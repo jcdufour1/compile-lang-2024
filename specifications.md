@@ -7,6 +7,70 @@ fn void main() {
 }
 '''
 
+struct
+'''c
+struct Token {
+    String name;
+    int num;
+}
+'''
+
+struct (generics)
+'''c
+def Token_types = String | int | uint;
+
+struct Token <T1: Token_types> {
+    String name;
+    T1 value;
+}
+'''
+
+for loop (index (0 inclusive, 10 exclusive))
+'''c
+for idx in [0, 10) {
+    print(idx);
+}
+'''
+
+for loop (index (0 inclusive, 10 inclusive))
+'''c
+for idx in [0, 10] {
+    print(idx);
+}
+'''
+
+for loop (iterate over each item)
+'''c
+Vec<int> vector = {89, 1893, 1, 8};
+defer free(vector);
+for num in vector.iter() {
+    println(idx);
+}
+'''
+
+for loop (iterate over each item with index)
+'''c
+Vec<int> vector = {89, 1893, 1, 8};
+defer free(vector);
+for index, num in vector.iter() {
+    println("at index ", index, ":", num);
+}
+'''
+
+for loop (index (0 inclusive, 10 inclusive))
+'''c
+for idx in (0, 10) {
+    print(idx);
+}
+'''
+
+function (generics)
+'''c
+fn Token<Type> get_token_value(Token& token) {
+    return token.value;
+}
+'''
+
 allocate thing (error)
 '''c
 fn void main() {
