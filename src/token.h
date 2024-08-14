@@ -3,9 +3,16 @@
 
 #include <string.h>
 #include "str_view.h"
+#include "newstring.h"
 
 typedef enum {
-    TOKEN_SYMBOL
+    TOKEN_SYMBOL,
+    TOKEN_OPEN_PAR,
+    TOKEN_CLOSE_PAR,
+    TOKEN_OPEN_CURLY_BRACE,
+    TOKEN_CLOSE_CURLY_BRACE,
+    TOKEN_DOUBLE_QUOTE,
+    TOKEN_SEMICOLON,
 } TOKEN_TYPE;
 
 typedef struct {
@@ -17,19 +24,45 @@ static inline void Token_init(Token* token) {
     memset(token, 0, sizeof(*token));
 }
 
-static inline char* Token_type_print(TOKEN_TYPE type) {
-    switch (type) {
+static inline Str_view Token_print_internal(Token token) {
+    static String text = {0};
+
+    switch (token.type) {
         case TOKEN_SYMBOL:
-            return "sym";
+            String_cpy_cstr_inplace(&text, "sym");
+            String_append(&text, '(');
+            String_append_strv(&text, token.text);
+            String_append(&text, ')');
+            break;
+        case TOKEN_OPEN_PAR:
+            String_cpy_cstr_inplace(&text, "(");
+            break;
+        case TOKEN_CLOSE_PAR:
+            String_cpy_cstr_inplace(&text, ")");
+            break;
+        case TOKEN_OPEN_CURLY_BRACE:
+            String_cpy_cstr_inplace(&text, "{");
+            break;
+        case TOKEN_CLOSE_CURLY_BRACE:
+            String_cpy_cstr_inplace(&text, "}");
+            break;
+        case TOKEN_DOUBLE_QUOTE:
+            String_cpy_cstr_inplace(&text, "\"");
+            break;
+        case TOKEN_SEMICOLON:
+            String_cpy_cstr_inplace(&text, ";");
             break;
         default:
             unreachable();
     }
+
+    Str_view str_view = {.str = text.buf, .count = text.count};
+    return str_view;
 }
 
-#define TOKEN_FMT "%s("STRV_FMT")"
+#define Token_print(token) Strv_print(Token_print_internal((token)))
 
-#define Token_print(token) Token_type_print((token).type), Strv_print((token).text)
+#define TOKEN_FMT STRV_FMT
 
 #endif // TOKEN_H
 
