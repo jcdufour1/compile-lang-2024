@@ -3,10 +3,11 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #define todo() \
     do { \
-        fprintf(stderr, "%s:%d:error: not implemented", __FILE__, __LINE__); \
+        fprintf(stderr, "%s:%d:error: not implemented\n", __FILE__, __LINE__); \
         abort(); \
     } while (0);
 

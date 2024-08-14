@@ -14,11 +14,11 @@ typedef struct {
     size_t capacity;
 } Tokens;
 
-static void Token_init(Token* token) {
+static inline void Tokens_init(Tokens* token) {
     memset(token, 0, sizeof(*token));
 }
 
-static void Tokens_reserve(Tokens* tokens, size_t minimum_count_empty_slots) {
+static inline void Tokens_reserve(Tokens* tokens, size_t minimum_count_empty_slots) {
     // tokens->capacity must be at least one greater than tokens->count for null termination
     while (tokens->count + minimum_count_empty_slots + 1 > tokens->capacity) {
         if (tokens->capacity < 1) {
@@ -32,7 +32,7 @@ static void Tokens_reserve(Tokens* tokens, size_t minimum_count_empty_slots) {
 }
 
 // string->buf is always null terminated
-static void Tokens_append(Tokens* tokens, const Token* token) {
+static inline void Tokens_append(Tokens* tokens, const Token* token) {
     Tokens_reserve(tokens, 1);
     tokens->buf[tokens->count++] = *token;
 }
