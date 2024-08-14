@@ -1,4 +1,4 @@
 
-fn void main() {
+fn main() void {
     println("hello");
 }
