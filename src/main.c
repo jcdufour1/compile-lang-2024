@@ -8,6 +8,7 @@
 #include "token.h"
 #include "tokens.h"
 #include "tokenizer.h"
+#include "parser.h"
 
 typedef struct {
     String file_name;
@@ -52,7 +53,8 @@ int main(int argc, char** argv) {
     }
 
     Tokens tokens = tokenize(file_text);
-    todo();
+
+    parse(tokens);
     // parse
     //
     // llvm thing
