@@ -2,8 +2,9 @@
 #define STR_VIEW_H
 
 #include <stddef.h>
-#include "util.h"
 #include <stdbool.h>
+#include <string.h>
+#include "util.h"
 
 typedef struct {
     const char* str;
@@ -65,6 +66,11 @@ static inline Str_view strv_chop_front_count(Str_view* str_view, size_t count) {
 
 static inline Str_view strv_chop_front(Str_view* str_view) {
     return strv_chop_front_count(str_view, 1);
+}
+
+// return 0 when match
+static inline int Strv_cmp_cstr(Str_view str_view, const char* cstr) {
+    return strncmp(str_view.str, cstr, str_view.count);
 }
 
 #define STRV_FMT "%.*s"
