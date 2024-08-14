@@ -4,77 +4,14 @@
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
-
-#define STRING_DEFAULT_CAPACITY 4048
-
-#define todo() \
-    do { \
-        fprintf(stderr, "%s:%d:error: not implemented", __FILE__, __LINE__); \
-        abort(); \
-    } while (0);
-
-typedef struct {
-    char* buf;
-    size_t count;
-    size_t capacity;
-} String;
+#include "newstring.h"
+#include "token.h"
+#include "tokens.h"
+#include "tokenizer.h"
 
 typedef struct {
     String file_name;
 } Parameters;
-
-void String_init(String* str) {
-    memset(str, 0, sizeof(*str));
-}
-
-void* safe_realloc(void* old_ptr, size_t new_capacity) {
-    void* new_ptr = realloc(old_ptr, new_capacity);
-    if (!new_ptr) {
-        todo();
-    }
-    return new_ptr;
-}
-
-void* safe_malloc(size_t capacity) {
-    void* new_ptr = malloc(capacity);
-    if (!new_ptr) {
-        todo();
-    }
-    memset(new_ptr, 0, capacity);
-    return new_ptr;
-}
-
-#define STRING_FMT "%.*s"
-
-#define String_print(string) (int)((string).count), (string).buf
-
-void String_reserve(String* str, size_t minimum_count_empty_slots) {
-    // str->capacity must be at least one greater than str->count for null termination
-    while (str->count + minimum_count_empty_slots + 1 > str->capacity) {
-        if (str->capacity < 1) {
-            str->capacity = STRING_DEFAULT_CAPACITY;
-            str->buf = safe_malloc(str->capacity);
-        } else {
-            str->capacity *= 2;
-            str->buf = safe_realloc(str->buf, str->capacity);
-        }
-    }
-}
-
-// string->buf is always null terminated
-void String_append(String* str, char ch) {
-    String_reserve(str, 1);
-    str->buf[str->count++] = ch;
-}
-
-String String_from_cstr(const char* cstr) {
-    String string;
-    String_init(&string);
-    for (int idx = 0; cstr[idx]; idx++) {
-        String_append(&string, cstr[idx]);
-    }
-    return string;
-}
 
 Parameters parse_args(int argc, char** argv) {
     if (argc != 2) {
@@ -114,9 +51,8 @@ int main(int argc, char** argv) {
         return 1;
     }
     printf("file:"STRING_FMT"\n", String_print(file_text));
-    //
-    // tokenize
-    //
+
+    Tokens tokens = tokenize(file_text);
     // parse
     //
     // llvm thing
