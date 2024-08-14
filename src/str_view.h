@@ -67,5 +67,8 @@ static inline Str_view strv_chop_front(Str_view* str_view) {
     return strv_chop_front_count(str_view, 1);
 }
 
+#define STRV_FMT "%.*s"
+
+#define Strv_print(str_view) (int)((str_view).count), (str_view).str
 
 #endif // STR_VIEW_H

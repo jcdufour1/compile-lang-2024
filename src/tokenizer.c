@@ -21,8 +21,9 @@ static bool get_next_token(Token* token, Str_view* file_text) {
     }
 
     if (isalpha(strv_front(*file_text))) {
-        log(LOG_DEBUG, "yes\n");
-        token->text =  strv_chop_on_cond(file_text, local_isalnum);
+        token->text = strv_chop_on_cond(file_text, local_isalnum);
+        token->type = TOKEN_SYMBOL;
+        log(LOG_TRACE, TOKEN_FMT"\n", Token_print(*token));
         return true;
     } else {
         todo();
