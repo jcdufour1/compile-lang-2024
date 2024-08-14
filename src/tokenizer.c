@@ -21,7 +21,7 @@ static bool get_next_token(Token* token, Str_view* file_text) {
     }
 
     if (isalpha(strv_front(*file_text))) {
-        fprintf(stderr, "yes\n");
+        log(LOG_DEBUG, "yes\n");
         token->text =  strv_chop_on_cond(file_text, local_isalnum);
         return true;
     } else {
