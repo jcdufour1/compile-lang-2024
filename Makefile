@@ -5,9 +5,9 @@ all: build
 run: build
 	src/main test.c
 
-build: main
+build: src/main
 
-main: src/main.o src/tokenizer.o
+src/main: src/main.o src/tokenizer.o
 	cc ${C_FLAGS} -o src/main src/main.o src/tokenizer.o 
 
 src/main.o: src/main.c src/*.h
