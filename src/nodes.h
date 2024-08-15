@@ -6,6 +6,7 @@
 #include <strings.h>
 #include "util.h"
 #include "node.h"
+#include "assert.h"
 
 #define NODES_DEFAULT_CAPACITY 512
 
@@ -22,28 +23,36 @@ static inline void nodes_reserve(size_t minimum_count_empty_slots) {
     while (nodes.count + minimum_count_empty_slots + 1 > nodes.capacity) {
         if (nodes.capacity < 1) {
             nodes.capacity = NODES_DEFAULT_CAPACITY;
-            nodes.buf = safe_malloc(nodes.capacity);
+            nodes.buf = safe_malloc(sizeof(nodes.buf[0])*nodes.capacity);
         } else {
             nodes.capacity *= 2;
-            nodes.buf = safe_realloc(nodes.buf, nodes.capacity);
+            nodes.buf = safe_realloc(nodes.buf, sizeof(nodes.buf[0])*nodes.capacity);
         }
     }
 }
 
-static inline void nodes_append(const Node* node) {
-    nodes_reserve(1);
-    nodes.buf[nodes.count++] = *node;
+static inline Node* nodes_at(Node_idx idx) {
+    assert(idx < nodes.count && "out of bounds");
+    return &nodes.buf[idx];
 }
 
-static inline Node* node_new() {
+static inline Node_idx node_new() {
     nodes_reserve(1);
     memset(&nodes.buf[nodes.count], 0, sizeof(nodes.buf[0]));
-    Node* node_created = &nodes.buf[nodes.count];
+    Node_idx idx_node_created = nodes.count;
     nodes.count++;
-    return node_created;
+
+    Node* new_node = nodes_at(idx_node_created);
+    new_node->parameters = NODE_IDX_NULL;
+    new_node->return_types = NODE_IDX_NULL;
+    new_node->body = NODE_IDX_NULL;
+    new_node->left = NODE_IDX_NULL;
+    new_node->right = NODE_IDX_NULL;
+
+    return idx_node_created;
 }
 
-void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, const Node* root, const char* file, int line);
+void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_idx root, const char* file, int line);
 
 #define log_tree(log_level, root) \
     nodes_log_tree_rec(log_level, 0, root, __FILE__, __LINE__);

@@ -63,7 +63,7 @@ static bool tokens_start_with_function_call(size_t* idx_semicolon, const Token* 
     return true;
 }
 
-static Node* parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
+static Node_idx parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
     if (state == PARSE_FUN_PARAMS) {
         if (tokens[0].type != TOKEN_OPEN_PAR) {
             log(LOG_ERROR, "error: '(' expected\n");
@@ -72,13 +72,13 @@ static Node* parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
         if (tokens[1].type != TOKEN_CLOSE_PAR) {
             todo();
         }
-        Node* parameters = node_new();
-        parameters->type = NODE_FUNCTION_PARAMETERS;
+        Node_idx parameters = node_new();
+        nodes_at(parameters)->type = NODE_FUNCTION_PARAMETERS;
         return parameters;
     }
 
     if (state == PARSE_FUN_ARGUMENTS) {
-        Node* argument = node_new();
+        Node_idx argument = node_new();
         size_t idx_semicolon;
         if (get_idx_token(&idx_semicolon, tokens, count, TOKEN_SEMICOLON)) {
             todo();
@@ -88,9 +88,9 @@ static Node* parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
         }
         switch (tokens[0].type) {
             case TOKEN_STRING_LITERAL:
-                argument->type = NODE_LITERAL;
-                argument->name = tokens[0].text;
-                argument->literal_type = TOKEN_STRING_LITERAL;
+                nodes_at(argument)->type = NODE_LITERAL;
+                nodes_at(argument)->name = tokens[0].text;
+                nodes_at(argument)->literal_type = TOKEN_STRING_LITERAL;
                 assert(count == 1);
                 return argument;
             default:
@@ -105,9 +105,9 @@ static Node* parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
         if (count > 1) {
             todo();
         }
-        Node* return_types = node_new();
-        return_types->type = NODE_FUNCTION_RETURN_TYPES;
-        return_types->lang_type = tokens[0].text;
+        Node_idx return_types = node_new();
+        nodes_at(return_types)->type = NODE_FUNCTION_RETURN_TYPES;
+        nodes_at(return_types)->lang_type = tokens[0].text;
         return return_types;
     }
 
@@ -115,17 +115,17 @@ static Node* parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
         if (count < 2) {
             unreachable();
         }
-        Node* body = node_new();
-        body->type = NODE_FUNCTION_BODY;
-        body->right = parse_rec(PARSE_NORMAL, &tokens[1], count - 1);
+        Node_idx body = node_new();
+        nodes_at(body)->type = NODE_FUNCTION_BODY;
+        nodes_at(body)->right = parse_rec(PARSE_NORMAL, &tokens[1], count - 1);
         return body;
     }
 
     if (tokens[0].type == TOKEN_SYMBOL && 0 == str_view_cmp_cstr(tokens[0].text, "fn")) {
-        Node* function = node_new();
-        function->type = NODE_FUNCTION_DEFINITION;
+        Node_idx function = node_new();
+        nodes_at(function)->type = NODE_FUNCTION_DEFINITION;
         if (tokens[1].type == TOKEN_SYMBOL) {
-            function->name = tokens[1].text;
+            nodes_at(function)->name = tokens[1].text;
         } else {
             todo();
         }
@@ -137,7 +137,7 @@ static Node* parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
         } else {
             todo();
         }
-        function->parameters = parse_rec(PARSE_FUN_PARAMS, &tokens[parameters_start], parameters_len);
+        nodes_at(function)->parameters = parse_rec(PARSE_FUN_PARAMS, &tokens[parameters_start], parameters_len);
 
         size_t return_types_len;
         size_t return_types_start = parameters_start + parameters_len;
@@ -146,7 +146,7 @@ static Node* parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
         } else {
             todo();
         }
-        function->return_types = parse_rec(PARSE_FUN_RETURN_TYPES, &tokens[return_types_start], return_types_len);
+        nodes_at(function)->return_types = parse_rec(PARSE_FUN_RETURN_TYPES, &tokens[return_types_start], return_types_len);
 
         size_t body_len;
         size_t body_start = return_types_start + return_types_len;
@@ -157,16 +157,16 @@ static Node* parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
         if (!get_idx_matching_token(&body_len, &tokens[body_start], count - body_start, TOKEN_CLOSE_CURLY_BRACE)) {
             todo();
         }
-        function->body = parse_rec(PARSE_FUN_BODY, &tokens[body_start], body_len);
+        nodes_at(function)->body = parse_rec(PARSE_FUN_BODY, &tokens[body_start], body_len);
 
         return function;
     } 
 
     size_t semicolon_pos;
     if (tokens_start_with_function_call(&semicolon_pos, tokens, count)) {
-        Node* function_call = node_new();
-        function_call->type = NODE_FUNCTION_CALL;
-        function_call->name = tokens[0].text;
+        Node_idx function_call = node_new();
+        nodes_at(function_call)->type = NODE_FUNCTION_CALL;
+        nodes_at(function_call)->name = tokens[0].text;
         log_tokens(LOG_TRACE, tokens, count);
         size_t parameters_start = 2; // exclude outer ()
         size_t parameters_end;
@@ -174,12 +174,12 @@ static Node* parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
             todo();
         }
         parameters_end--; // exclude outer ()
-        function_call->parameters = parse_rec(PARSE_FUN_ARGUMENTS, &tokens[parameters_start], parameters_start - parameters_end + 1);
+        nodes_at(function_call)->parameters = parse_rec(PARSE_FUN_ARGUMENTS, &tokens[parameters_start], parameters_start - parameters_end + 1);
         return function_call;
     }
 
     if (count < 1) {
-        return NULL;
+        return NODE_IDX_NULL;
     }
 
     log(LOG_TRACE, "parse_rec other: "TOKEN_FMT"\n", token_print(tokens[0]));
@@ -188,7 +188,7 @@ static Node* parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
 }
 
 void parse(const Tokens tokens) {
-    Node* root = parse_rec(PARSE_NORMAL, &tokens.buf[0], tokens.count);
+    Node_idx root = parse_rec(PARSE_NORMAL, &tokens.buf[0], tokens.count);
     log_tree(LOG_VERBOSE, root);
     todo();
 }

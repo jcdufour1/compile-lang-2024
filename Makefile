@@ -6,8 +6,7 @@ OBJS=\
 	 ${BUILD_DIR}/tokenizer.o \
 	 ${BUILD_DIR}/parser.o \
 	 ${BUILD_DIR}/globals.o \
-	 ${BUILD_DIR}/nodes.o \
-	 ${BUILD_DIR}/node.o
+	 ${BUILD_DIR}/nodes.o
 
 all: build
 
@@ -37,9 +36,6 @@ ${BUILD_DIR}/globals.o: src/globals.c src/*.h
 
 ${BUILD_DIR}/nodes.o: src/nodes.c src/*.h
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/nodes.o src/nodes.c
-
-${BUILD_DIR}/node.o: src/node.c src/*.h
-	cc ${C_FLAGS} -c -o ${BUILD_DIR}/node.o src/node.c
 
 clean:
 	rm -f ${OBJS} ${BUILD_DIR}/main

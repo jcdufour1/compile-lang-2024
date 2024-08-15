@@ -4,6 +4,8 @@
 #include "newstring.h"
 #include "str_view.h"
 #include "token.h"
+#include "util.h"
+#include "stdint.h"
 
 typedef enum {
     NODE_NO_TYPE,
@@ -16,9 +18,11 @@ typedef enum {
     NODE_LITERAL,
 } NODE_TYPE;
 
-typedef struct _Node {
-    struct _Node* left;
-    struct _Node* right;
+typedef size_t Node_idx;
+
+typedef struct {
+    Node_idx left;
+    Node_idx right;
 
     NODE_TYPE type;
 
@@ -26,14 +30,16 @@ typedef struct _Node {
 
     Str_view name;
     Str_view lang_type;
-    struct _Node* parameters;
-    struct _Node* return_types;
-    struct _Node* body;
+    Node_idx parameters;
+    Node_idx return_types;
+    Node_idx body;
 } Node;
 
 #define NODE_FMT STRING_FMT
 
-String node_print_internal(const Node* node, int pad_x);
+#define NODE_IDX_NULL SIZE_MAX
+
+String node_print_internal(Node_idx node, int pad_x);
 
 #define node_print(root, padx) string_print(node_print_internal((root), (pad_x)))
 
