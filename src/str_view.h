@@ -22,10 +22,11 @@ static inline char strv_front(Str_view str_view) {
     return str_view.str[0];
 }
 
-static inline Str_view strv_chop_on_cond(Str_view* str_view, bool (*should_continue)(char)) {
+static inline Str_view strv_chop_on_cond(Str_view* str_view, bool (*should_continue)(char /* previous char */, char /* current char */)) {
     Str_view new_str_view;
     for (size_t idx = 0; str_view->count > idx; idx++) {
-        if (!should_continue(str_view->str[idx])) {
+        char prev_char = idx > 0 ? (str_view->str[idx]) : (0);
+        if (!should_continue(prev_char, str_view->str[idx])) {
             new_str_view.str = str_view->str;
             new_str_view.count = idx;
             str_view->str += idx;
@@ -71,6 +72,13 @@ static inline Str_view strv_chop_front(Str_view* str_view) {
 // return 0 when match
 static inline int Strv_cmp_cstr(Str_view str_view, const char* cstr) {
     return strncmp(str_view.str, cstr, str_view.count);
+}
+
+static inline Str_view Str_view_from_cstr(const char* cstr) {
+    Str_view str_view;
+    str_view.str = cstr;
+    str_view.count = strlen(cstr);
+    return str_view;
 }
 
 #define STRV_FMT "%.*s"

@@ -13,6 +13,8 @@ typedef enum {
     TOKEN_CLOSE_CURLY_BRACE,
     TOKEN_DOUBLE_QUOTE,
     TOKEN_SEMICOLON,
+    TOKEN_COMMA,
+    TOKEN_STRING_LITERAL,
 } TOKEN_TYPE;
 
 typedef struct {
@@ -24,15 +26,17 @@ static inline void Token_init(Token* token) {
     memset(token, 0, sizeof(*token));
 }
 
-static inline Str_view Token_print_internal(Token token) {
+static inline Str_view Token_print_internal(Token token, bool type_only) {
     static String text = {0};
 
     switch (token.type) {
         case TOKEN_SYMBOL:
             String_cpy_cstr_inplace(&text, "sym");
-            String_append(&text, '(');
-            String_append_strv(&text, token.text);
-            String_append(&text, ')');
+            if (!type_only) {
+                String_append(&text, '(');
+                String_append_strv(&text, token.text);
+                String_append(&text, ')');
+            }
             break;
         case TOKEN_OPEN_PAR:
             String_cpy_cstr_inplace(&text, "(");
@@ -52,6 +56,14 @@ static inline Str_view Token_print_internal(Token token) {
         case TOKEN_SEMICOLON:
             String_cpy_cstr_inplace(&text, ";");
             break;
+        case TOKEN_STRING_LITERAL:
+            String_cpy_cstr_inplace(&text, "str");
+            if (!type_only) {
+                String_append(&text, '(');
+                String_append_strv(&text, token.text);
+                String_append(&text, ')');
+            }
+            break;
         default:
             unreachable();
     }
@@ -60,7 +72,11 @@ static inline Str_view Token_print_internal(Token token) {
     return str_view;
 }
 
-#define Token_print(token) Strv_print(Token_print_internal((token)))
+static inline Str_view Token_print_type(Token token) {
+    return Token_print_internal(token, true);
+}
+
+#define Token_print(token) Strv_print(Token_print_internal((token), false))
 
 #define TOKEN_FMT STRV_FMT
 

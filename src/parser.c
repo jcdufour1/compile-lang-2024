@@ -4,12 +4,63 @@
 #include "nodes.h"
 #include "assert.h"
 
+static inline void log_tokens(LOG_LEVEL log_level, const Token* tokens, size_t count) {
+    for (size_t idx = 0; idx < count; idx++) {
+        log(log_level, "    "TOKEN_FMT"\n", Token_print(tokens[idx]));
+    }
+}
+
 typedef enum {
     PARSE_NORMAL,
     PARSE_FUN_PARAMS,
     PARSE_FUN_BODY,
     PARSE_FUN_RETURN_TYPES,
+    PARSE_FUN_ARGUMENTS,
 } PARSE_STATE;
+
+// TODO: make this work when there are eg. nested (())
+static bool get_idx_matching_token(size_t* idx_matching, const Token* tokens, size_t count, TOKEN_TYPE type_to_match) {
+    for (size_t idx = 0; idx < count; idx++) {
+        if (tokens[idx].type == type_to_match) {
+            *idx_matching = idx;;
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool get_idx_token(size_t* idx_matching, const Token* tokens, size_t count, TOKEN_TYPE type_to_match) {
+    for (size_t idx = 0; idx < count; idx++) {
+        if (tokens[idx].type == type_to_match) {
+            *idx_matching = idx;;
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool tokens_start_with_function_call(size_t* idx_semicolon, const Token* tokens, size_t count) {
+    if (count < 2) {
+        return false;
+    }
+
+    if (tokens[0].type != TOKEN_SYMBOL) {
+        return false;
+    }
+
+    if (tokens[1].type != TOKEN_OPEN_PAR) {
+        return false;
+    }
+
+    size_t semicolon_pos;
+    get_idx_matching_token(&semicolon_pos, &tokens[0], count, TOKEN_SEMICOLON);
+    if (tokens[semicolon_pos - 1].type != TOKEN_CLOSE_PAR) {
+        return false;
+    }
+
+    *idx_semicolon = semicolon_pos;
+    return true;
+}
 
 static Node* parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
     if (state == PARSE_FUN_PARAMS) {
@@ -18,13 +69,32 @@ static Node* parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
             exit(1);
         }
         if (tokens[1].type != TOKEN_CLOSE_PAR) {
-            // function parameters not implemented
             todo();
-            exit(1);
         }
         Node* parameters = Node_new();
         parameters->type = NODE_FUNCTION_PARAMETERS;
         return parameters;
+    }
+
+    if (state == PARSE_FUN_ARGUMENTS) {
+        Node* argument = Node_new();
+        size_t idx_semicolon;
+        if (get_idx_token(&idx_semicolon, tokens, count, TOKEN_SEMICOLON)) {
+            todo();
+        }
+        if (get_idx_token(&idx_semicolon, tokens, count, TOKEN_COMMA)) {
+            todo();
+        }
+        switch (tokens[0].type) {
+            case TOKEN_STRING_LITERAL:
+                argument->type = NODE_LITERAL;
+                argument->name = tokens[0].text;
+                argument->literal_type = TOKEN_STRING_LITERAL;
+                assert(count == 1);
+                return argument;
+            default:
+                todo();
+        }
     }
 
     if (state == PARSE_FUN_RETURN_TYPES) {
@@ -44,16 +114,15 @@ static Node* parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
         if (count < 2) {
             unreachable();
         }
-        if (count > 2) {
-            todo();
-        }
         Node* body = Node_new();
         body->type = NODE_FUNCTION_BODY;
+        body->right = parse_rec(PARSE_NORMAL, &tokens[1], count - 1);
         return body;
     }
 
     if (tokens[0].type == TOKEN_SYMBOL && 0 == Strv_cmp_cstr(tokens[0].text, "fn")) {
         Node* function = Node_new();
+        function->type = NODE_FUNCTION_DEFINITION;
         if (tokens[1].type == TOKEN_SYMBOL) {
             function->name = tokens[1].text;
         } else {
@@ -81,9 +150,10 @@ static Node* parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
         size_t body_len;
         size_t body_start = return_types_start + return_types_len;
         assert(count > body_start);
-        if (tokens[body_start].type == TOKEN_OPEN_CURLY_BRACE && (tokens[body_start + 1].type == TOKEN_CLOSE_CURLY_BRACE)) {
-            body_len = 2;
-        } else {
+        if (tokens[body_start].type != TOKEN_OPEN_CURLY_BRACE) {
+            unreachable();
+        }
+        if (!get_idx_matching_token(&body_len, &tokens[body_start], count - body_start, TOKEN_CLOSE_CURLY_BRACE)) {
             todo();
         }
         function->body = parse_rec(PARSE_FUN_BODY, &tokens[body_start], body_len);
@@ -91,12 +161,119 @@ static Node* parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
         return function;
     } 
 
+    size_t semicolon_pos;
+    if (tokens_start_with_function_call(&semicolon_pos, tokens, count)) {
+        Node* function_call = Node_new();
+        function_call->type = NODE_FUNCTION_CALL;
+        function_call->name = tokens[0].text;
+        log_tokens(LOG_TRACE, tokens, count);
+        size_t parameters_start = 2; // exclude outer ()
+        size_t parameters_end;
+        if (!get_idx_matching_token(&parameters_end, tokens, count, TOKEN_CLOSE_PAR)) {
+            todo();
+        }
+        parameters_end--; // exclude outer ()
+        function_call->parameters = parse_rec(PARSE_FUN_ARGUMENTS, &tokens[parameters_start], parameters_start - parameters_end + 1);
+        return function_call;
+    }
+
+    if (count < 1) {
+        return NULL;
+    }
+
     log(LOG_TRACE, "parse_rec other: "TOKEN_FMT"\n", Token_print(tokens[0]));
     log(LOG_TRACE, "cmp: %d\n", Strv_cmp_cstr(tokens[0].text, "fn"));
     unreachable();
 }
 
+#define NODE_FMT STRING_FMT
+
+#define NODE_TYPE_FMT STRV_FMT
+
+static const char* NODE_LITERAL_DESCRIPTION = "literal";
+static const char* NODE_FUNCTION_CALL_DESCRIPTION = "fn_call";
+static const char* NODE_FUNCTION_DEFINITION_DESCRIPTION = "fn_def";
+static const char* NODE_FUNCTION_PARAMETERS_DESCRIPTION = "fn_params";
+static const char* NODE_FUNCTION_RETURN_TYPES_DESCRIPTION = "fn_return_types";
+static const char* NODE_FUNCTION_BODY_DESCRIPTION = "fn_body";
+
+static inline Str_view Node_type_get_strv(NODE_TYPE node_type) {
+    Str_view buf;
+    Str_view_init(&buf);
+
+    switch (node_type) {
+        case NODE_LITERAL:
+            return Str_view_from_cstr(NODE_LITERAL_DESCRIPTION);
+        case NODE_FUNCTION_CALL:
+            return Str_view_from_cstr(NODE_FUNCTION_CALL_DESCRIPTION);
+        case NODE_FUNCTION_DEFINITION:
+            return Str_view_from_cstr(NODE_FUNCTION_DEFINITION_DESCRIPTION);
+        case NODE_FUNCTION_PARAMETERS:
+            return Str_view_from_cstr(NODE_FUNCTION_PARAMETERS_DESCRIPTION);
+        case NODE_FUNCTION_RETURN_TYPES:
+            return Str_view_from_cstr(NODE_FUNCTION_RETURN_TYPES_DESCRIPTION);
+        case NODE_FUNCTION_BODY:
+            return Str_view_from_cstr(NODE_FUNCTION_BODY_DESCRIPTION);
+        default:
+            todo();
+    }
+}
+
+static inline String Node_print_internal(const Node* node, int pad_x) {
+    static String buf = {0};
+    String_set_to_zero_len(&buf);
+
+    for (int idx = 0; idx < pad_x; idx++) {
+        String_append(&buf, ' ');
+    }
+
+    String_extend_strv(&buf, node->name);
+
+    String_append(&buf, ':');
+
+    String_extend_strv(&buf, Node_type_get_strv(node->type));
+
+    String_append(&buf, '\n');
+
+    return buf;
+}
+
+#define Node_print(root, padx) String_print(Node_print_internal((root), (pad_x)))
+
+#define Node_info_print(root, padx) String_print(Node_print_internal((root), (pad_x)))
+
+static void log_tree_rec(LOG_LEVEL log_level, int pad_x, const Node* root, const char* file, int line) {
+    static String padding = {0};
+    String_set_to_zero_len(&padding);
+
+    for (int idx = 0; idx < pad_x; idx++) {
+        String_append(&padding, ' ');
+    }
+
+    log_file(file, line, log_level, STRING_FMT NODE_FMT, String_print(padding), Node_print(root, pad_x));
+
+    if (root->parameters) {
+        log_tree_rec(log_level, pad_x + 2, root->parameters, file, line);
+    }
+    if (root->return_types) {
+        log_tree_rec(log_level, pad_x + 2, root->return_types, file, line);
+    }
+    if (root->body) {
+        log_tree_rec(log_level, pad_x + 2, root->body, file, line);
+    }
+    if (root->right) {
+        log_tree_rec(log_level, pad_x + 2, root->right, file, line);
+    }
+    if (root->left) {
+        log_tree_rec(log_level, pad_x + 2, root->left, file, line);
+    }
+}
+
+#define log_tree(log_level, root) \
+    log_tree_rec(log_level, 0, root, __FILE__, __LINE__);
+
 void parse(const Tokens tokens) {
     Node* root = parse_rec(PARSE_NORMAL, &tokens.buf[0], tokens.count);
+    log_tree(LOG_VERBOSE, root);
     todo();
 }

@@ -5,8 +5,13 @@
 #include "str_view.h"
 #include <ctype.h>
 
-static bool local_isalnum(char ch) {
-    return isalnum(ch);
+static bool local_isalnum(char prev, char curr) {
+    (void) prev;
+    return isalnum(curr);
+}
+
+static bool is_not_quote(char prev, char curr) {
+    return curr != '"' || prev == '\\';
 }
 
 static bool get_next_token(Token* token, Str_view* file_text) {
@@ -45,8 +50,10 @@ static bool get_next_token(Token* token, Str_view* file_text) {
         token->type = TOKEN_CLOSE_CURLY_BRACE;
         return true;
     } else if (strv_front(*file_text) == '"') {
+        token->type = TOKEN_STRING_LITERAL;
         strv_chop_front(file_text);
-        token->type = TOKEN_DOUBLE_QUOTE;
+        token->text = strv_chop_on_cond(file_text, is_not_quote);
+        strv_chop_front(file_text);
         return true;
     } else if (strv_front(*file_text) == ';') {
         strv_chop_front(file_text);

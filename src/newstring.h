@@ -80,4 +80,10 @@ static inline void String_cpy_cstr_inplace(String* string, const char* cstr) {
     }
 }
 
+static inline void String_extend_strv(String* string, Str_view str_view) {
+    for (size_t idx = 0; idx < str_view.count; idx++) {
+        String_append(string, str_view.str[idx]);
+    }
+}
+
 #endif // NEWSTRING_H

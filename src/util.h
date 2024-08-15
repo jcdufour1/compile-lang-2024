@@ -17,16 +17,45 @@
 #define CURR_LOG_LEVEL LOG_TRACE
 #endif // CURR_LOG_LEVEL
 
+typedef int LOG_LEVEL;
+
 #define log(log_level, ...) \
     do { \
         if ((log_level) >= CURR_LOG_LEVEL) { \
+            switch ((log_level)) { \
+                case LOG_FETAL: \
+                    /* fallthrough */ \
+                case LOG_ERROR: \
+                    fprintf(stderr, "%s:%d:error:", __FILE__, __LINE__); \
+                    break; \
+                default: \
+                    fprintf(stderr, "%s:%d:", __FILE__, __LINE__); \
+                    break; \
+            } \
+            fprintf(stderr, __VA_ARGS__); \
+        } \
+    } while (0);
+
+#define log_file(file, line, log_level, ...) \
+    do { \
+        if ((log_level) >= CURR_LOG_LEVEL) { \
+            switch ((log_level)) { \
+                case LOG_FETAL: \
+                    /* fallthrough */ \
+                case LOG_ERROR: \
+                    fprintf(stderr, "%s:%d:error:", file, line); \
+                    break; \
+                default: \
+                    fprintf(stderr, "%s:%d:", file, line); \
+                    break; \
+            } \
             fprintf(stderr, __VA_ARGS__); \
         } \
     } while (0);
 
 #define todo() \
     do { \
-        log(LOG_FETAL, "%s:%d:error: not implemented\n", __FILE__, __LINE__); \
+        log(LOG_FETAL, "not implemented\n"); \
         abort(); \
     } while (0);
 
