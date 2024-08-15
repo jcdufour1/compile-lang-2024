@@ -6,7 +6,7 @@
 
 static inline void log_tokens(LOG_LEVEL log_level, const Token* tokens, size_t count) {
     for (size_t idx = 0; idx < count; idx++) {
-        log(log_level, "    "TOKEN_FMT"\n", Token_print(tokens[idx]));
+        log(log_level, "    "TOKEN_FMT"\n", token_print(tokens[idx]));
     }
 }
 
@@ -72,13 +72,13 @@ static Node* parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
         if (tokens[1].type != TOKEN_CLOSE_PAR) {
             todo();
         }
-        Node* parameters = Node_new();
+        Node* parameters = node_new();
         parameters->type = NODE_FUNCTION_PARAMETERS;
         return parameters;
     }
 
     if (state == PARSE_FUN_ARGUMENTS) {
-        Node* argument = Node_new();
+        Node* argument = node_new();
         size_t idx_semicolon;
         if (get_idx_token(&idx_semicolon, tokens, count, TOKEN_SEMICOLON)) {
             todo();
@@ -105,7 +105,7 @@ static Node* parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
         if (count > 1) {
             todo();
         }
-        Node* return_types = Node_new();
+        Node* return_types = node_new();
         return_types->type = NODE_FUNCTION_RETURN_TYPES;
         return_types->lang_type = tokens[0].text;
         return return_types;
@@ -115,14 +115,14 @@ static Node* parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
         if (count < 2) {
             unreachable();
         }
-        Node* body = Node_new();
+        Node* body = node_new();
         body->type = NODE_FUNCTION_BODY;
         body->right = parse_rec(PARSE_NORMAL, &tokens[1], count - 1);
         return body;
     }
 
-    if (tokens[0].type == TOKEN_SYMBOL && 0 == Strv_cmp_cstr(tokens[0].text, "fn")) {
-        Node* function = Node_new();
+    if (tokens[0].type == TOKEN_SYMBOL && 0 == str_view_cmp_cstr(tokens[0].text, "fn")) {
+        Node* function = node_new();
         function->type = NODE_FUNCTION_DEFINITION;
         if (tokens[1].type == TOKEN_SYMBOL) {
             function->name = tokens[1].text;
@@ -141,7 +141,7 @@ static Node* parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
 
         size_t return_types_len;
         size_t return_types_start = parameters_start + parameters_len;
-        if (tokens[return_types_start].type == TOKEN_SYMBOL && 0 == Strv_cmp_cstr(tokens[return_types_start].text, "void")) {
+        if (tokens[return_types_start].type == TOKEN_SYMBOL && 0 == str_view_cmp_cstr(tokens[return_types_start].text, "void")) {
             return_types_len = 1;
         } else {
             todo();
@@ -164,7 +164,7 @@ static Node* parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
 
     size_t semicolon_pos;
     if (tokens_start_with_function_call(&semicolon_pos, tokens, count)) {
-        Node* function_call = Node_new();
+        Node* function_call = node_new();
         function_call->type = NODE_FUNCTION_CALL;
         function_call->name = tokens[0].text;
         log_tokens(LOG_TRACE, tokens, count);
@@ -182,8 +182,8 @@ static Node* parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
         return NULL;
     }
 
-    log(LOG_TRACE, "parse_rec other: "TOKEN_FMT"\n", Token_print(tokens[0]));
-    log(LOG_TRACE, "cmp: %d\n", Strv_cmp_cstr(tokens[0].text, "fn"));
+    log(LOG_TRACE, "parse_rec other: "TOKEN_FMT"\n", token_print(tokens[0]));
+    log(LOG_TRACE, "cmp: %d\n", str_view_cmp_cstr(tokens[0].text, "fn"));
     unreachable();
 }
 

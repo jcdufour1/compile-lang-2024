@@ -33,8 +33,8 @@ typedef struct _Node {
 
 #define NODE_FMT STRING_FMT
 
-String Node_print_internal(const Node* node, int pad_x);
+String node_print_internal(const Node* node, int pad_x);
 
-#define Node_print(root, padx) String_print(Node_print_internal((root), (pad_x)))
+#define node_print(root, padx) string_print(node_print_internal((root), (pad_x)))
 
 #endif // NODE_H

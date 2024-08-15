@@ -19,62 +19,62 @@ static bool get_next_token(Token* token, Str_view* file_text) {
         return false;
     }
 
-    Token_init(token);
+    token_init(token);
 
-    while (file_text->count > 0 && (isspace(strv_front(*file_text)) || iscntrl(strv_front(*file_text)))) {
-        strv_chop_front(file_text);
+    while (file_text->count > 0 && (isspace(str_view_front(*file_text)) || iscntrl(str_view_front(*file_text)))) {
+        str_view_chop_front(file_text);
     }
 
     if (file_text->count < 1) {
         return false;
     }
 
-    if (isalpha(strv_front(*file_text))) {
-        token->text = strv_chop_on_cond(file_text, local_isalnum);
+    if (isalpha(str_view_front(*file_text))) {
+        token->text = str_view_chop_on_cond(file_text, local_isalnum);
         token->type = TOKEN_SYMBOL;
         return true;
-    } else if (strv_front(*file_text) == '(') {
-        strv_chop_front(file_text);
+    } else if (str_view_front(*file_text) == '(') {
+        str_view_chop_front(file_text);
         token->type = TOKEN_OPEN_PAR;
         return true;
-    } else if (strv_front(*file_text) == ')') {
-        strv_chop_front(file_text);
+    } else if (str_view_front(*file_text) == ')') {
+        str_view_chop_front(file_text);
         token->type = TOKEN_CLOSE_PAR;
         return true;
-    } else if (strv_front(*file_text) == '{') {
-        strv_chop_front(file_text);
+    } else if (str_view_front(*file_text) == '{') {
+        str_view_chop_front(file_text);
         token->type = TOKEN_OPEN_CURLY_BRACE;
         return true;
-    } else if (strv_front(*file_text) == '}') {
-        strv_chop_front(file_text);
+    } else if (str_view_front(*file_text) == '}') {
+        str_view_chop_front(file_text);
         token->type = TOKEN_CLOSE_CURLY_BRACE;
         return true;
-    } else if (strv_front(*file_text) == '"') {
+    } else if (str_view_front(*file_text) == '"') {
         token->type = TOKEN_STRING_LITERAL;
-        strv_chop_front(file_text);
-        token->text = strv_chop_on_cond(file_text, is_not_quote);
-        strv_chop_front(file_text);
+        str_view_chop_front(file_text);
+        token->text = str_view_chop_on_cond(file_text, is_not_quote);
+        str_view_chop_front(file_text);
         return true;
-    } else if (strv_front(*file_text) == ';') {
-        strv_chop_front(file_text);
+    } else if (str_view_front(*file_text) == ';') {
+        str_view_chop_front(file_text);
         token->type = TOKEN_SEMICOLON;
         return true;
     } else {
-        log(LOG_FETAL, "unknown symbol: %c (%x)\n", strv_front(*file_text), strv_front(*file_text));
+        log(LOG_FETAL, "unknown symbol: %c (%x)\n", str_view_front(*file_text), str_view_front(*file_text));
         todo();
     }
 }
 
 Tokens tokenize(const String file_text) {
     Tokens tokens;
-    Tokens_init(&tokens);
+    tokens_init(&tokens);
 
     Str_view curr_file_text = {.str = file_text.buf, .count = file_text.count};
 
     Token curr_token;
     while (get_next_token(&curr_token, &curr_file_text)) {
-        log(LOG_TRACE, "token received: "TOKEN_FMT"\n", Token_print(curr_token));
-        Tokens_append(&tokens, &curr_token);
+        log(LOG_TRACE, "token received: "TOKEN_FMT"\n", token_print(curr_token));
+        tokens_append(&tokens, &curr_token);
     }
 
     return tokens;

@@ -19,13 +19,13 @@ Parameters parse_args(int argc, char** argv) {
         todo();
     }
 
-    Parameters params = {.file_name = String_new_from_cstr(argv[1])};
+    Parameters params = {.file_name = string_new_from_cstr(argv[1])};
     return params; 
 }
 
 int read_file(String* file_text, const String* input_file_name) {
     assert(!input_file_name->buf[input_file_name->count]);
-    String_init(file_text);
+    string_init(file_text);
     FILE* file = fopen(input_file_name->buf, "rb");
     if (!file) {
         return 0;
@@ -35,7 +35,7 @@ int read_file(String* file_text, const String* input_file_name) {
     size_t amount_read;
     // TODO: check for errors?
     do {
-        String_reserve(file_text, buf_size);
+        string_reserve(file_text, buf_size);
         amount_read = fread(file_text->buf, 1, buf_size, file);
         file_text->count += amount_read;
     } while (amount_read > 0);
@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
 
     String file_text;
     if (!read_file(&file_text, &params.file_name)) {
-        log(LOG_FETAL, "could not open file "STRING_FMT": errno %d (%s)", String_print(params.file_name), errno, strerror(errno));
+        log(LOG_FETAL, "could not open file "STRING_FMT": errno %d (%s)", string_print(params.file_name), errno, strerror(errno));
         return 1;
     }
 

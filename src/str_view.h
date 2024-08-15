@@ -11,18 +11,14 @@ typedef struct {
     size_t count;
 } Str_view;
 
-static inline void Str_view_init(Str_view* str_view) {
-    memset(str_view, 0, sizeof(*str_view));
-}
-
-static inline char strv_front(Str_view str_view) {
+static inline char str_view_front(Str_view str_view) {
     if (str_view.count < 1) {
         todo();
     }
     return str_view.str[0];
 }
 
-static inline Str_view strv_chop_on_cond(Str_view* str_view, bool (*should_continue)(char /* previous char */, char /* current char */)) {
+static inline Str_view str_view_chop_on_cond(Str_view* str_view, bool (*should_continue)(char /* previous char */, char /* current char */)) {
     Str_view new_str_view;
     for (size_t idx = 0; str_view->count > idx; idx++) {
         char prev_char = idx > 0 ? (str_view->str[idx]) : (0);
@@ -37,7 +33,7 @@ static inline Str_view strv_chop_on_cond(Str_view* str_view, bool (*should_conti
     todo();
 }
 
-static inline Str_view strv_chop_on_delim(Str_view* str_view, char delim) {
+static inline Str_view str_view_chop_on_delim(Str_view* str_view, char delim) {
     Str_view new_str_view;
     for (size_t idx = 0; str_view->count > idx; idx++) {
         if (str_view->str[idx] == delim) {
@@ -53,7 +49,7 @@ static inline Str_view strv_chop_on_delim(Str_view* str_view, char delim) {
     todo();
 }
 
-static inline Str_view strv_chop_front_count(Str_view* str_view, size_t count) {
+static inline Str_view str_view_chop_front_count(Str_view* str_view, size_t count) {
     if (str_view->count < count) {
         todo();
     }
@@ -65,24 +61,24 @@ static inline Str_view strv_chop_front_count(Str_view* str_view, size_t count) {
     return new_str_view;
 }
 
-static inline Str_view strv_chop_front(Str_view* str_view) {
-    return strv_chop_front_count(str_view, 1);
+static inline Str_view str_view_chop_front(Str_view* str_view) {
+    return str_view_chop_front_count(str_view, 1);
 }
 
 // return 0 when match
-static inline int Strv_cmp_cstr(Str_view str_view, const char* cstr) {
+static inline int str_view_cmp_cstr(Str_view str_view, const char* cstr) {
     return strncmp(str_view.str, cstr, str_view.count);
 }
 
-static inline Str_view Str_view_from_cstr(const char* cstr) {
+static inline Str_view str_view_from_cstr(const char* cstr) {
     Str_view str_view;
     str_view.str = cstr;
     str_view.count = strlen(cstr);
     return str_view;
 }
 
-#define STRV_FMT "%.*s"
+#define STR_VIEW_FMT "%.*s"
 
-#define Strv_print(str_view) (int)((str_view).count), (str_view).str
+#define str_view_print(str_view) (int)((str_view).count), (str_view).str
 
 #endif // STR_VIEW_H
