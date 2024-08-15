@@ -4,6 +4,13 @@
 #include "str_view.h"
 #include "util.h"
 
+static const char* NODE_LITERAL_DESCRIPTION = "literal";
+static const char* NODE_FUNCTION_CALL_DESCRIPTION = "fn_call";
+static const char* NODE_FUNCTION_DEFINITION_DESCRIPTION = "fn_def";
+static const char* NODE_FUNCTION_PARAMETERS_DESCRIPTION = "fn_params";
+static const char* NODE_FUNCTION_RETURN_TYPES_DESCRIPTION = "fn_return_types";
+static const char* NODE_FUNCTION_BODY_DESCRIPTION = "fn_body";
+
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_idx root, const char* file, int line) {
     static String padding = {0};
     string_set_to_zero_len(&padding);
@@ -30,13 +37,6 @@ void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_idx root, const cha
         nodes_log_tree_rec(log_level, pad_x + 2, nodes_at(root)->left, file, line);
     }
 }
-
-static const char* NODE_LITERAL_DESCRIPTION = "literal";
-static const char* NODE_FUNCTION_CALL_DESCRIPTION = "fn_call";
-static const char* NODE_FUNCTION_DEFINITION_DESCRIPTION = "fn_def";
-static const char* NODE_FUNCTION_PARAMETERS_DESCRIPTION = "fn_params";
-static const char* NODE_FUNCTION_RETURN_TYPES_DESCRIPTION = "fn_return_types";
-static const char* NODE_FUNCTION_BODY_DESCRIPTION = "fn_body";
 
 static Str_view node_type_get_strv(NODE_TYPE node_type) {
     switch (node_type) {
