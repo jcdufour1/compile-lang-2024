@@ -43,18 +43,27 @@ static inline Node_idx node_new() {
     nodes.count++;
 
     Node* new_node = nodes_at(idx_node_created);
-    new_node->parameters = NODE_IDX_NULL;
-    new_node->return_types = NODE_IDX_NULL;
-    new_node->body = NODE_IDX_NULL;
-    new_node->left = NODE_IDX_NULL;
-    new_node->right = NODE_IDX_NULL;
+    new_node->next = NODE_IDX_NULL;
+    new_node->prev = NODE_IDX_NULL;
+    new_node->left_child = NODE_IDX_NULL;
+    new_node->right_child = NODE_IDX_NULL;
 
     return idx_node_created;
+}
+
+static inline void nodes_set_right_child(Node_idx parent, Node_idx child) {
+    nodes_at(parent)->right_child = child;
+}
+
+static inline void nodes_set_next(Node_idx prev, Node_idx next) {
+    nodes_at(prev)->next = next;
+    nodes_at(next)->prev = prev;
 }
 
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_idx root, const char* file, int line);
 
 #define log_tree(log_level, root) \
     nodes_log_tree_rec(log_level, 0, root, __FILE__, __LINE__);
+
 
 #endif // NODES_H

@@ -117,7 +117,7 @@ static Node_idx parse_rec(PARSE_STATE state, const Token* tokens, size_t count) 
         }
         Node_idx body = node_new();
         nodes_at(body)->type = NODE_FUNCTION_BODY;
-        nodes_at(body)->right = parse_rec(PARSE_NORMAL, &tokens[1], count - 1);
+        nodes_set_right_child(body, parse_rec(PARSE_NORMAL, &tokens[1], count - 1));
         return body;
     }
 
@@ -137,7 +137,8 @@ static Node_idx parse_rec(PARSE_STATE state, const Token* tokens, size_t count) 
         } else {
             todo();
         }
-        nodes_at(function)->parameters = parse_rec(PARSE_FUN_PARAMS, &tokens[parameters_start], parameters_len);
+        Node_idx parameters = parse_rec(PARSE_FUN_PARAMS, &tokens[parameters_start], parameters_len);
+        nodes_set_right_child(function, parameters);
 
         size_t return_types_len;
         size_t return_types_start = parameters_start + parameters_len;
@@ -146,7 +147,8 @@ static Node_idx parse_rec(PARSE_STATE state, const Token* tokens, size_t count) 
         } else {
             todo();
         }
-        nodes_at(function)->return_types = parse_rec(PARSE_FUN_RETURN_TYPES, &tokens[return_types_start], return_types_len);
+        Node_idx return_types = parse_rec(PARSE_FUN_RETURN_TYPES, &tokens[return_types_start], return_types_len);
+        nodes_set_next(parameters, return_types);
 
         size_t body_len;
         size_t body_start = return_types_start + return_types_len;
@@ -157,7 +159,8 @@ static Node_idx parse_rec(PARSE_STATE state, const Token* tokens, size_t count) 
         if (!get_idx_matching_token(&body_len, &tokens[body_start], count - body_start, TOKEN_CLOSE_CURLY_BRACE)) {
             todo();
         }
-        nodes_at(function)->body = parse_rec(PARSE_FUN_BODY, &tokens[body_start], body_len);
+        Node_idx body = parse_rec(PARSE_FUN_BODY, &tokens[body_start], body_len);
+        nodes_set_next(return_types, body);
 
         return function;
     } 
@@ -174,7 +177,7 @@ static Node_idx parse_rec(PARSE_STATE state, const Token* tokens, size_t count) 
             todo();
         }
         parameters_end--; // exclude outer ()
-        nodes_at(function_call)->parameters = parse_rec(PARSE_FUN_ARGUMENTS, &tokens[parameters_start], parameters_start - parameters_end + 1);
+        nodes_set_right_child(function_call, parse_rec(PARSE_FUN_ARGUMENTS, &tokens[parameters_start], parameters_start - parameters_end + 1));
         return function_call;
     }
 

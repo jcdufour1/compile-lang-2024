@@ -21,8 +21,10 @@ typedef enum {
 typedef size_t Node_idx;
 
 typedef struct {
-    Node_idx left;
-    Node_idx right;
+    Node_idx next;
+    Node_idx prev;
+    Node_idx left_child;
+    Node_idx right_child;
 
     NODE_TYPE type;
 
@@ -30,9 +32,6 @@ typedef struct {
 
     Str_view name;
     Str_view lang_type;
-    Node_idx parameters;
-    Node_idx return_types;
-    Node_idx body;
 } Node;
 
 #define NODE_FMT STRING_FMT

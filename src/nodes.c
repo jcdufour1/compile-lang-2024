@@ -21,20 +21,14 @@ void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_idx root, const cha
 
     log_file(file, line, log_level, STRING_FMT NODE_FMT, string_print(padding), node_print(root, pad_x));
 
-    if (nodes_at(root)->parameters != NODE_IDX_NULL) {
-        nodes_log_tree_rec(log_level, pad_x + 2, nodes_at(root)->parameters, file, line);
+    if (nodes_at(root)->right_child != NODE_IDX_NULL) {
+        nodes_log_tree_rec(log_level, pad_x + 2, nodes_at(root)->right_child, file, line);
     }
-    if (nodes_at(root)->return_types != NODE_IDX_NULL) {
-        nodes_log_tree_rec(log_level, pad_x + 2, nodes_at(root)->return_types, file, line);
+    if (nodes_at(root)->left_child != NODE_IDX_NULL) {
+        todo();
     }
-    if (nodes_at(root)->body != NODE_IDX_NULL) {
-        nodes_log_tree_rec(log_level, pad_x + 2, nodes_at(root)->body, file, line);
-    }
-    if (nodes_at(root)->right != NODE_IDX_NULL) {
-        nodes_log_tree_rec(log_level, pad_x + 2, nodes_at(root)->right, file, line);
-    }
-    if (nodes_at(root)->left != NODE_IDX_NULL) {
-        nodes_log_tree_rec(log_level, pad_x + 2, nodes_at(root)->left, file, line);
+    if (nodes_at(root)->next != NODE_IDX_NULL) {
+        nodes_log_tree_rec(log_level, pad_x, nodes_at(root)->next, file, line);
     }
 }
 
