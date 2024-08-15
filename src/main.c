@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
 
     String file_text;
     if (!read_file(&file_text, &params.file_name)) {
-        log(LOG_FETAL, "could not open file "STRING_FMT": errno %d (%s)", string_print(params.file_name), errno, strerror(errno));
+        log(LOG_FETAL, "could not open file "STRING_FMT": errno %d (%s)\n", string_print(params.file_name), errno, strerror(errno));
         return 1;
     }
 

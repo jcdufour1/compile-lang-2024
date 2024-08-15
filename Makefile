@@ -15,7 +15,7 @@ setup:
 	mkdir -p build/debug/
 
 run: build
-	${BUILD_DIR}/main test.c
+	${BUILD_DIR}/main examples/test.c
 
 build: setup ${BUILD_DIR}/main
 
