@@ -40,6 +40,6 @@ typedef struct {
 
 String node_print_internal(Node_idx node, int pad_x);
 
-#define node_print(root, padx) string_print(node_print_internal((root), (pad_x)))
+#define node_print(root, pad_x_) string_print(node_print_internal((root), (pad_x_)))
 
 #endif // NODE_H

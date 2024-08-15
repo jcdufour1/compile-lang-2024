@@ -52,12 +52,22 @@ static inline Node_idx node_new() {
 }
 
 static inline void nodes_set_right_child(Node_idx parent, Node_idx child) {
+    assert(parent != NODE_IDX_NULL && child != NODE_IDX_NULL);
     nodes_at(parent)->right_child = child;
 }
 
-static inline void nodes_set_next(Node_idx prev, Node_idx next) {
-    nodes_at(prev)->next = next;
-    nodes_at(next)->prev = prev;
+static inline void nodes_set_next(Node_idx curr, Node_idx next) {
+    assert(curr != NODE_IDX_NULL && next != NODE_IDX_NULL);
+    nodes_at(curr)->next = next;
+    nodes_at(next)->prev = curr;
+}
+
+static inline Node_idx nodes_get_local_leftmost(Node_idx node) {
+    Node_idx result = node;
+    while (nodes_at(result)->prev != NODE_IDX_NULL) {
+        result = nodes_at(result)->prev;
+    }
+    return result;
 }
 
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_idx root, const char* file, int line);

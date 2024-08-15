@@ -10,6 +10,11 @@ static bool local_isalnum(char prev, char curr) {
     return isalnum(curr);
 }
 
+static bool local_isdigit(char prev, char curr) {
+    (void) prev;
+    return isdigit(curr);
+}
+
 static bool is_not_quote(char prev, char curr) {
     return curr != '"' || prev == '\\';
 }
@@ -32,6 +37,10 @@ static bool get_next_token(Token* token, Str_view* file_text) {
     if (isalpha(str_view_front(*file_text))) {
         token->text = str_view_chop_on_cond(file_text, local_isalnum);
         token->type = TOKEN_SYMBOL;
+        return true;
+    } else if (isdigit(str_view_front(*file_text))) {
+        token->text = str_view_chop_on_cond(file_text, local_isdigit);
+        token->type = TOKEN_NUM_LITERAL;
         return true;
     } else if (str_view_front(*file_text) == '(') {
         str_view_chop_front(file_text);
@@ -58,6 +67,10 @@ static bool get_next_token(Token* token, Str_view* file_text) {
     } else if (str_view_front(*file_text) == ';') {
         str_view_chop_front(file_text);
         token->type = TOKEN_SEMICOLON;
+        return true;
+    } else if (str_view_front(*file_text) == ',') {
+        str_view_chop_front(file_text);
+        token->type = TOKEN_COMMA;
         return true;
     } else {
         log(LOG_FETAL, "unknown symbol: %c (%x)\n", str_view_front(*file_text), str_view_front(*file_text));

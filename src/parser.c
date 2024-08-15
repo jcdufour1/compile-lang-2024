@@ -30,8 +30,8 @@ static bool get_idx_matching_token(size_t* idx_matching, const Token* tokens, si
 }
 
 // this function will not consider nested ()
-static bool get_idx_token(size_t* idx_matching, const Token* tokens, size_t count, TOKEN_TYPE type_to_match) {
-    for (size_t idx = 0; idx < count; idx++) {
+static bool get_idx_token(size_t* idx_matching, const Token* tokens, size_t start, size_t count, TOKEN_TYPE type_to_match) {
+    for (size_t idx = start; idx < count; idx++) {
         if (tokens[idx].type == type_to_match) {
             *idx_matching = idx;;
             return true;
@@ -78,24 +78,34 @@ static Node_idx parse_rec(PARSE_STATE state, const Token* tokens, size_t count) 
     }
 
     if (state == PARSE_FUN_ARGUMENTS) {
-        Node_idx argument = node_new();
         size_t idx_semicolon;
-        if (get_idx_token(&idx_semicolon, tokens, count, TOKEN_SEMICOLON)) {
+        if (get_idx_token(&idx_semicolon, tokens, 0, count, TOKEN_SEMICOLON)) {
             todo();
         }
-        if (get_idx_token(&idx_semicolon, tokens, count, TOKEN_COMMA)) {
-            todo();
+        Node_idx prev_node = NODE_IDX_NULL;
+        size_t start_curr_argument = 0; // inclusive
+        size_t end_curr_argument = 0; // inclusive
+        size_t idx_comma;
+        while (get_idx_token(&idx_comma, tokens, start_curr_argument, count, TOKEN_COMMA)) {
+            //log(LOG_TRACE, "token: "TOKEN_FMT"\n", token);
+            end_curr_argument = idx_comma - 1;
+            assert(end_curr_argument >= start_curr_argument);
+            size_t len_arg = end_curr_argument - start_curr_argument + 1;
+            Node_idx curr_node = parse_rec(PARSE_NORMAL, &tokens[start_curr_argument], len_arg);
+            if (prev_node != NODE_IDX_NULL) {
+                nodes_set_next(prev_node, curr_node);
+            }
+            start_curr_argument = idx_comma + 1;
+            prev_node = curr_node;
         }
-        switch (tokens[0].type) {
-            case TOKEN_STRING_LITERAL:
-                nodes_at(argument)->type = NODE_LITERAL;
-                nodes_at(argument)->name = tokens[0].text;
-                nodes_at(argument)->literal_type = TOKEN_STRING_LITERAL;
-                assert(count == 1);
-                return argument;
-            default:
-                todo();
+        end_curr_argument = count - 1;
+        size_t len_arg = end_curr_argument - start_curr_argument + 1;
+        Node_idx curr_node = parse_rec(PARSE_NORMAL, &tokens[start_curr_argument], len_arg);
+        if (prev_node != NODE_IDX_NULL) {
+            nodes_set_next(prev_node, curr_node);
         }
+        start_curr_argument = idx_comma + 1;
+        return nodes_get_local_leftmost(curr_node);
     }
 
     if (state == PARSE_FUN_RETURN_TYPES) {
@@ -177,8 +187,19 @@ static Node_idx parse_rec(PARSE_STATE state, const Token* tokens, size_t count) 
             todo();
         }
         parameters_end--; // exclude outer ()
-        nodes_set_right_child(function_call, parse_rec(PARSE_FUN_ARGUMENTS, &tokens[parameters_start], parameters_start - parameters_end + 1));
+        size_t count_to_pass_in = parameters_end - parameters_start + 1;
+        log(LOG_TRACE, "%zu %zu\n", parameters_start, parameters_end);
+        assert(count_to_pass_in < 1000);
+        nodes_set_right_child(function_call, parse_rec(PARSE_FUN_ARGUMENTS, &tokens[parameters_start], count_to_pass_in));
         return function_call;
+    }
+
+    if (count == 1 && Token_is_literal(tokens[0])) {
+        Node_idx new_node = node_new();
+        nodes_at(new_node)->type = NODE_LITERAL;
+        nodes_at(new_node)->name = tokens[0].text;
+        nodes_at(new_node)->literal_type = tokens[0].type;
+        return new_node;
     }
 
     if (count < 1) {
@@ -186,6 +207,7 @@ static Node_idx parse_rec(PARSE_STATE state, const Token* tokens, size_t count) 
     }
 
     log(LOG_TRACE, "parse_rec other: "TOKEN_FMT"\n", token_print(tokens[0]));
+    log(LOG_TRACE, "parse_rec other: %zu\n", count);
     log(LOG_TRACE, "cmp: %d\n", str_view_cmp_cstr(tokens[0].text, "fn"));
     unreachable();
 }
