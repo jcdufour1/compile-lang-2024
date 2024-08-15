@@ -11,8 +11,6 @@ static const char* NODE_FUNCTION_RETURN_TYPES_DESCRIPTION = "fn_return_types";
 static const char* NODE_FUNCTION_BODY_DESCRIPTION = "fn_body";
 
 static Str_view node_type_get_strv(NODE_TYPE node_type) {
-    Str_view buf = {0};
-
     switch (node_type) {
         case NODE_LITERAL:
             return str_view_from_cstr(NODE_LITERAL_DESCRIPTION);
