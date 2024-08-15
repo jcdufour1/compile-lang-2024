@@ -42,65 +42,74 @@ static inline bool Token_is_literal(const Token token) {
     }
 }
 
-static inline Str_view token_print_internal(Token token, bool type_only) {
-    static String text = {0};
+static inline Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
+    switch (token_type) {
+        case TOKEN_SYMBOL:
+            return str_view_from_cstr("sym");
+        case TOKEN_OPEN_PAR:
+            return str_view_from_cstr("(");
+        case TOKEN_CLOSE_PAR:
+            return str_view_from_cstr(")");
+        case TOKEN_OPEN_CURLY_BRACE:
+            return str_view_from_cstr("{");
+        case TOKEN_CLOSE_CURLY_BRACE:
+            return str_view_from_cstr("}");
+        case TOKEN_DOUBLE_QUOTE:
+            return str_view_from_cstr("\"");
+        case TOKEN_SEMICOLON:
+            return str_view_from_cstr(";");
+        case TOKEN_COMMA:
+            return str_view_from_cstr(",");
+        case TOKEN_STRING_LITERAL:
+            return str_view_from_cstr("str");
+        case TOKEN_NUM_LITERAL:
+            return str_view_from_cstr("num");
+        default:
+            unreachable();
+    }
+}
 
+static inline Str_view token_print_internal(Token token, bool type_only) {
+    static String buf = {0};
+    string_set_to_zero_len(&buf);
+
+    string_extend_strv(&buf, token_type_to_str_view(token.type));
+    if (type_only) {
+        Str_view str_view = {.str = buf.buf, .count = buf.count};
+        return str_view;
+    }
+
+    // add token text
     switch (token.type) {
         case TOKEN_SYMBOL:
-            string_cpy_cstr_inplace(&text, "sym");
-            if (!type_only) {
-                string_append(&text, '(');
-                string_append_strv(&text, token.text);
-                string_append(&text, ')');
-            }
+            string_append(&buf, '(');
+            string_append_strv(&buf, token.text);
+            string_append(&buf, ')');
             break;
-        case TOKEN_OPEN_PAR:
-            string_cpy_cstr_inplace(&text, "(");
-            break;
-        case TOKEN_CLOSE_PAR:
-            string_cpy_cstr_inplace(&text, ")");
-            break;
-        case TOKEN_OPEN_CURLY_BRACE:
-            string_cpy_cstr_inplace(&text, "{");
-            break;
-        case TOKEN_CLOSE_CURLY_BRACE:
-            string_cpy_cstr_inplace(&text, "}");
-            break;
-        case TOKEN_DOUBLE_QUOTE:
-            string_cpy_cstr_inplace(&text, "\"");
-            break;
-        case TOKEN_SEMICOLON:
-            string_cpy_cstr_inplace(&text, ";");
-            break;
+        case TOKEN_OPEN_PAR: // fallthrough
+        case TOKEN_CLOSE_PAR: // fallthrough
+        case TOKEN_OPEN_CURLY_BRACE: // fallthrough
+        case TOKEN_CLOSE_CURLY_BRACE: // fallthrough
+        case TOKEN_DOUBLE_QUOTE: // fallthrough
+        case TOKEN_SEMICOLON: // fallthrough
         case TOKEN_COMMA:
-            string_cpy_cstr_inplace(&text, ",");
             break;
-        case TOKEN_STRING_LITERAL:
-            string_cpy_cstr_inplace(&text, "str");
-            if (!type_only) {
-                string_append(&text, '(');
-                string_append_strv(&text, token.text);
-                string_append(&text, ')');
-            }
+        case TOKEN_STRING_LITERAL: 
+            string_append(&buf, '(');
+            string_append_strv(&buf, token.text);
+            string_append(&buf, ')');
             break;
         case TOKEN_NUM_LITERAL:
-            string_cpy_cstr_inplace(&text, "str");
-            if (!type_only) {
-                string_append(&text, '(');
-                string_append_strv(&text, token.text);
-                string_append(&text, ')');
-            }
+            string_append(&buf, '(');
+            string_append_strv(&buf, token.text);
+            string_append(&buf, ')');
             break;
         default:
             unreachable();
     }
 
-    Str_view str_view = {.str = text.buf, .count = text.count};
+    Str_view str_view = {.str = buf.buf, .count = buf.count};
     return str_view;
-}
-
-static inline Str_view token_print_type(Token token) {
-    return token_print_internal(token, true);
 }
 
 #define token_print(token) str_view_print(token_print_internal((token), false))

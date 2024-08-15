@@ -1,4 +1,4 @@
 
 fn main() void {
-    println("hello", "bye");
+    println("hello", 45);
 }
