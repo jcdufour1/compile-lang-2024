@@ -13,10 +13,6 @@ typedef struct {
     size_t capacity;
 } String;
 
-static void string_init(String* str) {
-    memset(str, 0, sizeof(*str));
-}
-
 #define STRING_FMT "%.*s"
 
 #define string_print(string) (int)((string).count), (string).buf
@@ -26,10 +22,10 @@ static inline void string_reserve(String* str, size_t minimum_count_empty_slots)
     while (str->count + minimum_count_empty_slots + 1 > str->capacity) {
         if (str->capacity < 1) {
             str->capacity = STRING_DEFAULT_CAPACITY;
-            str->buf = safe_malloc(str->capacity);
+            str->buf = safe_malloc(sizeof(str->buf[0])*str->capacity);
         } else {
             str->capacity *= 2;
-            str->buf = safe_realloc(str->buf, str->capacity);
+            str->buf = safe_realloc(str->buf, sizeof(str->buf[0])*str->capacity);
         }
     }
 }
@@ -47,8 +43,7 @@ static inline void string_append_strv(String* str, Str_view str_view) {
 }
 
 static inline String string_new_from_cstr(const char* cstr) {
-    String string;
-    string_init(&string);
+    String string = {0};
     for (int idx = 0; cstr[idx]; idx++) {
         string_append(&string, cstr[idx]);
     }

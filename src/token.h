@@ -22,10 +22,6 @@ typedef struct {
     TOKEN_TYPE type;
 } Token;
 
-static inline void token_init(Token* token) {
-    memset(token, 0, sizeof(*token));
-}
-
 static inline Str_view token_print_internal(Token token, bool type_only) {
     static String text = {0};
 

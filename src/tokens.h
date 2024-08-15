@@ -14,10 +14,6 @@ typedef struct {
     size_t capacity;
 } Tokens;
 
-static inline void tokens_init(Tokens* token) {
-    memset(token, 0, sizeof(*token));
-}
-
 static inline void tokens_reserve(Tokens* tokens, size_t minimum_count_empty_slots) {
     // tokens->capacity must be at least one greater than tokens->count for null termination
     while (tokens->count + minimum_count_empty_slots + 1 > tokens->capacity) {

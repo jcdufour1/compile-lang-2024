@@ -23,12 +23,12 @@ Parameters parse_args(int argc, char** argv) {
     return params; 
 }
 
-int read_file(String* file_text, const String* input_file_name) {
+bool read_file(String* file_text, const String* input_file_name) {
     assert(!input_file_name->buf[input_file_name->count]);
-    string_init(file_text);
+    memset(file_text, 0, sizeof(*file_text));
     FILE* file = fopen(input_file_name->buf, "rb");
     if (!file) {
-        return 0;
+        return false;
     }
 
     size_t buf_size = 2024;
@@ -40,7 +40,7 @@ int read_file(String* file_text, const String* input_file_name) {
         file_text->count += amount_read;
     } while (amount_read > 0);
 
-    return 1;
+    return true;
 }
 
 int main(int argc, char** argv) {

@@ -19,7 +19,7 @@ static bool get_next_token(Token* token, Str_view* file_text) {
         return false;
     }
 
-    token_init(token);
+    memset(token, 0, sizeof(*token));
 
     while (file_text->count > 0 && (isspace(str_view_front(*file_text)) || iscntrl(str_view_front(*file_text)))) {
         str_view_chop_front(file_text);
@@ -66,8 +66,7 @@ static bool get_next_token(Token* token, Str_view* file_text) {
 }
 
 Tokens tokenize(const String file_text) {
-    Tokens tokens;
-    tokens_init(&tokens);
+    Tokens tokens = {0};
 
     Str_view curr_file_text = {.str = file_text.buf, .count = file_text.count};
 
