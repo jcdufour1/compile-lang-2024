@@ -38,8 +38,8 @@ typedef struct {
 
 #define NODE_IDX_NULL SIZE_MAX
 
-String node_print_internal(Node_idx node, int pad_x);
+String node_print_internal(Node_idx node);
 
-#define node_print(root, pad_x_) string_print(node_print_internal((root), (pad_x_)))
+#define node_print(root) string_print(node_print_internal((root)))
 
 #endif // NODE_H

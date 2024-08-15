@@ -19,7 +19,7 @@ void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_idx root, const cha
         string_append(&padding, ' ');
     }
 
-    log_file(file, line, log_level, STRING_FMT NODE_FMT, string_print(padding), node_print(root, pad_x));
+    log_file(file, line, log_level, STRING_FMT NODE_FMT, string_print(padding), node_print(root));
 
     if (nodes_at(root)->right_child != NODE_IDX_NULL) {
         nodes_log_tree_rec(log_level, pad_x + 2, nodes_at(root)->right_child, file, line);
@@ -65,13 +65,9 @@ static void append_strv_in_gtlt(String* string, Str_view str_view) {
     append_strv_in_sym(string, str_view, '<', '>');
 }
 
-String node_print_internal(Node_idx node, int pad_x) {
+String node_print_internal(Node_idx node) {
     static String buf = {0};
     string_set_to_zero_len(&buf);
-
-    for (int idx = 0; idx < pad_x; idx++) {
-        string_append(&buf, ' ');
-    }
 
     string_extend_strv(&buf, node_type_get_strv(nodes_at(node)->type));
 
