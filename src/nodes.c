@@ -57,6 +57,12 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
     }
 }
 
+static void append_strv_in_par(String* string, Str_view str_view) {
+    string_append(string, '(');
+    string_extend_strv(string, str_view);
+    string_append(string, ')');
+}
+
 String node_print_internal(Node_idx node, int pad_x) {
     static String buf = {0};
     string_set_to_zero_len(&buf);
@@ -65,11 +71,30 @@ String node_print_internal(Node_idx node, int pad_x) {
         string_append(&buf, ' ');
     }
 
-    string_extend_strv(&buf, nodes_at(node)->name);
-
-    string_append(&buf, ':');
-
     string_extend_strv(&buf, node_type_get_strv(nodes_at(node)->type));
+
+
+    switch (nodes_at(node)->type) {
+        case NODE_FUNCTION_DEFINITION:
+            append_strv_in_par(&buf, nodes_at(node)->name);
+            break;
+        case NODE_FUNCTION_RETURN_TYPES:
+            append_strv_in_par(&buf, nodes_at(node)->lang_type);
+            break;
+        case NODE_FUNCTION_CALL:
+            append_strv_in_par(&buf, nodes_at(node)->name);
+            break;
+        case NODE_LITERAL:
+            append_strv_in_par(&buf, nodes_at(node)->name);
+            break;
+        case NODE_FUNCTION_PARAMETERS:
+            // fallthrough
+        case NODE_FUNCTION_BODY:
+            break;
+        default:
+            log(LOG_FETAL, "type: "STR_VIEW_FMT"\n", str_view_print(node_type_get_strv(nodes_at(node)->type)));
+            unreachable();
+    }
 
     string_append(&buf, '\n');
 
