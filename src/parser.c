@@ -29,6 +29,7 @@ static bool get_idx_matching_token(size_t* idx_matching, const Token* tokens, si
     return false;
 }
 
+// this function will not consider nested ()
 static bool get_idx_token(size_t* idx_matching, const Token* tokens, size_t count, TOKEN_TYPE type_to_match) {
     for (size_t idx = 0; idx < count; idx++) {
         if (tokens[idx].type == type_to_match) {
@@ -185,92 +186,6 @@ static Node* parse_rec(PARSE_STATE state, const Token* tokens, size_t count) {
     log(LOG_TRACE, "cmp: %d\n", Strv_cmp_cstr(tokens[0].text, "fn"));
     unreachable();
 }
-
-#define NODE_FMT STRING_FMT
-
-#define NODE_TYPE_FMT STRV_FMT
-
-static const char* NODE_LITERAL_DESCRIPTION = "literal";
-static const char* NODE_FUNCTION_CALL_DESCRIPTION = "fn_call";
-static const char* NODE_FUNCTION_DEFINITION_DESCRIPTION = "fn_def";
-static const char* NODE_FUNCTION_PARAMETERS_DESCRIPTION = "fn_params";
-static const char* NODE_FUNCTION_RETURN_TYPES_DESCRIPTION = "fn_return_types";
-static const char* NODE_FUNCTION_BODY_DESCRIPTION = "fn_body";
-
-static inline Str_view Node_type_get_strv(NODE_TYPE node_type) {
-    Str_view buf;
-    Str_view_init(&buf);
-
-    switch (node_type) {
-        case NODE_LITERAL:
-            return Str_view_from_cstr(NODE_LITERAL_DESCRIPTION);
-        case NODE_FUNCTION_CALL:
-            return Str_view_from_cstr(NODE_FUNCTION_CALL_DESCRIPTION);
-        case NODE_FUNCTION_DEFINITION:
-            return Str_view_from_cstr(NODE_FUNCTION_DEFINITION_DESCRIPTION);
-        case NODE_FUNCTION_PARAMETERS:
-            return Str_view_from_cstr(NODE_FUNCTION_PARAMETERS_DESCRIPTION);
-        case NODE_FUNCTION_RETURN_TYPES:
-            return Str_view_from_cstr(NODE_FUNCTION_RETURN_TYPES_DESCRIPTION);
-        case NODE_FUNCTION_BODY:
-            return Str_view_from_cstr(NODE_FUNCTION_BODY_DESCRIPTION);
-        default:
-            todo();
-    }
-}
-
-static inline String Node_print_internal(const Node* node, int pad_x) {
-    static String buf = {0};
-    String_set_to_zero_len(&buf);
-
-    for (int idx = 0; idx < pad_x; idx++) {
-        String_append(&buf, ' ');
-    }
-
-    String_extend_strv(&buf, node->name);
-
-    String_append(&buf, ':');
-
-    String_extend_strv(&buf, Node_type_get_strv(node->type));
-
-    String_append(&buf, '\n');
-
-    return buf;
-}
-
-#define Node_print(root, padx) String_print(Node_print_internal((root), (pad_x)))
-
-#define Node_info_print(root, padx) String_print(Node_print_internal((root), (pad_x)))
-
-static void log_tree_rec(LOG_LEVEL log_level, int pad_x, const Node* root, const char* file, int line) {
-    static String padding = {0};
-    String_set_to_zero_len(&padding);
-
-    for (int idx = 0; idx < pad_x; idx++) {
-        String_append(&padding, ' ');
-    }
-
-    log_file(file, line, log_level, STRING_FMT NODE_FMT, String_print(padding), Node_print(root, pad_x));
-
-    if (root->parameters) {
-        log_tree_rec(log_level, pad_x + 2, root->parameters, file, line);
-    }
-    if (root->return_types) {
-        log_tree_rec(log_level, pad_x + 2, root->return_types, file, line);
-    }
-    if (root->body) {
-        log_tree_rec(log_level, pad_x + 2, root->body, file, line);
-    }
-    if (root->right) {
-        log_tree_rec(log_level, pad_x + 2, root->right, file, line);
-    }
-    if (root->left) {
-        log_tree_rec(log_level, pad_x + 2, root->left, file, line);
-    }
-}
-
-#define log_tree(log_level, root) \
-    log_tree_rec(log_level, 0, root, __FILE__, __LINE__);
 
 void parse(const Tokens tokens) {
     Node* root = parse_rec(PARSE_NORMAL, &tokens.buf[0], tokens.count);

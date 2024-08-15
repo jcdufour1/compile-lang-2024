@@ -1,6 +1,7 @@
 #ifndef NODE_H
 #define NODE_H
 
+#include "newstring.h"
 #include "str_view.h"
 #include "token.h"
 
@@ -29,5 +30,11 @@ typedef struct _Node {
     struct _Node* return_types;
     struct _Node* body;
 } Node;
+
+#define NODE_FMT STRING_FMT
+
+String Node_print_internal(const Node* node, int pad_x);
+
+#define Node_print(root, padx) String_print(Node_print_internal((root), (pad_x)))
 
 #endif // NODE_H
