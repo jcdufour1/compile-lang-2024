@@ -61,7 +61,7 @@ typedef int LOG_LEVEL;
 
 #define unreachable() \
     do { \
-        log(LOG_FETAL, "%s:%d:error: unreachable\n", __FILE__, __LINE__); \
+        log(LOG_FETAL, "unreachable\n"); \
         abort(); \
     } while (0);
 
