@@ -36,6 +36,13 @@ static inline void string_append(String* str, char ch) {
     str->buf[str->count++] = ch;
 }
 
+// string->buf is always null terminated
+static inline void string_extend_cstr(String* str, const char* cstr) {
+    for (;*cstr; cstr++) {
+        string_append(str, *cstr);
+    }
+}
+
 static inline void string_append_strv(String* str, Str_view str_view) {
     for (size_t idx = 0; idx < str_view.count; idx++) {
         string_append(str, str_view.str[idx]);
