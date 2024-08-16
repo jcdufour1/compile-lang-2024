@@ -208,7 +208,6 @@ static Node_idx parse_rec(PARSE_STATE state, Tk_view tokens, int rec_depth) {
         nodes_set_next(parameters, return_types);
 
         log_tokens(LOG_TRACE, tokens, indent_amt);
-        size_t body_len;
         assert(tokens.tokens[tokens.count - 1].type == TOKEN_CLOSE_CURLY_BRACE);
         Tk_view body_tokens = {.tokens = tokens.tokens, .count = tokens.count - 1 /* exclude closing curly brace */};
         Node_idx body = parse_rec(PARSE_FUN_BODY, body_tokens, rec_depth + 1);
@@ -235,9 +234,9 @@ static Node_idx parse_rec(PARSE_STATE state, Tk_view tokens, int rec_depth) {
 
     log(LOG_TRACE, "token type: %d\n", tokens.tokens[0].type);
     log(LOG_TRACE, "token type: "TOKEN_TYPE_FMT"\n", token_type_print(tokens.tokens[0].type));
-    log(LOG_TRACE, "token_is_literal: %s\n", bool_print(Token_is_literal(tokens.tokens[0])));
+    log(LOG_TRACE, "token_is_literal: %s\n", bool_print(token_is_literal(tokens.tokens[0])));
     log(LOG_TRACE, "tokens.count: %zu\n", tokens.count);
-    if (tokens.count == 1 && Token_is_literal(tokens.tokens[0])) {
+    if (tokens.count == 1 && token_is_literal(tokens.tokens[0])) {
         Node_idx new_node = node_new();
         nodes_at(new_node)->type = NODE_LITERAL;
         nodes_at(new_node)->name = tokens.tokens[0].text;

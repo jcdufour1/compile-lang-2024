@@ -23,7 +23,7 @@ typedef struct {
     TOKEN_TYPE type;
 } Token;
 
-static inline bool Token_is_literal(const Token token) {
+static inline bool token_is_literal(const Token token) {
     switch (token.type) {
         case TOKEN_NUM_LITERAL: // fallthrough
         case TOKEN_STRING_LITERAL:
