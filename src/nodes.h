@@ -32,7 +32,14 @@ static inline void nodes_reserve(size_t minimum_count_empty_slots) {
 }
 
 static inline Node* nodes_at(Node_idx idx) {
-    assert(idx < nodes.count && "out of bounds");
+    if (idx >= nodes.count) {
+        if (idx == NODE_IDX_NULL) {
+            log(LOG_FETAL, "index is NODE_IDX_NULL\n");
+        } else {
+            log(LOG_FETAL,  "index %zu out of bounds", idx);
+        }
+        abort();
+    }
     return &nodes.buf[idx];
 }
 

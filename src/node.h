@@ -16,6 +16,7 @@ typedef enum {
     NODE_FUNCTION_CALL,
     NODE_FUNCTION_ARGUMENTS,
     NODE_LITERAL,
+    NODE_LANG_TYPE,
 } NODE_TYPE;
 
 typedef size_t Node_idx;

@@ -10,6 +10,7 @@ static const char* NODE_FUNCTION_DEFINITION_DESCRIPTION = "fn_def";
 static const char* NODE_FUNCTION_PARAMETERS_DESCRIPTION = "fn_params";
 static const char* NODE_FUNCTION_RETURN_TYPES_DESCRIPTION = "fn_return_types";
 static const char* NODE_FUNCTION_BODY_DESCRIPTION = "fn_body";
+static const char* NODE_LANG_TYPE_DESCRIPTION = "lang_type";
 
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_idx root, const char* file, int line) {
     static String padding = {0};
@@ -46,7 +47,10 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_FUNCTION_RETURN_TYPES_DESCRIPTION);
         case NODE_FUNCTION_BODY:
             return str_view_from_cstr(NODE_FUNCTION_BODY_DESCRIPTION);
+        case NODE_LANG_TYPE:
+            return str_view_from_cstr(NODE_LANG_TYPE_DESCRIPTION);
         default:
+            log(LOG_FETAL, "node_type: %d\n", node_type);
             todo();
     }
 }
@@ -75,9 +79,6 @@ String node_print_internal(Node_idx node) {
         case NODE_FUNCTION_DEFINITION:
             append_strv_in_par(&buf, nodes_at(node)->name);
             break;
-        case NODE_FUNCTION_RETURN_TYPES:
-            append_strv_in_par(&buf, nodes_at(node)->lang_type);
-            break;
         case NODE_FUNCTION_CALL:
             append_strv_in_par(&buf, nodes_at(node)->name);
             break;
@@ -85,9 +86,12 @@ String node_print_internal(Node_idx node) {
             append_strv_in_gtlt(&buf, token_type_to_str_view(nodes_at(node)->literal_type));
             append_strv_in_par(&buf, nodes_at(node)->name);
             break;
-        case NODE_FUNCTION_PARAMETERS:
-            // fallthrough
+        case NODE_LANG_TYPE:
+            append_strv_in_gtlt(&buf, nodes_at(node)->lang_type);
+            break;
+        case NODE_FUNCTION_PARAMETERS: // fallthrough
         case NODE_FUNCTION_BODY:
+        case NODE_FUNCTION_RETURN_TYPES:
             break;
         default:
             log(LOG_FETAL, "type: "STR_VIEW_FMT"\n", str_view_print(node_type_get_strv(nodes_at(node)->type)));

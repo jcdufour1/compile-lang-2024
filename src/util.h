@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define LOG_TRACE   0
 #define LOG_DEBUG   1
@@ -19,9 +20,21 @@
 
 typedef int LOG_LEVEL;
 
-#define log(log_level, ...) \
+#define PUSH_PRAGMA_IGNORE_WTYPE_LIMITS \
+    _Pragma("GCC diagnostic push") \
+    _Pragma("GCC diagnostic ignored \"-Wtype-limits\"") \
+
+#define POP_PRAGMA \
+    _Pragma("GCC diagnostic pop") \
+
+#define log_indent(log_level, indent, ...) \
     do { \
         if ((log_level) >= CURR_LOG_LEVEL) { \
+            PUSH_PRAGMA_IGNORE_WTYPE_LIMITS; \
+            for (size_t idx = 0; idx < indent; idx++) { \
+                fprintf(stderr, " "); \
+            } \
+            POP_PRAGMA; \
             switch ((log_level)) { \
                 case LOG_FETAL: \
                     /* fallthrough */ \
@@ -35,6 +48,9 @@ typedef int LOG_LEVEL;
             fprintf(stderr, __VA_ARGS__); \
         } \
     } while (0);
+
+#define log(log_level, ...) \
+    log_indent(log_level, 0, __VA_ARGS__);
 
 #define log_file(file, line, log_level, ...) \
     do { \
@@ -80,6 +96,15 @@ static void* safe_malloc(size_t capacity) {
     }
     memset(new_ptr, 0, capacity);
     return new_ptr;
+}
+
+#define BOOL_FMT "%s"
+
+static inline char* bool_print(bool condition) {
+    if (condition) {
+        return "true";
+    }
+    return "false";
 }
 
 #endif // UTIL_H

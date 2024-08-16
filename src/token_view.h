@@ -16,7 +16,25 @@ static inline Token tk_view_front(Tk_view token_view) {
     return tk_view_at(token_view, 0);
 }
 
-static inline Tk_view Tk_view_chop_on_type_delim(Tk_view* token_view, TOKEN_TYPE delim) {
+static inline Tk_view tk_view_chop_on_cond(
+    Tk_view* tk_view,
+    bool (*should_continue)(const Token* /* previous token */, const Token* /* current token */)
+) {
+    Tk_view new_tk_view;
+    for (size_t idx = 0; tk_view->count > idx; idx++) {
+        const Token* prev_token = idx > 0 ? (&tk_view->tokens[idx]) : (NULL);
+        if (!should_continue(prev_token, &tk_view->tokens[idx])) {
+            new_tk_view.tokens = tk_view->tokens;
+            new_tk_view.count = idx;
+            tk_view->tokens += idx;
+            tk_view->count -= idx;
+            return new_tk_view;
+        }
+    }
+    todo();
+}
+
+static inline Tk_view tk_view_chop_on_type_delim(Tk_view* token_view, TOKEN_TYPE delim) {
     Tk_view new_token_view;
     for (size_t idx = 0; token_view->count > idx; idx++) {
         if (token_view->tokens[idx].type == delim) {

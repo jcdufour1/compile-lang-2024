@@ -42,6 +42,10 @@ static inline bool Token_is_literal(const Token token) {
     }
 }
 
+#define TOKEN_TYPE_FMT STR_VIEW_FMT
+
+#define token_type_print(token_type) str_view_print(token_type_to_str_view(token_type))
+
 static inline Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
     switch (token_type) {
         case TOKEN_SYMBOL:
