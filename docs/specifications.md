@@ -156,3 +156,90 @@ fn void main() {
 }
 '''
 
+function returning an error (idea 3)
+'''c
+fn void main() {
+    File! file = open("hello.txt", FILE::READ);
+    if type(file) == err {
+        println("file could not be opened:", err_text(file));
+        return;
+    }
+    // file is now a normal file
+    ...
+}
+'''
+
+# constraints
+## array library
+'''c
+struct Array {
+    int* buf;
+    usize count;
+    usize capacity;
+}
+
+fn int array_at(Array* array, usize @{idx < array.count} idx) {
+    ...
+}
+'''
+
+## example 1
+'''c
+struct Array {
+    int* buf;
+    usize count;
+    usize capacity;
+}
+
+fn int array_at(Array* array, usize @{idx < array.count} idx) {
+    ...
+}
+
+fn void main() {
+    Array array = array_new();
+    array_push(array, 34);
+    array_push(array, 78);
+
+    // compiler gives error because idx is not < array.count
+    int num = array_at(array, 2);
+}
+'''
+
+## example 2
+'''c
+fn void main() {
+    Array array = array_get_with_random_count();
+
+    // compiler gives error because idx is not < array.count
+    int num = array_at(array, 2);
+}
+
+## example 3
+this compiles
+'''c
+fn void main() {
+    Array array = array_get_with_random_count();
+
+    if (array.len < 2) {
+        println("error: array has too few elements");
+        return;
+    }
+    int num = array_at(array, 2);
+}
+
+## example 4
+this compiles
+'''c
+fn void main() {
+    Array array = array_get_with_random_count();
+
+    if (array.len < 2) {
+        println("error: array has too few elements");
+        return;
+    }
+    int num = array_at(array, 2);
+}
+
+
+
+'''
