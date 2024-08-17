@@ -23,11 +23,11 @@ void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_idx root, const cha
 
     log_file(file, line, log_level, STRING_FMT NODE_FMT, string_print(padding), node_print(root));
 
-    if (nodes_at(root)->right_child != NODE_IDX_NULL) {
-        nodes_log_tree_rec(log_level, pad_x + 2, nodes_at(root)->right_child, file, line);
-    }
     if (nodes_at(root)->left_child != NODE_IDX_NULL) {
         nodes_log_tree_rec(log_level, pad_x + 2, nodes_at(root)->left_child, file, line);
+    }
+    if (nodes_at(root)->right_child != NODE_IDX_NULL) {
+        nodes_log_tree_rec(log_level, pad_x + 2, nodes_at(root)->right_child, file, line);
     }
     if (nodes_at(root)->next != NODE_IDX_NULL) {
         nodes_log_tree_rec(log_level, pad_x, nodes_at(root)->next, file, line);

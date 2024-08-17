@@ -11,6 +11,7 @@ typedef enum {
     // operators
     TOKEN_PLUS_SIGN,
     TOKEN_MINUS_SIGN,
+    TOKEN_MULTIPLY_SIGN,
 
     // literals
     TOKEN_STRING_LITERAL,
@@ -61,6 +62,7 @@ static inline bool token_is_operator(Token token) {
     switch (token.type) {
         case TOKEN_PLUS_SIGN: // fallthrough
         case TOKEN_MINUS_SIGN:
+        case TOKEN_MULTIPLY_SIGN:
             return true;
         case TOKEN_NUM_LITERAL: // fallthrough
         case TOKEN_STRING_LITERAL: // fallthrough
@@ -78,11 +80,14 @@ static inline bool token_is_operator(Token token) {
     }
 }
 
+// higher number returned from this function means that operator has higher precedence
 static inline uint32_t token_get_precedence_operator(Token token) {
     switch (token.type) {
         case TOKEN_PLUS_SIGN: // fallthrough
         case TOKEN_MINUS_SIGN:
             return 2;
+        case TOKEN_MULTIPLY_SIGN:
+            return 3;
         default:
             unreachable();
     }
@@ -114,6 +119,9 @@ static inline Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
             return str_view_from_cstr("+");
         case TOKEN_MINUS_SIGN:
             return str_view_from_cstr("-");
+        case TOKEN_MULTIPLY_SIGN:
+            // TODO: * may not always be multiplication
+            return str_view_from_cstr("*");
         case TOKEN_STRING_LITERAL:
             return str_view_from_cstr("str");
         case TOKEN_NUM_LITERAL:

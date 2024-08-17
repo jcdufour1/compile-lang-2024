@@ -81,6 +81,11 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text) 
         str_view_chop_front(file_text);
         token->type = TOKEN_MINUS_SIGN;
         return true;
+    } else if (str_view_front(*file_text) == '*') {
+        // TODO: * may not always be multiplication
+        str_view_chop_front(file_text);
+        token->type = TOKEN_MULTIPLY_SIGN;
+        return true;
     } else {
         log(LOG_FETAL, "unknown symbol: %c (%x)\n", str_view_front(*file_text), str_view_front(*file_text));
         todo();

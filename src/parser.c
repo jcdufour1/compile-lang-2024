@@ -78,9 +78,9 @@ static size_t count_operators(Tk_view tokens) {
     return count_op;
 }
 
-static size_t get_idx_highest_precedence_operator(Tk_view tokens) {
-    size_t idx_highest = SIZE_MAX;
-    uint32_t highest_pre = 0; // higher numbers have higher precedence
+static size_t get_idx_lowest_precedence_operator(Tk_view tokens) {
+    size_t idx_lowest = SIZE_MAX;
+    uint32_t lowest_pre = UINT32_MAX; // higher numbers have higher precedence
 
     for (size_t idx_ = tokens.count; idx_ > 0; idx_--) {
         size_t actual_idx = idx_ - 1;
@@ -90,16 +90,16 @@ static size_t get_idx_highest_precedence_operator(Tk_view tokens) {
         }
 
         uint32_t curr_precedence = token_get_precedence_operator(tk_view_at(tokens, actual_idx));
-        if (curr_precedence > highest_pre) {
-            highest_pre = curr_precedence;
-            idx_highest = actual_idx;
+        if (curr_precedence < lowest_pre) {
+            lowest_pre = curr_precedence;
+            idx_lowest = actual_idx;
         }
     }
 
-    if (idx_highest == SIZE_MAX) {
+    if (idx_lowest == SIZE_MAX) {
         unreachable();
     }
-    return idx_highest;
+    return idx_lowest;
 }
 
 static Node_idx parse_rec(PARSE_STATE state, Tk_view tokens, int rec_depth) {
@@ -155,7 +155,7 @@ static Node_idx parse_rec(PARSE_STATE state, Tk_view tokens, int rec_depth) {
         Node_idx return_types = node_new();
         nodes_at(return_types)->type = NODE_FUNCTION_RETURN_TYPES;
         Node_idx prev_node = NODE_IDX_NULL;
-        bool end_after_this;
+        bool end_after_this = false;
         while (1) {
             Tk_view lang_type_tokens;
             if (get_idx_token(NULL, tokens, 0, TOKEN_COMMA)) {
@@ -280,7 +280,7 @@ static Node_idx parse_rec(PARSE_STATE state, Tk_view tokens, int rec_depth) {
 
     if (count_operators(tokens) > 0) {
         log_tokens(LOG_TRACE, tokens, 0);
-        size_t idx_operator = get_idx_highest_precedence_operator(tokens);
+        size_t idx_operator = get_idx_lowest_precedence_operator(tokens);
         Tk_view left_tokens = tk_view_chop_count(&tokens, idx_operator);
         Tk_view operator_token = tk_view_chop_front(&tokens);
         Tk_view right_tokens = tokens;
