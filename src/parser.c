@@ -257,6 +257,7 @@ static Node_idx parse_rec(PARSE_STATE state, Tk_view tokens, int rec_depth) {
 void parse(const Tokens tokens) {
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.count};
     Node_idx root = parse_rec(PARSE_NORMAL, token_view, 0);
+    log(LOG_VERBOSE, "completed parse tree:\n");
     log_tree(LOG_VERBOSE, root);
     todo();
 }
