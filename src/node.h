@@ -26,7 +26,6 @@ typedef struct {
     Node_idx next;
     Node_idx prev;
     Node_idx left_child;
-    Node_idx right_child;
 
     NODE_TYPE type;
 

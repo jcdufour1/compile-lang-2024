@@ -53,14 +53,13 @@ static inline Node_idx node_new() {
     new_node->next = NODE_IDX_NULL;
     new_node->prev = NODE_IDX_NULL;
     new_node->left_child = NODE_IDX_NULL;
-    new_node->right_child = NODE_IDX_NULL;
 
     return idx_node_created;
 }
 
-static inline void nodes_set_right_child(Node_idx parent, Node_idx child) {
+static inline void nodes_set_left_child(Node_idx parent, Node_idx child) {
     assert(parent != NODE_IDX_NULL && child != NODE_IDX_NULL);
-    nodes_at(parent)->right_child = child;
+    nodes_at(parent)->left_child = child;
 }
 
 static inline void nodes_set_next(Node_idx curr, Node_idx next) {

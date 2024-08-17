@@ -178,7 +178,7 @@ static Node_idx parse_rec(PARSE_STATE state, Tk_view tokens, int rec_depth) {
 
             prev_node = curr_node;
             if (end_after_this) {
-                nodes_set_right_child(return_types, nodes_get_local_leftmost(curr_node));
+                nodes_set_left_child(return_types, nodes_get_local_leftmost(curr_node));
                 return return_types;
             }
         }
@@ -207,7 +207,7 @@ static Node_idx parse_rec(PARSE_STATE state, Tk_view tokens, int rec_depth) {
         assert(tokens.tokens[1].type == TOKEN_OPEN_PAR);
         size_t dummy;
         assert(tokens_start_with_function_call(&dummy, tokens));
-        nodes_set_right_child(body, parse_rec(PARSE_NORMAL, tokens, rec_depth + 1));
+        nodes_set_left_child(body, parse_rec(PARSE_NORMAL, tokens, rec_depth + 1));
         return body;
     }
 
@@ -231,7 +231,7 @@ static Node_idx parse_rec(PARSE_STATE state, Tk_view tokens, int rec_depth) {
         }
         Tk_view parameters_tokens = tk_view_chop_count(&tokens, parameters_len - 2); // exclude ()
         Node_idx parameters = parse_rec(PARSE_FUN_PARAMS, parameters_tokens, rec_depth + 1);
-        nodes_set_right_child(function, parameters);
+        nodes_set_left_child(function, parameters);
 
         if (tk_view_front(tokens).type != TOKEN_SYMBOL) {
             todo();
@@ -262,7 +262,7 @@ static Node_idx parse_rec(PARSE_STATE state, Tk_view tokens, int rec_depth) {
             todo();
         }
         Tk_view parameters_tokens = tk_view_chop_count(&tokens, parameters_end); // exclude outer ()
-        nodes_set_right_child(function_call, parse_rec(PARSE_FUN_ARGUMENTS, parameters_tokens, rec_depth + 1));
+        nodes_set_left_child(function_call, parse_rec(PARSE_FUN_ARGUMENTS, parameters_tokens, rec_depth + 1));
         return function_call;
     }
 
@@ -287,9 +287,11 @@ static Node_idx parse_rec(PARSE_STATE state, Tk_view tokens, int rec_depth) {
 
         Node_idx operator_node = node_new();
         nodes_at(operator_node)->type = NODE_OPERATOR;
-        nodes_at(operator_node)->left_child = parse_rec(PARSE_NORMAL, left_tokens, rec_depth + 1);
-        nodes_at(operator_node)->right_child = parse_rec(PARSE_NORMAL, right_tokens, rec_depth + 1);
         nodes_at(operator_node)->token_type = tk_view_front(operator_token).type;
+        Node_idx left_node = parse_rec(PARSE_NORMAL, left_tokens, rec_depth + 1);
+        Node_idx right_node = parse_rec(PARSE_NORMAL, right_tokens, rec_depth + 1);
+        nodes_set_left_child(operator_node, left_node);
+        nodes_set_next(left_node, right_node); 
         return operator_node;
     }
 
