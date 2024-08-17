@@ -4,6 +4,7 @@
 #include "nodes.h"
 #include "assert.h"
 #include "token_view.h"
+#include "parse_items.h"
 
 #define log_tokens(log_level, token_view, indent) \
     do { \
@@ -11,15 +12,6 @@
             log_indent(log_level, indent, " "TOKEN_FMT"\n", token_print(tokens.tokens[idx])); \
         } \
     } while(0);
-
-typedef enum {
-    PARSE_NORMAL,
-    PARSE_FUN_PARAMS,
-    PARSE_FUN_BODY,
-    PARSE_FUN_RETURN_TYPES,
-    PARSE_FUN_SINGLE_RETURN_TYPE,
-    PARSE_FUN_ARGUMENTS,
-} PARSE_STATE;
 
 // TODO: make this work when there are eg. nested (())
 static bool get_idx_matching_token(size_t* idx_matching, Tk_view tokens, TOKEN_TYPE type_to_match) {
@@ -305,9 +297,29 @@ static Node_idx parse_rec(PARSE_STATE state, Tk_view tokens, int rec_depth) {
     unreachable();
 }
 
+static void parse_parse_item(Parse_item item) {
+    todo();
+}
+
+Node_idx new_parse(PARSE_STATE state, Tk_view tokens, int rec_depth) {
+    parse_items_set_to_zero_len();
+
+    // push initial item
+    Parse_item parse_to_root = {.root_node = node_new(), .tokens = tokens, .parse_state = PARSE_NORMAL};
+    parse_items_append(parse_to_root);
+
+    while (parse_items.count > 0) {
+        Parse_item item = Parse_items_pop();
+        parse_parse_item(item);
+    }
+
+    todo();
+}
+
+
 void parse(const Tokens tokens) {
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.count};
-    Node_idx root = parse_rec(PARSE_NORMAL, token_view, 0);
+    Node_idx root = new_parse(PARSE_NORMAL, token_view, 0);
     log(LOG_VERBOSE, "completed parse tree:\n");
     log_tree(LOG_VERBOSE, root);
     todo();
