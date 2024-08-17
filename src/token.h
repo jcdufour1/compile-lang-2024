@@ -16,6 +16,7 @@ typedef enum {
     TOKEN_DOUBLE_QUOTE,
     TOKEN_SEMICOLON,
     TOKEN_COMMA,
+    TOKEN_PLUS_SIGN,
     TOKEN_STRING_LITERAL,
     TOKEN_NUM_LITERAL,
 } TOKEN_TYPE;
@@ -29,11 +30,32 @@ typedef struct {
 
 Str_view token_print_internal(Token token);
 
-static inline bool token_is_literal(const Token token) {
+static inline bool token_is_literal(Token token) {
     switch (token.type) {
         case TOKEN_NUM_LITERAL: // fallthrough
         case TOKEN_STRING_LITERAL:
             return true;
+        case TOKEN_CLOSE_PAR: // fallthrough
+        case TOKEN_OPEN_PAR: // fallthrough
+        case TOKEN_COMMA: // fallthrough
+        case TOKEN_PLUS_SIGN: // fallthrough
+        case TOKEN_DOUBLE_QUOTE: // fallthrough
+        case TOKEN_OPEN_CURLY_BRACE: // fallthrough
+        case TOKEN_CLOSE_CURLY_BRACE: // fallthrough
+        case TOKEN_SYMBOL: // fallthrough
+        case TOKEN_SEMICOLON:
+            return false;
+        default:
+            unreachable();
+    }
+}
+
+static inline bool token_is_operator(Token token) {
+    switch (token.type) {
+        case TOKEN_PLUS_SIGN:
+            return true;
+        case TOKEN_NUM_LITERAL: // fallthrough
+        case TOKEN_STRING_LITERAL: // fallthrough
         case TOKEN_CLOSE_PAR: // fallthrough
         case TOKEN_OPEN_PAR: // fallthrough
         case TOKEN_COMMA: // fallthrough
@@ -43,6 +65,15 @@ static inline bool token_is_literal(const Token token) {
         case TOKEN_SYMBOL: // fallthrough
         case TOKEN_SEMICOLON:
             return false;
+        default:
+            unreachable();
+    }
+}
+
+static inline uint32_t token_get_precedence_operator(Token token) {
+    switch (token.type) {
+        case TOKEN_PLUS_SIGN:
+            return 2;
         default:
             unreachable();
     }
@@ -70,6 +101,8 @@ static inline Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
             return str_view_from_cstr(";");
         case TOKEN_COMMA:
             return str_view_from_cstr(",");
+        case TOKEN_PLUS_SIGN:
+            return str_view_from_cstr("+");
         case TOKEN_STRING_LITERAL:
             return str_view_from_cstr("str");
         case TOKEN_NUM_LITERAL:

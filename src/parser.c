@@ -68,6 +68,38 @@ static bool tokens_start_with_function_call(size_t* idx_semicolon, Tk_view token
     return true;
 }
 
+static size_t count_operators(Tk_view tokens) {
+    size_t count_op = 0;
+    for (size_t idx = 0; idx < tokens.count; idx++) {
+        if (token_is_operator(tk_view_at(tokens, idx))) {
+            count_op++;
+        }
+    }
+    return count_op;
+}
+
+static size_t get_idx_highest_precedence_operator(Tk_view tokens) {
+    size_t idx_highest = SIZE_MAX;
+    uint32_t highest_pre = 0; // higher numbers have higher precedence
+
+    for (size_t idx = 0; idx < tokens.count; idx++) {
+        if (!token_is_operator(tk_view_at(tokens, idx))) {
+            continue;
+        }
+
+        uint32_t curr_precedence = token_get_precedence_operator(tk_view_at(tokens, idx));
+        if (curr_precedence > highest_pre) {
+            highest_pre = curr_precedence;
+            idx_highest = idx;
+        }
+    }
+
+    if (idx_highest == SIZE_MAX) {
+        unreachable();
+    }
+    return idx_highest;
+}
+
 static Node_idx parse_rec(PARSE_STATE state, Tk_view tokens, int rec_depth) {
     unsigned int indent_amt = 2*rec_depth;
     log_tokens(LOG_TRACE, tokens, indent_amt);
@@ -240,8 +272,23 @@ static Node_idx parse_rec(PARSE_STATE state, Tk_view tokens, int rec_depth) {
         Node_idx new_node = node_new();
         nodes_at(new_node)->type = NODE_LITERAL;
         nodes_at(new_node)->name = tokens.tokens[0].text;
-        nodes_at(new_node)->literal_type = tokens.tokens[0].type;
+        nodes_at(new_node)->token_type = tokens.tokens[0].type;
         return new_node;
+    }
+
+    if (count_operators(tokens) > 0) {
+        log_tokens(LOG_TRACE, tokens, 0);
+        size_t idx_operator = get_idx_highest_precedence_operator(tokens);
+        Tk_view left_tokens = tk_view_chop_count(&tokens, idx_operator);
+        Tk_view operator_token = tk_view_chop_front(&tokens);
+        Tk_view right_tokens = tokens;
+
+        Node_idx operator_node = node_new();
+        nodes_at(operator_node)->type = NODE_OPERATOR;
+        nodes_at(operator_node)->left_child = parse_rec(PARSE_NORMAL, left_tokens, rec_depth + 1);
+        nodes_at(operator_node)->right_child = parse_rec(PARSE_NORMAL, right_tokens, rec_depth + 1);
+        nodes_at(operator_node)->token_type = tk_view_front(operator_token).type;
+        return operator_node;
     }
 
     if (tokens.count < 1) {

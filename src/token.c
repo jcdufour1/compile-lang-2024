@@ -27,6 +27,7 @@ Str_view token_print_internal(Token token) {
         case TOKEN_DOUBLE_QUOTE: // fallthrough
         case TOKEN_SEMICOLON: // fallthrough
         case TOKEN_COMMA:
+        case TOKEN_PLUS_SIGN:
             break;
         case TOKEN_STRING_LITERAL: 
             string_append(&buf, '(');

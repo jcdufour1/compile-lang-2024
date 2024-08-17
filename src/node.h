@@ -17,6 +17,7 @@ typedef enum {
     NODE_FUNCTION_ARGUMENTS,
     NODE_LITERAL,
     NODE_LANG_TYPE,
+    NODE_OPERATOR,
 } NODE_TYPE;
 
 typedef size_t Node_idx;
@@ -29,7 +30,7 @@ typedef struct {
 
     NODE_TYPE type;
 
-    TOKEN_TYPE literal_type;
+    TOKEN_TYPE token_type;
 
     Str_view name;
     Str_view lang_type;

@@ -11,6 +11,7 @@ static const char* NODE_FUNCTION_PARAMETERS_DESCRIPTION = "fn_params";
 static const char* NODE_FUNCTION_RETURN_TYPES_DESCRIPTION = "fn_return_types";
 static const char* NODE_FUNCTION_BODY_DESCRIPTION = "fn_body";
 static const char* NODE_LANG_TYPE_DESCRIPTION = "lang_type";
+static const char* NODE_OPERATOR_DESCRIPTION = "operator";
 
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_idx root, const char* file, int line) {
     static String padding = {0};
@@ -26,7 +27,7 @@ void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_idx root, const cha
         nodes_log_tree_rec(log_level, pad_x + 2, nodes_at(root)->right_child, file, line);
     }
     if (nodes_at(root)->left_child != NODE_IDX_NULL) {
-        todo();
+        nodes_log_tree_rec(log_level, pad_x + 2, nodes_at(root)->left_child, file, line);
     }
     if (nodes_at(root)->next != NODE_IDX_NULL) {
         nodes_log_tree_rec(log_level, pad_x, nodes_at(root)->next, file, line);
@@ -49,6 +50,8 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_FUNCTION_BODY_DESCRIPTION);
         case NODE_LANG_TYPE:
             return str_view_from_cstr(NODE_LANG_TYPE_DESCRIPTION);
+        case NODE_OPERATOR:
+            return str_view_from_cstr(NODE_OPERATOR_DESCRIPTION);
         default:
             log(LOG_FETAL, "node_type: %d\n", node_type);
             todo();
@@ -83,11 +86,14 @@ String node_print_internal(Node_idx node) {
             append_strv_in_par(&buf, nodes_at(node)->name);
             break;
         case NODE_LITERAL:
-            append_strv_in_gtlt(&buf, token_type_to_str_view(nodes_at(node)->literal_type));
+            append_strv_in_gtlt(&buf, token_type_to_str_view(nodes_at(node)->token_type));
             append_strv_in_par(&buf, nodes_at(node)->name);
             break;
         case NODE_LANG_TYPE:
             append_strv_in_gtlt(&buf, nodes_at(node)->lang_type);
+            break;
+        case NODE_OPERATOR:
+            string_extend_strv(&buf, token_type_to_str_view(nodes_at(node)->token_type));
             break;
         case NODE_FUNCTION_PARAMETERS: // fallthrough
         case NODE_FUNCTION_BODY:
