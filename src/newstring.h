@@ -22,10 +22,10 @@ static inline void string_reserve(String* str, size_t minimum_count_empty_slots)
     while (str->count + minimum_count_empty_slots + 1 > str->capacity) {
         if (str->capacity < 1) {
             str->capacity = STRING_DEFAULT_CAPACITY;
-            str->buf = safe_malloc(sizeof(str->buf[0])*str->capacity);
+            str->buf = safe_malloc(str->capacity, sizeof(str->buf[0]));
         } else {
             str->capacity *= 2;
-            str->buf = safe_realloc(str->buf, sizeof(str->buf[0])*str->capacity);
+            str->buf = safe_realloc(str->buf, str->capacity, sizeof(str->buf[0]));
         }
     }
 }

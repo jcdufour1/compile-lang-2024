@@ -81,7 +81,8 @@ typedef int LOG_LEVEL;
         abort(); \
     } while (0);
 
-static void* safe_realloc(void* old_ptr, size_t new_capacity) {
+static void* safe_realloc(void* old_ptr, size_t new_count_items, size_t size_each_item) {
+    size_t new_capacity = new_count_items*size_each_item;
     void* new_ptr = realloc(old_ptr, new_capacity);
     if (!new_ptr) {
         todo();
@@ -89,7 +90,8 @@ static void* safe_realloc(void* old_ptr, size_t new_capacity) {
     return new_ptr;
 }
 
-static void* safe_malloc(size_t capacity) {
+static void* safe_malloc(size_t count_items, size_t size_each_item) {
+    size_t capacity = count_items*size_each_item;
     void* new_ptr = malloc(capacity);
     if (!new_ptr) {
         todo();

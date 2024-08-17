@@ -19,10 +19,10 @@ static inline void tokens_reserve(Tokens* tokens, size_t minimum_count_empty_slo
     while (tokens->count + minimum_count_empty_slots + 1 > tokens->capacity) {
         if (tokens->capacity < 1) {
             tokens->capacity = TOKENS_DEFAULT_CAPACITY;
-            tokens->buf = safe_malloc(tokens->capacity);
+            tokens->buf = safe_malloc(tokens->capacity, sizeof(tokens->buf[0]));
         } else {
             tokens->capacity *= 2;
-            tokens->buf = safe_realloc(tokens->buf, tokens->capacity);
+            tokens->buf = safe_realloc(tokens->buf, tokens->capacity, sizeof(tokens->buf[0]));
         }
     }
 }

@@ -23,10 +23,10 @@ static inline void nodes_reserve(size_t minimum_count_empty_slots) {
     while (nodes.count + minimum_count_empty_slots + 1 > nodes.capacity) {
         if (nodes.capacity < 1) {
             nodes.capacity = NODES_DEFAULT_CAPACITY;
-            nodes.buf = safe_malloc(sizeof(nodes.buf[0])*nodes.capacity);
+            nodes.buf = safe_malloc(nodes.capacity, sizeof(nodes.buf[0]));
         } else {
             nodes.capacity *= 2;
-            nodes.buf = safe_realloc(nodes.buf, sizeof(nodes.buf[0])*nodes.capacity);
+            nodes.buf = safe_realloc(nodes.buf, nodes.capacity, sizeof(nodes.buf[0]));
         }
     }
 }
