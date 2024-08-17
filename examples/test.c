@@ -1,4 +1,4 @@
 
 fn main() void, int {
-    println("hello", 45 + 67);
+    println("hello", 45 + 67 - 21);
 }

@@ -82,15 +82,17 @@ static size_t get_idx_highest_precedence_operator(Tk_view tokens) {
     size_t idx_highest = SIZE_MAX;
     uint32_t highest_pre = 0; // higher numbers have higher precedence
 
-    for (size_t idx = 0; idx < tokens.count; idx++) {
-        if (!token_is_operator(tk_view_at(tokens, idx))) {
+    for (size_t idx_ = tokens.count; idx_ > 0; idx_--) {
+        size_t actual_idx = idx_ - 1;
+
+        if (!token_is_operator(tk_view_at(tokens, actual_idx))) {
             continue;
         }
 
-        uint32_t curr_precedence = token_get_precedence_operator(tk_view_at(tokens, idx));
+        uint32_t curr_precedence = token_get_precedence_operator(tk_view_at(tokens, actual_idx));
         if (curr_precedence > highest_pre) {
             highest_pre = curr_precedence;
-            idx_highest = idx;
+            idx_highest = actual_idx;
         }
     }
 
