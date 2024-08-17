@@ -102,7 +102,7 @@ static void* safe_malloc(size_t count_items, size_t size_each_item) {
 
 #define BOOL_FMT "%s"
 
-static inline char* bool_print(bool condition) {
+static inline const char* bool_print(bool condition) {
     if (condition) {
         return "true";
     }

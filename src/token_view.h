@@ -51,6 +51,9 @@ static inline Tk_view tk_view_chop_on_type_delim(Tk_view* token_view, TOKEN_TYPE
 }
 
 static inline Tk_view tk_view_chop_count(Tk_view* token_view, size_t count) {
+    if (token_view->count < count) {
+        unreachable();
+    }
     Tk_view new = {token_view->tokens, count};
     token_view->tokens += count;
     token_view->count -= count;

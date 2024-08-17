@@ -95,6 +95,7 @@ static size_t get_idx_lowest_precedence_operator(Tk_view tokens) {
 }
 
 static Node_idx parse_later(PARSE_STATE parse_state, Tk_view tokens) {
+    assert(tokens.count > 0);
     // create a node that will later be parsed fully (but node next, prev, and left_child may be set eariler), return idx of that node
     Node_idx new_node = node_new();
     Parse_item new_item = {.parse_state = parse_state, .tokens = tokens, .root_node = new_node};
@@ -110,38 +111,7 @@ static void parse_function_parameters(Parse_item item) {
     if (item.tokens.count > 0) {
         todo();
     }
-    Node_idx parameters = node_new();
-    nodes_at(parameters)->type = NODE_FUNCTION_PARAMETERS;
-}
-
-static void parse_function_arguments(Parse_item item) {
-    size_t idx_semicolon;
-    if (get_idx_token(&idx_semicolon, item.tokens, 0, TOKEN_SEMICOLON)) {
-        todo();
-    }
-    bool end_after_this = false;
-    Node_idx prev_node = NODE_IDX_NULL;
-    while (1) {
-        Tk_view curr_arg_tokens;
-        if (get_idx_token(NULL, item.tokens, 0, TOKEN_COMMA)) {
-            curr_arg_tokens = tk_view_chop_on_type_delim(&item.tokens, TOKEN_COMMA);
-            tk_view_chop_front(&item.tokens); // trim comma off tokens
-        } else {
-            curr_arg_tokens = item.tokens;
-            end_after_this = true;
-        }
-
-        Node_idx curr_node = parse_later(PARSE_NORMAL, curr_arg_tokens);
-        if (prev_node != NODE_IDX_NULL) {
-            nodes_set_next(prev_node, curr_node);
-        }
-
-        prev_node = curr_node;
-        if (end_after_this) {
-            //return nodes_get_local_leftmost(curr_node);
-            return;
-        }
-    }
+    nodes_at(item.root_node)->type = NODE_FUNCTION_PARAMETERS;
 }
 
 static void parse_function_return_types(Parse_item item) {
@@ -189,7 +159,7 @@ static void parse_function_single_return_type(Parse_item item) {
         unreachable();
     }
     assert(item.tokens.tokens[0].type == TOKEN_SYMBOL);
-    Node_idx return_type = node_new();
+    Node_idx return_type = item.root_node;
     nodes_at(return_type)->type = NODE_LANG_TYPE;
     nodes_at(return_type)->lang_type = item.tokens.tokens[0].text;
     //return return_type;
@@ -200,20 +170,21 @@ static void parse_function_body(Parse_item item) {
     if (item.tokens.count < 2) {
         unreachable();
     }
-    Node_idx body = node_new();
+    Node_idx body = item.root_node;
     nodes_at(body)->type = NODE_FUNCTION_BODY;
     assert(item.tokens.tokens[0].type == TOKEN_SYMBOL);
     assert(item.tokens.tokens[1].type == TOKEN_OPEN_PAR);
     size_t dummy;
     assert(tokens_start_with_function_call(&dummy, item.tokens));
-    nodes_set_left_child(body, parse_later(PARSE_NORMAL, item.tokens));
+    Tk_view body_tokens = item.tokens;
+    nodes_set_left_child(body, parse_later(PARSE_NORMAL, body_tokens));
     //return body;
     return;
 }
 
 static void parse_function_definition(Parse_item item) {
     tk_view_chop_front(&item.tokens);
-    Node_idx function = node_new();
+    Node_idx function = item.root_node;
     nodes_at(function)->type = NODE_FUNCTION_DEFINITION;
     if (tk_view_front(item.tokens).type == TOKEN_SYMBOL) {
         nodes_at(function)->name = tk_view_chop_front(&item.tokens).tokens[0].text;
@@ -242,17 +213,19 @@ static void parse_function_definition(Parse_item item) {
     nodes_set_next(parameters, return_types);
 
     log_tokens(LOG_TRACE, item.tokens, 0);
-    assert(item.tokens.tokens[item.tokens.count - 1].type == TOKEN_CLOSE_CURLY_BRACE);
-    Tk_view body_tokens = {.tokens = item.tokens.tokens, .count = item.tokens.count - 1 /* exclude closing curly brace */};
+    Tk_view body_tokens = tk_view_chop_on_type_delim(&item.tokens, TOKEN_CLOSE_CURLY_BRACE);
+    tk_view_chop_front(&item.tokens); // remove closing brace
     Node_idx body = parse_later(PARSE_FUN_BODY, body_tokens);
     nodes_set_next(return_types, body);
-
+    if (item.tokens.count > 0) {
+        todo();
+    }
     //return function;
     return;
 }
 
 static void parse_literal(Parse_item item) {
-    Node_idx new_node = node_new();
+    Node_idx new_node = item.root_node;
     nodes_at(new_node)->type = NODE_LITERAL;
     nodes_at(new_node)->name = item.tokens.tokens[0].text;
     nodes_at(new_node)->token_type = item.tokens.tokens[0].type;
@@ -267,7 +240,7 @@ static void parse_operation(Parse_item item) {
     Tk_view operator_token = tk_view_chop_front(&item.tokens);
     Tk_view right_tokens = item.tokens;
 
-    Node_idx operator_node = node_new();
+    Node_idx operator_node = item.root_node;
     nodes_at(operator_node)->type = NODE_OPERATOR;
     nodes_at(operator_node)->token_type = tk_view_front(operator_token).type;
     Node_idx left_node = parse_later(PARSE_NORMAL, left_tokens);
@@ -278,20 +251,46 @@ static void parse_operation(Parse_item item) {
     return;
 }
 
+// returns true if the parse was successful
+static bool extract_function_argument(Node_idx* child, Tk_view* tokens) {
+    if (tokens->count < 1) {
+        return false;
+    }
+
+    size_t idx_delim;
+    Tk_view curr_arg_tokens;
+    if (!get_idx_token(&idx_delim, *tokens, 0, TOKEN_COMMA)) {
+        idx_delim = tokens->count - 1;
+    }
+    curr_arg_tokens = tk_view_chop_count(tokens, idx_delim);
+    assert(curr_arg_tokens.count > 0);
+    tk_view_chop_front(tokens); // remove comma or closing parenthesis
+
+    *child = parse_later(PARSE_NORMAL, curr_arg_tokens);
+    return true;
+}
+
 static void parse_function_call(Parse_item item) {
-    Node_idx function_call = node_new();
+    log_tokens(LOG_TRACE, item.tokens, 0);
+    Node_idx function_call = item.root_node;
     nodes_at(function_call)->type = NODE_FUNCTION_CALL;
     nodes_at(function_call)->name = item.tokens.tokens[0].text;
-    log_tokens(LOG_TRACE, item.tokens, 0);
     tk_view_chop_count(&item.tokens, 2); // exclude outer ()
+
     size_t parameters_end;
     if (!get_idx_matching_token(&parameters_end, item.tokens, TOKEN_CLOSE_PAR)) {
         todo();
     }
-    Tk_view parameters_tokens = tk_view_chop_count(&item.tokens, parameters_end); // exclude outer ()
-    nodes_set_left_child(function_call, parse_later(PARSE_FUN_ARGUMENTS, parameters_tokens));
-    //return function_call;
-    return;
+    Tk_view arguments_tokens = tk_view_chop_count(&item.tokens, parameters_end);
+    tk_view_chop_front(&item.tokens); // remove closing )
+    tk_view_chop_front(&item.tokens); // remove ;
+
+    Node_idx child;
+    while (extract_function_argument(&child, &arguments_tokens)) {
+        nodes_append_child(item.root_node, child);
+    }
+    log_tokens(LOG_TRACE, item.tokens, 0);
+    assert(item.tokens.count == 0);
 }
 
 static void parse_parse_item(Parse_item item) {
@@ -304,9 +303,6 @@ static void parse_parse_item(Parse_item item) {
         case PARSE_FUN_PARAMS:
             parse_function_parameters(item);
             return;
-        case PARSE_FUN_ARGUMENTS:
-            parse_function_arguments(item);
-            return;
         case PARSE_FUN_RETURN_TYPES:
             parse_function_return_types(item);
             return;
@@ -315,6 +311,9 @@ static void parse_parse_item(Parse_item item) {
             return;
         case PARSE_FUN_BODY:
             parse_function_body(item);
+            return;
+        case PARSE_FUN_SINGLE_ARGUMENT:
+            todo();
             return;
         default:
             unreachable();
@@ -351,7 +350,7 @@ static void parse_parse_item(Parse_item item) {
     unreachable();
 }
 
-Node_idx new_parse(Tk_view tokens) {
+static Node_idx new_parse(Tk_view tokens) {
     parse_items_set_to_zero_len();
 
     // push initial item

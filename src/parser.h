@@ -11,6 +11,7 @@ typedef enum {
     PARSE_FUN_RETURN_TYPES,
     PARSE_FUN_SINGLE_RETURN_TYPE,
     PARSE_FUN_ARGUMENTS,
+    PARSE_FUN_SINGLE_ARGUMENT,
 } PARSE_STATE;
 
 void parse(const Tokens tokens);

@@ -68,6 +68,19 @@ static inline void nodes_set_next(Node_idx curr, Node_idx next) {
     nodes_at(next)->prev = curr;
 }
 
+static inline void nodes_append_child(Node_idx parent, Node_idx child) {
+    if (nodes_at(parent)->left_child == NODE_IDX_NULL) {
+        nodes_at(parent)->left_child = child;
+        return;
+    }
+
+    Node_idx curr_node = nodes_at(parent)->left_child;
+    while (nodes_at(curr_node)->next != NODE_IDX_NULL) {
+        curr_node = nodes_at(curr_node)->next;
+    }
+    nodes_set_next(curr_node, child);
+}
+
 static inline Node_idx nodes_get_local_leftmost(Node_idx node) {
     Node_idx result = node;
     while (nodes_at(result)->prev != NODE_IDX_NULL) {
