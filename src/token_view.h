@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include "token.h"
+#include "assert.h"
 
 typedef struct {
     const Token* tokens;
@@ -10,6 +11,7 @@ typedef struct {
 } Tk_view;
 
 static inline Token tk_view_at(Tk_view token_view, size_t idx) {
+    assert(token_view.count > idx);
     return token_view.tokens[idx];
 }
 static inline Token tk_view_front(Tk_view token_view) {
@@ -63,5 +65,22 @@ static inline Tk_view tk_view_chop_count(Tk_view* token_view, size_t count) {
 static inline Tk_view tk_view_chop_front(Tk_view* token_view) {
     return tk_view_chop_count(token_view, 1);
 }
+
+static inline Str_view token_view_print_internal(Tk_view token_view) {
+    static String buf = {0};
+    string_set_to_zero_len(&buf);
+
+    for (size_t idx = 0; idx < token_view.count; idx++) {
+        string_extend_strv(&buf, token_print_internal(token_view.tokens[idx]));
+        string_extend_cstr(&buf, ";    ");
+    }
+
+    Str_view str_view = {.str = buf.buf, .count = buf.count};
+    return str_view;
+}
+
+#define TOKEN_VIEW_FMT STR_VIEW_FMT
+
+#define token_view_print(token_view__dfjasdjf) str_view_print(token_view_print_internal(token_view__dfjasdjf))
 
 #endif // TOKEN_VIEW_H

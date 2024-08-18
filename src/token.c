@@ -1,17 +1,12 @@
 #include "token.h"
-
-static void add_line_num_to_string(String* string, int line_num) {
-    const char* fmt_str =  " (line %d)";
-    static char num_str[20];
-    sprintf(num_str, fmt_str, line_num);
-    string_extend_cstr(string, num_str);
-}
+#include "assert.h"
 
 Str_view token_print_internal(Token token) {
     static String buf = {0};
     string_set_to_zero_len(&buf);
 
     string_extend_strv(&buf, token_type_to_str_view(token.type));
+    assert(strlen(buf.buf) == buf.count);
 
     // add token text
     switch (token.type) {
@@ -45,8 +40,10 @@ Str_view token_print_internal(Token token) {
             unreachable();
     }
 
-    add_line_num_to_string(&buf, token.line_num);
+    assert(strlen(buf.buf) == buf.count);
+    string_add_int(&buf, token.line_num);
 
+    assert(strlen(buf.buf) == buf.count);
     Str_view str_view = {.str = buf.buf, .count = buf.count};
     return str_view;
 }

@@ -12,6 +12,7 @@ static const char* NODE_FUNCTION_RETURN_TYPES_DESCRIPTION = "fn_return_types";
 static const char* NODE_FUNCTION_BODY_DESCRIPTION = "fn_body";
 static const char* NODE_LANG_TYPE_DESCRIPTION = "lang_type";
 static const char* NODE_OPERATOR_DESCRIPTION = "operator";
+static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_idx root, const char* file, int line) {
     static String padding = {0};
@@ -21,7 +22,7 @@ void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_idx root, const cha
         string_append(&padding, ' ');
     }
 
-    log_file(file, line, log_level, STRING_FMT NODE_FMT, string_print(padding), node_print(root));
+    log_file(file, line, log_level, STRING_FMT NODE_FMT"\n", string_print(padding), node_print(root));
 
     if (nodes_at(root)->left_child != NODE_IDX_NULL) {
         nodes_log_tree_rec(log_level, pad_x + 2, nodes_at(root)->left_child, file, line);
@@ -49,6 +50,8 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_LANG_TYPE_DESCRIPTION);
         case NODE_OPERATOR:
             return str_view_from_cstr(NODE_OPERATOR_DESCRIPTION);
+        case NODE_NO_TYPE:
+            return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
         default:
             log(LOG_FETAL, "node_type: %d\n", node_type);
             todo();
@@ -95,13 +98,12 @@ String node_print_internal(Node_idx node) {
         case NODE_FUNCTION_PARAMETERS: // fallthrough
         case NODE_FUNCTION_BODY:
         case NODE_FUNCTION_RETURN_TYPES:
+        case NODE_NO_TYPE:
             break;
         default:
             log(LOG_FETAL, "type: "STR_VIEW_FMT"\n", str_view_print(node_type_get_strv(nodes_at(node)->type)));
             unreachable();
     }
-
-    string_append(&buf, '\n');
 
     return buf;
 }

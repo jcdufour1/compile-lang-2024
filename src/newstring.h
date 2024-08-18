@@ -82,10 +82,23 @@ static inline void string_cpy_cstr_inplace(String* string, const char* cstr) {
     }
 }
 
+static inline void string_extend_string(String* dest, const String src) {
+    for (size_t idx = 0; idx < src.count; idx++) {
+        string_append(dest, src.buf[idx]);
+    }
+}
+
 static inline void string_extend_strv(String* string, Str_view str_view) {
     for (size_t idx = 0; idx < str_view.count; idx++) {
         string_append(string, str_view.str[idx]);
     }
+}
+
+static inline void string_add_int(String* string, int num) {
+    const char* fmt_str =  " (line %d)";
+    static char num_str[20];
+    sprintf(num_str, fmt_str, num);
+    string_extend_cstr(string, num_str);
 }
 
 #endif // NEWSTRING_H
