@@ -1,3 +1,5 @@
+.PHONY: all setup build valgrind gdb
+
 C_FLAGS=-Wall -Wextra -std=c11 -pedantic -g
 
 BUILD_DIR=build/debug/
@@ -9,6 +11,8 @@ OBJS=\
 	 ${BUILD_DIR}/token.o \
 	 ${BUILD_DIR}/nodes.o
 
+ARGS_PROGRAM=compile examples/test.c --emit-llvm
+
 all: build
 
 setup:
@@ -16,7 +20,13 @@ setup:
 	mkdir -p build/debug/
 
 run: build
-	${BUILD_DIR}/main examples/test.c
+	${BUILD_DIR}/main ${ARGS_PROGRAM}
+
+valgrind: build
+	valgrind ${BUILD_DIR}/main ${ARGS_PROGRAM}
+
+gdb: build
+	gdb --args ${BUILD_DIR}/main ${ARGS_PROGRAM}
 
 build: setup ${BUILD_DIR}/main
 
