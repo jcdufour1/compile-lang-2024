@@ -192,7 +192,7 @@ static Node_id parse_function_definition(Tk_view tokens) {
     }
     Tk_view parameters_tokens = tk_view_chop_count(&tokens, parameters_len - 2); // exclude ()
     Node_id parameters = parse_function_parameters(parameters_tokens);
-    nodes_set_left_child(function, parameters);
+    nodes_append_child(function, parameters);
 
     if (tk_view_front(tokens).type != TOKEN_SYMBOL) {
         todo();
@@ -200,13 +200,13 @@ static Node_id parse_function_definition(Tk_view tokens) {
     Tk_view return_type_tokens = tk_view_chop_on_type_delim(&tokens, TOKEN_OPEN_CURLY_BRACE);
     tk_view_chop_front(&tokens); // remove open curly brace
     Node_id return_types = parse_function_return_types(return_type_tokens);
-    nodes_set_next(parameters, return_types);
+    nodes_append_child(function, return_types);
 
     log_tokens(LOG_TRACE, tokens, 0);
     Tk_view body_tokens = tk_view_chop_on_type_delim(&tokens, TOKEN_CLOSE_CURLY_BRACE);
     tk_view_chop_front(&tokens); // remove closing brace
     Node_id body = parse_function_body(body_tokens);
-    nodes_set_next(return_types, body);
+    nodes_append_child(function, body);
     if (tokens.count > 0) {
         todo();
     }
