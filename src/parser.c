@@ -5,7 +5,8 @@
 #include "assert.h"
 #include "token_view.h"
 
-static Node_id parse_rec(PARSE_STATE parse_state, Tk_view tokens);
+static Node_id parse_rec(Tk_view tokens);
+static Node_id parse_function_single_return_type(Tk_view tokens);
 
 #define log_tokens(log_level, token_view, indent) \
     do { \
@@ -130,7 +131,7 @@ static Node_id parse_function_return_types(Tk_view tokens) {
             end_after_this = true;
         }
 
-        Node_id curr_node = parse_rec(PARSE_FUN_SINGLE_RETURN_TYPE, lang_type_tokens);
+        Node_id curr_node = parse_function_single_return_type(lang_type_tokens);
         if (prev_node != NODE_IDX_NULL) {
             nodes_set_next(prev_node, curr_node);
         }
@@ -167,7 +168,7 @@ static Node_id parse_function_body(Tk_view tokens) {
     size_t dummy;
     assert(tokens_start_with_function_call(&dummy, tokens));
     Tk_view body_tokens = tokens;
-    nodes_set_left_child(body, parse_rec(PARSE_NORMAL, body_tokens));
+    nodes_set_left_child(body, parse_rec(body_tokens));
     return body;
 }
 
@@ -190,7 +191,7 @@ static Node_id parse_function_definition(Tk_view tokens) {
         todo();
     }
     Tk_view parameters_tokens = tk_view_chop_count(&tokens, parameters_len - 2); // exclude ()
-    Node_id parameters = parse_rec(PARSE_FUN_PARAMS, parameters_tokens);
+    Node_id parameters = parse_function_parameters(parameters_tokens);
     nodes_set_left_child(function, parameters);
 
     if (tk_view_front(tokens).type != TOKEN_SYMBOL) {
@@ -198,13 +199,13 @@ static Node_id parse_function_definition(Tk_view tokens) {
     }
     Tk_view return_type_tokens = tk_view_chop_on_type_delim(&tokens, TOKEN_OPEN_CURLY_BRACE);
     tk_view_chop_front(&tokens); // remove open curly brace
-    Node_id return_types = parse_rec(PARSE_FUN_RETURN_TYPES, return_type_tokens);
+    Node_id return_types = parse_function_return_types(return_type_tokens);
     nodes_set_next(parameters, return_types);
 
     log_tokens(LOG_TRACE, tokens, 0);
     Tk_view body_tokens = tk_view_chop_on_type_delim(&tokens, TOKEN_CLOSE_CURLY_BRACE);
     tk_view_chop_front(&tokens); // remove closing brace
-    Node_id body = parse_rec(PARSE_FUN_BODY, body_tokens);
+    Node_id body = parse_function_body(body_tokens);
     nodes_set_next(return_types, body);
     if (tokens.count > 0) {
         todo();
@@ -236,8 +237,8 @@ static Node_id parse_operation(Tk_view tokens) {
     nodes_at(operator_node)->type = NODE_OPERATOR;
     nodes_at(operator_node)->token_type = tk_view_front(operator_token).type;
 
-    Node_id left_node = parse_rec(PARSE_NORMAL, left_tokens);
-    Node_id right_node = parse_rec(PARSE_NORMAL, right_tokens);
+    Node_id left_node = parse_rec(left_tokens);
+    Node_id right_node = parse_rec(right_tokens);
     nodes_append_child(operator_node, left_node);
     nodes_append_child(operator_node, right_node);
     return operator_node;
@@ -264,7 +265,7 @@ static bool extract_function_argument(Node_id* child, Tk_view* tokens) {
         tk_view_chop_front(tokens); // remove comma
     }
 
-    *child = parse_rec(PARSE_NORMAL, curr_arg_tokens);
+    *child = parse_rec(curr_arg_tokens);
     return true;
 }
 
@@ -291,26 +292,9 @@ static Node_id parse_function_call(Tk_view tokens) {
     return function_call;
 }
 
-static Node_id parse_rec(PARSE_STATE parse_state, Tk_view tokens) {
+static Node_id parse_rec(Tk_view tokens) {
     unsigned int indent_amt = 0;
     log_tokens(LOG_TRACE, tokens, indent_amt);
-
-    switch (parse_state) {
-        case PARSE_NORMAL:
-            break;
-        case PARSE_FUN_PARAMS:
-            return parse_function_parameters(tokens);
-        case PARSE_FUN_RETURN_TYPES:
-            return parse_function_return_types(tokens);
-        case PARSE_FUN_SINGLE_RETURN_TYPE:
-            return parse_function_single_return_type(tokens);
-        case PARSE_FUN_BODY:
-            return parse_function_body(tokens);
-        case PARSE_FUN_SINGLE_ARGUMENT:
-            todo();
-        default:
-            unreachable();
-    }
 
     if (tokens.count > 0 && tk_view_front(tokens).type == TOKEN_SYMBOL && 0 == str_view_cmp_cstr(tk_view_front(tokens).text, "fn")) {
         return parse_function_definition(tokens);
@@ -341,7 +325,7 @@ static Node_id parse_rec(PARSE_STATE parse_state, Tk_view tokens) {
 
 void parse(const Tokens tokens) {
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.count};
-    Node_id root = parse_rec(PARSE_NORMAL, token_view);
+    Node_id root = parse_rec(token_view);
     log(LOG_VERBOSE, "completed parse tree:\n");
     log_tree(LOG_VERBOSE, root);
     todo();
