@@ -20,12 +20,12 @@ typedef enum {
     NODE_OPERATOR,
 } NODE_TYPE;
 
-typedef size_t Node_idx;
+typedef size_t Node_id;
 
 typedef struct {
-    Node_idx next;
-    Node_idx prev;
-    Node_idx left_child;
+    Node_id next;
+    Node_id prev;
+    Node_id left_child;
 
     NODE_TYPE type;
 
@@ -39,7 +39,7 @@ typedef struct {
 
 #define NODE_IDX_NULL SIZE_MAX
 
-String node_print_internal(Node_idx node);
+String node_print_internal(Node_id node);
 
 #define node_print(root) string_print(node_print_internal((root)))
 

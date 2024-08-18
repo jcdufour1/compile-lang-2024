@@ -14,7 +14,7 @@ static const char* NODE_LANG_TYPE_DESCRIPTION = "lang_type";
 static const char* NODE_OPERATOR_DESCRIPTION = "operator";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
-void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_idx root, const char* file, int line) {
+void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_id root, const char* file, int line) {
     static String padding = {0};
     string_set_to_zero_len(&padding);
 
@@ -72,7 +72,7 @@ static void append_strv_in_gtlt(String* string, Str_view str_view) {
     append_strv_in_sym(string, str_view, '<', '>');
 }
 
-String node_print_internal(Node_idx node) {
+String node_print_internal(Node_id node) {
     static String buf = {0};
     string_set_to_zero_len(&buf);
 

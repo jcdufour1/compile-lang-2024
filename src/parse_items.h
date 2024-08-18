@@ -10,7 +10,7 @@
 #define PARSE_ITEMS_DEFAULT_CAPACITY 64
 
 typedef struct {
-    Node_idx root_node; // node that tokens are being parsed into
+    Node_id root_node; // node that tokens are being parsed into
     Tk_view tokens; // these tokens will be parsed into root_node
     PARSE_STATE parse_state;
 } Parse_item;
