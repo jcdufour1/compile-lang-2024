@@ -5,10 +5,12 @@
 #include <errno.h>
 #include <assert.h>
 #include "newstring.h"
+#include "node.h"
 #include "token.h"
 #include "tokens.h"
 #include "tokenizer.h"
 #include "parser.h"
+#include "emit_llvm.h"
 
 typedef struct {
     String input_file_name;
@@ -131,10 +133,13 @@ int main(int argc, char** argv) {
 
     Tokens tokens = tokenize(file_text);
 
-    parse(tokens);
-    // parse
-    //
-    // llvm thing
+    Node_id root = parse(tokens);
+
+    if (params.emit_llvm) {
+        emit_llvm_from_tree(root);
+    } else {
+        todo();
+    }
 
     return 0;
 }

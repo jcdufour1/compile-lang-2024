@@ -9,6 +9,7 @@ OBJS=\
 	 ${BUILD_DIR}/parser.o \
 	 ${BUILD_DIR}/globals.o \
 	 ${BUILD_DIR}/token.o \
+	 ${BUILD_DIR}/emit_llvm.o \
 	 ${BUILD_DIR}/nodes.o
 
 ARGS_PROGRAM=compile examples/test.c --emit-llvm
@@ -50,6 +51,9 @@ ${BUILD_DIR}/nodes.o: src/nodes.c src/*.h
 
 ${BUILD_DIR}/token.o: src/token.c src/*.h
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/token.o src/token.c
+
+${BUILD_DIR}/emit_llvm.o: src/emit_llvm.c src/*.h
+	cc ${C_FLAGS} -c -o ${BUILD_DIR}/emit_llvm.o src/emit_llvm.c
 
 
 clean:

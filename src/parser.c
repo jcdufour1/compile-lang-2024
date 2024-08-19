@@ -323,10 +323,10 @@ static Node_id parse_rec(Tk_view tokens) {
     unreachable();
 }
 
-void parse(const Tokens tokens) {
+Node_id parse(const Tokens tokens) {
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.count};
     Node_id root = parse_rec(token_view);
     log(LOG_VERBOSE, "completed parse tree:\n");
     log_tree(LOG_VERBOSE, root);
-    todo();
+    return root;
 }

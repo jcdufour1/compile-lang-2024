@@ -3,7 +3,8 @@
 
 #include "token.h"
 #include "tokens.h"
+#include "node.h"
 
-void parse(const Tokens tokens);
+Node_id parse(const Tokens tokens);
 
 #endif // PARSER_H
