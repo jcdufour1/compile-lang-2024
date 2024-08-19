@@ -11,8 +11,8 @@ static Node_id parse_function_single_return_type(Tk_view tokens);
 #define log_tokens(log_level, token_view, indent) \
     do { \
         log(log_level, "tokens:\n"); \
-        for (size_t idx = 0; idx < token_view.count; idx++) { \
-            log_indent(log_level, indent, " "TOKEN_FMT"\n", token_print(token_view.tokens[idx])); \
+        for (size_t idx = 0; idx < (token_view).count; idx++) { \
+            log_indent(log_level, indent, " "TOKEN_FMT"\n", token_print((token_view).tokens[idx])); \
         } \
     } while(0);
 
@@ -40,7 +40,7 @@ static bool get_idx_token(size_t* idx_matching, Tk_view tokens, size_t start, TO
     return false;
 }
 
-static bool tokens_start_with_function_call(size_t* idx_semicolon, Tk_view tokens) {
+static bool tokens_start_with_function_call(Tk_view tokens) {
     if (tokens.count < 2) {
         return false;
     }
@@ -59,7 +59,6 @@ static bool tokens_start_with_function_call(size_t* idx_semicolon, Tk_view token
         return false;
     }
 
-    *idx_semicolon = semicolon_pos;
     return true;
 }
 
@@ -151,49 +150,70 @@ static Node_id parse_function_body(Tk_view tokens) {
     nodes_at(body)->type = NODE_FUNCTION_BODY;
     assert(tokens.tokens[0].type == TOKEN_SYMBOL);
     assert(tokens.tokens[1].type == TOKEN_OPEN_PAR);
-    size_t dummy;
-    assert(tokens_start_with_function_call(&dummy, tokens));
+    assert(tokens_start_with_function_call(tokens));
     Tk_view body_tokens = tokens;
+    //while (parse_
     nodes_set_left_child(body, parse_rec(body_tokens));
     return body;
 }
 
-static Node_id parse_function_definition(Tk_view tokens) {
-    tk_view_chop_front(&tokens);
+static bool tokens_start_with_function_definition(Tk_view tokens) {
+    if (tokens.count < 1) {
+        return false;
+    }
+
+    if (tk_view_front(tokens).type != TOKEN_SYMBOL) {
+        return false;
+    }
+
+    if (0 != str_view_cmp_cstr(tk_view_front(tokens).text, "fn")) {
+        return false;
+    }
+
+    return true;
+}
+
+static bool extract_function_definition(Node_id* child, Tk_view* tokens) {
+    if (!tokens_start_with_function_definition(*tokens)) {
+        return false;
+    }
+
+    tk_view_chop_front(tokens);
     Node_id function = node_new();
     nodes_at(function)->type = NODE_FUNCTION_DEFINITION;
-    if (tk_view_front(tokens).type == TOKEN_SYMBOL) {
-        nodes_at(function)->name = tk_view_chop_front(&tokens).tokens[0].text;
+    if (tk_view_front(*tokens).type == TOKEN_SYMBOL) {
+        nodes_at(function)->name = tk_view_chop_front(tokens).tokens[0].text;
     } else {
         todo();
     }
-    Tk_view open_par = tk_view_chop_front(&tokens);
+    Tk_view open_par = tk_view_chop_front(tokens);
     assert(open_par.tokens[0].type == TOKEN_OPEN_PAR);
 
     size_t parameters_len;
-    if (tk_view_front(tk_view_chop_front(&tokens)).type == TOKEN_CLOSE_PAR) {
+    if (tk_view_front(tk_view_chop_front(tokens)).type == TOKEN_CLOSE_PAR) {
         parameters_len = 2;
     } else {
         todo();
     }
-    Tk_view parameters_tokens = tk_view_chop_count(&tokens, parameters_len - 2); // exclude ()
+    Tk_view parameters_tokens = tk_view_chop_count(tokens, parameters_len - 2); // exclude ()
     Node_id parameters = parse_function_parameters(parameters_tokens);
     nodes_append_child(function, parameters);
 
-    Tk_view return_type_tokens = tk_view_chop_on_type_delim(&tokens, TOKEN_OPEN_CURLY_BRACE);
-    tk_view_chop_front(&tokens); // remove open curly brace
+    Tk_view return_type_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_OPEN_CURLY_BRACE);
+    tk_view_chop_front(tokens); // remove open curly brace
     Node_id return_types = parse_function_return_types(return_type_tokens);
     nodes_append_child(function, return_types);
 
-    log_tokens(LOG_TRACE, tokens, 0);
-    Tk_view body_tokens = tk_view_chop_on_type_delim(&tokens, TOKEN_CLOSE_CURLY_BRACE);
-    tk_view_chop_front(&tokens); // remove closing brace
+    log_tokens(LOG_TRACE, *tokens, 0);
+    Tk_view body_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_CLOSE_CURLY_BRACE);
+    tk_view_chop_front(tokens); // remove closing brace
     Node_id body = parse_function_body(body_tokens);
     nodes_append_child(function, body);
-    if (tokens.count > 0) {
+    if (tokens->count > 0) {
         todo();
     }
-    return function;
+    *child = function;
+    return true;
 }
 
 static Node_id parse_literal(Tk_view tokens) {
@@ -253,26 +273,34 @@ static bool extract_function_argument(Node_id* child, Tk_view* tokens) {
     return true;
 }
 
-static Node_id parse_function_call(Tk_view tokens) {
-    log_tokens(LOG_TRACE, tokens, 0);
+static bool extract_function_call(Node_id* child, Tk_view* tokens) {
+    log_tokens(LOG_TRACE, *tokens, 0);
+    if (!tokens_start_with_function_call(*tokens)) {
+        return false;
+    }
+
     Node_id function_call = node_new();
     nodes_at(function_call)->type = NODE_FUNCTION_CALL;
-    nodes_at(function_call)->name = tokens.tokens[0].text;
-    tk_view_chop_count(&tokens, 2); // exclude outer ()
+    nodes_at(function_call)->name = tokens->tokens[0].text;
+    tk_view_chop_count(tokens, 2); // exclude outer ()
 
     size_t parameters_end;
-    if (!get_idx_matching_token(&parameters_end, tokens, TOKEN_CLOSE_PAR)) {
+    if (!get_idx_matching_token(&parameters_end, *tokens, TOKEN_CLOSE_PAR)) {
         todo();
     }
-    Tk_view arguments_tokens = tk_view_chop_count(&tokens, parameters_end);
-    tk_view_chop_front(&tokens); // remove closing )
+    Tk_view arguments_tokens = tk_view_chop_count(tokens, parameters_end);
 
-    Node_id child;
-    while (extract_function_argument(&child, &arguments_tokens)) {
-        nodes_append_child(function_call, child);
+    Node_id argument;
+    while (extract_function_argument(&argument, &arguments_tokens)) {
+        nodes_append_child(function_call, argument);
     }
-    assert(tokens.count == 0);
-    return function_call;
+
+    assert(tk_view_front(*tokens).type == TOKEN_CLOSE_PAR);
+    assert(tk_view_at(*tokens, 1).type == TOKEN_SEMICOLON);
+    tk_view_chop_count(tokens, 2); // remove );
+
+    *child = function_call;
+    return true;
 }
 
 static Node_id parse_rec(Tk_view tokens) {
@@ -288,17 +316,20 @@ static Node_id parse_rec(Tk_view tokens) {
         return parse_literal(tokens);
     }
 
-    while (tokens.count > 0) {
-        size_t semicolon_pos;
-        if (tk_view_front(tokens).type == TOKEN_SYMBOL && 0 == str_view_cmp_cstr(tk_view_front(tokens).text, "fn")) {
-            return parse_function_definition(tokens);
-        } else if (tokens_start_with_function_call(&semicolon_pos, tokens)) {
-            Tk_view fun_call_tokens = tk_view_chop_on_type_delim(&tokens, TOKEN_SEMICOLON);
-            tk_view_chop_front(&tokens); // remove semicolon
-            return parse_function_call(fun_call_tokens);
-        } else {
-            break;
+    if (tokens_start_with_function_call(tokens) || tokens_start_with_function_definition(tokens)) {
+        Node_id block = node_new();
+        nodes_at(block)->type = NODE_BLOCK;
+        while (tokens.count > 0) {
+            Node_id child;
+            if (extract_function_definition(&child, &tokens)) {
+                nodes_append_child(block, child);
+            } else if (extract_function_call(&child, &tokens)) {
+                nodes_append_child(block, child);
+            } else {
+                todo();
+            }
         }
+        return block;
     }
 
     if (count_operators(tokens) > 0) {

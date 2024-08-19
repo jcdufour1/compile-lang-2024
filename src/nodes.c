@@ -12,6 +12,7 @@ static const char* NODE_FUNCTION_RETURN_TYPES_DESCRIPTION = "fn_return_types";
 static const char* NODE_FUNCTION_BODY_DESCRIPTION = "fn_body";
 static const char* NODE_LANG_TYPE_DESCRIPTION = "lang_type";
 static const char* NODE_OPERATOR_DESCRIPTION = "operator";
+static const char* NODE_BLOCK_DESCRIPTION = "block";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_id root, const char* file, int line) {
@@ -50,6 +51,8 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_LANG_TYPE_DESCRIPTION);
         case NODE_OPERATOR:
             return str_view_from_cstr(NODE_OPERATOR_DESCRIPTION);
+        case NODE_BLOCK:
+            return str_view_from_cstr(NODE_BLOCK_DESCRIPTION);
         case NODE_NO_TYPE:
             return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
         default:
@@ -98,6 +101,7 @@ String node_print_internal(Node_id node) {
         case NODE_FUNCTION_PARAMETERS: // fallthrough
         case NODE_FUNCTION_BODY:
         case NODE_FUNCTION_RETURN_TYPES:
+        case NODE_BLOCK:
         case NODE_NO_TYPE:
             break;
         default:
