@@ -107,54 +107,40 @@ static Node_id parse_function_parameters(Tk_view tokens) {
     return new_node;
 }
 
-static Node_id parse_function_return_types(Tk_view tokens) {
-    log_tokens(LOG_TRACE, tokens, 0);
-    if (tokens.count < 1) {
-        unreachable();
-    }
-    Node_id return_types = node_new();
-    nodes_at(return_types)->type = NODE_FUNCTION_RETURN_TYPES;
-    Node_id prev_node = NODE_IDX_NULL;
-    bool end_after_this = false;
-    while (1) {
-        Tk_view lang_type_tokens;
-        if (get_idx_token(NULL, tokens, 0, TOKEN_COMMA)) {
-            lang_type_tokens = tk_view_chop_on_type_delim(&tokens, TOKEN_COMMA);
-            if (tokens.tokens[0].type == TOKEN_OPEN_CURLY_BRACE) {
-                // we are parsing last return type
-                end_after_this = true;
-            }
-            tk_view_chop_front(&tokens); // trim comma
-            log_tokens(LOG_TRACE, lang_type_tokens, 0);
-        } else {
-            lang_type_tokens = tokens;
-            end_after_this = true;
-        }
-
-        Node_id curr_node = parse_function_single_return_type(lang_type_tokens);
-        if (prev_node != NODE_IDX_NULL) {
-            nodes_set_next(prev_node, curr_node);
-        }
-
-        prev_node = curr_node;
-        if (end_after_this) {
-            nodes_set_left_child(return_types, nodes_get_local_leftmost(curr_node));
-            return return_types;
-        }
-    }
-}
-
 static Node_id parse_function_single_return_type(Tk_view tokens) {
-    if (tokens.count > 1) {
-        log(LOG_FETAL, "tokens.count: %zu\n", tokens.count);
-        log_tokens(LOG_FETAL, tokens, 0);
-        unreachable();
-    }
+    assert(tokens.count == 1);
     assert(tokens.tokens[0].type == TOKEN_SYMBOL);
+
     Node_id return_type = node_new();
     nodes_at(return_type)->type = NODE_LANG_TYPE;
     nodes_at(return_type)->lang_type = tk_view_front(tokens).text;
     return return_type;
+}
+
+static bool extract_function_return_type(Node_id* child, Tk_view* tokens) {
+    if (tokens->count < 1) {
+        return false;
+    }
+
+    // a return type is only one token, at least for now
+    Tk_view return_type_token = tk_view_chop_front(tokens);
+    if (get_idx_token(NULL, *tokens, 0, TOKEN_COMMA)) {
+        tk_view_chop_front(tokens); // remove comma
+    }
+
+    *child = parse_function_single_return_type(return_type_token);
+    return true;
+}
+
+static Node_id parse_function_return_types(Tk_view tokens) {
+    Node_id return_types = node_new();
+    nodes_at(return_types)->type = NODE_FUNCTION_RETURN_TYPES;
+
+    Node_id child;
+    while (extract_function_return_type(&child, &tokens)) {
+        nodes_append_child(return_types, child);
+    }
+    return return_types;
 }
 
 static Node_id parse_function_body(Tk_view tokens) {
@@ -194,9 +180,6 @@ static Node_id parse_function_definition(Tk_view tokens) {
     Node_id parameters = parse_function_parameters(parameters_tokens);
     nodes_append_child(function, parameters);
 
-    if (tk_view_front(tokens).type != TOKEN_SYMBOL) {
-        todo();
-    }
     Tk_view return_type_tokens = tk_view_chop_on_type_delim(&tokens, TOKEN_OPEN_CURLY_BRACE);
     tk_view_chop_front(&tokens); // remove open curly brace
     Node_id return_types = parse_function_return_types(return_type_tokens);
