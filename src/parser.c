@@ -159,46 +159,52 @@ static bool tokens_start_with_function_definition(Tk_view tokens) {
     return true;
 }
 
+static Node_id parse_function_definition(Tk_view tokens) {
+    tk_view_chop_front(&tokens);
+    Node_id function = node_new();
+    nodes_at(function)->type = NODE_FUNCTION_DEFINITION;
+    if (tk_view_front(tokens).type == TOKEN_SYMBOL) {
+        nodes_at(function)->name = tk_view_chop_front(&tokens).tokens[0].text;
+    } else {
+        todo();
+    }
+    Tk_view open_par = tk_view_chop_front(&tokens);
+    assert(open_par.tokens[0].type == TOKEN_OPEN_PAR);
+
+    size_t parameters_len;
+    if (tk_view_front(tk_view_chop_front(&tokens)).type == TOKEN_CLOSE_PAR) {
+        parameters_len = 2;
+    } else {
+        todo();
+    }
+    Tk_view parameters_tokens = tk_view_chop_count(&tokens, parameters_len - 2); // exclude ()
+    Node_id parameters = parse_function_parameters(parameters_tokens);
+    nodes_append_child(function, parameters);
+
+    Tk_view return_type_tokens = tk_view_chop_on_type_delim(&tokens, TOKEN_OPEN_CURLY_BRACE);
+    tk_view_chop_front(&tokens); // remove open curly brace
+    Node_id return_types = parse_function_return_types(return_type_tokens);
+    nodes_append_child(function, return_types);
+
+    log_tokens(LOG_TRACE, tokens, 0);
+    Tk_view body_tokens = tk_view_chop_count(&tokens, tokens.count);
+    Node_id body = parse_block(body_tokens);
+    nodes_append_child(function, body);
+
+    assert(tokens.count == 0);
+    
+    return function;
+}
+
 static bool extract_function_definition(Node_id* child, Tk_view* tokens) {
     if (!tokens_start_with_function_definition(*tokens)) {
         return false;
     }
 
-    tk_view_chop_front(tokens);
-    Node_id function = node_new();
-    nodes_at(function)->type = NODE_FUNCTION_DEFINITION;
-    if (tk_view_front(*tokens).type == TOKEN_SYMBOL) {
-        nodes_at(function)->name = tk_view_chop_front(tokens).tokens[0].text;
-    } else {
-        todo();
-    }
-    Tk_view open_par = tk_view_chop_front(tokens);
-    assert(open_par.tokens[0].type == TOKEN_OPEN_PAR);
+    Tk_view function_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_CLOSE_CURLY_BRACE);
+    tk_view_chop_front(tokens); // remove }
 
-    size_t parameters_len;
-    if (tk_view_front(tk_view_chop_front(tokens)).type == TOKEN_CLOSE_PAR) {
-        parameters_len = 2;
-    } else {
-        todo();
-    }
-    Tk_view parameters_tokens = tk_view_chop_count(tokens, parameters_len - 2); // exclude ()
-    Node_id parameters = parse_function_parameters(parameters_tokens);
-    nodes_append_child(function, parameters);
-
-    Tk_view return_type_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_OPEN_CURLY_BRACE);
-    tk_view_chop_front(tokens); // remove open curly brace
-    Node_id return_types = parse_function_return_types(return_type_tokens);
-    nodes_append_child(function, return_types);
-
-    log_tokens(LOG_TRACE, *tokens, 0);
-    Tk_view body_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_CLOSE_CURLY_BRACE);
-    tk_view_chop_front(tokens); // remove closing brace
-    Node_id body = parse_block(body_tokens);
-    nodes_append_child(function, body);
-    if (tokens->count > 0) {
-        todo();
-    }
-    *child = function;
+    *child = parse_function_definition(function_tokens);
     return true;
 }
 
