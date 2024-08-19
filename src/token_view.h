@@ -36,6 +36,7 @@ static inline Tk_view tk_view_chop_on_cond(
     todo();
 }
 
+// delim itself is left in the input token_view
 static inline Tk_view tk_view_chop_on_type_delim(Tk_view* token_view, TOKEN_TYPE delim) {
     Tk_view new_token_view;
     for (size_t idx = 0; token_view->count > idx; idx++) {
@@ -66,7 +67,7 @@ static inline Tk_view tk_view_chop_front(Tk_view* token_view) {
     return tk_view_chop_count(token_view, 1);
 }
 
-static inline Str_view token_view_print_internal(Tk_view token_view) {
+static inline Str_view tk_view_print_internal(Tk_view token_view) {
     static String buf = {0};
     string_set_to_zero_len(&buf);
 
@@ -79,8 +80,8 @@ static inline Str_view token_view_print_internal(Tk_view token_view) {
     return str_view;
 }
 
-#define TOKEN_VIEW_FMT STR_VIEW_FMT
+#define TK_VIEW_FMT STR_VIEW_FMT
 
-#define token_view_print(token_view__dfjasdjf) str_view_print(token_view_print_internal(token_view__dfjasdjf))
+#define tk_view_print(token_view__dfjasdjf) str_view_print(tk_view_print_internal(token_view__dfjasdjf))
 
 #endif // TOKEN_VIEW_H

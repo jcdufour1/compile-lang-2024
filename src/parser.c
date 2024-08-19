@@ -248,6 +248,7 @@ static bool extract_function_argument(Node_id* child, Tk_view* tokens) {
         tk_view_chop_front(tokens); // remove comma
     }
 
+    log(LOG_DEBUG, "curr_arg_tokens tokens: "TK_VIEW_FMT"\n", tk_view_print(curr_arg_tokens));
     *child = parse_rec(curr_arg_tokens);
     return true;
 }
@@ -265,7 +266,6 @@ static Node_id parse_function_call(Tk_view tokens) {
     }
     Tk_view arguments_tokens = tk_view_chop_count(&tokens, parameters_end);
     tk_view_chop_front(&tokens); // remove closing )
-    tk_view_chop_front(&tokens); // remove ;
 
     Node_id child;
     while (extract_function_argument(&child, &arguments_tokens)) {
@@ -279,26 +279,30 @@ static Node_id parse_rec(Tk_view tokens) {
     unsigned int indent_amt = 0;
     log_tokens(LOG_TRACE, tokens, indent_amt);
 
-    if (tokens.count > 0 && tk_view_front(tokens).type == TOKEN_SYMBOL && 0 == str_view_cmp_cstr(tk_view_front(tokens).text, "fn")) {
-        return parse_function_definition(tokens);
-    }
-
-    size_t semicolon_pos;
-    if (tokens_start_with_function_call(&semicolon_pos, tokens)) {
-        return parse_function_call(tokens);
+    if (tokens.count < 1) {
+        //log_tree(LOG_VERBOSE, root);
+        unreachable();
     }
 
     if (tokens.count == 1 && token_is_literal(tokens.tokens[0])) {
         return parse_literal(tokens);
     }
 
-    if (count_operators(tokens) > 0) {
-        return parse_operation(tokens);
+    while (tokens.count > 0) {
+        size_t semicolon_pos;
+        if (tk_view_front(tokens).type == TOKEN_SYMBOL && 0 == str_view_cmp_cstr(tk_view_front(tokens).text, "fn")) {
+            return parse_function_definition(tokens);
+        } else if (tokens_start_with_function_call(&semicolon_pos, tokens)) {
+            Tk_view fun_call_tokens = tk_view_chop_on_type_delim(&tokens, TOKEN_SEMICOLON);
+            tk_view_chop_front(&tokens); // remove semicolon
+            return parse_function_call(fun_call_tokens);
+        } else {
+            break;
+        }
     }
 
-    if (tokens.count < 1) {
-        //log_tree(LOG_VERBOSE, root);
-        unreachable();
+    if (count_operators(tokens) > 0) {
+        return parse_operation(tokens);
     }
 
     log_tokens(LOG_DEBUG, tokens, 0);
