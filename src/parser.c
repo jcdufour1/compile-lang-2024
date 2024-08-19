@@ -7,6 +7,7 @@
 
 static Node_id parse_rec(Tk_view tokens);
 static Node_id parse_function_single_return_type(Tk_view tokens);
+static Node_id parse_block(Tk_view tokens);
 
 #define log_tokens(log_level, token_view, indent) \
     do { \
@@ -142,21 +143,6 @@ static Node_id parse_function_return_types(Tk_view tokens) {
     return return_types;
 }
 
-static Node_id parse_function_body(Tk_view tokens) {
-    if (tokens.count < 2) {
-        unreachable();
-    }
-    Node_id body = node_new();
-    nodes_at(body)->type = NODE_FUNCTION_BODY;
-    assert(tokens.tokens[0].type == TOKEN_SYMBOL);
-    assert(tokens.tokens[1].type == TOKEN_OPEN_PAR);
-    assert(tokens_start_with_function_call(tokens));
-    Tk_view body_tokens = tokens;
-    //while (parse_
-    nodes_set_left_child(body, parse_rec(body_tokens));
-    return body;
-}
-
 static bool tokens_start_with_function_definition(Tk_view tokens) {
     if (tokens.count < 1) {
         return false;
@@ -207,7 +193,7 @@ static bool extract_function_definition(Node_id* child, Tk_view* tokens) {
     log_tokens(LOG_TRACE, *tokens, 0);
     Tk_view body_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_CLOSE_CURLY_BRACE);
     tk_view_chop_front(tokens); // remove closing brace
-    Node_id body = parse_function_body(body_tokens);
+    Node_id body = parse_block(body_tokens);
     nodes_append_child(function, body);
     if (tokens->count > 0) {
         todo();
@@ -303,6 +289,22 @@ static bool extract_function_call(Node_id* child, Tk_view* tokens) {
     return true;
 }
 
+static Node_id parse_block(Tk_view tokens) {
+    Node_id block = node_new();
+    nodes_at(block)->type = NODE_BLOCK;
+    while (tokens.count > 0) {
+        Node_id child;
+        if (extract_function_definition(&child, &tokens)) {
+            nodes_append_child(block, child);
+        } else if (extract_function_call(&child, &tokens)) {
+            nodes_append_child(block, child);
+        } else {
+            todo();
+        }
+    }
+    return block;
+}
+
 static Node_id parse_rec(Tk_view tokens) {
     unsigned int indent_amt = 0;
     log_tokens(LOG_TRACE, tokens, indent_amt);
@@ -317,19 +319,7 @@ static Node_id parse_rec(Tk_view tokens) {
     }
 
     if (tokens_start_with_function_call(tokens) || tokens_start_with_function_definition(tokens)) {
-        Node_id block = node_new();
-        nodes_at(block)->type = NODE_BLOCK;
-        while (tokens.count > 0) {
-            Node_id child;
-            if (extract_function_definition(&child, &tokens)) {
-                nodes_append_child(block, child);
-            } else if (extract_function_call(&child, &tokens)) {
-                nodes_append_child(block, child);
-            } else {
-                todo();
-            }
-        }
-        return block;
+        return parse_block(tokens);
     }
 
     if (count_operators(tokens) > 0) {
