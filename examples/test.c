@@ -1,5 +1,5 @@
-fn write() {
-    println("writing string");
+fn println(String msg) {
+    write(msg);
 }
 
 fn main() {

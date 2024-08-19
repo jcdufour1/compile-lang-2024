@@ -19,6 +19,7 @@ typedef enum {
     NODE_LITERAL,
     NODE_LANG_TYPE,
     NODE_OPERATOR,
+    NODE_SYMBOL,
 } NODE_TYPE;
 
 typedef size_t Node_id;

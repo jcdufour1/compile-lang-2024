@@ -13,6 +13,7 @@ static const char* NODE_FUNCTION_BODY_DESCRIPTION = "fn_body";
 static const char* NODE_LANG_TYPE_DESCRIPTION = "lang_type";
 static const char* NODE_OPERATOR_DESCRIPTION = "operator";
 static const char* NODE_BLOCK_DESCRIPTION = "block";
+static const char* NODE_SYMBOL_DESCRIPTION = "sym";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_id root, const char* file, int line) {
@@ -53,6 +54,8 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_OPERATOR_DESCRIPTION);
         case NODE_BLOCK:
             return str_view_from_cstr(NODE_BLOCK_DESCRIPTION);
+        case NODE_SYMBOL:
+            return str_view_from_cstr(NODE_SYMBOL_DESCRIPTION);
         case NODE_NO_TYPE:
             return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
         default:
@@ -82,14 +85,13 @@ String node_print_internal(Node_id node) {
     string_extend_strv(&buf, node_type_get_strv(nodes_at(node)->type));
 
     switch (nodes_at(node)->type) {
-        case NODE_FUNCTION_DEFINITION:
-            append_strv_in_par(&buf, nodes_at(node)->name);
-            break;
-        case NODE_FUNCTION_CALL:
-            append_strv_in_par(&buf, nodes_at(node)->name);
-            break;
+        case NODE_SYMBOL:
+            // fallthrough
         case NODE_LITERAL:
-            append_strv_in_gtlt(&buf, token_type_to_str_view(nodes_at(node)->token_type));
+            // fallthrough
+        case NODE_FUNCTION_DEFINITION:
+            // fallthrough
+        case NODE_FUNCTION_CALL:
             append_strv_in_par(&buf, nodes_at(node)->name);
             break;
         case NODE_LANG_TYPE:
@@ -98,10 +100,14 @@ String node_print_internal(Node_id node) {
         case NODE_OPERATOR:
             string_extend_strv(&buf, token_type_to_str_view(nodes_at(node)->token_type));
             break;
-        case NODE_FUNCTION_PARAMETERS: // fallthrough
+        case NODE_FUNCTION_PARAMETERS:
+            // fallthrough
         case NODE_FUNCTION_BODY:
+            // fallthrough
         case NODE_FUNCTION_RETURN_TYPES:
+            // fallthrough
         case NODE_BLOCK:
+            // fallthrough
         case NODE_NO_TYPE:
             break;
         default:
