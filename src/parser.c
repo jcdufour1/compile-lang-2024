@@ -4,6 +4,7 @@
 #include "nodes.h"
 #include "assert.h"
 #include "token_view.h"
+#include "symbol_table.h"
 
 static Node_id parse_rec(Tk_view tokens);
 static Node_id parse_function_single_return_type(Tk_view tokens);
@@ -247,6 +248,8 @@ static Node_id parse_literal(Tk_view tokens) {
     nodes_at(new_node)->type = NODE_LITERAL;
     nodes_at(new_node)->name = tk_view_front(tokens).text;
     nodes_at(new_node)->token_type = tk_view_front(tokens).type;
+
+    sym_tbl_add(new_node);
     return new_node;
 }
 

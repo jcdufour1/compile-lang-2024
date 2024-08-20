@@ -91,6 +91,7 @@ static void* safe_realloc(void* old_ptr, size_t new_count_items, size_t size_eac
     return new_ptr;
 }
 
+// buffer is zero initialized
 static void* safe_malloc(size_t count_items, size_t size_each_item) {
     size_t capacity = count_items*size_each_item;
     void* new_ptr = malloc(capacity);

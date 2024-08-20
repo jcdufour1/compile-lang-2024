@@ -475,7 +475,7 @@ extern "C" {
 extern void stbds_rand_seed(size_t seed);
 
 // these are the hash functions used internally if you want to test them or use them for other purposes
-extern size_t stbds_hash_bytes(void *p, size_t len, size_t seed);
+extern size_t stbds_hash_bytes(const void *p, size_t len, size_t seed);
 extern size_t stbds_hash_string(char *str, size_t seed);
 
 // this is a simple string arena allocator, initialize with e.g. 'stbds_string_arena my_arena={0}'.
@@ -1048,7 +1048,7 @@ typedef int STBDS_SIPHASH_2_4_can_only_be_used_in_64_bit_builds[sizeof(size_t) =
 #pragma warning(disable:4127) // conditional expression is constant, for do..while(0) and sizeof()==
 #endif
 
-static size_t stbds_siphash_bytes(void *p, size_t len, size_t seed)
+static size_t stbds_siphash_bytes(const void *p, size_t len, size_t seed)
 {
   unsigned char *d = (unsigned char *) p;
   size_t i,j;
@@ -1113,7 +1113,7 @@ static size_t stbds_siphash_bytes(void *p, size_t len, size_t seed)
 #endif
 }
 
-size_t stbds_hash_bytes(void *p, size_t len, size_t seed)
+size_t stbds_hash_bytes(const void *p, size_t len, size_t seed)
 {
 #ifdef STBDS_SIPHASH_2_4
   return stbds_siphash_bytes(p,len,seed);
