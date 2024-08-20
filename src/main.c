@@ -11,6 +11,7 @@
 #include "tokenizer.h"
 #include "parser.h"
 #include "emit_llvm.h"
+#include <stb_ds.h>
 
 typedef struct {
     String input_file_name;
