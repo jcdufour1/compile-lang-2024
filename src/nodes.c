@@ -85,9 +85,10 @@ String node_print_internal(Node_id node) {
     string_extend_strv(&buf, node_type_get_strv(nodes_at(node)->type));
 
     switch (nodes_at(node)->type) {
-        case NODE_SYMBOL:
-            // fallthrough
         case NODE_LITERAL:
+            append_strv_in_gtlt(&buf, token_type_to_str_view(nodes_at(node)->token_type));
+            // fallthrough
+        case NODE_SYMBOL:
             // fallthrough
         case NODE_FUNCTION_DEFINITION:
             // fallthrough
