@@ -111,4 +111,12 @@ static inline const char* bool_print(bool condition) {
     return "false";
 }
 
+static inline void safe_free_internal(void* ptr) {
+    free(ptr);
+}
+
+#define safe_free(ptr) \
+    safe_free_internal(ptr); \
+    (ptr) = NULL;
+
 #endif // UTIL_H

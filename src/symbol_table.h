@@ -2,11 +2,12 @@
 #define SYMBOL_TABLE_H
 
 #include "str_view.h"
+#include "string.h"
 #include "node.h"
 #include "nodes.h"
 #include <stb_ds.h>
 
-#define SYM_TBL_DEFAULT_CAPACITY 4048
+#define SYM_TBL_DEFAULT_CAPACITY 1
 #define SYM_TBL_MAX_DENSITY (0.6f)
 
 typedef enum {
@@ -16,7 +17,7 @@ typedef enum {
 } SYM_TBL_STATUS;
 
 typedef struct {
-    Str_view name;
+    Str_view key;
     Node_id node;
     SYM_TBL_STATUS status;
 } Symbol_table_node;
@@ -29,43 +30,105 @@ typedef struct {
 
 extern Symbol_table symbol_table;
 
+static inline size_t sym_tbl_calculate_idx(Str_view sym_name, size_t capacity) {
+    return stbds_hash_bytes(sym_name.str, sym_name.count, 0) % capacity;
+}
+
+static inline void sym_tbl_add_internal(Symbol_table_node* sym_tbl_nodes, size_t capacity, Node_id node_of_symbol) {
+    assert(node_of_symbol != NODE_IDX_NULL);
+    Str_view symbol_name = nodes_at(node_of_symbol)->name;
+    assert(symbol_name.count > 0 && "invalid node_of_symbol");
+
+    size_t curr_table_idx = sym_tbl_calculate_idx(symbol_name, capacity);
+    size_t init_table_idx = curr_table_idx; 
+    while (sym_tbl_nodes[curr_table_idx].status == SYM_TBL_OCCUPIED) {
+        curr_table_idx = (curr_table_idx + 1) % capacity;
+        assert(init_table_idx != curr_table_idx && "hash table is full here, and it should not be");
+        (void) init_table_idx;
+    }
+
+    Symbol_table_node node = {.key = symbol_name, .node = node_of_symbol, .status = SYM_TBL_OCCUPIED};
+    sym_tbl_nodes[curr_table_idx] = node;
+}
+
+static inline void sym_tbl_cpy(Symbol_table_node* dest, const Symbol_table_node* src, size_t count) {
+    for (size_t bucket_src = 0; bucket_src < count; bucket_src++) {
+        if (src[bucket_src].status == SYM_TBL_OCCUPIED) {
+            sym_tbl_add_internal(dest, symbol_table.capacity, src[bucket_src].node);
+        }
+    }
+}
+
 static inline void sym_tbl_expand_if_nessessary() {
+    size_t old_capacity = symbol_table.capacity;
     size_t minimum_count_to_reserve = 1;
     size_t new_count = symbol_table.count + minimum_count_to_reserve;
     size_t node_size = sizeof(symbol_table.table_nodes[0]);
 
+    bool should_move_elements = true;
+    Symbol_table_node* new_table_nodes;
+
     if (symbol_table.capacity < 1) {
         symbol_table.capacity = SYM_TBL_DEFAULT_CAPACITY;
-        symbol_table.table_nodes = safe_malloc(symbol_table.capacity, node_size);
+        should_move_elements = true;
     }
-
     while ((float)new_count / symbol_table.capacity >= SYM_TBL_MAX_DENSITY) {
         symbol_table.capacity *= 2;
-        symbol_table.table_nodes = safe_realloc(symbol_table.table_nodes, symbol_table.capacity, node_size);
+        should_move_elements = true;
+    }
+
+    if (should_move_elements) {
+        new_table_nodes = safe_malloc(symbol_table.capacity, node_size);
+        sym_tbl_cpy(new_table_nodes, symbol_table.table_nodes, old_capacity);
+        safe_free(symbol_table.table_nodes);
+        symbol_table.table_nodes = new_table_nodes;
     }
 }
 
-static inline size_t sym_tbl_calculate_idx(Str_view sym_name) {
-    return stbds_hash_bytes(sym_name.str, sym_name.count, 0) % symbol_table.capacity;
+static inline bool sym_tbl_is_equal(Str_view a, Str_view b) {
+    if (a.count != b.count) {
+        return false;
+    }
+
+    return 0 == memcmp(a.str, a.str, b.count);
+}
+
+// return false if symbol is not found
+static inline bool sym_tbl_lookup(
+    Node_id* result,
+    Str_view key
+) {
+    size_t curr_table_idx = sym_tbl_calculate_idx(key, symbol_table.capacity);
+    size_t init_table_idx = curr_table_idx; 
+
+    while (1) {
+        Symbol_table_node curr_node = symbol_table.table_nodes[curr_table_idx];
+
+        if (curr_node.status == SYM_TBL_OCCUPIED) {
+            if (sym_tbl_is_equal(curr_node.key, key)) {
+                *result = curr_node.node;
+                return true;
+            }
+        }
+
+        if (curr_node.status == SYM_TBL_NEVER_OCCUPIED) {
+            return false;
+        }
+
+        curr_table_idx = (curr_table_idx + 1) % symbol_table.capacity;
+        if (curr_table_idx == init_table_idx) {
+            return false;
+        }
+    }
+
+    unreachable();
 }
 
 static inline void sym_tbl_add(
     Node_id node_of_symbol
 ) {
     sym_tbl_expand_if_nessessary();
-
-    assert(nodes_at(node_of_symbol));
-    Str_view symbol_name = nodes_at(node_of_symbol)->name;
-    assert(symbol_name.count > 0 && "invalid node_of_symbol");
-
-    size_t table_idx = sym_tbl_calculate_idx(nodes_at(node_of_symbol)->name);
-    if (symbol_table.table_nodes[table_idx].status == SYM_TBL_OCCUPIED) {
-        todo();
-    } else {
-        Symbol_table_node node = {.name = nodes_at(node_of_symbol)->name, .node = node_of_symbol, .status = SYM_TBL_OCCUPIED};
-        symbol_table.table_nodes[table_idx] = node;
-    }
-
+    sym_tbl_add_internal(symbol_table.table_nodes, symbol_table.capacity, node_of_symbol);
     symbol_table.count++;
 }
 
