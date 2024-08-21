@@ -6,12 +6,22 @@
 #include "symbol_table.h"
 
 static void block_to_strv(String* output, Node_id fun_block);
-static uint32_t count_local = 1;
+
+static size_t count_par = 0;
 
 static void function_params_to_strv(String* output, Node_id fun_params) {
-    (void) output;
+
+    size_t idx = 0;
     nodes_foreach_child(param, fun_params) {
-        todo(); // adding function parameter not implemented
+        if (idx++ > 0) {
+            string_extend_cstr(output, ", ");
+        }
+
+        char num_str[20];
+        sprintf(num_str, "%zu", count_par);
+        string_extend_cstr(output, "ptr noundef %");
+        string_extend_cstr(output, num_str);
+        count_par++;
     }
 }
 
@@ -21,9 +31,34 @@ static void function_arguments_to_strv(String* output, Node_id fun_args) {
     todo();
 }
 
+static void function_call_arguments(String* output, Node_id statement) {
+    size_t idx = 0;
+    nodes_foreach_child(argument, statement) {
+        if (idx++ > 0) {
+            string_extend_cstr(output, ", ");
+        }
+        switch (nodes_at(argument)->type) {
+            case NODE_LITERAL: {
+                Str_view literal_name = nodes_at(argument)->name;
+                string_extend_cstr(output, "ptr noundef @.");
+                string_extend_strv(output, literal_name);
+                break;
+            }
+            case NODE_SYMBOL: {
+                string_extend_cstr(output, "ptr noundef %0");
+                log(LOG_DEBUG, NODE_FMT"\n", node_print(argument));
+                count_par++;
+                break;
+            }
+            default:
+                todo();
+        }
+    }
+}
+
 static void function_call_to_strv(String* output, Node_id statement) {
     char num_str[20];
-    sprintf(num_str, "%d", count_local++);
+    sprintf(num_str, "%zu", count_par++);
 
     string_extend_cstr(output, "    %");
     string_extend_cstr(output, num_str);
@@ -32,18 +67,7 @@ static void function_call_to_strv(String* output, Node_id statement) {
 
     // arguments
     string_extend_cstr(output, "(");
-    nodes_foreach_child(argument, statement) {
-        switch (nodes_at(argument)->type) {
-            case NODE_LITERAL: {
-                Str_view literal_name = nodes_at(argument)->name;
-                string_extend_cstr(output, "ptr noundef @.");
-                string_extend_strv(output, literal_name);
-                break;
-            }
-            default:
-                todo();
-        }
-    }
+    function_call_arguments(output, statement);
     string_extend_cstr(output, ")");
 
     string_extend_cstr(output, "\n");
@@ -52,10 +76,13 @@ static void function_call_to_strv(String* output, Node_id statement) {
 static void function_definition_to_strv(String* output, Node_id fun_def) {
     string_extend_cstr(output, "define dso_local i32 @");
     string_extend_strv(output, nodes_at(fun_def)->name);
+
     Node_id params = nodes_get_child_of_type(fun_def, NODE_FUNCTION_PARAMETERS);
     string_append(output, '(');
     function_params_to_strv(output, params);
     string_append(output, ')');
+    count_par++;
+
     string_extend_cstr(output, " {\n");
 
     Node_id block = nodes_get_child_of_type(fun_def, NODE_BLOCK);

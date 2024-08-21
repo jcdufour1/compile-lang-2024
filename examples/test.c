@@ -1,8 +1,8 @@
-fn println() {
-    puts("hello world");
+fn println(String str) {
+    puts(str);
 }
 
 fn main() {
-    println("hello");
-    println("bye");
+    println("hello world");
+    println("bye world");
 }
