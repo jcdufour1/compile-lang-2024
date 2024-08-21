@@ -40,6 +40,7 @@ Str_view token_print_internal(Token token) {
             unreachable();
     }
 
+    log(LOG_DEBUG, "thing thing\n");
     assert(strlen(buf.buf) == buf.info.count);
     string_add_int(&buf, token.line_num);
 

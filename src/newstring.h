@@ -5,8 +5,9 @@
 #include "util.h"
 #include "str_view.h"
 #include "vector.h"
+#include "assert.h"
 
-#define STRING_DEFAULT_CAPACITY 4048
+#define STRING_DEFAULT_CAPACITY 8
 
 typedef struct {
     Vec_base info;
@@ -18,11 +19,12 @@ typedef struct {
 #define string_print(string) (int)((string).info.count), (string).buf
 
 static inline void string_reserve(String* str, size_t minimum_count_empty_slots) {
-    vector_reserve(str, sizeof(str->buf[0]), minimum_count_empty_slots, STRING_DEFAULT_CAPACITY);
+    vector_reserve(str, sizeof(str->buf[0]), minimum_count_empty_slots + 1, STRING_DEFAULT_CAPACITY);
 }
 
 // string->buf is always null terminated
 static inline void string_append(String* str, char ch) {
+    assert(sizeof(str->buf[0]) == 1);
     vector_append(str, sizeof(str->buf[0]), &ch, STRING_DEFAULT_CAPACITY);
 }
 

@@ -7,32 +7,23 @@
 #include "util.h"
 #include "node.h"
 #include "assert.h"
+#include "vector.h"
 
 #define NODES_DEFAULT_CAPACITY 512
 
 typedef struct {
+    Vec_base info;
     Node* buf;
-    size_t count;
-    size_t capacity;
 } Nodes;
 
 extern Nodes nodes;
 
 static inline void nodes_reserve(size_t minimum_count_empty_slots) {
-    // nodes->capacity must be at least one greater than nodes->count for null termination
-    while (nodes.count + minimum_count_empty_slots + 1 > nodes.capacity) {
-        if (nodes.capacity < 1) {
-            nodes.capacity = NODES_DEFAULT_CAPACITY;
-            nodes.buf = safe_malloc(nodes.capacity, sizeof(nodes.buf[0]));
-        } else {
-            nodes.capacity *= 2;
-            nodes.buf = safe_realloc(nodes.buf, nodes.capacity, sizeof(nodes.buf[0]));
-        }
-    }
+    vector_reserve(&nodes, sizeof(nodes.buf[0]), minimum_count_empty_slots, NODES_DEFAULT_CAPACITY);
 }
 
 static inline Node* nodes_at(Node_id idx) {
-    if (idx >= nodes.count) {
+    if (idx >= nodes.info.count) {
         if (idx == NODE_IDX_NULL) {
             log(LOG_FETAL, "index is NODE_IDX_NULL\n");
         } else {
@@ -45,9 +36,9 @@ static inline Node* nodes_at(Node_id idx) {
 
 static inline Node_id node_new() {
     nodes_reserve(1);
-    memset(&nodes.buf[nodes.count], 0, sizeof(nodes.buf[0]));
-    Node_id idx_node_created = nodes.count;
-    nodes.count++;
+    memset(&nodes.buf[nodes.info.count], 0, sizeof(nodes.buf[0]));
+    Node_id idx_node_created = nodes.info.count;
+    nodes.info.count++;
 
     Node* new_node = nodes_at(idx_node_created);
     new_node->next = NODE_IDX_NULL;

@@ -16,22 +16,23 @@ typedef struct {
 
 static inline void vector_reserve(void* typed_vector, size_t size_each_item, size_t minimum_count_empty_slots, size_t init_capacity) {
     Vector* vector = (Vector*)typed_vector;
+    size_t old_capacity = vector->info.capacity;
 
     while (vector->info.count + minimum_count_empty_slots + 1 > vector->info.capacity) {
         if (vector->info.capacity < 1) {
             vector->info.capacity = init_capacity;
-            vector->buf = safe_malloc(vector->info.capacity, sizeof(size_each_item));
+            vector->buf = safe_malloc(vector->info.capacity, size_each_item);
         } else {
             vector->info.capacity *= 2;
-            vector->buf = safe_realloc(vector->buf, vector->info.capacity, sizeof(size_each_item));
+            vector->buf = safe_realloc(vector->buf, old_capacity, vector->info.capacity, size_each_item);
         }
     }
 }
 
-static inline void vector_append(void* typed_vector, size_t size_each_item, void* item_to_append, size_t init_capacity) {
+static inline void vector_append(void* typed_vector, size_t size_each_item, const void* item_to_append, size_t init_capacity) {
     Vector* vector = (Vector*)typed_vector;
 
-    vector_reserve(typed_vector, size_each_item, 1, init_capacity);
+    vector_reserve(typed_vector, size_each_item, 2, init_capacity);
     memmove((char*)vector->buf + size_each_item*vector->info.count, item_to_append, size_each_item);
     vector->info.count++;
 }
