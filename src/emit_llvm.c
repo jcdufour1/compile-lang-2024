@@ -41,9 +41,12 @@ static Str_view function_call_to_strv(Node_id statement) {
     string_extend_cstr(&buf, "(");
     nodes_foreach_child(argument, statement) {
         switch (nodes_at(argument)->type) {
-            case NODE_LITERAL:
-                string_extend_cstr(&buf, "ptr noundef @.str");
+            case NODE_LITERAL: {
+                Str_view literal_name = nodes_at(argument)->name;
+                string_extend_cstr(&buf, "ptr noundef @.");
+                string_extend_strv(&buf, literal_name);
                 break;
+            }
             default:
                 todo();
         }
