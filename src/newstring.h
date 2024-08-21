@@ -49,6 +49,14 @@ static inline String string_new_from_cstr(const char* cstr) {
     return string;
 }
 
+static inline String string_new_from_strv(Str_view str_view) {
+    String string = {0};
+    for (int idx = 0; str_view.str[idx]; idx++) {
+        string_append(&string, str_view.str[idx]);
+    }
+    return string;
+}
+
 static inline void string_set_to_zero_len(String* string) {
     vector_set_to_zero_len(string, sizeof(string->buf[0]));
 }
@@ -87,6 +95,20 @@ static inline void string_add_int(String* string, int num) {
     static char num_str[20];
     sprintf(num_str, fmt_str, num);
     string_extend_cstr(string, num_str);
+}
+
+static inline void string_extend_strv_in_sym(String* string, Str_view str_view, char opening_symbol, char closing_symbol) {
+    string_append(string, opening_symbol);
+    string_extend_strv(string, str_view);
+    string_append(string, closing_symbol);
+}
+
+static inline void string_extend_strv_in_par(String* string, Str_view str_view) {
+    string_extend_strv_in_sym(string, str_view, '(', ')');
+}
+
+static inline void string_extend_strv_in_gtlt(String* string, Str_view str_view) {
+    string_extend_strv_in_sym(string, str_view, '<', '>');
 }
 
 #endif // NEWSTRING_H

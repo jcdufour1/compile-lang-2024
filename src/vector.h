@@ -16,7 +16,7 @@ typedef struct {
 
 static inline void vector_reserve(void* typed_vector, size_t size_each_item, size_t minimum_count_empty_slots, size_t init_capacity) {
     Vector* vector = (Vector*)typed_vector;
-    size_t old_capacity = vector->info.capacity;
+    size_t old_capacity = size_each_item*vector->info.capacity;
 
     while (vector->info.count + minimum_count_empty_slots + 1 > vector->info.capacity) {
         if (vector->info.capacity < 1) {

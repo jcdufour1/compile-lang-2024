@@ -85,5 +85,23 @@ void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_id root, const char
 #define log_tree(log_level, root) \
     nodes_log_tree_rec(log_level, 0, root, __FILE__, __LINE__);
 
+#define nodes_foreach_child(child, parent) \
+    for (Node_id child = nodes_at(parent)->left_child; (child) != NODE_IDX_NULL; (child) = nodes_at(child)->next)
+
+static inline Node_id nodes_get_child_of_type(Node_id parent, NODE_TYPE node_type) {
+    if (nodes_at(parent)->left_child == NODE_IDX_NULL) {
+        todo();
+    }
+
+    nodes_foreach_child(child, parent) {
+        if (nodes_at(child)->type == node_type) {
+            return child;
+        }
+    }
+
+    log_tree(LOG_VERBOSE, parent);
+    unreachable();
+}
+
 
 #endif // NODES_H

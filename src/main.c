@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
     Node_id root = parse(tokens);
 
     Node_id item;
-    assert(sym_tbl_lookup(&item, str_view_from_cstr("str5")));
+    assert(sym_tbl_lookup(&item, str_view_from_cstr("str0")));
     log(LOG_DEBUG, NODE_FMT"\n", node_print(item));
 
     if (params.emit_llvm) {

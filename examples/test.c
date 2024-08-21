@@ -1,8 +1,8 @@
-fn println(String msg) {
-    write(msg);
+fn println() {
+    write("hello");
 }
 
 fn main() {
-    println("hello", 3 + 45 * 67 - 21);
+    println("hello");
     println("bye");
 }

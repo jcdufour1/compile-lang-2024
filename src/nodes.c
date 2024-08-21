@@ -64,20 +64,6 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
     }
 }
 
-static void append_strv_in_sym(String* string, Str_view str_view, char opening_symbol, char closing_symbol) {
-    string_append(string, opening_symbol);
-    string_extend_strv(string, str_view);
-    string_append(string, closing_symbol);
-}
-
-static void append_strv_in_par(String* string, Str_view str_view) {
-    append_strv_in_sym(string, str_view, '(', ')');
-}
-
-static void append_strv_in_gtlt(String* string, Str_view str_view) {
-    append_strv_in_sym(string, str_view, '<', '>');
-}
-
 String node_print_internal(Node_id node) {
     static String buf = {0};
     string_set_to_zero_len(&buf);
@@ -86,19 +72,19 @@ String node_print_internal(Node_id node) {
 
     switch (nodes_at(node)->type) {
         case NODE_LITERAL:
-            append_strv_in_gtlt(&buf, token_type_to_str_view(nodes_at(node)->token_type));
-            append_strv_in_par(&buf, nodes_at(node)->name);
-            append_strv_in_par(&buf, nodes_at(node)->str_data);
+            string_extend_strv_in_gtlt(&buf, token_type_to_str_view(nodes_at(node)->token_type));
+            string_extend_strv_in_par(&buf, nodes_at(node)->name);
+            string_extend_strv_in_par(&buf, nodes_at(node)->str_data);
             break;
         case NODE_SYMBOL:
             // fallthrough
         case NODE_FUNCTION_DEFINITION:
             // fallthrough
         case NODE_FUNCTION_CALL:
-            append_strv_in_par(&buf, nodes_at(node)->name);
+            string_extend_strv_in_par(&buf, nodes_at(node)->name);
             break;
         case NODE_LANG_TYPE:
-            append_strv_in_gtlt(&buf, nodes_at(node)->lang_type);
+            string_extend_strv_in_gtlt(&buf, nodes_at(node)->lang_type);
             break;
         case NODE_OPERATOR:
             string_extend_strv(&buf, token_type_to_str_view(nodes_at(node)->token_type));
