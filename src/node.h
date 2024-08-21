@@ -33,6 +33,8 @@ typedef struct {
 
     TOKEN_TYPE token_type;
 
+    size_t llvm_id;
+
     Str_view name;
     Str_view str_data;
     Str_view lang_type;

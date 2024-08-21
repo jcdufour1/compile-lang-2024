@@ -7,7 +7,7 @@
 
 static void block_to_strv(String* output, Node_id fun_block);
 
-static size_t count_par = 0;
+static size_t llvm_id_for_next_var = 1;
 
 static void function_params_to_strv(String* output, Node_id fun_params) {
 
@@ -18,10 +18,12 @@ static void function_params_to_strv(String* output, Node_id fun_params) {
         }
 
         char num_str[20];
-        sprintf(num_str, "%zu", count_par);
+        nodes_at(param)->llvm_id = llvm_id_for_next_var;
+        sprintf(num_str, "%zu", llvm_id_for_next_var);
         string_extend_cstr(output, "ptr noundef %");
         string_extend_cstr(output, num_str);
-        count_par++;
+
+        llvm_id_for_next_var++;
     }
 }
 
@@ -45,9 +47,18 @@ static void function_call_arguments(String* output, Node_id statement) {
                 break;
             }
             case NODE_SYMBOL: {
-                string_extend_cstr(output, "ptr noundef %0");
-                log(LOG_DEBUG, NODE_FMT"\n", node_print(argument));
-                count_par++;
+                Node_id variable_declaration;
+                if (!sym_tbl_lookup(&variable_declaration, nodes_at(argument)->name)) {
+                    log(LOG_ERROR, "unknown variable: "STR_VIEW_FMT"\n", str_view_print(nodes_at(argument)->name));
+                    abort();
+                }
+                size_t llvm_id = nodes_at(variable_declaration)->llvm_id;
+                assert(llvm_id > 0);
+                char llvm_id_str[20];
+                sprintf(llvm_id_str, "%zu", llvm_id);
+                string_extend_cstr(output, "ptr noundef %");
+                string_extend_cstr(output, llvm_id_str);
+                llvm_id_for_next_var++;
                 break;
             }
             default:
@@ -58,7 +69,7 @@ static void function_call_arguments(String* output, Node_id statement) {
 
 static void function_call_to_strv(String* output, Node_id statement) {
     char num_str[20];
-    sprintf(num_str, "%zu", count_par++);
+    sprintf(num_str, "%zu", llvm_id_for_next_var++);
 
     string_extend_cstr(output, "    %");
     string_extend_cstr(output, num_str);
@@ -81,7 +92,7 @@ static void function_definition_to_strv(String* output, Node_id fun_def) {
     string_append(output, '(');
     function_params_to_strv(output, params);
     string_append(output, ')');
-    count_par++;
+    llvm_id_for_next_var++;
 
     string_extend_cstr(output, " {\n");
 
@@ -97,11 +108,9 @@ static void block_to_strv(String* output, Node_id fun_block) {
     nodes_foreach_child(statement, fun_block) {
         switch (nodes_at(statement)->type) {
             case NODE_FUNCTION_DEFINITION:
-                log(LOG_DEBUG, "function_defintion thing\n");
                 function_definition_to_strv(output, statement);
                 break;
             case NODE_FUNCTION_CALL:
-                log(LOG_DEBUG, "function_call thing\n");
                 function_call_to_strv(output, statement);
                 break;
             default:
@@ -147,8 +156,11 @@ static void llvm_from_tree_to_strv(String* output, Node_id root) {
 
 static void symbols_to_strv(String* output) {
     for (size_t idx = 0; idx < symbol_table.capacity; idx++) {
-        Symbol_table_node curr_node = symbol_table.table_nodes[idx];
+        const Symbol_table_node curr_node = symbol_table.table_nodes[idx];
         if (curr_node.status != SYM_TBL_OCCUPIED) {
+            continue;
+        }
+        if (nodes_at(curr_node.node)->type != NODE_LITERAL) {
             continue;
         }
 

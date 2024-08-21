@@ -140,6 +140,7 @@ static bool extract_function_parameter(Node_id* child, Tk_view* tokens) {
     nodes_at(param)->type = NODE_LANG_TYPE;
     nodes_at(param)->lang_type = tk_view_front(tk_view_chop_front(&param_tokens)).text;
     nodes_at(param)->name = tk_view_front(tk_view_chop_front(&param_tokens)).text;
+    sym_tbl_add(param);
 
     *child = param;
     return true;
@@ -229,7 +230,7 @@ static Node_id parse_function_definition(Tk_view tokens) {
     assert(tk_view_front(open_par).type == TOKEN_OPEN_PAR);
     size_t parameters_len;
     get_idx_matching_token(&parameters_len, tokens, TOKEN_CLOSE_PAR);
-    Tk_view parameters_tokens = tk_view_chop_count(&tokens, parameters_len); // exclude ()
+    Tk_view parameters_tokens = tk_view_chop_count(&tokens, parameters_len);
     Node_id parameters = parse_function_parameters(parameters_tokens);
     nodes_append_child(function, parameters);
     tk_view_chop_front(&tokens); // remove )

@@ -21,10 +21,10 @@ Str_view token_print_internal(Token token) {
         case TOKEN_CLOSE_CURLY_BRACE: // fallthrough
         case TOKEN_DOUBLE_QUOTE: // fallthrough
         case TOKEN_SEMICOLON: // fallthrough
-        case TOKEN_COMMA:
-        case TOKEN_PLUS_SIGN:
-        case TOKEN_MINUS_SIGN:
-        case TOKEN_MULTIPLY_SIGN:
+        case TOKEN_COMMA: // fallthrough
+        case TOKEN_PLUS_SIGN: // fallthrough
+        case TOKEN_MINUS_SIGN: // fallthrough
+        case TOKEN_MULTIPLY_SIGN: // fallthrough
             break;
         case TOKEN_STRING_LITERAL: 
             string_append(&buf, '(');
