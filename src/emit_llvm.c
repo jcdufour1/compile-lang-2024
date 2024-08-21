@@ -185,10 +185,13 @@ static Str_view symbols_to_strv(Node_id root) {
 
 void emit_llvm_from_tree(Node_id root) {
     Str_view str_view = llvm_from_tree_to_strv(root);
-    log(LOG_VERBOSE, "\n"STR_VIEW_FMT"\n", str_view_print(str_view));
+    log(LOG_NOTE, "\n"STR_VIEW_FMT"\n", str_view_print(str_view));
 
     Str_view symbols = symbols_to_strv(root);
-    log(LOG_VERBOSE, "\n"STR_VIEW_FMT"\n", str_view_print(symbols));
+    log(LOG_NOTE, "\n"STR_VIEW_FMT"\n", str_view_print(symbols));
+
+    Str_view extern_functions = str_view_from_cstr("declare i32 @puts(ptr noundef)\n");
+    log(LOG_NOTE, "\n"STR_VIEW_FMT"\n", str_view_print(extern_functions));
 
     String file_text = string_new_from_strv(str_view);
     assert(!file_text.buf[file_text.info.count] && "string is not null terminated");
