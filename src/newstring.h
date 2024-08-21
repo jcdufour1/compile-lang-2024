@@ -24,7 +24,6 @@ static inline void string_reserve(String* str, size_t minimum_count_empty_slots)
 
 // string->buf is always null terminated
 static inline void string_append(String* str, char ch) {
-    assert(sizeof(str->buf[0]) == 1);
     vector_append(str, sizeof(str->buf[0]), &ch, STRING_DEFAULT_CAPACITY);
 }
 

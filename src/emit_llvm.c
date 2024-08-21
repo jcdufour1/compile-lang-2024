@@ -3,6 +3,7 @@
 #include "nodes.h"
 #include "emit_llvm.h"
 #include "newstring.h"
+#include "symbol_table.h"
 
 static Str_view block_to_strv(Node_id fun_block);
 static uint32_t count_local = 1;
@@ -156,9 +157,38 @@ static Str_view llvm_from_tree_to_strv(Node_id root) {
     unreachable();
 }
 
+static Str_view symbols_to_strv(Node_id root) {
+    static String buf = {0};
+
+    for (size_t idx = 0; idx < symbol_table.capacity; idx++) {
+        Symbol_table_node curr_node = symbol_table.table_nodes[idx];
+        if (curr_node.status != SYM_TBL_OCCUPIED) {
+            continue;
+        }
+
+        char width_literal[20];
+        sprintf(width_literal, "%zu", nodes_at(curr_node.node)->str_data.count + 1);
+
+        string_extend_cstr(&buf, "@.");
+        string_extend_strv(&buf, curr_node.key);
+        string_extend_cstr(&buf, " = private unnamed_addr_constant [");
+        string_extend_cstr(&buf, width_literal);
+        string_extend_cstr(&buf, "xi8] c\"");
+        string_extend_strv(&buf, nodes_at(curr_node.node)->str_data);
+        string_extend_cstr(&buf, "\\00\", align 1");
+        string_extend_cstr(&buf, "\n");
+    }
+
+    Str_view str_view = {.str = buf.buf, .count = buf.info.count};
+    return str_view;
+}
+
 void emit_llvm_from_tree(Node_id root) {
     Str_view str_view = llvm_from_tree_to_strv(root);
     log(LOG_VERBOSE, "\n"STR_VIEW_FMT"\n", str_view_print(str_view));
+
+    Str_view symbols = symbols_to_strv(root);
+    log(LOG_VERBOSE, "\n"STR_VIEW_FMT"\n", str_view_print(symbols));
 
     String file_text = string_new_from_strv(str_view);
     assert(!file_text.buf[file_text.info.count] && "string is not null terminated");
