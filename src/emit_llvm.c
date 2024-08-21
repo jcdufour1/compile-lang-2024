@@ -61,6 +61,8 @@ static void function_definition_to_strv(String* output, Node_id fun_def) {
     Node_id block = nodes_get_child_of_type(fun_def, NODE_BLOCK);
     block_to_strv(output, block);
 
+    string_extend_cstr(output, "    ret i32 0\n");
+
     string_extend_cstr(output, "}\n");
 }
 
@@ -128,9 +130,9 @@ static void symbols_to_strv(String* output) {
 
         string_extend_cstr(output, "@.");
         string_extend_strv(output, curr_node.key);
-        string_extend_cstr(output, " = private unnamed_addr_constant [");
+        string_extend_cstr(output, " = private unnamed_addr constant [ ");
         string_extend_cstr(output, width_literal);
-        string_extend_cstr(output, "xi8] c\"");
+        string_extend_cstr(output, " x i8] c\"");
         string_extend_strv(output, nodes_at(curr_node.node)->str_data);
         string_extend_cstr(output, "\\00\", align 1");
         string_extend_cstr(output, "\n");
@@ -144,8 +146,10 @@ void emit_llvm_from_tree(Node_id root) {
     symbols_to_strv(&output);
 
     string_extend_cstr(&output, "declare i32 @puts(ptr noundef)\n");
+
     log(LOG_NOTE, "\n"STRING_FMT"\n", string_print(output));
 
-    //write_file("main.ll", file_text.buf);
+    Str_view final_output = {.str = output.buf, .count = output.info.count};
+    write_file("test.ll", final_output);
 }
 

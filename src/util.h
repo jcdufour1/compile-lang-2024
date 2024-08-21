@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include "str_view_struct.h"
 
 #define LOG_TRACE   0
 #define LOG_DEBUG   1
@@ -115,6 +116,9 @@ static inline const char* bool_print(bool condition) {
 static inline void safe_free_internal(void* ptr) {
     free(ptr);
 }
+
+
+void write_file(const char* file_path, Str_view text_to_write);
 
 #define safe_free(ptr) \
     safe_free_internal(ptr); \

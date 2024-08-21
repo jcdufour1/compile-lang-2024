@@ -5,11 +5,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "util.h"
-
-typedef struct {
-    const char* str;
-    size_t count;
-} Str_view;
+#include "str_view_struct.h"
 
 static inline char str_view_front(Str_view str_view) {
     if (str_view.count < 1) {

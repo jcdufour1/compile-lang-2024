@@ -1,5 +1,5 @@
 fn println() {
-    puts("hello");
+    puts("hello world");
 }
 
 fn main() {
