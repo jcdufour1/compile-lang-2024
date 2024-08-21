@@ -95,7 +95,7 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text) 
 Tokens tokenize(const String file_text) {
     Tokens tokens = {0};
 
-    Str_view curr_file_text = {.str = file_text.buf, .count = file_text.count};
+    Str_view curr_file_text = {.str = file_text.buf, .count = file_text.info.count};
 
     size_t line_num = 0;
     Token curr_token;

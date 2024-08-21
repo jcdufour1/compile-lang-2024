@@ -11,6 +11,7 @@
 #include "tokenizer.h"
 #include "parser.h"
 #include "emit_llvm.h"
+#include "symbol_table.h"
 #include <stb_ds.h>
 
 typedef struct {
@@ -104,7 +105,7 @@ static Parameters parse_args(int argc, char** argv) {
 }
 
 static bool read_file(String* file_text, const String* input_file_name) {
-    assert(!input_file_name->buf[input_file_name->count]);
+    assert(!input_file_name->buf[input_file_name->info.count]);
     memset(file_text, 0, sizeof(*file_text));
     FILE* file = fopen(input_file_name->buf, "rb");
     if (!file) {
@@ -117,7 +118,7 @@ static bool read_file(String* file_text, const String* input_file_name) {
     do {
         string_reserve(file_text, buf_size);
         amount_read = fread(file_text->buf, 1, buf_size, file);
-        file_text->count += amount_read;
+        file_text->info.count += amount_read;
     } while (amount_read > 0);
 
     return true;
@@ -135,6 +136,10 @@ int main(int argc, char** argv) {
     Tokens tokens = tokenize(file_text);
 
     Node_id root = parse(tokens);
+
+    Node_id item;
+    assert(sym_tbl_lookup(&item, str_view_from_cstr("str5")));
+    log(LOG_DEBUG, NODE_FMT"\n", node_print(item));
 
     if (params.emit_llvm) {
         emit_llvm_from_tree(root);

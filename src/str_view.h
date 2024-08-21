@@ -70,6 +70,7 @@ static inline int str_view_cmp_cstr(Str_view str_view, const char* cstr) {
     return strncmp(str_view.str, cstr, str_view.count);
 }
 
+// only string literals can be passed into this function
 static inline Str_view str_view_from_cstr(const char* cstr) {
     Str_view str_view;
     str_view.str = cstr;

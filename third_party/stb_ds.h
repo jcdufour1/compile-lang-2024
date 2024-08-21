@@ -1050,7 +1050,7 @@ typedef int STBDS_SIPHASH_2_4_can_only_be_used_in_64_bit_builds[sizeof(size_t) =
 
 static size_t stbds_siphash_bytes(const void *p, size_t len, size_t seed)
 {
-  unsigned char *d = (unsigned char *) p;
+  const unsigned char *d = p;
   size_t i,j;
   size_t v0,v1,v2,v3, data;
 
@@ -1118,7 +1118,7 @@ size_t stbds_hash_bytes(const void *p, size_t len, size_t seed)
 #ifdef STBDS_SIPHASH_2_4
   return stbds_siphash_bytes(p,len,seed);
 #else
-  unsigned char *d = (unsigned char *) p;
+  const unsigned char *d = p;
 
   if (len == 4) {
     unsigned int hash = d[0] | (d[1] << 8) | (d[2] << 16) | (d[3] << 24);

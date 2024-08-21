@@ -6,7 +6,7 @@ Str_view token_print_internal(Token token) {
     string_set_to_zero_len(&buf);
 
     string_extend_strv(&buf, token_type_to_str_view(token.type));
-    assert(strlen(buf.buf) == buf.count);
+    assert(strlen(buf.buf) == buf.info.count);
 
     // add token text
     switch (token.type) {
@@ -40,11 +40,11 @@ Str_view token_print_internal(Token token) {
             unreachable();
     }
 
-    assert(strlen(buf.buf) == buf.count);
+    assert(strlen(buf.buf) == buf.info.count);
     string_add_int(&buf, token.line_num);
 
-    assert(strlen(buf.buf) == buf.count);
-    Str_view str_view = {.str = buf.buf, .count = buf.count};
+    assert(strlen(buf.buf) == buf.info.count);
+    Str_view str_view = {.str = buf.buf, .count = buf.info.count};
     return str_view;
 }
 

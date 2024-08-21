@@ -34,6 +34,7 @@ typedef struct {
     TOKEN_TYPE token_type;
 
     Str_view name;
+    Str_view str_data;
     Str_view lang_type;
 } Node;
 

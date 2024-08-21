@@ -90,7 +90,7 @@ static inline bool sym_tbl_is_equal(Str_view a, Str_view b) {
         return false;
     }
 
-    return 0 == memcmp(a.str, a.str, b.count);
+    return 0 == memcmp(a.str, b.str, b.count);
 }
 
 // return false if symbol is not found

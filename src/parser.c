@@ -5,6 +5,7 @@
 #include "assert.h"
 #include "token_view.h"
 #include "symbol_table.h"
+#include "string_vec.h"
 
 static Node_id parse_rec(Tk_view tokens);
 static Node_id parse_function_single_return_type(Tk_view tokens);
@@ -17,6 +18,24 @@ static Node_id parse_block(Tk_view tokens);
             log_indent(log_level, indent, " "TOKEN_FMT"\n", token_print((token_view).tokens[idx])); \
         } \
     } while(0);
+
+static Str_view literal_name_new() {
+    static String_vec literal_strings = {0};
+    static size_t count = 0;
+
+    char var_name[20];
+    sprintf(var_name, "str%zu", count);
+
+    String symbol_name = {0};
+    string_cpy_cstr_inplace(&symbol_name, var_name);
+    string_vec_append(&literal_strings, symbol_name);
+
+    count++;
+
+    String symbol_in_vec = literal_strings.buf[literal_strings.info.count - 1];
+    Str_view str_view = {.str = symbol_in_vec.buf, .count = symbol_in_vec.info.count};
+    return str_view;
+}
 
 // TODO: make this work when there are eg. nested (())
 static bool get_idx_matching_token(size_t* idx_matching, Tk_view tokens, TOKEN_TYPE type_to_match) {
@@ -246,8 +265,11 @@ static bool extract_function_definition(Node_id* child, Tk_view* tokens) {
 static Node_id parse_literal(Tk_view tokens) {
     Node_id new_node = node_new();
     nodes_at(new_node)->type = NODE_LITERAL;
-    nodes_at(new_node)->name = tk_view_front(tokens).text;
+    nodes_at(new_node)->name = literal_name_new();
+    assert(nodes_at(new_node)->str_data.count < 1);
+    nodes_at(new_node)->str_data = tk_view_front(tokens).text;
     nodes_at(new_node)->token_type = tk_view_front(tokens).type;
+    log(LOG_DEBUG, NODE_FMT"\n", node_print(new_node));
 
     sym_tbl_add(new_node);
     return new_node;

@@ -76,7 +76,7 @@ static inline Str_view tk_view_print_internal(Tk_view token_view) {
         string_extend_cstr(&buf, ";    ");
     }
 
-    Str_view str_view = {.str = buf.buf, .count = buf.count};
+    Str_view str_view = {.str = buf.buf, .count = buf.info.count};
     return str_view;
 }
 

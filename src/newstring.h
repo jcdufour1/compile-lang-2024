@@ -4,36 +4,26 @@
 #include <string.h>
 #include "util.h"
 #include "str_view.h"
+#include "vector.h"
 
 #define STRING_DEFAULT_CAPACITY 4048
 
 typedef struct {
+    Vec_base info;
     char* buf;
-    size_t count;
-    size_t capacity;
 } String;
 
 #define STRING_FMT "%.*s"
 
-#define string_print(string) (int)((string).count), (string).buf
+#define string_print(string) (int)((string).info.count), (string).buf
 
 static inline void string_reserve(String* str, size_t minimum_count_empty_slots) {
-    // str->capacity must be at least one greater than str->count for null termination
-    while (str->count + minimum_count_empty_slots + 1 > str->capacity) {
-        if (str->capacity < 1) {
-            str->capacity = STRING_DEFAULT_CAPACITY;
-            str->buf = safe_malloc(str->capacity, sizeof(str->buf[0]));
-        } else {
-            str->capacity *= 2;
-            str->buf = safe_realloc(str->buf, str->capacity, sizeof(str->buf[0]));
-        }
-    }
+    vector_reserve(str, sizeof(str->buf[0]), minimum_count_empty_slots, STRING_DEFAULT_CAPACITY);
 }
 
 // string->buf is always null terminated
 static inline void string_append(String* str, char ch) {
-    string_reserve(str, 1);
-    str->buf[str->count++] = ch;
+    vector_append(str, sizeof(str->buf[0]), &ch, STRING_DEFAULT_CAPACITY);
 }
 
 // string->buf is always null terminated
@@ -58,11 +48,7 @@ static inline String string_new_from_cstr(const char* cstr) {
 }
 
 static inline void string_set_to_zero_len(String* string) {
-    if (string->count < 1) {
-        return;
-    }
-    memset(string->buf, 0, sizeof(string->buf[0])*string->count);
-    string->count = 0;
+    vector_set_to_zero_len(string, sizeof(string->buf[0]));
 }
 
 // if string is already initialized (but may or may not be empty)
@@ -83,7 +69,7 @@ static inline void string_cpy_cstr_inplace(String* string, const char* cstr) {
 }
 
 static inline void string_extend_string(String* dest, const String src) {
-    for (size_t idx = 0; idx < src.count; idx++) {
+    for (size_t idx = 0; idx < src.info.count; idx++) {
         string_append(dest, src.buf[idx]);
     }
 }
