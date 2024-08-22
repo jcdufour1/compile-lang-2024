@@ -10,6 +10,6 @@ fn println(String string1, String string2) i32 {
 }
 
 fn main() {
-    println("hello", "world");
+    return println("hello", "world");
     return println("bye world", "bye again");
 }

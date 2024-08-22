@@ -76,8 +76,6 @@ static void function_call_to_strv(String* output, Node_id statement) {
 
     nodes_at(statement)->llvm_id = llvm_id_for_next_var;
 
-    llvm_id_for_next_var++;
-
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, llvm_id_for_next_var);
     string_extend_cstr(output, " = call i32 @");
@@ -89,6 +87,8 @@ static void function_call_to_strv(String* output, Node_id statement) {
     string_extend_cstr(output, ")");
 
     string_extend_cstr(output, "\n");
+
+    llvm_id_for_next_var++;
 }
 
 static void function_definition_to_strv(String* output, Node_id fun_def) {
@@ -141,11 +141,12 @@ static void function_return_statement(String* output, Node_id statement) {
             string_extend_cstr(output, "    ret i32 %");
             string_extend_size_t(output, get_return_val_llvm_id(child));
             string_extend_cstr(output, "\n");
-            return;
+            break;
         }
         default:
             todo();
     }
+    llvm_id_for_next_var++;
 }
 
 static void variable_definition(String* output, Node_id variable_def) {
