@@ -5,11 +5,6 @@
 #include "str_view.h"
 #include <ctype.h>
 
-static bool local_isalnum(char prev, char curr) {
-    (void) prev;
-    return isalnum(curr);
-}
-
 static bool local_isalnum_or_underscore(char prev, char curr) {
     (void) prev;
     return isalnum(curr) || curr == '_';

@@ -1,3 +1,6 @@
+
+extern("c") fn puts(String str_to_print);
+
 fn println(String string1, String string2) i32 {
     let string_hello: String = "new string 23";
     puts(string_hello);

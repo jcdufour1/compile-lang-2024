@@ -49,8 +49,14 @@ static void function_call_arguments(String* output, Node_id statement) {
             case NODE_SYMBOL: {
                 Node_id variable_declaration;
                 if (!sym_tbl_lookup(&variable_declaration, nodes_at(argument)->name)) {
-                    msg(LOG_ERROR, params.input_file_name, nodes_at(argument)->line_num, "unknown variable: "STR_VIEW_FMT"\n", str_view_print(nodes_at(argument)->name));
-                    abort();
+                    msg(
+                        LOG_WARNING,
+                        params.input_file_name,
+                        nodes_at(argument)->line_num,
+                        "unknown variable: "STR_VIEW_FMT"\n",
+                        str_view_print(nodes_at(argument)->name)
+                    );
+                    break;
                 }
                 size_t llvm_id = nodes_at(variable_declaration)->llvm_id;
                 assert(llvm_id > 0);
@@ -174,6 +180,13 @@ static void variable_definition(String* output, Node_id variable_def) {
     nodes_at(variable_def)->llvm_id++;
 }
 
+static void function_declaration(String* output, Node_id fun_decl) {
+    string_extend_cstr(output, "declare i32 @");
+    string_extend_strv(output, nodes_at(fun_decl)->name);
+    string_extend_cstr(output, " (ptr noundef) ");
+    string_extend_cstr(output, "\n");
+}
+
 static void block_to_strv(String* output, Node_id fun_block) {
     nodes_foreach_child(statement, fun_block) {
         switch (nodes_at(statement)->type) {
@@ -188,6 +201,9 @@ static void block_to_strv(String* output, Node_id fun_block) {
                 break;
             case NODE_VARIABLE_DEFINITION:
                 variable_definition(output, statement);
+                break;
+            case NODE_FUNCTION_DECLARATION:
+                function_declaration(output, statement);
                 break;
             default:
                 todo();
@@ -221,8 +237,6 @@ static void llvm_from_tree_to_strv(String* output, Node_id root) {
             todo();
         case NODE_SYMBOL:
             todo();
-        case NODE_NO_TYPE:
-            unreachable();
         default:
             unreachable();
     }
@@ -266,8 +280,6 @@ void emit_llvm_from_tree(Node_id root) {
     llvm_from_tree_to_strv(&output, root);
 
     symbols_to_strv(&output);
-
-    string_extend_cstr(&output, "declare i32 @puts(ptr noundef)\n");
 
     log(LOG_NOTE, "\n"STRING_FMT"\n", string_print(output));
 

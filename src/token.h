@@ -77,6 +77,8 @@ static inline bool token_is_operator(Token token) {
         case TOKEN_CLOSE_CURLY_BRACE: // fallthrough
         case TOKEN_SYMBOL: // fallthrough
         case TOKEN_SEMICOLON:
+        case TOKEN_COLON:
+        case TOKEN_SINGLE_EQUAL:
             return false;
         default:
             unreachable();
@@ -129,6 +131,10 @@ static inline Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
             return str_view_from_cstr("str");
         case TOKEN_NUM_LITERAL:
             return str_view_from_cstr("num");
+        case TOKEN_COLON:
+            return str_view_from_cstr(":");
+        case TOKEN_SINGLE_EQUAL:
+            return str_view_from_cstr("=");
         default:
             unreachable();
     }

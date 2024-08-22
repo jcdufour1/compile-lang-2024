@@ -22,6 +22,7 @@ typedef enum {
     NODE_SYMBOL,
     NODE_RETURN_STATEMENT,
     NODE_VARIABLE_DEFINITION,
+    NODE_FUNCTION_DECLARATION,
 } NODE_TYPE;
 
 typedef size_t Node_id;

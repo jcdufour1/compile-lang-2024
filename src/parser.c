@@ -66,6 +66,10 @@ static bool tokens_start_with_function_call(Tk_view tokens) {
         return false;
     }
 
+    if (0 == str_view_cmp_cstr(tk_view_front(tokens).text, "extern")) {
+        return false;
+    }
+
     if (tokens.tokens[0].type != TOKEN_SYMBOL) {
         return false;
     }
@@ -124,10 +128,9 @@ static size_t get_idx_lowest_precedence_operator(Tk_view tokens) {
 }
 
 static bool extract_function_parameter(Node_id* child, Tk_view* tokens) {
-    if (tokens->count < 1) {
+    if (tokens->count < 2) {
         return false;
     }
-    assert(tokens->count > 1 && "type or parameter name not specified");
 
     size_t idx_token;
     Tk_view param_tokens;
@@ -144,7 +147,9 @@ static bool extract_function_parameter(Node_id* child, Tk_view* tokens) {
 
     Node_id param = node_new();
     nodes_at(param)->type = NODE_LANG_TYPE;
+
     nodes_at(param)->lang_type = tk_view_front(tk_view_chop_front(&param_tokens)).text;
+
     nodes_at(param)->name = tk_view_front(tk_view_chop_front(&param_tokens)).text;
     sym_tbl_add(param);
 
@@ -219,6 +224,28 @@ static bool tokens_start_with_function_definition(Tk_view tokens) {
     return true;
 }
 
+static bool extract_function_parameters(Node_id* result, Tk_view* tokens) {
+    size_t parameters_len;
+    get_idx_matching_token(&parameters_len, *tokens, TOKEN_CLOSE_PAR);
+
+    Tk_view parameters_tokens = tk_view_chop_count(tokens, parameters_len);
+    tk_view_chop_front(tokens); // remove )
+
+    *result = parse_function_parameters(parameters_tokens);
+
+    return true;
+}
+
+static bool extract_function_return_types(Node_id* result, Tk_view* tokens) {
+    Tk_view return_type_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_OPEN_CURLY_BRACE);
+
+    Tk_view open_curly_brace_token = tk_view_chop_front(tokens); // remove open curly brace
+    assert(tk_view_front(open_curly_brace_token).type == TOKEN_OPEN_CURLY_BRACE);
+
+    *result = parse_function_return_types(return_type_tokens);
+    return true;
+}
+
 static Node_id parse_function_definition(Tk_view tokens) {
     tk_view_chop_front(&tokens);
     Node_id function = node_new();
@@ -232,17 +259,16 @@ static Node_id parse_function_definition(Tk_view tokens) {
     assert(open_par.tokens[0].type == TOKEN_OPEN_PAR);
 
     assert(tk_view_front(open_par).type == TOKEN_OPEN_PAR);
-    size_t parameters_len;
-    get_idx_matching_token(&parameters_len, tokens, TOKEN_CLOSE_PAR);
-    Tk_view parameters_tokens = tk_view_chop_count(&tokens, parameters_len);
-    Node_id parameters = parse_function_parameters(parameters_tokens);
+    Node_id parameters;
+    if (!extract_function_parameters(&parameters, &tokens)) {
+        todo();
+    }
     nodes_append_child(function, parameters);
-    tk_view_chop_front(&tokens); // remove )
-
-    Tk_view return_type_tokens = tk_view_chop_on_type_delim(&tokens, TOKEN_OPEN_CURLY_BRACE);
-    Tk_view open_curly_brace_token = tk_view_chop_front(&tokens); // remove open curly brace
-    assert(tk_view_front(open_curly_brace_token).type == TOKEN_OPEN_CURLY_BRACE);
-    Node_id return_types = parse_function_return_types(return_type_tokens);
+    
+    Node_id return_types;
+    if (!extract_function_return_types(&return_types, &tokens)) {
+        todo();
+    }
     nodes_append_child(function, return_types);
 
     log_tokens(LOG_TRACE, tokens, 0);
@@ -319,6 +345,52 @@ static bool extract_variable_definition(Node_id* child, Tk_view* tokens) {
     return true;
 }
 
+static Node_id parse_function_declaration(Tk_view tokens) {
+    tk_view_chop_count(&tokens, 2); // remove "extern" and "("
+    Tk_view extern_type_token = tk_view_chop_front(&tokens); // remove "c"
+    tk_view_chop_count(&tokens, 2); // remove ")" and "fn"
+
+    if (0 != str_view_cmp_cstr(tk_view_front(extern_type_token).text, "c")) {
+        todo();
+    }
+
+    Node_id fun_declaration = node_new();
+    nodes_at(fun_declaration)->type = NODE_FUNCTION_DECLARATION;
+
+    nodes_at(fun_declaration)->name = tk_view_front(tk_view_chop_front(&tokens)).text;
+    assert(nodes_at(fun_declaration)->name.count > 0);
+
+    Tk_view open_par_token = tk_view_chop_front(&tokens); // remove "("
+    assert(tk_view_front(open_par_token).type == TOKEN_OPEN_PAR);
+
+    Node_id parameters;
+    if (!extract_function_parameters(&parameters, &tokens)) {
+        todo();
+    }
+    nodes_append_child(fun_declaration, parameters);
+    
+    return fun_declaration;
+}
+
+static bool tokens_start_with_function_declaration(Tk_view tokens) {
+    if (tokens.count < 2) {
+        return false;
+    }
+
+    return 0 == str_view_cmp_cstr(tk_view_front(tokens).text, "extern");
+}
+
+static bool extract_function_declaration(Node_id* child, Tk_view* tokens) {
+    if (!tokens_start_with_function_declaration(*tokens)) {
+        return false;
+    }
+
+    Tk_view declaration_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_SEMICOLON);
+    tk_view_chop_front(tokens); // remove ;
+
+    *child = parse_function_declaration(declaration_tokens);
+    return true;
+}
 
 static Node_id parse_literal(Tk_view tokens) {
     Node_id new_node = node_new();
@@ -446,6 +518,13 @@ static bool extract_function_return_statement(Node_id* result, Tk_view* tokens) 
     return true;
 }
 
+static bool is_block(Tk_view tokens) {
+    return \
+        tokens_start_with_function_call(tokens) || \
+        tokens_start_with_function_definition(tokens) || \
+        tokens_start_with_function_declaration(tokens);
+}
+
 static Node_id parse_block(Tk_view tokens) {
     Node_id block = node_new();
     nodes_at(block)->type = NODE_BLOCK;
@@ -455,6 +534,7 @@ static Node_id parse_block(Tk_view tokens) {
         } else if (extract_function_call(&child, &tokens)) {
         } else if (extract_function_return_statement(&child, &tokens)) {
         } else if (extract_variable_definition(&child, &tokens)) {
+        } else if (extract_function_declaration(&child, &tokens)) {
         } else {
             todo();
         }
@@ -480,7 +560,7 @@ static Node_id parse_rec(Tk_view tokens) {
         return parse_symbol(tokens);
     }
 
-    if (tokens_start_with_function_call(tokens) || tokens_start_with_function_definition(tokens)) {
+    if (is_block(tokens)) {
         return parse_block(tokens);
     }
 
