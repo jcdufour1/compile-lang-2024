@@ -368,18 +368,39 @@ static bool extract_function_call(Node_id* child, Tk_view* tokens) {
     return true;
 }
 
+static Node_id parse_function_return_statement(Tk_view tokens) {
+    tk_view_chop_front(&tokens); // remove "return"
+
+    Node_id new_node = node_new();
+    nodes_at(new_node)->type = NODE_RETURN_STATEMENT;
+    nodes_append_child(new_node, parse_rec(tokens));
+    return new_node;
+}
+
+static bool extract_function_return_statement(Node_id* result, Tk_view* tokens) {
+    if (0 != str_view_cmp_cstr(tk_view_front(*tokens).text, "return")) {
+        return false;
+    }
+
+    Tk_view return_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_SEMICOLON);
+    tk_view_chop_front(tokens); // remove ;
+
+    *result = parse_function_return_statement(return_tokens);
+    return true;
+}
+
 static Node_id parse_block(Tk_view tokens) {
     Node_id block = node_new();
     nodes_at(block)->type = NODE_BLOCK;
     while (tokens.count > 0) {
         Node_id child;
         if (extract_function_definition(&child, &tokens)) {
-            nodes_append_child(block, child);
         } else if (extract_function_call(&child, &tokens)) {
-            nodes_append_child(block, child);
+        } else if (extract_function_return_statement(&child, &tokens)) {
         } else {
             todo();
         }
+        nodes_append_child(block, child);
     }
     return block;
 }

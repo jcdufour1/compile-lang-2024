@@ -57,7 +57,7 @@ static void function_call_arguments(String* output, Node_id statement) {
                 size_t llvm_id = nodes_at(variable_declaration)->llvm_id;
                 assert(llvm_id > 0);
                 char llvm_id_str[20];
-                sprintf(llvm_id_str, "%19zu", llvm_id);
+                sprintf(llvm_id_str, "%zu", llvm_id);
                 string_extend_cstr(output, "ptr noundef %");
                 string_extend_cstr(output, llvm_id_str);
                 llvm_id_for_next_var++;
@@ -101,9 +101,18 @@ static void function_definition_to_strv(String* output, Node_id fun_def) {
     Node_id block = nodes_get_child_of_type(fun_def, NODE_BLOCK);
     block_to_strv(output, block);
 
-    string_extend_cstr(output, "    ret i32 0\n");
-
     string_extend_cstr(output, "}\n");
+}
+
+static void function_return_statement(String* output, Node_id statement) {
+    Node_id child = nodes_at(statement)->left_child;
+    if (nodes_at(child)->type != NODE_LITERAL || nodes_at(child)->token_type != TOKEN_NUM_LITERAL) {
+        todo();
+    }
+
+    string_extend_cstr(output, "    ret i32 ");
+    string_extend_strv(output, nodes_at(child)->str_data);
+    string_extend_cstr(output, "\n");
 }
 
 static void block_to_strv(String* output, Node_id fun_block) {
@@ -114,6 +123,9 @@ static void block_to_strv(String* output, Node_id fun_block) {
                 break;
             case NODE_FUNCTION_CALL:
                 function_call_to_strv(output, statement);
+                break;
+            case NODE_RETURN_STATEMENT:
+                function_return_statement(output, statement);
                 break;
             default:
                 todo();
