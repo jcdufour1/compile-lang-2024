@@ -103,5 +103,12 @@ static inline Node_id nodes_get_child_of_type(Node_id parent, NODE_TYPE node_typ
     unreachable();
 }
 
+static inline size_t nodes_count_children(Node_id parent) {
+    size_t count = 0;
+    nodes_foreach_child(child, parent) {
+        count++;
+    }
+    return count;
+}
 
 #endif // NODES_H

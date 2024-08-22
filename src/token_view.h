@@ -63,6 +63,10 @@ static inline Tk_view tk_view_chop_count(Tk_view* token_view, size_t count) {
     return new;
 }
 
+static inline Tk_view tk_view_chop_count_at_most(Tk_view* token_view, size_t count) {
+    return tk_view_chop_count(token_view, MIN(token_view->count, count));
+}
+
 static inline Tk_view tk_view_chop_front(Tk_view* token_view) {
     return tk_view_chop_count(token_view, 1);
 }

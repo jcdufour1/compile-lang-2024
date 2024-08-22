@@ -75,7 +75,13 @@ static bool tokens_start_with_function_call(Tk_view tokens) {
     }
 
     size_t semicolon_pos;
-    get_idx_matching_token(&semicolon_pos, tokens, TOKEN_SEMICOLON);
+    if (!get_idx_matching_token(&semicolon_pos, tokens, TOKEN_SEMICOLON)) {
+        semicolon_pos = tokens.count;
+    }
+    if (semicolon_pos < 1) {
+        todo();
+    }
+
     if (tokens.tokens[semicolon_pos - 1].type != TOKEN_CLOSE_PAR) {
         return false;
     }
@@ -282,7 +288,6 @@ static Node_id parse_variable_definition(Tk_view variable_tokens) {
 
     Tk_view variable_name_token = tk_view_chop_front(&variable_tokens);
     nodes_at(variable_def)->name = tk_view_front(variable_name_token).text;
-    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(nodes_at(variable_def)->name));
 
     tk_view_chop_front(&variable_tokens); // remove ":"
 
@@ -323,7 +328,6 @@ static Node_id parse_literal(Tk_view tokens) {
     nodes_at(new_node)->str_data = tk_view_front(tokens).text;
     nodes_at(new_node)->token_type = tk_view_front(tokens).type;
     nodes_at(new_node)->line_num = tk_view_front(tokens).line_num;
-    log(LOG_DEBUG, NODE_FMT"\n", node_print(new_node));
 
     sym_tbl_add(new_node);
     return new_node;
@@ -337,7 +341,6 @@ static Node_id parse_symbol(Tk_view tokens) {
     nodes_at(sym_node)->name = tk_view_front(tokens).text;
     nodes_at(sym_node)->line_num = tk_view_front(tokens).line_num;
     assert(nodes_at(sym_node)->line_num > 0);
-    log(LOG_DEBUG, NODE_FMT"\n", node_print(sym_node));
     return sym_node;
 }
 
@@ -415,8 +418,8 @@ static bool extract_function_call(Node_id* child, Tk_view* tokens) {
     }
 
     assert(tk_view_front(*tokens).type == TOKEN_CLOSE_PAR);
-    assert(tk_view_at(*tokens, 1).type == TOKEN_SEMICOLON);
-    tk_view_chop_count(tokens, 2); // remove );
+    assert(tokens->count == 1 || tk_view_at(*tokens, 1).type == TOKEN_SEMICOLON);
+    tk_view_chop_count_at_most(tokens, 2); // remove );
 
     *child = function_call;
     return true;
@@ -462,10 +465,7 @@ static Node_id parse_block(Tk_view tokens) {
 
 static Node_id parse_rec(Tk_view tokens) {
     unsigned int indent_amt = 0;
-    //log_tokens(LOG_TRACE, tokens, indent_amt);
-    if (tokens.tokens[0].text.str[0] == 'j') {
-        log_tokens(LOG_DEBUG, tokens, indent_amt);
-    }
+    log_tokens(LOG_TRACE, tokens, indent_amt);
 
     if (tokens.count < 1) {
         //log_tree(LOG_VERBOSE, root);

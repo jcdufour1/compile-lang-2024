@@ -127,4 +127,6 @@ static inline void safe_free_internal(void* ptr) {
     safe_free_internal(ptr); \
     (ptr) = NULL;
 
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
 #endif // UTIL_H

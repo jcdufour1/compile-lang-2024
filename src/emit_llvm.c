@@ -70,8 +70,14 @@ static void function_call_arguments(String* output, Node_id statement) {
 }
 
 static void function_call_to_strv(String* output, Node_id statement) {
+    assert(nodes_at(statement)->llvm_id == 0);
+
+    nodes_at(statement)->llvm_id = llvm_id_for_next_var;
+
     char num_str[20];
-    sprintf(num_str, "%zu", llvm_id_for_next_var++);
+    sprintf(num_str, "%zu", llvm_id_for_next_var);
+
+    llvm_id_for_next_var++;
 
     string_extend_cstr(output, "    %");
     string_extend_cstr(output, num_str);
@@ -104,15 +110,47 @@ static void function_definition_to_strv(String* output, Node_id fun_def) {
     string_extend_cstr(output, "}\n");
 }
 
-static void function_return_statement(String* output, Node_id statement) {
-    Node_id child = nodes_at(statement)->left_child;
-    if (nodes_at(child)->type != NODE_LITERAL || nodes_at(child)->token_type != TOKEN_NUM_LITERAL) {
-        todo();
+static size_t get_return_val_llvm_id(Node_id block) {
+    assert(nodes_at(block)->type == NODE_BLOCK);
+    assert(nodes_count_children(block) == 1);
+
+    Node_id child = nodes_at(block)->left_child;
+    if (nodes_at(child)->type == NODE_FUNCTION_CALL) {
+        return nodes_at(child)->llvm_id;
     }
 
-    string_extend_cstr(output, "    ret i32 ");
-    string_extend_strv(output, nodes_at(child)->str_data);
-    string_extend_cstr(output, "\n");
+    todo();
+
+}
+
+static void function_return_statement(String* output, Node_id statement) {
+    Node_id child = nodes_at(statement)->left_child;
+    switch (nodes_at(child)->type) {
+        case NODE_LITERAL:
+            if (nodes_at(child)->token_type != TOKEN_NUM_LITERAL) {
+                todo();
+            }
+            string_extend_cstr(output, "    ret i32 ");
+            string_extend_strv(output, nodes_at(child)->str_data);
+            string_extend_cstr(output, "\n");
+            break;
+        case NODE_FUNCTION_CALL:
+            todo();
+            // fallthrough
+        case NODE_BLOCK: {
+            block_to_strv(output, child);
+            size_t return_val_llvm_id = get_return_val_llvm_id(child);
+            char return_val_llvm_id_str[20];
+            sprintf(return_val_llvm_id_str, "%zu", return_val_llvm_id);
+
+            string_extend_cstr(output, "    ret i32 %");
+            string_extend_cstr(output, return_val_llvm_id_str);
+            string_extend_cstr(output, "\n");
+            return;
+        }
+        default:
+            todo();
+    }
 }
 
 static void variable_definition(String* output, Node_id variable_def) {
