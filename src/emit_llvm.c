@@ -56,7 +56,7 @@ static void function_call_arguments(String* output, Node_id statement) {
                 }
                 size_t llvm_id = nodes_at(variable_declaration)->llvm_id;
                 assert(llvm_id > 0);
-                char llvm_id_str[20];
+                char llvm_id_str[21];
                 sprintf(llvm_id_str, "%zu", llvm_id);
                 string_extend_cstr(output, "ptr noundef %");
                 string_extend_cstr(output, llvm_id_str);
@@ -139,12 +139,8 @@ static void function_return_statement(String* output, Node_id statement) {
             // fallthrough
         case NODE_BLOCK: {
             block_to_strv(output, child);
-            size_t return_val_llvm_id = get_return_val_llvm_id(child);
-            char return_val_llvm_id_str[20];
-            sprintf(return_val_llvm_id_str, "%zu", return_val_llvm_id);
-
             string_extend_cstr(output, "    ret i32 %");
-            string_extend_cstr(output, return_val_llvm_id_str);
+            string_extend_size_t(output, get_return_val_llvm_id(child));
             string_extend_cstr(output, "\n");
             return;
         }

@@ -34,6 +34,13 @@ static inline void string_extend_cstr(String* str, const char* cstr) {
     }
 }
 
+// string->buf is always null terminated
+static inline void string_extend_size_t(String* str, size_t num) {
+    char num_str[21];
+    sprintf(num_str, "%zu", num);
+    string_extend_cstr(str, num_str);
+}
+
 static inline void string_append_strv(String* str, Str_view str_view) {
     for (size_t idx = 0; idx < str_view.count; idx++) {
         string_append(str, str_view.str[idx]);
