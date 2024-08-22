@@ -11,7 +11,8 @@ OBJS=\
 	 ${BUILD_DIR}/token.o \
 	 ${BUILD_DIR}/emit_llvm.o \
 	 ${BUILD_DIR}/hash_table.o \
-	 ${BUILD_DIR}/util.o \
+	 ${BUILD_DIR}/file.o \
+	 ${BUILD_DIR}/parameters.o \
 	 ${BUILD_DIR}/nodes.o
 
 ARGS_PROGRAM=compile examples/test.c --emit-llvm
@@ -60,8 +61,11 @@ ${BUILD_DIR}/emit_llvm.o: src/emit_llvm.c src/*.h third_party/*
 ${BUILD_DIR}/hash_table.o: src/hash_table.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/hash_table.o src/hash_table.c
 
-${BUILD_DIR}/util.o: src/util.c src/*.h third_party/*
-	cc ${C_FLAGS} -c -o ${BUILD_DIR}/util.o src/util.c
+${BUILD_DIR}/file.o: src/file.c src/*.h third_party/*
+	cc ${C_FLAGS} -c -o ${BUILD_DIR}/file.o src/file.c
+
+${BUILD_DIR}/parameters.o: src/parameters.c src/*.h third_party/*
+	cc ${C_FLAGS} -c -o ${BUILD_DIR}/parameters.o src/parameters.c
 
 
 clean:

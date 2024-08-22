@@ -24,7 +24,7 @@ void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_id root, const char
         string_append(&padding, ' ');
     }
 
-    log_file(file, line, log_level, STRING_FMT NODE_FMT"\n", string_print(padding), node_print(root));
+    log_file_new(log_level, file, line, STRING_FMT NODE_FMT"\n", string_print(padding), node_print(root));
 
     if (nodes_at(root)->left_child != NODE_IDX_NULL) {
         nodes_log_tree_rec(log_level, pad_x + 2, nodes_at(root)->left_child, file, line);

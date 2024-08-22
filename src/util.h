@@ -51,10 +51,7 @@ typedef int LOG_LEVEL;
         } \
     } while (0);
 
-#define log(log_level, ...) \
-    log_indent(log_level, 0, __VA_ARGS__);
-
-#define log_file(file, line, log_level, ...) \
+#define log_file_new(log_level, file, line, ...) \
     do { \
         if ((log_level) >= CURR_LOG_LEVEL) { \
             switch ((log_level)) { \
@@ -70,6 +67,14 @@ typedef int LOG_LEVEL;
             fprintf(stderr, __VA_ARGS__); \
         } \
     } while (0);
+
+// print messages that are intended for debugging
+#define log(log_level, ...) \
+    log_indent(log_level, 0, __VA_ARGS__);
+
+// print messages that are intended for the user (eg. syntax errors)
+#define msg(log_level, file, line, ...) \
+    log_file_new(log_level, file, line, __VA_ARGS__);
 
 #define todo() \
     do { \
@@ -117,8 +122,6 @@ static inline void safe_free_internal(void* ptr) {
     free(ptr);
 }
 
-
-void write_file(const char* file_path, Str_view text_to_write);
 
 #define safe_free(ptr) \
     safe_free_internal(ptr); \

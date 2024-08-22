@@ -24,7 +24,7 @@ Str_view token_print_internal(Token token) {
         case TOKEN_COMMA: // fallthrough
         case TOKEN_PLUS_SIGN: // fallthrough
         case TOKEN_MINUS_SIGN: // fallthrough
-        case TOKEN_MULTIPLY_SIGN: // fallthrough
+        case TOKEN_MULTIPLY_SIGN:
             break;
         case TOKEN_STRING_LITERAL: 
             string_append(&buf, '(');
@@ -40,7 +40,6 @@ Str_view token_print_internal(Token token) {
             unreachable();
     }
 
-    log(LOG_DEBUG, "thing thing\n");
     assert(strlen(buf.buf) == buf.info.count);
     string_add_int(&buf, token.line_num);
 

@@ -4,6 +4,8 @@
 #include "emit_llvm.h"
 #include "newstring.h"
 #include "symbol_table.h"
+#include "parameters.h"
+#include "file.h"
 
 static void block_to_strv(String* output, Node_id fun_block);
 
@@ -49,13 +51,13 @@ static void function_call_arguments(String* output, Node_id statement) {
             case NODE_SYMBOL: {
                 Node_id variable_declaration;
                 if (!sym_tbl_lookup(&variable_declaration, nodes_at(argument)->name)) {
-                    log(LOG_ERROR, "unknown variable: "STR_VIEW_FMT"\n", str_view_print(nodes_at(argument)->name));
+                    msg(LOG_ERROR, params.input_file_name, nodes_at(argument)->line_num, "unknown variable: "STR_VIEW_FMT"\n", str_view_print(nodes_at(argument)->name));
                     abort();
                 }
                 size_t llvm_id = nodes_at(variable_declaration)->llvm_id;
                 assert(llvm_id > 0);
                 char llvm_id_str[20];
-                sprintf(llvm_id_str, "%zu", llvm_id);
+                sprintf(llvm_id_str, "%19zu", llvm_id);
                 string_extend_cstr(output, "ptr noundef %");
                 string_extend_cstr(output, llvm_id_str);
                 llvm_id_for_next_var++;

@@ -147,9 +147,7 @@ static bool extract_function_parameter(Node_id* child, Tk_view* tokens) {
 }
 
 static Node_id parse_function_parameters(Tk_view tokens) {
-    //log(LOG_TRACE, "entering parse_function_parameters\n");
-    log(LOG_DEBUG, "entering parse_function_parameters\n");
-    log_tokens(LOG_DEBUG, tokens, 0);
+    log(LOG_TRACE, "entering parse_function_parameters\n");
 
     Node_id fun_params = node_new();
     nodes_at(fun_params)->type = NODE_FUNCTION_PARAMETERS;
@@ -270,6 +268,7 @@ static Node_id parse_literal(Tk_view tokens) {
     assert(nodes_at(new_node)->str_data.count < 1);
     nodes_at(new_node)->str_data = tk_view_front(tokens).text;
     nodes_at(new_node)->token_type = tk_view_front(tokens).type;
+    nodes_at(new_node)->line_num = tk_view_front(tokens).line_num;
     log(LOG_DEBUG, NODE_FMT"\n", node_print(new_node));
 
     sym_tbl_add(new_node);
@@ -282,6 +281,9 @@ static Node_id parse_symbol(Tk_view tokens) {
     Node_id sym_node = node_new();
     nodes_at(sym_node)->type = NODE_SYMBOL;
     nodes_at(sym_node)->name = tk_view_front(tokens).text;
+    nodes_at(sym_node)->line_num = tk_view_front(tokens).line_num;
+    assert(nodes_at(sym_node)->line_num > 0);
+    log(LOG_DEBUG, NODE_FMT"\n", node_print(sym_node));
     return sym_node;
 }
 
@@ -300,6 +302,7 @@ static Node_id parse_operation(Tk_view tokens) {
     Node_id operator_node = node_new();
     nodes_at(operator_node)->type = NODE_OPERATOR;
     nodes_at(operator_node)->token_type = tk_view_front(operator_token).type;
+    nodes_at(operator_node)->line_num = tk_view_front(operator_token).line_num;
 
     Node_id left_node = parse_rec(left_tokens);
     Node_id right_node = parse_rec(right_tokens);
@@ -329,7 +332,6 @@ static bool extract_function_argument(Node_id* child, Tk_view* tokens) {
         tk_view_chop_front(tokens); // remove comma
     }
 
-    log(LOG_DEBUG, "curr_arg_tokens tokens: "TK_VIEW_FMT"\n", tk_view_print(curr_arg_tokens));
     *child = parse_rec(curr_arg_tokens);
     return true;
 }
@@ -352,7 +354,6 @@ static bool extract_function_call(Node_id* child, Tk_view* tokens) {
         todo();
     }
     Tk_view arguments_tokens = tk_view_chop_count(tokens, parameters_end);
-    log_tokens(LOG_DEBUG, arguments_tokens, 0);
 
     Node_id argument;
     while (extract_function_argument(&argument, &arguments_tokens)) {
@@ -385,7 +386,10 @@ static Node_id parse_block(Tk_view tokens) {
 
 static Node_id parse_rec(Tk_view tokens) {
     unsigned int indent_amt = 0;
-    log_tokens(LOG_TRACE, tokens, indent_amt);
+    //log_tokens(LOG_TRACE, tokens, indent_amt);
+    if (tokens.tokens[0].text.str[0] == 'j') {
+        log_tokens(LOG_DEBUG, tokens, indent_amt);
+    }
 
     if (tokens.count < 1) {
         //log_tree(LOG_VERBOSE, root);

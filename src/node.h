@@ -38,6 +38,8 @@ typedef struct {
     Str_view name;
     Str_view str_data;
     Str_view lang_type;
+
+    uint32_t line_num;
 } Node;
 
 #define NODE_FMT STRING_FMT

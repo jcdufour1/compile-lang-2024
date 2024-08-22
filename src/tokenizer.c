@@ -97,7 +97,7 @@ Tokens tokenize(const String file_text) {
 
     Str_view curr_file_text = {.str = file_text.buf, .count = file_text.info.count};
 
-    size_t line_num = 0;
+    size_t line_num = 1;
     Token curr_token;
     while (get_next_token(&line_num, &curr_token, &curr_file_text)) {
         log(LOG_TRACE, "token received: "TOKEN_FMT"\n", token_print(curr_token));
