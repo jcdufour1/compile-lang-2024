@@ -10,6 +10,11 @@ static bool local_isalnum(char prev, char curr) {
     return isalnum(curr);
 }
 
+static bool local_isalnum_or_underscore(char prev, char curr) {
+    (void) prev;
+    return isalnum(curr) || curr == '_';
+}
+
 static bool local_isdigit(char prev, char curr) {
     (void) prev;
     return isdigit(curr);
@@ -36,7 +41,7 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text) 
     token->line_num = *line_num;
 
     if (isalpha(str_view_front(*file_text))) {
-        token->text = str_view_chop_on_cond(file_text, local_isalnum);
+        token->text = str_view_chop_on_cond(file_text, local_isalnum_or_underscore);
         token->type = TOKEN_SYMBOL;
         return true;
     } else if (isdigit(str_view_front(*file_text))) {
@@ -85,6 +90,20 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text) 
         // TODO: * may not always be multiplication
         str_view_chop_front(file_text);
         token->type = TOKEN_MULTIPLY_SIGN;
+        return true;
+    } else if (str_view_front(*file_text) == ':') {
+        str_view_chop_front(file_text);
+        token->type = TOKEN_COLON;
+        return true;
+    } else if (str_view_front(*file_text) == '+') {
+        str_view_chop_front(file_text);
+        assert((file_text->count < 1 || str_view_front(*file_text) != '+') && "double + not implemented");
+        token->type = TOKEN_SINGLE_PLUS;
+        return true;
+    } else if (str_view_front(*file_text) == '=') {
+        str_view_chop_front(file_text);
+        assert((file_text->count < 1 || str_view_front(*file_text) != '=') && "double = not implemented");
+        token->type = TOKEN_SINGLE_EQUAL;
         return true;
     } else {
         log(LOG_FETAL, "unknown symbol: %c (%x)\n", str_view_front(*file_text), str_view_front(*file_text));

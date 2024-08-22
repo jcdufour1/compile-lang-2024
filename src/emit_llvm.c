@@ -115,6 +115,38 @@ static void function_return_statement(String* output, Node_id statement) {
     string_extend_cstr(output, "\n");
 }
 
+static void variable_definition(String* output, Node_id variable_def) {
+    nodes_at(variable_def)->llvm_id = llvm_id_for_next_var;
+    llvm_id_for_next_var++;
+
+    char num_str[20];
+    sprintf(num_str, "%zu", nodes_at(variable_def)->llvm_id);
+
+    string_extend_cstr(output, "    %");
+    string_extend_cstr(output, num_str);
+    string_extend_cstr(output, " = alloca ptr, align 8");
+    string_extend_cstr(output, "\n");
+
+    string_extend_cstr(output, "    store ptr @.");
+    string_extend_strv(output, nodes_at(variable_def)->name);
+    string_extend_cstr(output, ", ptr %");
+    string_extend_cstr(output, num_str);
+    string_extend_cstr(output, ", align 8");
+    string_extend_cstr(output, "\n");
+
+    char num_str_2[20];
+    sprintf(num_str_2, "%zu", llvm_id_for_next_var);
+    llvm_id_for_next_var++;
+    string_extend_cstr(output, "    %");
+    string_extend_cstr(output, num_str_2);
+    string_extend_cstr(output, " = load ptr, ptr %");
+    string_extend_cstr(output, num_str);
+    string_extend_cstr(output, ", align 8");
+    string_extend_cstr(output, "\n");
+
+    nodes_at(variable_def)->llvm_id++;
+}
+
 static void block_to_strv(String* output, Node_id fun_block) {
     nodes_foreach_child(statement, fun_block) {
         switch (nodes_at(statement)->type) {
@@ -126,6 +158,9 @@ static void block_to_strv(String* output, Node_id fun_block) {
                 break;
             case NODE_RETURN_STATEMENT:
                 function_return_statement(output, statement);
+                break;
+            case NODE_VARIABLE_DEFINITION:
+                variable_definition(output, statement);
                 break;
             default:
                 todo();
@@ -174,17 +209,25 @@ static void symbols_to_strv(String* output) {
         if (curr_node.status != SYM_TBL_OCCUPIED) {
             continue;
         }
-        if (nodes_at(curr_node.node)->type != NODE_LITERAL) {
-            continue;
+        switch (nodes_at(curr_node.node)->type) {
+            case NODE_LITERAL:
+                // fallthrough
+            case NODE_VARIABLE_DEFINITION:
+                break;
+            case NODE_LANG_TYPE:
+                break;
+            default:
+                log(LOG_FETAL, NODE_FMT"\n", node_print(curr_node.node));
+                todo();
         }
 
-        char width_literal[20];
-        sprintf(width_literal, "%zu", nodes_at(curr_node.node)->str_data.count + 1);
+        char literal_width[20];
+        sprintf(literal_width, "%zu", nodes_at(curr_node.node)->str_data.count + 1);
 
         string_extend_cstr(output, "@.");
         string_extend_strv(output, curr_node.key);
         string_extend_cstr(output, " = private unnamed_addr constant [ ");
-        string_extend_cstr(output, width_literal);
+        string_extend_cstr(output, literal_width);
         string_extend_cstr(output, " x i8] c\"");
         string_extend_strv(output, nodes_at(curr_node.node)->str_data);
         string_extend_cstr(output, "\\00\", align 1");

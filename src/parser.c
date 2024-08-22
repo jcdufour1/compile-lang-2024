@@ -261,6 +261,60 @@ static bool extract_function_definition(Node_id* child, Tk_view* tokens) {
     return true;
 }
 
+static bool tokens_start_with_variable_definition(Tk_view tokens) {
+    if (tk_view_front(tokens).type != TOKEN_SYMBOL) {
+        return false;
+    }
+
+    if (0 != str_view_cmp_cstr(tk_view_front(tokens).text, "let")) {
+        return false;
+    }
+
+    return true;
+}
+
+static Node_id parse_variable_definition(Tk_view variable_tokens) {
+    Tk_view return_keyword_token = tk_view_chop_front(&variable_tokens); // remove "return"
+    assert(0 == token_is_equal(tk_view_front(return_keyword_token), "return", TOKEN_SYMBOL));
+
+    Node_id variable_def = node_new();
+    nodes_at(variable_def)->type = NODE_VARIABLE_DEFINITION;
+
+    Tk_view variable_name_token = tk_view_chop_front(&variable_tokens);
+    nodes_at(variable_def)->name = tk_view_front(variable_name_token).text;
+    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(nodes_at(variable_def)->name));
+
+    tk_view_chop_front(&variable_tokens); // remove ":"
+
+    nodes_at(variable_def)->lang_type = tk_view_front(tk_view_chop_front(&variable_tokens)).text;
+
+    tk_view_chop_front(&variable_tokens); // remove "="
+
+    nodes_at(variable_def)->str_data = tk_view_front(tk_view_chop_front(&variable_tokens)).text;
+
+    sym_tbl_add(variable_def);
+
+    Node_id dummy;
+    assert(sym_tbl_lookup(&dummy, str_view_from_cstr("string_hello")));
+
+    assert(variable_tokens.count == 0);
+
+    return variable_def;
+}
+
+static bool extract_variable_definition(Node_id* child, Tk_view* tokens) {
+    if (!tokens_start_with_variable_definition(*tokens)) {
+        return false;
+    }
+
+    Tk_view variable_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_SEMICOLON);
+    tk_view_chop_front(tokens); // remove ;
+
+    *child = parse_variable_definition(variable_tokens);
+    return true;
+}
+
+
 static Node_id parse_literal(Tk_view tokens) {
     Node_id new_node = node_new();
     nodes_at(new_node)->type = NODE_LITERAL;
@@ -397,6 +451,7 @@ static Node_id parse_block(Tk_view tokens) {
         if (extract_function_definition(&child, &tokens)) {
         } else if (extract_function_call(&child, &tokens)) {
         } else if (extract_function_return_statement(&child, &tokens)) {
+        } else if (extract_variable_definition(&child, &tokens)) {
         } else {
             todo();
         }

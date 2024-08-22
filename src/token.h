@@ -26,6 +26,9 @@ typedef enum {
     TOKEN_DOUBLE_QUOTE,
     TOKEN_SEMICOLON,
     TOKEN_COMMA,
+    TOKEN_COLON,
+    TOKEN_SINGLE_PLUS,
+    TOKEN_SINGLE_EQUAL,
 } TOKEN_TYPE;
 
 typedef struct {
@@ -129,6 +132,14 @@ static inline Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
         default:
             unreachable();
     }
+}
+
+static inline bool token_is_equal(const Token token, const char* cstr, TOKEN_TYPE token_type) {
+    if (token.type != token_type) {
+        return false;
+    }
+
+    return 0 == str_view_cmp_cstr(token.text, cstr);
 }
 
 #define token_print(token) str_view_print(token_print_internal(token))

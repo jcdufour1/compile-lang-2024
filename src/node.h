@@ -21,6 +21,7 @@ typedef enum {
     NODE_OPERATOR,
     NODE_SYMBOL,
     NODE_RETURN_STATEMENT,
+    NODE_VARIABLE_DEFINITION,
 } NODE_TYPE;
 
 typedef size_t Node_id;
@@ -36,9 +37,9 @@ typedef struct {
 
     size_t llvm_id;
 
-    Str_view name;
-    Str_view str_data;
-    Str_view lang_type;
+    Str_view name; // eg. "string1" in "let string1: String = "hello""
+    Str_view str_data; // eg. "hello" in "let string1: String = "hello""
+    Str_view lang_type; // eg. "String" in "let string1: String = "hello""
 
     uint32_t line_num;
 } Node;

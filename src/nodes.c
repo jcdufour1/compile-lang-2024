@@ -1,5 +1,3 @@
-#include "newstring.h"
-#include "node.h"
 #include "nodes.h"
 #include "str_view.h"
 #include "util.h"
@@ -15,6 +13,7 @@ static const char* NODE_OPERATOR_DESCRIPTION = "operator";
 static const char* NODE_BLOCK_DESCRIPTION = "block";
 static const char* NODE_SYMBOL_DESCRIPTION = "sym";
 static const char* NODE_RETURN_STATEMENT_DESCRIPTION = "return";
+static const char* NODE_VARIABLE_DEFINITION_DESCRIPTION = "var_def";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_id root, const char* file, int line) {
@@ -59,6 +58,8 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_SYMBOL_DESCRIPTION);
         case NODE_RETURN_STATEMENT:
             return str_view_from_cstr(NODE_RETURN_STATEMENT_DESCRIPTION);
+        case NODE_VARIABLE_DEFINITION:
+            return str_view_from_cstr(NODE_VARIABLE_DEFINITION_DESCRIPTION);
         case NODE_NO_TYPE:
             return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
         default:
@@ -86,6 +87,8 @@ String node_print_internal(Node_id node) {
         case NODE_FUNCTION_CALL:
             string_extend_strv_in_par(&buf, nodes_at(node)->name);
             break;
+        case NODE_VARIABLE_DEFINITION:
+            // fallthrough
         case NODE_LANG_TYPE:
             string_extend_strv_in_gtlt(&buf, nodes_at(node)->lang_type);
             break;
