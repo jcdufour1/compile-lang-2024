@@ -19,11 +19,9 @@ static void function_params_to_strv(String* output, Node_id fun_params) {
             string_extend_cstr(output, ", ");
         }
 
-        char num_str[20];
         nodes_at(param)->llvm_id = llvm_id_for_next_var;
-        sprintf(num_str, "%zu", llvm_id_for_next_var);
         string_extend_cstr(output, "ptr noundef %");
-        string_extend_cstr(output, num_str);
+        string_extend_size_t(output, llvm_id_for_next_var);
 
         llvm_id_for_next_var++;
     }
@@ -56,10 +54,8 @@ static void function_call_arguments(String* output, Node_id statement) {
                 }
                 size_t llvm_id = nodes_at(variable_declaration)->llvm_id;
                 assert(llvm_id > 0);
-                char llvm_id_str[21];
-                sprintf(llvm_id_str, "%zu", llvm_id);
                 string_extend_cstr(output, "ptr noundef %");
-                string_extend_cstr(output, llvm_id_str);
+                string_extend_size_t(output, llvm_id);
                 llvm_id_for_next_var++;
                 break;
             }
@@ -74,13 +70,10 @@ static void function_call_to_strv(String* output, Node_id statement) {
 
     nodes_at(statement)->llvm_id = llvm_id_for_next_var;
 
-    char num_str[20];
-    sprintf(num_str, "%zu", llvm_id_for_next_var);
-
     llvm_id_for_next_var++;
 
     string_extend_cstr(output, "    %");
-    string_extend_cstr(output, num_str);
+    string_extend_size_t(output, llvm_id_for_next_var);
     string_extend_cstr(output, " = call i32 @");
     string_extend_strv(output, nodes_at(statement)->name);
 
@@ -153,7 +146,7 @@ static void variable_definition(String* output, Node_id variable_def) {
     nodes_at(variable_def)->llvm_id = llvm_id_for_next_var;
     llvm_id_for_next_var++;
 
-    char num_str[20];
+    char num_str[21];
     sprintf(num_str, "%zu", nodes_at(variable_def)->llvm_id);
 
     string_extend_cstr(output, "    %");
@@ -168,7 +161,7 @@ static void variable_definition(String* output, Node_id variable_def) {
     string_extend_cstr(output, ", align 8");
     string_extend_cstr(output, "\n");
 
-    char num_str_2[20];
+    char num_str_2[21];
     sprintf(num_str_2, "%zu", llvm_id_for_next_var);
     llvm_id_for_next_var++;
     string_extend_cstr(output, "    %");
@@ -255,13 +248,12 @@ static void symbols_to_strv(String* output) {
                 todo();
         }
 
-        char literal_width[20];
-        sprintf(literal_width, "%zu", nodes_at(curr_node.node)->str_data.count + 1);
+        size_t literal_width = nodes_at(curr_node.node)->str_data.count + 1;
 
         string_extend_cstr(output, "@.");
         string_extend_strv(output, curr_node.key);
         string_extend_cstr(output, " = private unnamed_addr constant [ ");
-        string_extend_cstr(output, literal_width);
+        string_extend_size_t(output, literal_width);
         string_extend_cstr(output, " x i8] c\"");
         string_extend_strv(output, nodes_at(curr_node.node)->str_data);
         string_extend_cstr(output, "\\00\", align 1");
