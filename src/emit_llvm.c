@@ -8,6 +8,7 @@
 #include "file.h"
 
 static void block_to_strv(String* output, Node_id fun_block);
+static void llvm_from_tree_to_strv(String* output, Node_id root);
 
 static size_t llvm_id_for_next_var = 1;
 
@@ -114,12 +115,37 @@ static size_t get_return_val_llvm_id(Node_id block) {
     assert(nodes_count_children(block) == 1);
 
     Node_id child = nodes_at(block)->left_child;
-    if (nodes_at(child)->type == NODE_FUNCTION_CALL) {
+    if (nodes_at(child)->type == NODE_FUNCTION_CALL || nodes_at(child)->type == NODE_OPERATOR) {
         return nodes_at(child)->llvm_id;
     }
 
     todo();
 
+}
+
+static void emit_operator(String* output, Node_id operator) {
+    nodes_at(operator)->llvm_id = llvm_id_for_next_var;
+
+    Node_id child_lhs = nodes_at(operator)->left_child;
+    Node_id child_rhs = nodes_at(child_lhs)->next;
+
+    if (nodes_at(child_lhs)->type != NODE_LITERAL || nodes_at(child_rhs)->type != NODE_LITERAL) {
+        todo();
+    }
+
+    string_extend_cstr(output, "    %");
+    string_extend_size_t(output, llvm_id_for_next_var);
+
+    string_extend_cstr(output, " = mul nsw i32 ");
+    string_extend_strv(output, nodes_at(child_lhs)->str_data);
+
+    string_extend_cstr(output, ", ");
+
+    string_extend_strv(output, nodes_at(child_rhs)->str_data);
+
+    string_extend_cstr(output, "\n");
+
+    llvm_id_for_next_var++;
 }
 
 static void function_return_statement(String* output, Node_id statement) {
@@ -140,6 +166,13 @@ static void function_return_statement(String* output, Node_id statement) {
             block_to_strv(output, child);
             string_extend_cstr(output, "    ret i32 %");
             string_extend_size_t(output, get_return_val_llvm_id(child));
+            string_extend_cstr(output, "\n");
+            break;
+        }
+        case NODE_OPERATOR: {
+            emit_operator(output, child);
+            string_extend_cstr(output, "    ret i32 %");
+            string_extend_size_t(output, nodes_at(child)->llvm_id);
             string_extend_cstr(output, "\n");
             break;
         }

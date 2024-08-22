@@ -6,7 +6,7 @@ fn println(String string1, String string2) i32 {
     puts(string_hello);
     puts(string1);
     puts(string2);
-    return 4;
+    return 4*2;
 }
 
 fn main() {
