@@ -86,13 +86,13 @@ static void emit_load_variable(String* output, Node_id variable_call) {
     }
 
     size_t load_dest_id = llvm_id_for_next_var;
-    assert(load_dest_id > 0);
 
     Node_id variable_def;
     if (!sym_tbl_lookup(&variable_def, nodes_at(variable_call)->name)) {
         todo();
     }
     nodes_at(variable_def)->llvm_id_variable.new_load_dest = load_dest_id;
+    assert(nodes_at(variable_def)->llvm_id_variable.store_dest > 0);
 
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, load_dest_id);
@@ -153,10 +153,9 @@ static void emit_alloca(String* output, Node_id symbol_def) {
     llvm_id_for_next_var++;
 }
 
-static void emit_store(String* output, Node_id variable_def){
+static void emit_store(String* output, Node_id variable_def, Str_view num_str){
     size_t src_llvm_id = nodes_at(variable_def)->llvm_id_variable.def;
     size_t alloca_dest_id = nodes_at(variable_def)->llvm_id_variable.store_dest;
-    assert(src_llvm_id > 0);
     assert(alloca_dest_id > 0);
 
     switch (nodes_at(variable_def)->type) {
@@ -170,7 +169,7 @@ static void emit_store(String* output, Node_id variable_def){
                 string_extend_cstr(output, "\n");
             } else if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "i32")) {
                 string_extend_cstr(output, "    store i32 ");
-                string_extend_strv(output, nodes_at(variable_def)->str_data);
+                string_extend_strv(output, num_str);
                 string_extend_cstr(output, ", ptr %");
                 string_extend_size_t(output, alloca_dest_id);
                 string_extend_cstr(output, ", align 8");
@@ -209,7 +208,7 @@ static void emit_store_fun_params(String* output, Node_id parameters) {
 
         emit_alloca(output, param);
 
-        emit_store(output, param);
+        emit_store(output, param, str_view_from_cstr(""));
 
         llvm_id_for_next_var++;
     }
@@ -311,8 +310,26 @@ static void emit_variable_definition(String* output, Node_id variable_def) {
     nodes_at(variable_def)->llvm_id_variable.def = llvm_id_for_next_var;
 
     emit_alloca(output, variable_def);
+}
 
-    emit_store(output, variable_def);
+static void emit_assignment(String* output, Node_id assignment) {
+    Node_id lhs = nodes_at(assignment)->left_child;
+    Node_id rhs = nodes_at(lhs)->next;
+
+    Node_id lhs_def;
+    if (!sym_tbl_lookup(&lhs_def, nodes_at(lhs)->name)) {
+        todo();
+    }
+
+    size_t dest_id = nodes_at(lhs_def)->llvm_id_variable.store_dest;
+
+    switch (nodes_at(rhs)->type) {
+        case NODE_LITERAL:
+            emit_store(output, lhs_def, nodes_at(rhs)->str_data);
+            break;
+        default:
+            todo();
+    }
 }
 
 static void emit_function_declaration(String* output, Node_id fun_decl) {
@@ -339,6 +356,9 @@ static void emit_block(String* output, Node_id fun_block) {
                 break;
             case NODE_FUNCTION_DECLARATION:
                 emit_function_declaration(output, statement);
+                break;
+            case NODE_ASSIGNMENT:
+                emit_assignment(output, statement);
                 break;
             default:
                 todo();

@@ -319,9 +319,11 @@ static Node_id parse_variable_definition(Tk_view variable_tokens) {
 
     nodes_at(variable_def)->lang_type = tk_view_front(tk_view_chop_front(&variable_tokens)).text;
 
+    /*
     tk_view_chop_front(&variable_tokens); // remove "="
 
     nodes_at(variable_def)->str_data = tk_view_front(tk_view_chop_front(&variable_tokens)).text;
+    */
 
     sym_tbl_add(variable_def);
 
@@ -522,14 +524,48 @@ static bool is_block(Tk_view tokens) {
         tokens_start_with_function_declaration(tokens);
 }
 
+static bool is_assignment(Tk_view tokens) {
+    if (tk_view_front(tk_view_chop_front(&tokens)).type != TOKEN_SYMBOL) {
+        return false;
+    }
+
+    return (tk_view_front(tk_view_chop_front(&tokens)).type == TOKEN_SINGLE_EQUAL);
+}
+
+static bool extract_assignment(Node_id* result, Tk_view* tokens) {
+    if (!is_assignment(*tokens)) {
+        return false;
+    }
+    log_tokens(LOG_DEBUG, *tokens, 0);
+
+    Node_id assignment = node_new();
+    nodes_at(assignment)->type = NODE_ASSIGNMENT;
+    
+    Tk_view lhs_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_SINGLE_EQUAL);
+    nodes_append_child(assignment, parse_rec(lhs_tokens));
+
+    tk_view_chop_front(tokens); // remove =
+
+    Tk_view rhs_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_SEMICOLON);
+    nodes_append_child(assignment, parse_rec(rhs_tokens));
+
+    tk_view_chop_front(tokens); // remove ;
+
+    assert(lhs_tokens.count + rhs_tokens.count < tokens->count);
+
+    *result = assignment;
+}
+
 static Node_id parse_block(Tk_view tokens) {
     Node_id block = node_new();
     nodes_at(block)->type = NODE_BLOCK;
     while (tokens.count > 0) {
+        log_tokens(LOG_DEBUG, tokens, 0);
         Node_id child;
         if (extract_function_definition(&child, &tokens)) {
         } else if (extract_function_call(&child, &tokens)) {
         } else if (extract_function_return_statement(&child, &tokens)) {
+        } else if (extract_assignment(&child, &tokens)) {
         } else if (extract_variable_definition(&child, &tokens)) {
         } else if (extract_function_declaration(&child, &tokens)) {
         } else {

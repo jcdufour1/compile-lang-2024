@@ -15,6 +15,7 @@ static const char* NODE_SYMBOL_DESCRIPTION = "sym";
 static const char* NODE_RETURN_STATEMENT_DESCRIPTION = "return";
 static const char* NODE_VARIABLE_DEFINITION_DESCRIPTION = "var_def";
 static const char* NODE_FUNCTION_DECLARATION_DESCRIPTION = "fun_declaration";
+static const char* NODE_ASSIGNMENT_DESCRIPTION = "assignment";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_id root, const char* file, int line) {
@@ -68,6 +69,8 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_VARIABLE_DEFINITION_DESCRIPTION);
         case NODE_FUNCTION_DECLARATION:
             return str_view_from_cstr(NODE_FUNCTION_DECLARATION_DESCRIPTION);
+        case NODE_ASSIGNMENT:
+            return str_view_from_cstr(NODE_ASSIGNMENT_DESCRIPTION);
         case NODE_NO_TYPE:
             return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
         default:
@@ -114,6 +117,8 @@ String node_print_internal(Node_id node) {
         case NODE_RETURN_STATEMENT:
             // fallthrough
         case NODE_FUNCTION_DECLARATION:
+            // fallthrough
+        case NODE_ASSIGNMENT:
             // fallthrough
         case NODE_NO_TYPE:
             break;
