@@ -27,6 +27,12 @@ typedef enum {
 typedef size_t Node_id;
 
 typedef struct {
+    size_t def; // %[num] where variable is defined
+    size_t store_dest; // %[num] stack location where the most recent store operation has put the variable
+    size_t new_load_dest; // %[num] register where the most recent load operation has put the variable
+} Llvm_id_variable;
+
+typedef struct {
     Node_id next;
     Node_id prev;
     Node_id left_child;
@@ -35,7 +41,10 @@ typedef struct {
 
     TOKEN_TYPE token_type;
 
-    size_t llvm_id;
+    union {
+        Llvm_id_variable llvm_id_variable;
+        size_t llvm_id_block_return;
+    };
 
     Str_view name; // eg. "string1" in "let string1: String = "hello""
     Str_view str_data; // eg. "hello" in "let string1: String = "hello""

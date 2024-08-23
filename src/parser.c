@@ -325,9 +325,6 @@ static Node_id parse_variable_definition(Tk_view variable_tokens) {
 
     sym_tbl_add(variable_def);
 
-    Node_id dummy;
-    assert(sym_tbl_lookup(&dummy, str_view_from_cstr("string_hello")));
-
     assert(variable_tokens.count == 0);
 
     return variable_def;

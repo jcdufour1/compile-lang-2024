@@ -2,15 +2,14 @@
 extern("c") fn puts(String str_to_print);
 
 fn println(String string1, String string2) i32 {
-    let string_hello: String = "new string 23";
-    let num1: i32 = 24;
-    puts(string_hello);
+    let num1: i32 = 9;
+    let num2: i32 = 10;
     puts(string1);
     puts(string2);
-    return num1;
+    return num2;
 }
 
 fn main() {
-    return println("hello", "world");
+    println("hello", "world");
     return println("bye world", "bye again");
 }
