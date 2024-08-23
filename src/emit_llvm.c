@@ -7,12 +7,12 @@
 #include "parameters.h"
 #include "file.h"
 
-static void block_to_strv(String* output, Node_id fun_block);
-static void llvm_from_tree_to_strv(String* output, Node_id root);
+static void emit_block(String* output, Node_id fun_block);
+static void emit_llvm_main(String* output, Node_id root);
 
 static size_t llvm_id_for_next_var = 1;
 
-static void function_params_to_strv(String* output, Node_id fun_params) {
+static void emit_function_params(String* output, Node_id fun_params) {
 
     size_t idx = 0;
     nodes_foreach_child(param, fun_params) {
@@ -28,7 +28,7 @@ static void function_params_to_strv(String* output, Node_id fun_params) {
     }
 }
 
-static void function_call_arguments(String* output, Node_id statement) {
+static void emit_function_call_arguments(String* output, Node_id statement) {
     size_t idx = 0;
     nodes_foreach_child(argument, statement) {
         if (idx++ > 0) {
@@ -66,7 +66,7 @@ static void function_call_arguments(String* output, Node_id statement) {
     }
 }
 
-static void function_call_to_strv(String* output, Node_id statement) {
+static void emit_function_call(String* output, Node_id statement) {
     assert(nodes_at(statement)->llvm_id == 0);
 
     nodes_at(statement)->llvm_id = llvm_id_for_next_var;
@@ -78,7 +78,7 @@ static void function_call_to_strv(String* output, Node_id statement) {
 
     // arguments
     string_extend_cstr(output, "(");
-    function_call_arguments(output, statement);
+    emit_function_call_arguments(output, statement);
     string_extend_cstr(output, ")");
 
     string_extend_cstr(output, "\n");
@@ -86,20 +86,20 @@ static void function_call_to_strv(String* output, Node_id statement) {
     llvm_id_for_next_var++;
 }
 
-static void function_definition_to_strv(String* output, Node_id fun_def) {
+static void emit_function_definition(String* output, Node_id fun_def) {
     string_extend_cstr(output, "define dso_local i32 @");
     string_extend_strv(output, nodes_at(fun_def)->name);
 
     Node_id params = nodes_get_child_of_type(fun_def, NODE_FUNCTION_PARAMETERS);
     string_append(output, '(');
-    function_params_to_strv(output, params);
+    emit_function_params(output, params);
     string_append(output, ')');
     llvm_id_for_next_var++;
 
     string_extend_cstr(output, " {\n");
 
     Node_id block = nodes_get_child_of_type(fun_def, NODE_BLOCK);
-    block_to_strv(output, block);
+    emit_block(output, block);
 
     string_extend_cstr(output, "}\n");
 }
@@ -142,7 +142,7 @@ static void emit_operator(String* output, Node_id operator) {
     llvm_id_for_next_var++;
 }
 
-static void function_return_statement(String* output, Node_id statement) {
+static void emit_function_return_statement(String* output, Node_id statement) {
     Node_id child = nodes_at(statement)->left_child;
     switch (nodes_at(child)->type) {
         case NODE_LITERAL:
@@ -156,7 +156,7 @@ static void function_return_statement(String* output, Node_id statement) {
         case NODE_FUNCTION_CALL:
             todo();
         case NODE_BLOCK: {
-            block_to_strv(output, child);
+            emit_block(output, child);
             string_extend_cstr(output, "    ret i32 %");
             string_extend_size_t(output, get_return_val_llvm_id(child));
             string_extend_cstr(output, "\n");
@@ -228,7 +228,7 @@ static void emit_load(String* output, Node_id variable_def, const char* num_allo
     string_extend_cstr(output, "\n");
 }
 
-static void variable_definition(String* output, Node_id variable_def) {
+static void emit_variable_definition(String* output, Node_id variable_def) {
     nodes_at(variable_def)->llvm_id = llvm_id_for_next_var;
     llvm_id_for_next_var++;
 
@@ -252,30 +252,30 @@ static void variable_definition(String* output, Node_id variable_def) {
     nodes_at(variable_def)->llvm_id++;
 }
 
-static void function_declaration(String* output, Node_id fun_decl) {
+static void emit_function_declaration(String* output, Node_id fun_decl) {
     string_extend_cstr(output, "declare i32 @");
     string_extend_strv(output, nodes_at(fun_decl)->name);
     string_extend_cstr(output, " (ptr noundef) ");
     string_extend_cstr(output, "\n");
 }
 
-static void block_to_strv(String* output, Node_id fun_block) {
+static void emit_block(String* output, Node_id fun_block) {
     nodes_foreach_child(statement, fun_block) {
         switch (nodes_at(statement)->type) {
             case NODE_FUNCTION_DEFINITION:
-                function_definition_to_strv(output, statement);
+                emit_function_definition(output, statement);
                 break;
             case NODE_FUNCTION_CALL:
-                function_call_to_strv(output, statement);
+                emit_function_call(output, statement);
                 break;
             case NODE_RETURN_STATEMENT:
-                function_return_statement(output, statement);
+                emit_function_return_statement(output, statement);
                 break;
             case NODE_VARIABLE_DEFINITION:
-                variable_definition(output, statement);
+                emit_variable_definition(output, statement);
                 break;
             case NODE_FUNCTION_DECLARATION:
-                function_declaration(output, statement);
+                emit_function_declaration(output, statement);
                 break;
             default:
                 todo();
@@ -283,13 +283,13 @@ static void block_to_strv(String* output, Node_id fun_block) {
     }
 }
 
-static void llvm_from_tree_to_strv(String* output, Node_id root) {
+static void emit_llvm_main(String* output, Node_id root) {
     switch (nodes_at(root)->type) {
         case NODE_BLOCK:
-            block_to_strv(output, root);
+            emit_block(output, root);
             return;
         case NODE_FUNCTION_DEFINITION:
-            function_definition_to_strv(output, root);
+            emit_function_definition(output, root);
             return;
         case NODE_FUNCTION_PARAMETERS:
             todo();
@@ -316,7 +316,7 @@ static void llvm_from_tree_to_strv(String* output, Node_id root) {
     unreachable();
 }
 
-static void symbols_to_strv(String* output) {
+static void emit_symbols(String* output) {
     for (size_t idx = 0; idx < symbol_table.capacity; idx++) {
         const Symbol_table_node curr_node = symbol_table.table_nodes[idx];
         if (curr_node.status != SYM_TBL_OCCUPIED) {
@@ -349,9 +349,10 @@ static void symbols_to_strv(String* output) {
 
 void emit_llvm_from_tree(Node_id root) {
     String output = {0};
-    llvm_from_tree_to_strv(&output, root);
 
-    symbols_to_strv(&output);
+    emit_llvm_main(&output, root);
+
+    emit_symbols(&output);
 
     log(LOG_NOTE, "\n"STRING_FMT"\n", string_print(output));
 
