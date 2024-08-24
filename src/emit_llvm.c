@@ -12,8 +12,29 @@ static void emit_llvm_main(String* output, Node_id root);
 
 static size_t llvm_id_for_next_var = 1;
 
-static void emit_function_params(String* output, Node_id fun_params) {
+static void extend_type_call_str(String* output, Node_id variable_def) {
+    if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "String")) {
+        string_extend_cstr(output, "ptr");
+    } else if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "i32")) {
+        string_extend_cstr(output, "i32");
+    } else {
+        todo();
+    }
+}
 
+static void extend_type_decl_str(String* output, Node_id variable_def) {
+    Str_view lang_type = nodes_at(variable_def)->lang_type;
+
+    if (0 == str_view_cmp_cstr(lang_type, "String")) {
+        string_extend_cstr(output, "ptr noundef");
+    } else if (0 == str_view_cmp_cstr(lang_type, "i32")) {
+        string_extend_cstr(output, "i32 noundef");
+    } else {
+        todo();
+    }
+}
+
+static void emit_function_params(String* output, Node_id fun_params) {
     size_t idx = 0;
     nodes_foreach_child(param, fun_params) {
         if (idx++ > 0) {
@@ -21,45 +42,56 @@ static void emit_function_params(String* output, Node_id fun_params) {
         }
 
         nodes_at(param)->llvm_id_variable.def = llvm_id_for_next_var;
-        string_extend_cstr(output, "ptr noundef %");
+        extend_type_decl_str(output, param);
+        string_extend_cstr(output, " %");
         string_extend_size_t(output, nodes_at(param)->llvm_id_variable.def);
 
         llvm_id_for_next_var++;
     }
 }
 
+static void extend_literal_decl(String* output, Node_id var_decl_or_def) {
+    extend_type_decl_str(output, var_decl_or_def);
+
+    Str_view lang_type = nodes_at(var_decl_or_def)->lang_type;
+    if (0 == str_view_cmp_cstr(lang_type, "String")) {
+        string_extend_cstr(output, " @.");
+        string_extend_strv(output, nodes_at(var_decl_or_def)->name);
+    } else if (0 == str_view_cmp_cstr(lang_type, "i32")) {
+        string_append(output, ' ');
+        string_extend_strv(output, nodes_at(var_decl_or_def)->str_data);
+    } else {
+        todo();
+    }
+}
+
 static void emit_function_call_arguments(String* output, Node_id statement) {
     size_t idx = 0;
     nodes_foreach_child(argument, statement) {
+        Node_id var_decl_or_def;
+        if (!sym_tbl_lookup(&var_decl_or_def, nodes_at(argument)->name)) {
+            msg(
+                LOG_WARNING,
+                params.input_file_name,
+                nodes_at(argument)->line_num,
+                "unknown variable: "STR_VIEW_FMT"\n",
+                str_view_print(nodes_at(argument)->name)
+            );
+            break;
+        }
         if (idx++ > 0) {
             string_extend_cstr(output, ", ");
         }
         switch (nodes_at(argument)->type) {
             case NODE_LITERAL: {
-                Str_view literal_name = nodes_at(argument)->name;
-                string_extend_cstr(output, "ptr noundef @.");
-                string_extend_strv(output, literal_name);
+                extend_literal_decl(output, var_decl_or_def);
                 break;
             }
             case NODE_SYMBOL: {
-                Node_id variable_declaration;
-                if (!sym_tbl_lookup(&variable_declaration, nodes_at(argument)->name)) {
-                    msg(
-                        LOG_WARNING,
-                        params.input_file_name,
-                        nodes_at(argument)->line_num,
-                        "unknown variable: "STR_VIEW_FMT"\n",
-                        str_view_print(nodes_at(argument)->name)
-                    );
-                    break;
-                }
-                Node_id variable_def;
-                if (!sym_tbl_lookup(&variable_def, nodes_at(argument)->name)) {
-                    todo();
-                }
-                size_t llvm_id = nodes_at(variable_def)->llvm_id_variable.new_load_dest;
+                size_t llvm_id = nodes_at(var_decl_or_def)->llvm_id_variable.new_load_dest;
                 assert(llvm_id > 0);
-                string_extend_cstr(output, "ptr noundef %");
+                extend_type_call_str(output, var_decl_or_def);
+                string_extend_cstr(output, " %");
                 string_extend_size_t(output, llvm_id);
                 llvm_id_for_next_var++;
                 break;
@@ -67,16 +99,6 @@ static void emit_function_call_arguments(String* output, Node_id statement) {
             default:
                 todo();
         }
-    }
-}
-
-static void extend_type_str(String* output, Node_id variable_def) {
-    if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "String")) {
-        string_extend_cstr(output, "ptr");
-    } else if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "i32")) {
-        string_extend_cstr(output, "i32");
-    } else {
-        todo();
     }
 }
 
@@ -97,7 +119,7 @@ static void emit_load_variable(String* output, Node_id variable_call) {
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, load_dest_id);
     string_extend_cstr(output, " = load ");
-    extend_type_str(output, variable_def);
+    extend_type_call_str(output, variable_def);
     string_extend_cstr(output, ", ");
     string_extend_cstr(output, "ptr");
     string_extend_cstr(output, " %");
@@ -146,7 +168,7 @@ static void emit_alloca(String* output, Node_id symbol_def) {
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, nodes_at(symbol_def)->llvm_id_variable.store_dest);
     string_extend_cstr(output, " = alloca ");
-    extend_type_str(output, symbol_def);
+    extend_type_call_str(output, symbol_def);
     string_extend_cstr(output, ", align 8");
     string_extend_cstr(output, "\n");
 
@@ -154,7 +176,6 @@ static void emit_alloca(String* output, Node_id symbol_def) {
 }
 
 static void emit_store(String* output, Node_id variable_def, Str_view num_str){
-    log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
     size_t src_llvm_id = nodes_at(variable_def)->llvm_id_variable.def;
     size_t alloca_dest_id = nodes_at(variable_def)->llvm_id_variable.store_dest;
     assert(alloca_dest_id > 0);

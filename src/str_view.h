@@ -63,6 +63,9 @@ static inline Str_view str_view_chop_front(Str_view* str_view) {
 
 // return 0 when match
 static inline int str_view_cmp_cstr(Str_view str_view, const char* cstr) {
+    if (strlen(cstr) != str_view.count) {
+        return 100;
+    }
     return strncmp(str_view.str, cstr, str_view.count);
 }
 

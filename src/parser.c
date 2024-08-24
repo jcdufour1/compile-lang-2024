@@ -65,7 +65,6 @@ static bool get_idx_token(size_t* idx_matching, Tk_view tokens, size_t start, TO
 
 static bool tokens_start_with_function_call(Tk_view tokens) {
     if (tokens.count < 2) {
-        log(LOG_DEBUG, "returning\n");
         return false;
     }
 
@@ -164,6 +163,11 @@ static bool extract_function_parameter(Node_id* child, Tk_view* tokens) {
 
     nodes_at(param)->name = tk_view_chop_front(&param_tokens).text;
     sym_tbl_add(param);
+    Node_id dummy;
+    static size_t count = 0;
+    if (count == 2) {
+        assert(sym_tbl_lookup(&dummy, str_view_from_cstr("num2")));
+    }
 
     *child = param;
     return true;
@@ -221,7 +225,6 @@ static Node_id parse_function_return_types(Tk_view tokens) {
 
 static bool tokens_start_with_function_definition(Tk_view tokens) {
     if (tokens.count < 1) {
-        log(LOG_DEBUG, "returning\n");
         return false;
     }
 
@@ -392,7 +395,6 @@ static Node_id parse_function_declaration(Tk_view tokens) {
 
 static bool tokens_start_with_function_declaration(Tk_view tokens) {
     if (tokens.count < 2) {
-        log(LOG_DEBUG, "returning\n");
         return false;
     }
 
@@ -411,6 +413,17 @@ static bool extract_function_declaration(Node_id* child, Tk_view* tokens) {
     return true;
 }
 
+static Str_view get_literal_lang_type_from_token_type(TOKEN_TYPE token_type) {
+    switch (token_type) {
+        case TOKEN_STRING_LITERAL:
+            return str_view_from_cstr("String");
+        case TOKEN_NUM_LITERAL:
+            return str_view_from_cstr("i32");
+        default:
+            todo();
+    }
+}
+
 static Node_id parse_literal(Tk_view tokens) {
     Node_id new_node = node_new();
     nodes_at(new_node)->type = NODE_LITERAL;
@@ -419,6 +432,7 @@ static Node_id parse_literal(Tk_view tokens) {
     nodes_at(new_node)->str_data = tk_view_front(tokens).text;
     nodes_at(new_node)->token_type = tk_view_front(tokens).type;
     nodes_at(new_node)->line_num = tk_view_front(tokens).line_num;
+    nodes_at(new_node)->lang_type = get_literal_lang_type_from_token_type(nodes_at(new_node)->token_type);
 
     sym_tbl_add(new_node);
     return new_node;

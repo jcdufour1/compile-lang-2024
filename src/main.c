@@ -31,7 +31,6 @@ int main(int argc, char** argv) {
 
     Node_id item;
     assert(sym_tbl_lookup(&item, str_view_from_cstr("str0")));
-    log(LOG_DEBUG, NODE_FMT"\n", node_print(item));
 
     if (params.emit_llvm) {
         emit_llvm_from_tree(root);
