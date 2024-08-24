@@ -154,6 +154,7 @@ static void emit_alloca(String* output, Node_id symbol_def) {
 }
 
 static void emit_store(String* output, Node_id variable_def, Str_view num_str){
+    log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
     size_t src_llvm_id = nodes_at(variable_def)->llvm_id_variable.def;
     size_t alloca_dest_id = nodes_at(variable_def)->llvm_id_variable.store_dest;
     assert(alloca_dest_id > 0);
@@ -205,11 +206,8 @@ static void emit_store(String* output, Node_id variable_def, Str_view num_str){
 static void emit_store_fun_params(String* output, Node_id parameters) {
     nodes_foreach_child(param, parameters) {
         assert(nodes_at(param)->llvm_id_variable.def > 0);
-
         emit_alloca(output, param);
-
         emit_store(output, param, str_view_from_cstr(""));
-
         llvm_id_for_next_var++;
     }
 }
@@ -307,8 +305,8 @@ static void emit_function_return_statement(String* output, Node_id statement) {
 }
 
 static void emit_variable_definition(String* output, Node_id variable_def) {
+    assert(nodes_at(variable_def)->llvm_id_variable.def == 0 && "redefinition of variable");
     nodes_at(variable_def)->llvm_id_variable.def = llvm_id_for_next_var;
-
     emit_alloca(output, variable_def);
 }
 
@@ -325,6 +323,9 @@ static void emit_assignment(String* output, Node_id assignment) {
 
     switch (nodes_at(rhs)->type) {
         case NODE_LITERAL:
+            if (nodes_at(lhs_def)->llvm_id_variable.def == 0) {
+                emit_variable_definition(output, lhs_def);
+            }
             emit_store(output, lhs_def, nodes_at(rhs)->str_data);
             break;
         default:

@@ -14,6 +14,7 @@ static inline Token tk_view_at(Tk_view token_view, size_t idx) {
     assert(token_view.count > idx);
     return token_view.tokens[idx];
 }
+
 static inline Token tk_view_front(Tk_view token_view) {
     return tk_view_at(token_view, 0);
 }
