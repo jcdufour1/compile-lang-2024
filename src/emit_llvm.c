@@ -180,41 +180,32 @@ static void emit_store(String* output, Node_id variable_def, Str_view num_str){
     size_t alloca_dest_id = nodes_at(variable_def)->llvm_id_variable.store_dest;
     assert(alloca_dest_id > 0);
 
+    string_extend_cstr(output, "    store ");
+    extend_type_call_str(output, variable_def);
+    string_append(output, ' ');
+
     switch (nodes_at(variable_def)->type) {
         case NODE_VARIABLE_DEFINITION:
             if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "String")) {
-                string_extend_cstr(output, "    store ptr @.");
-                string_extend_strv(output, nodes_at(variable_def)->name);
-                string_extend_cstr(output, ", ptr %");
-                string_extend_size_t(output, alloca_dest_id);
-                string_extend_cstr(output, ", align 8");
-                string_extend_cstr(output, "\n");
+                string_extend_cstr(output, " %");
+                string_extend_size_t(output, src_llvm_id);
             } else if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "i32")) {
-                string_extend_cstr(output, "    store i32 ");
                 string_extend_strv(output, num_str);
-                string_extend_cstr(output, ", ptr %");
-                string_extend_size_t(output, alloca_dest_id);
-                string_extend_cstr(output, ", align 8");
-                string_extend_cstr(output, "\n");
             } else {
                 todo();
             }
             break;
         case NODE_LANG_TYPE:
             if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "String")) {
-                string_extend_cstr(output, "    store ptr %");
+                string_extend_cstr(output, " %");
                 string_extend_size_t(output, src_llvm_id);
-                string_extend_cstr(output, ", ptr %");
-                string_extend_size_t(output, alloca_dest_id);
-                string_extend_cstr(output, ", align 8");
-                string_extend_cstr(output, "\n");
             } else if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "i32")) {
-                string_extend_cstr(output, "    store i32 %");
-                string_extend_size_t(output, src_llvm_id);
-                string_extend_cstr(output, ", ptr %");
-                string_extend_size_t(output, alloca_dest_id);
-                string_extend_cstr(output, ", align 8");
-                string_extend_cstr(output, "\n");
+                if (num_str.count > 0) {
+                    string_extend_strv(output, num_str);
+                } else {
+                    string_extend_cstr(output, " %");
+                    string_extend_size_t(output, src_llvm_id);
+                }
             } else {
                 todo();
             }
@@ -222,9 +213,15 @@ static void emit_store(String* output, Node_id variable_def, Str_view num_str){
         default:
             todo();
     }
+
+    string_extend_cstr(output, ", ptr %");
+    string_extend_size_t(output, alloca_dest_id);
+    string_extend_cstr(output, ", align 8");
+    string_extend_cstr(output, "\n");
 }
 
 static void emit_store_fun_params(String* output, Node_id parameters) {
+    assert(nodes_at(parameters)->type == NODE_FUNCTION_PARAMETERS);
     nodes_foreach_child(param, parameters) {
         assert(nodes_at(param)->llvm_id_variable.def > 0);
         emit_alloca(output, param);
@@ -347,6 +344,7 @@ static void emit_assignment(String* output, Node_id assignment) {
             if (nodes_at(lhs_def)->llvm_id_variable.def == 0) {
                 emit_variable_definition(output, lhs_def);
             }
+            assert(nodes_at(rhs)->str_data.count > 0);
             emit_store(output, lhs_def, nodes_at(rhs)->str_data);
             break;
         default:

@@ -2,6 +2,7 @@
 extern("c") fn puts(String str_to_print);
 
 fn println(String string1, i32 num2) i32 {
+    num2 = 11;
     puts(string1);
     return num2;
 }
