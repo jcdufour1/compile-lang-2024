@@ -8,7 +8,7 @@
 #include "string_vec.h"
 
 static Node_id parse_rec(Tk_view tokens);
-static Node_id parse_function_single_return_type(Tk_view tokens);
+static Node_id parse_function_single_return_type(Token tokens);
 static Node_id parse_block(Tk_view tokens);
 
 #define log_tokens(log_level, token_view, indent) \
@@ -160,9 +160,9 @@ static bool extract_function_parameter(Node_id* child, Tk_view* tokens) {
     Node_id param = node_new();
     nodes_at(param)->type = NODE_LANG_TYPE;
 
-    nodes_at(param)->lang_type = tk_view_front(tk_view_chop_front(&param_tokens)).text;
+    nodes_at(param)->lang_type = tk_view_chop_front(&param_tokens).text;
 
-    nodes_at(param)->name = tk_view_front(tk_view_chop_front(&param_tokens)).text;
+    nodes_at(param)->name = tk_view_chop_front(&param_tokens).text;
     sym_tbl_add(param);
 
     *child = param;
@@ -184,13 +184,12 @@ static Node_id parse_function_parameters(Tk_view tokens) {
     return fun_params;
 }
 
-static Node_id parse_function_single_return_type(Tk_view tokens) {
-    assert(tokens.count == 1);
-    assert(tokens.tokens[0].type == TOKEN_SYMBOL);
+static Node_id parse_function_single_return_type(Token token) {
+    assert(token.type == TOKEN_SYMBOL);
 
     Node_id return_type = node_new();
     nodes_at(return_type)->type = NODE_LANG_TYPE;
-    nodes_at(return_type)->lang_type = tk_view_front(tokens).text;
+    nodes_at(return_type)->lang_type = token.text;
     return return_type;
 }
 
@@ -200,7 +199,7 @@ static bool extract_function_return_type(Node_id* child, Tk_view* tokens) {
     }
 
     // a return type is only one token, at least for now
-    Tk_view return_type_token = tk_view_chop_front(tokens);
+    Token return_type_token = tk_view_chop_front(tokens);
     if (get_idx_token(NULL, *tokens, 0, TOKEN_COMMA)) {
         tk_view_chop_front(tokens); // remove comma
     }
@@ -252,8 +251,8 @@ static bool extract_function_parameters(Node_id* result, Tk_view* tokens) {
 static bool extract_function_return_types(Node_id* result, Tk_view* tokens) {
     Tk_view return_type_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_OPEN_CURLY_BRACE);
 
-    Tk_view open_curly_brace_token = tk_view_chop_front(tokens); // remove open curly brace
-    assert(tk_view_front(open_curly_brace_token).type == TOKEN_OPEN_CURLY_BRACE);
+    Token open_curly_brace_token = tk_view_chop_front(tokens); // remove open curly brace
+    assert(open_curly_brace_token.type == TOKEN_OPEN_CURLY_BRACE);
 
     *result = parse_function_return_types(return_type_tokens);
     return true;
@@ -264,14 +263,13 @@ static Node_id parse_function_definition(Tk_view tokens) {
     Node_id function = node_new();
     nodes_at(function)->type = NODE_FUNCTION_DEFINITION;
     if (tk_view_front(tokens).type == TOKEN_SYMBOL) {
-        nodes_at(function)->name = tk_view_chop_front(&tokens).tokens[0].text;
+        nodes_at(function)->name = tk_view_chop_front(&tokens).text;
     } else {
         todo();
     }
-    Tk_view open_par = tk_view_chop_front(&tokens); // remove (
-    assert(open_par.tokens[0].type == TOKEN_OPEN_PAR);
+    Token open_par = tk_view_chop_front(&tokens); // remove (
+    assert(open_par.type == TOKEN_OPEN_PAR);
 
-    assert(tk_view_front(open_par).type == TOKEN_OPEN_PAR);
     Node_id parameters;
     if (!extract_function_parameters(&parameters, &tokens)) {
         todo();
@@ -322,23 +320,23 @@ static bool tokens_start_with_variable_declaration(Tk_view tokens) {
 }
 
 static Node_id parse_variable_definition(Tk_view variable_tokens) {
-    Tk_view return_keyword_token = tk_view_chop_front(&variable_tokens); // remove "return"
-    assert(0 == token_is_equal(tk_view_front(return_keyword_token), "return", TOKEN_SYMBOL));
+    Token return_keyword_token = tk_view_chop_front(&variable_tokens); // remove "return"
+    assert(0 == token_is_equal(return_keyword_token, "return", TOKEN_SYMBOL));
 
     Node_id variable_def = node_new();
     nodes_at(variable_def)->type = NODE_VARIABLE_DEFINITION;
 
-    Tk_view variable_name_token = tk_view_chop_front(&variable_tokens);
-    nodes_at(variable_def)->name = tk_view_front(variable_name_token).text;
+    Token variable_name_token = tk_view_chop_front(&variable_tokens);
+    nodes_at(variable_def)->name = variable_name_token.text;
 
     tk_view_chop_front(&variable_tokens); // remove ":"
 
-    nodes_at(variable_def)->lang_type = tk_view_front(tk_view_chop_front(&variable_tokens)).text;
+    nodes_at(variable_def)->lang_type = tk_view_chop_front(&variable_tokens).text;
 
     /*
     tk_view_chop_front(&variable_tokens); // remove "="
 
-    nodes_at(variable_def)->str_data = tk_view_front(tk_view_chop_front(&variable_tokens)).text;
+    nodes_at(variable_def)->str_data = tk_view_chop_front(&variable_tokens).text;
     */
 
     sym_tbl_add(variable_def);
@@ -367,21 +365,21 @@ static bool extract_variable_declaration(Node_id* child, Tk_view* tokens) {
 
 static Node_id parse_function_declaration(Tk_view tokens) {
     tk_view_chop_count(&tokens, 2); // remove "extern" and "("
-    Tk_view extern_type_token = tk_view_chop_front(&tokens); // remove "c"
+    Token extern_type_token = tk_view_chop_front(&tokens); // remove "c"
     tk_view_chop_count(&tokens, 2); // remove ")" and "fn"
 
-    if (0 != str_view_cmp_cstr(tk_view_front(extern_type_token).text, "c")) {
+    if (0 != str_view_cmp_cstr(extern_type_token.text, "c")) {
         todo();
     }
 
     Node_id fun_declaration = node_new();
     nodes_at(fun_declaration)->type = NODE_FUNCTION_DECLARATION;
 
-    nodes_at(fun_declaration)->name = tk_view_front(tk_view_chop_front(&tokens)).text;
+    nodes_at(fun_declaration)->name = tk_view_chop_front(&tokens).text;
     assert(nodes_at(fun_declaration)->name.count > 0);
 
-    Tk_view open_par_token = tk_view_chop_front(&tokens); // remove "("
-    assert(tk_view_front(open_par_token).type == TOKEN_OPEN_PAR);
+    Token open_par_token = tk_view_chop_front(&tokens); // remove "("
+    assert(open_par_token.type == TOKEN_OPEN_PAR);
 
     Node_id parameters;
     if (!extract_function_parameters(&parameters, &tokens)) {
@@ -442,17 +440,16 @@ static Node_id parse_operation(Tk_view tokens) {
 
     size_t idx_operator = get_idx_lowest_precedence_operator(tokens);
     Tk_view left_tokens = tk_view_chop_count(&tokens, idx_operator);
-    Tk_view operator_token = tk_view_chop_front(&tokens);
+    Token operator_token = tk_view_chop_front(&tokens);
     Tk_view right_tokens = tokens;
 
     assert(left_tokens.count > 0);
-    assert(operator_token.count == 1);
     assert(right_tokens.count > 0);
 
     Node_id operator_node = node_new();
     nodes_at(operator_node)->type = NODE_OPERATOR;
-    nodes_at(operator_node)->token_type = tk_view_front(operator_token).type;
-    nodes_at(operator_node)->line_num = tk_view_front(operator_token).line_num;
+    nodes_at(operator_node)->token_type = operator_token.type;
+    nodes_at(operator_node)->line_num = operator_token.line_num;
 
     Node_id left_node = parse_rec(left_tokens);
     Node_id right_node = parse_rec(right_tokens);

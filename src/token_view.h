@@ -68,8 +68,8 @@ static inline Tk_view tk_view_chop_count_at_most(Tk_view* token_view, size_t cou
     return tk_view_chop_count(token_view, MIN(token_view->count, count));
 }
 
-static inline Tk_view tk_view_chop_front(Tk_view* token_view) {
-    return tk_view_chop_count(token_view, 1);
+static inline Token tk_view_chop_front(Tk_view* token_view) {
+    return tk_view_front(tk_view_chop_count(token_view, 1));
 }
 
 static inline Str_view tk_view_print_internal(Tk_view token_view) {
