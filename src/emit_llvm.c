@@ -331,20 +331,16 @@ static void emit_variable_definition(String* output, Node_id variable_def) {
 }
 
 static void emit_src_of_assignment(String* output, Node_id variable_def, void* item) {
-    size_t src_llvm_id = nodes_at(variable_def)->llvm_id_variable.def;
-    Str_view num_str = nodes_at(variable_def)->str_data;
+    size_t src_llvm_id = nodes_at(variable_def)->llvm_id_variable.store_dest;
 
     Node_id rhs = *(Node_id*)item;
     Str_view symbol_name = nodes_at(rhs)->name;
+    Str_view num_str = nodes_at(rhs)->str_data;
 
     if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "String")) {
         log(LOG_DEBUG, "thing\n");
-        if (num_str.count > 0) {
-            string_extend_strv(output, symbol_name);
-        } else {
-            string_extend_cstr(output, " @.");
-            string_extend_strv(output, symbol_name);
-        }
+        string_extend_cstr(output, " @.");
+        string_extend_strv(output, symbol_name);
     } else if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "i32")) {
         if (num_str.count > 0) {
             string_extend_strv(output, num_str);
