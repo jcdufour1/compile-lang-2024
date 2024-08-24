@@ -175,8 +175,7 @@ static void emit_alloca(String* output, Node_id symbol_def) {
     llvm_id_for_next_var++;
 }
 
-static void emit_store(String* output, Node_id variable_def, Str_view num_str){
-    size_t src_llvm_id = nodes_at(variable_def)->llvm_id_variable.def;
+static void emit_store(String* output, Node_id variable_def, void (emit_src)(String* output, Node_id variable_def, void* item), void* item){
     size_t alloca_dest_id = nodes_at(variable_def)->llvm_id_variable.store_dest;
     assert(alloca_dest_id > 0);
 
@@ -184,21 +183,29 @@ static void emit_store(String* output, Node_id variable_def, Str_view num_str){
     extend_type_call_str(output, variable_def);
     string_append(output, ' ');
 
+    emit_src(output, variable_def, item);
+
+    string_extend_cstr(output, ", ptr %");
+    string_extend_size_t(output, alloca_dest_id);
+    string_extend_cstr(output, ", align 8");
+    string_extend_cstr(output, "\n");
+}
+
+static void emit_src_1(String* output, Node_id variable_def, void* item) {
+    size_t src_llvm_id = nodes_at(variable_def)->llvm_id_variable.def;
+    Str_view num_str = str_view_from_cstr("");
+
     switch (nodes_at(variable_def)->type) {
         case NODE_VARIABLE_DEFINITION:
-            if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "String")) {
-                string_extend_cstr(output, " %");
-                string_extend_size_t(output, src_llvm_id);
-            } else if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "i32")) {
-                string_extend_strv(output, num_str);
-            } else {
-                todo();
-            }
-            break;
+            // fallthrough
         case NODE_LANG_TYPE:
             if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "String")) {
-                string_extend_cstr(output, " %");
-                string_extend_size_t(output, src_llvm_id);
+                if (num_str.count > 0) {
+                    string_extend_strv(output, num_str);
+                } else {
+                    string_extend_cstr(output, " %");
+                    string_extend_size_t(output, src_llvm_id);
+                }
             } else if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "i32")) {
                 if (num_str.count > 0) {
                     string_extend_strv(output, num_str);
@@ -213,11 +220,6 @@ static void emit_store(String* output, Node_id variable_def, Str_view num_str){
         default:
             todo();
     }
-
-    string_extend_cstr(output, ", ptr %");
-    string_extend_size_t(output, alloca_dest_id);
-    string_extend_cstr(output, ", align 8");
-    string_extend_cstr(output, "\n");
 }
 
 static void emit_store_fun_params(String* output, Node_id parameters) {
@@ -225,7 +227,7 @@ static void emit_store_fun_params(String* output, Node_id parameters) {
     nodes_foreach_child(param, parameters) {
         assert(nodes_at(param)->llvm_id_variable.def > 0);
         emit_alloca(output, param);
-        emit_store(output, param, str_view_from_cstr(""));
+        emit_store(output, param, emit_src_1, NULL);
         llvm_id_for_next_var++;
     }
 }
@@ -328,6 +330,33 @@ static void emit_variable_definition(String* output, Node_id variable_def) {
     emit_alloca(output, variable_def);
 }
 
+static void emit_src_of_assignment(String* output, Node_id variable_def, void* item) {
+    size_t src_llvm_id = nodes_at(variable_def)->llvm_id_variable.def;
+    Str_view num_str = nodes_at(variable_def)->str_data;
+
+    Node_id rhs = *(Node_id*)item;
+    Str_view symbol_name = nodes_at(rhs)->name;
+
+    if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "String")) {
+        log(LOG_DEBUG, "thing\n");
+        if (num_str.count > 0) {
+            string_extend_strv(output, symbol_name);
+        } else {
+            string_extend_cstr(output, " @.");
+            string_extend_strv(output, symbol_name);
+        }
+    } else if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "i32")) {
+        if (num_str.count > 0) {
+            string_extend_strv(output, num_str);
+        } else {
+            string_extend_cstr(output, " %");
+            string_extend_size_t(output, src_llvm_id);
+        }
+    } else {
+        todo();
+    }
+}
+
 static void emit_assignment(String* output, Node_id assignment) {
     Node_id lhs = nodes_at(assignment)->left_child;
     Node_id rhs = nodes_at(lhs)->next;
@@ -345,7 +374,7 @@ static void emit_assignment(String* output, Node_id assignment) {
                 emit_variable_definition(output, lhs_def);
             }
             assert(nodes_at(rhs)->str_data.count > 0);
-            emit_store(output, lhs_def, nodes_at(rhs)->str_data);
+            emit_store(output, lhs_def, emit_src_of_assignment, &rhs);
             break;
         default:
             todo();
