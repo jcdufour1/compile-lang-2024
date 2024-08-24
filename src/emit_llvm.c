@@ -191,7 +191,7 @@ static void emit_store(String* output, Node_id variable_def, void (emit_src)(Str
     string_extend_cstr(output, "\n");
 }
 
-static void emit_src_1(String* output, Node_id variable_def, void* item) {
+static void emit_src_of_fun_params(String* output, Node_id variable_def, void* item) {
     size_t src_llvm_id = nodes_at(variable_def)->llvm_id_variable.def;
     Str_view num_str = str_view_from_cstr("");
 
@@ -199,23 +199,8 @@ static void emit_src_1(String* output, Node_id variable_def, void* item) {
         case NODE_VARIABLE_DEFINITION:
             // fallthrough
         case NODE_LANG_TYPE:
-            if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "String")) {
-                if (num_str.count > 0) {
-                    string_extend_strv(output, num_str);
-                } else {
-                    string_extend_cstr(output, " %");
-                    string_extend_size_t(output, src_llvm_id);
-                }
-            } else if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "i32")) {
-                if (num_str.count > 0) {
-                    string_extend_strv(output, num_str);
-                } else {
-                    string_extend_cstr(output, " %");
-                    string_extend_size_t(output, src_llvm_id);
-                }
-            } else {
-                todo();
-            }
+            string_extend_cstr(output, " %");
+            string_extend_size_t(output, src_llvm_id);
             break;
         default:
             todo();
@@ -227,7 +212,7 @@ static void emit_store_fun_params(String* output, Node_id parameters) {
     nodes_foreach_child(param, parameters) {
         assert(nodes_at(param)->llvm_id_variable.def > 0);
         emit_alloca(output, param);
-        emit_store(output, param, emit_src_1, NULL);
+        emit_store(output, param, emit_src_of_fun_params, NULL);
         llvm_id_for_next_var++;
     }
 }
@@ -338,16 +323,10 @@ static void emit_src_of_assignment(String* output, Node_id variable_def, void* i
     Str_view num_str = nodes_at(rhs)->str_data;
 
     if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "String")) {
-        log(LOG_DEBUG, "thing\n");
         string_extend_cstr(output, " @.");
         string_extend_strv(output, symbol_name);
     } else if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "i32")) {
-        if (num_str.count > 0) {
-            string_extend_strv(output, num_str);
-        } else {
-            string_extend_cstr(output, " %");
-            string_extend_size_t(output, src_llvm_id);
-        }
+        string_extend_strv(output, num_str);
     } else {
         todo();
     }
