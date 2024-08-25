@@ -19,6 +19,7 @@ static Node_id parse_single_item_or_block(Tk_view tokens);
         for (size_t idx = 0; idx < (token_view).count; idx++) { \
             log_indent(log_level, indent, " "TOKEN_FMT"\n", token_print((token_view).tokens[idx])); \
         } \
+        log(log_level, "\n"); \
     } while(0);
 
 static Str_view literal_name_new() {
@@ -39,16 +40,27 @@ static Str_view literal_name_new() {
     return str_view;
 }
 
-// TODO: make this work when there are eg. nested (())
-static bool get_idx_matching_token(size_t* idx_matching, Tk_view tokens, TOKEN_TYPE type_to_match) {
+// TODO: this function will consider ([])
+static bool get_idx_matching_token(
+    size_t* idx_matching,
+    Tk_view tokens,
+    TOKEN_TYPE type_to_match
+) {
+    int par_level = 0; // return when type_to_match found only if this is 0
     for (size_t idx = 0; idx < tokens.count; idx++) {
-        if (tokens.tokens[idx].type == type_to_match) {
-            if (idx_matching) {
-                *idx_matching = idx;;
-            }
+        Token curr_token = tokens.tokens[idx];
+        if (par_level == 0 && curr_token.type == type_to_match) {
+            *idx_matching = idx;
             return true;
         }
+
+        if (token_is_closing(curr_token)) {
+            par_level--;
+        } else if (token_is_opening(curr_token)) {
+            par_level++;
+        }
     }
+
     return false;
 }
 
@@ -83,7 +95,7 @@ static bool tokens_start_with_function_call(Tk_view tokens) {
     }
 
     size_t semicolon_pos;
-    if (!get_idx_matching_token(&semicolon_pos, tokens, TOKEN_SEMICOLON)) {
+    if (!get_idx_token(&semicolon_pos, tokens, 0, TOKEN_SEMICOLON)) {
         semicolon_pos = tokens.count;
     }
     if (semicolon_pos < 1) {
@@ -244,7 +256,9 @@ static bool tokens_start_with_function_definition(Tk_view tokens) {
 
 static bool extract_function_parameters(Node_id* result, Tk_view* tokens) {
     size_t parameters_len;
-    get_idx_matching_token(&parameters_len, *tokens, TOKEN_CLOSE_PAR);
+    if (!get_idx_matching_token(&parameters_len, *tokens, TOKEN_CLOSE_PAR)) {
+        todo();
+    }
 
     Tk_view parameters_tokens = tk_view_chop_count(tokens, parameters_len);
     tk_view_chop_front(tokens); // remove )
@@ -517,6 +531,7 @@ static bool extract_function_call(Node_id* child, Tk_view* tokens) {
     Tk_view arguments_tokens = tk_view_chop_count(tokens, parameters_end);
 
     Node_id argument;
+    log_tokens(LOG_DEBUG, arguments_tokens, 0);
     while (extract_function_argument(&argument, &arguments_tokens)) {
         nodes_append_child(function_call, argument);
     }

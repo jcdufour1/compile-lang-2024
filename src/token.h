@@ -139,6 +139,92 @@ static inline Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
     }
 }
 
+static inline bool token_is_closing(Token curr_token) {
+    switch (curr_token.type) {
+        case TOKEN_CLOSE_PAR:
+            // fallthrough
+        case TOKEN_CLOSE_CURLY_BRACE:
+            return true;
+        case TOKEN_SINGLE_PLUS:
+            // fallthrough
+        case TOKEN_SINGLE_MINUS:
+            // fallthrough
+        case TOKEN_ASTERISK:
+            // fallthrough
+        case TOKEN_STRING_LITERAL:
+            // fallthrough
+        case TOKEN_NUM_LITERAL:
+            // fallthrough
+        case TOKEN_SYMBOL:
+            // fallthrough
+        case TOKEN_OPEN_PAR:
+            // fallthrough
+        case TOKEN_OPEN_CURLY_BRACE:
+            // fallthrough
+        case TOKEN_DOUBLE_QUOTE:
+            // fallthrough
+        case TOKEN_SEMICOLON:
+            // fallthrough
+        case TOKEN_COMMA:
+            // fallthrough
+        case TOKEN_COLON:
+            // fallthrough
+        case TOKEN_SINGLE_EQUAL:
+            // fallthrough
+        case TOKEN_SINGLE_DOT:
+            // fallthrough
+        case TOKEN_DOUBLE_DOT:
+            // fallthrough
+        case TOKEN_TRIPLE_DOT:
+            return false;
+        default:
+            unreachable();
+    }
+}
+
+static inline bool token_is_opening(Token curr_token) {
+    switch (curr_token.type) {
+        case TOKEN_OPEN_PAR:
+            // fallthrough
+        case TOKEN_OPEN_CURLY_BRACE:
+            return true;
+        case TOKEN_SINGLE_PLUS:
+            // fallthrough
+        case TOKEN_SINGLE_MINUS:
+            // fallthrough
+        case TOKEN_ASTERISK:
+            // fallthrough
+        case TOKEN_STRING_LITERAL:
+            // fallthrough
+        case TOKEN_NUM_LITERAL:
+            // fallthrough
+        case TOKEN_SYMBOL:
+            // fallthrough
+        case TOKEN_CLOSE_PAR:
+            // fallthrough
+        case TOKEN_CLOSE_CURLY_BRACE:
+            // fallthrough
+        case TOKEN_DOUBLE_QUOTE:
+            // fallthrough
+        case TOKEN_SEMICOLON:
+            // fallthrough
+        case TOKEN_COMMA:
+            // fallthrough
+        case TOKEN_COLON:
+            // fallthrough
+        case TOKEN_SINGLE_EQUAL:
+            // fallthrough
+        case TOKEN_SINGLE_DOT:
+            // fallthrough
+        case TOKEN_DOUBLE_DOT:
+            // fallthrough
+        case TOKEN_TRIPLE_DOT:
+            return false;
+        default:
+            unreachable();
+    }
+}
+
 static inline bool token_is_equal(const Token token, const char* cstr, TOKEN_TYPE token_type) {
     if (token.type != token_type) {
         return false;

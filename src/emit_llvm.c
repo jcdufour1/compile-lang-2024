@@ -112,6 +112,9 @@ static void emit_function_call_arguments(String* output, Node_id statement) {
                 llvm_id_for_next_var++;
                 break;
             }
+            case NODE_FUNCTION_CALL:
+                unreachable(); // this function call should be changed to assign to a variable 
+                               // before reaching emit_llvm stage, then assign that variable here. 
             default:
                 todo();
         }
