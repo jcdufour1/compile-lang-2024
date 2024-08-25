@@ -20,7 +20,7 @@ fn println(String string1, i32 num2) i32 {
 
 fn main() i32 {
     let count_3: i32 = 89;
-    let string_thing_4: String = "bicycle";
+    let string_thing_4: String = get_string();
     printf("%s: %d\n", string_thing_4, count_3);
     return println("bye world", 55);
 }

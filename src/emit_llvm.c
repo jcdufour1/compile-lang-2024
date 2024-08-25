@@ -417,6 +417,9 @@ static void emit_assignment(String* output, Node_id assignment) {
         case NODE_BLOCK:
             todo();
         case NODE_FUNCTION_CALL:
+            if (nodes_at(lhs_def)->llvm_id_variable.def == 0) {
+                emit_variable_definition(output, lhs_def);
+            }
             emit_function_call(output, rhs);
             size_t fun_call_result_id = nodes_at(rhs)->llvm_id_block_return;
             assert(fun_call_result_id > 0);
