@@ -37,21 +37,34 @@ static inline Tk_view tk_view_chop_on_cond(
     todo();
 }
 
-// delim itself is left in the input token_view
-static inline Tk_view tk_view_chop_on_type_delim(Tk_view* token_view, TOKEN_TYPE delim) {
+static inline Tk_view tk_view_chop_on_type_delim_common(Tk_view* token_view, TOKEN_TYPE delim, bool or_all_fallback) {
     Tk_view new_token_view;
-    for (size_t idx = 0; token_view->count > idx; idx++) {
+    size_t idx = 0;
+    for (; idx < token_view->count; idx++) {
         if (token_view->tokens[idx].type == delim) {
-            new_token_view.tokens = token_view->tokens;
-            new_token_view.count = idx;
-            token_view->tokens += idx;
-            token_view->count -= idx;
-            return new_token_view;
+            break;
         }
     }
 
-    // delim not found
-    todo();
+    if ((!or_all_fallback) && (idx >= token_view->count)) {
+        unreachable();
+    }
+
+    new_token_view.tokens = token_view->tokens;
+    new_token_view.count = idx;
+    token_view->tokens += idx;
+    token_view->count -= idx;
+    return new_token_view;
+}
+
+// delim itself is left in the input token_view
+static inline Tk_view tk_view_chop_on_type_delim(Tk_view* token_view, TOKEN_TYPE delim) {
+    return tk_view_chop_on_type_delim_common(token_view, delim, false);
+}
+
+// chop all if delim not found
+static inline Tk_view tk_view_chop_on_type_delim_or_all(Tk_view* token_view, TOKEN_TYPE delim) {
+    return tk_view_chop_on_type_delim_common(token_view, delim, true);
 }
 
 static inline Tk_view tk_view_chop_count(Tk_view* token_view, size_t count) {

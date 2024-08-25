@@ -122,11 +122,12 @@ static inline void safe_free_internal(void* ptr) {
     free(ptr);
 }
 
-
 #define safe_free(ptr) \
     safe_free_internal(ptr); \
     (ptr) = NULL;
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
+
+#define INLINE static inline __attribute__((always_inline))
 
 #endif // UTIL_H

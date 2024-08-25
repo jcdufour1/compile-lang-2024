@@ -34,6 +34,30 @@ static void extend_type_decl_str(String* output, Node_id variable_def) {
     }
 }
 
+static void extend_literal_decl(String* output, Node_id var_decl_or_def) {
+    extend_type_decl_str(output, var_decl_or_def);
+
+    Str_view lang_type = nodes_at(var_decl_or_def)->lang_type;
+    if (0 == str_view_cmp_cstr(lang_type, "String")) {
+        string_extend_cstr(output, " @.");
+        string_extend_strv(output, nodes_at(var_decl_or_def)->name);
+    } else if (0 == str_view_cmp_cstr(lang_type, "i32")) {
+        string_append(output, ' ');
+        string_extend_strv(output, nodes_at(var_decl_or_def)->str_data);
+    } else {
+        todo();
+    }
+}
+
+static Node_id return_type_from_function_definition(Node_id fun_def) {
+    Node_id return_types = nodes_get_child_of_type(fun_def, NODE_FUNCTION_RETURN_TYPES);
+    assert(nodes_count_children(return_types) < 2);
+    if (nodes_count_children(return_types) > 0) {
+        return nodes_at(return_types)->left_child;
+    }
+    unreachable();
+}
+
 static void emit_function_params(String* output, Node_id fun_params) {
     size_t idx = 0;
     nodes_foreach_child(param, fun_params) {
@@ -47,21 +71,6 @@ static void emit_function_params(String* output, Node_id fun_params) {
         string_extend_size_t(output, nodes_at(param)->llvm_id_variable.def);
 
         llvm_id_for_next_var++;
-    }
-}
-
-static void extend_literal_decl(String* output, Node_id var_decl_or_def) {
-    extend_type_decl_str(output, var_decl_or_def);
-
-    Str_view lang_type = nodes_at(var_decl_or_def)->lang_type;
-    if (0 == str_view_cmp_cstr(lang_type, "String")) {
-        string_extend_cstr(output, " @.");
-        string_extend_strv(output, nodes_at(var_decl_or_def)->name);
-    } else if (0 == str_view_cmp_cstr(lang_type, "i32")) {
-        string_append(output, ' ');
-        string_extend_strv(output, nodes_at(var_decl_or_def)->str_data);
-    } else {
-        todo();
     }
 }
 
@@ -143,12 +152,19 @@ static void emit_function_call(String* output, Node_id fun_call) {
         }
     }
 
+    Node_id fun_def;
+    if (!sym_tbl_lookup(&fun_def, nodes_at(fun_call)->name)) {
+        unreachable();
+    }
+
     nodes_at(fun_call)->llvm_id_variable.def = llvm_id_for_next_var;
 
     // start of actual function call
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, nodes_at(fun_call)->llvm_id_variable.def);
-    string_extend_cstr(output, " = call i32 @");
+    string_extend_cstr(output, " = call ");
+    extend_type_call_str(output, return_type_from_function_definition(fun_def));
+    string_extend_cstr(output, " @");
     string_extend_strv(output, nodes_at(fun_call)->name);
 
     // arguments
@@ -218,7 +234,11 @@ static void emit_store_fun_params(String* output, Node_id parameters) {
 }
 
 static void emit_function_definition(String* output, Node_id fun_def) {
-    string_extend_cstr(output, "define dso_local i32 @");
+    string_extend_cstr(output, "define dso_local ");
+
+    extend_type_call_str(output, return_type_from_function_definition(fun_def));
+
+    string_extend_cstr(output, " @");
     string_extend_strv(output, nodes_at(fun_def)->name);
 
     Node_id params = nodes_get_child_of_type(fun_def, NODE_FUNCTION_PARAMETERS);
@@ -264,20 +284,41 @@ static void emit_operator(String* output, Node_id operator) {
 
 static void emit_function_return_statement(String* output, Node_id statement) {
     Node_id child = nodes_at(statement)->left_child;
+    Node_id child_def;
+    if (!sym_tbl_lookup(&child_def, nodes_at(child)->name)) {
+        todo();
+    }
+
     switch (nodes_at(child)->type) {
         case NODE_LITERAL:
             if (nodes_at(child)->token_type != TOKEN_NUM_LITERAL) {
                 todo();
             }
-            string_extend_cstr(output, "    ret i32 ");
+            string_extend_cstr(output, "    ret ");
+            extend_type_call_str(output, child_def);
+            string_extend_cstr(output, " ");
             string_extend_strv(output, nodes_at(child)->str_data);
             string_extend_cstr(output, "\n");
             break;
-        case NODE_FUNCTION_CALL:
-            todo();
+        case NODE_FUNCTION_CALL: {
+            emit_function_call(output, child);
+            string_extend_cstr(output, "    ret ");
+
+            Node_id return_types = nodes_get_child_of_type(child_def, NODE_FUNCTION_RETURN_TYPES);
+            assert(nodes_count_children(return_types) == 1 && "not implemented");
+            Node_id return_type = nodes_at(return_types)->left_child;
+
+            extend_type_call_str(output, return_type);
+            string_extend_cstr(output, " %");
+            string_extend_size_t(output, nodes_at(child)->llvm_id_block_return);
+            string_extend_cstr(output, "\n");
+            break;
+        }
         case NODE_BLOCK: {
             emit_block(output, child);
-            string_extend_cstr(output, "    ret i32 %");
+            string_extend_cstr(output, "    ret ");
+            extend_type_call_str(output, child_def);
+            string_extend_cstr(output, " %");
             string_extend_size_t(output, nodes_at(child)->llvm_id_block_return);
             string_extend_cstr(output, "\n");
             break;
@@ -285,7 +326,9 @@ static void emit_function_return_statement(String* output, Node_id statement) {
         case NODE_OPERATOR: {
             todo();
             emit_operator(output, child);
-            string_extend_cstr(output, "    ret i32 %");
+            string_extend_cstr(output, "    ret ");
+            extend_type_call_str(output, child_def);
+            string_extend_cstr(output, " %");
             string_extend_size_t(output, nodes_at(child)->llvm_id_block_return);
             string_extend_cstr(output, "\n");
             break;
@@ -298,7 +341,9 @@ static void emit_function_return_statement(String* output, Node_id statement) {
                 todo();
             }
 
-            string_extend_cstr(output, "    ret i32 %");
+            string_extend_cstr(output, "    ret ");
+            extend_type_call_str(output, child_def);
+            string_extend_cstr(output, " %");
             string_extend_size_t(output, nodes_at(symbol_def)->llvm_id_variable.new_load_dest);
             string_extend_cstr(output, "\n");
             break;
@@ -322,13 +367,25 @@ static void emit_src_of_assignment(String* output, Node_id variable_def, void* i
     Str_view symbol_name = nodes_at(rhs)->name;
     Str_view num_str = nodes_at(rhs)->str_data;
 
-    if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "String")) {
-        string_extend_cstr(output, " @.");
-        string_extend_strv(output, symbol_name);
-    } else if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "i32")) {
-        string_extend_strv(output, num_str);
-    } else {
-        todo();
+    switch (nodes_at(rhs)->type) {
+        case NODE_SYMBOL:
+            // fallthrough
+        case NODE_LITERAL:
+            if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "String")) {
+                string_extend_cstr(output, " @.");
+                string_extend_strv(output, symbol_name);
+            } else if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "i32")) {
+                string_extend_strv(output, num_str);
+            } else {
+                todo();
+            }
+            break;
+        case NODE_FUNCTION_CALL:
+            string_extend_cstr(output, " %");
+            string_extend_size_t(output, nodes_at(rhs)->llvm_id_block_return);
+            break;
+        default:
+            todo();
     }
 }
 
@@ -351,13 +408,23 @@ static void emit_assignment(String* output, Node_id assignment) {
             assert(nodes_at(rhs)->str_data.count > 0);
             emit_store(output, lhs_def, emit_src_of_assignment, &rhs);
             break;
+        case NODE_BLOCK:
+            todo();
+        case NODE_FUNCTION_CALL:
+            emit_function_call(output, rhs);
+            size_t fun_call_result_id = nodes_at(rhs)->llvm_id_block_return;
+            assert(fun_call_result_id > 0);
+            emit_store(output, lhs_def, emit_src_of_assignment, &rhs);
+            break;
         default:
             todo();
     }
 }
 
 static void emit_function_declaration(String* output, Node_id fun_decl) {
-    string_extend_cstr(output, "declare i32 @");
+    string_extend_cstr(output, "declare i32");
+    //extend_literal_decl(output, fun_decl); // TODO
+    string_extend_cstr(output, " @");
     string_extend_strv(output, nodes_at(fun_decl)->name);
     string_extend_cstr(output, " (ptr noundef) ");
     string_extend_cstr(output, "\n");
@@ -432,8 +499,14 @@ static void emit_symbols(String* output) {
             case NODE_LITERAL:
                 // fallthrough
             case NODE_VARIABLE_DEFINITION:
-                break;
+                // fallthrough
             case NODE_LANG_TYPE:
+                // fallthrough
+            case NODE_FUNCTION_CALL:
+                // fallthrough
+            case NODE_FUNCTION_DECLARATION:
+                // fallthrough
+            case NODE_FUNCTION_DEFINITION:
                 break;
             default:
                 log(LOG_FETAL, NODE_FMT"\n", node_print(curr_node.node));
