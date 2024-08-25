@@ -153,6 +153,7 @@ static bool is_assignment(Tk_view tokens) {
 }
 
 static bool extract_function_parameter(Node_id* child, Tk_view* tokens) {
+    log_tokens(LOG_DEBUG, *tokens, 0);
     if (tokens->count < 2) {
         return false;
     }
@@ -166,24 +167,24 @@ static bool extract_function_parameter(Node_id* child, Tk_view* tokens) {
         param_tokens = tk_view_chop_count(tokens, tokens->count);
     }
 
-    if (param_tokens.count < 2 || param_tokens.count > 3) {
-        todo();
-    }
-
     Node_id param = node_new();
     nodes_at(param)->type = NODE_LANG_TYPE;
 
+    nodes_at(param)->name = tk_view_chop_front(&param_tokens).text;
+
+    tk_view_chop_front(&param_tokens); // remove :
+
     nodes_at(param)->lang_type = tk_view_chop_front(&param_tokens).text;
 
-    if (tk_view_front(param_tokens).type == TOKEN_TRIPLE_DOT) {
+    if (param_tokens.count > 0 && tk_view_front(param_tokens).type == TOKEN_TRIPLE_DOT) {
         tk_view_chop_front(&param_tokens);
         nodes_at(param)->is_variadic = true;
     }
 
-    nodes_at(param)->name = tk_view_chop_front(&param_tokens).text;
     sym_tbl_add(param);
 
     *child = param;
+    assert(param_tokens.count == 0);
     return true;
 }
 
