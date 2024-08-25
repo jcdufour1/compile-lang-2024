@@ -19,6 +19,11 @@ static bool is_not_quote(char prev, char curr) {
     return curr != '"' || prev == '\\';
 }
 
+static bool is_dot(char prev, char curr) {
+    (void) prev;
+    return curr == '.';
+}
+
 static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text) {
     memset(token, 0, sizeof(*token));
 
@@ -73,18 +78,14 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text) 
         str_view_chop_front(file_text);
         token->type = TOKEN_COMMA;
         return true;
-    } else if (str_view_front(*file_text) == '+') {
-        str_view_chop_front(file_text);
-        token->type = TOKEN_PLUS_SIGN;
-        return true;
     } else if (str_view_front(*file_text) == '-') {
         str_view_chop_front(file_text);
-        token->type = TOKEN_MINUS_SIGN;
+        token->type = TOKEN_SINGLE_MINUS;
         return true;
     } else if (str_view_front(*file_text) == '*') {
         // TODO: * may not always be multiplication
         str_view_chop_front(file_text);
-        token->type = TOKEN_MULTIPLY_SIGN;
+        token->type = TOKEN_ASTERISK;
         return true;
     } else if (str_view_front(*file_text) == ':') {
         str_view_chop_front(file_text);
@@ -100,6 +101,20 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text) 
         assert((file_text->count < 1 || str_view_front(*file_text) != '=') && "double = not implemented");
         token->type = TOKEN_SINGLE_EQUAL;
         return true;
+    } else if (str_view_front(*file_text) == '.') {
+        Str_view dots = str_view_chop_on_cond(file_text, is_dot);
+        if (dots.count == 1) {
+            token->type = TOKEN_SINGLE_DOT;
+            return true;
+        } else if (dots.count == 2) {
+            token->type = TOKEN_DOUBLE_DOT;
+            return true;
+        } else if (dots.count == 3) {
+            token->type = TOKEN_TRIPLE_DOT;
+            return true;
+        } else {
+            todo();
+        }
     } else {
         log(LOG_FETAL, "unknown symbol: %c (%x)\n", str_view_front(*file_text), str_view_front(*file_text));
         todo();

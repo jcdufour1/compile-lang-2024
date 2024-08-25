@@ -22,10 +22,9 @@ Str_view token_print_internal(Token token) {
         case TOKEN_DOUBLE_QUOTE: // fallthrough
         case TOKEN_SEMICOLON: // fallthrough
         case TOKEN_COMMA: // fallthrough
-        case TOKEN_PLUS_SIGN: // fallthrough
-        case TOKEN_MINUS_SIGN: // fallthrough
+        case TOKEN_SINGLE_MINUS: // fallthrough
         case TOKEN_COLON: // fallthrough
-        case TOKEN_MULTIPLY_SIGN: // fallthrough
+        case TOKEN_ASTERISK: // fallthrough
         case TOKEN_SINGLE_EQUAL:
             break;
         case TOKEN_STRING_LITERAL: 

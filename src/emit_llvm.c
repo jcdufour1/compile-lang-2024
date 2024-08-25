@@ -23,8 +23,12 @@ static void extend_type_call_str(String* output, Node_id variable_def) {
 }
 
 static void extend_type_decl_str(String* output, Node_id variable_def) {
-    Str_view lang_type = nodes_at(variable_def)->lang_type;
+    if (nodes_at(variable_def)->is_variadic) {
+        string_extend_cstr(output, "...");
+        return;
+    }
 
+    Str_view lang_type = nodes_at(variable_def)->lang_type;
     if (0 == str_view_cmp_cstr(lang_type, "String")) {
         string_extend_cstr(output, "ptr noundef");
     } else if (0 == str_view_cmp_cstr(lang_type, "i32")) {
@@ -67,6 +71,9 @@ static void emit_function_params(String* output, Node_id fun_params) {
 
         nodes_at(param)->llvm_id_variable.def = llvm_id_for_next_var;
         extend_type_decl_str(output, param);
+        if (nodes_at(param)->is_variadic) {
+            return;
+        }
         string_extend_cstr(output, " %");
         string_extend_size_t(output, nodes_at(param)->llvm_id_variable.def);
 
@@ -208,8 +215,8 @@ static void emit_store(String* output, Node_id variable_def, void (emit_src)(Str
 }
 
 static void emit_src_of_fun_params(String* output, Node_id variable_def, void* item) {
+    (void) item;
     size_t src_llvm_id = nodes_at(variable_def)->llvm_id_variable.def;
-    Str_view num_str = str_view_from_cstr("");
 
     switch (nodes_at(variable_def)->type) {
         case NODE_VARIABLE_DEFINITION:
@@ -362,6 +369,7 @@ static void emit_variable_definition(String* output, Node_id variable_def) {
 
 static void emit_src_of_assignment(String* output, Node_id variable_def, void* item) {
     size_t src_llvm_id = nodes_at(variable_def)->llvm_id_variable.store_dest;
+    (void) src_llvm_id;
 
     Node_id rhs = *(Node_id*)item;
     Str_view symbol_name = nodes_at(rhs)->name;
@@ -398,8 +406,6 @@ static void emit_assignment(String* output, Node_id assignment) {
         todo();
     }
 
-    size_t dest_id = nodes_at(lhs_def)->llvm_id_variable.store_dest;
-
     switch (nodes_at(rhs)->type) {
         case NODE_LITERAL:
             if (nodes_at(lhs_def)->llvm_id_variable.def == 0) {
@@ -426,7 +432,9 @@ static void emit_function_declaration(String* output, Node_id fun_decl) {
     //extend_literal_decl(output, fun_decl); // TODO
     string_extend_cstr(output, " @");
     string_extend_strv(output, nodes_at(fun_decl)->name);
-    string_extend_cstr(output, " (ptr noundef) ");
+    string_append(output, '(');
+    emit_function_params(output, nodes_get_child_of_type(fun_decl, NODE_FUNCTION_PARAMETERS));
+    string_append(output, ')');
     string_extend_cstr(output, "\n");
 }
 

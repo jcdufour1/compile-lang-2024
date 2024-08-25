@@ -154,7 +154,7 @@ static bool extract_function_parameter(Node_id* child, Tk_view* tokens) {
         param_tokens = tk_view_chop_count(tokens, tokens->count);
     }
 
-    if (param_tokens.count != 2) {
+    if (param_tokens.count < 2 || param_tokens.count > 3) {
         todo();
     }
 
@@ -163,13 +163,13 @@ static bool extract_function_parameter(Node_id* child, Tk_view* tokens) {
 
     nodes_at(param)->lang_type = tk_view_chop_front(&param_tokens).text;
 
+    if (tk_view_front(param_tokens).type == TOKEN_TRIPLE_DOT) {
+        tk_view_chop_front(&param_tokens);
+        nodes_at(param)->is_variadic = true;
+    }
+
     nodes_at(param)->name = tk_view_chop_front(&param_tokens).text;
     sym_tbl_add(param);
-    Node_id dummy;
-    static size_t count = 0;
-    if (count == 2) {
-        assert(sym_tbl_lookup(&dummy, str_view_from_cstr("num2")));
-    }
 
     *child = param;
     return true;

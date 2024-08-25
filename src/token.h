@@ -9,9 +9,9 @@
 
 typedef enum {
     // operators
-    TOKEN_PLUS_SIGN,
-    TOKEN_MINUS_SIGN,
-    TOKEN_MULTIPLY_SIGN,
+    TOKEN_SINGLE_PLUS,
+    TOKEN_SINGLE_MINUS,
+    TOKEN_ASTERISK,
 
     // literals
     TOKEN_STRING_LITERAL,
@@ -27,8 +27,10 @@ typedef enum {
     TOKEN_SEMICOLON,
     TOKEN_COMMA,
     TOKEN_COLON,
-    TOKEN_SINGLE_PLUS,
     TOKEN_SINGLE_EQUAL,
+    TOKEN_SINGLE_DOT,
+    TOKEN_DOUBLE_DOT,
+    TOKEN_TRIPLE_DOT,
 } TOKEN_TYPE;
 
 typedef struct {
@@ -48,8 +50,7 @@ static inline bool token_is_literal(Token token) {
         case TOKEN_CLOSE_PAR: // fallthrough
         case TOKEN_OPEN_PAR: // fallthrough
         case TOKEN_COMMA: // fallthrough
-        case TOKEN_PLUS_SIGN: // fallthrough
-        case TOKEN_MINUS_SIGN: // fallthrough
+        case TOKEN_SINGLE_MINUS: // fallthrough
         case TOKEN_DOUBLE_QUOTE: // fallthrough
         case TOKEN_OPEN_CURLY_BRACE: // fallthrough
         case TOKEN_CLOSE_CURLY_BRACE: // fallthrough
@@ -63,9 +64,8 @@ static inline bool token_is_literal(Token token) {
 
 static inline bool token_is_operator(Token token) {
     switch (token.type) {
-        case TOKEN_PLUS_SIGN: // fallthrough
-        case TOKEN_MINUS_SIGN:
-        case TOKEN_MULTIPLY_SIGN:
+        case TOKEN_SINGLE_MINUS:
+        case TOKEN_ASTERISK:
             return true;
         case TOKEN_NUM_LITERAL: // fallthrough
         case TOKEN_STRING_LITERAL: // fallthrough
@@ -88,10 +88,9 @@ static inline bool token_is_operator(Token token) {
 // higher number returned from this function means that operator has higher precedence
 static inline uint32_t token_get_precedence_operator(Token token) {
     switch (token.type) {
-        case TOKEN_PLUS_SIGN: // fallthrough
-        case TOKEN_MINUS_SIGN:
+        case TOKEN_SINGLE_MINUS:
             return 2;
-        case TOKEN_MULTIPLY_SIGN:
+        case TOKEN_ASTERISK:
             return 3;
         default:
             unreachable();
@@ -120,11 +119,11 @@ static inline Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
             return str_view_from_cstr(";");
         case TOKEN_COMMA:
             return str_view_from_cstr(",");
-        case TOKEN_PLUS_SIGN:
+        case TOKEN_SINGLE_PLUS:
             return str_view_from_cstr("+");
-        case TOKEN_MINUS_SIGN:
+        case TOKEN_SINGLE_MINUS:
             return str_view_from_cstr("-");
-        case TOKEN_MULTIPLY_SIGN:
+        case TOKEN_ASTERISK:
             // TODO: * may not always be multiplication
             return str_view_from_cstr("*");
         case TOKEN_STRING_LITERAL:

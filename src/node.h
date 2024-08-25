@@ -51,6 +51,8 @@ typedef struct {
     Str_view str_data; // eg. "hello" in "let string1: String = "hello""
     Str_view lang_type; // eg. "String" in "let string1: String = "hello""
 
+    bool is_variadic : 1;
+
     uint32_t line_num;
 } Node;
 

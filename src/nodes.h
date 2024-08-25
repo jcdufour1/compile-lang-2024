@@ -83,9 +83,11 @@ static inline Node_id nodes_get_local_leftmost(Node_id node) {
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_id root, const char* file, int line);
 
 #define log_tree(log_level, root) \
-    log_file_new(log_level, __FILE__, __LINE__, "tree:\n"); \
-    nodes_log_tree_rec(log_level, 0, root, __FILE__, __LINE__); \
-    log_file_new(log_level, __FILE__, __LINE__, "\n"); 
+    do { \
+        log_file_new(log_level, __FILE__, __LINE__, "tree:\n"); \
+        nodes_log_tree_rec(log_level, 0, root, __FILE__, __LINE__); \
+        log_file_new(log_level, __FILE__, __LINE__, "\n"); \
+    } while(0);
 
 #define nodes_foreach_child(child, parent) \
     for (Node_id child = nodes_at(parent)->left_child; (child) != NODE_IDX_NULL; (child) = nodes_at(child)->next)
