@@ -13,10 +13,10 @@ static void emit_llvm_main(String* output, Node_id root);
 static size_t llvm_id_for_next_var = 1;
 
 static void extend_type_call_str(String* output, Node_id variable_def) {
-    if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "String")) {
-        string_extend_cstr(output, "ptr");
-    } else if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "i32")) {
+    if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "i32")) {
         string_extend_cstr(output, "i32");
+    } else if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "ptr")) {
+        string_extend_cstr(output, "ptr");
     } else {
         todo();
     }
@@ -28,21 +28,15 @@ static void extend_type_decl_str(String* output, Node_id variable_def) {
         return;
     }
 
-    Str_view lang_type = nodes_at(variable_def)->lang_type;
-    if (0 == str_view_cmp_cstr(lang_type, "String")) {
-        string_extend_cstr(output, "ptr noundef");
-    } else if (0 == str_view_cmp_cstr(lang_type, "i32")) {
-        string_extend_cstr(output, "i32 noundef");
-    } else {
-        todo();
-    }
+    extend_type_call_str(output, variable_def);
+    string_extend_cstr(output, " noundef");
 }
 
 static void extend_literal_decl(String* output, Node_id var_decl_or_def) {
     extend_type_decl_str(output, var_decl_or_def);
 
     Str_view lang_type = nodes_at(var_decl_or_def)->lang_type;
-    if (0 == str_view_cmp_cstr(lang_type, "String")) {
+    if (0 == str_view_cmp_cstr(lang_type, "ptr")) {
         string_extend_cstr(output, " @.");
         string_extend_strv(output, nodes_at(var_decl_or_def)->name);
     } else if (0 == str_view_cmp_cstr(lang_type, "i32")) {
@@ -382,7 +376,7 @@ static void emit_src_of_assignment(String* output, Node_id variable_def, void* i
         case NODE_SYMBOL:
             // fallthrough
         case NODE_LITERAL:
-            if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "String")) {
+            if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "ptr")) {
                 string_extend_cstr(output, " @.");
                 string_extend_strv(output, symbol_name);
             } else if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "i32")) {

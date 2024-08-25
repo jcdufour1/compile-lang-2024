@@ -430,7 +430,7 @@ static bool extract_function_declaration(Node_id* child, Tk_view* tokens) {
 static Str_view get_literal_lang_type_from_token_type(TOKEN_TYPE token_type) {
     switch (token_type) {
         case TOKEN_STRING_LITERAL:
-            return str_view_from_cstr("String");
+            return str_view_from_cstr("ptr");
         case TOKEN_NUM_LITERAL:
             return str_view_from_cstr("i32");
         default:
