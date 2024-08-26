@@ -20,6 +20,9 @@ fn println(string1: ptr, num2: i32) i32 {
 
 fn main() i32 {
     let count_3: i32 = 89;
+    for idx in {0..2} {
+        puts("thing");
+    }
     let string_thing_4: ptr = get_string();
     string_thing_4 = "hello";
     printf("%s: %d\n", string_thing_4, count_3);
