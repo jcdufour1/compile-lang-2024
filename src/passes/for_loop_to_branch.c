@@ -35,11 +35,16 @@ static Node_id jmp_if_less_than_new(
     Str_view label_name_if_true,
     Str_view label_name_if_false
 ) {
+    Node_id less_than = node_new();
+    nodes_at(less_than)->type = NODE_OPERATOR;
+    nodes_at(less_than)->token_type = TOKEN_LESS_THAN;
+    nodes_append_child(less_than, symbol_new(label_name_if_true));
+    nodes_append_child(less_than, symbol_new(label_name_if_false));
+
     Node_id cond_goto = node_new();
     nodes_at(cond_goto)->type = NODE_COND_GOTO;
     nodes_at(cond_goto)->name = symbol_name_to_check;
-    nodes_append_child(cond_goto, symbol_new(label_name_if_true));
-    nodes_append_child(cond_goto, symbol_new(label_name_if_false));
+    nodes_append_child(cond_goto, less_than);
     return cond_goto;
 }
 
