@@ -168,4 +168,17 @@ static inline Node_id nodes_get_sibling_of_type(Node_id node, NODE_TYPE node_typ
     unreachable();
 }
 
+static inline Node_id nodes_get_child(Node_id parent, size_t idx) {
+    size_t curr_idx = 0;
+    nodes_foreach_child(child, parent) {
+        if (curr_idx == idx) {
+            return child;
+        }
+
+        curr_idx++;
+    }
+
+    unreachable();
+}
+
 #endif // NODES_H

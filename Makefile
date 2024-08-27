@@ -13,6 +13,7 @@ OBJS=\
 	 ${BUILD_DIR}/hash_table.o \
 	 ${BUILD_DIR}/file.o \
 	 ${BUILD_DIR}/parameters.o \
+	 ${BUILD_DIR}/parser_utils.o \
 	 ${BUILD_DIR}/passes/do_passes.o \
 	 ${BUILD_DIR}/passes/walk_tree.o \
 	 ${BUILD_DIR}/passes/for_loop_to_branch.o \
@@ -42,6 +43,9 @@ ${BUILD_DIR}/main.o: src/main.c src/*.h src/passes/*.h third_party/*
 
 ${BUILD_DIR}/parser.o: src/parser.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/parser.o src/parser.c
+
+${BUILD_DIR}/parser_utils.o: src/parser_utils.c src/*.h third_party/*
+	cc ${C_FLAGS} -c -o ${BUILD_DIR}/parser_utils.o src/parser_utils.c
 
 ${BUILD_DIR}/tokenizer.o: src/tokenizer.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/tokenizer.o src/tokenizer.c

@@ -1,5 +1,7 @@
 #include "../node.h"
 #include "../nodes.h"
+#include "../symbol_table.h"
+#include "../parser_utils.h"
 
 static Node_id assignment_new(Node_id lhs, Node_id rhs) {
     Node_id assignment = node_new();
@@ -13,6 +15,7 @@ static Node_id for_loop_start_label_new(Str_view label_name) {
     Node_id label = node_new();
     nodes_at(label)->type = NODE_LABEL;
     nodes_at(label)->name = label_name;
+    sym_tbl_add(label);
     return label;
 }
 
@@ -30,6 +33,14 @@ static Node_id symbol_new(Str_view symbol_name) {
     return symbol;
 }
 
+static Node_id literal_new(Str_view value) {
+    Node_id symbol = node_new();
+    nodes_at(symbol)->type = NODE_LITERAL;
+    nodes_at(symbol)->name = literal_name_new();
+    nodes_at(symbol)->str_data = value;
+    return symbol;
+}
+
 static Node_id jmp_if_less_than_new(
     Str_view symbol_name_to_check,
     Str_view label_name_if_true,
@@ -38,13 +49,15 @@ static Node_id jmp_if_less_than_new(
     Node_id less_than = node_new();
     nodes_at(less_than)->type = NODE_OPERATOR;
     nodes_at(less_than)->token_type = TOKEN_LESS_THAN;
-    nodes_append_child(less_than, symbol_new(label_name_if_true));
-    nodes_append_child(less_than, symbol_new(label_name_if_false));
+    nodes_append_child(less_than, symbol_new(symbol_name_to_check));
+    nodes_append_child(less_than, literal_new(str_view_from_cstr("2")));
 
     Node_id cond_goto = node_new();
     nodes_at(cond_goto)->type = NODE_COND_GOTO;
     nodes_at(cond_goto)->name = symbol_name_to_check;
     nodes_append_child(cond_goto, less_than);
+    nodes_append_child(cond_goto, symbol_new(label_name_if_true));
+    nodes_append_child(cond_goto, symbol_new(label_name_if_false));
     return cond_goto;
 }
 
@@ -91,9 +104,6 @@ void for_loop_to_branch(Node_id curr_node) {
     nodes_append_child(new_branch_block, goto_new(nodes_at(check_cond_label)->name));
 
     nodes_append_child(new_branch_block, after_for_loop_label);
-
-    log_tree(LOG_DEBUG, new_branch_block);
-    todo();
 
     nodes_replace(curr_node, new_branch_block);
 }

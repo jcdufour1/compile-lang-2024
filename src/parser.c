@@ -5,7 +5,7 @@
 #include "assert.h"
 #include "token_view.h"
 #include "symbol_table.h"
-#include "string_vec.h"
+#include "parser_utils.h"
 
 static Node_id parse_single_item(Tk_view tokens);
 static Node_id parse_function_single_return_type(Token tokens);
@@ -21,24 +21,6 @@ static Node_id parse_single_item_or_block(Tk_view tokens);
         } \
         log(log_level, "\n"); \
     } while(0);
-
-static Str_view literal_name_new() {
-    static String_vec literal_strings = {0};
-    static size_t count = 0;
-
-    char var_name[20];
-    sprintf(var_name, "str%zu", count);
-
-    String symbol_name = {0};
-    string_cpy_cstr_inplace(&symbol_name, var_name);
-    string_vec_append(&literal_strings, symbol_name);
-
-    count++;
-
-    String symbol_in_vec = literal_strings.buf[literal_strings.info.count - 1];
-    Str_view str_view = {.str = symbol_in_vec.buf, .count = symbol_in_vec.info.count};
-    return str_view;
-}
 
 // TODO: this function will consider ([])
 static bool get_idx_matching_token(

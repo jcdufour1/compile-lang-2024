@@ -116,10 +116,6 @@ static void emit_function_call_arguments(String* output, Node_id statement) {
 }
 
 static void emit_load_variable(String* output, Node_id variable_call) {
-    if (nodes_at(variable_call)->llvm_id_variable.def > 0) {
-        todo();
-    }
-
     size_t load_dest_id = llvm_id_for_next_var;
 
     Node_id variable_def;
@@ -438,6 +434,53 @@ static void emit_function_declaration(String* output, Node_id fun_decl) {
     string_extend_cstr(output, "\n");
 }
 
+static void emit_label(String* output, Node_id label) {
+    nodes_at(label)->llvm_id_label_def = llvm_id_for_next_var;
+    string_extend_size_t(output, nodes_at(label)->llvm_id_label_def);
+    string_extend_cstr(output, ":\n");
+    llvm_id_for_next_var++;
+}
+
+static void emit_cmp_less_than(String* output, size_t* llvm_cmp_dest, Node_id lhs, Node_id rhs) {
+    Node_id varaible_to_cmp;
+    if (!sym_tbl_lookup(&varaible_to_cmp, nodes_at(lhs)->name)) {
+        todo();
+    }
+    emit_load_variable(output, varaible_to_cmp);
+
+    *llvm_cmp_dest = llvm_id_for_next_var;
+
+    string_extend_cstr(output, "    %");
+    string_extend_size_t(output, *llvm_cmp_dest);
+
+    string_extend_cstr(output, " = icmp slt i32 %");
+    string_extend_size_t(output, nodes_at(varaible_to_cmp)->llvm_id_variable.new_load_dest);
+
+    log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
+    todo();
+
+    llvm_id_for_next_var++;
+}
+
+static void emit_cond_goto(String* output, Node_id cond_goto) {
+    Node_id operator = nodes_get_child_of_type(cond_goto, NODE_OPERATOR);
+    switch (nodes_at(operator)->token_type) {
+        case TOKEN_LESS_THAN:
+            break;
+        default:
+            unreachable();
+    }
+    assert(nodes_count_children(operator) == 2);
+    Node_id lhs = nodes_get_child(operator, 0);
+    Node_id rhs = nodes_get_child(operator, 1);
+    size_t llvm_cmp_dest;
+    emit_cmp_less_than(output, &llvm_cmp_dest, lhs, rhs);
+
+    string_extend_cstr(output, "    br");
+    log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
+    todo();
+}
+
 static void emit_block(String* output, Node_id fun_block) {
     nodes_foreach_child(statement, fun_block) {
         switch (nodes_at(statement)->type) {
@@ -459,7 +502,17 @@ static void emit_block(String* output, Node_id fun_block) {
             case NODE_ASSIGNMENT:
                 emit_assignment(output, statement);
                 break;
+            case NODE_BLOCK:
+                emit_block(output, statement);
+                break;
+            case NODE_LABEL:
+                emit_label(output, statement);
+                break;
+            case NODE_COND_GOTO:
+                emit_cond_goto(output, statement);
+                break;
             default:
+                log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
                 todo();
         }
     }

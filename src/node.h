@@ -49,6 +49,7 @@ typedef struct {
     TOKEN_TYPE token_type;
 
     union {
+        size_t llvm_id_label_def;
         Llvm_id_variable llvm_id_variable;
         size_t llvm_id_block_return;
     };
