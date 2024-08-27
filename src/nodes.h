@@ -72,7 +72,7 @@ static inline void nodes_append_child(Node_id parent, Node_id child) {
     nodes_set_next(curr_node, child);
 }
 
-static inline Node_id nodes_get_local_leftmost(Node_id node) {
+static inline Node_id nodes_get_leftmost_sibling(Node_id node) {
     Node_id result = node;
     while (nodes_at(result)->prev != NODE_IDX_NULL) {
         result = nodes_at(result)->prev;
@@ -104,6 +104,20 @@ static inline Node_id nodes_get_child_of_type(Node_id parent, NODE_TYPE node_typ
     }
 
     log_tree(LOG_VERBOSE, parent);
+    unreachable();
+}
+
+static inline Node_id nodes_get_sibling_of_type(Node_id node, NODE_TYPE node_type) {
+    Node_id curr_node = nodes_get_leftmost_sibling(node);
+
+    while (curr_node != NODE_IDX_NULL) {
+        if (nodes_at(curr_node)->type == node_type) {
+            return curr_node;
+        }
+        curr_node = nodes_at(curr_node)->next;
+    }
+
+    log_tree(LOG_VERBOSE, node);
     unreachable();
 }
 

@@ -20,6 +20,7 @@ static const char* NODE_FOR_VARIABLE_DEF_DESCRIPTION = "for_var_def";
 static const char* NODE_FOR_LOWER_BOUND_DESCRIPTION = "lower_bound";
 static const char* NODE_FOR_UPPER_BOUND_DESCRIPTION = "upper_bound";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
+static const char* NODE_GOTO_DESCRIPTION = "goto";
 
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_id root, const char* file, int line) {
     if (nodes.info.count < 1) {
@@ -80,6 +81,8 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_FOR_LOWER_BOUND_DESCRIPTION);
         case NODE_FOR_UPPER_BOUND:
             return str_view_from_cstr(NODE_FOR_UPPER_BOUND_DESCRIPTION);
+        case NODE_GOTO:
+            return str_view_from_cstr(NODE_GOTO_DESCRIPTION);
         case NODE_NO_TYPE:
             return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
         default:
@@ -134,6 +137,8 @@ String node_print_internal(Node_id node) {
         case NODE_FOR_LOWER_BOUND:
             // fallthrough
         case NODE_FOR_VARIABLE_DEF:
+            // fallthrough
+        case NODE_GOTO:
             // fallthrough
         case NODE_NO_TYPE:
             break;

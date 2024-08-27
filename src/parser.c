@@ -156,7 +156,6 @@ static bool is_assignment(Tk_view tokens) {
 }
 
 static bool extract_function_parameter(Node_id* child, Tk_view* tokens) {
-    log_tokens(LOG_DEBUG, *tokens, 0);
     if (tokens->count < 2) {
         return false;
     }
@@ -316,7 +315,6 @@ static Node_id parse_function_definition(Tk_view tokens) {
     nodes_at(function)->type = NODE_FUNCTION_DEFINITION;
 
     Tk_view body_tokens = tk_view_chop_count(&tokens, tokens.count);
-    log_tokens(LOG_DEBUG, body_tokens, 0);
     Node_id body = parse_block(body_tokens);
     nodes_append_child(function, body);
 
@@ -331,7 +329,6 @@ static bool extract_function_definition(Node_id* child, Tk_view* tokens) {
     }
 
     size_t close_curly_brace_idx;
-    log_tokens(LOG_DEBUG, *tokens, 0);
     if (!get_idx_matching_token(&close_curly_brace_idx, *tokens, true, TOKEN_CLOSE_CURLY_BRACE)) {
         todo();
     }
@@ -669,7 +666,6 @@ static Node_id parse_block(Tk_view tokens) {
     Node_id block = node_new();
     nodes_at(block)->type = NODE_BLOCK;
     while (tokens.count > 0) {
-        log_tokens(LOG_DEBUG, tokens, 0);
         Node_id child;
         if (!extract_block_element(&child, &tokens)) {
             todo();
@@ -693,7 +689,6 @@ static Node_id parse_single_item_or_block(Tk_view tokens) {
 
 static Node_id parse_single_item(Tk_view tokens) {
     unsigned int indent_amt = 0;
-    log_tokens(LOG_DEBUG, tokens, indent_amt);
 
     if (tokens.count < 1) {
         unreachable();
