@@ -442,11 +442,11 @@ static void emit_label(String* output, Node_id label) {
 }
 
 static void emit_cmp_less_than(String* output, size_t* llvm_cmp_dest, Node_id lhs, Node_id rhs) {
-    Node_id varaible_to_cmp;
-    if (!sym_tbl_lookup(&varaible_to_cmp, nodes_at(lhs)->name)) {
+    Node_id var_to_cmp_def;
+    if (!sym_tbl_lookup(&var_to_cmp_def, nodes_at(lhs)->name)) {
         todo();
     }
-    emit_load_variable(output, varaible_to_cmp);
+    emit_load_variable(output, var_to_cmp_def);
 
     *llvm_cmp_dest = llvm_id_for_next_var;
 
@@ -454,7 +454,10 @@ static void emit_cmp_less_than(String* output, size_t* llvm_cmp_dest, Node_id lh
     string_extend_size_t(output, *llvm_cmp_dest);
 
     string_extend_cstr(output, " = icmp slt i32 %");
-    string_extend_size_t(output, nodes_at(varaible_to_cmp)->llvm_id_variable.new_load_dest);
+    string_extend_size_t(output, nodes_at(var_to_cmp_def)->llvm_id_variable.new_load_dest);
+    string_extend_cstr(output, ", ");
+    string_extend_strv(output, nodes_at(rhs)->str_data);
+    string_extend_cstr(output, "\n");
 
     log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
     todo();
