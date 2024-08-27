@@ -16,6 +16,9 @@ static const char* NODE_VARIABLE_DEFINITION_DESCRIPTION = "var_def";
 static const char* NODE_FUNCTION_DECLARATION_DESCRIPTION = "fun_declaration";
 static const char* NODE_ASSIGNMENT_DESCRIPTION = "assignment";
 static const char* NODE_FOR_LOOP_DESCRIPTION = "for";
+static const char* NODE_FOR_VARIABLE_DEF_DESCRIPTION = "for_var_def";
+static const char* NODE_FOR_LOWER_BOUND_DESCRIPTION = "lower_bound";
+static const char* NODE_FOR_UPPER_BOUND_DESCRIPTION = "upper_bound";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_id root, const char* file, int line) {
@@ -71,6 +74,12 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_ASSIGNMENT_DESCRIPTION);
         case NODE_FOR_LOOP:
             return str_view_from_cstr(NODE_FOR_LOOP_DESCRIPTION);
+        case NODE_FOR_VARIABLE_DEF:
+            return str_view_from_cstr(NODE_FOR_VARIABLE_DEF_DESCRIPTION);
+        case NODE_FOR_LOWER_BOUND:
+            return str_view_from_cstr(NODE_FOR_LOWER_BOUND_DESCRIPTION);
+        case NODE_FOR_UPPER_BOUND:
+            return str_view_from_cstr(NODE_FOR_UPPER_BOUND_DESCRIPTION);
         case NODE_NO_TYPE:
             return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
         default:
@@ -119,6 +128,12 @@ String node_print_internal(Node_id node) {
         case NODE_ASSIGNMENT:
             // fallthrough
         case NODE_FOR_LOOP:
+            // fallthrough
+        case NODE_FOR_UPPER_BOUND:
+            // fallthrough
+        case NODE_FOR_LOWER_BOUND:
+            // fallthrough
+        case NODE_FOR_VARIABLE_DEF:
             // fallthrough
         case NODE_NO_TYPE:
             break;

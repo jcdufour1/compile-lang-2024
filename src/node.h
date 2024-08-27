@@ -25,6 +25,7 @@ typedef enum {
     NODE_FOR_LOOP,
     NODE_FOR_LOWER_BOUND,
     NODE_FOR_UPPER_BOUND,
+    NODE_FOR_VARIABLE_DEF,
 } NODE_TYPE;
 
 typedef size_t Node_id;

@@ -417,33 +417,45 @@ static bool extract_for_loop(Node_id* child, Tk_view* tokens) {
     if (!tokens_start_with_for_loop(*tokens)) {
         return false;
     }
+
     Node_id for_loop = node_new();
     nodes_at(for_loop)->type = NODE_FOR_LOOP;
     tk_view_chop_front(tokens); // remove for
 
     Tk_view for_var_decl_tokens = tk_view_chop_on_cond(tokens, is_symbol_in);
-    nodes_append_child(for_loop, parse_single_item(for_var_decl_tokens));
+    Node_id var_def = node_new();
+    nodes_at(var_def)->type = NODE_FOR_VARIABLE_DEF;
+    nodes_append_child(var_def, parse_single_item(for_var_decl_tokens));
+    nodes_append_child(for_loop, var_def);
     tk_view_chop_front(tokens); // remove in
 
     Token next_token = tk_view_chop_front(tokens); // remove {
     if (next_token.type != TOKEN_OPEN_CURLY_BRACE) {
         todo();
     }
-    log_tokens(LOG_DEBUG, *tokens, 0);
     Tk_view lower_bound_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_DOUBLE_DOT);
-    nodes_append_child(for_loop, parse_single_item(lower_bound_tokens));
+    Node_id lower_bound = node_new();
+    nodes_at(lower_bound)->type = NODE_FOR_LOWER_BOUND;
+    nodes_append_child(lower_bound, parse_single_item(lower_bound_tokens));
+    nodes_append_child(for_loop, lower_bound);
+
     tk_view_chop_front(tokens); // remove ..
-    log_tokens(LOG_DEBUG, *tokens, 0);
+
     Tk_view upper_bound_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_CLOSE_CURLY_BRACE);
-    nodes_append_child(for_loop, parse_single_item(upper_bound_tokens));
     tk_view_chop_front(tokens); // remove }
+    Node_id upper_bound = node_new();
+    nodes_at(upper_bound)->type = NODE_FOR_UPPER_BOUND;
+    nodes_append_child(upper_bound, parse_single_item(upper_bound_tokens));
+    nodes_append_child(for_loop, upper_bound);
 
     tk_view_chop_front(tokens); // remove { at body start
     Tk_view body_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_CLOSE_CURLY_BRACE);
     nodes_append_child(for_loop, parse_block(body_tokens));
+    tk_view_chop_front(tokens); // remove } at body end
 
     log_tree(LOG_DEBUG, for_loop);
-    todo();
+    *child = for_loop;
+    return true;
 }
 
 static Node_id parse_function_declaration(Tk_view tokens) {
@@ -451,12 +463,12 @@ static Node_id parse_function_declaration(Tk_view tokens) {
     Token extern_type_token = tk_view_chop_front(&tokens); // remove "c"
     tk_view_chop_count(&tokens, 2); // remove ")" and "fn"
 
-    Node_id fun_declaration = extract_function_declaration_common(&tokens);
-    nodes_at(fun_declaration)->type = NODE_FUNCTION_DECLARATION;
-
     if (0 != str_view_cmp_cstr(extern_type_token.text, "c")) {
         todo();
     }
+
+    Node_id fun_declaration = extract_function_declaration_common(&tokens);
+    nodes_at(fun_declaration)->type = NODE_FUNCTION_DECLARATION;
 
     assert(tokens.count == 0);
     return fun_declaration;
@@ -620,13 +632,6 @@ static bool extract_function_return_statement(Node_id* result, Tk_view* tokens) 
     return true;
 }
 
-static bool is_block(Tk_view tokens) {
-    return \
-        tokens_start_with_function_call(tokens) || \
-        tokens_start_with_function_definition(tokens) || \
-        tokens_start_with_function_declaration(tokens);
-}
-
 static bool extract_assignment(Node_id* result, Tk_view* tokens) {
     if (!is_assignment(*tokens)) {
         return false;
@@ -664,6 +669,7 @@ static Node_id parse_block(Tk_view tokens) {
     Node_id block = node_new();
     nodes_at(block)->type = NODE_BLOCK;
     while (tokens.count > 0) {
+        log_tokens(LOG_DEBUG, tokens, 0);
         Node_id child;
         if (!extract_block_element(&child, &tokens)) {
             todo();
@@ -687,7 +693,7 @@ static Node_id parse_single_item_or_block(Tk_view tokens) {
 
 static Node_id parse_single_item(Tk_view tokens) {
     unsigned int indent_amt = 0;
-    log_tokens(LOG_TRACE, tokens, indent_amt);
+    log_tokens(LOG_DEBUG, tokens, indent_amt);
 
     if (tokens.count < 1) {
         unreachable();
@@ -717,6 +723,7 @@ static Node_id parse_single_item(Tk_view tokens) {
         return parse_operation(tokens);
     }
 
+    log_tokens(LOG_DEBUG, tokens, indent_amt);
     log_tree(LOG_VERBOSE, 0);
     unreachable();
 }
