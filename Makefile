@@ -13,15 +13,12 @@ OBJS=\
 	 ${BUILD_DIR}/hash_table.o \
 	 ${BUILD_DIR}/file.o \
 	 ${BUILD_DIR}/parameters.o \
+	 ${BUILD_DIR}/passes/do_passes.o \
 	 ${BUILD_DIR}/nodes.o
 
 ARGS_PROGRAM=compile examples/test.c --emit-llvm
 
 all: build
-
-setup:
-	mkdir -p build/release/
-	mkdir -p build/debug/
 
 run: build
 	${BUILD_DIR}/main ${ARGS_PROGRAM}
@@ -32,12 +29,13 @@ valgrind: build
 gdb: build
 	gdb --args ${BUILD_DIR}/main ${ARGS_PROGRAM}
 
-build: setup ${BUILD_DIR}/main
+build: ${BUILD_DIR}/main
 
+# general
 ${BUILD_DIR}/main: ${OBJS}
 	cc ${C_FLAGS} -o ${BUILD_DIR}/main ${OBJS}
 
-${BUILD_DIR}/main.o: src/main.c src/*.h third_party/*
+${BUILD_DIR}/main.o: src/main.c src/*.h src/passes/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/main.o src/main.c
 
 ${BUILD_DIR}/parser.o: src/parser.c src/*.h third_party/*
@@ -66,6 +64,11 @@ ${BUILD_DIR}/file.o: src/file.c src/*.h third_party/*
 
 ${BUILD_DIR}/parameters.o: src/parameters.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/parameters.o src/parameters.c
+
+
+# passes
+${BUILD_DIR}/passes/do_passes.o: src/passes/do_passes.c src/*.h src/passes/*.h third_party/*
+	cc ${C_FLAGS} -c -o ${BUILD_DIR}/passes/do_passes.o src/passes/do_passes.c
 
 
 clean:

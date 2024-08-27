@@ -1,20 +1,16 @@
 #include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
 #include "newstring.h"
 #include "node.h"
-#include "token.h"
 #include "tokens.h"
 #include "tokenizer.h"
 #include "parser.h"
 #include "emit_llvm.h"
-#include "symbol_table.h"
 #include "parameters.h"
 #include "file.h"
-#include <stb_ds.h>
+#include "passes/do_passes.h"
 
 int main(int argc, char** argv) {
     parse_args(argc, argv);
@@ -29,8 +25,7 @@ int main(int argc, char** argv) {
 
     Node_id root = parse(tokens);
 
-    Node_id item;
-    assert(sym_tbl_lookup(&item, str_view_from_cstr("str0")));
+    do_passes(&root);
 
     if (params.emit_llvm) {
         emit_llvm_from_tree(root);
