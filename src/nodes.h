@@ -72,6 +72,19 @@ static inline void nodes_append_child(Node_id parent, Node_id child) {
     nodes_set_next(curr_node, child);
 }
 
+static inline void nodes_insert_after(Node_id node_to_insert_after, Node_id node_to_insert) {
+    todo();
+}
+
+static inline void nodes_replace(Node_id node_to_replace, Node_id src) {
+    *nodes_at(node_to_replace) = *nodes_at(src);
+}
+
+static inline void nodes_remove_siblings(Node_id node) {
+    nodes_at(node)->next = NODE_IDX_NULL;
+    nodes_at(node)->prev = NODE_IDX_NULL;
+}
+
 static inline Node_id nodes_get_leftmost_sibling(Node_id node) {
     Node_id result = node;
     while (nodes_at(result)->prev != NODE_IDX_NULL) {

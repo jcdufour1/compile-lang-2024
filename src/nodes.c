@@ -110,13 +110,15 @@ String node_print_internal(Node_id node) {
         case NODE_FUNCTION_CALL:
             string_extend_strv_in_par(&buf, nodes_at(node)->name);
             break;
-        case NODE_VARIABLE_DEFINITION:
-            // fallthrough
         case NODE_LANG_TYPE:
             string_extend_strv_in_gtlt(&buf, nodes_at(node)->lang_type);
             break;
         case NODE_OPERATOR:
             string_extend_strv(&buf, token_type_to_str_view(nodes_at(node)->token_type));
+            break;
+        case NODE_VARIABLE_DEFINITION:
+            string_extend_strv_in_gtlt(&buf, nodes_at(node)->lang_type);
+            string_extend_strv_in_par(&buf, nodes_at(node)->name);
             break;
         case NODE_FUNCTION_PARAMETERS:
             // fallthrough

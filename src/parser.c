@@ -407,7 +407,10 @@ static bool tokens_start_with_for_loop(Tk_view tokens) {
 
 static bool is_symbol_in(const Token* prev, const Token* curr) {
     (void) prev;
-    return curr->type == TOKEN_SYMBOL && str_view_cmp_cstr(curr->text, "in");
+    if (curr->type != TOKEN_SYMBOL) {
+        return true;
+    }
+    return 0 != str_view_cmp_cstr(curr->text, "in");
 }
 
 static bool extract_for_loop(Node_id* child, Tk_view* tokens) {

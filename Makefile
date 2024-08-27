@@ -75,7 +75,7 @@ ${BUILD_DIR}/passes/do_passes.o: src/passes/do_passes.c src/*.h src/passes/*.h t
 ${BUILD_DIR}/passes/walk_tree.o: src/passes/walk_tree.c src/*.h src/passes/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/passes/walk_tree.o src/passes/walk_tree.c
 
-${BUILD_DIR}/passes/for_loop_to_branch.o: src/passes/for_loop_to_branch.c src/*.h src/passes/*.h third_party/*
+${BUILD_DIR}/passes/for_loop_to_branch.o: src/passes/for_loop_to_branch.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/passes/for_loop_to_branch.o src/passes/for_loop_to_branch.c
 
 clean:
