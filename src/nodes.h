@@ -93,7 +93,7 @@ static inline Node_id nodes_single_child(Node_id node) {
 
 static inline void nodes_insert_after(Node_id node_to_insert_after, Node_id node_to_insert) {
     (void) node_to_insert_after;
-    (void) node_to_insert;;
+    (void) node_to_insert;
     todo();
 }
 

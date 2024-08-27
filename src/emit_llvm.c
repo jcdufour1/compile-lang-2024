@@ -452,20 +452,27 @@ static void emit_cmp_less_than(String* output, size_t* llvm_cmp_dest, Node_id lh
 
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, *llvm_cmp_dest);
-
     string_extend_cstr(output, " = icmp slt i32 %");
     string_extend_size_t(output, nodes_at(var_to_cmp_def)->llvm_id_variable.new_load_dest);
     string_extend_cstr(output, ", ");
     string_extend_strv(output, nodes_at(rhs)->str_data);
     string_extend_cstr(output, "\n");
 
-    log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
-    todo();
-
     llvm_id_for_next_var++;
 }
 
 static void emit_cond_goto(String* output, Node_id cond_goto) {
+    Node_id label_if_true = nodes_get_child(cond_goto, 1);
+    Node_id label_if_false = nodes_get_child(cond_goto, 2);
+    Node_id if_true_def;
+    if (!sym_tbl_lookup(&if_true_def, nodes_at(label_if_true)->name)) {
+        todo();
+    }
+    Node_id if_false_def;
+    if (!sym_tbl_lookup(&if_false_def, nodes_at(label_if_false)->name)) {
+        todo();
+    }
+
     Node_id operator = nodes_get_child_of_type(cond_goto, NODE_OPERATOR);
     switch (nodes_at(operator)->token_type) {
         case TOKEN_LESS_THAN:
@@ -479,7 +486,10 @@ static void emit_cond_goto(String* output, Node_id cond_goto) {
     size_t llvm_cmp_dest;
     emit_cmp_less_than(output, &llvm_cmp_dest, lhs, rhs);
 
-    string_extend_cstr(output, "    br");
+    string_extend_cstr(output, "    br i1 %");
+    string_extend_size_t(output, llvm_cmp_dest);
+    string_extend_cstr(output, ", label %");
+    string_extend_size_t(output, nodes_at(if_true_def)->llvm_id_label_def);
     log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
     todo();
 }
