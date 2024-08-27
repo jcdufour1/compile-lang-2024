@@ -22,7 +22,7 @@ extern Nodes nodes;
     for (Node_id child = nodes_at(parent)->left_child; (child) != NODE_IDX_NULL; (child) = nodes_at(child)->next)
 
 #define nodes_foreach_curr_and_next(curr_node, start_node) \
-    for (Node_id curr_node = nodes_at(start_node)->left_child; (curr_node) != NODE_IDX_NULL; (curr_node) = nodes_at(curr_node)->next)
+    for (Node_id curr_node = (start_node); (curr_node) != NODE_IDX_NULL; (curr_node) = nodes_at(curr_node)->next)
 
 static inline void nodes_reserve(size_t minimum_count_empty_slots) {
     vector_reserve(&nodes, sizeof(nodes.buf[0]), minimum_count_empty_slots, NODES_DEFAULT_CAPACITY);
@@ -54,6 +54,14 @@ static inline Node_id node_new() {
     return idx_node_created;
 }
 
+static inline size_t nodes_count_children(Node_id parent) {
+    size_t count = 0;
+    nodes_foreach_child(child, parent) {
+        count++;
+    }
+    return count;
+}
+
 static inline void nodes_set_left_child(Node_id parent, Node_id child) {
     assert(parent != NODE_IDX_NULL && child != NODE_IDX_NULL);
     nodes_at(parent)->left_child = child;
@@ -78,6 +86,11 @@ static inline void nodes_append_child(Node_id parent, Node_id child) {
     nodes_set_next(curr_node, child);
 }
 
+static inline Node_id nodes_single_child(Node_id node) {
+    assert(nodes_count_children(node) == 1);
+    return nodes_at(node)->left_child;
+}
+
 static inline void nodes_insert_after(Node_id node_to_insert_after, Node_id node_to_insert) {
     todo();
 }
@@ -93,6 +106,18 @@ static inline void nodes_extend_children(Node_id parent, Node_id start_of_nodes_
 }
 
 static inline void nodes_remove_siblings(Node_id node) {
+    assert(node != NODE_IDX_NULL);
+
+    Node_id prev = nodes_at(node)->prev;
+    if (prev != NODE_IDX_NULL) {
+        nodes_at(prev)->next = NODE_IDX_NULL;
+    }
+
+    Node_id next = nodes_at(node)->next;
+    if (next != NODE_IDX_NULL) {
+        nodes_at(next)->next = NODE_IDX_NULL;
+    }
+
     nodes_at(node)->next = NODE_IDX_NULL;
     nodes_at(node)->prev = NODE_IDX_NULL;
 }
@@ -141,14 +166,6 @@ static inline Node_id nodes_get_sibling_of_type(Node_id node, NODE_TYPE node_typ
 
     log_tree(LOG_VERBOSE, node);
     unreachable();
-}
-
-static inline size_t nodes_count_children(Node_id parent) {
-    size_t count = 0;
-    nodes_foreach_child(child, parent) {
-        count++;
-    }
-    return count;
 }
 
 #endif // NODES_H

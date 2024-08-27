@@ -12,6 +12,7 @@ typedef enum {
     TOKEN_SINGLE_PLUS,
     TOKEN_SINGLE_MINUS,
     TOKEN_ASTERISK,
+    TOKEN_LESS_THAN,
 
     // literals
     TOKEN_STRING_LITERAL,

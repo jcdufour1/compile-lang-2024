@@ -21,6 +21,7 @@ static const char* NODE_FOR_LOWER_BOUND_DESCRIPTION = "lower_bound";
 static const char* NODE_FOR_UPPER_BOUND_DESCRIPTION = "upper_bound";
 static const char* NODE_GOTO_DESCRIPTION = "goto";
 static const char* NODE_LABEL_DESCRIPTION = "label";
+static const char* NODE_COND_GOTO_DESCRIPTION = "cond_goto";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_id root, const char* file, int line) {
@@ -30,19 +31,17 @@ void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_id root, const char
     }
 
     static String padding = {0};
-    string_set_to_zero_len(&padding);
 
-    for (int idx = 0; idx < pad_x; idx++) {
-        string_append(&padding, ' ');
-    }
+    nodes_foreach_curr_and_next(curr_node, root) {
+        string_set_to_zero_len(&padding);
+        for (int idx = 0; idx < pad_x; idx++) {
+            string_append(&padding, ' ');
+        }
 
-    log_file_new(log_level, file, line, STRING_FMT NODE_FMT"\n", string_print(padding), node_print(root));
-
-    if (nodes_at(root)->left_child != NODE_IDX_NULL) {
-        nodes_log_tree_rec(log_level, pad_x + 2, nodes_at(root)->left_child, file, line);
-    }
-    if (nodes_at(root)->next != NODE_IDX_NULL) {
-        nodes_log_tree_rec(log_level, pad_x, nodes_at(root)->next, file, line);
+        log_file_new(log_level, file, line, STRING_FMT NODE_FMT"\n", string_print(padding), node_print(curr_node));
+        if (nodes_at(curr_node)->left_child != NODE_IDX_NULL) {
+            nodes_log_tree_rec(log_level, pad_x + 2, nodes_at(curr_node)->left_child, file, line);
+        }
     }
 }
 
@@ -84,6 +83,8 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_FOR_UPPER_BOUND_DESCRIPTION);
         case NODE_GOTO:
             return str_view_from_cstr(NODE_GOTO_DESCRIPTION);
+        case NODE_COND_GOTO:
+            return str_view_from_cstr(NODE_COND_GOTO_DESCRIPTION);
         case NODE_NO_TYPE:
             return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
         case NODE_LABEL:
@@ -103,8 +104,10 @@ String node_print_internal(Node_id node) {
     switch (nodes_at(node)->type) {
         case NODE_GOTO:
             // fallthrough
+        case NODE_COND_GOTO:
+            // fallthrough
         case NODE_LABEL:
-            string_extend_strv_in_par(&buf, nodes_at(node)->str_data);
+            string_extend_strv_in_par(&buf, nodes_at(node)->name);
             break;
         case NODE_LITERAL:
             string_extend_strv_in_gtlt(&buf, token_type_to_str_view(nodes_at(node)->token_type));

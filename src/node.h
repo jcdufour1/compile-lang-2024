@@ -27,6 +27,7 @@ typedef enum {
     NODE_FOR_UPPER_BOUND,
     NODE_FOR_VARIABLE_DEF,
     NODE_GOTO,
+    NODE_COND_GOTO,
     NODE_LABEL,
 } NODE_TYPE;
 
