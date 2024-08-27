@@ -7,7 +7,6 @@ static const char* NODE_FUNCTION_CALL_DESCRIPTION = "fn_call";
 static const char* NODE_FUNCTION_DEFINITION_DESCRIPTION = "fn_def";
 static const char* NODE_FUNCTION_PARAMETERS_DESCRIPTION = "fn_params";
 static const char* NODE_FUNCTION_RETURN_TYPES_DESCRIPTION = "fn_return_types";
-static const char* NODE_FUNCTION_BODY_DESCRIPTION = "fn_body";
 static const char* NODE_LANG_TYPE_DESCRIPTION = "lang_type";
 static const char* NODE_OPERATOR_DESCRIPTION = "operator";
 static const char* NODE_BLOCK_DESCRIPTION = "block";
@@ -54,8 +53,6 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_FUNCTION_PARAMETERS_DESCRIPTION);
         case NODE_FUNCTION_RETURN_TYPES:
             return str_view_from_cstr(NODE_FUNCTION_RETURN_TYPES_DESCRIPTION);
-        case NODE_FUNCTION_BODY:
-            return str_view_from_cstr(NODE_FUNCTION_BODY_DESCRIPTION);
         case NODE_LANG_TYPE:
             return str_view_from_cstr(NODE_LANG_TYPE_DESCRIPTION);
         case NODE_OPERATOR:
@@ -110,8 +107,6 @@ String node_print_internal(Node_id node) {
             string_extend_strv(&buf, token_type_to_str_view(nodes_at(node)->token_type));
             break;
         case NODE_FUNCTION_PARAMETERS:
-            // fallthrough
-        case NODE_FUNCTION_BODY:
             // fallthrough
         case NODE_FUNCTION_RETURN_TYPES:
             // fallthrough

@@ -478,8 +478,6 @@ static void emit_llvm_main(String* output, Node_id root) {
             todo();
         case NODE_FUNCTION_RETURN_TYPES:
             todo();
-        case NODE_FUNCTION_BODY:
-            todo();
         case NODE_FUNCTION_CALL:
             todo();
         case NODE_LITERAL:
