@@ -18,6 +18,12 @@ typedef struct {
 
 extern Nodes nodes;
 
+#define nodes_foreach_child(child, parent) \
+    for (Node_id child = nodes_at(parent)->left_child; (child) != NODE_IDX_NULL; (child) = nodes_at(child)->next)
+
+#define nodes_foreach_curr_and_next(curr_node, start_node) \
+    for (Node_id curr_node = nodes_at(start_node)->left_child; (curr_node) != NODE_IDX_NULL; (curr_node) = nodes_at(curr_node)->next)
+
 static inline void nodes_reserve(size_t minimum_count_empty_slots) {
     vector_reserve(&nodes, sizeof(nodes.buf[0]), minimum_count_empty_slots, NODES_DEFAULT_CAPACITY);
 }
@@ -80,6 +86,12 @@ static inline void nodes_replace(Node_id node_to_replace, Node_id src) {
     *nodes_at(node_to_replace) = *nodes_at(src);
 }
 
+static inline void nodes_extend_children(Node_id parent, Node_id start_of_nodes_to_extend) {
+    nodes_foreach_curr_and_next(curr_node, start_of_nodes_to_extend) {
+        nodes_append_child(parent, curr_node);
+    }
+}
+
 static inline void nodes_remove_siblings(Node_id node) {
     nodes_at(node)->next = NODE_IDX_NULL;
     nodes_at(node)->prev = NODE_IDX_NULL;
@@ -101,9 +113,6 @@ void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_id root, const char
         nodes_log_tree_rec(log_level, 0, root, __FILE__, __LINE__); \
         log_file_new(log_level, __FILE__, __LINE__, "\n"); \
     } while(0);
-
-#define nodes_foreach_child(child, parent) \
-    for (Node_id child = nodes_at(parent)->left_child; (child) != NODE_IDX_NULL; (child) = nodes_at(child)->next)
 
 static inline Node_id nodes_get_child_of_type(Node_id parent, NODE_TYPE node_type) {
     if (nodes_at(parent)->left_child == NODE_IDX_NULL) {

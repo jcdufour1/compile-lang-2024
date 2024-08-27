@@ -19,8 +19,9 @@ static const char* NODE_FOR_LOOP_DESCRIPTION = "for";
 static const char* NODE_FOR_VARIABLE_DEF_DESCRIPTION = "for_var_def";
 static const char* NODE_FOR_LOWER_BOUND_DESCRIPTION = "lower_bound";
 static const char* NODE_FOR_UPPER_BOUND_DESCRIPTION = "upper_bound";
-static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 static const char* NODE_GOTO_DESCRIPTION = "goto";
+static const char* NODE_LABEL_DESCRIPTION = "label";
+static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_id root, const char* file, int line) {
     if (nodes.info.count < 1) {
@@ -85,6 +86,8 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_GOTO_DESCRIPTION);
         case NODE_NO_TYPE:
             return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
+        case NODE_LABEL:
+            return str_view_from_cstr(NODE_LABEL_DESCRIPTION);
         default:
             log(LOG_FETAL, "node_type: %d\n", node_type);
             todo();
@@ -98,6 +101,11 @@ String node_print_internal(Node_id node) {
     string_extend_strv(&buf, node_type_get_strv(nodes_at(node)->type));
 
     switch (nodes_at(node)->type) {
+        case NODE_GOTO:
+            // fallthrough
+        case NODE_LABEL:
+            string_extend_strv_in_par(&buf, nodes_at(node)->str_data);
+            break;
         case NODE_LITERAL:
             string_extend_strv_in_gtlt(&buf, token_type_to_str_view(nodes_at(node)->token_type));
             string_extend_strv_in_par(&buf, nodes_at(node)->name);
@@ -139,8 +147,6 @@ String node_print_internal(Node_id node) {
         case NODE_FOR_LOWER_BOUND:
             // fallthrough
         case NODE_FOR_VARIABLE_DEF:
-            // fallthrough
-        case NODE_GOTO:
             // fallthrough
         case NODE_NO_TYPE:
             break;
