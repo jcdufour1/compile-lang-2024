@@ -4,29 +4,38 @@
 #include "../parser_utils.h"
 
 void assign_llvm_ids(Node_id curr_node) {
-    todo();
-    /*
     static size_t llvm_id_for_next_var = 1;
+    log_tree(LOG_DEBUG, 0);
+    log_tree(LOG_DEBUG, curr_node);
 
     switch (nodes_at(curr_node)->type) {
         case NODE_FUNCTION_PARAMETERS:
-            todo();
-            break;
+            return;
         case NODE_VARIABLE_DEFINITION:
-            nodes_at(curr_node)->llvm_id_symbol_def.def = llvm_id_for_next_var;
-            break;
-        case NODE_SYMBOL: {
-            Node_id sym_def;
-            try(sym_tbl_lookup(&sym_def, nodes_at(curr_node)->name));
-            nodes_at(curr_node)->llvm_id_symbol_call.last_store = nodes_at(sym_def)->llvm_id_symbol_def.last_store;
-            break;
-        }
+            return;
+        case NODE_SYMBOL:
+            return;
+        case NODE_LITERAL:
+            return;
+        case NODE_BLOCK:
+            return;
+        case NODE_FUNCTION_DECLARATION:
+            return;
+        case NODE_FUNCTION_DEFINITION:
+            return;
+        case NODE_FUNCTION_CALL:
+            nodes_at(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var++;
+            return;
+        case NODE_FUNCTION_RETURN_TYPES:
+            return;
+        case NODE_RETURN_STATEMENT:
+            return;
+        case NODE_LANG_TYPE:
+            return;
         default:
             unreachable();
-
-        llvm_id_for_next_var++;
     }
 
-    */
     todo();
 }

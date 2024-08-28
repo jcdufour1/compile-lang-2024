@@ -65,6 +65,14 @@ static inline size_t nodes_count_children(Node_id parent) {
     return count;
 }
 
+static inline Node_id nodes_get_leftmost_sibling(Node_id node) {
+    Node_id result = node;
+    while (nodes_at(result)->prev != NODE_IDX_NULL) {
+        result = nodes_at(result)->prev;
+    }
+    return result;
+}
+
 static inline void nodes_set_left_child(Node_id parent, Node_id child) {
     assert(parent != NODE_IDX_NULL && child != NODE_IDX_NULL);
     nodes_at(parent)->left_child = child;
@@ -73,9 +81,23 @@ static inline void nodes_set_left_child(Node_id parent, Node_id child) {
 
 static inline void nodes_insert_after(Node_id curr, Node_id node_to_insert) {
     assert(curr != NODE_IDX_NULL && node_to_insert != NODE_IDX_NULL);
+    Node_id old_next = nodes_at(curr)->next;
     nodes_at(curr)->next = node_to_insert;
     nodes_at(node_to_insert)->prev = curr;
+    nodes_at(node_to_insert)->next = old_next;
     nodes_at(node_to_insert)->parent = nodes_at(curr)->parent;
+}
+
+static inline void nodes_insert_before(Node_id curr, Node_id node_to_insert) {
+    assert(curr != NODE_IDX_NULL && node_to_insert != NODE_IDX_NULL);
+    Node_id old_prev = nodes_at(curr)->prev;
+    nodes_at(curr)->prev = node_to_insert;
+    nodes_at(node_to_insert)->next = curr;
+    nodes_at(node_to_insert)->prev = old_prev;
+    nodes_at(node_to_insert)->parent = nodes_at(curr)->parent;
+
+    Node_id parent = nodes_at(curr)->parent;
+    nodes_at(parent)->left_child = nodes_get_leftmost_sibling(curr);
 }
 
 static inline void nodes_append_child(Node_id parent, Node_id child) {
@@ -127,14 +149,6 @@ static inline void nodes_remove_siblings(Node_id node) {
 
     nodes_at(node)->next = NODE_IDX_NULL;
     nodes_at(node)->prev = NODE_IDX_NULL;
-}
-
-static inline Node_id nodes_get_leftmost_sibling(Node_id node) {
-    Node_id result = node;
-    while (nodes_at(result)->prev != NODE_IDX_NULL) {
-        result = nodes_at(result)->prev;
-    }
-    return result;
 }
 
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_id root, const char* file, int line);

@@ -63,16 +63,25 @@ static void emit_function_params(String* output, Node_id fun_params) {
             string_extend_cstr(output, ", ");
         }
 
-        nodes_at(param)->llvm_id_variable.def = llvm_id_for_next_var;
         extend_type_decl_str(output, param);
         if (nodes_at(param)->is_variadic) {
             return;
         }
         string_extend_cstr(output, " %");
-        string_extend_size_t(output, nodes_at(param)->llvm_id_variable.def);
+        string_extend_size_t(output, nodes_at(param)->llvm_id);
 
         llvm_id_for_next_var++;
     }
+}
+
+static Llvm_id get_prev_load_id(Node_id var_def) {
+    (void) var_def;
+    todo();
+}
+
+static Llvm_id get_store_dest_id(Node_id var_call) {
+    (void) var_call;
+    todo();
 }
 
 static void emit_function_call_arguments(String* output, Node_id statement) {
@@ -98,7 +107,8 @@ static void emit_function_call_arguments(String* output, Node_id statement) {
                 break;
             }
             case NODE_SYMBOL: {
-                size_t llvm_id = nodes_at(var_decl_or_def)->llvm_id_variable.new_load_dest;
+                size_t llvm_id = get_prev_load_id(var_decl_or_def);
+                log_tree(LOG_DEBUG, argument);
                 assert(llvm_id > 0);
                 extend_type_call_str(output, var_decl_or_def);
                 string_extend_cstr(output, " %");
@@ -122,8 +132,7 @@ static void emit_load_variable(String* output, Node_id variable_call) {
     if (!sym_tbl_lookup(&variable_def, nodes_at(variable_call)->name)) {
         todo();
     }
-    nodes_at(variable_def)->llvm_id_variable.new_load_dest = load_dest_id;
-    assert(nodes_at(variable_def)->llvm_id_variable.store_dest > 0);
+    assert(get_store_dest_id(variable_call) > 0);
 
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, load_dest_id);
@@ -132,7 +141,7 @@ static void emit_load_variable(String* output, Node_id variable_call) {
     string_extend_cstr(output, ", ");
     string_extend_cstr(output, "ptr");
     string_extend_cstr(output, " %");
-    string_extend_size_t(output, nodes_at(variable_def)->llvm_id_variable.store_dest);
+    string_extend_size_t(output, get_store_dest_id(variable_call));
     string_extend_cstr(output, ", align 8");
     string_extend_cstr(output, "\n");
 
@@ -140,7 +149,7 @@ static void emit_load_variable(String* output, Node_id variable_call) {
 }
 
 static void emit_function_call(String* output, Node_id fun_call) {
-    assert(nodes_at(fun_call)->llvm_id_variable.def == 0);
+    //assert(nodes_at(fun_call)->llvm_id == 0);
 
     // load arguments
     nodes_foreach_child(argument, fun_call) {
@@ -157,11 +166,9 @@ static void emit_function_call(String* output, Node_id fun_call) {
         unreachable();
     }
 
-    nodes_at(fun_call)->llvm_id_variable.def = llvm_id_for_next_var;
-
     // start of actual function call
     string_extend_cstr(output, "    %");
-    string_extend_size_t(output, nodes_at(fun_call)->llvm_id_variable.def);
+    string_extend_size_t(output, nodes_at(fun_call)->llvm_id);
     string_extend_cstr(output, " = call ");
     extend_type_call_str(output, return_type_from_function_definition(fun_def));
     string_extend_cstr(output, " @");
@@ -178,11 +185,10 @@ static void emit_function_call(String* output, Node_id fun_call) {
 }
 
 static void emit_alloca(String* output, Node_id symbol_def) {
-    assert(nodes_at(symbol_def)->llvm_id_variable.def > 0);
-    nodes_at(symbol_def)->llvm_id_variable.store_dest = llvm_id_for_next_var;
+    //assert(nodes_at(symbol_def)->llvm_id > 0);
 
     string_extend_cstr(output, "    %");
-    string_extend_size_t(output, nodes_at(symbol_def)->llvm_id_variable.store_dest);
+    string_extend_size_t(output, get_store_dest_id(symbol_def));
     string_extend_cstr(output, " = alloca ");
     extend_type_call_str(output, symbol_def);
     string_extend_cstr(output, ", align 8");
@@ -192,7 +198,7 @@ static void emit_alloca(String* output, Node_id symbol_def) {
 }
 
 static void emit_store(String* output, Node_id variable_def, void (emit_src)(String* output, Node_id variable_def, void* item), void* item){
-    size_t alloca_dest_id = nodes_at(variable_def)->llvm_id_variable.store_dest;
+    size_t alloca_dest_id = get_store_dest_id(variable_def);
     assert(alloca_dest_id > 0);
 
     string_extend_cstr(output, "    store ");
@@ -209,7 +215,7 @@ static void emit_store(String* output, Node_id variable_def, void (emit_src)(Str
 
 static void emit_src_of_fun_params(String* output, Node_id variable_def, void* item) {
     (void) item;
-    size_t src_llvm_id = nodes_at(variable_def)->llvm_id_variable.def;
+    size_t src_llvm_id = nodes_at(variable_def)->llvm_id;
 
     switch (nodes_at(variable_def)->type) {
         case NODE_VARIABLE_DEFINITION:
@@ -226,7 +232,7 @@ static void emit_src_of_fun_params(String* output, Node_id variable_def, void* i
 static void emit_store_fun_params(String* output, Node_id parameters) {
     assert(nodes_at(parameters)->type == NODE_FUNCTION_PARAMETERS);
     nodes_foreach_child(param, parameters) {
-        assert(nodes_at(param)->llvm_id_variable.def > 0);
+        assert(nodes_at(param)->llvm_id > 0);
         emit_alloca(output, param);
         emit_store(output, param, emit_src_of_fun_params, NULL);
         llvm_id_for_next_var++;
@@ -258,7 +264,7 @@ static void emit_function_definition(String* output, Node_id fun_def) {
 }
 
 static void emit_operator(String* output, Node_id operator) {
-    nodes_at(operator)->llvm_id_variable.def = llvm_id_for_next_var;
+    nodes_at(operator)->llvm_id = llvm_id_for_next_var;
 
     Node_id child_lhs = nodes_at(operator)->left_child;
     Node_id child_rhs = nodes_at(child_lhs)->next;
@@ -280,6 +286,11 @@ static void emit_operator(String* output, Node_id operator) {
     string_extend_cstr(output, "\n");
 
     llvm_id_for_next_var++;
+}
+
+static Node_id get_block_return_id(Node_id fun_call) {
+    (void) fun_call;
+    todo();
 }
 
 static void emit_function_return_statement(String* output, Node_id statement) {
@@ -310,7 +321,7 @@ static void emit_function_return_statement(String* output, Node_id statement) {
 
             extend_type_call_str(output, return_type);
             string_extend_cstr(output, " %");
-            string_extend_size_t(output, nodes_at(child)->llvm_id_block_return);
+            string_extend_size_t(output, get_block_return_id(child));
             string_extend_cstr(output, "\n");
             break;
         }
@@ -319,7 +330,7 @@ static void emit_function_return_statement(String* output, Node_id statement) {
             string_extend_cstr(output, "    ret ");
             extend_type_call_str(output, child_def);
             string_extend_cstr(output, " %");
-            string_extend_size_t(output, nodes_at(child)->llvm_id_block_return);
+            string_extend_size_t(output, get_block_return_id(child));
             string_extend_cstr(output, "\n");
             break;
         }
@@ -329,7 +340,7 @@ static void emit_function_return_statement(String* output, Node_id statement) {
             string_extend_cstr(output, "    ret ");
             extend_type_call_str(output, child_def);
             string_extend_cstr(output, " %");
-            string_extend_size_t(output, nodes_at(child)->llvm_id_block_return);
+            string_extend_size_t(output, get_block_return_id(child));
             string_extend_cstr(output, "\n");
             break;
         }
@@ -344,7 +355,7 @@ static void emit_function_return_statement(String* output, Node_id statement) {
             string_extend_cstr(output, "    ret ");
             extend_type_call_str(output, child_def);
             string_extend_cstr(output, " %");
-            string_extend_size_t(output, nodes_at(symbol_def)->llvm_id_variable.new_load_dest);
+            string_extend_size_t(output, get_prev_load_id(symbol_def));
             string_extend_cstr(output, "\n");
             break;
         }
@@ -355,13 +366,13 @@ static void emit_function_return_statement(String* output, Node_id statement) {
 }
 
 static void emit_variable_definition(String* output, Node_id variable_def) {
-    assert(nodes_at(variable_def)->llvm_id_variable.def == 0 && "redefinition of variable");
-    nodes_at(variable_def)->llvm_id_variable.def = llvm_id_for_next_var;
+    assert(nodes_at(variable_def)->llvm_id == 0 && "redefinition of variable");
+    nodes_at(variable_def)->llvm_id = llvm_id_for_next_var;
     emit_alloca(output, variable_def);
 }
 
 static void emit_src_of_assignment(String* output, Node_id variable_def, void* item) {
-    size_t src_llvm_id = nodes_at(variable_def)->llvm_id_variable.store_dest;
+    size_t src_llvm_id = get_store_dest_id(variable_def);
     (void) src_llvm_id;
 
     Node_id rhs = *(Node_id*)item;
@@ -383,7 +394,7 @@ static void emit_src_of_assignment(String* output, Node_id variable_def, void* i
             break;
         case NODE_FUNCTION_CALL:
             string_extend_cstr(output, " %");
-            string_extend_size_t(output, nodes_at(rhs)->llvm_id_block_return);
+            string_extend_size_t(output, get_block_return_id(rhs));
             break;
         default:
             todo();
@@ -401,7 +412,7 @@ static void emit_assignment(String* output, Node_id assignment) {
 
     switch (nodes_at(rhs)->type) {
         case NODE_LITERAL:
-            if (nodes_at(lhs_def)->llvm_id_variable.def == 0) {
+            if (nodes_at(lhs_def)->llvm_id == 0) {
                 emit_variable_definition(output, lhs_def);
             }
             assert(nodes_at(rhs)->str_data.count > 0);
@@ -410,11 +421,11 @@ static void emit_assignment(String* output, Node_id assignment) {
         case NODE_BLOCK:
             todo();
         case NODE_FUNCTION_CALL:
-            if (nodes_at(lhs_def)->llvm_id_variable.def == 0) {
+            if (nodes_at(lhs_def)->llvm_id == 0) {
                 emit_variable_definition(output, lhs_def);
             }
             emit_function_call(output, rhs);
-            size_t fun_call_result_id = nodes_at(rhs)->llvm_id_block_return;
+            size_t fun_call_result_id = get_block_return_id(rhs);
             assert(fun_call_result_id > 0);
             emit_store(output, lhs_def, emit_src_of_assignment, &rhs);
             break;
@@ -435,8 +446,8 @@ static void emit_function_declaration(String* output, Node_id fun_decl) {
 }
 
 static void emit_label(String* output, Node_id label) {
-    nodes_at(label)->llvm_id_label_def = llvm_id_for_next_var;
-    string_extend_size_t(output, nodes_at(label)->llvm_id_label_def);
+    nodes_at(label)->llvm_id = llvm_id_for_next_var;
+    string_extend_size_t(output, nodes_at(label)->llvm_id);
     string_extend_cstr(output, ":\n");
     llvm_id_for_next_var++;
 }
@@ -453,7 +464,7 @@ static void emit_cmp_less_than(String* output, size_t* llvm_cmp_dest, Node_id lh
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, *llvm_cmp_dest);
     string_extend_cstr(output, " = icmp slt i32 %");
-    string_extend_size_t(output, nodes_at(var_to_cmp_def)->llvm_id_variable.new_load_dest);
+    string_extend_size_t(output, get_prev_load_id(var_to_cmp_def));
     string_extend_cstr(output, ", ");
     string_extend_strv(output, nodes_at(rhs)->str_data);
     string_extend_cstr(output, "\n");
@@ -489,7 +500,7 @@ static void emit_cond_goto(String* output, Node_id cond_goto) {
     string_extend_cstr(output, "    br i1 %");
     string_extend_size_t(output, llvm_cmp_dest);
     string_extend_cstr(output, ", label %");
-    string_extend_size_t(output, nodes_at(if_true_def)->llvm_id_label_def);
+    string_extend_size_t(output, nodes_at(if_true_def)->llvm_id);
     log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
     todo();
 }
@@ -529,7 +540,7 @@ static void emit_block(String* output, Node_id fun_block) {
                 todo();
         }
     }
-    nodes_at(fun_block)->llvm_id_block_return = nodes_at(nodes_at(fun_block)->left_child)->llvm_id_block_return;
+    //get_block_return_id(fun_block) = get_block_return_id(nodes_at(fun_block)->left_child);
 }
 
 static void emit_llvm_main(String* output, Node_id root) {

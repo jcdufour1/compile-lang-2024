@@ -21,7 +21,7 @@ OBJS=\
 	 ${BUILD_DIR}/passes/add_load_and_store.o \
 	 ${BUILD_DIR}/nodes.o
 
-ARGS_PROGRAM=compile examples/test.c --emit-llvm
+ARGS_PROGRAM=compile examples/test_hello.c --emit-llvm
 
 all: build
 
