@@ -24,6 +24,9 @@ extern Nodes nodes;
 #define nodes_foreach_curr_and_next(curr_node, start_node) \
     for (Node_id curr_node = (start_node); (curr_node) != NODE_IDX_NULL; (curr_node) = nodes_at(curr_node)->next)
 
+#define nodes_foreach_from_last(curr_node, last_node) \
+    for (Node_id curr_node = (last_node); (curr_node) != NODE_IDX_NULL; (curr_node) = nodes_at(curr_node)->prev)
+
 static inline void nodes_reserve(size_t minimum_count_empty_slots) {
     vector_reserve(&nodes, sizeof(nodes.buf[0]), minimum_count_empty_slots, NODES_DEFAULT_CAPACITY);
 }
@@ -65,17 +68,20 @@ static inline size_t nodes_count_children(Node_id parent) {
 static inline void nodes_set_left_child(Node_id parent, Node_id child) {
     assert(parent != NODE_IDX_NULL && child != NODE_IDX_NULL);
     nodes_at(parent)->left_child = child;
+    nodes_at(child)->parent = parent;
 }
 
-static inline void nodes_set_next(Node_id curr, Node_id next) {
-    assert(curr != NODE_IDX_NULL && next != NODE_IDX_NULL);
-    nodes_at(curr)->next = next;
-    nodes_at(next)->prev = curr;
+static inline void nodes_insert_after(Node_id curr, Node_id node_to_insert) {
+    assert(curr != NODE_IDX_NULL && node_to_insert != NODE_IDX_NULL);
+    nodes_at(curr)->next = node_to_insert;
+    nodes_at(node_to_insert)->prev = curr;
+    nodes_at(node_to_insert)->parent = nodes_at(curr)->parent;
 }
 
 static inline void nodes_append_child(Node_id parent, Node_id child) {
     if (nodes_at(parent)->left_child == NODE_IDX_NULL) {
         nodes_at(parent)->left_child = child;
+        nodes_at(child)->parent = parent;
         return;
     }
 
@@ -83,7 +89,7 @@ static inline void nodes_append_child(Node_id parent, Node_id child) {
     while (nodes_at(curr_node)->next != NODE_IDX_NULL) {
         curr_node = nodes_at(curr_node)->next;
     }
-    nodes_set_next(curr_node, child);
+    nodes_insert_after(curr_node, child);
 }
 
 static inline Node_id nodes_single_child(Node_id node) {
@@ -91,14 +97,13 @@ static inline Node_id nodes_single_child(Node_id node) {
     return nodes_at(node)->left_child;
 }
 
-static inline void nodes_insert_after(Node_id node_to_insert_after, Node_id node_to_insert) {
-    (void) node_to_insert_after;
-    (void) node_to_insert;
-    todo();
-}
-
 static inline void nodes_replace(Node_id node_to_replace, Node_id src) {
-    *nodes_at(node_to_replace) = *nodes_at(src);
+    Node new_node = *nodes_at(src);
+    new_node.parent = nodes_at(node_to_replace)->parent;
+    //new_node.left_child = nodes_at(node_to_replace)->left_child;
+    //new_node.right_child = nodes_at(node_to_replace)->left_child;
+
+    *nodes_at(node_to_replace) = new_node;
 }
 
 static inline void nodes_extend_children(Node_id parent, Node_id start_of_nodes_to_extend) {
@@ -181,6 +186,29 @@ static inline Node_id nodes_get_child(Node_id parent, size_t idx) {
     }
 
     unreachable();
+}
+
+static inline bool nodes_try_get_last_child_of_type(Node_id* result, Node_id parent, NODE_TYPE node_type) {
+    Node_id curr_child = NODE_IDX_NULL;
+    nodes_foreach_child(child, parent) {
+        curr_child = child;
+    }
+    assert(curr_child != NODE_IDX_NULL);
+
+    nodes_foreach_from_last(curr, parent) {
+        if (nodes_at(curr)->type == node_type) {
+            *result = curr;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static inline Node_id nodes_get_last_child_of_type(Node_id parent, NODE_TYPE node_type) {
+    Node_id result;
+    try(nodes_try_get_last_child_of_type(&result, parent, node_type));
+    return result;
 }
 
 #endif // NODES_H

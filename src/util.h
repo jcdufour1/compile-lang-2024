@@ -130,4 +130,11 @@ static inline void safe_free_internal(void* ptr) {
 
 #define INLINE static inline __attribute__((always_inline))
 
+#define try(cond) \
+    do { \
+        if (!(cond)) { \
+            abort(); \
+        } \
+    } while(0);
+
 #endif // UTIL_H

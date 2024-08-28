@@ -152,7 +152,7 @@ static bool extract_function_parameter(Node_id* child, Tk_view* tokens) {
     }
 
     Node_id param = node_new();
-    nodes_at(param)->type = NODE_LANG_TYPE;
+    nodes_at(param)->type = NODE_VARIABLE_DEFINITION;
 
     nodes_at(param)->name = tk_view_chop_front(&param_tokens).text;
 

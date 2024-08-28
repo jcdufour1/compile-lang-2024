@@ -29,6 +29,9 @@ typedef enum {
     NODE_GOTO,
     NODE_COND_GOTO,
     NODE_LABEL,
+    NODE_ALLOCA,
+    NODE_STORE,
+    NODE_LOAD,
 } NODE_TYPE;
 
 typedef size_t Node_id;
@@ -43,6 +46,7 @@ typedef struct {
     Node_id next;
     Node_id prev;
     Node_id left_child;
+    Node_id parent;
 
     NODE_TYPE type;
 

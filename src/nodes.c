@@ -22,6 +22,9 @@ static const char* NODE_FOR_UPPER_BOUND_DESCRIPTION = "upper_bound";
 static const char* NODE_GOTO_DESCRIPTION = "goto";
 static const char* NODE_LABEL_DESCRIPTION = "label";
 static const char* NODE_COND_GOTO_DESCRIPTION = "cond_goto";
+static const char* NODE_ALLOCA_DESCRIPTION = "alloca";
+static const char* NODE_STORE_DESCRIPTION = "store";
+static const char* NODE_LOAD_DESCRIPTION = "load";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_id root, const char* file, int line) {
@@ -89,6 +92,8 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
         case NODE_LABEL:
             return str_view_from_cstr(NODE_LABEL_DESCRIPTION);
+        case NODE_ALLOCA:
+            return str_view_from_cstr(NODE_ALLOCA_DESCRIPTION);
         default:
             log(LOG_FETAL, "node_type: %d\n", node_type);
             todo();
@@ -102,6 +107,12 @@ String node_print_internal(Node_id node) {
     string_extend_strv(&buf, node_type_get_strv(nodes_at(node)->type));
 
     switch (nodes_at(node)->type) {
+        case NODE_ALLOCA:
+            // fallthrough
+        case NODE_STORE:
+            // fallthrough
+        case NODE_LOAD:
+            // fallthrough
         case NODE_GOTO:
             // fallthrough
         case NODE_COND_GOTO:
