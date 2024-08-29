@@ -103,19 +103,21 @@ static inline void nodes_insert_after(Node_id curr, Node_id node_to_insert) {
     nodes_at(node_to_insert)->parent = nodes_at(curr)->parent;
 }
 
-static inline void nodes_insert_before(Node_id curr, Node_id node_to_insert) {
-    assert(curr != NODE_IDX_NULL && node_to_insert != NODE_IDX_NULL);
+static inline void nodes_insert_before(Node_id node_to_insert_before, Node_id node_to_insert) {
+    assert(node_to_insert_before != NODE_IDX_NULL && node_to_insert != NODE_IDX_NULL);
 
-    Node_id old_prev = nodes_at(curr)->prev;
-    nodes_at(old_prev)->next = node_to_insert;
+    Node_id old_prev = nodes_at(node_to_insert_before)->prev;
+    if (old_prev != NODE_IDX_NULL) {
+        nodes_at(old_prev)->next = node_to_insert;
+    }
     nodes_at(node_to_insert)->prev = old_prev;
 
-    nodes_at(curr)->prev = node_to_insert;
-    nodes_at(node_to_insert)->next = curr;
+    nodes_at(node_to_insert_before)->prev = node_to_insert;
+    nodes_at(node_to_insert)->next = node_to_insert_before;
 
-    nodes_at(node_to_insert)->parent = nodes_at(curr)->parent;
-    Node_id parent = nodes_at(curr)->parent;
-    nodes_at(parent)->left_child = nodes_get_leftmost_sibling(curr);
+    nodes_at(node_to_insert)->parent = nodes_at(node_to_insert_before)->parent;
+    Node_id parent = nodes_at(node_to_insert_before)->parent;
+    nodes_at(parent)->left_child = nodes_get_leftmost_sibling(node_to_insert_before);
 }
 
 static inline void nodes_append_child(Node_id parent, Node_id child) {
@@ -153,8 +155,8 @@ static inline void nodes_replace(Node_id node_to_replace, Node_id src) {
     *nodes_at(node_to_replace) = new_node;
 }
 
-static inline void nodes_extend_children(Node_id parent, Node_id start_of_nodes_to_extend) {
-    nodes_foreach_from_curr(curr_node, start_of_nodes_to_extend) {
+static inline void nodes_extend_children(Node_id parent, Node_id parent_of_nodes_to_extend) {
+    nodes_foreach_from_curr(curr_node, parent_of_nodes_to_extend) {
         nodes_append_child(parent, curr_node);
     }
 }
@@ -241,6 +243,33 @@ static inline Node_id nodes_get_last_child_of_type(Node_id parent, NODE_TYPE nod
     Node_id result;
     try(nodes_try_get_last_child_of_type(&result, parent, node_type));
     return result;
+}
+
+static inline void nodes_remove(Node_id node_to_remove) {
+    assert(node_to_remove != NODE_IDX_NULL);
+
+    Node_id next = nodes_at(node_to_remove)->next;
+    Node_id prev = nodes_at(node_to_remove)->prev;
+    Node_id parent = nodes_at(node_to_remove)->parent;
+    Node_id left_child = nodes_at(node_to_remove)->left_child;
+
+    if (next != NODE_IDX_NULL) {
+        nodes_at(next)->prev = prev;
+    }
+
+    if (prev != NODE_IDX_NULL) {
+        nodes_at(prev)->next = next;
+    }
+
+    if (nodes_at(parent)->left_child == node_to_remove) {
+        nodes_at(parent)->left_child = next;
+    }
+
+    if (left_child != NODE_IDX_NULL) {
+        todo();
+    }
+
+    nodes_reset_links(node_to_remove);
 }
 
 #endif // NODES_H

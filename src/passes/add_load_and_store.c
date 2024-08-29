@@ -19,17 +19,6 @@ static Node_id store_new(Node_id item_to_store) {
     return store;
 }
 
-static void insert_store_assignment(Node_id assignment, Node_id item_to_store) {
-    Node_id lhs = nodes_get_child(assignment, 0);
-    Node_id new_store = node_new();
-    nodes_at(new_store)->type = NODE_STORE;
-    nodes_at(new_store)->name = nodes_at(lhs)->name;
-    nodes_reset_links(item_to_store);
-    nodes_append_child(new_store, item_to_store);
-
-    nodes_insert_before(assignment, new_store);
-}
-
 static void insert_alloca(Node_id var_def) {
     Node_id var_def_parent = nodes_at(var_def)->parent;
 
@@ -47,6 +36,32 @@ static void insert_alloca(Node_id var_def) {
     }
 
     nodes_insert_after(node_to_insert_after, new_alloca);
+}
+
+static void insert_store_assignment(Node_id assignment, Node_id item_to_store) {
+    Node_id lhs = nodes_get_child(assignment, 0);
+    log_tree(LOG_DEBUG, 0);
+    switch (nodes_at(lhs)->type) {
+        case NODE_VARIABLE_DEFINITION:
+            nodes_remove(lhs);
+            nodes_insert_before(assignment, lhs);
+            insert_alloca(lhs);
+            break;
+        case NODE_SYMBOL:
+            break;
+        default:
+            todo();
+    }
+    log_tree(LOG_DEBUG, 0);
+    Node_id new_store = node_new();
+    nodes_at(new_store)->type = NODE_STORE;
+    nodes_at(new_store)->name = nodes_at(lhs)->name;
+    nodes_reset_links(item_to_store);
+    nodes_append_child(new_store, item_to_store);
+
+    nodes_insert_before(assignment, new_store);
+    log_tree(LOG_DEBUG, 0);
+    log_tree(LOG_DEBUG, assignment);
 }
 
 //static void load_function_call(Node_id)
@@ -76,6 +91,24 @@ static void add_load_return_statement(Node_id return_statement) {
     }
 }
 
+static void add_load_cond_goto(Node_id cond_goto) {
+    Node_id operator = nodes_get_child(cond_goto, 0);
+    Node_id lhs = nodes_get_child(operator, 0);
+    Node_id rhs = nodes_get_child(operator, 1);
+
+    switch (nodes_at(lhs)->type) {
+        case NODE_SYMBOL:
+            add_load(cond_goto, lhs);
+            break;
+        default:
+            unreachable();
+    }
+
+    if (nodes_at(rhs)->type != NODE_LITERAL) {
+        todo();
+    }
+}
+
 void add_load_and_store(Node_id curr_node) {
     //log_tree(LOG_DEBUG, 0);
     //log_tree(LOG_DEBUG, curr_node);
@@ -95,7 +128,7 @@ void add_load_and_store(Node_id curr_node) {
         case NODE_LANG_TYPE:
             return;
         case NODE_OPERATOR:
-            todo();
+            return;
         case NODE_BLOCK:
             return;
         case NODE_SYMBOL:
@@ -125,6 +158,7 @@ void add_load_and_store(Node_id curr_node) {
         case NODE_GOTO:
             return;
         case NODE_COND_GOTO:
+            add_load_cond_goto(curr_node);
             return;
         case NODE_NO_TYPE:
             todo();

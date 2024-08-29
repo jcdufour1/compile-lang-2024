@@ -37,6 +37,14 @@ void assign_llvm_ids(Node_id curr_node) {
             // fallthrough
         case NODE_LOAD:
             // fallthrough
+        case NODE_GOTO:
+            // fallthrough
+        case NODE_COND_GOTO:
+            // fallthrough
+        case NODE_OPERATOR:
+            // fallthrough
+        case NODE_LABEL:
+            // fallthrough
         case NODE_STORE:
             nodes_at(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var++;
