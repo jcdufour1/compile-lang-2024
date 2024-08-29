@@ -75,9 +75,9 @@ static void emit_function_params(String* output, Node_id fun_params) {
     }
 }
 
-static void emit_function_call_arguments(String* output, Node_id statement) {
+static void emit_function_call_arguments(String* output, Node_id fun_call) {
     size_t idx = 0;
-    nodes_foreach_child(argument, statement) {
+    nodes_foreach_child(argument, fun_call) {
         Node_id var_decl_or_def;
         if (!sym_tbl_lookup(&var_decl_or_def, nodes_at(argument)->name)) {
             msg(
@@ -98,7 +98,7 @@ static void emit_function_call_arguments(String* output, Node_id statement) {
                 break;
             }
             case NODE_SYMBOL: {
-                size_t llvm_id = get_prev_load_id(var_decl_or_def);
+                size_t llvm_id = get_prev_load_id(argument);
                 log_tree(LOG_DEBUG, argument);
                 assert(llvm_id > 0);
                 extend_type_call_str(output, var_decl_or_def);
@@ -532,6 +532,9 @@ static void emit_block(String* output, Node_id fun_block) {
                 break;
             case NODE_STORE:
                 emit_store(output, statement);
+                break;
+            case NODE_LOAD:
+                emit_load_variable(output, statement);
                 break;
             default:
                 log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
