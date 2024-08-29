@@ -198,12 +198,25 @@ static void emit_src_literal(String* output, Node_id src) {
     }
 }
 
+static void emit_src_function_call_result(String* output, Node_id store) {
+    Node_id fun_call = nodes_at(store)->left_child;
+    assert(fun_call != NODE_IDX_NULL);
+    assert(nodes_at(fun_call)->type == NODE_FUNCTION_CALL);
+
+    //extend_type_call_str(output, nodes_at(fun_call)->type);
+    string_extend_cstr(output, " %");
+    string_extend_size_t(output, nodes_at(fun_call)->llvm_id);
+}
+
 static void emit_src(String* output, Node_id store) {
     log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
     Node_id src = nodes_single_child(store);
     switch (nodes_at(src)->type) {
         case NODE_LITERAL:
             emit_src_literal(output, src);
+            break;
+        case NODE_FUNCTION_CALL:
+            emit_src_function_call_result(output, store);
             break;
         default:
             todo();
@@ -214,6 +227,11 @@ static void emit_store(String* output, Node_id store) {
     size_t alloca_dest_id = get_store_dest_id(store);
     Node_id var_def = get_symbol_def_from_alloca(store);
     assert(alloca_dest_id > 0);
+
+    Node_id src = nodes_single_child(store);
+    if (nodes_at(src)->type == NODE_FUNCTION_CALL) {
+        emit_function_call(output, src);
+    }
 
     string_extend_cstr(output, "    store ");
     extend_type_call_str(output, var_def);

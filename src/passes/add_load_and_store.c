@@ -65,7 +65,15 @@ static void add_load_foreach_arg(Node_id function_call) {
 }
 
 static void add_load_return_statement(Node_id return_statement) {
-    add_load(return_statement, nodes_single_child(return_statement));
+    switch (nodes_at(nodes_single_child(return_statement))->type) {
+        case NODE_SYMBOL:
+            add_load(return_statement, nodes_single_child(return_statement));
+            return;
+        case NODE_LITERAL:
+            return;
+        default:
+            unreachable();
+    }
 }
 
 void add_load_and_store(Node_id curr_node) {
