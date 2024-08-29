@@ -31,9 +31,7 @@ static void extend_type_decl_str(String* output, Node_id variable_def) {
     string_extend_cstr(output, " noundef");
 }
 
-static void extend_literal_decl(String* output, Node_id var_decl_or_def) {
-    extend_type_decl_str(output, var_decl_or_def);
-
+static void extend_literal_decl_prefix(String* output, Node_id var_decl_or_def) {
     Str_view lang_type = nodes_at(var_decl_or_def)->lang_type;
     if (0 == str_view_cmp_cstr(lang_type, "ptr")) {
         string_extend_cstr(output, " @.");
@@ -44,6 +42,11 @@ static void extend_literal_decl(String* output, Node_id var_decl_or_def) {
     } else {
         todo();
     }
+}
+
+static void extend_literal_decl(String* output, Node_id var_decl_or_def) {
+    extend_type_decl_str(output, var_decl_or_def);
+    extend_literal_decl_prefix(output, var_decl_or_def);
 }
 
 static Node_id return_type_from_function_definition(Node_id fun_def) {
@@ -168,14 +171,7 @@ static void emit_src_of_assignment(String* output, Node_id variable_def, void* i
         case NODE_SYMBOL:
             // fallthrough
         case NODE_LITERAL:
-            if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "ptr")) {
-                string_extend_cstr(output, " @.");
-                string_extend_strv(output, symbol_name);
-            } else if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "i32")) {
-                string_extend_strv(output, num_str);
-            } else {
-                todo();
-            }
+            extend_literal_decl_prefix(output, variable_def);
             break;
         case NODE_FUNCTION_CALL:
             string_extend_cstr(output, " %");
@@ -188,14 +184,7 @@ static void emit_src_of_assignment(String* output, Node_id variable_def, void* i
 
 static void emit_src_literal(String* output, Node_id src) {
     Str_view num_str = nodes_at(src)->str_data;
-    if (0 == str_view_cmp_cstr(nodes_at(src)->lang_type, "ptr")) {
-        string_extend_cstr(output, " @.");
-        string_extend_strv(output, nodes_at(src)->name);
-    } else if (0 == str_view_cmp_cstr(nodes_at(src)->lang_type, "i32")) {
-        string_extend_strv(output, num_str);
-    } else {
-        todo();
-    }
+    extend_literal_decl_prefix(output, src);
 }
 
 static void emit_src_function_call_result(String* output, Node_id store) {
@@ -203,7 +192,6 @@ static void emit_src_function_call_result(String* output, Node_id store) {
     assert(fun_call != NODE_IDX_NULL);
     assert(nodes_at(fun_call)->type == NODE_FUNCTION_CALL);
 
-    //extend_type_call_str(output, nodes_at(fun_call)->type);
     string_extend_cstr(output, " %");
     string_extend_size_t(output, nodes_at(fun_call)->llvm_id);
 }
@@ -235,7 +223,6 @@ static void emit_store(String* output, Node_id store) {
 
     string_extend_cstr(output, "    store ");
     extend_type_call_str(output, var_def);
-    string_append(output, ' ');
 
     emit_src(output, store);
 
