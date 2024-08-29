@@ -64,6 +64,10 @@ static void add_load_foreach_arg(Node_id function_call) {
     }
 }
 
+static void add_load_return_statement(Node_id return_statement) {
+    add_load(return_statement, nodes_single_child(return_statement));
+}
+
 void add_load_and_store(Node_id curr_node) {
     //log_tree(LOG_DEBUG, 0);
     //log_tree(LOG_DEBUG, curr_node);
@@ -89,6 +93,7 @@ void add_load_and_store(Node_id curr_node) {
         case NODE_SYMBOL:
             return;
         case NODE_RETURN_STATEMENT:
+            add_load_return_statement(curr_node);
             return;
         case NODE_VARIABLE_DEFINITION:
             if (nodes_at(nodes_at(curr_node)->parent)->type == NODE_FUNCTION_PARAMETERS) {

@@ -28,9 +28,11 @@ Node_id get_block_return_id(Node_id fun_call) {
 }
 
 Llvm_id get_prev_load_id(Node_id var_call) {
+    log(LOG_DEBUG, "entering\n");
     nodes_foreach_from_curr_rev(curr_node, var_call) {
         if (nodes_at(curr_node)->type == NODE_LOAD && 0 == str_view_cmp(nodes_at(curr_node)->name, nodes_at(var_call)->name)) {
             assert(nodes_at(curr_node)->llvm_id > 0);
+            log(LOG_DEBUG, "exiting\n");
             return nodes_at(curr_node)->llvm_id;
         }
     }
@@ -38,12 +40,17 @@ Llvm_id get_prev_load_id(Node_id var_call) {
     Node_id parent_var_call = nodes_at(var_call)->parent;
     switch (nodes_at(parent_var_call)->type) {
         case NODE_FUNCTION_CALL:
+            // fallthrough
+        case NODE_SYMBOL:
+            // fallthrough
+        case NODE_RETURN_STATEMENT:
             break;
         default:
             unreachable();
     }
     
     nodes_foreach_from_curr_rev(curr_node, parent_var_call) {
+        log(LOG_DEBUG, NODE_FMT"\n"NODE_FMT"\n", node_print(curr_node), node_print(var_call));
         if (nodes_at(curr_node)->type == NODE_LOAD && 0 == str_view_cmp(nodes_at(curr_node)->name, nodes_at(var_call)->name)) {
             assert(nodes_at(curr_node)->llvm_id > 0);
             return nodes_at(curr_node)->llvm_id;
