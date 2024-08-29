@@ -67,4 +67,9 @@ String node_print_internal(Node_id node);
 
 #define node_print(root) string_print(node_print_internal((root)))
 
+#define node_printf(node) \
+    do { \
+        log(LOG_NOTE, NODE_FMT"\n", node_print(node)); \
+    } while (0);
+
 #endif // NODE_H

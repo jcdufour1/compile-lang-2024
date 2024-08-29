@@ -5,8 +5,8 @@
 
 void assign_llvm_ids(Node_id curr_node) {
     static size_t llvm_id_for_next_var = 1;
-    log_tree(LOG_DEBUG, 0);
-    log_tree(LOG_DEBUG, curr_node);
+    //log_tree(LOG_DEBUG, 0);
+    //log_tree(LOG_DEBUG, curr_node);
 
     switch (nodes_at(curr_node)->type) {
         case NODE_FUNCTION_PARAMETERS:
@@ -23,19 +23,25 @@ void assign_llvm_ids(Node_id curr_node) {
             return;
         case NODE_FUNCTION_DEFINITION:
             return;
-        case NODE_FUNCTION_CALL:
-            nodes_at(curr_node)->llvm_id = llvm_id_for_next_var;
-            llvm_id_for_next_var++;
-            return;
         case NODE_FUNCTION_RETURN_TYPES:
             return;
         case NODE_RETURN_STATEMENT:
             return;
         case NODE_LANG_TYPE:
             return;
+        case NODE_FUNCTION_CALL:
+            // fallthrough
+        case NODE_ASSIGNMENT:
+            // fallthrough
+        case NODE_ALLOCA:
+            // fallthrough
+        case NODE_LOAD:
+            // fallthrough
+        case NODE_STORE:
+            nodes_at(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var++;
+            return;
         default:
             unreachable();
     }
-
-    todo();
 }

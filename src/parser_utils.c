@@ -1,6 +1,8 @@
 
 #include "str_view.h"
 #include "string_vec.h"
+#include "node.h"
+#include "nodes.h"
 
 Str_view literal_name_new(void) {
     static String_vec literal_strings = {0};
@@ -20,3 +22,34 @@ Str_view literal_name_new(void) {
     return str_view;
 }
 
+Node_id get_block_return_id(Node_id fun_call) {
+    (void) fun_call;
+    todo();
+}
+
+Llvm_id get_prev_load_id(Node_id var_call) {
+    (void) var_call;
+    todo();
+}
+
+Llvm_id get_store_dest_id(Node_id var_call) {
+    nodes_foreach_from_curr_rev(curr_node, var_call) {
+        log(LOG_DEBUG, NODE_FMT"\n"NODE_FMT"\n", node_print(curr_node), node_print(var_call));
+        if (nodes_at(curr_node)->type == NODE_ALLOCA && 0 == str_view_cmp(nodes_at(curr_node)->name, nodes_at(var_call)->name)) {
+            assert(nodes_at(curr_node)->llvm_id > 0);
+            return nodes_at(curr_node)->llvm_id;
+        }
+    }
+
+    unreachable();
+}
+
+Node_id get_symbol_def_from_alloca(Node_id alloca) {
+    nodes_foreach_from_curr_rev(curr_node, alloca) {
+        if (nodes_at(curr_node)->type == NODE_VARIABLE_DEFINITION && 0 == str_view_cmp(nodes_at(alloca)->name, nodes_at(alloca)->name)) {
+            return curr_node;
+        }
+    }
+
+    unreachable();
+}

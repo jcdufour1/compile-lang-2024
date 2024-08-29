@@ -35,7 +35,9 @@ static bool get_idx_matching_token(
     for (size_t idx = 0; idx < tokens.count; idx++) {
         Token curr_token = tokens.tokens[idx];
         if (par_level == 0 && curr_token.type == type_to_match) {
-            *idx_matching = idx;
+            if (idx_matching) {
+                *idx_matching = idx;
+            }
             return true;
         }
 

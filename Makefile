@@ -1,6 +1,6 @@
 .PHONY: all setup build valgrind gdb
 
-C_FLAGS=-Wall -Wextra -std=c11 -pedantic -g -I ./third_party/
+C_FLAGS=-Wall -Wextra -Wunused-function -std=c11 -pedantic -g -I ./third_party/
 
 BUILD_DIR=build/debug/
 OBJS=\
@@ -21,7 +21,7 @@ OBJS=\
 	 ${BUILD_DIR}/passes/add_load_and_store.o \
 	 ${BUILD_DIR}/nodes.o
 
-ARGS_PROGRAM=compile examples/test_hello.c --emit-llvm
+ARGS_PROGRAM=compile examples/test_basic.c --emit-llvm
 
 all: build
 

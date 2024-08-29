@@ -69,6 +69,14 @@ static inline int str_view_cmp_cstr(Str_view str_view, const char* cstr) {
     return strncmp(str_view.str, cstr, str_view.count);
 }
 
+// return 0 when match
+static inline int str_view_cmp(Str_view a, Str_view b) {
+    if (a.count != b.count) {
+        return 100;
+    }
+    return strncmp(a.str, b.str, a.count);
+}
+
 // only string literals can be passed into this function
 static inline Str_view str_view_from_cstr(const char* cstr) {
     Str_view str_view;

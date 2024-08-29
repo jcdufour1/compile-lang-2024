@@ -35,7 +35,7 @@ void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_id root, const char
 
     static String padding = {0};
 
-    nodes_foreach_curr_and_next(curr_node, root) {
+    nodes_foreach_from_curr(curr_node, root) {
         string_set_to_zero_len(&padding);
         for (int idx = 0; idx < pad_x; idx++) {
             string_append(&padding, ' ');
