@@ -59,7 +59,7 @@ static inline bool token_is_literal(Token token) {
         case TOKEN_SEMICOLON:
             return false;
         default:
-            unreachable();
+            unreachable("");
     }
 }
 
@@ -82,7 +82,7 @@ static inline bool token_is_operator(Token token) {
         case TOKEN_SINGLE_EQUAL:
             return false;
         default:
-            unreachable();
+            unreachable("");
     }
 }
 
@@ -94,7 +94,7 @@ static inline uint32_t token_get_precedence_operator(Token token) {
         case TOKEN_ASTERISK:
             return 3;
         default:
-            unreachable();
+            unreachable("");
     }
 }
 
@@ -144,7 +144,7 @@ static inline Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
         case TOKEN_LESS_THAN:
             return str_view_from_cstr("<");
         default:
-            unreachable();
+            unreachable("");
     }
 }
 
@@ -187,7 +187,7 @@ static inline bool token_is_closing(Token curr_token) {
         case TOKEN_TRIPLE_DOT:
             return false;
         default:
-            unreachable();
+            unreachable("");
     }
 }
 
@@ -230,7 +230,7 @@ static inline bool token_is_opening(Token curr_token) {
         case TOKEN_TRIPLE_DOT:
             return false;
         default:
-            unreachable();
+            unreachable("");
     }
 }
 

@@ -121,7 +121,7 @@ static inline bool sym_tbl_lookup(
         }
     }
 
-    unreachable();
+    unreachable("");
 }
 
 static inline void sym_tbl_add(

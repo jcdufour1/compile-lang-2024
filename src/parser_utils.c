@@ -39,7 +39,7 @@ static Node_id get_prev_matching_node(Node_id node_to_start, Node_id var_call, b
         return get_prev_matching_node(nodes_at(node_to_start)->parent, var_call, is_matching);
     }
 
-    unreachable();
+    unreachable("");
 }
 
 static bool is_load(Node_id curr_node, Node_id var_call) {

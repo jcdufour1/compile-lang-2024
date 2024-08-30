@@ -3,12 +3,12 @@
 
 #include "../node.h"
 
-void walk_tree(Node_id root, void (callback)(Node_id curr_node));
+bool walk_tree(Node_id root, bool (callback)(Node_id curr_node));
 
-void for_loop_to_branch(Node_id curr_node);
+bool for_loop_to_branch(Node_id curr_node);
 
-void add_load_and_store(Node_id curr_node);
+bool add_load_and_store(Node_id curr_node);
 
-void assign_llvm_ids(Node_id curr_node);
+bool assign_llvm_ids(Node_id curr_node);
 
 #endif // PASSES_H

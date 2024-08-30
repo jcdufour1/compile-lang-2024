@@ -41,7 +41,7 @@ Str_view token_print_internal(Token token) {
             string_append(&buf, ')');
             break;
         default:
-            unreachable();
+            unreachable("");
     }
 
     assert(strlen(buf.buf) == buf.info.count);

@@ -221,7 +221,7 @@ static inline void nodes_replace(Node_id node_to_replace, Node_id src) {
 
     nodes_assert_tree_linkage_is_consistant(node_id_from(0));
 
-    if (node_is_null(nodes_prev(node_to_replace))) {
+    if (!node_is_null(nodes_next(node_to_replace))) {
         nodes_establish_siblings(src, nodes_at(node_to_replace)->next);
     }
 
@@ -263,7 +263,7 @@ static inline Node_id nodes_get_child_of_type(Node_id parent, NODE_TYPE node_typ
     }
 
     log_tree(LOG_VERBOSE, parent);
-    unreachable();
+    unreachable("");
 }
 
 static inline Node_id nodes_get_sibling_of_type(Node_id node, NODE_TYPE node_type) {
@@ -277,7 +277,7 @@ static inline Node_id nodes_get_sibling_of_type(Node_id node, NODE_TYPE node_typ
     }
 
     log_tree(LOG_VERBOSE, node);
-    unreachable();
+    unreachable("");
 }
 
 static inline Node_id nodes_get_child(Node_id parent, size_t idx) {
@@ -290,7 +290,7 @@ static inline Node_id nodes_get_child(Node_id parent, size_t idx) {
         curr_idx++;
     }
 
-    unreachable();
+    unreachable("");
 }
 
 static inline bool nodes_try_get_last_child_of_type(Node_id* result, Node_id parent, NODE_TYPE node_type) {
@@ -341,7 +341,7 @@ static inline void nodes_remove(Node_id node_to_remove, bool keep_children) {
     }
 
     if (!keep_children && !node_is_null(left_child)) {
-        unreachable();
+        unreachable("");
     }
 
     nodes_reset_links_of_self_only(node_to_remove, keep_children);

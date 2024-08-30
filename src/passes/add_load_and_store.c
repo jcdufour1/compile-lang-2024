@@ -3,6 +3,8 @@
 #include "../symbol_table.h"
 #include "../parser_utils.h"
 
+#include "passes.h"
+
 static Node_id alloca_new(Node_id var_def) {
     Node_id alloca = node_new();
     nodes_at(alloca)->type = NODE_ALLOCA;
@@ -72,7 +74,6 @@ static void insert_store_assignment(Node_id assignment, Node_id item_to_store) {
             insert_alloca(lhs);
             // fallthrough
         case NODE_SYMBOL:
-            insert_load(assignment, lhs);
             node_printf(lhs);
             break;
         default:
@@ -93,7 +94,7 @@ static void insert_store_assignment(Node_id assignment, Node_id item_to_store) {
     log_tree(LOG_DEBUG, node_id_from(0));
 
     nodes_insert_before(assignment, new_store);
-    nodes_remove(assignment, true);
+    log_tree(LOG_DEBUG, node_id_from(0));
     log_tree(LOG_DEBUG, node_id_from(0));
 }
 
@@ -113,7 +114,7 @@ static void add_load_return_statement(Node_id return_statement) {
         case NODE_LITERAL:
             return;
         default:
-            unreachable();
+            unreachable("");
     }
 }
 
@@ -127,7 +128,7 @@ static void add_load_cond_goto(Node_id cond_goto) {
             insert_load(cond_goto, lhs);
             break;
         default:
-            unreachable();
+            unreachable("");
     }
 
     if (nodes_at(rhs)->type != NODE_LITERAL) {
@@ -135,44 +136,61 @@ static void add_load_cond_goto(Node_id cond_goto) {
     }
 }
 
-void add_load_and_store(Node_id curr_node) {
+static void add_load_operator(Node_id operator) {
+    Node_id lhs = nodes_get_child(operator, 0);
+    Node_id rhs = nodes_get_child(operator, 1);
+
+    if (nodes_at(lhs)->type != NODE_LITERAL) {
+        //insert_load(operator, lhs);
+    }
+
+    if (nodes_at(rhs)->type != NODE_LITERAL) {
+        //insert_load(operator, rhs);
+    }
+
+    log_tree(LOG_DEBUG, node_id_from(0));
+    todo();
+}
+
+bool add_load_and_store(Node_id curr_node) {
     //log_tree(LOG_DEBUG, 0);
     //log_tree(LOG_DEBUG, curr_node);
     //log(LOG_DEBUG, NODE_FMT"\n", node_print(curr_node));
     switch (nodes_at(curr_node)->type) {
         case NODE_LITERAL:
-            return;
+            return false;
         case NODE_FUNCTION_CALL:
             add_load_foreach_arg(curr_node);
-            return;
+            return false;
         case NODE_FUNCTION_DEFINITION:
-            return;
+            return false;
         case NODE_FUNCTION_PARAMETERS:
-            return;
+            return false;
         case NODE_FUNCTION_RETURN_TYPES:
-            return;
+            return false;
         case NODE_LANG_TYPE:
-            return;
+            return false;
         case NODE_OPERATOR:
-            return;
+            //add_load_operator(curr_node);
+            return false;
         case NODE_BLOCK:
-            return;
+            return false;
         case NODE_SYMBOL:
-            return;
+            return false;
         case NODE_RETURN_STATEMENT:
             add_load_return_statement(curr_node);
-            return;
+            return false;
         case NODE_VARIABLE_DEFINITION:
             if (nodes_at(nodes_at(curr_node)->parent)->type == NODE_FUNCTION_PARAMETERS) {
-                return;
+                return false;
             }
             insert_alloca(curr_node);
-            return;
+            return false;
         case NODE_FUNCTION_DECLARATION:
-            return;
+            return false;
         case NODE_ASSIGNMENT:
             insert_store_assignment(curr_node, nodes_get_child(curr_node, 1));
-            return;
+            return true;
         case NODE_FOR_LOOP:
             todo();
         case NODE_FOR_VARIABLE_DEF:
@@ -182,20 +200,20 @@ void add_load_and_store(Node_id curr_node) {
         case NODE_FOR_UPPER_BOUND:
             todo();
         case NODE_GOTO:
-            return;
+            return false;
         case NODE_COND_GOTO:
             add_load_cond_goto(curr_node);
-            return;
+            return false;
         case NODE_NO_TYPE:
             todo();
         case NODE_LABEL:
-            return;
+            return false;
         case NODE_ALLOCA:
-            return;
+            return false;
         case NODE_STORE:
-            return;
+            return false;
         case NODE_LOAD:
-            return;
+            return false;
         default:
             todo();
     }

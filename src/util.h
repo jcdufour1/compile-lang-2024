@@ -82,9 +82,10 @@ typedef int LOG_LEVEL;
         abort(); \
     } while (0);
 
-#define unreachable() \
+#define unreachable(...) \
     do { \
-        log(LOG_FETAL, "unreachable\n"); \
+        log(LOG_FETAL, "unreachable:"); \
+        fprintf(stderr, __VA_ARGS__); \
         abort(); \
     } while (0);
 

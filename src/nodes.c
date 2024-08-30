@@ -212,7 +212,7 @@ String node_print_internal(Node_id node) {
             break;
         default:
             log(LOG_FETAL, "type: "STR_VIEW_FMT"\n", str_view_print(node_type_get_strv(nodes_at(node)->type)));
-            unreachable();
+            unreachable("");
     }
 
     return buf;

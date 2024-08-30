@@ -2,33 +2,34 @@
 #include "../nodes.h"
 #include "../symbol_table.h"
 #include "../parser_utils.h"
+#include "../nodes.h"
 
-void assign_llvm_ids(Node_id curr_node) {
+bool assign_llvm_ids(Node_id curr_node) {
     static size_t llvm_id_for_next_var = 1;
     //log_tree(LOG_DEBUG, 0);
     //log_tree(LOG_DEBUG, curr_node);
 
     switch (nodes_at(curr_node)->type) {
         case NODE_FUNCTION_PARAMETERS:
-            return;
+            return false;
         case NODE_VARIABLE_DEFINITION:
-            return;
+            return false;
         case NODE_SYMBOL:
-            return;
+            return false;
         case NODE_LITERAL:
-            return;
+            return false;
         case NODE_BLOCK:
-            return;
+            return false;
         case NODE_FUNCTION_DECLARATION:
-            return;
+            return false;
         case NODE_FUNCTION_DEFINITION:
-            return;
+            return false;
         case NODE_FUNCTION_RETURN_TYPES:
-            return;
+            return false;
         case NODE_RETURN_STATEMENT:
-            return;
+            return false;
         case NODE_LANG_TYPE:
-            return;
+            return false;
         case NODE_FUNCTION_CALL:
             // fallthrough
         case NODE_ASSIGNMENT:
@@ -48,8 +49,8 @@ void assign_llvm_ids(Node_id curr_node) {
         case NODE_STORE:
             nodes_at(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var++;
-            return;
+            return false;
         default:
-            unreachable();
+            unreachable("");
     }
 }

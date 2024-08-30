@@ -2,6 +2,7 @@
 #include "../nodes.h"
 #include "../symbol_table.h"
 #include "../parser_utils.h"
+#include "../nodes.h"
 
 static Node_id assignment_new(Node_id lhs, Node_id rhs) {
     Node_id assignment = node_new();
@@ -62,9 +63,9 @@ static Node_id jmp_if_less_than_new(
     return cond_goto;
 }
 
-void for_loop_to_branch(Node_id for_loop) {
+bool for_loop_to_branch(Node_id for_loop) {
     if (nodes_at(for_loop)->type != NODE_FOR_LOOP) {
-        return;
+        return false;
     }
 
     Node_id lower_bound = nodes_get_child_of_type(for_loop, NODE_FOR_LOWER_BOUND);
@@ -126,4 +127,6 @@ void for_loop_to_branch(Node_id for_loop) {
 
     nodes_replace(for_loop, new_branch_block);
     log_tree(LOG_DEBUG, node_id_from(0));
+
+    return false;
 }

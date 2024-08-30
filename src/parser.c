@@ -125,7 +125,7 @@ static size_t get_idx_lowest_precedence_operator(Tk_view tokens) {
     }
 
     if (idx_lowest == SIZE_MAX) {
-        unreachable();
+        unreachable("");
     }
     return idx_lowest;
 }
@@ -666,7 +666,7 @@ static Node_id parse_block(Tk_view tokens) {
 static Node_id parse_single_item_or_block(Tk_view tokens) {
     Node_id block = parse_block(tokens);
     if (nodes_count_children(block) < 1) {
-        unreachable();
+        unreachable("");
     }
     if (nodes_count_children(block) == 1) {
         return nodes_left_child(block);
@@ -678,7 +678,7 @@ static Node_id parse_single_item(Tk_view tokens) {
     unsigned int indent_amt = 0;
 
     if (tokens.count < 1) {
-        unreachable();
+        unreachable("");
     }
 
     Node_id var_declaration;
@@ -707,7 +707,7 @@ static Node_id parse_single_item(Tk_view tokens) {
 
     log_tokens(LOG_DEBUG, tokens, indent_amt);
     log_tree(LOG_VERBOSE, node_id_from(0));
-    unreachable();
+    unreachable("");
 }
 
 Node_id parse(const Tokens tokens) {

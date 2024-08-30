@@ -56,7 +56,7 @@ static Node_id return_type_from_function_definition(Node_id fun_def) {
     if (nodes_count_children(return_types) > 0) {
         return nodes_at(return_types)->left_child;
     }
-    unreachable();
+    unreachable("");
 }
 
 static void emit_function_params(String* output, Node_id fun_params) {
@@ -107,7 +107,7 @@ static void emit_function_call_arguments(String* output, Node_id fun_call) {
                 break;
             }
             case NODE_FUNCTION_CALL:
-                unreachable(); // this function call should be changed to assign to a variable 
+                unreachable(""); // this function call should be changed to assign to a variable 
                                // before reaching emit_llvm stage, then assign that variable here. 
             default:
                 todo();
@@ -130,7 +130,7 @@ static void emit_function_call(String* output, Node_id fun_call) {
 
     Node_id fun_def;
     if (!sym_tbl_lookup(&fun_def, nodes_at(fun_call)->name)) {
-        unreachable();
+        unreachable("");
     }
 
     // start of actual function call
@@ -403,7 +403,7 @@ static void emit_cond_goto(String* output, Node_id cond_goto) {
         case TOKEN_LESS_THAN:
             break;
         default:
-            unreachable();
+            unreachable("");
     }
     assert(nodes_count_children(operator) == 2);
     Node_id lhs = nodes_get_child(operator, 0);
@@ -509,10 +509,10 @@ static void emit_llvm_main(String* output, Node_id root) {
         case NODE_SYMBOL:
             todo();
         default:
-            unreachable();
+            unreachable("");
     }
     
-    unreachable();
+    unreachable("");
 }
 
 static void emit_symbols(String* output) {

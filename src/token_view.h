@@ -47,7 +47,7 @@ static inline Tk_view tk_view_chop_on_type_delim_common(Tk_view* token_view, TOK
     }
 
     if ((!or_all_fallback) && (idx >= token_view->count)) {
-        unreachable();
+        unreachable("");
     }
 
     new_token_view.tokens = token_view->tokens;
@@ -70,7 +70,7 @@ static inline Tk_view tk_view_chop_on_type_delim_or_all(Tk_view* token_view, TOK
 
 static inline Tk_view tk_view_chop_count(Tk_view* token_view, size_t count) {
     if (token_view->count < count) {
-        unreachable();
+        unreachable("");
     }
     Tk_view result = {.tokens = token_view->tokens, .count = count};
     token_view->tokens += count;
