@@ -20,14 +20,11 @@ static Node_id store_new(Node_id item_to_store) {
 }
 
 static void insert_alloca(Node_id var_def) {
-    Node_id var_def_parent = nodes_at(var_def)->parent;
-
     Node_id new_alloca = alloca_new(var_def);
 
     log_tree(LOG_DEBUG, 0);
-    Node_id last_alloca;
 
-    Node_id node_to_insert_after;
+    Node_id node_to_insert_after = NODE_IDX_NULL;
     nodes_foreach_from_curr_rev(curr, var_def) {
         if (nodes_at(var_def)->type != NODE_ALLOCA) {
             node_to_insert_after = curr;
@@ -35,10 +32,14 @@ static void insert_alloca(Node_id var_def) {
         }
     }
 
+    assert(node_to_insert_after != NODE_IDX_NULL);
+
     nodes_insert_after(node_to_insert_after, new_alloca);
 }
 
 static void insert_store_assignment(Node_id assignment, Node_id item_to_store) {
+    assert(nodes_at(assignment)->type == NODE_ASSIGNMENT);
+
     Node_id lhs = nodes_get_child(assignment, 0);
     log_tree(LOG_DEBUG, 0);
     switch (nodes_at(lhs)->type) {
@@ -46,27 +47,53 @@ static void insert_store_assignment(Node_id assignment, Node_id item_to_store) {
             nodes_remove(lhs);
             nodes_insert_before(assignment, lhs);
             insert_alloca(lhs);
+            node_printf(lhs);
             break;
         case NODE_SYMBOL:
+            node_printf(lhs);
             break;
         default:
             todo();
     }
-    log_tree(LOG_DEBUG, 0);
+
     Node_id new_store = node_new();
+    node_printf(lhs);
     nodes_at(new_store)->type = NODE_STORE;
+    node_printf(lhs);
     nodes_at(new_store)->name = nodes_at(lhs)->name;
-    nodes_reset_links(item_to_store);
+    node_printf(lhs);
+    node_printf(new_store);
+    log_tree(LOG_DEBUG, 0);
+    nodes_remove(item_to_store);
+    log_tree(LOG_DEBUG, 0);
     nodes_append_child(new_store, item_to_store);
+    log_tree(LOG_DEBUG, 0);
 
     nodes_insert_before(assignment, new_store);
     log_tree(LOG_DEBUG, 0);
     log_tree(LOG_DEBUG, assignment);
+    log_tree(LOG_DEBUG, nodes_at(assignment)->parent);
+    log_tree(LOG_DEBUG, nodes_at(nodes_at(assignment)->parent)->parent);
+    //log_tree(LOG_DEBUG, nodes_at(nodes_at(nodes_at(assignment)->parent)->parent)->left_child);
+    //todo();
 }
 
 //static void load_function_call(Node_id)
 
 static void add_load(Node_id node_insert_load_before, Node_id symbol_call) {
+    switch (nodes_at(symbol_call)->type) {
+        case NODE_SYMBOL:
+            // fallthrough
+        case NODE_LITERAL:
+            log_tree(LOG_DEBUG, symbol_call);
+            node_printf(symbol_call);
+            assert(nodes_at(symbol_call)->name.count > 0);
+            break;
+        default:
+            node_printf(symbol_call);
+            todo();
+    }
+
     Node_id load = node_new();
     nodes_at(load)->type = NODE_LOAD;
     nodes_at(load)->name = nodes_at(symbol_call)->name;

@@ -1,6 +1,7 @@
 #include "nodes.h"
 #include "str_view.h"
 #include "util.h"
+#include "size_t_vec.h"
 
 static const char* NODE_LITERAL_DESCRIPTION = "literal";
 static const char* NODE_FUNCTION_CALL_DESCRIPTION = "fn_call";
@@ -27,7 +28,48 @@ static const char* NODE_STORE_DESCRIPTION = "store";
 static const char* NODE_LOAD_DESCRIPTION = "load";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
+static void nodes_assert_tree_linkage_is_consistant_internal(Size_t_vec* nodes_visited, Node_id root) {
+    if (root == NODE_IDX_NULL) {
+        return;
+    }
+
+    assert(!size_t_vec_in(nodes_visited, root) && "same node found more than once");
+    size_t_vec_append(nodes_visited, root);
+
+    {
+        Node_id left_child = nodes_at(root)->left_child;
+        if (left_child != NODE_IDX_NULL) {
+            assert(root == nodes_at(left_child)->parent);
+            nodes_assert_tree_linkage_is_consistant_internal(nodes_visited, left_child);
+        }
+    }
+
+    {
+        Node_id next = nodes_at(root)->next;
+        if (next != NODE_IDX_NULL) {
+            // TODO: don't do recursion for next and prev
+            assert(root == nodes_at(next)->prev);
+            nodes_assert_tree_linkage_is_consistant_internal(nodes_visited, next);
+        }
+    }
+
+    {
+        Node_id prev = nodes_at(root)->prev;
+        if (prev != NODE_IDX_NULL) {
+            assert(root == nodes_at(prev)->next);
+        }
+    }
+}
+
+void nodes_assert_tree_linkage_is_consistant(Node_id root) {
+    static Size_t_vec nodes_visited = {0};
+    memset(&nodes_visited, 0, sizeof(nodes_visited));
+    nodes_assert_tree_linkage_is_consistant_internal(&nodes_visited, root);
+}
+
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_id root, const char* file, int line) {
+    nodes_assert_tree_linkage_is_consistant(root);
+
     if (nodes.info.count < 1) {
         log_file_new(log_level, file, line, "<empty tree>\n");
         return;

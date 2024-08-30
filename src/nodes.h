@@ -13,6 +13,8 @@
 
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_id root, const char* file, int line);
 
+void nodes_assert_tree_linkage_is_consistant(Node_id root);
+
 #define log_tree(log_level, root) \
     do { \
         log_file_new(log_level, __FILE__, __LINE__, "tree:\n"); \
@@ -36,8 +38,8 @@ extern Nodes nodes;
 #define nodes_foreach_from_curr_rev(curr_node, start_node) \
     for (Node_id curr_node = (start_node); (curr_node) != NODE_IDX_NULL; (curr_node) = nodes_at(curr_node)->prev)
 
-static inline void nodes_reserve(size_t minimum_count_empty_slots) {
-    vector_reserve(&nodes, sizeof(nodes.buf[0]), minimum_count_empty_slots, NODES_DEFAULT_CAPACITY);
+static inline void nodes_reserve(Nodes* curr_nodes, size_t minimum_count_empty_slots) {
+    vector_reserve(curr_nodes, sizeof(nodes.buf[0]), minimum_count_empty_slots, NODES_DEFAULT_CAPACITY);
 }
 
 static inline Node* nodes_at(Node_id idx) {
@@ -52,18 +54,27 @@ static inline Node* nodes_at(Node_id idx) {
     return &nodes.buf[idx];
 }
 
+static inline void nodes_reset_links_of_self_only(Node_id node) {
+    nodes_at(node)->left_child = NODE_IDX_NULL;
+    nodes_at(node)->next = NODE_IDX_NULL;
+    nodes_at(node)->prev = NODE_IDX_NULL;
+    nodes_at(node)->parent = NODE_IDX_NULL;
+}
+
 static inline Node_id node_new() {
-    nodes_reserve(1);
+    nodes_reserve(&nodes, 1);
     memset(&nodes.buf[nodes.info.count], 0, sizeof(nodes.buf[0]));
     Node_id idx_node_created = nodes.info.count;
     nodes.info.count++;
 
-    Node* new_node = nodes_at(idx_node_created);
-    new_node->next = NODE_IDX_NULL;
-    new_node->prev = NODE_IDX_NULL;
-    new_node->left_child = NODE_IDX_NULL;
+    nodes_reset_links_of_self_only(idx_node_created);
 
     return idx_node_created;
+}
+
+static inline void nodes_establish_siblings(Node_id curr, Node_id next) {
+    nodes_at(curr)->next = next;
+    nodes_at(next)->prev = curr;
 }
 
 static inline size_t nodes_count_children(Node_id parent) {
@@ -88,11 +99,6 @@ static inline void nodes_set_left_child(Node_id parent, Node_id child) {
     nodes_at(child)->parent = parent;
 }
 
-static inline void nodes_establish_siblings(Node_id curr, Node_id next) {
-    nodes_at(curr)->next = next;
-    nodes_at(next)->prev = curr;
-}
-
 static inline void nodes_insert_after(Node_id curr, Node_id node_to_insert) {
     assert(curr != NODE_IDX_NULL && node_to_insert != NODE_IDX_NULL);
     Node_id old_next = nodes_at(curr)->next;
@@ -106,18 +112,25 @@ static inline void nodes_insert_after(Node_id curr, Node_id node_to_insert) {
 static inline void nodes_insert_before(Node_id node_to_insert_before, Node_id node_to_insert) {
     assert(node_to_insert_before != NODE_IDX_NULL && node_to_insert != NODE_IDX_NULL);
 
-    Node_id old_prev = nodes_at(node_to_insert_before)->prev;
-    if (old_prev != NODE_IDX_NULL) {
-        nodes_at(old_prev)->next = node_to_insert;
+    Node_id new_prev = nodes_at(node_to_insert_before)->prev;
+    Node_id new_next = node_to_insert_before;
+    if (new_prev != NODE_IDX_NULL) {
+        nodes_establish_siblings(new_prev, node_to_insert);
     }
-    nodes_at(node_to_insert)->prev = old_prev;
 
-    nodes_at(node_to_insert_before)->prev = node_to_insert;
-    nodes_at(node_to_insert)->next = node_to_insert_before;
+    assert(new_next != NODE_IDX_NULL);
+    nodes_establish_siblings(node_to_insert, new_next);
 
-    nodes_at(node_to_insert)->parent = nodes_at(node_to_insert_before)->parent;
     Node_id parent = nodes_at(node_to_insert_before)->parent;
-    nodes_at(parent)->left_child = nodes_get_leftmost_sibling(node_to_insert_before);
+    if (nodes_at(parent)->left_child == node_to_insert_before) {
+        nodes_at(parent)->left_child = node_to_insert;
+    }
+    nodes_at(node_to_insert)->parent = parent;
+
+    log_tree(LOG_DEBUG, 0);
+    log_tree(LOG_DEBUG, parent);
+    log_tree(LOG_DEBUG, nodes_at(parent)->left_child);
+    log_tree(LOG_DEBUG, node_to_insert);
 }
 
 static inline void nodes_append_child(Node_id parent, Node_id child) {
@@ -134,25 +147,33 @@ static inline void nodes_append_child(Node_id parent, Node_id child) {
     nodes_insert_after(curr_node, child);
 }
 
-static inline void nodes_reset_links(Node_id node) {
-    nodes_at(node)->left_child = NODE_IDX_NULL;
-    nodes_at(node)->next = NODE_IDX_NULL;
-    nodes_at(node)->prev = NODE_IDX_NULL;
-    nodes_at(node)->parent = NODE_IDX_NULL;
-}
-
 static inline Node_id nodes_single_child(Node_id node) {
     assert(nodes_count_children(node) == 1);
     return nodes_at(node)->left_child;
 }
 
+// child of src will be kept
+// there should not be next, prev, or parent attached to src
+// note: src will be modified and should probably not be used again
 static inline void nodes_replace(Node_id node_to_replace, Node_id src) {
-    Node new_node = *nodes_at(src);
-    new_node.parent = nodes_at(node_to_replace)->parent;
-    //new_node.left_child = nodes_at(node_to_replace)->left_child;
-    //new_node.right_child = nodes_at(node_to_replace)->left_child;
+    assert(nodes_at(src)->next == NODE_IDX_NULL);
+    assert(nodes_at(src)->prev == NODE_IDX_NULL);
+    assert(nodes_at(src)->parent == NODE_IDX_NULL);
+    assert(node_to_replace != NODE_IDX_NULL);
 
-    *nodes_at(node_to_replace) = new_node;
+    if (nodes_at(node_to_replace)->prev == NODE_IDX_NULL) {
+        nodes_set_left_child(nodes_at(node_to_replace)->parent, src);
+    } else {
+        nodes_establish_siblings(nodes_at(node_to_replace)->prev, src);
+    }
+
+    nodes_assert_tree_linkage_is_consistant(0);
+
+    if (nodes_at(node_to_replace)->prev != NODE_IDX_NULL) {
+        nodes_establish_siblings(src, nodes_at(node_to_replace)->next);
+    }
+
+    nodes_assert_tree_linkage_is_consistant(0);
 }
 
 static inline void nodes_extend_children(Node_id parent, Node_id parent_of_nodes_to_extend) {
@@ -269,7 +290,7 @@ static inline void nodes_remove(Node_id node_to_remove) {
         todo();
     }
 
-    nodes_reset_links(node_to_remove);
+    nodes_reset_links_of_self_only(node_to_remove);
 }
 
 #endif // NODES_H

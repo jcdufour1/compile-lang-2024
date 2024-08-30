@@ -160,12 +160,7 @@ static void emit_alloca(String* output, Node_id alloca) {
 }
 
 static void emit_src_of_assignment(String* output, Node_id variable_def, void* item) {
-    size_t src_llvm_id = get_store_dest_id(variable_def);
-    (void) src_llvm_id;
-
     Node_id rhs = *(Node_id*)item;
-    Str_view symbol_name = nodes_at(rhs)->name;
-    Str_view num_str = nodes_at(rhs)->str_data;
 
     switch (nodes_at(rhs)->type) {
         case NODE_SYMBOL:
