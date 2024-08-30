@@ -22,62 +22,52 @@ Str_view literal_name_new(void) {
     return str_view;
 }
 
-Node_id get_block_return_id(Node_id fun_call) {
+Llvm_id get_block_return_id(Node_id fun_call) {
     (void) fun_call;
     todo();
 }
 
-Llvm_id get_prev_load_id(Node_id var_call) {
-    log(LOG_DEBUG, "entering\n");
-    nodes_foreach_from_curr_rev(curr_node, var_call) {
-        if (nodes_at(curr_node)->type == NODE_LOAD && 0 == str_view_cmp(nodes_at(curr_node)->name, nodes_at(var_call)->name)) {
-            assert(nodes_at(curr_node)->llvm_id > 0);
-            log(LOG_DEBUG, "exiting\n");
-            return nodes_at(curr_node)->llvm_id;
-        }
-    }
-
-    Node_id parent_var_call = nodes_at(var_call)->parent;
-    switch (nodes_at(parent_var_call)->type) {
-        case NODE_FUNCTION_CALL:
-            // fallthrough
-        case NODE_SYMBOL:
-            // fallthrough
-        case NODE_RETURN_STATEMENT:
-            break;
-        default:
-            unreachable();
-    }
-    
-    nodes_foreach_from_curr_rev(curr_node, parent_var_call) {
-        log(LOG_DEBUG, NODE_FMT"\n"NODE_FMT"\n", node_print(curr_node), node_print(var_call));
-        if (nodes_at(curr_node)->type == NODE_LOAD && 0 == str_view_cmp(nodes_at(curr_node)->name, nodes_at(var_call)->name)) {
-            assert(nodes_at(curr_node)->llvm_id > 0);
-            return nodes_at(curr_node)->llvm_id;
-        }
-    }
-
-    unreachable();
-}
-
-Llvm_id get_store_dest_id(Node_id var_call) {
-    nodes_foreach_from_curr_rev(curr_node, var_call) {
-        log(LOG_DEBUG, NODE_FMT"\n"NODE_FMT"\n", node_print(curr_node), node_print(var_call));
-        if (nodes_at(curr_node)->type == NODE_ALLOCA && 0 == str_view_cmp(nodes_at(curr_node)->name, nodes_at(var_call)->name)) {
-            assert(nodes_at(curr_node)->llvm_id > 0);
-            return nodes_at(curr_node)->llvm_id;
-        }
-    }
-
-    unreachable();
-}
-
-Node_id get_symbol_def_from_alloca(Node_id alloca) {
-    nodes_foreach_from_curr_rev(curr_node, alloca) {
-        if (nodes_at(curr_node)->type == NODE_VARIABLE_DEFINITION && 0 == str_view_cmp(nodes_at(alloca)->name, nodes_at(alloca)->name)) {
+static Node_id get_prev_matching_node(Node_id node_to_start, Node_id var_call, bool is_matching(Node_id curr_node, Node_id var_call)) {
+    nodes_foreach_from_curr_rev(curr_node, node_to_start) {
+        if (is_matching(curr_node, var_call)) {
+            node_printf(curr_node);
             return curr_node;
         }
     }
 
+    if (!node_is_null(nodes_parent(node_to_start))) {
+        return get_prev_matching_node(nodes_at(node_to_start)->parent, var_call, is_matching);
+    }
+
     unreachable();
+}
+
+static bool is_load(Node_id curr_node, Node_id var_call) {
+    return nodes_at(curr_node)->type == NODE_LOAD && 0 == str_view_cmp(nodes_at(curr_node)->name, nodes_at(var_call)->name);
+}
+
+static bool is_store(Node_id curr_node, Node_id var_call) {
+    return nodes_at(curr_node)->type == NODE_STORE && 0 == str_view_cmp(nodes_at(curr_node)->name, nodes_at(var_call)->name);
+}
+
+static bool is_variable_def(Node_id curr_node, Node_id var_call) {
+    return nodes_at(curr_node)->type == NODE_VARIABLE_DEFINITION && 0 == str_view_cmp(nodes_at(curr_node)->name, nodes_at(var_call)->name);
+}
+
+Llvm_id get_prev_load_id(Node_id var_call) {
+    Node_id load = get_prev_matching_node(var_call, var_call, is_load);
+    Llvm_id llvm_id = nodes_at(load)->llvm_id;
+    assert(llvm_id > 0);
+    return llvm_id;
+}
+
+Llvm_id get_store_dest_id(Node_id var_call) {
+    Node_id store = get_prev_matching_node(var_call, var_call, is_store);
+    Llvm_id llvm_id = nodes_at(store)->llvm_id;
+    assert(llvm_id > 0);
+    return llvm_id;
+}
+
+Node_id get_symbol_def_from_alloca(Node_id alloca) {
+    return get_prev_matching_node(alloca, alloca, is_variable_def);
 }

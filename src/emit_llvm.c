@@ -12,6 +12,7 @@ static void emit_block(String* output, Node_id fun_block);
 static void emit_llvm_main(String* output, Node_id root);
 
 static void extend_type_call_str(String* output, Node_id variable_def) {
+    assert(nodes_at(variable_def)->lang_type.count > 0);
     if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "i32")) {
         string_extend_cstr(output, "i32");
     } else if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "ptr")) {
@@ -178,13 +179,12 @@ static void emit_src_of_assignment(String* output, Node_id variable_def, void* i
 }
 
 static void emit_src_literal(String* output, Node_id src) {
-    Str_view num_str = nodes_at(src)->str_data;
     extend_literal_decl_prefix(output, src);
 }
 
 static void emit_src_function_call_result(String* output, Node_id store) {
     Node_id fun_call = nodes_at(store)->left_child;
-    assert(fun_call != NODE_IDX_NULL);
+    assert(!node_is_null(fun_call));
     assert(nodes_at(fun_call)->type == NODE_FUNCTION_CALL);
 
     string_extend_cstr(output, " %");
@@ -379,6 +379,7 @@ static void emit_cmp_less_than(String* output, size_t* llvm_cmp_dest, Node_id lh
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, *llvm_cmp_dest);
     string_extend_cstr(output, " = icmp slt i32 %");
+    log_tree(LOG_DEBUG, var_to_cmp_def);
     string_extend_size_t(output, get_prev_load_id(var_to_cmp_def));
     string_extend_cstr(output, ", ");
     string_extend_strv(output, nodes_at(rhs)->str_data);

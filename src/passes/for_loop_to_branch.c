@@ -73,57 +73,57 @@ void for_loop_to_branch(Node_id for_loop) {
 
     Node_id new_branch_block = node_new();
     nodes_at(new_branch_block)->type = NODE_BLOCK;
-    assert(nodes_at(new_branch_block)->parent == NODE_IDX_NULL);
+    assert(node_is_null(nodes_parent(new_branch_block)));
 
-    log_tree(LOG_DEBUG, 0);
+    log_tree(LOG_DEBUG, node_id_from(0));
     Node_id symbol_lhs_assign;
     Node_id old_var_def;
     {
         Node_id new_var_def;
         new_var_def = nodes_get_child_of_type(for_loop, NODE_FOR_VARIABLE_DEF);
         old_var_def = nodes_get_child_of_type(new_var_def, NODE_VARIABLE_DEFINITION);
-        nodes_remove(old_var_def);
-        log_tree(LOG_DEBUG, 0);
+        nodes_remove(old_var_def, false);
+        log_tree(LOG_DEBUG, node_id_from(0));
         nodes_insert_before(for_loop, old_var_def);
-        log_tree(LOG_DEBUG, 0);
+        log_tree(LOG_DEBUG, node_id_from(0));
         node_printf(for_loop);
         node_printf(old_var_def);
         symbol_lhs_assign = symbol_new(nodes_at(old_var_def)->name);
         nodes_remove_siblings(new_var_def);
     }
-    assert(nodes_at(new_branch_block)->parent == NODE_IDX_NULL);
-    log_tree(LOG_DEBUG, 0);
+    assert(node_is_null(nodes_parent(new_branch_block)));
+    log_tree(LOG_DEBUG, node_id_from(0));
     nodes_remove_siblings(lower_bound);
     nodes_remove_siblings(upper_bound);
     nodes_remove_siblings(for_block);
-    log_tree(LOG_DEBUG, 0);
-    assert(nodes_at(new_branch_block)->parent == NODE_IDX_NULL);
+    log_tree(LOG_DEBUG, node_id_from(0));
+    assert(node_is_null(nodes_parent(new_branch_block)));
 
     Node_id new_var_assign = assignment_new(symbol_lhs_assign, nodes_at(lower_bound)->left_child);
     nodes_append_child(new_branch_block, new_var_assign);
 
-    log_tree(LOG_DEBUG, 0);
+    log_tree(LOG_DEBUG, node_id_from(0));
     Node_id check_cond_label = label_new(str_view_from_cstr("for_start"));
     Node_id after_check_label = label_new(str_view_from_cstr("for_after_check"));
     Node_id after_for_loop_label = label_new(str_view_from_cstr("for_after"));
-    log_tree(LOG_DEBUG, 0);
+    log_tree(LOG_DEBUG, node_id_from(0));
     Node_id check_cond_jmp = jmp_if_less_than_new(
         nodes_at(old_var_def)->name, 
         nodes_at(after_check_label)->name, 
         nodes_at(after_for_loop_label)->name
     );
-    log_tree(LOG_DEBUG, 0);
+    log_tree(LOG_DEBUG, node_id_from(0));
 
     nodes_append_child(new_branch_block, check_cond_label);
     nodes_append_child(new_branch_block, check_cond_jmp);
     nodes_append_child(new_branch_block, after_check_label);
     nodes_extend_children(new_branch_block, nodes_single_child(for_block));
     nodes_append_child(new_branch_block, goto_new(nodes_at(check_cond_label)->name));
-    log_tree(LOG_DEBUG, 0);
+    log_tree(LOG_DEBUG, node_id_from(0));
 
     nodes_append_child(new_branch_block, after_for_loop_label);
-    log_tree(LOG_DEBUG, 0);
+    log_tree(LOG_DEBUG, node_id_from(0));
 
     nodes_replace(for_loop, new_branch_block);
-    log_tree(LOG_DEBUG, 0);
+    log_tree(LOG_DEBUG, node_id_from(0));
 }

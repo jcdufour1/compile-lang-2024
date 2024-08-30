@@ -29,34 +29,34 @@ static const char* NODE_LOAD_DESCRIPTION = "load";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
 static void nodes_assert_tree_linkage_is_consistant_internal(Size_t_vec* nodes_visited, Node_id root) {
-    if (root == NODE_IDX_NULL) {
+    if (node_is_null(root)) {
         return;
     }
 
-    assert(!size_t_vec_in(nodes_visited, root) && "same node found more than once");
-    size_t_vec_append(nodes_visited, root);
+    assert(!size_t_vec_in(nodes_visited, node_unwrap(root)) && "same node found more than once");
+    size_t_vec_append(nodes_visited, node_unwrap(root));
 
     {
         Node_id left_child = nodes_at(root)->left_child;
-        if (left_child != NODE_IDX_NULL) {
-            assert(root == nodes_at(left_child)->parent);
+        if (!node_is_null(left_child)) {
+            assert(node_ids_equal(root, nodes_parent(left_child)));
             nodes_assert_tree_linkage_is_consistant_internal(nodes_visited, left_child);
         }
     }
 
     {
         Node_id next = nodes_at(root)->next;
-        if (next != NODE_IDX_NULL) {
+        if (!node_is_null(next)) {
             // TODO: don't do recursion for next and prev
-            assert(root == nodes_at(next)->prev);
+            assert(node_ids_equal(root, nodes_prev(next)));
             nodes_assert_tree_linkage_is_consistant_internal(nodes_visited, next);
         }
     }
 
     {
         Node_id prev = nodes_at(root)->prev;
-        if (prev != NODE_IDX_NULL) {
-            assert(root == nodes_at(prev)->next);
+        if (!node_is_null(prev)) {
+            assert(node_ids_equal(root, nodes_next(prev)));
         }
     }
 }
@@ -84,7 +84,7 @@ void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_id root, const char
         }
 
         log_file_new(log_level, file, line, STRING_FMT NODE_FMT"\n", string_print(padding), node_print(curr_node));
-        if (nodes_at(curr_node)->left_child != NODE_IDX_NULL) {
+        if (!node_is_null(nodes_left_child(curr_node))) {
             nodes_log_tree_rec(log_level, pad_x + 2, nodes_at(curr_node)->left_child, file, line);
         }
     }

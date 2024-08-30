@@ -35,7 +35,7 @@ static inline size_t sym_tbl_calculate_idx(Str_view sym_name, size_t capacity) {
 }
 
 static inline void sym_tbl_add_internal(Symbol_table_node* sym_tbl_nodes, size_t capacity, Node_id node_of_symbol) {
-    assert(node_of_symbol != NODE_IDX_NULL);
+    assert(!node_is_null(node_of_symbol));
     Str_view symbol_name = nodes_at(node_of_symbol)->name;
     assert(symbol_name.count > 0 && "invalid node_of_symbol");
 

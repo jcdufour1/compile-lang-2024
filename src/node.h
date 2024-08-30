@@ -34,7 +34,9 @@ typedef enum {
     NODE_LOAD,
 } NODE_TYPE;
 
-typedef size_t Node_id;
+typedef struct {
+    size_t id;
+} Node_id;
 
 typedef size_t Llvm_id;
 

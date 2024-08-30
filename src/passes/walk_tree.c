@@ -4,7 +4,7 @@
 #include "../util.h"
 
 void walk_tree(Node_id root, void (callback)(Node_id curr_node)) {
-    if (root == NODE_IDX_NULL) {
+    if (node_is_null(root)) {
         return;
     }
 
