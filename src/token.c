@@ -28,7 +28,8 @@ Str_view token_print_internal(Token token) {
         case TOKEN_SINGLE_EQUAL: // fallthrough
         case TOKEN_SINGLE_DOT: // fallthrough
         case TOKEN_DOUBLE_DOT: // fallthrough
-        case TOKEN_TRIPLE_DOT:
+        case TOKEN_TRIPLE_DOT: // fallthrough
+        case TOKEN_SINGLE_PLUS: // fallthrough
             break;
         case TOKEN_STRING_LITERAL: 
             string_append(&buf, '(');

@@ -36,6 +36,14 @@ static void nodes_assert_tree_linkage_is_consistant_internal(Size_t_vec* nodes_v
     assert(!size_t_vec_in(nodes_visited, node_unwrap(root)) && "same node found more than once");
     size_t_vec_append(nodes_visited, node_unwrap(root));
 
+    assert(
+        !node_ids_equal(root, nodes_next(root)) && \
+        !node_ids_equal(root, nodes_prev(root)) && \
+        !node_ids_equal(root, nodes_left_child(root)) && \
+        !node_ids_equal(root, nodes_parent(root)) && \
+        "node points to itself"
+    );
+
     {
         Node_id left_child = nodes_at(root)->left_child;
         if (!node_is_null(left_child)) {
@@ -48,6 +56,9 @@ static void nodes_assert_tree_linkage_is_consistant_internal(Size_t_vec* nodes_v
         Node_id next = nodes_at(root)->next;
         if (!node_is_null(next)) {
             // TODO: don't do recursion for next and prev
+            //node_printf(root);
+            //node_printf(next);
+            //node_printf(nodes_prev(next));
             assert(node_ids_equal(root, nodes_prev(next)));
             nodes_assert_tree_linkage_is_consistant_internal(nodes_visited, next);
         }
@@ -149,6 +160,11 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
 String node_print_internal(Node_id node) {
     static String buf = {0};
     string_set_to_zero_len(&buf);
+
+    if (node_is_null(node)) {
+        string_extend_cstr(&buf, "<null>");
+        return buf;
+    }
 
     string_extend_strv(&buf, node_type_get_strv(nodes_at(node)->type));
 

@@ -149,12 +149,16 @@ static inline void nodes_establish_parent_left_child(Node_id parent, Node_id chi
 
 static inline void nodes_insert_after(Node_id curr, Node_id node_to_insert) {
     assert(!node_is_null(curr) && !node_is_null(node_to_insert));
+    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
     Node_id old_next = nodes_next(curr);
+    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
     nodes_establish_siblings(curr, node_to_insert);
     if (!node_is_null(old_next)) {
+    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
         nodes_establish_siblings(node_to_insert, old_next);
     }
     nodes_at(node_to_insert)->parent = nodes_at(curr)->parent;
+    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
 }
 
 static inline bool node_ids_equal(Node_id a, Node_id b) {
@@ -193,10 +197,14 @@ static inline void nodes_append_child(Node_id parent, Node_id child) {
     }
 
     Node_id curr_node = nodes_at(parent)->left_child;
+    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
     while (!node_is_null(nodes_next(curr_node))) {
+    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
         curr_node = nodes_at(curr_node)->next;
     }
+    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
     nodes_insert_after(curr_node, child);
+    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
 }
 
 static inline Node_id nodes_single_child(Node_id node) {
@@ -228,9 +236,33 @@ static inline void nodes_replace(Node_id node_to_replace, Node_id src) {
     nodes_assert_tree_linkage_is_consistant(node_id_from(0));
 }
 
-static inline void nodes_extend_children(Node_id parent, Node_id parent_of_nodes_to_extend) {
-    nodes_foreach_from_curr(curr_node, parent_of_nodes_to_extend) {
+static inline void nodes_extend_children(Node_id parent, Node_id start_of_nodes_to_extend) {
+    nodes_foreach_from_curr(curr_node, start_of_nodes_to_extend) {
+        nodes_assert_tree_linkage_is_consistant(node_id_from(0));
+        nodes_assert_tree_linkage_is_consistant(parent);
+        nodes_assert_tree_linkage_is_consistant(start_of_nodes_to_extend);
+        nodes_assert_tree_linkage_is_consistant(curr_node);
+        log_tree(LOG_DEBUG, parent);
+        nodes_assert_tree_linkage_is_consistant(parent);
+        node_printf(curr_node);
+        if (!node_is_null(nodes_prev(curr_node))) {
+        nodes_assert_tree_linkage_is_consistant(parent);
+            node_printf(nodes_prev(curr_node));
+        }
+        nodes_assert_tree_linkage_is_consistant(parent);
+        if (!node_is_null(nodes_next(curr_node))) {
+        nodes_assert_tree_linkage_is_consistant(parent);
+            node_printf(nodes_next(curr_node));
+        }
+        nodes_assert_tree_linkage_is_consistant(parent);
+        node_printf(curr_node);
+        node_printf(nodes_next(curr_node));
+        node_printf(nodes_prev(curr_node));
+        node_printf(nodes_parent(curr_node));
         nodes_append_child(parent, curr_node);
+        nodes_assert_tree_linkage_is_consistant(parent);
+        nodes_assert_tree_linkage_is_consistant(node_id_from(0));
+        nodes_assert_tree_linkage_is_consistant(parent);
     }
 }
 

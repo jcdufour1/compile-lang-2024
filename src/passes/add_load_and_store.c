@@ -88,6 +88,7 @@ static void insert_store_assignment(Node_id assignment, Node_id item_to_store) {
     node_printf(lhs);
     node_printf(new_store);
     log_tree(LOG_DEBUG, node_id_from(0));
+    node_printf(item_to_store);
     nodes_remove(item_to_store, false);
     log_tree(LOG_DEBUG, node_id_from(0));
     nodes_append_child(new_store, item_to_store);

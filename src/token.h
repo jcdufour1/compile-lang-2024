@@ -7,6 +7,10 @@
 #include "str_view.h"
 #include "newstring.h"
 
+#define token_print(token) str_view_print(token_print_internal(token))
+
+#define TOKEN_FMT STR_VIEW_FMT
+
 typedef enum {
     // operators
     TOKEN_SINGLE_PLUS,
@@ -66,6 +70,7 @@ static inline bool token_is_literal(Token token) {
 static inline bool token_is_operator(Token token) {
     switch (token.type) {
         case TOKEN_SINGLE_MINUS:
+        case TOKEN_SINGLE_PLUS:
         case TOKEN_ASTERISK:
             return true;
         case TOKEN_NUM_LITERAL: // fallthrough
@@ -82,13 +87,15 @@ static inline bool token_is_operator(Token token) {
         case TOKEN_SINGLE_EQUAL:
             return false;
         default:
-            unreachable("");
+            unreachable(TOKEN_FMT"\n", token_print(token));
     }
 }
 
 // higher number returned from this function means that operator has higher precedence
 static inline uint32_t token_get_precedence_operator(Token token) {
     switch (token.type) {
+        case TOKEN_SINGLE_PLUS:
+            return 2;
         case TOKEN_SINGLE_MINUS:
             return 2;
         case TOKEN_ASTERISK:
@@ -241,10 +248,6 @@ static inline bool token_is_equal(const Token token, const char* cstr, TOKEN_TYP
 
     return 0 == str_view_cmp_cstr(token.text, cstr);
 }
-
-#define token_print(token) str_view_print(token_print_internal(token))
-
-#define TOKEN_FMT STR_VIEW_FMT
 
 #endif // TOKEN_H
 

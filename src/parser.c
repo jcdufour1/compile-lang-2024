@@ -7,7 +7,7 @@
 #include "symbol_table.h"
 #include "parser_utils.h"
 
-static Node_id parse_single_item(Tk_view tokens);
+static Node_id parse_single_statement(Tk_view tokens);
 static Node_id parse_function_single_return_type(Token tokens);
 static Node_id parse_block(Tk_view tokens);
 INLINE bool extract_block_element(Node_id* child, Tk_view* tokens);
@@ -409,7 +409,7 @@ static bool extract_for_loop(Node_id* child, Tk_view* tokens) {
     Tk_view for_var_decl_tokens = tk_view_chop_on_cond(tokens, is_symbol_in);
     Node_id var_def = node_new();
     nodes_at(var_def)->type = NODE_FOR_VARIABLE_DEF;
-    nodes_append_child(var_def, parse_single_item(for_var_decl_tokens));
+    nodes_append_child(var_def, parse_single_statement(for_var_decl_tokens));
     nodes_append_child(for_loop, var_def);
     tk_view_chop_front(tokens); // remove in
 
@@ -420,7 +420,7 @@ static bool extract_for_loop(Node_id* child, Tk_view* tokens) {
     Tk_view lower_bound_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_DOUBLE_DOT);
     Node_id lower_bound = node_new();
     nodes_at(lower_bound)->type = NODE_FOR_LOWER_BOUND;
-    nodes_append_child(lower_bound, parse_single_item(lower_bound_tokens));
+    nodes_append_child(lower_bound, parse_single_statement(lower_bound_tokens));
     nodes_append_child(for_loop, lower_bound);
 
     tk_view_chop_front(tokens); // remove ..
@@ -429,7 +429,7 @@ static bool extract_for_loop(Node_id* child, Tk_view* tokens) {
     tk_view_chop_front(tokens); // remove }
     Node_id upper_bound = node_new();
     nodes_at(upper_bound)->type = NODE_FOR_UPPER_BOUND;
-    nodes_append_child(upper_bound, parse_single_item(upper_bound_tokens));
+    nodes_append_child(upper_bound, parse_single_statement(upper_bound_tokens));
     nodes_append_child(for_loop, upper_bound);
 
     tk_view_chop_front(tokens); // remove { at body start
@@ -530,8 +530,8 @@ static Node_id parse_operation(Tk_view tokens) {
     nodes_at(operator_node)->token_type = operator_token.type;
     nodes_at(operator_node)->line_num = operator_token.line_num;
 
-    Node_id left_node = parse_single_item(left_tokens);
-    Node_id right_node = parse_single_item(right_tokens);
+    Node_id left_node = parse_single_statement(left_tokens);
+    Node_id right_node = parse_single_statement(right_tokens);
     nodes_append_child(operator_node, left_node);
     nodes_append_child(operator_node, right_node);
     return operator_node;
@@ -558,7 +558,7 @@ static bool extract_function_argument(Node_id* child, Tk_view* tokens) {
         tk_view_chop_front(tokens); // remove comma
     }
 
-    *child = parse_single_item(curr_arg_tokens);
+    *child = parse_single_statement(curr_arg_tokens);
     return true;
 }
 
@@ -600,7 +600,7 @@ static Node_id parse_function_return_statement(Tk_view tokens) {
 
     Node_id new_node = node_new();
     nodes_at(new_node)->type = NODE_RETURN_STATEMENT;
-    nodes_append_child(new_node, parse_single_item(tokens));
+    nodes_append_child(new_node, parse_single_statement(tokens));
     return new_node;
 }
 
@@ -625,12 +625,12 @@ static bool extract_assignment(Node_id* result, Tk_view* tokens) {
     nodes_at(assignment)->type = NODE_ASSIGNMENT;
     
     Tk_view lhs_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_SINGLE_EQUAL);
-    nodes_append_child(assignment, parse_single_item(lhs_tokens));
+    nodes_append_child(assignment, parse_single_statement(lhs_tokens));
 
     tk_view_chop_front(tokens); // remove =
 
     Tk_view rhs_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_SEMICOLON);
-    nodes_append_child(assignment, parse_single_item(rhs_tokens));
+    nodes_append_child(assignment, parse_single_statement(rhs_tokens));
 
     tk_view_chop_front(tokens); // remove ;
 
@@ -674,7 +674,7 @@ static Node_id parse_single_item_or_block(Tk_view tokens) {
     return block;
 }
 
-static Node_id parse_single_item(Tk_view tokens) {
+static Node_id parse_single_statement(Tk_view tokens) {
     unsigned int indent_amt = 0;
 
     if (tokens.count < 1) {

@@ -105,11 +105,14 @@ bool for_loop_to_branch(Node_id for_loop) {
         nodes_at(after_for_loop_label)->name
     );
 
+    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
     nodes_append_child(new_branch_block, jmp_to_check_cond_label);
     nodes_append_child(new_branch_block, check_cond_label);
     nodes_append_child(new_branch_block, check_cond_jmp);
     nodes_append_child(new_branch_block, after_check_label);
-    nodes_extend_children(new_branch_block, nodes_single_child(for_block));
+    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
+    log_tree(LOG_DEBUG, for_block);
+    nodes_append_child(new_branch_block, nodes_left_child(for_block));
     nodes_append_child(new_branch_block, goto_new(nodes_at(check_cond_label)->name));
     log_tree(LOG_DEBUG, node_id_from(0));
 
