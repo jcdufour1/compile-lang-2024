@@ -202,23 +202,65 @@ static void emit_src_operator(String* output, Node_id store) {
     string_extend_size_t(output, nodes_at(operator)->llvm_id);
 }
 
-static void emit_operator(String* output, Node_id operator) {
-    Node_id child_lhs = nodes_at(operator)->left_child;
-    Node_id child_rhs = nodes_at(child_lhs)->next;
+static void emit_operator_type(String* output, Node_id operator) {
+    assert(nodes_at(operator)->type == NODE_OPERATOR);
+    
+    switch (nodes_at(operator)->token_type) {
+        case TOKEN_SINGLE_MINUS:
+            todo();
+        case TOKEN_SINGLE_PLUS:
+            string_extend_cstr(output, "add nsw i32 ");
+            break;
+        case TOKEN_ASTERISK:
+            string_extend_cstr(output, "mul nsw i32 ");
+            break;
+        default:
+             unreachable(TOKEN_TYPE_FMT"\n", token_type_print(nodes_at(operator)->token_type));
+    }
+}
 
-    if (nodes_at(child_lhs)->type != NODE_LITERAL || nodes_at(child_rhs)->type != NODE_LITERAL) {
-        todo();
+static void emit_operator_operand(String* output, Node_id operand) {
+    switch (nodes_at(operand)->type) {
+        case NODE_LITERAL:
+            string_extend_strv(output, nodes_at(operand)->str_data);
+            break;
+        case NODE_SYMBOL:
+            string_extend_cstr(output, "%");
+            string_extend_size_t(output, get_prev_load_id(operand));
+            break;
+        default:
+            unreachable(NODE_FMT"\n", node_print(operand));
+    }
+}
+
+static void emit_operator(String* output, Node_id operator) {
+    Node_id lhs = nodes_get_child(operator, 0);
+    Node_id rhs = nodes_get_child(operator, 1);
+
+    // emit prereq function calls (may not be needed), etc. before actual operation
+    switch (nodes_at(lhs)->type) {
+        case NODE_SYMBOL:
+            break;
+        case NODE_LITERAL:
+            break;
+        case NODE_FUNCTION_CALL:
+            todo();
+        case NODE_OPERATOR:
+            todo(); // this possibly should not ever happen
+        default:
+            todo();
     }
 
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, nodes_at(operator)->llvm_id);
 
-    string_extend_cstr(output, " = mul nsw i32 ");
-    string_extend_strv(output, nodes_at(child_lhs)->str_data);
 
+    string_extend_cstr(output, " = ");
+    emit_operator_type(output, operator);
+
+    emit_operator_operand(output, lhs);
     string_extend_cstr(output, ", ");
-
-    string_extend_strv(output, nodes_at(child_rhs)->str_data);
+    emit_operator_operand(output, rhs);
 
     string_extend_cstr(output, "\n");
 }
@@ -246,6 +288,7 @@ static void emit_store(String* output, Node_id store) {
     Node_id var_def = get_symbol_def_from_alloca(store);
     assert(alloca_dest_id > 0);
 
+    // emit prerequisite call, etc before actually storing
     Node_id src = nodes_single_child(store);
     switch (nodes_at(src)->type) {
         case NODE_FUNCTION_CALL:
@@ -254,8 +297,10 @@ static void emit_store(String* output, Node_id store) {
         case NODE_OPERATOR:
             emit_operator(output, src);
             break;
+        case NODE_LITERAL:
+            break;
         default:
-            unreachable("");
+            unreachable(NODE_FMT"\n", node_print(src));
     }
 
     string_extend_cstr(output, "    store ");
