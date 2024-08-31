@@ -42,7 +42,7 @@ static void insert_alloca(Node_id var_def) {
 static void insert_load(Node_id node_insert_load_before, Node_id symbol_call) {
     switch (nodes_at(symbol_call)->type) {
         case NODE_LITERAL:
-            // fallthrough
+            return;
         case NODE_SYMBOL:
             // fallthrough
         case NODE_VARIABLE_DEFINITION:

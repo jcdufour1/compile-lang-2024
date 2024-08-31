@@ -1,6 +1,6 @@
 .PHONY: all setup build valgrind gdb
 
-C_FLAGS=-Wall -Wextra -Wunused-function -std=c11 -pedantic -g -I ./third_party/
+C_FLAGS=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function -std=c11 -pedantic -g -I ./third_party/
 
 BUILD_DIR=build/debug/
 OBJS=\
@@ -21,7 +21,8 @@ OBJS=\
 	 ${BUILD_DIR}/passes/add_load_and_store.o \
 	 ${BUILD_DIR}/nodes.o
 
-ARGS_PROGRAM=compile examples/test_basic.c --emit-llvm
+ARGS_PROGRAM ?= compile examples/test_basic.c --emit-llvm
+CAT ?= cat
 
 all: build
 
@@ -35,6 +36,9 @@ gdb: build
 	gdb --args ${BUILD_DIR}/main ${ARGS_PROGRAM}
 
 build: ${BUILD_DIR}/main
+
+test_quick: run
+	${CAT} test.ll && clang test.ll -o a.out && ./a.out ; echo $?
 
 # general
 ${BUILD_DIR}/main: ${OBJS}

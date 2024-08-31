@@ -150,11 +150,12 @@ static void emit_function_call(String* output, Node_id fun_call) {
 }
 
 static void emit_alloca(String* output, Node_id alloca) {
-    //assert(nodes_at(symbol_def)->llvm_id > 0);
+    assert(nodes_at(alloca)->type == NODE_ALLOCA);
 
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, nodes_at(alloca)->llvm_id);
     string_extend_cstr(output, " = alloca ");
+    node_printf(alloca);
     extend_type_call_str(output, get_symbol_def_from_alloca(alloca));
     string_extend_cstr(output, ", align 8");
     string_extend_cstr(output, "\n");
@@ -366,24 +367,31 @@ static void emit_function_declaration(String* output, Node_id fun_decl) {
 }
 
 static void emit_label(String* output, Node_id label) {
+    string_extend_cstr(output, "\n");
     string_extend_size_t(output, nodes_at(label)->llvm_id);
     string_extend_cstr(output, ":\n");
 }
 
-static void emit_cmp_less_than(String* output, size_t* llvm_cmp_dest, Node_id lhs, Node_id rhs) {
+static void emit_cmp_less_than(String* output, size_t llvm_cmp_dest, Node_id lhs, Node_id rhs) {
     Node_id var_to_cmp_def;
     if (!sym_tbl_lookup(&var_to_cmp_def, nodes_at(lhs)->name)) {
         todo();
     }
 
     string_extend_cstr(output, "    %");
-    string_extend_size_t(output, *llvm_cmp_dest);
+    string_extend_size_t(output, llvm_cmp_dest);
     string_extend_cstr(output, " = icmp slt i32 %");
     log_tree(LOG_DEBUG, var_to_cmp_def);
-    string_extend_size_t(output, get_prev_load_id(var_to_cmp_def));
+    string_extend_size_t(output, get_prev_load_id(lhs));
     string_extend_cstr(output, ", ");
     string_extend_strv(output, nodes_at(rhs)->str_data);
     string_extend_cstr(output, "\n");
+}
+
+static void emit_goto(String* output, Node_id lang_goto) {
+    string_extend_cstr(output, "    br label %");
+    string_extend_size_t(output, get_matching_label_id(lang_goto));
+    string_append(output, '\n');
 }
 
 static void emit_cond_goto(String* output, Node_id cond_goto) {
@@ -408,21 +416,23 @@ static void emit_cond_goto(String* output, Node_id cond_goto) {
     assert(nodes_count_children(operator) == 2);
     Node_id lhs = nodes_get_child(operator, 0);
     Node_id rhs = nodes_get_child(operator, 1);
-    size_t llvm_cmp_dest;
-    emit_cmp_less_than(output, &llvm_cmp_dest, lhs, rhs);
+    size_t llvm_cmp_dest = nodes_at(operator)->llvm_id;
+    emit_cmp_less_than(output, llvm_cmp_dest, lhs, rhs);
 
     string_extend_cstr(output, "    br i1 %");
     string_extend_size_t(output, llvm_cmp_dest);
     string_extend_cstr(output, ", label %");
-    string_extend_size_t(output, nodes_at(if_true_def)->llvm_id);
-    log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
-    todo();
+    string_extend_size_t(output, get_matching_label_id(label_if_true));
+    string_extend_cstr(output, ", label %");
+    string_extend_size_t(output, get_matching_label_id(label_if_false));
+    string_append(output, '\n');
 }
 
 static void emit_load_variable(String* output, Node_id variable_call) {
     Node_id variable_def;
+    node_printf(variable_call);
     if (!sym_tbl_lookup(&variable_def, nodes_at(variable_call)->name)) {
-        todo();
+        unreachable("attempt to load a symbol that is undefined:"NODE_FMT"\n", node_print(variable_call));
     }
     log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
     log_tree(LOG_DEBUG, variable_call);
@@ -469,6 +479,9 @@ static void emit_block(String* output, Node_id fun_block) {
             case NODE_COND_GOTO:
                 emit_cond_goto(output, statement);
                 break;
+            case NODE_GOTO:
+                emit_goto(output, statement);
+                break;
             case NODE_ALLOCA:
                 emit_alloca(output, statement);
                 break;
@@ -480,6 +493,7 @@ static void emit_block(String* output, Node_id fun_block) {
                 break;
             default:
                 log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
+                node_printf(statement);
                 todo();
         }
     }
@@ -531,6 +545,8 @@ static void emit_symbols(String* output) {
             case NODE_FUNCTION_CALL:
                 // fallthrough
             case NODE_FUNCTION_DECLARATION:
+                // fallthrough
+            case NODE_LABEL:
                 // fallthrough
             case NODE_FUNCTION_DEFINITION:
                 break;

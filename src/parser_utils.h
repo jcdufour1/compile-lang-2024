@@ -14,4 +14,6 @@ Llvm_id get_store_dest_id(Node_id var_call);
 
 Node_id get_symbol_def_from_alloca(Node_id alloca);
 
+Llvm_id get_matching_label_id(Node_id symbol_call);
+
 #endif // PARSER_UTIL_H
