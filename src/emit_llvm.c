@@ -438,15 +438,9 @@ static void emit_label(String* output, Node_id label) {
 }
 
 static void emit_cmp_less_than(String* output, size_t llvm_cmp_dest, Node_id lhs, Node_id rhs) {
-    Node_id var_to_cmp_def;
-    if (!sym_tbl_lookup(&var_to_cmp_def, nodes_at(lhs)->name)) {
-        todo();
-    }
-
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, llvm_cmp_dest);
     string_extend_cstr(output, " = icmp slt i32 %");
-    log_tree(LOG_DEBUG, var_to_cmp_def);
     string_extend_size_t(output, get_prev_load_id(lhs));
     string_extend_cstr(output, ", ");
     string_extend_strv(output, nodes_at(rhs)->str_data);

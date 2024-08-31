@@ -207,6 +207,7 @@ static inline void nodes_append_child(Node_id parent, Node_id child) {
     nodes_assert_tree_linkage_is_consistant(node_id_from(0));
 }
 
+// when node only has one child
 static inline Node_id nodes_single_child(Node_id node) {
     assert(nodes_count_children(node) == 1);
     return nodes_at(node)->left_child;

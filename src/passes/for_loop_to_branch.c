@@ -55,13 +55,19 @@ static Node_id literal_new(Str_view value) {
 static Node_id jmp_if_less_than_new(
     Str_view symbol_name_to_check,
     Str_view label_name_if_true,
-    Str_view label_name_if_false
+    Str_view label_name_if_false,
+    Node_id upper_bound
 ) {
+    if (nodes_at(nodes_single_child(upper_bound))->type != NODE_LITERAL) {
+        todo();
+    }
+
+    Str_view upper_bound_str = nodes_at(nodes_single_child(upper_bound))->str_data;
     Node_id less_than = node_new();
     nodes_at(less_than)->type = NODE_OPERATOR;
     nodes_at(less_than)->token_type = TOKEN_LESS_THAN;
     nodes_append_child(less_than, symbol_new(symbol_name_to_check));
-    nodes_append_child(less_than, literal_new(str_view_from_cstr("6")));
+    nodes_append_child(less_than, literal_new(upper_bound_str));
 
     Node_id cond_goto = node_new();
     nodes_at(cond_goto)->type = NODE_COND_GOTO;
@@ -118,7 +124,8 @@ bool for_loop_to_branch(Node_id for_loop) {
     Node_id check_cond_jmp = jmp_if_less_than_new(
         nodes_at(old_var_def)->name, 
         nodes_at(after_check_label)->name, 
-        nodes_at(after_for_loop_label)->name
+        nodes_at(after_for_loop_label)->name,
+        upper_bound
     );
 
     nodes_append_child(new_branch_block, new_var_assign);
