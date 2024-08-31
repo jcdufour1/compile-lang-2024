@@ -192,6 +192,37 @@ static void emit_src_function_call_result(String* output, Node_id store) {
     string_extend_size_t(output, nodes_at(fun_call)->llvm_id);
 }
 
+static void emit_src_operator(String* output, Node_id store) {
+    assert(nodes_at(store)->type == NODE_STORE);
+    Node_id operator = nodes_at(store)->left_child;
+    assert(!node_is_null(operator));
+    assert(nodes_at(operator)->type == NODE_OPERATOR);
+
+    string_extend_cstr(output, " %");
+    string_extend_size_t(output, nodes_at(operator)->llvm_id);
+}
+
+static void emit_operator(String* output, Node_id operator) {
+    Node_id child_lhs = nodes_at(operator)->left_child;
+    Node_id child_rhs = nodes_at(child_lhs)->next;
+
+    if (nodes_at(child_lhs)->type != NODE_LITERAL || nodes_at(child_rhs)->type != NODE_LITERAL) {
+        todo();
+    }
+
+    string_extend_cstr(output, "    %");
+    string_extend_size_t(output, nodes_at(operator)->llvm_id);
+
+    string_extend_cstr(output, " = mul nsw i32 ");
+    string_extend_strv(output, nodes_at(child_lhs)->str_data);
+
+    string_extend_cstr(output, ", ");
+
+    string_extend_strv(output, nodes_at(child_rhs)->str_data);
+
+    string_extend_cstr(output, "\n");
+}
+
 static void emit_src(String* output, Node_id store) {
     log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
     Node_id src = nodes_single_child(store);
@@ -201,6 +232,9 @@ static void emit_src(String* output, Node_id store) {
             break;
         case NODE_FUNCTION_CALL:
             emit_src_function_call_result(output, store);
+            break;
+        case NODE_OPERATOR:
+            emit_src_operator(output, store);
             break;
         default:
             todo();
@@ -213,8 +247,15 @@ static void emit_store(String* output, Node_id store) {
     assert(alloca_dest_id > 0);
 
     Node_id src = nodes_single_child(store);
-    if (nodes_at(src)->type == NODE_FUNCTION_CALL) {
-        emit_function_call(output, src);
+    switch (nodes_at(src)->type) {
+        case NODE_FUNCTION_CALL:
+            emit_function_call(output, src);
+            break;
+        case NODE_OPERATOR:
+            emit_operator(output, src);
+            break;
+        default:
+            unreachable("");
     }
 
     string_extend_cstr(output, "    store ");
@@ -263,27 +304,6 @@ static void emit_function_definition(String* output, Node_id fun_def) {
     emit_block(output, block);
 
     string_extend_cstr(output, "}\n");
-}
-
-static void emit_operator(String* output, Node_id operator) {
-    Node_id child_lhs = nodes_at(operator)->left_child;
-    Node_id child_rhs = nodes_at(child_lhs)->next;
-
-    if (nodes_at(child_lhs)->type != NODE_LITERAL || nodes_at(child_rhs)->type != NODE_LITERAL) {
-        todo();
-    }
-
-    string_extend_cstr(output, "    %");
-    string_extend_size_t(output, nodes_at(operator)->llvm_id);
-
-    string_extend_cstr(output, " = mul nsw i32 ");
-    string_extend_strv(output, nodes_at(child_lhs)->str_data);
-
-    string_extend_cstr(output, ", ");
-
-    string_extend_strv(output, nodes_at(child_rhs)->str_data);
-
-    string_extend_cstr(output, "\n");
 }
 
 static void emit_function_return_statement(String* output, Node_id fun_return) {

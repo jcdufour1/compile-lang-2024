@@ -183,10 +183,10 @@ static inline void nodes_insert_before(Node_id node_to_insert_before, Node_id no
     }
     nodes_at(node_to_insert)->parent = parent;
 
-    log_tree(LOG_DEBUG, node_id_from(0));
-    log_tree(LOG_DEBUG, parent);
-    log_tree(LOG_DEBUG, nodes_at(parent)->left_child);
-    log_tree(LOG_DEBUG, node_to_insert);
+    //log_tree(LOG_DEBUG, node_id_from(0));
+    //log_tree(LOG_DEBUG, parent);
+    //log_tree(LOG_DEBUG, nodes_at(parent)->left_child);
+    //log_tree(LOG_DEBUG, node_to_insert);
 }
 
 static inline void nodes_append_child(Node_id parent, Node_id child) {

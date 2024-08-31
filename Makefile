@@ -38,7 +38,7 @@ gdb: build
 build: ${BUILD_DIR}/main
 
 test_quick: run
-	${CAT} test.ll && clang test.ll -o a.out && ./a.out ; echo $?
+	${CAT} test.ll && clang test.ll -o a.out && ./a.out ; echo $$?
 
 # general
 ${BUILD_DIR}/main: ${OBJS}
