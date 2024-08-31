@@ -1,5 +1,3 @@
-#include "../node.h"
-#include "../nodes.h"
 #include "../symbol_table.h"
 #include "../parser_utils.h"
 #include "../nodes.h"
@@ -7,6 +5,16 @@
 static Node_id assignment_new(Node_id lhs, Node_id rhs) {
     Node_id assignment = node_new();
     nodes_at(assignment)->type = NODE_ASSIGNMENT;
+    nodes_append_child(assignment, lhs);
+    nodes_append_child(assignment, rhs);
+    return assignment;
+}
+
+static Node_id operation_new(Node_id lhs, Node_id rhs, TOKEN_TYPE operation_type) {
+    // TODO: check if lhs or rhs were already appended to the tree
+    Node_id assignment = node_new();
+    nodes_at(assignment)->type = NODE_OPERATOR;
+    nodes_at(assignment)->token_type = operation_type;
     nodes_append_child(assignment, lhs);
     nodes_append_child(assignment, rhs);
     return assignment;
@@ -53,7 +61,7 @@ static Node_id jmp_if_less_than_new(
     nodes_at(less_than)->type = NODE_OPERATOR;
     nodes_at(less_than)->token_type = TOKEN_LESS_THAN;
     nodes_append_child(less_than, symbol_new(symbol_name_to_check));
-    nodes_append_child(less_than, literal_new(str_view_from_cstr("2")));
+    nodes_append_child(less_than, literal_new(str_view_from_cstr("6")));
 
     Node_id cond_goto = node_new();
     nodes_at(cond_goto)->type = NODE_COND_GOTO;
@@ -61,6 +69,12 @@ static Node_id jmp_if_less_than_new(
     nodes_append_child(cond_goto, symbol_new(label_name_if_true));
     nodes_append_child(cond_goto, symbol_new(label_name_if_false));
     return cond_goto;
+}
+
+static Node_id get_for_loop_cond_var_assign(Str_view sym_name) {
+    Node_id literal = literal_new(str_view_from_cstr("1"));
+    Node_id operation = operation_new(symbol_new(sym_name), literal, TOKEN_SINGLE_PLUS);
+    return assignment_new(symbol_new(sym_name), operation);
 }
 
 bool for_loop_to_branch(Node_id for_loop) {
@@ -87,13 +101,15 @@ bool for_loop_to_branch(Node_id for_loop) {
         symbol_lhs_assign = symbol_new(nodes_at(old_var_def)->name);
         nodes_remove_siblings(new_var_def);
     }
+
+    Node_id assignment_to_inc_cond_var = get_for_loop_cond_var_assign(nodes_at(old_var_def)->name);
     assert(node_is_null(nodes_parent(new_branch_block)));
     nodes_remove_siblings(lower_bound);
     nodes_remove_siblings(upper_bound);
     nodes_remove_siblings(for_block);
 
+    // initial assignment
     Node_id new_var_assign = assignment_new(symbol_lhs_assign, nodes_at(lower_bound)->left_child);
-    nodes_append_child(new_branch_block, new_var_assign);
 
     Node_id jmp_to_check_cond_label = goto_new(str_view_from_cstr("for_start"));
     Node_id check_cond_label = label_new(str_view_from_cstr("for_start"));
@@ -105,22 +121,19 @@ bool for_loop_to_branch(Node_id for_loop) {
         nodes_at(after_for_loop_label)->name
     );
 
-    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
+    nodes_append_child(new_branch_block, new_var_assign);
     nodes_append_child(new_branch_block, jmp_to_check_cond_label);
     nodes_append_child(new_branch_block, check_cond_label);
     nodes_append_child(new_branch_block, check_cond_jmp);
     nodes_append_child(new_branch_block, after_check_label);
-    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
-    log_tree(LOG_DEBUG, for_block);
     nodes_append_child(new_branch_block, nodes_left_child(for_block));
+    nodes_append_child(new_branch_block, assignment_to_inc_cond_var);
     nodes_append_child(new_branch_block, goto_new(nodes_at(check_cond_label)->name));
-    log_tree(LOG_DEBUG, node_id_from(0));
 
     nodes_append_child(new_branch_block, after_for_loop_label);
-    log_tree(LOG_DEBUG, node_id_from(0));
+
 
     nodes_replace(for_loop, new_branch_block);
-    log_tree(LOG_DEBUG, node_id_from(0));
 
     return false;
 }
