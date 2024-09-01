@@ -24,10 +24,13 @@ static Node_id store_new(Node_id item_to_store) {
 static void insert_alloca(Node_id var_def) {
     Node_id new_alloca = alloca_new(var_def);
 
+    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
+
     log_tree(LOG_DEBUG, node_id_from(0));
 
     Node_id node_to_insert_after = node_id_from(NODE_IDX_NULL);
     nodes_foreach_from_curr_rev(curr, var_def) {
+        nodes_assert_tree_linkage_is_consistant(node_id_from(0));
         if (nodes_at(var_def)->type != NODE_ALLOCA) {
             node_to_insert_after = curr;
             continue;
@@ -79,6 +82,7 @@ static void load_operator_operand(Node_id node_insert_before, Node_id operand) {
 }
 
 static void load_operator_operands(Node_id node_insert_before, Node_id operator) {
+    node_printf(operator);
     assert(nodes_at(operator)->type == NODE_OPERATOR);
     assert(nodes_count_children(operator) == 2);
 

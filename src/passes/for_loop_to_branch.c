@@ -3,10 +3,13 @@
 #include "../nodes.h"
 
 static Node_id assignment_new(Node_id lhs, Node_id rhs) {
+    nodes_remove_siblings_and_parent(lhs);
+    nodes_remove_siblings_and_parent(rhs);
+
     Node_id assignment = node_new();
     nodes_at(assignment)->type = NODE_ASSIGNMENT;
-    nodes_append_child(assignment, node_clone(lhs));
-    nodes_append_child(assignment, node_clone(rhs));
+    nodes_append_child(assignment, lhs);
+    nodes_append_child(assignment, rhs);
     return assignment;
 }
 
@@ -110,9 +113,9 @@ bool for_loop_to_branch(Node_id for_loop) {
 
     Node_id assignment_to_inc_cond_var = get_for_loop_cond_var_assign(nodes_at(old_var_def)->name);
     assert(node_is_null(nodes_parent(new_branch_block)));
-    nodes_remove_siblings(lower_bound);
-    nodes_remove_siblings(upper_bound);
-    nodes_remove_siblings(for_block);
+    nodes_remove_siblings_and_parent(lower_bound);
+    nodes_remove_siblings_and_parent(upper_bound);
+    nodes_remove_siblings_and_parent(for_block);
 
     // initial assignment
     Node_id new_var_assign = assignment_new(symbol_lhs_assign, nodes_at(lower_bound)->left_child);
