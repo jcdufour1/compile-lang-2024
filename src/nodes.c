@@ -33,6 +33,7 @@ static void nodes_assert_tree_linkage_is_consistant_internal(Size_t_vec* nodes_v
         return;
     }
 
+    //nodes_log_tree_rec(LOG_DEBUG, 0, root, __FILE__, __LINE__);
     assert(!size_t_vec_in(nodes_visited, node_unwrap(root)) && "same node found more than once");
     size_t_vec_append(nodes_visited, node_unwrap(root));
 
@@ -44,30 +45,25 @@ static void nodes_assert_tree_linkage_is_consistant_internal(Size_t_vec* nodes_v
         "node points to itself"
     );
 
-    {
-        Node_id left_child = nodes_at(root)->left_child;
+    Node_id base_parent = nodes_parent(root);
+    nodes_foreach_from_curr(curr_node, root) {
+        //log(LOG_DEBUG, "idx: %zu\n", idx);
+        //node_printf(curr_node);
+        //node_printf(nodes_left_child(curr_node));
+        //nodes_log_tree_rec(LOG_DEBUG, 0, curr_node, __FILE__, __LINE__);
+        //nodes_log_tree_rec(LOG_DEBUG, 0, base_parent, __FILE__, __LINE__);
+        //nodes_log_tree_rec(LOG_DEBUG, 0, nodes_parent(curr_node), __FILE__, __LINE__);
+        //node_printf(nodes_next(curr_node));
+        if (!node_is_null(nodes_next(curr_node))) {
+            //node_printf(nodes_prev(nodes_next(curr_node)));
+            assert(node_ids_equal(curr_node, nodes_prev(nodes_next(curr_node))));
+        }
+        assert(node_ids_equal(nodes_parent(curr_node), base_parent));
+
+        Node_id left_child = nodes_at(curr_node)->left_child;
         if (!node_is_null(left_child)) {
-            assert(node_ids_equal(root, nodes_parent(left_child)));
+            assert(node_ids_equal(curr_node, nodes_parent(left_child)));
             nodes_assert_tree_linkage_is_consistant_internal(nodes_visited, left_child);
-        }
-    }
-
-    {
-        Node_id next = nodes_at(root)->next;
-        if (!node_is_null(next)) {
-            // TODO: don't do recursion for next and prev
-            //node_printf(root);
-            //node_printf(next);
-            //node_printf(nodes_prev(next));
-            assert(node_ids_equal(root, nodes_prev(next)));
-            nodes_assert_tree_linkage_is_consistant_internal(nodes_visited, next);
-        }
-    }
-
-    {
-        Node_id prev = nodes_at(root)->prev;
-        if (!node_is_null(prev)) {
-            assert(node_ids_equal(root, nodes_next(prev)));
         }
     }
 }
@@ -79,8 +75,6 @@ void nodes_assert_tree_linkage_is_consistant(Node_id root) {
 }
 
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_id root, const char* file, int line) {
-    nodes_assert_tree_linkage_is_consistant(root);
-
     if (nodes.info.count < 1) {
         log_file_new(log_level, file, line, "<empty tree>\n");
         return;

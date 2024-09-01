@@ -17,10 +17,11 @@ void nodes_assert_tree_linkage_is_consistant(Node_id root);
 
 #define log_tree(log_level, root) \
     do { \
+        nodes_assert_tree_linkage_is_consistant(root); \
         log_file_new(log_level, __FILE__, __LINE__, "tree:\n"); \
         nodes_log_tree_rec(log_level, 0, root, __FILE__, __LINE__); \
         log_file_new(log_level, __FILE__, __LINE__, "\n"); \
-    } while(0);
+    } while(0)
 
 typedef struct {
     Vec_base info;
@@ -77,11 +78,11 @@ static inline void nodes_set_prev(Node_id base, Node_id prev) {
     nodes_at(base)->prev = prev;
 }
 
-static inline void nodes_set_left_child_tmp(Node_id base, Node_id left_child) {
+static inline void nodes_set_left_child_internal(Node_id base, Node_id left_child) {
     nodes_at(base)->left_child = left_child;
 }
 
-static inline void nodes_set_parent(Node_id base, Node_id parent) {
+static inline void nodes_set_parent_internal(Node_id base, Node_id parent) {
     nodes_at(base)->parent = parent;
 }
 
@@ -102,11 +103,11 @@ static inline Node_id node_id_from(size_t idx) {
 // do not use this function to remove node from tree (use node_remove instead for that)
 static inline void nodes_reset_links_of_self_only(Node_id node, bool keep_children) {
     if (!keep_children) {
-        nodes_set_left_child_tmp(node, node_id_from(NODE_IDX_NULL));
+        nodes_set_left_child_internal(node, node_id_from(NODE_IDX_NULL));
     }
     nodes_set_next(node, node_id_from(NODE_IDX_NULL));
     nodes_set_prev(node, node_id_from(NODE_IDX_NULL));
-    nodes_set_parent(node, node_id_from(NODE_IDX_NULL));
+    nodes_set_parent_internal(node, node_id_from(NODE_IDX_NULL));
 }
 
 static inline Node_id node_new() {
@@ -141,10 +142,23 @@ static inline Node_id nodes_get_leftmost_sibling(Node_id node) {
     return result;
 }
 
+static inline Node_id nodes_get_local_leftmost(Node_id start_node) {
+    assert(!node_is_null(start_node));
+
+    Node_id first;
+    nodes_foreach_from_curr_rev(curr_node, start_node) {
+        first = curr_node;
+    }
+    return first;
+}
+
 static inline void nodes_establish_parent_left_child(Node_id parent, Node_id child) {
     assert(!node_is_null(parent) && !node_is_null(child));
-    nodes_set_left_child_tmp(parent, child);
-    nodes_set_parent(child, parent);
+
+    nodes_foreach_from_curr(curr_node, nodes_get_local_leftmost(child)) {
+        nodes_set_parent_internal(child, parent);
+    }
+    nodes_set_left_child_internal(parent, child);
 }
 
 static inline void nodes_insert_after(Node_id curr, Node_id node_to_insert) {
@@ -190,6 +204,11 @@ static inline void nodes_insert_before(Node_id node_to_insert_before, Node_id no
 }
 
 static inline void nodes_append_child(Node_id parent, Node_id child) {
+    // this function must not be used for appending nodes that have next, parent, or prev node(s) attached
+    assert(node_is_null(nodes_next(child)));
+    assert(node_is_null(nodes_prev(child)));
+    assert(node_is_null(nodes_parent(child)));
+
     if (node_is_null(nodes_left_child(parent))) {
         nodes_at(parent)->left_child = child;
         nodes_at(child)->parent = parent;
@@ -197,14 +216,11 @@ static inline void nodes_append_child(Node_id parent, Node_id child) {
     }
 
     Node_id curr_node = nodes_at(parent)->left_child;
-    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
     while (!node_is_null(nodes_next(curr_node))) {
-    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
         curr_node = nodes_at(curr_node)->next;
     }
-    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
     nodes_insert_after(curr_node, child);
-    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
+    nodes_assert_tree_linkage_is_consistant(parent);
 }
 
 // when node only has one child
@@ -222,10 +238,14 @@ static inline void nodes_replace(Node_id node_to_replace, Node_id src) {
     assert(node_is_null(nodes_parent(src)));
     assert(!node_is_null(node_to_replace));
 
+    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
+
     if (node_is_null(nodes_prev(node_to_replace))) {
         nodes_establish_parent_left_child(nodes_at(node_to_replace)->parent, src);
     } else {
         nodes_establish_siblings(nodes_at(node_to_replace)->prev, src);
+        nodes_set_parent_internal(src, nodes_parent(node_to_replace));
+        nodes_assert_tree_linkage_is_consistant(node_id_from(0));
     }
 
     nodes_assert_tree_linkage_is_consistant(node_id_from(0));
@@ -235,36 +255,6 @@ static inline void nodes_replace(Node_id node_to_replace, Node_id src) {
     }
 
     nodes_assert_tree_linkage_is_consistant(node_id_from(0));
-}
-
-static inline void nodes_extend_children(Node_id parent, Node_id start_of_nodes_to_extend) {
-    nodes_foreach_from_curr(curr_node, start_of_nodes_to_extend) {
-        nodes_assert_tree_linkage_is_consistant(node_id_from(0));
-        nodes_assert_tree_linkage_is_consistant(parent);
-        nodes_assert_tree_linkage_is_consistant(start_of_nodes_to_extend);
-        nodes_assert_tree_linkage_is_consistant(curr_node);
-        log_tree(LOG_DEBUG, parent);
-        nodes_assert_tree_linkage_is_consistant(parent);
-        node_printf(curr_node);
-        if (!node_is_null(nodes_prev(curr_node))) {
-        nodes_assert_tree_linkage_is_consistant(parent);
-            node_printf(nodes_prev(curr_node));
-        }
-        nodes_assert_tree_linkage_is_consistant(parent);
-        if (!node_is_null(nodes_next(curr_node))) {
-        nodes_assert_tree_linkage_is_consistant(parent);
-            node_printf(nodes_next(curr_node));
-        }
-        nodes_assert_tree_linkage_is_consistant(parent);
-        node_printf(curr_node);
-        node_printf(nodes_next(curr_node));
-        node_printf(nodes_prev(curr_node));
-        node_printf(nodes_parent(curr_node));
-        nodes_append_child(parent, curr_node);
-        nodes_assert_tree_linkage_is_consistant(parent);
-        nodes_assert_tree_linkage_is_consistant(node_id_from(0));
-        nodes_assert_tree_linkage_is_consistant(parent);
-    }
 }
 
 static inline void nodes_remove_siblings(Node_id node) {
@@ -378,6 +368,22 @@ static inline void nodes_remove(Node_id node_to_remove, bool keep_children) {
     }
 
     nodes_reset_links_of_self_only(node_to_remove, keep_children);
+}
+
+static inline void nodes_extend_children(Node_id parent, Node_id start_of_nodes_to_extend) {
+    nodes_assert_tree_linkage_is_consistant(parent);
+    nodes_foreach_from_curr(curr_node, start_of_nodes_to_extend) {
+        nodes_remove(curr_node, true);
+        nodes_assert_tree_linkage_is_consistant(parent);
+    }
+    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
+}
+
+static inline Node_id node_clone(Node_id node_to_clone) {
+    Node_id new_node = node_new();
+    *nodes_at(new_node) = *nodes_at(node_to_clone);
+    nodes_reset_links_of_self_only(new_node, false);
+    return new_node;
 }
 
 #endif // NODES_H

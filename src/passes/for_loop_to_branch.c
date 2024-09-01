@@ -5,8 +5,8 @@
 static Node_id assignment_new(Node_id lhs, Node_id rhs) {
     Node_id assignment = node_new();
     nodes_at(assignment)->type = NODE_ASSIGNMENT;
-    nodes_append_child(assignment, lhs);
-    nodes_append_child(assignment, rhs);
+    nodes_append_child(assignment, node_clone(lhs));
+    nodes_append_child(assignment, node_clone(rhs));
     return assignment;
 }
 
@@ -133,13 +133,13 @@ bool for_loop_to_branch(Node_id for_loop) {
     nodes_append_child(new_branch_block, check_cond_label);
     nodes_append_child(new_branch_block, check_cond_jmp);
     nodes_append_child(new_branch_block, after_check_label);
-    nodes_append_child(new_branch_block, nodes_left_child(for_block));
+    nodes_extend_children(new_branch_block, nodes_left_child(for_block)); // this is the problem
     nodes_append_child(new_branch_block, assignment_to_inc_cond_var);
     nodes_append_child(new_branch_block, goto_new(nodes_at(check_cond_label)->name));
 
     nodes_append_child(new_branch_block, after_for_loop_label);
 
-
+    log_tree(LOG_DEBUG, node_id_from(0));
     nodes_replace(for_loop, new_branch_block);
 
     return false;

@@ -31,14 +31,16 @@ Llvm_id get_block_return_id(Node_id fun_call) {
 // return true if successful, false otherwise
 static bool get_prev_matching_node(Node_id* result, Node_id node_to_start, Node_id var_call, bool is_matching(Node_id curr_node, Node_id var_call)) {
     nodes_foreach_from_curr_rev(curr_node, node_to_start) {
+        node_printf(curr_node);
+        assert(node_ids_equal(nodes_parent(curr_node), nodes_parent(node_to_start)));
         if (is_matching(curr_node, var_call)) {
-            node_printf(curr_node);
             *result = curr_node;
             return true;
         }
     }
 
     if (!node_is_null(nodes_parent(node_to_start))) {
+        log(LOG_DEBUG, "thing 87\n");
         return get_prev_matching_node(result, nodes_at(node_to_start)->parent, var_call, is_matching);
     }
 
