@@ -46,8 +46,8 @@ static inline Tk_view tk_view_chop_on_type_delim_common(Tk_view* token_view, TOK
         }
     }
 
-    if ((!or_all_fallback) && (idx >= token_view->count)) {
-        unreachable("");
+    if (!or_all_fallback && (idx >= token_view->count)) {
+        unreachable("delim not found");
     }
 
     new_token_view.tokens = token_view->tokens;

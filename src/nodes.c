@@ -47,13 +47,6 @@ static void nodes_assert_tree_linkage_is_consistant_internal(Size_t_vec* nodes_v
 
     Node_id base_parent = nodes_parent(root);
     nodes_foreach_from_curr(curr_node, root) {
-        //log(LOG_DEBUG, "idx: %zu\n", idx);
-        //node_printf(curr_node);
-        //node_printf(nodes_left_child(curr_node));
-        //nodes_log_tree_rec(LOG_DEBUG, 0, curr_node, __FILE__, __LINE__);
-        //nodes_log_tree_rec(LOG_DEBUG, 0, base_parent, __FILE__, __LINE__);
-        //nodes_log_tree_rec(LOG_DEBUG, 0, nodes_parent(curr_node), __FILE__, __LINE__);
-        //node_printf(nodes_next(curr_node));
         if (!node_is_null(nodes_next(curr_node))) {
             //node_printf(nodes_prev(nodes_next(curr_node)));
             assert(node_ids_equal(curr_node, nodes_prev(nodes_next(curr_node))));

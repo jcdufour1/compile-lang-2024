@@ -17,6 +17,7 @@ typedef enum {
     TOKEN_SINGLE_MINUS,
     TOKEN_ASTERISK,
     TOKEN_LESS_THAN,
+    TOKEN_GREATER_THAN,
 
     // literals
     TOKEN_STRING_LITERAL,
@@ -72,6 +73,8 @@ static inline bool token_is_operator(Token token) {
         case TOKEN_SINGLE_MINUS:
         case TOKEN_SINGLE_PLUS:
         case TOKEN_ASTERISK:
+        case TOKEN_LESS_THAN:
+        case TOKEN_GREATER_THAN:
             return true;
         case TOKEN_NUM_LITERAL: // fallthrough
         case TOKEN_STRING_LITERAL: // fallthrough
@@ -94,8 +97,12 @@ static inline bool token_is_operator(Token token) {
 // higher number returned from this function means that operator has higher precedence
 static inline uint32_t token_get_precedence_operator(Token token) {
     switch (token.type) {
+        case TOKEN_LESS_THAN:
+            // fallthrough
+        case TOKEN_GREATER_THAN:
+            return 1;
         case TOKEN_SINGLE_PLUS:
-            return 2;
+            // fallthrough
         case TOKEN_SINGLE_MINUS:
             return 2;
         case TOKEN_ASTERISK:
@@ -150,6 +157,8 @@ static inline Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
             return str_view_from_cstr("...");
         case TOKEN_LESS_THAN:
             return str_view_from_cstr("<");
+        case TOKEN_GREATER_THAN:
+            return str_view_from_cstr(">");
         default:
             unreachable("");
     }
@@ -192,6 +201,10 @@ static inline bool token_is_closing(Token curr_token) {
         case TOKEN_DOUBLE_DOT:
             // fallthrough
         case TOKEN_TRIPLE_DOT:
+            // fallthrough
+        case TOKEN_LESS_THAN:
+            // fallthrough
+        case TOKEN_GREATER_THAN:
             return false;
         default:
             unreachable("");
@@ -235,6 +248,10 @@ static inline bool token_is_opening(Token curr_token) {
         case TOKEN_DOUBLE_DOT:
             // fallthrough
         case TOKEN_TRIPLE_DOT:
+            // fallthrough
+        case TOKEN_LESS_THAN:
+            // fallthrough
+        case TOKEN_GREATER_THAN:
             return false;
         default:
             unreachable("");
@@ -246,7 +263,7 @@ static inline bool token_is_equal(const Token token, const char* cstr, TOKEN_TYP
         return false;
     }
 
-    return 0 == str_view_cmp_cstr(token.text, cstr);
+    return str_view_cstr_is_equal(token.text, cstr);
 }
 
 #endif // TOKEN_H

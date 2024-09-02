@@ -101,6 +101,11 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text) 
         assert((file_text->count < 1 || str_view_front(*file_text) != '=') && "double = not implemented");
         token->type = TOKEN_SINGLE_EQUAL;
         return true;
+    } else if (str_view_front(*file_text) == '>') {
+        str_view_chop_front(file_text);
+        assert((file_text->count < 1 || str_view_front(*file_text) != '=') && ">= not implemented");
+        token->type = TOKEN_GREATER_THAN;
+        return true;
     } else if (str_view_front(*file_text) == '.') {
         Str_view dots = str_view_chop_on_cond(file_text, is_dot);
         if (dots.count == 1) {

@@ -61,12 +61,12 @@ static inline Str_view str_view_chop_front(Str_view* str_view) {
     return str_view_chop_front_count(str_view, 1);
 }
 
-// return 0 when match
-static inline int str_view_cmp_cstr(Str_view str_view, const char* cstr) {
+// return true when match
+static inline bool str_view_cstr_is_equal(Str_view str_view, const char* cstr) {
     if (strlen(cstr) != str_view.count) {
-        return 100;
+        return false;
     }
-    return strncmp(str_view.str, cstr, str_view.count);
+    return 0 == strncmp(str_view.str, cstr, str_view.count);
 }
 
 // return 0 when match

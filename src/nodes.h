@@ -163,14 +163,15 @@ static inline void nodes_establish_parent_left_child(Node_id parent, Node_id chi
 
 static inline void nodes_insert_after(Node_id curr, Node_id node_to_insert) {
     assert(!node_is_null(curr) && !node_is_null(node_to_insert));
-    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
+
     Node_id old_next = nodes_next(curr);
     nodes_establish_siblings(curr, node_to_insert);
     if (!node_is_null(old_next)) {
         nodes_establish_siblings(node_to_insert, old_next);
     }
     nodes_at(node_to_insert)->parent = nodes_at(curr)->parent;
-    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
+
+    nodes_assert_tree_linkage_is_consistant(curr);
 }
 
 static inline bool node_ids_equal(Node_id a, Node_id b) {
@@ -218,6 +219,7 @@ static inline void nodes_append_child(Node_id parent, Node_id child) {
         curr_node = nodes_at(curr_node)->next;
     }
     nodes_insert_after(curr_node, child);
+
     nodes_assert_tree_linkage_is_consistant(parent);
 }
 
@@ -236,23 +238,16 @@ static inline void nodes_replace(Node_id node_to_replace, Node_id src) {
     assert(node_is_null(nodes_parent(src)));
     assert(!node_is_null(node_to_replace));
 
-    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
-
     if (node_is_null(nodes_prev(node_to_replace))) {
         nodes_establish_parent_left_child(nodes_at(node_to_replace)->parent, src);
     } else {
         nodes_establish_siblings(nodes_at(node_to_replace)->prev, src);
         nodes_set_parent_internal(src, nodes_parent(node_to_replace));
-        nodes_assert_tree_linkage_is_consistant(node_id_from(0));
     }
-
-    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
 
     if (!node_is_null(nodes_next(node_to_replace))) {
         nodes_establish_siblings(src, nodes_at(node_to_replace)->next);
     }
-
-    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
 }
 
 static inline void nodes_remove_siblings(Node_id node) {
@@ -378,8 +373,6 @@ static inline void nodes_remove(Node_id node_to_remove, bool keep_children) {
 }
 
 static inline void nodes_extend_children(Node_id parent, Node_id start_of_nodes_to_extend) {
-    nodes_assert_tree_linkage_is_consistant(parent);
-
     Node_id curr_node = start_of_nodes_to_extend;
     Node_id next_node;
     while (1) {
@@ -395,7 +388,7 @@ static inline void nodes_extend_children(Node_id parent, Node_id start_of_nodes_
         curr_node = next_node;
     }
 
-    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
+    nodes_assert_tree_linkage_is_consistant(parent);
 }
 
 static inline Node_id node_clone(Node_id node_to_clone) {

@@ -13,9 +13,9 @@ static void emit_llvm_main(String* output, Node_id root);
 
 static void extend_type_call_str(String* output, Node_id variable_def) {
     assert(nodes_at(variable_def)->lang_type.count > 0);
-    if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "i32")) {
+    if (str_view_cstr_is_equal(nodes_at(variable_def)->lang_type, "i32")) {
         string_extend_cstr(output, "i32");
-    } else if (0 == str_view_cmp_cstr(nodes_at(variable_def)->lang_type, "ptr")) {
+    } else if (str_view_cstr_is_equal(nodes_at(variable_def)->lang_type, "ptr")) {
         string_extend_cstr(output, "ptr");
     } else {
         todo();
@@ -34,10 +34,10 @@ static void extend_type_decl_str(String* output, Node_id variable_def) {
 
 static void extend_literal_decl_prefix(String* output, Node_id var_decl_or_def) {
     Str_view lang_type = nodes_at(var_decl_or_def)->lang_type;
-    if (0 == str_view_cmp_cstr(lang_type, "ptr")) {
+    if (str_view_cstr_is_equal(lang_type, "ptr")) {
         string_extend_cstr(output, " @.");
         string_extend_strv(output, nodes_at(var_decl_or_def)->name);
-    } else if (0 == str_view_cmp_cstr(lang_type, "i32")) {
+    } else if (str_view_cstr_is_equal(lang_type, "i32")) {
         string_append(output, ' ');
         string_extend_strv(output, nodes_at(var_decl_or_def)->str_data);
     } else {

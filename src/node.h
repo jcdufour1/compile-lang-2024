@@ -1,6 +1,5 @@
 #ifndef NODE_H
 #define NODE_H
-
 #include "newstring.h"
 #include "str_view.h"
 #include "token.h"
@@ -21,11 +20,12 @@ typedef enum {
     NODE_RETURN_STATEMENT,
     NODE_VARIABLE_DEFINITION,
     NODE_FUNCTION_DECLARATION,
-    NODE_ASSIGNMENT,
     NODE_FOR_LOOP,
     NODE_FOR_LOWER_BOUND,
     NODE_FOR_UPPER_BOUND,
     NODE_FOR_VARIABLE_DEF,
+    NODE_IF_STATEMENT,
+    NODE_ASSIGNMENT,
     NODE_GOTO,
     NODE_COND_GOTO,
     NODE_LABEL,

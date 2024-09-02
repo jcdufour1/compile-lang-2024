@@ -64,12 +64,39 @@ static bool get_idx_token(size_t* idx_matching, Tk_view tokens, size_t start, TO
     return false;
 }
 
+// consume tokens from { to } (inclusive) and discard {}
+static Tk_view extract_items_inside_brackets(Tk_view* tokens, TOKEN_TYPE closing_bracket_type) {
+    Token opening_bracket = tk_view_chop_front(tokens);
+    // the opening_bracket type should be the opening bracket type that corresponds to closing_brace_type
+    switch (closing_bracket_type) {
+        case TOKEN_CLOSE_CURLY_BRACE:
+            assert(opening_bracket.type == TOKEN_OPEN_CURLY_BRACE);
+            break;
+        case TOKEN_CLOSE_PAR:
+            assert(opening_bracket.type == TOKEN_OPEN_PAR);
+            break;
+        default:
+            unreachable("invalid or unimplemented bracket type");
+    }
+
+    size_t idx_closing_bracket;
+    if (!get_idx_matching_token(&idx_closing_bracket, *tokens, false, closing_bracket_type)) {
+        unreachable("closing bracket not found");
+    }
+    Tk_view inside_brackets = tk_view_chop_count(tokens, idx_closing_bracket);
+
+    log_tokens(LOG_DEBUG, *tokens, 0);
+    Token closing_bracket = tk_view_chop_front(tokens);
+    assert(closing_bracket.type == closing_bracket_type);
+    return inside_brackets;
+}
+
 static bool tokens_start_with_function_call(Tk_view tokens) {
     if (tokens.count < 2) {
         return false;
     }
 
-    if (0 == str_view_cmp_cstr(tk_view_front(tokens).text, "extern")) {
+    if (!str_view_cstr_is_equal(tk_view_front(tokens).text, "extern")) {
         return false;
     }
 
@@ -234,7 +261,7 @@ static bool tokens_start_with_function_definition(Tk_view tokens) {
         return false;
     }
 
-    if (0 != str_view_cmp_cstr(tk_view_front(tokens).text, "fn")) {
+    if (!str_view_cstr_is_equal(tk_view_front(tokens).text, "fn")) {
         return false;
     }
 
@@ -331,7 +358,7 @@ static bool tokens_start_with_variable_declaration(Tk_view tokens) {
     if (tk_view_front(tokens).type != TOKEN_SYMBOL) {
         return false;
     }
-    if (0 != str_view_cmp_cstr(tk_view_front(tokens).text, "let")) {
+    if (!str_view_cstr_is_equal(tk_view_front(tokens).text, "let")) {
         return false;
     }
 
@@ -386,15 +413,15 @@ static bool tokens_start_with_for_loop(Tk_view tokens) {
     if (tk_view_front(tokens).type != TOKEN_SYMBOL) {
         return false;
     }
-    return 0 == str_view_cmp_cstr(tk_view_front(tokens).text, "for");
+    return str_view_cstr_is_equal(tk_view_front(tokens).text, "for");
 }
 
-static bool is_symbol_in(const Token* prev, const Token* curr) {
+static bool is_not_symbol_in(const Token* prev, const Token* curr) {
     (void) prev;
     if (curr->type != TOKEN_SYMBOL) {
         return true;
     }
-    return 0 != str_view_cmp_cstr(curr->text, "in");
+    return !str_view_cstr_is_equal(curr->text, "in");
 }
 
 static bool extract_for_loop(Node_id* child, Tk_view* tokens) {
@@ -406,7 +433,7 @@ static bool extract_for_loop(Node_id* child, Tk_view* tokens) {
     nodes_at(for_loop)->type = NODE_FOR_LOOP;
     tk_view_chop_front(tokens); // remove for
 
-    Tk_view for_var_decl_tokens = tk_view_chop_on_cond(tokens, is_symbol_in);
+    Tk_view for_var_decl_tokens = tk_view_chop_on_cond(tokens, is_not_symbol_in);
     Node_id var_def = node_new();
     nodes_at(var_def)->type = NODE_FOR_VARIABLE_DEF;
     nodes_append_child(var_def, parse_single_statement(for_var_decl_tokens));
@@ -432,10 +459,9 @@ static bool extract_for_loop(Node_id* child, Tk_view* tokens) {
     nodes_append_child(upper_bound, parse_single_statement(upper_bound_tokens));
     nodes_append_child(for_loop, upper_bound);
 
-    tk_view_chop_front(tokens); // remove { at body start
-    Tk_view body_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_CLOSE_CURLY_BRACE);
+    log_tokens(LOG_DEBUG, *tokens, 0);
+    Tk_view body_tokens = extract_items_inside_brackets(tokens, TOKEN_CLOSE_CURLY_BRACE);
     nodes_append_child(for_loop, parse_block(body_tokens));
-    tk_view_chop_front(tokens); // remove } at body end
 
     log_tree(LOG_DEBUG, for_loop);
     *child = for_loop;
@@ -447,7 +473,7 @@ static Node_id parse_function_declaration(Tk_view tokens) {
     Token extern_type_token = tk_view_chop_front(&tokens); // remove "c"
     tk_view_chop_count(&tokens, 2); // remove ")" and "fn"
 
-    if (0 != str_view_cmp_cstr(extern_type_token.text, "c")) {
+    if (!str_view_cstr_is_equal(extern_type_token.text, "c")) {
         todo();
     }
 
@@ -463,7 +489,7 @@ static bool tokens_start_with_function_declaration(Tk_view tokens) {
         return false;
     }
 
-    return 0 == str_view_cmp_cstr(tk_view_front(tokens).text, "extern");
+    return str_view_cstr_is_equal(tk_view_front(tokens).text, "extern");
 }
 
 static bool extract_function_declaration(Node_id* child, Tk_view* tokens) {
@@ -605,10 +631,11 @@ static Node_id parse_function_return_statement(Tk_view tokens) {
 }
 
 static bool extract_function_return_statement(Node_id* result, Tk_view* tokens) {
-    if (0 != str_view_cmp_cstr(tk_view_front(*tokens).text, "return")) {
+    if (!str_view_cstr_is_equal(tk_view_front(*tokens).text, "return")) {
         return false;
     }
 
+    log_tokens(LOG_DEBUG, *tokens, 0);
     Tk_view return_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_SEMICOLON);
     tk_view_chop_front(tokens); // remove ;
 
@@ -638,8 +665,34 @@ static bool extract_assignment(Node_id* result, Tk_view* tokens) {
     return true;
 }
 
+static bool is_if_statement(Tk_view tokens) {
+    if (tk_view_front(tokens).type == TOKEN_SYMBOL && str_view_cstr_is_equal(tk_view_front(tokens).text, "if")) {
+        return true;
+    }
+    return false;
+}
+
+static bool extract_if_statement(Node_id* result, Tk_view* tokens) {
+    if (!is_if_statement(*tokens)) {
+        return false;
+    }
+
+    Node_id if_statement = node_new();
+    nodes_at(if_statement)->type = NODE_IF_STATEMENT;
+
+    tk_view_chop_front(tokens); // remove "if"
+    Tk_view if_condition = tk_view_chop_on_type_delim(tokens, TOKEN_OPEN_CURLY_BRACE);
+    log_tokens(LOG_DEBUG, if_condition, 0);
+
+    Tk_view if_body = extract_items_inside_brackets(tokens, TOKEN_CLOSE_CURLY_BRACE);
+
+    log_tokens(LOG_DEBUG, if_body, 0);
+    todo();
+}
+
 INLINE bool extract_block_element(Node_id* child, Tk_view* tokens) {
     return \
+        extract_if_statement(child, tokens) || \
         extract_function_definition(child, tokens) || \
         extract_function_call(child, tokens) || \
         extract_function_return_statement(child, tokens) || \
