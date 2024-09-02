@@ -96,7 +96,7 @@ static bool tokens_start_with_function_call(Tk_view tokens) {
         return false;
     }
 
-    if (!str_view_cstr_is_equal(tk_view_front(tokens).text, "extern")) {
+    if (str_view_cstr_is_equal(tk_view_front(tokens).text, "extern")) {
         return false;
     }
 
@@ -672,6 +672,19 @@ static bool is_if_statement(Tk_view tokens) {
     return false;
 }
 
+static Node_id parse_if_condition(Tk_view tokens) {
+    Node_id condition = node_new();
+    nodes_at(condition)->type = NODE_IF_CONDITION;
+
+    log_tokens(LOG_DEBUG, tokens, 0);
+    if (count_operators(tokens) > 0) {
+        nodes_append_child(condition, parse_operation(tokens));
+        return condition;
+    }
+
+    todo();
+}
+
 static bool extract_if_statement(Node_id* result, Tk_view* tokens) {
     if (!is_if_statement(*tokens)) {
         return false;
@@ -681,13 +694,19 @@ static bool extract_if_statement(Node_id* result, Tk_view* tokens) {
     nodes_at(if_statement)->type = NODE_IF_STATEMENT;
 
     tk_view_chop_front(tokens); // remove "if"
-    Tk_view if_condition = tk_view_chop_on_type_delim(tokens, TOKEN_OPEN_CURLY_BRACE);
-    log_tokens(LOG_DEBUG, if_condition, 0);
+    Tk_view if_condition_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_OPEN_CURLY_BRACE);
+    Node_id if_condition = parse_if_condition(if_condition_tokens);
 
-    Tk_view if_body = extract_items_inside_brackets(tokens, TOKEN_CLOSE_CURLY_BRACE);
+    log_tokens(LOG_DEBUG, if_condition_tokens, 0);
 
-    log_tokens(LOG_DEBUG, if_body, 0);
-    todo();
+    Tk_view if_body_tokens = extract_items_inside_brackets(tokens, TOKEN_CLOSE_CURLY_BRACE);
+    Node_id if_body = parse_block(if_body_tokens);
+
+    nodes_append_child(if_statement, if_condition);
+    nodes_append_child(if_statement, if_body);
+
+    log_tokens(LOG_DEBUG, if_body_tokens, 0);
+    *result = if_statement;
 }
 
 INLINE bool extract_block_element(Node_id* child, Tk_view* tokens) {
@@ -708,6 +727,7 @@ static Node_id parse_block(Tk_view tokens) {
     while (tokens.count > 0) {
         Node_id child;
         if (!extract_block_element(&child, &tokens)) {
+            log_tokens(LOG_ERROR, tokens, 0);
             todo();
         }
         nodes_append_child(block, child);

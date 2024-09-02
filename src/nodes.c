@@ -26,6 +26,8 @@ static const char* NODE_COND_GOTO_DESCRIPTION = "cond_goto";
 static const char* NODE_ALLOCA_DESCRIPTION = "alloca";
 static const char* NODE_STORE_DESCRIPTION = "store";
 static const char* NODE_LOAD_DESCRIPTION = "load";
+static const char* NODE_IF_STATEMENT_DESCRIPTION = "if_statement";
+static const char* NODE_IF_CONDITION_DESCRIPTION = "if_condition";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
 static void nodes_assert_tree_linkage_is_consistant_internal(Size_t_vec* nodes_visited, Node_id root) {
@@ -136,6 +138,10 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_STORE_DESCRIPTION);
         case NODE_LOAD:
             return str_view_from_cstr(NODE_LOAD_DESCRIPTION);
+        case NODE_IF_STATEMENT:
+            return str_view_from_cstr(NODE_IF_STATEMENT_DESCRIPTION);
+        case NODE_IF_CONDITION:
+            return str_view_from_cstr(NODE_IF_CONDITION_DESCRIPTION);
         case NODE_NO_TYPE:
             return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
         default:
@@ -210,6 +216,10 @@ String node_print_internal(Node_id node) {
         case NODE_FOR_LOWER_BOUND:
             // fallthrough
         case NODE_FOR_VARIABLE_DEF:
+            // fallthrough
+        case NODE_IF_STATEMENT:
+            // fallthrough
+        case NODE_IF_CONDITION:
             // fallthrough
         case NODE_NO_TYPE:
             break;

@@ -235,6 +235,7 @@ bool add_load_and_store(Node_id curr_node) {
             insert_store_assignment(curr_node, nodes_get_child(curr_node, 1));
             return true;
         case NODE_FOR_LOOP:
+            unreachable("for loop node should not still exist at this point\n");
             todo();
         case NODE_FOR_VARIABLE_DEF:
             todo();
@@ -257,6 +258,8 @@ bool add_load_and_store(Node_id curr_node) {
             return false;
         case NODE_LOAD:
             return false;
+        case NODE_IF_STATEMENT:
+            unreachable("if statement node should not still exist at this point\n");
         default:
             todo();
     }
