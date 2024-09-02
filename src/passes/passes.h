@@ -5,7 +5,7 @@
 
 bool walk_tree(Node_id root, bool (callback)(Node_id curr_node));
 
-bool for_loop_to_branch(Node_id curr_node);
+bool for_and_if_to_branch(Node_id curr_node);
 
 bool add_load_and_store(Node_id curr_node);
 

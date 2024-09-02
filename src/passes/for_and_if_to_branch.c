@@ -86,11 +86,7 @@ static Node_id get_for_loop_cond_var_assign(Str_view sym_name) {
     return assignment_new(symbol_new(sym_name), operation);
 }
 
-bool for_loop_to_branch(Node_id for_loop) {
-    if (nodes_at(for_loop)->type != NODE_FOR_LOOP) {
-        return false;
-    }
-
+static void for_loop_to_branch(Node_id for_loop) {
     Node_id lower_bound = nodes_get_child_of_type(for_loop, NODE_FOR_LOWER_BOUND);
     Node_id upper_bound = nodes_get_child_of_type(for_loop, NODE_FOR_UPPER_BOUND);
     Node_id for_block = nodes_get_child_of_type(for_loop, NODE_BLOCK);
@@ -144,6 +140,22 @@ bool for_loop_to_branch(Node_id for_loop) {
 
     log_tree(LOG_DEBUG, node_id_from(0));
     nodes_replace(for_loop, new_branch_block);
+}
 
-    return false;
+static void if_statement_to_branch(Node_id curr_node) {
+    todo();
+}
+
+bool for_and_if_to_branch(Node_id curr_node) {
+    switch (nodes_at(curr_node)->type) {
+        case NODE_FOR_LOOP:
+            for_loop_to_branch(curr_node);
+            return false;
+        case NODE_IF_STATEMENT:
+            if_statement_to_branch(curr_node);
+            return false;
+        default:
+            return false;
+    }
+
 }

@@ -16,7 +16,7 @@ OBJS=\
 	 ${BUILD_DIR}/parser_utils.o \
 	 ${BUILD_DIR}/passes/do_passes.o \
 	 ${BUILD_DIR}/passes/walk_tree.o \
-	 ${BUILD_DIR}/passes/for_loop_to_branch.o \
+	 ${BUILD_DIR}/passes/for_and_if_to_branch.o \
 	 ${BUILD_DIR}/passes/assign_llvm_ids.o \
 	 ${BUILD_DIR}/passes/add_load_and_store.o \
 	 ${BUILD_DIR}/nodes.o
@@ -85,8 +85,8 @@ ${BUILD_DIR}/passes/do_passes.o: src/passes/do_passes.c src/*.h src/passes/*.h t
 ${BUILD_DIR}/passes/walk_tree.o: src/passes/walk_tree.c src/*.h src/passes/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/passes/walk_tree.o src/passes/walk_tree.c
 
-${BUILD_DIR}/passes/for_loop_to_branch.o: src/passes/for_loop_to_branch.c src/*.h third_party/*
-	cc ${C_FLAGS} -c -o ${BUILD_DIR}/passes/for_loop_to_branch.o src/passes/for_loop_to_branch.c
+${BUILD_DIR}/passes/for_and_if_to_branch.o: src/passes/for_and_if_to_branch.c src/*.h third_party/*
+	cc ${C_FLAGS} -c -o ${BUILD_DIR}/passes/for_and_if_to_branch.o src/passes/for_and_if_to_branch.c
 
 ${BUILD_DIR}/passes/assign_llvm_ids.o: src/passes/assign_llvm_ids.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/passes/assign_llvm_ids.o src/passes/assign_llvm_ids.c
