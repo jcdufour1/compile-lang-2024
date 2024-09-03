@@ -70,6 +70,14 @@ static inline Node_id nodes_left_child(Node_id idx) {
     return nodes_at(idx)->left_child;
 }
 
+// return prev if prev is non-null, or parent otherwise
+static inline Node_id nodes_prev_or_parent(Node_id idx) {
+    if (node_is_null(nodes_prev(idx))) {
+        return nodes_parent(idx);
+    }
+    return nodes_prev(idx);
+}
+
 static inline void nodes_set_next(Node_id base, Node_id next) {
     nodes_at(base)->next = next;
 }
