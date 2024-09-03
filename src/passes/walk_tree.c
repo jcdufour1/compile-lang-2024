@@ -13,6 +13,7 @@ typedef enum {
 // callback returns true to indicate that the curr_node should be removed
 // nodes (other than decendents of curr_node) should not be removed within the callback
 // `nodes_replace` should only be called on curr_node or decendents
+// nodes should only be inserted (in callback) as decendent of curr_node
 bool walk_tree(Node_id curr_node, bool (callback)(Node_id curr_node)) {
     const Node_id original_root = curr_node;
 
@@ -26,7 +27,6 @@ bool walk_tree(Node_id curr_node, bool (callback)(Node_id curr_node)) {
     LOCAL_STATUS status;
     Node_id prev = nodes_prev(curr_node);
     Node_id parent = nodes_parent(curr_node);
-    log_tree(LOG_DEBUG, curr_node);
     if (node_is_null(parent)) {
         log(LOG_DEBUG, "thing 1\n");
         // we are at the actual root
@@ -55,14 +55,11 @@ bool walk_tree(Node_id curr_node, bool (callback)(Node_id curr_node)) {
             break;
         case LOCAL_PREV:
             log(LOG_DEBUG, "thing 6\n");
-            log_tree(LOG_DEBUG, prev);
-            log_tree(LOG_DEBUG, curr_node);
             curr_node = nodes_next(prev);
             break;
         default:
             unreachable("");
     }
-    log_tree(LOG_DEBUG, curr_node);
 
     nodes_assert_tree_linkage_is_consistant(curr_node);
 

@@ -96,18 +96,17 @@ static void for_loop_to_branch(Node_id for_loop) {
     assert(node_is_null(nodes_parent(new_branch_block)));
 
     Node_id symbol_lhs_assign;
-    Node_id old_var_def;
+    Node_id regular_var_def;
     {
-        Node_id new_var_def;
-        new_var_def = nodes_get_child_of_type(for_loop, NODE_FOR_VARIABLE_DEF);
-        old_var_def = nodes_get_child_of_type(new_var_def, NODE_VARIABLE_DEFINITION);
-        nodes_remove(old_var_def, false);
-        nodes_insert_before(for_loop, old_var_def);
-        symbol_lhs_assign = symbol_new(nodes_at(old_var_def)->name);
-        nodes_remove_siblings(new_var_def);
+        Node_id for_var_def;
+        for_var_def = nodes_get_child_of_type(for_loop, NODE_FOR_VARIABLE_DEF);
+        regular_var_def = nodes_get_child_of_type(for_var_def, NODE_VARIABLE_DEFINITION);
+        nodes_remove(regular_var_def, false);
+        symbol_lhs_assign = symbol_new(nodes_at(regular_var_def)->name);
+        nodes_remove_siblings(for_var_def);
     }
 
-    Node_id assignment_to_inc_cond_var = get_for_loop_cond_var_assign(nodes_at(old_var_def)->name);
+    Node_id assignment_to_inc_cond_var = get_for_loop_cond_var_assign(nodes_at(regular_var_def)->name);
     assert(node_is_null(nodes_parent(new_branch_block)));
     nodes_remove_siblings_and_parent(lower_bound);
     nodes_remove_siblings_and_parent(upper_bound);
@@ -121,12 +120,13 @@ static void for_loop_to_branch(Node_id for_loop) {
     Node_id after_check_label = label_new(str_view_from_cstr("for_after_check"));
     Node_id after_for_loop_label = label_new(str_view_from_cstr("for_after"));
     Node_id check_cond_jmp = jmp_if_less_than_new(
-        nodes_at(old_var_def)->name, 
+        nodes_at(regular_var_def)->name, 
         nodes_at(after_check_label)->name, 
         nodes_at(after_for_loop_label)->name,
         upper_bound
     );
 
+    nodes_append_child(new_branch_block, regular_var_def);
     nodes_append_child(new_branch_block, new_var_assign);
     nodes_append_child(new_branch_block, jmp_to_check_cond_label);
     nodes_append_child(new_branch_block, check_cond_label);
@@ -138,7 +138,6 @@ static void for_loop_to_branch(Node_id for_loop) {
 
     nodes_append_child(new_branch_block, after_for_loop_label);
 
-    log_tree(LOG_DEBUG, node_id_from(0));
     nodes_replace(for_loop, new_branch_block);
 }
 
@@ -157,5 +156,5 @@ bool for_and_if_to_branch(Node_id curr_node) {
         default:
             return false;
     }
-
 }
+
