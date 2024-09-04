@@ -132,7 +132,7 @@ static void for_loop_to_branch(Node_id for_loop) {
     nodes_append_child(new_branch_block, check_cond_label);
     nodes_append_child(new_branch_block, check_cond_jmp);
     nodes_append_child(new_branch_block, after_check_label);
-    nodes_extend_children(new_branch_block, nodes_left_child(for_block)); // this is the problem
+    nodes_extend_children(new_branch_block, nodes_left_child(for_block));
     nodes_append_child(new_branch_block, assignment_to_inc_cond_var);
     nodes_append_child(new_branch_block, goto_new(nodes_at(check_cond_label)->name));
 
@@ -142,6 +142,21 @@ static void for_loop_to_branch(Node_id for_loop) {
 }
 
 static void if_statement_to_branch(Node_id curr_node) {
+    log_tree(LOG_DEBUG, curr_node);
+
+    Node_id condition = nodes_get_child_of_type(curr_node, NODE_IF_CONDITION);
+    Node_id block = nodes_get_child_of_type(curr_node, NODE_BLOCK);
+
+    Node_id new_branch_block = node_new();
+    nodes_at(new_branch_block)->type = NODE_BLOCK;
+
+    Node_id check_cond_jmp = jmp_if_less_than_new(
+        nodes_at(regular_var_def)->name, 
+        nodes_at(after_check_label)->name, 
+        nodes_at(after_for_loop_label)->name,
+        upper_bound
+    );
+
     todo();
 }
 

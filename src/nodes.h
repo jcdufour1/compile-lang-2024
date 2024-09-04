@@ -286,7 +286,7 @@ static inline void nodes_remove_siblings_and_parent(Node_id node) {
 
 static inline Node_id nodes_get_child_of_type(Node_id parent, NODE_TYPE node_type) {
     if (node_is_null(nodes_left_child(parent))) {
-        todo();
+        unreachable("no children");
     }
 
     nodes_foreach_child(child, parent) {
@@ -296,7 +296,7 @@ static inline Node_id nodes_get_child_of_type(Node_id parent, NODE_TYPE node_typ
     }
 
     log_tree(LOG_VERBOSE, parent);
-    unreachable("");
+    unreachable("node_type not found");
 }
 
 static inline Node_id nodes_get_sibling_of_type(Node_id node, NODE_TYPE node_type) {
