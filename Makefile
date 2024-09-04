@@ -6,6 +6,7 @@ BUILD_DIR=build/debug/
 OBJS=\
 	 ${BUILD_DIR}/main.o \
 	 ${BUILD_DIR}/tokenizer.o \
+	 ${BUILD_DIR}/arena.o \
 	 ${BUILD_DIR}/parser.o \
 	 ${BUILD_DIR}/globals.o \
 	 ${BUILD_DIR}/token.o \
@@ -49,6 +50,9 @@ ${BUILD_DIR}/main.o: src/main.c src/*.h src/passes/*.h third_party/*
 
 ${BUILD_DIR}/parser.o: src/parser.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/parser.o src/parser.c
+
+${BUILD_DIR}/arena.o: src/arena.c src/*.h third_party/*
+	cc ${C_FLAGS} -c -o ${BUILD_DIR}/arena.o src/arena.c
 
 ${BUILD_DIR}/parser_utils.o: src/parser_utils.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/parser_utils.o src/parser_utils.c
