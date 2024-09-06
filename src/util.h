@@ -89,27 +89,6 @@ typedef int LOG_LEVEL;
         abort(); \
     } while (0);
 
-static void* safe_realloc(void* old_ptr, size_t old_capacity, size_t new_count_items, size_t size_each_item) {
-    size_t new_capacity = new_count_items*size_each_item;
-    void* new_ptr = realloc(old_ptr, new_capacity);
-    memset((char*)new_ptr + old_capacity, 0,  new_capacity - old_capacity);
-    if (!new_ptr) {
-        todo();
-    }
-    return new_ptr;
-}
-
-// buffer is zero initialized
-static void* safe_malloc(size_t count_items, size_t size_each_item) {
-    size_t capacity = count_items*size_each_item;
-    void* new_ptr = malloc(capacity);
-    if (!new_ptr) {
-        todo();
-    }
-    memset(new_ptr, 0, capacity);
-    return new_ptr;
-}
-
 #define BOOL_FMT "%s"
 
 static inline const char* bool_print(bool condition) {
@@ -118,14 +97,6 @@ static inline const char* bool_print(bool condition) {
     }
     return "false";
 }
-
-static inline void safe_free_internal(void* ptr) {
-    free(ptr);
-}
-
-#define safe_free(ptr) \
-    safe_free_internal(ptr); \
-    (ptr) = NULL;
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 

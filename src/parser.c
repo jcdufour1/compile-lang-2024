@@ -707,6 +707,7 @@ static bool extract_if_statement(Node_id* result, Tk_view* tokens) {
 
     log_tokens(LOG_DEBUG, if_body_tokens, 0);
     *result = if_statement;
+    todo();
 }
 
 INLINE bool extract_block_element(Node_id* child, Tk_view* tokens) {

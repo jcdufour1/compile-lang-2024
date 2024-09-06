@@ -78,9 +78,9 @@ static inline void sym_tbl_expand_if_nessessary() {
     }
 
     if (should_move_elements) {
-        new_table_nodes = safe_malloc(symbol_table.capacity, node_size);
+        new_table_nodes = arena_alloc(symbol_table.capacity*node_size);
         sym_tbl_cpy(new_table_nodes, symbol_table.table_nodes, old_capacity);
-        safe_free(symbol_table.table_nodes);
+        arena_free(symbol_table.table_nodes, symbol_table.capacity*node_size);
         symbol_table.table_nodes = new_table_nodes;
     }
 }
