@@ -6,10 +6,6 @@
 #define ARENA_DEFAULT_CAPACITY (1 << 20) // 1 MB initial
 #define ARENA_FREE_NODE_BLOCK_CAPACITY 16
 
-static size_t space_remaining(void) {
-    return arena.capacity - arena.in_use;
-}
-
 static void* safe_realloc(void* old_ptr, size_t old_capacity, size_t new_count_items, size_t size_each_item) {
     size_t new_capacity = new_count_items*size_each_item;
     void* new_ptr = realloc(old_ptr, new_capacity);
@@ -36,7 +32,11 @@ static void* safe_malloc(size_t capacity) {
         (ptr) = NULL; \
     } while (0);
 
-static void remove_free_node(Arena_free_node* prev_node, Arena_free_node* node_to_remove) {
+static size_t space_remaining(void) {
+    return arena.capacity - arena.in_use;
+}
+
+static void remove_free_node(Arena_free_node* node_to_remove) {
     assert(node_to_remove && "node_to_remove should not be null");
 
     if (node_to_remove == (Arena_free_node*)node_to_remove->buf) {
@@ -62,7 +62,7 @@ static bool use_free_node(void** buf, size_t capacity_needed) {
                 curr_node->capacity -= capacity_needed;
             } else {
                 // remove free node
-                remove_free_node(prev_node, curr_node);
+                remove_free_node(curr_node);
             }
             return true;
         }
@@ -83,8 +83,7 @@ void* arena_alloc(size_t capacity_needed) {
         while (space_remaining() < capacity_needed) {
             arena.capacity *= 2;
         }
-        arena.buf = safe_malloc(arena.capacity);
-        log(LOG_DEBUG, "thing 88: %p %zu\n", arena.buf, arena.capacity);
+        arena.buf_after_taken = safe_malloc(arena.capacity);
     }
 
     if (space_remaining() < capacity_needed) {
@@ -99,10 +98,11 @@ void* arena_alloc(size_t capacity_needed) {
     }
 
     // no free node could hold this item
-    void* new_alloc_buf = (char*)arena.buf + arena.in_use;
+    void* new_alloc_buf = arena.buf_after_taken;
     memset(new_alloc_buf, 0, capacity_needed);
     log(LOG_DEBUG, "thing 89: %p %zu\n", new_alloc_buf, capacity_needed);
     arena.in_use += capacity_needed;
+    arena.buf_after_taken = arena.buf_after_taken + capacity_needed;
     return new_alloc_buf;
 }
 

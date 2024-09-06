@@ -10,8 +10,8 @@ typedef struct Arena_free_node_ {
 } Arena_free_node;
 
 typedef struct {
-    void* buf;
-    size_t in_use; // size in bytes of space taken (including freed spots)
+    void* buf_after_taken;
+    size_t in_use;
     size_t capacity; // size in bytes of space malloced
 
     Arena_free_node* free_node;
