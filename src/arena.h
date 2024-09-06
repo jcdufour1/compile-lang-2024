@@ -3,9 +3,10 @@
 
 #include <stddef.h>
 
-typedef struct {
+typedef struct Arena_free_node_ {
     void* buf;
     size_t capacity;
+    struct Arena_free_node_* next;
 } Arena_free_node;
 
 typedef struct {
@@ -13,16 +14,15 @@ typedef struct {
     size_t in_use; // size in bytes of space taken (including freed spots)
     size_t capacity; // size in bytes of space malloced
 
-    Arena_free_node* free_nodes;
-    size_t free_nodes_count;
-    size_t free_nodes_capacity;
+    Arena_free_node* free_node;
 } Arena;
 
 extern Arena arena;
 
-// allocate a memory region in arena, return pointer (similer to malloc, but never return null)
+// allocate a zero-initialized memory region in arena, return pointer (similer to malloc, but never return null)
 void* arena_alloc(size_t capacity);
 
+// zero-initialized
 void* arena_realloc(void* old_buf, size_t old_capacity, size_t new_capacity);
 
 void arena_free(void* buf, size_t old_capacity);

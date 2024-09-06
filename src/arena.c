@@ -4,7 +4,7 @@
 #include <stddef.h>
 
 #define ARENA_DEFAULT_CAPACITY (1 << 20) // 1 MB initial
-#define ARENA_FREE_NODES_DEFAULT_CAPACITY 16 // 16 free nodes initial
+#define ARENA_FREE_NODE_BLOCK_CAPACITY 16
 
 static size_t space_remaining(void) {
     return arena.capacity - arena.in_use;
@@ -36,29 +36,40 @@ static void* safe_malloc(size_t capacity) {
         (ptr) = NULL; \
     } while (0);
 
-static void remove_free_node(Arena_free_node* node_ptr) {
-    size_t count_nodes_to_move = (arena.free_nodes + arena.free_nodes_count) - (node_ptr + 1);
-    memmove(node_ptr, node_ptr + 1, count_nodes_to_move);
-    arena.free_nodes_count--;
+static void remove_free_node(Arena_free_node* prev_node, Arena_free_node* node_to_remove) {
+    assert(node_to_remove && "node_to_remove should not be null");
+
+    if (node_to_remove == (Arena_free_node*)node_to_remove->buf) {
+        todo();
+    }
+
+    Arena_free_node new_node = {.buf = node_to_remove, .capacity = sizeof(*node_to_remove), .next = node_to_remove->next};
+    *node_to_remove = new_node;
+    assert(node_to_remove != node_to_remove->next);
 }
 
+// TODO: combine contiguous free nodes
 static bool use_free_node(void** buf, size_t capacity_needed) {
-    for (size_t idx = 0; idx < arena.free_nodes_count; idx++) {
-        if (arena.free_nodes[idx].capacity >= capacity_needed) {
-            if (arena.free_nodes[idx].capacity > capacity_needed) {
-                *buf = arena.free_nodes[idx].buf;
-                memset(*buf, 0, capacity_needed);
-                // create smaller node
-                arena.free_nodes[idx].buf += capacity_needed;
-                arena.free_nodes[idx].capacity -= capacity_needed;
-                return true;
-            }
-
-            *buf = arena.free_nodes[idx].buf;
+    Arena_free_node* prev_node = NULL;
+    Arena_free_node* curr_node = arena.free_node;
+    while (curr_node) {
+        if (curr_node->capacity >= capacity_needed) {
+            *buf = curr_node->buf;
             memset(*buf, 0, capacity_needed);
-            remove_free_node(&arena.free_nodes[idx]);
+            if (curr_node->capacity > capacity_needed) {
+                // create smaller node
+                curr_node->buf = (char*)curr_node->buf + capacity_needed;
+                curr_node->capacity -= capacity_needed;
+            } else {
+                // remove free node
+                remove_free_node(prev_node, curr_node);
+            }
             return true;
         }
+
+        prev_node = curr_node;
+        curr_node = curr_node->next;
+        assert(prev_node != curr_node);
     }
 
     return false;
@@ -98,21 +109,18 @@ void* arena_alloc(size_t capacity_needed) {
 void arena_free(void* buf, size_t old_capacity) {
     assert(buf && "null freed");
 
-    if (arena.free_nodes_capacity < 1) {
-        arena.free_nodes_capacity = ARENA_FREE_NODES_DEFAULT_CAPACITY;
-        arena.free_nodes = arena_alloc(arena.free_nodes_capacity*sizeof(arena.free_nodes[0]));
-        log(LOG_DEBUG, "thing 98: %p\n", (void*)arena.free_nodes);
-    }
+    Arena_free_node* new_next = arena.free_node ? (arena.free_node->next) : NULL;
+    Arena_free_node* new_node = arena_alloc(sizeof(*arena.free_node));
 
-    log(LOG_DEBUG, "thing 100: %p\n", (void*)buf);
-    if (arena.free_nodes_capacity <= arena.free_nodes_count) {
-        // need to expand free_nodes
-        todo();
+    if (new_node == arena.free_node) {
+        new_next = arena.free_node->next;
+    } else {
+        new_next = arena.free_node;
     }
-
-    Arena_free_node new_node = {.buf = buf, .capacity = old_capacity};
-    arena.free_nodes[arena.free_nodes_count] = new_node;
-    arena.free_nodes_count++;
+    Arena_free_node new_node_struct = {.buf = buf, .capacity = old_capacity, .next = new_next};
+    *new_node = new_node_struct;
+    arena.free_node = new_node;
+    assert(arena.free_node != arena.free_node->next);
 }
 
 void* arena_realloc(void* old_buf, size_t old_capacity, size_t new_capacity) {
