@@ -85,7 +85,7 @@ static Tk_view extract_items_inside_brackets(Tk_view* tokens, TOKEN_TYPE closing
     }
     Tk_view inside_brackets = tk_view_chop_count(tokens, idx_closing_bracket);
 
-    log_tokens(LOG_DEBUG, *tokens, 0);
+    //log_tokens(LOG_DEBUG, *tokens, 0);
     Token closing_bracket = tk_view_chop_front(tokens);
     assert(closing_bracket.type == closing_bracket_type);
     return inside_brackets;
@@ -202,7 +202,7 @@ static bool extract_function_parameter(Node_id* child, Tk_view* tokens) {
 }
 
 static Node_id parse_function_parameters(Tk_view tokens) {
-    log(LOG_TRACE, "entering parse_function_parameters\n");
+    //log(LOG_TRACE, "entering parse_function_parameters\n");
 
     Node_id fun_params = node_new();
     nodes_at(fun_params)->type = NODE_FUNCTION_PARAMETERS;
@@ -459,11 +459,11 @@ static bool extract_for_loop(Node_id* child, Tk_view* tokens) {
     nodes_append_child(upper_bound, parse_single_statement(upper_bound_tokens));
     nodes_append_child(for_loop, upper_bound);
 
-    log_tokens(LOG_DEBUG, *tokens, 0);
+    //log_tokens(LOG_DEBUG, *tokens, 0);
     Tk_view body_tokens = extract_items_inside_brackets(tokens, TOKEN_CLOSE_CURLY_BRACE);
     nodes_append_child(for_loop, parse_block(body_tokens));
 
-    log_tree(LOG_DEBUG, for_loop);
+    //log_tree(LOG_DEBUG, for_loop);
     *child = for_loop;
     return true;
 }
@@ -541,7 +541,7 @@ static Node_id parse_symbol(Tk_view tokens) {
 }
 
 static Node_id parse_operation(Tk_view tokens) {
-    log_tokens(LOG_TRACE, tokens, 0);
+    //log_tokens(LOG_TRACE, tokens, 0);
 
     size_t idx_operator = get_idx_lowest_precedence_operator(tokens);
     Tk_view left_tokens = tk_view_chop_count(&tokens, idx_operator);
@@ -589,7 +589,7 @@ static bool extract_function_argument(Node_id* child, Tk_view* tokens) {
 }
 
 static bool extract_function_call(Node_id* child, Tk_view* tokens) {
-    log_tokens(LOG_TRACE, *tokens, 0);
+    //log_tokens(LOG_TRACE, *tokens, 0);
     if (!tokens_start_with_function_call(*tokens)) {
         return false;
     }
@@ -608,7 +608,7 @@ static bool extract_function_call(Node_id* child, Tk_view* tokens) {
     Tk_view arguments_tokens = tk_view_chop_count(tokens, parameters_end);
 
     Node_id argument;
-    log_tokens(LOG_DEBUG, arguments_tokens, 0);
+    //log_tokens(LOG_DEBUG, arguments_tokens, 0);
     while (extract_function_argument(&argument, &arguments_tokens)) {
         nodes_append_child(function_call, argument);
     }
@@ -635,7 +635,7 @@ static bool extract_function_return_statement(Node_id* result, Tk_view* tokens) 
         return false;
     }
 
-    log_tokens(LOG_DEBUG, *tokens, 0);
+    //log_tokens(LOG_DEBUG, *tokens, 0);
     Tk_view return_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_SEMICOLON);
     tk_view_chop_front(tokens); // remove ;
 
@@ -676,7 +676,7 @@ static Node_id parse_if_condition(Tk_view tokens) {
     Node_id condition = node_new();
     nodes_at(condition)->type = NODE_IF_CONDITION;
 
-    log_tokens(LOG_DEBUG, tokens, 0);
+    //log_tokens(LOG_DEBUG, tokens, 0);
     if (count_operators(tokens) > 0) {
         nodes_append_child(condition, parse_operation(tokens));
         return condition;
@@ -697,7 +697,7 @@ static bool extract_if_statement(Node_id* result, Tk_view* tokens) {
     Tk_view if_condition_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_OPEN_CURLY_BRACE);
     Node_id if_condition = parse_if_condition(if_condition_tokens);
 
-    log_tokens(LOG_DEBUG, if_condition_tokens, 0);
+    //log_tokens(LOG_DEBUG, if_condition_tokens, 0);
 
     Tk_view if_body_tokens = extract_items_inside_brackets(tokens, TOKEN_CLOSE_CURLY_BRACE);
     Node_id if_body = parse_block(if_body_tokens);
@@ -705,7 +705,7 @@ static bool extract_if_statement(Node_id* result, Tk_view* tokens) {
     nodes_append_child(if_statement, if_condition);
     nodes_append_child(if_statement, if_body);
 
-    log_tokens(LOG_DEBUG, if_body_tokens, 0);
+    //log_tokens(LOG_DEBUG, if_body_tokens, 0);
     *result = if_statement;
     todo();
 }
@@ -728,7 +728,7 @@ static Node_id parse_block(Tk_view tokens) {
     while (tokens.count > 0) {
         Node_id child;
         if (!extract_block_element(&child, &tokens)) {
-            log_tokens(LOG_ERROR, tokens, 0);
+            //log_tokens(LOG_ERROR, tokens, 0);
             todo();
         }
         nodes_append_child(block, child);
@@ -779,15 +779,15 @@ static Node_id parse_single_statement(Tk_view tokens) {
         return parse_operation(tokens);
     }
 
-    log_tokens(LOG_DEBUG, tokens, indent_amt);
-    log_tree(LOG_VERBOSE, node_id_from(0));
+    //log_tokens(LOG_DEBUG, tokens, indent_amt);
+    //log_tree(LOG_VERBOSE, node_id_from(0));
     unreachable("");
 }
 
 Node_id parse(const Tokens tokens) {
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
     Node_id root = parse_block(token_view);
-    log(LOG_VERBOSE, "completed parse tree:\n");
-    log_tree(LOG_VERBOSE, root);
+    //log(LOG_VERBOSE, "completed parse tree:\n");
+    //log_tree(LOG_VERBOSE, root);
     return root;
 }

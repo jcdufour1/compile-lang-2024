@@ -130,7 +130,7 @@ static void emit_function_call(String* output, Node_id fun_call) {
 
     Node_id fun_def;
     if (!sym_tbl_lookup(&fun_def, nodes_at(fun_call)->name)) {
-        unreachable("");
+        unreachable(NODE_FMT"\n", node_print(fun_call));
     }
 
     // start of actual function call

@@ -7,7 +7,7 @@
 #include "nodes.h"
 #include <stb_ds.h>
 
-#define SYM_TBL_DEFAULT_CAPACITY 1
+#define SYM_TBL_DEFAULT_CAPACITY 100000
 #define SYM_TBL_MAX_DENSITY (0.6f)
 
 typedef enum {
@@ -51,8 +51,9 @@ static inline void sym_tbl_add_internal(Symbol_table_node* sym_tbl_nodes, size_t
     sym_tbl_nodes[curr_table_idx] = node;
 }
 
-static inline void sym_tbl_cpy(Symbol_table_node* dest, const Symbol_table_node* src, size_t capacity_node_count) {
-    for (size_t bucket_src = 0; bucket_src < capacity_node_count; bucket_src++) {
+static inline void sym_tbl_cpy(Symbol_table_node* dest, const Symbol_table_node* src, size_t count_nodes_to_cpy) {
+    assert(count_nodes_to_cpy < 1);
+    for (size_t bucket_src = 0; bucket_src < count_nodes_to_cpy; bucket_src++) {
         log(LOG_DEBUG, "thing 12\n");
         if (src[bucket_src].status == SYM_TBL_OCCUPIED) {
             log(LOG_DEBUG, "thing 13\n");
@@ -69,7 +70,7 @@ static inline void sym_tbl_expand_if_nessessary() {
     size_t new_count = symbol_table.count + minimum_count_to_reserve;
     size_t node_size = sizeof(symbol_table.table_nodes[0]);
 
-    bool should_move_elements = true;
+    bool should_move_elements = false;
     Symbol_table_node* new_table_nodes;
 
     if (symbol_table.capacity < 1) {

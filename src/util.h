@@ -100,6 +100,8 @@ static inline const char* bool_print(bool condition) {
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
 #define INLINE static inline __attribute__((always_inline))
 
 #define try(cond) \

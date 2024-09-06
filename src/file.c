@@ -3,6 +3,8 @@
 #include "newstring.h"
 
 bool read_file(String* file_text, const char* input_file_name) {
+    assert(input_file_name);
+
     memset(file_text, 0, sizeof(*file_text));
     FILE* file = fopen(input_file_name, "rb");
     if (!file) {

@@ -33,5 +33,7 @@ int main(int argc, char** argv) {
         todo();
     }
 
+    arena_log_free_nodes();
+
     return 0;
 }

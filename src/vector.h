@@ -26,7 +26,7 @@ static inline void vector_reserve(void* typed_vector, size_t size_each_item, siz
             log(LOG_DEBUG, "thing 131: %p\n", vector->buf);
         } else {
             vector->info.capacity *= 2;
-            vector->buf = arena_realloc(vector->buf, old_count, vector->info.capacity*size_each_item);
+            vector->buf = arena_realloc(vector->buf, old_count*size_each_item, vector->info.capacity*size_each_item);
             log(LOG_DEBUG, "thing 132: %p\n", vector->buf);
         }
     }

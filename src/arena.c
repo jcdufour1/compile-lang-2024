@@ -32,8 +32,8 @@ static void* safe_malloc(size_t capacity) {
         (ptr) = NULL; \
     } while (0);
 
-static size_t space_remaining(void) {
-    return arena.capacity - arena.in_use;
+static size_t space_remaining(const Arena_buf arena_buf) {
+    return arena_buf.capacity - arena_buf.in_use;
 }
 
 static void remove_free_node(Arena_free_node* node_to_remove) {
@@ -44,6 +44,7 @@ static void remove_free_node(Arena_free_node* node_to_remove) {
     }
 
     Arena_free_node new_node = {.buf = node_to_remove, .capacity = sizeof(*node_to_remove), .next = node_to_remove->next};
+    log(LOG_DEBUG, "%p %zu\n", new_node.buf, new_node.capacity);
     *node_to_remove = new_node;
     assert(node_to_remove != node_to_remove->next);
 }
@@ -55,15 +56,11 @@ static bool use_free_node(void** buf, size_t capacity_needed) {
     while (curr_node) {
         if (curr_node->capacity >= capacity_needed) {
             *buf = curr_node->buf;
+            arena_log_free_nodes();
             memset(*buf, 0, capacity_needed);
-            if (curr_node->capacity > capacity_needed) {
-                // create smaller node
-                curr_node->buf = (char*)curr_node->buf + capacity_needed;
-                curr_node->capacity -= capacity_needed;
-            } else {
-                // remove free node
-                remove_free_node(curr_node);
-            }
+            // create smaller node
+            curr_node->buf = (char*)curr_node->buf + capacity_needed;
+            curr_node->capacity -= capacity_needed;
             return true;
         }
 
@@ -75,21 +72,18 @@ static bool use_free_node(void** buf, size_t capacity_needed) {
     return false;
 }
 
+static size_t get_total_alloced(void) {
+    Arena_buf* curr_buf = arena.buf;
+    size_t total_alloced = 0;
+    while (curr_buf) {
+        total_alloced += curr_buf->capacity;
+        curr_buf = curr_buf->next;
+    }
+    return total_alloced;
+}
+
 void* arena_alloc(size_t capacity_needed) {
     // TODO: get region from free list if possible
-
-    if (arena.capacity < 1) {
-        arena.capacity = ARENA_DEFAULT_CAPACITY;
-        while (space_remaining() < capacity_needed) {
-            arena.capacity *= 2;
-        }
-        arena.buf_after_taken = safe_malloc(arena.capacity);
-    }
-
-    if (space_remaining() < capacity_needed) {
-        // need to allocate new region
-        todo();
-    }
 
     void* buf;
     if (use_free_node(&buf, capacity_needed)) {
@@ -98,16 +92,63 @@ void* arena_alloc(size_t capacity_needed) {
     }
 
     // no free node could hold this item
-    void* new_alloc_buf = arena.buf_after_taken;
+    Arena_buf* arena_buf_new_region = arena.buf;
+    Arena_buf* arena_buf_last = NULL;
+    while (arena_buf_new_region) {
+        arena_buf_last = arena_buf_new_region;
+        if (space_remaining(*arena_buf_new_region) >= capacity_needed) {
+            break;
+        }
+        arena_buf_new_region = arena_buf_new_region->next;
+    }
+
+    if (!arena_buf_new_region) {
+        // could not find space; must allocate new Arena_buf
+        size_t arena_buf_capacity = MAX(get_total_alloced(), ARENA_DEFAULT_CAPACITY);
+        arena_buf_capacity = MAX(arena_buf_capacity, capacity_needed + sizeof(*arena.buf));
+        arena_buf_new_region = safe_malloc(arena_buf_capacity);
+        arena_buf_new_region->buf_after_taken = arena_buf_new_region + 1;
+        arena_buf_new_region->in_use = sizeof(*arena.buf);
+        arena_buf_new_region->capacity = arena_buf_capacity;
+        if (arena_buf_last) {
+            arena_buf_last->next = arena_buf_new_region;
+        } else {
+            arena.buf = arena_buf_new_region;
+        }
+    }
+
+    assert(arena_buf_new_region);
+    void* new_alloc_buf = arena_buf_new_region->buf_after_taken;
     memset(new_alloc_buf, 0, capacity_needed);
     log(LOG_DEBUG, "thing 89: %p %zu\n", new_alloc_buf, capacity_needed);
-    arena.in_use += capacity_needed;
-    arena.buf_after_taken = arena.buf_after_taken + capacity_needed;
+    arena_buf_new_region->in_use += capacity_needed;
+    arena_buf_new_region->buf_after_taken = (char*)arena_buf_new_region->buf_after_taken + capacity_needed;
     return new_alloc_buf;
+}
+
+static bool find_empty_free_node(Arena_free_node** result) {
+    Arena_free_node* curr_free_node = arena.free_node;
+    while (curr_free_node) {
+        if (curr_free_node->capacity < 1) {
+            *result = curr_free_node;
+            return true;
+        }
+
+        curr_free_node = curr_free_node->next;
+    }
+
+    return false;
 }
 
 void arena_free(void* buf, size_t old_capacity) {
     assert(buf && "null freed");
+
+    Arena_free_node* free_node;
+    if (find_empty_free_node(&free_node)) {
+        free_node->buf = buf;
+        free_node->capacity = old_capacity;
+        return;
+    }
 
     Arena_free_node* new_next = arena.free_node ? (arena.free_node->next) : NULL;
     Arena_free_node* new_node = arena_alloc(sizeof(*arena.free_node));
