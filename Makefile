@@ -1,6 +1,9 @@
-.PHONY: all setup build valgrind gdb
+.PHONY: all setup build gdb
 
-C_FLAGS=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function -std=c11 -pedantic -g -I ./third_party/
+C_FLAGS=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
+		-std=c11 -pedantic -g -I ./third_party/ \
+		-fsanitize=address \
+		-lasan
 
 BUILD_DIR=build/debug/
 OBJS=\
@@ -29,9 +32,6 @@ all: build
 
 run: build
 	${BUILD_DIR}/main ${ARGS_PROGRAM}
-
-valgrind: build
-	valgrind ${BUILD_DIR}/main ${ARGS_PROGRAM}
 
 gdb: build
 	gdb --args ${BUILD_DIR}/main ${ARGS_PROGRAM}

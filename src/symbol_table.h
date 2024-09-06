@@ -51,16 +51,20 @@ static inline void sym_tbl_add_internal(Symbol_table_node* sym_tbl_nodes, size_t
     sym_tbl_nodes[curr_table_idx] = node;
 }
 
-static inline void sym_tbl_cpy(Symbol_table_node* dest, const Symbol_table_node* src, size_t count) {
-    for (size_t bucket_src = 0; bucket_src < count; bucket_src++) {
+static inline void sym_tbl_cpy(Symbol_table_node* dest, const Symbol_table_node* src, size_t capacity_node_count) {
+    for (size_t bucket_src = 0; bucket_src < capacity_node_count; bucket_src++) {
+        log(LOG_DEBUG, "thing 12\n");
         if (src[bucket_src].status == SYM_TBL_OCCUPIED) {
+            log(LOG_DEBUG, "thing 13\n");
             sym_tbl_add_internal(dest, symbol_table.capacity, src[bucket_src].node);
+        } else {
+            log(LOG_DEBUG, "not thing 13\n");
         }
     }
 }
 
 static inline void sym_tbl_expand_if_nessessary() {
-    size_t old_capacity = symbol_table.capacity;
+    size_t old_capacity_node_count = symbol_table.capacity;
     size_t minimum_count_to_reserve = 1;
     size_t new_count = symbol_table.count + minimum_count_to_reserve;
     size_t node_size = sizeof(symbol_table.table_nodes[0]);
@@ -72,15 +76,17 @@ static inline void sym_tbl_expand_if_nessessary() {
         symbol_table.capacity = SYM_TBL_DEFAULT_CAPACITY;
         should_move_elements = true;
     }
-    while ((float)new_count / symbol_table.capacity >= SYM_TBL_MAX_DENSITY) {
+    while (((float)new_count / symbol_table.capacity) >= SYM_TBL_MAX_DENSITY) {
         symbol_table.capacity *= 2;
         should_move_elements = true;
     }
 
     if (should_move_elements) {
         new_table_nodes = arena_alloc(symbol_table.capacity*node_size);
-        sym_tbl_cpy(new_table_nodes, symbol_table.table_nodes, old_capacity);
-        arena_free(symbol_table.table_nodes, symbol_table.capacity*node_size);
+        sym_tbl_cpy(new_table_nodes, symbol_table.table_nodes, old_capacity_node_count);
+        if (symbol_table.table_nodes) {
+            arena_free(symbol_table.table_nodes, symbol_table.capacity*node_size);
+        }
         symbol_table.table_nodes = new_table_nodes;
     }
 }

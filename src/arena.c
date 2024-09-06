@@ -36,6 +36,34 @@ static void* safe_malloc(size_t capacity) {
         (ptr) = NULL; \
     } while (0);
 
+static void remove_free_node(Arena_free_node* node_ptr) {
+    size_t count_nodes_to_move = (arena.free_nodes + arena.free_nodes_count) - (node_ptr + 1);
+    memmove(node_ptr, node_ptr + 1, count_nodes_to_move);
+    arena.free_nodes_count--;
+}
+
+static bool use_free_node(void** buf, size_t capacity_needed) {
+    for (size_t idx = 0; idx < arena.free_nodes_count; idx++) {
+        if (arena.free_nodes[idx].capacity >= capacity_needed) {
+            if (arena.free_nodes[idx].capacity > capacity_needed) {
+                *buf = arena.free_nodes[idx].buf;
+                memset(*buf, 0, capacity_needed);
+                // create smaller node
+                arena.free_nodes[idx].buf += capacity_needed;
+                arena.free_nodes[idx].capacity -= capacity_needed;
+                return true;
+            }
+
+            *buf = arena.free_nodes[idx].buf;
+            memset(*buf, 0, capacity_needed);
+            remove_free_node(&arena.free_nodes[idx]);
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void* arena_alloc(size_t capacity_needed) {
     // TODO: get region from free list if possible
 
@@ -53,19 +81,30 @@ void* arena_alloc(size_t capacity_needed) {
         todo();
     }
 
+    void* buf;
+    if (use_free_node(&buf, capacity_needed)) {
+        // a free node can hold this item
+        return buf;
+    }
+
+    // no free node could hold this item
     void* new_alloc_buf = (char*)arena.buf + arena.in_use;
+    memset(new_alloc_buf, 0, capacity_needed);
     log(LOG_DEBUG, "thing 89: %p %zu\n", new_alloc_buf, capacity_needed);
     arena.in_use += capacity_needed;
     return new_alloc_buf;
 }
 
 void arena_free(void* buf, size_t old_capacity) {
+    assert(buf && "null freed");
+
     if (arena.free_nodes_capacity < 1) {
         arena.free_nodes_capacity = ARENA_FREE_NODES_DEFAULT_CAPACITY;
         arena.free_nodes = arena_alloc(arena.free_nodes_capacity*sizeof(arena.free_nodes[0]));
         log(LOG_DEBUG, "thing 98: %p\n", (void*)arena.free_nodes);
     }
 
+    log(LOG_DEBUG, "thing 100: %p\n", (void*)buf);
     if (arena.free_nodes_capacity <= arena.free_nodes_count) {
         // need to expand free_nodes
         todo();
