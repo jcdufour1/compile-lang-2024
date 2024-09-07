@@ -46,12 +46,15 @@ void arena_destroy(void);
 
 #define arena_log_free_nodes() \
     do { \
+        size_t count_nodes = 0; \
         log(LOG_DEBUG, "thing 489\n"); \
         Arena_free_node* curr_node = arena.free_node; \
         while (curr_node) { \
+            count_nodes++; \
             log(LOG_DEBUG, "%p %zu\n", curr_node->buf, curr_node->capacity); \
             curr_node = curr_node->next; \
         } \
+        log(LOG_DEBUG, "total count free nodes printed: %zu\n", count_nodes); \
     } \
     while (0)
 
