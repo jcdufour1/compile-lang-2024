@@ -17,9 +17,16 @@ typedef struct Arena_free_node_ {
     struct Arena_free_node_* next;
 } Arena_free_node;
 
+#ifndef NDEBUG
+typedef Arena_free_node Arena_alloc_node;
+#endif // NDEBUG
+
 typedef struct {
     Arena_buf* buf;
     Arena_free_node* free_node;
+#ifndef NDEBUG
+    Arena_alloc_node* alloc_node;
+#endif // NDEBUG
 } Arena;
 
 extern Arena arena;
@@ -34,6 +41,8 @@ void* arena_alloc(size_t capacity);
 void* arena_realloc(void* old_buf, size_t old_capacity, size_t new_capacity);
 
 void arena_free(void* buf, size_t old_capacity);
+
+void arena_destroy(void);
 
 #define arena_log_free_nodes() \
     do { \

@@ -32,21 +32,77 @@ static void* safe_malloc(size_t capacity) {
         (ptr) = NULL; \
     } while (0);
 
-static size_t space_remaining(const Arena_buf arena_buf) {
-    return arena_buf.capacity - arena_buf.in_use;
-}
+#ifdef NDEBUG
+#define push_alloc(buf, capacity_needed)
+#define assert_node_alloced(buf, capacity_needed)
+#define remove_alloc(buf)
+#else
+static bool node_is_alloced(const void* buf, size_t old_capacity) {
+    log(LOG_NOTE, "%zu\n", old_capacity);
+    Arena_alloc_node* curr_node = arena.alloc_node;
+    while (curr_node) {
+        assert(curr_node->buf);
+        if ((size_t)curr_node->buf == (size_t)buf) {
+            if (curr_node->capacity != old_capacity) {
+                unreachable(
+                    "capacity passed to arena_free is %zu; expected %zu\n",
+                    old_capacity,
+                    curr_node->capacity
+                );
+            }
+            return true;
+        }
 
-static void remove_free_node(Arena_free_node* node_to_remove) {
-    assert(node_to_remove && "node_to_remove should not be null");
-
-    if (node_to_remove == (Arena_free_node*)node_to_remove->buf) {
-        todo();
+        curr_node = curr_node->next;
     }
 
-    Arena_free_node new_node = {.buf = node_to_remove, .capacity = sizeof(*node_to_remove), .next = node_to_remove->next};
-    log(LOG_DEBUG, "%p %zu\n", new_node.buf, new_node.capacity);
-    *node_to_remove = new_node;
-    assert(node_to_remove != node_to_remove->next);
+    return false;
+}
+
+static void push_alloc(void* buf, size_t capacity_needed) {
+    assert(!node_is_alloced(buf, capacity_needed) && "buf already alloced");
+    assert(buf);
+    Arena_alloc_node* curr_node = arena.alloc_node;
+    if (!curr_node) {
+        arena.alloc_node = safe_malloc(sizeof(*arena.alloc_node));
+        arena.alloc_node->buf = buf;
+        arena.alloc_node->capacity = capacity_needed;
+        assert(node_is_alloced(buf, capacity_needed));
+        return;
+    }
+
+    Arena_alloc_node* prev_node = NULL;
+    while (curr_node) {
+        prev_node = curr_node;
+        curr_node = curr_node->next;
+    }
+    prev_node->next = safe_malloc(sizeof(*arena.alloc_node));
+    prev_node->next->buf = buf;
+    prev_node->next->capacity = capacity_needed;
+    assert(node_is_alloced(buf, capacity_needed));
+}
+
+static void remove_alloc(void* buf) {
+    Arena_alloc_node* curr_node = arena.alloc_node;
+    Arena_alloc_node* prev_node = NULL;
+    while (curr_node) {
+        if (curr_node->buf == buf) {
+            if (prev_node) {
+                prev_node->next = curr_node->next;
+            } else {
+                arena.alloc_node = curr_node->next;
+            }
+            safe_free(curr_node);
+            return;
+        }
+        curr_node = curr_node->next;
+    }
+    unreachable("");
+}
+#endif // NDEBUG
+
+static size_t space_remaining(const Arena_buf arena_buf) {
+    return arena_buf.capacity - arena_buf.in_use;
 }
 
 // TODO: combine contiguous free nodes
@@ -55,8 +111,8 @@ static bool use_free_node(void** buf, size_t capacity_needed) {
     Arena_free_node* curr_node = arena.free_node;
     while (curr_node) {
         if (curr_node->capacity >= capacity_needed) {
+            assert(!node_is_alloced(curr_node->buf, curr_node->capacity));
             *buf = curr_node->buf;
-            arena_log_free_nodes();
             memset(*buf, 0, capacity_needed);
             // create smaller node
             curr_node->buf = (char*)curr_node->buf + capacity_needed;
@@ -83,13 +139,15 @@ static size_t get_total_alloced(void) {
 }
 
 void* arena_alloc(size_t capacity_needed) {
-    // TODO: get region from free list if possible
-
-    void* buf;
-    if (use_free_node(&buf, capacity_needed)) {
-        // a free node can hold this item
-        assert(0 == memcmp(buf, zero_block, capacity_needed));
-        return buf;
+    {
+        void* buf;
+        if (use_free_node(&buf, capacity_needed)) {
+            // a free node can hold this item
+            assert(0 == memcmp(buf, zero_block, capacity_needed));
+            push_alloc(buf, capacity_needed);
+            assert(node_is_alloced(buf, capacity_needed));
+            return buf;
+        }
     }
 
     // no free node could hold this item
@@ -121,10 +179,11 @@ void* arena_alloc(size_t capacity_needed) {
     assert(arena_buf_new_region);
     void* new_alloc_buf = arena_buf_new_region->buf_after_taken;
     memset(new_alloc_buf, 0, capacity_needed);
-    log(LOG_DEBUG, "thing 89: %p %zu\n", new_alloc_buf, capacity_needed);
     arena_buf_new_region->in_use += capacity_needed;
     arena_buf_new_region->buf_after_taken = (char*)arena_buf_new_region->buf_after_taken + capacity_needed;
     assert(0 == memcmp(new_alloc_buf, zero_block, capacity_needed));
+    push_alloc(new_alloc_buf, capacity_needed);
+    assert(node_is_alloced(new_alloc_buf, capacity_needed));
     return new_alloc_buf;
 }
 
@@ -143,7 +202,11 @@ static bool find_empty_free_node(Arena_free_node** result) {
 }
 
 void arena_free(void* buf, size_t old_capacity) {
+    log(LOG_NOTE, "%zu\n", old_capacity);
     assert(buf && "null freed");
+    assert(node_is_alloced(buf, old_capacity));
+    remove_alloc(buf);
+    assert(!node_is_alloced(buf, old_capacity));
 
     Arena_free_node* free_node;
     if (find_empty_free_node(&free_node)) {
@@ -164,11 +227,27 @@ void arena_free(void* buf, size_t old_capacity) {
     *new_node = new_node_struct;
     arena.free_node = new_node;
     assert(arena.free_node != arena.free_node->next);
+    assert(!node_is_alloced(buf, old_capacity));
 }
 
 void* arena_realloc(void* old_buf, size_t old_capacity, size_t new_capacity) {
     void* new_buf = arena_alloc(new_capacity);
     memcpy(new_buf, old_buf, old_capacity);
+    log(LOG_NOTE, "%zu\n", old_capacity);
     arena_free(old_buf, old_capacity);
     return new_buf;
+}
+
+void arena_destroy(void) {
+    todo();
+#ifndef NDEBUG
+    Arena_alloc_node* curr_node = arena.alloc_node;
+    Arena_alloc_node* prev_node = NULL;
+    while (curr_node) {
+        log(LOG_NOTE, "thing thing\n");
+        prev_node = curr_node;
+        curr_node = curr_node->next;
+        safe_free(prev_node);
+    }
+#endif // NDEBUG
 }

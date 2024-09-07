@@ -3,7 +3,7 @@
 C_FLAGS=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
 		-std=c11 -pedantic -g -I ./third_party/ \
 		-fsanitize=address,bounds-strict \
-		-lasan
+		-lasan 
 
 BUILD_DIR=build/debug/
 OBJS=\
@@ -24,6 +24,7 @@ OBJS=\
 	 ${BUILD_DIR}/passes/assign_llvm_ids.o \
 	 ${BUILD_DIR}/passes/add_load_and_store.o \
 	 ${BUILD_DIR}/nodes.o
+DEP_COMMON = Makefile
 
 ARGS_PROGRAM ?= compile examples/test_basic.c --emit-llvm
 CAT ?= cat
@@ -45,60 +46,60 @@ test_quick: run
 	#valgrind ${BUILD_DIR}/main ${ARGS_PROGRAM}
 
 # general
-${BUILD_DIR}/main: ${OBJS}
+${BUILD_DIR}/main: ${DEP_COMMON} ${OBJS}
 	cc ${C_FLAGS} -o ${BUILD_DIR}/main ${OBJS}
 
-${BUILD_DIR}/main.o: src/main.c src/*.h src/passes/*.h third_party/*
+${BUILD_DIR}/main.o: ${DEP_COMMON} src/main.c src/*.h src/passes/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/main.o src/main.c
 
-${BUILD_DIR}/parser.o: src/parser.c src/*.h third_party/*
+${BUILD_DIR}/parser.o: ${DEP_COMMON} src/parser.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/parser.o src/parser.c
 
-${BUILD_DIR}/arena.o: src/arena.c src/*.h third_party/*
+${BUILD_DIR}/arena.o: ${DEP_COMMON} src/arena.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/arena.o src/arena.c
 
-${BUILD_DIR}/parser_utils.o: src/parser_utils.c src/*.h third_party/*
+${BUILD_DIR}/parser_utils.o: ${DEP_COMMON} src/parser_utils.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/parser_utils.o src/parser_utils.c
 
-${BUILD_DIR}/tokenizer.o: src/tokenizer.c src/*.h third_party/*
+${BUILD_DIR}/tokenizer.o: ${DEP_COMMON} src/tokenizer.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/tokenizer.o src/tokenizer.c
 
-${BUILD_DIR}/globals.o: src/globals.c src/*.h third_party/*
+${BUILD_DIR}/globals.o: ${DEP_COMMON} src/globals.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/globals.o src/globals.c
 
-${BUILD_DIR}/nodes.o: src/nodes.c src/*.h third_party/*
+${BUILD_DIR}/nodes.o: ${DEP_COMMON} src/nodes.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/nodes.o src/nodes.c
 
-${BUILD_DIR}/token.o: src/token.c src/*.h third_party/*
+${BUILD_DIR}/token.o: ${DEP_COMMON} src/token.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/token.o src/token.c
 
-${BUILD_DIR}/emit_llvm.o: src/emit_llvm.c src/*.h third_party/*
+${BUILD_DIR}/emit_llvm.o: ${DEP_COMMON} src/emit_llvm.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/emit_llvm.o src/emit_llvm.c
 
-${BUILD_DIR}/hash_table.o: src/hash_table.c src/*.h third_party/*
+${BUILD_DIR}/hash_table.o: ${DEP_COMMON} src/hash_table.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/hash_table.o src/hash_table.c
 
-${BUILD_DIR}/file.o: src/file.c src/*.h third_party/*
+${BUILD_DIR}/file.o: ${DEP_COMMON} src/file.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/file.o src/file.c
 
-${BUILD_DIR}/parameters.o: src/parameters.c src/*.h third_party/*
+${BUILD_DIR}/parameters.o: ${DEP_COMMON} src/parameters.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/parameters.o src/parameters.c
 
 
 # passes
-${BUILD_DIR}/passes/do_passes.o: src/passes/do_passes.c src/*.h src/passes/*.h third_party/*
+${BUILD_DIR}/passes/do_passes.o: ${DEP_COMMON} src/passes/do_passes.c src/*.h src/passes/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/passes/do_passes.o src/passes/do_passes.c
 
-${BUILD_DIR}/passes/walk_tree.o: src/passes/walk_tree.c src/*.h src/passes/*.h third_party/*
+${BUILD_DIR}/passes/walk_tree.o: ${DEP_COMMON} src/passes/walk_tree.c src/*.h src/passes/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/passes/walk_tree.o src/passes/walk_tree.c
 
-${BUILD_DIR}/passes/for_and_if_to_branch.o: src/passes/for_and_if_to_branch.c src/*.h third_party/*
+${BUILD_DIR}/passes/for_and_if_to_branch.o: ${DEP_COMMON} src/passes/for_and_if_to_branch.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/passes/for_and_if_to_branch.o src/passes/for_and_if_to_branch.c
 
-${BUILD_DIR}/passes/assign_llvm_ids.o: src/passes/assign_llvm_ids.c src/*.h third_party/*
+${BUILD_DIR}/passes/assign_llvm_ids.o: ${DEP_COMMON} src/passes/assign_llvm_ids.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/passes/assign_llvm_ids.o src/passes/assign_llvm_ids.c
 
-${BUILD_DIR}/passes/add_load_and_store.o: src/passes/add_load_and_store.c src/*.h third_party/*
+${BUILD_DIR}/passes/add_load_and_store.o: ${DEP_COMMON} src/passes/add_load_and_store.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/passes/add_load_and_store.o src/passes/add_load_and_store.c
 
 
