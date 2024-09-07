@@ -35,17 +35,13 @@ typedef enum {
     NODE_LOAD,
 } NODE_TYPE;
 
-typedef struct {
-    size_t id;
-} Node_id;
-
 typedef size_t Llvm_id;
 
-typedef struct {
-    Node_id next;
-    Node_id prev;
-    Node_id left_child;
-    Node_id parent;
+typedef struct Node_ {
+    struct Node_* next;
+    struct Node_* prev;
+    struct Node_* left_child;
+    struct Node_* parent;
 
     NODE_TYPE type;
 
@@ -62,11 +58,13 @@ typedef struct {
     uint32_t line_num;
 } Node;
 
+extern Node* root_of_tree;
+
 #define NODE_FMT STRING_FMT
 
 #define NODE_IDX_NULL SIZE_MAX
 
-String node_print_internal(Node_id node);
+String node_print_internal(const Node* node);
 
 #define node_print(root) string_print(node_print_internal((root)))
 

@@ -33,7 +33,7 @@ void* arena_alloc(size_t capacity);
 // zero-initialized
 void* arena_realloc(void* old_buf, size_t old_capacity, size_t new_capacity);
 
-void arena_free(void* buf, size_t old_capacity, bool is_sym_tbl);
+void arena_free(void* buf, size_t old_capacity);
 
 #define arena_log_free_nodes() \
     do { \

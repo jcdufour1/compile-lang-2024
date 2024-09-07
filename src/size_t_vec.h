@@ -18,12 +18,7 @@ static inline size_t size_t_vec_at(Size_t_vec* vector, size_t idx) {
 }
 
 static inline bool size_t_vec_in(Size_t_vec* vector, size_t num_to_find) {
-    for (size_t idx = 0; idx < vector->info.count; idx++) {
-        if (vector->buf[idx] == num_to_find) {
-            return true;
-        }
-    }
-    return false;
+    return vector_in(vector, sizeof(vector->buf[0]), &num_to_find);
 }
 
 #endif // SIZE_T_VEC_H

@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
 
     Tokens tokens = tokenize(file_text);
 
-    Node_id root = parse(tokens);
+    Node* root = parse(tokens);
 
     do_passes(&root);
 

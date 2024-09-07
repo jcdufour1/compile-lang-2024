@@ -1,7 +1,7 @@
 #include "nodes.h"
 #include "str_view.h"
 #include "util.h"
-#include "size_t_vec.h"
+#include "node_ptr_vec.h"
 
 static const char* NODE_LITERAL_DESCRIPTION = "literal";
 static const char* NODE_FUNCTION_CALL_DESCRIPTION = "fn_call";
@@ -30,62 +30,64 @@ static const char* NODE_IF_STATEMENT_DESCRIPTION = "if_statement";
 static const char* NODE_IF_CONDITION_DESCRIPTION = "if_condition";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
-static void nodes_assert_tree_linkage_is_consistant_internal(Size_t_vec* nodes_visited, Node_id root) {
-    if (node_is_null(root)) {
+static void nodes_assert_tree_linkage_is_consistant_internal(Node_ptr_vec* nodes_visited, Node* root) {
+    if (!root) {
         return;
     }
 
     //nodes_log_tree_rec(LOG_DEBUG, 0, root, __FILE__, __LINE__);
-    assert(!size_t_vec_in(nodes_visited, node_unwrap(root)) && "same node found more than once");
-    size_t_vec_append(nodes_visited, node_unwrap(root));
+    assert(!node_ptr_vec_in(nodes_visited, root) && "same node found more than once");
+    node_ptr_vec_append(nodes_visited, root);
 
     assert(
-        !node_ids_equal(root, nodes_next(root)) && \
-        !node_ids_equal(root, nodes_prev(root)) && \
-        !node_ids_equal(root, nodes_left_child(root)) && \
-        !node_ids_equal(root, nodes_parent(root)) && \
+        (root != root->next) && \
+        (root != root->prev) && \
+        (root != root->left_child) && \
+        (root != root->parent) && \
         "node points to itself"
     );
 
-    Node_id base_parent = nodes_parent(root);
+    Node* base_parent = root->parent;
     nodes_foreach_from_curr(curr_node, root) {
-        if (!node_is_null(nodes_next(curr_node))) {
-            //node_printf(nodes_prev(nodes_next(curr_node)));
-            assert(node_ids_equal(curr_node, nodes_prev(nodes_next(curr_node))));
+        bool dummy_bool = true;
+        assert(dummy_bool);
+        if (curr_node->next) {
+            //node_printf(curr_node->prev->next);
+            assert(curr_node == curr_node->next->prev);
         }
-        assert(node_ids_equal(nodes_parent(curr_node), base_parent));
+        assert(curr_node->parent == base_parent);
 
-        Node_id left_child = nodes_at(curr_node)->left_child;
-        if (!node_is_null(left_child)) {
-            assert(node_ids_equal(curr_node, nodes_parent(left_child)));
+        Node* left_child = curr_node->left_child;
+        if (left_child) {
+            assert(curr_node == left_child->parent);
             nodes_assert_tree_linkage_is_consistant_internal(nodes_visited, left_child);
         }
     }
 }
 
-void nodes_assert_tree_linkage_is_consistant(Node_id root) {
-    static Size_t_vec nodes_visited = {0};
+void nodes_assert_tree_linkage_is_consistant(Node* root) {
+    static Node_ptr_vec nodes_visited = {0};
     memset(&nodes_visited, 0, sizeof(nodes_visited));
     nodes_assert_tree_linkage_is_consistant_internal(&nodes_visited, root);
 }
 
-void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, Node_id root, const char* file, int line) {
-    if (nodes.info.count < 1) {
+void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, const Node* root, const char* file, int line) {
+    if (!root_of_tree) {
         log_file_new(log_level, file, line, "<empty tree>\n");
         return;
     }
 
     static String padding = {0};
 
-    nodes_foreach_from_curr(curr_node, root) {
+    nodes_foreach_from_curr_const(curr_node, root) {
         string_set_to_zero_len(&padding);
         for (int idx = 0; idx < pad_x; idx++) {
             string_append(&padding, ' ');
         }
 
         log_file_new(log_level, file, line, STRING_FMT NODE_FMT"\n", string_print(padding), node_print(curr_node));
-        if (!node_is_null(nodes_left_child(curr_node))) {
-            nodes_log_tree_rec(log_level, pad_x + 2, nodes_at(curr_node)->left_child, file, line);
+        if (curr_node->left_child) {
+            nodes_log_tree_rec(log_level, pad_x + 2, curr_node->left_child, file, line);
         }
     }
 }
@@ -150,18 +152,18 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
     }
 }
 
-String node_print_internal(Node_id node) {
+String node_print_internal(const Node* node) {
     static String buf = {0};
     string_set_to_zero_len(&buf);
 
-    if (node_is_null(node)) {
+    if (!node) {
         string_extend_cstr(&buf, "<null>");
         return buf;
     }
 
-    string_extend_strv(&buf, node_type_get_strv(nodes_at(node)->type));
+    string_extend_strv(&buf, node_type_get_strv(node->type));
 
-    switch (nodes_at(node)->type) {
+    switch (node->type) {
         case NODE_ALLOCA:
             // fallthrough
         case NODE_STORE:
@@ -173,29 +175,29 @@ String node_print_internal(Node_id node) {
         case NODE_COND_GOTO:
             // fallthrough
         case NODE_LABEL:
-            string_extend_strv_in_par(&buf, nodes_at(node)->name);
+            string_extend_strv_in_par(&buf, node->name);
             break;
         case NODE_LITERAL:
-            string_extend_strv_in_gtlt(&buf, token_type_to_str_view(nodes_at(node)->token_type));
-            string_extend_strv_in_par(&buf, nodes_at(node)->name);
-            string_extend_strv_in_par(&buf, nodes_at(node)->str_data);
+            string_extend_strv_in_gtlt(&buf, token_type_to_str_view(node->token_type));
+            string_extend_strv_in_par(&buf, node->name);
+            string_extend_strv_in_par(&buf, node->str_data);
             break;
         case NODE_SYMBOL:
             // fallthrough
         case NODE_FUNCTION_DEFINITION:
             // fallthrough
         case NODE_FUNCTION_CALL:
-            string_extend_strv_in_par(&buf, nodes_at(node)->name);
+            string_extend_strv_in_par(&buf, node->name);
             break;
         case NODE_LANG_TYPE:
-            string_extend_strv_in_gtlt(&buf, nodes_at(node)->lang_type);
+            string_extend_strv_in_gtlt(&buf, node->lang_type);
             break;
         case NODE_OPERATOR:
-            string_extend_strv(&buf, token_type_to_str_view(nodes_at(node)->token_type));
+            string_extend_strv(&buf, token_type_to_str_view(node->token_type));
             break;
         case NODE_VARIABLE_DEFINITION:
-            string_extend_strv_in_gtlt(&buf, nodes_at(node)->lang_type);
-            string_extend_strv_in_par(&buf, nodes_at(node)->name);
+            string_extend_strv_in_gtlt(&buf, node->lang_type);
+            string_extend_strv_in_par(&buf, node->name);
             break;
         case NODE_FUNCTION_PARAMETERS:
             // fallthrough
@@ -224,7 +226,7 @@ String node_print_internal(Node_id node) {
         case NODE_NO_TYPE:
             break;
         default:
-            log(LOG_FETAL, "type: "STR_VIEW_FMT"\n", str_view_print(node_type_get_strv(nodes_at(node)->type)));
+            log(LOG_FETAL, "type: "STR_VIEW_FMT"\n", str_view_print(node_type_get_strv(node->type)));
             unreachable("");
     }
 

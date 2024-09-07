@@ -23,11 +23,9 @@ static inline void vector_reserve(void* typed_vector, size_t size_each_item, siz
         if (vector->info.capacity < 1) {
             vector->info.capacity = init_capacity;
             vector->buf = arena_alloc(vector->info.capacity*size_each_item);
-            log(LOG_DEBUG, "thing 131: %p\n", vector->buf);
         } else {
             vector->info.capacity *= 2;
             vector->buf = arena_realloc(vector->buf, old_count*size_each_item, vector->info.capacity*size_each_item);
-            log(LOG_DEBUG, "thing 132: %p\n", vector->buf);
         }
     }
 }
@@ -45,6 +43,17 @@ static inline void vector_set_to_zero_len(void* typed_vector, size_t size_each_i
 
     memset(vector->buf, 0, size_each_item*vector->info.count);
     vector->info.count = 0;
+}
+
+static inline bool vector_in(void* typed_vector, size_t size_each_item, const void* item_to_find) {
+    Vector* vector = (Vector*)typed_vector;
+
+    for (size_t idx = 0; idx < vector->info.count; idx++) {
+        if (0 == memcmp((char*)vector->buf + size_each_item*idx, item_to_find, size_each_item)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 #endif // VECTOR_H

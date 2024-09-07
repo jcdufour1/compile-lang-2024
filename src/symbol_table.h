@@ -18,7 +18,7 @@ typedef enum {
 
 typedef struct {
     Str_view key;
-    Node_id node;
+    Node* node;
     SYM_TBL_STATUS status;
 } Symbol_table_node;
 
@@ -34,9 +34,9 @@ static inline size_t sym_tbl_calculate_idx(Str_view sym_name, size_t capacity) {
     return stbds_hash_bytes(sym_name.str, sym_name.count, 0) % capacity;
 }
 
-static inline void sym_tbl_add_internal(Symbol_table_node* sym_tbl_nodes, size_t capacity, Node_id node_of_symbol) {
-    assert(!node_is_null(node_of_symbol));
-    Str_view symbol_name = nodes_at(node_of_symbol)->name;
+static inline void sym_tbl_add_internal(Symbol_table_node* sym_tbl_nodes, size_t capacity, Node* node_of_symbol) {
+    assert(node_of_symbol);
+    Str_view symbol_name = node_of_symbol->name;
     assert(symbol_name.count > 0 && "invalid node_of_symbol");
 
     size_t curr_table_idx = sym_tbl_calculate_idx(symbol_name, capacity);
@@ -85,7 +85,7 @@ static inline void sym_tbl_expand_if_nessessary() {
         new_table_nodes = arena_alloc(symbol_table.capacity*node_size);
         sym_tbl_cpy(new_table_nodes, symbol_table.table_nodes, old_capacity_node_count);
         if (symbol_table.table_nodes) {
-            arena_free(symbol_table.table_nodes, old_capacity_node_count*node_size, true);
+            arena_free(symbol_table.table_nodes, old_capacity_node_count*node_size);
         }
         symbol_table.table_nodes = new_table_nodes;
     }
@@ -101,7 +101,7 @@ static inline bool sym_tbl_is_equal(Str_view a, Str_view b) {
 
 // return false if symbol is not found
 static inline bool sym_tbl_lookup(
-    Node_id* result,
+    Node** result,
     Str_view key
 ) {
     size_t curr_table_idx = sym_tbl_calculate_idx(key, symbol_table.capacity);
@@ -131,7 +131,7 @@ static inline bool sym_tbl_lookup(
 }
 
 static inline void sym_tbl_add(
-    Node_id node_of_symbol
+    Node* node_of_symbol
 ) {
     sym_tbl_expand_if_nessessary();
     sym_tbl_add_internal(symbol_table.table_nodes, symbol_table.capacity, node_of_symbol);

@@ -3,6 +3,6 @@
 
 #include "../node.h"
 
-void do_passes(Node_id* root);
+void do_passes(Node** root);
 
 #endif // DO_PASSES_H

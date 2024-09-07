@@ -4,12 +4,12 @@
 #include "../parser_utils.h"
 #include "../nodes.h"
 
-bool assign_llvm_ids(Node_id curr_node) {
+bool assign_llvm_ids(Node* curr_node) {
     static size_t llvm_id_for_next_var = 1;
     //log_tree(LOG_DEBUG, 0);
     //log_tree(LOG_DEBUG, curr_node);
 
-    switch (nodes_at(curr_node)->type) {
+    switch (curr_node->type) {
         case NODE_FUNCTION_PARAMETERS:
             return false;
         case NODE_VARIABLE_DEFINITION:
@@ -47,7 +47,7 @@ bool assign_llvm_ids(Node_id curr_node) {
         case NODE_LABEL:
             // fallthrough
         case NODE_STORE:
-            nodes_at(curr_node)->llvm_id = llvm_id_for_next_var;
+            curr_node->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var++;
             return false;
         default:

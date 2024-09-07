@@ -142,14 +142,11 @@ static bool find_empty_free_node(Arena_free_node** result) {
     return false;
 }
 
-void arena_free(void* buf, size_t old_capacity, bool is_sym_tbl) {
+void arena_free(void* buf, size_t old_capacity) {
     assert(buf && "null freed");
 
     Arena_free_node* free_node;
     if (find_empty_free_node(&free_node)) {
-        if (is_sym_tbl) {
-            todo();
-        }
         free_node->buf = buf;
         free_node->capacity = old_capacity;
         return;
@@ -172,6 +169,6 @@ void arena_free(void* buf, size_t old_capacity, bool is_sym_tbl) {
 void* arena_realloc(void* old_buf, size_t old_capacity, size_t new_capacity) {
     void* new_buf = arena_alloc(new_capacity);
     memcpy(new_buf, old_buf, old_capacity);
-    arena_free(old_buf, old_capacity, false);
+    arena_free(old_buf, old_capacity);
     return new_buf;
 }

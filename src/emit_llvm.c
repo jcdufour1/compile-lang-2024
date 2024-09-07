@@ -8,22 +8,22 @@
 #include "file.h"
 #include "parser_utils.h"
 
-static void emit_block(String* output, Node_id fun_block);
-static void emit_llvm_main(String* output, Node_id root);
+static void emit_block(String* output, Node* fun_block);
+static void emit_llvm_main(String* output, Node* root);
 
-static void extend_type_call_str(String* output, Node_id variable_def) {
-    assert(nodes_at(variable_def)->lang_type.count > 0);
-    if (str_view_cstr_is_equal(nodes_at(variable_def)->lang_type, "i32")) {
+static void extend_type_call_str(String* output, Node* variable_def) {
+    assert(variable_def->lang_type.count > 0);
+    if (str_view_cstr_is_equal(variable_def->lang_type, "i32")) {
         string_extend_cstr(output, "i32");
-    } else if (str_view_cstr_is_equal(nodes_at(variable_def)->lang_type, "ptr")) {
+    } else if (str_view_cstr_is_equal(variable_def->lang_type, "ptr")) {
         string_extend_cstr(output, "ptr");
     } else {
         todo();
     }
 }
 
-static void extend_type_decl_str(String* output, Node_id variable_def) {
-    if (nodes_at(variable_def)->is_variadic) {
+static void extend_type_decl_str(String* output, Node* variable_def) {
+    if (variable_def->is_variadic) {
         string_extend_cstr(output, "...");
         return;
     }
@@ -32,34 +32,34 @@ static void extend_type_decl_str(String* output, Node_id variable_def) {
     string_extend_cstr(output, " noundef");
 }
 
-static void extend_literal_decl_prefix(String* output, Node_id var_decl_or_def) {
-    Str_view lang_type = nodes_at(var_decl_or_def)->lang_type;
+static void extend_literal_decl_prefix(String* output, Node* var_decl_or_def) {
+    Str_view lang_type = var_decl_or_def->lang_type;
     if (str_view_cstr_is_equal(lang_type, "ptr")) {
         string_extend_cstr(output, " @.");
-        string_extend_strv(output, nodes_at(var_decl_or_def)->name);
+        string_extend_strv(output, var_decl_or_def->name);
     } else if (str_view_cstr_is_equal(lang_type, "i32")) {
         string_append(output, ' ');
-        string_extend_strv(output, nodes_at(var_decl_or_def)->str_data);
+        string_extend_strv(output, var_decl_or_def->str_data);
     } else {
         todo();
     }
 }
 
-static void extend_literal_decl(String* output, Node_id var_decl_or_def) {
+static void extend_literal_decl(String* output, Node* var_decl_or_def) {
     extend_type_decl_str(output, var_decl_or_def);
     extend_literal_decl_prefix(output, var_decl_or_def);
 }
 
-static Node_id return_type_from_function_definition(Node_id fun_def) {
-    Node_id return_types = nodes_get_child_of_type(fun_def, NODE_FUNCTION_RETURN_TYPES);
+static Node* return_type_from_function_definition(Node* fun_def) {
+    Node* return_types = nodes_get_child_of_type(fun_def, NODE_FUNCTION_RETURN_TYPES);
     assert(nodes_count_children(return_types) < 2);
     if (nodes_count_children(return_types) > 0) {
-        return nodes_at(return_types)->left_child;
+        return return_types->left_child;
     }
     unreachable("");
 }
 
-static void emit_function_params(String* output, Node_id fun_params) {
+static void emit_function_params(String* output, Node* fun_params) {
     size_t idx = 0;
     nodes_foreach_child(param, fun_params) {
         if (idx++ > 0) {
@@ -67,32 +67,32 @@ static void emit_function_params(String* output, Node_id fun_params) {
         }
 
         extend_type_decl_str(output, param);
-        if (nodes_at(param)->is_variadic) {
+        if (param->is_variadic) {
             return;
         }
         string_extend_cstr(output, " %");
-        string_extend_size_t(output, nodes_at(param)->llvm_id);
+        string_extend_size_t(output, param->llvm_id);
     }
 }
 
-static void emit_function_call_arguments(String* output, Node_id fun_call) {
+static void emit_function_call_arguments(String* output, Node* fun_call) {
     size_t idx = 0;
     nodes_foreach_child(argument, fun_call) {
-        Node_id var_decl_or_def;
-        if (!sym_tbl_lookup(&var_decl_or_def, nodes_at(argument)->name)) {
+        Node* var_decl_or_def;
+        if (!sym_tbl_lookup(&var_decl_or_def, argument->name)) {
             msg(
                 LOG_WARNING,
                 params.input_file_name,
-                nodes_at(argument)->line_num,
+                argument->line_num,
                 "unknown variable: "STR_VIEW_FMT"\n",
-                str_view_print(nodes_at(argument)->name)
+                str_view_print(argument->name)
             );
             break;
         }
         if (idx++ > 0) {
             string_extend_cstr(output, ", ");
         }
-        switch (nodes_at(argument)->type) {
+        switch (argument->type) {
             case NODE_LITERAL: {
                 extend_literal_decl(output, var_decl_or_def);
                 break;
@@ -115,31 +115,31 @@ static void emit_function_call_arguments(String* output, Node_id fun_call) {
     }
 }
 
-static void emit_function_call(String* output, Node_id fun_call) {
-    //assert(nodes_at(fun_call)->llvm_id == 0);
+static void emit_function_call(String* output, Node* fun_call) {
+    //assert(fun_call->llvm_id == 0);
 
     // load arguments
     nodes_foreach_child(argument, fun_call) {
-        if (nodes_at(argument)->type == NODE_SYMBOL) {
+        if (argument->type == NODE_SYMBOL) {
             //emit_load_variable(output, argument);
-        } else if (nodes_at(argument)->type == NODE_LITERAL) {
+        } else if (argument->type == NODE_LITERAL) {
         } else {
             todo();
         }
     }
 
-    Node_id fun_def;
-    if (!sym_tbl_lookup(&fun_def, nodes_at(fun_call)->name)) {
+    Node* fun_def;
+    if (!sym_tbl_lookup(&fun_def, fun_call->name)) {
         unreachable(NODE_FMT"\n", node_print(fun_call));
     }
 
     // start of actual function call
     string_extend_cstr(output, "    %");
-    string_extend_size_t(output, nodes_at(fun_call)->llvm_id);
+    string_extend_size_t(output, fun_call->llvm_id);
     string_extend_cstr(output, " = call ");
     extend_type_call_str(output, return_type_from_function_definition(fun_def));
     string_extend_cstr(output, " @");
-    string_extend_strv(output, nodes_at(fun_call)->name);
+    string_extend_strv(output, fun_call->name);
 
     // arguments
     string_extend_cstr(output, "(");
@@ -149,11 +149,11 @@ static void emit_function_call(String* output, Node_id fun_call) {
     string_extend_cstr(output, "\n");
 }
 
-static void emit_alloca(String* output, Node_id alloca) {
-    assert(nodes_at(alloca)->type == NODE_ALLOCA);
+static void emit_alloca(String* output, Node* alloca) {
+    assert(alloca->type == NODE_ALLOCA);
 
     string_extend_cstr(output, "    %");
-    string_extend_size_t(output, nodes_at(alloca)->llvm_id);
+    string_extend_size_t(output, alloca->llvm_id);
     string_extend_cstr(output, " = alloca ");
     node_printf(alloca);
     extend_type_call_str(output, get_symbol_def_from_alloca(alloca));
@@ -161,10 +161,10 @@ static void emit_alloca(String* output, Node_id alloca) {
     string_extend_cstr(output, "\n");
 }
 
-static void emit_src_of_assignment(String* output, Node_id variable_def, void* item) {
-    Node_id rhs = *(Node_id*)item;
+static void emit_src_of_assignment(String* output, Node* variable_def, void* item) {
+    Node* rhs = *(Node**)item;
 
-    switch (nodes_at(rhs)->type) {
+    switch (rhs->type) {
         case NODE_SYMBOL:
             // fallthrough
         case NODE_LITERAL:
@@ -179,33 +179,33 @@ static void emit_src_of_assignment(String* output, Node_id variable_def, void* i
     }
 }
 
-static void emit_src_literal(String* output, Node_id src) {
+static void emit_src_literal(String* output, Node* src) {
     extend_literal_decl_prefix(output, src);
 }
 
-static void emit_src_function_call_result(String* output, Node_id store) {
-    Node_id fun_call = nodes_at(store)->left_child;
-    assert(!node_is_null(fun_call));
-    assert(nodes_at(fun_call)->type == NODE_FUNCTION_CALL);
+static void emit_src_function_call_result(String* output, Node* store) {
+    Node* fun_call = store->left_child;
+    assert(fun_call);
+    assert(fun_call->type == NODE_FUNCTION_CALL);
 
     string_extend_cstr(output, " %");
-    string_extend_size_t(output, nodes_at(fun_call)->llvm_id);
+    string_extend_size_t(output, fun_call->llvm_id);
 }
 
-static void emit_src_operator(String* output, Node_id store) {
-    assert(nodes_at(store)->type == NODE_STORE);
-    Node_id operator = nodes_at(store)->left_child;
-    assert(!node_is_null(operator));
-    assert(nodes_at(operator)->type == NODE_OPERATOR);
+static void emit_src_operator(String* output, Node* store) {
+    assert(store->type == NODE_STORE);
+    Node* operator = store->left_child;
+    assert(operator);
+    assert(operator->type == NODE_OPERATOR);
 
     string_extend_cstr(output, " %");
-    string_extend_size_t(output, nodes_at(operator)->llvm_id);
+    string_extend_size_t(output, operator->llvm_id);
 }
 
-static void emit_operator_type(String* output, Node_id operator) {
-    assert(nodes_at(operator)->type == NODE_OPERATOR);
+static void emit_operator_type(String* output, Node* operator) {
+    assert(operator->type == NODE_OPERATOR);
     
-    switch (nodes_at(operator)->token_type) {
+    switch (operator->token_type) {
         case TOKEN_SINGLE_MINUS:
             todo();
         case TOKEN_SINGLE_PLUS:
@@ -215,14 +215,14 @@ static void emit_operator_type(String* output, Node_id operator) {
             string_extend_cstr(output, "mul nsw i32 ");
             break;
         default:
-             unreachable(TOKEN_TYPE_FMT"\n", token_type_print(nodes_at(operator)->token_type));
+             unreachable(TOKEN_TYPE_FMT"\n", token_type_print(operator->token_type));
     }
 }
 
-static void emit_operator_operand(String* output, Node_id operand) {
-    switch (nodes_at(operand)->type) {
+static void emit_operator_operand(String* output, Node* operand) {
+    switch (operand->type) {
         case NODE_LITERAL:
-            string_extend_strv(output, nodes_at(operand)->str_data);
+            string_extend_strv(output, operand->str_data);
             break;
         case NODE_SYMBOL:
             string_extend_cstr(output, "%");
@@ -233,12 +233,12 @@ static void emit_operator_operand(String* output, Node_id operand) {
     }
 }
 
-static void emit_operator(String* output, Node_id operator) {
-    Node_id lhs = nodes_get_child(operator, 0);
-    Node_id rhs = nodes_get_child(operator, 1);
+static void emit_operator(String* output, Node* operator) {
+    Node* lhs = nodes_get_child(operator, 0);
+    Node* rhs = nodes_get_child(operator, 1);
 
     // emit prereq function calls (may not be needed), etc. before actual operation
-    switch (nodes_at(lhs)->type) {
+    switch (lhs->type) {
         case NODE_SYMBOL:
             break;
         case NODE_LITERAL:
@@ -252,7 +252,7 @@ static void emit_operator(String* output, Node_id operator) {
     }
 
     string_extend_cstr(output, "    %");
-    string_extend_size_t(output, nodes_at(operator)->llvm_id);
+    string_extend_size_t(output, operator->llvm_id);
 
 
     string_extend_cstr(output, " = ");
@@ -265,10 +265,10 @@ static void emit_operator(String* output, Node_id operator) {
     string_extend_cstr(output, "\n");
 }
 
-static void emit_src(String* output, Node_id store) {
+static void emit_src(String* output, Node* store) {
     log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
-    Node_id src = nodes_single_child(store);
-    switch (nodes_at(src)->type) {
+    Node* src = nodes_single_child(store);
+    switch (src->type) {
         case NODE_LITERAL:
             emit_src_literal(output, src);
             break;
@@ -283,14 +283,14 @@ static void emit_src(String* output, Node_id store) {
     }
 }
 
-static void emit_store(String* output, Node_id store) {
+static void emit_store(String* output, Node* store) {
     size_t alloca_dest_id = get_store_dest_id(store);
-    Node_id var_def = get_symbol_def_from_alloca(store);
+    Node* var_def = get_symbol_def_from_alloca(store);
     assert(alloca_dest_id > 0);
 
     // emit prerequisite call, etc before actually storing
-    Node_id src = nodes_single_child(store);
-    switch (nodes_at(src)->type) {
+    Node* src = nodes_single_child(store);
+    switch (src->type) {
         case NODE_FUNCTION_CALL:
             emit_function_call(output, src);
             break;
@@ -314,11 +314,11 @@ static void emit_store(String* output, Node_id store) {
     string_extend_cstr(output, "\n");
 }
 
-static void emit_src_of_fun_params(String* output, Node_id variable_def, void* item) {
+static void emit_src_of_fun_params(String* output, Node* variable_def, void* item) {
     (void) item;
-    size_t src_llvm_id = nodes_at(variable_def)->llvm_id;
+    size_t src_llvm_id = variable_def->llvm_id;
 
-    switch (nodes_at(variable_def)->type) {
+    switch (variable_def->type) {
         case NODE_VARIABLE_DEFINITION:
             // fallthrough
         case NODE_LANG_TYPE:
@@ -330,52 +330,52 @@ static void emit_src_of_fun_params(String* output, Node_id variable_def, void* i
     }
 }
 
-static void emit_function_definition(String* output, Node_id fun_def) {
+static void emit_function_definition(String* output, Node* fun_def) {
     string_extend_cstr(output, "define dso_local ");
 
     extend_type_call_str(output, return_type_from_function_definition(fun_def));
 
     string_extend_cstr(output, " @");
-    string_extend_strv(output, nodes_at(fun_def)->name);
+    string_extend_strv(output, fun_def->name);
 
-    Node_id params = nodes_get_child_of_type(fun_def, NODE_FUNCTION_PARAMETERS);
+    Node* params = nodes_get_child_of_type(fun_def, NODE_FUNCTION_PARAMETERS);
     string_append(output, '(');
     emit_function_params(output, params);
     string_append(output, ')');
 
     string_extend_cstr(output, " {\n");
 
-    Node_id block = nodes_get_child_of_type(fun_def, NODE_BLOCK);
+    Node* block = nodes_get_child_of_type(fun_def, NODE_BLOCK);
     emit_block(output, block);
 
     string_extend_cstr(output, "}\n");
 }
 
-static void emit_function_return_statement(String* output, Node_id fun_return) {
-    Node_id sym_to_return = nodes_at(fun_return)->left_child;
-    Node_id sym_to_rtn_def;
-    if (!sym_tbl_lookup(&sym_to_rtn_def, nodes_at(sym_to_return)->name)) {
+static void emit_function_return_statement(String* output, Node* fun_return) {
+    Node* sym_to_return = fun_return->left_child;
+    Node* sym_to_rtn_def;
+    if (!sym_tbl_lookup(&sym_to_rtn_def, sym_to_return->name)) {
         todo();
     }
 
-    switch (nodes_at(sym_to_return)->type) {
+    switch (sym_to_return->type) {
         case NODE_LITERAL:
-            if (nodes_at(sym_to_return)->token_type != TOKEN_NUM_LITERAL) {
+            if (sym_to_return->token_type != TOKEN_NUM_LITERAL) {
                 todo();
             }
             string_extend_cstr(output, "    ret ");
             extend_type_call_str(output, sym_to_rtn_def);
             string_extend_cstr(output, " ");
-            string_extend_strv(output, nodes_at(sym_to_return)->str_data);
+            string_extend_strv(output, sym_to_return->str_data);
             string_extend_cstr(output, "\n");
             break;
         case NODE_FUNCTION_CALL: {
             emit_function_call(output, sym_to_return);
             string_extend_cstr(output, "    ret ");
 
-            Node_id return_types = nodes_get_child_of_type(sym_to_rtn_def, NODE_FUNCTION_RETURN_TYPES);
+            Node* return_types = nodes_get_child_of_type(sym_to_rtn_def, NODE_FUNCTION_RETURN_TYPES);
             assert(nodes_count_children(return_types) == 1 && "not implemented");
-            Node_id return_type = nodes_at(return_types)->left_child;
+            Node* return_type = return_types->left_child;
 
             extend_type_call_str(output, return_type);
             string_extend_cstr(output, " %");
@@ -403,8 +403,8 @@ static void emit_function_return_statement(String* output, Node_id fun_return) {
             break;
         }
         case NODE_SYMBOL: {
-            Node_id symbol_def;
-            if (!sym_tbl_lookup(&symbol_def, nodes_at(sym_to_return)->name)) {
+            Node* symbol_def;
+            if (!sym_tbl_lookup(&symbol_def, sym_to_return->name)) {
                 todo();
             }
 
@@ -420,62 +420,62 @@ static void emit_function_return_statement(String* output, Node_id fun_return) {
     }
 }
 
-static void emit_function_declaration(String* output, Node_id fun_decl) {
+static void emit_function_declaration(String* output, Node* fun_decl) {
     string_extend_cstr(output, "declare i32");
     //extend_literal_decl(output, fun_decl); // TODO
     string_extend_cstr(output, " @");
-    string_extend_strv(output, nodes_at(fun_decl)->name);
+    string_extend_strv(output, fun_decl->name);
     string_append(output, '(');
     emit_function_params(output, nodes_get_child_of_type(fun_decl, NODE_FUNCTION_PARAMETERS));
     string_append(output, ')');
     string_extend_cstr(output, "\n");
 }
 
-static void emit_label(String* output, Node_id label) {
+static void emit_label(String* output, Node* label) {
     string_extend_cstr(output, "\n");
-    string_extend_size_t(output, nodes_at(label)->llvm_id);
+    string_extend_size_t(output, label->llvm_id);
     string_extend_cstr(output, ":\n");
 }
 
-static void emit_cmp_less_than(String* output, size_t llvm_cmp_dest, Node_id lhs, Node_id rhs) {
+static void emit_cmp_less_than(String* output, size_t llvm_cmp_dest, Node* lhs, Node* rhs) {
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, llvm_cmp_dest);
     string_extend_cstr(output, " = icmp slt i32 %");
     string_extend_size_t(output, get_prev_load_id(lhs));
     string_extend_cstr(output, ", ");
-    string_extend_strv(output, nodes_at(rhs)->str_data);
+    string_extend_strv(output, rhs->str_data);
     string_extend_cstr(output, "\n");
 }
 
-static void emit_goto(String* output, Node_id lang_goto) {
+static void emit_goto(String* output, Node* lang_goto) {
     string_extend_cstr(output, "    br label %");
     string_extend_size_t(output, get_matching_label_id(lang_goto));
     string_append(output, '\n');
 }
 
-static void emit_cond_goto(String* output, Node_id cond_goto) {
-    Node_id label_if_true = nodes_get_child(cond_goto, 1);
-    Node_id label_if_false = nodes_get_child(cond_goto, 2);
-    Node_id if_true_def;
-    if (!sym_tbl_lookup(&if_true_def, nodes_at(label_if_true)->name)) {
+static void emit_cond_goto(String* output, Node* cond_goto) {
+    Node* label_if_true = nodes_get_child(cond_goto, 1);
+    Node* label_if_false = nodes_get_child(cond_goto, 2);
+    Node* if_true_def;
+    if (!sym_tbl_lookup(&if_true_def, label_if_true->name)) {
         todo();
     }
-    Node_id if_false_def;
-    if (!sym_tbl_lookup(&if_false_def, nodes_at(label_if_false)->name)) {
+    Node* if_false_def;
+    if (!sym_tbl_lookup(&if_false_def, label_if_false->name)) {
         todo();
     }
 
-    Node_id operator = nodes_get_child_of_type(cond_goto, NODE_OPERATOR);
-    switch (nodes_at(operator)->token_type) {
+    Node* operator = nodes_get_child_of_type(cond_goto, NODE_OPERATOR);
+    switch (operator->token_type) {
         case TOKEN_LESS_THAN:
             break;
         default:
             unreachable("");
     }
     assert(nodes_count_children(operator) == 2);
-    Node_id lhs = nodes_get_child(operator, 0);
-    Node_id rhs = nodes_get_child(operator, 1);
-    size_t llvm_cmp_dest = nodes_at(operator)->llvm_id;
+    Node* lhs = nodes_get_child(operator, 0);
+    Node* rhs = nodes_get_child(operator, 1);
+    size_t llvm_cmp_dest = operator->llvm_id;
     emit_cmp_less_than(output, llvm_cmp_dest, lhs, rhs);
 
     string_extend_cstr(output, "    br i1 %");
@@ -487,10 +487,10 @@ static void emit_cond_goto(String* output, Node_id cond_goto) {
     string_append(output, '\n');
 }
 
-static void emit_load_variable(String* output, Node_id variable_call) {
-    Node_id variable_def;
+static void emit_load_variable(String* output, Node* variable_call) {
+    Node* variable_def;
     node_printf(variable_call);
-    if (!sym_tbl_lookup(&variable_def, nodes_at(variable_call)->name)) {
+    if (!sym_tbl_lookup(&variable_def, variable_call->name)) {
         unreachable("attempt to load a symbol that is undefined:"NODE_FMT"\n", node_print(variable_call));
     }
     log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
@@ -498,7 +498,7 @@ static void emit_load_variable(String* output, Node_id variable_call) {
     assert(get_store_dest_id(variable_call) > 0);
 
     string_extend_cstr(output, "    %");
-    string_extend_size_t(output, nodes_at(variable_call)->llvm_id);
+    string_extend_size_t(output, variable_call->llvm_id);
     string_extend_cstr(output, " = load ");
     extend_type_call_str(output, variable_def);
     string_extend_cstr(output, ", ");
@@ -509,9 +509,9 @@ static void emit_load_variable(String* output, Node_id variable_call) {
     string_extend_cstr(output, "\n");
 }
 
-static void emit_block(String* output, Node_id fun_block) {
+static void emit_block(String* output, Node* fun_block) {
     nodes_foreach_child(statement, fun_block) {
-        switch (nodes_at(statement)->type) {
+        switch (statement->type) {
             case NODE_FUNCTION_DEFINITION:
                 emit_function_definition(output, statement);
                 break;
@@ -550,17 +550,19 @@ static void emit_block(String* output, Node_id fun_block) {
             case NODE_LOAD:
                 emit_load_variable(output, statement);
                 break;
+            case NODE_FOR_LOOP:
+                unreachable("for loop should not still be present at this point\n");
             default:
                 log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
                 node_printf(statement);
                 todo();
         }
     }
-    //get_block_return_id(fun_block) = get_block_return_id(nodes_at(fun_block)->left_child);
+    //get_block_return_id(fun_block) = get_block_return_id(fun_block->left_child);
 }
 
-static void emit_llvm_main(String* output, Node_id root) {
-    switch (nodes_at(root)->type) {
+static void emit_llvm_main(String* output, Node* root) {
+    switch (root->type) {
         case NODE_BLOCK:
             emit_block(output, root);
             return;
@@ -594,7 +596,7 @@ static void emit_symbols(String* output) {
         if (curr_node.status != SYM_TBL_OCCUPIED) {
             continue;
         }
-        switch (nodes_at(curr_node.node)->type) {
+        switch (curr_node.node->type) {
             case NODE_LITERAL:
                 // fallthrough
             case NODE_VARIABLE_DEFINITION:
@@ -614,7 +616,7 @@ static void emit_symbols(String* output) {
                 todo();
         }
 
-        size_t literal_width = nodes_at(curr_node.node)->str_data.count + 1;
+        size_t literal_width = curr_node.node->str_data.count + 1;
 
         string_extend_cstr(output, "@.");
         log(LOG_DEBUG, SYM_TBL_STATUS_FMT"\n", sym_tbl_status_print(curr_node.status));
@@ -623,13 +625,13 @@ static void emit_symbols(String* output) {
         string_extend_cstr(output, " = private unnamed_addr constant [ ");
         string_extend_size_t(output, literal_width);
         string_extend_cstr(output, " x i8] c\"");
-        string_extend_strv(output, nodes_at(curr_node.node)->str_data);
+        string_extend_strv(output, curr_node.node->str_data);
         string_extend_cstr(output, "\\00\", align 1");
         string_extend_cstr(output, "\n");
     }
 }
 
-void emit_llvm_from_tree(Node_id root) {
+void emit_llvm_from_tree(Node* root) {
     String output = {0};
 
     emit_llvm_main(&output, root);

@@ -5,46 +5,46 @@
 
 #include "passes.h"
 
-static Node_id alloca_new(Node_id var_def) {
-    Node_id alloca = node_new();
-    nodes_at(alloca)->type = NODE_ALLOCA;
-    nodes_at(alloca)->name = nodes_at(var_def)->name;
+static Node* alloca_new(Node* var_def) {
+    Node* alloca = node_new();
+    alloca->type = NODE_ALLOCA;
+    alloca->name = var_def->name;
     return alloca;
 }
 
-static Node_id store_new(Node_id item_to_store) {
+static Node* store_new(Node* item_to_store) {
     (void) item_to_store;
     todo();
-    Node_id store = node_new();
-    nodes_at(store)->type = NODE_STORE;
-    //nodes_at(store)->name = nodes_at(var_def)->name;
+    Node* store = node_new();
+    store->type = NODE_STORE;
+    //store->name = var_def->name;
     return store;
 }
 
-static void insert_alloca(Node_id var_def) {
-    Node_id new_alloca = alloca_new(var_def);
+static void insert_alloca(Node* var_def) {
+    Node* new_alloca = alloca_new(var_def);
 
-    nodes_assert_tree_linkage_is_consistant(node_id_from(0));
+    nodes_assert_tree_linkage_is_consistant(root_of_tree);
 
-    log_tree(LOG_DEBUG, node_id_from(0));
+    log_tree(LOG_DEBUG, root_of_tree);
 
-    Node_id node_to_insert_after = node_id_from(NODE_IDX_NULL);
+    Node* node_to_insert_after = NULL;
     nodes_foreach_from_curr_rev(curr, var_def) {
-        nodes_assert_tree_linkage_is_consistant(node_id_from(0));
-        if (nodes_at(var_def)->type != NODE_ALLOCA) {
+        nodes_assert_tree_linkage_is_consistant(root_of_tree);
+        if (var_def->type != NODE_ALLOCA) {
             node_to_insert_after = curr;
             continue;
         }
     }
 
-    assert(!node_is_null(node_to_insert_after));
+    assert(node_to_insert_after);
 
     nodes_insert_after(node_to_insert_after, new_alloca);
 }
 
-static void insert_load(Node_id node_insert_load_before, Node_id symbol_call) {
+static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
     log(LOG_DEBUG, "insert_load\n");
-    switch (nodes_at(symbol_call)->type) {
+    switch (symbol_call->type) {
         case NODE_LITERAL:
             return;
         case NODE_SYMBOL:
@@ -52,21 +52,21 @@ static void insert_load(Node_id node_insert_load_before, Node_id symbol_call) {
         case NODE_VARIABLE_DEFINITION:
             log_tree(LOG_DEBUG, symbol_call);
             node_printf(symbol_call);
-            assert(nodes_at(symbol_call)->name.count > 0);
+            assert(symbol_call->name.count > 0);
             break;
         default:
             node_printf(symbol_call);
             todo();
     }
 
-    Node_id load = node_new();
-    nodes_at(load)->type = NODE_LOAD;
-    nodes_at(load)->name = nodes_at(symbol_call)->name;
+    Node* load = node_new();
+    load->type = NODE_LOAD;
+    load->name = symbol_call->name;
     nodes_insert_before(node_insert_load_before, load);
 }
 
-static void load_operator_operand(Node_id node_insert_before, Node_id operand) {
-    switch (nodes_at(operand)->type) {
+static void load_operator_operand(Node* node_insert_before, Node* operand) {
+    switch (operand->type) {
         case NODE_OPERATOR:
             todo();
         case NODE_LITERAL:
@@ -81,27 +81,27 @@ static void load_operator_operand(Node_id node_insert_before, Node_id operand) {
     }
 }
 
-static void load_operator_operands(Node_id node_insert_before, Node_id operator) {
+static void load_operator_operands(Node* node_insert_before, Node* operator) {
     node_printf(operator);
-    assert(nodes_at(operator)->type == NODE_OPERATOR);
+    assert(operator->type == NODE_OPERATOR);
     assert(nodes_count_children(operator) == 2);
 
-    Node_id lhs = nodes_get_child(operator, 0);
-    Node_id rhs = nodes_get_child(operator, 1);
+    Node* lhs = nodes_get_child(operator, 0);
+    Node* rhs = nodes_get_child(operator, 1);
 
     load_operator_operand(node_insert_before, lhs);
     load_operator_operand(node_insert_before, rhs);
 }
 
-static void insert_store_assignment(Node_id assignment, Node_id item_to_store) {
+static void insert_store_assignment(Node* assignment, Node* item_to_store) {
     log(LOG_DEBUG, "THING 76: insert_store_assignment\n");
-    assert(nodes_at(assignment)->type == NODE_ASSIGNMENT);
+    assert(assignment->type == NODE_ASSIGNMENT);
 
-    Node_id lhs = nodes_get_child(assignment, 0);
-    Node_id rhs = nodes_get_child(assignment, 1);
+    Node* lhs = nodes_get_child(assignment, 0);
+    Node* rhs = nodes_get_child(assignment, 1);
 
-    log_tree(LOG_DEBUG, node_id_from(0));
-    switch (nodes_at(lhs)->type) {
+    log_tree(LOG_DEBUG, root_of_tree);
+    switch (lhs->type) {
         case NODE_VARIABLE_DEFINITION:
             nodes_remove(lhs, false);
             nodes_insert_before(assignment, lhs);
@@ -114,7 +114,7 @@ static void insert_store_assignment(Node_id assignment, Node_id item_to_store) {
             todo();
     }
    
-    switch (nodes_at(rhs)->type) {
+    switch (rhs->type) {
         case NODE_VARIABLE_DEFINITION:
             todo();
             break;
@@ -130,27 +130,27 @@ static void insert_store_assignment(Node_id assignment, Node_id item_to_store) {
             todo();
     }
 
-    Node_id new_store = node_new();
-    nodes_at(new_store)->type = NODE_STORE;
-    nodes_at(new_store)->name = nodes_at(lhs)->name;
+    Node* new_store = node_new();
+    new_store->type = NODE_STORE;
+    new_store->name = lhs->name;
     nodes_remove(item_to_store, true);
     nodes_append_child(new_store, item_to_store);
 
     nodes_insert_before(assignment, new_store);
 }
 
-//static void load_function_call(Node_id)
+//static void load_function_call(Node*)
 
-static void add_load_foreach_arg(Node_id function_call) {
+static void add_load_foreach_arg(Node* function_call) {
     log(LOG_DEBUG, "add_foreach_arg\n");
     nodes_foreach_child(argument, function_call) {
         insert_load(function_call, argument);
     }
 }
 
-static void add_load_return_statement(Node_id return_statement) {
+static void add_load_return_statement(Node* return_statement) {
     log(LOG_DEBUG, "add_load_return_statement\n");
-    switch (nodes_at(nodes_single_child(return_statement))->type) {
+    switch (nodes_single_child(return_statement)->type) {
         case NODE_SYMBOL:
             insert_load(return_statement, nodes_single_child(return_statement));
             return;
@@ -161,12 +161,12 @@ static void add_load_return_statement(Node_id return_statement) {
     }
 }
 
-static void add_load_cond_goto(Node_id cond_goto) {
-    Node_id operator = nodes_get_child(cond_goto, 0);
-    Node_id lhs = nodes_get_child(operator, 0);
-    Node_id rhs = nodes_get_child(operator, 1);
+static void add_load_cond_goto(Node* cond_goto) {
+    Node* operator = nodes_get_child(cond_goto, 0);
+    Node* lhs = nodes_get_child(operator, 0);
+    Node* rhs = nodes_get_child(operator, 1);
 
-    switch (nodes_at(lhs)->type) {
+    switch (lhs->type) {
         case NODE_SYMBOL:
             insert_load(cond_goto, lhs);
             break;
@@ -174,32 +174,32 @@ static void add_load_cond_goto(Node_id cond_goto) {
             unreachable("");
     }
 
-    if (nodes_at(rhs)->type != NODE_LITERAL) {
+    if (rhs->type != NODE_LITERAL) {
         todo();
     }
 }
 
-static void add_load_operator(Node_id operator) {
-    Node_id lhs = nodes_get_child(operator, 0);
-    Node_id rhs = nodes_get_child(operator, 1);
+static void add_load_operator(Node* operator) {
+    Node* lhs = nodes_get_child(operator, 0);
+    Node* rhs = nodes_get_child(operator, 1);
 
-    if (nodes_at(lhs)->type != NODE_LITERAL) {
+    if (lhs->type != NODE_LITERAL) {
         //insert_load(operator, lhs);
     }
 
-    if (nodes_at(rhs)->type != NODE_LITERAL) {
+    if (rhs->type != NODE_LITERAL) {
         //insert_load(operator, rhs);
     }
 
-    log_tree(LOG_DEBUG, node_id_from(0));
+    log_tree(LOG_DEBUG, root_of_tree);
     todo();
 }
 
-bool add_load_and_store(Node_id curr_node) {
+bool add_load_and_store(Node* curr_node) {
     //log_tree(LOG_DEBUG, 0);
     //log_tree(LOG_DEBUG, curr_node);
     //log(LOG_DEBUG, NODE_FMT"\n", node_print(curr_node));
-    switch (nodes_at(curr_node)->type) {
+    switch (curr_node->type) {
         case NODE_LITERAL:
             return false;
         case NODE_FUNCTION_CALL:
@@ -224,7 +224,7 @@ bool add_load_and_store(Node_id curr_node) {
             add_load_return_statement(curr_node);
             return false;
         case NODE_VARIABLE_DEFINITION:
-            if (nodes_at(nodes_at(curr_node)->parent)->type == NODE_FUNCTION_PARAMETERS) {
+            if (curr_node->parent->type == NODE_FUNCTION_PARAMETERS) {
                 return false;
             }
             insert_alloca(curr_node);
