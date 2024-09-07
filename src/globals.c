@@ -13,3 +13,5 @@ Arena arena = {0};
 
 void* arena_buffers[100000] = {0};
 size_t arena_buffers_count = 0;
+
+uint8_t zero_block[100000000] = {0};

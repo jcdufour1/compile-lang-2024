@@ -617,6 +617,8 @@ static void emit_symbols(String* output) {
         size_t literal_width = nodes_at(curr_node.node)->str_data.count + 1;
 
         string_extend_cstr(output, "@.");
+        log(LOG_DEBUG, SYM_TBL_STATUS_FMT"\n", sym_tbl_status_print(curr_node.status));
+        log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(curr_node.key));
         string_extend_strv(output, curr_node.key);
         string_extend_cstr(output, " = private unnamed_addr constant [ ");
         string_extend_size_t(output, literal_width);

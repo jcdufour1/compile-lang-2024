@@ -88,6 +88,7 @@ void* arena_alloc(size_t capacity_needed) {
     void* buf;
     if (use_free_node(&buf, capacity_needed)) {
         // a free node can hold this item
+        assert(0 == memcmp(buf, zero_block, capacity_needed));
         return buf;
     }
 
@@ -123,6 +124,7 @@ void* arena_alloc(size_t capacity_needed) {
     log(LOG_DEBUG, "thing 89: %p %zu\n", new_alloc_buf, capacity_needed);
     arena_buf_new_region->in_use += capacity_needed;
     arena_buf_new_region->buf_after_taken = (char*)arena_buf_new_region->buf_after_taken + capacity_needed;
+    assert(0 == memcmp(new_alloc_buf, zero_block, capacity_needed));
     return new_alloc_buf;
 }
 
@@ -140,11 +142,14 @@ static bool find_empty_free_node(Arena_free_node** result) {
     return false;
 }
 
-void arena_free(void* buf, size_t old_capacity) {
+void arena_free(void* buf, size_t old_capacity, bool is_sym_tbl) {
     assert(buf && "null freed");
 
     Arena_free_node* free_node;
     if (find_empty_free_node(&free_node)) {
+        if (is_sym_tbl) {
+            todo();
+        }
         free_node->buf = buf;
         free_node->capacity = old_capacity;
         return;
@@ -167,6 +172,6 @@ void arena_free(void* buf, size_t old_capacity) {
 void* arena_realloc(void* old_buf, size_t old_capacity, size_t new_capacity) {
     void* new_buf = arena_alloc(new_capacity);
     memcpy(new_buf, old_buf, old_capacity);
-    arena_free(old_buf, old_capacity);
+    arena_free(old_buf, old_capacity, false);
     return new_buf;
 }

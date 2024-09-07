@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include "str_view_struct.h"
 
 #define LOG_TRACE   0
@@ -110,5 +111,7 @@ static inline const char* bool_print(bool condition) {
             abort(); \
         } \
     } while(0);
+
+extern uint8_t zero_block[100000000];
 
 #endif // UTIL_H

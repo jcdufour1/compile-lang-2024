@@ -7,7 +7,7 @@
 #include "nodes.h"
 #include <stb_ds.h>
 
-#define SYM_TBL_DEFAULT_CAPACITY 100000
+#define SYM_TBL_DEFAULT_CAPACITY 1
 #define SYM_TBL_MAX_DENSITY (0.6f)
 
 typedef enum {
@@ -52,7 +52,6 @@ static inline void sym_tbl_add_internal(Symbol_table_node* sym_tbl_nodes, size_t
 }
 
 static inline void sym_tbl_cpy(Symbol_table_node* dest, const Symbol_table_node* src, size_t count_nodes_to_cpy) {
-    assert(count_nodes_to_cpy < 1);
     for (size_t bucket_src = 0; bucket_src < count_nodes_to_cpy; bucket_src++) {
         log(LOG_DEBUG, "thing 12\n");
         if (src[bucket_src].status == SYM_TBL_OCCUPIED) {
@@ -86,7 +85,7 @@ static inline void sym_tbl_expand_if_nessessary() {
         new_table_nodes = arena_alloc(symbol_table.capacity*node_size);
         sym_tbl_cpy(new_table_nodes, symbol_table.table_nodes, old_capacity_node_count);
         if (symbol_table.table_nodes) {
-            arena_free(symbol_table.table_nodes, symbol_table.capacity*node_size);
+            arena_free(symbol_table.table_nodes, old_capacity_node_count*node_size, true);
         }
         symbol_table.table_nodes = new_table_nodes;
     }
@@ -137,6 +136,21 @@ static inline void sym_tbl_add(
     sym_tbl_expand_if_nessessary();
     sym_tbl_add_internal(symbol_table.table_nodes, symbol_table.capacity, node_of_symbol);
     symbol_table.count++;
+}
+
+#define SYM_TBL_STATUS_FMT "%s"
+
+static inline const char* sym_tbl_status_print(SYM_TBL_STATUS status) {
+    switch (status) {
+        case SYM_TBL_NEVER_OCCUPIED:
+            return "never occupied";
+        case SYM_TBL_PREVIOUSLY_OCCUPIED:
+            return "prev occupied";
+        case SYM_TBL_OCCUPIED:
+            return "currently occupied";
+        default:
+            unreachable("");
+    }
 }
 
 #endif // SYMBOL_TABLE_H

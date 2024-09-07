@@ -2,7 +2,7 @@
 
 C_FLAGS=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
 		-std=c11 -pedantic -g -I ./third_party/ \
-		-fsanitize=address \
+		-fsanitize=address,bounds-strict \
 		-lasan
 
 BUILD_DIR=build/debug/
@@ -40,6 +40,9 @@ build: ${BUILD_DIR}/main
 
 test_quick: run
 	${CAT} test.ll && clang test.ll -o a.out && ./a.out ; echo $$?
+
+#valgrind: build
+	#valgrind ${BUILD_DIR}/main ${ARGS_PROGRAM}
 
 # general
 ${BUILD_DIR}/main: ${OBJS}
