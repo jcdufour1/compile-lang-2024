@@ -9,8 +9,6 @@
 #include "assert.h"
 #include "vector.h"
 
-#define NODES_DEFAULT_CAPACITY 512
-
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, const Node* root, const char* file, int line);
 
 void nodes_assert_tree_linkage_is_consistant(Node* root);

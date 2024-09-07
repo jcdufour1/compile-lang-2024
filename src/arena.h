@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
+#include "util.h"
 
 typedef struct Arena_buf_ {
     void* buf_after_taken;
@@ -43,6 +44,40 @@ void* arena_realloc(void* old_buf, size_t old_capacity, size_t new_capacity);
 void arena_free(void* buf, size_t old_capacity);
 
 void arena_destroy(void);
+
+static inline size_t arena_count_allocated_nodes(void) {
+    size_t count_nodes = 0;
+    Arena_alloc_node* curr_node = arena.alloc_node;
+    while (curr_node) {
+        count_nodes++;
+        curr_node = curr_node->next;
+    }
+    return count_nodes;
+}
+
+static inline size_t arena_count_free_nodes(void) {
+    size_t count_nodes = 0;
+    Arena_free_node* curr_node = arena.free_node;
+    while (curr_node) {
+        count_nodes++;
+        curr_node = curr_node->next;
+    }
+    return count_nodes;
+}
+
+#define arena_log_alloced_nodes() \
+    do { \
+        size_t count_nodes = 0; \
+        log(LOG_DEBUG, "thing 489\n"); \
+        Arena_alloc_node* curr_node = arena.alloc_node; \
+        while (curr_node) { \
+            count_nodes++; \
+            log(LOG_DEBUG, "%p %zu\n", curr_node->buf, curr_node->capacity); \
+            curr_node = curr_node->next; \
+        } \
+        log(LOG_DEBUG, "total count alloc nodes printed: %zu\n", count_nodes); \
+    } \
+    while (0)
 
 #define arena_log_free_nodes() \
     do { \

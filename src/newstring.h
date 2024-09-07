@@ -7,7 +7,7 @@
 #include "vector.h"
 #include "assert.h"
 
-#define STRING_DEFAULT_CAPACITY 8
+#define STRING_DEFAULT_CAPACITY 1
 
 typedef struct {
     Vec_base info;
