@@ -86,6 +86,7 @@ typedef int LOG_LEVEL;
     do { \
         log(LOG_FETAL, "unreachable:"); \
         fprintf(stderr, __VA_ARGS__); \
+        fprintf(stderr, "\n"); \
         abort(); \
     } while (0);
 

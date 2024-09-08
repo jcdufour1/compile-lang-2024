@@ -9,10 +9,11 @@
 static void* safe_realloc(void* old_ptr, size_t old_capacity, size_t new_count_items, size_t size_each_item) {
     size_t new_capacity = new_count_items*size_each_item;
     void* new_ptr = realloc(old_ptr, new_capacity);
-    memset((char*)new_ptr + old_capacity, 0,  new_capacity - old_capacity);
     if (!new_ptr) {
-        todo();
+        msg(LOG_FETAL, "", 0, "realloc failed\n");
+        exit(1);
     }
+    memset((char*)new_ptr + old_capacity, 0,  new_capacity - old_capacity);
     return new_ptr;
 }
 
@@ -20,7 +21,8 @@ static void* safe_realloc(void* old_ptr, size_t old_capacity, size_t new_count_i
 static void* safe_malloc(size_t capacity) {
     void* new_ptr = malloc(capacity);
     if (!new_ptr) {
-        todo();
+        msg(LOG_FETAL, "", 0, "malloc failed\n");
+        exit(1);
     }
     memset(new_ptr, 0, capacity);
     return new_ptr;
@@ -126,8 +128,8 @@ static bool use_free_node(void** buf, size_t capacity_needed) {
     Arena_free_node* curr_node = arena.free_node;
     while (curr_node) {
         if (curr_node->capacity >= capacity_needed) {
-            arena_log_alloced_nodes();
-            arena_log_free_nodes();
+            //arena_log_alloced_nodes();
+            //arena_log_free_nodes();
             assert(!buf_is_in_alloc(curr_node->buf));
             assert(!node_is_alloced(curr_node->buf, curr_node->capacity));
             *buf = curr_node->buf;

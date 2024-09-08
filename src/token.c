@@ -1,6 +1,54 @@
 #include "token.h"
 #include "assert.h"
 
+Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
+    switch (token_type) {
+        case TOKEN_SYMBOL:
+            return str_view_from_cstr("sym");
+        case TOKEN_OPEN_PAR:
+            return str_view_from_cstr("(");
+        case TOKEN_CLOSE_PAR:
+            return str_view_from_cstr(")");
+        case TOKEN_OPEN_CURLY_BRACE:
+            return str_view_from_cstr("{");
+        case TOKEN_CLOSE_CURLY_BRACE:
+            return str_view_from_cstr("}");
+        case TOKEN_DOUBLE_QUOTE:
+            return str_view_from_cstr("\"");
+        case TOKEN_SEMICOLON:
+            return str_view_from_cstr(";");
+        case TOKEN_COMMA:
+            return str_view_from_cstr(",");
+        case TOKEN_SINGLE_PLUS:
+            return str_view_from_cstr("+");
+        case TOKEN_SINGLE_MINUS:
+            return str_view_from_cstr("-");
+        case TOKEN_ASTERISK:
+            // TODO: * may not always be multiplication
+            return str_view_from_cstr("*");
+        case TOKEN_STRING_LITERAL:
+            return str_view_from_cstr("str");
+        case TOKEN_NUM_LITERAL:
+            return str_view_from_cstr("num");
+        case TOKEN_COLON:
+            return str_view_from_cstr(":");
+        case TOKEN_SINGLE_EQUAL:
+            return str_view_from_cstr("=");
+        case TOKEN_SINGLE_DOT:
+            return str_view_from_cstr(".");
+        case TOKEN_DOUBLE_DOT:
+            return str_view_from_cstr("..");
+        case TOKEN_TRIPLE_DOT:
+            return str_view_from_cstr("...");
+        case TOKEN_LESS_THAN:
+            return str_view_from_cstr("<");
+        case TOKEN_GREATER_THAN:
+            return str_view_from_cstr(">");
+        default:
+            unreachable("");
+    }
+}
+
 Str_view token_print_internal(Token token) {
     static String buf = {0};
     string_set_to_zero_len(&buf);

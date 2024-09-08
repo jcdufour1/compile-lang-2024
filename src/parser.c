@@ -17,7 +17,7 @@ static Node* parse_single_item_or_block(Tk_view tokens);
     do { \
         log(log_level, "tokens:\n"); \
         for (size_t idx = 0; idx < (token_view).count; idx++) { \
-            log_indent(log_level, indent, " "TOKEN_FMT"\n", token_print((token_view).tokens[idx])); \
+            log_indent((log_level), (indent), " "TOKEN_FMT"\n", token_print((token_view).tokens[idx])); \
         } \
         log(log_level, "\n"); \
     } while(0);
@@ -777,8 +777,8 @@ static Node* parse_single_statement(Tk_view tokens) {
         return parse_operation(tokens);
     }
 
-    //log_tokens(LOG_DEBUG, tokens, indent_amt);
-    //log_tree(LOG_VERBOSE, node_id_from(0));
+    log_tokens(LOG_DEBUG, tokens, 0);
+    log_tree(LOG_VERBOSE, root_of_tree);
     unreachable("");
 }
 

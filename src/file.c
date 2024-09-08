@@ -1,6 +1,9 @@
 
 #include "util.h"
 #include "newstring.h"
+#include "parameters.h"
+#include <stdlib.h>
+#include <errno.h>
 
 bool read_file(String* file_text, const char* input_file_name) {
     assert(input_file_name);
@@ -27,7 +30,8 @@ bool read_file(String* file_text, const char* input_file_name) {
 void write_file(const char* file_path, Str_view text_to_write) {
     FILE* file = fopen(file_path, "w");
     if (!file) {
-        todo();
+        msg(LOG_FETAL, "dummy", 0, "could not open file %s: errno %d (%s)\n", params.input_file_name, errno, strerror(errno));
+        exit(1);
     }
 
     for (size_t idx = 0; idx < text_to_write.count; idx++) {
