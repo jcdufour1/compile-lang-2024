@@ -179,27 +179,29 @@ static void emit_src_of_assignment(String* output, Node* variable_def, void* ite
     }
 }
 
-static void emit_src_literal(String* output, Node* src) {
-    extend_literal_decl_prefix(output, src);
+static void emit_src_literal(String* output, Node* var_decl_or_def) {
+    extend_literal_decl_prefix(output, var_decl_or_def);
 }
 
-static void emit_src_function_call_result(String* output, Node* store) {
-    Node* fun_call = store->left_child;
-    assert(fun_call);
+static void emit_src_function_call_result(String* output, Node* fun_call) {
     assert(fun_call->type == NODE_FUNCTION_CALL);
 
     string_extend_cstr(output, " %");
     string_extend_size_t(output, fun_call->llvm_id);
 }
 
-static void emit_src_operator(String* output, Node* store) {
-    assert(store->type == NODE_STORE);
-    Node* operator = store->left_child;
-    assert(operator);
+static void emit_src_operator(String* output, Node* operator) {
     assert(operator->type == NODE_OPERATOR);
 
     string_extend_cstr(output, " %");
     string_extend_size_t(output, operator->llvm_id);
+}
+
+static void emit_src_symbol(String* output, Node* symbol) {
+    assert(symbol->type == NODE_SYMBOL);
+
+    string_extend_cstr(output, " %");
+    string_extend_size_t(output, get_prev_load_id(symbol));
 }
 
 static void emit_operator_type(String* output, Node* operator) {
@@ -265,22 +267,46 @@ static void emit_operator(String* output, Node* operator) {
     string_extend_cstr(output, "\n");
 }
 
-static void emit_src(String* output, Node* store) {
-    log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
-    Node* src = nodes_single_child(store);
+static void emit_src(String* output, Node* src) {
+    //log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
     switch (src->type) {
         case NODE_LITERAL:
             emit_src_literal(output, src);
             break;
         case NODE_FUNCTION_CALL:
-            emit_src_function_call_result(output, store);
+            emit_src_function_call_result(output, src);
             break;
         case NODE_OPERATOR:
-            emit_src_operator(output, store);
+            emit_src_operator(output, src);
+            break;
+        case NODE_SYMBOL:
+            emit_src_symbol(output, src);
             break;
         default:
             todo();
     }
+}
+
+static void emit_load_variable(String* output, Node* variable_call) {
+    Node* variable_def;
+    node_printf(variable_call);
+    if (!sym_tbl_lookup(&variable_def, variable_call->name)) {
+        unreachable("attempt to load a symbol that is undefined:"NODE_FMT"\n", node_print(variable_call));
+    }
+    //log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
+    //log_tree(LOG_DEBUG, variable_call);
+    assert(get_store_dest_id(variable_call) > 0);
+
+    string_extend_cstr(output, "    %");
+    string_extend_size_t(output, variable_call->llvm_id);
+    string_extend_cstr(output, " = load ");
+    extend_type_call_str(output, variable_def);
+    string_extend_cstr(output, ", ");
+    string_extend_cstr(output, "ptr");
+    string_extend_cstr(output, " %");
+    string_extend_size_t(output, get_store_dest_id(variable_call));
+    string_extend_cstr(output, ", align 8");
+    string_extend_cstr(output, "\n");
 }
 
 static void emit_store(String* output, Node* store) {
@@ -299,14 +325,18 @@ static void emit_store(String* output, Node* store) {
             break;
         case NODE_LITERAL:
             break;
+        case NODE_SYMBOL:
+            //emit_load_variable(output, src);
+            break;
         default:
+            log_tree(LOG_DEBUG, store);
             unreachable(NODE_FMT"\n", node_print(src));
     }
 
     string_extend_cstr(output, "    store ");
     extend_type_call_str(output, var_def);
 
-    emit_src(output, store);
+    emit_src(output, src);
 
     string_extend_cstr(output, ", ptr %");
     string_extend_size_t(output, alloca_dest_id);
@@ -487,28 +517,6 @@ static void emit_cond_goto(String* output, Node* cond_goto) {
     string_append(output, '\n');
 }
 
-static void emit_load_variable(String* output, Node* variable_call) {
-    Node* variable_def;
-    node_printf(variable_call);
-    if (!sym_tbl_lookup(&variable_def, variable_call->name)) {
-        unreachable("attempt to load a symbol that is undefined:"NODE_FMT"\n", node_print(variable_call));
-    }
-    log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
-    log_tree(LOG_DEBUG, variable_call);
-    assert(get_store_dest_id(variable_call) > 0);
-
-    string_extend_cstr(output, "    %");
-    string_extend_size_t(output, variable_call->llvm_id);
-    string_extend_cstr(output, " = load ");
-    extend_type_call_str(output, variable_def);
-    string_extend_cstr(output, ", ");
-    string_extend_cstr(output, "ptr");
-    string_extend_cstr(output, " %");
-    string_extend_size_t(output, get_store_dest_id(variable_call));
-    string_extend_cstr(output, ", align 8");
-    string_extend_cstr(output, "\n");
-}
-
 static void emit_block(String* output, Node* fun_block) {
     nodes_foreach_child(statement, fun_block) {
         switch (statement->type) {
@@ -553,7 +561,7 @@ static void emit_block(String* output, Node* fun_block) {
             case NODE_FOR_LOOP:
                 unreachable("for loop should not still be present at this point\n");
             default:
-                log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
+                //log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
                 node_printf(statement);
                 todo();
         }

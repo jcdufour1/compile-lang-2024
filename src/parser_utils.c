@@ -31,7 +31,7 @@ Llvm_id get_block_return_id(Node* fun_call) {
 // return true if successful, false otherwise
 static bool get_prev_matching_node(Node** result, Node* node_to_start, Node* var_call, bool is_matching(Node* curr_node, Node* var_call)) {
     nodes_foreach_from_curr_rev(curr_node, node_to_start) {
-        node_printf(curr_node);
+        //node_printf(curr_node);
         assert(curr_node->parent == node_to_start->parent);
         if (is_matching(curr_node, var_call)) {
             *result = curr_node;
@@ -40,7 +40,7 @@ static bool get_prev_matching_node(Node** result, Node* node_to_start, Node* var
     }
 
     if (node_to_start->parent) {
-        log(LOG_DEBUG, "thing 87\n");
+        //log(LOG_DEBUG, "thing 87\n");
         return get_prev_matching_node(result, node_to_start->parent, var_call, is_matching);
     }
 

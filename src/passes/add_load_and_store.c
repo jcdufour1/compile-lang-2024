@@ -119,7 +119,8 @@ static void insert_store_assignment(Node* assignment, Node* item_to_store) {
             todo();
             break;
         case NODE_SYMBOL:
-            todo();
+            insert_load(assignment, rhs);
+            log_tree(LOG_DEBUG, root_of_tree);
             break;
         case NODE_LITERAL:
             break;
