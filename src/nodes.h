@@ -55,6 +55,7 @@ static inline Node* node_new(void) {
     Node* new_node = arena_alloc(sizeof(*new_node));
     nodes_reset_links_of_self_only(new_node, false);
     if (!root_of_tree) {
+        // it is assumed that the first node created is the root
         root_of_tree = new_node;
     }
     return new_node;
@@ -296,7 +297,7 @@ static inline void nodes_remove(Node* node_to_remove, bool keep_children) {
         prev->next = next;
     }
 
-    if (parent->left_child == node_to_remove) {
+    if (parent && parent->left_child == node_to_remove) {
         parent->left_child = next;
     }
 

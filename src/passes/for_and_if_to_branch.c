@@ -114,8 +114,8 @@ static void for_loop_to_branch(Node* for_loop) {
     // initial assignment
     Node* new_var_assign = assignment_new(symbol_lhs_assign, lower_bound->left_child);
 
-    Node* jmp_to_check_cond_label = goto_new(str_view_from_cstr("for_start"));
     Node* check_cond_label = label_new(str_view_from_cstr("for_start"));
+    Node* jmp_to_check_cond_label = goto_new(check_cond_label->name);
     Node* after_check_label = label_new(str_view_from_cstr("for_after_check"));
     Node* after_for_loop_label = label_new(str_view_from_cstr("for_after"));
     Node* check_cond_jmp = jmp_if_less_than_new(
@@ -134,7 +134,6 @@ static void for_loop_to_branch(Node* for_loop) {
     nodes_extend_children(new_branch_block, for_block->left_child);
     nodes_append_child(new_branch_block, assignment_to_inc_cond_var);
     nodes_append_child(new_branch_block, goto_new(check_cond_label->name));
-
     nodes_append_child(new_branch_block, after_for_loop_label);
 
     nodes_replace(for_loop, new_branch_block);
@@ -155,21 +154,30 @@ static void if_statement_to_branch(Node* curr_node) {
     assert(upper_bound->type == NODE_LITERAL);
     assert(upper_bound->token_type == TOKEN_NUM_LITERAL);
 
-    Node* new_branch_block = node_new();
-    new_branch_block->type = NODE_BLOCK;
-
     Node* if_true = label_new(str_view_from_cstr("if_true"));
-    Node* if_false = label_new(str_view_from_cstr("if_false"));
+    Node* if_after = label_new(str_view_from_cstr("if_false"));
 
     Node* check_cond_jmp = jmp_if_less_than_new(
         symbol_to_check->name, 
         if_true->name, 
-        if_false->name,
+        if_after->name,
         upper_bound
     );
 
+    Node* jmp_to_if_after = goto_new(if_after->name);
+
+    Node* new_branch_block = node_new();
+    new_branch_block->type = NODE_BLOCK;
+
+    nodes_append_child(new_branch_block, check_cond_jmp);
+    nodes_append_child(new_branch_block, if_true);
+    nodes_extend_children(new_branch_block, block);
+    nodes_extend_children(new_branch_block, jmp_to_if_after);
+    nodes_append_child(new_branch_block, if_after);
+
+    nodes_replace(curr_node, new_branch_block);
+
     log_tree(LOG_DEBUG, check_cond_jmp);
-    todo();
 }
 
 bool for_and_if_to_branch(Node* curr_node) {
