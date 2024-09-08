@@ -223,7 +223,7 @@ static inline Node* nodes_get_child_of_type(Node* parent, NODE_TYPE node_type) {
     }
 
     log_tree(LOG_VERBOSE, parent);
-    unreachable("");
+    unreachable("node_type not found");
 }
 
 static inline Node* nodes_get_sibling_of_type(Node* node, NODE_TYPE node_type) {

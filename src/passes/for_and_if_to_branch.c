@@ -96,18 +96,17 @@ static void for_loop_to_branch(Node* for_loop) {
     assert(!new_branch_block->parent);
 
     Node* symbol_lhs_assign;
-    Node* old_var_def;
+    Node* regular_var_def;
     {
-        Node* new_var_def;
-        new_var_def = nodes_get_child_of_type(for_loop, NODE_FOR_VARIABLE_DEF);
-        old_var_def = nodes_get_child_of_type(new_var_def, NODE_VARIABLE_DEFINITION);
-        nodes_remove(old_var_def, false);
-        nodes_insert_before(for_loop, old_var_def);
-        symbol_lhs_assign = symbol_new(old_var_def->name);
+        Node* new_var_def = nodes_get_child_of_type(for_loop, NODE_FOR_VARIABLE_DEF);
+        regular_var_def = nodes_get_child_of_type(new_var_def, NODE_VARIABLE_DEFINITION);
+        nodes_remove(regular_var_def, false);
+        nodes_insert_before(for_loop, regular_var_def);
+        symbol_lhs_assign = symbol_new(regular_var_def->name);
         nodes_remove_siblings(new_var_def);
     }
 
-    Node* assignment_to_inc_cond_var = get_for_loop_cond_var_assign(old_var_def->name);
+    Node* assignment_to_inc_cond_var = get_for_loop_cond_var_assign(regular_var_def->name);
     assert(!new_branch_block->parent);
     nodes_remove_siblings_and_parent(lower_bound);
     nodes_remove_siblings_and_parent(upper_bound);
@@ -121,7 +120,7 @@ static void for_loop_to_branch(Node* for_loop) {
     Node* after_check_label = label_new(str_view_from_cstr("for_after_check"));
     Node* after_for_loop_label = label_new(str_view_from_cstr("for_after"));
     Node* check_cond_jmp = jmp_if_less_than_new(
-        old_var_def->name, 
+        regular_var_def->name, 
         after_check_label->name, 
         after_for_loop_label->name,
         upper_bound
@@ -132,7 +131,7 @@ static void for_loop_to_branch(Node* for_loop) {
     nodes_append_child(new_branch_block, check_cond_label);
     nodes_append_child(new_branch_block, check_cond_jmp);
     nodes_append_child(new_branch_block, after_check_label);
-    nodes_extend_children(new_branch_block, for_block->left_child); // this is the problem
+    nodes_extend_children(new_branch_block, for_block->left_child);
     nodes_append_child(new_branch_block, assignment_to_inc_cond_var);
     nodes_append_child(new_branch_block, goto_new(check_cond_label->name));
 
@@ -142,6 +141,25 @@ static void for_loop_to_branch(Node* for_loop) {
 }
 
 static void if_statement_to_branch(Node* curr_node) {
+    log_tree(LOG_DEBUG, curr_node);
+
+    Node* condition = nodes_get_child_of_type(curr_node, NODE_IF_CONDITION);
+    Node* block = nodes_get_child_of_type(curr_node, NODE_BLOCK);
+
+    Node* new_branch_block = node_new();
+    new_branch_block->type = NODE_BLOCK;
+
+    todo();
+
+    /*
+    Node* check_cond_jmp = jmp_if_less_than_new(
+        regular_var_def->name, 
+        after_check_label->name, 
+        after_for_loop_label->name,
+        upper_bound
+    );
+    */
+
     todo();
 }
 
@@ -156,5 +174,5 @@ bool for_and_if_to_branch(Node* curr_node) {
         default:
             return false;
     }
-
 }
+
