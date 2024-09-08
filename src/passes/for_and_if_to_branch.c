@@ -114,10 +114,10 @@ static void for_loop_to_branch(Node* for_loop) {
     // initial assignment
     Node* new_var_assign = assignment_new(symbol_lhs_assign, lower_bound->left_child);
 
-    Node* check_cond_label = label_new(str_view_from_cstr("for_start"));
+    Node* check_cond_label = label_new(literal_name_new());
     Node* jmp_to_check_cond_label = goto_new(check_cond_label->name);
-    Node* after_check_label = label_new(str_view_from_cstr("for_after_check"));
-    Node* after_for_loop_label = label_new(str_view_from_cstr("for_after"));
+    Node* after_check_label = label_new(literal_name_new());
+    Node* after_for_loop_label = label_new(literal_name_new());
     Node* check_cond_jmp = jmp_if_less_than_new(
         regular_var_def->name, 
         after_check_label->name, 
@@ -154,8 +154,8 @@ static void if_statement_to_branch(Node* curr_node) {
     assert(upper_bound->type == NODE_LITERAL);
     assert(upper_bound->token_type == TOKEN_NUM_LITERAL);
 
-    Node* if_true = label_new(str_view_from_cstr("if_true"));
-    Node* if_after = label_new(str_view_from_cstr("if_false"));
+    Node* if_true = label_new(literal_name_new());
+    Node* if_after = label_new(literal_name_new());
 
     Node* check_cond_jmp = jmp_if_less_than_new(
         symbol_to_check->name, 
