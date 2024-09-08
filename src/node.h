@@ -62,8 +62,6 @@ extern Node* root_of_tree;
 
 #define NODE_FMT STRING_FMT
 
-#define NODE_IDX_NULL SIZE_MAX
-
 String node_print_internal(const Node* node);
 
 #define node_print(root) string_print(node_print_internal((root)))

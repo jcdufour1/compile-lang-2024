@@ -707,6 +707,7 @@ static bool extract_if_statement(Node** result, Tk_view* tokens) {
 
     //log_tokens(LOG_DEBUG, if_body_tokens, 0);
     *result = if_statement;
+    return true;
 }
 
 INLINE bool extract_block_element(Node** child, Tk_view* tokens) {
@@ -784,7 +785,7 @@ static Node* parse_single_statement(Tk_view tokens) {
 Node* parse(const Tokens tokens) {
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
     Node* root = parse_block(token_view);
-    //log(LOG_VERBOSE, "completed parse tree:\n");
-    //log_tree(LOG_VERBOSE, root);
+    log(LOG_VERBOSE, "completed parse tree:\n");
+    log_tree(LOG_VERBOSE, root);
     return root;
 }

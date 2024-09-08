@@ -61,11 +61,11 @@ static Node* jmp_if_less_than_new(
     Str_view label_name_if_false,
     Node* upper_bound
 ) {
-    if (nodes_single_child(upper_bound)->type != NODE_LITERAL) {
+    if (nodes_count_children(upper_bound) > 0 || upper_bound->type != NODE_LITERAL) {
         todo();
     }
 
-    Str_view upper_bound_str = nodes_single_child(upper_bound)->str_data;
+    Str_view upper_bound_str = upper_bound->str_data;
     Node* less_than = node_new();
     less_than->type = NODE_OPERATOR;
     less_than->token_type = TOKEN_LESS_THAN;
@@ -122,7 +122,7 @@ static void for_loop_to_branch(Node* for_loop) {
         regular_var_def->name, 
         after_check_label->name, 
         after_for_loop_label->name,
-        upper_bound
+        nodes_single_child(upper_bound)
     );
 
     nodes_append_child(new_branch_block, regular_var_def);
@@ -146,20 +146,29 @@ static void if_statement_to_branch(Node* curr_node) {
     Node* condition = nodes_get_child_of_type(curr_node, NODE_IF_CONDITION);
     Node* block = nodes_get_child_of_type(curr_node, NODE_BLOCK);
 
+    Node* operation = nodes_get_child_of_type(condition, NODE_OPERATOR);
+    node_printf(operation);
+    assert(operation->token_type == TOKEN_LESS_THAN);
+    Node* symbol_to_check = nodes_get_child(operation, 0);
+    assert(symbol_to_check->type == NODE_SYMBOL);
+    Node* upper_bound = nodes_get_child(operation, 1);
+    assert(upper_bound->type == NODE_LITERAL);
+    assert(upper_bound->token_type == TOKEN_NUM_LITERAL);
+
     Node* new_branch_block = node_new();
     new_branch_block->type = NODE_BLOCK;
 
-    todo();
+    Node* if_true = label_new(str_view_from_cstr("if_true"));
+    Node* if_false = label_new(str_view_from_cstr("if_false"));
 
-    /*
     Node* check_cond_jmp = jmp_if_less_than_new(
-        regular_var_def->name, 
-        after_check_label->name, 
-        after_for_loop_label->name,
+        symbol_to_check->name, 
+        if_true->name, 
+        if_false->name,
         upper_bound
     );
-    */
 
+    log_tree(LOG_DEBUG, check_cond_jmp);
     todo();
 }
 
