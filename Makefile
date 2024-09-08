@@ -1,11 +1,28 @@
 .PHONY: all setup build gdb
 
-C_FLAGS=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
-		-std=c11 -pedantic -g -I ./third_party/ \
-		-fsanitize=address,bounds-strict \
-		-lasan 
+LOG_LEVEL ?= "LOG_TRACE"
 
-BUILD_DIR=build/debug/
+C_FLAGS_DEBUG=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
+			  -std=c11 -pedantic -g -I ./third_party/ \
+			  -D CURR_LOG_LEVEL=${LOG_LEVEL} \
+			  -fsanitize=address,bounds-strict \
+			  -lasan 
+C_FLAGS_RELEASE=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
+			    -std=c11 -pedantic -g -I ./third_party/ \
+			    -D CURR_LOG_LEVEL=${LOG_LEVEL} \
+			    -DNDEBUG \
+				-O2 \
+				-pg 
+
+DEBUG ?= 0
+ifeq ($(DEBUG), 1)
+    C_FLAGS = ${C_FLAGS_DEBUG}
+	BUILD_DIR=./build/debug/
+else
+    C_FLAGS = ${C_FLAGS_RELEASE}
+	BUILD_DIR=./build/release/
+endif
+
 OBJS=\
 	 ${BUILD_DIR}/main.o \
 	 ${BUILD_DIR}/tokenizer.o \
@@ -32,7 +49,7 @@ CAT ?= cat
 all: build
 
 run: build
-	${BUILD_DIR}/main ${ARGS_PROGRAM}
+	time ${BUILD_DIR}/main ${ARGS_PROGRAM}
 
 gdb: build
 	gdb --args ${BUILD_DIR}/main ${ARGS_PROGRAM}
