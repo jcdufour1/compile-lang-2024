@@ -55,26 +55,24 @@ static Node* literal_new(Str_view value) {
     return symbol;
 }
 
-static Node* jmp_if_less_than_new(
+static Node* cond_goto_new(
     Str_view symbol_name_to_check,
     Str_view label_name_if_true,
     Str_view label_name_if_false,
-    Node* upper_bound
+    TOKEN_TYPE operator_type,
+    const Node* upper_bound
 ) {
-    if (nodes_count_children(upper_bound) > 0 || upper_bound->type != NODE_LITERAL) {
-        todo();
-    }
+    Node* upper_bound_copy = node_clone(upper_bound);
 
-    Str_view upper_bound_str = upper_bound->str_data;
-    Node* less_than = node_new();
-    less_than->type = NODE_OPERATOR;
-    less_than->token_type = TOKEN_LESS_THAN;
-    nodes_append_child(less_than, symbol_new(symbol_name_to_check));
-    nodes_append_child(less_than, literal_new(upper_bound_str));
+    Node* operator = node_new();
+    operator->type = NODE_OPERATOR;
+    operator->token_type = operator_type;
+    nodes_append_child(operator, symbol_new(symbol_name_to_check));
+    nodes_append_child(operator, upper_bound_copy);
 
     Node* cond_goto = node_new();
     cond_goto->type = NODE_COND_GOTO;
-    nodes_append_child(cond_goto, less_than);
+    nodes_append_child(cond_goto, operator);
     nodes_append_child(cond_goto, symbol_new(label_name_if_true));
     nodes_append_child(cond_goto, symbol_new(label_name_if_false));
     return cond_goto;
@@ -118,10 +116,11 @@ static void for_loop_to_branch(Node* for_loop) {
     Node* jmp_to_check_cond_label = goto_new(check_cond_label->name);
     Node* after_check_label = label_new(literal_name_new());
     Node* after_for_loop_label = label_new(literal_name_new());
-    Node* check_cond_jmp = jmp_if_less_than_new(
+    Node* check_cond_jmp = cond_goto_new(
         regular_var_def->name, 
         after_check_label->name, 
         after_for_loop_label->name,
+        TOKEN_LESS_THAN,
         nodes_single_child(upper_bound)
     );
 
@@ -146,21 +145,21 @@ static void if_statement_to_branch(Node* curr_node) {
     Node* block = nodes_get_child_of_type(curr_node, NODE_BLOCK);
 
     Node* operation = nodes_get_child_of_type(condition, NODE_OPERATOR);
-    node_printf(operation);
-    assert(operation->token_type == TOKEN_LESS_THAN);
     Node* symbol_to_check = nodes_get_child(operation, 0);
     assert(symbol_to_check->type == NODE_SYMBOL);
     Node* upper_bound = nodes_get_child(operation, 1);
     assert(upper_bound->type == NODE_LITERAL);
     assert(upper_bound->token_type == TOKEN_NUM_LITERAL);
+    nodes_remove_siblings_and_parent(upper_bound);
 
     Node* if_true = label_new(literal_name_new());
     Node* if_after = label_new(literal_name_new());
 
-    Node* check_cond_jmp = jmp_if_less_than_new(
+    Node* check_cond_jmp = cond_goto_new(
         symbol_to_check->name, 
         if_true->name, 
         if_after->name,
+        operation->token_type,
         upper_bound
     );
 

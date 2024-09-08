@@ -66,7 +66,7 @@ static inline void nodes_establish_siblings(Node* curr, Node* next) {
     next->prev = curr;
 }
 
-static inline size_t nodes_count_children(Node* parent) {
+static inline size_t nodes_count_children(const Node* parent) {
     size_t count = 0;
     nodes_foreach_child(child, parent) {
         count++;

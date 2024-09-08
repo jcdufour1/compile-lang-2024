@@ -167,17 +167,8 @@ static void add_load_cond_goto(Node* cond_goto) {
     Node* lhs = nodes_get_child(operator, 0);
     Node* rhs = nodes_get_child(operator, 1);
 
-    switch (lhs->type) {
-        case NODE_SYMBOL:
-            insert_load(cond_goto, lhs);
-            break;
-        default:
-            unreachable("");
-    }
-
-    if (rhs->type != NODE_LITERAL) {
-        todo();
-    }
+    insert_load(cond_goto, lhs);
+    insert_load(cond_goto, rhs);
 }
 
 static void add_load_operator(Node* operator) {

@@ -470,10 +470,10 @@ static void emit_label(String* output, Node* label) {
 static void emit_cmp_less_than(String* output, size_t llvm_cmp_dest, Node* lhs, Node* rhs) {
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, llvm_cmp_dest);
-    string_extend_cstr(output, " = icmp slt i32 %");
-    string_extend_size_t(output, get_prev_load_id(lhs));
+    string_extend_cstr(output, " = icmp slt i32 ");
+    emit_operator_operand(output, lhs);
     string_extend_cstr(output, ", ");
-    string_extend_strv(output, rhs->str_data);
+    emit_operator_operand(output, rhs);
     string_extend_cstr(output, "\n");
 }
 
