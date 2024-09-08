@@ -101,7 +101,6 @@ static void for_loop_to_branch(Node* for_loop) {
         Node* new_var_def = nodes_get_child_of_type(for_loop, NODE_FOR_VARIABLE_DEF);
         regular_var_def = nodes_get_child_of_type(new_var_def, NODE_VARIABLE_DEFINITION);
         nodes_remove(regular_var_def, false);
-        nodes_insert_before(for_loop, regular_var_def);
         symbol_lhs_assign = symbol_new(regular_var_def->name);
         nodes_remove_siblings(new_var_def);
     }
@@ -126,6 +125,7 @@ static void for_loop_to_branch(Node* for_loop) {
         upper_bound
     );
 
+    nodes_append_child(new_branch_block, regular_var_def);
     nodes_append_child(new_branch_block, new_var_assign);
     nodes_append_child(new_branch_block, jmp_to_check_cond_label);
     nodes_append_child(new_branch_block, check_cond_label);
