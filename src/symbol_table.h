@@ -53,12 +53,8 @@ static inline void sym_tbl_add_internal(Symbol_table_node* sym_tbl_nodes, size_t
 
 static inline void sym_tbl_cpy(Symbol_table_node* dest, const Symbol_table_node* src, size_t count_nodes_to_cpy) {
     for (size_t bucket_src = 0; bucket_src < count_nodes_to_cpy; bucket_src++) {
-        log(LOG_DEBUG, "thing 12\n");
         if (src[bucket_src].status == SYM_TBL_OCCUPIED) {
-            log(LOG_DEBUG, "thing 13\n");
             sym_tbl_add_internal(dest, symbol_table.capacity, src[bucket_src].node);
-        } else {
-            log(LOG_DEBUG, "not thing 13\n");
         }
     }
 }

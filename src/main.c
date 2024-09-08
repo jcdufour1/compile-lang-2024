@@ -37,6 +37,7 @@ int main(int argc, char** argv) {
     }
 
     arena_log_free_nodes();
+    log(LOG_VERBOSE, "arena size total capacity: %zu KB\n", arena_get_total_capacity() / 1024);
 
     return 0;
 }

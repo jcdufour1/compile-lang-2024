@@ -51,17 +51,11 @@ static bool buf_is_in_alloc(const void* buf) {
     return false;
 }
 static bool node_is_alloced(const void* buf, size_t old_capacity) {
-    log(LOG_NOTE, "%zu\n", old_capacity);
     Arena_alloc_node* curr_node = arena.alloc_node;
     while (curr_node) {
         assert(curr_node->buf);
         if ((size_t)curr_node->buf == (size_t)buf) {
             if (curr_node->capacity != old_capacity) {
-                log(LOG_WARNING,
-                    "capacity passed to arena_free is %zu; expected %zu\n",
-                    old_capacity,
-                    curr_node->capacity
-                );
                 return false;
             }
             return true;
@@ -134,7 +128,6 @@ static bool use_free_node(void** buf, size_t capacity_needed) {
         if (curr_node->capacity >= capacity_needed) {
             arena_log_alloced_nodes();
             arena_log_free_nodes();
-            log(LOG_DEBUG, "%p\n", curr_node->buf);
             assert(!buf_is_in_alloc(curr_node->buf));
             assert(!node_is_alloced(curr_node->buf, curr_node->capacity));
             *buf = curr_node->buf;
@@ -250,7 +243,6 @@ static bool expand_neighbor_free_node(void* buf, size_t capacity) {
         }
 
         if (curr_node && (char*)curr_node->buf == (char*)buf + capacity) {
-            log(LOG_NOTE, "thing thing\n");
             curr_node->buf = buf;
             curr_node->capacity += capacity;
             return true;
@@ -263,10 +255,7 @@ static bool expand_neighbor_free_node(void* buf, size_t capacity) {
 }
 
 void arena_free(void* buf, size_t old_capacity) {
-    log(LOG_NOTE, "being freed:%p %zu\n", buf, old_capacity);
     assert(buf && "null freed");
-    arena_log_free_nodes();
-    arena_log_alloced_nodes();
     assert(buf_is_in_alloc(buf));
     assert(node_is_alloced(buf, old_capacity));
     remove_alloc(buf);
@@ -302,7 +291,6 @@ void arena_free(void* buf, size_t old_capacity) {
 void* arena_realloc(void* old_buf, size_t old_capacity, size_t new_capacity) {
     void* new_buf = arena_alloc(new_capacity);
     memcpy(new_buf, old_buf, old_capacity);
-    log(LOG_NOTE, "%zu\n", old_capacity);
     arena_free(old_buf, old_capacity);
     return new_buf;
 }
@@ -313,10 +301,20 @@ void arena_destroy(void) {
     Arena_alloc_node* curr_node = arena.alloc_node;
     Arena_alloc_node* prev_node = NULL;
     while (curr_node) {
-        log(LOG_NOTE, "thing thing\n");
         prev_node = curr_node;
         curr_node = curr_node->next;
         safe_free(prev_node);
     }
 #endif // NDEBUG
 }
+
+size_t arena_get_total_capacity(void) {
+    size_t total = 0;
+    Arena_buf* curr_buf = arena.buf;
+    while (curr_buf) {
+        total += curr_buf->capacity;
+        curr_buf = curr_buf->next;
+    }
+    return total;
+}
+

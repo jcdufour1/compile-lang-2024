@@ -39,7 +39,6 @@ bool walk_tree(Node* curr_node, bool (callback)(Node* curr_node)) {
 
     bool delete_curr_node = callback(curr_node);
     nodes_assert_tree_linkage_is_consistant(root_of_tree);
-    log(LOG_NOTE, "thkdjfla\n");
 
     // this is for incase curr_node is modified in callback
     switch (status) {
@@ -68,7 +67,6 @@ bool walk_tree(Node* curr_node, bool (callback)(Node* curr_node)) {
     Node* child = curr_node->left_child;
     while (child) {
         Node* child_next = child->next;
-        node_printf(child_next);
         bool remove_child = walk_tree(child, callback);
         if (remove_child) {
             nodes_remove(child, true);

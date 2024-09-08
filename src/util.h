@@ -16,7 +16,6 @@
 #define LOG_ERROR   5
 #define LOG_FETAL   6
 
-#define CURR_LOG_LEVEL LOG_DEBUG
 #ifndef CURR_LOG_LEVEL
 #define CURR_LOG_LEVEL LOG_TRACE
 #endif // CURR_LOG_LEVEL

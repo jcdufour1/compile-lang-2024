@@ -45,6 +45,7 @@ void arena_free(void* buf, size_t old_capacity);
 
 void arena_destroy(void);
 
+#ifndef NDEBUG
 static inline size_t arena_count_allocated_nodes(void) {
     size_t count_nodes = 0;
     Arena_alloc_node* curr_node = arena.alloc_node;
@@ -55,20 +56,9 @@ static inline size_t arena_count_allocated_nodes(void) {
     return count_nodes;
 }
 
-static inline size_t arena_count_free_nodes(void) {
-    size_t count_nodes = 0;
-    Arena_free_node* curr_node = arena.free_node;
-    while (curr_node) {
-        count_nodes++;
-        curr_node = curr_node->next;
-    }
-    return count_nodes;
-}
-
 #define arena_log_alloced_nodes() \
     do { \
         size_t count_nodes = 0; \
-        log(LOG_DEBUG, "thing 489\n"); \
         Arena_alloc_node* curr_node = arena.alloc_node; \
         while (curr_node) { \
             count_nodes++; \
@@ -82,7 +72,6 @@ static inline size_t arena_count_free_nodes(void) {
 #define arena_log_free_nodes() \
     do { \
         size_t count_nodes = 0; \
-        log(LOG_DEBUG, "thing 489\n"); \
         Arena_free_node* curr_node = arena.free_node; \
         while (curr_node) { \
             count_nodes++; \
@@ -92,5 +81,22 @@ static inline size_t arena_count_free_nodes(void) {
         log(LOG_DEBUG, "total count free nodes printed: %zu\n", count_nodes); \
     } \
     while (0)
+
+#else
+#define arena_log_alloced_nodes()
+#define arena_log_free_nodes()
+#endif // NDEBUG
+
+static inline size_t arena_count_free_nodes(void) {
+    size_t count_nodes = 0;
+    Arena_free_node* curr_node = arena.free_node;
+    while (curr_node) {
+        count_nodes++;
+        curr_node = curr_node->next;
+    }
+    return count_nodes;
+}
+
+size_t arena_get_total_capacity(void);
 
 #endif // ARENA_H

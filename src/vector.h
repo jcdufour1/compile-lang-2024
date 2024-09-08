@@ -21,11 +21,9 @@ static inline void vector_reserve(void* typed_vector, size_t size_each_item, siz
     while (vector->info.count + minimum_count_empty_slots + 1 > vector->info.capacity) {
         if (vector->info.capacity < 1) {
             vector->info.capacity = init_capacity;
-            log(LOG_NOTE, "%zu\n", vector->info.capacity*size_each_item);
             vector->buf = arena_alloc(vector->info.capacity*size_each_item);
         } else {
             size_t old_capacity_count_elements = vector->info.capacity;
-            log(LOG_NOTE, "%zu\n", vector->info.capacity*size_each_item);
             vector->info.capacity *= 2;
             vector->buf = arena_realloc(vector->buf, old_capacity_count_elements*size_each_item, vector->info.capacity*size_each_item);
         }
