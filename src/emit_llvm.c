@@ -11,6 +11,41 @@
 static void emit_block(String* output, Node* fun_block);
 static void emit_llvm_main(String* output, Node* root);
 
+// \n excapes are actually stored as is in tokens and nodes, but should be printed as \0a
+// number of excape sequences are returned
+static void string_extend_strv_eval_escapes(String* string, Str_view str_view) {
+    while (str_view.count > 0) {
+        char front_char = str_view_chop_front(&str_view);
+        if (front_char == '\\') {
+            string_append(string, '\\');
+            switch (str_view_chop_front(&str_view)) {
+                case 'n':
+                    string_extend_hex_2_digits(string, 0x0a);
+                    break;
+                default:
+                    unreachable("");
+            }
+        } else {
+            string_append(string, front_char);
+        }
+    }
+}
+
+static size_t get_count_excape_seq(Str_view str_view) {
+    size_t count_excapes = 0;
+    while (str_view.count > 0) {
+        if (str_view_chop_front(&str_view) == '\\') {
+            if (str_view.count < 1) {
+                unreachable("invalid excape sequence");
+            }
+
+            str_view_chop_front(&str_view); // important in case of // excape sequence
+            count_excapes++;
+        }
+    }
+    return count_excapes;
+}
+
 static void extend_type_call_str(String* output, Node* variable_def) {
     assert(variable_def->lang_type.count > 0);
     if (str_view_cstr_is_equal(variable_def->lang_type, "i32")) {
@@ -624,14 +659,15 @@ static void emit_symbols(String* output) {
                 todo();
         }
 
-        size_t literal_width = curr_node.node->str_data.count + 1;
+        size_t literal_width = curr_node.node->str_data.count + 1 - \
+                               get_count_excape_seq(curr_node.node->str_data);
 
         string_extend_cstr(output, "@.");
         string_extend_strv(output, curr_node.key);
         string_extend_cstr(output, " = private unnamed_addr constant [ ");
         string_extend_size_t(output, literal_width);
         string_extend_cstr(output, " x i8] c\"");
-        string_extend_strv(output, curr_node.node->str_data);
+        string_extend_strv_eval_escapes(output, curr_node.node->str_data);
         string_extend_cstr(output, "\\00\", align 1");
         string_extend_cstr(output, "\n");
     }

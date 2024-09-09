@@ -34,17 +34,17 @@ static inline void string_extend_cstr(String* str, const char* cstr) {
     }
 }
 
+static inline void string_extend_hex_2_digits(String* str, uint8_t num) {
+    char num_str[3];
+    sprintf(num_str, "%02x", num);
+    string_extend_cstr(str, num_str);
+}
+
 // string->buf is always null terminated
 static inline void string_extend_size_t(String* str, size_t num) {
     char num_str[21];
     sprintf(num_str, "%zu", num);
     string_extend_cstr(str, num_str);
-}
-
-static inline void string_append_strv(String* str, Str_view str_view) {
-    for (size_t idx = 0; idx < str_view.count; idx++) {
-        string_append(str, str_view.str[idx]);
-    }
 }
 
 static inline String string_new_from_cstr(const char* cstr) {

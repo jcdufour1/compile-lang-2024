@@ -60,7 +60,7 @@ Str_view token_print_internal(Token token) {
     switch (token.type) {
         case TOKEN_SYMBOL:
             string_append(&buf, '(');
-            string_append_strv(&buf, token.text);
+            string_extend_strv(&buf, token.text);
             string_append(&buf, ')');
             break;
         case TOKEN_OPEN_PAR: // fallthrough
@@ -83,12 +83,12 @@ Str_view token_print_internal(Token token) {
             break;
         case TOKEN_STRING_LITERAL: 
             string_append(&buf, '(');
-            string_append_strv(&buf, token.text);
+            string_extend_strv(&buf, token.text);
             string_append(&buf, ')');
             break;
         case TOKEN_NUM_LITERAL:
             string_append(&buf, '(');
-            string_append_strv(&buf, token.text);
+            string_extend_strv(&buf, token.text);
             string_append(&buf, ')');
             break;
         default:

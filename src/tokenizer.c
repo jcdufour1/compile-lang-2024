@@ -28,8 +28,8 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text) 
     memset(token, 0, sizeof(*token));
 
     while (file_text->count > 0 && (isspace(str_view_front(*file_text)) || iscntrl(str_view_front(*file_text)))) {
-        Str_view ch = str_view_chop_front(file_text);
-        if (str_view_front(ch) == '\n') {
+        char ch = str_view_chop_front(file_text);
+        if (ch == '\n') {
             (*line_num)++;
         }
     }

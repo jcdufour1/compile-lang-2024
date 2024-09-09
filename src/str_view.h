@@ -57,8 +57,8 @@ static inline Str_view str_view_chop_front_count(Str_view* str_view, size_t coun
     return new_str_view;
 }
 
-static inline Str_view str_view_chop_front(Str_view* str_view) {
-    return str_view_chop_front_count(str_view, 1);
+static inline char str_view_chop_front(Str_view* str_view) {
+    return str_view_front(str_view_chop_front_count(str_view, 1));
 }
 
 // return true when match
