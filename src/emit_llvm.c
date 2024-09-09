@@ -520,14 +520,6 @@ static void emit_goto(String* output, Node* lang_goto) {
 static void emit_cond_goto(String* output, Node* cond_goto) {
     Node* label_if_true = nodes_get_child(cond_goto, 1);
     Node* label_if_false = nodes_get_child(cond_goto, 2);
-    Node* if_true_def;
-    if (!sym_tbl_lookup(&if_true_def, label_if_true->name)) {
-        todo();
-    }
-    Node* if_false_def;
-    if (!sym_tbl_lookup(&if_false_def, label_if_false->name)) {
-        todo();
-    }
 
     Node* operator = nodes_get_child_of_type(cond_goto, NODE_OPERATOR);
     switch (operator->token_type) {
