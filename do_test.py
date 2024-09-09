@@ -1,4 +1,15 @@
-import os, subprocess, sys, pathlib
+import os, subprocess, sys, pathlib, difflib
+
+class changes:
+    REMOVED = "\033[37;41m" #]
+    ADDED = "\033[30;42m" #]
+    TO_NORMAL = "\033[0m" #]
+
+class status_colors:
+    RED = "\033[31;40m" #]
+    GREEN = "\033[32;40m" #]
+    BLUE = "\033[34;40m" #]
+    TO_NORMAL = "\033[0m" #]
 
 EXAMPLES_DIR = "./examples/new_lang/"
 
@@ -10,6 +21,15 @@ EXPECTED_DIR = "./tests/expected/"
 
 def to_str(a):
     return str(a)
+
+def print_error(*base, **kargs) -> None:
+    print(status_colors.RED, *base, status_colors.TO_NORMAL, file=sys.stderr, sep = "", **kargs)
+
+def print_success(*base, **kargs) -> None:
+    print(status_colors.GREEN, *base, status_colors.TO_NORMAL, file=sys.stderr, sep = "", **kargs)
+
+def print_info(*base, **kargs) -> None:
+    print(status_colors.BLUE, *base, status_colors.TO_NORMAL, file=sys.stderr, sep = "", **kargs)
 
 def get_files_to_test() -> list[str]:
     files: list[str] = []
@@ -27,7 +47,7 @@ def get_expected_output(file: str) -> str:
         return input_file.read()
 
 # return true if test was successful
-def do_test(file: str, do_debug: bool, expected_output: str) -> bool:
+def do_test(file: str, do_debug: bool, expected_output: str):
     debug_release_text: str
     compile_cmd: list[str]
     if do_debug:
@@ -39,72 +59,75 @@ def do_test(file: str, do_debug: bool, expected_output: str) -> bool:
     compile_cmd.append("compile")
     compile_cmd.append(file)
     compile_cmd.append("--emit-llvm")
-    print("testing: " + file + " (" + debug_release_text + ")")
+    print_info("testing: " + file + " (" + debug_release_text + ")")
     process = subprocess.run(compile_cmd)
     if process.returncode != 0:
-        print("testing: compilation of " + file + " (" + debug_release_text + ") fail")
-        return False
+        print_error("testing: compilation of " + file + " (" + debug_release_text + ") fail")
+        sys.exit(1)
 
     clang_cmd = ["clang", TEST_OUTPUT, "-o", "test"]
     process = subprocess.run(clang_cmd)
     if process.returncode != 0:
-        print("testing: clang " + file + " (" + debug_release_text + ") fail")
-        return False
+        print_error("testing: clang " + file + " (" + debug_release_text + ") fail")
+        sys.exit(1)
 
     test_cmd = ["./test"]
     process = subprocess.run(test_cmd, stdout=subprocess.PIPE, text=True)
-    print(process.stdout)
     if process.returncode != 0:
-        print("testing: test " + file + " (" + debug_release_text + ") fail (returned exit code " + str(process.returncode))
-        return False
+        print_error("testing: test " + file + " (" + debug_release_text + ") fail (returned exit code " + str(process.returncode) + ")")
+        sys.exit(1)
     if str(process.stdout) != expected_output:
-        print("testing: test " + file + " (" + debug_release_text + ") fail (stdout did not match expected)")
-        print("stdout:")
-        print(str(process.stdout))
-        print("expected:")
-        print(expected_output)
-        return False
+        stdout_color: str = ""
+        expected_color: str = ""
+        print_error("test fail")
+        diff = difflib.SequenceMatcher(None, expected_output, str(process.stdout))
+        for tag, expected_start, expected_end, stdout_start, stdout_end, in diff.get_opcodes():
+            if tag == 'insert':
+                stdout_color += changes.ADDED + str(process.stdout)[stdout_start:stdout_end] + changes.TO_NORMAL
+            elif tag == 'equal':
+                expected_color += str(process.stdout)[stdout_start:stdout_end]
+                stdout_color += str(process.stdout)[stdout_start:stdout_end]
+            elif tag == 'replace':
+                expected_color += changes.REMOVED + expected_output[expected_start:expected_end] + changes.TO_NORMAL
+                stdout_color += changes.ADDED + str(process.stdout)[stdout_start:stdout_end] + changes.TO_NORMAL
+            elif tag == 'delete':
+                expected_color += changes.REMOVED + str(expected_output)[expected_start:expected_end] + changes.TO_NORMAL
+            else:
+                print_error("tag unregonized:" + tag)
+                assert(False)
+        print_info("expected output:")
+        print(expected_color)
+        print_info("actual process output:")
+        print(stdout_color)
+        sys.exit(1)
 
-    print("testing: " + file + " (" + debug_release_text + ") success")
+    print_success("testing: " + file + " (" + debug_release_text + ") success")
     print()
-    return True
 
 def main() -> None:
-    debug_fail_count: int = 0
-    release_fail_count: int = 0
-
     cmd = ["make", "-j4", "build"]
-    print("compiling debug:")
+    print_info("compiling debug:")
     process = subprocess.run(cmd, env=dict(os.environ | {"DEBUG": "1"}))
     if process.returncode != 0:
-        print("compilation of debug failed", file=sys.stderr)
+        print_error("compilation of debug failed", file=sys.stderr)
         sys.exit(1)
-    print("compiling debug: done")
+    print_success("compiling debug: done")
     print()
 
     cmd = ["make", "-j4", "build"]
-    print("compiling release:")
+    print_info("compiling release:")
     process = subprocess.run(cmd, env=dict(os.environ | {"DEBUG": "0"}))
     if process.returncode != 0:
-        print("compilation of release failed", file=sys.stderr)
+        print_error("compilation of release failed", file=sys.stderr)
         sys.exit(1)
-    print("compiling release: done")
+    print_success("compiling release: done")
     print()
 
     for file in get_files_to_test():
-        if not do_test(file, True, get_expected_output(file)):
-            debug_fail_count += 1
-        if not do_test(file, False, get_expected_output(file)):
-            release_fail_count += 1
+        do_test(file, True, get_expected_output(file))
+        do_test(file, False, get_expected_output(file))
 
-    if debug_fail_count == 0 and release_fail_count == 0:
-        print("all tests passed")
-        sys.exit(0)
-
-    print(str(debug_fail_count) + " debug tests failed")
-    print(str(release_fail_count) + " release tests failed")
-    sys.exit(1)
-
+    print_success("all tests passed")
 
 if __name__ == '__main__':
     main()
