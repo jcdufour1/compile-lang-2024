@@ -43,7 +43,7 @@ OBJS=\
 	 ${BUILD_DIR}/nodes.o
 DEP_COMMON = Makefile
 
-ARGS_PROGRAM ?= compile examples/test_basic.c --emit-llvm
+ARGS_PROGRAM ?= compile examples/new_lang/test_basic.c --emit-llvm
 CAT ?= cat
 
 all: build
