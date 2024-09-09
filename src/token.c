@@ -44,6 +44,8 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
             return str_view_from_cstr("<");
         case TOKEN_GREATER_THAN:
             return str_view_from_cstr(">");
+        case TOKEN_SLASH:
+            return str_view_from_cstr("/");
         default:
             unreachable("");
     }
@@ -73,6 +75,7 @@ Str_view token_print_internal(Token token) {
         case TOKEN_SINGLE_MINUS: // fallthrough
         case TOKEN_COLON: // fallthrough
         case TOKEN_ASTERISK: // fallthrough
+        case TOKEN_SLASH: // fallthrough
         case TOKEN_SINGLE_EQUAL: // fallthrough
         case TOKEN_SINGLE_DOT: // fallthrough
         case TOKEN_DOUBLE_DOT: // fallthrough

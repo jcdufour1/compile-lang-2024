@@ -78,6 +78,11 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text) 
         str_view_chop_front(file_text);
         token->type = TOKEN_COMMA;
         return true;
+    } else if (str_view_front(*file_text) == '+') {
+        str_view_chop_front(file_text);
+        assert((file_text->count < 1 || str_view_front(*file_text) != '+') && "double + not implemented");
+        token->type = TOKEN_SINGLE_PLUS;
+        return true;
     } else if (str_view_front(*file_text) == '-') {
         str_view_chop_front(file_text);
         token->type = TOKEN_SINGLE_MINUS;
@@ -87,14 +92,13 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text) 
         str_view_chop_front(file_text);
         token->type = TOKEN_ASTERISK;
         return true;
+    } else if (str_view_front(*file_text) == '/') {
+        str_view_chop_front(file_text);
+        token->type = TOKEN_SLASH;
+        return true;
     } else if (str_view_front(*file_text) == ':') {
         str_view_chop_front(file_text);
         token->type = TOKEN_COLON;
-        return true;
-    } else if (str_view_front(*file_text) == '+') {
-        str_view_chop_front(file_text);
-        assert((file_text->count < 1 || str_view_front(*file_text) != '+') && "double + not implemented");
-        token->type = TOKEN_SINGLE_PLUS;
         return true;
     } else if (str_view_front(*file_text) == '=') {
         str_view_chop_front(file_text);

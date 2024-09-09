@@ -239,16 +239,21 @@ static void emit_src_symbol(String* output, Node* symbol) {
 }
 
 static void emit_operator_type(String* output, Node* operator) {
+    // TODO: do signed and unsigned operations correctly
     assert(operator->type == NODE_OPERATOR);
     
     switch (operator->token_type) {
         case TOKEN_SINGLE_MINUS:
-            todo();
+            string_extend_cstr(output, "sub nsw i32 ");
+            break;
         case TOKEN_SINGLE_PLUS:
             string_extend_cstr(output, "add nsw i32 ");
             break;
         case TOKEN_ASTERISK:
             string_extend_cstr(output, "mul nsw i32 ");
+            break;
+        case TOKEN_SLASH:
+            string_extend_cstr(output, "sdiv i32 ");
             break;
         default:
              unreachable(TOKEN_TYPE_FMT"\n", token_type_print(operator->token_type));
