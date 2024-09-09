@@ -24,14 +24,24 @@ static bool is_dot(char prev, char curr) {
     return curr == '.';
 }
 
-static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text) {
-    memset(token, 0, sizeof(*token));
-
+static void chop_whitespace(Str_view* file_text, size_t* line_num) {
     while (file_text->count > 0 && (isspace(str_view_front(*file_text)) || iscntrl(str_view_front(*file_text)))) {
         char ch = str_view_chop_front(file_text);
         if (ch == '\n') {
             (*line_num)++;
         }
+    }
+}
+
+static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text) {
+    memset(token, 0, sizeof(*token));
+
+    chop_whitespace(file_text, line_num);
+
+    // remove // style comments
+    if (file_text->count > 1 && str_view_cstr_is_equal(str_view_slice(*file_text, 0, 2), "//")) {
+        str_view_chop_on_delim(file_text, '\n');
+        chop_whitespace(file_text, line_num);
     }
 
     if (file_text->count < 1) {
@@ -93,7 +103,7 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text) 
         token->type = TOKEN_ASTERISK;
         return true;
     } else if (str_view_front(*file_text) == '/') {
-        str_view_chop_front(file_text);
+        str_view_chop_front(file_text); // remove /
         token->type = TOKEN_SLASH;
         return true;
     } else if (str_view_front(*file_text) == ':') {

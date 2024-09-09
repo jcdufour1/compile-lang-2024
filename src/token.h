@@ -74,7 +74,7 @@ static inline bool token_is_literal(Token token) {
         case TOKEN_SEMICOLON:
             return false;
         default:
-            unreachable("");
+            unreachable(TOKEN_FMT"\n", token_print(token));
     }
 }
 

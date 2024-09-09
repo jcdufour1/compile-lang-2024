@@ -2,6 +2,7 @@ extern("c") fn printf(str_to_print: ptr, args: any...) i32;
 
 fn main() i32 {
     for let num1: i32 in {0..10} {
+        // define and assign variables
         let add_result: i32 = num1 + 3;
         let sub_result: i32 = num1 - 3;
         let mul_result: i32 = num1*3;

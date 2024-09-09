@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
+#include <assert.h>
 #include "util.h"
 #include "str_view_struct.h"
 
@@ -12,6 +13,12 @@ static inline char str_view_front(Str_view str_view) {
         todo();
     }
     return str_view.str[0];
+}
+
+static inline Str_view str_view_slice(Str_view str_view, size_t start, size_t count) {
+    assert(start + count <= str_view.count && "out of bounds");
+    Str_view new_str_view = {.str = str_view.str + start, .count = count};
+    return new_str_view;
 }
 
 static inline Str_view str_view_chop_on_cond(Str_view* str_view, bool (*should_continue)(char /* previous char */, char /* current char */)) {
