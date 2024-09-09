@@ -12,7 +12,6 @@ static void emit_block(String* output, Node* fun_block);
 static void emit_llvm_main(String* output, Node* root);
 
 // \n excapes are actually stored as is in tokens and nodes, but should be printed as \0a
-// number of excape sequences are returned
 static void string_extend_strv_eval_escapes(String* string, Str_view str_view) {
     while (str_view.count > 0) {
         char front_char = str_view_chop_front(&str_view);
