@@ -31,10 +31,13 @@ static bool get_idx_matching_token(
                                          // false otherwise
     TOKEN_TYPE type_to_match
 ) {
+    log(LOG_DEBUG, "entering: %zu\n", tokens.count);
     int par_level = include_opposite_type_to_match ? (-1) : (0);
     for (size_t idx = 0; idx < tokens.count; idx++) {
         Token curr_token = tokens.tokens[idx];
+        log(LOG_DEBUG, TOKEN_FMT": %d\n", token_print(curr_token), par_level);
         if (par_level == 0 && curr_token.type == type_to_match) {
+            log(LOG_DEBUG, "yes\n");
             if (idx_matching) {
                 *idx_matching = idx;
             }
@@ -64,9 +67,10 @@ static bool get_idx_token(size_t* idx_matching, Tk_view tokens, size_t start, TO
     return false;
 }
 
-// consume tokens from { to } (inclusive) and discard {}
+// consume tokens from { to } (inclusive) and discard outer {}
 static Tk_view extract_items_inside_brackets(Tk_view* tokens, TOKEN_TYPE closing_bracket_type) {
     Token opening_bracket = tk_view_chop_front(tokens);
+    assert(opening_bracket.type == TOKEN_OPEN_CURLY_BRACE);
     // the opening_bracket type should be the opening bracket type that corresponds to closing_brace_type
     switch (closing_bracket_type) {
         case TOKEN_CLOSE_CURLY_BRACE:
@@ -425,6 +429,7 @@ static bool is_not_symbol_in(const Token* prev, const Token* curr) {
 }
 
 static bool extract_for_loop(Node** child, Tk_view* tokens) {
+    log_tokens(LOG_DEBUG, *tokens, 0);
     if (!tokens_start_with_for_loop(*tokens)) {
         return false;
     }
@@ -453,6 +458,7 @@ static bool extract_for_loop(Node** child, Tk_view* tokens) {
     tk_view_chop_front(tokens); // remove ..
 
     Tk_view upper_bound_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_CLOSE_CURLY_BRACE);
+    log_tokens(LOG_DEBUG, upper_bound_tokens, 0);
     tk_view_chop_front(tokens); // remove }
     Node* upper_bound = node_new();
     upper_bound->type = NODE_FOR_UPPER_BOUND;
@@ -716,9 +722,9 @@ INLINE bool extract_block_element(Node** child, Tk_view* tokens) {
         extract_function_definition(child, tokens) || \
         extract_function_call(child, tokens) || \
         extract_function_return_statement(child, tokens) || \
-        extract_assignment(child, tokens) || \
         extract_variable_declaration(child, tokens) || \
         extract_for_loop(child, tokens) || \
+        extract_assignment(child, tokens) || \
         extract_function_declaration(child, tokens);
 }
 
@@ -728,7 +734,7 @@ static Node* parse_block(Tk_view tokens) {
     while (tokens.count > 0) {
         Node* child;
         if (!extract_block_element(&child, &tokens)) {
-            //log_tokens(LOG_ERROR, tokens, 0);
+            log_tokens(LOG_ERROR, tokens, 0);
             todo();
         }
         nodes_append_child(block, child);

@@ -145,43 +145,43 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type);
 static inline bool token_is_closing(Token curr_token) {
     switch (curr_token.type) {
         case TOKEN_CLOSE_PAR:
-            // fallthrough
+            return true;
         case TOKEN_CLOSE_CURLY_BRACE:
             return true;
         case TOKEN_SINGLE_PLUS:
-            // fallthrough
+            return false;
         case TOKEN_SINGLE_MINUS:
-            // fallthrough
+            return false;
         case TOKEN_ASTERISK:
-            // fallthrough
+            return false;
         case TOKEN_STRING_LITERAL:
-            // fallthrough
+            return false;
         case TOKEN_NUM_LITERAL:
-            // fallthrough
+            return false;
         case TOKEN_SYMBOL:
-            // fallthrough
+            return false;
         case TOKEN_OPEN_PAR:
-            // fallthrough
+            return false;
         case TOKEN_OPEN_CURLY_BRACE:
-            // fallthrough
+            return false;
         case TOKEN_DOUBLE_QUOTE:
-            // fallthrough
+            return false;
         case TOKEN_SEMICOLON:
-            // fallthrough
+            return false;
         case TOKEN_COMMA:
-            // fallthrough
+            return false;
         case TOKEN_COLON:
-            // fallthrough
+            return false;
         case TOKEN_SINGLE_EQUAL:
-            // fallthrough
+            return false;
         case TOKEN_SINGLE_DOT:
-            // fallthrough
+            return false;
         case TOKEN_DOUBLE_DOT:
-            // fallthrough
+            return false;
         case TOKEN_TRIPLE_DOT:
-            // fallthrough
+            return false;
         case TOKEN_LESS_THAN:
-            // fallthrough
+            return false;
         case TOKEN_GREATER_THAN:
             return false;
         default:
@@ -192,43 +192,43 @@ static inline bool token_is_closing(Token curr_token) {
 static inline bool token_is_opening(Token curr_token) {
     switch (curr_token.type) {
         case TOKEN_OPEN_PAR:
-            // fallthrough
+            return true;
         case TOKEN_OPEN_CURLY_BRACE:
             return true;
         case TOKEN_SINGLE_PLUS:
-            // fallthrough
+            return false;
         case TOKEN_SINGLE_MINUS:
-            // fallthrough
+            return false;
         case TOKEN_ASTERISK:
-            // fallthrough
+            return false;
         case TOKEN_STRING_LITERAL:
-            // fallthrough
+            return false;
         case TOKEN_NUM_LITERAL:
-            // fallthrough
+            return false;
         case TOKEN_SYMBOL:
-            // fallthrough
+            return false;
         case TOKEN_CLOSE_PAR:
-            // fallthrough
+            return false;
         case TOKEN_CLOSE_CURLY_BRACE:
-            // fallthrough
+            return false;
         case TOKEN_DOUBLE_QUOTE:
-            // fallthrough
+            return false;
         case TOKEN_SEMICOLON:
-            // fallthrough
+            return false;
         case TOKEN_COMMA:
-            // fallthrough
+            return false;
         case TOKEN_COLON:
-            // fallthrough
+            return false;
         case TOKEN_SINGLE_EQUAL:
-            // fallthrough
+            return false;
         case TOKEN_SINGLE_DOT:
-            // fallthrough
+            return false;
         case TOKEN_DOUBLE_DOT:
-            // fallthrough
+            return false;
         case TOKEN_TRIPLE_DOT:
-            // fallthrough
+            return false;
         case TOKEN_LESS_THAN:
-            // fallthrough
+            return false;
         case TOKEN_GREATER_THAN:
             return false;
         default:

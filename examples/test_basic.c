@@ -6,6 +6,7 @@ fn main() i32 {
     for let num1: i32 in {0..7} {
         puts("outer for");
         for let num2: i32 in {0..num1} {
+            num1 = 8;
             printf("%d ", num2);
         }
         puts("");

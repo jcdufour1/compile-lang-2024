@@ -70,7 +70,7 @@ static inline Tk_view tk_view_chop_on_type_delim_or_all(Tk_view* token_view, TOK
 
 static inline Tk_view tk_view_chop_count(Tk_view* token_view, size_t count) {
     if (token_view->count < count) {
-        unreachable("");
+        unreachable("out of bounds");
     }
     Tk_view result = {.tokens = token_view->tokens, .count = count};
     token_view->tokens += count;
@@ -101,6 +101,6 @@ static inline Str_view tk_view_print_internal(Tk_view token_view) {
 
 #define TK_VIEW_FMT STR_VIEW_FMT
 
-#define tk_view_print(token_view__dfjasdjf) str_view_print(tk_view_print_internal(token_view__dfjasdjf))
+#define tk_view_print(token_view) str_view_print(tk_view_print_internal(token_view))
 
 #endif // TOKEN_VIEW_H
