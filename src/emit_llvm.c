@@ -624,6 +624,20 @@ static void emit_llvm_main(String* output, Node* root) {
     unreachable("");
 }
 
+static void emit_symbol(String* output, const Symbol_table_node node) {
+    size_t literal_width = node.node->str_data.count + 1 - \
+                           get_count_excape_seq(node.node->str_data);
+
+    string_extend_cstr(output, "@.");
+    string_extend_strv(output, node.key);
+    string_extend_cstr(output, " = private unnamed_addr constant [ ");
+    string_extend_size_t(output, literal_width);
+    string_extend_cstr(output, " x i8] c\"");
+    string_extend_strv_eval_escapes(output, node.node->str_data);
+    string_extend_cstr(output, "\\00\", align 1");
+    string_extend_cstr(output, "\n");
+}
+
 static void emit_symbols(String* output) {
     for (size_t idx = 0; idx < symbol_table.capacity; idx++) {
         const Symbol_table_node curr_node = symbol_table.table_nodes[idx];
@@ -632,7 +646,8 @@ static void emit_symbols(String* output) {
         }
         switch (curr_node.node->type) {
             case NODE_LITERAL:
-                // fallthrough
+                emit_symbol(output, curr_node);
+                break;
             case NODE_VARIABLE_DEFINITION:
                 // fallthrough
             case NODE_LANG_TYPE:
@@ -649,20 +664,9 @@ static void emit_symbols(String* output) {
                 log(LOG_FETAL, NODE_FMT"\n", node_print(curr_node.node));
                 todo();
         }
-
-        size_t literal_width = curr_node.node->str_data.count + 1 - \
-                               get_count_excape_seq(curr_node.node->str_data);
-
-        string_extend_cstr(output, "@.");
-        string_extend_strv(output, curr_node.key);
-        string_extend_cstr(output, " = private unnamed_addr constant [ ");
-        string_extend_size_t(output, literal_width);
-        string_extend_cstr(output, " x i8] c\"");
-        string_extend_strv_eval_escapes(output, curr_node.node->str_data);
-        string_extend_cstr(output, "\\00\", align 1");
-        string_extend_cstr(output, "\n");
     }
 }
+
 
 void emit_llvm_from_tree(Node* root) {
     String output = {0};
