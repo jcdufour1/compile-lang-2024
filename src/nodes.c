@@ -55,6 +55,14 @@ static void nodes_assert_tree_linkage_is_consistant_internal(Node_ptr_vec* nodes
             //node_printf(curr_node->prev->next);
             assert(curr_node == curr_node->next->prev);
         }
+        if (curr_node->prev) {
+            if (curr_node != curr_node->prev->next) {
+                node_printf(curr_node);
+                node_printf(curr_node->prev);
+                node_printf(curr_node->prev->next);
+                assert(false);
+            }
+        }
         assert(curr_node->parent == base_parent);
 
         Node* left_child = curr_node->left_child;
@@ -179,7 +187,7 @@ String node_print_internal(const Node* node) {
             break;
         case NODE_LITERAL:
             string_extend_strv_in_gtlt(&buf, token_type_to_str_view(node->token_type));
-            string_extend_strv_in_par(&buf, node->name);
+            string_extend_strv(&buf, node->name);
             string_extend_strv_in_par(&buf, node->str_data);
             break;
         case NODE_SYMBOL:
@@ -197,7 +205,7 @@ String node_print_internal(const Node* node) {
             break;
         case NODE_VARIABLE_DEFINITION:
             string_extend_strv_in_gtlt(&buf, node->lang_type);
-            string_extend_strv_in_par(&buf, node->name);
+            string_extend_strv(&buf, node->name);
             break;
         case NODE_FUNCTION_PARAMETERS:
             // fallthrough

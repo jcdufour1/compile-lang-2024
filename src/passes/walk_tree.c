@@ -35,6 +35,7 @@ bool walk_tree(Node* curr_node, bool (callback)(Node* curr_node)) {
     } else {
         //log(LOG_DEBUG, "thing 3\n");
         status = LOCAL_PREV;
+        assert(prev);
     }
 
     bool delete_curr_node = callback(curr_node);
@@ -43,24 +44,33 @@ bool walk_tree(Node* curr_node, bool (callback)(Node* curr_node)) {
     // this is for incase curr_node is modified in callback
     switch (status) {
         case LOCAL_CURR_IS_ROOT:
-            //log(LOG_DEBUG, "thing 4\n");
+            log(LOG_DEBUG, "thing 4\n");
             // assuming that actual root is 0
             curr_node = root_of_tree;
             break;
         case LOCAL_PARENT:
-            //log(LOG_DEBUG, "thing 5\n");
+            log(LOG_DEBUG, "thing 5\n");
             curr_node = parent->left_child;
             break;
         case LOCAL_PREV:
-            //log(LOG_DEBUG, "thing 6\n");
+            log(LOG_DEBUG, "thing 6\n");
             //log_tree(LOG_DEBUG, prev);
             //log_tree(LOG_DEBUG, curr_node);
             curr_node = prev->next;
+            log_tree(LOG_DEBUG, prev);
+            log_tree(LOG_DEBUG, curr_node->prev);
+            log_tree(LOG_DEBUG, curr_node);
+            log_tree(LOG_DEBUG, curr_node->next);
+            nodes_assert_tree_linkage_is_consistant(curr_node->next);
+            nodes_assert_tree_linkage_is_consistant(curr_node->prev);
+            nodes_assert_tree_linkage_is_consistant(prev);
+            nodes_assert_tree_linkage_is_consistant(curr_node->parent);
             break;
         default:
             unreachable("");
     }
-    //log_tree(LOG_DEBUG, curr_node);
+    assert(curr_node);
+    log_tree(LOG_DEBUG, curr_node);
 
     nodes_assert_tree_linkage_is_consistant(curr_node);
 

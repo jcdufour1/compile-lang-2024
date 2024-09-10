@@ -53,7 +53,6 @@ static inline void nodes_reset_links_of_self_only(Node* node, bool keep_children
 
 static inline Node* node_new(void) {
     Node* new_node = arena_alloc(sizeof(*new_node));
-    nodes_reset_links_of_self_only(new_node, false);
     if (!root_of_tree) {
         // it is assumed that the first node created is the root
         root_of_tree = new_node;
@@ -116,6 +115,13 @@ static inline void nodes_insert_after(Node* curr, Node* node_to_insert) {
 
 static inline void nodes_insert_before(Node* node_to_insert_before, Node* node_to_insert) {
     assert(node_to_insert_before && node_to_insert);
+    // this function must not be used for appending nodes that have next, parent, or prev node(s) attached
+    assert(!node_to_insert->next);
+    assert(!node_to_insert->prev);
+    assert(!node_to_insert->parent);
+    nodes_assert_tree_linkage_is_consistant(node_to_insert_before);
+    nodes_assert_tree_linkage_is_consistant(node_to_insert);
+    nodes_assert_tree_linkage_is_consistant(node_to_insert->parent);
 
     Node* new_prev = node_to_insert_before->prev;
     Node* new_next = node_to_insert_before;
@@ -125,12 +131,22 @@ static inline void nodes_insert_before(Node* node_to_insert_before, Node* node_t
 
     assert(new_next);
     nodes_establish_siblings(node_to_insert, new_next);
+    assert(node_to_insert == node_to_insert_before->prev);
+    assert(node_to_insert->next == node_to_insert_before);
+
+    node_printf(node_to_insert->next->left_child);
+
+    node_printf(node_to_insert_before->next);
+    node_printf(node_to_insert->prev);
 
     Node* parent = node_to_insert_before->parent;
     if (parent->left_child == node_to_insert_before) {
         parent->left_child = node_to_insert;
     }
     node_to_insert->parent = parent;
+    nodes_assert_tree_linkage_is_consistant(node_to_insert_before);
+    nodes_assert_tree_linkage_is_consistant(node_to_insert);
+    nodes_assert_tree_linkage_is_consistant(node_to_insert->parent);
 
     //log_tree(LOG_DEBUG, node_id_from(0));
     //log_tree(LOG_DEBUG, parent);
@@ -204,10 +220,17 @@ static inline void nodes_remove_siblings(Node* node) {
 }
 
 static inline void nodes_remove_siblings_and_parent(Node* node) {
+    assert(node);
+
+    Node* parent_left_child = node->parent ? (node->parent->left_child) : NULL;
+    if (parent_left_child == node) {
+        parent_left_child = node->next;
+    }
+
     nodes_remove_siblings(node);
 
     if (node->parent) {
-        node->parent->left_child = NULL;
+        node->parent->left_child = parent_left_child;
         node->parent = NULL;
     }
 }

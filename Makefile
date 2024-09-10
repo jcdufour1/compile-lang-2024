@@ -27,6 +27,7 @@ OBJS=\
 	 ${BUILD_DIR}/main.o \
 	 ${BUILD_DIR}/tokenizer.o \
 	 ${BUILD_DIR}/arena.o \
+	 ${BUILD_DIR}/nodes.o \
 	 ${BUILD_DIR}/parser.o \
 	 ${BUILD_DIR}/globals.o \
 	 ${BUILD_DIR}/token.o \
@@ -40,10 +41,11 @@ OBJS=\
 	 ${BUILD_DIR}/passes/for_and_if_to_branch.o \
 	 ${BUILD_DIR}/passes/assign_llvm_ids.o \
 	 ${BUILD_DIR}/passes/add_load_and_store.o \
-	 ${BUILD_DIR}/nodes.o
+	 ${BUILD_DIR}/passes/flatten_operations.o
 DEP_COMMON = Makefile
 
-ARGS_PROGRAM ?= compile examples/new_lang/test_basic.c --emit-llvm
+FILE_TO_TEST ?= examples/new_lang/test_basic.c
+ARGS_PROGRAM ?= compile ${FILE_TO_TEST} --emit-llvm
 CAT ?= cat
 
 all: build
@@ -110,14 +112,17 @@ ${BUILD_DIR}/passes/do_passes.o: ${DEP_COMMON} src/passes/do_passes.c src/*.h sr
 ${BUILD_DIR}/passes/walk_tree.o: ${DEP_COMMON} src/passes/walk_tree.c src/*.h src/passes/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/passes/walk_tree.o src/passes/walk_tree.c
 
-${BUILD_DIR}/passes/for_and_if_to_branch.o: ${DEP_COMMON} src/passes/for_and_if_to_branch.c src/*.h third_party/*
+${BUILD_DIR}/passes/for_and_if_to_branch.o: ${DEP_COMMON} src/passes/for_and_if_to_branch.c src/passes/*.h src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/passes/for_and_if_to_branch.o src/passes/for_and_if_to_branch.c
 
-${BUILD_DIR}/passes/assign_llvm_ids.o: ${DEP_COMMON} src/passes/assign_llvm_ids.c src/*.h third_party/*
+${BUILD_DIR}/passes/assign_llvm_ids.o: ${DEP_COMMON} src/passes/assign_llvm_ids.c src/*.h src/passes/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/passes/assign_llvm_ids.o src/passes/assign_llvm_ids.c
 
-${BUILD_DIR}/passes/add_load_and_store.o: ${DEP_COMMON} src/passes/add_load_and_store.c src/*.h third_party/*
+${BUILD_DIR}/passes/add_load_and_store.o: ${DEP_COMMON} src/passes/add_load_and_store.c src/*.h src/passes/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/passes/add_load_and_store.o src/passes/add_load_and_store.c
+
+${BUILD_DIR}/passes/flatten_operations.o: ${DEP_COMMON} src/passes/flatten_operations.c src/*.h src/passes/*.h third_party/*
+	cc ${C_FLAGS} -c -o ${BUILD_DIR}/passes/flatten_operations.o src/passes/flatten_operations.c
 
 
 clean:

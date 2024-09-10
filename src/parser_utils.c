@@ -104,3 +104,37 @@ Llvm_id get_matching_label_id(Node* symbol_call) {
     return label->llvm_id;
 }
 
+Node* assignment_new(Node* lhs, Node* rhs) {
+    assert(!lhs->prev);
+    assert(!lhs->next);
+    assert(!lhs->parent);
+    assert(!rhs->prev);
+    assert(!rhs->next);
+    assert(!rhs->parent);
+
+    nodes_remove_siblings_and_parent(lhs);
+    nodes_remove_siblings_and_parent(rhs);
+
+    Node* assignment = node_new();
+    assignment->type = NODE_ASSIGNMENT;
+    nodes_append_child(assignment, lhs);
+    nodes_append_child(assignment, rhs);
+    return assignment;
+}
+
+Node* literal_new(Str_view value) {
+    Node* symbol = node_new();
+    symbol->type = NODE_LITERAL;
+    symbol->name = literal_name_new();
+    symbol->str_data = value;
+    return symbol;
+}
+
+Node* symbol_new(Str_view symbol_name) {
+    assert(symbol_name.count > 0);
+
+    Node* symbol = node_new();
+    symbol->type = NODE_SYMBOL;
+    symbol->name = symbol_name;
+    return symbol;
+}

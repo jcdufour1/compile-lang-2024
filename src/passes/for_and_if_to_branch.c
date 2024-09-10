@@ -2,17 +2,6 @@
 #include "../parser_utils.h"
 #include "../nodes.h"
 
-static Node* assignment_new(Node* lhs, Node* rhs) {
-    nodes_remove_siblings_and_parent(lhs);
-    nodes_remove_siblings_and_parent(rhs);
-
-    Node* assignment = node_new();
-    assignment->type = NODE_ASSIGNMENT;
-    nodes_append_child(assignment, lhs);
-    nodes_append_child(assignment, rhs);
-    return assignment;
-}
-
 static Node* operation_new(Node* lhs, Node* rhs, TOKEN_TYPE operation_type) {
     // TODO: check if lhs or rhs were already appended to the tree
     Node* assignment = node_new();
@@ -36,23 +25,6 @@ static Node* goto_new(Str_view name_label_to_jmp_to) {
     lang_goto->type = NODE_GOTO;
     lang_goto->name = name_label_to_jmp_to;
     return lang_goto;
-}
-
-static Node* symbol_new(Str_view symbol_name) {
-    assert(symbol_name.count > 0);
-
-    Node* symbol = node_new();
-    symbol->type = NODE_SYMBOL;
-    symbol->name = symbol_name;
-    return symbol;
-}
-
-static Node* literal_new(Str_view value) {
-    Node* symbol = node_new();
-    symbol->type = NODE_LITERAL;
-    symbol->name = literal_name_new();
-    symbol->str_data = value;
-    return symbol;
 }
 
 static Node* cond_goto_new(
@@ -106,11 +78,13 @@ static void for_loop_to_branch(Node* for_loop) {
     Node* assignment_to_inc_cond_var = get_for_loop_cond_var_assign(regular_var_def->name);
     assert(!new_branch_block->parent);
     nodes_remove_siblings_and_parent(lower_bound);
+    Node* lower_bound_child = nodes_single_child(lower_bound);
+    nodes_remove_siblings_and_parent(lower_bound_child);
     nodes_remove_siblings_and_parent(upper_bound);
     nodes_remove_siblings_and_parent(for_block);
 
     // initial assignment
-    Node* new_var_assign = assignment_new(symbol_lhs_assign, lower_bound->left_child);
+    Node* new_var_assign = assignment_new(symbol_lhs_assign, lower_bound_child);
 
     Node* check_cond_label = label_new(literal_name_new());
     Node* jmp_to_check_cond_label = goto_new(check_cond_label->name);
