@@ -530,8 +530,10 @@ static void emit_cond_goto(String* output, const Node* cond_goto) {
     string_append(output, '\n');
 }
 
-static void emit_block(String* output, const Node* fun_block) {
-    nodes_foreach_child(statement, fun_block) {
+static void emit_block(String* output, const Node* block) {
+    assert(block->type == NODE_BLOCK);
+
+    nodes_foreach_child(statement, block) {
         switch (statement->type) {
             case NODE_FUNCTION_DEFINITION:
                 emit_function_definition(output, statement);
@@ -582,35 +584,6 @@ static void emit_block(String* output, const Node* fun_block) {
     //get_block_return_id(fun_block) = get_block_return_id(fun_block->left_child);
 }
 
-static void emit_llvm_main(String* output, const Node* root) {
-    switch (root->type) {
-        case NODE_BLOCK:
-            emit_block(output, root);
-            return;
-        case NODE_FUNCTION_DEFINITION:
-            emit_function_definition(output, root);
-            return;
-        case NODE_FUNCTION_PARAMETERS:
-            todo();
-        case NODE_FUNCTION_RETURN_TYPES:
-            todo();
-        case NODE_FUNCTION_CALL:
-            todo();
-        case NODE_LITERAL:
-            todo();
-        case NODE_LANG_TYPE:
-            todo();
-        case NODE_OPERATOR:
-            todo();
-        case NODE_SYMBOL:
-            todo();
-        default:
-            unreachable("");
-    }
-    
-    unreachable("");
-}
-
 static void emit_symbol(String* output, const Symbol_table_node node) {
     size_t literal_width = node.node->str_data.count + 1 - \
                            get_count_excape_seq(node.node->str_data);
@@ -654,11 +627,10 @@ static void emit_symbols(String* output) {
     }
 }
 
-
 void emit_llvm_from_tree(const Node* root) {
     String output = {0};
 
-    emit_llvm_main(&output, root);
+    emit_block(&output, root);
 
     emit_symbols(&output);
 
