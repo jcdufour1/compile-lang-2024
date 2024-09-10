@@ -31,7 +31,7 @@ static const char* NODE_IF_CONDITION_DESCRIPTION = "if_condition";
 static const char* NODE_FUNCTION_PARAM_CALL_DESCRIPTION = "fun_param_call";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
-static void nodes_assert_tree_linkage_is_consistant_internal(Node_ptr_vec* nodes_visited, Node* root) {
+static void nodes_assert_tree_linkage_is_consistant_internal(Node_ptr_vec* nodes_visited, const Node* root) {
     if (!root) {
         return;
     }
@@ -49,7 +49,7 @@ static void nodes_assert_tree_linkage_is_consistant_internal(Node_ptr_vec* nodes
     );
 
     Node* base_parent = root->parent;
-    nodes_foreach_from_curr(curr_node, root) {
+    nodes_foreach_from_curr_const(curr_node, root) {
         bool dummy_bool = true;
         assert(dummy_bool);
         if (curr_node->next) {
@@ -74,7 +74,7 @@ static void nodes_assert_tree_linkage_is_consistant_internal(Node_ptr_vec* nodes
     }
 }
 
-void nodes_assert_tree_linkage_is_consistant(Node* root) {
+void nodes_assert_tree_linkage_is_consistant(const Node* root) {
     static Node_ptr_vec nodes_visited = {0};
     memset(&nodes_visited, 0, sizeof(nodes_visited));
     nodes_assert_tree_linkage_is_consistant_internal(&nodes_visited, root);

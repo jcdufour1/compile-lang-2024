@@ -11,7 +11,7 @@
 
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, const Node* root, const char* file, int line);
 
-void nodes_assert_tree_linkage_is_consistant(Node* root);
+void nodes_assert_tree_linkage_is_consistant(const Node* root);
 
 #define log_tree(log_level, root) \
     do { \
@@ -40,6 +40,9 @@ static inline Node* nodes_prev_or_parent(Node* node) {
 
 #define nodes_foreach_from_curr_rev(curr_node, start_node) \
     for (Node* curr_node = (start_node); (curr_node); (curr_node) = (curr_node)->prev)
+
+#define nodes_foreach_from_curr_rev_const(curr_node, start_node) \
+    for (const Node* curr_node = (start_node); (curr_node); (curr_node) = (curr_node)->prev)
 
 static inline Node* nodes_get_local_leftmost(Node* start_node) {
     assert(start_node);
@@ -196,6 +199,11 @@ static inline Node* nodes_single_child(Node* node) {
     return node->left_child;
 }
 
+static inline const Node* nodes_single_child_const(const Node* node) {
+    assert(nodes_count_children(node) == 1);
+    return node->left_child;
+}
+
 // child of src will be kept
 // there should not be next, prev, or parent attached to src
 // note: src will be modified and should probably not be used again
@@ -265,6 +273,10 @@ static inline Node* nodes_get_child_of_type(Node* parent, NODE_TYPE node_type) {
     unreachable("node_type not found");
 }
 
+static inline const Node* nodes_get_child_of_type_const(const Node* parent, NODE_TYPE node_type) {
+    return nodes_get_child_of_type((Node*)parent, node_type);
+}
+
 static inline Node* nodes_get_sibling_of_type(Node* node, NODE_TYPE node_type) {
     Node* curr_node = nodes_get_leftmost_sibling(node);
 
@@ -290,6 +302,10 @@ static inline Node* nodes_get_child(Node* parent, size_t idx) {
     }
 
     unreachable("");
+}
+
+static inline const Node* nodes_get_child_const(const Node* parent, size_t idx) {
+    return nodes_get_child((Node*)parent, idx);
 }
 
 static inline bool nodes_try_get_last_child_of_type(Node** result, Node* parent, NODE_TYPE node_type) {

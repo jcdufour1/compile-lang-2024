@@ -8,8 +8,8 @@
 #include "file.h"
 #include "parser_utils.h"
 
-static void emit_block(String* output, Node* fun_block);
-static void emit_llvm_main(String* output, Node* root);
+static void emit_block(String* output, const Node* fun_block);
+static void emit_llvm_main(String* output, const Node* root);
 
 // \n excapes are actually stored as is in tokens and nodes, but should be printed as \0a
 static void string_extend_strv_eval_escapes(String* string, Str_view str_view) {
@@ -45,7 +45,7 @@ static size_t get_count_excape_seq(Str_view str_view) {
     return count_excapes;
 }
 
-static void extend_type_call_str(String* output, Node* variable_def) {
+static void extend_type_call_str(String* output, const Node* variable_def) {
     assert(variable_def->lang_type.count > 0);
     if (str_view_cstr_is_equal(variable_def->lang_type, "i32")) {
         string_extend_cstr(output, "i32");
@@ -56,7 +56,7 @@ static void extend_type_call_str(String* output, Node* variable_def) {
     }
 }
 
-static void extend_type_decl_str(String* output, Node* variable_def) {
+static void extend_type_decl_str(String* output, const Node* variable_def) {
     if (variable_def->is_variadic) {
         string_extend_cstr(output, "...");
         return;
@@ -66,7 +66,7 @@ static void extend_type_decl_str(String* output, Node* variable_def) {
     string_extend_cstr(output, " noundef");
 }
 
-static void extend_literal_decl_prefix(String* output, Node* var_decl_or_def) {
+static void extend_literal_decl_prefix(String* output, const Node* var_decl_or_def) {
     Str_view lang_type = var_decl_or_def->lang_type;
     if (str_view_cstr_is_equal(lang_type, "ptr")) {
         string_extend_cstr(output, " @.");
@@ -79,13 +79,13 @@ static void extend_literal_decl_prefix(String* output, Node* var_decl_or_def) {
     }
 }
 
-static void extend_literal_decl(String* output, Node* var_decl_or_def) {
+static void extend_literal_decl(String* output, const Node* var_decl_or_def) {
     extend_type_decl_str(output, var_decl_or_def);
     extend_literal_decl_prefix(output, var_decl_or_def);
 }
 
-static Node* return_type_from_function_definition(Node* fun_def) {
-    Node* return_types = nodes_get_child_of_type(fun_def, NODE_FUNCTION_RETURN_TYPES);
+static Node* return_type_from_function_definition(const Node* fun_def) {
+    const Node* return_types = nodes_get_child_of_type_const(fun_def, NODE_FUNCTION_RETURN_TYPES);
     assert(nodes_count_children(return_types) < 2);
     if (nodes_count_children(return_types) > 0) {
         return return_types->left_child;
@@ -93,7 +93,7 @@ static Node* return_type_from_function_definition(Node* fun_def) {
     unreachable("");
 }
 
-static void emit_function_params(String* output, Node* fun_params) {
+static void emit_function_params(String* output, const Node* fun_params) {
     size_t idx = 0;
     nodes_foreach_child(param, fun_params) {
         if (idx++ > 0) {
@@ -109,7 +109,7 @@ static void emit_function_params(String* output, Node* fun_params) {
     }
 }
 
-static void emit_function_call_arguments(String* output, Node* fun_call) {
+static void emit_function_call_arguments(String* output, const Node* fun_call) {
     size_t idx = 0;
     nodes_foreach_child(argument, fun_call) {
         Node* var_decl_or_def;
@@ -149,7 +149,7 @@ static void emit_function_call_arguments(String* output, Node* fun_call) {
     }
 }
 
-static void emit_function_call(String* output, Node* fun_call) {
+static void emit_function_call(String* output, const Node* fun_call) {
     //assert(fun_call->llvm_id == 0);
 
     // load arguments
@@ -183,7 +183,7 @@ static void emit_function_call(String* output, Node* fun_call) {
     string_extend_cstr(output, "\n");
 }
 
-static void emit_alloca(String* output, Node* alloca) {
+static void emit_alloca(String* output, const Node* alloca) {
     assert(alloca->type == NODE_ALLOCA);
 
     string_extend_cstr(output, "    %");
@@ -195,7 +195,7 @@ static void emit_alloca(String* output, Node* alloca) {
     string_extend_cstr(output, "\n");
 }
 
-static void emit_src_of_assignment(String* output, Node* variable_def, void* item) {
+static void emit_src_of_assignment(String* output, const Node* variable_def, void* item) {
     Node* rhs = *(Node**)item;
 
     switch (rhs->type) {
@@ -213,7 +213,7 @@ static void emit_src_of_assignment(String* output, Node* variable_def, void* ite
     }
 }
 
-static void emit_operator_type(String* output, Node* operator) {
+static void emit_operator_type(String* output, const Node* operator) {
     // TODO: do signed and unsigned operations correctly
     assert(operator->type == NODE_OPERATOR);
     
@@ -231,11 +231,11 @@ static void emit_operator_type(String* output, Node* operator) {
             string_extend_cstr(output, "sdiv i32 ");
             break;
         default:
-             unreachable(TOKEN_TYPE_FMT"\n", token_type_print(operator->token_type));
+            unreachable(TOKEN_TYPE_FMT"\n", token_type_print(operator->token_type));
     }
 }
 
-static void emit_operator_operand(String* output, Node* operand) {
+static void emit_operator_operand(String* output, const Node* operand) {
     switch (operand->type) {
         case NODE_LITERAL:
             string_extend_strv(output, operand->str_data);
@@ -249,9 +249,9 @@ static void emit_operator_operand(String* output, Node* operand) {
     }
 }
 
-static void emit_operator(String* output, Node* operator) {
-    Node* lhs = nodes_get_child(operator, 0);
-    Node* rhs = nodes_get_child(operator, 1);
+static void emit_operator(String* output, const Node* operator) {
+    const Node* lhs = nodes_get_child_const(operator, 0);
+    const Node* rhs = nodes_get_child_const(operator, 1);
 
     // emit prereq function calls (may not be needed), etc. before actual operation
     switch (lhs->type) {
@@ -280,7 +280,7 @@ static void emit_operator(String* output, Node* operator) {
     string_extend_cstr(output, "\n");
 }
 
-static void emit_src(String* output, Node* src) {
+static void emit_src(String* output, const Node* src) {
     //log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
     switch (src->type) {
         case NODE_LITERAL:
@@ -305,7 +305,7 @@ static void emit_src(String* output, Node* src) {
     }
 }
 
-static void emit_load_variable(String* output, Node* variable_call) {
+static void emit_load_variable(String* output, const Node* variable_call) {
     Node* variable_def;
     node_printf(variable_call);
     if (!sym_tbl_lookup(&variable_def, variable_call->name)) {
@@ -327,13 +327,13 @@ static void emit_load_variable(String* output, Node* variable_call) {
     string_extend_cstr(output, "\n");
 }
 
-static void emit_store(String* output, Node* store) {
+static void emit_store(String* output, const Node* store) {
     size_t alloca_dest_id = get_store_dest_id(store);
-    Node* var_def = get_symbol_def_from_alloca(store);
+    const Node* var_def = get_symbol_def_from_alloca(store);
     assert(alloca_dest_id > 0);
 
     // emit prerequisite call, etc before actually storing
-    Node* src = nodes_single_child(store);
+    const Node* src = nodes_single_child_const(store);
     switch (src->type) {
         case NODE_FUNCTION_CALL:
             emit_function_call(output, src);
@@ -365,7 +365,7 @@ static void emit_store(String* output, Node* store) {
     string_extend_cstr(output, "\n");
 }
 
-static void emit_src_of_fun_params(String* output, Node* variable_def, void* item) {
+static void emit_src_of_fun_params(String* output, const Node* variable_def, void* item) {
     (void) item;
     size_t src_llvm_id = variable_def->llvm_id;
 
@@ -381,7 +381,7 @@ static void emit_src_of_fun_params(String* output, Node* variable_def, void* ite
     }
 }
 
-static void emit_function_definition(String* output, Node* fun_def) {
+static void emit_function_definition(String* output, const Node* fun_def) {
     string_extend_cstr(output, "define dso_local ");
 
     extend_type_call_str(output, return_type_from_function_definition(fun_def));
@@ -389,20 +389,20 @@ static void emit_function_definition(String* output, Node* fun_def) {
     string_extend_cstr(output, " @");
     string_extend_strv(output, fun_def->name);
 
-    Node* params = nodes_get_child_of_type(fun_def, NODE_FUNCTION_PARAMETERS);
+    const Node* params = nodes_get_child_of_type_const(fun_def, NODE_FUNCTION_PARAMETERS);
     string_append(output, '(');
     emit_function_params(output, params);
     string_append(output, ')');
 
     string_extend_cstr(output, " {\n");
 
-    Node* block = nodes_get_child_of_type(fun_def, NODE_BLOCK);
+    const Node* block = nodes_get_child_of_type_const(fun_def, NODE_BLOCK);
     emit_block(output, block);
 
     string_extend_cstr(output, "}\n");
 }
 
-static void emit_function_return_statement(String* output, Node* fun_return) {
+static void emit_function_return_statement(String* output, const Node* fun_return) {
     Node* sym_to_return = fun_return->left_child;
     Node* sym_to_rtn_def;
     if (!sym_tbl_lookup(&sym_to_rtn_def, sym_to_return->name)) {
@@ -471,24 +471,24 @@ static void emit_function_return_statement(String* output, Node* fun_return) {
     }
 }
 
-static void emit_function_declaration(String* output, Node* fun_decl) {
+static void emit_function_declaration(String* output, const Node* fun_decl) {
     string_extend_cstr(output, "declare i32");
     //extend_literal_decl(output, fun_decl); // TODO
     string_extend_cstr(output, " @");
     string_extend_strv(output, fun_decl->name);
     string_append(output, '(');
-    emit_function_params(output, nodes_get_child_of_type(fun_decl, NODE_FUNCTION_PARAMETERS));
+    emit_function_params(output, nodes_get_child_of_type_const(fun_decl, NODE_FUNCTION_PARAMETERS));
     string_append(output, ')');
     string_extend_cstr(output, "\n");
 }
 
-static void emit_label(String* output, Node* label) {
+static void emit_label(String* output, const Node* label) {
     string_extend_cstr(output, "\n");
     string_extend_size_t(output, label->llvm_id);
     string_extend_cstr(output, ":\n");
 }
 
-static void emit_cmp_less_than(String* output, size_t llvm_cmp_dest, Node* lhs, Node* rhs) {
+static void emit_cmp_less_than(String* output, size_t llvm_cmp_dest, const Node* lhs, const Node* rhs) {
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, llvm_cmp_dest);
     string_extend_cstr(output, " = icmp slt i32 ");
@@ -498,17 +498,17 @@ static void emit_cmp_less_than(String* output, size_t llvm_cmp_dest, Node* lhs, 
     string_extend_cstr(output, "\n");
 }
 
-static void emit_goto(String* output, Node* lang_goto) {
+static void emit_goto(String* output, const Node* lang_goto) {
     string_extend_cstr(output, "    br label %");
     string_extend_size_t(output, get_matching_label_id(lang_goto));
     string_append(output, '\n');
 }
 
-static void emit_cond_goto(String* output, Node* cond_goto) {
-    Node* label_if_true = nodes_get_child(cond_goto, 1);
-    Node* label_if_false = nodes_get_child(cond_goto, 2);
+static void emit_cond_goto(String* output, const Node* cond_goto) {
+    const Node* label_if_true = nodes_get_child_const(cond_goto, 1);
+    const Node* label_if_false = nodes_get_child_const(cond_goto, 2);
 
-    Node* operator = nodes_get_child_of_type(cond_goto, NODE_OPERATOR);
+    const Node* operator = nodes_get_child_of_type_const(cond_goto, NODE_OPERATOR);
     switch (operator->token_type) {
         case TOKEN_LESS_THAN:
             break;
@@ -516,8 +516,8 @@ static void emit_cond_goto(String* output, Node* cond_goto) {
             unreachable("");
     }
     assert(nodes_count_children(operator) == 2);
-    Node* lhs = nodes_get_child(operator, 0);
-    Node* rhs = nodes_get_child(operator, 1);
+    const Node* lhs = nodes_get_child_const(operator, 0);
+    const Node* rhs = nodes_get_child_const(operator, 1);
     size_t llvm_cmp_dest = operator->llvm_id;
     emit_cmp_less_than(output, llvm_cmp_dest, lhs, rhs);
 
@@ -530,7 +530,7 @@ static void emit_cond_goto(String* output, Node* cond_goto) {
     string_append(output, '\n');
 }
 
-static void emit_block(String* output, Node* fun_block) {
+static void emit_block(String* output, const Node* fun_block) {
     nodes_foreach_child(statement, fun_block) {
         switch (statement->type) {
             case NODE_FUNCTION_DEFINITION:
@@ -582,7 +582,7 @@ static void emit_block(String* output, Node* fun_block) {
     //get_block_return_id(fun_block) = get_block_return_id(fun_block->left_child);
 }
 
-static void emit_llvm_main(String* output, Node* root) {
+static void emit_llvm_main(String* output, const Node* root) {
     switch (root->type) {
         case NODE_BLOCK:
             emit_block(output, root);
@@ -655,7 +655,7 @@ static void emit_symbols(String* output) {
 }
 
 
-void emit_llvm_from_tree(Node* root) {
+void emit_llvm_from_tree(const Node* root) {
     String output = {0};
 
     emit_llvm_main(&output, root);
