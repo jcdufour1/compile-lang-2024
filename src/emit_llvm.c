@@ -270,7 +270,6 @@ static void emit_operator(String* output, Node* operator) {
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, operator->llvm_id);
 
-
     string_extend_cstr(output, " = ");
     emit_operator_type(output, operator);
 

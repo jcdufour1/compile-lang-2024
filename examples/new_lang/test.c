@@ -24,7 +24,9 @@ fn main() i32 {
         puts("thing");
     }
     let string_thing_4: ptr = get_string();
-    string_thing_4 = "hello";
-    printf("%s: %d\n", string_thing_4, count_3);
-    return println("bye world", 55);
+    let string_thing_5: ptr;
+    string_thing_5 = "hello";
+    printf("%s\n", string_thing_4);
+    printf("%s: %d\n", string_thing_5, count_3);
+    return 0;
 }

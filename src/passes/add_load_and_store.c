@@ -153,7 +153,6 @@ static void insert_store_assignment(Node* assignment, Node* item_to_store) {
             load_operator_operands(assignment, rhs);
             break;
         case NODE_FUNCTION_CALL:
-            unreachable("function possibly should not make it here")
             break;
         default:
             node_printf(rhs)

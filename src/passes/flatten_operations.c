@@ -20,10 +20,10 @@ static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* o
     assert(old_operation->type == NODE_OPERATOR);
     Node* lhs = nodes_get_child(old_operation, 0);
     Node* rhs = nodes_get_child(old_operation, 1);
+    nodes_remove_siblings_and_parent(lhs);
+    nodes_remove_siblings_and_parent(rhs);
 
     if (lhs->type == NODE_OPERATOR) {
-        nodes_remove_siblings_and_parent(lhs);
-        nodes_remove_siblings_and_parent(rhs);
 
         log(LOG_DEBUG, "REALLY DOING THING\n");
         Str_view var_name = literal_name_new();
@@ -36,14 +36,19 @@ static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* o
 
         nodes_append_child(old_operation, symbol_new(var_name));
 
-        nodes_remove_siblings_and_parent(rhs);
-        nodes_append_child(old_operation, rhs);
-
         log_tree(LOG_DEBUG, node_to_insert_before->parent);
+    } else if (lhs->type == NODE_FUNCTION_CALL){
+        todo();
+    } else {
+        nodes_append_child(old_operation, lhs);
     }
 
     if (rhs->type == NODE_OPERATOR) {
         todo();
+    } else if (rhs->type == NODE_FUNCTION_CALL){
+        todo();
+    } else {
+        nodes_append_child(old_operation, rhs);
     }
 }
 
