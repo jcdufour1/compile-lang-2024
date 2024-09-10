@@ -41,6 +41,31 @@ static inline Node* nodes_prev_or_parent(Node* node) {
 #define nodes_foreach_from_curr_rev(curr_node, start_node) \
     for (Node* curr_node = (start_node); (curr_node); (curr_node) = (curr_node)->prev)
 
+static inline Node* nodes_get_local_leftmost(Node* start_node) {
+    assert(start_node);
+
+    Node* first;
+    nodes_foreach_from_curr_rev(curr_node, start_node) {
+        first = curr_node;
+    }
+    return first;
+}
+
+static inline Node* nodes_get_local_rightmost(Node* start_node) {
+    assert(start_node);
+
+    Node* rightmost;
+    nodes_foreach_from_curr(curr_node, start_node) {
+        rightmost = curr_node;
+    }
+    log_tree(LOG_DEBUG, start_node);
+    log_tree(LOG_DEBUG, rightmost);
+    return rightmost;
+}
+
+#define nodes_foreach_child_rev(child, parent) \
+    nodes_foreach_from_curr_rev(child, nodes_get_local_rightmost((parent)->left_child))
+
 // do not use this function to remove node from tree (use node_remove instead for that)
 static inline void nodes_reset_links_of_self_only(Node* node, bool keep_children) {
     if (!keep_children) {
@@ -79,16 +104,6 @@ static inline Node* nodes_get_leftmost_sibling(Node* node) {
         result = result->prev;
     }
     return result;
-}
-
-static inline Node* nodes_get_local_leftmost(Node* start_node) {
-    assert(start_node);
-
-    Node* first;
-    nodes_foreach_from_curr_rev(curr_node, start_node) {
-        first = curr_node;
-    }
-    return first;
 }
 
 static inline void nodes_establish_parent_left_child(Node* parent, Node* child) {
@@ -355,6 +370,17 @@ static inline Node* node_clone(const Node* node_to_clone) {
     *new_node = *node_to_clone;
     nodes_reset_links_of_self_only(new_node, false);
     return new_node;
+}
+
+static inline void nodes_move_back_one(Node* node) {
+    log(LOG_DEBUG, "thing thing\n");
+    assert(node->prev);
+
+    Node* prev = node->prev;
+    nodes_remove(node, true);
+    nodes_insert_before(prev, node);
+    nodes_assert_tree_linkage_is_consistant(node);
+    nodes_assert_tree_linkage_is_consistant(prev);
 }
 
 #endif // NODES_H

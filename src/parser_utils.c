@@ -76,7 +76,7 @@ Llvm_id get_prev_load_id(Node* var_call) {
 Llvm_id get_store_dest_id(Node* var_call) {
     Node* store;
     if (!get_prev_matching_node(&store, var_call, var_call, is_alloca)) {
-        unreachable("no store node found before symbol call:"NODE_FMT"\n", node_print(var_call));
+        unreachable("no alloca node found before symbol call:"NODE_FMT"\n", node_print(var_call));
     }
     Llvm_id llvm_id = store->llvm_id;
     assert(llvm_id > 0);

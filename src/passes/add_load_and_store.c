@@ -22,6 +22,7 @@ static Node* store_new(Node* item_to_store) {
 }
 
 static void insert_alloca(Node* var_def) {
+    log_tree(LOG_DEBUG, var_def);
     Node* new_alloca = alloca_new(var_def);
 
     nodes_assert_tree_linkage_is_consistant(root_of_tree);
@@ -29,11 +30,13 @@ static void insert_alloca(Node* var_def) {
     log_tree(LOG_DEBUG, root_of_tree);
 
     Node* node_to_insert_after = NULL;
-    nodes_foreach_from_curr_rev(curr, var_def) {
+    nodes_foreach_from_curr(curr, nodes_get_local_leftmost(var_def)) {
         nodes_assert_tree_linkage_is_consistant(root_of_tree);
-        if (var_def->type != NODE_ALLOCA) {
-            node_to_insert_after = curr;
-            continue;
+        node_to_insert_after = curr;
+        if (curr->type != NODE_VARIABLE_DEFINITION) {
+            assert(curr->prev);
+            node_to_insert_after = curr->prev;
+            break;
         }
     }
 
