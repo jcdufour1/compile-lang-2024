@@ -25,24 +25,20 @@ static void insert_alloca(Node* var_def) {
     log_tree(LOG_DEBUG, var_def);
     Node* new_alloca = alloca_new(var_def);
 
-    nodes_assert_tree_linkage_is_consistant(root_of_tree);
-
     log_tree(LOG_DEBUG, root_of_tree);
 
-    Node* node_to_insert_after = NULL;
     nodes_foreach_from_curr(curr, nodes_get_local_leftmost(var_def)) {
-        nodes_assert_tree_linkage_is_consistant(root_of_tree);
-        node_to_insert_after = curr;
         if (curr->type != NODE_VARIABLE_DEFINITION) {
-            assert(curr->prev);
-            node_to_insert_after = curr->prev;
-            break;
+            if (curr->prev) {
+                nodes_insert_after(curr->prev, new_alloca);
+                return;
+            }
+            nodes_insert_before(curr, new_alloca);
+            return;
         }
     }
 
-    assert(node_to_insert_after);
-
-    nodes_insert_after(node_to_insert_after, new_alloca);
+    unreachable("");
 }
 
 static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
