@@ -51,19 +51,27 @@ bool flatten_operations(Node* curr_node) {
     }
 
     log_tree(LOG_DEBUG, curr_node);
-    nodes_foreach_child_rev(potential_assign, curr_node) {
-        log_tree(LOG_DEBUG, potential_assign);
-        if (potential_assign->type == NODE_ASSIGNMENT) {
-            nodes_foreach_child(potential_op, potential_assign) {
+    Node* assign_or_var_def = nodes_get_local_rightmost(curr_node->left_child);
+    while (assign_or_var_def) {
+        bool advance_to_prev = true;
+        log_tree(LOG_DEBUG, assign_or_var_def);
+        if (assign_or_var_def->type == NODE_ASSIGNMENT) {
+            nodes_foreach_child(potential_op, assign_or_var_def) {
                 if (potential_op->type == NODE_OPERATOR) {
-                    flatten_operation_if_nessessary(potential_assign, potential_op);
+                    flatten_operation_if_nessessary(assign_or_var_def, potential_op);
                 }
             }
-        } else if (potential_assign->type == NODE_VARIABLE_DEFINITION) {
-            Node* var_def = potential_assign;
-            while (var_def->prev && var_def->prev->type != NODE_VARIABLE_DEFINITION) {
-                nodes_move_back_one(var_def);
+        } else if (assign_or_var_def->type == NODE_VARIABLE_DEFINITION) {
+            if (assign_or_var_def->prev && assign_or_var_def->prev->type != NODE_VARIABLE_DEFINITION) {
+                Node* init_prev = assign_or_var_def->prev;
+                nodes_move_back_one(assign_or_var_def);
+                assign_or_var_def = init_prev;
+                advance_to_prev = false;
             }
+        }
+
+        if (advance_to_prev) {
+            assign_or_var_def = assign_or_var_def->prev;
         }
     }
 

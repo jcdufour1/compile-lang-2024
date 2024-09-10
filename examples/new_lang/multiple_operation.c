@@ -4,11 +4,20 @@ extern("c") fn printf(format_string: ptr, args: any...) i32;
 fn main() i32 {
     let num1: i32 = 2;
     let num2: i32 = 93;
-    let result: i32;
+    let result_1: i32;
     let num3: i32 = 3;
     let num4: i32 = 9;
 
-    result = num2*num3 + num4/num1;
-    printf("%d\n", result);
+    result_1 = num2*num3 + num4/num1;
+    printf("%d\n", result_1);
+
+    let num5: i32 = 5;
+    let num6: i32 = 12;
+    let result_2: i32;
+    let num7: i32 = 92;
+    let num8: i32 = 16;
+
+    result_2 = num5*num6 + num7/num8;
+    printf("%d\n", result_2);
     return 0;
 }
