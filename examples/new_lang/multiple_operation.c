@@ -19,5 +19,14 @@ fn main() i32 {
 
     result_2 = num5*num6 + num7/num8;
     printf("%d\n", result_2);
+
+    let num9: i32 = 5;
+    let num10: i32 = 12;
+    let result_3: i32;
+    let num11: i32 = 92;
+    let num12: i32 = 16;
+
+    result_3 = (1 + 7)*10 + num11/num12;
+    printf("%d\n", result_3);
     return 0;
 }

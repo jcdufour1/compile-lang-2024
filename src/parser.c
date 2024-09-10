@@ -31,13 +31,10 @@ static bool get_idx_matching_token(
                                          // false otherwise
     TOKEN_TYPE type_to_match
 ) {
-    log(LOG_DEBUG, "entering: %zu\n", tokens.count);
     int par_level = include_opposite_type_to_match ? (-1) : (0);
     for (size_t idx = 0; idx < tokens.count; idx++) {
         Token curr_token = tokens.tokens[idx];
-        log(LOG_DEBUG, TOKEN_FMT": %d\n", token_print(curr_token), par_level);
         if (par_level == 0 && curr_token.type == type_to_match) {
-            log(LOG_DEBUG, "yes\n");
             if (idx_matching) {
                 *idx_matching = idx;
             }
@@ -89,7 +86,6 @@ static Tk_view extract_items_inside_brackets(Tk_view* tokens, TOKEN_TYPE closing
     }
     Tk_view inside_brackets = tk_view_chop_count(tokens, idx_closing_bracket);
 
-    //log_tokens(LOG_DEBUG, *tokens, 0);
     Token closing_bracket = tk_view_chop_front(tokens);
     assert(closing_bracket.type == closing_bracket_type);
     return inside_brackets;
@@ -140,15 +136,32 @@ static size_t count_operators(Tk_view tokens) {
 static size_t get_idx_lowest_precedence_operator(Tk_view tokens) {
     size_t idx_lowest = SIZE_MAX;
     uint32_t lowest_pre = UINT32_MAX; // higher numbers have higher precedence
+    uint16_t par_level = 1;
 
     for (size_t idx_ = tokens.count; idx_ > 0; idx_--) {
         size_t actual_idx = idx_ - 1;
+        Token curr_token = tk_view_at(tokens, actual_idx);
 
-        if (!token_is_operator(tk_view_at(tokens, actual_idx))) {
+        if (curr_token.type == TOKEN_OPEN_PAR) {
+            log(LOG_DEBUG, "open\n");
+            assert(par_level > 1);
+            par_level--;
+            continue;
+        }
+        if (curr_token.type == TOKEN_CLOSE_PAR) {
+            log(LOG_DEBUG, "close\n");
+            par_level++;
             continue;
         }
 
-        uint32_t curr_precedence = token_get_precedence_operator(tk_view_at(tokens, actual_idx));
+        if (!token_is_operator(curr_token)) {
+            continue;
+        }
+
+        assert(par_level > 0);
+        uint32_t curr_precedence = (par_level*TOKEN_MAX_PRECEDENCE)*token_get_precedence_operator(
+            tk_view_at(tokens, actual_idx)
+        );
         if (curr_precedence < lowest_pre) {
             lowest_pre = curr_precedence;
             idx_lowest = actual_idx;
@@ -429,10 +442,10 @@ static bool is_not_symbol_in(const Token* prev, const Token* curr) {
 }
 
 static bool extract_for_loop(Node** child, Tk_view* tokens) {
-    log_tokens(LOG_DEBUG, *tokens, 0);
     if (!tokens_start_with_for_loop(*tokens)) {
         return false;
     }
+    log_tokens(LOG_DEBUG, *tokens, 0);
 
     Node* for_loop = node_new();
     for_loop->type = NODE_FOR_LOOP;
@@ -548,7 +561,6 @@ static Node* parse_symbol(Tk_view tokens) {
 
 static Node* parse_operation(Tk_view tokens) {
     //log_tokens(LOG_TRACE, tokens, 0);
-
     size_t idx_operator = get_idx_lowest_precedence_operator(tokens);
     Tk_view left_tokens = tk_view_chop_count(&tokens, idx_operator);
     Token operator_token = tk_view_chop_front(&tokens);
@@ -614,7 +626,6 @@ static bool extract_function_call(Node** child, Tk_view* tokens) {
     Tk_view arguments_tokens = tk_view_chop_count(tokens, parameters_end);
 
     Node* argument;
-    //log_tokens(LOG_DEBUG, arguments_tokens, 0);
     while (extract_function_argument(&argument, &arguments_tokens)) {
         nodes_append_child(function_call, argument);
     }
@@ -641,7 +652,6 @@ static bool extract_function_return_statement(Node** result, Tk_view* tokens) {
         return false;
     }
 
-    //log_tokens(LOG_DEBUG, *tokens, 0);
     Tk_view return_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_SEMICOLON);
     tk_view_chop_front(tokens); // remove ;
 
@@ -682,7 +692,6 @@ static Node* parse_if_condition(Tk_view tokens) {
     Node* condition = node_new();
     condition->type = NODE_IF_CONDITION;
 
-    //log_tokens(LOG_DEBUG, tokens, 0);
     if (count_operators(tokens) > 0) {
         nodes_append_child(condition, parse_operation(tokens));
         return condition;
@@ -703,15 +712,12 @@ static bool extract_if_statement(Node** result, Tk_view* tokens) {
     Tk_view if_condition_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_OPEN_CURLY_BRACE);
     Node* if_condition = parse_if_condition(if_condition_tokens);
 
-    //log_tokens(LOG_DEBUG, if_condition_tokens, 0);
-
     Tk_view if_body_tokens = extract_items_inside_brackets(tokens, TOKEN_CLOSE_CURLY_BRACE);
     Node* if_body = parse_block(if_body_tokens);
 
     nodes_append_child(if_statement, if_condition);
     nodes_append_child(if_statement, if_body);
 
-    //log_tokens(LOG_DEBUG, if_body_tokens, 0);
     *result = if_statement;
     return true;
 }
@@ -757,6 +763,13 @@ static Node* parse_single_item_or_block(Tk_view tokens) {
 static Node* parse_single_statement(Tk_view tokens) {
     if (tokens.count < 1) {
         unreachable("");
+    }
+
+    while (tk_view_front(tokens).type == TOKEN_OPEN_PAR && tk_view_at(tokens, tokens.count - 1).type == TOKEN_CLOSE_PAR) {
+        tk_view_chop_front(&tokens); // remove (
+        Tk_view inner_tokens = tk_view_chop_count(&tokens, tokens.count - 1);
+        tk_view_chop_front(&tokens); // remove )
+        tokens = inner_tokens;
     }
 
     Node* var_declaration;

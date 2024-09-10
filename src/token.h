@@ -121,6 +121,8 @@ static inline bool token_is_operator(Token token) {
     }
 }
 
+static const uint32_t TOKEN_MAX_PRECEDENCE = 20;
+
 // higher number returned from this function means that operator has higher precedence
 static inline uint32_t token_get_precedence_operator(Token token) {
     switch (token.type) {
