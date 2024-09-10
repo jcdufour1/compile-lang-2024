@@ -15,7 +15,6 @@ static Node* variable_i32_def_new(Str_view name) {
 }
 
 static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* old_operation) {
-    log(LOG_DEBUG, "DOING_THING\n");
     log_tree(LOG_DEBUG, old_operation);
     assert(old_operation->type == NODE_OPERATOR);
     Node* lhs = nodes_get_child(old_operation, 0);
@@ -24,19 +23,10 @@ static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* o
     nodes_remove_siblings_and_parent(rhs);
 
     if (lhs->type == NODE_OPERATOR) {
-
-        log(LOG_DEBUG, "REALLY DOING THING\n");
         Str_view var_name = literal_name_new();
-        Node* var_def = variable_i32_def_new(var_name);
-        node_printf(var_def);
-        nodes_insert_before(node_to_insert_before, var_def);
-
-        Node* child_assignment = assignment_new(symbol_new(var_name), lhs);
-        nodes_insert_before(node_to_insert_before, child_assignment);
-
+        nodes_insert_before(node_to_insert_before, variable_i32_def_new(var_name));
+        nodes_insert_before(node_to_insert_before, assignment_new(symbol_new(var_name), lhs));
         nodes_append_child(old_operation, symbol_new(var_name));
-
-        log_tree(LOG_DEBUG, node_to_insert_before->parent);
     } else if (lhs->type == NODE_FUNCTION_CALL){
         todo();
     } else {
@@ -44,7 +34,10 @@ static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* o
     }
 
     if (rhs->type == NODE_OPERATOR) {
-        todo();
+        Str_view var_name = literal_name_new();
+        nodes_insert_before(node_to_insert_before, variable_i32_def_new(var_name));
+        nodes_insert_before(node_to_insert_before, assignment_new(symbol_new(var_name), rhs));
+        nodes_append_child(old_operation, symbol_new(var_name));
     } else if (rhs->type == NODE_FUNCTION_CALL){
         todo();
     } else {

@@ -93,7 +93,7 @@ static void insert_store(Node* node_insert_store_before, Node* symbol_call /* sr
 static void load_operator_operand(Node* node_insert_before, Node* operand) {
     switch (operand->type) {
         case NODE_OPERATOR:
-            todo();
+            unreachable("nested operators should not still be present at this point");
         case NODE_LITERAL:
             break;
         case NODE_VARIABLE_DEFINITION:
