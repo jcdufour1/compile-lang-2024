@@ -5,7 +5,7 @@
 
 #include "passes.h"
 
-static Node* alloca_new(Node* var_def) {
+static Node* alloca_new(const Node* var_def) {
     Node* alloca = node_new();
     alloca->type = NODE_ALLOCA;
     alloca->name = var_def->name;
@@ -66,6 +66,32 @@ static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
     load->type = NODE_LOAD;
     load->name = symbol_call->name;
     nodes_insert_before(node_insert_load_before, load);
+}
+
+static void insert_store(Node* node_insert_store_before, Node* symbol_call /* src */) {
+    log(LOG_DEBUG, "insert_store\n");
+    switch (symbol_call->type) {
+        case NODE_LITERAL:
+            return;
+        case NODE_SYMBOL:
+            // fallthrough
+        case NODE_VARIABLE_DEFINITION:
+            log_tree(LOG_DEBUG, symbol_call);
+            node_printf(symbol_call);
+            assert(symbol_call->name.count > 0);
+            break;
+        case NODE_FUNCTION_PARAM_CALL:
+            break;
+        default:
+            node_printf(symbol_call);
+            todo();
+    }
+
+    Node* store = node_new();
+    store->type = NODE_STORE;
+    store->name = symbol_call->name;
+    nodes_append_child(store, symbol_call);
+    nodes_insert_before(node_insert_store_before, store);
 }
 
 static void load_operator_operand(Node* node_insert_before, Node* operand) {
@@ -194,6 +220,21 @@ static void add_load_operator(Node* operator) {
     todo();
 }
 
+static void load_function_parameters(Node* fun_def) {
+    assert(fun_def->type == NODE_FUNCTION_DEFINITION);
+    Node* fun_params = nodes_get_child_of_type(fun_def, NODE_FUNCTION_PARAMETERS);
+    Node* fun_block = nodes_get_child_of_type(fun_def, NODE_BLOCK);
+
+    nodes_foreach_child(param, fun_params) {
+        Node* fun_param_call = symbol_new(param->name);
+        fun_param_call->type = NODE_FUNCTION_PARAM_CALL;
+        insert_store(fun_block->left_child, fun_param_call);
+
+        nodes_insert_before(fun_block->left_child, alloca_new(param));
+    }
+    log_tree(LOG_DEBUG, fun_params->parent);
+}
+
 bool add_load_and_store(Node* curr_node) {
     //log_tree(LOG_DEBUG, 0);
     //log_tree(LOG_DEBUG, curr_node);
@@ -205,8 +246,12 @@ bool add_load_and_store(Node* curr_node) {
             add_load_foreach_arg(curr_node);
             return false;
         case NODE_FUNCTION_DEFINITION:
+            node_printf(curr_node);
+            load_function_parameters(curr_node);
             return false;
         case NODE_FUNCTION_PARAMETERS:
+            return false;
+        case NODE_FUNCTION_PARAM_CALL:
             return false;
         case NODE_FUNCTION_RETURN_TYPES:
             return false;

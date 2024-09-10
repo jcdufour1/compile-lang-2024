@@ -213,31 +213,6 @@ static void emit_src_of_assignment(String* output, Node* variable_def, void* ite
     }
 }
 
-static void emit_src_literal(String* output, Node* var_decl_or_def) {
-    extend_literal_decl_prefix(output, var_decl_or_def);
-}
-
-static void emit_src_function_call_result(String* output, Node* fun_call) {
-    assert(fun_call->type == NODE_FUNCTION_CALL);
-
-    string_extend_cstr(output, " %");
-    string_extend_size_t(output, fun_call->llvm_id);
-}
-
-static void emit_src_operator(String* output, Node* operator) {
-    assert(operator->type == NODE_OPERATOR);
-
-    string_extend_cstr(output, " %");
-    string_extend_size_t(output, operator->llvm_id);
-}
-
-static void emit_src_symbol(String* output, Node* symbol) {
-    assert(symbol->type == NODE_SYMBOL);
-
-    string_extend_cstr(output, " %");
-    string_extend_size_t(output, get_prev_load_id(symbol));
-}
-
 static void emit_operator_type(String* output, Node* operator) {
     // TODO: do signed and unsigned operations correctly
     assert(operator->type == NODE_OPERATOR);
@@ -310,16 +285,21 @@ static void emit_src(String* output, Node* src) {
     //log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
     switch (src->type) {
         case NODE_LITERAL:
-            emit_src_literal(output, src);
+            extend_literal_decl_prefix(output, src);
             break;
         case NODE_FUNCTION_CALL:
-            emit_src_function_call_result(output, src);
-            break;
+            // fallthrough
         case NODE_OPERATOR:
-            emit_src_operator(output, src);
+            string_extend_cstr(output, " %");
+            string_extend_size_t(output, src->llvm_id);
             break;
         case NODE_SYMBOL:
-            emit_src_symbol(output, src);
+            string_extend_cstr(output, " %");
+            string_extend_size_t(output, get_prev_load_id(src));
+            break;
+        case NODE_FUNCTION_PARAM_CALL:
+            string_extend_cstr(output, " %");
+            string_extend_size_t(output, get_matching_fun_param_load_id(src));
             break;
         default:
             todo();
@@ -365,6 +345,9 @@ static void emit_store(String* output, Node* store) {
         case NODE_LITERAL:
             break;
         case NODE_SYMBOL:
+            //emit_load_variable(output, src);
+            break;
+        case NODE_FUNCTION_PARAM_CALL:
             //emit_load_variable(output, src);
             break;
         default:

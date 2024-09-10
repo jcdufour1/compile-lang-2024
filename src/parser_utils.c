@@ -138,3 +138,23 @@ Node* symbol_new(Str_view symbol_name) {
     symbol->name = symbol_name;
     return symbol;
 }
+
+Llvm_id get_matching_fun_param_load_id(Node* fun_param_call) {
+    assert(fun_param_call->type == NODE_FUNCTION_PARAM_CALL);
+
+    Node* fun_def = fun_param_call;
+    while (fun_def->type != NODE_FUNCTION_DEFINITION) {
+        fun_def = fun_def->parent;
+        assert(fun_def);
+    }
+
+    Node* fun_params = nodes_get_child_of_type(fun_def, NODE_FUNCTION_PARAMETERS);
+    nodes_foreach_child(param, fun_params) {
+        if (0 == str_view_cmp(param->name, fun_param_call->name)) {
+            assert(param->llvm_id > 0);
+            return param->llvm_id;
+        }
+    }
+
+    unreachable("fun_param matching "NODE_FMT" not found", node_print(fun_param_call));
+}

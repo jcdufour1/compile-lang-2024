@@ -12,13 +12,13 @@ bool assign_llvm_ids(Node* curr_node) {
     switch (curr_node->type) {
         case NODE_FUNCTION_PARAMETERS:
             return false;
-        case NODE_VARIABLE_DEFINITION:
-            return false;
         case NODE_SYMBOL:
             return false;
         case NODE_LITERAL:
             return false;
         case NODE_BLOCK:
+            return false;
+        case NODE_FUNCTION_PARAM_CALL:
             return false;
         case NODE_FUNCTION_DECLARATION:
             return false;
@@ -30,6 +30,8 @@ bool assign_llvm_ids(Node* curr_node) {
             return false;
         case NODE_LANG_TYPE:
             return false;
+        case NODE_VARIABLE_DEFINITION:
+            // fallthrough
         case NODE_FUNCTION_CALL:
             // fallthrough
         case NODE_ASSIGNMENT:
@@ -47,10 +49,11 @@ bool assign_llvm_ids(Node* curr_node) {
         case NODE_LABEL:
             // fallthrough
         case NODE_STORE:
+            // fallthrough
             curr_node->llvm_id = llvm_id_for_next_var;
-            llvm_id_for_next_var++;
+            llvm_id_for_next_var += 2;
             return false;
         default:
-            unreachable("");
+            unreachable(NODE_FMT"\n", node_print(curr_node));
     }
 }

@@ -24,4 +24,6 @@ Node* literal_new(Str_view value);
 
 Node* symbol_new(Str_view symbol_name);
 
+Llvm_id get_matching_fun_param_load_id(Node* src);
+
 #endif // PARSER_UTIL_H
