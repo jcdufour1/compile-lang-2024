@@ -444,11 +444,6 @@ static void emit_function_return_statement(String* output, const Node* fun_retur
             break;
         }
         case NODE_SYMBOL: {
-            Node* symbol_def;
-            if (!sym_tbl_lookup(&symbol_def, sym_to_return->name)) {
-                todo();
-            }
-
             string_extend_cstr(output, "    ret ");
             extend_type_call_str(output, sym_to_rtn_def);
             string_extend_cstr(output, " %");
