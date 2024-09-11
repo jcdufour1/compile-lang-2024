@@ -45,6 +45,18 @@ static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* o
     }
 }
 
+static void move_operator_back(Node* return_statement) {
+    assert(return_statement->type == NODE_RETURN_STATEMENT);
+    Node* operation = nodes_single_child(return_statement);
+    assert(operation->type == NODE_OPERATOR);
+    nodes_remove(operation, true);
+
+    Str_view var_name = literal_name_new();
+    nodes_insert_before(return_statement, variable_i32_def_new(var_name)); // TODO: use correct type here
+    nodes_insert_before(return_statement, assignment_new(symbol_new(var_name), operation));
+    nodes_append_child(return_statement, symbol_new(var_name));
+}
+
 bool flatten_operations(Node* curr_node) {
     if (curr_node->type != NODE_BLOCK) {
         return false;
@@ -68,6 +80,10 @@ bool flatten_operations(Node* curr_node) {
                 assign_or_var_def = init_prev;
                 advance_to_prev = false;
             }
+        } else if (assign_or_var_def->type == NODE_RETURN_STATEMENT) {
+            if (nodes_single_child(assign_or_var_def)->type == NODE_OPERATOR) {
+                move_operator_back(assign_or_var_def);
+            }
         }
 
         if (advance_to_prev) {
@@ -77,3 +93,4 @@ bool flatten_operations(Node* curr_node) {
 
     return false;
 }
+

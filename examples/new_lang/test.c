@@ -9,13 +9,14 @@ fn get_string() ptr {
 
 fn println(string1: ptr, num2: i32) i32 {
     let string_thing: ptr = "67";
+    puts(string_thing);
     let num1: i32 = 1;
     num1 = 3;
     num1 = 5;
     string_thing = get_string();
     puts(string1);
     puts(string_thing);
-    return num1;
+    return num2*5;
 }
 
 fn main() i32 {
@@ -28,5 +29,7 @@ fn main() i32 {
     string_thing_5 = "hello";
     printf("%s\n", string_thing_4);
     printf("%s: %d\n", string_thing_5, count_3);
+    let result: i32 = println("bye", 91);
+    printf("%d\n", result);
     return 0;
 }

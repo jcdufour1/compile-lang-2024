@@ -406,7 +406,7 @@ static void emit_function_return_statement(String* output, const Node* fun_retur
     Node* sym_to_return = fun_return->left_child;
     Node* sym_to_rtn_def;
     if (!sym_tbl_lookup(&sym_to_rtn_def, sym_to_return->name)) {
-        todo();
+        unreachable("");
     }
 
     switch (sym_to_return->type) {
@@ -430,22 +430,12 @@ static void emit_function_return_statement(String* output, const Node* fun_retur
 
             extend_type_call_str(output, return_type);
             string_extend_cstr(output, " %");
-            string_extend_size_t(output, get_block_return_id(sym_to_return));
+            string_extend_size_t(output, sym_to_return->llvm_id);
             string_extend_cstr(output, "\n");
             break;
         }
         case NODE_BLOCK: {
             emit_block(output, sym_to_return);
-            string_extend_cstr(output, "    ret ");
-            extend_type_call_str(output, sym_to_rtn_def);
-            string_extend_cstr(output, " %");
-            string_extend_size_t(output, get_block_return_id(sym_to_return));
-            string_extend_cstr(output, "\n");
-            break;
-        }
-        case NODE_OPERATOR: {
-            todo();
-            emit_operator(output, sym_to_return);
             string_extend_cstr(output, "    ret ");
             extend_type_call_str(output, sym_to_rtn_def);
             string_extend_cstr(output, " %");

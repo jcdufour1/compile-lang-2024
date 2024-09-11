@@ -179,14 +179,19 @@ static void add_load_foreach_arg(Node* function_call) {
 
 static void add_load_return_statement(Node* return_statement) {
     log(LOG_DEBUG, "add_load_return_statement\n");
-    switch (nodes_single_child(return_statement)->type) {
+    Node* node_to_return = nodes_single_child(return_statement);
+    switch (node_to_return->type) {
         case NODE_SYMBOL:
-            insert_load(return_statement, nodes_single_child(return_statement));
+            insert_load(return_statement, node_to_return);
             return;
+        case NODE_FUNCTION_CALL:
+            // fallthrough
         case NODE_LITERAL:
             return;
+        case NODE_OPERATOR:
+            unreachable("operator should not still be the child of return statement at this point");
         default:
-            unreachable("");
+            unreachable(NODE_FMT"\n", node_print(node_to_return));
     }
 }
 
