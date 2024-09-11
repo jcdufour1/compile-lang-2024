@@ -382,9 +382,13 @@ static bool tokens_start_with_variable_declaration(Tk_view tokens) {
     return true;
 }
 
-static Node* parse_variable_definition(Tk_view variable_tokens) {
-    Token return_keyword_token = tk_view_chop_front(&variable_tokens); // remove "return"
-    assert(0 == token_is_equal(return_keyword_token, "return", TOKEN_SYMBOL));
+static Node* parse_variable_definition(Tk_view variable_tokens, bool require_let) {
+     // remove "let"
+    if (token_is_equal(tk_view_front(variable_tokens), "let", TOKEN_SYMBOL)) {
+        tk_view_chop_front(&variable_tokens);
+    } else if (require_let) {
+        unreachable("");
+    }
 
     Node* variable_def = node_new();
     variable_def->type = NODE_VARIABLE_DEFINITION;
@@ -422,7 +426,7 @@ static bool extract_variable_declaration(Node** child, Tk_view* tokens) {
         var_decl_tokens = tk_view_chop_count(tokens, tokens->count);
     }
 
-    *child = parse_variable_definition(var_decl_tokens);
+    *child = parse_variable_definition(var_decl_tokens, true);
     return true;
 }
 
@@ -454,7 +458,7 @@ static bool extract_for_loop(Node** child, Tk_view* tokens) {
     Tk_view for_var_decl_tokens = tk_view_chop_on_cond(tokens, is_not_symbol_in);
     Node* var_def = node_new();
     var_def->type = NODE_FOR_VARIABLE_DEF;
-    nodes_append_child(var_def, parse_single_statement(for_var_decl_tokens));
+    nodes_append_child(var_def, parse_variable_definition(for_var_decl_tokens, false));
     nodes_append_child(for_loop, var_def);
     tk_view_chop_front(tokens); // remove in
 

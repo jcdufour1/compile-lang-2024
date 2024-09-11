@@ -2,15 +2,15 @@ extern("c") fn puts(str_to_print: ptr) i32;
 extern("c") fn printf(str_to_print_2: ptr, args: any...) i32;
 
 fn main() i32 {
-    for let num1: i32 in {0..7} {
-        for let num2: i32 in {0..num1} {
+    for num1: i32 in {0..7} {
+        for num2: i32 in {0..num1} {
             printf("%d ", num2);
         }
         printf("\n");
     }
 
-    for let num11: i32 in {2..9} {
-        for let num12: i32 in {num11..9} {
+    for num11: i32 in {2..9} {
+        for num12: i32 in {num11..9} {
             printf("%d ", num12);
         }
         printf("\n");
