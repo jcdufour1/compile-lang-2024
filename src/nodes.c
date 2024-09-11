@@ -31,6 +31,7 @@ static const char* NODE_IF_CONDITION_DESCRIPTION = "if_condition";
 static const char* NODE_FUNCTION_PARAM_CALL_DESCRIPTION = "fun_param_call";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
+#ifndef NDEBUG
 static void nodes_assert_tree_linkage_is_consistant_internal(Node_ptr_vec* nodes_visited, const Node* root) {
     if (!root) {
         return;
@@ -76,9 +77,10 @@ static void nodes_assert_tree_linkage_is_consistant_internal(Node_ptr_vec* nodes
 
 void nodes_assert_tree_linkage_is_consistant(const Node* root) {
     static Node_ptr_vec nodes_visited = {0};
-    memset(&nodes_visited, 0, sizeof(nodes_visited));
+    node_ptr_vec_set_to_zero_len(&nodes_visited);
     nodes_assert_tree_linkage_is_consistant_internal(&nodes_visited, root);
 }
+#endif // NDEBUG
 
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, const Node* root, const char* file, int line) {
     if (!root_of_tree) {

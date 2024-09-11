@@ -62,11 +62,9 @@ bool flatten_operations(Node* curr_node) {
         return false;
     }
 
-    log_tree(LOG_DEBUG, curr_node);
     Node* assign_or_var_def = nodes_get_local_rightmost(curr_node->left_child);
     while (assign_or_var_def) {
         bool advance_to_prev = true;
-        log_tree(LOG_DEBUG, assign_or_var_def);
         if (assign_or_var_def->type == NODE_ASSIGNMENT) {
             nodes_foreach_child(potential_op, assign_or_var_def) {
                 if (potential_op->type == NODE_OPERATOR) {

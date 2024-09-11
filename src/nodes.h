@@ -11,7 +11,11 @@
 
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, const Node* root, const char* file, int line);
 
+#ifdef NDEBUG
+#define nodes_assert_tree_linkage_is_consistant(root)
+#else
 void nodes_assert_tree_linkage_is_consistant(const Node* root);
+#endif // NDEBUG
 
 #define log_tree(log_level, root) \
     do { \
@@ -127,8 +131,6 @@ static inline void nodes_insert_after(Node* curr, Node* node_to_insert) {
         nodes_establish_siblings(node_to_insert, old_next);
     }
     node_to_insert->parent = curr->parent;
-
-    nodes_assert_tree_linkage_is_consistant(curr);
 }
 
 static inline void nodes_insert_before(Node* node_to_insert_before, Node* node_to_insert) {
@@ -137,9 +139,6 @@ static inline void nodes_insert_before(Node* node_to_insert_before, Node* node_t
     assert(!node_to_insert->next);
     assert(!node_to_insert->prev);
     assert(!node_to_insert->parent);
-    nodes_assert_tree_linkage_is_consistant(node_to_insert_before);
-    nodes_assert_tree_linkage_is_consistant(node_to_insert);
-    nodes_assert_tree_linkage_is_consistant(node_to_insert->parent);
 
     Node* new_prev = node_to_insert_before->prev;
     Node* new_next = node_to_insert_before;
@@ -162,14 +161,6 @@ static inline void nodes_insert_before(Node* node_to_insert_before, Node* node_t
         parent->left_child = node_to_insert;
     }
     node_to_insert->parent = parent;
-    nodes_assert_tree_linkage_is_consistant(node_to_insert_before);
-    nodes_assert_tree_linkage_is_consistant(node_to_insert);
-    nodes_assert_tree_linkage_is_consistant(node_to_insert->parent);
-
-    //log_tree(LOG_DEBUG, node_id_from(0));
-    //log_tree(LOG_DEBUG, parent);
-    //log_tree(LOG_DEBUG, parent->left_child);
-    //log_tree(LOG_DEBUG, node_to_insert);
 }
 
 static inline void nodes_append_child(Node* parent, Node* child) {
@@ -189,8 +180,6 @@ static inline void nodes_append_child(Node* parent, Node* child) {
         curr_node = curr_node->next;
     }
     nodes_insert_after(curr_node, child);
-
-    nodes_assert_tree_linkage_is_consistant(parent);
 }
 
 // when node only has one child
@@ -373,12 +362,9 @@ static inline void nodes_extend_children(Node* parent, Node* start_of_nodes_to_e
 
         nodes_remove(curr_node, true);
         nodes_append_child(parent, curr_node);
-        nodes_assert_tree_linkage_is_consistant(parent);
 
         curr_node = next_node;
     }
-
-    nodes_assert_tree_linkage_is_consistant(parent);
 }
 
 static inline Node* node_clone(const Node* node_to_clone) {
@@ -395,8 +381,6 @@ static inline void nodes_move_back_one(Node* node) {
     Node* prev = node->prev;
     nodes_remove(node, true);
     nodes_insert_before(prev, node);
-    nodes_assert_tree_linkage_is_consistant(node);
-    nodes_assert_tree_linkage_is_consistant(prev);
 }
 
 #endif // NODES_H

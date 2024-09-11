@@ -520,8 +520,6 @@ static void emit_cond_goto(String* output, const Node* cond_goto) {
             unreachable("");
     }
     assert(nodes_count_children(operator) == 2);
-    const Node* lhs = nodes_get_child_const(operator, 0);
-    const Node* rhs = nodes_get_child_const(operator, 1);
     size_t llvm_cmp_dest = operator->llvm_id;
 
     emit_compare(output, operator);

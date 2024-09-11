@@ -25,9 +25,9 @@ typedef Arena_free_node Arena_alloc_node;
 typedef struct {
     Arena_buf* buf;
     Arena_free_node* free_node;
-#ifndef NDEBUG
+#if 0
     Arena_alloc_node* alloc_node;
-#endif // NDEBUG
+#endif
 } Arena;
 
 extern Arena arena;
@@ -45,7 +45,7 @@ void arena_free(void* buf, size_t old_capacity);
 
 void arena_destroy(void);
 
-#ifndef NDEBUG
+#if 0
 static inline size_t arena_count_allocated_nodes(void) {
     size_t count_nodes = 0;
     Arena_alloc_node* curr_node = arena.alloc_node;
@@ -69,6 +69,9 @@ static inline size_t arena_count_allocated_nodes(void) {
     } \
     while (0)
 
+#endif
+
+#ifndef NDEBUG
 #define arena_log_free_nodes() \
     do { \
         size_t count_nodes = 0; \
@@ -87,6 +90,7 @@ static inline size_t arena_count_allocated_nodes(void) {
 #define arena_log_free_nodes()
 #endif // NDEBUG
 
+#else
 static inline size_t arena_count_free_nodes(void) {
     size_t count_nodes = 0;
     Arena_free_node* curr_node = arena.free_node;

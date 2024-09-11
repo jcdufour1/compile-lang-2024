@@ -130,7 +130,6 @@ static void if_statement_to_branch(Node* curr_node) {
     nodes_remove(operation, true);
     Node* lhs = nodes_get_child(operation, 0);
     Node* rhs = nodes_get_child(operation, 1);
-    assert(rhs->token_type == TOKEN_NUM_LITERAL);
     nodes_remove_siblings_and_parent(lhs);
     nodes_remove_siblings_and_parent(rhs);
 

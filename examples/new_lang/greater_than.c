@@ -1,6 +1,6 @@
 extern("c") fn puts(str_to_print: ptr) i32;
 
-fn main() i32 {
+fn do_constants() i32 {
     if 8 < 1 {
         puts("1");
     }
@@ -24,5 +24,119 @@ fn main() i32 {
     if 8 > 9 {
         puts("6");
     }
+
     return 0;
 }
+
+fn do_var_lhs() i32 {
+    let num1: i32 = 8;
+
+    if num1 < 1 {
+        puts("1");
+    }
+
+    if num1 < 8 {
+        puts("2");
+    }
+
+    if num1 < 9 {
+        puts("3");
+    }
+
+    if num1 > 1 {
+        puts("4");
+    }
+
+    if num1 > 8 {
+        puts("5");
+    }
+
+    if num1 > 9 {
+        puts("6");
+    }
+
+    return 0;
+}
+
+fn do_var_rhs() i32 {
+    let num1: i32 = 8;
+
+    if 1 < num1  {
+        puts("1");
+    }
+
+    if 8 < num1  {
+        puts("2");
+    }
+
+    if 9 < num1  {
+        puts("3");
+    }
+
+    if 1 > num1  {
+        puts("4");
+    }
+
+    if 8 > num1  {
+        puts("5");
+    }
+
+    if 9 > num1  {
+        puts("6");
+    }
+
+    return 0;
+}
+
+fn do_var_both() i32 {
+    let lhs: i32 = 8;
+    let rhs: i32;
+
+    lhs = 1;
+    rhs = 8;
+    if lhs < rhs  {
+        puts("1");
+    }
+
+    lhs = 8;
+    rhs = 8;
+    if lhs < rhs  {
+        puts("2");
+    }
+
+    lhs = 9;
+    rhs = 8;
+    if lhs < rhs  {
+        puts("3");
+    }
+
+    lhs = 1;
+    rhs = 8;
+    if lhs > rhs  {
+        puts("4");
+    }
+
+    lhs = 8;
+    rhs = 8;
+    if lhs > rhs  {
+        puts("5");
+    }
+
+    lhs = 9;
+    rhs = 8;
+    if lhs > rhs  {
+        puts("6");
+    }
+
+    return 0;
+}
+
+fn main() i32 {
+    do_constants();
+    do_var_lhs();
+    do_var_rhs();
+    do_var_both();
+
+    return 0;
+}
+
