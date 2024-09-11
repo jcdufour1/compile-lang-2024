@@ -28,19 +28,24 @@ static Node* goto_new(Str_view name_label_to_jmp_to) {
 }
 
 static Node* cond_goto_new(
-    Str_view symbol_name_to_check,
+    Node* lhs,
+    Node* rhs,
     Str_view label_name_if_true,
     Str_view label_name_if_false,
-    TOKEN_TYPE operator_type,
-    const Node* upper_bound
+    TOKEN_TYPE operator_type
 ) {
-    Node* upper_bound_copy = node_clone(upper_bound);
+    assert(!lhs->prev);
+    assert(!lhs->next);
+    assert(!lhs->parent);
+    assert(!rhs->prev);
+    assert(!rhs->next);
+    assert(!rhs->parent);
 
     Node* operator = node_new();
     operator->type = NODE_OPERATOR;
     operator->token_type = operator_type;
-    nodes_append_child(operator, symbol_new(symbol_name_to_check));
-    nodes_append_child(operator, upper_bound_copy);
+    nodes_append_child(operator, lhs);
+    nodes_append_child(operator, rhs);
 
     Node* cond_goto = node_new();
     cond_goto->type = NODE_COND_GOTO;
@@ -57,9 +62,12 @@ static Node* get_for_loop_cond_var_assign(Str_view sym_name) {
 }
 
 static void for_loop_to_branch(Node* for_loop) {
-    Node* lower_bound = nodes_get_child_of_type(for_loop, NODE_FOR_LOWER_BOUND);
-    Node* upper_bound = nodes_get_child_of_type(for_loop, NODE_FOR_UPPER_BOUND);
+    Node* lhs = nodes_get_child_of_type(for_loop, NODE_FOR_LOWER_BOUND);
+    Node* rhs = nodes_get_child_of_type(for_loop, NODE_FOR_UPPER_BOUND);
     Node* for_block = nodes_get_child_of_type(for_loop, NODE_BLOCK);
+
+    Node* rhs_actual = nodes_single_child(rhs);
+    nodes_remove_siblings_and_parent(rhs_actual);
 
     Node* new_branch_block = node_new();
     new_branch_block->type = NODE_BLOCK;
@@ -77,10 +85,10 @@ static void for_loop_to_branch(Node* for_loop) {
 
     Node* assignment_to_inc_cond_var = get_for_loop_cond_var_assign(regular_var_def->name);
     assert(!new_branch_block->parent);
-    nodes_remove_siblings_and_parent(lower_bound);
-    Node* lower_bound_child = nodes_single_child(lower_bound);
+    nodes_remove_siblings_and_parent(lhs);
+    Node* lower_bound_child = nodes_single_child(lhs);
     nodes_remove_siblings_and_parent(lower_bound_child);
-    nodes_remove_siblings_and_parent(upper_bound);
+    nodes_remove_siblings_and_parent(rhs);
     nodes_remove_siblings_and_parent(for_block);
 
     // initial assignment
@@ -91,11 +99,11 @@ static void for_loop_to_branch(Node* for_loop) {
     Node* after_check_label = label_new(literal_name_new());
     Node* after_for_loop_label = label_new(literal_name_new());
     Node* check_cond_jmp = cond_goto_new(
-        regular_var_def->name, 
+        symbol_new(regular_var_def->name),
+        rhs_actual,
         after_check_label->name, 
         after_for_loop_label->name,
-        TOKEN_LESS_THAN,
-        nodes_single_child(upper_bound)
+        TOKEN_LESS_THAN
     );
 
     nodes_append_child(new_branch_block, regular_var_def);
@@ -119,22 +127,22 @@ static void if_statement_to_branch(Node* curr_node) {
     Node* block = nodes_get_child_of_type(curr_node, NODE_BLOCK);
 
     Node* operation = nodes_get_child_of_type(condition, NODE_OPERATOR);
-    Node* symbol_to_check = nodes_get_child(operation, 0);
-    assert(symbol_to_check->type == NODE_SYMBOL);
-    Node* upper_bound = nodes_get_child(operation, 1);
-    assert(upper_bound->type == NODE_LITERAL);
-    assert(upper_bound->token_type == TOKEN_NUM_LITERAL);
-    nodes_remove_siblings_and_parent(upper_bound);
+    nodes_remove(operation, true);
+    Node* lhs = nodes_get_child(operation, 0);
+    Node* rhs = nodes_get_child(operation, 1);
+    assert(rhs->token_type == TOKEN_NUM_LITERAL);
+    nodes_remove_siblings_and_parent(lhs);
+    nodes_remove_siblings_and_parent(rhs);
 
     Node* if_true = label_new(literal_name_new());
     Node* if_after = label_new(literal_name_new());
 
     Node* check_cond_jmp = cond_goto_new(
-        symbol_to_check->name, 
+        lhs, 
+        rhs,
         if_true->name, 
         if_after->name,
-        operation->token_type,
-        upper_bound
+        operation->token_type
     );
 
     Node* jmp_to_if_after = goto_new(if_after->name);

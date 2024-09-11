@@ -473,10 +473,27 @@ static void emit_label(String* output, const Node* label) {
     string_extend_cstr(output, ":\n");
 }
 
-static void emit_cmp_less_than(String* output, size_t llvm_cmp_dest, const Node* lhs, const Node* rhs) {
+static void emit_compare(String* output, const Node* operator) {
+    assert(operator->type == NODE_OPERATOR);
+    const Node* lhs = nodes_get_child_const(operator, 0);
+    const Node* rhs = nodes_get_child_const(operator, 1);
+
     string_extend_cstr(output, "    %");
-    string_extend_size_t(output, llvm_cmp_dest);
-    string_extend_cstr(output, " = icmp slt i32 ");
+    string_extend_size_t(output, operator->llvm_id);
+    string_extend_cstr(output, " = icmp ");
+
+    switch (operator->token_type) {
+        case TOKEN_LESS_THAN:
+            string_extend_cstr(output, "slt");
+            break;
+        case TOKEN_GREATER_THAN:
+            string_extend_cstr(output, "sgt");
+            break;
+        default:
+            unreachable("");
+    }
+
+    string_extend_cstr(output, " i32 ");
     emit_operator_operand(output, lhs);
     string_extend_cstr(output, ", ");
     emit_operator_operand(output, rhs);
@@ -496,6 +513,8 @@ static void emit_cond_goto(String* output, const Node* cond_goto) {
     const Node* operator = nodes_get_child_of_type_const(cond_goto, NODE_OPERATOR);
     switch (operator->token_type) {
         case TOKEN_LESS_THAN:
+            // fallthrough
+        case TOKEN_GREATER_THAN:
             break;
         default:
             unreachable("");
@@ -504,7 +523,8 @@ static void emit_cond_goto(String* output, const Node* cond_goto) {
     const Node* lhs = nodes_get_child_const(operator, 0);
     const Node* rhs = nodes_get_child_const(operator, 1);
     size_t llvm_cmp_dest = operator->llvm_id;
-    emit_cmp_less_than(output, llvm_cmp_dest, lhs, rhs);
+
+    emit_compare(output, operator);
 
     string_extend_cstr(output, "    br i1 %");
     string_extend_size_t(output, llvm_cmp_dest);
