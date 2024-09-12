@@ -1,5 +1,6 @@
 
 
+
 hello world 
 '''c
 fn void main() {
@@ -169,6 +170,29 @@ fn void main() {
 }
 '''
 
+function returning an error (idea 4)
+'''c
+fn void main() {
+    File file = open("hello.txt", FILE::READ) orelse {
+        println("file could not be opened:", err_text(file));
+        return;
+    }
+    // file is now a normal file
+    ...
+}
+
+function returning an error (idea 5)
+'''c
+fn void main() {
+    File file = open("hello.txt", FILE::READ) orelse {
+        println("file could not be opened:", err_text(file));
+        return;
+    }
+    // file is now a normal file
+    ...
+}
+
+'''
 # constraints
 ## array library
 '''c
@@ -242,4 +266,21 @@ fn void main() {
 
 
 
+'''
+
+# print formatting
+print num1
+'''c
+fn main() i32 {
+    let num1: i32 = 89;
+    println("num1: {num1}");
+}
+'''
+print num1 + num2
+'''c
+fn main() i32 {
+    let num1: i32 = 89;
+    let num2: i32 = 76;
+    println("num1: {num1 + num2}");
+}
 '''
