@@ -44,15 +44,12 @@ static size_t get_count_excape_seq(Str_view str_view) {
     return count_excapes;
 }
 
-static void extend_type_call_str(String* output, const Node* variable_def) {
-    assert(variable_def->lang_type.count > 0);
-    if (str_view_cstr_is_equal(variable_def->lang_type, "i32")) {
-        string_extend_cstr(output, "i32");
-    } else if (str_view_cstr_is_equal(variable_def->lang_type, "ptr")) {
-        string_extend_cstr(output, "ptr");
-    } else {
-        todo();
+static void extend_type_call_str(String* output, const Node* sym_def) {
+    Node* struct_def;
+    if (sym_tbl_lookup(&struct_def, sym_def->lang_type)) {
+        string_extend_cstr(output, "%struct.");
     }
+    string_extend_strv(output, sym_def->lang_type);
 }
 
 static void extend_type_decl_str(String* output, const Node* variable_def) {
@@ -188,7 +185,6 @@ static void emit_alloca(String* output, const Node* alloca) {
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, alloca->llvm_id);
     string_extend_cstr(output, " = alloca ");
-    node_printf(alloca);
     extend_type_call_str(output, get_symbol_def_from_alloca(alloca));
     string_extend_cstr(output, ", align 8");
     string_extend_cstr(output, "\n");
@@ -308,7 +304,14 @@ static void emit_load_variable(String* output, const Node* variable_call) {
     string_extend_cstr(output, "\n");
 }
 
-static void emit_store(String* output, const Node* store) {
+static void emit_store_struct_literal(String* output, const Node* store) {
+    size_t alloca_dest_id = get_store_dest_id(store);
+    string_extend_cstr(output, "    call void @llvm.memcpy.p0.p0.i64(ptr align 4 %");
+    string_extend_size_t(output, alloca_dest_id);
+    string_extend_cstr(output, ", ptr align 4 @__const.main.div, i64 20, i1 false)\n");
+}
+
+static void emit_normal_store(String* output, const Node* store) {
     size_t alloca_dest_id = get_store_dest_id(store);
     const Node* var_def = get_symbol_def_from_alloca(store);
     assert(alloca_dest_id > 0);
@@ -344,6 +347,14 @@ static void emit_store(String* output, const Node* store) {
     string_extend_size_t(output, alloca_dest_id);
     string_extend_cstr(output, ", align 8");
     string_extend_cstr(output, "\n");
+}
+
+static void emit_store(String* output, const Node* store) {
+    if (store->left_child->type == NODE_STRUCT_LITERAL) {
+        emit_store_struct_literal(output, store);
+    } else {
+        emit_normal_store(output, store);
+    }
 }
 
 static void emit_function_definition(String* output, const Node* fun_def) {
@@ -499,7 +510,6 @@ static void emit_cond_goto(String* output, const Node* cond_goto) {
 }
 
 static void emit_struct_definition(String* output, const Node* statement) {
-
     string_extend_cstr(output, "%struct.");
     string_extend_strv(output, statement->name);
     string_extend_cstr(output, " = type { ");
@@ -512,8 +522,6 @@ static void emit_struct_definition(String* output, const Node* statement) {
         is_first = false;
     }
     string_extend_cstr(output, " }\n");
-    log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
-    todo();
 }
 
 static void emit_block(String* output, const Node* block) {
@@ -574,7 +582,7 @@ static void emit_block(String* output, const Node* block) {
 }
 
 static void emit_symbol(String* output, const Symbol_table_node node) {
-    size_t literal_width = node.node->str_data.count + 1 - \
+    size_t literal_width = node.node->str_data.count + 1 -
                            get_count_excape_seq(node.node->str_data);
 
     string_extend_cstr(output, "@.");
@@ -587,6 +595,10 @@ static void emit_symbol(String* output, const Symbol_table_node node) {
     string_extend_cstr(output, "\n");
 }
 
+static void emit_struct_literal(String* output, const Node* literal) {
+    todo();
+}
+
 static void emit_symbols(String* output) {
     for (size_t idx = 0; idx < symbol_table.capacity; idx++) {
         const Symbol_table_node curr_node = symbol_table.table_nodes[idx];
@@ -596,6 +608,9 @@ static void emit_symbols(String* output) {
         switch (curr_node.node->type) {
             case NODE_LITERAL:
                 emit_symbol(output, curr_node);
+                break;
+            case NODE_STRUCT_LITERAL:
+                emit_struct_literal(output, curr_node.node);
                 break;
             case NODE_VARIABLE_DEFINITION:
                 // fallthrough
@@ -608,6 +623,8 @@ static void emit_symbols(String* output) {
             case NODE_LABEL:
                 // fallthrough
             case NODE_FUNCTION_DEFINITION:
+                // fallthrough
+            case NODE_STRUCT_DEFINITION:
                 break;
             default:
                 log(LOG_FETAL, NODE_FMT"\n", node_print(curr_node.node));

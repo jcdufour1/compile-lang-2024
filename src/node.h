@@ -35,8 +35,9 @@ typedef enum {
     NODE_COND_GOTO,
     NODE_LABEL,
     NODE_ALLOCA,
-    NODE_STORE,
     NODE_LOAD,
+    NODE_STORE,
+    NODE_STORE_MEMBER,
 } NODE_TYPE;
 
 typedef size_t Llvm_id;

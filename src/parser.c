@@ -370,7 +370,7 @@ static Node* extract_struct_definition(Tk_view* tokens) {
     }
 
     try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
-    log_tree(LOG_DEBUG, new_struct);
+    sym_tbl_add(new_struct);
     return new_struct;
 }
 
@@ -707,6 +707,7 @@ static Node* parse_struct_literal(Tk_view tokens) {
     }
 
     assert(tokens.count < 1);
+    sym_tbl_add(struct_literal);
     return struct_literal;
 }
 

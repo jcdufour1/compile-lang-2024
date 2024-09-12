@@ -158,3 +158,8 @@ Llvm_id get_matching_fun_param_load_id(const Node* fun_param_call) {
 
     unreachable("fun_param matching "NODE_FMT" not found", node_print(fun_param_call));
 }
+
+const Node* get_lang_type_from_sym_definition(const Node* sym_def) {
+    todo();
+}
+

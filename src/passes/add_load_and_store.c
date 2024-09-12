@@ -60,6 +60,7 @@ static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
             load->type = NODE_LOAD;
             load->name = symbol_call->name;
             nodes_insert_before(node_insert_load_before, load);
+            break;
         }
         default:
             node_printf(symbol_call);
@@ -276,7 +277,10 @@ bool add_load_and_store(Node* curr_node) {
             add_load_return_statement(curr_node);
             return false;
         case NODE_VARIABLE_DEFINITION:
-            if (curr_node->parent->type == NODE_FUNCTION_PARAMETERS || curr_node->parent->type == NODE_STRUCT_DEFINITION) {
+            if (curr_node->parent->type == NODE_FUNCTION_PARAMETERS ||
+                curr_node->parent->type == NODE_STRUCT_DEFINITION ||
+                curr_node->parent->type == NODE_STRUCT_LITERAL
+            ) {
                 return false;
             }
             insert_alloca(curr_node);

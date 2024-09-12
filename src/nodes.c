@@ -32,6 +32,7 @@ static const char* NODE_FUNCTION_PARAM_CALL_DESCRIPTION = "fun_param_call";
 static const char* NODE_STRUCT_DEFINITION_DESCRIPTION = "struct_def";
 static const char* NODE_STRUCT_MEMBER_CALL_DESCRIPTION = "struct_member_call";
 static const char* NODE_STRUCT_LITERAL_DESCRIPTION = "struct_literal";
+static const char* NODE_STORE_MEMBER_DESCRIPTION = "store_member";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
 #ifndef NDEBUG
@@ -166,6 +167,8 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_STRUCT_MEMBER_CALL_DESCRIPTION);
         case NODE_STRUCT_LITERAL:
             return str_view_from_cstr(NODE_STRUCT_LITERAL_DESCRIPTION);
+        case NODE_STORE_MEMBER:
+            return str_view_from_cstr(NODE_STORE_MEMBER_DESCRIPTION);
         case NODE_NO_TYPE:
             return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
         default:
