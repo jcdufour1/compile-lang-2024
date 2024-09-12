@@ -115,6 +115,8 @@ static inline bool token_is_operator(Token token) {
         case TOKEN_COLON:
             // fallthrough
         case TOKEN_SINGLE_EQUAL:
+            // fallthrough
+        case TOKEN_SINGLE_DOT:
             return false;
         default:
             unreachable(TOKEN_FMT"\n", token_print(token));

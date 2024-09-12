@@ -12,6 +12,7 @@ static Node* parse_function_single_return_type(Token tokens);
 static Node* parse_block(Tk_view tokens);
 INLINE bool extract_block_element(Node** child, Tk_view* tokens);
 static Node* parse_single_item_or_block(Tk_view tokens);
+static Node* parse_variable_definition(Tk_view variable_tokens, bool require_let);
 
 #define log_tokens(log_level, token_view, indent) \
     do { \
@@ -175,12 +176,15 @@ static size_t get_idx_lowest_precedence_operator(Tk_view tokens) {
 }
 
 static bool is_assignment(Tk_view tokens) {
-    if (!get_idx_token(NULL, tokens, 0, TOKEN_SEMICOLON)) {
-        return false;
+    Tk_view curr_statement;
+    size_t idx_semicolon;
+    if (get_idx_token(&idx_semicolon, tokens, 0, TOKEN_SEMICOLON)) {
+        curr_statement = tk_view_chop_on_type_delim(&tokens, TOKEN_SEMICOLON);
+    } else {
+        curr_statement = tokens;
     }
 
-    Tk_view statement_tokens = tk_view_chop_on_type_delim(&tokens, TOKEN_SEMICOLON);
-    return get_idx_token(NULL, statement_tokens, 0, TOKEN_SINGLE_EQUAL);
+    return get_idx_token(NULL, tokens, 0, TOKEN_SINGLE_EQUAL);
 }
 
 static bool extract_function_parameter(Node** child, Tk_view* tokens) {
@@ -351,6 +355,38 @@ static Node* parse_function_definition(Tk_view tokens) {
     return function;
 }
 
+static bool extract_struct_definition(Node** child, Tk_view* tokens) {
+    if (!token_is_equal(tk_view_front(*tokens), "struct", TOKEN_SYMBOL)) {
+        return false;
+    }
+    tk_view_chop_front(tokens); // remove "struct"
+
+    size_t close_curly_brace_idx;
+    if (!get_idx_matching_token(&close_curly_brace_idx, *tokens, true, TOKEN_CLOSE_CURLY_BRACE)) {
+        todo();
+    }
+    Tk_view struct_body_tokens = tk_view_chop_count(tokens, close_curly_brace_idx); // remove }
+    Token name = tk_view_chop_front(&struct_body_tokens);
+    tk_view_chop_front(&struct_body_tokens); // remove {
+
+    Node* new_struct = node_new();
+    new_struct->name = name.text;
+    new_struct->type = NODE_STRUCT_DEFINITION;
+
+    while (struct_body_tokens.count > 0) {
+        Tk_view member_tokens = tk_view_chop_on_type_delim(&struct_body_tokens, TOKEN_SEMICOLON);
+        tk_view_chop_front(&struct_body_tokens); // remove semicolon
+        log_tokens(LOG_DEBUG, member_tokens, 0);
+        Node* member = parse_variable_definition(member_tokens, false);
+        nodes_append_child(new_struct, member);
+    }
+
+    try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
+    log_tree(LOG_DEBUG, new_struct);
+    *child = new_struct;
+    return true;
+}
+
 static bool extract_function_definition(Node** child, Tk_view* tokens) {
     if (!tokens_start_with_function_definition(*tokens)) {
         return false;
@@ -383,6 +419,7 @@ static bool tokens_start_with_variable_declaration(Tk_view tokens) {
 }
 
 static Node* parse_variable_definition(Tk_view variable_tokens, bool require_let) {
+    log_tokens(LOG_DEBUG, variable_tokens, 0);
      // remove "let"
     if (token_is_equal(tk_view_front(variable_tokens), "let", TOKEN_SYMBOL)) {
         tk_view_chop_front(&variable_tokens);
@@ -408,6 +445,7 @@ static Node* parse_variable_definition(Tk_view variable_tokens, bool require_let
 
     sym_tbl_add(variable_def);
 
+    log_tokens(LOG_DEBUG, variable_tokens, 0);
     assert(variable_tokens.count == 0);
 
     return variable_def;
@@ -728,6 +766,7 @@ static bool extract_if_statement(Node** result, Tk_view* tokens) {
 
 INLINE bool extract_block_element(Node** child, Tk_view* tokens) {
     return \
+        extract_struct_definition(child, tokens) || \
         extract_if_statement(child, tokens) || \
         extract_function_definition(child, tokens) || \
         extract_function_call(child, tokens) || \
@@ -764,15 +803,32 @@ static Node* parse_single_item_or_block(Tk_view tokens) {
     return block;
 }
 
+static Node* parse_struct_literal(Tk_view tokens) {
+    try(tk_view_try_consume(NULL, &tokens, TOKEN_OPEN_CURLY_BRACE));
+    Node* struct_literal = node_new();
+
+    while (tokens.count > 0 && tk_view_front(tokens).type != TOKEN_CLOSE_CURLY_BRACE) {
+        try(tk_view_try_consume(NULL, &tokens, TOKEN_SINGLE_DOT));
+
+        Node* assignment;
+        try(extract_assignment(&assignment, &tokens));
+        nodes_append_child(struct_literal, assignment);
+    }
+
+    try(tk_view_try_consume(NULL, &tokens, TOKEN_CLOSE_CURLY_BRACE));
+    assert(tokens.count > 0);
+    todo();
+}
+
 static Node* parse_single_statement(Tk_view tokens) {
     if (tokens.count < 1) {
         unreachable("");
     }
 
     while (tk_view_front(tokens).type == TOKEN_OPEN_PAR && tk_view_at(tokens, tokens.count - 1).type == TOKEN_CLOSE_PAR) {
-        tk_view_chop_front(&tokens); // remove (
+        try(tk_view_try_consume(NULL, &tokens, TOKEN_OPEN_PAR));
         Tk_view inner_tokens = tk_view_chop_count(&tokens, tokens.count - 1);
-        tk_view_chop_front(&tokens); // remove )
+        try(tk_view_try_consume(NULL, &tokens, TOKEN_CLOSE_PAR));
         tokens = inner_tokens;
     }
 
@@ -780,6 +836,10 @@ static Node* parse_single_statement(Tk_view tokens) {
     if (extract_variable_declaration(&var_declaration, &tokens)) {
         assert(tokens.count < 1);
         return var_declaration;
+    }
+
+    if (tk_view_front(tokens).type == TOKEN_OPEN_CURLY_BRACE && tk_view_at(tokens, 1).type == TOKEN_SINGLE_DOT) {
+        return parse_struct_literal(tokens);
     }
 
     if (tokens.count == 1 && token_is_literal(tokens.tokens[0])) {
