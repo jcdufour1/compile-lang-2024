@@ -182,7 +182,7 @@ static bool extract_function_parameter(Node** child, Tk_view* tokens) {
     Tk_view param_tokens;
     if (get_idx_matching_token(&idx_token, *tokens, false, TOKEN_COMMA)) {
         param_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_COMMA);
-        tk_view_chop_front(tokens); // remove ,
+        try(tk_view_try_consume(NULL, tokens, TOKEN_COMMA));
     } else {
         param_tokens = tk_view_chop_count(tokens, tokens->count);
     }
@@ -362,10 +362,10 @@ static Node* extract_struct_definition(Tk_view* tokens) {
 
     while (struct_body_tokens.count > 0) {
         Tk_view member_tokens = tk_view_chop_on_type_delim(&struct_body_tokens, TOKEN_SEMICOLON);
-        tk_view_chop_front(&struct_body_tokens); // remove semicolon
+        try(tk_view_try_consume(NULL, &struct_body_tokens, TOKEN_SEMICOLON));
         log_tokens(LOG_DEBUG, member_tokens, 0);
         Node* member;
-        try(extract_function_parameter(&member, &struct_body_tokens));
+        try(extract_function_parameter(&member, &member_tokens));
         nodes_append_child(new_struct, member);
     }
 

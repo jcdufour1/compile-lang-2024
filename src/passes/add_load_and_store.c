@@ -44,24 +44,28 @@ static void insert_alloca(Node* var_def) {
 static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
     log(LOG_DEBUG, "insert_load\n");
     switch (symbol_call->type) {
+        case NODE_STRUCT_LITERAL:
+            // fallthrough
         case NODE_LITERAL:
             return;
+        case NODE_STRUCT_MEMBER_CALL:
+            todo();
         case NODE_SYMBOL:
             // fallthrough
-        case NODE_VARIABLE_DEFINITION:
+        case NODE_VARIABLE_DEFINITION: {
             log_tree(LOG_DEBUG, symbol_call);
             node_printf(symbol_call);
             assert(symbol_call->name.count > 0);
-            break;
+            Node* load = node_new();
+            load->type = NODE_LOAD;
+            load->name = symbol_call->name;
+            nodes_insert_before(node_insert_load_before, load);
+        }
         default:
             node_printf(symbol_call);
             todo();
     }
 
-    Node* load = node_new();
-    load->type = NODE_LOAD;
-    load->name = symbol_call->name;
-    nodes_insert_before(node_insert_load_before, load);
 }
 
 static void insert_store(Node* node_insert_store_before, Node* symbol_call /* src */) {
@@ -143,6 +147,8 @@ static void insert_store_assignment(Node* assignment, Node* item_to_store) {
         case NODE_VARIABLE_DEFINITION:
             todo();
             break;
+        case NODE_STRUCT_LITERAL:
+            // fallthrough
         case NODE_SYMBOL:
             insert_load(assignment, rhs);
             log_tree(LOG_DEBUG, root_of_tree);
@@ -240,6 +246,8 @@ bool add_load_and_store(Node* curr_node) {
     //log_tree(LOG_DEBUG, curr_node);
     //log(LOG_DEBUG, NODE_FMT"\n", node_print(curr_node));
     switch (curr_node->type) {
+        case NODE_STRUCT_LITERAL:
+            return false;
         case NODE_LITERAL:
             return false;
         case NODE_FUNCTION_CALL:
@@ -268,7 +276,7 @@ bool add_load_and_store(Node* curr_node) {
             add_load_return_statement(curr_node);
             return false;
         case NODE_VARIABLE_DEFINITION:
-            if (curr_node->parent->type == NODE_FUNCTION_PARAMETERS) {
+            if (curr_node->parent->type == NODE_FUNCTION_PARAMETERS || curr_node->parent->type == NODE_STRUCT_DEFINITION) {
                 return false;
             }
             insert_alloca(curr_node);
@@ -304,7 +312,9 @@ bool add_load_and_store(Node* curr_node) {
             return false;
         case NODE_IF_STATEMENT:
             unreachable("if statement node should not still exist at this point\n");
+        case NODE_STRUCT_DEFINITION:
+            return false;
         default:
-            todo();
+            unreachable(NODE_FMT"\n", node_print(curr_node));
     }
 }

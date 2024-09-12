@@ -10,6 +10,10 @@ bool assign_llvm_ids(Node* curr_node) {
     //log_tree(LOG_DEBUG, curr_node);
 
     switch (curr_node->type) {
+        case NODE_STRUCT_LITERAL:
+            return false;
+        case NODE_STRUCT_DEFINITION:
+            return false;
         case NODE_FUNCTION_PARAMETERS:
             return false;
         case NODE_SYMBOL:
@@ -30,6 +34,8 @@ bool assign_llvm_ids(Node* curr_node) {
             return false;
         case NODE_LANG_TYPE:
             return false;
+        case NODE_STRUCT_MEMBER_CALL:
+            // fallthrough
         case NODE_VARIABLE_DEFINITION:
             // fallthrough
         case NODE_FUNCTION_CALL:

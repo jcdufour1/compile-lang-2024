@@ -498,6 +498,24 @@ static void emit_cond_goto(String* output, const Node* cond_goto) {
     string_append(output, '\n');
 }
 
+static void emit_struct_definition(String* output, const Node* statement) {
+
+    string_extend_cstr(output, "%struct.");
+    string_extend_strv(output, statement->name);
+    string_extend_cstr(output, " = type { ");
+    bool is_first = true;
+    nodes_foreach_child(member, statement) {
+        if (!is_first) {
+            string_extend_cstr(output, ", ");
+        }
+        string_extend_strv(output, member->lang_type);
+        is_first = false;
+    }
+    string_extend_cstr(output, " }\n");
+    log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
+    todo();
+}
+
 static void emit_block(String* output, const Node* block) {
     assert(block->type == NODE_BLOCK);
 
@@ -540,6 +558,9 @@ static void emit_block(String* output, const Node* block) {
                 break;
             case NODE_LOAD:
                 emit_load_variable(output, statement);
+                break;
+            case NODE_STRUCT_DEFINITION:
+                emit_struct_definition(output, statement);
                 break;
             case NODE_FOR_LOOP:
                 unreachable("for loop should not still be present at this point\n");
