@@ -9,7 +9,6 @@
 #include "parser_utils.h"
 
 static void emit_block(String* output, const Node* fun_block);
-static void emit_llvm_main(String* output, const Node* root);
 
 // \n excapes are actually stored as is in tokens and nodes, but should be printed as \0a
 static void string_extend_strv_eval_escapes(String* string, Str_view str_view) {
@@ -195,24 +194,6 @@ static void emit_alloca(String* output, const Node* alloca) {
     string_extend_cstr(output, "\n");
 }
 
-static void emit_src_of_assignment(String* output, const Node* variable_def, void* item) {
-    Node* rhs = *(Node**)item;
-
-    switch (rhs->type) {
-        case NODE_SYMBOL:
-            // fallthrough
-        case NODE_LITERAL:
-            extend_literal_decl_prefix(output, variable_def);
-            break;
-        case NODE_FUNCTION_CALL:
-            string_extend_cstr(output, " %");
-            string_extend_size_t(output, get_block_return_id(rhs));
-            break;
-        default:
-            todo();
-    }
-}
-
 static void emit_operator_type(String* output, const Node* operator) {
     // TODO: do signed and unsigned operations correctly
     assert(operator->type == NODE_OPERATOR);
@@ -363,22 +344,6 @@ static void emit_store(String* output, const Node* store) {
     string_extend_size_t(output, alloca_dest_id);
     string_extend_cstr(output, ", align 8");
     string_extend_cstr(output, "\n");
-}
-
-static void emit_src_of_fun_params(String* output, const Node* variable_def, void* item) {
-    (void) item;
-    size_t src_llvm_id = variable_def->llvm_id;
-
-    switch (variable_def->type) {
-        case NODE_VARIABLE_DEFINITION:
-            // fallthrough
-        case NODE_LANG_TYPE:
-            string_extend_cstr(output, " %");
-            string_extend_size_t(output, src_llvm_id);
-            break;
-        default:
-            todo();
-    }
 }
 
 static void emit_function_definition(String* output, const Node* fun_def) {

@@ -10,8 +10,6 @@
 static Node* parse_function_single_return_type(Token tokens);
 static Node* parse_block(Tk_view tokens);
 INLINE bool extract_statement(Node** child, Tk_view* tokens);
-static Node* parse_single_item_or_block(Tk_view tokens);
-static Node* parse_statement(Tk_view tokens);
 static Node* parse_expression(Tk_view tokens);
 
 #define log_tokens(log_level, token_view, indent) \
@@ -175,11 +173,6 @@ static size_t get_idx_lowest_precedence_operator(Tk_view tokens) {
     return idx_lowest;
 }
 
-static bool is_assignment(Tk_view tokens) {
-    Tk_view statement_tokens = tk_view_chop_on_type_delim_or_all(&tokens, TOKEN_SEMICOLON);
-    return get_idx_token(NULL, statement_tokens, 0, TOKEN_SINGLE_EQUAL);
-}
-
 static bool extract_function_parameter(Node** child, Tk_view* tokens) {
     if (tokens->count < 2) {
         return false;
@@ -266,22 +259,6 @@ static Node* parse_function_return_types(Tk_view tokens) {
     return return_types;
 }
 
-static bool tokens_start_with_function_definition(Tk_view tokens) {
-    if (tokens.count < 1) {
-        return false;
-    }
-
-    if (tk_view_front(tokens).type != TOKEN_SYMBOL) {
-        return false;
-    }
-
-    if (!str_view_cstr_is_equal(tk_view_front(tokens).text, "fn")) {
-        return false;
-    }
-
-    return true;
-}
-
 static bool extract_function_parameters(Node** result, Tk_view* tokens) {
     size_t parameters_len;
     if (!get_idx_matching_token(&parameters_len, *tokens, false, TOKEN_CLOSE_PAR)) {
@@ -359,17 +336,6 @@ static Node* extract_function_definition(Tk_view* tokens) {
     return parse_function_definition(function_tokens);
 }
 
-static bool tokens_start_with_variable_declaration(Tk_view tokens) {
-    if (tk_view_front(tokens).type != TOKEN_SYMBOL) {
-        return false;
-    }
-    if (!str_view_cstr_is_equal(tk_view_front(tokens).text, "let")) {
-        return false;
-    }
-
-    return true;
-}
-
 static Node* parse_variable_definition(Tk_view variable_tokens, bool require_let) {
      // remove "let"
     if (token_is_equal(tk_view_front(variable_tokens), "let", TOKEN_SYMBOL)) {
@@ -408,13 +374,6 @@ static bool extract_variable_declaration(Node** child, Tk_view* tokens) {
 
     *child = parse_variable_definition(var_decl_tokens, true);
     return true;
-}
-
-static bool tokens_start_with_for_loop(Tk_view tokens) {
-    if (tk_view_front(tokens).type != TOKEN_SYMBOL) {
-        return false;
-    }
-    return str_view_cstr_is_equal(tk_view_front(tokens).text, "for");
 }
 
 static bool is_not_symbol_in(const Token* prev, const Token* curr) {
@@ -478,14 +437,6 @@ static Node* parse_function_declaration(Tk_view tokens) {
 
     assert(tokens.count == 0);
     return fun_declaration;
-}
-
-static bool tokens_start_with_function_declaration(Tk_view tokens) {
-    if (tokens.count < 2) {
-        return false;
-    }
-
-    return str_view_cstr_is_equal(tk_view_front(tokens).text, "extern");
 }
 
 static Node* extract_function_declaration(Tk_view* tokens) {
@@ -733,26 +684,6 @@ static Node* parse_block(Tk_view tokens) {
         nodes_append_child(block, child);
     }
     return block;
-}
-
-// give block only if there is a need
-static Node* parse_single_item_or_block(Tk_view tokens) {
-    Node* block = parse_block(tokens);
-    if (nodes_count_children(block) < 1) {
-        unreachable("");
-    }
-    if (nodes_count_children(block) == 1) {
-        return block->left_child;
-    }
-    return block;
-}
-
-static Node* parse_single_statement(Tk_view tokens) {
-    unreachable("");
-}
-
-static Node* parse_statement(Tk_view tokens) {
-    todo();
 }
 
 static Node* parse_expression(Tk_view tokens) {
