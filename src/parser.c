@@ -202,6 +202,7 @@ static bool extract_function_parameter(Node** child, Tk_view* tokens) {
 
     sym_tbl_add(param);
 
+    tk_view_try_consume(NULL, &param_tokens, TOKEN_SEMICOLON);
     *child = param;
     assert(param_tokens.count == 0);
     return true;
@@ -343,6 +344,36 @@ static Node* parse_variable_definition(Tk_view variable_tokens, bool require_let
 
     return variable_def;
 }
+
+static Node* extract_struct_definition(Tk_view* tokens) {
+    try(tk_view_try_consume_symbol(NULL, tokens, "struct")); // remove "struct"
+
+    size_t close_curly_brace_idx;
+    if (!get_idx_matching_token(&close_curly_brace_idx, *tokens, true, TOKEN_CLOSE_CURLY_BRACE)) {
+        todo();
+    }
+    Tk_view struct_body_tokens = tk_view_chop_count(tokens, close_curly_brace_idx); // remove }
+    Token name = tk_view_chop_front(&struct_body_tokens);
+    tk_view_chop_front(&struct_body_tokens); // remove {
+
+    Node* new_struct = node_new();
+    new_struct->name = name.text;
+    new_struct->type = NODE_STRUCT_DEFINITION;
+
+    while (struct_body_tokens.count > 0) {
+        Tk_view member_tokens = tk_view_chop_on_type_delim(&struct_body_tokens, TOKEN_SEMICOLON);
+        tk_view_chop_front(&struct_body_tokens); // remove semicolon
+        log_tokens(LOG_DEBUG, member_tokens, 0);
+        Node* member;
+        try(extract_function_parameter(&member, &struct_body_tokens));
+        nodes_append_child(new_struct, member);
+    }
+
+    try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
+    log_tree(LOG_DEBUG, new_struct);
+    return new_struct;
+}
+
 
 static bool extract_variable_declaration(Node** child, Tk_view* tokens) {
     Tk_view var_decl_tokens;
@@ -595,7 +626,12 @@ static Node* extract_if_statement(Tk_view* tokens) {
     return if_statement;
 }
 
-INLINE bool extract_statement(Node** child, Tk_view* tokens) {
+static bool extract_statement(Node** child, Tk_view* tokens) {
+    if (token_is_equal(tk_view_front(*tokens), "struct", TOKEN_SYMBOL)) {
+        *child = extract_struct_definition(tokens);
+        return true;
+    }
+
     if (token_is_equal(tk_view_front(*tokens), "extern", TOKEN_SYMBOL)) {
         *child = extract_function_declaration(tokens);
         return true;
