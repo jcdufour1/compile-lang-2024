@@ -7,11 +7,12 @@
 #include "symbol_table.h"
 #include "parser_utils.h"
 
-static Node* parse_single_statement(Tk_view tokens);
 static Node* parse_function_single_return_type(Token tokens);
 static Node* parse_block(Tk_view tokens);
 INLINE bool extract_block_element(Node** child, Tk_view* tokens);
 static Node* parse_single_item_or_block(Tk_view tokens);
+static Node* parse_statement(Tk_view tokens);
+static Node* parse_expression(Tk_view tokens);
 
 #define log_tokens(log_level, token_view, indent) \
     do { \
@@ -469,7 +470,7 @@ static bool extract_for_loop(Node** child, Tk_view* tokens) {
     Tk_view lower_bound_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_DOUBLE_DOT);
     Node* lower_bound = node_new();
     lower_bound->type = NODE_FOR_LOWER_BOUND;
-    nodes_append_child(lower_bound, parse_single_statement(lower_bound_tokens));
+    nodes_append_child(lower_bound, parse_expression(lower_bound_tokens));
     nodes_append_child(for_loop, lower_bound);
 
     tk_view_chop_front(tokens); // remove ..
@@ -479,7 +480,7 @@ static bool extract_for_loop(Node** child, Tk_view* tokens) {
     tk_view_chop_front(tokens); // remove }
     Node* upper_bound = node_new();
     upper_bound->type = NODE_FOR_UPPER_BOUND;
-    nodes_append_child(upper_bound, parse_single_statement(upper_bound_tokens));
+    nodes_append_child(upper_bound, parse_expression(upper_bound_tokens));
     nodes_append_child(for_loop, upper_bound);
 
     //log_tokens(LOG_DEBUG, *tokens, 0);
@@ -578,8 +579,8 @@ static Node* parse_operation(Tk_view tokens) {
     operator_node->token_type = operator_token.type;
     operator_node->line_num = operator_token.line_num;
 
-    Node* left_node = parse_single_statement(left_tokens);
-    Node* right_node = parse_single_statement(right_tokens);
+    Node* left_node = parse_expression(left_tokens);
+    Node* right_node = parse_expression(right_tokens);
     nodes_append_child(operator_node, left_node);
     nodes_append_child(operator_node, right_node);
     return operator_node;
@@ -591,22 +592,10 @@ static bool extract_function_argument(Node** child, Tk_view* tokens) {
         return false;
     }
 
-    size_t idx_delim;
-    Tk_view curr_arg_tokens;
-
-    bool remove_comma = false;
-    if (get_idx_token(&idx_delim, *tokens, 0, TOKEN_COMMA)) {
-        remove_comma = true;
-    } else {
-        idx_delim = tokens->count;
-    }
-    curr_arg_tokens = tk_view_chop_count(tokens, idx_delim);
-
-    if (remove_comma) {
-        tk_view_chop_front(tokens); // remove comma
-    }
-
-    *child = parse_single_statement(curr_arg_tokens);
+    assert(tk_view_front(*tokens).type != TOKEN_COMMA);
+    Tk_view curr_arg_tokens = tk_view_chop_on_type_delim_or_all(tokens, TOKEN_COMMA);
+    tk_view_try_consume(NULL, tokens, TOKEN_COMMA);
+    *child = parse_expression(curr_arg_tokens);
     return true;
 }
 
@@ -647,7 +636,7 @@ static Node* parse_function_return_statement(Tk_view tokens) {
 
     Node* new_node = node_new();
     new_node->type = NODE_RETURN_STATEMENT;
-    nodes_append_child(new_node, parse_single_statement(tokens));
+    nodes_append_child(new_node, parse_expression(tokens));
     return new_node;
 }
 
@@ -672,12 +661,12 @@ static bool extract_assignment(Node** result, Tk_view* tokens) {
     assignment->type = NODE_ASSIGNMENT;
     
     Tk_view lhs_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_SINGLE_EQUAL);
-    nodes_append_child(assignment, parse_single_statement(lhs_tokens));
+    nodes_append_child(assignment, parse_expression(lhs_tokens));
 
     tk_view_chop_front(tokens); // remove =
 
     Tk_view rhs_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_SEMICOLON);
-    nodes_append_child(assignment, parse_single_statement(rhs_tokens));
+    nodes_append_child(assignment, parse_expression(rhs_tokens));
 
     tk_view_chop_front(tokens); // remove ;
 
@@ -765,21 +754,23 @@ static Node* parse_single_item_or_block(Tk_view tokens) {
 }
 
 static Node* parse_single_statement(Tk_view tokens) {
+    unreachable("");
+}
+
+static Node* parse_statement(Tk_view tokens) {
+    todo();
+}
+
+static Node* parse_expression(Tk_view tokens) {
     if (tokens.count < 1) {
         unreachable("");
     }
 
     while (tk_view_front(tokens).type == TOKEN_OPEN_PAR && tk_view_at(tokens, tokens.count - 1).type == TOKEN_CLOSE_PAR) {
-        tk_view_chop_front(&tokens); // remove (
+        try(tk_view_try_consume(NULL, &tokens, TOKEN_OPEN_PAR));
         Tk_view inner_tokens = tk_view_chop_count(&tokens, tokens.count - 1);
-        tk_view_chop_front(&tokens); // remove )
+        try(tk_view_try_consume(NULL, &tokens, TOKEN_CLOSE_PAR));
         tokens = inner_tokens;
-    }
-
-    Node* var_declaration;
-    if (extract_variable_declaration(&var_declaration, &tokens)) {
-        assert(tokens.count < 1);
-        return var_declaration;
     }
 
     if (tokens.count == 1 && token_is_literal(tokens.tokens[0])) {
@@ -790,20 +781,39 @@ static Node* parse_single_statement(Tk_view tokens) {
         return parse_symbol(tokens);
     }
 
-    Node* block_element;
-    if (extract_block_element(&block_element, &tokens)) {
-        assert(tokens.count < 1);
-        return block_element;
+    if (token_is_equal(tk_view_front(tokens), "let", TOKEN_SYMBOL)) {
+        Node* var_declaration;
+        if (extract_variable_declaration(&var_declaration, &tokens)) {
+            assert(tokens.count < 1);
+            return var_declaration;
+        }
     }
 
     if (count_operators(tokens) > 0) {
         return parse_operation(tokens);
     }
 
+    Node* fun_call;
+    if (extract_function_call(&fun_call, &tokens)) {
+        assert(tokens.count < 1);
+        return fun_call;
+    }
+
+    log_tokens(LOG_DEBUG, tokens, 0);
+    todo();
+}
+
+/*
+    Node* block_element;
+    if (extract_block_element(&block_element, &tokens)) {
+        assert(tokens.count < 1);
+        return block_element;
+    }
+
     log_tokens(LOG_DEBUG, tokens, 0);
     log_tree(LOG_VERBOSE, root_of_tree);
     unreachable("");
-}
+    */
 
 Node* parse(const Tokens tokens) {
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};

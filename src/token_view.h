@@ -86,6 +86,25 @@ static inline Token tk_view_chop_front(Tk_view* token_view) {
     return tk_view_front(tk_view_chop_count(token_view, 1));
 }
 
+static inline bool tk_view_try_consume(Token* result, Tk_view* tokens, TOKEN_TYPE expected) {
+    if (tokens->count < 1 || tk_view_front(*tokens).type != expected) {
+        return false;
+    }
+    
+    Token token = tk_view_chop_front(tokens);
+    if (result) {
+        *result = token;
+    }
+    return true;
+}
+
+static inline bool tk_view_try_consume_symbol(Token* result, Tk_view* tokens, const char* cstr) {
+    if (!str_view_cstr_is_equal(tk_view_front(*tokens).text, cstr)) {
+        return false;
+    }
+    return tk_view_try_consume(result, tokens, TOKEN_SYMBOL);
+}
+
 static inline Str_view tk_view_print_internal(Tk_view token_view) {
     static String buf = {0};
     string_set_to_zero_len(&buf);
