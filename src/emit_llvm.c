@@ -80,6 +80,26 @@ static void extend_literal_decl(String* output, const Node* var_decl_or_def) {
     extend_literal_decl_prefix(output, var_decl_or_def);
 }
 
+static size_t get_member_index(const Node* struct_def, const Node* member_symbol) {
+    size_t idx = 0;
+    nodes_foreach_child(curr_member, struct_def) {
+        if (str_view_is_equal(curr_member->name, member_symbol->name)) {
+            return idx;
+        }
+        idx++;
+    }
+    unreachable("member not found");
+}
+
+static const Node* get_member_def(const Node* struct_def, const Node* member_symbol) {
+    nodes_foreach_child(curr_member, struct_def) {
+        if (str_view_is_equal(curr_member->name, member_symbol->name)) {
+            return curr_member;
+        }
+    }
+    unreachable("member not found");
+}
+
 static Node* return_type_from_function_definition(const Node* fun_def) {
     const Node* return_types = nodes_get_child_of_type_const(fun_def, NODE_FUNCTION_RETURN_TYPES);
     assert(nodes_count_children(return_types) < 2);
@@ -105,6 +125,21 @@ static void emit_function_params(String* output, const Node* fun_params) {
     }
 }
 
+static void emit_fun_arg_struct_member_call(String* output, const Node* member_call) {
+    Node* var_def;
+    if (!sym_tbl_lookup(&var_def, member_call->name)) {
+        unreachable("");
+    }
+    Node* struct_def;
+    if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
+        unreachable("");
+    }
+    const Node* member_def = get_member_def(struct_def, nodes_single_child_const(member_call));
+    extend_type_call_str(output, member_def);
+    string_extend_cstr(output, " %");
+    string_extend_size_t(output, get_prev_load_id(member_call));
+}
+
 static void emit_function_call_arguments(String* output, const Node* fun_call) {
     size_t idx = 0;
     nodes_foreach_child(argument, fun_call) {
@@ -127,15 +162,14 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
                 extend_literal_decl(output, var_decl_or_def);
                 break;
             }
-            case NODE_STRUCT_MEMBER_CALL:
-                // fallthrough
+            case NODE_STRUCT_MEMBER_CALL: {
+                emit_fun_arg_struct_member_call(output, argument);
+                break;
+            }
             case NODE_SYMBOL: {
-                size_t llvm_id = get_prev_load_id(argument);
-                log_tree(LOG_DEBUG, argument);
-                assert(llvm_id > 0);
                 extend_type_call_str(output, var_decl_or_def);
                 string_extend_cstr(output, " %");
-                string_extend_size_t(output, llvm_id);
+                string_extend_size_t(output, get_prev_load_id(argument));
                 break;
             }
             case NODE_FUNCTION_CALL:
@@ -532,17 +566,6 @@ static void emit_struct_definition(String* output, const Node* statement) {
     string_extend_cstr(output, " }\n");
 }
 
-static size_t get_member_index(const Node* struct_def, const Node* member_symbol) {
-    size_t idx = 0;
-    nodes_foreach_child(curr_member, struct_def) {
-        if (str_view_is_equal(curr_member->name, member_symbol->name)) {
-            return idx;
-        }
-        idx++;
-    }
-    unreachable("member not found");
-}
-
 static void emit_load_struct_member(String* output, const Node* load_member) {
     Node* var_def;
     if (!sym_tbl_lookup(&var_def, load_member->name)) {
@@ -553,6 +576,7 @@ static void emit_load_struct_member(String* output, const Node* load_member) {
         unreachable("");
     }
     size_t member_idx = get_member_index(struct_def, nodes_single_child_const(load_member));
+    const Node* member_def = get_member_def(struct_def, nodes_single_child_const(load_member));
     string_extend_cstr(output, "    %"); 
     string_extend_size_t(output, load_member->llvm_id - 1);
     string_extend_cstr(output, " = getelementptr inbounds %struct.");
@@ -567,7 +591,7 @@ static void emit_load_struct_member(String* output, const Node* load_member) {
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, load_member->llvm_id);
     string_extend_cstr(output, " = load ");
-    extend_type_call_str(output, var_def);
+    extend_type_call_str(output, member_def);
     string_extend_cstr(output, ", ");
     string_extend_cstr(output, "ptr");
     string_extend_cstr(output, " %");
