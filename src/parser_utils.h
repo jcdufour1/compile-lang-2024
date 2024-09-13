@@ -28,4 +28,10 @@ Llvm_id get_matching_fun_param_load_id(const Node* src);
 
 const Node* get_lang_type_from_sym_definition(const Node* sym_def);
 
+size_t sizeof_lang_type(Str_view lang_type);
+
+size_t sizeof_item(const Node* item);
+
+size_t sizeof_struct(const Node* struct_literal);
+
 #endif // PARSER_UTIL_H

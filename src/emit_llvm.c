@@ -308,7 +308,11 @@ static void emit_store_struct_literal(String* output, const Node* store) {
     size_t alloca_dest_id = get_store_dest_id(store);
     string_extend_cstr(output, "    call void @llvm.memcpy.p0.p0.i64(ptr align 4 %");
     string_extend_size_t(output, alloca_dest_id);
-    string_extend_cstr(output, ", ptr align 4 @__const.main.div, i64 20, i1 false)\n");
+    string_extend_cstr(output, ", ptr align 4 @__const.main.");
+    string_extend_strv(output, nodes_single_child_const(store)->name);
+    string_extend_cstr(output, ", i64 ");
+    string_extend_size_t(output, sizeof_struct(nodes_single_child_const(store)));
+    string_extend_cstr(output, ", i1 false)\n");
 }
 
 static void emit_normal_store(String* output, const Node* store) {
@@ -596,7 +600,24 @@ static void emit_symbol(String* output, const Symbol_table_node node) {
 }
 
 static void emit_struct_literal(String* output, const Node* literal) {
-    todo();
+    string_extend_cstr(output, "@__const.main.");
+    string_extend_strv(output, literal->name);
+    string_extend_cstr(output, " = private unnamed_addr constant %struct.Div {");
+
+    size_t is_first = true;
+    nodes_foreach_child(member_store, literal) {
+        if (!is_first) {
+            string_append(output, ',');
+        }
+        assert(member_store->type == NODE_STORE);
+        const Node* member = nodes_single_child_const(member_store);
+        string_extend_strv(output, member->lang_type);
+        string_append(output, ' ');
+        string_extend_strv(output, member->str_data);
+        is_first = false;
+    }
+
+    string_extend_cstr(output, "} , align 4\n");
 }
 
 static void emit_symbols(String* output) {

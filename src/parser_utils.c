@@ -163,3 +163,36 @@ const Node* get_lang_type_from_sym_definition(const Node* sym_def) {
     todo();
 }
 
+size_t sizeof_lang_type(Str_view lang_type) {
+    if (str_view_cstr_is_equal(lang_type, "ptr")) {
+        return 8;
+     } else if (str_view_cstr_is_equal(lang_type, "i32")) {
+        return 4;
+     } else {
+        unreachable("");
+     }
+}
+
+size_t sizeof_item(const Node* item) {
+    switch (item->type) {
+        case NODE_STRUCT_LITERAL:
+            todo();
+        case NODE_LITERAL:
+            return sizeof_lang_type(item->lang_type);
+        default:
+            node_printf(item);
+            unreachable("");
+    }
+}
+
+size_t sizeof_struct(const Node* struct_literal) {
+    assert(struct_literal->type == NODE_STRUCT_LITERAL);
+
+    size_t size = 0;
+    nodes_foreach_child(child, struct_literal) {
+        const Node* member = nodes_single_child_const(child);
+        size += sizeof_item(member);
+    }
+    return size;
+}
+
