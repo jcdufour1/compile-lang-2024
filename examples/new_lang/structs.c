@@ -9,6 +9,6 @@ struct Div {
 fn main() i32 {
     let div: Div;
     div = {.numerator = 9, .denominator = 2};
-    printf("%d %d\n", div.denominator, 10);
+    printf("%d/%d\n", div.numerator, div.denominator);
     return 0;
 }

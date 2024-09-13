@@ -47,9 +47,21 @@ static bool get_prev_matching_node(const Node** result, const Node* node_to_star
     return false;
 }
 
+static bool is_load_struct_member(const Node* curr_node, const Node* var_call) {
+    if (curr_node->type != NODE_LOAD_STRUCT_MEMBER) {
+        return false;
+    }
+    if (!str_view_is_equal(curr_node->name, var_call->name)) {
+        return false;
+    }
+
+    const Node* curr_member = nodes_single_child_const(curr_node);
+    const Node* member_to_find = nodes_single_child_const(var_call);
+    return str_view_is_equal(curr_member->name, member_to_find->name);
+}
+
 static bool is_load(const Node* curr_node, const Node* var_call) {
-    return (curr_node->type == NODE_LOAD || curr_node->type == NODE_LOAD_STRUCT_MEMBER) && \
-        0 == str_view_cmp(curr_node->name, var_call->name);
+    return (curr_node->type == NODE_LOAD) && str_view_is_equal(curr_node->name, var_call->name);
 }
 
 static bool is_store(const Node* curr_node, const Node* var_call) {
@@ -66,8 +78,14 @@ static bool is_variable_def(const Node* curr_node, const Node* var_call) {
 
 Llvm_id get_prev_load_id(const Node* var_call) {
     const Node* load;
-    if (!get_prev_matching_node(&load, var_call, var_call, is_load)) {
-        unreachable("no load node found before symbol call:"NODE_FMT"\n", node_print(var_call));
+    if (var_call->type == NODE_STRUCT_MEMBER_CALL) {
+        if (!get_prev_matching_node(&load, var_call, var_call, is_load_struct_member)) {
+            unreachable("no struct load node found before symbol call:"NODE_FMT"\n", node_print(var_call));
+        }
+    } else {
+        if (!get_prev_matching_node(&load, var_call, var_call, is_load)) {
+            unreachable("no struct load node found before symbol call:"NODE_FMT"\n", node_print(var_call));
+        }
     }
     Llvm_id llvm_id = load->llvm_id;
     assert(llvm_id > 0);
