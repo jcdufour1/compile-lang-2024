@@ -218,6 +218,8 @@ String node_print_internal(const Node* node) {
             // fallthrough
         case NODE_LOAD_STRUCT_MEMBER:
             // fallthrough
+        case NODE_STORE_STRUCT_MEMBER:
+            // fallthrough
         case NODE_STRUCT_DEFINITION:
             // fallthrough
         case NODE_STRUCT_MEMBER_CALL:

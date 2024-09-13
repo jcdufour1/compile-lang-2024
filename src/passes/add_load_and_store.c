@@ -142,6 +142,8 @@ static void insert_store_assignment(Node* assignment, Node* item_to_store) {
         case NODE_SYMBOL:
             node_printf(lhs);
             break;
+        case NODE_STRUCT_MEMBER_CALL:
+            break;
         default:
             todo();
     }
@@ -168,16 +170,19 @@ static void insert_store_assignment(Node* assignment, Node* item_to_store) {
             todo();
     }
 
-    Node* new_store = node_new();
-    new_store->type = NODE_STORE;
-    new_store->name = lhs->name;
+    Node* store = node_new();
+    store->name = lhs->name;
     nodes_remove(item_to_store, true);
-    nodes_append_child(new_store, item_to_store);
+    if (lhs->type == NODE_STRUCT_MEMBER_CALL) {
+        store->type = NODE_STORE_STRUCT_MEMBER;
+        nodes_append_child(store, node_clone(nodes_single_child(lhs)));
+    } else {
+        store->type = NODE_STORE;
+    }
+    nodes_append_child(store, item_to_store);
 
-    nodes_insert_before(assignment, new_store);
+    nodes_insert_before(assignment, store);
 }
-
-//static void load_function_call(Node*)
 
 static void add_load_foreach_arg(Node* function_call) {
     log(LOG_DEBUG, "add_foreach_arg\n");

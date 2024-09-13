@@ -316,6 +316,7 @@ static void emit_src(String* output, const Node* src) {
             string_extend_size_t(output, get_matching_fun_param_load_id(src));
             break;
         default:
+            node_printf(src);
             todo();
     }
 }
@@ -355,7 +356,12 @@ static void emit_store_struct_literal(String* output, const Node* store) {
 
 static void emit_normal_store(String* output, const Node* store) {
     size_t alloca_dest_id = get_store_dest_id(store);
-    const Node* var_def = get_symbol_def_from_alloca(store);
+    const Node* var_or_member_def;
+    if (store->type == NODE_STORE_STRUCT_MEMBER) {
+        var_or_member_def = get_symbol_def_from_alloca(store);
+    } else {
+        var_or_member_def = get_symbol_def_from_alloca(store);
+    }
     assert(alloca_dest_id > 0);
 
     // emit prerequisite call, etc before actually storing
@@ -381,7 +387,7 @@ static void emit_normal_store(String* output, const Node* store) {
     }
 
     string_extend_cstr(output, "    store ");
-    extend_type_call_str(output, var_def);
+    extend_type_call_str(output, var_or_member_def);
 
     emit_src(output, src);
 
@@ -391,9 +397,44 @@ static void emit_normal_store(String* output, const Node* store) {
     string_extend_cstr(output, "\n");
 }
 
+static void emit_store_struct_member(String* output, const Node* store_struct) {
+    Node* var_def;
+    if (!sym_tbl_lookup(&var_def, store_struct->name)) {
+        unreachable("");
+    }
+    Node* struct_def;
+    if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
+        unreachable("");
+    }
+    size_t member_idx = get_member_index(struct_def, nodes_get_child_const(store_struct, 0));
+    string_extend_cstr(output, "    %"); 
+    string_extend_size_t(output, store_struct->llvm_id - 1);
+    string_extend_cstr(output, " = getelementptr inbounds %struct.");
+    string_extend_strv(output, var_def->lang_type);
+    string_extend_cstr(output, ", ptr %");
+    string_extend_size_t(output, get_store_dest_id(store_struct));
+    string_extend_cstr(output, ", i32 0");
+    string_extend_cstr(output, ", i32 ");
+    string_extend_size_t(output, member_idx);
+    string_append(output, '\n');
+
+    const Node* member_def = get_member_def(struct_def, nodes_get_child_const(store_struct, 0));
+    string_extend_cstr(output, "    store ");
+    extend_type_call_str(output, member_def);
+    emit_src(output, nodes_get_child_const(store_struct, 1));
+    string_extend_cstr(output, ", ");
+    string_extend_cstr(output, "ptr");
+    string_extend_cstr(output, " %");
+    string_extend_size_t(output, store_struct->llvm_id - 1);
+    string_extend_cstr(output, ", align 8");
+    string_extend_cstr(output, "\n");
+}
+
 static void emit_store(String* output, const Node* store) {
     if (store->left_child->type == NODE_STRUCT_LITERAL) {
         emit_store_struct_literal(output, store);
+    } else if (store->left_child->type == NODE_STORE_STRUCT_MEMBER) {
+        emit_store_struct_member(output, store);
     } else {
         emit_normal_store(output, store);
     }
@@ -648,6 +689,9 @@ static void emit_block(String* output, const Node* block) {
                 break;
             case NODE_LOAD_STRUCT_MEMBER:
                 emit_load_struct_member(output, statement);
+                break;
+            case NODE_STORE_STRUCT_MEMBER:
+                emit_store_struct_member(output, statement);
                 break;
             case NODE_FOR_LOOP:
                 unreachable("for loop should not still be present at this point\n");

@@ -102,13 +102,43 @@ Llvm_id get_store_dest_id(const Node* var_call) {
     return llvm_id;
 }
 
-const Node* get_symbol_def_from_alloca(const Node* alloca) {
+const Node* get_normal_symbol_def_from_alloca(const Node* alloca) {
     Node* sym_def;
     if (!sym_tbl_lookup(&sym_def, alloca->name)) {
         unreachable("alloca call to undefined variable:"NODE_FMT"\n", node_print(alloca));
     }
-
     return sym_def;
+}
+
+const Node* get_member_def_from_alloca(const Node* store_struct) {
+    const Node* var_def = get_normal_symbol_def_from_alloca(store_struct);
+
+    Node* struct_def;
+    try(sym_tbl_lookup(&struct_def, var_def->lang_type));
+
+    Str_view member_type = nodes_single_child_const(store_struct)->lang_type;
+    nodes_foreach_child(member, struct_def) {
+        node_printf(member);
+        log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(member_type));
+        if (str_view_is_equal(member->lang_type, member_type)) {
+            return member;
+        }
+    }
+
+    unreachable("");
+}
+
+const Node* get_symbol_def_from_alloca(const Node* alloca) {
+    switch (alloca->type) {
+        case NODE_STORE_STRUCT_MEMBER:
+            return get_member_def_from_alloca(alloca);
+        case NODE_ALLOCA:
+            // fallthrough
+        case NODE_STORE:
+            return get_normal_symbol_def_from_alloca(alloca);
+        default:
+            unreachable(NODE_FMT"\n", node_print(alloca));
+    }
 }
 
 Llvm_id get_matching_label_id(const Node* symbol_call) {
