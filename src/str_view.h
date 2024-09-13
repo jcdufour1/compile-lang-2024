@@ -84,6 +84,11 @@ static inline int str_view_cmp(Str_view a, Str_view b) {
     return strncmp(a.str, b.str, a.count);
 }
 
+// return 0 when match
+static inline bool str_view_is_equal(Str_view a, Str_view b) {
+    return 0 == str_view_cmp(a, b);
+}
+
 // only string literals can be passed into this function
 static inline Str_view str_view_from_cstr(const char* cstr) {
     Str_view str_view;

@@ -48,7 +48,8 @@ static bool get_prev_matching_node(const Node** result, const Node* node_to_star
 }
 
 static bool is_load(const Node* curr_node, const Node* var_call) {
-    return curr_node->type == NODE_LOAD && 0 == str_view_cmp(curr_node->name, var_call->name);
+    return (curr_node->type == NODE_LOAD || curr_node->type == NODE_LOAD_STRUCT_MEMBER) && \
+        0 == str_view_cmp(curr_node->name, var_call->name);
 }
 
 static bool is_store(const Node* curr_node, const Node* var_call) {

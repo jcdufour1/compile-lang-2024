@@ -43,30 +43,32 @@ static void insert_alloca(Node* var_def) {
 
 static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
     log(LOG_DEBUG, "insert_load\n");
+
     switch (symbol_call->type) {
         case NODE_STRUCT_LITERAL:
             // fallthrough
         case NODE_LITERAL:
             return;
         case NODE_STRUCT_MEMBER_CALL:
-            todo();
+            // fallthrough
         case NODE_SYMBOL:
             // fallthrough
-        case NODE_VARIABLE_DEFINITION: {
-            log_tree(LOG_DEBUG, symbol_call);
-            node_printf(symbol_call);
-            assert(symbol_call->name.count > 0);
-            Node* load = node_new();
-            load->type = NODE_LOAD;
-            load->name = symbol_call->name;
-            nodes_insert_before(node_insert_load_before, load);
+        case NODE_VARIABLE_DEFINITION:
             break;
-        }
         default:
             node_printf(symbol_call);
             todo();
     }
 
+    Node* load = node_new();
+    if (symbol_call->type == NODE_STRUCT_MEMBER_CALL) {
+        load->type = NODE_LOAD_STRUCT_MEMBER;
+        nodes_append_child(load, node_clone(nodes_single_child(symbol_call)));
+    } else {
+        load->type = NODE_LOAD;
+    }
+    load->name = symbol_call->name;
+    nodes_insert_before(node_insert_load_before, load);
 }
 
 static void insert_store(Node* node_insert_store_before, Node* symbol_call /* src */) {

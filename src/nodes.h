@@ -61,7 +61,7 @@ static inline Node* nodes_get_local_leftmost(Node* start_node) {
 static inline Node* nodes_get_local_rightmost(Node* start_node) {
     assert(start_node);
 
-    Node* rightmost;
+    Node* rightmost = NULL;
     nodes_foreach_from_curr(curr_node, start_node) {
         rightmost = curr_node;
     }

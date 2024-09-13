@@ -28,7 +28,9 @@ void do_thing(Div div) {
 }
 
 int main(void) {
-    Div div = {.numerator = 78, .denominator = 90};
-    do_thing(div);
+    Div div = {.numerator = 78, .denominator = 90, .extra_num = 7};
+    printf("%d\n", div.extra_num);
+    div.extra_num = 12;
+    printf("%d\n", div.extra_num);
     return 0;
 }
