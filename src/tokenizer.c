@@ -38,8 +38,6 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text) 
 
     chop_whitespace(file_text, line_num);
 
-    // remove // style comments
-
     if (file_text->count < 1) {
         return false;
     }
