@@ -65,8 +65,6 @@ static inline Node* nodes_get_local_rightmost(Node* start_node) {
     nodes_foreach_from_curr(curr_node, start_node) {
         rightmost = curr_node;
     }
-    log_tree(LOG_DEBUG, start_node);
-    log_tree(LOG_DEBUG, rightmost);
     return rightmost;
 }
 
@@ -150,11 +148,6 @@ static inline void nodes_insert_before(Node* node_to_insert_before, Node* node_t
     nodes_establish_siblings(node_to_insert, new_next);
     assert(node_to_insert == node_to_insert_before->prev);
     assert(node_to_insert->next == node_to_insert_before);
-
-    node_printf(node_to_insert->next->left_child);
-
-    node_printf(node_to_insert_before->next);
-    node_printf(node_to_insert->prev);
 
     Node* parent = node_to_insert_before->parent;
     if (parent->left_child == node_to_insert_before) {
@@ -325,6 +318,7 @@ static inline Node* nodes_get_last_child_of_type(Node* parent, NODE_TYPE node_ty
 // remove node_to_remove (and its children if present and keep_children is true) from tree. 
 // children of node_to_remove will stay attached to node_to_remove if keep_children is true
 static inline void nodes_remove(Node* node_to_remove, bool keep_children) {
+    log_tree(LOG_DEBUG, node_to_remove);
     assert(node_to_remove);
 
     Node* next = node_to_remove->next;

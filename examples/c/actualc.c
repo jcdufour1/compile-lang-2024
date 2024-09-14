@@ -24,7 +24,6 @@ Div print(const char* str, int num1, char* another_str) {
 }
 
 void do_thing(Div div) {
-
 }
 
 int main(void) {

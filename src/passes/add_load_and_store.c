@@ -69,6 +69,8 @@ static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
     }
     load->name = symbol_call->name;
     nodes_insert_before(node_insert_load_before, load);
+    //log_tree(LOG_DEBUG, node_insert_load_before->parent);
+    //todo();
 }
 
 static void insert_store(Node* node_insert_store_before, Node* symbol_call /* src */) {
@@ -125,7 +127,15 @@ static void load_operator_operands(Node* node_insert_before, Node* operator) {
     load_operator_operand(node_insert_before, rhs);
 }
 
-static void insert_store_assignment(Node* assignment, Node* item_to_store) {
+static void add_load_foreach_arg(Node* node_insert_before, Node* function_call) {
+    log(LOG_DEBUG, "add_foreach_arg\n");
+    nodes_foreach_child(argument, function_call) {
+        node_printf(argument);
+        insert_load(node_insert_before, argument);
+    }
+}
+
+static void insert_store_assignment(Node* assignment) {
     log(LOG_DEBUG, "THING 76: insert_store_assignment\n");
     assert(assignment->type == NODE_ASSIGNMENT);
 
@@ -172,29 +182,24 @@ static void insert_store_assignment(Node* assignment, Node* item_to_store) {
 
     Node* store = node_new();
     store->name = lhs->name;
-    nodes_remove(item_to_store, true);
+    nodes_remove(rhs, true);
     if (lhs->type == NODE_STRUCT_MEMBER_CALL) {
         store->type = NODE_STORE_STRUCT_MEMBER;
         nodes_append_child(store, node_clone(nodes_single_child(lhs)));
     } else {
         store->type = NODE_STORE;
     }
-    nodes_append_child(store, item_to_store);
+    nodes_append_child(store, rhs);
 
     nodes_insert_before(assignment, store);
-}
-
-static void add_load_foreach_arg(Node* function_call) {
-    log(LOG_DEBUG, "add_foreach_arg\n");
-    nodes_foreach_child(argument, function_call) {
-        insert_load(function_call, argument);
-    }
 }
 
 static void add_load_return_statement(Node* return_statement) {
     log(LOG_DEBUG, "add_load_return_statement\n");
     Node* node_to_return = nodes_single_child(return_statement);
     switch (node_to_return->type) {
+        case NODE_STRUCT_MEMBER_CALL:
+            // fallthrough
         case NODE_SYMBOL:
             insert_load(return_statement, node_to_return);
             return;
@@ -249,83 +254,124 @@ static void load_function_parameters(Node* fun_def) {
     log_tree(LOG_DEBUG, fun_params->parent);
 }
 
-bool add_load_and_store(Node* curr_node) {
+static void load_function_arguments(Node* fun_call) {
+    switch (fun_call->parent->type) {
+        case NODE_STORE:
+            add_load_foreach_arg(fun_call->parent, fun_call);
+            return;
+        case NODE_BLOCK:
+            add_load_foreach_arg(fun_call, fun_call);
+            return;
+        case NODE_ASSIGNMENT:
+            add_load_foreach_arg(fun_call, fun_call);
+            return;
+        default:
+            unreachable(NODE_FMT"\n", node_print(fun_call->parent));
+    }
+}
+
+bool add_load_and_store(Node* start_start_node) {
     //log_tree(LOG_DEBUG, 0);
     //log_tree(LOG_DEBUG, curr_node);
     //log(LOG_DEBUG, NODE_FMT"\n", node_print(curr_node));
-    switch (curr_node->type) {
-        case NODE_STRUCT_LITERAL:
-            return false;
-        case NODE_LITERAL:
-            return false;
-        case NODE_FUNCTION_CALL:
-            add_load_foreach_arg(curr_node);
-            return false;
-        case NODE_FUNCTION_DEFINITION:
-            node_printf(curr_node);
-            load_function_parameters(curr_node);
-            return false;
-        case NODE_FUNCTION_PARAMETERS:
-            return false;
-        case NODE_FUNCTION_PARAM_CALL:
-            return false;
-        case NODE_FUNCTION_RETURN_TYPES:
-            return false;
-        case NODE_LANG_TYPE:
-            return false;
-        case NODE_OPERATOR:
-            //add_load_operator(curr_node);
-            return false;
-        case NODE_BLOCK:
-            return false;
-        case NODE_SYMBOL:
-            return false;
-        case NODE_RETURN_STATEMENT:
-            add_load_return_statement(curr_node);
-            return false;
-        case NODE_VARIABLE_DEFINITION:
-            if (curr_node->parent->type == NODE_FUNCTION_PARAMETERS ||
-                curr_node->parent->type == NODE_STRUCT_DEFINITION ||
-                curr_node->parent->type == NODE_STRUCT_LITERAL
-            ) {
-                return false;
-            }
-            insert_alloca(curr_node);
-            return false;
-        case NODE_FUNCTION_DECLARATION:
-            return false;
-        case NODE_ASSIGNMENT:
-            insert_store_assignment(curr_node, nodes_get_child(curr_node, 1));
-            return true;
-        case NODE_FOR_LOOP:
-            unreachable("for loop node should not still exist at this point\n");
-            todo();
-        case NODE_FOR_VARIABLE_DEF:
-            todo();
-        case NODE_FOR_LOWER_BOUND:
-            todo();
-        case NODE_FOR_UPPER_BOUND:
-            todo();
-        case NODE_GOTO:
-            return false;
-        case NODE_COND_GOTO:
-            add_load_cond_goto(curr_node);
-            return false;
-        case NODE_NO_TYPE:
-            todo();
-        case NODE_LABEL:
-            return false;
-        case NODE_ALLOCA:
-            return false;
-        case NODE_STORE:
-            return false;
-        case NODE_LOAD:
-            return false;
-        case NODE_IF_STATEMENT:
-            unreachable("if statement node should not still exist at this point\n");
-        case NODE_STRUCT_DEFINITION:
-            return false;
-        default:
-            unreachable(NODE_FMT"\n", node_print(curr_node));
+    if (!start_start_node->left_child) {
+        return false;
     }
+
+    Node* curr_node = nodes_get_local_rightmost(start_start_node->left_child);
+    while (curr_node) {
+        bool go_to_prev = true;
+        switch (curr_node->type) {
+            case NODE_STRUCT_LITERAL:
+                break;
+            case NODE_LITERAL:
+                break;
+            case NODE_FUNCTION_CALL:
+                load_function_arguments(curr_node);
+                break;
+            case NODE_FUNCTION_DEFINITION:
+                node_printf(curr_node);
+                load_function_parameters(curr_node);
+                break;
+            case NODE_FUNCTION_PARAMETERS:
+                break;
+            case NODE_FUNCTION_PARAM_CALL:
+                break;
+            case NODE_FUNCTION_RETURN_TYPES:
+                break;
+            case NODE_LANG_TYPE:
+                break;
+            case NODE_OPERATOR:
+                //add_load_operator(curr_node);
+                break;
+            case NODE_BLOCK:
+                break;
+            case NODE_SYMBOL:
+                break;
+            case NODE_RETURN_STATEMENT:
+                add_load_return_statement(curr_node);
+                break;
+            case NODE_VARIABLE_DEFINITION:
+                if (curr_node->parent->type == NODE_FUNCTION_PARAMETERS ||
+                    curr_node->parent->type == NODE_STRUCT_DEFINITION ||
+                    curr_node->parent->type == NODE_STRUCT_LITERAL
+                ) {
+                    break;
+                }
+                insert_alloca(curr_node);
+                break;
+            case NODE_FUNCTION_DECLARATION:
+                break;
+            case NODE_ASSIGNMENT: {
+                Node* assignment = curr_node;
+                insert_store_assignment(assignment);
+                curr_node = assignment->prev;
+                nodes_remove(assignment, true);
+                go_to_prev = false;
+                break;
+            }
+            case NODE_FOR_LOOP:
+                unreachable("for loop node should not still exist at this point\n");
+                todo();
+            case NODE_FOR_VARIABLE_DEF:
+                todo();
+            case NODE_FOR_LOWER_BOUND:
+                todo();
+            case NODE_FOR_UPPER_BOUND:
+                todo();
+            case NODE_GOTO:
+                break;
+            case NODE_COND_GOTO:
+                add_load_cond_goto(curr_node);
+                break;
+            case NODE_NO_TYPE:
+                todo();
+            case NODE_LABEL:
+                break;
+            case NODE_ALLOCA:
+                break;
+            case NODE_STORE:
+                break;
+            case NODE_LOAD:
+                break;
+            case NODE_IF_STATEMENT:
+                unreachable("if statement node should not still exist at this point\n");
+            case NODE_LOAD_STRUCT_MEMBER:
+                break;
+            case NODE_STORE_STRUCT_MEMBER:
+                break;
+            case NODE_STRUCT_MEMBER_CALL:
+                break;
+            case NODE_STRUCT_DEFINITION:
+                break;
+            default:
+                unreachable(NODE_FMT"\n", node_print(curr_node));
+        }
+
+        if (go_to_prev) {
+            curr_node = curr_node->prev;
+        }
+    }
+
+    return false;
 }

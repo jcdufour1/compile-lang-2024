@@ -45,6 +45,7 @@ static size_t get_count_excape_seq(Str_view str_view) {
 }
 
 static void extend_type_call_str(String* output, const Node* sym_def) {
+    node_printf(sym_def);
     Node* struct_def;
     if (sym_tbl_lookup(&struct_def, sym_def->lang_type)) {
         string_extend_cstr(output, "%struct.");
@@ -92,7 +93,12 @@ static size_t get_member_index(const Node* struct_def, const Node* member_symbol
 }
 
 static const Node* get_member_def(const Node* struct_def, const Node* member_symbol) {
+    assert(struct_def->type == NODE_STRUCT_DEFINITION);
+    assert(member_symbol->type == NODE_SYMBOL);
+
     nodes_foreach_child(curr_member, struct_def) {
+        node_printf(curr_member);
+        node_printf(member_symbol);
         if (str_view_is_equal(curr_member->name, member_symbol->name)) {
             return curr_member;
         }
@@ -169,6 +175,8 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
             case NODE_SYMBOL: {
                 extend_type_call_str(output, var_decl_or_def);
                 string_extend_cstr(output, " %");
+                node_printf(argument);
+                log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
                 string_extend_size_t(output, get_prev_load_id(argument));
                 break;
             }
@@ -502,9 +510,26 @@ static void emit_function_return_statement(String* output, const Node* fun_retur
             string_extend_cstr(output, "\n");
             break;
         }
-        case NODE_SYMBOL: {
+        case NODE_SYMBOL:
+            if (sym_to_return->parent && sym_to_return->parent->type == NODE_STRUCT_MEMBER_CALL) {
+                break;
+            }
             string_extend_cstr(output, "    ret ");
             extend_type_call_str(output, sym_to_rtn_def);
+            string_extend_cstr(output, " %");
+            string_extend_size_t(output, get_prev_load_id(sym_to_return));
+            string_extend_cstr(output, "\n");
+            break;
+        case NODE_STRUCT_MEMBER_CALL: {
+            Node* struct_def;
+            if (!sym_tbl_lookup(&struct_def, sym_to_rtn_def->lang_type)) {
+                unreachable("");
+            }
+            const Node* member_def = get_member_def(
+                struct_def, nodes_single_child_const(sym_to_return)
+            );
+            string_extend_cstr(output, "    ret ");
+            extend_type_call_str(output, member_def);
             string_extend_cstr(output, " %");
             string_extend_size_t(output, get_prev_load_id(sym_to_return));
             string_extend_cstr(output, "\n");

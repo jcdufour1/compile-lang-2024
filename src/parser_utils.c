@@ -51,12 +51,16 @@ static bool is_load_struct_member(const Node* curr_node, const Node* var_call) {
     if (curr_node->type != NODE_LOAD_STRUCT_MEMBER) {
         return false;
     }
+    node_printf(curr_node);
+    node_printf(var_call);
     if (!str_view_is_equal(curr_node->name, var_call->name)) {
         return false;
     }
 
     const Node* curr_member = nodes_single_child_const(curr_node);
+    node_printf(curr_member);
     const Node* member_to_find = nodes_single_child_const(var_call);
+    node_printf(member_to_find);
     return str_view_is_equal(curr_member->name, member_to_find->name);
 }
 
@@ -77,6 +81,7 @@ static bool is_variable_def(const Node* curr_node, const Node* var_call) {
 }
 
 Llvm_id get_prev_load_id(const Node* var_call) {
+    node_printf(var_call);
     const Node* load;
     if (var_call->type == NODE_STRUCT_MEMBER_CALL) {
         if (!get_prev_matching_node(&load, var_call, var_call, is_load_struct_member)) {
