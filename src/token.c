@@ -46,6 +46,8 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
             return str_view_from_cstr(">");
         case TOKEN_SLASH:
             return str_view_from_cstr("/");
+        case TOKEN_COMMENT:
+            return str_view_from_cstr("comment");
         default:
             unreachable("");
     }
@@ -84,11 +86,10 @@ Str_view token_print_internal(Token token) {
         case TOKEN_LESS_THAN: // fallthrough
         case TOKEN_GREATER_THAN: // fallthrough
             break;
+        case TOKEN_COMMENT: 
+            // fallthrough
         case TOKEN_STRING_LITERAL: 
-            string_append(&buf, '(');
-            string_extend_strv(&buf, token.text);
-            string_append(&buf, ')');
-            break;
+            // fallthrough
         case TOKEN_NUM_LITERAL:
             string_append(&buf, '(');
             string_extend_strv(&buf, token.text);

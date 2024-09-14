@@ -33,7 +33,7 @@ static inline Str_view str_view_chop_on_cond(Str_view* str_view, bool (*should_c
             return new_str_view;
         }
     }
-    todo();
+    unreachable("cond is never met");
 }
 
 static inline Str_view str_view_chop_on_delim(Str_view* str_view, char delim) {
@@ -47,9 +47,7 @@ static inline Str_view str_view_chop_on_delim(Str_view* str_view, char delim) {
             return new_str_view;
         }
     }
-
-    // delim not found
-    todo();
+    unreachable("delim not found");
 }
 
 static inline Str_view str_view_chop_front_count(Str_view* str_view, size_t count) {

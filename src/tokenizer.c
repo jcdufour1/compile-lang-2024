@@ -39,10 +39,6 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text) 
     chop_whitespace(file_text, line_num);
 
     // remove // style comments
-    if (file_text->count > 1 && str_view_cstr_is_equal(str_view_slice(*file_text, 0, 2), "//")) {
-        str_view_chop_on_delim(file_text, '\n');
-        chop_whitespace(file_text, line_num);
-    }
 
     if (file_text->count < 1) {
         return false;
@@ -102,6 +98,11 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text) 
         str_view_chop_front(file_text);
         token->type = TOKEN_ASTERISK;
         return true;
+    } else if (file_text->count > 1 && str_view_cstr_is_equal(str_view_slice(*file_text, 0, 2), "//")) {
+        str_view_chop_on_delim(file_text, '\n');
+        chop_whitespace(file_text, line_num);
+        token->type = TOKEN_COMMENT;
+        return true;
     } else if (str_view_front(*file_text) == '/') {
         str_view_chop_front(file_text); // remove /
         token->type = TOKEN_SLASH;
@@ -154,7 +155,9 @@ Tokens tokenize(const String file_text) {
     Token curr_token;
     while (get_next_token(&line_num, &curr_token, &curr_file_text)) {
         log(LOG_TRACE, "token received: "TOKEN_FMT"\n", token_print(curr_token));
-        tokens_append(&tokens, &curr_token);
+        if (curr_token.type != TOKEN_COMMENT) {
+            tokens_append(&tokens, &curr_token);
+        }
     }
 
     return tokens;

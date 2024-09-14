@@ -38,6 +38,9 @@ typedef enum {
     TOKEN_SINGLE_DOT,
     TOKEN_DOUBLE_DOT,
     TOKEN_TRIPLE_DOT,
+
+    // comment
+    TOKEN_COMMENT,
 } TOKEN_TYPE;
 
 typedef struct {
@@ -253,7 +256,6 @@ static inline bool token_is_equal(const Token token, const char* cstr, TOKEN_TYP
     if (token.type != token_type) {
         return false;
     }
-
     return str_view_cstr_is_equal(token.text, cstr);
 }
 

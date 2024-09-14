@@ -7,6 +7,8 @@ struct Div {
 }
 
 fn main() i32 {
+    // comment
+    // test
     let div: Div;
     div = {.numerator = 9, .denominator = 2};
     printf("%d/%d\n", div.numerator, div.denominator);
