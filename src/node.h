@@ -60,6 +60,8 @@ typedef struct Node_ {
     Str_view lang_type; // eg. "String" in "let string1: String = "hello""
 
     bool is_variadic : 1;
+    bool is_struct_associated : 1;
+    bool is_fun_param_associated : 1;
 
     uint32_t line_num;
 } Node;

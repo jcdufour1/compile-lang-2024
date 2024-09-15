@@ -24,6 +24,10 @@ Div print(const char* str, int num1, char* another_str) {
 }
 
 void do_thing(Div div) {
+    printf("%d/%d\n", div.numerator, div.denominator);
+}
+
+void do_thing_ptr(Div* div) {
 }
 
 int main(void) {
@@ -31,5 +35,7 @@ int main(void) {
     printf("%d\n", div.extra_num);
     div.extra_num = 12;
     printf("%d\n", div.extra_num);
+    do_thing(div);
+    do_thing_ptr(&div);
     return 0;
 }

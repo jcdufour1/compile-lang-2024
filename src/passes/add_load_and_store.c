@@ -9,6 +9,9 @@ static Node* alloca_new(const Node* var_def) {
     Node* alloca = node_new();
     alloca->type = NODE_ALLOCA;
     alloca->name = var_def->name;
+    if (is_struct_variable_definition(var_def)) {
+        alloca->is_struct_associated = true;
+    }
     return alloca;
 }
 
@@ -248,8 +251,10 @@ static void load_function_parameters(Node* fun_def) {
         Node* fun_param_call = symbol_new(param->name);
         fun_param_call->type = NODE_FUNCTION_PARAM_CALL;
         insert_store(fun_block->left_child, fun_param_call);
+        Node* alloca = alloca_new(param);
+        alloca->is_fun_param_associated = true;
 
-        nodes_insert_before(fun_block->left_child, alloca_new(param));
+        nodes_insert_before(fun_block->left_child, alloca);
     }
     log_tree(LOG_DEBUG, fun_params->parent);
 }

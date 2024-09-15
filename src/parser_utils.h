@@ -4,6 +4,7 @@
 #include "str_view.h"
 #include "node.h"
 #include "nodes.h"
+#include "symbol_table.h"
 
 Str_view literal_name_new(void);
 
@@ -33,5 +34,24 @@ size_t sizeof_lang_type(Str_view lang_type);
 size_t sizeof_item(const Node* item);
 
 size_t sizeof_struct(const Node* struct_literal);
+
+static inline bool is_struct_variable_definition(const Node* var_def) {
+    assert(var_def->type == NODE_VARIABLE_DEFINITION);
+
+    Node* struct_def;
+    return sym_tbl_lookup(&struct_def, var_def->lang_type);
+}
+
+static inline bool is_struct_symbol(const Node* symbol) {
+    assert(symbol->type == NODE_SYMBOL);
+
+    Node* var_def;
+    if (!sym_tbl_lookup(&var_def, symbol->lang_type)) {
+        unreachable("");
+    }
+    return is_struct_variable_definition(var_def);
+}
+
+size_t sizeof_struct_definition(const Node* struct_def);
 
 #endif // PARSER_UTIL_H

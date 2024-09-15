@@ -233,20 +233,44 @@ size_t sizeof_item(const Node* item) {
             todo();
         case NODE_LITERAL:
             return sizeof_lang_type(item->lang_type);
+        case NODE_VARIABLE_DEFINITION:
+            return sizeof_lang_type(item->lang_type);
         default:
             node_printf(item);
             unreachable("");
     }
 }
 
-size_t sizeof_struct(const Node* struct_literal) {
-    assert(struct_literal->type == NODE_STRUCT_LITERAL);
+size_t sizeof_struct_literal(const Node* struct_literal_or_def) {
+    assert(struct_literal_or_def->type == NODE_STRUCT_LITERAL || struct_literal_or_def->type == NODE_STRUCT_DEFINITION);
 
     size_t size = 0;
-    nodes_foreach_child(child, struct_literal) {
+    nodes_foreach_child(child, struct_literal_or_def) {
         const Node* member = nodes_single_child_const(child);
         size += sizeof_item(member);
     }
     return size;
+}
+
+size_t sizeof_struct_definition(const Node* struct_def) {
+    assert(struct_def->type == NODE_STRUCT_LITERAL || struct_def->type == NODE_STRUCT_DEFINITION);
+
+    size_t size = 0;
+    nodes_foreach_child(member_def, struct_def) {
+        size += sizeof_item(member_def);
+    }
+    return size;
+}
+
+size_t sizeof_struct(const Node* struct_literal_or_def) {
+    switch (struct_literal_or_def->type) {
+        case NODE_STRUCT_DEFINITION:
+            return sizeof_struct_definition(struct_literal_or_def);
+        case NODE_STRUCT_LITERAL:
+            return sizeof_struct_literal(struct_literal_or_def);
+        default:
+            node_printf(struct_literal_or_def);
+            todo();
+    }
 }
 
