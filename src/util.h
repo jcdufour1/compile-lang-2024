@@ -108,6 +108,9 @@ static inline const char* bool_print(bool condition) {
 #define try(cond) \
     do { \
         if (!(cond)) { \
+            log(LOG_FETAL, "condition \""); \
+            fprintf(stderr, #cond); \
+            fprintf(stderr, "\" failed\n"); \
             abort(); \
         } \
     } while(0);

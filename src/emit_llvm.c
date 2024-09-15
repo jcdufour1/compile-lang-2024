@@ -178,10 +178,11 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
                 extend_literal_decl(output, var_decl_or_def);
                 break;
             }
-            case NODE_STRUCT_MEMBER_CALL: {
+            case NODE_STRUCT_MEMBER_CALL:
                 emit_fun_arg_struct_member_call(output, argument);
                 break;
-            }
+            case NODE_STRUCT_LITERAL:
+                todo();
             case NODE_SYMBOL: {
                 node_printf(var_decl_or_def);
                 if (is_struct_variable_definition(var_decl_or_def)) {
@@ -205,25 +206,13 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
                 unreachable(""); // this function call should be changed to assign to a variable 
                                // before reaching emit_llvm stage, then assign that variable here. 
             default:
-                todo();
+                unreachable(NODE_FMT"\n", node_print(argument));
         }
     }
 }
 
 static void emit_function_call(String* output, const Node* fun_call) {
     //assert(fun_call->llvm_id == 0);
-
-    // load arguments
-    nodes_foreach_child(argument, fun_call) {
-        if (argument->type == NODE_SYMBOL) {
-            //emit_load_variable(output, argument);
-        } else if (argument->type == NODE_LITERAL) {
-        } else if (argument->type == NODE_STRUCT_MEMBER_CALL) {
-        } else {
-            node_printf(argument);
-            todo();
-        }
-    }
 
     Node* fun_def;
     if (!sym_tbl_lookup(&fun_def, fun_call->name)) {

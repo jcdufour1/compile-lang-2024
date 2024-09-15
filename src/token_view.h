@@ -10,6 +10,57 @@ typedef struct {
     size_t count;
 } Tk_view;
 
+#define log_tokens(log_level, token_view, indent) \
+    do { \
+        log(log_level, "tokens:\n"); \
+        for (size_t idx = 0; idx < (token_view).count; idx++) { \
+            log_indent((log_level), (indent), " "TOKEN_FMT"\n", token_print((token_view).tokens[idx])); \
+        } \
+        log(log_level, "\n"); \
+    } while(0);
+
+// TODO: this function will consider ([])
+static bool get_idx_matching_token(
+    size_t* idx_matching,
+    Tk_view tokens, 
+    bool include_opposite_type_to_match, // true if opening bracket that matches closing bracket 
+                                         // type_to_match is included from tokens, 
+                                         // false otherwise
+    TOKEN_TYPE type_to_match
+) {
+    int par_level = include_opposite_type_to_match ? (-1) : (0);
+    for (size_t idx = 0; idx < tokens.count; idx++) {
+        Token curr_token = tokens.tokens[idx];
+        if (par_level == 0 && curr_token.type == type_to_match) {
+            if (idx_matching) {
+                *idx_matching = idx;
+            }
+            return true;
+        }
+
+        if (token_is_closing(curr_token)) {
+            par_level--;
+        } else if (token_is_opening(curr_token)) {
+            par_level++;
+        }
+    }
+
+    return false;
+}
+
+// this function will not consider nested ()
+static bool get_idx_token(size_t* idx_matching, Tk_view tokens, size_t start, TOKEN_TYPE type_to_match) {
+    for (size_t idx = start; idx < tokens.count; idx++) {
+        if (tokens.tokens[idx].type == type_to_match) {
+            if (idx_matching) {
+                *idx_matching = idx;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
 static inline Token tk_view_at(Tk_view token_view, size_t idx) {
     assert(token_view.count > idx);
     return token_view.tokens[idx];
@@ -17,6 +68,43 @@ static inline Token tk_view_at(Tk_view token_view, size_t idx) {
 
 static inline Token tk_view_front(Tk_view token_view) {
     return tk_view_at(token_view, 0);
+}
+
+static inline Tk_view tk_view_chop_count(Tk_view* token_view, size_t count) {
+    if (token_view->count < count) {
+        unreachable("out of bounds");
+    }
+    Tk_view result = {.tokens = token_view->tokens, .count = count};
+    token_view->tokens += count;
+    token_view->count -= count;
+    return result;
+}
+
+static inline Tk_view tk_view_chop_count_at_most(Tk_view* token_view, size_t count) {
+    return tk_view_chop_count(token_view, MIN(token_view->count, count));
+}
+
+static inline Token tk_view_chop_front(Tk_view* token_view) {
+    return tk_view_front(tk_view_chop_count(token_view, 1));
+}
+
+static inline bool tk_view_try_consume(Token* result, Tk_view* tokens, TOKEN_TYPE expected) {
+    if (tokens->count < 1 || tk_view_front(*tokens).type != expected) {
+        return false;
+    }
+    
+    Token token = tk_view_chop_front(tokens);
+    if (result) {
+        *result = token;
+    }
+    return true;
+}
+
+static inline bool tk_view_try_consume_symbol(Token* result, Tk_view* tokens, const char* cstr) {
+    if (!str_view_cstr_is_equal(tk_view_front(*tokens).text, cstr)) {
+        return false;
+    }
+    return tk_view_try_consume(result, tokens, TOKEN_SYMBOL);
 }
 
 static inline Tk_view tk_view_chop_on_cond(
@@ -68,41 +156,43 @@ static inline Tk_view tk_view_chop_on_type_delim_or_all(Tk_view* token_view, TOK
     return tk_view_chop_on_type_delim_common(token_view, delim, true);
 }
 
-static inline Tk_view tk_view_chop_count(Tk_view* token_view, size_t count) {
-    if (token_view->count < count) {
-        unreachable("out of bounds");
+static inline Tk_view tk_view_chop_on_matching_type_delim_common(
+    Tk_view* token_view,
+    TOKEN_TYPE delim,
+    bool matching_opening_included,
+    bool or_all_fallback
+) {
+    log_tokens(LOG_DEBUG, *token_view, 0);
+    size_t idx_matching;
+    if (!get_idx_matching_token(&idx_matching, *token_view, matching_opening_included, delim)) {
+        if (!or_all_fallback) {
+            unreachable("");
+        }
+        return tk_view_chop_count(token_view, token_view->count);
     }
-    Tk_view result = {.tokens = token_view->tokens, .count = count};
-    token_view->tokens += count;
-    token_view->count -= count;
+    Tk_view result = tk_view_chop_count(token_view, idx_matching);
+    log_tokens(LOG_DEBUG, result, 0);
     return result;
 }
 
-static inline Tk_view tk_view_chop_count_at_most(Tk_view* token_view, size_t count) {
-    return tk_view_chop_count(token_view, MIN(token_view->count, count));
+// delim itself is left in the input token_view
+static inline Tk_view tk_view_chop_on_matching_type_delim(
+    Tk_view* token_view,
+    TOKEN_TYPE delim,
+    bool matching_opening_included // if true, matching opening ( in tokens
+    ) {
+    return tk_view_chop_on_matching_type_delim_common(token_view, delim, matching_opening_included, false);
 }
 
-static inline Token tk_view_chop_front(Tk_view* token_view) {
-    return tk_view_front(tk_view_chop_count(token_view, 1));
-}
-
-static inline bool tk_view_try_consume(Token* result, Tk_view* tokens, TOKEN_TYPE expected) {
-    if (tokens->count < 1 || tk_view_front(*tokens).type != expected) {
-        return false;
-    }
-    
-    Token token = tk_view_chop_front(tokens);
-    if (result) {
-        *result = token;
-    }
-    return true;
-}
-
-static inline bool tk_view_try_consume_symbol(Token* result, Tk_view* tokens, const char* cstr) {
-    if (!str_view_cstr_is_equal(tk_view_front(*tokens).text, cstr)) {
-        return false;
-    }
-    return tk_view_try_consume(result, tokens, TOKEN_SYMBOL);
+// considers matching ()
+// delim itself is left in the input token_view
+// chop all if delim not found
+static inline Tk_view tk_view_chop_on_matching_type_delim_or_all(
+    Tk_view* token_view,
+    TOKEN_TYPE delim,
+    bool matching_opening_included // if true, matching opening ( in tokens
+    ) {
+    return tk_view_chop_on_matching_type_delim_common(token_view, delim, matching_opening_included, true);
 }
 
 static inline Str_view tk_view_print_internal(Tk_view token_view) {
