@@ -63,8 +63,6 @@ typedef struct Node_ {
     bool is_struct_associated : 1;
     bool is_fun_param_associated : 1;
 
-    uint16_t ptr_depth; // 1 means single ptr, 2 means double ptr, etc.
-
     uint32_t line_num;
 } Node;
 
