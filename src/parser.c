@@ -43,28 +43,13 @@ static bool tokens_start_with_function_call(Tk_view tokens) {
     if (tokens.count < 2) {
         return false;
     }
-
     if (str_view_cstr_is_equal(tk_view_front(tokens).text, "extern")) {
         return false;
     }
-
     if (tokens.tokens[0].type != TOKEN_SYMBOL) {
         return false;
     }
-
     if (tokens.tokens[1].type != TOKEN_OPEN_PAR) {
-        return false;
-    }
-
-    size_t semicolon_pos;
-    if (!get_idx_token(&semicolon_pos, tokens, 0, TOKEN_SEMICOLON)) {
-        semicolon_pos = tokens.count;
-    }
-    if (semicolon_pos < 1) {
-        todo();
-    }
-
-    if (tokens.tokens[semicolon_pos - 1].type != TOKEN_CLOSE_PAR) {
         return false;
     }
 
@@ -72,7 +57,6 @@ static bool tokens_start_with_function_call(Tk_view tokens) {
 }
 
 static size_t get_idx_lowest_precedence_operator(Tk_view tokens) {
-    log_tokens(LOG_DEBUG, tokens);
     size_t idx_lowest = SIZE_MAX;
     uint32_t lowest_pre = UINT32_MAX; // higher numbers have higher precedence
     uint16_t par_level = 1;
@@ -225,7 +209,7 @@ static Node* extract_struct_definition(Tk_view* tokens) {
     while (tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_CLOSE_CURLY_BRACE) {
         Node* member;
         try(extract_function_parameter(&member, tokens));
-        try(tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON));
+        tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
         nodes_append_child(new_struct, member);
     }
 
@@ -309,7 +293,7 @@ static Node* extract_function_declaration(Tk_view* tokens) {
     Node* fun_declaration = extract_function_declaration_common(tokens);
     fun_declaration->type = NODE_FUNCTION_DECLARATION;
 
-    try(tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON));
+    tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
     return fun_declaration;
 }
 
@@ -367,8 +351,6 @@ static bool try_extract_operation_tokens(Tk_view* operation, Tk_view* tokens) {
     for (idx = 0; idx < tokens->count; idx++) {
         Token curr_token = tk_view_at(*tokens, idx);
         if (token_is_operator(curr_token)) {
-            log_tokens(LOG_DEBUG, *tokens);
-            log(LOG_DEBUG, "%zu\n", idx);
             assert(par_status != PAR_OPERATOR);
             par_status = PAR_OPERATOR;
             is_operation = true;
@@ -482,7 +464,6 @@ static bool extract_function_call(Node** child, Tk_view* tokens) {
     }
 
     try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_PAR));
-    tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
 
     *child = function_call;
     return true;
@@ -504,6 +485,7 @@ static Node* extract_assignment(Tk_view* tokens, TOKEN_TYPE delim) {
     
     Tk_view lhs_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_SINGLE_EQUAL);
     nodes_append_child(assignment, extract_expression(&lhs_tokens));
+
 
     try(tk_view_try_consume(NULL, tokens, TOKEN_SINGLE_EQUAL));
 
@@ -611,7 +593,7 @@ static Node* extract_block(Tk_view* tokens) {
         if (!extract_statement(&child, tokens)) {
             todo();
         }
-        assert(!tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON));
+        tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
         nodes_append_child(block, child);
     }
     return block;
@@ -644,7 +626,6 @@ static Node* extract_struct_member_call(Tk_view* tokens) {
 }
 
 static Node* extract_expression(Tk_view* tokens) {
-    log_tokens(LOG_DEBUG, *tokens);
     assert(tokens->tokens);
     if (tokens->count < 1) {
         unreachable("");

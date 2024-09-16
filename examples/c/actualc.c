@@ -6,11 +6,17 @@ int mul(int a, int b) {
 }
 
 typedef struct {
+    long num;
+    char ch;
+} Token;
+
+typedef struct {
     int numerator;
     int denominator;
     int extra_num;
     int extra_num_2;
     int extra_num_3;
+    Token token;
 } Div;
 
 Div print(const char* str, int num1, char* another_str) {
@@ -24,7 +30,7 @@ Div print(const char* str, int num1, char* another_str) {
 }
 
 void do_thing(Div div) {
-    printf("%d/%d\n", div.numerator, div.denominator);
+    printf("%d/%d %c\n", div.numerator, div.denominator, div.token.ch);
 }
 
 void do_thing_ptr(Div* div) {
