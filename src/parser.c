@@ -382,26 +382,50 @@ static Node* extract_symbol(Tk_view* tokens) {
     return sym_node;
 }
 
+typedef enum {
+    PAR_OPERAND,
+    PAR_OPERATOR,
+    PAR_PAR,
+} PAR_STATUS;
+
 static Tk_view extract_operation_tokens(Tk_view* tokens) {
     size_t idx = 0;
+    PAR_STATUS par_status = PAR_PAR;
     for (idx = 0; idx < tokens->count; idx++) {
         Token curr_token = tk_view_at(*tokens, idx);
         if (token_is_operator(curr_token)) {
+            log_tokens(LOG_DEBUG, *tokens);
+            log(LOG_DEBUG, "%zu\n", idx);
+            assert(par_status != PAR_OPERATOR);
+            par_status = PAR_OPERATOR;
             continue;
         }
         switch (curr_token.type) {
             case TOKEN_NUM_LITERAL:
+                assert(par_status != PAR_OPERAND);
+                par_status = PAR_OPERAND;
                 continue;
             case TOKEN_SYMBOL:
+                assert(par_status != PAR_OPERAND);
+                par_status = PAR_OPERAND;
                 continue;
             case TOKEN_OPEN_PAR:
+                par_status = PAR_PAR;
                 continue;
             case TOKEN_CLOSE_PAR:
+                par_status = PAR_PAR;
                 continue;
+            case TOKEN_OPEN_CURLY_BRACE:
+                assert(par_status != PAR_OPERATOR);
+                goto after_for_extract_operation_tokens;
+            case TOKEN_STRING_LITERAL:
+                todo();
             default:
                 unreachable(TOKEN_FMT"\n", token_print(curr_token));
         }
     }
+
+after_for_extract_operation_tokens:
     return tk_view_chop_count(tokens, idx);
 }
 
@@ -509,12 +533,12 @@ static bool is_if_statement(Tk_view tokens) {
     return false;
 }
 
-static Node* parse_if_condition(Tk_view tokens) {
+static Node* extract_if_condition(Tk_view* tokens) {
     Node* condition = node_new();
     condition->type = NODE_IF_CONDITION;
 
-    if (count_operators(tokens) > 0) {
-        nodes_append_child(condition, extract_operation(&tokens));
+    if (count_operators(*tokens) > 0) {
+        nodes_append_child(condition, extract_operation(tokens));
         return condition;
     }
 
@@ -527,9 +551,8 @@ static Node* extract_if_statement(Tk_view* tokens) {
 
     try(tk_view_try_consume_symbol(NULL, tokens, "if"));
 
-    Tk_view if_condition_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_OPEN_CURLY_BRACE);
+    nodes_append_child(if_statement, extract_if_condition(tokens));
     Tk_view if_body_tokens = extract_items_inside_brackets(tokens, TOKEN_CLOSE_CURLY_BRACE);
-    nodes_append_child(if_statement, parse_if_condition(if_condition_tokens));
     nodes_append_child(if_statement, extract_block(&if_body_tokens));
 
     return if_statement;
