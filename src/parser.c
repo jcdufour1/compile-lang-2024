@@ -121,53 +121,29 @@ static size_t get_idx_lowest_precedence_operator(Tk_view tokens) {
 }
 
 static bool extract_function_parameter(Node** child, Tk_view* tokens) {
-    if (tokens->count < 2) {
+    if (tokens->count < 1 || tk_view_front(*tokens).type == TOKEN_CLOSE_PAR) {
         return false;
-    }
-
-    size_t idx_token;
-    Tk_view param_tokens;
-    if (get_idx_matching_token(&idx_token, *tokens, false, TOKEN_COMMA)) {
-        param_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_COMMA);
-        try(tk_view_try_consume(NULL, tokens, TOKEN_COMMA));
-    } else {
-        param_tokens = tk_view_chop_count(tokens, tokens->count);
     }
 
     Node* param = node_new();
     param->type = NODE_VARIABLE_DEFINITION;
 
-    param->name = tk_view_chop_front(&param_tokens).text;
+    param->name = tk_view_chop_front(tokens).text;
 
-    try(tk_view_try_consume(NULL, &param_tokens, TOKEN_COLON));
+    try(tk_view_try_consume(NULL, tokens, TOKEN_COLON));
 
-    param->lang_type = tk_view_chop_front(&param_tokens).text;
+    param->lang_type = tk_view_chop_front(tokens).text;
 
-    if (tk_view_try_consume(NULL, &param_tokens, TOKEN_TRIPLE_DOT)) {
+    if (tk_view_try_consume(NULL, tokens, TOKEN_TRIPLE_DOT)) {
         param->is_variadic = true;
     }
 
     sym_tbl_add(param);
 
-    tk_view_try_consume(NULL, &param_tokens, TOKEN_SEMICOLON);
+    tk_view_try_consume(NULL, tokens, TOKEN_COMMA);
+
     *child = param;
-    assert(param_tokens.count == 0);
     return true;
-}
-
-static Node* parse_function_parameters(Tk_view tokens) {
-    //log(LOG_TRACE, "entering parse_function_parameters\n");
-
-    Node* fun_params = node_new();
-    fun_params->type = NODE_FUNCTION_PARAMETERS;
-
-    Node* param;
-    while (extract_function_parameter(&param, &tokens)) {
-        nodes_append_child(fun_params, param);
-    }
-
-    assert(tokens.count == 0);
-    return fun_params;
 }
 
 static Node* parse_function_single_return_type(Token token) {
@@ -181,16 +157,18 @@ static Node* parse_function_single_return_type(Token token) {
 }
 
 static bool extract_function_parameters(Node** result, Tk_view* tokens) {
-    size_t parameters_len;
-    if (!get_idx_matching_token(&parameters_len, *tokens, false, TOKEN_CLOSE_PAR)) {
-        todo();
+    Node* fun_params = node_new();
+    fun_params->type = NODE_FUNCTION_PARAMETERS;
+
+    Node* param;
+    while (extract_function_parameter(&param, tokens)) {
+        nodes_append_child(fun_params, param);
     }
 
-    Tk_view parameters_tokens = tk_view_chop_count(tokens, parameters_len);
-    try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_PAR));
-
-    *result = parse_function_parameters(parameters_tokens);
-
+    if (tokens->count > 0) {
+        try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_PAR));
+    }
+    *result = fun_params;
     return true;
 }
 
@@ -200,7 +178,6 @@ static bool extract_function_return_types(Node** result, Tk_view* tokens) {
 
     while (tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_OPEN_CURLY_BRACE) {
         // a return type is only one token, at least for now
-        log_tokens(LOG_DEBUG, *tokens, 0);
         Node* child = parse_function_single_return_type(tk_view_chop_front(tokens));
         nodes_append_child(return_types, child);
         tk_view_try_consume(NULL, tokens, TOKEN_COMMA);
@@ -428,7 +405,6 @@ static Node* parse_symbol(Tk_view tokens) {
 }
 
 static Node* parse_operation(Tk_view tokens) {
-    //log_tokens(LOG_TRACE, tokens, 0);
     size_t idx_operator = get_idx_lowest_precedence_operator(tokens);
     Tk_view left_tokens = tk_view_chop_count(&tokens, idx_operator);
     Token operator_token = tk_view_chop_front(&tokens);
