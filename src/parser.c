@@ -365,27 +365,31 @@ static Str_view get_literal_lang_type_from_token_type(TOKEN_TYPE token_type) {
     }
 }
 
-static Node* parse_literal(Tk_view tokens) {
+static Node* extract_literal(Tk_view* tokens) {
+    Token token = tk_view_chop_front(tokens);
+    assert(token_is_literal(token));
+
     Node* new_node = node_new();
     new_node->type = NODE_LITERAL;
     new_node->name = literal_name_new();
     assert(new_node->str_data.count < 1);
-    new_node->str_data = tk_view_front(tokens).text;
-    new_node->token_type = tk_view_front(tokens).type;
-    new_node->line_num = tk_view_front(tokens).line_num;
+    new_node->str_data = token.text;
+    new_node->token_type = token.type;
+    new_node->line_num = token.line_num;
     new_node->lang_type = get_literal_lang_type_from_token_type(new_node->token_type);
 
     sym_tbl_add(new_node);
     return new_node;
 }
 
-static Node* parse_symbol(Tk_view tokens) {
-    assert(tokens.count == 1);
+static Node* extract_symbol(Tk_view* tokens) {
+    Token token = tk_view_chop_front(tokens);
+    assert(token.type == TOKEN_SYMBOL);
 
     Node* sym_node = node_new();
     sym_node->type = NODE_SYMBOL;
-    sym_node->name = tk_view_front(tokens).text;
-    sym_node->line_num = tk_view_front(tokens).line_num;
+    sym_node->name = token.text;
+    sym_node->line_num = token.line_num;
     assert(sym_node->line_num > 0);
     return sym_node;
 }
@@ -633,11 +637,11 @@ static Node* parse_expression(Tk_view tokens) {
     }
 
     if (tokens.count == 1 && token_is_literal(tokens.tokens[0])) {
-        return parse_literal(tokens);
+        return extract_literal(&tokens);
     }
 
     if (tokens.count == 1 && tk_view_front(tokens).type == TOKEN_SYMBOL) {
-        return parse_symbol(tokens);
+        return extract_symbol(&tokens);
     }
 
     if (token_is_equal(tk_view_front(tokens), "let", TOKEN_SYMBOL)) {
