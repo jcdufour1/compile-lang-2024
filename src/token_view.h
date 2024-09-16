@@ -10,11 +10,11 @@ typedef struct {
     size_t count;
 } Tk_view;
 
-#define log_tokens(log_level, token_view, indent) \
+#define log_tokens(log_level, token_view) \
     do { \
         log(log_level, "tokens:\n"); \
         for (size_t idx = 0; idx < (token_view).count; idx++) { \
-            log_indent((log_level), (indent), " "TOKEN_FMT"\n", token_print((token_view).tokens[idx])); \
+            log((log_level), TOKEN_FMT"\n", token_print((token_view).tokens[idx])); \
         } \
         log(log_level, "\n"); \
     } while(0);
@@ -162,7 +162,7 @@ static inline Tk_view tk_view_chop_on_matching_type_delim_common(
     bool matching_opening_included,
     bool or_all_fallback
 ) {
-    log_tokens(LOG_DEBUG, *token_view, 0);
+    log_tokens(LOG_DEBUG, *token_view);
     size_t idx_matching;
     if (!get_idx_matching_token(&idx_matching, *token_view, matching_opening_included, delim)) {
         if (!or_all_fallback) {
@@ -171,7 +171,7 @@ static inline Tk_view tk_view_chop_on_matching_type_delim_common(
         return tk_view_chop_count(token_view, token_view->count);
     }
     Tk_view result = tk_view_chop_count(token_view, idx_matching);
-    log_tokens(LOG_DEBUG, result, 0);
+    log_tokens(LOG_DEBUG, result);
     return result;
 }
 

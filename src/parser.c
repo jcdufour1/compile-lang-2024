@@ -127,19 +127,13 @@ static bool extract_function_parameter(Node** child, Tk_view* tokens) {
 
     Node* param = node_new();
     param->type = NODE_VARIABLE_DEFINITION;
-
     param->name = tk_view_chop_front(tokens).text;
-
     try(tk_view_try_consume(NULL, tokens, TOKEN_COLON));
-
     param->lang_type = tk_view_chop_front(tokens).text;
-
     if (tk_view_try_consume(NULL, tokens, TOKEN_TRIPLE_DOT)) {
         param->is_variadic = true;
     }
-
     sym_tbl_add(param);
-
     tk_view_try_consume(NULL, tokens, TOKEN_COMMA);
 
     *child = param;
@@ -260,26 +254,27 @@ static Node* parse_variable_definition(Tk_view variable_tokens, bool require_let
 static Node* extract_struct_definition(Tk_view* tokens) {
     try(tk_view_try_consume_symbol(NULL, tokens, "struct")); // remove "struct"
 
+    Token name = tk_view_chop_front(tokens);
     size_t close_curly_brace_idx;
     if (!get_idx_matching_token(&close_curly_brace_idx, *tokens, true, TOKEN_CLOSE_CURLY_BRACE)) {
         todo();
     }
-    Tk_view struct_body_tokens = tk_view_chop_count(tokens, close_curly_brace_idx); // remove }
-    Token name = tk_view_chop_front(&struct_body_tokens);
-    tk_view_chop_front(&struct_body_tokens); // remove {
+    Tk_view struct_body_tokens = tk_view_chop_count(tokens, close_curly_brace_idx);
 
     Node* new_struct = node_new();
     new_struct->name = name.text;
     new_struct->type = NODE_STRUCT_DEFINITION;
 
+    try(tk_view_try_consume(NULL, &struct_body_tokens, TOKEN_OPEN_CURLY_BRACE));
     while (struct_body_tokens.count > 0) {
-        Tk_view member_tokens = tk_view_chop_on_type_delim(&struct_body_tokens, TOKEN_SEMICOLON);
-        try(tk_view_try_consume(NULL, &struct_body_tokens, TOKEN_SEMICOLON));
         Node* member;
-        try(extract_function_parameter(&member, &member_tokens));
+        log_tokens(LOG_DEBUG, struct_body_tokens);
+        try(extract_function_parameter(&member, &struct_body_tokens));
+        try(tk_view_try_consume(NULL, &struct_body_tokens, TOKEN_SEMICOLON));
         nodes_append_child(new_struct, member);
     }
 
+    log_tokens(LOG_DEBUG, *tokens);
     try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
     sym_tbl_add(new_struct);
     return new_struct;
@@ -585,7 +580,7 @@ static bool extract_statement(Node** child, Tk_view* tokens) {
         return status;
     }
 
-    log_tokens(LOG_ERROR, *tokens, 0);
+    log_tokens(LOG_ERROR, *tokens);
     unreachable("");
 }
 
@@ -595,7 +590,7 @@ static Node* parse_block(Tk_view tokens) {
     while (tokens.count > 0) {
         Node* child;
         if (!extract_statement(&child, &tokens)) {
-            log_tokens(LOG_ERROR, tokens, 0);
+            log_tokens(LOG_ERROR, tokens);
             todo();
         }
         assert(!tk_view_try_consume(NULL, &tokens, TOKEN_SEMICOLON));
@@ -684,7 +679,7 @@ static Node* parse_expression(Tk_view tokens) {
         return parse_struct_member_call(tokens);
     }
 
-    log_tokens(LOG_DEBUG, tokens, 0);
+    log_tokens(LOG_DEBUG, tokens);
     todo();
 }
 
