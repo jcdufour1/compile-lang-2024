@@ -42,6 +42,8 @@ static inline void sym_tbl_add_internal(Symbol_table_node* sym_tbl_nodes, size_t
     size_t curr_table_idx = sym_tbl_calculate_idx(symbol_name, capacity);
     size_t init_table_idx = curr_table_idx; 
     while (sym_tbl_nodes[curr_table_idx].status == SYM_TBL_OCCUPIED) {
+        // TODO: enable this
+        // assert(!str_view_is_equal(sym_tbl_nodes[curr_table_idx].node->name, node_of_symbol->name) && "redefinition of symbol");
         curr_table_idx = (curr_table_idx + 1) % capacity;
         assert(init_table_idx != curr_table_idx && "hash table is full here, and it should not be");
         (void) init_table_idx;
