@@ -594,18 +594,18 @@ static Node* parse_block(Tk_view tokens) {
     return block;
 }
 
-static Node* parse_struct_literal(Tk_view tokens) {
+static Node* extract_struct_literal(Tk_view* tokens) {
     Node* struct_literal = node_new();
     struct_literal->type = NODE_STRUCT_LITERAL;
     struct_literal->name = literal_name_new();
     struct_literal->lang_type = str_view_from_cstr("Div"); // TODO: actually implement type functionality
-    try(tk_view_try_consume(NULL, &tokens, TOKEN_OPEN_CURLY_BRACE));
+    try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE));
 
-    while (tk_view_try_consume(NULL, &tokens, TOKEN_SINGLE_DOT)) {
-        nodes_append_child(struct_literal, extract_assignment(&tokens, TOKEN_COMMA));
+    while (tk_view_try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
+        nodes_append_child(struct_literal, extract_assignment(tokens, TOKEN_COMMA));
     }
 
-    assert(tokens.count < 1);
+    assert(tokens->count < 1);
     sym_tbl_add(struct_literal);
     return struct_literal;
 }
@@ -665,7 +665,7 @@ static Node* parse_expression(Tk_view tokens) {
     if (token_is_equal(tk_view_front(tokens), "", TOKEN_OPEN_CURLY_BRACE) &&
         token_is_equal(tk_view_at(tokens, 1), "", TOKEN_SINGLE_DOT)
     ) {
-        return parse_struct_literal(tokens);
+        return extract_struct_literal(&tokens);
     }
 
     if (tk_view_front(tokens).type == TOKEN_SYMBOL &&
