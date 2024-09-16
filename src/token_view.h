@@ -162,7 +162,6 @@ static inline Tk_view tk_view_chop_on_matching_type_delim_common(
     bool matching_opening_included,
     bool or_all_fallback
 ) {
-    log_tokens(LOG_DEBUG, *token_view);
     size_t idx_matching;
     if (!get_idx_matching_token(&idx_matching, *token_view, matching_opening_included, delim)) {
         if (!or_all_fallback) {
@@ -171,7 +170,6 @@ static inline Tk_view tk_view_chop_on_matching_type_delim_common(
         return tk_view_chop_count(token_view, token_view->count);
     }
     Tk_view result = tk_view_chop_count(token_view, idx_matching);
-    log_tokens(LOG_DEBUG, result);
     return result;
 }
 
@@ -193,6 +191,24 @@ static inline Tk_view tk_view_chop_on_matching_type_delim_or_all(
     bool matching_opening_included // if true, matching opening ( in tokens
     ) {
     return tk_view_chop_on_matching_type_delim_common(token_view, delim, matching_opening_included, true);
+}
+
+static inline Tk_view tk_view_chop_on_matching_type_delims_or_all(
+    Tk_view* token_view,
+    TOKEN_TYPE delim1,
+    TOKEN_TYPE delim2,
+    bool matching_opening_included // if true, matching opening ( in tokens
+) {
+    Tk_view option_1_tokens = *token_view;
+    Tk_view option_2_tokens = *token_view;
+    Tk_view option_1 = tk_view_chop_on_matching_type_delim_common(&option_1_tokens, delim1, matching_opening_included, true);
+    Tk_view option_2 = tk_view_chop_on_matching_type_delim_common(&option_2_tokens, delim2, matching_opening_included, true);
+    if (option_1.count < option_2.count) {
+        *token_view = option_1_tokens;
+        return option_1;
+    }
+    *token_view = option_2_tokens;
+    return option_2;
 }
 
 static inline Str_view tk_view_print_internal(Tk_view token_view) {

@@ -125,7 +125,6 @@ static bool extract_function_parameter(Node** child, Tk_view* tokens) {
         return false;
     }
 
-    log_tokens(LOG_DEBUG, *tokens);
     Node* param = node_new();
     param->type = NODE_VARIABLE_DEFINITION;
     param->name = tk_view_chop_front(tokens).text;
@@ -258,13 +257,11 @@ static Node* extract_struct_definition(Tk_view* tokens) {
     try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE));
     while (tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_CLOSE_CURLY_BRACE) {
         Node* member;
-        log_tokens(LOG_DEBUG, *tokens);
         try(extract_function_parameter(&member, tokens));
         try(tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON));
         nodes_append_child(new_struct, member);
     }
 
-    log_tokens(LOG_DEBUG, *tokens);
     try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
     sym_tbl_add(new_struct);
     return new_struct;
@@ -338,9 +335,7 @@ static Node* extract_function_declaration(Tk_view* tokens) {
     try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_PAR));
     try(tk_view_try_consume_symbol(NULL, tokens, "fn"));
 
-    log_tokens(LOG_DEBUG, *tokens);
     Node* fun_declaration = extract_function_declaration_common(tokens);
-    log_tokens(LOG_DEBUG, *tokens);
     fun_declaration->type = NODE_FUNCTION_DECLARATION;
 
     try(tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON));
@@ -411,7 +406,6 @@ static Tk_view extract_operation_tokens(Tk_view* tokens) {
 }
 
 static Node* parse_operation(Tk_view tokens) {
-    log_tokens(LOG_DEBUG, tokens);
     size_t idx_operator = get_idx_lowest_precedence_operator(tokens);
     Tk_view left_tokens = tk_view_chop_count(&tokens, idx_operator);
     Token operator_token = tk_view_chop_front(&tokens);
@@ -438,12 +432,12 @@ static Node* extract_operation(Tk_view* tokens) {
 
 // returns true if the parse was successful
 static bool extract_function_argument(Node** child, Tk_view* tokens) {
-    if (tokens->count < 1) {
+    if (tokens->count < 1 || tk_view_front(*tokens).type == TOKEN_CLOSE_PAR) {
         return false;
     }
 
     assert(tk_view_front(*tokens).type != TOKEN_COMMA);
-    Tk_view curr_arg_tokens = tk_view_chop_on_matching_type_delim_or_all(tokens, TOKEN_COMMA, false);
+    Tk_view curr_arg_tokens = tk_view_chop_on_matching_type_delims_or_all(tokens, TOKEN_COMMA, TOKEN_CLOSE_PAR, false);
     tk_view_try_consume(NULL, tokens, TOKEN_COMMA);
     *child = extract_expression(&curr_arg_tokens);
     return true;
@@ -460,18 +454,12 @@ static bool extract_function_call(Node** child, Tk_view* tokens) {
     try(tk_view_try_consume(NULL, tokens, TOKEN_SYMBOL));
     try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_PAR));
 
-    size_t parameters_end;
-    if (!get_idx_matching_token(&parameters_end, *tokens, false, TOKEN_CLOSE_PAR)) {
-        todo();
-    }
-    Tk_view arguments_tokens = tk_view_chop_count(tokens, parameters_end);
-
     Node* argument;
-    while (extract_function_argument(&argument, &arguments_tokens)) {
+    while (extract_function_argument(&argument, tokens)) {
         nodes_append_child(function_call, argument);
     }
 
-    try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_PAR));
+    tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_PAR);
     tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
 
     *child = function_call;

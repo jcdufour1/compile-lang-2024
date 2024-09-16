@@ -109,7 +109,7 @@ def main() -> None:
     print_info("compiling debug:")
     process = subprocess.run(cmd, env=dict(os.environ | {"DEBUG": "1"}))
     if process.returncode != 0:
-        print_error("compilation of debug failed", file=sys.stderr)
+        print_error("compilation of debug failed")
         sys.exit(1)
     print_success("compiling debug: done")
     print()
@@ -118,7 +118,7 @@ def main() -> None:
     print_info("compiling release:")
     process = subprocess.run(cmd, env=dict(os.environ | {"DEBUG": "0"}))
     if process.returncode != 0:
-        print_error("compilation of release failed", file=sys.stderr)
+        print_error("compilation of release failed")
         sys.exit(1)
     print_success("compiling release: done")
     print()
