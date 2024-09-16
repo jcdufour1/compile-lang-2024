@@ -387,11 +387,35 @@ static Node* extract_symbol(Tk_view* tokens) {
     return sym_node;
 }
 
+static Tk_view extract_operation_tokens(Tk_view* tokens) {
+    size_t idx = 0;
+    for (idx = 0; idx < tokens->count; idx++) {
+        Token curr_token = tk_view_at(*tokens, idx);
+        if (token_is_operator(curr_token)) {
+            continue;
+        }
+        switch (curr_token.type) {
+            case TOKEN_NUM_LITERAL:
+                continue;
+            case TOKEN_SYMBOL:
+                continue;
+            case TOKEN_OPEN_PAR:
+                continue;
+            case TOKEN_CLOSE_PAR:
+                continue;
+            default:
+                unreachable(TOKEN_FMT"\n", token_print(curr_token));
+        }
+    }
+    return tk_view_chop_count(tokens, idx);
+}
+
 static Node* parse_operation(Tk_view tokens) {
+    log_tokens(LOG_DEBUG, tokens);
     size_t idx_operator = get_idx_lowest_precedence_operator(tokens);
     Tk_view left_tokens = tk_view_chop_count(&tokens, idx_operator);
     Token operator_token = tk_view_chop_front(&tokens);
-    Tk_view right_tokens = tokens;
+    Tk_view right_tokens = tk_view_chop_count(&tokens, tokens.count);
 
     assert(left_tokens.count > 0);
     assert(right_tokens.count > 0);
@@ -406,6 +430,10 @@ static Node* parse_operation(Tk_view tokens) {
     nodes_append_child(operator_node, left_node);
     nodes_append_child(operator_node, right_node);
     return operator_node;
+}
+
+static Node* extract_operation(Tk_view* tokens) {
+    return parse_operation(extract_operation_tokens(tokens));
 }
 
 // returns true if the parse was successful
@@ -498,7 +526,7 @@ static Node* parse_if_condition(Tk_view tokens) {
     condition->type = NODE_IF_CONDITION;
 
     if (count_operators(tokens) > 0) {
-        nodes_append_child(condition, parse_operation(tokens));
+        nodes_append_child(condition, extract_operation(&tokens));
         return condition;
     }
 
@@ -642,10 +670,6 @@ static Node* parse_expression(Tk_view tokens) {
         }
     }
 
-    if (count_operators(tokens) > 0) {
-        return parse_operation(tokens);
-    }
-
     Node* fun_call;
     if (extract_function_call(&fun_call, &tokens)) {
         assert(tokens.count < 1);
@@ -663,6 +687,8 @@ static Node* parse_expression(Tk_view tokens) {
     ) {
         return extract_struct_member_call(&tokens);
     }
+
+    return extract_operation(&tokens);
 
     log_tokens(LOG_DEBUG, tokens);
     todo();
