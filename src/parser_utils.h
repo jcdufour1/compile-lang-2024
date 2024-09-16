@@ -54,4 +54,8 @@ static inline bool is_struct_symbol(const Node* symbol) {
 
 size_t sizeof_struct_definition(const Node* struct_def);
 
+const Node* get_param_def_from_node_in_fun_body(const Node* node);
+
+bool param_def_from_node_in_fun_body_exists(const Node* node);
+
 #endif // PARSER_UTIL_H

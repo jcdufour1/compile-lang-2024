@@ -147,6 +147,11 @@ static bool extract_function_parameter(Node** child, Tk_view* tokens) {
         param->is_variadic = true;
     }
 
+
+    while (tk_view_try_consume(NULL, &param_tokens, TOKEN_ASTERISK)) {
+        param->ptr_depth++;
+    }
+
     sym_tbl_add(param);
 
     tk_view_try_consume(NULL, &param_tokens, TOKEN_SEMICOLON);

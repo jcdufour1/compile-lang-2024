@@ -28,6 +28,7 @@ void do_thing(Div div) {
 }
 
 void do_thing_ptr(Div* div) {
+    div->numerator = 8176;
 }
 
 int main(void) {

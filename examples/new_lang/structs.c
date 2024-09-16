@@ -20,6 +20,13 @@ fn get_div(div: Div) Div {
     return div;
 }
 
+fn div_ptr(div: Div*) i32 {
+    div.numerator = 87;
+    div.denominator = 23;
+    printf("%d/%d\n", div.numerator, div.denominator);
+    return 0;
+}
+
 fn main() i32 {
     let div: Div;
     div = {.numerator = 9, .denominator = 2};
@@ -30,6 +37,8 @@ fn main() i32 {
     printf("%d/%d\n", div.numerator, div.denominator);
     printf("%d/%d\n", result, div.denominator);
     let new_div: Div = get_div(div);
+    printf("%d/%d\n", new_div.numerator, new_div.denominator);
+    div_ptr(new_div);
     printf("%d/%d\n", new_div.numerator, new_div.denominator);
     return 0;
 }

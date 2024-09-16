@@ -121,9 +121,18 @@ static void emit_function_params(String* output, const Node* fun_params) {
         }
 
         if (is_struct_variable_definition(param)) {
-            string_extend_cstr(output, "ptr noundef byval(");
-            extend_type_call_str(output, param);
-            string_extend_cstr(output, ")");
+            switch (param->ptr_depth) {
+                case 0:
+                    string_extend_cstr(output, "ptr noundef byval(");
+                    extend_type_call_str(output, param);
+                    string_extend_cstr(output, ")");
+                    break;
+                case 1:
+                    string_extend_cstr(output, "ptr noundef");
+                    break;
+                default:
+                    todo();
+            }
         } else {
             extend_type_decl_str(output, param);
         }
@@ -146,9 +155,18 @@ static void emit_fun_arg_struct_member_call(String* output, const Node* member_c
     }
     const Node* member_def = get_member_def(struct_def, nodes_single_child_const(member_call));
     if (is_struct_variable_definition(member_def)) {
-        string_extend_cstr(output, "ptr noundef byval(");
-        extend_type_call_str(output, member_def);
-        string_extend_cstr(output, ")");
+        switch (member_def->ptr_depth) {
+            case 0:
+                string_extend_cstr(output, "ptr noundef byval(");
+                extend_type_call_str(output, member_def);
+                string_extend_cstr(output, ")");
+                break;
+            case 1:
+                todo();
+                break;
+            default:
+                todo();
+        }
     } else {
         extend_type_call_str(output, member_def);
     }
@@ -157,6 +175,8 @@ static void emit_fun_arg_struct_member_call(String* output, const Node* member_c
 }
 
 static void emit_function_call_arguments(String* output, const Node* fun_call) {
+    Node* fun_def;
+    try(sym_tbl_lookup(&fun_def, fun_call->name));
     size_t idx = 0;
     nodes_foreach_child(argument, fun_call) {
         Node* var_decl_or_def;
@@ -170,7 +190,7 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
             );
             break;
         }
-        if (idx++ > 0) {
+        if (idx > 0) {
             string_extend_cstr(output, ", ");
         }
         switch (argument->type) {
@@ -186,9 +206,20 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
             case NODE_SYMBOL: {
                 node_printf(var_decl_or_def);
                 if (is_struct_variable_definition(var_decl_or_def)) {
-                    string_extend_cstr(output, "ptr noundef byval(");
-                    extend_type_call_str(output, var_decl_or_def);
-                    string_extend_cstr(output, ")");
+                    const Node* fun_params = nodes_get_child_of_type_const(fun_def, NODE_FUNCTION_PARAMETERS);
+                    const Node* fun_param = nodes_get_child_const(fun_params, idx);
+                    switch (fun_param->ptr_depth) {
+                        case 0:
+                            string_extend_cstr(output, "ptr noundef byval(");
+                            extend_type_call_str(output, var_decl_or_def);
+                            string_extend_cstr(output, ")");
+                            break;
+                        case 1:
+                            string_extend_cstr(output, "ptr noundef");
+                            break;
+                        default:
+                            todo();
+                    }
                 } else {
                     extend_type_call_str(output, var_decl_or_def);
                 }
@@ -208,6 +239,8 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
             default:
                 unreachable(NODE_FMT"\n", node_print(argument));
         }
+
+        idx++;
     }
 }
 
@@ -241,9 +274,38 @@ static void emit_alloca(String* output, const Node* alloca) {
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, alloca->llvm_id);
     string_extend_cstr(output, " = alloca ");
-    extend_type_call_str(output, get_symbol_def_from_alloca(alloca));
-    string_extend_cstr(output, ", align 8");
-    string_extend_cstr(output, "\n");
+
+    const Node* fun_param = NULL;
+    if (param_def_from_node_in_fun_body_exists(alloca)) {
+        fun_param = get_param_def_from_node_in_fun_body(alloca);
+    } else {
+        extend_type_call_str(output, get_symbol_def_from_alloca(alloca));
+        string_extend_cstr(output, ", align 8");
+        string_extend_cstr(output, "\n");
+        return;
+    }
+
+    Node* struct_def;
+    if (!sym_tbl_lookup(&struct_def, fun_param->name)) {
+        extend_type_call_str(output, get_symbol_def_from_alloca(alloca));
+        string_extend_cstr(output, ", align 8");
+        string_extend_cstr(output, "\n");
+        return;
+    }
+
+    switch (fun_param->ptr_depth) {
+        case 0:
+            extend_type_call_str(output, get_symbol_def_from_alloca(alloca));
+            string_extend_cstr(output, ", align 8");
+            string_extend_cstr(output, "\n");
+            return;
+        case 1:
+            string_extend_cstr(output, "ptr, align 8");
+            string_extend_cstr(output, "\n");
+            return;
+        default:
+            todo();
+    }
 }
 
 static void emit_operator_type(String* output, const Node* operator) {
@@ -386,13 +448,42 @@ static void emit_store_struct_fun_param(String* output, const Node* store) {
     }
 
     const Node* src = nodes_single_child_const(store);
-    string_extend_cstr(output, "    call void @llvm.memcpy.p0.p0.i64(ptr align 4 %");
-    string_extend_size_t(output, alloca_dest_id);
-    string_extend_cstr(output, ", ptr align 4 %");
-    string_extend_size_t(output, get_matching_fun_param_load_id(src));
-    string_extend_cstr(output, ", i64 ");
-    string_extend_size_t(output, sizeof_struct_definition(struct_def));
-    string_extend_cstr(output, ", i1 false)\n");
+
+    const Node* fun_block = store->parent;
+    assert(fun_block->type == NODE_BLOCK);
+    const Node* fun_def = fun_block->parent;
+    assert(fun_def->type == NODE_FUNCTION_DEFINITION);
+
+    const Node* fun_param;
+    nodes_foreach_child(curr_fun_param, nodes_get_child_of_type_const(fun_def, NODE_FUNCTION_PARAMETERS)) {
+        if (str_view_is_equal(curr_fun_param->name, src->name)) {
+            fun_param = curr_fun_param;
+        }
+    }
+    switch (fun_param->ptr_depth) {
+        case 0:
+            string_extend_cstr(output, "    call void @llvm.memcpy.p0.p0.i64(ptr align 4 %");
+            string_extend_size_t(output, alloca_dest_id);
+            string_extend_cstr(output, ", ptr align 4 %");
+            string_extend_size_t(output, get_matching_fun_param_load_id(src));
+            string_extend_cstr(output, ", i64 ");
+            string_extend_size_t(output, sizeof_struct_definition(struct_def));
+            string_extend_cstr(output, ", i1 false)\n");
+            break;
+        case 1:
+            string_extend_cstr(output, "    store ptr ");
+            emit_src(output, src);
+            string_extend_cstr(output, ", ");
+            string_extend_cstr(output, "ptr");
+            string_extend_cstr(output, " %");
+            string_extend_size_t(output, get_store_dest_id(store));
+            string_extend_cstr(output, ", align 8");
+            string_extend_cstr(output, "\n");
+            break;
+        default:
+            todo();
+    }
+
 }
 
 static void emit_normal_store(String* output, const Node* store) {
