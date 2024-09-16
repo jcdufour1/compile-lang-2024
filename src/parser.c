@@ -8,7 +8,7 @@
 #include "parser_utils.h"
 
 static Node* parse_function_single_return_type(Token tokens);
-static Node* parse_block(Tk_view tokens);
+static Node* extract_block(Tk_view* tokens);
 INLINE bool extract_statement(Node** child, Tk_view* tokens);
 static Node* parse_expression(Tk_view tokens);
 
@@ -206,7 +206,7 @@ static Node* parse_function_definition(Tk_view tokens) {
     Node* function = extract_function_declaration_common(&tokens);
     try(tk_view_try_consume(NULL, &tokens, TOKEN_OPEN_CURLY_BRACE));
     function->type = NODE_FUNCTION_DEFINITION;
-    nodes_append_child(function, parse_block(tokens));
+    nodes_append_child(function, extract_block(&tokens));
 
     return function;
 }
@@ -322,7 +322,7 @@ static Node* extract_for_loop(Tk_view* tokens) {
     nodes_append_child(for_loop, upper_bound);
 
     Tk_view body_tokens = extract_items_inside_brackets(tokens, TOKEN_CLOSE_CURLY_BRACE);
-    nodes_append_child(for_loop, parse_block(body_tokens));
+    nodes_append_child(for_loop, extract_block(&body_tokens));
 
     return for_loop;
 }
@@ -542,7 +542,7 @@ static Node* extract_if_statement(Tk_view* tokens) {
     Tk_view if_condition_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_OPEN_CURLY_BRACE);
     Tk_view if_body_tokens = extract_items_inside_brackets(tokens, TOKEN_CLOSE_CURLY_BRACE);
     nodes_append_child(if_statement, parse_if_condition(if_condition_tokens));
-    nodes_append_child(if_statement, parse_block(if_body_tokens));
+    nodes_append_child(if_statement, extract_block(&if_body_tokens));
 
     return if_statement;
 }
@@ -600,16 +600,15 @@ static bool extract_statement(Node** child, Tk_view* tokens) {
     unreachable("");
 }
 
-static Node* parse_block(Tk_view tokens) {
+static Node* extract_block(Tk_view* tokens) {
     Node* block = node_new();
     block->type = NODE_BLOCK;
-    while (tokens.count > 0) {
+    while (tokens->count > 0 && !tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
         Node* child;
-        if (!extract_statement(&child, &tokens)) {
-            log_tokens(LOG_ERROR, tokens);
+        if (!extract_statement(&child, tokens)) {
             todo();
         }
-        assert(!tk_view_try_consume(NULL, &tokens, TOKEN_SEMICOLON));
+        assert(!tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON));
         nodes_append_child(block, child);
     }
     return block;
@@ -647,13 +646,6 @@ static Node* parse_expression(Tk_view tokens) {
         unreachable("");
     }
 
-    while (tk_view_front(tokens).type == TOKEN_OPEN_PAR && tk_view_at(tokens, tokens.count - 1).type == TOKEN_CLOSE_PAR) {
-        try(tk_view_try_consume(NULL, &tokens, TOKEN_OPEN_PAR));
-        Tk_view inner_tokens = tk_view_chop_count(&tokens, tokens.count - 1);
-        try(tk_view_try_consume(NULL, &tokens, TOKEN_CLOSE_PAR));
-        tokens = inner_tokens;
-    }
-
     if (tokens.count == 1 && token_is_literal(tokens.tokens[0])) {
         return extract_literal(&tokens);
     }
@@ -688,6 +680,13 @@ static Node* parse_expression(Tk_view tokens) {
         return extract_struct_member_call(&tokens);
     }
 
+    while (tk_view_front(tokens).type == TOKEN_OPEN_PAR && tk_view_at(tokens, tokens.count - 1).type == TOKEN_CLOSE_PAR) {
+        try(tk_view_try_consume(NULL, &tokens, TOKEN_OPEN_PAR));
+        Tk_view inner_tokens = tk_view_chop_count(&tokens, tokens.count - 1);
+        try(tk_view_try_consume(NULL, &tokens, TOKEN_CLOSE_PAR));
+        tokens = inner_tokens;
+    }
+
     return extract_operation(&tokens);
 
     log_tokens(LOG_DEBUG, tokens);
@@ -696,7 +695,7 @@ static Node* parse_expression(Tk_view tokens) {
 
 Node* parse(const Tokens tokens) {
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
-    Node* root = parse_block(token_view);
+    Node* root = extract_block(&token_view);
     log(LOG_VERBOSE, "completed parse tree:\n");
     log_tree(LOG_VERBOSE, root);
     return root;
