@@ -247,7 +247,10 @@ static Node* extract_variable_declaration(Tk_view* tokens, bool require_let) {
     sym_tbl_add(variable_def);
 
     if (tokens->count > 0 && !tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON)) {
-        nodes_append_child(variable_def, extract_expression(tokens));
+        Token front = tk_view_front(*tokens);
+        if (front.type == TOKEN_SYMBOL && str_view_cstr_is_equal(front.text, "if")) {
+            nodes_append_child(variable_def, extract_expression(tokens));
+        }
     }
     tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
     return variable_def;
@@ -266,10 +269,9 @@ static Node* extract_for_loop(Tk_view* tokens) {
     for_loop->type = NODE_FOR_LOOP;
     try(tk_view_try_consume_symbol(NULL, tokens, "for"));
 
-    Tk_view for_var_decl_tokens = tk_view_chop_on_cond(tokens, is_not_symbol_in);
     Node* var_def = node_new();
     var_def->type = NODE_FOR_VARIABLE_DEF;
-    nodes_append_child(var_def, extract_variable_declaration(&for_var_decl_tokens, false));
+    nodes_append_child(var_def, extract_variable_declaration(tokens, false));
     nodes_append_child(for_loop, var_def);
     try(tk_view_try_consume_symbol(NULL, tokens, "in"));
 
