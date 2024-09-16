@@ -171,11 +171,12 @@ static bool extract_function_return_types(Node** result, Tk_view* tokens) {
     Node* return_types = node_new();
     return_types->type = NODE_FUNCTION_RETURN_TYPES;
 
-    while (tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_OPEN_CURLY_BRACE) {
+    bool is_comma = true;
+    while (is_comma) {
         // a return type is only one token, at least for now
         Node* child = parse_function_single_return_type(tk_view_chop_front(tokens));
         nodes_append_child(return_types, child);
-        tk_view_try_consume(NULL, tokens, TOKEN_COMMA);
+        is_comma = tk_view_try_consume(NULL, tokens, TOKEN_COMMA);
     }
 
     *result = return_types;
@@ -333,30 +334,24 @@ static Node* extract_for_loop(Tk_view* tokens) {
     return for_loop;
 }
 
-static Node* parse_function_declaration(Tk_view tokens) {
-    try(tk_view_try_consume_symbol(NULL, &tokens, "extern"));
-    try(tk_view_try_consume(NULL, &tokens, TOKEN_OPEN_PAR));
-
+static Node* extract_function_declaration(Tk_view* tokens) {
+    try(tk_view_try_consume_symbol(NULL, tokens, "extern"));
+    try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_PAR));
     Token extern_type_token;
-    try(tk_view_try_consume(&extern_type_token, &tokens, TOKEN_STRING_LITERAL));
+    try(tk_view_try_consume(&extern_type_token, tokens, TOKEN_STRING_LITERAL));
     if (!str_view_cstr_is_equal(extern_type_token.text, "c")) {
         todo();
     }
+    try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_PAR));
+    try(tk_view_try_consume_symbol(NULL, tokens, "fn"));
 
-    try(tk_view_try_consume(NULL, &tokens, TOKEN_CLOSE_PAR));
-    try(tk_view_try_consume_symbol(NULL, &tokens, "fn"));
-
-    Node* fun_declaration = extract_function_declaration_common(&tokens);
+    log_tokens(LOG_DEBUG, *tokens);
+    Node* fun_declaration = extract_function_declaration_common(tokens);
+    log_tokens(LOG_DEBUG, *tokens);
     fun_declaration->type = NODE_FUNCTION_DECLARATION;
 
-    assert(tokens.count == 0);
-    return fun_declaration;
-}
-
-static Node* extract_function_declaration(Tk_view* tokens) {
-    Tk_view declaration_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_SEMICOLON);
     try(tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON));
-    return parse_function_declaration(declaration_tokens);
+    return fun_declaration;
 }
 
 static Str_view get_literal_lang_type_from_token_type(TOKEN_TYPE token_type) {
