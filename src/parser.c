@@ -141,16 +141,6 @@ static bool extract_function_parameter(Node** child, Tk_view* tokens) {
     return true;
 }
 
-static Node* parse_function_single_return_type(Token token) {
-    assert(token.type == TOKEN_SYMBOL);
-
-    Node* return_type = node_new();
-    return_type->type = NODE_LANG_TYPE;
-    return_type->lang_type = token.text;
-    assert(return_type->lang_type.count > 0);
-    return return_type;
-}
-
 static bool extract_function_parameters(Node** result, Tk_view* tokens) {
     Node* fun_params = node_new();
     fun_params->type = NODE_FUNCTION_PARAMETERS;
@@ -174,8 +164,11 @@ static bool extract_function_return_types(Node** result, Tk_view* tokens) {
     bool is_comma = true;
     while (is_comma) {
         // a return type is only one token, at least for now
-        Node* child = parse_function_single_return_type(tk_view_chop_front(tokens));
-        nodes_append_child(return_types, child);
+        Node* return_type = node_new();
+        return_type->type = NODE_LANG_TYPE;
+        return_type->lang_type = tk_view_chop_front(tokens).text;
+        assert(return_type->lang_type.count > 0);
+        nodes_append_child(return_types, return_type);
         is_comma = tk_view_try_consume(NULL, tokens, TOKEN_COMMA);
     }
 
@@ -610,16 +603,13 @@ static Node* extract_struct_literal(Tk_view* tokens) {
     return struct_literal;
 }
 
-static Node* parse_struct_member_call(Tk_view tokens) {
+static Node* extract_struct_member_call(Tk_view* tokens) {
     Node* member_call = node_new();
     member_call->type = NODE_STRUCT_MEMBER_CALL;
-    member_call->name = tk_view_chop_front(&tokens).text;
-    try(tk_view_try_consume(NULL, &tokens, TOKEN_SINGLE_DOT));
-    nodes_append_child(member_call, symbol_new(tk_view_chop_front(&tokens).text));
+    member_call->name = tk_view_chop_front(tokens).text;
+    try(tk_view_try_consume(NULL, tokens, TOKEN_SINGLE_DOT));
+    nodes_append_child(member_call, symbol_new(tk_view_chop_front(tokens).text));
 
-    if (tokens.count > 0) {
-        todo();
-    }
     return member_call;
 }
 
@@ -671,7 +661,7 @@ static Node* parse_expression(Tk_view tokens) {
     if (tk_view_front(tokens).type == TOKEN_SYMBOL &&
         token_is_equal(tk_view_at(tokens, 1), "", TOKEN_SINGLE_DOT)
     ) {
-        return parse_struct_member_call(tokens);
+        return extract_struct_member_call(&tokens);
     }
 
     log_tokens(LOG_DEBUG, tokens);
