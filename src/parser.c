@@ -125,6 +125,7 @@ static bool extract_function_parameter(Node** child, Tk_view* tokens) {
         return false;
     }
 
+    log_tokens(LOG_DEBUG, *tokens);
     Node* param = node_new();
     param->type = NODE_VARIABLE_DEFINITION;
     param->name = tk_view_chop_front(tokens).text;
@@ -255,22 +256,17 @@ static Node* extract_struct_definition(Tk_view* tokens) {
     try(tk_view_try_consume_symbol(NULL, tokens, "struct")); // remove "struct"
 
     Token name = tk_view_chop_front(tokens);
-    size_t close_curly_brace_idx;
-    if (!get_idx_matching_token(&close_curly_brace_idx, *tokens, true, TOKEN_CLOSE_CURLY_BRACE)) {
-        todo();
-    }
-    Tk_view struct_body_tokens = tk_view_chop_count(tokens, close_curly_brace_idx);
 
     Node* new_struct = node_new();
     new_struct->name = name.text;
     new_struct->type = NODE_STRUCT_DEFINITION;
 
-    try(tk_view_try_consume(NULL, &struct_body_tokens, TOKEN_OPEN_CURLY_BRACE));
-    while (struct_body_tokens.count > 0) {
+    try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE));
+    while (tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_CLOSE_CURLY_BRACE) {
         Node* member;
-        log_tokens(LOG_DEBUG, struct_body_tokens);
-        try(extract_function_parameter(&member, &struct_body_tokens));
-        try(tk_view_try_consume(NULL, &struct_body_tokens, TOKEN_SEMICOLON));
+        log_tokens(LOG_DEBUG, *tokens);
+        try(extract_function_parameter(&member, tokens));
+        try(tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON));
         nodes_append_child(new_struct, member);
     }
 
