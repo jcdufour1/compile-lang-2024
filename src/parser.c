@@ -180,19 +180,6 @@ static Node* parse_function_single_return_type(Token token) {
     return return_type;
 }
 
-static bool extract_function_return_type(Node** child, Tk_view* tokens) {
-    if (tokens->count < 1) {
-        return false;
-    }
-
-    // a return type is only one token, at least for now
-    Token return_type_token = tk_view_chop_front(tokens);
-    tk_view_try_consume(NULL, tokens, TOKEN_COMMA);
-
-    *child = parse_function_single_return_type(return_type_token);
-    return true;
-}
-
 static bool extract_function_parameters(Node** result, Tk_view* tokens) {
     size_t parameters_len;
     if (!get_idx_matching_token(&parameters_len, *tokens, false, TOKEN_CLOSE_PAR)) {
@@ -208,14 +195,15 @@ static bool extract_function_parameters(Node** result, Tk_view* tokens) {
 }
 
 static bool extract_function_return_types(Node** result, Tk_view* tokens) {
-    Tk_view return_type_tokens = tk_view_chop_on_type_delim_or_all(tokens, TOKEN_OPEN_CURLY_BRACE);
-
     Node* return_types = node_new();
     return_types->type = NODE_FUNCTION_RETURN_TYPES;
 
-    Node* child;
-    while (extract_function_return_type(&child, &return_type_tokens)) {
+    while (tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_OPEN_CURLY_BRACE) {
+        // a return type is only one token, at least for now
+        log_tokens(LOG_DEBUG, *tokens, 0);
+        Node* child = parse_function_single_return_type(tk_view_chop_front(tokens));
         nodes_append_child(return_types, child);
+        tk_view_try_consume(NULL, tokens, TOKEN_COMMA);
     }
 
     *result = return_types;
