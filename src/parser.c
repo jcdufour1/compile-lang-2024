@@ -273,7 +273,7 @@ static Node* extract_for_loop(Tk_view* tokens) {
     nodes_append_child(for_loop, upper_bound);
     try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
 
-    Tk_view body_tokens = extract_items_inside_brackets(tokens, TOKEN_CLOSE_CURLY_BRACE);
+    Tk_view body_tokens = extract_items_inside_brackets(tokens, TOKEN_CLOSE_CURLY_BRACE); // TODO: remove this line?
     nodes_append_child(for_loop, extract_block(&body_tokens));
 
     return for_loop;
@@ -385,6 +385,8 @@ static bool try_extract_operation_tokens(Tk_view* operation, Tk_view* tokens) {
                 // fallthrough
             case TOKEN_DOUBLE_DOT:
                 // fallthrough
+            case TOKEN_SINGLE_EQUAL:
+                // fallthrough
             case TOKEN_COMMA:
                 assert(par_status != PAR_OPERATOR);
                 goto after_for_extract_operation_tokens;
@@ -479,23 +481,13 @@ static Node* extract_function_return_statement(Tk_view* tokens) {
     return new_node;
 }
 
-static Node* extract_assignment(Tk_view* tokens, TOKEN_TYPE delim) {
+static Node* extract_assignment(Tk_view* tokens) {
     Node* assignment = node_new();
     assignment->type = NODE_ASSIGNMENT;
     
-    Tk_view lhs_tokens = tk_view_chop_on_type_delim(tokens, TOKEN_SINGLE_EQUAL);
-    nodes_append_child(assignment, extract_expression(&lhs_tokens));
-
-
+    nodes_append_child(assignment, extract_expression(tokens)); // lhs
     try(tk_view_try_consume(NULL, tokens, TOKEN_SINGLE_EQUAL));
-
-    Tk_view rhs_tokens_temp = tk_view_chop_on_type_delim_or_all(tokens, delim);
-    Tk_view rhs_tokens = tk_view_chop_on_matching_type_delim_or_all(&rhs_tokens_temp, TOKEN_CLOSE_CURLY_BRACE, false);
-    nodes_append_child(assignment, extract_expression(&rhs_tokens));
-
-    if (!tk_view_try_consume(NULL, tokens, delim) && !tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
-        assert(tokens->count < 1);
-    }
+    nodes_append_child(assignment, extract_expression(tokens)); // rhs
 
     return assignment;
 }
@@ -569,8 +561,11 @@ static bool extract_statement(Node** child, Tk_view* tokens) {
 
     Tk_view assignment_tokens = tk_view_chop_on_type_delim_or_all(tokens, TOKEN_SEMICOLON);
     if (get_idx_token(NULL, assignment_tokens, 0, TOKEN_SINGLE_EQUAL)) {
-        *child = extract_assignment(&assignment_tokens, TOKEN_SEMICOLON);
+        log_tokens(LOG_DEBUG, *tokens);
+        log_tokens(LOG_DEBUG, assignment_tokens);
+        *child = extract_assignment(&assignment_tokens);
         tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
+        log_tokens(LOG_DEBUG, assignment_tokens);
         assert(assignment_tokens.count < 1);
         return true;
     }
@@ -607,10 +602,12 @@ static Node* extract_struct_literal(Tk_view* tokens) {
     try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE));
 
     while (tk_view_try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
-        nodes_append_child(struct_literal, extract_assignment(tokens, TOKEN_COMMA));
+        log_tokens(LOG_DEBUG, *tokens);
+        nodes_append_child(struct_literal, extract_assignment(tokens));
+        tk_view_try_consume(NULL, tokens, TOKEN_COMMA);
     }
 
-    assert(tokens->count < 1);
+    try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
     sym_tbl_add(struct_literal);
     return struct_literal;
 }
