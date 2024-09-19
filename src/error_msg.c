@@ -19,6 +19,6 @@ void msg_redefinition_of_symbol(const Node* new_sym_def) {
     assert(original_def->file_path && strlen(original_def->file_path) > 0);
     msg(
         LOG_NOTE, original_def->file_path, original_def->line_num,
-        "symbol originally defined here\n"
+        STR_VIEW_FMT " originally defined here\n", str_view_print(original_def->name)
     );
 }

@@ -147,10 +147,16 @@ static bool extract_function_return_types(Node** result, Tk_view* tokens) {
 static Node* extract_function_declaration_common(Tk_view* tokens) {
     Node* fun_declaration = node_new();
 
-    fun_declaration->name = tk_view_chop_front(tokens).text;
+    Token name_token = tk_view_chop_front(tokens);
+    fun_declaration->name = name_token.text;
+    fun_declaration->line_num = name_token.line_num;
+    fun_declaration->file_path = name_token.file_path;
     assert(fun_declaration->name.count > 0);
 
-    try(sym_tbl_add(fun_declaration));
+    if (!sym_tbl_add(fun_declaration)) {
+        msg_redefinition_of_symbol(fun_declaration);
+        todo();
+    }
 
     try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_PAR));
 
@@ -198,6 +204,8 @@ static Node* extract_struct_definition(Tk_view* tokens) {
     Node* new_struct = node_new();
     new_struct->name = name.text;
     new_struct->type = NODE_STRUCT_DEFINITION;
+    new_struct->line_num = name.line_num;
+    new_struct->file_path = name.file_path;
 
     try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE));
     while (tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_CLOSE_CURLY_BRACE) {
@@ -208,7 +216,10 @@ static Node* extract_struct_definition(Tk_view* tokens) {
     }
 
     try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
-    try(sym_tbl_add(new_struct));
+    if (!sym_tbl_add(new_struct)) {
+        msg_redefinition_of_symbol(new_struct);
+        todo();
+    }
     return new_struct;
 }
 
