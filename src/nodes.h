@@ -369,7 +369,6 @@ static inline Node* node_clone(const Node* node_to_clone) {
 }
 
 static inline void nodes_move_back_one(Node* node) {
-    log(LOG_DEBUG, "thing thing\n");
     assert(node->prev);
 
     Node* prev = node->prev;
