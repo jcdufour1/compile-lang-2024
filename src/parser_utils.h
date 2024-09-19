@@ -36,6 +36,9 @@ size_t sizeof_item(const Node* item);
 size_t sizeof_struct(const Node* struct_literal);
 
 static inline bool is_struct_variable_definition(const Node* var_def) {
+    if (var_def->type == NODE_STRUCT_ELEMENT_PTR_DEF) {
+        return false;
+    }
     assert(var_def->type == NODE_VARIABLE_DEFINITION);
 
     Node* struct_def;

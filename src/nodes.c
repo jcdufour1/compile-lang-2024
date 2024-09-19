@@ -36,6 +36,7 @@ static const char* NODE_STORE_STRUCT_MEMBER_DESCRIPTION = "store_member";
 static const char* NODE_LOAD_STRUCT_MEMBER_DESCRIPTION = "load_member";
 static const char* NODE_STRUCT_ELEMENT_PTR_CALL_DESCRIPTION = "struct_element_ptr_call";
 static const char* NODE_STRUCT_ELEMENT_PTR_DEF_DESCRIPTION = "struct_element_ptr_def";
+static const char* NODE_LOAD_STRUCT_ELEMENT_PTR_DESCRIPTION = "load_struct_elem_ptr";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
 #ifndef NDEBUG
@@ -178,6 +179,8 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_STRUCT_ELEMENT_PTR_CALL_DESCRIPTION);
         case NODE_STRUCT_ELEMENT_PTR_DEF:
             return str_view_from_cstr(NODE_STRUCT_ELEMENT_PTR_DEF_DESCRIPTION);
+        case NODE_LOAD_STRUCT_ELEMENT_PTR:
+            return str_view_from_cstr(NODE_LOAD_STRUCT_ELEMENT_PTR_DESCRIPTION);
         case NODE_NO_TYPE:
             return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
         default:
@@ -205,6 +208,8 @@ String node_print_internal(const Node* node) {
         case NODE_FUNCTION_PARAM_CALL:
             // fallthrough
         case NODE_LOAD:
+            // fallthrough
+        case NODE_LOAD_STRUCT_ELEMENT_PTR:
             // fallthrough
         case NODE_GOTO:
             // fallthrough

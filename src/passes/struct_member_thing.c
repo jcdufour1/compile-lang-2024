@@ -34,7 +34,7 @@ static void do_function_call(Node* node_to_insert_before, Node* fun_call) {
         switch (arg->type) {
             case NODE_STRUCT_MEMBER_CALL:
                 do_thing(node_to_insert_before, arg);
-                todo();
+                break;
             default:
                 break;
         }
@@ -48,9 +48,62 @@ static void do_return_statement(Node* node_to_insert_before, Node* rtn_statement
     switch (child->type) {
         case NODE_LITERAL:
             break;
+        case NODE_SYMBOL:
+            break;
+        case NODE_STRUCT_MEMBER_CALL:
+            do_thing(node_to_insert_before, child);
+            break;
         default:
             unreachable(NODE_FMT"\n", node_print(child));
     }
+}
+
+static void do_assignment_operand_symbol(Node* node_to_insert_before, Node* operand) {
+    assert(operand->type == NODE_SYMBOL);
+
+    Node* var_def;
+    try(sym_tbl_lookup(&var_def, operand->name));
+
+    Node* struct_def;
+    if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
+        unreachable("");
+    }
+
+    switch (var_def->type) {
+        case NODE_VARIABLE_DEFINITION:
+            return;
+        default:
+            unreachable(NODE_FMT"\n", node_print(var_def));
+    }
+}
+
+static void do_assignment_operand(Node* node_to_insert_before, Node* operand) {
+    switch (operand->type) {
+        case NODE_STRUCT_ELEMENT_PTR_DEF:
+            break;
+        case NODE_SYMBOL:
+            do_assignment_operand_symbol(node_to_insert_before, operand);
+            break;
+        case NODE_VARIABLE_DEFINITION:
+            break;
+        case NODE_FUNCTION_CALL:
+            do_function_call(node_to_insert_before, operand);
+            break;
+        case NODE_STRUCT_MEMBER_CALL:
+            do_thing(node_to_insert_before, operand);
+            break;
+        case NODE_LITERAL:
+            break;
+        case NODE_STRUCT_LITERAL:
+            break;
+        default:
+            unreachable(NODE_FMT"\n", node_print(operand));
+    }
+}
+
+static void do_assignment(Node* node_to_insert_before, Node* assignment) {
+    do_assignment_operand(node_to_insert_before, nodes_get_child(assignment, 0));
+    do_assignment_operand(node_to_insert_before, nodes_get_child(assignment, 1));
 }
 
 static void struct_member_thing_internal(Node* block) {
@@ -97,7 +150,7 @@ static void struct_member_thing_internal(Node* block) {
                 do_return_statement(block_element, block_element);
                 break;
             case NODE_VARIABLE_DEFINITION:
-                todo();
+                break;
             case NODE_FUNCTION_DECLARATION:
                 break;
             case NODE_FOR_LOOP:
@@ -113,7 +166,8 @@ static void struct_member_thing_internal(Node* block) {
             case NODE_IF_CONDITION:
                 todo();
             case NODE_ASSIGNMENT:
-                todo();
+                do_assignment(block_element, block_element);
+                break;
             case NODE_GOTO:
                 todo();
             case NODE_COND_GOTO:
