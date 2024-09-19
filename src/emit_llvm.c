@@ -206,6 +206,11 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
             case NODE_FUNCTION_CALL:
                 unreachable(""); // this function call should be changed to assign to a variable 
                                // before reaching emit_llvm stage, then assign that variable here. 
+            case NODE_STRUCT_ELEMENT_PTR_CALL:
+                string_extend_strv(output, str_view_from_cstr("ptr"));
+                string_extend_cstr(output, " %");
+                string_extend_size_t(output, get_prev_load_id(argument));
+                break;
             default:
                 unreachable(NODE_FMT"\n", node_print(argument));
         }
@@ -360,6 +365,31 @@ static void emit_load_variable(String* output, const Node* variable_call) {
     string_extend_size_t(output, get_store_dest_id(variable_call));
     string_extend_cstr(output, ", align 8");
     string_extend_cstr(output, "\n");
+}
+
+static void emit_load_struct_element_ptr(String* output, const Node* load_elem_ptr) {
+    assert(load_elem_ptr->type == NODE_LOAD_STRUCT_ELEMENT_PTR);
+
+    Node* elem_ptr_def;
+    if (!sym_tbl_lookup(&elem_ptr_def, load_elem_ptr->name)) {
+        unreachable("");
+    }
+    Node* struct_def;
+    if (!sym_tbl_lookup(&struct_def, elem_ptr_def->lang_type)) {
+        unreachable(NODE_FMT"\n", node_print(elem_ptr_def));
+    }
+
+    size_t member_idx = get_member_index(struct_def, nodes_get_child_const(elem_ptr_def, 0));
+    string_extend_cstr(output, "    %"); 
+    string_extend_size_t(output, load_elem_ptr->llvm_id);
+    string_extend_cstr(output, " = getelementptr inbounds %struct.");
+    string_extend_strv(output, elem_ptr_def->lang_type);
+    string_extend_cstr(output, ", ptr %");
+    string_extend_size_t(output, get_store_dest_id(load_elem_ptr));
+    string_extend_cstr(output, ", i32 0");
+    string_extend_cstr(output, ", i32 ");
+    string_extend_size_t(output, member_idx);
+    string_append(output, '\n');
 }
 
 static void emit_store_struct_literal(String* output, const Node* store) {
@@ -757,6 +787,9 @@ static void emit_block(String* output, const Node* block) {
             case NODE_LOAD:
                 emit_load_variable(output, statement);
                 break;
+            case NODE_LOAD_STRUCT_ELEMENT_PTR:
+                emit_load_struct_element_ptr(output, statement);
+                break;
             case NODE_STRUCT_DEFINITION:
                 emit_struct_definition(output, statement);
                 break;
@@ -768,6 +801,8 @@ static void emit_block(String* output, const Node* block) {
                 break;
             case NODE_FOR_LOOP:
                 unreachable("for loop should not still be present at this point\n");
+            case NODE_STRUCT_ELEMENT_PTR_DEF:
+                break;
             default:
                 //log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
                 node_printf(statement);
@@ -838,6 +873,8 @@ static void emit_symbols(String* output) {
             case NODE_FUNCTION_DEFINITION:
                 // fallthrough
             case NODE_STRUCT_DEFINITION:
+                // fallthrough
+            case NODE_STRUCT_ELEMENT_PTR_DEF:
                 break;
             default:
                 log(LOG_FETAL, NODE_FMT"\n", node_print(curr_node.node));

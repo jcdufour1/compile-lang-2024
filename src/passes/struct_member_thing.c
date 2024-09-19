@@ -3,11 +3,11 @@
 #include "../nodes.h"
 #include "../parser_utils.h"
 
-static Node* struct_element_ptr_def_new(Str_view name) {
+static Node* struct_element_ptr_def_new(Str_view name, Str_view struct_def_type) {
     Node* var_def = node_new();
     var_def->name = name;
     var_def->type = NODE_STRUCT_ELEMENT_PTR_DEF;
-    var_def->lang_type = str_view_from_cstr("");
+    var_def->lang_type = struct_def_type;
     var_def->token_type = TOKEN_NONTYPE;
 
     try(sym_tbl_add(var_def));
@@ -18,7 +18,10 @@ static void do_thing(Node* node_to_insert_before, Node* old_struct_memb_call) {
     log_tree(LOG_DEBUG, node_to_insert_before->parent);
     assert(old_struct_memb_call->type == NODE_STRUCT_MEMBER_CALL);
 
-    Node* lhs = struct_element_ptr_def_new(literal_name_new());
+    Node* var_def;
+    try(sym_tbl_lookup(&var_def, old_struct_memb_call->name));
+
+    Node* lhs = struct_element_ptr_def_new(literal_name_new(), var_def->lang_type);
     nodes_append_child(lhs, node_clone(nodes_single_child(old_struct_memb_call)));
     Node* assignment = assignment_new(lhs, symbol_new(old_struct_memb_call->name));
     nodes_insert_before(node_to_insert_before, assignment);
