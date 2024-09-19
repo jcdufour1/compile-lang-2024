@@ -345,7 +345,6 @@ typedef enum {
 
 static bool try_extract_operation_tokens(Tk_view* operation, Tk_view* tokens) {
     bool is_operation = false;
-    bool is_poisoned = false;
     size_t idx = 0;
     PAR_STATUS par_status = PAR_PAR;
     for (idx = 0; idx < tokens->count; idx++) {
@@ -363,7 +362,7 @@ static bool try_extract_operation_tokens(Tk_view* operation, Tk_view* tokens) {
                 // fallthrough
             case TOKEN_SYMBOL:
                 if (par_status == PAR_OPERAND) {
-                    is_poisoned = true;
+                    goto after_for_extract_operation_tokens;
                 }
                 par_status = PAR_OPERAND;
                 continue;
@@ -398,9 +397,6 @@ static bool try_extract_operation_tokens(Tk_view* operation, Tk_view* tokens) {
 after_for_extract_operation_tokens:
     if (!is_operation) {
         return false;
-    }
-    if (is_poisoned) {
-        unreachable("invalid syntax");
     }
     *operation = tk_view_chop_count(tokens, idx);
     return true;
@@ -481,11 +477,14 @@ static Node* extract_function_return_statement(Tk_view* tokens) {
     return new_node;
 }
 
-static Node* extract_assignment(Tk_view* tokens) {
+static Node* extract_assignment(Tk_view* tokens, Node* lhs) {
     Node* assignment = node_new();
     assignment->type = NODE_ASSIGNMENT;
+    if (!lhs) {
+        lhs = extract_expression(tokens);
+    }
     
-    nodes_append_child(assignment, extract_expression(tokens)); // lhs
+    nodes_append_child(assignment, lhs); // lhs
     try(tk_view_try_consume(NULL, tokens, TOKEN_SINGLE_EQUAL));
     nodes_append_child(assignment, extract_expression(tokens)); // rhs
 
@@ -559,22 +558,27 @@ static bool extract_statement(Node** child, Tk_view* tokens) {
         return extract_function_call(child, tokens);
     }
 
-    Tk_view assignment_tokens = tk_view_chop_on_type_delim_or_all(tokens, TOKEN_SEMICOLON);
-    if (get_idx_token(NULL, assignment_tokens, 0, TOKEN_SINGLE_EQUAL)) {
+    Node* var_decl = NULL;
+    if (token_is_equal(tk_view_front(*tokens), "let", TOKEN_SYMBOL)) {
         log_tokens(LOG_DEBUG, *tokens);
-        log_tokens(LOG_DEBUG, assignment_tokens);
-        *child = extract_assignment(&assignment_tokens);
+        var_decl = extract_expression(tokens);
+        log_tokens(LOG_DEBUG, *tokens);
+        if (tk_view_front(*tokens).type == TOKEN_SINGLE_EQUAL) {
+            *child = extract_assignment(tokens, var_decl);
+            tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
+            log_tokens(LOG_DEBUG, *tokens);
+            log_tree(LOG_DEBUG, *child);
+            return true;
+        }
         tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
-        log_tokens(LOG_DEBUG, assignment_tokens);
-        assert(assignment_tokens.count < 1);
+        log_tree(LOG_DEBUG, var_decl);
+        *child = var_decl;
         return true;
     }
-
-    if (token_is_equal(tk_view_front(assignment_tokens), "let", TOKEN_SYMBOL)) {
-        *child = extract_variable_declaration(&assignment_tokens, true);
-        tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
-        return true;
-    }
+    log_tokens(LOG_DEBUG, *tokens);
+    *child = extract_assignment(tokens, NULL);
+    tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
+    return true;
 
     log_tokens(LOG_ERROR, *tokens);
     unreachable("");
@@ -603,7 +607,7 @@ static Node* extract_struct_literal(Tk_view* tokens) {
 
     while (tk_view_try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
         log_tokens(LOG_DEBUG, *tokens);
-        nodes_append_child(struct_literal, extract_assignment(tokens));
+        nodes_append_child(struct_literal, extract_assignment(tokens, NULL));
         tk_view_try_consume(NULL, tokens, TOKEN_COMMA);
     }
 
@@ -646,7 +650,6 @@ static Node* extract_expression(Tk_view* tokens) {
 
     Node* fun_call;
     if (extract_function_call(&fun_call, tokens)) {
-        assert(tokens->count < 1);
         return fun_call;
     }
 

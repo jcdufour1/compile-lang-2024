@@ -1,7 +1,7 @@
 
-extern("c") fn puts(str_to_print: ptr) i32;
+extern("c") fn puts(str_to_print: ptr) i32
 
 fn main() i32 {
-    puts("hello");
-    return 0;
+    puts("hello")
+    return 0
 }

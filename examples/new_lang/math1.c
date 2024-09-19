@@ -1,23 +1,23 @@
-extern("c") fn printf(str_to_print: ptr, args: any...) i32;
+extern("c") fn printf(str_to_print: ptr, args: any...) i32
 
 fn main() i32 {
     for let num1: i32 in {0..10} {
         // define and assign variables
-        let add_result: i32 = num1 + 3;
-        let sub_result: i32 = num1 - 3;
-        let mul_result: i32 = num1*3;
-        let div_result: i32 = num1/3;
-        let curr_num: i32 = 9;
-        let result5: i32;
-        printf("%d + 3 = %d\n", num1, add_result);
-        printf("%d - 3 = %d\n", num1, sub_result);
-        printf("%d*3 = %d\n", num1, mul_result);
-        printf("%d/3 = %d\n", num1, div_result);
+        let add_result: i32 = num1 + 3
+        let sub_result: i32 = num1 - 3
+        let mul_result: i32 = num1*3
+        let div_result: i32 = num1/3
+        let curr_num: i32 = 9
+        let result5: i32
+        printf("%d + 3 = %d\n", num1, add_result)
+        printf("%d - 3 = %d\n", num1, sub_result)
+        printf("%d*3 = %d\n", num1, mul_result)
+        printf("%d/3 = %d\n", num1, div_result)
 
-        result5 = 2*curr_num + 1;
-        printf("2*%d + 1 = %d\n", curr_num, result5);
+        result5 = 2*curr_num + 1
+        printf("2*%d + 1 = %d\n", curr_num, result5)
     }
 
-    return 0;
+    return 0
 }
 
