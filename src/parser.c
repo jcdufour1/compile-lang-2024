@@ -33,8 +33,7 @@ static Tk_view extract_items_inside_brackets(Tk_view* tokens, TOKEN_TYPE closing
     }
     Tk_view inside_brackets = tk_view_chop_count(tokens, idx_closing_bracket);
 
-    Token closing_bracket = tk_view_chop_front(tokens);
-    assert(closing_bracket.type == closing_bracket_type);
+    try(tk_view_try_consume(NULL, tokens, closing_bracket_type));
     return inside_brackets;
 }
 
@@ -402,6 +401,16 @@ after_for_extract_operation_tokens:
 }
 
 static Node* parse_operation(Tk_view tokens) {
+    while (tk_view_front(tokens).type == TOKEN_OPEN_PAR) {
+        Tk_view temp = tokens;
+        Tk_view inner_tokens = extract_items_inside_brackets(&temp, TOKEN_CLOSE_PAR);
+        if (inner_tokens.count + 2 != tokens.count) {
+            // this means that () group at beginning of expression does not wrap the entirty of tokens
+            break;
+        }
+        tokens = inner_tokens;
+    }
+
     size_t idx_operator = get_idx_lowest_precedence_operator(tokens);
     Tk_view left_tokens = tk_view_chop_count(&tokens, idx_operator);
     Token operator_token = tk_view_chop_front(&tokens);
