@@ -59,29 +59,29 @@ fn do_var_lhs() i32 {
 }
 
 fn do_var_rhs() i32 {
-    let num1: i32 = 8
+    let num2: i32 = 8
 
-    if 1 < num1  {
+    if 1 < num2  {
         puts("1")
     }
 
-    if 8 < num1  {
+    if 8 < num2  {
         puts("2")
     }
 
-    if 9 < num1  {
+    if 9 < num2  {
         puts("3")
     }
 
-    if 1 > num1  {
+    if 1 > num2  {
         puts("4")
     }
 
-    if 8 > num1  {
+    if 8 > num2  {
         puts("5")
     }
 
-    if 9 > num1  {
+    if 9 > num2  {
         puts("6")
     }
 

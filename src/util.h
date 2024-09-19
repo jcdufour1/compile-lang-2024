@@ -29,7 +29,28 @@ typedef int LOG_LEVEL;
 #define POP_PRAGMA \
     _Pragma("GCC diagnostic pop") \
 
-#define log_indent(log_level, indent, ...) \
+static inline const char* get_log_level_str(int log_level) {
+    switch (log_level) {
+        case LOG_TRACE:
+            return "";
+        case LOG_DEBUG:
+            return "debug";
+        case LOG_VERBOSE:
+            return "debug";
+        case LOG_NOTE:
+            return "note";
+        case LOG_WARNING:
+            return "warning";
+        case LOG_ERROR:
+            return "error";
+        case LOG_FETAL:
+            return "fetal error";
+        default:
+            abort();
+    }
+}
+
+#define log_common(log_level, file, line, indent, ...) \
     do { \
         if ((log_level) >= CURR_LOG_LEVEL) { \
             PUSH_PRAGMA_IGNORE_WTYPE_LIMITS; \
@@ -37,36 +58,16 @@ typedef int LOG_LEVEL;
                 fprintf(stderr, " "); \
             } \
             POP_PRAGMA; \
-            switch ((log_level)) { \
-                case LOG_FETAL: \
-                    /* fallthrough */ \
-                case LOG_ERROR: \
-                    fprintf(stderr, "%s:%d:error:", __FILE__, __LINE__); \
-                    break; \
-                default: \
-                    fprintf(stderr, "%s:%d:", __FILE__, __LINE__); \
-                    break; \
-            } \
+            fprintf(stderr, "%s:%d:%s:", file, line, get_log_level_str(log_level)); \
             fprintf(stderr, __VA_ARGS__); \
         } \
     } while (0);
 
+#define log_indent(log_level, indent, ...) \
+    log_common(log_level, __FILE__, __LINE__, indent, __VA_ARGS__)
+
 #define log_file_new(log_level, file, line, ...) \
-    do { \
-        if ((log_level) >= CURR_LOG_LEVEL) { \
-            switch ((log_level)) { \
-                case LOG_FETAL: \
-                    /* fallthrough */ \
-                case LOG_ERROR: \
-                    fprintf(stderr, "%s:%d:error:", file, line); \
-                    break; \
-                default: \
-                    fprintf(stderr, "%s:%d:", file, line); \
-                    break; \
-            } \
-            fprintf(stderr, __VA_ARGS__); \
-        } \
-    } while (0);
+    log_common(log_level, file, line, 0, __VA_ARGS__)
 
 // print messages that are intended for debugging
 #define log(log_level, ...) \

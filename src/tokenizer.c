@@ -3,6 +3,7 @@
 #include "token.h"
 #include "tokenizer.h"
 #include "str_view.h"
+#include "parameters.h"
 #include <ctype.h>
 
 static bool local_isalnum_or_underscore(char prev, char curr) {
@@ -33,7 +34,7 @@ static void chop_whitespace(Str_view* file_text, size_t* line_num) {
     }
 }
 
-static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text) {
+static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text, Parameters params) {
     memset(token, 0, sizeof(*token));
 
     chop_whitespace(file_text, line_num);
@@ -43,6 +44,7 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text) 
     }
 
     token->line_num = *line_num;
+    token->file_path = params.input_file_name;
 
     if (isalpha(str_view_front(*file_text))) {
         token->text = str_view_chop_on_cond(file_text, local_isalnum_or_underscore);
@@ -144,14 +146,14 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text) 
     }
 }
 
-Tokens tokenize(const String file_text) {
+Tokens tokenize(const String file_text, Parameters params) {
     Tokens tokens = {0};
 
     Str_view curr_file_text = {.str = file_text.buf, .count = file_text.info.count};
 
     size_t line_num = 1;
     Token curr_token;
-    while (get_next_token(&line_num, &curr_token, &curr_file_text)) {
+    while (get_next_token(&line_num, &curr_token, &curr_file_text, params)) {
         log(LOG_TRACE, "token received: "TOKEN_FMT"\n", token_print(curr_token));
         if (curr_token.type != TOKEN_COMMENT) {
             tokens_append(&tokens, &curr_token);

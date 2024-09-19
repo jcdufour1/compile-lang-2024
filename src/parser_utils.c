@@ -124,7 +124,6 @@ const Node* get_member_def_from_alloca(const Node* store_struct) {
     Str_view member_type = nodes_single_child_const(store_struct)->lang_type;
     nodes_foreach_child(member, struct_def) {
         node_printf(member);
-        log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(member_type));
         if (str_view_is_equal(member->lang_type, member_type)) {
             return member;
         }

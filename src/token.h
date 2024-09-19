@@ -51,6 +51,7 @@ typedef struct {
     TOKEN_TYPE type;
 
     uint32_t line_num;
+    const char* file_path;
 } Token;
 
 Str_view token_print_internal(Token token);

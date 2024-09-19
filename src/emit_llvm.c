@@ -82,6 +82,8 @@ static void extend_literal_decl(String* output, const Node* var_decl_or_def) {
 }
 
 static size_t get_member_index(const Node* struct_def, const Node* member_symbol) {
+    log_tree(LOG_DEBUG, struct_def);
+    assert(struct_def->type == NODE_STRUCT_DEFINITION);
     size_t idx = 0;
     nodes_foreach_child(curr_member, struct_def) {
         if (str_view_is_equal(curr_member->name, member_symbol->name)) {
@@ -683,6 +685,7 @@ static void emit_load_struct_member(String* output, const Node* load_member) {
     if (!sym_tbl_lookup(&var_def, load_member->name)) {
         unreachable("");
     }
+    log_tree(LOG_DEBUG, var_def);
     Node* struct_def;
     if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
         unreachable("");

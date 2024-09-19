@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    Tokens tokens = tokenize(file_text);
+    Tokens tokens = tokenize(file_text, params);
 
     Node* root = parse(tokens);
 

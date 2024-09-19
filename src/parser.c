@@ -6,11 +6,13 @@
 #include "token_view.h"
 #include "symbol_table.h"
 #include "parser_utils.h"
+#include "error_msg.h"
 
 static Node* parse_function_single_return_type(Token tokens);
 static Node* extract_block(Tk_view* tokens);
 INLINE bool extract_statement(Node** child, Tk_view* tokens);
 static Node* extract_expression(Tk_view* tokens);
+static Node* extract_variable_declaration(Tk_view* tokens, bool require_let);
 
 // consume tokens from { to } (inclusive) and discard outer {}
 static Tk_view extract_items_inside_brackets(Tk_view* tokens, TOKEN_TYPE closing_bracket_type) {
@@ -97,15 +99,10 @@ static bool extract_function_parameter(Node** child, Tk_view* tokens) {
         return false;
     }
 
-    Node* param = node_new();
-    param->type = NODE_VARIABLE_DEFINITION;
-    param->name = tk_view_chop_front(tokens).text;
-    try(tk_view_try_consume(NULL, tokens, TOKEN_COLON));
-    param->lang_type = tk_view_chop_front(tokens).text;
+    Node* param = extract_variable_declaration(tokens, false);
     if (tk_view_try_consume(NULL, tokens, TOKEN_TRIPLE_DOT)) {
         param->is_variadic = true;
     }
-    sym_tbl_add(param);
     tk_view_try_consume(NULL, tokens, TOKEN_COMMA);
 
     *child = param;
@@ -153,7 +150,7 @@ static Node* extract_function_declaration_common(Tk_view* tokens) {
     fun_declaration->name = tk_view_chop_front(tokens).text;
     assert(fun_declaration->name.count > 0);
 
-    sym_tbl_add(fun_declaration);
+    try(sym_tbl_add(fun_declaration));
 
     try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_PAR));
 
@@ -211,7 +208,7 @@ static Node* extract_struct_definition(Tk_view* tokens) {
     }
 
     try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
-    sym_tbl_add(new_struct);
+    try(sym_tbl_add(new_struct));
     return new_struct;
 }
 
@@ -220,12 +217,18 @@ static Node* extract_variable_declaration(Tk_view* tokens, bool require_let) {
         assert(!require_let);
     }
 
+    Token name_token = tk_view_chop_front(tokens);
     Node* variable_def = node_new();
     variable_def->type = NODE_VARIABLE_DEFINITION;
-    variable_def->name = tk_view_chop_front(tokens).text;
+    variable_def->name = name_token.text;
+    variable_def->line_num = name_token.line_num;
+    variable_def->file_path = name_token.file_path;
     try(tk_view_try_consume(NULL, tokens, TOKEN_COLON));
     variable_def->lang_type = tk_view_chop_front(tokens).text;
-    sym_tbl_add(variable_def);
+    if (!sym_tbl_add(variable_def)) {
+        msg_redefinition_of_symbol(variable_def);
+        todo();
+    }
 
     if (tokens->count > 0 && !tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON)) {
         Token front = tk_view_front(*tokens);
@@ -318,7 +321,7 @@ static Node* extract_literal(Tk_view* tokens) {
     new_node->line_num = token.line_num;
     new_node->lang_type = get_literal_lang_type_from_token_type(new_node->token_type);
 
-    sym_tbl_add(new_node);
+    try(sym_tbl_add(new_node));
     return new_node;
 }
 
@@ -613,7 +616,7 @@ static Node* extract_struct_literal(Tk_view* tokens) {
     }
 
     try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
-    sym_tbl_add(struct_literal);
+    try(sym_tbl_add(struct_literal));
     return struct_literal;
 }
 

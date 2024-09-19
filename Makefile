@@ -36,12 +36,14 @@ OBJS=\
 	 ${BUILD_DIR}/file.o \
 	 ${BUILD_DIR}/parameters.o \
 	 ${BUILD_DIR}/parser_utils.o \
+	 ${BUILD_DIR}/error_msg.o \
 	 ${BUILD_DIR}/passes/do_passes.o \
 	 ${BUILD_DIR}/passes/walk_tree.o \
 	 ${BUILD_DIR}/passes/for_and_if_to_branch.o \
 	 ${BUILD_DIR}/passes/assign_llvm_ids.o \
 	 ${BUILD_DIR}/passes/add_load_and_store.o \
 	 ${BUILD_DIR}/passes/flatten_operations.o
+
 DEP_COMMON = Makefile
 
 FILE_TO_TEST ?= examples/new_lang/test_basic.c
@@ -103,6 +105,9 @@ ${BUILD_DIR}/file.o: ${DEP_COMMON} src/file.c src/*.h third_party/*
 
 ${BUILD_DIR}/parameters.o: ${DEP_COMMON} src/parameters.c src/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/parameters.o src/parameters.c
+
+${BUILD_DIR}/error_msg.o: ${DEP_COMMON} src/error_msg.c src/*.h third_party/*
+	cc ${C_FLAGS} -c -o ${BUILD_DIR}/error_msg.o src/error_msg.c
 
 
 # passes

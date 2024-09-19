@@ -16,7 +16,7 @@ static Node* label_new(Str_view label_name) {
     Node* label = node_new();
     label->type = NODE_LABEL;
     label->name = label_name;
-    sym_tbl_add(label);
+    try(sym_tbl_add(label));
     return label;
 }
 
@@ -121,8 +121,6 @@ static void for_loop_to_branch(Node* for_loop) {
 }
 
 static void if_statement_to_branch(Node* curr_node) {
-    log_tree(LOG_DEBUG, curr_node);
-
     Node* condition = nodes_get_child_of_type(curr_node, NODE_IF_CONDITION);
     Node* block = nodes_get_child_of_type(curr_node, NODE_BLOCK);
 
@@ -156,8 +154,6 @@ static void if_statement_to_branch(Node* curr_node) {
     nodes_append_child(new_branch_block, if_after);
 
     nodes_replace(curr_node, new_branch_block);
-
-    log_tree(LOG_DEBUG, check_cond_jmp);
 }
 
 bool for_and_if_to_branch(Node* curr_node) {

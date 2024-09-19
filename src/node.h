@@ -64,6 +64,7 @@ typedef struct Node_ {
     bool is_fun_param_associated : 1;
 
     uint32_t line_num;
+    const char* file_path;
 } Node;
 
 extern Node* root_of_tree;

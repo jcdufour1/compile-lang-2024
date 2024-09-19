@@ -10,7 +10,7 @@ static Node* variable_i32_def_new(Str_view name) {
     var_def->lang_type = str_view_from_cstr("i32");
     var_def->token_type = TOKEN_NUM_LITERAL;
 
-    sym_tbl_add(var_def);
+    try(sym_tbl_add(var_def));
     return var_def;
 }
 

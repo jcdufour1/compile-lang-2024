@@ -34,7 +34,8 @@ static inline size_t sym_tbl_calculate_idx(Str_view sym_name, size_t capacity) {
     return stbds_hash_bytes(sym_name.str, sym_name.count, 0) % capacity;
 }
 
-static inline void sym_tbl_add_internal(Symbol_table_node* sym_tbl_nodes, size_t capacity, Node* node_of_symbol) {
+// returns false if symbol is already added to the table
+static inline bool sym_tbl_add_internal(Symbol_table_node* sym_tbl_nodes, size_t capacity, Node* node_of_symbol) {
     assert(node_of_symbol);
     Str_view symbol_name = node_of_symbol->name;
     assert(symbol_name.count > 0 && "invalid node_of_symbol");
@@ -42,8 +43,9 @@ static inline void sym_tbl_add_internal(Symbol_table_node* sym_tbl_nodes, size_t
     size_t curr_table_idx = sym_tbl_calculate_idx(symbol_name, capacity);
     size_t init_table_idx = curr_table_idx; 
     while (sym_tbl_nodes[curr_table_idx].status == SYM_TBL_OCCUPIED) {
-        // TODO: enable this
-        // assert(!str_view_is_equal(sym_tbl_nodes[curr_table_idx].node->name, node_of_symbol->name) && "redefinition of symbol");
+        if (str_view_is_equal(sym_tbl_nodes[curr_table_idx].node->name, node_of_symbol->name)) {
+            return false;
+        }
         curr_table_idx = (curr_table_idx + 1) % capacity;
         assert(init_table_idx != curr_table_idx && "hash table is full here, and it should not be");
         (void) init_table_idx;
@@ -51,6 +53,7 @@ static inline void sym_tbl_add_internal(Symbol_table_node* sym_tbl_nodes, size_t
 
     Symbol_table_node node = {.key = symbol_name, .node = node_of_symbol, .status = SYM_TBL_OCCUPIED};
     sym_tbl_nodes[curr_table_idx] = node;
+    return true;
 }
 
 static inline void sym_tbl_cpy(Symbol_table_node* dest, const Symbol_table_node* src, size_t count_nodes_to_cpy) {
@@ -128,12 +131,16 @@ static inline bool sym_tbl_lookup(
     unreachable("");
 }
 
-static inline void sym_tbl_add(
+// returns false if symbol has already been added to the table
+static inline bool sym_tbl_add(
     Node* node_of_symbol
 ) {
     sym_tbl_expand_if_nessessary();
-    sym_tbl_add_internal(symbol_table.table_nodes, symbol_table.capacity, node_of_symbol);
+    if (!sym_tbl_add_internal(symbol_table.table_nodes, symbol_table.capacity, node_of_symbol)) {
+        return false;
+    }
     symbol_table.count++;
+    return true;
 }
 
 #define SYM_TBL_STATUS_FMT "%s"
