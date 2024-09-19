@@ -12,6 +12,9 @@
 #define TOKEN_FMT STR_VIEW_FMT
 
 typedef enum {
+    // nontype
+    TOKEN_NONTYPE,
+
     // operators
     TOKEN_SINGLE_PLUS,
     TOKEN_SINGLE_MINUS,

@@ -15,7 +15,6 @@ static Node* extract_expression(Tk_view* tokens);
 // consume tokens from { to } (inclusive) and discard outer {}
 static Tk_view extract_items_inside_brackets(Tk_view* tokens, TOKEN_TYPE closing_bracket_type) {
     Token opening_bracket = tk_view_chop_front(tokens);
-    assert(opening_bracket.type == TOKEN_OPEN_CURLY_BRACE);
     // the opening_bracket type should be the opening bracket type that corresponds to closing_brace_type
     switch (closing_bracket_type) {
         case TOKEN_CLOSE_CURLY_BRACE:
@@ -59,14 +58,13 @@ static bool tokens_start_with_function_call(Tk_view tokens) {
 static size_t get_idx_lowest_precedence_operator(Tk_view tokens) {
     size_t idx_lowest = SIZE_MAX;
     uint32_t lowest_pre = UINT32_MAX; // higher numbers have higher precedence
-    uint16_t par_level = 1;
+    int16_t par_level = 1;
 
     for (size_t idx_ = tokens.count; idx_ > 0; idx_--) {
         size_t actual_idx = idx_ - 1;
         Token curr_token = tk_view_at(tokens, actual_idx);
 
         if (curr_token.type == TOKEN_OPEN_PAR) {
-            assert(par_level > 1);
             par_level--;
             continue;
         }
@@ -348,6 +346,7 @@ static bool try_extract_operation_tokens(Tk_view* operation, Tk_view* tokens) {
     size_t idx = 0;
     PAR_STATUS par_status = PAR_PAR;
     for (idx = 0; idx < tokens->count; idx++) {
+        TOKEN_TYPE prev_token_type = idx > 0 ? tk_view_at(*tokens, idx - 1).type : TOKEN_NONTYPE;
         Token curr_token = tk_view_at(*tokens, idx);
         if (token_is_operator(curr_token)) {
             assert(par_status != PAR_OPERATOR);
@@ -361,7 +360,7 @@ static bool try_extract_operation_tokens(Tk_view* operation, Tk_view* tokens) {
             case TOKEN_STRING_LITERAL:
                 // fallthrough
             case TOKEN_SYMBOL:
-                if (par_status == PAR_OPERAND) {
+                if (prev_token_type == TOKEN_CLOSE_PAR || par_status == PAR_OPERAND) {
                     goto after_for_extract_operation_tokens;
                 }
                 par_status = PAR_OPERAND;
@@ -560,22 +559,16 @@ static bool extract_statement(Node** child, Tk_view* tokens) {
 
     Node* var_decl = NULL;
     if (token_is_equal(tk_view_front(*tokens), "let", TOKEN_SYMBOL)) {
-        log_tokens(LOG_DEBUG, *tokens);
         var_decl = extract_expression(tokens);
-        log_tokens(LOG_DEBUG, *tokens);
         if (tk_view_front(*tokens).type == TOKEN_SINGLE_EQUAL) {
             *child = extract_assignment(tokens, var_decl);
             tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
-            log_tokens(LOG_DEBUG, *tokens);
-            log_tree(LOG_DEBUG, *child);
             return true;
         }
         tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
-        log_tree(LOG_DEBUG, var_decl);
         *child = var_decl;
         return true;
     }
-    log_tokens(LOG_DEBUG, *tokens);
     *child = extract_assignment(tokens, NULL);
     tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
     return true;
@@ -606,7 +599,6 @@ static Node* extract_struct_literal(Tk_view* tokens) {
     try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE));
 
     while (tk_view_try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
-        log_tokens(LOG_DEBUG, *tokens);
         nodes_append_child(struct_literal, extract_assignment(tokens, NULL));
         tk_view_try_consume(NULL, tokens, TOKEN_COMMA);
     }
@@ -632,10 +624,14 @@ static Node* extract_expression(Tk_view* tokens) {
         unreachable("");
     }
 
-    while (tk_view_front(*tokens).type == TOKEN_OPEN_PAR && tk_view_at(*tokens, tokens->count - 1).type == TOKEN_CLOSE_PAR) {
-        try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_PAR));
-        Tk_view inner_tokens = tk_view_chop_count(tokens, tokens->count - 1);
-        try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_PAR));
+    assert(tokens->count > 0);
+    while (tk_view_front(*tokens).type == TOKEN_OPEN_PAR) {
+        Tk_view temp = *tokens;
+        Tk_view inner_tokens = extract_items_inside_brackets(&temp, TOKEN_CLOSE_PAR);
+        if (inner_tokens.count + 2 != tokens->count) {
+            // this means that () group at beginning of expression does not wrap the entirty of tokens
+            break;
+        }
         *tokens = inner_tokens;
     }
 

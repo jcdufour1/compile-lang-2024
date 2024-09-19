@@ -208,6 +208,8 @@ String node_print_internal(const Node* node) {
             string_extend_strv_in_par(&buf, node->name);
             break;
         case NODE_LITERAL:
+            log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(node->name));
+            log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(node->str_data));
             string_extend_strv_in_gtlt(&buf, token_type_to_str_view(node->token_type));
             string_extend_strv(&buf, node->name);
             string_extend_strv_in_par(&buf, node->str_data);

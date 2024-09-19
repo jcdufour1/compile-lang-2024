@@ -3,6 +3,8 @@
 
 Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
     switch (token_type) {
+        case TOKEN_NONTYPE:
+            return str_view_from_cstr("nontype");
         case TOKEN_SYMBOL:
             return str_view_from_cstr("sym");
         case TOKEN_OPEN_PAR:
@@ -49,7 +51,7 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
         case TOKEN_COMMENT:
             return str_view_from_cstr("comment");
         default:
-            unreachable("");
+            unreachable("%d\n", token_type);
     }
 }
 

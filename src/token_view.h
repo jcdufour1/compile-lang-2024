@@ -12,7 +12,7 @@ typedef struct {
 
 #define log_tokens(log_level, token_view) \
     do { \
-        log(log_level, "tokens:\n"); \
+        log((log_level), "tokens:\n"); \
         for (size_t idx = 0; idx < (token_view).count; idx++) { \
             log((log_level), TOKEN_FMT"\n", token_print((token_view).tokens[idx])); \
         } \
@@ -209,6 +209,20 @@ static inline Tk_view tk_view_chop_on_matching_type_delims_or_all(
     }
     *token_view = option_2_tokens;
     return option_2;
+}
+
+static inline bool tk_view_try_find(
+    size_t* first_occcurance,
+    Tk_view token_view,
+    TOKEN_TYPE token_type
+) {
+    for (size_t idx = 0; idx < token_view.count; idx++) {
+        if (token_view.tokens[idx].type == token_type) {
+            *first_occcurance = idx;
+            return true;
+        }
+    }
+    return false;
 }
 
 static inline Str_view tk_view_print_internal(Tk_view token_view) {
