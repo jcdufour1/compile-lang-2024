@@ -11,6 +11,8 @@ bool flatten_operations(Node* curr_node);
 
 bool add_load_and_store(Node* curr_node);
 
+bool flatten_load_and_store(Node* curr_node);
+
 bool assign_llvm_ids(Node* curr_node);
 
 #endif // PASSES_H

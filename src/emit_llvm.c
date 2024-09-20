@@ -331,7 +331,7 @@ static void emit_src(String* output, const Node* src) {
             string_extend_cstr(output, " %");
             string_extend_size_t(output, get_prev_load_id(src));
             break;
-        case NODE_FUNCTION_PARAM_CALL:
+        case NODE_FUNCTION_PARAM_SYM:
             string_extend_cstr(output, " %");
             string_extend_size_t(output, get_matching_fun_param_load_id(src));
             break;
@@ -412,6 +412,7 @@ static void emit_normal_store(String* output, const Node* store) {
     const Node* src = nodes_single_child_const(store);
     switch (src->type) {
         case NODE_FUNCTION_CALL:
+            unreachable("");
             emit_function_call(output, src);
             break;
         case NODE_OPERATOR:
@@ -422,7 +423,7 @@ static void emit_normal_store(String* output, const Node* store) {
         case NODE_SYMBOL:
             //emit_load_variable(output, src);
             break;
-        case NODE_FUNCTION_PARAM_CALL:
+        case NODE_FUNCTION_PARAM_SYM:
             is_fun_param_call = true;
             //emit_load_variable(output, src);
             break;
@@ -489,7 +490,7 @@ static void emit_store(String* output, const Node* store) {
         emit_store_struct_literal(output, store);
     } else if (store->left_child->type == NODE_STORE_STRUCT_MEMBER) {
         emit_store_struct_member(output, store);
-    } else if (is_struct_def && src->type == NODE_FUNCTION_PARAM_CALL) {
+    } else if (is_struct_def && src->type == NODE_FUNCTION_PARAM_SYM) {
         emit_store_struct_fun_param(output, store);
     } else {
         emit_normal_store(output, store);

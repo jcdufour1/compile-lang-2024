@@ -88,7 +88,7 @@ static void insert_store(Node* node_insert_store_before, Node* symbol_call /* sr
             node_printf(symbol_call);
             assert(symbol_call->name.count > 0);
             break;
-        case NODE_FUNCTION_PARAM_CALL:
+        case NODE_FUNCTION_PARAM_SYM:
             break;
         default:
             node_printf(symbol_call);
@@ -249,7 +249,7 @@ static void load_function_parameters(Node* fun_def) {
 
     nodes_foreach_child(param, fun_params) {
         Node* fun_param_call = symbol_new(param->name);
-        fun_param_call->type = NODE_FUNCTION_PARAM_CALL;
+        fun_param_call->type = NODE_FUNCTION_PARAM_SYM;
         insert_store(fun_block->left_child, fun_param_call);
         Node* alloca = alloca_new(param);
         alloca->is_fun_param_associated = true;
@@ -300,7 +300,7 @@ bool add_load_and_store(Node* start_start_node) {
                 break;
             case NODE_FUNCTION_PARAMETERS:
                 break;
-            case NODE_FUNCTION_PARAM_CALL:
+            case NODE_FUNCTION_PARAM_SYM:
                 break;
             case NODE_FUNCTION_RETURN_TYPES:
                 break;

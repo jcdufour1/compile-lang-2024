@@ -193,7 +193,7 @@ Node* symbol_new(Str_view symbol_name) {
 }
 
 Llvm_id get_matching_fun_param_load_id(const Node* fun_param_call) {
-    assert(fun_param_call->type == NODE_FUNCTION_PARAM_CALL);
+    assert(fun_param_call->type == NODE_FUNCTION_PARAM_SYM);
 
     const Node* fun_def = fun_param_call;
     while (fun_def->type != NODE_FUNCTION_DEFINITION) {
@@ -213,6 +213,7 @@ Llvm_id get_matching_fun_param_load_id(const Node* fun_param_call) {
 }
 
 const Node* get_lang_type_from_sym_definition(const Node* sym_def) {
+    (void) sym_def;
     todo();
 }
 

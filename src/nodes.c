@@ -28,12 +28,14 @@ static const char* NODE_STORE_DESCRIPTION = "store";
 static const char* NODE_LOAD_DESCRIPTION = "load";
 static const char* NODE_IF_STATEMENT_DESCRIPTION = "if_statement";
 static const char* NODE_IF_CONDITION_DESCRIPTION = "if_condition";
-static const char* NODE_FUNCTION_PARAM_CALL_DESCRIPTION = "fun_param_call";
+static const char* NODE_FUNCTION_PARAM_SYM_DESCRIPTION = "fun_param_sym";
 static const char* NODE_STRUCT_DEFINITION_DESCRIPTION = "struct_def";
 static const char* NODE_STRUCT_MEMBER_CALL_DESCRIPTION = "struct_member_call";
 static const char* NODE_STRUCT_LITERAL_DESCRIPTION = "struct_literal";
 static const char* NODE_STORE_STRUCT_MEMBER_DESCRIPTION = "store_member";
 static const char* NODE_LOAD_STRUCT_MEMBER_DESCRIPTION = "load_member";
+static const char* NODE_NODE_FUNCTION_RETURN_VALUE_SYM_DESCRIPTION = "fun_return_value_sym";
+static const char* NODE_NODE_MEMCPY_DESCRIPTION = "memcpy";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
 #ifndef NDEBUG
@@ -160,8 +162,8 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_IF_STATEMENT_DESCRIPTION);
         case NODE_IF_CONDITION:
             return str_view_from_cstr(NODE_IF_CONDITION_DESCRIPTION);
-        case NODE_FUNCTION_PARAM_CALL:
-            return str_view_from_cstr(NODE_FUNCTION_PARAM_CALL_DESCRIPTION);
+        case NODE_FUNCTION_PARAM_SYM:
+            return str_view_from_cstr(NODE_FUNCTION_PARAM_SYM_DESCRIPTION);
         case NODE_STRUCT_DEFINITION:
             return str_view_from_cstr(NODE_STRUCT_DEFINITION_DESCRIPTION);
         case NODE_STRUCT_MEMBER_CALL:
@@ -172,6 +174,10 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_STORE_STRUCT_MEMBER_DESCRIPTION);
         case NODE_LOAD_STRUCT_MEMBER:
             return str_view_from_cstr(NODE_LOAD_STRUCT_MEMBER_DESCRIPTION);
+        case NODE_FUNCTION_RETURN_VALUE_SYM:
+            return str_view_from_cstr(NODE_NODE_FUNCTION_RETURN_VALUE_SYM_DESCRIPTION);
+        case NODE_MEMCPY:
+            return str_view_from_cstr(NODE_NODE_MEMCPY_DESCRIPTION);
         case NODE_NO_TYPE:
             return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
         default:
@@ -196,7 +202,7 @@ String node_print_internal(const Node* node) {
             // fallthrough
         case NODE_STORE:
             // fallthrough
-        case NODE_FUNCTION_PARAM_CALL:
+        case NODE_FUNCTION_PARAM_SYM:
             // fallthrough
         case NODE_LOAD:
             // fallthrough
@@ -219,6 +225,8 @@ String node_print_internal(const Node* node) {
         case NODE_LOAD_STRUCT_MEMBER:
             // fallthrough
         case NODE_STORE_STRUCT_MEMBER:
+            // fallthrough
+        case NODE_MEMCPY:
             // fallthrough
         case NODE_STRUCT_DEFINITION:
             // fallthrough
@@ -262,6 +270,8 @@ String node_print_internal(const Node* node) {
         case NODE_IF_STATEMENT:
             // fallthrough
         case NODE_IF_CONDITION:
+            // fallthrough
+        case NODE_FUNCTION_RETURN_VALUE_SYM:
             // fallthrough
         case NODE_NO_TYPE:
             break;
