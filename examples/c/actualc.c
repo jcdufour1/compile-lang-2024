@@ -36,12 +36,13 @@ void do_thing(Div div) {
 void do_thing_ptr(Div* div) {
 }
 
+void do_thing_member_ptr(int* numerator) {
+    *numerator = 9;
+}
+
 int main(void) {
+    int a = 8;
     Div div = {.numerator = 78, .denominator = 90, .extra_num = 7};
     printf("%d\n", div.extra_num);
-    div.extra_num = 12;
-    printf("%d\n", div.extra_num);
-    do_thing(div);
-    do_thing_ptr(&div);
     return 0;
 }
