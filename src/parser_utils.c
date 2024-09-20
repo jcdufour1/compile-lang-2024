@@ -48,7 +48,7 @@ static bool get_prev_matching_node(const Node** result, const Node* node_to_star
 }
 
 static bool is_load_struct_member(const Node* curr_node, const Node* var_call) {
-    if (curr_node->type != NODE_LOAD_STRUCT_MEMBER && curr_node->type != NODE_LOAD_STRUCT_ELEMENT_PTR) {
+    if (curr_node->type != NODE_LOAD_STRUCT_MEMBER) {
         return false;
     }
     node_printf(curr_node);
@@ -61,12 +61,11 @@ static bool is_load_struct_member(const Node* curr_node, const Node* var_call) {
     node_printf(curr_member);
     const Node* member_to_find = nodes_single_child_const(var_call);
     node_printf(member_to_find);
-    todo();
     return str_view_is_equal(curr_member->name, member_to_find->name);
 }
 
 static bool is_load(const Node* curr_node, const Node* var_call) {
-    return (curr_node->type == NODE_LOAD || curr_node->type == NODE_LOAD_STRUCT_ELEMENT_PTR) && str_view_is_equal(curr_node->name, var_call->name);
+    return (curr_node->type == NODE_LOAD) && str_view_is_equal(curr_node->name, var_call->name);
 }
 
 static bool is_store(const Node* curr_node, const Node* var_call) {
