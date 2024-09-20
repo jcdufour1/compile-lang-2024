@@ -339,6 +339,10 @@ static void emit_src(String* output, const Node* src) {
             string_extend_cstr(output, " %");
             string_extend_size_t(output, get_prev_function_call_id(src));
             break;
+        case NODE_OPERATOR_RETURN_VALUE_SYM:
+            string_extend_cstr(output, " %");
+            string_extend_size_t(output, get_prev_operator_id(src));
+            break;
         default:
             node_printf(src);
             todo();
@@ -434,6 +438,8 @@ static void emit_normal_store(String* output, const Node* store) {
             //emit_load_variable(output, src);
             break;
         case NODE_FUNCTION_RETURN_VALUE_SYM:
+            break;
+        case NODE_OPERATOR_RETURN_VALUE_SYM:
             break;
         default:
             log_tree(LOG_DEBUG, store);
@@ -779,6 +785,9 @@ static void emit_block(String* output, const Node* block) {
                 break;
             case NODE_MEMCPY:
                 emit_memcpy(output, statement);
+                break;
+            case NODE_OPERATOR:
+                emit_operator(output, statement);
                 break;
             case NODE_FOR_LOOP:
                 unreachable("for loop should not still be present at this point\n");

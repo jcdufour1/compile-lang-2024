@@ -35,6 +35,7 @@ static const char* NODE_STRUCT_LITERAL_DESCRIPTION = "struct_literal";
 static const char* NODE_STORE_STRUCT_MEMBER_DESCRIPTION = "store_member";
 static const char* NODE_LOAD_STRUCT_MEMBER_DESCRIPTION = "load_member";
 static const char* NODE_NODE_FUNCTION_RETURN_VALUE_SYM_DESCRIPTION = "fun_return_value_sym";
+static const char* NODE_NODE_OPERATOR_RETURN_VALUE_SYM_DESCRIPTION = "operator_return_value_sym";
 static const char* NODE_NODE_MEMCPY_DESCRIPTION = "memcpy";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
@@ -176,6 +177,8 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_LOAD_STRUCT_MEMBER_DESCRIPTION);
         case NODE_FUNCTION_RETURN_VALUE_SYM:
             return str_view_from_cstr(NODE_NODE_FUNCTION_RETURN_VALUE_SYM_DESCRIPTION);
+        case NODE_OPERATOR_RETURN_VALUE_SYM:
+            return str_view_from_cstr(NODE_NODE_OPERATOR_RETURN_VALUE_SYM_DESCRIPTION);
         case NODE_MEMCPY:
             return str_view_from_cstr(NODE_NODE_MEMCPY_DESCRIPTION);
         case NODE_NO_TYPE:
@@ -272,6 +275,8 @@ String node_print_internal(const Node* node) {
         case NODE_IF_CONDITION:
             // fallthrough
         case NODE_FUNCTION_RETURN_VALUE_SYM:
+            // fallthrough
+        case NODE_OPERATOR_RETURN_VALUE_SYM:
             // fallthrough
         case NODE_NO_TYPE:
             break;

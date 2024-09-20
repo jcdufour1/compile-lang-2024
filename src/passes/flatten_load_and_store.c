@@ -13,21 +13,27 @@ static void do_store(Node* node_to_insert_before, Node* store) {
             nodes_append_child(store, new_src);
             break;
         }
-        case NODE_STRUCT_LITERAL: {
-            store->type = NODE_MEMCPY;
-            log_tree(LOG_DEBUG, store->parent);
+        case NODE_OPERATOR: {
+            nodes_remove(src, true);
+            nodes_insert_before(node_to_insert_before, src);
+            Node* new_src = node_new();
+            new_src->type = NODE_OPERATOR_RETURN_VALUE_SYM;
+            nodes_append_child(store, new_src);
             break;
         }
+        case NODE_STRUCT_LITERAL:
+            store->type = NODE_MEMCPY;
+            break;
         case NODE_FUNCTION_PARAM_SYM:
             break;
         case NODE_FUNCTION_RETURN_VALUE_SYM:
+            break;
+        case NODE_OPERATOR_RETURN_VALUE_SYM:
             break;
         case NODE_LITERAL:
             break;
         case NODE_SYMBOL:
             break;
-        case NODE_OPERATOR:
-            break; // todo: implement this
         default:
             unreachable(NODE_FMT"\n", node_print(src));
     }
@@ -114,6 +120,8 @@ bool flatten_load_and_store(Node* start_start_node) {
             case NODE_MEMCPY:
                 break;
             case NODE_FUNCTION_RETURN_VALUE_SYM:
+                break;
+            case NODE_OPERATOR_RETURN_VALUE_SYM:
                 break;
             default:
                 unreachable(NODE_FMT"\n", node_print(curr_node));
