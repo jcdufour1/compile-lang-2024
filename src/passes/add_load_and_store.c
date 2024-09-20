@@ -54,8 +54,6 @@ static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
             return;
         case NODE_STRUCT_MEMBER_CALL:
             // fallthrough
-        case NODE_STRUCT_ELEMENT_PTR_CALL:
-            // fallthrough
         case NODE_SYMBOL:
             // fallthrough
         case NODE_VARIABLE_DEFINITION:
@@ -67,11 +65,8 @@ static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
 
     Node* load = node_new();
     if (symbol_call->type == NODE_STRUCT_MEMBER_CALL) {
-        unreachable("");
         load->type = NODE_LOAD_STRUCT_MEMBER;
         nodes_append_child(load, node_clone(nodes_single_child(symbol_call)));
-    } else if (symbol_call->type == NODE_STRUCT_ELEMENT_PTR_CALL) {
-        load->type = NODE_LOAD_STRUCT_ELEMENT_PTR;
     } else {
         load->type = NODE_LOAD;
     }
@@ -153,9 +148,7 @@ static void insert_store_assignment(Node* assignment) {
     log_tree(LOG_DEBUG, root_of_tree);
     switch (lhs->type) {
         case NODE_VARIABLE_DEFINITION:
-            // fallthrough
-        case NODE_STRUCT_ELEMENT_PTR_DEF:
-            nodes_remove(lhs, true);
+            nodes_remove(lhs, false);
             nodes_insert_before(assignment, lhs);
             insert_alloca(lhs);
             break;
@@ -164,10 +157,8 @@ static void insert_store_assignment(Node* assignment) {
             break;
         case NODE_STRUCT_MEMBER_CALL:
             break;
-        case NODE_STRUCT_ELEMENT_PTR_CALL:
-            break;
         default:
-            unreachable(NODE_FMT"\n", node_print(lhs));
+            todo();
     }
    
     switch (rhs->type) {
@@ -207,17 +198,12 @@ static void insert_store_assignment(Node* assignment) {
 }
 
 static void add_load_return_statement(Node* return_statement) {
-    assert(return_statement->type == NODE_RETURN_STATEMENT);
-
     log(LOG_DEBUG, "add_load_return_statement\n");
-    log_tree(LOG_DEBUG, return_statement);
     Node* node_to_return = nodes_single_child(return_statement);
     switch (node_to_return->type) {
         case NODE_STRUCT_MEMBER_CALL:
             // fallthrough
         case NODE_SYMBOL:
-            // fallthrough
-        case NODE_STRUCT_ELEMENT_PTR_CALL:
             insert_load(return_statement, node_to_return);
             return;
         case NODE_FUNCTION_CALL:
@@ -325,15 +311,11 @@ bool add_load_and_store(Node* start_start_node) {
                 break;
             case NODE_BLOCK:
                 break;
-            case NODE_STRUCT_ELEMENT_PTR_CALL:
-                break;
             case NODE_SYMBOL:
                 break;
             case NODE_RETURN_STATEMENT:
                 add_load_return_statement(curr_node);
                 break;
-            case NODE_STRUCT_ELEMENT_PTR_DEF:
-                // fallthrough
             case NODE_VARIABLE_DEFINITION:
                 if (curr_node->parent->type == NODE_FUNCTION_PARAMETERS ||
                     curr_node->parent->type == NODE_STRUCT_DEFINITION ||
@@ -368,8 +350,7 @@ bool add_load_and_store(Node* start_start_node) {
                 add_load_cond_goto(curr_node);
                 break;
             case NODE_NO_TYPE:
-                log_tree(LOG_DEBUG, curr_node->parent);
-                unreachable(NODE_FMT"\n", node_print(curr_node));
+                todo();
             case NODE_LABEL:
                 break;
             case NODE_ALLOCA:
@@ -378,8 +359,6 @@ bool add_load_and_store(Node* start_start_node) {
                 break;
             case NODE_LOAD:
                 break;
-            case NODE_LOAD_STRUCT_ELEMENT_PTR:
-                break;
             case NODE_IF_STATEMENT:
                 unreachable("if statement node should not still exist at this point\n");
             case NODE_LOAD_STRUCT_MEMBER:
@@ -387,7 +366,7 @@ bool add_load_and_store(Node* start_start_node) {
             case NODE_STORE_STRUCT_MEMBER:
                 break;
             case NODE_STRUCT_MEMBER_CALL:
-                unreachable("");
+                break;
             case NODE_STRUCT_DEFINITION:
                 break;
             default:

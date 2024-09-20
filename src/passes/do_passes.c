@@ -11,6 +11,7 @@ void do_passes(Node** root) {
 
     walk_tree(*root, struct_member_thing);
     log_tree(LOG_DEBUG, *root);
+    todo();
 
     walk_tree(*root, flatten_operations);
     log_tree(LOG_DEBUG, *root);

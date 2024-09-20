@@ -12,13 +12,9 @@ bool assign_llvm_ids(Node* curr_node) {
     switch (curr_node->type) {
         case NODE_STRUCT_LITERAL:
             return false;
-        case NODE_STRUCT_ELEMENT_PTR_DEF:
-            return false;
         case NODE_STRUCT_DEFINITION:
             return false;
         case NODE_FUNCTION_PARAMETERS:
-            return false;
-        case NODE_STRUCT_ELEMENT_PTR_CALL:
             return false;
         case NODE_SYMBOL:
             return false;
@@ -51,8 +47,6 @@ bool assign_llvm_ids(Node* curr_node) {
         case NODE_ASSIGNMENT:
             // fallthrough
         case NODE_ALLOCA:
-            // fallthrough
-        case NODE_LOAD_STRUCT_ELEMENT_PTR:
             // fallthrough
         case NODE_LOAD:
             // fallthrough
