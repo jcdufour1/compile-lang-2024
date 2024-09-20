@@ -81,10 +81,6 @@ static bool is_variable_def(const Node* curr_node, const Node* var_call) {
     return curr_node->type == NODE_VARIABLE_DEFINITION && 0 == str_view_cmp(curr_node->name, var_call->name);
 }
 
-static bool is_load_member_ptr(const Node* curr_node, const Node* load_member_value) {
-    return curr_node->type == NODE_STRUCT_MEMBER_CALL_LOW_LEVEL && 0 == str_view_cmp(curr_node->name, load_member_value->name);
-}
-
 Llvm_id get_prev_load_id(const Node* var_call) {
     node_printf(var_call);
     const Node* load;
@@ -102,26 +98,6 @@ Llvm_id get_prev_load_id(const Node* var_call) {
     return llvm_id;
 }
 
-const Node* get_prev_store_member_ptr(const Node* load_member_value) {
-    assert(load_member_value->type == NODE_LOAD_STRUCT_MEMBER);
-    node_printf(load_member_value);
-
-
-    const Node* store_member_ptr;
-    if (!get_prev_matching_node(&store_member_ptr, load_member_value, load_member_value, is_store)) {
-        unreachable("no struct load node found before symbol call:"NODE_FMT"\n", node_print(store_member_ptr));
-    }
-    return store_member_ptr;
-
-}
-
-const Node* get_store_member_symbol_from_load_member_value(const Node* load_member_value) {
-    const Node* store_member_ptr = get_prev_store_member_ptr(load_member_value);
-    const Node* member_symbol = nodes_single_child_const(nodes_single_child_const(store_member_ptr));
-    node_printf(member_symbol);
-    return member_symbol;
-}
-
 Llvm_id get_store_dest_id(const Node* var_call) {
     const Node* store;
     if (!get_prev_matching_node(&store, var_call, var_call, is_alloca)) {
@@ -136,10 +112,6 @@ const Node* get_normal_symbol_def_from_alloca(const Node* alloca) {
     Node* sym_def;
     if (!sym_tbl_lookup(&sym_def, alloca->name)) {
         unreachable("alloca call to undefined variable:"NODE_FMT"\n", node_print(alloca));
-    }
-    log(LOG_DEBUG, NODE_FMT"\n", node_print(alloca));
-    log(LOG_DEBUG, NODE_FMT"\n", node_print(sym_def));
-    if (!str_view_cstr_is_equal(alloca->name, "div3")) {
     }
     return sym_def;
 }
@@ -300,17 +272,5 @@ size_t sizeof_struct(const Node* struct_literal_or_def) {
             node_printf(struct_literal_or_def);
             todo();
     }
-}
-
-const Node* get_member_def(const Node* struct_def, const Node* member_symbol) {
-    assert(struct_def->type == NODE_STRUCT_DEFINITION);
-    assert(member_symbol->type == NODE_SYMBOL);
-
-    nodes_foreach_child(curr_member, struct_def) {
-        if (str_view_is_equal(curr_member->name, member_symbol->name)) {
-            return curr_member;
-        }
-    }
-    unreachable("member not found");
 }
 
