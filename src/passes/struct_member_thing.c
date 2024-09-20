@@ -7,6 +7,7 @@ static Node* struct_element_ptr_def_new(Str_view name, Str_view struct_def_type)
     Node* var_def = node_new();
     var_def->name = name;
     var_def->type = NODE_STRUCT_ELEMENT_PTR_DEF;
+    assert(struct_def_type.count > 0);
     var_def->lang_type = struct_def_type;
     var_def->token_type = TOKEN_NONTYPE;
 
@@ -14,20 +15,21 @@ static Node* struct_element_ptr_def_new(Str_view name, Str_view struct_def_type)
     return var_def;
 }
 
-static void do_thing(Node* node_to_insert_before, Node* old_struct_memb_call) {
-    log_tree(LOG_DEBUG, node_to_insert_before->parent);
+static void replace_struct_member_call(Node* node_to_insert_before, Node* old_struct_memb_call) {
     assert(old_struct_memb_call->type == NODE_STRUCT_MEMBER_CALL);
 
     Node* var_def;
     try(sym_tbl_lookup(&var_def, old_struct_memb_call->name));
 
     Node* lhs = struct_element_ptr_def_new(literal_name_new(), var_def->lang_type);
-    nodes_append_child(lhs, node_clone(nodes_single_child(old_struct_memb_call)));
-    Node* assignment = assignment_new(lhs, symbol_new(old_struct_memb_call->name));
+    Node* new_thing = node_clone_self_and_children(old_struct_memb_call);
+    new_thing->type = NODE_STRUCT_MEMBER_CALL_LOW_LEVEL;
+    Node* assignment = assignment_new(lhs, new_thing);
     nodes_insert_before(node_to_insert_before, assignment);
 
-    old_struct_memb_call->type = NODE_STRUCT_ELEMENT_PTR_CALL;
     old_struct_memb_call->name = lhs->name;
+    nodes_remove(nodes_single_child(old_struct_memb_call), true);
+    //log(LOG_DEBUG, NODE_FMT"\n", node_print(old_struct_memb_call));
 }
 
 static void do_function_call(Node* node_to_insert_before, Node* fun_call) {
@@ -36,7 +38,7 @@ static void do_function_call(Node* node_to_insert_before, Node* fun_call) {
     nodes_foreach_child(arg, fun_call) {
         switch (arg->type) {
             case NODE_STRUCT_MEMBER_CALL:
-                do_thing(node_to_insert_before, arg);
+                replace_struct_member_call(node_to_insert_before, arg);
                 break;
             default:
                 break;
@@ -54,7 +56,7 @@ static void do_return_statement(Node* node_to_insert_before, Node* rtn_statement
         case NODE_SYMBOL:
             break;
         case NODE_STRUCT_MEMBER_CALL:
-            do_thing(node_to_insert_before, child);
+            replace_struct_member_call(node_to_insert_before, child);
             break;
         default:
             unreachable(NODE_FMT"\n", node_print(child));
@@ -93,11 +95,13 @@ static void do_assignment_operand(Node* node_to_insert_before, Node* operand) {
             do_function_call(node_to_insert_before, operand);
             break;
         case NODE_STRUCT_MEMBER_CALL:
-            do_thing(node_to_insert_before, operand);
+            replace_struct_member_call(node_to_insert_before, operand);
             break;
         case NODE_LITERAL:
             break;
         case NODE_STRUCT_LITERAL:
+            break;
+        case NODE_STRUCT_MEMBER_CALL_LOW_LEVEL:
             break;
         default:
             unreachable(NODE_FMT"\n", node_print(operand));
@@ -114,7 +118,6 @@ static void struct_member_thing_internal(Node* block) {
 
     Node* block_element = nodes_get_local_rightmost(block->left_child);
     while (block_element) {
-        node_printf(block_element);
         bool advance_to_prev = true;
         switch (block_element->type) {
             case NODE_NO_TYPE:
@@ -169,6 +172,7 @@ static void struct_member_thing_internal(Node* block) {
             case NODE_IF_CONDITION:
                 todo();
             case NODE_ASSIGNMENT:
+                node_printf(block_element);
                 do_assignment(block_element, block_element);
                 break;
             case NODE_GOTO:

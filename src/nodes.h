@@ -368,6 +368,18 @@ static inline Node* node_clone(const Node* node_to_clone) {
     return new_node;
 }
 
+static inline Node* node_clone_self_and_children(const Node* node_to_clone) {
+    if (!node_to_clone) {
+        return NULL;
+    }
+
+    Node* new_node = node_clone(node_to_clone);
+    nodes_foreach_child(child, node_to_clone) {
+        nodes_append_child(new_node, node_clone_self_and_children(child));
+    }
+    return new_node;
+}
+
 static inline void nodes_move_back_one(Node* node) {
     assert(node->prev);
 

@@ -35,6 +35,61 @@ size_t sizeof_item(const Node* item);
 
 size_t sizeof_struct(const Node* struct_literal);
 
+static inline const Node* struct_definition_from_node(const Node* node) {
+    switch (node->type) {
+        case NODE_SYMBOL:
+            break;
+        case NODE_STORE:
+            break;
+        default:
+            unreachable(NODE_FMT"\n", node_print(node));
+    }
+
+    Node* var_def;
+    if (!sym_tbl_lookup(&var_def, node->name)) {
+        unreachable("");
+    }
+    switch (var_def->type) {
+        case NODE_STRUCT_ELEMENT_PTR_DEF:
+            break;
+        default:
+            unreachable(NODE_FMT"\n", node_print(var_def));
+    }
+
+    Node* struct_def;
+    if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
+        unreachable("");
+    }
+    return struct_def;
+}
+
+static inline const Node* struct_variable_definition_from_node(const Node* node) {
+    switch (node->type) {
+        case NODE_SYMBOL:
+            break;
+        case NODE_STORE:
+            break;
+        case NODE_STRUCT_MEMBER_CALL_LOW_LEVEL:
+            break;
+        default:
+            unreachable(NODE_FMT"\n", node_print(node));
+    }
+
+    Node* var_def;
+    if (!sym_tbl_lookup(&var_def, node->name)) {
+        unreachable("");
+    }
+    switch (var_def->type) {
+        case NODE_VARIABLE_DEFINITION:
+            return var_def;
+        default:
+            unreachable(NODE_FMT"\n", node_print(var_def));
+    }
+
+    unreachable(NODE_FMT"\n", node_print(var_def));
+}
+
+
 static inline bool is_struct_variable_definition(const Node* var_def) {
     if (var_def->type == NODE_STRUCT_ELEMENT_PTR_DEF) {
         return false;
@@ -56,5 +111,9 @@ static inline bool is_struct_symbol(const Node* symbol) {
 }
 
 size_t sizeof_struct_definition(const Node* struct_def);
+
+const Node* get_member_def(const Node* struct_def, const Node* member_symbol);
+
+const Node* get_store_member_symbol_from_load_member_value(const Node* load_member_value);
 
 #endif // PARSER_UTIL_H

@@ -67,18 +67,27 @@ static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
 
     Node* load = node_new();
     if (symbol_call->type == NODE_STRUCT_MEMBER_CALL) {
-        unreachable("");
         load->type = NODE_LOAD_STRUCT_MEMBER;
-        nodes_append_child(load, node_clone(nodes_single_child(symbol_call)));
+        Node* load_ptr = node_new();
+        load_ptr->name = symbol_call->name;
+        load_ptr->type = NODE_LOAD;
+        nodes_insert_before(node_insert_load_before, load_ptr);
     } else if (symbol_call->type == NODE_STRUCT_ELEMENT_PTR_CALL) {
         load->type = NODE_LOAD_STRUCT_ELEMENT_PTR;
+        log_tree(LOG_DEBUG, symbol_call);
+        //load->lang_type = get_member_def(struct_def, )->lang_type;
+        todo();
     } else {
         load->type = NODE_LOAD;
     }
     load->name = symbol_call->name;
+    log(LOG_DEBUG, "-------\n");
+    log_tree(LOG_DEBUG, node_insert_load_before->parent);
+    log(LOG_DEBUG, "-------\n");
     nodes_insert_before(node_insert_load_before, load);
-    //log_tree(LOG_DEBUG, node_insert_load_before->parent);
-    //todo();
+    log(LOG_DEBUG, "-------\n");
+    log_tree(LOG_DEBUG, node_insert_load_before->parent);
+    log(LOG_DEBUG, "-------\n");
 }
 
 static void insert_store(Node* node_insert_store_before, Node* symbol_call /* src */) {
@@ -157,12 +166,14 @@ static void insert_store_assignment(Node* assignment) {
         case NODE_STRUCT_ELEMENT_PTR_DEF:
             nodes_remove(lhs, true);
             nodes_insert_before(assignment, lhs);
-            insert_alloca(lhs);
+            //insert_alloca(lhs); // TODO: can I remove this?
             break;
         case NODE_SYMBOL:
             node_printf(lhs);
             break;
         case NODE_STRUCT_MEMBER_CALL:
+            break;
+        case NODE_STRUCT_MEMBER_CALL_LOW_LEVEL:
             break;
         case NODE_STRUCT_ELEMENT_PTR_CALL:
             break;
@@ -187,6 +198,8 @@ static void insert_store_assignment(Node* assignment) {
             break;
         case NODE_FUNCTION_CALL:
             break;
+        case NODE_STRUCT_MEMBER_CALL_LOW_LEVEL:
+            break;
         default:
             node_printf(rhs)
             todo();
@@ -196,6 +209,9 @@ static void insert_store_assignment(Node* assignment) {
     store->name = lhs->name;
     nodes_remove(rhs, true);
     if (lhs->type == NODE_STRUCT_MEMBER_CALL) {
+        store->type = NODE_STORE_STRUCT_MEMBER;
+        nodes_append_child(store, node_clone(nodes_single_child(lhs)));
+    } else if (lhs->type == NODE_STRUCT_MEMBER_CALL_LOW_LEVEL) {
         store->type = NODE_STORE_STRUCT_MEMBER;
         nodes_append_child(store, node_clone(nodes_single_child(lhs)));
     } else {
@@ -387,7 +403,9 @@ bool add_load_and_store(Node* start_start_node) {
             case NODE_STORE_STRUCT_MEMBER:
                 break;
             case NODE_STRUCT_MEMBER_CALL:
-                unreachable("");
+                break;
+            case NODE_STRUCT_MEMBER_CALL_LOW_LEVEL:
+                break;
             case NODE_STRUCT_DEFINITION:
                 break;
             default:
