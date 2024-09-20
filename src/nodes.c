@@ -37,7 +37,7 @@ static const char* NODE_LOAD_STRUCT_MEMBER_DESCRIPTION = "load_member";
 static const char* NODE_STRUCT_ELEMENT_PTR_CALL_DESCRIPTION = "struct_element_ptr_call";
 static const char* NODE_STRUCT_ELEMENT_PTR_DEF_DESCRIPTION = "struct_element_ptr_def";
 static const char* NODE_LOAD_STRUCT_ELEMENT_PTR_DESCRIPTION = "load_struct_elem_ptr";
-static const char* NODE_STRUCT_MEMBER_CALL_LOW_LEVEL_DESCRIPTION = "struct_member_call_low_level";
+static const char* NODE_NODE_STRUCT_MEMBER_ELEMENT_PTR_SYMBOL_DESCRIPTION = "struct_member_load_member_element_ptr";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
 #ifndef NDEBUG
@@ -184,8 +184,8 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_LOAD_STRUCT_ELEMENT_PTR_DESCRIPTION);
         case NODE_NO_TYPE:
             return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
-        case NODE_STRUCT_MEMBER_CALL_LOW_LEVEL:
-            return str_view_from_cstr(NODE_STRUCT_MEMBER_CALL_LOW_LEVEL_DESCRIPTION);
+        case NODE_STRUCT_MEMBER_ELEMENT_PTR_SYMBOL:
+            return str_view_from_cstr(NODE_NODE_STRUCT_MEMBER_ELEMENT_PTR_SYMBOL_DESCRIPTION);
         default:
             log(LOG_FETAL, "node_type: %d\n", node_type);
             todo();
@@ -251,7 +251,7 @@ String node_print_internal(const Node* node) {
             break;
         case NODE_VARIABLE_DEFINITION:
             // fallthrough
-        case NODE_STRUCT_MEMBER_CALL_LOW_LEVEL:
+        case NODE_STRUCT_MEMBER_ELEMENT_PTR_SYMBOL:
             // fallthrough
         case NODE_STRUCT_ELEMENT_PTR_DEF:
             // fallthrough

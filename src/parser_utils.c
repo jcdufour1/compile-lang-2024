@@ -5,6 +5,8 @@
 #include "symbol_table.h"
 #include "parser_utils.h"
 
+const Node* get_member_definition(const Node* struct_def, const Node* member_symbol);
+
 Str_view literal_name_new(void) {
     static String_vec literal_strings = {0};
     static size_t count = 0;
@@ -51,22 +53,21 @@ static bool is_load_struct_member(const Node* curr_node, const Node* var_call) {
     if (curr_node->type != NODE_LOAD_STRUCT_MEMBER && curr_node->type != NODE_LOAD_STRUCT_ELEMENT_PTR) {
         return false;
     }
-    node_printf(curr_node);
-    node_printf(var_call);
+    log_tree(LOG_DEBUG, curr_node);
+    log_tree(LOG_DEBUG, var_call);
     if (!str_view_is_equal(curr_node->name, var_call->name)) {
         return false;
     }
 
-    const Node* curr_member = nodes_single_child_const(curr_node);
-    node_printf(curr_member);
-    const Node* member_to_find = nodes_single_child_const(var_call);
-    node_printf(member_to_find);
-    todo();
-    return str_view_is_equal(curr_member->name, member_to_find->name);
+    //const Node* curr_member = get_member_symbol_definition_auto(curr_node);
+    //node_printf(curr_member);
+    //const Node* member_to_find = nodes_single_child_const(var_call);
+    //node_printf(member_to_find);
+    return str_view_is_equal(curr_node->name, var_call->name);
 }
 
 static bool is_load(const Node* curr_node, const Node* var_call) {
-    return (curr_node->type == NODE_LOAD || curr_node->type == NODE_LOAD_STRUCT_ELEMENT_PTR) && str_view_is_equal(curr_node->name, var_call->name);
+    return (curr_node->type == NODE_LOAD || curr_node->type == NODE_LOAD_STRUCT_MEMBER) && str_view_is_equal(curr_node->name, var_call->name);
 }
 
 static bool is_store(const Node* curr_node, const Node* var_call) {
@@ -82,7 +83,7 @@ static bool is_variable_def(const Node* curr_node, const Node* var_call) {
 }
 
 static bool is_load_member_ptr(const Node* curr_node, const Node* load_member_value) {
-    return curr_node->type == NODE_STRUCT_MEMBER_CALL_LOW_LEVEL && 0 == str_view_cmp(curr_node->name, load_member_value->name);
+    return curr_node->type == NODE_STRUCT_MEMBER_ELEMENT_PTR_SYMBOL && 0 == str_view_cmp(curr_node->name, load_member_value->name);
 }
 
 Llvm_id get_prev_load_id(const Node* var_call) {
@@ -102,24 +103,46 @@ Llvm_id get_prev_load_id(const Node* var_call) {
     return llvm_id;
 }
 
-const Node* get_prev_store_member_ptr(const Node* load_member_value) {
-    assert(load_member_value->type == NODE_LOAD_STRUCT_MEMBER);
-    node_printf(load_member_value);
+Llvm_id get_prev_load_id_value(const Node* var_call) {
+    node_printf(var_call);
+    const Node* load;
+    if (var_call->type == NODE_STRUCT_MEMBER_CALL) {
+        if (!get_prev_matching_node(&load, var_call, var_call, is_store)) {
+            unreachable("no struct load node found before symbol call:"NODE_FMT"\n", node_print(var_call));
+        }
+    } else {
+        if (!get_prev_matching_node(&load, var_call, var_call, is_load)) {
+            unreachable("no struct load node found before symbol call:"NODE_FMT"\n", node_print(var_call));
+        }
+    }
+    Llvm_id llvm_id = load->llvm_id;
+    assert(llvm_id > 0);
+    return llvm_id;
+}
 
+const Node* get_prev_store_member_ptr(const Node* load_member_value) {
+    node_printf(load_member_value);
 
     const Node* store_member_ptr;
     if (!get_prev_matching_node(&store_member_ptr, load_member_value, load_member_value, is_store)) {
         unreachable("no struct load node found before symbol call:"NODE_FMT"\n", node_print(store_member_ptr));
     }
     return store_member_ptr;
-
 }
 
-const Node* get_store_member_symbol_from_load_member_value(const Node* load_member_value) {
-    const Node* store_member_ptr = get_prev_store_member_ptr(load_member_value);
-    const Node* member_symbol = nodes_single_child_const(nodes_single_child_const(store_member_ptr));
-    node_printf(member_symbol);
-    return member_symbol;
+const Node* get_member_symbol_definition_auto(const Node* node) {
+    switch (node->type) {
+        case NODE_LOAD_STRUCT_MEMBER:
+            break;
+        case NODE_STRUCT_MEMBER_CALL:
+            break;
+        default:
+            unreachable(NODE_FMT"\n", node_print(node));
+    }
+
+    const Node* store_member_ptr = get_prev_store_member_ptr(node);
+    const Node* symbol_thing = nodes_single_child_const(nodes_single_child_const(store_member_ptr));
+    return get_member_definition(struct_definition_from_node(node), symbol_thing);
 }
 
 Llvm_id get_store_dest_id(const Node* var_call) {
@@ -302,7 +325,7 @@ size_t sizeof_struct(const Node* struct_literal_or_def) {
     }
 }
 
-const Node* get_member_def(const Node* struct_def, const Node* member_symbol) {
+const Node* get_member_definition(const Node* struct_def, const Node* member_symbol) {
     assert(struct_def->type == NODE_STRUCT_DEFINITION);
     assert(member_symbol->type == NODE_SYMBOL);
 
