@@ -122,6 +122,4 @@ const Node* get_store_member_symbol(const Node* node);
 
 const Node* get_member_symbol_definition_auto(const Node* node);
 
-const Node* get_prev_thing_member_ptr(const Node* load_member_value);
-
 #endif // PARSER_UTIL_H

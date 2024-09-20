@@ -142,6 +142,7 @@ static void emit_function_params(String* output, const Node* fun_params) {
 }
 
 static void emit_fun_arg_struct_member_call(String* output, const Node* member_call) {
+    todo();
     Node* var_def;
     if (!sym_tbl_lookup(&var_def, member_call->name)) {
         unreachable("");
@@ -160,6 +161,8 @@ static void emit_fun_arg_struct_member_call(String* output, const Node* member_c
     }
     string_extend_cstr(output, " %");
     string_extend_size_t(output, get_prev_load_id(member_call));
+    log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
+    todo();
 }
 
 static void emit_function_call_arguments(String* output, const Node* fun_call) {
@@ -326,6 +329,7 @@ static void emit_operator(String* output, const Node* operator) {
 }
 
 static void emit_src(String* output, const Node* src) {
+    //log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
     switch (src->type) {
         case NODE_LITERAL:
             extend_literal_decl_prefix(output, src);
@@ -333,13 +337,11 @@ static void emit_src(String* output, const Node* src) {
         case NODE_FUNCTION_CALL:
             // fallthrough
         case NODE_STRUCT_MEMBER_ELEMENT_PTR_SYMBOL:
+            todo();
             // fallthrough
         case NODE_OPERATOR:
-            log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
             string_extend_cstr(output, " %");
             string_extend_size_t(output, src->llvm_id);
-            log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
-            log_tree(LOG_DEBUG, src->parent);
             break;
         case NODE_SYMBOL:
             string_extend_cstr(output, " %");
@@ -378,8 +380,7 @@ static void emit_load_variable(String* output, const Node* variable_call) {
 }
 
 static void emit_load_struct_element_ptr(String* output, const Node* store) {
-    log_tree(LOG_DEBUG, store);
-    log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
+    todo();
     const Node* load_elem_ptr = nodes_single_child_const(store);
     log(LOG_DEBUG, NODE_FMT"\n", node_print(load_elem_ptr));
     assert(load_elem_ptr->type == NODE_STRUCT_MEMBER_ELEMENT_PTR_SYMBOL);
@@ -393,8 +394,6 @@ static void emit_load_struct_element_ptr(String* output, const Node* store) {
         unreachable(NODE_FMT"\n", node_print(elem_ptr_def));
     }
 
-    log_tree(LOG_DEBUG, store);
-    log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
     size_t member_idx = get_member_index(struct_def, nodes_get_child_const(load_elem_ptr, 0));
     string_extend_cstr(output, "    %"); 
     string_extend_size_t(output, load_elem_ptr->llvm_id);
@@ -476,6 +475,7 @@ static void emit_normal_store(String* output, const Node* store) {
             //emit_load_variable(output, src);
             break;
         case NODE_STRUCT_MEMBER_ELEMENT_PTR_SYMBOL:
+            todo();
             emit_load_struct_element_ptr(output, store);
             break;
         default:
@@ -493,7 +493,6 @@ static void emit_normal_store(String* output, const Node* store) {
         extend_type_call_str(output, var_or_member_def);
     }
 
-    log_tree(LOG_DEBUG, src);
     emit_src(output, src);
 
     string_extend_cstr(output, ", ptr %");
@@ -738,7 +737,6 @@ static void emit_struct_definition(String* output, const Node* statement) {
 }
 
 static void emit_load_struct_member(String* output, const Node* load_member) {
-    log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
     Node* member_ptr_def;
     if (!sym_tbl_lookup(&member_ptr_def, load_member->name)) {
         unreachable("");
@@ -757,9 +755,12 @@ static void emit_load_struct_member(String* output, const Node* load_member) {
     string_extend_cstr(output, ", ");
     string_extend_cstr(output, "ptr");
     string_extend_cstr(output, " %");
-    string_extend_size_t(output, get_store_dest_id(load_member));
+    string_extend_size_t(output, get_prev_load_id(load_member));
     string_extend_cstr(output, ", align 8");
     string_extend_cstr(output, "\n");
+
+    log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
+    todo();
 }
 
 static void emit_block(String* output, const Node* block) {
