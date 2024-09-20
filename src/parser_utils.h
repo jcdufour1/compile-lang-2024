@@ -41,10 +41,6 @@ static inline const Node* struct_definition_from_node(const Node* node) {
             break;
         case NODE_STORE:
             break;
-        case NODE_STRUCT_MEMBER_CALL:
-            break;
-        case NODE_LOAD_STRUCT_MEMBER:
-            break;
         default:
             unreachable(NODE_FMT"\n", node_print(node));
     }
@@ -73,7 +69,7 @@ static inline const Node* struct_variable_definition_from_node(const Node* node)
             break;
         case NODE_STORE:
             break;
-        case NODE_STRUCT_MEMBER_ELEMENT_PTR_SYMBOL:
+        case NODE_STRUCT_MEMBER_CALL_LOW_LEVEL:
             break;
         default:
             unreachable(NODE_FMT"\n", node_print(node));
@@ -116,10 +112,8 @@ static inline bool is_struct_symbol(const Node* symbol) {
 
 size_t sizeof_struct_definition(const Node* struct_def);
 
-const Node* get_member_definition(const Node* struct_def, const Node* member_symbol);
+const Node* get_member_def(const Node* struct_def, const Node* member_symbol);
 
-const Node* get_store_member_symbol(const Node* node);
-
-const Node* get_member_symbol_definition_auto(const Node* node);
+const Node* get_store_member_symbol_from_load_member_value(const Node* load_member_value);
 
 #endif // PARSER_UTIL_H

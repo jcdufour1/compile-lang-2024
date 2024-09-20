@@ -142,17 +142,16 @@ static void emit_function_params(String* output, const Node* fun_params) {
 }
 
 static void emit_fun_arg_struct_member_call(String* output, const Node* member_call) {
-    todo();
     Node* var_def;
     if (!sym_tbl_lookup(&var_def, member_call->name)) {
         unreachable("");
     }
-    const Node* struct_def = struct_definition_from_node(member_call);
+    Node* struct_def;
     if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
         unreachable("");
     }
-    const Node* member_def = get_member_symbol_definition_auto(member_call);
-    if (is_struct_variable_definition(var_def)) {
+    const Node* member_def = get_member_def(struct_def, nodes_single_child_const(member_call));
+    if (is_struct_variable_definition(member_def)) {
         string_extend_cstr(output, "ptr noundef byval(");
         extend_type_call_str(output, member_def);
         string_extend_cstr(output, ")");
@@ -161,8 +160,6 @@ static void emit_fun_arg_struct_member_call(String* output, const Node* member_c
     }
     string_extend_cstr(output, " %");
     string_extend_size_t(output, get_prev_load_id(member_call));
-    log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
-    todo();
 }
 
 static void emit_function_call_arguments(String* output, const Node* fun_call) {
@@ -188,7 +185,6 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
                 break;
             }
             case NODE_STRUCT_MEMBER_CALL:
-                log_tree(LOG_DEBUG, argument);
                 emit_fun_arg_struct_member_call(output, argument);
                 break;
             case NODE_STRUCT_LITERAL:
@@ -215,7 +211,6 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
                 unreachable(""); // this function call should be changed to assign to a variable 
                                // before reaching emit_llvm stage, then assign that variable here. 
             case NODE_STRUCT_ELEMENT_PTR_CALL:
-                todo();
                 string_extend_strv(output, str_view_from_cstr("ptr"));
                 string_extend_cstr(output, " %");
                 string_extend_size_t(output, get_prev_load_id(argument));
@@ -336,8 +331,7 @@ static void emit_src(String* output, const Node* src) {
             break;
         case NODE_FUNCTION_CALL:
             // fallthrough
-        case NODE_STRUCT_MEMBER_ELEMENT_PTR_SYMBOL:
-            todo();
+        case NODE_STRUCT_MEMBER_CALL_LOW_LEVEL:
             // fallthrough
         case NODE_OPERATOR:
             string_extend_cstr(output, " %");
@@ -380,10 +374,9 @@ static void emit_load_variable(String* output, const Node* variable_call) {
 }
 
 static void emit_load_struct_element_ptr(String* output, const Node* store) {
-    todo();
     const Node* load_elem_ptr = nodes_single_child_const(store);
     log(LOG_DEBUG, NODE_FMT"\n", node_print(load_elem_ptr));
-    assert(load_elem_ptr->type == NODE_STRUCT_MEMBER_ELEMENT_PTR_SYMBOL);
+    assert(load_elem_ptr->type == NODE_STRUCT_MEMBER_CALL_LOW_LEVEL);
 
     Node* elem_ptr_def;
     if (!sym_tbl_lookup(&elem_ptr_def, load_elem_ptr->name)) {
@@ -421,7 +414,6 @@ static void emit_store_struct_literal(String* output, const Node* store) {
 }
 
 static void emit_store_struct_fun_param(String* output, const Node* store) {
-    todo();
     size_t alloca_dest_id = get_store_dest_id(store);
 
     Node* var_def;
@@ -448,7 +440,6 @@ static void emit_normal_store(String* output, const Node* store) {
     size_t alloca_dest_id = get_store_dest_id(store);
     const Node* var_or_member_def;
     if (store->type == NODE_STORE_STRUCT_MEMBER) {
-        todo();
         var_or_member_def = get_symbol_def_from_alloca(store);
     } else {
         var_or_member_def = get_symbol_def_from_alloca(store);
@@ -474,8 +465,7 @@ static void emit_normal_store(String* output, const Node* store) {
             is_fun_param_call = true;
             //emit_load_variable(output, src);
             break;
-        case NODE_STRUCT_MEMBER_ELEMENT_PTR_SYMBOL:
-            todo();
+        case NODE_STRUCT_MEMBER_CALL_LOW_LEVEL:
             emit_load_struct_element_ptr(output, store);
             break;
         default:
@@ -499,10 +489,12 @@ static void emit_normal_store(String* output, const Node* store) {
     string_extend_size_t(output, alloca_dest_id);
     string_extend_cstr(output, ", align 8");
     string_extend_cstr(output, "\n");
+
+    log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
+    todo();
 }
 
 static void emit_store_struct_member(String* output, const Node* store_struct) {
-    todo();
     Node* var_def;
     if (!sym_tbl_lookup(&var_def, store_struct->name)) {
         unreachable("");
@@ -523,7 +515,7 @@ static void emit_store_struct_member(String* output, const Node* store_struct) {
     string_extend_size_t(output, member_idx);
     string_append(output, '\n');
 
-    const Node* member_def = get_member_definition(struct_def, nodes_get_child_const(store_struct, 0));
+    const Node* member_def = get_member_def(struct_def, nodes_get_child_const(store_struct, 0));
     string_extend_cstr(output, "    store ");
     extend_type_call_str(output, member_def);
     emit_src(output, nodes_get_child_const(store_struct, 1));
@@ -543,7 +535,7 @@ static void emit_store(String* output, const Node* store) {
     } else if (store->left_child->type == NODE_STORE_STRUCT_MEMBER) {
         todo();
         emit_store_struct_member(output, store);
-    } else if (store->left_child->type == NODE_STRUCT_MEMBER_ELEMENT_PTR_SYMBOL) {
+    } else if (store->left_child->type == NODE_STRUCT_MEMBER_CALL_LOW_LEVEL) {
         emit_normal_store(output, store);
     } else if (is_struct_def && src->type == NODE_FUNCTION_PARAM_CALL) {
         emit_store_struct_fun_param(output, store);
@@ -629,7 +621,7 @@ static void emit_function_return_statement(String* output, const Node* fun_retur
             if (!sym_tbl_lookup(&struct_def, sym_to_rtn_def->lang_type)) {
                 unreachable("");
             }
-            const Node* member_def = get_member_definition(
+            const Node* member_def = get_member_def(
                 struct_def, nodes_single_child_const(sym_to_return)
             );
             string_extend_cstr(output, "    ret ");
@@ -746,7 +738,8 @@ static void emit_load_struct_member(String* output, const Node* load_member) {
     if (!sym_tbl_lookup(&struct_def, member_ptr_def->lang_type)) {
         unreachable("");
     }
-    const Node* member_def = get_member_symbol_definition_auto(load_member);
+    const Node* thing = get_store_member_symbol_from_load_member_value(load_member);
+    const Node* member_def = get_member_def(struct_def, thing);
 
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, load_member->llvm_id);

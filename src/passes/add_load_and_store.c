@@ -68,6 +68,10 @@ static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
     Node* load = node_new();
     if (symbol_call->type == NODE_STRUCT_MEMBER_CALL) {
         load->type = NODE_LOAD_STRUCT_MEMBER;
+        Node* load_ptr = node_new();
+        load_ptr->name = symbol_call->name;
+        load_ptr->type = NODE_LOAD;
+        nodes_insert_before(node_insert_load_before, load_ptr);
     } else if (symbol_call->type == NODE_STRUCT_ELEMENT_PTR_CALL) {
         load->type = NODE_LOAD_STRUCT_ELEMENT_PTR;
         log_tree(LOG_DEBUG, symbol_call);
@@ -169,7 +173,7 @@ static void insert_store_assignment(Node* assignment) {
             break;
         case NODE_STRUCT_MEMBER_CALL:
             break;
-        case NODE_STRUCT_MEMBER_ELEMENT_PTR_SYMBOL:
+        case NODE_STRUCT_MEMBER_CALL_LOW_LEVEL:
             break;
         case NODE_STRUCT_ELEMENT_PTR_CALL:
             break;
@@ -194,7 +198,7 @@ static void insert_store_assignment(Node* assignment) {
             break;
         case NODE_FUNCTION_CALL:
             break;
-        case NODE_STRUCT_MEMBER_ELEMENT_PTR_SYMBOL:
+        case NODE_STRUCT_MEMBER_CALL_LOW_LEVEL:
             break;
         default:
             node_printf(rhs)
@@ -207,7 +211,7 @@ static void insert_store_assignment(Node* assignment) {
     if (lhs->type == NODE_STRUCT_MEMBER_CALL) {
         store->type = NODE_STORE_STRUCT_MEMBER;
         nodes_append_child(store, node_clone(nodes_single_child(lhs)));
-    } else if (lhs->type == NODE_STRUCT_MEMBER_ELEMENT_PTR_SYMBOL) {
+    } else if (lhs->type == NODE_STRUCT_MEMBER_CALL_LOW_LEVEL) {
         store->type = NODE_STORE_STRUCT_MEMBER;
         nodes_append_child(store, node_clone(nodes_single_child(lhs)));
     } else {
@@ -400,7 +404,7 @@ bool add_load_and_store(Node* start_start_node) {
                 break;
             case NODE_STRUCT_MEMBER_CALL:
                 break;
-            case NODE_STRUCT_MEMBER_ELEMENT_PTR_SYMBOL:
+            case NODE_STRUCT_MEMBER_CALL_LOW_LEVEL:
                 break;
             case NODE_STRUCT_DEFINITION:
                 break;

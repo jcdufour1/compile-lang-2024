@@ -23,7 +23,7 @@ static void replace_struct_member_call(Node* node_to_insert_before, Node* old_st
 
     Node* lhs = struct_element_ptr_def_new(literal_name_new(), var_def->lang_type);
     Node* new_thing = node_clone_self_and_children(old_struct_memb_call);
-    new_thing->type = NODE_STRUCT_MEMBER_ELEMENT_PTR_SYMBOL;
+    new_thing->type = NODE_STRUCT_MEMBER_CALL_LOW_LEVEL;
     Node* assignment = assignment_new(lhs, new_thing);
     nodes_insert_before(node_to_insert_before, assignment);
 
@@ -101,7 +101,7 @@ static void do_assignment_operand(Node* node_to_insert_before, Node* operand) {
             break;
         case NODE_STRUCT_LITERAL:
             break;
-        case NODE_STRUCT_MEMBER_ELEMENT_PTR_SYMBOL:
+        case NODE_STRUCT_MEMBER_CALL_LOW_LEVEL:
             break;
         default:
             unreachable(NODE_FMT"\n", node_print(operand));
