@@ -24,6 +24,10 @@ static void do_store(Node* node_to_insert_before, Node* store) {
             break;
         case NODE_LITERAL:
             break;
+        case NODE_SYMBOL:
+            break;
+        case NODE_OPERATOR:
+            break; // todo: implement this
         default:
             unreachable(NODE_FMT"\n", node_print(src));
     }

@@ -80,6 +80,10 @@ static bool is_variable_def(const Node* curr_node, const Node* var_call) {
     return curr_node->type == NODE_VARIABLE_DEFINITION && 0 == str_view_cmp(curr_node->name, var_call->name);
 }
 
+static bool is_function_call(const Node* curr_node, const Node* var_call) {
+    return curr_node->type == NODE_FUNCTION_CALL;
+}
+
 Llvm_id get_prev_load_id(const Node* var_call) {
     node_printf(var_call);
     const Node* load;
@@ -105,6 +109,14 @@ Llvm_id get_store_dest_id(const Node* var_call) {
     Llvm_id llvm_id = store->llvm_id;
     assert(llvm_id > 0);
     return llvm_id;
+}
+
+Llvm_id get_prev_function_call_id(const Node* node) {
+    const Node* fun_call;
+    if (!get_prev_matching_node(&fun_call, node, node, is_function_call)) {
+        unreachable("no function call found before:"NODE_FMT"\n", node_print(node));
+    }
+    return fun_call->llvm_id;
 }
 
 const Node* get_normal_symbol_def_from_alloca(const Node* alloca) {

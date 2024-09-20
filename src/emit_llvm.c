@@ -335,6 +335,10 @@ static void emit_src(String* output, const Node* src) {
             string_extend_cstr(output, " %");
             string_extend_size_t(output, get_matching_fun_param_load_id(src));
             break;
+        case NODE_FUNCTION_RETURN_VALUE_SYM:
+            string_extend_cstr(output, " %");
+            string_extend_size_t(output, get_prev_function_call_id(src));
+            break;
         default:
             node_printf(src);
             todo();
@@ -363,14 +367,16 @@ static void emit_load_variable(String* output, const Node* variable_call) {
     string_extend_cstr(output, "\n");
 }
 
-static void emit_store_struct_literal(String* output, const Node* store) {
-    size_t alloca_dest_id = get_store_dest_id(store);
+static void emit_memcpy(String* output, const Node* memcpy_node) {
+    assert(memcpy_node->type == NODE_MEMCPY);
+
+    size_t alloca_dest_id = get_store_dest_id(memcpy_node);
     string_extend_cstr(output, "    call void @llvm.memcpy.p0.p0.i64(ptr align 4 %");
     string_extend_size_t(output, alloca_dest_id);
     string_extend_cstr(output, ", ptr align 4 @__const.main.");
-    string_extend_strv(output, nodes_single_child_const(store)->name);
+    string_extend_strv(output, nodes_single_child_const(memcpy_node)->name);
     string_extend_cstr(output, ", i64 ");
-    string_extend_size_t(output, sizeof_struct(nodes_single_child_const(store)));
+    string_extend_size_t(output, sizeof_struct(nodes_single_child_const(memcpy_node)));
     string_extend_cstr(output, ", i1 false)\n");
 }
 
@@ -427,6 +433,8 @@ static void emit_normal_store(String* output, const Node* store) {
             is_fun_param_call = true;
             //emit_load_variable(output, src);
             break;
+        case NODE_FUNCTION_RETURN_VALUE_SYM:
+            break;
         default:
             log_tree(LOG_DEBUG, store);
             unreachable(NODE_FMT"\n", node_print(src));
@@ -448,6 +456,7 @@ static void emit_normal_store(String* output, const Node* store) {
     string_extend_size_t(output, alloca_dest_id);
     string_extend_cstr(output, ", align 8");
     string_extend_cstr(output, "\n");
+    log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
 }
 
 static void emit_store_struct_member(String* output, const Node* store_struct) {
@@ -487,7 +496,7 @@ static void emit_store(String* output, const Node* store) {
     const Node* src = nodes_single_child_const(store);
     bool is_struct_def = is_struct_variable_definition(get_symbol_def_from_alloca(store));
     if (store->left_child->type == NODE_STRUCT_LITERAL) {
-        emit_store_struct_literal(output, store);
+        unreachable("");
     } else if (store->left_child->type == NODE_STORE_STRUCT_MEMBER) {
         emit_store_struct_member(output, store);
     } else if (is_struct_def && src->type == NODE_FUNCTION_PARAM_SYM) {
@@ -767,6 +776,9 @@ static void emit_block(String* output, const Node* block) {
                 break;
             case NODE_STORE_STRUCT_MEMBER:
                 emit_store_struct_member(output, statement);
+                break;
+            case NODE_MEMCPY:
+                emit_memcpy(output, statement);
                 break;
             case NODE_FOR_LOOP:
                 unreachable("for loop should not still be present at this point\n");

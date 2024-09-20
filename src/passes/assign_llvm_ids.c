@@ -58,6 +58,10 @@ bool assign_llvm_ids(Node* curr_node) {
             // fallthrough
         case NODE_LABEL:
             // fallthrough
+        case NODE_MEMCPY:
+            // fallthrough
+        case NODE_FUNCTION_RETURN_VALUE_SYM:
+            // fallthrough
         case NODE_STORE:
             // fallthrough
             curr_node->llvm_id = llvm_id_for_next_var;
