@@ -302,8 +302,10 @@ static void emit_operator(String* output, const Node* operator) {
             todo();
         case NODE_OPERATOR:
             todo(); // this possibly should not ever happen
+        case NODE_OPERATOR_RETURN_VALUE_SYM:
+            break;
         default:
-            todo();
+            unreachable(NODE_FMT"\n", node_print(lhs));
     }
 
     string_extend_cstr(output, "    %");

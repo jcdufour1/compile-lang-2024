@@ -318,7 +318,6 @@ static inline Node* nodes_get_last_child_of_type(Node* parent, NODE_TYPE node_ty
 // remove node_to_remove (and its children if present and keep_children is true) from tree. 
 // children of node_to_remove will stay attached to node_to_remove if keep_children is true
 static inline void nodes_remove(Node* node_to_remove, bool keep_children) {
-    log_tree(LOG_DEBUG, node_to_remove);
     assert(node_to_remove);
 
     Node* next = node_to_remove->next;
@@ -369,7 +368,6 @@ static inline Node* node_clone(const Node* node_to_clone) {
 }
 
 static inline void nodes_move_back_one(Node* node) {
-    log(LOG_DEBUG, "thing thing\n");
     assert(node->prev);
 
     Node* prev = node->prev;

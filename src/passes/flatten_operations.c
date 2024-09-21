@@ -23,10 +23,11 @@ static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* o
     nodes_remove_siblings_and_parent(rhs);
 
     if (lhs->type == NODE_OPERATOR) {
-        Str_view var_name = literal_name_new();
-        nodes_insert_before(node_to_insert_before, variable_i32_def_new(var_name));
-        nodes_insert_before(node_to_insert_before, assignment_new(symbol_new(var_name), lhs));
-        nodes_append_child(old_operation, symbol_new(var_name));
+        Node* operator_sym = node_new();
+        operator_sym->type = NODE_OPERATOR_RETURN_VALUE_SYM;
+        nodes_insert_before(node_to_insert_before, lhs);
+        nodes_append_child(old_operation, operator_sym);
+        operator_sym->node_to_load = lhs;
     } else if (lhs->type == NODE_FUNCTION_CALL){
         todo();
     } else {
@@ -44,6 +45,8 @@ static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* o
     } else {
         nodes_append_child(old_operation, rhs);
     }
+
+    log_tree(LOG_DEBUG, old_operation->parent->parent);
 }
 
 static void move_operator_back(Node* return_statement) {
@@ -66,7 +69,9 @@ bool flatten_operations(Node* curr_node) {
     Node* assign_or_var_def = nodes_get_local_rightmost(curr_node->left_child);
     while (assign_or_var_def) {
         bool advance_to_prev = true;
-        if (assign_or_var_def->type == NODE_ASSIGNMENT) {
+        if (assign_or_var_def->type == NODE_OPERATOR) {
+            flatten_operation_if_nessessary(assign_or_var_def, assign_or_var_def);
+        } else if (assign_or_var_def->type == NODE_ASSIGNMENT) {
             nodes_foreach_child(potential_op, assign_or_var_def) {
                 if (potential_op->type == NODE_OPERATOR) {
                     flatten_operation_if_nessessary(assign_or_var_def, potential_op);
