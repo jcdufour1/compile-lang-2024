@@ -181,7 +181,6 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
         case NODE_VARIABLE_DEFINITION:
             nodes_remove(lhs, false);
             nodes_insert_before(node_to_insert_before, lhs);
-            insert_alloca(lhs);
             break;
         case NODE_SYMBOL:
             node_printf(lhs);
@@ -353,12 +352,6 @@ bool add_load_and_store(Node* start_start_node) {
                 add_load_return_statement(curr_node);
                 break;
             case NODE_VARIABLE_DEFINITION:
-                if (curr_node->parent->type == NODE_FUNCTION_PARAMETERS ||
-                    curr_node->parent->type == NODE_STRUCT_DEFINITION ||
-                    curr_node->parent->type == NODE_STRUCT_LITERAL
-                ) {
-                    break;
-                }
                 insert_alloca(curr_node);
                 break;
             case NODE_FUNCTION_DECLARATION:
