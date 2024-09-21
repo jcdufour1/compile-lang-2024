@@ -1,7 +1,7 @@
 #ifndef DO_PASSES_H
 #define DO_PASSES_H
 
-#include "../node.h"
+#include "node.h"
 
 void do_passes(Node** root);
 
