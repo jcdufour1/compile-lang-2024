@@ -100,6 +100,7 @@ static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
         load->type = NODE_LOAD;
     }
     load->name = symbol_call->name;
+    symbol_call->node_to_load = load;
     nodes_insert_before(node_insert_load_before, load);
     //log_tree(LOG_DEBUG, node_insert_load_before->parent);
     //todo();
@@ -281,6 +282,7 @@ static void load_function_parameters(Node* fun_def) {
     nodes_foreach_child(param, fun_params) {
         Node* fun_param_call = symbol_new(param->name);
         fun_param_call->type = NODE_FUNCTION_PARAM_SYM;
+        fun_param_call->node_to_load = param;
         insert_store(fun_block->left_child, fun_param_call);
         Node* alloca = alloca_new(param);
         alloca->is_fun_param_associated = true;

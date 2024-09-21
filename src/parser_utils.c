@@ -91,25 +91,6 @@ static bool is_operator(const Node* curr_node, const Node* var_call) {
     return curr_node->type == NODE_OPERATOR;
 }
 
-Llvm_id get_prev_load_id(const Node* var_call) {
-    log(LOG_DEBUG, "-----\n");
-    node_printf(var_call);
-    const Node* load;
-    if (var_call->type == NODE_STRUCT_MEMBER_SYM) {
-        if (!get_prev_matching_node(&load, var_call, var_call, is_load_struct_member)) {
-            unreachable("no struct load node found before symbol call:"NODE_FMT"\n", node_print(var_call));
-        }
-    } else {
-        if (!get_prev_matching_node(&load, var_call, var_call, is_load)) {
-            unreachable("no load node found before symbol call:"NODE_FMT"\n", node_print(var_call));
-        }
-    }
-    Llvm_id llvm_id = load->llvm_id;
-    assert(llvm_id > 0);
-    log(LOG_DEBUG, "-----\n");
-    return llvm_id;
-}
-
 Llvm_id get_store_dest_id(const Node* var_call) {
     const Node* store;
     if (!get_prev_matching_node(&store, var_call, var_call, is_alloca)) {
@@ -203,26 +184,6 @@ Node* symbol_new(Str_view symbol_name) {
     symbol->type = NODE_SYMBOL;
     symbol->name = symbol_name;
     return symbol;
-}
-
-Llvm_id get_matching_fun_param_load_id(const Node* fun_param_call) {
-    assert(fun_param_call->type == NODE_FUNCTION_PARAM_SYM);
-
-    const Node* fun_def = fun_param_call;
-    while (fun_def->type != NODE_FUNCTION_DEFINITION) {
-        fun_def = fun_def->parent;
-        assert(fun_def);
-    }
-
-    const Node* fun_params = nodes_get_child_of_type_const(fun_def, NODE_FUNCTION_PARAMETERS);
-    nodes_foreach_child(param, fun_params) {
-        if (0 == str_view_cmp(param->name, fun_param_call->name)) {
-            assert(param->llvm_id > 0);
-            return param->llvm_id;
-        }
-    }
-
-    unreachable("fun_param matching "NODE_FMT" not found", node_print(fun_param_call));
 }
 
 const Node* get_lang_type_from_sym_definition(const Node* sym_def) {

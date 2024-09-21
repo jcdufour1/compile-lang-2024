@@ -155,7 +155,7 @@ static void emit_fun_arg_struct_member_call(String* output, const Node* member_c
         extend_type_call_str(output, member_def);
     }
     string_extend_cstr(output, " %");
-    string_extend_size_t(output, get_prev_load_id(member_call));
+    string_extend_size_t(output, member_call->node_to_load->llvm_id);
 }
 
 static void emit_function_call_arguments(String* output, const Node* fun_call) {
@@ -200,7 +200,7 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
                 if (is_struct_variable_definition(var_decl_or_def)) {
                     string_extend_size_t(output, get_store_dest_id(argument));
                 } else {
-                    string_extend_size_t(output, get_prev_load_id(argument));
+                    string_extend_size_t(output, argument->node_to_load->llvm_id);
                 }
                 break;
             }
@@ -277,7 +277,7 @@ static void emit_operator_operand(String* output, const Node* operand) {
             break;
         case NODE_SYMBOL:
             string_extend_cstr(output, "%");
-            string_extend_size_t(output, get_prev_load_id(operand));
+            string_extend_size_t(output, operand->node_to_load->llvm_id);
             break;
         case NODE_OPERATOR_RETURN_VALUE_SYM:
             string_extend_cstr(output, "%");
@@ -327,19 +327,13 @@ static void emit_src(String* output, const Node* src) {
         case NODE_LITERAL:
             extend_literal_decl_prefix(output, src);
             break;
-        case NODE_FUNCTION_CALL:
-            // fallthrough
-        case NODE_OPERATOR:
-            string_extend_cstr(output, " %");
-            string_extend_size_t(output, src->llvm_id);
-            break;
         case NODE_SYMBOL:
             string_extend_cstr(output, " %");
-            string_extend_size_t(output, get_prev_load_id(src));
+            string_extend_size_t(output, src->node_to_load->llvm_id);
             break;
         case NODE_FUNCTION_PARAM_SYM:
             string_extend_cstr(output, " %");
-            string_extend_size_t(output, get_matching_fun_param_load_id(src));
+            string_extend_size_t(output, src->node_to_load->llvm_id);
             break;
         case NODE_FUNCTION_RETURN_VALUE_SYM:
             string_extend_cstr(output, " %");
@@ -407,7 +401,7 @@ static void emit_store_struct_fun_param(String* output, const Node* store) {
     string_extend_cstr(output, "    call void @llvm.memcpy.p0.p0.i64(ptr align 4 %");
     string_extend_size_t(output, alloca_dest_id);
     string_extend_cstr(output, ", ptr align 4 %");
-    string_extend_size_t(output, get_matching_fun_param_load_id(src));
+    string_extend_size_t(output, src->node_to_load->llvm_id);
     string_extend_cstr(output, ", i64 ");
     string_extend_size_t(output, sizeof_struct_definition(struct_def));
     string_extend_cstr(output, ", i1 false)\n");
@@ -587,7 +581,7 @@ static void emit_function_return_statement(String* output, const Node* fun_retur
             string_extend_cstr(output, "    ret ");
             extend_type_call_str(output, sym_to_rtn_def);
             string_extend_cstr(output, " %");
-            string_extend_size_t(output, get_prev_load_id(sym_to_return));
+            string_extend_size_t(output, sym_to_return->node_to_load->llvm_id);
             string_extend_cstr(output, "\n");
             break;
         case NODE_STRUCT_MEMBER_SYM: {
@@ -601,7 +595,7 @@ static void emit_function_return_statement(String* output, const Node* fun_retur
             string_extend_cstr(output, "    ret ");
             extend_type_call_str(output, member_def);
             string_extend_cstr(output, " %");
-            string_extend_size_t(output, get_prev_load_id(sym_to_return));
+            string_extend_size_t(output, sym_to_return->node_to_load->llvm_id);
             string_extend_cstr(output, "\n");
             break;
         }
