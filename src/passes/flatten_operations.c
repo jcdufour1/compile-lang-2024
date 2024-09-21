@@ -15,7 +15,7 @@ static Node* variable_i32_def_new(Str_view name) {
 }
 
 static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* old_operation) {
-    log_tree(LOG_DEBUG, old_operation);
+    log_tree(LOG_DEBUG, old_operation->parent->parent);
     assert(old_operation->type == NODE_OPERATOR);
     Node* lhs = nodes_get_child(old_operation, 0);
     Node* rhs = nodes_get_child(old_operation, 1);
@@ -34,10 +34,11 @@ static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* o
     }
 
     if (rhs->type == NODE_OPERATOR) {
-        Str_view var_name = literal_name_new();
-        nodes_insert_before(node_to_insert_before, variable_i32_def_new(var_name));
-        nodes_insert_before(node_to_insert_before, assignment_new(symbol_new(var_name), rhs));
-        nodes_append_child(old_operation, symbol_new(var_name));
+        Node* operator_sym = node_new();
+        operator_sym->type = NODE_OPERATOR_RETURN_VALUE_SYM;
+        nodes_insert_before(node_to_insert_before, rhs);
+        nodes_append_child(old_operation, operator_sym);
+        operator_sym->node_to_load = rhs;
     } else if (rhs->type == NODE_FUNCTION_CALL){
         todo();
     } else {

@@ -279,6 +279,10 @@ static void emit_operator_operand(String* output, const Node* operand) {
             string_extend_cstr(output, "%");
             string_extend_size_t(output, get_prev_load_id(operand));
             break;
+        case NODE_OPERATOR_RETURN_VALUE_SYM:
+            string_extend_cstr(output, "%");
+            string_extend_size_t(output, operand->node_to_load->llvm_id);
+            break;
         default:
             unreachable(NODE_FMT"\n", node_print(operand));
     }

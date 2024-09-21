@@ -65,6 +65,7 @@ static bool is_load_struct_member(const Node* curr_node, const Node* var_call) {
 }
 
 static bool is_load(const Node* curr_node, const Node* var_call) {
+    log(LOG_DEBUG, NODE_FMT "" NODE_FMT"\n", node_print(curr_node), node_print(var_call));
     return (curr_node->type == NODE_LOAD) && str_view_is_equal(curr_node->name, var_call->name);
 }
 
@@ -91,6 +92,7 @@ static bool is_operator(const Node* curr_node, const Node* var_call) {
 }
 
 Llvm_id get_prev_load_id(const Node* var_call) {
+    log(LOG_DEBUG, "-----\n");
     node_printf(var_call);
     const Node* load;
     if (var_call->type == NODE_STRUCT_MEMBER_SYM) {
@@ -99,11 +101,12 @@ Llvm_id get_prev_load_id(const Node* var_call) {
         }
     } else {
         if (!get_prev_matching_node(&load, var_call, var_call, is_load)) {
-            unreachable("no struct load node found before symbol call:"NODE_FMT"\n", node_print(var_call));
+            unreachable("no load node found before symbol call:"NODE_FMT"\n", node_print(var_call));
         }
     }
     Llvm_id llvm_id = load->llvm_id;
     assert(llvm_id > 0);
+    log(LOG_DEBUG, "-----\n");
     return llvm_id;
 }
 
