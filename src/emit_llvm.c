@@ -180,7 +180,7 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
                 extend_literal_decl(output, var_decl_or_def);
                 break;
             }
-            case NODE_STRUCT_MEMBER_CALL:
+            case NODE_STRUCT_MEMBER_SYM:
                 emit_fun_arg_struct_member_call(output, argument);
                 break;
             case NODE_STRUCT_LITERAL:
@@ -575,7 +575,7 @@ static void emit_function_return_statement(String* output, const Node* fun_retur
             break;
         }
         case NODE_SYMBOL:
-            if (sym_to_return->parent && sym_to_return->parent->type == NODE_STRUCT_MEMBER_CALL) {
+            if (sym_to_return->parent && sym_to_return->parent->type == NODE_STRUCT_MEMBER_SYM) {
                 break;
             }
             string_extend_cstr(output, "    ret ");
@@ -584,7 +584,7 @@ static void emit_function_return_statement(String* output, const Node* fun_retur
             string_extend_size_t(output, get_prev_load_id(sym_to_return));
             string_extend_cstr(output, "\n");
             break;
-        case NODE_STRUCT_MEMBER_CALL: {
+        case NODE_STRUCT_MEMBER_SYM: {
             Node* struct_def;
             if (!sym_tbl_lookup(&struct_def, sym_to_rtn_def->lang_type)) {
                 unreachable("");

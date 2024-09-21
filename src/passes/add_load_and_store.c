@@ -52,7 +52,7 @@ static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
             // fallthrough
         case NODE_LITERAL:
             return;
-        case NODE_STRUCT_MEMBER_CALL:
+        case NODE_STRUCT_MEMBER_SYM:
             // fallthrough
         case NODE_SYMBOL:
             // fallthrough
@@ -64,7 +64,7 @@ static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
     }
 
     Node* load = node_new();
-    if (symbol_call->type == NODE_STRUCT_MEMBER_CALL) {
+    if (symbol_call->type == NODE_STRUCT_MEMBER_SYM) {
         load->type = NODE_LOAD_STRUCT_MEMBER;
         nodes_append_child(load, node_clone(nodes_single_child(symbol_call)));
     } else {
@@ -155,7 +155,7 @@ static void insert_store_assignment(Node* assignment) {
         case NODE_SYMBOL:
             node_printf(lhs);
             break;
-        case NODE_STRUCT_MEMBER_CALL:
+        case NODE_STRUCT_MEMBER_SYM:
             break;
         default:
             todo();
@@ -186,7 +186,7 @@ static void insert_store_assignment(Node* assignment) {
     Node* store = node_new();
     store->name = lhs->name;
     nodes_remove(rhs, true);
-    if (lhs->type == NODE_STRUCT_MEMBER_CALL) {
+    if (lhs->type == NODE_STRUCT_MEMBER_SYM) {
         store->type = NODE_STORE_STRUCT_MEMBER;
         nodes_append_child(store, node_clone(nodes_single_child(lhs)));
     } else {
@@ -201,7 +201,7 @@ static void add_load_return_statement(Node* return_statement) {
     log(LOG_DEBUG, "add_load_return_statement\n");
     Node* node_to_return = nodes_single_child(return_statement);
     switch (node_to_return->type) {
-        case NODE_STRUCT_MEMBER_CALL:
+        case NODE_STRUCT_MEMBER_SYM:
             // fallthrough
         case NODE_SYMBOL:
             insert_load(return_statement, node_to_return);
@@ -365,7 +365,7 @@ bool add_load_and_store(Node* start_start_node) {
                 break;
             case NODE_STORE_STRUCT_MEMBER:
                 break;
-            case NODE_STRUCT_MEMBER_CALL:
+            case NODE_STRUCT_MEMBER_SYM:
                 break;
             case NODE_STRUCT_DEFINITION:
                 break;

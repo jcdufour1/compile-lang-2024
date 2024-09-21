@@ -93,7 +93,7 @@ static bool is_operator(const Node* curr_node, const Node* var_call) {
 Llvm_id get_prev_load_id(const Node* var_call) {
     node_printf(var_call);
     const Node* load;
-    if (var_call->type == NODE_STRUCT_MEMBER_CALL) {
+    if (var_call->type == NODE_STRUCT_MEMBER_SYM) {
         if (!get_prev_matching_node(&load, var_call, var_call, is_load_struct_member)) {
             unreachable("no struct load node found before symbol call:"NODE_FMT"\n", node_print(var_call));
         }

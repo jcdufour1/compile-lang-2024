@@ -57,7 +57,7 @@ bool flatten_load_and_store(Node* start_start_node) {
                 break;
             case NODE_STRUCT_LITERAL:
                 break;
-            case NODE_STRUCT_MEMBER_CALL:
+            case NODE_STRUCT_MEMBER_SYM:
                 break;
             case NODE_BLOCK:
                 break;

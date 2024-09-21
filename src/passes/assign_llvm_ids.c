@@ -38,7 +38,7 @@ bool assign_llvm_ids(Node* curr_node) {
             // fallthrough
         case NODE_STORE_STRUCT_MEMBER:
             // fallthrough
-        case NODE_STRUCT_MEMBER_CALL:
+        case NODE_STRUCT_MEMBER_SYM:
             // fallthrough
         case NODE_VARIABLE_DEFINITION:
             // fallthrough

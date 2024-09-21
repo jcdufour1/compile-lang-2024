@@ -633,7 +633,7 @@ static Node* extract_struct_literal(Tk_view* tokens) {
 
 static Node* extract_struct_member_call(Tk_view* tokens) {
     Node* member_call = node_new();
-    member_call->type = NODE_STRUCT_MEMBER_CALL;
+    member_call->type = NODE_STRUCT_MEMBER_SYM;
     member_call->name = tk_view_chop_front(tokens).text;
     try(tk_view_try_consume(NULL, tokens, TOKEN_SINGLE_DOT));
     nodes_append_child(member_call, symbol_new(tk_view_chop_front(tokens).text));
