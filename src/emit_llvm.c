@@ -54,14 +54,16 @@ static void extend_type_call_str(String* output, const Node* sym_def) {
     string_extend_strv(output, sym_def->lang_type);
 }
 
-static void extend_type_decl_str(String* output, const Node* variable_def) {
+static void extend_type_decl_str(String* output, const Node* variable_def, bool noundef) {
     if (variable_def->is_variadic) {
         string_extend_cstr(output, "...");
         return;
     }
 
     extend_type_call_str(output, variable_def);
-    string_extend_cstr(output, " noundef");
+    if (noundef) {
+        string_extend_cstr(output, " noundef");
+    }
 }
 
 static void extend_literal_decl_prefix(String* output, const Node* var_decl_or_def) {
@@ -77,8 +79,8 @@ static void extend_literal_decl_prefix(String* output, const Node* var_decl_or_d
     }
 }
 
-static void extend_literal_decl(String* output, const Node* var_decl_or_def) {
-    extend_type_decl_str(output, var_decl_or_def);
+static void extend_literal_decl(String* output, const Node* var_decl_or_def, bool noundef) {
+    extend_type_decl_str(output, var_decl_or_def, noundef);
     extend_literal_decl_prefix(output, var_decl_or_def);
 }
 
@@ -103,7 +105,7 @@ static void emit_function_params(String* output, const Node* fun_params) {
             extend_type_call_str(output, param);
             string_extend_cstr(output, ")");
         } else {
-            extend_type_decl_str(output, param);
+            extend_type_decl_str(output, param, true);
         }
         if (param->is_variadic) {
             return;
@@ -148,7 +150,7 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
         }
         switch (argument->type) {
             case NODE_LITERAL: {
-                extend_literal_decl(output, var_decl_or_def);
+                extend_literal_decl(output, var_decl_or_def, true);
                 break;
             }
             case NODE_STRUCT_MEMBER_SYM:
@@ -750,10 +752,6 @@ static void emit_block(String* output, const Node* block) {
             case NODE_STRUCT_DEFINITION:
                 emit_struct_definition(output, statement);
                 break;
-            case NODE_LOAD_STRUCT_MEMBER:
-                unreachable("");
-                emit_load_struct_member(output, statement);
-                break;
             case NODE_STORE_STRUCT_MEMBER:
                 emit_store_struct_member(output, statement);
                 break;
@@ -797,7 +795,9 @@ static void emit_symbol(String* output, const Symbol_table_node node) {
 static void emit_struct_literal(String* output, const Node* literal) {
     string_extend_cstr(output, "@__const.main.");
     string_extend_strv(output, literal->name);
-    string_extend_cstr(output, " = private unnamed_addr constant %struct.Div {");
+    string_extend_cstr(output, " = private unnamed_addr constant %struct.");
+    string_extend_strv(output, literal->lang_type);
+    string_extend_cstr(output, " {");
 
     size_t is_first = true;
     nodes_foreach_child(member_store, literal) {
@@ -806,9 +806,7 @@ static void emit_struct_literal(String* output, const Node* literal) {
         }
         assert(member_store->type == NODE_STORE);
         const Node* member = nodes_single_child_const(member_store);
-        string_extend_strv(output, member->lang_type);
-        string_append(output, ' ');
-        string_extend_strv(output, member->str_data);
+        extend_literal_decl(output, member, false);
         is_first = false;
     }
 
@@ -826,6 +824,7 @@ static void emit_symbols(String* output) {
                 emit_symbol(output, curr_node);
                 break;
             case NODE_STRUCT_LITERAL:
+                node_printf(curr_node.node);
                 emit_struct_literal(output, curr_node.node);
                 break;
             case NODE_VARIABLE_DEFINITION:
@@ -851,13 +850,9 @@ static void emit_symbols(String* output) {
 
 void emit_llvm_from_tree(const Node* root) {
     String output = {0};
-
     emit_block(&output, root);
-
     emit_symbols(&output);
-
     log(LOG_NOTE, "\n"STRING_FMT"\n", string_print(output));
-
     Str_view final_output = {.str = output.buf, .count = output.info.count};
     write_file("test.ll", final_output);
 }

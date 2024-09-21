@@ -43,7 +43,8 @@ OBJS=\
 	 ${BUILD_DIR}/passes/assign_llvm_ids.o \
 	 ${BUILD_DIR}/passes/add_load_and_store.o \
 	 ${BUILD_DIR}/passes/flatten_load_and_store.o \
-	 ${BUILD_DIR}/passes/flatten_operations.o
+	 ${BUILD_DIR}/passes/flatten_operations.o \
+	 ${BUILD_DIR}/passes/analysis_1.o
 
 DEP_COMMON = Makefile
 
@@ -132,6 +133,9 @@ ${BUILD_DIR}/passes/flatten_operations.o: ${DEP_COMMON} src/passes/flatten_opera
 
 ${BUILD_DIR}/passes/flatten_load_and_store.o: ${DEP_COMMON} src/passes/flatten_load_and_store.c src/*.h src/passes/*.h third_party/*
 	cc ${C_FLAGS} -c -o ${BUILD_DIR}/passes/flatten_load_and_store.o src/passes/flatten_load_and_store.c
+
+${BUILD_DIR}/passes/analysis_1.o: ${DEP_COMMON} src/passes/analysis_1.c src/*.h src/passes/*.h third_party/*
+	cc ${C_FLAGS} -c -o ${BUILD_DIR}/passes/analysis_1.o src/passes/analysis_1.c
 
 
 clean:

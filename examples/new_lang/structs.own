@@ -1,19 +1,19 @@
 
 extern("c") fn printf(format_string: ptr, args: any...) i32
 
-struct Div {
+struct Div_struct {
     numerator: i32
     denominator: i32
 }
 
-fn get_numerator(div: Div) i32 {
+fn get_numerator(div: Div_struct) i32 {
     div.numerator = 8
     div.denominator = 7
     printf("%d/%d\n", div.numerator, div.denominator)
     return div.numerator
 }
 
-fn get_div(div2: Div) Div {
+fn get_div(div2: Div_struct) Div_struct {
     div2.numerator = 14
     div2.denominator = 34
     printf("%d/%d\n", div2.numerator, div2.denominator)
@@ -21,7 +21,7 @@ fn get_div(div2: Div) Div {
 }
 
 fn main() i32 {
-    let div3: Div
+    let div3: Div_struct
     div3 = {.numerator = 9, .denominator = 2}
     printf("%d/%d\n", div3.numerator, div3.denominator)
     div3.numerator = 11
@@ -29,7 +29,7 @@ fn main() i32 {
     let result: i32 = get_numerator(div3)
     printf("%d/%d\n", div3.numerator, div3.denominator)
     printf("%d/%d\n", result, div3.denominator)
-    let new_div3: Div = get_div(div3)
+    let new_div3: Div_struct = get_div(div3)
     printf("%d/%d\n", new_div3.numerator, new_div3.denominator)
     return 0
 }
