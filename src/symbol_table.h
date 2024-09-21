@@ -64,7 +64,7 @@ static inline void sym_tbl_cpy(Symbol_table_node* dest, const Symbol_table_node*
     }
 }
 
-static inline void sym_tbl_expand_if_nessessary() {
+static inline void sym_tbl_expand_if_nessessary(void) {
     size_t old_capacity_node_count = symbol_table.capacity;
     size_t minimum_count_to_reserve = 1;
     size_t new_count = symbol_table.count + minimum_count_to_reserve;

@@ -12,9 +12,6 @@
 #include "file.h"
 #include "passes/do_passes.h"
 
-// we do not want to detect leaks (for now) since this compiler is a short running program
-const char* __asan_default_options() { return "detect_leaks=0"; }
-
 int main(int argc, char** argv) {
     parse_args(argc, argv);
 
