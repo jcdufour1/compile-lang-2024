@@ -233,10 +233,9 @@ String node_print_internal(const Node* node) {
             // fallthrough
         case NODE_STRUCT_DEFINITION:
             // fallthrough
-        case NODE_STRUCT_MEMBER_SYM:
-            // fallthrough
         case NODE_FUNCTION_CALL:
             string_extend_strv_in_par(&buf, node->name);
+            string_extend_size_t(&buf, node->llvm_id);
             break;
         case NODE_LANG_TYPE:
             string_extend_strv_in_gtlt(&buf, node->lang_type);
@@ -274,11 +273,18 @@ String node_print_internal(const Node* node) {
             // fallthrough
         case NODE_IF_CONDITION:
             // fallthrough
+        case NODE_NO_TYPE:
+            break;
+        case NODE_STRUCT_MEMBER_SYM:
+            // fallthrough
         case NODE_FUNCTION_RETURN_VALUE_SYM:
             // fallthrough
         case NODE_OPERATOR_RETURN_VALUE_SYM:
             // fallthrough
-        case NODE_NO_TYPE:
+            string_extend_strv_in_par(&buf, node->name);
+            if (node->node_to_load) {
+                string_extend_size_t(&buf, node->node_to_load->llvm_id);
+            }
             break;
         default:
             log(LOG_FETAL, "type: "STR_VIEW_FMT"\n", str_view_print(node_type_get_strv(node->type)));

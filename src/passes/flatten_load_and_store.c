@@ -10,6 +10,7 @@ static void do_store(Node* node_to_insert_before, Node* store) {
             nodes_insert_before(node_to_insert_before, src);
             Node* new_src = node_new();
             new_src->type = NODE_FUNCTION_RETURN_VALUE_SYM;
+            new_src->node_to_load = src;
             nodes_append_child(store, new_src);
             break;
         }
@@ -18,6 +19,7 @@ static void do_store(Node* node_to_insert_before, Node* store) {
             nodes_insert_before(node_to_insert_before, src);
             Node* new_src = node_new();
             new_src->type = NODE_OPERATOR_RETURN_VALUE_SYM;
+            new_src->node_to_load = src;
             nodes_append_child(store, new_src);
             break;
         }

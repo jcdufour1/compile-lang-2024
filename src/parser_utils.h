@@ -54,8 +54,4 @@ static inline bool is_struct_symbol(const Node* symbol) {
 
 size_t sizeof_struct_definition(const Node* struct_def);
 
-Llvm_id get_prev_function_call_id(const Node* node);
-
-Llvm_id get_prev_operator_id(const Node* node);
-
 #endif // PARSER_UTIL_H

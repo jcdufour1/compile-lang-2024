@@ -343,11 +343,11 @@ static void emit_src(String* output, const Node* src) {
             break;
         case NODE_FUNCTION_RETURN_VALUE_SYM:
             string_extend_cstr(output, " %");
-            string_extend_size_t(output, get_prev_function_call_id(src));
+            string_extend_size_t(output, src->node_to_load->llvm_id);
             break;
         case NODE_OPERATOR_RETURN_VALUE_SYM:
             string_extend_cstr(output, " %");
-            string_extend_size_t(output, get_prev_operator_id(src));
+            string_extend_size_t(output, src->node_to_load->llvm_id);
             break;
         default:
             node_printf(src);
