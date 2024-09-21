@@ -54,4 +54,29 @@ static inline bool is_struct_symbol(const Node* symbol) {
 
 size_t sizeof_struct_definition(const Node* struct_def);
 
+static size_t get_member_index(const Node* struct_def, const Node* member_symbol) {
+    log_tree(LOG_DEBUG, struct_def);
+    assert(struct_def->type == NODE_STRUCT_DEFINITION);
+    size_t idx = 0;
+    nodes_foreach_child(curr_member, struct_def) {
+        if (str_view_is_equal(curr_member->name, member_symbol->name)) {
+            return idx;
+        }
+        idx++;
+    }
+    unreachable("member not found");
+}
+
+static const Node* get_member_def(const Node* struct_def, const Node* member_symbol) {
+    assert(struct_def->type == NODE_STRUCT_DEFINITION);
+    assert(member_symbol->type == NODE_SYMBOL);
+
+    nodes_foreach_child(curr_member, struct_def) {
+        if (str_view_is_equal(curr_member->name, member_symbol->name)) {
+            return curr_member;
+        }
+    }
+    unreachable("member not found");
+}
+
 #endif // PARSER_UTIL_H

@@ -110,9 +110,13 @@ bool flatten_load_and_store(Node* start_start_node) {
                 break;
             case NODE_ALLOCA:
                 break;
-            case NODE_LOAD:
+            case NODE_LOAD_VARIABLE:
                 break;
             case NODE_LOAD_STRUCT_MEMBER:
+                break;
+            case NODE_LOAD_ANOTHER_NODE:
+                break;
+            case NODE_LOAD_STRUCT_ELEMENT_PTR:
                 break;
             case NODE_STORE:
                 do_store(curr_node, curr_node);

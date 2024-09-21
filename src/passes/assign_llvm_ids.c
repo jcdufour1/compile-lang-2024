@@ -34,6 +34,10 @@ bool assign_llvm_ids(Node* curr_node) {
             return false;
         case NODE_LANG_TYPE:
             return false;
+        case NODE_LOAD_STRUCT_ELEMENT_PTR:
+            // fallthrough
+        case NODE_LOAD_ANOTHER_NODE:
+            // fallthrough
         case NODE_LOAD_STRUCT_MEMBER:
             // fallthrough
         case NODE_STORE_STRUCT_MEMBER:
@@ -48,7 +52,7 @@ bool assign_llvm_ids(Node* curr_node) {
             // fallthrough
         case NODE_ALLOCA:
             // fallthrough
-        case NODE_LOAD:
+        case NODE_LOAD_VARIABLE:
             // fallthrough
         case NODE_GOTO:
             // fallthrough

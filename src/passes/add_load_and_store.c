@@ -92,16 +92,40 @@ static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
             todo();
     }
 
-    Node* load = node_new();
     if (symbol_call->type == NODE_STRUCT_MEMBER_SYM) {
-        load->type = NODE_LOAD_STRUCT_MEMBER;
-        nodes_append_child(load, node_clone(nodes_single_child(symbol_call)));
+        Node* load_element_ptr = node_new();
+        load_element_ptr->type = NODE_LOAD_STRUCT_ELEMENT_PTR;
+        load_element_ptr->name = symbol_call->name;
+        Node* element_sym = nodes_single_child(symbol_call);
+
+        Node* var_def;
+        if (!sym_tbl_lookup(&var_def, symbol_call->name)) {
+            unreachable("");
+        }
+        Node* struct_def;
+        if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
+            unreachable("");
+        }
+        const Node* member_def = get_member_def(struct_def, element_sym);
+        symbol_call->lang_type = member_def->lang_type;
+        load_element_ptr->lang_type = member_def->lang_type;
+
+        nodes_append_child(load_element_ptr, node_clone(element_sym));
+        nodes_insert_before(node_insert_load_before, load_element_ptr);
+        Node* load_node = node_new();
+        load_node->type = NODE_LOAD_ANOTHER_NODE;
+        load_node->node_to_load = load_element_ptr;
+        load_node->lang_type = load_element_ptr->lang_type;
+        nodes_insert_before(node_insert_load_before, load_node);
+        symbol_call->node_to_load = load_node;
+        nodes_remove(nodes_single_child(symbol_call), true);
     } else {
-        load->type = NODE_LOAD;
+        Node* load = node_new();
+        load->type = NODE_LOAD_VARIABLE;
+        load->name = symbol_call->name;
+        symbol_call->node_to_load = load;
+        nodes_insert_before(node_insert_load_before, load);
     }
-    load->name = symbol_call->name;
-    symbol_call->node_to_load = load;
-    nodes_insert_before(node_insert_load_before, load);
     //log_tree(LOG_DEBUG, node_insert_load_before->parent);
     //todo();
 }
@@ -388,7 +412,11 @@ bool add_load_and_store(Node* start_start_node) {
                 break;
             case NODE_STORE:
                 break;
-            case NODE_LOAD:
+            case NODE_LOAD_VARIABLE:
+                break;
+            case NODE_LOAD_ANOTHER_NODE:
+                break;
+            case NODE_LOAD_STRUCT_ELEMENT_PTR:
                 break;
             case NODE_IF_STATEMENT:
                 unreachable("if statement node should not still exist at this point\n");

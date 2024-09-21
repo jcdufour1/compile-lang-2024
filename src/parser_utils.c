@@ -66,7 +66,7 @@ static bool is_load_struct_member(const Node* curr_node, const Node* var_call) {
 
 static bool is_load(const Node* curr_node, const Node* var_call) {
     log(LOG_DEBUG, NODE_FMT "" NODE_FMT"\n", node_print(curr_node), node_print(var_call));
-    return (curr_node->type == NODE_LOAD) && str_view_is_equal(curr_node->name, var_call->name);
+    return (curr_node->type == NODE_LOAD_VARIABLE) && str_view_is_equal(curr_node->name, var_call->name);
 }
 
 static bool is_store(const Node* curr_node, const Node* var_call) {
