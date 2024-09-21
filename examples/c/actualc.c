@@ -7,7 +7,7 @@ int mul(int a, int b) {
 
 typedef struct {
     long num;
-    char ch;
+    char* string_data;
 } Token;
 
 typedef struct {
@@ -30,13 +30,14 @@ Div print(const char* str, int num1, char* another_str) {
 }
 
 void do_thing(Div div) {
-    printf("%d/%d %c\n", div.numerator, div.denominator, div.token.ch);
+    printf("%d/%d %s\n", div.numerator, div.denominator, div.token.string_data);
 }
 
 void do_thing_ptr(Div* div) {
 }
 
 int main(void) {
+    Token token = {.num = 89, .string_data = "djsf"};
     Div div = {.numerator = 78, .denominator = 90, .extra_num = 7};
     printf("%d\n", div.extra_num);
     div.extra_num = 12;

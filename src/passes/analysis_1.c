@@ -7,12 +7,15 @@ static void do_assignment(Node* curr_node) {
     Node* lhs = nodes_get_child(curr_node, 0);
     Node* rhs = nodes_get_child(curr_node, 1);
     if (rhs->type == NODE_STRUCT_LITERAL) {
-        if (lhs->type != NODE_SYMBOL) {
-            todo();
+        if (lhs->type == NODE_VARIABLE_DEFINITION) {
+            rhs->lang_type = lhs->lang_type;
+        } else if (lhs->type == NODE_SYMBOL) {
+            Node* sym_def;
+            try(sym_tbl_lookup(&sym_def, lhs->name));
+            rhs->lang_type = sym_def->lang_type;
+        } else {
+            unreachable("");
         }
-        Node* sym_def;
-        try(sym_tbl_lookup(&sym_def, lhs->name));
-        rhs->lang_type = sym_def->lang_type;
     }
 }
 

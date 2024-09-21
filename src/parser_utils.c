@@ -191,7 +191,7 @@ const Node* get_lang_type_from_sym_definition(const Node* sym_def) {
     todo();
 }
 
-size_t sizeof_lang_type(Str_view lang_type) {
+uint64_t sizeof_lang_type(Str_view lang_type) {
     if (str_view_cstr_is_equal(lang_type, "ptr")) {
         return 8;
      } else if (str_view_cstr_is_equal(lang_type, "i32")) {
@@ -201,7 +201,7 @@ size_t sizeof_lang_type(Str_view lang_type) {
      }
 }
 
-size_t sizeof_item(const Node* item) {
+uint64_t sizeof_item(const Node* item) {
     switch (item->type) {
         case NODE_STRUCT_LITERAL:
             todo();
@@ -215,28 +215,38 @@ size_t sizeof_item(const Node* item) {
     }
 }
 
-size_t sizeof_struct_literal(const Node* struct_literal_or_def) {
-    assert(struct_literal_or_def->type == NODE_STRUCT_LITERAL || struct_literal_or_def->type == NODE_STRUCT_DEFINITION);
+uint64_t sizeof_struct_literal(const Node* struct_literal) {
+    assert(struct_literal->type == NODE_STRUCT_LITERAL);
+    uint64_t required_alignment = 8; // TODO: do not hardcode this
 
-    size_t size = 0;
-    nodes_foreach_child(child, struct_literal_or_def) {
+    uint64_t total = 0;
+    nodes_foreach_child(child, struct_literal) {
         const Node* member = nodes_single_child_const(child);
-        size += sizeof_item(member);
+        uint64_t sizeof_curr_item = sizeof_item(member);
+        if (total%required_alignment + sizeof_curr_item > required_alignment) {
+            total += required_alignment - total%required_alignment;
+        }
+        total += sizeof_curr_item;
     }
-    return size;
+    return total;
 }
 
-size_t sizeof_struct_definition(const Node* struct_def) {
-    assert(struct_def->type == NODE_STRUCT_LITERAL || struct_def->type == NODE_STRUCT_DEFINITION);
+uint64_t sizeof_struct_definition(const Node* struct_def) {
+    assert(struct_def->type == NODE_STRUCT_DEFINITION);
+    uint64_t required_alignment = 8; // TODO: do not hardcode this
 
-    size_t size = 0;
+    uint64_t total = 0;
     nodes_foreach_child(member_def, struct_def) {
-        size += sizeof_item(member_def);
+        uint64_t sizeof_curr_item = sizeof_item(member_def);
+        if (total%required_alignment + sizeof_curr_item > required_alignment) {
+            total += required_alignment - total%required_alignment;
+        }
+        total += sizeof_curr_item;
     }
-    return size;
+    return total;
 }
 
-size_t sizeof_struct(const Node* struct_literal_or_def) {
+uint64_t sizeof_struct(const Node* struct_literal_or_def) {
     switch (struct_literal_or_def->type) {
         case NODE_STRUCT_DEFINITION:
             return sizeof_struct_definition(struct_literal_or_def);

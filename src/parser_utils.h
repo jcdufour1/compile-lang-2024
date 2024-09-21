@@ -29,11 +29,13 @@ Llvm_id get_matching_fun_param_load_id(const Node* src);
 
 const Node* get_lang_type_from_sym_definition(const Node* sym_def);
 
-size_t sizeof_lang_type(Str_view lang_type);
+uint64_t sizeof_lang_type(Str_view lang_type);
 
-size_t sizeof_item(const Node* item);
+uint64_t sizeof_item(const Node* item);
 
-size_t sizeof_struct(const Node* struct_literal);
+uint64_t sizeof_struct(const Node* struct_literal);
+
+uint64_t sizeof_struct_definition(const Node* struct_def);
 
 static inline bool is_struct_variable_definition(const Node* var_def) {
     assert(var_def->type == NODE_VARIABLE_DEFINITION);
@@ -52,9 +54,7 @@ static inline bool is_struct_symbol(const Node* symbol) {
     return is_struct_variable_definition(var_def);
 }
 
-size_t sizeof_struct_definition(const Node* struct_def);
-
-static size_t get_member_index(const Node* struct_def, const Node* member_symbol) {
+static inline size_t get_member_index(const Node* struct_def, const Node* member_symbol) {
     log_tree(LOG_DEBUG, struct_def);
     assert(struct_def->type == NODE_STRUCT_DEFINITION);
     size_t idx = 0;
@@ -67,7 +67,7 @@ static size_t get_member_index(const Node* struct_def, const Node* member_symbol
     unreachable("member not found");
 }
 
-static const Node* get_member_def(const Node* struct_def, const Node* member_symbol) {
+static inline const Node* get_member_def(const Node* struct_def, const Node* member_symbol) {
     assert(struct_def->type == NODE_STRUCT_DEFINITION);
     assert(member_symbol->type == NODE_SYMBOL);
 
