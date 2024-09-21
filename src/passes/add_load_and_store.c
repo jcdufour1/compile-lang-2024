@@ -5,6 +5,8 @@
 
 #include "passes.h"
 
+static void insert_store_assignment(Node* node_to_insert_before, Node* assignment);
+
 static Node* alloca_new(const Node* var_def) {
     Node* alloca = node_new();
     alloca->type = NODE_ALLOCA;
@@ -22,6 +24,33 @@ static Node* store_new(Node* item_to_store) {
     store->type = NODE_STORE;
     //store->name = var_def->name;
     return store;
+}
+
+static void do_struct_literal(Node* struct_literal) {
+    assert(struct_literal->type == NODE_STRUCT_LITERAL);
+
+    Node* member = nodes_get_child(struct_literal, 0);
+    while (member) {
+        bool go_to_next = true;
+        switch (member->type) {
+            case NODE_ASSIGNMENT: {
+                Node* assignment = member;
+                insert_store_assignment(assignment, assignment);
+                member = assignment->prev;
+                nodes_remove(assignment, true);
+                go_to_next = false;
+                break;
+            }
+            case NODE_STORE:
+                break;
+            default:
+                unreachable(NODE_FMT"\n", node_print(member));
+        }
+
+        if (go_to_next) {
+            member = member->next;
+        }
+    }
 }
 
 static void insert_alloca(Node* var_def) {
@@ -113,8 +142,10 @@ static void load_operator_operand(Node* node_insert_before, Node* operand) {
         case NODE_SYMBOL:
             insert_load(node_insert_before, operand);
             break;
+        case NODE_OPERATOR_RETURN_VALUE_SYM:
+            break;
         default:
-            unreachable("");
+            unreachable(NODE_FMT"\n", node_print(operand));
     }
 }
 
@@ -138,7 +169,7 @@ static void add_load_foreach_arg(Node* node_insert_before, Node* function_call) 
     }
 }
 
-static void insert_store_assignment(Node* assignment) {
+static void insert_store_assignment(Node* node_to_insert_before, Node* assignment) {
     log(LOG_DEBUG, "THING 76: insert_store_assignment\n");
     assert(assignment->type == NODE_ASSIGNMENT);
 
@@ -149,7 +180,7 @@ static void insert_store_assignment(Node* assignment) {
     switch (lhs->type) {
         case NODE_VARIABLE_DEFINITION:
             nodes_remove(lhs, false);
-            nodes_insert_before(assignment, lhs);
+            nodes_insert_before(node_to_insert_before, lhs);
             insert_alloca(lhs);
             break;
         case NODE_SYMBOL:
@@ -166,10 +197,11 @@ static void insert_store_assignment(Node* assignment) {
             todo();
             break;
         case NODE_STRUCT_LITERAL:
-            // fallthrough
+            do_struct_literal(rhs);
+            insert_load(node_to_insert_before, rhs);
+            break;
         case NODE_SYMBOL:
             insert_load(assignment, rhs);
-            log_tree(LOG_DEBUG, root_of_tree);
             break;
         case NODE_LITERAL:
             break;
@@ -194,7 +226,7 @@ static void insert_store_assignment(Node* assignment) {
     }
     nodes_append_child(store, rhs);
 
-    nodes_insert_before(assignment, store);
+    nodes_insert_before(node_to_insert_before, store);
 }
 
 static void add_load_return_statement(Node* return_statement) {
@@ -282,12 +314,16 @@ bool add_load_and_store(Node* start_start_node) {
     if (!start_start_node->left_child) {
         return false;
     }
+    if (start_start_node->type != NODE_BLOCK) {
+        return false;
+    }
 
     Node* curr_node = nodes_get_local_rightmost(start_start_node->left_child);
     while (curr_node) {
         bool go_to_prev = true;
         switch (curr_node->type) {
             case NODE_STRUCT_LITERAL:
+                do_struct_literal(curr_node);
                 break;
             case NODE_LITERAL:
                 break;
@@ -307,7 +343,7 @@ bool add_load_and_store(Node* start_start_node) {
             case NODE_LANG_TYPE:
                 break;
             case NODE_OPERATOR:
-                //add_load_operator(curr_node);
+                load_operator_operands(curr_node, curr_node);
                 break;
             case NODE_BLOCK:
                 break;
@@ -329,7 +365,7 @@ bool add_load_and_store(Node* start_start_node) {
                 break;
             case NODE_ASSIGNMENT: {
                 Node* assignment = curr_node;
-                insert_store_assignment(assignment);
+                insert_store_assignment(assignment, assignment);
                 curr_node = assignment->prev;
                 nodes_remove(assignment, true);
                 go_to_prev = false;
@@ -366,6 +402,8 @@ bool add_load_and_store(Node* start_start_node) {
             case NODE_STORE_STRUCT_MEMBER:
                 break;
             case NODE_STRUCT_MEMBER_SYM:
+                break;
+            case NODE_OPERATOR_RETURN_VALUE_SYM:
                 break;
             case NODE_STRUCT_DEFINITION:
                 break;
