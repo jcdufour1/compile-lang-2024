@@ -38,6 +38,8 @@ bool assign_llvm_ids(Node* curr_node) {
             // fallthrough
         case NODE_LOAD_ANOTHER_NODE:
             // fallthrough
+        case NODE_STORE_ANOTHER_NODE:
+            // fallthrough
         case NODE_LOAD_STRUCT_MEMBER:
             // fallthrough
         case NODE_STORE_STRUCT_MEMBER:
@@ -68,7 +70,7 @@ bool assign_llvm_ids(Node* curr_node) {
             // fallthrough
         case NODE_OPERATOR_RETURN_VALUE_SYM:
             // fallthrough
-        case NODE_STORE:
+        case NODE_STORE_VARIABLE:
             // fallthrough
             curr_node->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;

@@ -122,6 +122,9 @@ static inline void nodes_establish_parent_left_child(Node* parent, Node* child) 
 
 static inline void nodes_insert_after(Node* curr, Node* node_to_insert) {
     assert(curr && node_to_insert);
+    assert(!node_to_insert->next);
+    assert(!node_to_insert->prev);
+    assert(!node_to_insert->parent);
 
     Node* old_next = curr->next;
     nodes_establish_siblings(curr, node_to_insert);
@@ -129,6 +132,21 @@ static inline void nodes_insert_after(Node* curr, Node* node_to_insert) {
         nodes_establish_siblings(node_to_insert, old_next);
     }
     node_to_insert->parent = curr->parent;
+}
+
+static inline void nodes_insert_after_1(Node* curr, Node* node_to_insert) {
+    assert(curr && node_to_insert);
+    assert(!node_to_insert->next);
+    assert(!node_to_insert->prev);
+    assert(!node_to_insert->parent);
+
+    Node* old_next = curr->next;
+    nodes_establish_siblings(curr, node_to_insert);
+    if (old_next) {
+        nodes_establish_siblings(node_to_insert, old_next);
+    }
+    node_to_insert->parent = curr->parent;
+    todo();
 }
 
 static inline void nodes_insert_before(Node* node_to_insert_before, Node* node_to_insert) {
@@ -373,6 +391,11 @@ static inline void nodes_move_back_one(Node* node) {
     Node* prev = node->prev;
     nodes_remove(node, true);
     nodes_insert_before(prev, node);
+}
+
+static inline void nodes_clone_self_and_children(const Node* node_to_clone) {
+    (void) node_to_clone;
+    todo();
 }
 
 #endif // NODES_H

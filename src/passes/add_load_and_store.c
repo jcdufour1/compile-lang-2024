@@ -21,7 +21,7 @@ static Node* store_new(Node* item_to_store) {
     (void) item_to_store;
     todo();
     Node* store = node_new();
-    store->type = NODE_STORE;
+    store->type = NODE_STORE_VARIABLE;
     //store->name = var_def->name;
     return store;
 }
@@ -41,7 +41,7 @@ static void do_struct_literal(Node* struct_literal) {
                 go_to_next = false;
                 break;
             }
-            case NODE_STORE:
+            case NODE_STORE_VARIABLE:
                 break;
             default:
                 unreachable(NODE_FMT"\n", node_print(member));
@@ -73,6 +73,40 @@ static void insert_alloca(Node* var_def) {
     unreachable("");
 }
 
+// returns node of element pointer that should then be loaded
+static Node* do_load_struct_element_ptr(Node* node_to_insert_before, Node* symbol_call) {
+    Node* prev_struct_sym = symbol_call;
+    Node* node_element_ptr_to_load = symbol_call;
+    Node* load_element_ptr = NULL;
+    nodes_foreach_child(element_sym, symbol_call) {
+        load_element_ptr = node_new();
+        load_element_ptr->type = NODE_LOAD_STRUCT_ELEMENT_PTR;
+        load_element_ptr->name = prev_struct_sym->name;
+        Node* var_def;
+        if (!sym_tbl_lookup(&var_def, prev_struct_sym->name)) {
+            unreachable("");
+        }
+        Node* struct_def;
+        if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
+            unreachable("");
+        }
+        const Node* member_def = get_member_def(struct_def, element_sym);
+        symbol_call->lang_type = member_def->lang_type;
+        load_element_ptr->lang_type = member_def->lang_type;
+        load_element_ptr->node_to_load = node_element_ptr_to_load;
+        nodes_append_child(load_element_ptr, node_clone(element_sym));
+        nodes_insert_before(node_to_insert_before, load_element_ptr);
+        if (prev_struct_sym == symbol_call) {
+            load_element_ptr->load_elem_ptr_get_store_dest_id = true;
+        }
+
+        prev_struct_sym = element_sym;
+        node_element_ptr_to_load = load_element_ptr;
+    }
+    assert(load_element_ptr);
+    return load_element_ptr;
+}
+
 static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
     log(LOG_DEBUG, "insert_load\n");
 
@@ -93,50 +127,21 @@ static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
     }
 
     if (symbol_call->type == NODE_STRUCT_MEMBER_SYM) {
-        Node* prev_struct_sym = symbol_call;
-        Node* node_element_ptr_to_load = symbol_call;
-        Node* load_element_ptr;
-        nodes_foreach_child(element_sym, symbol_call) {
-            load_element_ptr = node_new();
-            log(LOG_DEBUG, "yes\n");
-            load_element_ptr->type = NODE_LOAD_STRUCT_ELEMENT_PTR;
-            load_element_ptr->name = prev_struct_sym->name;
-            Node* var_def;
-            log(LOG_DEBUG, NODE_FMT"\n", node_print(symbol_call));
-            if (!sym_tbl_lookup(&var_def, prev_struct_sym->name)) {
-                unreachable("");
-            }
-            Node* struct_def;
-            if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
-                unreachable("");
-            }
-            const Node* member_def = get_member_def(struct_def, element_sym);
-            symbol_call->lang_type = member_def->lang_type;
-            load_element_ptr->lang_type = member_def->lang_type;
-            load_element_ptr->node_to_load = node_element_ptr_to_load;
-            nodes_append_child(load_element_ptr, node_clone(element_sym));
-            nodes_insert_before(node_insert_load_before, load_element_ptr);
-            if (prev_struct_sym == symbol_call) {
-                load_element_ptr->load_elem_ptr_get_store_dest_id = true;
-            }
-
-
-            prev_struct_sym = element_sym;
-            node_element_ptr_to_load = load_element_ptr;
-        }
         Node* load_node = node_new();
         load_node->type = NODE_LOAD_ANOTHER_NODE;
+        Node* load_element_ptr = do_load_struct_element_ptr(node_insert_load_before, symbol_call);
         load_node->node_to_load = load_element_ptr;
         load_node->lang_type = load_element_ptr->lang_type;
         nodes_insert_before(node_insert_load_before, load_node);
         symbol_call->node_to_load = load_node;
-
     } else {
         Node* load = node_new();
         load->type = NODE_LOAD_VARIABLE;
         load->name = symbol_call->name;
         symbol_call->node_to_load = load;
         nodes_insert_before(node_insert_load_before, load);
+        log_tree(LOG_DEBUG, load);
+        log_tree(LOG_DEBUG, node_insert_load_before->parent);
     }
     log_tree(LOG_DEBUG, node_insert_load_before->parent);
 }
@@ -160,11 +165,21 @@ static void insert_store(Node* node_insert_store_before, Node* symbol_call /* sr
             todo();
     }
 
-    Node* store = node_new();
-    store->type = NODE_STORE;
-    store->name = symbol_call->name;
-    nodes_append_child(store, symbol_call);
-    nodes_insert_before(node_insert_store_before, store);
+    if (symbol_call->type == NODE_STRUCT_MEMBER_SYM) {
+        todo();
+    } else {
+        Node* store = node_new();
+        store->type = NODE_STORE_VARIABLE;
+        store->name = symbol_call->name;
+        //symbol_call->node_to_load = store;
+        nodes_append_child(store, symbol_call);
+        nodes_insert_before(node_insert_store_before, store);
+    }
+    //Node* store = node_new();
+    //store->type = NODE_STORE;
+    //store->name = symbol_call->name;
+    //nodes_append_child(store, symbol_call);
+    //nodes_insert_before(node_insert_store_before, store);
 }
 
 static void load_operator_operand(Node* node_insert_before, Node* operand) {
@@ -250,18 +265,31 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
             todo();
     }
 
-    Node* store = node_new();
-    store->name = lhs->name;
-    nodes_remove(rhs, true);
     if (lhs->type == NODE_STRUCT_MEMBER_SYM) {
-        store->type = NODE_STORE_STRUCT_MEMBER;
-        nodes_append_child(store, node_clone(nodes_single_child(lhs)));
+        log_tree(LOG_DEBUG, node_to_insert_before->parent);
+        nodes_remove(lhs, true);
+        nodes_remove(rhs, true);
+        log_tree(LOG_DEBUG, node_to_insert_before->parent);
+        Node* store = node_new();
+        store->type = NODE_STORE_ANOTHER_NODE;
+        Node* store_element_ptr = do_load_struct_element_ptr(node_to_insert_before, lhs);
+        log_tree(LOG_DEBUG, store_element_ptr->parent);
+        log_tree(LOG_DEBUG, store_element_ptr);
+        store->node_to_load = store_element_ptr;
+        store->lang_type = store_element_ptr->lang_type;
+        nodes_append_child(store, rhs);
+        nodes_insert_after(assignment, store);
+        nodes_insert_after(assignment, lhs);
+        //lhs->node_to_load = store;
+        log_tree(LOG_DEBUG, node_to_insert_before->parent);
     } else {
-        store->type = NODE_STORE;
+        Node* store = node_new();
+        store->name = lhs->name;
+        nodes_remove(rhs, true);
+        store->type = NODE_STORE_VARIABLE;
+        nodes_append_child(store, rhs);
+        nodes_insert_before(node_to_insert_before, store);
     }
-    nodes_append_child(store, rhs);
-
-    nodes_insert_before(node_to_insert_before, store);
 }
 
 static void add_load_return_statement(Node* return_statement) {
@@ -329,7 +357,7 @@ static void load_function_parameters(Node* fun_def) {
 
 static void load_function_arguments(Node* fun_call) {
     switch (fun_call->parent->type) {
-        case NODE_STORE:
+        case NODE_STORE_VARIABLE:
             add_load_foreach_arg(fun_call->parent, fun_call);
             return;
         case NODE_BLOCK:
@@ -421,11 +449,13 @@ bool add_load_and_store(Node* start_start_node) {
                 break;
             case NODE_ALLOCA:
                 break;
-            case NODE_STORE:
+            case NODE_STORE_VARIABLE:
                 break;
             case NODE_LOAD_VARIABLE:
                 break;
             case NODE_LOAD_ANOTHER_NODE:
+                break;
+            case NODE_STORE_ANOTHER_NODE:
                 break;
             case NODE_LOAD_STRUCT_ELEMENT_PTR:
                 break;

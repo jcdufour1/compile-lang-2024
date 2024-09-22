@@ -374,6 +374,29 @@ static void emit_memcpy(String* output, const Node* memcpy_node) {
     string_extend_cstr(output, ", i1 false)\n");
 }
 
+static void emit_store_another_node(String* output, const Node* statement) {
+    string_extend_cstr(output, "    store ");
+    /*
+    if (is_struct_variable_definition(var_or_member_def) && is_fun_param_call) {
+        node_printf(store);
+        node_printf(var_or_member_def);
+        node_printf(src);
+        unreachable("");
+    } else {
+        extend_type_call_str(output, var_or_member_def);
+    }
+    */
+    extend_type_call_str(output, statement);
+
+    emit_src(output, nodes_single_child_const(statement));
+
+    string_extend_cstr(output, ", ptr %");
+    string_extend_size_t(output, statement->node_to_load->llvm_id);
+    string_extend_cstr(output, ", align 8");
+    string_extend_cstr(output, "\n");
+    log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
+}
+
 static void emit_store_struct_fun_param(String* output, const Node* store) {
     size_t alloca_dest_id = get_store_dest_id(store);
 
@@ -699,8 +722,9 @@ static void emit_load_struct_element_pointer(String* output, const Node* load_el
     string_extend_cstr(output, " = getelementptr inbounds %struct.");
     string_extend_strv(output, var_def->lang_type);
     string_extend_cstr(output, ", ptr %");
-    log(LOG_DEBUG, NODE_FMT"\n", node_print(load_elem_ptr->node_to_load));
     if (load_elem_ptr->load_elem_ptr_get_store_dest_id) {
+        log_tree(LOG_DEBUG, load_elem_ptr);
+        log_tree(LOG_DEBUG, load_elem_ptr->node_to_load);
         string_extend_size_t(output, get_store_dest_id(load_elem_ptr->node_to_load));
     } else {
         string_extend_size_t(output, load_elem_ptr->node_to_load->llvm_id);
@@ -748,7 +772,7 @@ static void emit_block(String* output, const Node* block) {
             case NODE_ALLOCA:
                 emit_alloca(output, statement);
                 break;
-            case NODE_STORE:
+            case NODE_STORE_VARIABLE:
                 emit_store(output, statement);
                 break;
             case NODE_LOAD_VARIABLE:
@@ -772,10 +796,15 @@ static void emit_block(String* output, const Node* block) {
             case NODE_LOAD_ANOTHER_NODE:
                 emit_load_another_node(output, statement);
                 break;
+            case NODE_STORE_ANOTHER_NODE:
+                emit_store_another_node(output, statement);
+                break;
+            case NODE_STRUCT_MEMBER_SYM:
+                break;
             case NODE_FOR_LOOP:
                 unreachable("for loop should not still be present at this point\n");
             default:
-                //log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
+                log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
                 node_printf(statement);
                 todo();
         }
@@ -809,7 +838,7 @@ static void emit_struct_literal(String* output, const Node* literal) {
         if (!is_first) {
             string_append(output, ',');
         }
-        assert(member_store->type == NODE_STORE);
+        assert(member_store->type == NODE_STORE_VARIABLE);
         const Node* member = nodes_single_child_const(member_store);
         extend_literal_decl(output, member, false);
         is_first = false;

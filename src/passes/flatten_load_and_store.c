@@ -3,6 +3,7 @@
 #include "../nodes.h"
 
 static void do_store(Node* node_to_insert_before, Node* store) {
+    log_tree(LOG_DEBUG, store);
     Node* src = nodes_single_child(store);
     switch (src->type) {
         case NODE_FUNCTION_CALL: {
@@ -116,9 +117,11 @@ bool flatten_load_and_store(Node* start_start_node) {
                 break;
             case NODE_LOAD_ANOTHER_NODE:
                 break;
+            case NODE_STORE_ANOTHER_NODE:
+                break;
             case NODE_LOAD_STRUCT_ELEMENT_PTR:
                 break;
-            case NODE_STORE:
+            case NODE_STORE_VARIABLE:
                 do_store(curr_node, curr_node);
                 break;
             case NODE_STORE_STRUCT_MEMBER:

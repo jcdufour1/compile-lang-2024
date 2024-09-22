@@ -31,7 +31,8 @@ Llvm_id get_block_return_id(const Node* fun_call) {
 // return true if successful, false otherwise
 static bool get_prev_matching_node(const Node** result, const Node* node_to_start, const Node* var_call, bool is_matching(const Node* curr_node, const Node* var_call)) {
     nodes_foreach_from_curr_rev_const(curr_node, node_to_start) {
-        //node_printf(curr_node);
+        log(LOG_DEBUG, NODE_FMT "" NODE_FMT"\n", node_print(curr_node), node_print(node_to_start));
+        log(LOG_DEBUG, NODE_FMT"\n", node_print(curr_node->parent));
         assert(curr_node->parent == node_to_start->parent);
         if (is_matching(curr_node, var_call)) {
             *result = curr_node;
@@ -70,10 +71,11 @@ static bool is_load(const Node* curr_node, const Node* var_call) {
 }
 
 static bool is_store(const Node* curr_node, const Node* var_call) {
-    return curr_node->type == NODE_STORE && 0 == str_view_cmp(curr_node->name, var_call->name);
+    return curr_node->type == NODE_STORE_VARIABLE && 0 == str_view_cmp(curr_node->name, var_call->name);
 }
 
 static bool is_alloca(const Node* curr_node, const Node* var_call) {
+    node_printf(curr_node);
     return curr_node->type == NODE_ALLOCA && 0 == str_view_cmp(curr_node->name, var_call->name);
 }
 
@@ -92,6 +94,8 @@ static bool is_operator(const Node* curr_node, const Node* var_call) {
 }
 
 const Node* get_alloca(const Node* var_call) {
+    log_tree(LOG_DEBUG, var_call);
+    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(var_call->name));
     const Node* alloca_node;
     if (!get_prev_matching_node(&alloca_node, var_call, var_call, is_alloca)) {
         unreachable("no alloca node found before symbol call:"NODE_FMT"\n", node_print(var_call));
@@ -136,7 +140,7 @@ const Node* get_symbol_def_from_alloca(const Node* alloca) {
             return get_member_def_from_alloca(alloca);
         case NODE_ALLOCA:
             // fallthrough
-        case NODE_STORE:
+        case NODE_STORE_VARIABLE:
             return get_normal_symbol_def_from_alloca(alloca);
         default:
             unreachable(NODE_FMT"\n", node_print(alloca));

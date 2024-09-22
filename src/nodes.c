@@ -24,7 +24,7 @@ static const char* NODE_GOTO_DESCRIPTION = "goto";
 static const char* NODE_LABEL_DESCRIPTION = "label";
 static const char* NODE_COND_GOTO_DESCRIPTION = "cond_goto";
 static const char* NODE_ALLOCA_DESCRIPTION = "alloca";
-static const char* NODE_STORE_DESCRIPTION = "store";
+static const char* NODE_STORE_VARIABLE_DESCRIPTION = "store_variable";
 static const char* NODE_LOAD_VARIABLE_DESCRIPTION = "load_varaible";
 static const char* NODE_IF_STATEMENT_DESCRIPTION = "if_statement";
 static const char* NODE_IF_CONDITION_DESCRIPTION = "if_condition";
@@ -36,6 +36,7 @@ static const char* NODE_STORE_STRUCT_MEMBER_DESCRIPTION = "store_member";
 static const char* NODE_LOAD_STRUCT_MEMBER_DESCRIPTION = "load_member";
 static const char* NODE_LOAD_STRUCT_ELEMENT_PTR_DESCRIPTION = "load_element_ptr";
 static const char* NODE_LOAD_ANOTHER_NODE_DESCRIPTION = "load_another_node";
+static const char* NODE_STORE_ANOTHER_NODE_DESCRIPTION = "store_another_node";
 static const char* NODE_NODE_FUNCTION_RETURN_VALUE_SYM_DESCRIPTION = "fun_return_value_sym";
 static const char* NODE_NODE_OPERATOR_RETURN_VALUE_SYM_DESCRIPTION = "operator_return_value_sym";
 static const char* NODE_NODE_MEMCPY_DESCRIPTION = "memcpy";
@@ -157,8 +158,8 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_LABEL_DESCRIPTION);
         case NODE_ALLOCA:
             return str_view_from_cstr(NODE_ALLOCA_DESCRIPTION);
-        case NODE_STORE:
-            return str_view_from_cstr(NODE_STORE_DESCRIPTION);
+        case NODE_STORE_VARIABLE:
+            return str_view_from_cstr(NODE_STORE_VARIABLE_DESCRIPTION);
         case NODE_LOAD_VARIABLE:
             return str_view_from_cstr(NODE_LOAD_VARIABLE_DESCRIPTION);
         case NODE_IF_STATEMENT:
@@ -183,12 +184,14 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_NODE_OPERATOR_RETURN_VALUE_SYM_DESCRIPTION);
         case NODE_MEMCPY:
             return str_view_from_cstr(NODE_NODE_MEMCPY_DESCRIPTION);
-        case NODE_NO_TYPE:
-            return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
         case NODE_LOAD_STRUCT_ELEMENT_PTR:
             return str_view_from_cstr(NODE_LOAD_STRUCT_ELEMENT_PTR_DESCRIPTION);
         case NODE_LOAD_ANOTHER_NODE:
             return str_view_from_cstr(NODE_LOAD_ANOTHER_NODE_DESCRIPTION);
+        case NODE_STORE_ANOTHER_NODE:
+            return str_view_from_cstr(NODE_STORE_ANOTHER_NODE_DESCRIPTION);
+        case NODE_NO_TYPE:
+            return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
         default:
             log(LOG_FETAL, "node_type: %d\n", node_type);
             todo();
@@ -209,7 +212,7 @@ String node_print_internal(const Node* node) {
     switch (node->type) {
         case NODE_ALLOCA:
             // fallthrough
-        case NODE_STORE:
+        case NODE_STORE_VARIABLE:
             // fallthrough
         case NODE_FUNCTION_PARAM_SYM:
             // fallthrough
@@ -284,6 +287,8 @@ String node_print_internal(const Node* node) {
         case NODE_NO_TYPE:
             break;
         case NODE_LOAD_ANOTHER_NODE:
+            // fallthrough
+        case NODE_STORE_ANOTHER_NODE:
             // fallthrough
         case NODE_STRUCT_MEMBER_SYM:
             // fallthrough

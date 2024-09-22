@@ -44,5 +44,10 @@ fn main() i32 {
     token.div5 = new_div3;
     printf("token: %d %s\n", token.num, token.string_data);
     printf("%d/%d\n", token.div5.numerator, token.div5.denominator)
+    token.div5.numerator = 831;
+    token.div5.denominator = 700;
+    printf("%d/%d\n", token.div5.numerator, token.div5.denominator)
+    token.div5 = div3;
+    printf("%d/%d\n", token.div5.numerator, token.div5.denominator)
     return 0
 }
