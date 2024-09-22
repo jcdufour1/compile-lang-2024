@@ -7,16 +7,6 @@
 
 static void insert_store_assignment(Node* node_to_insert_before, Node* assignment);
 
-static Node* alloca_new(const Node* var_def) {
-    Node* alloca = node_new();
-    alloca->type = NODE_ALLOCA;
-    alloca->name = var_def->name;
-    if (is_struct_variable_definition(var_def)) {
-        alloca->is_struct_associated = true;
-    }
-    return alloca;
-}
-
 static Node* store_new(Node* item_to_store) {
     (void) item_to_store;
     todo();
@@ -51,26 +41,6 @@ static void do_struct_literal(Node* struct_literal) {
             member = member->next;
         }
     }
-}
-
-static void insert_alloca(Node* var_def) {
-    log_tree(LOG_DEBUG, var_def);
-    Node* new_alloca = alloca_new(var_def);
-
-    log_tree(LOG_DEBUG, root_of_tree);
-
-    nodes_foreach_from_curr(curr, nodes_get_local_leftmost(var_def)) {
-        if (curr->type != NODE_VARIABLE_DEFINITION) {
-            if (curr->prev) {
-                nodes_insert_after(curr->prev, new_alloca);
-                return;
-            }
-            nodes_insert_before(curr, new_alloca);
-            return;
-        }
-    }
-
-    unreachable("");
 }
 
 // returns node of element pointer that should then be loaded
@@ -337,6 +307,15 @@ static void add_load_operator(Node* operator) {
     todo();
 }
 
+static Node* get_node_after_last_alloca(Node* fun_block) {
+    nodes_foreach_child(node, fun_block) {
+        if (node->type != NODE_ALLOCA) {
+            return node;
+        }
+    }
+    unreachable("");
+}
+
 static void load_function_parameters(Node* fun_def) {
     assert(fun_def->type == NODE_FUNCTION_DEFINITION);
     Node* fun_params = nodes_get_child_of_type(fun_def, NODE_FUNCTION_PARAMETERS);
@@ -346,11 +325,7 @@ static void load_function_parameters(Node* fun_def) {
         Node* fun_param_call = symbol_new(param->name);
         fun_param_call->type = NODE_FUNCTION_PARAM_SYM;
         fun_param_call->node_to_load = param;
-        insert_store(fun_block->left_child, fun_param_call);
-        Node* alloca = alloca_new(param);
-        alloca->is_fun_param_associated = true;
-
-        nodes_insert_before(fun_block->left_child, alloca);
+        insert_store(get_node_after_last_alloca(fun_block), fun_param_call);
     }
     log_tree(LOG_DEBUG, fun_params->parent);
 }
@@ -417,7 +392,6 @@ bool add_load_and_store(Node* start_start_node) {
                 add_load_return_statement(curr_node);
                 break;
             case NODE_VARIABLE_DEFINITION:
-                insert_alloca(curr_node);
                 break;
             case NODE_FUNCTION_DECLARATION:
                 break;

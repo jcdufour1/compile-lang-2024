@@ -23,9 +23,9 @@ static void do_function_call(Node* fun_call) {
     Node* fun_def;
     try(sym_tbl_lookup(&fun_def, fun_call->name));
     Node* params = nodes_get_child_of_type(fun_def, NODE_FUNCTION_PARAMETERS);
-    size_t idx = 0;
+    size_t params_idx = 0;
     nodes_foreach_child(argument, fun_call) {
-        Node* corresponding_param = nodes_get_child(params, idx);
+        Node* corresponding_param = nodes_get_child(params, params_idx);
         switch (corresponding_param->pointer_depth) {
             case 0:
                 break;
@@ -36,7 +36,9 @@ static void do_function_call(Node* fun_call) {
                 todo();
         }
 
-        idx++;
+        if (!corresponding_param->is_variadic) {
+            params_idx++;
+        }
     }
 }
 
