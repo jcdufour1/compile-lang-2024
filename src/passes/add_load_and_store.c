@@ -109,6 +109,7 @@ static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
         const Node* member_def = get_member_def(struct_def, element_sym);
         symbol_call->lang_type = member_def->lang_type;
         load_element_ptr->lang_type = member_def->lang_type;
+        load_element_ptr->node_to_load = symbol_call;
 
         nodes_append_child(load_element_ptr, node_clone(element_sym));
         nodes_insert_before(node_insert_load_before, load_element_ptr);

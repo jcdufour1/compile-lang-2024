@@ -12,7 +12,10 @@ Llvm_id get_block_return_id(const Node* fun_call);
 
 Llvm_id get_prev_load_id(const Node* var_call);
 
+const Node* get_alloca(const Node* var_call);
+
 Llvm_id get_store_dest_id(const Node* var_call);
+
 
 const Node* get_symbol_def_from_alloca(const Node* alloca);
 
@@ -45,10 +48,10 @@ static inline bool is_struct_variable_definition(const Node* var_def) {
 }
 
 static inline bool is_struct_symbol(const Node* symbol) {
-    assert(symbol->type == NODE_SYMBOL);
+    assert(symbol->type == NODE_SYMBOL || symbol->type == NODE_STRUCT_MEMBER_SYM);
 
     Node* var_def;
-    if (!sym_tbl_lookup(&var_def, symbol->lang_type)) {
+    if (!sym_tbl_lookup(&var_def, symbol->name)) {
         unreachable("");
     }
     return is_struct_variable_definition(var_def);

@@ -91,12 +91,16 @@ static bool is_operator(const Node* curr_node, const Node* var_call) {
     return curr_node->type == NODE_OPERATOR;
 }
 
-Llvm_id get_store_dest_id(const Node* var_call) {
-    const Node* store;
-    if (!get_prev_matching_node(&store, var_call, var_call, is_alloca)) {
+const Node* get_alloca(const Node* var_call) {
+    const Node* alloca_node;
+    if (!get_prev_matching_node(&alloca_node, var_call, var_call, is_alloca)) {
         unreachable("no alloca node found before symbol call:"NODE_FMT"\n", node_print(var_call));
     }
-    Llvm_id llvm_id = store->llvm_id;
+    return alloca_node;
+}
+
+Llvm_id get_store_dest_id(const Node* var_call) {
+    Llvm_id llvm_id = get_alloca(var_call)->llvm_id;
     assert(llvm_id > 0);
     return llvm_id;
 }

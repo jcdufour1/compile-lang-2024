@@ -699,7 +699,12 @@ static void emit_load_struct_element_pointer(String* output, const Node* load_el
     string_extend_cstr(output, " = getelementptr inbounds %struct.");
     string_extend_strv(output, var_def->lang_type);
     string_extend_cstr(output, ", ptr %");
-    string_extend_size_t(output, get_store_dest_id(load_elem_ptr));
+    log(LOG_DEBUG, NODE_FMT"\n", node_print(load_elem_ptr->node_to_load));
+    if (is_struct_symbol(load_elem_ptr->node_to_load)) {
+        string_extend_size_t(output, get_store_dest_id(load_elem_ptr->node_to_load));
+    } else {
+        string_extend_size_t(output, load_elem_ptr->node_to_load->llvm_id);
+    }
     string_extend_cstr(output, ", i32 0");
     string_extend_cstr(output, ", i32 ");
     string_extend_size_t(output, member_idx);
