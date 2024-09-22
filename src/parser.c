@@ -236,6 +236,9 @@ static Node* extract_variable_declaration(Tk_view* tokens, bool require_let) {
     variable_def->file_path = name_token.file_path;
     try(tk_view_try_consume(NULL, tokens, TOKEN_COLON));
     variable_def->lang_type = tk_view_chop_front(tokens).text;
+    while (tk_view_try_consume(NULL, tokens, TOKEN_ASTERISK)) {
+        variable_def->pointer_depth++;
+    }
     if (!sym_tbl_add(variable_def)) {
         msg_redefinition_of_symbol(variable_def);
         todo();

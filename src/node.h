@@ -65,6 +65,7 @@ typedef struct Node_ {
     Str_view name; // eg. "string1" in "let string1: String = "hello""
     Str_view str_data; // eg. "hello" in "let string1: String = "hello""
     Str_view lang_type; // eg. "String" in "let string1: String = "hello""
+    uint16_t pointer_depth;
 
     bool is_variadic : 1;
     bool is_struct_associated : 1;
