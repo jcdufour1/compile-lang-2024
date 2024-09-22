@@ -37,6 +37,9 @@ fn main() i32 {
     printf("%d/%d\n", result, div3.denominator)
     let new_div3: Div = get_div(div3)
     printf("%d/%d\n", new_div3.numerator, new_div3.denominator)
+    // confirm that div3 is not modified by get_div
+    printf("%d/%d\n", div3.numerator, div3.denominator)
+    printf("%d/%d\n", result, div3.denominator)
 
     let token: Token
     token.num = 923;
@@ -49,5 +52,18 @@ fn main() i32 {
     printf("%d/%d\n", token.div5.numerator, token.div5.denominator)
     token.div5 = div3;
     printf("%d/%d\n", token.div5.numerator, token.div5.denominator)
+
+    let token2: Token
+    token2.num = 82
+    token2.string_data = "bye"
+    let div19: Div = {.numerator = 56, .denominator = 84}
+    token2.div5 = div19
+
+    token = token2
+    printf("%d %s %d/%d\n", token.num, token.string_data, token.div5.numerator, token.div5.denominator)
+    token2.num = 71
+    printf("%d %s %d/%d\n", token2.num, token2.string_data, token2.div5.numerator, token2.div5.denominator)
+    // confirm that token2 is actually a copy of token
+    printf("%d %s %d/%d\n", token.num, token.string_data, token.div5.numerator, token.div5.denominator)
     return 0
 }
