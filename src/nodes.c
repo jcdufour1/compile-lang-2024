@@ -291,6 +291,7 @@ String node_print_internal(const Node* node) {
             // fallthrough
         case NODE_OPERATOR_RETURN_VALUE_SYM:
             // fallthrough
+            string_extend_strv_in_gtlt(&buf, node->lang_type);
             string_extend_strv_in_par(&buf, node->name);
             string_extend_cstr(&buf, "[node_to_load:");
             if (node->node_to_load) {

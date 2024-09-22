@@ -68,6 +68,7 @@ typedef struct Node_ {
     bool is_variadic : 1;
     bool is_struct_associated : 1;
     bool is_fun_param_associated : 1;
+    bool load_elem_ptr_get_store_dest_id : 1;
 
     uint32_t line_num;
     const char* file_path;
