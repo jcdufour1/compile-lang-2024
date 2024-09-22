@@ -76,6 +76,7 @@ typedef struct Node_ {
     const char* file_path;
 
     struct Node_* node_to_load;
+    struct Node_* associated_alloca;
 } Node;
 
 extern Node* root_of_tree;

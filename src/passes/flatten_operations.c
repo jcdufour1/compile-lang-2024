@@ -15,7 +15,6 @@ static Node* variable_i32_def_new(Str_view name) {
 }
 
 static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* old_operation) {
-    log_tree(LOG_DEBUG, old_operation->parent->parent);
     assert(old_operation->type == NODE_OPERATOR);
     Node* lhs = nodes_get_child(old_operation, 0);
     Node* rhs = nodes_get_child(old_operation, 1);
@@ -45,8 +44,6 @@ static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* o
     } else {
         nodes_append_child(old_operation, rhs);
     }
-
-    log_tree(LOG_DEBUG, old_operation->parent->parent);
 }
 
 static void move_operator_back(Node* return_statement) {

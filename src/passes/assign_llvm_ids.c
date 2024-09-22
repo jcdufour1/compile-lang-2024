@@ -6,8 +6,6 @@
 
 bool assign_llvm_ids(Node* curr_node) {
     static size_t llvm_id_for_next_var = 1;
-    //log_tree(LOG_DEBUG, 0);
-    //log_tree(LOG_DEBUG, curr_node);
 
     switch (curr_node->type) {
         case NODE_STRUCT_LITERAL:

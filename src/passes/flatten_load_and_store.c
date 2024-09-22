@@ -3,7 +3,6 @@
 #include "../nodes.h"
 
 static void do_store(Node* node_to_insert_before, Node* store) {
-    log_tree(LOG_DEBUG, store);
     Node* src = nodes_single_child(store);
     switch (src->type) {
         case NODE_FUNCTION_CALL: {
@@ -43,9 +42,6 @@ static void do_store(Node* node_to_insert_before, Node* store) {
 }
 
 bool flatten_load_and_store(Node* start_start_node) {
-    //log_tree(LOG_DEBUG, 0);
-    //log_tree(LOG_DEBUG, curr_node);
-    //log(LOG_DEBUG, NODE_FMT"\n", node_print(curr_node));
     if (!start_start_node->left_child) {
         return false;
     }

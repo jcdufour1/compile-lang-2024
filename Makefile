@@ -49,7 +49,7 @@ OBJS=\
 
 DEP_COMMON = Makefile
 
-FILE_TO_TEST ?= examples/new_lang/test_basic.c
+FILE_TO_TEST ?= examples/new_lang/structs.own
 ARGS_PROGRAM ?= compile ${FILE_TO_TEST} --emit-llvm
 CAT ?= cat
 

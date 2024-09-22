@@ -694,7 +694,7 @@ static Node* extract_expression(Tk_view* tokens) {
         return extract_struct_literal(tokens);
     }
 
-    log_tokens(LOG_DEBUG, *tokens);
+    log_tokens(LOG_ERROR, *tokens);
     todo();
 }
 

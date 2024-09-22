@@ -12,7 +12,11 @@ Llvm_id get_block_return_id(const Node* fun_call);
 
 Llvm_id get_prev_load_id(const Node* var_call);
 
-const Node* get_alloca(const Node* var_call);
+Node* get_alloca(Node* var_call);
+
+static inline const Node* get_alloca_const(const Node* var_call) {
+    return get_alloca((Node*)var_call);
+}
 
 Llvm_id get_store_dest_id(const Node* var_call);
 
@@ -58,7 +62,6 @@ static inline bool is_struct_symbol(const Node* symbol) {
 }
 
 static inline size_t get_member_index(const Node* struct_def, const Node* member_symbol) {
-    log_tree(LOG_DEBUG, struct_def);
     assert(struct_def->type == NODE_STRUCT_DEFINITION);
     size_t idx = 0;
     nodes_foreach_child(curr_member, struct_def) {

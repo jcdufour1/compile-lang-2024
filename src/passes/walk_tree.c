@@ -14,7 +14,6 @@ typedef enum {
 // nodes (other than decendents of curr_node) should not be removed within the callback
 // `nodes_replace` should only be called on curr_node or decendents
 bool walk_tree(Node* curr_node, bool (callback)(Node* curr_node)) {
-    log(LOG_DEBUG, "walk tree: "NODE_FMT"\n", node_print(curr_node));
     if (!curr_node) {
         return false;
     }

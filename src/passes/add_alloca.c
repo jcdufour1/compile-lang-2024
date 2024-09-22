@@ -3,13 +3,14 @@
 #include "../nodes.h"
 #include "../parser_utils.h"
 
-static Node* alloca_new(const Node* var_def) {
+static Node* alloca_new(Node* var_def) {
     Node* alloca = node_new();
     alloca->type = NODE_ALLOCA;
     alloca->name = var_def->name;
     if (is_struct_variable_definition(var_def)) {
         alloca->is_struct_associated = true;
     }
+    var_def->associated_alloca = alloca;
     return alloca;
 }
 
@@ -27,10 +28,7 @@ static void do_function_definition(Node* fun_def) {
 
 
 static void insert_alloca(Node* start_of_block, Node* var_def) {
-    log_tree(LOG_DEBUG, var_def);
     Node* new_alloca = alloca_new(var_def);
-
-    log_tree(LOG_DEBUG, root_of_tree);
 
     nodes_foreach_from_curr(curr, start_of_block) {
         if (curr->type != NODE_VARIABLE_DEFINITION) {
@@ -43,6 +41,7 @@ static void insert_alloca(Node* start_of_block, Node* var_def) {
         }
     }
 
+
     unreachable("");
 }
 
@@ -54,9 +53,6 @@ static void do_assignment(Node* start_of_block, Node* assignment) {
 }
 
 bool add_alloca(Node* start_start_node) {
-    //log_tree(LOG_DEBUG, 0);
-    //log_tree(LOG_DEBUG, curr_node);
-    //log(LOG_DEBUG, NODE_FMT"\n", node_print(curr_node));
     if (!start_start_node->left_child) {
         return false;
     }

@@ -169,7 +169,6 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
                 }
                 string_extend_cstr(output, " %");
                 node_printf(argument);
-                log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
                 if (is_struct_variable_definition(var_decl_or_def)) {
                     string_extend_size_t(output, get_store_dest_id(argument));
                 } else {
@@ -295,7 +294,6 @@ static void emit_operator(String* output, const Node* operator) {
 }
 
 static void emit_src(String* output, const Node* src) {
-    //log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
     switch (src->type) {
         case NODE_LITERAL:
             extend_literal_decl_prefix(output, src);
@@ -328,8 +326,6 @@ static void emit_load_variable(String* output, const Node* variable_call) {
     if (!sym_tbl_lookup(&variable_def, variable_call->name)) {
         unreachable("attempt to load a symbol that is undefined:"NODE_FMT"\n", node_print(variable_call));
     }
-    //log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
-    //log_tree(LOG_DEBUG, variable_call);
     assert(get_store_dest_id(variable_call) > 0);
 
     string_extend_cstr(output, "    %");
@@ -345,8 +341,6 @@ static void emit_load_variable(String* output, const Node* variable_call) {
 }
 
 static void emit_load_another_node(String* output, const Node* load_node) {
-    //log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
-    //log_tree(LOG_DEBUG, variable_call);
     assert(load_node->node_to_load->llvm_id > 0);
 
     string_extend_cstr(output, "    %");
@@ -394,7 +388,6 @@ static void emit_store_another_node(String* output, const Node* statement) {
     string_extend_size_t(output, statement->node_to_load->llvm_id);
     string_extend_cstr(output, ", align 8");
     string_extend_cstr(output, "\n");
-    log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
 }
 
 static void emit_store_struct_fun_param(String* output, const Node* store) {
@@ -455,7 +448,7 @@ static void emit_normal_store(String* output, const Node* store) {
         case NODE_OPERATOR_RETURN_VALUE_SYM:
             break;
         default:
-            log_tree(LOG_DEBUG, store);
+            log_tree(LOG_ERROR, store);
             unreachable(NODE_FMT"\n", node_print(src));
     }
 
@@ -475,7 +468,6 @@ static void emit_normal_store(String* output, const Node* store) {
     string_extend_size_t(output, alloca_dest_id);
     string_extend_cstr(output, ", align 8");
     string_extend_cstr(output, "\n");
-    log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
 }
 
 static void emit_store_struct_member(String* output, const Node* store_struct) {
@@ -711,7 +703,6 @@ static void emit_load_struct_element_pointer(String* output, const Node* load_el
     if (!sym_tbl_lookup(&var_def, load_elem_ptr->name)) {
         unreachable("");
     }
-    log_tree(LOG_DEBUG, var_def);
     Node* struct_def;
     if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
         unreachable("");
@@ -722,13 +713,7 @@ static void emit_load_struct_element_pointer(String* output, const Node* load_el
     string_extend_cstr(output, " = getelementptr inbounds %struct.");
     string_extend_strv(output, var_def->lang_type);
     string_extend_cstr(output, ", ptr %");
-    if (load_elem_ptr->load_elem_ptr_get_store_dest_id) {
-        log_tree(LOG_DEBUG, load_elem_ptr);
-        log_tree(LOG_DEBUG, load_elem_ptr->node_to_load);
-        string_extend_size_t(output, get_store_dest_id(load_elem_ptr->node_to_load));
-    } else {
-        string_extend_size_t(output, load_elem_ptr->node_to_load->llvm_id);
-    }
+    string_extend_size_t(output, load_elem_ptr->node_to_load->llvm_id);
     string_extend_cstr(output, ", i32 0");
     string_extend_cstr(output, ", i32 ");
     string_extend_size_t(output, member_idx);
@@ -804,7 +789,7 @@ static void emit_block(String* output, const Node* block) {
             case NODE_FOR_LOOP:
                 unreachable("for loop should not still be present at this point\n");
             default:
-                log(LOG_DEBUG, STRING_FMT"\n", string_print(*output));
+                log(LOG_ERROR, STRING_FMT"\n", string_print(*output));
                 node_printf(statement);
                 todo();
         }

@@ -46,7 +46,7 @@ static void do_struct_literal(Node* struct_literal) {
 // returns node of element pointer that should then be loaded
 static Node* do_load_struct_element_ptr(Node* node_to_insert_before, Node* symbol_call) {
     Node* prev_struct_sym = symbol_call;
-    Node* node_element_ptr_to_load = symbol_call;
+    Node* node_element_ptr_to_load = get_alloca(symbol_call);
     Node* load_element_ptr = NULL;
     nodes_foreach_child(element_sym, symbol_call) {
         load_element_ptr = node_new();
@@ -66,9 +66,6 @@ static Node* do_load_struct_element_ptr(Node* node_to_insert_before, Node* symbo
         load_element_ptr->node_to_load = node_element_ptr_to_load;
         nodes_append_child(load_element_ptr, node_clone(element_sym));
         nodes_insert_before(node_to_insert_before, load_element_ptr);
-        if (prev_struct_sym == symbol_call) {
-            load_element_ptr->load_elem_ptr_get_store_dest_id = true;
-        }
 
         prev_struct_sym = element_sym;
         node_element_ptr_to_load = load_element_ptr;
@@ -78,8 +75,6 @@ static Node* do_load_struct_element_ptr(Node* node_to_insert_before, Node* symbo
 }
 
 static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
-    log(LOG_DEBUG, "insert_load\n");
-
     switch (symbol_call->type) {
         case NODE_STRUCT_LITERAL:
             // fallthrough
@@ -110,21 +105,16 @@ static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
         load->name = symbol_call->name;
         symbol_call->node_to_load = load;
         nodes_insert_before(node_insert_load_before, load);
-        log_tree(LOG_DEBUG, load);
-        log_tree(LOG_DEBUG, node_insert_load_before->parent);
     }
-    log_tree(LOG_DEBUG, node_insert_load_before->parent);
 }
 
 static void insert_store(Node* node_insert_store_before, Node* symbol_call /* src */) {
-    log(LOG_DEBUG, "insert_store\n");
     switch (symbol_call->type) {
         case NODE_LITERAL:
             return;
         case NODE_SYMBOL:
             // fallthrough
         case NODE_VARIABLE_DEFINITION:
-            log_tree(LOG_DEBUG, symbol_call);
             node_printf(symbol_call);
             assert(symbol_call->name.count > 0);
             break;
@@ -183,7 +173,6 @@ static void load_operator_operands(Node* node_insert_before, Node* operator) {
 }
 
 static void add_load_foreach_arg(Node* node_insert_before, Node* function_call) {
-    log(LOG_DEBUG, "add_foreach_arg\n");
     nodes_foreach_child(argument, function_call) {
         node_printf(argument);
         insert_load(node_insert_before, argument);
@@ -191,13 +180,11 @@ static void add_load_foreach_arg(Node* node_insert_before, Node* function_call) 
 }
 
 static void insert_store_assignment(Node* node_to_insert_before, Node* assignment) {
-    log(LOG_DEBUG, "THING 76: insert_store_assignment\n");
     assert(assignment->type == NODE_ASSIGNMENT);
 
     Node* lhs = nodes_get_child(assignment, 0);
     Node* rhs = nodes_get_child(assignment, 1);
 
-    log_tree(LOG_DEBUG, root_of_tree);
     switch (lhs->type) {
         case NODE_VARIABLE_DEFINITION:
             nodes_remove(lhs, false);
@@ -236,22 +223,17 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
     }
 
     if (lhs->type == NODE_STRUCT_MEMBER_SYM) {
-        log_tree(LOG_DEBUG, node_to_insert_before->parent);
         nodes_remove(lhs, true);
         nodes_remove(rhs, true);
-        log_tree(LOG_DEBUG, node_to_insert_before->parent);
         Node* store = node_new();
         store->type = NODE_STORE_ANOTHER_NODE;
         Node* store_element_ptr = do_load_struct_element_ptr(node_to_insert_before, lhs);
-        log_tree(LOG_DEBUG, store_element_ptr->parent);
-        log_tree(LOG_DEBUG, store_element_ptr);
         store->node_to_load = store_element_ptr;
         store->lang_type = store_element_ptr->lang_type;
         nodes_append_child(store, rhs);
         nodes_insert_after(assignment, store);
         nodes_insert_after(assignment, lhs);
         //lhs->node_to_load = store;
-        log_tree(LOG_DEBUG, node_to_insert_before->parent);
     } else {
         Node* store = node_new();
         store->name = lhs->name;
@@ -263,7 +245,6 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
 }
 
 static void add_load_return_statement(Node* return_statement) {
-    log(LOG_DEBUG, "add_load_return_statement\n");
     Node* node_to_return = nodes_single_child(return_statement);
     switch (node_to_return->type) {
         case NODE_STRUCT_MEMBER_SYM:
@@ -303,7 +284,6 @@ static void add_load_operator(Node* operator) {
         //insert_load(operator, rhs);
     }
 
-    log_tree(LOG_DEBUG, root_of_tree);
     todo();
 }
 
@@ -327,7 +307,6 @@ static void load_function_parameters(Node* fun_def) {
         fun_param_call->node_to_load = param;
         insert_store(get_node_after_last_alloca(fun_block), fun_param_call);
     }
-    log_tree(LOG_DEBUG, fun_params->parent);
 }
 
 static void load_function_arguments(Node* fun_call) {
@@ -347,9 +326,6 @@ static void load_function_arguments(Node* fun_call) {
 }
 
 bool add_load_and_store(Node* start_start_node) {
-    //log_tree(LOG_DEBUG, 0);
-    //log_tree(LOG_DEBUG, curr_node);
-    //log(LOG_DEBUG, NODE_FMT"\n", node_print(curr_node));
     if (!start_start_node->left_child) {
         return false;
     }
