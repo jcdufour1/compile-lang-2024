@@ -618,7 +618,6 @@ static Node* extract_struct_literal(Tk_view* tokens) {
     Node* struct_literal = node_new();
     struct_literal->type = NODE_STRUCT_LITERAL;
     struct_literal->name = literal_name_new();
-    struct_literal->lang_type = str_view_from_cstr("Div"); // TODO: actually implement type functionality
     try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE));
 
     while (tk_view_try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
@@ -635,9 +634,9 @@ static Node* extract_struct_member_call(Tk_view* tokens) {
     Node* member_call = node_new();
     member_call->type = NODE_STRUCT_MEMBER_SYM;
     member_call->name = tk_view_chop_front(tokens).text;
-    try(tk_view_try_consume(NULL, tokens, TOKEN_SINGLE_DOT));
-    nodes_append_child(member_call, symbol_new(tk_view_chop_front(tokens).text));
-
+    while (tk_view_try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
+        nodes_append_child(member_call, symbol_new(tk_view_chop_front(tokens).text));
+    }
     return member_call;
 }
 

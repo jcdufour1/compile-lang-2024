@@ -4,6 +4,7 @@ extern("c") fn printf(format_string: ptr, args: any...) i32
 struct Token {
     num: i32
     string_data: ptr
+    div5: Div
 }
 
 struct Div {
@@ -37,7 +38,11 @@ fn main() i32 {
     let new_div3: Div = get_div(div3)
     printf("%d/%d\n", new_div3.numerator, new_div3.denominator)
 
-    let token: Token = {.num = 923, .string_data = "hello"}
+    let token: Token
+    token.num = 923;
+    token.string_data = "hello";
+    token.div5 = new_div3;
     printf("token: %d %s\n", token.num, token.string_data);
+    printf("%d/%d\n", token.div5.numerator, token.div5.denominator)
     return 0
 }

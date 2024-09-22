@@ -12,8 +12,7 @@ C_FLAGS_RELEASE=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
 			    -std=c11 -pedantic -g -I ./third_party/ \
 			    -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			    -DNDEBUG \
-				-O2 \
-				-pg 
+				-O2
 
 DEBUG ?= 0
 ifeq ($(DEBUG), 1)

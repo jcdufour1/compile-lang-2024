@@ -677,7 +677,7 @@ static void emit_struct_definition(String* output, const Node* statement) {
         if (!is_first) {
             string_extend_cstr(output, ", ");
         }
-        string_extend_strv(output, member->lang_type);
+        extend_type_decl_str(output, member, false);
         is_first = false;
     }
     string_extend_cstr(output, " }\n");

@@ -93,33 +93,34 @@ static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
     }
 
     if (symbol_call->type == NODE_STRUCT_MEMBER_SYM) {
-        Node* load_element_ptr = node_new();
-        load_element_ptr->type = NODE_LOAD_STRUCT_ELEMENT_PTR;
-        load_element_ptr->name = symbol_call->name;
-        Node* element_sym = nodes_single_child(symbol_call);
+        nodes_foreach_child(element_sym, symbol_call) {
+            Node* load_element_ptr = node_new();
+            load_element_ptr->type = NODE_LOAD_STRUCT_ELEMENT_PTR;
+            load_element_ptr->name = symbol_call->name;
+            Node* var_def;
+            log(LOG_DEBUG, NODE_FMT"\n", node_print(symbol_call));
+            if (!sym_tbl_lookup(&var_def, symbol_call->name)) {
+                unreachable("");
+            }
+            Node* struct_def;
+            if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
+                unreachable("");
+            }
+            const Node* member_def = get_member_def(struct_def, element_sym);
+            symbol_call->lang_type = member_def->lang_type;
+            load_element_ptr->lang_type = member_def->lang_type;
+            load_element_ptr->node_to_load = symbol_call;
+            nodes_append_child(load_element_ptr, node_clone(element_sym));
+            nodes_insert_before(node_insert_load_before, load_element_ptr);
 
-        Node* var_def;
-        if (!sym_tbl_lookup(&var_def, symbol_call->name)) {
-            unreachable("");
+            Node* load_node = node_new();
+            load_node->type = NODE_LOAD_ANOTHER_NODE;
+            load_node->node_to_load = load_element_ptr;
+            load_node->lang_type = load_element_ptr->lang_type;
+            nodes_insert_before(node_insert_load_before, load_node);
+            symbol_call->node_to_load = load_node;
+            nodes_remove(element_sym, true);
         }
-        Node* struct_def;
-        if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
-            unreachable("");
-        }
-        const Node* member_def = get_member_def(struct_def, element_sym);
-        symbol_call->lang_type = member_def->lang_type;
-        load_element_ptr->lang_type = member_def->lang_type;
-        load_element_ptr->node_to_load = symbol_call;
-
-        nodes_append_child(load_element_ptr, node_clone(element_sym));
-        nodes_insert_before(node_insert_load_before, load_element_ptr);
-        Node* load_node = node_new();
-        load_node->type = NODE_LOAD_ANOTHER_NODE;
-        load_node->node_to_load = load_element_ptr;
-        load_node->lang_type = load_element_ptr->lang_type;
-        nodes_insert_before(node_insert_load_before, load_node);
-        symbol_call->node_to_load = load_node;
-        nodes_remove(nodes_single_child(symbol_call), true);
     } else {
         Node* load = node_new();
         load->type = NODE_LOAD_VARIABLE;
@@ -127,8 +128,7 @@ static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
         symbol_call->node_to_load = load;
         nodes_insert_before(node_insert_load_before, load);
     }
-    //log_tree(LOG_DEBUG, node_insert_load_before->parent);
-    //todo();
+    log_tree(LOG_DEBUG, node_insert_load_before->parent);
 }
 
 static void insert_store(Node* node_insert_store_before, Node* symbol_call /* src */) {
