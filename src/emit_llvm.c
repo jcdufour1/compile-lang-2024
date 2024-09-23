@@ -113,22 +113,6 @@ static void emit_function_params(String* output, const Node* fun_params) {
     }
 }
 
-static void emit_fun_arg_struct_member_call(String* output, const Node* member_call) {
-    assert(member_call->lang_type.count > 0);
-
-    Node* var_def;
-    if (!sym_tbl_lookup(&var_def, member_call->name)) {
-        unreachable("");
-    }
-    Node* struct_def;
-    if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
-        unreachable("");
-    }
-    extend_type_call_str(output, member_call->lang_type);
-    string_extend_cstr(output, " %");
-    string_extend_size_t(output, member_call->node_to_load->llvm_id);
-}
-
 static void emit_function_call_arguments(String* output, const Node* fun_call) {
     size_t idx = 0;
     nodes_foreach_child(argument, fun_call) {
@@ -152,7 +136,10 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
                 break;
             }
             case NODE_STRUCT_MEMBER_SYM:
-                emit_fun_arg_struct_member_call(output, argument);
+                assert(argument->lang_type.count > 0);
+                extend_type_call_str(output, argument->lang_type);
+                string_extend_cstr(output, " %");
+                string_extend_size_t(output, argument->node_to_load->llvm_id);
                 break;
             case NODE_STRUCT_LITERAL:
                 todo();
@@ -367,16 +354,6 @@ static void emit_memcpy(String* output, const Node* memcpy_node) {
 
 static void emit_store_another_node(String* output, const Node* store) {
     string_extend_cstr(output, "    store ");
-    /*
-    if (is_struct_variable_definition(var_or_member_def) && is_fun_param_call) {
-        node_printf(store);
-        node_printf(var_or_member_def);
-        node_printf(src);
-        unreachable("");
-    } else {
-        extend_type_call_str(output, var_or_member_def);
-    }
-    */
     extend_type_call_str(output, store->lang_type);
 
     emit_src(output, nodes_single_child_const(store));
@@ -390,23 +367,13 @@ static void emit_store_another_node(String* output, const Node* store) {
 static void emit_store_struct_fun_param(String* output, const Node* store) {
     size_t alloca_dest_id = get_store_dest_id(store);
 
-    Node* var_def;
-    if (!sym_tbl_lookup(&var_def, store->name)) {
-        node_printf(store);
-        unreachable("");
-    }
-    Node* struct_def;
-    if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
-        unreachable("");
-    }
-
     const Node* src = nodes_single_child_const(store);
     string_extend_cstr(output, "    call void @llvm.memcpy.p0.p0.i64(ptr align 4 %");
     string_extend_size_t(output, alloca_dest_id);
     string_extend_cstr(output, ", ptr align 4 %");
     string_extend_size_t(output, src->node_to_load->llvm_id);
     string_extend_cstr(output, ", i64 ");
-    string_extend_size_t(output, sizeof_struct_definition(struct_def));
+    string_extend_size_t(output, sizeof_struct_definition(get_struct_definition_const(store)));
     string_extend_cstr(output, ", i1 false)\n");
 }
 
@@ -467,46 +434,13 @@ static void emit_normal_store(String* output, const Node* store) {
     string_extend_cstr(output, "\n");
 }
 
-static void emit_store_struct_member(String* output, const Node* store_struct) {
-    Node* var_def;
-    if (!sym_tbl_lookup(&var_def, store_struct->name)) {
-        unreachable("");
-    }
-    Node* struct_def;
-    if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
-        unreachable("");
-    }
-    size_t member_idx = get_member_index(struct_def, nodes_get_child_const(store_struct, 0));
-    string_extend_cstr(output, "    %"); 
-    string_extend_size_t(output, store_struct->llvm_id - 1);
-    string_extend_cstr(output, " = getelementptr inbounds %struct.");
-    string_extend_strv(output, var_def->lang_type);
-    string_extend_cstr(output, ", ptr %");
-    string_extend_size_t(output, get_store_dest_id(store_struct));
-    string_extend_cstr(output, ", i32 0");
-    string_extend_cstr(output, ", i32 ");
-    string_extend_size_t(output, member_idx);
-    string_append(output, '\n');
-
-    const Node* member_def = get_member_def(struct_def, nodes_get_child_const(store_struct, 0));
-    string_extend_cstr(output, "    store ");
-    extend_type_call_str(output, member_def->lang_type);
-    emit_src(output, nodes_get_child_const(store_struct, 1));
-    string_extend_cstr(output, ", ");
-    string_extend_cstr(output, "ptr");
-    string_extend_cstr(output, " %");
-    string_extend_size_t(output, store_struct->llvm_id - 1);
-    string_extend_cstr(output, ", align 8");
-    string_extend_cstr(output, "\n");
-}
-
 static void emit_store(String* output, const Node* store) {
     const Node* src = nodes_single_child_const(store);
-    bool is_struct_def = is_struct_variable_definition(get_symbol_def_from_alloca(store));
+    bool is_struct_def = is_corresponding_to_a_struct(store);
     if (store->left_child->type == NODE_STRUCT_LITERAL) {
         unreachable("");
     } else if (store->left_child->type == NODE_STORE_STRUCT_MEMBER) {
-        emit_store_struct_member(output, store);
+        unreachable("");
     } else if (is_struct_def && src->type == NODE_FUNCTION_PARAM_SYM) {
         emit_store_struct_fun_param(output, store);
     } else {
@@ -587,10 +521,7 @@ static void emit_function_return_statement(String* output, const Node* fun_retur
             string_extend_cstr(output, "\n");
             break;
         case NODE_STRUCT_MEMBER_SYM: {
-            Node* struct_def;
-            if (!sym_tbl_lookup(&struct_def, sym_to_rtn_def->lang_type)) {
-                unreachable("");
-            }
+            assert(is_struct_variable_definition(sym_to_rtn_def));
             string_extend_cstr(output, "    ret ");
             extend_type_call_str(output, sym_to_return->lang_type);
             string_extend_cstr(output, " %");
@@ -764,7 +695,7 @@ static void emit_block(String* output, const Node* block) {
                 emit_struct_definition(output, statement);
                 break;
             case NODE_STORE_STRUCT_MEMBER:
-                emit_store_struct_member(output, statement);
+                unreachable("");
                 break;
             case NODE_MEMCPY:
                 emit_memcpy(output, statement);

@@ -61,6 +61,8 @@ static inline bool is_struct_symbol(const Node* symbol) {
     return is_struct_variable_definition(var_def);
 }
 
+bool is_corresponding_to_a_struct(const Node* node);
+
 static inline size_t get_member_index(const Node* struct_def, const Node* member_symbol) {
     assert(struct_def->type == NODE_STRUCT_DEFINITION);
     size_t idx = 0;
@@ -83,6 +85,12 @@ static inline const Node* get_member_def(const Node* struct_def, const Node* mem
         }
     }
     unreachable("member not found");
+}
+
+Node* get_struct_definition(Node* node);
+
+static inline const Node* get_struct_definition_const(const Node* node) {
+    return get_struct_definition((Node*)node);
 }
 
 #endif // PARSER_UTIL_H

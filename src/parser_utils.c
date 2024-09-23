@@ -263,3 +263,43 @@ uint64_t sizeof_struct(const Node* struct_literal_or_def) {
     }
 }
 
+bool is_corresponding_to_a_struct(const Node* node) {
+    Node* var_def;
+    Node* struct_def;
+    switch (node->type) {
+        case NODE_SYMBOL:
+            // fallthrough
+        case NODE_STORE_VARIABLE:
+            if (!sym_tbl_lookup(&var_def, node->name)) {
+                return false;
+            }
+            if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
+                return false;
+            }
+            return true;
+        default:
+            todo();
+
+    }
+}
+
+Node* get_struct_definition(Node* node) {
+    switch (node->type) {
+        case NODE_STORE_VARIABLE:
+            // fallthrough
+        case NODE_SYMBOL: {
+            Node* var_def;
+            if (!sym_tbl_lookup(&var_def, node->name)) {
+                unreachable("");
+            }
+            Node* struct_def;
+            if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
+                unreachable("");
+            }
+            return struct_def;
+        }
+        default:
+            unreachable(NODE_FMT"\n", node_print(node));
+    }
+}
+
