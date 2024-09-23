@@ -16,7 +16,7 @@ static Node* extract_variable_declaration(Tk_view* tokens, bool require_let);
 
 // consume tokens from { to } (inclusive) and discard outer {}
 static Tk_view extract_items_inside_brackets(Tk_view* tokens, TOKEN_TYPE closing_bracket_type) {
-    Token opening_bracket = tk_view_chop_front(tokens);
+    Token opening_bracket = tk_view_consume(tokens);
     // the opening_bracket type should be the opening bracket type that corresponds to closing_brace_type
     switch (closing_bracket_type) {
         case TOKEN_CLOSE_CURLY_BRACE:
@@ -33,7 +33,7 @@ static Tk_view extract_items_inside_brackets(Tk_view* tokens, TOKEN_TYPE closing
     if (!get_idx_matching_token(&idx_closing_bracket, *tokens, false, closing_bracket_type)) {
         unreachable("closing bracket not found");
     }
-    Tk_view inside_brackets = tk_view_chop_count(tokens, idx_closing_bracket);
+    Tk_view inside_brackets = tk_view_consume_count(tokens, idx_closing_bracket);
 
     try(tk_view_try_consume(NULL, tokens, closing_bracket_type));
     return inside_brackets;
@@ -134,7 +134,7 @@ static bool extract_function_return_types(Node** result, Tk_view* tokens) {
         // a return type is only one token, at least for now
         Node* return_type = node_new();
         return_type->type = NODE_LANG_TYPE;
-        return_type->lang_type = tk_view_chop_front(tokens).text;
+        return_type->lang_type = tk_view_consume(tokens).text;
         assert(return_type->lang_type.count > 0);
         nodes_append_child(return_types, return_type);
         is_comma = tk_view_try_consume(NULL, tokens, TOKEN_COMMA);
@@ -147,7 +147,7 @@ static bool extract_function_return_types(Node** result, Tk_view* tokens) {
 static Node* extract_function_declaration_common(Tk_view* tokens) {
     Node* fun_declaration = node_new();
 
-    Token name_token = tk_view_chop_front(tokens);
+    Token name_token = tk_view_consume(tokens);
     fun_declaration->name = name_token.text;
     fun_declaration->line_num = name_token.line_num;
     fun_declaration->file_path = name_token.file_path;
@@ -190,7 +190,7 @@ static Node* extract_function_definition(Tk_view* tokens) {
     if (!get_idx_matching_token(&close_curly_brace_idx, *tokens, true, TOKEN_CLOSE_CURLY_BRACE)) {
         todo();
     }
-    Tk_view function_tokens = tk_view_chop_count(tokens, close_curly_brace_idx);
+    Tk_view function_tokens = tk_view_consume_count(tokens, close_curly_brace_idx);
     try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
 
     return parse_function_definition(function_tokens);
@@ -199,7 +199,7 @@ static Node* extract_function_definition(Tk_view* tokens) {
 static Node* extract_struct_definition(Tk_view* tokens) {
     try(tk_view_try_consume_symbol(NULL, tokens, "struct")); // remove "struct"
 
-    Token name = tk_view_chop_front(tokens);
+    Token name = tk_view_consume(tokens);
 
     Node* new_struct = node_new();
     new_struct->name = name.text;
@@ -228,14 +228,14 @@ static Node* extract_variable_declaration(Tk_view* tokens, bool require_let) {
         assert(!require_let);
     }
 
-    Token name_token = tk_view_chop_front(tokens);
+    Token name_token = tk_view_consume(tokens);
     Node* variable_def = node_new();
     variable_def->type = NODE_VARIABLE_DEFINITION;
     variable_def->name = name_token.text;
     variable_def->line_num = name_token.line_num;
     variable_def->file_path = name_token.file_path;
     try(tk_view_try_consume(NULL, tokens, TOKEN_COLON));
-    variable_def->lang_type = tk_view_chop_front(tokens).text;
+    variable_def->lang_type = tk_view_consume(tokens).text;
     while (tk_view_try_consume(NULL, tokens, TOKEN_ASTERISK)) {
         variable_def->pointer_depth++;
     }
@@ -323,7 +323,7 @@ static Str_view get_literal_lang_type_from_token_type(TOKEN_TYPE token_type) {
 }
 
 static Node* extract_literal(Tk_view* tokens) {
-    Token token = tk_view_chop_front(tokens);
+    Token token = tk_view_consume(tokens);
     assert(token_is_literal(token));
 
     Node* new_node = node_new();
@@ -340,7 +340,7 @@ static Node* extract_literal(Tk_view* tokens) {
 }
 
 static Node* extract_symbol(Tk_view* tokens) {
-    Token token = tk_view_chop_front(tokens);
+    Token token = tk_view_consume(tokens);
     assert(token.type == TOKEN_SYMBOL);
 
     Node* sym_node = node_new();
@@ -413,7 +413,7 @@ after_for_extract_operation_tokens:
     if (!is_operation) {
         return false;
     }
-    *operation = tk_view_chop_count(tokens, idx);
+    *operation = tk_view_consume_count(tokens, idx);
     return true;
 }
 
@@ -429,9 +429,9 @@ static Node* parse_operation(Tk_view tokens) {
     }
 
     size_t idx_operator = get_idx_lowest_precedence_operator(tokens);
-    Tk_view left_tokens = tk_view_chop_count(&tokens, idx_operator);
-    Token operator_token = tk_view_chop_front(&tokens);
-    Tk_view right_tokens = tk_view_chop_count(&tokens, tokens.count);
+    Tk_view left_tokens = tk_view_consume_count(&tokens, idx_operator);
+    Token operator_token = tk_view_consume(&tokens);
+    Tk_view right_tokens = tk_view_consume_count(&tokens, tokens.count);
 
     assert(left_tokens.count > 0);
     assert(right_tokens.count > 0);
@@ -464,7 +464,12 @@ static bool extract_function_argument(Node** child, Tk_view* tokens) {
     }
 
     assert(tk_view_front(*tokens).type != TOKEN_COMMA);
-    Tk_view curr_arg_tokens = tk_view_chop_on_matching_type_delims_or_all(tokens, TOKEN_COMMA, TOKEN_CLOSE_PAR, false);
+    Tk_view curr_arg_tokens = tk_view_consume_until_matching_type_delims_or_all(
+        tokens,
+        TOKEN_COMMA,
+        TOKEN_CLOSE_PAR,
+        false
+    );
     tk_view_try_consume(NULL, tokens, TOKEN_COMMA);
     *child = extract_expression(&curr_arg_tokens);
     return true;
@@ -636,9 +641,9 @@ static Node* extract_struct_literal(Tk_view* tokens) {
 static Node* extract_struct_member_call(Tk_view* tokens) {
     Node* member_call = node_new();
     member_call->type = NODE_STRUCT_MEMBER_SYM;
-    member_call->name = tk_view_chop_front(tokens).text;
+    member_call->name = tk_view_consume(tokens).text;
     while (tk_view_try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
-        nodes_append_child(member_call, symbol_new(tk_view_chop_front(tokens).text));
+        nodes_append_child(member_call, symbol_new(tk_view_consume(tokens).text));
     }
     return member_call;
 }

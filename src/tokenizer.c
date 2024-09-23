@@ -25,9 +25,9 @@ static bool is_dot(char prev, char curr) {
     return curr == '.';
 }
 
-static void chop_whitespace(Str_view* file_text, size_t* line_num) {
+static void trim_whitespace(Str_view* file_text, size_t* line_num) {
     while (file_text->count > 0 && (isspace(str_view_front(*file_text)) || iscntrl(str_view_front(*file_text)))) {
-        char ch = str_view_chop_front(file_text);
+        char ch = str_view_consume(file_text);
         if (ch == '\n') {
             (*line_num)++;
         }
@@ -37,7 +37,7 @@ static void chop_whitespace(Str_view* file_text, size_t* line_num) {
 static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text, Parameters params) {
     memset(token, 0, sizeof(*token));
 
-    chop_whitespace(file_text, line_num);
+    trim_whitespace(file_text, line_num);
 
     if (file_text->count < 1) {
         return false;
@@ -47,87 +47,87 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text, 
     token->file_path = params.input_file_name;
 
     if (isalpha(str_view_front(*file_text))) {
-        token->text = str_view_chop_on_cond(file_text, local_isalnum_or_underscore);
+        token->text = str_view_consume_while(file_text, local_isalnum_or_underscore);
         token->type = TOKEN_SYMBOL;
         return true;
     } else if (isdigit(str_view_front(*file_text))) {
-        token->text = str_view_chop_on_cond(file_text, local_isdigit);
+        token->text = str_view_consume_while(file_text, local_isdigit);
         token->type = TOKEN_NUM_LITERAL;
         return true;
     } else if (str_view_front(*file_text) == '(') {
-        str_view_chop_front(file_text);
+        str_view_consume(file_text);
         token->type = TOKEN_OPEN_PAR;
         return true;
     } else if (str_view_front(*file_text) == ')') {
-        str_view_chop_front(file_text);
+        str_view_consume(file_text);
         token->type = TOKEN_CLOSE_PAR;
         return true;
     } else if (str_view_front(*file_text) == '{') {
-        str_view_chop_front(file_text);
+        str_view_consume(file_text);
         token->type = TOKEN_OPEN_CURLY_BRACE;
         return true;
     } else if (str_view_front(*file_text) == '}') {
-        str_view_chop_front(file_text);
+        str_view_consume(file_text);
         token->type = TOKEN_CLOSE_CURLY_BRACE;
         return true;
     } else if (str_view_front(*file_text) == '"') {
         token->type = TOKEN_STRING_LITERAL;
-        str_view_chop_front(file_text);
-        token->text = str_view_chop_on_cond(file_text, is_not_quote);
-        str_view_chop_front(file_text);
+        str_view_consume(file_text);
+        token->text = str_view_consume_while(file_text, is_not_quote);
+        str_view_consume(file_text);
         return true;
     } else if (str_view_front(*file_text) == ';') {
-        str_view_chop_front(file_text);
+        str_view_consume(file_text);
         token->type = TOKEN_SEMICOLON;
         return true;
     } else if (str_view_front(*file_text) == ',') {
-        str_view_chop_front(file_text);
+        str_view_consume(file_text);
         token->type = TOKEN_COMMA;
         return true;
     } else if (str_view_front(*file_text) == '+') {
-        str_view_chop_front(file_text);
+        str_view_consume(file_text);
         assert((file_text->count < 1 || str_view_front(*file_text) != '+') && "double + not implemented");
         token->type = TOKEN_SINGLE_PLUS;
         return true;
     } else if (str_view_front(*file_text) == '-') {
-        str_view_chop_front(file_text);
+        str_view_consume(file_text);
         token->type = TOKEN_SINGLE_MINUS;
         return true;
     } else if (str_view_front(*file_text) == '*') {
         // TODO: * may not always be multiplication
-        str_view_chop_front(file_text);
+        str_view_consume(file_text);
         token->type = TOKEN_ASTERISK;
         return true;
     } else if (file_text->count > 1 && str_view_cstr_is_equal(str_view_slice(*file_text, 0, 2), "//")) {
-        str_view_chop_on_delim(file_text, '\n');
-        chop_whitespace(file_text, line_num);
+        str_view_consume_until(file_text, '\n');
+        trim_whitespace(file_text, line_num);
         token->type = TOKEN_COMMENT;
         return true;
     } else if (str_view_front(*file_text) == '/') {
-        str_view_chop_front(file_text); // remove /
+        str_view_consume(file_text); // remove /
         token->type = TOKEN_SLASH;
         return true;
     } else if (str_view_front(*file_text) == ':') {
-        str_view_chop_front(file_text);
+        str_view_consume(file_text);
         token->type = TOKEN_COLON;
         return true;
     } else if (str_view_front(*file_text) == '=') {
-        str_view_chop_front(file_text);
+        str_view_consume(file_text);
         assert((file_text->count < 1 || str_view_front(*file_text) != '=') && "double = not implemented");
         token->type = TOKEN_SINGLE_EQUAL;
         return true;
     } else if (str_view_front(*file_text) == '>') {
-        str_view_chop_front(file_text);
+        str_view_consume(file_text);
         assert((file_text->count < 1 || str_view_front(*file_text) != '=') && ">= not implemented");
         token->type = TOKEN_GREATER_THAN;
         return true;
     } else if (str_view_front(*file_text) == '<') {
-        str_view_chop_front(file_text);
+        str_view_consume(file_text);
         assert((file_text->count < 1 || str_view_front(*file_text) != '=') && ">= not implemented");
         token->type = TOKEN_LESS_THAN;
         return true;
     } else if (str_view_front(*file_text) == '.') {
-        Str_view dots = str_view_chop_on_cond(file_text, is_dot);
+        Str_view dots = str_view_consume_while(file_text, is_dot);
         if (dots.count == 1) {
             token->type = TOKEN_SINGLE_DOT;
             return true;

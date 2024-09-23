@@ -7,9 +7,6 @@ static Node* alloca_new(Node* var_def) {
     Node* alloca = node_new();
     alloca->type = NODE_ALLOCA;
     alloca->name = var_def->name;
-    if (is_struct_variable_definition(var_def)) {
-        alloca->is_struct_associated = true;
-    }
     var_def->associated_alloca = alloca;
     return alloca;
 }
@@ -21,7 +18,6 @@ static void do_function_definition(Node* fun_def) {
 
     nodes_foreach_child(param, fun_params) {
         Node* alloca = alloca_new(param);
-        alloca->is_fun_param_associated = true;
         nodes_insert_before(fun_block->left_child, alloca);
     }
 }

@@ -21,7 +21,7 @@ static inline Str_view str_view_slice(Str_view str_view, size_t start, size_t co
     return new_str_view;
 }
 
-static inline Str_view str_view_chop_on_cond(Str_view* str_view, bool (*should_continue)(char /* previous char */, char /* current char */)) {
+static inline Str_view str_view_consume_while(Str_view* str_view, bool (*should_continue)(char /* previous char */, char /* current char */)) {
     Str_view new_str_view;
     for (size_t idx = 0; str_view->count > idx; idx++) {
         char prev_char = idx > 0 ? (str_view->str[idx]) : (0);
@@ -36,7 +36,7 @@ static inline Str_view str_view_chop_on_cond(Str_view* str_view, bool (*should_c
     unreachable("cond is never met");
 }
 
-static inline Str_view str_view_chop_on_delim(Str_view* str_view, char delim) {
+static inline Str_view str_view_consume_until(Str_view* str_view, char delim) {
     Str_view new_str_view;
     for (size_t idx = 0; str_view->count > idx; idx++) {
         if (str_view->str[idx] == delim) {
@@ -50,7 +50,7 @@ static inline Str_view str_view_chop_on_delim(Str_view* str_view, char delim) {
     unreachable("delim not found");
 }
 
-static inline Str_view str_view_chop_front_count(Str_view* str_view, size_t count) {
+static inline Str_view str_view_consume_count(Str_view* str_view, size_t count) {
     if (str_view->count < count) {
         todo();
     }
@@ -62,8 +62,8 @@ static inline Str_view str_view_chop_front_count(Str_view* str_view, size_t coun
     return new_str_view;
 }
 
-static inline char str_view_chop_front(Str_view* str_view) {
-    return str_view_front(str_view_chop_front_count(str_view, 1));
+static inline char str_view_consume(Str_view* str_view) {
+    return str_view_front(str_view_consume_count(str_view, 1));
 }
 
 // return true when match
@@ -82,7 +82,6 @@ static inline int str_view_cmp(Str_view a, Str_view b) {
     return strncmp(a.str, b.str, a.count);
 }
 
-// return 0 when match
 static inline bool str_view_is_equal(Str_view a, Str_view b) {
     return 0 == str_view_cmp(a, b);
 }
