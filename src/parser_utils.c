@@ -279,7 +279,6 @@ bool is_corresponding_to_a_struct(const Node* node) {
             return true;
         default:
             todo();
-
     }
 }
 

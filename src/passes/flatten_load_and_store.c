@@ -10,7 +10,7 @@ static void do_store(Node* node_to_insert_before, Node* store) {
             nodes_insert_before(node_to_insert_before, src);
             Node* new_src = node_new();
             new_src->type = NODE_FUNCTION_RETURN_VALUE_SYM;
-            new_src->node_to_load = src;
+            new_src->node_src = src;
             nodes_append_child(store, new_src);
             break;
         }
@@ -19,7 +19,7 @@ static void do_store(Node* node_to_insert_before, Node* store) {
             nodes_insert_before(node_to_insert_before, src);
             Node* new_src = node_new();
             new_src->type = NODE_OPERATOR_RETURN_VALUE_SYM;
-            new_src->node_to_load = src;
+            new_src->node_src = src;
             nodes_append_child(store, new_src);
             break;
         }
@@ -78,7 +78,8 @@ bool flatten_load_and_store(Node* start_start_node) {
             case NODE_OPERATOR:
                 break;
             case NODE_SYMBOL:
-                unreachable(NODE_FMT"\n", node_print(curr_node));
+                //unreachable(NODE_FMT"\n", node_print(curr_node));
+                break;
             case NODE_RETURN_STATEMENT:
                 break;
             case NODE_VARIABLE_DEFINITION:

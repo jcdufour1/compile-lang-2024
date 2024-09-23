@@ -299,8 +299,12 @@ String node_print_internal(const Node* node) {
             string_extend_strv_in_gtlt(&buf, node->lang_type);
             string_extend_strv_in_par(&buf, node->name);
             string_extend_cstr(&buf, "[node_to_load:");
-            if (node->node_to_load) {
-                string_extend_size_t(&buf, node->node_to_load->llvm_id);
+            if (node->node_src) {
+                string_extend_size_t(&buf, node->node_src->llvm_id);
+            }
+            string_extend_cstr(&buf, " ");
+            if (node->node_dest) {
+                string_extend_size_t(&buf, node->node_dest->llvm_id);
             }
             string_extend_cstr(&buf, "]");
             break;

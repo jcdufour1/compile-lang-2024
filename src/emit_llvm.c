@@ -44,12 +44,15 @@ static size_t get_count_excape_seq(Str_view str_view) {
     return count_excapes;
 }
 
-static void extend_type_call_str(String* output, Str_view lang_type) {
+// todo: take lang_type instead of Node*
+static void extend_type_call_str(String* output, const Node* sym_def) {
+    assert(sym_def->lang_type.count > 0);
+    node_printf(sym_def);
     Node* struct_def;
-    if (sym_tbl_lookup(&struct_def, lang_type)) {
+    if (sym_tbl_lookup(&struct_def, sym_def->lang_type)) {
         string_extend_cstr(output, "%struct.");
     }
-    string_extend_strv(output, lang_type);
+    string_extend_strv(output, sym_def->lang_type);
 }
 
 static void extend_type_decl_str(String* output, const Node* variable_def, bool noundef) {
@@ -58,7 +61,7 @@ static void extend_type_decl_str(String* output, const Node* variable_def, bool 
         return;
     }
 
-    extend_type_call_str(output, variable_def->lang_type);
+    extend_type_call_str(output, variable_def);
     if (noundef) {
         string_extend_cstr(output, " noundef");
     }
@@ -73,6 +76,8 @@ static void extend_literal_decl_prefix(String* output, const Node* var_decl_or_d
         string_append(output, ' ');
         string_extend_strv(output, var_decl_or_def->str_data);
     } else {
+        log(LOG_ERROR, NODE_FMT"\n", node_print(var_decl_or_def));
+        log(LOG_ERROR, STR_VIEW_FMT"\n", str_view_print(lang_type));
         todo();
     }
 }
@@ -100,7 +105,7 @@ static void emit_function_params(String* output, const Node* fun_params) {
 
         if (is_struct_variable_definition(param)) {
             string_extend_cstr(output, "ptr noundef byval(");
-            extend_type_call_str(output, param->lang_type);
+            extend_type_call_str(output, param);
             string_extend_cstr(output, ")");
         } else {
             extend_type_decl_str(output, param, true);
@@ -111,6 +116,22 @@ static void emit_function_params(String* output, const Node* fun_params) {
         string_extend_cstr(output, " %");
         string_extend_size_t(output, param->llvm_id);
     }
+}
+
+static void emit_fun_arg_struct_member_call(String* output, const Node* member_call) {
+    assert(member_call->lang_type.count > 0);
+
+    Node* var_def;
+    if (!sym_tbl_lookup(&var_def, member_call->name)) {
+        unreachable("");
+    }
+    Node* struct_def;
+    if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
+        unreachable("");
+    }
+    extend_type_call_str(output, member_call);
+    string_extend_cstr(output, " %");
+    string_extend_size_t(output, member_call->node_src->llvm_id);
 }
 
 static void emit_function_call_arguments(String* output, const Node* fun_call) {
@@ -136,29 +157,27 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
                 break;
             }
             case NODE_STRUCT_MEMBER_SYM:
-                assert(argument->lang_type.count > 0);
-                extend_type_call_str(output, argument->lang_type);
-                string_extend_cstr(output, " %");
-                string_extend_size_t(output, argument->node_to_load->llvm_id);
+                emit_fun_arg_struct_member_call(output, argument);
                 break;
             case NODE_STRUCT_LITERAL:
                 todo();
             case NODE_SYMBOL: {
-                unreachable("");
                 node_printf(var_decl_or_def);
+                node_printf(argument);
                 if (is_struct_variable_definition(var_decl_or_def)) {
                     string_extend_cstr(output, "ptr noundef byval(");
-                    extend_type_call_str(output, var_decl_or_def->lang_type);
+                    node_printf(argument);
+                    extend_type_call_str(output, var_decl_or_def);
                     string_extend_cstr(output, ")");
                 } else {
-                    extend_type_call_str(output, var_decl_or_def->lang_type);
+                    extend_type_call_str(output, var_decl_or_def);
                 }
                 string_extend_cstr(output, " %");
                 node_printf(argument);
                 if (is_struct_variable_definition(var_decl_or_def)) {
                     string_extend_size_t(output, get_store_dest_id(argument));
                 } else {
-                    string_extend_size_t(output, argument->node_to_load->llvm_id);
+                    string_extend_size_t(output, argument->node_src->llvm_id);
                 }
                 break;
             }
@@ -183,7 +202,7 @@ static void emit_function_call(String* output, const Node* fun_call) {
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, fun_call->llvm_id);
     string_extend_cstr(output, " = call ");
-    extend_type_call_str(output, return_type_from_function_definition(fun_def)->lang_type);
+    extend_type_call_str(output, return_type_from_function_definition(fun_def));
     string_extend_cstr(output, " @");
     string_extend_strv(output, fun_call->name);
 
@@ -201,7 +220,7 @@ static void emit_alloca(String* output, const Node* alloca) {
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, alloca->llvm_id);
     string_extend_cstr(output, " = alloca ");
-    extend_type_call_str(output, get_symbol_def_from_alloca(alloca)->lang_type);
+    extend_type_call_str(output, get_symbol_def_from_alloca(alloca));
     string_extend_cstr(output, ", align 8");
     string_extend_cstr(output, "\n");
 }
@@ -235,11 +254,11 @@ static void emit_operator_operand(String* output, const Node* operand) {
             break;
         case NODE_SYMBOL:
             string_extend_cstr(output, "%");
-            string_extend_size_t(output, operand->node_to_load->llvm_id);
+            string_extend_size_t(output, operand->node_src->llvm_id);
             break;
         case NODE_OPERATOR_RETURN_VALUE_SYM:
             string_extend_cstr(output, "%");
-            string_extend_size_t(output, operand->node_to_load->llvm_id);
+            string_extend_size_t(output, operand->node_src->llvm_id);
             break;
         default:
             unreachable(NODE_FMT"\n", node_print(operand));
@@ -286,19 +305,19 @@ static void emit_src(String* output, const Node* src) {
             break;
         case NODE_SYMBOL:
             string_extend_cstr(output, " %");
-            string_extend_size_t(output, src->node_to_load->llvm_id);
+            string_extend_size_t(output, src->node_src->llvm_id);
             break;
         case NODE_FUNCTION_PARAM_SYM:
             string_extend_cstr(output, " %");
-            string_extend_size_t(output, src->node_to_load->llvm_id);
+            string_extend_size_t(output, src->node_src->llvm_id);
             break;
         case NODE_FUNCTION_RETURN_VALUE_SYM:
             string_extend_cstr(output, " %");
-            string_extend_size_t(output, src->node_to_load->llvm_id);
+            string_extend_size_t(output, src->node_src->llvm_id);
             break;
         case NODE_OPERATOR_RETURN_VALUE_SYM:
             string_extend_cstr(output, " %");
-            string_extend_size_t(output, src->node_to_load->llvm_id);
+            string_extend_size_t(output, src->node_src->llvm_id);
             break;
         default:
             node_printf(src);
@@ -317,7 +336,7 @@ static void emit_load_variable(String* output, const Node* variable_call) {
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, variable_call->llvm_id);
     string_extend_cstr(output, " = load ");
-    extend_type_call_str(output, variable_def->lang_type);
+    extend_type_call_str(output, variable_def);
     string_extend_cstr(output, ", ");
     string_extend_cstr(output, "ptr");
     string_extend_cstr(output, " %");
@@ -327,16 +346,17 @@ static void emit_load_variable(String* output, const Node* variable_call) {
 }
 
 static void emit_load_another_node(String* output, const Node* load_node) {
-    assert(load_node->node_to_load->llvm_id > 0);
+    log_tree(LOG_DEBUG, load_node);
+    assert(load_node->node_src->llvm_id > 0);
 
     string_extend_cstr(output, "    %");
     string_extend_size_t(output, load_node->llvm_id);
     string_extend_cstr(output, " = load ");
-    extend_type_call_str(output, load_node->lang_type);
+    extend_type_call_str(output, load_node);
     string_extend_cstr(output, ", ");
     string_extend_cstr(output, "ptr");
     string_extend_cstr(output, " %");
-    string_extend_size_t(output, load_node->node_to_load->llvm_id);
+    string_extend_size_t(output, load_node->node_src->llvm_id);
     string_extend_cstr(output, ", align 8");
     string_extend_cstr(output, "\n");
 }
@@ -344,8 +364,9 @@ static void emit_load_another_node(String* output, const Node* load_node) {
 static void emit_memcpy(String* output, const Node* memcpy_node) {
     assert(memcpy_node->type == NODE_MEMCPY);
 
+    size_t alloca_dest_id = get_store_dest_id(memcpy_node);
     string_extend_cstr(output, "    call void @llvm.memcpy.p0.p0.i64(ptr align 4 %");
-    string_extend_size_t(output, get_store_dest_id(memcpy_node));
+    string_extend_size_t(output, alloca_dest_id);
     string_extend_cstr(output, ", ptr align 4 @__const.main.");
     string_extend_strv(output, nodes_single_child_const(memcpy_node)->name);
     string_extend_cstr(output, ", i64 ");
@@ -355,12 +376,24 @@ static void emit_memcpy(String* output, const Node* memcpy_node) {
 
 static void emit_store_another_node(String* output, const Node* store) {
     string_extend_cstr(output, "    store ");
-    extend_type_call_str(output, store->lang_type);
+    /*
+    if (is_struct_variable_definition(var_or_member_def) && is_fun_param_call) {
+        node_printf(store);
+        node_printf(var_or_member_def);
+        node_printf(src);
+        unreachable("");
+    } else {
+        extend_type_call_str(output, var_or_member_def);
+    }
+    */
+    node_printf(store);
+    node_printf(store->left_child);
+    extend_type_call_str(output, store);
 
     emit_src(output, nodes_single_child_const(store));
 
     string_extend_cstr(output, ", ptr %");
-    string_extend_size_t(output, store->node_to_load->llvm_id);
+    string_extend_size_t(output, store->node_src->llvm_id);
     string_extend_cstr(output, ", align 8");
     string_extend_cstr(output, "\n");
 }
@@ -368,13 +401,23 @@ static void emit_store_another_node(String* output, const Node* store) {
 static void emit_store_struct_fun_param(String* output, const Node* store) {
     size_t alloca_dest_id = get_store_dest_id(store);
 
+    Node* var_def;
+    if (!sym_tbl_lookup(&var_def, store->name)) {
+        node_printf(store);
+        unreachable("");
+    }
+    Node* struct_def;
+    if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
+        unreachable("");
+    }
+
     const Node* src = nodes_single_child_const(store);
     string_extend_cstr(output, "    call void @llvm.memcpy.p0.p0.i64(ptr align 4 %");
     string_extend_size_t(output, alloca_dest_id);
     string_extend_cstr(output, ", ptr align 4 %");
-    string_extend_size_t(output, src->node_to_load->llvm_id);
+    string_extend_size_t(output, src->node_src->llvm_id);
     string_extend_cstr(output, ", i64 ");
-    string_extend_size_t(output, sizeof_struct_definition(get_struct_definition_const(store)));
+    string_extend_size_t(output, sizeof_struct_definition(struct_def));
     string_extend_cstr(output, ", i1 false)\n");
 }
 
@@ -424,7 +467,7 @@ static void emit_normal_store(String* output, const Node* store) {
         node_printf(src);
         unreachable("");
     } else {
-        extend_type_call_str(output, var_or_member_def->lang_type);
+        extend_type_call_str(output, var_or_member_def);
     }
 
     emit_src(output, src);
@@ -435,13 +478,46 @@ static void emit_normal_store(String* output, const Node* store) {
     string_extend_cstr(output, "\n");
 }
 
+static void emit_store_struct_member(String* output, const Node* store_struct) {
+    Node* var_def;
+    if (!sym_tbl_lookup(&var_def, store_struct->name)) {
+        unreachable("");
+    }
+    Node* struct_def;
+    if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
+        unreachable("");
+    }
+    size_t member_idx = get_member_index(struct_def, nodes_get_child_const(store_struct, 0));
+    string_extend_cstr(output, "    %"); 
+    string_extend_size_t(output, store_struct->llvm_id - 1);
+    string_extend_cstr(output, " = getelementptr inbounds %struct.");
+    string_extend_strv(output, var_def->lang_type);
+    string_extend_cstr(output, ", ptr %");
+    string_extend_size_t(output, get_store_dest_id(store_struct));
+    string_extend_cstr(output, ", i32 0");
+    string_extend_cstr(output, ", i32 ");
+    string_extend_size_t(output, member_idx);
+    string_append(output, '\n');
+
+    const Node* member_def = get_member_def(struct_def, nodes_get_child_const(store_struct, 0));
+    string_extend_cstr(output, "    store ");
+    extend_type_call_str(output, member_def);
+    emit_src(output, nodes_get_child_const(store_struct, 1));
+    string_extend_cstr(output, ", ");
+    string_extend_cstr(output, "ptr");
+    string_extend_cstr(output, " %");
+    string_extend_size_t(output, store_struct->llvm_id - 1);
+    string_extend_cstr(output, ", align 8");
+    string_extend_cstr(output, "\n");
+}
+
 static void emit_store(String* output, const Node* store) {
     const Node* src = nodes_single_child_const(store);
-    bool is_struct_def = is_corresponding_to_a_struct(store);
+    bool is_struct_def = is_struct_variable_definition(get_symbol_def_from_alloca(store));
     if (store->left_child->type == NODE_STRUCT_LITERAL) {
         unreachable("");
     } else if (store->left_child->type == NODE_STORE_STRUCT_MEMBER) {
-        unreachable("");
+        emit_store_struct_member(output, store);
     } else if (is_struct_def && src->type == NODE_FUNCTION_PARAM_SYM) {
         emit_store_struct_fun_param(output, store);
     } else {
@@ -452,7 +528,7 @@ static void emit_store(String* output, const Node* store) {
 static void emit_function_definition(String* output, const Node* fun_def) {
     string_extend_cstr(output, "define dso_local ");
 
-    extend_type_call_str(output, return_type_from_function_definition(fun_def)->lang_type);
+    extend_type_call_str(output, return_type_from_function_definition(fun_def));
 
     string_extend_cstr(output, " @");
     string_extend_strv(output, fun_def->name);
@@ -483,7 +559,7 @@ static void emit_function_return_statement(String* output, const Node* fun_retur
                 todo();
             }
             string_extend_cstr(output, "    ret ");
-            extend_type_call_str(output, sym_to_rtn_def->lang_type);
+            extend_type_call_str(output, sym_to_rtn_def);
             string_extend_cstr(output, " ");
             string_extend_strv(output, sym_to_return->str_data);
             string_extend_cstr(output, "\n");
@@ -496,7 +572,7 @@ static void emit_function_return_statement(String* output, const Node* fun_retur
             assert(nodes_count_children(return_types) == 1 && "not implemented");
             Node* return_type = return_types->left_child;
 
-            extend_type_call_str(output, return_type->lang_type);
+            extend_type_call_str(output, return_type);
             string_extend_cstr(output, " %");
             string_extend_size_t(output, sym_to_return->llvm_id);
             string_extend_cstr(output, "\n");
@@ -505,7 +581,7 @@ static void emit_function_return_statement(String* output, const Node* fun_retur
         case NODE_BLOCK: {
             emit_block(output, sym_to_return);
             string_extend_cstr(output, "    ret ");
-            extend_type_call_str(output, sym_to_rtn_def->lang_type);
+            extend_type_call_str(output, sym_to_rtn_def);
             string_extend_cstr(output, " %");
             string_extend_size_t(output, get_block_return_id(sym_to_return));
             string_extend_cstr(output, "\n");
@@ -516,17 +592,20 @@ static void emit_function_return_statement(String* output, const Node* fun_retur
                 break;
             }
             string_extend_cstr(output, "    ret ");
-            extend_type_call_str(output, sym_to_rtn_def->lang_type);
+            extend_type_call_str(output, sym_to_rtn_def);
             string_extend_cstr(output, " %");
-            string_extend_size_t(output, sym_to_return->node_to_load->llvm_id);
+            string_extend_size_t(output, sym_to_return->node_src->llvm_id);
             string_extend_cstr(output, "\n");
             break;
         case NODE_STRUCT_MEMBER_SYM: {
-            assert(is_struct_variable_definition(sym_to_rtn_def));
+            Node* struct_def;
+            if (!sym_tbl_lookup(&struct_def, sym_to_rtn_def->lang_type)) {
+                unreachable("");
+            }
             string_extend_cstr(output, "    ret ");
-            extend_type_call_str(output, sym_to_return->lang_type);
+            extend_type_call_str(output, sym_to_return);
             string_extend_cstr(output, " %");
-            string_extend_size_t(output, sym_to_return->node_to_load->llvm_id);
+            string_extend_size_t(output, sym_to_return->node_src->llvm_id);
             string_extend_cstr(output, "\n");
             break;
         }
@@ -642,7 +721,7 @@ static void emit_load_struct_element_pointer(String* output, const Node* load_el
     string_extend_cstr(output, " = getelementptr inbounds %struct.");
     string_extend_strv(output, var_def->lang_type);
     string_extend_cstr(output, ", ptr %");
-    string_extend_size_t(output, load_elem_ptr->node_to_load->llvm_id);
+    string_extend_size_t(output, load_elem_ptr->node_src->llvm_id);
     string_extend_cstr(output, ", i32 0");
     string_extend_cstr(output, ", i32 ");
     string_extend_size_t(output, member_idx);
@@ -696,7 +775,7 @@ static void emit_block(String* output, const Node* block) {
                 emit_struct_definition(output, statement);
                 break;
             case NODE_STORE_STRUCT_MEMBER:
-                unreachable("");
+                emit_store_struct_member(output, statement);
                 break;
             case NODE_MEMCPY:
                 emit_memcpy(output, statement);
@@ -765,9 +844,6 @@ static void emit_symbols(String* output) {
     for (size_t idx = 0; idx < symbol_table.capacity; idx++) {
         const Symbol_table_node curr_node = symbol_table.table_nodes[idx];
         if (curr_node.status != SYM_TBL_OCCUPIED) {
-            continue;
-        }
-        if (str_view_cstr_is_equal(curr_node.node->lang_type, "i32")) {
             continue;
         }
         switch (curr_node.node->type) {

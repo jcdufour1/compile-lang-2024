@@ -73,7 +73,8 @@ typedef struct Node_ {
     uint32_t line_num;
     const char* file_path;
 
-    struct Node_* node_to_load;
+    struct Node_* node_src;
+    struct Node_* node_dest;
     struct Node_* associated_alloca;
 } Node;
 

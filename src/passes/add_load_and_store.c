@@ -64,7 +64,7 @@ static Node* do_load_struct_element_ptr(Node* node_to_insert_before, Node* symbo
         const Node* member_def = get_member_def(struct_def, element_sym);
         symbol_call->lang_type = member_def->lang_type;
         load_element_ptr->lang_type = member_def->lang_type;
-        load_element_ptr->node_to_load = node_element_ptr_to_load;
+        load_element_ptr->node_src = node_element_ptr_to_load;
         nodes_append_child(load_element_ptr, node_clone(element_sym));
         nodes_insert_before(node_to_insert_before, load_element_ptr);
 
@@ -96,15 +96,17 @@ static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
         Node* load_node = node_new();
         load_node->type = NODE_LOAD_ANOTHER_NODE;
         Node* load_element_ptr = do_load_struct_element_ptr(node_insert_load_before, symbol_call);
-        load_node->node_to_load = load_element_ptr;
+        load_node->node_src = load_element_ptr;
         load_node->lang_type = load_element_ptr->lang_type;
         nodes_insert_before(node_insert_load_before, load_node);
-        symbol_call->node_to_load = load_node;
+        symbol_call->node_src = load_node;
     } else {
         Node* load = node_new();
         load->type = NODE_LOAD_VARIABLE;
         load->name = symbol_call->name;
-        symbol_call->node_to_load = load;
+        load->node_src = load;
+        load->lang_type = symbol_call->lang_type;
+        symbol_call->node_src = load;
         nodes_insert_before(node_insert_load_before, load);
     }
 }
@@ -139,13 +141,15 @@ static void insert_store(Node* node_insert_store_before, Node* symbol_call /* sr
 
         switch (symbol_call->type) {
             case NODE_SYMBOL:
+                todo();
                 symbol_call->type = NODE_LLVM_SYMBOL;
+                symbol_call->node_src = get_alloca(symbol_call);
                 // fallthrough
             case NODE_VARIABLE_DEFINITION:
-                todo();
+                //todo();
                 break;
             case NODE_FUNCTION_PARAM_SYM:
-                todo();
+                //todo();
                 break;
             default:
                 node_printf(symbol_call);
@@ -245,7 +249,7 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
         Node* store = node_new();
         store->type = NODE_STORE_ANOTHER_NODE;
         Node* store_element_ptr = do_load_struct_element_ptr(node_to_insert_before, lhs);
-        store->node_to_load = store_element_ptr;
+        store->node_src = store_element_ptr;
         store->lang_type = store_element_ptr->lang_type;
         nodes_append_child(store, rhs);
         nodes_insert_after(assignment, store);
@@ -322,7 +326,7 @@ static void load_function_parameters(Node* fun_def) {
     nodes_foreach_child(param, fun_params) {
         Node* fun_param_call = symbol_new(param->name);
         fun_param_call->type = NODE_FUNCTION_PARAM_SYM;
-        fun_param_call->node_to_load = param;
+        fun_param_call->node_src = param;
         insert_store(get_node_after_last_alloca(fun_block), fun_param_call);
     }
 }

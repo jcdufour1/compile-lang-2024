@@ -26,7 +26,7 @@ static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* o
         operator_sym->type = NODE_OPERATOR_RETURN_VALUE_SYM;
         nodes_insert_before(node_to_insert_before, lhs);
         nodes_append_child(old_operation, operator_sym);
-        operator_sym->node_to_load = lhs;
+        operator_sym->node_src = lhs;
     } else if (lhs->type == NODE_FUNCTION_CALL){
         todo();
     } else {
@@ -38,7 +38,7 @@ static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* o
         operator_sym->type = NODE_OPERATOR_RETURN_VALUE_SYM;
         nodes_insert_before(node_to_insert_before, rhs);
         nodes_append_child(old_operation, operator_sym);
-        operator_sym->node_to_load = rhs;
+        operator_sym->node_src = rhs;
     } else if (rhs->type == NODE_FUNCTION_CALL){
         todo();
     } else {
