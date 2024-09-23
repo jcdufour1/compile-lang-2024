@@ -93,19 +93,23 @@ static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
     }
 
     if (symbol_call->type == NODE_STRUCT_MEMBER_SYM) {
-        Node* load_node = node_new();
-        load_node->type = NODE_LOAD_ANOTHER_NODE;
-        Node* load_element_ptr = do_load_struct_element_ptr(node_insert_load_before, symbol_call);
-        load_node->node_src = load_element_ptr;
-        load_node->lang_type = load_element_ptr->lang_type;
-        nodes_insert_before(node_insert_load_before, load_node);
-        symbol_call->node_src = load_node;
-    } else {
         Node* load = node_new();
-        load->type = NODE_LOAD_VARIABLE;
+        load->type = NODE_LOAD_ANOTHER_NODE;
+        Node* load_element_ptr = do_load_struct_element_ptr(node_insert_load_before, symbol_call);
+        load->node_src = load_element_ptr;
+        load->lang_type = load_element_ptr->lang_type;
+        assert(load->lang_type.count > 0);
+        nodes_insert_before(node_insert_load_before, load);
+        symbol_call->node_src = load;
+    } else {
+        Node* sym_def;
+        try(sym_tbl_lookup(&sym_def, symbol_call->name));
+        Node* load = node_new();
+        load->type = NODE_LOAD_ANOTHER_NODE;
         load->name = symbol_call->name;
-        load->node_src = load;
-        load->lang_type = symbol_call->lang_type;
+        load->node_src = get_alloca(symbol_call);
+        load->lang_type = sym_def->lang_type;
+        assert(load->lang_type.count > 0);
         symbol_call->node_src = load;
         nodes_insert_before(node_insert_load_before, load);
     }
