@@ -78,7 +78,7 @@ bool flatten_load_and_store(Node* start_start_node) {
             case NODE_OPERATOR:
                 break;
             case NODE_SYMBOL:
-                break;
+                unreachable(NODE_FMT"\n", node_print(curr_node));
             case NODE_RETURN_STATEMENT:
                 break;
             case NODE_VARIABLE_DEFINITION:

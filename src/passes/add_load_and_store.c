@@ -134,6 +134,21 @@ static void insert_store(Node* node_insert_store_before, Node* symbol_call /* sr
         //symbol_call->node_to_load = store;
         nodes_append_child(store, symbol_call);
         nodes_insert_before(node_insert_store_before, store);
+
+        switch (symbol_call->type) {
+            case NODE_SYMBOL:
+                symbol_call->type = NODE_LLVM_SYMBOL;
+                // fallthrough
+            case NODE_VARIABLE_DEFINITION:
+                todo();
+                break;
+            case NODE_FUNCTION_PARAM_SYM:
+                todo();
+                break;
+            default:
+                node_printf(symbol_call);
+                todo();
+        }
     }
     //Node* store = node_new();
     //store->type = NODE_STORE;

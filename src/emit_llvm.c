@@ -159,6 +159,7 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
             case NODE_STRUCT_LITERAL:
                 todo();
             case NODE_SYMBOL: {
+                unreachable("");
                 node_printf(var_decl_or_def);
                 if (is_struct_variable_definition(var_decl_or_def)) {
                     string_extend_cstr(output, "ptr noundef byval(");

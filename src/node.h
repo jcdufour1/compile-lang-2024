@@ -46,6 +46,7 @@ typedef enum {
     NODE_FUNCTION_RETURN_VALUE_SYM,
     NODE_OPERATOR_RETURN_VALUE_SYM,
     NODE_MEMCPY,
+    NODE_LLVM_SYMBOL,
 } NODE_TYPE;
 
 typedef size_t Llvm_id;
