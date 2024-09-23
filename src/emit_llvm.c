@@ -358,9 +358,8 @@ static void emit_load_another_node(String* output, const Node* load_node) {
 static void emit_memcpy(String* output, const Node* memcpy_node) {
     assert(memcpy_node->type == NODE_MEMCPY);
 
-    size_t alloca_dest_id = get_store_dest_id(memcpy_node);
     string_extend_cstr(output, "    call void @llvm.memcpy.p0.p0.i64(ptr align 4 %");
-    string_extend_size_t(output, alloca_dest_id);
+    string_extend_size_t(output, get_store_dest_id(memcpy_node));
     string_extend_cstr(output, ", ptr align 4 @__const.main.");
     string_extend_strv(output, nodes_single_child_const(memcpy_node)->name);
     string_extend_cstr(output, ", i64 ");
@@ -836,6 +835,9 @@ static void emit_symbols(String* output) {
     for (size_t idx = 0; idx < symbol_table.capacity; idx++) {
         const Symbol_table_node curr_node = symbol_table.table_nodes[idx];
         if (curr_node.status != SYM_TBL_OCCUPIED) {
+            continue;
+        }
+        if (str_view_cstr_is_equal(curr_node.node->lang_type, "i32")) {
             continue;
         }
         switch (curr_node.node->type) {

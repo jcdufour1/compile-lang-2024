@@ -11,6 +11,7 @@ static Node* store_new(Node* item_to_store) {
     (void) item_to_store;
     todo();
     Node* store = node_new();
+    store->associated_alloca = get_alloca(item_to_store);
     store->type = NODE_STORE_VARIABLE;
     //store->name = var_def->name;
     return store;
@@ -131,6 +132,7 @@ static void insert_store(Node* node_insert_store_before, Node* symbol_call /* sr
         Node* store = node_new();
         store->type = NODE_STORE_VARIABLE;
         store->name = symbol_call->name;
+        store->associated_alloca = get_alloca(symbol_call);
         //symbol_call->node_to_load = store;
         nodes_append_child(store, symbol_call);
         nodes_insert_before(node_insert_store_before, store);
@@ -237,6 +239,7 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
     } else {
         Node* store = node_new();
         store->name = lhs->name;
+        node_printf(lhs);
         nodes_remove(rhs, true);
         store->type = NODE_STORE_VARIABLE;
         nodes_append_child(store, rhs);
@@ -315,8 +318,7 @@ static void load_function_arguments(Node* fun_call) {
             add_load_foreach_arg(fun_call->parent, fun_call);
             return;
         case NODE_BLOCK:
-            add_load_foreach_arg(fun_call, fun_call);
-            return;
+            // fallthrough
         case NODE_ASSIGNMENT:
             add_load_foreach_arg(fun_call, fun_call);
             return;
