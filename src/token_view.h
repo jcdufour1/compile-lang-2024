@@ -70,7 +70,7 @@ static inline Token tk_view_front(Tk_view token_view) {
     return tk_view_at(token_view, 0);
 }
 
-static inline Tk_view tk_view_chop_count(Tk_view* token_view, size_t count) {
+static inline Tk_view tk_view_consume_count(Tk_view* token_view, size_t count) {
     if (token_view->count < count) {
         unreachable("out of bounds");
     }
@@ -80,12 +80,12 @@ static inline Tk_view tk_view_chop_count(Tk_view* token_view, size_t count) {
     return result;
 }
 
-static inline Tk_view tk_view_chop_count_at_most(Tk_view* token_view, size_t count) {
-    return tk_view_chop_count(token_view, MIN(token_view->count, count));
+static inline Tk_view tk_view_consume_count_at_most(Tk_view* token_view, size_t count) {
+    return tk_view_consume_count(token_view, MIN(token_view->count, count));
 }
 
-static inline Token tk_view_chop_front(Tk_view* token_view) {
-    return tk_view_front(tk_view_chop_count(token_view, 1));
+static inline Token tk_view_consume(Tk_view* token_view) {
+    return tk_view_front(tk_view_consume_count(token_view, 1));
 }
 
 static inline bool tk_view_try_consume(Token* result, Tk_view* tokens, TOKEN_TYPE expected) {
@@ -93,7 +93,7 @@ static inline bool tk_view_try_consume(Token* result, Tk_view* tokens, TOKEN_TYP
         return false;
     }
     
-    Token token = tk_view_chop_front(tokens);
+    Token token = tk_view_consume(tokens);
     if (result) {
         *result = token;
     }
@@ -107,7 +107,7 @@ static inline bool tk_view_try_consume_symbol(Token* result, Tk_view* tokens, co
     return tk_view_try_consume(result, tokens, TOKEN_SYMBOL);
 }
 
-static inline Tk_view tk_view_chop_on_cond(
+static inline Tk_view tk_view_consume_while(
     Tk_view* tk_view,
     bool (*should_continue)(const Token* /* previous token */, const Token* /* current token */)
 ) {
@@ -125,7 +125,7 @@ static inline Tk_view tk_view_chop_on_cond(
     todo();
 }
 
-static inline Tk_view tk_view_chop_on_type_delim_common(Tk_view* token_view, TOKEN_TYPE delim, bool or_all_fallback) {
+static inline Tk_view tk_view_consume_until_common(Tk_view* token_view, TOKEN_TYPE delim, bool or_all_fallback) {
     Tk_view new_token_view;
     size_t idx = 0;
     for (; idx < token_view->count; idx++) {
@@ -146,17 +146,17 @@ static inline Tk_view tk_view_chop_on_type_delim_common(Tk_view* token_view, TOK
 }
 
 // delim itself is left in the input token_view
-static inline Tk_view tk_view_chop_on_type_delim(Tk_view* token_view, TOKEN_TYPE delim) {
-    return tk_view_chop_on_type_delim_common(token_view, delim, false);
+static inline Tk_view tk_view_consume_until(Tk_view* token_view, TOKEN_TYPE delim) {
+    return tk_view_consume_until_common(token_view, delim, false);
 }
 
 // delim itself is left in the input token_view
-// chop all if delim not found
-static inline Tk_view tk_view_chop_on_type_delim_or_all(Tk_view* token_view, TOKEN_TYPE delim) {
-    return tk_view_chop_on_type_delim_common(token_view, delim, true);
+// consume all if delim not found
+static inline Tk_view tk_view_consume_until_or_all(Tk_view* token_view, TOKEN_TYPE delim) {
+    return tk_view_consume_until_common(token_view, delim, true);
 }
 
-static inline Tk_view tk_view_chop_on_matching_type_delim_common(
+static inline Tk_view tk_view_consume_until_matching_delim_common(
     Tk_view* token_view,
     TOKEN_TYPE delim,
     bool matching_opening_included,
@@ -167,33 +167,33 @@ static inline Tk_view tk_view_chop_on_matching_type_delim_common(
         if (!or_all_fallback) {
             unreachable("");
         }
-        return tk_view_chop_count(token_view, token_view->count);
+        return tk_view_consume_count(token_view, token_view->count);
     }
-    Tk_view result = tk_view_chop_count(token_view, idx_matching);
+    Tk_view result = tk_view_consume_count(token_view, idx_matching);
     return result;
 }
 
 // delim itself is left in the input token_view
-static inline Tk_view tk_view_chop_on_matching_type_delim(
+static inline Tk_view tk_view_consume_until_matching_delim(
     Tk_view* token_view,
     TOKEN_TYPE delim,
     bool matching_opening_included // if true, matching opening ( in tokens
     ) {
-    return tk_view_chop_on_matching_type_delim_common(token_view, delim, matching_opening_included, false);
+    return tk_view_consume_until_matching_delim_common(token_view, delim, matching_opening_included, false);
 }
 
 // considers matching ()
 // delim itself is left in the input token_view
-// chop all if delim not found
-static inline Tk_view tk_view_chop_on_matching_type_delim_or_all(
+// consume all if delim not found
+static inline Tk_view tk_view_consume_until_matching_delim_or_all(
     Tk_view* token_view,
     TOKEN_TYPE delim,
     bool matching_opening_included // if true, matching opening ( in tokens
     ) {
-    return tk_view_chop_on_matching_type_delim_common(token_view, delim, matching_opening_included, true);
+    return tk_view_consume_until_matching_delim_common(token_view, delim, matching_opening_included, true);
 }
 
-static inline Tk_view tk_view_chop_on_matching_type_delims_or_all(
+static inline Tk_view tk_view_consume_until_matching_type_delims_or_all(
     Tk_view* token_view,
     TOKEN_TYPE delim1,
     TOKEN_TYPE delim2,
@@ -201,8 +201,8 @@ static inline Tk_view tk_view_chop_on_matching_type_delims_or_all(
 ) {
     Tk_view option_1_tokens = *token_view;
     Tk_view option_2_tokens = *token_view;
-    Tk_view option_1 = tk_view_chop_on_matching_type_delim_common(&option_1_tokens, delim1, matching_opening_included, true);
-    Tk_view option_2 = tk_view_chop_on_matching_type_delim_common(&option_2_tokens, delim2, matching_opening_included, true);
+    Tk_view option_1 = tk_view_consume_until_matching_delim_common(&option_1_tokens, delim1, matching_opening_included, true);
+    Tk_view option_2 = tk_view_consume_until_matching_delim_common(&option_2_tokens, delim2, matching_opening_included, true);
     if (option_1.count < option_2.count) {
         *token_view = option_1_tokens;
         return option_1;
