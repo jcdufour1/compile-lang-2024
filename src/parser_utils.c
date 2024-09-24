@@ -252,11 +252,15 @@ uint64_t sizeof_struct_definition(const Node* struct_def) {
 }
 
 uint64_t sizeof_struct(const Node* struct_literal_or_def) {
+    assert(is_corresponding_to_a_struct(struct_literal_or_def));
+
     switch (struct_literal_or_def->type) {
         case NODE_STRUCT_DEFINITION:
             return sizeof_struct_definition(struct_literal_or_def);
         case NODE_STRUCT_LITERAL:
             return sizeof_struct_literal(struct_literal_or_def);
+        case NODE_FUNCTION_PARAM_SYM:
+            return sizeof_struct_literal(get_struct_definition_const(struct_literal_or_def));
         default:
             node_printf(struct_literal_or_def);
             todo();
@@ -267,9 +271,17 @@ bool is_corresponding_to_a_struct(const Node* node) {
     Node* var_def;
     Node* struct_def;
     switch (node->type) {
+        case NODE_STRUCT_LITERAL:
+            return true;
         case NODE_SYMBOL:
             // fallthrough
         case NODE_STORE_VARIABLE:
+            // fallthrough
+        case NODE_STORE_ANOTHER_NODE:
+            // fallthrough
+        case NODE_FUNCTION_PARAM_SYM:
+            // fallthrough
+            assert(node->name.count > 0);
             if (!sym_tbl_lookup(&var_def, node->name)) {
                 return false;
             }
@@ -278,6 +290,7 @@ bool is_corresponding_to_a_struct(const Node* node) {
             }
             return true;
         default:
+            log_tree(LOG_DEBUG, node);
             todo();
     }
 }

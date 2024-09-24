@@ -129,6 +129,8 @@ bool flatten_load_and_store(Node* start_start_node) {
                 break;
             case NODE_OPERATOR_RETURN_VALUE_SYM:
                 break;
+            case NODE_LLVM_STORE_LITERAL:
+                break;
             default:
                 unreachable(NODE_FMT"\n", node_print(curr_node));
         }

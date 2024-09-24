@@ -33,6 +33,7 @@ static const char* NODE_STRUCT_DEFINITION_DESCRIPTION = "struct_def";
 static const char* NODE_STRUCT_MEMBER_SYM_DESCRIPTION = "struct_member_sym";
 static const char* NODE_STRUCT_LITERAL_DESCRIPTION = "struct_literal";
 static const char* NODE_STORE_STRUCT_MEMBER_DESCRIPTION = "store_member";
+static const char* NODE_LLVM_STORE_LITERAL_DESCRIPTION = "llvm_store_literal";
 static const char* NODE_LOAD_STRUCT_MEMBER_DESCRIPTION = "load_member";
 static const char* NODE_LOAD_STRUCT_ELEMENT_PTR_DESCRIPTION = "load_element_ptr";
 static const char* NODE_LOAD_ANOTHER_NODE_DESCRIPTION = "load_another_node";
@@ -190,6 +191,8 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_LOAD_ANOTHER_NODE_DESCRIPTION);
         case NODE_STORE_ANOTHER_NODE:
             return str_view_from_cstr(NODE_STORE_ANOTHER_NODE_DESCRIPTION);
+        case NODE_LLVM_STORE_LITERAL:
+            return str_view_from_cstr(NODE_LLVM_STORE_LITERAL_DESCRIPTION);
         case NODE_NO_TYPE:
             return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
         default:
@@ -295,6 +298,8 @@ String node_print_internal(const Node* node) {
         case NODE_FUNCTION_RETURN_VALUE_SYM:
             // fallthrough
         case NODE_OPERATOR_RETURN_VALUE_SYM:
+            // fallthrough
+        case NODE_LLVM_STORE_LITERAL:
             // fallthrough
             string_extend_strv_in_gtlt(&buf, node->lang_type);
             string_extend_strv_in_par(&buf, node->name);

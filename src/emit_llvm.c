@@ -346,7 +346,6 @@ static void emit_load_variable(String* output, const Node* variable_call) {
 }
 
 static void emit_load_another_node(String* output, const Node* load_node) {
-    log_tree(LOG_DEBUG, load_node);
     assert(load_node->node_src->llvm_id > 0);
 
     string_extend_cstr(output, "    %");
@@ -375,25 +374,23 @@ static void emit_memcpy(String* output, const Node* memcpy_node) {
 }
 
 static void emit_store_another_node(String* output, const Node* store) {
+    assert(store->type == NODE_STORE_ANOTHER_NODE);
     string_extend_cstr(output, "    store ");
-    /*
-    if (is_struct_variable_definition(var_or_member_def) && is_fun_param_call) {
-        node_printf(store);
-        node_printf(var_or_member_def);
-        node_printf(src);
-        unreachable("");
-    } else {
-        extend_type_call_str(output, var_or_member_def);
-    }
-    */
-    node_printf(store);
-    node_printf(store->left_child);
     extend_type_call_str(output, store);
-
-    emit_src(output, nodes_single_child_const(store));
-
-    string_extend_cstr(output, ", ptr %");
+    string_extend_cstr(output, " %");
     string_extend_size_t(output, store->node_src->llvm_id);
+    string_extend_cstr(output, ", ptr %");
+    string_extend_size_t(output, store->node_dest->llvm_id);
+    string_extend_cstr(output, ", align 8");
+    string_extend_cstr(output, "\n");
+}
+
+static void emit_llvm_store_literal(String* output, const Node* store) {
+    assert(store->type == NODE_LLVM_STORE_LITERAL);
+    string_extend_cstr(output, "    store ");
+    extend_literal_decl_prefix(output, nodes_single_child_const(store));
+    string_extend_cstr(output, ", ptr %");
+    string_extend_size_t(output, store->node_dest->llvm_id);
     string_extend_cstr(output, ", align 8");
     string_extend_cstr(output, "\n");
 }
@@ -437,10 +434,9 @@ static void emit_normal_store(String* output, const Node* store) {
     switch (src->type) {
         case NODE_FUNCTION_CALL:
             unreachable("");
-            emit_function_call(output, src);
             break;
         case NODE_OPERATOR:
-            emit_operator(output, src);
+            unreachable("");
             break;
         case NODE_LITERAL:
             break;
@@ -767,6 +763,9 @@ static void emit_block(String* output, const Node* block) {
                 break;
             case NODE_STORE_VARIABLE:
                 emit_store(output, statement);
+                break;
+            case NODE_LLVM_STORE_LITERAL:
+                emit_llvm_store_literal(output, statement);
                 break;
             case NODE_LOAD_VARIABLE:
                 emit_load_variable(output, statement);

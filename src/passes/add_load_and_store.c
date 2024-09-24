@@ -136,8 +136,15 @@ static void insert_store(Node* node_insert_store_before, Node* symbol_call /* sr
         todo();
     } else {
         Node* store = node_new();
-        store->type = NODE_STORE_VARIABLE;
+        store->type = NODE_STORE_ANOTHER_NODE;
         store->name = symbol_call->name;
+        store->node_src = symbol_call->node_src;
+        store->lang_type = symbol_call->lang_type;
+        log_tree(LOG_DEBUG, store);
+        assert(store->lang_type.count > 0);
+        store->node_dest = get_alloca(symbol_call);
+        assert(store->node_src);
+        assert(store->node_dest);
         store->associated_alloca = get_alloca(symbol_call);
         //symbol_call->node_to_load = store;
         nodes_append_child(store, symbol_call);
@@ -251,9 +258,14 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
         nodes_remove(lhs, true);
         nodes_remove(rhs, true);
         Node* store = node_new();
-        store->type = NODE_STORE_ANOTHER_NODE;
         Node* store_element_ptr = do_load_struct_element_ptr(node_to_insert_before, lhs);
-        store->node_src = store_element_ptr;
+        if (rhs->type == NODE_LITERAL) {
+            store->type = NODE_LLVM_STORE_LITERAL;
+        } else {
+            store->type = NODE_STORE_ANOTHER_NODE;
+            store->node_src = rhs;
+        }
+        store->node_dest = store_element_ptr;
         store->lang_type = store_element_ptr->lang_type;
         nodes_append_child(store, rhs);
         nodes_insert_after(assignment, store);
@@ -331,6 +343,7 @@ static void load_function_parameters(Node* fun_def) {
         Node* fun_param_call = symbol_new(param->name);
         fun_param_call->type = NODE_FUNCTION_PARAM_SYM;
         fun_param_call->node_src = param;
+        fun_param_call->lang_type = param->lang_type;
         insert_store(get_node_after_last_alloca(fun_block), fun_param_call);
     }
 }
