@@ -76,7 +76,7 @@ typedef struct Node_ {
 
     struct Node_* node_src;
     struct Node_* node_dest;
-    struct Node_* associated_alloca;
+    struct Node_* storage_location;
 } Node;
 
 extern Node* root_of_tree;

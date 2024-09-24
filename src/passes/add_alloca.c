@@ -7,7 +7,7 @@ static Node* alloca_new(Node* var_def) {
     Node* alloca = node_new();
     alloca->type = NODE_ALLOCA;
     alloca->name = var_def->name;
-    var_def->associated_alloca = alloca;
+    var_def->storage_location = alloca;
     return alloca;
 }
 
@@ -17,6 +17,10 @@ static void do_function_definition(Node* fun_def) {
     Node* fun_block = nodes_get_child_of_type(fun_def, NODE_BLOCK);
 
     nodes_foreach_child(param, fun_params) {
+        if (is_corresponding_to_a_struct(param)) {
+            param->storage_location = param;
+            continue;
+        }
         Node* alloca = alloca_new(param);
         nodes_insert_before(fun_block->left_child, alloca);
     }

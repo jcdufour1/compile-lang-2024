@@ -12,10 +12,10 @@ Llvm_id get_block_return_id(const Node* fun_call);
 
 Llvm_id get_prev_load_id(const Node* var_call);
 
-Node* get_alloca(Node* var_call);
+Node* get_storage_location(Node* var_call);
 
 static inline const Node* get_alloca_const(const Node* var_call) {
-    return get_alloca((Node*)var_call);
+    return get_storage_location((Node*)var_call);
 }
 
 Llvm_id get_store_dest_id(const Node* var_call);

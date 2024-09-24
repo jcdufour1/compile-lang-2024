@@ -89,15 +89,16 @@ static bool is_operator(const Node* curr_node, const Node* var_call) {
     return curr_node->type == NODE_OPERATOR;
 }
 
-Node* get_alloca(Node* var_call) {
+
+Node* get_storage_location(Node* var_call) {
     Node* sym_def;
     if (!sym_tbl_lookup(&sym_def, var_call->name)) {
         unreachable("symbol definition not found");
     }
-    if (!sym_def->associated_alloca) {
-        unreachable("no alloca node associated with symbol definition");
+    if (!sym_def->storage_location) {
+        unreachable("no storage location associated with symbol definition");
     }
-    return sym_def->associated_alloca;
+    return sym_def->storage_location;
 }
 
 Llvm_id get_store_dest_id(const Node* var_call) {
@@ -274,6 +275,8 @@ bool is_corresponding_to_a_struct(const Node* node) {
         case NODE_STRUCT_LITERAL:
             return true;
         case NODE_SYMBOL:
+            // fallthrough
+        case NODE_VARIABLE_DEFINITION:
             // fallthrough
         case NODE_STORE_VARIABLE:
             // fallthrough

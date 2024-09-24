@@ -56,6 +56,8 @@ static void extend_type_call_str(String* output, const Node* sym_def) {
 }
 
 static void extend_type_decl_str(String* output, const Node* variable_def, bool noundef) {
+    assert(variable_def->lang_type.count > 0);
+
     if (variable_def->is_variadic) {
         string_extend_cstr(output, "...");
         return;
@@ -69,6 +71,7 @@ static void extend_type_decl_str(String* output, const Node* variable_def, bool 
 
 static void extend_literal_decl_prefix(String* output, const Node* var_decl_or_def) {
     Str_view lang_type = var_decl_or_def->lang_type;
+    assert(lang_type.count > 0);
     if (str_view_cstr_is_equal(lang_type, "ptr")) {
         string_extend_cstr(output, " @.");
         string_extend_strv(output, var_decl_or_def->name);
@@ -375,6 +378,7 @@ static void emit_memcpy(String* output, const Node* memcpy_node) {
 
 static void emit_store_another_node(String* output, const Node* store) {
     assert(store->type == NODE_STORE_ANOTHER_NODE);
+    assert(store->lang_type.count > 0);
     string_extend_cstr(output, "    store ");
     extend_type_call_str(output, store);
     string_extend_cstr(output, " %");
@@ -388,6 +392,7 @@ static void emit_store_another_node(String* output, const Node* store) {
 static void emit_llvm_store_literal(String* output, const Node* store) {
     assert(store->type == NODE_LLVM_STORE_LITERAL);
     string_extend_cstr(output, "    store ");
+    extend_type_call_str(output, store);
     extend_literal_decl_prefix(output, nodes_single_child_const(store));
     string_extend_cstr(output, ", ptr %");
     string_extend_size_t(output, store->node_dest->llvm_id);
@@ -484,6 +489,7 @@ static void emit_store_struct_member(String* output, const Node* store_struct) {
         unreachable("");
     }
     size_t member_idx = get_member_index(struct_def, nodes_get_child_const(store_struct, 0));
+    assert(var_def->lang_type.count > 0);
     string_extend_cstr(output, "    %"); 
     string_extend_size_t(output, store_struct->llvm_id - 1);
     string_extend_cstr(output, " = getelementptr inbounds %struct.");
@@ -712,6 +718,7 @@ static void emit_load_struct_element_pointer(String* output, const Node* load_el
         unreachable("");
     }
     size_t member_idx = get_member_index(struct_def, nodes_single_child_const(load_elem_ptr));
+    assert(var_def->lang_type.count > 0);
     string_extend_cstr(output, "    %"); 
     string_extend_size_t(output, load_elem_ptr->llvm_id);
     string_extend_cstr(output, " = getelementptr inbounds %struct.");
@@ -819,6 +826,7 @@ static void emit_symbol(String* output, const Symbol_table_node node) {
 }
 
 static void emit_struct_literal(String* output, const Node* literal) {
+    assert(literal->lang_type.count > 0);
     string_extend_cstr(output, "@__const.main.");
     string_extend_strv(output, literal->name);
     string_extend_cstr(output, " = private unnamed_addr constant %struct.");

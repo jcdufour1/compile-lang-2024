@@ -11,7 +11,7 @@ static Node* store_new(Node* item_to_store) {
     (void) item_to_store;
     todo();
     Node* store = node_new();
-    store->associated_alloca = get_alloca(item_to_store);
+    store->storage_location = get_storage_location(item_to_store);
     store->type = NODE_STORE_VARIABLE;
     //store->name = var_def->name;
     return store;
@@ -47,7 +47,7 @@ static void do_struct_literal(Node* struct_literal) {
 // returns node of element pointer that should then be loaded
 static Node* do_load_struct_element_ptr(Node* node_to_insert_before, Node* symbol_call) {
     Node* prev_struct_sym = symbol_call;
-    Node* node_element_ptr_to_load = get_alloca(symbol_call);
+    Node* node_element_ptr_to_load = get_storage_location(symbol_call);
     Node* load_element_ptr = NULL;
     nodes_foreach_child(element_sym, symbol_call) {
         load_element_ptr = node_new();
@@ -75,12 +75,12 @@ static Node* do_load_struct_element_ptr(Node* node_to_insert_before, Node* symbo
     return load_element_ptr;
 }
 
-static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
+static Node* insert_load(Node* node_insert_load_before, Node* symbol_call) {
     switch (symbol_call->type) {
         case NODE_STRUCT_LITERAL:
             // fallthrough
         case NODE_LITERAL:
-            return;
+            return NULL;
         case NODE_STRUCT_MEMBER_SYM:
             // fallthrough
         case NODE_SYMBOL:
@@ -101,17 +101,19 @@ static void insert_load(Node* node_insert_load_before, Node* symbol_call) {
         assert(load->lang_type.count > 0);
         nodes_insert_before(node_insert_load_before, load);
         symbol_call->node_src = load;
+        return load;
     } else {
         Node* sym_def;
         try(sym_tbl_lookup(&sym_def, symbol_call->name));
         Node* load = node_new();
         load->type = NODE_LOAD_ANOTHER_NODE;
         load->name = symbol_call->name;
-        load->node_src = get_alloca(symbol_call);
+        load->node_src = get_storage_location(symbol_call);
         load->lang_type = sym_def->lang_type;
         assert(load->lang_type.count > 0);
         symbol_call->node_src = load;
         nodes_insert_before(node_insert_load_before, load);
+        return load;
     }
 }
 
@@ -142,10 +144,10 @@ static void insert_store(Node* node_insert_store_before, Node* symbol_call /* sr
         store->lang_type = symbol_call->lang_type;
         log_tree(LOG_DEBUG, store);
         assert(store->lang_type.count > 0);
-        store->node_dest = get_alloca(symbol_call);
+        store->node_dest = get_storage_location(symbol_call);
         assert(store->node_src);
         assert(store->node_dest);
-        store->associated_alloca = get_alloca(symbol_call);
+        store->storage_location = get_storage_location(symbol_call);
         //symbol_call->node_to_load = store;
         nodes_append_child(store, symbol_call);
         nodes_insert_before(node_insert_store_before, store);
@@ -154,7 +156,8 @@ static void insert_store(Node* node_insert_store_before, Node* symbol_call /* sr
             case NODE_SYMBOL:
                 todo();
                 symbol_call->type = NODE_LLVM_SYMBOL;
-                symbol_call->node_src = get_alloca(symbol_call);
+                symbol_call->node_src = get_storage_location(symbol_call);
+                assert(symbol_call->node_src);
                 // fallthrough
             case NODE_VARIABLE_DEFINITION:
                 //todo();
@@ -216,6 +219,7 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
 
     Node* lhs = nodes_get_child(assignment, 0);
     Node* rhs = nodes_get_child(assignment, 1);
+    Node* rhs_load = NULL;
 
     switch (lhs->type) {
         case NODE_VARIABLE_DEFINITION:
@@ -240,7 +244,7 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
             insert_load(node_to_insert_before, rhs);
             break;
         case NODE_SYMBOL:
-            insert_load(assignment, rhs);
+            rhs_load = insert_load(assignment, rhs);
             break;
         case NODE_LITERAL:
             break;
@@ -263,7 +267,8 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
             store->type = NODE_LLVM_STORE_LITERAL;
         } else {
             store->type = NODE_STORE_ANOTHER_NODE;
-            store->node_src = rhs;
+            store->node_src = rhs_load;
+            assert(store->node_src);
         }
         store->node_dest = store_element_ptr;
         store->lang_type = store_element_ptr->lang_type;
@@ -340,6 +345,9 @@ static void load_function_parameters(Node* fun_def) {
     Node* fun_block = nodes_get_child_of_type(fun_def, NODE_BLOCK);
 
     nodes_foreach_child(param, fun_params) {
+        if (is_corresponding_to_a_struct(param)) {
+            continue;
+        }
         Node* fun_param_call = symbol_new(param->name);
         fun_param_call->type = NODE_FUNCTION_PARAM_SYM;
         fun_param_call->node_src = param;
