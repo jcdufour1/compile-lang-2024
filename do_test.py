@@ -1,4 +1,4 @@
-import os, subprocess, sys, pathlib, difflib
+import os, subprocess, sys, pathlib, difflib, multiprocessing
 
 class changes:
     REMOVED = "\033[37;41m" #]
@@ -23,6 +23,9 @@ def to_str(a):
     return str(a)
 
 def print_error(*base, **kargs) -> None:
+    print(status_colors.RED, *base, status_colors.TO_NORMAL, file=sys.stderr, sep = "", **kargs)
+
+def print_warning(*base, **kargs) -> None:
     print(status_colors.RED, *base, status_colors.TO_NORMAL, file=sys.stderr, sep = "", **kargs)
 
 def print_success(*base, **kargs) -> None:
@@ -104,17 +107,22 @@ def do_test(file: str, do_debug: bool, expected_output: str):
     print_success("testing: " + file + " (" + debug_release_text + ") success")
     print()
 
-def main() -> None:
-    cmd = ["make", "-j4", "build"]
+def do_debug(count_threads: int) -> None:
+    cmd = ["make", "-j", str(count_threads), "build"]
     print_info("compiling debug:")
     process = subprocess.run(cmd, env=dict(os.environ | {"DEBUG": "1"}))
     if process.returncode != 0:
         print_error("compilation of debug failed")
         sys.exit(1)
     print_success("compiling debug: done")
+
+    for file in get_files_to_test():
+        do_test(file, do_debug=True, expected_output=get_expected_output(file))
+    print_success("testing debug: done")
     print()
 
-    cmd = ["make", "-j4", "build"]
+def do_release(count_threads: int) -> None:
+    cmd = ["make", "-j", str(count_threads), "build"]
     print_info("compiling release:")
     process = subprocess.run(cmd, env=dict(os.environ | {"DEBUG": "0"}))
     if process.returncode != 0:
@@ -124,9 +132,21 @@ def main() -> None:
     print()
 
     for file in get_files_to_test():
-        do_test(file, True, get_expected_output(file))
-        do_test(file, False, get_expected_output(file))
+        do_test(file, do_debug=False, expected_output=get_expected_output(file))
+    print_success("testing release: done")
+    print()
 
+def main() -> None:
+    count_threads: int
+    try:
+        count_threads =  multiprocessing.cpu_count()
+    except Exception as e:
+        print_warning("could not determine number of cpus; assuming 2")
+        print_warning(e, file=sys.stderr)
+        count_threads = 2
+
+    do_debug(count_threads)
+    do_release(count_threads)
     print_success("all tests passed")
 
 if __name__ == '__main__':
