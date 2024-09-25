@@ -42,7 +42,6 @@ OBJS=\
 	 ${BUILD_DIR}/passes/for_and_if_to_branch.o \
 	 ${BUILD_DIR}/passes/assign_llvm_ids.o \
 	 ${BUILD_DIR}/passes/add_load_and_store.o \
-	 ${BUILD_DIR}/passes/flatten_load_and_store.o \
 	 ${BUILD_DIR}/passes/flatten_operations.o \
 	 ${BUILD_DIR}/passes/add_alloca.o \
 	 ${BUILD_DIR}/passes/analysis_1.o

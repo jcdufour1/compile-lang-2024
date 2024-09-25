@@ -21,9 +21,6 @@ void do_passes(Node** root) {
     walk_tree(*root, add_load_and_store);
     log_tree(LOG_DEBUG, *root);
 
-    walk_tree(*root, flatten_load_and_store);
-    log_tree(LOG_DEBUG, *root);
-
     walk_tree(*root, assign_llvm_ids);
     log_tree(LOG_DEBUG, *root);
 }

@@ -318,7 +318,7 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
             store->name = lhs->name;
             node_printf(lhs);
             nodes_remove(rhs, true);
-            store->type = NODE_STORE_VARIABLE;
+            store->type = NODE_LLVM_STORE_STRUCT_LITERAL;
             nodes_append_child(store, rhs);
             nodes_insert_before(node_to_insert_before, store);
         } else {
@@ -513,6 +513,8 @@ bool add_load_and_store(Node* start_start_node) {
             case NODE_STRUCT_DEFINITION:
                 break;
             case NODE_LLVM_STORE_LITERAL:
+                break;
+            case NODE_LLVM_STORE_STRUCT_LITERAL:
                 break;
             default:
                 unreachable(NODE_FMT"\n", node_print(curr_node));

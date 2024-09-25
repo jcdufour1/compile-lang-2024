@@ -34,6 +34,7 @@ static const char* NODE_STRUCT_MEMBER_SYM_DESCRIPTION = "struct_member_sym";
 static const char* NODE_STRUCT_LITERAL_DESCRIPTION = "struct_literal";
 static const char* NODE_STORE_STRUCT_MEMBER_DESCRIPTION = "store_member";
 static const char* NODE_LLVM_STORE_LITERAL_DESCRIPTION = "llvm_store_literal";
+static const char* NODE_LLVM_STORE_STRUCT_LITERAL_DESCRIPTION = "llvm_store_struct_literal";
 static const char* NODE_LOAD_STRUCT_MEMBER_DESCRIPTION = "load_member";
 static const char* NODE_LOAD_STRUCT_ELEMENT_PTR_DESCRIPTION = "load_element_ptr";
 static const char* NODE_LOAD_ANOTHER_NODE_DESCRIPTION = "load_another_node";
@@ -183,8 +184,6 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_NODE_FUNCTION_RETURN_VALUE_SYM_DESCRIPTION);
         case NODE_OPERATOR_RETURN_VALUE_SYM:
             return str_view_from_cstr(NODE_NODE_OPERATOR_RETURN_VALUE_SYM_DESCRIPTION);
-        case NODE_MEMCPY:
-            return str_view_from_cstr(NODE_NODE_MEMCPY_DESCRIPTION);
         case NODE_LOAD_STRUCT_ELEMENT_PTR:
             return str_view_from_cstr(NODE_LOAD_STRUCT_ELEMENT_PTR_DESCRIPTION);
         case NODE_LOAD_ANOTHER_NODE:
@@ -193,6 +192,8 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_STORE_ANOTHER_NODE_DESCRIPTION);
         case NODE_LLVM_STORE_LITERAL:
             return str_view_from_cstr(NODE_LLVM_STORE_LITERAL_DESCRIPTION);
+        case NODE_LLVM_STORE_STRUCT_LITERAL:
+            return str_view_from_cstr(NODE_LLVM_STORE_STRUCT_LITERAL_DESCRIPTION);
         case NODE_NO_TYPE:
             return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
         default:
@@ -234,8 +235,6 @@ static void extend_node_text(String* string, const Node* node, bool do_recursion
         case NODE_LOAD_STRUCT_ELEMENT_PTR:
             // fallthrough
         case NODE_STORE_STRUCT_MEMBER:
-            // fallthrough
-        case NODE_MEMCPY:
             // fallthrough
         case NODE_STRUCT_DEFINITION:
             // fallthrough
@@ -292,6 +291,8 @@ static void extend_node_text(String* string, const Node* node, bool do_recursion
         case NODE_OPERATOR_RETURN_VALUE_SYM:
             // fallthrough
         case NODE_LLVM_STORE_LITERAL:
+            // fallthrough
+        case NODE_LLVM_STORE_STRUCT_LITERAL:
             // fallthrough
             string_extend_strv_in_gtlt(string, node->lang_type);
             string_extend_strv_in_par(string, node->name);
