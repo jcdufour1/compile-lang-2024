@@ -5,4 +5,6 @@
 
 void msg_redefinition_of_symbol(const Node* new_sym_def);
 
+void msg_undefined_symbol(const Node* sym_call);
+
 #endif // ERROR_MSG_H

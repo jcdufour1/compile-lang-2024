@@ -41,7 +41,6 @@ static const char* NODE_LOAD_ANOTHER_NODE_DESCRIPTION = "load_another_node";
 static const char* NODE_STORE_ANOTHER_NODE_DESCRIPTION = "store_another_node";
 static const char* NODE_NODE_FUNCTION_RETURN_VALUE_SYM_DESCRIPTION = "fun_return_value_sym";
 static const char* NODE_NODE_OPERATOR_RETURN_VALUE_SYM_DESCRIPTION = "operator_return_value_sym";
-static const char* NODE_NODE_MEMCPY_DESCRIPTION = "memcpy";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
 #ifndef NDEBUG

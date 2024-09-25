@@ -4,7 +4,7 @@
 #include "../parser_utils.h"
 
 static Node* alloca_new(Node* var_def) {
-    Node* alloca = node_new();
+    Node* alloca = node_new(var_def->file_path, var_def->line_num);
     alloca->type = NODE_ALLOCA;
     alloca->name = var_def->name;
     var_def->storage_location = alloca;

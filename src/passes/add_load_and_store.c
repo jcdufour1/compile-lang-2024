@@ -40,7 +40,7 @@ static Node* do_load_struct_element_ptr(Node* node_to_insert_before, Node* symbo
     Node* node_element_ptr_to_load = get_storage_location(symbol_call);
     Node* load_element_ptr = NULL;
     nodes_foreach_child(element_sym, symbol_call) {
-        load_element_ptr = node_new();
+        load_element_ptr = node_new(element_sym->file_path, element_sym->line_num);
         load_element_ptr->type = NODE_LOAD_STRUCT_ELEMENT_PTR;
         load_element_ptr->name = prev_struct_sym->name;
         Node* var_def;
@@ -83,7 +83,7 @@ static Node* insert_load(Node* node_insert_load_before, Node* symbol_call) {
     }
 
     if (symbol_call->type == NODE_STRUCT_MEMBER_SYM) {
-        Node* load = node_new();
+        Node* load = node_new(symbol_call->file_path, symbol_call->line_num);
         load->type = NODE_LOAD_ANOTHER_NODE;
         Node* load_element_ptr = do_load_struct_element_ptr(node_insert_load_before, symbol_call);
         load->node_src = load_element_ptr;
@@ -95,7 +95,7 @@ static Node* insert_load(Node* node_insert_load_before, Node* symbol_call) {
     } else {
         Node* sym_def;
         try(sym_tbl_lookup(&sym_def, symbol_call->name));
-        Node* load = node_new();
+        Node* load = node_new(sym_def->file_path, sym_def->line_num);
         load->type = NODE_LOAD_ANOTHER_NODE;
         load->name = symbol_call->name;
         load->node_src = get_storage_location(symbol_call);
@@ -127,7 +127,7 @@ static void insert_store(Node* node_insert_store_before, Node* symbol_call /* sr
     if (symbol_call->type == NODE_STRUCT_MEMBER_SYM) {
         todo();
     } else {
-        Node* store = node_new();
+        Node* store = node_new(symbol_call->file_path, symbol_call->line_num);
         store->type = NODE_STORE_ANOTHER_NODE;
         store->name = symbol_call->name;
         store->node_src = symbol_call->node_src;
@@ -269,7 +269,7 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
 
     if (is_for_struct_literal_member) {
         log_tree(LOG_DEBUG, assignment);
-        Node* store = node_new();
+        Node* store = node_new(lhs->file_path, lhs->line_num);
         store->name = lhs->name;
         node_printf(lhs);
         nodes_remove(rhs, true);
@@ -282,7 +282,7 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
         }
         nodes_remove(lhs, true);
         //nodes_remove(rhs, true);
-        Node* store = node_new();
+        Node* store = node_new(lhs->file_path, lhs->line_num);
         Node* store_element_ptr = do_load_struct_element_ptr(node_to_insert_before, lhs);
         if (rhs->type == NODE_LITERAL) {
             store->type = NODE_LLVM_STORE_LITERAL;
@@ -298,7 +298,7 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
         nodes_insert_after(assignment, lhs);
     } else {
         if (rhs->type == NODE_LITERAL) {
-            Node* store = node_new();
+            Node* store = node_new(rhs->file_path, rhs->line_num);
             store->type = NODE_LLVM_STORE_LITERAL;
             store->name = lhs->name;
             log_tree(LOG_DEBUG, assignment);
@@ -314,7 +314,7 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
             nodes_insert_before(node_to_insert_before, store);
         } else if (rhs->type == NODE_STRUCT_LITERAL) {
             log_tree(LOG_DEBUG, assignment);
-            Node* store = node_new();
+            Node* store = node_new(lhs->file_path, lhs->line_num);
             store->name = lhs->name;
             node_printf(lhs);
             nodes_remove(rhs, true);
@@ -322,7 +322,7 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
             nodes_append_child(store, rhs);
             nodes_insert_before(node_to_insert_before, store);
         } else {
-            Node* store = node_new();
+            Node* store = node_new(lhs->file_path, lhs->line_num);
             store->type = NODE_STORE_ANOTHER_NODE;
             store->name = lhs->name;
             store->node_dest = get_storage_location(lhs);
@@ -393,7 +393,7 @@ static void load_function_parameters(Node* fun_def) {
         if (is_corresponding_to_a_struct(param)) {
             continue;
         }
-        Node* fun_param_call = symbol_new(param->name);
+        Node* fun_param_call = symbol_new(param->name, param->file_path, param->line_num);
         fun_param_call->type = NODE_FUNCTION_PARAM_SYM;
         fun_param_call->node_src = param;
         fun_param_call->lang_type = param->lang_type;
@@ -417,6 +417,7 @@ static void load_function_arguments(Node* fun_call) {
 }
 
 bool add_load_and_store(Node* start_start_node) {
+    log(LOG_DEBUG, "entering add_load_and_store "NODE_FMT"\n", node_print(start_start_node));
     if (!start_start_node->left_child) {
         return false;
     }
@@ -426,6 +427,7 @@ bool add_load_and_store(Node* start_start_node) {
 
     Node* curr_node = nodes_get_local_rightmost(start_start_node->left_child);
     while (curr_node) {
+        log(LOG_DEBUG, NODE_FMT"\n", node_print(curr_node));
         bool go_to_prev = true;
         switch (curr_node->type) {
             case NODE_STRUCT_LITERAL:

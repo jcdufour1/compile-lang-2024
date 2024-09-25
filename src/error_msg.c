@@ -22,3 +22,13 @@ void msg_redefinition_of_symbol(const Node* new_sym_def) {
         STR_VIEW_FMT " originally defined here\n", str_view_print(original_def->name)
     );
 }
+
+void msg_undefined_symbol(const Node* sym_call) {
+    assert(sym_call->line_num > 0);
+    assert(sym_call->file_path && strlen(sym_call->file_path) > 0);
+
+    msg(
+        LOG_ERROR, sym_call->file_path, sym_call->line_num,
+        "symbol `"STR_VIEW_FMT"` is not defined\n", str_view_print(sym_call->name)
+    );
+}

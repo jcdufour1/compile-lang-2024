@@ -2,20 +2,33 @@
 #include "../node.h"
 #include "../nodes.h"
 #include "../symbol_table.h"
+#include "../parser_utils.h"
+#include "../error_msg.h"
 
 static void do_assignment(Node* assignment) {
     Node* lhs = nodes_get_child(assignment, 0);
     Node* rhs = nodes_get_child(assignment, 1);
-    if (rhs->type == NODE_STRUCT_LITERAL) {
-        if (lhs->type == NODE_VARIABLE_DEFINITION) {
+    switch (lhs->type) {
+        case NODE_VARIABLE_DEFINITION:
             rhs->lang_type = lhs->lang_type;
-        } else if (lhs->type == NODE_SYMBOL) {
+            break;
+        case NODE_SYMBOL: {
             Node* sym_def;
             try(sym_tbl_lookup(&sym_def, lhs->name));
             rhs->lang_type = sym_def->lang_type;
-        } else {
-            unreachable("");
+            break;
         }
+        case NODE_STRUCT_MEMBER_SYM: {
+            Node* struct_var_def;
+            if (!try_get_struct_definition(&struct_var_def, lhs)) {
+                msg_undefined_symbol(lhs);
+                todo();
+            }
+            //rhs->lang_type = struct->lang_type;
+            break;
+        }
+        default:
+            unreachable(NODE_FMT"\n", node_print(lhs));
     }
 }
 

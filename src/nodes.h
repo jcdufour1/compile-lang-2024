@@ -81,12 +81,14 @@ static inline void nodes_reset_links_of_self_only(Node* node, bool keep_children
     node->parent = NULL;
 }
 
-static inline Node* node_new(void) {
+static inline Node* node_new(const char* file_path, uint32_t line_num) {
     Node* new_node = arena_alloc(sizeof(*new_node));
     if (!root_of_tree) {
         // it is assumed that the first node created is the root
         root_of_tree = new_node;
     }
+    new_node->file_path = file_path;
+    new_node->line_num = line_num;
     return new_node;
 }
 
@@ -202,27 +204,6 @@ static inline Node* nodes_single_child(Node* node) {
 static inline const Node* nodes_single_child_const(const Node* node) {
     assert(nodes_count_children(node) == 1);
     return node->left_child;
-}
-
-// child of src will be kept
-// there should not be next, prev, or parent attached to src
-// note: src will be modified and should probably not be used again
-static inline void nodes_replace(Node* node_to_replace, Node* src) {
-    assert(!src->next);
-    assert(!src->prev);
-    assert(!src->parent);
-    assert(node_to_replace);
-
-    if (!node_to_replace->prev) {
-        nodes_establish_parent_left_child(node_to_replace->parent, src);
-    } else {
-        nodes_establish_siblings(node_to_replace->prev, src);
-        src->parent = node_to_replace->parent;
-    }
-
-    if (node_to_replace->next) {
-        nodes_establish_siblings(src, node_to_replace->next);
-    }
 }
 
 static inline void nodes_remove_siblings(Node* node) {
@@ -379,7 +360,7 @@ static inline void nodes_extend_children(Node* parent, Node* start_of_nodes_to_e
 }
 
 static inline Node* node_clone(const Node* node_to_clone) {
-    Node* new_node = node_new();
+    Node* new_node = node_new(node_to_clone->file_path, node_to_clone->line_num);
     *new_node = *node_to_clone;
     nodes_reset_links_of_self_only(new_node, false);
     return new_node;

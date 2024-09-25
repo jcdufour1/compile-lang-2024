@@ -3,8 +3,8 @@
 #include "../nodes.h"
 #include "../symbol_table.h"
 
-static Node* variable_i32_def_new(Str_view name) {
-    Node* var_def = node_new();
+static Node* variable_i32_def_new(Str_view name, const char* file_path, uint32_t line_num) {
+    Node* var_def = node_new(file_path, line_num);
     var_def->name = name;
     var_def->type = NODE_VARIABLE_DEFINITION;
     var_def->lang_type = str_view_from_cstr("i32");
@@ -22,7 +22,7 @@ static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* o
     nodes_remove_siblings_and_parent(rhs);
 
     if (lhs->type == NODE_OPERATOR) {
-        Node* operator_sym = node_new();
+        Node* operator_sym = node_new(lhs->file_path, lhs->line_num);
         operator_sym->type = NODE_OPERATOR_RETURN_VALUE_SYM;
         nodes_insert_before(node_to_insert_before, lhs);
         nodes_append_child(old_operation, operator_sym);
@@ -34,7 +34,7 @@ static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* o
     }
 
     if (rhs->type == NODE_OPERATOR) {
-        Node* operator_sym = node_new();
+        Node* operator_sym = node_new(rhs->file_path, rhs->line_num);
         operator_sym->type = NODE_OPERATOR_RETURN_VALUE_SYM;
         nodes_insert_before(node_to_insert_before, rhs);
         nodes_append_child(old_operation, operator_sym);
@@ -53,9 +53,13 @@ static void move_operator_back(Node* return_statement) {
     nodes_remove(operation, true);
 
     Str_view var_name = literal_name_new();
-    nodes_insert_before(return_statement, variable_i32_def_new(var_name)); // TODO: use correct type here
-    nodes_insert_before(return_statement, assignment_new(symbol_new(var_name), operation));
-    nodes_append_child(return_statement, symbol_new(var_name));
+    nodes_insert_before(
+        return_statement,
+        variable_i32_def_new(var_name, return_statement->file_path, return_statement->line_num)
+    ); // TODO: use correct type here
+    Node* new_assign = assignment_new(symbol_new(var_name, operation->file_path, operation->line_num), operation);
+    nodes_insert_before(return_statement, new_assign);
+    nodes_append_child(return_statement, symbol_new(var_name, new_assign->file_path, new_assign->line_num));
 }
 
 bool flatten_operations(Node* curr_node) {

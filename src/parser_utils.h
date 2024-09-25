@@ -27,9 +27,9 @@ Llvm_id get_matching_label_id(const Node* symbol_call);
 // lhs and rhs should not be used for other tasks after this
 Node* assignment_new(Node* lhs, Node* rhs);
 
-Node* literal_new(Str_view value);
+Node* literal_new(Str_view value, const char* file_path, uint32_t line_num);
 
-Node* symbol_new(Str_view symbol_name);
+Node* symbol_new(Str_view symbol_name, const char* file_path, uint32_t line_num);
 
 Llvm_id get_matching_fun_param_load_id(const Node* src);
 
@@ -86,7 +86,15 @@ static inline const Node* get_member_def(const Node* struct_def, const Node* mem
     unreachable("member not found");
 }
 
-Node* get_struct_definition(Node* node);
+bool try_get_struct_definition(Node** struct_def, Node* node);
+
+static inline Node* get_struct_definition(Node* node) {
+    Node* struct_def;
+    if (!try_get_struct_definition(&struct_def, node)) {
+        unreachable("could not find struct definition for "NODE_FMT"\n", node_print(node));
+    }
+    return struct_def;
+}
 
 static inline const Node* get_struct_definition_const(const Node* node) {
     return get_struct_definition((Node*)node);
