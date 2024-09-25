@@ -300,6 +300,13 @@ bool is_corresponding_to_a_struct(const Node* node) {
 
 Node* get_struct_definition(Node* node) {
     switch (node->type) {
+        case NODE_STRUCT_LITERAL: {
+            Node* struct_def;
+            if (!sym_tbl_lookup(&struct_def, node->lang_type)) {
+                unreachable("");
+            }
+            return struct_def;
+        }
         case NODE_STORE_VARIABLE:
             // fallthrough
         case NODE_SYMBOL: {

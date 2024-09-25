@@ -201,16 +201,8 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
     }
 }
 
-String node_print_internal(const Node* node) {
-    static String buf = {0};
-    string_set_to_zero_len(&buf);
-
-    if (!node) {
-        string_extend_cstr(&buf, "<null>");
-        return buf;
-    }
-
-    string_extend_strv(&buf, node_type_get_strv(node->type));
+static void extend_node_text(String* string, const Node* node, bool do_recursion) {
+    string_extend_strv(string, node_type_get_strv(node->type));
 
     switch (node->type) {
         case NODE_ALLOCA:
@@ -226,12 +218,12 @@ String node_print_internal(const Node* node) {
         case NODE_COND_GOTO:
             // fallthrough
         case NODE_LABEL:
-            string_extend_strv_in_par(&buf, node->name);
+            string_extend_strv_in_par(string, node->name);
             break;
         case NODE_LITERAL:
-            string_extend_strv_in_gtlt(&buf, token_type_to_str_view(node->token_type));
-            string_extend_strv(&buf, node->name);
-            string_extend_strv_in_par(&buf, node->str_data);
+            string_extend_strv_in_gtlt(string, token_type_to_str_view(node->token_type));
+            string_extend_strv(string, node->name);
+            string_extend_strv_in_par(string, node->str_data);
             break;
         case NODE_SYMBOL:
             // fallthrough
@@ -248,20 +240,20 @@ String node_print_internal(const Node* node) {
         case NODE_STRUCT_DEFINITION:
             // fallthrough
         case NODE_FUNCTION_CALL:
-            string_extend_strv_in_par(&buf, node->name);
-            string_extend_size_t(&buf, node->llvm_id);
+            string_extend_strv_in_par(string, node->name);
+            string_extend_size_t(string, node->llvm_id);
             break;
         case NODE_LANG_TYPE:
-            string_extend_strv_in_gtlt(&buf, node->lang_type);
+            string_extend_strv_in_gtlt(string, node->lang_type);
             break;
         case NODE_OPERATOR:
-            string_extend_strv(&buf, token_type_to_str_view(node->token_type));
+            string_extend_strv(string, token_type_to_str_view(node->token_type));
             break;
         case NODE_VARIABLE_DEFINITION:
             // fallthrough
         case NODE_STRUCT_LITERAL:
-            string_extend_strv_in_gtlt(&buf, node->lang_type);
-            string_extend_strv(&buf, node->name);
+            string_extend_strv_in_gtlt(string, node->lang_type);
+            string_extend_strv(string, node->name);
             break;
         case NODE_FUNCTION_PARAMETERS:
             // fallthrough
@@ -301,22 +293,36 @@ String node_print_internal(const Node* node) {
             // fallthrough
         case NODE_LLVM_STORE_LITERAL:
             // fallthrough
-            string_extend_strv_in_gtlt(&buf, node->lang_type);
-            string_extend_strv_in_par(&buf, node->name);
-            string_extend_cstr(&buf, "[node_to_load:");
-            if (node->node_src) {
-                string_extend_size_t(&buf, node->node_src->llvm_id);
+            string_extend_strv_in_gtlt(string, node->lang_type);
+            string_extend_strv_in_par(string, node->name);
+                string_extend_cstr(string, "[");
+            if (node->node_src && do_recursion) {
+                string_extend_cstr(string, "node_src:");
+                extend_node_text(string, node->node_src, false);
             }
-            string_extend_cstr(&buf, " ");
-            if (node->node_dest) {
-                string_extend_size_t(&buf, node->node_dest->llvm_id);
+            string_extend_cstr(string, " ");
+            if (node->node_dest && do_recursion) {
+                string_extend_cstr(string, "node_dest:");
+                extend_node_text(string, node->node_dest, false);
             }
-            string_extend_cstr(&buf, "]");
+            string_extend_cstr(string, "]");
             break;
         default:
             log(LOG_FETAL, "type: "STR_VIEW_FMT"\n", str_view_print(node_type_get_strv(node->type)));
             unreachable("");
     }
+}
+
+String node_print_internal(const Node* node) {
+    static String buf = {0};
+    string_set_to_zero_len(&buf);
+
+    if (!node) {
+        string_extend_cstr(&buf, "<null>");
+        return buf;
+    }
+
+    extend_node_text(&buf, node, true);
 
     return buf;
 }

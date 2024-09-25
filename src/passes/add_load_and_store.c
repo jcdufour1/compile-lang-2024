@@ -5,17 +5,7 @@
 
 #include "passes.h"
 
-static void insert_store_assignment(Node* node_to_insert_before, Node* assignment);
-
-static Node* store_new(Node* item_to_store) {
-    (void) item_to_store;
-    todo();
-    Node* store = node_new();
-    store->storage_location = get_storage_location(item_to_store);
-    store->type = NODE_STORE_VARIABLE;
-    //store->name = var_def->name;
-    return store;
-}
+static void insert_store_assignment(Node* node_to_insert_before, Node* assignment, bool is_for_struct_literal_member);
 
 static void do_struct_literal(Node* struct_literal) {
     assert(struct_literal->type == NODE_STRUCT_LITERAL);
@@ -26,7 +16,7 @@ static void do_struct_literal(Node* struct_literal) {
         switch (member->type) {
             case NODE_ASSIGNMENT: {
                 Node* assignment = member;
-                insert_store_assignment(assignment, assignment);
+                insert_store_assignment(assignment, assignment, true);
                 member = assignment->prev;
                 nodes_remove(assignment, true);
                 go_to_next = false;
@@ -195,7 +185,7 @@ static void load_operator_operand(Node* node_insert_before, Node* operand) {
     }
 }
 
-static void load_operator_operands(Node* node_insert_before, Node* operator) {
+static Node* load_operator_operands(Node* node_insert_before, Node* operator) {
     node_printf(operator);
     assert(operator->type == NODE_OPERATOR);
     assert(nodes_count_children(operator) == 2);
@@ -205,6 +195,9 @@ static void load_operator_operands(Node* node_insert_before, Node* operator) {
 
     load_operator_operand(node_insert_before, lhs);
     load_operator_operand(node_insert_before, rhs);
+
+    operator->lang_type = str_view_from_cstr("i32");
+    return operator;
 }
 
 static void add_load_foreach_arg(Node* node_insert_before, Node* function_call) {
@@ -214,7 +207,7 @@ static void add_load_foreach_arg(Node* node_insert_before, Node* function_call) 
     }
 }
 
-static void insert_store_assignment(Node* node_to_insert_before, Node* assignment) {
+static void insert_store_assignment(Node* node_to_insert_before, Node* assignment, bool is_for_struct_literal_member) {
     assert(assignment->type == NODE_ASSIGNMENT);
 
     Node* lhs = nodes_get_child(assignment, 0);
@@ -241,42 +234,41 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
             break;
         case NODE_STRUCT_LITERAL:
             do_struct_literal(rhs);
-            insert_load(node_to_insert_before, rhs);
+            //rhs_load = insert_load(node_to_insert_before, rhs);
+            //assert(rhs_load->lang_type.count > 0);
             break;
         case NODE_SYMBOL:
-            rhs_load = insert_load(assignment, rhs);
+            rhs_load = insert_load(node_to_insert_before, rhs);
+            assert(rhs_load);
+            assert(rhs_load->lang_type.count > 0);
             break;
         case NODE_LITERAL:
             break;
         case NODE_OPERATOR:
-            load_operator_operands(assignment, rhs);
+            rhs_load = load_operator_operands(node_to_insert_before, rhs);
+            nodes_remove(rhs_load, true);
+            assert(rhs_load);
+            assert(rhs_load->lang_type.count > 0);
+            nodes_insert_before(node_to_insert_before, rhs_load);
             break;
         case NODE_FUNCTION_CALL:
+            rhs_load = rhs;
+            nodes_remove(rhs_load, true);
+            nodes_insert_before(node_to_insert_before, rhs_load);
+            Node* fun_def;
+            try(sym_tbl_lookup(&fun_def, rhs->name));
+            Node* function_rtn_type = nodes_single_child(nodes_get_child_of_type(fun_def, NODE_FUNCTION_RETURN_TYPES));
+            rhs_load->lang_type = function_rtn_type->lang_type;
+            assert(rhs_load);
+            assert(rhs_load->lang_type.count > 0);
             break;
         default:
             node_printf(rhs)
             todo();
     }
 
-    if (lhs->type == NODE_STRUCT_MEMBER_SYM) {
-        nodes_remove(lhs, true);
-        nodes_remove(rhs, true);
-        Node* store = node_new();
-        Node* store_element_ptr = do_load_struct_element_ptr(node_to_insert_before, lhs);
-        if (rhs->type == NODE_LITERAL) {
-            store->type = NODE_LLVM_STORE_LITERAL;
-        } else {
-            store->type = NODE_STORE_ANOTHER_NODE;
-            store->node_src = rhs_load;
-            assert(store->node_src);
-        }
-        store->node_dest = store_element_ptr;
-        store->lang_type = store_element_ptr->lang_type;
-        nodes_append_child(store, rhs);
-        nodes_insert_after(assignment, store);
-        nodes_insert_after(assignment, lhs);
-        //lhs->node_to_load = store;
-    } else {
+    if (is_for_struct_literal_member) {
+        log_tree(LOG_DEBUG, assignment);
         Node* store = node_new();
         store->name = lhs->name;
         node_printf(lhs);
@@ -284,6 +276,75 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
         store->type = NODE_STORE_VARIABLE;
         nodes_append_child(store, rhs);
         nodes_insert_before(node_to_insert_before, store);
+    } else if (lhs->type == NODE_STRUCT_MEMBER_SYM) {
+        if (rhs->type == NODE_STRUCT_LITERAL) {
+            todo();
+        }
+        nodes_remove(lhs, true);
+        //nodes_remove(rhs, true);
+        Node* store = node_new();
+        Node* store_element_ptr = do_load_struct_element_ptr(node_to_insert_before, lhs);
+        if (rhs->type == NODE_LITERAL) {
+            store->type = NODE_LLVM_STORE_LITERAL;
+            nodes_append_child(store, node_clone(rhs));
+        } else {
+            store->type = NODE_STORE_ANOTHER_NODE;
+            store->node_src = rhs_load;
+            assert(store->node_src);
+        }
+        store->node_dest = store_element_ptr;
+        store->lang_type = store_element_ptr->lang_type;
+        nodes_insert_after(assignment, store);
+        nodes_insert_after(assignment, lhs);
+    } else {
+        if (rhs->type == NODE_LITERAL) {
+            Node* store = node_new();
+            store->type = NODE_LLVM_STORE_LITERAL;
+            store->name = lhs->name;
+            log_tree(LOG_DEBUG, assignment);
+            store->node_dest = get_storage_location(lhs);
+            store->lang_type = rhs->lang_type;
+            assert(store->lang_type.count > 0);
+            log_tree(LOG_DEBUG, store);
+            log_tree(LOG_DEBUG, assignment);
+            //assert(store->lang_type.count > 0); // TODO: actually check for this
+            node_printf(lhs);
+            nodes_remove(rhs, true);
+            nodes_append_child(store, rhs);
+            nodes_insert_before(node_to_insert_before, store);
+        } else if (rhs->type == NODE_STRUCT_LITERAL) {
+            log_tree(LOG_DEBUG, assignment);
+            Node* store = node_new();
+            store->name = lhs->name;
+            node_printf(lhs);
+            nodes_remove(rhs, true);
+            store->type = NODE_STORE_VARIABLE;
+            nodes_append_child(store, rhs);
+            nodes_insert_before(node_to_insert_before, store);
+        } else {
+            Node* store = node_new();
+            store->type = NODE_STORE_ANOTHER_NODE;
+            store->name = lhs->name;
+            store->node_dest = get_storage_location(lhs);
+            store->node_src = rhs_load;
+            log_tree(LOG_DEBUG, assignment);
+            log_tree(LOG_DEBUG, lhs);
+            log_tree(LOG_DEBUG, rhs);
+            if (rhs->type == NODE_STRUCT_LITERAL) {
+                unreachable("");
+            }
+            store->lang_type = rhs_load->lang_type;
+            assert(store->lang_type.count > 0);
+            log_tree(LOG_DEBUG, assignment);
+            log_tree(LOG_DEBUG, rhs_load);
+            log_tree(LOG_DEBUG, get_storage_location(lhs));
+            log_tree(LOG_DEBUG, store->node_dest);
+            log_tree(LOG_DEBUG, store);
+            //assert(store->lang_type.count > 0); // TODO: actually check for this
+            node_printf(lhs);
+            //nodes_remove(rhs, true);
+            nodes_insert_before(node_to_insert_before, store);
+        }
     }
 }
 
@@ -310,24 +371,8 @@ static void add_load_cond_goto(Node* cond_goto) {
     Node* operator = nodes_get_child(cond_goto, 0);
     Node* lhs = nodes_get_child(operator, 0);
     Node* rhs = nodes_get_child(operator, 1);
-
     insert_load(cond_goto, lhs);
     insert_load(cond_goto, rhs);
-}
-
-static void add_load_operator(Node* operator) {
-    Node* lhs = nodes_get_child(operator, 0);
-    Node* rhs = nodes_get_child(operator, 1);
-
-    if (lhs->type != NODE_LITERAL) {
-        //insert_load(operator, lhs);
-    }
-
-    if (rhs->type != NODE_LITERAL) {
-        //insert_load(operator, rhs);
-    }
-
-    todo();
 }
 
 static Node* get_node_after_last_alloca(Node* fun_block) {
@@ -419,7 +464,7 @@ bool add_load_and_store(Node* start_start_node) {
                 break;
             case NODE_ASSIGNMENT: {
                 Node* assignment = curr_node;
-                insert_store_assignment(assignment, assignment);
+                insert_store_assignment(assignment, assignment, false);
                 curr_node = assignment->prev;
                 nodes_remove(assignment, true);
                 go_to_prev = false;
@@ -466,6 +511,8 @@ bool add_load_and_store(Node* start_start_node) {
             case NODE_OPERATOR_RETURN_VALUE_SYM:
                 break;
             case NODE_STRUCT_DEFINITION:
+                break;
+            case NODE_LLVM_STORE_LITERAL:
                 break;
             default:
                 unreachable(NODE_FMT"\n", node_print(curr_node));
