@@ -75,7 +75,14 @@ static inline const char* get_log_level_str(int log_level) {
 
 // print messages that are intended for the user (eg. syntax errors)
 #define msg(log_level, file, line, ...) \
-    log_file_new(log_level, file, line, __VA_ARGS__);
+    do { \
+        if ((log_level) >= LOG_ERROR) { \
+            error_count++; \
+        } else if ((log_level) == LOG_WARNING) { \
+            warning_count++; \
+        } \
+        log_file_new(log_level, file, line, __VA_ARGS__); \
+    } while (0)
 
 #define todo() \
     do { \
@@ -117,5 +124,8 @@ static inline const char* bool_print(bool condition) {
     } while(0);
 
 extern uint8_t zero_block[100000000];
+
+extern size_t error_count;
+extern size_t warning_count;
 
 #endif // UTIL_H

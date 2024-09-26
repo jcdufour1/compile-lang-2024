@@ -9,10 +9,12 @@ static void do_symbol(const Node* symbol) {
     assert(symbol->type == NODE_SYMBOL);
 
     Node* sym_def;
-    try(sym_tbl_lookup(&sym_def, symbol->name));
+    if (!sym_tbl_lookup(&sym_def, symbol->name)) {
+        msg_undefined_symbol(symbol);
+    }
 }
 
-void try_get_member_def_from_struct_member_symbol(Node** member_def, const Node* struct_memb_sym) {
+static void do_struct_member_symbol(const Node* struct_memb_sym) {
     Node* curr_memb_def = NULL;
     Node* struct_def;
     Node* struct_var;
@@ -21,7 +23,7 @@ void try_get_member_def_from_struct_member_symbol(Node** member_def, const Node*
         return;
     }
     if (!sym_tbl_lookup(&struct_def, struct_var->lang_type)) {
-        todo();
+        todo(); // this should possibly never happen
     }
     bool is_struct = true;
     nodes_foreach_child(memb_sym, struct_memb_sym) {
@@ -37,32 +39,84 @@ void try_get_member_def_from_struct_member_symbol(Node** member_def, const Node*
     }
 }
 
-static void do_struct_member_symbol(const Node* memb_sym) {
-    Node* memb_def;
-    log_tree(LOG_DEBUG, memb_sym);
-    try_get_member_def_from_struct_member_symbol(&memb_def, memb_sym);
+static bool symbol_assignment_types_are_compatible(const Node* lhs,  const Node* rhs) {
+    assert(lhs->type == NODE_SYMBOL);
+
+    switch (rhs->type) {
+        case NODE_LITERAL: {
+            if (is_corresponding_to_a_struct(lhs)) {
+                todo(); // struct assigned literal of invalid type
+            }
+            Node* lhs_def;
+            try(sym_tbl_lookup(&lhs_def, rhs->name));
+            Str_view lhs_lang_type = lhs_def->lang_type;
+            if (str_view_cstr_is_equal(lhs_lang_type, "i32")) {
+                unreachable("rhs: "NODE_FMT"    rhs: "NODE_FMT"\n", node_print(lhs), node_print(rhs));
+            } else {
+                unreachable("rhs: "NODE_FMT"    rhs: "NODE_FMT"\n", node_print(lhs), node_print(rhs));
+            }
+        }
+        case NODE_STRUCT_LITERAL: {
+            if (!is_corresponding_to_a_struct(lhs)) {
+                todo(); // non_struct assigned struct literal
+            }
+            Node* var_def;
+            try(sym_tbl_lookup(&var_def, lhs->name));
+            Node* struct_def;
+            try(sym_tbl_lookup(&struct_def, var_def->lang_type));
+            size_t idx = 0;
+            nodes_foreach_child(memb_sym_def, struct_def) {
+                const Node* assign_memb_sym = nodes_get_child_const(rhs, idx);
+                const Node* memb_sym = nodes_get_child_const(assign_memb_sym, 0);
+                const Node* assign_memb_sym_rhs = nodes_get_child_const(assign_memb_sym, 1);
+                if (assign_memb_sym_rhs->type != NODE_LITERAL) {
+                    todo();
+                }
+                if (!str_view_is_equal(memb_sym_def->name, memb_sym->name)) {
+                    msg_invalid_struct_member_assignment_in_literal(
+                        var_def,
+                        memb_sym_def,
+                        memb_sym
+                    );
+                }
+
+                idx++;
+            }
+        }
+        default:
+            unreachable("rhs: "NODE_FMT"\n", node_print(rhs));
+    }
 }
 
 static void do_assignment(Node* assignment) {
     Node* lhs = nodes_get_child(assignment, 0);
     Node* rhs = nodes_get_child(assignment, 1);
+
+    Str_view lhs_lang_type;
     switch (lhs->type) {
         case NODE_VARIABLE_DEFINITION:
             rhs->lang_type = lhs->lang_type;
             break;
         case NODE_SYMBOL: {
-            log_tree(LOG_DEBUG, assignment);
             Node* sym_def;
-            try(sym_tbl_lookup(&sym_def, lhs->name));
-            rhs->lang_type = sym_def->lang_type;
+            if (!sym_tbl_lookup(&sym_def, lhs->name)) {
+                msg_undefined_symbol(lhs);
+                return;
+            }
+            if (!symbol_assignment_types_are_compatible(lhs, rhs)) {
+                todo();
+            }
+            lhs_lang_type = sym_def->lang_type;
+            rhs->lang_type = lhs_lang_type;
             break;
         }
         case NODE_STRUCT_MEMBER_SYM: {
             Node* struct_var_def;
             if (!try_get_struct_definition(&struct_var_def, lhs)) {
                 msg_undefined_symbol(lhs);
-                todo();
+                return;
             }
+            lhs_lang_type = struct_var_def->lang_type;
             //rhs->lang_type = struct->lang_type;
             break;
         }
@@ -73,7 +127,10 @@ static void do_assignment(Node* assignment) {
 
 static void do_function_call(Node* fun_call) {
     Node* fun_def;
-    try(sym_tbl_lookup(&fun_def, fun_call->name));
+    if (!sym_tbl_lookup(&fun_def, fun_call->name)) {
+        msg_undefined_function(fun_call);
+        return;
+    }
     Node* params = nodes_get_child_of_type(fun_def, NODE_FUNCTION_PARAMETERS);
     size_t params_idx = 0;
 

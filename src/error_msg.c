@@ -33,6 +33,13 @@ void msg_undefined_symbol(const Node* sym_call) {
     );
 }
 
+void msg_undefined_function(const Node* fun_call) {
+    msg(
+        LOG_ERROR, fun_call->file_path, fun_call->line_num,
+        "function `"STR_VIEW_FMT"` is not defined\n", str_view_print(fun_call->name)
+    );
+}
+
 void msg_invalid_struct_member(const Node* node) {
     switch (node->type) {
         case NODE_STRUCT_MEMBER_SYM:
@@ -57,4 +64,27 @@ void msg_invalid_struct_member(const Node* node) {
         default:
             unreachable(NODE_FMT"\n", node_print(node));
     }
+}
+
+
+void msg_invalid_struct_member_assignment_in_literal(
+    const Node* struct_var_def,
+    const Node* memb_sym_def,
+    const Node* memb_sym
+) {
+    msg(
+        LOG_ERROR, memb_sym->file_path, memb_sym->line_num, 
+        "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
+        str_view_print(memb_sym_def->name), str_view_print(memb_sym->name)
+    );
+    msg(
+        LOG_NOTE, struct_var_def->file_path, struct_var_def->line_num, 
+        "variable `"STR_VIEW_FMT"` is defined as struct `"STR_VIEW_FMT"`\n",
+        str_view_print(struct_var_def->name), str_view_print(struct_var_def->lang_type)
+    );
+    msg(
+        LOG_NOTE, memb_sym_def->file_path, memb_sym_def->line_num, 
+        "member symbol `"STR_VIEW_FMT"` of struct `"STR_VIEW_FMT"` defined here\n", 
+        str_view_print(memb_sym_def->name), str_view_print(struct_var_def->lang_type)
+    );
 }

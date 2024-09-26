@@ -724,7 +724,7 @@ static Node* extract_expression(Tk_view* tokens) {
 Node* parse(const Tokens tokens) {
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
     Node* root = extract_block(&token_view);
-    log(LOG_VERBOSE, "completed parse tree:\n");
-    log_tree(LOG_VERBOSE, root);
+    //log(LOG_VERBOSE, "completed parse tree:\n");
+    //log_tree(LOG_VERBOSE, root);
     return root;
 }

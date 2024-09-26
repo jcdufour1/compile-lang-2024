@@ -202,7 +202,6 @@ static Node* load_operator_operands(Node* node_insert_before, Node* operator) {
 
 static void add_load_foreach_arg(Node* node_insert_before, Node* function_call) {
     nodes_foreach_child(argument, function_call) {
-        node_printf(argument);
         insert_load(node_insert_before, argument);
     }
 }
@@ -417,7 +416,6 @@ static void load_function_arguments(Node* fun_call) {
 }
 
 bool add_load_and_store(Node* start_start_node) {
-    log(LOG_DEBUG, "entering add_load_and_store "NODE_FMT"\n", node_print(start_start_node));
     if (!start_start_node->left_child) {
         return false;
     }
@@ -439,7 +437,6 @@ bool add_load_and_store(Node* start_start_node) {
                 load_function_arguments(curr_node);
                 break;
             case NODE_FUNCTION_DEFINITION:
-                node_printf(curr_node);
                 load_function_parameters(curr_node);
                 break;
             case NODE_FUNCTION_PARAMETERS:
