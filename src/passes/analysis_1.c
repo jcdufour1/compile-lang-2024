@@ -39,19 +39,33 @@ static void do_struct_member_symbol(const Node* struct_memb_sym) {
     }
 }
 
-static bool symbol_assignment_types_are_compatible(const Node* lhs,  const Node* rhs) {
+static bool symbol_assignment_types_are_compatible(const Node* lhs, const Node* rhs) {
     assert(lhs->type == NODE_SYMBOL);
+    bool are_compatible = true;
 
     switch (rhs->type) {
         case NODE_LITERAL: {
             if (is_corresponding_to_a_struct(lhs)) {
-                todo(); // struct assigned literal of invalid type
+                // struct assigned literal of invalid type
+                meg_struct_assigned_to_invalid_literal(lhs, rhs);
+                are_compatible = false;
+                break;
             }
             Node* lhs_def;
             try(sym_tbl_lookup(&lhs_def, rhs->name));
             Str_view lhs_lang_type = lhs_def->lang_type;
             if (str_view_cstr_is_equal(lhs_lang_type, "i32")) {
-                unreachable("rhs: "NODE_FMT"    rhs: "NODE_FMT"\n", node_print(lhs), node_print(rhs));
+                if (!str_view_cstr_is_equal(rhs->lang_type, "num")) {
+                    msg_invalid_assignment_to_literal(lhs, rhs);
+                    are_compatible = false;
+                    break;
+                }
+            } else if (str_view_cstr_is_equal(lhs_lang_type, "ptr")) {
+                if (!str_view_cstr_is_equal(rhs->lang_type, "str")) {
+                    msg_invalid_assignment_to_literal(lhs, rhs);
+                    are_compatible = false;
+                    break;
+                }
             } else {
                 unreachable("rhs: "NODE_FMT"    rhs: "NODE_FMT"\n", node_print(lhs), node_print(rhs));
             }
@@ -60,10 +74,10 @@ static bool symbol_assignment_types_are_compatible(const Node* lhs,  const Node*
             if (!is_corresponding_to_a_struct(lhs)) {
                 todo(); // non_struct assigned struct literal
             }
-            Node* var_def;
-            try(sym_tbl_lookup(&var_def, lhs->name));
+            Node* lhs_var_def;
+            try(sym_tbl_lookup(&lhs_var_def, lhs->name));
             Node* struct_def;
-            try(sym_tbl_lookup(&struct_def, var_def->lang_type));
+            try(sym_tbl_lookup(&struct_def, lhs_var_def->lang_type));
             size_t idx = 0;
             nodes_foreach_child(memb_sym_def, struct_def) {
                 const Node* assign_memb_sym = nodes_get_child_const(rhs, idx);
@@ -74,18 +88,32 @@ static bool symbol_assignment_types_are_compatible(const Node* lhs,  const Node*
                 }
                 if (!str_view_is_equal(memb_sym_def->name, memb_sym->name)) {
                     msg_invalid_struct_member_assignment_in_literal(
-                        var_def,
+                        lhs_var_def,
                         memb_sym_def,
                         memb_sym
                     );
+                    are_compatible = false;
                 }
 
                 idx++;
             }
+            break;
+        }
+        case NODE_SYMBOL: {
+            Node* lhs_var_def;
+            try(sym_tbl_lookup(&lhs_var_def, lhs->name));
+            Node* rhs_var_def;
+            try(sym_tbl_lookup(&rhs_var_def, rhs->name));
+            if (!str_view_is_equal(lhs_var_def->lang_type, rhs_var_def->lang_type)) {
+                todo();
+            }
+            break;
         }
         default:
             unreachable("rhs: "NODE_FMT"\n", node_print(rhs));
     }
+
+    return are_compatible;
 }
 
 static void do_assignment(Node* assignment) {
@@ -104,7 +132,7 @@ static void do_assignment(Node* assignment) {
                 return;
             }
             if (!symbol_assignment_types_are_compatible(lhs, rhs)) {
-                todo();
+                return;
             }
             lhs_lang_type = sym_def->lang_type;
             rhs->lang_type = lhs_lang_type;

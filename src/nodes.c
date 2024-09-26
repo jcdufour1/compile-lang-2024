@@ -313,17 +313,18 @@ static void extend_node_text(String* string, const Node* node, bool do_recursion
     }
 }
 
-String node_print_internal(const Node* node) {
-    static String buf = {0};
-    string_set_to_zero_len(&buf);
+Str_view node_print_internal(const Node* node) {
+    String buf = {0}; // todo: put these strings in an arena to free, etc
 
     if (!node) {
         string_extend_cstr(&buf, "<null>");
-        return buf;
+        Str_view str_view = {.str = buf.buf, .count = buf.info.count};
+        return str_view;
     }
 
     extend_node_text(&buf, node, true);
 
-    return buf;
+    Str_view str_view = {.str = buf.buf, .count = buf.info.count};
+    return str_view;
 }
 

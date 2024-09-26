@@ -3,6 +3,7 @@
 #include "node.h"
 #include "nodes.h"
 #include "symbol_table.h"
+#include "parser_utils.h"
 
 void msg_redefinition_of_symbol(const Node* new_sym_def) {
     assert(new_sym_def->line_num > 0);
@@ -86,5 +87,38 @@ void msg_invalid_struct_member_assignment_in_literal(
         LOG_NOTE, memb_sym_def->file_path, memb_sym_def->line_num, 
         "member symbol `"STR_VIEW_FMT"` of struct `"STR_VIEW_FMT"` defined here\n", 
         str_view_print(memb_sym_def->name), str_view_print(struct_var_def->lang_type)
+    );
+}
+
+void meg_struct_assigned_to_invalid_literal(const Node* lhs, const Node* rhs) {
+    assert(lhs->type == NODE_SYMBOL && is_struct_symbol(lhs));
+    assert(rhs->type == NODE_LITERAL);
+
+    Node* struct_var_def;
+    try(sym_tbl_lookup(&struct_var_def, lhs->name));
+    msg(
+        LOG_ERROR, rhs->file_path, rhs->line_num, 
+        "invalid literal type is assigned to `"STR_VIEW_FMT"`, "
+        "but `"STR_VIEW_FMT"` is of type `"STR_VIEW_FMT"`\n",
+        str_view_print(lhs->name), 
+        str_view_print(lhs->name), 
+        str_view_print(struct_var_def->lang_type)
+    );
+    msg(
+        LOG_NOTE, struct_var_def->file_path, struct_var_def->line_num, 
+        "variable `"STR_VIEW_FMT"` is defined as struct `"STR_VIEW_FMT"`\n",
+        str_view_print(struct_var_def->name), str_view_print(struct_var_def->lang_type)
+    );
+}
+
+void msg_invalid_assignment_to_literal(const Node* lhs, const Node* rhs) {
+    assert(lhs->type == NODE_SYMBOL && rhs->type == NODE_LITERAL);
+
+    Node* var_def;
+    try(sym_tbl_lookup(&var_def, lhs->name));
+    msg(
+        LOG_ERROR, rhs->file_path, rhs->line_num, 
+        "invalid literal type is assigned to `"STR_VIEW_FMT"`\n",
+        str_view_print(lhs->name)
     );
 }

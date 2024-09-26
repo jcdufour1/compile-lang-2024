@@ -132,7 +132,6 @@ static void insert_store(Node* node_insert_store_before, Node* symbol_call /* sr
         store->name = symbol_call->name;
         store->node_src = symbol_call->node_src;
         store->lang_type = symbol_call->lang_type;
-        log_tree(LOG_DEBUG, store);
         assert(store->lang_type.count > 0);
         store->node_dest = get_storage_location(symbol_call);
         assert(store->node_src);
@@ -267,7 +266,6 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
     }
 
     if (is_for_struct_literal_member) {
-        log_tree(LOG_DEBUG, assignment);
         Node* store = node_new(lhs->file_path, lhs->line_num);
         store->name = lhs->name;
         node_printf(lhs);
@@ -300,19 +298,15 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
             Node* store = node_new(rhs->file_path, rhs->line_num);
             store->type = NODE_LLVM_STORE_LITERAL;
             store->name = lhs->name;
-            log_tree(LOG_DEBUG, assignment);
             store->node_dest = get_storage_location(lhs);
             store->lang_type = rhs->lang_type;
             assert(store->lang_type.count > 0);
-            log_tree(LOG_DEBUG, store);
-            log_tree(LOG_DEBUG, assignment);
             //assert(store->lang_type.count > 0); // TODO: actually check for this
             node_printf(lhs);
             nodes_remove(rhs, true);
             nodes_append_child(store, rhs);
             nodes_insert_before(node_to_insert_before, store);
         } else if (rhs->type == NODE_STRUCT_LITERAL) {
-            log_tree(LOG_DEBUG, assignment);
             Node* store = node_new(lhs->file_path, lhs->line_num);
             store->name = lhs->name;
             node_printf(lhs);
@@ -326,19 +320,11 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
             store->name = lhs->name;
             store->node_dest = get_storage_location(lhs);
             store->node_src = rhs_load;
-            log_tree(LOG_DEBUG, assignment);
-            log_tree(LOG_DEBUG, lhs);
-            log_tree(LOG_DEBUG, rhs);
             if (rhs->type == NODE_STRUCT_LITERAL) {
                 unreachable("");
             }
             store->lang_type = rhs_load->lang_type;
             assert(store->lang_type.count > 0);
-            log_tree(LOG_DEBUG, assignment);
-            log_tree(LOG_DEBUG, rhs_load);
-            log_tree(LOG_DEBUG, get_storage_location(lhs));
-            log_tree(LOG_DEBUG, store->node_dest);
-            log_tree(LOG_DEBUG, store);
             //assert(store->lang_type.count > 0); // TODO: actually check for this
             node_printf(lhs);
             //nodes_remove(rhs, true);
@@ -425,7 +411,6 @@ bool add_load_and_store(Node* start_start_node) {
 
     Node* curr_node = nodes_get_local_rightmost(start_start_node->left_child);
     while (curr_node) {
-        log(LOG_DEBUG, NODE_FMT"\n", node_print(curr_node));
         bool go_to_prev = true;
         switch (curr_node->type) {
             case NODE_STRUCT_LITERAL:
