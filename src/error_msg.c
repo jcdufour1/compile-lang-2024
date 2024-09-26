@@ -32,3 +32,29 @@ void msg_undefined_symbol(const Node* sym_call) {
         "symbol `"STR_VIEW_FMT"` is not defined\n", str_view_print(sym_call->name)
     );
 }
+
+void msg_invalid_struct_member(const Node* node) {
+    switch (node->type) {
+        case NODE_STRUCT_MEMBER_SYM:
+            todo();
+        case NODE_SYMBOL: {
+            Node* struct_memb_sym = node->parent;
+            assert(struct_memb_sym->type == NODE_STRUCT_MEMBER_SYM);
+            msg(
+                LOG_ERROR, node->file_path, node->line_num, 
+                "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 
+                str_view_print(node->name), str_view_print(struct_memb_sym->name)
+            );
+            Node* struct_memb_sym_def;
+            try(sym_tbl_lookup(&struct_memb_sym_def, struct_memb_sym->name));
+            msg(
+                LOG_NOTE, struct_memb_sym_def->file_path, struct_memb_sym_def->line_num, 
+                "`"STR_VIEW_FMT"` defined here\n", str_view_print(struct_memb_sym_def->name)
+            );
+
+            todo();
+        }
+        default:
+            unreachable(NODE_FMT"\n", node_print(node));
+    }
+}

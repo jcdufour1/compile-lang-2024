@@ -74,16 +74,26 @@ static inline size_t get_member_index(const Node* struct_def, const Node* member
     unreachable("member not found");
 }
 
-static inline const Node* get_member_def(const Node* struct_def, const Node* member_symbol) {
+static inline bool try_get_member_def(Node** member_def, const Node* struct_def, const Node* member_symbol) {
     assert(struct_def->type == NODE_STRUCT_DEFINITION);
     assert(member_symbol->type == NODE_SYMBOL);
 
     nodes_foreach_child(curr_member, struct_def) {
         if (str_view_is_equal(curr_member->name, member_symbol->name)) {
-            return curr_member;
+            assert(curr_member->lang_type.count > 0);
+            *member_def = curr_member;
+            return true;
         }
     }
-    unreachable("member not found");
+    return false;
+}
+
+static inline const Node* get_member_def(const Node* struct_def, const Node* member_symbol) {
+    Node* member_def;
+    if (!try_get_member_def(&member_def, struct_def, member_symbol)) {
+        unreachable("could not find member definition");
+    }
+    return member_def;
 }
 
 bool try_get_struct_definition(Node** struct_def, Node* node);

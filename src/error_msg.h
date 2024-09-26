@@ -7,4 +7,6 @@ void msg_redefinition_of_symbol(const Node* new_sym_def);
 
 void msg_undefined_symbol(const Node* sym_call);
 
+void msg_invalid_struct_member(const Node* node);
+
 #endif // ERROR_MSG_H

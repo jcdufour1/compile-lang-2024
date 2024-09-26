@@ -165,8 +165,8 @@ Node* assignment_new(Node* lhs, Node* rhs) {
     assert(!rhs->next);
     assert(!rhs->parent);
 
-    nodes_remove_siblings_and_parent(lhs);
-    nodes_remove_siblings_and_parent(rhs);
+    nodes_remove(lhs, true);
+    nodes_remove(rhs, true);
 
     Node* assignment = node_new(lhs->file_path, lhs->line_num);
     assignment->type = NODE_ASSIGNMENT;
@@ -301,6 +301,9 @@ bool is_corresponding_to_a_struct(const Node* node) {
 bool try_get_struct_definition(Node** struct_def, Node* node) {
     switch (node->type) {
         case NODE_STRUCT_LITERAL: {
+            // fallthrough
+        case NODE_VARIABLE_DEFINITION:
+            assert(node->lang_type.count > 0);
             if (!sym_tbl_lookup(struct_def, node->lang_type)) {
                 return false;
             }
@@ -312,16 +315,18 @@ bool try_get_struct_definition(Node** struct_def, Node* node) {
             // fallthrough
         case NODE_STRUCT_MEMBER_SYM: {
             Node* var_def;
+            assert(node->name.count > 0);
             if (!sym_tbl_lookup(&var_def, node->name)) {
                 return false;
             }
+            assert(var_def->lang_type.count > 0);
             if (!sym_tbl_lookup(struct_def, var_def->lang_type)) {
                 return false;
             }
             return true;
         }
         default:
-             return false;
+            unreachable("");
     }
 }
 
