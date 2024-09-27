@@ -651,7 +651,9 @@ static Node* extract_struct_member_call(Tk_view* tokens) {
     member_call->name = start_token.text;
     while (tk_view_try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
         Token member_token = tk_view_consume(tokens);
-        Node* member = symbol_new(member_token.text, member_token.pos);
+        Node* member = node_new(member_token.pos);
+        member->type = NODE_STRUCT_MEMBER_SYM_PIECE;
+        member->name = member_token.text;
         nodes_append_child(member_call, member);
     }
     return member_call;

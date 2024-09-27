@@ -40,6 +40,8 @@ static Node* do_load_struct_element_ptr(Node* node_to_insert_before, Node* symbo
     Node* node_element_ptr_to_load = get_storage_location(symbol_call);
     Node* load_element_ptr = NULL;
     nodes_foreach_child(element_sym, symbol_call) {
+        assert(element_sym->type == NODE_STRUCT_MEMBER_SYM_PIECE);
+
         load_element_ptr = node_new(element_sym->pos);
         load_element_ptr->type = NODE_LOAD_STRUCT_ELEMENT_PTR;
         load_element_ptr->name = prev_struct_sym->name;

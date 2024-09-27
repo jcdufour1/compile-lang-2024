@@ -76,7 +76,7 @@ static inline size_t get_member_index(const Node* struct_def, const Node* member
 
 static inline bool try_get_member_def(Node** member_def, const Node* struct_def, const Node* member_symbol) {
     assert(struct_def->type == NODE_STRUCT_DEFINITION);
-    assert(member_symbol->type == NODE_SYMBOL);
+    assert(member_symbol->type == NODE_STRUCT_MEMBER_SYM_PIECE);
 
     nodes_foreach_child(curr_member, struct_def) {
         if (str_view_is_equal(curr_member->name, member_symbol->name)) {
