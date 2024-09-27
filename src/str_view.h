@@ -74,7 +74,6 @@ static inline bool str_view_cstr_is_equal(Str_view str_view, const char* cstr) {
     return 0 == strncmp(str_view.str, cstr, str_view.count);
 }
 
-// return 0 when match
 static inline int str_view_cmp(Str_view a, Str_view b) {
     if (a.count != b.count) {
         return 100;

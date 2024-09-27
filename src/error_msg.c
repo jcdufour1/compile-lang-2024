@@ -6,9 +6,6 @@
 #include "parser_utils.h"
 
 void msg_redefinition_of_symbol(const Node* new_sym_def) {
-    assert(new_sym_def->line_num > 0);
-    assert(new_sym_def->file_path && strlen(new_sym_def->file_path) > 0);
-
     msg(
         LOG_ERROR, new_sym_def->file_path, new_sym_def->line_num,
         "redefinition of symbol "STR_VIEW_FMT"\n", str_view_print(new_sym_def->name)
@@ -25,9 +22,6 @@ void msg_redefinition_of_symbol(const Node* new_sym_def) {
 }
 
 void msg_undefined_symbol(const Node* sym_call) {
-    assert(sym_call->line_num > 0);
-    assert(sym_call->file_path && strlen(sym_call->file_path) > 0);
-
     msg(
         LOG_ERROR, sym_call->file_path, sym_call->line_num,
         "symbol `"STR_VIEW_FMT"` is not defined\n", str_view_print(sym_call->name)
@@ -57,10 +51,18 @@ void msg_invalid_struct_member(const Node* node) {
             try(sym_tbl_lookup(&struct_memb_sym_def, struct_memb_sym->name));
             msg(
                 LOG_NOTE, struct_memb_sym_def->file_path, struct_memb_sym_def->line_num, 
-                "`"STR_VIEW_FMT"` defined here\n", str_view_print(struct_memb_sym_def->name)
+                "`"STR_VIEW_FMT"` defined here as type `"STR_VIEW_FMT"`\n",
+                str_view_print(struct_memb_sym_def->name),
+                str_view_print(struct_memb_sym_def->lang_type)
             );
-
-            todo();
+            Node* struct_def;
+            try(sym_tbl_lookup(&struct_def, struct_memb_sym_def->lang_type));
+            msg(
+                LOG_NOTE, struct_def->file_path, struct_def->line_num, 
+                "struct `"STR_VIEW_FMT"` defined here\n", 
+                str_view_print(struct_memb_sym_def->lang_type)
+            );
+            break;
         }
         default:
             unreachable(NODE_FMT"\n", node_print(node));
@@ -120,5 +122,21 @@ void msg_invalid_assignment_to_literal(const Node* lhs, const Node* rhs) {
         LOG_ERROR, rhs->file_path, rhs->line_num, 
         "invalid literal type is assigned to `"STR_VIEW_FMT"`\n",
         str_view_print(lhs->name)
+    );
+}
+
+void msg_invalid_assignment_to_operation(
+    const Node* lhs,
+    const Node* operation,
+    Str_view operation_lang_type
+) {
+    assert(lhs->type == NODE_SYMBOL);
+
+    Node* var_def;
+    try(sym_tbl_lookup(&var_def, lhs->name));
+    msg(
+        LOG_ERROR, operation->file_path, operation->line_num, 
+        "operation is of type `"STR_VIEW_FMT"`, but type `"STR_VIEW_FMT"` expected\n",
+        str_view_print(operation_lang_type), str_view_print(var_def->lang_type)
     );
 }

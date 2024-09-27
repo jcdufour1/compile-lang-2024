@@ -32,11 +32,59 @@ static void do_struct_member_symbol(const Node* struct_memb_sym) {
         }
         if (!try_get_member_def(&curr_memb_def, struct_def, memb_sym)) {
             msg_invalid_struct_member(memb_sym);
+            return;
         }
         if (!try_get_struct_definition(&struct_def, curr_memb_def)) {
             is_struct = false;
         }
     }
+}
+
+static bool try_get_operator_literal_lang_type(Str_view* result, const Node* literal) {
+    assert(literal->type == NODE_LITERAL);
+
+    switch (literal->token_type) {
+        case TOKEN_STRING_LITERAL:
+            *result = str_view_from_cstr("ptr");
+            return true;
+        case TOKEN_NUM_LITERAL:
+            *result = str_view_from_cstr("i32");
+            return true;
+        default:
+            unreachable("");
+    }
+}
+
+// returns false if unsuccessful
+static bool try_get_operator_lang_type(Str_view* result, const Node* operator) {
+    assert(operator->type == NODE_OPERATOR);
+
+    const Node* lhs = nodes_get_child_const(operator, 0);
+    switch (lhs->type) {
+        case NODE_LITERAL: {
+            if (!try_get_operator_literal_lang_type(result, lhs)) {
+                todo();
+            }
+            return true;
+        }
+        case NODE_OPERATOR:
+            return try_get_operator_lang_type(result, lhs);
+        case NODE_SYMBOL: {
+            Node* sym_def;
+            if (!sym_tbl_lookup(&sym_def, lhs->name)) {
+                msg_undefined_symbol(lhs);
+                return false;
+            }
+            if (is_struct_variable_definition(sym_def)) {
+                todo();
+            }
+            *result = sym_def->lang_type;
+            return true;
+        }
+        default:
+            unreachable(NODE_FMT, node_print(lhs));
+    }
+    unreachable("");
 }
 
 static bool symbol_assignment_types_are_compatible(const Node* lhs, const Node* rhs) {
@@ -48,27 +96,23 @@ static bool symbol_assignment_types_are_compatible(const Node* lhs, const Node* 
             if (is_corresponding_to_a_struct(lhs)) {
                 // struct assigned literal of invalid type
                 meg_struct_assigned_to_invalid_literal(lhs, rhs);
+                todo();
                 are_compatible = false;
                 break;
             }
             Node* lhs_def;
-            try(sym_tbl_lookup(&lhs_def, rhs->name));
+            try(sym_tbl_lookup(&lhs_def, lhs->name));
             Str_view lhs_lang_type = lhs_def->lang_type;
-            if (str_view_cstr_is_equal(lhs_lang_type, "i32")) {
-                if (!str_view_cstr_is_equal(rhs->lang_type, "num")) {
-                    msg_invalid_assignment_to_literal(lhs, rhs);
-                    are_compatible = false;
-                    break;
-                }
-            } else if (str_view_cstr_is_equal(lhs_lang_type, "ptr")) {
-                if (!str_view_cstr_is_equal(rhs->lang_type, "str")) {
-                    msg_invalid_assignment_to_literal(lhs, rhs);
-                    are_compatible = false;
-                    break;
-                }
-            } else {
-                unreachable("rhs: "NODE_FMT"    rhs: "NODE_FMT"\n", node_print(lhs), node_print(rhs));
+
+            Str_view rhs_lang_type;
+            if (!try_get_operator_literal_lang_type(&rhs_lang_type, rhs)) {
+                msg_invalid_assignment_to_literal(lhs, rhs);
+                are_compatible = false;
             }
+            if (!str_view_is_equal(lhs_lang_type, rhs_lang_type)) {
+                msg_invalid_assignment_to_literal(lhs, rhs);
+            }
+            break;
         }
         case NODE_STRUCT_LITERAL: {
             if (!is_corresponding_to_a_struct(lhs)) {
@@ -106,6 +150,26 @@ static bool symbol_assignment_types_are_compatible(const Node* lhs, const Node* 
             try(sym_tbl_lookup(&rhs_var_def, rhs->name));
             if (!str_view_is_equal(lhs_var_def->lang_type, rhs_var_def->lang_type)) {
                 todo();
+            }
+            break;
+        }
+        case NODE_OPERATOR: {
+            Str_view rhs_lang_type;
+            if (!try_get_operator_lang_type(&rhs_lang_type, rhs)) {
+                break;
+            }
+            Node* lhs_var_def;
+            try(sym_tbl_lookup(&lhs_var_def, lhs->name));
+            if (!str_view_is_equal(rhs_lang_type, lhs_var_def->lang_type)) {
+                msg_invalid_assignment_to_operation(lhs, rhs, rhs_lang_type);
+                are_compatible = false;
+            }
+            break;
+        }
+        case NODE_FUNCTION_CALL: {
+            Node* fun_def;
+            if (!sym_tbl_lookup(&fun_def, rhs->name)) {
+                msg_undefined_function(rhs);
             }
             break;
         }
