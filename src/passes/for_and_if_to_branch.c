@@ -4,7 +4,7 @@
 
 static Node* operation_new(Node* lhs, Node* rhs, TOKEN_TYPE operation_type) {
     // TODO: check if lhs or rhs were already appended to the tree
-    Node* assignment = node_new(lhs->file_path, lhs->line_num);
+    Node* assignment = node_new(lhs->pos);
     assignment->type = NODE_OPERATOR;
     assignment->token_type = operation_type;
     nodes_append_child(assignment, lhs);
@@ -12,16 +12,16 @@ static Node* operation_new(Node* lhs, Node* rhs, TOKEN_TYPE operation_type) {
     return assignment;
 }
 
-static Node* label_new(Str_view label_name, const char* file_path, uint32_t line_num) {
-    Node* label = node_new(file_path, line_num);
+static Node* label_new(Str_view label_name, Pos pos) {
+    Node* label = node_new(pos);
     label->type = NODE_LABEL;
     label->name = label_name;
     try(sym_tbl_add(label));
     return label;
 }
 
-static Node* goto_new(Str_view name_label_to_jmp_to, const char* file_path, uint32_t line_num) {
-    Node* lang_goto = node_new(file_path, line_num);
+static Node* goto_new(Str_view name_label_to_jmp_to, Pos pos) {
+    Node* lang_goto = node_new(pos);
     lang_goto->type = NODE_GOTO;
     lang_goto->name = name_label_to_jmp_to;
     return lang_goto;
@@ -41,24 +41,24 @@ static Node* cond_goto_new(
     assert(!rhs->next);
     assert(!rhs->parent);
 
-    Node* operator = node_new(lhs->file_path, lhs->line_num);
+    Node* operator = node_new(lhs->pos);
     operator->type = NODE_OPERATOR;
     operator->token_type = operator_type;
     nodes_append_child(operator, lhs);
     nodes_append_child(operator, rhs);
 
-    Node* cond_goto = node_new(lhs->file_path, lhs->line_num);
+    Node* cond_goto = node_new(lhs->pos);
     cond_goto->type = NODE_COND_GOTO;
     nodes_append_child(cond_goto, operator);
-    nodes_append_child(cond_goto, symbol_new(label_name_if_true, lhs->file_path, lhs->line_num));
-    nodes_append_child(cond_goto, symbol_new(label_name_if_false, lhs->file_path, lhs->line_num));
+    nodes_append_child(cond_goto, symbol_new(label_name_if_true, lhs->pos));
+    nodes_append_child(cond_goto, symbol_new(label_name_if_false, lhs->pos));
     return cond_goto;
 }
 
-static Node* get_for_loop_cond_var_assign(Str_view sym_name, const char* file_path, uint32_t line_num) {
-    Node* literal = literal_new(str_view_from_cstr("1"), file_path, line_num);
-    Node* operation = operation_new(symbol_new(sym_name, file_path, line_num), literal, TOKEN_SINGLE_PLUS);
-    return assignment_new(symbol_new(sym_name, file_path, line_num), operation);
+static Node* get_for_loop_cond_var_assign(Str_view sym_name, Pos pos) {
+    Node* literal = literal_new(str_view_from_cstr("1"), pos);
+    Node* operation = operation_new(symbol_new(sym_name, pos), literal, TOKEN_SINGLE_PLUS);
+    return assignment_new(symbol_new(sym_name, pos), operation);
 }
 
 static void for_loop_to_branch(Node* for_loop) {
@@ -70,7 +70,7 @@ static void for_loop_to_branch(Node* for_loop) {
     Node* rhs_actual = nodes_single_child(rhs);
     nodes_remove_siblings_and_parent(rhs_actual);
 
-    Node* new_branch_block = node_new(for_loop->file_path, for_loop->line_num);
+    Node* new_branch_block = node_new(for_loop->pos);
     new_branch_block->type = NODE_BLOCK;
     assert(!new_branch_block->parent);
 
@@ -80,11 +80,11 @@ static void for_loop_to_branch(Node* for_loop) {
         Node* new_var_def = nodes_get_child_of_type(for_loop, NODE_FOR_VARIABLE_DEF);
         regular_var_def = nodes_get_child_of_type(new_var_def, NODE_VARIABLE_DEFINITION);
         nodes_remove(regular_var_def, false);
-        symbol_lhs_assign = symbol_new(regular_var_def->name, regular_var_def->file_path, regular_var_def->line_num);
+        symbol_lhs_assign = symbol_new(regular_var_def->name, regular_var_def->pos);
         nodes_remove_siblings(new_var_def);
     }
 
-    Node* assignment_to_inc_cond_var = get_for_loop_cond_var_assign(regular_var_def->name, lhs->file_path, lhs->line_num);
+    Node* assignment_to_inc_cond_var = get_for_loop_cond_var_assign(regular_var_def->name, lhs->pos);
     assert(!new_branch_block->parent);
     nodes_remove_siblings_and_parent(lhs);
     Node* lower_bound_child = nodes_single_child(lhs);
@@ -95,12 +95,12 @@ static void for_loop_to_branch(Node* for_loop) {
     // initial assignment
     Node* new_var_assign = assignment_new(symbol_lhs_assign, lower_bound_child);
 
-    Node* check_cond_label = label_new(literal_name_new(), for_loop->file_path, for_loop->line_num);
-    Node* jmp_to_check_cond_label = goto_new(check_cond_label->name, for_loop->file_path, for_loop->line_num);
-    Node* after_check_label = label_new(literal_name_new(), for_loop->file_path, for_loop->line_num);
-    Node* after_for_loop_label = label_new(literal_name_new(), for_loop->file_path, for_loop->line_num);
+    Node* check_cond_label = label_new(literal_name_new(), for_loop->pos);
+    Node* jmp_to_check_cond_label = goto_new(check_cond_label->name, for_loop->pos);
+    Node* after_check_label = label_new(literal_name_new(), for_loop->pos);
+    Node* after_for_loop_label = label_new(literal_name_new(), for_loop->pos);
     Node* check_cond_jmp = cond_goto_new(
-        symbol_new(regular_var_def->name, lhs->file_path, lhs->line_num),
+        symbol_new(regular_var_def->name, lhs->pos),
         rhs_actual,
         after_check_label->name, 
         after_for_loop_label->name,
@@ -115,7 +115,7 @@ static void for_loop_to_branch(Node* for_loop) {
     nodes_append_child(new_branch_block, after_check_label);
     nodes_extend_children(new_branch_block, for_block->left_child);
     nodes_append_child(new_branch_block, assignment_to_inc_cond_var);
-    nodes_append_child(new_branch_block, goto_new(check_cond_label->name, for_loop->file_path, for_loop->line_num));
+    nodes_append_child(new_branch_block, goto_new(check_cond_label->name, for_loop->pos));
     nodes_append_child(new_branch_block, after_for_loop_label);
 
     nodes_insert_before(for_loop, new_branch_block);
@@ -132,8 +132,8 @@ static void if_statement_to_branch(Node* if_statement) {
     nodes_remove(lhs, true);
     nodes_remove(rhs, true);
 
-    Node* if_true = label_new(literal_name_new(), block->file_path, block->line_num);
-    Node* if_after = label_new(literal_name_new(), operation->file_path, operation->line_num);
+    Node* if_true = label_new(literal_name_new(), block->pos);
+    Node* if_after = label_new(literal_name_new(), operation->pos);
 
     Node* check_cond_jmp = cond_goto_new(
         lhs, 
@@ -143,9 +143,9 @@ static void if_statement_to_branch(Node* if_statement) {
         operation->token_type
     );
 
-    Node* jmp_to_if_after = goto_new(if_after->name, block->file_path, block->line_num);
+    Node* jmp_to_if_after = goto_new(if_after->name, block->pos);
 
-    Node* new_branch_block = node_new(block->file_path, block->line_num);
+    Node* new_branch_block = node_new(block->pos);
     new_branch_block->type = NODE_BLOCK;
 
     nodes_append_child(new_branch_block, check_cond_jmp);

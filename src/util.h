@@ -22,6 +22,13 @@
 
 typedef int LOG_LEVEL;
 
+typedef struct {
+    const char* file_path;
+    uint32_t line;
+} Pos;
+
+static const Pos dummy_pos = {0};
+
 #define PUSH_PRAGMA_IGNORE_WTYPE_LIMITS \
     _Pragma("GCC diagnostic push") \
     _Pragma("GCC diagnostic ignored \"-Wtype-limits\"") \
@@ -74,14 +81,14 @@ static inline const char* get_log_level_str(int log_level) {
     log_indent(log_level, 0, __VA_ARGS__);
 
 // print messages that are intended for the user (eg. syntax errors)
-#define msg(log_level, file, line, ...) \
+#define msg(log_level, pos, ...) \
     do { \
         if ((log_level) >= LOG_ERROR) { \
             error_count++; \
         } else if ((log_level) == LOG_WARNING) { \
             warning_count++; \
         } \
-        log_file_new(log_level, file, line, __VA_ARGS__); \
+        log_file_new(log_level, (pos).file_path, (pos).line, __VA_ARGS__); \
     } while (0)
 
 #define todo() \

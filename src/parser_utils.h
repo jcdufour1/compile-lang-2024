@@ -27,9 +27,9 @@ Llvm_id get_matching_label_id(const Node* symbol_call);
 // lhs and rhs should not be used for other tasks after this
 Node* assignment_new(Node* lhs, Node* rhs);
 
-Node* literal_new(Str_view value, const char* file_path, uint32_t line_num);
+Node* literal_new(Str_view value, Pos pos);
 
-Node* symbol_new(Str_view symbol_name, const char* file_path, uint32_t line_num);
+Node* symbol_new(Str_view symbol_name, Pos pos);
 
 Llvm_id get_matching_fun_param_load_id(const Node* src);
 

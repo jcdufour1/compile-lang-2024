@@ -30,7 +30,7 @@ bool read_file(String* file_text, const char* input_file_name) {
 void write_file(const char* file_path, Str_view text_to_write) {
     FILE* file = fopen(file_path, "w");
     if (!file) {
-        msg(LOG_FETAL, "dummy", 0, "could not open file %s: errno %d (%s)\n", params.input_file_name, errno, strerror(errno));
+        msg(LOG_FETAL, dummy_pos, "could not open file %s: errno %d (%s)\n", params.input_file_name, errno, strerror(errno));
         exit(1);
     }
 

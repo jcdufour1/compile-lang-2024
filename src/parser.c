@@ -110,7 +110,7 @@ static bool extract_function_parameter(Node** child, Tk_view* tokens) {
 }
 
 static bool extract_function_parameters(Node** result, Tk_view* tokens) {
-    Node* fun_params = node_new(tk_view_front(*tokens).file_path, tk_view_front(*tokens).line_num);
+    Node* fun_params = node_new(tk_view_front(*tokens).pos);
     fun_params->type = NODE_FUNCTION_PARAMETERS;
 
     Node* param;
@@ -126,14 +126,14 @@ static bool extract_function_parameters(Node** result, Tk_view* tokens) {
 }
 
 static bool extract_function_return_types(Node** result, Tk_view* tokens) {
-    Node* return_types = node_new(tk_view_front(*tokens).file_path, tk_view_front(*tokens).line_num);
+    Node* return_types = node_new(tk_view_front(*tokens).pos);
     return_types->type = NODE_FUNCTION_RETURN_TYPES;
 
     bool is_comma = true;
     while (is_comma) {
         // a return type is only one token, at least for now
         Token rtn_type_token = tk_view_consume(tokens);
-        Node* return_type = node_new(rtn_type_token.file_path, rtn_type_token.line_num);
+        Node* return_type = node_new(rtn_type_token.pos);
         return_type->type = NODE_LANG_TYPE;
         return_type->lang_type = rtn_type_token.text;
         assert(return_type->lang_type.count > 0);
@@ -146,12 +146,10 @@ static bool extract_function_return_types(Node** result, Tk_view* tokens) {
 }
 
 static Node* extract_function_declaration_common(Tk_view* tokens) {
-    Node* fun_declaration = node_new(tk_view_front(*tokens).file_path, tk_view_front(*tokens).line_num);
+    Node* fun_declaration = node_new(tk_view_front(*tokens).pos);
 
     Token name_token = tk_view_consume(tokens);
     fun_declaration->name = name_token.text;
-    fun_declaration->line_num = name_token.line_num;
-    fun_declaration->file_path = name_token.file_path;
     assert(fun_declaration->name.count > 0);
 
     if (!sym_tbl_add(fun_declaration)) {
@@ -202,11 +200,9 @@ static Node* extract_struct_definition(Tk_view* tokens) {
 
     Token name = tk_view_consume(tokens);
 
-    Node* new_struct = node_new(name.file_path, name.line_num);
+    Node* new_struct = node_new(name.pos);
     new_struct->name = name.text;
     new_struct->type = NODE_STRUCT_DEFINITION;
-    new_struct->line_num = name.line_num;
-    new_struct->file_path = name.file_path;
 
     try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE));
     while (tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_CLOSE_CURLY_BRACE) {
@@ -230,11 +226,9 @@ static Node* extract_variable_declaration(Tk_view* tokens, bool require_let) {
     }
 
     Token name_token = tk_view_consume(tokens);
-    Node* variable_def = node_new(name_token.file_path, name_token.line_num);
+    Node* variable_def = node_new(name_token.pos);
     variable_def->type = NODE_VARIABLE_DEFINITION;
     variable_def->name = name_token.text;
-    variable_def->line_num = name_token.line_num;
-    variable_def->file_path = name_token.file_path;
     try(tk_view_try_consume(NULL, tokens, TOKEN_COLON));
     variable_def->lang_type = tk_view_consume(tokens).text;
     while (tk_view_try_consume(NULL, tokens, TOKEN_ASTERISK)) {
@@ -266,11 +260,11 @@ static bool is_not_symbol_in(const Token* prev, const Token* curr) {
 static Node* extract_for_loop(Tk_view* tokens) {
     Token for_token;
     try(tk_view_try_consume_symbol(&for_token, tokens, "for"));
-    Node* for_loop = node_new(for_token.file_path, for_token.line_num);
+    Node* for_loop = node_new(for_token.pos);
     for_loop->type = NODE_FOR_LOOP;
 
     Node* var_def_child = extract_variable_declaration(tokens, false);
-    Node* var_def = node_new(var_def_child->file_path, var_def_child->line_num);
+    Node* var_def = node_new(var_def_child->pos);
     var_def->type = NODE_FOR_VARIABLE_DEF;
     nodes_append_child(var_def, var_def_child);
     nodes_append_child(for_loop, var_def);
@@ -279,14 +273,14 @@ static Node* extract_for_loop(Tk_view* tokens) {
     try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE));
 
     Node* lower_bound_child = extract_expression(tokens);
-    Node* lower_bound = node_new(lower_bound_child->file_path, lower_bound_child->line_num);
+    Node* lower_bound = node_new(lower_bound_child->pos);
     lower_bound->type = NODE_FOR_LOWER_BOUND;
     nodes_append_child(lower_bound, lower_bound_child);
     nodes_append_child(for_loop, lower_bound);
     try(tk_view_try_consume(NULL, tokens, TOKEN_DOUBLE_DOT));
 
     Node* upper_bound_child = extract_expression(tokens);
-    Node* upper_bound = node_new(upper_bound_child->file_path, upper_bound_child->line_num);
+    Node* upper_bound = node_new(upper_bound_child->pos);
     upper_bound->type = NODE_FOR_UPPER_BOUND;
     nodes_append_child(upper_bound, upper_bound_child);
     nodes_append_child(for_loop, upper_bound);
@@ -331,13 +325,12 @@ static Node* extract_literal(Tk_view* tokens) {
     Token token = tk_view_consume(tokens);
     assert(token_is_literal(token));
 
-    Node* new_node = node_new(token.file_path, token.line_num);
+    Node* new_node = node_new(token.pos);
     new_node->type = NODE_LITERAL;
     new_node->name = literal_name_new();
     assert(new_node->str_data.count < 1);
     new_node->str_data = token.text;
     new_node->token_type = token.type;
-    new_node->line_num = token.line_num;
     new_node->lang_type = get_literal_lang_type_from_token_type(new_node->token_type);
 
     try(sym_tbl_add(new_node));
@@ -348,11 +341,10 @@ static Node* extract_symbol(Tk_view* tokens) {
     Token token = tk_view_consume(tokens);
     assert(token.type == TOKEN_SYMBOL);
 
-    Node* sym_node = node_new(token.file_path, token.line_num);
+    Node* sym_node = node_new(token.pos);
     sym_node->type = NODE_SYMBOL;
     sym_node->name = token.text;
-    sym_node->line_num = token.line_num;
-    assert(sym_node->line_num > 0);
+    assert(sym_node->pos.line > 0);
     return sym_node;
 }
 
@@ -441,10 +433,9 @@ static Node* parse_operation(Tk_view tokens) {
     assert(left_tokens.count > 0);
     assert(right_tokens.count > 0);
 
-    Node* operator_node = node_new(operator_token.file_path, operator_token.line_num);
+    Node* operator_node = node_new(operator_token.pos);
     operator_node->type = NODE_OPERATOR;
     operator_node->token_type = operator_token.type;
-    operator_node->line_num = operator_token.line_num;
 
     Node* left_node = extract_expression(&left_tokens);
     Node* right_node = extract_expression(&right_tokens);
@@ -488,7 +479,7 @@ static bool extract_function_call(Node** child, Tk_view* tokens) {
     Token fun_name_token;
     try(tk_view_try_consume(&fun_name_token, tokens, TOKEN_SYMBOL));
     try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_PAR));
-    Node* function_call = node_new(fun_name_token.file_path, fun_name_token.line_num);
+    Node* function_call = node_new(fun_name_token.pos);
     function_call->type = NODE_FUNCTION_CALL;
     function_call->name = fun_name_token.text;
 
@@ -507,7 +498,7 @@ static Node* extract_function_return_statement(Tk_view* tokens) {
     try(tk_view_try_consume_symbol(NULL, tokens, "return"));
 
     Node* expression = extract_expression(tokens);
-    Node* new_node = node_new(expression->file_path, expression->line_num);
+    Node* new_node = node_new(expression->pos);
     new_node->type = NODE_RETURN_STATEMENT;
     nodes_append_child(new_node, expression);
     tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
@@ -518,12 +509,12 @@ static Node* extract_assignment(Tk_view* tokens, Node* lhs) {
     Token equal_token;
     Node* assignment = NULL;
     if (lhs) {
-        assignment = node_new(lhs->file_path, lhs->line_num);
+        assignment = node_new(lhs->pos);
         try(tk_view_try_consume(&equal_token, tokens, TOKEN_SINGLE_EQUAL));
     } else {
         lhs = extract_expression(tokens);
         try(tk_view_try_consume(&equal_token, tokens, TOKEN_SINGLE_EQUAL));
-        assignment = node_new(equal_token.file_path, equal_token.line_num);
+        assignment = node_new(equal_token.pos);
     }
     assignment->type = NODE_ASSIGNMENT;
     nodes_append_child(assignment, lhs);
@@ -543,7 +534,7 @@ static Node* extract_if_condition(Tk_view* tokens) {
 
     Node* operation;
     try(try_extract_operation(&operation, tokens))
-    Node* condition = node_new(operation->file_path, operation->line_num);
+    Node* condition = node_new(operation->pos);
     condition->type = NODE_IF_CONDITION;
     nodes_append_child(condition, operation);
     return condition;
@@ -552,7 +543,7 @@ static Node* extract_if_condition(Tk_view* tokens) {
 static Node* extract_if_statement(Tk_view* tokens) {
     Token if_start_token;
     try(tk_view_try_consume_symbol(&if_start_token, tokens, "if"));
-    Node* if_statement = node_new(if_start_token.file_path, if_start_token.line_num);
+    Node* if_statement = node_new(if_start_token.pos);
     if_statement->type = NODE_IF_STATEMENT;
 
     nodes_append_child(if_statement, extract_if_condition(tokens));
@@ -626,7 +617,7 @@ static Node* extract_block(Tk_view* tokens) {
             todo();
         }
         if (is_first) {
-            block = node_new(child->file_path, child->line_num);
+            block = node_new(child->pos);
             block->type = NODE_BLOCK;
         }
         tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
@@ -639,7 +630,7 @@ static Node* extract_block(Tk_view* tokens) {
 static Node* extract_struct_literal(Tk_view* tokens) {
     Token start_token;
     try(tk_view_try_consume(&start_token, tokens, TOKEN_OPEN_CURLY_BRACE));
-    Node* struct_literal = node_new(start_token.file_path, start_token.line_num);
+    Node* struct_literal = node_new(start_token.pos);
     struct_literal->type = NODE_STRUCT_LITERAL;
     struct_literal->name = literal_name_new();
 
@@ -655,12 +646,12 @@ static Node* extract_struct_literal(Tk_view* tokens) {
 
 static Node* extract_struct_member_call(Tk_view* tokens) {
     Token start_token = tk_view_consume(tokens);
-    Node* member_call = node_new(start_token.file_path, start_token.line_num);
+    Node* member_call = node_new(start_token.pos);
     member_call->type = NODE_STRUCT_MEMBER_SYM;
     member_call->name = start_token.text;
     while (tk_view_try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
         Token member_token = tk_view_consume(tokens);
-        Node* member = symbol_new(member_token.text, member_token.file_path, member_token.line_num);
+        Node* member = symbol_new(member_token.text, member_token.pos);
         nodes_append_child(member_call, member);
     }
     return member_call;

@@ -43,8 +43,8 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text, 
         return false;
     }
 
-    token->line_num = *line_num;
-    token->file_path = params.input_file_name;
+    token->pos.line = *line_num;
+    token->pos.file_path = params.input_file_name;
 
     if (isalpha(str_view_front(*file_text))) {
         token->text = str_view_consume_while(file_text, local_isalnum_or_underscore);

@@ -71,8 +71,7 @@ typedef struct Node_ {
 
     bool is_variadic : 1;
 
-    uint32_t line_num;
-    const char* file_path;
+    Pos pos;
 
     struct Node_* node_src;
     struct Node_* node_dest;

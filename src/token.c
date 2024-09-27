@@ -102,7 +102,7 @@ Str_view token_print_internal(Token token) {
     }
 
     assert(strlen(buf.buf) == buf.info.count);
-    string_add_int(&buf, token.line_num);
+    string_add_int(&buf, token.pos.line);
 
     assert(strlen(buf.buf) == buf.info.count);
     Str_view str_view = {.str = buf.buf, .count = buf.info.count};

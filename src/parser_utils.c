@@ -168,25 +168,25 @@ Node* assignment_new(Node* lhs, Node* rhs) {
     nodes_remove(lhs, true);
     nodes_remove(rhs, true);
 
-    Node* assignment = node_new(lhs->file_path, lhs->line_num);
+    Node* assignment = node_new(lhs->pos);
     assignment->type = NODE_ASSIGNMENT;
     nodes_append_child(assignment, lhs);
     nodes_append_child(assignment, rhs);
     return assignment;
 }
 
-Node* literal_new(Str_view value, const char* file_path, uint32_t line_num) {
-    Node* symbol = node_new(file_path, line_num);
+Node* literal_new(Str_view value, Pos pos) {
+    Node* symbol = node_new(pos);
     symbol->type = NODE_LITERAL;
     symbol->name = literal_name_new();
     symbol->str_data = value;
     return symbol;
 }
 
-Node* symbol_new(Str_view symbol_name, const char* file_path, uint32_t line_num) {
+Node* symbol_new(Str_view symbol_name, Pos pos) {
     assert(symbol_name.count > 0);
 
-    Node* symbol = node_new(file_path, line_num);
+    Node* symbol = node_new(pos);
     symbol->type = NODE_SYMBOL;
     symbol->name = symbol_name;
     return symbol;

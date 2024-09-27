@@ -50,8 +50,7 @@ typedef struct {
     Str_view text;
     TOKEN_TYPE type;
 
-    uint32_t line_num;
-    const char* file_path;
+    Pos pos;
 } Token;
 
 Str_view token_print_internal(Token token);

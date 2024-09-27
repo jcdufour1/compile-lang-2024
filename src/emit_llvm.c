@@ -143,8 +143,7 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
         if (!sym_tbl_lookup(&var_decl_or_def, argument->name)) {
             msg(
                 LOG_WARNING,
-                params.input_file_name,
-                argument->line_num,
+                argument->pos,
                 "unknown variable: "STR_VIEW_FMT"\n",
                 str_view_print(argument->name)
             );
