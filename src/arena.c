@@ -4,7 +4,6 @@
 #include <stddef.h>
 
 #define ARENA_DEFAULT_CAPACITY (1 << 20) // 1 MB initial
-#define ARENA_FREE_NODE_BLOCK_CAPACITY 16
 
 static void* safe_realloc(void* old_ptr, size_t old_capacity, size_t new_count_items, size_t size_each_item) {
     size_t new_capacity = new_count_items*size_each_item;
@@ -13,7 +12,7 @@ static void* safe_realloc(void* old_ptr, size_t old_capacity, size_t new_count_i
         msg(LOG_FETAL, dummy_pos, "realloc failed\n");
         exit(1);
     }
-    memset((char*)new_ptr + old_capacity, 0,  new_capacity - old_capacity);
+    memset((char*)new_ptr + old_capacity, 0, new_capacity - old_capacity);
     return new_ptr;
 }
 
@@ -125,32 +124,6 @@ static size_t space_remaining(const Arena_buf arena_buf) {
     return arena_buf.capacity - arena_buf.in_use;
 }
 
-// TODO: combine contiguous free nodes
-static bool use_free_node(void** buf, size_t capacity_needed) {
-    return false;
-    Arena_free_node* curr_node = arena.free_node;
-    while (curr_node) {
-        if (curr_node->capacity >= capacity_needed) {
-            //arena_log_alloced_nodes();
-            //arena_log_free_nodes();
-#if 0
-            assert(!buf_is_in_alloc(curr_node->buf));
-            assert(!node_is_alloced(curr_node->buf, curr_node->capacity));
-#endif
-            *buf = curr_node->buf;
-            memset(*buf, 0, capacity_needed);
-            // create smaller node
-            curr_node->buf = (char*)curr_node->buf + capacity_needed;
-            curr_node->capacity -= capacity_needed;
-            return true;
-        }
-
-        curr_node = curr_node->next;
-    }
-
-    return false;
-}
-
 static size_t get_total_alloced(void) {
     Arena_buf* curr_buf = arena.buf;
     size_t total_alloced = 0;
@@ -162,22 +135,6 @@ static size_t get_total_alloced(void) {
 }
 
 void* arena_alloc(size_t capacity_needed) {
-    {
-        void* buf;
-        if (use_free_node(&buf, capacity_needed)) {
-#if 0
-            assert(!buf_is_in_alloc(buf));
-            assert(!node_is_alloced(buf, capacity_needed));
-#endif
-            // a free node can hold this item
-            assert(0 == memcmp(buf, zero_block, capacity_needed));
-            push_alloc(buf, capacity_needed);
-            assert(node_is_alloced(buf, capacity_needed));
-            return buf;
-        }
-    }
-
-    // no free node could hold this item
     Arena_buf* arena_buf_new_region = arena.buf;
     Arena_buf* arena_buf_last = NULL;
     while (arena_buf_new_region) {
@@ -214,98 +171,9 @@ void* arena_alloc(size_t capacity_needed) {
     return new_alloc_buf;
 }
 
-static bool find_empty_free_node(Arena_free_node** result) {
-    return false;
-    Arena_free_node* curr_free_node = arena.free_node;
-    while (curr_free_node) {
-        if (curr_free_node->capacity < 1) {
-            *result = curr_free_node;
-            return true;
-        }
-
-        curr_free_node = curr_free_node->next;
-    }
-
-    return false;
-}
-
-static void join_two_free_nodes_if_possible(Arena_free_node* node_to_join) {
-    return;
-    Arena_free_node* curr_node = arena.free_node;
-    while (curr_node) {
-        if ((char*)node_to_join->buf + node_to_join->capacity == curr_node->buf) {
-            node_to_join->capacity += curr_node->capacity;
-            curr_node->capacity = 0;
-        }
-
-        curr_node = curr_node->next;
-    }
-}
-
-static bool expand_neighbor_free_node(void* buf, size_t capacity) {
-    return false;
-    Arena_free_node* curr_node = arena.free_node;
-    while (curr_node) {
-        if ((char*)curr_node->buf + curr_node->capacity == (char*)buf) {
-            curr_node->capacity += capacity;
-            join_two_free_nodes_if_possible(curr_node);
-            return true;
-        }
-
-        if (curr_node && (char*)curr_node->buf == (char*)buf + capacity) {
-            curr_node->buf = buf;
-            curr_node->capacity += capacity;
-            return true;
-        }
-
-        curr_node = curr_node->next;
-    }
-
-    return false;
-}
-
-void arena_free(void* buf, size_t old_capacity) {
-#if 0
-    assert(buf && "null freed");
-    assert(buf_is_in_alloc(buf));
-    assert(node_is_alloced(buf, old_capacity));
-    remove_alloc(buf);
-    assert(!buf_is_in_alloc(buf));
-    assert(!node_is_alloced(buf, old_capacity));
-#endif
-
-    if (expand_neighbor_free_node(buf, old_capacity)) {
-        return;
-    }
-
-    Arena_free_node* free_node;
-    if (find_empty_free_node(&free_node)) {
-        free_node->buf = buf;
-        free_node->capacity = old_capacity;
-        return;
-    }
-
-    Arena_free_node* new_next = arena.free_node ? (arena.free_node->next) : NULL;
-    Arena_free_node* new_node = arena_alloc(sizeof(*arena.free_node));
-
-    if (new_node == arena.free_node) {
-        new_next = arena.free_node->next;
-    } else {
-        new_next = arena.free_node;
-    }
-    Arena_free_node new_node_struct = {.buf = buf, .capacity = old_capacity, .next = new_next};
-    *new_node = new_node_struct;
-    arena.free_node = new_node;
-    assert(arena.free_node != arena.free_node->next);
-#if 0
-    assert(!node_is_alloced(buf, old_capacity));
-#endif
-}
-
 void* arena_realloc(void* old_buf, size_t old_capacity, size_t new_capacity) {
     void* new_buf = arena_alloc(new_capacity);
     memcpy(new_buf, old_buf, old_capacity);
-    arena_free(old_buf, old_capacity);
     return new_buf;
 }
 
