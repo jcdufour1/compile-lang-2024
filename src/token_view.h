@@ -225,13 +225,13 @@ static inline bool tk_view_try_find(
     return false;
 }
 
-static inline Str_view tk_view_print_internal(Tk_view token_view) {
-    static String buf = {0};
+static inline Str_view tk_view_print_internal(Arena* arena, Tk_view token_view) {
+    String buf = {0};
     string_set_to_zero_len(&buf);
 
     for (size_t idx = 0; idx < token_view.count; idx++) {
-        string_extend_strv(&buf, token_print_internal(token_view.tokens[idx]));
-        string_extend_cstr(&buf, ";    ");
+        string_extend_strv(&print_arena, &buf, token_print_internal(arena, token_view.tokens[idx]));
+        string_extend_cstr(&print_arena, &buf, ";    ");
     }
 
     Str_view str_view = {.str = buf.buf, .count = buf.info.count};

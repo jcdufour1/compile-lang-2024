@@ -15,11 +15,11 @@ typedef struct {
 } Tokens;
 
 static inline void tokens_reserve(Tokens* tokens, size_t minimum_count_empty_slots) {
-    vector_reserve(tokens, sizeof(tokens->buf[0]), minimum_count_empty_slots, TOKENS_DEFAULT_CAPACITY);
+    vector_reserve(&arena, tokens, sizeof(tokens->buf[0]), minimum_count_empty_slots, TOKENS_DEFAULT_CAPACITY);
 }
 
 static inline void tokens_append(Tokens* tokens, const Token* token) {
-    vector_append(tokens, sizeof(tokens->buf[0]), token, TOKENS_DEFAULT_CAPACITY);
+    vector_append(&arena, tokens, sizeof(tokens->buf[0]), token, TOKENS_DEFAULT_CAPACITY);
 }
 
 #endif // TOKENS_H

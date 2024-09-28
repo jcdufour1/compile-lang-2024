@@ -34,7 +34,7 @@ static void* safe_malloc(size_t capacity) {
     } while (0);
 
 #if 1
-#define push_alloc(buf, capacity_needed)
+#define push_alloc(arena, buf, capacity_needed)
 #define assert_node_alloced(buf, capacity_needed)
 #define remove_alloc(buf)
 #define buf_is_in_alloc(buf) true
@@ -134,8 +134,8 @@ static size_t get_total_alloced(void) {
     return total_alloced;
 }
 
-void* arena_alloc(size_t capacity_needed) {
-    Arena_buf* arena_buf_new_region = arena.buf;
+void* arena_alloc(Arena* arena, size_t capacity_needed) {
+    Arena_buf* arena_buf_new_region = arena->buf;
     Arena_buf* arena_buf_last = NULL;
     while (arena_buf_new_region) {
         arena_buf_last = arena_buf_new_region;
@@ -148,15 +148,15 @@ void* arena_alloc(size_t capacity_needed) {
     if (!arena_buf_new_region) {
         // could not find space; must allocate new Arena_buf
         size_t arena_buf_capacity = MAX(get_total_alloced(), ARENA_DEFAULT_CAPACITY);
-        arena_buf_capacity = MAX(arena_buf_capacity, capacity_needed + sizeof(*arena.buf));
+        arena_buf_capacity = MAX(arena_buf_capacity, capacity_needed + sizeof(*arena->buf));
         arena_buf_new_region = safe_malloc(arena_buf_capacity);
         arena_buf_new_region->buf_after_taken = arena_buf_new_region + 1;
-        arena_buf_new_region->in_use = sizeof(*arena.buf);
+        arena_buf_new_region->in_use = sizeof(*arena->buf);
         arena_buf_new_region->capacity = arena_buf_capacity;
         if (arena_buf_last) {
             arena_buf_last->next = arena_buf_new_region;
         } else {
-            arena.buf = arena_buf_new_region;
+            arena->buf = arena_buf_new_region;
         }
     }
 
@@ -166,18 +166,19 @@ void* arena_alloc(size_t capacity_needed) {
     arena_buf_new_region->in_use += capacity_needed;
     arena_buf_new_region->buf_after_taken = (char*)arena_buf_new_region->buf_after_taken + capacity_needed;
     assert(0 == memcmp(new_alloc_buf, zero_block, capacity_needed));
-    push_alloc(new_alloc_buf, capacity_needed);
+    push_alloc(arena, new_alloc_buf, capacity_needed);
     assert(node_is_alloced(new_alloc_buf, capacity_needed));
     return new_alloc_buf;
 }
 
-void* arena_realloc(void* old_buf, size_t old_capacity, size_t new_capacity) {
-    void* new_buf = arena_alloc(new_capacity);
+void* arena_realloc(Arena* arena, void* old_buf, size_t old_capacity, size_t new_capacity) {
+    void* new_buf = arena_alloc(arena, new_capacity);
     memcpy(new_buf, old_buf, old_capacity);
     return new_buf;
 }
 
-void arena_destroy(void) {
+void arena_destroy(Arena* arena) {
+    (void) arena;
     todo();
 #if 0
     Arena_alloc_node* curr_node = arena.alloc_node;
@@ -190,9 +191,25 @@ void arena_destroy(void) {
 #endif
 }
 
-size_t arena_get_total_capacity(void) {
+// reset, but do not free, allocated area
+void arena_reset(Arena* arena) {
+    Arena_buf* curr_buf = arena->buf;
+    while (curr_buf) {
+        assert(curr_buf->in_use >= sizeof(*arena->buf));
+        curr_buf->buf_after_taken = (char*)curr_buf->buf_after_taken - (curr_buf->in_use - sizeof(*arena->buf));
+        memset(
+            (char*)curr_buf->buf_after_taken + sizeof(*arena->buf),
+            0,
+            curr_buf->in_use - sizeof(*arena->buf)
+        );
+        curr_buf->in_use = sizeof(*arena->buf);
+        curr_buf = curr_buf->next;
+    }
+}
+
+size_t arena_get_total_capacity(Arena* arena) {
     size_t total = 0;
-    Arena_buf* curr_buf = arena.buf;
+    Arena_buf* curr_buf = arena->buf;
     while (curr_buf) {
         total += curr_buf->capacity;
         curr_buf = curr_buf->next;

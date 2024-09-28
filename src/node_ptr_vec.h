@@ -17,7 +17,7 @@ static inline void node_ptr_vec_set_to_zero_len(Node_ptr_vec* vector) {
 }
 
 static inline void node_ptr_vec_append(Node_ptr_vec* vector, const Node* num_to_append) {
-    vector_append(vector, sizeof(vector->buf[0]), &num_to_append, NODE_PTR_VEC_DEFAULT_CAPACITY);
+    vector_append(&arena, vector, sizeof(vector->buf[0]), &num_to_append, NODE_PTR_VEC_DEFAULT_CAPACITY);
 }
 
 static inline Node* node_ptr_vec_at(Node_ptr_vec* vector, size_t idx) {

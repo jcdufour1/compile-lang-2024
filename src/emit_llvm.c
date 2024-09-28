@@ -11,20 +11,20 @@
 static void emit_block(String* output, const Node* fun_block);
 
 // \n excapes are actually stored as is in tokens and nodes, but should be printed as \0a
-static void string_extend_strv_eval_escapes(String* string, Str_view str_view) {
+static void string_extend_strv_eval_escapes(Arena* arena, String* string, Str_view str_view) {
     while (str_view.count > 0) {
         char front_char = str_view_consume(&str_view);
         if (front_char == '\\') {
-            string_append(string, '\\');
+            string_append(arena, string, '\\');
             switch (str_view_consume(&str_view)) {
                 case 'n':
-                    string_extend_hex_2_digits(string, 0x0a);
+                    string_extend_hex_2_digits(arena, string, 0x0a);
                     break;
                 default:
                     unreachable("");
             }
         } else {
-            string_append(string, front_char);
+            string_append(arena, string, front_char);
         }
     }
 }
@@ -49,22 +49,22 @@ static void extend_type_call_str(String* output, Str_view lang_type) {
     assert(lang_type.count > 0);
     Node* struct_def;
     if (sym_tbl_lookup(&struct_def, lang_type)) {
-        string_extend_cstr(output, "%struct.");
+        string_extend_cstr(&arena, output, "%struct.");
     }
-    string_extend_strv(output, lang_type);
+    string_extend_strv(&arena, output, lang_type);
 }
 
 static void extend_type_decl_str(String* output, const Node* variable_def, bool noundef) {
     assert(variable_def->lang_type.count > 0);
 
     if (variable_def->is_variadic) {
-        string_extend_cstr(output, "...");
+        string_extend_cstr(&arena, output, "...");
         return;
     }
 
     extend_type_call_str(output, variable_def->lang_type);
     if (noundef) {
-        string_extend_cstr(output, " noundef");
+        string_extend_cstr(&arena, output, " noundef");
     }
 }
 
@@ -72,11 +72,11 @@ static void extend_literal_decl_prefix(String* output, const Node* var_decl_or_d
     Str_view lang_type = var_decl_or_def->lang_type;
     assert(lang_type.count > 0);
     if (str_view_cstr_is_equal(lang_type, "ptr")) {
-        string_extend_cstr(output, " @.");
-        string_extend_strv(output, var_decl_or_def->name);
+        string_extend_cstr(&arena, output, " @.");
+        string_extend_strv(&arena, output, var_decl_or_def->name);
     } else if (str_view_cstr_is_equal(lang_type, "i32")) {
-        string_append(output, ' ');
-        string_extend_strv(output, var_decl_or_def->str_data);
+        string_append(&arena, output, ' ');
+        string_extend_strv(&arena, output, var_decl_or_def->str_data);
     } else {
         log(LOG_ERROR, NODE_FMT"\n", node_print(var_decl_or_def));
         log(LOG_ERROR, STR_VIEW_FMT"\n", str_view_print(lang_type));
@@ -102,21 +102,21 @@ static void emit_function_params(String* output, const Node* fun_params) {
     size_t idx = 0;
     nodes_foreach_child(param, fun_params) {
         if (idx++ > 0) {
-            string_extend_cstr(output, ", ");
+            string_extend_cstr(&arena, output, ", ");
         }
 
         if (is_struct_variable_definition(param)) {
-            string_extend_cstr(output, "ptr noundef byval(");
+            string_extend_cstr(&arena, output, "ptr noundef byval(");
             extend_type_call_str(output, param->lang_type);
-            string_extend_cstr(output, ")");
+            string_extend_cstr(&arena, output, ")");
         } else {
             extend_type_decl_str(output, param, true);
         }
         if (param->is_variadic) {
             return;
         }
-        string_extend_cstr(output, " %");
-        string_extend_size_t(output, param->llvm_id);
+        string_extend_cstr(&arena, output, " %");
+        string_extend_size_t(&arena, output, param->llvm_id);
     }
 }
 
@@ -132,8 +132,8 @@ static void emit_fun_arg_struct_member_call(String* output, const Node* member_c
         unreachable("");
     }
     extend_type_call_str(output, member_call->lang_type);
-    string_extend_cstr(output, " %");
-    string_extend_size_t(output, member_call->node_src->llvm_id);
+    string_extend_cstr(&arena, output, " %");
+    string_extend_size_t(&arena, output, member_call->node_src->llvm_id);
 }
 
 static void emit_function_call_arguments(String* output, const Node* fun_call) {
@@ -150,7 +150,7 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
             break;
         }
         if (idx++ > 0) {
-            string_extend_cstr(output, ", ");
+            string_extend_cstr(&arena, output, ", ");
         }
         switch (argument->type) {
             case NODE_LITERAL: {
@@ -168,19 +168,19 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
                 node_printf(var_decl_or_def);
                 node_printf(argument);
                 if (is_struct_variable_definition(var_decl_or_def)) {
-                    string_extend_cstr(output, "ptr noundef byval(");
+                    string_extend_cstr(&arena, output, "ptr noundef byval(");
                     node_printf(argument);
                     extend_type_call_str(output, var_decl_or_def->lang_type);
-                    string_extend_cstr(output, ")");
+                    string_extend_cstr(&arena, output, ")");
                 } else {
                     extend_type_call_str(output, var_decl_or_def->lang_type);
                 }
-                string_extend_cstr(output, " %");
+                string_extend_cstr(&arena, output, " %");
                 node_printf(argument);
                 if (is_struct_variable_definition(var_decl_or_def)) {
-                    string_extend_size_t(output, get_store_dest_id(argument));
+                    string_extend_size_t(&arena, output, get_store_dest_id(argument));
                 } else {
-                    string_extend_size_t(output, argument->node_src->llvm_id);
+                    string_extend_size_t(&arena, output, argument->node_src->llvm_id);
                 }
                 break;
             }
@@ -202,30 +202,30 @@ static void emit_function_call(String* output, const Node* fun_call) {
     }
 
     // start of actual function call
-    string_extend_cstr(output, "    %");
-    string_extend_size_t(output, fun_call->llvm_id);
-    string_extend_cstr(output, " = call ");
+    string_extend_cstr(&arena, output, "    %");
+    string_extend_size_t(&arena, output, fun_call->llvm_id);
+    string_extend_cstr(&arena, output, " = call ");
     extend_type_call_str(output, return_type_from_function_definition(fun_def)->lang_type);
-    string_extend_cstr(output, " @");
-    string_extend_strv(output, fun_call->name);
+    string_extend_cstr(&arena, output, " @");
+    string_extend_strv(&arena, output, fun_call->name);
 
     // arguments
-    string_extend_cstr(output, "(");
+    string_extend_cstr(&arena, output, "(");
     emit_function_call_arguments(output, fun_call);
-    string_extend_cstr(output, ")");
+    string_extend_cstr(&arena, output, ")");
 
-    string_extend_cstr(output, "\n");
+    string_extend_cstr(&arena, output, "\n");
 }
 
 static void emit_alloca(String* output, const Node* alloca) {
     assert(alloca->type == NODE_ALLOCA);
 
-    string_extend_cstr(output, "    %");
-    string_extend_size_t(output, alloca->llvm_id);
-    string_extend_cstr(output, " = alloca ");
+    string_extend_cstr(&arena, output, "    %");
+    string_extend_size_t(&arena, output, alloca->llvm_id);
+    string_extend_cstr(&arena, output, " = alloca ");
     extend_type_call_str(output, get_symbol_def_from_alloca(alloca)->lang_type);
-    string_extend_cstr(output, ", align 8");
-    string_extend_cstr(output, "\n");
+    string_extend_cstr(&arena, output, ", align 8");
+    string_extend_cstr(&arena, output, "\n");
 }
 
 static void emit_operator_type(String* output, const Node* operator) {
@@ -234,16 +234,16 @@ static void emit_operator_type(String* output, const Node* operator) {
     
     switch (operator->token_type) {
         case TOKEN_SINGLE_MINUS:
-            string_extend_cstr(output, "sub nsw i32 ");
+            string_extend_cstr(&arena, output, "sub nsw i32 ");
             break;
         case TOKEN_SINGLE_PLUS:
-            string_extend_cstr(output, "add nsw i32 ");
+            string_extend_cstr(&arena, output, "add nsw i32 ");
             break;
         case TOKEN_ASTERISK:
-            string_extend_cstr(output, "mul nsw i32 ");
+            string_extend_cstr(&arena, output, "mul nsw i32 ");
             break;
         case TOKEN_SLASH:
-            string_extend_cstr(output, "sdiv i32 ");
+            string_extend_cstr(&arena, output, "sdiv i32 ");
             break;
         default:
             unreachable(TOKEN_TYPE_FMT"\n", token_type_print(operator->token_type));
@@ -253,15 +253,15 @@ static void emit_operator_type(String* output, const Node* operator) {
 static void emit_operator_operand(String* output, const Node* operand) {
     switch (operand->type) {
         case NODE_LITERAL:
-            string_extend_strv(output, operand->str_data);
+            string_extend_strv(&arena, output, operand->str_data);
             break;
         case NODE_SYMBOL_TYPED:
-            string_extend_cstr(output, "%");
-            string_extend_size_t(output, operand->node_src->llvm_id);
+            string_extend_cstr(&arena, output, "%");
+            string_extend_size_t(&arena, output, operand->node_src->llvm_id);
             break;
         case NODE_OPERATOR_RETURN_VALUE_SYM:
-            string_extend_cstr(output, "%");
-            string_extend_size_t(output, operand->node_src->llvm_id);
+            string_extend_cstr(&arena, output, "%");
+            string_extend_size_t(&arena, output, operand->node_src->llvm_id);
             break;
         case NODE_SYMBOL_UNTYPED:
             unreachable("untyped symbols should not still be present");
@@ -274,16 +274,16 @@ static void emit_operator(String* output, const Node* operator) {
     const Node* lhs = nodes_get_child_const(operator, 0);
     const Node* rhs = nodes_get_child_const(operator, 1);
 
-    string_extend_cstr(output, "    %");
-    string_extend_size_t(output, operator->llvm_id);
-    string_extend_cstr(output, " = ");
+    string_extend_cstr(&arena, output, "    %");
+    string_extend_size_t(&arena, output, operator->llvm_id);
+    string_extend_cstr(&arena, output, " = ");
     emit_operator_type(output, operator);
 
     emit_operator_operand(output, lhs);
-    string_extend_cstr(output, ", ");
+    string_extend_cstr(&arena, output, ", ");
     emit_operator_operand(output, rhs);
 
-    string_extend_cstr(output, "\n");
+    string_extend_cstr(&arena, output, "\n");
 }
 
 static void emit_src(String* output, const Node* src) {
@@ -298,8 +298,8 @@ static void emit_src(String* output, const Node* src) {
         case NODE_FUNCTION_RETURN_VALUE_SYM:
             // fallthrough
         case NODE_OPERATOR_RETURN_VALUE_SYM:
-            string_extend_cstr(output, " %");
-            string_extend_size_t(output, src->node_src->llvm_id);
+            string_extend_cstr(&arena, output, " %");
+            string_extend_size_t(&arena, output, src->node_src->llvm_id);
             break;
         case NODE_SYMBOL_UNTYPED:
             unreachable("untyped symbols should not still be present");
@@ -317,89 +317,89 @@ static void emit_load_variable(String* output, const Node* variable_call) {
     }
     assert(get_store_dest_id(variable_call) > 0);
 
-    string_extend_cstr(output, "    %");
-    string_extend_size_t(output, variable_call->llvm_id);
-    string_extend_cstr(output, " = load ");
+    string_extend_cstr(&arena, output, "    %");
+    string_extend_size_t(&arena, output, variable_call->llvm_id);
+    string_extend_cstr(&arena, output, " = load ");
     extend_type_call_str(output, variable_def->lang_type);
-    string_extend_cstr(output, ", ");
-    string_extend_cstr(output, "ptr");
-    string_extend_cstr(output, " %");
-    string_extend_size_t(output, get_store_dest_id(variable_call));
-    string_extend_cstr(output, ", align 8");
-    string_extend_cstr(output, "\n");
+    string_extend_cstr(&arena, output, ", ");
+    string_extend_cstr(&arena, output, "ptr");
+    string_extend_cstr(&arena, output, " %");
+    string_extend_size_t(&arena, output, get_store_dest_id(variable_call));
+    string_extend_cstr(&arena, output, ", align 8");
+    string_extend_cstr(&arena, output, "\n");
 }
 
 static void emit_load_another_node(String* output, const Node* load_node) {
     assert(load_node->node_src->llvm_id > 0);
 
-    string_extend_cstr(output, "    %");
-    string_extend_size_t(output, load_node->llvm_id);
-    string_extend_cstr(output, " = load ");
+    string_extend_cstr(&arena, output, "    %");
+    string_extend_size_t(&arena, output, load_node->llvm_id);
+    string_extend_cstr(&arena, output, " = load ");
     extend_type_call_str(output, load_node->lang_type);
-    string_extend_cstr(output, ", ");
-    string_extend_cstr(output, "ptr");
-    string_extend_cstr(output, " %");
-    string_extend_size_t(output, load_node->node_src->llvm_id);
-    string_extend_cstr(output, ", align 8");
-    string_extend_cstr(output, "\n");
+    string_extend_cstr(&arena, output, ", ");
+    string_extend_cstr(&arena, output, "ptr");
+    string_extend_cstr(&arena, output, " %");
+    string_extend_size_t(&arena, output, load_node->node_src->llvm_id);
+    string_extend_cstr(&arena, output, ", align 8");
+    string_extend_cstr(&arena, output, "\n");
 }
 
 static void emit_llvm_store_struct_literal(String* output, const Node* memcpy_node) {
     assert(memcpy_node->type == NODE_LLVM_STORE_STRUCT_LITERAL);
 
     size_t alloca_dest_id = get_store_dest_id(memcpy_node);
-    string_extend_cstr(output, "    call void @llvm.memcpy.p0.p0.i64(ptr align 4 %");
-    string_extend_size_t(output, alloca_dest_id);
-    string_extend_cstr(output, ", ptr align 4 @__const.main.");
-    string_extend_strv(output, nodes_single_child_const(memcpy_node)->name);
-    string_extend_cstr(output, ", i64 ");
-    string_extend_size_t(output, sizeof_struct(nodes_single_child_const(memcpy_node)));
-    string_extend_cstr(output, ", i1 false)\n");
+    string_extend_cstr(&arena, output, "    call void @llvm.memcpy.p0.p0.i64(ptr align 4 %");
+    string_extend_size_t(&arena, output, alloca_dest_id);
+    string_extend_cstr(&arena, output, ", ptr align 4 @__const.main.");
+    string_extend_strv(&arena, output, nodes_single_child_const(memcpy_node)->name);
+    string_extend_cstr(&arena, output, ", i64 ");
+    string_extend_size_t(&arena, output, sizeof_struct(nodes_single_child_const(memcpy_node)));
+    string_extend_cstr(&arena, output, ", i1 false)\n");
 }
 
 static void emit_store_another_node(String* output, const Node* store) {
     assert(store->type == NODE_STORE_ANOTHER_NODE);
     assert(store->lang_type.count > 0);
-    string_extend_cstr(output, "    store ");
+    string_extend_cstr(&arena, output, "    store ");
     extend_type_call_str(output, store->lang_type);
-    string_extend_cstr(output, " %");
-    string_extend_size_t(output, store->node_src->llvm_id);
-    string_extend_cstr(output, ", ptr %");
-    string_extend_size_t(output, store->node_dest->llvm_id);
-    string_extend_cstr(output, ", align 8");
-    string_extend_cstr(output, "\n");
+    string_extend_cstr(&arena, output, " %");
+    string_extend_size_t(&arena, output, store->node_src->llvm_id);
+    string_extend_cstr(&arena, output, ", ptr %");
+    string_extend_size_t(&arena, output, store->node_dest->llvm_id);
+    string_extend_cstr(&arena, output, ", align 8");
+    string_extend_cstr(&arena, output, "\n");
 }
 
 static void emit_llvm_store_literal(String* output, const Node* store) {
     assert(store->type == NODE_LLVM_STORE_LITERAL);
-    string_extend_cstr(output, "    store ");
+    string_extend_cstr(&arena, output, "    store ");
     extend_type_call_str(output, store->lang_type);
     extend_literal_decl_prefix(output, nodes_single_child_const(store));
-    string_extend_cstr(output, ", ptr %");
-    string_extend_size_t(output, store->node_dest->llvm_id);
-    string_extend_cstr(output, ", align 8");
-    string_extend_cstr(output, "\n");
+    string_extend_cstr(&arena, output, ", ptr %");
+    string_extend_size_t(&arena, output, store->node_dest->llvm_id);
+    string_extend_cstr(&arena, output, ", align 8");
+    string_extend_cstr(&arena, output, "\n");
 }
 
 static void emit_function_definition(String* output, const Node* fun_def) {
-    string_extend_cstr(output, "define dso_local ");
+    string_extend_cstr(&arena, output, "define dso_local ");
 
     extend_type_call_str(output, return_type_from_function_definition(fun_def)->lang_type);
 
-    string_extend_cstr(output, " @");
-    string_extend_strv(output, fun_def->name);
+    string_extend_cstr(&arena, output, " @");
+    string_extend_strv(&arena, output, fun_def->name);
 
     const Node* params = nodes_get_child_of_type_const(fun_def, NODE_FUNCTION_PARAMETERS);
-    string_append(output, '(');
+    string_append(&arena, output, '(');
     emit_function_params(output, params);
-    string_append(output, ')');
+    string_append(&arena, output, ')');
 
-    string_extend_cstr(output, " {\n");
+    string_extend_cstr(&arena, output, " {\n");
 
     const Node* block = nodes_get_child_of_type_const(fun_def, NODE_BLOCK);
     emit_block(output, block);
 
-    string_extend_cstr(output, "}\n");
+    string_extend_cstr(&arena, output, "}\n");
 }
 
 static void emit_function_return_statement(String* output, const Node* fun_return) {
@@ -414,32 +414,32 @@ static void emit_function_return_statement(String* output, const Node* fun_retur
             if (sym_to_return->token_type != TOKEN_NUM_LITERAL) {
                 todo();
             }
-            string_extend_cstr(output, "    ret ");
+            string_extend_cstr(&arena, output, "    ret ");
             extend_type_call_str(output, sym_to_rtn_def->lang_type);
-            string_extend_cstr(output, " ");
-            string_extend_strv(output, sym_to_return->str_data);
-            string_extend_cstr(output, "\n");
+            string_extend_cstr(&arena, output, " ");
+            string_extend_strv(&arena, output, sym_to_return->str_data);
+            string_extend_cstr(&arena, output, "\n");
             break;
         case NODE_SYMBOL_TYPED:
             if (sym_to_return->parent && sym_to_return->parent->type == NODE_STRUCT_MEMBER_SYM) {
                 break;
             }
-            string_extend_cstr(output, "    ret ");
+            string_extend_cstr(&arena, output, "    ret ");
             extend_type_call_str(output, sym_to_rtn_def->lang_type);
-            string_extend_cstr(output, " %");
-            string_extend_size_t(output, sym_to_return->node_src->llvm_id);
-            string_extend_cstr(output, "\n");
+            string_extend_cstr(&arena, output, " %");
+            string_extend_size_t(&arena, output, sym_to_return->node_src->llvm_id);
+            string_extend_cstr(&arena, output, "\n");
             break;
         case NODE_STRUCT_MEMBER_SYM: {
             Node* struct_def;
             if (!sym_tbl_lookup(&struct_def, sym_to_rtn_def->lang_type)) {
                 unreachable("");
             }
-            string_extend_cstr(output, "    ret ");
+            string_extend_cstr(&arena, output, "    ret ");
             extend_type_call_str(output, sym_to_return->lang_type);
-            string_extend_cstr(output, " %");
-            string_extend_size_t(output, sym_to_return->node_src->llvm_id);
-            string_extend_cstr(output, "\n");
+            string_extend_cstr(&arena, output, " %");
+            string_extend_size_t(&arena, output, sym_to_return->node_src->llvm_id);
+            string_extend_cstr(&arena, output, "\n");
             break;
         }
         case NODE_SYMBOL_UNTYPED:
@@ -450,20 +450,20 @@ static void emit_function_return_statement(String* output, const Node* fun_retur
 }
 
 static void emit_function_declaration(String* output, const Node* fun_decl) {
-    string_extend_cstr(output, "declare i32");
+    string_extend_cstr(&arena, output, "declare i32");
     //extend_literal_decl(output, fun_decl); // TODO
-    string_extend_cstr(output, " @");
-    string_extend_strv(output, fun_decl->name);
-    string_append(output, '(');
+    string_extend_cstr(&arena, output, " @");
+    string_extend_strv(&arena, output, fun_decl->name);
+    string_append(&arena, output, '(');
     emit_function_params(output, nodes_get_child_of_type_const(fun_decl, NODE_FUNCTION_PARAMETERS));
-    string_append(output, ')');
-    string_extend_cstr(output, "\n");
+    string_append(&arena, output, ')');
+    string_extend_cstr(&arena, output, "\n");
 }
 
 static void emit_label(String* output, const Node* label) {
-    string_extend_cstr(output, "\n");
-    string_extend_size_t(output, label->llvm_id);
-    string_extend_cstr(output, ":\n");
+    string_extend_cstr(&arena, output, "\n");
+    string_extend_size_t(&arena, output, label->llvm_id);
+    string_extend_cstr(&arena, output, ":\n");
 }
 
 static void emit_compare(String* output, const Node* operator) {
@@ -471,32 +471,32 @@ static void emit_compare(String* output, const Node* operator) {
     const Node* lhs = nodes_get_child_const(operator, 0);
     const Node* rhs = nodes_get_child_const(operator, 1);
 
-    string_extend_cstr(output, "    %");
-    string_extend_size_t(output, operator->llvm_id);
-    string_extend_cstr(output, " = icmp ");
+    string_extend_cstr(&arena, output, "    %");
+    string_extend_size_t(&arena, output, operator->llvm_id);
+    string_extend_cstr(&arena, output, " = icmp ");
 
     switch (operator->token_type) {
         case TOKEN_LESS_THAN:
-            string_extend_cstr(output, "slt");
+            string_extend_cstr(&arena, output, "slt");
             break;
         case TOKEN_GREATER_THAN:
-            string_extend_cstr(output, "sgt");
+            string_extend_cstr(&arena, output, "sgt");
             break;
         default:
             unreachable("");
     }
 
-    string_extend_cstr(output, " i32 ");
+    string_extend_cstr(&arena, output, " i32 ");
     emit_operator_operand(output, lhs);
-    string_extend_cstr(output, ", ");
+    string_extend_cstr(&arena, output, ", ");
     emit_operator_operand(output, rhs);
-    string_extend_cstr(output, "\n");
+    string_extend_cstr(&arena, output, "\n");
 }
 
 static void emit_goto(String* output, const Node* lang_goto) {
-    string_extend_cstr(output, "    br label %");
-    string_extend_size_t(output, get_matching_label_id(lang_goto));
-    string_append(output, '\n');
+    string_extend_cstr(&arena, output, "    br label %");
+    string_extend_size_t(&arena, output, get_matching_label_id(lang_goto));
+    string_append(&arena, output, '\n');
 }
 
 static void emit_cond_goto(String* output, const Node* cond_goto) {
@@ -517,28 +517,28 @@ static void emit_cond_goto(String* output, const Node* cond_goto) {
 
     emit_compare(output, operator);
 
-    string_extend_cstr(output, "    br i1 %");
-    string_extend_size_t(output, llvm_cmp_dest);
-    string_extend_cstr(output, ", label %");
-    string_extend_size_t(output, get_matching_label_id(label_if_true));
-    string_extend_cstr(output, ", label %");
-    string_extend_size_t(output, get_matching_label_id(label_if_false));
-    string_append(output, '\n');
+    string_extend_cstr(&arena, output, "    br i1 %");
+    string_extend_size_t(&arena, output, llvm_cmp_dest);
+    string_extend_cstr(&arena, output, ", label %");
+    string_extend_size_t(&arena, output, get_matching_label_id(label_if_true));
+    string_extend_cstr(&arena, output, ", label %");
+    string_extend_size_t(&arena, output, get_matching_label_id(label_if_false));
+    string_append(&arena, output, '\n');
 }
 
 static void emit_struct_definition(String* output, const Node* statement) {
-    string_extend_cstr(output, "%struct.");
-    string_extend_strv(output, statement->name);
-    string_extend_cstr(output, " = type { ");
+    string_extend_cstr(&arena, output, "%struct.");
+    string_extend_strv(&arena, output, statement->name);
+    string_extend_cstr(&arena, output, " = type { ");
     bool is_first = true;
     nodes_foreach_child(member, statement) {
         if (!is_first) {
-            string_extend_cstr(output, ", ");
+            string_extend_cstr(&arena, output, ", ");
         }
         extend_type_decl_str(output, member, false);
         is_first = false;
     }
-    string_extend_cstr(output, " }\n");
+    string_extend_cstr(&arena, output, " }\n");
 }
 
 static void emit_load_struct_element_pointer(String* output, const Node* load_elem_ptr) {
@@ -552,16 +552,16 @@ static void emit_load_struct_element_pointer(String* output, const Node* load_el
     }
     size_t member_idx = get_member_index(struct_def, nodes_single_child_const(load_elem_ptr));
     assert(var_def->lang_type.count > 0);
-    string_extend_cstr(output, "    %"); 
-    string_extend_size_t(output, load_elem_ptr->llvm_id);
-    string_extend_cstr(output, " = getelementptr inbounds %struct.");
-    string_extend_strv(output, var_def->lang_type);
-    string_extend_cstr(output, ", ptr %");
-    string_extend_size_t(output, load_elem_ptr->node_src->llvm_id);
-    string_extend_cstr(output, ", i32 0");
-    string_extend_cstr(output, ", i32 ");
-    string_extend_size_t(output, member_idx);
-    string_append(output, '\n');
+    string_extend_cstr(&arena, output, "    %"); 
+    string_extend_size_t(&arena, output, load_elem_ptr->llvm_id);
+    string_extend_cstr(&arena, output, " = getelementptr inbounds %struct.");
+    string_extend_strv(&arena, output, var_def->lang_type);
+    string_extend_cstr(&arena, output, ", ptr %");
+    string_extend_size_t(&arena, output, load_elem_ptr->node_src->llvm_id);
+    string_extend_cstr(&arena, output, ", i32 0");
+    string_extend_cstr(&arena, output, ", i32 ");
+    string_extend_size_t(&arena, output, member_idx);
+    string_append(&arena, output, '\n');
 }
 
 static void emit_block(String* output, const Node* block) {
@@ -647,28 +647,28 @@ static void emit_symbol(String* output, const Symbol_table_node node) {
     size_t literal_width = node.node->str_data.count + 1 -
                            get_count_excape_seq(node.node->str_data);
 
-    string_extend_cstr(output, "@.");
-    string_extend_strv(output, node.key);
-    string_extend_cstr(output, " = private unnamed_addr constant [ ");
-    string_extend_size_t(output, literal_width);
-    string_extend_cstr(output, " x i8] c\"");
-    string_extend_strv_eval_escapes(output, node.node->str_data);
-    string_extend_cstr(output, "\\00\", align 1");
-    string_extend_cstr(output, "\n");
+    string_extend_cstr(&arena, output, "@.");
+    string_extend_strv(&arena, output, node.key);
+    string_extend_cstr(&arena, output, " = private unnamed_addr constant [ ");
+    string_extend_size_t(&arena, output, literal_width);
+    string_extend_cstr(&arena, output, " x i8] c\"");
+    string_extend_strv_eval_escapes(&arena, output, node.node->str_data);
+    string_extend_cstr(&arena, output, "\\00\", align 1");
+    string_extend_cstr(&arena, output, "\n");
 }
 
 static void emit_struct_literal(String* output, const Node* literal) {
     assert(literal->lang_type.count > 0);
-    string_extend_cstr(output, "@__const.main.");
-    string_extend_strv(output, literal->name);
-    string_extend_cstr(output, " = private unnamed_addr constant %struct.");
-    string_extend_strv(output, literal->lang_type);
-    string_extend_cstr(output, " {");
+    string_extend_cstr(&arena, output, "@__const.main.");
+    string_extend_strv(&arena, output, literal->name);
+    string_extend_cstr(&arena, output, " = private unnamed_addr constant %struct.");
+    string_extend_strv(&arena, output, literal->lang_type);
+    string_extend_cstr(&arena, output, " {");
 
     size_t is_first = true;
     nodes_foreach_child(member_store, literal) {
         if (!is_first) {
-            string_append(output, ',');
+            string_append(&arena, output, ',');
         }
         assert(member_store->type == NODE_STORE_VARIABLE);
         const Node* member = nodes_single_child_const(member_store);
@@ -676,7 +676,7 @@ static void emit_struct_literal(String* output, const Node* literal) {
         is_first = false;
     }
 
-    string_extend_cstr(output, "} , align 4\n");
+    string_extend_cstr(&arena, output, "} , align 4\n");
 }
 
 static void emit_symbols(String* output) {

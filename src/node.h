@@ -84,9 +84,9 @@ extern Node* root_of_tree;
 
 #define NODE_FMT STR_VIEW_FMT
 
-Str_view node_print_internal(const Node* node);
+Str_view node_print_internal(Arena* arena, const Node* node);
 
-#define node_print(root) str_view_print(node_print_internal((root)))
+#define node_print(root) str_view_print(node_print_internal(&print_arena, (root)))
 
 #define node_printf(node) \
     do { \

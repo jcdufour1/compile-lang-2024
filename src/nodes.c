@@ -103,7 +103,7 @@ void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, const Node* root, const 
     nodes_foreach_from_curr_const(curr_node, root) {
         string_set_to_zero_len(&padding);
         for (int idx = 0; idx < pad_x; idx++) {
-            string_append(&padding, ' ');
+            string_append(&print_arena, &padding, ' ');
         }
 
         log_file_new(log_level, file, line, STRING_FMT NODE_FMT"\n", string_print(padding), node_print(curr_node));
@@ -203,8 +203,8 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
     }
 }
 
-static void extend_node_text(String* string, const Node* node, bool do_recursion) {
-    string_extend_strv(string, node_type_get_strv(node->type));
+static void extend_node_text(Arena* arena, String* string, const Node* node, bool do_recursion) {
+    string_extend_strv(arena, string, node_type_get_strv(node->type));
 
     switch (node->type) {
         case NODE_ALLOCA:
@@ -220,12 +220,12 @@ static void extend_node_text(String* string, const Node* node, bool do_recursion
         case NODE_COND_GOTO:
             // fallthrough
         case NODE_LABEL:
-            string_extend_strv_in_par(string, node->name);
+            string_extend_strv_in_par(arena, string, node->name);
             break;
         case NODE_LITERAL:
-            string_extend_strv_in_gtlt(string, token_type_to_str_view(node->token_type));
-            string_extend_strv(string, node->name);
-            string_extend_strv_in_par(string, node->str_data);
+            string_extend_strv_in_gtlt(arena, string, token_type_to_str_view(node->token_type));
+            string_extend_strv(arena, string, node->name);
+            string_extend_strv_in_par(arena, string, node->str_data);
             break;
         case NODE_SYMBOL_UNTYPED:
             // fallthrough
@@ -242,20 +242,20 @@ static void extend_node_text(String* string, const Node* node, bool do_recursion
         case NODE_STRUCT_DEFINITION:
             // fallthrough
         case NODE_FUNCTION_CALL:
-            string_extend_strv_in_par(string, node->name);
-            string_extend_size_t(string, node->llvm_id);
+            string_extend_strv_in_par(arena, string, node->name);
+            string_extend_size_t(arena, string, node->llvm_id);
             break;
         case NODE_LANG_TYPE:
-            string_extend_strv_in_gtlt(string, node->lang_type);
+            string_extend_strv_in_gtlt(arena, string, node->lang_type);
             break;
         case NODE_OPERATOR:
-            string_extend_strv(string, token_type_to_str_view(node->token_type));
+            string_extend_strv(arena, string, token_type_to_str_view(node->token_type));
             break;
         case NODE_VARIABLE_DEFINITION:
             // fallthrough
         case NODE_STRUCT_LITERAL:
-            string_extend_strv_in_gtlt(string, node->lang_type);
-            string_extend_strv(string, node->name);
+            string_extend_strv_in_gtlt(arena, string, node->lang_type);
+            string_extend_strv(arena, string, node->name);
             break;
         case NODE_FUNCTION_PARAMETERS:
             // fallthrough
@@ -299,39 +299,39 @@ static void extend_node_text(String* string, const Node* node, bool do_recursion
             // fallthrough
         case NODE_SYMBOL_TYPED:
             // fallthrough
-            string_extend_strv_in_gtlt(string, node->lang_type);
-            string_extend_strv_in_par(string, node->name);
-                string_extend_cstr(string, "[");
+            string_extend_strv_in_gtlt(arena, string, node->lang_type);
+            string_extend_strv_in_par(arena, string, node->name);
+                string_extend_cstr(arena, string, "[");
             if (node->node_src && do_recursion) {
-                string_extend_cstr(string, "node_src:");
-                extend_node_text(string, node->node_src, false);
+                string_extend_cstr(arena, string, "node_src:");
+                extend_node_text(arena, string, node->node_src, false);
             }
-            string_extend_cstr(string, " ");
+            string_extend_cstr(arena, string, " ");
             if (node->node_dest && do_recursion) {
-                string_extend_cstr(string, "node_dest:");
-                extend_node_text(string, node->node_dest, false);
+                string_extend_cstr(arena, string, "node_dest:");
+                extend_node_text(arena, string, node->node_dest, false);
             }
-            string_extend_cstr(string, "]");
+            string_extend_cstr(arena, string, "]");
             break;
         default:
             log(LOG_FETAL, "type: "STR_VIEW_FMT"\n", str_view_print(node_type_get_strv(node->type)));
             unreachable("");
     }
 
-    string_extend_cstr(string, "    line:");
-    string_extend_size_t(string, node->pos.line);
+    string_extend_cstr(arena, string, "    line:");
+    string_extend_size_t(arena, string, node->pos.line);
 }
 
-Str_view node_print_internal(const Node* node) {
+Str_view node_print_internal(Arena* arena, const Node* node) {
     String buf = {0}; // todo: put these strings in an arena to free, etc
 
     if (!node) {
-        string_extend_cstr(&buf, "<null>");
+        string_extend_cstr(arena, &buf, "<null>");
         Str_view str_view = {.str = buf.buf, .count = buf.info.count};
         return str_view;
     }
 
-    extend_node_text(&buf, node, true);
+    extend_node_text(arena, &buf, node, true);
 
     Str_view str_view = {.str = buf.buf, .count = buf.info.count};
     return str_view;
