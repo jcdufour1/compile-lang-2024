@@ -14,8 +14,8 @@ Str_view literal_name_new(void) {
     sprintf(var_name, "str%zu", count);
 
     String symbol_name = {0};
-    string_cpy_cstr_inplace(&arena, &symbol_name, var_name);
-    string_vec_append(&arena, &literal_strings, symbol_name);
+    string_cpy_cstr_inplace(&a_main, &symbol_name, var_name);
+    string_vec_append(&a_main, &literal_strings, symbol_name);
 
     count++;
 

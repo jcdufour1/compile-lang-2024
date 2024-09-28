@@ -56,7 +56,7 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
 }
 
 Str_view token_print_internal(Arena* arena, Token token) {
-    static String buf = {0};
+    String buf = {0};
     string_set_to_zero_len(&buf);
 
     string_extend_strv(arena, &buf, token_type_to_str_view(token.type));

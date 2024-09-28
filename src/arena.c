@@ -124,8 +124,8 @@ static size_t space_remaining(const Arena_buf arena_buf) {
     return arena_buf.capacity - arena_buf.in_use;
 }
 
-static size_t get_total_alloced(void) {
-    Arena_buf* curr_buf = arena.buf;
+static size_t get_total_alloced(Arena* arena) {
+    Arena_buf* curr_buf = arena->buf;
     size_t total_alloced = 0;
     while (curr_buf) {
         total_alloced += curr_buf->capacity;
@@ -147,7 +147,7 @@ void* arena_alloc(Arena* arena, size_t capacity_needed) {
 
     if (!arena_buf_new_region) {
         // could not find space; must allocate new Arena_buf
-        size_t arena_buf_capacity = MAX(get_total_alloced(), ARENA_DEFAULT_CAPACITY);
+        size_t arena_buf_capacity = MAX(get_total_alloced(arena), ARENA_DEFAULT_CAPACITY);
         arena_buf_capacity = MAX(arena_buf_capacity, capacity_needed + sizeof(*arena->buf));
         arena_buf_new_region = safe_malloc(arena_buf_capacity);
         arena_buf_new_region->buf_after_taken = arena_buf_new_region + 1;
@@ -198,7 +198,7 @@ void arena_reset(Arena* arena) {
         assert(curr_buf->in_use >= sizeof(*arena->buf));
         curr_buf->buf_after_taken = (char*)curr_buf->buf_after_taken - (curr_buf->in_use - sizeof(*arena->buf));
         memset(
-            (char*)curr_buf->buf_after_taken + sizeof(*arena->buf),
+            (char*)curr_buf->buf_after_taken,
             0,
             curr_buf->in_use - sizeof(*arena->buf)
         );
@@ -207,7 +207,7 @@ void arena_reset(Arena* arena) {
     }
 }
 
-size_t arena_get_total_capacity(Arena* arena) {
+size_t arena_get_total_capacity(const Arena* arena) {
     size_t total = 0;
     Arena_buf* curr_buf = arena->buf;
     while (curr_buf) {

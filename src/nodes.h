@@ -82,7 +82,7 @@ static inline void nodes_reset_links_of_self_only(Node* node, bool keep_children
 }
 
 static inline Node* node_new(Pos pos) {
-    Node* new_node = arena_alloc(&arena, sizeof(*new_node));
+    Node* new_node = arena_alloc(&a_main, sizeof(*new_node));
     if (!root_of_tree) {
         // it is assumed that the first node created is the root
         root_of_tree = new_node;

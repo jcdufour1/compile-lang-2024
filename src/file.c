@@ -18,7 +18,7 @@ bool read_file(String* file_text, const char* input_file_name) {
     size_t amount_read;
     // TODO: check for errors?
     do {
-        string_reserve(&arena, file_text, buf_size);
+        string_reserve(&a_main, file_text, buf_size);
         amount_read = fread(file_text->buf + file_text->info.count, 1, buf_size, file);
         file_text->info.count += amount_read;
     } while (amount_read > 0);

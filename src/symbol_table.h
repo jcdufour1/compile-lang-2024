@@ -83,7 +83,7 @@ static inline void sym_tbl_expand_if_nessessary(void) {
     }
 
     if (should_move_elements) {
-        new_table_nodes = arena_alloc(&arena, symbol_table.capacity*node_size);
+        new_table_nodes = arena_alloc(&a_main, symbol_table.capacity*node_size);
         sym_tbl_cpy(new_table_nodes, symbol_table.table_nodes, old_capacity_node_count);
         if (symbol_table.table_nodes) {
             // not freeing here currently

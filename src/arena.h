@@ -29,7 +29,7 @@ typedef struct {
 #endif
 } Arena;
 
-extern Arena arena;
+extern Arena a_main;
 extern Arena print_arena;
 
 extern void* arena_buffers[100000];
@@ -72,6 +72,6 @@ static inline size_t arena_count_allocated_nodes(void) {
 // reset, but do not free, allocated area
 void arena_reset(Arena* arena);
 
-size_t arena_get_total_capacity(Arena* arena);
+size_t arena_get_total_capacity(const Arena* arena);
 
 #endif // ARENA_H

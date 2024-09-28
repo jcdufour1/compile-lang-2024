@@ -7,7 +7,7 @@ Symbol_table symbol_table = {0};
 
 Parameters params = {0};
 
-Arena arena = {0};
+Arena a_main = {0};
 Arena print_arena = {0};
 
 Node* root_of_tree = NULL;
