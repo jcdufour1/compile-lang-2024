@@ -162,7 +162,9 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
                 break;
             case NODE_STRUCT_LITERAL:
                 todo();
-            case NODE_SYMBOL: {
+            case NODE_SYMBOL_UNTYPED:
+                unreachable("untyped symbols should not still be present");
+            case NODE_SYMBOL_TYPED: {
                 node_printf(var_decl_or_def);
                 node_printf(argument);
                 if (is_struct_variable_definition(var_decl_or_def)) {
@@ -253,7 +255,7 @@ static void emit_operator_operand(String* output, const Node* operand) {
         case NODE_LITERAL:
             string_extend_strv(output, operand->str_data);
             break;
-        case NODE_SYMBOL:
+        case NODE_SYMBOL_TYPED:
             string_extend_cstr(output, "%");
             string_extend_size_t(output, operand->node_src->llvm_id);
             break;
@@ -261,6 +263,8 @@ static void emit_operator_operand(String* output, const Node* operand) {
             string_extend_cstr(output, "%");
             string_extend_size_t(output, operand->node_src->llvm_id);
             break;
+        case NODE_SYMBOL_UNTYPED:
+            unreachable("untyped symbols should not still be present");
         default:
             unreachable(NODE_FMT"\n", node_print(operand));
     }
@@ -287,7 +291,7 @@ static void emit_src(String* output, const Node* src) {
         case NODE_LITERAL:
             extend_literal_decl_prefix(output, src);
             break;
-        case NODE_SYMBOL:
+        case NODE_SYMBOL_TYPED:
             // fallthrough
         case NODE_FUNCTION_PARAM_SYM:
             // fallthrough
@@ -297,6 +301,8 @@ static void emit_src(String* output, const Node* src) {
             string_extend_cstr(output, " %");
             string_extend_size_t(output, src->node_src->llvm_id);
             break;
+        case NODE_SYMBOL_UNTYPED:
+            unreachable("untyped symbols should not still be present");
         default:
             node_printf(src);
             todo();
@@ -414,7 +420,7 @@ static void emit_function_return_statement(String* output, const Node* fun_retur
             string_extend_strv(output, sym_to_return->str_data);
             string_extend_cstr(output, "\n");
             break;
-        case NODE_SYMBOL:
+        case NODE_SYMBOL_TYPED:
             if (sym_to_return->parent && sym_to_return->parent->type == NODE_STRUCT_MEMBER_SYM) {
                 break;
             }
@@ -436,6 +442,8 @@ static void emit_function_return_statement(String* output, const Node* fun_retur
             string_extend_cstr(output, "\n");
             break;
         }
+        case NODE_SYMBOL_UNTYPED:
+            unreachable("untyped symbols should not still be present");
         default:
             unreachable("");
     }

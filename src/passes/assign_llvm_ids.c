@@ -14,7 +14,7 @@ bool assign_llvm_ids(Node* curr_node) {
             return false;
         case NODE_FUNCTION_PARAMETERS:
             return false;
-        case NODE_SYMBOL:
+        case NODE_SYMBOL_TYPED:
             return false;
         case NODE_LITERAL:
             return false;
@@ -32,6 +32,11 @@ bool assign_llvm_ids(Node* curr_node) {
             return false;
         case NODE_LANG_TYPE:
             return false;
+        case NODE_SYMBOL_UNTYPED:
+            if (!curr_node->parent || curr_node->parent->type != NODE_COND_GOTO) {
+                unreachable("node_symbol_untyped should not exist here except in conditional goto");
+            }
+            // fallthrough
         case NODE_LOAD_STRUCT_ELEMENT_PTR:
             // fallthrough
         case NODE_LOAD_ANOTHER_NODE:

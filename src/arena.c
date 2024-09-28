@@ -127,6 +127,7 @@ static size_t space_remaining(const Arena_buf arena_buf) {
 
 // TODO: combine contiguous free nodes
 static bool use_free_node(void** buf, size_t capacity_needed) {
+    return false;
     Arena_free_node* curr_node = arena.free_node;
     while (curr_node) {
         if (curr_node->capacity >= capacity_needed) {
@@ -214,6 +215,7 @@ void* arena_alloc(size_t capacity_needed) {
 }
 
 static bool find_empty_free_node(Arena_free_node** result) {
+    return false;
     Arena_free_node* curr_free_node = arena.free_node;
     while (curr_free_node) {
         if (curr_free_node->capacity < 1) {
@@ -228,6 +230,7 @@ static bool find_empty_free_node(Arena_free_node** result) {
 }
 
 static void join_two_free_nodes_if_possible(Arena_free_node* node_to_join) {
+    return;
     Arena_free_node* curr_node = arena.free_node;
     while (curr_node) {
         if ((char*)node_to_join->buf + node_to_join->capacity == curr_node->buf) {
@@ -240,6 +243,7 @@ static void join_two_free_nodes_if_possible(Arena_free_node* node_to_join) {
 }
 
 static bool expand_neighbor_free_node(void* buf, size_t capacity) {
+    return false;
     Arena_free_node* curr_node = arena.free_node;
     while (curr_node) {
         if ((char*)curr_node->buf + curr_node->capacity == (char*)buf) {

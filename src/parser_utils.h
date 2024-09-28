@@ -27,7 +27,7 @@ Llvm_id get_matching_label_id(const Node* symbol_call);
 // lhs and rhs should not be used for other tasks after this
 Node* assignment_new(Node* lhs, Node* rhs);
 
-Node* literal_new(Str_view value, Pos pos);
+Node* literal_new(Str_view value, TOKEN_TYPE token_type, Pos pos);
 
 Node* symbol_new(Str_view symbol_name, Pos pos);
 
@@ -51,7 +51,7 @@ static inline bool is_struct_variable_definition(const Node* var_def) {
 }
 
 static inline bool is_struct_symbol(const Node* symbol) {
-    assert(symbol->type == NODE_SYMBOL || symbol->type == NODE_STRUCT_MEMBER_SYM);
+    assert(symbol->type == NODE_SYMBOL_TYPED || symbol->type == NODE_STRUCT_MEMBER_SYM);
 
     Node* var_def;
     if (!sym_tbl_lookup(&var_def, symbol->name)) {
@@ -109,5 +109,22 @@ static inline Node* get_struct_definition(Node* node) {
 static inline const Node* get_struct_definition_const(const Node* node) {
     return get_struct_definition((Node*)node);
 }
+
+bool set_assignment_operand_types(Node* lhs, Node* rhs);
+
+// returns false if unsuccessful
+bool try_set_operator_lang_type(Str_view* result, Node* operator);
+
+// returns false if unsuccessful
+bool try_set_operator_operand_lang_type(Str_view* result, Node* operand);
+
+// set symbol lang_type, and report error if symbol is undefined
+void set_symbol_type(Node* sym_untyped);
+
+void set_function_call_types(Node* fun_call);
+
+void set_struct_member_symbol_types(const Node* struct_memb_sym);
+
+void set_return_statement_types(Node* rtn_statement);
 
 #endif // PARSER_UTIL_H

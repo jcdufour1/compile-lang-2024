@@ -75,7 +75,7 @@ static Node* insert_load(Node* node_insert_load_before, Node* symbol_call) {
             return NULL;
         case NODE_STRUCT_MEMBER_SYM:
             // fallthrough
-        case NODE_SYMBOL:
+        case NODE_SYMBOL_TYPED:
             // fallthrough
         case NODE_VARIABLE_DEFINITION:
             break;
@@ -113,7 +113,7 @@ static void insert_store(Node* node_insert_store_before, Node* symbol_call /* sr
     switch (symbol_call->type) {
         case NODE_LITERAL:
             return;
-        case NODE_SYMBOL:
+        case NODE_SYMBOL_TYPED:
             // fallthrough
         case NODE_VARIABLE_DEFINITION:
             node_printf(symbol_call);
@@ -144,7 +144,7 @@ static void insert_store(Node* node_insert_store_before, Node* symbol_call /* sr
         nodes_insert_before(node_insert_store_before, store);
 
         switch (symbol_call->type) {
-            case NODE_SYMBOL:
+            case NODE_SYMBOL_TYPED:
                 todo();
                 symbol_call->type = NODE_LLVM_SYMBOL;
                 symbol_call->node_src = get_storage_location(symbol_call);
@@ -176,7 +176,7 @@ static void load_operator_operand(Node* node_insert_before, Node* operand) {
             break;
         case NODE_VARIABLE_DEFINITION:
             todo();
-        case NODE_SYMBOL:
+        case NODE_SYMBOL_TYPED:
             insert_load(node_insert_before, operand);
             break;
         case NODE_OPERATOR_RETURN_VALUE_SYM:
@@ -219,13 +219,13 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
             nodes_remove(lhs, false);
             nodes_insert_before(node_to_insert_before, lhs);
             break;
-        case NODE_SYMBOL:
+        case NODE_SYMBOL_TYPED:
             node_printf(lhs);
             break;
         case NODE_STRUCT_MEMBER_SYM:
             break;
         default:
-            todo();
+            unreachable(NODE_FMT, node_print(lhs));
     }
    
     switch (rhs->type) {
@@ -237,7 +237,7 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
             //rhs_load = insert_load(node_to_insert_before, rhs);
             //assert(rhs_load->lang_type.count > 0);
             break;
-        case NODE_SYMBOL:
+        case NODE_SYMBOL_TYPED:
             rhs_load = insert_load(node_to_insert_before, rhs);
             assert(rhs_load);
             assert(rhs_load->lang_type.count > 0);
@@ -340,7 +340,7 @@ static void add_load_return_statement(Node* return_statement) {
     switch (node_to_return->type) {
         case NODE_STRUCT_MEMBER_SYM:
             // fallthrough
-        case NODE_SYMBOL:
+        case NODE_SYMBOL_TYPED:
             insert_load(return_statement, node_to_return);
             return;
         case NODE_FUNCTION_CALL:
@@ -439,7 +439,9 @@ bool add_load_and_store(Node* start_start_node) {
                 break;
             case NODE_BLOCK:
                 break;
-            case NODE_SYMBOL:
+            case NODE_SYMBOL_UNTYPED:
+                unreachable("untyped symbol should not still be present");
+            case NODE_SYMBOL_TYPED:
                 break;
             case NODE_RETURN_STATEMENT:
                 add_load_return_statement(curr_node);

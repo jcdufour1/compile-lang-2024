@@ -60,6 +60,7 @@ static void move_operator_back(Node* return_statement) {
     Node* new_assign = assignment_new(symbol_new(var_name, operation->pos), operation);
     nodes_insert_before(return_statement, new_assign);
     nodes_append_child(return_statement, symbol_new(var_name, new_assign->pos));
+    set_return_statement_types(return_statement);
 }
 
 bool flatten_operations(Node* curr_node) {

@@ -37,7 +37,7 @@ void msg_invalid_struct_member(const Node* node) {
     switch (node->type) {
         case NODE_STRUCT_MEMBER_SYM:
             todo();
-        case NODE_SYMBOL: {
+        case NODE_SYMBOL_TYPED: {
             Node* struct_memb_sym = node->parent;
             assert(struct_memb_sym->type == NODE_STRUCT_MEMBER_SYM);
             msg(
@@ -91,7 +91,7 @@ void msg_invalid_struct_member_assignment_in_literal(
 }
 
 void meg_struct_assigned_to_invalid_literal(const Node* lhs, const Node* rhs) {
-    assert(lhs->type == NODE_SYMBOL && is_struct_symbol(lhs));
+    assert(lhs->type == NODE_SYMBOL_TYPED && is_struct_symbol(lhs));
     assert(rhs->type == NODE_LITERAL);
 
     Node* struct_var_def;
@@ -112,7 +112,7 @@ void meg_struct_assigned_to_invalid_literal(const Node* lhs, const Node* rhs) {
 }
 
 void msg_invalid_assignment_to_literal(const Node* lhs, const Node* rhs) {
-    assert(lhs->type == NODE_SYMBOL && rhs->type == NODE_LITERAL);
+    assert(lhs->type == NODE_SYMBOL_TYPED && rhs->type == NODE_LITERAL);
 
     Node* var_def;
     try(sym_tbl_lookup(&var_def, lhs->name));
@@ -128,7 +128,7 @@ void msg_invalid_assignment_to_operation(
     const Node* operation,
     Str_view operation_lang_type
 ) {
-    assert(lhs->type == NODE_SYMBOL);
+    assert(lhs->type == NODE_SYMBOL_TYPED);
 
     Node* var_def;
     try(sym_tbl_lookup(&var_def, lhs->name));

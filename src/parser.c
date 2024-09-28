@@ -342,7 +342,7 @@ static Node* extract_symbol(Tk_view* tokens) {
     assert(token.type == TOKEN_SYMBOL);
 
     Node* sym_node = node_new(token.pos);
-    sym_node->type = NODE_SYMBOL;
+    sym_node->type = NODE_SYMBOL_UNTYPED;
     sym_node->name = token.text;
     assert(sym_node->pos.line > 0);
     return sym_node;

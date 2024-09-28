@@ -11,7 +11,8 @@ static const char* NODE_FUNCTION_RETURN_TYPES_DESCRIPTION = "fn_return_types";
 static const char* NODE_LANG_TYPE_DESCRIPTION = "lang_type";
 static const char* NODE_OPERATOR_DESCRIPTION = "operator";
 static const char* NODE_BLOCK_DESCRIPTION = "block";
-static const char* NODE_SYMBOL_DESCRIPTION = "sym";
+static const char* NODE_SYMBOL_UNTYPED_DESCRIPTION = "sym_untyped";
+static const char* NODE_SYMBOL_TYPED_DESCRIPTION= "sym_typed";
 static const char* NODE_RETURN_STATEMENT_DESCRIPTION = "return";
 static const char* NODE_VARIABLE_DEFINITION_DESCRIPTION = "var_def";
 static const char* NODE_FUNCTION_DECLARATION_DESCRIPTION = "fun_declaration";
@@ -67,14 +68,10 @@ static void nodes_assert_tree_linkage_is_consistant_internal(Node_ptr_vec* nodes
         bool dummy_bool = true;
         assert(dummy_bool);
         if (curr_node->next) {
-            //node_printf(curr_node->prev->next);
             assert(curr_node == curr_node->next->prev);
         }
         if (curr_node->prev) {
             if (curr_node != curr_node->prev->next) {
-                node_printf(curr_node);
-                node_printf(curr_node->prev);
-                node_printf(curr_node->prev->next);
                 assert(false);
             }
         }
@@ -134,8 +131,10 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_OPERATOR_DESCRIPTION);
         case NODE_BLOCK:
             return str_view_from_cstr(NODE_BLOCK_DESCRIPTION);
-        case NODE_SYMBOL:
-            return str_view_from_cstr(NODE_SYMBOL_DESCRIPTION);
+        case NODE_SYMBOL_UNTYPED:
+            return str_view_from_cstr(NODE_SYMBOL_UNTYPED_DESCRIPTION);
+        case NODE_SYMBOL_TYPED:
+            return str_view_from_cstr(NODE_SYMBOL_TYPED_DESCRIPTION);
         case NODE_RETURN_STATEMENT:
             return str_view_from_cstr(NODE_RETURN_STATEMENT_DESCRIPTION);
         case NODE_VARIABLE_DEFINITION:
@@ -228,7 +227,7 @@ static void extend_node_text(String* string, const Node* node, bool do_recursion
             string_extend_strv(string, node->name);
             string_extend_strv_in_par(string, node->str_data);
             break;
-        case NODE_SYMBOL:
+        case NODE_SYMBOL_UNTYPED:
             // fallthrough
         case NODE_STRUCT_MEMBER_SYM_PIECE:
             // fallthrough
@@ -298,6 +297,8 @@ static void extend_node_text(String* string, const Node* node, bool do_recursion
             // fallthrough
         case NODE_LLVM_STORE_STRUCT_LITERAL:
             // fallthrough
+        case NODE_SYMBOL_TYPED:
+            // fallthrough
             string_extend_strv_in_gtlt(string, node->lang_type);
             string_extend_strv_in_par(string, node->name);
                 string_extend_cstr(string, "[");
@@ -316,6 +317,9 @@ static void extend_node_text(String* string, const Node* node, bool do_recursion
             log(LOG_FETAL, "type: "STR_VIEW_FMT"\n", str_view_print(node_type_get_strv(node->type)));
             unreachable("");
     }
+
+    string_extend_cstr(string, "    line:");
+    string_extend_size_t(string, node->pos.line);
 }
 
 Str_view node_print_internal(const Node* node) {

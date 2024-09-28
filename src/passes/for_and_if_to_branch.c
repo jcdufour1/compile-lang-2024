@@ -9,6 +9,8 @@ static Node* operation_new(Node* lhs, Node* rhs, TOKEN_TYPE operation_type) {
     assignment->token_type = operation_type;
     nodes_append_child(assignment, lhs);
     nodes_append_child(assignment, rhs);
+
+    set_assignment_operand_types(lhs, rhs);
     return assignment;
 }
 
@@ -41,28 +43,22 @@ static Node* cond_goto_new(
     assert(!rhs->next);
     assert(!rhs->parent);
 
-    Node* operator = node_new(lhs->pos);
-    operator->type = NODE_OPERATOR;
-    operator->token_type = operator_type;
-    nodes_append_child(operator, lhs);
-    nodes_append_child(operator, rhs);
-
     Node* cond_goto = node_new(lhs->pos);
     cond_goto->type = NODE_COND_GOTO;
-    nodes_append_child(cond_goto, operator);
+    nodes_append_child(cond_goto, operation_new(lhs, rhs, operator_type));
     nodes_append_child(cond_goto, symbol_new(label_name_if_true, lhs->pos));
     nodes_append_child(cond_goto, symbol_new(label_name_if_false, lhs->pos));
     return cond_goto;
 }
 
 static Node* get_for_loop_cond_var_assign(Str_view sym_name, Pos pos) {
-    Node* literal = literal_new(str_view_from_cstr("1"), pos);
+    Node* literal = literal_new(str_view_from_cstr("1"), TOKEN_NUM_LITERAL, pos);
     Node* operation = operation_new(symbol_new(sym_name, pos), literal, TOKEN_SINGLE_PLUS);
     return assignment_new(symbol_new(sym_name, pos), operation);
 }
 
 static void for_loop_to_branch(Node* for_loop) {
-    log_tree(LOG_DEBUG, for_loop);
+    log_tree(LOG_TRACE, for_loop);
     Node* lhs = nodes_get_child_of_type(for_loop, NODE_FOR_LOWER_BOUND);
     Node* rhs = nodes_get_child_of_type(for_loop, NODE_FOR_UPPER_BOUND);
     Node* for_block = nodes_get_child_of_type(for_loop, NODE_BLOCK);
@@ -163,6 +159,7 @@ bool for_and_if_to_branch(Node* block) {
     }
     Node* curr_node = nodes_get_local_rightmost(block->left_child);
     bool go_to_prev;
+    (void) go_to_prev;
     while (curr_node) {
         bool go_to_prev = true;
         switch (curr_node->type) {
