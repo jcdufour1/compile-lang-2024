@@ -661,7 +661,6 @@ static void emit_symbols(String* output) {
                 emit_symbol(output, curr_node);
                 break;
             case NODE_STRUCT_LITERAL:
-                node_printf(curr_node.node);
                 emit_struct_literal(output, curr_node.node);
                 break;
             case NODE_VARIABLE_DEFINITION:

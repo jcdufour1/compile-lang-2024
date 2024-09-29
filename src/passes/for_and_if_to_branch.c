@@ -2,18 +2,6 @@
 #include "../parser_utils.h"
 #include "../nodes.h"
 
-static Node* operation_new(Node* lhs, Node* rhs, TOKEN_TYPE operation_type) {
-    // TODO: check if lhs or rhs were already appended to the tree
-    Node* assignment = node_new(lhs->pos);
-    assignment->type = NODE_OPERATOR;
-    assignment->token_type = operation_type;
-    nodes_append_child(assignment, lhs);
-    nodes_append_child(assignment, rhs);
-
-    set_assignment_operand_types(lhs, rhs);
-    return assignment;
-}
-
 static Node* label_new(Str_view label_name, Pos pos) {
     Node* label = node_new(pos);
     label->type = NODE_LABEL;

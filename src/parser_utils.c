@@ -196,6 +196,19 @@ Node* symbol_new(Str_view symbol_name, Pos pos) {
     return symbol;
 }
 
+Node* operation_new(Node* lhs, Node* rhs, TOKEN_TYPE operation_type) {
+    // TODO: check if lhs or rhs were already appended to the tree
+    Node* operation = node_new(lhs->pos);
+    operation->type = NODE_OPERATOR;
+    operation->token_type = operation_type;
+    nodes_append_child(operation, lhs);
+    nodes_append_child(operation, rhs);
+
+    Str_view dummy;
+    try(try_set_operator_lang_type(&dummy, operation));
+    return operation;
+}
+
 const Node* get_lang_type_from_sym_definition(const Node* sym_def) {
     (void) sym_def;
     todo();
@@ -455,6 +468,9 @@ bool set_assignment_operand_types(Node* lhs, Node* rhs) {
         case NODE_VARIABLE_DEFINITION:
             break;
         case NODE_LITERAL:
+            break;
+        case NODE_FUNCTION_CALL:
+            set_function_call_types(lhs);
             break;
         default:
             unreachable(NODE_FMT, node_print(lhs));

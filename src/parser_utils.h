@@ -31,6 +31,8 @@ Node* literal_new(Str_view value, TOKEN_TYPE token_type, Pos pos);
 
 Node* symbol_new(Str_view symbol_name, Pos pos);
 
+Node* operation_new(Node* lhs, Node* rhs, TOKEN_TYPE operation_type);
+
 Llvm_id get_matching_fun_param_load_id(const Node* src);
 
 const Node* get_lang_type_from_sym_definition(const Node* sym_def);

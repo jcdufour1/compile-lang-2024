@@ -9,7 +9,6 @@ static void do_assignment(Node* assignment) {
     Node* lhs = nodes_get_child(assignment, 0);
     Node* rhs = nodes_get_child(assignment, 1);
 
-
     switch (lhs->type) {
         case NODE_VARIABLE_DEFINITION:
             if (!set_assignment_operand_types(lhs, rhs)) {
@@ -45,21 +44,39 @@ static void set_if_statement_types(Node* if_statement) {
     assert(if_statement->type == NODE_IF_STATEMENT);
 
     Node* if_condition = nodes_get_child_of_type(if_statement, NODE_IF_CONDITION);
-    Node* if_cond_child = nodes_single_child(if_condition);
-    switch (if_cond_child->type) {
+    Node* old_if_cond_child = nodes_single_child(if_condition);
+    switch (old_if_cond_child->type) {
         case NODE_SYMBOL_UNTYPED:
-            set_symbol_type(if_cond_child);
+            set_symbol_type(old_if_cond_child);
             break;
         case NODE_OPERATOR: {
             Str_view dummy;
-            try_set_operator_lang_type(&dummy, if_cond_child);
+            try_set_operator_lang_type(&dummy, old_if_cond_child);
             break;
         }
-        case NODE_FUNCTION_CALL:
-            set_function_call_types(if_cond_child);
+        case NODE_FUNCTION_CALL: {
+            set_function_call_types(old_if_cond_child);
+            nodes_remove(old_if_cond_child, true);
+            Node* new_if_cond_child = operation_new(
+                old_if_cond_child,
+                literal_new(str_view_from_cstr("1"), TOKEN_NUM_LITERAL, old_if_cond_child->pos),
+                TOKEN_DOUBLE_EQUAL
+            );
+            nodes_append_child(if_condition, new_if_cond_child);
             break;
+         }
+        case NODE_LITERAL: {
+            nodes_remove(old_if_cond_child, true);
+            Node* new_if_cond_child = operation_new(
+                old_if_cond_child,
+                literal_new(str_view_from_cstr("1"), TOKEN_NUM_LITERAL, old_if_cond_child->pos),
+                TOKEN_DOUBLE_EQUAL
+            );
+            nodes_append_child(if_condition, new_if_cond_child);
+            break;
+         }
         default:
-            unreachable(NODE_FMT, node_print(if_cond_child));
+            unreachable(NODE_FMT, node_print(old_if_cond_child));
     }
 }
 

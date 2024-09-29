@@ -373,8 +373,26 @@ static inline void nodes_move_back_one(Node* node) {
     nodes_insert_before(prev, node);
 }
 
-static inline void nodes_clone_self_and_children(const Node* node_to_clone) {
-    (void) node_to_clone;
+static inline Node* nodes_clone_self_and_children(const Node* node_to_clone) {
+    assert(!node_to_clone->next);
+    assert(!node_to_clone->prev);
+    assert(!node_to_clone->parent);
+
+    Node* new_node = node_clone(node_to_clone);
+
+    nodes_foreach_child(child, node_to_clone) {
+        nodes_append_child(new_node, nodes_clone_self_and_children(child));
+    }
+
+    return new_node;
+}
+
+static inline void nodes_replace(Node* node_to_replace, Node* replacement_node) {
+    (void) node_to_replace;
+    (void) replacement_node;
+    assert(!replacement_node->next);
+    assert(!replacement_node->prev);
+    assert(!replacement_node->parent);
     todo();
 }
 

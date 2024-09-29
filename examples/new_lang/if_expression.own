@@ -14,7 +14,6 @@ fn main() i32 {
     if 8*3 < 5 {
         puts("no");
     }
-
     if 8*3 < 50 {
         puts("yes");
     }
@@ -22,17 +21,22 @@ fn main() i32 {
     if 8*3 - 1 < 24 {
         puts("yes2");
     }
-
     if 8*3 + 1 < 25 {
         puts("no2");
     }
 
-    if yes() == 1 {
+    if yes() {
         puts("yes3");
     }
-
-    if no() == 1 {
+    if no() {
         puts("no3");
+    }
+
+    if 1 {
+        puts("yes4");
+    }
+    if 0 {
+        puts("no4");
     }
 
     return 0
