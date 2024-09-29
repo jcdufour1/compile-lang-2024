@@ -24,11 +24,6 @@ Str_view literal_name_new(void) {
     return str_view;
 }
 
-Llvm_id get_block_return_id(const Node* fun_call) {
-    (void) fun_call;
-    todo();
-}
-
 Node* get_storage_location(Node* var_call) {
     Node* sym_def;
     if (!sym_tbl_lookup(&sym_def, var_call->name)) {
@@ -41,7 +36,7 @@ Node* get_storage_location(Node* var_call) {
 }
 
 Llvm_id get_store_dest_id(const Node* var_call) {
-    Llvm_id llvm_id = get_alloca_const(var_call)->llvm_id;
+    Llvm_id llvm_id = get_storage_location_const(var_call)->llvm_id;
     assert(llvm_id > 0);
     return llvm_id;
 }

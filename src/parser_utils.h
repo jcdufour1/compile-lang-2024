@@ -8,13 +8,11 @@
 
 Str_view literal_name_new(void);
 
-Llvm_id get_block_return_id(const Node* fun_call);
-
 Llvm_id get_prev_load_id(const Node* var_call);
 
 Node* get_storage_location(Node* var_call);
 
-static inline const Node* get_alloca_const(const Node* var_call) {
+static inline const Node* get_storage_location_const(const Node* var_call) {
     return get_storage_location((Node*)var_call);
 }
 
