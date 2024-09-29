@@ -532,8 +532,7 @@ static bool is_if_statement(Tk_view tokens) {
 
 static Node* extract_if_condition(Tk_view* tokens) {
 
-    Node* operation;
-    try(try_extract_operation(&operation, tokens))
+    Node* operation = extract_expression(tokens);
     Node* condition = node_new(operation->pos);
     condition->type = NODE_IF_CONDITION;
     nodes_append_child(condition, operation);

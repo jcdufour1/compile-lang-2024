@@ -354,14 +354,6 @@ static void add_load_return_statement(Node* return_statement) {
     }
 }
 
-static void add_load_cond_goto(Node* cond_goto) {
-    Node* operator = nodes_get_child(cond_goto, 0);
-    Node* lhs = nodes_get_child(operator, 0);
-    Node* rhs = nodes_get_child(operator, 1);
-    insert_load(cond_goto, lhs);
-    insert_load(cond_goto, rhs);
-}
-
 static Node* get_node_after_last_alloca(Node* fun_block) {
     nodes_foreach_child(node, fun_block) {
         if (node->type != NODE_ALLOCA) {
@@ -470,7 +462,6 @@ bool add_load_and_store(Node* start_start_node) {
             case NODE_GOTO:
                 break;
             case NODE_COND_GOTO:
-                add_load_cond_goto(curr_node);
                 break;
             case NODE_NO_TYPE:
                 todo();

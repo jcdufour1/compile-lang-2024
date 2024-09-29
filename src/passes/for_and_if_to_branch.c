@@ -29,25 +29,21 @@ static Node* goto_new(Str_view name_label_to_jmp_to, Pos pos) {
     return lang_goto;
 }
 
-static Node* cond_goto_new(
-    Node* lhs,
-    Node* rhs,
+static Node* conditional_goto_new(
+    Node* oper_rtn_sym,
     Str_view label_name_if_true,
-    Str_view label_name_if_false,
-    TOKEN_TYPE operator_type
+    Str_view label_name_if_false
 ) {
-    assert(!lhs->prev);
-    assert(!lhs->next);
-    assert(!lhs->parent);
-    assert(!rhs->prev);
-    assert(!rhs->next);
-    assert(!rhs->parent);
+    assert(oper_rtn_sym->type == NODE_OPERATOR_RETURN_VALUE_SYM);
+    assert(!oper_rtn_sym->prev);
+    assert(!oper_rtn_sym->next);
+    assert(!oper_rtn_sym->parent);
 
-    Node* cond_goto = node_new(lhs->pos);
+    Node* cond_goto = node_new(oper_rtn_sym->pos);
     cond_goto->type = NODE_COND_GOTO;
-    nodes_append_child(cond_goto, operation_new(lhs, rhs, operator_type));
-    nodes_append_child(cond_goto, symbol_new(label_name_if_true, lhs->pos));
-    nodes_append_child(cond_goto, symbol_new(label_name_if_false, lhs->pos));
+    nodes_append_child(cond_goto, oper_rtn_sym);
+    nodes_append_child(cond_goto, symbol_new(label_name_if_true, oper_rtn_sym->pos));
+    nodes_append_child(cond_goto, symbol_new(label_name_if_false, oper_rtn_sym->pos));
     return cond_goto;
 }
 
@@ -64,7 +60,7 @@ static void for_loop_to_branch(Node* for_loop) {
     Node* for_block = nodes_get_child_of_type(for_loop, NODE_BLOCK);
 
     Node* rhs_actual = nodes_single_child(rhs);
-    nodes_remove_siblings_and_parent(rhs_actual);
+    nodes_remove(rhs_actual, true);
 
     Node* new_branch_block = node_new(for_loop->pos);
     new_branch_block->type = NODE_BLOCK;
@@ -82,11 +78,17 @@ static void for_loop_to_branch(Node* for_loop) {
 
     Node* assignment_to_inc_cond_var = get_for_loop_cond_var_assign(regular_var_def->name, lhs->pos);
     assert(!new_branch_block->parent);
-    nodes_remove_siblings_and_parent(lhs);
+    nodes_remove(lhs, true);
     Node* lower_bound_child = nodes_single_child(lhs);
-    nodes_remove_siblings_and_parent(lower_bound_child);
-    nodes_remove_siblings_and_parent(rhs);
-    nodes_remove_siblings_and_parent(for_block);
+    nodes_remove(lower_bound_child, true);
+    nodes_remove(rhs, true);
+    nodes_remove(for_block, true);
+
+    Node* new_operation = operation_new(
+        symbol_new(symbol_lhs_assign->name, symbol_lhs_assign->pos),
+        rhs_actual,
+        TOKEN_LESS_THAN
+    );
 
     // initial assignment
     Node* new_var_assign = assignment_new(symbol_lhs_assign, lower_bound_child);
@@ -95,18 +97,20 @@ static void for_loop_to_branch(Node* for_loop) {
     Node* jmp_to_check_cond_label = goto_new(check_cond_label->name, for_loop->pos);
     Node* after_check_label = label_new(literal_name_new(), for_loop->pos);
     Node* after_for_loop_label = label_new(literal_name_new(), for_loop->pos);
-    Node* check_cond_jmp = cond_goto_new(
-        symbol_new(regular_var_def->name, lhs->pos),
-        rhs_actual,
+    Node* oper_rtn_sym = node_new(new_operation->pos);
+    oper_rtn_sym->type = NODE_OPERATOR_RETURN_VALUE_SYM;
+    oper_rtn_sym->node_src = new_operation;
+    Node* check_cond_jmp = conditional_goto_new(
+        oper_rtn_sym,
         after_check_label->name, 
-        after_for_loop_label->name,
-        TOKEN_LESS_THAN
+        after_for_loop_label->name
     );
 
     nodes_append_child(new_branch_block, regular_var_def);
     nodes_append_child(new_branch_block, new_var_assign);
     nodes_append_child(new_branch_block, jmp_to_check_cond_label);
     nodes_append_child(new_branch_block, check_cond_label);
+    nodes_append_child(new_branch_block, new_operation);
     nodes_append_child(new_branch_block, check_cond_jmp);
     nodes_append_child(new_branch_block, after_check_label);
     nodes_extend_children(new_branch_block, for_block->left_child);
@@ -118,32 +122,28 @@ static void for_loop_to_branch(Node* for_loop) {
 }
 
 static void if_statement_to_branch(Node* if_statement) {
-    Node* condition = nodes_get_child_of_type(if_statement, NODE_IF_CONDITION);
+    Node* if_condition = nodes_get_child_of_type(if_statement, NODE_IF_CONDITION);
+    nodes_remove(if_condition, true);
+    assert(nodes_count_children(if_condition) == 1);
     Node* block = nodes_get_child_of_type(if_statement, NODE_BLOCK);
 
-    Node* operation = nodes_get_child_of_type(condition, NODE_OPERATOR);
+    Node* operation = nodes_single_child(if_condition);
     nodes_remove(operation, true);
-    Node* lhs = nodes_get_child(operation, 0);
-    Node* rhs = nodes_get_child(operation, 1);
-    nodes_remove(lhs, true);
-    nodes_remove(rhs, true);
+    Node* oper_rtn_sym = node_new(operation->pos);
+    oper_rtn_sym->type = NODE_OPERATOR_RETURN_VALUE_SYM;
+    oper_rtn_sym->node_src = operation;
 
     Node* if_true = label_new(literal_name_new(), block->pos);
     Node* if_after = label_new(literal_name_new(), operation->pos);
 
-    Node* check_cond_jmp = cond_goto_new(
-        lhs, 
-        rhs,
-        if_true->name, 
-        if_after->name,
-        operation->token_type
-    );
+    Node* check_cond_jmp = conditional_goto_new(oper_rtn_sym, if_true->name, if_after->name);
 
     Node* jmp_to_if_after = goto_new(if_after->name, block->pos);
 
     Node* new_branch_block = node_new(block->pos);
     new_branch_block->type = NODE_BLOCK;
 
+    nodes_append_child(new_branch_block, operation);
     nodes_append_child(new_branch_block, check_cond_jmp);
     nodes_append_child(new_branch_block, if_true);
     nodes_extend_children(new_branch_block, block);

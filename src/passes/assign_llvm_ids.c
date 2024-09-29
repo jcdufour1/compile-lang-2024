@@ -63,6 +63,8 @@ bool assign_llvm_ids(Node* curr_node) {
             // fallthrough
         case NODE_COND_GOTO:
             // fallthrough
+        case NODE_IF_CONDITION:
+            // fallthrough
         case NODE_OPERATOR:
             // fallthrough
         case NODE_LABEL:

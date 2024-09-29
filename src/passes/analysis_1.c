@@ -41,6 +41,25 @@ static void do_function_definition(Node* fun_def) {
     (void) fun_def;
 }
 
+static void set_if_statement_types(Node* if_statement) {
+    assert(if_statement->type == NODE_IF_STATEMENT);
+
+    Node* if_condition = nodes_get_child_of_type(if_statement, NODE_IF_CONDITION);
+    Node* if_cond_child = nodes_single_child(if_condition);
+    switch (if_cond_child->type) {
+        case NODE_SYMBOL_UNTYPED:
+            set_symbol_type(if_cond_child);
+            break;
+        case NODE_OPERATOR: {
+            Str_view dummy;
+            try_set_operator_lang_type(&dummy, if_cond_child);
+            break;
+        }
+        default:
+            unreachable(NODE_FMT, node_print(if_cond_child));
+    }
+}
+
 bool analysis_1(Node* start_node) {
     if (start_node->type != NODE_BLOCK) {
         return false;
@@ -66,6 +85,9 @@ bool analysis_1(Node* start_node) {
                 break;
             case NODE_OPERATOR:
                 todo();
+                break;
+            case NODE_IF_STATEMENT:
+                set_if_statement_types(curr_node);
                 break;
             default:
                 break;

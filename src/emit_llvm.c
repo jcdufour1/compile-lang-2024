@@ -245,6 +245,12 @@ static void emit_operator_type(String* output, const Node* operator) {
         case TOKEN_SLASH:
             string_extend_cstr(&a_main, output, "sdiv i32 ");
             break;
+        case TOKEN_LESS_THAN:
+            string_extend_cstr(&a_main, output, "icmp slt i32 ");
+            break;
+        case TOKEN_GREATER_THAN:
+            string_extend_cstr(&a_main, output, "icmp sgt i32 ");
+            break;
         default:
             unreachable(TOKEN_TYPE_FMT"\n", token_type_print(operator->token_type));
     }
@@ -466,33 +472,6 @@ static void emit_label(String* output, const Node* label) {
     string_extend_cstr(&a_main, output, ":\n");
 }
 
-static void emit_compare(String* output, const Node* operator) {
-    assert(operator->type == NODE_OPERATOR);
-    const Node* lhs = nodes_get_child_const(operator, 0);
-    const Node* rhs = nodes_get_child_const(operator, 1);
-
-    string_extend_cstr(&a_main, output, "    %");
-    string_extend_size_t(&a_main, output, operator->llvm_id);
-    string_extend_cstr(&a_main, output, " = icmp ");
-
-    switch (operator->token_type) {
-        case TOKEN_LESS_THAN:
-            string_extend_cstr(&a_main, output, "slt");
-            break;
-        case TOKEN_GREATER_THAN:
-            string_extend_cstr(&a_main, output, "sgt");
-            break;
-        default:
-            unreachable("");
-    }
-
-    string_extend_cstr(&a_main, output, " i32 ");
-    emit_operator_operand(output, lhs);
-    string_extend_cstr(&a_main, output, ", ");
-    emit_operator_operand(output, rhs);
-    string_extend_cstr(&a_main, output, "\n");
-}
-
 static void emit_goto(String* output, const Node* lang_goto) {
     string_extend_cstr(&a_main, output, "    br label %");
     string_extend_size_t(&a_main, output, get_matching_label_id(lang_goto));
@@ -503,22 +482,11 @@ static void emit_cond_goto(String* output, const Node* cond_goto) {
     const Node* label_if_true = nodes_get_child_const(cond_goto, 1);
     const Node* label_if_false = nodes_get_child_const(cond_goto, 2);
 
-    const Node* operator = nodes_get_child_of_type_const(cond_goto, NODE_OPERATOR);
-    switch (operator->token_type) {
-        case TOKEN_LESS_THAN:
-            // fallthrough
-        case TOKEN_GREATER_THAN:
-            break;
-        default:
-            unreachable("");
-    }
-    assert(nodes_count_children(operator) == 2);
-    size_t llvm_cmp_dest = operator->llvm_id;
-
-    emit_compare(output, operator);
+    Node* llvm_cmp_dest = 
+        nodes_get_child_of_type_const(cond_goto, NODE_OPERATOR_RETURN_VALUE_SYM)->node_src;
 
     string_extend_cstr(&a_main, output, "    br i1 %");
-    string_extend_size_t(&a_main, output, llvm_cmp_dest);
+    string_extend_size_t(&a_main, output, llvm_cmp_dest->llvm_id);
     string_extend_cstr(&a_main, output, ", label %");
     string_extend_size_t(&a_main, output, get_matching_label_id(label_if_true));
     string_extend_cstr(&a_main, output, ", label %");
