@@ -251,6 +251,9 @@ static void emit_operator_type(String* output, const Node* operator) {
         case TOKEN_GREATER_THAN:
             string_extend_cstr(&a_main, output, "icmp sgt i32 ");
             break;
+        case TOKEN_DOUBLE_EQUAL:
+            string_extend_cstr(&a_main, output, "icmp eq i32 ");
+            break;
         default:
             unreachable(TOKEN_TYPE_FMT"\n", token_type_print(operator->token_type));
     }
@@ -262,9 +265,9 @@ static void emit_operator_operand(String* output, const Node* operand) {
             string_extend_strv(&a_main, output, operand->str_data);
             break;
         case NODE_SYMBOL_TYPED:
-            string_extend_cstr(&a_main, output, "%");
-            string_extend_size_t(&a_main, output, operand->node_src->llvm_id);
-            break;
+            // fallthrough
+        case NODE_FUNCTION_RETURN_VALUE_SYM:
+            // fallthrough
         case NODE_OPERATOR_RETURN_VALUE_SYM:
             string_extend_cstr(&a_main, output, "%");
             string_extend_size_t(&a_main, output, operand->node_src->llvm_id);

@@ -19,9 +19,10 @@ typedef enum {
     TOKEN_SINGLE_PLUS,
     TOKEN_SINGLE_MINUS,
     TOKEN_ASTERISK,
+    TOKEN_SLASH,
     TOKEN_LESS_THAN,
     TOKEN_GREATER_THAN,
-    TOKEN_SLASH,
+    TOKEN_DOUBLE_EQUAL,
 
     // literals
     TOKEN_STRING_LITERAL,
@@ -97,6 +98,8 @@ static inline bool token_is_operator(Token token) {
         case TOKEN_LESS_THAN:
             // fallthrough
         case TOKEN_GREATER_THAN:
+            // fallthrough
+        case TOKEN_DOUBLE_EQUAL:
             return true;
         case TOKEN_NUM_LITERAL:
             // fallthrough
@@ -148,6 +151,8 @@ static inline uint32_t token_get_precedence_operator(Token token) {
             // fallthrough
         case TOKEN_SLASH:
             return 3;
+        case TOKEN_DOUBLE_EQUAL:
+            return 4;
         default:
             unreachable("");
     }
@@ -192,6 +197,8 @@ static inline bool token_is_closing(Token curr_token) {
         case TOKEN_COLON:
             return false;
         case TOKEN_SINGLE_EQUAL:
+            return false;
+        case TOKEN_DOUBLE_EQUAL:
             return false;
         case TOKEN_SINGLE_DOT:
             return false;
@@ -241,6 +248,8 @@ static inline bool token_is_opening(Token curr_token) {
         case TOKEN_COLON:
             return false;
         case TOKEN_SINGLE_EQUAL:
+            return false;
+        case TOKEN_DOUBLE_EQUAL:
             return false;
         case TOKEN_SINGLE_DOT:
             return false;

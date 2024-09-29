@@ -181,6 +181,8 @@ static void load_operator_operand(Node* node_insert_before, Node* operand) {
             break;
         case NODE_OPERATOR_RETURN_VALUE_SYM:
             break;
+        case NODE_FUNCTION_RETURN_VALUE_SYM:
+            break;
         default:
             unreachable(NODE_FMT"\n", node_print(operand));
     }

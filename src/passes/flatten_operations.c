@@ -18,8 +18,8 @@ static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* o
     assert(old_operation->type == NODE_OPERATOR);
     Node* lhs = nodes_get_child(old_operation, 0);
     Node* rhs = nodes_get_child(old_operation, 1);
-    nodes_remove_siblings_and_parent(lhs);
-    nodes_remove_siblings_and_parent(rhs);
+    nodes_remove(lhs, true);
+    nodes_remove(rhs, true);
 
     if (lhs->type == NODE_OPERATOR) {
         Node* operator_sym = node_new(lhs->pos);
@@ -28,7 +28,11 @@ static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* o
         nodes_append_child(old_operation, operator_sym);
         operator_sym->node_src = lhs;
     } else if (lhs->type == NODE_FUNCTION_CALL){
-        todo();
+        Node* fun_sym = node_new(lhs->pos);
+        fun_sym->type = NODE_FUNCTION_RETURN_VALUE_SYM;
+        nodes_insert_before(node_to_insert_before, lhs);
+        nodes_append_child(old_operation, fun_sym);
+        fun_sym->node_src = lhs;
     } else {
         nodes_append_child(old_operation, lhs);
     }
@@ -40,7 +44,11 @@ static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* o
         nodes_append_child(old_operation, operator_sym);
         operator_sym->node_src = rhs;
     } else if (rhs->type == NODE_FUNCTION_CALL){
-        todo();
+        Node* fun_sym = node_new(rhs->pos);
+        fun_sym->type = NODE_FUNCTION_RETURN_VALUE_SYM;
+        nodes_insert_before(node_to_insert_before, rhs);
+        nodes_append_child(old_operation, fun_sym);
+        fun_sym->node_src = rhs;
     } else {
         nodes_append_child(old_operation, rhs);
     }

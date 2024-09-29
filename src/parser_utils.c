@@ -403,6 +403,9 @@ bool try_set_operator_operand_lang_type(Str_view* result, Node* operand) {
         }
         case NODE_SYMBOL_TYPED:
             return true;
+        case NODE_FUNCTION_CALL:
+            set_function_call_types(operand);
+            return true;
         default:
             unreachable(NODE_FMT, node_print(operand));
     }

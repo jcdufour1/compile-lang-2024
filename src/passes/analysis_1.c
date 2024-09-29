@@ -55,6 +55,9 @@ static void set_if_statement_types(Node* if_statement) {
             try_set_operator_lang_type(&dummy, if_cond_child);
             break;
         }
+        case NODE_FUNCTION_CALL:
+            set_function_call_types(if_cond_child);
+            break;
         default:
             unreachable(NODE_FMT, node_print(if_cond_child));
     }

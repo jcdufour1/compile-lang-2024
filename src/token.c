@@ -36,6 +36,8 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
             return str_view_from_cstr(":");
         case TOKEN_SINGLE_EQUAL:
             return str_view_from_cstr("=");
+        case TOKEN_DOUBLE_EQUAL:
+            return str_view_from_cstr("==");
         case TOKEN_SINGLE_DOT:
             return str_view_from_cstr(".");
         case TOKEN_DOUBLE_DOT:
@@ -81,6 +83,7 @@ Str_view token_print_internal(Arena* arena, Token token) {
         case TOKEN_ASTERISK: // fallthrough
         case TOKEN_SLASH: // fallthrough
         case TOKEN_SINGLE_EQUAL: // fallthrough
+        case TOKEN_DOUBLE_EQUAL: // fallthrough
         case TOKEN_SINGLE_DOT: // fallthrough
         case TOKEN_DOUBLE_DOT: // fallthrough
         case TOKEN_TRIPLE_DOT: // fallthrough

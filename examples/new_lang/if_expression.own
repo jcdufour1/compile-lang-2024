@@ -1,0 +1,39 @@
+
+extern("c") fn puts(str_to_print: ptr) i32
+extern("c") fn printf(str_to_print_2: ptr, args: any...) i32
+
+fn yes() i32 {
+    return 1
+}
+
+fn no() i32 {
+    return 0
+}
+
+fn main() i32 {
+    if 8*3 < 5 {
+        puts("no");
+    }
+
+    if 8*3 < 50 {
+        puts("yes");
+    }
+
+    if 8*3 - 1 < 24 {
+        puts("yes2");
+    }
+
+    if 8*3 + 1 < 25 {
+        puts("no2");
+    }
+
+    if yes() == 1 {
+        puts("yes3");
+    }
+
+    if no() == 1 {
+        puts("no3");
+    }
+
+    return 0
+}

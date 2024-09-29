@@ -41,6 +41,9 @@ void* arena_alloc(Arena* arena, size_t capacity);
 // zero-initialized
 void* arena_realloc(Arena* arena, void* old_buf, size_t old_capacity, size_t new_capacity);
 
+// reset, but do not free, allocated area
+void arena_reset(Arena* arena);
+
 void arena_destroy(Arena* arena);
 
 #if 0
@@ -68,9 +71,6 @@ static inline size_t arena_count_allocated_nodes(void) {
     while (0)
 
 #endif
-
-// reset, but do not free, allocated area
-void arena_reset(Arena* arena);
 
 size_t arena_get_total_capacity(const Arena* arena);
 
