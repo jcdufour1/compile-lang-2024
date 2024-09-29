@@ -14,44 +14,36 @@ static Node* variable_i32_def_new(Str_view name, Pos pos) {
     return var_def;
 }
 
+static void flatten_operation_operand_if_nessessary(
+    Node* node_to_insert_before,
+    Node* old_operation,
+    Node* operand
+) {
+    if (operand->type == NODE_OPERATOR) {
+        Node* operator_sym = node_new(operand->pos);
+        operator_sym->type = NODE_OPERATOR_RETURN_VALUE_SYM;
+        nodes_insert_before(node_to_insert_before, operand);
+        nodes_append_child(old_operation, operator_sym);
+        operator_sym->node_src = operand;
+    } else if (operand->type == NODE_FUNCTION_CALL){
+        Node* fun_sym = node_new(operand->pos);
+        fun_sym->type = NODE_FUNCTION_RETURN_VALUE_SYM;
+        nodes_insert_before(node_to_insert_before, operand);
+        nodes_append_child(old_operation, fun_sym);
+        fun_sym->node_src = operand;
+    } else {
+        nodes_append_child(old_operation, operand);
+    }
+}
+
 static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* old_operation) {
     assert(old_operation->type == NODE_OPERATOR);
     Node* lhs = nodes_get_child(old_operation, 0);
     Node* rhs = nodes_get_child(old_operation, 1);
     nodes_remove(lhs, true);
     nodes_remove(rhs, true);
-
-    if (lhs->type == NODE_OPERATOR) {
-        Node* operator_sym = node_new(lhs->pos);
-        operator_sym->type = NODE_OPERATOR_RETURN_VALUE_SYM;
-        nodes_insert_before(node_to_insert_before, lhs);
-        nodes_append_child(old_operation, operator_sym);
-        operator_sym->node_src = lhs;
-    } else if (lhs->type == NODE_FUNCTION_CALL){
-        Node* fun_sym = node_new(lhs->pos);
-        fun_sym->type = NODE_FUNCTION_RETURN_VALUE_SYM;
-        nodes_insert_before(node_to_insert_before, lhs);
-        nodes_append_child(old_operation, fun_sym);
-        fun_sym->node_src = lhs;
-    } else {
-        nodes_append_child(old_operation, lhs);
-    }
-
-    if (rhs->type == NODE_OPERATOR) {
-        Node* operator_sym = node_new(rhs->pos);
-        operator_sym->type = NODE_OPERATOR_RETURN_VALUE_SYM;
-        nodes_insert_before(node_to_insert_before, rhs);
-        nodes_append_child(old_operation, operator_sym);
-        operator_sym->node_src = rhs;
-    } else if (rhs->type == NODE_FUNCTION_CALL){
-        Node* fun_sym = node_new(rhs->pos);
-        fun_sym->type = NODE_FUNCTION_RETURN_VALUE_SYM;
-        nodes_insert_before(node_to_insert_before, rhs);
-        nodes_append_child(old_operation, fun_sym);
-        fun_sym->node_src = rhs;
-    } else {
-        nodes_append_child(old_operation, rhs);
-    }
+    flatten_operation_operand_if_nessessary(node_to_insert_before, old_operation, lhs);
+    flatten_operation_operand_if_nessessary(node_to_insert_before, old_operation, rhs);
 }
 
 static void move_operator_back(Node* return_statement) {
