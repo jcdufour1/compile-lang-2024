@@ -351,6 +351,8 @@ static void add_load_return_statement(Node* return_statement) {
             return;
         case NODE_OPERATOR:
             unreachable("operator should not still be the child of return statement at this point");
+        case NODE_OPERATOR_RETURN_VALUE_SYM:
+            break;
         default:
             unreachable(NODE_FMT"\n", node_print(node_to_return));
     }

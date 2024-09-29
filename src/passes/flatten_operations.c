@@ -3,36 +3,22 @@
 #include "../nodes.h"
 #include "../symbol_table.h"
 
-static Node* variable_i32_def_new(Str_view name, Pos pos) {
-    Node* var_def = node_new(pos);
-    var_def->name = name;
-    var_def->type = NODE_VARIABLE_DEFINITION;
-    var_def->lang_type = str_view_from_cstr("i32");
-    var_def->token_type = TOKEN_NUM_LITERAL;
-
-    try(sym_tbl_add(var_def));
-    return var_def;
-}
-
-static void flatten_operation_operand_if_nessessary(
-    Node* node_to_insert_before,
-    Node* old_operation,
-    Node* operand
-) {
+// returns operand or operand symbol
+static Node* flatten_operation_operand(Node* node_to_insert_before, Node* operand) {
     if (operand->type == NODE_OPERATOR) {
         Node* operator_sym = node_new(operand->pos);
         operator_sym->type = NODE_OPERATOR_RETURN_VALUE_SYM;
         nodes_insert_before(node_to_insert_before, operand);
-        nodes_append_child(old_operation, operator_sym);
         operator_sym->node_src = operand;
+        return operator_sym;
     } else if (operand->type == NODE_FUNCTION_CALL){
         Node* fun_sym = node_new(operand->pos);
         fun_sym->type = NODE_FUNCTION_RETURN_VALUE_SYM;
         nodes_insert_before(node_to_insert_before, operand);
-        nodes_append_child(old_operation, fun_sym);
         fun_sym->node_src = operand;
+        return fun_sym;
     } else {
-        nodes_append_child(old_operation, operand);
+        return operand;
     }
 }
 
@@ -42,8 +28,8 @@ static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* o
     Node* rhs = nodes_get_child(old_operation, 1);
     nodes_remove(lhs, true);
     nodes_remove(rhs, true);
-    flatten_operation_operand_if_nessessary(node_to_insert_before, old_operation, lhs);
-    flatten_operation_operand_if_nessessary(node_to_insert_before, old_operation, rhs);
+    nodes_append_child(old_operation, flatten_operation_operand(node_to_insert_before, lhs));
+    nodes_append_child(old_operation, flatten_operation_operand(node_to_insert_before, rhs));
 }
 
 static void move_operator_back(Node* return_statement) {
@@ -52,14 +38,13 @@ static void move_operator_back(Node* return_statement) {
     assert(operation->type == NODE_OPERATOR);
     nodes_remove(operation, true);
 
-    Str_view var_name = literal_name_new();
-    nodes_insert_before(
-        return_statement,
-        variable_i32_def_new(var_name, return_statement->pos)
-    ); // TODO: use correct type here
-    Node* new_assign = assignment_new(symbol_new(var_name, operation->pos), operation);
-    nodes_insert_before(return_statement, new_assign);
-    nodes_append_child(return_statement, symbol_new(var_name, new_assign->pos));
+    Node* operator_sym = node_new(return_statement->pos);
+    operator_sym->type = NODE_OPERATOR_RETURN_VALUE_SYM;
+    operator_sym->node_src = operation;
+    try(try_set_operator_lang_type(&operator_sym->lang_type, operation));
+    assert(operator_sym->lang_type.count > 0);
+    nodes_insert_before(return_statement, operation);
+    nodes_append_child(return_statement, operator_sym);
     set_return_statement_types(return_statement);
 }
 

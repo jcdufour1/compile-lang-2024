@@ -558,6 +558,8 @@ void set_return_statement_types(Node* rtn_statement) {
             try_set_operator_lang_type(&dummy, child);
             break;
         }
+        case NODE_OPERATOR_RETURN_VALUE_SYM:
+            break;
         default:
             unreachable(NODE_FMT"\n", node_print(child));
     }

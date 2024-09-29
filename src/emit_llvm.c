@@ -390,10 +390,7 @@ static void emit_function_definition(String* output, const Node* fun_def) {
 
 static void emit_function_return_statement(String* output, const Node* fun_return) {
     Node* sym_to_return = fun_return->left_child;
-    Node* sym_to_rtn_def;
-    if (!sym_tbl_lookup(&sym_to_rtn_def, sym_to_return->name)) {
-        unreachable("");
-    }
+    assert(sym_to_return->lang_type.count > 0);
 
     switch (sym_to_return->type) {
         case NODE_LITERAL:
@@ -401,26 +398,16 @@ static void emit_function_return_statement(String* output, const Node* fun_retur
                 todo();
             }
             string_extend_cstr(&a_main, output, "    ret ");
-            extend_type_call_str(output, sym_to_rtn_def->lang_type);
+            extend_type_call_str(output, sym_to_return->lang_type);
             string_extend_cstr(&a_main, output, " ");
             string_extend_strv(&a_main, output, sym_to_return->str_data);
             string_extend_cstr(&a_main, output, "\n");
             break;
         case NODE_SYMBOL_TYPED:
-            if (sym_to_return->parent && sym_to_return->parent->type == NODE_STRUCT_MEMBER_SYM) {
-                break;
-            }
-            string_extend_cstr(&a_main, output, "    ret ");
-            extend_type_call_str(output, sym_to_rtn_def->lang_type);
-            string_extend_cstr(&a_main, output, " %");
-            string_extend_size_t(&a_main, output, sym_to_return->node_src->llvm_id);
-            string_extend_cstr(&a_main, output, "\n");
-            break;
-        case NODE_STRUCT_MEMBER_SYM: {
-            Node* struct_def;
-            if (!sym_tbl_lookup(&struct_def, sym_to_rtn_def->lang_type)) {
-                unreachable("");
-            }
+            // fallthrough
+        case NODE_STRUCT_MEMBER_SYM:
+            // fallthrough
+        case NODE_OPERATOR_RETURN_VALUE_SYM: {
             string_extend_cstr(&a_main, output, "    ret ");
             extend_type_call_str(output, sym_to_return->lang_type);
             string_extend_cstr(&a_main, output, " %");
