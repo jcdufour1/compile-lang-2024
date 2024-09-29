@@ -41,6 +41,36 @@ static Node* get_for_loop_cond_var_assign(Str_view sym_name, Pos pos) {
     return assignment_new(symbol_new(sym_name, pos), operation);
 }
 
+static void change_break_to_goto(Node* block, const Node* label_to_goto) {
+    Node* curr_node = nodes_get_local_rightmost(block->left_child);
+    while (curr_node) {
+        switch (curr_node->type) {
+            case NODE_IF_STATEMENT:
+                change_break_to_goto(nodes_get_child_of_type(curr_node, NODE_BLOCK), label_to_goto);
+                break;
+            case NODE_FUNCTION_CALL:
+                break;
+            case NODE_ASSIGNMENT:
+                break;
+            case NODE_FOR_LOOP:
+                break;
+            case NODE_VARIABLE_DEFINITION:
+                break;
+            case NODE_BREAK: {
+                Node* new_goto = goto_new(label_to_goto->name, label_to_goto->pos);
+                nodes_insert_before(curr_node, new_goto);
+                nodes_remove(curr_node, false);
+                curr_node = new_goto;
+                break;
+            }
+            default:
+                unreachable(NODE_FMT, node_print(curr_node));
+        }
+
+        curr_node = curr_node->prev;
+    }
+}
+
 static void for_loop_to_branch(Node* for_loop) {
     log_tree(LOG_TRACE, for_loop);
     Node* lhs = nodes_get_child_of_type(for_loop, NODE_FOR_LOWER_BOUND);
@@ -57,11 +87,11 @@ static void for_loop_to_branch(Node* for_loop) {
     Node* symbol_lhs_assign;
     Node* regular_var_def;
     {
-        Node* new_var_def = nodes_get_child_of_type(for_loop, NODE_FOR_VARIABLE_DEF);
-        regular_var_def = nodes_get_child_of_type(new_var_def, NODE_VARIABLE_DEFINITION);
+        Node* old_for_var_def = nodes_get_child_of_type(for_loop, NODE_FOR_VARIABLE_DEF);
+        regular_var_def = nodes_get_child_of_type(old_for_var_def, NODE_VARIABLE_DEFINITION);
         nodes_remove(regular_var_def, false);
         symbol_lhs_assign = symbol_new(regular_var_def->name, regular_var_def->pos);
-        nodes_remove_siblings(new_var_def);
+        nodes_remove_siblings(old_for_var_def);
     }
 
     Node* assignment_to_inc_cond_var = get_for_loop_cond_var_assign(regular_var_def->name, lhs->pos);
@@ -73,9 +103,7 @@ static void for_loop_to_branch(Node* for_loop) {
     nodes_remove(for_block, true);
 
     Node* new_operation = operation_new(
-        symbol_new(symbol_lhs_assign->name, symbol_lhs_assign->pos),
-        rhs_actual,
-        TOKEN_LESS_THAN
+        symbol_new(symbol_lhs_assign->name, symbol_lhs_assign->pos), rhs_actual, TOKEN_LESS_THAN
     );
 
     // initial assignment
@@ -93,6 +121,8 @@ static void for_loop_to_branch(Node* for_loop) {
         after_check_label->name, 
         after_for_loop_label->name
     );
+
+    change_break_to_goto(for_block, after_for_loop_label);
 
     nodes_append_child(new_branch_block, regular_var_def);
     nodes_append_child(new_branch_block, new_var_assign);
@@ -167,6 +197,9 @@ bool for_and_if_to_branch(Node* block) {
                 go_to_prev = false;
                 break;
             }
+            case NODE_BREAK:
+                unreachable("");
+                break;
             default:
                 break;
         }

@@ -31,5 +31,13 @@ fn main() i32 {
     printf("%s: %d\n", string_thing_5, count_3)
     let result: i32 = println("bye", 91)
     printf("%d\n", result)
+
+    for idx_2: i32 in {0..10} {
+        printf("idx_2: %d\n", idx_2)
+        if idx_2 > 5 {
+            break
+        }
+    }
+
     return 0
 }

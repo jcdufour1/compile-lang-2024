@@ -21,6 +21,7 @@ static const char* NODE_FOR_LOOP_DESCRIPTION = "for";
 static const char* NODE_FOR_VARIABLE_DEF_DESCRIPTION = "for_var_def";
 static const char* NODE_FOR_LOWER_BOUND_DESCRIPTION = "lower_bound";
 static const char* NODE_FOR_UPPER_BOUND_DESCRIPTION = "upper_bound";
+static const char* NODE_BREAK_DESCRIPTION = "break";
 static const char* NODE_GOTO_DESCRIPTION = "goto";
 static const char* NODE_LABEL_DESCRIPTION = "label";
 static const char* NODE_COND_GOTO_DESCRIPTION = "cond_goto";
@@ -195,6 +196,8 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_LLVM_STORE_LITERAL_DESCRIPTION);
         case NODE_LLVM_STORE_STRUCT_LITERAL:
             return str_view_from_cstr(NODE_LLVM_STORE_STRUCT_LITERAL_DESCRIPTION);
+        case NODE_BREAK:
+            return str_view_from_cstr(NODE_BREAK_DESCRIPTION);
         case NODE_NO_TYPE:
             return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
         default:
@@ -280,6 +283,8 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
         case NODE_IF_STATEMENT:
             // fallthrough
         case NODE_IF_CONDITION:
+            // fallthrough
+        case NODE_BREAK:
             // fallthrough
         case NODE_NO_TYPE:
             break;

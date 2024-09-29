@@ -6,3 +6,10 @@ hello: 89
 bye
 new programming language
 455
+idx_2: 0
+idx_2: 1
+idx_2: 2
+idx_2: 3
+idx_2: 4
+idx_2: 5
+idx_2: 6

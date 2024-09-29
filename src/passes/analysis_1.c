@@ -64,7 +64,7 @@ static void set_if_statement_types(Node* if_statement) {
             );
             nodes_append_child(if_condition, new_if_cond_child);
             break;
-         }
+        }
         case NODE_LITERAL: {
             nodes_remove(old_if_cond_child, true);
             Node* new_if_cond_child = operation_new(
@@ -74,7 +74,7 @@ static void set_if_statement_types(Node* if_statement) {
             );
             nodes_append_child(if_condition, new_if_cond_child);
             break;
-         }
+        }
         default:
             unreachable(NODE_FMT, node_print(old_if_cond_child));
     }

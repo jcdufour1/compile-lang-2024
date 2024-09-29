@@ -29,68 +29,6 @@ Llvm_id get_block_return_id(const Node* fun_call) {
     todo();
 }
 
-// return true if successful, false otherwise
-static bool get_prev_matching_node(const Node** result, const Node* node_to_start, const Node* var_call, bool is_matching(const Node* curr_node, const Node* var_call)) {
-    nodes_foreach_from_curr_rev_const(curr_node, node_to_start) {
-        assert(curr_node->parent == node_to_start->parent);
-        if (is_matching(curr_node, var_call)) {
-            *result = curr_node;
-            return true;
-        }
-    }
-
-    if (node_to_start->parent) {
-        return get_prev_matching_node(result, node_to_start->parent, var_call, is_matching);
-    }
-
-    return false;
-}
-
-static bool is_load_struct_member(const Node* curr_node, const Node* var_call) {
-    if (curr_node->type != NODE_LOAD_STRUCT_MEMBER) {
-        return false;
-    }
-    node_printf(curr_node);
-    node_printf(var_call);
-    if (!str_view_is_equal(curr_node->name, var_call->name)) {
-        return false;
-    }
-
-    const Node* curr_member = nodes_single_child_const(curr_node);
-    node_printf(curr_member);
-    const Node* member_to_find = nodes_single_child_const(var_call);
-    node_printf(member_to_find);
-    return str_view_is_equal(curr_member->name, member_to_find->name);
-}
-
-static bool is_load(const Node* curr_node, const Node* var_call) {
-    return (curr_node->type == NODE_LOAD_VARIABLE) && str_view_is_equal(curr_node->name, var_call->name);
-}
-
-static bool is_store(const Node* curr_node, const Node* var_call) {
-    return curr_node->type == NODE_STORE_VARIABLE && 0 == str_view_cmp(curr_node->name, var_call->name);
-}
-
-static bool is_alloca(const Node* curr_node, const Node* var_call) {
-    node_printf(curr_node);
-    return curr_node->type == NODE_ALLOCA && 0 == str_view_cmp(curr_node->name, var_call->name);
-}
-
-static bool is_variable_def(const Node* curr_node, const Node* var_call) {
-    return curr_node->type == NODE_VARIABLE_DEFINITION && 0 == str_view_cmp(curr_node->name, var_call->name);
-}
-
-static bool is_function_call(const Node* curr_node, const Node* var_call) {
-    (void) var_call;
-    return curr_node->type == NODE_FUNCTION_CALL;
-}
-
-static bool is_operator(const Node* curr_node, const Node* var_call) {
-    (void) var_call;
-    return curr_node->type == NODE_OPERATOR;
-}
-
-
 Node* get_storage_location(Node* var_call) {
     Node* sym_def;
     if (!sym_tbl_lookup(&sym_def, var_call->name)) {

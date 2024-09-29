@@ -295,29 +295,6 @@ static void emit_operator(String* output, const Node* operator) {
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_src(String* output, const Node* src) {
-    switch (src->type) {
-        case NODE_LITERAL:
-            extend_literal_decl_prefix(output, src);
-            break;
-        case NODE_SYMBOL_TYPED:
-            // fallthrough
-        case NODE_FUNCTION_PARAM_SYM:
-            // fallthrough
-        case NODE_FUNCTION_RETURN_VALUE_SYM:
-            // fallthrough
-        case NODE_OPERATOR_RETURN_VALUE_SYM:
-            string_extend_cstr(&a_main, output, " %");
-            string_extend_size_t(&a_main, output, src->node_src->llvm_id);
-            break;
-        case NODE_SYMBOL_UNTYPED:
-            unreachable("untyped symbols should not still be present");
-        default:
-            node_printf(src);
-            todo();
-    }
-}
-
 static void emit_load_variable(String* output, const Node* variable_call) {
     Node* variable_def;
     node_printf(variable_call);

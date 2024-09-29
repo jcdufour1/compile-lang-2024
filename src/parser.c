@@ -8,7 +8,6 @@
 #include "parser_utils.h"
 #include "error_msg.h"
 
-static Node* parse_function_single_return_type(Token tokens);
 static Node* extract_block(Tk_view* tokens);
 INLINE bool extract_statement(Node** child, Tk_view* tokens);
 static Node* extract_expression(Tk_view* tokens);
@@ -249,14 +248,6 @@ static Node* extract_variable_declaration(Tk_view* tokens, bool require_let) {
     return variable_def;
 }
 
-static bool is_not_symbol_in(const Token* prev, const Token* curr) {
-    (void) prev;
-    if (curr->type != TOKEN_SYMBOL) {
-        return true;
-    }
-    return !str_view_cstr_is_equal(curr->text, "in");
-}
-
 static Node* extract_for_loop(Tk_view* tokens) {
     Token for_token;
     try(tk_view_try_consume_symbol(&for_token, tokens, "for"));
@@ -290,6 +281,13 @@ static Node* extract_for_loop(Tk_view* tokens) {
     nodes_append_child(for_loop, extract_block(&body_tokens));
 
     return for_loop;
+}
+
+static Node* extract_break(Tk_view* tokens) {
+    Token break_token = tk_view_consume(tokens);
+    Node* bk_statement = node_new(break_token.pos);
+    bk_statement->type = NODE_BREAK;
+    return bk_statement;
 }
 
 static Node* extract_function_declaration(Tk_view* tokens) {
@@ -523,13 +521,6 @@ static Node* extract_assignment(Tk_view* tokens, Node* lhs) {
     return assignment;
 }
 
-static bool is_if_statement(Tk_view tokens) {
-    if (tk_view_front(tokens).type == TOKEN_SYMBOL && str_view_cstr_is_equal(tk_view_front(tokens).text, "if")) {
-        return true;
-    }
-    return false;
-}
-
 static Node* extract_if_condition(Tk_view* tokens) {
 
     Node* operation = extract_expression(tokens);
@@ -580,6 +571,11 @@ static bool extract_statement(Node** child, Tk_view* tokens) {
 
     if (token_is_equal(tk_view_front(*tokens), "for", TOKEN_SYMBOL)) {
         *child = extract_for_loop(tokens);
+        return true;
+    }
+
+    if (token_is_equal(tk_view_front(*tokens), "break", TOKEN_SYMBOL)) {
+        *child = extract_break(tokens);
         return true;
     }
 
