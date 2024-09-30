@@ -107,7 +107,7 @@ Node* assignment_new(Node* lhs, Node* rhs) {
     nodes_append_child(assignment, lhs);
     nodes_append_child(assignment, rhs);
 
-    set_assignment_operand_types(lhs, rhs);
+    set_assignment_operand_types(assignment);
     return assignment;
 }
 
@@ -137,8 +137,7 @@ Node* operation_new(Node* lhs, Node* rhs, TOKEN_TYPE operation_type) {
     nodes_append_child(operation, lhs);
     nodes_append_child(operation, rhs);
 
-    Str_view dummy;
-    try(try_set_operator_lang_type(&dummy, operation));
+    try(try_set_operator_lang_type(operation));
     return operation;
 }
 
@@ -246,6 +245,8 @@ bool is_corresponding_to_a_struct(const Node* node) {
             unreachable("untyped symbols should not still be present");
         case NODE_LITERAL:
             return false;
+        case NODE_STRUCT_MEMBER_SYM:
+            return true;
         default:
             log_tree(LOG_DEBUG, node);
             todo();
@@ -316,16 +317,17 @@ void set_symbol_type(Node* sym_untyped) {
 }
 
 // returns false if unsuccessful
-bool try_set_operator_lang_type(Str_view* result, Node* operator) {
+bool try_set_operator_lang_type(Node* operator) {
     assert(operator->type == NODE_OPERATOR);
 
     Node* lhs = nodes_get_child(operator, 0);
     Node* rhs = nodes_get_child(operator, 1);
 
-    if (!try_set_operator_operand_lang_type(result, lhs)) {
+    Str_view dummy;
+    if (!try_set_operator_operand_lang_type(&dummy, lhs)) {
         return false;
     }
-    return try_set_operator_operand_lang_type(result, rhs);
+    return try_set_operator_operand_lang_type(&operator->lang_type, rhs);
 }
 
 // returns false if unsuccessful
@@ -338,7 +340,11 @@ bool try_set_operator_operand_lang_type(Str_view* result, Node* operand) {
             return true;
         }
         case NODE_OPERATOR:
-            return try_set_operator_lang_type(result, operand);
+            if (!try_set_operator_lang_type(operand)) {
+                return false;
+            }
+            *result = operand->lang_type;
+            return true;
         case NODE_SYMBOL_UNTYPED: {
             set_symbol_type(operand);
             if (is_corresponding_to_a_struct(operand)) {
@@ -348,8 +354,10 @@ bool try_set_operator_operand_lang_type(Str_view* result, Node* operand) {
             return true;
         }
         case NODE_SYMBOL_TYPED:
+            *result = operand->lang_type;
             return true;
         case NODE_FUNCTION_CALL:
+            *result = operand->lang_type;
             set_function_call_types(operand);
             return true;
         default:
@@ -393,7 +401,12 @@ void set_struct_literal_assignment_types(Node* lhs, Node* struct_literal) {
     assert(struct_literal->lang_type.count > 0);
 }
 
-bool set_assignment_operand_types(Node* lhs, Node* rhs) {
+bool set_assignment_operand_types(Node* assignment) {
+    assert(assignment->type == NODE_ASSIGNMENT);
+
+    Node* lhs = nodes_get_child(assignment, 0);
+    Node* rhs = nodes_get_child(assignment, 1);
+
     switch (lhs->type) {
         case NODE_SYMBOL_UNTYPED:
             set_symbol_type(lhs);
@@ -403,8 +416,14 @@ bool set_assignment_operand_types(Node* lhs, Node* rhs) {
         case NODE_LITERAL:
             break;
         case NODE_FUNCTION_CALL:
-            set_function_call_types(lhs);
+            unreachable("");
             break;
+        case NODE_STRUCT_MEMBER_SYM:
+            set_struct_member_symbol_types(lhs);
+            if (rhs->type == NODE_SYMBOL_UNTYPED) {
+                set_symbol_type(rhs);
+            }
+            return true; // TODO: do not return here
         default:
             unreachable(NODE_FMT, node_print(lhs));
     }
@@ -450,14 +469,13 @@ bool set_assignment_operand_types(Node* lhs, Node* rhs) {
         case NODE_SYMBOL_TYPED:
             unreachable("");
         case NODE_OPERATOR: {
-            Str_view rhs_lang_type;
-            if (!try_set_operator_lang_type(&rhs_lang_type, rhs)) {
+            if (!try_set_operator_lang_type(rhs)) {
                 break;
             }
             Node* lhs_var_def;
             try(sym_tbl_lookup(&lhs_var_def, lhs->name));
-            if (!str_view_is_equal(rhs_lang_type, lhs_var_def->lang_type)) {
-                msg_invalid_assignment_to_operation(lhs, rhs, rhs_lang_type);
+            if (!str_view_is_equal(rhs->lang_type, lhs_var_def->lang_type)) {
+                msg_invalid_assignment_to_operation(lhs, rhs);
                 are_compatible = false;
             }
             break;
@@ -554,8 +572,7 @@ void set_return_statement_types(Node* rtn_statement) {
             // TODO: check type of this literal with function return type
             break;
         case NODE_OPERATOR: {
-            Str_view dummy;
-            try_set_operator_lang_type(&dummy, child);
+            try_set_operator_lang_type(child);
             break;
         }
         case NODE_OPERATOR_RETURN_VALUE_SYM:

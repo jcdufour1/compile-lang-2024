@@ -110,10 +110,10 @@ static inline const Node* get_struct_definition_const(const Node* node) {
     return get_struct_definition((Node*)node);
 }
 
-bool set_assignment_operand_types(Node* lhs, Node* rhs);
+bool set_assignment_operand_types(Node* assignment);
 
 // returns false if unsuccessful
-bool try_set_operator_lang_type(Str_view* result, Node* operator);
+bool try_set_operator_lang_type(Node* operator);
 
 // returns false if unsuccessful
 bool try_set_operator_operand_lang_type(Str_view* result, Node* operand);

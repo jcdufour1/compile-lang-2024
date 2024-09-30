@@ -123,18 +123,15 @@ void msg_invalid_assignment_to_literal(const Node* lhs, const Node* rhs) {
     );
 }
 
-void msg_invalid_assignment_to_operation(
-    const Node* lhs,
-    const Node* operation,
-    Str_view operation_lang_type
-) {
+void msg_invalid_assignment_to_operation(const Node* lhs, const Node* operation) {
     assert(lhs->type == NODE_SYMBOL_TYPED);
+    assert(operation->type == NODE_OPERATOR);
 
     Node* var_def;
     try(sym_tbl_lookup(&var_def, lhs->name));
     msg(
         LOG_ERROR, operation->pos,
         "operation is of type `"STR_VIEW_FMT"`, but type `"STR_VIEW_FMT"` expected\n",
-        str_view_print(operation_lang_type), str_view_print(var_def->lang_type)
+        str_view_print(operation->lang_type), str_view_print(var_def->lang_type)
     );
 }

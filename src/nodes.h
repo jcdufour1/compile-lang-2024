@@ -281,7 +281,10 @@ static inline Node* nodes_get_child(Node* parent, size_t idx) {
         curr_idx++;
     }
 
-    unreachable("");
+    if (curr_idx > 0) {
+        unreachable("idx %zu is out of bounds (max index is %zu [inclusive])", idx, curr_idx - 1);
+    }
+    unreachable("no children");
 }
 
 static inline const Node* nodes_get_child_const(const Node* parent, size_t idx) {

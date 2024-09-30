@@ -21,10 +21,6 @@ void meg_struct_assigned_to_invalid_literal(const Node* lhs, const Node* rhs);
 
 void msg_invalid_assignment_to_literal(const Node* lhs, const Node* rhs);
 
-void msg_invalid_assignment_to_operation(
-    const Node* lhs,
-    const Node* operation, 
-    Str_view operation_lang_type
-);
+void msg_invalid_assignment_to_operation(const Node* lhs, const Node* operation);
 
 #endif // ERROR_MSG_H

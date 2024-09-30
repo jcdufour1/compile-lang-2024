@@ -212,6 +212,7 @@ static void add_load_foreach_arg(Node* node_insert_before, Node* function_call) 
 static void insert_store_assignment(Node* node_to_insert_before, Node* assignment, bool is_for_struct_literal_member) {
     assert(assignment->type == NODE_ASSIGNMENT);
 
+    log_tree(LOG_DEBUG, assignment);
     Node* lhs = nodes_get_child(assignment, 0);
     Node* rhs = nodes_get_child(assignment, 1);
     Node* rhs_load = NULL;
@@ -247,11 +248,10 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
         case NODE_LITERAL:
             break;
         case NODE_OPERATOR:
-            rhs_load = load_operator_operands(node_to_insert_before, rhs);
-            nodes_remove(rhs_load, true);
-            assert(rhs_load);
-            assert(rhs_load->lang_type.count > 0);
-            nodes_insert_before(node_to_insert_before, rhs_load);
+            unreachable("operator should not still be present");
+            break;
+        case NODE_OPERATOR_RETURN_VALUE_SYM:
+            rhs_load = rhs->node_src;
             break;
         case NODE_FUNCTION_CALL:
             rhs_load = rhs;
