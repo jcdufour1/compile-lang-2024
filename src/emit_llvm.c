@@ -120,6 +120,15 @@ static void emit_function_params(String* output, const Node* fun_params) {
     }
 }
 
+static Str_view get_member_sym_piece_final_lang_type(const Node* struct_memb_sym) {
+    Str_view lang_type = {0};
+    nodes_foreach_child(memb_piece, struct_memb_sym) {
+        lang_type = memb_piece->lang_type;
+    }
+    assert(lang_type.count > 0);
+    return lang_type;
+}
+
 static void emit_fun_arg_struct_member_call(String* output, const Node* member_call) {
     assert(member_call->lang_type.count > 0);
 
@@ -131,7 +140,7 @@ static void emit_fun_arg_struct_member_call(String* output, const Node* member_c
     if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
         unreachable("");
     }
-    extend_type_call_str(output, member_call->lang_type);
+    extend_type_call_str(output, get_member_sym_piece_final_lang_type(member_call));
     string_extend_cstr(&a_main, output, " %");
     string_extend_size_t(&a_main, output, member_call->node_src->llvm_id);
 }
@@ -405,16 +414,20 @@ static void emit_function_return_statement(String* output, const Node* fun_retur
             break;
         case NODE_SYMBOL_TYPED:
             // fallthrough
-        case NODE_STRUCT_MEMBER_SYM_TYPED:
-            // fallthrough
-        case NODE_OPERATOR_RETURN_VALUE_SYM: {
+        case NODE_OPERATOR_RETURN_VALUE_SYM:
             string_extend_cstr(&a_main, output, "    ret ");
             extend_type_call_str(output, sym_to_return->lang_type);
             string_extend_cstr(&a_main, output, " %");
             string_extend_size_t(&a_main, output, sym_to_return->node_src->llvm_id);
             string_extend_cstr(&a_main, output, "\n");
             break;
-        }
+        case NODE_STRUCT_MEMBER_SYM_TYPED:
+            string_extend_cstr(&a_main, output, "    ret ");
+            extend_type_call_str(output, get_member_sym_piece_final_lang_type(sym_to_return));
+            string_extend_cstr(&a_main, output, " %");
+            string_extend_size_t(&a_main, output, sym_to_return->node_src->llvm_id);
+            string_extend_cstr(&a_main, output, "\n");
+            break;
         case NODE_SYMBOL_UNTYPED:
             unreachable("untyped symbols should not still be present");
         default:

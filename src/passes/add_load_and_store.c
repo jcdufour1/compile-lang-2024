@@ -54,7 +54,7 @@ static Node* do_load_struct_element_ptr(Node* node_to_insert_before, Node* symbo
             unreachable("");
         }
         const Node* member_def = get_member_def(struct_def, element_sym);
-        symbol_call->lang_type = member_def->lang_type;
+        //symbol_call->lang_type = member_def->lang_type;
         load_element_ptr->lang_type = member_def->lang_type;
         load_element_ptr->node_src = node_element_ptr_to_load;
         nodes_append_child(load_element_ptr, node_clone(element_sym));
