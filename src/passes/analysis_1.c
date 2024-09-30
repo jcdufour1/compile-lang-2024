@@ -5,10 +5,6 @@
 #include "../parser_utils.h"
 #include "../error_msg.h"
 
-static void do_function_definition(Node* fun_def) {
-    (void) fun_def;
-}
-
 static void set_if_statement_types(Node* if_statement) {
     assert(if_statement->type == NODE_IF_STATEMENT);
 
@@ -62,7 +58,6 @@ bool analysis_1(Node* start_node) {
                 set_function_call_types(curr_node);
                 break;
             case NODE_FUNCTION_DEFINITION:
-                do_function_definition(curr_node);
                 break;
             case NODE_SYMBOL_UNTYPED:
                 todo();

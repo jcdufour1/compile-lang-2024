@@ -57,7 +57,6 @@ const Node* get_member_def_from_alloca(const Node* store_struct) {
 
     Str_view member_type = nodes_single_child_const(store_struct)->lang_type;
     nodes_foreach_child(member, struct_def) {
-        node_printf(member);
         if (str_view_is_equal(member->lang_type, member_type)) {
             return member;
         }
@@ -165,7 +164,6 @@ uint64_t sizeof_item(const Node* item) {
         case NODE_VARIABLE_DEFINITION:
             return sizeof_lang_type(item->lang_type);
         default:
-            node_printf(item);
             unreachable("");
     }
 }
@@ -248,7 +246,7 @@ bool is_corresponding_to_a_struct(const Node* node) {
         case NODE_STRUCT_MEMBER_SYM_TYPED:
             return true;
         default:
-            log_tree(LOG_DEBUG, node);
+            log_tree(LOG_FETAL, node);
             todo();
     }
 }
@@ -497,6 +495,10 @@ void set_function_call_types(Node* fun_call) {
         msg_undefined_function(fun_call);
         return;
     }
+    Node* fun_rtn_types = nodes_get_child_of_type(fun_def, NODE_FUNCTION_RETURN_TYPES);
+    Node* fun_rtn_type = nodes_single_child(fun_rtn_types);
+    fun_call->lang_type = fun_rtn_type->lang_type;
+    assert(fun_call->lang_type.count > 0);
     Node* params = nodes_get_child_of_type(fun_def, NODE_FUNCTION_PARAMETERS);
     size_t params_idx = 0;
 
@@ -545,6 +547,7 @@ void set_struct_member_symbol_types(Node* struct_memb_sym) {
     struct_memb_sym->type = NODE_STRUCT_MEMBER_SYM_TYPED;
     struct_memb_sym->lang_type = struct_def->name;
     bool is_struct = true;
+    Node* prev_struct_def = struct_def;
     nodes_foreach_child(memb_sym, struct_memb_sym) {
         if (!is_struct) {
             todo();
@@ -561,6 +564,10 @@ void set_struct_member_symbol_types(Node* struct_memb_sym) {
         assert(struct_def->type == NODE_STRUCT_DEFINITION);
         memb_sym->type = NODE_STRUCT_MEMBER_SYM_PIECE_TYPED;
         memb_sym->lang_type = curr_memb_def->lang_type;
+        node_printf(struct_def);
+        memb_sym->struct_index = get_member_index(prev_struct_def, memb_sym);
+
+        prev_struct_def = struct_def;
     }
 }
 

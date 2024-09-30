@@ -132,14 +132,6 @@ static Str_view get_member_sym_piece_final_lang_type(const Node* struct_memb_sym
 static void emit_fun_arg_struct_member_call(String* output, const Node* member_call) {
     assert(member_call->lang_type.count > 0);
 
-    Node* var_def;
-    if (!sym_tbl_lookup(&var_def, member_call->name)) {
-        unreachable("");
-    }
-    Node* struct_def;
-    if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
-        unreachable("");
-    }
     extend_type_call_str(output, get_member_sym_piece_final_lang_type(member_call));
     string_extend_cstr(&a_main, output, " %");
     string_extend_size_t(&a_main, output, member_call->node_src->llvm_id);
@@ -148,22 +140,12 @@ static void emit_fun_arg_struct_member_call(String* output, const Node* member_c
 static void emit_function_call_arguments(String* output, const Node* fun_call) {
     size_t idx = 0;
     nodes_foreach_child(argument, fun_call) {
-        Node* var_decl_or_def;
-        if (!sym_tbl_lookup(&var_decl_or_def, argument->name)) {
-            msg(
-                LOG_WARNING,
-                argument->pos,
-                "unknown variable: "STR_VIEW_FMT"\n",
-                str_view_print(argument->name)
-            );
-            break;
-        }
         if (idx++ > 0) {
             string_extend_cstr(&a_main, output, ", ");
         }
         switch (argument->type) {
             case NODE_LITERAL: {
-                extend_literal_decl(output, var_decl_or_def, true);
+                extend_literal_decl(output, argument, true);
                 break;
             }
             case NODE_STRUCT_MEMBER_SYM_TYPED:
@@ -174,19 +156,15 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
             case NODE_SYMBOL_UNTYPED:
                 unreachable("untyped symbols should not still be present");
             case NODE_SYMBOL_TYPED: {
-                node_printf(var_decl_or_def);
-                node_printf(argument);
-                if (is_struct_variable_definition(var_decl_or_def)) {
+                if (is_struct_symbol(argument)) {
                     string_extend_cstr(&a_main, output, "ptr noundef byval(");
-                    node_printf(argument);
-                    extend_type_call_str(output, var_decl_or_def->lang_type);
+                    extend_type_call_str(output, argument->lang_type);
                     string_extend_cstr(&a_main, output, ")");
                 } else {
-                    extend_type_call_str(output, var_decl_or_def->lang_type);
+                    extend_type_call_str(output, argument->lang_type);
                 }
                 string_extend_cstr(&a_main, output, " %");
-                node_printf(argument);
-                if (is_struct_variable_definition(var_decl_or_def)) {
+                if (is_struct_symbol(argument)) {
                     string_extend_size_t(&a_main, output, get_store_dest_id(argument));
                 } else {
                     string_extend_size_t(&a_main, output, argument->node_src->llvm_id);
@@ -205,16 +183,11 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
 static void emit_function_call(String* output, const Node* fun_call) {
     //assert(fun_call->llvm_id == 0);
 
-    Node* fun_def;
-    if (!sym_tbl_lookup(&fun_def, fun_call->name)) {
-        unreachable(NODE_FMT"\n", node_print(fun_call));
-    }
-
     // start of actual function call
     string_extend_cstr(&a_main, output, "    %");
     string_extend_size_t(&a_main, output, fun_call->llvm_id);
     string_extend_cstr(&a_main, output, " = call ");
-    extend_type_call_str(output, return_type_from_function_definition(fun_def)->lang_type);
+    extend_type_call_str(output, fun_call->lang_type);
     string_extend_cstr(&a_main, output, " @");
     string_extend_strv(&a_main, output, fun_call->name);
 
@@ -305,17 +278,10 @@ static void emit_operator(String* output, const Node* operator) {
 }
 
 static void emit_load_variable(String* output, const Node* variable_call) {
-    Node* variable_def;
-    node_printf(variable_call);
-    if (!sym_tbl_lookup(&variable_def, variable_call->name)) {
-        unreachable("attempt to load a symbol that is undefined:"NODE_FMT"\n", node_print(variable_call));
-    }
-    assert(get_store_dest_id(variable_call) > 0);
-
     string_extend_cstr(&a_main, output, "    %");
     string_extend_size_t(&a_main, output, variable_call->llvm_id);
     string_extend_cstr(&a_main, output, " = load ");
-    extend_type_call_str(output, variable_def->lang_type);
+    extend_type_call_str(output, variable_call->lang_type);
     string_extend_cstr(&a_main, output, ", ");
     string_extend_cstr(&a_main, output, "ptr");
     string_extend_cstr(&a_main, output, " %");
@@ -490,12 +456,6 @@ static void emit_struct_definition(String* output, const Node* statement) {
 }
 
 static void emit_load_struct_element_pointer(String* output, const Node* load_elem_ptr) {
-    Node* struct_def;
-    node_printf(load_elem_ptr);
-    if (!sym_tbl_lookup(&struct_def, load_elem_ptr->node_src->lang_type)) {
-        unreachable("");
-    }
-    size_t member_idx = get_member_index(struct_def, nodes_single_child_const(load_elem_ptr));
     assert(load_elem_ptr->lang_type.count > 0);
     string_extend_cstr(&a_main, output, "    %"); 
     string_extend_size_t(&a_main, output, load_elem_ptr->llvm_id);
@@ -505,7 +465,7 @@ static void emit_load_struct_element_pointer(String* output, const Node* load_el
     string_extend_size_t(&a_main, output, load_elem_ptr->node_src->llvm_id);
     string_extend_cstr(&a_main, output, ", i32 0");
     string_extend_cstr(&a_main, output, ", i32 ");
-    string_extend_size_t(&a_main, output, member_idx);
+    string_extend_size_t(&a_main, output, load_elem_ptr->struct_index);
     string_append(&a_main, output, '\n');
 }
 

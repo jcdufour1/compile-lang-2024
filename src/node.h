@@ -72,11 +72,13 @@ typedef struct Node_ {
     Str_view name; // eg. "string1" in "let string1: String = "hello""
     Str_view str_data; // eg. "hello" in "let string1: String = "hello""
     Str_view lang_type; // eg. "String" in "let string1: String = "hello""
-    uint16_t pointer_depth;
+    int16_t pointer_depth;
 
     bool is_variadic : 1;
 
     Pos pos;
+
+    size_t struct_index;
 
     struct Node_* node_src;
     struct Node_* node_dest;
