@@ -246,8 +246,6 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             // fallthrough
         case NODE_LOAD_STRUCT_MEMBER:
             // fallthrough
-        case NODE_LOAD_STRUCT_ELEMENT_PTR:
-            // fallthrough
         case NODE_STORE_STRUCT_MEMBER:
             // fallthrough
         case NODE_STRUCT_DEFINITION:
@@ -313,6 +311,8 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
         case NODE_STRUCT_MEMBER_SYM_TYPED:
             // fallthrough
         case NODE_STRUCT_MEMBER_SYM_PIECE_TYPED:
+            // fallthrough
+        case NODE_LOAD_STRUCT_ELEMENT_PTR:
             // fallthrough
             string_extend_strv_in_gtlt(arena, string, node->lang_type);
             string_extend_strv_in_par(arena, string, node->name);

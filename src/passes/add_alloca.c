@@ -7,6 +7,7 @@ static Node* alloca_new(Node* var_def) {
     Node* alloca = node_new(var_def->pos);
     alloca->type = NODE_ALLOCA;
     alloca->name = var_def->name;
+    alloca->lang_type = var_def->lang_type;
     var_def->storage_location = alloca;
     return alloca;
 }

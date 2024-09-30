@@ -490,20 +490,17 @@ static void emit_struct_definition(String* output, const Node* statement) {
 }
 
 static void emit_load_struct_element_pointer(String* output, const Node* load_elem_ptr) {
-    Node* var_def;
-    if (!sym_tbl_lookup(&var_def, load_elem_ptr->name)) {
-        unreachable("");
-    }
     Node* struct_def;
-    if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
+    node_printf(load_elem_ptr);
+    if (!sym_tbl_lookup(&struct_def, load_elem_ptr->node_src->lang_type)) {
         unreachable("");
     }
     size_t member_idx = get_member_index(struct_def, nodes_single_child_const(load_elem_ptr));
-    assert(var_def->lang_type.count > 0);
+    assert(load_elem_ptr->lang_type.count > 0);
     string_extend_cstr(&a_main, output, "    %"); 
     string_extend_size_t(&a_main, output, load_elem_ptr->llvm_id);
     string_extend_cstr(&a_main, output, " = getelementptr inbounds %struct.");
-    string_extend_strv(&a_main, output, var_def->lang_type);
+    string_extend_strv(&a_main, output, load_elem_ptr->node_src->lang_type);
     string_extend_cstr(&a_main, output, ", ptr %");
     string_extend_size_t(&a_main, output, load_elem_ptr->node_src->llvm_id);
     string_extend_cstr(&a_main, output, ", i32 0");
