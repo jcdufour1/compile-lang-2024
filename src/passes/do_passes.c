@@ -24,6 +24,7 @@ void do_passes(Node** root) {
     log_tree(LOG_DEBUG, *root);
     arena_reset(&print_arena);
 
+    // TODO: do not set NODE_STRUCT_MEMBER_SYM_TYPED lang_type in add_load_and_store
     walk_tree(*root, add_load_and_store);
     log_tree(LOG_DEBUG, *root);
     arena_reset(&print_arena);

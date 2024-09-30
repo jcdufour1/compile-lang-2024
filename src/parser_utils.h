@@ -51,7 +51,7 @@ static inline bool is_struct_variable_definition(const Node* var_def) {
 }
 
 static inline bool is_struct_symbol(const Node* symbol) {
-    assert(symbol->type == NODE_SYMBOL_TYPED || symbol->type == NODE_STRUCT_MEMBER_SYM);
+    assert(symbol->type == NODE_SYMBOL_TYPED || symbol->type == NODE_STRUCT_MEMBER_SYM_TYPED);
 
     Node* var_def;
     if (!sym_tbl_lookup(&var_def, symbol->name)) {
@@ -76,7 +76,10 @@ static inline size_t get_member_index(const Node* struct_def, const Node* member
 
 static inline bool try_get_member_def(Node** member_def, const Node* struct_def, const Node* member_symbol) {
     assert(struct_def->type == NODE_STRUCT_DEFINITION);
-    assert(member_symbol->type == NODE_STRUCT_MEMBER_SYM_PIECE);
+    assert(
+        member_symbol->type == NODE_STRUCT_MEMBER_SYM_PIECE_TYPED ||
+        member_symbol->type == NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED
+    );
 
     nodes_foreach_child(curr_member, struct_def) {
         if (str_view_is_equal(curr_member->name, member_symbol->name)) {
@@ -123,7 +126,7 @@ void set_symbol_type(Node* sym_untyped);
 
 void set_function_call_types(Node* fun_call);
 
-void set_struct_member_symbol_types(const Node* struct_memb_sym);
+void set_struct_member_symbol_types(Node* struct_memb_sym);
 
 void set_return_statement_types(Node* rtn_statement);
 

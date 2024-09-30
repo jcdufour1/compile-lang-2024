@@ -35,11 +35,11 @@ void msg_undefined_function(const Node* fun_call) {
 
 void msg_invalid_struct_member(const Node* node) {
     switch (node->type) {
-        case NODE_STRUCT_MEMBER_SYM:
+        case NODE_STRUCT_MEMBER_SYM_TYPED:
             todo();
         case NODE_SYMBOL_TYPED: {
             Node* struct_memb_sym = node->parent;
-            assert(struct_memb_sym->type == NODE_STRUCT_MEMBER_SYM);
+            assert(struct_memb_sym->type == NODE_STRUCT_MEMBER_SYM_TYPED);
             msg(
                 LOG_ERROR, node->pos,
                 "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 

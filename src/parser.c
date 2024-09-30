@@ -642,12 +642,12 @@ static Node* extract_struct_literal(Tk_view* tokens) {
 static Node* extract_struct_member_call(Tk_view* tokens) {
     Token start_token = tk_view_consume(tokens);
     Node* member_call = node_new(start_token.pos);
-    member_call->type = NODE_STRUCT_MEMBER_SYM;
+    member_call->type = NODE_STRUCT_MEMBER_SYM_UNTYPED;
     member_call->name = start_token.text;
     while (tk_view_try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
         Token member_token = tk_view_consume(tokens);
         Node* member = node_new(member_token.pos);
-        member->type = NODE_STRUCT_MEMBER_SYM_PIECE;
+        member->type = NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED;
         member->name = member_token.text;
         nodes_append_child(member_call, member);
     }

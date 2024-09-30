@@ -245,7 +245,7 @@ bool is_corresponding_to_a_struct(const Node* node) {
             unreachable("untyped symbols should not still be present");
         case NODE_LITERAL:
             return false;
-        case NODE_STRUCT_MEMBER_SYM:
+        case NODE_STRUCT_MEMBER_SYM_TYPED:
             return true;
         default:
             log_tree(LOG_DEBUG, node);
@@ -268,7 +268,7 @@ bool try_get_struct_definition(Node** struct_def, Node* node) {
             // fallthrough
         case NODE_SYMBOL_TYPED:
             // fallthrough
-        case NODE_STRUCT_MEMBER_SYM: {
+        case NODE_STRUCT_MEMBER_SYM_TYPED: {
             Node* var_def;
             assert(node->name.count > 0);
             if (!sym_tbl_lookup(&var_def, node->name)) {
@@ -418,7 +418,7 @@ bool set_assignment_operand_types(Node* assignment) {
         case NODE_FUNCTION_CALL:
             unreachable("");
             break;
-        case NODE_STRUCT_MEMBER_SYM:
+        case NODE_STRUCT_MEMBER_SYM_UNTYPED:
             set_struct_member_symbol_types(lhs);
             if (rhs->type == NODE_SYMBOL_UNTYPED) {
                 set_symbol_type(rhs);
@@ -507,7 +507,7 @@ void set_function_call_types(Node* fun_call) {
             case NODE_SYMBOL_UNTYPED:
                 set_symbol_type(argument);
                 break;
-            case NODE_STRUCT_MEMBER_SYM:
+            case NODE_STRUCT_MEMBER_SYM_UNTYPED:
                 set_struct_member_symbol_types(argument);
                 break;
             default:
@@ -531,7 +531,7 @@ void set_function_call_types(Node* fun_call) {
     }
 }
 
-void set_struct_member_symbol_types(const Node* struct_memb_sym) {
+void set_struct_member_symbol_types(Node* struct_memb_sym) {
     Node* curr_memb_def = NULL;
     Node* struct_def;
     Node* struct_var;
@@ -542,6 +542,8 @@ void set_struct_member_symbol_types(const Node* struct_memb_sym) {
     if (!sym_tbl_lookup(&struct_def, struct_var->lang_type)) {
         todo(); // this should possibly never happen
     }
+    struct_memb_sym->type = NODE_STRUCT_MEMBER_SYM_TYPED;
+    struct_memb_sym->lang_type = struct_def->name;
     bool is_struct = true;
     nodes_foreach_child(memb_sym, struct_memb_sym) {
         if (!is_struct) {
@@ -554,6 +556,11 @@ void set_struct_member_symbol_types(const Node* struct_memb_sym) {
         if (!try_get_struct_definition(&struct_def, curr_memb_def)) {
             is_struct = false;
         }
+
+        assert(memb_sym->type == NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED);
+        assert(struct_def->type == NODE_STRUCT_DEFINITION);
+        memb_sym->type = NODE_STRUCT_MEMBER_SYM_PIECE_TYPED;
+        memb_sym->lang_type = curr_memb_def->lang_type;
     }
 }
 
@@ -565,7 +572,7 @@ void set_return_statement_types(Node* rtn_statement) {
         case NODE_SYMBOL_UNTYPED:
             set_symbol_type(child);
             break;
-        case NODE_STRUCT_MEMBER_SYM:
+        case NODE_STRUCT_MEMBER_SYM_UNTYPED:
             set_struct_member_symbol_types(child);
             break;
         case NODE_LITERAL:

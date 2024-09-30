@@ -157,7 +157,7 @@ static void emit_function_call_arguments(String* output, const Node* fun_call) {
                 extend_literal_decl(output, var_decl_or_def, true);
                 break;
             }
-            case NODE_STRUCT_MEMBER_SYM:
+            case NODE_STRUCT_MEMBER_SYM_TYPED:
                 emit_fun_arg_struct_member_call(output, argument);
                 break;
             case NODE_STRUCT_LITERAL:
@@ -405,7 +405,7 @@ static void emit_function_return_statement(String* output, const Node* fun_retur
             break;
         case NODE_SYMBOL_TYPED:
             // fallthrough
-        case NODE_STRUCT_MEMBER_SYM:
+        case NODE_STRUCT_MEMBER_SYM_TYPED:
             // fallthrough
         case NODE_OPERATOR_RETURN_VALUE_SYM: {
             string_extend_cstr(&a_main, output, "    ret ");
@@ -565,7 +565,7 @@ static void emit_block(String* output, const Node* block) {
             case NODE_STORE_ANOTHER_NODE:
                 emit_store_another_node(output, statement);
                 break;
-            case NODE_STRUCT_MEMBER_SYM:
+            case NODE_STRUCT_MEMBER_SYM_TYPED:
                 break;
             case NODE_FOR_LOOP:
                 unreachable("for loop should not still be present at this point\n");

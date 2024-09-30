@@ -32,9 +32,11 @@ static const char* NODE_IF_STATEMENT_DESCRIPTION = "if_statement";
 static const char* NODE_IF_CONDITION_DESCRIPTION = "if_condition";
 static const char* NODE_FUNCTION_PARAM_SYM_DESCRIPTION = "fun_param_sym";
 static const char* NODE_STRUCT_DEFINITION_DESCRIPTION = "struct_def";
-static const char* NODE_STRUCT_MEMBER_SYM_DESCRIPTION = "struct_member_sym";
-static const char* NODE_STRUCT_MEMBER_SYM_PIECE_DESCRIPTION = "struct_member_sym_piece";
 static const char* NODE_STRUCT_LITERAL_DESCRIPTION = "struct_literal";
+static const char* NODE_STRUCT_MEMBER_SYM_TYPED_DESCRIPTION = "struct_member_sym_typed";
+static const char* NODE_STRUCT_MEMBER_SYM_UNTYPED_DESCRIPTION = "struct_member_sym_untyped";
+static const char* NODE_STRUCT_MEMBER_SYM_PIECE_TYPED_DESCRIPTION = "struct_member_sym_piece_typed";
+static const char* NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED_DESCRIPTION = "struct_member_sym_piece_untyped";
 static const char* NODE_STORE_STRUCT_MEMBER_DESCRIPTION = "store_member";
 static const char* NODE_LLVM_STORE_LITERAL_DESCRIPTION = "llvm_store_literal";
 static const char* NODE_LLVM_STORE_STRUCT_LITERAL_DESCRIPTION = "llvm_store_struct_literal";
@@ -172,10 +174,14 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_FUNCTION_PARAM_SYM_DESCRIPTION);
         case NODE_STRUCT_DEFINITION:
             return str_view_from_cstr(NODE_STRUCT_DEFINITION_DESCRIPTION);
-        case NODE_STRUCT_MEMBER_SYM:
-            return str_view_from_cstr(NODE_STRUCT_MEMBER_SYM_DESCRIPTION);
-        case NODE_STRUCT_MEMBER_SYM_PIECE:
-            return str_view_from_cstr(NODE_STRUCT_MEMBER_SYM_PIECE_DESCRIPTION);
+        case NODE_STRUCT_MEMBER_SYM_UNTYPED:
+            return str_view_from_cstr(NODE_STRUCT_MEMBER_SYM_UNTYPED_DESCRIPTION);
+        case NODE_STRUCT_MEMBER_SYM_TYPED:
+            return str_view_from_cstr(NODE_STRUCT_MEMBER_SYM_TYPED_DESCRIPTION);
+        case NODE_STRUCT_MEMBER_SYM_PIECE_TYPED:
+            return str_view_from_cstr(NODE_STRUCT_MEMBER_SYM_PIECE_TYPED_DESCRIPTION);
+        case NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED:
+            return str_view_from_cstr(NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED_DESCRIPTION);
         case NODE_STRUCT_LITERAL:
             return str_view_from_cstr(NODE_STRUCT_LITERAL_DESCRIPTION);
         case NODE_STORE_STRUCT_MEMBER:
@@ -232,7 +238,9 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             break;
         case NODE_SYMBOL_UNTYPED:
             // fallthrough
-        case NODE_STRUCT_MEMBER_SYM_PIECE:
+        case NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED:
+            // fallthrough
+        case NODE_STRUCT_MEMBER_SYM_UNTYPED:
             // fallthrough
         case NODE_FUNCTION_DEFINITION:
             // fallthrough
@@ -292,8 +300,6 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             // fallthrough
         case NODE_STORE_ANOTHER_NODE:
             // fallthrough
-        case NODE_STRUCT_MEMBER_SYM:
-            // fallthrough
         case NODE_FUNCTION_RETURN_VALUE_SYM:
             // fallthrough
         case NODE_OPERATOR_RETURN_VALUE_SYM:
@@ -303,6 +309,10 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
         case NODE_LLVM_STORE_STRUCT_LITERAL:
             // fallthrough
         case NODE_SYMBOL_TYPED:
+            // fallthrough
+        case NODE_STRUCT_MEMBER_SYM_TYPED:
+            // fallthrough
+        case NODE_STRUCT_MEMBER_SYM_PIECE_TYPED:
             // fallthrough
             string_extend_strv_in_gtlt(arena, string, node->lang_type);
             string_extend_strv_in_par(arena, string, node->name);

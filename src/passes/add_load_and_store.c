@@ -40,7 +40,7 @@ static Node* do_load_struct_element_ptr(Node* node_to_insert_before, Node* symbo
     Node* node_element_ptr_to_load = get_storage_location(symbol_call);
     Node* load_element_ptr = NULL;
     nodes_foreach_child(element_sym, symbol_call) {
-        assert(element_sym->type == NODE_STRUCT_MEMBER_SYM_PIECE);
+        assert(element_sym->type == NODE_STRUCT_MEMBER_SYM_PIECE_TYPED);
 
         load_element_ptr = node_new(element_sym->pos);
         load_element_ptr->type = NODE_LOAD_STRUCT_ELEMENT_PTR;
@@ -73,7 +73,7 @@ static Node* insert_load(Node* node_insert_load_before, Node* symbol_call) {
             // fallthrough
         case NODE_LITERAL:
             return NULL;
-        case NODE_STRUCT_MEMBER_SYM:
+        case NODE_STRUCT_MEMBER_SYM_TYPED:
             // fallthrough
         case NODE_SYMBOL_TYPED:
             // fallthrough
@@ -84,7 +84,7 @@ static Node* insert_load(Node* node_insert_load_before, Node* symbol_call) {
             todo();
     }
 
-    if (symbol_call->type == NODE_STRUCT_MEMBER_SYM) {
+    if (symbol_call->type == NODE_STRUCT_MEMBER_SYM_TYPED) {
         Node* load = node_new(symbol_call->pos);
         load->type = NODE_LOAD_ANOTHER_NODE;
         Node* load_element_ptr = do_load_struct_element_ptr(node_insert_load_before, symbol_call);
@@ -126,7 +126,7 @@ static void insert_store(Node* node_insert_store_before, Node* symbol_call /* sr
             todo();
     }
 
-    if (symbol_call->type == NODE_STRUCT_MEMBER_SYM) {
+    if (symbol_call->type == NODE_STRUCT_MEMBER_SYM_TYPED) {
         todo();
     } else {
         Node* store = node_new(symbol_call->pos);
@@ -225,7 +225,7 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
         case NODE_SYMBOL_TYPED:
             node_printf(lhs);
             break;
-        case NODE_STRUCT_MEMBER_SYM:
+        case NODE_STRUCT_MEMBER_SYM_TYPED:
             break;
         default:
             unreachable(NODE_FMT, node_print(lhs));
@@ -277,7 +277,7 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
         store->type = NODE_STORE_VARIABLE;
         nodes_append_child(store, rhs);
         nodes_insert_before(node_to_insert_before, store);
-    } else if (lhs->type == NODE_STRUCT_MEMBER_SYM) {
+    } else if (lhs->type == NODE_STRUCT_MEMBER_SYM_TYPED) {
         if (rhs->type == NODE_STRUCT_LITERAL) {
             todo();
         }
@@ -340,7 +340,7 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
 static void add_load_return_statement(Node* return_statement) {
     Node* node_to_return = nodes_single_child(return_statement);
     switch (node_to_return->type) {
-        case NODE_STRUCT_MEMBER_SYM:
+        case NODE_STRUCT_MEMBER_SYM_TYPED:
             // fallthrough
         case NODE_SYMBOL_TYPED:
             insert_load(return_statement, node_to_return);
@@ -489,7 +489,7 @@ bool add_load_and_store(Node* start_start_node) {
                 break;
             case NODE_STORE_STRUCT_MEMBER:
                 break;
-            case NODE_STRUCT_MEMBER_SYM:
+            case NODE_STRUCT_MEMBER_SYM_TYPED:
                 break;
             case NODE_OPERATOR_RETURN_VALUE_SYM:
                 break;
