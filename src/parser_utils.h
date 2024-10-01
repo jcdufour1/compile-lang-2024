@@ -35,7 +35,7 @@ Llvm_id get_matching_fun_param_load_id(const Node* src);
 
 const Node* get_lang_type_from_sym_definition(const Node* sym_def);
 
-uint64_t sizeof_lang_type(Str_view lang_type);
+uint64_t sizeof_lang_type(Lang_type lang_type);
 
 uint64_t sizeof_item(const Node* item);
 
@@ -47,7 +47,7 @@ static inline bool is_struct_variable_definition(const Node* var_def) {
     assert(var_def->type == NODE_VARIABLE_DEFINITION);
 
     Node* struct_def;
-    return sym_tbl_lookup(&struct_def, var_def->lang_type);
+    return sym_tbl_lookup(&struct_def, var_def->lang_type.str);
 }
 
 static inline bool is_struct_symbol(const Node* symbol) {
@@ -83,7 +83,7 @@ static inline bool try_get_member_def(Node** member_def, const Node* struct_def,
 
     nodes_foreach_child(curr_member, struct_def) {
         if (str_view_is_equal(curr_member->name, member_symbol->name)) {
-            assert(curr_member->lang_type.count > 0);
+            assert(curr_member->lang_type.str.count > 0);
             *member_def = curr_member;
             return true;
         }
@@ -119,7 +119,7 @@ bool set_assignment_operand_types(Node* assignment);
 bool try_set_operator_lang_type(Node* operator);
 
 // returns false if unsuccessful
-bool try_set_operator_operand_lang_type(Str_view* result, Node* operand);
+bool try_set_operator_operand_lang_type(Lang_type* result, Node* operand);
 
 // set symbol lang_type, and report error if symbol is undefined
 void set_symbol_type(Node* sym_untyped);

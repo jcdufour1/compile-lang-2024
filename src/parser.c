@@ -134,8 +134,11 @@ static bool extract_function_return_types(Node** result, Tk_view* tokens) {
         Token rtn_type_token = tk_view_consume(tokens);
         Node* return_type = node_new(rtn_type_token.pos);
         return_type->type = NODE_LANG_TYPE;
-        return_type->lang_type = rtn_type_token.text;
-        assert(return_type->lang_type.count > 0);
+        return_type->lang_type.str = rtn_type_token.text;
+        if (tk_view_try_consume(NULL, tokens, TOKEN_ASTERISK)) {
+            todo();
+        }
+        assert(return_type->lang_type.str.count > 0);
         nodes_append_child(return_types, return_type);
         is_comma = tk_view_try_consume(NULL, tokens, TOKEN_COMMA);
     }
@@ -229,9 +232,9 @@ static Node* extract_variable_declaration(Tk_view* tokens, bool require_let) {
     variable_def->type = NODE_VARIABLE_DEFINITION;
     variable_def->name = name_token.text;
     try(tk_view_try_consume(NULL, tokens, TOKEN_COLON));
-    variable_def->lang_type = tk_view_consume(tokens).text;
+    variable_def->lang_type.str = tk_view_consume(tokens).text;
     while (tk_view_try_consume(NULL, tokens, TOKEN_ASTERISK)) {
-        variable_def->pointer_depth++;
+        variable_def->lang_type.pointer_depth++;
     }
     if (!sym_tbl_add(variable_def)) {
         msg_redefinition_of_symbol(variable_def);
@@ -308,12 +311,12 @@ static Node* extract_function_declaration(Tk_view* tokens) {
     return fun_declaration;
 }
 
-static Str_view get_literal_lang_type_from_token_type(TOKEN_TYPE token_type) {
+static Lang_type get_literal_lang_type_from_token_type(TOKEN_TYPE token_type) {
     switch (token_type) {
         case TOKEN_STRING_LITERAL:
-            return str_view_from_cstr("ptr");
+            return lang_type_from_cstr("ptr", 0); // TODO: should this actally be zero?
         case TOKEN_NUM_LITERAL:
-            return str_view_from_cstr("i32");
+            return lang_type_from_cstr("i32", 0);
         default:
             todo();
     }

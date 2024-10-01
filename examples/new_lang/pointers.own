@@ -1,7 +1,8 @@
 
 extern("c") fn printf(format_string: ptr, args: any...) i32
 
-fn add_one(num_to_inc: i32*) i32 {
+// TODO: make num_to_inc a pointer
+fn add_one(num_to_inc: i32) i32 {
     num_to_inc = num_to_inc + 1
     return 0
 }

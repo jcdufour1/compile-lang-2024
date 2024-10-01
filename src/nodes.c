@@ -54,7 +54,6 @@ static void nodes_assert_tree_linkage_is_consistant_internal(Node_ptr_vec* nodes
         return;
     }
 
-    //nodes_log_tree_rec(LOG_DEBUG, 0, root, __FILE__, __LINE__);
     assert(!node_ptr_vec_in(nodes_visited, root) && "same node found more than once");
     node_ptr_vec_append(nodes_visited, root);
 
@@ -94,6 +93,29 @@ void nodes_assert_tree_linkage_is_consistant(const Node* root) {
     nodes_assert_tree_linkage_is_consistant_internal(&nodes_visited, root);
 }
 #endif // NDEBUG
+
+void extend_lang_type_to_string(Arena* arena, String* string, Lang_type lang_type, bool surround_in_lt_gt) {
+    if (surround_in_lt_gt) {
+        string_append(arena, string, '<');
+    }
+    string_extend_strv(arena, string, lang_type.str);
+    if (lang_type.pointer_depth < 0) {
+        todo();
+    }
+    for (int16_t idx = 0; idx < lang_type.pointer_depth; idx++) {
+        string_append(arena, string, '*');
+    }
+    if (surround_in_lt_gt) {
+        string_append(arena, string, '>');
+    }
+}
+
+Str_view lang_type_print_internal(Arena* arena, Lang_type lang_type, bool surround_in_lt_gt) {
+    String buf = {0};
+    extend_lang_type_to_string(arena, &buf, lang_type, surround_in_lt_gt);
+    Str_view str_view = {.str = buf.buf, .count = buf.info.count};
+    return str_view;
+}
 
 void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, const Node* root, const char* file, int line) {
     if (!root_of_tree) {
@@ -255,7 +277,7 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             string_extend_size_t(arena, string, node->llvm_id);
             break;
         case NODE_LANG_TYPE:
-            string_extend_strv_in_gtlt(arena, string, node->lang_type);
+            extend_lang_type_to_string(arena, string, node->lang_type, true);
             break;
         case NODE_OPERATOR:
             string_extend_strv(arena, string, token_type_to_str_view(node->token_type));
@@ -263,7 +285,7 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
         case NODE_VARIABLE_DEFINITION:
             // fallthrough
         case NODE_STRUCT_LITERAL:
-            string_extend_strv_in_gtlt(arena, string, node->lang_type);
+            extend_lang_type_to_string(arena, string, node->lang_type, true);
             string_extend_strv(arena, string, node->name);
             break;
         case NODE_FUNCTION_PARAMETERS:
@@ -314,7 +336,7 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             // fallthrough
         case NODE_LOAD_STRUCT_ELEMENT_PTR:
             // fallthrough
-            string_extend_strv_in_gtlt(arena, string, node->lang_type);
+            extend_lang_type_to_string(arena, string, node->lang_type, true);
             string_extend_strv_in_par(arena, string, node->name);
                 string_extend_cstr(arena, string, "[");
             if (node->node_src && do_recursion) {

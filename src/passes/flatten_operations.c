@@ -42,7 +42,7 @@ static Node* move_operator_back(Node* node_to_insert_before, Node* operation) {
     operator_sym->node_src = operation;
     try(try_set_operator_lang_type(operation));
     operator_sym->lang_type = operation->lang_type;
-    assert(operator_sym->lang_type.count > 0);
+    assert(operator_sym->lang_type.str.count > 0);
     nodes_insert_before(node_to_insert_before, operation);
     return operator_sym;
 }

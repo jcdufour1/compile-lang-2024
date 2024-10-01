@@ -57,6 +57,14 @@ typedef enum {
 
 typedef size_t Llvm_id;
 
+typedef struct {
+    Str_view str;
+    int16_t pointer_depth; // for function parameter: 2 means that function argument must also have 2 for this field
+                           // and that in function, variable is already referenced twice
+                           //
+                           // for function argument: 2 means to reference the variable twice
+} Lang_type;
+
 typedef struct Node_ {
     struct Node_* next;
     struct Node_* prev;
@@ -71,8 +79,7 @@ typedef struct Node_ {
 
     Str_view name; // eg. "string1" in "let string1: String = "hello""
     Str_view str_data; // eg. "hello" in "let string1: String = "hello""
-    Str_view lang_type; // eg. "String" in "let string1: String = "hello""
-    int16_t pointer_depth;
+    Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 
     bool is_variadic : 1;
 
@@ -86,6 +93,32 @@ typedef struct Node_ {
 } Node;
 
 extern Node* root_of_tree;
+
+#define LANG_TYPE_FMT STR_VIEW_FMT
+
+void extend_lang_type_to_string(
+    Arena* arena,
+    String* string,
+    Lang_type lang_type,
+    bool surround_in_lt_gt
+);
+
+// only literals can be used here
+static inline Lang_type lang_type_from_cstr(const char* cstr, int16_t pointer_depth) {
+    Lang_type Lang_type = {.str = str_view_from_cstr(cstr), .pointer_depth = pointer_depth};
+    return Lang_type;
+}
+
+static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
+    if (a.pointer_depth != b.pointer_depth) {
+        return false;
+    }
+    return str_view_is_equal(a.str, b.str);
+}
+
+Str_view lang_type_print_internal(Arena* arena, Lang_type lang_type, bool surround_in_lt_gt);
+
+#define lang_type_print(lang_type) str_view_print(lang_type_print_internal(&print_arena, (lang_type), false))
 
 #define NODE_FMT STR_VIEW_FMT
 

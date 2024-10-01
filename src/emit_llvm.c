@@ -44,18 +44,20 @@ static size_t get_count_excape_seq(Str_view str_view) {
     return count_excapes;
 }
 
-// todo: take lang_type instead of Node*
-static void extend_type_call_str(String* output, Str_view lang_type) {
-    assert(lang_type.count > 0);
+static void extend_type_call_str(String* output, Lang_type lang_type) {
+    assert(lang_type.str.count > 0);
     Node* struct_def;
-    if (sym_tbl_lookup(&struct_def, lang_type)) {
+    if (lang_type.pointer_depth != 0) {
+        todo();
+    }
+    if (sym_tbl_lookup(&struct_def, lang_type.str)) {
         string_extend_cstr(&a_main, output, "%struct.");
     }
-    string_extend_strv(&a_main, output, lang_type);
+    extend_lang_type_to_string(&a_main, output, lang_type, false);
 }
 
 static void extend_type_decl_str(String* output, const Node* variable_def, bool noundef) {
-    assert(variable_def->lang_type.count > 0);
+    assert(variable_def->lang_type.str.count > 0);
 
     if (variable_def->is_variadic) {
         string_extend_cstr(&a_main, output, "...");
@@ -69,17 +71,20 @@ static void extend_type_decl_str(String* output, const Node* variable_def, bool 
 }
 
 static void extend_literal_decl_prefix(String* output, const Node* var_decl_or_def) {
-    Str_view lang_type = var_decl_or_def->lang_type;
-    assert(lang_type.count > 0);
-    if (str_view_cstr_is_equal(lang_type, "ptr")) {
+    Lang_type lang_type = var_decl_or_def->lang_type;
+    assert(lang_type.str.count > 0);
+    if (lang_type.pointer_depth != 0) {
+        todo();
+    }
+    if (str_view_cstr_is_equal(lang_type.str, "ptr")) {
         string_extend_cstr(&a_main, output, " @.");
         string_extend_strv(&a_main, output, var_decl_or_def->name);
-    } else if (str_view_cstr_is_equal(lang_type, "i32")) {
+    } else if (str_view_cstr_is_equal(lang_type.str, "i32")) {
         string_append(&a_main, output, ' ');
         string_extend_strv(&a_main, output, var_decl_or_def->str_data);
     } else {
         log(LOG_ERROR, NODE_FMT"\n", node_print(var_decl_or_def));
-        log(LOG_ERROR, STR_VIEW_FMT"\n", str_view_print(lang_type));
+        log(LOG_ERROR, STR_VIEW_FMT"\n", lang_type_print(lang_type));
         todo();
     }
 }
@@ -120,17 +125,17 @@ static void emit_function_params(String* output, const Node* fun_params) {
     }
 }
 
-static Str_view get_member_sym_piece_final_lang_type(const Node* struct_memb_sym) {
-    Str_view lang_type = {0};
+static Lang_type get_member_sym_piece_final_lang_type(const Node* struct_memb_sym) {
+    Lang_type lang_type = {0};
     nodes_foreach_child(memb_piece, struct_memb_sym) {
         lang_type = memb_piece->lang_type;
     }
-    assert(lang_type.count > 0);
+    assert(lang_type.str.count > 0);
     return lang_type;
 }
 
 static void emit_fun_arg_struct_member_call(String* output, const Node* member_call) {
-    assert(member_call->lang_type.count > 0);
+    assert(member_call->lang_type.str.count > 0);
 
     extend_type_call_str(output, get_member_sym_piece_final_lang_type(member_call));
     string_extend_cstr(&a_main, output, " %");
@@ -320,7 +325,7 @@ static void emit_llvm_store_struct_literal(String* output, const Node* memcpy_no
 
 static void emit_store_another_node(String* output, const Node* store) {
     assert(store->type == NODE_STORE_ANOTHER_NODE);
-    assert(store->lang_type.count > 0);
+    assert(store->lang_type.str.count > 0);
     string_extend_cstr(&a_main, output, "    store ");
     extend_type_call_str(output, store->lang_type);
     string_extend_cstr(&a_main, output, " %");
@@ -365,7 +370,7 @@ static void emit_function_definition(String* output, const Node* fun_def) {
 
 static void emit_function_return_statement(String* output, const Node* fun_return) {
     Node* sym_to_return = fun_return->left_child;
-    assert(sym_to_return->lang_type.count > 0);
+    assert(sym_to_return->lang_type.str.count > 0);
 
     switch (sym_to_return->type) {
         case NODE_LITERAL:
@@ -456,11 +461,14 @@ static void emit_struct_definition(String* output, const Node* statement) {
 }
 
 static void emit_load_struct_element_pointer(String* output, const Node* load_elem_ptr) {
-    assert(load_elem_ptr->lang_type.count > 0);
+    assert(load_elem_ptr->lang_type.str.count > 0);
     string_extend_cstr(&a_main, output, "    %"); 
     string_extend_size_t(&a_main, output, load_elem_ptr->llvm_id);
     string_extend_cstr(&a_main, output, " = getelementptr inbounds %struct.");
-    string_extend_strv(&a_main, output, load_elem_ptr->node_src->lang_type);
+    if (load_elem_ptr->node_src->lang_type.pointer_depth != 0) {
+        todo();
+    }
+    extend_lang_type_to_string(&a_main, output, load_elem_ptr->node_src->lang_type, false);
     string_extend_cstr(&a_main, output, ", ptr %");
     string_extend_size_t(&a_main, output, load_elem_ptr->node_src->llvm_id);
     string_extend_cstr(&a_main, output, ", i32 0");
@@ -563,11 +571,11 @@ static void emit_symbol(String* output, const Symbol_table_node node) {
 }
 
 static void emit_struct_literal(String* output, const Node* literal) {
-    assert(literal->lang_type.count > 0);
+    assert(literal->lang_type.str.count > 0);
     string_extend_cstr(&a_main, output, "@__const.main.");
     string_extend_strv(&a_main, output, literal->name);
     string_extend_cstr(&a_main, output, " = private unnamed_addr constant %struct.");
-    string_extend_strv(&a_main, output, literal->lang_type);
+    extend_lang_type_to_string(&a_main, output, literal->lang_type, false);
     string_extend_cstr(&a_main, output, " {");
 
     size_t is_first = true;

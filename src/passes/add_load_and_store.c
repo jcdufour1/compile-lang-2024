@@ -45,14 +45,6 @@ static Node* do_load_struct_element_ptr(Node* node_to_insert_before, Node* symbo
         load_element_ptr = node_new(element_sym->pos);
         load_element_ptr->type = NODE_LOAD_STRUCT_ELEMENT_PTR;
         load_element_ptr->name = prev_struct_sym->name;
-        Node* var_def;
-        if (!sym_tbl_lookup(&var_def, prev_struct_sym->name)) {
-            unreachable("");
-        }
-        Node* struct_def;
-        if (!sym_tbl_lookup(&struct_def, var_def->lang_type)) {
-            unreachable("");
-        }
         load_element_ptr->lang_type = element_sym->lang_type;
         load_element_ptr->struct_index = element_sym->struct_index;
         load_element_ptr->node_src = node_element_ptr_to_load;
@@ -89,7 +81,7 @@ static Node* insert_load(Node* node_insert_load_before, Node* symbol_call) {
         Node* load_element_ptr = do_load_struct_element_ptr(node_insert_load_before, symbol_call);
         load->node_src = load_element_ptr;
         load->lang_type = load_element_ptr->lang_type;
-        assert(load->lang_type.count > 0);
+        assert(load->lang_type.str.count > 0);
         nodes_insert_before(node_insert_load_before, load);
         symbol_call->node_src = load;
         return load;
@@ -101,7 +93,7 @@ static Node* insert_load(Node* node_insert_load_before, Node* symbol_call) {
         load->name = symbol_call->name;
         load->node_src = get_storage_location(symbol_call);
         load->lang_type = sym_def->lang_type;
-        assert(load->lang_type.count > 0);
+        assert(load->lang_type.str.count > 0);
         symbol_call->node_src = load;
         nodes_insert_before(node_insert_load_before, load);
         return load;
@@ -132,7 +124,7 @@ static void insert_store(Node* node_insert_store_before, Node* symbol_call /* sr
         store->name = symbol_call->name;
         store->node_src = symbol_call->node_src;
         store->lang_type = symbol_call->lang_type;
-        assert(store->lang_type.count > 0);
+        assert(store->lang_type.str.count > 0);
         store->node_dest = get_storage_location(symbol_call);
         assert(store->node_src);
         assert(store->node_dest);
@@ -196,7 +188,7 @@ static Node* load_operator_operands(Node* node_insert_before, Node* operator) {
     load_operator_operand(node_insert_before, lhs);
     load_operator_operand(node_insert_before, rhs);
 
-    operator->lang_type = str_view_from_cstr("i32");
+    operator->lang_type = lang_type_from_cstr("i32", 0);
     return operator;
 }
 
@@ -238,7 +230,7 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
         case NODE_SYMBOL_TYPED:
             rhs_load = insert_load(node_to_insert_before, rhs);
             assert(rhs_load);
-            assert(rhs_load->lang_type.count > 0);
+            assert(rhs_load->lang_type.str.count > 0);
             break;
         case NODE_LITERAL:
             break;
@@ -257,7 +249,7 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
             Node* function_rtn_type = nodes_single_child(nodes_get_child_of_type(fun_def, NODE_FUNCTION_RETURN_TYPES));
             rhs_load->lang_type = function_rtn_type->lang_type;
             assert(rhs_load);
-            assert(rhs_load->lang_type.count > 0);
+            assert(rhs_load->lang_type.str.count > 0);
             break;
         default:
             todo();
@@ -297,7 +289,7 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
             store->name = lhs->name;
             store->node_dest = get_storage_location(lhs);
             store->lang_type = rhs->lang_type;
-            assert(store->lang_type.count > 0);
+            assert(store->lang_type.str.count > 0);
             //assert(store->lang_type.count > 0); // TODO: actually check for this
             nodes_remove(rhs, true);
             nodes_append_child(store, rhs);
@@ -319,7 +311,7 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
                 unreachable("");
             }
             store->lang_type = rhs_load->lang_type;
-            assert(store->lang_type.count > 0);
+            assert(store->lang_type.str.count > 0);
             //assert(store->lang_type.count > 0); // TODO: actually check for this
             //nodes_remove(rhs, true);
             nodes_insert_before(node_to_insert_before, store);

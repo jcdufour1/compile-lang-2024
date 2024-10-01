@@ -49,16 +49,16 @@ void msg_invalid_struct_member(const Node* node) {
             try(sym_tbl_lookup(&struct_memb_sym_def, struct_memb_sym->name));
             msg(
                 LOG_NOTE, struct_memb_sym_def->pos,
-                "`"STR_VIEW_FMT"` defined here as type `"STR_VIEW_FMT"`\n",
+                "`"STR_VIEW_FMT"` defined here as type `"LANG_TYPE_FMT"`\n",
                 str_view_print(struct_memb_sym_def->name),
-                str_view_print(struct_memb_sym_def->lang_type)
+                lang_type_print(struct_memb_sym_def->lang_type)
             );
             Node* struct_def;
-            try(sym_tbl_lookup(&struct_def, struct_memb_sym_def->lang_type));
+            try(sym_tbl_lookup(&struct_def, struct_memb_sym_def->lang_type.str));
             msg(
                 LOG_NOTE, struct_def->pos,
-                "struct `"STR_VIEW_FMT"` defined here\n", 
-                str_view_print(struct_memb_sym_def->lang_type)
+                "struct `"LANG_TYPE_FMT"` defined here\n", 
+                lang_type_print(struct_memb_sym_def->lang_type)
             );
             break;
         }
@@ -80,13 +80,13 @@ void msg_invalid_struct_member_assignment_in_literal(
     );
     msg(
         LOG_NOTE, struct_var_def->pos,
-        "variable `"STR_VIEW_FMT"` is defined as struct `"STR_VIEW_FMT"`\n",
-        str_view_print(struct_var_def->name), str_view_print(struct_var_def->lang_type)
+        "variable `"STR_VIEW_FMT"` is defined as struct `"LANG_TYPE_FMT"`\n",
+        str_view_print(struct_var_def->name), lang_type_print(struct_var_def->lang_type)
     );
     msg(
         LOG_NOTE, memb_sym_def->pos,
         "member symbol `"STR_VIEW_FMT"` of struct `"STR_VIEW_FMT"` defined here\n", 
-        str_view_print(memb_sym_def->name), str_view_print(struct_var_def->lang_type)
+        str_view_print(memb_sym_def->name), lang_type_print(struct_var_def->lang_type)
     );
 }
 
@@ -102,12 +102,12 @@ void meg_struct_assigned_to_invalid_literal(const Node* lhs, const Node* rhs) {
         "but `"STR_VIEW_FMT"` is of type `"STR_VIEW_FMT"`\n",
         str_view_print(lhs->name), 
         str_view_print(lhs->name), 
-        str_view_print(struct_var_def->lang_type)
+        lang_type_print(struct_var_def->lang_type)
     );
     msg(
         LOG_NOTE, struct_var_def->pos,
         "variable `"STR_VIEW_FMT"` is defined as struct `"STR_VIEW_FMT"`\n",
-        str_view_print(struct_var_def->name), str_view_print(struct_var_def->lang_type)
+        str_view_print(struct_var_def->name), lang_type_print(struct_var_def->lang_type)
     );
 }
 
@@ -131,7 +131,7 @@ void msg_invalid_assignment_to_operation(const Node* lhs, const Node* operation)
     try(sym_tbl_lookup(&var_def, lhs->name));
     msg(
         LOG_ERROR, operation->pos,
-        "operation is of type `"STR_VIEW_FMT"`, but type `"STR_VIEW_FMT"` expected\n",
-        str_view_print(operation->lang_type), str_view_print(var_def->lang_type)
+        "operation is of type `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
+        lang_type_print(operation->lang_type), lang_type_print(var_def->lang_type)
     );
 }
