@@ -43,9 +43,7 @@ uint64_t sizeof_struct(const Node* struct_literal);
 
 uint64_t sizeof_struct_definition(const Node* struct_def);
 
-static inline bool is_struct_variable_definition(const Node* var_def) {
-    assert(var_def->type == NODE_VARIABLE_DEFINITION);
-
+static inline bool is_struct_variable_definition(const Node_generic* var_def) {
     Node* struct_def;
     return sym_tbl_lookup(&struct_def, var_def->lang_type.str);
 }
@@ -57,7 +55,7 @@ static inline bool is_struct_symbol(const Node* symbol) {
     if (!sym_tbl_lookup(&var_def, symbol->name)) {
         unreachable("");
     }
-    return is_struct_variable_definition(var_def);
+    return is_struct_variable_definition(node_unwrap_generic_const(var_def));
 }
 
 bool is_corresponding_to_a_struct(const Node* node);
@@ -83,7 +81,7 @@ static inline bool try_get_member_def(Node** member_def, const Node* struct_def,
 
     nodes_foreach_child(curr_member, struct_def) {
         if (str_view_is_equal(curr_member->name, member_symbol->name)) {
-            assert(curr_member->lang_type.str.count > 0);
+            assert(node_unwrap_generic_const(curr_member)->lang_type.str.count > 0);
             *member_def = curr_member;
             return true;
         }

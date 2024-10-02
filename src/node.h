@@ -65,32 +65,47 @@ typedef struct {
                            // for function argument: 2 means to reference the variable twice
 } Lang_type;
 
-typedef struct Node_ {
-    struct Node_* next;
-    struct Node_* prev;
-    struct Node_* left_child;
-    struct Node_* parent;
-
-    NODE_TYPE type;
-
+typedef struct {
     TOKEN_TYPE token_type;
 
     Llvm_id llvm_id;
 
-    Str_view name; // eg. "string1" in "let string1: String = "hello""
     Str_view str_data; // eg. "hello" in "let string1: String = "hello""
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 
     bool is_variadic : 1;
-
-    Pos pos;
 
     size_t struct_index;
 
     struct Node_* node_src;
     struct Node_* node_dest;
     struct Node_* storage_location;
+} Node_generic;
+
+typedef union {
+    Node_generic node_generic;
+} Node_as;
+
+typedef struct Node_ {
+    Node_as as;
+    Pos pos;
+    NODE_TYPE type;
+
+    Str_view name; // eg. "string1" in "let string1: String = "hello""
+
+    struct Node_* next;
+    struct Node_* prev;
+    struct Node_* left_child;
+    struct Node_* parent;
 } Node;
+
+static inline Node_generic* node_unwrap_generic(Node* node) {
+    return (Node_generic*)node;
+}
+
+static inline const Node_generic* node_unwrap_generic_const(const Node* node) {
+    return (const Node_generic*)node;
+}
 
 extern Node* root_of_tree;
 

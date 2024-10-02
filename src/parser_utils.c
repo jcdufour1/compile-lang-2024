@@ -32,7 +32,7 @@ Node* get_storage_location(Node* var_call) {
     if (!sym_def->storage_location) {
         unreachable("no storage location associated with symbol definition");
     }
-    return sym_def->storage_location;
+    return node_unwrap_generic(sym_def)->storage_location;
 }
 
 Llvm_id get_store_dest_id(const Node* var_call) {

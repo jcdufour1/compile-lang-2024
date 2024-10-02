@@ -81,7 +81,7 @@ bool assign_llvm_ids(Node* curr_node) {
             // fallthrough
         case NODE_STRUCT_MEMBER_SYM_PIECE_TYPED:
             // fallthrough
-            curr_node->llvm_id = llvm_id_for_next_var;
+            node_unwrap_generic(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
             return false;
         default:

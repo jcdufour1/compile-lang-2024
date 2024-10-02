@@ -57,8 +57,6 @@ static void extend_type_call_str(String* output, Lang_type lang_type) {
 }
 
 static void extend_type_decl_str(String* output, const Node* variable_def, bool noundef) {
-    assert(variable_def->lang_type.str.count > 0);
-
     if (variable_def->is_variadic) {
         string_extend_cstr(&a_main, output, "...");
         return;

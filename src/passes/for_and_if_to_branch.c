@@ -149,7 +149,7 @@ static void if_statement_to_branch(Node* if_statement) {
     nodes_remove(operation, true);
     Node* oper_rtn_sym = node_new(operation->pos);
     oper_rtn_sym->type = NODE_OPERATOR_RETURN_VALUE_SYM;
-    oper_rtn_sym->node_src = operation;
+    node_unwrap_generic(oper_rtn_sym)->node_src = operation;
 
     Node* if_true = label_new(literal_name_new(), block->pos);
     Node* if_after = label_new(literal_name_new(), operation->pos);

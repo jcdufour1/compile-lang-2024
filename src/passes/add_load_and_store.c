@@ -45,9 +45,9 @@ static Node* do_load_struct_element_ptr(Node* node_to_insert_before, Node* symbo
         load_element_ptr = node_new(element_sym->pos);
         load_element_ptr->type = NODE_LOAD_STRUCT_ELEMENT_PTR;
         load_element_ptr->name = prev_struct_sym->name;
-        load_element_ptr->lang_type = element_sym->lang_type;
+        node_unwrap_generic(load_element_ptr)->lang_type = element_sym->lang_type;
         load_element_ptr->struct_index = element_sym->struct_index;
-        load_element_ptr->node_src = node_element_ptr_to_load;
+        node_unwrap_generic(load_element_ptr)->node_src = node_element_ptr_to_load;
         nodes_append_child(load_element_ptr, node_clone(element_sym));
         nodes_insert_before(node_to_insert_before, load_element_ptr);
 
