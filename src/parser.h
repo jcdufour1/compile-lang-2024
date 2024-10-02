@@ -5,6 +5,6 @@
 #include "tokens.h"
 #include "node.h"
 
-Node* parse(const Tokens tokens);
+Node_block* parse(const Tokens tokens);
 
 #endif // PARSER_H

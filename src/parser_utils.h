@@ -43,7 +43,7 @@ uint64_t sizeof_struct(const Node* struct_literal);
 
 uint64_t sizeof_struct_definition(const Node* struct_def);
 
-static inline bool is_struct_variable_definition(const Node_generic* var_def) {
+static inline bool is_struct_variable_definition(const Node_variable_def* var_def) {
     Node* struct_def;
     return sym_tbl_lookup(&struct_def, var_def->lang_type.str);
 }
@@ -55,7 +55,7 @@ static inline bool is_struct_symbol(const Node* symbol) {
     if (!sym_tbl_lookup(&var_def, symbol->name)) {
         unreachable("");
     }
-    return is_struct_variable_definition(node_unwrap_generic_const(var_def));
+    return is_struct_variable_definition(node_unwrap_variable_def(var_def));
 }
 
 bool is_corresponding_to_a_struct(const Node* node);
@@ -72,8 +72,7 @@ static inline size_t get_member_index(const Node* struct_def, const Node* member
     unreachable("member not found");
 }
 
-static inline bool try_get_member_def(Node** member_def, const Node* struct_def, const Node* member_symbol) {
-    assert(struct_def->type == NODE_STRUCT_DEFINITION);
+static inline bool try_get_member_def(Node_struct_member_def** member_def, const Node_struct_def* struct_def, const Node* member_symbol) {
     assert(
         member_symbol->type == NODE_STRUCT_MEMBER_SYM_PIECE_TYPED ||
         member_symbol->type == NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED
@@ -81,16 +80,16 @@ static inline bool try_get_member_def(Node** member_def, const Node* struct_def,
 
     nodes_foreach_child(curr_member, struct_def) {
         if (str_view_is_equal(curr_member->name, member_symbol->name)) {
-            assert(node_unwrap_generic_const(curr_member)->lang_type.str.count > 0);
-            *member_def = curr_member;
+            assert(node_unwrap_struct_member_sym_piece_typed(curr_member)->lang_type.str.count > 0);
+            *member_def = (Node_struct_member_def*)curr_member;
             return true;
         }
     }
     return false;
 }
 
-static inline const Node* get_member_def(const Node* struct_def, const Node* member_symbol) {
-    Node* member_def;
+static inline const Node_struct_member_def* get_member_def(const Node_struct_def* struct_def, const Node* member_symbol) {
+    Node_struct_member_def* member_def;
     if (!try_get_member_def(&member_def, struct_def, member_symbol)) {
         unreachable("could not find member definition");
     }

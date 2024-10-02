@@ -8,7 +8,7 @@
 #include "file.h"
 #include "parser_utils.h"
 
-static void emit_block(String* output, const Node* fun_block);
+static void emit_block(String* output, const Node_block* fun_block);
 
 // \n excapes are actually stored as is in tokens and nodes, but should be printed as \0a
 static void string_extend_strv_eval_escapes(Arena* arena, String* string, Str_view str_view) {
@@ -56,7 +56,7 @@ static void extend_type_call_str(String* output, Lang_type lang_type) {
     extend_lang_type_to_string(&a_main, output, lang_type, false);
 }
 
-static void extend_type_decl_str(String* output, const Node* variable_def, bool noundef) {
+static void extend_type_decl_str(String* output, const Node_variable_def* variable_def, bool noundef) {
     if (variable_def->is_variadic) {
         string_extend_cstr(&a_main, output, "...");
         return;
@@ -68,28 +68,29 @@ static void extend_type_decl_str(String* output, const Node* variable_def, bool 
     }
 }
 
-static void extend_literal_decl_prefix(String* output, const Node* var_decl_or_def) {
-    Lang_type lang_type = var_decl_or_def->lang_type;
-    assert(lang_type.str.count > 0);
-    if (lang_type.pointer_depth != 0) {
+static void extend_literal_decl_prefix(String* output, const Node_variable_def* var_def) {
+    Str_view name = node_wrap(var_def)->name;
+
+    assert(var_def->lang_type.str.count > 0);
+    if (var_def->lang_type.pointer_depth != 0) {
         todo();
     }
-    if (str_view_cstr_is_equal(lang_type.str, "ptr")) {
+    if (str_view_cstr_is_equal(var_def->lang_type.str, "ptr")) {
         string_extend_cstr(&a_main, output, " @.");
-        string_extend_strv(&a_main, output, var_decl_or_def->name);
-    } else if (str_view_cstr_is_equal(lang_type.str, "i32")) {
+        string_extend_strv(&a_main, output, name);
+    } else if (str_view_cstr_is_equal(var_def->lang_type.str, "i32")) {
         string_append(&a_main, output, ' ');
-        string_extend_strv(&a_main, output, var_decl_or_def->str_data);
+        string_extend_strv(&a_main, output, var_def->str_data);
     } else {
-        log(LOG_ERROR, NODE_FMT"\n", node_print(var_decl_or_def));
-        log(LOG_ERROR, STR_VIEW_FMT"\n", lang_type_print(lang_type));
+        log(LOG_ERROR, NODE_FMT"\n", node_print(var_def));
+        log(LOG_ERROR, STR_VIEW_FMT"\n", lang_type_print(var_def->lang_type));
         todo();
     }
 }
 
-static void extend_literal_decl(String* output, const Node* var_decl_or_def, bool noundef) {
-    extend_type_decl_str(output, var_decl_or_def, noundef);
-    extend_literal_decl_prefix(output, var_decl_or_def);
+static void extend_literal_decl(String* output, const Node_variable_def* var_def, bool noundef) {
+    extend_type_decl_str(output, var_def, noundef);
+    extend_literal_decl_prefix(output, var_def);
 }
 
 static Node* return_type_from_function_definition(const Node* fun_def) {
@@ -101,9 +102,18 @@ static Node* return_type_from_function_definition(const Node* fun_def) {
     unreachable("");
 }
 
-static void emit_function_params(String* output, const Node* fun_params) {
+static Llvm_id get_llvm_id(const Node* node) {
+    switch (node->type) {
+        default:
+            unreachable(NODE_FMT, node_print(node));
+    }
+}
+
+static void emit_function_params(String* output, const Node_function_params* fun_params) {
     size_t idx = 0;
-    nodes_foreach_child(param, fun_params) {
+    nodes_foreach_child(param_, fun_params) {
+        Node_variable_def* param = node_unwrap_variable_def(param_);
+
         if (idx++ > 0) {
             string_extend_cstr(&a_main, output, ", ");
         }
@@ -123,21 +133,23 @@ static void emit_function_params(String* output, const Node* fun_params) {
     }
 }
 
-static Lang_type get_member_sym_piece_final_lang_type(const Node* struct_memb_sym) {
+static Lang_type get_member_sym_piece_final_lang_type(const Node_struct_member_sym_typed* struct_memb_sym) {
     Lang_type lang_type = {0};
-    nodes_foreach_child(memb_piece, struct_memb_sym) {
+    nodes_foreach_child(memb_piece_, struct_memb_sym) {
+        const Node_struct_member_sym_piece_typed* memb_piece = 
+            node_unwrap_struct_member_sym_piece_typed_const(memb_piece_);
         lang_type = memb_piece->lang_type;
     }
     assert(lang_type.str.count > 0);
     return lang_type;
 }
 
-static void emit_fun_arg_struct_member_call(String* output, const Node* member_call) {
+static void emit_fun_arg_struct_member_call(String* output, const Node_struct_member_sym_typed* member_call) {
     assert(member_call->lang_type.str.count > 0);
 
     extend_type_call_str(output, get_member_sym_piece_final_lang_type(member_call));
     string_extend_cstr(&a_main, output, " %");
-    string_extend_size_t(&a_main, output, member_call->node_src->llvm_id);
+    string_extend_size_t(&a_main, output, get_llvm_id(member_call->node_src));
 }
 
 static void emit_function_call_arguments(String* output, const Node* fun_call) {
@@ -475,7 +487,7 @@ static void emit_load_struct_element_pointer(String* output, const Node* load_el
     string_append(&a_main, output, '\n');
 }
 
-static void emit_block(String* output, const Node* block) {
+static void emit_block(String* output, const Node_block* block) {
     assert(block->type == NODE_BLOCK);
 
     nodes_foreach_child(statement, block) {
@@ -624,7 +636,7 @@ static void emit_symbols(String* output) {
     }
 }
 
-void emit_llvm_from_tree(const Node* root) {
+void emit_llvm_from_tree(const Node_block* root) {
     String output = {0};
     emit_block(&output, root);
     emit_symbols(&output);

@@ -3,6 +3,6 @@
 
 #include "node.h"
 
-void emit_llvm_from_tree(const Node* root);
+void emit_llvm_from_tree(const Node_block* root);
 
 #endif // EMIT_LLVM_H

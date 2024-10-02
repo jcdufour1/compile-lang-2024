@@ -4,7 +4,7 @@
 #include "../nodes.h"
 #include "passes.h"
 
-void do_passes(Node** root) {
+void do_passes(Node_block** root) {
     walk_tree(*root, analysis_1);
     log_tree(LOG_DEBUG, *root);
     if (error_count > 0) {

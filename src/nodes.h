@@ -34,19 +34,19 @@ static inline Node* nodes_prev_or_parent(Node* node) {
 }
 
 #define nodes_foreach_child(child, parent) \
-    for (Node* child = (parent)->left_child; (child); (child) = (child)->next)
+    for (Node* child = ((Node*)parent)->left_child; (child); (child) = (child)->next)
 
 #define nodes_foreach_from_curr(curr_node, start_node) \
-    for (Node* curr_node = (start_node); (curr_node); (curr_node) = (curr_node)->next)
+    for (Node* curr_node = ((Node*)start_node); (curr_node); (curr_node) = (curr_node)->next)
 
 #define nodes_foreach_from_curr_const(curr_node, start_node) \
-    for (const Node* curr_node = (start_node); (curr_node); (curr_node) = (curr_node)->next)
+    for (const Node* curr_node = ((const Node*)start_node); (curr_node); (curr_node) = (curr_node)->next)
 
 #define nodes_foreach_from_curr_rev(curr_node, start_node) \
-    for (Node* curr_node = (start_node); (curr_node); (curr_node) = (curr_node)->prev)
+    for (Node* curr_node = ((Node*)start_node); (curr_node); (curr_node) = (curr_node)->prev)
 
 #define nodes_foreach_from_curr_rev_const(curr_node, start_node) \
-    for (const Node* curr_node = (start_node); (curr_node); (curr_node) = (curr_node)->prev)
+    for (const Node* curr_node = ((const Node*)start_node); (curr_node); (curr_node) = (curr_node)->prev)
 
 static inline Node* nodes_get_local_leftmost(Node* start_node) {
     assert(start_node);
@@ -81,13 +81,14 @@ static inline void nodes_reset_links_of_self_only(Node* node, bool keep_children
     node->parent = NULL;
 }
 
-static inline Node* node_new(Pos pos) {
+static inline Node* node_new(Pos pos, NODE_TYPE node_type) {
     Node* new_node = arena_alloc(&a_main, sizeof(*new_node));
     if (!root_of_tree) {
         // it is assumed that the first node created is the root
         root_of_tree = new_node;
     }
     new_node->pos = pos;
+    new_node->type = node_type;
     return new_node;
 }
 
@@ -362,7 +363,7 @@ static inline void nodes_extend_children(Node* parent, Node* start_of_nodes_to_e
 }
 
 static inline Node* node_clone(const Node* node_to_clone) {
-    Node* new_node = node_new(node_to_clone->pos);
+    Node* new_node = node_new(node_to_clone->pos, node_to_clone->type);
     *new_node = *node_to_clone;
     nodes_reset_links_of_self_only(new_node, false);
     return new_node;
