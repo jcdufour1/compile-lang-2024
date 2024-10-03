@@ -42,10 +42,7 @@ typedef enum {
     NODE_COND_GOTO,
     NODE_LABEL,
     NODE_ALLOCA,
-    NODE_LOAD_VARIABLE,
-    NODE_LOAD_STRUCT_MEMBER,
     NODE_STORE_VARIABLE,
-    NODE_STORE_STRUCT_MEMBER,
     NODE_LLVM_STORE_STRUCT_LITERAL,
 
     NODE_LOAD_ANOTHER_NODE,
@@ -68,7 +65,7 @@ typedef struct {
 } Lang_type;
 
 typedef struct {
-    int dummy;
+    Llvm_id llvm_id;
 } Node_symbol_untyped;
 
 typedef struct {
@@ -112,10 +109,12 @@ typedef struct {
 typedef struct {
     TOKEN_TYPE token_type;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
+    Llvm_id llvm_id;
 } Node_operator;
 
 typedef struct {
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
+    Llvm_id llvm_id;
 } Node_struct_literal;
 
 typedef struct {
@@ -137,6 +136,7 @@ typedef struct {
 typedef struct {
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     size_t struct_index;
+    Llvm_id llvm_id;
 } Node_struct_member_sym_piece_typed;
 
 typedef struct {
@@ -180,7 +180,7 @@ typedef struct {
 } Node_break;
 
 typedef struct {
-    int a;
+    Llvm_id llvm_id;
 } Node_assignment;
 
 typedef struct {
@@ -202,6 +202,7 @@ typedef struct {
 typedef struct {
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     struct Node_* node_src;
+    Llvm_id llvm_id;
 } Node_struct_member_sym_typed;
 
 typedef struct {
@@ -210,10 +211,11 @@ typedef struct {
 
 typedef struct {
     struct Node_* node_src;
+    Llvm_id llvm_id;
 } Node_operator_rtn_val_sym;
 
 typedef struct {
-    int a;
+    Llvm_id llvm_id;
 } Node_function_rtn_val_sym;
 
 typedef struct {
@@ -236,11 +238,11 @@ typedef struct {
 } Node_llvm_store_literal;
 
 typedef struct {
-    int a;
+    Llvm_id llvm_id;
 } Node_goto;
 
 typedef struct {
-    int a;
+    Llvm_id llvm_id;
 } Node_cond_goto;
 
 typedef union {

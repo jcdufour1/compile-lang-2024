@@ -69,8 +69,6 @@ const Node_variable_def* get_member_def_from_alloca(const Node* store_struct) {
 
 const Node_variable_def* get_symbol_def_from_alloca(const Node* alloca) {
     switch (alloca->type) {
-        case NODE_STORE_STRUCT_MEMBER:
-            return get_member_def_from_alloca(alloca);
         case NODE_ALLOCA:
             // fallthrough
         case NODE_STORE_VARIABLE:

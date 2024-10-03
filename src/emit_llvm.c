@@ -288,19 +288,6 @@ static void emit_operator(String* output, const Node* operator) {
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_load_variable(String* output, const Node* variable_call) {
-    string_extend_cstr(&a_main, output, "    %");
-    string_extend_size_t(&a_main, output, get_llvm_id(variable_call));
-    string_extend_cstr(&a_main, output, " = load ");
-    extend_type_call_str(output, get_lang_type(variable_call));
-    string_extend_cstr(&a_main, output, ", ");
-    string_extend_cstr(&a_main, output, "ptr");
-    string_extend_cstr(&a_main, output, " %");
-    string_extend_size_t(&a_main, output, get_store_dest_id(variable_call));
-    string_extend_cstr(&a_main, output, ", align 8");
-    string_extend_cstr(&a_main, output, "\n");
-}
-
 static void emit_load_another_node(String* output, const Node_load_another_node* load_node) {
     assert(get_llvm_id(load_node->node_src) > 0);
 
@@ -530,14 +517,8 @@ static void emit_block(String* output, const Node_block* block) {
             case NODE_LLVM_STORE_STRUCT_LITERAL:
                 emit_llvm_store_struct_literal(output, statement);
                 break;
-            case NODE_LOAD_VARIABLE:
-                emit_load_variable(output, statement);
-                break;
             case NODE_STRUCT_DEFINITION:
                 emit_struct_definition(output, statement);
-                break;
-            case NODE_STORE_STRUCT_MEMBER:
-                unreachable("");
                 break;
             case NODE_OPERATOR:
                 emit_operator(output, statement);

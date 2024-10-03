@@ -36,52 +36,77 @@ bool assign_llvm_ids(Node* curr_node) {
             if (!curr_node->parent || curr_node->parent->type != NODE_COND_GOTO) {
                 unreachable("node_symbol_untyped should not exist here except in conditional goto");
             }
-            // fallthrough
+            node_unwrap_symbol_untyped(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var += 2;
+            return false;
         case NODE_LOAD_STRUCT_ELEMENT_PTR:
-            // fallthrough
+            node_unwrap_load_elem_ptr(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var += 2;
+            return false;
         case NODE_LOAD_ANOTHER_NODE:
-            // fallthrough
+            node_unwrap_load_another_node(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var += 2;
+            return false;
         case NODE_STORE_ANOTHER_NODE:
-            // fallthrough
-        case NODE_LOAD_STRUCT_MEMBER:
-            // fallthrough
-        case NODE_STORE_STRUCT_MEMBER:
-            // fallthrough
+            node_unwrap_store_another_node(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var += 2;
+            return false;
         case NODE_STRUCT_MEMBER_SYM_TYPED:
-            // fallthrough
+            node_unwrap_struct_member_sym_typed(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var += 2;
+            return false;
         case NODE_VARIABLE_DEFINITION:
-            // fallthrough
+            node_unwrap_variable_def(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var += 2;
+            return false;
         case NODE_FUNCTION_CALL:
-            // fallthrough
+            node_unwrap_function_call(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var += 2;
+            return false;
         case NODE_ASSIGNMENT:
-            // fallthrough
+            node_unwrap_assignment(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var += 2;
+            return false;
         case NODE_ALLOCA:
-            // fallthrough
-        case NODE_LOAD_VARIABLE:
-            // fallthrough
+            node_unwrap_alloca(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var += 2;
+            return false;
         case NODE_GOTO:
-            // fallthrough
+            node_unwrap_goto(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var += 2;
+            return false;
         case NODE_COND_GOTO:
-            // fallthrough
+            node_unwrap_cond_goto(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var += 2;
+            return false;
         case NODE_IF_CONDITION:
-            // fallthrough
+            unreachable("");
         case NODE_OPERATOR:
-            // fallthrough
+            node_unwrap_operator(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var += 2;
+            return false;
         case NODE_LABEL:
-            // fallthrough
+            node_unwrap_label(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var += 2;
+            return false;
         case NODE_FUNCTION_RETURN_VALUE_SYM:
-            // fallthrough
+            node_unwrap_function_rtn_val_sym(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var += 2;
+            return false;
         case NODE_OPERATOR_RETURN_VALUE_SYM:
-            // fallthrough
+            node_unwrap_operator_rtn_val_sym(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var += 2;
+            return false;
         case NODE_STORE_VARIABLE:
-            // fallthrough
+            unreachable("");
         case NODE_LLVM_STORE_LITERAL:
-            // fallthrough
+            node_unwrap_llvm_store_literal(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var += 2;
+            return false;
         case NODE_LLVM_STORE_STRUCT_LITERAL:
-            // fallthrough
+            unreachable("");
         case NODE_STRUCT_MEMBER_SYM_PIECE_TYPED:
-            // fallthrough
-            node_unwrap_generic(curr_node)->llvm_id = llvm_id_for_next_var;
+            node_unwrap_struct_member_sym_piece_typed(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
             return false;
         default:
