@@ -18,7 +18,7 @@ static inline const Node* get_storage_location_const(const Node* var_call) {
 
 Llvm_id get_store_dest_id(const Node* var_call);
 
-const Node* get_symbol_def_from_alloca(const Node* alloca);
+const Node_variable_def* get_symbol_def_from_alloca(const Node_alloca* alloca);
 
 Llvm_id get_matching_label_id(const Node* symbol_call);
 

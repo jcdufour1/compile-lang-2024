@@ -65,7 +65,7 @@ const Node* get_member_def_from_alloca(const Node* store_struct) {
     unreachable("");
 }
 
-const Node* get_symbol_def_from_alloca(const Node* alloca) {
+const Node_variable_def* get_symbol_def_from_alloca(const Node_alloca* alloca) {
     switch (alloca->type) {
         case NODE_STORE_STRUCT_MEMBER:
             return get_member_def_from_alloca(alloca);

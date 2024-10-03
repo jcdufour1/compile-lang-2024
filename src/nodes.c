@@ -336,17 +336,17 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             // fallthrough
         case NODE_LOAD_STRUCT_ELEMENT_PTR:
             // fallthrough
-            extend_lang_type_to_string(arena, string, node_unwrap_load_struct_elem_ptr_const(node)->lang_type, true);
+            extend_lang_type_to_string(arena, string, node_unwrap_load_elem_ptr_const(node)->lang_type, true);
             string_extend_strv_in_par(arena, string, node->name);
                 string_extend_cstr(arena, string, "[");
-            if (node_unwrap_load_struct_elem_ptr_const(node)->node_src && do_recursion) {
+            if (node_unwrap_load_elem_ptr_const(node)->node_src && do_recursion) {
                 string_extend_cstr(arena, string, "node_src:");
-                extend_node_text(arena, string, node_unwrap_load_struct_elem_ptr_const(node)->node_src, false);
+                extend_node_text(arena, string, node_unwrap_load_elem_ptr_const(node)->node_src, false);
             }
             string_extend_cstr(arena, string, " ");
-            if (node_unwrap_load_struct_elem_ptr_const(node)->node_dest && do_recursion) {
+            if (node_unwrap_load_elem_ptr_const(node)->node_dest && do_recursion) {
                 string_extend_cstr(arena, string, "node_dest:");
-                extend_node_text(arena, string, node_unwrap_load_struct_elem_ptr_const(node)->node_dest, false);
+                extend_node_text(arena, string, node_unwrap_load_elem_ptr_const(node)->node_dest, false);
             }
             string_extend_cstr(arena, string, "]");
             break;

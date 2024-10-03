@@ -74,11 +74,20 @@ typedef struct {
 typedef struct {
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Str_view str_data;
+    struct Node_* node_src;
 } Node_symbol_typed;
 
 typedef struct {
-    int dummy;
+    Llvm_id llvm_id;
 } Node_label;
+
+typedef struct {
+    Lang_type lang_type;
+    Llvm_id llvm_id;
+    size_t struct_index;
+    struct Node_* node_src;
+    struct Node_* node_dest;
+} Node_load_element_ptr;
 
 typedef struct {
     Str_view str_data; // eg. "hello" in "let string1: String = "hello""
@@ -88,6 +97,7 @@ typedef struct {
 
 typedef struct {
     Llvm_id llvm_id;
+    Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 } Node_function_call;
 
 typedef struct {
@@ -106,12 +116,6 @@ typedef struct {
 typedef struct {
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 } Node_struct_literal;
-
-typedef struct {
-    Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
-    struct Node_* node_src;
-    struct Node_* node_dest;
-} Node_load_struct_elem_ptr;
 
 typedef struct {
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
@@ -196,6 +200,45 @@ typedef struct {
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     struct Node_* node_src;
 } Node_struct_member_sym_typed;
+
+typedef struct {
+    Llvm_id llvm_id;
+} Node_alloca;
+
+typedef struct {
+    struct Node_* node_src;
+} Node_operator_rtn_val_sym;
+
+typedef struct {
+    int a;
+} Node_function_rtn_val_sym;
+
+typedef struct {
+    struct Node_* node_src;
+    Llvm_id llvm_id;
+    Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
+} Node_load_another_node;
+
+typedef struct {
+    struct Node_* node_src;
+    struct Node_* node_dest;
+    Llvm_id llvm_id;
+    Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
+} Node_store_another_node;
+
+typedef struct {
+    struct Node_* node_dest;
+    Llvm_id llvm_id;
+    Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
+} Node_llvm_store_literal;
+
+typedef struct {
+    int a;
+} Node_goto;
+
+typedef struct {
+    int a;
+} Node_cond_goto;
 
 typedef union {
     Node_struct_member_sym_piece_untyped memb_sym_piece_untyped;
@@ -294,14 +337,14 @@ static inline const Node_struct_literal* node_unwrap_struct_literal_const(const 
     return (const Node_struct_literal*)node;
 }
 
-static inline Node_load_struct_elem_ptr* node_unwrap_load_struct_elem_ptr(Node* node) {
+static inline Node_load_element_ptr* node_unwrap_load_elem_ptr(Node* node) {
     assert(node->type == NODE_LOAD_STRUCT_ELEMENT_PTR);
-    return (Node_load_struct_elem_ptr*)node;
+    return (Node_load_element_ptr*)node;
 }
 
-static inline const Node_load_struct_elem_ptr* node_unwrap_load_struct_elem_ptr_const(const Node* node) {
+static inline const Node_load_element_ptr* node_unwrap_load_elem_ptr_const(const Node* node) {
     assert(node->type == NODE_LOAD_STRUCT_ELEMENT_PTR);
-    return (const Node_load_struct_elem_ptr*)node;
+    return (const Node_load_element_ptr*)node;
 }
 
 static inline Node_variable_def* node_unwrap_variable_def(Node* node) {
@@ -494,15 +537,91 @@ static inline const Node_struct_member_sym_untyped* node_unwrap_struct_member_sy
     return (const Node_struct_member_sym_untyped*)node;
 }
 
-static inline Node_struct_member_sym_typed* node_wrap_struct_member_sym_typed(Node* node) {
+static inline Node_struct_member_sym_typed* node_unwrap_struct_member_sym_typed(Node* node) {
     assert(node->type == NODE_STRUCT_MEMBER_SYM_TYPED);
     return (Node_struct_member_sym_typed*)node;
 }
 
-static inline const Node_struct_member_sym_typed* node_wrap_struct_member_sym_typed_const(const Node* node) {
+static inline const Node_struct_member_sym_typed* node_unwrap_struct_member_sym_typed_const(const Node* node) {
     assert(node->type == NODE_STRUCT_MEMBER_SYM_TYPED);
     return (const Node_struct_member_sym_typed*)node;
 }
+
+static inline Node_operator_rtn_val_sym* node_unwrap_operator_rtn_val_sym(Node* node) {
+    assert(node->type == NODE_OPERATOR_RETURN_VALUE_SYM);
+    return (Node_operator_rtn_val_sym*)node;
+}
+
+static inline const Node_operator_rtn_val_sym* node_unwrap_operator_rtn_val_sym_const(const Node* node) {
+    assert(node->type == NODE_OPERATOR_RETURN_VALUE_SYM);
+    return (const Node_operator_rtn_val_sym*)node;
+}
+
+static inline Node_function_rtn_val_sym* node_unwrap_function_rtn_val_sym(Node* node) {
+    assert(node->type == NODE_FUNCTION_RETURN_TYPES);
+    return (Node_function_rtn_val_sym*)node;
+}
+
+static inline const Node_function_rtn_val_sym* node_unwrap_function_rtn_val_sym_const(const Node* node) {
+    assert(node->type == NODE_FUNCTION_RETURN_TYPES);
+    return (const Node_function_rtn_val_sym*)node;
+}
+
+static inline Node_cond_goto* node_unwrap_cond_goto(Node* node) {
+    assert(node->type == NODE_COND_GOTO);
+    return (Node_cond_goto*)node;
+}
+
+static inline const Node_cond_goto* node_unwrap_cond_goto_const(const Node* node) {
+    assert(node->type == NODE_COND_GOTO);
+    return (const Node_cond_goto*)node;
+}
+
+static inline Node_goto* node_unwrap_goto(Node* node) {
+    assert(node->type == NODE_GOTO);
+    return (Node_goto*)node;
+}
+
+static inline const Node_goto* node_unwrap_goto_const(const Node* node) {
+    assert(node->type == NODE_GOTO);
+    return (const Node_goto*)node;
+}
+
+static inline Node_alloca* node_unwrap_alloca(Node* node) {
+    assert(node->type == NODE_ALLOCA);
+    return (Node_alloca*)node;
+}
+
+static inline const Node_llvm_store_literal* node_unwrap_llvm_store_literal_const(const Node* node) {
+    assert(node->type == NODE_LLVM_STORE_LITERAL);
+    return (const Node_llvm_store_literal*)node;
+}
+
+static inline Node_llvm_store_literal* node_unwrap_llvm_store_literal(Node* node) {
+    assert(node->type == NODE_LLVM_STORE_LITERAL);
+    return (Node_llvm_store_literal*)node;
+}
+
+static inline const Node_load_another_node* node_unwrap_load_another_node_const(const Node* node) {
+    assert(node->type == NODE_LOAD_ANOTHER_NODE);
+    return (const Node_load_another_node*)node;
+}
+
+static inline Node_load_another_node* node_unwrap_load_another_node(Node* node) {
+    assert(node->type == NODE_LOAD_ANOTHER_NODE);
+    return (Node_load_another_node*)node;
+}
+
+static inline const Node_store_another_node* node_unwrap_store_another_node_const(const Node* node) {
+    assert(node->type == NODE_STORE_ANOTHER_NODE);
+    return (const Node_store_another_node*)node;
+}
+
+static inline Node_store_another_node* node_unwrap_store_another_node(Node* node) {
+    assert(node->type == NODE_STORE_ANOTHER_NODE);
+    return (Node_store_another_node*)node;
+}
+
 
 #define node_wrap(node) ((Node*)node)
 
