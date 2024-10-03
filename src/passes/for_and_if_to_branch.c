@@ -2,18 +2,16 @@
 #include "../parser_utils.h"
 #include "../nodes.h"
 
-static Node* label_new(Str_view label_name, Pos pos) {
-    Node* label = node_new(pos);
-    label->type = NODE_LABEL;
-    label->name = label_name;
-    try(sym_tbl_add(label));
+static Node_label* label_new(Str_view label_name, Pos pos) {
+    Node_label* label = node_unwrap_label(node_new(pos, NODE_LABEL));
+    node_wrap(label)->name = label_name;
+    try(sym_tbl_add(node_wrap(label)));
     return label;
 }
 
-static Node* goto_new(Str_view name_label_to_jmp_to, Pos pos) {
-    Node* lang_goto = node_new(pos);
-    lang_goto->type = NODE_GOTO;
-    lang_goto->name = name_label_to_jmp_to;
+static Node_goto* goto_new(Str_view name_label_to_jmp_to, Pos pos) {
+    Node_goto* lang_goto = node_unwrap_goto(node_new(pos, NODE_GOTO));
+    node_wrap(lang_goto)->name = name_label_to_jmp_to;
     return lang_goto;
 }
 

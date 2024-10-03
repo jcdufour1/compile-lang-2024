@@ -63,27 +63,6 @@ static bool is_variadic(const Node* node) {
     }
 }
 
-static Lang_type get_lang_type(const Node* node) {
-    switch (node->type) {
-        default:
-            unreachable(NODE_FMT, node_print(node));
-    }
-}
-
-static Str_view get_str_data(const Node* node) {
-    switch (node->type) {
-        default:
-            unreachable(NODE_FMT, node_print(node));
-    }
-}
-
-static Llvm_id get_llvm_id(const Node* node) {
-    switch (node->type) {
-        default:
-            unreachable(NODE_FMT, node_print(node));
-    }
-}
-
 static void extend_type_decl_str(String* output, const Node* variable_def, bool noundef) {
     if (is_variadic(variable_def)) {
         string_extend_cstr(&a_main, output, "...");
@@ -239,7 +218,7 @@ static void emit_alloca(String* output, const Node_alloca* alloca) {
     string_extend_cstr(&a_main, output, "    %");
     string_extend_size_t(&a_main, output, alloca->llvm_id);
     string_extend_cstr(&a_main, output, " = alloca ");
-    extend_type_call_str(output, get_symbol_def_from_alloca(alloca)->lang_type);
+    extend_type_call_str(output, get_symbol_def_from_alloca(node_wrap(alloca))->lang_type);
     string_extend_cstr(&a_main, output, ", align 8");
     string_extend_cstr(&a_main, output, "\n");
 }
@@ -586,23 +565,23 @@ static void emit_block(String* output, const Node_block* block) {
 }
 
 static void emit_symbol(String* output, const Symbol_table_node node) {
-    size_t literal_width = node.node->str_data.count + 1 -
-                           get_count_excape_seq(node.node->str_data);
+    size_t literal_width = get_str_data(node.node).count + 1 -
+                           get_count_excape_seq(get_str_data(node.node));
 
     string_extend_cstr(&a_main, output, "@.");
     string_extend_strv(&a_main, output, node.key);
     string_extend_cstr(&a_main, output, " = private unnamed_addr constant [ ");
     string_extend_size_t(&a_main, output, literal_width);
     string_extend_cstr(&a_main, output, " x i8] c\"");
-    string_extend_strv_eval_escapes(&a_main, output, node.node->str_data);
+    string_extend_strv_eval_escapes(&a_main, output, get_str_data(node.node));
     string_extend_cstr(&a_main, output, "\\00\", align 1");
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_struct_literal(String* output, const Node* literal) {
+static void emit_struct_literal(String* output, const Node_struct_literal* literal) {
     assert(literal->lang_type.str.count > 0);
     string_extend_cstr(&a_main, output, "@__const.main.");
-    string_extend_strv(&a_main, output, literal->name);
+    string_extend_strv(&a_main, output, node_wrap(literal)->name);
     string_extend_cstr(&a_main, output, " = private unnamed_addr constant %struct.");
     extend_lang_type_to_string(&a_main, output, literal->lang_type, false);
     string_extend_cstr(&a_main, output, " {");
@@ -632,7 +611,7 @@ static void emit_symbols(String* output) {
                 emit_symbol(output, curr_node);
                 break;
             case NODE_STRUCT_LITERAL:
-                emit_struct_literal(output, curr_node.node);
+                emit_struct_literal(output, node_unwrap_struct_literal(curr_node.node));
                 break;
             case NODE_VARIABLE_DEFINITION:
                 // fallthrough

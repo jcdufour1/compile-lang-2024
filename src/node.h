@@ -111,6 +111,7 @@ typedef struct {
 
 typedef struct {
     TOKEN_TYPE token_type;
+    Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 } Node_operator;
 
 typedef struct {
@@ -122,6 +123,7 @@ typedef struct {
     bool is_variadic : 1;
     Str_view str_data; // eg. "hello" in "let string1: String = "hello""
     Llvm_id llvm_id;
+    struct Node_* storage_location;
 } Node_variable_def;
 
 typedef struct {
@@ -134,6 +136,7 @@ typedef struct {
 
 typedef struct {
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
+    size_t struct_index;
 } Node_struct_member_sym_piece_typed;
 
 typedef struct {

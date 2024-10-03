@@ -26,10 +26,10 @@ void msg_undefined_symbol(const Node* sym_call) {
     );
 }
 
-void msg_undefined_function(const Node* fun_call) {
+void msg_undefined_function(const Node_function_call* fun_call) {
     msg(
-        LOG_ERROR, fun_call->pos,
-        "function `"STR_VIEW_FMT"` is not defined\n", str_view_print(fun_call->name)
+        LOG_ERROR, node_wrap(fun_call)->pos,
+        "function `"STR_VIEW_FMT"` is not defined\n", str_view_print(node_wrap(fun_call)->name)
     );
 }
 
@@ -45,12 +45,13 @@ void msg_invalid_struct_member(const Node* node) {
                 "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 
                 str_view_print(node->name), str_view_print(struct_memb_sym->name)
             );
-            Node* struct_memb_sym_def;
-            try(sym_tbl_lookup(&struct_memb_sym_def, struct_memb_sym->name));
+            Node* struct_memb_sym_def_;
+            try(sym_tbl_lookup(&struct_memb_sym_def_, struct_memb_sym->name));
+            const Node_variable_def* struct_memb_sym_def = node_unwrap_variable_def_const(struct_memb_sym_def_);
             msg(
-                LOG_NOTE, struct_memb_sym_def->pos,
+                LOG_NOTE, node_wrap(struct_memb_sym_def)->pos,
                 "`"STR_VIEW_FMT"` defined here as type `"LANG_TYPE_FMT"`\n",
-                str_view_print(struct_memb_sym_def->name),
+                str_view_print(node_wrap(struct_memb_sym_def)->name),
                 lang_type_print(struct_memb_sym_def->lang_type)
             );
             Node* struct_def;
@@ -69,24 +70,24 @@ void msg_invalid_struct_member(const Node* node) {
 
 
 void msg_invalid_struct_member_assignment_in_literal(
-    const Node* struct_var_def,
-    const Node* memb_sym_def,
+    const Node_variable_def* struct_var_def,
+    const Node_variable_def* memb_sym_def,
     const Node* memb_sym
 ) {
     msg(
         LOG_ERROR, memb_sym->pos,
         "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
-        str_view_print(memb_sym_def->name), str_view_print(memb_sym->name)
+        str_view_print(node_wrap(memb_sym_def)->name), str_view_print(node_wrap(memb_sym)->name)
     );
     msg(
-        LOG_NOTE, struct_var_def->pos,
+        LOG_NOTE, node_wrap(struct_var_def)->pos,
         "variable `"STR_VIEW_FMT"` is defined as struct `"LANG_TYPE_FMT"`\n",
-        str_view_print(struct_var_def->name), lang_type_print(struct_var_def->lang_type)
+        str_view_print(node_wrap(struct_var_def)->name), lang_type_print(struct_var_def->lang_type)
     );
     msg(
-        LOG_NOTE, memb_sym_def->pos,
+        LOG_NOTE, node_wrap(memb_sym_def)->pos,
         "member symbol `"STR_VIEW_FMT"` of struct `"STR_VIEW_FMT"` defined here\n", 
-        str_view_print(memb_sym_def->name), lang_type_print(struct_var_def->lang_type)
+        str_view_print(node_wrap(memb_sym_def)->name), lang_type_print(struct_var_def->lang_type)
     );
 }
 
@@ -94,8 +95,9 @@ void meg_struct_assigned_to_invalid_literal(const Node* lhs, const Node* rhs) {
     assert(lhs->type == NODE_SYMBOL_TYPED && is_struct_symbol(lhs));
     assert(rhs->type == NODE_LITERAL);
 
-    Node* struct_var_def;
-    try(sym_tbl_lookup(&struct_var_def, lhs->name));
+    Node* struct_var_def_;
+    try(sym_tbl_lookup(&struct_var_def_, lhs->name));
+    const Node_variable_def* struct_var_def = node_unwrap_variable_def_const(struct_var_def_);
     msg(
         LOG_ERROR, rhs->pos,
         "invalid literal type is assigned to `"STR_VIEW_FMT"`, "
@@ -105,9 +107,9 @@ void meg_struct_assigned_to_invalid_literal(const Node* lhs, const Node* rhs) {
         lang_type_print(struct_var_def->lang_type)
     );
     msg(
-        LOG_NOTE, struct_var_def->pos,
+        LOG_NOTE, node_wrap(struct_var_def)->pos,
         "variable `"STR_VIEW_FMT"` is defined as struct `"STR_VIEW_FMT"`\n",
-        str_view_print(struct_var_def->name), lang_type_print(struct_var_def->lang_type)
+        str_view_print(node_wrap(struct_var_def)->name), lang_type_print(struct_var_def->lang_type)
     );
 }
 
@@ -123,14 +125,14 @@ void msg_invalid_assignment_to_literal(const Node* lhs, const Node* rhs) {
     );
 }
 
-void msg_invalid_assignment_to_operation(const Node* lhs, const Node* operation) {
+void msg_invalid_assignment_to_operation(const Node* lhs, const Node_operator* operation) {
     assert(lhs->type == NODE_SYMBOL_TYPED);
-    assert(operation->type == NODE_OPERATOR);
 
-    Node* var_def;
-    try(sym_tbl_lookup(&var_def, lhs->name));
+    Node* var_def_;
+    try(sym_tbl_lookup(&var_def_, lhs->name));
+    const Node_variable_def* var_def = node_unwrap_variable_def_const(var_def_);
     msg(
-        LOG_ERROR, operation->pos,
+        LOG_ERROR, node_wrap(operation)->pos,
         "operation is of type `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
         lang_type_print(operation->lang_type), lang_type_print(var_def->lang_type)
     );
