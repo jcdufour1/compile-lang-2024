@@ -27,7 +27,7 @@ Str_view literal_name_new(void) {
 Node* get_storage_location(Node* var_call) {
     Node* sym_def_;
     if (!sym_tbl_lookup(&sym_def_, var_call->name)) {
-        unreachable("symbol definition not found");
+        unreachable("symbol definition for node not found: "NODE_FMT, node_print(var_call));
     }
     Node_variable_def* sym_def = node_unwrap_variable_def(sym_def_);
     if (!sym_def->storage_location) {

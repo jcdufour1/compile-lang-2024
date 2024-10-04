@@ -96,6 +96,9 @@ static Node_load_another_node* insert_load(Node* node_insert_load_before, Node* 
         load->lang_type = node_unwrap_variable_def(sym_def)->lang_type;
         assert(load->lang_type.str.count > 0);
         switch (symbol_call->type) {
+            case NODE_SYMBOL_TYPED:
+                node_unwrap_symbol_typed(symbol_call)->node_src = node_wrap(load);
+                break;
             default:
                 unreachable(NODE_FMT, node_print(symbol_call));
         }
@@ -126,9 +129,10 @@ static void insert_store(Node* node_insert_store_before, Node* symbol_call /* sr
     } else {
         Node_store_another_node* store = node_unwrap_store_another_node(node_new(symbol_call->pos, NODE_STORE_ANOTHER_NODE));
         node_wrap(store)->name = symbol_call->name;
-        todo(); // store->node_src = symbol_call->node_src; // make switch out of this
+        store->node_src = get_node_src(symbol_call);
         store->lang_type = get_lang_type(symbol_call);
         assert(store->lang_type.str.count > 0);
+        node_printf(symbol_call);
         store->node_dest = get_storage_location(symbol_call);
         assert(store->node_src);
         assert(store->node_dest);
@@ -367,6 +371,7 @@ static void load_function_parameters(Node_function_definition* fun_def) {
             continue;
         }
         Node_function_param_sym* fun_param_call = node_unwrap_function_param_sym(node_new(param->pos, NODE_FUNCTION_PARAM_SYM));
+        node_wrap(fun_param_call)->name = node_wrap(param)->name;
         fun_param_call->node_src = param;
         fun_param_call->lang_type = get_lang_type(param);
         insert_store(get_node_after_last_alloca(fun_block), node_wrap(fun_param_call));

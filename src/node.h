@@ -215,6 +215,7 @@ typedef struct {
 } Node_alloca;
 
 typedef struct {
+    struct Node_* node_dest;
     struct Node_* node_src;
     Llvm_id llvm_id;
     Lang_type lang_type;
@@ -222,7 +223,9 @@ typedef struct {
 
 typedef struct {
     struct Node_* node_src;
+    struct Node_* node_dest;
     Llvm_id llvm_id;
+    Lang_type lang_type;
 } Node_function_rtn_val_sym;
 
 typedef struct {
@@ -242,6 +245,7 @@ typedef struct {
 
 typedef struct {
     struct Node_* node_dest;
+    struct Node_* node_src;
     Llvm_id llvm_id;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 } Node_llvm_store_literal;
@@ -636,12 +640,12 @@ static inline const Node_operator_rtn_val_sym* node_unwrap_operator_rtn_val_sym_
 }
 
 static inline Node_function_rtn_val_sym* node_unwrap_function_rtn_val_sym(Node* node) {
-    assert(node->type == NODE_FUNCTION_RETURN_TYPES);
+    assert(node->type == NODE_FUNCTION_RETURN_VALUE_SYM);
     return (Node_function_rtn_val_sym*)node;
 }
 
 static inline const Node_function_rtn_val_sym* node_unwrap_function_rtn_val_sym_const(const Node* node) {
-    assert(node->type == NODE_FUNCTION_RETURN_TYPES);
+    assert(node->type == NODE_FUNCTION_RETURN_VALUE_SYM);
     return (const Node_function_rtn_val_sym*)node;
 }
 

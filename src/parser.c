@@ -178,7 +178,7 @@ static Node_function_definition* parse_function_definition(Tk_view tokens) {
     Node_function_declaration* fun_decl = extract_function_declaration_common(&tokens);
     try(tk_view_try_consume(NULL, &tokens, TOKEN_OPEN_CURLY_BRACE));
     node_wrap(fun_decl)->type = NODE_FUNCTION_DEFINITION;
-    Node_function_definition* function = node_unwrap_function_definition(nodes_clone_self_and_children(node_wrap(fun_decl)));
+    Node_function_definition* function = node_unwrap_function_definition(node_wrap(fun_decl));
     nodes_append_child(node_wrap(function), node_wrap(extract_block(&tokens)));
 
     return node_unwrap_function_definition(node_wrap(function));

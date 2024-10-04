@@ -267,7 +267,7 @@ static void emit_operator_operand(String* output, const Node* operand) {
             // fallthrough
         case NODE_OPERATOR_RETURN_VALUE_SYM:
             string_extend_cstr(&a_main, output, "%");
-            string_extend_size_t(&a_main, output, get_llvm_id(node_unwrap_operator_rtn_val_sym_const(operand)->node_src));
+            string_extend_size_t(&a_main, output, get_llvm_id(get_node_src_const(operand)));
             break;
         case NODE_SYMBOL_UNTYPED:
             unreachable("untyped symbols should not still be present");
@@ -383,11 +383,10 @@ static void emit_return_statement(String* output, const Node_return_statement* f
         case NODE_SYMBOL_TYPED:
             // fallthrough
         case NODE_OPERATOR_RETURN_VALUE_SYM: {
-            const Node_operator_rtn_val_sym* oper_rtn = node_unwrap_operator_rtn_val_sym_const(sym_to_return);
             string_extend_cstr(&a_main, output, "    ret ");
             extend_type_call_str(output, get_lang_type(sym_to_return));
             string_extend_cstr(&a_main, output, " %");
-            string_extend_size_t(&a_main, output, get_llvm_id(oper_rtn->node_src));
+            string_extend_size_t(&a_main, output, get_llvm_id(get_node_src_const(sym_to_return)));
             string_extend_cstr(&a_main, output, "\n");
             break;
         }
