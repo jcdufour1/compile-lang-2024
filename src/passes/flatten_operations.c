@@ -6,17 +6,15 @@
 // returns operand or operand symbol
 static Node* flatten_operation_operand(Node* node_to_insert_before, Node* operand) {
     if (operand->type == NODE_OPERATOR) {
-        Node* operator_sym = node_new(operand->pos);
-        operator_sym->type = NODE_OPERATOR_RETURN_VALUE_SYM;
+        Node* operator_sym = node_new(operand->pos, NODE_OPERATOR_RETURN_VALUE_SYM);
         nodes_insert_before(node_to_insert_before, operand);
-        operator_sym->node_src = operand;
+        node_unwrap_operator_rtn_val_sym(operator_sym)->node_src = operand;
         return operator_sym;
-    } else if (operand->type == NODE_FUNCTION_CALL){
-        Node* fun_sym = node_new(operand->pos);
-        fun_sym->type = NODE_FUNCTION_RETURN_VALUE_SYM;
+    } else if (operand->type == NODE_FUNCTION_CALL) {
+        Node_function_rtn_val_sym* fun_sym = node_unwrap_function_rtn_val_sym(node_new(operand->pos, NODE_FUNCTION_RETURN_VALUE_SYM));
         nodes_insert_before(node_to_insert_before, operand);
         fun_sym->node_src = operand;
-        return fun_sym;
+        return node_wrap(fun_sym);
     } else {
         return operand;
     }
@@ -33,17 +31,15 @@ static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* o
 }
 
 // operator symbol is returned
-static Node* move_operator_back(Node* node_to_insert_before, Node* operation) {
-    assert(operation->type == NODE_OPERATOR);
-    nodes_remove(operation, true);
+static Node_operator_rtn_val_sym* move_operator_back(Node* node_to_insert_before, Node_operator* operation) {
+    nodes_remove(node_wrap(operation), true);
 
-    Node* operator_sym = node_new(operation->pos);
-    operator_sym->type = NODE_OPERATOR_RETURN_VALUE_SYM;
-    operator_sym->node_src = operation;
+    Node_operator_rtn_val_sym* operator_sym = node_unwrap_operator_rtn_val_sym(node_new(node_wrap(operation)->pos, NODE_OPERATOR_RETURN_VALUE_SYM));
+    operator_sym->node_src = node_wrap(operation);
     try(try_set_operator_lang_type(operation));
     operator_sym->lang_type = operation->lang_type;
     assert(operator_sym->lang_type.str.count > 0);
-    nodes_insert_before(node_to_insert_before, operation);
+    nodes_insert_before(node_to_insert_before, node_wrap(operation));
     return operator_sym;
 }
 
@@ -60,7 +56,7 @@ bool flatten_operations(Node* curr_node) {
         } else if (assign_or_var_def->type == NODE_ASSIGNMENT) {
             Node* rhs = nodes_get_child(assign_or_var_def, 1);
             if (rhs->type == NODE_OPERATOR) {
-                nodes_append_child(assign_or_var_def, move_operator_back(assign_or_var_def, rhs));
+                nodes_append_child(assign_or_var_def, node_wrap(move_operator_back(assign_or_var_def, node_unwrap_operator(rhs))));
             }
         } else if (assign_or_var_def->type == NODE_VARIABLE_DEFINITION) {
             if (assign_or_var_def->prev && assign_or_var_def->prev->type != NODE_VARIABLE_DEFINITION) {
@@ -73,7 +69,7 @@ bool flatten_operations(Node* curr_node) {
             if (nodes_single_child(assign_or_var_def)->type == NODE_OPERATOR) {
                 nodes_append_child(
                     assign_or_var_def,
-                    move_operator_back(assign_or_var_def, nodes_single_child(assign_or_var_def))
+                    node_wrap(move_operator_back(assign_or_var_def, node_unwrap_operator(nodes_single_child(assign_or_var_def))))
                 );
             }
         }

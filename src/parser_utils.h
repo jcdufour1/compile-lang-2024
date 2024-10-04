@@ -5,6 +5,7 @@
 #include "node.h"
 #include "nodes.h"
 #include "symbol_table.h"
+#include "node_utils.h"
 
 Str_view literal_name_new(void);
 
@@ -79,7 +80,7 @@ static inline bool try_get_member_def(Node_variable_def** member_def, const Node
 
     nodes_foreach_child(curr_member, struct_def) {
         if (str_view_is_equal(curr_member->name, member_symbol->name)) {
-            assert(node_unwrap_struct_member_sym_piece_typed(curr_member)->lang_type.str.count > 0);
+            assert(get_lang_type(curr_member).str.count > 0);
             *member_def = (Node_variable_def*)curr_member;
             return true;
         }
@@ -125,26 +126,5 @@ void set_function_call_types(Node_function_call* fun_call);
 void set_struct_member_symbol_types(Node_struct_member_sym_untyped* struct_memb_sym);
 
 void set_return_statement_types(Node* rtn_statement);
-
-static Llvm_id get_llvm_id(const Node* node) {
-    switch (node->type) {
-        default:
-            unreachable(NODE_FMT, node_print(node));
-    }
-}
-
-static Lang_type get_lang_type(const Node* node) {
-    switch (node->type) {
-        default:
-            unreachable(NODE_FMT, node_print(node));
-    }
-}
-
-static Str_view get_str_data(const Node* node) {
-    switch (node->type) {
-        default:
-            unreachable(NODE_FMT, node_print(node));
-    }
-}
 
 #endif // PARSER_UTIL_H

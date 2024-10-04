@@ -165,7 +165,7 @@ Tokens tokenize(const String file_text, Parameters params) {
     size_t line_num = 1;
     Token curr_token;
     while (get_next_token(&line_num, &curr_token, &curr_file_text, params)) {
-        log(LOG_DEBUG, "token received: "TOKEN_FMT"\n", token_print(curr_token));
+        //log(LOG_DEBUG, "token received: "TOKEN_FMT"\n", token_print(curr_token));
         if (curr_token.type != TOKEN_COMMENT) {
             tokens_append(&tokens, &curr_token);
         }

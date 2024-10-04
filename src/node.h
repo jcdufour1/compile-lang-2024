@@ -72,6 +72,7 @@ typedef struct {
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Str_view str_data;
     struct Node_* node_src;
+    struct Node_* node_dest;
 } Node_symbol_typed;
 
 typedef struct {
@@ -137,10 +138,12 @@ typedef struct {
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     size_t struct_index;
     Llvm_id llvm_id;
+    struct Node_* node_src;
 } Node_struct_member_sym_piece_typed;
 
 typedef struct {
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
+    Llvm_id llvm_id;
 } Node_struct_def;
 
 typedef struct {
@@ -156,7 +159,7 @@ typedef struct {
 } Node_function_declaration;
 
 typedef struct {
-    int a;
+    Llvm_id llvm_id;
 } Node_function_definition;
 
 typedef struct {
@@ -196,7 +199,8 @@ typedef struct {
 } Node_block;
 
 typedef struct {
-    int a;
+    Llvm_id llvm_id;
+    Lang_type lang_type;
 } Node_struct_member_sym_untyped;
 
 typedef struct {
@@ -207,19 +211,23 @@ typedef struct {
 
 typedef struct {
     Llvm_id llvm_id;
+    Lang_type lang_type;
 } Node_alloca;
 
 typedef struct {
     struct Node_* node_src;
     Llvm_id llvm_id;
+    Lang_type lang_type;
 } Node_operator_rtn_val_sym;
 
 typedef struct {
+    struct Node_* node_src;
     Llvm_id llvm_id;
 } Node_function_rtn_val_sym;
 
 typedef struct {
     struct Node_* node_src;
+    struct Node_* node_dest;
     Llvm_id llvm_id;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 } Node_load_another_node;
@@ -227,6 +235,7 @@ typedef struct {
 typedef struct {
     struct Node_* node_src;
     struct Node_* node_dest;
+    struct Node_* storage_location;
     Llvm_id llvm_id;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 } Node_store_another_node;
@@ -245,7 +254,71 @@ typedef struct {
     Llvm_id llvm_id;
 } Node_cond_goto;
 
+typedef struct {
+    Llvm_id llvm_id;
+    struct Node_* node_src;
+} Node_llvm_symbol;
+
+typedef struct {
+    Llvm_id llvm_id;
+    Lang_type lang_type;
+} Node_store_variable;
+
+typedef struct {
+    Llvm_id llvm_id;
+    Lang_type lang_type;
+    struct Node_* node_src;
+    struct Node_* node_dest;
+} Node_llvm_store_struct_literal;
+
+typedef struct {
+    struct Node_* node_src;
+    Lang_type lang_type;
+} Node_function_param_sym;
+
 typedef union {
+    Node_llvm_store_struct_literal node_llvm_store_struct_literal;
+    Node_store_variable node_store_variable;
+    Node_llvm_symbol node_llvm_symbol;
+    Node_cond_goto node_cond_goto;
+    Node_goto node_goto;
+    Node_llvm_store_literal node_llvm_store_literal;
+    Node_store_another_node node_store_another_node;
+    Node_load_another_node node_load_another_node;
+    Node_function_rtn_val_sym node_function_rtn_val_sym;
+    Node_operator_rtn_val_sym node_operator_rtn_val_sym;
+    Node_alloca node_alloca;
+    Node_struct_member_sym_typed node_struct_member_sym_typed;
+    Node_struct_member_sym_untyped node_struct_member_sym_untyped;
+    Node_block node_block;
+    Node_if_condition node_if_condition;
+    Node_if node_if;
+    Node_assignment node_assignment;
+    Node_break node_break;
+    Node_for_upper_bound node_for_upper_bound;
+    Node_for_lower_bound node_for_lower_bound;
+    Node_return_statement node_return_statement;
+    Node_for_loop node_for_loop;
+    Node_function_definition node_function_definition;
+    Node_function_declaration node_function_declaration;
+    Node_struct_member_def node_struct_member_def;
+    Node_function_return_types node_function_return_types;
+    Node_struct_def node_struct_def;
+    Node_struct_member_sym_piece_typed node_struct_member_sym_piece_typed;
+    Node_struct_member_sym_piece_untyped node_struct_member_sym_piece_untyped;
+    Node_for_variable_def node_for_variable_def;
+    Node_variable_def node_variable_def;
+    Node_struct_literal node_struct_literal;
+    Node_operator node_operator;
+    Node_lang_type node_lang_type;
+    Node_function_params node_function_params;
+    Node_function_call node_function_call;
+    Node_literal node_literal;
+    Node_load_element_ptr node_load_element_ptr;
+    Node_label node_label;
+    Node_symbol_typed node_symbol_typed;
+    Node_symbol_untyped node_symbol_untyped;
+    Lang_type lang_type;
     Node_struct_member_sym_piece_untyped memb_sym_piece_untyped;
     Node_struct_member_sym_piece_typed memb_sym_piece_typed;
 } Node_as;
@@ -363,22 +436,22 @@ static inline const Node_variable_def* node_unwrap_variable_def_const(const Node
 }
 
 static inline Node_struct_member_sym_piece_untyped* node_unwrap_struct_member_sym_piece_untyped(Node* node) {
-    assert(node->type == NODE_STRUCT_MEMBER_SYM_UNTYPED);
+    assert(node->type == NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED);
     return (Node_struct_member_sym_piece_untyped*)node;
 }
 
 static inline const Node_struct_member_sym_piece_untyped* node_unwrap_struct_member_sym_piece_untyped_const(const Node* node) {
-    assert(node->type == NODE_STRUCT_MEMBER_SYM_UNTYPED);
+    assert(node->type == NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED);
     return (const Node_struct_member_sym_piece_untyped*)node;
 }
 
 static inline Node_struct_member_sym_piece_typed* node_unwrap_struct_member_sym_piece_typed(Node* node) {
-    assert(node->type == NODE_STRUCT_MEMBER_SYM_TYPED);
+    assert(node->type == NODE_STRUCT_MEMBER_SYM_PIECE_TYPED);
     return (Node_struct_member_sym_piece_typed*)node;
 }
 
 static inline const Node_struct_member_sym_piece_typed* node_unwrap_struct_member_sym_piece_typed_const(const Node* node) {
-    assert(node->type == NODE_STRUCT_MEMBER_SYM_TYPED);
+    assert(node->type == NODE_STRUCT_MEMBER_SYM_PIECE_TYPED);
     return (const Node_struct_member_sym_piece_typed*)node;
 }
 
@@ -597,6 +670,11 @@ static inline Node_alloca* node_unwrap_alloca(Node* node) {
     return (Node_alloca*)node;
 }
 
+static inline const Node_alloca* node_unwrap_alloca_const(const Node* node) {
+    assert(node->type == NODE_ALLOCA);
+    return (const Node_alloca*)node;
+}
+
 static inline const Node_llvm_store_literal* node_unwrap_llvm_store_literal_const(const Node* node) {
     assert(node->type == NODE_LLVM_STORE_LITERAL);
     return (const Node_llvm_store_literal*)node;
@@ -627,6 +705,45 @@ static inline Node_store_another_node* node_unwrap_store_another_node(Node* node
     return (Node_store_another_node*)node;
 }
 
+static inline const Node_llvm_symbol* node_unwrap_llvm_symbol_const(const Node* node) {
+    assert(node->type == NODE_LLVM_SYMBOL);
+    return (const Node_llvm_symbol*)node;
+}
+
+static inline Node_llvm_symbol* node_unwrap_llvm_symbol(Node* node) {
+    assert(node->type == NODE_LLVM_SYMBOL);
+    return (Node_llvm_symbol*)node;
+}
+
+static inline const Node_store_variable* node_unwrap_store_variable_const(const Node* node) {
+    assert(node->type == NODE_STORE_VARIABLE);
+    return (const Node_store_variable*)node;
+}
+
+static inline Node_store_variable* node_unwrap_store_variable(Node* node) {
+    assert(node->type == NODE_STORE_VARIABLE);
+    return (Node_store_variable*)node;
+}
+
+static inline const Node_llvm_store_struct_literal* node_unwrap_llvm_store_struct_literal_const(const Node* node) {
+    assert(node->type == NODE_LLVM_STORE_STRUCT_LITERAL);
+    return (const Node_llvm_store_struct_literal*)node;
+}
+
+static inline Node_llvm_store_struct_literal* node_unwrap_llvm_store_struct_literal(Node* node) {
+    assert(node->type == NODE_LLVM_STORE_STRUCT_LITERAL);
+    return (Node_llvm_store_struct_literal*)node;
+}
+
+static inline Node_function_param_sym* node_unwrap_function_param_sym(Node* node) {
+    assert(node->type == NODE_FUNCTION_PARAM_SYM);
+    return (Node_function_param_sym*)node;
+}
+
+static inline const Node_function_param_sym* node_unwrap_function_param_sym_const(const Node* node) {
+    assert(node->type == NODE_FUNCTION_PARAM_SYM);
+    return (const Node_function_param_sym*)node;
+}
 
 #define node_wrap(node) ((Node*)node)
 

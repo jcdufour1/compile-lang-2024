@@ -58,6 +58,10 @@ static void extend_type_call_str(String* output, Lang_type lang_type) {
 
 static bool is_variadic(const Node* node) {
     switch (node->type) {
+        case NODE_VARIABLE_DEFINITION:
+            return node_unwrap_variable_def_const(node)->is_variadic;
+        case NODE_LITERAL:
+            return false;
         default:
             unreachable(NODE_FMT, node_print(node));
     }

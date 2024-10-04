@@ -449,7 +449,7 @@ bool set_assignment_operand_types(Node_assignment* assignment) {
             try(sym_tbl_lookup(&lhs_var_def, lhs->name));
             Node* rhs_var_def;
             try(sym_tbl_lookup(&rhs_var_def, rhs->name));
-            if (!lang_type_is_equal(node_unwrap_variable_def(lhs_var_def)->lang_type, node_unwrap_lang_type(rhs_var_def)->lang_type)) {
+            if (!lang_type_is_equal(node_unwrap_variable_def(lhs_var_def)->lang_type, node_unwrap_variable_def(rhs_var_def)->lang_type)) {
                 todo();
             }
             break;
@@ -559,7 +559,7 @@ void set_struct_member_symbol_types(Node_struct_member_sym_untyped* struct_memb_
         node_wrap(memb_sym_untyped)->type = NODE_STRUCT_MEMBER_SYM_PIECE_TYPED;
         Node_struct_member_sym_piece_typed* memb_sym_typed = node_unwrap_struct_member_sym_piece_typed(node_wrap(memb_sym_untyped));
         memb_sym_typed->lang_type = curr_memb_def->lang_type;
-        node_printf(struct_def);
+        //node_printf(struct_def);
         memb_sym_typed->struct_index = get_member_index(prev_struct_def, memb_sym_typed);
 
         prev_struct_def = struct_def;
