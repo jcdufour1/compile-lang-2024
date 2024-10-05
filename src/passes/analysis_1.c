@@ -23,8 +23,8 @@ static void set_if_statement_types(Node* if_statement) {
             nodes_remove(old_if_cond_child, true);
             Node_operator* new_if_cond_child = operation_new(
                 old_if_cond_child,
-                node_wrap(literal_new(str_view_from_cstr("1"), TOKEN_NUM_LITERAL, node_wrap(old_if_cond_child)->pos)),
-                TOKEN_DOUBLE_EQUAL
+                node_wrap(literal_new(str_view_from_cstr("0"), TOKEN_NUM_LITERAL, node_wrap(old_if_cond_child)->pos)),
+                TOKEN_NOT_EQUAL
             );
             nodes_append_child(node_wrap(if_condition), node_wrap(new_if_cond_child));
             break;

@@ -252,6 +252,9 @@ static void emit_operator_type(String* output, const Node_operator* operator) {
         case TOKEN_DOUBLE_EQUAL:
             string_extend_cstr(&a_main, output, "icmp eq i32 ");
             break;
+        case TOKEN_NOT_EQUAL:
+            string_extend_cstr(&a_main, output, "icmp ne i32 ");
+            break;
         default:
             unreachable(TOKEN_TYPE_FMT"\n", token_type_print(operator->token_type));
     }

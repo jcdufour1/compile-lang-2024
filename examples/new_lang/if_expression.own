@@ -6,6 +6,10 @@ fn yes() i32 {
     return 1
 }
 
+fn yes2() i32 {
+    return 2
+}
+
 fn no() i32 {
     return 0
 }
@@ -28,6 +32,10 @@ fn main() i32 {
     if yes() {
         puts("yes3");
     }
+    if yes2() {
+        // 2 also is considered to be true
+        puts("yes3.2");
+    }
     if no() {
         puts("no3");
     }
@@ -37,6 +45,12 @@ fn main() i32 {
     }
     if 0 {
         puts("no4");
+    }
+    if yes() != 0 {
+        puts("yes5");
+    }
+    if yes() != 1 {
+        puts("no5");
     }
 
     return 0

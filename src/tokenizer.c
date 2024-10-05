@@ -59,48 +59,38 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text, 
         token->text = str_view_consume_while(file_text, local_isdigit);
         token->type = TOKEN_NUM_LITERAL;
         return true;
-    } else if (str_view_front(*file_text) == '(') {
-        str_view_consume(file_text);
+    } else if (str_view_try_consume(file_text, '(')) {
         token->type = TOKEN_OPEN_PAR;
         return true;
-    } else if (str_view_front(*file_text) == ')') {
-        str_view_consume(file_text);
+    } else if (str_view_try_consume(file_text, ')')) {
         token->type = TOKEN_CLOSE_PAR;
         return true;
-    } else if (str_view_front(*file_text) == '{') {
-        str_view_consume(file_text);
+    } else if (str_view_try_consume(file_text, '{')) {
         token->type = TOKEN_OPEN_CURLY_BRACE;
         return true;
-    } else if (str_view_front(*file_text) == '}') {
-        str_view_consume(file_text);
+    } else if (str_view_try_consume(file_text, '}')) {
         token->type = TOKEN_CLOSE_CURLY_BRACE;
         return true;
-    } else if (str_view_front(*file_text) == '"') {
+    } else if (str_view_try_consume(file_text, '"')) {
         token->type = TOKEN_STRING_LITERAL;
-        str_view_consume(file_text);
         token->text = str_view_consume_while(file_text, is_not_quote);
-        str_view_consume(file_text);
+        try(str_view_try_consume(file_text, '"'));
         return true;
-    } else if (str_view_front(*file_text) == ';') {
-        str_view_consume(file_text);
+    } else if (str_view_try_consume(file_text, ';')) {
         token->type = TOKEN_SEMICOLON;
         return true;
-    } else if (str_view_front(*file_text) == ',') {
-        str_view_consume(file_text);
+    } else if (str_view_try_consume(file_text, ',')) {
         token->type = TOKEN_COMMA;
         return true;
-    } else if (str_view_front(*file_text) == '+') {
-        str_view_consume(file_text);
+    } else if (str_view_try_consume(file_text, '+')) {
         assert((file_text->count < 1 || str_view_front(*file_text) != '+') && "double + not implemented");
         token->type = TOKEN_SINGLE_PLUS;
         return true;
-    } else if (str_view_front(*file_text) == '-') {
-        str_view_consume(file_text);
+    } else if (str_view_try_consume(file_text, '-')) {
         token->type = TOKEN_SINGLE_MINUS;
         return true;
-    } else if (str_view_front(*file_text) == '*') {
+    } else if (str_view_try_consume(file_text, '*')) {
         // TODO: * may not always be multiplication
-        str_view_consume(file_text);
         token->type = TOKEN_ASTERISK;
         return true;
     } else if (file_text->count > 1 && str_view_cstr_is_equal(str_view_slice(*file_text, 0, 2), "//")) {
@@ -108,14 +98,18 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text, 
         trim_whitespace(file_text, line_num);
         token->type = TOKEN_COMMENT;
         return true;
-    } else if (str_view_front(*file_text) == '/') {
-        str_view_consume(file_text); // remove /
+    } else if (str_view_try_consume(file_text, '/')) {
         token->type = TOKEN_SLASH;
         return true;
-    } else if (str_view_front(*file_text) == ':') {
-        str_view_consume(file_text);
+    } else if (str_view_try_consume(file_text, ':')) {
         token->type = TOKEN_COLON;
         return true;
+    } else if (str_view_try_consume(file_text, '!')) {
+        if (str_view_try_consume(file_text, '=')) {
+            token->type = TOKEN_NOT_EQUAL;
+            return true;
+        }
+        todo(); // bitwise operations not implemented
     } else if (str_view_front(*file_text) == '=') {
         Str_view equals = str_view_consume_while(file_text, is_equal);
         if (equals.count == 1) {
@@ -127,13 +121,11 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text, 
         } else {
             todo();
         }
-    } else if (str_view_front(*file_text) == '>') {
-        str_view_consume(file_text);
+    } else if (str_view_try_consume(file_text, '>')) {
         assert((file_text->count < 1 || str_view_front(*file_text) != '=') && ">= not implemented");
         token->type = TOKEN_GREATER_THAN;
         return true;
-    } else if (str_view_front(*file_text) == '<') {
-        str_view_consume(file_text);
+    } else if (str_view_try_consume(file_text, '<')) {
         assert((file_text->count < 1 || str_view_front(*file_text) != '=') && ">= not implemented");
         token->type = TOKEN_LESS_THAN;
         return true;

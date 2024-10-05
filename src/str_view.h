@@ -93,6 +93,14 @@ static inline Str_view str_view_from_cstr(const char* cstr) {
     return str_view;
 }
 
+static inline bool str_view_try_consume(Str_view* str_view, char ch) {
+    if (str_view_front(*str_view) == ch) {
+        str_view_consume(str_view);
+        return true;
+    }
+    return false;
+}
+
 #define STR_VIEW_FMT "%.*s"
 
 #define str_view_print(str_view) (int)((str_view).count), (str_view).str
