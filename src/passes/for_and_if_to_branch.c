@@ -38,7 +38,7 @@ static Node_assignment* get_for_loop_cond_var_assign(Str_view sym_name, Pos pos)
 }
 
 static void change_break_to_goto(Node_block* block, const Node_label* label_to_goto) {
-    Node* curr_node = nodes_get_local_rightmost(node_wrap(block)->left_child);
+    Node* curr_node = nodes_get_local_rightmost(block->child);
     while (curr_node) {
         switch (curr_node->type) {
             case NODE_IF_STATEMENT:
@@ -125,7 +125,7 @@ static void for_loop_to_branch(Node_for_loop* for_loop) {
     nodes_append_child(node_wrap(new_branch_block), node_wrap(new_operation));
     nodes_append_child(node_wrap(new_branch_block), node_wrap(check_cond_jmp));
     nodes_append_child(node_wrap(new_branch_block), node_wrap(after_check_label));
-    nodes_extend_children(node_wrap(new_branch_block), node_wrap(for_block)->left_child);
+    nodes_extend_children(node_wrap(new_branch_block), get_left_child(node_wrap(for_block)));
     nodes_append_child(node_wrap(new_branch_block), node_wrap(assignment_to_inc_cond_var));
     nodes_append_child(node_wrap(new_branch_block), node_wrap(goto_new(check_cond_label->name, node_wrap(for_loop)->pos)));
     nodes_append_child(node_wrap(new_branch_block), node_wrap(after_for_loop_label));
@@ -168,7 +168,7 @@ bool for_and_if_to_branch(Node* block_) {
         return false;
     }
     Node_block* block = node_unwrap_block(block_);
-    Node* curr_node = nodes_get_local_rightmost(node_wrap(block)->left_child);
+    Node* curr_node = nodes_get_local_rightmost(block->child);
     bool go_to_prev;
     (void) go_to_prev;
     while (curr_node) {

@@ -254,8 +254,8 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
             nodes_insert_before(node_to_insert_before, rhs_load);
             Node* fun_def;
             try(sym_tbl_lookup(&fun_def, get_node_name(rhs)));
-            Node* function_rtn_type = nodes_single_child(nodes_get_child_of_type(fun_def, NODE_FUNCTION_RETURN_TYPES));
-            node_unwrap_function_call(rhs_load)->lang_type = node_unwrap_lang_type(function_rtn_type)->lang_type;
+            Node_lang_type* function_rtn_type = node_unwrap_function_return_types(nodes_get_child_of_type(fun_def, NODE_FUNCTION_RETURN_TYPES))->child;
+            node_unwrap_function_call(rhs_load)->lang_type = function_rtn_type->lang_type;
             assert(rhs_load);
             assert(node_unwrap_function_call(rhs_load)->lang_type.str.count > 0);
             rhs_load_lang_type = node_unwrap_function_call(rhs)->lang_type;
@@ -392,14 +392,15 @@ static void load_function_arguments(Node* fun_call) {
 }
 
 bool add_load_and_store(Node* start_start_node) {
-    if (!start_start_node->left_child) {
-        return false;
-    }
     if (start_start_node->type != NODE_BLOCK) {
         return false;
     }
+    Node_block* block = node_unwrap_block(start_start_node);
+    if (!block->child) {
+        return false;
+    }
 
-    Node* curr_node = nodes_get_local_rightmost(start_start_node->left_child);
+    Node* curr_node = nodes_get_local_rightmost(node_wrap(block->child));
     while (curr_node) {
         bool go_to_prev = true;
         switch (curr_node->type) {

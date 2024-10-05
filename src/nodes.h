@@ -33,8 +33,233 @@ static inline Node* nodes_prev_or_parent(Node* node) {
     return node->prev;
 }
 
+static inline void set_left_child(Node* parent, Node* left_child) {
+    (void) parent;
+    (void) left_child;
+    switch (parent->type) {
+        case NODE_SYMBOL_UNTYPED:
+            node_unwrap_symbol_untyped(parent)->child = left_child;
+            return;
+        case NODE_SYMBOL_TYPED:
+            node_unwrap_symbol_typed(parent)->child = left_child;
+            return;
+        case NODE_LABEL:
+            node_unwrap_label(parent)->child = left_child;
+            return;
+        case NODE_LITERAL:
+            node_unwrap_literal(parent)->child = left_child;
+            return;
+        case NODE_FUNCTION_CALL:
+            node_unwrap_function_call(parent)->child = left_child;
+            return;
+        case NODE_LANG_TYPE:
+            node_unwrap_lang_type(parent)->child = left_child;
+            return;
+        case NODE_OPERATOR:
+            node_unwrap_operator(parent)->child = left_child;
+            return;
+        case NODE_STRUCT_LITERAL:
+            node_unwrap_struct_literal(parent)->child = left_child;
+            return;
+        case NODE_LOAD_STRUCT_ELEMENT_PTR:
+            node_unwrap_load_elem_ptr(parent)->child = left_child;
+            return;
+        case NODE_VARIABLE_DEFINITION:
+            node_unwrap_variable_def(parent)->child = left_child;
+            return;
+        case NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED:
+            node_unwrap_struct_member_sym_piece_untyped(parent)->child = left_child;
+            return;
+        case NODE_STRUCT_MEMBER_SYM_PIECE_TYPED:
+            node_unwrap_struct_member_sym_piece_typed(parent)->child = left_child;
+            return;
+        case NODE_STRUCT_DEFINITION:
+            node_unwrap_struct_def(parent)->child = left_child;
+            return;
+        case NODE_FUNCTION_PARAMETERS:
+            node_unwrap_function_params(parent)->child = left_child;
+            return;
+        case NODE_FUNCTION_RETURN_TYPES:
+            unreachable("should not assign this in this way");
+            return;
+        case NODE_FUNCTION_DECLARATION:
+            node_unwrap_function_declaration(parent)->child = left_child;
+            return;
+        case NODE_FUNCTION_DEFINITION:
+            node_unwrap_function_definition(parent)->child = left_child;
+            return;
+        case NODE_FOR_LOOP:
+            node_unwrap_for_loop(parent)->child = left_child;
+            return;
+        case NODE_FOR_VARIABLE_DEF:
+            node_unwrap_for_variable_def(parent)->child = left_child;
+            return;
+        case NODE_FOR_LOWER_BOUND:
+            node_unwrap_for_lower_bound(parent)->child = left_child;
+            return;
+        case NODE_FOR_UPPER_BOUND:
+            node_unwrap_for_upper_bound(parent)->child = left_child;
+            return;
+        case NODE_BREAK:
+            node_unwrap_break(parent)->child = left_child;
+            return;
+        case NODE_RETURN_STATEMENT:
+            node_unwrap_return_statement(parent)->child = left_child;
+            return;
+        case NODE_ASSIGNMENT:
+            node_unwrap_assignment(parent)->child = left_child;
+            return;
+        case NODE_IF_STATEMENT:
+            node_unwrap_if(parent)->child = left_child;
+            return;
+        case NODE_IF_CONDITION:
+            node_unwrap_if_condition(parent)->child = left_child;
+            return;
+        case NODE_BLOCK:
+            node_unwrap_block(parent)->child = left_child;
+            return;
+        case NODE_STRUCT_MEMBER_SYM_UNTYPED:
+            node_unwrap_struct_member_sym_untyped(parent)->child = left_child;
+            return;
+        case NODE_STRUCT_MEMBER_SYM_TYPED:
+            node_unwrap_struct_member_sym_typed(parent)->child = left_child;
+            return;
+        case NODE_OPERATOR_RETURN_VALUE_SYM:
+            node_unwrap_operator_rtn_val_sym(parent)->child = left_child;
+            return;
+        case NODE_FUNCTION_RETURN_VALUE_SYM:
+            node_unwrap_function_rtn_val_sym(parent)->child = left_child;
+            return;
+        case NODE_COND_GOTO:
+            node_unwrap_cond_goto(parent)->child = left_child;
+            return;
+        case NODE_GOTO:
+            node_unwrap_goto(parent)->child = left_child;
+            return;
+        case NODE_ALLOCA:
+            node_unwrap_alloca(parent)->child = left_child;
+            return;
+        case NODE_LLVM_STORE_LITERAL:
+            node_unwrap_llvm_store_literal(parent)->child = left_child;
+            return;
+        case NODE_LOAD_ANOTHER_NODE:
+            node_unwrap_load_another_node(parent)->child = left_child;
+            return;
+        case NODE_STORE_ANOTHER_NODE:
+            node_unwrap_store_another_node(parent)->child = left_child;
+            return;
+        case NODE_LLVM_SYMBOL:
+            node_unwrap_llvm_symbol(parent)->child = left_child;
+            return;
+        case NODE_STORE_VARIABLE:
+            node_unwrap_store_variable(parent)->child = left_child;
+            return;
+        case NODE_LLVM_STORE_STRUCT_LITERAL:
+            node_unwrap_llvm_store_struct_literal(parent)->child = left_child;
+            return;
+        case NODE_FUNCTION_PARAM_SYM:
+            node_unwrap_function_param_sym(parent)->child = left_child;
+            return;
+        default:
+            unreachable(NODE_FMT, node_print(parent));
+    }
+}
+
+static inline Node* get_left_child(Node* node) {
+    switch (node->type) {
+        case NODE_SYMBOL_UNTYPED:
+            return node_unwrap_symbol_untyped(node)->child;
+        case NODE_SYMBOL_TYPED:
+            return node_unwrap_symbol_typed(node)->child;
+        case NODE_LABEL:
+            return node_unwrap_label(node)->child;
+        case NODE_LITERAL:
+            return node_unwrap_literal(node)->child;
+        case NODE_FUNCTION_CALL:
+            return node_unwrap_function_call(node)->child;
+        case NODE_LANG_TYPE:
+            return node_unwrap_lang_type(node)->child;
+        case NODE_OPERATOR:
+            return node_unwrap_operator(node)->child;
+        case NODE_STRUCT_LITERAL:
+            return node_unwrap_struct_literal(node)->child;
+        case NODE_LOAD_STRUCT_ELEMENT_PTR:
+            return node_unwrap_load_elem_ptr(node)->child;
+        case NODE_VARIABLE_DEFINITION:
+            return node_unwrap_variable_def(node)->child;
+        case NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED:
+            return node_unwrap_struct_member_sym_piece_untyped(node)->child;
+        case NODE_STRUCT_MEMBER_SYM_PIECE_TYPED:
+            return node_unwrap_struct_member_sym_piece_typed(node)->child;
+        case NODE_STRUCT_DEFINITION:
+            return node_unwrap_struct_def(node)->child;
+        case NODE_FUNCTION_PARAMETERS:
+            return node_unwrap_function_params(node)->child;
+        case NODE_FUNCTION_RETURN_TYPES:
+            unreachable("should not do it this way");
+        case NODE_FUNCTION_DECLARATION:
+            return node_unwrap_function_declaration(node)->child;
+        case NODE_FUNCTION_DEFINITION:
+            return node_unwrap_function_definition(node)->child;
+        case NODE_FOR_LOOP:
+            return node_unwrap_for_loop(node)->child;
+        case NODE_FOR_VARIABLE_DEF:
+            return node_unwrap_for_variable_def(node)->child;
+        case NODE_FOR_LOWER_BOUND:
+            return node_unwrap_for_lower_bound(node)->child;
+        case NODE_FOR_UPPER_BOUND:
+            return node_unwrap_for_upper_bound(node)->child;
+        case NODE_BREAK:
+            return node_unwrap_break(node)->child;
+        case NODE_RETURN_STATEMENT:
+            return node_unwrap_return_statement(node)->child;
+        case NODE_ASSIGNMENT:
+            return node_unwrap_assignment(node)->child;
+        case NODE_IF_STATEMENT:
+            return node_unwrap_if(node)->child;
+        case NODE_IF_CONDITION:
+            return node_unwrap_if_condition(node)->child;
+        case NODE_BLOCK:
+            return node_unwrap_block(node)->child;
+        case NODE_STRUCT_MEMBER_SYM_UNTYPED:
+            return node_unwrap_struct_member_sym_untyped(node)->child;
+        case NODE_STRUCT_MEMBER_SYM_TYPED:
+            return node_unwrap_struct_member_sym_typed(node)->child;
+        case NODE_OPERATOR_RETURN_VALUE_SYM:
+            return node_unwrap_operator_rtn_val_sym(node)->child;
+        case NODE_FUNCTION_RETURN_VALUE_SYM:
+            return node_unwrap_function_rtn_val_sym(node)->child;
+        case NODE_COND_GOTO:
+            return node_unwrap_cond_goto(node)->child;
+        case NODE_GOTO:
+            return node_unwrap_goto(node)->child;
+        case NODE_ALLOCA:
+            return node_unwrap_alloca_const(node)->child;
+        case NODE_LLVM_STORE_LITERAL:
+            return node_unwrap_llvm_store_literal(node)->child;
+        case NODE_LOAD_ANOTHER_NODE:
+            return node_unwrap_load_another_node(node)->child;
+        case NODE_STORE_ANOTHER_NODE:
+            return node_unwrap_store_another_node(node)->child;
+        case NODE_LLVM_SYMBOL:
+            return node_unwrap_llvm_symbol(node)->child;
+        case NODE_STORE_VARIABLE:
+            return node_unwrap_store_variable(node)->child;
+        case NODE_LLVM_STORE_STRUCT_LITERAL:
+            return node_unwrap_llvm_store_struct_literal(node)->child;
+        case NODE_FUNCTION_PARAM_SYM:
+            return node_unwrap_function_param_sym_const(node)->child;
+        default:
+            unreachable(NODE_FMT, node_print(node));
+    }
+}
+
+static inline const Node* get_left_child_const(const Node* node) {
+    return get_left_child((Node*)node);
+}
+
 #define nodes_foreach_child(child, parent) \
-    for (Node* child = ((Node*)parent)->left_child; (child); (child) = (child)->next)
+    for (Node* child = get_left_child((Node*)parent); (child); (child) = (child)->next)
 
 #define nodes_foreach_from_curr(curr_node, start_node) \
     for (Node* curr_node = ((Node*)start_node); (curr_node); (curr_node) = (curr_node)->next)
@@ -74,7 +299,7 @@ static inline Node* nodes_get_local_rightmost(Node* start_node) {
 // do not use this function to remove node from tree (use node_remove instead for that)
 static inline void nodes_reset_links_of_self_only(Node* node, bool keep_children) {
     if (!keep_children) {
-        node->left_child = NULL;
+        set_left_child(node, NULL);
     }
     node->next = NULL;
     node->prev = NULL;
@@ -119,7 +344,7 @@ static inline void nodes_establish_parent_left_child(Node* parent, Node* child) 
     nodes_foreach_from_curr(curr_node, nodes_get_local_leftmost(child)) {
         child->parent = parent;
     }
-    parent->left_child = child;
+    set_left_child(parent, child);
 }
 
 static inline void nodes_insert_after(Node* curr, Node* node_to_insert) {
@@ -155,8 +380,8 @@ static inline void nodes_insert_before(Node* node_to_insert_before, Node* node_t
     assert(node_to_insert->next == node_to_insert_before);
 
     Node* parent = node_to_insert_before->parent;
-    if (parent->left_child == node_to_insert_before) {
-        parent->left_child = node_to_insert;
+    if (get_left_child(parent) == node_to_insert_before) {
+        set_left_child(parent, node_to_insert);
     }
     node_to_insert->parent = parent;
 }
@@ -167,13 +392,13 @@ static inline void nodes_append_child(Node* parent, Node* child) {
     assert(!child->prev);
     assert(!child->parent);
 
-    if (!parent->left_child) {
-        parent->left_child = child;
+    if (!get_left_child(parent)) {
+        set_left_child(parent, child);
         child->parent = parent;
         return;
     }
 
-    Node* curr_node = parent->left_child;
+    Node* curr_node = get_left_child(parent);
     while (curr_node->next) {
         curr_node = curr_node->next;
     }
@@ -183,12 +408,12 @@ static inline void nodes_append_child(Node* parent, Node* child) {
 // when node only has one child
 static inline Node* nodes_single_child(Node* node) {
     assert(nodes_count_children(node) == 1);
-    return node->left_child;
+    return get_left_child(node);
 }
 
 static inline const Node* nodes_single_child_const(const Node* node) {
     assert(nodes_count_children(node) == 1);
-    return node->left_child;
+    return get_left_child_const(node);
 }
 
 static inline void nodes_remove_siblings(Node* node) {
@@ -211,7 +436,7 @@ static inline void nodes_remove_siblings(Node* node) {
 static inline void nodes_remove_siblings_and_parent(Node* node) {
     assert(node);
 
-    Node* parent_left_child = node->parent ? (node->parent->left_child) : NULL;
+    Node* parent_left_child = node->parent ? (get_left_child(node->parent)) : NULL;
     if (parent_left_child == node) {
         parent_left_child = node->next;
     }
@@ -219,13 +444,13 @@ static inline void nodes_remove_siblings_and_parent(Node* node) {
     nodes_remove_siblings(node);
 
     if (node->parent) {
-        node->parent->left_child = parent_left_child;
+        set_left_child(node->parent, parent_left_child);
         node->parent = NULL;
     }
 }
 
 static inline Node* nodes_get_child_of_type(Node* parent, NODE_TYPE node_type) {
-    if (!parent->left_child) {
+    if (!get_left_child(parent)) {
         todo();
     }
 
@@ -310,7 +535,7 @@ static inline void nodes_remove(Node* node_to_remove, bool keep_children) {
     Node* next = node_to_remove->next;
     Node* prev = node_to_remove->prev;
     Node* parent = node_to_remove->parent;
-    Node* left_child = node_to_remove->left_child;
+    Node* left_child = get_left_child(node_to_remove);
 
     if (next) {
         next->prev = prev;
@@ -320,8 +545,8 @@ static inline void nodes_remove(Node* node_to_remove, bool keep_children) {
         prev->next = next;
     }
 
-    if (parent && parent->left_child == node_to_remove) {
-        parent->left_child = next;
+    if (parent && get_left_child(parent) == node_to_remove) {
+        set_left_child(parent, next);
     }
 
     if (!keep_children && left_child) {

@@ -49,6 +49,7 @@ static const char* NODE_NODE_OPERATOR_RETURN_VALUE_SYM_DESCRIPTION = "operator_r
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
 #ifndef NDEBUG
+#if 0
 static void nodes_assert_tree_linkage_is_consistant_internal(Node_ptr_vec* nodes_visited, const Node* root) {
     if (!root) {
         return;
@@ -60,7 +61,7 @@ static void nodes_assert_tree_linkage_is_consistant_internal(Node_ptr_vec* nodes
     assert(
         (root != root->next) && \
         (root != root->prev) && \
-        (root != root->left_child) && \
+        (root != get_left_child_const(root)) && \
         (root != root->parent) && \
         "node points to itself"
     );
@@ -79,7 +80,7 @@ static void nodes_assert_tree_linkage_is_consistant_internal(Node_ptr_vec* nodes
         }
         assert(curr_node->parent == base_parent);
 
-        Node* left_child = curr_node->left_child;
+        const Node* left_child = get_left_child_const(curr_node);
         if (left_child) {
             assert(curr_node == left_child->parent);
             nodes_assert_tree_linkage_is_consistant_internal(nodes_visited, left_child);
@@ -92,6 +93,13 @@ void nodes_assert_tree_linkage_is_consistant(const Node* root) {
     node_ptr_vec_set_to_zero_len(&nodes_visited);
     nodes_assert_tree_linkage_is_consistant_internal(&nodes_visited, root);
 }
+
+#else
+
+void nodes_assert_tree_linkage_is_consistant(const Node* root) {
+    (void) root;
+}
+#endif // 0
 #endif // NDEBUG
 
 void extend_lang_type_to_string(Arena* arena, String* string, Lang_type lang_type, bool surround_in_lt_gt) {
@@ -122,6 +130,9 @@ void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, const Node* root, const 
         log_file_new(log_level, file, line, "<empty tree>\n");
         return;
     }
+    if (!root) {
+        return;
+    }
 
     static String padding = {0};
 
@@ -132,9 +143,16 @@ void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, const Node* root, const 
         }
 
         log_file_new(log_level, file, line, STRING_FMT NODE_FMT"\n", string_print(padding), node_print(curr_node));
-        if (curr_node->left_child) {
-            nodes_log_tree_rec(log_level, pad_x + 2, curr_node->left_child, file, line);
+        const Node* left_child;
+        switch (curr_node->type) {
+            case NODE_FUNCTION_RETURN_TYPES:
+                left_child = node_wrap(node_unwrap_function_return_types_const(curr_node)->child);
+                break;
+            default:
+                left_child = get_left_child_const(curr_node);
+                break;
         }
+        nodes_log_tree_rec(log_level, pad_x + 2, left_child, file, line);
     }
 }
 

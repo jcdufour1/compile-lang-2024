@@ -48,7 +48,7 @@ bool flatten_operations(Node* curr_node) {
         return false;
     }
 
-    Node* assign_or_var_def = nodes_get_local_rightmost(curr_node->left_child);
+    Node* assign_or_var_def = nodes_get_local_rightmost(get_left_child(curr_node));
     while (assign_or_var_def) {
         bool advance_to_prev = true;
         if (assign_or_var_def->type == NODE_OPERATOR) {

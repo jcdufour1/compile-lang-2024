@@ -105,11 +105,10 @@ static void extend_literal_decl(String* output, const Node* var_def, bool nounde
     extend_literal_decl_prefix(output, var_def);
 }
 
-static Node* return_type_from_function_definition(const Node_function_definition* fun_def) {
+static const Node_lang_type* return_type_from_function_definition(const Node_function_definition* fun_def) {
     const Node_function_return_types* return_types = node_unwrap_function_return_types_const(nodes_get_child_of_type_const(node_wrap(fun_def), NODE_FUNCTION_RETURN_TYPES));
-    assert(nodes_count_children(node_wrap(return_types)) < 2);
-    if (nodes_count_children(node_wrap(return_types)) > 0) {
-        return node_wrap(return_types)->left_child;
+    if (return_types->child) {
+        return return_types->child;
     }
     unreachable("");
 }
@@ -349,7 +348,7 @@ static void emit_llvm_store_literal(String* output, const Node_llvm_store_litera
 static void emit_function_definition(String* output, const Node_function_definition* fun_def) {
     string_extend_cstr(&a_main, output, "define dso_local ");
 
-    extend_type_call_str(output, get_lang_type(return_type_from_function_definition(fun_def)));
+    extend_type_call_str(output, return_type_from_function_definition(fun_def)->lang_type);
 
     string_extend_cstr(&a_main, output, " @");
     string_extend_strv(&a_main, output, get_node_name(node_wrap(fun_def)));
@@ -368,7 +367,7 @@ static void emit_function_definition(String* output, const Node_function_definit
 }
 
 static void emit_return_statement(String* output, const Node_return_statement* fun_return) {
-    const Node* sym_to_return = node_wrap(fun_return)->left_child;
+    const Node* sym_to_return = fun_return->child;
     assert(get_lang_type(sym_to_return).str.count > 0);
 
     switch (sym_to_return->type) {

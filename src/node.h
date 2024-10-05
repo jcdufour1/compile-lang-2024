@@ -65,11 +65,13 @@ typedef struct {
 } Lang_type;
 
 typedef struct {
+    struct Node_* child;
     Llvm_id llvm_id;
     Str_view name;
 } Node_symbol_untyped;
 
 typedef struct {
+    struct Node_* child;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Str_view str_data;
     struct Node_* node_src;
@@ -78,11 +80,13 @@ typedef struct {
 } Node_symbol_typed;
 
 typedef struct {
+    struct Node_* child;
     Llvm_id llvm_id;
     Str_view name;
 } Node_label;
 
 typedef struct {
+    struct Node_* child;
     Lang_type lang_type;
     Llvm_id llvm_id;
     size_t struct_index;
@@ -92,39 +96,46 @@ typedef struct {
 } Node_load_element_ptr;
 
 typedef struct {
+    struct Node_* child;
     Str_view str_data; // eg. "hello" in "let string1: String = "hello""
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Str_view name;
 } Node_literal;
 
 typedef struct {
+    struct Node_* child;
     Str_view name;
     Llvm_id llvm_id;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 } Node_function_call;
 
 typedef struct {
+    struct Node_* child;
     Llvm_id llvm_id;
 } Node_function_params;
 
 typedef struct {
+    struct Node_* child;
     Llvm_id llvm_id;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 } Node_lang_type;
 
 typedef struct {
+    struct Node_* child;
     TOKEN_TYPE token_type;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Llvm_id llvm_id;
 } Node_operator;
 
 typedef struct {
+    struct Node_* child;
     Str_view name;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Llvm_id llvm_id;
 } Node_struct_literal;
 
 typedef struct {
+    struct Node_* child;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     bool is_variadic : 1;
     Str_view str_data; // eg. "hello" in "let string1: String = "hello""
@@ -134,14 +145,16 @@ typedef struct {
 } Node_variable_def;
 
 typedef struct {
-    int a;
+    struct Node_* child;
 } Node_for_variable_def;
 
 typedef struct {
+    struct Node_* child;
     Str_view name;
 } Node_struct_member_sym_piece_untyped;
 
 typedef struct {
+    struct Node_* child;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     size_t struct_index;
     Llvm_id llvm_id;
@@ -150,71 +163,78 @@ typedef struct {
 } Node_struct_member_sym_piece_typed;
 
 typedef struct {
+    struct Node_* child;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Llvm_id llvm_id;
     Str_view name;
 } Node_struct_def;
 
 typedef struct {
-    int a;
+    Node_lang_type* child;
 } Node_function_return_types;
 
 typedef struct {
+    struct Node_* child;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 } Node_struct_member_def;
 
 typedef struct {
+    struct Node_* child;
     Str_view name;
 } Node_function_declaration;
 
 typedef struct {
+    struct Node_* child;
     Llvm_id llvm_id;
     Str_view name;
 } Node_function_definition;
 
 typedef struct {
-    int a;
+    struct Node_* child;
 } Node_for_loop;
 
 typedef struct {
-    int a;
+    struct Node_* child;
 } Node_return_statement;
 
 typedef struct {
-    int a;
+    struct Node_* child;
 } Node_for_lower_bound;
 
 typedef struct {
-    int a;
+    struct Node_* child;
 } Node_for_upper_bound;
 
 typedef struct {
-    int a;
+    struct Node_* child;
 } Node_break;
 
 typedef struct {
+    struct Node_* child;
     Llvm_id llvm_id;
 } Node_assignment;
 
 typedef struct {
-    int a;
+    struct Node_* child;
 } Node_if;
 
 typedef struct {
-    int a;
+    struct Node_* child;
 } Node_if_condition;
 
 typedef struct {
-    int a;
+    struct Node_* child;
 } Node_block;
 
 typedef struct {
+    struct Node_* child;
     Str_view name;
     Llvm_id llvm_id;
     Lang_type lang_type;
 } Node_struct_member_sym_untyped;
 
 typedef struct {
+    struct Node_* child;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     struct Node_* node_src;
     Llvm_id llvm_id;
@@ -222,12 +242,14 @@ typedef struct {
 } Node_struct_member_sym_typed;
 
 typedef struct {
+    struct Node_* child;
     Llvm_id llvm_id;
     Lang_type lang_type;
     Str_view name;
 } Node_alloca;
 
 typedef struct {
+    struct Node_* child;
     struct Node_* node_dest;
     struct Node_* node_src;
     Llvm_id llvm_id;
@@ -236,6 +258,7 @@ typedef struct {
 } Node_operator_rtn_val_sym;
 
 typedef struct {
+    struct Node_* child;
     struct Node_* node_src;
     struct Node_* node_dest;
     Llvm_id llvm_id;
@@ -243,6 +266,7 @@ typedef struct {
 } Node_function_rtn_val_sym;
 
 typedef struct {
+    struct Node_* child;
     struct Node_* node_src;
     struct Node_* node_dest;
     Llvm_id llvm_id;
@@ -250,6 +274,7 @@ typedef struct {
 } Node_load_another_node;
 
 typedef struct {
+    struct Node_* child;
     struct Node_* node_src;
     struct Node_* node_dest;
     struct Node_* storage_location;
@@ -258,6 +283,7 @@ typedef struct {
 } Node_store_another_node;
 
 typedef struct {
+    struct Node_* child;
     struct Node_* node_dest;
     struct Node_* node_src;
     Llvm_id llvm_id;
@@ -266,26 +292,31 @@ typedef struct {
 } Node_llvm_store_literal;
 
 typedef struct {
+    struct Node_* child;
     Str_view name;
     Llvm_id llvm_id;
 } Node_goto;
 
 typedef struct {
+    struct Node_* child;
     Llvm_id llvm_id;
 } Node_cond_goto;
 
 typedef struct {
+    struct Node_* child;
     Llvm_id llvm_id;
     struct Node_* node_src;
 } Node_llvm_symbol;
 
 typedef struct {
+    struct Node_* child;
     Llvm_id llvm_id;
     Lang_type lang_type;
     Str_view name;
 } Node_store_variable;
 
 typedef struct {
+    struct Node_* child;
     Llvm_id llvm_id;
     Lang_type lang_type;
     struct Node_* node_src;
@@ -294,6 +325,7 @@ typedef struct {
 } Node_llvm_store_struct_literal;
 
 typedef struct {
+    struct Node_* child;
     struct Node_* node_src;
     Lang_type lang_type;
     Str_view name;
@@ -355,7 +387,6 @@ typedef struct Node_ {
 
     struct Node_* next;
     struct Node_* prev;
-    struct Node_* left_child;
     struct Node_* parent;
 } Node;
 

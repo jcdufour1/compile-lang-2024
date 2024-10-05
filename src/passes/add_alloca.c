@@ -21,7 +21,7 @@ static void do_function_definition(Node_function_definition* fun_def) {
             continue;
         }
         Node_alloca* alloca = alloca_new(node_unwrap_variable_def(param));
-        nodes_insert_before(node_wrap(fun_block)->left_child, node_wrap(alloca));
+        nodes_insert_before(fun_block->child, node_wrap(alloca));
     }
 }
 
@@ -52,15 +52,15 @@ static void do_assignment(Node* start_of_block, Node_assignment* assignment) {
 }
 
 bool add_alloca(Node* start_start_node) {
-    if (!start_start_node->left_child) {
-        return false;
-    }
     if (start_start_node->type != NODE_BLOCK) {
         return false;
     }
+    if (!get_left_child(start_start_node)) {
+        return false;
+    }
 
-    Node* curr_node = nodes_get_local_rightmost(start_start_node->left_child);
-    Node* start_of_block = start_start_node->left_child;
+    Node* curr_node = nodes_get_local_rightmost(get_left_child(start_start_node));
+    Node* start_of_block = get_left_child(start_start_node);
     while (curr_node) {
         bool go_to_prev = true;
         switch (curr_node->type) {

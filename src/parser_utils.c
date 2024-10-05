@@ -485,7 +485,7 @@ void set_function_call_types(Node_function_call* fun_call) {
         return;
     }
     Node_function_return_types* fun_rtn_types = node_unwrap_function_return_types(nodes_get_child_of_type(fun_def, NODE_FUNCTION_RETURN_TYPES));
-    Node_lang_type* fun_rtn_type = node_unwrap_lang_type(nodes_single_child(node_wrap(fun_rtn_types)));
+    Node_lang_type* fun_rtn_type = fun_rtn_types->child;
     fun_call->lang_type = fun_rtn_type->lang_type;
     assert(fun_call->lang_type.str.count > 0);
     Node* params = nodes_get_child_of_type(fun_def, NODE_FUNCTION_PARAMETERS);

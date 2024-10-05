@@ -136,7 +136,7 @@ static bool extract_function_return_types(Node_function_return_types** result, T
             todo();
         }
         assert(return_type->lang_type.str.count > 0);
-        nodes_append_child(node_wrap(return_types), node_wrap(return_type));
+        return_types->child = return_type;
         is_comma = tk_view_try_consume(NULL, tokens, TOKEN_COMMA);
     }
 
