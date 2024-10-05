@@ -261,7 +261,7 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             // fallthrough
             break;
         case NODE_LITERAL:
-            string_extend_strv_in_gtlt(arena, string, token_type_to_str_view(node_unwrap_literal_const(node)->token_type));
+            extend_lang_type_to_string(arena, string, node_unwrap_literal_const(node)->lang_type, true);
             string_extend_strv(arena, string, get_node_name(node));
             string_extend_strv_in_par(arena, string, node_unwrap_literal_const(node)->str_data);
             break;

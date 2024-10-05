@@ -303,27 +303,12 @@ static Node_function_declaration* extract_function_declaration(Tk_view* tokens) 
     return fun_declaration;
 }
 
-static Lang_type get_literal_lang_type_from_token_type(TOKEN_TYPE token_type) {
-    switch (token_type) {
-        case TOKEN_STRING_LITERAL:
-            return lang_type_from_cstr("ptr", 0); // TODO: should this actally be zero?
-        case TOKEN_NUM_LITERAL:
-            return lang_type_from_cstr("i32", 0);
-        default:
-            todo();
-    }
-}
-
 static Node_literal* extract_literal(Tk_view* tokens) {
     Token token = tk_view_consume(tokens);
     assert(token_is_literal(token));
 
-    Node_literal* new_node = node_unwrap_literal(node_new(token.pos, NODE_LITERAL));
-    new_node->name = literal_name_new();
-    assert(new_node->str_data.count < 1);
-    new_node->str_data = token.text;
-    new_node->token_type = token.type;
-    new_node->lang_type = get_literal_lang_type_from_token_type(new_node->token_type);
+    Node_literal* new_node = literal_new(token.text, token.type, token.pos);
+    assert(new_node->str_data.count > 0);
 
     try(sym_tbl_add(node_wrap(new_node)));
     return new_node;

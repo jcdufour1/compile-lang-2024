@@ -94,7 +94,6 @@ typedef struct {
 typedef struct {
     Str_view str_data; // eg. "hello" in "let string1: String = "hello""
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
-    TOKEN_TYPE token_type;
     Str_view name;
 } Node_literal;
 

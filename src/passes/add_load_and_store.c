@@ -20,7 +20,7 @@ static void do_struct_literal(Node_struct_literal* struct_literal) {
                 go_to_next = false;
                 break;
             }
-            case NODE_STORE_VARIABLE:
+            case NODE_LITERAL:
                 break;
             default:
                 unreachable(NODE_FMT"\n", node_print(member));
@@ -265,11 +265,12 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
     }
 
     if (is_for_struct_literal_member) {
-        Node_store_variable* store = node_unwrap_store_variable(node_new(lhs->pos, NODE_STORE_VARIABLE));
-        store->name = get_node_name(lhs);
-        nodes_remove(rhs, true);
-        nodes_append_child(node_wrap(store), rhs);
-        nodes_insert_before(node_to_insert_before, node_wrap(store));
+        unreachable("");
+        //Node_store_variable* store = node_unwrap_store_variable(node_new(lhs->pos, NODE_STORE_VARIABLE));
+        //store->name = get_node_name(lhs);
+        //nodes_remove(rhs, true);
+        //nodes_append_child(node_wrap(store), rhs);
+        //nodes_insert_before(node_to_insert_before, node_wrap(store));
     } else if (lhs->type == NODE_STRUCT_MEMBER_SYM_TYPED) {
         if (rhs->type == NODE_STRUCT_LITERAL) {
             todo();

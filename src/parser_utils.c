@@ -6,6 +6,8 @@
 #include "parser_utils.h"
 #include "error_msg.h"
 
+static void set_literal_lang_type(Node_literal* literal, TOKEN_TYPE token_type);
+
 Str_view literal_name_new(void) {
     static String_vec literal_strings = {0};
     static size_t count = 0;
@@ -112,7 +114,7 @@ Node_literal* literal_new(Str_view value, TOKEN_TYPE token_type, Pos pos) {
     Node_literal* literal = node_unwrap_literal(node_new(pos, NODE_LITERAL));
     literal->name = literal_name_new();
     literal->str_data = value;
-    literal->token_type = token_type;
+    set_literal_lang_type(literal, token_type);
     return literal;
 }
 
@@ -164,18 +166,7 @@ uint64_t sizeof_item(const Node* item) {
 }
 
 uint64_t sizeof_struct_literal(const Node_struct_literal* struct_literal) {
-    uint64_t required_alignment = 8; // TODO: do not hardcode this
-
-    uint64_t total = 0;
-    nodes_foreach_child(child, struct_literal) {
-        const Node* member = nodes_single_child_const(child);
-        uint64_t sizeof_curr_item = sizeof_item(member);
-        if (total%required_alignment + sizeof_curr_item > required_alignment) {
-            total += required_alignment - total%required_alignment;
-        }
-        total += sizeof_curr_item;
-    }
-    return total;
+    return sizeof_struct_definition(get_struct_definition_const(node_wrap(struct_literal)));
 }
 
 uint64_t sizeof_struct_definition(const Node_struct_def* struct_def) {
@@ -283,14 +274,14 @@ bool try_get_struct_definition(Node_struct_def** struct_def, Node* node) {
     }
 }
 
-static bool try_get_literal_lang_type(Lang_type* result, const Node_literal* literal) {
-    switch (literal->token_type) {
+static void set_literal_lang_type(Node_literal* literal, TOKEN_TYPE token_type) {
+    switch (token_type) {
         case TOKEN_STRING_LITERAL:
-            *result = lang_type_from_cstr("ptr", 0);
-            return true;
+            literal->lang_type = lang_type_from_cstr("ptr", 0);
+            break;
         case TOKEN_NUM_LITERAL:
-            *result = lang_type_from_cstr("i32", 0);
-            return true;
+            literal->lang_type = lang_type_from_cstr("i32", 0);
+            break;
         default:
             unreachable(NODE_FMT, node_print(literal));
     }
@@ -326,9 +317,7 @@ bool try_set_operator_lang_type(Node_operator* operator) {
 bool try_set_operator_operand_lang_type(Lang_type* result, Node* operand) {
     switch (operand->type) {
         case NODE_LITERAL: {
-            if (!try_get_literal_lang_type(result, node_unwrap_literal(operand))) {
-                todo();
-            }
+            *result = node_unwrap_literal(operand)->lang_type;
             return true;
         }
         case NODE_OPERATOR:
@@ -371,29 +360,36 @@ void set_struct_literal_assignment_types(Node* lhs, Node_struct_literal* struct_
     struct_literal->lang_type = lang_type;
     size_t idx = 0;
     nodes_foreach_child(memb_sym_def_, struct_def) {
+        if (memb_sym_def_->type == NODE_LITERAL) {
+            break;
+        }
+
         Node_variable_def* memb_sym_def = node_unwrap_variable_def(memb_sym_def_);
         Node_assignment* assign_memb_sym = node_unwrap_assignment(nodes_get_child(node_wrap(struct_literal), idx));
-        Node* memb_sym = nodes_get_child(node_wrap(assign_memb_sym), 0);
-        Node* assign_memb_sym_rhs = nodes_get_child(node_wrap(assign_memb_sym), 1);
-        if (assign_memb_sym_rhs->type != NODE_LITERAL) {
-            todo();
-        }
-        Node_symbol_untyped temp = *node_unwrap_symbol_untyped(memb_sym);
-        memb_sym->type = NODE_SYMBOL_TYPED;
-        node_unwrap_symbol_typed(memb_sym)->name = temp.name;
-        try(try_get_literal_lang_type(&node_unwrap_symbol_typed(memb_sym)->lang_type, node_unwrap_literal(assign_memb_sym_rhs)));
-        if (!str_view_is_equal(memb_sym_def->name, get_node_name(memb_sym))) {
-            node_printf(memb_sym);
+        Node_symbol_untyped* memb_sym_untyped = node_unwrap_symbol_untyped(nodes_get_child(node_wrap(assign_memb_sym), 0));
+        Node_literal* assign_memb_sym_rhs = node_unwrap_literal(nodes_get_child(node_wrap(assign_memb_sym), 1));
+        if (!str_view_is_equal(memb_sym_def->name, memb_sym_untyped->name)) {
             todo();
             msg_invalid_struct_member_assignment_in_literal(
                 lhs_var_def,
                 memb_sym_def,
-                memb_sym
+                memb_sym_untyped
             );
         }
 
+        nodes_remove(node_wrap(assign_memb_sym_rhs), false);
+        nodes_append_child(node_wrap(struct_literal), node_wrap(assign_memb_sym_rhs));
+
         idx++;
     }
+
+    while (nodes_count_children(node_wrap(struct_literal)) > 0) {
+        if (nodes_get_child(node_wrap(struct_literal), 0)->type == NODE_LITERAL) {
+            break;
+        }
+        nodes_remove(nodes_get_child(node_wrap(struct_literal), 0), true);
+    }
+    log_tree(LOG_DEBUG, node_wrap(struct_literal));
 
     assert(struct_literal->lang_type.str.count > 0);
 }
@@ -435,12 +431,7 @@ bool set_assignment_operand_types(Node_assignment* assignment) {
                 break;
             }
 
-            Lang_type rhs_lang_type;
-            if (!try_get_literal_lang_type(&rhs_lang_type, node_unwrap_literal(rhs))) {
-                msg_invalid_assignment_to_literal(node_unwrap_symbol_typed(lhs), node_unwrap_literal(rhs));
-                are_compatible = false;
-            }
-            if (!lang_type_is_equal(get_lang_type(lhs), rhs_lang_type)) {
+            if (!lang_type_is_equal(get_lang_type(lhs), node_unwrap_literal(rhs)->lang_type)) {
                 msg_invalid_assignment_to_literal(node_unwrap_symbol_typed(lhs), node_unwrap_literal(rhs));
                 are_compatible = false;
             }
@@ -604,4 +595,3 @@ void set_return_statement_types(Node* rtn_statement) {
             unreachable(NODE_FMT"\n", node_print(child));
     }
 }
-

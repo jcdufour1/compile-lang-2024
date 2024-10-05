@@ -72,12 +72,12 @@ void msg_invalid_struct_member(const Node* node) {
 void msg_invalid_struct_member_assignment_in_literal(
     const Node_variable_def* struct_var_def,
     const Node_variable_def* memb_sym_def,
-    const Node* memb_sym
+    const Node_symbol_untyped* memb_sym
 ) {
     msg(
-        LOG_ERROR, memb_sym->pos,
+        LOG_ERROR, node_wrap(memb_sym)->pos,
         "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
-        str_view_print(memb_sym_def->name), str_view_print(get_node_name(memb_sym))
+        str_view_print(memb_sym_def->name), str_view_print(memb_sym->name)
     );
     msg(
         LOG_NOTE, node_wrap(struct_var_def)->pos,

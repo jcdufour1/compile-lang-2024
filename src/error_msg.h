@@ -14,7 +14,7 @@ void msg_undefined_function(const Node_function_call* fun_call);
 void msg_invalid_struct_member_assignment_in_literal(
     const Node_variable_def* struct_var_def,
     const Node_variable_def* memb_sym_def,
-    const Node* memb_sym
+    const Node_symbol_untyped* memb_sym
 );
 
 void meg_struct_assigned_to_invalid_literal(const Node* lhs, const Node* rhs);

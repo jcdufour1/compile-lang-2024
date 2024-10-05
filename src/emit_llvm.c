@@ -371,7 +371,7 @@ static void emit_return_statement(String* output, const Node_return_statement* f
     switch (sym_to_return->type) {
         case NODE_LITERAL: {
             const Node_literal* literal = node_unwrap_literal_const(sym_to_return);
-            if (literal->token_type != TOKEN_NUM_LITERAL) {
+            if (!lang_type_is_equal(literal->lang_type, lang_type_from_cstr("i32", 0))) {
                 todo();
             }
             string_extend_cstr(&a_main, output, "    ret ");
@@ -563,22 +563,20 @@ static void emit_symbol(String* output, const Symbol_table_node node) {
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_struct_literal(String* output, const Node_struct_literal* literal) {
-    assert(literal->lang_type.str.count > 0);
+static void emit_struct_literal(String* output, const Node_struct_literal* struct_literal) {
+    assert(struct_literal->lang_type.str.count > 0);
     string_extend_cstr(&a_main, output, "@__const.main.");
-    string_extend_strv(&a_main, output, literal->name);
+    string_extend_strv(&a_main, output, struct_literal->name);
     string_extend_cstr(&a_main, output, " = private unnamed_addr constant %struct.");
-    extend_lang_type_to_string(&a_main, output, literal->lang_type, false);
+    extend_lang_type_to_string(&a_main, output, struct_literal->lang_type, false);
     string_extend_cstr(&a_main, output, " {");
 
     size_t is_first = true;
-    nodes_foreach_child(member_store, literal) {
+    nodes_foreach_child(memb_literal, struct_literal) {
         if (!is_first) {
             string_append(&a_main, output, ',');
         }
-        assert(member_store->type == NODE_STORE_VARIABLE);
-        const Node* member = nodes_single_child_const(member_store);
-        extend_literal_decl(output, member, false);
+        extend_literal_decl(output, memb_literal, false);
         is_first = false;
     }
 
