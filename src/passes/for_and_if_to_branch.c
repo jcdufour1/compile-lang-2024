@@ -4,14 +4,14 @@
 
 static Node_label* label_new(Str_view label_name, Pos pos) {
     Node_label* label = node_unwrap_label(node_new(pos, NODE_LABEL));
-    node_wrap(label)->name = label_name;
+    label->name = label_name;
     try(sym_tbl_add(node_wrap(label)));
     return label;
 }
 
 static Node_goto* goto_new(Str_view name_label_to_jmp_to, Pos pos) {
     Node_goto* lang_goto = node_unwrap_goto(node_new(pos, NODE_GOTO));
-    node_wrap(lang_goto)->name = name_label_to_jmp_to;
+    lang_goto->name = name_label_to_jmp_to;
     return lang_goto;
 }
 
@@ -53,7 +53,7 @@ static void change_break_to_goto(Node_block* block, const Node_label* label_to_g
             case NODE_VARIABLE_DEFINITION:
                 break;
             case NODE_BREAK: {
-                Node_goto* new_goto = goto_new(node_wrap(label_to_goto)->name, node_wrap(label_to_goto)->pos);
+                Node_goto* new_goto = goto_new(label_to_goto->name, node_wrap(label_to_goto)->pos);
                 nodes_insert_before(curr_node, node_wrap(new_goto));
                 nodes_remove(curr_node, false);
                 curr_node = node_wrap(new_goto);
@@ -80,16 +80,16 @@ static void for_loop_to_branch(Node_for_loop* for_loop) {
     assert(!node_wrap(new_branch_block)->parent);
 
     Node_symbol_untyped* symbol_lhs_assign;
-    Node* regular_var_def;
+    Node_variable_def* regular_var_def;
     {
         Node_for_variable_def* old_for_var_def = node_unwrap_for_variable_def(nodes_get_child_of_type(node_wrap(for_loop), NODE_FOR_VARIABLE_DEF));
-        regular_var_def = nodes_get_child_of_type(node_wrap(old_for_var_def), NODE_VARIABLE_DEFINITION);
-        nodes_remove(regular_var_def, false);
-        symbol_lhs_assign = symbol_new(regular_var_def->name, regular_var_def->pos);
+        regular_var_def = node_unwrap_variable_def(nodes_get_child_of_type(node_wrap(old_for_var_def), NODE_VARIABLE_DEFINITION));
+        nodes_remove(node_wrap(regular_var_def), false);
+        symbol_lhs_assign = symbol_new(regular_var_def->name, node_wrap(regular_var_def)->pos);
         nodes_remove_siblings(node_wrap(old_for_var_def));
     }
 
-    Node_assignment* assignment_to_inc_cond_var = get_for_loop_cond_var_assign(node_wrap(regular_var_def)->name, node_wrap(lhs)->pos);
+    Node_assignment* assignment_to_inc_cond_var = get_for_loop_cond_var_assign(regular_var_def->name, node_wrap(lhs)->pos);
     assert(!node_wrap(new_branch_block)->parent);
     nodes_remove(node_wrap(lhs), true);
     Node* lower_bound_child = nodes_single_child(node_wrap(lhs));
@@ -98,27 +98,27 @@ static void for_loop_to_branch(Node_for_loop* for_loop) {
     nodes_remove(node_wrap(for_block), true);
 
     Node_operator* new_operation = operation_new(
-        node_wrap(symbol_new(node_wrap(symbol_lhs_assign)->name, node_wrap(symbol_lhs_assign)->pos)), rhs_actual, TOKEN_LESS_THAN
+        node_wrap(symbol_new(symbol_lhs_assign->name, node_wrap(symbol_lhs_assign)->pos)), rhs_actual, TOKEN_LESS_THAN
     );
 
     // initial assignment
     Node_assignment* new_var_assign = assignment_new(node_wrap(symbol_lhs_assign), node_wrap(lower_bound_child));
 
     Node_label* check_cond_label = label_new(literal_name_new(), node_wrap(for_loop)->pos);
-    Node_goto* jmp_to_check_cond_label = goto_new(node_wrap(check_cond_label)->name, node_wrap(for_loop)->pos);
+    Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label->name, node_wrap(for_loop)->pos);
     Node_label* after_check_label = label_new(literal_name_new(), node_wrap(for_loop)->pos);
     Node_label* after_for_loop_label = label_new(literal_name_new(), node_wrap(for_loop)->pos);
     Node_operator_rtn_val_sym* oper_rtn_sym = node_unwrap_operator_rtn_val_sym(node_new(node_wrap(new_operation)->pos, NODE_OPERATOR_RETURN_VALUE_SYM));
     oper_rtn_sym->node_src = node_wrap(new_operation);
     Node_cond_goto* check_cond_jmp = conditional_goto_new(
         oper_rtn_sym,
-        node_wrap(after_check_label)->name, 
-        node_wrap(after_for_loop_label)->name
+        after_check_label->name, 
+        after_for_loop_label->name
     );
 
     change_break_to_goto(for_block, after_for_loop_label);
 
-    nodes_append_child(node_wrap(new_branch_block), regular_var_def);
+    nodes_append_child(node_wrap(new_branch_block), node_wrap(regular_var_def));
     nodes_append_child(node_wrap(new_branch_block), node_wrap(new_var_assign));
     nodes_append_child(node_wrap(new_branch_block), node_wrap(jmp_to_check_cond_label));
     nodes_append_child(node_wrap(new_branch_block), node_wrap(check_cond_label));
@@ -127,7 +127,7 @@ static void for_loop_to_branch(Node_for_loop* for_loop) {
     nodes_append_child(node_wrap(new_branch_block), node_wrap(after_check_label));
     nodes_extend_children(node_wrap(new_branch_block), node_wrap(for_block)->left_child);
     nodes_append_child(node_wrap(new_branch_block), node_wrap(assignment_to_inc_cond_var));
-    nodes_append_child(node_wrap(new_branch_block), node_wrap(goto_new(node_wrap(check_cond_label)->name, node_wrap(for_loop)->pos)));
+    nodes_append_child(node_wrap(new_branch_block), node_wrap(goto_new(check_cond_label->name, node_wrap(for_loop)->pos)));
     nodes_append_child(node_wrap(new_branch_block), node_wrap(after_for_loop_label));
 
     nodes_insert_before(node_wrap(for_loop), node_wrap(new_branch_block));
@@ -147,9 +147,9 @@ static void if_statement_to_branch(Node_if* if_statement) {
     Node_label* if_true = label_new(literal_name_new(), node_wrap(block)->pos);
     Node_label* if_after = label_new(literal_name_new(), node_wrap(operation)->pos);
 
-    Node_cond_goto* check_cond_jmp = conditional_goto_new(oper_rtn_sym, node_wrap(if_true)->name, node_wrap(if_after)->name);
+    Node_cond_goto* check_cond_jmp = conditional_goto_new(oper_rtn_sym, if_true->name, if_after->name);
 
-    Node_goto* jmp_to_if_after = goto_new(node_wrap(if_after)->name, node_wrap(block)->pos);
+    Node_goto* jmp_to_if_after = goto_new(if_after->name, node_wrap(block)->pos);
 
     Node_block* new_branch_block = node_unwrap_block(node_new(node_wrap(block)->pos, NODE_BLOCK));
 

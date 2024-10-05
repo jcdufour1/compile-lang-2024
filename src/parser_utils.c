@@ -26,7 +26,7 @@ Str_view literal_name_new(void) {
 
 Node* get_storage_location(Node* var_call) {
     Node* sym_def_;
-    if (!sym_tbl_lookup(&sym_def_, var_call->name)) {
+    if (!sym_tbl_lookup(&sym_def_, get_node_name(var_call))) {
         unreachable("symbol definition for node not found: "NODE_FMT, node_print(var_call));
     }
     Node_variable_def* sym_def = node_unwrap_variable_def(sym_def_);
@@ -42,10 +42,10 @@ Llvm_id get_store_dest_id(const Node* var_call) {
     return llvm_id;
 }
 
-const Node_variable_def* get_normal_symbol_def_from_alloca(const Node* alloca) {
+const Node_variable_def* get_normal_symbol_def_from_alloca(const Node* node) {
     Node* sym_def;
-    if (!sym_tbl_lookup(&sym_def, alloca->name)) {
-        unreachable("alloca call to undefined variable:"NODE_FMT"\n", node_print(alloca));
+    if (!sym_tbl_lookup(&sym_def, get_node_name(node))) {
+        unreachable("node call to undefined variable:"NODE_FMT"\n", node_print(node));
     }
     return node_unwrap_variable_def(sym_def);
 }
@@ -79,10 +79,10 @@ const Node_variable_def* get_symbol_def_from_alloca(const Node* alloca) {
 }
 
 Llvm_id get_matching_label_id(const Node* symbol_call) {
-    assert(symbol_call->name.count > 0);
+    assert(get_node_name(symbol_call).count > 0);
 
     Node* label_;
-    if (!sym_tbl_lookup(&label_, symbol_call->name)) {
+    if (!sym_tbl_lookup(&label_, get_node_name(symbol_call))) {
         unreachable("call to undefined label");
     }
     Node_label* label = node_unwrap_label(label_);
@@ -110,7 +110,7 @@ Node_assignment* assignment_new(Node* lhs, Node* rhs) {
 
 Node_literal* literal_new(Str_view value, TOKEN_TYPE token_type, Pos pos) {
     Node_literal* literal = node_unwrap_literal(node_new(pos, NODE_LITERAL));
-    node_wrap(literal)->name = literal_name_new();
+    literal->name = literal_name_new();
     literal->str_data = value;
     literal->token_type = token_type;
     return literal;
@@ -120,7 +120,7 @@ Node_symbol_untyped* symbol_new(Str_view symbol_name, Pos pos) {
     assert(symbol_name.count > 0);
 
     Node_symbol_untyped* symbol = node_unwrap_symbol_untyped(node_new(pos, NODE_SYMBOL_UNTYPED));
-    node_wrap(symbol)->name = symbol_name;
+    symbol->name = symbol_name;
     return symbol;
 }
 
@@ -224,8 +224,9 @@ bool is_corresponding_to_a_struct(const Node* node) {
             // fallthrough
         case NODE_FUNCTION_PARAM_SYM:
             // fallthrough
-            assert(node->name.count > 0);
-            if (!sym_tbl_lookup(&var_def, node->name)) {
+            node_printf(node);
+            assert(get_node_name(node).count > 0);
+            if (!sym_tbl_lookup(&var_def, get_node_name(node))) {
                 return false;
             }
             if (!sym_tbl_lookup(&struct_def, get_lang_type(var_def).str)) {
@@ -263,8 +264,8 @@ bool try_get_struct_definition(Node_struct_def** struct_def, Node* node) {
             // fallthrough
         case NODE_STRUCT_MEMBER_SYM_TYPED: {
             Node* var_def;
-            assert(node->name.count > 0);
-            if (!sym_tbl_lookup(&var_def, node->name)) {
+            assert(get_node_name(node).count > 0);
+            if (!sym_tbl_lookup(&var_def, get_node_name(node))) {
                 return false;
             }
             assert(get_lang_type(var_def).str.count > 0);
@@ -298,12 +299,14 @@ static bool try_get_literal_lang_type(Lang_type* result, const Node_literal* lit
 // set symbol lang_type, and report error if symbol is undefined
 void set_symbol_type(Node_symbol_untyped* sym_untyped) {
     Node* sym_def;
-    if (!sym_tbl_lookup(&sym_def, node_wrap(sym_untyped)->name)) {
+    if (!sym_tbl_lookup(&sym_def, sym_untyped->name)) {
         msg_undefined_symbol(node_wrap(sym_untyped));
         return;
     }
+    Node_symbol_untyped temp = *sym_untyped;
     node_wrap(sym_untyped)->type = NODE_SYMBOL_TYPED;
     Node_symbol_typed* sym_typed = node_unwrap_symbol_typed(node_wrap(sym_untyped));
+    sym_typed->name = temp.name;
     sym_typed->lang_type = node_unwrap_variable_def_const(sym_def)->lang_type;
 }
 
@@ -360,11 +363,11 @@ void set_struct_literal_assignment_types(Node* lhs, Node_struct_literal* struct_
         todo(); // non_struct assigned struct literal
     }
     Node* lhs_var_def_;
-    try(sym_tbl_lookup(&lhs_var_def_, lhs->name));
+    try(sym_tbl_lookup(&lhs_var_def_, get_node_name(lhs)));
     Node_variable_def* lhs_var_def = node_unwrap_variable_def(lhs_var_def_);
     Node* struct_def;
     try(sym_tbl_lookup(&struct_def, lhs_var_def->lang_type.str));
-    Lang_type lang_type = {.str = struct_def->name, .pointer_depth = 0};
+    Lang_type lang_type = {.str = node_unwrap_struct_def(struct_def)->name, .pointer_depth = 0};
     struct_literal->lang_type = lang_type;
     size_t idx = 0;
     nodes_foreach_child(memb_sym_def_, struct_def) {
@@ -375,9 +378,13 @@ void set_struct_literal_assignment_types(Node* lhs, Node_struct_literal* struct_
         if (assign_memb_sym_rhs->type != NODE_LITERAL) {
             todo();
         }
+        Node_symbol_untyped temp = *node_unwrap_symbol_untyped(memb_sym);
         memb_sym->type = NODE_SYMBOL_TYPED;
+        node_unwrap_symbol_typed(memb_sym)->name = temp.name;
         try(try_get_literal_lang_type(&node_unwrap_symbol_typed(memb_sym)->lang_type, node_unwrap_literal(assign_memb_sym_rhs)));
-        if (!str_view_is_equal(node_wrap(memb_sym_def)->name, memb_sym->name)) {
+        if (!str_view_is_equal(memb_sym_def->name, get_node_name(memb_sym))) {
+            node_printf(memb_sym);
+            todo();
             msg_invalid_struct_member_assignment_in_literal(
                 lhs_var_def,
                 memb_sym_def,
@@ -430,11 +437,11 @@ bool set_assignment_operand_types(Node_assignment* assignment) {
 
             Lang_type rhs_lang_type;
             if (!try_get_literal_lang_type(&rhs_lang_type, node_unwrap_literal(rhs))) {
-                msg_invalid_assignment_to_literal(lhs, rhs);
+                msg_invalid_assignment_to_literal(node_unwrap_symbol_typed(lhs), node_unwrap_literal(rhs));
                 are_compatible = false;
             }
             if (!lang_type_is_equal(get_lang_type(lhs), rhs_lang_type)) {
-                msg_invalid_assignment_to_literal(lhs, rhs);
+                msg_invalid_assignment_to_literal(node_unwrap_symbol_typed(lhs), node_unwrap_literal(rhs));
                 are_compatible = false;
             }
             break;
@@ -446,9 +453,9 @@ bool set_assignment_operand_types(Node_assignment* assignment) {
         case NODE_SYMBOL_UNTYPED: {
             set_symbol_type(node_unwrap_symbol_untyped(rhs));
             Node* lhs_var_def;
-            try(sym_tbl_lookup(&lhs_var_def, lhs->name));
+            try(sym_tbl_lookup(&lhs_var_def, get_node_name(lhs)));
             Node* rhs_var_def;
-            try(sym_tbl_lookup(&rhs_var_def, rhs->name));
+            try(sym_tbl_lookup(&rhs_var_def, get_node_name(rhs)));
             if (!lang_type_is_equal(node_unwrap_variable_def(lhs_var_def)->lang_type, node_unwrap_variable_def(rhs_var_def)->lang_type)) {
                 todo();
             }
@@ -462,7 +469,7 @@ bool set_assignment_operand_types(Node_assignment* assignment) {
             }
             Node_operator* rhs_oper = node_unwrap_operator(rhs);
             Node* lhs_var_def;
-            try(sym_tbl_lookup(&lhs_var_def, lhs->name));
+            try(sym_tbl_lookup(&lhs_var_def, get_node_name(lhs)));
             if (!lang_type_is_equal(rhs_oper->lang_type, node_unwrap_variable_def(lhs_var_def)->lang_type)) {
                 msg_invalid_assignment_to_operation(lhs, rhs_oper);
                 are_compatible = false;
@@ -482,7 +489,7 @@ bool set_assignment_operand_types(Node_assignment* assignment) {
 
 void set_function_call_types(Node_function_call* fun_call) {
     Node* fun_def;
-    if (!sym_tbl_lookup(&fun_def, node_wrap(fun_call)->name)) {
+    if (!sym_tbl_lookup(&fun_def, fun_call->name)) {
         msg_undefined_function(fun_call);
         return;
     }
@@ -529,17 +536,20 @@ void set_struct_member_symbol_types(Node_struct_member_sym_untyped* struct_memb_
     Node_variable_def* curr_memb_def = NULL;
     Node* struct_def_;
     Node* struct_var;
-    if (!sym_tbl_lookup(&struct_var, node_wrap(struct_memb_sym_untyped)->name)) {
+    if (!sym_tbl_lookup(&struct_var, struct_memb_sym_untyped->name)) {
         msg_undefined_symbol(node_wrap(struct_memb_sym_untyped));
         return;
     }
     if (!sym_tbl_lookup(&struct_def_, node_unwrap_variable_def(struct_var)->lang_type.str)) {
         todo(); // this should possibly never happen
     }
+    Node_struct_member_sym_untyped temp = *struct_memb_sym_untyped;
     Node_struct_def* struct_def = node_unwrap_struct_def(struct_def_);
     node_wrap(struct_memb_sym_untyped)->type = NODE_STRUCT_MEMBER_SYM_TYPED;
     Node_struct_member_sym_typed* struct_memb_sym_typed = node_unwrap_struct_member_sym_typed(node_wrap(struct_memb_sym_untyped));
-    struct_memb_sym_typed->lang_type.str = node_wrap(struct_def)->name;
+    struct_memb_sym_typed->name = temp.name;
+    assert(struct_memb_sym_typed->name.count > 0);
+    struct_memb_sym_typed->lang_type.str = struct_def->name;
     struct_memb_sym_typed->lang_type.pointer_depth = 0;
     bool is_struct = true;
     Node_struct_def* prev_struct_def = struct_def;
@@ -549,6 +559,8 @@ void set_struct_member_symbol_types(Node_struct_member_sym_untyped* struct_memb_
             todo();
         }
         if (!try_get_member_def(&curr_memb_def, struct_def, node_wrap(memb_sym_untyped))) {
+            node_printf(memb_sym_untyped);
+            node_printf(curr_memb_def);
             msg_invalid_struct_member(node_wrap(memb_sym_untyped));
             return;
         }
@@ -556,8 +568,10 @@ void set_struct_member_symbol_types(Node_struct_member_sym_untyped* struct_memb_
             is_struct = false;
         }
 
+        Node_struct_member_sym_piece_untyped temp_piece = *memb_sym_untyped;
         node_wrap(memb_sym_untyped)->type = NODE_STRUCT_MEMBER_SYM_PIECE_TYPED;
         Node_struct_member_sym_piece_typed* memb_sym_typed = node_unwrap_struct_member_sym_piece_typed(node_wrap(memb_sym_untyped));
+        memb_sym_typed->name = temp_piece.name;
         memb_sym_typed->lang_type = curr_memb_def->lang_type;
         //node_printf(struct_def);
         memb_sym_typed->struct_index = get_member_index(prev_struct_def, memb_sym_typed);

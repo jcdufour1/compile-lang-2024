@@ -53,7 +53,7 @@ static inline bool is_struct_symbol(const Node* symbol) {
     assert(symbol->type == NODE_SYMBOL_TYPED || symbol->type == NODE_STRUCT_MEMBER_SYM_TYPED);
 
     Node* var_def;
-    if (!sym_tbl_lookup(&var_def, symbol->name)) {
+    if (!sym_tbl_lookup(&var_def, get_node_name(symbol))) {
         unreachable("");
     }
     return is_struct_variable_definition(node_unwrap_variable_def(var_def));
@@ -64,7 +64,7 @@ bool is_corresponding_to_a_struct(const Node* node);
 static inline size_t get_member_index(const Node_struct_def* struct_def, const Node_struct_member_sym_piece_typed* member_symbol) {
     size_t idx = 0;
     nodes_foreach_child(curr_member, struct_def) {
-        if (str_view_is_equal(node_wrap(curr_member)->name, node_wrap(member_symbol)->name)) {
+        if (str_view_is_equal(get_node_name(node_wrap(curr_member)), get_node_name(node_wrap(member_symbol)))) {
             return idx;
         }
         idx++;
@@ -79,7 +79,7 @@ static inline bool try_get_member_def(Node_variable_def** member_def, const Node
     );
 
     nodes_foreach_child(curr_member, struct_def) {
-        if (str_view_is_equal(curr_member->name, member_symbol->name)) {
+        if (str_view_is_equal(get_node_name(curr_member), get_node_name(member_symbol))) {
             assert(get_lang_type(curr_member).str.count > 0);
             *member_def = (Node_variable_def*)curr_member;
             return true;

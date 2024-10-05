@@ -66,6 +66,7 @@ typedef struct {
 
 typedef struct {
     Llvm_id llvm_id;
+    Str_view name;
 } Node_symbol_untyped;
 
 typedef struct {
@@ -73,10 +74,12 @@ typedef struct {
     Str_view str_data;
     struct Node_* node_src;
     struct Node_* node_dest;
+    Str_view name;
 } Node_symbol_typed;
 
 typedef struct {
     Llvm_id llvm_id;
+    Str_view name;
 } Node_label;
 
 typedef struct {
@@ -85,15 +88,18 @@ typedef struct {
     size_t struct_index;
     struct Node_* node_src;
     struct Node_* node_dest;
+    Str_view name;
 } Node_load_element_ptr;
 
 typedef struct {
     Str_view str_data; // eg. "hello" in "let string1: String = "hello""
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     TOKEN_TYPE token_type;
+    Str_view name;
 } Node_literal;
 
 typedef struct {
+    Str_view name;
     Llvm_id llvm_id;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 } Node_function_call;
@@ -114,6 +120,7 @@ typedef struct {
 } Node_operator;
 
 typedef struct {
+    Str_view name;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Llvm_id llvm_id;
 } Node_struct_literal;
@@ -124,6 +131,7 @@ typedef struct {
     Str_view str_data; // eg. "hello" in "let string1: String = "hello""
     Llvm_id llvm_id;
     struct Node_* storage_location;
+    Str_view name;
 } Node_variable_def;
 
 typedef struct {
@@ -131,7 +139,7 @@ typedef struct {
 } Node_for_variable_def;
 
 typedef struct {
-    int a;
+    Str_view name;
 } Node_struct_member_sym_piece_untyped;
 
 typedef struct {
@@ -139,11 +147,13 @@ typedef struct {
     size_t struct_index;
     Llvm_id llvm_id;
     struct Node_* node_src;
+    Str_view name;
 } Node_struct_member_sym_piece_typed;
 
 typedef struct {
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Llvm_id llvm_id;
+    Str_view name;
 } Node_struct_def;
 
 typedef struct {
@@ -155,11 +165,12 @@ typedef struct {
 } Node_struct_member_def;
 
 typedef struct {
-    int a;
+    Str_view name;
 } Node_function_declaration;
 
 typedef struct {
     Llvm_id llvm_id;
+    Str_view name;
 } Node_function_definition;
 
 typedef struct {
@@ -199,6 +210,7 @@ typedef struct {
 } Node_block;
 
 typedef struct {
+    Str_view name;
     Llvm_id llvm_id;
     Lang_type lang_type;
 } Node_struct_member_sym_untyped;
@@ -207,11 +219,13 @@ typedef struct {
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     struct Node_* node_src;
     Llvm_id llvm_id;
+    Str_view name;
 } Node_struct_member_sym_typed;
 
 typedef struct {
     Llvm_id llvm_id;
     Lang_type lang_type;
+    Str_view name;
 } Node_alloca;
 
 typedef struct {
@@ -219,6 +233,7 @@ typedef struct {
     struct Node_* node_src;
     Llvm_id llvm_id;
     Lang_type lang_type;
+    Str_view name;
 } Node_operator_rtn_val_sym;
 
 typedef struct {
@@ -248,9 +263,11 @@ typedef struct {
     struct Node_* node_src;
     Llvm_id llvm_id;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
+    Str_view name;
 } Node_llvm_store_literal;
 
 typedef struct {
+    Str_view name;
     Llvm_id llvm_id;
 } Node_goto;
 
@@ -266,6 +283,7 @@ typedef struct {
 typedef struct {
     Llvm_id llvm_id;
     Lang_type lang_type;
+    Str_view name;
 } Node_store_variable;
 
 typedef struct {
@@ -273,11 +291,13 @@ typedef struct {
     Lang_type lang_type;
     struct Node_* node_src;
     struct Node_* node_dest;
+    Str_view name;
 } Node_llvm_store_struct_literal;
 
 typedef struct {
     struct Node_* node_src;
     Lang_type lang_type;
+    Str_view name;
 } Node_function_param_sym;
 
 typedef union {
@@ -332,7 +352,7 @@ typedef struct Node_ {
     Node_as as;
     Pos pos;
     NODE_TYPE type;
-    Str_view name; // eg. "string1" in "let string1: String = "hello""
+    //Str_view name; // eg. "string1" in "let string1: String = "hello""
 
     struct Node_* next;
     struct Node_* prev;

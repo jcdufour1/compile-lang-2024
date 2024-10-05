@@ -4,6 +4,8 @@
 #include "node_ptr_vec.h"
 #include "node_utils.h"
 
+static void extend_node_text(Arena* arena, String* string, const Node* node, bool do_recursion);
+
 static const char* NODE_LITERAL_DESCRIPTION = "literal";
 static const char* NODE_FUNCTION_CALL_DESCRIPTION = "fn_call";
 static const char* NODE_FUNCTION_DEFINITION_DESCRIPTION = "fn_def";
@@ -226,6 +228,20 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
     }
 }
 
+static void print_thing(Arena* arena, String* string, const Node* node, bool do_recursion) {
+    string_extend_cstr(arena, string, "[");
+    if (get_node_src_const(node) && do_recursion) {
+        string_extend_cstr(arena, string, "node_src:");
+        extend_node_text(arena, string, get_node_src_const(node), false);
+    }
+    string_extend_cstr(arena, string, " ");
+    if (get_node_dest_const(node) && do_recursion) {
+        string_extend_cstr(arena, string, "node_dest:");
+        extend_node_text(arena, string, get_node_dest_const(node), false);
+    }
+    string_extend_cstr(arena, string, "]");
+}
+
 static void extend_node_text(Arena* arena, String* string, const Node* node, bool do_recursion) {
     string_extend_strv(arena, string, node_type_get_strv(node->type));
 
@@ -238,14 +254,15 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             // fallthrough
         case NODE_GOTO:
             // fallthrough
+        case NODE_LABEL:
+            string_extend_strv_in_par(arena, string, get_node_name(node));
+            break;
         case NODE_COND_GOTO:
             // fallthrough
-        case NODE_LABEL:
-            string_extend_strv_in_par(arena, string, node->name);
             break;
         case NODE_LITERAL:
             string_extend_strv_in_gtlt(arena, string, token_type_to_str_view(node_unwrap_literal_const(node)->token_type));
-            string_extend_strv(arena, string, node->name);
+            string_extend_strv(arena, string, get_node_name(node));
             string_extend_strv_in_par(arena, string, node_unwrap_literal_const(node)->str_data);
             break;
         case NODE_SYMBOL_UNTYPED:
@@ -259,7 +276,7 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
         case NODE_STRUCT_DEFINITION:
             // fallthrough
         case NODE_FUNCTION_CALL:
-            string_extend_strv_in_par(arena, string, node->name);
+            string_extend_strv_in_par(arena, string, get_node_name(node));
             string_extend_size_t(arena, string, get_llvm_id(node));
             break;
         case NODE_LANG_TYPE:
@@ -270,11 +287,11 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             break;
         case NODE_VARIABLE_DEFINITION:
             extend_lang_type_to_string(arena, string, node_unwrap_variable_def_const(node)->lang_type, true);
-            string_extend_strv(arena, string, node->name);
+            string_extend_strv(arena, string, get_node_name(node));
             break;
         case NODE_STRUCT_LITERAL:
             extend_lang_type_to_string(arena, string, node_unwrap_struct_literal_const(node)->lang_type, true);
-            string_extend_strv(arena, string, node->name);
+            string_extend_strv(arena, string, get_node_name(node));
             break;
         case NODE_FUNCTION_PARAMETERS:
             // fallthrough
@@ -305,38 +322,50 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
         case NODE_NO_TYPE:
             break;
         case NODE_LOAD_ANOTHER_NODE:
-            // fallthrough
-        case NODE_STORE_ANOTHER_NODE:
-            // fallthrough
-        case NODE_FUNCTION_RETURN_VALUE_SYM:
-            // fallthrough
-        case NODE_OPERATOR_RETURN_VALUE_SYM:
-            // fallthrough
-        case NODE_LLVM_STORE_LITERAL:
-            // fallthrough
-        case NODE_LLVM_STORE_STRUCT_LITERAL:
-            // fallthrough
-        case NODE_SYMBOL_TYPED:
-            // fallthrough
-        case NODE_STRUCT_MEMBER_SYM_TYPED:
-            // fallthrough
-        case NODE_STRUCT_MEMBER_SYM_PIECE_TYPED:
-            // fallthrough
-        case NODE_LOAD_STRUCT_ELEMENT_PTR:
-            // fallthrough
             extend_lang_type_to_string(arena, string, get_lang_type(node), true);
-            string_extend_strv_in_par(arena, string, node->name);
-                string_extend_cstr(arena, string, "[");
-            if (get_node_src_const(node) && do_recursion) {
-                string_extend_cstr(arena, string, "node_src:");
-                extend_node_text(arena, string, get_node_src_const(node), false);
-            }
-            string_extend_cstr(arena, string, " ");
-            if (get_node_dest_const(node) && do_recursion) {
-                string_extend_cstr(arena, string, "node_dest:");
-                extend_node_text(arena, string, get_node_dest_const(node), false);
-            }
-            string_extend_cstr(arena, string, "]");
+            print_thing(arena, string, node, do_recursion);
+            break;
+        case NODE_STORE_ANOTHER_NODE:
+            extend_lang_type_to_string(arena, string, get_lang_type(node), true);
+            print_thing(arena, string, node, do_recursion);
+            break;
+        case NODE_FUNCTION_RETURN_VALUE_SYM:
+            extend_lang_type_to_string(arena, string, get_lang_type(node), true);
+            print_thing(arena, string, node, do_recursion);
+            break;
+        case NODE_OPERATOR_RETURN_VALUE_SYM:
+            extend_lang_type_to_string(arena, string, get_lang_type(node), true);
+            print_thing(arena, string, node, do_recursion);
+            break;
+        case NODE_LLVM_STORE_LITERAL:
+            extend_lang_type_to_string(arena, string, get_lang_type(node), true);
+            string_extend_strv_in_par(arena, string, get_node_name(node));
+            print_thing(arena, string, node, do_recursion);
+            break;
+        case NODE_LLVM_STORE_STRUCT_LITERAL:
+            extend_lang_type_to_string(arena, string, get_lang_type(node), true);
+            string_extend_strv_in_par(arena, string, get_node_name(node));
+            print_thing(arena, string, node, do_recursion);
+            break;
+        case NODE_SYMBOL_TYPED:
+            extend_lang_type_to_string(arena, string, get_lang_type(node), true);
+            string_extend_strv_in_par(arena, string, get_node_name(node));
+            print_thing(arena, string, node, do_recursion);
+            break;
+        case NODE_STRUCT_MEMBER_SYM_TYPED:
+            extend_lang_type_to_string(arena, string, get_lang_type(node), true);
+            string_extend_strv_in_par(arena, string, get_node_name(node));
+            print_thing(arena, string, node, do_recursion);
+            break;
+        case NODE_STRUCT_MEMBER_SYM_PIECE_TYPED:
+            extend_lang_type_to_string(arena, string, get_lang_type(node), true);
+            string_extend_strv_in_par(arena, string, get_node_name(node));
+            print_thing(arena, string, node, do_recursion);
+            break;
+        case NODE_LOAD_STRUCT_ELEMENT_PTR:
+            extend_lang_type_to_string(arena, string, get_lang_type(node), true);
+            string_extend_strv_in_par(arena, string, get_node_name(node));
+            print_thing(arena, string, node, do_recursion);
             break;
         default:
             log(LOG_FETAL, "type: "STR_VIEW_FMT"\n", str_view_print(node_type_get_strv(node->type)));

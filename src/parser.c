@@ -148,8 +148,8 @@ static Node_function_declaration* extract_function_declaration_common(Tk_view* t
     Node_function_declaration* fun_declaration = node_unwrap_function_declaration(node_new(tk_view_front(*tokens).pos, NODE_FUNCTION_DECLARATION));
 
     Token name_token = tk_view_consume(tokens);
-    node_wrap(fun_declaration)->name = name_token.text;
-    assert(node_wrap(fun_declaration)->name.count > 0);
+    fun_declaration->name = name_token.text;
+    assert(fun_declaration->name.count > 0);
 
     if (!sym_tbl_add(node_wrap(fun_declaration))) {
         msg_redefinition_of_symbol(node_wrap(fun_declaration));
@@ -177,8 +177,10 @@ static Node_function_definition* parse_function_definition(Tk_view tokens) {
     tk_view_try_consume_symbol(NULL, &tokens, "fn");
     Node_function_declaration* fun_decl = extract_function_declaration_common(&tokens);
     try(tk_view_try_consume(NULL, &tokens, TOKEN_OPEN_CURLY_BRACE));
+    Node_function_declaration temp = *fun_decl;
     node_wrap(fun_decl)->type = NODE_FUNCTION_DEFINITION;
     Node_function_definition* function = node_unwrap_function_definition(node_wrap(fun_decl));
+    function->name = temp.name;
     nodes_append_child(node_wrap(function), node_wrap(extract_block(&tokens)));
 
     return node_unwrap_function_definition(node_wrap(function));
@@ -201,7 +203,7 @@ static Node_struct_def* extract_struct_definition(Tk_view* tokens) {
     Token name = tk_view_consume(tokens);
 
     Node_struct_def* new_struct = node_unwrap_struct_def(node_new(name.pos, NODE_STRUCT_DEFINITION));
-    node_wrap(new_struct)->name = name.text;
+    new_struct->name = name.text;
 
     try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE));
     while (tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_CLOSE_CURLY_BRACE) {
@@ -226,7 +228,7 @@ static Node_variable_def* extract_variable_declaration(Tk_view* tokens, bool req
 
     Token name_token = tk_view_consume(tokens);
     Node_variable_def* variable_def = node_unwrap_variable_def(node_new(name_token.pos, NODE_VARIABLE_DEFINITION));
-    node_wrap(variable_def)->name = name_token.text;
+    variable_def->name = name_token.text;
     try(tk_view_try_consume(NULL, tokens, TOKEN_COLON));
     variable_def->lang_type.str = tk_view_consume(tokens).text;
     while (tk_view_try_consume(NULL, tokens, TOKEN_ASTERISK)) {
@@ -317,7 +319,7 @@ static Node_literal* extract_literal(Tk_view* tokens) {
     assert(token_is_literal(token));
 
     Node_literal* new_node = node_unwrap_literal(node_new(token.pos, NODE_LITERAL));
-    node_wrap(new_node)->name = literal_name_new();
+    new_node->name = literal_name_new();
     assert(new_node->str_data.count < 1);
     new_node->str_data = token.text;
     new_node->token_type = token.type;
@@ -332,7 +334,7 @@ static Node_symbol_untyped* extract_symbol(Tk_view* tokens) {
     assert(token.type == TOKEN_SYMBOL);
 
     Node_symbol_untyped* sym_node = node_unwrap_symbol_untyped(node_new(token.pos, NODE_SYMBOL_UNTYPED));
-    node_wrap(sym_node)->name = token.text;
+    sym_node->name = token.text;
     assert(node_wrap(sym_node)->pos.line > 0);
     return sym_node;
 }
@@ -468,7 +470,7 @@ static bool extract_function_call(Node_function_call** child, Tk_view* tokens) {
     try(tk_view_try_consume(&fun_name_token, tokens, TOKEN_SYMBOL));
     try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_PAR));
     Node_function_call* function_call = node_unwrap_function_call(node_new(fun_name_token.pos, NODE_FUNCTION_CALL));
-    node_wrap(function_call)->name = fun_name_token.text;
+    function_call->name = fun_name_token.text;
 
     Node* argument;
     while (extract_function_argument(&argument, tokens)) {
@@ -609,7 +611,7 @@ static Node_struct_literal* extract_struct_literal(Tk_view* tokens) {
     Token start_token;
     try(tk_view_try_consume(&start_token, tokens, TOKEN_OPEN_CURLY_BRACE));
     Node_struct_literal* struct_literal = node_unwrap_struct_literal(node_new(start_token.pos, NODE_STRUCT_LITERAL));
-    node_wrap(struct_literal)->name = literal_name_new();
+    struct_literal->name = literal_name_new();
 
     while (tk_view_try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
         nodes_append_child(node_wrap(struct_literal), node_wrap(extract_assignment(tokens, NULL)));
@@ -624,11 +626,11 @@ static Node_struct_literal* extract_struct_literal(Tk_view* tokens) {
 static Node_struct_member_sym_untyped* extract_struct_member_call(Tk_view* tokens) {
     Token start_token = tk_view_consume(tokens);
     Node_struct_member_sym_untyped* member_call = node_unwrap_struct_member_sym_untyped(node_new(start_token.pos, NODE_STRUCT_MEMBER_SYM_UNTYPED));
-    node_wrap(member_call)->name = start_token.text;
+    member_call->name = start_token.text;
     while (tk_view_try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
         Token member_token = tk_view_consume(tokens);
         Node_struct_member_sym_piece_untyped* member = node_unwrap_struct_member_sym_piece_untyped(node_new(member_token.pos, NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED));
-        node_wrap(member)->name = member_token.text;
+        member->name = member_token.text;
         nodes_append_child(node_wrap(member_call), node_wrap(member));
     }
     return member_call;

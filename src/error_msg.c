@@ -8,28 +8,28 @@
 void msg_redefinition_of_symbol(const Node* new_sym_def) {
     msg(
         LOG_ERROR, new_sym_def->pos,
-        "redefinition of symbol "STR_VIEW_FMT"\n", str_view_print(new_sym_def->name)
+        "redefinition of symbol "STR_VIEW_FMT"\n", str_view_print(get_node_name(new_sym_def))
     );
 
     Node* original_def;
-    try(sym_tbl_lookup(&original_def, new_sym_def->name));
+    try(sym_tbl_lookup(&original_def, get_node_name(new_sym_def)));
     msg(
         LOG_NOTE, original_def->pos,
-        STR_VIEW_FMT " originally defined here\n", str_view_print(original_def->name)
+        STR_VIEW_FMT " originally defined here\n", str_view_print(get_node_name(original_def))
     );
 }
 
 void msg_undefined_symbol(const Node* sym_call) {
     msg(
         LOG_ERROR, sym_call->pos,
-        "symbol `"STR_VIEW_FMT"` is not defined\n", str_view_print(sym_call->name)
+        "symbol `"STR_VIEW_FMT"` is not defined\n", str_view_print(get_node_name(sym_call))
     );
 }
 
 void msg_undefined_function(const Node_function_call* fun_call) {
     msg(
         LOG_ERROR, node_wrap(fun_call)->pos,
-        "function `"STR_VIEW_FMT"` is not defined\n", str_view_print(node_wrap(fun_call)->name)
+        "function `"STR_VIEW_FMT"` is not defined\n", str_view_print(fun_call->name)
     );
 }
 
@@ -43,15 +43,15 @@ void msg_invalid_struct_member(const Node* node) {
             msg(
                 LOG_ERROR, node->pos,
                 "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 
-                str_view_print(node->name), str_view_print(struct_memb_sym->name)
+                str_view_print(get_node_name(node)), str_view_print(get_node_name(struct_memb_sym))
             );
             Node* struct_memb_sym_def_;
-            try(sym_tbl_lookup(&struct_memb_sym_def_, struct_memb_sym->name));
+            try(sym_tbl_lookup(&struct_memb_sym_def_, get_node_name(struct_memb_sym)));
             const Node_variable_def* struct_memb_sym_def = node_unwrap_variable_def_const(struct_memb_sym_def_);
             msg(
                 LOG_NOTE, node_wrap(struct_memb_sym_def)->pos,
                 "`"STR_VIEW_FMT"` defined here as type `"LANG_TYPE_FMT"`\n",
-                str_view_print(node_wrap(struct_memb_sym_def)->name),
+                str_view_print(struct_memb_sym_def->name),
                 lang_type_print(struct_memb_sym_def->lang_type)
             );
             Node* struct_def;
@@ -77,17 +77,17 @@ void msg_invalid_struct_member_assignment_in_literal(
     msg(
         LOG_ERROR, memb_sym->pos,
         "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
-        str_view_print(node_wrap(memb_sym_def)->name), str_view_print(node_wrap(memb_sym)->name)
+        str_view_print(memb_sym_def->name), str_view_print(get_node_name(memb_sym))
     );
     msg(
         LOG_NOTE, node_wrap(struct_var_def)->pos,
         "variable `"STR_VIEW_FMT"` is defined as struct `"LANG_TYPE_FMT"`\n",
-        str_view_print(node_wrap(struct_var_def)->name), lang_type_print(struct_var_def->lang_type)
+        str_view_print(struct_var_def->name), lang_type_print(struct_var_def->lang_type)
     );
     msg(
         LOG_NOTE, node_wrap(memb_sym_def)->pos,
         "member symbol `"STR_VIEW_FMT"` of struct `"STR_VIEW_FMT"` defined here\n", 
-        str_view_print(node_wrap(memb_sym_def)->name), lang_type_print(struct_var_def->lang_type)
+        str_view_print(memb_sym_def->name), lang_type_print(struct_var_def->lang_type)
     );
 }
 
@@ -96,30 +96,28 @@ void meg_struct_assigned_to_invalid_literal(const Node* lhs, const Node* rhs) {
     assert(rhs->type == NODE_LITERAL);
 
     Node* struct_var_def_;
-    try(sym_tbl_lookup(&struct_var_def_, lhs->name));
+    try(sym_tbl_lookup(&struct_var_def_, get_node_name(lhs)));
     const Node_variable_def* struct_var_def = node_unwrap_variable_def_const(struct_var_def_);
     msg(
         LOG_ERROR, rhs->pos,
         "invalid literal type is assigned to `"STR_VIEW_FMT"`, "
         "but `"STR_VIEW_FMT"` is of type `"STR_VIEW_FMT"`\n",
-        str_view_print(lhs->name), 
-        str_view_print(lhs->name), 
+        str_view_print(get_node_name(lhs)), 
+        str_view_print(get_node_name(lhs)), 
         lang_type_print(struct_var_def->lang_type)
     );
     msg(
         LOG_NOTE, node_wrap(struct_var_def)->pos,
         "variable `"STR_VIEW_FMT"` is defined as struct `"STR_VIEW_FMT"`\n",
-        str_view_print(node_wrap(struct_var_def)->name), lang_type_print(struct_var_def->lang_type)
+        str_view_print(struct_var_def->name), lang_type_print(struct_var_def->lang_type)
     );
 }
 
-void msg_invalid_assignment_to_literal(const Node* lhs, const Node* rhs) {
-    assert(lhs->type == NODE_SYMBOL_TYPED && rhs->type == NODE_LITERAL);
-
+void msg_invalid_assignment_to_literal(const Node_symbol_typed* lhs, const Node_literal* rhs) {
     Node* var_def;
     try(sym_tbl_lookup(&var_def, lhs->name));
     msg(
-        LOG_ERROR, rhs->pos,
+        LOG_ERROR, node_wrap(rhs)->pos,
         "invalid literal type is assigned to `"STR_VIEW_FMT"`\n",
         str_view_print(lhs->name)
     );
@@ -129,7 +127,7 @@ void msg_invalid_assignment_to_operation(const Node* lhs, const Node_operator* o
     assert(lhs->type == NODE_SYMBOL_TYPED);
 
     Node* var_def_;
-    try(sym_tbl_lookup(&var_def_, lhs->name));
+    try(sym_tbl_lookup(&var_def_, get_node_name(lhs)));
     const Node_variable_def* var_def = node_unwrap_variable_def_const(var_def_);
     msg(
         LOG_ERROR, node_wrap(operation)->pos,

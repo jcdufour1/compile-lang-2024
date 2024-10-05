@@ -5,6 +5,7 @@
 #include "string.h"
 #include "node.h"
 #include "nodes.h"
+#include "node_utils.h"
 #include <stb_ds.h>
 
 #define SYM_TBL_DEFAULT_CAPACITY 1
@@ -37,13 +38,13 @@ static inline size_t sym_tbl_calculate_idx(Str_view sym_name, size_t capacity) {
 // returns false if symbol is already added to the table
 static inline bool sym_tbl_add_internal(Symbol_table_node* sym_tbl_nodes, size_t capacity, Node* node_of_symbol) {
     assert(node_of_symbol);
-    Str_view symbol_name = node_of_symbol->name;
+    Str_view symbol_name = get_node_name(node_of_symbol);
     assert(symbol_name.count > 0 && "invalid node_of_symbol");
 
     size_t curr_table_idx = sym_tbl_calculate_idx(symbol_name, capacity);
     size_t init_table_idx = curr_table_idx; 
     while (sym_tbl_nodes[curr_table_idx].status == SYM_TBL_OCCUPIED) {
-        if (str_view_is_equal(sym_tbl_nodes[curr_table_idx].node->name, node_of_symbol->name)) {
+        if (str_view_is_equal(get_node_name(sym_tbl_nodes[curr_table_idx].node), get_node_name(node_of_symbol))) {
             return false;
         }
         curr_table_idx = (curr_table_idx + 1) % capacity;
@@ -105,6 +106,7 @@ static inline bool sym_tbl_lookup(
     Node** result,
     Str_view key
 ) {
+    assert(key.count > 0);
     size_t curr_table_idx = sym_tbl_calculate_idx(key, symbol_table.capacity);
     size_t init_table_idx = curr_table_idx; 
 

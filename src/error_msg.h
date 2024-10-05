@@ -19,7 +19,7 @@ void msg_invalid_struct_member_assignment_in_literal(
 
 void meg_struct_assigned_to_invalid_literal(const Node* lhs, const Node* rhs);
 
-void msg_invalid_assignment_to_literal(const Node* lhs, const Node* rhs);
+void msg_invalid_assignment_to_literal(const Node_symbol_typed* lhs, const Node_literal* rhs);
 
 void msg_invalid_assignment_to_operation(const Node* lhs, const Node_operator* operation);
 

@@ -7,6 +7,7 @@
 #include "parameters.h"
 #include "file.h"
 #include "parser_utils.h"
+#include "node_utils.h"
 
 static void emit_block(String* output, const Node_block* fun_block);
 
@@ -80,7 +81,7 @@ static void extend_type_decl_str(String* output, const Node* variable_def, bool 
 }
 
 static void extend_literal_decl_prefix(String* output, const Node* var_def) {
-    Str_view name = node_wrap(var_def)->name;
+    Str_view name = get_node_name(var_def);
 
     assert(get_lang_type(var_def).str.count > 0);
     if (get_lang_type(var_def).pointer_depth != 0) {
@@ -208,7 +209,7 @@ static void emit_function_call(String* output, const Node_function_call* fun_cal
     string_extend_cstr(&a_main, output, " = call ");
     extend_type_call_str(output, fun_call->lang_type);
     string_extend_cstr(&a_main, output, " @");
-    string_extend_strv(&a_main, output, node_wrap(fun_call)->name);
+    string_extend_strv(&a_main, output, get_node_name(node_wrap(fun_call)));
 
     // arguments
     string_extend_cstr(&a_main, output, "(");
@@ -314,7 +315,7 @@ static void emit_llvm_store_struct_literal(String* output, const Node* memcpy_no
     string_extend_cstr(&a_main, output, "    call void @llvm.memcpy.p0.p0.i64(ptr align 4 %");
     string_extend_size_t(&a_main, output, alloca_dest_id);
     string_extend_cstr(&a_main, output, ", ptr align 4 @__const.main.");
-    string_extend_strv(&a_main, output, nodes_single_child_const(memcpy_node)->name);
+    string_extend_strv(&a_main, output, get_node_name(nodes_single_child_const(memcpy_node)));
     string_extend_cstr(&a_main, output, ", i64 ");
     string_extend_size_t(&a_main, output, sizeof_struct(nodes_single_child_const(memcpy_node)));
     string_extend_cstr(&a_main, output, ", i1 false)\n");
@@ -348,7 +349,7 @@ static void emit_function_definition(String* output, const Node_function_definit
     extend_type_call_str(output, get_lang_type(return_type_from_function_definition(fun_def)));
 
     string_extend_cstr(&a_main, output, " @");
-    string_extend_strv(&a_main, output, node_wrap(fun_def)->name);
+    string_extend_strv(&a_main, output, get_node_name(node_wrap(fun_def)));
 
     const Node_function_params* params = node_unwrap_function_params_const(nodes_get_child_of_type_const(node_wrap(fun_def), NODE_FUNCTION_PARAMETERS));
     string_append(&a_main, output, '(');
@@ -410,7 +411,7 @@ static void emit_function_declaration(String* output, const Node* fun_decl) {
     string_extend_cstr(&a_main, output, "declare i32");
     //extend_literal_decl(output, fun_decl); // TODO
     string_extend_cstr(&a_main, output, " @");
-    string_extend_strv(&a_main, output, fun_decl->name);
+    string_extend_strv(&a_main, output, get_node_name(fun_decl));
     string_append(&a_main, output, '(');
     emit_function_params(output, node_unwrap_function_params_const(nodes_get_child_of_type_const(fun_decl, NODE_FUNCTION_PARAMETERS)));
     string_append(&a_main, output, ')');
@@ -447,7 +448,7 @@ static void emit_cond_goto(String* output, const Node_cond_goto* cond_goto) {
 
 static void emit_struct_definition(String* output, const Node* statement) {
     string_extend_cstr(&a_main, output, "%struct.");
-    string_extend_strv(&a_main, output, statement->name);
+    string_extend_strv(&a_main, output, get_node_name(statement));
     string_extend_cstr(&a_main, output, " = type { ");
     bool is_first = true;
     nodes_foreach_child(member, statement) {
@@ -565,7 +566,7 @@ static void emit_symbol(String* output, const Symbol_table_node node) {
 static void emit_struct_literal(String* output, const Node_struct_literal* literal) {
     assert(literal->lang_type.str.count > 0);
     string_extend_cstr(&a_main, output, "@__const.main.");
-    string_extend_strv(&a_main, output, node_wrap(literal)->name);
+    string_extend_strv(&a_main, output, literal->name);
     string_extend_cstr(&a_main, output, " = private unnamed_addr constant %struct.");
     extend_lang_type_to_string(&a_main, output, literal->lang_type, false);
     string_extend_cstr(&a_main, output, " {");

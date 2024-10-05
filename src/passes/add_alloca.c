@@ -5,7 +5,7 @@
 
 static Node_alloca* alloca_new(Node_variable_def* var_def) {
     Node_alloca* alloca = node_unwrap_alloca(node_new(node_wrap(var_def)->pos, NODE_ALLOCA));
-    node_wrap(alloca)->name = node_wrap(var_def)->name;
+    alloca->name = var_def->name;
     alloca->lang_type = var_def->lang_type;
     var_def->storage_location = node_wrap(alloca);
     return alloca;
