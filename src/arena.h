@@ -12,21 +12,8 @@ typedef struct Arena_buf_ {
     struct Arena_buf_* next;
 } Arena_buf;
 
-typedef struct Arena_free_node_ {
-    void* buf;
-    size_t capacity;
-} Arena_free_node;
-
-#ifndef NDEBUG
-typedef Arena_free_node Arena_alloc_node;
-#endif // NDEBUG
-
 typedef struct {
     Arena_buf* buf;
-    Arena_free_node* free_node;
-#if 0
-    Arena_alloc_node* alloc_node;
-#endif
 } Arena;
 
 extern Arena a_main;
@@ -45,32 +32,6 @@ void* arena_realloc(Arena* arena, void* old_buf, size_t old_capacity, size_t new
 void arena_reset(Arena* arena);
 
 void arena_destroy(Arena* arena);
-
-#if 0
-static inline size_t arena_count_allocated_nodes(void) {
-    size_t count_nodes = 0;
-    Arena_alloc_node* curr_node = arena.alloc_node;
-    while (curr_node) {
-        count_nodes++;
-        curr_node = curr_node->next;
-    }
-    return count_nodes;
-}
-
-#define arena_log_alloced_nodes() \
-    do { \
-        size_t count_nodes = 0; \
-        Arena_alloc_node* curr_node = arena.alloc_node; \
-        while (curr_node) { \
-            count_nodes++; \
-            log(LOG_DEBUG, "%p %zu\n", curr_node->buf, curr_node->capacity); \
-            curr_node = curr_node->next; \
-        } \
-        log(LOG_DEBUG, "total count alloc nodes printed: %zu\n", count_nodes); \
-    } \
-    while (0)
-
-#endif
 
 size_t arena_get_total_capacity(const Arena* arena);
 

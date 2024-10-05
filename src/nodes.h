@@ -136,21 +136,6 @@ static inline void nodes_insert_after(Node* curr, Node* node_to_insert) {
     node_to_insert->parent = curr->parent;
 }
 
-static inline void nodes_insert_after_1(Node* curr, Node* node_to_insert) {
-    assert(curr && node_to_insert);
-    assert(!node_to_insert->next);
-    assert(!node_to_insert->prev);
-    assert(!node_to_insert->parent);
-
-    Node* old_next = curr->next;
-    nodes_establish_siblings(curr, node_to_insert);
-    if (old_next) {
-        nodes_establish_siblings(node_to_insert, old_next);
-    }
-    node_to_insert->parent = curr->parent;
-    todo();
-}
-
 static inline void nodes_insert_before(Node* node_to_insert_before, Node* node_to_insert) {
     assert(node_to_insert_before && node_to_insert);
     // this function must not be used for appending nodes that have next, parent, or prev node(s) attached
