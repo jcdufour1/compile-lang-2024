@@ -38,10 +38,10 @@ static inline void set_left_child(Node* parent, Node* left_child) {
     (void) left_child;
     switch (parent->type) {
         case NODE_SYMBOL_UNTYPED:
-            node_unwrap_symbol_untyped(parent)->child = left_child;
+            unreachable("");
             return;
         case NODE_SYMBOL_TYPED:
-            node_unwrap_symbol_typed(parent)->child = left_child;
+            unreachable("");
             return;
         case NODE_LABEL:
             node_unwrap_label(parent)->child = left_child;
@@ -168,9 +168,9 @@ static inline void set_left_child(Node* parent, Node* left_child) {
 static inline Node* get_left_child(Node* node) {
     switch (node->type) {
         case NODE_SYMBOL_UNTYPED:
-            return node_unwrap_symbol_untyped(node)->child;
+            unreachable("");
         case NODE_SYMBOL_TYPED:
-            return node_unwrap_symbol_typed(node)->child;
+            unreachable("");
         case NODE_LABEL:
             return node_unwrap_label(node)->child;
         case NODE_LITERAL:
@@ -249,6 +249,12 @@ static inline Node* get_left_child(Node* node) {
             return node_unwrap_llvm_store_struct_literal(node)->child;
         case NODE_FUNCTION_PARAM_SYM:
             return node_unwrap_function_param_sym_const(node)->child;
+        case NODE_PTR_BYVAL_SYM:
+            return NULL;
+        case NODE_LOAD_SYM_RETURN_VALUE_SYM:
+            return NULL;
+        case NODE_LLVM_LOAD_STRUCT_MEMBER_SYM:
+            return NULL;
         default:
             unreachable(NODE_FMT, node_print(node));
     }

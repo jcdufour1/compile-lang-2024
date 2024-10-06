@@ -61,10 +61,11 @@ void* arena_alloc(Arena* arena, size_t capacity_needed) {
     if (!arena_buf_new_region) {
         // could not find space; must allocate new Arena_buf
         size_t arena_buf_capacity = MAX(get_total_alloced(arena), ARENA_DEFAULT_CAPACITY);
-        arena_buf_capacity = MAX(arena_buf_capacity, capacity_needed + sizeof(*arena->buf));
+        size_t temporary_value_that_needs_to_be_looked_at = 8; // TODO: this should be sizeof(*arena->buf) or something
+        arena_buf_capacity = MAX(arena_buf_capacity, capacity_needed + temporary_value_that_needs_to_be_looked_at);
         arena_buf_new_region = safe_malloc(arena_buf_capacity);
         arena_buf_new_region->buf_after_taken = arena_buf_new_region + 1;
-        arena_buf_new_region->in_use = sizeof(*arena->buf);
+        arena_buf_new_region->in_use = temporary_value_that_needs_to_be_looked_at;
         arena_buf_new_region->capacity = arena_buf_capacity;
         if (arena_buf_last) {
             arena_buf_last->next = arena_buf_new_region;

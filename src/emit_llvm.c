@@ -134,25 +134,6 @@ static void emit_function_params(String* output, const Node_function_params* fun
     }
 }
 
-static Lang_type get_member_sym_piece_final_lang_type(const Node_struct_member_sym_typed* struct_memb_sym) {
-    Lang_type lang_type = {0};
-    nodes_foreach_child(memb_piece_, struct_memb_sym) {
-        const Node_struct_member_sym_piece_typed* memb_piece = 
-            node_unwrap_struct_member_sym_piece_typed_const(memb_piece_);
-        lang_type = memb_piece->lang_type;
-    }
-    assert(lang_type.str.count > 0);
-    return lang_type;
-}
-
-static void emit_fun_arg_struct_member_call(String* output, const Node_struct_member_sym_typed* member_call) {
-    assert(member_call->lang_type.str.count > 0);
-
-    extend_type_call_str(output, get_member_sym_piece_final_lang_type(member_call));
-    string_extend_cstr(&a_main, output, " %");
-    string_extend_size_t(&a_main, output, get_llvm_id(member_call->node_src));
-}
-
 static void emit_function_call_arguments(String* output, const Node_function_call* fun_call) {
     size_t idx = 0;
     nodes_foreach_child(argument, fun_call) {
@@ -165,28 +146,31 @@ static void emit_function_call_arguments(String* output, const Node_function_cal
                 break;
             }
             case NODE_STRUCT_MEMBER_SYM_TYPED:
-                emit_fun_arg_struct_member_call(output, node_unwrap_struct_member_sym_typed(argument));
+                unreachable("");
                 break;
             case NODE_STRUCT_LITERAL:
                 todo();
             case NODE_SYMBOL_UNTYPED:
                 unreachable("untyped symbols should not still be present");
-            case NODE_SYMBOL_TYPED: {
-                if (is_struct_symbol(argument)) {
-                    string_extend_cstr(&a_main, output, "ptr noundef byval(");
-                    extend_type_call_str(output, get_lang_type(argument));
-                    string_extend_cstr(&a_main, output, ")");
-                } else {
-                    extend_type_call_str(output, get_lang_type(argument));
-                }
+            case NODE_SYMBOL_TYPED:
+                unreachable("typed symbols should not still be present");
+            case NODE_PTR_BYVAL_SYM:
+                string_extend_cstr(&a_main, output, "ptr noundef byval(");
+                extend_type_call_str(output, get_lang_type(argument));
+                string_extend_cstr(&a_main, output, ")");
                 string_extend_cstr(&a_main, output, " %");
-                if (is_struct_symbol(argument)) {
-                    string_extend_size_t(&a_main, output, get_store_dest_id(argument));
-                } else {
-                    string_extend_size_t(&a_main, output, get_llvm_id(node_unwrap_symbol_typed(argument)->node_src));
-                }
+                string_extend_size_t(&a_main, output, get_llvm_id(node_unwrap_ptr_byval_sym(argument)->node_src));
                 break;
-            }
+            case NODE_LOAD_SYM_RETURN_VALUE_SYM:
+                extend_type_call_str(output, get_lang_type(argument));
+                string_extend_cstr(&a_main, output, " %");
+                string_extend_size_t(&a_main, output, node_unwrap_load_sym_return_val_sym(argument)->node_src->llvm_id);
+                break;
+            case NODE_LLVM_LOAD_STRUCT_MEMBER_SYM:
+                extend_type_call_str(output, get_lang_type(argument));
+                string_extend_cstr(&a_main, output, " %");
+                string_extend_size_t(&a_main, output, node_unwrap_llvm_load_struct_member_sym(argument)->node_src->llvm_id);
+                break;
             case NODE_FUNCTION_CALL:
                 unreachable(""); // this function call should be changed to assign to a variable 
                                // before reaching emit_llvm stage, then assign that variable here. 
@@ -262,12 +246,16 @@ static void emit_operator_operand(String* output, const Node* operand) {
             string_extend_strv(&a_main, output, node_unwrap_literal_const(operand)->str_data);
             break;
         case NODE_SYMBOL_TYPED:
-            // fallthrough
+            unreachable("");
         case NODE_FUNCTION_RETURN_VALUE_SYM:
             // fallthrough
         case NODE_OPERATOR_RETURN_VALUE_SYM:
             string_extend_cstr(&a_main, output, "%");
             string_extend_size_t(&a_main, output, get_llvm_id(get_node_src_const(operand)));
+            break;
+        case NODE_LOAD_SYM_RETURN_VALUE_SYM:
+            string_extend_cstr(&a_main, output, "%");
+            string_extend_size_t(&a_main, output, node_unwrap_load_sym_return_val_sym_const(operand)->node_src->llvm_id);
             break;
         case NODE_SYMBOL_UNTYPED:
             unreachable("untyped symbols should not still be present");
@@ -381,7 +369,7 @@ static void emit_return_statement(String* output, const Node_return_statement* f
             break;
         }
         case NODE_SYMBOL_TYPED:
-            // fallthrough
+           unreachable("");
         case NODE_OPERATOR_RETURN_VALUE_SYM: {
             string_extend_cstr(&a_main, output, "    ret ");
             extend_type_call_str(output, get_lang_type(sym_to_return));
@@ -390,19 +378,30 @@ static void emit_return_statement(String* output, const Node_return_statement* f
             string_extend_cstr(&a_main, output, "\n");
             break;
         }
-        case NODE_STRUCT_MEMBER_SYM_TYPED: {
-            const Node_struct_member_sym_typed* memb_sym = node_unwrap_struct_member_sym_typed_const(sym_to_return);
+        case NODE_STRUCT_MEMBER_SYM_TYPED:
+             unreachable("");
+        case NODE_SYMBOL_UNTYPED:
+            unreachable("untyped symbols should not still be present");
+        case NODE_LOAD_SYM_RETURN_VALUE_SYM: {
+            const Node_load_sym_return_val_sym* memb_sym = node_unwrap_load_sym_return_val_sym_const(sym_to_return);
             string_extend_cstr(&a_main, output, "    ret ");
-            extend_type_call_str(output, get_member_sym_piece_final_lang_type(memb_sym));
+            extend_type_call_str(output, memb_sym->lang_type);
             string_extend_cstr(&a_main, output, " %");
-            string_extend_size_t(&a_main, output, get_llvm_id(memb_sym->node_src));
+            string_extend_size_t(&a_main, output, memb_sym->node_src->llvm_id);
             string_extend_cstr(&a_main, output, "\n");
             break;
         }
-        case NODE_SYMBOL_UNTYPED:
-            unreachable("untyped symbols should not still be present");
+        case NODE_LLVM_LOAD_STRUCT_MEMBER_SYM: {
+            const Node_llvm_load_struct_member_sym* memb_sym = node_unwrap_llvm_load_struct_member_sym_const(sym_to_return);
+            string_extend_cstr(&a_main, output, "    ret ");
+            extend_type_call_str(output, memb_sym->lang_type);
+            string_extend_cstr(&a_main, output, " %");
+            string_extend_size_t(&a_main, output, memb_sym->node_src->llvm_id);
+            string_extend_cstr(&a_main, output, "\n");
+            break;
+        }
         default:
-            unreachable("");
+            unreachable(NODE_FMT, node_print(sym_to_return));
     }
 }
 

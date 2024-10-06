@@ -22,6 +22,10 @@ bool walk_tree(Node* input_node, int recursion_depth, bool (callback)(Node* inpu
                 walk_tree(node_wrap(node_unwrap_assignment(curr_node)->lhs), recursion_depth, callback);
                 walk_tree(node_wrap(node_unwrap_assignment(curr_node)->rhs), recursion_depth, callback);
                 break;
+            case NODE_SYMBOL_TYPED:
+                break;
+            case NODE_SYMBOL_UNTYPED:
+                break;
             default:
                 walk_tree(get_left_child(curr_node), recursion_depth + 1, callback);
                 break;

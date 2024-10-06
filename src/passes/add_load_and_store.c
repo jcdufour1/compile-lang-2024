@@ -61,6 +61,35 @@ static Node_load_element_ptr* do_load_struct_element_ptr(Node* node_to_insert_be
     return load_element_ptr;
 }
 
+static void sym_typed_to_load_sym_rtn_value_sym(Node_symbol_typed* symbol, Node_load_another_node* node_src) {
+    Node_symbol_typed temp = *symbol;
+    node_wrap(symbol)->type = NODE_LOAD_SYM_RETURN_VALUE_SYM;
+    Node_load_sym_return_val_sym* load_ref = node_unwrap_load_sym_return_val_sym(node_wrap(symbol));
+    load_ref->lang_type = temp.lang_type;
+    load_ref->node_src = node_src;
+}
+
+static Lang_type get_member_sym_piece_final_lang_type(const Node_struct_member_sym_typed* struct_memb_sym) {
+    Lang_type lang_type = {0};
+    log_tree(LOG_DEBUG, node_wrap(struct_memb_sym));
+    nodes_foreach_child(memb_piece_, struct_memb_sym) {
+        const Node_struct_member_sym_piece_typed* memb_piece = 
+            node_unwrap_struct_member_sym_piece_typed_const(memb_piece_);
+        lang_type = memb_piece->lang_type;
+    }
+    assert(lang_type.str.count > 0);
+    return lang_type;
+}
+
+static void struct_memb_to_load_memb_rtn_val_sym(Node_struct_member_sym_typed* struct_memb, Node_load_another_node* node_src) {
+    //Node_struct_member_sym_typed temp = *struct_memb;
+    Lang_type lang_type_to_load = get_member_sym_piece_final_lang_type(struct_memb);
+    node_wrap(struct_memb)->type = NODE_LLVM_LOAD_STRUCT_MEMBER_SYM;
+    Node_llvm_load_struct_member_sym* load_ref = node_unwrap_llvm_load_struct_member_sym(node_wrap(struct_memb));
+    load_ref->lang_type = lang_type_to_load;
+    load_ref->node_src = node_src;
+}
+
 static Node_load_another_node* insert_load(Node* node_insert_load_before, Node* symbol_call) {
     switch (symbol_call->type) {
         case NODE_STRUCT_LITERAL:
@@ -85,7 +114,7 @@ static Node_load_another_node* insert_load(Node* node_insert_load_before, Node* 
         load->lang_type = load_element_ptr->lang_type;
         assert(load->lang_type.str.count > 0);
         nodes_insert_before(node_insert_load_before, node_wrap(load));
-        node_unwrap_struct_member_sym_typed(symbol_call)->node_src = node_wrap(load);
+        struct_memb_to_load_memb_rtn_val_sym(node_unwrap_struct_member_sym_typed(symbol_call), load);
         return load;
     } else {
         Node* sym_def;
@@ -96,7 +125,7 @@ static Node_load_another_node* insert_load(Node* node_insert_load_before, Node* 
         assert(load->lang_type.str.count > 0);
         switch (symbol_call->type) {
             case NODE_SYMBOL_TYPED:
-                node_unwrap_symbol_typed(symbol_call)->node_src = node_wrap(load);
+                sym_typed_to_load_sym_rtn_value_sym(node_unwrap_symbol_typed(symbol_call), load);
                 break;
             default:
                 unreachable(NODE_FMT, node_print(symbol_call));
@@ -234,7 +263,7 @@ static void insert_store_assignment(Node* node_to_insert_before, Node_assignment
         case NODE_SYMBOL_TYPED:
             rhs_load = node_wrap(insert_load(node_to_insert_before, rhs));
             assert(rhs_load);
-            rhs_load_lang_type = node_unwrap_symbol_typed(rhs)->lang_type;
+            rhs_load_lang_type = node_unwrap_load_sym_return_val_sym(rhs)->lang_type;
             break;
         case NODE_LITERAL:
             rhs_load_lang_type = node_unwrap_literal(rhs)->lang_type;

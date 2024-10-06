@@ -178,6 +178,12 @@ static inline Lang_type get_lang_type(const Node* node) {
             unreachable("");
         case NODE_LLVM_STORE_LITERAL:
             return node_unwrap_llvm_store_literal_const(node)->lang_type;
+        case NODE_LOAD_SYM_RETURN_VALUE_SYM:
+            return node_unwrap_load_sym_return_val_sym_const(node)->lang_type;
+        case NODE_PTR_BYVAL_SYM:
+            return node_unwrap_ptr_byval_sym_const(node)->lang_type;
+        case NODE_LLVM_LOAD_STRUCT_MEMBER_SYM:
+            return node_unwrap_llvm_load_struct_member_sym_const(node)->lang_type;
         default:
             unreachable(""); // we cannot print node_type because it will cause infinite recursion
     }
@@ -194,7 +200,7 @@ static inline Node* get_node_src(Node* node) {
         case NODE_STRUCT_MEMBER_SYM_UNTYPED:
             unreachable("");
         case NODE_STRUCT_MEMBER_SYM_TYPED:
-            return node_unwrap_struct_member_sym_typed_const(node)->node_src;
+            unreachable("");
         case NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED:
             unreachable("");
         case NODE_STRUCT_MEMBER_SYM_PIECE_TYPED:
@@ -220,7 +226,7 @@ static inline Node* get_node_src(Node* node) {
         case NODE_SYMBOL_UNTYPED:
             unreachable("");
         case NODE_SYMBOL_TYPED:
-            return node_unwrap_symbol_typed_const(node)->node_src;
+            unreachable("");
         case NODE_RETURN_STATEMENT:
             unreachable("");
         case NODE_VARIABLE_DEFINITION:
@@ -269,6 +275,12 @@ static inline Node* get_node_src(Node* node) {
             unreachable("");
         case NODE_LLVM_STORE_LITERAL:
             unreachable("");
+        case NODE_LOAD_SYM_RETURN_VALUE_SYM:
+            return node_wrap(node_unwrap_load_sym_return_val_sym(node)->node_src);
+        case NODE_PTR_BYVAL_SYM:
+            return node_unwrap_ptr_byval_sym(node)->node_src;
+        case NODE_LLVM_LOAD_STRUCT_MEMBER_SYM:
+            return node_wrap(node_unwrap_llvm_load_struct_member_sym(node)->node_src);
         default:
             unreachable(""); // we cannot print node_type because it will cause infinite recursion
     }
@@ -285,11 +297,11 @@ static inline Node* get_node_dest(Node* node) {
         case NODE_STRUCT_MEMBER_SYM_UNTYPED:
             unreachable("");
         case NODE_STRUCT_MEMBER_SYM_TYPED:
-            return node_unwrap_struct_member_sym_typed_const(node)->node_src;
+            unreachable("");
         case NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED:
             unreachable("");
         case NODE_STRUCT_MEMBER_SYM_PIECE_TYPED:
-            return node_unwrap_struct_member_sym_piece_typed_const(node)->node_src;
+            unreachable("");
         case NODE_BLOCK:
             unreachable("");
         case NODE_FUNCTION_DEFINITION:
@@ -311,7 +323,7 @@ static inline Node* get_node_dest(Node* node) {
         case NODE_SYMBOL_UNTYPED:
             unreachable("");
         case NODE_SYMBOL_TYPED:
-            return node_unwrap_symbol_typed_const(node)->node_dest;
+            unreachable("");
         case NODE_RETURN_STATEMENT:
             unreachable("");
         case NODE_VARIABLE_DEFINITION:

@@ -113,6 +113,18 @@ bool assign_llvm_ids(Node* curr_node) {
             node_unwrap_struct_member_sym_piece_typed(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
             return false;
+        case NODE_PTR_BYVAL_SYM:
+            node_unwrap_ptr_byval_sym(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var += 2;
+            return false;
+        case NODE_LOAD_SYM_RETURN_VALUE_SYM:
+            node_unwrap_load_sym_return_val_sym(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var += 2;
+            return false;
+        case NODE_LLVM_LOAD_STRUCT_MEMBER_SYM:
+            node_unwrap_llvm_load_struct_member_sym(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var += 2;
+            return false;
         default:
             unreachable(NODE_FMT"\n", node_print(curr_node));
     }
