@@ -43,7 +43,8 @@ static Node_operator_rtn_val_sym* move_operator_back(Node* node_to_insert_before
     return operator_sym;
 }
 
-bool flatten_operations(Node* curr_node) {
+bool flatten_operations(Node* curr_node, int recursion_depth) {
+    (void) recursion_depth;
     if (curr_node->type != NODE_BLOCK) {
         return false;
     }

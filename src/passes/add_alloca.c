@@ -50,7 +50,8 @@ static void do_assignment(Node* start_of_block, Node_assignment* assignment) {
     }
 }
 
-bool add_alloca(Node* start_start_node) {
+bool add_alloca(Node* start_start_node, int recursion_depth) {
+    (void) recursion_depth;
     if (start_start_node->type != NODE_BLOCK) {
         return false;
     }

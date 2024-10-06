@@ -389,7 +389,8 @@ static void load_function_arguments(Node* fun_call) {
     }
 }
 
-bool add_load_and_store(Node* start_start_node) {
+bool add_load_and_store(Node* start_start_node, int recursion_depth) {
+    (void) recursion_depth;
     if (start_start_node->type != NODE_BLOCK) {
         return false;
     }

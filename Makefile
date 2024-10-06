@@ -37,8 +37,8 @@ OBJS=\
 	 ${BUILD_DIR}/parameters.o \
 	 ${BUILD_DIR}/parser_utils.o \
 	 ${BUILD_DIR}/error_msg.o \
+	 ${BUILD_DIR}/walk_tree.o \
 	 ${BUILD_DIR}/passes/do_passes.o \
-	 ${BUILD_DIR}/passes/walk_tree.o \
 	 ${BUILD_DIR}/passes/for_and_if_to_branch.o \
 	 ${BUILD_DIR}/passes/assign_llvm_ids.o \
 	 ${BUILD_DIR}/passes/add_load_and_store.o \
@@ -107,13 +107,13 @@ ${BUILD_DIR}/parameters.o: ${DEP_COMMON} src/parameters.c third_party/*
 ${BUILD_DIR}/error_msg.o: ${DEP_COMMON} src/error_msg.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/error_msg.o src/error_msg.c
 
+${BUILD_DIR}/walk_tree.o: ${DEP_COMMON} src/walk_tree.c third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/walk_tree.o src/walk_tree.c
+
 
 # passes
 ${BUILD_DIR}/passes/do_passes.o: ${DEP_COMMON} src/passes/do_passes.c src/passes/*.h third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/do_passes.o src/passes/do_passes.c
-
-${BUILD_DIR}/passes/walk_tree.o: ${DEP_COMMON} src/passes/walk_tree.c src/passes/*.h third_party/*
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/walk_tree.o src/passes/walk_tree.c
 
 ${BUILD_DIR}/passes/for_and_if_to_branch.o: ${DEP_COMMON} src/passes/for_and_if_to_branch.c src/passes/*.h third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/for_and_if_to_branch.o src/passes/for_and_if_to_branch.c

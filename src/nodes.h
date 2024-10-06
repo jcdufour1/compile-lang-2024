@@ -9,7 +9,7 @@
 #include "assert.h"
 #include "vector.h"
 
-void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, const Node* root, const char* file, int line);
+void nodes_log_tree_internal(LOG_LEVEL log_level, const Node* root, const char* file, int line);
 
 #ifdef NDEBUG
 #define nodes_assert_tree_linkage_is_consistant(root)
@@ -21,7 +21,7 @@ void nodes_assert_tree_linkage_is_consistant(const Node* root);
     do { \
         nodes_assert_tree_linkage_is_consistant(root); \
         log_file_new(log_level, __FILE__, __LINE__, "tree:\n"); \
-        nodes_log_tree_rec(log_level, 0, root, __FILE__, __LINE__); \
+        nodes_log_tree_internal(log_level, root, __FILE__, __LINE__); \
         log_file_new(log_level, __FILE__, __LINE__, "\n"); \
     } while(0)
 

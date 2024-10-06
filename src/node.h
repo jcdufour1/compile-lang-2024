@@ -175,11 +175,6 @@ typedef struct {
 
 typedef struct {
     struct Node_* child;
-    Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
-} Node_struct_member_def;
-
-typedef struct {
-    struct Node_* child;
     Str_view name;
 } Node_function_declaration;
 
@@ -358,7 +353,6 @@ typedef union {
     Node_for_loop node_for_loop;
     Node_function_definition node_function_definition;
     Node_function_declaration node_function_declaration;
-    Node_struct_member_def node_struct_member_def;
     Node_function_return_types node_function_return_types;
     Node_struct_def node_struct_def;
     Node_struct_member_sym_piece_typed node_struct_member_sym_piece_typed;

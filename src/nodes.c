@@ -3,6 +3,7 @@
 #include "util.h"
 #include "node_ptr_vec.h"
 #include "node_utils.h"
+#include "do_passes.h"
 
 static void extend_node_text(Arena* arena, String* string, const Node* node, bool do_recursion);
 
@@ -118,6 +119,10 @@ void extend_lang_type_to_string(Arena* arena, String* string, Lang_type lang_typ
     }
 }
 
+static int log_file_level = 0;
+static const char* log_file = NULL;
+static int log_line = 0;
+
 Str_view lang_type_print_internal(Arena* arena, Lang_type lang_type, bool surround_in_lt_gt) {
     String buf = {0};
     extend_lang_type_to_string(arena, &buf, lang_type, surround_in_lt_gt);
@@ -125,42 +130,29 @@ Str_view lang_type_print_internal(Arena* arena, Lang_type lang_type, bool surrou
     return str_view;
 }
 
-void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, const Node* root, const char* file, int line) {
+bool log_node_in_tree_internal(Node* node, int recursion_depth) {
+    static String padding = {0};
+    string_set_to_zero_len(&padding);
+
+    for (int idx = 0; idx < 2*recursion_depth; idx++) {
+        string_append(&print_arena, &padding, ' ');
+    }
+
+    log_file_new(log_file_level, log_file, log_line, STRING_FMT NODE_FMT"\n", string_print(padding), node_print(node));
+    return false;
+}
+
+void nodes_log_tree_internal(LOG_LEVEL log_level, const Node* root, const char* file, int line) {
     if (!root_of_tree) {
         log_file_new(log_level, file, line, "<empty tree>\n");
         return;
     }
-    if (!root) {
-        return;
-    }
 
-    static String padding = {0};
+    log_file_level = log_level;
+    log_file = file;
+    log_line = line;
 
-    nodes_foreach_from_curr_const(curr_node, root) {
-        string_set_to_zero_len(&padding);
-        for (int idx = 0; idx < pad_x; idx++) {
-            string_append(&print_arena, &padding, ' ');
-        }
-
-        log_file_new(log_level, file, line, STRING_FMT NODE_FMT"\n", string_print(padding), node_print(curr_node));
-        const Node* left_child;
-        switch (curr_node->type) {
-            case NODE_FUNCTION_RETURN_TYPES:
-                left_child = node_wrap(node_unwrap_function_return_types_const(curr_node)->child);
-                nodes_log_tree_rec(log_level, pad_x + 2, left_child, file, line);
-                break;
-            case NODE_ASSIGNMENT: {
-                const Node_assignment* assignment = node_unwrap_assignment_const(curr_node);
-                nodes_log_tree_rec(log_level, pad_x + 2, assignment->lhs, file, line);
-                nodes_log_tree_rec(log_level, pad_x + 2, assignment->rhs, file, line);
-                break;
-            }
-            default:
-                left_child = get_left_child_const(curr_node);
-                nodes_log_tree_rec(log_level, pad_x + 2, left_child, file, line);
-                break;
-        }
-    }
+    walk_tree((Node*)root, 0, log_node_in_tree_internal);
 }
 
 static Str_view node_type_get_strv(NODE_TYPE node_type) {

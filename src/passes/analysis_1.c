@@ -44,7 +44,8 @@ static void set_if_statement_types(Node* if_statement) {
     }
 }
 
-bool analysis_1(Node* start_node) {
+bool analysis_1(Node* start_node, int recursion_depth) {
+    (void) recursion_depth;
     if (start_node->type != NODE_BLOCK) {
         return false;
     }
