@@ -279,9 +279,8 @@ typedef struct {
 } Node_store_another_node;
 
 typedef struct {
-    struct Node_* child;
+    Node_literal* child;
     struct Node_* node_dest;
-    struct Node_* node_src;
     Llvm_id llvm_id;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Str_view name;
@@ -315,7 +314,6 @@ typedef struct {
     struct Node_* child;
     Llvm_id llvm_id;
     Lang_type lang_type;
-    struct Node_* node_src;
     struct Node_* node_dest;
     Str_view name;
 } Node_llvm_store_struct_literal;

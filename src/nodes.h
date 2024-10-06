@@ -140,7 +140,7 @@ static inline void set_left_child(Node* parent, Node* left_child) {
             node_unwrap_alloca(parent)->child = left_child;
             return;
         case NODE_LLVM_STORE_LITERAL:
-            node_unwrap_llvm_store_literal(parent)->child = left_child;
+            node_unwrap_llvm_store_literal(parent)->child = node_unwrap_literal(left_child);
             return;
         case NODE_LOAD_ANOTHER_NODE:
             node_unwrap_load_another_node(parent)->child = left_child;
@@ -236,7 +236,7 @@ static inline Node* get_left_child(Node* node) {
         case NODE_ALLOCA:
             return node_unwrap_alloca_const(node)->child;
         case NODE_LLVM_STORE_LITERAL:
-            return node_unwrap_llvm_store_literal(node)->child;
+            return node_wrap(node_unwrap_llvm_store_literal(node)->child);
         case NODE_LOAD_ANOTHER_NODE:
             return node_unwrap_load_another_node(node)->child;
         case NODE_STORE_ANOTHER_NODE:

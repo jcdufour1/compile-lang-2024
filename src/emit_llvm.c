@@ -80,28 +80,25 @@ static void extend_type_decl_str(String* output, const Node* variable_def, bool 
     }
 }
 
-static void extend_literal_decl_prefix(String* output, const Node* var_def) {
-    Str_view name = get_node_name(var_def);
-
-    assert(get_lang_type(var_def).str.count > 0);
-    if (get_lang_type(var_def).pointer_depth != 0) {
+static void extend_literal_decl_prefix(String* output, const Node_literal* var_def) {
+    assert(var_def->lang_type.str.count > 0);
+    if (var_def->lang_type.pointer_depth != 0) {
         todo();
     }
-    if (str_view_cstr_is_equal(get_lang_type(var_def).str, "ptr")) {
+    if (str_view_cstr_is_equal(var_def->lang_type.str, "ptr")) {
         string_extend_cstr(&a_main, output, " @.");
-        string_extend_strv(&a_main, output, name);
-    } else if (str_view_cstr_is_equal(get_lang_type(var_def).str, "i32")) {
+        string_extend_strv(&a_main, output, var_def->name);
+    } else if (str_view_cstr_is_equal(var_def->lang_type.str, "i32")) {
         string_append(&a_main, output, ' ');
-        string_extend_strv(&a_main, output, get_str_data(var_def));
+        string_extend_strv(&a_main, output, var_def->str_data);
     } else {
         log(LOG_ERROR, NODE_FMT"\n", node_print(var_def));
-        log(LOG_ERROR, STR_VIEW_FMT"\n", lang_type_print(get_lang_type(var_def)));
         todo();
     }
 }
 
-static void extend_literal_decl(String* output, const Node* var_def, bool noundef) {
-    extend_type_decl_str(output, var_def, noundef);
+static void extend_literal_decl(String* output, const Node_literal* var_def, bool noundef) {
+    extend_type_decl_str(output, node_wrap(var_def), noundef);
     extend_literal_decl_prefix(output, var_def);
 }
 
@@ -164,7 +161,7 @@ static void emit_function_call_arguments(String* output, const Node_function_cal
         }
         switch (argument->type) {
             case NODE_LITERAL: {
-                extend_literal_decl(output, argument, true);
+                extend_literal_decl(output, node_unwrap_literal_const(argument), true);
                 break;
             }
             case NODE_STRUCT_MEMBER_SYM_TYPED:
@@ -338,7 +335,7 @@ static void emit_store_another_node(String* output, const Node_store_another_nod
 static void emit_llvm_store_literal(String* output, const Node_llvm_store_literal* store) {
     string_extend_cstr(&a_main, output, "    store ");
     extend_type_call_str(output, store->lang_type);
-    extend_literal_decl_prefix(output, nodes_single_child_const(node_wrap(store)));
+    extend_literal_decl_prefix(output, store->child);
     string_extend_cstr(&a_main, output, ", ptr %");
     string_extend_size_t(&a_main, output, get_llvm_id(store->node_dest));
     string_extend_cstr(&a_main, output, ", align 8");
@@ -552,15 +549,15 @@ static void emit_block(String* output, const Node_block* block) {
 }
 
 static void emit_symbol(String* output, const Symbol_table_node node) {
-    size_t literal_width = get_str_data(node.node).count + 1 -
-                           get_count_excape_seq(get_str_data(node.node));
+    Str_view str_data = node_unwrap_literal_const(node.node)->str_data;
+    size_t literal_width = str_data.count + 1 - get_count_excape_seq(str_data);
 
     string_extend_cstr(&a_main, output, "@.");
     string_extend_strv(&a_main, output, node.key);
     string_extend_cstr(&a_main, output, " = private unnamed_addr constant [ ");
     string_extend_size_t(&a_main, output, literal_width);
     string_extend_cstr(&a_main, output, " x i8] c\"");
-    string_extend_strv_eval_escapes(&a_main, output, get_str_data(node.node));
+    string_extend_strv_eval_escapes(&a_main, output, str_data);
     string_extend_cstr(&a_main, output, "\\00\", align 1");
     string_extend_cstr(&a_main, output, "\n");
 }
@@ -578,7 +575,7 @@ static void emit_struct_literal(String* output, const Node_struct_literal* struc
         if (!is_first) {
             string_append(&a_main, output, ',');
         }
-        extend_literal_decl(output, memb_literal, false);
+        extend_literal_decl(output, node_unwrap_literal_const(memb_literal), false);
         is_first = false;
     }
 
