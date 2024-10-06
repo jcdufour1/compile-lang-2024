@@ -45,9 +45,8 @@ static void insert_alloca(Node* start_of_block, Node_variable_def* var_def) {
 }
 
 static void do_assignment(Node* start_of_block, Node_assignment* assignment) {
-    Node* lhs = nodes_get_child(node_wrap(assignment), 0);
-    if (lhs->type == NODE_VARIABLE_DEFINITION) {
-        insert_alloca(start_of_block, node_unwrap_variable_def(lhs));
+    if (assignment->lhs->type == NODE_VARIABLE_DEFINITION) {
+        insert_alloca(start_of_block, node_unwrap_variable_def(assignment->lhs));
     }
 }
 

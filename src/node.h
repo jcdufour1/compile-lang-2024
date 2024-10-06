@@ -210,7 +210,8 @@ typedef struct {
 } Node_break;
 
 typedef struct {
-    struct Node_* child;
+    struct Node_* lhs;
+    struct Node_* rhs;
     Llvm_id llvm_id;
 } Node_assignment;
 

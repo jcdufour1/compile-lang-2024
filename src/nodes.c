@@ -147,12 +147,19 @@ void nodes_log_tree_rec(LOG_LEVEL log_level, int pad_x, const Node* root, const 
         switch (curr_node->type) {
             case NODE_FUNCTION_RETURN_TYPES:
                 left_child = node_wrap(node_unwrap_function_return_types_const(curr_node)->child);
+                nodes_log_tree_rec(log_level, pad_x + 2, left_child, file, line);
                 break;
+            case NODE_ASSIGNMENT: {
+                const Node_assignment* assignment = node_unwrap_assignment_const(curr_node);
+                nodes_log_tree_rec(log_level, pad_x + 2, assignment->lhs, file, line);
+                nodes_log_tree_rec(log_level, pad_x + 2, assignment->rhs, file, line);
+                break;
+            }
             default:
                 left_child = get_left_child_const(curr_node);
+                nodes_log_tree_rec(log_level, pad_x + 2, left_child, file, line);
                 break;
         }
-        nodes_log_tree_rec(log_level, pad_x + 2, left_child, file, line);
     }
 }
 

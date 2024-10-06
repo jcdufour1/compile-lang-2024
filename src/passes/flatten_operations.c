@@ -54,9 +54,11 @@ bool flatten_operations(Node* curr_node) {
         if (assign_or_var_def->type == NODE_OPERATOR) {
             flatten_operation_if_nessessary(assign_or_var_def, assign_or_var_def);
         } else if (assign_or_var_def->type == NODE_ASSIGNMENT) {
-            Node* rhs = nodes_get_child(assign_or_var_def, 1);
+            Node* rhs = node_unwrap_assignment(assign_or_var_def)->rhs;
             if (rhs->type == NODE_OPERATOR) {
-                nodes_append_child(assign_or_var_def, node_wrap(move_operator_back(assign_or_var_def, node_unwrap_operator(rhs))));
+                node_unwrap_assignment(assign_or_var_def)->rhs = node_wrap(
+                    move_operator_back(assign_or_var_def, node_unwrap_operator(rhs))
+                );
             }
         } else if (assign_or_var_def->type == NODE_VARIABLE_DEFINITION) {
             if (assign_or_var_def->prev && assign_or_var_def->prev->type != NODE_VARIABLE_DEFINITION) {

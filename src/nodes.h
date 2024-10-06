@@ -107,7 +107,7 @@ static inline void set_left_child(Node* parent, Node* left_child) {
             node_unwrap_return_statement(parent)->child = left_child;
             return;
         case NODE_ASSIGNMENT:
-            node_unwrap_assignment(parent)->child = left_child;
+            unreachable("");
             return;
         case NODE_IF_STATEMENT:
             node_unwrap_if(parent)->child = left_child;
@@ -214,7 +214,7 @@ static inline Node* get_left_child(Node* node) {
         case NODE_RETURN_STATEMENT:
             return node_unwrap_return_statement(node)->child;
         case NODE_ASSIGNMENT:
-            return node_unwrap_assignment(node)->child;
+            unreachable("");
         case NODE_IF_STATEMENT:
             return node_unwrap_if(node)->child;
         case NODE_IF_CONDITION:
@@ -535,7 +535,6 @@ static inline void nodes_remove(Node* node_to_remove, bool keep_children) {
     Node* next = node_to_remove->next;
     Node* prev = node_to_remove->prev;
     Node* parent = node_to_remove->parent;
-    Node* left_child = get_left_child(node_to_remove);
 
     if (next) {
         next->prev = prev;
@@ -549,7 +548,7 @@ static inline void nodes_remove(Node* node_to_remove, bool keep_children) {
         set_left_child(parent, next);
     }
 
-    if (!keep_children && left_child) {
+    if (!keep_children && get_left_child(node_to_remove)) {
         unreachable("");
     }
 

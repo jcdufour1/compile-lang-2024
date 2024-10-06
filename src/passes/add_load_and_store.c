@@ -5,7 +5,7 @@
 
 #include "passes.h"
 
-static void insert_store_assignment(Node* node_to_insert_before, Node* assignment, bool is_for_struct_literal_member);
+static void insert_store_assignment(Node* node_to_insert_before, Node_assignment* assignment, bool is_for_struct_literal_member);
 
 static void do_struct_literal(Node_struct_literal* struct_literal) {
     Node* member = nodes_get_child(node_wrap(struct_literal), 0);
@@ -14,7 +14,7 @@ static void do_struct_literal(Node_struct_literal* struct_literal) {
         switch (member->type) {
             case NODE_ASSIGNMENT: {
                 Node* assignment = member;
-                insert_store_assignment(assignment, assignment, true);
+                insert_store_assignment(assignment, node_unwrap_assignment(assignment), true);
                 member = assignment->prev;
                 nodes_remove(assignment, true);
                 go_to_next = false;
@@ -201,11 +201,9 @@ static void add_load_foreach_arg(Node* node_insert_before, Node* function_call) 
     }
 }
 
-static void insert_store_assignment(Node* node_to_insert_before, Node* assignment, bool is_for_struct_literal_member) {
-    assert(assignment->type == NODE_ASSIGNMENT);
-
-    Node* lhs = nodes_get_child(assignment, 0);
-    Node* rhs = nodes_get_child(assignment, 1);
+static void insert_store_assignment(Node* node_to_insert_before, Node_assignment* assignment, bool is_for_struct_literal_member) {
+    Node* lhs = assignment->lhs;
+    Node* rhs = assignment->rhs;
     Node* rhs_load = NULL;
     Lang_type rhs_load_lang_type = {0};
 
@@ -295,8 +293,8 @@ static void insert_store_assignment(Node* node_to_insert_before, Node* assignmen
             generic_store = node_wrap(store);
         }
         //nodes_remove(rhs, true);
-        nodes_insert_after(assignment, generic_store);
-        nodes_insert_after(assignment, lhs);
+        nodes_insert_after(node_wrap(assignment), generic_store);
+        nodes_insert_after(node_wrap(assignment), lhs);
     } else {
         if (rhs->type == NODE_LITERAL) {
             Node_llvm_store_literal* store = node_unwrap_llvm_store_literal(node_new(rhs->pos, NODE_LLVM_STORE_LITERAL));
@@ -441,7 +439,7 @@ bool add_load_and_store(Node* start_start_node) {
                 break;
             case NODE_ASSIGNMENT: {
                 Node* assignment = curr_node;
-                insert_store_assignment(assignment, assignment, false);
+                insert_store_assignment(assignment, node_unwrap_assignment(assignment), false);
                 curr_node = assignment->prev;
                 nodes_remove(assignment, true);
                 go_to_prev = false;

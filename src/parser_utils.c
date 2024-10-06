@@ -103,8 +103,8 @@ Node_assignment* assignment_new(Node* lhs, Node* rhs) {
     nodes_remove(rhs, true);
 
     Node_assignment* assignment = node_unwrap_assignment(node_new(lhs->pos, NODE_ASSIGNMENT));
-    nodes_append_child(node_wrap(assignment), lhs);
-    nodes_append_child(node_wrap(assignment), rhs);
+    assignment->lhs = lhs;
+    assignment->rhs = rhs;
 
     set_assignment_operand_types(assignment);
     return assignment;
@@ -366,8 +366,8 @@ void set_struct_literal_assignment_types(Node* lhs, Node_struct_literal* struct_
 
         Node_variable_def* memb_sym_def = node_unwrap_variable_def(memb_sym_def_);
         Node_assignment* assign_memb_sym = node_unwrap_assignment(nodes_get_child(node_wrap(struct_literal), idx));
-        Node_symbol_untyped* memb_sym_untyped = node_unwrap_symbol_untyped(nodes_get_child(node_wrap(assign_memb_sym), 0));
-        Node_literal* assign_memb_sym_rhs = node_unwrap_literal(nodes_get_child(node_wrap(assign_memb_sym), 1));
+        Node_symbol_untyped* memb_sym_untyped = node_unwrap_symbol_untyped(assign_memb_sym->lhs);
+        Node_literal* assign_memb_sym_rhs = node_unwrap_literal(assign_memb_sym->rhs);
         if (!str_view_is_equal(memb_sym_def->name, memb_sym_untyped->name)) {
             todo();
             msg_invalid_struct_member_assignment_in_literal(
@@ -395,8 +395,8 @@ void set_struct_literal_assignment_types(Node* lhs, Node_struct_literal* struct_
 }
 
 bool set_assignment_operand_types(Node_assignment* assignment) {
-    Node* lhs = nodes_get_child(node_wrap(assignment), 0);
-    Node* rhs = nodes_get_child(node_wrap(assignment), 1);
+    Node* lhs = assignment->lhs;
+    Node* rhs = assignment->rhs;
 
     switch (lhs->type) {
         case NODE_SYMBOL_UNTYPED:

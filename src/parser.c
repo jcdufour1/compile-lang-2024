@@ -489,8 +489,8 @@ static Node_assignment* extract_assignment(Tk_view* tokens, Node* lhs) {
         try(tk_view_try_consume(&equal_token, tokens, TOKEN_SINGLE_EQUAL));
         assignment = node_unwrap_assignment(node_new(equal_token.pos, NODE_ASSIGNMENT));
     }
-    nodes_append_child(node_wrap(assignment), lhs);
-    nodes_append_child(node_wrap(assignment), extract_expression(tokens)); // rhs
+    assignment->lhs = lhs;
+    assignment->rhs = extract_expression(tokens);
 
     return assignment;
 }

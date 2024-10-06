@@ -19,6 +19,10 @@ bool walk_tree(Node* input_node, bool (callback)(Node* input_node)) {
             case NODE_FUNCTION_RETURN_TYPES:
                 walk_tree(node_wrap(node_unwrap_function_return_types(curr_node)->child), callback);
                 break;
+            case NODE_ASSIGNMENT:
+                walk_tree(node_wrap(node_unwrap_assignment(curr_node)->lhs), callback);
+                walk_tree(node_wrap(node_unwrap_assignment(curr_node)->rhs), callback);
+                break;
             default:
                 walk_tree(get_left_child(curr_node), callback);
                 break;
