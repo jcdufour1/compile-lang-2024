@@ -63,10 +63,10 @@ static Node_load_element_ptr* do_load_struct_element_ptr(Node* node_to_insert_be
 
 static void sym_typed_to_load_sym_rtn_value_sym(Node_symbol_typed* symbol, Node_load_another_node* node_src) {
     Node_symbol_typed temp = *symbol;
-    node_wrap(symbol)->type = NODE_LOAD_SYM_RETURN_VALUE_SYM;
-    Node_load_sym_return_val_sym* load_ref = node_unwrap_load_sym_return_val_sym(node_wrap(symbol));
+    node_wrap(symbol)->type = NODE_LLVM_REGISTER_SYM;
+    Node_llvm_register_sym* load_ref = node_unwrap_llvm_register_sym(node_wrap(symbol));
     load_ref->lang_type = temp.lang_type;
-    load_ref->node_src = node_src;
+    load_ref->node_src = node_wrap(node_src);
 }
 
 static Lang_type get_member_sym_piece_final_lang_type(const Node_struct_member_sym_typed* struct_memb_sym) {
@@ -84,10 +84,10 @@ static Lang_type get_member_sym_piece_final_lang_type(const Node_struct_member_s
 static void struct_memb_to_load_memb_rtn_val_sym(Node_struct_member_sym_typed* struct_memb, Node_load_another_node* node_src) {
     //Node_struct_member_sym_typed temp = *struct_memb;
     Lang_type lang_type_to_load = get_member_sym_piece_final_lang_type(struct_memb);
-    node_wrap(struct_memb)->type = NODE_LLVM_LOAD_STRUCT_MEMBER_SYM;
-    Node_llvm_load_struct_member_sym* load_ref = node_unwrap_llvm_load_struct_member_sym(node_wrap(struct_memb));
+    node_wrap(struct_memb)->type = NODE_LLVM_REGISTER_SYM;
+    Node_llvm_register_sym* load_ref = node_unwrap_llvm_register_sym(node_wrap(struct_memb));
     load_ref->lang_type = lang_type_to_load;
-    load_ref->node_src = node_src;
+    load_ref->node_src = node_wrap(node_src);
 }
 
 static Node_load_another_node* insert_load(Node* node_insert_load_before, Node* symbol_call) {
@@ -180,9 +180,7 @@ static void load_operator_operand(Node* node_insert_before, Node* operand) {
         case NODE_SYMBOL_TYPED:
             insert_load(node_insert_before, operand);
             break;
-        case NODE_OPERATOR_RETURN_VALUE_SYM:
-            break;
-        case NODE_FUNCTION_RETURN_VALUE_SYM:
+        case NODE_LLVM_REGISTER_SYM:
             break;
         default:
             unreachable(NODE_FMT"\n", node_print(operand));
@@ -241,17 +239,17 @@ static void insert_store_assignment(Node* node_to_insert_before, Node_assignment
         case NODE_SYMBOL_TYPED:
             rhs_load = node_wrap(insert_load(node_to_insert_before, rhs));
             assert(rhs_load);
-            rhs_load_lang_type = node_unwrap_load_sym_return_val_sym(rhs)->lang_type;
+            rhs_load_lang_type = node_unwrap_llvm_register_sym(rhs)->lang_type;
             break;
         case NODE_LITERAL:
             rhs_load_lang_type = node_unwrap_literal(rhs)->lang_type;
             break;
+        case NODE_LLVM_REGISTER_SYM:
+            rhs_load = node_unwrap_llvm_register_sym(rhs)->node_src;
+            rhs_load_lang_type = node_unwrap_llvm_register_sym(rhs)->lang_type;
+            break;
         case NODE_OPERATOR:
             unreachable("operator should not still be present");
-            break;
-        case NODE_OPERATOR_RETURN_VALUE_SYM:
-            rhs_load = node_unwrap_operator_rtn_val_sym(rhs)->node_src;
-            rhs_load_lang_type = node_unwrap_operator_rtn_val_sym(rhs)->lang_type;
             break;
         case NODE_FUNCTION_CALL:
             rhs_load = rhs;
@@ -345,12 +343,12 @@ static void add_load_return_statement(Node* return_statement) {
             return;
         case NODE_FUNCTION_CALL:
             // fallthrough
+        case NODE_LLVM_REGISTER_SYM:
+            // fallthrough
         case NODE_LITERAL:
             return;
         case NODE_OPERATOR:
             unreachable("operator should not still be the child of return statement at this point");
-        case NODE_OPERATOR_RETURN_VALUE_SYM:
-            break;
         default:
             unreachable(NODE_FMT"\n", node_print(node_to_return));
     }
@@ -484,7 +482,7 @@ bool add_load_and_store(Node* start_start_node, int recursion_depth) {
                 unreachable("if statement node should not still exist at this point\n");
             case NODE_STRUCT_MEMBER_SYM_TYPED:
                 break;
-            case NODE_OPERATOR_RETURN_VALUE_SYM:
+            case NODE_LLVM_REGISTER_SYM:
                 break;
             case NODE_STRUCT_DEFINITION:
                 break;

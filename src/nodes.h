@@ -124,12 +124,6 @@ static inline void set_left_child(Node* parent, Node* left_child) {
         case NODE_STRUCT_MEMBER_SYM_TYPED:
             node_unwrap_struct_member_sym_typed(parent)->child = left_child;
             return;
-        case NODE_OPERATOR_RETURN_VALUE_SYM:
-            node_unwrap_operator_rtn_val_sym(parent)->child = left_child;
-            return;
-        case NODE_FUNCTION_RETURN_VALUE_SYM:
-            node_unwrap_function_rtn_val_sym(parent)->child = left_child;
-            return;
         case NODE_COND_GOTO:
             node_unwrap_cond_goto(parent)->child = left_child;
             return;
@@ -222,10 +216,6 @@ static inline Node* get_left_child(Node* node) {
             return node_unwrap_struct_member_sym_untyped(node)->child;
         case NODE_STRUCT_MEMBER_SYM_TYPED:
             return node_unwrap_struct_member_sym_typed(node)->child;
-        case NODE_OPERATOR_RETURN_VALUE_SYM:
-            return node_unwrap_operator_rtn_val_sym(node)->child;
-        case NODE_FUNCTION_RETURN_VALUE_SYM:
-            return node_unwrap_function_rtn_val_sym(node)->child;
         case NODE_COND_GOTO:
             return node_unwrap_cond_goto(node)->child;
         case NODE_GOTO:
@@ -246,9 +236,7 @@ static inline Node* get_left_child(Node* node) {
             return node_unwrap_function_param_sym_const(node)->child;
         case NODE_PTR_BYVAL_SYM:
             return NULL;
-        case NODE_LOAD_SYM_RETURN_VALUE_SYM:
-            return NULL;
-        case NODE_LLVM_LOAD_STRUCT_MEMBER_SYM:
+        case NODE_LLVM_REGISTER_SYM:
             return NULL;
         default:
             unreachable(NODE_FMT, node_print(node));

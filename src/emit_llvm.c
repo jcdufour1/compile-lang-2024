@@ -161,15 +161,10 @@ static void emit_function_call_arguments(String* output, const Node_function_cal
                 string_extend_cstr(&a_main, output, " %");
                 string_extend_size_t(&a_main, output, get_llvm_id(node_unwrap_ptr_byval_sym(argument)->node_src));
                 break;
-            case NODE_LOAD_SYM_RETURN_VALUE_SYM:
+            case NODE_LLVM_REGISTER_SYM:
                 extend_type_call_str(output, get_lang_type(argument));
                 string_extend_cstr(&a_main, output, " %");
-                string_extend_size_t(&a_main, output, node_unwrap_load_sym_return_val_sym(argument)->node_src->llvm_id);
-                break;
-            case NODE_LLVM_LOAD_STRUCT_MEMBER_SYM:
-                extend_type_call_str(output, get_lang_type(argument));
-                string_extend_cstr(&a_main, output, " %");
-                string_extend_size_t(&a_main, output, node_unwrap_llvm_load_struct_member_sym(argument)->node_src->llvm_id);
+                string_extend_size_t(&a_main, output, get_llvm_id(node_unwrap_llvm_register_sym_const(argument)->node_src));
                 break;
             case NODE_FUNCTION_CALL:
                 unreachable(""); // this function call should be changed to assign to a variable 
@@ -247,15 +242,9 @@ static void emit_operator_operand(String* output, const Node* operand) {
             break;
         case NODE_SYMBOL_TYPED:
             unreachable("");
-        case NODE_FUNCTION_RETURN_VALUE_SYM:
-            // fallthrough
-        case NODE_OPERATOR_RETURN_VALUE_SYM:
+        case NODE_LLVM_REGISTER_SYM:
             string_extend_cstr(&a_main, output, "%");
-            string_extend_size_t(&a_main, output, get_llvm_id(get_node_src_const(operand)));
-            break;
-        case NODE_LOAD_SYM_RETURN_VALUE_SYM:
-            string_extend_cstr(&a_main, output, "%");
-            string_extend_size_t(&a_main, output, node_unwrap_load_sym_return_val_sym_const(operand)->node_src->llvm_id);
+            string_extend_size_t(&a_main, output, get_llvm_id(node_unwrap_llvm_register_sym_const(operand)->node_src));
             break;
         case NODE_SYMBOL_UNTYPED:
             unreachable("untyped symbols should not still be present");
@@ -370,33 +359,16 @@ static void emit_return_statement(String* output, const Node_return_statement* f
         }
         case NODE_SYMBOL_TYPED:
            unreachable("");
-        case NODE_OPERATOR_RETURN_VALUE_SYM: {
-            string_extend_cstr(&a_main, output, "    ret ");
-            extend_type_call_str(output, get_lang_type(sym_to_return));
-            string_extend_cstr(&a_main, output, " %");
-            string_extend_size_t(&a_main, output, get_llvm_id(get_node_src_const(sym_to_return)));
-            string_extend_cstr(&a_main, output, "\n");
-            break;
-        }
         case NODE_STRUCT_MEMBER_SYM_TYPED:
              unreachable("");
         case NODE_SYMBOL_UNTYPED:
             unreachable("untyped symbols should not still be present");
-        case NODE_LOAD_SYM_RETURN_VALUE_SYM: {
-            const Node_load_sym_return_val_sym* memb_sym = node_unwrap_load_sym_return_val_sym_const(sym_to_return);
+        case NODE_LLVM_REGISTER_SYM: {
+            const Node_llvm_register_sym* memb_sym = node_unwrap_llvm_register_sym_const(sym_to_return);
             string_extend_cstr(&a_main, output, "    ret ");
             extend_type_call_str(output, memb_sym->lang_type);
             string_extend_cstr(&a_main, output, " %");
-            string_extend_size_t(&a_main, output, memb_sym->node_src->llvm_id);
-            string_extend_cstr(&a_main, output, "\n");
-            break;
-        }
-        case NODE_LLVM_LOAD_STRUCT_MEMBER_SYM: {
-            const Node_llvm_load_struct_member_sym* memb_sym = node_unwrap_llvm_load_struct_member_sym_const(sym_to_return);
-            string_extend_cstr(&a_main, output, "    ret ");
-            extend_type_call_str(output, memb_sym->lang_type);
-            string_extend_cstr(&a_main, output, " %");
-            string_extend_size_t(&a_main, output, memb_sym->node_src->llvm_id);
+            string_extend_size_t(&a_main, output, get_llvm_id(memb_sym->node_src));
             string_extend_cstr(&a_main, output, "\n");
             break;
         }
@@ -433,7 +405,7 @@ static void emit_cond_goto(String* output, const Node_cond_goto* cond_goto) {
     const Node* label_if_false = nodes_get_child_const(node_wrap(cond_goto), 2);
 
     const Node* llvm_cmp_dest = 
-        node_unwrap_operator_rtn_val_sym_const(nodes_get_child_of_type_const(node_wrap(cond_goto), NODE_OPERATOR_RETURN_VALUE_SYM))->node_src;
+        node_unwrap_llvm_register_sym_const(nodes_get_child_of_type_const(node_wrap(cond_goto), NODE_LLVM_REGISTER_SYM))->node_src;
 
     string_extend_cstr(&a_main, output, "    br i1 %");
     string_extend_size_t(&a_main, output, get_llvm_id(llvm_cmp_dest));

@@ -89,14 +89,6 @@ bool assign_llvm_ids(Node* curr_node) {
             node_unwrap_label(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
             return false;
-        case NODE_FUNCTION_RETURN_VALUE_SYM:
-            node_unwrap_function_rtn_val_sym(curr_node)->llvm_id = llvm_id_for_next_var;
-            llvm_id_for_next_var += 2;
-            return false;
-        case NODE_OPERATOR_RETURN_VALUE_SYM:
-            node_unwrap_operator_rtn_val_sym(curr_node)->llvm_id = llvm_id_for_next_var;
-            llvm_id_for_next_var += 2;
-            return false;
         case NODE_STORE_VARIABLE:
             unreachable("");
         case NODE_LLVM_STORE_LITERAL:
@@ -115,12 +107,8 @@ bool assign_llvm_ids(Node* curr_node) {
             node_unwrap_ptr_byval_sym(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
             return false;
-        case NODE_LOAD_SYM_RETURN_VALUE_SYM:
-            node_unwrap_load_sym_return_val_sym(curr_node)->llvm_id = llvm_id_for_next_var;
-            llvm_id_for_next_var += 2;
-            return false;
-        case NODE_LLVM_LOAD_STRUCT_MEMBER_SYM:
-            node_unwrap_llvm_load_struct_member_sym(curr_node)->llvm_id = llvm_id_for_next_var;
+        case NODE_LLVM_REGISTER_SYM:
+            node_unwrap_llvm_register_sym(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
             return false;
         default:

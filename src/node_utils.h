@@ -79,10 +79,6 @@ static inline Llvm_id get_llvm_id(const Node* node) {
             unreachable("");
         case NODE_LOAD_STRUCT_ELEMENT_PTR:
             return node_unwrap_load_elem_ptr_const(node)->llvm_id;
-        case NODE_FUNCTION_RETURN_VALUE_SYM:
-            unreachable("");
-        case NODE_OPERATOR_RETURN_VALUE_SYM:
-            unreachable("");
         case NODE_LLVM_STORE_LITERAL:
             unreachable("");
         default:
@@ -168,18 +164,12 @@ static inline Lang_type get_lang_type(const Node* node) {
             return node_unwrap_store_another_node_const(node)->lang_type;
         case NODE_LOAD_STRUCT_ELEMENT_PTR:
             return node_unwrap_load_elem_ptr_const(node)->lang_type;
-        case NODE_FUNCTION_RETURN_VALUE_SYM:
-            return node_unwrap_function_rtn_val_sym_const(node)->lang_type;
-        case NODE_OPERATOR_RETURN_VALUE_SYM:
-            return node_unwrap_operator_rtn_val_sym_const(node)->lang_type;
         case NODE_LLVM_STORE_LITERAL:
             return node_unwrap_llvm_store_literal_const(node)->lang_type;
-        case NODE_LOAD_SYM_RETURN_VALUE_SYM:
-            return node_unwrap_load_sym_return_val_sym_const(node)->lang_type;
         case NODE_PTR_BYVAL_SYM:
             return node_unwrap_ptr_byval_sym_const(node)->lang_type;
-        case NODE_LLVM_LOAD_STRUCT_MEMBER_SYM:
-            return node_unwrap_llvm_load_struct_member_sym_const(node)->lang_type;
+        case NODE_LLVM_REGISTER_SYM:
+            return node_unwrap_llvm_register_sym_const(node)->lang_type;
         default:
             unreachable(""); // we cannot print node_type because it will cause infinite recursion
     }
@@ -263,18 +253,12 @@ static inline Node* get_node_src(Node* node) {
             return node_unwrap_store_another_node_const(node)->node_src;
         case NODE_LOAD_STRUCT_ELEMENT_PTR:
             return node_unwrap_load_elem_ptr_const(node)->node_src;
-        case NODE_FUNCTION_RETURN_VALUE_SYM:
-            return node_unwrap_function_rtn_val_sym_const(node)->node_src;
-        case NODE_OPERATOR_RETURN_VALUE_SYM:
-            return node_unwrap_operator_rtn_val_sym_const(node)->node_src;
         case NODE_LLVM_STORE_LITERAL:
             unreachable("");
-        case NODE_LOAD_SYM_RETURN_VALUE_SYM:
-            return node_wrap(node_unwrap_load_sym_return_val_sym(node)->node_src);
         case NODE_PTR_BYVAL_SYM:
             return node_unwrap_ptr_byval_sym(node)->node_src;
-        case NODE_LLVM_LOAD_STRUCT_MEMBER_SYM:
-            return node_wrap(node_unwrap_llvm_load_struct_member_sym(node)->node_src);
+        case NODE_LLVM_REGISTER_SYM:
+            return node_unwrap_llvm_register_sym_const(node)->node_src;
         default:
             unreachable(""); // we cannot print node_type because it will cause infinite recursion
     }
@@ -358,10 +342,6 @@ static inline Node* get_node_dest(Node* node) {
             return node_unwrap_store_another_node_const(node)->node_dest;
         case NODE_LOAD_STRUCT_ELEMENT_PTR:
             return node_unwrap_load_elem_ptr_const(node)->node_dest;
-        case NODE_FUNCTION_RETURN_VALUE_SYM:
-            return node_unwrap_function_rtn_val_sym_const(node)->node_dest;
-        case NODE_OPERATOR_RETURN_VALUE_SYM:
-            return node_unwrap_operator_rtn_val_sym_const(node)->node_dest;
         case NODE_LLVM_STORE_LITERAL:
             return node_unwrap_llvm_store_literal_const(node)->node_dest;
         default:
@@ -447,10 +427,6 @@ static inline Str_view get_node_name(const Node* node) {
             unreachable("");
         case NODE_LOAD_STRUCT_ELEMENT_PTR:
             return node_unwrap_load_elem_ptr_const(node)->name;
-        case NODE_FUNCTION_RETURN_VALUE_SYM:
-            unreachable("");
-        case NODE_OPERATOR_RETURN_VALUE_SYM:
-            return node_unwrap_operator_rtn_val_sym_const(node)->name;
         case NODE_LLVM_STORE_LITERAL:
             return node_unwrap_llvm_store_literal_const(node)->name;
         default:

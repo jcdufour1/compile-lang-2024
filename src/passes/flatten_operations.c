@@ -6,12 +6,12 @@
 // returns operand or operand symbol
 static Node* flatten_operation_operand(Node* node_to_insert_before, Node* operand) {
     if (operand->type == NODE_OPERATOR) {
-        Node* operator_sym = node_new(operand->pos, NODE_OPERATOR_RETURN_VALUE_SYM);
+        Node* operator_sym = node_new(operand->pos, NODE_LLVM_REGISTER_SYM);
         nodes_insert_before(node_to_insert_before, operand);
-        node_unwrap_operator_rtn_val_sym(operator_sym)->node_src = operand;
+        node_unwrap_llvm_register_sym(operator_sym)->node_src = operand;
         return operator_sym;
     } else if (operand->type == NODE_FUNCTION_CALL) {
-        Node_function_rtn_val_sym* fun_sym = node_unwrap_function_rtn_val_sym(node_new(operand->pos, NODE_FUNCTION_RETURN_VALUE_SYM));
+        Node_llvm_register_sym* fun_sym = node_unwrap_llvm_register_sym(node_new(operand->pos, NODE_LLVM_REGISTER_SYM));
         nodes_insert_before(node_to_insert_before, operand);
         fun_sym->node_src = operand;
         return node_wrap(fun_sym);
@@ -31,10 +31,10 @@ static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* o
 }
 
 // operator symbol is returned
-static Node_operator_rtn_val_sym* move_operator_back(Node* node_to_insert_before, Node_operator* operation) {
+static Node_llvm_register_sym* move_operator_back(Node* node_to_insert_before, Node_operator* operation) {
     nodes_remove(node_wrap(operation), true);
 
-    Node_operator_rtn_val_sym* operator_sym = node_unwrap_operator_rtn_val_sym(node_new(node_wrap(operation)->pos, NODE_OPERATOR_RETURN_VALUE_SYM));
+    Node_llvm_register_sym* operator_sym = node_unwrap_llvm_register_sym(node_new(node_wrap(operation)->pos, NODE_LLVM_REGISTER_SYM));
     operator_sym->node_src = node_wrap(operation);
     try(try_set_operator_lang_type(operation));
     operator_sym->lang_type = operation->lang_type;

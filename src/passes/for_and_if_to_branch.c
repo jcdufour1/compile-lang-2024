@@ -16,7 +16,7 @@ static Node_goto* goto_new(Str_view name_label_to_jmp_to, Pos pos) {
 }
 
 static Node_cond_goto* conditional_goto_new(
-    Node_operator_rtn_val_sym* oper_rtn_sym,
+    Node_llvm_register_sym* oper_rtn_sym,
     Str_view label_name_if_true,
     Str_view label_name_if_false
 ) {
@@ -108,7 +108,7 @@ static void for_loop_to_branch(Node_for_loop* for_loop) {
     Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label->name, node_wrap(for_loop)->pos);
     Node_label* after_check_label = label_new(literal_name_new(), node_wrap(for_loop)->pos);
     Node_label* after_for_loop_label = label_new(literal_name_new(), node_wrap(for_loop)->pos);
-    Node_operator_rtn_val_sym* oper_rtn_sym = node_unwrap_operator_rtn_val_sym(node_new(node_wrap(new_operation)->pos, NODE_OPERATOR_RETURN_VALUE_SYM));
+    Node_llvm_register_sym* oper_rtn_sym = node_unwrap_llvm_register_sym(node_new(node_wrap(new_operation)->pos, NODE_LLVM_REGISTER_SYM));
     oper_rtn_sym->node_src = node_wrap(new_operation);
     Node_cond_goto* check_cond_jmp = conditional_goto_new(
         oper_rtn_sym,
@@ -141,7 +141,7 @@ static void if_statement_to_branch(Node_if* if_statement) {
 
     Node_operator* operation = node_unwrap_operator(nodes_single_child(node_wrap(if_condition)));
     nodes_remove(node_wrap(operation), true);
-    Node_operator_rtn_val_sym* oper_rtn_sym = node_unwrap_operator_rtn_val_sym(node_new(node_wrap(operation)->pos, NODE_OPERATOR_RETURN_VALUE_SYM));
+    Node_llvm_register_sym* oper_rtn_sym = node_unwrap_llvm_register_sym(node_new(node_wrap(operation)->pos, NODE_LLVM_REGISTER_SYM));
     oper_rtn_sym->node_src = node_wrap(operation);
 
     Node_label* if_true = label_new(literal_name_new(), node_wrap(block)->pos);

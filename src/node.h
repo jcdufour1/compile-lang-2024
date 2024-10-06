@@ -48,12 +48,9 @@ typedef enum {
     NODE_LOAD_ANOTHER_NODE,
     NODE_STORE_ANOTHER_NODE,
     NODE_LOAD_STRUCT_ELEMENT_PTR,
-    NODE_FUNCTION_RETURN_VALUE_SYM,
-    NODE_OPERATOR_RETURN_VALUE_SYM,
-    NODE_LOAD_SYM_RETURN_VALUE_SYM,
     NODE_PTR_BYVAL_SYM,
     NODE_LLVM_STORE_LITERAL,
-    NODE_LLVM_LOAD_STRUCT_MEMBER_SYM,
+    NODE_LLVM_REGISTER_SYM,
 } NODE_TYPE;
 
 typedef size_t Llvm_id;
@@ -243,23 +240,6 @@ typedef struct {
 
 typedef struct {
     struct Node_* child;
-    struct Node_* node_dest;
-    struct Node_* node_src;
-    Llvm_id llvm_id;
-    Lang_type lang_type;
-    Str_view name;
-} Node_operator_rtn_val_sym;
-
-typedef struct {
-    struct Node_* child;
-    struct Node_* node_src;
-    struct Node_* node_dest;
-    Llvm_id llvm_id;
-    Lang_type lang_type;
-} Node_function_rtn_val_sym;
-
-typedef struct {
-    struct Node_* child;
     struct Node_* node_src;
     struct Node_* node_dest;
     Llvm_id llvm_id;
@@ -274,6 +254,12 @@ typedef struct {
     Llvm_id llvm_id;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 } Node_store_another_node;
+
+typedef struct {
+    Lang_type lang_type;
+    struct Node_* node_src;
+    Llvm_id llvm_id;
+} Node_llvm_register_sym;
 
 typedef struct {
     Node_literal* child;
@@ -317,21 +303,9 @@ typedef struct {
 
 typedef struct {
     Lang_type lang_type;
-    Node_load_another_node* node_src;
-    Llvm_id llvm_id;
-} Node_load_sym_return_val_sym;
-
-typedef struct {
-    Lang_type lang_type;
     struct Node_* node_src;
     Llvm_id llvm_id;
 } Node_ptr_byval_sym;
-
-typedef struct {
-    Lang_type lang_type;
-    Node_load_another_node* node_src;
-    Llvm_id llvm_id;
-} Node_llvm_load_struct_member_sym;
 
 typedef union {
     Node_function_param_sym node_function_param_sym;
@@ -342,8 +316,6 @@ typedef union {
     Node_llvm_store_literal node_llvm_store_literal;
     Node_store_another_node node_store_another_node;
     Node_load_another_node node_load_another_node;
-    Node_function_rtn_val_sym node_function_rtn_val_sym;
-    Node_operator_rtn_val_sym node_operator_rtn_val_sym;
     Node_alloca node_alloca;
     Node_struct_member_sym_typed node_struct_member_sym_typed;
     Node_struct_member_sym_untyped node_struct_member_sym_untyped;
@@ -377,9 +349,8 @@ typedef union {
     Lang_type lang_type;
     Node_struct_member_sym_piece_untyped memb_sym_piece_untyped;
     Node_struct_member_sym_piece_typed memb_sym_piece_typed;
-    Node_load_sym_return_val_sym node_load_sym_return_val_sym;
     Node_ptr_byval_sym node_ptr_byval_sym;
-    Node_llvm_load_struct_member_sym node_llvm_load_struct_member_sym;
+    Node_llvm_register_sym node_llvm_register_sym;
 } Node_as;
 
 typedef struct Node_ {
@@ -683,26 +654,6 @@ static inline const Node_struct_member_sym_typed* node_unwrap_struct_member_sym_
     return &node->as.node_struct_member_sym_typed;
 }
 
-static inline Node_operator_rtn_val_sym* node_unwrap_operator_rtn_val_sym(Node* node) {
-    assert(node->type == NODE_OPERATOR_RETURN_VALUE_SYM);
-    return &node->as.node_operator_rtn_val_sym;
-}
-
-static inline const Node_operator_rtn_val_sym* node_unwrap_operator_rtn_val_sym_const(const Node* node) {
-    assert(node->type == NODE_OPERATOR_RETURN_VALUE_SYM);
-    return &node->as.node_operator_rtn_val_sym;
-}
-
-static inline Node_function_rtn_val_sym* node_unwrap_function_rtn_val_sym(Node* node) {
-    assert(node->type == NODE_FUNCTION_RETURN_VALUE_SYM);
-    return &node->as.node_function_rtn_val_sym;
-}
-
-static inline const Node_function_rtn_val_sym* node_unwrap_function_rtn_val_sym_const(const Node* node) {
-    assert(node->type == NODE_FUNCTION_RETURN_VALUE_SYM);
-    return &node->as.node_function_rtn_val_sym;
-}
-
 static inline Node_cond_goto* node_unwrap_cond_goto(Node* node) {
     assert(node->type == NODE_COND_GOTO);
     return &node->as.node_cond_goto;
@@ -793,16 +744,6 @@ static inline const Node_function_param_sym* node_unwrap_function_param_sym_cons
     return &node->as.node_function_param_sym;
 }
 
-static inline Node_load_sym_return_val_sym* node_unwrap_load_sym_return_val_sym(Node* node) {
-    assert(node->type == NODE_LOAD_SYM_RETURN_VALUE_SYM);
-    return &node->as.node_load_sym_return_val_sym;
-}
-
-static inline const Node_load_sym_return_val_sym* node_unwrap_load_sym_return_val_sym_const(const Node* node) {
-    assert(node->type == NODE_LOAD_SYM_RETURN_VALUE_SYM);
-    return &node->as.node_load_sym_return_val_sym;
-}
-
 static inline Node_ptr_byval_sym* node_unwrap_ptr_byval_sym(Node* node) {
     assert(node->type == NODE_PTR_BYVAL_SYM);
     return &node->as.node_ptr_byval_sym;
@@ -813,14 +754,14 @@ static inline const Node_ptr_byval_sym* node_unwrap_ptr_byval_sym_const(const No
     return &node->as.node_ptr_byval_sym;
 }
 
-static inline Node_llvm_load_struct_member_sym* node_unwrap_llvm_load_struct_member_sym(Node* node) {
-    assert(node->type == NODE_LLVM_LOAD_STRUCT_MEMBER_SYM);
-    return &node->as.node_llvm_load_struct_member_sym;
+static inline Node_llvm_register_sym* node_unwrap_llvm_register_sym(Node* node) {
+    assert(node->type == NODE_LLVM_REGISTER_SYM);
+    return &node->as.node_llvm_register_sym;
 }
 
-static inline const Node_llvm_load_struct_member_sym* node_unwrap_llvm_load_struct_member_sym_const(const Node* node) {
-    assert(node->type == NODE_LLVM_LOAD_STRUCT_MEMBER_SYM);
-    return &node->as.node_llvm_load_struct_member_sym;
+static inline const Node_llvm_register_sym* node_unwrap_llvm_register_sym_const(const Node* node) {
+    assert(node->type == NODE_LLVM_REGISTER_SYM);
+    return &node->as.node_llvm_register_sym;
 }
 
 #define node_wrap(node) ((Node*)node)
