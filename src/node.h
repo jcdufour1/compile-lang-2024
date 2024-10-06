@@ -52,7 +52,6 @@ typedef enum {
     NODE_OPERATOR_RETURN_VALUE_SYM,
     NODE_LOAD_SYM_RETURN_VALUE_SYM,
     NODE_PTR_BYVAL_SYM,
-    NODE_LLVM_SYMBOL,
     NODE_LLVM_STORE_LITERAL,
     NODE_LLVM_LOAD_STRUCT_MEMBER_SYM,
 } NODE_TYPE;
@@ -297,13 +296,6 @@ typedef struct {
 
 typedef struct {
     struct Node_* child;
-    Llvm_id llvm_id;
-    struct Node_* node_src;
-} Node_llvm_symbol;
-
-typedef struct {
-    struct Node_* child;
-    Llvm_id llvm_id;
     Lang_type lang_type;
     Str_view name;
 } Node_store_variable;
@@ -345,7 +337,6 @@ typedef union {
     Node_function_param_sym node_function_param_sym;
     Node_llvm_store_struct_literal node_llvm_store_struct_literal;
     Node_store_variable node_store_variable;
-    Node_llvm_symbol node_llvm_symbol;
     Node_cond_goto node_cond_goto;
     Node_goto node_goto;
     Node_llvm_store_literal node_llvm_store_literal;
@@ -770,16 +761,6 @@ static inline const Node_store_another_node* node_unwrap_store_another_node_cons
 static inline Node_store_another_node* node_unwrap_store_another_node(Node* node) {
     assert(node->type == NODE_STORE_ANOTHER_NODE);
     return &node->as.node_store_another_node;
-}
-
-static inline const Node_llvm_symbol* node_unwrap_llvm_symbol_const(const Node* node) {
-    assert(node->type == NODE_LLVM_SYMBOL);
-    return &node->as.node_llvm_symbol;
-}
-
-static inline Node_llvm_symbol* node_unwrap_llvm_symbol(Node* node) {
-    assert(node->type == NODE_LLVM_SYMBOL);
-    return &node->as.node_llvm_symbol;
 }
 
 static inline const Node_store_variable* node_unwrap_store_variable_const(const Node* node) {

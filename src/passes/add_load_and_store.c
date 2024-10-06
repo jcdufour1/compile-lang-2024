@@ -130,7 +130,6 @@ static Node_load_another_node* insert_load(Node* node_insert_load_before, Node* 
             default:
                 unreachable(NODE_FMT, node_print(symbol_call));
         }
-        //symbol_call->node_src = load; // TODO: place this in switch
         nodes_insert_before(node_insert_load_before, node_wrap(load));
         return load;
     }
@@ -167,28 +166,7 @@ static void insert_store(Node* node_insert_store_before, Node* symbol_call /* sr
         //symbol_call->node_to_load = store;
         nodes_append_child(node_wrap(store), symbol_call);
         nodes_insert_before(node_insert_store_before, node_wrap(store));
-
-        switch (symbol_call->type) {
-            case NODE_SYMBOL_TYPED:
-                symbol_call->type = NODE_LLVM_SYMBOL;
-                node_unwrap_llvm_symbol(symbol_call)->node_src = get_storage_location(symbol_call);
-                // fallthrough
-            case NODE_VARIABLE_DEFINITION:
-                //todo();
-                break;
-            case NODE_FUNCTION_PARAM_SYM:
-                //todo();
-                break;
-            default:
-                node_printf(symbol_call);
-                todo();
-        }
     }
-    //Node* store = node_new();
-    //store->type = NODE_STORE;
-    //store->name = symbol_call->name;
-    //nodes_append_child(store, symbol_call);
-    //nodes_insert_before(node_insert_store_before, store);
 }
 
 static void load_operator_operand(Node* node_insert_before, Node* operand) {

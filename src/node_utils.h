@@ -83,8 +83,6 @@ static inline Llvm_id get_llvm_id(const Node* node) {
             unreachable("");
         case NODE_OPERATOR_RETURN_VALUE_SYM:
             unreachable("");
-        case NODE_LLVM_SYMBOL:
-            unreachable("");
         case NODE_LLVM_STORE_LITERAL:
             unreachable("");
         default:
@@ -174,8 +172,6 @@ static inline Lang_type get_lang_type(const Node* node) {
             return node_unwrap_function_rtn_val_sym_const(node)->lang_type;
         case NODE_OPERATOR_RETURN_VALUE_SYM:
             return node_unwrap_operator_rtn_val_sym_const(node)->lang_type;
-        case NODE_LLVM_SYMBOL:
-            unreachable("");
         case NODE_LLVM_STORE_LITERAL:
             return node_unwrap_llvm_store_literal_const(node)->lang_type;
         case NODE_LOAD_SYM_RETURN_VALUE_SYM:
@@ -271,8 +267,6 @@ static inline Node* get_node_src(Node* node) {
             return node_unwrap_function_rtn_val_sym_const(node)->node_src;
         case NODE_OPERATOR_RETURN_VALUE_SYM:
             return node_unwrap_operator_rtn_val_sym_const(node)->node_src;
-        case NODE_LLVM_SYMBOL:
-            unreachable("");
         case NODE_LLVM_STORE_LITERAL:
             unreachable("");
         case NODE_LOAD_SYM_RETURN_VALUE_SYM:
@@ -368,8 +362,6 @@ static inline Node* get_node_dest(Node* node) {
             return node_unwrap_function_rtn_val_sym_const(node)->node_dest;
         case NODE_OPERATOR_RETURN_VALUE_SYM:
             return node_unwrap_operator_rtn_val_sym_const(node)->node_dest;
-        case NODE_LLVM_SYMBOL:
-            unreachable("");
         case NODE_LLVM_STORE_LITERAL:
             return node_unwrap_llvm_store_literal_const(node)->node_dest;
         default:
@@ -459,8 +451,6 @@ static inline Str_view get_node_name(const Node* node) {
             unreachable("");
         case NODE_OPERATOR_RETURN_VALUE_SYM:
             return node_unwrap_operator_rtn_val_sym_const(node)->name;
-        case NODE_LLVM_SYMBOL:
-            unreachable("");
         case NODE_LLVM_STORE_LITERAL:
             return node_unwrap_llvm_store_literal_const(node)->name;
         default:

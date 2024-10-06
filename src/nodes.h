@@ -148,9 +148,6 @@ static inline void set_left_child(Node* parent, Node* left_child) {
         case NODE_STORE_ANOTHER_NODE:
             node_unwrap_store_another_node(parent)->child = left_child;
             return;
-        case NODE_LLVM_SYMBOL:
-            node_unwrap_llvm_symbol(parent)->child = left_child;
-            return;
         case NODE_STORE_VARIABLE:
             node_unwrap_store_variable(parent)->child = left_child;
             return;
@@ -241,8 +238,6 @@ static inline Node* get_left_child(Node* node) {
             return node_unwrap_load_another_node(node)->child;
         case NODE_STORE_ANOTHER_NODE:
             return node_unwrap_store_another_node(node)->child;
-        case NODE_LLVM_SYMBOL:
-            return node_unwrap_llvm_symbol(node)->child;
         case NODE_STORE_VARIABLE:
             return node_unwrap_store_variable(node)->child;
         case NODE_LLVM_STORE_STRUCT_LITERAL:

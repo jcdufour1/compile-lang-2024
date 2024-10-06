@@ -98,9 +98,7 @@ bool assign_llvm_ids(Node* curr_node) {
             llvm_id_for_next_var += 2;
             return false;
         case NODE_STORE_VARIABLE:
-            node_unwrap_store_variable(curr_node)->llvm_id = llvm_id_for_next_var;
-            llvm_id_for_next_var += 2;
-            return false;
+            unreachable("");
         case NODE_LLVM_STORE_LITERAL:
             node_unwrap_llvm_store_literal(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
