@@ -91,7 +91,7 @@ static inline void set_left_child(Node* parent, Node* left_child) {
             node_unwrap_for_loop(parent)->child = left_child;
             return;
         case NODE_FOR_VARIABLE_DEF:
-            node_unwrap_for_variable_def(parent)->child = left_child;
+            unreachable("");
             return;
         case NODE_FOR_LOWER_BOUND:
             node_unwrap_for_lower_bound(parent)->child = left_child;
@@ -188,7 +188,7 @@ static inline Node* get_left_child(Node* node) {
         case NODE_FOR_LOOP:
             return node_unwrap_for_loop(node)->child;
         case NODE_FOR_VARIABLE_DEF:
-            return node_unwrap_for_variable_def(node)->child;
+            return node_wrap(node_unwrap_for_variable_def(node)->child);
         case NODE_FOR_LOWER_BOUND:
             return node_unwrap_for_lower_bound(node)->child;
         case NODE_FOR_UPPER_BOUND:

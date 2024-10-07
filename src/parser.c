@@ -256,7 +256,7 @@ static Node_for_loop* extract_for_loop(Tk_view* tokens) {
 
     Node_variable_def* var_def_child = extract_variable_declaration(tokens, false);
     Node_for_variable_def* var_def = node_unwrap_for_variable_def(node_new(node_wrap(var_def_child)->pos, NODE_FOR_VARIABLE_DEF));
-    nodes_append_child(node_wrap(var_def), node_wrap(var_def_child));
+    var_def->child = var_def_child;
     nodes_append_child(node_wrap(for_loop), node_wrap(var_def));
     try(tk_view_try_consume_symbol(NULL, tokens, "in"));
 

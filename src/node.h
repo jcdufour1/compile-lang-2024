@@ -131,7 +131,7 @@ typedef struct {
 } Node_variable_def;
 
 typedef struct {
-    struct Node_* child;
+    Node_variable_def* child;
 } Node_for_variable_def;
 
 typedef struct {
