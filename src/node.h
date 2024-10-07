@@ -202,7 +202,6 @@ typedef struct {
 typedef struct {
     struct Node_* lhs;
     struct Node_* rhs;
-    Llvm_id llvm_id;
 } Node_assignment;
 
 typedef struct {
@@ -220,7 +219,6 @@ typedef struct {
 typedef struct {
     struct Node_* child;
     Str_view name;
-    Llvm_id llvm_id;
     Lang_type lang_type;
 } Node_struct_member_sym_untyped;
 
@@ -232,25 +230,20 @@ typedef struct {
 } Node_struct_member_sym_typed;
 
 typedef struct {
-    struct Node_* child;
     Llvm_id llvm_id;
     Lang_type lang_type;
     Str_view name;
 } Node_alloca;
 
 typedef struct {
-    struct Node_* child;
     struct Node_* node_src;
-    struct Node_* node_dest;
     Llvm_id llvm_id;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 } Node_load_another_node;
 
 typedef struct {
-    struct Node_* child;
     struct Node_* node_src;
     struct Node_* node_dest;
-    struct Node_* storage_location;
     Llvm_id llvm_id;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 } Node_store_another_node;

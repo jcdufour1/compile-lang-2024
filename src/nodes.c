@@ -350,7 +350,6 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
         case NODE_LOAD_ANOTHER_NODE:
             extend_lang_type_to_string(arena, string, get_lang_type(node), true);
             print_node_src(arena, string, node, do_recursion);
-            print_node_dest(arena, string, node, do_recursion);
             break;
         case NODE_STORE_ANOTHER_NODE:
             extend_lang_type_to_string(arena, string, get_lang_type(node), true);

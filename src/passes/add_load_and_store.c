@@ -162,9 +162,6 @@ static void insert_store(Node* node_insert_store_before, Node* symbol_call /* sr
         store->node_dest = get_storage_location(symbol_call);
         assert(store->node_src);
         assert(store->node_dest);
-        store->storage_location = get_storage_location(symbol_call);
-        //symbol_call->node_to_load = store;
-        nodes_append_child(node_wrap(store), symbol_call);
         nodes_insert_before(node_insert_store_before, node_wrap(store));
     }
 }
