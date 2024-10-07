@@ -102,25 +102,22 @@ static inline bool sym_tbl_is_equal(Str_view a, Str_view b) {
 }
 
 // return false if symbol is not found
-static inline bool sym_tbl_lookup(
-    Node** result,
-    Str_view key
-) {
+static inline bool sym_tbl_lookup_internal(Symbol_table_node** result, Str_view key) {
     assert(key.count > 0);
     size_t curr_table_idx = sym_tbl_calculate_idx(key, symbol_table.capacity);
     size_t init_table_idx = curr_table_idx; 
 
     while (1) {
-        Symbol_table_node curr_node = symbol_table.table_nodes[curr_table_idx];
+        Symbol_table_node* curr_node = &symbol_table.table_nodes[curr_table_idx];
 
-        if (curr_node.status == SYM_TBL_OCCUPIED) {
-            if (sym_tbl_is_equal(curr_node.key, key)) {
-                *result = curr_node.node;
+        if (curr_node->status == SYM_TBL_OCCUPIED) {
+            if (sym_tbl_is_equal(curr_node->key, key)) {
+                *result = curr_node;
                 return true;
             }
         }
 
-        if (curr_node.status == SYM_TBL_NEVER_OCCUPIED) {
+        if (curr_node->status == SYM_TBL_NEVER_OCCUPIED) {
             return false;
         }
 
@@ -133,16 +130,32 @@ static inline bool sym_tbl_lookup(
     unreachable("");
 }
 
+static inline bool sym_tbl_lookup(Node** result, Str_view key) {
+    Symbol_table_node* sym_node;
+    if (!sym_tbl_lookup_internal(&sym_node, key)) {
+        return false;
+    }
+    *result = sym_node->node;
+    return true;
+}
+
 // returns false if symbol has already been added to the table
-static inline bool sym_tbl_add(
-    Node* node_of_symbol
-) {
+static inline bool sym_tbl_add(Node* node_of_symbol) {
     sym_tbl_expand_if_nessessary();
     if (!sym_tbl_add_internal(symbol_table.table_nodes, symbol_table.capacity, node_of_symbol)) {
         return false;
     }
     symbol_table.count++;
     return true;
+}
+
+static inline void sym_tbl_update(Node* node_of_symbol) {
+    Symbol_table_node* sym_node;
+    if (sym_tbl_lookup_internal(&sym_node, get_node_name(node_of_symbol))) {
+        sym_node->node = node_of_symbol;
+        return;
+    }
+    try(sym_tbl_add(node_of_symbol));
 }
 
 #define SYM_TBL_STATUS_FMT "%s"
