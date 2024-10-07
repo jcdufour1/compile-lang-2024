@@ -108,7 +108,8 @@ typedef struct {
 } Node_lang_type;
 
 typedef struct {
-    struct Node_* child;
+    struct Node_* lhs;
+    struct Node_* rhs;
     TOKEN_TYPE token_type;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Llvm_id llvm_id;

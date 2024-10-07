@@ -126,13 +126,13 @@ Node_symbol_untyped* symbol_new(Str_view symbol_name, Pos pos) {
 
 Node_operator* operation_new(Node* lhs, Node* rhs, TOKEN_TYPE operation_type) {
     // TODO: check if lhs or rhs were already appended to the tree
-    Node_operator* operation = node_unwrap_operator(node_new(lhs->pos, NODE_OPERATOR));
-    operation->token_type = operation_type;
-    nodes_append_child(node_wrap(operation), lhs);
-    nodes_append_child(node_wrap(operation), rhs);
+    Node_operator* operator = node_unwrap_operator(node_new(lhs->pos, NODE_OPERATOR));
+    operator->token_type = operation_type;
+    operator->lhs = lhs;
+    operator->rhs = rhs;
 
-    try(try_set_operator_lang_type(operation));
-    return operation;
+    try(try_set_operator_lang_type(operator));
+    return operator;
 }
 
 const Node* get_lang_type_from_sym_definition(const Node* sym_def) {
@@ -293,14 +293,11 @@ void set_symbol_type(Node_symbol_untyped* sym_untyped) {
 
 // returns false if unsuccessful
 bool try_set_operator_lang_type(Node_operator* operator) {
-    Node* lhs = nodes_get_child(node_wrap(operator), 0);
-    Node* rhs = nodes_get_child(node_wrap(operator), 1);
-
     Lang_type dummy;
-    if (!try_set_operator_operand_lang_type(&dummy, lhs)) {
+    if (!try_set_operator_operand_lang_type(&dummy, operator->lhs)) {
         return false;
     }
-    return try_set_operator_operand_lang_type(&operator->lang_type, rhs);
+    return try_set_operator_operand_lang_type(&operator->lang_type, operator->rhs);
 }
 
 // returns false if unsuccessful

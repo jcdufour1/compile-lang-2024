@@ -253,18 +253,15 @@ static void emit_operator_operand(String* output, const Node* operand) {
     }
 }
 
-static void emit_operator(String* output, const Node* operator) {
-    const Node* lhs = nodes_get_child_const(operator, 0);
-    const Node* rhs = nodes_get_child_const(operator, 1);
-
+static void emit_operator(String* output, const Node_operator* operator) {
     string_extend_cstr(&a_main, output, "    %");
-    string_extend_size_t(&a_main, output, get_llvm_id(operator));
+    string_extend_size_t(&a_main, output, operator->llvm_id);
     string_extend_cstr(&a_main, output, " = ");
-    emit_operator_type(output, node_unwrap_operator_const(operator));
+    emit_operator_type(output, operator);
 
-    emit_operator_operand(output, lhs);
+    emit_operator_operand(output, operator->lhs);
     string_extend_cstr(&a_main, output, ", ");
-    emit_operator_operand(output, rhs);
+    emit_operator_operand(output, operator->rhs);
 
     string_extend_cstr(&a_main, output, "\n");
 }
@@ -492,7 +489,7 @@ static void emit_block(String* output, const Node_block* block) {
                 emit_struct_definition(output, statement);
                 break;
             case NODE_OPERATOR:
-                emit_operator(output, statement);
+                emit_operator(output, node_unwrap_operator_const(statement));
                 break;
             case NODE_LOAD_STRUCT_ELEMENT_PTR:
                 emit_load_struct_element_pointer(output, node_unwrap_load_elem_ptr_const(statement));

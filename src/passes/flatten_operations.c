@@ -20,14 +20,11 @@ static Node* flatten_operation_operand(Node* node_to_insert_before, Node* operan
     }
 }
 
-static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node* old_operation) {
-    assert(old_operation->type == NODE_OPERATOR);
-    Node* lhs = nodes_get_child(old_operation, 0);
-    Node* rhs = nodes_get_child(old_operation, 1);
-    nodes_remove(lhs, true);
-    nodes_remove(rhs, true);
-    nodes_append_child(old_operation, flatten_operation_operand(node_to_insert_before, lhs));
-    nodes_append_child(old_operation, flatten_operation_operand(node_to_insert_before, rhs));
+static void flatten_operation_if_nessessary(Node* node_to_insert_before, Node_operator* old_operation) {
+    nodes_remove(old_operation->lhs, true);
+    nodes_remove(old_operation->rhs, true);
+    old_operation->lhs = flatten_operation_operand(node_to_insert_before, old_operation->lhs);
+    old_operation->rhs = flatten_operation_operand(node_to_insert_before, old_operation->rhs);
 }
 
 // operator symbol is returned
@@ -53,7 +50,7 @@ bool flatten_operations(Node* curr_node, int recursion_depth) {
     while (assign_or_var_def) {
         bool advance_to_prev = true;
         if (assign_or_var_def->type == NODE_OPERATOR) {
-            flatten_operation_if_nessessary(assign_or_var_def, assign_or_var_def);
+            flatten_operation_if_nessessary(assign_or_var_def, node_unwrap_operator(assign_or_var_def));
         } else if (assign_or_var_def->type == NODE_ASSIGNMENT) {
             Node* rhs = node_unwrap_assignment(assign_or_var_def)->rhs;
             if (rhs->type == NODE_OPERATOR) {

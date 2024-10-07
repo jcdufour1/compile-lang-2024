@@ -56,8 +56,7 @@ static inline void set_left_child(Node* parent, Node* left_child) {
             unreachable("");
             return;
         case NODE_OPERATOR:
-            node_unwrap_operator(parent)->child = left_child;
-            return;
+            unreachable("");
         case NODE_STRUCT_LITERAL:
             node_unwrap_struct_literal(parent)->child = left_child;
             return;
@@ -165,7 +164,7 @@ static inline Node* get_left_child(Node* node) {
         case NODE_LANG_TYPE:
             unreachable("");
         case NODE_OPERATOR:
-            return node_unwrap_operator(node)->child;
+            unreachable("");
         case NODE_STRUCT_LITERAL:
             return node_unwrap_struct_literal(node)->child;
         case NODE_LOAD_STRUCT_ELEMENT_PTR:

@@ -185,15 +185,8 @@ static void load_operator_operand(Node* node_insert_before, Node* operand) {
 }
 
 static Node_operator* load_operator_operands(Node* node_insert_before, Node_operator* operator) {
-    assert(nodes_count_children(node_wrap(operator)) == 2);
-
-    Node* lhs = nodes_get_child(node_wrap(operator), 0);
-    Node* rhs = nodes_get_child(node_wrap(operator), 1);
-
-    load_operator_operand(node_insert_before, lhs);
-    load_operator_operand(node_insert_before, rhs);
-
-    operator->lang_type = lang_type_from_cstr("i32", 0);
+    load_operator_operand(node_insert_before, operator->lhs);
+    load_operator_operand(node_insert_before, operator->rhs);
     return operator;
 }
 

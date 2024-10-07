@@ -411,11 +411,9 @@ static Node_operator* parse_operation(Tk_view tokens) {
 
     Node_operator* operator_node = node_unwrap_operator(node_new(operator_token.pos, NODE_OPERATOR));
     operator_node->token_type = operator_token.type;
+    operator_node->lhs = extract_expression(&left_tokens);
+    operator_node->rhs = extract_expression(&right_tokens);
 
-    Node* left_node = extract_expression(&left_tokens);
-    Node* right_node = extract_expression(&right_tokens);
-    nodes_append_child(node_wrap(operator_node), left_node);
-    nodes_append_child(node_wrap(operator_node), right_node);
     return operator_node;
 }
 
