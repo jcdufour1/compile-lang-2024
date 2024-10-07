@@ -41,7 +41,7 @@ static Node_load_element_ptr* do_load_struct_element_ptr(Node* node_to_insert_be
         unreachable("symbol definition not found");
     }
     node_printf(sym_def_);
-    Node* node_element_ptr_to_load = get_storage_location(symbol_call);
+    Node* node_element_ptr_to_load = get_storage_location(get_node_name(symbol_call));
     Node_load_element_ptr* load_element_ptr = NULL;
     nodes_foreach_child(element_sym_, symbol_call) {
         Node_struct_member_sym_piece_typed* element_sym = node_unwrap_struct_member_sym_piece_typed(element_sym_);
@@ -119,7 +119,7 @@ static Node_load_another_node* insert_load(Node* node_insert_load_before, Node* 
         Node* sym_def;
         try(sym_tbl_lookup(&sym_def, get_node_name(symbol_call)));
         Node_load_another_node* load = node_unwrap_load_another_node(node_new(sym_def->pos, NODE_LOAD_ANOTHER_NODE));
-        load->node_src = get_storage_location(symbol_call);
+        load->node_src = get_storage_location(get_node_name(symbol_call));
         load->lang_type = node_unwrap_variable_def(sym_def)->lang_type;
         assert(load->lang_type.str.count > 0);
         switch (symbol_call->type) {
@@ -135,15 +135,16 @@ static Node_load_another_node* insert_load(Node* node_insert_load_before, Node* 
 }
 
 static void insert_store(Node* node_insert_store_before, Node* symbol_call /* src */) {
+    Str_view dest_name = {0};
     switch (symbol_call->type) {
         case NODE_LITERAL:
             return;
         case NODE_SYMBOL_TYPED:
             // fallthrough
         case NODE_VARIABLE_DEFINITION:
-            assert(get_node_name(symbol_call).count > 0);
-            break;
-        case NODE_FUNCTION_PARAM_SYM:
+            dest_name = get_node_name(symbol_call);
+        case NODE_LLVM_REGISTER_SYM:
+            dest_name = get_node_name(node_unwrap_llvm_register_sym(symbol_call)->node_src);
             break;
         default:
             node_printf(symbol_call);
@@ -158,7 +159,7 @@ static void insert_store(Node* node_insert_store_before, Node* symbol_call /* sr
         store->lang_type = get_lang_type(symbol_call);
         assert(store->lang_type.str.count > 0);
         node_printf(symbol_call);
-        store->node_dest = get_storage_location(symbol_call);
+        store->node_dest = get_storage_location(dest_name);
         assert(store->node_src);
         assert(store->node_dest);
         nodes_insert_before(node_insert_store_before, node_wrap(store));
@@ -299,7 +300,7 @@ static void insert_store_assignment(Node* node_to_insert_before, Node_assignment
         if (rhs->type == NODE_LITERAL) {
             Node_llvm_store_literal* store = node_unwrap_llvm_store_literal(node_new(rhs->pos, NODE_LLVM_STORE_LITERAL));
             store->name = get_node_name(lhs);
-            store->node_dest = get_storage_location(lhs);
+            store->node_dest = get_storage_location(store->name);
             store->lang_type = node_unwrap_literal(rhs)->lang_type;
             assert(store->lang_type.str.count > 0);
             //assert(store->lang_type.count > 0); // TODO: actually check for this
@@ -314,7 +315,7 @@ static void insert_store_assignment(Node* node_to_insert_before, Node_assignment
             nodes_insert_before(node_to_insert_before, node_wrap(store));
         } else {
             Node_store_another_node* store = node_unwrap_store_another_node(node_new(lhs->pos, NODE_STORE_ANOTHER_NODE));
-            store->node_dest = get_storage_location(lhs);
+            store->node_dest = get_storage_location(get_node_name(lhs));
             store->node_src = rhs_load;
             if (rhs->type == NODE_STRUCT_LITERAL) {
                 unreachable("");
@@ -366,8 +367,7 @@ static void load_function_parameters(Node_function_definition* fun_def) {
         if (is_corresponding_to_a_struct(param)) {
             continue;
         }
-        Node_function_param_sym* fun_param_call = node_unwrap_function_param_sym(node_new(param->pos, NODE_FUNCTION_PARAM_SYM));
-        fun_param_call->name = get_node_name(param);
+        Node_llvm_register_sym* fun_param_call = node_unwrap_llvm_register_sym(node_new(param->pos, NODE_LLVM_REGISTER_SYM));
         fun_param_call->node_src = param;
         fun_param_call->lang_type = get_lang_type(param);
         insert_store(get_node_after_last_alloca(fun_block), node_wrap(fun_param_call));
@@ -415,8 +415,6 @@ bool add_load_and_store(Node* start_start_node, int recursion_depth) {
                 load_function_parameters(node_unwrap_function_definition(curr_node));
                 break;
             case NODE_FUNCTION_PARAMETERS:
-                break;
-            case NODE_FUNCTION_PARAM_SYM:
                 break;
             case NODE_FUNCTION_RETURN_TYPES:
                 break;

@@ -20,8 +20,6 @@ bool assign_llvm_ids(Node* curr_node) {
             return false;
         case NODE_BLOCK:
             return false;
-        case NODE_FUNCTION_PARAM_SYM:
-            return false;
         case NODE_FUNCTION_DECLARATION:
             return false;
         case NODE_FUNCTION_DEFINITION:

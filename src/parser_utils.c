@@ -26,10 +26,10 @@ Str_view literal_name_new(void) {
     return str_view;
 }
 
-Node* get_storage_location(Node* var_call) {
+Node* get_storage_location(Str_view sym_name) {
     Node* sym_def_;
-    if (!sym_tbl_lookup(&sym_def_, get_node_name(var_call))) {
-        unreachable("symbol definition for node not found: "NODE_FMT, node_print(var_call));
+    if (!sym_tbl_lookup(&sym_def_, sym_name)) {
+        unreachable("symbol definition for symbol "STR_VIEW_FMT" not found\n", str_view_print(sym_name));
     }
     Node_variable_def* sym_def = node_unwrap_variable_def(sym_def_);
     if (!sym_def->storage_location) {
@@ -39,7 +39,7 @@ Node* get_storage_location(Node* var_call) {
 }
 
 Llvm_id get_store_dest_id(const Node* var_call) {
-    Llvm_id llvm_id = get_llvm_id(get_storage_location_const(var_call));
+    Llvm_id llvm_id = get_llvm_id(get_storage_location(get_node_name(var_call)));
     assert(llvm_id > 0);
     return llvm_id;
 }
@@ -191,8 +191,6 @@ uint64_t sizeof_struct(const Node* struct_literal_or_def) {
             return sizeof_struct_definition(node_unwrap_struct_def_const(struct_literal_or_def));
         case NODE_STRUCT_LITERAL:
             return sizeof_struct_literal(node_unwrap_struct_literal_const(struct_literal_or_def));
-        case NODE_FUNCTION_PARAM_SYM:
-            return sizeof_struct_definition(get_struct_definition_const(struct_literal_or_def));
         default:
             node_printf(struct_literal_or_def);
             todo();
@@ -212,8 +210,6 @@ bool is_corresponding_to_a_struct(const Node* node) {
         case NODE_STORE_VARIABLE:
             // fallthrough
         case NODE_STORE_ANOTHER_NODE:
-            // fallthrough
-        case NODE_FUNCTION_PARAM_SYM:
             // fallthrough
             node_printf(node);
             assert(get_node_name(node).count > 0);

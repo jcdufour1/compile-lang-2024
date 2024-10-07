@@ -42,6 +42,8 @@ bool walk_tree(Node* input_node, int recursion_depth, bool (callback)(Node* inpu
                 break;
             case NODE_STRUCT_MEMBER_SYM_TYPED:
                 break;
+            case NODE_LANG_TYPE:
+                break;
             default:
                 walk_tree(get_left_child(curr_node), recursion_depth + 1, callback);
                 break;

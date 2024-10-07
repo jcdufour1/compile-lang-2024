@@ -27,8 +27,6 @@ static inline Llvm_id get_llvm_id(const Node* node) {
             unreachable("");
         case NODE_FUNCTION_CALL:
             return node_unwrap_function_call_const(node)->llvm_id;
-        case NODE_FUNCTION_PARAM_SYM:
-            unreachable("");
         case NODE_LITERAL:
             unreachable("");
         case NODE_LANG_TYPE:
@@ -112,8 +110,6 @@ static inline Lang_type get_lang_type(const Node* node) {
             unreachable("");
         case NODE_FUNCTION_CALL:
             unreachable("");
-        case NODE_FUNCTION_PARAM_SYM:
-            return node_unwrap_function_param_sym_const(node)->lang_type;
         case NODE_LITERAL:
             return node_unwrap_literal_const(node)->lang_type;
         case NODE_LANG_TYPE:
@@ -201,8 +197,6 @@ static inline Node* get_node_src(Node* node) {
             unreachable("");
         case NODE_FUNCTION_CALL:
             unreachable("");
-        case NODE_FUNCTION_PARAM_SYM:
-            return node_unwrap_function_param_sym_const(node)->node_src;
         case NODE_LITERAL:
             unreachable("");
         case NODE_LANG_TYPE:
@@ -290,8 +284,6 @@ static inline Node* get_node_dest(Node* node) {
             unreachable("");
         case NODE_FUNCTION_CALL:
             unreachable("");
-        case NODE_FUNCTION_PARAM_SYM:
-            unreachable("");
         case NODE_LITERAL:
             unreachable("");
         case NODE_LANG_TYPE:
@@ -375,8 +367,6 @@ static inline Str_view get_node_name(const Node* node) {
             unreachable("");
         case NODE_FUNCTION_CALL:
             return node_unwrap_function_call_const(node)->name;
-        case NODE_FUNCTION_PARAM_SYM:
-            return node_unwrap_function_param_sym_const(node)->name;
         case NODE_LITERAL:
             return node_unwrap_literal_const(node)->name;
         case NODE_LANG_TYPE:

@@ -33,7 +33,6 @@ static const char* NODE_ALLOCA_DESCRIPTION = "alloca";
 static const char* NODE_STORE_VARIABLE_DESCRIPTION = "store_variable";
 static const char* NODE_IF_STATEMENT_DESCRIPTION = "if_statement";
 static const char* NODE_IF_CONDITION_DESCRIPTION = "if_condition";
-static const char* NODE_FUNCTION_PARAM_SYM_DESCRIPTION = "fun_param_sym";
 static const char* NODE_STRUCT_DEFINITION_DESCRIPTION = "struct_def";
 static const char* NODE_STRUCT_LITERAL_DESCRIPTION = "struct_literal";
 static const char* NODE_STRUCT_MEMBER_SYM_TYPED_DESCRIPTION = "struct_member_sym_typed";
@@ -207,8 +206,6 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_IF_STATEMENT_DESCRIPTION);
         case NODE_IF_CONDITION:
             return str_view_from_cstr(NODE_IF_CONDITION_DESCRIPTION);
-        case NODE_FUNCTION_PARAM_SYM:
-            return str_view_from_cstr(NODE_FUNCTION_PARAM_SYM_DESCRIPTION);
         case NODE_STRUCT_DEFINITION:
             return str_view_from_cstr(NODE_STRUCT_DEFINITION_DESCRIPTION);
         case NODE_STRUCT_MEMBER_SYM_UNTYPED:
@@ -269,8 +266,6 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
         case NODE_ALLOCA:
             // fallthrough
         case NODE_STORE_VARIABLE:
-            // fallthrough
-        case NODE_FUNCTION_PARAM_SYM:
             // fallthrough
         case NODE_GOTO:
             // fallthrough

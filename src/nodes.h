@@ -53,7 +53,7 @@ static inline void set_left_child(Node* parent, Node* left_child) {
             node_unwrap_function_call(parent)->child = left_child;
             return;
         case NODE_LANG_TYPE:
-            node_unwrap_lang_type(parent)->child = left_child;
+            unreachable("");
             return;
         case NODE_OPERATOR:
             node_unwrap_operator(parent)->child = left_child;
@@ -148,9 +148,6 @@ static inline void set_left_child(Node* parent, Node* left_child) {
         case NODE_LLVM_STORE_STRUCT_LITERAL:
             node_unwrap_llvm_store_struct_literal(parent)->child = left_child;
             return;
-        case NODE_FUNCTION_PARAM_SYM:
-            node_unwrap_function_param_sym(parent)->child = left_child;
-            return;
         default:
             unreachable(NODE_FMT, node_print(parent));
     }
@@ -169,7 +166,7 @@ static inline Node* get_left_child(Node* node) {
         case NODE_FUNCTION_CALL:
             return node_unwrap_function_call(node)->child;
         case NODE_LANG_TYPE:
-            return node_unwrap_lang_type(node)->child;
+            unreachable("");
         case NODE_OPERATOR:
             return node_unwrap_operator(node)->child;
         case NODE_STRUCT_LITERAL:
@@ -232,8 +229,6 @@ static inline Node* get_left_child(Node* node) {
             return node_unwrap_store_variable(node)->child;
         case NODE_LLVM_STORE_STRUCT_LITERAL:
             return node_unwrap_llvm_store_struct_literal(node)->child;
-        case NODE_FUNCTION_PARAM_SYM:
-            return node_unwrap_function_param_sym_const(node)->child;
         case NODE_PTR_BYVAL_SYM:
             return NULL;
         case NODE_LLVM_REGISTER_SYM:

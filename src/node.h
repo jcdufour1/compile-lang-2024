@@ -21,7 +21,6 @@ typedef enum {
     NODE_FUNCTION_PARAMETERS,
     NODE_FUNCTION_RETURN_TYPES,
     NODE_FUNCTION_CALL,
-    NODE_FUNCTION_PARAM_SYM,
     NODE_LITERAL,
     NODE_LANG_TYPE,
     NODE_OPERATOR,
@@ -106,7 +105,6 @@ typedef struct {
 } Node_function_params;
 
 typedef struct {
-    struct Node_* child;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 } Node_lang_type;
 
@@ -277,20 +275,12 @@ typedef struct {
 } Node_llvm_store_struct_literal;
 
 typedef struct {
-    struct Node_* child;
-    struct Node_* node_src;
-    Lang_type lang_type;
-    Str_view name;
-} Node_function_param_sym;
-
-typedef struct {
     Lang_type lang_type;
     struct Node_* node_src;
     Llvm_id llvm_id;
 } Node_ptr_byval_sym;
 
 typedef union {
-    Node_function_param_sym node_function_param_sym;
     Node_llvm_store_struct_literal node_llvm_store_struct_literal;
     Node_store_variable node_store_variable;
     Node_cond_goto node_cond_goto;
@@ -714,16 +704,6 @@ static inline const Node_llvm_store_struct_literal* node_unwrap_llvm_store_struc
 static inline Node_llvm_store_struct_literal* node_unwrap_llvm_store_struct_literal(Node* node) {
     assert(node->type == NODE_LLVM_STORE_STRUCT_LITERAL);
     return &node->as.node_llvm_store_struct_literal;
-}
-
-static inline Node_function_param_sym* node_unwrap_function_param_sym(Node* node) {
-    assert(node->type == NODE_FUNCTION_PARAM_SYM);
-    return &node->as.node_function_param_sym;
-}
-
-static inline const Node_function_param_sym* node_unwrap_function_param_sym_const(const Node* node) {
-    assert(node->type == NODE_FUNCTION_PARAM_SYM);
-    return &node->as.node_function_param_sym;
 }
 
 static inline Node_ptr_byval_sym* node_unwrap_ptr_byval_sym(Node* node) {
