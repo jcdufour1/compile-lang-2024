@@ -84,7 +84,7 @@ static void for_loop_to_branch(Node_for_loop* for_loop) {
     {
         Node_for_variable_def* old_for_var_def = node_unwrap_for_variable_def(nodes_get_child_of_type(node_wrap(for_loop), NODE_FOR_VARIABLE_DEF));
         regular_var_def = node_unwrap_variable_def(nodes_get_child_of_type(node_wrap(old_for_var_def), NODE_VARIABLE_DEFINITION));
-        nodes_remove(node_wrap(regular_var_def), false);
+        nodes_remove_siblings_and_parent(node_wrap(regular_var_def));
         symbol_lhs_assign = symbol_new(regular_var_def->name, node_wrap(regular_var_def)->pos);
         nodes_remove_siblings(node_wrap(old_for_var_def));
     }

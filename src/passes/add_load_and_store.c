@@ -51,7 +51,6 @@ static Node_load_element_ptr* do_load_struct_element_ptr(Node* node_to_insert_be
         load_element_ptr->lang_type = element_sym->lang_type;
         load_element_ptr->struct_index = element_sym->struct_index;
         load_element_ptr->node_src = node_element_ptr_to_load;
-        nodes_append_child(node_wrap(load_element_ptr), node_clone(node_wrap(element_sym)));
         nodes_insert_before(node_wrap(node_to_insert_before), node_wrap(load_element_ptr));
 
         prev_struct_sym = node_wrap(element_sym);
@@ -211,7 +210,7 @@ static void insert_store_assignment(Node* node_to_insert_before, Node_assignment
 
     switch (lhs->type) {
         case NODE_VARIABLE_DEFINITION:
-            nodes_remove(lhs, false);
+            nodes_remove_siblings(lhs);
             nodes_insert_before(node_to_insert_before, lhs);
             break;
         case NODE_SYMBOL_TYPED:
@@ -296,7 +295,6 @@ static void insert_store_assignment(Node* node_to_insert_before, Node_assignment
         }
         //nodes_remove(rhs, true);
         nodes_insert_after(node_wrap(assignment), generic_store);
-        nodes_insert_after(node_wrap(assignment), lhs);
     } else {
         if (rhs->type == NODE_LITERAL) {
             Node_llvm_store_literal* store = node_unwrap_llvm_store_literal(node_new(rhs->pos, NODE_LLVM_STORE_LITERAL));

@@ -36,7 +36,7 @@ static inline Llvm_id get_llvm_id(const Node* node) {
         case NODE_OPERATOR:
             return node_unwrap_operator_const(node)->llvm_id;
         case NODE_SYMBOL_UNTYPED:
-            return node_unwrap_symbol_untyped_const(node)->llvm_id;
+            unreachable("");
         case NODE_SYMBOL_TYPED:
             unreachable("");
         case NODE_RETURN_STATEMENT:
@@ -190,7 +190,7 @@ static inline Node* get_node_src(Node* node) {
         case NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED:
             unreachable("");
         case NODE_STRUCT_MEMBER_SYM_PIECE_TYPED:
-            return node_unwrap_struct_member_sym_piece_typed_const(node)->node_src;
+            unreachable("");
         case NODE_BLOCK:
             unreachable("");
         case NODE_FUNCTION_DEFINITION:
@@ -341,7 +341,7 @@ static inline Node* get_node_dest(Node* node) {
         case NODE_STORE_ANOTHER_NODE:
             return node_unwrap_store_another_node_const(node)->node_dest;
         case NODE_LOAD_STRUCT_ELEMENT_PTR:
-            return node_unwrap_load_elem_ptr_const(node)->node_dest;
+            unreachable("");
         case NODE_LLVM_STORE_LITERAL:
             return node_unwrap_llvm_store_literal_const(node)->node_dest;
         default:

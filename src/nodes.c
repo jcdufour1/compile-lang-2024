@@ -104,12 +104,9 @@ void nodes_assert_tree_linkage_is_consistant(const Node* root) {
 #endif // NDEBUG
 
 void extend_lang_type_to_string(Arena* arena, String* string, Lang_type lang_type, bool surround_in_lt_gt) {
-    assert(string->info.count < 100000);
     if (surround_in_lt_gt) {
         string_append(arena, string, '<');
     }
-    assert(string->info.count < 100000);
-    assert(lang_type.str.count < 100000);
     string_extend_strv(arena, string, lang_type.str);
     if (lang_type.pointer_depth < 0) {
         todo();
@@ -249,7 +246,6 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
 }
 
 static void print_node_dest(Arena* arena, String* string, const Node* node, bool do_recursion) {
-    assert(string->info.count < 100000);
     string_extend_cstr(arena, string, " ");
     if (get_node_dest_const(node) && do_recursion) {
         string_extend_cstr(arena, string, "node_dest:");
@@ -259,7 +255,6 @@ static void print_node_dest(Arena* arena, String* string, const Node* node, bool
 }
 
 static void print_node_src(Arena* arena, String* string, const Node* node, bool do_recursion) {
-    assert(string->info.count < 100000);
     string_extend_cstr(arena, string, "[");
     if (get_node_src_const(node) && do_recursion) {
         string_extend_cstr(arena, string, "node_src:");
@@ -268,7 +263,6 @@ static void print_node_src(Arena* arena, String* string, const Node* node, bool 
 }
 
 static void extend_node_text(Arena* arena, String* string, const Node* node, bool do_recursion) {
-    assert(string->info.count < 100000);
     string_extend_strv(arena, string, node_type_get_strv(node->type));
 
     switch (node->type) {
@@ -292,15 +286,20 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             string_extend_strv_in_par(arena, string, node_unwrap_literal_const(node)->str_data);
             break;
         case NODE_SYMBOL_UNTYPED:
-            // fallthrough
+            string_extend_strv_in_par(arena, string, get_node_name(node));
+            break;
         case NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED:
             // fallthrough
+            break;
         case NODE_STRUCT_MEMBER_SYM_UNTYPED:
             // fallthrough
+            break;
         case NODE_FUNCTION_DEFINITION:
             // fallthrough
+            break;
         case NODE_STRUCT_DEFINITION:
             // fallthrough
+            break;
         case NODE_FUNCTION_CALL:
             string_extend_strv_in_par(arena, string, get_node_name(node));
             string_extend_size_t(arena, string, get_llvm_id(node));
@@ -377,13 +376,11 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
         case NODE_STRUCT_MEMBER_SYM_PIECE_TYPED:
             extend_lang_type_to_string(arena, string, get_lang_type(node), true);
             string_extend_strv_in_par(arena, string, get_node_name(node));
-            print_node_src(arena, string, node, do_recursion);
             break;
         case NODE_LOAD_STRUCT_ELEMENT_PTR:
             extend_lang_type_to_string(arena, string, get_lang_type(node), true);
             string_extend_strv_in_par(arena, string, get_node_name(node));
             print_node_src(arena, string, node, do_recursion);
-            print_node_dest(arena, string, node, do_recursion);
             break;
         case NODE_PTR_BYVAL_SYM:
             extend_lang_type_to_string(arena, string, get_lang_type(node), true);
@@ -403,6 +400,10 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
 }
 
 Str_view node_print_internal(Arena* arena, const Node* node) {
+    if (!node) {
+        return str_view_from_cstr("<null>");
+    }
+
     String buf = {0}; // todo: put these strings in an arena to free, etc
 
     if (!node) {

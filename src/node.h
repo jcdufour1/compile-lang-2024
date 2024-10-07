@@ -64,7 +64,6 @@ typedef struct {
 } Lang_type;
 
 typedef struct {
-    Llvm_id llvm_id;
     Str_view name;
 } Node_symbol_untyped;
 
@@ -75,18 +74,15 @@ typedef struct {
 } Node_symbol_typed;
 
 typedef struct {
-    struct Node_* child;
     Llvm_id llvm_id;
     Str_view name;
 } Node_label;
 
 typedef struct {
-    struct Node_* child;
     Lang_type lang_type;
     Llvm_id llvm_id;
     size_t struct_index;
     struct Node_* node_src;
-    struct Node_* node_dest;
     Str_view name;
 } Node_load_element_ptr;
 
@@ -111,7 +107,6 @@ typedef struct {
 
 typedef struct {
     struct Node_* child;
-    Llvm_id llvm_id;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 } Node_lang_type;
 
@@ -130,10 +125,8 @@ typedef struct {
 } Node_struct_literal;
 
 typedef struct {
-    struct Node_* child;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     bool is_variadic : 1;
-    Str_view str_data; // eg. "hello" in "let string1: String = "hello""
     Llvm_id llvm_id;
     struct Node_* storage_location;
     Str_view name;
@@ -144,16 +137,12 @@ typedef struct {
 } Node_for_variable_def;
 
 typedef struct {
-    struct Node_* child;
     Str_view name;
 } Node_struct_member_sym_piece_untyped;
 
 typedef struct {
-    struct Node_* child;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     size_t struct_index;
-    Llvm_id llvm_id;
-    struct Node_* node_src;
     Str_view name;
 } Node_struct_member_sym_piece_typed;
 

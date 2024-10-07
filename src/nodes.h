@@ -44,7 +44,7 @@ static inline void set_left_child(Node* parent, Node* left_child) {
             unreachable("");
             return;
         case NODE_LABEL:
-            node_unwrap_label(parent)->child = left_child;
+            unreachable("");
             return;
         case NODE_LITERAL:
             node_unwrap_literal(parent)->child = left_child;
@@ -62,16 +62,16 @@ static inline void set_left_child(Node* parent, Node* left_child) {
             node_unwrap_struct_literal(parent)->child = left_child;
             return;
         case NODE_LOAD_STRUCT_ELEMENT_PTR:
-            node_unwrap_load_elem_ptr(parent)->child = left_child;
+            unreachable("");
             return;
         case NODE_VARIABLE_DEFINITION:
-            node_unwrap_variable_def(parent)->child = left_child;
+            unreachable("");
             return;
         case NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED:
-            node_unwrap_struct_member_sym_piece_untyped(parent)->child = left_child;
+            unreachable("");
             return;
         case NODE_STRUCT_MEMBER_SYM_PIECE_TYPED:
-            node_unwrap_struct_member_sym_piece_typed(parent)->child = left_child;
+            unreachable("");
             return;
         case NODE_STRUCT_DEFINITION:
             node_unwrap_struct_def(parent)->child = left_child;
@@ -122,7 +122,7 @@ static inline void set_left_child(Node* parent, Node* left_child) {
             node_unwrap_struct_member_sym_untyped(parent)->child = left_child;
             return;
         case NODE_STRUCT_MEMBER_SYM_TYPED:
-            node_unwrap_struct_member_sym_typed(parent)->child = left_child;
+            unreachable("");
             return;
         case NODE_COND_GOTO:
             node_unwrap_cond_goto(parent)->child = left_child;
@@ -163,7 +163,7 @@ static inline Node* get_left_child(Node* node) {
         case NODE_SYMBOL_TYPED:
             unreachable("");
         case NODE_LABEL:
-            return node_unwrap_label(node)->child;
+            unreachable("");
         case NODE_LITERAL:
             return node_unwrap_literal(node)->child;
         case NODE_FUNCTION_CALL:
@@ -175,13 +175,13 @@ static inline Node* get_left_child(Node* node) {
         case NODE_STRUCT_LITERAL:
             return node_unwrap_struct_literal(node)->child;
         case NODE_LOAD_STRUCT_ELEMENT_PTR:
-            return node_unwrap_load_elem_ptr(node)->child;
+            unreachable("");
         case NODE_VARIABLE_DEFINITION:
-            return node_unwrap_variable_def(node)->child;
+            unreachable("");
         case NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED:
-            return node_unwrap_struct_member_sym_piece_untyped(node)->child;
+            unreachable("");
         case NODE_STRUCT_MEMBER_SYM_PIECE_TYPED:
-            return node_unwrap_struct_member_sym_piece_typed(node)->child;
+            unreachable("");
         case NODE_STRUCT_DEFINITION:
             return node_unwrap_struct_def(node)->child;
         case NODE_FUNCTION_PARAMETERS:

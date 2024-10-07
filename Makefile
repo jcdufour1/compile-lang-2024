@@ -62,7 +62,7 @@ gdb: build
 build: ${BUILD_DIR}/main
 
 test_quick: run
-	clang test.ll -o a.out && ./a.out ; echo $$?
+	${CC_COMPILER} test.ll -o a.out && ./a.out ; echo $$?
 
 # general
 ${BUILD_DIR}/main: ${DEP_COMMON} ${OBJS}
