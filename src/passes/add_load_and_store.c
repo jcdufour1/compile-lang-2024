@@ -376,9 +376,6 @@ static void load_function_parameters(Node_function_definition* fun_def) {
 
 static void load_function_arguments(Node* fun_call) {
     switch (fun_call->parent->type) {
-        case NODE_STORE_VARIABLE:
-            add_load_foreach_arg(fun_call->parent, fun_call);
-            return;
         case NODE_BLOCK:
             // fallthrough
         case NODE_ASSIGNMENT:
@@ -462,8 +459,6 @@ bool add_load_and_store(Node* start_start_node, int recursion_depth) {
             case NODE_LABEL:
                 break;
             case NODE_ALLOCA:
-                break;
-            case NODE_STORE_VARIABLE:
                 break;
             case NODE_LOAD_ANOTHER_NODE:
                 break;

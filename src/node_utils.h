@@ -67,8 +67,6 @@ static inline Llvm_id get_llvm_id(const Node* node) {
             unreachable("");
         case NODE_ALLOCA:
             return node_unwrap_alloca_const(node)->llvm_id;
-        case NODE_STORE_VARIABLE:
-            unreachable("");
         case NODE_LLVM_STORE_STRUCT_LITERAL:
             unreachable("");
         case NODE_LOAD_ANOTHER_NODE:
@@ -150,8 +148,6 @@ static inline Lang_type get_lang_type(const Node* node) {
             unreachable("");
         case NODE_ALLOCA:
             return node_unwrap_alloca_const(node)->lang_type;
-        case NODE_STORE_VARIABLE:
-            unreachable("");
         case NODE_LLVM_STORE_STRUCT_LITERAL:
             return node_unwrap_llvm_store_struct_literal_const(node)->lang_type;
         case NODE_LOAD_ANOTHER_NODE:
@@ -236,8 +232,6 @@ static inline Node* get_node_src(Node* node) {
         case NODE_LABEL:
             unreachable("");
         case NODE_ALLOCA:
-            unreachable("");
-        case NODE_STORE_VARIABLE:
             unreachable("");
         case NODE_LLVM_STORE_STRUCT_LITERAL:
             unreachable("");
@@ -324,8 +318,6 @@ static inline Node* get_node_dest(Node* node) {
             unreachable("");
         case NODE_ALLOCA:
             unreachable("");
-        case NODE_STORE_VARIABLE:
-            unreachable("");
         case NODE_LLVM_STORE_STRUCT_LITERAL:
             return node_unwrap_llvm_store_struct_literal_const(node)->node_dest;
         case NODE_LOAD_ANOTHER_NODE:
@@ -407,8 +399,6 @@ static inline Str_view get_node_name(const Node* node) {
             return node_unwrap_label_const(node)->name;
         case NODE_ALLOCA:
             return node_unwrap_alloca_const(node)->name;
-        case NODE_STORE_VARIABLE:
-            return node_unwrap_store_variable_const(node)->name;
         case NODE_LLVM_STORE_STRUCT_LITERAL:
             return node_unwrap_llvm_store_struct_literal_const(node)->name;
         case NODE_LOAD_ANOTHER_NODE:

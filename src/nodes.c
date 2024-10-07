@@ -30,7 +30,6 @@ static const char* NODE_GOTO_DESCRIPTION = "goto";
 static const char* NODE_LABEL_DESCRIPTION = "label";
 static const char* NODE_COND_GOTO_DESCRIPTION = "cond_goto";
 static const char* NODE_ALLOCA_DESCRIPTION = "alloca";
-static const char* NODE_STORE_VARIABLE_DESCRIPTION = "store_variable";
 static const char* NODE_IF_STATEMENT_DESCRIPTION = "if_statement";
 static const char* NODE_IF_CONDITION_DESCRIPTION = "if_condition";
 static const char* NODE_STRUCT_DEFINITION_DESCRIPTION = "struct_def";
@@ -200,8 +199,6 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_LABEL_DESCRIPTION);
         case NODE_ALLOCA:
             return str_view_from_cstr(NODE_ALLOCA_DESCRIPTION);
-        case NODE_STORE_VARIABLE:
-            return str_view_from_cstr(NODE_STORE_VARIABLE_DESCRIPTION);
         case NODE_IF_STATEMENT:
             return str_view_from_cstr(NODE_IF_STATEMENT_DESCRIPTION);
         case NODE_IF_CONDITION:
@@ -264,8 +261,6 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
 
     switch (node->type) {
         case NODE_ALLOCA:
-            // fallthrough
-        case NODE_STORE_VARIABLE:
             // fallthrough
         case NODE_GOTO:
             // fallthrough

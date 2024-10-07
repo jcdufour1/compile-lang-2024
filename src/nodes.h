@@ -142,9 +142,6 @@ static inline void set_left_child(Node* parent, Node* left_child) {
         case NODE_STORE_ANOTHER_NODE:
             unreachable("");
             return;
-        case NODE_STORE_VARIABLE:
-            node_unwrap_store_variable(parent)->child = left_child;
-            return;
         case NODE_LLVM_STORE_STRUCT_LITERAL:
             node_unwrap_llvm_store_struct_literal(parent)->child = left_child;
             return;
@@ -225,8 +222,6 @@ static inline Node* get_left_child(Node* node) {
             unreachable("");
         case NODE_STORE_ANOTHER_NODE:
             unreachable("");
-        case NODE_STORE_VARIABLE:
-            return node_unwrap_store_variable(node)->child;
         case NODE_LLVM_STORE_STRUCT_LITERAL:
             return node_unwrap_llvm_store_struct_literal(node)->child;
         case NODE_PTR_BYVAL_SYM:

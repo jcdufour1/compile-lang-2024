@@ -482,9 +482,6 @@ static void emit_block(String* output, const Node_block* block) {
             case NODE_ALLOCA:
                 emit_alloca(output, node_unwrap_alloca(statement));
                 break;
-            case NODE_STORE_VARIABLE:
-                unreachable("");
-                break;
             case NODE_LLVM_STORE_LITERAL:
                 emit_llvm_store_literal(output, node_unwrap_llvm_store_literal(statement));
                 break;

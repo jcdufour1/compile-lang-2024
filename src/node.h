@@ -41,7 +41,6 @@ typedef enum {
     NODE_COND_GOTO,
     NODE_LABEL,
     NODE_ALLOCA,
-    NODE_STORE_VARIABLE,
     NODE_LLVM_STORE_STRUCT_LITERAL,
 
     NODE_LOAD_ANOTHER_NODE,
@@ -262,12 +261,6 @@ typedef struct {
 
 typedef struct {
     struct Node_* child;
-    Lang_type lang_type;
-    Str_view name;
-} Node_store_variable;
-
-typedef struct {
-    struct Node_* child;
     Llvm_id llvm_id;
     Lang_type lang_type;
     struct Node_* node_dest;
@@ -282,7 +275,6 @@ typedef struct {
 
 typedef union {
     Node_llvm_store_struct_literal node_llvm_store_struct_literal;
-    Node_store_variable node_store_variable;
     Node_cond_goto node_cond_goto;
     Node_goto node_goto;
     Node_llvm_store_literal node_llvm_store_literal;
@@ -684,16 +676,6 @@ static inline const Node_store_another_node* node_unwrap_store_another_node_cons
 static inline Node_store_another_node* node_unwrap_store_another_node(Node* node) {
     assert(node->type == NODE_STORE_ANOTHER_NODE);
     return &node->as.node_store_another_node;
-}
-
-static inline const Node_store_variable* node_unwrap_store_variable_const(const Node* node) {
-    assert(node->type == NODE_STORE_VARIABLE);
-    return &node->as.node_store_variable;
-}
-
-static inline Node_store_variable* node_unwrap_store_variable(Node* node) {
-    assert(node->type == NODE_STORE_VARIABLE);
-    return &node->as.node_store_variable;
 }
 
 static inline const Node_llvm_store_struct_literal* node_unwrap_llvm_store_struct_literal_const(const Node* node) {

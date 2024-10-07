@@ -72,8 +72,6 @@ const Node_variable_def* get_member_def_from_alloca(const Node* store_struct) {
 const Node_variable_def* get_symbol_def_from_alloca(const Node* alloca) {
     switch (alloca->type) {
         case NODE_ALLOCA:
-            // fallthrough
-        case NODE_STORE_VARIABLE:
             return get_normal_symbol_def_from_alloca(alloca);
         default:
             unreachable(NODE_FMT"\n", node_print(alloca));
@@ -207,8 +205,6 @@ bool is_corresponding_to_a_struct(const Node* node) {
             // fallthrough
         case NODE_SYMBOL_TYPED:
             // fallthrough
-        case NODE_STORE_VARIABLE:
-            // fallthrough
         case NODE_STORE_ANOTHER_NODE:
             // fallthrough
             node_printf(node);
@@ -245,8 +241,6 @@ bool try_get_struct_definition(Node_struct_def** struct_def, Node* node) {
             *struct_def = node_unwrap_struct_def(struct_def_);
             return true;
         }
-        case NODE_STORE_VARIABLE:
-            // fallthrough
         case NODE_SYMBOL_TYPED:
             // fallthrough
         case NODE_STRUCT_MEMBER_SYM_TYPED: {
