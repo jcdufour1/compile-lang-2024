@@ -254,10 +254,7 @@ static Node_for_loop* extract_for_loop(Tk_view* tokens) {
     try(tk_view_try_consume_symbol(&for_token, tokens, "for"));
     Node_for_loop* for_loop = node_unwrap_for_loop(node_new(for_token.pos, NODE_FOR_LOOP));
 
-    Node_variable_def* var_def_child = extract_variable_declaration(tokens, false);
-    Node_for_variable_def* var_def = node_unwrap_for_variable_def(node_new(node_wrap(var_def_child)->pos, NODE_FOR_VARIABLE_DEF));
-    var_def->child = var_def_child;
-    nodes_append_child(node_wrap(for_loop), node_wrap(var_def));
+    for_loop->var_def = extract_variable_declaration(tokens, false);
     try(tk_view_try_consume_symbol(NULL, tokens, "in"));
 
     try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE));
@@ -265,17 +262,17 @@ static Node_for_loop* extract_for_loop(Tk_view* tokens) {
     Node* lower_bound_child = extract_expression(tokens);
     Node_for_lower_bound* lower_bound = node_unwrap_for_lower_bound(node_new(lower_bound_child->pos, NODE_FOR_LOWER_BOUND));
     nodes_append_child(node_wrap(lower_bound), lower_bound_child);
-    nodes_append_child(node_wrap(for_loop), node_wrap(lower_bound));
+    for_loop->lower_bound = lower_bound;
     try(tk_view_try_consume(NULL, tokens, TOKEN_DOUBLE_DOT));
 
     Node* upper_bound_child = extract_expression(tokens);
     Node_for_upper_bound* upper_bound = node_unwrap_for_upper_bound(node_new(upper_bound_child->pos, NODE_FOR_UPPER_BOUND));
     nodes_append_child(node_wrap(upper_bound), upper_bound_child);
-    nodes_append_child(node_wrap(for_loop), node_wrap(upper_bound));
+    for_loop->upper_bound = upper_bound;
     try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
 
     Tk_view body_tokens = extract_items_inside_brackets(tokens, TOKEN_CLOSE_CURLY_BRACE); // TODO: remove this line?
-    nodes_append_child(node_wrap(for_loop), node_wrap(extract_block(&body_tokens)));
+    for_loop->body = extract_block(&body_tokens);
 
     return for_loop;
 }

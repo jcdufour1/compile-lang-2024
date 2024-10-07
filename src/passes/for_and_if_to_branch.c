@@ -69,9 +69,9 @@ static void change_break_to_goto(Node_block* block, const Node_label* label_to_g
 
 static void for_loop_to_branch(Node_for_loop* for_loop) {
     log_tree(LOG_TRACE, node_wrap(for_loop));
-    Node_for_lower_bound* lhs = node_unwrap_for_lower_bound(nodes_get_child_of_type(node_wrap(for_loop), NODE_FOR_LOWER_BOUND));
-    Node_for_upper_bound* rhs = node_unwrap_for_upper_bound(nodes_get_child_of_type(node_wrap(for_loop), NODE_FOR_UPPER_BOUND));
-    Node_block* for_block = node_unwrap_block(nodes_get_child_of_type(node_wrap(for_loop), NODE_BLOCK));
+    Node_for_lower_bound* lhs = for_loop->lower_bound;
+    Node_for_upper_bound* rhs = for_loop->upper_bound;
+    Node_block* for_block = for_loop->body;
 
     Node* rhs_actual = nodes_single_child(node_wrap(rhs));
     nodes_remove(rhs_actual, true);
@@ -80,16 +80,14 @@ static void for_loop_to_branch(Node_for_loop* for_loop) {
     assert(!node_wrap(new_branch_block)->parent);
 
     Node_symbol_untyped* symbol_lhs_assign;
-    Node_variable_def* regular_var_def;
+    Node_variable_def* for_var_def;
     {
-        Node_for_variable_def* old_for_var_def = node_unwrap_for_variable_def(nodes_get_child_of_type(node_wrap(for_loop), NODE_FOR_VARIABLE_DEF));
-        regular_var_def = node_unwrap_variable_def(nodes_get_child_of_type(node_wrap(old_for_var_def), NODE_VARIABLE_DEFINITION));
-        nodes_remove_siblings_and_parent(node_wrap(regular_var_def));
-        symbol_lhs_assign = symbol_new(regular_var_def->name, node_wrap(regular_var_def)->pos);
-        nodes_remove_siblings(node_wrap(old_for_var_def));
+        for_var_def = for_loop->var_def;
+        nodes_remove_siblings_and_parent(node_wrap(for_var_def));
+        symbol_lhs_assign = symbol_new(for_var_def->name, node_wrap(for_var_def)->pos);
     }
 
-    Node_assignment* assignment_to_inc_cond_var = get_for_loop_cond_var_assign(regular_var_def->name, node_wrap(lhs)->pos);
+    Node_assignment* assignment_to_inc_cond_var = get_for_loop_cond_var_assign(for_var_def->name, node_wrap(lhs)->pos);
     assert(!node_wrap(new_branch_block)->parent);
     nodes_remove(node_wrap(lhs), true);
     Node* lower_bound_child = nodes_single_child(node_wrap(lhs));
@@ -118,7 +116,7 @@ static void for_loop_to_branch(Node_for_loop* for_loop) {
 
     change_break_to_goto(for_block, after_for_loop_label);
 
-    nodes_append_child(node_wrap(new_branch_block), node_wrap(regular_var_def));
+    nodes_append_child(node_wrap(new_branch_block), node_wrap(for_var_def));
     nodes_append_child(node_wrap(new_branch_block), node_wrap(new_var_assign));
     nodes_append_child(node_wrap(new_branch_block), node_wrap(jmp_to_check_cond_label));
     nodes_append_child(node_wrap(new_branch_block), node_wrap(check_cond_label));

@@ -437,8 +437,6 @@ bool add_load_and_store(Node* start_start_node, int recursion_depth) {
             case NODE_FOR_LOOP:
                 unreachable("for loop node should not still exist at this point\n");
                 todo();
-            case NODE_FOR_VARIABLE_DEF:
-                todo();
             case NODE_FOR_LOWER_BOUND:
                 todo();
             case NODE_FOR_UPPER_BOUND:

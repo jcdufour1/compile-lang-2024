@@ -13,18 +13,18 @@ bool walk_tree(Node* input_node, int recursion_depth, bool (callback)(Node* inpu
 
         switch (curr_node->type) {
             case NODE_FUNCTION_PARAMETERS:
-                walk_tree(node_wrap(node_unwrap_function_params(curr_node)->child), recursion_depth, callback);
+                walk_tree(node_wrap(node_unwrap_function_params(curr_node)->child), recursion_depth + 1, callback);
                 break;
             case NODE_FUNCTION_RETURN_TYPES:
-                walk_tree(node_wrap(node_unwrap_function_return_types(curr_node)->child), recursion_depth, callback);
+                walk_tree(node_wrap(node_unwrap_function_return_types(curr_node)->child), recursion_depth + 1, callback);
                 break;
             case NODE_ASSIGNMENT:
-                walk_tree(node_wrap(node_unwrap_assignment(curr_node)->lhs), recursion_depth, callback);
-                walk_tree(node_wrap(node_unwrap_assignment(curr_node)->rhs), recursion_depth, callback);
+                walk_tree(node_wrap(node_unwrap_assignment(curr_node)->lhs), recursion_depth + 1, callback);
+                walk_tree(node_wrap(node_unwrap_assignment(curr_node)->rhs), recursion_depth + 1, callback);
                 break;
             case NODE_OPERATOR:
-                walk_tree(node_wrap(node_unwrap_operator(curr_node)->lhs), recursion_depth, callback);
-                walk_tree(node_wrap(node_unwrap_operator(curr_node)->rhs), recursion_depth, callback);
+                walk_tree(node_wrap(node_unwrap_operator(curr_node)->lhs), recursion_depth + 1, callback);
+                walk_tree(node_wrap(node_unwrap_operator(curr_node)->rhs), recursion_depth + 1, callback);
                 break;
             case NODE_SYMBOL_TYPED:
                 break;
@@ -47,6 +47,12 @@ bool walk_tree(Node* input_node, int recursion_depth, bool (callback)(Node* inpu
             case NODE_STRUCT_MEMBER_SYM_TYPED:
                 break;
             case NODE_LANG_TYPE:
+                break;
+            case NODE_FOR_LOOP:
+                walk_tree(node_wrap(node_unwrap_for_loop(curr_node)->var_def), recursion_depth + 1, callback);
+                walk_tree(node_wrap(node_unwrap_for_loop(curr_node)->lower_bound), recursion_depth + 1, callback);
+                walk_tree(node_wrap(node_unwrap_for_loop(curr_node)->upper_bound), recursion_depth + 1, callback);
+                walk_tree(node_wrap(node_unwrap_for_loop(curr_node)->body), recursion_depth + 1, callback);
                 break;
             default:
                 walk_tree(get_left_child(curr_node), recursion_depth + 1, callback);

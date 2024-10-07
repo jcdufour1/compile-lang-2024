@@ -49,8 +49,6 @@ static inline Llvm_id get_llvm_id(const Node* node) {
             unreachable("");
         case NODE_FOR_UPPER_BOUND:
             unreachable("");
-        case NODE_FOR_VARIABLE_DEF:
-            unreachable("");
         case NODE_BREAK:
             unreachable("");
         case NODE_IF_STATEMENT:
@@ -129,8 +127,6 @@ static inline Lang_type get_lang_type(const Node* node) {
         case NODE_FOR_LOWER_BOUND:
             unreachable("");
         case NODE_FOR_UPPER_BOUND:
-            unreachable("");
-        case NODE_FOR_VARIABLE_DEF:
             unreachable("");
         case NODE_BREAK:
             unreachable("");
@@ -215,8 +211,6 @@ static inline Node* get_node_src(Node* node) {
             unreachable("");
         case NODE_FOR_UPPER_BOUND:
             unreachable("");
-        case NODE_FOR_VARIABLE_DEF:
-            unreachable("");
         case NODE_BREAK:
             unreachable("");
         case NODE_IF_STATEMENT:
@@ -300,8 +294,6 @@ static inline Node* get_node_dest(Node* node) {
             unreachable("");
         case NODE_FOR_UPPER_BOUND:
             unreachable("");
-        case NODE_FOR_VARIABLE_DEF:
-            unreachable("");
         case NODE_BREAK:
             unreachable("");
         case NODE_IF_STATEMENT:
@@ -380,8 +372,6 @@ static inline Str_view get_node_name(const Node* node) {
         case NODE_FOR_LOWER_BOUND:
             unreachable("");
         case NODE_FOR_UPPER_BOUND:
-            unreachable("");
-        case NODE_FOR_VARIABLE_DEF:
             unreachable("");
         case NODE_BREAK:
             unreachable("");

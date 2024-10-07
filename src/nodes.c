@@ -22,7 +22,6 @@ static const char* NODE_VARIABLE_DEFINITION_DESCRIPTION = "var_def";
 static const char* NODE_FUNCTION_DECLARATION_DESCRIPTION = "fun_declaration";
 static const char* NODE_ASSIGNMENT_DESCRIPTION = "assignment";
 static const char* NODE_FOR_LOOP_DESCRIPTION = "for";
-static const char* NODE_FOR_VARIABLE_DEF_DESCRIPTION = "for_var_def";
 static const char* NODE_FOR_LOWER_BOUND_DESCRIPTION = "lower_bound";
 static const char* NODE_FOR_UPPER_BOUND_DESCRIPTION = "upper_bound";
 static const char* NODE_BREAK_DESCRIPTION = "break";
@@ -185,8 +184,6 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_ASSIGNMENT_DESCRIPTION);
         case NODE_FOR_LOOP:
             return str_view_from_cstr(NODE_FOR_LOOP_DESCRIPTION);
-        case NODE_FOR_VARIABLE_DEF:
-            return str_view_from_cstr(NODE_FOR_VARIABLE_DEF_DESCRIPTION);
         case NODE_FOR_LOWER_BOUND:
             return str_view_from_cstr(NODE_FOR_LOWER_BOUND_DESCRIPTION);
         case NODE_FOR_UPPER_BOUND:
@@ -325,8 +322,6 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
         case NODE_FOR_UPPER_BOUND:
             // fallthrough
         case NODE_FOR_LOWER_BOUND:
-            // fallthrough
-        case NODE_FOR_VARIABLE_DEF:
             // fallthrough
         case NODE_IF_STATEMENT:
             // fallthrough

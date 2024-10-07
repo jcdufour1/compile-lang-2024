@@ -32,7 +32,6 @@ typedef enum {
     NODE_FOR_LOOP,
     NODE_FOR_LOWER_BOUND,
     NODE_FOR_UPPER_BOUND,
-    NODE_FOR_VARIABLE_DEF,
     NODE_BREAK,
     NODE_IF_STATEMENT,
     NODE_IF_CONDITION,
@@ -131,10 +130,6 @@ typedef struct {
 } Node_variable_def;
 
 typedef struct {
-    Node_variable_def* child;
-} Node_for_variable_def;
-
-typedef struct {
     Str_view name;
 } Node_struct_member_sym_piece_untyped;
 
@@ -168,19 +163,26 @@ typedef struct {
 
 typedef struct {
     struct Node_* child;
-} Node_for_loop;
-
-typedef struct {
-    struct Node_* child;
-} Node_return_statement;
-
-typedef struct {
-    struct Node_* child;
 } Node_for_lower_bound;
 
 typedef struct {
     struct Node_* child;
 } Node_for_upper_bound;
+
+typedef struct {
+    struct Node_* child;
+} Node_block;
+
+typedef struct {
+    Node_variable_def* var_def;
+    Node_for_lower_bound* lower_bound;
+    Node_for_upper_bound* upper_bound;
+    Node_block* body;
+} Node_for_loop;
+
+typedef struct {
+    struct Node_* child;
+} Node_return_statement;
 
 typedef struct {
     struct Node_* child;
@@ -198,10 +200,6 @@ typedef struct {
 typedef struct {
     struct Node_* child;
 } Node_if_condition;
-
-typedef struct {
-    struct Node_* child;
-} Node_block;
 
 typedef struct {
     struct Node_* child;
@@ -299,7 +297,6 @@ typedef union {
     Node_struct_def node_struct_def;
     Node_struct_member_sym_piece_typed node_struct_member_sym_piece_typed;
     Node_struct_member_sym_piece_untyped node_struct_member_sym_piece_untyped;
-    Node_for_variable_def node_for_variable_def;
     Node_variable_def node_variable_def;
     Node_struct_literal node_struct_literal;
     Node_operator node_operator;
@@ -507,16 +504,6 @@ static inline Node_for_loop* node_unwrap_for_loop(Node* node) {
 static inline const Node_for_loop* node_unwrap_for_loop_const(const Node* node) {
     assert(node->type == NODE_FOR_LOOP);
     return &node->as.node_for_loop;
-}
-
-static inline Node_for_variable_def* node_unwrap_for_variable_def(Node* node) {
-    assert(node->type == NODE_FOR_VARIABLE_DEF);
-    return &node->as.node_for_variable_def;
-}
-
-static inline const Node_for_variable_def* node_unwrap_for_variable_def_const(const Node* node) {
-    assert(node->type == NODE_FOR_VARIABLE_DEF);
-    return &node->as.node_for_variable_def;
 }
 
 static inline Node_for_lower_bound* node_unwrap_for_lower_bound(Node* node) {
