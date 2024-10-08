@@ -34,7 +34,7 @@ static void* safe_malloc(size_t capacity) {
     } while (0);
 
 static size_t get_total_alloced(Arena* arena) {
-    Arena_buf* curr_buf = arena->buf;
+    Arena_buf* curr_buf = arena->next;
     size_t total_alloced = 0;
     while (curr_buf) {
         total_alloced += curr_buf->capacity;
@@ -44,43 +44,31 @@ static size_t get_total_alloced(Arena* arena) {
 }
 
 void* arena_alloc(Arena* arena, size_t capacity_needed) {
-    (void) arena;
-    return safe_malloc(capacity_needed);
-    /*
-    Arena_buf* arena_buf_new_region = arena->buf;
-    Arena_buf* arena_buf_last = NULL;
-    while (arena_buf_new_region) {
-        arena_buf_last = arena_buf_new_region;
-        if (arena_buf_new_region-> >= capacity_needed) {
+    Arena_buf** curr_buf = &arena->next;
+    while (1) {
+        if (!(*curr_buf)) {
+            size_t cap_new_buf = MAX(get_total_alloced(arena), ARENA_DEFAULT_CAPACITY);
+            cap_new_buf = MAX(cap_new_buf, capacity_needed);
+            *curr_buf = safe_malloc(cap_new_buf);
+            (*curr_buf)->capacity = cap_new_buf;
+            assert(sizeof(**curr_buf) == sizeof(Arena_buf));
+            (*curr_buf)->count = sizeof(**curr_buf);
+            assert((*curr_buf)->count >= sizeof(Arena_buf));
+        }
+
+        assert((*curr_buf)->count >= sizeof(Arena_buf));
+        size_t rem_capacity = (*curr_buf)->capacity - (*curr_buf)->count;
+        if (rem_capacity >= capacity_needed) {
             break;
         }
-        arena_buf_new_region = arena_buf_new_region->next;
+
+        curr_buf = &(*curr_buf)->next;
     }
 
-    if (!arena_buf_new_region) {
-        // could not find space; must allocate new Arena_buf
-        size_t arena_buf_capacity = MAX(get_total_alloced(arena), ARENA_DEFAULT_CAPACITY);
-        size_t temporary_value_that_needs_to_be_looked_at = 8; // TODO: this should be sizeof(*arena->buf) or something
-        arena_buf_capacity = MAX(arena_buf_capacity, capacity_needed + temporary_value_that_needs_to_be_looked_at);
-        arena_buf_new_region = safe_malloc(arena_buf_capacity);
-        arena_buf_new_region->buf_after_taken = arena_buf_new_region + 1;
-        arena_buf_new_region->in_use = temporary_value_that_needs_to_be_looked_at;
-        arena_buf_new_region->capacity = arena_buf_capacity;
-        if (arena_buf_last) {
-            arena_buf_last->next = arena_buf_new_region;
-        } else {
-            arena->buf = arena_buf_new_region;
-        }
-    }
-
-    assert(arena_buf_new_region);
-    void* new_alloc_buf = arena_buf_new_region->buf_after_taken;
-    memset(new_alloc_buf, 0, capacity_needed);
-    arena_buf_new_region->in_use += capacity_needed;
-    arena_buf_new_region->buf_after_taken = (char*)arena_buf_new_region->buf_after_taken + capacity_needed;
-    assert(0 == memcmp(new_alloc_buf, zero_block, capacity_needed));
-    return new_alloc_buf;
-    */
+    assert((*curr_buf)->count >= sizeof(Arena_buf));
+    void* buf_to_return = (char*)(*curr_buf) + (*curr_buf)->count;
+    (*curr_buf)->count += capacity_needed;
+    return buf_to_return;
 }
 
 void* arena_realloc(Arena* arena, void* old_buf, size_t old_capacity, size_t new_capacity) {
@@ -96,23 +84,17 @@ void arena_destroy(Arena* arena) {
 
 // reset, but do not free, allocated area
 void arena_reset(Arena* arena) {
-    Arena_buf* curr_buf = arena->buf;
+    Arena_buf* curr_buf = arena->next;
     while (curr_buf) {
-        assert(curr_buf->in_use >= sizeof(*arena->buf));
-        curr_buf->buf_after_taken = (char*)curr_buf->buf_after_taken - (curr_buf->in_use - sizeof(*arena->buf));
-        memset(
-            (char*)curr_buf->buf_after_taken,
-            0,
-            curr_buf->in_use - sizeof(*arena->buf)
-        );
-        curr_buf->in_use = sizeof(*arena->buf);
+        curr_buf->count = sizeof(*curr_buf);
+
         curr_buf = curr_buf->next;
     }
 }
 
 size_t arena_get_total_capacity(const Arena* arena) {
     size_t total = 0;
-    Arena_buf* curr_buf = arena->buf;
+    Arena_buf* curr_buf = arena->next;
     while (curr_buf) {
         total += curr_buf->capacity;
         curr_buf = curr_buf->next;

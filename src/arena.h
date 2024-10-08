@@ -6,14 +6,13 @@
 #include "util.h"
 
 typedef struct Arena_buf_ {
-    void* buf_after_taken; // this pointer is incremented as space is used up
-    size_t in_use; // buf_after_taken - in_use will yield the start of the buffer (including Arena_buf_ itself)
-    size_t capacity; // size in bytes of space malloced
+    size_t count; // count of bytes used including the Arena node itself
+    size_t capacity; // total count of bytes alloced in this node including the Arena node itself
     struct Arena_buf_* next;
 } Arena_buf;
 
 typedef struct {
-    Arena_buf* buf;
+    Arena_buf* next;
 } Arena;
 
 extern Arena a_main;
