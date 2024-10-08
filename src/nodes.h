@@ -139,7 +139,7 @@ static inline void set_left_child(Node* parent, Node* left_child) {
             unreachable("");
             return;
         case NODE_LLVM_STORE_STRUCT_LITERAL:
-            node_unwrap_llvm_store_struct_literal(parent)->child = left_child;
+            unreachable("");
             return;
         default:
             unreachable(NODE_FMT, node_print(parent));
@@ -217,7 +217,7 @@ static inline Node* get_left_child(Node* node) {
         case NODE_STORE_ANOTHER_NODE:
             unreachable("");
         case NODE_LLVM_STORE_STRUCT_LITERAL:
-            return node_unwrap_llvm_store_struct_literal(node)->child;
+            unreachable("");
         case NODE_PTR_BYVAL_SYM:
             return NULL;
         case NODE_LLVM_REGISTER_SYM:

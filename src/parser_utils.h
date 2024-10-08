@@ -40,6 +40,8 @@ uint64_t sizeof_struct(const Node* struct_literal);
 
 uint64_t sizeof_struct_definition(const Node_struct_def* struct_def);
 
+uint64_t sizeof_struct_literal(const Node_struct_literal* struct_literal);
+
 static inline bool is_struct_variable_definition(const Node_variable_def* var_def) {
     Node* struct_def;
     return sym_tbl_lookup(&struct_def, var_def->lang_type.str);

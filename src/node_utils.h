@@ -393,7 +393,7 @@ static inline Str_view get_node_name(const Node* node) {
         case NODE_ALLOCA:
             return node_unwrap_alloca_const(node)->name;
         case NODE_LLVM_STORE_STRUCT_LITERAL:
-            return node_unwrap_llvm_store_struct_literal_const(node)->name;
+            unreachable("");
         case NODE_LOAD_ANOTHER_NODE:
             unreachable("");
         case NODE_STORE_ANOTHER_NODE:

@@ -309,9 +309,9 @@ static void insert_store_assignment(Node* node_to_insert_before, Node_assignment
             nodes_insert_before(node_to_insert_before, node_wrap(store));
         } else if (rhs->type == NODE_STRUCT_LITERAL) {
             Node_llvm_store_struct_literal* store = node_unwrap_llvm_store_struct_literal(node_new(lhs->pos, NODE_LLVM_STORE_STRUCT_LITERAL));
-            store->name = get_node_name(lhs);
             nodes_remove(rhs, true);
-            nodes_append_child(node_wrap(store), rhs);
+            store->child = node_unwrap_struct_literal(rhs);
+            store->node_dest = get_storage_location(get_node_name(lhs));
             nodes_insert_before(node_to_insert_before, node_wrap(store));
         } else {
             Node_store_another_node* store = node_unwrap_store_another_node(node_new(lhs->pos, NODE_STORE_ANOTHER_NODE));

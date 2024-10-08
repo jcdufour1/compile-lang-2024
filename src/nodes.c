@@ -347,7 +347,6 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             break;
         case NODE_LLVM_STORE_STRUCT_LITERAL:
             extend_lang_type_to_string(arena, string, get_lang_type(node), true);
-            string_extend_strv_in_par(arena, string, get_node_name(node));
             print_node_dest(arena, string, node, do_recursion);
             break;
         case NODE_SYMBOL_TYPED:

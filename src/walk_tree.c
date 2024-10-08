@@ -66,6 +66,9 @@ bool walk_tree(Node* input_node, int recursion_depth, bool (callback)(Node* inpu
                 walk_tree(node_wrap(node_unwrap_if(curr_node)->condition), recursion_depth + 1, callback);
                 walk_tree(node_wrap(node_unwrap_if(curr_node)->body), recursion_depth + 1, callback);
                 break;
+            case NODE_LLVM_STORE_STRUCT_LITERAL:
+                walk_tree(node_wrap(node_unwrap_llvm_store_struct_literal(curr_node)->child), recursion_depth + 1, callback);
+                break;
             default:
                 walk_tree(get_left_child(curr_node), recursion_depth + 1, callback);
                 break;

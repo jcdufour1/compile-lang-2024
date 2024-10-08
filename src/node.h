@@ -261,11 +261,10 @@ typedef struct {
 } Node_cond_goto;
 
 typedef struct {
-    struct Node_* child;
+    Node_struct_literal* child;
     Llvm_id llvm_id;
     Lang_type lang_type;
     struct Node_* node_dest;
-    Str_view name;
 } Node_llvm_store_struct_literal;
 
 typedef struct {

@@ -281,16 +281,13 @@ static void emit_load_another_node(String* output, const Node_load_another_node*
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_llvm_store_struct_literal(String* output, const Node* memcpy_node) {
-    assert(memcpy_node->type == NODE_LLVM_STORE_STRUCT_LITERAL);
-
-    size_t alloca_dest_id = get_store_dest_id(memcpy_node);
+static void emit_llvm_store_struct_literal(String* output, const Node_llvm_store_struct_literal* store) {
     string_extend_cstr(&a_main, output, "    call void @llvm.memcpy.p0.p0.i64(ptr align 4 %");
-    string_extend_size_t(&a_main, output, alloca_dest_id);
+    string_extend_size_t(&a_main, output, get_llvm_id(store->node_dest));
     string_extend_cstr(&a_main, output, ", ptr align 4 @__const.main.");
-    string_extend_strv(&a_main, output, get_node_name(nodes_single_child_const(memcpy_node)));
+    string_extend_strv(&a_main, output, store->child->name);
     string_extend_cstr(&a_main, output, ", i64 ");
-    string_extend_size_t(&a_main, output, sizeof_struct(nodes_single_child_const(memcpy_node)));
+    string_extend_size_t(&a_main, output, sizeof_struct_literal(store->child));
     string_extend_cstr(&a_main, output, ", i1 false)\n");
 }
 
@@ -481,7 +478,7 @@ static void emit_block(String* output, const Node_block* block) {
                 emit_llvm_store_literal(output, node_unwrap_llvm_store_literal(statement));
                 break;
             case NODE_LLVM_STORE_STRUCT_LITERAL:
-                emit_llvm_store_struct_literal(output, statement);
+                emit_llvm_store_struct_literal(output, node_unwrap_llvm_store_struct_literal_const(statement));
                 break;
             case NODE_STRUCT_DEFINITION:
                 emit_struct_definition(output, statement);
