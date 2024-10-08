@@ -51,12 +51,9 @@ void* arena_alloc(Arena* arena, size_t capacity_needed) {
             cap_new_buf = MAX(cap_new_buf, capacity_needed);
             *curr_buf = safe_malloc(cap_new_buf);
             (*curr_buf)->capacity = cap_new_buf;
-            assert(sizeof(**curr_buf) == sizeof(Arena_buf));
             (*curr_buf)->count = sizeof(**curr_buf);
-            assert((*curr_buf)->count >= sizeof(Arena_buf));
         }
 
-        assert((*curr_buf)->count >= sizeof(Arena_buf));
         size_t rem_capacity = (*curr_buf)->capacity - (*curr_buf)->count;
         if (rem_capacity >= capacity_needed) {
             break;
@@ -65,7 +62,6 @@ void* arena_alloc(Arena* arena, size_t capacity_needed) {
         curr_buf = &(*curr_buf)->next;
     }
 
-    assert((*curr_buf)->count >= sizeof(Arena_buf));
     void* buf_to_return = (char*)(*curr_buf) + (*curr_buf)->count;
     (*curr_buf)->count += capacity_needed;
     return buf_to_return;
