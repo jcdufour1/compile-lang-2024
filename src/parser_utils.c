@@ -471,11 +471,17 @@ void set_function_call_types(Node_function_call* fun_call) {
         msg_undefined_function(fun_call);
         return;
     }
-    Node_function_return_types* fun_rtn_types = node_unwrap_function_return_types(nodes_get_child_of_type(fun_def, NODE_FUNCTION_RETURN_TYPES));
+    Node_function_declaration* fun_decl;
+    if (fun_def->type == NODE_FUNCTION_DEFINITION) {
+        fun_decl = node_unwrap_function_definition(fun_def)->declaration;
+    } else {
+        fun_decl = node_unwrap_function_declaration(fun_def);
+    }
+    Node_function_return_types* fun_rtn_types = fun_decl->return_types;
     Node_lang_type* fun_rtn_type = fun_rtn_types->child;
     fun_call->lang_type = fun_rtn_type->lang_type;
     assert(fun_call->lang_type.str.count > 0);
-    Node* params = nodes_get_child_of_type(fun_def, NODE_FUNCTION_PARAMETERS);
+    Node_function_params* params = fun_decl->parameters;
     size_t params_idx = 0;
 
     nodes_foreach_child(argument, fun_call) {
@@ -492,7 +498,7 @@ void set_function_call_types(Node_function_call* fun_call) {
                 unreachable(NODE_FMT, node_print(argument));
         }
 
-        Node_variable_def* corresponding_param = node_unwrap_variable_def(nodes_get_child(params, params_idx));
+        Node_variable_def* corresponding_param = node_unwrap_variable_def(nodes_get_child(node_wrap(params), params_idx));
         switch (corresponding_param->lang_type.pointer_depth) {
             case 0:
                 break;

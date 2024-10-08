@@ -54,6 +54,14 @@ bool walk_tree(Node* input_node, int recursion_depth, bool (callback)(Node* inpu
                 walk_tree(node_wrap(node_unwrap_for_loop(curr_node)->upper_bound), recursion_depth + 1, callback);
                 walk_tree(node_wrap(node_unwrap_for_loop(curr_node)->body), recursion_depth + 1, callback);
                 break;
+            case NODE_FUNCTION_DEFINITION:
+                walk_tree(node_wrap(node_unwrap_function_definition(curr_node)->declaration), recursion_depth + 1, callback);
+                walk_tree(node_wrap(node_unwrap_function_definition(curr_node)->body), recursion_depth + 1, callback);
+                break;
+            case NODE_FUNCTION_DECLARATION:
+                walk_tree(node_wrap(node_unwrap_function_declaration(curr_node)->parameters), recursion_depth + 1, callback);
+                walk_tree(node_wrap(node_unwrap_function_declaration(curr_node)->return_types), recursion_depth + 1, callback);
+                break;
             default:
                 walk_tree(get_left_child(curr_node), recursion_depth + 1, callback);
                 break;

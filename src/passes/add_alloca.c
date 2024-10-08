@@ -12,16 +12,13 @@ static Node_alloca* alloca_new(Node_variable_def* var_def) {
 }
 
 static void do_function_definition(Node_function_definition* fun_def) {
-    Node_function_params* fun_params = node_unwrap_function_params(nodes_get_child_of_type(node_wrap(fun_def), NODE_FUNCTION_PARAMETERS));
-    Node_block* fun_block = node_unwrap_block(nodes_get_child_of_type(node_wrap(fun_def), NODE_BLOCK));
-
-    nodes_foreach_child(param, fun_params) {
+    nodes_foreach_child(param, fun_def->declaration->parameters) {
         if (is_corresponding_to_a_struct(param)) {
             node_unwrap_variable_def(param)->storage_location = param;
             continue;
         }
         Node_alloca* alloca = alloca_new(node_unwrap_variable_def(param));
-        nodes_insert_before(fun_block->child, node_wrap(alloca));
+        nodes_insert_before(fun_def->body->child, node_wrap(alloca));
     }
 }
 

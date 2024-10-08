@@ -82,10 +82,10 @@ static inline void set_left_child(Node* parent, Node* left_child) {
             unreachable("should not assign this in this way");
             return;
         case NODE_FUNCTION_DECLARATION:
-            node_unwrap_function_declaration(parent)->child = left_child;
+            unreachable("");
             return;
         case NODE_FUNCTION_DEFINITION:
-            node_unwrap_function_definition(parent)->child = left_child;
+            unreachable("");
             return;
         case NODE_FOR_LOOP:
             unreachable("");
@@ -179,9 +179,9 @@ static inline Node* get_left_child(Node* node) {
         case NODE_FUNCTION_RETURN_TYPES:
             unreachable("should not do it this way");
         case NODE_FUNCTION_DECLARATION:
-            return node_unwrap_function_declaration(node)->child;
+            unreachable("");
         case NODE_FUNCTION_DEFINITION:
-            return node_unwrap_function_definition(node)->child;
+            unreachable("");
         case NODE_FOR_LOOP:
             unreachable("");
         case NODE_FOR_LOWER_BOUND:

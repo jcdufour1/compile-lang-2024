@@ -103,7 +103,7 @@ static void extend_literal_decl(String* output, const Node_literal* var_def, boo
 }
 
 static const Node_lang_type* return_type_from_function_definition(const Node_function_definition* fun_def) {
-    const Node_function_return_types* return_types = node_unwrap_function_return_types_const(nodes_get_child_of_type_const(node_wrap(fun_def), NODE_FUNCTION_RETURN_TYPES));
+    const Node_function_return_types* return_types = fun_def->declaration->return_types;
     if (return_types->child) {
         return return_types->child;
     }
@@ -324,15 +324,13 @@ static void emit_function_definition(String* output, const Node_function_definit
     string_extend_cstr(&a_main, output, " @");
     string_extend_strv(&a_main, output, get_node_name(node_wrap(fun_def)));
 
-    const Node_function_params* params = node_unwrap_function_params_const(nodes_get_child_of_type_const(node_wrap(fun_def), NODE_FUNCTION_PARAMETERS));
     string_append(&a_main, output, '(');
-    emit_function_params(output, params);
+    emit_function_params(output, fun_def->declaration->parameters);
     string_append(&a_main, output, ')');
 
     string_extend_cstr(&a_main, output, " {\n");
 
-    const Node_block* block = node_unwrap_block_const(nodes_get_child_of_type_const(node_wrap(fun_def), NODE_BLOCK));
-    emit_block(output, block);
+    emit_block(output, fun_def->body);
 
     string_extend_cstr(&a_main, output, "}\n");
 }
@@ -374,13 +372,13 @@ static void emit_return_statement(String* output, const Node_return_statement* f
     }
 }
 
-static void emit_function_declaration(String* output, const Node* fun_decl) {
+static void emit_function_declaration(String* output, const Node_function_declaration* fun_decl) {
     string_extend_cstr(&a_main, output, "declare i32");
     //extend_literal_decl(output, fun_decl); // TODO
     string_extend_cstr(&a_main, output, " @");
-    string_extend_strv(&a_main, output, get_node_name(fun_decl));
+    string_extend_strv(&a_main, output, fun_decl->name);
     string_append(&a_main, output, '(');
-    emit_function_params(output, node_unwrap_function_params_const(nodes_get_child_of_type_const(fun_decl, NODE_FUNCTION_PARAMETERS)));
+    emit_function_params(output, fun_decl->parameters);
     string_append(&a_main, output, ')');
     string_extend_cstr(&a_main, output, "\n");
 }
@@ -460,7 +458,7 @@ static void emit_block(String* output, const Node_block* block) {
             case NODE_VARIABLE_DEFINITION:
                 break;
             case NODE_FUNCTION_DECLARATION:
-                emit_function_declaration(output, statement);
+                emit_function_declaration(output, node_unwrap_function_declaration(statement));
                 break;
             case NODE_ASSIGNMENT:
                 unreachable("an assignment should not still be present at this point");

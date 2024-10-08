@@ -149,26 +149,17 @@ static Node_function_declaration* extract_function_declaration_common(Tk_view* t
 
     Token name_token = tk_view_consume(tokens);
     fun_declaration->name = name_token.text;
-    assert(fun_declaration->name.count > 0);
-
     if (!sym_tbl_add(node_wrap(fun_declaration))) {
         msg_redefinition_of_symbol(node_wrap(fun_declaration));
         todo();
     }
-
     try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_PAR));
-
-    Node_function_params* parameters;
-    if (!extract_function_parameters(&parameters, tokens)) {
+    if (!extract_function_parameters(&fun_declaration->parameters, tokens)) {
         todo();
     }
-    nodes_append_child(node_wrap(fun_declaration), node_wrap(parameters));
-    
-    Node_function_return_types* return_types;
-    if (!extract_function_return_types(&return_types, tokens)) {
+    if (!extract_function_return_types(&fun_declaration->return_types, tokens)) {
         todo();
     }
-    nodes_append_child(node_wrap(fun_declaration), node_wrap(return_types));
 
     return fun_declaration;
 }
@@ -177,13 +168,11 @@ static Node_function_definition* parse_function_definition(Tk_view tokens) {
     tk_view_try_consume_symbol(NULL, &tokens, "fn");
     Node_function_declaration* fun_decl = extract_function_declaration_common(&tokens);
     try(tk_view_try_consume(NULL, &tokens, TOKEN_OPEN_CURLY_BRACE));
-    Node_function_declaration temp = *fun_decl;
-    node_wrap(fun_decl)->type = NODE_FUNCTION_DEFINITION;
-    Node_function_definition* function = node_unwrap_function_definition(node_wrap(fun_decl));
-    function->name = temp.name;
-    nodes_append_child(node_wrap(function), node_wrap(extract_block(&tokens)));
-
-    return node_unwrap_function_definition(node_wrap(function));
+    Node_function_definition* function = node_unwrap_function_definition(node_new(node_wrap(fun_decl)->pos, NODE_FUNCTION_DEFINITION));
+    function->declaration = fun_decl;
+    sym_tbl_update(node_wrap(function));
+    function->body = extract_block(&tokens);
+    return function;
 }
 
 static Node_function_definition* extract_function_definition(Tk_view* tokens) {

@@ -245,12 +245,19 @@ static void insert_store_assignment(Node* node_to_insert_before, Node_assignment
             rhs_load = rhs;
             nodes_remove(rhs_load, true);
             nodes_insert_before(node_to_insert_before, rhs_load);
-            Node* fun_def;
-            try(sym_tbl_lookup(&fun_def, get_node_name(rhs)));
-            Node_lang_type* function_rtn_type = node_unwrap_function_return_types(nodes_get_child_of_type(fun_def, NODE_FUNCTION_RETURN_TYPES))->child;
+            Node_function_declaration* fun_decl;
+            {
+                Node* fun_def;
+                try(sym_tbl_lookup(&fun_def, get_node_name(rhs)));
+                if (fun_def->type == NODE_FUNCTION_DEFINITION) {
+                    fun_decl = node_unwrap_function_definition(fun_def)->declaration;
+                } else {
+                    fun_decl = node_unwrap_function_declaration(fun_def);
+                }
+            }
+            Node_lang_type* function_rtn_type = fun_decl->return_types->child;
             node_unwrap_function_call(rhs_load)->lang_type = function_rtn_type->lang_type;
             assert(rhs_load);
-            assert(node_unwrap_function_call(rhs_load)->lang_type.str.count > 0);
             rhs_load_lang_type = node_unwrap_function_call(rhs)->lang_type;
             break;
         default:
@@ -353,17 +360,14 @@ static Node* get_node_after_last_alloca(Node* fun_block) {
 }
 
 static void load_function_parameters(Node_function_definition* fun_def) {
-    Node* fun_params = nodes_get_child_of_type(node_wrap(fun_def), NODE_FUNCTION_PARAMETERS);
-    Node* fun_block = nodes_get_child_of_type(node_wrap(fun_def), NODE_BLOCK);
-
-    nodes_foreach_child(param, fun_params) {
+    nodes_foreach_child(param, fun_def->declaration->parameters) {
         if (is_corresponding_to_a_struct(param)) {
             continue;
         }
         Node_llvm_register_sym* fun_param_call = node_unwrap_llvm_register_sym(node_new(param->pos, NODE_LLVM_REGISTER_SYM));
         fun_param_call->node_src = param;
         fun_param_call->lang_type = get_lang_type(param);
-        insert_store(get_node_after_last_alloca(fun_block), node_wrap(fun_param_call));
+        insert_store(get_node_after_last_alloca(node_wrap(fun_def->body)), node_wrap(fun_param_call));
     }
 }
 

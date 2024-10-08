@@ -344,7 +344,10 @@ static inline Str_view get_node_name(const Node* node) {
         case NODE_BLOCK:
             unreachable("");
         case NODE_FUNCTION_DEFINITION:
-            return node_unwrap_function_definition_const(node)->name;
+            if (!node_unwrap_function_definition_const(node)->declaration) {
+                unreachable("");
+            }
+            return node_unwrap_function_definition_const(node)->declaration->name;
         case NODE_FUNCTION_PARAMETERS:
             unreachable("");
         case NODE_FUNCTION_RETURN_TYPES:

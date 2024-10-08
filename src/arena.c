@@ -33,10 +33,6 @@ static void* safe_malloc(size_t capacity) {
         (ptr) = NULL; \
     } while (0);
 
-static size_t space_remaining(const Arena_buf arena_buf) {
-    return arena_buf.capacity - arena_buf.in_use;
-}
-
 static size_t get_total_alloced(Arena* arena) {
     Arena_buf* curr_buf = arena->buf;
     size_t total_alloced = 0;
@@ -48,11 +44,14 @@ static size_t get_total_alloced(Arena* arena) {
 }
 
 void* arena_alloc(Arena* arena, size_t capacity_needed) {
+    (void) arena;
+    return safe_malloc(capacity_needed);
+    /*
     Arena_buf* arena_buf_new_region = arena->buf;
     Arena_buf* arena_buf_last = NULL;
     while (arena_buf_new_region) {
         arena_buf_last = arena_buf_new_region;
-        if (space_remaining(*arena_buf_new_region) >= capacity_needed) {
+        if (arena_buf_new_region-> >= capacity_needed) {
             break;
         }
         arena_buf_new_region = arena_buf_new_region->next;
@@ -81,6 +80,7 @@ void* arena_alloc(Arena* arena, size_t capacity_needed) {
     arena_buf_new_region->buf_after_taken = (char*)arena_buf_new_region->buf_after_taken + capacity_needed;
     assert(0 == memcmp(new_alloc_buf, zero_block, capacity_needed));
     return new_alloc_buf;
+    */
 }
 
 void* arena_realloc(Arena* arena, void* old_buf, size_t old_capacity, size_t new_capacity) {

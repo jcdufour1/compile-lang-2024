@@ -147,18 +147,23 @@ typedef struct {
 } Node_struct_def;
 
 typedef struct {
+    struct Node_* child;
+} Node_block;
+
+typedef struct {
     Node_lang_type* child;
 } Node_function_return_types;
 
 typedef struct {
-    struct Node_* child;
+    Node_function_params* parameters;
+    Node_function_return_types* return_types;
     Str_view name;
 } Node_function_declaration;
 
 typedef struct {
-    struct Node_* child;
+    Node_function_declaration* declaration;
+    Node_block* body;
     Llvm_id llvm_id;
-    Str_view name;
 } Node_function_definition;
 
 typedef struct {
@@ -168,10 +173,6 @@ typedef struct {
 typedef struct {
     struct Node_* child;
 } Node_for_upper_bound;
-
-typedef struct {
-    struct Node_* child;
-} Node_block;
 
 typedef struct {
     Node_variable_def* var_def;
