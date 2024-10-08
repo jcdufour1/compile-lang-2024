@@ -121,10 +121,10 @@ static inline void set_left_child(Node* parent, Node* left_child) {
             unreachable("");
             return;
         case NODE_COND_GOTO:
-            node_unwrap_cond_goto(parent)->child = left_child;
+            unreachable("");
             return;
         case NODE_GOTO:
-            node_unwrap_goto(parent)->child = left_child;
+            unreachable("");
             return;
         case NODE_ALLOCA:
             unreachable("");
@@ -205,9 +205,9 @@ static inline Node* get_left_child(Node* node) {
         case NODE_STRUCT_MEMBER_SYM_TYPED:
             return node_unwrap_struct_member_sym_typed(node)->child;
         case NODE_COND_GOTO:
-            return node_unwrap_cond_goto(node)->child;
+            unreachable("");
         case NODE_GOTO:
-            return node_unwrap_goto(node)->child;
+            unreachable("");
         case NODE_ALLOCA:
             unreachable("");
         case NODE_LLVM_STORE_LITERAL:

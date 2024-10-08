@@ -78,11 +78,9 @@ const Node_variable_def* get_symbol_def_from_alloca(const Node* alloca) {
     }
 }
 
-Llvm_id get_matching_label_id(const Node* symbol_call) {
-    assert(get_node_name(symbol_call).count > 0);
-
+Llvm_id get_matching_label_id(Str_view name) {
     Node* label_;
-    if (!sym_tbl_lookup(&label_, get_node_name(symbol_call))) {
+    if (!sym_tbl_lookup(&label_, name)) {
         unreachable("call to undefined label");
     }
     Node_label* label = node_unwrap_label(label_);

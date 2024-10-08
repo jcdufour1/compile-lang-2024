@@ -17,7 +17,7 @@ Llvm_id get_store_dest_id(const Node* var_call);
 
 const Node_variable_def* get_symbol_def_from_alloca(const Node* alloca);
 
-Llvm_id get_matching_label_id(const Node* symbol_call);
+Llvm_id get_matching_label_id(Str_view name);
 
 // lhs and rhs should not be used for other tasks after this
 Node_assignment* assignment_new(Node* lhs, Node* rhs);

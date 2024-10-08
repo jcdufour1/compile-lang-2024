@@ -388,23 +388,17 @@ static void emit_label(String* output, const Node_label* label) {
 
 static void emit_goto(String* output, const Node_goto* lang_goto) {
     string_extend_cstr(&a_main, output, "    br label %");
-    string_extend_size_t(&a_main, output, get_matching_label_id(node_wrap(lang_goto)));
+    string_extend_size_t(&a_main, output, get_matching_label_id(lang_goto->name));
     string_append(&a_main, output, '\n');
 }
 
 static void emit_cond_goto(String* output, const Node_cond_goto* cond_goto) {
-    const Node* label_if_true = nodes_get_child_const(node_wrap(cond_goto), 1);
-    const Node* label_if_false = nodes_get_child_const(node_wrap(cond_goto), 2);
-
-    const Node* llvm_cmp_dest = 
-        node_unwrap_llvm_register_sym_const(nodes_get_child_of_type_const(node_wrap(cond_goto), NODE_LLVM_REGISTER_SYM))->node_src;
-
     string_extend_cstr(&a_main, output, "    br i1 %");
-    string_extend_size_t(&a_main, output, get_llvm_id(llvm_cmp_dest));
+    string_extend_size_t(&a_main, output, cond_goto->node_src->llvm_id);
     string_extend_cstr(&a_main, output, ", label %");
-    string_extend_size_t(&a_main, output, get_matching_label_id(label_if_true));
+    string_extend_size_t(&a_main, output, get_matching_label_id(cond_goto->if_true->name));
     string_extend_cstr(&a_main, output, ", label %");
-    string_extend_size_t(&a_main, output, get_matching_label_id(label_if_false));
+    string_extend_size_t(&a_main, output, get_matching_label_id(cond_goto->if_false->name));
     string_append(&a_main, output, '\n');
 }
 

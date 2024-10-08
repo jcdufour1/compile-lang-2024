@@ -250,13 +250,14 @@ typedef struct {
 } Node_llvm_store_literal;
 
 typedef struct {
-    struct Node_* child;
     Str_view name;
     Llvm_id llvm_id;
 } Node_goto;
 
 typedef struct {
-    struct Node_* child;
+    Node_operator* node_src;
+    Node_symbol_untyped* if_true;
+    Node_symbol_untyped* if_false;
     Llvm_id llvm_id;
 } Node_cond_goto;
 

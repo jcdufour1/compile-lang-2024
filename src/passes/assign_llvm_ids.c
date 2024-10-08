@@ -31,9 +31,6 @@ bool assign_llvm_ids(Node* curr_node) {
         case NODE_LANG_TYPE:
             return false;
         case NODE_SYMBOL_UNTYPED:
-            if (!curr_node->parent || curr_node->parent->type != NODE_COND_GOTO) {
-                unreachable("node_symbol_untyped should not exist here except in conditional goto");
-            }
             return false;
         case NODE_LOAD_STRUCT_ELEMENT_PTR:
             node_unwrap_load_elem_ptr(curr_node)->llvm_id = llvm_id_for_next_var;
