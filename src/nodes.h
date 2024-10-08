@@ -106,7 +106,7 @@ static inline void set_left_child(Node* parent, Node* left_child) {
             unreachable("");
             return;
         case NODE_IF_STATEMENT:
-            node_unwrap_if(parent)->child = left_child;
+            unreachable("");
             return;
         case NODE_IF_CONDITION:
             node_unwrap_if_condition(parent)->child = left_child;
@@ -195,7 +195,7 @@ static inline Node* get_left_child(Node* node) {
         case NODE_ASSIGNMENT:
             unreachable("");
         case NODE_IF_STATEMENT:
-            return node_unwrap_if(node)->child;
+            unreachable("");
         case NODE_IF_CONDITION:
             return node_unwrap_if_condition(node)->child;
         case NODE_BLOCK:

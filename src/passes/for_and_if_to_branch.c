@@ -42,7 +42,7 @@ static void change_break_to_goto(Node_block* block, const Node_label* label_to_g
     while (curr_node) {
         switch (curr_node->type) {
             case NODE_IF_STATEMENT:
-                change_break_to_goto(node_unwrap_block(nodes_get_child_of_type(curr_node, NODE_BLOCK)), label_to_goto);
+                change_break_to_goto(node_unwrap_if(curr_node)->body, label_to_goto);
                 break;
             case NODE_FUNCTION_CALL:
                 break;
@@ -132,10 +132,10 @@ static void for_loop_to_branch(Node_for_loop* for_loop) {
 }
 
 static void if_statement_to_branch(Node_if* if_statement) {
-    Node_if_condition* if_condition = node_unwrap_if_condition(nodes_get_child_of_type(node_wrap(if_statement), NODE_IF_CONDITION));
+    Node_if_condition* if_condition = if_statement->condition;
     nodes_remove(node_wrap(if_condition), true);
     assert(nodes_count_children(node_wrap(if_condition)) == 1);
-    Node_block* block = node_unwrap_block(nodes_get_child_of_type(node_wrap(if_statement), NODE_BLOCK));
+    Node_block* block = if_statement->body;
 
     Node_operator* operation = node_unwrap_operator(nodes_single_child(node_wrap(if_condition)));
     nodes_remove(node_wrap(operation), true);

@@ -8,8 +8,8 @@
 static void set_if_statement_types(Node* if_statement) {
     assert(if_statement->type == NODE_IF_STATEMENT);
 
-    Node_if_condition* if_condition = node_unwrap_if_condition(nodes_get_child_of_type(if_statement, NODE_IF_CONDITION));
-    Node* old_if_cond_child = nodes_single_child(node_wrap(if_condition));
+    Node_if_condition* if_condition = node_unwrap_if(if_statement)->condition;
+    Node* old_if_cond_child = if_condition->child;
     switch (old_if_cond_child->type) {
         case NODE_SYMBOL_UNTYPED:
             set_symbol_type(node_unwrap_symbol_untyped(old_if_cond_child));

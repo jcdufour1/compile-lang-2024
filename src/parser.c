@@ -491,9 +491,9 @@ static Node_if* extract_if_statement(Tk_view* tokens) {
     try(tk_view_try_consume_symbol(&if_start_token, tokens, "if"));
     Node_if* if_statement = node_unwrap_if(node_new(if_start_token.pos, NODE_IF_STATEMENT));
 
-    nodes_append_child(node_wrap(if_statement), node_wrap(extract_if_condition(tokens)));
+    if_statement->condition = extract_if_condition(tokens);
     Tk_view if_body_tokens = extract_items_inside_brackets(tokens, TOKEN_CLOSE_CURLY_BRACE);
-    nodes_append_child(node_wrap(if_statement), node_wrap(extract_block(&if_body_tokens)));
+    if_statement->body = extract_block(&if_body_tokens);
 
     return if_statement;
 }

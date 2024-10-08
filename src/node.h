@@ -196,11 +196,12 @@ typedef struct {
 
 typedef struct {
     struct Node_* child;
-} Node_if;
+} Node_if_condition;
 
 typedef struct {
-    struct Node_* child;
-} Node_if_condition;
+    Node_if_condition* condition;
+    Node_block* body;
+} Node_if;
 
 typedef struct {
     struct Node_* child;
