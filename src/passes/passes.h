@@ -3,6 +3,12 @@
 
 #include "../node.h"
 
+static inline bool dummy_callback(Node* curr_node, int recursion_depth) {
+    (void) curr_node;
+    (void) recursion_depth;
+    return false;
+}
+
 bool analysis_1(Node* curr_node, int recursion_depth);
 
 bool for_and_if_to_branch(Node* curr_node, int recursion_depth);

@@ -57,6 +57,7 @@ bool assign_llvm_ids(Node* curr_node) {
             llvm_id_for_next_var += 2;
             return false;
         case NODE_ASSIGNMENT:
+            log_tree(LOG_DEBUG, curr_node);
             unreachable("");
         case NODE_ALLOCA:
             node_unwrap_alloca(curr_node)->llvm_id = llvm_id_for_next_var;

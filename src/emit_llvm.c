@@ -111,32 +111,34 @@ static const Node_lang_type* return_type_from_function_definition(const Node_fun
 }
 
 static void emit_function_params(String* output, const Node_function_params* fun_params) {
-    size_t idx = 0;
-    nodes_foreach_child(param_, fun_params) {
-        Node_variable_def* param = node_unwrap_variable_def(param_);
+    for (size_t idx = 0; idx < fun_params->params.info.count; idx++) {
+        const Node_variable_def* curr_param = node_unwrap_variable_def_const(
+            node_ptr_vec_at_const(&fun_params->params, idx)
+        );
 
         if (idx++ > 0) {
             string_extend_cstr(&a_main, output, ", ");
         }
 
-        if (is_struct_variable_definition(param)) {
+        if (is_struct_variable_definition(curr_param)) {
             string_extend_cstr(&a_main, output, "ptr noundef byval(");
-            extend_type_call_str(output, param->lang_type);
+            extend_type_call_str(output, curr_param->lang_type);
             string_extend_cstr(&a_main, output, ")");
         } else {
-            extend_type_decl_str(output, node_wrap(param), true);
+            extend_type_decl_str(output, node_wrap(curr_param), true);
         }
-        if (param->is_variadic) {
+        if (curr_param->is_variadic) {
             return;
         }
         string_extend_cstr(&a_main, output, " %");
-        string_extend_size_t(&a_main, output, param->llvm_id);
+        string_extend_size_t(&a_main, output, curr_param->llvm_id);
     }
 }
 
 static void emit_function_call_arguments(String* output, const Node_function_call* fun_call) {
-    size_t idx = 0;
-    nodes_foreach_child(argument, fun_call) {
+    
+    for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
+        const Node* argument = node_ptr_vec_at_const(&fun_call->args, idx);
         if (idx++ > 0) {
             string_extend_cstr(&a_main, output, ", ");
         }
@@ -159,7 +161,7 @@ static void emit_function_call_arguments(String* output, const Node_function_cal
                 extend_type_call_str(output, get_lang_type(argument));
                 string_extend_cstr(&a_main, output, ")");
                 string_extend_cstr(&a_main, output, " %");
-                string_extend_size_t(&a_main, output, get_llvm_id(node_unwrap_ptr_byval_sym(argument)->node_src));
+                string_extend_size_t(&a_main, output, get_llvm_id(node_unwrap_ptr_byval_sym_const(argument)->node_src));
                 break;
             case NODE_LLVM_REGISTER_SYM:
                 extend_type_call_str(output, get_lang_type(argument));
@@ -402,16 +404,16 @@ static void emit_cond_goto(String* output, const Node_cond_goto* cond_goto) {
     string_append(&a_main, output, '\n');
 }
 
-static void emit_struct_definition(String* output, const Node* statement) {
+static void emit_struct_definition(String* output, const Node_struct_def* struct_def) {
     string_extend_cstr(&a_main, output, "%struct.");
-    string_extend_strv(&a_main, output, get_node_name(statement));
+    string_extend_strv(&a_main, output, struct_def->name);
     string_extend_cstr(&a_main, output, " = type { ");
     bool is_first = true;
-    nodes_foreach_child(member, statement) {
+    for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         if (!is_first) {
             string_extend_cstr(&a_main, output, ", ");
         }
-        extend_type_decl_str(output, member, false);
+        extend_type_decl_str(output, node_ptr_vec_at_const(&struct_def->members, idx), false);
         is_first = false;
     }
     string_extend_cstr(&a_main, output, " }\n");
@@ -435,7 +437,9 @@ static void emit_load_struct_element_pointer(String* output, const Node_load_ele
 }
 
 static void emit_block(String* output, const Node_block* block) {
-    nodes_foreach_child(statement, block) {
+    for (size_t idx = 0; idx < block->children.info.count; idx++) {
+        const Node* statement = node_ptr_vec_at_const(&block->children, idx);
+
         switch (statement->type) {
             case NODE_FUNCTION_DEFINITION:
                 emit_function_definition(output, node_unwrap_function_definition_const(statement));
@@ -444,38 +448,38 @@ static void emit_block(String* output, const Node_block* block) {
                 emit_function_call(output, node_unwrap_function_call_const(statement));
                 break;
             case NODE_RETURN_STATEMENT:
-                emit_return_statement(output, node_unwrap_return_statement(statement));
+                emit_return_statement(output, node_unwrap_return_statement_const(statement));
                 break;
             case NODE_VARIABLE_DEFINITION:
                 break;
             case NODE_FUNCTION_DECLARATION:
-                emit_function_declaration(output, node_unwrap_function_declaration(statement));
+                emit_function_declaration(output, node_unwrap_function_declaration_const(statement));
                 break;
             case NODE_ASSIGNMENT:
                 unreachable("an assignment should not still be present at this point");
             case NODE_BLOCK:
-                emit_block(output, node_unwrap_block(statement));
+                emit_block(output, node_unwrap_block_const(statement));
                 break;
             case NODE_LABEL:
-                emit_label(output, node_unwrap_label(statement));
+                emit_label(output, node_unwrap_label_const(statement));
                 break;
             case NODE_COND_GOTO:
-                emit_cond_goto(output, node_unwrap_cond_goto(statement));
+                emit_cond_goto(output, node_unwrap_cond_goto_const(statement));
                 break;
             case NODE_GOTO:
-                emit_goto(output, node_unwrap_goto(statement));
+                emit_goto(output, node_unwrap_goto_const(statement));
                 break;
             case NODE_ALLOCA:
-                emit_alloca(output, node_unwrap_alloca(statement));
+                emit_alloca(output, node_unwrap_alloca_const(statement));
                 break;
             case NODE_LLVM_STORE_LITERAL:
-                emit_llvm_store_literal(output, node_unwrap_llvm_store_literal(statement));
+                emit_llvm_store_literal(output, node_unwrap_llvm_store_literal_const(statement));
                 break;
             case NODE_LLVM_STORE_STRUCT_LITERAL:
                 emit_llvm_store_struct_literal(output, node_unwrap_llvm_store_struct_literal_const(statement));
                 break;
             case NODE_STRUCT_DEFINITION:
-                emit_struct_definition(output, statement);
+                emit_struct_definition(output, node_unwrap_struct_def_const(statement));
                 break;
             case NODE_OPERATOR:
                 emit_operator(output, node_unwrap_operator_const(statement));
@@ -525,7 +529,8 @@ static void emit_struct_literal(String* output, const Node_struct_literal* struc
     string_extend_cstr(&a_main, output, " {");
 
     size_t is_first = true;
-    nodes_foreach_child(memb_literal, struct_literal) {
+    for (size_t idx = 0; idx < struct_literal->members.info.count; idx++) {
+        const Node* memb_literal = node_ptr_vec_at_const(&struct_literal->members, idx);
         if (!is_first) {
             string_append(&a_main, output, ',');
         }

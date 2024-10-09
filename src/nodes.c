@@ -46,60 +46,6 @@ static const char* NODE_PTR_BYVAL_SYM_DESCRIPTION = "byval_sym";
 static const char* NODE_LLVM_REGISTER_SYM_DESCRIPTION = "llvm_register_sym";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
-#ifndef NDEBUG
-#if 0
-static void nodes_assert_tree_linkage_is_consistant_internal(Node_ptr_vec* nodes_visited, const Node* root) {
-    if (!root) {
-        return;
-    }
-
-    assert(!node_ptr_vec_in(nodes_visited, root) && "same node found more than once");
-    node_ptr_vec_append(nodes_visited, root);
-
-    assert(
-        (root != root->next) && \
-        (root != root->prev) && \
-        (root != get_left_child_const(root)) && \
-        (root != root->parent) && \
-        "node points to itself"
-    );
-
-    Node* base_parent = root->parent;
-    nodes_foreach_from_curr_const(curr_node, root) {
-        bool dummy_bool = true;
-        assert(dummy_bool);
-        if (curr_node->next) {
-            assert(curr_node == curr_node->next->prev);
-        }
-        if (curr_node->prev) {
-            if (curr_node != curr_node->prev->next) {
-                assert(false);
-            }
-        }
-        assert(curr_node->parent == base_parent);
-
-        const Node* left_child = get_left_child_const(curr_node);
-        if (left_child) {
-            assert(curr_node == left_child->parent);
-            nodes_assert_tree_linkage_is_consistant_internal(nodes_visited, left_child);
-        }
-    }
-}
-
-void nodes_assert_tree_linkage_is_consistant(const Node* root) {
-    static Node_ptr_vec nodes_visited = {0};
-    node_ptr_vec_set_to_zero_len(&nodes_visited);
-    nodes_assert_tree_linkage_is_consistant_internal(&nodes_visited, root);
-}
-
-#else
-
-void nodes_assert_tree_linkage_is_consistant(const Node* root) {
-    (void) root;
-}
-#endif // 0
-#endif // NDEBUG
-
 void extend_lang_type_to_string(Arena* arena, String* string, Lang_type lang_type, bool surround_in_lt_gt) {
     if (surround_in_lt_gt) {
         string_append(arena, string, '<');
@@ -265,7 +211,6 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             string_extend_strv_in_par(arena, string, get_node_name(node));
             break;
         case NODE_COND_GOTO:
-            // fallthrough
             break;
         case NODE_LITERAL:
             extend_lang_type_to_string(arena, string, node_unwrap_literal_const(node)->lang_type, true);
@@ -276,16 +221,13 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             string_extend_strv_in_par(arena, string, get_node_name(node));
             break;
         case NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED:
-            // fallthrough
             break;
         case NODE_STRUCT_MEMBER_SYM_UNTYPED:
-            // fallthrough
             break;
         case NODE_FUNCTION_DEFINITION:
-            // fallthrough
+            string_extend_strv_in_par(arena, string, get_node_name(node));
             break;
         case NODE_STRUCT_DEFINITION:
-            // fallthrough
             break;
         case NODE_FUNCTION_CALL:
             string_extend_strv_in_par(arena, string, get_node_name(node));
@@ -305,6 +247,9 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             extend_lang_type_to_string(arena, string, node_unwrap_struct_literal_const(node)->lang_type, true);
             string_extend_strv(arena, string, get_node_name(node));
             break;
+        case NODE_FUNCTION_DECLARATION:
+            string_extend_strv_in_par(arena, string, get_node_name(node));
+            break;
         case NODE_FUNCTION_PARAMETERS:
             // fallthrough
         case NODE_FUNCTION_RETURN_TYPES:
@@ -312,8 +257,6 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
         case NODE_BLOCK:
             // fallthrough
         case NODE_RETURN_STATEMENT:
-            // fallthrough
-        case NODE_FUNCTION_DECLARATION:
             // fallthrough
         case NODE_ASSIGNMENT:
             // fallthrough
@@ -388,7 +331,7 @@ Str_view node_print_internal(Arena* arena, const Node* node) {
         return str_view_from_cstr("<null>");
     }
 
-    String buf = {0}; // todo: put these strings in an arena to free, etc
+    String buf = {0};
 
     if (!node) {
         string_extend_cstr(arena, &buf, "<null>");

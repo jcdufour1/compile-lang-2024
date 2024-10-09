@@ -5,10 +5,8 @@
 #include "../parser_utils.h"
 #include "../error_msg.h"
 
-static void set_if_statement_types(Node* if_statement) {
-    assert(if_statement->type == NODE_IF_STATEMENT);
-
-    Node_if_condition* if_condition = node_unwrap_if(if_statement)->condition;
+static void set_if_statement_types(Node_if* if_statement) {
+    Node_if_condition* if_condition = if_statement->condition;
     Node* old_if_cond_child = if_condition->child;
     switch (old_if_cond_child->type) {
         case NODE_SYMBOL_UNTYPED:
@@ -20,23 +18,19 @@ static void set_if_statement_types(Node* if_statement) {
         }
         case NODE_FUNCTION_CALL: {
             set_function_call_types(node_unwrap_function_call(old_if_cond_child));
-            nodes_remove(old_if_cond_child, true);
-            Node_operator* new_if_cond_child = operation_new(
+            if_condition->child = node_wrap(operation_new(
                 old_if_cond_child,
                 node_wrap(literal_new(str_view_from_cstr("0"), TOKEN_NUM_LITERAL, node_wrap(old_if_cond_child)->pos)),
                 TOKEN_NOT_EQUAL
-            );
-            nodes_append_child(node_wrap(if_condition), node_wrap(new_if_cond_child));
+            ));
             break;
         }
         case NODE_LITERAL: {
-            nodes_remove(old_if_cond_child, true);
-            Node_operator* new_if_cond_child = operation_new(
+            if_condition->child = node_wrap(operation_new(
                 old_if_cond_child,
                 node_wrap(literal_new(str_view_from_cstr("1"), TOKEN_NUM_LITERAL, old_if_cond_child->pos)),
                 TOKEN_DOUBLE_EQUAL
-            );
-            nodes_append_child(node_wrap(if_condition), node_wrap(new_if_cond_child));
+            ));
             break;
         }
         default:
@@ -44,13 +38,17 @@ static void set_if_statement_types(Node* if_statement) {
     }
 }
 
-bool analysis_1(Node* start_node, int recursion_depth) {
+bool analysis_1(Node* block_, int recursion_depth) {
     (void) recursion_depth;
-    if (start_node->type != NODE_BLOCK) {
+    if (block_->type != NODE_BLOCK) {
         return false;
     }
+    Node_block* block = node_unwrap_block(block_);
+    Node_ptr_vec* block_children = &block->children;
 
-    nodes_foreach_child(curr_node, start_node) {
+    for (size_t idx = 0; idx < block_children->info.count; idx++) {
+        Node* curr_node = node_ptr_vec_at(block_children, idx);
+
         switch (curr_node->type) {
             case NODE_ASSIGNMENT:
                 set_assignment_operand_types(node_unwrap_assignment(curr_node));
@@ -65,13 +63,13 @@ bool analysis_1(Node* start_node, int recursion_depth) {
                 set_symbol_type(node_unwrap_symbol_untyped(curr_node));
                 break;
             case NODE_RETURN_STATEMENT:
-                set_return_statement_types(curr_node);
+                set_return_statement_types(node_unwrap_return_statement(curr_node));
                 break;
             case NODE_OPERATOR:
                 todo();
                 break;
             case NODE_IF_STATEMENT:
-                set_if_statement_types(curr_node);
+                set_if_statement_types(node_unwrap_if(curr_node));
                 break;
             default:
                 break;

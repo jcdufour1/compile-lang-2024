@@ -1,5 +1,7 @@
 #ifndef NODE_H
 #define NODE_H
+
+#include "node_ptr_vec.h"
 #include "newstring.h"
 #include "str_view.h"
 #include "token.h"
@@ -84,21 +86,20 @@ typedef struct {
 } Node_load_element_ptr;
 
 typedef struct {
-    struct Node_* child;
     Str_view str_data; // eg. "hello" in "let string1: String = "hello""
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Str_view name;
 } Node_literal;
 
 typedef struct {
-    struct Node_* child;
+    Node_ptr_vec args;
     Str_view name;
     Llvm_id llvm_id;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 } Node_function_call;
 
 typedef struct {
-    struct Node_* child;
+    Node_ptr_vec params;
     Llvm_id llvm_id;
 } Node_function_params;
 
@@ -115,7 +116,7 @@ typedef struct {
 } Node_operator;
 
 typedef struct {
-    struct Node_* child;
+    Node_ptr_vec members;
     Str_view name;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Llvm_id llvm_id;
@@ -140,14 +141,14 @@ typedef struct {
 } Node_struct_member_sym_piece_typed;
 
 typedef struct {
-    struct Node_* child;
+    Node_ptr_vec members;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Llvm_id llvm_id;
     Str_view name;
 } Node_struct_def;
 
 typedef struct {
-    struct Node_* child;
+    Node_ptr_vec children;
 } Node_block;
 
 typedef struct {
@@ -204,13 +205,13 @@ typedef struct {
 } Node_if;
 
 typedef struct {
-    struct Node_* child;
+    Node_ptr_vec children;
     Str_view name;
     Lang_type lang_type;
 } Node_struct_member_sym_untyped;
 
 typedef struct {
-    struct Node_* child;
+    Node_ptr_vec children;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Llvm_id llvm_id;
     Str_view name;
@@ -321,11 +322,6 @@ typedef struct Node_ {
     Node_as as;
     Pos pos;
     NODE_TYPE type;
-    //Str_view name; // eg. "string1" in "let string1: String = "hello""
-
-    struct Node_* next;
-    struct Node_* prev;
-    struct Node_* parent;
 } Node;
 
 static inline Node_symbol_untyped* node_unwrap_symbol_untyped(Node* node) {

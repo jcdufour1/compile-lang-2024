@@ -33,12 +33,12 @@ void msg_undefined_function(const Node_function_call* fun_call) {
     );
 }
 
-void msg_invalid_struct_member(const Node* node) {
+void msg_invalid_struct_member(const Node* parent, const Node* node) {
     switch (node->type) {
         case NODE_STRUCT_MEMBER_SYM_TYPED:
             todo();
         case NODE_SYMBOL_TYPED: {
-            Node* struct_memb_sym = node->parent;
+            const Node* struct_memb_sym = parent;
             assert(struct_memb_sym->type == NODE_STRUCT_MEMBER_SYM_TYPED);
             msg(
                 LOG_ERROR, node->pos,

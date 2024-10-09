@@ -113,7 +113,7 @@ static bool extract_function_parameters(Node_function_params** result, Tk_view* 
 
     Node_variable_def* param;
     while (extract_function_parameter(&param, tokens)) {
-        nodes_append_child(node_wrap(fun_params), node_wrap(param));
+        node_ptr_vec_append(&fun_params->params, node_wrap(param));
     }
 
     if (tokens->count > 0) {
@@ -199,13 +199,12 @@ static Node_struct_def* extract_struct_definition(Tk_view* tokens) {
         Node_variable_def* member;
         try(extract_function_parameter(&member, tokens));
         tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
-        nodes_append_child(node_wrap(new_struct), node_wrap(member));
+        node_ptr_vec_append(&new_struct->members, node_wrap(member));
     }
 
     try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
     if (!sym_tbl_add(node_wrap(new_struct))) {
         msg_redefinition_of_symbol(node_wrap(new_struct));
-        todo();
     }
     return new_struct;
 }
@@ -231,7 +230,8 @@ static Node_variable_def* extract_variable_declaration(Tk_view* tokens, bool req
     if (tokens->count > 0 && !tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON)) {
         Token front = tk_view_front(*tokens);
         if (front.type == TOKEN_SYMBOL && str_view_cstr_is_equal(front.text, "if")) {
-            nodes_append_child(node_wrap(variable_def), extract_expression(tokens));
+            todo();
+            //nodes_append_child(node_wrap(variable_def), extract_expression(tokens));
         }
     }
     tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
@@ -250,13 +250,13 @@ static Node_for_loop* extract_for_loop(Tk_view* tokens) {
 
     Node* lower_bound_child = extract_expression(tokens);
     Node_for_lower_bound* lower_bound = node_unwrap_for_lower_bound(node_new(lower_bound_child->pos, NODE_FOR_LOWER_BOUND));
-    nodes_append_child(node_wrap(lower_bound), lower_bound_child);
+    lower_bound->child = lower_bound_child;
     for_loop->lower_bound = lower_bound;
     try(tk_view_try_consume(NULL, tokens, TOKEN_DOUBLE_DOT));
 
     Node* upper_bound_child = extract_expression(tokens);
     Node_for_upper_bound* upper_bound = node_unwrap_for_upper_bound(node_new(upper_bound_child->pos, NODE_FOR_UPPER_BOUND));
-    nodes_append_child(node_wrap(upper_bound), upper_bound_child);
+    upper_bound->child = upper_bound_child;
     for_loop->upper_bound = upper_bound;
     try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
 
@@ -443,7 +443,7 @@ static bool extract_function_call(Node_function_call** child, Tk_view* tokens) {
 
     Node* argument;
     while (extract_function_argument(&argument, tokens)) {
-        nodes_append_child(node_wrap(function_call), argument);
+        node_ptr_vec_append(&function_call->args, argument);
     }
 
     try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_PAR));
@@ -457,7 +457,7 @@ static Node_return_statement* extract_function_return_statement(Tk_view* tokens)
 
     Node* expression = extract_expression(tokens);
     Node_return_statement* new_node = node_unwrap_return_statement(node_new(expression->pos, NODE_RETURN_STATEMENT));
-    nodes_append_child(node_wrap(new_node), expression);
+    new_node->child = expression;
     tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
     return new_node;
 }
@@ -482,7 +482,7 @@ static Node_assignment* extract_assignment(Tk_view* tokens, Node* lhs) {
 static Node_if_condition* extract_if_condition(Tk_view* tokens) {
     Node* operation = extract_expression(tokens);
     Node_if_condition* condition = node_unwrap_if_condition(node_new(operation->pos, NODE_IF_CONDITION));
-    nodes_append_child(node_wrap(condition), operation);
+    condition->child = operation;
     return condition;
 }
 
@@ -570,7 +570,7 @@ static Node_block* extract_block(Tk_view* tokens) {
             block = node_unwrap_block(node_new(child->pos, NODE_BLOCK));
         }
         tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
-        nodes_append_child(node_wrap(block), child);
+        node_ptr_vec_append(&block->children, child);
         is_first = false;
     }
     return block;
@@ -583,7 +583,7 @@ static Node_struct_literal* extract_struct_literal(Tk_view* tokens) {
     struct_literal->name = literal_name_new();
 
     while (tk_view_try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
-        nodes_append_child(node_wrap(struct_literal), node_wrap(extract_assignment(tokens, NULL)));
+        node_ptr_vec_append(&struct_literal->members, node_wrap(extract_assignment(tokens, NULL)));
         tk_view_try_consume(NULL, tokens, TOKEN_COMMA);
     }
 
@@ -600,7 +600,7 @@ static Node_struct_member_sym_untyped* extract_struct_member_call(Tk_view* token
         Token member_token = tk_view_consume(tokens);
         Node_struct_member_sym_piece_untyped* member = node_unwrap_struct_member_sym_piece_untyped(node_new(member_token.pos, NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED));
         member->name = member_token.text;
-        nodes_append_child(node_wrap(member_call), node_wrap(member));
+        node_ptr_vec_append(&member_call->children, node_wrap(member));
     }
     return member_call;
 }

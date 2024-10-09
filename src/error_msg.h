@@ -7,7 +7,7 @@ void msg_redefinition_of_symbol(const Node* new_sym_def);
 
 void msg_undefined_symbol(const Node* sym_call);
 
-void msg_invalid_struct_member(const Node* node);
+void msg_invalid_struct_member(const Node* parent, const Node* node);
 
 void msg_undefined_function(const Node_function_call* fun_call);
 

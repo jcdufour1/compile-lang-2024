@@ -1,5 +1,6 @@
 #include "str_view.h"
 #include "string_vec.h"
+#include "node_ptr_vec.h"
 #include "node.h"
 #include "nodes.h"
 #include "symbol_table.h"
@@ -52,23 +53,6 @@ const Node_variable_def* get_normal_symbol_def_from_alloca(const Node* node) {
     return node_unwrap_variable_def(sym_def);
 }
 
-const Node_variable_def* get_member_def_from_alloca(const Node* store_struct) {
-    const Node_variable_def* var_def = get_normal_symbol_def_from_alloca(store_struct);
-
-    Node* struct_def;
-    try(sym_tbl_lookup(&struct_def, var_def->lang_type.str));
-
-    Lang_type member_type = get_lang_type(nodes_single_child_const(node_wrap(store_struct)));
-    nodes_foreach_child(member_, struct_def) {
-        Node_variable_def* member = node_unwrap_variable_def(member_);
-        if (lang_type_is_equal(member->lang_type, member_type)) {
-            return member;
-        }
-    }
-
-    unreachable("");
-}
-
 const Node_variable_def* get_symbol_def_from_alloca(const Node* alloca) {
     switch (alloca->type) {
         case NODE_ALLOCA:
@@ -88,16 +72,6 @@ Llvm_id get_matching_label_id(Str_view name) {
 }
 
 Node_assignment* assignment_new(Node* lhs, Node* rhs) {
-    assert(!lhs->prev);
-    assert(!lhs->next);
-    assert(!lhs->parent);
-    assert(!rhs->prev);
-    assert(!rhs->next);
-    assert(!rhs->parent);
-
-    nodes_remove(lhs, true);
-    nodes_remove(rhs, true);
-
     Node_assignment* assignment = node_unwrap_assignment(node_new(lhs->pos, NODE_ASSIGNMENT));
     assignment->lhs = lhs;
     assignment->rhs = rhs;
@@ -169,8 +143,9 @@ uint64_t sizeof_struct_definition(const Node_struct_def* struct_def) {
     uint64_t required_alignment = 8; // TODO: do not hardcode this
 
     uint64_t total = 0;
-    nodes_foreach_child(member_def, struct_def) {
-        uint64_t sizeof_curr_item = sizeof_item(member_def);
+    for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
+        const Node* memb_def = node_ptr_vec_at_const(&struct_def->members, idx);
+        uint64_t sizeof_curr_item = sizeof_item(memb_def);
         if (total%required_alignment + sizeof_curr_item > required_alignment) {
             total += required_alignment - total%required_alignment;
         }
@@ -339,18 +314,21 @@ void set_struct_literal_assignment_types(Node* lhs, Node_struct_literal* struct_
     Node* lhs_var_def_;
     try(sym_tbl_lookup(&lhs_var_def_, get_node_name(lhs)));
     Node_variable_def* lhs_var_def = node_unwrap_variable_def(lhs_var_def_);
-    Node* struct_def;
-    try(sym_tbl_lookup(&struct_def, lhs_var_def->lang_type.str));
-    Lang_type lang_type = {.str = node_unwrap_struct_def(struct_def)->name, .pointer_depth = 0};
+    Node* struct_def_;
+    try(sym_tbl_lookup(&struct_def_, lhs_var_def->lang_type.str));
+    Node_struct_def* struct_def = node_unwrap_struct_def(struct_def_);
+    Lang_type lang_type = {.str = struct_def->name, .pointer_depth = 0};
     struct_literal->lang_type = lang_type;
-    size_t idx = 0;
-    nodes_foreach_child(memb_sym_def_, struct_def) {
+    
+    Node_ptr_vec new_literal_members = {0};
+    for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
+        Node* memb_sym_def_ = node_ptr_vec_at(&struct_def->members, idx);
         if (memb_sym_def_->type == NODE_LITERAL) {
             break;
         }
 
         Node_variable_def* memb_sym_def = node_unwrap_variable_def(memb_sym_def_);
-        Node_assignment* assign_memb_sym = node_unwrap_assignment(nodes_get_child(node_wrap(struct_literal), idx));
+        Node_assignment* assign_memb_sym = node_unwrap_assignment(node_ptr_vec_at(&struct_literal->members, idx));
         Node_symbol_untyped* memb_sym_untyped = node_unwrap_symbol_untyped(assign_memb_sym->lhs);
         Node_literal* assign_memb_sym_rhs = node_unwrap_literal(assign_memb_sym->rhs);
         if (!str_view_is_equal(memb_sym_def->name, memb_sym_untyped->name)) {
@@ -362,18 +340,11 @@ void set_struct_literal_assignment_types(Node* lhs, Node_struct_literal* struct_
             );
         }
 
-        nodes_remove(node_wrap(assign_memb_sym_rhs), false);
-        nodes_append_child(node_wrap(struct_literal), node_wrap(assign_memb_sym_rhs));
-
-        idx++;
+        node_ptr_vec_append(&new_literal_members, node_wrap(assign_memb_sym_rhs));
     }
 
-    while (nodes_count_children(node_wrap(struct_literal)) > 0) {
-        if (nodes_get_child(node_wrap(struct_literal), 0)->type == NODE_LITERAL) {
-            break;
-        }
-        nodes_remove(nodes_get_child(node_wrap(struct_literal), 0), true);
-    }
+    struct_literal->members = new_literal_members;
+
     log_tree(LOG_DEBUG, node_wrap(struct_literal));
 
     assert(struct_literal->lang_type.str.count > 0);
@@ -482,7 +453,8 @@ void set_function_call_types(Node_function_call* fun_call) {
     Node_function_params* params = fun_decl->parameters;
     size_t params_idx = 0;
 
-    nodes_foreach_child(argument, fun_call) {
+    for (size_t arg_idx = 0; arg_idx < fun_call->args.info.count; arg_idx++) {
+        Node* argument = node_ptr_vec_at(&fun_call->args, arg_idx);
         switch (argument->type) {
             case NODE_LITERAL:
                 break;
@@ -496,7 +468,7 @@ void set_function_call_types(Node_function_call* fun_call) {
                 unreachable(NODE_FMT, node_print(argument));
         }
 
-        Node_variable_def* corresponding_param = node_unwrap_variable_def(nodes_get_child(node_wrap(params), params_idx));
+        Node_variable_def* corresponding_param = node_unwrap_variable_def(node_ptr_vec_at(&params->params, params_idx));
         switch (corresponding_param->lang_type.pointer_depth) {
             case 0:
                 break;
@@ -535,7 +507,8 @@ void set_struct_member_symbol_types(Node_struct_member_sym_untyped* struct_memb_
     struct_memb_sym_typed->lang_type.pointer_depth = 0;
     bool is_struct = true;
     Node_struct_def* prev_struct_def = struct_def;
-    nodes_foreach_child(memb_sym_untyped_, struct_memb_sym_typed) {
+    for (size_t idx = 0; idx < struct_memb_sym_typed->children.info.count; idx++) {
+        Node* memb_sym_untyped_ = node_ptr_vec_at(&struct_memb_sym_typed->children, idx);
         Node_struct_member_sym_piece_untyped* memb_sym_untyped = node_unwrap_struct_member_sym_piece_untyped(memb_sym_untyped_);
         if (!is_struct) {
             todo();
@@ -543,7 +516,7 @@ void set_struct_member_symbol_types(Node_struct_member_sym_untyped* struct_memb_
         if (!try_get_member_def(&curr_memb_def, struct_def, node_wrap(memb_sym_untyped))) {
             node_printf(memb_sym_untyped);
             node_printf(curr_memb_def);
-            msg_invalid_struct_member(node_wrap(memb_sym_untyped));
+            msg_invalid_struct_member(node_wrap(struct_memb_sym_typed), node_wrap(memb_sym_untyped));
             return;
         }
         if (!try_get_struct_definition(&struct_def, node_wrap(curr_memb_def))) {
@@ -562,10 +535,8 @@ void set_struct_member_symbol_types(Node_struct_member_sym_untyped* struct_memb_
     }
 }
 
-void set_return_statement_types(Node* rtn_statement) {
-    assert(rtn_statement->type == NODE_RETURN_STATEMENT);
-
-    Node* child = nodes_single_child(rtn_statement);
+void set_return_statement_types(Node_return_statement* rtn_statement) {
+    Node* child = rtn_statement->child;
     switch (child->type) {
         case NODE_SYMBOL_UNTYPED:
             set_symbol_type(node_unwrap_symbol_untyped(child));
