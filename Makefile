@@ -1,7 +1,5 @@
 .PHONY: all setup build gdb
 
-LOG_LEVEL ?= "LOG_TRACE"
-
 CC_COMPILER ?= clang
 
 C_FLAGS_DEBUG=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
@@ -18,9 +16,11 @@ DEBUG ?= 0
 ifeq ($(DEBUG), 1)
     C_FLAGS = ${C_FLAGS_DEBUG}
 	BUILD_DIR=./build/debug/
+	LOG_LEVEL ?= "LOG_TRACE"
 else
     C_FLAGS = ${C_FLAGS_RELEASE}
 	BUILD_DIR=./build/release/
+	LOG_LEVEL ?= "LOG_VERBOSE"
 endif
 
 OBJS=\

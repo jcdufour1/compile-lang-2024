@@ -580,7 +580,7 @@ void emit_llvm_from_tree(const Node_block* root) {
     String output = {0};
     emit_block(&output, root);
     emit_symbols(&output);
-    log(LOG_NOTE, "\n"STRING_FMT"\n", string_print(output));
+    log(LOG_DEBUG, "\n"STRING_FMT"\n", string_print(output));
     Str_view final_output = {.str = output.buf, .count = output.info.count};
     write_file("test.ll", final_output);
 }
