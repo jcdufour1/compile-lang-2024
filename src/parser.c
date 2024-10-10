@@ -524,63 +524,34 @@ static Node_if* extract_if_statement(Tk_view* tokens) {
 }
 
 static bool extract_statement(Node** child, Tk_view* tokens) {
+    Node* lhs;
     if (token_is_equal(tk_view_front(*tokens), "struct", TOKEN_SYMBOL)) {
-        *child = node_wrap(extract_struct_definition(tokens));
-        return true;
+        lhs = node_wrap(extract_struct_definition(tokens));
+    } else if (token_is_equal(tk_view_front(*tokens), "extern", TOKEN_SYMBOL)) {
+        lhs = node_wrap(extract_function_declaration(tokens));
+    } else if (token_is_equal(tk_view_front(*tokens), "fn", TOKEN_SYMBOL)) {
+        lhs = node_wrap(extract_function_definition(tokens));
+    } else if (token_is_equal(tk_view_front(*tokens), "return", TOKEN_SYMBOL)) {
+        lhs = node_wrap(extract_function_return_statement(tokens));
+    } else if (token_is_equal(tk_view_front(*tokens), "if", TOKEN_SYMBOL)) {
+        lhs = node_wrap(extract_if_statement(tokens));
+    } else if (token_is_equal(tk_view_front(*tokens), "for", TOKEN_SYMBOL)) {
+        lhs = extract_for_loop(tokens);
+    } else if (token_is_equal(tk_view_front(*tokens), "break", TOKEN_SYMBOL)) {
+        lhs = node_wrap(extract_break(tokens));
+    } else {
+        lhs = extract_expression(tokens);
     }
 
-    if (token_is_equal(tk_view_front(*tokens), "extern", TOKEN_SYMBOL)) {
-        *child = node_wrap(extract_function_declaration(tokens));
-        return true;
+    // do assignment if applicible
+    if (tokens->count > 0 && tk_view_front(*tokens).type == TOKEN_SINGLE_EQUAL) {
+        *child = node_wrap(extract_assignment(tokens, lhs));
+    } else {
+        *child = lhs;
     }
 
-    if (token_is_equal(tk_view_front(*tokens), "fn", TOKEN_SYMBOL)) {
-        *child = node_wrap(extract_function_definition(tokens));
-        return true;
-    }
-
-    if (token_is_equal(tk_view_front(*tokens), "return", TOKEN_SYMBOL)) {
-        *child = node_wrap(extract_function_return_statement(tokens));
-        return true;
-    }
-
-    if (token_is_equal(tk_view_front(*tokens), "if", TOKEN_SYMBOL)) {
-        *child = node_wrap(extract_if_statement(tokens));
-        return true;
-    }
-
-    if (token_is_equal(tk_view_front(*tokens), "for", TOKEN_SYMBOL)) {
-        *child = extract_for_loop(tokens);
-        return true;
-    }
-
-    if (token_is_equal(tk_view_front(*tokens), "break", TOKEN_SYMBOL)) {
-        *child = node_wrap(extract_break(tokens));
-        return true;
-    }
-
-    if (tk_view_front(*tokens).type == TOKEN_SYMBOL && tk_view_at(*tokens, 1).type == TOKEN_OPEN_PAR) {
-        return extract_function_call((Node_function_call**)child, tokens);
-    }
-
-    Node* var_decl = NULL;
-    if (token_is_equal(tk_view_front(*tokens), "let", TOKEN_SYMBOL)) {
-        var_decl = extract_expression(tokens);
-        if (tk_view_front(*tokens).type == TOKEN_SINGLE_EQUAL) {
-            *child = node_wrap(extract_assignment(tokens, var_decl));
-            tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
-            return true;
-        }
-        tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
-        *child = var_decl;
-        return true;
-    }
-    *child = node_wrap(extract_assignment(tokens, NULL));
     tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
     return true;
-
-    log_tokens(LOG_ERROR, *tokens);
-    unreachable("");
 }
 
 static Node_block* extract_block(Tk_view* tokens) {
@@ -649,43 +620,30 @@ static Node* extract_expression(Tk_view* tokens) {
     }
 
     Node_operator* operation;
+    Node_function_call* fun_call;
     if (try_extract_operation(&operation, tokens)) {
         return node_wrap(operation);
-    }
-
-    if (token_is_equal(tk_view_front(*tokens), "let", TOKEN_SYMBOL)) {
+    } else if (token_is_equal(tk_view_front(*tokens), "let", TOKEN_SYMBOL)) {
         Node_variable_def* result;
         try(try_extract_variable_declaration(&result, tokens, true));
         return node_wrap(result);
-    }
-
-    Node_function_call* fun_call;
-    if (extract_function_call(&fun_call, tokens)) {
+    } else if (extract_function_call(&fun_call, tokens)) {
         return node_wrap(fun_call);
-    }
-
-    if (tokens->count > 1 && tk_view_front(*tokens).type == TOKEN_SYMBOL &&
+    } else if (tokens->count > 1 && tk_view_front(*tokens).type == TOKEN_SYMBOL &&
         token_is_equal(tk_view_at(*tokens, 1), "", TOKEN_SINGLE_DOT)
     ) {
         return node_wrap(extract_struct_member_call(tokens));
-    }
-
-    if (token_is_literal(tk_view_front(*tokens))) {
+    } else if (token_is_literal(tk_view_front(*tokens))) {
         return node_wrap(extract_literal(tokens));
-    }
-
-    if (tk_view_front(*tokens).type == TOKEN_SYMBOL) {
+    } else if (tk_view_front(*tokens).type == TOKEN_SYMBOL) {
         return node_wrap(extract_symbol(tokens));
-    }
-
-    if (token_is_equal(tk_view_front(*tokens), "", TOKEN_OPEN_CURLY_BRACE) &&
-        token_is_equal(tk_view_at(*tokens, 1), "", TOKEN_SINGLE_DOT)
-    ) {
+    } else if (token_is_equal(tk_view_front(*tokens), "", TOKEN_OPEN_CURLY_BRACE) && token_is_equal(tk_view_at(*tokens, 1), "", TOKEN_SINGLE_DOT)) {
         return node_wrap(extract_struct_literal(tokens));
+    } else {
+        log_tokens(LOG_ERROR, *tokens);
+        todo();
     }
 
-    log_tokens(LOG_ERROR, *tokens);
-    todo();
 }
 
 Node_block* parse(const Tokens tokens) {
