@@ -60,7 +60,7 @@ static void change_break_to_goto(Node_block* block, const Node_label* label_to_g
     }
 }
 
-static Node_block* for_loop_to_branch(Node_for_loop* for_loop) {
+static Node_block* for_loop_to_branch(Node_for_range* for_loop) {
     log_tree(LOG_TRACE, node_wrap(for_loop));
 
     Node_block* for_block = for_loop->body;

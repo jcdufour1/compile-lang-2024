@@ -180,7 +180,12 @@ typedef struct {
     Node_for_lower_bound* lower_bound;
     Node_for_upper_bound* upper_bound;
     Node_block* body;
-} Node_for_loop;
+} Node_for_range;
+
+typedef struct {
+    struct Node_* condition;
+    Node_block* body;
+} Node_for_with_condition;
 
 typedef struct {
     struct Node_* child;
@@ -293,7 +298,7 @@ typedef union {
     Node_for_upper_bound node_for_upper_bound;
     Node_for_lower_bound node_for_lower_bound;
     Node_return_statement node_return_statement;
-    Node_for_loop node_for_loop;
+    Node_for_range node_for_loop;
     Node_function_definition node_function_definition;
     Node_function_declaration node_function_declaration;
     Node_function_return_types node_function_return_types;
@@ -494,12 +499,12 @@ static inline const Node_function_definition* node_unwrap_function_definition_co
     return &node->as.node_function_definition;
 }
 
-static inline Node_for_loop* node_unwrap_for_loop(Node* node) {
+static inline Node_for_range* node_unwrap_for_loop(Node* node) {
     assert(node->type == NODE_FOR_LOOP);
     return &node->as.node_for_loop;
 }
 
-static inline const Node_for_loop* node_unwrap_for_loop_const(const Node* node) {
+static inline const Node_for_range* node_unwrap_for_loop_const(const Node* node) {
     assert(node->type == NODE_FOR_LOOP);
     return &node->as.node_for_loop;
 }

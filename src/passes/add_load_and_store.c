@@ -55,7 +55,7 @@ static Node_load_element_ptr* do_load_struct_element_ptr(
         Node_struct_member_sym_piece_typed* element_sym = node_unwrap_struct_member_sym_piece_typed(element_sym_);
 
         load_element_ptr = node_unwrap_load_elem_ptr(node_new(node_wrap(element_sym)->pos, NODE_LOAD_STRUCT_ELEMENT_PTR));
-        load_element_ptr->name = get_node_name(prev_struct_sym); // put this in switch
+        load_element_ptr->name = get_node_name(prev_struct_sym);
         load_element_ptr->lang_type = element_sym->lang_type;
         load_element_ptr->struct_index = element_sym->struct_index;
         load_element_ptr->node_src = node_element_ptr_to_load;
