@@ -34,11 +34,11 @@ def print_success(*base, **kargs) -> None:
 def print_info(*base, **kargs) -> None:
     print(status_colors.BLUE, *base, status_colors.TO_NORMAL, file=sys.stderr, sep = "", **kargs)
 
-def get_files_to_test() -> list[str]:
+def get_files_to_test(files_to_exclude: list[str]) -> list[str]:
     files: list[str] = []
     for possible_file_base in map(to_str, os.listdir(EXAMPLES_DIR)):
-        possible_file: str = os.path.join(EXAMPLES_DIR, possible_file_base)
-        if os.path.isfile(possible_file):
+        possible_file: str = os.path.realpath(os.path.join(EXAMPLES_DIR, possible_file_base))
+        if os.path.isfile(possible_file) and possible_file not in files_to_exclude:
             files.append(possible_file)
     return files
 
@@ -107,7 +107,7 @@ def do_test(file: str, do_debug: bool, expected_output: str):
     print_success("testing: " + file + " (" + debug_release_text + ") success")
     print()
 
-def do_debug(count_threads: int) -> None:
+def do_debug(files_to_exclude: list[str], count_threads: int) -> None:
     cmd = ["make", "-j", str(count_threads), "build"]
     print_info("compiling debug:")
     process = subprocess.run(cmd, env=dict(os.environ | {"DEBUG": "1"}))
@@ -116,12 +116,12 @@ def do_debug(count_threads: int) -> None:
         sys.exit(1)
     print_success("compiling debug: done")
 
-    for file in get_files_to_test():
+    for file in get_files_to_test(files_to_exclude):
         do_test(file, do_debug=True, expected_output=get_expected_output(file))
     print_success("testing debug: done")
     print()
 
-def do_release(count_threads: int) -> None:
+def do_release(files_to_exclude: list[str], count_threads: int) -> None:
     cmd = ["make", "-j", str(count_threads), "build"]
     print_info("compiling release:")
     process = subprocess.run(cmd, env=dict(os.environ | {"DEBUG": "0"}))
@@ -131,12 +131,23 @@ def do_release(count_threads: int) -> None:
     print_success("compiling release: done")
     print()
 
-    for file in get_files_to_test():
+    for file in get_files_to_test(files_to_exclude):
         do_test(file, do_debug=False, expected_output=get_expected_output(file))
     print_success("testing release: done")
     print()
 
+def parse_args() -> list[str]:
+    list_files: list[str] = []
+    for arg in sys.argv:
+        if (arg.startswith("--exclude=")):
+            files_to_exclude = arg[len("--exclude="):]
+            for idx, file_path in enumerate(files_to_exclude.split(",")):
+                list_files.append(os.path.realpath(file_path))
+    return list_files
+
 def main() -> None:
+    files_to_exclude: list[str] = parse_args()
+
     count_threads: int
     try:
         count_threads =  multiprocessing.cpu_count()
@@ -145,8 +156,8 @@ def main() -> None:
         print_warning(e, file=sys.stderr)
         count_threads = 2
 
-    do_debug(count_threads)
-    do_release(count_threads)
+    do_debug(files_to_exclude, count_threads)
+    do_release(files_to_exclude, count_threads)
     print_success("all tests passed")
 
 if __name__ == '__main__':
