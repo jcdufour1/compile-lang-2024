@@ -5,12 +5,16 @@
 #include "../parser_utils.h"
 #include "../error_msg.h"
 
-static void set_if_statement_types(Node_if* if_statement) {
-    Node_if_condition* if_condition = if_statement->condition;
-    Node* old_if_cond_child = if_condition->child;
+static void set_if_condition_types(Node_if_condition* if_cond) {
+    Node* old_if_cond_child = if_cond->child;
     switch (old_if_cond_child->type) {
         case NODE_SYMBOL_UNTYPED:
             set_symbol_type(node_unwrap_symbol_untyped(old_if_cond_child));
+            if_cond->child = node_wrap(operation_new(
+                old_if_cond_child,
+                node_wrap(literal_new(str_view_from_cstr("1"), TOKEN_NUM_LITERAL, old_if_cond_child->pos)),
+                TOKEN_DOUBLE_EQUAL
+            ));
             break;
         case NODE_OPERATOR: {
             try_set_operator_lang_type(node_unwrap_operator(old_if_cond_child));
@@ -18,7 +22,7 @@ static void set_if_statement_types(Node_if* if_statement) {
         }
         case NODE_FUNCTION_CALL: {
             set_function_call_types(node_unwrap_function_call(old_if_cond_child));
-            if_condition->child = node_wrap(operation_new(
+            if_cond->child = node_wrap(operation_new(
                 old_if_cond_child,
                 node_wrap(literal_new(str_view_from_cstr("0"), TOKEN_NUM_LITERAL, node_wrap(old_if_cond_child)->pos)),
                 TOKEN_NOT_EQUAL
@@ -26,7 +30,7 @@ static void set_if_statement_types(Node_if* if_statement) {
             break;
         }
         case NODE_LITERAL: {
-            if_condition->child = node_wrap(operation_new(
+            if_cond->child = node_wrap(operation_new(
                 old_if_cond_child,
                 node_wrap(literal_new(str_view_from_cstr("1"), TOKEN_NUM_LITERAL, old_if_cond_child->pos)),
                 TOKEN_DOUBLE_EQUAL
@@ -69,7 +73,10 @@ bool analysis_1(Node* block_, int recursion_depth) {
                 todo();
                 break;
             case NODE_IF_STATEMENT:
-                set_if_statement_types(node_unwrap_if(curr_node));
+                set_if_condition_types(node_unwrap_if(curr_node)->condition);
+                break;
+            case NODE_FOR_WITH_CONDITION:
+                set_if_condition_types(node_unwrap_for_with_condition(curr_node)->condition);
                 break;
             default:
                 break;

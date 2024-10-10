@@ -496,7 +496,9 @@ static void emit_block(String* output, const Node_block* block) {
                 break;
             case NODE_STRUCT_MEMBER_SYM_TYPED:
                 break;
-            case NODE_FOR_LOOP:
+            case NODE_FOR_RANGE:
+                unreachable("for loop should not still be present at this point\n");
+            case NODE_FOR_WITH_CONDITION:
                 unreachable("for loop should not still be present at this point\n");
             default:
                 log(LOG_ERROR, STRING_FMT"\n", string_print(*output));

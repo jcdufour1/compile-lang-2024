@@ -494,7 +494,10 @@ bool add_load_and_store(Node* start_start_node, int recursion_depth) {
                 *node_ptr_vec_at_ref(&block->children, idx) = thing;
                 break;
             }
-            case NODE_FOR_LOOP:
+            case NODE_FOR_RANGE:
+                unreachable("for loop node should not still exist at this point\n");
+                todo();
+            case NODE_FOR_WITH_CONDITION:
                 unreachable("for loop node should not still exist at this point\n");
                 todo();
             case NODE_FOR_LOWER_BOUND:

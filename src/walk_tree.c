@@ -57,11 +57,15 @@ void walk_tree(
             break;
         case NODE_LANG_TYPE:
             break;
-        case NODE_FOR_LOOP:
-            walk_tree(node_wrap(node_unwrap_for_loop(input_node)->var_def), recursion_depth + 1, callback);
-            walk_tree(node_wrap(node_unwrap_for_loop(input_node)->lower_bound), recursion_depth + 1, callback);
-            walk_tree(node_wrap(node_unwrap_for_loop(input_node)->upper_bound), recursion_depth + 1, callback);
-            walk_tree(node_wrap(node_unwrap_for_loop(input_node)->body), recursion_depth + 1, callback);
+        case NODE_FOR_RANGE:
+            walk_tree(node_wrap(node_unwrap_for_range(input_node)->var_def), recursion_depth + 1, callback);
+            walk_tree(node_wrap(node_unwrap_for_range(input_node)->lower_bound), recursion_depth + 1, callback);
+            walk_tree(node_wrap(node_unwrap_for_range(input_node)->upper_bound), recursion_depth + 1, callback);
+            walk_tree(node_wrap(node_unwrap_for_range(input_node)->body), recursion_depth + 1, callback);
+            break;
+        case NODE_FOR_WITH_CONDITION:
+            walk_tree(node_wrap(node_unwrap_for_with_condition(input_node)->condition), recursion_depth + 1, callback);
+            walk_tree(node_wrap(node_unwrap_for_with_condition(input_node)->body), recursion_depth + 1, callback);
             break;
         case NODE_IF_STATEMENT:
             walk_tree(node_wrap(node_unwrap_if(input_node)->condition), recursion_depth + 1, callback);

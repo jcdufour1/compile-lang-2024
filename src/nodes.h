@@ -72,7 +72,10 @@ static inline void set_left_child(Node* parent, Node* left_child) {
         case NODE_FUNCTION_DEFINITION:
             unreachable("");
             return;
-        case NODE_FOR_LOOP:
+        case NODE_FOR_RANGE:
+            unreachable("");
+            return;
+        case NODE_FOR_WITH_CONDITION:
             unreachable("");
             return;
         case NODE_FOR_LOWER_BOUND:
@@ -166,7 +169,9 @@ static inline Node* get_left_child(Node* node) {
             unreachable("");
         case NODE_FUNCTION_DEFINITION:
             unreachable("");
-        case NODE_FOR_LOOP:
+        case NODE_FOR_RANGE:
+            unreachable("");
+        case NODE_FOR_WITH_CONDITION:
             unreachable("");
         case NODE_FOR_LOWER_BOUND:
             return node_unwrap_for_lower_bound(node)->child;

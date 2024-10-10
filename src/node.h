@@ -31,7 +31,8 @@ typedef enum {
     NODE_RETURN_STATEMENT,
     NODE_VARIABLE_DEFINITION,
     NODE_FUNCTION_DECLARATION,
-    NODE_FOR_LOOP,
+    NODE_FOR_RANGE,
+    NODE_FOR_WITH_CONDITION,
     NODE_FOR_LOWER_BOUND,
     NODE_FOR_UPPER_BOUND,
     NODE_BREAK,
@@ -176,6 +177,10 @@ typedef struct {
 } Node_for_upper_bound;
 
 typedef struct {
+    struct Node_* child;
+} Node_if_condition;
+
+typedef struct {
     Node_variable_def* var_def;
     Node_for_lower_bound* lower_bound;
     Node_for_upper_bound* upper_bound;
@@ -183,7 +188,7 @@ typedef struct {
 } Node_for_range;
 
 typedef struct {
-    struct Node_* condition;
+    Node_if_condition* condition;
     Node_block* body;
 } Node_for_with_condition;
 
@@ -199,10 +204,6 @@ typedef struct {
     struct Node_* lhs;
     struct Node_* rhs;
 } Node_assignment;
-
-typedef struct {
-    struct Node_* child;
-} Node_if_condition;
 
 typedef struct {
     Node_if_condition* condition;
@@ -321,6 +322,7 @@ typedef union {
     Node_struct_member_sym_piece_typed memb_sym_piece_typed;
     Node_ptr_byval_sym node_ptr_byval_sym;
     Node_llvm_register_sym node_llvm_register_sym;
+    Node_for_with_condition node_for_with_condition;
 } Node_as;
 
 typedef struct Node_ {
@@ -499,14 +501,24 @@ static inline const Node_function_definition* node_unwrap_function_definition_co
     return &node->as.node_function_definition;
 }
 
-static inline Node_for_range* node_unwrap_for_loop(Node* node) {
-    assert(node->type == NODE_FOR_LOOP);
+static inline Node_for_range* node_unwrap_for_range(Node* node) {
+    assert(node->type == NODE_FOR_RANGE);
     return &node->as.node_for_loop;
 }
 
-static inline const Node_for_range* node_unwrap_for_loop_const(const Node* node) {
-    assert(node->type == NODE_FOR_LOOP);
+static inline const Node_for_range* node_unwrap_for_range_const(const Node* node) {
+    assert(node->type == NODE_FOR_RANGE);
     return &node->as.node_for_loop;
+}
+
+static inline Node_for_with_condition* node_unwrap_for_with_condition(Node* node) {
+    assert(node->type == NODE_FOR_WITH_CONDITION);
+    return &node->as.node_for_with_condition;
+}
+
+static inline const Node_for_with_condition* node_unwrap_for_with_condition_const(const Node* node) {
+    assert(node->type == NODE_FOR_WITH_CONDITION);
+    return &node->as.node_for_with_condition;
 }
 
 static inline Node_for_lower_bound* node_unwrap_for_lower_bound(Node* node) {

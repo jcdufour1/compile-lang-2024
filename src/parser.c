@@ -12,6 +12,7 @@ static Node_block* extract_block(Tk_view* tokens);
 INLINE bool extract_statement(Node** child, Tk_view* tokens);
 static Node* extract_expression(Tk_view* tokens);
 static bool try_extract_variable_declaration(Node_variable_def** result, Tk_view* tokens, bool require_let);
+static Node_if_condition* extract_if_condition(Tk_view* tokens);
 
 // consume tokens from { to } (inclusive) and discard outer {}
 static Tk_view extract_items_inside_brackets(Tk_view* tokens, TOKEN_TYPE closing_bracket_type) {
@@ -269,15 +270,18 @@ static void extract_for_range(Node_for_range* for_loop, Tk_view* tokens) {
 }
 
 static Node_for_with_condition* extract_for_with_condition(Node_for_range* for_range, Tk_view* tokens) {
-    (void) for_range;
-    (void) tokens;
-    todo();
+    Node_for_with_condition* for_with_cond = node_unwrap_for_with_condition(node_new(node_wrap(for_range)->pos, NODE_FOR_WITH_CONDITION));
+    for_with_cond->condition = extract_if_condition(tokens);
+
+    Tk_view body_tokens = extract_items_inside_brackets(tokens, TOKEN_CLOSE_CURLY_BRACE);
+    for_with_cond->body = extract_block(&body_tokens);
+    return for_with_cond;
 }
 
 static Node* extract_for_loop(Tk_view* tokens) {
     Token for_token;
     try(tk_view_try_consume_symbol(&for_token, tokens, "for"));
-    Node_for_range* for_loop = node_unwrap_for_loop(node_new(for_token.pos, NODE_FOR_LOOP));
+    Node_for_range* for_loop = node_unwrap_for_range(node_new(for_token.pos, NODE_FOR_RANGE));
     
     if (try_extract_variable_declaration(&for_loop->var_def, tokens, false)) {
         extract_for_range(for_loop, tokens);
@@ -594,6 +598,7 @@ static Node_block* extract_block(Tk_view* tokens) {
         node_ptr_vec_append(&block->children, child);
         is_first = false;
     }
+    assert(block);
     return block;
 }
 

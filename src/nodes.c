@@ -21,7 +21,8 @@ static const char* NODE_RETURN_STATEMENT_DESCRIPTION = "return";
 static const char* NODE_VARIABLE_DEFINITION_DESCRIPTION = "var_def";
 static const char* NODE_FUNCTION_DECLARATION_DESCRIPTION = "fun_declaration";
 static const char* NODE_ASSIGNMENT_DESCRIPTION = "assignment";
-static const char* NODE_FOR_LOOP_DESCRIPTION = "for";
+static const char* NODE_FOR_RANGE_DESCRIPTION = "for_range";
+static const char* NODE_FOR_WITH_CONDITION_DESCRIPTION = "for_with_condition";
 static const char* NODE_FOR_LOWER_BOUND_DESCRIPTION = "lower_bound";
 static const char* NODE_FOR_UPPER_BOUND_DESCRIPTION = "upper_bound";
 static const char* NODE_BREAK_DESCRIPTION = "break";
@@ -128,8 +129,10 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_FUNCTION_DECLARATION_DESCRIPTION);
         case NODE_ASSIGNMENT:
             return str_view_from_cstr(NODE_ASSIGNMENT_DESCRIPTION);
-        case NODE_FOR_LOOP:
-            return str_view_from_cstr(NODE_FOR_LOOP_DESCRIPTION);
+        case NODE_FOR_RANGE:
+            return str_view_from_cstr(NODE_FOR_RANGE_DESCRIPTION);
+        case NODE_FOR_WITH_CONDITION:
+            return str_view_from_cstr(NODE_FOR_WITH_CONDITION_DESCRIPTION);
         case NODE_FOR_LOWER_BOUND:
             return str_view_from_cstr(NODE_FOR_LOWER_BOUND_DESCRIPTION);
         case NODE_FOR_UPPER_BOUND:
@@ -211,6 +214,7 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             string_extend_strv_in_par(arena, string, get_node_name(node));
             break;
         case NODE_COND_GOTO:
+            print_node_src(arena, string, node, do_recursion);
             break;
         case NODE_LITERAL:
             extend_lang_type_to_string(arena, string, node_unwrap_literal_const(node)->lang_type, true);
@@ -260,7 +264,9 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             // fallthrough
         case NODE_ASSIGNMENT:
             // fallthrough
-        case NODE_FOR_LOOP:
+        case NODE_FOR_RANGE:
+            // fallthrough
+        case NODE_FOR_WITH_CONDITION:
             // fallthrough
         case NODE_FOR_UPPER_BOUND:
             // fallthrough

@@ -53,5 +53,14 @@ fn main() i32 {
         puts("no5");
     }
 
+    let num_yes: i32 = 1;
+    let num_no: i32 = 0;
+    if num_yes {
+        puts("yes6");
+    }
+    if num_no {
+        puts("no6");
+    }
+
     return 0
 }

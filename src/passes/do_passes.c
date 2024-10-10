@@ -6,7 +6,7 @@
 #include "../do_passes.h"
 
 void do_passes(Node_block** root) {
-    log_tree(LOG_DEBUG, node_wrap(*root));
+    //log_tree(LOG_DEBUG, node_wrap(*root));
     walk_tree(node_wrap(*root), 0, analysis_1);
     log_tree(LOG_DEBUG, node_wrap(*root));
     if (error_count > 0) {

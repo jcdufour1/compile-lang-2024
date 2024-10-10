@@ -43,7 +43,9 @@ static inline Llvm_id get_llvm_id(const Node* node) {
             return node_unwrap_variable_def_const(node)->llvm_id;
         case NODE_FUNCTION_DECLARATION:
             unreachable("");
-        case NODE_FOR_LOOP:
+        case NODE_FOR_RANGE:
+            unreachable("");
+        case NODE_FOR_WITH_CONDITION:
             unreachable("");
         case NODE_FOR_LOWER_BOUND:
             unreachable("");
@@ -122,7 +124,9 @@ static inline Lang_type get_lang_type(const Node* node) {
             return node_unwrap_variable_def_const(node)->lang_type;
         case NODE_FUNCTION_DECLARATION:
             unreachable("");
-        case NODE_FOR_LOOP:
+        case NODE_FOR_RANGE:
+            unreachable("");
+        case NODE_FOR_WITH_CONDITION:
             unreachable("");
         case NODE_FOR_LOWER_BOUND:
             unreachable("");
@@ -205,7 +209,9 @@ static inline Node* get_node_src(Node* node) {
             unreachable("");
         case NODE_FUNCTION_DECLARATION:
             unreachable("");
-        case NODE_FOR_LOOP:
+        case NODE_FOR_RANGE:
+            unreachable("");
+        case NODE_FOR_WITH_CONDITION:
             unreachable("");
         case NODE_FOR_LOWER_BOUND:
             unreachable("");
@@ -222,7 +228,7 @@ static inline Node* get_node_src(Node* node) {
         case NODE_GOTO:
             unreachable("");
         case NODE_COND_GOTO:
-            unreachable("");
+            return node_wrap(node_unwrap_cond_goto_const(node)->node_src);
         case NODE_LABEL:
             unreachable("");
         case NODE_ALLOCA:
@@ -288,7 +294,9 @@ static inline Node* get_node_dest(Node* node) {
             unreachable("");
         case NODE_FUNCTION_DECLARATION:
             unreachable("");
-        case NODE_FOR_LOOP:
+        case NODE_FOR_RANGE:
+            unreachable("");
+        case NODE_FOR_WITH_CONDITION:
             unreachable("");
         case NODE_FOR_LOWER_BOUND:
             unreachable("");
@@ -370,7 +378,9 @@ static inline Str_view get_node_name(const Node* node) {
             return node_unwrap_variable_def_const(node)->name;
         case NODE_FUNCTION_DECLARATION:
             return node_unwrap_function_declaration_const(node)->name;
-        case NODE_FOR_LOOP:
+        case NODE_FOR_RANGE:
+            unreachable("");
+        case NODE_FOR_WITH_CONDITION:
             unreachable("");
         case NODE_FOR_LOWER_BOUND:
             unreachable("");

@@ -47,7 +47,9 @@ static void change_break_to_goto(Node_block* block, const Node_label* label_to_g
                 break;
             case NODE_ASSIGNMENT:
                 break;
-            case NODE_FOR_LOOP:
+            case NODE_FOR_RANGE:
+                break;
+            case NODE_FOR_WITH_CONDITION:
                 break;
             case NODE_VARIABLE_DEFINITION:
                 break;
@@ -60,7 +62,38 @@ static void change_break_to_goto(Node_block* block, const Node_label* label_to_g
     }
 }
 
-static Node_block* for_loop_to_branch(Node_for_range* for_loop) {
+static Node_block* for_with_condition_to_branch(Node_for_with_condition* for_loop) {
+    Node_block* for_block = for_loop->body;
+    Node_block* new_branch_block = node_unwrap_block(node_new(node_wrap(for_loop)->pos, NODE_BLOCK));
+    Node_operator* operation = node_unwrap_operator(for_loop->condition->child);
+
+    Node_label* check_cond_label = label_new(literal_name_new(), node_wrap(for_loop)->pos);
+    Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label->name, node_wrap(for_loop)->pos);
+    Node_label* after_check_label = label_new(literal_name_new(), node_wrap(for_loop)->pos);
+    Node_label* after_for_loop_label = label_new(literal_name_new(), node_wrap(for_loop)->pos);
+    Node_llvm_register_sym* oper_rtn_sym = node_unwrap_llvm_register_sym(node_new(node_wrap(operation)->pos, NODE_LLVM_REGISTER_SYM));
+    oper_rtn_sym->node_src = node_wrap(operation);
+    Node_cond_goto* check_cond_jmp = conditional_goto_new(
+        operation,
+        after_check_label->name, 
+        after_for_loop_label->name
+    );
+
+    change_break_to_goto(for_block, after_for_loop_label);
+
+    node_ptr_vec_append(&new_branch_block->children, node_wrap(jmp_to_check_cond_label));
+    node_ptr_vec_append(&new_branch_block->children, node_wrap(check_cond_label));
+    node_ptr_vec_append(&new_branch_block->children, node_wrap(operation));
+    node_ptr_vec_append(&new_branch_block->children, node_wrap(check_cond_jmp));
+    node_ptr_vec_append(&new_branch_block->children, node_wrap(after_check_label));
+    node_ptr_vec_extend(&new_branch_block->children, for_block->children);
+    node_ptr_vec_append(&new_branch_block->children, node_wrap(goto_new(check_cond_label->name, node_wrap(for_loop)->pos)));
+    node_ptr_vec_append(&new_branch_block->children, node_wrap(after_for_loop_label));
+
+    return new_branch_block;
+}
+
+static Node_block* for_range_to_branch(Node_for_range* for_loop) {
     log_tree(LOG_TRACE, node_wrap(for_loop));
 
     Node_block* for_block = for_loop->body;
@@ -149,8 +182,12 @@ bool for_and_if_to_branch(Node* block_) {
         Node** curr_node = node_ptr_vec_at_ref(&block->children, idx);
 
         switch ((*curr_node)->type) {
-            case NODE_FOR_LOOP:
-                *curr_node = node_wrap(for_loop_to_branch(node_unwrap_for_loop(*curr_node)));
+            case NODE_FOR_RANGE:
+                *curr_node = node_wrap(for_range_to_branch(node_unwrap_for_range(*curr_node)));
+                assert(*curr_node);
+                break;
+            case NODE_FOR_WITH_CONDITION:
+                *curr_node = node_wrap(for_with_condition_to_branch(node_unwrap_for_with_condition(*curr_node)));
                 assert(*curr_node);
                 break;
             case NODE_IF_STATEMENT:
