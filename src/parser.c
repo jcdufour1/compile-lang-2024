@@ -15,14 +15,13 @@ static Node_variable_def* extract_variable_declaration(Tk_view* tokens, bool req
 
 // consume tokens from { to } (inclusive) and discard outer {}
 static Tk_view extract_items_inside_brackets(Tk_view* tokens, TOKEN_TYPE closing_bracket_type) {
-    Token opening_bracket = tk_view_consume(tokens);
     // the opening_bracket type should be the opening bracket type that corresponds to closing_brace_type
     switch (closing_bracket_type) {
         case TOKEN_CLOSE_CURLY_BRACE:
-            assert(opening_bracket.type == TOKEN_OPEN_CURLY_BRACE);
+            try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE));
             break;
         case TOKEN_CLOSE_PAR:
-            assert(opening_bracket.type == TOKEN_OPEN_PAR);
+            try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_PAR));
             break;
         default:
             unreachable("invalid or unimplemented bracket type");
