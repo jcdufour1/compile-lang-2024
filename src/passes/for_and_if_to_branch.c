@@ -145,9 +145,7 @@ bool for_and_if_to_branch(Node* block_) {
     }
     Node_block* block = node_unwrap_block(block_);
 
-    for (size_t idx_ = block->children.info.count; idx_ > 0; idx_--) {
-        size_t idx = idx_ - 1;
-
+    for (size_t idx = block->children.info.count - 1;; idx--) {
         Node** curr_node = node_ptr_vec_at_ref(&block->children, idx);
 
         switch ((*curr_node)->type) {
@@ -164,6 +162,10 @@ bool for_and_if_to_branch(Node* block_) {
                 break;
             default:
                 break;
+        }
+
+        if (idx < 1) {
+            break;
         }
     }
 

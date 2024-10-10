@@ -49,7 +49,7 @@ static inline void string_extend_size_t(Arena* arena, String* str, size_t num) {
 
 static inline String string_new_from_cstr(Arena* arena, const char* cstr) {
     String string = {0};
-    for (int idx = 0; cstr[idx]; idx++) {
+    for (size_t idx = 0; cstr[idx]; idx++) {
         string_append(arena, &string, cstr[idx]);
     }
     return string;
@@ -57,7 +57,7 @@ static inline String string_new_from_cstr(Arena* arena, const char* cstr) {
 
 static inline String string_new_from_strv(Arena* arena, Str_view str_view) {
     String string = {0};
-    for (int idx = 0; str_view.str[idx]; idx++) {
+    for (size_t idx = 0; str_view.str[idx]; idx++) {
         string_append(arena, &string, str_view.str[idx]);
     }
     return string;
@@ -79,7 +79,7 @@ static inline void string_cpy_cstr_inplace(Arena* arena, String* string, const c
     }
     string_set_to_zero_len(string);
     string_reserve(arena, string, cstr_len);
-    for (int idx = 0; cstr[idx]; idx++) {
+    for (size_t idx = 0; cstr[idx]; idx++) {
         string_append(arena, string, cstr[idx]);
     }
 }

@@ -7,14 +7,14 @@
 
 static Node* get_store_assignment(
     Node_ptr_vec* block_children,
-    int64_t* idx_to_insert_before,
+    size_t* idx_to_insert_before,
     Node_assignment* assignment,
     bool is_for_struct_literal_member
 );
 
 static void do_struct_literal(
     Node_ptr_vec* block_children,
-    int64_t* idx_to_insert_before,
+    size_t* idx_to_insert_before,
     Node_struct_literal* struct_literal
 ) {
     for (size_t idx = 0; idx < struct_literal->members.info.count; idx++) {
@@ -40,7 +40,7 @@ static void do_struct_literal(
 // returns node of element pointer that should then be loaded
 static Node_load_element_ptr* do_load_struct_element_ptr(
     Node_ptr_vec* block_children,
-    int64_t* idx_to_insert_before,
+    size_t* idx_to_insert_before,
     Node_struct_member_sym_typed* symbol_call
 ) {
     Node* prev_struct_sym = node_wrap(symbol_call);
@@ -101,7 +101,7 @@ static void struct_memb_to_load_memb_rtn_val_sym(Node_struct_member_sym_typed* s
 
 static Node_load_another_node* insert_load(
     Node_ptr_vec* block_children,
-    int64_t* idx_to_insert_before,
+    size_t* idx_to_insert_before,
     Node* symbol_call
 ) {
     switch (symbol_call->type) {
@@ -151,7 +151,7 @@ static Node_load_another_node* insert_load(
 
 static void insert_store(
     Node_ptr_vec* block_children,
-    int64_t* idx_to_insert_before,
+    size_t* idx_to_insert_before,
     Node* symbol_call /* src */
 ) {
     Str_view dest_name = {0};
@@ -187,7 +187,7 @@ static void insert_store(
 
 static void load_operator_operand(
     Node_ptr_vec* block_children,
-    int64_t* idx_to_insert_before,
+    size_t* idx_to_insert_before,
     Node* operand
 ) {
     switch (operand->type) {
@@ -209,7 +209,7 @@ static void load_operator_operand(
 
 static Node_operator* load_operator_operands(
     Node_ptr_vec* block_children,
-    int64_t* idx_to_insert_before,
+    size_t* idx_to_insert_before,
     Node_operator* operator
 ) {
     load_operator_operand(block_children, idx_to_insert_before, operator->lhs);
@@ -219,7 +219,7 @@ static Node_operator* load_operator_operands(
 
 static void add_load_foreach_arg(
     Node_ptr_vec* block_children,
-    int64_t* idx_to_insert_before,
+    size_t* idx_to_insert_before,
     Node_function_call* function_call
 ) {
     for (size_t idx = 0; idx < function_call->args.info.count; idx++) {
@@ -230,7 +230,7 @@ static void add_load_foreach_arg(
 
 static Node* get_store_assignment(
     Node_ptr_vec* block_children,
-    int64_t* idx_to_insert_before,
+    size_t* idx_to_insert_before,
     Node_assignment* assignment,
     bool is_for_struct_literal_member
 ) {
@@ -373,7 +373,7 @@ static Node* get_store_assignment(
 
 static void add_load_return_statement(
     Node_ptr_vec* block_children,
-    int64_t* idx_to_insert_before,
+    size_t* idx_to_insert_before,
     Node_return_statement* return_statement
 ) {
     Node* node_to_return = return_statement->child;
@@ -417,13 +417,13 @@ static void load_function_parameters(Node_function_definition* fun_def) {
         fun_param_call->node_src = param;
         fun_param_call->lang_type = get_lang_type(param);
         size_t idx_insert_before = get_idx_node_after_last_alloca(fun_def->body);
-        insert_store(&fun_def->body->children, (int64_t*)&idx_insert_before, node_wrap(fun_param_call));
+        insert_store(&fun_def->body->children, &idx_insert_before, node_wrap(fun_param_call));
     }
 }
 
 static void load_function_arguments(
     Node_ptr_vec* block_children,
-    int64_t* idx_to_insert_before,
+    size_t* idx_to_insert_before,
     Node_function_call* fun_call
 ) {
     add_load_foreach_arg(block_children, idx_to_insert_before, fun_call);
@@ -436,7 +436,7 @@ bool add_load_and_store(Node* start_start_node, int recursion_depth) {
     }
     Node_block* block = node_unwrap_block(start_start_node);
 
-    for (int64_t idx = block->children.info.count - 1; idx > -1; idx--) {
+    for (size_t idx = block->children.info.count - 1;; idx--) {
         Node* curr_node = node_ptr_vec_at(&block->children, idx);
 
         switch (curr_node->type) {
@@ -520,6 +520,10 @@ bool add_load_and_store(Node* start_start_node, int recursion_depth) {
                 break;
             default:
                 unreachable(NODE_FMT"\n", node_print(curr_node));
+        }
+
+        if (idx < 1) {
+            break;
         }
     }
 

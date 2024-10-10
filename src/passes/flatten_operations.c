@@ -6,7 +6,7 @@
 // returns operand or operand symbol
 static Node* flatten_operation_operand(
     Node_ptr_vec* block_children,
-    int64_t* idx_to_insert_before,
+    size_t* idx_to_insert_before,
     Node* operand
 ) {
     if (operand->type == NODE_OPERATOR) {
@@ -31,7 +31,7 @@ static Node* flatten_operation_operand(
 
 static void flatten_operation_if_nessessary(
     Node_ptr_vec* block_children,
-    int64_t* idx_to_insert_before,
+    size_t* idx_to_insert_before,
     Node_operator* old_operation
 ) {
     old_operation->lhs = flatten_operation_operand(block_children, idx_to_insert_before, old_operation->lhs);
@@ -41,7 +41,7 @@ static void flatten_operation_if_nessessary(
 // operator symbol is returned
 static Node_llvm_register_sym* move_operator_back(
     Node_ptr_vec* block_children,
-    int64_t* idx_to_insert_before,
+    size_t* idx_to_insert_before,
     Node_operator* operation
 ) {
     Node_llvm_register_sym* operator_sym = node_unwrap_llvm_register_sym(node_new(node_wrap(operation)->pos, NODE_LLVM_REGISTER_SYM));
@@ -72,7 +72,7 @@ bool flatten_operations(Node* block_, int recursion_depth) {
     }
     Node_block* block = node_unwrap_block(block_);
 
-    for (int64_t idx = block->children.info.count - 1; idx > -1; idx--) {
+    for (size_t idx = block->children.info.count - 1;; idx--) {
         Node* curr_node = node_ptr_vec_at(&block->children, idx);
 
         if (curr_node->type == NODE_OPERATOR) {
@@ -85,13 +85,6 @@ bool flatten_operations(Node* block_, int recursion_depth) {
                 );
                 assert(node_unwrap_assignment(curr_node)->rhs);
             }
-        } else if (curr_node->type == NODE_VARIABLE_DEFINITION) {
-            Node** prev_node_ref = idx > 0 ? (node_ptr_vec_at_ref(&block->children, idx - 1)) : NULL;
-            if (prev_node_ref && (*prev_node_ref)->type != NODE_VARIABLE_DEFINITION) {
-                // move curr_node back one
-                Node** curr_node_ref = node_ptr_vec_at_ref(&block->children, idx);
-                //swap_nodes(curr_node_ref, prev_node_ref);
-            }
         } else if (curr_node->type == NODE_RETURN_STATEMENT) {
             Node_return_statement* rtn_statement = node_unwrap_return_statement(curr_node);
             if (rtn_statement->child->type == NODE_OPERATOR) {
@@ -102,6 +95,10 @@ bool flatten_operations(Node* block_, int recursion_depth) {
                 ));
                 assert(rtn_statement->child);
             }
+        }
+        
+        if (idx < 1) {
+            break;
         }
     }
 
