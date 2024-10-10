@@ -30,11 +30,9 @@ static void insert_alloca(
     size_t* idx_to_insert_before,
     Node_variable_def* var_def
 ) {
-    node_ptr_assert_no_null(block_children);
-    node_ptr_vec_insert(block_children, 0, node_wrap(alloca_new(var_def)));
-    node_ptr_assert_no_null(block_children);
-    (*idx_to_insert_before)++;
-    node_ptr_assert_no_null(block_children);
+    insert_into_node_ptr_vec(block_children, idx_to_insert_before, 0, node_wrap(
+        alloca_new(var_def)
+    ));
 }
 
 static void do_assignment(

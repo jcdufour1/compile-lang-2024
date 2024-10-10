@@ -3,10 +3,16 @@
 
 #include "../node.h"
 
-static inline bool dummy_callback(Node* curr_node, int recursion_depth) {
-    (void) curr_node;
-    (void) recursion_depth;
-    return false;
+static inline void insert_into_node_ptr_vec(
+    Node_ptr_vec* block_children,
+    size_t* idx_to_insert_before,
+    size_t idx_to_insert_item,
+    Node* node_to_insert
+) {
+    node_ptr_vec_insert(block_children, idx_to_insert_item, node_to_insert);
+    if (idx_to_insert_item <= *idx_to_insert_before) {
+        (*idx_to_insert_before)++;
+    }
 }
 
 bool analysis_1(Node* curr_node, int recursion_depth);

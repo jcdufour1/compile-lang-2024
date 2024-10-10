@@ -11,15 +11,24 @@ static Node* flatten_operation_operand(
 ) {
     if (operand->type == NODE_OPERATOR) {
         Node* operator_sym = node_new(operand->pos, NODE_LLVM_REGISTER_SYM);
-        node_ptr_vec_insert(block_children, *idx_to_insert_before, operand);
-        (*idx_to_insert_before)++;
+
+        insert_into_node_ptr_vec(
+            block_children,
+            idx_to_insert_before,
+            *idx_to_insert_before,
+            operand
+        );
         node_unwrap_llvm_register_sym(operator_sym)->node_src = operand;
         assert(node_unwrap_llvm_register_sym(operator_sym)->node_src);
         return operator_sym;
     } else if (operand->type == NODE_FUNCTION_CALL) {
         Node_llvm_register_sym* fun_sym = node_unwrap_llvm_register_sym(node_new(operand->pos, NODE_LLVM_REGISTER_SYM));
-        node_ptr_vec_insert(block_children, *idx_to_insert_before, operand);
-        (*idx_to_insert_before)++;
+        insert_into_node_ptr_vec(
+            block_children,
+            idx_to_insert_before,
+            *idx_to_insert_before,
+            operand
+        );
         fun_sym->node_src = operand;
         assert(fun_sym->node_src);
         return node_wrap(fun_sym);
@@ -50,8 +59,12 @@ static Node_llvm_register_sym* move_operator_back(
     operator_sym->lang_type = operation->lang_type;
     assert(operator_sym->lang_type.str.count > 0);
     assert(operation);
-    node_ptr_vec_insert(block_children, *idx_to_insert_before, node_wrap(operation));
-    (*idx_to_insert_before)++;
+    insert_into_node_ptr_vec(
+        block_children,
+        idx_to_insert_before,
+        *idx_to_insert_before,
+        node_wrap(operation)
+    );
     assert(operator_sym);
     return operator_sym;
 }

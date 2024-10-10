@@ -59,12 +59,15 @@ static Node_load_element_ptr* do_load_struct_element_ptr(
         load_element_ptr->lang_type = element_sym->lang_type;
         load_element_ptr->struct_index = element_sym->struct_index;
         load_element_ptr->node_src = node_element_ptr_to_load;
-        node_ptr_vec_insert(block_children, *idx_to_insert_before, node_wrap(load_element_ptr));
+        insert_into_node_ptr_vec(
+            block_children,
+            idx_to_insert_before,
+            *idx_to_insert_before,
+            node_wrap(load_element_ptr)
+        );
 
         prev_struct_sym = node_wrap(element_sym);
         node_element_ptr_to_load = node_wrap(load_element_ptr);
-
-        (*idx_to_insert_before)++;
     }
     assert(load_element_ptr);
     return load_element_ptr;
@@ -143,8 +146,12 @@ static Node_load_another_node* insert_load(
             default:
                 unreachable(NODE_FMT, node_print(symbol_call));
         }
-        node_ptr_vec_insert(block_children, *idx_to_insert_before, node_wrap(load));
-        (*idx_to_insert_before)++;
+        insert_into_node_ptr_vec(
+            block_children,
+            idx_to_insert_before,
+            *idx_to_insert_before,
+            node_wrap(load)
+        );
         return load;
     }
 }
@@ -177,11 +184,13 @@ static void insert_store(
         Node_store_another_node* store = node_unwrap_store_another_node(node_new(symbol_call->pos, NODE_STORE_ANOTHER_NODE));
         store->node_src = get_node_src(symbol_call);
         store->lang_type = get_lang_type(symbol_call);
-        assert(store->lang_type.str.count > 0);
         store->node_dest = get_storage_location(dest_name);
-        assert(store->node_src);
-        assert(store->node_dest);
-        node_ptr_vec_insert(block_children, *idx_to_insert_before, node_wrap(store));
+        insert_into_node_ptr_vec(
+            block_children,
+            idx_to_insert_before,
+            *idx_to_insert_before,
+            node_wrap(store)
+        );
     }
 }
 
@@ -278,8 +287,12 @@ static Node* get_store_assignment(
             break;
         case NODE_FUNCTION_CALL:
             rhs_load = rhs;
-            node_ptr_vec_insert(block_children, *idx_to_insert_before, rhs);
-            (*idx_to_insert_before)++;
+            insert_into_node_ptr_vec(
+                block_children,
+                idx_to_insert_before,
+                *idx_to_insert_before,
+                rhs
+            );
             Node_function_declaration* fun_decl;
             {
                 Node* fun_def;
@@ -319,7 +332,6 @@ static Node* get_store_assignment(
                 idx_to_insert_before,
                 node_unwrap_struct_member_sym_typed(lhs)
             );
-            //(*idx_to_insert_before)++;
             store->child = node_unwrap_literal(rhs);
             store->node_dest = node_wrap(store_element_ptr);
             store->lang_type = store_element_ptr->lang_type;
@@ -331,7 +343,6 @@ static Node* get_store_assignment(
                 idx_to_insert_before,
                 node_unwrap_struct_member_sym_typed(lhs)
             );
-            //(*idx_to_insert_before)++;
             store->node_src = rhs_load;
             assert(store->node_src);
             store->node_dest = node_wrap(store_element_ptr);
