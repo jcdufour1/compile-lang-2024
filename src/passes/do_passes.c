@@ -18,8 +18,6 @@ void do_passes(Node_block** root) {
     log_tree(LOG_DEBUG, node_wrap(*root));
     arena_reset(&print_arena);
 
-    walk_tree(node_wrap(*root), 0, dummy_callback);
-
     walk_tree(node_wrap(*root), 0, flatten_operations);
     log_tree(LOG_DEBUG, node_wrap(*root));
     arena_reset(&print_arena);

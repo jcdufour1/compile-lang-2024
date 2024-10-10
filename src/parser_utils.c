@@ -180,7 +180,6 @@ bool is_corresponding_to_a_struct(const Node* node) {
             // fallthrough
         case NODE_STORE_ANOTHER_NODE:
             // fallthrough
-            node_printf(node);
             assert(get_node_name(node).count > 0);
             if (!sym_tbl_lookup(&var_def, get_node_name(node))) {
                 return false;
@@ -514,8 +513,6 @@ void set_struct_member_symbol_types(Node_struct_member_sym_untyped* struct_memb_
             todo();
         }
         if (!try_get_member_def(&curr_memb_def, struct_def, node_wrap(memb_sym_untyped))) {
-            node_printf(memb_sym_untyped);
-            node_printf(curr_memb_def);
             msg_invalid_struct_member(node_wrap(struct_memb_sym_typed), node_wrap(memb_sym_untyped));
             return;
         }
@@ -528,7 +525,6 @@ void set_struct_member_symbol_types(Node_struct_member_sym_untyped* struct_memb_
         Node_struct_member_sym_piece_typed* memb_sym_typed = node_unwrap_struct_member_sym_piece_typed(node_wrap(memb_sym_untyped));
         memb_sym_typed->name = temp_piece.name;
         memb_sym_typed->lang_type = curr_memb_def->lang_type;
-        //node_printf(struct_def);
         memb_sym_typed->struct_index = get_member_index(prev_struct_def, memb_sym_typed);
 
         prev_struct_def = struct_def;

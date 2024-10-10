@@ -64,11 +64,7 @@ bool add_alloca(Node* block_, int recursion_depth) {
     }
 
     for (size_t idx = 0; idx < block_children->info.count; idx++) {
-        node_printf(node_ptr_vec_at(block_children, idx));
-        log(LOG_DEBUG, "---------------------\n");
-        log(LOG_DEBUG, "idx: %zu\n", idx);
         node_ptr_assert_no_null(&block->children);
-        log(LOG_DEBUG, "---------------------\n");
         Node* curr_node = node_ptr_vec_at(block_children, idx);
         switch (curr_node->type) {
             case NODE_VARIABLE_DEFINITION:

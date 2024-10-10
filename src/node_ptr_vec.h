@@ -64,7 +64,6 @@ static inline Node* node_ptr_vec_top(Node_ptr_vec* vector) {
 
 static inline void node_ptr_assert_no_null(const Node_ptr_vec* vector) {
     for (size_t idx = 0; idx < vector->info.count; idx++) {
-        log(LOG_DEBUG, "node_ptr_assert_no_null: idx: %zu\n", idx);
         assert(node_ptr_vec_at((Node_ptr_vec*)vector, idx));
     }
 }

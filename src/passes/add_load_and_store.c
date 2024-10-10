@@ -7,14 +7,14 @@
 
 static Node* get_store_assignment(
     Node_ptr_vec* block_children,
-    size_t* idx_to_insert_before,
+    int64_t* idx_to_insert_before,
     Node_assignment* assignment,
     bool is_for_struct_literal_member
 );
 
 static void do_struct_literal(
     Node_ptr_vec* block_children,
-    size_t* idx_to_insert_before,
+    int64_t* idx_to_insert_before,
     Node_struct_literal* struct_literal
 ) {
     for (size_t idx = 0; idx < struct_literal->members.info.count; idx++) {
@@ -40,16 +40,14 @@ static void do_struct_literal(
 // returns node of element pointer that should then be loaded
 static Node_load_element_ptr* do_load_struct_element_ptr(
     Node_ptr_vec* block_children,
-    size_t* idx_to_insert_before,
+    int64_t* idx_to_insert_before,
     Node_struct_member_sym_typed* symbol_call
 ) {
     Node* prev_struct_sym = node_wrap(symbol_call);
-    node_printf(symbol_call);
     Node* sym_def_;
     if (!sym_tbl_lookup(&sym_def_, symbol_call->name)) {
         unreachable("symbol definition not found");
     }
-    node_printf(sym_def_);
     Node* node_element_ptr_to_load = get_storage_location(symbol_call->name);
     Node_load_element_ptr* load_element_ptr = NULL;
     for (size_t idx = 0; idx < symbol_call->children.info.count; idx++) {
@@ -82,7 +80,6 @@ static void sym_typed_to_load_sym_rtn_value_sym(Node_symbol_typed* symbol, Node_
 
 static Lang_type get_member_sym_piece_final_lang_type(const Node_struct_member_sym_typed* struct_memb_sym) {
     Lang_type lang_type = {0};
-    log_tree(LOG_DEBUG, node_wrap(struct_memb_sym));
     for (size_t idx = 0; idx < struct_memb_sym->children.info.count; idx++) {
         const Node* memb_piece_ = node_ptr_vec_at_const(&struct_memb_sym->children, idx);
         const Node_struct_member_sym_piece_typed* memb_piece = 
@@ -104,7 +101,7 @@ static void struct_memb_to_load_memb_rtn_val_sym(Node_struct_member_sym_typed* s
 
 static Node_load_another_node* insert_load(
     Node_ptr_vec* block_children,
-    size_t* idx_to_insert_before,
+    int64_t* idx_to_insert_before,
     Node* symbol_call
 ) {
     switch (symbol_call->type) {
@@ -147,13 +144,14 @@ static Node_load_another_node* insert_load(
                 unreachable(NODE_FMT, node_print(symbol_call));
         }
         node_ptr_vec_insert(block_children, *idx_to_insert_before, node_wrap(load));
+        (*idx_to_insert_before)++;
         return load;
     }
 }
 
 static void insert_store(
     Node_ptr_vec* block_children,
-    size_t* idx_to_insert_before,
+    int64_t* idx_to_insert_before,
     Node* symbol_call /* src */
 ) {
     Str_view dest_name = {0};
@@ -164,6 +162,7 @@ static void insert_store(
             // fallthrough
         case NODE_VARIABLE_DEFINITION:
             dest_name = get_node_name(symbol_call);
+            break;
         case NODE_LLVM_REGISTER_SYM:
             dest_name = get_node_name(node_unwrap_llvm_register_sym(symbol_call)->node_src);
             break;
@@ -179,7 +178,6 @@ static void insert_store(
         store->node_src = get_node_src(symbol_call);
         store->lang_type = get_lang_type(symbol_call);
         assert(store->lang_type.str.count > 0);
-        node_printf(symbol_call);
         store->node_dest = get_storage_location(dest_name);
         assert(store->node_src);
         assert(store->node_dest);
@@ -189,7 +187,7 @@ static void insert_store(
 
 static void load_operator_operand(
     Node_ptr_vec* block_children,
-    size_t* idx_to_insert_before,
+    int64_t* idx_to_insert_before,
     Node* operand
 ) {
     switch (operand->type) {
@@ -211,7 +209,7 @@ static void load_operator_operand(
 
 static Node_operator* load_operator_operands(
     Node_ptr_vec* block_children,
-    size_t* idx_to_insert_before,
+    int64_t* idx_to_insert_before,
     Node_operator* operator
 ) {
     load_operator_operand(block_children, idx_to_insert_before, operator->lhs);
@@ -221,7 +219,7 @@ static Node_operator* load_operator_operands(
 
 static void add_load_foreach_arg(
     Node_ptr_vec* block_children,
-    size_t* idx_to_insert_before,
+    int64_t* idx_to_insert_before,
     Node_function_call* function_call
 ) {
     for (size_t idx = 0; idx < function_call->args.info.count; idx++) {
@@ -232,7 +230,7 @@ static void add_load_foreach_arg(
 
 static Node* get_store_assignment(
     Node_ptr_vec* block_children,
-    size_t* idx_to_insert_before,
+    int64_t* idx_to_insert_before,
     Node_assignment* assignment,
     bool is_for_struct_literal_member
 ) {
@@ -321,7 +319,7 @@ static Node* get_store_assignment(
                 idx_to_insert_before,
                 node_unwrap_struct_member_sym_typed(lhs)
             );
-            (*idx_to_insert_before)++;
+            //(*idx_to_insert_before)++;
             store->child = node_unwrap_literal(rhs);
             store->node_dest = node_wrap(store_element_ptr);
             store->lang_type = store_element_ptr->lang_type;
@@ -333,7 +331,7 @@ static Node* get_store_assignment(
                 idx_to_insert_before,
                 node_unwrap_struct_member_sym_typed(lhs)
             );
-            (*idx_to_insert_before)++;
+            //(*idx_to_insert_before)++;
             store->node_src = rhs_load;
             assert(store->node_src);
             store->node_dest = node_wrap(store_element_ptr);
@@ -375,7 +373,7 @@ static Node* get_store_assignment(
 
 static void add_load_return_statement(
     Node_ptr_vec* block_children,
-    size_t* idx_to_insert_before,
+    int64_t* idx_to_insert_before,
     Node_return_statement* return_statement
 ) {
     Node* node_to_return = return_statement->child;
@@ -419,13 +417,13 @@ static void load_function_parameters(Node_function_definition* fun_def) {
         fun_param_call->node_src = param;
         fun_param_call->lang_type = get_lang_type(param);
         size_t idx_insert_before = get_idx_node_after_last_alloca(fun_def->body);
-        insert_store(&fun_def->body->children, &idx_insert_before, node_wrap(fun_param_call));
+        insert_store(&fun_def->body->children, (int64_t*)&idx_insert_before, node_wrap(fun_param_call));
     }
 }
 
 static void load_function_arguments(
     Node_ptr_vec* block_children,
-    size_t* idx_to_insert_before,
+    int64_t* idx_to_insert_before,
     Node_function_call* fun_call
 ) {
     add_load_foreach_arg(block_children, idx_to_insert_before, fun_call);
@@ -438,9 +436,7 @@ bool add_load_and_store(Node* start_start_node, int recursion_depth) {
     }
     Node_block* block = node_unwrap_block(start_start_node);
 
-    for (size_t idx_ = block->children.info.count; idx_ > 0; idx_--) {
-        assert(idx_ < 100000 && "underflow has occured");
-        size_t idx = idx_ - 1;
+    for (int64_t idx = block->children.info.count - 1; idx > -1; idx--) {
         Node* curr_node = node_ptr_vec_at(&block->children, idx);
 
         switch (curr_node->type) {
@@ -478,13 +474,13 @@ bool add_load_and_store(Node* start_start_node, int recursion_depth) {
             case NODE_FUNCTION_DECLARATION:
                 break;
             case NODE_ASSIGNMENT: {
-                Node** curr_node_ref = node_ptr_vec_at_ref(&block->children, idx);
-                *curr_node_ref = get_store_assignment(
+                Node* thing = get_store_assignment(
                     &block->children,
                     &idx,
                     node_unwrap_assignment(curr_node),
                     false
                 );
+                *node_ptr_vec_at_ref(&block->children, idx) = thing;
                 break;
             }
             case NODE_FOR_LOOP:

@@ -63,6 +63,10 @@ void walk_tree(
             walk_tree(node_wrap(node_unwrap_for_loop(input_node)->upper_bound), recursion_depth + 1, callback);
             walk_tree(node_wrap(node_unwrap_for_loop(input_node)->body), recursion_depth + 1, callback);
             break;
+        case NODE_IF_STATEMENT:
+            walk_tree(node_wrap(node_unwrap_if(input_node)->condition), recursion_depth + 1, callback);
+            walk_tree(node_wrap(node_unwrap_if(input_node)->body), recursion_depth + 1, callback);
+            break;
         case NODE_FUNCTION_DEFINITION:
             walk_tree(node_wrap(node_unwrap_function_definition(input_node)->declaration), recursion_depth + 1, callback);
             walk_tree(node_wrap(node_unwrap_function_definition(input_node)->body), recursion_depth + 1, callback);
@@ -70,10 +74,6 @@ void walk_tree(
         case NODE_FUNCTION_DECLARATION:
             walk_tree(node_wrap(node_unwrap_function_declaration(input_node)->parameters), recursion_depth + 1, callback);
             walk_tree(node_wrap(node_unwrap_function_declaration(input_node)->return_types), recursion_depth + 1, callback);
-            break;
-        case NODE_IF_STATEMENT:
-            walk_tree(node_wrap(node_unwrap_if(input_node)->condition), recursion_depth + 1, callback);
-            walk_tree(node_wrap(node_unwrap_if(input_node)->body), recursion_depth + 1, callback);
             break;
         case NODE_LLVM_STORE_STRUCT_LITERAL:
             walk_tree(node_wrap(node_unwrap_llvm_store_struct_literal(input_node)->child), recursion_depth + 1, callback);
@@ -95,8 +95,16 @@ void walk_tree(
         case NODE_FOR_UPPER_BOUND:
             walk_tree(node_wrap(node_unwrap_for_upper_bound(input_node)->child), recursion_depth + 1, callback);
             break;
+        case NODE_IF_CONDITION:
+            walk_tree(node_wrap(node_unwrap_if_condition(input_node)->child), recursion_depth + 1, callback);
+            break;
         case NODE_LITERAL:
             break;
+        case NODE_STRUCT_LITERAL: {
+            Node_ptr_vec* vector = &node_unwrap_struct_literal(input_node)->members;
+            walk_node_ptr_vec(vector, recursion_depth, callback);
+            break;
+        }
         case NODE_FUNCTION_CALL: {
             Node_ptr_vec* vector = &node_unwrap_function_call(input_node)->args;
             walk_node_ptr_vec(vector, recursion_depth, callback);
@@ -107,9 +115,17 @@ void walk_tree(
             break;
         case NODE_LLVM_REGISTER_SYM:
             break;
+        case NODE_BREAK:
+            walk_tree(node_wrap(node_unwrap_break(input_node)->child), recursion_depth + 1, callback);
+            break;
         case NODE_LLVM_STORE_LITERAL:
             walk_tree(node_wrap(node_unwrap_llvm_store_literal(input_node)->child), recursion_depth + 1, callback);
             break;
+        case NODE_STRUCT_DEFINITION: {
+            Node_ptr_vec* vector = &node_unwrap_struct_def(input_node)->members;
+            walk_node_ptr_vec(vector, recursion_depth, callback);
+            break;
+        }
         default:
             unreachable(NODE_FMT"\n", node_print(input_node));
             break;

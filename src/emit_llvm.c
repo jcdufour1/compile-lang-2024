@@ -116,7 +116,7 @@ static void emit_function_params(String* output, const Node_function_params* fun
             node_ptr_vec_at_const(&fun_params->params, idx)
         );
 
-        if (idx++ > 0) {
+        if (idx > 0) {
             string_extend_cstr(&a_main, output, ", ");
         }
 
@@ -136,12 +136,13 @@ static void emit_function_params(String* output, const Node_function_params* fun
 }
 
 static void emit_function_call_arguments(String* output, const Node_function_call* fun_call) {
-    
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
         const Node* argument = node_ptr_vec_at_const(&fun_call->args, idx);
-        if (idx++ > 0) {
+
+        if (idx > 0) {
             string_extend_cstr(&a_main, output, ", ");
         }
+
         switch (argument->type) {
             case NODE_LITERAL: {
                 extend_literal_decl(output, node_unwrap_literal_const(argument), true);
