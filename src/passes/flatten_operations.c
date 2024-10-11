@@ -9,7 +9,7 @@ static Node* flatten_operation_operand(
     size_t* idx_to_insert_before,
     Node* operand
 ) {
-    if (operand->type == NODE_OPERATOR) {
+    if (operand->type == NODE_BINARY) {
         Node* operator_sym = node_new(operand->pos, NODE_LLVM_REGISTER_SYM);
 
         insert_into_node_ptr_vec(
@@ -41,7 +41,7 @@ static Node* flatten_operation_operand(
 static void flatten_operation_if_nessessary(
     Node_ptr_vec* block_children,
     size_t* idx_to_insert_before,
-    Node_operator* old_operation
+    Node_binary* old_operation
 ) {
     old_operation->lhs = flatten_operation_operand(block_children, idx_to_insert_before, old_operation->lhs);
     old_operation->rhs = flatten_operation_operand(block_children, idx_to_insert_before, old_operation->rhs);
@@ -51,7 +51,7 @@ static void flatten_operation_if_nessessary(
 static Node_llvm_register_sym* move_operator_back(
     Node_ptr_vec* block_children,
     size_t* idx_to_insert_before,
-    Node_operator* operation
+    Node_binary* operation
 ) {
     Node_llvm_register_sym* operator_sym = node_unwrap_llvm_register_sym(node_new(node_wrap(operation)->pos, NODE_LLVM_REGISTER_SYM));
     operator_sym->node_src = node_wrap(operation);
@@ -88,23 +88,23 @@ bool flatten_operations(Node* block_, int recursion_depth) {
     for (size_t idx = block->children.info.count - 1;; idx--) {
         Node* curr_node = node_ptr_vec_at(&block->children, idx);
 
-        if (curr_node->type == NODE_OPERATOR) {
-            flatten_operation_if_nessessary(&block->children, &idx, node_unwrap_operator(curr_node));
+        if (curr_node->type == NODE_BINARY) {
+            flatten_operation_if_nessessary(&block->children, &idx, node_unwrap_binary(curr_node));
         } else if (curr_node->type == NODE_ASSIGNMENT) {
             Node* rhs = node_unwrap_assignment(curr_node)->rhs;
-            if (rhs->type == NODE_OPERATOR) {
+            if (rhs->type == NODE_BINARY) {
                 node_unwrap_assignment(curr_node)->rhs = node_wrap(
-                    move_operator_back(&block->children, &idx, node_unwrap_operator(rhs))
+                    move_operator_back(&block->children, &idx, node_unwrap_binary(rhs))
                 );
                 assert(node_unwrap_assignment(curr_node)->rhs);
             }
         } else if (curr_node->type == NODE_RETURN_STATEMENT) {
             Node_return_statement* rtn_statement = node_unwrap_return_statement(curr_node);
-            if (rtn_statement->child->type == NODE_OPERATOR) {
+            if (rtn_statement->child->type == NODE_BINARY) {
                 rtn_statement->child = node_wrap(move_operator_back(
                     &block->children,
                     &idx,
-                    node_unwrap_operator(rtn_statement->child)
+                    node_unwrap_binary(rtn_statement->child)
                 ));
                 assert(rtn_statement->child);
             }

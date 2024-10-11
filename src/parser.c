@@ -514,8 +514,8 @@ static Node* extract_expression_piece(Tk_view* tokens) {
     }
 }
 
-static Node_operator* parser_operation_new(Node* lhs, Token operation_token, Node* rhs) {
-    Node_operator* operation = node_unwrap_operator(node_new(operation_token.pos, NODE_OPERATOR));
+static Node_binary* parser_operation_new(Node* lhs, Token operation_token, Node* rhs) {
+    Node_binary* operation = node_unwrap_binary(node_new(operation_token.pos, NODE_BINARY));
     operation->token_type = operation_token.type;
     operation->lhs = lhs;
     operation->rhs = rhs;
@@ -533,20 +533,20 @@ static Node* extract_expression(Tk_view* tokens) {
     bool is_first_operator = true;
     while (tokens->count > 0 && token_is_operator(tk_view_front(*tokens))) {
         Token operator_token = tk_view_consume(tokens);
-        if (!is_first_operator && expression->type == NODE_OPERATOR &&
+        if (!is_first_operator && expression->type == NODE_BINARY &&
             operator_precedence(prev_operator_token) < operator_precedence(operator_token)
         ) {
             Node* rhs = extract_expression_piece(tokens);
-            Node_operator* operation = parser_operation_new(
-                node_unwrap_operator(expression)->rhs,
+            Node_binary* operation = parser_operation_new(
+                node_unwrap_binary(expression)->rhs,
                 operator_token,
                 rhs
             );
-            node_unwrap_operator(expression)->rhs = node_wrap(operation);
+            node_unwrap_binary(expression)->rhs = node_wrap(operation);
         } else {
             Node* lhs = expression;
             Node* rhs = extract_expression_piece(tokens);
-            Node_operator* operation = parser_operation_new(lhs, operator_token, rhs);
+            Node_binary* operation = parser_operation_new(lhs, operator_token, rhs);
             expression = node_wrap(operation);
         }
 

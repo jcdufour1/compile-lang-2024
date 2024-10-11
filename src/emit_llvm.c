@@ -206,7 +206,7 @@ static void emit_alloca(String* output, const Node_alloca* alloca) {
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_operator_type(String* output, const Node_operator* operator) {
+static void emit_operator_type(String* output, const Node_binary* operator) {
     // TODO: do signed and unsigned operations correctly
     switch (operator->token_type) {
         case TOKEN_SINGLE_MINUS:
@@ -256,7 +256,7 @@ static void emit_operator_operand(String* output, const Node* operand) {
     }
 }
 
-static void emit_operator(String* output, const Node_operator* operator) {
+static void emit_operator(String* output, const Node_binary* operator) {
     string_extend_cstr(&a_main, output, "    %");
     string_extend_size_t(&a_main, output, operator->llvm_id);
     string_extend_cstr(&a_main, output, " = ");
@@ -482,8 +482,8 @@ static void emit_block(String* output, const Node_block* block) {
             case NODE_STRUCT_DEFINITION:
                 emit_struct_definition(output, node_unwrap_struct_def_const(statement));
                 break;
-            case NODE_OPERATOR:
-                emit_operator(output, node_unwrap_operator_const(statement));
+            case NODE_BINARY:
+                emit_operator(output, node_unwrap_binary_const(statement));
                 break;
             case NODE_LOAD_STRUCT_ELEMENT_PTR:
                 emit_load_struct_element_pointer(output, node_unwrap_load_elem_ptr_const(statement));

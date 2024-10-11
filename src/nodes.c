@@ -13,7 +13,7 @@ static const char* NODE_FUNCTION_DEFINITION_DESCRIPTION = "fn_def";
 static const char* NODE_FUNCTION_PARAMETERS_DESCRIPTION = "fn_params";
 static const char* NODE_FUNCTION_RETURN_TYPES_DESCRIPTION = "fn_return_types";
 static const char* NODE_LANG_TYPE_DESCRIPTION = "lang_type";
-static const char* NODE_OPERATOR_DESCRIPTION = "operator";
+static const char* NODE_BINARY_DESCRIPTION = "operator";
 static const char* NODE_BLOCK_DESCRIPTION = "block";
 static const char* NODE_SYMBOL_UNTYPED_DESCRIPTION = "sym_untyped";
 static const char* NODE_SYMBOL_TYPED_DESCRIPTION= "sym_typed";
@@ -113,8 +113,8 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_FUNCTION_RETURN_TYPES_DESCRIPTION);
         case NODE_LANG_TYPE:
             return str_view_from_cstr(NODE_LANG_TYPE_DESCRIPTION);
-        case NODE_OPERATOR:
-            return str_view_from_cstr(NODE_OPERATOR_DESCRIPTION);
+        case NODE_BINARY:
+            return str_view_from_cstr(NODE_BINARY_DESCRIPTION);
         case NODE_BLOCK:
             return str_view_from_cstr(NODE_BLOCK_DESCRIPTION);
         case NODE_SYMBOL_UNTYPED:
@@ -240,8 +240,8 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
         case NODE_LANG_TYPE:
             extend_lang_type_to_string(arena, string, node_unwrap_lang_type_const(node)->lang_type, true);
             break;
-        case NODE_OPERATOR:
-            string_extend_strv(arena, string, token_type_to_str_view(node_unwrap_operator_const(node)->token_type));
+        case NODE_BINARY:
+            string_extend_strv(arena, string, token_type_to_str_view(node_unwrap_binary_const(node)->token_type));
             break;
         case NODE_VARIABLE_DEFINITION:
             extend_lang_type_to_string(arena, string, node_unwrap_variable_def_const(node)->lang_type, true);

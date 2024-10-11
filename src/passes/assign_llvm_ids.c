@@ -73,8 +73,8 @@ bool assign_llvm_ids(Node* curr_node) {
             return false;
         case NODE_IF_CONDITION:
             unreachable("");
-        case NODE_OPERATOR:
-            node_unwrap_operator(curr_node)->llvm_id = llvm_id_for_next_var;
+        case NODE_BINARY:
+            node_unwrap_binary(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
             return false;
         case NODE_LABEL:

@@ -31,9 +31,9 @@ void walk_tree(
             walk_tree(node_wrap(node_unwrap_assignment(input_node)->lhs), recursion_depth + 1, callback);
             walk_tree(node_wrap(node_unwrap_assignment(input_node)->rhs), recursion_depth + 1, callback);
             break;
-        case NODE_OPERATOR:
-            walk_tree(node_wrap(node_unwrap_operator(input_node)->lhs), recursion_depth + 1, callback);
-            walk_tree(node_wrap(node_unwrap_operator(input_node)->rhs), recursion_depth + 1, callback);
+        case NODE_BINARY:
+            walk_tree(node_wrap(node_unwrap_binary(input_node)->lhs), recursion_depth + 1, callback);
+            walk_tree(node_wrap(node_unwrap_binary(input_node)->rhs), recursion_depth + 1, callback);
             break;
         case NODE_SYMBOL_TYPED:
             break;

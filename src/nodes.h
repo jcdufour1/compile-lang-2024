@@ -40,7 +40,7 @@ static inline void set_left_child(Node* parent, Node* left_child) {
         case NODE_LANG_TYPE:
             unreachable("");
             return;
-        case NODE_OPERATOR:
+        case NODE_BINARY:
             unreachable("");
         case NODE_STRUCT_LITERAL:
             unreachable("");
@@ -147,7 +147,7 @@ static inline Node* get_left_child(Node* node) {
             unreachable("");
         case NODE_LANG_TYPE:
             unreachable("");
-        case NODE_OPERATOR:
+        case NODE_BINARY:
             unreachable("");
         case NODE_STRUCT_LITERAL:
             unreachable("");

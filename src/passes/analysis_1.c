@@ -16,8 +16,8 @@ static void set_if_condition_types(Node_if_condition* if_cond) {
                 TOKEN_DOUBLE_EQUAL
             ));
             break;
-        case NODE_OPERATOR: {
-            try_set_operator_lang_type(node_unwrap_operator(old_if_cond_child));
+        case NODE_BINARY: {
+            try_set_operator_lang_type(node_unwrap_binary(old_if_cond_child));
             break;
         }
         case NODE_FUNCTION_CALL: {
@@ -69,7 +69,7 @@ bool analysis_1(Node* block_, int recursion_depth) {
             case NODE_RETURN_STATEMENT:
                 set_return_statement_types(node_unwrap_return_statement(curr_node));
                 break;
-            case NODE_OPERATOR:
+            case NODE_BINARY:
                 todo();
                 break;
             case NODE_IF_STATEMENT:

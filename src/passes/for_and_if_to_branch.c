@@ -16,7 +16,7 @@ static Node_goto* goto_new(Str_view name_label_to_jmp_to, Pos pos) {
 }
 
 static Node_cond_goto* conditional_goto_new(
-    Node_operator* oper_rtn_sym,
+    Node_binary* oper_rtn_sym,
     Str_view label_name_if_true,
     Str_view label_name_if_false
 ) {
@@ -29,7 +29,7 @@ static Node_cond_goto* conditional_goto_new(
 
 static Node_assignment* for_loop_cond_var_assign_new(Str_view sym_name, Pos pos) {
     Node_literal* literal = literal_new(str_view_from_cstr("1"), TOKEN_NUM_LITERAL, pos);
-    Node_operator* operation = operation_new(node_wrap(symbol_new(sym_name, pos)), node_wrap(literal), TOKEN_SINGLE_PLUS);
+    Node_binary* operation = operation_new(node_wrap(symbol_new(sym_name, pos)), node_wrap(literal), TOKEN_SINGLE_PLUS);
     return assignment_new(node_wrap(symbol_new(sym_name, pos)), node_wrap(operation));
 }
 
@@ -65,7 +65,7 @@ static void change_break_to_goto(Node_block* block, const Node_label* label_to_g
 static Node_block* for_with_condition_to_branch(Node_for_with_condition* for_loop) {
     Node_block* for_block = for_loop->body;
     Node_block* new_branch_block = node_unwrap_block(node_new(node_wrap(for_loop)->pos, NODE_BLOCK));
-    Node_operator* operation = node_unwrap_operator(for_loop->condition->child);
+    Node_binary* operation = node_unwrap_binary(for_loop->condition->child);
 
     Node_label* check_cond_label = label_new(literal_name_new(), node_wrap(for_loop)->pos);
     Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label->name, node_wrap(for_loop)->pos);
@@ -111,7 +111,7 @@ static Node_block* for_range_to_branch(Node_for_range* for_loop) {
 
     Node_assignment* assignment_to_inc_cond_var = for_loop_cond_var_assign_new(for_var_def->name, node_wrap(lhs_actual)->pos);
 
-    Node_operator* new_operation = operation_new(
+    Node_binary* new_operation = operation_new(
         node_wrap(symbol_new(symbol_lhs_assign->name, node_wrap(symbol_lhs_assign)->pos)), rhs_actual, TOKEN_LESS_THAN
     );
 
@@ -151,7 +151,7 @@ static Node_block* if_statement_to_branch(Node_if* if_statement) {
     Node_if_condition* if_condition = if_statement->condition;
     Node_block* block = if_statement->body;
 
-    Node_operator* operation = node_unwrap_operator(if_condition->child);
+    Node_binary* operation = node_unwrap_binary(if_condition->child);
 
     Node_label* if_true = label_new(literal_name_new(), node_wrap(block)->pos);
     Node_label* if_after = label_new(literal_name_new(), node_wrap(operation)->pos);

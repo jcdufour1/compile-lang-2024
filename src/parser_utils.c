@@ -96,9 +96,9 @@ Node_symbol_untyped* symbol_new(Str_view symbol_name, Pos pos) {
     return symbol;
 }
 
-Node_operator* operation_new(Node* lhs, Node* rhs, TOKEN_TYPE operation_type) {
+Node_binary* operation_new(Node* lhs, Node* rhs, TOKEN_TYPE operation_type) {
     // TODO: check if lhs or rhs were already appended to the tree
-    Node_operator* operator = node_unwrap_operator(node_new(lhs->pos, NODE_OPERATOR));
+    Node_binary* operator = node_unwrap_binary(node_new(lhs->pos, NODE_BINARY));
     operator->token_type = operation_type;
     operator->lhs = lhs;
     operator->rhs = rhs;
@@ -264,7 +264,7 @@ void set_symbol_type(Node_symbol_untyped* sym_untyped) {
 }
 
 // returns false if unsuccessful
-bool try_set_operator_lang_type(Node_operator* operator) {
+bool try_set_operator_lang_type(Node_binary* operator) {
     Lang_type dummy;
     if (!try_set_operator_operand_lang_type(&dummy, operator->lhs)) {
         return false;
@@ -279,11 +279,11 @@ bool try_set_operator_operand_lang_type(Lang_type* result, Node* operand) {
             *result = node_unwrap_literal(operand)->lang_type;
             return true;
         }
-        case NODE_OPERATOR:
-            if (!try_set_operator_lang_type(node_unwrap_operator(operand))) {
+        case NODE_BINARY:
+            if (!try_set_operator_lang_type(node_unwrap_binary(operand))) {
                 return false;
             }
-            *result = node_unwrap_operator(operand)->lang_type;
+            *result = node_unwrap_binary(operand)->lang_type;
             return true;
         case NODE_SYMBOL_UNTYPED: {
             set_symbol_type(node_unwrap_symbol_untyped(operand));
@@ -409,11 +409,11 @@ bool set_assignment_operand_types(Node_assignment* assignment) {
         }
         case NODE_SYMBOL_TYPED:
             unreachable("");
-        case NODE_OPERATOR: {
-            if (!try_set_operator_lang_type(node_unwrap_operator(rhs))) {
+        case NODE_BINARY: {
+            if (!try_set_operator_lang_type(node_unwrap_binary(rhs))) {
                 break;
             }
-            Node_operator* rhs_oper = node_unwrap_operator(rhs);
+            Node_binary* rhs_oper = node_unwrap_binary(rhs);
             Node* lhs_var_def;
             try(sym_tbl_lookup(&lhs_var_def, get_node_name(lhs)));
             if (!lang_type_is_equal(rhs_oper->lang_type, node_unwrap_variable_def(lhs_var_def)->lang_type)) {
@@ -543,8 +543,8 @@ void set_return_statement_types(Node_return_statement* rtn_statement) {
         case NODE_LITERAL:
             // TODO: check type of this literal with function return type
             break;
-        case NODE_OPERATOR: {
-            try_set_operator_lang_type(node_unwrap_operator(child));
+        case NODE_BINARY: {
+            try_set_operator_lang_type(node_unwrap_binary(child));
             break;
         }
         case NODE_LLVM_REGISTER_SYM:

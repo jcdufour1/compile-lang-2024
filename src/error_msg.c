@@ -123,7 +123,7 @@ void msg_invalid_assignment_to_literal(const Node_symbol_typed* lhs, const Node_
     );
 }
 
-void msg_invalid_assignment_to_operation(const Node* lhs, const Node_operator* operation) {
+void msg_invalid_assignment_to_operation(const Node* lhs, const Node_binary* operation) {
     assert(lhs->type == NODE_SYMBOL_TYPED);
 
     Node* var_def_;

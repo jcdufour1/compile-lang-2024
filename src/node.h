@@ -25,7 +25,7 @@ typedef enum {
     NODE_FUNCTION_CALL,
     NODE_LITERAL,
     NODE_LANG_TYPE,
-    NODE_OPERATOR,
+    NODE_BINARY,
     NODE_SYMBOL_UNTYPED,
     NODE_SYMBOL_TYPED,
     NODE_RETURN_STATEMENT,
@@ -114,7 +114,7 @@ typedef struct {
     TOKEN_TYPE token_type;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Llvm_id llvm_id;
-} Node_operator;
+} Node_binary;
 
 typedef struct {
     Node_ptr_vec members;
@@ -262,7 +262,7 @@ typedef struct {
 } Node_goto;
 
 typedef struct {
-    Node_operator* node_src;
+    Node_binary* node_src;
     Node_symbol_untyped* if_true;
     Node_symbol_untyped* if_false;
     Llvm_id llvm_id;
@@ -308,7 +308,7 @@ typedef union {
     Node_struct_member_sym_piece_untyped node_struct_member_sym_piece_untyped;
     Node_variable_def node_variable_def;
     Node_struct_literal node_struct_literal;
-    Node_operator node_operator;
+    Node_binary node_binary;
     Node_lang_type node_lang_type;
     Node_function_params node_function_params;
     Node_function_call node_function_call;
@@ -391,14 +391,14 @@ static inline const Node_lang_type* node_unwrap_lang_type_const(const Node* node
     return &node->as.node_lang_type;
 }
 
-static inline Node_operator* node_unwrap_operator(Node* node) {
-    assert(node->type == NODE_OPERATOR);
-    return &node->as.node_operator;
+static inline Node_binary* node_unwrap_binary(Node* node) {
+    assert(node->type == NODE_BINARY);
+    return &node->as.node_binary;
 }
 
-static inline const Node_operator* node_unwrap_operator_const(const Node* node) {
-    assert(node->type == NODE_OPERATOR);
-    return &node->as.node_operator;
+static inline const Node_binary* node_unwrap_binary_const(const Node* node) {
+    assert(node->type == NODE_BINARY);
+    return &node->as.node_binary;
 }
 
 static inline Node_struct_literal* node_unwrap_struct_literal(Node* node) {

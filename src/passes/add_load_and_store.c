@@ -200,7 +200,7 @@ static void load_operator_operand(
     Node* operand
 ) {
     switch (operand->type) {
-        case NODE_OPERATOR:
+        case NODE_BINARY:
             unreachable("nested operators should not still be present at this point");
         case NODE_LITERAL:
             break;
@@ -216,10 +216,10 @@ static void load_operator_operand(
     }
 }
 
-static Node_operator* load_operator_operands(
+static Node_binary* load_operator_operands(
     Node_ptr_vec* block_children,
     size_t* idx_to_insert_before,
-    Node_operator* operator
+    Node_binary* operator
 ) {
     load_operator_operand(block_children, idx_to_insert_before, operator->lhs);
     load_operator_operand(block_children, idx_to_insert_before, operator->rhs);
@@ -282,7 +282,7 @@ static Node* get_store_assignment(
             rhs_load = node_unwrap_llvm_register_sym(rhs)->node_src;
             rhs_load_lang_type = node_unwrap_llvm_register_sym(rhs)->lang_type;
             break;
-        case NODE_OPERATOR:
+        case NODE_BINARY:
             unreachable("operator should not still be present");
             break;
         case NODE_FUNCTION_CALL:
@@ -400,7 +400,7 @@ static void add_load_return_statement(
             // fallthrough
         case NODE_LITERAL:
             return;
-        case NODE_OPERATOR:
+        case NODE_BINARY:
             unreachable("operator should not still be the child of return statement at this point");
         default:
             unreachable(NODE_FMT"\n", node_print(node_to_return));
@@ -468,8 +468,8 @@ bool add_load_and_store(Node* start_start_node, int recursion_depth) {
                 break;
             case NODE_LANG_TYPE:
                 break;
-            case NODE_OPERATOR:
-                load_operator_operands(&block->children, &idx, node_unwrap_operator(curr_node));
+            case NODE_BINARY:
+                load_operator_operands(&block->children, &idx, node_unwrap_binary(curr_node));
                 break;
             case NODE_BLOCK:
                 break;
