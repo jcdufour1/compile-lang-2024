@@ -55,42 +55,28 @@ static bool tokens_start_with_function_call(Tk_view tokens) {
     return true;
 }
 
-static size_t get_idx_lowest_precedence_operator(Tk_view tokens) {
-    size_t idx_lowest = SIZE_MAX;
-    uint32_t lowest_pre = UINT32_MAX; // higher numbers have higher precedence
-    int16_t par_level = 1;
-
-    for (size_t idx_ = tokens.count; idx_ > 0; idx_--) {
-        size_t actual_idx = idx_ - 1;
-        Token curr_token = tk_view_at(tokens, actual_idx);
-
-        if (curr_token.type == TOKEN_OPEN_PAR) {
-            par_level--;
-            continue;
-        }
-        if (curr_token.type == TOKEN_CLOSE_PAR) {
-            par_level++;
-            continue;
-        }
-
-        if (!token_is_operator(curr_token)) {
-            continue;
-        }
-
-        assert(par_level > 0);
-        uint32_t curr_precedence = (par_level*TOKEN_MAX_PRECEDENCE)*token_get_precedence_operator(
-            tk_view_at(tokens, actual_idx)
-        );
-        if (curr_precedence < lowest_pre) {
-            lowest_pre = curr_precedence;
-            idx_lowest = actual_idx;
-        }
+// higher number returned from this function means that operator has higher precedence
+static inline uint32_t operator_precedence(Token token) {
+    switch (token.type) {
+        case TOKEN_LESS_THAN:
+            // fallthrough
+        case TOKEN_GREATER_THAN:
+            return 1;
+        case TOKEN_SINGLE_PLUS:
+            // fallthrough
+        case TOKEN_SINGLE_MINUS:
+            return 2;
+        case TOKEN_ASTERISK:
+            // fallthrough
+        case TOKEN_SLASH:
+            return 3;
+        case TOKEN_DOUBLE_EQUAL:
+            return 4;
+        case TOKEN_NOT_EQUAL:
+            return 4;
+        default:
+            unreachable(TOKEN_FMT, token_print(token));
     }
-
-    if (idx_lowest == SIZE_MAX) {
-        unreachable("");
-    }
-    return idx_lowest;
 }
 
 static bool extract_function_parameter(Node_variable_def** child, Tk_view* tokens) {
@@ -335,108 +321,6 @@ static Node_symbol_untyped* extract_symbol(Tk_view* tokens) {
     return sym_node;
 }
 
-typedef enum {
-    PAR_OPERAND,
-    PAR_OPERATOR,
-    PAR_PAR,
-} PAR_STATUS;
-
-static bool try_extract_operation_tokens(Tk_view* operation, Tk_view* tokens) {
-    bool is_operation = false;
-    size_t idx = 0;
-    PAR_STATUS par_status = PAR_PAR;
-    for (idx = 0; idx < tokens->count; idx++) {
-        TOKEN_TYPE prev_token_type = idx > 0 ? tk_view_at(*tokens, idx - 1).type : TOKEN_NONTYPE;
-        Token curr_token = tk_view_at(*tokens, idx);
-        if (token_is_operator(curr_token)) {
-            assert(par_status != PAR_OPERATOR);
-            par_status = PAR_OPERATOR;
-            is_operation = true;
-            continue;
-        }
-        switch (curr_token.type) {
-            case TOKEN_NUM_LITERAL:
-                // fallthrough
-            case TOKEN_STRING_LITERAL:
-                // fallthrough
-            case TOKEN_SYMBOL:
-                if (prev_token_type == TOKEN_CLOSE_PAR || par_status == PAR_OPERAND) {
-                    goto after_for_extract_operation_tokens;
-                }
-                par_status = PAR_OPERAND;
-                continue;
-            case TOKEN_OPEN_PAR:
-                par_status = PAR_PAR;
-                continue;
-            case TOKEN_CLOSE_PAR:
-                par_status = PAR_PAR;
-                continue;
-            case TOKEN_OPEN_CURLY_BRACE:
-                // fallthrough
-            case TOKEN_SEMICOLON:
-                // fallthrough
-            case TOKEN_SINGLE_DOT:
-                // fallthrough
-            case TOKEN_COLON:
-                // fallthrough
-            case TOKEN_CLOSE_CURLY_BRACE:
-                // fallthrough
-            case TOKEN_DOUBLE_DOT:
-                // fallthrough
-            case TOKEN_SINGLE_EQUAL:
-                // fallthrough
-            case TOKEN_COMMA:
-                assert(par_status != PAR_OPERATOR);
-                goto after_for_extract_operation_tokens;
-            default:
-                unreachable(TOKEN_FMT"\n", token_print(curr_token));
-        }
-    }
-
-after_for_extract_operation_tokens:
-    if (!is_operation) {
-        return false;
-    }
-    *operation = tk_view_consume_count(tokens, idx);
-    return true;
-}
-
-static Node_operator* parse_operation(Tk_view tokens) {
-    while (tk_view_front(tokens).type == TOKEN_OPEN_PAR) {
-        Tk_view temp = tokens;
-        Tk_view inner_tokens = extract_items_inside_brackets(&temp, TOKEN_CLOSE_PAR);
-        if (inner_tokens.count + 2 != tokens.count) {
-            // this means that () group at beginning of expression does not wrap the entirty of tokens
-            break;
-        }
-        tokens = inner_tokens;
-    }
-
-    size_t idx_operator = get_idx_lowest_precedence_operator(tokens);
-    Tk_view left_tokens = tk_view_consume_count(&tokens, idx_operator);
-    Token operator_token = tk_view_consume(&tokens);
-    Tk_view right_tokens = tk_view_consume_count(&tokens, tokens.count);
-
-    assert(left_tokens.count > 0);
-    assert(right_tokens.count > 0);
-
-    Node_operator* operator_node = node_unwrap_operator(node_new(operator_token.pos, NODE_OPERATOR));
-    operator_node->token_type = operator_token.type;
-    operator_node->lhs = extract_expression(&left_tokens);
-    operator_node->rhs = extract_expression(&right_tokens);
-
-    return operator_node;
-}
-
-INLINE bool try_extract_operation(Node_operator** operation, Tk_view* tokens) {
-    Tk_view operation_tokens;
-    if (!try_extract_operation_tokens(&operation_tokens, tokens)) {
-        return false;
-    }
-    *operation = parse_operation(operation_tokens);
-    return true;
-}
-
 // returns true if the parse was successful
 static bool extract_function_argument(Node** child, Tk_view* tokens) {
     if (tokens->count < 1 || tk_view_front(*tokens).type == TOKEN_CLOSE_PAR) {
@@ -602,27 +486,12 @@ static Node_struct_member_sym_untyped* extract_struct_member_call(Tk_view* token
     return member_call;
 }
 
-static Node* extract_expression(Tk_view* tokens) {
-    assert(tokens->tokens);
-    if (tokens->count < 1) {
-        unreachable("");
-    }
-
-    assert(tokens->count > 0);
-    while (tk_view_front(*tokens).type == TOKEN_OPEN_PAR) {
-        Tk_view temp = *tokens;
-        Tk_view inner_tokens = extract_items_inside_brackets(&temp, TOKEN_CLOSE_PAR);
-        if (inner_tokens.count + 2 != tokens->count) {
-            // this means that () group at beginning of expression does not wrap the entirty of tokens
-            break;
-        }
-        *tokens = inner_tokens;
-    }
-
-    Node_operator* operation;
+static Node* extract_expression_piece(Tk_view* tokens) {
     Node_function_call* fun_call;
-    if (try_extract_operation(&operation, tokens)) {
-        return node_wrap(operation);
+    if (tk_view_try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
+        Node* expr_in_par = extract_expression(tokens);
+        try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_PAR));
+        return expr_in_par;
     } else if (token_is_equal(tk_view_front(*tokens), "let", TOKEN_SYMBOL)) {
         Node_variable_def* result;
         try(try_extract_variable_declaration(&result, tokens, true));
@@ -643,7 +512,60 @@ static Node* extract_expression(Tk_view* tokens) {
         log_tokens(LOG_ERROR, *tokens);
         todo();
     }
+}
 
+static Node_operator* parser_operation_new(Node* lhs, Token operation_token, Node* rhs) {
+    Node_operator* operation = node_unwrap_operator(node_new(operation_token.pos, NODE_OPERATOR));
+    operation->token_type = operation_token.type;
+    operation->lhs = lhs;
+    operation->rhs = rhs;
+    return operation;
+}
+
+static Node* extract_expression(Tk_view* tokens) {
+    assert(tokens->tokens);
+    if (tokens->count < 1) {
+        unreachable("");
+    }
+
+    assert(tokens->count > 0);
+    while (tk_view_front(*tokens).type == TOKEN_OPEN_PAR) {
+        Tk_view temp = *tokens;
+        Tk_view inner_tokens = extract_items_inside_brackets(&temp, TOKEN_CLOSE_PAR);
+        if (inner_tokens.count + 2 != tokens->count) {
+            // this means that () group at beginning of expression does not wrap the entirty of tokens
+            break;
+        }
+        *tokens = inner_tokens;
+    }
+
+    Node* expression = extract_expression_piece(tokens);
+    Token prev_operator_token = {0};
+    bool is_first_operator = true;
+    while (tokens->count > 0 && token_is_operator(tk_view_front(*tokens))) {
+        Token operator_token = tk_view_consume(tokens);
+        if (!is_first_operator && expression->type == NODE_OPERATOR &&
+            operator_precedence(prev_operator_token) < operator_precedence(operator_token)
+        ) {
+            Node* rhs = extract_expression_piece(tokens);
+            Node_operator* operation = parser_operation_new(
+                node_unwrap_operator(expression)->rhs,
+                operator_token,
+                rhs
+            );
+            node_unwrap_operator(expression)->rhs = node_wrap(operation);
+        } else {
+            Node* lhs = expression;
+            Node* rhs = extract_expression_piece(tokens);
+            Node_operator* operation = parser_operation_new(lhs, operator_token, rhs);
+            expression = node_wrap(operation);
+        }
+
+        is_first_operator = false;
+        prev_operator_token = operator_token;
+    }
+
+    return expression;
 }
 
 Node_block* parse(const Tokens tokens) {

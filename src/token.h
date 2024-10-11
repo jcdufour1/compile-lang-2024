@@ -139,30 +139,6 @@ static inline bool token_is_operator(Token token) {
 
 static const uint32_t TOKEN_MAX_PRECEDENCE = 20;
 
-// higher number returned from this function means that operator has higher precedence
-static inline uint32_t token_get_precedence_operator(Token token) {
-    switch (token.type) {
-        case TOKEN_LESS_THAN:
-            // fallthrough
-        case TOKEN_GREATER_THAN:
-            return 1;
-        case TOKEN_SINGLE_PLUS:
-            // fallthrough
-        case TOKEN_SINGLE_MINUS:
-            return 2;
-        case TOKEN_ASTERISK:
-            // fallthrough
-        case TOKEN_SLASH:
-            return 3;
-        case TOKEN_DOUBLE_EQUAL:
-            return 4;
-        case TOKEN_NOT_EQUAL:
-            return 4;
-        default:
-            unreachable("");
-    }
-}
-
 #define TOKEN_TYPE_FMT STR_VIEW_FMT
 
 #define token_type_print(token_type) str_view_print(token_type_to_str_view(token_type))

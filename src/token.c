@@ -74,6 +74,7 @@ Str_view token_print_internal(Arena* arena, Token token) {
             string_append(arena, &buf, ')');
             break;
         case TOKEN_OPEN_PAR: // fallthrough
+        case TOKEN_NONTYPE: // fallthrough
         case TOKEN_CLOSE_PAR: // fallthrough
         case TOKEN_OPEN_CURLY_BRACE: // fallthrough
         case TOKEN_CLOSE_CURLY_BRACE: // fallthrough
