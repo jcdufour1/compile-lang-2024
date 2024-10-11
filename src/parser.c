@@ -528,17 +528,6 @@ static Node* extract_expression(Tk_view* tokens) {
         unreachable("");
     }
 
-    assert(tokens->count > 0);
-    while (tk_view_front(*tokens).type == TOKEN_OPEN_PAR) {
-        Tk_view temp = *tokens;
-        Tk_view inner_tokens = extract_items_inside_brackets(&temp, TOKEN_CLOSE_PAR);
-        if (inner_tokens.count + 2 != tokens->count) {
-            // this means that () group at beginning of expression does not wrap the entirty of tokens
-            break;
-        }
-        *tokens = inner_tokens;
-    }
-
     Node* expression = extract_expression_piece(tokens);
     Token prev_operator_token = {0};
     bool is_first_operator = true;
