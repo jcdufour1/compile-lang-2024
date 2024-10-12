@@ -41,8 +41,8 @@ void walk_tree(
             } else {
                 unreachable("");
             }
+            break;
         }
-        break;
         case NODE_SYMBOL_TYPED:
             break;
         case NODE_SYMBOL_UNTYPED:

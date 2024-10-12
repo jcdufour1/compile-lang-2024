@@ -24,6 +24,7 @@ typedef enum {
     TOKEN_GREATER_THAN,
     TOKEN_DOUBLE_EQUAL,
     TOKEN_NOT_EQUAL,
+    TOKEN_XOR,
 
     // unary operators
     TOKEN_NOT,

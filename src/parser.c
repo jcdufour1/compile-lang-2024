@@ -133,6 +133,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_COMMENT:
             return false;
+        case TOKEN_XOR:
+            return false;
     }
 }
 

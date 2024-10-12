@@ -239,6 +239,9 @@ static void emit_binary_type(String* output, const Node_binary* operator) {
         case TOKEN_NOT_EQUAL:
             string_extend_cstr(&a_main, output, "icmp ne i32 ");
             break;
+        case TOKEN_XOR:
+            string_extend_cstr(&a_main, output, "xor i32 ");
+            break;
         default:
             unreachable(TOKEN_TYPE_FMT"\n", token_type_print(operator->token_type));
     }

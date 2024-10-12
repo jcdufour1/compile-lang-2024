@@ -25,6 +25,8 @@ bool add_alloca(Node* curr_node, int recursion_depth);
 
 bool add_load_and_store(Node* curr_node, int recursion_depth);
 
+bool change_operators(Node* curr_node, int recursion_depth);
+
 bool assign_llvm_ids(Node* curr_node, int recursion_depth);
 
 #endif // PASSES_H

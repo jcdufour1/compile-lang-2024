@@ -44,7 +44,8 @@ OBJS=\
 	 ${BUILD_DIR}/passes/add_load_and_store.o \
 	 ${BUILD_DIR}/passes/flatten_operations.o \
 	 ${BUILD_DIR}/passes/add_alloca.o \
-	 ${BUILD_DIR}/passes/analysis_1.o
+	 ${BUILD_DIR}/passes/analysis_1.o \
+	 ${BUILD_DIR}/passes/change_operators.o
 
 DEP_COMMON = Makefile src/*.h
 
@@ -135,6 +136,9 @@ ${BUILD_DIR}/passes/analysis_1.o: ${DEP_COMMON} src/passes/analysis_1.c src/pass
 
 ${BUILD_DIR}/passes/add_alloca.o: ${DEP_COMMON} src/passes/add_alloca.c src/passes/*.h third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/add_alloca.o src/passes/add_alloca.c
+
+${BUILD_DIR}/passes/change_operators.o: ${DEP_COMMON} src/passes/change_operators.c src/passes/*.h third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/change_operators.o src/passes/change_operators.c
 
 
 clean:

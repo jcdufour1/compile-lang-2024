@@ -56,6 +56,8 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
             return str_view_from_cstr("!=");
         case TOKEN_NOT:
             return str_view_from_cstr("!");
+        case TOKEN_XOR:
+            return str_view_from_cstr("xor");
         default:
             unreachable("%d\n", token_type);
     }
