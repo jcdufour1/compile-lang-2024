@@ -2,13 +2,14 @@
 #include "node.h"
 #include "nodes.h"
 #include "util.h"
+#include "do_passes.h"
 
 INLINE void walk_node_ptr_vec(Env* env, Node_ptr_vec* vector, void (callback)(Env* env));
 
 INLINE void walk_tree_traverse(Env* env, Node* new_curr_node, void (callback)(Env* env));
 
 void walk_tree(Env* env, void (callback)(Env* env)) {
-    if (!node_ptr_vec_top(&env->ancesters)) {
+    if (!vec_top(&env->ancesters)) {
         return;
     }
 
@@ -16,7 +17,7 @@ void walk_tree(Env* env, void (callback)(Env* env)) {
 
     callback(env);
 
-    Node* curr_node = node_ptr_vec_top(&env->ancesters);
+    Node* curr_node = vec_top(&env->ancesters);
     switch (curr_node->type) {
         case NODE_FUNCTION_PARAMETERS:
             walk_node_ptr_vec(env, &node_unwrap_function_params(curr_node)->params, callback);
@@ -143,20 +144,20 @@ void walk_tree(Env* env, void (callback)(Env* env)) {
 }
 
 INLINE void walk_node_ptr_vec(Env* env, Node_ptr_vec* vector, void (callback)(Env* env)) {
-    node_ptr_assert_no_null(vector);
     //log(LOG_DEBUG, "-------------------------\n");
     for (size_t idx = 0; idx < vector->info.count; idx++) {
         //log_tree(LOG_DEBUG, node_ptr_vec_at(vector, idx));
-        assert(node_ptr_vec_at(vector, idx) && "a null element is in this vector");
-        walk_tree_traverse(env, node_ptr_vec_at(vector, idx), callback);
+        assert(vec_at(vector, idx) && "a null element is in this vector");
+        walk_tree_traverse(env, vec_at(vector, idx), callback);
     }
     //log(LOG_DEBUG, "-------------------------\n");
 }
 
 INLINE void walk_tree_traverse(Env* env, Node* new_curr_node, void (callback)(Env* env)) {
-    node_ptr_vec_append(&env->ancesters, new_curr_node);
+    vec_append(&a_main, &env->ancesters, new_curr_node);
     env->recursion_depth++;
     walk_tree(env, callback);
-    node_ptr_vec_pop(&env->ancesters);
+    Node* dummy = NULL;
+    vec_pop(dummy, &env->ancesters);
     env->recursion_depth--;
 }

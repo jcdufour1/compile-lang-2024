@@ -1,0 +1,1109 @@
+ARENA_DEFAULT_CAPACITY	src/arena.c	6
+ARENA_H	src/arena.h	2
+Arena	src/arena.h	16
+Arena_buf	src/arena.h	12
+Arena_buf_	src/arena.h	8
+BOOL_FMT	src/util.h	108
+CURR_LOG_LEVEL	src/util.h	20
+DO_PASSES_H	src/do_passes.h	2
+Div	examples/c/actualc.c	20
+EMIT_LLVM_H	src/emit_llvm.h	2
+ERROR_MSG_H	src/error_msg.h	2
+Env	src/do_passes.h	11
+FILE_H	src/file.h	2
+Hash_node	src/hash_table.h	9
+INCLUDE_STB_DS_H	third_party/stb_ds.h	392
+INLINE	src/util.h	121
+LANG_TYPE_FMT	src/node.h	802
+LOG_DEBUG	src/util.h	12
+LOG_ERROR	src/util.h	16
+LOG_FETAL	src/util.h	17
+LOG_LEVEL	src/util.h	23
+LOG_NOTE	src/util.h	14
+LOG_TRACE	src/util.h	11
+LOG_VERBOSE	src/util.h	13
+LOG_WARNING	src/util.h	15
+Lang_type	src/node.h	64
+Llvm_id	src/node.h	56
+MAX	src/util.h	/^#define MAX(a, b) ((a) > (b) ? (a) : (b))$/
+MIN	src/util.h	/^#define MIN(a, b) ((a) < (b) ? (a) : (b))$/
+Mactualc	examples/c/actualc.c	/^int main(void) {$/
+Mmain	src/main.c	/^int main(int argc, char** argv) {$/
+NEWSTRING_H	src/newstring.h	2
+NODES_H	src/nodes.h	2
+NODE_ALLOCA	src/node.h	45
+NODE_ALLOCA_DESCRIPTION	src/nodes.c	33
+NODE_ASSIGNMENT	src/node.h	41
+NODE_ASSIGNMENT_DESCRIPTION	src/nodes.c	24
+NODE_BINARY_DESCRIPTION	src/nodes.c	16
+NODE_BLOCK	src/node.h	21
+NODE_BLOCK_DESCRIPTION	src/nodes.c	18
+NODE_BREAK	src/node.h	38
+NODE_BREAK_DESCRIPTION	src/nodes.c	29
+NODE_COND_GOTO	src/node.h	43
+NODE_COND_GOTO_DESCRIPTION	src/nodes.c	32
+NODE_FMT	src/node.h	828
+NODE_FOR_LOWER_BOUND	src/node.h	36
+NODE_FOR_LOWER_BOUND_DESCRIPTION	src/nodes.c	27
+NODE_FOR_RANGE	src/node.h	34
+NODE_FOR_RANGE_DESCRIPTION	src/nodes.c	25
+NODE_FOR_UPPER_BOUND	src/node.h	37
+NODE_FOR_UPPER_BOUND_DESCRIPTION	src/nodes.c	28
+NODE_FOR_WITH_CONDITION	src/node.h	35
+NODE_FOR_WITH_CONDITION_DESCRIPTION	src/nodes.c	26
+NODE_FUNCTION_CALL	src/node.h	25
+NODE_FUNCTION_CALL_DESCRIPTION	src/nodes.c	11
+NODE_FUNCTION_DECLARATION	src/node.h	33
+NODE_FUNCTION_DECLARATION_DESCRIPTION	src/nodes.c	23
+NODE_FUNCTION_DEFINITION	src/node.h	22
+NODE_FUNCTION_DEFINITION_DESCRIPTION	src/nodes.c	12
+NODE_FUNCTION_PARAMETERS	src/node.h	23
+NODE_FUNCTION_PARAMETERS_DESCRIPTION	src/nodes.c	13
+NODE_FUNCTION_RETURN_TYPES	src/node.h	24
+NODE_FUNCTION_RETURN_TYPES_DESCRIPTION	src/nodes.c	14
+NODE_GOTO	src/node.h	42
+NODE_GOTO_DESCRIPTION	src/nodes.c	30
+NODE_H	src/node.h	2
+NODE_IF_CONDITION	src/node.h	40
+NODE_IF_CONDITION_DESCRIPTION	src/nodes.c	35
+NODE_IF_STATEMENT	src/node.h	39
+NODE_IF_STATEMENT_DESCRIPTION	src/nodes.c	34
+NODE_LABEL	src/node.h	44
+NODE_LABEL_DESCRIPTION	src/nodes.c	31
+NODE_LANG_TYPE	src/node.h	27
+NODE_LANG_TYPE_DESCRIPTION	src/nodes.c	15
+NODE_LITERAL	src/node.h	26
+NODE_LITERAL_DESCRIPTION	src/nodes.c	10
+NODE_LLVM_REGISTER_SYM	src/node.h	53
+NODE_LLVM_REGISTER_SYM_DESCRIPTION	src/nodes.c	48
+NODE_LLVM_STORE_LITERAL	src/node.h	52
+NODE_LLVM_STORE_LITERAL_DESCRIPTION	src/nodes.c	42
+NODE_LLVM_STORE_STRUCT_LITERAL	src/node.h	46
+NODE_LLVM_STORE_STRUCT_LITERAL_DESCRIPTION	src/nodes.c	43
+NODE_LOAD_ANOTHER_NODE	src/node.h	48
+NODE_LOAD_ANOTHER_NODE_DESCRIPTION	src/nodes.c	45
+NODE_LOAD_STRUCT_ELEMENT_PTR	src/node.h	50
+NODE_LOAD_STRUCT_ELEMENT_PTR_DESCRIPTION	src/nodes.c	44
+NODE_NO_TYPE	src/node.h	14
+NODE_NO_TYPE_DESCRIPTION	src/nodes.c	49
+NODE_OPERATOR	src/node.h	28
+NODE_OPERATOR_TYPE	src/node.h	134
+NODE_OP_BINARY	src/node.h	133
+NODE_OP_UNARY	src/node.h	132
+NODE_PRINT_H	src/node_print.h	2
+NODE_PTR_BYVAL_SYM	src/node.h	51
+NODE_PTR_BYVAL_SYM_DESCRIPTION	src/nodes.c	47
+NODE_PTR_VEC_DEFAULT_CAPACITY	src/node_ptr_vec.h	8
+NODE_PTR_VEC_H	src/node_ptr_vec.h	2
+NODE_RETURN_STATEMENT	src/node.h	31
+NODE_RETURN_STATEMENT_DESCRIPTION	src/nodes.c	21
+NODE_STORE_ANOTHER_NODE	src/node.h	49
+NODE_STORE_ANOTHER_NODE_DESCRIPTION	src/nodes.c	46
+NODE_STRUCT_DEFINITION	src/node.h	15
+NODE_STRUCT_DEFINITION_DESCRIPTION	src/nodes.c	36
+NODE_STRUCT_LITERAL	src/node.h	16
+NODE_STRUCT_LITERAL_DESCRIPTION	src/nodes.c	37
+NODE_STRUCT_MEMBER_SYM_PIECE_TYPED	src/node.h	20
+NODE_STRUCT_MEMBER_SYM_PIECE_TYPED_DESCRIPTION	src/nodes.c	40
+NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED	src/node.h	19
+NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED_DESCRIPTION	src/nodes.c	41
+NODE_STRUCT_MEMBER_SYM_TYPED	src/node.h	18
+NODE_STRUCT_MEMBER_SYM_TYPED_DESCRIPTION	src/nodes.c	38
+NODE_STRUCT_MEMBER_SYM_UNTYPED	src/node.h	17
+NODE_STRUCT_MEMBER_SYM_UNTYPED_DESCRIPTION	src/nodes.c	39
+NODE_SYMBOL_TYPED	src/node.h	30
+NODE_SYMBOL_TYPED_DESCRIPTION	src/nodes.c	20
+NODE_SYMBOL_UNTYPED	src/node.h	29
+NODE_SYMBOL_UNTYPED_DESCRIPTION	src/nodes.c	19
+NODE_TYPE	src/node.h	54
+NODE_UNARY_DESCRIPTION	src/nodes.c	17
+NODE_UTIL_H	src/node_utils.h	2
+NODE_VARIABLE_DEFINITION	src/node.h	32
+NODE_VARIABLE_DEFINITION_DESCRIPTION	src/nodes.c	22
+Node	src/node.h	352
+Node	src/node_ptr_vec.h	12
+Node_	src/node.h	348
+Node_alloca	src/node.h	252
+Node_as	src/node.h	346
+Node_assignment	src/node.h	228
+Node_binary	src/node.h	124
+Node_block	src/node.h	175
+Node_break	src/node.h	223
+Node_cond_goto	src/node.h	290
+Node_for_lower_bound	src/node.h	195
+Node_for_range	src/node.h	210
+Node_for_upper_bound	src/node.h	199
+Node_for_with_condition	src/node.h	215
+Node_function_call	src/node.h	100
+Node_function_declaration	src/node.h	185
+Node_function_definition	src/node.h	191
+Node_function_params	src/node.h	105
+Node_function_return_types	src/node.h	179
+Node_goto	src/node.h	283
+Node_if	src/node.h	233
+Node_if_condition	src/node.h	203
+Node_label	src/node.h	79
+Node_lang_type	src/node.h	109
+Node_literal	src/node.h	93
+Node_llvm_register_sym	src/node.h	271
+Node_llvm_store_literal	src/node.h	278
+Node_llvm_store_struct_literal	src/node.h	297
+Node_load_another_node	src/node.h	258
+Node_load_element_ptr	src/node.h	87
+Node_operator	src/node.h	139
+Node_operator_as	src/node.h	129
+Node_ptr_byval_sym	src/node.h	303
+Node_ptr_vec	src/node_ptr_vec.h	17
+Node_return_statement	src/node.h	219
+Node_store_another_node	src/node.h	265
+Node_struct_def	src/node.h	171
+Node_struct_literal	src/node.h	146
+Node_struct_member_sym_piece_typed	src/node.h	164
+Node_struct_member_sym_piece_untyped	src/node.h	158
+Node_struct_member_sym_typed	src/node.h	246
+Node_struct_member_sym_untyped	src/node.h	239
+Node_symbol_typed	src/node.h	74
+Node_symbol_untyped	src/node.h	68
+Node_unary	src/node.h	116
+Node_variable_def	src/node.h	154
+PARAMETERS_H	src/parameters.h	2
+PARSER_H	src/parser.h	2
+PARSER_UTIL_H	src/parser_utils.h	2
+PASSES_H	src/passes/passes.h	2
+POP_PRAGMA	src/util.h	36
+PUSH_PRAGMA_IGNORE_WTYPE_LIMITS	src/util.h	32
+Parameters	src/parameters.h	11
+Pos	src/util.h	28
+SIZE_T_VEC_H	src/size_t_vec.h	2
+STBDS_ADDRESSOF	third_party/stb_ds.h	/^  #define STBDS_ADDRESSOF(typevar, value)     ((__/
+STBDS_ADDRESSOF	third_party/stb_ds.h	/^  #define STBDS_ADDRESSOF(typevar, value)     ((ty/
+STBDS_ADDRESSOF	third_party/stb_ds.h	/^#define STBDS_ADDRESSOF(typevar, value)     &(valu/
+STBDS_ALIGN_FWD	third_party/stb_ds.h	/^#define STBDS_ALIGN_FWD(n,a)   (((n) + (a) - 1) & /
+STBDS_ARR_TO_HASH	third_party/stb_ds.h	/^#define STBDS_ARR_TO_HASH(x,elemsize) ((char*) (x)/
+STBDS_ASSERT	third_party/stb_ds.h	/^#define STBDS_ASSERT(x)   ((void) 0)$/
+STBDS_ASSERT	third_party/stb_ds.h	1627
+STBDS_ASSERT	third_party/stb_ds.h	1630
+STBDS_ASSERT_WAS_UNDEFINED	third_party/stb_ds.h	737
+STBDS_BUCKET_LENGTH	third_party/stb_ds.h	810
+STBDS_BUCKET_LENGTH	third_party/stb_ds.h	812
+STBDS_BUCKET_MASK	third_party/stb_ds.h	816
+STBDS_BUCKET_SHIFT	third_party/stb_ds.h	815
+STBDS_CACHE_LINE_SIZE	third_party/stb_ds.h	817
+STBDS_FREE	third_party/stb_ds.h	/^#define STBDS_FREE(c,p)      free(p)$/
+STBDS_HASH_DELETED	third_party/stb_ds.h	847
+STBDS_HASH_EMPTY	third_party/stb_ds.h	846
+STBDS_HASH_TO_ARR	third_party/stb_ds.h	/^#define STBDS_HASH_TO_ARR(x,elemsize) ((char*) (x)/
+STBDS_HAS_LITERAL_ARRAY	third_party/stb_ds.h	517
+STBDS_HM_BINARY	third_party/stb_ds.h	679
+STBDS_HM_STRING	third_party/stb_ds.h	680
+STBDS_INDEX_DELETED	third_party/stb_ds.h	843
+STBDS_INDEX_EMPTY	third_party/stb_ds.h	842
+STBDS_INDEX_IN_USE	third_party/stb_ds.h	/^#define STBDS_INDEX_IN_USE(x)  ((x) >= 0)$/
+STBDS_NOTUSED	third_party/stb_ds.h	/^#define STBDS_NOTUSED(v)  (void)(v)$/
+STBDS_NOTUSED	third_party/stb_ds.h	/^#define STBDS_NOTUSED(v)  (void)sizeof(v)$/
+STBDS_OFFSETOF	third_party/stb_ds.h	/^#define STBDS_OFFSETOF(var,field)           ((char/
+STBDS_REALLOC	third_party/stb_ds.h	/^#define STBDS_REALLOC(c,p,s) realloc(p,s)$/
+STBDS_ROTATE_LEFT	third_party/stb_ds.h	/^#define STBDS_ROTATE_LEFT(val, n)   (((val) << (n)/
+STBDS_ROTATE_RIGHT	third_party/stb_ds.h	/^#define STBDS_ROTATE_RIGHT(val, n)  (((val) >> (n)/
+STBDS_SH_ARENA	third_party/stb_ds.h	687
+STBDS_SH_DEFAULT	third_party/stb_ds.h	685
+STBDS_SH_NONE	third_party/stb_ds.h	684
+STBDS_SH_STRDUP	third_party/stb_ds.h	686
+STBDS_SIPHASH_2_4_can_only_be_used_in_64_bit_builds	third_party/stb_ds.h	1036
+STBDS_SIPHASH_C_ROUNDS	third_party/stb_ds.h	1034
+STBDS_SIPHASH_C_ROUNDS	third_party/stb_ds.h	1040
+STBDS_SIPHASH_D_ROUNDS	third_party/stb_ds.h	1035
+STBDS_SIPHASH_D_ROUNDS	third_party/stb_ds.h	1043
+STBDS_SIPROUND	third_party/stb_ds.h	/^  #define STBDS_SIPROUND() \\$/
+STBDS_SIZE_T_BITS	third_party/stb_ds.h	861
+STBDS_STATS	third_party/stb_ds.h	/^#define STBDS_STATS(x)   x$/
+STBDS_STATS	third_party/stb_ds.h	/^#define STBDS_STATS(x)$/
+STBDS_STRING_ARENA_BLOCKSIZE_MAX	third_party/stb_ds.h	1554
+STBDS_STRING_ARENA_BLOCKSIZE_MIN	third_party/stb_ds.h	1551
+STB_DS_IMPLEMENTATION	src/hash_table.c	2
+STRING_DEFAULT_CAPACITY	src/newstring.h	10
+STRING_FMT	src/newstring.h	17
+STRING_VEC_DEFAULT_CAPACITY	src/string_vec.h	7
+STRING_VEC_H	src/string_vec.h	2
+STR_VIEW_FMT	src/str_view.h	104
+STR_VIEW_H	src/str_view.h	2
+STR_VIEW_STRUCT_H	src/str_view_struct.h	2
+SYMBOL_TABLE_H	src/symbol_table.h	2
+SYMBOL_TABLE_H	src/hash_table.h	2
+SYM_TBL_DEFAULT_CAPACITY	src/symbol_table.h	11
+SYM_TBL_MAX_DENSITY	src/symbol_table.h	12
+SYM_TBL_NEVER_OCCUPIED	src/symbol_table.h	15
+SYM_TBL_OCCUPIED	src/symbol_table.h	17
+SYM_TBL_PREVIOUSLY_OCCUPIED	src/symbol_table.h	16
+SYM_TBL_STATUS	src/symbol_table.h	18
+SYM_TBL_STATUS_FMT	src/symbol_table.h	161
+Size_t_vec	src/size_t_vec.h	10
+Str_view	src/str_view_struct.h	9
+String	src/newstring.h	15
+String_vec	src/string_vec.h	12
+Symbol_table	src/symbol_table.h	30
+Symbol_table_node	src/symbol_table.h	24
+TK_VIEW_FMT	src/token_view.h	241
+TOKENIZER_H	src/tokenizer.h	2
+TOKENS_DEFAULT_CAPACITY	src/tokens.h	10
+TOKENS_H	src/tokens.h	2
+TOKEN_ASTERISK	src/token.h	21
+TOKEN_CLOSE_CURLY_BRACE	src/token.h	44
+TOKEN_CLOSE_PAR	src/token.h	42
+TOKEN_COLON	src/token.h	48
+TOKEN_COMMA	src/token.h	47
+TOKEN_COMMENT	src/token.h	55
+TOKEN_DEREF	src/token.h	31
+TOKEN_DOUBLE_DOT	src/token.h	51
+TOKEN_DOUBLE_EQUAL	src/token.h	25
+TOKEN_DOUBLE_QUOTE	src/token.h	45
+TOKEN_FMT	src/token.h	12
+TOKEN_GREATER_THAN	src/token.h	24
+TOKEN_H	src/token.h	2
+TOKEN_LESS_THAN	src/token.h	23
+TOKEN_MAX_PRECEDENCE	src/token.h	187
+TOKEN_NONTYPE	src/token.h	16
+TOKEN_NOT	src/token.h	30
+TOKEN_NOT_EQUAL	src/token.h	26
+TOKEN_NUM_LITERAL	src/token.h	36
+TOKEN_OPEN_CURLY_BRACE	src/token.h	43
+TOKEN_OPEN_PAR	src/token.h	41
+TOKEN_REFER	src/token.h	32
+TOKEN_SEMICOLON	src/token.h	46
+TOKEN_SINGLE_DOT	src/token.h	50
+TOKEN_SINGLE_EQUAL	src/token.h	49
+TOKEN_SINGLE_MINUS	src/token.h	20
+TOKEN_SINGLE_PLUS	src/token.h	19
+TOKEN_SLASH	src/token.h	22
+TOKEN_STRING_LITERAL	src/token.h	35
+TOKEN_SYMBOL	src/token.h	40
+TOKEN_TRIPLE_DOT	src/token.h	52
+TOKEN_TYPE	src/token.h	56
+TOKEN_TYPE_FMT	src/token.h	189
+TOKEN_VIEW_H	src/token_view.h	2
+TOKEN_VOID	src/token.h	37
+TOKEN_XOR	src/token.h	27
+Tk_view	src/token_view.h	11
+Token	src/token.h	63
+Token	examples/c/actualc.c	11
+Tokens	src/tokens.h	15
+UTIL_H	src/util.h	2
+VECTOR_H	src/vector.h	2
+Vec_base	src/vector.h	13
+_CRT_SECURE_NO_WARNINGS	third_party/stb_ds.h	388
+a_main	src/globals.c	10
+add_alloca	src/passes/add_alloca.c	/^void add_alloca(Env* env) {$/
+add_load_and_store	src/passes/add_load_and_store.c	/^void add_load_and_store(Env* env) {$/
+add_load_foreach_arg	src/passes/add_load_and_store.c	/^static void add_load_foreach_arg($/
+add_load_return_statement	src/passes/add_load_and_store.c	/^static void add_load_return_statement($/
+alloca_new	src/passes/add_alloca.c	/^static Node_alloca* alloca_new(Node_variable_def* /
+analysis_1	src/passes/analysis_1.c	/^void analysis_1(Env* env) {$/
+ancesters	src/do_passes.h	8
+arena_alloc	src/arena.c	/^void* arena_alloc(Arena* arena, size_t capacity_ne/
+arena_buffers	src/globals.c	15
+arena_buffers_count	src/globals.c	16
+arena_destroy	src/arena.c	/^void arena_destroy(Arena* arena) {$/
+arena_get_total_capacity	src/arena.c	/^size_t arena_get_total_capacity(const Arena* arena/
+arena_realloc	src/arena.c	/^void* arena_realloc(Arena* arena, void* old_buf, s/
+arena_reset	src/arena.c	/^void arena_reset(Arena* arena) {$/
+args	src/node.h	96
+arraddn	third_party/stb_ds.h	404
+arraddnindex	third_party/stb_ds.h	406
+arraddnptr	third_party/stb_ds.h	405
+arrcap	third_party/stb_ds.h	414
+arrdel	third_party/stb_ds.h	411
+arrdeln	third_party/stb_ds.h	412
+arrdelswap	third_party/stb_ds.h	413
+arrfree	third_party/stb_ds.h	403
+arrins	third_party/stb_ds.h	409
+arrinsn	third_party/stb_ds.h	410
+arrlast	third_party/stb_ds.h	408
+arrlen	third_party/stb_ds.h	398
+arrlenu	third_party/stb_ds.h	399
+arrpop	third_party/stb_ds.h	402
+arrpush	third_party/stb_ds.h	401
+arrput	third_party/stb_ds.h	400
+arrsetcap	third_party/stb_ds.h	415
+arrsetlen	third_party/stb_ds.h	407
+as	src/node.h	137
+as	src/node.h	349
+assign_llvm_ids	src/passes/assign_llvm_ids.c	/^void assign_llvm_ids(Env* env) {$/
+assignment_new	src/parser_utils.c	/^Node_assignment* assignment_new(Node* lhs, Node* r/
+b	third_party/stb_ds.h	1634
+b	third_party/stb_ds.h	1635
+ba52	src/passes/passes.h	/^>>>>>>> 615ba52 (wip: refactoring of walk_tree)$/
+binary	src/node.h	128
+binary_new	src/parser_utils.c	/^Node_binary* binary_new(Node* lhs, Node* rhs, TOKE/
+block	third_party/stb_ds.h	675
+body	src/node.h	189
+body	src/node.h	209
+body	src/node.h	214
+body	src/node.h	232
+bool_print	src/util.h	/^static inline const char* bool_print(bool conditio/
+buf	src/string_vec.h	11
+buf	src/size_t_vec.h	9
+buf	src/newstring.h	14
+buf	src/tokens.h	14
+buf	src/node_ptr_vec.h	16
+buffer	third_party/stb_ds.h	1637
+c	third_party/stb_ds.h	1634
+c	third_party/stb_ds.h	1635
+capacity	src/arena.h	10
+capacity	src/symbol_table.h	29
+capacity	src/vector.h	12
+capacity	third_party/stb_ds.h	660
+change_break_to_goto	src/passes/for_and_if_to_branch.c	/^static void change_break_to_goto(Node_block* block/
+change_operators	src/passes/change_operators.c	/^void change_operators(Env* env) {$/
+child	src/node.h	112
+child	src/node.h	178
+child	src/node.h	194
+child	src/node.h	198
+child	src/node.h	202
+child	src/node.h	218
+child	src/node.h	222
+child	src/node.h	274
+child	src/node.h	293
+children	src/node.h	174
+children	src/node.h	236
+children	src/node.h	242
+compile	src/parameters.h	9
+condition	src/node.h	213
+condition	src/node.h	231
+conditional_goto_new	src/passes/for_and_if_to_branch.c	/^static Node_cond_goto* conditional_goto_new($/
+consume_arg	src/parameters.c	/^static const char* consume_arg(int* argc, char*** /
+count	src/arena.h	9
+count	src/symbol_table.h	28
+count	src/vector.h	11
+count	src/token_view.h	10
+count	src/str_view_struct.h	8
+d	third_party/stb_ds.h	1634
+d	third_party/stb_ds.h	1635
+declaration	src/node.h	188
+denominator	examples/c/actualc.c	15
+do_assignment	src/passes/add_alloca.c	/^static void do_assignment($/
+do_change_operator	src/passes/change_operators.c	/^static void do_change_operator(Node_operator* oper/
+do_function_definition	src/passes/add_alloca.c	/^static void do_function_definition(Node_function_d/
+do_load_struct_element_ptr	src/passes/add_load_and_store.c	/^static Node_load_element_ptr* do_load_struct_eleme/
+do_passes	src/passes/do_passes.c	/^void do_passes(Node_block** root) {$/
+do_struct_literal	src/passes/add_load_and_store.c	/^static void do_struct_literal($/
+do_thing	examples/c/actualc.c	/^void do_thing(Div div) {$/
+do_thing_ptr	examples/c/actualc.c	/^void do_thing_ptr(Div* div) {$/
+dummy_pos	src/util.h	30
+emit_alloca	src/emit_llvm.c	/^static void emit_alloca(String* output, const Node/
+emit_binary_type	src/emit_llvm.c	/^static void emit_binary_type(String* output, const/
+emit_block	src/emit_llvm.c	/^static void emit_block(String* output, const Node_/
+emit_cond_goto	src/emit_llvm.c	/^static void emit_cond_goto(String* output, const N/
+emit_function_call	src/emit_llvm.c	/^static void emit_function_call(String* output, con/
+emit_function_call_arguments	src/emit_llvm.c	/^static void emit_function_call_arguments(String* o/
+emit_function_declaration	src/emit_llvm.c	/^static void emit_function_declaration(String* outp/
+emit_function_definition	src/emit_llvm.c	/^static void emit_function_definition(String* outpu/
+emit_function_params	src/emit_llvm.c	/^static void emit_function_params(String* output, c/
+emit_goto	src/emit_llvm.c	/^static void emit_goto(String* output, const Node_g/
+emit_label	src/emit_llvm.c	/^static void emit_label(String* output, const Node_/
+emit_llvm	src/parameters.h	10
+emit_llvm_from_tree	src/emit_llvm.c	/^void emit_llvm_from_tree(const Node_block* root) {/
+emit_llvm_store_literal	src/emit_llvm.c	/^static void emit_llvm_store_literal(String* output/
+emit_llvm_store_struct_literal	src/emit_llvm.c	/^static void emit_llvm_store_struct_literal(String*/
+emit_load_another_node	src/emit_llvm.c	/^static void emit_load_another_node(String* output,/
+emit_load_struct_element_pointer	src/emit_llvm.c	/^static void emit_load_struct_element_pointer(Strin/
+emit_operator	src/emit_llvm.c	/^static void emit_operator(String* output, const No/
+emit_operator_operand	src/emit_llvm.c	/^static void emit_operator_operand(String* output, /
+emit_operator_type	src/emit_llvm.c	/^static void emit_operator_type(String* output, con/
+emit_return_statement	src/emit_llvm.c	/^static void emit_return_statement(String* output, /
+emit_store_another_node	src/emit_llvm.c	/^static void emit_store_another_node(String* output/
+emit_struct_definition	src/emit_llvm.c	/^static void emit_struct_definition(String* output,/
+emit_struct_literal	src/emit_llvm.c	/^static void emit_struct_literal(String* output, co/
+emit_symbol	src/emit_llvm.c	/^static void emit_symbol(String* output, const Symb/
+emit_symbols	src/emit_llvm.c	/^static void emit_symbols(String* output) {$/
+emit_unary_type	src/emit_llvm.c	/^static void emit_unary_type(String* output, const /
+error_count	src/globals.c	20
+extend_lang_type_to_string	src/nodes.c	/^void extend_lang_type_to_string(Arena* arena, Stri/
+extend_literal_decl	src/emit_llvm.c	/^static void extend_literal_decl(String* output, co/
+extend_literal_decl_prefix	src/emit_llvm.c	/^static void extend_literal_decl_prefix(String* out/
+extend_node_text	src/nodes.c	/^static void extend_node_text(Arena* arena, String*/
+extend_type_call_str	src/emit_llvm.c	/^static void extend_type_call_str(String* output, L/
+extend_type_decl_str	src/emit_llvm.c	/^static void extend_type_decl_str(String* output, c/
+extra_num	examples/c/actualc.c	16
+extra_num_2	examples/c/actualc.c	17
+extra_num_3	examples/c/actualc.c	18
+extract_assignment	src/parser.c	/^static Node_assignment* extract_assignment(Tk_view/
+extract_block	src/parser.c	/^static Node_block* extract_block(Tk_view* tokens) /
+extract_break	src/parser.c	/^static Node_break* extract_break(Tk_view* tokens) /
+extract_for_loop	src/parser.c	/^static Node* extract_for_loop(Tk_view* tokens) {$/
+extract_for_range	src/parser.c	/^static void extract_for_range(Node_for_range* for_/
+extract_for_with_condition	src/parser.c	/^static Node_for_with_condition* extract_for_with_c/
+extract_function_argument	src/parser.c	/^static bool extract_function_argument(Node** child/
+extract_function_call	src/parser.c	/^static bool extract_function_call(Node_function_ca/
+extract_function_declaration	src/parser.c	/^static Node_function_declaration* extract_function/
+extract_function_declaration_common	src/parser.c	/^static Node_function_declaration* extract_function/
+extract_function_definition	src/parser.c	/^static Node_function_definition* extract_function_/
+extract_function_parameter	src/parser.c	/^static bool extract_function_parameter(Node_variab/
+extract_function_parameters	src/parser.c	/^static bool extract_function_parameters(Node_funct/
+extract_function_return_statement	src/parser.c	/^static Node_return_statement* extract_function_ret/
+extract_function_return_types	src/parser.c	/^static bool extract_function_return_types(Node_fun/
+extract_if_condition	src/parser.c	/^static Node_if_condition* extract_if_condition(Tk_/
+extract_if_statement	src/parser.c	/^static Node_if* extract_if_statement(Tk_view* toke/
+extract_items_inside_brackets	src/parser.c	/^static Tk_view extract_items_inside_brackets(Tk_vi/
+extract_literal	src/parser.c	/^static Node_literal* extract_literal(Tk_view* toke/
+extract_statement	src/parser.c	/^static bool extract_statement(Node** child, Tk_vie/
+extract_struct_definition	src/parser.c	/^static Node_struct_def* extract_struct_definition(/
+extract_struct_literal	src/parser.c	/^static Node_struct_literal* extract_struct_literal/
+extract_struct_member_call	src/parser.c	/^static Node_struct_member_sym_untyped* extract_str/
+extract_symbol	src/parser.c	/^static Node_symbol_untyped* extract_symbol(Tk_view/
+file_path	src/util.h	26
+flatten_operation_if_nessessary	src/passes/add_load_and_store.c	/^static void flatten_operation_if_nessessary($/
+flatten_operation_operand	src/passes/add_load_and_store.c	/^static Node* flatten_operation_operand($/
+for_and_if_to_branch	src/passes/for_and_if_to_branch.c	/^void for_and_if_to_branch(Env* env) {$/
+for_loop_cond_var_assign_new	src/passes/for_and_if_to_branch.c	/^static Node_assignment* for_loop_cond_var_assign_n/
+for_range_to_branch	src/passes/for_and_if_to_branch.c	/^static Node_block* for_range_to_branch(Node_for_ra/
+for_with_condition_to_branch	src/passes/for_and_if_to_branch.c	/^static Node_block* for_with_condition_to_branch(No/
+get_count_excape_seq	src/emit_llvm.c	/^static size_t get_count_excape_seq(Str_view str_vi/
+get_idx_matching_token	src/token_view.h	/^static bool get_idx_matching_token($/
+get_idx_node_after_last_alloca	src/passes/add_load_and_store.c	/^static size_t get_idx_node_after_last_alloca(Node_/
+get_idx_token	src/token_view.h	/^static bool get_idx_token(size_t* idx_matching, Tk/
+get_lang_type	src/node_utils.h	/^static inline Lang_type get_lang_type(const Node* /
+get_lang_type_from_sym_definition	src/parser_utils.c	/^const Node* get_lang_type_from_sym_definition(cons/
+get_left_child	src/nodes.h	/^static inline Node* get_left_child(Node* node) {$/
+get_left_child_const	src/nodes.h	/^static inline const Node* get_left_child_const(con/
+get_llvm_id	src/node_utils.h	/^static inline Llvm_id get_llvm_id(const Node* node/
+get_log_level_str	src/util.h	/^static inline const char* get_log_level_str(int lo/
+get_matching_label_id	src/parser_utils.c	/^Llvm_id get_matching_label_id(Str_view name) {$/
+get_member_def	src/parser_utils.h	/^static inline const Node_variable_def* get_member_/
+get_member_index	src/parser_utils.h	/^static inline size_t get_member_index(const Node_s/
+get_member_sym_piece_final_lang_type	src/passes/add_load_and_store.c	/^static Lang_type get_member_sym_piece_final_lang_t/
+get_next_token	src/tokenizer.c	/^static bool get_next_token(size_t* line_num, Token/
+get_node_dest	src/node_utils.h	/^static inline Node* get_node_dest(Node* node) {$/
+get_node_dest_const	src/node_utils.h	/^static inline const Node* get_node_dest_const(cons/
+get_node_name	src/node_utils.h	/^static inline Str_view get_node_name(const Node* n/
+get_node_src	src/node_utils.h	/^static inline Node* get_node_src(Node* node) {$/
+get_node_src_const	src/node_utils.h	/^static inline const Node* get_node_src_const(const/
+get_normal_symbol_def_from_alloca	src/parser_utils.c	/^const Node_variable_def* get_normal_symbol_def_fro/
+get_operator_lang_type	src/parser_utils.c	/^Lang_type get_operator_lang_type(const Node_operat/
+get_params_with_defaults	src/parameters.c	/^static Parameters get_params_with_defaults(void) {/
+get_storage_location	src/parser_utils.c	/^Node* get_storage_location(Str_view sym_name) {$/
+get_store_assignment	src/passes/add_load_and_store.c	/^static Node* get_store_assignment($/
+get_store_dest_id	src/parser_utils.c	/^Llvm_id get_store_dest_id(const Node* var_call) {$/
+get_struct_definition	src/parser_utils.h	/^static inline Node_struct_def* get_struct_definiti/
+get_struct_definition_const	src/parser_utils.h	/^static inline const Node_struct_def* get_struct_de/
+get_symbol_def_from_alloca	src/parser_utils.c	/^const Node_variable_def* get_symbol_def_from_alloc/
+get_total_alloced	src/arena.c	/^static size_t get_total_alloced(Arena* arena) {$/
+goto_new	src/passes/for_and_if_to_branch.c	/^static Node_goto* goto_new(Str_view name_label_to_/
+hash	third_party/stb_ds.h	823
+hash_table	third_party/stb_ds.h	661
+hmdefault	third_party/stb_ds.h	431
+hmdefaults	third_party/stb_ds.h	432
+hmdel	third_party/stb_ds.h	427
+hmfree	third_party/stb_ds.h	430
+hmget	third_party/stb_ds.h	419
+hmget_ts	third_party/stb_ds.h	420
+hmgeti	third_party/stb_ds.h	425
+hmgeti_ts	third_party/stb_ds.h	426
+hmgetp	third_party/stb_ds.h	422
+hmgetp_null	third_party/stb_ds.h	424
+hmgetp_ts	third_party/stb_ds.h	423
+hmgets	third_party/stb_ds.h	421
+hmlen	third_party/stb_ds.h	428
+hmlenu	third_party/stb_ds.h	429
+hmput	third_party/stb_ds.h	417
+hmputs	third_party/stb_ds.h	418
+if_false	src/node.h	288
+if_statement_to_branch	src/passes/for_and_if_to_branch.c	/^static Node_block* if_statement_to_branch(Node_if*/
+if_true	src/node.h	287
+index	third_party/stb_ds.h	824
+info	src/string_vec.h	10
+info	src/size_t_vec.h	8
+info	src/newstring.h	13
+info	src/tokens.h	13
+info	src/node_ptr_vec.h	15
+input_file_name	src/parameters.h	8
+insert_alloca	src/passes/add_alloca.c	/^static void insert_alloca($/
+insert_into_node_ptr_vec	src/passes/passes.h	/^static inline void insert_into_node_ptr_vec($/
+insert_load	src/passes/add_load_and_store.c	/^static Node_load_another_node* insert_load($/
+insert_store	src/passes/add_load_and_store.c	/^static void insert_store($/
+is_corresponding_to_a_struct	src/parser_utils.c	/^bool is_corresponding_to_a_struct(const Node* node/
+is_dot	src/tokenizer.c	/^static bool is_dot(char prev, char curr) {$/
+is_equal	src/tokenizer.c	/^static bool is_equal(char prev, char curr) {$/
+is_long_option	src/parameters.c	/^static bool is_long_option(char** argv) {$/
+is_not_quote	src/tokenizer.c	/^static bool is_not_quote(char prev, char curr) {$/
+is_short_option	src/parameters.c	/^static bool is_short_option(char** argv) {$/
+is_struct_symbol	src/parser_utils.h	/^static inline bool is_struct_symbol(const Node* sy/
+is_struct_variable_definition	src/parser_utils.h	/^static inline bool is_struct_variable_definition(c/
+is_unary	src/parser.c	/^static bool is_unary(TOKEN_TYPE token_type) {$/
+is_variadic	src/node.h	150
+is_variadic	src/emit_llvm.c	/^static bool is_variadic(const Node* node) {$/
+key	src/symbol_table.h	21
+key	src/hash_table.h	8
+key	third_party/stb_ds.h	1634
+key	third_party/stb_ds.h	1635
+key	third_party/stb_ds.h	1657
+key	third_party/stb_ds.h	1658
+key	third_party/stb_ds.h	1659
+key	third_party/stb_ds.h	1797
+label_new	src/passes/for_and_if_to_branch.c	/^static Node_label* label_new(Str_view label_name, /
+lang_type	src/node.h	71
+lang_type	src/node.h	82
+lang_type	src/node.h	91
+lang_type	src/node.h	99
+lang_type	src/node.h	108
+lang_type	src/node.h	114
+lang_type	src/node.h	122
+lang_type	src/node.h	144
+lang_type	src/node.h	149
+lang_type	src/node.h	161
+lang_type	src/node.h	168
+lang_type	src/node.h	238
+lang_type	src/node.h	243
+lang_type	src/node.h	250
+lang_type	src/node.h	257
+lang_type	src/node.h	264
+lang_type	src/node.h	268
+lang_type	src/node.h	277
+lang_type	src/node.h	295
+lang_type	src/node.h	300
+lang_type_from_cstr	src/node.h	/^static inline Lang_type lang_type_from_cstr(const /
+lang_type_is_equal	src/node.h	/^static inline bool lang_type_is_equal(Lang_type a,/
+lang_type_print	src/node.h	/^#define lang_type_print(lang_type) str_view_print(/
+lang_type_print_internal	src/nodes.c	/^Str_view lang_type_print_internal(Arena* arena, La/
+length	third_party/stb_ds.h	659
+lhs	src/node.h	119
+lhs	src/node.h	226
+line	src/util.h	27
+literal_name_new	src/parser_utils.c	/^Str_view literal_name_new(void) {$/
+literal_new	src/parser_utils.c	/^Node_literal* literal_new(Str_view value, TOKEN_TY/
+llvm_id	src/node.h	77
+llvm_id	src/node.h	83
+llvm_id	src/node.h	98
+llvm_id	src/node.h	104
+llvm_id	src/node.h	115
+llvm_id	src/node.h	123
+llvm_id	src/node.h	145
+llvm_id	src/node.h	151
+llvm_id	src/node.h	169
+llvm_id	src/node.h	190
+llvm_id	src/node.h	244
+llvm_id	src/node.h	249
+llvm_id	src/node.h	256
+llvm_id	src/node.h	263
+llvm_id	src/node.h	270
+llvm_id	src/node.h	276
+llvm_id	src/node.h	282
+llvm_id	src/node.h	289
+llvm_id	src/node.h	294
+llvm_id	src/node.h	302
+load_function_arguments	src/passes/add_load_and_store.c	/^static void load_function_arguments($/
+load_function_parameters	src/passes/add_load_and_store.c	/^static void load_function_parameters(Node_function/
+load_operator_operand	src/passes/add_load_and_store.c	/^static void load_operator_operand($/
+load_operator_operands	src/passes/add_load_and_store.c	/^static void load_operator_operands($/
+load_struct_literal	src/passes/load_struct_literal.c	/^bool load_struct_literal(Node* curr_node) {$/
+local_isalnum_or_underscore	src/tokenizer.c	/^static bool local_isalnum_or_underscore(char prev,/
+local_isdigit	src/tokenizer.c	/^static bool local_isdigit(char prev, char curr) {$/
+log	src/util.h	/^#define log(log_level, ...) \\$/
+log_common	src/util.h	/^#define log_common(log_level, file, line, indent, /
+log_file	src/nodes.c	68
+log_file_level	src/nodes.c	67
+log_file_new	src/util.h	/^#define log_file_new(log_level, file, line, ...) \\/
+log_indent	src/util.h	/^#define log_indent(log_level, indent, ...) \\$/
+log_line	src/nodes.c	69
+log_node_in_tree_internal	src/nodes.c	/^void log_node_in_tree_internal(Env* env) {$/
+log_tokens	src/token_view.h	/^#define log_tokens(log_level, token_view) \\$/
+log_tree	src/nodes.h	/^#define log_tree(log_level, root) \\$/
+lower_bound	src/node.h	207
+meg_struct_assigned_to_invalid_literal	src/error_msg.c	/^void meg_struct_assigned_to_invalid_literal(const /
+memb_sym_piece_typed	src/node.h	341
+memb_sym_piece_untyped	src/node.h	340
+members	src/node.h	142
+members	src/node.h	167
+mode	third_party/stb_ds.h	676
+move_operator_back	src/passes/add_load_and_store.c	/^static Node_llvm_register_sym* move_operator_back(/
+msg	src/util.h	/^#define msg(log_level, pos, ...) \\$/
+msg_invalid_assignment_to_literal	src/error_msg.c	/^void msg_invalid_assignment_to_literal(const Node_/
+msg_invalid_assignment_to_operation	src/error_msg.c	/^void msg_invalid_assignment_to_operation(const Nod/
+msg_invalid_struct_member	src/error_msg.c	/^void msg_invalid_struct_member(const Node* parent,/
+msg_invalid_struct_member_assignment_in_literal	src/error_msg.c	/^void msg_invalid_struct_member_assignment_in_liter/
+msg_redefinition_of_symbol	src/error_msg.c	/^void msg_redefinition_of_symbol(const Node* new_sy/
+msg_undefined_function	src/error_msg.c	/^void msg_undefined_function(const Node_function_ca/
+msg_undefined_symbol	src/error_msg.c	/^void msg_undefined_symbol(const Node* sym_call) {$/
+mul	examples/c/actualc.c	/^int mul(int a, int b) {$/
+name	src/node.h	67
+name	src/node.h	73
+name	src/node.h	78
+name	src/node.h	86
+name	src/node.h	92
+name	src/node.h	97
+name	src/node.h	143
+name	src/node.h	153
+name	src/node.h	157
+name	src/node.h	163
+name	src/node.h	170
+name	src/node.h	184
+name	src/node.h	237
+name	src/node.h	245
+name	src/node.h	251
+name	src/node.h	281
+next	src/arena.h	11
+next	src/arena.h	15
+next	third_party/stb_ds.h	667
+node	src/symbol_table.h	22
+node_alloca	src/node.h	312
+node_assignment	src/node.h	318
+node_auto_unwrap_op_binary	src/node.h	/^static inline Node_binary* node_auto_unwrap_op_bin/
+node_auto_unwrap_op_binary_const	src/node.h	/^static inline const Node_binary* node_auto_unwrap_/
+node_auto_unwrap_op_unary	src/node.h	/^static inline Node_unary* node_auto_unwrap_op_unar/
+node_auto_unwrap_op_unary_const	src/node.h	/^static inline const Node_unary* node_auto_unwrap_o/
+node_block	src/node.h	315
+node_break	src/node.h	319
+node_clone	src/nodes.h	/^static inline Node* node_clone(const Node* node_to/
+node_cond_goto	src/node.h	307
+node_dest	src/node.h	262
+node_dest	src/node.h	275
+node_dest	src/node.h	296
+node_for_loop	src/node.h	323
+node_for_lower_bound	src/node.h	321
+node_for_upper_bound	src/node.h	320
+node_for_with_condition	src/node.h	344
+node_function_call	src/node.h	334
+node_function_declaration	src/node.h	325
+node_function_definition	src/node.h	324
+node_function_params	src/node.h	333
+node_function_return_types	src/node.h	326
+node_goto	src/node.h	308
+node_if	src/node.h	317
+node_if_condition	src/node.h	316
+node_is_binary	src/node.h	/^static inline bool node_is_binary(const Node* node/
+node_is_unary	src/node.h	/^static inline bool node_is_unary(const Node* node)/
+node_label	src/node.h	337
+node_lang_type	src/node.h	332
+node_literal	src/node.h	335
+node_llvm_register_sym	src/node.h	343
+node_llvm_store_literal	src/node.h	309
+node_llvm_store_struct_literal	src/node.h	306
+node_load_another_node	src/node.h	311
+node_load_element_ptr	src/node.h	336
+node_new	src/nodes.h	/^static inline Node* node_new(Pos pos, NODE_TYPE no/
+node_operator	src/node.h	345
+node_print	src/node.h	/^#define node_print(root) str_view_print(node_print/
+node_print_internal	src/nodes.c	/^Str_view node_print_internal(Arena* arena, const N/
+node_printf	src/node.h	/^#define node_printf(node) \\$/
+node_ptr_byval_sym	src/node.h	342
+node_return_statement	src/node.h	322
+node_src	src/node.h	85
+node_src	src/node.h	255
+node_src	src/node.h	261
+node_src	src/node.h	269
+node_src	src/node.h	286
+node_src	src/node.h	301
+node_store_another_node	src/node.h	310
+node_struct_def	src/node.h	327
+node_struct_literal	src/node.h	331
+node_struct_member_sym_piece_typed	src/node.h	328
+node_struct_member_sym_piece_untyped	src/node.h	329
+node_struct_member_sym_typed	src/node.h	313
+node_struct_member_sym_untyped	src/node.h	314
+node_symbol_typed	src/node.h	338
+node_symbol_untyped	src/node.h	339
+node_type_get_strv	src/nodes.c	/^static Str_view node_type_get_strv(const Node* nod/
+node_unwrap_alloca	src/node.h	/^static inline Node_alloca* node_unwrap_alloca(Node/
+node_unwrap_alloca_const	src/node.h	/^static inline const Node_alloca* node_unwrap_alloc/
+node_unwrap_assignment	src/node.h	/^static inline Node_assignment* node_unwrap_assignm/
+node_unwrap_assignment_const	src/node.h	/^static inline const Node_assignment* node_unwrap_a/
+node_unwrap_block	src/node.h	/^static inline Node_block* node_unwrap_block(Node* /
+node_unwrap_block_const	src/node.h	/^static inline const Node_block* node_unwrap_block_/
+node_unwrap_break	src/node.h	/^static inline Node_break* node_unwrap_break(Node* /
+node_unwrap_break_const	src/node.h	/^static inline const Node_break* node_unwrap_break_/
+node_unwrap_cond_goto	src/node.h	/^static inline Node_cond_goto* node_unwrap_cond_got/
+node_unwrap_cond_goto_const	src/node.h	/^static inline const Node_cond_goto* node_unwrap_co/
+node_unwrap_for_lower_bound	src/node.h	/^static inline Node_for_lower_bound* node_unwrap_fo/
+node_unwrap_for_lower_bound_const	src/node.h	/^static inline const Node_for_lower_bound* node_unw/
+node_unwrap_for_range	src/node.h	/^static inline Node_for_range* node_unwrap_for_rang/
+node_unwrap_for_range_const	src/node.h	/^static inline const Node_for_range* node_unwrap_fo/
+node_unwrap_for_upper_bound	src/node.h	/^static inline Node_for_upper_bound* node_unwrap_fo/
+node_unwrap_for_upper_bound_const	src/node.h	/^static inline const Node_for_upper_bound* node_unw/
+node_unwrap_for_with_condition	src/node.h	/^static inline Node_for_with_condition* node_unwrap/
+node_unwrap_for_with_condition_const	src/node.h	/^static inline const Node_for_with_condition* node_/
+node_unwrap_function_call	src/node.h	/^static inline Node_function_call* node_unwrap_func/
+node_unwrap_function_call_const	src/node.h	/^static inline const Node_function_call* node_unwra/
+node_unwrap_function_declaration	src/node.h	/^static inline Node_function_declaration* node_unwr/
+node_unwrap_function_declaration_const	src/node.h	/^static inline const Node_function_declaration* nod/
+node_unwrap_function_definition	src/node.h	/^static inline Node_function_definition* node_unwra/
+node_unwrap_function_definition_const	src/node.h	/^static inline const Node_function_definition* node/
+node_unwrap_function_params	src/node.h	/^static inline Node_function_params* node_unwrap_fu/
+node_unwrap_function_params_const	src/node.h	/^static inline const Node_function_params* node_unw/
+node_unwrap_function_return_types	src/node.h	/^static inline Node_function_return_types* node_unw/
+node_unwrap_function_return_types_const	src/node.h	/^static inline const Node_function_return_types* no/
+node_unwrap_goto	src/node.h	/^static inline Node_goto* node_unwrap_goto(Node* no/
+node_unwrap_goto_const	src/node.h	/^static inline const Node_goto* node_unwrap_goto_co/
+node_unwrap_if	src/node.h	/^static inline Node_if* node_unwrap_if(Node* node) /
+node_unwrap_if_condition	src/node.h	/^static inline Node_if_condition* node_unwrap_if_co/
+node_unwrap_if_condition_const	src/node.h	/^static inline const Node_if_condition* node_unwrap/
+node_unwrap_if_const	src/node.h	/^static inline const Node_if* node_unwrap_if_const(/
+node_unwrap_label	src/node.h	/^static inline Node_label* node_unwrap_label(Node* /
+node_unwrap_label_const	src/node.h	/^static inline const Node_label* node_unwrap_label_/
+node_unwrap_lang_type	src/node.h	/^static inline Node_lang_type* node_unwrap_lang_typ/
+node_unwrap_lang_type_const	src/node.h	/^static inline const Node_lang_type* node_unwrap_la/
+node_unwrap_literal	src/node.h	/^static inline Node_literal* node_unwrap_literal(No/
+node_unwrap_literal_const	src/node.h	/^static inline const Node_literal* node_unwrap_lite/
+node_unwrap_llvm_register_sym	src/node.h	/^static inline Node_llvm_register_sym* node_unwrap_/
+node_unwrap_llvm_register_sym_const	src/node.h	/^static inline const Node_llvm_register_sym* node_u/
+node_unwrap_llvm_store_literal	src/node.h	/^static inline Node_llvm_store_literal* node_unwrap/
+node_unwrap_llvm_store_literal_const	src/node.h	/^static inline const Node_llvm_store_literal* node_/
+node_unwrap_llvm_store_struct_literal	src/node.h	/^static inline Node_llvm_store_struct_literal* node/
+node_unwrap_llvm_store_struct_literal_const	src/node.h	/^static inline const Node_llvm_store_struct_literal/
+node_unwrap_load_another_node	src/node.h	/^static inline Node_load_another_node* node_unwrap_/
+node_unwrap_load_another_node_const	src/node.h	/^static inline const Node_load_another_node* node_u/
+node_unwrap_load_elem_ptr	src/node.h	/^static inline Node_load_element_ptr* node_unwrap_l/
+node_unwrap_load_elem_ptr_const	src/node.h	/^static inline const Node_load_element_ptr* node_un/
+node_unwrap_op_binary	src/node.h	/^static inline Node_binary* node_unwrap_op_binary(N/
+node_unwrap_op_binary_const	src/node.h	/^static inline const Node_binary* node_unwrap_op_bi/
+node_unwrap_op_unary	src/node.h	/^static inline Node_unary* node_unwrap_op_unary(Nod/
+node_unwrap_op_unary_const	src/node.h	/^static inline const Node_unary* node_unwrap_op_una/
+node_unwrap_operation	src/node.h	/^static inline Node_operator* node_unwrap_operation/
+node_unwrap_operation_const	src/node.h	/^static inline const Node_operator* node_unwrap_ope/
+node_unwrap_ptr_byval_sym	src/node.h	/^static inline Node_ptr_byval_sym* node_unwrap_ptr_/
+node_unwrap_ptr_byval_sym_const	src/node.h	/^static inline const Node_ptr_byval_sym* node_unwra/
+node_unwrap_return_statement	src/node.h	/^static inline Node_return_statement* node_unwrap_r/
+node_unwrap_return_statement_const	src/node.h	/^static inline const Node_return_statement* node_un/
+node_unwrap_store_another_node	src/node.h	/^static inline Node_store_another_node* node_unwrap/
+node_unwrap_store_another_node_const	src/node.h	/^static inline const Node_store_another_node* node_/
+node_unwrap_struct_def	src/node.h	/^static inline Node_struct_def* node_unwrap_struct_/
+node_unwrap_struct_def_const	src/node.h	/^static inline const Node_struct_def* node_unwrap_s/
+node_unwrap_struct_literal	src/node.h	/^static inline Node_struct_literal* node_unwrap_str/
+node_unwrap_struct_literal_const	src/node.h	/^static inline const Node_struct_literal* node_unwr/
+node_unwrap_struct_member_sym_piece_typed	src/node.h	/^static inline Node_struct_member_sym_piece_typed* /
+node_unwrap_struct_member_sym_piece_typed_const	src/node.h	/^static inline const Node_struct_member_sym_piece_t/
+node_unwrap_struct_member_sym_piece_untyped	src/node.h	/^static inline Node_struct_member_sym_piece_untyped/
+node_unwrap_struct_member_sym_piece_untyped_const	src/node.h	/^static inline const Node_struct_member_sym_piece_u/
+node_unwrap_struct_member_sym_typed	src/node.h	/^static inline Node_struct_member_sym_typed* node_u/
+node_unwrap_struct_member_sym_typed_const	src/node.h	/^static inline const Node_struct_member_sym_typed* /
+node_unwrap_struct_member_sym_untyped	src/node.h	/^static inline Node_struct_member_sym_untyped* node/
+node_unwrap_struct_member_sym_untyped_const	src/node.h	/^static inline const Node_struct_member_sym_untyped/
+node_unwrap_symbol_typed	src/node.h	/^static inline Node_symbol_typed* node_unwrap_symbo/
+node_unwrap_symbol_typed_const	src/node.h	/^static inline const Node_symbol_typed* node_unwrap/
+node_unwrap_symbol_untyped	src/node.h	/^static inline Node_symbol_untyped* node_unwrap_sym/
+node_unwrap_symbol_untyped_const	src/node.h	/^static inline const Node_symbol_untyped* node_unwr/
+node_unwrap_variable_def	src/node.h	/^static inline Node_variable_def* node_unwrap_varia/
+node_unwrap_variable_def_const	src/node.h	/^static inline const Node_variable_def* node_unwrap/
+node_variable_def	src/node.h	330
+node_wrap	src/node.h	/^#define node_wrap(node) ((Node*)(node))$/
+node_wrap_const	src/node.h	/^#define node_wrap_const(node) ((const Node*)node)$/
+node_wrap_operator	src/node.h	/^#define node_wrap_operator(operator) ((Node_operat/
+nodes_log_tree_internal	src/nodes.c	/^void nodes_log_tree_internal(LOG_LEVEL log_level, /
+num	examples/c/actualc.c	9
+numerator	examples/c/actualc.c	14
+operator_precedence	src/parser.c	/^static inline uint32_t operator_precedence(Token t/
+parameters	src/node.h	182
+params	src/node.h	103
+params	src/globals.c	8
+parse	src/parser.c	/^Node_block* parse(const Tokens tokens) {$/
+parse_args	src/parameters.c	/^void parse_args(int argc, char** argv) {$/
+parse_function_definition	src/parser.c	/^static Node_function_definition* parse_function_de/
+parse_long_option	src/parameters.c	/^static void parse_long_option(Parameters* params, /
+parse_normal_option	src/parameters.c	/^static void parse_normal_option(Parameters* params/
+parser_binary_new	src/parser.c	/^static Node_binary* parser_binary_new(Node* lhs, T/
+parser_unary_new	src/parser.c	/^static Node_unary* parser_unary_new(Token operatio/
+pointer_depth	src/node.h	60
+pos	src/node.h	350
+pos	src/token.h	62
+prev_pos	src/globals.c	23
+print	examples/c/actualc.c	/^Div print(const char* str, int num1, char* another/
+print_arena	src/globals.c	11
+print_node_dest	src/nodes.c	/^static void print_node_dest(Arena* arena, String* /
+print_node_src	src/nodes.c	/^static void print_node_src(Arena* arena, String* s/
+read_file	src/file.c	/^bool read_file(String* file_text, const char* inpu/
+recursion_depth	src/do_passes.h	10
+refer_to_llvm_register_symbol	src/passes/add_load_and_store.c	/^static void refer_to_llvm_register_symbol(Node_una/
+remaining	third_party/stb_ds.h	674
+return_type_from_function_definition	src/emit_llvm.c	/^static const Node_lang_type* return_type_from_func/
+return_types	src/node.h	183
+rhs	src/node.h	120
+rhs	src/node.h	227
+root_of_tree	src/globals.c	13
+safe_free	src/arena.c	/^#define safe_free(ptr) \\$/
+safe_malloc	src/arena.c	/^static void* safe_malloc(size_t capacity) {$/
+safe_realloc	src/arena.c	/^static void* safe_realloc(void* old_ptr, size_t ol/
+seed	third_party/stb_ds.h	836
+set_if_condition_types	src/passes/analysis_1.c	/^static void set_if_condition_types(Node_if_conditi/
+set_left_child	src/nodes.h	/^static inline void set_left_child(Node* parent, No/
+sh_new_arena	third_party/stb_ds.h	448
+sh_new_strdup	third_party/stb_ds.h	449
+shdefault	third_party/stb_ds.h	446
+shdefaults	third_party/stb_ds.h	447
+shdel	third_party/stb_ds.h	442
+shfree	third_party/stb_ds.h	445
+shget	third_party/stb_ds.h	437
+shgeti	third_party/stb_ds.h	438
+shgetp	third_party/stb_ds.h	440
+shgetp_null	third_party/stb_ds.h	441
+shgets	third_party/stb_ds.h	439
+shlen	third_party/stb_ds.h	443
+shlenu	third_party/stb_ds.h	444
+shput	third_party/stb_ds.h	434
+shputi	third_party/stb_ds.h	435
+shputs	third_party/stb_ds.h	436
+size_t_vec_append	src/size_t_vec.h	/^static inline void size_t_vec_append(Size_t_vec* v/
+size_t_vec_at	src/size_t_vec.h	/^static inline size_t size_t_vec_at(Size_t_vec* vec/
+size_t_vec_in	src/size_t_vec.h	/^static inline bool size_t_vec_in(Size_t_vec* vecto/
+sizeof_item	src/parser_utils.c	/^uint64_t sizeof_item(const Node* item) {$/
+sizeof_lang_type	src/parser_utils.c	/^uint64_t sizeof_lang_type(Lang_type lang_type) {$/
+sizeof_struct	src/parser_utils.c	/^uint64_t sizeof_struct(const Node* struct_literal_/
+sizeof_struct_definition	src/parser_utils.c	/^uint64_t sizeof_struct_definition(const Node_struc/
+sizeof_struct_literal	src/parser_utils.c	/^uint64_t sizeof_struct_literal(const Node_struct_l/
+slot_count	third_party/stb_ds.h	830
+slot_count_log2	third_party/stb_ds.h	837
+start_walk	src/do_passes.h	/^static inline void start_walk(Node_block** root, v/
+status	src/symbol_table.h	23
+stbds_arraddn	third_party/stb_ds.h	/^#define stbds_arraddn(a,n)     ((void)(stbds_arrad/
+stbds_arraddnindex	third_party/stb_ds.h	/^#define stbds_arraddnindex(a,n)(stbds_arrmaybegrow/
+stbds_arraddnoff	third_party/stb_ds.h	549
+stbds_arraddnptr	third_party/stb_ds.h	/^#define stbds_arraddnptr(a,n)  (stbds_arrmaybegrow/
+stbds_array_grow	third_party/stb_ds.h	743
+stbds_array_header	third_party/stb_ds.h	663
+stbds_arrcap	third_party/stb_ds.h	/^#define stbds_arrcap(a)        ((a) ? stbds_header/
+stbds_arrdel	third_party/stb_ds.h	/^#define stbds_arrdel(a,i)      stbds_arrdeln(a,i,1/
+stbds_arrdeln	third_party/stb_ds.h	/^#define stbds_arrdeln(a,i,n)   (memmove(&(a)[i], &/
+stbds_arrdelswap	third_party/stb_ds.h	/^#define stbds_arrdelswap(a,i)  ((a)[i] = stbds_arr/
+stbds_arrfree	third_party/stb_ds.h	/^#define stbds_arrfree(a)       ((void) ((a) ? STBD/
+stbds_arrfreef	third_party/stb_ds.h	/^void stbds_arrfreef(void *a)$/
+stbds_arrgrow	third_party/stb_ds.h	/^#define stbds_arrgrow(a,b,c)   ((a) = stbds_arrgro/
+stbds_arrgrowf	third_party/stb_ds.h	/^void *stbds_arrgrowf(void *a, size_t elemsize, siz/
+stbds_arrgrowf_wrapper	third_party/stb_ds.h	/^template<class T> static T * stbds_arrgrowf_wrappe/
+stbds_arrgrowf_wrapper	third_party/stb_ds.h	715
+stbds_arrins	third_party/stb_ds.h	/^#define stbds_arrins(a,i,v)    (stbds_arrinsn((a),/
+stbds_arrinsn	third_party/stb_ds.h	/^#define stbds_arrinsn(a,i,n)   (stbds_arraddn((a),/
+stbds_arrlast	third_party/stb_ds.h	/^#define stbds_arrlast(a)       ((a)[stbds_header(a/
+stbds_arrlen	third_party/stb_ds.h	/^#define stbds_arrlen(a)        ((a) ? (ptrdiff_t) /
+stbds_arrlenu	third_party/stb_ds.h	/^#define stbds_arrlenu(a)       ((a) ?             /
+stbds_arrmaybegrow	third_party/stb_ds.h	/^#define stbds_arrmaybegrow(a,n)  ((!(a) || stbds_h/
+stbds_arrpop	third_party/stb_ds.h	/^#define stbds_arrpop(a)        (stbds_header(a)->l/
+stbds_arrpush	third_party/stb_ds.h	544
+stbds_arrput	third_party/stb_ds.h	/^#define stbds_arrput(a,v)      (stbds_arrmaybegrow/
+stbds_arrsetcap	third_party/stb_ds.h	/^#define stbds_arrsetcap(a,n)   (stbds_arrgrow(a,0,/
+stbds_arrsetlen	third_party/stb_ds.h	/^#define stbds_arrsetlen(a,n)   ((stbds_arrcap(a) </
+stbds_hash_alloc	third_party/stb_ds.h	748
+stbds_hash_bucket	third_party/stb_ds.h	825
+stbds_hash_bytes	third_party/stb_ds.h	/^size_t stbds_hash_bytes(const void *p, size_t len,/
+stbds_hash_grow	third_party/stb_ds.h	744
+stbds_hash_index	third_party/stb_ds.h	840
+stbds_hash_probes	third_party/stb_ds.h	747
+stbds_hash_rebuild	third_party/stb_ds.h	746
+stbds_hash_seed	third_party/stb_ds.h	849
+stbds_hash_shrink	third_party/stb_ds.h	745
+stbds_hash_string	third_party/stb_ds.h	/^size_t stbds_hash_string(char *str, size_t seed)$/
+stbds_hash_table	third_party/stb_ds.h	/^#define stbds_hash_table(a)  ((stbds_hash_index *)/
+stbds_header	third_party/stb_ds.h	/^#define stbds_header(t)  ((stbds_array_header *) (/
+stbds_hm_find_slot	third_party/stb_ds.h	/^static ptrdiff_t stbds_hm_find_slot(void *a, size_/
+stbds_hmdefault	third_party/stb_ds.h	/^#define stbds_hmdefault(t, v) \\$/
+stbds_hmdefaults	third_party/stb_ds.h	/^#define stbds_hmdefaults(t, s) \\$/
+stbds_hmdel	third_party/stb_ds.h	/^#define stbds_hmdel(t,k) \\$/
+stbds_hmdel_key	third_party/stb_ds.h	/^void * stbds_hmdel_key(void *a, size_t elemsize, v/
+stbds_hmdel_key_wrapper	third_party/stb_ds.h	/^template<class T> static T * stbds_hmdel_key_wrapp/
+stbds_hmdel_key_wrapper	third_party/stb_ds.h	720
+stbds_hmfree	third_party/stb_ds.h	/^#define stbds_hmfree(p)        \\$/
+stbds_hmfree_func	third_party/stb_ds.h	/^void stbds_hmfree_func(void *a, size_t elemsize)$/
+stbds_hmget	third_party/stb_ds.h	/^#define stbds_hmget(t, k)     (stbds_hmgetp(t,k)->/
+stbds_hmget_key	third_party/stb_ds.h	/^void * stbds_hmget_key(void *a, size_t elemsize, v/
+stbds_hmget_key_ts	third_party/stb_ds.h	/^void * stbds_hmget_key_ts(void *a, size_t elemsize/
+stbds_hmget_key_ts_wrapper	third_party/stb_ds.h	/^template<class T> static T * stbds_hmget_key_ts_wr/
+stbds_hmget_key_ts_wrapper	third_party/stb_ds.h	717
+stbds_hmget_key_wrapper	third_party/stb_ds.h	/^template<class T> static T * stbds_hmget_key_wrapp/
+stbds_hmget_key_wrapper	third_party/stb_ds.h	716
+stbds_hmget_ts	third_party/stb_ds.h	/^#define stbds_hmget_ts(t, k, temp)  (stbds_hmgetp_/
+stbds_hmgeti	third_party/stb_ds.h	/^#define stbds_hmgeti(t,k) \\$/
+stbds_hmgeti_ts	third_party/stb_ds.h	/^#define stbds_hmgeti_ts(t,k,temp) \\$/
+stbds_hmgetp	third_party/stb_ds.h	/^#define stbds_hmgetp(t, k) \\$/
+stbds_hmgetp_null	third_party/stb_ds.h	/^#define stbds_hmgetp_null(t,k)  (stbds_hmgeti(t,k)/
+stbds_hmgetp_ts	third_party/stb_ds.h	/^#define stbds_hmgetp_ts(t, k, temp) \\$/
+stbds_hmgets	third_party/stb_ds.h	/^#define stbds_hmgets(t, k)    (*stbds_hmgetp(t,k))/
+stbds_hmlen	third_party/stb_ds.h	/^#define stbds_hmlen(t)        ((t) ? (ptrdiff_t) s/
+stbds_hmlenu	third_party/stb_ds.h	/^#define stbds_hmlenu(t)       ((t) ?             s/
+stbds_hmput	third_party/stb_ds.h	/^#define stbds_hmput(t, k, v) \\$/
+stbds_hmput_default	third_party/stb_ds.h	/^void * stbds_hmput_default(void *a, size_t elemsiz/
+stbds_hmput_default_wrapper	third_party/stb_ds.h	/^template<class T> static T * stbds_hmput_default_w/
+stbds_hmput_default_wrapper	third_party/stb_ds.h	718
+stbds_hmput_key	third_party/stb_ds.h	/^void *stbds_hmput_key(void *a, size_t elemsize, vo/
+stbds_hmput_key_wrapper	third_party/stb_ds.h	/^template<class T> static T * stbds_hmput_key_wrapp/
+stbds_hmput_key_wrapper	third_party/stb_ds.h	719
+stbds_hmputs	third_party/stb_ds.h	/^#define stbds_hmputs(t, s) \\$/
+stbds_is_key_equal	third_party/stb_ds.h	/^static int stbds_is_key_equal(void *a, size_t elem/
+stbds_load_32_or_64	third_party/stb_ds.h	/^#define stbds_load_32_or_64(var, temp, v32, v64_hi/
+stbds_log2	third_party/stb_ds.h	/^static size_t stbds_log2(size_t slot_count)$/
+stbds_make_hash_index	third_party/stb_ds.h	/^static stbds_hash_index *stbds_make_hash_index(siz/
+stbds_probe_position	third_party/stb_ds.h	/^static size_t stbds_probe_position(size_t hash, si/
+stbds_pshdel	third_party/stb_ds.h	/^#define stbds_pshdel(t,k) \\$/
+stbds_pshget	third_party/stb_ds.h	/^#define stbds_pshget(t, k) \\$/
+stbds_pshgeti	third_party/stb_ds.h	/^#define stbds_pshgeti(t,k) \\$/
+stbds_pshput	third_party/stb_ds.h	/^#define stbds_pshput(t, p) \\$/
+stbds_rand_seed	third_party/stb_ds.h	/^void stbds_rand_seed(size_t seed)$/
+stbds_rehash_items	third_party/stb_ds.h	750
+stbds_rehash_probes	third_party/stb_ds.h	749
+stbds_sh_new_arena	third_party/stb_ds.h	/^#define stbds_sh_new_arena(t)  \\$/
+stbds_sh_new_strdup	third_party/stb_ds.h	/^#define stbds_sh_new_strdup(t) \\$/
+stbds_shdefault	third_party/stb_ds.h	/^#define stbds_shdefault(t, v)  stbds_hmdefault(t,v/
+stbds_shdefaults	third_party/stb_ds.h	/^#define stbds_shdefaults(t, s) stbds_hmdefaults(t,/
+stbds_shdel	third_party/stb_ds.h	/^#define stbds_shdel(t,k) \\$/
+stbds_shfree	third_party/stb_ds.h	649
+stbds_shget	third_party/stb_ds.h	/^#define stbds_shget(t, k)  (stbds_shgetp(t,k)->val/
+stbds_shgeti	third_party/stb_ds.h	/^#define stbds_shgeti(t,k) \\$/
+stbds_shgetp	third_party/stb_ds.h	/^#define stbds_shgetp(t, k) \\$/
+stbds_shgetp_null	third_party/stb_ds.h	/^#define stbds_shgetp_null(t,k)  (stbds_shgeti(t,k)/
+stbds_shgets	third_party/stb_ds.h	/^#define stbds_shgets(t, k) (*stbds_shgetp(t,k))$/
+stbds_shlen	third_party/stb_ds.h	655
+stbds_shlenu	third_party/stb_ds.h	650
+stbds_shmode_func	third_party/stb_ds.h	/^void * stbds_shmode_func(size_t elemsize, int mode/
+stbds_shmode_func_wrapper	third_party/stb_ds.h	/^template<class T> static T * stbds_shmode_func_wra/
+stbds_shmode_func_wrapper	third_party/stb_ds.h	/^#define stbds_shmode_func_wrapper(t,e,m)  stbds_sh/
+stbds_shput	third_party/stb_ds.h	/^#define stbds_shput(t, k, v) \\$/
+stbds_shputi	third_party/stb_ds.h	/^#define stbds_shputi(t, k, v) \\$/
+stbds_shputs	third_party/stb_ds.h	/^#define stbds_shputs(t, s) \\$/
+stbds_siphash_bytes	third_party/stb_ds.h	/^static size_t stbds_siphash_bytes(const void *p, s/
+stbds_stralloc	third_party/stb_ds.h	/^char *stbds_stralloc(stbds_string_arena *a, char */
+stbds_strdup	third_party/stb_ds.h	/^static char *stbds_strdup(char *str)$/
+stbds_string_arena	third_party/stb_ds.h	482
+stbds_string_arena	third_party/stb_ds.h	671
+stbds_string_block	third_party/stb_ds.h	665
+stbds_string_block	third_party/stb_ds.h	669
+stbds_strreset	third_party/stb_ds.h	/^void stbds_strreset(stbds_string_arena *a)$/
+stbds_struct	third_party/stb_ds.h	1634
+stbds_struct2	third_party/stb_ds.h	1635
+stbds_temp	third_party/stb_ds.h	/^#define stbds_temp(t)    stbds_header(t)->temp$/
+stbds_temp_key	third_party/stb_ds.h	/^#define stbds_temp_key(t) (*(char **) stbds_header/
+stbds_unit_tests	third_party/stb_ds.h	/^void stbds_unit_tests(void)$/
+storage	third_party/stb_ds.h	668
+storage	third_party/stb_ds.h	673
+storage	third_party/stb_ds.h	839
+storage_location	src/node.h	152
+str	src/node.h	59
+str	src/str_view_struct.h	7
+str_data	src/node.h	72
+str_data	src/node.h	90
+str_view_cmp	src/str_view.h	/^static inline int str_view_cmp(Str_view a, Str_vie/
+str_view_consume	src/str_view.h	/^static inline char str_view_consume(Str_view* str_/
+str_view_consume_count	src/str_view.h	/^static inline Str_view str_view_consume_count(Str_/
+str_view_consume_until	src/str_view.h	/^static inline Str_view str_view_consume_until(Str_/
+str_view_consume_while	src/str_view.h	/^static inline Str_view str_view_consume_while(Str_/
+str_view_cstr_is_equal	src/str_view.h	/^static inline bool str_view_cstr_is_equal(Str_view/
+str_view_from_cstr	src/str_view.h	/^static inline Str_view str_view_from_cstr(const ch/
+str_view_front	src/str_view.h	/^static inline char str_view_front(Str_view str_vie/
+str_view_is_equal	src/str_view.h	/^static inline bool str_view_is_equal(Str_view a, S/
+str_view_print	src/str_view.h	/^#define str_view_print(str_view) (int)((str_view)./
+str_view_slice	src/str_view.h	/^static inline Str_view str_view_slice(Str_view str/
+str_view_try_consume	src/str_view.h	/^static inline bool str_view_try_consume(Str_view* /
+stralloc	third_party/stb_ds.h	451
+string	third_party/stb_ds.h	838
+string_add_int	src/newstring.h	/^static inline void string_add_int(Arena* arena, St/
+string_cpy_cstr_inplace	src/newstring.h	/^static inline void string_cpy_cstr_inplace(Arena* /
+string_data	examples/c/actualc.c	10
+string_extend_cstr	src/newstring.h	/^static inline void string_extend_cstr(Arena* arena/
+string_extend_hex_2_digits	src/newstring.h	/^static inline void string_extend_hex_2_digits(Aren/
+string_extend_size_t	src/newstring.h	/^static inline void string_extend_size_t(Arena* are/
+string_extend_strv	src/newstring.h	/^static inline void string_extend_strv(Arena* arena/
+string_extend_strv_eval_escapes	src/emit_llvm.c	/^static void string_extend_strv_eval_escapes(Arena*/
+string_extend_strv_in_gtlt	src/newstring.h	/^static inline void string_extend_strv_in_gtlt(Aren/
+string_extend_strv_in_par	src/newstring.h	/^static inline void string_extend_strv_in_par(Arena/
+string_extend_strv_in_sym	src/newstring.h	/^static inline void string_extend_strv_in_sym(Arena/
+string_new_from_cstr	src/newstring.h	/^static inline String string_new_from_cstr(Arena* a/
+string_new_from_strv	src/newstring.h	/^static inline String string_new_from_strv(Arena* a/
+string_print	src/newstring.h	/^#define string_print(string) (int)((string).info.c/
+strkey	third_party/stb_ds.h	/^char *strkey(int n)$/
+strreset	third_party/stb_ds.h	452
+struct_index	src/node.h	84
+struct_index	src/node.h	162
+struct_memb_to_load_memb_rtn_val_sym	src/passes/add_load_and_store.c	/^static void struct_memb_to_load_memb_rtn_val_sym(N/
+sym_tbl_add	src/symbol_table.h	/^static inline bool sym_tbl_add(Node* node_of_symbo/
+sym_tbl_add_internal	src/symbol_table.h	/^static inline bool sym_tbl_add_internal(Symbol_tab/
+sym_tbl_calculate_idx	src/symbol_table.h	/^static inline size_t sym_tbl_calculate_idx(Str_vie/
+sym_tbl_cpy	src/symbol_table.h	/^static inline void sym_tbl_cpy(Symbol_table_node* /
+sym_tbl_expand_if_nessessary	src/symbol_table.h	/^static inline void sym_tbl_expand_if_nessessary(vo/
+sym_tbl_is_equal	src/symbol_table.h	/^static inline bool sym_tbl_is_equal(Str_view a, St/
+sym_tbl_lookup	src/symbol_table.h	/^static inline bool sym_tbl_lookup(Node** result, S/
+sym_tbl_lookup_internal	src/symbol_table.h	/^static inline bool sym_tbl_lookup_internal(Symbol_/
+sym_tbl_status_print	src/symbol_table.h	/^static inline const char* sym_tbl_status_print(SYM/
+sym_tbl_update	src/symbol_table.h	/^static inline void sym_tbl_update(Node* node_of_sy/
+sym_typed_to_load_sym_rtn_value_sym	src/passes/add_load_and_store.c	/^static void sym_typed_to_load_sym_rtn_value_sym(No/
+symbol_new	src/parser_utils.c	/^Node_symbol_untyped* symbol_new(Str_view symbol_na/
+symbol_table	src/globals.c	6
+table_nodes	src/symbol_table.h	27
+temp	third_party/stb_ds.h	662
+temp_key	third_party/stb_ds.h	829
+text	src/token.h	59
+tk_view_at	src/token_view.h	/^static inline Token tk_view_at(Tk_view token_view,/
+tk_view_consume	src/token_view.h	/^static inline Token tk_view_consume(Tk_view* token/
+tk_view_consume_count	src/token_view.h	/^static inline Tk_view tk_view_consume_count(Tk_vie/
+tk_view_consume_count_at_most	src/token_view.h	/^static inline Tk_view tk_view_consume_count_at_mos/
+tk_view_consume_until	src/token_view.h	/^static inline Tk_view tk_view_consume_until(Tk_vie/
+tk_view_consume_until_common	src/token_view.h	/^static inline Tk_view tk_view_consume_until_common/
+tk_view_consume_until_matching_delim	src/token_view.h	/^static inline Tk_view tk_view_consume_until_matchi/
+tk_view_consume_until_matching_delim_common	src/token_view.h	/^static inline Tk_view tk_view_consume_until_matchi/
+tk_view_consume_until_matching_delim_or_all	src/token_view.h	/^static inline Tk_view tk_view_consume_until_matchi/
+tk_view_consume_until_matching_type_delims_or_all	src/token_view.h	/^static inline Tk_view tk_view_consume_until_matchi/
+tk_view_consume_until_or_all	src/token_view.h	/^static inline Tk_view tk_view_consume_until_or_all/
+tk_view_consume_while	src/token_view.h	/^static inline Tk_view tk_view_consume_while($/
+tk_view_front	src/token_view.h	/^static inline Token tk_view_front(Tk_view token_vi/
+tk_view_print	src/token_view.h	/^#define tk_view_print(token_view) str_view_print(t/
+tk_view_print_internal	src/token_view.h	/^static inline Str_view tk_view_print_internal(Aren/
+tk_view_try_consume	src/token_view.h	/^static inline bool tk_view_try_consume(Token* resu/
+tk_view_try_consume_symbol	src/token_view.h	/^static inline bool tk_view_try_consume_symbol(Toke/
+tk_view_try_find	src/token_view.h	/^static inline bool tk_view_try_find($/
+todo	src/util.h	/^#define todo() \\$/
+token	examples/c/actualc.c	19
+token_is_closing	src/token.h	/^static inline bool token_is_closing(Token curr_tok/
+token_is_equal	src/token.h	/^static inline bool token_is_equal(const Token toke/
+token_is_literal	src/token.h	/^static inline bool token_is_literal(Token token) {/
+token_is_opening	src/token.h	/^static inline bool token_is_opening(Token curr_tok/
+token_is_operator	src/token.h	/^static inline bool token_is_operator(Token token) /
+token_print	src/token.h	/^#define token_print(token) str_view_print(token_pr/
+token_print_internal	src/token.c	/^Str_view token_print_internal(Arena* arena, Token /
+token_type	src/node.h	113
+token_type	src/node.h	121
+token_type_print	src/token.h	/^#define token_type_print(token_type) str_view_prin/
+token_type_to_str_view	src/token.c	/^Str_view token_type_to_str_view(TOKEN_TYPE token_t/
+tokenize	src/tokenizer.c	/^Tokens tokenize(const String file_text, Parameters/
+tokens	src/token_view.h	9
+tokens_start_with_function_call	src/parser.c	/^static bool tokens_start_with_function_call(Tk_vie/
+tombstone_count	third_party/stb_ds.h	834
+tombstone_count_threshold	third_party/stb_ds.h	835
+trim_whitespace	src/tokenizer.c	/^static void trim_whitespace(Str_view* file_text, s/
+try	src/util.h	/^#define try(cond) \\$/
+try_extract_expression	src/parser.c	/^static bool try_extract_expression(Node** result, /
+try_extract_expression_piece	src/parser.c	/^static bool try_extract_expression_piece(Node** re/
+try_extract_variable_declaration	src/parser.c	/^static bool try_extract_variable_declaration(Node_/
+try_get_member_def	src/parser_utils.h	/^static inline bool try_get_member_def(Node_variabl/
+try_get_struct_definition	src/parser_utils.c	/^bool try_get_struct_definition(Node_struct_def** s/
+try_set_assignment_operand_types	src/parser_utils.c	/^bool try_set_assignment_operand_types(Lang_type* l/
+try_set_binary_lang_type	src/parser_utils.c	/^bool try_set_binary_lang_type(Lang_type* lang_type/
+try_set_function_call_types	src/parser_utils.c	/^bool try_set_function_call_types(Lang_type* lang_t/
+try_set_if_condition_types	src/parser_utils.c	/^static bool try_set_if_condition_types(Lang_type* /
+try_set_literal_lang_type	src/parser_utils.c	/^static bool try_set_literal_lang_type(Lang_type* l/
+try_set_node_type	src/parser_utils.c	/^bool try_set_node_type(Lang_type* lang_type, Node*/
+try_set_operation_lang_type	src/parser_utils.c	/^bool try_set_operation_lang_type(Lang_type* lang_t/
+try_set_struct_literal_assignment_types	src/parser_utils.c	/^bool try_set_struct_literal_assignment_types(Lang_/
+try_set_struct_member_symbol_types	src/parser_utils.c	/^bool try_set_struct_member_symbol_types(Lang_type*/
+try_set_symbol_type	src/parser_utils.c	/^bool try_set_symbol_type(Lang_type* lang_type, Nod/
+try_set_unary_lang_type	src/parser_utils.c	/^bool try_set_unary_lang_type(Lang_type* lang_type,/
+type	src/node.h	138
+type	src/node.h	351
+type	src/token.h	60
+unary	src/node.h	127
+unary_new	src/parser_utils.c	/^Node_unary* unary_new(Node* child, TOKEN_TYPE oper/
+unreachable	src/util.h	/^#define unreachable(...) \\$/
+upper_bound	src/node.h	208
+used_count	third_party/stb_ds.h	831
+used_count_shrink_threshold	third_party/stb_ds.h	833
+used_count_threshold	third_party/stb_ds.h	832
+value	third_party/stb_ds.h	1657
+value	third_party/stb_ds.h	1658
+value	third_party/stb_ds.h	1659
+value	third_party/stb_ds.h	1797
+var_def	src/node.h	206
+vec_append	src/vector.h	/^#define vec_append(arena, vector, item_to_append) /
+vec_at	src/vector.h	/^#define vec_at(vector, index) \\$/
+vec_at_ref	src/vector.h	/^#define vec_at_ref(vector, index) \\$/
+vec_extend	src/vector.h	/^#define vec_extend(arena, dest, src) \\$/
+vec_insert	src/vector.h	/^#define vec_insert(arena, vector, index, item_to_i/
+vec_reserve	src/vector.h	/^#define vec_reserve(arena, vector, min_count_empty/
+vec_reset	src/vector.h	/^#define vec_reset(vector) \\$/
+walk_node_ptr_vec	src/walk_tree.c	/^INLINE void walk_node_ptr_vec(Env* env, Node_ptr_v/
+walk_tree	src/walk_tree.c	/^void walk_tree(Env* env, void (callback)(Env* env)/
+walk_tree_traverse	src/walk_tree.c	/^INLINE void walk_tree_traverse(Env* env, Node* new/
+warning_count	src/globals.c	21
+write_file	src/file.c	/^void write_file(const char* file_path, Str_view te/
+zero_block	src/globals.c	18

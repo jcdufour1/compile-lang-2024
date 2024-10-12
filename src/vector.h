@@ -64,4 +64,15 @@ typedef struct {
         (dest)->info.count += (src)->info.count; \
     } while(0)
 
+#define vec_top(vector) \
+    (vec_at((vector), (vector)->info.count - 1))
+
+#define vec_pop(popped_item, vector) \
+    do { \
+        if (popped_item) { \
+            (popped_item) = vec_top(vector); \
+        } \
+        (vector)->info.count--; \
+    } while(0)
+
 #endif // VECTOR_H

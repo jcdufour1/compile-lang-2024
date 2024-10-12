@@ -531,7 +531,6 @@ static void load_function_arguments(
     add_load_foreach_arg(block_children, idx_to_insert_before, fun_call);
 }
 
-<<<<<<< HEAD
 // returns operand or operand symbol
 static Node* flatten_operation_operand(
     Node_ptr_vec* block_children,
