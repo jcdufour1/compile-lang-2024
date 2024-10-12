@@ -338,7 +338,6 @@ typedef union {
     Node_label node_label;
     Node_symbol_typed node_symbol_typed;
     Node_symbol_untyped node_symbol_untyped;
-    Lang_type lang_type;
     Node_struct_member_sym_piece_untyped memb_sym_piece_untyped;
     Node_struct_member_sym_piece_typed memb_sym_piece_typed;
     Node_ptr_byval_sym node_ptr_byval_sym;

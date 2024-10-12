@@ -2,6 +2,7 @@
 #define PASSES_H
 
 #include "../node.h"
+#include "../do_passes.h"
 
 static inline void insert_into_node_ptr_vec(
     Node_ptr_vec* block_children,
@@ -15,18 +16,18 @@ static inline void insert_into_node_ptr_vec(
     }
 }
 
-bool analysis_1(Node* curr_node, int recursion_depth);
+void analysis_1(Env* env);
 
-bool for_and_if_to_branch(Node* curr_node, int recursion_depth);
+void for_and_if_to_branch(Env* env);
 
-bool flatten_operations(Node* curr_node, int recursion_depth);
+void flatten_operations(Env* env);
 
-bool add_alloca(Node* curr_node, int recursion_depth);
+void add_alloca(Env* env);
 
-bool add_load_and_store(Node* curr_node, int recursion_depth);
+void add_load_and_store(Env* env);
 
-bool change_operators(Node* curr_node, int recursion_depth);
+void change_operators(Env* env);
 
-bool assign_llvm_ids(Node* curr_node, int recursion_depth);
+void assign_llvm_ids(Env* env);
 
 #endif // PASSES_H
