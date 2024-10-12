@@ -123,7 +123,7 @@ void msg_invalid_assignment_to_literal(const Node_symbol_typed* lhs, const Node_
     );
 }
 
-void msg_invalid_assignment_to_operation(const Node* lhs, const Node_binary* operation) {
+void msg_invalid_assignment_to_operation(const Node* lhs, const Node_operator* operation) {
     assert(lhs->type == NODE_SYMBOL_TYPED);
 
     Node* var_def_;
@@ -132,6 +132,6 @@ void msg_invalid_assignment_to_operation(const Node* lhs, const Node_binary* ope
     msg(
         LOG_ERROR, node_wrap(operation)->pos,
         "operation is of type `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
-        lang_type_print(operation->lang_type), lang_type_print(var_def->lang_type)
+        lang_type_print(get_operator_lang_type(operation)), lang_type_print(var_def->lang_type)
     );
 }

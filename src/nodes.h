@@ -40,7 +40,7 @@ static inline void set_left_child(Node* parent, Node* left_child) {
         case NODE_LANG_TYPE:
             unreachable("");
             return;
-        case NODE_BINARY:
+        case NODE_OPERATOR:
             unreachable("");
         case NODE_STRUCT_LITERAL:
             unreachable("");
@@ -97,7 +97,7 @@ static inline void set_left_child(Node* parent, Node* left_child) {
             unreachable("");
             return;
         case NODE_IF_CONDITION:
-            node_unwrap_if_condition(parent)->child = left_child;
+            unreachable("");
             return;
         case NODE_BLOCK:
             unreachable("");
@@ -147,8 +147,6 @@ static inline Node* get_left_child(Node* node) {
             unreachable("");
         case NODE_LANG_TYPE:
             unreachable("");
-        case NODE_BINARY:
-            unreachable("");
         case NODE_STRUCT_LITERAL:
             unreachable("");
         case NODE_LOAD_STRUCT_ELEMENT_PTR:
@@ -186,7 +184,7 @@ static inline Node* get_left_child(Node* node) {
         case NODE_IF_STATEMENT:
             unreachable("");
         case NODE_IF_CONDITION:
-            return node_unwrap_if_condition(node)->child;
+            unreachable("");
         case NODE_BLOCK:
             unreachable("");
         case NODE_STRUCT_MEMBER_SYM_UNTYPED:

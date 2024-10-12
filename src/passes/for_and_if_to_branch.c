@@ -16,20 +16,20 @@ static Node_goto* goto_new(Str_view name_label_to_jmp_to, Pos pos) {
 }
 
 static Node_cond_goto* conditional_goto_new(
-    Node_binary* oper_rtn_sym,
+    Node_operator* operator, // TODO: make better way to pass generic operation to a function
     Str_view label_name_if_true,
     Str_view label_name_if_false
 ) {
-    Node_cond_goto* cond_goto = node_unwrap_cond_goto(node_new(node_wrap(oper_rtn_sym)->pos, NODE_COND_GOTO));
-    cond_goto->node_src = oper_rtn_sym;
-    cond_goto->if_true = symbol_new(label_name_if_true, node_wrap(oper_rtn_sym)->pos);
-    cond_goto->if_false = symbol_new(label_name_if_false, node_wrap(oper_rtn_sym)->pos);
+    Node_cond_goto* cond_goto = node_unwrap_cond_goto(node_new(node_wrap(operator)->pos, NODE_COND_GOTO));
+    cond_goto->node_src = operator;
+    cond_goto->if_true = symbol_new(label_name_if_true, node_wrap(operator)->pos);
+    cond_goto->if_false = symbol_new(label_name_if_false, node_wrap(operator)->pos);
     return cond_goto;
 }
 
 static Node_assignment* for_loop_cond_var_assign_new(Str_view sym_name, Pos pos) {
     Node_literal* literal = literal_new(str_view_from_cstr("1"), TOKEN_NUM_LITERAL, pos);
-    Node_binary* operation = operation_new(node_wrap(symbol_new(sym_name, pos)), node_wrap(literal), TOKEN_SINGLE_PLUS);
+    Node_binary* operation = binary_new(node_wrap(symbol_new(sym_name, pos)), node_wrap(literal), TOKEN_SINGLE_PLUS);
     return assignment_new(node_wrap(symbol_new(sym_name, pos)), node_wrap(operation));
 }
 
@@ -65,7 +65,7 @@ static void change_break_to_goto(Node_block* block, const Node_label* label_to_g
 static Node_block* for_with_condition_to_branch(Node_for_with_condition* for_loop) {
     Node_block* for_block = for_loop->body;
     Node_block* new_branch_block = node_unwrap_block(node_new(node_wrap(for_loop)->pos, NODE_BLOCK));
-    Node_binary* operation = node_unwrap_binary(for_loop->condition->child);
+    Node_operator* operation = node_unwrap_operation(for_loop->condition->child);
 
     Node_label* check_cond_label = label_new(literal_name_new(), node_wrap(for_loop)->pos);
     Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label->name, node_wrap(for_loop)->pos);
@@ -111,7 +111,7 @@ static Node_block* for_range_to_branch(Node_for_range* for_loop) {
 
     Node_assignment* assignment_to_inc_cond_var = for_loop_cond_var_assign_new(for_var_def->name, node_wrap(lhs_actual)->pos);
 
-    Node_binary* new_operation = operation_new(
+    Node_binary* new_operation = binary_new(
         node_wrap(symbol_new(symbol_lhs_assign->name, node_wrap(symbol_lhs_assign)->pos)), rhs_actual, TOKEN_LESS_THAN
     );
 
@@ -125,7 +125,7 @@ static Node_block* for_range_to_branch(Node_for_range* for_loop) {
     Node_llvm_register_sym* oper_rtn_sym = node_unwrap_llvm_register_sym(node_new(node_wrap(new_operation)->pos, NODE_LLVM_REGISTER_SYM));
     oper_rtn_sym->node_src = node_wrap(new_operation);
     Node_cond_goto* check_cond_jmp = conditional_goto_new(
-        new_operation,
+        node_wrap_operator(new_operation),
         after_check_label->name, 
         after_for_loop_label->name
     );
@@ -151,7 +151,7 @@ static Node_block* if_statement_to_branch(Node_if* if_statement) {
     Node_if_condition* if_condition = if_statement->condition;
     Node_block* block = if_statement->body;
 
-    Node_binary* operation = node_unwrap_binary(if_condition->child);
+    Node_operator* operation = node_unwrap_operation(if_condition->child);
 
     Node_label* if_true = label_new(literal_name_new(), node_wrap(block)->pos);
     Node_label* if_after = label_new(literal_name_new(), node_wrap(operation)->pos);

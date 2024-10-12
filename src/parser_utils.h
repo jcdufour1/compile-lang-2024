@@ -26,7 +26,9 @@ Node_literal* literal_new(Str_view value, TOKEN_TYPE token_type, Pos pos);
 
 Node_symbol_untyped* symbol_new(Str_view symbol_name, Pos pos);
 
-Node_binary* operation_new(Node* lhs, Node* rhs, TOKEN_TYPE operation_type);
+Node_binary* binary_new(Node* lhs, Node* rhs, TOKEN_TYPE operation_type);
+
+Node_unary* unary_new(Node* child, TOKEN_TYPE operation_type);
 
 Llvm_id get_matching_fun_param_load_id(const Node* src);
 
@@ -111,10 +113,14 @@ static inline const Node_struct_def* get_struct_definition_const(const Node* nod
 bool set_assignment_operand_types(Node_assignment* assignment);
 
 // returns false if unsuccessful
-bool try_set_operator_lang_type(Node_binary* operator);
+bool try_set_binary_lang_type(Node_binary* operator);
 
 // returns false if unsuccessful
-bool try_set_operator_operand_lang_type(Lang_type* result, Node* operand);
+bool try_set_binary_operand_lang_type(Lang_type* result, Node* operand);
+
+bool try_set_unary_lang_type(Node_unary* unary);
+
+bool try_set_operation_lang_type(Node_operator* operator);
 
 // set symbol lang_type, and report error if symbol is undefined
 void set_symbol_type(Node_symbol_untyped* sym_untyped);
@@ -124,5 +130,7 @@ void set_function_call_types(Node_function_call* fun_call);
 void set_struct_member_symbol_types(Node_struct_member_sym_untyped* struct_memb_sym);
 
 void set_return_statement_types(Node_return_statement* rtn_statement);
+
+Lang_type get_operator_lang_type(const Node_operator* operator);
 
 #endif // PARSER_UTIL_H

@@ -79,6 +79,63 @@ static inline uint32_t operator_precedence(Token token) {
     }
 }
 
+static bool is_unary(TOKEN_TYPE token_type) {
+    switch (token_type) {
+        case TOKEN_NONTYPE:
+            return false;
+        case TOKEN_SINGLE_PLUS:
+            return false;
+        case TOKEN_SINGLE_MINUS:
+            return false;
+        case TOKEN_ASTERISK:
+            return false;
+        case TOKEN_SLASH:
+            return false;
+        case TOKEN_LESS_THAN:
+            return false;
+        case TOKEN_GREATER_THAN:
+            return false;
+        case TOKEN_DOUBLE_EQUAL:
+            return false;
+        case TOKEN_NOT_EQUAL:
+            return false;
+        case TOKEN_NOT:
+            return true;
+        case TOKEN_STRING_LITERAL:
+            return false;
+        case TOKEN_NUM_LITERAL:
+            return false;
+        case TOKEN_SYMBOL:
+            return false;
+        case TOKEN_OPEN_PAR:
+            return false;
+        case TOKEN_CLOSE_PAR:
+            return false;
+        case TOKEN_OPEN_CURLY_BRACE:
+            return false;
+        case TOKEN_CLOSE_CURLY_BRACE:
+            return false;
+        case TOKEN_DOUBLE_QUOTE:
+            return false;
+        case TOKEN_SEMICOLON:
+            return false;
+        case TOKEN_COMMA:
+            return false;
+        case TOKEN_COLON:
+            return false;
+        case TOKEN_SINGLE_EQUAL:
+            return false;
+        case TOKEN_SINGLE_DOT:
+            return false;
+        case TOKEN_DOUBLE_DOT:
+            return false;
+        case TOKEN_TRIPLE_DOT:
+            return false;
+        case TOKEN_COMMENT:
+            return false;
+    }
+}
+
 static bool extract_function_parameter(Node_variable_def** child, Tk_view* tokens) {
     if (tokens->count < 1 || tk_view_front(*tokens).type == TOKEN_CLOSE_PAR) {
         return false;
@@ -514,12 +571,23 @@ static Node* extract_expression_piece(Tk_view* tokens) {
     }
 }
 
-static Node_binary* parser_operation_new(Node* lhs, Token operation_token, Node* rhs) {
-    Node_binary* operation = node_unwrap_binary(node_new(operation_token.pos, NODE_BINARY));
-    operation->token_type = operation_token.type;
-    operation->lhs = lhs;
-    operation->rhs = rhs;
-    return operation;
+static Node_binary* parser_binary_new(Node* lhs, Token operation_token, Node* rhs) {
+    Node_operator* operation = node_unwrap_operation(node_new(operation_token.pos, NODE_OPERATOR));
+    operation->type = NODE_OP_BINARY;
+    Node_binary* binary = node_unwrap_op_binary(operation);
+    binary->token_type = operation_token.type;
+    binary->lhs = lhs;
+    binary->rhs = rhs;
+    return binary;
+}
+
+static Node_unary* parser_unary_new(Token operation_token, Node* child) {
+    Node_operator* operation = node_unwrap_operation(node_new(operation_token.pos, NODE_OPERATOR));
+    operation->type = NODE_OP_UNARY;
+    Node_unary* unary = node_unwrap_op_unary(operation);
+    unary->token_type = operation_token.type;
+    unary->child = child;
+    return unary;
 }
 
 static Node* extract_expression(Tk_view* tokens) {
@@ -528,25 +596,37 @@ static Node* extract_expression(Tk_view* tokens) {
         unreachable("");
     }
 
-    Node* expression = extract_expression_piece(tokens);
+    Node* expression = NULL;
+    if (!is_unary(tk_view_front(*tokens).type)) {
+         expression = extract_expression_piece(tokens);
+    }
     Token prev_operator_token = {0};
     bool is_first_operator = true;
     while (tokens->count > 0 && token_is_operator(tk_view_front(*tokens))) {
         Token operator_token = tk_view_consume(tokens);
-        if (!is_first_operator && expression->type == NODE_BINARY &&
+        if (is_unary(operator_token.type)) {
+            Node* rhs = extract_expression_piece(tokens);
+            Node_unary* operation = parser_unary_new(operator_token, rhs);
+            if (expression) {
+                todo();
+                node_auto_unwrap_op_unary(expression)->child = node_wrap(operation);
+            } else {
+                expression = node_wrap(operation);
+            }
+        } else if (!is_first_operator && node_is_binary(expression) &&
             operator_precedence(prev_operator_token) < operator_precedence(operator_token)
         ) {
             Node* rhs = extract_expression_piece(tokens);
-            Node_binary* operation = parser_operation_new(
-                node_unwrap_binary(expression)->rhs,
+            Node_binary* operation = parser_binary_new(
+                node_auto_unwrap_op_binary(expression)->rhs,
                 operator_token,
                 rhs
             );
-            node_unwrap_binary(expression)->rhs = node_wrap(operation);
+            node_auto_unwrap_op_binary(expression)->rhs = node_wrap(operation);
         } else {
             Node* lhs = expression;
             Node* rhs = extract_expression_piece(tokens);
-            Node_binary* operation = parser_operation_new(lhs, operator_token, rhs);
+            Node_binary* operation = parser_binary_new(lhs, operator_token, rhs);
             expression = node_wrap(operation);
         }
 

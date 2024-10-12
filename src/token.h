@@ -15,7 +15,7 @@ typedef enum {
     // nontype
     TOKEN_NONTYPE,
 
-    // operators
+    // binary operators
     TOKEN_SINGLE_PLUS,
     TOKEN_SINGLE_MINUS,
     TOKEN_ASTERISK,
@@ -24,6 +24,9 @@ typedef enum {
     TOKEN_GREATER_THAN,
     TOKEN_DOUBLE_EQUAL,
     TOKEN_NOT_EQUAL,
+
+    // unary operators
+    TOKEN_NOT,
 
     // literals
     TOKEN_STRING_LITERAL,
@@ -80,6 +83,8 @@ static inline bool token_is_literal(Token token) {
         case TOKEN_SYMBOL:
             // fallthrough
         case TOKEN_SEMICOLON:
+            // fallthrough
+        case TOKEN_NOT:
             return false;
         default:
             unreachable(TOKEN_FMT"\n", token_print(token));
@@ -103,6 +108,8 @@ static inline bool token_is_operator(Token token) {
         case TOKEN_DOUBLE_EQUAL:
             // fallthrough
         case TOKEN_NOT_EQUAL:
+            // fallthrough
+        case TOKEN_NOT:
             return true;
         case TOKEN_NUM_LITERAL:
             // fallthrough
@@ -193,6 +200,8 @@ static inline bool token_is_closing(Token curr_token) {
             return false;
         case TOKEN_NOT_EQUAL:
             return false;
+        case TOKEN_NOT:
+            return false;
         default:
             unreachable("");
     }
@@ -245,6 +254,8 @@ static inline bool token_is_opening(Token curr_token) {
         case TOKEN_GREATER_THAN:
             return false;
         case TOKEN_NOT_EQUAL:
+            return false;
+        case TOKEN_NOT:
             return false;
         default:
             unreachable("");

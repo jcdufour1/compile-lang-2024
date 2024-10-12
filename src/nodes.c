@@ -13,7 +13,8 @@ static const char* NODE_FUNCTION_DEFINITION_DESCRIPTION = "fn_def";
 static const char* NODE_FUNCTION_PARAMETERS_DESCRIPTION = "fn_params";
 static const char* NODE_FUNCTION_RETURN_TYPES_DESCRIPTION = "fn_return_types";
 static const char* NODE_LANG_TYPE_DESCRIPTION = "lang_type";
-static const char* NODE_BINARY_DESCRIPTION = "operator";
+static const char* NODE_BINARY_DESCRIPTION = "binary";
+static const char* NODE_UNARY_DESCRIPTION = "unary";
 static const char* NODE_BLOCK_DESCRIPTION = "block";
 static const char* NODE_SYMBOL_UNTYPED_DESCRIPTION = "sym_untyped";
 static const char* NODE_SYMBOL_TYPED_DESCRIPTION= "sym_typed";
@@ -99,8 +100,8 @@ void nodes_log_tree_internal(LOG_LEVEL log_level, const Node* root, const char* 
     walk_tree((Node*)root, 0, log_node_in_tree_internal);
 }
 
-static Str_view node_type_get_strv(NODE_TYPE node_type) {
-    switch (node_type) {
+static Str_view node_type_get_strv(const Node* node) {
+    switch (node->type) {
         case NODE_LITERAL:
             return str_view_from_cstr(NODE_LITERAL_DESCRIPTION);
         case NODE_FUNCTION_CALL:
@@ -113,8 +114,17 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
             return str_view_from_cstr(NODE_FUNCTION_RETURN_TYPES_DESCRIPTION);
         case NODE_LANG_TYPE:
             return str_view_from_cstr(NODE_LANG_TYPE_DESCRIPTION);
-        case NODE_BINARY:
-            return str_view_from_cstr(NODE_BINARY_DESCRIPTION);
+        case NODE_OPERATOR: {
+            const Node_operator* operator = node_unwrap_operation_const(node);
+            if (operator->type == NODE_OP_UNARY) {
+                return str_view_from_cstr(NODE_UNARY_DESCRIPTION);
+            } else if (operator->type == NODE_OP_BINARY) {
+                return str_view_from_cstr(NODE_BINARY_DESCRIPTION);
+            } else {
+                unreachable("");
+            }
+        }
+        break;
         case NODE_BLOCK:
             return str_view_from_cstr(NODE_BLOCK_DESCRIPTION);
         case NODE_SYMBOL_UNTYPED:
@@ -180,7 +190,7 @@ static Str_view node_type_get_strv(NODE_TYPE node_type) {
         case NODE_NO_TYPE:
             return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
         default:
-            log(LOG_FETAL, "node_type: %d\n", node_type);
+            log(LOG_FETAL, "node->type: %d\n", node->type);
             todo();
     }
 }
@@ -203,7 +213,7 @@ static void print_node_src(Arena* arena, String* string, const Node* node, bool 
 }
 
 static void extend_node_text(Arena* arena, String* string, const Node* node, bool do_recursion) {
-    string_extend_strv(arena, string, node_type_get_strv(node->type));
+    string_extend_strv(arena, string, node_type_get_strv(node));
 
     switch (node->type) {
         case NODE_ALLOCA:
@@ -240,9 +250,17 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
         case NODE_LANG_TYPE:
             extend_lang_type_to_string(arena, string, node_unwrap_lang_type_const(node)->lang_type, true);
             break;
-        case NODE_BINARY:
-            string_extend_strv(arena, string, token_type_to_str_view(node_unwrap_binary_const(node)->token_type));
-            break;
+        case NODE_OPERATOR: {
+            const Node_operator* operator = node_unwrap_operation_const(node);
+            if (operator->type == NODE_OP_UNARY) {
+                string_extend_strv(arena, string, token_type_to_str_view(node_unwrap_op_unary_const(operator)->token_type));
+            } else if (operator->type == NODE_OP_BINARY) {
+                string_extend_strv(arena, string, token_type_to_str_view(node_unwrap_op_binary_const(operator)->token_type));
+            } else {
+                unreachable("");
+            }
+        }
+        break;
         case NODE_VARIABLE_DEFINITION:
             extend_lang_type_to_string(arena, string, node_unwrap_variable_def_const(node)->lang_type, true);
             string_extend_strv(arena, string, get_node_name(node));
@@ -324,7 +342,7 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             print_node_src(arena, string, node, do_recursion);
             break;
         default:
-            log(LOG_FETAL, "type: "STR_VIEW_FMT"\n", str_view_print(node_type_get_strv(node->type)));
+            log(LOG_FETAL, "type: "STR_VIEW_FMT"\n", str_view_print(node_type_get_strv(node)));
             unreachable("");
     }
 

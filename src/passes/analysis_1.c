@@ -10,19 +10,27 @@ static void set_if_condition_types(Node_if_condition* if_cond) {
     switch (old_if_cond_child->type) {
         case NODE_SYMBOL_UNTYPED:
             set_symbol_type(node_unwrap_symbol_untyped(old_if_cond_child));
-            if_cond->child = node_wrap(operation_new(
+            if_cond->child = node_wrap(binary_new(
                 old_if_cond_child,
                 node_wrap(literal_new(str_view_from_cstr("1"), TOKEN_NUM_LITERAL, old_if_cond_child->pos)),
                 TOKEN_DOUBLE_EQUAL
             ));
             break;
-        case NODE_BINARY: {
-            try_set_operator_lang_type(node_unwrap_binary(old_if_cond_child));
-            break;
+        case NODE_OPERATOR: {
+            Node_operator* operator = node_unwrap_operation(old_if_cond_child);
+            if (operator->type == NODE_OP_UNARY) {
+                try_set_unary_lang_type(node_unwrap_op_unary(operator));
+            } else if (operator->type == NODE_OP_BINARY) {
+                try_set_binary_lang_type(node_unwrap_op_binary(operator));
+            } else {
+                unreachable("");
+            }
         }
+        break;
         case NODE_FUNCTION_CALL: {
+            log(LOG_DEBUG, NODE_FMT"\n", node_print(old_if_cond_child));
             set_function_call_types(node_unwrap_function_call(old_if_cond_child));
-            if_cond->child = node_wrap(operation_new(
+            if_cond->child = node_wrap(binary_new(
                 old_if_cond_child,
                 node_wrap(literal_new(str_view_from_cstr("0"), TOKEN_NUM_LITERAL, node_wrap(old_if_cond_child)->pos)),
                 TOKEN_NOT_EQUAL
@@ -30,7 +38,7 @@ static void set_if_condition_types(Node_if_condition* if_cond) {
             break;
         }
         case NODE_LITERAL: {
-            if_cond->child = node_wrap(operation_new(
+            if_cond->child = node_wrap(binary_new(
                 old_if_cond_child,
                 node_wrap(literal_new(str_view_from_cstr("1"), TOKEN_NUM_LITERAL, old_if_cond_child->pos)),
                 TOKEN_DOUBLE_EQUAL
@@ -69,7 +77,7 @@ bool analysis_1(Node* block_, int recursion_depth) {
             case NODE_RETURN_STATEMENT:
                 set_return_statement_types(node_unwrap_return_statement(curr_node));
                 break;
-            case NODE_BINARY:
+            case NODE_OPERATOR:
                 todo();
                 break;
             case NODE_IF_STATEMENT:

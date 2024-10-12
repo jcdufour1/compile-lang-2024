@@ -206,7 +206,13 @@ static void emit_alloca(String* output, const Node_alloca* alloca) {
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_operator_type(String* output, const Node_binary* operator) {
+static void emit_unary_type(String* output, const Node_unary* operator) {
+    (void) output;
+    (void) operator;
+    todo();
+}
+
+static void emit_binary_type(String* output, const Node_binary* operator) {
     // TODO: do signed and unsigned operations correctly
     switch (operator->token_type) {
         case TOKEN_SINGLE_MINUS:
@@ -238,6 +244,16 @@ static void emit_operator_type(String* output, const Node_binary* operator) {
     }
 }
 
+static void emit_operator_type(String* output, const Node_operator* operator) {
+    if (operator->type == NODE_OP_UNARY) {
+        emit_unary_type(output, node_unwrap_op_unary_const(operator));
+    } else if (operator->type == NODE_OP_BINARY) {
+        emit_binary_type(output, node_unwrap_op_binary_const(operator));
+    } else {
+        unreachable("");
+    }
+}
+
 static void emit_operator_operand(String* output, const Node* operand) {
     switch (operand->type) {
         case NODE_LITERAL:
@@ -256,15 +272,22 @@ static void emit_operator_operand(String* output, const Node* operand) {
     }
 }
 
-static void emit_operator(String* output, const Node_binary* operator) {
+static void emit_operator(String* output, const Node_operator* operator) {
     string_extend_cstr(&a_main, output, "    %");
-    string_extend_size_t(&a_main, output, operator->llvm_id);
+    string_extend_size_t(&a_main, output, get_llvm_id(node_wrap(operator)));
     string_extend_cstr(&a_main, output, " = ");
     emit_operator_type(output, operator);
 
-    emit_operator_operand(output, operator->lhs);
-    string_extend_cstr(&a_main, output, ", ");
-    emit_operator_operand(output, operator->rhs);
+    if (operator->type == NODE_OP_UNARY) {
+        todo();
+    } else if (operator->type == NODE_OP_BINARY) {
+        const Node_binary* binary = node_unwrap_op_binary_const(operator);
+        emit_operator_operand(output, binary->lhs);
+        string_extend_cstr(&a_main, output, ", ");
+        emit_operator_operand(output, binary->rhs);
+    } else {
+        unreachable("");
+    }
 
     string_extend_cstr(&a_main, output, "\n");
 }
@@ -397,7 +420,7 @@ static void emit_goto(String* output, const Node_goto* lang_goto) {
 
 static void emit_cond_goto(String* output, const Node_cond_goto* cond_goto) {
     string_extend_cstr(&a_main, output, "    br i1 %");
-    string_extend_size_t(&a_main, output, cond_goto->node_src->llvm_id);
+    string_extend_size_t(&a_main, output, get_llvm_id(node_wrap(cond_goto->node_src)));
     string_extend_cstr(&a_main, output, ", label %");
     string_extend_size_t(&a_main, output, get_matching_label_id(cond_goto->if_true->name));
     string_extend_cstr(&a_main, output, ", label %");
@@ -482,8 +505,8 @@ static void emit_block(String* output, const Node_block* block) {
             case NODE_STRUCT_DEFINITION:
                 emit_struct_definition(output, node_unwrap_struct_def_const(statement));
                 break;
-            case NODE_BINARY:
-                emit_operator(output, node_unwrap_binary_const(statement));
+            case NODE_OPERATOR:
+                emit_operator(output, node_unwrap_operation_const(statement));
                 break;
             case NODE_LOAD_STRUCT_ELEMENT_PTR:
                 emit_load_struct_element_pointer(output, node_unwrap_load_elem_ptr_const(statement));

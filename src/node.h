@@ -25,7 +25,7 @@ typedef enum {
     NODE_FUNCTION_CALL,
     NODE_LITERAL,
     NODE_LANG_TYPE,
-    NODE_BINARY,
+    NODE_OPERATOR,
     NODE_SYMBOL_UNTYPED,
     NODE_SYMBOL_TYPED,
     NODE_RETURN_STATEMENT,
@@ -109,12 +109,34 @@ typedef struct {
 } Node_lang_type;
 
 typedef struct {
+    struct Node_* child;
+    TOKEN_TYPE token_type;
+    Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
+    Llvm_id llvm_id;
+} Node_unary;
+
+typedef struct {
     struct Node_* lhs;
     struct Node_* rhs;
     TOKEN_TYPE token_type;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Llvm_id llvm_id;
 } Node_binary;
+
+typedef union {
+    Node_unary unary;
+    Node_binary binary;
+} Node_operator_as;
+
+typedef enum {
+    NODE_OP_UNARY,
+    NODE_OP_BINARY,
+} NODE_OPERATOR_TYPE;
+
+typedef struct {
+    Node_operator_as as;
+    NODE_OPERATOR_TYPE type;
+} Node_operator;
 
 typedef struct {
     Node_ptr_vec members;
@@ -262,7 +284,7 @@ typedef struct {
 } Node_goto;
 
 typedef struct {
-    Node_binary* node_src;
+    Node_operator* node_src;
     Node_symbol_untyped* if_true;
     Node_symbol_untyped* if_false;
     Llvm_id llvm_id;
@@ -308,7 +330,6 @@ typedef union {
     Node_struct_member_sym_piece_untyped node_struct_member_sym_piece_untyped;
     Node_variable_def node_variable_def;
     Node_struct_literal node_struct_literal;
-    Node_binary node_binary;
     Node_lang_type node_lang_type;
     Node_function_params node_function_params;
     Node_function_call node_function_call;
@@ -323,6 +344,7 @@ typedef union {
     Node_ptr_byval_sym node_ptr_byval_sym;
     Node_llvm_register_sym node_llvm_register_sym;
     Node_for_with_condition node_for_with_condition;
+    Node_operator node_operator;
 } Node_as;
 
 typedef struct Node_ {
@@ -391,14 +413,58 @@ static inline const Node_lang_type* node_unwrap_lang_type_const(const Node* node
     return &node->as.node_lang_type;
 }
 
-static inline Node_binary* node_unwrap_binary(Node* node) {
-    assert(node->type == NODE_BINARY);
-    return &node->as.node_binary;
+static inline Node_operator* node_unwrap_operation(Node* node) {
+    assert(node->type == NODE_OPERATOR);
+    return &node->as.node_operator;
 }
 
-static inline const Node_binary* node_unwrap_binary_const(const Node* node) {
-    assert(node->type == NODE_BINARY);
-    return &node->as.node_binary;
+static inline const Node_operator* node_unwrap_operation_const(const Node* node) {
+    assert(node->type == NODE_OPERATOR);
+    return &node->as.node_operator;
+}
+
+static inline Node_binary* node_auto_unwrap_op_binary(Node* node) {
+    Node_operator* operator = node_unwrap_operation(node);
+    assert(operator->type == NODE_OP_BINARY);
+    return &operator->as.binary;
+}
+
+static inline const Node_binary* node_auto_unwrap_op_binary_const(const Node* node) {
+    const Node_operator* operator = node_unwrap_operation_const(node);
+    assert(operator->type == NODE_OP_BINARY);
+    return &operator->as.binary;
+}
+
+static inline Node_unary* node_auto_unwrap_op_unary(Node* node) {
+    Node_operator* operator = node_unwrap_operation(node);
+    assert(operator->type == NODE_OP_UNARY);
+    return &operator->as.unary;
+}
+
+static inline const Node_unary* node_auto_unwrap_op_unary_const(const Node* node) {
+    const Node_operator* operator = node_unwrap_operation_const(node);
+    assert(operator->type == NODE_OP_UNARY);
+    return &operator->as.unary;
+}
+
+static inline Node_binary* node_unwrap_op_binary(Node_operator* node) {
+    assert(node->type == NODE_OP_BINARY);
+    return &node->as.binary;
+}
+
+static inline const Node_binary* node_unwrap_op_binary_const(const Node_operator* node) {
+    assert(node->type == NODE_OP_BINARY);
+    return &node->as.binary;
+}
+
+static inline Node_unary* node_unwrap_op_unary(Node_operator* node) {
+    assert(node->type == NODE_OP_UNARY);
+    return &node->as.unary;
+}
+
+static inline const Node_unary* node_unwrap_op_unary_const(const Node_operator* node) {
+    assert(node->type == NODE_OP_UNARY);
+    return &node->as.unary;
 }
 
 static inline Node_struct_literal* node_unwrap_struct_literal(Node* node) {
@@ -711,7 +777,25 @@ static inline const Node_llvm_register_sym* node_unwrap_llvm_register_sym_const(
     return &node->as.node_llvm_register_sym;
 }
 
-#define node_wrap(node) ((Node*)node)
+static inline bool node_is_binary(const Node* node) {
+    if (node->type != NODE_OPERATOR) {
+        return false;
+    }
+    const Node_operator* operator = node_unwrap_operation_const(node);
+    return operator->type == NODE_OP_BINARY;
+}
+
+static inline bool node_is_unary(const Node* node) {
+    if (node->type != NODE_OPERATOR) {
+        return false;
+    }
+    const Node_operator* operator = node_unwrap_operation_const(node);
+    return operator->type == NODE_OP_UNARY;
+}
+
+#define node_wrap_operator(operator) ((Node_operator*)(operator))
+
+#define node_wrap(node) ((Node*)(node))
 
 #define node_wrap_const(node) ((const Node*)node)
 

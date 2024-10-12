@@ -31,8 +31,17 @@ static inline Llvm_id get_llvm_id(const Node* node) {
             unreachable("");
         case NODE_LANG_TYPE:
             unreachable("");
-        case NODE_BINARY:
-            return node_unwrap_binary_const(node)->llvm_id;
+        case NODE_OPERATOR: {
+            const Node_operator* operator = node_unwrap_operation_const(node);
+            if (operator->type == NODE_OP_UNARY) {
+                return node_unwrap_op_unary_const(operator)->llvm_id;
+            } else if (operator->type == NODE_OP_BINARY) {
+                return node_unwrap_op_binary_const(operator)->llvm_id;
+            } else {
+                unreachable("");
+            }
+        }
+        break;
         case NODE_SYMBOL_UNTYPED:
             unreachable("");
         case NODE_SYMBOL_TYPED:
@@ -112,8 +121,6 @@ static inline Lang_type get_lang_type(const Node* node) {
             return node_unwrap_literal_const(node)->lang_type;
         case NODE_LANG_TYPE:
             return node_unwrap_lang_type_const(node)->lang_type;
-        case NODE_BINARY:
-            unreachable("");
         case NODE_SYMBOL_UNTYPED:
             unreachable("");
         case NODE_SYMBOL_TYPED:
@@ -196,8 +203,6 @@ static inline Node* get_node_src(Node* node) {
         case NODE_LITERAL:
             unreachable("");
         case NODE_LANG_TYPE:
-            unreachable("");
-        case NODE_BINARY:
             unreachable("");
         case NODE_SYMBOL_UNTYPED:
             unreachable("");
@@ -282,8 +287,6 @@ static inline Node* get_node_dest(Node* node) {
             unreachable("");
         case NODE_LANG_TYPE:
             unreachable("");
-        case NODE_BINARY:
-            unreachable("");
         case NODE_SYMBOL_UNTYPED:
             unreachable("");
         case NODE_SYMBOL_TYPED:
@@ -365,8 +368,6 @@ static inline Str_view get_node_name(const Node* node) {
         case NODE_LITERAL:
             return node_unwrap_literal_const(node)->name;
         case NODE_LANG_TYPE:
-            unreachable("");
-        case NODE_BINARY:
             unreachable("");
         case NODE_SYMBOL_UNTYPED:
             return node_unwrap_symbol_untyped_const(node)->name;

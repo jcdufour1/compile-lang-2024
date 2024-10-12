@@ -109,7 +109,8 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text, 
             token->type = TOKEN_NOT_EQUAL;
             return true;
         }
-        todo(); // bitwise operations not implemented
+        token->type = TOKEN_NOT;
+        return true;
     } else if (str_view_front(*file_text) == '=') {
         Str_view equals = str_view_consume_while(file_text, is_equal);
         if (equals.count == 1) {

@@ -54,6 +54,8 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
             return str_view_from_cstr("comment");
         case TOKEN_NOT_EQUAL:
             return str_view_from_cstr("!=");
+        case TOKEN_NOT:
+            return str_view_from_cstr("!");
         default:
             unreachable("%d\n", token_type);
     }
@@ -94,6 +96,7 @@ Str_view token_print_internal(Arena* arena, Token token) {
         case TOKEN_LESS_THAN: // fallthrough
         case TOKEN_GREATER_THAN: // fallthrough
         case TOKEN_NOT_EQUAL: // fallthrough
+        case TOKEN_NOT: // fallthrough
             break;
         case TOKEN_COMMENT: 
             // fallthrough

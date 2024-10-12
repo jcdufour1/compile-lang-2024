@@ -31,10 +31,18 @@ void walk_tree(
             walk_tree(node_wrap(node_unwrap_assignment(input_node)->lhs), recursion_depth + 1, callback);
             walk_tree(node_wrap(node_unwrap_assignment(input_node)->rhs), recursion_depth + 1, callback);
             break;
-        case NODE_BINARY:
-            walk_tree(node_wrap(node_unwrap_binary(input_node)->lhs), recursion_depth + 1, callback);
-            walk_tree(node_wrap(node_unwrap_binary(input_node)->rhs), recursion_depth + 1, callback);
-            break;
+        case NODE_OPERATOR: {
+            Node_operator* operator = node_unwrap_operation(input_node);
+            if (operator->type == NODE_OP_UNARY) {
+                walk_tree(node_wrap(node_unwrap_op_unary(operator)->child), recursion_depth + 1, callback);
+            } else if (operator->type == NODE_OP_BINARY) {
+                walk_tree(node_wrap(node_unwrap_op_binary(operator)->lhs), recursion_depth + 1, callback);
+                walk_tree(node_wrap(node_unwrap_op_binary(operator)->rhs), recursion_depth + 1, callback);
+            } else {
+                unreachable("");
+            }
+        }
+        break;
         case NODE_SYMBOL_TYPED:
             break;
         case NODE_SYMBOL_UNTYPED:
