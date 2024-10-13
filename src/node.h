@@ -275,7 +275,6 @@ typedef struct {
     struct Node_* node_dest;
     Llvm_id llvm_id;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
-    Str_view name;
 } Node_llvm_store_literal;
 
 typedef struct {

@@ -412,9 +412,13 @@ static inline Str_view get_node_name(const Node* node) {
         case NODE_LOAD_STRUCT_ELEMENT_PTR:
             return node_unwrap_load_elem_ptr_const(node)->name;
         case NODE_LLVM_STORE_LITERAL:
-            return node_unwrap_llvm_store_literal_const(node)->name;
-        default:
-            unreachable("");  // we cannot print node_type because it will cause infinite recursion
+            unreachable("");
+        case NODE_LLVM_REGISTER_SYM:
+            unreachable("");
+        case NODE_OPERATOR:
+            unreachable("");
+        case NODE_PTR_BYVAL_SYM:
+            unreachable("");
     }
 }
 

@@ -21,7 +21,8 @@ static void do_change_operator(Node_operator* operator) {
                 break;
             }
             default:
-                unreachable(TOKEN_TYPE_FMT"\n", token_type_print(unary->token_type));
+                break;
+                //unreachable(TOKEN_TYPE_FMT"\n", token_type_print(unary->token_type));
         }
     } else if (operator->type == NODE_OP_BINARY) {
         return;

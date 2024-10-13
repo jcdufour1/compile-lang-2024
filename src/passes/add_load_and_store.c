@@ -8,8 +8,7 @@
 static Node* get_store_assignment(
     Node_ptr_vec* block_children,
     size_t* idx_to_insert_before,
-    Node_assignment* assignment,
-    bool is_for_struct_literal_member
+    Node_assignment* assignment
 );
 
 static void do_struct_literal(
@@ -25,8 +24,7 @@ static void do_struct_literal(
                 *curr_memb = get_store_assignment(
                     block_children,
                     idx_to_insert_before,
-                    node_unwrap_assignment(*curr_memb),
-                    true
+                    node_unwrap_assignment(*curr_memb)
                 );
                 break;
             case NODE_LITERAL:
@@ -271,21 +269,45 @@ static Node_llvm_register_sym* move_operator_back(
 static Node* get_store_assignment(
     Node_ptr_vec* block_children,
     size_t* idx_to_insert_before,
-    Node_assignment* assignment,
-    bool is_for_struct_literal_member
+    Node_assignment* assignment
 ) {
     Node* lhs = assignment->lhs;
     Node* rhs = assignment->rhs;
-    Node* rhs_load = NULL;
+    Node* store_dest = NULL;
+    Node* store_src = NULL;
+    Lang_type lhs_load_lang_type = {0};
     Lang_type rhs_load_lang_type = {0};
 
     switch (lhs->type) {
         case NODE_VARIABLE_DEFINITION:
+            store_dest = get_storage_location(get_node_name(lhs));
+            lhs_load_lang_type = node_unwrap_variable_def(lhs)->lang_type;
             break;
         case NODE_SYMBOL_TYPED:
+            store_dest = get_storage_location(get_node_name(lhs));
+            lhs_load_lang_type = node_unwrap_symbol_typed(lhs)->lang_type;
             break;
-        case NODE_STRUCT_MEMBER_SYM_TYPED:
+        case NODE_STRUCT_MEMBER_SYM_TYPED: {
+            store_dest = node_wrap(do_load_struct_element_ptr(
+                block_children,
+                idx_to_insert_before,
+                node_unwrap_struct_member_sym_typed(lhs)
+            ));
+            lhs_load_lang_type = get_member_sym_piece_final_lang_type(
+                node_unwrap_struct_member_sym_typed(lhs)
+            );
             break;
+        }
+        case NODE_OPERATOR: {
+            Node_operator* operator = node_unwrap_operation(lhs);
+            Node_unary* unary = node_unwrap_op_unary(operator);
+            if (unary->token_type != TOKEN_DEREF) {
+                todo();
+            }
+            store_dest = node_wrap(insert_load(block_children, idx_to_insert_before, unary->child));
+            lhs_load_lang_type = unary->lang_type;
+            break;
+        }
         default:
             unreachable(NODE_FMT, node_print(lhs));
     }
@@ -296,29 +318,31 @@ static Node* get_store_assignment(
             break;
         case NODE_STRUCT_LITERAL:
             do_struct_literal(block_children, idx_to_insert_before, node_unwrap_struct_literal(rhs));
-            //rhs_load = insert_load(node_to_insert_before, rhs);
-            //assert(rhs_load->lang_type.count > 0);
+            //store_src = insert_load(node_to_insert_before, rhs);
+            //assert(store_src->lang_type.count > 0);
             rhs_load_lang_type = node_unwrap_struct_literal(rhs)->lang_type;
             assert(rhs_load_lang_type.str.count > 0);
             break;
         case NODE_SYMBOL_TYPED:
-            rhs_load = node_wrap(insert_load(block_children, idx_to_insert_before, rhs));
-            assert(rhs_load);
+            store_src = node_wrap(insert_load(block_children, idx_to_insert_before, rhs));
+            assert(store_src);
             rhs_load_lang_type = node_unwrap_llvm_register_sym(rhs)->lang_type;
             break;
         case NODE_LITERAL:
             rhs_load_lang_type = node_unwrap_literal(rhs)->lang_type;
             break;
         case NODE_LLVM_REGISTER_SYM:
-            rhs_load = node_unwrap_llvm_register_sym(rhs)->node_src;
+            store_src = node_unwrap_llvm_register_sym(rhs)->node_src;
             rhs_load_lang_type = node_unwrap_llvm_register_sym(rhs)->lang_type;
             break;
-        case NODE_OPERATOR:
-            rhs_load = node_wrap(move_operator_back(block_children, idx_to_insert_before, node_unwrap_operation(rhs)));
-            rhs_load_lang_type = node_unwrap_llvm_register_sym(rhs_load)->lang_type;
+        case NODE_OPERATOR: {
+            Node_llvm_register_sym* store_src_ = move_operator_back(block_children, idx_to_insert_before, node_unwrap_operation(rhs));
+            store_src = node_wrap(store_src_->node_src);
+            rhs_load_lang_type = store_src_->lang_type;
             break;
+        }
         case NODE_FUNCTION_CALL:
-            rhs_load = rhs;
+            store_src = rhs;
             insert_into_node_ptr_vec(
                 block_children,
                 idx_to_insert_before,
@@ -336,8 +360,8 @@ static Node* get_store_assignment(
                 }
             }
             Node_lang_type* function_rtn_type = fun_decl->return_types->child;
-            node_unwrap_function_call(rhs_load)->lang_type = function_rtn_type->lang_type;
-            assert(rhs_load);
+            node_unwrap_function_call(store_src)->lang_type = function_rtn_type->lang_type;
+            assert(store_src);
             rhs_load_lang_type = node_unwrap_function_call(rhs)->lang_type;
             break;
         default:
@@ -345,77 +369,28 @@ static Node* get_store_assignment(
             todo();
     }
 
-    if (is_for_struct_literal_member) {
-        unreachable("");
-        //Node_store_variable* store = node_unwrap_store_variable(node_new(lhs->pos, NODE_STORE_VARIABLE));
-        //store->name = get_node_name(lhs);
-        //nodes_remove(rhs, true);
-        //nodes_append_child(node_wrap(store), rhs);
-        //nodes_insert_before(node_to_insert_before, node_wrap(store));
-    } else if (lhs->type == NODE_STRUCT_MEMBER_SYM_TYPED) {
-        if (rhs->type == NODE_STRUCT_LITERAL) {
-            todo();
-        }
-
-        Node* generic_store;
-        if (rhs->type == NODE_LITERAL) {
-            Node_llvm_store_literal* store = node_unwrap_llvm_store_literal(node_new(lhs->pos, NODE_LLVM_STORE_LITERAL));
-            Node_load_element_ptr* store_element_ptr = do_load_struct_element_ptr(
-                block_children,
-                idx_to_insert_before,
-                node_unwrap_struct_member_sym_typed(lhs)
-            );
-            store->child = node_unwrap_literal(rhs);
-            store->node_dest = node_wrap(store_element_ptr);
-            store->lang_type = store_element_ptr->lang_type;
-            generic_store = node_wrap(store);
-        } else {
-            Node_store_another_node* store = node_unwrap_store_another_node(node_new(lhs->pos, NODE_STORE_ANOTHER_NODE));
-            Node_load_element_ptr* store_element_ptr = do_load_struct_element_ptr(
-                block_children,
-                idx_to_insert_before,
-                node_unwrap_struct_member_sym_typed(lhs)
-            );
-            store->node_src = rhs_load;
-            assert(store->node_src);
-            store->node_dest = node_wrap(store_element_ptr);
-            store->lang_type = store_element_ptr->lang_type;
-            generic_store = node_wrap(store);
-        }
-        //nodes_remove(rhs, true);
-        return generic_store;
+    if (rhs->type == NODE_LITERAL) {
+        Node_llvm_store_literal* store = node_unwrap_llvm_store_literal(node_new(rhs->pos, NODE_LLVM_STORE_LITERAL));
+        store->node_dest = store_dest;
+        store->lang_type = lhs_load_lang_type;
+        assert(store->lang_type.str.count > 0);
+        store->child = node_unwrap_literal(rhs);
+        return node_wrap(store);
+    } else if (rhs->type == NODE_STRUCT_LITERAL) {
+        Node_llvm_store_struct_literal* store = node_unwrap_llvm_store_struct_literal(node_new(lhs->pos, NODE_LLVM_STORE_STRUCT_LITERAL));
+        store->child = node_unwrap_struct_literal(rhs);
+        store->node_dest = store_dest;
+        return node_wrap(store);
     } else {
-        if (rhs->type == NODE_LITERAL) {
-            Node_llvm_store_literal* store = node_unwrap_llvm_store_literal(node_new(rhs->pos, NODE_LLVM_STORE_LITERAL));
-            store->name = get_node_name(lhs);
-            store->node_dest = get_storage_location(store->name);
-            store->lang_type = node_unwrap_literal(rhs)->lang_type;
-            assert(store->lang_type.str.count > 0);
-            //assert(store->lang_type.count > 0); // TODO: actually check for this
-            store->child = node_unwrap_literal(rhs);
-            return node_wrap(store);
-        } else if (rhs->type == NODE_STRUCT_LITERAL) {
-            Node_llvm_store_struct_literal* store = node_unwrap_llvm_store_struct_literal(node_new(lhs->pos, NODE_LLVM_STORE_STRUCT_LITERAL));
-            store->child = node_unwrap_struct_literal(rhs);
-            store->node_dest = get_storage_location(get_node_name(lhs));
-            return node_wrap(store);
-        } else {
-            Node_store_another_node* store = node_unwrap_store_another_node(node_new(lhs->pos, NODE_STORE_ANOTHER_NODE));
-            store->node_dest = get_storage_location(get_node_name(lhs));
-            if (rhs_load->type == NODE_LLVM_REGISTER_SYM) {
-                store->node_src = node_unwrap_llvm_register_sym(rhs_load)->node_src;
-            } else {
-                store->node_src = rhs_load;
-            }
-            if (rhs->type == NODE_STRUCT_LITERAL) {
-                unreachable("");
-            }
-            store->lang_type = rhs_load_lang_type;
-            assert(store->lang_type.str.count > 0);
-            //assert(store->lang_type.count > 0); // TODO: actually check for this
-            //nodes_remove(rhs, true);
-            return node_wrap(store);
+        Node_store_another_node* store = node_unwrap_store_another_node(node_new(lhs->pos, NODE_STORE_ANOTHER_NODE));
+        store->node_dest = store_dest;
+        store->node_src = store_src;
+        if (rhs->type == NODE_STRUCT_LITERAL) {
+            unreachable("");
         }
+        store->lang_type = rhs_load_lang_type;
+        assert(store->lang_type.str.count > 0);
+        return node_wrap(store);
     }
 }
 
@@ -592,8 +567,7 @@ bool add_load_and_store(Node* start_start_node, int recursion_depth) {
                 Node* thing = get_store_assignment(
                     &block->children,
                     &idx,
-                    node_unwrap_assignment(curr_node),
-                    false
+                    node_unwrap_assignment(curr_node)
                 );
                 *node_ptr_vec_at_ref(&block->children, idx) = thing;
                 break;

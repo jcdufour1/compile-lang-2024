@@ -47,10 +47,12 @@ static size_t get_count_excape_seq(Str_view str_view) {
 
 static void extend_type_call_str(String* output, Lang_type lang_type) {
     assert(lang_type.str.count > 0);
-    Node* struct_def;
     if (lang_type.pointer_depth != 0) {
-        todo();
+        string_extend_cstr(&a_main, output, "ptr");
+        return;
     }
+
+    Node* struct_def;
     if (sym_tbl_lookup(&struct_def, lang_type.str)) {
         string_extend_cstr(&a_main, output, "%struct.");
     }
