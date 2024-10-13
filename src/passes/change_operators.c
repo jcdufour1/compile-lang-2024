@@ -13,11 +13,11 @@ static void do_change_operator(Node_operator* operator) {
                 Node_binary* binary = node_unwrap_op_binary(operator);
                 binary->lhs = temp.child;
                 binary->rhs = node_wrap(literal_new(
-                    str_view_from_cstr("4294967295"),
+                    str_view_from_cstr("0"),
                     TOKEN_NUM_LITERAL,
                     pos
                 ));
-                binary->token_type = TOKEN_XOR;
+                binary->token_type = TOKEN_DOUBLE_EQUAL;
                 break;
             }
             default:
@@ -29,7 +29,6 @@ static void do_change_operator(Node_operator* operator) {
         unreachable("");
     }
 }
-
 
 bool change_operators(Node* curr_node, int recursion_depth) {
     log_tree(LOG_DEBUG, curr_node);

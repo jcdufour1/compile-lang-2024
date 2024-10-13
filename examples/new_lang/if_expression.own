@@ -68,5 +68,12 @@ fn main() i32 {
     if !num_yes {
         puts("no7");
     }
+
+    if !no() {
+        puts("yes8");
+    }
+    if !yes() {
+        puts("no8");
+    }
     return 0
 }
