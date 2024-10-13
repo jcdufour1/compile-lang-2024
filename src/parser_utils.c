@@ -302,6 +302,18 @@ bool try_set_unary_lang_type(Lang_type* lang_type, Node_unary* unary) {
     if (!try_set_node_type(&unary->lang_type, unary->child)) {
         return false;
     }
+
+    switch (unary->token_type) {
+        case TOKEN_NOT:
+            break;
+        case TOKEN_DEREF:
+            assert(unary->lang_type.pointer_depth > 0);
+            unary->lang_type.pointer_depth--;
+            break;
+        default:
+            unreachable("");
+    }
+
     *lang_type = unary->lang_type;
     return true;
 }
@@ -388,6 +400,8 @@ bool try_set_assignment_operand_types(Lang_type* lang_type, Node_assignment* ass
             return false;
         }
     }
+    log_tree(LOG_DEBUG, lhs);
+    log_tree(LOG_DEBUG, rhs);
     if (!lang_type_is_equal(lhs_lang_type, rhs_lang_type)) {
         todo();
     }
@@ -420,8 +434,6 @@ bool try_set_assignment_operand_types(Lang_type* lang_type, Node_assignment* ass
         case NODE_OPERATOR:
             break;
         case NODE_FUNCTION_CALL:
-            break;
-        case NODE_DEREF_UNTYPED:
             break;
         default:
             unreachable("rhs: "NODE_FMT"\n", node_print(rhs));
@@ -564,19 +576,6 @@ static bool try_set_if_condition_types(Lang_type* lang_type, Node_if_condition* 
     return false;
 }
 
-static bool try_set_deref_types(Lang_type* lang_type, Node_deref_untyped* deref_untyped) {
-    if (!try_set_node_type(lang_type, deref_untyped->child)) {
-        return false;
-    }
-
-    Node_deref_untyped temp = *deref_untyped;
-    node_wrap(deref_untyped)->type = NODE_DEREF_TYPED;
-    Node_deref_typed* deref_typed = node_unwrap_deref_typed(node_wrap(deref_untyped));
-    deref_typed->child = temp.child;
-    deref_typed->lang_type = *lang_type;
-    return false;
-}
-
 bool try_set_node_type(Lang_type* lang_type, Node* node) {
     switch (node->type) {
         case NODE_LITERAL:
@@ -601,11 +600,6 @@ bool try_set_node_type(Lang_type* lang_type, Node* node) {
             return try_set_assignment_operand_types(lang_type, node_unwrap_assignment(node));
         case NODE_VARIABLE_DEFINITION:
             *lang_type = node_unwrap_variable_def(node)->lang_type;
-            return true;
-        case NODE_DEREF_UNTYPED:
-            return try_set_deref_types(lang_type, node_unwrap_deref_untyped(node));
-        case NODE_DEREF_TYPED:
-            *lang_type = node_unwrap_deref_typed(node)->lang_type;
             return true;
         case NODE_RETURN_STATEMENT:
             return try_set_node_type(lang_type, node_unwrap_return_statement(node)->child);

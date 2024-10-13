@@ -28,6 +28,7 @@ typedef enum {
 
     // unary operators
     TOKEN_NOT,
+    TOKEN_DEREF,
 
     // literals
     TOKEN_STRING_LITERAL,
@@ -111,6 +112,8 @@ static inline bool token_is_operator(Token token) {
         case TOKEN_NOT_EQUAL:
             // fallthrough
         case TOKEN_NOT:
+            // fallthrough
+        case TOKEN_DEREF:
             return true;
         case TOKEN_NUM_LITERAL:
             // fallthrough
@@ -203,6 +206,8 @@ static inline bool token_is_closing(Token curr_token) {
             return false;
         case TOKEN_NOT:
             return false;
+        case TOKEN_DEREF:
+            return false;
         default:
             unreachable("");
     }
@@ -257,6 +262,8 @@ static inline bool token_is_opening(Token curr_token) {
         case TOKEN_NOT_EQUAL:
             return false;
         case TOKEN_NOT:
+            return false;
+        case TOKEN_DEREF:
             return false;
         default:
             unreachable("");

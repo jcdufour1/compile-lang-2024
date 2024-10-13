@@ -135,6 +135,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_XOR:
             return false;
+        case TOKEN_DEREF:
+            return true;
     }
 }
 
@@ -545,40 +547,38 @@ static Node_struct_member_sym_untyped* extract_struct_member_call(Tk_view* token
     return member_call;
 }
 
-static bool try_extract_deref(Node_deref_untyped** result, Tk_view* tokens) {
-    Tk_view curr_tokens = *tokens;
-    Token deref_start_token;
-    if (!tk_view_try_consume_symbol(&deref_start_token, &curr_tokens, "deref")) {
-        return false;
-    } 
-    if (!tk_view_try_consume(NULL, &curr_tokens, TOKEN_OPEN_PAR)) {
-        return false;
-    }
+static Node_unary* parser_unary_new(Token operation_token, Node* child) {
+    Node_operator* operation = node_unwrap_operation(node_new(operation_token.pos, NODE_OPERATOR));
+    operation->type = NODE_OP_UNARY;
+    Node_unary* unary = node_unwrap_op_unary(operation);
+    unary->token_type = operation_token.type;
+    unary->child = child;
+    return unary;
+}
 
-    Node_deref_untyped* deref = node_unwrap_deref_untyped(node_new(deref_start_token.pos, NODE_DEREF_UNTYPED));
-    deref->child = extract_expression(&curr_tokens);
-    if (!tk_view_try_consume(NULL, &curr_tokens, TOKEN_CLOSE_PAR)) {
-        todo(); // syntax error
-    }
-
-    *result = deref;
-    *tokens = curr_tokens;
-    return true;
+static Node_binary* parser_binary_new(Node* lhs, Token operation_token, Node* rhs) {
+    Node_operator* operation = node_unwrap_operation(node_new(operation_token.pos, NODE_OPERATOR));
+    operation->type = NODE_OP_BINARY;
+    Node_binary* binary = node_unwrap_op_binary(operation);
+    binary->token_type = operation_token.type;
+    binary->lhs = lhs;
+    binary->rhs = rhs;
+    return binary;
 }
 
 static Node* extract_expression_piece(Tk_view* tokens) {
     Node_function_call* fun_call;
-    Node_deref_untyped* deref;
     if (tk_view_try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
         Node* expr_in_par = extract_expression(tokens);
         try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_PAR));
         return expr_in_par;
+    } else if (is_unary(tk_view_front(*tokens).type)) {
+        Token operation_token = tk_view_consume(tokens);
+        return node_wrap(parser_unary_new(operation_token, extract_expression_piece(tokens)));
     } else if (token_is_equal(tk_view_front(*tokens), "let", TOKEN_SYMBOL)) {
         Node_variable_def* result;
         try(try_extract_variable_declaration(&result, tokens, true));
         return node_wrap(result);
-    } else if (try_extract_deref(&deref, tokens)) {
-        return node_wrap(deref);
     } else if (extract_function_call(&fun_call, tokens)) {
         return node_wrap(fun_call);
     } else if (tokens->count > 1 && tk_view_front(*tokens).type == TOKEN_SYMBOL &&
@@ -597,48 +597,20 @@ static Node* extract_expression_piece(Tk_view* tokens) {
     }
 }
 
-static Node_binary* parser_binary_new(Node* lhs, Token operation_token, Node* rhs) {
-    Node_operator* operation = node_unwrap_operation(node_new(operation_token.pos, NODE_OPERATOR));
-    operation->type = NODE_OP_BINARY;
-    Node_binary* binary = node_unwrap_op_binary(operation);
-    binary->token_type = operation_token.type;
-    binary->lhs = lhs;
-    binary->rhs = rhs;
-    return binary;
-}
-
-static Node_unary* parser_unary_new(Token operation_token, Node* child) {
-    Node_operator* operation = node_unwrap_operation(node_new(operation_token.pos, NODE_OPERATOR));
-    operation->type = NODE_OP_UNARY;
-    Node_unary* unary = node_unwrap_op_unary(operation);
-    unary->token_type = operation_token.type;
-    unary->child = child;
-    return unary;
-}
-
 static Node* extract_expression(Tk_view* tokens) {
     assert(tokens->tokens);
     if (tokens->count < 1) {
         unreachable("");
     }
 
-    Node* expression = NULL;
-    if (!is_unary(tk_view_front(*tokens).type)) {
-         expression = extract_expression_piece(tokens);
-    }
+    log_tokens(LOG_DEBUG, *tokens);
+    Node* expression = extract_expression_piece(tokens);
     Token prev_operator_token = {0};
     bool is_first_operator = true;
-    while (tokens->count > 0 && token_is_operator(tk_view_front(*tokens))) {
+    while (tokens->count > 0 && token_is_operator(tk_view_front(*tokens)) && !is_unary(tk_view_front(*tokens).type)) {
         Token operator_token = tk_view_consume(tokens);
         if (is_unary(operator_token.type)) {
-            Node* rhs = extract_expression_piece(tokens);
-            Node_unary* operation = parser_unary_new(operator_token, rhs);
-            if (expression) {
-                todo();
-                node_auto_unwrap_op_unary(expression)->child = node_wrap(operation);
-            } else {
-                expression = node_wrap(operation);
-            }
+            unreachable("");
         } else if (!is_first_operator && node_is_binary(expression) &&
             operator_precedence(prev_operator_token) < operator_precedence(operator_token)
         ) {

@@ -44,8 +44,6 @@ typedef enum {
     NODE_LABEL,
     NODE_ALLOCA,
     NODE_LLVM_STORE_STRUCT_LITERAL,
-    NODE_DEREF_UNTYPED,
-    NODE_DEREF_TYPED,
 
     NODE_LOAD_ANOTHER_NODE,
     NODE_STORE_ANOTHER_NODE,
@@ -305,15 +303,6 @@ typedef struct {
     Llvm_id llvm_id;
 } Node_ptr_byval_sym;
 
-typedef struct {
-    struct Node_* child;
-} Node_deref_untyped;
-
-typedef struct {
-    struct Node_* child;
-    Lang_type lang_type; // type that deref operator returns
-} Node_deref_typed;
-
 typedef union {
     Node_llvm_store_struct_literal node_llvm_store_struct_literal;
     Node_cond_goto node_cond_goto;
@@ -356,8 +345,6 @@ typedef union {
     Node_llvm_register_sym node_llvm_register_sym;
     Node_for_with_condition node_for_with_condition;
     Node_operator node_operator;
-    Node_deref_untyped node_deref_untyped;
-    Node_deref_typed node_deref_typed;
 } Node_as;
 
 typedef struct Node_ {
@@ -788,26 +775,6 @@ static inline Node_llvm_register_sym* node_unwrap_llvm_register_sym(Node* node) 
 static inline const Node_llvm_register_sym* node_unwrap_llvm_register_sym_const(const Node* node) {
     assert(node->type == NODE_LLVM_REGISTER_SYM);
     return &node->as.node_llvm_register_sym;
-}
-
-static inline Node_deref_untyped* node_unwrap_deref_untyped(Node* node) {
-    assert(node->type == NODE_DEREF_UNTYPED);
-    return &node->as.node_deref_untyped;
-}
-
-static inline const Node_deref_untyped* node_unwrap_deref_untyped_const(const Node* node) {
-    assert(node->type == NODE_DEREF_UNTYPED);
-    return &node->as.node_deref_untyped;
-}
-
-static inline Node_deref_typed* node_unwrap_deref_typed(Node* node) {
-    assert(node->type == NODE_DEREF_TYPED);
-    return &node->as.node_deref_typed;
-}
-
-static inline const Node_deref_typed* node_unwrap_deref_typed_const(const Node* node) {
-    assert(node->type == NODE_DEREF_TYPED);
-    return &node->as.node_deref_typed;
 }
 
 static inline bool node_is_binary(const Node* node) {
