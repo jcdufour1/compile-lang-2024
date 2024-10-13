@@ -341,6 +341,7 @@ static Node* get_store_assignment(
             rhs_load_lang_type = node_unwrap_function_call(rhs)->lang_type;
             break;
         default:
+            assert(false);
             todo();
     }
 
@@ -401,7 +402,11 @@ static Node* get_store_assignment(
         } else {
             Node_store_another_node* store = node_unwrap_store_another_node(node_new(lhs->pos, NODE_STORE_ANOTHER_NODE));
             store->node_dest = get_storage_location(get_node_name(lhs));
-            store->node_src = rhs_load;
+            if (rhs_load->type == NODE_LLVM_REGISTER_SYM) {
+                store->node_src = node_unwrap_llvm_register_sym(rhs_load)->node_src;
+            } else {
+                store->node_src = rhs_load;
+            }
             if (rhs->type == NODE_STRUCT_LITERAL) {
                 unreachable("");
             }
@@ -419,12 +424,11 @@ static void add_load_return_statement(
     size_t* idx_to_insert_before,
     Node_return_statement* return_statement
 ) {
-    Node* node_to_return = return_statement->child;
-    switch (node_to_return->type) {
+    switch (return_statement->child->type) {
         case NODE_STRUCT_MEMBER_SYM_TYPED:
             // fallthrough
         case NODE_SYMBOL_TYPED:
-            insert_load(block_children, idx_to_insert_before, node_to_return);
+            insert_load(block_children, idx_to_insert_before, return_statement->child);
             return;
         case NODE_FUNCTION_CALL:
             // fallthrough
@@ -433,9 +437,17 @@ static void add_load_return_statement(
         case NODE_LITERAL:
             return;
         case NODE_OPERATOR:
-            unreachable("operator should not still be the child of return statement at this point");
+            if (return_statement->child->type == NODE_OPERATOR) {
+                return_statement->child = node_wrap(move_operator_back(
+                    block_children,
+                    idx_to_insert_before,
+                    node_unwrap_operation(return_statement->child)
+                ));
+                assert(return_statement->child);
+            }
+            break;
         default:
-            unreachable(NODE_FMT"\n", node_print(node_to_return));
+            unreachable(NODE_FMT"\n", node_print(return_statement->child));
     }
 }
 
@@ -569,31 +581,14 @@ bool add_load_and_store(Node* start_start_node, int recursion_depth) {
                 unreachable("untyped symbol should not still be present");
             case NODE_SYMBOL_TYPED:
                 break;
-            case NODE_RETURN_STATEMENT: {
-                Node_return_statement* rtn_statement = node_unwrap_return_statement(curr_node);
-                if (rtn_statement->child->type == NODE_OPERATOR) {
-                    rtn_statement->child = node_wrap(move_operator_back(
-                        &block->children,
-                        &idx,
-                        node_unwrap_operation(rtn_statement->child)
-                    ));
-                    assert(rtn_statement->child);
-                }
+            case NODE_RETURN_STATEMENT:
                 add_load_return_statement(&block->children, &idx, node_unwrap_return_statement(curr_node));
                 break;
-            }
             case NODE_VARIABLE_DEFINITION:
                 break;
             case NODE_FUNCTION_DECLARATION:
                 break;
             case NODE_ASSIGNMENT: {
-                Node* rhs = node_unwrap_assignment(curr_node)->rhs;
-                if (rhs->type == NODE_OPERATOR) {
-                    node_unwrap_assignment(curr_node)->rhs = node_wrap(
-                        move_operator_back(&block->children, &idx, node_unwrap_operation(rhs))
-                    );
-                    assert(node_unwrap_assignment(curr_node)->rhs);
-                }
                 Node* thing = get_store_assignment(
                     &block->children,
                     &idx,
