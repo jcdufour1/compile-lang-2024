@@ -70,7 +70,9 @@ static Node_llvm_register_sym* move_operator_back(
 ) {
     Node_llvm_register_sym* operator_sym = node_unwrap_llvm_register_sym(node_new(node_wrap(operation)->pos, NODE_LLVM_REGISTER_SYM));
     operator_sym->node_src = node_wrap(operation);
-    try(try_set_operation_lang_type(operation));
+    Lang_type dummy; 
+    try(try_set_operation_lang_type(&dummy, operation));
+    log_tree(LOG_DEBUG, node_wrap(operation));
     operator_sym->lang_type = get_operator_lang_type(operation);
     assert(operator_sym->lang_type.str.count > 0);
     assert(operation);

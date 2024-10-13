@@ -545,8 +545,30 @@ static Node_struct_member_sym_untyped* extract_struct_member_call(Tk_view* token
     return member_call;
 }
 
+static bool try_extract_deref(Node_deref_untyped** result, Tk_view* tokens) {
+    Tk_view curr_tokens = *tokens;
+    Token deref_start_token;
+    if (!tk_view_try_consume_symbol(&deref_start_token, &curr_tokens, "deref")) {
+        return false;
+    } 
+    if (!tk_view_try_consume(NULL, &curr_tokens, TOKEN_OPEN_PAR)) {
+        return false;
+    }
+
+    Node_deref_untyped* deref = node_unwrap_deref_untyped(node_new(deref_start_token.pos, NODE_DEREF_UNTYPED));
+    deref->child = extract_expression(&curr_tokens);
+    if (!tk_view_try_consume(NULL, &curr_tokens, TOKEN_CLOSE_PAR)) {
+        todo(); // syntax error
+    }
+
+    *result = deref;
+    *tokens = curr_tokens;
+    return true;
+}
+
 static Node* extract_expression_piece(Tk_view* tokens) {
     Node_function_call* fun_call;
+    Node_deref_untyped* deref;
     if (tk_view_try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
         Node* expr_in_par = extract_expression(tokens);
         try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_PAR));
@@ -555,6 +577,8 @@ static Node* extract_expression_piece(Tk_view* tokens) {
         Node_variable_def* result;
         try(try_extract_variable_declaration(&result, tokens, true));
         return node_wrap(result);
+    } else if (try_extract_deref(&deref, tokens)) {
+        return node_wrap(deref);
     } else if (extract_function_call(&fun_call, tokens)) {
         return node_wrap(fun_call);
     } else if (tokens->count > 1 && tk_view_front(*tokens).type == TOKEN_SYMBOL &&

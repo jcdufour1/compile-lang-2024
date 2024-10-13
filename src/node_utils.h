@@ -130,7 +130,7 @@ static inline Lang_type get_lang_type(const Node* node) {
         case NODE_VARIABLE_DEFINITION:
             return node_unwrap_variable_def_const(node)->lang_type;
         case NODE_FUNCTION_DECLARATION:
-            unreachable("");
+            return node_unwrap_function_declaration_const(node)->return_types->child->lang_type;
         case NODE_FOR_RANGE:
             unreachable("");
         case NODE_FOR_WITH_CONDITION:
@@ -169,6 +169,10 @@ static inline Lang_type get_lang_type(const Node* node) {
             return node_unwrap_ptr_byval_sym_const(node)->lang_type;
         case NODE_LLVM_REGISTER_SYM:
             return node_unwrap_llvm_register_sym_const(node)->lang_type;
+        case NODE_DEREF_UNTYPED:
+            unreachable("");
+        case NODE_DEREF_TYPED:
+            return node_unwrap_deref_typed_const(node)->lang_type;
         default:
             unreachable(""); // we cannot print node_type because it will cause infinite recursion
     }

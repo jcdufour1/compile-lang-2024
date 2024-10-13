@@ -46,6 +46,8 @@ static const char* NODE_LOAD_ANOTHER_NODE_DESCRIPTION = "load_another_node";
 static const char* NODE_STORE_ANOTHER_NODE_DESCRIPTION = "store_another_node";
 static const char* NODE_PTR_BYVAL_SYM_DESCRIPTION = "byval_sym";
 static const char* NODE_LLVM_REGISTER_SYM_DESCRIPTION = "llvm_register_sym";
+static const char* NODE_DEREF_UNTYPED_DESCRIPTION = "deref_untyped";
+static const char* NODE_DEREF_TYPED_DESCRIPTION = "deref_typed";
 static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
 void extend_lang_type_to_string(Arena* arena, String* string, Lang_type lang_type, bool surround_in_lt_gt) {
@@ -187,6 +189,10 @@ static Str_view node_type_get_strv(const Node* node) {
             return str_view_from_cstr(NODE_PTR_BYVAL_SYM_DESCRIPTION);
         case NODE_LLVM_REGISTER_SYM:
             return str_view_from_cstr(NODE_LLVM_REGISTER_SYM_DESCRIPTION);
+        case NODE_DEREF_UNTYPED:
+            return str_view_from_cstr(NODE_DEREF_UNTYPED_DESCRIPTION);
+        case NODE_DEREF_TYPED:
+            return str_view_from_cstr(NODE_DEREF_TYPED_DESCRIPTION);
         case NODE_NO_TYPE:
             return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
         default:
@@ -272,6 +278,11 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
         case NODE_FUNCTION_DECLARATION:
             string_extend_strv_in_par(arena, string, get_node_name(node));
             break;
+        case NODE_DEREF_TYPED:
+            extend_lang_type_to_string(arena, string, get_lang_type(node), true);
+            break;
+        case NODE_DEREF_UNTYPED:
+            // fallthrough
         case NODE_FUNCTION_PARAMETERS:
             // fallthrough
         case NODE_FUNCTION_RETURN_TYPES:

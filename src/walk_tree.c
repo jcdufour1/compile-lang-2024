@@ -112,6 +112,12 @@ void walk_tree(
             break;
         case NODE_LITERAL:
             break;
+        case NODE_DEREF_UNTYPED:
+            walk_tree(node_wrap(node_unwrap_deref_untyped(input_node)->child), recursion_depth + 1, callback);
+            break;
+        case NODE_DEREF_TYPED:
+            walk_tree(node_wrap(node_unwrap_deref_typed(input_node)->child), recursion_depth + 1, callback);
+            break;
         case NODE_STRUCT_LITERAL: {
             Node_ptr_vec* vector = &node_unwrap_struct_literal(input_node)->members;
             walk_node_ptr_vec(vector, recursion_depth, callback);

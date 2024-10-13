@@ -2,17 +2,16 @@
 extern("c") fn printf(format_string: ptr, args: any...) i32
 
 // TODO: make num_to_inc a pointer
-fn add_one(num_to_inc: i32) i32 {
-    num_to_inc = num_to_inc + 1
+fn add_one(num_ptr: i32*) i32 {
+    let num_val: i32 = deref(num_ptr)
+    num_val = num_val + 1
+    deref(num_ptr) = num_val
     return 0
 }
 
 fn main() i32 {
     let num: i32 = 8
     add_one(num)
-
-    // TODO: remove this statement
-    num = num + 1
 
     printf("%d\n", num)
     return 0
