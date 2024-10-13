@@ -19,8 +19,6 @@ bool analysis_1(Node* curr_node, int recursion_depth);
 
 bool for_and_if_to_branch(Node* curr_node, int recursion_depth);
 
-bool flatten_operations(Node* curr_node, int recursion_depth);
-
 bool add_alloca(Node* curr_node, int recursion_depth);
 
 bool add_load_and_store(Node* curr_node, int recursion_depth);

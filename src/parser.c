@@ -603,7 +603,6 @@ static Node* extract_expression(Tk_view* tokens) {
         unreachable("");
     }
 
-    log_tokens(LOG_DEBUG, *tokens);
     Node* expression = extract_expression_piece(tokens);
     Token prev_operator_token = {0};
     bool is_first_operator = true;

@@ -42,7 +42,6 @@ OBJS=\
 	 ${BUILD_DIR}/passes/for_and_if_to_branch.o \
 	 ${BUILD_DIR}/passes/assign_llvm_ids.o \
 	 ${BUILD_DIR}/passes/add_load_and_store.o \
-	 ${BUILD_DIR}/passes/flatten_operations.o \
 	 ${BUILD_DIR}/passes/add_alloca.o \
 	 ${BUILD_DIR}/passes/analysis_1.o \
 	 ${BUILD_DIR}/passes/change_operators.o
@@ -124,12 +123,6 @@ ${BUILD_DIR}/passes/assign_llvm_ids.o: ${DEP_COMMON} src/passes/assign_llvm_ids.
 
 ${BUILD_DIR}/passes/add_load_and_store.o: ${DEP_COMMON} src/passes/add_load_and_store.c src/passes/*.h third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/add_load_and_store.o src/passes/add_load_and_store.c
-
-${BUILD_DIR}/passes/flatten_operations.o: ${DEP_COMMON} src/passes/flatten_operations.c src/passes/*.h third_party/*
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/flatten_operations.o src/passes/flatten_operations.c
-
-${BUILD_DIR}/passes/flatten_load_and_store.o: ${DEP_COMMON} src/passes/flatten_load_and_store.c src/passes/*.h third_party/*
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/flatten_load_and_store.o src/passes/flatten_load_and_store.c
 
 ${BUILD_DIR}/passes/analysis_1.o: ${DEP_COMMON} src/passes/analysis_1.c src/passes/*.h third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/analysis_1.o src/passes/analysis_1.c
