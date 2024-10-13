@@ -6,7 +6,7 @@
 #include "passes.h"
 
 void assign_llvm_ids(Env* env) {
-    Node* curr_node = node_ptr_vec_top(&env->ancesters);
+    Node* curr_node = vec_top(&env->ancesters);
     static size_t llvm_id_for_next_var = 1;
 
     switch (curr_node->type) {

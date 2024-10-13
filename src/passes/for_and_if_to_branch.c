@@ -174,7 +174,7 @@ static Node_block* if_statement_to_branch(Node_if* if_statement) {
 }
 
 void for_and_if_to_branch(Env* env) {
-    Node* block_ = node_ptr_vec_top(&env->ancesters);
+    Node* block_ = vec_top(&env->ancesters);
     if (block_->type != NODE_BLOCK) {
         return;
     }

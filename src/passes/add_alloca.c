@@ -46,7 +46,7 @@ static void do_assignment(
 }
 
 void add_alloca(Env* env) {
-    Node* block_ = node_ptr_vec_top(&env->ancesters);
+    Node* block_ = vec_top(&env->ancesters);
     if (block_->type != NODE_BLOCK) {
         return;
     }

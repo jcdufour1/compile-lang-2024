@@ -600,7 +600,7 @@ static void flatten_operation_if_nessessary(
 }
 
 void add_load_and_store(Env* env) {
-    Node* start_start_node = node_ptr_vec_top(&env->ancesters);
+    Node* start_start_node = vec_top(&env->ancesters);
     if (start_start_node->type != NODE_BLOCK) {
         return;
     }
