@@ -6,12 +6,16 @@
 
 INLINE void walk_node_ptr_vec(Node_ptr_vec* vector, Env* env, void (callback)(Env* env));
 
+INLINE void walk_tree_traverse(Env* env, Node** new_curr_node, void (callback)(Env* env)) {
+}
+
 void walk_tree(Env* env, void (callback)(Env* env)) {
-    if (!node_ptr_vec_top(input_node)) {
+    if (!node_ptr_vec_top(&env->ancesters)) {
+        todo();
         return;
     }
 
-    callback(node_ptr_vec_top(input_node), recursion_depth);
+    callback(env);
 
     env->recursion_depth++;
 
@@ -20,19 +24,19 @@ void walk_tree(Env* env, void (callback)(Env* env)) {
             walk_node_ptr_vec(&node_unwrap_function_params(input_node)->params, env, callback);
             break;
         case NODE_FUNCTION_RETURN_TYPES:
-            walk_tree(node_wrap(node_unwrap_function_return_types(input_node)->child), env, callback);
+            start_walk(node_wrap(node_unwrap_function_return_types(input_node)->child), env, callback);
             break;
         case NODE_ASSIGNMENT:
-            walk_tree(node_wrap(node_unwrap_assignment(input_node)->lhs), env, callback);
-            walk_tree(node_wrap(node_unwrap_assignment(input_node)->rhs), env, callback);
+            start_walk(node_wrap(node_unwrap_assignment(input_node)->lhs), env, callback);
+            start_walk(node_wrap(node_unwrap_assignment(input_node)->rhs), env, callback);
             break;
         case NODE_OPERATOR: {
             Node_operator* operator = node_unwrap_operation(input_node);
             if (operator->type == NODE_OP_UNARY) {
-                walk_tree(node_wrap(node_unwrap_op_unary(operator)->child), env, callback);
+                start_walk(node_wrap(node_unwrap_op_unary(operator)->child), env, callback);
             } else if (operator->type == NODE_OP_BINARY) {
-                walk_tree(node_wrap(node_unwrap_op_binary(operator)->lhs), env, callback);
-                walk_tree(node_wrap(node_unwrap_op_binary(operator)->rhs), env, callback);
+                start_walk(node_wrap(node_unwrap_op_binary(operator)->lhs), env, callback);
+                start_walk(node_wrap(node_unwrap_op_binary(operator)->rhs), env, callback);
             } else {
                 unreachable("");
             }
@@ -61,35 +65,35 @@ void walk_tree(Env* env, void (callback)(Env* env)) {
         case NODE_LANG_TYPE:
             break;
         case NODE_FOR_RANGE:
-            walk_tree(node_wrap(node_unwrap_for_range(input_node)->var_def), env, callback);
-            walk_tree(node_wrap(node_unwrap_for_range(input_node)->lower_bound), env, callback);
-            walk_tree(node_wrap(node_unwrap_for_range(input_node)->upper_bound), env, callback);
-            walk_tree(node_wrap(node_unwrap_for_range(input_node)->body), env, callback);
+            start_walk(node_wrap(node_unwrap_for_range(input_node)->var_def), env, callback);
+            start_walk(node_wrap(node_unwrap_for_range(input_node)->lower_bound), env, callback);
+            start_walk(node_wrap(node_unwrap_for_range(input_node)->upper_bound), env, callback);
+            start_walk(node_wrap(node_unwrap_for_range(input_node)->body), env, callback);
             break;
         case NODE_FOR_WITH_CONDITION:
-            walk_tree(node_wrap(node_unwrap_for_with_condition(input_node)->condition), env, callback);
-            walk_tree(node_wrap(node_unwrap_for_with_condition(input_node)->body), env, callback);
+            start_walk(node_wrap(node_unwrap_for_with_condition(input_node)->condition), env, callback);
+            start_walk(node_wrap(node_unwrap_for_with_condition(input_node)->body), env, callback);
             break;
         case NODE_IF_STATEMENT:
-            walk_tree(node_wrap(node_unwrap_if(input_node)->condition), env, callback);
-            walk_tree(node_wrap(node_unwrap_if(input_node)->body), env, callback);
+            start_walk(node_wrap(node_unwrap_if(input_node)->condition), env, callback);
+            start_walk(node_wrap(node_unwrap_if(input_node)->body), env, callback);
             break;
         case NODE_FUNCTION_DEFINITION:
-            walk_tree(node_wrap(node_unwrap_function_definition(input_node)->declaration), env, callback);
-            walk_tree(node_wrap(node_unwrap_function_definition(input_node)->body), env, callback);
+            start_walk(node_wrap(node_unwrap_function_definition(input_node)->declaration), env, callback);
+            start_walk(node_wrap(node_unwrap_function_definition(input_node)->body), env, callback);
             break;
         case NODE_FUNCTION_DECLARATION:
-            walk_tree(node_wrap(node_unwrap_function_declaration(input_node)->parameters), env, callback);
-            walk_tree(node_wrap(node_unwrap_function_declaration(input_node)->return_types), env, callback);
+            start_walk(node_wrap(node_unwrap_function_declaration(input_node)->parameters), env, callback);
+            start_walk(node_wrap(node_unwrap_function_declaration(input_node)->return_types), env, callback);
             break;
         case NODE_LLVM_STORE_STRUCT_LITERAL:
-            walk_tree(node_wrap(node_unwrap_llvm_store_struct_literal(input_node)->child), env, callback);
+            start_walk(node_wrap(node_unwrap_llvm_store_struct_literal(input_node)->child), env, callback);
             break;
         case NODE_GOTO:
             break;
         case NODE_COND_GOTO:
-            walk_tree(node_wrap(node_unwrap_cond_goto(input_node)->if_true), env, callback);
-            walk_tree(node_wrap(node_unwrap_cond_goto(input_node)->if_false), env, callback);
+            start_walk(node_wrap(node_unwrap_cond_goto(input_node)->if_true), env, callback);
+            start_walk(node_wrap(node_unwrap_cond_goto(input_node)->if_false), env, callback);
             break;
         case NODE_BLOCK: {
             Node_ptr_vec* vector = &node_unwrap_block(input_node)->children;
@@ -97,13 +101,13 @@ void walk_tree(Env* env, void (callback)(Env* env)) {
             break;
         }
         case NODE_FOR_LOWER_BOUND:
-            walk_tree(node_wrap(node_unwrap_for_lower_bound(input_node)->child), env, callback);
+            start_walk(node_wrap(node_unwrap_for_lower_bound(input_node)->child), env, callback);
             break;
         case NODE_FOR_UPPER_BOUND:
-            walk_tree(node_wrap(node_unwrap_for_upper_bound(input_node)->child), env, callback);
+            start_walk(node_wrap(node_unwrap_for_upper_bound(input_node)->child), env, callback);
             break;
         case NODE_IF_CONDITION:
-            walk_tree(node_wrap(node_unwrap_if_condition(input_node)->child), env, callback);
+            start_walk(node_wrap(node_unwrap_if_condition(input_node)->child), env, callback);
             break;
         case NODE_LITERAL:
             break;
@@ -118,15 +122,15 @@ void walk_tree(Env* env, void (callback)(Env* env)) {
             break;
         }
         case NODE_RETURN_STATEMENT:
-            walk_tree(node_wrap(node_unwrap_return_statement(input_node)->child), env, callback);
+            start_walk(node_wrap(node_unwrap_return_statement(input_node)->child), env, callback);
             break;
         case NODE_LLVM_REGISTER_SYM:
             break;
         case NODE_BREAK:
-            walk_tree(node_wrap(node_unwrap_break(input_node)->child), env, callback);
+            start_walk(node_wrap(node_unwrap_break(input_node)->child), env, callback);
             break;
         case NODE_LLVM_STORE_LITERAL:
-            walk_tree(node_wrap(node_unwrap_llvm_store_literal(input_node)->child), env, callback);
+            start_walk(node_wrap(node_unwrap_llvm_store_literal(input_node)->child), env, callback);
             break;
         case NODE_STRUCT_DEFINITION: {
             Node_ptr_vec* vector = &node_unwrap_struct_def(input_node)->members;

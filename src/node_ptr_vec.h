@@ -36,6 +36,12 @@ static inline void node_ptr_vec_append(Node_ptr_vec* vector, Node* node_to_appen
     vector_append(&a_main, vector, sizeof(vector->buf[0]), &node_to_append, NODE_PTR_VEC_DEFAULT_CAPACITY);
 }
 
+static inline Node* node_ptr_vec_pop(Node_ptr_vec* vector) {
+    Node* node = vector->buf[vector->info.count];
+    vector->info.count--;
+    return node;
+}
+
 static inline void node_ptr_vec_extend(Node_ptr_vec* dest, const Node_ptr_vec src) {
     vector_extend(&a_main, dest, &src, sizeof(dest->buf[0]), NODE_PTR_VEC_DEFAULT_CAPACITY);
 }
