@@ -14,12 +14,4 @@ typedef struct {
     Token* buf;
 } Tokens;
 
-static inline void tokens_reserve(Tokens* tokens, size_t minimum_count_empty_slots) {
-    vector_reserve(&a_main, tokens, sizeof(tokens->buf[0]), minimum_count_empty_slots, TOKENS_DEFAULT_CAPACITY);
-}
-
-static inline void tokens_append(Tokens* tokens, const Token* token) {
-    vector_append(&a_main, tokens, sizeof(tokens->buf[0]), token, TOKENS_DEFAULT_CAPACITY);
-}
-
 #endif // TOKENS_H

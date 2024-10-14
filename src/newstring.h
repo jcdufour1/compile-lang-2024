@@ -18,19 +18,10 @@ typedef struct {
 
 #define string_print(string) (int)((string).info.count), (string).buf
 
-static inline void string_reserve(Arena* arena, String* str, size_t minimum_count_empty_slots) {
-    vector_reserve(arena, str, sizeof(str->buf[0]), minimum_count_empty_slots + 1, STRING_DEFAULT_CAPACITY);
-}
-
-// string->buf is always null terminated
-static inline void string_append(Arena* arena, String* str, char ch) {
-    vector_append(arena, str, sizeof(str->buf[0]), &ch, STRING_DEFAULT_CAPACITY);
-}
-
 // string->buf is always null terminated
 static inline void string_extend_cstr(Arena* arena, String* str, const char* cstr) {
     for (;*cstr; cstr++) {
-        string_append(arena, str, *cstr);
+        vec_append(arena, str, *cstr);
     }
 }
 
@@ -50,7 +41,7 @@ static inline void string_extend_size_t(Arena* arena, String* str, size_t num) {
 static inline String string_new_from_cstr(Arena* arena, const char* cstr) {
     String string = {0};
     for (size_t idx = 0; cstr[idx]; idx++) {
-        string_append(arena, &string, cstr[idx]);
+        vec_append(arena, &string, cstr[idx]);
     }
     return string;
 }
@@ -58,13 +49,9 @@ static inline String string_new_from_cstr(Arena* arena, const char* cstr) {
 static inline String string_new_from_strv(Arena* arena, Str_view str_view) {
     String string = {0};
     for (size_t idx = 0; str_view.str[idx]; idx++) {
-        string_append(arena, &string, str_view.str[idx]);
+        vec_append(arena, &string, str_view.str[idx]);
     }
     return string;
-}
-
-static inline void string_set_to_zero_len(String* string) {
-    vector_set_to_zero_len(string, sizeof(string->buf[0]));
 }
 
 // if string is already initialized (but may or may not be empty)
@@ -77,22 +64,16 @@ static inline void string_cpy_cstr_inplace(Arena* arena, String* string, const c
         *string = string_new_from_cstr(arena, cstr);
         return;
     }
-    string_set_to_zero_len(string);
-    string_reserve(arena, string, cstr_len);
+    vec_reset(string);
+    vec_reserve(arena, string, cstr_len);
     for (size_t idx = 0; cstr[idx]; idx++) {
-        string_append(arena, string, cstr[idx]);
-    }
-}
-
-static inline void string_extend_string(Arena* arena, String* dest, const String src) {
-    for (size_t idx = 0; idx < src.info.count; idx++) {
-        string_append(arena, dest, src.buf[idx]);
+        vec_append(arena, string, cstr[idx]);
     }
 }
 
 static inline void string_extend_strv(Arena* arena, String* string, Str_view str_view) {
     for (size_t idx = 0; idx < str_view.count; idx++) {
-        string_append(arena, string, str_view.str[idx]);
+        vec_append(arena, string, str_view.str[idx]);
     }
 }
 
@@ -104,9 +85,9 @@ static inline void string_add_int(Arena* arena, String* string, int num) {
 }
 
 static inline void string_extend_strv_in_sym(Arena* arena, String* string, Str_view str_view, char opening_symbol, char closing_symbol) {
-    string_append(arena, string, opening_symbol);
+    vec_append(arena, string, opening_symbol);
     string_extend_strv(arena, string, str_view);
-    string_append(arena, string, closing_symbol);
+    vec_append(arena, string, closing_symbol);
 }
 
 static inline void string_extend_strv_in_par(Arena* arena, String* string, Str_view str_view) {

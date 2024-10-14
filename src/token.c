@@ -67,7 +67,7 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
 
 Str_view token_print_internal(Arena* arena, Token token) {
     String buf = {0};
-    string_set_to_zero_len(&buf);
+    vec_reset(&buf);
 
     string_extend_strv(arena, &buf, token_type_to_str_view(token.type));
     assert(strlen(buf.buf) == buf.info.count);
@@ -75,9 +75,9 @@ Str_view token_print_internal(Arena* arena, Token token) {
     // add token text
     switch (token.type) {
         case TOKEN_SYMBOL:
-            string_append(arena, &buf, '(');
+            vec_append(arena, &buf, '(');
             string_extend_strv(arena, &buf, token.text);
-            string_append(arena, &buf, ')');
+            vec_append(arena, &buf, ')');
             break;
         case TOKEN_OPEN_PAR: // fallthrough
         case TOKEN_NONTYPE: // fallthrough
@@ -108,9 +108,9 @@ Str_view token_print_internal(Arena* arena, Token token) {
         case TOKEN_STRING_LITERAL: 
             // fallthrough
         case TOKEN_NUM_LITERAL:
-            string_append(arena, &buf, '(');
+            vec_append(arena, &buf, '(');
             string_extend_strv(arena, &buf, token.text);
-            string_append(arena, &buf, ')');
+            vec_append(arena, &buf, ')');
             break;
         default:
             unreachable("");

@@ -50,17 +50,17 @@ static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
 void extend_lang_type_to_string(Arena* arena, String* string, Lang_type lang_type, bool surround_in_lt_gt) {
     if (surround_in_lt_gt) {
-        string_append(arena, string, '<');
+        vec_append(arena, string, '<');
     }
     string_extend_strv(arena, string, lang_type.str);
     if (lang_type.pointer_depth < 0) {
         todo();
     }
     for (int16_t idx = 0; idx < lang_type.pointer_depth; idx++) {
-        string_append(arena, string, '*');
+        vec_append(arena, string, '*');
     }
     if (surround_in_lt_gt) {
-        string_append(arena, string, '>');
+        vec_append(arena, string, '>');
     }
 }
 
@@ -76,11 +76,11 @@ Str_view lang_type_print_internal(Arena* arena, Lang_type lang_type, bool surrou
 }
 
 bool log_node_in_tree_internal(Node* node, int recursion_depth) {
-    static String padding = {0};
-    string_set_to_zero_len(&padding);
+    String padding = {0};
+    vec_reset(&padding);
 
     for (int idx = 0; idx < 2*recursion_depth; idx++) {
-        string_append(&print_arena, &padding, ' ');
+        vec_append(&print_arena, &padding, ' ');
     }
 
     log_file_new(log_file_level, log_file, log_line, STRING_FMT NODE_FMT"\n", string_print(padding), node_print(node));
@@ -213,6 +213,7 @@ static void print_node_src(Arena* arena, String* string, const Node* node, bool 
 }
 
 static void extend_node_text(Arena* arena, String* string, const Node* node, bool do_recursion) {
+    assert(node);
     string_extend_strv(arena, string, node_type_get_strv(node));
 
     switch (node->type) {

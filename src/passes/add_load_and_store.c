@@ -17,7 +17,7 @@ static void do_struct_literal(
     Node_struct_literal* struct_literal
 ) {
     for (size_t idx = 0; idx < struct_literal->members.info.count; idx++) {
-        Node** curr_memb = node_ptr_vec_at_ref(&struct_literal->members, idx);
+        Node** curr_memb = vec_at_ref(&struct_literal->members, idx);
 
         switch ((*curr_memb)->type) {
             case NODE_ASSIGNMENT:
@@ -49,7 +49,7 @@ static Node_load_element_ptr* do_load_struct_element_ptr(
     Node* node_element_ptr_to_load = get_storage_location(symbol_call->name);
     Node_load_element_ptr* load_element_ptr = NULL;
     for (size_t idx = 0; idx < symbol_call->children.info.count; idx++) {
-        Node* element_sym_ = node_ptr_vec_at(&symbol_call->children, idx);
+        Node* element_sym_ = vec_at(&symbol_call->children, idx);
         Node_struct_member_sym_piece_typed* element_sym = node_unwrap_struct_member_sym_piece_typed(element_sym_);
 
         load_element_ptr = node_unwrap_load_elem_ptr(node_new(node_wrap(element_sym)->pos, NODE_LOAD_STRUCT_ELEMENT_PTR));
@@ -82,7 +82,7 @@ static void sym_typed_to_load_sym_rtn_value_sym(Node_symbol_typed* symbol, Node_
 static Lang_type get_member_sym_piece_final_lang_type(const Node_struct_member_sym_typed* struct_memb_sym) {
     Lang_type lang_type = {0};
     for (size_t idx = 0; idx < struct_memb_sym->children.info.count; idx++) {
-        const Node* memb_piece_ = node_ptr_vec_at_const(&struct_memb_sym->children, idx);
+        const Node* memb_piece_ = vec_at(&struct_memb_sym->children, idx);
         const Node_struct_member_sym_piece_typed* memb_piece = 
             node_unwrap_struct_member_sym_piece_typed_const(memb_piece_);
         lang_type = memb_piece->lang_type;
@@ -127,7 +127,7 @@ static Node_load_another_node* insert_load(
         load->node_src = node_wrap(load_element_ptr);
         load->lang_type = load_element_ptr->lang_type;
         assert(load->lang_type.str.count > 0);
-        node_ptr_vec_insert(block_children, *idx_to_insert_before, node_wrap(load));
+        vec_insert(&a_main, block_children, *idx_to_insert_before, node_wrap(load));
         struct_memb_to_load_memb_rtn_val_sym(node_unwrap_struct_member_sym_typed(symbol_call), load);
         return load;
     } else {
@@ -237,7 +237,7 @@ static void add_load_foreach_arg(
     Node_function_call* function_call
 ) {
     for (size_t idx = 0; idx < function_call->args.info.count; idx++) {
-        Node* argument = node_ptr_vec_at(&function_call->args, idx);
+        Node* argument = vec_at(&function_call->args, idx);
         insert_load(block_children, idx_to_insert_before, argument);
     }
 }
@@ -428,7 +428,7 @@ static void add_load_return_statement(
 
 static size_t get_idx_node_after_last_alloca(Node_block* block) {
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        Node* node = node_ptr_vec_at(&block->children, idx);
+        Node* node = vec_at(&block->children, idx);
         if (node->type != NODE_ALLOCA) {
             return idx;
         }
@@ -439,7 +439,7 @@ static size_t get_idx_node_after_last_alloca(Node_block* block) {
 static void load_function_parameters(Node_function_definition* fun_def) {
     Node_ptr_vec* params = &fun_def->declaration->parameters->params;
     for (size_t idx = 0; idx < params->info.count; idx++) {
-        Node* param = node_ptr_vec_at(params, idx);
+        Node* param = vec_at(params, idx);
         if (is_corresponding_to_a_struct(param)) {
             continue;
         }
@@ -526,7 +526,7 @@ bool add_load_and_store(Node* start_start_node, int recursion_depth) {
     Node_block* block = node_unwrap_block(start_start_node);
 
     for (size_t idx = block->children.info.count - 1;; idx--) {
-        Node* curr_node = node_ptr_vec_at(&block->children, idx);
+        Node* curr_node = vec_at(&block->children, idx);
 
         switch (curr_node->type) {
             case NODE_STRUCT_LITERAL:
@@ -569,7 +569,7 @@ bool add_load_and_store(Node* start_start_node, int recursion_depth) {
                     &idx,
                     node_unwrap_assignment(curr_node)
                 );
-                *node_ptr_vec_at_ref(&block->children, idx) = thing;
+                *vec_at_ref(&block->children, idx) = thing;
                 break;
             }
             case NODE_FOR_RANGE:

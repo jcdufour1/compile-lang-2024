@@ -63,7 +63,7 @@ bool is_corresponding_to_a_struct(const Node* node);
 
 static inline size_t get_member_index(const Node_struct_def* struct_def, const Node_struct_member_sym_piece_typed* member_symbol) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
-        const Node* curr_member = node_ptr_vec_at_const(&struct_def->members, idx);
+        const Node* curr_member = vec_at(&struct_def->members, idx);
         if (str_view_is_equal(get_node_name(node_wrap(curr_member)), get_node_name(node_wrap(member_symbol)))) {
             return idx;
         }
@@ -78,7 +78,7 @@ static inline bool try_get_member_def(Node_variable_def** member_def, const Node
     );
 
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
-        const Node* curr_member = node_ptr_vec_at_const(&struct_def->members, idx);
+        const Node* curr_member = vec_at(&struct_def->members, idx);
         if (str_view_is_equal(get_node_name(curr_member), get_node_name(member_symbol))) {
             assert(get_lang_type(curr_member).str.count > 0);
             *member_def = (Node_variable_def*)curr_member;

@@ -2,6 +2,8 @@
 #define VECTOR_H
 
 #include <stddef.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include "util.h"
 #include "arena.h"
 
@@ -10,98 +12,56 @@ typedef struct {
     size_t capacity;
 } Vec_base;
 
-typedef struct {
-    Vec_base info;
-    void* buf;
-} Vector;
+#define vec_reserve(arena, vector, min_count_empty_slots) \
+    do { \
+        size_t original_capacity = (vector)->info.capacity; \
+        size_t needs_resizing = false; \
+        while ((vector)->info.capacity < (vector)->info.count + (min_count_empty_slots)) { \
+            if ((vector)->info.capacity < 1) { \
+                (vector)->info.capacity = 2; \
+            } else { \
+                needs_resizing = true; \
+                (vector)->info.capacity *= 2; \
+            } \
+        } \
+        if (original_capacity == 0) { \
+            (vector)->buf = arena_alloc(arena, sizeof((vector)->buf[0])*(vector)->info.capacity); \
+        } else if (needs_resizing) { \
+            (vector)->buf = arena_realloc(arena, (vector)->buf, sizeof((vector)->buf[0])*original_capacity, sizeof((vector)->buf[0])*(vector)->info.capacity); \
+        } \
+    } while(0)
 
-static inline void vector_reserve(
-    Arena* arena,
-    void* typed_vector,
-    size_t size_each_item,
-    size_t minimum_count_empty_slots,
-    size_t init_capacity
-) {
-    Vector* vector = typed_vector;
+#define vec_append(arena, vector, item_to_append) \
+    do { \
+        (void) (arena); \
+        vec_reserve(arena, vector, 1); \
+        (vector)->buf[(vector)->info.count++] = (item_to_append); \
+    } while(0)
 
-    while (vector->info.count + minimum_count_empty_slots + 1 > vector->info.capacity) {
-        if (vector->info.capacity < 1) {
-            vector->info.capacity = init_capacity;
-            vector->buf = arena_alloc(arena, vector->info.capacity*size_each_item);
-        } else {
-            size_t old_capacity_count_elements = vector->info.capacity;
-            vector->info.capacity *= 2;
-            vector->buf = arena_realloc(arena, vector->buf, old_capacity_count_elements*size_each_item, vector->info.capacity*size_each_item);
-        }
-    }
-}
+#define vec_reset(vector) \
+    do { \
+        (vector)->info.count = 0; \
+    } while(0)
 
-static inline void vector_append(Arena* arena,
-    void* typed_vector,
-    size_t size_each_item,
-    const void* item_to_append,
-    size_t init_capacity
-) {
-    Vector* vector = typed_vector;
+#define vec_at(vector, index) \
+    ((vector)->buf[(index)])
 
-    vector_reserve(arena, typed_vector, size_each_item, 2, init_capacity);
-    memmove((char*)vector->buf + size_each_item*vector->info.count, item_to_append, size_each_item);
-    vector->info.count++;
-}
+#define vec_at_ref(vector, index) \
+    (&(vector)->buf[(index)])
 
-static inline void vector_extend(
-    Arena* arena,
-    void* typed_dest,
-    const void* typed_src,
-    size_t size_each_item,
-    size_t init_capacity
-) {
-    Vector* dest = typed_dest;
-    const Vector* src = typed_src;
+#define vec_insert(arena, vector, index, item_to_insert) \
+    do { \
+        vec_reserve(arena, vector, 1); \
+        memmove((vector)->buf + index + 1, (vector)->buf + index, sizeof((vector)->buf[0])*((vector)->info.count - (index))); \
+        (vector)->buf[(index)] = item_to_insert; \
+        (vector)->info.count++; \
+    } while(0)
 
-    for (size_t idx = 0; idx < src->info.count; idx++) {
-        const void* item_to_append = (char*)src->buf + size_each_item*idx;
-        vector_append(arena, dest, size_each_item, item_to_append, init_capacity);
-    }
-}
-
-static inline void vector_insert(
-    Arena* arena,
-    void* typed_vector,
-    size_t index,
-    size_t size_each_item,
-    const void* item_to_append,
-    size_t init_capacity
-) {
-    Vector* vector = typed_vector;
-
-    // make room for item to be inserted
-    vector_reserve(arena, typed_vector, size_each_item, 2, init_capacity);
-    size_t count_to_move = vector->info.count - index;
-    memmove((char*)vector->buf + size_each_item*(index + 1), (char*)vector->buf + size_each_item*index, size_each_item*count_to_move);
-
-    // actually insert item
-    memmove((char*)vector->buf + size_each_item*index, item_to_append, size_each_item);
-
-    vector->info.count++;
-}
-
-static inline void vector_set_to_zero_len(void* typed_vector, size_t size_each_item) {
-    Vector* vector = typed_vector;
-
-    memset(vector->buf, 0, size_each_item*vector->info.count);
-    vector->info.count = 0;
-}
-
-static inline bool vector_in(void* typed_vector, size_t size_each_item, const void* item_to_find) {
-    Vector* vector = typed_vector;
-
-    for (size_t idx = 0; idx < vector->info.count; idx++) {
-        if (0 == memcmp((char*)vector->buf + size_each_item*idx, item_to_find, size_each_item)) {
-            return true;
-        }
-    }
-    return false;
-}
+#define vec_extend(arena, dest, src) \
+    do { \
+        vec_reserve(arena, dest, (src)->info.count); \
+        memmove((dest)->buf + (dest)->info.count, (src)->buf, sizeof((dest)->buf[0])*(src)->info.count); \
+        (dest)->info.count += (src)->info.count; \
+    } while(0)
 
 #endif // VECTOR_H

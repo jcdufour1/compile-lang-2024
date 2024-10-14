@@ -37,7 +37,7 @@ static void change_break_to_goto(Node_block* block, const Node_label* label_to_g
     for (size_t idx_ = block->children.info.count; idx_ > 0; idx_--) {
         size_t idx = idx_ - 1;
 
-        Node** curr_node = node_ptr_vec_at_ref(&block->children, idx);
+        Node** curr_node = vec_at_ref(&block->children, idx);
 
         switch ((*curr_node)->type) {
             case NODE_IF_STATEMENT:
@@ -81,14 +81,14 @@ static Node_block* for_with_condition_to_branch(Node_for_with_condition* for_loo
 
     change_break_to_goto(for_block, after_for_loop_label);
 
-    node_ptr_vec_append(&new_branch_block->children, node_wrap(jmp_to_check_cond_label));
-    node_ptr_vec_append(&new_branch_block->children, node_wrap(check_cond_label));
-    node_ptr_vec_append(&new_branch_block->children, node_wrap(operation));
-    node_ptr_vec_append(&new_branch_block->children, node_wrap(check_cond_jmp));
-    node_ptr_vec_append(&new_branch_block->children, node_wrap(after_check_label));
-    node_ptr_vec_extend(&new_branch_block->children, for_block->children);
-    node_ptr_vec_append(&new_branch_block->children, node_wrap(goto_new(check_cond_label->name, node_wrap(for_loop)->pos)));
-    node_ptr_vec_append(&new_branch_block->children, node_wrap(after_for_loop_label));
+    vec_append(&a_main, &new_branch_block->children, node_wrap(jmp_to_check_cond_label));
+    vec_append(&a_main, &new_branch_block->children, node_wrap(check_cond_label));
+    vec_append(&a_main, &new_branch_block->children, node_wrap(operation));
+    vec_append(&a_main, &new_branch_block->children, node_wrap(check_cond_jmp));
+    vec_append(&a_main, &new_branch_block->children, node_wrap(after_check_label));
+    vec_extend(&a_main, &new_branch_block->children, &for_block->children);
+    vec_append(&a_main, &new_branch_block->children, node_wrap(goto_new(check_cond_label->name, node_wrap(for_loop)->pos)));
+    vec_append(&a_main, &new_branch_block->children, node_wrap(after_for_loop_label));
 
     return new_branch_block;
 }
@@ -132,17 +132,17 @@ static Node_block* for_range_to_branch(Node_for_range* for_loop) {
 
     change_break_to_goto(for_block, after_for_loop_label);
 
-    node_ptr_vec_append(&new_branch_block->children, node_wrap(for_var_def));
-    node_ptr_vec_append(&new_branch_block->children, node_wrap(new_var_assign));
-    node_ptr_vec_append(&new_branch_block->children, node_wrap(jmp_to_check_cond_label));
-    node_ptr_vec_append(&new_branch_block->children, node_wrap(check_cond_label));
-    node_ptr_vec_append(&new_branch_block->children, node_wrap(new_operation));
-    node_ptr_vec_append(&new_branch_block->children, node_wrap(check_cond_jmp));
-    node_ptr_vec_append(&new_branch_block->children, node_wrap(after_check_label));
-    node_ptr_vec_extend(&new_branch_block->children, for_block->children);
-    node_ptr_vec_append(&new_branch_block->children, node_wrap(assignment_to_inc_cond_var));
-    node_ptr_vec_append(&new_branch_block->children, node_wrap(goto_new(check_cond_label->name, node_wrap(for_loop)->pos)));
-    node_ptr_vec_append(&new_branch_block->children, node_wrap(after_for_loop_label));
+    vec_append(&a_main, &new_branch_block->children, node_wrap(for_var_def));
+    vec_append(&a_main, &new_branch_block->children, node_wrap(new_var_assign));
+    vec_append(&a_main, &new_branch_block->children, node_wrap(jmp_to_check_cond_label));
+    vec_append(&a_main, &new_branch_block->children, node_wrap(check_cond_label));
+    vec_append(&a_main, &new_branch_block->children, node_wrap(new_operation));
+    vec_append(&a_main, &new_branch_block->children, node_wrap(check_cond_jmp));
+    vec_append(&a_main, &new_branch_block->children, node_wrap(after_check_label));
+    vec_extend(&a_main, &new_branch_block->children, &for_block->children);
+    vec_append(&a_main, &new_branch_block->children, node_wrap(assignment_to_inc_cond_var));
+    vec_append(&a_main, &new_branch_block->children, node_wrap(goto_new(check_cond_label->name, node_wrap(for_loop)->pos)));
+    vec_append(&a_main, &new_branch_block->children, node_wrap(after_for_loop_label));
 
     return new_branch_block;
 }
@@ -162,12 +162,12 @@ static Node_block* if_statement_to_branch(Node_if* if_statement) {
 
     Node_block* new_branch_block = node_unwrap_block(node_new(node_wrap(block)->pos, NODE_BLOCK));
 
-    node_ptr_vec_append(&new_branch_block->children, node_wrap(operation));
-    node_ptr_vec_append(&new_branch_block->children, node_wrap(check_cond_jmp));
-    node_ptr_vec_append(&new_branch_block->children, node_wrap(if_true));
-    node_ptr_vec_extend(&new_branch_block->children, block->children);
-    node_ptr_vec_append(&new_branch_block->children, node_wrap(jmp_to_if_after));
-    node_ptr_vec_append(&new_branch_block->children, node_wrap(if_after));
+    vec_append(&a_main, &new_branch_block->children, node_wrap(operation));
+    vec_append(&a_main, &new_branch_block->children, node_wrap(check_cond_jmp));
+    vec_append(&a_main, &new_branch_block->children, node_wrap(if_true));
+    vec_extend(&a_main, &new_branch_block->children, &block->children);
+    vec_append(&a_main, &new_branch_block->children, node_wrap(jmp_to_if_after));
+    vec_append(&a_main, &new_branch_block->children, node_wrap(if_after));
 
     return new_branch_block;
 }
@@ -179,7 +179,7 @@ bool for_and_if_to_branch(Node* block_) {
     Node_block* block = node_unwrap_block(block_);
 
     for (size_t idx = block->children.info.count - 1;; idx--) {
-        Node** curr_node = node_ptr_vec_at_ref(&block->children, idx);
+        Node** curr_node = vec_at_ref(&block->children, idx);
 
         switch ((*curr_node)->type) {
             case NODE_FOR_RANGE:

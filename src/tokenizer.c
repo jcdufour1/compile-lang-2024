@@ -163,7 +163,7 @@ Tokens tokenize(const String file_text, Parameters params) {
     while (get_next_token(&line_num, &curr_token, &curr_file_text, params)) {
         //log(LOG_TRACE, "token received: "TOKEN_FMT"\n", token_print(curr_token));
         if (curr_token.type != TOKEN_COMMENT) {
-            tokens_append(&tokens, &curr_token);
+            vec_append(&a_main, &tokens, curr_token);
         }
     }
 

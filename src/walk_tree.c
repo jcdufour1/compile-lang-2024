@@ -150,12 +150,11 @@ INLINE void walk_node_ptr_vec(
     int recursion_depth,
     bool (callback)(Node* input_node, int recursion_depth)
 ) {
-    node_ptr_assert_no_null(vector);
     //log(LOG_DEBUG, "-------------------------\n");
     for (size_t idx = 0; idx < vector->info.count; idx++) {
         //log_tree(LOG_DEBUG, node_ptr_vec_at(vector, idx));
-        assert(node_ptr_vec_at(vector, idx) && "a null element is in this vector");
-        walk_tree(node_ptr_vec_at(vector, idx), recursion_depth + 1, callback);
+        assert(vec_at(vector, idx) && "a null element is in this vector");
+        walk_tree(vec_at(vector, idx), recursion_depth + 1, callback);
     }
     //log(LOG_DEBUG, "-------------------------\n");
 }

@@ -16,7 +16,7 @@ static void string_extend_strv_eval_escapes(Arena* arena, String* string, Str_vi
     while (str_view.count > 0) {
         char front_char = str_view_consume(&str_view);
         if (front_char == '\\') {
-            string_append(arena, string, '\\');
+            vec_append(arena, string, '\\');
             switch (str_view_consume(&str_view)) {
                 case 'n':
                     string_extend_hex_2_digits(arena, string, 0x0a);
@@ -25,7 +25,7 @@ static void string_extend_strv_eval_escapes(Arena* arena, String* string, Str_vi
                     unreachable("");
             }
         } else {
-            string_append(arena, string, front_char);
+            vec_append(arena, string, front_char);
         }
     }
 }
@@ -91,7 +91,7 @@ static void extend_literal_decl_prefix(String* output, const Node_literal* var_d
         string_extend_cstr(&a_main, output, " @.");
         string_extend_strv(&a_main, output, var_def->name);
     } else if (str_view_cstr_is_equal(var_def->lang_type.str, "i32")) {
-        string_append(&a_main, output, ' ');
+        vec_append(&a_main, output, ' ');
         string_extend_strv(&a_main, output, var_def->str_data);
     } else {
         log(LOG_ERROR, NODE_FMT"\n", node_print(var_def));
@@ -115,7 +115,7 @@ static const Node_lang_type* return_type_from_function_definition(const Node_fun
 static void emit_function_params(String* output, const Node_function_params* fun_params) {
     for (size_t idx = 0; idx < fun_params->params.info.count; idx++) {
         const Node_variable_def* curr_param = node_unwrap_variable_def_const(
-            node_ptr_vec_at_const(&fun_params->params, idx)
+            vec_at(&fun_params->params, idx)
         );
 
         if (idx > 0) {
@@ -139,7 +139,7 @@ static void emit_function_params(String* output, const Node_function_params* fun
 
 static void emit_function_call_arguments(String* output, const Node_function_call* fun_call) {
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
-        const Node* argument = node_ptr_vec_at_const(&fun_call->args, idx);
+        const Node* argument = vec_at(&fun_call->args, idx);
 
         if (idx > 0) {
             string_extend_cstr(&a_main, output, ", ");
@@ -352,9 +352,9 @@ static void emit_function_definition(String* output, const Node_function_definit
     string_extend_cstr(&a_main, output, " @");
     string_extend_strv(&a_main, output, get_node_name(node_wrap(fun_def)));
 
-    string_append(&a_main, output, '(');
+    vec_append(&a_main, output, '(');
     emit_function_params(output, fun_def->declaration->parameters);
-    string_append(&a_main, output, ')');
+    vec_append(&a_main, output, ')');
 
     string_extend_cstr(&a_main, output, " {\n");
 
@@ -405,9 +405,9 @@ static void emit_function_declaration(String* output, const Node_function_declar
     //extend_literal_decl(output, fun_decl); // TODO
     string_extend_cstr(&a_main, output, " @");
     string_extend_strv(&a_main, output, fun_decl->name);
-    string_append(&a_main, output, '(');
+    vec_append(&a_main, output, '(');
     emit_function_params(output, fun_decl->parameters);
-    string_append(&a_main, output, ')');
+    vec_append(&a_main, output, ')');
     string_extend_cstr(&a_main, output, "\n");
 }
 
@@ -420,7 +420,7 @@ static void emit_label(String* output, const Node_label* label) {
 static void emit_goto(String* output, const Node_goto* lang_goto) {
     string_extend_cstr(&a_main, output, "    br label %");
     string_extend_size_t(&a_main, output, get_matching_label_id(lang_goto->name));
-    string_append(&a_main, output, '\n');
+    vec_append(&a_main, output, '\n');
 }
 
 static void emit_cond_goto(String* output, const Node_cond_goto* cond_goto) {
@@ -430,7 +430,7 @@ static void emit_cond_goto(String* output, const Node_cond_goto* cond_goto) {
     string_extend_size_t(&a_main, output, get_matching_label_id(cond_goto->if_true->name));
     string_extend_cstr(&a_main, output, ", label %");
     string_extend_size_t(&a_main, output, get_matching_label_id(cond_goto->if_false->name));
-    string_append(&a_main, output, '\n');
+    vec_append(&a_main, output, '\n');
 }
 
 static void emit_struct_definition(String* output, const Node_struct_def* struct_def) {
@@ -442,7 +442,7 @@ static void emit_struct_definition(String* output, const Node_struct_def* struct
         if (!is_first) {
             string_extend_cstr(&a_main, output, ", ");
         }
-        extend_type_decl_str(output, node_ptr_vec_at_const(&struct_def->members, idx), false);
+        extend_type_decl_str(output, vec_at(&struct_def->members, idx), false);
         is_first = false;
     }
     string_extend_cstr(&a_main, output, " }\n");
@@ -462,12 +462,12 @@ static void emit_load_struct_element_pointer(String* output, const Node_load_ele
     string_extend_cstr(&a_main, output, ", i32 0");
     string_extend_cstr(&a_main, output, ", i32 ");
     string_extend_size_t(&a_main, output, load_elem_ptr->struct_index);
-    string_append(&a_main, output, '\n');
+    vec_append(&a_main, output, '\n');
 }
 
 static void emit_block(String* output, const Node_block* block) {
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        const Node* statement = node_ptr_vec_at_const(&block->children, idx);
+        const Node* statement = vec_at(&block->children, idx);
 
         switch (statement->type) {
             case NODE_FUNCTION_DEFINITION:
@@ -561,9 +561,9 @@ static void emit_struct_literal(String* output, const Node_struct_literal* struc
 
     size_t is_first = true;
     for (size_t idx = 0; idx < struct_literal->members.info.count; idx++) {
-        const Node* memb_literal = node_ptr_vec_at_const(&struct_literal->members, idx);
+        const Node* memb_literal = vec_at(&struct_literal->members, idx);
         if (!is_first) {
-            string_append(&a_main, output, ',');
+            vec_append(&a_main, output, ',');
         }
         extend_literal_decl(output, node_unwrap_literal_const(memb_literal), false);
         is_first = false;

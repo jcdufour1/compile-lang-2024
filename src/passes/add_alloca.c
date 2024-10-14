@@ -15,12 +15,12 @@ static Node_alloca* alloca_new(Node_variable_def* var_def) {
 static void do_function_definition(Node_function_definition* fun_def) {
     Node_function_params* params = fun_def->declaration->parameters;
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
-        Node_variable_def* param = node_unwrap_variable_def(node_ptr_vec_at(&params->params, idx));
+        Node_variable_def* param = node_unwrap_variable_def(vec_at(&params->params, idx));
         if (is_corresponding_to_a_struct(node_wrap(param))) {
             param->storage_location = node_wrap(param);
             continue;
         }
-        node_ptr_vec_insert(&fun_def->body->children, 0, node_wrap(alloca_new(param)));
+        vec_insert(&a_main, &fun_def->body->children, 0, node_wrap(alloca_new(param)));
     }
 }
 
@@ -40,13 +40,9 @@ static void do_assignment(
     size_t* idx_to_insert_before,
     Node_assignment* assignment
 ) {
-    node_ptr_assert_no_null(block_children);
     if (assignment->lhs->type == NODE_VARIABLE_DEFINITION) {
-        assert(assignment->lhs);
         insert_alloca(block_children, idx_to_insert_before, node_unwrap_variable_def(assignment->lhs));
-        node_ptr_assert_no_null(block_children);
     }
-    node_ptr_assert_no_null(block_children);
 }
 
 bool add_alloca(Node* block_, int recursion_depth) {
@@ -58,24 +54,17 @@ bool add_alloca(Node* block_, int recursion_depth) {
     Node_ptr_vec* block_children = &block->children;
 
     for (size_t idx = 0; idx < block_children->info.count; idx++) {
-        assert(node_ptr_vec_at(&block->children, idx));
-    }
+        Node* curr_node = vec_at(block_children, idx);
 
-    for (size_t idx = 0; idx < block_children->info.count; idx++) {
-        node_ptr_assert_no_null(&block->children);
-        Node* curr_node = node_ptr_vec_at(block_children, idx);
         switch (curr_node->type) {
             case NODE_VARIABLE_DEFINITION:
                 insert_alloca(block_children, &idx, node_unwrap_variable_def(curr_node));
-                node_ptr_assert_no_null(&block->children);
                 break;
             case NODE_FUNCTION_DEFINITION:
                 do_function_definition(node_unwrap_function_definition(curr_node));
-                node_ptr_assert_no_null(&block->children);
                 break;
             case NODE_ASSIGNMENT:
                 do_assignment(block_children, &idx, node_unwrap_assignment(curr_node));
-                node_ptr_assert_no_null(&block->children);
             default:
                 break;
         }

@@ -14,7 +14,7 @@ bool analysis_1(Node* block_, int recursion_depth) {
     Node_ptr_vec* block_children = &block->children;
 
     for (size_t idx = 0; idx < block_children->info.count; idx++) {
-        Node* curr_node = node_ptr_vec_at(block_children, idx);
+        Node* curr_node = vec_at(block_children, idx);
         Lang_type dummy;
         switch (curr_node->type) {
             case NODE_ASSIGNMENT:
