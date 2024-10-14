@@ -60,6 +60,8 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
             return str_view_from_cstr("xor");
         case TOKEN_DEREF:
             return str_view_from_cstr("deref");
+        case TOKEN_REFER:
+            return str_view_from_cstr("refer");
         default:
             unreachable("%d\n", token_type);
     }

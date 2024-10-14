@@ -310,6 +310,9 @@ bool try_set_unary_lang_type(Lang_type* lang_type, Node_unary* unary) {
             assert(unary->lang_type.pointer_depth > 0);
             unary->lang_type.pointer_depth--;
             break;
+        case TOKEN_REFER:
+            unary->lang_type.pointer_depth++;
+            break;
         default:
             unreachable("");
     }

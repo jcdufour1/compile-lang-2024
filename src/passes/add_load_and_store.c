@@ -359,7 +359,13 @@ static Node* get_store_assignment(
                 Node_unary* unary = node_unwrap_op_unary(operator);
                 if (unary->token_type == TOKEN_DEREF) {
                     Node* store_src_imm = node_wrap(insert_load(block_children, idx_to_insert_before, unary->child));
-                    store_src = node_wrap(insert_load(block_children, idx_to_insert_before, store_src_imm));
+                    Node_load_another_node* store_src_ = insert_load(block_children, idx_to_insert_before, store_src_imm);
+                    store_src_->lang_type.pointer_depth--;
+                    store_src = node_wrap(store_src_);
+                    rhs_load_lang_type = unary->lang_type;
+                    break;
+                } else if (unary->token_type == TOKEN_REFER) {
+                    store_src = get_storage_location(get_node_name(unary->child));
                     rhs_load_lang_type = unary->lang_type;
                     break;
                 }

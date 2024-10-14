@@ -137,6 +137,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_DEREF:
             return true;
+        case TOKEN_REFER:
+            return true;
     }
 }
 

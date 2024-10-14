@@ -56,6 +56,8 @@ static bool get_next_token(size_t* line_num, Token* token, Str_view* file_text, 
         token->type = TOKEN_SYMBOL;
         if (str_view_cstr_is_equal(token->text, "deref")) {
             token->type = TOKEN_DEREF;
+        } else if (str_view_cstr_is_equal(token->text, "refer")) {
+            token->type = TOKEN_REFER;
         }
         return true;
     } else if (isdigit(str_view_front(*file_text))) {
