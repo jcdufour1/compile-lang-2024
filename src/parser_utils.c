@@ -255,6 +255,9 @@ static bool try_set_literal_lang_type(Lang_type* lang_type, Node_literal* litera
         case TOKEN_NUM_LITERAL:
             literal->lang_type = lang_type_from_cstr("i32", 0);
             break;
+        case TOKEN_VOID:
+            literal->lang_type = lang_type_from_cstr("void", 0);
+            break;
         default:
             unreachable(NODE_FMT, node_print(literal));
     }

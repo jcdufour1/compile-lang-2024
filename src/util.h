@@ -135,4 +135,6 @@ extern uint8_t zero_block[100000000];
 extern size_t error_count;
 extern size_t warning_count;
 
+extern Pos prev_pos;
+
 #endif // UTIL_H

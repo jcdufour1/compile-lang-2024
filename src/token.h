@@ -34,6 +34,7 @@ typedef enum {
     // literals
     TOKEN_STRING_LITERAL,
     TOKEN_NUM_LITERAL,
+    TOKEN_VOID,
 
     // miscellaneous
     TOKEN_SYMBOL,

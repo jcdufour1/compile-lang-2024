@@ -19,3 +19,5 @@ uint8_t zero_block[100000000] = {0};
 
 size_t error_count = 0;
 size_t warning_count = 0;
+
+Pos prev_pos = {0};

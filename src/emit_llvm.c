@@ -184,9 +184,13 @@ static void emit_function_call(String* output, const Node_function_call* fun_cal
     //assert(fun_call->llvm_id == 0);
 
     // start of actual function call
-    string_extend_cstr(&a_main, output, "    %");
-    string_extend_size_t(&a_main, output, fun_call->llvm_id);
-    string_extend_cstr(&a_main, output, " = call ");
+    string_extend_cstr(&a_main, output, "    ");
+    if (!lang_type_is_equal(fun_call->lang_type, lang_type_from_cstr("void", 0))) {
+        string_extend_cstr(&a_main, output, "%");
+        string_extend_size_t(&a_main, output, fun_call->llvm_id);
+        string_extend_cstr(&a_main, output, " = ");
+    }
+    string_extend_cstr(&a_main, output, "call ");
     extend_type_call_str(output, fun_call->lang_type);
     string_extend_cstr(&a_main, output, " @");
     string_extend_strv(&a_main, output, get_node_name(node_wrap(fun_call)));
@@ -370,9 +374,6 @@ static void emit_return_statement(String* output, const Node_return_statement* f
     switch (sym_to_return->type) {
         case NODE_LITERAL: {
             const Node_literal* literal = node_unwrap_literal_const(sym_to_return);
-            if (!lang_type_is_equal(literal->lang_type, lang_type_from_cstr("i32", 0))) {
-                todo();
-            }
             string_extend_cstr(&a_main, output, "    ret ");
             extend_type_call_str(output, literal->lang_type);
             string_extend_cstr(&a_main, output, " ");
