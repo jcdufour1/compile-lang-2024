@@ -111,10 +111,12 @@ static Node_load_another_node* insert_load(
         case NODE_LITERAL:
             return NULL;
         case NODE_STRUCT_MEMBER_SYM_TYPED:
-            // fallthrough
+            break;
         case NODE_SYMBOL_TYPED:
-            // fallthrough
+            break;
         case NODE_VARIABLE_DEFINITION:
+            break;
+        case NODE_LOAD_ANOTHER_NODE:
             break;
         default:
             node_printf(symbol_call);
@@ -129,6 +131,17 @@ static Node_load_another_node* insert_load(
         assert(load->lang_type.str.count > 0);
         vec_insert(&a_main, block_children, *idx_to_insert_before, node_wrap(load));
         struct_memb_to_load_memb_rtn_val_sym(node_unwrap_struct_member_sym_typed(symbol_call), load);
+        return load;
+    } else if (symbol_call->type == NODE_LOAD_ANOTHER_NODE) {
+        Node_load_another_node* load = node_unwrap_load_another_node(node_new(symbol_call->pos, NODE_LOAD_ANOTHER_NODE));
+        load->node_src = symbol_call;
+        load->lang_type = node_unwrap_load_another_node(symbol_call)->lang_type;
+        insert_into_node_ptr_vec(
+            block_children,
+            idx_to_insert_before,
+            *idx_to_insert_before,
+            node_wrap(load)
+        );
         return load;
     } else {
         Node* sym_def;
@@ -336,7 +349,17 @@ static Node* get_store_assignment(
             rhs_load_lang_type = node_unwrap_llvm_register_sym(rhs)->lang_type;
             break;
         case NODE_OPERATOR: {
-            Node_llvm_register_sym* store_src_ = move_operator_back(block_children, idx_to_insert_before, node_unwrap_operation(rhs));
+            Node_operator* operator = node_unwrap_operation(rhs);
+            if (operator->type == NODE_OP_UNARY) {
+                Node_unary* unary = node_unwrap_op_unary(operator);
+                if (unary->token_type == TOKEN_DEREF) {
+                    Node* store_src_imm = node_wrap(insert_load(block_children, idx_to_insert_before, unary->child));
+                    store_src = node_wrap(insert_load(block_children, idx_to_insert_before, store_src_imm));
+                    rhs_load_lang_type = unary->lang_type;
+                    break;
+                }
+            }
+            Node_llvm_register_sym* store_src_ = move_operator_back(block_children, idx_to_insert_before, operator);
             store_src = node_wrap(store_src_->node_src);
             rhs_load_lang_type = store_src_->lang_type;
             break;
