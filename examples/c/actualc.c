@@ -37,12 +37,7 @@ void do_thing_ptr(Div* div) {
 }
 
 int main(void) {
-    Token token = {.num = 89, .string_data = "djsf"};
-    Div div = {.numerator = 78, .denominator = 90, .extra_num = 7};
-    printf("%d\n", div.extra_num);
-    div.extra_num = 12;
-    printf("%d\n", div.extra_num);
-    do_thing(div);
-    do_thing_ptr(&div);
+    int num1 = 8;
+    int* ptr = &num1;
     return 0;
 }

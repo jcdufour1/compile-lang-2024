@@ -132,12 +132,7 @@ static Node_load_another_node* insert_load(
         case NODE_LOAD_ANOTHER_NODE:
             break;
         case NODE_OPERATOR: {
-            Node_operator* operator = node_unwrap_operation(symbol_call);
-            Node_unary* unary = node_unwrap_op_unary(operator);
-            if (unary->token_type == TOKEN_REFER) {
-                break;
-            }
-            todo();
+            break;
         }
         default:
             node_printf(symbol_call);
@@ -255,6 +250,8 @@ static void load_operator_operand(
             insert_load(block_children, idx_to_insert_before, operand);
             break;
         case NODE_LLVM_REGISTER_SYM:
+            break;
+        case NODE_LOAD_ANOTHER_NODE:
             break;
         default:
             unreachable(NODE_FMT"\n", node_print(operand));
@@ -530,7 +527,15 @@ static Node* flatten_operation_operand(
     if (operand->type == NODE_OPERATOR) {
         Node_operator* child = node_unwrap_operation(operand);
         if (child->type == NODE_OP_UNARY) {
-            todo();
+            Node_unary* unary = node_unwrap_op_unary(child);
+            if (unary->token_type == TOKEN_DEREF) {
+                Node* store_src_imm = node_wrap(insert_load(block_children, idx_to_insert_before, unary->child));
+                Node_load_another_node* store_src_ = insert_load(block_children, idx_to_insert_before, store_src_imm);
+                store_src_->lang_type.pointer_depth--;
+                Node_llvm_register_sym* reg_sym = node_unwrap_llvm_register_sym(node_new(operand->pos, NODE_LLVM_REGISTER_SYM));
+                reg_sym->node_src = node_wrap(store_src_);
+                return node_wrap(reg_sym);
+            }
         } else if (child->type == NODE_OP_BINARY) {
             Node* operator_sym = node_new(operand->pos, NODE_LLVM_REGISTER_SYM);
 
@@ -546,6 +551,7 @@ static Node* flatten_operation_operand(
         } else {
             unreachable("");
         }
+        todo();
     } else if (operand->type == NODE_FUNCTION_CALL) {
         Node_llvm_register_sym* fun_sym = node_unwrap_llvm_register_sym(node_new(operand->pos, NODE_LLVM_REGISTER_SYM));
         insert_into_node_ptr_vec(
