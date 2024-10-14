@@ -100,6 +100,19 @@ static void struct_memb_to_load_memb_rtn_val_sym(Node_struct_member_sym_typed* s
     load_ref->node_src = node_wrap(node_src);
 }
 
+static void refer_to_llvm_register_symbol(Node_unary* refer) {
+    assert(refer->token_type == TOKEN_REFER);
+
+    //Node_struct_member_sym_typed temp = *struct_memb;
+    Lang_type lang_type_to_load = refer->lang_type;
+    lang_type_to_load.pointer_depth++;
+    Node* child = refer->child;
+    node_wrap(refer)->type = NODE_LLVM_REGISTER_SYM;
+    Node_llvm_register_sym* load_ref = node_unwrap_llvm_register_sym(node_wrap(refer));
+    load_ref->lang_type = lang_type_to_load;
+    load_ref->node_src = get_storage_location(get_node_name(child));
+}
+
 static Node_load_another_node* insert_load(
     Node_ptr_vec* block_children,
     size_t* idx_to_insert_before,
@@ -118,6 +131,14 @@ static Node_load_another_node* insert_load(
             break;
         case NODE_LOAD_ANOTHER_NODE:
             break;
+        case NODE_OPERATOR: {
+            Node_operator* operator = node_unwrap_operation(symbol_call);
+            Node_unary* unary = node_unwrap_op_unary(operator);
+            if (unary->token_type == TOKEN_REFER) {
+                break;
+            }
+            todo();
+        }
         default:
             node_printf(symbol_call);
             todo();
@@ -148,6 +169,14 @@ static Node_load_another_node* insert_load(
             node_wrap(load)
         );
         return load;
+    } else if (symbol_call->type == NODE_OPERATOR) {
+        Node_operator* operator = node_unwrap_operation(symbol_call);
+        Node_unary* unary = node_unwrap_op_unary(operator);
+        if (unary->token_type != TOKEN_REFER) {
+            todo();
+        }
+        refer_to_llvm_register_symbol(unary);
+        return NULL;
     } else {
         Node* sym_def;
         try(sym_tbl_lookup(&sym_def, get_node_name(symbol_call)));
@@ -255,8 +284,7 @@ static void add_load_foreach_arg(
     Node_function_call* function_call
 ) {
     for (size_t idx = 0; idx < function_call->args.info.count; idx++) {
-        Node* argument = vec_at(&function_call->args, idx);
-        insert_load(block_children, idx_to_insert_before, argument);
+        insert_load(block_children, idx_to_insert_before, vec_at(&function_call->args, idx));
     }
 }
 

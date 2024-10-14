@@ -1,7 +1,6 @@
 
 extern("c") fn printf(format_string: ptr, args: any...) i32
 
-// TODO: make num_to_inc a pointer
 fn add_one(num_ptr: i32*) i32 {
     let num_val: i32 = deref(num_ptr)
     num_val = num_val + 1
@@ -11,7 +10,9 @@ fn add_one(num_ptr: i32*) i32 {
 
 fn main() i32 {
     let num: i32 = 8
-    add_one(num)
+    printf("%d\n", num)
+
+    add_one(refer(num))
 
     printf("%d\n", num)
     return 0
