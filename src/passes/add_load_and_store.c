@@ -129,7 +129,12 @@ static Node_load_another_node* insert_load(
         load->node_src = node_wrap(load_element_ptr);
         load->lang_type = load_element_ptr->lang_type;
         assert(load->lang_type.str.count > 0);
-        vec_insert(&a_main, block_children, *idx_to_insert_before, node_wrap(load));
+        insert_into_node_ptr_vec(
+            block_children,
+            idx_to_insert_before,
+            *idx_to_insert_before,
+            node_wrap(load)
+        );
         struct_memb_to_load_memb_rtn_val_sym(node_unwrap_struct_member_sym_typed(symbol_call), load);
         return load;
     } else if (symbol_call->type == NODE_LOAD_ANOTHER_NODE) {
