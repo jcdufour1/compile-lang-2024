@@ -66,32 +66,66 @@ Str_view token_print_internal(Arena* arena, Token token);
 
 static inline bool token_is_literal(Token token) {
     switch (token.type) {
-        case TOKEN_NUM_LITERAL:
-            // fallthrough
-        case TOKEN_STRING_LITERAL:
-            return true;
-        case TOKEN_CLOSE_PAR:
-            // fallthrough
-        case TOKEN_OPEN_PAR:
-            // fallthrough
-        case TOKEN_COMMA:
-            // fallthrough
+        case TOKEN_NONTYPE:
+            return false;
+        case TOKEN_SINGLE_PLUS:
+            return false;
         case TOKEN_SINGLE_MINUS:
-            // fallthrough
-        case TOKEN_DOUBLE_QUOTE:
-            // fallthrough
-        case TOKEN_OPEN_CURLY_BRACE:
-            // fallthrough
-        case TOKEN_CLOSE_CURLY_BRACE:
-            // fallthrough
-        case TOKEN_SYMBOL:
-            // fallthrough
-        case TOKEN_SEMICOLON:
-            // fallthrough
+            return false;
+        case TOKEN_ASTERISK:
+            return false;
+        case TOKEN_SLASH:
+            return false;
+        case TOKEN_LESS_THAN:
+            return false;
+        case TOKEN_GREATER_THAN:
+            return false;
+        case TOKEN_DOUBLE_EQUAL:
+            return false;
+        case TOKEN_NOT_EQUAL:
+            return false;
+        case TOKEN_XOR:
+            return false;
         case TOKEN_NOT:
             return false;
-        default:
-            unreachable(TOKEN_FMT"\n", token_print(token));
+        case TOKEN_DEREF:
+            return false;
+        case TOKEN_REFER:
+            return false;
+        case TOKEN_STRING_LITERAL:
+            return true;
+        case TOKEN_NUM_LITERAL:
+            return true;
+        case TOKEN_VOID:
+            return true;
+        case TOKEN_SYMBOL:
+            return false;
+        case TOKEN_OPEN_PAR:
+            return false;
+        case TOKEN_CLOSE_PAR:
+            return false;
+        case TOKEN_OPEN_CURLY_BRACE:
+            return false;
+        case TOKEN_CLOSE_CURLY_BRACE:
+            return false;
+        case TOKEN_DOUBLE_QUOTE:
+            return false;
+        case TOKEN_SEMICOLON:
+            return false;
+        case TOKEN_COMMA:
+            return false;
+        case TOKEN_COLON:
+            return false;
+        case TOKEN_SINGLE_EQUAL:
+            return false;
+        case TOKEN_SINGLE_DOT:
+            return false;
+        case TOKEN_DOUBLE_DOT:
+            return false;
+        case TOKEN_TRIPLE_DOT:
+            return false;
+        case TOKEN_COMMENT:
+            return false;
     }
 }
 

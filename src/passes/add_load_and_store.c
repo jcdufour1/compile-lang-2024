@@ -347,7 +347,15 @@ static Node* get_store_assignment(
             if (unary->token_type != TOKEN_DEREF) {
                 todo();
             }
-            store_dest = node_wrap(insert_load(block_children, idx_to_insert_before, unary->child));
+            if (is_corresponding_to_a_struct(unary->child)) {
+                if (get_lang_type(unary->child).pointer_depth > 0) {
+                    store_dest = get_storage_location(get_node_name(unary->child));
+                } else {
+                    todo();
+                }
+            } else {
+                store_dest = node_wrap(insert_load(block_children, idx_to_insert_before, unary->child));
+            }
             lhs_load_lang_type = unary->lang_type;
             break;
         }
@@ -383,7 +391,12 @@ static Node* get_store_assignment(
             if (operator->type == NODE_OP_UNARY) {
                 Node_unary* unary = node_unwrap_op_unary(operator);
                 if (unary->token_type == TOKEN_DEREF) {
-                    Node* store_src_imm = node_wrap(insert_load(block_children, idx_to_insert_before, unary->child));
+                    Node* store_src_imm;
+                    if (unary->child->type == NODE_STRUCT_MEMBER_SYM_TYPED) {
+                        todo();
+                    } else {
+                        store_src_imm = node_wrap(insert_load(block_children, idx_to_insert_before, unary->child));
+                    }
                     Node_load_another_node* store_src_ = insert_load(block_children, idx_to_insert_before, store_src_imm);
                     store_src_->lang_type.pointer_depth--;
                     store_src = node_wrap(store_src_);

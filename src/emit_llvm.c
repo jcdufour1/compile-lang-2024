@@ -123,9 +123,15 @@ static void emit_function_params(String* output, const Node_function_params* fun
         }
 
         if (is_struct_variable_definition(curr_param)) {
-            string_extend_cstr(&a_main, output, "ptr noundef byval(");
-            extend_type_call_str(output, curr_param->lang_type);
-            string_extend_cstr(&a_main, output, ")");
+            if (curr_param->lang_type.pointer_depth < 0) {
+                unreachable("");
+            } else if (curr_param->lang_type.pointer_depth > 0) {
+                extend_type_call_str(output, curr_param->lang_type);
+            } else {
+                string_extend_cstr(&a_main, output, "ptr noundef byval(");
+                extend_type_call_str(output, curr_param->lang_type);
+                string_extend_cstr(&a_main, output, ")");
+            }
         } else {
             extend_type_decl_str(output, node_wrap(curr_param), true);
         }

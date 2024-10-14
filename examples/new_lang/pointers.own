@@ -11,6 +11,17 @@ fn operation_2(num_ptr_2: i32*) {
     return
 }
 
+struct Div {
+    numerator: i32
+    denominator: i32
+}
+
+fn set_div(div_ptr: Div*) {
+    let new_div: Div = {.numerator = 134, .denominator = 45};
+    deref(div_ptr) = new_div;
+    return
+}
+
 fn main() i32 {
     let num: i32 = 8
     printf("%d\n", num)
@@ -18,6 +29,12 @@ fn main() i32 {
     printf("%d\n", num)
     operation_2(refer(num))
     printf("%d\n", num)
+
+    let div: Div = {.numerator = 87, .denominator = 123};
+    printf("%d/%d\n", div.numerator, div.denominator)
+    set_div(refer(div));
+    printf("%d/%d\n", div.numerator, div.denominator)
+
     return 0
 }
 

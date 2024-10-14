@@ -406,8 +406,18 @@ bool try_set_assignment_operand_types(Lang_type* lang_type, Node_assignment* ass
             return false;
         }
     }
+
     if (!lang_type_is_equal(lhs_lang_type, rhs_lang_type)) {
         todo();
+        /*
+        if (is_corresponding_to_a_struct(rhs)) {
+            if (str_view_is_equal(lhs_lang_type.str, rhs_lang_type.str) && lhs_lang_type.pointer_depth 1= rhs_lang_type.pointer_depth - 1) {
+                todo();
+            }
+        } else {
+            todo();
+        }
+        */
     }
 
     switch (rhs->type) {
