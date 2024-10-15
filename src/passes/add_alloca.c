@@ -49,10 +49,10 @@ static void do_assignment(
     node_ptr_assert_no_null(block_children);
 }
 
-bool add_alloca(Node* block_, int recursion_depth) {
-    (void) recursion_depth;
+void add_alloca(Env* env) {
+    Node* block_ = node_ptr_vec_top(&env->ancesters);
     if (block_->type != NODE_BLOCK) {
-        return false;
+        return;
     }
     Node_block* block = node_unwrap_block(block_);
     Node_ptr_vec* block_children = &block->children;
@@ -81,5 +81,5 @@ bool add_alloca(Node* block_, int recursion_depth) {
         }
     }
 
-    return false;
+    return;
 }

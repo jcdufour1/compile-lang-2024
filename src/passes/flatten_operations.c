@@ -93,10 +93,10 @@ static void swap_nodes(Node** a, Node** b) {
     assert(*b);
 }
 
-bool flatten_operations(Node* block_, int recursion_depth) {
-    (void) recursion_depth;
+void flatten_operations(Env* env) {
+    Node* block_ = node_ptr_vec_top(&env->ancesters);
     if (block_->type != NODE_BLOCK) {
-        return false;
+        return;
     }
     Node_block* block = node_unwrap_block(block_);
 
@@ -130,6 +130,6 @@ bool flatten_operations(Node* block_, int recursion_depth) {
         }
     }
 
-    return false;
+    return;
 }
 

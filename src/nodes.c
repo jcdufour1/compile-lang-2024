@@ -77,7 +77,7 @@ Str_view lang_type_print_internal(Arena* arena, Lang_type lang_type, bool surrou
 
 void log_node_in_tree_internal(Env* env) {
     Node* node = node_ptr_vec_top(&env->ancesters);
-    static String padding = {0};
+    String padding = {0};
     string_set_to_zero_len(&padding);
 
     for (int idx = 0; idx < 2*env->recursion_depth; idx++) {

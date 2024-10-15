@@ -50,10 +50,10 @@ static void set_if_condition_types(Node_if_condition* if_cond) {
     }
 }
 
-bool analysis_1(Node* block_, int recursion_depth) {
-    (void) recursion_depth;
+void analysis_1(Env* env) {
+    Node* block_ = node_ptr_vec_top(&env->ancesters);
     if (block_->type != NODE_BLOCK) {
-        return false;
+        return;
     }
     Node_block* block = node_unwrap_block(block_);
     Node_ptr_vec* block_children = &block->children;
@@ -91,5 +91,5 @@ bool analysis_1(Node* block_, int recursion_depth) {
         }
     }
 
-    return false;
+    return;
 }

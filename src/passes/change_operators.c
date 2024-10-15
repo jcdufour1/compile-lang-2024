@@ -1,6 +1,7 @@
 
 #include "../nodes.h"
 #include "../parser_utils.h"
+#include "passes.h"
 
 static void do_change_operator(Node_operator* operator) {
     Pos pos = node_wrap(operator)->pos;
@@ -31,13 +32,12 @@ static void do_change_operator(Node_operator* operator) {
 }
 
 
-bool change_operators(Node* curr_node, int recursion_depth) {
+void change_operators(Env* env) {
+    Node* curr_node = node_ptr_vec_top(&env->ancesters);
     log_tree(LOG_DEBUG, curr_node);
-    //log(LOG_DEBUG, NODE_FMT"\n", node_print(curr_node));
     if (!curr_node) {
-        return false;
+        return;
     }
-    (void) recursion_depth;
     switch (curr_node->type) {
         case NODE_OPERATOR:
             do_change_operator(node_unwrap_operation(curr_node));
@@ -46,5 +46,5 @@ bool change_operators(Node* curr_node, int recursion_depth) {
             break;
     }
 
-    return false;
+    return;
 }
