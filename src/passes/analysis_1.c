@@ -5,10 +5,55 @@
 #include "../parser_utils.h"
 #include "../error_msg.h"
 
-bool analysis_1(Node* block_, int recursion_depth) {
-    (void) recursion_depth;
+static void set_if_condition_types(Node_if_condition* if_cond) {
+    Node* old_if_cond_child = if_cond->child;
+    switch (old_if_cond_child->type) {
+        case NODE_SYMBOL_UNTYPED:
+            set_symbol_type(node_unwrap_symbol_untyped(old_if_cond_child));
+            if_cond->child = node_wrap(binary_new(
+                old_if_cond_child,
+                node_wrap(literal_new(str_view_from_cstr("1"), TOKEN_NUM_LITERAL, old_if_cond_child->pos)),
+                TOKEN_DOUBLE_EQUAL
+            ));
+            break;
+        case NODE_OPERATOR: {
+            Node_operator* operator = node_unwrap_operation(old_if_cond_child);
+            if (operator->type == NODE_OP_UNARY) {
+                try_set_unary_lang_type(node_unwrap_op_unary(operator));
+            } else if (operator->type == NODE_OP_BINARY) {
+                try_set_binary_lang_type(node_unwrap_op_binary(operator));
+            } else {
+                unreachable("");
+            }
+        }
+        break;
+        case NODE_FUNCTION_CALL: {
+            log(LOG_DEBUG, NODE_FMT"\n", node_print(old_if_cond_child));
+            set_function_call_types(node_unwrap_function_call(old_if_cond_child));
+            if_cond->child = node_wrap(binary_new(
+                old_if_cond_child,
+                node_wrap(literal_new(str_view_from_cstr("0"), TOKEN_NUM_LITERAL, node_wrap(old_if_cond_child)->pos)),
+                TOKEN_NOT_EQUAL
+            ));
+            break;
+        }
+        case NODE_LITERAL: {
+            if_cond->child = node_wrap(binary_new(
+                old_if_cond_child,
+                node_wrap(literal_new(str_view_from_cstr("1"), TOKEN_NUM_LITERAL, old_if_cond_child->pos)),
+                TOKEN_DOUBLE_EQUAL
+            ));
+            break;
+        }
+        default:
+            unreachable(NODE_FMT, node_print(old_if_cond_child));
+    }
+}
+
+void analysis_1(Env* env) {
+    Node* block_ = node_ptr_vec_top(&env->ancesters);
     if (block_->type != NODE_BLOCK) {
-        return false;
+        return;
     }
     Node_block* block = node_unwrap_block(block_);
     Node_ptr_vec* block_children = &block->children;
@@ -37,5 +82,5 @@ bool analysis_1(Node* block_, int recursion_depth) {
         }
     }
 
-    return false;
+    return;
 }

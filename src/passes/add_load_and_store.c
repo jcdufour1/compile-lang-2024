@@ -531,6 +531,7 @@ static void load_function_arguments(
     add_load_foreach_arg(block_children, idx_to_insert_before, fun_call);
 }
 
+<<<<<<< HEAD
 // returns operand or operand symbol
 static Node* flatten_operation_operand(
     Node_ptr_vec* block_children,
@@ -599,10 +600,10 @@ static void flatten_operation_if_nessessary(
     }
 }
 
-bool add_load_and_store(Node* start_start_node, int recursion_depth) {
-    (void) recursion_depth;
+void add_load_and_store(Env* env) {
+    Node* start_start_node = node_ptr_vec_top(&env->ancesters);
     if (start_start_node->type != NODE_BLOCK) {
-        return false;
+        return;
     }
     Node_block* block = node_unwrap_block(start_start_node);
 
@@ -700,5 +701,5 @@ bool add_load_and_store(Node* start_start_node, int recursion_depth) {
         }
     }
 
-    return false;
+    return;
 }

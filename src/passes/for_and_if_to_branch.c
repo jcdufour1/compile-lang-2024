@@ -1,6 +1,7 @@
 #include "../symbol_table.h"
 #include "../parser_utils.h"
 #include "../nodes.h"
+#include "passes.h"
 
 static Node_label* label_new(Str_view label_name, Pos pos) {
     Node_label* label = node_unwrap_label(node_new(pos, NODE_LABEL));
@@ -172,9 +173,10 @@ static Node_block* if_statement_to_branch(Node_if* if_statement) {
     return new_branch_block;
 }
 
-bool for_and_if_to_branch(Node* block_) {
+void for_and_if_to_branch(Env* env) {
+    Node* block_ = node_ptr_vec_top(&env->ancesters);
     if (block_->type != NODE_BLOCK) {
-        return false;
+        return;
     }
     Node_block* block = node_unwrap_block(block_);
 
@@ -206,6 +208,6 @@ bool for_and_if_to_branch(Node* block_) {
         }
     }
 
-    return true;
+    return;
 }
 
