@@ -33,7 +33,7 @@ static void do_change_operator(Node_operator* operator) {
 }
 
 void change_operators(Env* env) {
-    Node* curr_node = node_ptr_vec_top(&env->ancesters);
+    Node* curr_node = vec_top(&env->ancesters);
     log_tree(LOG_DEBUG, curr_node);
     if (!curr_node) {
         return;

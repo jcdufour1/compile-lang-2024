@@ -9,8 +9,9 @@ DO_PASSES_H	src/do_passes.h	2
 Div	examples/c/actualc.c	20
 EMIT_LLVM_H	src/emit_llvm.h	2
 ERROR_MSG_H	src/error_msg.h	2
-Env	src/do_passes.h	11
+Env	src/do_passes.h	12
 FILE_H	src/file.h	2
+HEAD	src/passes/change_operators.c	35
 Hash_node	src/hash_table.h	9
 INCLUDE_STB_DS_H	third_party/stb_ds.h	392
 INLINE	src/util.h	121
@@ -298,7 +299,7 @@ add_load_foreach_arg	src/passes/add_load_and_store.c	/^static void add_load_fore
 add_load_return_statement	src/passes/add_load_and_store.c	/^static void add_load_return_statement($/
 alloca_new	src/passes/add_alloca.c	/^static Node_alloca* alloca_new(Node_variable_def* /
 analysis_1	src/passes/analysis_1.c	/^void analysis_1(Env* env) {$/
-ancesters	src/do_passes.h	8
+ancesters	src/do_passes.h	9
 arena_alloc	src/arena.c	/^void* arena_alloc(Arena* arena, size_t capacity_ne/
 arena_buffers	src/globals.c	15
 arena_buffers_count	src/globals.c	16
@@ -331,7 +332,6 @@ assign_llvm_ids	src/passes/assign_llvm_ids.c	/^void assign_llvm_ids(Env* env) {$
 assignment_new	src/parser_utils.c	/^Node_assignment* assignment_new(Node* lhs, Node* r/
 b	third_party/stb_ds.h	1634
 b	third_party/stb_ds.h	1635
-ba52	src/passes/passes.h	/^>>>>>>> 615ba52 (wip: refactoring of walk_tree)$/
 binary	src/node.h	128
 binary_new	src/parser_utils.c	/^Node_binary* binary_new(Node* lhs, Node* rhs, TOKE/
 block	third_party/stb_ds.h	675
@@ -353,7 +353,6 @@ capacity	src/symbol_table.h	29
 capacity	src/vector.h	12
 capacity	third_party/stb_ds.h	660
 change_break_to_goto	src/passes/for_and_if_to_branch.c	/^static void change_break_to_goto(Node_block* block/
-change_operators	src/passes/change_operators.c	/^void change_operators(Env* env) {$/
 child	src/node.h	112
 child	src/node.h	178
 child	src/node.h	194
@@ -451,8 +450,11 @@ extract_struct_literal	src/parser.c	/^static Node_struct_literal* extract_struct
 extract_struct_member_call	src/parser.c	/^static Node_struct_member_sym_untyped* extract_str/
 extract_symbol	src/parser.c	/^static Node_symbol_untyped* extract_symbol(Tk_view/
 file_path	src/util.h	26
+flatten_operation_if_nessessary	src/passes/flatten_operations.c	/^static void flatten_operation_if_nessessary($/
 flatten_operation_if_nessessary	src/passes/add_load_and_store.c	/^static void flatten_operation_if_nessessary($/
+flatten_operation_operand	src/passes/flatten_operations.c	/^static Node* flatten_operation_operand($/
 flatten_operation_operand	src/passes/add_load_and_store.c	/^static Node* flatten_operation_operand($/
+flatten_operations	src/passes/flatten_operations.c	/^void flatten_operations(Env* env) {$/
 for_and_if_to_branch	src/passes/for_and_if_to_branch.c	/^void for_and_if_to_branch(Env* env) {$/
 for_loop_cond_var_assign_new	src/passes/for_and_if_to_branch.c	/^static Node_assignment* for_loop_cond_var_assign_n/
 for_range_to_branch	src/passes/for_and_if_to_branch.c	/^static Node_block* for_range_to_branch(Node_for_ra/
@@ -614,6 +616,7 @@ memb_sym_piece_untyped	src/node.h	340
 members	src/node.h	142
 members	src/node.h	167
 mode	third_party/stb_ds.h	676
+move_operator_back	src/passes/flatten_operations.c	/^static Node_llvm_register_sym* move_operator_back(/
 move_operator_back	src/passes/add_load_and_store.c	/^static Node_llvm_register_sym* move_operator_back(/
 msg	src/util.h	/^#define msg(log_level, pos, ...) \\$/
 msg_invalid_assignment_to_literal	src/error_msg.c	/^void msg_invalid_assignment_to_literal(const Node_/
@@ -809,7 +812,7 @@ print_arena	src/globals.c	11
 print_node_dest	src/nodes.c	/^static void print_node_dest(Arena* arena, String* /
 print_node_src	src/nodes.c	/^static void print_node_src(Arena* arena, String* s/
 read_file	src/file.c	/^bool read_file(String* file_text, const char* inpu/
-recursion_depth	src/do_passes.h	10
+recursion_depth	src/do_passes.h	11
 refer_to_llvm_register_symbol	src/passes/add_load_and_store.c	/^static void refer_to_llvm_register_symbol(Node_una/
 remaining	third_party/stb_ds.h	674
 return_type_from_function_definition	src/emit_llvm.c	/^static const Node_lang_type* return_type_from_func/
@@ -849,7 +852,7 @@ sizeof_struct_definition	src/parser_utils.c	/^uint64_t sizeof_struct_definition(
 sizeof_struct_literal	src/parser_utils.c	/^uint64_t sizeof_struct_literal(const Node_struct_l/
 slot_count	third_party/stb_ds.h	830
 slot_count_log2	third_party/stb_ds.h	837
-start_walk	src/do_passes.h	/^static inline void start_walk(Node_block** root, v/
+start_walk	src/do_passes.h	/^INLINE void start_walk(Node_block** root, void (ca/
 status	src/symbol_table.h	23
 stbds_arraddn	third_party/stb_ds.h	/^#define stbds_arraddn(a,n)     ((void)(stbds_arrad/
 stbds_arraddnindex	third_party/stb_ds.h	/^#define stbds_arraddnindex(a,n)(stbds_arrmaybegrow/
@@ -1008,6 +1011,7 @@ strreset	third_party/stb_ds.h	452
 struct_index	src/node.h	84
 struct_index	src/node.h	162
 struct_memb_to_load_memb_rtn_val_sym	src/passes/add_load_and_store.c	/^static void struct_memb_to_load_memb_rtn_val_sym(N/
+swap_nodes	src/passes/flatten_operations.c	/^static void swap_nodes(Node** a, Node** b) {$/
 sym_tbl_add	src/symbol_table.h	/^static inline bool sym_tbl_add(Node* node_of_symbo/
 sym_tbl_add_internal	src/symbol_table.h	/^static inline bool sym_tbl_add_internal(Symbol_tab/
 sym_tbl_calculate_idx	src/symbol_table.h	/^static inline size_t sym_tbl_calculate_idx(Str_vie/
@@ -1099,8 +1103,10 @@ vec_at	src/vector.h	/^#define vec_at(vector, index) \\$/
 vec_at_ref	src/vector.h	/^#define vec_at_ref(vector, index) \\$/
 vec_extend	src/vector.h	/^#define vec_extend(arena, dest, src) \\$/
 vec_insert	src/vector.h	/^#define vec_insert(arena, vector, index, item_to_i/
+vec_pop	src/vector.h	/^#define vec_pop(popped_item, vector) \\$/
 vec_reserve	src/vector.h	/^#define vec_reserve(arena, vector, min_count_empty/
 vec_reset	src/vector.h	/^#define vec_reset(vector) \\$/
+vec_top	src/vector.h	/^#define vec_top(vector) \\$/
 walk_node_ptr_vec	src/walk_tree.c	/^INLINE void walk_node_ptr_vec(Env* env, Node_ptr_v/
 walk_tree	src/walk_tree.c	/^void walk_tree(Env* env, void (callback)(Env* env)/
 walk_tree_traverse	src/walk_tree.c	/^INLINE void walk_tree_traverse(Env* env, Node* new/

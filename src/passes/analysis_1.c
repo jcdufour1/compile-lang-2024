@@ -31,7 +31,9 @@ static void set_if_condition_types(Node_if_condition* if_cond) {
         case NODE_FUNCTION_CALL: {
             log(LOG_DEBUG, NODE_FMT"\n", node_print(old_if_cond_child));
             Lang_type dummy;
-            set_function_call_types(&dummy, node_unwrap_function_call(old_if_cond_child));
+            if (!try_set_function_call_types(&dummy, node_unwrap_function_call(old_if_cond_child))) {
+                todo();
+            }
             if_cond->child = node_wrap(binary_new(
                 old_if_cond_child,
                 node_wrap(literal_new(str_view_from_cstr("0"), TOKEN_NUM_LITERAL, node_wrap(old_if_cond_child)->pos)),
