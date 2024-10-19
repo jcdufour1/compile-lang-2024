@@ -1,4 +1,4 @@
-extern("c") fn printf(str_to_print_2: ptr, args: any...) i32
+extern("c") fn printf(str_to_print: ptr, args: any...) i32
 
 fn main() i32 {
     let should_loop: i32 = 1

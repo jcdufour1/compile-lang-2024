@@ -1,13 +1,13 @@
 
 extern("c") fn printf(format_string: ptr, args: any...) i32
 
-fn add_one(num_ptr: i32*) {
-    deref(num_ptr) = deref(num_ptr) + 1
+fn add_one(num: i32*) {
+    deref(num) = deref(num) + 1
     return
 }
 
-fn operation_2(num_ptr_2: i32*) {
-    deref(num_ptr_2) = 2*deref(num_ptr_2) + 1
+fn operation_2(num: i32*) {
+    deref(num) = 2*deref(num) + 1
     return
 }
 
@@ -16,9 +16,9 @@ struct Div {
     denominator: i32
 }
 
-fn set_div(div_ptr: Div*) {
+fn set_div(div: Div*) {
     let new_div: Div = {.numerator = 134, .denominator = 45};
-    deref(div_ptr) = new_div;
+    deref(div) = new_div;
     return
 }
 
