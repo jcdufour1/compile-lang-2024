@@ -5,12 +5,13 @@
 #include "../parser_utils.h"
 #include "../error_msg.h"
 
-static void set_if_condition_types(Node_if_condition* if_cond) {
+static void set_if_condition_types(Env* env, Node_if_condition* if_cond) {
     Node* old_if_cond_child = if_cond->child;
     switch (old_if_cond_child->type) {
         case NODE_SYMBOL_UNTYPED:
             set_symbol_type(node_unwrap_symbol_untyped(old_if_cond_child));
             if_cond->child = node_wrap(binary_new(
+                env,
                 old_if_cond_child,
                 node_wrap(literal_new(str_view_from_cstr("1"), TOKEN_NUM_LITERAL, old_if_cond_child->pos)),
                 TOKEN_DOUBLE_EQUAL
@@ -20,9 +21,9 @@ static void set_if_condition_types(Node_if_condition* if_cond) {
             Lang_type dummy;
             Node_operator* operator = node_unwrap_operation(old_if_cond_child);
             if (operator->type == NODE_OP_UNARY) {
-                try_set_unary_lang_type(&dummy, node_unwrap_op_unary(operator));
+                try_set_unary_lang_type(env, &dummy, node_unwrap_op_unary(operator));
             } else if (operator->type == NODE_OP_BINARY) {
-                try_set_binary_lang_type(&dummy, node_unwrap_op_binary(operator));
+                try_set_binary_lang_type(env, &dummy, node_unwrap_op_binary(operator));
             } else {
                 unreachable("");
             }
@@ -31,10 +32,11 @@ static void set_if_condition_types(Node_if_condition* if_cond) {
         case NODE_FUNCTION_CALL: {
             log(LOG_DEBUG, NODE_FMT"\n", node_print(old_if_cond_child));
             Lang_type dummy;
-            if (!try_set_function_call_types(&dummy, node_unwrap_function_call(old_if_cond_child))) {
+            if (!try_set_function_call_types(env, &dummy, node_unwrap_function_call(old_if_cond_child))) {
                 todo();
             }
             if_cond->child = node_wrap(binary_new(
+                env,
                 old_if_cond_child,
                 node_wrap(literal_new(str_view_from_cstr("0"), TOKEN_NUM_LITERAL, node_wrap(old_if_cond_child)->pos)),
                 TOKEN_NOT_EQUAL
@@ -43,6 +45,7 @@ static void set_if_condition_types(Node_if_condition* if_cond) {
         }
         case NODE_LITERAL: {
             if_cond->child = node_wrap(binary_new(
+                env,
                 old_if_cond_child,
                 node_wrap(literal_new(str_view_from_cstr("1"), TOKEN_NUM_LITERAL, old_if_cond_child->pos)),
                 TOKEN_DOUBLE_EQUAL
@@ -79,7 +82,7 @@ void analysis_1(Env* env) {
             case NODE_IF_STATEMENT:
                 //fallthrough
             case NODE_FOR_WITH_CONDITION:
-                try_set_node_type(&dummy, curr_node);
+                try_set_node_type(env, &dummy, curr_node);
                 break;
             default:
                 break;

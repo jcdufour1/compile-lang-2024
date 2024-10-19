@@ -7,7 +7,6 @@
 #include "tokens.h"
 #include "tokenizer.h"
 #include "parser.h"
-#include "emit_llvm.h"
 #include "parameters.h"
 #include "file.h"
 #include "do_passes.h"
@@ -25,13 +24,7 @@ int main(int argc, char** argv) {
 
     Node_block* root = parse(tokens);
 
-    do_passes(&root);
-
-    if (params.emit_llvm) {
-        emit_llvm_from_tree(root);
-    } else {
-        todo();
-    }
+    do_passes(&root, &params);
 
     return 0;
 }

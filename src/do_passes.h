@@ -4,14 +4,10 @@
 #include "util.h"
 #include "node.h"
 #include "node_ptr_vec.h"
+#include "env.h"
+#include "parameters.h"
 
-typedef struct {
-    Node_ptr_vec ancesters; // index 0 is the root of the tree
-                            // index len - 1 is the current node
-    int recursion_depth;
-} Env;
-
-void do_passes(Node_block** root);
+void do_passes(Node_block** root, const Parameters* params);
 
 void walk_tree(Env* env, void (callback)(Env* env));
 

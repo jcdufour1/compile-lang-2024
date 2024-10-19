@@ -33,7 +33,6 @@ typedef struct {
 
 #define vec_append(arena, vector, item_to_append) \
     do { \
-        (void) (arena); \
         vec_reserve(arena, vector, 1); \
         (vector)->buf[(vector)->info.count++] = (item_to_append); \
     } while(0)
@@ -69,9 +68,7 @@ typedef struct {
 
 #define vec_pop(popped_item, vector) \
     do { \
-        if (popped_item) { \
-            (popped_item) = vec_top(vector); \
-        } \
+        (popped_item) = vec_top(vector); \
         (vector)->info.count--; \
     } while(0)
 

@@ -5,14 +5,14 @@
 #include "symbol_table.h"
 #include "parser_utils.h"
 
-void msg_redefinition_of_symbol(const Node* new_sym_def) {
+void msg_redefinition_of_symbol(const Env* env, const Node* new_sym_def) {
     msg(
         LOG_ERROR, new_sym_def->pos,
         "redefinition of symbol "STR_VIEW_FMT"\n", str_view_print(get_node_name(new_sym_def))
     );
 
     Node* original_def;
-    try(sym_tbl_lookup(&original_def, get_node_name(new_sym_def)));
+    try(symbol_lookup(&original_def, env, get_node_name(new_sym_def)));
     msg(
         LOG_NOTE, original_def->pos,
         STR_VIEW_FMT " originally defined here\n", str_view_print(get_node_name(original_def))
@@ -33,7 +33,7 @@ void msg_undefined_function(const Node_function_call* fun_call) {
     );
 }
 
-void msg_invalid_struct_member(const Node* parent, const Node* node) {
+void msg_invalid_struct_member(const Env* env, const Node* parent, const Node* node) {
     switch (node->type) {
         case NODE_STRUCT_MEMBER_SYM_TYPED:
             todo();
@@ -46,7 +46,7 @@ void msg_invalid_struct_member(const Node* parent, const Node* node) {
                 str_view_print(get_node_name(node)), str_view_print(get_node_name(struct_memb_sym))
             );
             Node* struct_memb_sym_def_;
-            try(sym_tbl_lookup(&struct_memb_sym_def_, get_node_name(struct_memb_sym)));
+            try(symbol_lookup(&struct_memb_sym_def_, env, get_node_name(struct_memb_sym)));
             const Node_variable_def* struct_memb_sym_def = node_unwrap_variable_def_const(struct_memb_sym_def_);
             msg(
                 LOG_NOTE, node_wrap(struct_memb_sym_def)->pos,
@@ -55,7 +55,7 @@ void msg_invalid_struct_member(const Node* parent, const Node* node) {
                 lang_type_print(struct_memb_sym_def->lang_type)
             );
             Node* struct_def;
-            try(sym_tbl_lookup(&struct_def, struct_memb_sym_def->lang_type.str));
+            try(symbol_lookup(&struct_def, env, struct_memb_sym_def->lang_type.str));
             msg(
                 LOG_NOTE, struct_def->pos,
                 "struct `"LANG_TYPE_FMT"` defined here\n", 
@@ -91,12 +91,12 @@ void msg_invalid_struct_member_assignment_in_literal(
     );
 }
 
-void meg_struct_assigned_to_invalid_literal(const Node* lhs, const Node* rhs) {
-    assert(lhs->type == NODE_SYMBOL_TYPED && is_struct_symbol(lhs));
+void meg_struct_assigned_to_invalid_literal(const Env* env, const Node* lhs, const Node* rhs) {
+    assert(lhs->type == NODE_SYMBOL_TYPED && is_struct_symbol(env, lhs));
     assert(rhs->type == NODE_LITERAL);
 
     Node* struct_var_def_;
-    try(sym_tbl_lookup(&struct_var_def_, get_node_name(lhs)));
+    try(symbol_lookup(&struct_var_def_, env, get_node_name(lhs)));
     const Node_variable_def* struct_var_def = node_unwrap_variable_def_const(struct_var_def_);
     msg(
         LOG_ERROR, rhs->pos,
@@ -113,9 +113,9 @@ void meg_struct_assigned_to_invalid_literal(const Node* lhs, const Node* rhs) {
     );
 }
 
-void msg_invalid_assignment_to_literal(const Node_symbol_typed* lhs, const Node_literal* rhs) {
+void msg_invalid_assignment_to_literal(const Env* env, const Node_symbol_typed* lhs, const Node_literal* rhs) {
     Node* var_def;
-    try(sym_tbl_lookup(&var_def, lhs->name));
+    try(symbol_lookup(&var_def, env, lhs->name));
     msg(
         LOG_ERROR, node_wrap(rhs)->pos,
         "invalid literal type is assigned to `"STR_VIEW_FMT"`\n",
@@ -123,11 +123,11 @@ void msg_invalid_assignment_to_literal(const Node_symbol_typed* lhs, const Node_
     );
 }
 
-void msg_invalid_assignment_to_operation(const Node* lhs, const Node_operator* operation) {
+void msg_invalid_assignment_to_operation(const Env* env, const Node* lhs, const Node_operator* operation) {
     assert(lhs->type == NODE_SYMBOL_TYPED);
 
     Node* var_def_;
-    try(sym_tbl_lookup(&var_def_, get_node_name(lhs)));
+    try(symbol_lookup(&var_def_, env, get_node_name(lhs)));
     const Node_variable_def* var_def = node_unwrap_variable_def_const(var_def_);
     msg(
         LOG_ERROR, node_wrap(operation)->pos,

@@ -70,11 +70,16 @@ static inline const char* get_log_level_str(int log_level) {
         } \
     } while (0);
 
+#define log_indent_file(log_level, file, line, indent, ...) \
+    do { \
+        log_common(log_level, file, line, indent, __VA_ARGS__) \
+    } while(0)
+
 #define log_indent(log_level, indent, ...) \
     log_common(log_level, __FILE__, __LINE__, indent, __VA_ARGS__)
 
 #define log_file_new(log_level, file, line, ...) \
-    log_common(log_level, file, line, 0, __VA_ARGS__)
+    log_indent_file(log_level, file, line, 0, __VA_ARGS__)
 
 // print messages that are intended for debugging
 #define log(log_level, ...) \

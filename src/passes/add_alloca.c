@@ -12,11 +12,11 @@ static Node_alloca* alloca_new(Node_variable_def* var_def) {
     return alloca;
 }
 
-static void do_function_definition(Node_function_definition* fun_def) {
+static void do_function_definition(Env* env, Node_function_definition* fun_def) {
     Node_function_params* params = fun_def->declaration->parameters;
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
         Node_variable_def* param = node_unwrap_variable_def(vec_at(&params->params, idx));
-        if (is_corresponding_to_a_struct(node_wrap(param))) {
+        if (is_corresponding_to_a_struct(env, node_wrap(param))) {
             param->storage_location = node_wrap(param);
             continue;
         }
@@ -61,7 +61,7 @@ void add_alloca(Env* env) {
                 insert_alloca(block_children, &idx, node_unwrap_variable_def(curr_node));
                 break;
             case NODE_FUNCTION_DEFINITION:
-                do_function_definition(node_unwrap_function_definition(curr_node));
+                do_function_definition(env, node_unwrap_function_definition(curr_node));
                 break;
             case NODE_ASSIGNMENT:
                 do_assignment(block_children, &idx, node_unwrap_assignment(curr_node));

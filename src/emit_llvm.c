@@ -9,7 +9,7 @@
 #include "parser_utils.h"
 #include "node_utils.h"
 
-static void emit_block(String* output, const Node_block* fun_block);
+static void emit_block(Env* env, String* output, const Node_block* fun_block);
 
 // \n excapes are actually stored as is in tokens and nodes, but should be printed as \0a
 static void string_extend_strv_eval_escapes(Arena* arena, String* string, Str_view str_view) {
@@ -45,7 +45,7 @@ static size_t get_count_excape_seq(Str_view str_view) {
     return count_excapes;
 }
 
-static void extend_type_call_str(String* output, Lang_type lang_type) {
+static void extend_type_call_str(const Env* env, String* output, Lang_type lang_type) {
     assert(lang_type.str.count > 0);
     if (lang_type.pointer_depth != 0) {
         string_extend_cstr(&a_main, output, "ptr");
@@ -53,7 +53,7 @@ static void extend_type_call_str(String* output, Lang_type lang_type) {
     }
 
     Node* struct_def;
-    if (sym_tbl_lookup(&struct_def, lang_type.str)) {
+    if (symbol_lookup(&struct_def, env, lang_type.str)) {
         string_extend_cstr(&a_main, output, "%struct.");
     }
     extend_lang_type_to_string(&a_main, output, lang_type, false);
@@ -70,13 +70,13 @@ static bool is_variadic(const Node* node) {
     }
 }
 
-static void extend_type_decl_str(String* output, const Node* variable_def, bool noundef) {
+static void extend_type_decl_str(const Env* env, String* output, const Node* variable_def, bool noundef) {
     if (is_variadic(variable_def)) {
         string_extend_cstr(&a_main, output, "...");
         return;
     }
 
-    extend_type_call_str(output, get_lang_type(variable_def));
+    extend_type_call_str(env, output, get_lang_type(variable_def));
     if (noundef) {
         string_extend_cstr(&a_main, output, " noundef");
     }
@@ -99,8 +99,8 @@ static void extend_literal_decl_prefix(String* output, const Node_literal* var_d
     }
 }
 
-static void extend_literal_decl(String* output, const Node_literal* var_def, bool noundef) {
-    extend_type_decl_str(output, node_wrap(var_def), noundef);
+static void extend_literal_decl(const Env* env, String* output, const Node_literal* var_def, bool noundef) {
+    extend_type_decl_str(env, output, node_wrap(var_def), noundef);
     extend_literal_decl_prefix(output, var_def);
 }
 
@@ -112,7 +112,7 @@ static const Node_lang_type* return_type_from_function_definition(const Node_fun
     unreachable("");
 }
 
-static void emit_function_params(String* output, const Node_function_params* fun_params) {
+static void emit_function_params(const Env* env, String* output, const Node_function_params* fun_params) {
     for (size_t idx = 0; idx < fun_params->params.info.count; idx++) {
         const Node_variable_def* curr_param = node_unwrap_variable_def_const(
             vec_at(&fun_params->params, idx)
@@ -122,18 +122,18 @@ static void emit_function_params(String* output, const Node_function_params* fun
             string_extend_cstr(&a_main, output, ", ");
         }
 
-        if (is_struct_variable_definition(curr_param)) {
+        if (is_struct_variable_definition(env, curr_param)) {
             if (curr_param->lang_type.pointer_depth < 0) {
                 unreachable("");
             } else if (curr_param->lang_type.pointer_depth > 0) {
-                extend_type_call_str(output, curr_param->lang_type);
+                extend_type_call_str(env, output, curr_param->lang_type);
             } else {
                 string_extend_cstr(&a_main, output, "ptr noundef byval(");
-                extend_type_call_str(output, curr_param->lang_type);
+                extend_type_call_str(env, output, curr_param->lang_type);
                 string_extend_cstr(&a_main, output, ")");
             }
         } else {
-            extend_type_decl_str(output, node_wrap(curr_param), true);
+            extend_type_decl_str(env, output, node_wrap(curr_param), true);
         }
         if (curr_param->is_variadic) {
             return;
@@ -143,7 +143,7 @@ static void emit_function_params(String* output, const Node_function_params* fun
     }
 }
 
-static void emit_function_call_arguments(String* output, const Node_function_call* fun_call) {
+static void emit_function_call_arguments(const Env* env, String* output, const Node_function_call* fun_call) {
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
         const Node* argument = vec_at(&fun_call->args, idx);
 
@@ -153,7 +153,7 @@ static void emit_function_call_arguments(String* output, const Node_function_cal
 
         switch (argument->type) {
             case NODE_LITERAL: {
-                extend_literal_decl(output, node_unwrap_literal_const(argument), true);
+                extend_literal_decl(env, output, node_unwrap_literal_const(argument), true);
                 break;
             }
             case NODE_STRUCT_MEMBER_SYM_TYPED:
@@ -167,13 +167,13 @@ static void emit_function_call_arguments(String* output, const Node_function_cal
                 unreachable("typed symbols should not still be present");
             case NODE_PTR_BYVAL_SYM:
                 string_extend_cstr(&a_main, output, "ptr noundef byval(");
-                extend_type_call_str(output, get_lang_type(argument));
+                extend_type_call_str(env, output, get_lang_type(argument));
                 string_extend_cstr(&a_main, output, ")");
                 string_extend_cstr(&a_main, output, " %");
                 string_extend_size_t(&a_main, output, get_llvm_id(node_unwrap_ptr_byval_sym_const(argument)->node_src));
                 break;
             case NODE_LLVM_REGISTER_SYM:
-                extend_type_call_str(output, get_lang_type(argument));
+                extend_type_call_str(env, output, get_lang_type(argument));
                 string_extend_cstr(&a_main, output, " %");
                 string_extend_size_t(&a_main, output, get_llvm_id(node_unwrap_llvm_register_sym_const(argument)->node_src));
                 break;
@@ -186,7 +186,7 @@ static void emit_function_call_arguments(String* output, const Node_function_cal
     }
 }
 
-static void emit_function_call(String* output, const Node_function_call* fun_call) {
+static void emit_function_call(const Env* env, String* output, const Node_function_call* fun_call) {
     //assert(fun_call->llvm_id == 0);
 
     // start of actual function call
@@ -197,23 +197,23 @@ static void emit_function_call(String* output, const Node_function_call* fun_cal
         string_extend_cstr(&a_main, output, " = ");
     }
     string_extend_cstr(&a_main, output, "call ");
-    extend_type_call_str(output, fun_call->lang_type);
+    extend_type_call_str(env, output, fun_call->lang_type);
     string_extend_cstr(&a_main, output, " @");
     string_extend_strv(&a_main, output, get_node_name(node_wrap(fun_call)));
 
     // arguments
     string_extend_cstr(&a_main, output, "(");
-    emit_function_call_arguments(output, fun_call);
+    emit_function_call_arguments(env, output, fun_call);
     string_extend_cstr(&a_main, output, ")");
 
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_alloca(String* output, const Node_alloca* alloca) {
+static void emit_alloca(const Env* env, String* output, const Node_alloca* alloca) {
     string_extend_cstr(&a_main, output, "    %");
     string_extend_size_t(&a_main, output, alloca->llvm_id);
     string_extend_cstr(&a_main, output, " = alloca ");
-    extend_type_call_str(output, get_symbol_def_from_alloca(node_wrap(alloca))->lang_type);
+    extend_type_call_str(env, output, get_symbol_def_from_alloca(env, node_wrap(alloca))->lang_type);
     string_extend_cstr(&a_main, output, ", align 8");
     string_extend_cstr(&a_main, output, "\n");
 }
@@ -307,13 +307,13 @@ static void emit_operator(String* output, const Node_operator* operator) {
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_load_another_node(String* output, const Node_load_another_node* load_node) {
+static void emit_load_another_node(const Env* env, String* output, const Node_load_another_node* load_node) {
     assert(get_llvm_id(load_node->node_src) > 0);
 
     string_extend_cstr(&a_main, output, "    %");
     string_extend_size_t(&a_main, output, load_node->llvm_id);
     string_extend_cstr(&a_main, output, " = load ");
-    extend_type_call_str(output, load_node->lang_type);
+    extend_type_call_str(env, output, load_node->lang_type);
     string_extend_cstr(&a_main, output, ", ");
     string_extend_cstr(&a_main, output, "ptr");
     string_extend_cstr(&a_main, output, " %");
@@ -322,20 +322,20 @@ static void emit_load_another_node(String* output, const Node_load_another_node*
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_llvm_store_struct_literal(String* output, const Node_llvm_store_struct_literal* store) {
+static void emit_llvm_store_struct_literal(const Env* env, String* output, const Node_llvm_store_struct_literal* store) {
     string_extend_cstr(&a_main, output, "    call void @llvm.memcpy.p0.p0.i64(ptr align 4 %");
     string_extend_size_t(&a_main, output, get_llvm_id(store->node_dest));
     string_extend_cstr(&a_main, output, ", ptr align 4 @__const.main.");
     string_extend_strv(&a_main, output, store->child->name);
     string_extend_cstr(&a_main, output, ", i64 ");
-    string_extend_size_t(&a_main, output, sizeof_struct_literal(store->child));
+    string_extend_size_t(&a_main, output, sizeof_struct_literal(env, store->child));
     string_extend_cstr(&a_main, output, ", i1 false)\n");
 }
 
-static void emit_store_another_node(String* output, const Node_store_another_node* store) {
+static void emit_store_another_node(const Env* env, String* output, const Node_store_another_node* store) {
     assert(store->lang_type.str.count > 0);
     string_extend_cstr(&a_main, output, "    store ");
-    extend_type_call_str(output, store->lang_type);
+    extend_type_call_str(env, output, store->lang_type);
     string_extend_cstr(&a_main, output, " %");
     string_extend_size_t(&a_main, output, get_llvm_id(store->node_src));
     string_extend_cstr(&a_main, output, ", ptr %");
@@ -344,9 +344,9 @@ static void emit_store_another_node(String* output, const Node_store_another_nod
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_llvm_store_literal(String* output, const Node_llvm_store_literal* store) {
+static void emit_llvm_store_literal(const Env* env, String* output, const Node_llvm_store_literal* store) {
     string_extend_cstr(&a_main, output, "    store ");
-    extend_type_call_str(output, store->lang_type);
+    extend_type_call_str(env, output, store->lang_type);
     extend_literal_decl_prefix(output, store->child);
     string_extend_cstr(&a_main, output, ", ptr %");
     string_extend_size_t(&a_main, output, get_llvm_id(store->node_dest));
@@ -354,26 +354,26 @@ static void emit_llvm_store_literal(String* output, const Node_llvm_store_litera
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_function_definition(String* output, const Node_function_definition* fun_def) {
+static void emit_function_definition(Env* env, String* output, const Node_function_definition* fun_def) {
     string_extend_cstr(&a_main, output, "define dso_local ");
 
-    extend_type_call_str(output, return_type_from_function_definition(fun_def)->lang_type);
+    extend_type_call_str(env, output, return_type_from_function_definition(fun_def)->lang_type);
 
     string_extend_cstr(&a_main, output, " @");
     string_extend_strv(&a_main, output, get_node_name(node_wrap(fun_def)));
 
     vec_append(&a_main, output, '(');
-    emit_function_params(output, fun_def->declaration->parameters);
+    emit_function_params(env, output, fun_def->declaration->parameters);
     vec_append(&a_main, output, ')');
 
     string_extend_cstr(&a_main, output, " {\n");
 
-    emit_block(output, fun_def->body);
+    emit_block(env, output, fun_def->body);
 
     string_extend_cstr(&a_main, output, "}\n");
 }
 
-static void emit_return_statement(String* output, const Node_return_statement* fun_return) {
+static void emit_return_statement(const Env* env, String* output, const Node_return_statement* fun_return) {
     const Node* sym_to_return = fun_return->child;
     assert(get_lang_type(sym_to_return).str.count > 0);
 
@@ -381,7 +381,7 @@ static void emit_return_statement(String* output, const Node_return_statement* f
         case NODE_LITERAL: {
             const Node_literal* literal = node_unwrap_literal_const(sym_to_return);
             string_extend_cstr(&a_main, output, "    ret ");
-            extend_type_call_str(output, literal->lang_type);
+            extend_type_call_str(env, output, literal->lang_type);
             string_extend_cstr(&a_main, output, " ");
             string_extend_strv(&a_main, output, literal->str_data);
             string_extend_cstr(&a_main, output, "\n");
@@ -396,7 +396,7 @@ static void emit_return_statement(String* output, const Node_return_statement* f
         case NODE_LLVM_REGISTER_SYM: {
             const Node_llvm_register_sym* memb_sym = node_unwrap_llvm_register_sym_const(sym_to_return);
             string_extend_cstr(&a_main, output, "    ret ");
-            extend_type_call_str(output, memb_sym->lang_type);
+            extend_type_call_str(env, output, memb_sym->lang_type);
             string_extend_cstr(&a_main, output, " %");
             string_extend_size_t(&a_main, output, get_llvm_id(memb_sym->node_src));
             string_extend_cstr(&a_main, output, "\n");
@@ -407,13 +407,13 @@ static void emit_return_statement(String* output, const Node_return_statement* f
     }
 }
 
-static void emit_function_declaration(String* output, const Node_function_declaration* fun_decl) {
+static void emit_function_declaration(const Env* env, String* output, const Node_function_declaration* fun_decl) {
     string_extend_cstr(&a_main, output, "declare i32");
     //extend_literal_decl(output, fun_decl); // TODO
     string_extend_cstr(&a_main, output, " @");
     string_extend_strv(&a_main, output, fun_decl->name);
     vec_append(&a_main, output, '(');
-    emit_function_params(output, fun_decl->parameters);
+    emit_function_params(env, output, fun_decl->parameters);
     vec_append(&a_main, output, ')');
     string_extend_cstr(&a_main, output, "\n");
 }
@@ -424,23 +424,23 @@ static void emit_label(String* output, const Node_label* label) {
     string_extend_cstr(&a_main, output, ":\n");
 }
 
-static void emit_goto(String* output, const Node_goto* lang_goto) {
+static void emit_goto(const Env* env, String* output, const Node_goto* lang_goto) {
     string_extend_cstr(&a_main, output, "    br label %");
-    string_extend_size_t(&a_main, output, get_matching_label_id(lang_goto->name));
+    string_extend_size_t(&a_main, output, get_matching_label_id(env, lang_goto->name));
     vec_append(&a_main, output, '\n');
 }
 
-static void emit_cond_goto(String* output, const Node_cond_goto* cond_goto) {
+static void emit_cond_goto(const Env* env, String* output, const Node_cond_goto* cond_goto) {
     string_extend_cstr(&a_main, output, "    br i1 %");
     string_extend_size_t(&a_main, output, get_llvm_id(node_wrap(cond_goto->node_src)));
     string_extend_cstr(&a_main, output, ", label %");
-    string_extend_size_t(&a_main, output, get_matching_label_id(cond_goto->if_true->name));
+    string_extend_size_t(&a_main, output, get_matching_label_id(env, cond_goto->if_true->name));
     string_extend_cstr(&a_main, output, ", label %");
-    string_extend_size_t(&a_main, output, get_matching_label_id(cond_goto->if_false->name));
+    string_extend_size_t(&a_main, output, get_matching_label_id(env, cond_goto->if_false->name));
     vec_append(&a_main, output, '\n');
 }
 
-static void emit_struct_definition(String* output, const Node_struct_def* struct_def) {
+static void emit_struct_definition(const Env* env, String* output, const Node_struct_def* struct_def) {
     string_extend_cstr(&a_main, output, "%struct.");
     string_extend_strv(&a_main, output, struct_def->name);
     string_extend_cstr(&a_main, output, " = type { ");
@@ -449,7 +449,7 @@ static void emit_struct_definition(String* output, const Node_struct_def* struct
         if (!is_first) {
             string_extend_cstr(&a_main, output, ", ");
         }
-        extend_type_decl_str(output, vec_at(&struct_def->members, idx), false);
+        extend_type_decl_str(env, output, vec_at(&struct_def->members, idx), false);
         is_first = false;
     }
     string_extend_cstr(&a_main, output, " }\n");
@@ -472,50 +472,52 @@ static void emit_load_struct_element_pointer(String* output, const Node_load_ele
     vec_append(&a_main, output, '\n');
 }
 
-static void emit_block(String* output, const Node_block* block) {
+static void emit_block(Env* env, String* output, const Node_block* block) {
+    vec_append(&a_main, &env->ancesters, node_wrap(block));
+
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         const Node* statement = vec_at(&block->children, idx);
 
         switch (statement->type) {
             case NODE_FUNCTION_DEFINITION:
-                emit_function_definition(output, node_unwrap_function_definition_const(statement));
+                emit_function_definition(env, output, node_unwrap_function_definition_const(statement));
                 break;
             case NODE_FUNCTION_CALL:
-                emit_function_call(output, node_unwrap_function_call_const(statement));
+                emit_function_call(env, output, node_unwrap_function_call_const(statement));
                 break;
             case NODE_RETURN_STATEMENT:
-                emit_return_statement(output, node_unwrap_return_statement_const(statement));
+                emit_return_statement(env, output, node_unwrap_return_statement_const(statement));
                 break;
             case NODE_VARIABLE_DEFINITION:
                 break;
             case NODE_FUNCTION_DECLARATION:
-                emit_function_declaration(output, node_unwrap_function_declaration_const(statement));
+                emit_function_declaration(env, output, node_unwrap_function_declaration_const(statement));
                 break;
             case NODE_ASSIGNMENT:
                 unreachable("an assignment should not still be present at this point");
             case NODE_BLOCK:
-                emit_block(output, node_unwrap_block_const(statement));
+                emit_block(env, output, node_unwrap_block_const(statement));
                 break;
             case NODE_LABEL:
                 emit_label(output, node_unwrap_label_const(statement));
                 break;
             case NODE_COND_GOTO:
-                emit_cond_goto(output, node_unwrap_cond_goto_const(statement));
+                emit_cond_goto(env, output, node_unwrap_cond_goto_const(statement));
                 break;
             case NODE_GOTO:
-                emit_goto(output, node_unwrap_goto_const(statement));
+                emit_goto(env, output, node_unwrap_goto_const(statement));
                 break;
             case NODE_ALLOCA:
-                emit_alloca(output, node_unwrap_alloca_const(statement));
+                emit_alloca(env, output, node_unwrap_alloca_const(statement));
                 break;
             case NODE_LLVM_STORE_LITERAL:
-                emit_llvm_store_literal(output, node_unwrap_llvm_store_literal_const(statement));
+                emit_llvm_store_literal(env, output, node_unwrap_llvm_store_literal_const(statement));
                 break;
             case NODE_LLVM_STORE_STRUCT_LITERAL:
-                emit_llvm_store_struct_literal(output, node_unwrap_llvm_store_struct_literal_const(statement));
+                emit_llvm_store_struct_literal(env, output, node_unwrap_llvm_store_struct_literal_const(statement));
                 break;
             case NODE_STRUCT_DEFINITION:
-                emit_struct_definition(output, node_unwrap_struct_def_const(statement));
+                emit_struct_definition(env, output, node_unwrap_struct_def_const(statement));
                 break;
             case NODE_OPERATOR:
                 emit_operator(output, node_unwrap_operation_const(statement));
@@ -524,10 +526,10 @@ static void emit_block(String* output, const Node_block* block) {
                 emit_load_struct_element_pointer(output, node_unwrap_load_elem_ptr_const(statement));
                 break;
             case NODE_LOAD_ANOTHER_NODE:
-                emit_load_another_node(output, node_unwrap_load_another_node_const(statement));
+                emit_load_another_node(env, output, node_unwrap_load_another_node_const(statement));
                 break;
             case NODE_STORE_ANOTHER_NODE:
-                emit_store_another_node(output, node_unwrap_store_another_node_const(statement));
+                emit_store_another_node(env, output, node_unwrap_store_another_node_const(statement));
                 break;
             case NODE_STRUCT_MEMBER_SYM_TYPED:
                 break;
@@ -542,6 +544,8 @@ static void emit_block(String* output, const Node_block* block) {
         }
     }
     //get_block_return_id(fun_block) = get_block_return_id(fun_block->left_child);
+    Node* dummy = NULL;
+    vec_pop(dummy, &env->ancesters);
 }
 
 static void emit_symbol(String* output, const Symbol_table_node node) {
@@ -558,7 +562,7 @@ static void emit_symbol(String* output, const Symbol_table_node node) {
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_struct_literal(String* output, const Node_struct_literal* struct_literal) {
+static void emit_struct_literal(const Env* env, String* output, const Node_struct_literal* struct_literal) {
     assert(struct_literal->lang_type.str.count > 0);
     string_extend_cstr(&a_main, output, "@__const.main.");
     string_extend_strv(&a_main, output, struct_literal->name);
@@ -572,14 +576,18 @@ static void emit_struct_literal(String* output, const Node_struct_literal* struc
         if (!is_first) {
             vec_append(&a_main, output, ',');
         }
-        extend_literal_decl(output, node_unwrap_literal_const(memb_literal), false);
+        extend_literal_decl(env, output, node_unwrap_literal_const(memb_literal), false);
         is_first = false;
     }
 
     string_extend_cstr(&a_main, output, "} , align 4\n");
 }
 
-static void emit_symbols(String* output) {
+static void emit_symbols(const Env* env, String* output) {
+    (void) env;
+    (void) output;
+    return;
+    /*
     for (size_t idx = 0; idx < symbol_table.capacity; idx++) {
         const Symbol_table_node curr_node = symbol_table.table_nodes[idx];
         if (curr_node.status != SYM_TBL_OCCUPIED) {
@@ -611,12 +619,13 @@ static void emit_symbols(String* output) {
                 todo();
         }
     }
+    */
 }
 
-void emit_llvm_from_tree(const Node_block* root) {
+void emit_llvm_from_tree(Env* env, const Node_block* root) {
     String output = {0};
-    emit_block(&output, root);
-    emit_symbols(&output);
+    emit_block(env, &output, root);
+    emit_symbols(env, &output);
     log(LOG_DEBUG, "\n"STRING_FMT"\n", string_print(output));
     Str_view final_output = {.str = output.buf, .count = output.info.count};
     write_file("test.ll", final_output);

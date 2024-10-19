@@ -3,8 +3,6 @@
 #include "parameters.h"
 #include "arena.h"
 
-Symbol_table symbol_table = {0};
-
 Parameters params = {0};
 
 Arena a_main = {0};

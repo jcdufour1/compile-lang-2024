@@ -6,7 +6,7 @@
 #include "str_view.h"
 #include "token.h"
 #include "util.h"
-#include "stdint.h"
+#include "symbol_table_struct.h"
 
 struct Node_;
 
@@ -172,6 +172,7 @@ typedef struct {
 
 typedef struct {
     Node_ptr_vec children;
+    Symbol_table symbol_table;
 } Node_block;
 
 typedef struct {
