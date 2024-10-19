@@ -32,7 +32,7 @@ OBJS=\
 	 ${BUILD_DIR}/globals.o \
 	 ${BUILD_DIR}/token.o \
 	 ${BUILD_DIR}/emit_llvm.o \
-	 ${BUILD_DIR}/hash_table.o \
+	 ${BUILD_DIR}/symbol_table.o \
 	 ${BUILD_DIR}/file.o \
 	 ${BUILD_DIR}/parameters.o \
 	 ${BUILD_DIR}/parser_utils.o \
@@ -92,11 +92,8 @@ ${BUILD_DIR}/nodes.o: ${DEP_COMMON} src/nodes.c third_party/*
 ${BUILD_DIR}/token.o: ${DEP_COMMON} src/token.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/token.o src/token.c
 
-${BUILD_DIR}/emit_llvm.o: ${DEP_COMMON} src/emit_llvm.c third_party/*
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/emit_llvm.o src/emit_llvm.c
-
-${BUILD_DIR}/hash_table.o: ${DEP_COMMON} src/hash_table.c third_party/*
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/hash_table.o src/hash_table.c
+${BUILD_DIR}/symbol_table.o: ${DEP_COMMON} src/symbol_table.c third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/symbol_table.o src/symbol_table.c
 
 ${BUILD_DIR}/file.o: ${DEP_COMMON} src/file.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/file.o src/file.c
@@ -133,6 +130,8 @@ ${BUILD_DIR}/passes/add_alloca.o: ${DEP_COMMON} src/passes/add_alloca.c src/pass
 ${BUILD_DIR}/passes/change_operators.o: ${DEP_COMMON} src/passes/change_operators.c src/passes/*.h third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/change_operators.o src/passes/change_operators.c
 
+${BUILD_DIR}/passes/emit_llvm.o: ${DEP_COMMON} src/passes/emit_llvm.c src/passes/*.h third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/emit_llvm.o src/passes/emit_llvm.c
 
 clean:
 	rm -f ${OBJS} ${BUILD_DIR}/main
