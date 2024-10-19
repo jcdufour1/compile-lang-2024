@@ -3,3 +3,4 @@ build/
 *.ll
 *.out
 test
+tags
