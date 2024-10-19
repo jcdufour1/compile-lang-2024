@@ -133,6 +133,8 @@ static Node_load_another_node* insert_load(
             try(sym_tbl_add(&env->global_literals, symbol_call));
             log(LOG_DEBUG, "env->global_literals: %p\n", (void*)&env->global_literals);
             return NULL;
+        case NODE_LLVM_REGISTER_SYM:
+            return NULL;
         case NODE_STRUCT_MEMBER_SYM_TYPED:
             break;
         case NODE_SYMBOL_TYPED:
@@ -250,31 +252,6 @@ static void insert_store(
     }
 }
 
-static void load_operator_operand(
-    Env* env,
-    Node_ptr_vec* block_children,
-    size_t* idx_to_insert_before,
-    Node* operand
-) {
-    switch (operand->type) {
-        case NODE_OPERATOR:
-            unreachable("nested operators should not still be present at this point");
-        case NODE_LITERAL:
-            break;
-        case NODE_VARIABLE_DEFINITION:
-            todo();
-        case NODE_SYMBOL_TYPED:
-            insert_load(env, block_children, idx_to_insert_before, operand);
-            break;
-        case NODE_LLVM_REGISTER_SYM:
-            break;
-        case NODE_LOAD_ANOTHER_NODE:
-            break;
-        default:
-            unreachable(NODE_FMT"\n", node_print(operand));
-    }
-}
-
 static void load_operator_operands(
     Env* env,
     Node_ptr_vec* block_children,
@@ -283,11 +260,11 @@ static void load_operator_operands(
 ) {
     if (operator->type == NODE_OP_UNARY) {
         Node_unary* unary_oper = node_unwrap_op_unary(operator);
-        load_operator_operand(env, block_children, idx_to_insert_before, unary_oper->child);
+        insert_load(env, block_children, idx_to_insert_before, unary_oper->child);
     } else if (operator->type == NODE_OP_BINARY) {
         Node_binary* bin_oper = node_unwrap_op_binary(operator);
-        load_operator_operand(env, block_children, idx_to_insert_before, bin_oper->lhs);
-        load_operator_operand(env, block_children, idx_to_insert_before, bin_oper->rhs);
+        insert_load(env, block_children, idx_to_insert_before, bin_oper->lhs);
+        insert_load(env, block_children, idx_to_insert_before, bin_oper->rhs);
     } else {
         unreachable("");
     }
