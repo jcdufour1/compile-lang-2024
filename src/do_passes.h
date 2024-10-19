@@ -11,12 +11,13 @@ void do_passes(Node_block** root, const Parameters* params);
 
 void walk_tree(Env* env, void (callback)(Env* env));
 
-INLINE void start_walk(Node_block** root, void (callback)(Env* env)) {
-    Env env = {0};
-    vec_append(&a_main, &env.ancesters, node_wrap(*root));
-    walk_tree(&env, callback);
+INLINE void start_walk(Env* env, Node_block** root, void (callback)(Env* env)) {
+    assert(env->recursion_depth == 0);
+    assert(env->ancesters.info.count == 0);
+    vec_append(&a_main, &env->ancesters, node_wrap(*root));
+    walk_tree(env, callback);
     Node* dummy = NULL;
-    vec_pop(dummy, &env.ancesters);
+    vec_pop(dummy, &env->ancesters);
 }
 
 #endif // DO_PASSES_H

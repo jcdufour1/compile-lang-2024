@@ -584,21 +584,19 @@ static void emit_struct_literal(const Env* env, String* output, const Node_struc
 }
 
 static void emit_symbols(const Env* env, String* output) {
-    (void) env;
-    (void) output;
-    return;
-    /*
-    for (size_t idx = 0; idx < symbol_table.capacity; idx++) {
-        const Symbol_table_node curr_node = symbol_table.table_nodes[idx];
+    log(LOG_DEBUG, "env->global_literals: %p\n", (void*)&env->global_literals);
+    for (size_t idx = 0; idx < env->global_literals.capacity; idx++) {
+        const Symbol_table_node curr_node = env->global_literals.table_nodes[idx];
         if (curr_node.status != SYM_TBL_OCCUPIED) {
             continue;
         }
+
         switch (curr_node.node->type) {
             case NODE_LITERAL:
                 emit_symbol(output, curr_node);
                 break;
             case NODE_STRUCT_LITERAL:
-                emit_struct_literal(output, node_unwrap_struct_literal(curr_node.node));
+                emit_struct_literal(env, output, node_unwrap_struct_literal(curr_node.node));
                 break;
             case NODE_VARIABLE_DEFINITION:
                 // fallthrough
@@ -619,7 +617,6 @@ static void emit_symbols(const Env* env, String* output) {
                 todo();
         }
     }
-    */
 }
 
 void emit_llvm_from_tree(Env* env, const Node_block* root) {

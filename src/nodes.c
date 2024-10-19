@@ -4,6 +4,7 @@
 #include "node_ptr_vec.h"
 #include "node_utils.h"
 #include "do_passes.h"
+#include "symbol_table.h"
 
 static void extend_node_text(Arena* arena, String* string, const Node* node, bool do_recursion);
 
@@ -85,6 +86,7 @@ void log_node_in_tree_internal(Env* env) {
     }
 
     log_file_new(log_file_level, log_file, log_line, STRING_FMT NODE_FMT"\n", string_print(padding), node_print(node));
+    log_symbol_table_if_block(env, log_file, log_line);
 }
 
 void nodes_log_tree_internal(LOG_LEVEL log_level, const Node* root, const char* file, int line) {

@@ -20,9 +20,9 @@ typedef struct {
             if ((vector)->info.capacity < 1) { \
                 (vector)->info.capacity = 2; \
             } else { \
-                needs_resizing = true; \
                 (vector)->info.capacity *= 2; \
             } \
+            needs_resizing = true; \
         } \
         if (original_capacity == 0) { \
             (vector)->buf = arena_alloc(arena, sizeof((vector)->buf[0])*(vector)->info.capacity); \

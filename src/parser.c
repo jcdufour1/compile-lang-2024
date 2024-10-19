@@ -226,7 +226,6 @@ static Node_function_declaration* extract_function_declaration_common(Env* env, 
     if (!extract_function_return_types(&fun_declaration->return_types, tokens)) {
         todo();
     }
-    symbol_ignore_defered(env);
 
     return fun_declaration;
 }
@@ -388,6 +387,7 @@ static Node_function_declaration* extract_function_declaration(Env* env, Tk_view
     Node_function_declaration* fun_declaration = extract_function_declaration_common(env, tokens);
 
     tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
+    symbol_ignore_defered(env);
     return fun_declaration;
 }
 
@@ -616,8 +616,7 @@ static Node_binary* parser_binary_new(Node* lhs, Token operation_token, Node* rh
 static bool try_extract_expression_piece(Env* env, Node** result, Tk_view* tokens, bool defer_sym_add) {
     Node_function_call* fun_call;
     if (tk_view_try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
-        //try(try_extract_expression(env, result, tokens));
-        todo();
+        try(try_extract_expression(env, result, tokens, defer_sym_add));
         try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_PAR));
         return true;
     } else if (is_unary(tk_view_front(*tokens).type)) {

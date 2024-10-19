@@ -60,9 +60,14 @@ void add_alloca(Env* env) {
             case NODE_VARIABLE_DEFINITION:
                 insert_alloca(block_children, &idx, node_unwrap_variable_def(curr_node));
                 break;
-            case NODE_FUNCTION_DEFINITION:
+            case NODE_FUNCTION_DEFINITION: {
+                Node_block* fun_block = node_unwrap_function_definition(curr_node)->body;
+                vec_append(&a_main, &env->ancesters, node_wrap(fun_block));
                 do_function_definition(env, node_unwrap_function_definition(curr_node));
+                Node* dummy;
+                vec_pop(dummy, &env->ancesters);
                 break;
+            }
             case NODE_ASSIGNMENT:
                 do_assignment(block_children, &idx, node_unwrap_assignment(curr_node));
             default:

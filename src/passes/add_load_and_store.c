@@ -18,6 +18,8 @@ static void do_struct_literal(
     size_t* idx_to_insert_before,
     Node_struct_literal* struct_literal
 ) {
+    try(sym_tbl_add(&env->global_literals, node_wrap(struct_literal)));
+
     for (size_t idx = 0; idx < struct_literal->members.info.count; idx++) {
         Node** curr_memb = vec_at_ref(&struct_literal->members, idx);
 
@@ -125,8 +127,11 @@ static Node_load_another_node* insert_load(
 ) {
     switch (symbol_call->type) {
         case NODE_STRUCT_LITERAL:
-            // fallthrough
+            do_struct_literal(env, block_children, idx_to_insert_before, node_unwrap_struct_literal(symbol_call));
+            return NULL;
         case NODE_LITERAL:
+            try(sym_tbl_add(&env->global_literals, symbol_call));
+            log(LOG_DEBUG, "env->global_literals: %p\n", (void*)&env->global_literals);
             return NULL;
         case NODE_STRUCT_MEMBER_SYM_TYPED:
             break;
@@ -397,6 +402,7 @@ static Node* get_store_assignment(
             rhs_load_lang_type = node_unwrap_llvm_register_sym(rhs)->lang_type;
             break;
         case NODE_LITERAL:
+            try(sym_tbl_add(&env->global_literals, rhs));
             rhs_load_lang_type = node_unwrap_literal(rhs)->lang_type;
             break;
         case NODE_LLVM_REGISTER_SYM:
@@ -640,9 +646,14 @@ void add_load_and_store(Env* env) {
             case NODE_FUNCTION_CALL:
                 load_function_arguments(env, &block->children, &idx, node_unwrap_function_call(curr_node));
                 break;
-            case NODE_FUNCTION_DEFINITION:
+            case NODE_FUNCTION_DEFINITION: {
+                Node_block* fun_block = node_unwrap_function_definition(curr_node)->body;
+                vec_append(&a_main, &env->ancesters, node_wrap(fun_block));
                 load_function_parameters(env, node_unwrap_function_definition(curr_node));
+                Node* dummy;
+                vec_pop(dummy, &env->ancesters);
                 break;
+            }
             case NODE_FUNCTION_PARAMETERS:
                 break;
             case NODE_FUNCTION_RETURN_TYPES:

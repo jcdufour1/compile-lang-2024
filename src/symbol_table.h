@@ -14,11 +14,18 @@
 #define SYM_TBL_DEFAULT_CAPACITY 1
 #define SYM_TBL_MAX_DENSITY (0.6f)
 
-static inline void symbol_log_table_internal(int log_level, const Symbol_table sym_table, const char* file_path, int line) {
+static inline void symbol_log_table_internal(int log_level, const Symbol_table sym_table, int recursion_depth, const char* file_path, int line) {
+    String padding = {0};
+    int indent_amt = 2*(recursion_depth + 4);
+    vec_reserve(&print_arena, &padding, indent_amt);
+    for (int idx = 0; idx < indent_amt; idx++) {
+        vec_append(&print_arena, &padding, ' ');
+    }
+
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Symbol_table_node* sym_node = &sym_table.table_nodes[idx];
         if (sym_node->status == SYM_TBL_OCCUPIED) {
-            log_indent_file(log_level, file_path, line, 4, NODE_FMT"\n", node_print(sym_node->node));
+            log_file_new(log_level, file_path, line, STRING_FMT NODE_FMT"\n", string_print(padding), node_print(sym_node->node));
         }
     }
 }
@@ -191,7 +198,7 @@ static inline void symbol_log_internal(int log_level, const Env* env, const char
         Node* curr_node = vec_at(&env->ancesters, idx);
         if (curr_node->type == NODE_BLOCK) {
             log_indent_file(log_level, file_path, line, 0, "at index: %zu\n", idx);
-            symbol_log_table_internal(log_level, node_unwrap_block(curr_node)->symbol_table, file_path, line);
+            symbol_log_table_internal(log_level, node_unwrap_block(curr_node)->symbol_table, 4, file_path, line);
         }
 
         if (idx < 1) {
@@ -274,6 +281,7 @@ static inline void symbol_update(Env* env, Node* node_of_symbol) {
     if (symbol_lookup(&existing, env, get_node_name(node_of_symbol))) {
         todo();
     }
+    todo();
 }
 
 static inline Symbol_table* symbol_get_block(Env* env) {
@@ -288,20 +296,21 @@ static inline Symbol_table* symbol_get_block(Env* env) {
     }
 }
 
-static void log_symbol_table_if_block(Env* env) {
+static void log_symbol_table_if_block(Env* env, const char* file_path, int line) {
     Node* curr_node = vec_top(&env->ancesters);
     if (curr_node->type != NODE_BLOCK)  {
         return;
     }
 
     Node_block* block = node_unwrap_block(curr_node);
-    symbol_log_table_internal(LOG_DEBUG, block->symbol_table, __FILE__, __LINE__);
+    //log_indent_file(LOG_DEBUG, __FILE__, __LINE__, env->padding, "at recursion_depth: %d\n", env->recursion_depth);
+    symbol_log_table_internal(LOG_DEBUG, block->symbol_table, env->recursion_depth, file_path, line);
 }
 
-static inline void symbol_log_deep(Node* root) {
-    Env env = {0};
-    vec_append(&a_main, &env.ancesters, root);
-    walk_tree(&env, log_symbol_table_if_block);
+/*
+static inline void symbol_log_deep(Env* env, Node_block* root) {
+    start_walk(env, &root, log_symbol_table_if_block);
 }
+*/
 
 #endif // SYMBOL_TABLE_H
