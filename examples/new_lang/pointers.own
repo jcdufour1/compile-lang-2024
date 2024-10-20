@@ -2,12 +2,27 @@
 extern("c") fn printf(format_string: ptr, args: any...) i32
 
 fn add_one(num: i32*) {
+    deref(num) = num + 1
+    return
+}
+
+fn sub_one_explicit(num: i32*) {
+    deref(num) = deref(num) - 1
+    return
+}
+
+fn add_one_explicit(num: i32*) {
     deref(num) = deref(num) + 1
     return
 }
 
 fn operation_2(num: i32*) {
-    deref(num) = 2*deref(num) + 1
+    deref(num) = 2*num + 1
+    return
+}
+
+fn operation_2_explicit(num: i32*) {
+    deref(num) = 2*num + 1
     return
 }
 
@@ -42,7 +57,13 @@ fn main() i32 {
     printf("%d\n", num)
     add_one(refer(num))
     printf("%d\n", num)
+    add_one_explicit(refer(num))
+    printf("%d\n", num)
+    sub_one_explicit(refer(num))
+    printf("%d\n", num)
     operation_2(refer(num))
+    printf("%d\n", num)
+    operation_2_explicit(refer(num))
     printf("%d\n", num)
 
     let div: Div = {.numerator = 87, .denominator = 123};

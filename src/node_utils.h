@@ -1,6 +1,16 @@
 #ifndef NODE_UTIL_H
 #define NODE_UTIL_H
 
+static inline Lang_type get_operator_lang_type(const Node_operator* operator) {
+    if (operator->type == NODE_OP_UNARY) {
+        return node_unwrap_op_unary_const(operator)->lang_type;
+    } else if (operator->type == NODE_OP_BINARY) {
+        return node_unwrap_op_binary_const(operator)->lang_type;
+    } else {
+        unreachable("");
+    }
+}
+
 static inline Llvm_id get_llvm_id(const Node* node) {
     switch (node->type) {
         case NODE_NO_TYPE:
@@ -116,7 +126,7 @@ static inline Lang_type get_lang_type(const Node* node) {
         case NODE_FUNCTION_RETURN_TYPES:
             unreachable("");
         case NODE_FUNCTION_CALL:
-            unreachable("");
+            return node_unwrap_function_call_const(node)->lang_type;
         case NODE_LITERAL:
             return node_unwrap_literal_const(node)->lang_type;
         case NODE_LANG_TYPE:
@@ -169,8 +179,8 @@ static inline Lang_type get_lang_type(const Node* node) {
             return node_unwrap_ptr_byval_sym_const(node)->lang_type;
         case NODE_LLVM_REGISTER_SYM:
             return node_unwrap_llvm_register_sym_const(node)->lang_type;
-        default:
-            unreachable(""); // we cannot print node_type because it will cause infinite recursion
+        case NODE_OPERATOR:
+            return get_operator_lang_type(node_unwrap_operation_const(node));
     }
 }
 

@@ -82,7 +82,10 @@ void analysis_1(Env* env) {
             case NODE_IF_STATEMENT:
                 //fallthrough
             case NODE_FOR_WITH_CONDITION:
-                try_set_node_type(env, &dummy, curr_node);
+                if (!try_set_node_type(env, &dummy, curr_node)) {
+                    log_tree(LOG_DEBUG, curr_node);
+                    unreachable(NODE_FMT"\n", node_print(curr_node));
+                }
                 break;
             default:
                 break;
