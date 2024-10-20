@@ -461,9 +461,10 @@ static void emit_load_struct_element_pointer(String* output, const Node_load_ele
     string_extend_size_t(&a_main, output, load_elem_ptr->llvm_id);
     string_extend_cstr(&a_main, output, " = getelementptr inbounds %struct.");
     if (get_lang_type(load_elem_ptr->node_src).pointer_depth != 0) {
-        todo();
     }
-    extend_lang_type_to_string(&a_main, output, get_lang_type(load_elem_ptr->node_src), false);
+    Lang_type lang_type = get_lang_type(load_elem_ptr->node_src);
+    lang_type.pointer_depth = 0;
+    extend_lang_type_to_string(&a_main, output, lang_type, false);
     string_extend_cstr(&a_main, output, ", ptr %");
     string_extend_size_t(&a_main, output, get_llvm_id(load_elem_ptr->node_src));
     string_extend_cstr(&a_main, output, ", i32 0");

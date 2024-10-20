@@ -22,6 +22,11 @@ fn set_div(div: Div*) {
     return
 }
 
+fn set_div_denominator(div: Div*) {
+    div.denominator = 1298;
+    return
+}
+
 fn main() i32 {
     let num: i32 = 8
     printf("%d\n", num)
@@ -33,6 +38,8 @@ fn main() i32 {
     let div: Div = {.numerator = 87, .denominator = 123};
     printf("%d/%d\n", div.numerator, div.denominator)
     set_div(refer(div));
+    printf("%d/%d\n", div.numerator, div.denominator)
+    set_div_denominator(refer(div));
     printf("%d/%d\n", div.numerator, div.denominator)
 
     return 0
