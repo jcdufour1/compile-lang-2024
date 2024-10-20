@@ -54,23 +54,6 @@ static inline String string_new_from_strv(Arena* arena, Str_view str_view) {
     return string;
 }
 
-// if string is already initialized (but may or may not be empty)
-static inline void string_cpy_cstr_inplace(Arena* arena, String* string, const char* cstr) {
-    if (!cstr) {
-        todo();
-    }
-    size_t cstr_len = strlen(cstr);
-    if (!string->buf) {
-        *string = string_new_from_cstr(arena, cstr);
-        return;
-    }
-    vec_reset(string);
-    vec_reserve(arena, string, cstr_len);
-    for (size_t idx = 0; cstr[idx]; idx++) {
-        vec_append(arena, string, cstr[idx]);
-    }
-}
-
 static inline void string_extend_strv(Arena* arena, String* string, Str_view str_view) {
     for (size_t idx = 0; idx < str_view.count; idx++) {
         vec_append(arena, string, str_view.str[idx]);

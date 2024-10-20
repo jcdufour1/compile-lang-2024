@@ -15,9 +15,7 @@ Str_view literal_name_new(void) {
 
     char var_name[20];
     sprintf(var_name, "str%zu", count);
-
-    String symbol_name = {0};
-    string_cpy_cstr_inplace(&a_main, &symbol_name, var_name);
+    String symbol_name = string_new_from_cstr(&a_main, var_name);
     vec_append(&a_main, &literal_strings, symbol_name);
 
     count++;

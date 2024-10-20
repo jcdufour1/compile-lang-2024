@@ -1,13 +1,13 @@
 
-#include "node.h"
-#include "nodes.h"
-#include "emit_llvm.h"
-#include "newstring.h"
-#include "symbol_table.h"
-#include "parameters.h"
-#include "file.h"
-#include "parser_utils.h"
-#include "node_utils.h"
+#include "../node.h"
+#include "../nodes.h"
+#include "../emit_llvm.h"
+#include "../newstring.h"
+#include "../symbol_table.h"
+#include "../parameters.h"
+#include "../file.h"
+#include "../parser_utils.h"
+#include "../node_utils.h"
 
 static void emit_block(Env* env, String* output, const Node_block* fun_block);
 

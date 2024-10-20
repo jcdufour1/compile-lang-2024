@@ -31,7 +31,6 @@ OBJS=\
 	 ${BUILD_DIR}/parser.o \
 	 ${BUILD_DIR}/globals.o \
 	 ${BUILD_DIR}/token.o \
-	 ${BUILD_DIR}/emit_llvm.o \
 	 ${BUILD_DIR}/symbol_table.o \
 	 ${BUILD_DIR}/file.o \
 	 ${BUILD_DIR}/parameters.o \
@@ -44,7 +43,8 @@ OBJS=\
 	 ${BUILD_DIR}/passes/add_load_and_store.o \
 	 ${BUILD_DIR}/passes/add_alloca.o \
 	 ${BUILD_DIR}/passes/analysis_1.o \
-	 ${BUILD_DIR}/passes/change_operators.o
+	 ${BUILD_DIR}/passes/change_operators.o \
+	 ${BUILD_DIR}/passes/emit_llvm.o
 
 DEP_COMMON = Makefile src/*.h
 

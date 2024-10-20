@@ -281,18 +281,16 @@ static void add_load_foreach_arg(
     }
 }
 
-// operator symbol is returned
 static Node_llvm_register_sym* move_operator_back(
     Env* env,
     Node_ptr_vec* block_children,
     size_t* idx_to_insert_before,
     Node_operator* operation
 ) {
-    Node_llvm_register_sym* operator_sym = node_unwrap_llvm_register_sym(node_new(node_wrap(operation)->pos, NODE_LLVM_REGISTER_SYM));
+    Node_llvm_register_sym* operator_sym = node_unwrap_llvm_register_sym(
+        node_new(node_wrap(operation)->pos, NODE_LLVM_REGISTER_SYM)
+    );
     operator_sym->node_src = node_wrap(operation);
-    Lang_type dummy; 
-    try(try_set_operation_lang_type(env, &dummy, operation));
-    log_tree(LOG_DEBUG, node_wrap(operation));
     operator_sym->lang_type = get_operator_lang_type(operation);
     assert(operator_sym->lang_type.str.count > 0);
     assert(operation);
