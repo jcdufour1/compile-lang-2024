@@ -27,6 +27,16 @@ fn set_div_denominator(div: Div*) {
     return
 }
 
+fn print_div(div: Div*) {
+    printf("%d/%d\n", div.numerator, div.denominator)
+    return
+}
+
+fn set_div_from_another(dest: Div*, src: Div*) {
+    dest.denominator = src.denominator;
+    return
+}
+
 fn main() i32 {
     let num: i32 = 8
     printf("%d\n", num)
@@ -40,6 +50,12 @@ fn main() i32 {
     set_div(refer(div));
     printf("%d/%d\n", div.numerator, div.denominator)
     set_div_denominator(refer(div));
+    printf("%d/%d\n", div.numerator, div.denominator)
+    print_div(refer(div));
+    let div2: Div = {.numerator = 93, .denominator = 71};
+    set_div_from_another(refer(div2), refer(div));
+    printf("%d/%d\n", div2.numerator, div2.denominator)
+    // ensure original div was not modified by `set_div_from_another`
     printf("%d/%d\n", div.numerator, div.denominator)
 
     return 0

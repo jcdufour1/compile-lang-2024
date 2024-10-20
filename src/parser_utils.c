@@ -448,6 +448,8 @@ bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node
             break;
         case NODE_FUNCTION_CALL:
             break;
+        case NODE_STRUCT_MEMBER_SYM_TYPED:
+            break;
         default:
             unreachable("rhs: "NODE_FMT"\n", node_print(rhs));
     }
