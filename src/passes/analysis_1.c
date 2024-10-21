@@ -58,6 +58,7 @@ static void set_if_condition_types(Env* env, Node_if_condition* if_cond) {
 }
 
 void analysis_1(Env* env) {
+    log(LOG_DEBUG, "start thing\n");
     Node* block_ = vec_top(&env->ancesters);
     if (block_->type != NODE_BLOCK) {
         return;
@@ -65,6 +66,7 @@ void analysis_1(Env* env) {
     Node_block* block = node_unwrap_block(block_);
     Node_ptr_vec* block_children = &block->children;
 
+    bool rtn_is_at_end = false;
     for (size_t idx = 0; idx < block_children->info.count; idx++) {
         Node* curr_node = vec_at(block_children, idx);
         Lang_type dummy;
@@ -90,6 +92,25 @@ void analysis_1(Env* env) {
             default:
                 break;
         }
+
+        log(LOG_DEBUG, NODE_FMT"\n", node_print(curr_node));
+        if (idx == block_children->info.count - 1 && curr_node->type == NODE_RETURN_STATEMENT) {
+            rtn_is_at_end = true;
+        }
+    }
+
+    if (!rtn_is_at_end && 
+        env->ancesters.info.count > 1 && vec_at(&env->ancesters, env->ancesters.info.count - 2)
+    ) {
+        Pos pos = vec_top(block_children)->pos;
+        Node_return_statement* rtn_statement = node_unwrap_return_statement(
+            node_new(pos, NODE_RETURN_STATEMENT)
+        );
+        rtn_statement->child = node_wrap(literal_new(str_view_from_cstr(""), TOKEN_VOID, pos));
+        if (!try_set_node_type(rtn_statement)) {
+            todo();
+        }
+        vec_append(&a_main, block_children, node_wrap(rtn_statement));
     }
 
     return;

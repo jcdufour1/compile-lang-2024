@@ -1,6 +1,6 @@
 extern("c") fn puts(str_to_print: ptr) i32
 
-fn do_constants() i32 {
+fn do_constants() {
     if 8 < 1 {
         puts("1")
     }

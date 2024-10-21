@@ -3,27 +3,22 @@ extern("c") fn printf(format_string: ptr, args: any...) i32
 
 fn add_one(num: i32*) {
     deref(num) = num + 1
-    return
 }
 
 fn sub_one_explicit(num: i32*) {
     deref(num) = deref(num) - 1
-    return
 }
 
 fn add_one_explicit(num: i32*) {
     deref(num) = deref(num) + 1
-    return
 }
 
 fn operation_2(num: i32*) {
     deref(num) = 2*num + 1
-    return
 }
 
 fn operation_2_explicit(num: i32*) {
     deref(num) = 2*num + 1
-    return
 }
 
 struct Div {
@@ -34,22 +29,18 @@ struct Div {
 fn set_div(div: Div*) {
     let new_div: Div = {.numerator = 134, .denominator = 45};
     deref(div) = new_div;
-    return
 }
 
 fn set_div_denominator(div: Div*) {
     div.denominator = 1298;
-    return
 }
 
 fn print_div(div: Div*) {
     printf("%d/%d\n", div.numerator, div.denominator)
-    return
 }
 
 fn set_div_from_another(dest: Div*, src: Div*) {
     dest.denominator = src.denominator;
-    return
 }
 
 fn main() i32 {
