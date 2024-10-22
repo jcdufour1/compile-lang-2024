@@ -217,6 +217,7 @@ typedef struct {
 
 typedef struct {
     struct Node_* child;
+    bool auto_inserted : 1;
 } Node_return_statement;
 
 typedef struct {

@@ -83,7 +83,7 @@ void analysis_1(Env* env) {
             case NODE_IF_STATEMENT:
                 //fallthrough
             case NODE_FOR_WITH_CONDITION:
-                try(try_set_node_type(env, &dummy, curr_node));
+                try_set_node_type(env, &dummy, curr_node);
                 break;
             default:
                 break;
@@ -105,6 +105,7 @@ void analysis_1(Env* env) {
         Node_return_statement* rtn_statement = node_unwrap_return_statement(
             node_new(pos, NODE_RETURN_STATEMENT)
         );
+        rtn_statement->auto_inserted = true;
         rtn_statement->child = node_wrap(literal_new(str_view_from_cstr(""), TOKEN_VOID, pos));
         Lang_type dummy;
         try_set_node_type(env, &dummy, node_wrap(rtn_statement));

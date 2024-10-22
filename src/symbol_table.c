@@ -129,6 +129,7 @@ bool sym_tbl_add(Symbol_table* sym_table, Node* node_of_symbol) {
         return false;
     }
     Node* dummy;
+    (void) dummy;
     assert(sym_tbl_lookup(&dummy, sym_table, get_node_name(node_of_symbol)));
     sym_table->count++;
     return true;

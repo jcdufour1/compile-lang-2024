@@ -281,6 +281,7 @@ static bool try_extract_variable_declaration(
     bool require_let,
     bool defer_sym_add
 ) {
+    (void) require_let;
     Tk_view tokens = *tokens_input;
     if (!tk_view_try_consume_symbol(NULL, &tokens, "let")) {
         assert(!require_let);
@@ -519,7 +520,13 @@ static bool extract_statement(Env* env, Node** child, Tk_view* tokens) {
     } else if (token_is_equal(tk_view_front(*tokens), "break", TOKEN_SYMBOL)) {
         lhs = node_wrap(extract_break(tokens));
     } else {
-        try(try_extract_expression(env, &lhs, tokens, false));
+        if (!try_extract_expression(env, &lhs, tokens, false)) {
+            if (tokens->count < 1) {
+                todo();
+            }
+            msg(LOG_ERROR, tk_view_front(*tokens).pos, "invalid or missing expression\n");
+            return false;
+        }
     }
 
     // do assignment if applicible
@@ -619,7 +626,10 @@ static bool try_extract_expression_piece(Env* env, Node** result, Tk_view* token
         return true;
     } else if (token_is_equal(tk_view_front(*tokens), "let", TOKEN_SYMBOL)) {
         Node_variable_def* var_def;
-        try(try_extract_variable_declaration(env, &var_def, tokens, true, defer_sym_add));
+        if (!try_extract_variable_declaration(env, &var_def, tokens, true, defer_sym_add)) {
+            msg(LOG_ERROR, tk_view_front(*tokens).pos, "incomplete variable definition\n");
+            return false;
+        }
         *result = node_wrap(var_def);
         return true;
     } else if (extract_function_call(env, &fun_call, tokens)) {
@@ -651,7 +661,9 @@ static bool try_extract_expression(Env* env, Node** result, Tk_view* tokens, boo
     }
 
     Node* expression;
-    try(try_extract_expression_piece(env, &expression, tokens, defer_sym_add));
+    if (!try_extract_expression_piece(env, &expression, tokens, defer_sym_add)) {
+        return false;
+    }
     Token prev_operator_token = {0};
     bool is_first_operator = true;
     while (tokens->count > 0 && token_is_operator(tk_view_front(*tokens)) && !is_unary(tk_view_front(*tokens).type)) {

@@ -199,6 +199,7 @@ bool is_corresponding_to_a_struct(const Env* env, const Node* node) {
             // fallthrough
             assert(get_node_name(node).count > 0);
             if (!symbol_lookup(&var_def, env, get_node_name(node))) {
+                todo();
                 return false;
             }
             if (!symbol_lookup(&struct_def, env, get_lang_type(var_def).str)) {
@@ -208,6 +209,7 @@ bool is_corresponding_to_a_struct(const Env* env, const Node* node) {
         case NODE_SYMBOL_UNTYPED:
             unreachable("untyped symbols should not still be present");
         case NODE_LITERAL:
+            todo();
             return false;
         case NODE_STRUCT_MEMBER_SYM_TYPED:
             return true;
@@ -236,11 +238,13 @@ bool try_get_struct_definition(const Env* env, Node_struct_def** struct_def, Nod
             Node* var_def;
             assert(get_node_name(node).count > 0);
             if (!symbol_lookup(&var_def, env, get_node_name(node))) {
+                todo();
                 return false;
             }
             assert(get_lang_type(var_def).str.count > 0);
             Node* struct_def_;
             if (!symbol_lookup(&struct_def_, env, get_lang_type(var_def).str)) {
+                todo();
                 return false;
             }
             *struct_def = node_unwrap_struct_def(struct_def_);
@@ -299,7 +303,12 @@ bool try_set_binary_lang_type(const Env* env, Lang_type* lang_type, Node_binary*
     }
     if (!lang_type_is_equal(get_lang_type(operator->lhs), get_lang_type(operator->rhs))) {
         if (!str_view_is_equal(get_lang_type(operator->lhs).str, get_lang_type(operator->rhs).str)) {
-            todo();
+            msg(
+                LOG_ERROR, node_wrap(operator)->pos,
+                "types `"LANG_TYPE_FMT"` and `"LANG_TYPE_FMT"` are not compatible\n",
+                lang_type_print(get_lang_type(operator->lhs)), lang_type_print(get_lang_type(operator->rhs))
+            );
+            return false;
         }
         // do auto dereferencing
         while (get_lang_type(operator->lhs).pointer_depth > 0) {
@@ -317,6 +326,7 @@ bool try_set_binary_lang_type(const Env* env, Lang_type* lang_type, Node_binary*
 
 bool try_set_unary_lang_type(const Env* env, Lang_type* lang_type, Node_unary* unary) {
     if (!try_set_node_type(env, &unary->lang_type, unary->child)) {
+        todo();
         return false;
     }
 
@@ -412,8 +422,9 @@ bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node
     }
 
     if (!lang_type_is_equal(lhs_lang_type, rhs_lang_type)) {
-        log(LOG_DEBUG, LANG_TYPE_FMT LANG_TYPE_FMT"\n", lang_type_print(lhs_lang_type), lang_type_print(rhs_lang_type));
-        todo();
+        //log(LOG_DEBUG, LANG_TYPE_FMT LANG_TYPE_FMT"\n", lang_type_print(lhs_lang_type), lang_type_print(rhs_lang_type));
+        msg(LOG_DEBUG, node_wrap(assignment)->pos, "invalid assignment\n");
+        return false;
         /*
         if (is_corresponding_to_a_struct(rhs)) {
             if (str_view_is_equal(lhs_lang_type.str, rhs_lang_type.str) && lhs_lang_type.pointer_depth 1= rhs_lang_type.pointer_depth - 1) {
@@ -487,6 +498,7 @@ bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_func
         Node* argument = vec_at(&fun_call->args, arg_idx);
         Lang_type lang_type;
         if (!try_set_node_type(env, &lang_type, argument)) {
+            todo();
             return false;
         }
 
@@ -524,7 +536,9 @@ bool try_set_struct_member_symbol_types(const Env* env, Lang_type* lang_type, No
     Node_struct_member_sym_untyped temp = *struct_memb_sym_untyped;
     Node_struct_def* struct_def = node_unwrap_struct_def(struct_def_);
     node_wrap(struct_memb_sym_untyped)->type = NODE_STRUCT_MEMBER_SYM_TYPED;
-    Node_struct_member_sym_typed* struct_memb_sym_typed = node_unwrap_struct_member_sym_typed(node_wrap(struct_memb_sym_untyped));
+    Node_struct_member_sym_typed* struct_memb_sym_typed = node_unwrap_struct_member_sym_typed(
+        node_wrap(struct_memb_sym_untyped)
+    );
     struct_memb_sym_typed->name = temp.name;
     assert(struct_memb_sym_typed->name.count > 0);
     struct_memb_sym_typed->lang_type.str = struct_def->name;
@@ -646,18 +660,35 @@ bool try_set_node_type(const Env* env, Lang_type* lang_type, Node* node) {
         case NODE_VARIABLE_DEFINITION:
             *lang_type = node_unwrap_variable_def(node)->lang_type;
             return true;
-        case NODE_RETURN_STATEMENT:
-            if (!try_set_node_type(env, lang_type, node_unwrap_return_statement(node)->child)) {
+        case NODE_RETURN_STATEMENT: {
+            Node_return_statement* rtn_statement = node_unwrap_return_statement(node);
+            if (!try_set_node_type(env, lang_type, rtn_statement->child)) {
+                todo();
                 return false;
             }
             if (!lang_type_is_equal(*lang_type, get_parent_function_return_type(env))) {
-                msg_mismatched_return_types(
-                    node_unwrap_return_statement(node),
-                    get_parent_function_definition_const(env)
-                );
+                const Node_function_definition* fun_def = get_parent_function_definition_const(env);
+                if (rtn_statement->auto_inserted) {
+                    msg(
+                        LOG_ERROR, node_wrap(rtn_statement)->pos,
+                        "no return statement in function that returns `"LANG_TYPE_FMT"`\n",
+                        lang_type_print(fun_def->declaration->return_types->child->lang_type)
+                    );
+                    msg(
+                        LOG_NOTE, node_wrap(fun_def->declaration->return_types)->pos,
+                        "function return type `"LANG_TYPE_FMT"` defined here\n",
+                        lang_type_print(fun_def->declaration->return_types->child->lang_type)
+                    );
+                } else {
+                    msg_mismatched_return_types(
+                        node_unwrap_return_statement(node),
+                        fun_def
+                    );
+                }
                 return false;
             }
             return true;
+        }
         case NODE_STRUCT_LITERAL:
             unreachable("cannot set struct literal type here");
         default:

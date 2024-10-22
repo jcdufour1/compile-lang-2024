@@ -118,6 +118,8 @@ bool try_set_binary_lang_type(const Env* env, Lang_type* lang_type, Node_binary*
 // returns false if unsuccessful
 bool try_set_binary_operand_lang_type(Lang_type* lang_type, Node* operand);
 
+Lang_type get_parent_function_return_type(const Env* env);
+
 bool try_set_unary_lang_type(const Env* env, Lang_type* lang_type, Node_unary* unary);
 
 bool try_set_operation_lang_type(const Env* env, Lang_type* lang_type, Node_operator* operator);
