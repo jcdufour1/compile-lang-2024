@@ -213,12 +213,10 @@ static Node_function_declaration* extract_function_declaration_common(Env* env, 
 
     Token name_token = tk_view_consume(tokens);
     fun_declaration->name = name_token.text;
-    symbol_log(LOG_DEBUG, env);
     if (!symbol_add(env, node_wrap(fun_declaration))) {
         msg_redefinition_of_symbol(env, node_wrap(fun_declaration));
         todo();
     }
-    symbol_log(LOG_DEBUG, env);
     try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_PAR));
     if (!extract_function_parameters(env, &fun_declaration->parameters, tokens)) {
         todo();
@@ -238,7 +236,6 @@ static Node_function_definition* parse_function_definition(Env* env, Tk_view tok
         node_new(node_wrap(fun_decl)->pos, NODE_FUNCTION_DEFINITION)
     );
     function->declaration = fun_decl;
-    symbol_log(LOG_DEBUG, env);
     function->body = extract_block(env, &tokens);
     return function;
 }
@@ -303,7 +300,6 @@ static bool try_extract_variable_declaration(
         variable_def->lang_type.pointer_depth++;
     }
     Node* dummy;
-    symbol_log(LOG_DEBUG, env);
     if (defer_sym_add) {
         symbol_add_defer(env, node_wrap(variable_def));
     } else {
@@ -341,7 +337,6 @@ static void extract_for_range(Env* env, Node_for_range* for_loop, Tk_view* token
     try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
 
     Tk_view body_tokens = extract_items_inside_brackets(tokens, TOKEN_CLOSE_CURLY_BRACE); // TODO: remove this line?
-    symbol_log(LOG_DEBUG, env);
     for_loop->body = extract_block(env, &body_tokens);
 }
 
@@ -355,7 +350,6 @@ static Node_for_with_condition* extract_for_with_condition(Env* env, Node_for_ra
 }
 
 static Node* extract_for_loop(Env* env, Tk_view* tokens) {
-    symbol_log(LOG_DEBUG, env);
     Token for_token;
     try(tk_view_try_consume_symbol(&for_token, tokens, "for"));
     Node_for_range* for_loop = node_unwrap_for_range(node_new(for_token.pos, NODE_FOR_RANGE));
@@ -542,7 +536,6 @@ static bool extract_statement(Env* env, Node** child, Tk_view* tokens) {
 static Node_block* extract_block(Env* env, Tk_view* tokens) {
     Node_block* block = node_unwrap_block(node_new(tk_view_front(*tokens).pos, NODE_BLOCK));
     vec_append(&a_main, &env->ancesters, node_wrap(block));
-    symbol_log(LOG_DEBUG, env);
     Node* redefined_symbol;
     if (!symbol_do_add_defered(&redefined_symbol, env)) {
         msg_redefinition_of_symbol(env, redefined_symbol);
@@ -556,7 +549,6 @@ static Node_block* extract_block(Env* env, Tk_view* tokens) {
         vec_append(&a_main, &block->children, child);
     }
     Node* dummy = NULL;
-    symbol_log(LOG_DEBUG, env);
     vec_pop(dummy, &env->ancesters);
     assert(dummy == node_wrap(block));
     assert(block);
@@ -700,7 +692,7 @@ Node_block* parse(const Tokens tokens) {
     log(LOG_DEBUG, "%zu\n", env.ancesters.info.count);
     assert(env.ancesters.info.count == 0);
     log(LOG_DEBUG, "done with parsing:\n");
-    symbol_log(LOG_DEBUG, &env);
+    symbol_log(LOG_TRACE, &env);
     //log(LOG_VERBOSE, "completed parse tree:\n");
     //log_tree(LOG_VERBOSE, root);
     return root;

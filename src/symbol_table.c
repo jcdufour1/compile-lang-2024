@@ -169,7 +169,6 @@ void symbol_log_internal(int log_level, const Env* env, const char* file_path, i
         }
 
         if (idx < 1) {
-            log(log_level, "\n\n");
             return;
         }
     }

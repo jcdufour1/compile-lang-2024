@@ -136,7 +136,7 @@ static inline Lang_type get_lang_type(const Node* node) {
         case NODE_SYMBOL_TYPED:
             return node_unwrap_symbol_typed_const(node)->lang_type;
         case NODE_RETURN_STATEMENT:
-            unreachable("");
+            return get_lang_type(node_unwrap_return_statement_const(node)->child);
         case NODE_VARIABLE_DEFINITION:
             return node_unwrap_variable_def_const(node)->lang_type;
         case NODE_FUNCTION_DECLARATION:

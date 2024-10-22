@@ -82,7 +82,7 @@ def do_test(file: str, do_debug: bool, expected_output: str):
     if str(process.stdout) != expected_output:
         stdout_color: str = ""
         expected_color: str = ""
-        print_error("test fail")
+        print_error("test fail:" + file + " (" + debug_release_text + ")")
         diff = difflib.SequenceMatcher(None, expected_output, str(process.stdout))
         for tag, expected_start, expected_end, stdout_start, stdout_end, in diff.get_opcodes():
             if tag == 'insert':

@@ -24,4 +24,9 @@ void msg_invalid_assignment_to_literal(const Env* env, const Node_symbol_typed* 
 
 void msg_invalid_assignment_to_operation(const Env* env, const Node* lhs, const Node_operator* operation);
 
+void msg_mismatched_return_types(
+    const Node_return_statement* rtn_statement,
+    const Node_function_definition* fun_def
+);
+
 #endif // ERROR_MSG_H

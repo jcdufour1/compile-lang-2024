@@ -600,6 +600,27 @@ static bool try_set_if_condition_types(const Env* env, Lang_type* lang_type, Nod
     return true;
 }
 
+const Node_function_definition* get_parent_function_definition_const(const Env* env) {
+    if (env->ancesters.info.count < 1) {
+        unreachable("");
+    }
+
+    for (size_t idx = env->ancesters.info.count - 1;; idx--) {
+        Node* curr_node = vec_at(&env->ancesters, idx);
+        if (curr_node->type == NODE_FUNCTION_DEFINITION) {
+            return node_unwrap_function_definition(curr_node);
+        }
+
+        if (idx < 1) {
+            unreachable("");
+        }
+    }
+}
+
+Lang_type get_parent_function_return_type(const Env* env) {
+    return get_parent_function_definition_const(env)->declaration->return_types->child->lang_type;
+}
+
 bool try_set_node_type(const Env* env, Lang_type* lang_type, Node* node) {
     switch (node->type) {
         case NODE_LITERAL:
@@ -626,7 +647,17 @@ bool try_set_node_type(const Env* env, Lang_type* lang_type, Node* node) {
             *lang_type = node_unwrap_variable_def(node)->lang_type;
             return true;
         case NODE_RETURN_STATEMENT:
-            return try_set_node_type(env, lang_type, node_unwrap_return_statement(node)->child);
+            if (!try_set_node_type(env, lang_type, node_unwrap_return_statement(node)->child)) {
+                return false;
+            }
+            if (!lang_type_is_equal(*lang_type, get_parent_function_return_type(env))) {
+                msg_mismatched_return_types(
+                    node_unwrap_return_statement(node),
+                    get_parent_function_definition_const(env)
+                );
+                return false;
+            }
+            return true;
         case NODE_STRUCT_LITERAL:
             unreachable("cannot set struct literal type here");
         default:

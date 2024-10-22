@@ -24,11 +24,9 @@ fn do_constants() {
     if 8 > 9 {
         puts("6")
     }
-
-    return 0
 }
 
-fn do_var_lhs() i32 {
+fn do_var_lhs() {
     let num1: i32 = 8
 
     if num1 < 1 {
@@ -54,11 +52,9 @@ fn do_var_lhs() i32 {
     if num1 > 9 {
         puts("6")
     }
-
-    return 0
 }
 
-fn do_var_rhs() i32 {
+fn do_var_rhs() {
     let num2: i32 = 8
 
     if 1 < num2  {
@@ -84,11 +80,9 @@ fn do_var_rhs() i32 {
     if 9 > num2  {
         puts("6")
     }
-
-    return 0
 }
 
-fn do_var_both() i32 {
+fn do_var_both() {
     let lhs: i32 = 8
     let rhs: i32
 
@@ -128,7 +122,12 @@ fn do_var_both() i32 {
         puts("6")
     }
 
-    return 0
+    let div: Div
+}
+
+struct Div {
+    a: i32
+    b: i32
 }
 
 fn main() i32 {

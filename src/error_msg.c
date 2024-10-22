@@ -135,3 +135,20 @@ void msg_invalid_assignment_to_operation(const Env* env, const Node* lhs, const 
         lang_type_print(get_operator_lang_type(operation)), lang_type_print(var_def->lang_type)
     );
 }
+
+void msg_mismatched_return_types(
+    const Node_return_statement* rtn_statement,
+    const Node_function_definition* fun_def
+) {
+    msg(
+        LOG_ERROR, node_wrap(rtn_statement)->pos,
+        "returning `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
+        lang_type_print(get_lang_type(node_wrap(rtn_statement))), 
+        lang_type_print(fun_def->declaration->return_types->child->lang_type)
+    );
+    msg(
+        LOG_NOTE, node_wrap(fun_def->declaration->return_types)->pos,
+        "function return type `"LANG_TYPE_FMT"` defined here\n",
+        lang_type_print(fun_def->declaration->return_types->child->lang_type)
+    );
+}
