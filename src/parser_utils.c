@@ -6,6 +6,7 @@
 #include "symbol_table.h"
 #include "parser_utils.h"
 #include "error_msg.h"
+#include <limits.h>
 
 static bool try_set_literal_lang_type(Lang_type* lang_type, Node_literal* literal, TOKEN_TYPE token_type);
 
@@ -359,7 +360,7 @@ bool try_set_operation_lang_type(const Env* env, Lang_type* lang_type, Node_oper
     }
 }
 
-bool try_set_struct_literal_assignment_types(const Env* env, Lang_type* lang_type, Node* lhs, Node_struct_literal* struct_literal) {
+bool try_set_struct_literal_assignment_types(const Env* env, Lang_type* lang_type, const Node* lhs, Node_struct_literal* struct_literal) {
     if (!is_corresponding_to_a_struct(env, lhs)) {
         todo(); // non_struct assigned struct literal
     }
@@ -422,56 +423,46 @@ bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node
     }
 
     if (!lang_type_is_equal(lhs_lang_type, rhs_lang_type)) {
-        //log(LOG_DEBUG, LANG_TYPE_FMT LANG_TYPE_FMT"\n", lang_type_print(lhs_lang_type), lang_type_print(rhs_lang_type));
         msg(LOG_DEBUG, node_wrap(assignment)->pos, "invalid assignment\n");
         return false;
-        /*
-        if (is_corresponding_to_a_struct(rhs)) {
-            if (str_view_is_equal(lhs_lang_type.str, rhs_lang_type.str) && lhs_lang_type.pointer_depth 1= rhs_lang_type.pointer_depth - 1) {
-                todo();
-            }
-        } else {
-            todo();
-        }
-        */
-    }
-
-    switch (rhs->type) {
-        case NODE_LITERAL: {
-            /*
-            if (is_corresponding_to_a_struct(lhs)) {
-                log_tree(LOG_DEBUG, lhs);
-                log_tree(LOG_DEBUG, rhs);
-                // struct assigned literal of invalid type
-                meg_struct_assigned_to_invalid_literal(lhs, rhs);
-                todo();
-                return false;
-            }
-
-            if (!lang_type_is_equal(lhs_lang_type, rhs_lang_type)) {
-                msg_invalid_assignment_to_literal(env, env, node_unwrap_symbol_typed(lhs), node_unwrap_literal(rhs));
-                return false;
-            }
-            */
-            break;
-        }
-        case NODE_STRUCT_LITERAL:
-            break;
-        case NODE_SYMBOL_UNTYPED:
-            break;
-        case NODE_SYMBOL_TYPED:
-            break;
-        case NODE_OPERATOR:
-            break;
-        case NODE_FUNCTION_CALL:
-            break;
-        case NODE_STRUCT_MEMBER_SYM_TYPED:
-            break;
-        default:
-            unreachable("rhs: "NODE_FMT"\n", node_print(rhs));
     }
 
     *lang_type = lhs_lang_type;
+    return true;
+}
+
+// TODO: merge this and try_set_assignment_operand_types in some way?
+bool try_set_function_call_argument_type(
+    const Env* env,
+    Lang_type* lang_type,
+    const Node_variable_def* param,
+    Node* arg
+) {
+    if (lang_type_is_equal(param->lang_type, lang_type_from_cstr("any", 0))) {
+        if (param->is_variadic) {
+            // TODO: do type checking here if this function is not an extern "c" function
+            return true;
+        } else {
+            todo();
+        }
+    }
+
+    Lang_type arg_lang_type = {0};
+    if (arg->type == NODE_STRUCT_LITERAL) {
+        try(try_set_struct_literal_assignment_types(env, &arg_lang_type, node_wrap(param), node_unwrap_struct_literal(arg)));
+    } else {
+        if (!try_set_node_type(env, &arg_lang_type, arg)) {
+            msg(LOG_ERROR, arg->pos, "invalid argument\n");
+            return false;
+        }
+    }
+
+    if (!lang_type_is_equal(param->lang_type, arg_lang_type)) {
+        msg(LOG_ERROR, arg->pos, "invalid argument\n");
+        return false;
+    }
+
+    *lang_type = param->lang_type;
     return true;
 }
 
@@ -494,6 +485,33 @@ bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_func
     Node_function_params* params = fun_decl->parameters;
     size_t params_idx = 0;
 
+    size_t min_args;
+    size_t max_args;
+    if (params->params.info.count < 1) {
+        min_args = 0;
+        max_args = 0;
+    } else if (node_unwrap_variable_def(vec_top(&params->params))->is_variadic) {
+        min_args = params->params.info.count - 1;
+        max_args = SIZE_MAX;
+    } else {
+        min_args = params->params.info.count;
+        max_args = params->params.info.count;
+    }
+    if (fun_call->args.info.count < min_args || fun_call->args.info.count > max_args) {
+        msg(
+            LOG_ERROR, node_wrap(fun_call)->pos,
+            "%zu arguments are passed to function `"STR_VIEW_FMT"`, but %zu arguments expected\n",
+            fun_call->args.info.count, str_view_print(fun_call->name), params->params.info.count
+        );
+        msg(
+            LOG_NOTE, 
+            node_wrap(fun_def)->pos,
+            "function `"STR_VIEW_FMT"` defined here\n",
+            str_view_print(fun_decl->name)
+        );
+        return false;
+    }
+
     for (size_t arg_idx = 0; arg_idx < fun_call->args.info.count; arg_idx++) {
         Node* argument = vec_at(&fun_call->args, arg_idx);
         Lang_type lang_type;
@@ -515,6 +533,11 @@ bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_func
 
         if (!corresponding_param->is_variadic) {
             params_idx++;
+        }
+
+        Lang_type dummy;
+        if (!try_set_function_call_argument_type(env, &dummy, corresponding_param, argument)) {
+            return false;
         }
     }
 
