@@ -228,27 +228,15 @@ static Node_function_declaration* extract_function_declaration_common(Env* env, 
     return fun_declaration;
 }
 
-static Node_function_definition* parse_function_definition(Env* env, Tk_view tokens) {
-    try(tk_view_try_consume_symbol(NULL, &tokens, "fn"));
-    Node_function_declaration* fun_decl = extract_function_declaration_common(env, &tokens);
-    try(tk_view_try_consume(NULL, &tokens, TOKEN_OPEN_CURLY_BRACE));
+static Node_function_definition* extract_function_definition(Env* env, Tk_view* tokens) {
+    try(tk_view_try_consume_symbol(NULL, tokens, "fn"));
+    Node_function_declaration* fun_decl = extract_function_declaration_common(env, tokens);
     Node_function_definition* function = node_unwrap_function_definition(
         node_new(node_wrap(fun_decl)->pos, NODE_FUNCTION_DEFINITION)
     );
     function->declaration = fun_decl;
-    function->body = extract_block(env, &tokens);
+    function->body = extract_block(env, tokens);
     return function;
-}
-
-static Node_function_definition* extract_function_definition(Env* env, Tk_view* tokens) {
-    size_t close_curly_brace_idx;
-    if (!get_idx_matching_token(&close_curly_brace_idx, *tokens, true, TOKEN_CLOSE_CURLY_BRACE)) {
-        todo();
-    }
-    Tk_view function_tokens = tk_view_consume_count(tokens, close_curly_brace_idx);
-    try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
-
-    return parse_function_definition(env, function_tokens);
 }
 
 static Node_struct_def* extract_struct_definition(Env* env, Tk_view* tokens) {
@@ -337,16 +325,14 @@ static void extract_for_range(Env* env, Node_for_range* for_loop, Tk_view* token
     for_loop->upper_bound = upper_bound;
     try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
 
-    Tk_view body_tokens = extract_items_inside_brackets(tokens, TOKEN_CLOSE_CURLY_BRACE); // TODO: remove this line?
-    for_loop->body = extract_block(env, &body_tokens);
+    for_loop->body = extract_block(env, tokens);
 }
 
 static Node_for_with_condition* extract_for_with_condition(Env* env, Node_for_range* for_range, Tk_view* tokens) {
     Node_for_with_condition* for_with_cond = node_unwrap_for_with_condition(node_new(node_wrap(for_range)->pos, NODE_FOR_WITH_CONDITION));
     for_with_cond->condition = extract_if_condition(env, tokens);
 
-    Tk_view body_tokens = extract_items_inside_brackets(tokens, TOKEN_CLOSE_CURLY_BRACE);
-    for_with_cond->body = extract_block(env, &body_tokens);
+    for_with_cond->body = extract_block(env, tokens);
     return for_with_cond;
 }
 
@@ -497,8 +483,7 @@ static Node_if* extract_if_statement(Env* env, Tk_view* tokens) {
     Node_if* if_statement = node_unwrap_if(node_new(if_start_token.pos, NODE_IF_STATEMENT));
 
     if_statement->condition = extract_if_condition(env, tokens);
-    Tk_view if_body_tokens = extract_items_inside_brackets(tokens, TOKEN_CLOSE_CURLY_BRACE);
-    if_statement->body = extract_block(env, &if_body_tokens);
+    if_statement->body = extract_block(env, tokens);
 
     return if_statement;
 }
@@ -541,6 +526,7 @@ static bool extract_statement(Env* env, Node** child, Tk_view* tokens) {
 }
 
 static Node_block* extract_block(Env* env, Tk_view* tokens) {
+    tk_view_try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE);
     Node_block* block = node_unwrap_block(node_new(tk_view_front(*tokens).pos, NODE_BLOCK));
     vec_append(&a_main, &env->ancesters, node_wrap(block));
     Node* redefined_symbol;
