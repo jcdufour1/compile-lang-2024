@@ -18,7 +18,6 @@ typedef struct {
 
 #define string_print(string) (int)((string).info.count), (string).buf
 
-// string->buf is always null terminated
 static inline void string_extend_cstr(Arena* arena, String* str, const char* cstr) {
     for (;*cstr; cstr++) {
         vec_append(arena, str, *cstr);
@@ -31,7 +30,6 @@ static inline void string_extend_hex_2_digits(Arena* arena, String* str, uint8_t
     string_extend_cstr(arena, str, num_str);
 }
 
-// string->buf is always null terminated
 static inline void string_extend_size_t(Arena* arena, String* str, size_t num) {
     char num_str[21];
     sprintf(num_str, "%zu", num);
@@ -79,6 +77,11 @@ static inline void string_extend_strv_in_par(Arena* arena, String* string, Str_v
 
 static inline void string_extend_strv_in_gtlt(Arena* arena, String* string, Str_view str_view) {
     string_extend_strv_in_sym(arena, string, str_view, '<', '>');
+}
+
+static inline Str_view string_to_strv(const String string) {
+    Str_view str_view = {.str = string.buf, .count = string.info.count};
+    return str_view;
 }
 
 #endif // NEWSTRING_H

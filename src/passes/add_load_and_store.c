@@ -275,7 +275,6 @@ static void add_load_foreach_arg(
 }
 
 static Node_llvm_register_sym* move_operator_back(
-    Env* env,
     Node_ptr_vec* block_children,
     size_t* idx_to_insert_before,
     Node_operator* operation
@@ -401,7 +400,7 @@ static Node* get_store_assignment(
                     break;
                 }
             }
-            Node_llvm_register_sym* store_src_ = move_operator_back(env, block_children, idx_to_insert_before, operator);
+            Node_llvm_register_sym* store_src_ = move_operator_back(block_children, idx_to_insert_before, operator);
             store_src = node_wrap(store_src_->node_src);
             rhs_load_lang_type = store_src_->lang_type;
             break;
@@ -480,7 +479,6 @@ static void add_load_return_statement(
         case NODE_OPERATOR:
             if (return_statement->child->type == NODE_OPERATOR) {
                 return_statement->child = node_wrap(move_operator_back(
-                    env,
                     block_children,
                     idx_to_insert_before,
                     node_unwrap_operation(return_statement->child)

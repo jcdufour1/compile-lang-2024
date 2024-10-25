@@ -67,7 +67,7 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
     }
 }
 
-Str_view token_print_internal(Arena* arena, Token token) {
+Str_view token_print_internal(Arena* arena, Token token, bool msg_format) {
     String buf = {0};
     vec_reset(&buf);
 
@@ -104,6 +104,9 @@ Str_view token_print_internal(Arena* arena, Token token) {
         case TOKEN_NOT_EQUAL: // fallthrough
         case TOKEN_NOT: // fallthrough
         case TOKEN_DEREF: // fallthrough
+        case TOKEN_XOR: // fallthrough
+        case TOKEN_REFER: // fallthrough
+        case TOKEN_VOID: // fallthrough
             break;
         case TOKEN_COMMENT: 
             // fallthrough
@@ -114,12 +117,11 @@ Str_view token_print_internal(Arena* arena, Token token) {
             string_extend_strv(arena, &buf, token.text);
             vec_append(arena, &buf, ')');
             break;
-        default:
-            unreachable("");
     }
 
-    assert(strlen(buf.buf) == buf.info.count);
-    string_add_int(arena, &buf, token.pos.line);
+    if (!msg_format) {
+        string_add_int(arena, &buf, token.pos.line);
+    }
 
     assert(strlen(buf.buf) == buf.info.count);
     Str_view str_view = {.str = buf.buf, .count = buf.info.count};

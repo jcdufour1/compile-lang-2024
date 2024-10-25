@@ -230,7 +230,7 @@ static inline Str_view tk_view_print_internal(Arena* arena, Tk_view token_view) 
     vec_reset(&buf);
 
     for (size_t idx = 0; idx < token_view.count; idx++) {
-        string_extend_strv(&print_arena, &buf, token_print_internal(arena, token_view.tokens[idx]));
+        string_extend_strv(&print_arena, &buf, token_print_internal(arena, token_view.tokens[idx], false));
         string_extend_cstr(&print_arena, &buf, ";    ");
     }
 

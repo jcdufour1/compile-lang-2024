@@ -3,8 +3,16 @@
 
 #include "node.h"
 #include "env.h"
+#include "token.h"
 
 void msg_redefinition_of_symbol(const Env* env, const Node* new_sym_def);
+
+void msg_parser_expected_internal(const Env* env, Token got, int count_expected, ...);
+
+#define msg_parser_expected(env, got, ...) \
+    do { \
+        msg_parser_expected_internal(env, got, sizeof((TOKEN_TYPE[]){__VA_ARGS__})/sizeof(TOKEN_TYPE), __VA_ARGS__); \
+    } while(0)
 
 void msg_undefined_symbol(const Node* sym_call);
 

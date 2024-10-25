@@ -7,7 +7,7 @@
 #include "str_view.h"
 #include "newstring.h"
 
-#define token_print(token) str_view_print(token_print_internal(&print_arena, token))
+#define token_print(token) str_view_print(token_print_internal(&print_arena, token, false))
 
 #define TOKEN_FMT STR_VIEW_FMT
 
@@ -62,7 +62,7 @@ typedef struct {
     Pos pos;
 } Token;
 
-Str_view token_print_internal(Arena* arena, Token token);
+Str_view token_print_internal(Arena* arena, Token token, bool msg_format);
 
 static inline bool token_is_literal(Token token) {
     switch (token.type) {

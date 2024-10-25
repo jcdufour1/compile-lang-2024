@@ -4,6 +4,7 @@
 #include "nodes.h"
 #include "symbol_table.h"
 #include "parser_utils.h"
+#include <stdarg.h>
 
 void msg_redefinition_of_symbol(const Env* env, const Node* new_sym_def) {
     msg(
@@ -17,6 +18,33 @@ void msg_redefinition_of_symbol(const Env* env, const Node* new_sym_def) {
         LOG_NOTE, original_def->pos,
         STR_VIEW_FMT " originally defined here\n", str_view_print(get_node_name(original_def))
     );
+}
+
+void msg_parser_expected_internal(const Env* env, Token got, int count_expected, ...) {
+    va_list args;
+    va_start(args, count_expected);
+
+    String msg = {0};
+    string_extend_cstr(&print_arena, &msg, "got token `");
+    string_extend_strv(&print_arena, &msg, token_print_internal(&print_arena, got, true));
+    string_extend_cstr(&print_arena, &msg, "`, but expected ");
+
+    for (int idx = 0; idx < count_expected; idx++) {
+        if (idx > 0) {
+            if (idx == count_expected - 1) {
+                string_extend_cstr(&print_arena, &msg, " or ");
+            } else {
+                string_extend_cstr(&print_arena, &msg, ", ");
+            }
+        }
+        string_extend_cstr(&print_arena, &msg, "`");
+        string_extend_strv(&print_arena, &msg, token_type_to_str_view(va_arg(args, TOKEN_TYPE)));
+        string_extend_cstr(&print_arena, &msg, "`");
+    }
+
+    msg(LOG_ERROR, got.pos, STR_VIEW_FMT"\n", str_view_print(string_to_strv(msg)));
+
+    va_end(args);
 }
 
 void msg_undefined_symbol(const Node* sym_call) {
