@@ -6,6 +6,62 @@
 #include "parser_utils.h"
 #include <stdarg.h>
 
+static const char* get_log_level_str(int log_level) {
+    switch (log_level) {
+        case LOG_TRACE:
+            return "";
+        case LOG_DEBUG:
+            return "debug";
+        case LOG_VERBOSE:
+            return "debug";
+        case LOG_NOTE:
+            return "note";
+        case LOG_WARNING:
+            return "warning";
+        case LOG_ERROR:
+            return "error";
+        case LOG_FETAL:
+            return "fetal error";
+        default:
+            abort();
+    }
+}
+
+void log_common_internal(LOG_LEVEL log_level, const char* file, int line, int indent, const char* format, va_list args) {
+    for (int idx = 0; idx < indent; idx++) {
+        fprintf(stderr, " ");
+    }
+
+    if (log_level >= CURR_LOG_LEVEL) {
+        fprintf(stderr, "%s:%d:%s:", file, line, get_log_level_str(log_level));
+        vfprintf(stderr, format, args);
+    }
+}
+
+void log_common(LOG_LEVEL log_level, const char* file, int line, int indent, const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+
+    log_common_internal(log_level, file, line, indent, format, args);
+
+    va_end(args);
+}
+
+void msg(LOG_LEVEL log_level, Pos pos, const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+
+    if (log_level >= LOG_ERROR) {
+        error_count++;
+    } else if (log_level == LOG_WARNING) {
+        warning_count++;
+    }
+
+    log_common_internal(log_level, pos.file_path, pos.line, 0, format, args);
+
+    va_end(args);
+}
+
 void msg_redefinition_of_symbol(const Env* env, const Node* new_sym_def) {
     msg(
         LOG_ERROR, new_sym_def->pos,
@@ -20,29 +76,29 @@ void msg_redefinition_of_symbol(const Env* env, const Node* new_sym_def) {
     );
 }
 
-void msg_parser_expected_internal(const Env* env, Token got, int count_expected, ...) {
+void msg_parser_expected_internal(Token got, int count_expected, ...) {
     va_list args;
     va_start(args, count_expected);
 
-    String msg = {0};
-    string_extend_cstr(&print_arena, &msg, "got token `");
-    string_extend_strv(&print_arena, &msg, token_print_internal(&print_arena, got, true));
-    string_extend_cstr(&print_arena, &msg, "`, but expected ");
+    String message = {0};
+    string_extend_cstr(&print_arena, &message, "got token `");
+    string_extend_strv(&print_arena, &message, token_print_internal(&print_arena, got, true));
+    string_extend_cstr(&print_arena, &message, "`, but expected ");
 
     for (int idx = 0; idx < count_expected; idx++) {
         if (idx > 0) {
             if (idx == count_expected - 1) {
-                string_extend_cstr(&print_arena, &msg, " or ");
+                string_extend_cstr(&print_arena, &message, " or ");
             } else {
-                string_extend_cstr(&print_arena, &msg, ", ");
+                string_extend_cstr(&print_arena, &message, ", ");
             }
         }
-        string_extend_cstr(&print_arena, &msg, "`");
-        string_extend_strv(&print_arena, &msg, token_type_to_str_view(va_arg(args, TOKEN_TYPE)));
-        string_extend_cstr(&print_arena, &msg, "`");
+        string_extend_cstr(&print_arena, &message, "`");
+        string_extend_strv(&print_arena, &message, token_type_to_str_view(va_arg(args, TOKEN_TYPE)));
+        string_extend_cstr(&print_arena, &message, "`");
     }
 
-    msg(LOG_ERROR, got.pos, STR_VIEW_FMT"\n", str_view_print(string_to_strv(msg)));
+    msg(LOG_ERROR, got.pos, STR_VIEW_FMT"\n", str_view_print(string_to_strv(message)));
 
     va_end(args);
 }

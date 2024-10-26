@@ -302,7 +302,6 @@ static void extract_for_range(Env* env, Node_for_range* for_loop, Tk_view* token
     try(tk_view_try_consume(NULL, tokens, TOKEN_DOUBLE_DOT));
 
     Node* upper_bound_child;
-    log_tokens(LOG_DEBUG, *tokens);
     if (!try_extract_expression(env, &upper_bound_child, tokens, true)) {
         todo();
         msg(LOG_ERROR, tk_view_front(*tokens).pos, "expected expression\n");
@@ -413,7 +412,7 @@ static bool try_extract_function_call(Env* env, Node_function_call** child, Tk_v
 
     if (!tk_view_try_consume(NULL, &curr_tokens, TOKEN_CLOSE_PAR)) {
         //msg_parser_expected(env, &tk_view_front(*curr_tokens), TOKEN_CLOSE_PAR, TOKEN_OPEN_CURLY_BRACE);
-        msg_parser_expected(env, tk_view_front(curr_tokens), TOKEN_CLOSE_PAR);
+        msg_parser_expected(tk_view_front(curr_tokens), TOKEN_CLOSE_PAR);
         exit(1);
     }
 

@@ -7,11 +7,11 @@
 
 void msg_redefinition_of_symbol(const Env* env, const Node* new_sym_def);
 
-void msg_parser_expected_internal(const Env* env, Token got, int count_expected, ...);
+void msg_parser_expected_internal(Token got, int count_expected, ...);
 
-#define msg_parser_expected(env, got, ...) \
+#define msg_parser_expected(got, ...) \
     do { \
-        msg_parser_expected_internal(env, got, sizeof((TOKEN_TYPE[]){__VA_ARGS__})/sizeof(TOKEN_TYPE), __VA_ARGS__); \
+        msg_parser_expected_internal(got, sizeof((TOKEN_TYPE[]){__VA_ARGS__})/sizeof(TOKEN_TYPE), __VA_ARGS__); \
     } while(0)
 
 void msg_undefined_symbol(const Node* sym_call);

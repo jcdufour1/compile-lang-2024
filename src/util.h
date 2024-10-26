@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include "str_view_struct.h"
 
 #define LOG_TRACE   0
@@ -36,65 +37,29 @@ static const Pos dummy_pos = {0};
 #define POP_PRAGMA \
     _Pragma("GCC diagnostic pop") \
 
-static inline const char* get_log_level_str(int log_level) {
-    switch (log_level) {
-        case LOG_TRACE:
-            return "";
-        case LOG_DEBUG:
-            return "debug";
-        case LOG_VERBOSE:
-            return "debug";
-        case LOG_NOTE:
-            return "note";
-        case LOG_WARNING:
-            return "warning";
-        case LOG_ERROR:
-            return "error";
-        case LOG_FETAL:
-            return "fetal error";
-        default:
-            abort();
-    }
-}
+void log_common(LOG_LEVEL log_level, const char* file, int line, int indent, const char* format, ...) 
+__attribute__((format (printf, 5, 6)));
 
-#define log_common(log_level, file, line, indent, ...) \
+#define log_indent_file(...) \
     do { \
-        if ((log_level) >= CURR_LOG_LEVEL) { \
-            PUSH_PRAGMA_IGNORE_WTYPE_LIMITS; \
-            for (size_t idx = 0; idx < indent; idx++) { \
-                fprintf(stderr, " "); \
-            } \
-            POP_PRAGMA; \
-            fprintf(stderr, "%s:%d:%s:", file, line, get_log_level_str(log_level)); \
-            fprintf(stderr, __VA_ARGS__); \
-        } \
-    } while (0);
+        log_common(__VA_ARGS__); \
+    } while(0) 
 
-#define log_indent_file(log_level, file, line, indent, ...) \
-    do { \
-        log_common(log_level, file, line, indent, __VA_ARGS__) \
-    } while(0)
+#define log_indent(log_level, indent, ...) \
+    log_common(log_level, __FILE__, __LINE__, indent, __VA_ARGS__)
 
 #define log_indent(log_level, indent, ...) \
     log_common(log_level, __FILE__, __LINE__, indent, __VA_ARGS__)
 
 #define log_file_new(log_level, file, line, ...) \
-    log_indent_file(log_level, file, line, 0, __VA_ARGS__)
+    log_common(log_level, file, line, 0, __VA_ARGS__)
 
 // print messages that are intended for debugging
 #define log(log_level, ...) \
-    log_indent(log_level, 0, __VA_ARGS__);
+    log_common(log_level, __FILE__, __LINE__, 0, __VA_ARGS__);
 
 // print messages that are intended for the user (eg. syntax errors)
-#define msg(log_level, pos, ...) \
-    do { \
-        if ((log_level) >= LOG_ERROR) { \
-            error_count++; \
-        } else if ((log_level) == LOG_WARNING) { \
-            warning_count++; \
-        } \
-        log_file_new(log_level, (pos).file_path, (pos).line, __VA_ARGS__); \
-    } while (0)
+void msg(LOG_LEVEL log_level, Pos pos, const char* format, ...);
 
 #define todo() \
     do { \
