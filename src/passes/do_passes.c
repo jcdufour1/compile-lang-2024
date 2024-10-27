@@ -13,7 +13,7 @@ void do_passes(Node_block** root, const Parameters* params) {
     start_walk(&env, root, analysis_1);
     log_tree(LOG_DEBUG, node_wrap(*root));
     if (error_count > 0) {
-        exit(1);
+        exit(EXIT_CODE_FAIL);
     }
     arena_reset(&print_arena);
 

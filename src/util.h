@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include "str_view_struct.h"
+#include "expected_fail_type.h"
 
 #define LOG_TRACE   0
 #define LOG_DEBUG   1
@@ -21,6 +22,12 @@
 #define CURR_LOG_LEVEL LOG_TRACE
 #endif // CURR_LOG_LEVEL
 
+typedef enum {
+    EXIT_CODE_SUCCESS = 0,
+    EXIT_CODE_FAIL = 1,
+    EXIT_CODE_EXPECTED_FAIL = 2,
+} EXIT_CODE;
+
 typedef int LOG_LEVEL;
 
 typedef struct {
@@ -29,13 +36,6 @@ typedef struct {
 } Pos;
 
 static const Pos dummy_pos = {0};
-
-#define PUSH_PRAGMA_IGNORE_WTYPE_LIMITS \
-    _Pragma("GCC diagnostic push") \
-    _Pragma("GCC diagnostic ignored \"-Wtype-limits\"") \
-
-#define POP_PRAGMA \
-    _Pragma("GCC diagnostic pop") \
 
 void log_common(LOG_LEVEL log_level, const char* file, int line, int indent, const char* format, ...) 
 __attribute__((format (printf, 5, 6)));
@@ -59,7 +59,8 @@ __attribute__((format (printf, 5, 6)));
     log_common(log_level, __FILE__, __LINE__, 0, __VA_ARGS__);
 
 // print messages that are intended for the user (eg. syntax errors)
-void msg(LOG_LEVEL log_level, Pos pos, const char* format, ...);
+void msg(LOG_LEVEL log_level, EXPECT_FAIL_TYPE expected_fail_type, Pos pos, const char* format, ...)
+__attribute__((format (printf, 4, 5)));
 
 #define todo() \
     do { \

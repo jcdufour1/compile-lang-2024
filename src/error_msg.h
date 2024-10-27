@@ -4,6 +4,7 @@
 #include "node.h"
 #include "env.h"
 #include "token.h"
+#include "expected_fail_type.h"
 
 void msg_redefinition_of_symbol(const Env* env, const Node* new_sym_def);
 
