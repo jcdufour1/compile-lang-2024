@@ -190,3 +190,4 @@ void msg_mismatched_return_types(
         lang_type_print(fun_def->declaration->return_types->child->lang_type)
     );
 }
+

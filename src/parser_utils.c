@@ -376,10 +376,6 @@ bool try_set_struct_literal_assignment_types(const Env* env, Lang_type* lang_typ
     Node_ptr_vec new_literal_members = {0};
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         Node* memb_sym_def_ = vec_at(&struct_def->members, idx);
-        if (memb_sym_def_->type == NODE_LITERAL) {
-            break;
-        }
-
         Node_variable_def* memb_sym_def = node_unwrap_variable_def(memb_sym_def_);
         Node_assignment* assign_memb_sym = node_unwrap_assignment(vec_at(&struct_literal->members, idx));
         Node_symbol_untyped* memb_sym_untyped = node_unwrap_symbol_untyped(assign_memb_sym->lhs);
@@ -497,11 +493,21 @@ bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_func
         max_args = params->params.info.count;
     }
     if (fun_call->args.info.count < min_args || fun_call->args.info.count > max_args) {
+        String message = {0};
+        string_extend_size_t(&print_arena, &message, fun_call->args.info.count);
+        string_extend_cstr(&print_arena, &message, " arguments are passed to function `");
+        string_extend_strv(&print_arena, &message, fun_call->name);
+        string_extend_cstr(&print_arena, &message, "`, but ");
+        string_extend_size_t(&print_arena, &message, min_args);
+        if (max_args > min_args) {
+            string_extend_cstr(&print_arena, &message, " or more");
+        }
+        string_extend_cstr(&print_arena, &message, " arguments expected\n");
         msg(
             LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, node_wrap(fun_call)->pos,
-            "%zu arguments are passed to function `"STR_VIEW_FMT"`, but %zu arguments expected\n",
-            fun_call->args.info.count, str_view_print(fun_call->name), params->params.info.count
+            STR_VIEW_FMT, str_view_print(string_to_strv(message))
         );
+
         msg(
             LOG_NOTE, EXPECT_FAIL_TYPE_NONE,
             node_wrap(fun_def)->pos,

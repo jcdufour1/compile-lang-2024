@@ -37,6 +37,8 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, str] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "binary_mismatched_types.own": "binary-mismatched-types",
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_fun_arg.own": "invalid-function-arguments",
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_fun_args.own": "invalid-count-function-arguments",
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_fun_args_2.own": "invalid-count-function-arguments",
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_fun_args_3.own": "invalid-count-function-arguments",
     EXPECTED_FAIL_EXAMPLES_DIR + "missing_return.own": "missing-return-statement",
     EXPECTED_FAIL_EXAMPLES_DIR + "var_redef.own": "redefinition-of-symbol",
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_struct_memb.own": "invalid-struct-member",

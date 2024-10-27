@@ -1,0 +1,9 @@
+
+fn foo(num: i32) {
+}
+
+fn main() i32 {
+    foo(8, 2)
+
+    return 0
+}
