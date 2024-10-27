@@ -12,11 +12,13 @@ class StatusColors:
     TO_NORMAL = "\033[0m" #]
 
 class FileItem:
-    def __init__(self, path: str, expected_success: bool):
+    def __init__(self, path: str, expected_success: bool, expected_fail_str: str | None):
         self.path = path
         self.expected_success = expected_success
+        self.expected_fail_str = expected_fail_str
     path: str
     expected_success: bool
+    expected_fail_str: str | None
 
 EXAMPLES_DIR = "./examples/new_lang/"
 EXPECTED_FAIL_EXAMPLES_DIR = "./tests/expected_failure_examples/"
@@ -26,6 +28,10 @@ BUILD_RELEASE_DIR = "./build/release/"
 EXE_BASE_NAME = "main"
 TEST_OUTPUT = "test.ll"
 EXPECTED_SUCCESS_RESULTS_DIR = "./tests/expected_success_results/"
+
+EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, str] = {
+    EXPECTED_FAIL_EXAMPLES_DIR + "var_redef.own": "redefinition-of-symbol",
+}
 
 def to_str(a):
     return str(a)
@@ -47,11 +53,11 @@ def get_files_to_test(files_to_exclude: list[str]) -> list[FileItem]:
     for possible_file_base in map(to_str, os.listdir(EXAMPLES_DIR)):
         possible_file_path: str = os.path.realpath(os.path.join(EXAMPLES_DIR, possible_file_base))
         if os.path.isfile(possible_file_path) and possible_file_path not in files_to_exclude:
-            files.append(FileItem(possible_file_path, True))
+            files.append(FileItem(possible_file_path, True, None))
     for possible_file_base in map(to_str, os.listdir(EXPECTED_FAIL_EXAMPLES_DIR)):
         possible_file_path: str = os.path.realpath(os.path.join(EXPECTED_FAIL_EXAMPLES_DIR, possible_file_base))
         if os.path.isfile(possible_file_path) and possible_file_path not in files_to_exclude:
-            files.append(FileItem(possible_file_path, False))
+            files.append(FileItem(possible_file_path, False, EXPECT_FAIL_FILE_PATH_TO_TYPE[os.path.join(EXPECTED_FAIL_EXAMPLES_DIR, possible_file_base)]))
     return files
 
 def get_expected_output(file: FileItem) -> str:
@@ -71,14 +77,20 @@ def do_test(file: FileItem, do_debug: bool, expected_output: str) -> bool:
     else:
         compile_cmd = [os.path.join(BUILD_RELEASE_DIR, EXE_BASE_NAME)]
         debug_release_text = "release"
-    compile_cmd.append("compile")
-    compile_cmd.append(file.path)
-    compile_cmd.append("--emit-llvm")
+    if file.expected_success:
+        compile_cmd.append("compile")
+        compile_cmd.append(file.path)
+        compile_cmd.append("--emit-llvm")
+    else:
+        assert(file.expected_fail_str != None)
+        compile_cmd.append("test-expected-fail")
+        compile_cmd.append(file.expected_fail_str)
+        compile_cmd.append(file.path)
     print_info("testing: " + file.path + " (" + debug_release_text + ")")
     process = subprocess.run(compile_cmd)
     if not file.expected_success:
-        if process.returncode == 0:
-            print_error("testing: compilation of " + file.path + " (" + debug_release_text + ") returned 0 exit code, but failure was expected")
+        if process.returncode != 2:
+            print_error("testing: compilation of " + file.path + " (" + debug_release_text + ") returned " + str(process.returncode) + " exit code, but expected failure (exit code 2) was expected")
             sys.exit(1)
             return
         else:

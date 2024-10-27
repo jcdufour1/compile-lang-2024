@@ -71,7 +71,7 @@ void msg(LOG_LEVEL log_level, EXPECT_FAIL_TYPE expected_fail_type, Pos pos, cons
 
 void msg_redefinition_of_symbol(const Env* env, const Node* new_sym_def) {
     msg(
-        LOG_ERROR, EXPECTED_FAIL_REDEFINITION_SYMBOL, new_sym_def->pos,
+        LOG_ERROR, EXPECT_FAIL_REDEFINITION_SYMBOL, new_sym_def->pos,
         "redefinition of symbol "STR_VIEW_FMT"\n", str_view_print(get_node_name(new_sym_def))
     );
 

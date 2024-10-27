@@ -47,7 +47,7 @@ static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
         );
 
         if (0 == strcmp(expected_fail_type_str, "redefinition-of-symbol")) {
-            params->expected_fail_type = EXPECTED_FAIL_REDEFINITION_SYMBOL;
+            params->expected_fail_type = EXPECT_FAIL_REDEFINITION_SYMBOL;
         } else {
             msg(LOG_FETAL, EXPECT_FAIL_TYPE_NONE, dummy_pos, "invalid expected fail type `%s`\n", expected_fail_type_str);
             exit(EXIT_CODE_FAIL);

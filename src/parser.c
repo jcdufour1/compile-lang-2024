@@ -304,7 +304,7 @@ static void extract_for_range(Env* env, Node_for_range* for_loop, Tk_view* token
     Node* upper_bound_child;
     if (!try_extract_expression(env, &upper_bound_child, tokens, true)) {
         todo();
-        msg(LOG_ERROR, EXPECTED_FAIL_EXPECTED_EXPRESSION, tk_view_front(*tokens).pos, "expected expression\n");
+        msg(LOG_ERROR, EXPECT_FAIL_EXPECTED_EXPRESSION, tk_view_front(*tokens).pos, "expected expression\n");
         return;
     }
     Node_for_upper_bound* upper_bound = node_unwrap_for_upper_bound(node_new(upper_bound_child->pos, NODE_FOR_UPPER_BOUND));
@@ -606,7 +606,7 @@ static bool try_extract_expression_piece(Env* env, Node** result, Tk_view* token
     } else if (token_is_equal(tk_view_front(*tokens), "let", TOKEN_SYMBOL)) {
         Node_variable_def* var_def;
         if (!try_extract_variable_declaration(env, &var_def, tokens, true, defer_sym_add)) {
-            msg(LOG_ERROR, EXPECTED_FAIL_INCOMPLETE_VAR_DEF, tk_view_front(*tokens).pos, "incomplete variable definition\n");
+            msg(LOG_ERROR, EXPECT_FAIL_INCOMPLETE_VAR_DEF, tk_view_front(*tokens).pos, "incomplete variable definition\n");
             return false;
         }
         *result = node_wrap(var_def);

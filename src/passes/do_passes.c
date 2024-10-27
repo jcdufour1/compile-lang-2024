@@ -39,7 +39,10 @@ void do_passes(Node_block** root, const Parameters* params) {
 
     if (params->emit_llvm) {
         emit_llvm_from_tree(&env, *root);
+    } else if (params->test_expected_fail) {
+        log(LOG_FETAL, "expected fail did not fail\n");
+        exit(EXIT_CODE_FAIL);
     } else {
-        todo();
+        unreachable("");
     }
 }
