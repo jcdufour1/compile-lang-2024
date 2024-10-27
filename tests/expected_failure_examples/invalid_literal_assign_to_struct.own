@@ -1,0 +1,12 @@
+extern("c") fn printf(str_to_print_2: ptr, args: any...) i32
+
+struct Div {
+    numerator: i32
+    denominator: i32
+}
+
+fn main() i32 {
+    let div: Div
+    div = 7
+    return 0
+}

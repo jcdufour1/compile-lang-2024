@@ -1,0 +1,16 @@
+
+struct Div {
+    numerator: i32
+    denominator: i32
+}
+
+struct Token {
+    num: i32
+    string_data: ptr
+    div5: Div
+}
+
+fn main() i32 {
+    let div: Div = {.numerator = 87, .denominatordaklsjfkjskf = 77}
+    return 0
+}

@@ -385,7 +385,6 @@ bool try_set_struct_literal_assignment_types(const Env* env, Lang_type* lang_typ
         Node_symbol_untyped* memb_sym_untyped = node_unwrap_symbol_untyped(assign_memb_sym->lhs);
         Node_literal* assign_memb_sym_rhs = node_unwrap_literal(assign_memb_sym->rhs);
         if (!str_view_is_equal(memb_sym_def->name, memb_sym_untyped->name)) {
-            todo();
             msg_invalid_struct_member_assignment_in_literal(
                 lhs_var_def,
                 memb_sym_def,
@@ -423,7 +422,7 @@ bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node
     }
 
     if (!lang_type_is_equal(lhs_lang_type, rhs_lang_type)) {
-        msg(LOG_DEBUG, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, node_wrap(assignment)->pos, "invalid assignment\n");
+        msg(LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, node_wrap(assignment)->pos, "invalid assignment\n");
         return false;
     }
 
@@ -575,7 +574,7 @@ bool try_set_struct_member_symbol_types(const Env* env, Lang_type* lang_type, No
             todo();
         }
         if (!try_get_member_def(&curr_memb_def, struct_def, node_wrap(memb_sym_untyped))) {
-            msg_invalid_struct_member(env, node_wrap(struct_memb_sym_typed), node_wrap(memb_sym_untyped));
+            msg_invalid_struct_member(env, struct_memb_sym_typed, memb_sym_untyped);
             return false;
         }
         if (!try_get_struct_definition(env, &struct_def, node_wrap(curr_memb_def))) {

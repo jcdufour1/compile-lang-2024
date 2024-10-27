@@ -1,0 +1,8 @@
+
+extern("c") fn printf(format_string: ptr, args: any...) i32
+
+fn main() i32 {
+    printf()
+
+    return 0
+}

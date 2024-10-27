@@ -30,7 +30,21 @@ TEST_OUTPUT = "test.ll"
 EXPECTED_SUCCESS_RESULTS_DIR = "./tests/expected_success_results/"
 
 EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, str] = {
+    EXPECTED_FAIL_EXAMPLES_DIR + "undef_symbol.own": "undefined-symbol",
+    EXPECTED_FAIL_EXAMPLES_DIR + "undef_function.own": "undefined-function",
+    EXPECTED_FAIL_EXAMPLES_DIR + "expected_expression.own": "expected-expression",
+    EXPECTED_FAIL_EXAMPLES_DIR + "incomplete_var_def.own": "incomplete-variable-definition",
+    EXPECTED_FAIL_EXAMPLES_DIR + "binary_mismatched_types.own": "binary-mismatched-types",
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_fun_arg.own": "invalid-function-arguments",
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_fun_args.own": "invalid-count-function-arguments",
+    EXPECTED_FAIL_EXAMPLES_DIR + "missing_return.own": "missing-return-statement",
     EXPECTED_FAIL_EXAMPLES_DIR + "var_redef.own": "redefinition-of-symbol",
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_struct_memb.own": "invalid-struct-member",
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_struct_memb_in_literal.own": "invalid-struct-member-in-literal",
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_literal_assign_to_struct.own": "assignment-mismatched-types",
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_literal_assign.own": "assignment-mismatched-types",
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_operation_assign.own": "assignment-mismatched-types",
+    EXPECTED_FAIL_EXAMPLES_DIR + "mismatched_return_type.own": "mismatched-return-type",
 }
 
 def to_str(a):

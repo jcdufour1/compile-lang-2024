@@ -303,8 +303,8 @@ static void extract_for_range(Env* env, Node_for_range* for_loop, Tk_view* token
 
     Node* upper_bound_child;
     if (!try_extract_expression(env, &upper_bound_child, tokens, true)) {
-        todo();
         msg(LOG_ERROR, EXPECT_FAIL_EXPECTED_EXPRESSION, tk_view_front(*tokens).pos, "expected expression\n");
+        todo();
         return;
     }
     Node_for_upper_bound* upper_bound = node_unwrap_for_upper_bound(node_new(upper_bound_child->pos, NODE_FOR_UPPER_BOUND));
@@ -491,7 +491,7 @@ static bool extract_statement(Env* env, Node** child, Tk_view* tokens) {
         lhs = node_wrap(extract_break(tokens));
     } else {
         if (!try_extract_expression(env, &lhs, tokens, false)) {
-            todo();
+            return false;
             /*
             if (tokens->count < 1) {
                 todo();
@@ -514,6 +514,10 @@ static bool extract_statement(Env* env, Node** child, Tk_view* tokens) {
 }
 
 static Node_block* extract_block(Env* env, Tk_view* tokens) {
+    if (tokens->count < 1) {
+        unreachable("empty file not implemented\n");
+    }
+
     tk_view_try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE);
     Node_block* block = node_unwrap_block(node_new(tk_view_front(*tokens).pos, NODE_BLOCK));
     vec_append(&a_main, &env->ancesters, node_wrap(block));
@@ -524,6 +528,7 @@ static Node_block* extract_block(Env* env, Tk_view* tokens) {
     while (tokens->count > 0 && !tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
         Node* child;
         if (!extract_statement(env, &child, tokens)) {
+            log_tokens(LOG_DEBUG, *tokens);
             todo();
         }
         tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);

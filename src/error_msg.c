@@ -124,39 +124,32 @@ void msg_undefined_function(const Node_function_call* fun_call) {
     );
 }
 
-void msg_invalid_struct_member(const Env* env, const Node* parent, const Node* node) {
-    switch (node->type) {
-        case NODE_STRUCT_MEMBER_SYM_TYPED:
-            todo();
-        case NODE_SYMBOL_TYPED: {
-            const Node* struct_memb_sym = parent;
-            assert(struct_memb_sym->type == NODE_STRUCT_MEMBER_SYM_TYPED);
-            msg(
-                LOG_ERROR, EXPECT_FAIL_INVALID_STRUCT_MEMBER, node->pos,
-                "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 
-                str_view_print(get_node_name(node)), str_view_print(get_node_name(struct_memb_sym))
-            );
-            Node* struct_memb_sym_def_;
-            try(symbol_lookup(&struct_memb_sym_def_, env, get_node_name(struct_memb_sym)));
-            const Node_variable_def* struct_memb_sym_def = node_unwrap_variable_def_const(struct_memb_sym_def_);
-            msg(
-                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap(struct_memb_sym_def)->pos,
-                "`"STR_VIEW_FMT"` defined here as type `"LANG_TYPE_FMT"`\n",
-                str_view_print(struct_memb_sym_def->name),
-                lang_type_print(struct_memb_sym_def->lang_type)
-            );
-            Node* struct_def;
-            try(symbol_lookup(&struct_def, env, struct_memb_sym_def->lang_type.str));
-            msg(
-                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, struct_def->pos,
-                "struct `"LANG_TYPE_FMT"` defined here\n", 
-                lang_type_print(struct_memb_sym_def->lang_type)
-            );
-            break;
-        }
-        default:
-            unreachable(NODE_FMT"\n", node_print(node));
-    }
+void msg_invalid_struct_member(
+    const Env* env,
+    const Node_struct_member_sym_typed* struct_memb_sym,
+    const Node_struct_member_sym_piece_untyped* struct_memb_sym_piece
+) {
+    msg(
+        LOG_ERROR, EXPECT_FAIL_INVALID_STRUCT_MEMBER, node_wrap(struct_memb_sym_piece)->pos,
+        "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 
+        str_view_print(struct_memb_sym_piece->name), str_view_print(struct_memb_sym->name)
+    );
+    Node* struct_memb_sym_def_;
+    try(symbol_lookup(&struct_memb_sym_def_, env, struct_memb_sym->name));
+    const Node_variable_def* struct_memb_sym_def = node_unwrap_variable_def_const(struct_memb_sym_def_);
+    msg(
+        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap(struct_memb_sym_def)->pos,
+        "`"STR_VIEW_FMT"` defined here as type `"LANG_TYPE_FMT"`\n",
+        str_view_print(struct_memb_sym_def->name),
+        lang_type_print(struct_memb_sym_def->lang_type)
+    );
+    Node* struct_def;
+    try(symbol_lookup(&struct_def, env, struct_memb_sym_def->lang_type.str));
+    msg(
+        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, struct_def->pos,
+        "struct `"LANG_TYPE_FMT"` defined here\n", 
+        lang_type_print(struct_memb_sym_def->lang_type)
+    );
 }
 
 void msg_invalid_struct_member_assignment_in_literal(
@@ -178,51 +171,6 @@ void msg_invalid_struct_member_assignment_in_literal(
         LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap(memb_sym_def)->pos,
         "member symbol `"STR_VIEW_FMT"` of struct `"STR_VIEW_FMT"` defined here\n", 
         str_view_print(memb_sym_def->name), lang_type_print(struct_var_def->lang_type)
-    );
-}
-
-void meg_struct_assigned_to_invalid_literal(const Env* env, const Node* lhs, const Node* rhs) {
-    assert(lhs->type == NODE_SYMBOL_TYPED && is_struct_symbol(env, lhs));
-    assert(rhs->type == NODE_LITERAL);
-
-    Node* struct_var_def_;
-    try(symbol_lookup(&struct_var_def_, env, get_node_name(lhs)));
-    const Node_variable_def* struct_var_def = node_unwrap_variable_def_const(struct_var_def_);
-    msg(
-        LOG_ERROR, EXPECT_FAIL_INVALID_LITERAL_ASSIGN_TO_STRUCT, rhs->pos,
-        "invalid literal type is assigned to `"STR_VIEW_FMT"`, "
-        "but `"STR_VIEW_FMT"` is of type `"STR_VIEW_FMT"`\n",
-        str_view_print(get_node_name(lhs)), 
-        str_view_print(get_node_name(lhs)), 
-        lang_type_print(struct_var_def->lang_type)
-    );
-    msg(
-        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap(struct_var_def)->pos,
-        "variable `"STR_VIEW_FMT"` is defined as struct `"STR_VIEW_FMT"`\n",
-        str_view_print(struct_var_def->name), lang_type_print(struct_var_def->lang_type)
-    );
-}
-
-void msg_invalid_assignment_to_literal(const Env* env, const Node_symbol_typed* lhs, const Node_literal* rhs) {
-    Node* var_def;
-    try(symbol_lookup(&var_def, env, lhs->name));
-    msg(
-        LOG_ERROR, EXPECT_FAIL_INVALID_LITERAL_ASSIGNMENT, node_wrap(rhs)->pos,
-        "invalid literal type is assigned to `"STR_VIEW_FMT"`\n",
-        str_view_print(lhs->name)
-    );
-}
-
-void msg_invalid_assignment_to_operation(const Env* env, const Node* lhs, const Node_operator* operation) {
-    assert(lhs->type == NODE_SYMBOL_TYPED);
-
-    Node* var_def_;
-    try(symbol_lookup(&var_def_, env, get_node_name(lhs)));
-    const Node_variable_def* var_def = node_unwrap_variable_def_const(var_def_);
-    msg(
-        LOG_ERROR, EXPECT_FAIL_INVALID_OPERATION_ASSIGNMENT, node_wrap(operation)->pos,
-        "operation is of type `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
-        lang_type_print(get_operator_lang_type(operation)), lang_type_print(var_def->lang_type)
     );
 }
 

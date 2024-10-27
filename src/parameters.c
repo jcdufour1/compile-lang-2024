@@ -46,10 +46,34 @@ static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
             argc, argv, "expected fail type expected after `test_expected_fail`"
         );
 
-        if (0 == strcmp(expected_fail_type_str, "redefinition-of-symbol")) {
+        if (0 == strcmp(expected_fail_type_str, "undefined-function")) {
+            params->expected_fail_type = EXPECT_FAIL_UNDEFINED_FUNCTION;
+        } else if (0 == strcmp(expected_fail_type_str, "undefined-symbol")) {
+            params->expected_fail_type = EXPECT_FAIL_UNDEFINED_SYMBOL;
+        } else if (0 == strcmp(expected_fail_type_str, "expected-expression")) {
+            params->expected_fail_type = EXPECT_FAIL_EXPECTED_EXPRESSION;
+        } else if (0 == strcmp(expected_fail_type_str, "incomplete-variable-definition")) {
+            params->expected_fail_type = EXPECT_FAIL_INCOMPLETE_VAR_DEF;
+        } else if (0 == strcmp(expected_fail_type_str, "binary-mismatched-types")) {
+            params->expected_fail_type = EXPECT_FAIL_BINARY_MISMATCHED_TYPES;
+        } else if (0 == strcmp(expected_fail_type_str, "assignment-mismatched-types")) {
+            params->expected_fail_type = EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES;
+        } else if (0 == strcmp(expected_fail_type_str, "mismatched-return-type")) {
+            params->expected_fail_type = EXPECT_FAIL_MISMATCHED_RETURN_TYPE;
+        } else if (0 == strcmp(expected_fail_type_str, "invalid-function-arguments")) {
+            params->expected_fail_type = EXPECT_FAIL_INVALID_FUN_ARG;
+        } else if (0 == strcmp(expected_fail_type_str, "invalid-count-function-arguments")) {
+            params->expected_fail_type = EXPECT_FAIL_INVALID_COUNT_FUN_ARGS;
+        } else if (0 == strcmp(expected_fail_type_str, "missing-return-statement")) {
+            params->expected_fail_type = EXPECT_FAIL_MISSING_RETURN_STATEMENT;
+        } else if (0 == strcmp(expected_fail_type_str, "invalid-struct-member")) {
+            params->expected_fail_type = EXPECT_FAIL_INVALID_STRUCT_MEMBER;
+        } else if (0 == strcmp(expected_fail_type_str, "invalid-struct-member-in-literal")) {
+            params->expected_fail_type = EXPECT_FAIL_INVALID_STRUCT_MEMBER_IN_LITERAL;
+        } else if (0 == strcmp(expected_fail_type_str, "redefinition-of-symbol")) {
             params->expected_fail_type = EXPECT_FAIL_REDEFINITION_SYMBOL;
         } else {
-            msg(LOG_FETAL, EXPECT_FAIL_TYPE_NONE, dummy_pos, "invalid expected fail type `%s`\n", expected_fail_type_str);
+            log(LOG_FETAL, "invalid expected fail type `%s`\n", expected_fail_type_str);
             exit(EXIT_CODE_FAIL);
         }
 
