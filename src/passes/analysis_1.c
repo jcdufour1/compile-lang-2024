@@ -3,7 +3,6 @@
 #include "../nodes.h"
 #include "../symbol_table.h"
 #include "../parser_utils.h"
-#include "../error_msg.h"
 
 static void set_if_condition_types(Env* env, Node_if_condition* if_cond) {
     Node* old_if_cond_child = if_cond->child;

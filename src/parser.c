@@ -6,7 +6,6 @@
 #include "token_view.h"
 #include "symbol_table.h"
 #include "parser_utils.h"
-#include "error_msg.h"
 
 static Node_block* extract_block(Env* env, Tk_view* tokens);
 INLINE bool extract_statement(Env* env, Node** child, Tk_view* tokens);
@@ -20,6 +19,52 @@ static bool try_extract_variable_declaration(
                        // until the next extract_block call
 );
 static Node_if_condition* extract_if_condition(Env* env, Tk_view* tokens);
+
+static void msg_parser_expected_internal(Token got, int count_expected, ...) {
+    va_list args;
+    va_start(args, count_expected);
+
+    String message = {0};
+    string_extend_cstr(&print_arena, &message, "got token `");
+    string_extend_strv(&print_arena, &message, token_print_internal(&print_arena, got, true));
+    string_extend_cstr(&print_arena, &message, "`, but expected ");
+
+    for (int idx = 0; idx < count_expected; idx++) {
+        if (idx > 0) {
+            if (idx == count_expected - 1) {
+                string_extend_cstr(&print_arena, &message, " or ");
+            } else {
+                string_extend_cstr(&print_arena, &message, ", ");
+            }
+        }
+        string_extend_cstr(&print_arena, &message, "`");
+        string_extend_strv(&print_arena, &message, token_type_to_str_view(va_arg(args, TOKEN_TYPE)));
+        string_extend_cstr(&print_arena, &message, "`");
+    }
+
+    msg(LOG_ERROR, EXPECT_FAIL_TYPE_NONE, got.pos, STR_VIEW_FMT"\n", str_view_print(string_to_strv(message)));
+
+    va_end(args);
+}
+
+#define msg_parser_expected(got, ...) \
+    do { \
+        msg_parser_expected_internal(got, sizeof((TOKEN_TYPE[]){__VA_ARGS__})/sizeof(TOKEN_TYPE), __VA_ARGS__); \
+    } while(0)
+
+static void msg_redefinition_of_symbol(const Env* env, const Node* new_sym_def) {
+    msg(
+        LOG_ERROR, EXPECT_FAIL_REDEFINITION_SYMBOL, new_sym_def->pos,
+        "redefinition of symbol "STR_VIEW_FMT"\n", str_view_print(get_node_name(new_sym_def))
+    );
+
+    Node* original_def;
+    try(symbol_lookup(&original_def, env, get_node_name(new_sym_def)));
+    msg(
+        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, original_def->pos,
+        STR_VIEW_FMT " originally defined here\n", str_view_print(get_node_name(original_def))
+    );
+}
 
 // consume tokens from { to } (inclusive) and discard outer {}
 static Tk_view extract_items_inside_brackets(Tk_view* tokens, TOKEN_TYPE closing_bracket_type) {
