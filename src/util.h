@@ -33,6 +33,7 @@ typedef int LOG_LEVEL;
 typedef struct {
     const char* file_path;
     uint32_t line;
+    uint32_t column;
 } Pos;
 
 static const Pos dummy_pos = {0};

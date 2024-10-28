@@ -27,22 +27,17 @@ static const char* get_log_level_str(int log_level) {
     }
 }
 
-void log_common_internal(LOG_LEVEL log_level, const char* file, int line, int indent, const char* format, va_list args) {
-    for (int idx = 0; idx < indent; idx++) {
-        fprintf(stderr, " ");
-    }
-
-    if (log_level >= CURR_LOG_LEVEL) {
-        fprintf(stderr, "%s:%d:%s:", file, line, get_log_level_str(log_level));
-        vfprintf(stderr, format, args);
-    }
-}
-
 void log_common(LOG_LEVEL log_level, const char* file, int line, int indent, const char* format, ...) {
     va_list args;
     va_start(args, format);
 
-    log_common_internal(log_level, file, line, indent, format, args);
+    for (int idx = 0; idx < indent; idx++) {
+        fprintf(stderr, " ");
+    }
+    if (log_level >= CURR_LOG_LEVEL) {
+        fprintf(stderr, "%s:%d:%s:", file, line, get_log_level_str(log_level));
+        vfprintf(stderr, format, args);
+    }
 
     va_end(args);
 }
@@ -57,7 +52,10 @@ void msg(LOG_LEVEL log_level, EXPECT_FAIL_TYPE expected_fail_type, Pos pos, cons
         warning_count++;
     }
 
-    log_common_internal(log_level, pos.file_path, pos.line, 0, format, args);
+    if (log_level >= CURR_LOG_LEVEL) {
+        fprintf(stderr, "%s:%d:%d:%s:", pos.file_path, pos.line, pos.column, get_log_level_str(log_level));
+        vfprintf(stderr, format, args);
+    }
 
     if (params.test_expected_fail && expected_fail_type == params.expected_fail_type) {
         assert(params.expected_fail_type != EXPECT_FAIL_TYPE_NONE);
