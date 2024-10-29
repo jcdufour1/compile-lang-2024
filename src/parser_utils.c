@@ -560,15 +560,6 @@ bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_func
         }
 
         Node_variable_def* corresponding_param = node_unwrap_variable_def(vec_at(&params->params, params_idx));
-        switch (corresponding_param->lang_type.pointer_depth) {
-            case 0:
-                break;
-            case 1:
-                //argument->lang_type.pointer_depth = 1;
-                break;
-            default:
-                todo();
-        }
 
         if (!corresponding_param->is_variadic) {
             params_idx++;

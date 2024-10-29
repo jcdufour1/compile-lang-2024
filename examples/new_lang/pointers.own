@@ -43,6 +43,10 @@ fn set_div_from_another(dest: Div*, src: Div*) {
     dest.denominator = src.denominator;
 }
 
+fn set_string(string: u8**) {
+    deref(string) = "bye"
+}
+
 fn main() i32 {
     let num: i32 = 8
     printf("%d\n", num)
@@ -69,6 +73,11 @@ fn main() i32 {
     printf("%d/%d\n", div2.numerator, div2.denominator)
     // ensure original div was not modified by `set_div_from_another`
     printf("%d/%d\n", div.numerator, div.denominator)
+
+    let string: u8* = "hello"
+    printf("%s\n", string)
+    set_string(refer(string))
+    printf("%s\n", string)
 
     return 0
 }
