@@ -1,14 +1,14 @@
 
-extern("c") fn puts(string: ptr) i32
-extern("c") fn printf(format_string: ptr, args: any...) i32
+extern("c") fn puts(string: u8*) i32
+extern("c") fn printf(format_string: u8*, args: any...) i32
 
-fn get_string() ptr {
-    let string: ptr = "new programming language"
+fn get_string() u8* {
+    let string: u8* = "new programming language"
     return string
 }
 
-fn println(string: ptr, num2: i32) i32 {
-    let string_thing: ptr = "67"
+fn println(string: u8*, num2: i32) i32 {
+    let string_thing: u8* = "67"
     puts(string_thing)
     let num1: i32 = 1
     num1 = 3
@@ -24,8 +24,8 @@ fn main() i32 {
     for let idx_2: i32 in {0..2} {
         puts("thing")
     }
-    let string_thing: ptr = get_string()
-    let string_thing_2: ptr
+    let string_thing: u8* = get_string()
+    let string_thing_2: u8*
     string_thing_2 = "hello"
     printf("%s\n", string_thing)
     printf("%s: %d\n", string_thing_2, count_3)

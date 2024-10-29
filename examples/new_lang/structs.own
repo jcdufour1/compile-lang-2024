@@ -1,9 +1,9 @@
 
-extern("c") fn printf(format_string: ptr, args: any...) i32
+extern("c") fn printf(format_string: u8*, args: any...) i32
 
 struct Token {
     num: i32
-    string_data: ptr
+    string_data: u8*
     div5: Div
 }
 

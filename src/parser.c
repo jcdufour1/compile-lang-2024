@@ -224,8 +224,8 @@ static bool extract_function_return_types(Node_function_return_types** result, T
             break;
         }
         return_type->lang_type.str = rtn_type_token.text;
-        if (tk_view_try_consume(NULL, tokens, TOKEN_ASTERISK)) {
-            todo();
+        while (tk_view_try_consume(NULL, tokens, TOKEN_ASTERISK)) {
+            return_type->lang_type.pointer_depth++;
         }
         assert(return_type->lang_type.str.count > 0);
         return_types->child = return_type;

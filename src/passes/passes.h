@@ -37,4 +37,6 @@ void change_operators(Env* env);
 
 void assign_llvm_ids(Env* env);
 
+void emit_llvm_from_tree(Env* env, const Node_block* root);
+
 #endif // PASSES_H

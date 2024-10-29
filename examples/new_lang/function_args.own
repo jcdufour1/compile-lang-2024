@@ -1,7 +1,7 @@
-extern("c") fn puts(str_to_print: ptr) i32
-extern("c") fn printf(str_to_print: ptr, args: any...) i32
+extern("c") fn puts(str_to_print: u8*) i32
+extern("c") fn printf(str_to_print: u8*, args: any...) i32
 
-fn print_string(string_input: ptr, num1: i32) {
+fn print_string(string_input: u8*, num1: i32) {
     puts(string_input)
     printf("%d\n", num1)
 

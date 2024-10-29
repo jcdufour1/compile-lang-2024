@@ -267,7 +267,7 @@ bool try_get_struct_definition(const Env* env, Node_struct_def** struct_def, Nod
 static bool try_set_literal_lang_type(Lang_type* lang_type, Node_literal* literal, TOKEN_TYPE token_type) {
     switch (token_type) {
         case TOKEN_STRING_LITERAL:
-            literal->lang_type = lang_type_from_cstr("ptr", 0);
+            literal->lang_type = lang_type_from_cstr("u8", 1);
             break;
         case TOKEN_NUM_LITERAL:
             literal->lang_type = lang_type_from_cstr("i32", 0);

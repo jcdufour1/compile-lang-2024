@@ -1,6 +1,6 @@
 
 fn main() i32 {
-    let string: ptr = "hello"
+    let string: u8* = "hello"
     string = 87
     return 0
 }

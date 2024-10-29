@@ -1,7 +1,7 @@
 
 
 fn main() i32 {
-    let string: ptr = "hello"
+    let string: u8* = "hello"
     let num1: i32 = 7*string
     return 0
 }

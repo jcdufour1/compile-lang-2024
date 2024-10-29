@@ -1,5 +1,5 @@
 
-extern("c") fn printf(format_string: ptr, args: any...) i32
+extern("c") fn printf(format_string: u8*, args: any...) i32
 
 fn add_one(num: i32*) {
     deref(num) = num + 1

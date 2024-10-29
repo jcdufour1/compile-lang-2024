@@ -4,7 +4,6 @@
 #include "../nodes.h"
 #include "passes.h"
 #include "../do_passes.h"
-#include "../emit_llvm.h"
 #include "../symbol_table.h"
 
 void do_passes(Node_block** root, const Parameters* params) {

@@ -1,8 +1,8 @@
 
 #include "../node.h"
 #include "../nodes.h"
-#include "../emit_llvm.h"
 #include "../newstring.h"
+#include "passes.h"
 #include "../symbol_table.h"
 #include "../parameters.h"
 #include "../file.h"
@@ -84,13 +84,16 @@ static void extend_type_decl_str(const Env* env, String* output, const Node* var
 
 static void extend_literal_decl_prefix(String* output, const Node_literal* var_def) {
     assert(var_def->lang_type.str.count > 0);
-    if (var_def->lang_type.pointer_depth != 0) {
-        todo();
-    }
-    if (str_view_cstr_is_equal(var_def->lang_type.str, "ptr")) {
+    if (str_view_cstr_is_equal(var_def->lang_type.str, "u8")) {
+        if (var_def->lang_type.pointer_depth != 1) {
+            todo();
+        }
         string_extend_cstr(&a_main, output, " @.");
         string_extend_strv(&a_main, output, var_def->name);
     } else if (str_view_cstr_is_equal(var_def->lang_type.str, "i32")) {
+        if (var_def->lang_type.pointer_depth != 0) {
+            todo();
+        }
         vec_append(&a_main, output, ' ');
         string_extend_strv(&a_main, output, var_def->str_data);
     } else {
