@@ -30,6 +30,7 @@ typedef enum {
     TOKEN_NOT,
     TOKEN_DEREF,
     TOKEN_REFER,
+    TOKEN_UNSAFE_CAST,
 
     // literals
     TOKEN_STRING_LITERAL,
@@ -126,6 +127,8 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_COMMENT:
             return false;
+        case TOKEN_UNSAFE_CAST:
+            return false;
     }
 }
 
@@ -150,6 +153,8 @@ static inline bool token_is_operator(Token token) {
         case TOKEN_NOT:
             // fallthrough
         case TOKEN_DEREF:
+            // fallthrough
+        case TOKEN_UNSAFE_CAST:
             return true;
         case TOKEN_INT_LITERAL:
             // fallthrough

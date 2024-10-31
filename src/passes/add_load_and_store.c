@@ -531,6 +531,21 @@ static Node* flatten_operation_operand(
                 Node_llvm_register_sym* reg_sym = node_unwrap_llvm_register_sym(node_new(operand->pos, NODE_LLVM_REGISTER_SYM));
                 reg_sym->node_src = node_wrap(store_src_);
                 return node_wrap(reg_sym);
+            } else if (unary->token_type == TOKEN_UNSAFE_CAST) {
+                Node* operator_sym = node_new(operand->pos, NODE_LLVM_REGISTER_SYM);
+
+                insert_into_node_ptr_vec(
+                    block_children,
+                    idx_to_insert_before,
+                    *idx_to_insert_before,
+                    operand
+                );
+                node_unwrap_llvm_register_sym(operator_sym)->node_src = operand;
+                node_unwrap_llvm_register_sym(operator_sym)->lang_type = get_lang_type(operand);
+                assert(node_unwrap_llvm_register_sym(operator_sym)->node_src);
+                return operator_sym;
+            } else {
+                todo();
             }
         } else if (child->type == NODE_OP_BINARY) {
             Node* operator_sym = node_new(operand->pos, NODE_LLVM_REGISTER_SYM);
@@ -542,12 +557,13 @@ static Node* flatten_operation_operand(
                 operand
             );
             node_unwrap_llvm_register_sym(operator_sym)->node_src = operand;
+            node_unwrap_llvm_register_sym(operator_sym)->lang_type = get_lang_type(operand);
             assert(node_unwrap_llvm_register_sym(operator_sym)->node_src);
             return operator_sym;
         } else {
             unreachable("");
         }
-        todo();
+        unreachable("");
     } else if (operand->type == NODE_FUNCTION_CALL) {
         Node_llvm_register_sym* fun_sym = node_unwrap_llvm_register_sym(node_new(operand->pos, NODE_LLVM_REGISTER_SYM));
         insert_into_node_ptr_vec(

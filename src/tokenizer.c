@@ -56,6 +56,8 @@ static bool get_next_token(Pos* pos, Token* token, Str_view_col* file_text, Para
             token->type = TOKEN_DEREF;
         } else if (str_view_cstr_is_equal(token->text, "refer")) {
             token->type = TOKEN_REFER;
+        } else if (str_view_cstr_is_equal(token->text, "unsafe_cast")) {
+            token->type = TOKEN_UNSAFE_CAST;
         }
         return true;
     } else if (isdigit(str_view_col_front(*file_text))) {

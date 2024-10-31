@@ -57,7 +57,7 @@ bool is_i_lang_type(Lang_type lang_type) {
     return idx > 1;
 }
 
-static int64_t i_lang_type_to_bit_width(Lang_type lang_type) {
+int64_t i_lang_type_to_bit_width(Lang_type lang_type) {
     assert(is_i_lang_type(lang_type));
     return str_view_to_int64_t(str_view_slice(lang_type.str, 1, lang_type.str.count - 1));
 }
@@ -436,26 +436,33 @@ bool try_set_binary_lang_type(const Env* env, Lang_type* lang_type, Node_binary*
 }
 
 bool try_set_unary_lang_type(const Env* env, Lang_type* lang_type, Node_unary* unary) {
-    if (!try_set_node_type(env, &unary->lang_type, unary->child)) {
+    if (!try_set_node_type(env, lang_type, unary->child)) {
         todo();
         return false;
     }
 
     switch (unary->token_type) {
         case TOKEN_NOT:
+            unary->lang_type = *lang_type;
             break;
         case TOKEN_DEREF:
             assert(unary->lang_type.pointer_depth > 0);
+            unary->lang_type = *lang_type;
             unary->lang_type.pointer_depth--;
             break;
         case TOKEN_REFER:
+            unary->lang_type = *lang_type;
             unary->lang_type.pointer_depth++;
+            break;
+        case TOKEN_UNSAFE_CAST:
+            if (!is_i_lang_type(unary->lang_type) || !is_i_lang_type(get_lang_type(unary->child))) {
+                todo();
+            }
             break;
         default:
             unreachable("");
     }
 
-    *lang_type = unary->lang_type;
     return true;
 }
 
@@ -526,9 +533,11 @@ bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node
 
     Lang_type lhs_lang_type = {0};
     Lang_type rhs_lang_type = {0};
+    log_tree(LOG_DEBUG, node_wrap(assignment));
     if (!try_set_node_type(env, &lhs_lang_type, lhs)) { 
         return false;
     }
+    log_tree(LOG_DEBUG, node_wrap(assignment));
     if (rhs->type == NODE_STRUCT_LITERAL) {
         try(try_set_struct_literal_assignment_types(env, &rhs_lang_type, lhs, node_unwrap_struct_literal(rhs)));
     } else {
@@ -536,6 +545,7 @@ bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node
             return false;
         }
     }
+    log_tree(LOG_DEBUG, node_wrap(assignment));
 
     *lang_type = lhs_lang_type;
 

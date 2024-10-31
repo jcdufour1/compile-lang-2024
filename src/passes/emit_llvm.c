@@ -221,54 +221,71 @@ static void emit_alloca(const Env* env, String* output, const Node_alloca* alloc
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_unary_type(String* output, const Node_unary* operator) {
-    (void) output;
-    (void) operator;
-    todo();
-}
-
-static void emit_binary_type(String* output, const Node_binary* operator) {
-    // TODO: do signed and unsigned operations correctly
-    switch (operator->token_type) {
-        case TOKEN_SINGLE_MINUS:
-            string_extend_cstr(&a_main, output, "sub nsw i32 ");
-            break;
-        case TOKEN_SINGLE_PLUS:
-            string_extend_cstr(&a_main, output, "add nsw i32 ");
-            break;
-        case TOKEN_ASTERISK:
-            string_extend_cstr(&a_main, output, "mul nsw i32 ");
-            break;
-        case TOKEN_SLASH:
-            string_extend_cstr(&a_main, output, "sdiv i32 ");
-            break;
-        case TOKEN_LESS_THAN:
-            string_extend_cstr(&a_main, output, "icmp slt i32 ");
-            break;
-        case TOKEN_GREATER_THAN:
-            string_extend_cstr(&a_main, output, "icmp sgt i32 ");
-            break;
-        case TOKEN_DOUBLE_EQUAL:
-            string_extend_cstr(&a_main, output, "icmp eq i32 ");
-            break;
-        case TOKEN_NOT_EQUAL:
-            string_extend_cstr(&a_main, output, "icmp ne i32 ");
-            break;
-        case TOKEN_XOR:
-            string_extend_cstr(&a_main, output, "xor i32 ");
+static void emit_unary_type(const Env* env, String* output, const Node_unary* unary) {
+    switch (unary->token_type) {
+        case TOKEN_UNSAFE_CAST:
+            if (!is_i_lang_type(unary->lang_type) || !is_i_lang_type(get_lang_type(unary->child))) {
+                unreachable("");
+            }
+            if (i_lang_type_to_bit_width(unary->lang_type) > i_lang_type_to_bit_width(get_lang_type(unary->child))) {
+                string_extend_cstr(&a_main, output, "zext ");
+            } else {
+                string_extend_cstr(&a_main, output, "trunc ");
+            }
+            extend_type_call_str(env, output, get_lang_type(unary->child));
+            string_extend_cstr(&a_main, output, " ");
             break;
         default:
-            unreachable(TOKEN_TYPE_FMT"\n", token_type_print(operator->token_type));
+            unreachable(NODE_FMT"\n", node_print(node_wrap(unary)));
     }
 }
 
-static void emit_operator_type(String* output, const Node_operator* operator) {
-    if (operator->type == NODE_OP_UNARY) {
-        emit_unary_type(output, node_unwrap_op_unary_const(operator));
-    } else if (operator->type == NODE_OP_BINARY) {
-        emit_binary_type(output, node_unwrap_op_binary_const(operator));
-    } else {
-        unreachable("");
+static void emit_binary_type(const Env* env, String* output, const Node_binary* binary) {
+    // TODO: do signed and unsigned operations correctly
+    switch (binary->token_type) {
+        case TOKEN_SINGLE_MINUS:
+            string_extend_cstr(&a_main, output, "sub nsw ");
+            break;
+        case TOKEN_SINGLE_PLUS:
+            string_extend_cstr(&a_main, output, "add nsw ");
+            break;
+        case TOKEN_ASTERISK:
+            string_extend_cstr(&a_main, output, "mul nsw ");
+            break;
+        case TOKEN_SLASH:
+            string_extend_cstr(&a_main, output, "sdiv ");
+            break;
+        case TOKEN_LESS_THAN:
+            string_extend_cstr(&a_main, output, "icmp slt ");
+            break;
+        case TOKEN_GREATER_THAN:
+            string_extend_cstr(&a_main, output, "icmp sgt ");
+            break;
+        case TOKEN_DOUBLE_EQUAL:
+            string_extend_cstr(&a_main, output, "icmp eq ");
+            break;
+        case TOKEN_NOT_EQUAL:
+            string_extend_cstr(&a_main, output, "icmp ne ");
+            break;
+        case TOKEN_XOR:
+            string_extend_cstr(&a_main, output, "xor ");
+            break;
+        default:
+            unreachable(TOKEN_TYPE_FMT"\n", token_type_print(binary->token_type));
+    }
+
+    extend_type_call_str(env, output, binary->lang_type);
+    string_extend_cstr(&a_main, output, " ");
+}
+
+static void emit_unary_suffix(const Env* env, String* output, const Node_unary* unary) {
+    switch (unary->token_type) {
+        case TOKEN_UNSAFE_CAST:
+            string_extend_cstr(&a_main, output, " to ");
+            extend_type_call_str(env, output, unary->lang_type);
+            break;
+        default:
+            unreachable(NODE_FMT"\n", node_print(node_wrap(unary)));
     }
 }
 
@@ -290,19 +307,33 @@ static void emit_operator_operand(String* output, const Node* operand) {
     }
 }
 
-static void emit_operator(String* output, const Node_operator* operator) {
+static void emit_operator(const Env* env, String* output, const Node_operator* operator) {
     string_extend_cstr(&a_main, output, "    %");
     string_extend_size_t(&a_main, output, get_llvm_id(node_wrap(operator)));
     string_extend_cstr(&a_main, output, " = ");
-    emit_operator_type(output, operator);
 
     if (operator->type == NODE_OP_UNARY) {
-        todo();
+        emit_unary_type(env, output, node_unwrap_op_unary_const(operator));
+    } else if (operator->type == NODE_OP_BINARY) {
+        emit_binary_type(env, output, node_unwrap_op_binary_const(operator));
+    } else {
+        unreachable("");
+    }
+
+    if (operator->type == NODE_OP_UNARY) {
+        emit_operator_operand(output, node_unwrap_op_unary_const(operator)->child);
     } else if (operator->type == NODE_OP_BINARY) {
         const Node_binary* binary = node_unwrap_op_binary_const(operator);
         emit_operator_operand(output, binary->lhs);
         string_extend_cstr(&a_main, output, ", ");
         emit_operator_operand(output, binary->rhs);
+    } else {
+        unreachable("");
+    }
+
+    if (operator->type == NODE_OP_UNARY) {
+        emit_unary_suffix(env, output, node_unwrap_op_unary_const(operator));
+    } else if (operator->type == NODE_OP_BINARY) {
     } else {
         unreachable("");
     }
@@ -524,7 +555,7 @@ static void emit_block(Env* env, String* output, const Node_block* block) {
                 emit_struct_definition(env, output, node_unwrap_struct_def_const(statement));
                 break;
             case NODE_OPERATOR:
-                emit_operator(output, node_unwrap_operation_const(statement));
+                emit_operator(env, output, node_unwrap_operation_const(statement));
                 break;
             case NODE_LOAD_STRUCT_ELEMENT_PTR:
                 emit_load_struct_element_pointer(output, node_unwrap_load_elem_ptr_const(statement));

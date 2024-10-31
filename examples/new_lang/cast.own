@@ -1,0 +1,7 @@
+
+fn main() i32 {
+    let small_num: i7
+    small_num = unsafe_cast<i7>(1000)*2
+
+    return 0
+}

@@ -62,6 +62,8 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
             return str_view_from_cstr("deref");
         case TOKEN_REFER:
             return str_view_from_cstr("refer");
+        case TOKEN_UNSAFE_CAST:
+            return str_view_from_cstr("unsafe_cast");
         default:
             unreachable("%d\n", token_type);
     }
@@ -107,6 +109,7 @@ Str_view token_print_internal(Arena* arena, Token token, bool msg_format) {
         case TOKEN_XOR: // fallthrough
         case TOKEN_REFER: // fallthrough
         case TOKEN_VOID: // fallthrough
+        case TOKEN_UNSAFE_CAST: // fallthrough
             break;
         case TOKEN_COMMENT: 
             // fallthrough

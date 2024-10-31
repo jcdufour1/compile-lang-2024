@@ -176,6 +176,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return true;
         case TOKEN_VOID:
             return false;
+        case TOKEN_UNSAFE_CAST:
+            return true;
     }
 }
 
@@ -622,12 +624,13 @@ static Node_struct_member_sym_untyped* extract_struct_member_call(Tk_view* token
     return member_call;
 }
 
-static Node_unary* parser_unary_new(Token operation_token, Node* child) {
+static Node_unary* parser_unary_new(Token operation_token, Node* child, Lang_type init_lang_type) {
     Node_operator* operation = node_unwrap_operation(node_new(operation_token.pos, NODE_OPERATOR));
     operation->type = NODE_OP_UNARY;
     Node_unary* unary = node_unwrap_op_unary(operation);
     unary->token_type = operation_token.type;
     unary->child = child;
+    unary->lang_type = init_lang_type;
     return unary;
 }
 
@@ -649,9 +652,44 @@ static bool try_extract_expression_piece(Env* env, Node** result, Tk_view* token
         return true;
     } else if (is_unary(tk_view_front(*tokens).type)) {
         Token operation_token = tk_view_consume(tokens);
+        Lang_type unary_lang_type = {0};
+        switch (operation_token.type) {
+            case TOKEN_DEREF:
+                break;
+            case TOKEN_REFER:
+                break;
+            case TOKEN_NOT:
+                break;
+            case TOKEN_UNSAFE_CAST: {
+                Token symbol;
+                {
+                    Token temp;
+                    if (!tk_view_try_consume(&temp, tokens, TOKEN_LESS_THAN)) {
+                        msg_parser_expected(temp, TOKEN_LESS_THAN);
+                        todo();
+                    }
+                }
+                if (!tk_view_try_consume(&symbol, tokens, TOKEN_SYMBOL)) {
+                    msg_parser_expected(symbol, TOKEN_SYMBOL);
+                    todo();
+                }
+                {
+                    Token temp;
+                    if (!tk_view_try_consume(&temp, tokens, TOKEN_GREATER_THAN)) {
+                        msg_parser_expected(temp, TOKEN_GREATER_THAN);
+                        todo();
+                    }
+                }
+                unary_lang_type = lang_type_from_strv(symbol.text, 0);
+                break;
+            }
+            default:
+                unreachable(TOKEN_TYPE_FMT"\n", token_type_print(operation_token.type));
+        }
         Node* inside_unary;
         try(try_extract_expression_piece(env, &inside_unary, tokens, defer_sym_add));
-        *result = node_wrap(parser_unary_new(operation_token, inside_unary));
+        *result = node_wrap(parser_unary_new(operation_token, inside_unary, unary_lang_type));
+        log_tree(LOG_DEBUG,*result);
         return true;
     } else if (token_is_equal(tk_view_front(*tokens), "let", TOKEN_SYMBOL)) {
         Node_variable_def* var_def;
