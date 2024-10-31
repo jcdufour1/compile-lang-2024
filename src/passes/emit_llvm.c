@@ -90,7 +90,7 @@ static void extend_literal_decl_prefix(String* output, const Node_literal* var_d
         }
         string_extend_cstr(&a_main, output, " @.");
         string_extend_strv(&a_main, output, var_def->name);
-    } else if (str_view_cstr_is_equal(var_def->lang_type.str, "i32")) {
+    } else if (is_i_lang_type(var_def->lang_type)) {
         if (var_def->lang_type.pointer_depth != 0) {
             todo();
         }

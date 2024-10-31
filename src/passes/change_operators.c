@@ -15,7 +15,7 @@ static void do_change_operator(Node_operator* operator) {
                 binary->lhs = temp.child;
                 binary->rhs = node_wrap(literal_new(
                     str_view_from_cstr("0"),
-                    TOKEN_NUM_LITERAL,
+                    TOKEN_INT_LITERAL,
                     pos
                 ));
                 binary->token_type = TOKEN_DOUBLE_EQUAL;

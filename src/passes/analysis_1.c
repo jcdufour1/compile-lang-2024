@@ -12,7 +12,7 @@ static void set_if_condition_types(Env* env, Node_if_condition* if_cond) {
             if_cond->child = node_wrap(binary_new(
                 env,
                 old_if_cond_child,
-                node_wrap(literal_new(str_view_from_cstr("1"), TOKEN_NUM_LITERAL, old_if_cond_child->pos)),
+                node_wrap(literal_new(str_view_from_cstr("1"), TOKEN_INT_LITERAL, old_if_cond_child->pos)),
                 TOKEN_DOUBLE_EQUAL
             ));
             break;
@@ -37,7 +37,7 @@ static void set_if_condition_types(Env* env, Node_if_condition* if_cond) {
             if_cond->child = node_wrap(binary_new(
                 env,
                 old_if_cond_child,
-                node_wrap(literal_new(str_view_from_cstr("0"), TOKEN_NUM_LITERAL, node_wrap(old_if_cond_child)->pos)),
+                node_wrap(literal_new(str_view_from_cstr("0"), TOKEN_INT_LITERAL, node_wrap(old_if_cond_child)->pos)),
                 TOKEN_NOT_EQUAL
             ));
             break;
@@ -46,7 +46,7 @@ static void set_if_condition_types(Env* env, Node_if_condition* if_cond) {
             if_cond->child = node_wrap(binary_new(
                 env,
                 old_if_cond_child,
-                node_wrap(literal_new(str_view_from_cstr("1"), TOKEN_NUM_LITERAL, old_if_cond_child->pos)),
+                node_wrap(literal_new(str_view_from_cstr("1"), TOKEN_INT_LITERAL, old_if_cond_child->pos)),
                 TOKEN_DOUBLE_EQUAL
             ));
             break;

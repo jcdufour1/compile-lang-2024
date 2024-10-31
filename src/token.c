@@ -30,7 +30,7 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
             return str_view_from_cstr("*");
         case TOKEN_STRING_LITERAL:
             return str_view_from_cstr("str");
-        case TOKEN_NUM_LITERAL:
+        case TOKEN_INT_LITERAL:
             return str_view_from_cstr("num");
         case TOKEN_COLON:
             return str_view_from_cstr(":");
@@ -112,7 +112,7 @@ Str_view token_print_internal(Arena* arena, Token token, bool msg_format) {
             // fallthrough
         case TOKEN_STRING_LITERAL: 
             // fallthrough
-        case TOKEN_NUM_LITERAL:
+        case TOKEN_INT_LITERAL:
             vec_append(arena, &buf, '(');
             string_extend_strv(arena, &buf, token.text);
             vec_append(arena, &buf, ')');

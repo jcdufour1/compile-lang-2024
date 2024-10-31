@@ -85,18 +85,6 @@ static void sym_typed_to_load_sym_rtn_value_sym(Node_symbol_typed* symbol, Node_
     load_ref->node_src = node_wrap(node_src);
 }
 
-static Lang_type get_member_sym_piece_final_lang_type(const Node_struct_member_sym_typed* struct_memb_sym) {
-    Lang_type lang_type = {0};
-    for (size_t idx = 0; idx < struct_memb_sym->children.info.count; idx++) {
-        const Node* memb_piece_ = vec_at(&struct_memb_sym->children, idx);
-        const Node_struct_member_sym_piece_typed* memb_piece = 
-            node_unwrap_struct_member_sym_piece_typed_const(memb_piece_);
-        lang_type = memb_piece->lang_type;
-    }
-    assert(lang_type.str.count > 0);
-    return lang_type;
-}
-
 static void struct_memb_to_load_memb_rtn_val_sym(Node_struct_member_sym_typed* struct_memb, Node_load_another_node* node_src) {
     //Node_struct_member_sym_typed temp = *struct_memb;
     Lang_type lang_type_to_load = get_member_sym_piece_final_lang_type(struct_memb);

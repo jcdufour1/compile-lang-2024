@@ -138,7 +138,7 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return true;
         case TOKEN_STRING_LITERAL:
             return false;
-        case TOKEN_NUM_LITERAL:
+        case TOKEN_INT_LITERAL:
             return false;
         case TOKEN_SYMBOL:
             return false;

@@ -12,5 +12,8 @@ fn main() i32 {
         printf("\n")
     }
 
+    let small_num: i8 = 9
+    printf("end: %d\n", small_num)
+
     return 0
 }

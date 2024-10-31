@@ -7,6 +7,8 @@
 #include "symbol_table.h"
 #include "node_utils.h"
 
+bool is_i_lang_type(Lang_type lang_type);
+
 Str_view literal_name_new(void);
 
 Llvm_id get_prev_load_id(const Node* var_call);

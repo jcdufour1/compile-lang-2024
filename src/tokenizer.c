@@ -60,7 +60,7 @@ static bool get_next_token(Pos* pos, Token* token, Str_view_col* file_text, Para
         return true;
     } else if (isdigit(str_view_col_front(*file_text))) {
         token->text = str_view_col_consume_while(pos, file_text, local_isdigit).base;
-        token->type = TOKEN_NUM_LITERAL;
+        token->type = TOKEN_INT_LITERAL;
         return true;
     } else if (str_view_col_try_consume(pos, file_text, '(')) {
         token->type = TOKEN_OPEN_PAR;

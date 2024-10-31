@@ -6,6 +6,96 @@
 #include "symbol_table.h"
 #include "parser_utils.h"
 #include <limits.h>
+#include <ctype.h>
+
+// result is rounded up
+static unsigned int log2(int64_t num) {
+    int64_t reference = 1;
+    for (unsigned int power = 0; power < 64; power++) {
+        if (num <= reference) {
+            return power;
+        }
+
+        reference *= 2;
+    }
+    unreachable("");
+}
+
+static int64_t str_view_to_int64_t(Str_view str_view) {
+    int64_t result = 0;
+    size_t idx = 0;
+    for (idx = 0; idx < str_view.count; idx++) {
+        log(LOG_DEBUG, "idx: %zu    "STR_VIEW_FMT"\n", idx, str_view_print(str_view));
+        char curr_char = str_view.str[idx];
+        if (!isdigit(curr_char)) {
+            break;
+        }
+        log(LOG_DEBUG, "idx: %zu    "STR_VIEW_FMT"\n", idx, str_view_print(str_view));
+
+        result *= 10;
+        result += curr_char - '0';
+    }
+
+    if (idx < 1) {
+        unreachable(STR_VIEW_FMT, str_view_print(str_view));
+    }
+    return result;
+}
+
+bool is_i_lang_type(Lang_type lang_type) {
+    if (lang_type.str.str[0] != 'i') {
+        return false;
+    }
+
+    size_t idx;
+    for (idx = 1; idx < lang_type.str.count; idx++) {
+        if (!isdigit(lang_type.str.str[idx])) {
+            return false;
+        }
+    }
+
+    return idx > 1;
+}
+
+static int64_t i_lang_type_to_bit_width(Lang_type lang_type) {
+    assert(is_i_lang_type(lang_type));
+    return str_view_to_int64_t(str_view_slice(lang_type.str, 1, lang_type.str.count - 1));
+}
+
+static bool can_be_implicitly_converted(Lang_type dest, Lang_type src) {
+    if (!is_i_lang_type(dest) || !is_i_lang_type(src)) {
+        return lang_type_is_equal(dest, src);
+    }
+    return i_lang_type_to_bit_width(dest) >= i_lang_type_to_bit_width(src);
+}
+
+typedef enum {
+    IMPLICIT_CONV_INVALID_TYPES,
+    IMPLICIT_CONV_CONVERTED,
+    IMPLICIT_CONV_OK,
+} IMPLICIT_CONV_STATUS;
+
+static IMPLICIT_CONV_STATUS do_implicit_conversion_if_needed(Lang_type dest_lang_type, Node* src) {
+    Lang_type src_lang_type = get_lang_type(src);
+    log(
+        LOG_DEBUG, LANG_TYPE_FMT" to "LANG_TYPE_FMT"\n", lang_type_print(src_lang_type),
+        lang_type_print(dest_lang_type)
+    );
+
+    if (lang_type_is_equal(dest_lang_type, src_lang_type)) {
+        return IMPLICIT_CONV_OK;
+    }
+    if (!can_be_implicitly_converted(dest_lang_type, src_lang_type)) {
+        return IMPLICIT_CONV_INVALID_TYPES;
+    }
+
+    *get_lang_type_ref(src) = dest_lang_type;
+    log(
+        LOG_DEBUG, LANG_TYPE_FMT" to "LANG_TYPE_FMT"\n", lang_type_print(src_lang_type),
+        lang_type_print(dest_lang_type)
+    );
+    return IMPLICIT_CONV_CONVERTED;
+}
 
 static void msg_undefined_symbol(const Node* sym_call) {
     msg(
@@ -14,7 +104,7 @@ static void msg_undefined_symbol(const Node* sym_call) {
     );
 }
 
-static bool try_set_literal_lang_type(Lang_type* lang_type, Node_literal* literal, TOKEN_TYPE token_type);
+static void try_set_literal_lang_type(Lang_type* lang_type, Node_literal* literal, TOKEN_TYPE token_type);
 
 Str_view literal_name_new(void) {
     static String_vec literal_strings = {0};
@@ -92,7 +182,7 @@ Node_literal* literal_new(Str_view value, TOKEN_TYPE token_type, Pos pos) {
     literal->name = literal_name_new();
     literal->str_data = value;
     Lang_type dummy;
-    try(try_set_literal_lang_type(&dummy, literal, token_type));
+    try_set_literal_lang_type(&dummy, literal, token_type);
     return literal;
 }
 
@@ -264,14 +354,19 @@ bool try_get_struct_definition(const Env* env, Node_struct_def** struct_def, Nod
     }
 }
 
-static bool try_set_literal_lang_type(Lang_type* lang_type, Node_literal* literal, TOKEN_TYPE token_type) {
+static void try_set_literal_lang_type(Lang_type* lang_type, Node_literal* literal, TOKEN_TYPE token_type) {
     switch (token_type) {
         case TOKEN_STRING_LITERAL:
             literal->lang_type = lang_type_from_cstr("u8", 1);
             break;
-        case TOKEN_NUM_LITERAL:
-            literal->lang_type = lang_type_from_cstr("i32", 0);
+        case TOKEN_INT_LITERAL: {
+            String lang_type_str;
+            string_extend_cstr(&a_main, &lang_type_str, "i");
+            unsigned int bit_width = MAX(1, log2(str_view_to_int64_t(literal->str_data)));
+            string_extend_size_t(&a_main, &lang_type_str, bit_width);
+            literal->lang_type = lang_type_from_strv(string_to_strv(lang_type_str), 0);
             break;
+        }
         case TOKEN_VOID:
             literal->lang_type = lang_type_from_cstr("void", 0);
             break;
@@ -280,7 +375,6 @@ static bool try_set_literal_lang_type(Lang_type* lang_type, Node_literal* litera
     }
 
     *lang_type = literal->lang_type;
-    return true;
 }
 
 // set symbol lang_type, and report error if symbol is undefined
@@ -308,22 +402,32 @@ bool try_set_binary_lang_type(const Env* env, Lang_type* lang_type, Node_binary*
     if (!try_set_node_type(env, &dummy, operator->rhs)) {
         return false;
     }
+
     if (!lang_type_is_equal(get_lang_type(operator->lhs), get_lang_type(operator->rhs))) {
-        if (!str_view_is_equal(get_lang_type(operator->lhs).str, get_lang_type(operator->rhs).str)) {
-            msg(
-                LOG_ERROR, EXPECT_FAIL_BINARY_MISMATCHED_TYPES, node_wrap(operator)->pos,
-                "types `"LANG_TYPE_FMT"` and `"LANG_TYPE_FMT"` are not valid operands to binary expression\n",
-                lang_type_print(get_lang_type(operator->lhs)), lang_type_print(get_lang_type(operator->rhs))
-            );
-            return false;
+        Lang_type lhs_lang_type = get_lang_type(operator->lhs);
+        Lang_type rhs_lang_type = get_lang_type(operator->rhs);
+        if (!lang_type_is_equal(lhs_lang_type, rhs_lang_type)) {
+            if (can_be_implicitly_converted(lhs_lang_type, rhs_lang_type)) {
+                node_unwrap_literal(operator->rhs)->lang_type = lhs_lang_type;
+            } else if (can_be_implicitly_converted(rhs_lang_type, lhs_lang_type)) {
+                node_unwrap_literal(operator->lhs)->lang_type = rhs_lang_type;
+            } else {
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_BINARY_MISMATCHED_TYPES, node_wrap(operator)->pos,
+                    "types `"LANG_TYPE_FMT"` and `"LANG_TYPE_FMT"` are not valid operands to binary expression\n",
+                    lang_type_print(get_lang_type(operator->lhs)), lang_type_print(get_lang_type(operator->rhs))
+                );
+                return false;
+            }
         }
+
         // do auto dereferencing
-        while (get_lang_type(operator->lhs).pointer_depth > 0) {
-            operator->lhs = node_wrap(unary_new(env, operator->lhs, TOKEN_DEREF));
-        }
-        while (get_lang_type(operator->rhs).pointer_depth > 0) {
-            operator->rhs = node_wrap(unary_new(env, operator->rhs, TOKEN_DEREF));
-        }
+        //while (get_lang_type(operator->lhs).pointer_depth > 0) {
+        //    operator->lhs = node_wrap(unary_new(env, operator->lhs, TOKEN_DEREF));
+        //}
+        //while (get_lang_type(operator->rhs).pointer_depth > 0) {
+        //    operator->rhs = node_wrap(unary_new(env, operator->rhs, TOKEN_DEREF));
+        //}
     }
 
     *lang_type = get_lang_type(operator->lhs);
@@ -433,17 +537,25 @@ bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node
         }
     }
 
-    if (!lang_type_is_equal(lhs_lang_type, rhs_lang_type)) {
-        msg(
-            LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, node_wrap(assignment)->pos,
-            "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
-            lang_type_print(rhs_lang_type), lang_type_print(lhs_lang_type)
-        );
-        return false;
-    }
-
     *lang_type = lhs_lang_type;
-    return true;
+
+    log(LOG_DEBUG, LANG_TYPE_FMT " to " LANG_TYPE_FMT"\n", lang_type_print(lhs_lang_type), lang_type_print(get_lang_type(rhs)));
+    log_tree(LOG_DEBUG, node_wrap(assignment));
+    switch (do_implicit_conversion_if_needed(lhs_lang_type, rhs)) {
+        case IMPLICIT_CONV_INVALID_TYPES: {
+            msg(
+                LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, node_wrap(assignment)->pos,
+                "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
+                lang_type_print(rhs_lang_type), lang_type_print(lhs_lang_type)
+            );
+            todo();
+            return false;
+        }
+        case IMPLICIT_CONV_OK:
+            // fallthrough
+        case IMPLICIT_CONV_CONVERTED:
+            return true;
+    }
 }
 
 // TODO: merge this and try_set_assignment_operand_types in some way?
@@ -543,10 +655,8 @@ bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_func
         );
 
         msg(
-            LOG_NOTE, EXPECT_FAIL_TYPE_NONE,
-            node_wrap(fun_def)->pos,
-            "function `"STR_VIEW_FMT"` defined here\n",
-            str_view_print(fun_decl->name)
+            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap(fun_def)->pos,
+            "function `"STR_VIEW_FMT"` defined here\n", str_view_print(fun_decl->name)
         );
         return false;
     }
@@ -594,8 +704,6 @@ bool try_set_struct_member_symbol_types(const Env* env, Lang_type* lang_type, No
     );
     memb_sym_typed->name = temp.name;
     assert(memb_sym_typed->name.count > 0);
-    memb_sym_typed->lang_type.str = struct_def->name;
-    memb_sym_typed->lang_type.pointer_depth = 0;
     bool is_struct = true;
     Node_struct_def* prev_struct_def = struct_def;
     for (size_t idx = 0; idx < memb_sym_typed->children.info.count; idx++) {
@@ -658,7 +766,7 @@ static bool try_set_if_condition_types(const Env* env, Lang_type* lang_type, Nod
             if_cond->child = node_wrap(binary_new(
                 env, 
                 old_if_cond_child,
-                node_wrap(literal_new(str_view_from_cstr("1"), TOKEN_NUM_LITERAL, old_if_cond_child->pos)),
+                node_wrap(literal_new(str_view_from_cstr("1"), TOKEN_INT_LITERAL, old_if_cond_child->pos)),
                 TOKEN_DOUBLE_EQUAL
             ));
             break;
@@ -668,7 +776,7 @@ static bool try_set_if_condition_types(const Env* env, Lang_type* lang_type, Nod
             if_cond->child = node_wrap(binary_new(
                 env,
                 old_if_cond_child,
-                node_wrap(literal_new(str_view_from_cstr("0"), TOKEN_NUM_LITERAL, node_wrap(old_if_cond_child)->pos)),
+                node_wrap(literal_new(str_view_from_cstr("0"), TOKEN_INT_LITERAL, node_wrap(old_if_cond_child)->pos)),
                 TOKEN_NOT_EQUAL
             ));
             break;
@@ -677,7 +785,7 @@ static bool try_set_if_condition_types(const Env* env, Lang_type* lang_type, Nod
             if_cond->child = node_wrap(binary_new(
                 env,
                 old_if_cond_child,
-                node_wrap(literal_new(str_view_from_cstr("1"), TOKEN_NUM_LITERAL, old_if_cond_child->pos)),
+                node_wrap(literal_new(str_view_from_cstr("1"), TOKEN_INT_LITERAL, old_if_cond_child->pos)),
                 TOKEN_DOUBLE_EQUAL
             ));
             break;
@@ -741,35 +849,37 @@ bool try_set_node_type(const Env* env, Lang_type* lang_type, Node* node) {
                 todo();
                 return false;
             }
-            if (!lang_type_is_equal(*lang_type, get_parent_function_return_type(env))) {
-                const Node_function_definition* fun_def = get_parent_function_definition_const(env);
-                if (rtn_statement->auto_inserted) {
-                    msg(
-                        LOG_ERROR, EXPECT_FAIL_MISSING_RETURN_STATEMENT, node_wrap(rtn_statement)->pos,
-                        "no return statement in function that returns `"LANG_TYPE_FMT"`\n",
-                        lang_type_print(fun_def->declaration->return_types->child->lang_type)
-                    );
-                    msg(
-                        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap(fun_def->declaration->return_types)->pos,
-                        "function return type `"LANG_TYPE_FMT"` defined here\n",
-                        lang_type_print(fun_def->declaration->return_types->child->lang_type)
-                    );
-                } else {
-                    Node_return_statement* rtn_statement = node_unwrap_return_statement(node);
-                    msg(
-                        LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, node_wrap(rtn_statement)->pos,
-                        "returning `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
-                        lang_type_print(get_lang_type(node_wrap(rtn_statement))), 
-                        lang_type_print(fun_def->declaration->return_types->child->lang_type)
-                    );
+
+            switch (do_implicit_conversion_if_needed(get_parent_function_definition_const(env)->declaration->return_types->child->lang_type, rtn_statement->child)) {
+                case IMPLICIT_CONV_INVALID_TYPES: {
+                    const Node_function_definition* fun_def = get_parent_function_definition_const(env);
+                    if (rtn_statement->auto_inserted) {
+                        msg(
+                            LOG_ERROR, EXPECT_FAIL_MISSING_RETURN_STATEMENT, node_wrap(rtn_statement)->pos,
+                            "no return statement in function that returns `"LANG_TYPE_FMT"`\n",
+                            lang_type_print(fun_def->declaration->return_types->child->lang_type)
+                        );
+                    } else {
+                        msg(
+                            LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, node_wrap(rtn_statement)->pos,
+                            "returning `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
+                            lang_type_print(get_lang_type(node_wrap(rtn_statement))), 
+                            lang_type_print(fun_def->declaration->return_types->child->lang_type)
+                        );
+                    }
                     msg(
                         LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap(fun_def->declaration->return_types)->pos,
                         "function return type `"LANG_TYPE_FMT"` defined here\n",
                         lang_type_print(fun_def->declaration->return_types->child->lang_type)
                     );
+                    return false;
                 }
-                return false;
+                case IMPLICIT_CONV_CONVERTED:
+                    // fallthrough
+                case IMPLICIT_CONV_OK:
+                    break;
             }
+
             return true;
         }
         case NODE_STRUCT_LITERAL:

@@ -33,7 +33,7 @@ typedef enum {
 
     // literals
     TOKEN_STRING_LITERAL,
-    TOKEN_NUM_LITERAL,
+    TOKEN_INT_LITERAL,
     TOKEN_VOID,
 
     // miscellaneous
@@ -94,7 +94,7 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_STRING_LITERAL:
             return true;
-        case TOKEN_NUM_LITERAL:
+        case TOKEN_INT_LITERAL:
             return true;
         case TOKEN_VOID:
             return true;
@@ -151,7 +151,7 @@ static inline bool token_is_operator(Token token) {
             // fallthrough
         case TOKEN_DEREF:
             return true;
-        case TOKEN_NUM_LITERAL:
+        case TOKEN_INT_LITERAL:
             // fallthrough
         case TOKEN_STRING_LITERAL:
             // fallthrough
@@ -208,7 +208,7 @@ static inline bool token_is_closing(Token curr_token) {
             return false;
         case TOKEN_STRING_LITERAL:
             return false;
-        case TOKEN_NUM_LITERAL:
+        case TOKEN_INT_LITERAL:
             return false;
         case TOKEN_SYMBOL:
             return false;
@@ -267,7 +267,7 @@ static inline bool token_is_opening(Token curr_token) {
             return false;
         case TOKEN_STRING_LITERAL:
             return false;
-        case TOKEN_NUM_LITERAL:
+        case TOKEN_INT_LITERAL:
             return false;
         case TOKEN_SYMBOL:
             return false;

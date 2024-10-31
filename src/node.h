@@ -242,7 +242,6 @@ typedef struct {
 
 typedef struct {
     Node_ptr_vec children;
-    Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Llvm_id llvm_id;
     Str_view name;
 } Node_struct_member_sym_typed;
@@ -810,10 +809,14 @@ void extend_lang_type_to_string(
     bool surround_in_lt_gt
 );
 
+static inline Lang_type lang_type_from_strv(Str_view str_view, int16_t pointer_depth) {
+    Lang_type Lang_type = {.str = str_view, .pointer_depth = pointer_depth};
+    return Lang_type;
+}
+
 // only literals can be used here
 static inline Lang_type lang_type_from_cstr(const char* cstr, int16_t pointer_depth) {
-    Lang_type Lang_type = {.str = str_view_from_cstr(cstr), .pointer_depth = pointer_depth};
-    return Lang_type;
+    return lang_type_from_strv(str_view_from_cstr(cstr), pointer_depth);
 }
 
 static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
