@@ -21,7 +21,7 @@ static inline Lang_type* get_operator_lang_type_ref(Node_operator* operator) {
     }
 }
 
-static Lang_type get_member_sym_piece_final_lang_type(const Node_struct_member_sym_typed* struct_memb_sym) {
+static inline Lang_type get_member_sym_piece_final_lang_type(const Node_struct_member_sym_typed* struct_memb_sym) {
     Lang_type lang_type = {0};
     for (size_t idx = 0; idx < struct_memb_sym->children.info.count; idx++) {
         const Node* memb_piece_ = vec_at(&struct_memb_sym->children, idx);

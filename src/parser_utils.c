@@ -9,7 +9,7 @@
 #include <ctype.h>
 
 // result is rounded up
-static unsigned int log2(int64_t num) {
+static int64_t log2(int64_t num) {
     int64_t reference = 1;
     for (unsigned int power = 0; power < 64; power++) {
         if (num <= reference) {
@@ -18,7 +18,15 @@ static unsigned int log2(int64_t num) {
 
         reference *= 2;
     }
-    unreachable("");
+    assert(0);
+}
+
+//static int64_t bit_width_needed_unsigned(int64_t num) {
+//    return MAX(1, log2(num + 1));
+//}
+
+static int64_t bit_width_needed_signed(int64_t num) {
+    return 1 + log2(num + 1);
 }
 
 static int64_t str_view_to_int64_t(Str_view str_view) {
@@ -42,6 +50,13 @@ static int64_t str_view_to_int64_t(Str_view str_view) {
     return result;
 }
 
+static Str_view int64_t_to_str_view(int64_t num) {
+    String string = {0};
+    string_extend_int64_t(&a_main, &string, num);
+    Str_view str_view = {.str = string.buf, .count = string.info.count};
+    return str_view;
+}
+
 bool is_i_lang_type(Lang_type lang_type) {
     if (lang_type.str.str[0] != 'i') {
         return false;
@@ -60,6 +75,15 @@ bool is_i_lang_type(Lang_type lang_type) {
 int64_t i_lang_type_to_bit_width(Lang_type lang_type) {
     assert(is_i_lang_type(lang_type));
     return str_view_to_int64_t(str_view_slice(lang_type.str, 1, lang_type.str.count - 1));
+}
+
+// TODO: put strings in a hash table to avoid allocating duplicate types
+static Lang_type bit_width_to_i_lang_type(int64_t bit_width) {
+    String string = {0};
+    string_extend_cstr(&a_main, &string, "i");
+    string_extend_int64_t(&a_main, &string, bit_width);
+    Str_view str_view = {.str = string.buf, .count = string.info.count};
+    return lang_type_from_strv(str_view, 0);
 }
 
 static bool can_be_implicitly_converted(Lang_type dest, Lang_type src) {
@@ -209,6 +233,7 @@ Node_unary* unary_new(const Env* env, Node* child, TOKEN_TYPE operation_type, La
     return unary;
 }
 
+// TODO: make Node_untyped_binary
 Node_binary* binary_new(const Env* env, Node* lhs, Node* rhs, TOKEN_TYPE operation_type) {
     // TODO: check if lhs or rhs were already appended to the tree
     Node_operator* operator = node_unwrap_operation(node_new(lhs->pos, NODE_OPERATOR));
@@ -221,6 +246,7 @@ Node_binary* binary_new(const Env* env, Node* lhs, Node* rhs, TOKEN_TYPE operati
     Lang_type dummy;
     symbol_log(LOG_DEBUG, env);
     try(try_set_binary_lang_type(env, &dummy, binary));
+    assert(binary->lang_type.str.count > 0);
     return binary;
 }
 
@@ -362,9 +388,9 @@ static void try_set_literal_lang_type(Lang_type* lang_type, Node_literal* litera
             literal->lang_type = lang_type_from_cstr("u8", 1);
             break;
         case TOKEN_INT_LITERAL: {
-            String lang_type_str;
+            String lang_type_str = {0};
             string_extend_cstr(&a_main, &lang_type_str, "i");
-            unsigned int bit_width = MAX(1, log2(str_view_to_int64_t(literal->str_data)));
+            int64_t bit_width = bit_width_needed_signed(str_view_to_int64_t(literal->str_data));
             string_extend_size_t(&a_main, &lang_type_str, bit_width);
             literal->lang_type = lang_type_from_strv(string_to_strv(lang_type_str), 0);
             break;
@@ -395,6 +421,64 @@ bool try_set_symbol_type(const Env* env, Lang_type* lang_type, Node_symbol_untyp
     return true;
 }
 
+static Node* simplify(const Env* env, Node* node);
+
+static Node* simplify_binary(const Env* env, Node_binary* binary) {
+    assert(binary->lang_type.str.count > 0);
+    binary->lhs = simplify(env, binary->lhs);
+    binary->rhs = simplify(env, binary->rhs);
+
+    if (binary->lhs->type == NODE_LITERAL && binary->rhs->type == NODE_LITERAL) {
+        int64_t lhs_val = str_view_to_int64_t(node_unwrap_literal(binary->lhs)->str_data);
+        int64_t rhs_val = str_view_to_int64_t(node_unwrap_literal(binary->rhs)->str_data);
+
+        int64_t result_val;
+        switch (binary->token_type) {
+            case TOKEN_SINGLE_PLUS:
+                result_val = lhs_val + rhs_val;
+                break;
+            case TOKEN_SINGLE_MINUS:
+                result_val = lhs_val - rhs_val;
+                break;
+            case TOKEN_ASTERISK:
+                result_val = lhs_val*rhs_val;
+                break;
+            case TOKEN_SLASH:
+                result_val = lhs_val/rhs_val;
+                break;
+            default:
+                unreachable(TOKEN_TYPE_FMT"\n", token_type_print(binary->token_type));
+        }
+
+        Str_view result_strv = int64_t_to_str_view(result_val);
+        Node_literal* literal = literal_new(result_strv, TOKEN_INT_LITERAL, node_wrap(binary)->pos);
+        return node_wrap(literal);
+    } else {
+        log_tree(LOG_DEBUG, node_wrap(binary));
+        todo();
+    }
+}
+
+// TODO: simplify could replace try_set_node_type
+static Node* simplify(const Env* env, Node* node) {
+    switch (node->type) {
+        case NODE_OPERATOR: {
+            Node_operator* operator = node_unwrap_operation(node);
+            if (operator->type == NODE_OP_BINARY) {
+                return simplify_binary(env, node_unwrap_op_binary(operator));
+            } else if (operator->type == NODE_OP_UNARY) {
+                todo();
+            } else {
+                todo();
+            }
+        }
+        case NODE_LITERAL:
+            return node;
+        default:
+            unreachable(NODE_FMT"\n", node_print(node));
+    }
+}
+
 // returns false if unsuccessful
 bool try_set_binary_lang_type(const Env* env, Lang_type* lang_type, Node_binary* operator) {
     Lang_type dummy;
@@ -405,44 +489,50 @@ bool try_set_binary_lang_type(const Env* env, Lang_type* lang_type, Node_binary*
         return false;
     }
 
-    Lang_type lhs_lang_type = get_lang_type(operator->lhs);
-    Lang_type rhs_lang_type = get_lang_type(operator->rhs);
-    if (!lang_type_is_equal(lhs_lang_type, rhs_lang_type)) {
-        if (!lang_type_is_equal(lhs_lang_type, rhs_lang_type)) {
-            if (can_be_implicitly_converted(lhs_lang_type, rhs_lang_type)) {
-                if (operator->rhs->type == NODE_LITERAL) {
-                    node_unwrap_literal(operator->rhs)->lang_type = lhs_lang_type;
-                } else {
-                    Node_unary* unary = unary_new(env, operator->rhs, TOKEN_UNSAFE_CAST, lhs_lang_type);
-                    operator->rhs = node_wrap(unary);
+    log_tree(LOG_DEBUG, node_wrap(operator));
+
+    if (!lang_type_is_equal(get_lang_type(operator->lhs), get_lang_type(operator->rhs))) {
+        if (can_be_implicitly_converted(get_lang_type(operator->lhs), get_lang_type(operator->rhs))) {
+            if (operator->rhs->type == NODE_LITERAL) {
+                while (get_lang_type(operator->lhs).pointer_depth > 0) {
+                    operator->lhs = node_wrap(unary_new(env, operator->lhs, TOKEN_DEREF, (Lang_type){0}));
                 }
-            } else if (can_be_implicitly_converted(rhs_lang_type, lhs_lang_type)) {
-                if (operator->lhs->type == NODE_LITERAL) {
-                    node_unwrap_literal(operator->lhs)->lang_type = rhs_lang_type;
-                } else if (operator->lhs->type == NODE_OPERATOR) {
-                } else {
-                    Node_unary* unary = unary_new(env, operator->lhs, TOKEN_UNSAFE_CAST, rhs_lang_type);
-                    operator->lhs = node_wrap(unary);
+                while (get_lang_type(operator->rhs).pointer_depth > 0) {
+                    operator->rhs = node_wrap(unary_new(env, operator->rhs, TOKEN_DEREF, (Lang_type){0}));
                 }
+                node_unwrap_literal(operator->rhs)->lang_type = get_lang_type(operator->lhs);
             } else {
-                msg(
-                    LOG_ERROR, EXPECT_FAIL_BINARY_MISMATCHED_TYPES, node_wrap(operator)->pos,
-                    "types `"LANG_TYPE_FMT"` and `"LANG_TYPE_FMT"` are not valid operands to binary expression\n",
-                    lang_type_print(get_lang_type(operator->lhs)), lang_type_print(get_lang_type(operator->rhs))
-                );
-                return false;
+                Node_unary* unary = unary_new(env, operator->rhs, TOKEN_UNSAFE_CAST, get_lang_type(operator->lhs));
+                operator->rhs = node_wrap(unary);
             }
+        } else if (can_be_implicitly_converted(get_lang_type(operator->rhs), get_lang_type(operator->lhs))) {
+            if (operator->lhs->type == NODE_LITERAL) {
+                while (get_lang_type(operator->lhs).pointer_depth > 0) {
+                    operator->lhs = node_wrap(unary_new(env, operator->lhs, TOKEN_DEREF, (Lang_type){0}));
+                }
+                while (get_lang_type(operator->rhs).pointer_depth > 0) {
+                    operator->rhs = node_wrap(unary_new(env, operator->rhs, TOKEN_DEREF, (Lang_type){0}));
+                }
+                node_unwrap_literal(operator->lhs)->lang_type = get_lang_type(operator->rhs);
+            } else if (operator->lhs->type == NODE_OPERATOR) {
+                log_tree(LOG_DEBUG, operator->lhs);
+                operator->lhs = simplify(env, operator->lhs);
+                log_tree(LOG_DEBUG, operator->lhs);
+            } else {
+                Node_unary* unary = unary_new(env, operator->lhs, TOKEN_UNSAFE_CAST, get_lang_type(operator->rhs));
+                operator->lhs = node_wrap(unary);
+            }
+        } else {
+            msg(
+                LOG_ERROR, EXPECT_FAIL_BINARY_MISMATCHED_TYPES, node_wrap(operator)->pos,
+                "types `"LANG_TYPE_FMT"` and `"LANG_TYPE_FMT"` are not valid operands to binary expression\n",
+                lang_type_print(get_lang_type(operator->lhs)), lang_type_print(get_lang_type(operator->rhs))
+            );
+            return false;
         }
-
-        // do auto dereferencing
-        //while (get_lang_type(operator->lhs).pointer_depth > 0) {
-        //    operator->lhs = node_wrap(unary_new(env, operator->lhs, TOKEN_DEREF));
-        //}
-        //while (get_lang_type(operator->rhs).pointer_depth > 0) {
-        //    operator->rhs = node_wrap(unary_new(env, operator->rhs, TOKEN_DEREF));
-        //}
     }
-
+            
+    assert(get_lang_type(operator->lhs).str.count > 0);
     *lang_type = get_lang_type(operator->lhs);
     operator->lang_type = get_lang_type(operator->lhs);
     return true;
@@ -450,29 +540,35 @@ bool try_set_binary_lang_type(const Env* env, Lang_type* lang_type, Node_binary*
 
 bool try_set_unary_lang_type(const Env* env, Lang_type* lang_type, Node_unary* unary) {
     assert(lang_type);
-    if (!try_set_node_type(env, lang_type, unary->child)) {
+    Lang_type init_lang_type;
+    if (!try_set_node_type(env, &init_lang_type, unary->child)) {
         todo();
         return false;
     }
 
     switch (unary->token_type) {
         case TOKEN_NOT:
-            unary->lang_type = *lang_type;
+            unary->lang_type = init_lang_type;
+            *lang_type = unary->lang_type;
             break;
         case TOKEN_DEREF:
+            unary->lang_type = init_lang_type;
             assert(unary->lang_type.pointer_depth > 0);
-            unary->lang_type = *lang_type;
             unary->lang_type.pointer_depth--;
+            *lang_type = unary->lang_type;
             break;
         case TOKEN_REFER:
-            unary->lang_type = *lang_type;
+            unary->lang_type = init_lang_type;
             unary->lang_type.pointer_depth++;
+            assert(unary->lang_type.pointer_depth > 0);
+            *lang_type = unary->lang_type;
             break;
         case TOKEN_UNSAFE_CAST:
             assert(unary->lang_type.str.count > 0);
             if (!is_i_lang_type(unary->lang_type) || !is_i_lang_type(get_lang_type(unary->child))) {
                 todo();
             }
+            *lang_type = init_lang_type;
             break;
         default:
             unreachable("");
@@ -512,6 +608,8 @@ bool try_set_struct_literal_assignment_types(const Env* env, Lang_type* lang_typ
         Node_assignment* assign_memb_sym = node_unwrap_assignment(vec_at(&struct_literal->members, idx));
         Node_symbol_untyped* memb_sym_piece_untyped = node_unwrap_symbol_untyped(assign_memb_sym->lhs);
         Node_literal* assign_memb_sym_rhs = node_unwrap_literal(assign_memb_sym->rhs);
+
+        assign_memb_sym_rhs->lang_type = memb_sym_def->lang_type;
         if (!str_view_is_equal(memb_sym_def->name, memb_sym_piece_untyped->name)) {
             msg(
                 LOG_ERROR, EXPECT_FAIL_INVALID_STRUCT_MEMBER_IN_LITERAL, node_wrap(memb_sym_piece_untyped)->pos,
@@ -586,10 +684,13 @@ bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node
 // TODO: merge this and try_set_assignment_operand_types in some way?
 bool try_set_function_call_argument_type(
     const Env* env,
+    Node** new_arg,
     Lang_type* lang_type,
     const Node_variable_def* param,
     Node* arg
 ) {
+    *new_arg = arg;
+
     if (lang_type_is_equal(param->lang_type, lang_type_from_cstr("any", 0))) {
         if (param->is_variadic) {
             // TODO: do type checking here if this function is not an extern "c" function
@@ -599,30 +700,40 @@ bool try_set_function_call_argument_type(
         }
     }
 
-    Lang_type arg_lang_type = {0};
+    Lang_type dummy;
     if (arg->type == NODE_STRUCT_LITERAL) {
-        try(try_set_struct_literal_assignment_types(env, &arg_lang_type, node_wrap(param), node_unwrap_struct_literal(arg)));
+        try(try_set_struct_literal_assignment_types(env, &dummy, node_wrap(param), node_unwrap_struct_literal(arg)));
     } else {
-        if (!try_set_node_type(env, &arg_lang_type, arg)) {
+        if (!try_set_node_type(env, &dummy, arg)) {
             return false;
         }
     }
 
-    if (!lang_type_is_equal(param->lang_type, arg_lang_type)) {
-        msg(
-            LOG_ERROR, EXPECT_FAIL_INVALID_FUN_ARG, arg->pos, 
-            "argument is of type `"LANG_TYPE_FMT"`, "
-            "but the corresponding parameter `"STR_VIEW_FMT"` is of type `"LANG_TYPE_FMT"`\n",
-            lang_type_print(arg_lang_type), 
-            str_view_print(param->name),
-            lang_type_print(param->lang_type)
-        );
-        msg(
-            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap(param)->pos,
-            "corresponding parameter `"STR_VIEW_FMT"` defined here\n",
-            str_view_print(param->name)
-        );
-        return false;
+    if (!lang_type_is_equal(param->lang_type, get_lang_type(arg))) {
+        if (can_be_implicitly_converted(param->lang_type, get_lang_type(arg))) {
+            if (arg->type == NODE_LITERAL) {
+                node_unwrap_literal(arg)->lang_type = param->lang_type;
+                *new_arg = arg;
+            } else {
+                arg = node_wrap(unary_new(env, arg, TOKEN_UNSAFE_CAST, param->lang_type));
+                *new_arg = arg;
+            }
+        } else {
+            msg(
+                LOG_ERROR, EXPECT_FAIL_INVALID_FUN_ARG, arg->pos, 
+                "argument is of type `"LANG_TYPE_FMT"`, "
+                "but the corresponding parameter `"STR_VIEW_FMT"` is of type `"LANG_TYPE_FMT"`\n",
+                lang_type_print(get_lang_type(arg)), 
+                str_view_print(param->name),
+                lang_type_print(param->lang_type)
+            );
+            msg(
+                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap(param)->pos,
+                "corresponding parameter `"STR_VIEW_FMT"` defined here\n",
+                str_view_print(param->name)
+            );
+            return false;
+        }
     }
 
     *lang_type = param->lang_type;
@@ -687,9 +798,9 @@ bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_func
     }
 
     for (size_t arg_idx = 0; arg_idx < fun_call->args.info.count; arg_idx++) {
-        Node* argument = vec_at(&fun_call->args, arg_idx);
+        Node** argument = vec_at_ref(&fun_call->args, arg_idx);
         Lang_type lang_type;
-        if (!try_set_node_type(env, &lang_type, argument)) {
+        if (!try_set_node_type(env, &lang_type, *argument)) {
             todo();
             return false;
         }
@@ -701,9 +812,11 @@ bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_func
         }
 
         Lang_type dummy;
-        if (!try_set_function_call_argument_type(env, &dummy, corresponding_param, argument)) {
+        Node* new_arg;
+        if (!try_set_function_call_argument_type(env, &new_arg, &dummy, corresponding_param, *argument)) {
             return false;
         }
+        *argument = new_arg;
     }
 
     *lang_type = fun_rtn_type->lang_type;

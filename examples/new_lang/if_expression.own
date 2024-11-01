@@ -15,10 +15,11 @@ fn no() i32 {
 }
 
 fn main() i32 {
-    if 8*3 < 5 {
+    // TODO: remove unsafe_cast from these examples
+    if unsafe_cast<i32>8*unsafe_cast<i32>3 < 5 {
         puts("no");
     }
-    if 8*3 < 50 {
+    if unsafe_cast<i32>8*unsafe_cast<i32>3 < 50 {
         puts("yes");
     }
 

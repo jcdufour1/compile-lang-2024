@@ -6,6 +6,8 @@
 #include "str_view.h"
 #include "vector.h"
 #include "assert.h"
+#include <inttypes.h>
+#include <stdint.h>
 
 #define STRING_DEFAULT_CAPACITY 1
 
@@ -33,6 +35,12 @@ static inline void string_extend_hex_2_digits(Arena* arena, String* str, uint8_t
 static inline void string_extend_size_t(Arena* arena, String* str, size_t num) {
     char num_str[21];
     sprintf(num_str, "%zu", num);
+    string_extend_cstr(arena, str, num_str);
+}
+
+static inline void string_extend_int64_t(Arena* arena, String* str, int64_t num) {
+    char num_str[21];
+    sprintf(num_str, "%"PRId64, num);
     string_extend_cstr(arena, str, num_str);
 }
 

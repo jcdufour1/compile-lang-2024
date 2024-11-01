@@ -240,6 +240,7 @@ static void emit_unary_type(const Env* env, String* output, const Node_unary* un
     }
 }
 
+// TODO: make Node_untyped_binary
 static void emit_binary_type(const Env* env, String* output, const Node_binary* binary) {
     // TODO: do signed and unsigned operations correctly
     switch (binary->token_type) {

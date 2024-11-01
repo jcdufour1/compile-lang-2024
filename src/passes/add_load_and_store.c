@@ -94,21 +94,20 @@ static void struct_memb_to_load_memb_rtn_val_sym(Node_struct_member_sym_typed* s
     load_ref->node_src = node_wrap(node_src);
 }
 
-static void refer_to_llvm_register_symbol(const Env* env, Node_unary* refer) {
+static Node_llvm_register_sym* refer_to_llvm_register_symbol(const Env* env, const Node_unary* refer) {
     assert(refer->token_type == TOKEN_REFER);
 
     //Node_struct_member_sym_typed temp = *struct_memb;
     Lang_type lang_type_to_load = refer->lang_type;
-    lang_type_to_load.pointer_depth++;
-    Node* child = refer->child;
-    node_wrap(refer)->type = NODE_LLVM_REGISTER_SYM;
-    Node_llvm_register_sym* load_ref = node_unwrap_llvm_register_sym(node_wrap(refer));
+    Node_llvm_register_sym* load_ref = node_unwrap_llvm_register_sym(node_new(node_wrap(refer)->pos, NODE_LLVM_REGISTER_SYM));
     load_ref->lang_type = lang_type_to_load;
-    load_ref->node_src = get_storage_location(env, get_node_name(child));
+    load_ref->node_src = get_storage_location(env, get_node_name(refer->child));
+    return load_ref;
 }
 
 static Node_load_another_node* insert_load(
     Env* env,
+    Node** new_symbol_call,
     Node_ptr_vec* block_children,
     size_t* idx_to_insert_before,
     Node* symbol_call
@@ -116,12 +115,15 @@ static Node_load_another_node* insert_load(
     switch (symbol_call->type) {
         case NODE_STRUCT_LITERAL:
             do_struct_literal(env, block_children, idx_to_insert_before, node_unwrap_struct_literal(symbol_call));
+            *new_symbol_call = symbol_call;
             return NULL;
         case NODE_LITERAL:
             try(sym_tbl_add(&env->global_literals, symbol_call));
             log(LOG_DEBUG, "env->global_literals: %p\n", (void*)&env->global_literals);
+            *new_symbol_call = symbol_call;
             return NULL;
         case NODE_LLVM_REGISTER_SYM:
+            *new_symbol_call = symbol_call;
             return NULL;
         case NODE_STRUCT_MEMBER_SYM_TYPED: {
             Node_load_another_node* load = node_unwrap_load_another_node(node_new(symbol_call->pos, NODE_LOAD_ANOTHER_NODE));
@@ -141,6 +143,7 @@ static Node_load_another_node* insert_load(
                 node_wrap(load)
             );
             struct_memb_to_load_memb_rtn_val_sym(node_unwrap_struct_member_sym_typed(symbol_call), load);
+            *new_symbol_call = symbol_call;
             return load;
         }
         case NODE_LOAD_ANOTHER_NODE: {
@@ -153,6 +156,7 @@ static Node_load_another_node* insert_load(
                 *idx_to_insert_before,
                 node_wrap(load)
             );
+            *new_symbol_call = symbol_call;
             return load;
         }
         case NODE_SYMBOL_TYPED:
@@ -166,7 +170,9 @@ static Node_load_another_node* insert_load(
             assert(load->lang_type.str.count > 0);
             switch (symbol_call->type) {
                 case NODE_SYMBOL_TYPED:
+                    log_tree(LOG_DEBUG, symbol_call);
                     sym_typed_to_load_sym_rtn_value_sym(node_unwrap_symbol_typed(symbol_call), load);
+                    log_tree(LOG_DEBUG, symbol_call);
                     break;
                 default:
                     unreachable(NODE_FMT, node_print(symbol_call));
@@ -177,6 +183,7 @@ static Node_load_another_node* insert_load(
                 *idx_to_insert_before,
                 node_wrap(load)
             );
+            *new_symbol_call = symbol_call;
             return load;
         }
         case NODE_OPERATOR: {
@@ -185,7 +192,7 @@ static Node_load_another_node* insert_load(
             if (unary->token_type != TOKEN_REFER) {
                 todo();
             }
-            refer_to_llvm_register_symbol(env, unary);
+            *new_symbol_call = node_wrap(refer_to_llvm_register_symbol(env, unary));
             return NULL;
         }
         default:
@@ -240,12 +247,18 @@ static void load_operator_operands(
     Node_operator* operator
 ) {
     if (operator->type == NODE_OP_UNARY) {
+        Node* new_child;
         Node_unary* unary_oper = node_unwrap_op_unary(operator);
-        insert_load(env, block_children, idx_to_insert_before, unary_oper->child);
+        insert_load(env, &new_child, block_children, idx_to_insert_before, unary_oper->child);
+        unary_oper->child = new_child;
     } else if (operator->type == NODE_OP_BINARY) {
+        Node* new_lhs;
+        Node* new_rhs;
         Node_binary* bin_oper = node_unwrap_op_binary(operator);
-        insert_load(env, block_children, idx_to_insert_before, bin_oper->lhs);
-        insert_load(env, block_children, idx_to_insert_before, bin_oper->rhs);
+        insert_load(env, &new_lhs, block_children, idx_to_insert_before, bin_oper->lhs);
+        insert_load(env, &new_rhs, block_children, idx_to_insert_before, bin_oper->rhs);
+        bin_oper->lhs = new_lhs;
+        bin_oper->rhs = new_rhs;
     } else {
         unreachable("");
     }
@@ -258,7 +271,10 @@ static void add_load_foreach_arg(
     Node_function_call* function_call
 ) {
     for (size_t idx = 0; idx < function_call->args.info.count; idx++) {
-        insert_load(env, block_children, idx_to_insert_before, vec_at(&function_call->args, idx));
+        Node** arg = vec_at_ref(&function_call->args, idx);
+        Node* new_arg;
+        insert_load(env, &new_arg, block_children, idx_to_insert_before, *arg);
+        *arg = new_arg;
     }
 }
 
@@ -290,36 +306,34 @@ static Node* get_store_assignment(
     size_t* idx_to_insert_before,
     Node_assignment* assignment
 ) {
-    Node* lhs = assignment->lhs;
-    Node* rhs = assignment->rhs;
     Node* store_dest = NULL;
     Node* store_src = NULL;
     Lang_type lhs_load_lang_type = {0};
     Lang_type rhs_load_lang_type = {0};
 
-    switch (lhs->type) {
+    switch (assignment->lhs->type) {
         case NODE_VARIABLE_DEFINITION:
-            store_dest = get_storage_location(env, get_node_name(lhs));
-            lhs_load_lang_type = node_unwrap_variable_def(lhs)->lang_type;
+            store_dest = get_storage_location(env, get_node_name(assignment->lhs));
+            lhs_load_lang_type = node_unwrap_variable_def(assignment->lhs)->lang_type;
             break;
         case NODE_SYMBOL_TYPED:
-            store_dest = get_storage_location(env, get_node_name(lhs));
-            lhs_load_lang_type = node_unwrap_symbol_typed(lhs)->lang_type;
+            store_dest = get_storage_location(env, get_node_name(assignment->lhs));
+            lhs_load_lang_type = node_unwrap_symbol_typed(assignment->lhs)->lang_type;
             break;
         case NODE_STRUCT_MEMBER_SYM_TYPED: {
             store_dest = node_wrap(do_load_struct_element_ptr(
                 env,
                 block_children,
                 idx_to_insert_before,
-                node_unwrap_struct_member_sym_typed(lhs)
+                node_unwrap_struct_member_sym_typed(assignment->lhs)
             ));
             lhs_load_lang_type = get_member_sym_piece_final_lang_type(
-                node_unwrap_struct_member_sym_typed(lhs)
+                node_unwrap_struct_member_sym_typed(assignment->lhs)
             );
             break;
         }
         case NODE_OPERATOR: {
-            Node_operator* operator = node_unwrap_operation(lhs);
+            Node_operator* operator = node_unwrap_operation(assignment->lhs);
             Node_unary* unary = node_unwrap_op_unary(operator);
             if (unary->token_type != TOKEN_DEREF) {
                 todo();
@@ -331,43 +345,57 @@ static Node* get_store_assignment(
                     todo();
                 }
             } else {
-                store_dest = node_wrap(insert_load(env, block_children, idx_to_insert_before, unary->child));
+                Node* new_child;
+                store_dest = node_wrap(insert_load(env, &new_child, block_children, idx_to_insert_before, unary->child));
+                unary->child = new_child;
             }
             lhs_load_lang_type = unary->lang_type;
             break;
         }
         default:
-            unreachable(NODE_FMT, node_print(lhs));
+            unreachable(NODE_FMT, node_print(assignment->lhs));
     }
    
-    switch (rhs->type) {
+    switch (assignment->rhs->type) {
         case NODE_VARIABLE_DEFINITION:
             todo();
             break;
-        case NODE_STRUCT_LITERAL:
-            store_src = node_wrap(insert_load(env, block_children, idx_to_insert_before, rhs));
-            rhs_load_lang_type = node_unwrap_struct_literal(rhs)->lang_type;
+        case NODE_STRUCT_LITERAL: {
+            Node* new_rhs;
+            store_src = node_wrap(insert_load(env, &new_rhs, block_children, idx_to_insert_before, assignment->rhs));
+            assignment->rhs = new_rhs;
+            rhs_load_lang_type = node_unwrap_struct_literal(assignment->rhs)->lang_type;
             assert(rhs_load_lang_type.str.count > 0);
             break;
-        case NODE_SYMBOL_TYPED:
-            store_src = node_wrap(insert_load(env, block_children, idx_to_insert_before, rhs));
+        }
+        case NODE_SYMBOL_TYPED: {
+            Node* new_rhs;
+            store_src = node_wrap(insert_load(env, &new_rhs, block_children, idx_to_insert_before, assignment->rhs));
+            assignment->rhs = new_rhs;
             assert(store_src);
-            rhs_load_lang_type = node_unwrap_llvm_register_sym(rhs)->lang_type;
+            rhs_load_lang_type = node_unwrap_llvm_register_sym(assignment->rhs)->lang_type;
             break;
-        case NODE_LITERAL:
-            store_src = node_wrap(insert_load(env, block_children, idx_to_insert_before, rhs));
-            rhs_load_lang_type = node_unwrap_literal(rhs)->lang_type;
+        }
+        case NODE_LITERAL: {
+            Node* new_rhs;
+            store_src = node_wrap(insert_load(env, &new_rhs, block_children, idx_to_insert_before, assignment->rhs));
+            assignment->rhs = new_rhs;
+            rhs_load_lang_type = node_unwrap_literal(assignment->rhs)->lang_type;
             break;
+        }
         case NODE_LLVM_REGISTER_SYM:
-            store_src = node_unwrap_llvm_register_sym(rhs)->node_src;
-            rhs_load_lang_type = node_unwrap_llvm_register_sym(rhs)->lang_type;
+            store_src = node_unwrap_llvm_register_sym(assignment->rhs)->node_src;
+            rhs_load_lang_type = node_unwrap_llvm_register_sym(assignment->rhs)->lang_type;
             break;
-        case NODE_STRUCT_MEMBER_SYM_TYPED:
-            store_src = node_wrap(insert_load(env, block_children, idx_to_insert_before, rhs));
-            rhs_load_lang_type = node_unwrap_llvm_register_sym(rhs)->lang_type;
+        case NODE_STRUCT_MEMBER_SYM_TYPED: {
+            Node* new_rhs;
+            store_src = node_wrap(insert_load(env, &new_rhs, block_children, idx_to_insert_before, assignment->rhs));
+            assignment->rhs = new_rhs;
+            rhs_load_lang_type = node_unwrap_llvm_register_sym(assignment->rhs)->lang_type;
             break;
+        }
         case NODE_OPERATOR: {
-            Node_operator* operator = node_unwrap_operation(rhs);
+            Node_operator* operator = node_unwrap_operation(assignment->rhs);
             if (operator->type == NODE_OP_UNARY) {
                 Node_unary* unary = node_unwrap_op_unary(operator);
                 if (unary->token_type == TOKEN_DEREF) {
@@ -375,9 +403,14 @@ static Node* get_store_assignment(
                     if (unary->child->type == NODE_STRUCT_MEMBER_SYM_TYPED) {
                         todo();
                     } else {
-                        store_src_imm = node_wrap(insert_load(env, block_children, idx_to_insert_before, unary->child));
+                        Node* new_child;
+                        store_src_imm = node_wrap(insert_load(env, &new_child, block_children, idx_to_insert_before, unary->child));
+                        unary->child = new_child;
                     }
-                    Node_load_another_node* store_src_ = insert_load(env, block_children, idx_to_insert_before, store_src_imm);
+                    Node* new_store_imm;
+                    Node_load_another_node* store_src_ = insert_load(env, &new_store_imm, block_children, idx_to_insert_before, store_src_imm);
+                    store_src_imm = new_store_imm;
+
                     store_src_->lang_type.pointer_depth--;
                     store_src = node_wrap(store_src_);
                     rhs_load_lang_type = unary->lang_type;
@@ -394,17 +427,17 @@ static Node* get_store_assignment(
             break;
         }
         case NODE_FUNCTION_CALL:
-            store_src = rhs;
+            store_src = assignment->rhs;
             insert_into_node_ptr_vec(
                 block_children,
                 idx_to_insert_before,
                 *idx_to_insert_before,
-                rhs
+                assignment->rhs
             );
             Node_function_declaration* fun_decl;
             {
                 Node* fun_def;
-                try(symbol_lookup(&fun_def, env, get_node_name(rhs)));
+                try(symbol_lookup(&fun_def, env, get_node_name(assignment->rhs)));
                 if (fun_def->type == NODE_FUNCTION_DEFINITION) {
                     fun_decl = node_unwrap_function_definition(fun_def)->declaration;
                 } else {
@@ -414,30 +447,30 @@ static Node* get_store_assignment(
             Node_lang_type* function_rtn_type = fun_decl->return_types->child;
             node_unwrap_function_call(store_src)->lang_type = function_rtn_type->lang_type;
             assert(store_src);
-            rhs_load_lang_type = node_unwrap_function_call(rhs)->lang_type;
+            rhs_load_lang_type = node_unwrap_function_call(assignment->rhs)->lang_type;
             break;
         default:
             assert(false);
             todo();
     }
 
-    if (rhs->type == NODE_LITERAL) {
-        Node_llvm_store_literal* store = node_unwrap_llvm_store_literal(node_new(rhs->pos, NODE_LLVM_STORE_LITERAL));
+    if (assignment->rhs->type == NODE_LITERAL) {
+        Node_llvm_store_literal* store = node_unwrap_llvm_store_literal(node_new(assignment->rhs->pos, NODE_LLVM_STORE_LITERAL));
         store->node_dest = store_dest;
         store->lang_type = lhs_load_lang_type;
         assert(store->lang_type.str.count > 0);
-        store->child = node_unwrap_literal(rhs);
+        store->child = node_unwrap_literal(assignment->rhs);
         return node_wrap(store);
-    } else if (rhs->type == NODE_STRUCT_LITERAL) {
-        Node_llvm_store_struct_literal* store = node_unwrap_llvm_store_struct_literal(node_new(lhs->pos, NODE_LLVM_STORE_STRUCT_LITERAL));
-        store->child = node_unwrap_struct_literal(rhs);
+    } else if (assignment->rhs->type == NODE_STRUCT_LITERAL) {
+        Node_llvm_store_struct_literal* store = node_unwrap_llvm_store_struct_literal(node_new(assignment->lhs->pos, NODE_LLVM_STORE_STRUCT_LITERAL));
+        store->child = node_unwrap_struct_literal(assignment->rhs);
         store->node_dest = store_dest;
         return node_wrap(store);
     } else {
-        Node_store_another_node* store = node_unwrap_store_another_node(node_new(lhs->pos, NODE_STORE_ANOTHER_NODE));
+        Node_store_another_node* store = node_unwrap_store_another_node(node_new(assignment->lhs->pos, NODE_STORE_ANOTHER_NODE));
         store->node_dest = store_dest;
         store->node_src = store_src;
-        if (rhs->type == NODE_STRUCT_LITERAL) {
+        if (assignment->rhs->type == NODE_STRUCT_LITERAL) {
             unreachable("");
         }
         store->lang_type = rhs_load_lang_type;
@@ -455,9 +488,12 @@ static void add_load_return_statement(
     switch (return_statement->child->type) {
         case NODE_STRUCT_MEMBER_SYM_TYPED:
             // fallthrough
-        case NODE_SYMBOL_TYPED:
-            insert_load(env, block_children, idx_to_insert_before, return_statement->child);
+        case NODE_SYMBOL_TYPED: {
+            Node* new_child;
+            insert_load(env, &new_child, block_children, idx_to_insert_before, return_statement->child);
+            return_statement->child = new_child;
             return;
+        }
         case NODE_FUNCTION_CALL:
             // fallthrough
         case NODE_LLVM_REGISTER_SYM:
@@ -525,8 +561,14 @@ static Node* flatten_operation_operand(
         if (child->type == NODE_OP_UNARY) {
             Node_unary* unary = node_unwrap_op_unary(child);
             if (unary->token_type == TOKEN_DEREF) {
-                Node* store_src_imm = node_wrap(insert_load(env, block_children, idx_to_insert_before, unary->child));
-                Node_load_another_node* store_src_ = insert_load(env, block_children, idx_to_insert_before, store_src_imm);
+                Node* new_child;
+                Node* store_src_imm = node_wrap(insert_load(env, &new_child, block_children, idx_to_insert_before, unary->child));
+                unary->child = new_child;
+
+                Node* new_store_src_imm;
+                Node_load_another_node* store_src_ = insert_load(env, &new_store_src_imm, block_children, idx_to_insert_before, store_src_imm);
+                store_src_imm = new_store_src_imm;
+
                 store_src_->lang_type.pointer_depth--;
                 Node_llvm_register_sym* reg_sym = node_unwrap_llvm_register_sym(node_new(operand->pos, NODE_LLVM_REGISTER_SYM));
                 reg_sym->node_src = node_wrap(store_src_);
@@ -566,14 +608,15 @@ static Node* flatten_operation_operand(
         unreachable("");
     } else if (operand->type == NODE_FUNCTION_CALL) {
         Node_llvm_register_sym* fun_sym = node_unwrap_llvm_register_sym(node_new(operand->pos, NODE_LLVM_REGISTER_SYM));
+        fun_sym->node_src = operand;
+        fun_sym->lang_type = get_lang_type(operand);
+        assert(fun_sym->node_src);
         insert_into_node_ptr_vec(
             block_children,
             idx_to_insert_before,
             *idx_to_insert_before,
             operand
         );
-        fun_sym->node_src = operand;
-        assert(fun_sym->node_src);
         return node_wrap(fun_sym);
     } else {
         assert(operand);
@@ -606,6 +649,9 @@ void add_load_and_store(Env* env) {
     }
     Node_block* block = node_unwrap_block(start_start_node);
 
+    if (block->children.info.count < 1) {
+        return;
+    }
     for (size_t idx = block->children.info.count - 1;; idx--) {
         Node* curr_node = vec_at(&block->children, idx);
 

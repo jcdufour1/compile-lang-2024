@@ -185,6 +185,9 @@ void for_and_if_to_branch(Env* env) {
     }
     Node_block* block = node_unwrap_block(block_);
 
+    if (block->children.info.count < 1) {
+        return;
+    }
     for (size_t idx = block->children.info.count - 1;; idx--) {
         Node** curr_node = vec_at_ref(&block->children, idx);
 

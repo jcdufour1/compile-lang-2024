@@ -261,6 +261,7 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
                 extend_lang_type_to_string(arena, string, node_unwrap_op_unary_const(operator)->lang_type, true);
                 string_extend_strv(arena, string, token_type_to_str_view(node_unwrap_op_unary_const(operator)->token_type));
             } else if (operator->type == NODE_OP_BINARY) {
+                extend_lang_type_to_string(arena, string, node_unwrap_op_binary_const(operator)->lang_type, true);
                 string_extend_strv(arena, string, token_type_to_str_view(node_unwrap_op_binary_const(operator)->token_type));
             } else {
                 unreachable("");
