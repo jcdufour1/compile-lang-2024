@@ -194,12 +194,14 @@ Node_symbol_untyped* symbol_new(Str_view symbol_name, Pos pos) {
     return symbol;
 }
 
-Node_unary* unary_new(const Env* env, Node* child, TOKEN_TYPE operation_type) {
+// TODO: make separate Node_unary_typed and Node_unary_untyped
+Node_unary* unary_new(const Env* env, Node* child, TOKEN_TYPE operation_type, Lang_type init_lang_type) {
     Node_operator* operator = node_unwrap_operation(node_new(child->pos, NODE_OPERATOR));
     operator->type = NODE_OP_UNARY;
     Node_unary* unary = node_unwrap_op_unary(operator);
     unary->token_type = operation_type;
     unary->child = child;
+    unary->lang_type = init_lang_type;
 
     Lang_type dummy;
     symbol_log(LOG_DEBUG, env);
@@ -403,14 +405,25 @@ bool try_set_binary_lang_type(const Env* env, Lang_type* lang_type, Node_binary*
         return false;
     }
 
-    if (!lang_type_is_equal(get_lang_type(operator->lhs), get_lang_type(operator->rhs))) {
-        Lang_type lhs_lang_type = get_lang_type(operator->lhs);
-        Lang_type rhs_lang_type = get_lang_type(operator->rhs);
+    Lang_type lhs_lang_type = get_lang_type(operator->lhs);
+    Lang_type rhs_lang_type = get_lang_type(operator->rhs);
+    if (!lang_type_is_equal(lhs_lang_type, rhs_lang_type)) {
         if (!lang_type_is_equal(lhs_lang_type, rhs_lang_type)) {
             if (can_be_implicitly_converted(lhs_lang_type, rhs_lang_type)) {
-                node_unwrap_literal(operator->rhs)->lang_type = lhs_lang_type;
+                if (operator->rhs->type == NODE_LITERAL) {
+                    node_unwrap_literal(operator->rhs)->lang_type = lhs_lang_type;
+                } else {
+                    Node_unary* unary = unary_new(env, operator->rhs, TOKEN_UNSAFE_CAST, lhs_lang_type);
+                    operator->rhs = node_wrap(unary);
+                }
             } else if (can_be_implicitly_converted(rhs_lang_type, lhs_lang_type)) {
-                node_unwrap_literal(operator->lhs)->lang_type = rhs_lang_type;
+                if (operator->lhs->type == NODE_LITERAL) {
+                    node_unwrap_literal(operator->lhs)->lang_type = rhs_lang_type;
+                } else if (operator->lhs->type == NODE_OPERATOR) {
+                } else {
+                    Node_unary* unary = unary_new(env, operator->lhs, TOKEN_UNSAFE_CAST, rhs_lang_type);
+                    operator->lhs = node_wrap(unary);
+                }
             } else {
                 msg(
                     LOG_ERROR, EXPECT_FAIL_BINARY_MISMATCHED_TYPES, node_wrap(operator)->pos,
@@ -436,6 +449,7 @@ bool try_set_binary_lang_type(const Env* env, Lang_type* lang_type, Node_binary*
 }
 
 bool try_set_unary_lang_type(const Env* env, Lang_type* lang_type, Node_unary* unary) {
+    assert(lang_type);
     if (!try_set_node_type(env, lang_type, unary->child)) {
         todo();
         return false;
@@ -455,6 +469,7 @@ bool try_set_unary_lang_type(const Env* env, Lang_type* lang_type, Node_unary* u
             unary->lang_type.pointer_depth++;
             break;
         case TOKEN_UNSAFE_CAST:
+            assert(unary->lang_type.str.count > 0);
             if (!is_i_lang_type(unary->lang_type) || !is_i_lang_type(get_lang_type(unary->child))) {
                 todo();
             }
@@ -860,37 +875,53 @@ bool try_set_node_type(const Env* env, Lang_type* lang_type, Node* node) {
                 return false;
             }
 
-            switch (do_implicit_conversion_if_needed(get_parent_function_definition_const(env)->declaration->return_types->child->lang_type, rtn_statement->child)) {
-                case IMPLICIT_CONV_INVALID_TYPES: {
-                    const Node_function_definition* fun_def = get_parent_function_definition_const(env);
-                    if (rtn_statement->auto_inserted) {
-                        msg(
-                            LOG_ERROR, EXPECT_FAIL_MISSING_RETURN_STATEMENT, node_wrap(rtn_statement)->pos,
-                            "no return statement in function that returns `"LANG_TYPE_FMT"`\n",
-                            lang_type_print(fun_def->declaration->return_types->child->lang_type)
-                        );
-                    } else {
-                        msg(
-                            LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, node_wrap(rtn_statement)->pos,
-                            "returning `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
-                            lang_type_print(get_lang_type(node_wrap(rtn_statement))), 
-                            lang_type_print(fun_def->declaration->return_types->child->lang_type)
-                        );
-                    }
-                    msg(
-                        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap(fun_def->declaration->return_types)->pos,
-                        "function return type `"LANG_TYPE_FMT"` defined here\n",
-                        lang_type_print(fun_def->declaration->return_types->child->lang_type)
-                    );
-                    return false;
+            Lang_type src_lang_type = get_lang_type(rtn_statement->child);
+            Lang_type dest_lang_type = get_parent_function_definition_const(env)->declaration->return_types->child->lang_type;
+            log(
+                LOG_DEBUG, LANG_TYPE_FMT" to "LANG_TYPE_FMT"\n", lang_type_print(src_lang_type),
+                lang_type_print(dest_lang_type)
+            );
+
+            if (lang_type_is_equal(dest_lang_type, src_lang_type)) {
+                return true;
+            }
+            if (can_be_implicitly_converted(dest_lang_type, src_lang_type)) {
+                log_tree(LOG_DEBUG, node_wrap(rtn_statement));
+                if (rtn_statement->child->type == NODE_LITERAL) {
+                    node_unwrap_literal(rtn_statement->child)->lang_type = dest_lang_type;
+                    return true;
                 }
-                case IMPLICIT_CONV_CONVERTED:
-                    // fallthrough
-                case IMPLICIT_CONV_OK:
-                    break;
+                Node_unary* unary = unary_new(env, rtn_statement->child, TOKEN_UNSAFE_CAST, dest_lang_type);
+                rtn_statement->child = node_wrap(unary);
+                return true;
             }
 
-            return true;
+            const Node_function_definition* fun_def = get_parent_function_definition_const(env);
+            if (rtn_statement->auto_inserted) {
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_MISSING_RETURN_STATEMENT, node_wrap(rtn_statement)->pos,
+                    "no return statement in function that returns `"LANG_TYPE_FMT"`\n",
+                    lang_type_print(fun_def->declaration->return_types->child->lang_type)
+                );
+            } else {
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, node_wrap(rtn_statement)->pos,
+                    "returning `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
+                    lang_type_print(get_lang_type(rtn_statement->child)), 
+                    lang_type_print(fun_def->declaration->return_types->child->lang_type)
+                );
+            }
+            msg(
+                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap(fun_def->declaration->return_types)->pos,
+                "function return type `"LANG_TYPE_FMT"` defined here\n",
+                lang_type_print(fun_def->declaration->return_types->child->lang_type)
+            );
+            return false;
+            //log(
+            //    LOG_DEBUG, LANG_TYPE_FMT" to "LANG_TYPE_FMT"\n", lang_type_print(src_lang_type),
+            //    lang_type_print(dest_lang_type)
+            //);
+            unreachable("");
         }
         case NODE_STRUCT_LITERAL:
             unreachable("cannot set struct literal type here");

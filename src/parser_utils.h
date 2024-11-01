@@ -32,7 +32,7 @@ Node_symbol_untyped* symbol_new(Str_view symbol_name, Pos pos);
 
 Node_binary* binary_new(const Env* env, Node* lhs, Node* rhs, TOKEN_TYPE operation_type);
 
-Node_unary* unary_new(const Env* env, Node* child, TOKEN_TYPE operation_type);
+Node_unary* unary_new(const Env* env, Node* child, TOKEN_TYPE operation_type, Lang_type init_lang_type);
 
 Llvm_id get_matching_fun_param_load_id(const Node* src);
 
