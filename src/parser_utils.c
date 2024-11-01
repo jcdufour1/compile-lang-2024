@@ -455,8 +455,7 @@ static Node* simplify_binary(const Env* env, Node_binary* binary) {
         Node_literal* literal = literal_new(result_strv, TOKEN_INT_LITERAL, node_wrap(binary)->pos);
         return node_wrap(literal);
     } else {
-        log_tree(LOG_DEBUG, node_wrap(binary));
-        todo();
+        return node_wrap(binary);
     }
 }
 
@@ -468,12 +467,16 @@ static Node* simplify(const Env* env, Node* node) {
             if (operator->type == NODE_OP_BINARY) {
                 return simplify_binary(env, node_unwrap_op_binary(operator));
             } else if (operator->type == NODE_OP_UNARY) {
-                todo();
+                return node;
             } else {
                 todo();
             }
         }
         case NODE_LITERAL:
+            return node;
+        case NODE_SYMBOL_TYPED:
+            return node;
+        case NODE_FUNCTION_CALL:
             return node;
         default:
             unreachable(NODE_FMT"\n", node_print(node));
@@ -482,6 +485,12 @@ static Node* simplify(const Env* env, Node* node) {
 
 // returns false if unsuccessful
 bool try_set_binary_lang_type(const Env* env, Node** new_node, Lang_type* lang_type, Node_binary* operator) {
+    //*new_node = simplify_binary(env, operator);
+    //if ((*new_node)->type != NODE_OP_BINARY) {
+    //    *lang_type = get_lang_type(*new_node);
+    //    return true;
+    //}
+
     Lang_type dummy;
     Node* new_lhs;
     if (!try_set_node_type(env, &new_lhs, &dummy, operator->lhs)) {
@@ -494,6 +503,9 @@ bool try_set_binary_lang_type(const Env* env, Node** new_node, Lang_type* lang_t
         return false;
     }
     operator->rhs = new_rhs;
+
+    operator->lhs = simplify(env, operator->lhs);
+    operator->rhs = simplify(env, operator->rhs);
 
     log_tree(LOG_DEBUG, node_wrap(operator));
 
@@ -520,10 +532,6 @@ bool try_set_binary_lang_type(const Env* env, Node** new_node, Lang_type* lang_t
                     operator->rhs = node_wrap(unary_new(env, operator->rhs, TOKEN_DEREF, (Lang_type){0}));
                 }
                 node_unwrap_literal(operator->lhs)->lang_type = get_lang_type(operator->rhs);
-            } else if (operator->lhs->type == NODE_OPERATOR) {
-                log_tree(LOG_DEBUG, operator->lhs);
-                operator->lhs = simplify(env, operator->lhs);
-                log_tree(LOG_DEBUG, operator->lhs);
             } else {
                 Node* unary = unary_new(env, operator->lhs, TOKEN_UNSAFE_CAST, get_lang_type(operator->rhs));
                 operator->lhs = unary;
