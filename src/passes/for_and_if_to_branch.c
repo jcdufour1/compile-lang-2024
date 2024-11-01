@@ -30,8 +30,8 @@ static Node_cond_goto* conditional_goto_new(
 
 static Node_assignment* for_loop_cond_var_assign_new(Env* env, Str_view sym_name, Pos pos) {
     Node_literal* literal = literal_new(str_view_from_cstr("1"), TOKEN_INT_LITERAL, pos);
-    Node_binary* operation = binary_new(env, node_wrap(symbol_new(sym_name, pos)), node_wrap(literal), TOKEN_SINGLE_PLUS);
-    return assignment_new(env, node_wrap(symbol_new(sym_name, pos)), node_wrap(operation));
+    Node* operation = binary_new(env, node_wrap(symbol_new(sym_name, pos)), node_wrap(literal), TOKEN_SINGLE_PLUS);
+    return assignment_new(env, node_wrap(symbol_new(sym_name, pos)), operation);
 }
 
 static void change_break_to_goto(Node_block* block, const Node_label* label_to_goto) {

@@ -30,9 +30,9 @@ Node_literal* literal_new(Str_view value, TOKEN_TYPE token_type, Pos pos);
 
 Node_symbol_untyped* symbol_new(Str_view symbol_name, Pos pos);
 
-Node_binary* binary_new(const Env* env, Node* lhs, Node* rhs, TOKEN_TYPE operation_type);
+Node* binary_new(const Env* env, Node* lhs, Node* rhs, TOKEN_TYPE operation_type);
 
-Node_unary* unary_new(const Env* env, Node* child, TOKEN_TYPE operation_type, Lang_type init_lang_type);
+Node* unary_new(const Env* env, Node* child, TOKEN_TYPE operation_type, Lang_type init_lang_type);
 
 Llvm_id get_matching_fun_param_load_id(const Node* src);
 
@@ -117,16 +117,16 @@ static inline const Node_struct_def* get_struct_definition_const(const Env* env,
 bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node_assignment* assignment);
 
 // returns false if unsuccessful
-bool try_set_binary_lang_type(const Env* env, Lang_type* lang_type, Node_binary* operator);
+bool try_set_binary_lang_type(const Env* env, Node** new_node, Lang_type* lang_type, Node_binary* operator);
 
 // returns false if unsuccessful
 bool try_set_binary_operand_lang_type(Lang_type* lang_type, Node* operand);
 
 Lang_type get_parent_function_return_type(const Env* env);
 
-bool try_set_unary_lang_type(const Env* env, Lang_type* lang_type, Node_unary* unary);
+bool try_set_unary_lang_type(const Env* env, Node** new_node, Lang_type* lang_type, Node_unary* unary);
 
-bool try_set_operation_lang_type(const Env* env, Lang_type* lang_type, Node_operator* operator);
+bool try_set_operation_lang_type(const Env* env, Node** new_node, Lang_type* lang_type, Node_operator* operator);
 
 // set symbol lang_type, and report error if symbol is undefined
 void set_symbol_type(Node_symbol_untyped* sym_untyped);
@@ -135,6 +135,6 @@ bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_func
 
 bool try_set_struct_member_symbol_types(const Env* env, Lang_type* lang_type, Node_struct_member_sym_untyped* struct_memb_sym);
 
-bool try_set_node_type(const Env* env, Lang_type* lang_type, Node* node);
+bool try_set_node_type(const Env* env, Node** new_node, Lang_type* lang_type, Node* node);
 
 #endif // PARSER_UTIL_H

@@ -17,12 +17,14 @@ static void set_if_condition_types(Env* env, Node_if_condition* if_cond) {
             ));
             break;
         case NODE_OPERATOR: {
+            Node* new_child;
             Lang_type dummy;
             Node_operator* operator = node_unwrap_operation(old_if_cond_child);
             if (operator->type == NODE_OP_UNARY) {
-                try_set_unary_lang_type(env, &dummy, node_unwrap_op_unary(operator));
+                try_set_unary_lang_type(env, &new_child, &dummy, node_unwrap_op_unary(operator));
             } else if (operator->type == NODE_OP_BINARY) {
-                try_set_binary_lang_type(env, &dummy, node_unwrap_op_binary(operator));
+                try_set_binary_lang_type(env, &new_child, &dummy, node_unwrap_op_binary(operator));
+                if_cond->child = new_child;
             } else {
                 unreachable("");
             }
@@ -66,9 +68,9 @@ void analysis_1(Env* env) {
 
     bool need_add_return = false;
     for (size_t idx = 0; idx < block_children->info.count; idx++) {
-        Node* curr_node = vec_at(block_children, idx);
+        Node** curr_node = vec_at_ref(block_children, idx);
         Lang_type dummy;
-        switch (curr_node->type) {
+        switch ((*curr_node)->type) {
             case NODE_ASSIGNMENT:
                 //fallthrough
             case NODE_FUNCTION_CALL:
@@ -81,15 +83,18 @@ void analysis_1(Env* env) {
                 //fallthrough
             case NODE_IF_STATEMENT:
                 //fallthrough
-            case NODE_FOR_WITH_CONDITION:
-                try_set_node_type(env, &dummy, curr_node);
+            case NODE_FOR_WITH_CONDITION: {
+                Node* new_node;
+                try_set_node_type(env, &new_node, &dummy, *curr_node);
+                *curr_node = new_node;
                 break;
+            }
             default:
                 break;
         }
 
         if (idx == block_children->info.count - 1 
-            && curr_node->type != NODE_RETURN_STATEMENT
+            && (*curr_node)->type != NODE_RETURN_STATEMENT
             && env->ancesters.info.count > 1
             && vec_at(&env->ancesters, env->ancesters.info.count - 2)->type == NODE_FUNCTION_DEFINITION
         ) {
@@ -107,8 +112,9 @@ void analysis_1(Env* env) {
         rtn_statement->auto_inserted = true;
         rtn_statement->child = node_wrap(literal_new(str_view_from_cstr(""), TOKEN_VOID, pos));
         Lang_type dummy;
-        try_set_node_type(env, &dummy, node_wrap(rtn_statement));
-        vec_append(&a_main, block_children, node_wrap(rtn_statement));
+        Node* new_rtn_statement;
+        try_set_node_type(env, &new_rtn_statement, &dummy, node_wrap(rtn_statement));
+        vec_append(&a_main, block_children, new_rtn_statement);
     }
 
     return;
