@@ -595,7 +595,7 @@ bool try_set_struct_literal_assignment_types(const Env* env, Node** new_node, La
         log(LOG_DEBUG, "%zu\n", idx);
         Node* memb_sym_def_ = vec_at(&struct_def->members, idx);
         Node_variable_def* memb_sym_def = node_unwrap_variable_def(memb_sym_def_);
-        log_tree(LOG_DEBUG, struct_literal);
+        log_tree(LOG_DEBUG, node_wrap(struct_literal));
         Node_assignment* assign_memb_sym = node_unwrap_assignment(vec_at(&struct_literal->members, idx));
         Node_symbol_untyped* memb_sym_piece_untyped = node_unwrap_symbol_untyped(assign_memb_sym->lhs);
         Node_literal* assign_memb_sym_rhs = node_unwrap_literal(assign_memb_sym->rhs);
@@ -676,67 +676,6 @@ bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node
     }
 }
 
-// TODO: merge this and try_set_assignment_operand_types in some way?
-bool try_set_function_call_argument_type(
-    const Env* env,
-    Node** new_arg,
-    Lang_type* lang_type,
-    const Node_variable_def* param,
-    Node* arg
-) {
-    *new_arg = arg;
-
-    if (lang_type_is_equal(param->lang_type, lang_type_from_cstr("any", 0))) {
-        if (param->is_variadic) {
-            // TODO: do type checking here if this function is not an extern "c" function
-            return true;
-        } else {
-            todo();
-        }
-    }
-
-    Lang_type dummy;
-    if (arg->type == NODE_STRUCT_LITERAL) {
-        try(try_set_struct_literal_assignment_types(env, new_arg, &dummy, node_wrap(param), node_unwrap_struct_literal(arg)));
-        arg = *new_arg;
-    } else {
-        if (!try_set_node_type(env, new_arg, &dummy, arg)) {
-            return false;
-        }
-    }
-    arg = *new_arg;
-
-    if (!lang_type_is_equal(param->lang_type, get_lang_type(arg))) {
-        if (can_be_implicitly_converted(param->lang_type, get_lang_type(arg))) {
-            if (arg->type == NODE_LITERAL) {
-                node_unwrap_literal(arg)->lang_type = param->lang_type;
-                *new_arg = arg;
-            } else {
-                arg = node_wrap(unary_new(env, arg, TOKEN_UNSAFE_CAST, param->lang_type));
-                *new_arg = arg;
-            }
-        } else {
-            msg(
-                LOG_ERROR, EXPECT_FAIL_INVALID_FUN_ARG, arg->pos, 
-                "argument is of type `"LANG_TYPE_FMT"`, "
-                "but the corresponding parameter `"STR_VIEW_FMT"` is of type `"LANG_TYPE_FMT"`\n",
-                lang_type_print(get_lang_type(arg)), 
-                str_view_print(param->name),
-                lang_type_print(param->lang_type)
-            );
-            msg(
-                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap(param)->pos,
-                "corresponding parameter `"STR_VIEW_FMT"` defined here\n",
-                str_view_print(param->name)
-            );
-            return false;
-        }
-    }
-
-    *lang_type = param->lang_type;
-    return true;
-}
-
 bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_function_call* fun_call) {
     bool status = true;
 
@@ -797,31 +736,57 @@ bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_func
     }
 
     for (size_t arg_idx = 0; arg_idx < fun_call->args.info.count; arg_idx++) {
-        Node_variable_def* corresponding_param = node_unwrap_variable_def(vec_at(&params->params, params_idx));
+        Node_variable_def* corres_param = node_unwrap_variable_def(vec_at(&params->params, params_idx));
         Node** argument = vec_at_ref(&fun_call->args, arg_idx);
-        Lang_type lang_type;
         Node* new_arg;
-        log_tree(LOG_DEBUG, *argument);
-        if ((*argument)->type == NODE_STRUCT_LITERAL) {
-            try(try_set_struct_literal_assignment_types(env, &new_arg, &lang_type, node_wrap(corresponding_param), node_unwrap_struct_literal(*argument)));
-        } else {
-            if (!try_set_node_type(env, &new_arg, &lang_type, *argument)) {
-                status = false;
-                continue;
-            }
-        }
-        *argument = new_arg;
 
-        if (!corresponding_param->is_variadic) {
+        if (!corres_param->is_variadic) {
             params_idx++;
         }
 
         Lang_type dummy;
-        if (!try_set_function_call_argument_type(env, &new_arg, &dummy, corresponding_param, *argument)) {
-            status = false;
-            continue;
+        if ((*argument)->type == NODE_STRUCT_LITERAL) {
+            try(try_set_struct_literal_assignment_types(env, &new_arg, &dummy, node_wrap(corres_param), node_unwrap_struct_literal(*argument)));
+        } else {
+            if (!try_set_node_type(env, &new_arg, &dummy, *argument)) {
+                return false;
+            }
         }
         *argument = new_arg;
+
+        if (lang_type_is_equal(corres_param->lang_type, lang_type_from_cstr("any", 0))) {
+            if (corres_param->is_variadic) {
+                // TODO: do type checking here if this function is not an extern "c" function
+                continue;
+            } else {
+                todo();
+            }
+        }
+
+        if (!lang_type_is_equal(corres_param->lang_type, get_lang_type(*argument))) {
+            if (can_be_implicitly_converted(corres_param->lang_type, get_lang_type(*argument))) {
+                if ((*argument)->type == NODE_LITERAL) {
+                    node_unwrap_literal((*argument))->lang_type = corres_param->lang_type;
+                } else {
+                    *argument = node_wrap(unary_new(env, *argument, TOKEN_UNSAFE_CAST, corres_param->lang_type));
+                }
+            } else {
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_INVALID_FUN_ARG, (*argument)->pos, 
+                    "argument is of type `"LANG_TYPE_FMT"`, "
+                    "but the corresponding parameter `"STR_VIEW_FMT"` is of type `"LANG_TYPE_FMT"`\n",
+                    lang_type_print(get_lang_type(*argument)), 
+                    str_view_print(corres_param->name),
+                    lang_type_print(corres_param->lang_type)
+                );
+                msg(
+                    LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap(corres_param)->pos,
+                    "corresponding parameter `"STR_VIEW_FMT"` defined here\n",
+                    str_view_print(corres_param->name)
+                );
+                return false;
+            }
+        }
     }
 
     *lang_type = fun_rtn_type->lang_type;
@@ -976,6 +941,9 @@ bool try_set_node_type(const Env* env, Node** new_node, Lang_type* lang_type, No
             return try_set_symbol_type(env, lang_type, node_unwrap_symbol_untyped(node));
         case NODE_STRUCT_MEMBER_SYM_UNTYPED:
             return try_set_struct_member_symbol_types(env, new_node, lang_type, node_unwrap_struct_member_sym_untyped(node));
+        case NODE_STRUCT_MEMBER_SYM_TYPED:
+            *lang_type = get_member_sym_piece_final_lang_type(node_unwrap_struct_member_sym_typed(node));
+            return true;
         case NODE_SYMBOL_TYPED:
             *lang_type = node_unwrap_symbol_typed(node)->lang_type;
             return true;
