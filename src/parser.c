@@ -60,7 +60,7 @@ static void msg_parser_expected_internal(Token got, int count_expected, ...) {
         string_extend_cstr(&print_arena, &message, "`");
     }
 
-    msg(LOG_ERROR, EXPECT_FAIL_TYPE_NONE, got.pos, STR_VIEW_FMT"\n", str_view_print(string_to_strv(message)));
+    msg(LOG_ERROR, EXPECT_FAIL_PARSER_EXPECTED, got.pos, STR_VIEW_FMT"\n", str_view_print(string_to_strv(message)));
 
     va_end(args);
 }
@@ -111,7 +111,7 @@ static Tk_view extract_items_inside_brackets(Tk_view* tokens, TOKEN_TYPE closing
 }
 
 // higher number returned from this function means that operator has higher precedence
-static inline uint32_t operator_precedence(Token token) {
+static uint32_t operator_precedence(Token token) {
     switch (token.type) {
         case TOKEN_LESS_THAN:
             // fallthrough
@@ -199,6 +199,7 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_UNSAFE_CAST:
             return true;
     }
+    unreachable("");
 }
 
 static bool starts_with_function_call(Tk_view tokens) {
@@ -478,50 +479,45 @@ static Node_symbol_untyped* extract_symbol(Tk_view* tokens) {
     return sym_node;
 }
 
-static PARSE_EXPR_STATUS extract_function_argument(Env* env, Node** child, Tk_view* tokens) {
-    switch (try_extract_expression(env, child, tokens, true)) {
-        case PARSE_EXPR_OK:
-            tk_view_try_consume(NULL, tokens, TOKEN_COMMA);
-            return PARSE_EXPR_OK;
-        case PARSE_EXPR_NONE:
-            return PARSE_EXPR_NONE;
-        case PARSE_EXPR_ERROR:
-            return PARSE_EXPR_ERROR;
-    }
-    unreachable("");
-}
-
 static PARSE_STATUS try_extract_function_call(Env* env, Node_function_call** child, Tk_view* tokens) {
     Tk_view curr_tokens = *tokens;
     Token fun_name_token;
     if (!tk_view_try_consume(&fun_name_token, &curr_tokens, TOKEN_SYMBOL)) {
-        unreachable("");
+        unreachable("this is not a function call");
     }
     if (!tk_view_try_consume(NULL, &curr_tokens, TOKEN_OPEN_PAR)) {
-        unreachable("");
+        unreachable("this is not a function call");
     }
     Node_function_call* function_call = node_unwrap_function_call(
         node_new(fun_name_token.pos, NODE_FUNCTION_CALL)
     );
     function_call->name = fun_name_token.text;
 
-    Node* argument;
-    bool done = false;
-    while (!done) {
-        switch (extract_function_argument(env, &argument, &curr_tokens)) {
+    bool is_first_time = true;
+    bool prev_is_comma = false;
+    while (is_first_time || prev_is_comma) {
+        Node* arg;
+        switch (try_extract_expression(env, &arg, &curr_tokens, true)) {
             case PARSE_EXPR_OK:
-                vec_append(&a_main, &function_call->args, argument);
+                vec_append(&a_main, &function_call->args, arg);
+                prev_is_comma = tk_view_try_consume(NULL, &curr_tokens, TOKEN_COMMA);
                 break;
             case PARSE_EXPR_NONE:
-                done = true;
+                if (prev_is_comma) {
+                    msg_expected_expression(tk_view_front(curr_tokens).pos);
+                    return PARSE_ERROR;
+                }
                 break;
             case PARSE_EXPR_ERROR:
                 return PARSE_ERROR;
+            default:
+                unreachable("");
         }
+        is_first_time = false;
     }
 
     if (!tk_view_try_consume(NULL, &curr_tokens, TOKEN_CLOSE_PAR)) {
-        msg_parser_expected(tk_view_front(curr_tokens), TOKEN_CLOSE_PAR);
+        msg_parser_expected(tk_view_front(curr_tokens), TOKEN_CLOSE_PAR, TOKEN_COMMA);
         return PARSE_ERROR;
     }
 
@@ -834,6 +830,8 @@ static PARSE_EXPR_STATUS try_extract_expression(Env* env, Node** result, Tk_view
             return PARSE_EXPR_ERROR;
         case PARSE_EXPR_NONE:
             return PARSE_EXPR_NONE;
+        default:
+            unreachable("");
     }
 
     Token prev_operator_token = {0};
@@ -881,7 +879,5 @@ Node_block* parse(const Tokens tokens) {
     assert(env.ancesters.info.count == 0);
     log(LOG_DEBUG, "done with parsing:\n");
     symbol_log(LOG_TRACE, &env);
-    //log(LOG_VERBOSE, "completed parse tree:\n");
-    //log_tree(LOG_VERBOSE, root);
     return root;
 }

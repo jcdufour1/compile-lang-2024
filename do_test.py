@@ -47,6 +47,8 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, str] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_literal_assign.own": "assignment-mismatched-types",
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_operation_assign.own": "assignment-mismatched-types",
     EXPECTED_FAIL_EXAMPLES_DIR + "mismatched_return_type.own": "mismatched-return-type",
+    EXPECTED_FAIL_EXAMPLES_DIR + "trailing_comma_fun_arg.own": "expected-expression",
+    EXPECTED_FAIL_EXAMPLES_DIR + "missing_comma_fun_arg.own": "parser-expected",
 }
 
 def to_str(a):

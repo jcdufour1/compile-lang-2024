@@ -1,0 +1,10 @@
+
+extern("c") fn printf(str_to_print: u8*, args: any...) i32
+
+fn main() i32 {
+    let small_num: i7
+    small_num = 8*2
+    printf("%d\n" 7);
+
+    return 0
+}

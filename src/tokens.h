@@ -7,8 +7,6 @@
 #include "util.h"
 #include "vector.h"
 
-#define TOKENS_DEFAULT_CAPACITY 512
-
 typedef struct {
     Vec_base info;
     Token* buf;
