@@ -11,6 +11,20 @@
 
 static void emit_block(Env* env, String* output, const Node_block* fun_block);
 
+static void extend_literal(String* output, const Node_literal* literal) {
+    switch (literal->type) {
+        case NODE_LIT_STRING:
+            string_extend_strv(&a_main, output, node_unwrap_lit_string_const(literal)->data);
+            return;
+        case NODE_LIT_NUMBER:
+            string_extend_int64_t(&a_main, output, node_unwrap_lit_number_const(literal)->data);
+            return;
+        case NODE_LIT_VOID:
+            return;
+    }
+    unreachable("");
+}
+
 // \n excapes are actually stored as is in tokens and nodes, but should be printed as \0a
 static void string_extend_strv_eval_escapes(Arena* arena, String* string, Str_view str_view) {
     while (str_view.count > 0) {
@@ -70,34 +84,34 @@ static bool is_variadic(const Node* node) {
     }
 }
 
-static void extend_type_decl_str(const Env* env, String* output, const Node* variable_def, bool noundef) {
-    if (is_variadic(variable_def)) {
+static void extend_type_decl_str(const Env* env, String* output, const Node* var_def_or_lit, bool noundef) {
+    if (is_variadic(var_def_or_lit)) {
         string_extend_cstr(&a_main, output, "...");
         return;
     }
 
-    extend_type_call_str(env, output, get_lang_type(variable_def));
+    extend_type_call_str(env, output, get_lang_type(var_def_or_lit));
     if (noundef) {
         string_extend_cstr(&a_main, output, " noundef");
     }
 }
 
-static void extend_literal_decl_prefix(String* output, const Node_literal* var_def) {
-    assert(var_def->lang_type.str.count > 0);
-    if (str_view_cstr_is_equal(var_def->lang_type.str, "u8")) {
-        if (var_def->lang_type.pointer_depth != 1) {
+static void extend_literal_decl_prefix(String* output, const Node_literal* literal) {
+    assert(literal->lang_type.str.count > 0);
+    if (str_view_cstr_is_equal(literal->lang_type.str, "u8")) {
+        if (literal->lang_type.pointer_depth != 1) {
             todo();
         }
         string_extend_cstr(&a_main, output, " @.");
-        string_extend_strv(&a_main, output, var_def->name);
-    } else if (is_i_lang_type(var_def->lang_type)) {
-        if (var_def->lang_type.pointer_depth != 0) {
+        string_extend_strv(&a_main, output, literal->name);
+    } else if (is_i_lang_type(literal->lang_type)) {
+        if (literal->lang_type.pointer_depth != 0) {
             todo();
         }
         vec_append(&a_main, output, ' ');
-        string_extend_strv(&a_main, output, var_def->str_data);
+        extend_literal(output, literal);
     } else {
-        log(LOG_ERROR, NODE_FMT"\n", node_print(var_def));
+        log(LOG_ERROR, NODE_FMT"\n", node_print(literal));
         todo();
     }
 }
@@ -293,7 +307,7 @@ static void emit_unary_suffix(const Env* env, String* output, const Node_unary* 
 static void emit_operator_operand(String* output, const Node* operand) {
     switch (operand->type) {
         case NODE_LITERAL:
-            string_extend_strv(&a_main, output, node_unwrap_literal_const(operand)->str_data);
+            extend_literal(output, node_unwrap_literal_const(operand));
             break;
         case NODE_SYMBOL_TYPED:
             unreachable("");
@@ -402,9 +416,7 @@ static void emit_function_definition(Env* env, String* output, const Node_functi
     vec_append(&a_main, output, ')');
 
     string_extend_cstr(&a_main, output, " {\n");
-
     emit_block(env, output, fun_def->body);
-
     string_extend_cstr(&a_main, output, "}\n");
 }
 
@@ -418,7 +430,7 @@ static void emit_return_statement(const Env* env, String* output, const Node_ret
             string_extend_cstr(&a_main, output, "    ret ");
             extend_type_call_str(env, output, literal->lang_type);
             string_extend_cstr(&a_main, output, " ");
-            string_extend_strv(&a_main, output, literal->str_data);
+            extend_literal(output, literal);
             string_extend_cstr(&a_main, output, "\n");
             break;
         }
@@ -585,7 +597,18 @@ static void emit_block(Env* env, String* output, const Node_block* block) {
 }
 
 static void emit_symbol(String* output, const Symbol_table_node node) {
-    Str_view str_data = node_unwrap_literal_const(node.node)->str_data;
+    Str_view str_data;
+    const Node_literal* literal = node_unwrap_literal_const(node.node);
+    switch (literal->type) {
+        case NODE_LIT_STRING:
+            str_data = node_unwrap_lit_string_const(literal)->data;
+            break;
+        case NODE_LIT_NUMBER:
+            return;
+        default:
+            unreachable("");
+    }
+
     size_t literal_width = str_data.count + 1 - get_count_excape_seq(str_data);
 
     string_extend_cstr(&a_main, output, "@.");

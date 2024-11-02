@@ -87,7 +87,27 @@ typedef struct {
 } Node_load_element_ptr;
 
 typedef struct {
-    Str_view str_data; // eg. "hello" in "let string1: String = "hello""
+    Str_view data; // eg. "hello" in "let string1: String = "hello""
+} Node_lit_string;
+
+typedef struct {
+    int64_t data;
+} Node_lit_number;
+
+typedef union {
+    Node_lit_string node_lit_string;
+    Node_lit_number node_lit_number;
+} Node_literal_as;
+
+typedef enum {
+    NODE_LIT_STRING,
+    NODE_LIT_NUMBER,
+    NODE_LIT_VOID,
+} NODE_LITERAL_TYPE;
+
+typedef struct {
+    Node_literal_as as;
+    NODE_LITERAL_TYPE type;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Str_view name;
 } Node_literal;
@@ -390,6 +410,50 @@ static inline Node_literal* node_unwrap_literal(Node* node) {
 static inline const Node_literal* node_unwrap_literal_const(const Node* node) {
     assert(node->type == NODE_LITERAL);
     return &node->as.node_literal;
+}
+
+static inline Node_lit_number* node_unwrap_lit_number(Node_literal* node) {
+    assert(node->type == NODE_LIT_NUMBER);
+    return &node->as.node_lit_number;
+}
+
+static inline const Node_lit_number* node_unwrap_lit_number_const(const Node_literal* node) {
+    assert(node->type == NODE_LIT_NUMBER);
+    return &node->as.node_lit_number;
+}
+
+static inline Node_lit_string* node_unwrap_lit_string(Node_literal* node) {
+    assert(node->type == NODE_LIT_STRING);
+    return &node->as.node_lit_string;
+}
+
+static inline const Node_lit_string* node_unwrap_lit_string_const(const Node_literal* node) {
+    assert(node->type == NODE_LIT_STRING);
+    return &node->as.node_lit_string;
+}
+
+static inline Node_lit_string* node_auto_unwrap_lit_string(Node* node) {
+    Node_literal* literal = node_unwrap_literal(node);
+    assert(literal->type == NODE_LIT_STRING);
+    return &literal->as.node_lit_string;
+}
+
+static inline const Node_lit_string* node_auto_unwrap_lit_string_const(const Node* node) {
+    const Node_literal* literal = node_unwrap_literal_const(node);
+    assert(literal->type == NODE_LIT_STRING);
+    return &literal->as.node_lit_string;
+}
+
+static inline Node_lit_number* node_auto_unwrap_lit_number(Node* node) {
+    Node_literal* literal = node_unwrap_literal(node);
+    assert(literal->type == NODE_LIT_NUMBER);
+    return &literal->as.node_lit_number;
+}
+
+static inline const Node_lit_number* node_auto_unwrap_lit_number_const(const Node* node) {
+    const Node_literal* literal = node_unwrap_literal_const(node);
+    assert(literal->type == NODE_LIT_NUMBER);
+    return &literal->as.node_lit_number;
 }
 
 static inline Node_function_call* node_unwrap_function_call(Node* node) {

@@ -231,11 +231,21 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
         case NODE_COND_GOTO:
             print_node_src(arena, string, node, do_recursion);
             break;
-        case NODE_LITERAL:
-            extend_lang_type_to_string(arena, string, node_unwrap_literal_const(node)->lang_type, true);
-            string_extend_strv(arena, string, get_node_name(node));
-            string_extend_strv_in_par(arena, string, node_unwrap_literal_const(node)->str_data);
+        case NODE_LITERAL: {
+            const Node_literal* literal = node_unwrap_literal_const(node);
+            extend_lang_type_to_string(arena, string, literal->lang_type, true);
+            string_extend_strv(arena, string, literal->name);
+            if (literal->type == NODE_LIT_STRING) {
+                string_extend_strv_in_par(arena, string, node_unwrap_lit_string_const(literal)->data);
+            } else if (literal->type == NODE_LIT_NUMBER) {
+                string_extend_int64_t(arena, string, node_unwrap_lit_number_const(literal)->data);
+            } else if (literal->type == NODE_LIT_VOID) {
+                string_extend_strv_in_par(arena, string, str_view_from_cstr("void"));
+            } else {
+                unreachable("");
+            }
             break;
+        }
         case NODE_SYMBOL_UNTYPED:
             string_extend_strv_in_par(arena, string, get_node_name(node));
             break;

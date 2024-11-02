@@ -165,7 +165,8 @@ static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement) {
             operation = node_unwrap_operation(if_cond->child);
             break;
         case NODE_LITERAL: {
-            int64_t value = str_view_to_int64_t(node_unwrap_literal_const(if_cond->child)->str_data);
+            const Node_literal* literal = node_unwrap_literal_const(if_cond->child);
+            int64_t value = node_unwrap_lit_number_const(literal)->data;
             if (value == 0) {
                 return new_branch_block;
             } else {

@@ -142,7 +142,7 @@ Str_view literal_name_new(void) {
     static String_vec literal_strings = {0};
     static size_t count = 0;
 
-    char var_name[20];
+    char var_name[24];
     sprintf(var_name, "str%zu", count);
     String symbol_name = string_new_from_cstr(&a_main, var_name);
     vec_append(&a_main, &literal_strings, symbol_name);
@@ -212,7 +212,23 @@ Node_assignment* assignment_new(const Env* env, Node* lhs, Node* rhs) {
 Node_literal* literal_new(Str_view value, TOKEN_TYPE token_type, Pos pos) {
     Node_literal* literal = node_unwrap_literal(node_new(pos, NODE_LITERAL));
     literal->name = literal_name_new();
-    literal->str_data = value;
+
+    switch (token_type) {
+        case TOKEN_INT_LITERAL:
+            literal->type = NODE_LIT_NUMBER;
+            node_unwrap_lit_number(literal)->data = str_view_to_int64_t(value);
+            break;
+        case TOKEN_STRING_LITERAL:
+            literal->type = NODE_LIT_STRING;
+            node_unwrap_lit_string(literal)->data = value;
+            break;
+        case TOKEN_VOID:
+            literal->type = NODE_LIT_VOID;
+            break;
+        default:
+            unreachable("");
+    }
+
     Lang_type dummy;
     try_set_literal_lang_type(&dummy, literal, token_type);
     return literal;
@@ -399,8 +415,8 @@ static void try_set_literal_lang_type(Lang_type* lang_type, Node_literal* litera
         case TOKEN_INT_LITERAL: {
             String lang_type_str = {0};
             string_extend_cstr(&a_main, &lang_type_str, "i");
-            int64_t bit_width = bit_width_needed_signed(str_view_to_int64_t(literal->str_data));
-            string_extend_size_t(&a_main, &lang_type_str, bit_width);
+            int64_t bit_width = bit_width_needed_signed(node_unwrap_lit_number(literal)->data);
+            string_extend_int64_t(&a_main, &lang_type_str, bit_width);
             literal->lang_type = lang_type_from_strv(string_to_strv(lang_type_str), 0);
             break;
         }
@@ -480,8 +496,8 @@ bool try_set_binary_lang_type(const Env* env, Node** new_node, Lang_type* lang_t
 
     // precalcuate binary in some situations
     if (operator->lhs->type == NODE_LITERAL && operator->rhs->type == NODE_LITERAL) {
-        int64_t lhs_val = str_view_to_int64_t(node_unwrap_literal(operator->lhs)->str_data);
-        int64_t rhs_val = str_view_to_int64_t(node_unwrap_literal(operator->rhs)->str_data);
+        int64_t lhs_val = node_auto_unwrap_lit_number(operator->lhs)->data;
+        int64_t rhs_val = node_auto_unwrap_lit_number(operator->rhs)->data;
 
         int64_t result_val;
         switch (operator->token_type) {
