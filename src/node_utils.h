@@ -25,6 +25,9 @@ static inline Lang_type get_member_sym_piece_final_lang_type(const Node_struct_m
     Lang_type lang_type = {0};
     for (size_t idx = 0; idx < struct_memb_sym->children.info.count; idx++) {
         const Node* memb_piece_ = vec_at(&struct_memb_sym->children, idx);
+        if (memb_piece_->type != NODE_STRUCT_MEMBER_SYM_PIECE_TYPED) {
+            unreachable("invalid node is in here");
+        }
         const Node_struct_member_sym_piece_typed* memb_piece = 
             node_unwrap_struct_member_sym_piece_typed_const(memb_piece_);
         lang_type = memb_piece->lang_type;

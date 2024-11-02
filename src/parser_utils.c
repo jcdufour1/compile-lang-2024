@@ -577,6 +577,7 @@ bool try_set_operation_lang_type(const Env* env, Node** new_node, Lang_type* lan
 }
 
 bool try_set_struct_literal_assignment_types(const Env* env, Node** new_node, Lang_type* lang_type, const Node* lhs, Node_struct_literal* struct_literal) {
+    log(LOG_DEBUG, "------------------------------\n");
     if (!is_corresponding_to_a_struct(env, lhs)) {
         todo(); // non_struct assigned struct literal
     }
@@ -591,8 +592,10 @@ bool try_set_struct_literal_assignment_types(const Env* env, Node** new_node, La
     
     Node_ptr_vec new_literal_members = {0};
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
+        log(LOG_DEBUG, "%zu\n", idx);
         Node* memb_sym_def_ = vec_at(&struct_def->members, idx);
         Node_variable_def* memb_sym_def = node_unwrap_variable_def(memb_sym_def_);
+        log_tree(LOG_DEBUG, struct_literal);
         Node_assignment* assign_memb_sym = node_unwrap_assignment(vec_at(&struct_literal->members, idx));
         Node_symbol_untyped* memb_sym_piece_untyped = node_unwrap_symbol_untyped(assign_memb_sym->lhs);
         Node_literal* assign_memb_sym_rhs = node_unwrap_literal(assign_memb_sym->rhs);
@@ -641,19 +644,22 @@ bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node
 
     Node* new_rhs;
     if (assignment->rhs->type == NODE_STRUCT_LITERAL) {
-        try(try_set_struct_literal_assignment_types(env, &new_rhs, &rhs_lang_type, assignment->lhs, node_unwrap_struct_literal(assignment->rhs)));
+        if (!try_set_struct_literal_assignment_types(
+            env, &new_rhs, &rhs_lang_type, assignment->lhs, node_unwrap_struct_literal(assignment->rhs)
+        )) {
+            return false;
+        }
     } else {
         if (!try_set_node_type(env, &new_rhs, &rhs_lang_type, assignment->rhs)) {
             return false;
         }
     }
     assignment->rhs = new_rhs;
-    log_tree(LOG_DEBUG, node_wrap(assignment));
 
     *lang_type = lhs_lang_type;
 
-    log(LOG_DEBUG, LANG_TYPE_FMT " to " LANG_TYPE_FMT"\n", lang_type_print(lhs_lang_type), lang_type_print(get_lang_type(assignment->rhs)));
-    log_tree(LOG_DEBUG, node_wrap(assignment));
+    assert(lhs_lang_type.str.count > 0);
+    assert(get_lang_type(assignment->rhs).str.count > 0);
     switch (do_implicit_conversion_if_needed(lhs_lang_type, assignment->rhs)) {
         case IMPLICIT_CONV_INVALID_TYPES: {
             msg(
@@ -661,7 +667,6 @@ bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node
                 "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
                 lang_type_print(rhs_lang_type), lang_type_print(lhs_lang_type)
             );
-            todo();
             return false;
         }
         case IMPLICIT_CONV_OK:
@@ -733,6 +738,8 @@ bool try_set_function_call_argument_type(
 }
 
 bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_function_call* fun_call) {
+    bool status = true;
+
     Node* fun_def;
     if (!symbol_lookup(&fun_def, env, fun_call->name)) {
         msg(
@@ -790,16 +797,20 @@ bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_func
     }
 
     for (size_t arg_idx = 0; arg_idx < fun_call->args.info.count; arg_idx++) {
+        Node_variable_def* corresponding_param = node_unwrap_variable_def(vec_at(&params->params, params_idx));
         Node** argument = vec_at_ref(&fun_call->args, arg_idx);
         Lang_type lang_type;
         Node* new_arg;
-        if (!try_set_node_type(env, &new_arg, &lang_type, *argument)) {
-            todo();
-            return false;
+        log_tree(LOG_DEBUG, *argument);
+        if ((*argument)->type == NODE_STRUCT_LITERAL) {
+            try(try_set_struct_literal_assignment_types(env, &new_arg, &lang_type, node_wrap(corresponding_param), node_unwrap_struct_literal(*argument)));
+        } else {
+            if (!try_set_node_type(env, &new_arg, &lang_type, *argument)) {
+                status = false;
+                continue;
+            }
         }
         *argument = new_arg;
-
-        Node_variable_def* corresponding_param = node_unwrap_variable_def(vec_at(&params->params, params_idx));
 
         if (!corresponding_param->is_variadic) {
             params_idx++;
@@ -807,40 +818,41 @@ bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_func
 
         Lang_type dummy;
         if (!try_set_function_call_argument_type(env, &new_arg, &dummy, corresponding_param, *argument)) {
-            return false;
+            status = false;
+            continue;
         }
         *argument = new_arg;
     }
 
     *lang_type = fun_rtn_type->lang_type;
-    return true;
+    return status;
 }
 
-bool try_set_struct_member_symbol_types(const Env* env, Lang_type* lang_type, Node_struct_member_sym_untyped* struct_memb_sym_untyped) {
+bool try_set_struct_member_symbol_types(const Env* env, Node** new_node, Lang_type* lang_type, Node_struct_member_sym_untyped* memb_sym_untyped) {
     Node_variable_def* curr_memb_def = NULL;
     Node* struct_def_;
     Node* struct_var;
-    if (!symbol_lookup(&struct_var, env, struct_memb_sym_untyped->name)) {
-        msg_undefined_symbol(node_wrap(struct_memb_sym_untyped));
+    if (!symbol_lookup(&struct_var, env, memb_sym_untyped->name)) {
+        msg_undefined_symbol(node_wrap(memb_sym_untyped));
+        *new_node = node_wrap(memb_sym_untyped);
         return false;
     }
     if (!symbol_lookup(&struct_def_, env, node_unwrap_variable_def(struct_var)->lang_type.str)) {
         todo(); // this should possibly never happen
     }
-    Node_struct_member_sym_untyped temp = *struct_memb_sym_untyped;
     Node_struct_def* struct_def = node_unwrap_struct_def(struct_def_);
-    node_wrap(struct_memb_sym_untyped)->type = NODE_STRUCT_MEMBER_SYM_TYPED;
+
     Node_struct_member_sym_typed* memb_sym_typed = node_unwrap_struct_member_sym_typed(
-        node_wrap(struct_memb_sym_untyped)
+        node_new(node_wrap(memb_sym_untyped)->pos, NODE_STRUCT_MEMBER_SYM_TYPED)
     );
-    memb_sym_typed->name = temp.name;
+    memb_sym_typed->name = memb_sym_untyped->name;
     assert(memb_sym_typed->name.count > 0);
     bool is_struct = true;
     Node_struct_def* prev_struct_def = struct_def;
-    for (size_t idx = 0; idx < memb_sym_typed->children.info.count; idx++) {
-        Node* memb_sym_untyped_ = vec_at(&memb_sym_typed->children, idx);
+    for (size_t idx = 0; idx < memb_sym_untyped->children.info.count; idx++) {
+        Node* memb_sym_piece_untyped_ = vec_at(&memb_sym_untyped->children, idx);
         Node_struct_member_sym_piece_untyped* memb_sym_piece_untyped = 
-            node_unwrap_struct_member_sym_piece_untyped(memb_sym_untyped_);
+            node_unwrap_struct_member_sym_piece_untyped(memb_sym_piece_untyped_);
         if (!is_struct) {
             todo();
         }
@@ -867,23 +879,27 @@ bool try_set_struct_member_symbol_types(const Env* env, Lang_type* lang_type, No
                 "struct `"LANG_TYPE_FMT"` defined here\n", 
                 lang_type_print(memb_sym_def->lang_type)
             );
+            *new_node = node_wrap(memb_sym_untyped);
             return false;
         }
         if (!try_get_struct_definition(env, &struct_def, node_wrap(curr_memb_def))) {
             is_struct = false;
         }
 
-        Node_struct_member_sym_piece_untyped temp_piece = *memb_sym_piece_untyped;
-        node_wrap(memb_sym_piece_untyped)->type = NODE_STRUCT_MEMBER_SYM_PIECE_TYPED;
-        Node_struct_member_sym_piece_typed* memb_sym_typed = node_unwrap_struct_member_sym_piece_typed(node_wrap(memb_sym_piece_untyped));
-        memb_sym_typed->name = temp_piece.name;
-        memb_sym_typed->lang_type = curr_memb_def->lang_type;
-        *lang_type = memb_sym_typed->lang_type;
-        memb_sym_typed->struct_index = get_member_index(prev_struct_def, memb_sym_typed);
+        Node_struct_member_sym_piece_typed* memb_sym_piece_typed = 
+            node_unwrap_struct_member_sym_piece_typed(node_new(
+                node_wrap(memb_sym_untyped)->pos, NODE_STRUCT_MEMBER_SYM_PIECE_TYPED
+            ));
+        memb_sym_piece_typed->name = curr_memb_def->name;
+        memb_sym_piece_typed->lang_type = curr_memb_def->lang_type;
+        *lang_type = memb_sym_piece_typed->lang_type;
+        vec_append(&a_main, &memb_sym_typed->children, node_wrap(memb_sym_piece_typed));
+        memb_sym_piece_typed->struct_index = get_member_index(prev_struct_def, memb_sym_piece_typed);
 
         prev_struct_def = struct_def;
     }
 
+    *new_node = node_wrap(memb_sym_typed);
     return true;
 }
 
@@ -959,7 +975,7 @@ bool try_set_node_type(const Env* env, Node** new_node, Lang_type* lang_type, No
         case NODE_SYMBOL_UNTYPED:
             return try_set_symbol_type(env, lang_type, node_unwrap_symbol_untyped(node));
         case NODE_STRUCT_MEMBER_SYM_UNTYPED:
-            return try_set_struct_member_symbol_types(env, lang_type, node_unwrap_struct_member_sym_untyped(node));
+            return try_set_struct_member_symbol_types(env, new_node, lang_type, node_unwrap_struct_member_sym_untyped(node));
         case NODE_SYMBOL_TYPED:
             *lang_type = node_unwrap_symbol_typed(node)->lang_type;
             return true;

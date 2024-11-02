@@ -60,7 +60,7 @@ void msg(LOG_LEVEL log_level, EXPECT_FAIL_TYPE expected_fail_type, Pos pos, cons
         assert(params.expected_fail_type != EXPECT_FAIL_TYPE_NONE);
 
         log(LOG_NOTE, "expected fail occured\n");
-        exit(EXIT_CODE_EXPECTED_FAIL);
+        expected_fail_count++;
     }
 
     va_end(args);

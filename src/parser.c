@@ -21,7 +21,7 @@ typedef enum {
     PARSE_EXPR_ERROR, // message reported to the user for various types of errors
 } PARSE_EXPR_STATUS;
 
-static Node_block* extract_block(Env* env, Tk_view* tokens);
+static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens);
 static PARSE_STATUS extract_statement(Env* env, Node** child, Tk_view* tokens);
 static PARSE_EXPR_STATUS try_extract_expression(Env* env, Node** result, Tk_view* tokens, bool defer_sym_add);
 static bool try_extract_variable_declaration(
@@ -302,8 +302,7 @@ static PARSE_STATUS extract_function_definition(Env* env, Node_function_definiti
         node_new(node_wrap(fun_decl)->pos, NODE_FUNCTION_DEFINITION)
     );
     (*fun_def)->declaration = fun_decl;
-    (*fun_def)->body = extract_block(env, tokens);
-    return PARSE_OK;
+    return extract_block(env, &(*fun_def)->body, tokens);
 }
 
 static Node_struct_def* extract_struct_definition(Env* env, Tk_view* tokens) {
@@ -397,16 +396,13 @@ static PARSE_STATUS extract_for_range_internal(Env* env, Node_for_range* for_loo
     for_loop->upper_bound = upper_bound;
     try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
 
-    for_loop->body = extract_block(env, tokens);
-    return PARSE_OK;
+    return extract_block(env, &for_loop->body, tokens);
 }
 
 static PARSE_STATUS extract_for_with_condition(Env* env, Node_for_with_condition** for_new, Node_for_range* for_range, Tk_view* tokens) {
     *for_new = node_unwrap_for_with_condition(node_new(node_wrap(for_range)->pos, NODE_FOR_WITH_CONDITION));
     (*for_new)->condition = extract_if_condition(env, tokens);
-
-    (*for_new)->body = extract_block(env, tokens);
-    return PARSE_OK;
+    return extract_block(env, &(*for_new)->body, tokens);
 }
 
 static PARSE_STATUS extract_for_loop(Env* env, Node** for_loop_result, Tk_view* tokens) {
@@ -518,6 +514,11 @@ static PARSE_STATUS try_extract_function_call(Env* env, Node_function_call** chi
 
     if (!tk_view_try_consume(NULL, &curr_tokens, TOKEN_CLOSE_PAR)) {
         msg_parser_expected(tk_view_front(curr_tokens), TOKEN_CLOSE_PAR, TOKEN_COMMA);
+        msg(
+            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap(function_call)->pos,
+            "when parsing arguments for call to function `"STR_VIEW_FMT"`\n", 
+            str_view_print(function_call->name)
+        );
         return PARSE_ERROR;
     }
 
@@ -580,11 +581,8 @@ static PARSE_STATUS extract_if_statement(Env* env, Node_if** if_statement, Tk_vi
     Token if_start_token;
     try(tk_view_try_consume_symbol(&if_start_token, tokens, "if"));
     *if_statement = node_unwrap_if(node_new(if_start_token.pos, NODE_IF_STATEMENT));
-
     (*if_statement)->condition = extract_if_condition(env, tokens);
-    (*if_statement)->body = extract_block(env, tokens);
-
-    return PARSE_OK;
+    return extract_block(env, &(*if_statement)->body, tokens);
 }
 
 static PARSE_STATUS extract_statement(Env* env, Node** child, Tk_view* tokens) {
@@ -640,34 +638,37 @@ static PARSE_STATUS extract_statement(Env* env, Node** child, Tk_view* tokens) {
     return PARSE_OK;
 }
 
-static Node_block* extract_block(Env* env, Tk_view* tokens) {
+static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens) {
+    PARSE_STATUS status = PARSE_OK;
+
     if (tokens->count < 1) {
         unreachable("empty file not implemented\n");
     }
 
     tk_view_try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE);
-    Node_block* block = node_unwrap_block(node_new(tk_view_front(*tokens).pos, NODE_BLOCK));
-    vec_append(&a_main, &env->ancesters, node_wrap(block));
+    *block = node_unwrap_block(node_new(tk_view_front(*tokens).pos, NODE_BLOCK));
+    vec_append(&a_main, &env->ancesters, node_wrap(*block));
     Node* redefined_symbol;
     if (!symbol_do_add_defered(&redefined_symbol, env)) {
         msg_redefinition_of_symbol(env, redefined_symbol);
-        todo();
+        status = PARSE_ERROR;
     }
     while (tokens->count > 0 && !tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
         Node* child;
         if (PARSE_OK != extract_statement(env, &child, tokens)) {
-            log_tokens(LOG_DEBUG, *tokens);
-            todo();
+            // TODO: sync tokens to continue parsing instead of just returning
+            status = PARSE_ERROR;
+            break;
         }
         tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
-        vec_append(&a_main, &block->children, child);
+        vec_append(&a_main, &(*block)->children, child);
     }
 
     Node* dummy = NULL;
     vec_pop(dummy, &env->ancesters);
-    assert(dummy == node_wrap(block));
-    assert(block);
-    return block;
+    assert(dummy == node_wrap(*block));
+    assert(*block);
+    return status;
 }
 
 static Node_struct_literal* extract_struct_literal(Env* env, Tk_view* tokens) {
@@ -874,7 +875,8 @@ static PARSE_EXPR_STATUS try_extract_expression(Env* env, Node** result, Tk_view
 Node_block* parse(const Tokens tokens) {
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
     Env env = {0};
-    Node_block* root = extract_block(&env, &token_view);
+    Node_block* root;
+    extract_block(&env, &root, &token_view);
     log(LOG_DEBUG, "%zu\n", env.ancesters.info.count);
     assert(env.ancesters.info.count == 0);
     log(LOG_DEBUG, "done with parsing:\n");

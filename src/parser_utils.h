@@ -135,7 +135,7 @@ void set_symbol_type(Node_symbol_untyped* sym_untyped);
 
 bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_function_call* fun_call);
 
-bool try_set_struct_member_symbol_types(const Env* env, Lang_type* lang_type, Node_struct_member_sym_untyped* struct_memb_sym);
+bool try_set_struct_member_symbol_types(const Env* env, Node** new_node, Lang_type* lang_type, Node_struct_member_sym_untyped* struct_memb_sym);
 
 bool try_set_node_type(const Env* env, Node** new_node, Lang_type* lang_type, Node* node);
 

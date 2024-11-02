@@ -6,13 +6,31 @@
 #include "../do_passes.h"
 #include "../symbol_table.h"
 
+static void do_exit(void) {
+    if (!params.test_expected_fail) {
+        exit(EXIT_CODE_FAIL);
+    }
+
+    if (expected_fail_count > 0) {
+        exit(EXIT_CODE_EXPECTED_FAIL);
+    } else {
+        log(LOG_FETAL, "expected fail did not fail, but normal fail did occur\n");
+        exit(EXIT_CODE_FAIL);
+    }
+}
+
 void do_passes(Node_block** root, const Parameters* params) {
+    if (error_count > 0) {
+        do_exit();
+    }
+    arena_reset(&print_arena);
+
     Env env = {0};
     //log_tree(LOG_DEBUG, node_wrap(*root));
     start_walk(&env, root, analysis_1);
     log_tree(LOG_DEBUG, node_wrap(*root));
     if (error_count > 0) {
-        exit(EXIT_CODE_FAIL);
+        do_exit();
     }
     arena_reset(&print_arena);
 
@@ -39,8 +57,7 @@ void do_passes(Node_block** root, const Parameters* params) {
     if (params->emit_llvm) {
         emit_llvm_from_tree(&env, *root);
     } else if (params->test_expected_fail) {
-        log(LOG_FETAL, "expected fail did not fail\n");
-        exit(EXIT_CODE_FAIL);
+        do_exit();
     } else {
         unreachable("");
     }
