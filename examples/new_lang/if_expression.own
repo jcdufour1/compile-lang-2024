@@ -15,11 +15,10 @@ fn no() i32 {
 }
 
 fn main() i32 {
-    // TODO: remove unsafe_cast from these examples
-    if unsafe_cast<i32>8*unsafe_cast<i32>3 < 5 {
+    if 8*3 < 5 {
         puts("no");
     }
-    if unsafe_cast<i32>8*unsafe_cast<i32>3 < 50 {
+    if 8*3 < 50 {
         puts("yes");
     }
 
@@ -41,6 +40,9 @@ fn main() i32 {
         puts("no3");
     }
 
+    if 2 {
+        puts("yes4.2");
+    }
     if 1 {
         puts("yes4");
     }
@@ -54,8 +56,12 @@ fn main() i32 {
         puts("no5");
     }
 
+    let num_yes2: i32 = 2;
     let num_yes: i32 = 1;
     let num_no: i32 = 0;
+    if num_yes2 {
+        puts("yes6.2");
+    }
     if num_yes {
         puts("yes6");
     }
@@ -68,6 +74,9 @@ fn main() i32 {
     }
     if !num_yes {
         puts("no7");
+    }
+    if !num_yes2 {
+        puts("no7.2");
     }
 
     if !no() {

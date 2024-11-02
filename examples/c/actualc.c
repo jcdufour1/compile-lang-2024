@@ -38,6 +38,8 @@ void do_thing_ptr(Div* div) {
 
 int main(void) {
     int num1 = 8;
-    int* ptr = &num1;
+    if (!num1) {
+        puts("hello");
+    }
     return 0;
 }

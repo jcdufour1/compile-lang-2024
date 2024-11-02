@@ -114,7 +114,7 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* for_loop) {
 
     Node_assignment* assignment_to_inc_cond_var = for_loop_cond_var_assign_new(env, for_var_def->name, node_wrap(lhs_actual)->pos);
 
-    Node_binary* new_operation = binary_new(
+    Node* new_operation = binary_new(
         env, node_wrap(symbol_new(symbol_lhs_assign->name, node_wrap(symbol_lhs_assign)->pos)), rhs_actual, TOKEN_LESS_THAN
     );
 
@@ -125,8 +125,8 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* for_loop) {
     Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label->name, node_wrap(for_loop)->pos);
     Node_label* after_check_label = label_new(env, literal_name_new(), node_wrap(for_loop)->pos);
     Node_label* after_for_loop_label = label_new(env, literal_name_new(), node_wrap(for_loop)->pos);
-    Node_llvm_register_sym* oper_rtn_sym = node_unwrap_llvm_register_sym(node_new(node_wrap(new_operation)->pos, NODE_LLVM_REGISTER_SYM));
-    oper_rtn_sym->node_src = node_wrap(new_operation);
+    Node_llvm_register_sym* oper_rtn_sym = node_unwrap_llvm_register_sym(node_new(new_operation->pos, NODE_LLVM_REGISTER_SYM));
+    oper_rtn_sym->node_src = new_operation;
     Node_cond_goto* check_cond_jmp = conditional_goto_new(
         node_wrap_operator(new_operation),
         after_check_label->name, 
@@ -154,10 +154,29 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* for_loop) {
 }
 
 static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement) {
-    Node_if_condition* if_condition = if_statement->condition;
+    Node_if_condition* if_cond = if_statement->condition;
     Node_block* block = if_statement->body;
 
-    Node_operator* operation = node_unwrap_operation(if_condition->child);
+    Node_block* new_branch_block = node_unwrap_block(node_new(node_wrap(block)->pos, NODE_BLOCK));
+
+    Node_operator* operation;
+    switch (if_cond->child->type) {
+        case NODE_OPERATOR:
+            operation = node_unwrap_operation(if_cond->child);
+            break;
+        case NODE_LITERAL: {
+            int64_t value = str_view_to_int64_t(node_unwrap_literal_const(if_cond->child)->str_data);
+            if (value == 0) {
+                return new_branch_block;
+            } else {
+                vec_extend(&a_main, &new_branch_block->children, &block->children);
+                return new_branch_block;
+            }
+        }
+        default:
+            unreachable(NODE_FMT"\n", node_print(if_cond->child));
+    }
+
 
     Node_label* if_true = label_new(env, literal_name_new(), node_wrap(block)->pos);
     Node_label* if_after = label_new(env, literal_name_new(), node_wrap(operation)->pos);
@@ -165,8 +184,6 @@ static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement) {
     Node_cond_goto* check_cond_jmp = conditional_goto_new(operation, if_true->name, if_after->name);
 
     Node_goto* jmp_to_if_after = goto_new(if_after->name, node_wrap(block)->pos);
-
-    Node_block* new_branch_block = node_unwrap_block(node_new(node_wrap(block)->pos, NODE_BLOCK));
 
     vec_append(&a_main, &new_branch_block->children, node_wrap(operation));
     vec_append(&a_main, &new_branch_block->children, node_wrap(check_cond_jmp));

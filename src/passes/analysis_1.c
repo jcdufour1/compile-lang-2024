@@ -4,60 +4,6 @@
 #include "../symbol_table.h"
 #include "../parser_utils.h"
 
-static void set_if_condition_types(Env* env, Node_if_condition* if_cond) {
-    Node* old_if_cond_child = if_cond->child;
-    switch (old_if_cond_child->type) {
-        case NODE_SYMBOL_UNTYPED:
-            set_symbol_type(node_unwrap_symbol_untyped(old_if_cond_child));
-            if_cond->child = node_wrap(binary_new(
-                env,
-                old_if_cond_child,
-                node_wrap(literal_new(str_view_from_cstr("1"), TOKEN_INT_LITERAL, old_if_cond_child->pos)),
-                TOKEN_DOUBLE_EQUAL
-            ));
-            break;
-        case NODE_OPERATOR: {
-            Node* new_child;
-            Lang_type dummy;
-            Node_operator* operator = node_unwrap_operation(old_if_cond_child);
-            if (operator->type == NODE_OP_UNARY) {
-                try_set_unary_lang_type(env, &new_child, &dummy, node_unwrap_op_unary(operator));
-            } else if (operator->type == NODE_OP_BINARY) {
-                try_set_binary_lang_type(env, &new_child, &dummy, node_unwrap_op_binary(operator));
-                if_cond->child = new_child;
-            } else {
-                unreachable("");
-            }
-        }
-        break;
-        case NODE_FUNCTION_CALL: {
-            log(LOG_DEBUG, NODE_FMT"\n", node_print(old_if_cond_child));
-            Lang_type dummy;
-            if (!try_set_function_call_types(env, &dummy, node_unwrap_function_call(old_if_cond_child))) {
-                todo();
-            }
-            if_cond->child = node_wrap(binary_new(
-                env,
-                old_if_cond_child,
-                node_wrap(literal_new(str_view_from_cstr("0"), TOKEN_INT_LITERAL, node_wrap(old_if_cond_child)->pos)),
-                TOKEN_NOT_EQUAL
-            ));
-            break;
-        }
-        case NODE_LITERAL: {
-            if_cond->child = node_wrap(binary_new(
-                env,
-                old_if_cond_child,
-                node_wrap(literal_new(str_view_from_cstr("1"), TOKEN_INT_LITERAL, old_if_cond_child->pos)),
-                TOKEN_DOUBLE_EQUAL
-            ));
-            break;
-        }
-        default:
-            unreachable(NODE_FMT, node_print(old_if_cond_child));
-    }
-}
-
 void analysis_1(Env* env) {
     Node* block_ = vec_top(&env->ancesters);
     if (block_->type != NODE_BLOCK) {

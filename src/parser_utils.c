@@ -18,7 +18,7 @@ static int64_t log2(int64_t num) {
 
         reference *= 2;
     }
-    assert(0);
+    unreachable("");
 }
 
 //static int64_t bit_width_needed_unsigned(int64_t num) {
@@ -29,7 +29,7 @@ static int64_t bit_width_needed_signed(int64_t num) {
     return 1 + log2(num + 1);
 }
 
-static int64_t str_view_to_int64_t(Str_view str_view) {
+int64_t str_view_to_int64_t(Str_view str_view) {
     int64_t result = 0;
     size_t idx = 0;
     for (idx = 0; idx < str_view.count; idx++) {
@@ -447,6 +447,18 @@ static Node* simplify_binary(const Env* env, Node_binary* binary) {
             case TOKEN_SLASH:
                 result_val = lhs_val/rhs_val;
                 break;
+            case TOKEN_LESS_THAN:
+                result_val = lhs_val < rhs_val ? 1 : 0;
+                break;
+            case TOKEN_GREATER_THAN:
+                result_val = lhs_val > rhs_val ? 1 : 0;
+                break;
+            case TOKEN_DOUBLE_EQUAL:
+                result_val = lhs_val == rhs_val ? 1 : 0;
+                break;
+            case TOKEN_NOT_EQUAL:
+                result_val = lhs_val != rhs_val ? 1 : 0;
+                break;
             default:
                 unreachable(TOKEN_TYPE_FMT"\n", token_type_print(binary->token_type));
         }
@@ -504,9 +516,6 @@ bool try_set_binary_lang_type(const Env* env, Node** new_node, Lang_type* lang_t
     }
     operator->rhs = new_rhs;
 
-    operator->lhs = simplify(env, operator->lhs);
-    operator->rhs = simplify(env, operator->rhs);
-
     log_tree(LOG_DEBUG, node_wrap(operator));
 
     if (!lang_type_is_equal(get_lang_type(operator->lhs), get_lang_type(operator->rhs))) {
@@ -549,7 +558,7 @@ bool try_set_binary_lang_type(const Env* env, Node** new_node, Lang_type* lang_t
     assert(get_lang_type(operator->lhs).str.count > 0);
     *lang_type = get_lang_type(operator->lhs);
     operator->lang_type = get_lang_type(operator->lhs);
-    *new_node = node_wrap(operator);
+    *new_node = simplify_binary(env, operator);
     return true;
 }
 
@@ -927,8 +936,8 @@ static bool try_set_if_condition_types(const Env* env, Lang_type* lang_type, Nod
             if_cond->child = binary_new(
                 env, 
                 if_cond->child,
-                node_wrap(literal_new(str_view_from_cstr("1"), TOKEN_INT_LITERAL, if_cond->child->pos)),
-                TOKEN_DOUBLE_EQUAL
+                node_wrap(literal_new(str_view_from_cstr("0"), TOKEN_INT_LITERAL, if_cond->child->pos)),
+                TOKEN_NOT_EQUAL
             );
             break;
         case NODE_OPERATOR:
@@ -946,8 +955,8 @@ static bool try_set_if_condition_types(const Env* env, Lang_type* lang_type, Nod
             if_cond->child = node_wrap(binary_new(
                 env,
                 if_cond->child,
-                node_wrap(literal_new(str_view_from_cstr("1"), TOKEN_INT_LITERAL, if_cond->child->pos)),
-                TOKEN_DOUBLE_EQUAL
+                node_wrap(literal_new(str_view_from_cstr("0"), TOKEN_INT_LITERAL, if_cond->child->pos)),
+                TOKEN_NOT_EQUAL
             ));
             break;
         }
