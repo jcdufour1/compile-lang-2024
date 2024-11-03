@@ -17,7 +17,7 @@ static Node_goto* goto_new(Str_view name_label_to_jmp_to, Pos pos) {
 }
 
 static Node_cond_goto* conditional_goto_new(
-    Node_operator* operator, // TODO: make better way to pass generic operation to a function
+    Node_operator* operator,
     Str_view label_name_if_true,
     Str_view label_name_if_false
 ) {

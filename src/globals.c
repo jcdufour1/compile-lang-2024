@@ -14,4 +14,5 @@ size_t error_count = 0;
 size_t warning_count = 0;
 size_t expected_fail_count = 0;
 
+// TODO: use this?
 Pos prev_pos = {0};

@@ -4,7 +4,7 @@
 #include "passes.h"
 
 // TODO: rewrite this pass, because this is unsafe
-// TODO: do not change type of existing node, because it is error prone
+// TODO: do not change type of existing node (or find better way), because this is error prone
 static void do_change_operator(Node_operator* operator) {
     log_tree(LOG_DEBUG, node_wrap(operator));
     Pos pos = node_wrap(operator)->pos;

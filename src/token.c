@@ -26,7 +26,6 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
         case TOKEN_SINGLE_MINUS:
             return str_view_from_cstr("-");
         case TOKEN_ASTERISK:
-            // TODO: * may not always be multiplication
             return str_view_from_cstr("*");
         case TOKEN_STRING_LITERAL:
             return str_view_from_cstr("str");
