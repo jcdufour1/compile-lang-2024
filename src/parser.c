@@ -531,13 +531,7 @@ static PARSE_STATUS extract_function_declaration(Env* env, Node_function_declara
         goto error;
     }
     if (!tk_view_try_consume(NULL, tokens, TOKEN_FN)) {
-        // TODO: figure out better way to print tokens to user 
-        // (avoid using token_print_internal directly)
-        msg(
-            LOG_ERROR, EXPECT_FAIL_PARSER_EXPECTED, tk_view_front(*tokens).pos,
-            "got token `"STR_VIEW_FMT"`, but expected `fn`\n", 
-            str_view_print(token_print_internal(&print_arena, tk_view_front(*tokens), true))
-        );
+        msg_parser_expected(tk_view_front(*tokens), TOKEN_FN);
         goto error;
     }
     if (PARSE_OK != extract_function_declaration_common(env, fun_decl, tokens)) {
