@@ -86,6 +86,55 @@ static PARSE_STATUS msg_redefinition_of_symbol(const Env* env, const Node* new_s
     return PARSE_ERROR;
 }
 
+static bool starts_with_struct_definition(Tk_view tokens) {
+    if (tokens.count < 1) {
+        return false;
+    }
+    return token_is_equal(tk_view_front(tokens), "struct", TOKEN_SYMBOL);
+}
+
+static bool starts_with_function_declaration(Tk_view tokens) {
+    if (tokens.count < 1) {
+        return false;
+    }
+    return token_is_equal(tk_view_front(tokens), "extern", TOKEN_SYMBOL);
+}
+
+static bool starts_with_function_definition(Tk_view tokens) {
+    if (tokens.count < 1) {
+        return false;
+    }
+    return token_is_equal(tk_view_front(tokens), "fn", TOKEN_SYMBOL);
+}
+
+static bool starts_with_return(Tk_view tokens) {
+    if (tokens.count < 1) {
+        return false;
+    }
+    return token_is_equal(tk_view_front(tokens), "return", TOKEN_SYMBOL);;
+}
+
+static bool starts_with_if(Tk_view tokens) {
+    if (tokens.count < 1) {
+        return false;
+    }
+    return token_is_equal(tk_view_front(tokens), "if", TOKEN_SYMBOL);;
+}
+
+static bool starts_with_for(Tk_view tokens) {
+    if (tokens.count < 1) {
+        return false;
+    }
+    return token_is_equal(tk_view_front(tokens), "for", TOKEN_SYMBOL);;
+}
+
+static bool starts_with_break(Tk_view tokens) {
+    if (tokens.count < 1) {
+        return false;
+    }
+    return token_is_equal(tk_view_front(tokens), "break", TOKEN_SYMBOL);
+}
+
 // consume tokens from { to } (inclusive) and discard outer {}
 static Tk_view extract_items_inside_brackets(Tk_view* tokens, TOKEN_TYPE closing_bracket_type) {
     // the opening_bracket type should be the opening bracket type that corresponds to closing_brace_type
@@ -587,39 +636,39 @@ static PARSE_STATUS extract_if_statement(Env* env, Node_if** if_statement, Tk_vi
 
 static PARSE_STATUS extract_statement(Env* env, Node** child, Tk_view* tokens) {
     Node* lhs;
-    if (token_is_equal(tk_view_front(*tokens), "struct", TOKEN_SYMBOL)) {
+    if (starts_with_struct_definition(*tokens)) {
         lhs = node_wrap(extract_struct_definition(env, tokens));
-    } else if (token_is_equal(tk_view_front(*tokens), "extern", TOKEN_SYMBOL)) {
+    } else if (starts_with_function_declaration(*tokens)) {
         Node_function_declaration* fun_decl;
         if (PARSE_OK != extract_function_declaration(env, &fun_decl, tokens)) {
             return PARSE_ERROR;
         }
         lhs = node_wrap(fun_decl);
-    } else if (token_is_equal(tk_view_front(*tokens), "fn", TOKEN_SYMBOL)) {
+    } else if (starts_with_function_definition(*tokens)) {
         Node_function_definition* fun_def;
         if (PARSE_OK != extract_function_definition(env, &fun_def, tokens)) {
             return PARSE_ERROR;
         }
         lhs = node_wrap(fun_def);
-    } else if (token_is_equal(tk_view_front(*tokens), "return", TOKEN_SYMBOL)) {
+    } else if (starts_with_return(*tokens)) {
         Node_return_statement* rtn_statement;
         if (PARSE_OK != extract_function_return_statement(env, &rtn_statement, tokens)) {
             return PARSE_ERROR;
         }
         lhs = node_wrap(rtn_statement);
-    } else if (token_is_equal(tk_view_front(*tokens), "if", TOKEN_SYMBOL)) {
+    } else if (starts_with_if(*tokens)) {
         Node_if* if_statement;
         if (PARSE_OK != extract_if_statement(env, &if_statement, tokens)) {
             return PARSE_ERROR;
         }
         lhs = node_wrap(if_statement);
-    } else if (token_is_equal(tk_view_front(*tokens), "for", TOKEN_SYMBOL)) {
+    } else if (starts_with_for(*tokens)) {
         Node* for_loop;
         if (PARSE_OK != extract_for_loop(env, &for_loop, tokens)) {
             return PARSE_ERROR;
         }
         lhs = for_loop;
-    } else if (token_is_equal(tk_view_front(*tokens), "break", TOKEN_SYMBOL)) {
+    } else if (starts_with_break(*tokens)) {
         lhs = node_wrap(extract_break(tokens));
     } else {
         if (PARSE_EXPR_OK != try_extract_expression(env, &lhs, tokens, false)) {
