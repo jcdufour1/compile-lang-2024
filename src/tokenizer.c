@@ -56,14 +56,34 @@ static bool get_next_token(Pos* pos, Token* token, Str_view_col* file_text, Para
     token->pos.file_path = pos->file_path;
 
     if (isalpha(str_view_col_front(*file_text))) {
-        token->text = str_view_col_consume_while(pos, file_text, local_isalnum_or_underscore).base;
-        token->type = TOKEN_SYMBOL;
-        if (str_view_cstr_is_equal(token->text, "deref")) {
+        Str_view text = str_view_col_consume_while(pos, file_text, local_isalnum_or_underscore).base;
+        if (str_view_cstr_is_equal(text, "deref")) {
             token->type = TOKEN_DEREF;
-        } else if (str_view_cstr_is_equal(token->text, "refer")) {
+        } else if (str_view_cstr_is_equal(text, "refer")) {
             token->type = TOKEN_REFER;
-        } else if (str_view_cstr_is_equal(token->text, "unsafe_cast")) {
+        } else if (str_view_cstr_is_equal(text, "unsafe_cast")) {
             token->type = TOKEN_UNSAFE_CAST;
+        } else if (str_view_cstr_is_equal(text, "fn")) {
+            token->type = TOKEN_FN;
+        } else if (str_view_cstr_is_equal(text, "for")) {
+            token->type = TOKEN_FOR;
+        } else if (str_view_cstr_is_equal(text, "if")) {
+            token->type = TOKEN_IF;
+        } else if (str_view_cstr_is_equal(text, "return")) {
+            token->type = TOKEN_RETURN;
+        } else if (str_view_cstr_is_equal(text, "extern")) {
+            token->type = TOKEN_EXTERN;
+        } else if (str_view_cstr_is_equal(text, "struct")) {
+            token->type = TOKEN_STRUCT;
+        } else if (str_view_cstr_is_equal(text, "let")) {
+            token->type = TOKEN_LET;
+        } else if (str_view_cstr_is_equal(text, "in")) {
+            token->type = TOKEN_IN;
+        } else if (str_view_cstr_is_equal(text, "break")) {
+            token->type = TOKEN_BREAK;
+        } else {
+            token->text = text;
+            token->type = TOKEN_SYMBOL;
         }
         return true;
     } else if (isdigit(str_view_col_front(*file_text))) {

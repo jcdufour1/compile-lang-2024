@@ -44,8 +44,10 @@ void log_common(LOG_LEVEL log_level, const char* file, int line, int indent, con
 void msg(LOG_LEVEL log_level, EXPECT_FAIL_TYPE expected_fail_type, Pos pos, const char* format, ...) {
     va_list args;
     va_start(args, format);
+    bool fail_immediately = false;
 
     if (log_level >= LOG_ERROR) {
+        fail_immediately = params.all_errors_fetal;
         error_count++;
     } else if (log_level == LOG_WARNING) {
         warning_count++;
@@ -61,6 +63,11 @@ void msg(LOG_LEVEL log_level, EXPECT_FAIL_TYPE expected_fail_type, Pos pos, cons
 
         log(LOG_NOTE, "expected fail occured\n");
         expected_fail_count++;
+    }
+
+    if (fail_immediately) {
+        fprintf(stderr, "%s: fail_immediately option active\n", get_log_level_str(LOG_FETAL));
+        abort();
     }
 
     va_end(args);

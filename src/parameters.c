@@ -97,6 +97,8 @@ static void parse_long_option(Parameters* params, int* argc, char*** argv) {
 
     if (0 == strcmp(curr_opt, "emit-llvm")) {
         params->emit_llvm = true;
+    } else if (0 == strcmp(curr_opt, "all-errors-fetal")) {
+        params->all_errors_fetal = true;
     } else {
         log(LOG_FETAL, "invalid option: %s\n", curr_opt);
         exit(EXIT_CODE_FAIL);

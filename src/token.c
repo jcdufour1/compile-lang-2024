@@ -63,9 +63,28 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
             return str_view_from_cstr("refer");
         case TOKEN_UNSAFE_CAST:
             return str_view_from_cstr("unsafe_cast");
-        default:
-            unreachable("%d\n", token_type);
+        case TOKEN_VOID:
+            return str_view_from_cstr("void");
+        case TOKEN_FN:
+            return str_view_from_cstr("fn");
+        case TOKEN_FOR:
+            return str_view_from_cstr("for");
+        case TOKEN_IF:
+            return str_view_from_cstr("if");
+        case TOKEN_RETURN:
+            return str_view_from_cstr("return");
+        case TOKEN_EXTERN:
+            return str_view_from_cstr("extern");
+        case TOKEN_STRUCT:
+            return str_view_from_cstr("struct");
+        case TOKEN_LET:
+            return str_view_from_cstr("let");
+        case TOKEN_IN:
+            return str_view_from_cstr("in");
+        case TOKEN_BREAK:
+            return str_view_from_cstr("break");
     }
+    unreachable("");
 }
 
 Str_view token_print_internal(Arena* arena, Token token, bool msg_format) {
@@ -109,6 +128,15 @@ Str_view token_print_internal(Arena* arena, Token token, bool msg_format) {
         case TOKEN_REFER: // fallthrough
         case TOKEN_VOID: // fallthrough
         case TOKEN_UNSAFE_CAST: // fallthrough
+        case TOKEN_FN: // fallthrough
+        case TOKEN_FOR: // fallthrough
+        case TOKEN_IF: // fallthrough
+        case TOKEN_RETURN: // fallthrough
+        case TOKEN_EXTERN: // fallthrough
+        case TOKEN_STRUCT: // fallthrough
+        case TOKEN_LET: // fallthrough
+        case TOKEN_IN: // fallthrough
+        case TOKEN_BREAK:
             break;
         case TOKEN_COMMENT: 
             // fallthrough

@@ -11,6 +11,7 @@ typedef struct {
     bool compile : 1;
     bool emit_llvm : 1;
     bool test_expected_fail : 1;
+    bool all_errors_fetal: 1;
 } Parameters;
 
 void parse_args(int argc, char** argv);

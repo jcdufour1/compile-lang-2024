@@ -52,6 +52,17 @@ typedef enum {
     TOKEN_DOUBLE_DOT,
     TOKEN_TRIPLE_DOT,
 
+    // keywords
+    TOKEN_FN,
+    TOKEN_FOR,
+    TOKEN_IF,
+    TOKEN_RETURN,
+    TOKEN_EXTERN,
+    TOKEN_STRUCT,
+    TOKEN_LET,
+    TOKEN_IN,
+    TOKEN_BREAK,
+
     // comment
     TOKEN_COMMENT,
 } TOKEN_TYPE;
@@ -129,6 +140,24 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_UNSAFE_CAST:
             return false;
+        case TOKEN_FN:
+            return false;
+        case TOKEN_FOR:
+            return false;
+        case TOKEN_IF:
+            return false;
+        case TOKEN_EXTERN:
+            return false;
+        case TOKEN_RETURN:
+            return false;
+        case TOKEN_STRUCT:
+            return false;
+        case TOKEN_LET:
+            return false;
+        case TOKEN_IN:
+            return false;
+        case TOKEN_BREAK:
+            return false;
     }
     unreachable("");
 }
@@ -192,6 +221,24 @@ static inline bool token_is_operator(Token token) {
         case TOKEN_VOID:
             // fallthrough
         case TOKEN_COMMENT:
+            // fallthrough
+        case TOKEN_FOR:
+            // fallthrough
+        case TOKEN_IF:
+            // fallthrough
+        case TOKEN_RETURN:
+            // fallthrough
+        case TOKEN_FN:
+            // fallthrough
+        case TOKEN_STRUCT:
+            // fallthrough
+        case TOKEN_EXTERN:
+            // fallthrough
+        case TOKEN_LET:
+            // fallthrough
+        case TOKEN_IN:
+            // fallthrough
+        case TOKEN_BREAK:
             // fallthrough
         case TOKEN_DOUBLE_DOT:
             return false;
