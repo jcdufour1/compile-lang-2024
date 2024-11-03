@@ -50,6 +50,11 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, str] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "trailing_comma_fun_arg.own": "expected-expression",
     EXPECTED_FAIL_EXAMPLES_DIR + "missing_comma_fun_arg.own": "parser-expected",
     EXPECTED_FAIL_EXAMPLES_DIR + "triple_equals.own": "invalid-token",
+    EXPECTED_FAIL_EXAMPLES_DIR + "extern_c_no_close_par_after_c.own": "parser-expected",
+    EXPECTED_FAIL_EXAMPLES_DIR + "extern_c_no_open_par_before_c.own": "parser-expected",
+    EXPECTED_FAIL_EXAMPLES_DIR + "extern_c_no_c_after_extern.own": "parser-expected",
+    EXPECTED_FAIL_EXAMPLES_DIR + "extern_c_empty_str_extern_type.own": "invalid-extern-type",
+    EXPECTED_FAIL_EXAMPLES_DIR + "extern_c_no_fn.own": "parser-expected",
 }
 
 def to_str(a):

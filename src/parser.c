@@ -482,22 +482,48 @@ static Node_break* extract_break(Tk_view* tokens) {
 }
 
 static PARSE_STATUS extract_function_declaration(Env* env, Node_function_declaration** fun_decl, Tk_view* tokens) {
-    try(tk_view_try_consume_symbol(NULL, tokens, "extern"));
-    try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_PAR));
-    Token extern_type_token;
-    try(tk_view_try_consume(&extern_type_token, tokens, TOKEN_STRING_LITERAL));
-    if (!str_view_cstr_is_equal(extern_type_token.text, "c")) {
-        todo();
-    }
-    try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_PAR));
-    try(tk_view_try_consume_symbol(NULL, tokens, "fn"));
-    if (PARSE_OK != extract_function_declaration_common(env, fun_decl, tokens)) {
-        return PARSE_ERROR;
-    }
+    PARSE_STATUS status = PARSE_ERROR;
 
+    try(tk_view_try_consume_symbol(NULL, tokens, "extern"));
+    if (!tk_view_try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
+        msg_parser_expected(tk_view_front(*tokens), TOKEN_OPEN_PAR);
+        goto error;
+    }
+    Token extern_type_token;
+    if (!tk_view_try_consume(&extern_type_token, tokens, TOKEN_STRING_LITERAL)) {
+        msg_parser_expected(tk_view_front(*tokens), TOKEN_STRING_LITERAL);
+        goto error;
+    }
+    if (!str_view_cstr_is_equal(extern_type_token.text, "c")) {
+        msg(
+            LOG_ERROR, EXPECT_FAIL_INVALID_EXTERN_TYPE, extern_type_token.pos,
+            "invalid extern type `"STR_VIEW_FMT"`\n", str_view_print(extern_type_token.text)
+        );
+        goto error;
+    }
+    if (!tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
+        msg_parser_expected(tk_view_front(*tokens), TOKEN_CLOSE_PAR);
+        goto error;
+    }
+    if (!tk_view_try_consume_symbol(NULL, tokens, "fn")) {
+        // TODO: figure out better way to print tokens to user 
+        // (avoid using token_print_internal directly)
+        msg(
+            LOG_ERROR, EXPECT_FAIL_PARSER_EXPECTED, tk_view_front(*tokens).pos,
+            "got token `"STR_VIEW_FMT"`, but expected `fn`\n", 
+            str_view_print(token_print_internal(&print_arena, tk_view_front(*tokens), true))
+        );
+        goto error;
+    }
+    if (PARSE_OK != extract_function_declaration_common(env, fun_decl, tokens)) {
+        goto error;
+    }
     tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
+
+    status = PARSE_OK;
+error:
     symbol_ignore_defered(env);
-    return PARSE_OK;
+    return status;
 }
 
 static Node_literal* extract_literal(Env* env, Tk_view* tokens, bool defer_sym_add) {
