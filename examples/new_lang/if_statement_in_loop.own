@@ -2,8 +2,8 @@ extern("c") fn puts(str_to_print: u8*) i32
 extern("c") fn printf(str_to_print_2: u8*, args: any...) i32
 
 fn main() i32 {
-    for num1: i32 in {0..7} {
-        for num2: i32 in {0..num1} {
+    for num1: i32 in 0..7 {
+        for num2: i32 in 0..num1 {
             let num_temp: i32
             num_temp = num2
             if num_temp < 5 {
@@ -13,8 +13,8 @@ fn main() i32 {
         printf("\n")
     }
 
-    for num1: i32 in {2..9} {
-        for num2: i32 in {num1..9} {
+    for num1: i32 in 2..9 {
+        for num2: i32 in num1..9 {
             let num_temp: i32 = num2
             if num_temp < 6 {
                 printf("%d ", num2)

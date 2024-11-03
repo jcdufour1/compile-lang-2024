@@ -21,7 +21,7 @@ fn println(string: u8*, num2: i32) i32 {
 
 fn main() i32 {
     let count_3: i32 = 89
-    for let idx_2: i32 in {0..2} {
+    for let idx_2: i32 in 0..2 {
         puts("thing")
     }
     let string_thing: u8* = get_string()
@@ -32,7 +32,7 @@ fn main() i32 {
     let result: i32 = println("bye", 91)
     printf("%d\n", result)
 
-    for idx_2: i32 in {0..10} {
+    for idx_2: i32 in 0..10 {
         printf("idx_2: %d\n", idx_2)
         if idx_2 > 5 {
             break

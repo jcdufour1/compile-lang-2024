@@ -449,16 +449,18 @@ static bool try_extract_variable_declaration(
 static PARSE_STATUS extract_for_range_internal(Env* env, Node_for_range* for_loop, Tk_view* tokens) {
     try(tk_view_try_consume(NULL, tokens, TOKEN_IN));
 
-    try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE));
-
     Node* lower_bound_child;
     if (PARSE_EXPR_OK != try_extract_expression(env, &lower_bound_child, tokens, true)) {
-        todo();
+        msg_expected_expression(tk_view_front(*tokens).pos);
+        return PARSE_ERROR;
     }
     Node_for_lower_bound* lower_bound = node_unwrap_for_lower_bound(node_new(lower_bound_child->pos, NODE_FOR_LOWER_BOUND));
     lower_bound->child = lower_bound_child;
     for_loop->lower_bound = lower_bound;
-    try(tk_view_try_consume(NULL, tokens, TOKEN_DOUBLE_DOT));
+    if (!tk_view_try_consume(NULL, tokens, TOKEN_DOUBLE_DOT)) {
+        msg_parser_expected(tk_view_front(*tokens), TOKEN_DOUBLE_DOT);
+        return PARSE_ERROR;
+    }
 
     Node* upper_bound_child;
     if (PARSE_EXPR_OK != try_extract_expression(env, &upper_bound_child, tokens, true)) {
@@ -468,7 +470,6 @@ static PARSE_STATUS extract_for_range_internal(Env* env, Node_for_range* for_loo
     Node_for_upper_bound* upper_bound = node_unwrap_for_upper_bound(node_new(upper_bound_child->pos, NODE_FOR_UPPER_BOUND));
     upper_bound->child = upper_bound_child;
     for_loop->upper_bound = upper_bound;
-    try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
 
     return extract_block(env, &for_loop->body, tokens);
 }
