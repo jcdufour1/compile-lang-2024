@@ -130,6 +130,7 @@ static inline bool token_is_literal(Token token) {
         case TOKEN_UNSAFE_CAST:
             return false;
     }
+    unreachable("");
 }
 
 static inline bool token_is_operator(Token token) {
@@ -153,6 +154,10 @@ static inline bool token_is_operator(Token token) {
         case TOKEN_NOT:
             // fallthrough
         case TOKEN_DEREF:
+            // fallthrough
+        case TOKEN_XOR:
+            // fallthrough
+        case TOKEN_REFER:
             // fallthrough
         case TOKEN_UNSAFE_CAST:
             return true;
@@ -182,11 +187,18 @@ static inline bool token_is_operator(Token token) {
             // fallthrough
         case TOKEN_SINGLE_DOT:
             // fallthrough
+        case TOKEN_NONTYPE:
+            // fallthrough
+        case TOKEN_VOID:
+            // fallthrough
+        case TOKEN_COMMENT:
+            // fallthrough
         case TOKEN_DOUBLE_DOT:
             return false;
-        default:
-            unreachable(TOKEN_FMT"\n", token_print(token));
+        case TOKEN_TRIPLE_DOT:
+            unreachable("");
     }
+    unreachable(TOKEN_FMT"\n", token_print(token));
 }
 
 static const uint32_t TOKEN_MAX_PRECEDENCE = 20;

@@ -74,6 +74,8 @@ static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
             params->expected_fail_type = EXPECT_FAIL_REDEFINITION_SYMBOL;
         } else if (0 == strcmp(expected_fail_type_str, "parser-expected")) {
             params->expected_fail_type = EXPECT_FAIL_PARSER_EXPECTED;
+        } else if (0 == strcmp(expected_fail_type_str, "invalid-token")) {
+            params->expected_fail_type = EXPECT_FAIL_INVALID_TOKEN;
         } else {
             log(LOG_FETAL, "invalid expected fail type `%s`\n", expected_fail_type_str);
             exit(EXIT_CODE_FAIL);

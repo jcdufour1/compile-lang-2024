@@ -6,6 +6,10 @@
 #include "parameters.h"
 #include <ctype.h>
 
+static void msg_tokenizer_invalid_token(Str_view_col text, Pos pos) {
+    msg(LOG_ERROR, EXPECT_FAIL_INVALID_TOKEN, pos, "invalid token `"STR_VIEW_FMT"`\n", str_view_col_print(text));
+}
+
 static bool local_isalnum_or_underscore(char prev, char curr) {
     (void) prev;
     return isalnum(curr) || curr == '_';
@@ -45,9 +49,11 @@ static bool get_next_token(Pos* pos, Token* token, Str_view_col* file_text, Para
         return false;
     }
 
+    pos->file_path = params.input_file_name;
+
     token->pos.column = pos->column + 1;
     token->pos.line = pos->line;
-    token->pos.file_path = params.input_file_name;
+    token->pos.file_path = pos->file_path;
 
     if (isalpha(str_view_col_front(*file_text))) {
         token->text = str_view_col_consume_while(pos, file_text, local_isalnum_or_underscore).base;
@@ -95,7 +101,6 @@ static bool get_next_token(Pos* pos, Token* token, Str_view_col* file_text, Para
         token->type = TOKEN_SINGLE_MINUS;
         return true;
     } else if (str_view_col_try_consume(pos, file_text, '*')) {
-        // TODO: * may not always be multiplication
         token->type = TOKEN_ASTERISK;
         return true;
     } else if (file_text->base.count > 1 && str_view_cstr_is_equal(str_view_slice(file_text->base, 0, 2), "//")) {
@@ -125,7 +130,9 @@ static bool get_next_token(Pos* pos, Token* token, Str_view_col* file_text, Para
             token->type = TOKEN_DOUBLE_EQUAL;
             return true;
         } else {
-            todo();
+            msg_tokenizer_invalid_token(equals, *pos);
+            token->type = TOKEN_NONTYPE;
+            return true;
         }
     } else if (str_view_col_try_consume(pos, file_text, '>')) {
         assert((file_text->base.count < 1 || str_view_col_front(*file_text) != '=') && ">= not implemented");
@@ -147,7 +154,9 @@ static bool get_next_token(Pos* pos, Token* token, Str_view_col* file_text, Para
             token->type = TOKEN_TRIPLE_DOT;
             return true;
         } else {
-            todo();
+            msg_tokenizer_invalid_token(dots, *pos);
+            token->type = TOKEN_NONTYPE;
+            return true;
         }
     } else {
         log(LOG_FETAL, "unknown symbol: %c (%x)\n", str_view_col_front(*file_text), str_view_col_front(*file_text));
