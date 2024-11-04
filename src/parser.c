@@ -21,10 +21,10 @@ typedef enum {
     PARSE_EXPR_ERROR, // message reported to the user for various types of errors
 } PARSE_EXPR_STATUS;
 
-static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens);
+static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens, bool is_top_level);
 static PARSE_STATUS extract_statement(Env* env, Node** child, Tk_view* tokens);
 static PARSE_EXPR_STATUS try_extract_expression(Env* env, Node** result, Tk_view* tokens, bool defer_sym_add);
-static bool try_extract_variable_declaration(
+static PARSE_STATUS try_extract_variable_declaration(
     Env* env, 
     Node_variable_def** result,
     Tk_view* tokens,
@@ -150,6 +150,14 @@ static bool starts_with_variable_declaration(Tk_view tokens) {
         return false;
     }
     return tk_view_front(tokens).type == TOKEN_LET;
+}
+
+static bool starts_with_variable_type_declaration(Tk_view tokens) {
+    tk_view_try_consume(NULL, &tokens, TOKEN_LET);
+    if (tokens.count < 2) {
+        return false;
+    }
+    return tk_view_front(tokens).type == TOKEN_SYMBOL && tk_view_at(tokens, 1).type == TOKEN_COLON;
 }
 
 // consume tokens from { to } (inclusive) and discard outer {}
@@ -292,7 +300,7 @@ static bool extract_function_parameter(Env* env, Node_variable_def** child, Tk_v
     }
 
     Node_variable_def* param;
-    try(try_extract_variable_declaration(env, &param, tokens, false, true));
+    try(PARSE_OK == try_extract_variable_declaration(env, &param, tokens, false, true));
     if (tk_view_try_consume(NULL, tokens, TOKEN_TRIPLE_DOT)) {
         param->is_variadic = true;
     }
@@ -376,7 +384,7 @@ static PARSE_STATUS extract_function_definition(Env* env, Node_function_definiti
         node_new(node_wrap(fun_decl)->pos, NODE_FUNCTION_DEFINITION)
     );
     (*fun_def)->declaration = fun_decl;
-    return extract_block(env, &(*fun_def)->body, tokens);
+    return extract_block(env, &(*fun_def)->body, tokens, false);
 }
 
 static Node_struct_def* extract_struct_definition(Env* env, Tk_view* tokens) {
@@ -402,30 +410,31 @@ static Node_struct_def* extract_struct_definition(Env* env, Tk_view* tokens) {
     return new_struct;
 }
 
-static bool try_extract_variable_declaration(
+static PARSE_STATUS try_extract_variable_declaration(
     Env* env,
     Node_variable_def** result,
-    Tk_view* tokens_input,
+    Tk_view* tokens,
     bool require_let,
     bool defer_sym_add
 ) {
     (void) require_let;
-    Tk_view tokens = *tokens_input;
-    if (!tk_view_try_consume(NULL, &tokens, TOKEN_LET)) {
+    if (!tk_view_try_consume(NULL, tokens, TOKEN_LET)) {
         assert(!require_let);
     }
 
     Token name_token;
-    if (!tk_view_try_consume(&name_token, &tokens, TOKEN_SYMBOL)) {
-        return false;
+    if (!tk_view_try_consume(&name_token, tokens, TOKEN_SYMBOL)) {
+        msg_parser_expected(tk_view_front(*tokens), TOKEN_SYMBOL);
+        return PARSE_ERROR;
     }
     Node_variable_def* variable_def = node_unwrap_variable_def(node_new(name_token.pos, NODE_VARIABLE_DEFINITION));
     variable_def->name = name_token.text;
-    if (!tk_view_try_consume(NULL, &tokens, TOKEN_COLON)) {
-        return false;
+    if (!tk_view_try_consume(NULL, tokens, TOKEN_COLON)) {
+        msg_parser_expected(tk_view_front(*tokens), TOKEN_COLON);
+        return PARSE_ERROR;
     }
-    variable_def->lang_type.str = tk_view_consume(&tokens).text;
-    while (tk_view_try_consume(NULL, &tokens, TOKEN_ASTERISK)) {
+    variable_def->lang_type.str = tk_view_consume(tokens).text;
+    while (tk_view_try_consume(NULL, tokens, TOKEN_ASTERISK)) {
         variable_def->lang_type.pointer_depth++;
     }
     Node* dummy;
@@ -434,16 +443,15 @@ static bool try_extract_variable_declaration(
     } else {
         if (symbol_lookup(&dummy, env, get_node_name(node_wrap(variable_def)))) {
             msg_redefinition_of_symbol(env, node_wrap(variable_def));
-            todo();
+            return PARSE_ERROR;
         }
         symbol_add(env, node_wrap(variable_def));
     }
 
-    tk_view_try_consume(NULL, &tokens, TOKEN_SEMICOLON);
+    tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
 
-    *tokens_input = tokens;
     *result = variable_def;
-    return true;
+    return PARSE_OK;
 }
 
 static PARSE_STATUS extract_for_range_internal(Env* env, Node_for_range* for_loop, Tk_view* tokens) {
@@ -471,13 +479,13 @@ static PARSE_STATUS extract_for_range_internal(Env* env, Node_for_range* for_loo
     upper_bound->child = upper_bound_child;
     for_loop->upper_bound = upper_bound;
 
-    return extract_block(env, &for_loop->body, tokens);
+    return extract_block(env, &for_loop->body, tokens, false);
 }
 
 static PARSE_STATUS extract_for_with_condition(Env* env, Node_for_with_condition** for_new, Node_for_range* for_range, Tk_view* tokens) {
     *for_new = node_unwrap_for_with_condition(node_new(node_wrap(for_range)->pos, NODE_FOR_WITH_CONDITION));
     (*for_new)->condition = extract_if_condition(env, tokens);
-    return extract_block(env, &(*for_new)->body, tokens);
+    return extract_block(env, &(*for_new)->body, tokens, false);
 }
 
 static PARSE_STATUS extract_for_loop(Env* env, Node** for_loop_result, Tk_view* tokens) {
@@ -485,7 +493,10 @@ static PARSE_STATUS extract_for_loop(Env* env, Node** for_loop_result, Tk_view* 
     try(tk_view_try_consume(&for_token, tokens, TOKEN_FOR));
     Node_for_range* for_loop = node_unwrap_for_range(node_new(for_token.pos, NODE_FOR_RANGE));
     
-    if (try_extract_variable_declaration(env, &for_loop->var_def, tokens, false, true)) {
+    if (starts_with_variable_type_declaration(*tokens)) {
+        if (PARSE_OK != try_extract_variable_declaration(env, &for_loop->var_def, tokens, false, true)) {
+            return PARSE_ERROR;
+        }
         if (PARSE_OK != extract_for_range_internal(env, for_loop, tokens)) {
             return PARSE_ERROR;
         }
@@ -677,7 +688,7 @@ static PARSE_STATUS extract_if_statement(Env* env, Node_if** if_statement, Tk_vi
     try(tk_view_try_consume(&if_start_token, tokens, TOKEN_IF));
     *if_statement = node_unwrap_if(node_new(if_start_token.pos, NODE_IF_STATEMENT));
     (*if_statement)->condition = extract_if_condition(env, tokens);
-    return extract_block(env, &(*if_statement)->body, tokens);
+    return extract_block(env, &(*if_statement)->body, tokens, false);
 }
 
 static PARSE_STATUS extract_statement(Env* env, Node** child, Tk_view* tokens) {
@@ -723,6 +734,7 @@ static PARSE_STATUS extract_statement(Env* env, Node** child, Tk_view* tokens) {
             case PARSE_EXPR_ERROR:
                 return PARSE_ERROR;
             case PARSE_EXPR_NONE:
+                msg_expected_expression(tk_view_front(*tokens).pos);
                 return PARSE_ERROR;
             default:
                 unreachable("");
@@ -740,14 +752,9 @@ static PARSE_STATUS extract_statement(Env* env, Node** child, Tk_view* tokens) {
     return PARSE_OK;
 }
 
-static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens) {
+static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens, bool is_top_level) {
     PARSE_STATUS status = PARSE_OK;
 
-    if (tokens->count < 1) {
-        unreachable("empty file not implemented\n");
-    }
-
-    tk_view_try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE);
     *block = node_unwrap_block(node_new(tk_view_front(*tokens).pos, NODE_BLOCK));
     vec_append(&a_main, &env->ancesters, node_wrap(*block));
     Node* redefined_symbol;
@@ -755,10 +762,25 @@ static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens)
         msg_redefinition_of_symbol(env, redefined_symbol);
         status = PARSE_ERROR;
     }
-    while (tokens->count > 0 && !tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
+
+    if (tokens->count < 1) {
+        unreachable("empty file not implemented\n");
+    }
+
+    if (!is_top_level && !tk_view_try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
+        msg_parser_expected(tk_view_front(*tokens), TOKEN_OPEN_CURLY_BRACE);
+        status = PARSE_ERROR;
+        goto end;
+    }
+    while (!tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
+        if (tokens->count < 1) {
+            if (!is_top_level) {
+                todo();
+            }
+            break;
+        }
         Node* child;
         if (PARSE_OK != extract_statement(env, &child, tokens)) {
-            log_tokens(LOG_DEBUG, *tokens);
             assert(error_count > 0 && "error_count not incremented\n");
             // TODO: sync tokens to continue parsing instead of just returning
             status = PARSE_ERROR;
@@ -768,10 +790,12 @@ static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens)
         vec_append(&a_main, &(*block)->children, child);
     }
 
+end:
     Node* dummy = NULL;
     vec_pop(dummy, &env->ancesters);
     assert(dummy == node_wrap(*block));
     assert(*block);
+    log_tree(LOG_DEBUG, *block);
     return status;
 }
 
@@ -888,7 +912,7 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node** result, T
         return PARSE_EXPR_OK;
     } else if (starts_with_variable_declaration(*tokens)) {
         Node_variable_def* var_def;
-        if (!try_extract_variable_declaration(env, &var_def, tokens, true, defer_sym_add)) {
+        if (PARSE_OK != try_extract_variable_declaration(env, &var_def, tokens, true, defer_sym_add)) {
             msg(LOG_ERROR, EXPECT_FAIL_INCOMPLETE_VAR_DEF, tk_view_front(*tokens).pos, "incomplete variable definition\n");
             return PARSE_EXPR_ERROR;
         }
@@ -985,7 +1009,7 @@ Node_block* parse(const Tokens tokens) {
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
     Env env = {0};
     Node_block* root;
-    extract_block(&env, &root, &token_view);
+    extract_block(&env, &root, &token_view, true);
     log(LOG_DEBUG, "%zu\n", env.ancesters.info.count);
     assert(env.ancesters.info.count == 0);
     log(LOG_DEBUG, "done with parsing:\n");

@@ -1,0 +1,19 @@
+extern("c") fn puts(str_to_print: u8*) i32
+extern("c") fn printf(str_to_print_2: u8*, args: any...) i32
+
+fn main() i32 {
+    let num1: i32
+
+    for num2: i32 in 2..9 {
+        for num3: i32 in num2..9 {
+            let num1: i32 = 67
+            let num_temp: i32 = num3
+            if num_temp < 6 {
+                printf("%d ", num3)
+            }
+        }
+        printf("\n")
+    }
+
+    return 0
+}

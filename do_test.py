@@ -57,6 +57,9 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, str] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "extern_c_no_fn.own": "parser-expected",
     EXPECTED_FAIL_EXAMPLES_DIR + "for_no_double_dot.own": "parser-expected",
     EXPECTED_FAIL_EXAMPLES_DIR + "for_no_double_dot_2.own": "parser-expected",
+    EXPECTED_FAIL_EXAMPLES_DIR + "var_redef_2.own": "redefinition-of-symbol",
+    EXPECTED_FAIL_EXAMPLES_DIR + "var_def_no_colon.own": "parser-expected",
+    EXPECTED_FAIL_EXAMPLES_DIR + "var_def_no_name.own": "parser-expected",
 }
 
 def to_str(a):
