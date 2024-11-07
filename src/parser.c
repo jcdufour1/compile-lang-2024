@@ -294,38 +294,54 @@ static bool is_unary(TOKEN_TYPE token_type) {
     unreachable("");
 }
 
-static bool extract_function_parameter(Env* env, Node_variable_def** child, Tk_view* tokens) {
+static PARSE_EXPR_STATUS extract_function_parameter(Env* env, Node_variable_def** child, Tk_view* tokens) {
     if (tokens->count < 1 || tk_view_front(*tokens).type == TOKEN_CLOSE_PAR) {
-        return false;
+        return PARSE_EXPR_NONE;
     }
 
     Node_variable_def* param;
-    try(PARSE_OK == try_extract_variable_declaration(env, &param, tokens, false, true));
+    if (PARSE_OK != try_extract_variable_declaration(env, &param, tokens, false, true)) {
+        return PARSE_EXPR_ERROR;
+    }
     if (tk_view_try_consume(NULL, tokens, TOKEN_TRIPLE_DOT)) {
         param->is_variadic = true;
     }
     tk_view_try_consume(NULL, tokens, TOKEN_COMMA);
 
     *child = param;
-    return true;
+    return PARSE_EXPR_OK;
 }
 
-static bool extract_function_parameters(Env* env, Node_function_params** result, Tk_view* tokens) {
+static PARSE_STATUS extract_function_parameters(Env* env, Node_function_params** result, Tk_view* tokens) {
     Node_function_params* fun_params = node_unwrap_function_params(node_new(tk_view_front(*tokens).pos, NODE_FUNCTION_PARAMETERS));
 
     Node_variable_def* param;
-    while (extract_function_parameter(env, &param, tokens)) {
-        vec_append(&a_main, &fun_params->params, node_wrap(param));
+    bool done = false;
+    while (!done) {
+        switch (extract_function_parameter(env, &param, tokens)) {
+            case PARSE_EXPR_OK:
+                vec_append(&a_main, &fun_params->params, node_wrap(param));
+                break;
+            case PARSE_EXPR_ERROR:
+                return PARSE_ERROR;
+            case PARSE_EXPR_NONE:
+                done = true;
+                break;
+            default:
+                unreachable("");
+        }
     }
 
     if (tokens->count > 0) {
-        try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_PAR));
+        if (!tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
+            unreachable("message not implemented\n");
+        }
     }
     *result = fun_params;
-    return true;
+    return PARSE_OK;
 }
 
-static bool extract_function_return_types(Node_function_return_types** result, Tk_view* tokens) {
+static void extract_function_return_types(Node_function_return_types** result, Tk_view* tokens) {
     Node_function_return_types* return_types = node_unwrap_function_return_types(node_new(tk_view_front(*tokens).pos, NODE_FUNCTION_RETURN_TYPES));
 
     bool is_comma = true;
@@ -348,7 +364,6 @@ static bool extract_function_return_types(Node_function_return_types** result, T
     }
 
     *result = return_types;
-    return true;
 }
 
 static PARSE_STATUS extract_function_declaration_common(
@@ -363,13 +378,14 @@ static PARSE_STATUS extract_function_declaration_common(
     if (!symbol_add(env, node_wrap(*fun_decl))) {
         return msg_redefinition_of_symbol(env, node_wrap(*fun_decl));
     }
-    try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_PAR));
-    if (!extract_function_parameters(env, &(*fun_decl)->parameters, tokens)) {
-        todo();
+    if (!tk_view_try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
+        msg_parser_expected(tk_view_front(*tokens), TOKEN_OPEN_PAR);
+        return PARSE_ERROR;
     }
-    if (!extract_function_return_types(&(*fun_decl)->return_types, tokens)) {
-        todo();
+    if (PARSE_OK != extract_function_parameters(env, &(*fun_decl)->parameters, tokens)) {
+        return PARSE_ERROR;
     }
+    extract_function_return_types(&(*fun_decl)->return_types, tokens);
 
     return PARSE_OK;
 }
@@ -398,7 +414,7 @@ static Node_struct_def* extract_struct_definition(Env* env, Tk_view* tokens) {
     try(tk_view_try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE));
     while (tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_CLOSE_CURLY_BRACE) {
         Node_variable_def* member;
-        try(extract_function_parameter(env, &member, tokens));
+        try(PARSE_EXPR_OK == extract_function_parameter(env, &member, tokens));
         tk_view_try_consume(NULL, tokens, TOKEN_SEMICOLON);
         vec_append(&a_main, &new_struct->members, node_wrap(member));
     }
@@ -433,7 +449,13 @@ static PARSE_STATUS try_extract_variable_declaration(
         msg_parser_expected(tk_view_front(*tokens), TOKEN_COLON);
         return PARSE_ERROR;
     }
-    variable_def->lang_type.str = tk_view_consume(tokens).text;
+    Token lang_type_token;
+    if (!tk_view_try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
+        // TODO: make this message say that type is expected instead of `sym`
+        msg_parser_expected(tk_view_front(*tokens), TOKEN_SYMBOL);
+        return PARSE_ERROR;
+    }
+    variable_def->lang_type.str = lang_type_token.text;
     while (tk_view_try_consume(NULL, tokens, TOKEN_ASTERISK)) {
         variable_def->lang_type.pointer_depth++;
     }
@@ -790,12 +812,11 @@ static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens,
         vec_append(&a_main, &(*block)->children, child);
     }
 
-end:
     Node* dummy = NULL;
+end:
     vec_pop(dummy, &env->ancesters);
     assert(dummy == node_wrap(*block));
     assert(*block);
-    log_tree(LOG_DEBUG, *block);
     return status;
 }
 
