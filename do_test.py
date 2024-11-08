@@ -64,6 +64,12 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, str] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "function_param_type_missing_2.own": "parser-expected",
     EXPECTED_FAIL_EXAMPLES_DIR + "fun_params_missing_open_par.own": "parser-expected",
     EXPECTED_FAIL_EXAMPLES_DIR + "fun_params_missing_close_par.own": "parser-expected",
+    EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_open_brace.own": "parser-expected",
+    EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_name.own": "parser-expected",
+    EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_memb_name.own": "parser-expected",
+    EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_memb_colon.own": "parser-expected",
+    EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_memb_type.own": "parser-expected",
+    EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_close_brace.own": "parser-expected",
 }
 
 def to_str(a):
