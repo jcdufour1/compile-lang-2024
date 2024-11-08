@@ -6,8 +6,13 @@
 #include "expected_fail_type.h"
 
 typedef struct {
+    Vec_base info;
+    EXPECT_FAIL_TYPE* buf;
+} Expect_fail_type_vec;
+
+typedef struct {
     const char* input_file_name;
-    EXPECT_FAIL_TYPE expected_fail_type;
+    Expect_fail_type_vec expected_fail_types;
     bool compile : 1;
     bool emit_llvm : 1;
     bool test_expected_fail : 1;

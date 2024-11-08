@@ -12,13 +12,13 @@ class StatusColors:
     TO_NORMAL = "\033[0m" #]
 
 class FileItem:
-    def __init__(self, path: str, expected_success: bool, expected_fail_str: str | None):
+    def __init__(self, path: str, expected_success: bool, expected_fail_str: list[str] | None):
         self.path = path
         self.expected_success = expected_success
         self.expected_fail_str = expected_fail_str
     path: str
     expected_success: bool
-    expected_fail_str: str | None
+    expected_fail_str: list[str] | None
 
 EXAMPLES_DIR = "./examples/new_lang/"
 EXPECTED_FAIL_EXAMPLES_DIR = "./tests/expected_failure_examples/"
@@ -29,51 +29,51 @@ EXE_BASE_NAME = "main"
 TEST_OUTPUT = "test.ll"
 EXPECTED_SUCCESS_RESULTS_DIR = "./tests/expected_success_results/"
 
-EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, str] = {
-    EXPECTED_FAIL_EXAMPLES_DIR + "undef_symbol.own": "undefined-symbol",
-    EXPECTED_FAIL_EXAMPLES_DIR + "undef_function.own": "undefined-function",
-    EXPECTED_FAIL_EXAMPLES_DIR + "expected_expression.own": "expected-expression",
-    EXPECTED_FAIL_EXAMPLES_DIR + "incomplete_var_def.own": "incomplete-variable-definition",
-    EXPECTED_FAIL_EXAMPLES_DIR + "binary_mismatched_types.own": "binary-mismatched-types",
-    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_fun_arg.own": "invalid-function-arguments",
-    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_fun_args.own": "invalid-count-function-arguments",
-    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_fun_args_2.own": "invalid-count-function-arguments",
-    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_fun_args_3.own": "invalid-count-function-arguments",
-    EXPECTED_FAIL_EXAMPLES_DIR + "missing_return.own": "missing-return-statement",
-    EXPECTED_FAIL_EXAMPLES_DIR + "var_redef.own": "redefinition-of-symbol",
-    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_struct_memb.own": "invalid-struct-member",
-    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_struct_memb_in_literal.own": "invalid-struct-member-in-literal",
-    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_literal_assign_to_struct.own": "assignment-mismatched-types",
-    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_literal_assign.own": "assignment-mismatched-types",
-    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_operation_assign.own": "assignment-mismatched-types",
-    EXPECTED_FAIL_EXAMPLES_DIR + "mismatched_return_type.own": "mismatched-return-type",
-    EXPECTED_FAIL_EXAMPLES_DIR + "trailing_comma_fun_arg.own": "expected-expression",
-    EXPECTED_FAIL_EXAMPLES_DIR + "missing_comma_fun_arg.own": "parser-expected",
-    EXPECTED_FAIL_EXAMPLES_DIR + "triple_equals.own": "invalid-token",
-    EXPECTED_FAIL_EXAMPLES_DIR + "extern_c_no_close_par_after_c.own": "parser-expected",
-    EXPECTED_FAIL_EXAMPLES_DIR + "extern_c_no_open_par_before_c.own": "parser-expected",
-    EXPECTED_FAIL_EXAMPLES_DIR + "extern_c_no_c_after_extern.own": "parser-expected",
-    EXPECTED_FAIL_EXAMPLES_DIR + "extern_c_empty_str_extern_type.own": "invalid-extern-type",
-    EXPECTED_FAIL_EXAMPLES_DIR + "extern_c_no_fn.own": "parser-expected",
-    EXPECTED_FAIL_EXAMPLES_DIR + "for_no_double_dot.own": "parser-expected",
-    EXPECTED_FAIL_EXAMPLES_DIR + "for_no_double_dot_2.own": "parser-expected",
-    EXPECTED_FAIL_EXAMPLES_DIR + "var_redef_2.own": "redefinition-of-symbol",
-    EXPECTED_FAIL_EXAMPLES_DIR + "var_def_no_colon.own": "parser-expected",
-    EXPECTED_FAIL_EXAMPLES_DIR + "var_def_no_name.own": "parser-expected",
-    EXPECTED_FAIL_EXAMPLES_DIR + "function_param_type_missing.own": "parser-expected",
-    EXPECTED_FAIL_EXAMPLES_DIR + "function_param_type_missing_2.own": "parser-expected",
-    EXPECTED_FAIL_EXAMPLES_DIR + "fun_params_missing_open_par.own": "parser-expected",
-    EXPECTED_FAIL_EXAMPLES_DIR + "fun_params_missing_close_par.own": "parser-expected",
-    EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_open_brace.own": "parser-expected",
-    EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_name.own": "parser-expected",
-    EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_memb_name.own": "parser-expected",
-    EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_memb_colon.own": "parser-expected",
-    EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_memb_type.own": "parser-expected",
-    EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_close_brace.own": "parser-expected",
-    EXPECTED_FAIL_EXAMPLES_DIR + "struct_lit_no_close_brace.own": "parser-expected",
-    EXPECTED_FAIL_EXAMPLES_DIR + "assign_no_rhs.own": "expected-expression",
-    EXPECTED_FAIL_EXAMPLES_DIR + "missing_close_par.own": "expected-expression",
-    EXPECTED_FAIL_EXAMPLES_DIR + "missing_close_par_2.own": "expected-expression",
+EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
+    EXPECTED_FAIL_EXAMPLES_DIR + "undef_symbol.own": ["undefined-symbol"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "undef_function.own": ["undefined-function"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "expected_expression.own": ["expected-expression"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "incomplete_var_def.own": ["incomplete-variable-definition"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "binary_mismatched_types.own": ["binary-mismatched-types"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_fun_arg.own": ["invalid-function-arguments"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_fun_args.own": ["invalid-count-function-arguments"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_fun_args_2.own": ["invalid-count-function-arguments"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_fun_args_3.own": ["invalid-count-function-arguments"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "missing_return.own": ["missing-return-statement"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "var_redef.own": ["redefinition-of-symbol"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_struct_memb.own": ["invalid-struct-member"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_struct_memb_in_literal.own": ["invalid-struct-member-in-literal"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_literal_assign_to_struct.own": ["assignment-mismatched-types"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_literal_assign.own": ["assignment-mismatched-types"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_operation_assign.own": ["assignment-mismatched-types"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "mismatched_return_type.own": ["mismatched-return-type"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "trailing_comma_fun_arg.own": ["expected-expression"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "missing_comma_fun_arg.own": ["parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "triple_equals.own": ["invalid-token"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "extern_c_no_close_par_after_c.own": ["parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "extern_c_no_open_par_before_c.own": ["parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "extern_c_no_c_after_extern.own": ["parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "extern_c_empty_str_extern_type.own": ["invalid-extern-type"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "extern_c_no_fn.own": ["parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "for_no_double_dot.own": ["parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "for_no_double_dot_2.own": ["parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "var_redef_2.own": ["redefinition-of-symbol"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "var_def_no_colon.own": ["parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "var_def_no_name.own": ["parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "function_param_type_missing.own": ["parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "function_param_type_missing_2.own": ["parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "fun_params_missing_open_par.own": ["parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "fun_params_missing_close_par.own": ["parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_open_brace.own": ["parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_name.own": ["parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_memb_name.own": ["parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_memb_colon.own": ["parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_memb_type.own": ["parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_close_brace.own": ["parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "struct_lit_no_close_brace.own": ["parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "assign_no_rhs.own": ["expected-expression"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "missing_close_par.own": ["expected-expression"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "missing_close_par_2.own": ["expected-expression"],
 }
 
 def to_str(a):
@@ -127,7 +127,7 @@ def do_test(file: FileItem, do_debug: bool, expected_output: str) -> bool:
     else:
         assert(file.expected_fail_str != None)
         compile_cmd.append("test-expected-fail")
-        compile_cmd.append(file.expected_fail_str)
+        compile_cmd.extend(file.expected_fail_str)
         compile_cmd.append(file.path)
     print_info("testing: " + file.path + " (" + debug_release_text + ")")
     process = subprocess.run(compile_cmd)

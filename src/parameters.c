@@ -47,37 +47,37 @@ static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
         );
 
         if (0 == strcmp(expected_fail_type_str, "undefined-function")) {
-            params->expected_fail_type = EXPECT_FAIL_UNDEFINED_FUNCTION;
+            vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_UNDEFINED_FUNCTION);
         } else if (0 == strcmp(expected_fail_type_str, "undefined-symbol")) {
-            params->expected_fail_type = EXPECT_FAIL_UNDEFINED_SYMBOL;
+            vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_UNDEFINED_SYMBOL);
         } else if (0 == strcmp(expected_fail_type_str, "expected-expression")) {
-            params->expected_fail_type = EXPECT_FAIL_EXPECTED_EXPRESSION;
+            vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_EXPECTED_EXPRESSION);
         } else if (0 == strcmp(expected_fail_type_str, "incomplete-variable-definition")) {
-            params->expected_fail_type = EXPECT_FAIL_INCOMPLETE_VAR_DEF;
+            vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_INCOMPLETE_VAR_DEF);
         } else if (0 == strcmp(expected_fail_type_str, "binary-mismatched-types")) {
-            params->expected_fail_type = EXPECT_FAIL_BINARY_MISMATCHED_TYPES;
+            vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_BINARY_MISMATCHED_TYPES);
         } else if (0 == strcmp(expected_fail_type_str, "assignment-mismatched-types")) {
-            params->expected_fail_type = EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES;
+            vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES);
         } else if (0 == strcmp(expected_fail_type_str, "mismatched-return-type")) {
-            params->expected_fail_type = EXPECT_FAIL_MISMATCHED_RETURN_TYPE;
+            vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_MISMATCHED_RETURN_TYPE);
         } else if (0 == strcmp(expected_fail_type_str, "invalid-function-arguments")) {
-            params->expected_fail_type = EXPECT_FAIL_INVALID_FUN_ARG;
+            vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_INVALID_FUN_ARG);
         } else if (0 == strcmp(expected_fail_type_str, "invalid-count-function-arguments")) {
-            params->expected_fail_type = EXPECT_FAIL_INVALID_COUNT_FUN_ARGS;
+            vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS);
         } else if (0 == strcmp(expected_fail_type_str, "missing-return-statement")) {
-            params->expected_fail_type = EXPECT_FAIL_MISSING_RETURN_STATEMENT;
+            vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_MISSING_RETURN_STATEMENT);
         } else if (0 == strcmp(expected_fail_type_str, "invalid-struct-member")) {
-            params->expected_fail_type = EXPECT_FAIL_INVALID_STRUCT_MEMBER;
+            vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_INVALID_STRUCT_MEMBER);
         } else if (0 == strcmp(expected_fail_type_str, "invalid-struct-member-in-literal")) {
-            params->expected_fail_type = EXPECT_FAIL_INVALID_STRUCT_MEMBER_IN_LITERAL;
+            vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_INVALID_STRUCT_MEMBER_IN_LITERAL);
         } else if (0 == strcmp(expected_fail_type_str, "redefinition-of-symbol")) {
-            params->expected_fail_type = EXPECT_FAIL_REDEFINITION_SYMBOL;
+            vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_REDEFINITION_SYMBOL);
         } else if (0 == strcmp(expected_fail_type_str, "parser-expected")) {
-            params->expected_fail_type = EXPECT_FAIL_PARSER_EXPECTED;
+            vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_PARSER_EXPECTED);
         } else if (0 == strcmp(expected_fail_type_str, "invalid-token")) {
-            params->expected_fail_type = EXPECT_FAIL_INVALID_TOKEN;
+            vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_INVALID_TOKEN);
         } else if (0 == strcmp(expected_fail_type_str, "invalid-extern-type")) {
-            params->expected_fail_type = EXPECT_FAIL_INVALID_EXTERN_TYPE;
+            vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_INVALID_EXTERN_TYPE);
         } else {
             log(LOG_FETAL, "invalid expected fail type `%s`\n", expected_fail_type_str);
             exit(EXIT_CODE_FAIL);

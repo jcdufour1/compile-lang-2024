@@ -58,11 +58,17 @@ void msg(LOG_LEVEL log_level, EXPECT_FAIL_TYPE expected_fail_type, Pos pos, cons
         vfprintf(stderr, format, args);
     }
 
-    if (params.test_expected_fail && expected_fail_type == params.expected_fail_type) {
-        assert(params.expected_fail_type != EXPECT_FAIL_TYPE_NONE);
+    log(LOG_DEBUG, "YES %d\n", expected_fail_type);
+    if (params.expected_fail_types.info.count > expected_fail_count) {
+        EXPECT_FAIL_TYPE expect_fail = vec_at(&params.expected_fail_types, expected_fail_count);
+        assert(expect_fail != EXPECT_FAIL_TYPE_NONE);
+        if (params.test_expected_fail && expected_fail_type == expect_fail) {
+            assert(expected_fail_count == 0);
+            assert(expect_fail != EXPECT_FAIL_TYPE_NONE);
 
-        log(LOG_NOTE, "expected fail occured\n");
-        expected_fail_count++;
+            log(LOG_NOTE, "expected fail occured\n");
+            expected_fail_count++;
+        }
     }
 
     if (fail_immediately) {
