@@ -70,6 +70,8 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, str] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_memb_colon.own": "parser-expected",
     EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_memb_type.own": "parser-expected",
     EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_close_brace.own": "parser-expected",
+    EXPECTED_FAIL_EXAMPLES_DIR + "struct_lit_no_close_brace.own": "parser-expected",
+    EXPECTED_FAIL_EXAMPLES_DIR + "assign_no_rhs.own": "expected-expression",
 }
 
 def to_str(a):

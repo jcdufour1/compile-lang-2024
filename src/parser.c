@@ -692,23 +692,45 @@ static PARSE_STATUS extract_function_return_statement(Env* env, Node_return_stat
     return PARSE_OK;
 }
 
-static Node_assignment* extract_assignment(Env* env, Tk_view* tokens, Node* lhs) {
+static PARSE_STATUS extract_assignment(Env* env, Node_assignment** assign, Tk_view* tokens, Node* lhs) {
     Token equal_token;
-    Node_assignment* assignment = NULL;
+    *assign = NULL;
     if (lhs) {
-        assignment = node_unwrap_assignment(node_new(lhs->pos, NODE_ASSIGNMENT));
-        try(tk_view_try_consume(&equal_token, tokens, TOKEN_SINGLE_EQUAL));
+        *assign = node_unwrap_assignment(node_new(lhs->pos, NODE_ASSIGNMENT));
+        if (!tk_view_try_consume(&equal_token, tokens, TOKEN_SINGLE_EQUAL)) {
+            unreachable("extract_assignment should possibly never be called with no `=`, but it was");
+        }
     } else {
-        try_extract_expression(env, &lhs, tokens, false);
-        try(tk_view_try_consume(&equal_token, tokens, TOKEN_SINGLE_EQUAL));
-        assignment = node_unwrap_assignment(node_new(equal_token.pos, NODE_ASSIGNMENT));
-    }
-    assignment->lhs = lhs;
-    if (PARSE_OK != try_extract_expression(env, &assignment->rhs, tokens, false)) {
-        todo();
+        switch (try_extract_expression(env, &lhs, tokens, false)) {
+            case PARSE_EXPR_NONE:
+                unreachable("extract_assignment should possibly never be called without lhs expression present, but it was");
+            case PARSE_EXPR_ERROR:
+                return PARSE_ERROR;
+            case PARSE_OK:
+                break;
+            default:
+                unreachable("");
+        }
+        if (!tk_view_try_consume(&equal_token, tokens, TOKEN_SINGLE_EQUAL)) {
+            todo();
+            msg_parser_expected(tk_view_front(*tokens), TOKEN_SINGLE_EQUAL);
+            return PARSE_ERROR;
+        }
+        *assign = node_unwrap_assignment(node_new(equal_token.pos, NODE_ASSIGNMENT));
     }
 
-    return assignment;
+    (*assign)->lhs = lhs;
+
+    switch (try_extract_expression(env, &(*assign)->rhs, tokens, false)) {
+        case PARSE_EXPR_NONE:
+            msg_expected_expression(tk_view_front(*tokens).pos);
+            return PARSE_ERROR;
+        case PARSE_EXPR_ERROR:
+            return PARSE_ERROR;
+        case PARSE_OK:
+            return PARSE_OK;
+    }
+    unreachable("");
 }
 
 static Node_if_condition* extract_if_condition(Env* env, Tk_view* tokens) {
@@ -785,7 +807,11 @@ static PARSE_STATUS extract_statement(Env* env, Node** child, Tk_view* tokens) {
 
     // do assignment if applicible
     if (tokens->count > 0 && tk_view_front(*tokens).type == TOKEN_SINGLE_EQUAL) {
-        *child = node_wrap(extract_assignment(env, tokens, lhs));
+        Node_assignment* assign;
+        if (PARSE_OK != extract_assignment(env, &assign, tokens, lhs)) {
+            return PARSE_ERROR;
+        }
+        *child = node_wrap(assign);
     } else {
         *child = lhs;
     }
@@ -840,22 +866,30 @@ end:
     return status;
 }
 
-static Node_struct_literal* extract_struct_literal(Env* env, Tk_view* tokens) {
+static PARSE_STATUS extract_struct_literal(Env* env, Node_struct_literal** struct_lit, Tk_view* tokens) {
     Token start_token;
-    try(tk_view_try_consume(&start_token, tokens, TOKEN_OPEN_CURLY_BRACE));
-    Node_struct_literal* struct_literal = node_unwrap_struct_literal(
+    if (!tk_view_try_consume(&start_token, tokens, TOKEN_OPEN_CURLY_BRACE)) {
+        msg_parser_expected(tk_view_front(*tokens), TOKEN_OPEN_CURLY_BRACE);
+        return PARSE_ERROR;
+    }
+    *struct_lit = node_unwrap_struct_literal(
         node_new(start_token.pos, NODE_STRUCT_LITERAL)
     );
-    struct_literal->name = literal_name_new();
+    (*struct_lit)->name = literal_name_new();
 
     while (tk_view_try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
-        vec_append(&a_main, &struct_literal->members, node_wrap(extract_assignment(env, tokens, NULL)));
+        Node_assignment* assign;
+        extract_assignment(env, &assign, tokens, NULL);
+        vec_append(&a_main, &(*struct_lit)->members, node_wrap(assign));
         tk_view_try_consume(NULL, tokens, TOKEN_COMMA);
     }
 
-    try(tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
-    try(symbol_add(env, node_wrap(struct_literal)));
-    return struct_literal;
+    if (!tk_view_try_consume(&start_token, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
+        msg_parser_expected(tk_view_front(*tokens), TOKEN_CLOSE_CURLY_BRACE, TOKEN_SINGLE_DOT);
+        return PARSE_ERROR;
+    }
+    try(symbol_add(env, node_wrap(*struct_lit)));
+    return PARSE_OK;
 }
 
 static Node_struct_member_sym_untyped* extract_struct_member_call(Tk_view* tokens) {
@@ -979,7 +1013,11 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node** result, T
     } else if (token_is_equal(tk_view_front(*tokens), "", TOKEN_OPEN_CURLY_BRACE) && 
         token_is_equal(tk_view_at(*tokens, 1), "", TOKEN_SINGLE_DOT)
     ) {
-        *result = node_wrap(extract_struct_literal(env, tokens));
+        Node_struct_literal* struct_lit;
+        if (PARSE_OK != extract_struct_literal(env, &struct_lit, tokens)) {
+            return PARSE_EXPR_ERROR;
+        }
+        *result = node_wrap(struct_lit);
         return PARSE_EXPR_OK;
     } else if (tk_view_front(*tokens).type == TOKEN_NONTYPE) {
         return PARSE_EXPR_NONE;

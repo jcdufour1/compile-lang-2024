@@ -1,0 +1,11 @@
+
+struct Div {
+    numerator: i32
+    denominator: i32
+}
+
+fn main() i32 {
+    let div: Div = {.numerator = 13, .denominator = 14
+
+    return 0
+}
