@@ -72,4 +72,9 @@ typedef struct {
         (vector)->info.count--; \
     } while(0)
 
+#define vec_rem_last(vector) \
+    do { \
+        (vector)->info.count--; \
+    } while(0)
+
 #endif // VECTOR_H

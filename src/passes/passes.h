@@ -10,14 +10,7 @@ static inline void insert_into_node_ptr_vec(
     size_t idx_to_insert_item,
     Node* node_to_insert
 ) {
-    for (size_t idx = 0; idx < block_children->info.count; idx++) {
-        node_print(vec_at(block_children, idx));
-    }
-    log(LOG_DEBUG, "sizeof: %zu\n", sizeof(block_children->buf[0]));
     vec_insert(&a_main, block_children, idx_to_insert_item, node_to_insert);
-    for (size_t idx = 0; idx < block_children->info.count; idx++) {
-        node_print(vec_at(block_children, idx));
-    }
     if (idx_to_insert_item <= *idx_to_insert_before) {
         (*idx_to_insert_before)++;
     }

@@ -219,8 +219,6 @@ static inline const Node* get_left_child_const(const Node* node) {
 }
 
 static inline Node* node_new(Pos pos, NODE_TYPE node_type) {
-    prev_pos = pos;
-
     Node* new_node = arena_alloc(&a_main, sizeof(*new_node));
     if (!root_of_tree) {
         // it is assumed that the first node created is the root

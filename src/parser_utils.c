@@ -9,7 +9,7 @@
 #include <ctype.h>
 
 // result is rounded up
-static int64_t log2(int64_t num) {
+static int64_t log2_int64_t(int64_t num) {
     int64_t reference = 1;
     for (unsigned int power = 0; power < 64; power++) {
         if (num <= reference) {
@@ -26,7 +26,7 @@ static int64_t log2(int64_t num) {
 //}
 
 static int64_t bit_width_needed_signed(int64_t num) {
-    return 1 + log2(num + 1);
+    return 1 + log2_int64_t(num + 1);
 }
 
 int64_t str_view_to_int64_t(Str_view str_view) {
@@ -690,6 +690,7 @@ bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node
         case IMPLICIT_CONV_CONVERTED:
             return true;
     }
+    unreachable("");
 }
 
 bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_function_call* fun_call) {

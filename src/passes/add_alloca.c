@@ -64,8 +64,7 @@ void add_alloca(Env* env) {
                 Node_block* fun_block = node_unwrap_function_definition(curr_node)->body;
                 vec_append(&a_main, &env->ancesters, node_wrap(fun_block));
                 do_function_definition(env, node_unwrap_function_definition(curr_node));
-                Node* dummy;
-                vec_pop(dummy, &env->ancesters);
+                vec_rem_last(&env->ancesters);
                 break;
             }
             case NODE_ASSIGNMENT:

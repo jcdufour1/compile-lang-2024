@@ -592,8 +592,7 @@ static void emit_block(Env* env, String* output, const Node_block* block) {
         }
     }
     //get_block_return_id(fun_block) = get_block_return_id(fun_block->left_child);
-    Node* dummy = NULL;
-    vec_pop(dummy, &env->ancesters);
+    vec_rem_last(&env->ancesters);
 }
 
 static void emit_symbol(String* output, const Symbol_table_node node) {

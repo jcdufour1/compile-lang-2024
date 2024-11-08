@@ -148,8 +148,7 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* for_loop) {
     vec_append(&a_main, &new_branch_block->children, node_wrap(after_for_loop_label));
 
     new_branch_block->symbol_table = for_block->symbol_table;
-    Node* dummy;
-    vec_pop(dummy, &env->ancesters);
+    vec_rem_last(&env->ancesters);
     return new_branch_block;
 }
 

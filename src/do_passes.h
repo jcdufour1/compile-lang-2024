@@ -16,8 +16,7 @@ INLINE void start_walk(Env* env, Node_block** root, void (callback)(Env* env)) {
     assert(env->ancesters.info.count == 0);
     vec_append(&a_main, &env->ancesters, node_wrap(*root));
     walk_tree(env, callback);
-    Node* dummy = NULL;
-    vec_pop(dummy, &env->ancesters);
+    vec_rem_last(&env->ancesters);
 }
 
 #endif // DO_PASSES_H

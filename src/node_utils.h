@@ -207,6 +207,7 @@ static inline Lang_type get_lang_type(const Node* node) {
         case NODE_OPERATOR:
             return get_operator_lang_type(node_unwrap_operation_const(node));
     }
+    unreachable("");
 }
 
 static inline Lang_type* get_lang_type_ref(Node* node) {
@@ -290,6 +291,7 @@ static inline Lang_type* get_lang_type_ref(Node* node) {
         case NODE_OPERATOR:
             return get_operator_lang_type_ref(node_unwrap_operation(node));
     }
+    unreachable("");
 }
 
 static inline Node* get_node_src(Node* node) {
@@ -538,6 +540,7 @@ static inline Str_view get_node_name(const Node* node) {
         case NODE_PTR_BYVAL_SYM:
             unreachable("");
     }
+    unreachable("");
 }
 
 static inline const Node* get_node_src_const(const Node* node) {

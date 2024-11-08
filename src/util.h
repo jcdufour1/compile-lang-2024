@@ -108,6 +108,4 @@ extern size_t error_count;
 extern size_t warning_count;
 extern size_t expected_fail_count;
 
-extern Pos prev_pos;
-
 #endif // UTIL_H

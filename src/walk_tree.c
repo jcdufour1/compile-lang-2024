@@ -216,8 +216,7 @@ INLINE void walk_tree_traverse(Env* env, Node* new_curr_node, void (callback)(En
     assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
     walk_tree(env, callback);
     assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
-    Node* dummy = NULL;
-    vec_pop(dummy, &env->ancesters);
+    vec_rem_last(&env->ancesters);
     env->recursion_depth--;
     assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
 }
