@@ -74,6 +74,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "assign_no_rhs.own": ["expected-expression"],
     EXPECTED_FAIL_EXAMPLES_DIR + "missing_close_par.own": ["expected-expression"],
     EXPECTED_FAIL_EXAMPLES_DIR + "missing_close_par_2.own": ["expected-expression"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "two_undef_symbols.own": ["undefined-symbol", "undefined-symbol"],
 }
 
 def to_str(a):
@@ -127,6 +128,7 @@ def do_test(file: FileItem, do_debug: bool, expected_output: str) -> bool:
     else:
         assert(file.expected_fail_str != None)
         compile_cmd.append("test-expected-fail")
+        compile_cmd.append(str(len(file.expected_fail_str)))
         compile_cmd.extend(file.expected_fail_str)
         compile_cmd.append(file.path)
     print_info("testing: " + file.path + " (" + debug_release_text + ")")

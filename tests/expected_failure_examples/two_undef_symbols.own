@@ -1,0 +1,11 @@
+
+extern("c") fn printf(str_to_print_2: u8*, args: any...) i32
+
+fn main() i32 {
+    let num1: i32 = 87
+    let num2: i32 = 88
+
+    printf("%d %d\n", num3, num4)
+
+    return 0
+}
