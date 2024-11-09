@@ -36,6 +36,7 @@ typedef enum {
     TOKEN_STRING_LITERAL,
     TOKEN_INT_LITERAL,
     TOKEN_VOID,
+    TOKEN_NEW_LINE,
 
     // miscellaneous
     TOKEN_SYMBOL,
@@ -158,6 +159,8 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_BREAK:
             return false;
+        case TOKEN_NEW_LINE:
+            return false;
     }
     unreachable("");
 }
@@ -239,6 +242,8 @@ static inline bool token_is_operator(Token token) {
         case TOKEN_IN:
             // fallthrough
         case TOKEN_BREAK:
+            // fallthrough
+        case TOKEN_NEW_LINE:
             // fallthrough
         case TOKEN_DOUBLE_DOT:
             return false;

@@ -2,6 +2,7 @@
 #include "util.h"
 #include "token.h"
 #include "tokenizer.h"
+#include "token_view.h"
 #include "str_view_col.h"
 #include "parameters.h"
 #include <ctype.h>
@@ -34,16 +35,24 @@ static bool is_dot(char prev, char curr) {
     return curr == '.';
 }
 
-static void trim_whitespace(Str_view_col* file_text, Pos* pos) {
-    while (file_text->base.count > 0 && (isspace(str_view_col_front(*file_text)) || iscntrl(str_view_col_front(*file_text)))) {
+static void trim_non_newline_whitespace(Str_view_col* file_text, Pos* pos) {
+    if (file_text->base.count < 1) {
+        return;
+    }
+    char curr = str_view_col_front(*file_text);
+    while (file_text->base.count > 0 && (isspace(curr) || iscntrl(curr)) && (curr != '\n')) {
+        if (file_text->base.count < 1) {
+            return;
+        }
         str_view_col_consume(pos, file_text);
+        curr = str_view_col_front(*file_text);
     }
 }
 
 static bool get_next_token(Pos* pos, Token* token, Str_view_col* file_text, Parameters params) {
     memset(token, 0, sizeof(*token));
 
-    trim_whitespace(file_text, pos);
+    trim_non_newline_whitespace(file_text, pos);
 
     if (file_text->base.count < 1) {
         return false;
@@ -125,7 +134,7 @@ static bool get_next_token(Pos* pos, Token* token, Str_view_col* file_text, Para
         return true;
     } else if (file_text->base.count > 1 && str_view_cstr_is_equal(str_view_slice(file_text->base, 0, 2), "//")) {
         str_view_col_consume_until(pos, file_text, '\n');
-        trim_whitespace(file_text, pos);
+        trim_non_newline_whitespace(file_text, pos);
         token->type = TOKEN_COMMENT;
         return true;
     } else if (str_view_col_try_consume(pos, file_text, '/')) {
@@ -178,9 +187,12 @@ static bool get_next_token(Pos* pos, Token* token, Str_view_col* file_text, Para
             token->type = TOKEN_NONTYPE;
             return true;
         }
+    } else if (str_view_col_try_consume(pos, file_text, '\n')) {
+        while (str_view_col_try_consume(pos, file_text, '\n'));
+        token->type = TOKEN_NEW_LINE;
+        return true;
     } else {
-        log(LOG_FETAL, "unknown symbol: %c (%x)\n", str_view_col_front(*file_text), str_view_col_front(*file_text));
-        todo();
+        unreachable("unknown symbol: %c (%x)\n", str_view_col_front(*file_text), str_view_col_front(*file_text));
     }
 }
 

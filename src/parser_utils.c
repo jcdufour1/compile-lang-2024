@@ -33,12 +33,10 @@ bool try_str_view_to_int64_t(int64_t* result, Str_view str_view) {
     *result = 0;
     size_t idx = 0;
     for (idx = 0; idx < str_view.count; idx++) {
-        log(LOG_DEBUG, "idx: %zu    "STR_VIEW_FMT"\n", idx, str_view_print(str_view));
         char curr_char = str_view.str[idx];
         if (!isdigit(curr_char)) {
             break;
         }
-        log(LOG_DEBUG, "idx: %zu    "STR_VIEW_FMT"\n", idx, str_view_print(str_view));
 
         *result *= 10;
         *result += curr_char - '0';

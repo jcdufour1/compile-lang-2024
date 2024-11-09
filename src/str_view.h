@@ -94,6 +94,9 @@ static inline Str_view str_view_from_cstr(const char* cstr) {
 }
 
 static inline bool str_view_try_consume(Str_view* str_view, char ch) {
+    if (str_view->count < 1) {
+        return false;
+    }
     if (str_view_front(*str_view) == ch) {
         str_view_consume(str_view);
         return true;
