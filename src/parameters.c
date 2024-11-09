@@ -1,6 +1,5 @@
 #include "parameters.h"
-#include <limits.h>
-#include <ctype.h>
+#include "parser_utils.h"
 
 static bool is_long_option(char** argv) {
     if (strlen(argv[0]) < 2) {
@@ -34,27 +33,6 @@ static const char* consume_arg(int* argc, char*** argv, const char* msg_if_missi
     return consume_arg(argc, argv, "stray - or -- is not permitted");
 }
 
-static bool try_str_view_to_int64_t(int64_t* result, Str_view str_view) {
-    *result = 0;
-    size_t idx = 0;
-    for (idx = 0; idx < str_view.count; idx++) {
-        log(LOG_DEBUG, "idx: %zu    "STR_VIEW_FMT"\n", idx, str_view_print(str_view));
-        char curr_char = str_view.str[idx];
-        if (!isdigit(curr_char)) {
-            break;
-        }
-        log(LOG_DEBUG, "idx: %zu    "STR_VIEW_FMT"\n", idx, str_view_print(str_view));
-
-        *result *= 10;
-        *result += curr_char - '0';
-    }
-
-    if (idx < 1) {
-        unreachable(STR_VIEW_FMT, str_view_print(str_view));
-    }
-    return true;
-}
-
 static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
     const char* curr_opt = consume_arg(argc, argv, "arg expected");
 
@@ -65,13 +43,12 @@ static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
         params->compile = false;
         params->test_expected_fail = true;
 
-        ;
         const char* count_args_cstr = consume_arg(argc, argv, "count expected");
-        int64_t count_args_ = INT32_MAX;
+        int64_t count_args_ = INT64_MAX;
         if (!try_str_view_to_int64_t(&count_args_, str_view_from_cstr(count_args_cstr))) {
             todo();
         }
-        assert(count_args_ < INT32_MAX && "count_args_ unset");
+        assert(count_args_ < INT64_MAX && "count_args_ unset");
         log(LOG_DEBUG, "%s\n", count_args_cstr);
         long count_args = count_args_;
         log(LOG_DEBUG, "%zu\n", count_args);

@@ -29,8 +29,8 @@ static int64_t bit_width_needed_signed(int64_t num) {
     return 1 + log2_int64_t(num + 1);
 }
 
-int64_t str_view_to_int64_t(Str_view str_view) {
-    int64_t result = 0;
+bool try_str_view_to_int64_t(int64_t* result, Str_view str_view) {
+    *result = 0;
     size_t idx = 0;
     for (idx = 0; idx < str_view.count; idx++) {
         log(LOG_DEBUG, "idx: %zu    "STR_VIEW_FMT"\n", idx, str_view_print(str_view));
@@ -40,11 +40,20 @@ int64_t str_view_to_int64_t(Str_view str_view) {
         }
         log(LOG_DEBUG, "idx: %zu    "STR_VIEW_FMT"\n", idx, str_view_print(str_view));
 
-        result *= 10;
-        result += curr_char - '0';
+        *result *= 10;
+        *result += curr_char - '0';
     }
 
     if (idx < 1) {
+        return false;
+    }
+    return true;
+}
+
+int64_t str_view_to_int64_t(Str_view str_view) {
+    int64_t result = INT64_MAX;
+
+    if (!try_str_view_to_int64_t(&result, str_view)) {
         unreachable(STR_VIEW_FMT, str_view_print(str_view));
     }
     return result;

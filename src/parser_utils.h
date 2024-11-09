@@ -13,6 +13,8 @@ int64_t i_lang_type_to_bit_width(Lang_type lang_type);
 
 int64_t str_view_to_int64_t(Str_view str_view);
 
+bool try_str_view_to_int64_t(int64_t* result, Str_view str_view);
+
 Str_view literal_name_new(void);
 
 Llvm_id get_prev_load_id(const Node* var_call);
