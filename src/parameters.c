@@ -89,6 +89,8 @@ static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
                 vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_INVALID_TOKEN);
             } else if (0 == strcmp(expected_fail_type_str, "invalid-extern-type")) {
                 vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_INVALID_EXTERN_TYPE);
+            } else if (0 == strcmp(expected_fail_type_str, "missing-close-curly-brace")) {
+                vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_MISSING_CLOSE_CURLY_BRACE);
             } else {
                 log(LOG_FETAL, "invalid expected fail type `%s`\n", expected_fail_type_str);
                 exit(EXIT_CODE_FAIL);

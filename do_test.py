@@ -76,6 +76,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "missing_close_par_2.own": ["expected-expression"],
     EXPECTED_FAIL_EXAMPLES_DIR + "two_undef_symbols.own": ["undefined-symbol", "undefined-symbol"],
     EXPECTED_FAIL_EXAMPLES_DIR + "two_parse_errors.own": ["parser-expected", "expected-expression"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "function_main_no_close_brace.own": ["missing-close-curly-brace"],
 }
 
 def to_str(a):

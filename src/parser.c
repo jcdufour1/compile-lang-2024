@@ -882,15 +882,21 @@ static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens,
         unreachable("empty file not implemented\n");
     }
 
-    if (!is_top_level && !try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
+    Token open_brace_token = {0};
+    if (!is_top_level && !try_consume(&open_brace_token, tokens, TOKEN_OPEN_CURLY_BRACE)) {
         msg_parser_expected(tk_view_front(*tokens), TOKEN_OPEN_CURLY_BRACE);
         status = PARSE_ERROR;
         goto end;
     }
     while (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
         if (tokens->count < 1) {
+            // this means that there is no matching `}` found
             if (!is_top_level) {
-                todo();
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_CURLY_BRACE, open_brace_token.pos, 
+                    "opening `{` is unmatched\n"
+                );
+                status = PARSE_ERROR;
             }
             break;
         }
