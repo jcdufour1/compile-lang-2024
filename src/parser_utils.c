@@ -553,7 +553,6 @@ bool try_set_unary_lang_type(const Env* env, Node** new_node, Lang_type* lang_ty
     Lang_type init_lang_type;
     Node* new_child;
     if (!try_set_node_type(env, &new_child, &init_lang_type, unary->child)) {
-        todo();
         return false;
     }
     unary->child = new_child;
@@ -775,7 +774,7 @@ bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_func
             try(try_set_struct_literal_assignment_types(env, &new_arg, &dummy, node_wrap(corres_param), node_unwrap_struct_literal(*argument)));
         } else {
             if (!try_set_node_type(env, &new_arg, &dummy, *argument)) {
-                return false;
+                status = true;
             }
         }
         *argument = new_arg;

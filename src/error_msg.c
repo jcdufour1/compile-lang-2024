@@ -41,7 +41,7 @@ void log_common(LOG_LEVEL log_level, const char* file, int line, int indent, con
     va_end(args);
 }
 
-void msg(LOG_LEVEL log_level, EXPECT_FAIL_TYPE expected_fail_type, Pos pos, const char* format, ...) {
+void msg(LOG_LEVEL log_level, EXPECT_FAIL_TYPE msg_expect_fail_type, Pos pos, const char* format, ...) {
     va_list args;
     va_start(args, format);
     bool fail_immediately = false;
@@ -61,13 +61,12 @@ void msg(LOG_LEVEL log_level, EXPECT_FAIL_TYPE expected_fail_type, Pos pos, cons
     log(LOG_DEBUG, "%zu\n", params.expected_fail_types.info.count);
     if (params.expected_fail_types.info.count > expected_fail_count) {
         assert(expected_fail_count < params.expected_fail_types.info.count && "out of bounds");
-        EXPECT_FAIL_TYPE curr_expect_fail = vec_at(&params.expected_fail_types, expected_fail_count);
-        assert(curr_expect_fail != EXPECT_FAIL_TYPE_NONE);
-        log(LOG_DEBUG, "YES %d\n", expected_fail_type);
-        log(LOG_DEBUG, "YES %d\n", curr_expect_fail);
-        if (params.test_expected_fail && expected_fail_type == curr_expect_fail) {
-            assert(expected_fail_count == 0);
-            assert(curr_expect_fail != EXPECT_FAIL_TYPE_NONE);
+        EXPECT_FAIL_TYPE expected_expect_fail = vec_at(&params.expected_fail_types, expected_fail_count);
+        assert(expected_expect_fail != EXPECT_FAIL_TYPE_NONE);
+        log(LOG_DEBUG, "YES %d\n", msg_expect_fail_type);
+        log(LOG_DEBUG, "YES %d\n", expected_expect_fail);
+        if (params.test_expected_fail && msg_expect_fail_type == expected_expect_fail) {
+            assert(expected_expect_fail != EXPECT_FAIL_TYPE_NONE);
 
             log(LOG_NOTE, "expected fail occured\n");
             expected_fail_count++;

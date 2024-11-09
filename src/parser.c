@@ -185,6 +185,28 @@ static bool starts_with_variable_type_declaration(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_SYMBOL && tk_view_at(tokens, 1).type == TOKEN_COLON;
 }
 
+static void sync(Tk_view* tokens) {
+    while (tokens->count > 0) {
+        tk_view_consume(tokens);
+
+        if (
+            starts_with_variable_type_declaration(*tokens) ||
+            starts_with_struct_definition(*tokens) ||
+            starts_with_function_declaration(*tokens) ||
+            starts_with_function_definition(*tokens) ||
+            starts_with_return(*tokens) ||
+            starts_with_if(*tokens) ||
+            starts_with_for(*tokens) ||
+            starts_with_break(*tokens) ||
+            starts_with_function_call(*tokens) ||
+            starts_with_variable_declaration(*tokens) ||
+            starts_with_variable_type_declaration(*tokens)
+        ) {
+            return;
+        }
+    }
+}
+
 // try_consume tokens from { to } (inclusive) and discard outer {}
 static Tk_view extract_items_inside_brackets(Tk_view* tokens, TOKEN_TYPE closing_bracket_type) {
     // the opening_bracket type should be the opening bracket type that corresponds to closing_brace_type
@@ -875,9 +897,14 @@ static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens,
         Node* child;
         if (PARSE_OK != extract_statement(env, &child, tokens)) {
             assert(error_count > 0 && "error_count not incremented\n");
-            // TODO: sync tokens to continue parsing instead of just returning
+            log_tokens(LOG_DEBUG, *tokens);
+            sync(tokens);
+            log_tokens(LOG_DEBUG, *tokens);
+            if (tokens->count < 1) {
+                break;
+            }
             status = PARSE_ERROR;
-            break;
+            continue;
         }
         try_consume(NULL, tokens, TOKEN_SEMICOLON);
         vec_append(&a_main, &(*block)->children, child);
