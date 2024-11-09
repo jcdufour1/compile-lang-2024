@@ -9,6 +9,8 @@ typedef struct {
     Node_ptr_vec defered_symbols_to_add;
     Symbol_table global_literals; // this is populated during add_load_and_store pass
     int recursion_depth;
+
+    int curly_brace_depth_curr_block;
 } Env;
 
 #endif // ENV_H

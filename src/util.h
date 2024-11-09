@@ -46,9 +46,7 @@ __attribute__((format (printf, 5, 6)));
         log_common(__VA_ARGS__); \
     } while(0) 
 
-#define log_indent(log_level, indent, ...) \
-    log_common(log_level, __FILE__, __LINE__, indent, __VA_ARGS__)
-
+// TODO: rename log_common to log_internal
 #define log_indent(log_level, indent, ...) \
     log_common(log_level, __FILE__, __LINE__, indent, __VA_ARGS__)
 

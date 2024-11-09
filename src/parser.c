@@ -100,6 +100,7 @@ static void msg_parser_expected_internal(const char* file, int line, Token got, 
 #define msg_parser_expected(got, ...) \
     do { \
         msg_parser_expected_internal(__FILE__, __LINE__, got, sizeof((TOKEN_TYPE[]){__VA_ARGS__})/sizeof(TOKEN_TYPE), __VA_ARGS__); \
+        log_common(LOG_DEBUG, __FILE__, __LINE__, 0, "note: location of error\n"); \
     } while(0)
 
 static PARSE_STATUS msg_redefinition_of_symbol(const Env* env, const Node* new_sym_def) {
@@ -192,43 +193,39 @@ static bool starts_with_variable_type_declaration(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_SYMBOL && tk_view_at(tokens, 1).type == TOKEN_COLON;
 }
 
-static void sync_normal(Tk_view* tokens) {
+static bool starts_with_struct_literal(Tk_view tokens) {
+    if (!try_consume(NULL, &tokens, TOKEN_OPEN_CURLY_BRACE)) {
+        return false;
+    }
+    while (try_consume(NULL, &tokens, TOKEN_NEW_LINE));
+    return try_consume(NULL, &tokens, TOKEN_SINGLE_DOT);
+}
+
+static void sync(Env* env, Tk_view* tokens) {
     while (tokens->count > 0) {
         consume(tokens);
         if (prev_token.type != TOKEN_NEW_LINE) {
             continue;
         }
 
-        if (
-            starts_with_struct_definition(*tokens) ||
-            starts_with_function_declaration(*tokens) ||
-            starts_with_function_definition(*tokens) ||
-            starts_with_return(*tokens) ||
-            starts_with_if(*tokens) ||
-            starts_with_for(*tokens) ||
-            starts_with_break(*tokens) ||
-            starts_with_function_call(*tokens) ||
-            starts_with_variable_declaration(*tokens)
-        ) {
+        if (env->curly_brace_depth_curr_block > 0 && try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
+            env->curly_brace_depth_curr_block--;
+        }
+
+        if (env->curly_brace_depth_curr_block < 1 && (
+                starts_with_struct_definition(*tokens) ||
+                starts_with_function_declaration(*tokens) ||
+                starts_with_function_definition(*tokens) ||
+                starts_with_return(*tokens) ||
+                starts_with_if(*tokens) ||
+                starts_with_for(*tokens) ||
+                starts_with_break(*tokens) ||
+                starts_with_function_call(*tokens) ||
+                starts_with_variable_declaration(*tokens)
+        )) {
             return;
         }
     }
-}
-
-static void sync_out_of_struct_definition(Tk_view* tokens) {
-    while (tokens->count > 0) {
-        consume(tokens);
-        if (prev_token.type != TOKEN_NEW_LINE) {
-            continue;
-        }
-
-        if (tk_view_try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
-        }
-    }
-}
-
-static void sync(Tk_view* tokens) {
-    sync_normal(tokens);
 }
 
 // try_consume tokens from { to } (inclusive) and discard outer {}
@@ -829,6 +826,7 @@ static PARSE_STATUS extract_if_statement(Env* env, Node_if** if_statement, Tk_vi
 
 static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* tokens) {
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
+    log_tokens(LOG_DEBUG, *tokens);
 
     Node* lhs;
     if (starts_with_struct_definition(*tokens)) {
@@ -899,12 +897,15 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
         return PARSE_EXPR_NONE;
     }
     if (!try_consume(NULL, tokens, TOKEN_NEW_LINE)) {
+        log_tokens(LOG_DEBUG, *tokens);
         todo();
     }
     return PARSE_EXPR_OK;
 }
 
 static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens, bool is_top_level) {
+    int prev_curly_brace_depth_curr_block = env->curly_brace_depth_curr_block;
+    env->curly_brace_depth_curr_block = 0;
     PARSE_STATUS status = PARSE_OK;
 
     *block = node_unwrap_block(node_new(tk_view_front(*tokens).pos, NODE_BLOCK));
@@ -947,7 +948,7 @@ static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens,
                 break;
             case PARSE_EXPR_ERROR:
                 assert(error_count > 0 && "error_count not incremented\n");
-                sync(tokens);
+                sync(env, tokens);
                 if (tokens->count < 1) {
                     should_stop = true;
                 }
@@ -972,33 +973,57 @@ end:
     vec_pop(dummy, &env->ancesters);
     assert(dummy == node_wrap(*block));
     assert(*block);
+    env->curly_brace_depth_curr_block = prev_curly_brace_depth_curr_block;
     return status;
 }
 
+static PARSE_STATUS extract_struct_literal_return(Env* env, PARSE_STATUS status) {
+    switch (status) {
+        case PARSE_OK:
+            assert(env->curly_brace_depth_curr_block > 0);
+            env->curly_brace_depth_curr_block--;
+            return PARSE_OK;
+        case PARSE_ERROR:
+            return PARSE_ERROR;
+    }
+    unreachable("");
+}
+
 static PARSE_STATUS extract_struct_literal(Env* env, Node_struct_literal** struct_lit, Tk_view* tokens) {
+    env->curly_brace_depth_curr_block++;
+
     Token start_token;
     if (!try_consume(&start_token, tokens, TOKEN_OPEN_CURLY_BRACE)) {
         msg_parser_expected(tk_view_front(*tokens), TOKEN_OPEN_CURLY_BRACE);
-        return PARSE_ERROR;
+        return extract_struct_literal_return(env, PARSE_ERROR);
     }
     *struct_lit = node_unwrap_struct_literal(
         node_new(start_token.pos, NODE_STRUCT_LITERAL)
     );
     (*struct_lit)->name = literal_name_new();
 
+    while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
     while (try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
+        bool delim_is_present = false;
         Node_assignment* assign;
         extract_assignment(env, &assign, tokens, NULL);
         vec_append(&a_main, &(*struct_lit)->members, node_wrap(assign));
-        try_consume(NULL, tokens, TOKEN_COMMA);
+        delim_is_present = try_consume(NULL, tokens, TOKEN_COMMA);
+        while (try_consume(NULL, tokens, TOKEN_NEW_LINE)) {
+            delim_is_present = true;
+        }
+        if (!delim_is_present) {
+            break;
+        }
     }
 
     if (!try_consume(&start_token, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
-        msg_parser_expected(tk_view_front(*tokens), TOKEN_CLOSE_CURLY_BRACE, TOKEN_SINGLE_DOT);
-        return PARSE_ERROR;
+        msg_parser_expected(tk_view_front(*tokens), TOKEN_COMMA, TOKEN_NEW_LINE, TOKEN_CLOSE_CURLY_BRACE);
+        return extract_struct_literal_return(env, PARSE_ERROR);
     }
+
     try(symbol_add(env, node_wrap(*struct_lit)));
-    return PARSE_OK;
+    return extract_struct_literal_return(env, PARSE_OK);
 }
 
 static Node_struct_member_sym_untyped* extract_struct_member_call(Tk_view* tokens) {
@@ -1136,9 +1161,7 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node** result, T
     } else if (tk_view_front(*tokens).type == TOKEN_SYMBOL) {
         *result = node_wrap(extract_symbol(tokens));
         return PARSE_EXPR_OK;
-    } else if (token_is_equal(tk_view_front(*tokens), "", TOKEN_OPEN_CURLY_BRACE) && 
-        token_is_equal(tk_view_at(*tokens, 1), "", TOKEN_SINGLE_DOT)
-    ) {
+    } else if (starts_with_struct_literal(*tokens)) {
         if (is_statement) {
             todo();
         }

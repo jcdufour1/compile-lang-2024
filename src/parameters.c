@@ -44,6 +44,7 @@ static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
         params->test_expected_fail = true;
 
         const char* count_args_cstr = consume_arg(argc, argv, "count expected");
+        // TODO: use size_t for count_args_
         int64_t count_args_ = INT64_MAX;
         if (!try_str_view_to_int64_t(&count_args_, str_view_from_cstr(count_args_cstr))) {
             todo();
