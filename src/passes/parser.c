@@ -207,27 +207,17 @@ static bool starts_with_struct_literal(Tk_view tokens) {
 static void sync(Tk_view* tokens) {
     int bracket_depth = 0;
     while (tokens->count > 0) {
-        log_tokens(LOG_DEBUG, *tokens);
         if (try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-            log(LOG_DEBUG, "bracket_depth: %d\n", bracket_depth);
-            log(LOG_DEBUG, "CASE 1\n");
             bracket_depth++;
         } else if (try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
-            log(LOG_DEBUG, "bracket_depth: %d\n", bracket_depth);
-            log(LOG_DEBUG, "CASE 2\n");
             if (bracket_depth == 0) {
-                log(LOG_DEBUG, "EXITING\n");
                 return;
             }
             bracket_depth--;
-            log(LOG_DEBUG, "bracket_depth after case 2: %d\n", bracket_depth);
         } else {
-            log(LOG_DEBUG, "bracket_depth: %d\n", bracket_depth);
-            log(LOG_DEBUG, "CASE 3\n");
             consume(tokens);
         }
         assert(bracket_depth >= 0);
-        log_tokens(LOG_DEBUG, *tokens);
 
         if (prev_token.type != TOKEN_NEW_LINE || bracket_depth != 0) {
             continue;
@@ -244,8 +234,6 @@ static void sync(Tk_view* tokens) {
             starts_with_function_call(*tokens) ||
             starts_with_variable_declaration(*tokens)
         ) {
-            log(LOG_DEBUG, "bracket_depth: %d\n", bracket_depth);
-            log(LOG_DEBUG, "EXITING 2\n");
             return;
         }
     }
@@ -958,7 +946,6 @@ static PARSE_STATUS extract_if_statement(Env* env, Node_if** if_statement, Tk_vi
 
 static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* tokens) {
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
-    log_tokens(LOG_DEBUG, *tokens);
 
     Node* lhs;
     if (starts_with_struct_definition(*tokens)) {
@@ -1028,8 +1015,11 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
         return PARSE_EXPR_NONE;
     }
     if (!try_consume(NULL, tokens, TOKEN_NEW_LINE)) {
-        log_tokens(LOG_DEBUG, *tokens);
-        todo();
+        msg(
+            LOG_ERROR, EXPECT_FAIL_NO_NEW_LINE_AFTER_STATEMENT, tk_view_front(*tokens).pos,
+            "expected newline after statement\n"
+        );
+        return PARSE_EXPR_ERROR;
     }
     return PARSE_EXPR_OK;
 }
@@ -1079,11 +1069,6 @@ static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens,
                 sync(tokens);
                 if (tokens->count < 1) {
                     should_stop = true;
-                    log(LOG_DEBUG, "SHOULD_STOP\n");
-                } else {
-                    log_tokens(LOG_DEBUG, *tokens);
-                    log(LOG_DEBUG, "NOT_SHOULD_STOP\n");
-                    log(LOG_DEBUG, "%zu\n", tokens->count);
                 }
                 status = PARSE_ERROR;
                 continue;
@@ -1319,7 +1304,6 @@ static PARSE_EXPR_STATUS try_extract_expression(Env* env, Node** result, Tk_view
         //if (can_end_statement(prev_token)) {
         //    break;
         //}
-        log_tokens(LOG_DEBUG, *tokens);
         while (try_consume(NULL, tokens, TOKEN_NEW_LINE)) {
             todo();
         }

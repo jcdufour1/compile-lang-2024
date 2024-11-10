@@ -113,8 +113,14 @@ static bool get_next_token(Pos* pos, Token* token, Str_view_col* file_text, Para
         return true;
     } else if (str_view_col_try_consume(pos, file_text, '"')) {
         token->type = TOKEN_STRING_LITERAL;
-        token->text = str_view_col_consume_while(pos, file_text, is_not_quote).base;
+        Str_view_col quote_str = {0};
+        if (!str_view_col_try_consume_while(&quote_str, pos, file_text, is_not_quote)) {
+            msg(LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_DOUBLE_QUOTE, token->pos, "unmatched `\"`\n");
+            token->type = TOKEN_NONTYPE;
+            return false;
+        }
         try(str_view_col_try_consume(pos, file_text, '"'));
+        token->text = quote_str.base;
         return true;
     } else if (str_view_col_try_consume(pos, file_text, ';')) {
         token->type = TOKEN_SEMICOLON;

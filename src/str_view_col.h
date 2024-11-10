@@ -31,25 +31,37 @@ static inline char str_view_col_consume(Pos* pos, Str_view_col* str_view) {
     return str_view_consume(&str_view->base);
 }
 
+static inline bool str_view_col_try_consume_while(
+    Str_view_col* result,
+    Pos* pos,
+    Str_view_col* str_view,
+    bool (*should_continue)(char /* previous char */, char /* current char */)
+) {
+    Str_view* base = &str_view->base;
+    for (size_t idx = 0; base->count > idx; idx++) {
+        char prev_char = idx > 0 ? (base->str[idx]) : (0);
+        if (!should_continue(prev_char, base->str[idx])) {
+            result->base.str = base->str;
+            result->base.count = idx;
+            base->str += idx;
+            base->count -= idx;
+            return true;
+        }
+        str_view_col_advance_pos(pos, base->str[idx]);
+    }
+    return false;
+}
+
 static inline Str_view_col str_view_col_consume_while(
     Pos* pos,
     Str_view_col* str_view,
     bool (*should_continue)(char /* previous char */, char /* current char */)
 ) {
-    Str_view_col new_str_view;
-    Str_view* base = &str_view->base;
-    for (size_t idx = 0; base->count > idx; idx++) {
-        char prev_char = idx > 0 ? (base->str[idx]) : (0);
-        if (!should_continue(prev_char, base->str[idx])) {
-            new_str_view.base.str = base->str;
-            new_str_view.base.count = idx;
-            base->str += idx;
-            base->count -= idx;
-            return new_str_view;
-        }
-        str_view_col_advance_pos(pos, base->str[idx]);
+    Str_view_col result = {0};
+    if (str_view_col_try_consume_while(&result, pos, str_view, should_continue)) {
+        return result;
     }
-    unreachable("cond is never met");
+    unreachable("condition is never met");
 }
 
 static inline Str_view_col str_view_col_consume_until(Pos* pos, Str_view_col* str_view, char delim) {

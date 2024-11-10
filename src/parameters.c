@@ -92,11 +92,14 @@ static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
                 vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_MISSING_CLOSE_CURLY_BRACE);
             } else if (0 == strcmp(expected_fail_type_str, "missing-close-par")) {
                 vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_MISSING_CLOSE_PAR);
+            } else if (0 == strcmp(expected_fail_type_str, "no-new-line-after-statement")) {
+                vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_NO_NEW_LINE_AFTER_STATEMENT);
+            } else if (0 == strcmp(expected_fail_type_str, "missing-close-double-quote")) {
+                vec_append(&a_main, &params->expected_fail_types, EXPECT_FAIL_MISSING_CLOSE_DOUBLE_QUOTE);
             } else {
                 log(LOG_FETAL, "invalid expected fail type `%s`\n", expected_fail_type_str);
                 exit(EXIT_CODE_FAIL);
             }
-
             assert(idx + 1 == params->expected_fail_types.info.count);
             assert(params->expected_fail_types.info.count > 0);
         }
