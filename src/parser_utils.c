@@ -48,6 +48,25 @@ bool try_str_view_to_int64_t(int64_t* result, Str_view str_view) {
     return true;
 }
 
+bool try_str_view_to_size_t(size_t* result, Str_view str_view) {
+    *result = 0;
+    size_t idx = 0;
+    for (idx = 0; idx < str_view.count; idx++) {
+        char curr_char = str_view.str[idx];
+        if (!isdigit(curr_char)) {
+            break;
+        }
+
+        *result *= 10;
+        *result += curr_char - '0';
+    }
+
+    if (idx < 1) {
+        return false;
+    }
+    return true;
+}
+
 int64_t str_view_to_int64_t(Str_view str_view) {
     int64_t result = INT64_MAX;
 
