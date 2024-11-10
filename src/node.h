@@ -37,7 +37,6 @@
     DO(load_element_ptr, NODE_LOAD_ELEMENT_PTR) \
     DO(label, NODE_LABEL) \
     DO(ptr_byval_sym, NODE_PTR_BYVAL_SYM) \
-    DO(llvm_register_sym, NODE_LLVM_REGISTER_SYM) \
     DO(for_with_cond, NODE_FOR_WITH_COND) \
     DO(expr, NODE_EXPR)
 
@@ -90,7 +89,12 @@
         Node_ptr_vec children; \
         Llvm_id llvm_id; \
         Str_view name; \
-    ) 
+    ) \
+    DO(llvm_register_sym, NODE_E_LLVM_REGISTER_SYM, \
+        Lang_type lang_type; \
+        struct Node_* node_src; \
+        Llvm_id llvm_id; \
+    )
 
 struct Node_;
 struct Node_expr_;
@@ -335,12 +339,6 @@ typedef struct {
 } Node_store_another_node;
 
 typedef struct {
-    Lang_type lang_type;
-    struct Node_* node_src;
-    Llvm_id llvm_id;
-} Node_llvm_register_sym;
-
-typedef struct {
     Node_e_literal* child;
     struct Node_* node_dest;
     Llvm_id llvm_id;
@@ -504,6 +502,22 @@ FOR_LIST_OF_NODE_E_OPERATORS(X)
 #undef X
 
 extern Node* root_of_tree;
+
+
+
+
+//
+//
+//
+// util
+//
+
+static inline Node_expr* node_make_expr(Node* node, NODE_EXPR_TYPE expr_type) {
+    assert(node->type == NODE_EXPR);
+    Node_expr* expr = node_unwrap_expr(node);
+    expr->type = expr_type; 
+    return expr;
+}
 
 #define LANG_TYPE_FMT STR_VIEW_FMT
 

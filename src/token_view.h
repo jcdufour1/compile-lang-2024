@@ -49,7 +49,7 @@ static bool get_idx_matching_token(
 }
 
 // this function will not consider nested ()
-static bool get_idx_token(size_t* idx_matching, Tk_view tokens, size_t start, TOKEN_TYPE type_to_match) {
+static inline bool get_idx_token(size_t* idx_matching, Tk_view tokens, size_t start, TOKEN_TYPE type_to_match) {
     for (size_t idx = start; idx < tokens.count; idx++) {
         if (tokens.tokens[idx].type == type_to_match) {
             if (idx_matching) {

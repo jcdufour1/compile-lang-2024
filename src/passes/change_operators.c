@@ -6,8 +6,8 @@
 // TODO: rewrite this pass, because this is unsafe
 // TODO: do not change type of existing node (or find better way), because this is error prone
 static void do_change_operator(Node_e_operator* operator) {
-    log_tree(LOG_DEBUG, node_wrap_operator(node_wrap_operator_generic(operator)));
-    Pos pos = node_wrap_operator(node_wrap_operator_generic(operator))->pos;
+    log_tree(LOG_DEBUG, node_wrap_expr(node_wrap_e_operator((operator))));
+    Pos pos = node_wrap_expr(node_wrap_e_operator(operator))->pos;
     if (operator->type == NODE_OP_UNARY) {
         Node_op_unary* unary = node_unwrap_op_unary(operator);
         switch (unary->token_type) {
@@ -22,7 +22,7 @@ static void do_change_operator(Node_e_operator* operator) {
                     pos
                 ));
                 binary->token_type = TOKEN_DOUBLE_EQUAL;
-                binary->lang_type = get_lang_type(temp.child);
+                binary->lang_type = get_lang_type_expr(temp.child);
                 assert(binary->lang_type.str.count > 0);
                 break;
             }
@@ -42,9 +42,14 @@ void change_operators(Env* env) {
     if (!curr_node) {
         return;
     }
-    switch (curr_node->type) {
+    if (curr_node->type != NODE_EXPR) {
+        return;
+    }
+
+    Node_expr* expr = node_unwrap_expr(curr_node);
+    switch (expr->type) {
         case NODE_E_OPERATOR:
-            do_change_operator(node_unwrap_operator(curr_node));
+            do_change_operator(node_unwrap_e_operator(expr));
             break;
         default:
             break;

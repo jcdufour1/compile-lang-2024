@@ -62,6 +62,8 @@ static inline Llvm_id get_llvm_id_expr(const Node_expr* expr) {
             unreachable("");
         case NODE_E_STRUCT_LITERAL:
             unreachable("");
+        case NODE_E_LLVM_REGISTER_SYM:
+            return node_unwrap_e_llvm_register_sym_const(expr)->llvm_id;
     }
     unreachable("");
 }
@@ -148,6 +150,8 @@ static inline Lang_type get_lang_type_expr(const Node_expr* expr) {
             unreachable("");
         case NODE_E_SYMBOL_TYPED:
             return node_unwrap_e_symbol_typed_const(expr)->lang_type;
+        case NODE_E_LLVM_REGISTER_SYM:
+            return node_unwrap_e_llvm_register_sym_const(expr)->lang_type;
     }
     unreachable("");
 }
@@ -170,6 +174,8 @@ static inline Lang_type* get_lang_type_expr_ref(Node_expr* expr) {
             return &node_unwrap_e_symbol_typed(expr)->lang_type;
         case NODE_E_OPERATOR:
             return get_operator_lang_type_ref(node_unwrap_e_operator(expr));
+        case NODE_E_LLVM_REGISTER_SYM:
+            return &node_unwrap_e_llvm_register_sym(expr)->lang_type;
     }
     unreachable("");
 }
@@ -234,8 +240,6 @@ static inline Lang_type get_lang_type(const Node* node) {
             return node_unwrap_llvm_store_literal_const(node)->lang_type;
         case NODE_PTR_BYVAL_SYM:
             return node_unwrap_ptr_byval_sym_const(node)->lang_type;
-        case NODE_LLVM_REGISTER_SYM:
-            return node_unwrap_llvm_register_sym_const(node)->lang_type;
     }
     unreachable("");
 }
@@ -300,8 +304,6 @@ static inline Lang_type* get_lang_type_ref(Node* node) {
             return &node_unwrap_llvm_store_literal(node)->lang_type;
         case NODE_PTR_BYVAL_SYM:
             return &node_unwrap_ptr_byval_sym(node)->lang_type;
-        case NODE_LLVM_REGISTER_SYM:
-            return &node_unwrap_llvm_register_sym(node)->lang_type;
     }
     unreachable("");
 }
@@ -324,7 +326,8 @@ static inline Node* get_expr_src(Node_expr* expr) {
             unreachable("");
         case NODE_E_OPERATOR:
             unreachable("");
-
+        case NODE_E_LLVM_REGISTER_SYM:
+            return node_unwrap_e_llvm_register_sym(expr)->node_src;
     }
     unreachable("");
 }
@@ -389,8 +392,6 @@ static inline Node* get_node_src(Node* node) {
             unreachable("");
         case NODE_PTR_BYVAL_SYM:
             return node_unwrap_ptr_byval_sym(node)->node_src;
-        case NODE_LLVM_REGISTER_SYM:
-            return node_unwrap_llvm_register_sym(node)->node_src;
     }
     unreachable("");
 }
@@ -412,6 +413,8 @@ static inline Node* get_expr_dest(Node_expr* expr) {
         case NODE_E_FUNCTION_CALL:
             unreachable("");
         case NODE_E_OPERATOR:
+            unreachable("");
+        case NODE_E_LLVM_REGISTER_SYM:
             unreachable("");
     }
     unreachable("");
@@ -477,8 +480,6 @@ static inline Node* get_node_dest(Node* node) {
             return node_unwrap_llvm_store_literal_const(node)->node_dest;
         case NODE_PTR_BYVAL_SYM:
             unreachable("");
-        case NODE_LLVM_REGISTER_SYM:
-            unreachable("");
     }
     unreachable("");
 }
@@ -502,7 +503,17 @@ static inline Str_view get_expr_name(const Node_expr* expr) {
         case NODE_E_LITERAL:
             return node_unwrap_e_literal_const(expr)->name;
             unreachable("");
+        case NODE_E_LLVM_REGISTER_SYM:
+            unreachable("");
     }
+}
+
+static inline Str_view get_node_name_expr(const Node_expr* node) {
+    switch (node->type) {
+        default:
+            unreachable("");
+    }
+    unreachable("");
 }
 
 static inline Str_view get_node_name(const Node* node) {
@@ -565,8 +576,6 @@ static inline Str_view get_node_name(const Node* node) {
         case NODE_LOAD_ELEMENT_PTR:
             return node_unwrap_load_element_ptr_const(node)->name;
         case NODE_LLVM_STORE_LITERAL:
-            unreachable("");
-        case NODE_LLVM_REGISTER_SYM:
             unreachable("");
         case NODE_PTR_BYVAL_SYM:
             unreachable("");

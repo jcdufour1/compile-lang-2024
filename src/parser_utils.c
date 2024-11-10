@@ -293,6 +293,7 @@ Node_expr* unary_new(const Env* env, Node_expr* child, TOKEN_TYPE operator_type,
 
 // TODO: make Node_untyped_binary
 Node_expr* binary_new(const Env* env, Node_expr* lhs, Node_expr* rhs, TOKEN_TYPE operator_type) {
+    todo();
     // TODO: check if lhs or rhs were already appended to the tree
     Node_expr* operator_ = node_unwrap_expr(node_new(node_wrap_expr(lhs)->pos, NODE_EXPR));
     operator_->type = NODE_E_OPERATOR;
@@ -619,10 +620,12 @@ bool try_set_binary_lang_type(const Env* env, Node_expr** new_node, Lang_type* l
         *new_node = node_wrap_e_operator(node_wrap_op_binary(operator));
     }
 
+    assert(get_lang_type_expr(*new_node).str.count > 0);
     return true;
 }
 
 bool try_set_unary_lang_type(const Env* env, Node_expr** new_node, Lang_type* lang_type, Node_op_unary* unary) {
+    todo();
     assert(lang_type);
     Lang_type init_lang_type;
     Node_expr* new_child;
@@ -734,6 +737,7 @@ bool try_set_expr_lang_type(const Env* env, Node_expr** new_node, Lang_type* lan
     switch (node->type) {
         case NODE_E_LITERAL:
             *lang_type = node_unwrap_e_literal(node)->lang_type;
+            *new_node = node;
             return true;
         case NODE_E_SYMBOL_UNTYPED:
             return try_set_symbol_type(env, lang_type, node_unwrap_e_symbol_untyped(node));
@@ -1062,7 +1066,9 @@ bool try_set_node_lang_type(const Env* env, Node** new_node, Lang_type* lang_typ
     switch (node->type) {
         case NODE_EXPR: {
             Node_expr* new_node_ = NULL;
-            try_set_expr_lang_type(env, &new_node_, lang_type, node_unwrap_expr(node));
+            if (!try_set_expr_lang_type(env, &new_node_, lang_type, node_unwrap_expr(node))) {
+                return false;
+            }
             *new_node = node_wrap_expr(new_node_);
             return true;
         }

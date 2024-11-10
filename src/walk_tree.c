@@ -60,6 +60,9 @@ INLINE void walk_tree_expr(Env* env, void (callback)(Env* env)) {
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         }
+        case NODE_E_LLVM_REGISTER_SYM:
+            assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
+            break;
     }
 }
 
@@ -176,9 +179,6 @@ void walk_tree(Env* env, void (callback)(Env* env)) {
             break;
         case NODE_RETURN:
             walk_tree_traverse(env, (Node*)node_unwrap_return(curr_node)->child, callback);
-            assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
-            break;
-        case NODE_LLVM_REGISTER_SYM:
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_BREAK:

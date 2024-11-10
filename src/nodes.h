@@ -36,12 +36,16 @@ static inline Node* get_left_child_expr(Node_expr* expr) {
             unreachable("");
         case NODE_E_OPERATOR:
             unreachable("");
+        case NODE_E_LLVM_REGISTER_SYM:
+            unreachable("");
     }
     unreachable("");
 }
 
 static inline Node* get_left_child(Node* node) {
     switch (node->type) {
+        case NODE_EXPR:
+            return get_left_child_expr(node_unwrap_expr(node));
         case NODE_LABEL:
             unreachable("");
         case NODE_LANG_TYPE:
@@ -97,8 +101,6 @@ static inline Node* get_left_child(Node* node) {
         case NODE_LLVM_STORE_STRUCT_LITERAL:
             unreachable("");
         case NODE_PTR_BYVAL_SYM:
-            return NULL;
-        case NODE_LLVM_REGISTER_SYM:
             return NULL;
         default:
             unreachable(NODE_FMT, node_print(node));

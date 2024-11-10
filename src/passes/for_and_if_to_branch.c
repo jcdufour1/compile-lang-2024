@@ -21,17 +21,17 @@ static Node_cond_goto* conditional_goto_new(
     Str_view label_name_if_true,
     Str_view label_name_if_false
 ) {
-    Node_cond_goto* cond_goto = node_unwrap_cond_goto(node_new(node_wrap_operator(node_wrap_operator_generic(operator))->pos, NODE_COND_GOTO));
+    Node_cond_goto* cond_goto = node_unwrap_cond_goto(node_new(node_wrap_expr(node_wrap_e_operator(operator))->pos, NODE_COND_GOTO));
     cond_goto->node_src = operator;
-    cond_goto->if_true = symbol_new(label_name_if_true, node_wrap_operator(node_wrap_operator_generic(operator))->pos);
-    cond_goto->if_false = symbol_new(label_name_if_false, node_wrap_operator(node_wrap_operator_generic(operator))->pos);
+    cond_goto->if_true = symbol_new(label_name_if_true, node_wrap_expr(node_wrap_e_operator(operator))->pos);
+    cond_goto->if_false = symbol_new(label_name_if_false, node_wrap_expr(node_wrap_e_operator(operator))->pos);
     return cond_goto;
 }
 
 static Node_assignment* for_loop_cond_var_assign_new(Env* env, Str_view sym_name, Pos pos) {
     Node_e_literal* literal = literal_new(str_view_from_cstr("1"), TOKEN_INT_LITERAL, pos);
-    Node* operator = binary_new(env, node_wrap_symbol_untyped(symbol_new(sym_name, pos)), node_wrap_e_literal(literal), TOKEN_SINGLE_PLUS);
-    return assignment_new(env, node_wrap_symbol_untyped(symbol_new(sym_name, pos)), operator);
+    Node_expr* operator = binary_new(env, node_wrap_e_symbol_untyped(symbol_new(sym_name, pos)), node_wrap_e_literal(literal), TOKEN_SINGLE_PLUS);
+    return assignment_new(env, node_wrap_expr(node_wrap_e_symbol_untyped(symbol_new(sym_name, pos))), operator);
 }
 
 static void change_break_to_goto(Node_block* block, const Node_label* label_to_goto) {
@@ -66,14 +66,14 @@ static void change_break_to_goto(Node_block* block, const Node_label* label_to_g
 static Node_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* for_loop) {
     Node_block* for_block = for_loop->body;
     Node_block* new_branch_block = node_unwrap_block(node_new(node_wrap_for_with_cond(for_loop)->pos, NODE_BLOCK));
-    Node_e_operator* operator = node_unwrap_operator(for_loop->condition->child);
+    Node_e_operator* operator = node_unwrap_e_operator(for_loop->condition->child);
 
     Node_label* check_cond_label = label_new(env, literal_name_new(), node_wrap_for_with_cond(for_loop)->pos);
     Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label->name, node_wrap_for_with_cond(for_loop)->pos);
     Node_label* after_check_label = label_new(env, literal_name_new(), node_wrap_for_with_cond(for_loop)->pos);
     Node_label* after_for_loop_label = label_new(env, literal_name_new(), node_wrap_for_with_cond(for_loop)->pos);
-    Node_llvm_register_sym* oper_rtn_sym = node_unwrap_llvm_register_sym(node_new(node_wrap_operator(node_wrap_operator_generic(operator))->pos, NODE_LLVM_REGISTER_SYM));
-    oper_rtn_sym->node_src = node_wrap_operator(node_wrap_operator_generic(operator));
+    Node_e_llvm_register_sym* oper_rtn_sym = node_unwrap_e_llvm_register_sym(node_make_expr(node_new(node_wrap_expr(node_wrap_e_operator(operator))->pos, NODE_EXPR), NODE_E_LLVM_REGISTER_SYM));
+    oper_rtn_sym->node_src = node_wrap_expr(node_wrap_e_operator(operator));
     Node_cond_goto* check_cond_jmp = conditional_goto_new(
         operator,
         after_check_label->name, 
@@ -84,7 +84,7 @@ static Node_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* for_loo
 
     vec_append(&a_main, &new_branch_block->children, node_wrap_goto(jmp_to_check_cond_label));
     vec_append(&a_main, &new_branch_block->children, node_wrap_label(check_cond_label));
-    vec_append(&a_main, &new_branch_block->children, node_wrap_operator(operator));
+    vec_append(&a_main, &new_branch_block->children, node_wrap_expr(node_wrap_e_operator(operator)));
     vec_append(&a_main, &new_branch_block->children, node_wrap_cond_goto(check_cond_jmp));
     vec_append(&a_main, &new_branch_block->children, node_wrap_label(after_check_label));
     vec_extend(&a_main, &new_branch_block->children, &for_block->children);
@@ -100,8 +100,8 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* for_loop) {
     Node_block* for_block = for_loop->body;
     vec_append(&a_main, &env->ancesters, node_wrap_block(for_block));
     symbol_log(LOG_DEBUG, env);
-    Node* lhs_actual = for_loop->lower_bound->child;
-    Node* rhs_actual = for_loop->upper_bound->child;
+    Node_expr* lhs_actual = for_loop->lower_bound->child;
+    Node_expr* rhs_actual = for_loop->upper_bound->child;
 
     Node_block* new_branch_block = node_unwrap_block(node_new(node_wrap_for_range(for_loop)->pos, NODE_BLOCK));
 
@@ -112,23 +112,23 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* for_loop) {
         symbol_lhs_assign = symbol_new(for_var_def->name, node_wrap_variable_def(for_var_def)->pos);
     }
 
-    Node_assignment* assignment_to_inc_cond_var = for_loop_cond_var_assign_new(env, for_var_def->name, lhs_actual->pos);
+    Node_assignment* assignment_to_inc_cond_var = for_loop_cond_var_assign_new(env, for_var_def->name, node_wrap_expr(lhs_actual)->pos);
 
-    Node* new_operator = binary_new(
-        env, node_wrap_symbol_untyped(symbol_new(symbol_lhs_assign->name, node_wrap_symbol_untyped(symbol_lhs_assign)->pos)), rhs_actual, TOKEN_LESS_THAN
+    Node_expr* new_operator = binary_new(
+        env, node_wrap_e_symbol_untyped(symbol_new(symbol_lhs_assign->name, node_wrap_expr(node_wrap_e_symbol_untyped(symbol_lhs_assign))->pos)), rhs_actual, TOKEN_LESS_THAN
     );
 
     // initial assignment
-    Node_assignment* new_var_assign = assignment_new(env, node_wrap_symbol_untyped(symbol_lhs_assign), lhs_actual);
+    Node_assignment* new_var_assign = assignment_new(env, node_wrap_expr(node_wrap_e_symbol_untyped(symbol_lhs_assign)), lhs_actual);
 
     Node_label* check_cond_label = label_new(env, literal_name_new(), node_wrap_for_range(for_loop)->pos);
     Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label->name, node_wrap_for_range(for_loop)->pos);
     Node_label* after_check_label = label_new(env, literal_name_new(), node_wrap_for_range(for_loop)->pos);
     Node_label* after_for_loop_label = label_new(env, literal_name_new(), node_wrap_for_range(for_loop)->pos);
-    Node_llvm_register_sym* oper_rtn_sym = node_unwrap_llvm_register_sym(node_new(new_operator->pos, NODE_LLVM_REGISTER_SYM));
-    oper_rtn_sym->node_src = new_operator;
+    Node_e_llvm_register_sym* oper_rtn_sym = node_unwrap_e_llvm_register_sym(node_make_expr(node_new(node_wrap_expr(new_operator)->pos, NODE_EXPR), NODE_E_LLVM_REGISTER_SYM));
+    oper_rtn_sym->node_src = node_wrap_expr(new_operator);
     Node_cond_goto* check_cond_jmp = conditional_goto_new(
-        node_wrap_operator_generic(new_operator),
+        node_unwrap_e_operator(new_operator),
         after_check_label->name, 
         after_for_loop_label->name
     );
@@ -139,7 +139,7 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* for_loop) {
     vec_append(&a_main, &new_branch_block->children, node_wrap_assignment(new_var_assign));
     vec_append(&a_main, &new_branch_block->children, node_wrap_goto(jmp_to_check_cond_label));
     vec_append(&a_main, &new_branch_block->children, node_wrap_label(check_cond_label));
-    vec_append(&a_main, &new_branch_block->children, new_operator);
+    vec_append(&a_main, &new_branch_block->children, node_wrap_expr(new_operator));
     vec_append(&a_main, &new_branch_block->children, node_wrap_cond_goto(check_cond_jmp));
     vec_append(&a_main, &new_branch_block->children, node_wrap_label(after_check_label));
     vec_extend(&a_main, &new_branch_block->children, &for_block->children);
@@ -161,10 +161,10 @@ static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement) {
     Node_e_operator* operator;
     switch (if_cond->child->type) {
         case NODE_E_OPERATOR:
-            operator = node_unwrap_operator(if_cond->child);
+            operator = node_unwrap_e_operator(if_cond->child);
             break;
         case NODE_E_LITERAL: {
-            const Node_e_literal* literal = node_unwrap_literal_const(if_cond->child);
+            const Node_e_literal* literal = node_unwrap_e_literal_const(if_cond->child);
             int64_t value = node_unwrap_lit_number_const(literal)->data;
             if (value == 0) {
                 return new_branch_block;
@@ -179,13 +179,13 @@ static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement) {
 
 
     Node_label* if_true = label_new(env, literal_name_new(), node_wrap_block(block)->pos);
-    Node_label* if_after = label_new(env, literal_name_new(), node_wrap_operator(operator)->pos);
+    Node_label* if_after = label_new(env, literal_name_new(), node_wrap_expr(node_wrap_e_operator(operator))->pos);
 
     Node_cond_goto* check_cond_jmp = conditional_goto_new(operator, if_true->name, if_after->name);
 
     Node_goto* jmp_to_if_after = goto_new(if_after->name, node_wrap_block(block)->pos);
 
-    vec_append(&a_main, &new_branch_block->children, node_wrap_operator(operator));
+    vec_append(&a_main, &new_branch_block->children, node_wrap_expr(node_wrap_e_operator(operator)));
     vec_append(&a_main, &new_branch_block->children, node_wrap_cond_goto(check_cond_jmp));
     vec_append(&a_main, &new_branch_block->children, node_wrap_label(if_true));
     vec_extend(&a_main, &new_branch_block->children, &block->children);
