@@ -60,7 +60,7 @@ static inline bool is_struct_variable_definition(const Env* env, const Node_vari
 }
 
 static inline bool is_struct_symbol(const Env* env, const Node* symbol) {
-    assert(symbol->type == NODE_SYMBOL_TYPED || symbol->type == NODE_STRUCT_MEMBER_SYM_TYPED);
+    assert(symbol->type == NODE_SYMBOL_TYPED || symbol->type == NODE_MEMBER_SYM_TYPED);
 
     Node* var_def;
     if (!symbol_lookup(&var_def, env, get_node_name(symbol))) {
@@ -71,10 +71,10 @@ static inline bool is_struct_symbol(const Env* env, const Node* symbol) {
 
 bool is_corresponding_to_a_struct(const Env* env, const Node* node);
 
-static inline size_t get_member_index(const Node_struct_def* struct_def, const Node_struct_member_sym_piece_typed* member_symbol) {
+static inline size_t get_member_index(const Node_struct_def* struct_def, const Node_member_sym_piece_typed* member_symbol) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         const Node* curr_member = vec_at(&struct_def->members, idx);
-        if (str_view_is_equal(get_node_name(curr_member), get_node_name(node_wrap_struct_member_sym_piece_typed_const(member_symbol)))) {
+        if (str_view_is_equal(get_node_name(curr_member), get_node_name(node_wrap_member_sym_piece_typed_const(member_symbol)))) {
             return idx;
         }
     }
@@ -83,8 +83,8 @@ static inline size_t get_member_index(const Node_struct_def* struct_def, const N
 
 static inline bool try_get_member_def(Node_variable_def** member_def, const Node_struct_def* struct_def, const Node* member_symbol) {
     assert(
-        member_symbol->type == NODE_STRUCT_MEMBER_SYM_PIECE_TYPED ||
-        member_symbol->type == NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED
+        member_symbol->type == NODE_MEMBER_SYM_PIECE_TYPED ||
+        member_symbol->type == NODE_MEMBER_SYM_PIECE_UNTYPED
     );
 
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
@@ -139,7 +139,7 @@ void set_symbol_type(Node_symbol_untyped* sym_untyped);
 
 bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_function_call* fun_call);
 
-bool try_set_struct_member_symbol_types(const Env* env, Node** new_node, Lang_type* lang_type, Node_struct_member_sym_untyped* struct_memb_sym);
+bool try_set_member_symbol_types(const Env* env, Node** new_node, Lang_type* lang_type, Node_member_sym_untyped* struct_memb_sym);
 
 bool try_set_node_type(const Env* env, Node** new_node, Lang_type* lang_type, Node* node);
 

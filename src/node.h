@@ -16,23 +16,22 @@
     DO(store_another_node, NODE_STORE_ANOTHER_NODE) \
     DO(load_another_node, NODE_LOAD_ANOTHER_NODE) \
     DO(alloca, NODE_ALLOCA) \
-    DO(struct_member_sym_typed, NODE_STRUCT_MEMBER_SYM_TYPED) \
-    DO(struct_member_sym_untyped, NODE_STRUCT_MEMBER_SYM_UNTYPED) \
+    DO(member_sym_typed, NODE_MEMBER_SYM_TYPED) \
+    DO(member_sym_untyped, NODE_MEMBER_SYM_UNTYPED) \
     DO(block, NODE_BLOCK) \
-    DO(if_condition, NODE_IF_CONDITION) \
+    DO(condition, NODE_CONDITION) \
     DO(if, NODE_IF) \
     DO(assignment, NODE_ASSIGNMENT) \
     DO(break, NODE_BREAK) \
     DO(for_upper_bound, NODE_FOR_UPPER_BOUND) \
     DO(for_lower_bound, NODE_FOR_LOWER_BOUND) \
-    DO(return_statement, NODE_RETURN_STATEMENT) \
+    DO(return, NODE_RETURN) \
     DO(for_range, NODE_FOR_RANGE) \
-    DO(function_definition, NODE_FUNCTION_DEFINITION) \
-    DO(function_declaration, NODE_FUNCTION_DECLARATION) \
-    DO(function_return_types, NODE_FUNCTION_RETURN_TYPES) \
+    DO(function_def, NODE_FUNCTION_DEF) \
+    DO(function_decl, NODE_FUNCTION_DECL) \
     DO(struct_def, NODE_STRUCT_DEF) \
-    DO(struct_member_sym_piece_typed, NODE_STRUCT_MEMBER_SYM_PIECE_TYPED) \
-    DO(struct_member_sym_piece_untyped, NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED) \
+    DO(member_sym_piece_typed, NODE_MEMBER_SYM_PIECE_TYPED) \
+    DO(member_sym_piece_untyped, NODE_MEMBER_SYM_PIECE_UNTYPED) \
     DO(variable_def, NODE_VARIABLE_DEF) \
     DO(struct_literal, NODE_STRUCT_LITERAL) \
     DO(lang_type, NODE_LANG_TYPE) \
@@ -45,7 +44,7 @@
     DO(symbol_untyped, NODE_SYMBOL_UNTYPED) \
     DO(ptr_byval_sym, NODE_PTR_BYVAL_SYM) \
     DO(llvm_register_sym, NODE_LLVM_REGISTER_SYM) \
-    DO(for_with_condition, NODE_FOR_WITH_CONDITION) \
+    DO(for_with_cond, NODE_FOR_WITH_COND) \
     DO(operator, NODE_OPERATOR)
 
 #define FOR_LIST_OF_NODE_OPERATORS(DO) \
@@ -199,13 +198,13 @@ typedef struct {
 
 typedef struct {
     Str_view name;
-} Node_struct_member_sym_piece_untyped;
+} Node_member_sym_piece_untyped;
 
 typedef struct {
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     size_t struct_index;
     Str_view name;
-} Node_struct_member_sym_piece_typed;
+} Node_member_sym_piece_typed;
 
 typedef struct {
     Node_ptr_vec members;
@@ -220,20 +219,16 @@ typedef struct {
 } Node_block;
 
 typedef struct {
-    Node_lang_type* child;
-} Node_function_return_types;
-
-typedef struct {
     Node_function_params* parameters;
-    Node_function_return_types* return_types;
+    Node_lang_type* return_type;
     Str_view name;
-} Node_function_declaration;
+} Node_function_decl;
 
 typedef struct {
-    Node_function_declaration* declaration;
+    Node_function_decl* declaration;
     Node_block* body;
     Llvm_id llvm_id;
-} Node_function_definition;
+} Node_function_def;
 
 typedef struct {
     struct Node_* child;
@@ -245,7 +240,7 @@ typedef struct {
 
 typedef struct {
     struct Node_* child;
-} Node_if_condition;
+} Node_condition;
 
 typedef struct {
     Node_variable_def* var_def;
@@ -255,14 +250,14 @@ typedef struct {
 } Node_for_range;
 
 typedef struct {
-    Node_if_condition* condition;
+    Node_condition* condition;
     Node_block* body;
-} Node_for_with_condition;
+} Node_for_with_cond;
 
 typedef struct {
     struct Node_* child;
     bool auto_inserted : 1;
-} Node_return_statement;
+} Node_return;
 
 typedef struct {
     struct Node_* child;
@@ -274,7 +269,7 @@ typedef struct {
 } Node_assignment;
 
 typedef struct {
-    Node_if_condition* condition;
+    Node_condition* condition;
     Node_block* body;
 } Node_if;
 
@@ -282,13 +277,13 @@ typedef struct {
     Node_ptr_vec children;
     Str_view name;
     Lang_type lang_type;
-} Node_struct_member_sym_untyped;
+} Node_member_sym_untyped;
 
 typedef struct {
     Node_ptr_vec children;
     Llvm_id llvm_id;
     Str_view name;
-} Node_struct_member_sym_typed;
+} Node_member_sym_typed;
 
 typedef struct {
     Llvm_id llvm_id;

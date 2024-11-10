@@ -23,13 +23,13 @@ void analysis_1(Env* env) {
                 //fallthrough
             case NODE_SYMBOL_UNTYPED:
                 //fallthrough
-            case NODE_RETURN_STATEMENT:
+            case NODE_RETURN:
                 //fallthrough
             case NODE_OPERATOR:
                 //fallthrough
             case NODE_IF:
                 //fallthrough
-            case NODE_FOR_WITH_CONDITION: {
+            case NODE_FOR_WITH_COND: {
                 Node* new_node;
                 try_set_node_type(env, &new_node, &dummy, *curr_node);
                 *curr_node = new_node;
@@ -40,9 +40,9 @@ void analysis_1(Env* env) {
         }
 
         if (idx == block_children->info.count - 1 
-            && (*curr_node)->type != NODE_RETURN_STATEMENT
+            && (*curr_node)->type != NODE_RETURN
             && env->ancesters.info.count > 1
-            && vec_at(&env->ancesters, env->ancesters.info.count - 2)->type == NODE_FUNCTION_DEFINITION
+            && vec_at(&env->ancesters, env->ancesters.info.count - 2)->type == NODE_FUNCTION_DEF
         ) {
             need_add_return = true;
         }
@@ -52,14 +52,14 @@ void analysis_1(Env* env) {
         env->ancesters.info.count > 1 && vec_at(&env->ancesters, env->ancesters.info.count - 2)
     ) {
         Pos pos = vec_top(block_children)->pos;
-        Node_return_statement* rtn_statement = node_unwrap_return_statement(
-            node_new(pos, NODE_RETURN_STATEMENT)
+        Node_return* rtn_statement = node_unwrap_return(
+            node_new(pos, NODE_RETURN)
         );
         rtn_statement->auto_inserted = true;
         rtn_statement->child = node_wrap_literal(literal_new(str_view_from_cstr(""), TOKEN_VOID, pos));
         Lang_type dummy;
         Node* new_rtn_statement;
-        try_set_node_type(env, &new_rtn_statement, &dummy, node_wrap_return_statement(rtn_statement));
+        try_set_node_type(env, &new_rtn_statement, &dummy, node_wrap_return(rtn_statement));
         vec_append(&a_main, block_children, new_rtn_statement);
     }
 

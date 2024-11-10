@@ -22,13 +22,11 @@ void assign_llvm_ids(Env* env) {
             return;
         case NODE_BLOCK:
             return;
-        case NODE_FUNCTION_DECLARATION:
+        case NODE_FUNCTION_DECL:
             return;
-        case NODE_FUNCTION_DEFINITION:
+        case NODE_FUNCTION_DEF:
             return;
-        case NODE_FUNCTION_RETURN_TYPES:
-            return;
-        case NODE_RETURN_STATEMENT:
+        case NODE_RETURN:
             return;
         case NODE_LANG_TYPE:
             return;
@@ -46,8 +44,8 @@ void assign_llvm_ids(Env* env) {
             node_unwrap_store_another_node(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
             return;
-        case NODE_STRUCT_MEMBER_SYM_TYPED:
-            node_unwrap_struct_member_sym_typed(curr_node)->llvm_id = llvm_id_for_next_var;
+        case NODE_MEMBER_SYM_TYPED:
+            node_unwrap_member_sym_typed(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
             return;
         case NODE_VARIABLE_DEF:
@@ -73,7 +71,7 @@ void assign_llvm_ids(Env* env) {
             node_unwrap_cond_goto(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
             return;
-        case NODE_IF_CONDITION:
+        case NODE_CONDITION:
             unreachable("");
         case NODE_OPERATOR: {
             Node_operator* operator = node_unwrap_operator(curr_node);
@@ -102,7 +100,7 @@ void assign_llvm_ids(Env* env) {
             node_unwrap_llvm_store_struct_literal(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
             return;
-        case NODE_STRUCT_MEMBER_SYM_PIECE_TYPED:
+        case NODE_MEMBER_SYM_PIECE_TYPED:
             unreachable("");
         case NODE_PTR_BYVAL_SYM:
             node_unwrap_ptr_byval_sym(curr_node)->llvm_id = llvm_id_for_next_var;

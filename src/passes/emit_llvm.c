@@ -121,10 +121,10 @@ static void extend_literal_decl(const Env* env, String* output, const Node_liter
     extend_literal_decl_prefix(output, literal);
 }
 
-static const Node_lang_type* return_type_from_function_definition(const Node_function_definition* fun_def) {
-    const Node_function_return_types* return_types = fun_def->declaration->return_types;
-    if (return_types->child) {
-        return return_types->child;
+static const Node_lang_type* return_type_from_function_def(const Node_function_def* fun_def) {
+    const Node_lang_type* return_type = fun_def->declaration->return_type;
+    if (return_type) {
+        return return_type;
     }
     unreachable("");
 }
@@ -173,7 +173,7 @@ static void emit_function_call_arguments(const Env* env, String* output, const N
                 extend_literal_decl(env, output, node_unwrap_literal_const(argument), true);
                 break;
             }
-            case NODE_STRUCT_MEMBER_SYM_TYPED:
+            case NODE_MEMBER_SYM_TYPED:
                 unreachable("");
                 break;
             case NODE_STRUCT_LITERAL:
@@ -403,13 +403,13 @@ static void emit_llvm_store_literal(const Env* env, String* output, const Node_l
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_function_definition(Env* env, String* output, const Node_function_definition* fun_def) {
+static void emit_function_def(Env* env, String* output, const Node_function_def* fun_def) {
     string_extend_cstr(&a_main, output, "define dso_local ");
 
-    extend_type_call_str(env, output, return_type_from_function_definition(fun_def)->lang_type);
+    extend_type_call_str(env, output, return_type_from_function_def(fun_def)->lang_type);
 
     string_extend_cstr(&a_main, output, " @");
-    string_extend_strv(&a_main, output, get_node_name(node_wrap_function_definition_const(fun_def)));
+    string_extend_strv(&a_main, output, get_node_name(node_wrap_function_def_const(fun_def)));
 
     vec_append(&a_main, output, '(');
     emit_function_params(env, output, fun_def->declaration->parameters);
@@ -420,7 +420,7 @@ static void emit_function_definition(Env* env, String* output, const Node_functi
     string_extend_cstr(&a_main, output, "}\n");
 }
 
-static void emit_return_statement(const Env* env, String* output, const Node_return_statement* fun_return) {
+static void emit_return(const Env* env, String* output, const Node_return* fun_return) {
     const Node* sym_to_return = fun_return->child;
     assert(get_lang_type(sym_to_return).str.count > 0);
 
@@ -436,7 +436,7 @@ static void emit_return_statement(const Env* env, String* output, const Node_ret
         }
         case NODE_SYMBOL_TYPED:
            unreachable("");
-        case NODE_STRUCT_MEMBER_SYM_TYPED:
+        case NODE_MEMBER_SYM_TYPED:
              unreachable("");
         case NODE_SYMBOL_UNTYPED:
             unreachable("untyped symbols should not still be present");
@@ -454,7 +454,7 @@ static void emit_return_statement(const Env* env, String* output, const Node_ret
     }
 }
 
-static void emit_function_declaration(const Env* env, String* output, const Node_function_declaration* fun_decl) {
+static void emit_function_decl(const Env* env, String* output, const Node_function_decl* fun_decl) {
     string_extend_cstr(&a_main, output, "declare i32");
     //extend_literal_decl(output, fun_decl); // TODO
     string_extend_cstr(&a_main, output, " @");
@@ -527,19 +527,19 @@ static void emit_block(Env* env, String* output, const Node_block* block) {
         const Node* statement = vec_at(&block->children, idx);
 
         switch (statement->type) {
-            case NODE_FUNCTION_DEFINITION:
-                emit_function_definition(env, output, node_unwrap_function_definition_const(statement));
+            case NODE_FUNCTION_DEF:
+                emit_function_def(env, output, node_unwrap_function_def_const(statement));
                 break;
             case NODE_FUNCTION_CALL:
                 emit_function_call(env, output, node_unwrap_function_call_const(statement));
                 break;
-            case NODE_RETURN_STATEMENT:
-                emit_return_statement(env, output, node_unwrap_return_statement_const(statement));
+            case NODE_RETURN:
+                emit_return(env, output, node_unwrap_return_const(statement));
                 break;
             case NODE_VARIABLE_DEF:
                 break;
-            case NODE_FUNCTION_DECLARATION:
-                emit_function_declaration(env, output, node_unwrap_function_declaration_const(statement));
+            case NODE_FUNCTION_DECL:
+                emit_function_decl(env, output, node_unwrap_function_decl_const(statement));
                 break;
             case NODE_ASSIGNMENT:
                 unreachable("an assignment should not still be present at this point");
@@ -579,11 +579,11 @@ static void emit_block(Env* env, String* output, const Node_block* block) {
             case NODE_STORE_ANOTHER_NODE:
                 emit_store_another_node(env, output, node_unwrap_store_another_node_const(statement));
                 break;
-            case NODE_STRUCT_MEMBER_SYM_TYPED:
+            case NODE_MEMBER_SYM_TYPED:
                 break;
             case NODE_FOR_RANGE:
                 unreachable("for loop should not still be present at this point\n");
-            case NODE_FOR_WITH_CONDITION:
+            case NODE_FOR_WITH_COND:
                 unreachable("for loop should not still be present at this point\n");
             default:
                 log(LOG_ERROR, STRING_FMT"\n", string_print(*output));
@@ -662,11 +662,11 @@ static void emit_symbols(const Env* env, String* output) {
                 // fallthrough
             case NODE_FUNCTION_CALL:
                 // fallthrough
-            case NODE_FUNCTION_DECLARATION:
+            case NODE_FUNCTION_DECL:
                 // fallthrough
             case NODE_LABEL:
                 // fallthrough
-            case NODE_FUNCTION_DEFINITION:
+            case NODE_FUNCTION_DEF:
                 // fallthrough
             case NODE_STRUCT_DEF:
                 break;

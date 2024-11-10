@@ -10,21 +10,20 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
 
 static const char* NODE_LITERAL_DESCRIPTION = "literal";
 static const char* NODE_FUNCTION_CALL_DESCRIPTION = "fn_call";
-static const char* NODE_FUNCTION_DEFINITION_DESCRIPTION = "fn_def";
+static const char* NODE_FUNCTION_DEF_DESCRIPTION = "fn_def";
 static const char* NODE_FUNCTION_PARAMETERS_DESCRIPTION = "fn_params";
-static const char* NODE_FUNCTION_RETURN_TYPES_DESCRIPTION = "fn_return_types";
 static const char* NODE_LANG_TYPE_DESCRIPTION = "lang_type";
 static const char* NODE_BINARY_DESCRIPTION = "binary";
 static const char* NODE_UNARY_DESCRIPTION = "unary";
 static const char* NODE_BLOCK_DESCRIPTION = "block";
 static const char* NODE_SYMBOL_UNTYPED_DESCRIPTION = "sym_untyped";
 static const char* NODE_SYMBOL_TYPED_DESCRIPTION= "sym_typed";
-static const char* NODE_RETURN_STATEMENT_DESCRIPTION = "return";
+static const char* NODE_RETURN_DESCRIPTION = "return";
 static const char* NODE_VARIABLE_DEFINITION_DESCRIPTION = "var_def";
-static const char* NODE_FUNCTION_DECLARATION_DESCRIPTION = "fun_declaration";
+static const char* NODE_FUNCTION_DECL_DESCRIPTION = "fun_declaration";
 static const char* NODE_ASSIGNMENT_DESCRIPTION = "assignment";
 static const char* NODE_FOR_RANGE_DESCRIPTION = "for_range";
-static const char* NODE_FOR_WITH_CONDITION_DESCRIPTION = "for_with_condition";
+static const char* NODE_FOR_WITH_COND_DESCRIPTION = "for_with_cond";
 static const char* NODE_FOR_LOWER_BOUND_DESCRIPTION = "lower_bound";
 static const char* NODE_FOR_UPPER_BOUND_DESCRIPTION = "upper_bound";
 static const char* NODE_BREAK_DESCRIPTION = "break";
@@ -33,13 +32,13 @@ static const char* NODE_LABEL_DESCRIPTION = "label";
 static const char* NODE_COND_GOTO_DESCRIPTION = "cond_goto";
 static const char* NODE_ALLOCA_DESCRIPTION = "alloca";
 static const char* NODE_IF_STATEMENT_DESCRIPTION = "if_statement";
-static const char* NODE_IF_CONDITION_DESCRIPTION = "if_condition";
+static const char* NODE_CONDITION_DESCRIPTION = "condition";
 static const char* NODE_STRUCT_DEFINITION_DESCRIPTION = "struct_def";
 static const char* NODE_STRUCT_LITERAL_DESCRIPTION = "struct_literal";
-static const char* NODE_STRUCT_MEMBER_SYM_TYPED_DESCRIPTION = "struct_member_sym_typed";
-static const char* NODE_STRUCT_MEMBER_SYM_UNTYPED_DESCRIPTION = "struct_member_sym_untyped";
-static const char* NODE_STRUCT_MEMBER_SYM_PIECE_TYPED_DESCRIPTION = "struct_member_sym_piece_typed";
-static const char* NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED_DESCRIPTION = "struct_member_sym_piece_untyped";
+static const char* NODE_MEMBER_SYM_TYPED_DESCRIPTION = "member_sym_typed";
+static const char* NODE_MEMBER_SYM_UNTYPED_DESCRIPTION = "member_sym_untyped";
+static const char* NODE_MEMBER_SYM_PIECE_TYPED_DESCRIPTION = "member_sym_piece_typed";
+static const char* NODE_MEMBER_SYM_PIECE_UNTYPED_DESCRIPTION = "member_sym_piece_untyped";
 static const char* NODE_LLVM_STORE_LITERAL_DESCRIPTION = "llvm_store_literal";
 static const char* NODE_LLVM_STORE_STRUCT_LITERAL_DESCRIPTION = "llvm_store_struct_literal";
 static const char* NODE_LOAD_STRUCT_ELEMENT_PTR_DESCRIPTION = "load_element_ptr";
@@ -109,12 +108,10 @@ static Str_view node_type_get_strv(const Node* node) {
             return str_view_from_cstr(NODE_LITERAL_DESCRIPTION);
         case NODE_FUNCTION_CALL:
             return str_view_from_cstr(NODE_FUNCTION_CALL_DESCRIPTION);
-        case NODE_FUNCTION_DEFINITION:
-            return str_view_from_cstr(NODE_FUNCTION_DEFINITION_DESCRIPTION);
+        case NODE_FUNCTION_DEF:
+            return str_view_from_cstr(NODE_FUNCTION_DEF_DESCRIPTION);
         case NODE_FUNCTION_PARAMS:
             return str_view_from_cstr(NODE_FUNCTION_PARAMETERS_DESCRIPTION);
-        case NODE_FUNCTION_RETURN_TYPES:
-            return str_view_from_cstr(NODE_FUNCTION_RETURN_TYPES_DESCRIPTION);
         case NODE_LANG_TYPE:
             return str_view_from_cstr(NODE_LANG_TYPE_DESCRIPTION);
         case NODE_OPERATOR: {
@@ -134,18 +131,18 @@ static Str_view node_type_get_strv(const Node* node) {
             return str_view_from_cstr(NODE_SYMBOL_UNTYPED_DESCRIPTION);
         case NODE_SYMBOL_TYPED:
             return str_view_from_cstr(NODE_SYMBOL_TYPED_DESCRIPTION);
-        case NODE_RETURN_STATEMENT:
-            return str_view_from_cstr(NODE_RETURN_STATEMENT_DESCRIPTION);
+        case NODE_RETURN:
+            return str_view_from_cstr(NODE_RETURN_DESCRIPTION);
         case NODE_VARIABLE_DEF:
             return str_view_from_cstr(NODE_VARIABLE_DEFINITION_DESCRIPTION);
-        case NODE_FUNCTION_DECLARATION:
-            return str_view_from_cstr(NODE_FUNCTION_DECLARATION_DESCRIPTION);
+        case NODE_FUNCTION_DECL:
+            return str_view_from_cstr(NODE_FUNCTION_DECL_DESCRIPTION);
         case NODE_ASSIGNMENT:
             return str_view_from_cstr(NODE_ASSIGNMENT_DESCRIPTION);
         case NODE_FOR_RANGE:
             return str_view_from_cstr(NODE_FOR_RANGE_DESCRIPTION);
-        case NODE_FOR_WITH_CONDITION:
-            return str_view_from_cstr(NODE_FOR_WITH_CONDITION_DESCRIPTION);
+        case NODE_FOR_WITH_COND:
+            return str_view_from_cstr(NODE_FOR_WITH_COND_DESCRIPTION);
         case NODE_FOR_LOWER_BOUND:
             return str_view_from_cstr(NODE_FOR_LOWER_BOUND_DESCRIPTION);
         case NODE_FOR_UPPER_BOUND:
@@ -160,18 +157,18 @@ static Str_view node_type_get_strv(const Node* node) {
             return str_view_from_cstr(NODE_ALLOCA_DESCRIPTION);
         case NODE_IF:
             return str_view_from_cstr(NODE_IF_STATEMENT_DESCRIPTION);
-        case NODE_IF_CONDITION:
-            return str_view_from_cstr(NODE_IF_CONDITION_DESCRIPTION);
+        case NODE_CONDITION:
+            return str_view_from_cstr(NODE_CONDITION_DESCRIPTION);
         case NODE_STRUCT_DEF:
             return str_view_from_cstr(NODE_STRUCT_DEFINITION_DESCRIPTION);
-        case NODE_STRUCT_MEMBER_SYM_UNTYPED:
-            return str_view_from_cstr(NODE_STRUCT_MEMBER_SYM_UNTYPED_DESCRIPTION);
-        case NODE_STRUCT_MEMBER_SYM_TYPED:
-            return str_view_from_cstr(NODE_STRUCT_MEMBER_SYM_TYPED_DESCRIPTION);
-        case NODE_STRUCT_MEMBER_SYM_PIECE_TYPED:
-            return str_view_from_cstr(NODE_STRUCT_MEMBER_SYM_PIECE_TYPED_DESCRIPTION);
-        case NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED:
-            return str_view_from_cstr(NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED_DESCRIPTION);
+        case NODE_MEMBER_SYM_UNTYPED:
+            return str_view_from_cstr(NODE_MEMBER_SYM_UNTYPED_DESCRIPTION);
+        case NODE_MEMBER_SYM_TYPED:
+            return str_view_from_cstr(NODE_MEMBER_SYM_TYPED_DESCRIPTION);
+        case NODE_MEMBER_SYM_PIECE_TYPED:
+            return str_view_from_cstr(NODE_MEMBER_SYM_PIECE_TYPED_DESCRIPTION);
+        case NODE_MEMBER_SYM_PIECE_UNTYPED:
+            return str_view_from_cstr(NODE_MEMBER_SYM_PIECE_UNTYPED_DESCRIPTION);
         case NODE_STRUCT_LITERAL:
             return str_view_from_cstr(NODE_STRUCT_LITERAL_DESCRIPTION);
         case NODE_LOAD_ELEMENT_PTR:
@@ -246,11 +243,11 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
         case NODE_SYMBOL_UNTYPED:
             string_extend_strv_in_par(arena, string, get_node_name(node));
             break;
-        case NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED:
+        case NODE_MEMBER_SYM_PIECE_UNTYPED:
             break;
-        case NODE_STRUCT_MEMBER_SYM_UNTYPED:
+        case NODE_MEMBER_SYM_UNTYPED:
             break;
-        case NODE_FUNCTION_DEFINITION:
+        case NODE_FUNCTION_DEF:
             string_extend_strv_in_par(arena, string, get_node_name(node));
             break;
         case NODE_STRUCT_DEF:
@@ -283,22 +280,20 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             extend_lang_type_to_string(arena, string, node_unwrap_struct_literal_const(node)->lang_type, true);
             string_extend_strv(arena, string, get_node_name(node));
             break;
-        case NODE_FUNCTION_DECLARATION:
+        case NODE_FUNCTION_DECL:
             string_extend_strv_in_par(arena, string, get_node_name(node));
             break;
         case NODE_FUNCTION_PARAMS:
             // fallthrough
-        case NODE_FUNCTION_RETURN_TYPES:
-            // fallthrough
         case NODE_BLOCK:
             // fallthrough
-        case NODE_RETURN_STATEMENT:
+        case NODE_RETURN:
             // fallthrough
         case NODE_ASSIGNMENT:
             // fallthrough
         case NODE_FOR_RANGE:
             // fallthrough
-        case NODE_FOR_WITH_CONDITION:
+        case NODE_FOR_WITH_COND:
             // fallthrough
         case NODE_FOR_UPPER_BOUND:
             // fallthrough
@@ -306,7 +301,7 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             // fallthrough
         case NODE_IF:
             // fallthrough
-        case NODE_IF_CONDITION:
+        case NODE_CONDITION:
             // fallthrough
         case NODE_BREAK:
             break;
@@ -331,11 +326,11 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             extend_lang_type_to_string(arena, string, get_lang_type(node), true);
             string_extend_strv_in_par(arena, string, get_node_name(node));
             break;
-        case NODE_STRUCT_MEMBER_SYM_TYPED:
+        case NODE_MEMBER_SYM_TYPED:
             extend_lang_type_to_string(arena, string, get_lang_type(node), true);
             string_extend_strv_in_par(arena, string, get_node_name(node));
             break;
-        case NODE_STRUCT_MEMBER_SYM_PIECE_TYPED:
+        case NODE_MEMBER_SYM_PIECE_TYPED:
             extend_lang_type_to_string(arena, string, get_lang_type(node), true);
             string_extend_strv_in_par(arena, string, get_node_name(node));
             break;

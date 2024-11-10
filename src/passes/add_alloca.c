@@ -12,7 +12,7 @@ static Node_alloca* alloca_new(Node_variable_def* var_def) {
     return alloca;
 }
 
-static void do_function_definition(Env* env, Node_function_definition* fun_def) {
+static void do_function_def(Env* env, Node_function_def* fun_def) {
     Node_function_params* params = fun_def->declaration->parameters;
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
         Node_variable_def* param = node_unwrap_variable_def(vec_at(&params->params, idx));
@@ -60,10 +60,10 @@ void add_alloca(Env* env) {
             case NODE_VARIABLE_DEF:
                 insert_alloca(block_children, &idx, node_unwrap_variable_def(curr_node));
                 break;
-            case NODE_FUNCTION_DEFINITION: {
-                Node_block* fun_block = node_unwrap_function_definition(curr_node)->body;
+            case NODE_FUNCTION_DEF: {
+                Node_block* fun_block = node_unwrap_function_def(curr_node)->body;
                 vec_append(&a_main, &env->ancesters, node_wrap_block(fun_block));
-                do_function_definition(env, node_unwrap_function_definition(curr_node));
+                do_function_def(env, node_unwrap_function_def(curr_node));
                 vec_rem_last(&env->ancesters);
                 break;
             }

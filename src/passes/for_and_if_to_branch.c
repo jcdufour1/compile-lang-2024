@@ -50,7 +50,7 @@ static void change_break_to_goto(Node_block* block, const Node_label* label_to_g
                 break;
             case NODE_FOR_RANGE:
                 break;
-            case NODE_FOR_WITH_CONDITION:
+            case NODE_FOR_WITH_COND:
                 break;
             case NODE_VARIABLE_DEF:
                 break;
@@ -63,15 +63,15 @@ static void change_break_to_goto(Node_block* block, const Node_label* label_to_g
     }
 }
 
-static Node_block* for_with_condition_to_branch(Env* env, Node_for_with_condition* for_loop) {
+static Node_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* for_loop) {
     Node_block* for_block = for_loop->body;
-    Node_block* new_branch_block = node_unwrap_block(node_new(node_wrap_for_with_condition(for_loop)->pos, NODE_BLOCK));
+    Node_block* new_branch_block = node_unwrap_block(node_new(node_wrap_for_with_cond(for_loop)->pos, NODE_BLOCK));
     Node_operator* operator = node_unwrap_operator(for_loop->condition->child);
 
-    Node_label* check_cond_label = label_new(env, literal_name_new(), node_wrap_for_with_condition(for_loop)->pos);
-    Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label->name, node_wrap_for_with_condition(for_loop)->pos);
-    Node_label* after_check_label = label_new(env, literal_name_new(), node_wrap_for_with_condition(for_loop)->pos);
-    Node_label* after_for_loop_label = label_new(env, literal_name_new(), node_wrap_for_with_condition(for_loop)->pos);
+    Node_label* check_cond_label = label_new(env, literal_name_new(), node_wrap_for_with_cond(for_loop)->pos);
+    Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label->name, node_wrap_for_with_cond(for_loop)->pos);
+    Node_label* after_check_label = label_new(env, literal_name_new(), node_wrap_for_with_cond(for_loop)->pos);
+    Node_label* after_for_loop_label = label_new(env, literal_name_new(), node_wrap_for_with_cond(for_loop)->pos);
     Node_llvm_register_sym* oper_rtn_sym = node_unwrap_llvm_register_sym(node_new(node_wrap_operator(node_wrap_operator_generic(operator))->pos, NODE_LLVM_REGISTER_SYM));
     oper_rtn_sym->node_src = node_wrap_operator(node_wrap_operator_generic(operator));
     Node_cond_goto* check_cond_jmp = conditional_goto_new(
@@ -88,7 +88,7 @@ static Node_block* for_with_condition_to_branch(Env* env, Node_for_with_conditio
     vec_append(&a_main, &new_branch_block->children, node_wrap_cond_goto(check_cond_jmp));
     vec_append(&a_main, &new_branch_block->children, node_wrap_label(after_check_label));
     vec_extend(&a_main, &new_branch_block->children, &for_block->children);
-    vec_append(&a_main, &new_branch_block->children, node_wrap_goto(goto_new(check_cond_label->name, node_wrap_for_with_condition(for_loop)->pos)));
+    vec_append(&a_main, &new_branch_block->children, node_wrap_goto(goto_new(check_cond_label->name, node_wrap_for_with_cond(for_loop)->pos)));
     vec_append(&a_main, &new_branch_block->children, node_wrap_label(after_for_loop_label));
 
     return new_branch_block;
@@ -153,7 +153,7 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* for_loop) {
 }
 
 static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement) {
-    Node_if_condition* if_cond = if_statement->condition;
+    Node_condition* if_cond = if_statement->condition;
     Node_block* block = if_statement->body;
 
     Node_block* new_branch_block = node_unwrap_block(node_new(node_wrap_block(block)->pos, NODE_BLOCK));
@@ -212,8 +212,8 @@ void for_and_if_to_branch(Env* env) {
             case NODE_FOR_RANGE:
                 *curr_node = node_wrap_block(for_range_to_branch(env, node_unwrap_for_range(*curr_node)));
                 break;
-            case NODE_FOR_WITH_CONDITION:
-                *curr_node = node_wrap_block(for_with_condition_to_branch(env, node_unwrap_for_with_condition(*curr_node)));
+            case NODE_FOR_WITH_COND:
+                *curr_node = node_wrap_block(for_with_cond_to_branch(env, node_unwrap_for_with_cond(*curr_node)));
                 assert(*curr_node);
                 break;
             case NODE_IF:
