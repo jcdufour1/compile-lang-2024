@@ -74,7 +74,7 @@ bool is_corresponding_to_a_struct(const Env* env, const Node* node);
 static inline size_t get_member_index(const Node_struct_def* struct_def, const Node_struct_member_sym_piece_typed* member_symbol) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         const Node* curr_member = vec_at(&struct_def->members, idx);
-        if (str_view_is_equal(get_node_name(node_wrap(curr_member)), get_node_name(node_wrap(member_symbol)))) {
+        if (str_view_is_equal(get_node_name(curr_member), get_node_name(node_wrap_struct_member_sym_piece_typed_const(member_symbol)))) {
             return idx;
         }
     }

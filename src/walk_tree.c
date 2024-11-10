@@ -27,21 +27,21 @@ void walk_tree(Env* env, void (callback)(Env* env)) {
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_FUNCTION_RETURN_TYPES:
-            walk_tree_traverse(env, node_wrap(node_unwrap_function_return_types(curr_node)->child), callback);
+            walk_tree_traverse(env, node_wrap_lang_type(node_unwrap_function_return_types(curr_node)->child), callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_ASSIGNMENT:
-            walk_tree_traverse(env, node_wrap(node_unwrap_assignment(curr_node)->lhs), callback);
-            walk_tree_traverse(env, node_wrap(node_unwrap_assignment(curr_node)->rhs), callback);
+            walk_tree_traverse(env, node_unwrap_assignment(curr_node)->lhs, callback);
+            walk_tree_traverse(env, node_unwrap_assignment(curr_node)->rhs, callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_OPERATOR: {
             Node_operator* operator = node_unwrap_operator(curr_node);
             if (operator->type == NODE_OP_UNARY) {
-                walk_tree_traverse(env, node_wrap(node_unwrap_op_unary(operator)->child), callback);
+                walk_tree_traverse(env, node_unwrap_op_unary(operator)->child, callback);
             } else if (operator->type == NODE_OP_BINARY) {
-                walk_tree_traverse(env, node_wrap(node_unwrap_op_binary(operator)->lhs), callback);
-                walk_tree_traverse(env, node_wrap(node_unwrap_op_binary(operator)->rhs), callback);
+                walk_tree_traverse(env, node_unwrap_op_binary(operator)->lhs, callback);
+                walk_tree_traverse(env, node_unwrap_op_binary(operator)->rhs, callback);
             } else {
                 unreachable("");
             }
@@ -88,34 +88,34 @@ void walk_tree(Env* env, void (callback)(Env* env)) {
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_FOR_RANGE:
-            walk_tree_traverse(env, node_wrap(node_unwrap_for_range(curr_node)->var_def), callback);
-            walk_tree_traverse(env, node_wrap(node_unwrap_for_range(curr_node)->lower_bound), callback);
-            walk_tree_traverse(env, node_wrap(node_unwrap_for_range(curr_node)->upper_bound), callback);
-            walk_tree_traverse(env, node_wrap(node_unwrap_for_range(curr_node)->body), callback);
+            walk_tree_traverse(env, node_wrap_variable_def(node_unwrap_for_range(curr_node)->var_def), callback);
+            walk_tree_traverse(env, node_wrap_for_lower_bound(node_unwrap_for_range(curr_node)->lower_bound), callback);
+            walk_tree_traverse(env, node_wrap_for_upper_bound(node_unwrap_for_range(curr_node)->upper_bound), callback);
+            walk_tree_traverse(env, node_wrap_block(node_unwrap_for_range(curr_node)->body), callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_FOR_WITH_CONDITION:
-            walk_tree_traverse(env, node_wrap(node_unwrap_for_with_condition(curr_node)->condition), callback);
-            walk_tree_traverse(env, node_wrap(node_unwrap_for_with_condition(curr_node)->body), callback);
+            walk_tree_traverse(env, node_wrap_if_condition(node_unwrap_for_with_condition(curr_node)->condition), callback);
+            walk_tree_traverse(env, node_wrap_block(node_unwrap_for_with_condition(curr_node)->body), callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_IF:
-            walk_tree_traverse(env, node_wrap(node_unwrap_if(curr_node)->condition), callback);
-            walk_tree_traverse(env, node_wrap(node_unwrap_if(curr_node)->body), callback);
+            walk_tree_traverse(env, node_wrap_if_condition(node_unwrap_if(curr_node)->condition), callback);
+            walk_tree_traverse(env, node_wrap_block(node_unwrap_if(curr_node)->body), callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_FUNCTION_DEFINITION:
-            walk_tree_traverse(env, node_wrap(node_unwrap_function_definition(curr_node)->declaration), callback);
-            walk_tree_traverse(env, node_wrap(node_unwrap_function_definition(curr_node)->body), callback);
+            walk_tree_traverse(env, node_wrap_function_declaration(node_unwrap_function_definition(curr_node)->declaration), callback);
+            walk_tree_traverse(env, node_wrap_block(node_unwrap_function_definition(curr_node)->body), callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_FUNCTION_DECLARATION:
-            walk_tree_traverse(env, node_wrap(node_unwrap_function_declaration(curr_node)->parameters), callback);
-            walk_tree_traverse(env, node_wrap(node_unwrap_function_declaration(curr_node)->return_types), callback);
+            walk_tree_traverse(env, node_wrap_function_params(node_unwrap_function_declaration(curr_node)->parameters), callback);
+            walk_tree_traverse(env, node_wrap_function_return_types(node_unwrap_function_declaration(curr_node)->return_types), callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_LLVM_STORE_STRUCT_LITERAL:
-            walk_tree_traverse(env, node_wrap(node_unwrap_llvm_store_struct_literal(curr_node)->child), callback);
+            walk_tree_traverse(env, node_wrap_struct_literal(node_unwrap_llvm_store_struct_literal(curr_node)->child), callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_STRUCT_MEMBER_SYM_PIECE_TYPED:
@@ -128,8 +128,8 @@ void walk_tree(Env* env, void (callback)(Env* env)) {
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_COND_GOTO:
-            walk_tree_traverse(env, node_wrap(node_unwrap_cond_goto(curr_node)->if_true), callback);
-            walk_tree_traverse(env, node_wrap(node_unwrap_cond_goto(curr_node)->if_false), callback);
+            walk_tree_traverse(env, node_wrap_symbol_untyped(node_unwrap_cond_goto(curr_node)->if_true), callback);
+            walk_tree_traverse(env, node_wrap_symbol_untyped(node_unwrap_cond_goto(curr_node)->if_false), callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_BLOCK: {
@@ -141,15 +141,15 @@ void walk_tree(Env* env, void (callback)(Env* env)) {
             break;
         }
         case NODE_FOR_LOWER_BOUND:
-            walk_tree_traverse(env, node_wrap(node_unwrap_for_lower_bound(curr_node)->child), callback);
+            walk_tree_traverse(env, node_unwrap_for_lower_bound(curr_node)->child, callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_FOR_UPPER_BOUND:
-            walk_tree_traverse(env, node_wrap(node_unwrap_for_upper_bound(curr_node)->child), callback);
+            walk_tree_traverse(env, node_unwrap_for_upper_bound(curr_node)->child, callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_IF_CONDITION:
-            walk_tree_traverse(env, node_wrap(node_unwrap_if_condition(curr_node)->child), callback);
+            walk_tree_traverse(env, node_unwrap_if_condition(curr_node)->child, callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_LITERAL:
@@ -168,18 +168,18 @@ void walk_tree(Env* env, void (callback)(Env* env)) {
             break;
         }
         case NODE_RETURN_STATEMENT:
-            walk_tree_traverse(env, node_wrap(node_unwrap_return_statement(curr_node)->child), callback);
+            walk_tree_traverse(env, node_unwrap_return_statement(curr_node)->child, callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_LLVM_REGISTER_SYM:
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_BREAK:
-            walk_tree_traverse(env, node_wrap(node_unwrap_break(curr_node)->child), callback);
+            walk_tree_traverse(env, node_unwrap_break(curr_node)->child, callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_LLVM_STORE_LITERAL:
-            walk_tree_traverse(env, node_wrap(node_unwrap_llvm_store_literal(curr_node)->child), callback);
+            walk_tree_traverse(env, node_wrap_literal(node_unwrap_llvm_store_literal(curr_node)->child), callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_STRUCT_DEF: {

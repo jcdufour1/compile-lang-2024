@@ -349,6 +349,14 @@ static inline Node_##lower* node_unwrap_##lower(Node* node) { \
 static inline const Node_##lower* node_unwrap_##lower##_const(const Node* node) { \
     assert(node->type == upper); \
     return &node->as._##lower; \
+} \
+ \
+static inline Node* node_wrap_##lower(Node_##lower* node) { \
+    return (Node*)node; \
+} \
+ \
+static inline const Node* node_wrap_##lower##_const(const Node_##lower* node) { \
+    return (const Node*)node; \
 }
 FOR_LIST_OF_NODES(X)
 #undef X
@@ -457,11 +465,7 @@ static inline bool node_is_unary(const Node* node) {
     return operator->type == NODE_OP_UNARY;
 }
 
-#define node_wrap_operator(operator) ((Node_operator*)(operator))
-
-#define node_wrap(node) ((Node*)(node))
-
-#define node_wrap_const(node) ((const Node*)node)
+#define node_wrap_operator_generic(operator) ((Node_operator*)(operator))
 
 extern Node* root_of_tree;
 
@@ -499,7 +503,7 @@ Str_view lang_type_print_internal(Arena* arena, Lang_type lang_type, bool surrou
 
 Str_view node_print_internal(Arena* arena, const Node* node);
 
-#define node_print(root) str_view_print(node_print_internal(&print_arena, node_wrap(root)))
+#define node_print(root) str_view_print(node_print_internal(&print_arena, (const Node*)(root)))
 
 #define node_printf(node) \
     do { \

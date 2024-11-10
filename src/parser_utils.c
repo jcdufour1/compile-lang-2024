@@ -207,6 +207,7 @@ const Node_variable_def* get_normal_symbol_def_from_alloca(const Env* env, const
     return node_unwrap_variable_def(sym_def);
 }
 
+// TODO: change this to only accept alloca?
 const Node_variable_def* get_symbol_def_from_alloca(const Env* env, const Node* alloca) {
     switch (alloca->type) {
         case NODE_ALLOCA:
@@ -331,7 +332,7 @@ uint64_t sizeof_item(const Env* env, const Node* item) {
 }
 
 uint64_t sizeof_struct_literal(const Env* env, const Node_struct_literal* struct_literal) {
-    return sizeof_struct_definition(env, get_struct_definition_const(env, node_wrap(struct_literal)));
+    return sizeof_struct_definition(env, get_struct_definition_const(env, node_wrap_struct_literal_const(struct_literal)));
 }
 
 uint64_t sizeof_struct_definition(const Env* env, const Node_struct_def* struct_def) {
@@ -460,12 +461,12 @@ static void try_set_literal_lang_type(Lang_type* lang_type, Node_literal* litera
 bool try_set_symbol_type(const Env* env, Lang_type* lang_type, Node_symbol_untyped* sym_untyped) {
     Node* sym_def;
     if (!symbol_lookup(&sym_def, env, sym_untyped->name)) {
-        msg_undefined_symbol(node_wrap(sym_untyped));
+        msg_undefined_symbol(node_wrap_symbol_untyped(sym_untyped));
         return false;
     }
     Node_symbol_untyped temp = *sym_untyped;
-    node_wrap(sym_untyped)->type = NODE_SYMBOL_TYPED;
-    Node_symbol_typed* sym_typed = node_unwrap_symbol_typed(node_wrap(sym_untyped));
+    node_wrap_symbol_untyped(sym_untyped)->type = NODE_SYMBOL_TYPED;
+    Node_symbol_typed* sym_typed = node_unwrap_symbol_typed(node_wrap_symbol_untyped(sym_untyped));
     sym_typed->name = temp.name;
     sym_typed->lang_type = node_unwrap_variable_def_const(sym_def)->lang_type;
     *lang_type = sym_typed->lang_type;
@@ -508,7 +509,7 @@ bool try_set_binary_lang_type(const Env* env, Node** new_node, Lang_type* lang_t
             }
         } else {
             msg(
-                LOG_ERROR, EXPECT_FAIL_BINARY_MISMATCHED_TYPES, node_wrap(operator)->pos,
+                LOG_ERROR, EXPECT_FAIL_BINARY_MISMATCHED_TYPES, node_wrap_operator(node_wrap_operator_generic(operator))->pos,
                 "types `"LANG_TYPE_FMT"` and `"LANG_TYPE_FMT"` are not valid operands to binary expression\n",
                 lang_type_print(get_lang_type(operator->lhs)), lang_type_print(get_lang_type(operator->rhs))
             );
@@ -556,10 +557,10 @@ bool try_set_binary_lang_type(const Env* env, Node** new_node, Lang_type* lang_t
         }
 
         Str_view result_strv = int64_t_to_str_view(result_val);
-        Node_literal* literal = literal_new(result_strv, TOKEN_INT_LITERAL, node_wrap(operator)->pos);
-        *new_node = node_wrap(literal);
+        Node_literal* literal = literal_new(result_strv, TOKEN_INT_LITERAL, node_wrap_operator(node_wrap_operator_generic(operator))->pos);
+        *new_node = node_wrap_literal(literal);
     } else {
-        *new_node = node_wrap(operator);
+        *new_node = node_wrap_operator(node_wrap_operator_generic(operator));
     }
 
     return true;
@@ -602,7 +603,7 @@ bool try_set_unary_lang_type(const Env* env, Node** new_node, Lang_type* lang_ty
             unreachable("");
     }
 
-    *new_node = node_wrap(unary);
+    *new_node = node_wrap_operator(node_wrap_operator_generic(unary));
     return true;
 }
 
@@ -636,7 +637,7 @@ bool try_set_struct_literal_assignment_types(const Env* env, Node** new_node, La
         log(LOG_DEBUG, "%zu\n", idx);
         Node* memb_sym_def_ = vec_at(&struct_def->members, idx);
         Node_variable_def* memb_sym_def = node_unwrap_variable_def(memb_sym_def_);
-        log_tree(LOG_DEBUG, node_wrap(struct_literal));
+        log_tree(LOG_DEBUG, node_wrap_struct_literal_const(struct_literal));
         Node_assignment* assign_memb_sym = node_unwrap_assignment(vec_at(&struct_literal->members, idx));
         Node_symbol_untyped* memb_sym_piece_untyped = node_unwrap_symbol_untyped(assign_memb_sym->lhs);
         Node_literal* assign_memb_sym_rhs = node_unwrap_literal(assign_memb_sym->rhs);
@@ -644,24 +645,24 @@ bool try_set_struct_literal_assignment_types(const Env* env, Node** new_node, La
         assign_memb_sym_rhs->lang_type = memb_sym_def->lang_type;
         if (!str_view_is_equal(memb_sym_def->name, memb_sym_piece_untyped->name)) {
             msg(
-                LOG_ERROR, EXPECT_FAIL_INVALID_STRUCT_MEMBER_IN_LITERAL, node_wrap(memb_sym_piece_untyped)->pos,
+                LOG_ERROR, EXPECT_FAIL_INVALID_STRUCT_MEMBER_IN_LITERAL, node_wrap_symbol_untyped(memb_sym_piece_untyped)->pos,
                 "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
                 str_view_print(memb_sym_def->name), str_view_print(memb_sym_piece_untyped->name)
             );
             msg(
-                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap(lhs_var_def)->pos,
+                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap_variable_def(lhs_var_def)->pos,
                 "variable `"STR_VIEW_FMT"` is defined as struct `"LANG_TYPE_FMT"`\n",
                 str_view_print(lhs_var_def->name), lang_type_print(lhs_var_def->lang_type)
             );
             msg(
-                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap(memb_sym_def)->pos,
+                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap_variable_def(memb_sym_def)->pos,
                 "member symbol `"STR_VIEW_FMT"` of struct `"STR_VIEW_FMT"` defined here\n", 
                 str_view_print(memb_sym_def->name), lang_type_print(lhs_var_def->lang_type)
             );
             return false;
         }
 
-        vec_append(&a_main, &new_literal_members, node_wrap(assign_memb_sym_rhs));
+        vec_append(&a_main, &new_literal_members, node_wrap_literal(assign_memb_sym_rhs));
     }
 
     struct_literal->members = new_literal_members;
@@ -669,7 +670,7 @@ bool try_set_struct_literal_assignment_types(const Env* env, Node** new_node, La
     assert(struct_literal->lang_type.str.count > 0);
 
     *lang_type = new_lang_type;
-    *new_node = node_wrap(struct_literal);
+    *new_node = node_wrap_struct_literal(struct_literal);
     return true;
 }
 
@@ -681,7 +682,7 @@ bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node
         return false;
     }
     assignment->lhs = new_lhs;
-    log_tree(LOG_DEBUG, node_wrap(assignment));
+    log_tree(LOG_DEBUG, node_wrap_assignment(assignment));
 
     Node* new_rhs;
     if (assignment->rhs->type == NODE_STRUCT_LITERAL) {
@@ -704,7 +705,7 @@ bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node
     switch (do_implicit_conversion_if_needed(lhs_lang_type, assignment->rhs)) {
         case IMPLICIT_CONV_INVALID_TYPES: {
             msg(
-                LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, node_wrap(assignment)->pos,
+                LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, node_wrap_assignment(assignment)->pos,
                 "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
                 lang_type_print(rhs_lang_type), lang_type_print(lhs_lang_type)
             );
@@ -724,7 +725,7 @@ bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_func
     Node* fun_def;
     if (!symbol_lookup(&fun_def, env, fun_call->name)) {
         msg(
-            LOG_ERROR, EXPECT_FAIL_UNDEFINED_FUNCTION, node_wrap(fun_call)->pos,
+            LOG_ERROR, EXPECT_FAIL_UNDEFINED_FUNCTION, node_wrap_function_call(fun_call)->pos,
             "function `"STR_VIEW_FMT"` is not defined\n", str_view_print(fun_call->name)
         );
         return false;
@@ -766,12 +767,12 @@ bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_func
         }
         string_extend_cstr(&print_arena, &message, " arguments expected\n");
         msg(
-            LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, node_wrap(fun_call)->pos,
+            LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, node_wrap_function_call(fun_call)->pos,
             STR_VIEW_FMT, str_view_print(string_to_strv(message))
         );
 
         msg(
-            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap(fun_def)->pos,
+            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, fun_def->pos,
             "function `"STR_VIEW_FMT"` defined here\n", str_view_print(fun_decl->name)
         );
         return false;
@@ -788,7 +789,9 @@ bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_func
 
         Lang_type dummy;
         if ((*argument)->type == NODE_STRUCT_LITERAL) {
-            try(try_set_struct_literal_assignment_types(env, &new_arg, &dummy, node_wrap(corres_param), node_unwrap_struct_literal(*argument)));
+            try(try_set_struct_literal_assignment_types(
+                env, &new_arg, &dummy, node_wrap_variable_def(corres_param), node_unwrap_struct_literal(*argument)
+            ));
         } else {
             if (!try_set_node_type(env, &new_arg, &dummy, *argument)) {
                 status = true;
@@ -810,7 +813,7 @@ bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_func
                 if ((*argument)->type == NODE_LITERAL) {
                     node_unwrap_literal((*argument))->lang_type = corres_param->lang_type;
                 } else {
-                    *argument = node_wrap(unary_new(env, *argument, TOKEN_UNSAFE_CAST, corres_param->lang_type));
+                    *argument = node_wrap_operator(node_wrap_operator_generic(unary_new(env, *argument, TOKEN_UNSAFE_CAST, corres_param->lang_type)));
                 }
             } else {
                 msg(
@@ -822,7 +825,7 @@ bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_func
                     lang_type_print(corres_param->lang_type)
                 );
                 msg(
-                    LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap(corres_param)->pos,
+                    LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap_variable_def(corres_param)->pos,
                     "corresponding parameter `"STR_VIEW_FMT"` defined here\n",
                     str_view_print(corres_param->name)
                 );
@@ -840,8 +843,8 @@ bool try_set_struct_member_symbol_types(const Env* env, Node** new_node, Lang_ty
     Node* struct_def_;
     Node* struct_var;
     if (!symbol_lookup(&struct_var, env, memb_sym_untyped->name)) {
-        msg_undefined_symbol(node_wrap(memb_sym_untyped));
-        *new_node = node_wrap(memb_sym_untyped);
+        msg_undefined_symbol(node_wrap_struct_member_sym_untyped(memb_sym_untyped));
+        *new_node = node_wrap_struct_member_sym_untyped(memb_sym_untyped);
         return false;
     }
     if (!symbol_lookup(&struct_def_, env, node_unwrap_variable_def(struct_var)->lang_type.str)) {
@@ -850,7 +853,7 @@ bool try_set_struct_member_symbol_types(const Env* env, Node** new_node, Lang_ty
     Node_struct_def* struct_def = node_unwrap_struct_def(struct_def_);
 
     Node_struct_member_sym_typed* memb_sym_typed = node_unwrap_struct_member_sym_typed(
-        node_new(node_wrap(memb_sym_untyped)->pos, NODE_STRUCT_MEMBER_SYM_TYPED)
+        node_new(node_wrap_struct_member_sym_untyped(memb_sym_untyped)->pos, NODE_STRUCT_MEMBER_SYM_TYPED)
     );
     memb_sym_typed->name = memb_sym_untyped->name;
     assert(memb_sym_typed->name.count > 0);
@@ -863,10 +866,10 @@ bool try_set_struct_member_symbol_types(const Env* env, Node** new_node, Lang_ty
         if (!is_struct) {
             todo();
         }
-        if (!try_get_member_def(&curr_memb_def, struct_def, node_wrap(memb_sym_piece_untyped))) {
+        if (!try_get_member_def(&curr_memb_def, struct_def, node_wrap_struct_member_sym_piece_untyped(memb_sym_piece_untyped))) {
             //msg_invalid_struct_member(env, memb_sym_typed, memb_sym_piece_untyped);
             msg(
-                LOG_ERROR, EXPECT_FAIL_INVALID_STRUCT_MEMBER, node_wrap(memb_sym_piece_untyped)->pos,
+                LOG_ERROR, EXPECT_FAIL_INVALID_STRUCT_MEMBER, node_wrap_struct_member_sym_piece_untyped(memb_sym_piece_untyped)->pos,
                 "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 
                 str_view_print(memb_sym_piece_untyped->name), str_view_print(memb_sym_typed->name)
             );
@@ -874,7 +877,7 @@ bool try_set_struct_member_symbol_types(const Env* env, Node** new_node, Lang_ty
             try(symbol_lookup(&memb_sym_def_, env, memb_sym_typed->name));
             const Node_variable_def* memb_sym_def = node_unwrap_variable_def_const(memb_sym_def_);
             msg(
-                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap(memb_sym_def)->pos,
+                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap_variable_def_const(memb_sym_def)->pos,
                 "`"STR_VIEW_FMT"` defined here as type `"LANG_TYPE_FMT"`\n",
                 str_view_print(memb_sym_def->name),
                 lang_type_print(memb_sym_def->lang_type)
@@ -886,28 +889,37 @@ bool try_set_struct_member_symbol_types(const Env* env, Node** new_node, Lang_ty
                 "struct `"LANG_TYPE_FMT"` defined here\n", 
                 lang_type_print(memb_sym_def->lang_type)
             );
-            *new_node = node_wrap(memb_sym_untyped);
+            *new_node = node_wrap_struct_member_sym_untyped(memb_sym_untyped);
             return false;
         }
-        if (!try_get_struct_definition(env, &struct_def, node_wrap(curr_memb_def))) {
+        if (!try_get_struct_definition(env, &struct_def, node_wrap_variable_def(curr_memb_def))) {
             is_struct = false;
         }
 
         Node_struct_member_sym_piece_typed* memb_sym_piece_typed = 
             node_unwrap_struct_member_sym_piece_typed(node_new(
-                node_wrap(memb_sym_untyped)->pos, NODE_STRUCT_MEMBER_SYM_PIECE_TYPED
+                node_wrap_struct_member_sym_untyped(memb_sym_untyped)->pos, NODE_STRUCT_MEMBER_SYM_PIECE_TYPED
             ));
         memb_sym_piece_typed->name = curr_memb_def->name;
         memb_sym_piece_typed->lang_type = curr_memb_def->lang_type;
         *lang_type = memb_sym_piece_typed->lang_type;
-        vec_append(&a_main, &memb_sym_typed->children, node_wrap(memb_sym_piece_typed));
+        vec_append(&a_main, &memb_sym_typed->children, node_wrap_struct_member_sym_piece_typed(memb_sym_piece_typed));
         memb_sym_piece_typed->struct_index = get_member_index(prev_struct_def, memb_sym_piece_typed);
 
         prev_struct_def = struct_def;
     }
 
-    *new_node = node_wrap(memb_sym_typed);
+    *new_node = node_wrap_struct_member_sym_typed(memb_sym_typed);
     return true;
+}
+
+INLINE Node* if_condition_get_default_child(const Env* env, Node* if_cond_child) {
+    return node_wrap_operator(node_wrap_operator_generic(binary_new(
+        env,
+        if_cond_child,
+        node_wrap_literal(literal_new(str_view_from_cstr("0"), TOKEN_INT_LITERAL, if_cond_child->pos)),
+        TOKEN_NOT_EQUAL
+    )));
 }
 
 static bool try_set_if_condition_types(const Env* env, Lang_type* lang_type, Node_if_condition* if_cond) {
@@ -916,34 +928,17 @@ static bool try_set_if_condition_types(const Env* env, Lang_type* lang_type, Nod
     if_cond->child = new_if_cond_child;
 
     switch (if_cond->child->type) {
-        case NODE_SYMBOL_TYPED:
-            if_cond->child = binary_new(
-                env, 
-                if_cond->child,
-                node_wrap(literal_new(str_view_from_cstr("0"), TOKEN_INT_LITERAL, if_cond->child->pos)),
-                TOKEN_NOT_EQUAL
-            );
-            break;
         case NODE_OPERATOR:
             break;
-        case NODE_FUNCTION_CALL: {
-            if_cond->child = node_wrap(binary_new(
-                env,
-                if_cond->child,
-                node_wrap(literal_new(str_view_from_cstr("0"), TOKEN_INT_LITERAL, node_wrap(if_cond->child)->pos)),
-                TOKEN_NOT_EQUAL
-            ));
+        case NODE_SYMBOL_TYPED:
+            if_cond->child = if_condition_get_default_child(env, if_cond->child);
             break;
-        }
-        case NODE_LITERAL: {
-            if_cond->child = node_wrap(binary_new(
-                env,
-                if_cond->child,
-                node_wrap(literal_new(str_view_from_cstr("0"), TOKEN_INT_LITERAL, if_cond->child->pos)),
-                TOKEN_NOT_EQUAL
-            ));
+        case NODE_FUNCTION_CALL:
+            if_cond->child = if_condition_get_default_child(env, if_cond->child);
             break;
-        }
+        case NODE_LITERAL:
+            if_cond->child = if_condition_get_default_child(env, if_cond->child);
+            break;
         default:
             unreachable(NODE_FMT, node_print(if_cond->child));
     }
@@ -1022,7 +1017,7 @@ bool try_set_node_type(const Env* env, Node** new_node, Lang_type* lang_type, No
                 return true;
             }
             if (can_be_implicitly_converted(dest_lang_type, src_lang_type)) {
-                log_tree(LOG_DEBUG, node_wrap(rtn_statement));
+                log_tree(LOG_DEBUG, node_wrap_return_statement(rtn_statement));
                 if (rtn_statement->child->type == NODE_LITERAL) {
                     node_unwrap_literal(rtn_statement->child)->lang_type = dest_lang_type;
                     return true;
@@ -1035,20 +1030,20 @@ bool try_set_node_type(const Env* env, Node** new_node, Lang_type* lang_type, No
             const Node_function_definition* fun_def = get_parent_function_definition_const(env);
             if (rtn_statement->auto_inserted) {
                 msg(
-                    LOG_ERROR, EXPECT_FAIL_MISSING_RETURN_STATEMENT, node_wrap(rtn_statement)->pos,
+                    LOG_ERROR, EXPECT_FAIL_MISSING_RETURN_STATEMENT, node_wrap_return_statement(rtn_statement)->pos,
                     "no return statement in function that returns `"LANG_TYPE_FMT"`\n",
                     lang_type_print(fun_def->declaration->return_types->child->lang_type)
                 );
             } else {
                 msg(
-                    LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, node_wrap(rtn_statement)->pos,
+                    LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, node_wrap_return_statement(rtn_statement)->pos,
                     "returning `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
                     lang_type_print(get_lang_type(rtn_statement->child)), 
                     lang_type_print(fun_def->declaration->return_types->child->lang_type)
                 );
             }
             msg(
-                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap(fun_def->declaration->return_types)->pos,
+                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap_function_return_types(fun_def->declaration->return_types)->pos,
                 "function return type `"LANG_TYPE_FMT"` defined here\n",
                 lang_type_print(fun_def->declaration->return_types->child->lang_type)
             );

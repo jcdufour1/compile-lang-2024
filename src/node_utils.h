@@ -345,7 +345,7 @@ static inline Node* get_node_src(Node* node) {
         case NODE_GOTO:
             unreachable("");
         case NODE_COND_GOTO:
-            return node_wrap(node_unwrap_cond_goto_const(node)->node_src);
+            return node_wrap_operator(node_unwrap_cond_goto(node)->node_src);
         case NODE_LABEL:
             unreachable("");
         case NODE_ALLOCA:
@@ -353,17 +353,17 @@ static inline Node* get_node_src(Node* node) {
         case NODE_LLVM_STORE_STRUCT_LITERAL:
             unreachable("");
         case NODE_LOAD_ANOTHER_NODE:
-            return node_unwrap_load_another_node_const(node)->node_src;
+            return node_unwrap_load_another_node(node)->node_src;
         case NODE_STORE_ANOTHER_NODE:
-            return node_unwrap_store_another_node_const(node)->node_src;
+            return node_unwrap_store_another_node(node)->node_src;
         case NODE_LOAD_ELEMENT_PTR:
-            return node_unwrap_load_element_ptr_const(node)->node_src;
+            return node_unwrap_load_element_ptr(node)->node_src;
         case NODE_LLVM_STORE_LITERAL:
             unreachable("");
         case NODE_PTR_BYVAL_SYM:
             return node_unwrap_ptr_byval_sym(node)->node_src;
         case NODE_LLVM_REGISTER_SYM:
-            return node_unwrap_llvm_register_sym_const(node)->node_src;
+            return node_unwrap_llvm_register_sym(node)->node_src;
         default:
             unreachable(""); // we cannot print node_type because it will cause infinite recursion
     }

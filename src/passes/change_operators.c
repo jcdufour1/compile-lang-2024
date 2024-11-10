@@ -6,8 +6,8 @@
 // TODO: rewrite this pass, because this is unsafe
 // TODO: do not change type of existing node (or find better way), because this is error prone
 static void do_change_operator(Node_operator* operator) {
-    log_tree(LOG_DEBUG, node_wrap(operator));
-    Pos pos = node_wrap(operator)->pos;
+    log_tree(LOG_DEBUG, node_wrap_operator(node_wrap_operator_generic(operator)));
+    Pos pos = node_wrap_operator(node_wrap_operator_generic(operator))->pos;
     if (operator->type == NODE_OP_UNARY) {
         Node_unary* unary = node_unwrap_op_unary(operator);
         switch (unary->token_type) {
@@ -16,7 +16,7 @@ static void do_change_operator(Node_operator* operator) {
                 operator->type = NODE_OP_BINARY;
                 Node_binary* binary = node_unwrap_op_binary(operator);
                 binary->lhs = temp.child;
-                binary->rhs = node_wrap(literal_new(
+                binary->rhs = node_wrap_literal(literal_new(
                     str_view_from_cstr("0"),
                     TOKEN_INT_LITERAL,
                     pos

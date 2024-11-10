@@ -14,7 +14,7 @@ void walk_tree(Env* env, void (callback)(Env* env));
 INLINE void start_walk(Env* env, Node_block** root, void (callback)(Env* env)) {
     assert(env->recursion_depth == 0);
     assert(env->ancesters.info.count == 0);
-    vec_append(&a_main, &env->ancesters, node_wrap(*root));
+    vec_append(&a_main, &env->ancesters, node_wrap_block(*root));
     walk_tree(env, callback);
     vec_rem_last(&env->ancesters);
 }

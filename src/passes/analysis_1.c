@@ -56,10 +56,10 @@ void analysis_1(Env* env) {
             node_new(pos, NODE_RETURN_STATEMENT)
         );
         rtn_statement->auto_inserted = true;
-        rtn_statement->child = node_wrap(literal_new(str_view_from_cstr(""), TOKEN_VOID, pos));
+        rtn_statement->child = node_wrap_literal(literal_new(str_view_from_cstr(""), TOKEN_VOID, pos));
         Lang_type dummy;
         Node* new_rtn_statement;
-        try_set_node_type(env, &new_rtn_statement, &dummy, node_wrap(rtn_statement));
+        try_set_node_type(env, &new_rtn_statement, &dummy, node_wrap_return_statement(rtn_statement));
         vec_append(&a_main, block_children, new_rtn_statement);
     }
 

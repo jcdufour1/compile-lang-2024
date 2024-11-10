@@ -116,9 +116,9 @@ static void extend_literal_decl_prefix(String* output, const Node_literal* liter
     }
 }
 
-static void extend_literal_decl(const Env* env, String* output, const Node_literal* var_def, bool noundef) {
-    extend_type_decl_str(env, output, node_wrap(var_def), noundef);
-    extend_literal_decl_prefix(output, var_def);
+static void extend_literal_decl(const Env* env, String* output, const Node_literal* literal, bool noundef) {
+    extend_type_decl_str(env, output, node_wrap_literal_const(literal), noundef);
+    extend_literal_decl_prefix(output, literal);
 }
 
 static const Node_lang_type* return_type_from_function_definition(const Node_function_definition* fun_def) {
@@ -150,7 +150,7 @@ static void emit_function_params(const Env* env, String* output, const Node_func
                 string_extend_cstr(&a_main, output, ")");
             }
         } else {
-            extend_type_decl_str(env, output, node_wrap(curr_param), true);
+            extend_type_decl_str(env, output, node_wrap_variable_def_const(curr_param), true);
         }
         if (curr_param->is_variadic) {
             return;
@@ -216,7 +216,7 @@ static void emit_function_call(const Env* env, String* output, const Node_functi
     string_extend_cstr(&a_main, output, "call ");
     extend_type_call_str(env, output, fun_call->lang_type);
     string_extend_cstr(&a_main, output, " @");
-    string_extend_strv(&a_main, output, get_node_name(node_wrap(fun_call)));
+    string_extend_strv(&a_main, output, fun_call->name);
 
     // arguments
     string_extend_cstr(&a_main, output, "(");
@@ -230,7 +230,7 @@ static void emit_alloca(const Env* env, String* output, const Node_alloca* alloc
     string_extend_cstr(&a_main, output, "    %");
     string_extend_size_t(&a_main, output, alloca->llvm_id);
     string_extend_cstr(&a_main, output, " = alloca ");
-    extend_type_call_str(env, output, get_symbol_def_from_alloca(env, node_wrap(alloca))->lang_type);
+    extend_type_call_str(env, output, get_symbol_def_from_alloca(env, node_wrap_alloca_const(alloca))->lang_type);
     string_extend_cstr(&a_main, output, ", align 8");
     string_extend_cstr(&a_main, output, "\n");
 }
@@ -250,7 +250,7 @@ static void emit_unary_type(const Env* env, String* output, const Node_unary* un
             string_extend_cstr(&a_main, output, " ");
             break;
         default:
-            unreachable(NODE_FMT"\n", node_print(node_wrap(unary)));
+            unreachable(NODE_FMT"\n", node_print(node_wrap_operator(node_wrap_operator_generic(unary))));
     }
 }
 
@@ -300,7 +300,7 @@ static void emit_unary_suffix(const Env* env, String* output, const Node_unary* 
             extend_type_call_str(env, output, unary->lang_type);
             break;
         default:
-            unreachable(NODE_FMT"\n", node_print(node_wrap(unary)));
+            unreachable(NODE_FMT"\n", node_print(node_wrap_operator(node_wrap_operator_generic(unary))));
     }
 }
 
@@ -324,7 +324,7 @@ static void emit_operator_operand(String* output, const Node* operand) {
 
 static void emit_operator(const Env* env, String* output, const Node_operator* operator) {
     string_extend_cstr(&a_main, output, "    %");
-    string_extend_size_t(&a_main, output, get_llvm_id(node_wrap(operator)));
+    string_extend_size_t(&a_main, output, get_llvm_id(node_wrap_operator(node_wrap_operator_generic(operator))));
     string_extend_cstr(&a_main, output, " = ");
 
     if (operator->type == NODE_OP_UNARY) {
@@ -409,7 +409,7 @@ static void emit_function_definition(Env* env, String* output, const Node_functi
     extend_type_call_str(env, output, return_type_from_function_definition(fun_def)->lang_type);
 
     string_extend_cstr(&a_main, output, " @");
-    string_extend_strv(&a_main, output, get_node_name(node_wrap(fun_def)));
+    string_extend_strv(&a_main, output, get_node_name(node_wrap_function_definition_const(fun_def)));
 
     vec_append(&a_main, output, '(');
     emit_function_params(env, output, fun_def->declaration->parameters);
@@ -479,7 +479,7 @@ static void emit_goto(const Env* env, String* output, const Node_goto* lang_goto
 
 static void emit_cond_goto(const Env* env, String* output, const Node_cond_goto* cond_goto) {
     string_extend_cstr(&a_main, output, "    br i1 %");
-    string_extend_size_t(&a_main, output, get_llvm_id(node_wrap(cond_goto->node_src)));
+    string_extend_size_t(&a_main, output, get_llvm_id(node_wrap_operator(cond_goto->node_src)));
     string_extend_cstr(&a_main, output, ", label %");
     string_extend_size_t(&a_main, output, get_matching_label_id(env, cond_goto->if_true->name));
     string_extend_cstr(&a_main, output, ", label %");
@@ -521,7 +521,7 @@ static void emit_load_struct_element_pointer(String* output, const Node_load_ele
 }
 
 static void emit_block(Env* env, String* output, const Node_block* block) {
-    vec_append(&a_main, &env->ancesters, node_wrap(block));
+    vec_append(&a_main, &env->ancesters, (Node*)node_wrap_block_const(block));
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         const Node* statement = vec_at(&block->children, idx);

@@ -37,32 +37,32 @@ void do_passes(String file_text, const Parameters* params) {
     arena_reset(&print_arena);
 
     Env env = {0};
-    //log_tree(LOG_DEBUG, node_wrap(*root));
+    //log_tree(LOG_DEBUG, node_wrap_block(*root));
     start_walk(&env, &root, analysis_1);
-    log_tree(LOG_DEBUG, node_wrap(root));
+    log_tree(LOG_DEBUG, node_wrap_block(root));
     if (error_count > 0) {
         fail();
     }
     arena_reset(&print_arena);
 
     start_walk(&env, &root, for_and_if_to_branch);
-    log_tree(LOG_DEBUG, node_wrap(root));
+    log_tree(LOG_DEBUG, node_wrap_block(root));
     arena_reset(&print_arena);
 
     start_walk(&env, &root, add_alloca);
-    log_tree(LOG_DEBUG, node_wrap(root));
+    log_tree(LOG_DEBUG, node_wrap_block(root));
     arena_reset(&print_arena);
 
     start_walk(&env, &root, add_load_and_store);
-    log_tree(LOG_DEBUG, node_wrap(root));
+    log_tree(LOG_DEBUG, node_wrap_block(root));
     arena_reset(&print_arena);
 
     start_walk(&env, &root, change_operators);
-    log_tree(LOG_DEBUG, node_wrap(root));
+    log_tree(LOG_DEBUG, node_wrap_block(root));
     arena_reset(&print_arena);
 
     start_walk(&env, &root, assign_llvm_ids);
-    log_tree(LOG_DEBUG, node_wrap(root));
+    log_tree(LOG_DEBUG, node_wrap_block(root));
     arena_reset(&print_arena);
 
     if (params->emit_llvm) {

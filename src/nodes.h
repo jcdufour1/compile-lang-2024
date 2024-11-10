@@ -198,7 +198,7 @@ static inline Node* get_left_child(Node* node) {
         case NODE_ALLOCA:
             unreachable("");
         case NODE_LLVM_STORE_LITERAL:
-            return node_wrap(node_unwrap_llvm_store_literal(node)->child);
+            return node_wrap_literal(node_unwrap_llvm_store_literal(node)->child);
         case NODE_LOAD_ANOTHER_NODE:
             unreachable("");
         case NODE_STORE_ANOTHER_NODE:
