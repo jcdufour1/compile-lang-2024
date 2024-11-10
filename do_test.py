@@ -31,9 +31,9 @@ EXPECTED_SUCCESS_RESULTS_DIR = "./tests/expected_success_results/"
 
 EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "undef_symbol.own": ["undefined-symbol"],
-    EXPECTED_FAIL_EXAMPLES_DIR + "undef_function.own": ["undefined-function"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "undef_function.own": ["undefined-function", "missing-return-statement"],
     EXPECTED_FAIL_EXAMPLES_DIR + "expected_expression.own": ["expected-expression"],
-    EXPECTED_FAIL_EXAMPLES_DIR + "incomplete_var_def.own": ["incomplete-variable-definition"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "incomplete_var_def.own": ["parser-expected"],
     EXPECTED_FAIL_EXAMPLES_DIR + "binary_mismatched_types.own": ["binary-mismatched-types"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_fun_arg.own": ["invalid-function-arguments"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_fun_args.own": ["invalid-count-function-arguments"],
@@ -72,8 +72,8 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_close_brace.own": ["parser-expected"],
     EXPECTED_FAIL_EXAMPLES_DIR + "struct_lit_no_close_brace.own": ["parser-expected"],
     EXPECTED_FAIL_EXAMPLES_DIR + "assign_no_rhs.own": ["expected-expression"],
-    EXPECTED_FAIL_EXAMPLES_DIR + "missing_close_par.own": ["expected-expression"],
-    EXPECTED_FAIL_EXAMPLES_DIR + "missing_close_par_2.own": ["expected-expression"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "missing_close_par.own": ["missing-close-par"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "missing_close_par_2.own": ["expected-expression", "missing-close-par"],
     EXPECTED_FAIL_EXAMPLES_DIR + "two_undef_symbols.own": ["undefined-symbol", "undefined-symbol"],
     EXPECTED_FAIL_EXAMPLES_DIR + "two_parse_errors.own": ["parser-expected", "expected-expression"],
     EXPECTED_FAIL_EXAMPLES_DIR + "function_main_no_close_brace.own": ["missing-close-curly-brace"],

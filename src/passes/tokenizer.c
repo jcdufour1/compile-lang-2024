@@ -1,10 +1,10 @@
 #include <stdbool.h>
-#include "util.h"
-#include "token.h"
-#include "tokenizer.h"
-#include "token_view.h"
-#include "str_view_col.h"
-#include "parameters.h"
+#include "../util.h"
+#include "../token.h"
+#include "../tokens.h"
+#include "../token_view.h"
+#include "../str_view_col.h"
+#include "../parameters.h"
 #include <ctype.h>
 
 static void msg_tokenizer_invalid_token(Str_view_col text, Pos pos) {
@@ -196,7 +196,7 @@ static bool get_next_token(Pos* pos, Token* token, Str_view_col* file_text, Para
     }
 }
 
-Tokens tokenize(const String file_text, Parameters params) {
+Tokens tokenize(const String file_text, const Parameters params) {
     Tokens tokens = {0};
 
     Str_view_col curr_file_text = {.base = {.str = file_text.buf, .count = file_text.info.count}};

@@ -38,28 +38,34 @@ typedef struct {
 
 static const Pos dummy_pos = {0};
 
-void log_common(LOG_LEVEL log_level, const char* file, int line, int indent, const char* format, ...) 
+// log* functions and macros print messages that are intended for debugging
+void log_internal(LOG_LEVEL log_level, const char* file, int line, int indent, const char* format, ...) 
 __attribute__((format (printf, 5, 6)));
 
 #define log_indent_file(...) \
     do { \
-        log_common(__VA_ARGS__); \
+        log_internal(__VA_ARGS__); \
     } while(0) 
 
-// TODO: rename log_common to log_internal
 #define log_indent(log_level, indent, ...) \
-    log_common(log_level, __FILE__, __LINE__, indent, __VA_ARGS__)
+    log_internal(log_level, __FILE__, __LINE__, indent, __VA_ARGS__)
 
 #define log_file_new(log_level, file, line, ...) \
-    log_common(log_level, file, line, 0, __VA_ARGS__)
+    log_internal(log_level, file, line, 0, __VA_ARGS__)
 
-// print messages that are intended for debugging
 #define log(log_level, ...) \
-    log_common(log_level, __FILE__, __LINE__, 0, __VA_ARGS__);
+    log_internal(log_level, __FILE__, __LINE__, 0, __VA_ARGS__);
 
-// print messages that are intended for the user (eg. syntax errors)
-void msg(LOG_LEVEL log_level, EXPECT_FAIL_TYPE expected_fail_type, Pos pos, const char* format, ...)
-__attribute__((format (printf, 4, 5)));
+// msg* functions and macros print messages that are intended for the user (eg. syntax errors)
+void msg_internal(
+    const char* file, int line, LOG_LEVEL log_level, EXPECT_FAIL_TYPE expected_fail_type,
+    Pos pos, const char* format, ...
+) __attribute__((format (printf, 6, 7)));
+
+#define msg(log_level, expected_fail_type, pos, ...) \
+    do { \
+        msg_internal(__FILE__, __LINE__, log_level, expected_fail_type, pos, __VA_ARGS__); \
+    } while (0)
 
 #define todo() \
     do { \

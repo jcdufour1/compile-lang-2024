@@ -5,8 +5,6 @@
 #include "newstring.h"
 #include "node.h"
 #include "tokens.h"
-#include "tokenizer.h"
-#include "parser.h"
 #include "parameters.h"
 #include "file.h"
 #include "do_passes.h"
@@ -20,11 +18,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    Tokens tokens = tokenize(file_text, params);
-
-    Node_block* root = parse(tokens);
-
-    do_passes(&root, &params);
+    do_passes(file_text, &params);
 
     return 0;
 }

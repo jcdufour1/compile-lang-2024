@@ -25,10 +25,8 @@ endif
 
 OBJS=\
 	 ${BUILD_DIR}/main.o \
-	 ${BUILD_DIR}/tokenizer.o \
 	 ${BUILD_DIR}/arena.o \
 	 ${BUILD_DIR}/nodes.o \
-	 ${BUILD_DIR}/parser.o \
 	 ${BUILD_DIR}/globals.o \
 	 ${BUILD_DIR}/token.o \
 	 ${BUILD_DIR}/symbol_table.o \
@@ -38,6 +36,8 @@ OBJS=\
 	 ${BUILD_DIR}/error_msg.o \
 	 ${BUILD_DIR}/walk_tree.o \
 	 ${BUILD_DIR}/passes/do_passes.o \
+	 ${BUILD_DIR}/passes/tokenizer.o \
+	 ${BUILD_DIR}/passes/parser.o \
 	 ${BUILD_DIR}/passes/for_and_if_to_branch.o \
 	 ${BUILD_DIR}/passes/assign_llvm_ids.o \
 	 ${BUILD_DIR}/passes/add_load_and_store.o \
@@ -71,17 +71,11 @@ ${BUILD_DIR}/main: ${DEP_COMMON} ${OBJS}
 ${BUILD_DIR}/main.o: ${DEP_COMMON} src/main.c src/passes/*.h third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/main.o src/main.c
 
-${BUILD_DIR}/parser.o: ${DEP_COMMON} src/parser.c third_party/*
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/parser.o src/parser.c
-
 ${BUILD_DIR}/arena.o: ${DEP_COMMON} src/arena.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/arena.o src/arena.c
 
 ${BUILD_DIR}/parser_utils.o: ${DEP_COMMON} src/parser_utils.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/parser_utils.o src/parser_utils.c
-
-${BUILD_DIR}/tokenizer.o: ${DEP_COMMON} src/tokenizer.c third_party/*
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/tokenizer.o src/tokenizer.c
 
 ${BUILD_DIR}/globals.o: ${DEP_COMMON} src/globals.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/globals.o src/globals.c
@@ -132,6 +126,12 @@ ${BUILD_DIR}/passes/change_operators.o: ${DEP_COMMON} src/passes/change_operator
 
 ${BUILD_DIR}/passes/emit_llvm.o: ${DEP_COMMON} src/passes/emit_llvm.c src/passes/*.h third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/emit_llvm.o src/passes/emit_llvm.c
+
+${BUILD_DIR}/passes/parser.o: ${DEP_COMMON} src/passes/parser.c src/passes/*.h third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/parser.o src/passes/parser.c
+
+${BUILD_DIR}/passes/tokenizer.o: ${DEP_COMMON} src/passes/tokenizer.c src/passes/*.h third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/tokenizer.o src/passes/tokenizer.c
 
 clean:
 	rm -f ${OBJS} ${BUILD_DIR}/main

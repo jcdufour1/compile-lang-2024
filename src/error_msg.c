@@ -26,7 +26,7 @@ static const char* get_log_level_str(int log_level) {
     }
 }
 
-void log_common(LOG_LEVEL log_level, const char* file, int line, int indent, const char* format, ...) {
+void log_internal(LOG_LEVEL log_level, const char* file, int line, int indent, const char* format, ...) {
     va_list args;
     va_start(args, format);
 
@@ -41,10 +41,11 @@ void log_common(LOG_LEVEL log_level, const char* file, int line, int indent, con
     va_end(args);
 }
 
-void msg(LOG_LEVEL log_level, EXPECT_FAIL_TYPE msg_expect_fail_type, Pos pos, const char* format, ...) {
+void msg_internal(const char* file, int line, LOG_LEVEL log_level, EXPECT_FAIL_TYPE msg_expect_fail_type, Pos pos, const char* format, ...) {
     va_list args;
     va_start(args, format);
     bool fail_immediately = false;
+
 
     if (log_level >= LOG_ERROR) {
         fail_immediately = params.all_errors_fetal;
@@ -56,21 +57,28 @@ void msg(LOG_LEVEL log_level, EXPECT_FAIL_TYPE msg_expect_fail_type, Pos pos, co
     if (log_level >= CURR_LOG_LEVEL) {
         fprintf(stderr, "%s:%d:%d:%s:", pos.file_path, pos.line, pos.column, get_log_level_str(log_level));
         vfprintf(stderr, format, args);
+        log_internal(LOG_DEBUG, file, line, 0, "location of error\n");
     }
 
     log(LOG_DEBUG, "%zu\n", params.expected_fail_types.info.count);
-    if (params.expected_fail_types.info.count > expected_fail_count) {
+    if (log_level >= LOG_ERROR && params.test_expected_fail) {
+        if (params.expected_fail_types.info.count <= expected_fail_count) {
+            log(LOG_FETAL, "too many fails occured\n");
+            exit(EXIT_CODE_FAIL);
+        }
         assert(expected_fail_count < params.expected_fail_types.info.count && "out of bounds");
         EXPECT_FAIL_TYPE expected_expect_fail = vec_at(&params.expected_fail_types, expected_fail_count);
         assert(expected_expect_fail != EXPECT_FAIL_TYPE_NONE);
         log(LOG_DEBUG, "YES %d\n", msg_expect_fail_type);
         log(LOG_DEBUG, "YES %d\n", expected_expect_fail);
-        if (params.test_expected_fail && msg_expect_fail_type == expected_expect_fail) {
-            assert(expected_expect_fail != EXPECT_FAIL_TYPE_NONE);
-
-            log(LOG_NOTE, "expected fail occured\n");
-            expected_fail_count++;
+        if (msg_expect_fail_type != expected_expect_fail) {
+            log(LOG_FETAL, "incorrect fail type occured\n");
+            exit(EXIT_CODE_FAIL);
         }
+        assert(expected_expect_fail != EXPECT_FAIL_TYPE_NONE);
+
+        log(LOG_NOTE, "expected fail occured\n");
+        expected_fail_count++;
     }
 
     if (fail_immediately) {

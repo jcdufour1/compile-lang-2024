@@ -7,7 +7,7 @@
 #include "env.h"
 #include "parameters.h"
 
-void do_passes(Node_block** root, const Parameters* params);
+void do_passes(String file_text, const Parameters* params);
 
 void walk_tree(Env* env, void (callback)(Env* env));
 

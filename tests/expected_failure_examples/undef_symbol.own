@@ -3,4 +3,5 @@ extern("c") fn printf(str_to_print_2: u8*, args: any...) i32
 
 fn main() i32 {
     printf("hello", num1)
+    return 0
 }

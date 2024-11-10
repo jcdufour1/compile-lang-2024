@@ -3,6 +3,7 @@
 
 #include "../node.h"
 #include "../do_passes.h"
+#include "../tokens.h"
 
 static inline void insert_into_node_ptr_vec(
     Node_ptr_vec* block_children,
@@ -15,6 +16,10 @@ static inline void insert_into_node_ptr_vec(
         (*idx_to_insert_before)++;
     }
 }
+
+Tokens tokenize(const String file_text, const Parameters params);
+
+Node_block* parse(const Tokens tokens);
 
 void analysis_1(Env* env);
 
