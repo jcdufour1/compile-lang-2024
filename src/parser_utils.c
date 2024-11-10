@@ -273,7 +273,7 @@ Node_symbol_untyped* symbol_new(Str_view symbol_name, Pos pos) {
 Node* unary_new(const Env* env, Node* child, TOKEN_TYPE operator_type, Lang_type init_lang_type) {
     Node_operator* operator = node_unwrap_operator(node_new(child->pos, NODE_OPERATOR));
     operator->type = NODE_OP_UNARY;
-    Node_unary* unary = node_unwrap_op_unary(operator);
+    Node_op_unary* unary = node_unwrap_op_unary(operator);
     unary->token_type = operator_type;
     unary->child = child;
     unary->lang_type = init_lang_type;
@@ -290,7 +290,7 @@ Node* binary_new(const Env* env, Node* lhs, Node* rhs, TOKEN_TYPE operator_type)
     // TODO: check if lhs or rhs were already appended to the tree
     Node_operator* operator = node_unwrap_operator(node_new(lhs->pos, NODE_OPERATOR));
     operator->type = NODE_OP_BINARY;
-    Node_binary* binary = node_unwrap_op_binary(operator);
+    Node_op_binary* binary = node_unwrap_op_binary(operator);
     binary->token_type = operator_type;
     binary->lhs = lhs;
     binary->rhs = rhs;
@@ -474,7 +474,7 @@ bool try_set_symbol_type(const Env* env, Lang_type* lang_type, Node_symbol_untyp
 }
 
 // returns false if unsuccessful
-bool try_set_binary_lang_type(const Env* env, Node** new_node, Lang_type* lang_type, Node_binary* operator) {
+bool try_set_binary_lang_type(const Env* env, Node** new_node, Lang_type* lang_type, Node_op_binary* operator) {
     Lang_type dummy;
     Node* new_lhs;
     if (!try_set_node_type(env, &new_lhs, &dummy, operator->lhs)) {
@@ -566,7 +566,7 @@ bool try_set_binary_lang_type(const Env* env, Node** new_node, Lang_type* lang_t
     return true;
 }
 
-bool try_set_unary_lang_type(const Env* env, Node** new_node, Lang_type* lang_type, Node_unary* unary) {
+bool try_set_unary_lang_type(const Env* env, Node** new_node, Lang_type* lang_type, Node_op_unary* unary) {
     assert(lang_type);
     Lang_type init_lang_type;
     Node* new_child;

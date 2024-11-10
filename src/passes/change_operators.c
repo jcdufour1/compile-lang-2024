@@ -9,12 +9,12 @@ static void do_change_operator(Node_operator* operator) {
     log_tree(LOG_DEBUG, node_wrap_operator(node_wrap_operator_generic(operator)));
     Pos pos = node_wrap_operator(node_wrap_operator_generic(operator))->pos;
     if (operator->type == NODE_OP_UNARY) {
-        Node_unary* unary = node_unwrap_op_unary(operator);
+        Node_op_unary* unary = node_unwrap_op_unary(operator);
         switch (unary->token_type) {
             case TOKEN_NOT: {
-                Node_unary temp = *unary;
+                Node_op_unary temp = *unary;
                 operator->type = NODE_OP_BINARY;
-                Node_binary* binary = node_unwrap_op_binary(operator);
+                Node_op_binary* binary = node_unwrap_op_binary(operator);
                 binary->lhs = temp.child;
                 binary->rhs = node_wrap_literal(literal_new(
                     str_view_from_cstr("0"),

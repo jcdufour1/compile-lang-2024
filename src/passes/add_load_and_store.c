@@ -94,7 +94,7 @@ static void struct_memb_to_load_memb_rtn_val_sym(Node_struct_member_sym_typed* s
     load_ref->node_src = node_wrap_load_another_node(node_src);
 }
 
-static Node_llvm_register_sym* refer_to_llvm_register_symbol(const Env* env, const Node_unary* refer) {
+static Node_llvm_register_sym* refer_to_llvm_register_symbol(const Env* env, const Node_op_unary* refer) {
     assert(refer->token_type == TOKEN_REFER);
 
     //Node_struct_member_sym_typed temp = *struct_memb;
@@ -188,7 +188,7 @@ static Node_load_another_node* insert_load(
         }
         case NODE_OPERATOR: {
             Node_operator* operator = node_unwrap_operator(symbol_call);
-            Node_unary* unary = node_unwrap_op_unary(operator);
+            Node_op_unary* unary = node_unwrap_op_unary(operator);
             if (unary->token_type != TOKEN_REFER) {
                 todo();
             }
@@ -248,13 +248,13 @@ static void load_operator_operands(
 ) {
     if (operator->type == NODE_OP_UNARY) {
         Node* new_child;
-        Node_unary* unary_oper = node_unwrap_op_unary(operator);
+        Node_op_unary* unary_oper = node_unwrap_op_unary(operator);
         insert_load(env, &new_child, block_children, idx_to_insert_before, unary_oper->child);
         unary_oper->child = new_child;
     } else if (operator->type == NODE_OP_BINARY) {
         Node* new_lhs;
         Node* new_rhs;
-        Node_binary* bin_oper = node_unwrap_op_binary(operator);
+        Node_op_binary* bin_oper = node_unwrap_op_binary(operator);
         insert_load(env, &new_lhs, block_children, idx_to_insert_before, bin_oper->lhs);
         insert_load(env, &new_rhs, block_children, idx_to_insert_before, bin_oper->rhs);
         bin_oper->lhs = new_lhs;
@@ -333,7 +333,7 @@ static Node* get_store_assignment(
             break;
         }
         case NODE_OPERATOR: {
-            Node_unary* unary = node_unwrap_op_unary(node_unwrap_operator(assignment->lhs));
+            Node_op_unary* unary = node_unwrap_op_unary(node_unwrap_operator(assignment->lhs));
             if (unary->token_type != TOKEN_DEREF) {
                 todo();
             }
@@ -396,7 +396,7 @@ static Node* get_store_assignment(
         case NODE_OPERATOR: {
             Node_operator* operator = node_unwrap_operator(assignment->rhs);
             if (operator->type == NODE_OP_UNARY) {
-                Node_unary* unary = node_unwrap_op_unary(operator);
+                Node_op_unary* unary = node_unwrap_op_unary(operator);
                 if (unary->token_type == TOKEN_DEREF) {
                     Node* store_src_imm;
                     if (unary->child->type == NODE_STRUCT_MEMBER_SYM_TYPED) {
@@ -558,7 +558,7 @@ static Node* flatten_operator_operand(
     if (operand->type == NODE_OPERATOR) {
         Node_operator* child = node_unwrap_operator(operand);
         if (child->type == NODE_OP_UNARY) {
-            Node_unary* unary = node_unwrap_op_unary(child);
+            Node_op_unary* unary = node_unwrap_op_unary(child);
             if (unary->token_type == TOKEN_DEREF) {
                 Node* new_child;
                 Node* store_src_imm = node_wrap_load_another_node(insert_load(env, &new_child, block_children, idx_to_insert_before, unary->child));
@@ -630,10 +630,10 @@ static void flatten_operator_if_nessessary(
     Node_operator* old_operator
 ) {
     if (old_operator->type == NODE_OP_UNARY) {
-        Node_unary* old_unary_op = node_unwrap_op_unary(old_operator);
+        Node_op_unary* old_unary_op = node_unwrap_op_unary(old_operator);
         old_unary_op->child = flatten_operator_operand(env, block_children, idx_to_insert_before, old_unary_op->child);
     } else if (old_operator->type == NODE_OP_BINARY) {
-        Node_binary* old_bin_op = node_unwrap_op_binary(old_operator);
+        Node_op_binary* old_bin_op = node_unwrap_op_binary(old_operator);
         old_bin_op->lhs = flatten_operator_operand(env, block_children, idx_to_insert_before, old_bin_op->lhs);
         old_bin_op->rhs = flatten_operator_operand(env, block_children, idx_to_insert_before, old_bin_op->rhs);
     } else {

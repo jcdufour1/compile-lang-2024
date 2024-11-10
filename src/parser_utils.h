@@ -123,14 +123,14 @@ static inline const Node_struct_def* get_struct_definition_const(const Env* env,
 bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node_assignment* assignment);
 
 // returns false if unsuccessful
-bool try_set_binary_lang_type(const Env* env, Node** new_node, Lang_type* lang_type, Node_binary* operator);
+bool try_set_binary_lang_type(const Env* env, Node** new_node, Lang_type* lang_type, Node_op_binary* operator);
 
 // returns false if unsuccessful
 bool try_set_binary_operand_lang_type(Lang_type* lang_type, Node* operand);
 
 Lang_type get_parent_function_return_type(const Env* env);
 
-bool try_set_unary_lang_type(const Env* env, Node** new_node, Lang_type* lang_type, Node_unary* unary);
+bool try_set_unary_lang_type(const Env* env, Node** new_node, Lang_type* lang_type, Node_op_unary* unary);
 
 bool try_set_operation_lang_type(const Env* env, Node** new_node, Lang_type* lang_type, Node_operator* operator);
 

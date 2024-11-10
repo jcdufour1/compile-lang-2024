@@ -48,6 +48,15 @@
     DO(for_with_condition, NODE_FOR_WITH_CONDITION) \
     DO(operator, NODE_OPERATOR)
 
+#define FOR_LIST_OF_NODE_OPERATORS(DO) \
+    DO(unary, NODE_OP_UNARY) \
+    DO(binary, NODE_OP_BINARY)
+
+#define FOR_LIST_OF_NODE_LITERALS(DO) \
+    DO(number, NODE_LIT_NUMBER) \
+    DO(string, NODE_LIT_STRING) \
+    DO(void, NODE_LIT_VOID)
+
 struct Node_;
 
 #define X(lower, upper) \
@@ -98,16 +107,23 @@ typedef struct {
     int64_t data;
 } Node_lit_number;
 
-typedef union {
-    Node_lit_string node_lit_string;
-    Node_lit_number node_lit_number;
-} Node_literal_as;
+typedef struct {
+    int dummy;
+} Node_lit_void;
 
+#define X(lower, upper) \
+    Node_lit_##lower _##lower;
+typedef union {
+    FOR_LIST_OF_NODE_LITERALS(X)
+} Node_literal_as;
+#undef X
+
+#define X(lower, upper) \
+    upper,
 typedef enum {
-    NODE_LIT_STRING,
-    NODE_LIT_NUMBER,
-    NODE_LIT_VOID,
+    FOR_LIST_OF_NODE_LITERALS(X)
 } NODE_LITERAL_TYPE;
+#undef X
 
 typedef struct {
     Node_literal_as as;
@@ -137,7 +153,7 @@ typedef struct {
     TOKEN_TYPE token_type;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Llvm_id llvm_id;
-} Node_unary;
+} Node_op_unary;
 
 typedef struct {
     struct Node_* lhs;
@@ -145,17 +161,21 @@ typedef struct {
     TOKEN_TYPE token_type;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Llvm_id llvm_id;
-} Node_binary;
+} Node_op_binary;
 
+#define X(lower, upper) \
+    Node_op_##lower _##lower;
 typedef union {
-    Node_unary unary;
-    Node_binary binary;
+    FOR_LIST_OF_NODE_OPERATORS(X)
 } Node_operator_as;
+#undef X
 
+#define X(lower, upper) \
+    upper,
 typedef enum {
-    NODE_OP_UNARY,
-    NODE_OP_BINARY,
+    FOR_LIST_OF_NODE_OPERATORS(X)
 } NODE_OPERATOR_TYPE;
+#undef X
 
 typedef struct {
     Node_operator_as as;
@@ -361,109 +381,71 @@ static inline const Node* node_wrap_##lower##_const(const Node_##lower* node) { 
 FOR_LIST_OF_NODES(X)
 #undef X
 
-static inline Node_lit_number* node_unwrap_lit_number(Node_literal* node) {
-    assert(node->type == NODE_LIT_NUMBER);
-    return &node->as.node_lit_number;
+#define X(lower, upper) \
+static inline Node_lit_##lower* node_unwrap_lit_##lower(Node_literal* node) { \
+    assert(node->type == upper); \
+    return &node->as._##lower; \
+} \
+ \
+static inline const Node_lit_##lower* node_unwrap_lit_##lower##_const(const Node_literal* node) { \
+    assert(node->type == upper); \
+    return &node->as._##lower; \
+} \
+ \
+static inline Node_literal* node_wrap_lit_##lower(Node_lit_##lower* node) { \
+    return (Node_literal*)node; \
+} \
+ \
+static inline const Node_literal* node_wrap_lit_##lower##_const(const Node_lit_##lower* node) { \
+    return (const Node_literal*)node; \
+} \
+static inline Node_lit_##lower* node_auto_unwrap_lit_##lower(Node* node) { \
+    Node_literal* literal = node_unwrap_literal(node); \
+    assert(literal->type == upper); \
+    return &literal->as._##lower; \
+} \
+static inline bool node_is_lit_##lower(const Node* node) { \
+    if (node->type != NODE_LITERAL) { \
+        return false; \
+    } \
+    const Node_literal* literal = node_unwrap_literal_const(node); \
+    return literal->type == upper; \
 }
+FOR_LIST_OF_NODE_LITERALS(X)
+#undef X
 
-static inline const Node_lit_number* node_unwrap_lit_number_const(const Node_literal* node) {
-    assert(node->type == NODE_LIT_NUMBER);
-    return &node->as.node_lit_number;
+#define X(lower, upper) \
+static inline Node_op_##lower* node_unwrap_op_##lower(Node_operator* node) { \
+    assert(node->type == upper); \
+    return &node->as._##lower; \
+} \
+ \
+static inline const Node_op_##lower* node_unwrap_op_##lower##_const(const Node_operator* node) { \
+    assert(node->type == upper); \
+    return &node->as._##lower; \
+} \
+ \
+static inline Node_operator* node_wrap_op_##lower(Node_op_##lower* node) { \
+    return (Node_operator*)node; \
+} \
+ \
+static inline const Node_operator* node_wrap_op_##lower##_const(const Node_op_##lower* node) { \
+    return (const Node_operator*)node; \
+} \
+static inline Node_op_##lower* node_auto_unwrap_op_##lower(Node* node) { \
+    Node_operator* operator = node_unwrap_operator(node); \
+    assert(operator->type == upper); \
+    return &operator->as._##lower; \
+} \
+static inline bool node_is_##lower(const Node* node) { \
+    if (node->type != NODE_OPERATOR) { \
+        return false; \
+    } \
+    const Node_operator* operator = node_unwrap_operator_const(node); \
+    return operator->type == upper; \
 }
-
-static inline Node_lit_string* node_unwrap_lit_string(Node_literal* node) {
-    assert(node->type == NODE_LIT_STRING);
-    return &node->as.node_lit_string;
-}
-
-static inline const Node_lit_string* node_unwrap_lit_string_const(const Node_literal* node) {
-    assert(node->type == NODE_LIT_STRING);
-    return &node->as.node_lit_string;
-}
-
-static inline Node_lit_string* node_auto_unwrap_lit_string(Node* node) {
-    Node_literal* literal = node_unwrap_literal(node);
-    assert(literal->type == NODE_LIT_STRING);
-    return &literal->as.node_lit_string;
-}
-
-static inline const Node_lit_string* node_auto_unwrap_lit_string_const(const Node* node) {
-    const Node_literal* literal = node_unwrap_literal_const(node);
-    assert(literal->type == NODE_LIT_STRING);
-    return &literal->as.node_lit_string;
-}
-
-static inline Node_lit_number* node_auto_unwrap_lit_number(Node* node) {
-    Node_literal* literal = node_unwrap_literal(node);
-    assert(literal->type == NODE_LIT_NUMBER);
-    return &literal->as.node_lit_number;
-}
-
-static inline const Node_lit_number* node_auto_unwrap_lit_number_const(const Node* node) {
-    const Node_literal* literal = node_unwrap_literal_const(node);
-    assert(literal->type == NODE_LIT_NUMBER);
-    return &literal->as.node_lit_number;
-}
-
-static inline Node_binary* node_auto_unwrap_op_binary(Node* node) {
-    Node_operator* operator = node_unwrap_operator(node);
-    assert(operator->type == NODE_OP_BINARY);
-    return &operator->as.binary;
-}
-
-static inline const Node_binary* node_auto_unwrap_op_binary_const(const Node* node) {
-    const Node_operator* operator = node_unwrap_operator_const(node);
-    assert(operator->type == NODE_OP_BINARY);
-    return &operator->as.binary;
-}
-
-static inline Node_unary* node_auto_unwrap_op_unary(Node* node) {
-    Node_operator* operator = node_unwrap_operator(node);
-    assert(operator->type == NODE_OP_UNARY);
-    return &operator->as.unary;
-}
-
-static inline const Node_unary* node_auto_unwrap_op_unary_const(const Node* node) {
-    const Node_operator* operator = node_unwrap_operator_const(node);
-    assert(operator->type == NODE_OP_UNARY);
-    return &operator->as.unary;
-}
-
-static inline Node_binary* node_unwrap_op_binary(Node_operator* node) {
-    assert(node->type == NODE_OP_BINARY);
-    return &node->as.binary;
-}
-
-static inline const Node_binary* node_unwrap_op_binary_const(const Node_operator* node) {
-    assert(node->type == NODE_OP_BINARY);
-    return &node->as.binary;
-}
-
-static inline Node_unary* node_unwrap_op_unary(Node_operator* node) {
-    assert(node->type == NODE_OP_UNARY);
-    return &node->as.unary;
-}
-
-static inline const Node_unary* node_unwrap_op_unary_const(const Node_operator* node) {
-    assert(node->type == NODE_OP_UNARY);
-    return &node->as.unary;
-}
-
-static inline bool node_is_binary(const Node* node) {
-    if (node->type != NODE_OPERATOR) {
-        return false;
-    }
-    const Node_operator* operator = node_unwrap_operator_const(node);
-    return operator->type == NODE_OP_BINARY;
-}
-
-static inline bool node_is_unary(const Node* node) {
-    if (node->type != NODE_OPERATOR) {
-        return false;
-    }
-    const Node_operator* operator = node_unwrap_operator_const(node);
-    return operator->type == NODE_OP_UNARY;
-}
+FOR_LIST_OF_NODE_OPERATORS(X)
+#undef X
 
 #define node_wrap_operator_generic(operator) ((Node_operator*)(operator))
 

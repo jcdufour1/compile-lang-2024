@@ -235,7 +235,7 @@ static void emit_alloca(const Env* env, String* output, const Node_alloca* alloc
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_unary_type(const Env* env, String* output, const Node_unary* unary) {
+static void emit_unary_type(const Env* env, String* output, const Node_op_unary* unary) {
     switch (unary->token_type) {
         case TOKEN_UNSAFE_CAST:
             if (!is_i_lang_type(unary->lang_type) || !is_i_lang_type(get_lang_type(unary->child))) {
@@ -255,7 +255,7 @@ static void emit_unary_type(const Env* env, String* output, const Node_unary* un
 }
 
 // TODO: make Node_untyped_binary
-static void emit_binary_type(const Env* env, String* output, const Node_binary* binary) {
+static void emit_binary_type(const Env* env, String* output, const Node_op_binary* binary) {
     // TODO: do signed and unsigned operators correctly
     switch (binary->token_type) {
         case TOKEN_SINGLE_MINUS:
@@ -293,7 +293,7 @@ static void emit_binary_type(const Env* env, String* output, const Node_binary* 
     string_extend_cstr(&a_main, output, " ");
 }
 
-static void emit_unary_suffix(const Env* env, String* output, const Node_unary* unary) {
+static void emit_unary_suffix(const Env* env, String* output, const Node_op_unary* unary) {
     switch (unary->token_type) {
         case TOKEN_UNSAFE_CAST:
             string_extend_cstr(&a_main, output, " to ");
@@ -338,7 +338,7 @@ static void emit_operator(const Env* env, String* output, const Node_operator* o
     if (operator->type == NODE_OP_UNARY) {
         emit_operator_operand(output, node_unwrap_op_unary_const(operator)->child);
     } else if (operator->type == NODE_OP_BINARY) {
-        const Node_binary* binary = node_unwrap_op_binary_const(operator);
+        const Node_op_binary* binary = node_unwrap_op_binary_const(operator);
         emit_operator_operand(output, binary->lhs);
         string_extend_cstr(&a_main, output, ", ");
         emit_operator_operand(output, binary->rhs);

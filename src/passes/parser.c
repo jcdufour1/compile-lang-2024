@@ -1145,20 +1145,20 @@ static Node_struct_member_sym_untyped* extract_struct_member_call(Tk_view* token
     return member_call;
 }
 
-static Node_unary* parser_unary_new(Token operator_token, Node* child, Lang_type init_lang_type) {
+static Node_op_unary* parser_unary_new(Token operator_token, Node* child, Lang_type init_lang_type) {
     Node_operator* operator = node_unwrap_operator(node_new(operator_token.pos, NODE_OPERATOR));
     operator->type = NODE_OP_UNARY;
-    Node_unary* unary = node_unwrap_op_unary(operator);
+    Node_op_unary* unary = node_unwrap_op_unary(operator);
     unary->token_type = operator_token.type;
     unary->child = child;
     unary->lang_type = init_lang_type;
     return unary;
 }
 
-static Node_binary* parser_binary_new(Node* lhs, Token operator_token, Node* rhs) {
+static Node_op_binary* parser_binary_new(Node* lhs, Token operator_token, Node* rhs) {
     Node_operator* operator = node_unwrap_operator(node_new(operator_token.pos, NODE_OPERATOR));
     operator->type = NODE_OP_BINARY;
-    Node_binary* binary = node_unwrap_op_binary(operator);
+    Node_op_binary* binary = node_unwrap_op_binary(operator);
     binary->token_type = operator_token.type;
     binary->lhs = lhs;
     binary->rhs = rhs;
@@ -1331,7 +1331,7 @@ static PARSE_EXPR_STATUS try_extract_expression(Env* env, Node** result, Tk_view
                     unreachable("");
 
             }
-            Node_binary* operator = parser_binary_new(
+            Node_op_binary* operator = parser_binary_new(
                 node_auto_unwrap_op_binary(expression)->rhs,
                 operator_token,
                 rhs
@@ -1355,7 +1355,7 @@ static PARSE_EXPR_STATUS try_extract_expression(Env* env, Node** result, Tk_view
                 default:
                     unreachable("");
             }
-            Node_binary* operator = parser_binary_new(lhs, operator_token, rhs);
+            Node_op_binary* operator = parser_binary_new(lhs, operator_token, rhs);
             expression = node_wrap_operator(node_wrap_operator_generic(operator));
         }
 
