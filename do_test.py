@@ -78,6 +78,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "two_parse_errors.own": ["parser-expected", "expected-expression"],
     EXPECTED_FAIL_EXAMPLES_DIR + "function_main_no_close_brace.own": ["missing-close-curly-brace"],
     EXPECTED_FAIL_EXAMPLES_DIR + "struct_literal_no_delim.own": ["parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "not_is_first_op_and_lhs_lower_pres_than_rhs.own": ["expected-expression"],
 }
 
 def to_str(a):

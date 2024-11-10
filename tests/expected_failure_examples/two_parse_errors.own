@@ -1,5 +1,6 @@
 
-fn main) {
+fn main() {
     let num1: i32 = 
+    num1: i32 = 12
     return 0
 }

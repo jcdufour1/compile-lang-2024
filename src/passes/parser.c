@@ -25,7 +25,7 @@ typedef enum {
 
 static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens, bool is_top_level);
 static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* tokens);
-static PARSE_EXPR_STATUS try_extract_expression(Env* env, Node** result, Tk_view* tokens, bool defer_sym_add, bool is_statement);
+static PARSE_EXPR_STATUS try_extract_expression(Env* env, Node** result, Tk_view* tokens, bool defer_sym_add);
 static PARSE_STATUS try_extract_variable_declaration(
     Env* env, 
     Node_variable_def** result,
@@ -700,7 +700,7 @@ static PARSE_STATUS extract_for_range_internal(Env* env, Node_for_range* for_loo
     try(try_consume(NULL, tokens, TOKEN_IN));
 
     Node* lower_bound_child;
-    if (PARSE_EXPR_OK != try_extract_expression(env, &lower_bound_child, tokens, true, false)) {
+    if (PARSE_EXPR_OK != try_extract_expression(env, &lower_bound_child, tokens, true)) {
         msg_expected_expression(*tokens);
         return PARSE_ERROR;
     }
@@ -713,7 +713,7 @@ static PARSE_STATUS extract_for_range_internal(Env* env, Node_for_range* for_loo
     }
 
     Node* upper_bound_child;
-    if (PARSE_EXPR_OK != try_extract_expression(env, &upper_bound_child, tokens, true, false)) {
+    if (PARSE_EXPR_OK != try_extract_expression(env, &upper_bound_child, tokens, true)) {
         msg_expected_expression(*tokens);
         return PARSE_ERROR;
     }
@@ -842,7 +842,7 @@ static PARSE_STATUS try_extract_function_call(Env* env, Node_function_call** chi
     bool prev_is_comma = false;
     while (is_first_time || prev_is_comma) {
         Node* arg;
-        switch (try_extract_expression(env, &arg, &curr_tokens, true, false)) {
+        switch (try_extract_expression(env, &arg, &curr_tokens, true)) {
             case PARSE_EXPR_OK:
                 vec_append(&a_main, &function_call->args, arg);
                 prev_is_comma = try_consume(NULL, &curr_tokens, TOKEN_COMMA);
@@ -880,7 +880,7 @@ static PARSE_STATUS extract_function_return_statement(Env* env, Node_return_stat
     try(try_consume(NULL, tokens, TOKEN_RETURN));
 
     Node* expression;
-    switch (try_extract_expression(env, &expression, tokens, false, false)) {
+    switch (try_extract_expression(env, &expression, tokens, false)) {
         case PARSE_EXPR_OK:
             *rtn_statement = node_unwrap_return_statement(node_new(expression->pos, NODE_RETURN_STATEMENT));
             (*rtn_statement)->child = expression;
@@ -906,7 +906,7 @@ static PARSE_STATUS extract_assignment(Env* env, Node_assignment** assign, Tk_vi
             unreachable("extract_assignment should possibly never be called with no `=`, but it was");
         }
     } else {
-        switch (try_extract_expression(env, &lhs, tokens, false, false)) {
+        switch (try_extract_expression(env, &lhs, tokens, false)) {
             case PARSE_EXPR_NONE:
                 unreachable("extract_assignment should possibly never be called without lhs expression present, but it was");
             case PARSE_EXPR_ERROR:
@@ -926,7 +926,7 @@ static PARSE_STATUS extract_assignment(Env* env, Node_assignment** assign, Tk_vi
 
     (*assign)->lhs = lhs;
 
-    switch (try_extract_expression(env, &(*assign)->rhs, tokens, false, false)) {
+    switch (try_extract_expression(env, &(*assign)->rhs, tokens, false)) {
         case PARSE_EXPR_NONE:
             msg_expected_expression(*tokens);
             return PARSE_ERROR;
@@ -940,7 +940,7 @@ static PARSE_STATUS extract_assignment(Env* env, Node_assignment** assign, Tk_vi
 
 static Node_if_condition* extract_if_condition(Env* env, Tk_view* tokens) {
     Node* operation;
-    if (PARSE_EXPR_OK != try_extract_expression(env, &operation, tokens, false, false)) {
+    if (PARSE_EXPR_OK != try_extract_expression(env, &operation, tokens, false)) {
         todo();
     }
     Node_if_condition* condition = node_unwrap_if_condition(node_new(operation->pos, NODE_IF_CONDITION));
@@ -1000,7 +1000,7 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
     } else if (starts_with_break(*tokens)) {
         lhs = node_wrap(extract_break(tokens));
     } else {
-        switch (try_extract_expression(env, &lhs, tokens, false, true)) {
+        switch (try_extract_expression(env, &lhs, tokens, false)) {
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_ERROR:
@@ -1180,8 +1180,7 @@ static Node_binary* parser_binary_new(Node* lhs, Token operation_token, Node* rh
     return binary;
 }
 
-static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node** result, Tk_view* tokens, bool defer_sym_add, bool is_statement) {
-    is_statement = false;
+static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node** result, Tk_view* tokens, bool defer_sym_add) {
     if (tokens->count < 1) {
         return PARSE_EXPR_NONE;
     }
@@ -1189,10 +1188,17 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node** result, T
     Node_function_call* fun_call;
     Token open_par_token = {0};
     if (try_consume(&open_par_token, tokens, TOKEN_OPEN_PAR)) {
-        switch (try_extract_expression(env, result, tokens, defer_sym_add, is_statement)) {
+        switch (try_extract_expression(env, result, tokens, defer_sym_add)) {
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_ERROR:
+                // TODO: remove this if if it causes too many issues
+                if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
+                    msg(
+                        LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_PAR, open_par_token.pos, 
+                        "opening `(` is unmatched\n"
+                    );
+                }
                 return PARSE_EXPR_ERROR;
             case PARSE_EXPR_NONE:
                 todo();
@@ -1208,9 +1214,6 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node** result, T
         }
         return PARSE_EXPR_OK;
     } else if (is_unary(tk_view_front(*tokens).type)) {
-        if (is_statement) {
-            todo();
-        }
         Token operation_token = tk_view_consume(tokens);
         Lang_type unary_lang_type = {0};
         switch (operation_token.type) {
@@ -1247,7 +1250,7 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node** result, T
                 unreachable(TOKEN_TYPE_FMT"\n", token_type_print(operation_token.type));
         }
         Node* inside_unary;
-        if (PARSE_EXPR_OK != try_extract_expression_piece(env, &inside_unary, tokens, defer_sym_add, is_statement)) {
+        if (PARSE_EXPR_OK != try_extract_expression_piece(env, &inside_unary, tokens, defer_sym_add)) {
             todo();
         }
         *result = node_wrap(parser_unary_new(operation_token, inside_unary, unary_lang_type));
@@ -1268,24 +1271,15 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node** result, T
     } else if (tokens->count > 1 && tk_view_front(*tokens).type == TOKEN_SYMBOL &&
         token_is_equal(tk_view_at(*tokens, 1), "", TOKEN_SINGLE_DOT)
     ) {
-        if (is_statement) {
-            todo();
-        }
         *result = node_wrap(extract_struct_member_call(tokens));
         return PARSE_EXPR_OK;
     } else if (token_is_literal(tk_view_front(*tokens))) {
-        if (is_statement) {
-            todo();
-        }
         *result = node_wrap(extract_literal(env, tokens, defer_sym_add));
         return PARSE_EXPR_OK;
     } else if (tk_view_front(*tokens).type == TOKEN_SYMBOL) {
         *result = node_wrap(extract_symbol(tokens));
         return PARSE_EXPR_OK;
     } else if (starts_with_struct_literal(*tokens)) {
-        if (is_statement) {
-            todo();
-        }
         Node_struct_literal* struct_lit;
         if (PARSE_OK != extract_struct_literal(env, &struct_lit, tokens)) {
             return PARSE_EXPR_ERROR;
@@ -1293,23 +1287,20 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node** result, T
         *result = node_wrap(struct_lit);
         return PARSE_EXPR_OK;
     } else if (tk_view_front(*tokens).type == TOKEN_NONTYPE) {
-        if (is_statement) {
-            todo();
-        }
         return PARSE_EXPR_NONE;
     } else {
         return PARSE_EXPR_NONE;
     }
 }
 
-static PARSE_EXPR_STATUS try_extract_expression(Env* env, Node** result, Tk_view* tokens, bool defer_sym_add, bool is_statement) {
+static PARSE_EXPR_STATUS try_extract_expression(Env* env, Node** result, Tk_view* tokens, bool defer_sym_add) {
     assert(tokens->tokens);
     if (tokens->count < 1) {
         return PARSE_EXPR_NONE;
     }
 
     Node* expression = NULL;
-    switch (try_extract_expression_piece(env, &expression, tokens, defer_sym_add, is_statement)) {
+    switch (try_extract_expression_piece(env, &expression, tokens, defer_sym_add)) {
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_ERROR:
@@ -1341,8 +1332,20 @@ static PARSE_EXPR_STATUS try_extract_expression(Env* env, Node** result, Tk_view
             operator_precedence(prev_operator_token) < operator_precedence(operator_token)
         ) {
             Node* rhs;
-            if (PARSE_EXPR_OK != try_extract_expression_piece(env, &rhs, tokens, defer_sym_add, false)) {
-                todo();
+            switch (try_extract_expression_piece(env, &rhs, tokens, defer_sym_add)) {
+                case PARSE_EXPR_OK:
+                    break;
+                case PARSE_EXPR_NONE: {
+                    msg_expected_expression(*tokens);
+                    return PARSE_EXPR_ERROR;
+                }
+                case PARSE_EXPR_ERROR: {
+                    assert(error_count > 0 && "error_count not incremented\n");
+                    return PARSE_EXPR_ERROR;
+                }
+                default:
+                    unreachable("");
+
             }
             Node_binary* operation = parser_binary_new(
                 node_auto_unwrap_op_binary(expression)->rhs,
@@ -1353,13 +1356,13 @@ static PARSE_EXPR_STATUS try_extract_expression(Env* env, Node** result, Tk_view
         } else {
             Node* lhs = expression;
             Node* rhs;
-            switch (try_extract_expression_piece(env, &rhs, tokens, defer_sym_add, false)) {
+            switch (try_extract_expression_piece(env, &rhs, tokens, defer_sym_add)) {
                 case PARSE_EXPR_OK:
                     break;
                 case PARSE_EXPR_NONE: {
                     log_tokens(LOG_DEBUG, *tokens);
                     msg_expected_expression(*tokens);
-                    break;
+                    return PARSE_EXPR_ERROR;
                 }
                 case PARSE_EXPR_ERROR: {
                     assert(error_count > 0 && "error_count not incremented\n");
