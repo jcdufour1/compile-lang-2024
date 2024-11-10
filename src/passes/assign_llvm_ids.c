@@ -10,15 +10,15 @@ void assign_llvm_ids(Env* env) {
     static size_t llvm_id_for_next_var = 1;
 
     switch (curr_node->type) {
-        case NODE_STRUCT_LITERAL:
+        case NODE_E_STRUCT_LITERAL:
             return;
         case NODE_STRUCT_DEF:
             return;
         case NODE_FUNCTION_PARAMS:
             return;
-        case NODE_SYMBOL_TYPED:
+        case NODE_E_SYMBOL_TYPED:
             return;
-        case NODE_LITERAL:
+        case NODE_E_LITERAL:
             return;
         case NODE_BLOCK:
             return;
@@ -30,7 +30,7 @@ void assign_llvm_ids(Env* env) {
             return;
         case NODE_LANG_TYPE:
             return;
-        case NODE_SYMBOL_UNTYPED:
+        case NODE_E_SYMBOL_UNTYPED:
             return;
         case NODE_LOAD_ELEMENT_PTR:
             node_unwrap_load_element_ptr(curr_node)->llvm_id = llvm_id_for_next_var;
@@ -44,7 +44,7 @@ void assign_llvm_ids(Env* env) {
             node_unwrap_store_another_node(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
             return;
-        case NODE_MEMBER_SYM_TYPED:
+        case NODE_E_MEMBER_SYM_TYPED:
             node_unwrap_member_sym_typed(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
             return;
@@ -52,7 +52,7 @@ void assign_llvm_ids(Env* env) {
             node_unwrap_variable_def(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
             return;
-        case NODE_FUNCTION_CALL:
+        case NODE_E_FUNCTION_CALL:
             node_unwrap_function_call(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
             return;
@@ -73,8 +73,8 @@ void assign_llvm_ids(Env* env) {
             return;
         case NODE_CONDITION:
             unreachable("");
-        case NODE_OPERATOR: {
-            Node_operator* operator = node_unwrap_operator(curr_node);
+        case NODE_E_OPERATOR: {
+            Node_e_operator* operator = node_unwrap_operator(curr_node);
             if (operator->type == NODE_OP_UNARY) {
                 node_unwrap_op_unary(operator)->llvm_id = llvm_id_for_next_var;
                 llvm_id_for_next_var += 2;

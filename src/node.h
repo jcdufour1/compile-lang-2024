@@ -2,6 +2,7 @@
 #define NODE_H
 
 #include "node_ptr_vec.h"
+#include "expr_ptr_vec.h"
 #include "newstring.h"
 #include "str_view.h"
 #include "token.h"
@@ -16,8 +17,6 @@
     DO(store_another_node, NODE_STORE_ANOTHER_NODE) \
     DO(load_another_node, NODE_LOAD_ANOTHER_NODE) \
     DO(alloca, NODE_ALLOCA) \
-    DO(member_sym_typed, NODE_MEMBER_SYM_TYPED) \
-    DO(member_sym_untyped, NODE_MEMBER_SYM_UNTYPED) \
     DO(block, NODE_BLOCK) \
     DO(condition, NODE_CONDITION) \
     DO(if, NODE_IF) \
@@ -33,36 +32,76 @@
     DO(member_sym_piece_typed, NODE_MEMBER_SYM_PIECE_TYPED) \
     DO(member_sym_piece_untyped, NODE_MEMBER_SYM_PIECE_UNTYPED) \
     DO(variable_def, NODE_VARIABLE_DEF) \
-    DO(struct_literal, NODE_STRUCT_LITERAL) \
     DO(lang_type, NODE_LANG_TYPE) \
     DO(function_params, NODE_FUNCTION_PARAMS) \
-    DO(function_call, NODE_FUNCTION_CALL) \
-    DO(literal, NODE_LITERAL) \
     DO(load_element_ptr, NODE_LOAD_ELEMENT_PTR) \
     DO(label, NODE_LABEL) \
-    DO(symbol_typed, NODE_SYMBOL_TYPED) \
-    DO(symbol_untyped, NODE_SYMBOL_UNTYPED) \
     DO(ptr_byval_sym, NODE_PTR_BYVAL_SYM) \
     DO(llvm_register_sym, NODE_LLVM_REGISTER_SYM) \
     DO(for_with_cond, NODE_FOR_WITH_COND) \
-    DO(operator, NODE_OPERATOR)
+    DO(expr, NODE_EXPR)
 
-#define FOR_LIST_OF_NODE_OPERATORS(DO) \
+#define FOR_LIST_OF_NODE_E_OPERATORS(DO) \
     DO(unary, NODE_OP_UNARY) \
     DO(binary, NODE_OP_BINARY)
 
-#define FOR_LIST_OF_NODE_LITERALS(DO) \
+#define FOR_LIST_OF_NODE_E_LITERALS(DO) \
     DO(number, NODE_LIT_NUMBER) \
     DO(string, NODE_LIT_STRING) \
     DO(void, NODE_LIT_VOID)
 
+#define FOR_LIST_OF_NODE_EXPRS(DO) \
+    DO(function_call, NODE_E_FUNCTION_CALL, \
+        Expr_ptr_vec args; \
+        Str_view name; \
+        Llvm_id llvm_id; \
+        Lang_type lang_type; /* eg. "String" in "let string1: String = "hello"" */ \
+    ) \
+    DO(struct_literal, NODE_E_STRUCT_LITERAL, \
+        Node_ptr_vec members; \
+        Str_view name; \
+        Lang_type lang_type; /* eg. "String" in "let string1: String = "hello"" */ \
+        Llvm_id llvm_id; \
+    )  \
+    DO(literal, NODE_E_LITERAL, \
+        Node_e_literal_as as; \
+        NODE_E_LITERAL_TYPE type; \
+        Lang_type lang_type; \
+        Str_view name; \
+    )  \
+    DO(symbol_typed, NODE_E_SYMBOL_TYPED, \
+        Lang_type lang_type; \
+        Str_view str_data; \
+        Str_view name; \
+    )  \
+    DO(symbol_untyped, NODE_E_SYMBOL_UNTYPED, \
+        Str_view name; \
+    ) \
+    DO(operator, NODE_E_OPERATOR, \
+        Node_e_operator_as as; \
+        NODE_E_OPERATOR_TYPE type; \
+    ) \
+    DO(member_sym_untyped, NODE_E_MEMBER_SYM_UNTYPED, \
+        Node_ptr_vec children; \
+        Str_view name; \
+        Lang_type lang_type; \
+    ) \
+    DO(member_sym_typed, NODE_E_MEMBER_SYM_TYPED, \
+        Node_ptr_vec children; \
+        Llvm_id llvm_id; \
+        Str_view name; \
+    ) 
+
 struct Node_;
+struct Node_expr_;
 
 #define X(lower, upper) \
     upper,
+
 typedef enum {
     FOR_LIST_OF_NODES(X)
 } NODE_TYPE;
+
 #undef X
 
 typedef size_t Llvm_id;
@@ -74,16 +113,6 @@ typedef struct {
                            //
                            // for function argument: 2 means to reference the variable twice
 } Lang_type;
-
-typedef struct {
-    Str_view name;
-} Node_symbol_untyped;
-
-typedef struct {
-    Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
-    Str_view str_data;
-    Str_view name;
-} Node_symbol_typed;
 
 typedef struct {
     Llvm_id llvm_id;
@@ -112,31 +141,21 @@ typedef struct {
 
 #define X(lower, upper) \
     Node_lit_##lower _##lower;
+
 typedef union {
-    FOR_LIST_OF_NODE_LITERALS(X)
-} Node_literal_as;
+    FOR_LIST_OF_NODE_E_LITERALS(X)
+} Node_e_literal_as;
+
 #undef X
 
 #define X(lower, upper) \
     upper,
+
 typedef enum {
-    FOR_LIST_OF_NODE_LITERALS(X)
-} NODE_LITERAL_TYPE;
+    FOR_LIST_OF_NODE_E_LITERALS(X)
+} NODE_E_LITERAL_TYPE;
+
 #undef X
-
-typedef struct {
-    Node_literal_as as;
-    NODE_LITERAL_TYPE type;
-    Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
-    Str_view name;
-} Node_literal;
-
-typedef struct {
-    Node_ptr_vec args;
-    Str_view name;
-    Llvm_id llvm_id;
-    Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
-} Node_function_call;
 
 typedef struct {
     Node_ptr_vec params;
@@ -148,15 +167,15 @@ typedef struct {
 } Node_lang_type;
 
 typedef struct {
-    struct Node_* child;
+    struct Node_expr_* child;
     TOKEN_TYPE token_type;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Llvm_id llvm_id;
 } Node_op_unary;
 
 typedef struct {
-    struct Node_* lhs;
-    struct Node_* rhs;
+    struct Node_expr_* lhs;
+    struct Node_expr_* rhs;
     TOKEN_TYPE token_type;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Llvm_id llvm_id;
@@ -164,29 +183,52 @@ typedef struct {
 
 #define X(lower, upper) \
     Node_op_##lower _##lower;
+
 typedef union {
-    FOR_LIST_OF_NODE_OPERATORS(X)
-} Node_operator_as;
+    FOR_LIST_OF_NODE_E_OPERATORS(X)
+} Node_e_operator_as;
+
 #undef X
 
 #define X(lower, upper) \
     upper,
+
 typedef enum {
-    FOR_LIST_OF_NODE_OPERATORS(X)
-} NODE_OPERATOR_TYPE;
+    FOR_LIST_OF_NODE_E_OPERATORS(X)
+} NODE_E_OPERATOR_TYPE;
+
 #undef X
 
-typedef struct {
-    Node_operator_as as;
-    NODE_OPERATOR_TYPE type;
-} Node_operator;
+#define X(lower, upper, members) \
+    upper,
 
-typedef struct {
-    Node_ptr_vec members;
-    Str_view name;
-    Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
-    Llvm_id llvm_id;
-} Node_struct_literal;
+typedef enum {
+    FOR_LIST_OF_NODE_EXPRS(X)
+} NODE_EXPR_TYPE;
+
+#undef X
+
+#define X(lower, upper, members) \
+typedef struct { \
+    members \
+} Node_e_##lower;
+
+FOR_LIST_OF_NODE_EXPRS(X)
+#undef X
+
+#define X(lower, upper, members) \
+    Node_e_##lower _##lower;
+
+typedef union {
+    FOR_LIST_OF_NODE_EXPRS(X)
+} Node_expr_as;
+
+#undef X
+
+typedef struct Node_expr_ {
+    Node_expr_as as;
+    NODE_EXPR_TYPE type;
+} Node_expr;
 
 typedef struct {
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
@@ -231,15 +273,15 @@ typedef struct {
 } Node_function_def;
 
 typedef struct {
-    struct Node_* child;
+    struct Node_expr_* child;
 } Node_for_lower_bound;
 
 typedef struct {
-    struct Node_* child;
+    struct Node_expr_* child;
 } Node_for_upper_bound;
 
 typedef struct {
-    struct Node_* child;
+    struct Node_expr_* child;
 } Node_condition;
 
 typedef struct {
@@ -255,7 +297,7 @@ typedef struct {
 } Node_for_with_cond;
 
 typedef struct {
-    struct Node_* child;
+    struct Node_expr_* child;
     bool auto_inserted : 1;
 } Node_return;
 
@@ -265,25 +307,13 @@ typedef struct {
 
 typedef struct {
     struct Node_* lhs;
-    struct Node_* rhs;
+    struct Node_expr_* rhs;
 } Node_assignment;
 
 typedef struct {
     Node_condition* condition;
     Node_block* body;
 } Node_if;
-
-typedef struct {
-    Node_ptr_vec children;
-    Str_view name;
-    Lang_type lang_type;
-} Node_member_sym_untyped;
-
-typedef struct {
-    Node_ptr_vec children;
-    Llvm_id llvm_id;
-    Str_view name;
-} Node_member_sym_typed;
 
 typedef struct {
     Llvm_id llvm_id;
@@ -311,7 +341,7 @@ typedef struct {
 } Node_llvm_register_sym;
 
 typedef struct {
-    Node_literal* child;
+    Node_e_literal* child;
     struct Node_* node_dest;
     Llvm_id llvm_id;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
@@ -323,14 +353,14 @@ typedef struct {
 } Node_goto;
 
 typedef struct {
-    Node_operator* node_src;
-    Node_symbol_untyped* if_true;
-    Node_symbol_untyped* if_false;
+    Node_e_operator* node_src;
+    Node_e_symbol_untyped* if_true;
+    Node_e_symbol_untyped* if_false;
     Llvm_id llvm_id;
 } Node_cond_goto;
 
 typedef struct {
-    Node_struct_literal* child;
+    Node_e_struct_literal* child;
     Llvm_id llvm_id;
     Lang_type lang_type;
     struct Node_* node_dest;
@@ -344,9 +374,11 @@ typedef struct {
 
 #define X(lower, upper) \
     Node_##lower _##lower;
+
 typedef union {
     FOR_LIST_OF_NODES(X)
 } Node_as;
+
 #undef X
 
 typedef struct Node_ {
@@ -373,76 +405,103 @@ static inline Node* node_wrap_##lower(Node_##lower* node) { \
 static inline const Node* node_wrap_##lower##_const(const Node_##lower* node) { \
     return (const Node*)node; \
 }
+
 FOR_LIST_OF_NODES(X)
+
+#undef X
+
+#define X(lower, upper, members) \
+static inline Node_e_##lower* node_unwrap_e_##lower(Node_expr* node) { \
+    assert(node->type == upper); \
+    return &node->as._##lower; \
+} \
+ \
+static inline const Node_e_##lower* node_unwrap_e_##lower##_const(const Node_expr* node) { \
+    assert(node->type == upper); \
+    return &node->as._##lower; \
+} \
+ \
+static inline Node_expr* node_wrap_e_##lower(Node_e_##lower* node) { \
+    return (Node_expr*)node; \
+} \
+ \
+static inline const Node_expr* node_wrap_e_##lower##_const(const Node_e_##lower* node) { \
+    return (const Node_expr*)node; \
+} \
+static inline Node_e_##lower* node_auto_unwrap_e_##lower(Node* node) { \
+    Node_expr* expr = node_unwrap_expr(node); \
+    assert(expr->type == upper); \
+    return &expr->as._##lower; \
+} \
+static inline bool node_is_e_##lower(const Node* node) { \
+    if (node->type != NODE_EXPR) { \
+        return false; \
+    } \
+    const Node_expr* expr = node_unwrap_expr_const(node); \
+    return expr->type == upper; \
+}
+
+FOR_LIST_OF_NODE_EXPRS(X)
+
 #undef X
 
 #define X(lower, upper) \
-static inline Node_lit_##lower* node_unwrap_lit_##lower(Node_literal* node) { \
+static inline Node_lit_##lower* node_unwrap_lit_##lower(Node_e_literal* node) { \
     assert(node->type == upper); \
     return &node->as._##lower; \
 } \
  \
-static inline const Node_lit_##lower* node_unwrap_lit_##lower##_const(const Node_literal* node) { \
+static inline const Node_lit_##lower* node_unwrap_lit_##lower##_const(const Node_e_literal* node) { \
     assert(node->type == upper); \
     return &node->as._##lower; \
 } \
  \
-static inline Node_literal* node_wrap_lit_##lower(Node_lit_##lower* node) { \
-    return (Node_literal*)node; \
+static inline Node_e_literal* node_wrap_lit_##lower(Node_lit_##lower* node) { \
+    return (Node_e_literal*)node; \
 } \
  \
-static inline const Node_literal* node_wrap_lit_##lower##_const(const Node_lit_##lower* node) { \
-    return (const Node_literal*)node; \
+static inline const Node_e_literal* node_wrap_lit_##lower##_const(const Node_lit_##lower* node) { \
+    return (const Node_e_literal*)node; \
 } \
-static inline Node_lit_##lower* node_auto_unwrap_lit_##lower(Node* node) { \
-    Node_literal* literal = node_unwrap_literal(node); \
+static inline Node_lit_##lower* node_auto_unwrap_lit_##lower(Node_expr* node) { \
+    Node_e_literal* literal = node_unwrap_e_literal(node); \
     assert(literal->type == upper); \
     return &literal->as._##lower; \
 } \
-static inline bool node_is_lit_##lower(const Node* node) { \
-    if (node->type != NODE_LITERAL) { \
+static inline bool node_is_lit_##lower(const Node_expr* node) { \
+    if (node->type != NODE_E_LITERAL) { \
         return false; \
     } \
-    const Node_literal* literal = node_unwrap_literal_const(node); \
+    const Node_e_literal* literal = node_unwrap_e_literal_const(node); \
     return literal->type == upper; \
 }
-FOR_LIST_OF_NODE_LITERALS(X)
+
+FOR_LIST_OF_NODE_E_LITERALS(X)
+
 #undef X
 
 #define X(lower, upper) \
-static inline Node_op_##lower* node_unwrap_op_##lower(Node_operator* node) { \
+static inline Node_op_##lower* node_unwrap_op_##lower(Node_e_operator* node) { \
     assert(node->type == upper); \
     return &node->as._##lower; \
 } \
  \
-static inline const Node_op_##lower* node_unwrap_op_##lower##_const(const Node_operator* node) { \
+static inline const Node_op_##lower* node_unwrap_op_##lower##_const(const Node_e_operator* node) { \
     assert(node->type == upper); \
     return &node->as._##lower; \
 } \
  \
-static inline Node_operator* node_wrap_op_##lower(Node_op_##lower* node) { \
-    return (Node_operator*)node; \
+static inline Node_e_operator* node_wrap_op_##lower(Node_op_##lower* node) { \
+    return (Node_e_operator*)node; \
 } \
  \
-static inline const Node_operator* node_wrap_op_##lower##_const(const Node_op_##lower* node) { \
-    return (const Node_operator*)node; \
+static inline const Node_e_operator* node_wrap_op_##lower##_const(const Node_op_##lower* node) { \
+    return (const Node_e_operator*)node; \
 } \
-static inline Node_op_##lower* node_auto_unwrap_op_##lower(Node* node) { \
-    Node_operator* operator = node_unwrap_operator(node); \
-    assert(operator->type == upper); \
-    return &operator->as._##lower; \
-} \
-static inline bool node_is_##lower(const Node* node) { \
-    if (node->type != NODE_OPERATOR) { \
-        return false; \
-    } \
-    const Node_operator* operator = node_unwrap_operator_const(node); \
-    return operator->type == upper; \
-}
-FOR_LIST_OF_NODE_OPERATORS(X)
-#undef X
 
-#define node_wrap_operator_generic(operator) ((Node_operator*)(operator))
+FOR_LIST_OF_NODE_E_OPERATORS(X)
+
+#undef X
 
 extern Node* root_of_tree;
 

@@ -11,7 +11,7 @@
 
 static void emit_block(Env* env, String* output, const Node_block* fun_block);
 
-static void extend_literal(String* output, const Node_literal* literal) {
+static void extend_literal(String* output, const Node_e_literal* literal) {
     switch (literal->type) {
         case NODE_LIT_STRING:
             string_extend_strv(&a_main, output, node_unwrap_lit_string_const(literal)->data);
@@ -77,7 +77,7 @@ static bool is_variadic(const Node* node) {
     switch (node->type) {
         case NODE_VARIABLE_DEF:
             return node_unwrap_variable_def_const(node)->is_variadic;
-        case NODE_LITERAL:
+        case NODE_E_LITERAL:
             return false;
         default:
             unreachable(NODE_FMT, node_print(node));
@@ -96,7 +96,7 @@ static void extend_type_decl_str(const Env* env, String* output, const Node* var
     }
 }
 
-static void extend_literal_decl_prefix(String* output, const Node_literal* literal) {
+static void extend_literal_decl_prefix(String* output, const Node_e_literal* literal) {
     assert(literal->lang_type.str.count > 0);
     if (str_view_cstr_is_equal(literal->lang_type.str, "u8")) {
         if (literal->lang_type.pointer_depth != 1) {
@@ -116,8 +116,8 @@ static void extend_literal_decl_prefix(String* output, const Node_literal* liter
     }
 }
 
-static void extend_literal_decl(const Env* env, String* output, const Node_literal* literal, bool noundef) {
-    extend_type_decl_str(env, output, node_wrap_literal_const(literal), noundef);
+static void extend_literal_decl(const Env* env, String* output, const Node_e_literal* literal, bool noundef) {
+    extend_type_decl_str(env, output, node_wrap_e_literal_const(literal), noundef);
     extend_literal_decl_prefix(output, literal);
 }
 
@@ -160,7 +160,7 @@ static void emit_function_params(const Env* env, String* output, const Node_func
     }
 }
 
-static void emit_function_call_arguments(const Env* env, String* output, const Node_function_call* fun_call) {
+static void emit_function_call_arguments(const Env* env, String* output, const Node_e_function_call* fun_call) {
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
         const Node* argument = vec_at(&fun_call->args, idx);
 
@@ -169,18 +169,18 @@ static void emit_function_call_arguments(const Env* env, String* output, const N
         }
 
         switch (argument->type) {
-            case NODE_LITERAL: {
+            case NODE_E_LITERAL: {
                 extend_literal_decl(env, output, node_unwrap_literal_const(argument), true);
                 break;
             }
-            case NODE_MEMBER_SYM_TYPED:
+            case NODE_E_MEMBER_SYM_TYPED:
                 unreachable("");
                 break;
-            case NODE_STRUCT_LITERAL:
+            case NODE_E_STRUCT_LITERAL:
                 todo();
-            case NODE_SYMBOL_UNTYPED:
+            case NODE_E_SYMBOL_UNTYPED:
                 unreachable("untyped symbols should not still be present");
-            case NODE_SYMBOL_TYPED:
+            case NODE_E_SYMBOL_TYPED:
                 unreachable("typed symbols should not still be present");
             case NODE_PTR_BYVAL_SYM:
                 string_extend_cstr(&a_main, output, "ptr noundef byval(");
@@ -194,7 +194,7 @@ static void emit_function_call_arguments(const Env* env, String* output, const N
                 string_extend_cstr(&a_main, output, " %");
                 string_extend_size_t(&a_main, output, get_llvm_id(node_unwrap_llvm_register_sym_const(argument)->node_src));
                 break;
-            case NODE_FUNCTION_CALL:
+            case NODE_E_FUNCTION_CALL:
                 unreachable(""); // this function call should be changed to assign to a variable 
                                // before reaching emit_llvm stage, then assign that variable here. 
             default:
@@ -203,7 +203,7 @@ static void emit_function_call_arguments(const Env* env, String* output, const N
     }
 }
 
-static void emit_function_call(const Env* env, String* output, const Node_function_call* fun_call) {
+static void emit_function_call(const Env* env, String* output, const Node_e_function_call* fun_call) {
     //assert(fun_call->llvm_id == 0);
 
     // start of actual function call
@@ -306,23 +306,23 @@ static void emit_unary_suffix(const Env* env, String* output, const Node_op_unar
 
 static void emit_operator_operand(String* output, const Node* operand) {
     switch (operand->type) {
-        case NODE_LITERAL:
+        case NODE_E_LITERAL:
             extend_literal(output, node_unwrap_literal_const(operand));
             break;
-        case NODE_SYMBOL_TYPED:
+        case NODE_E_SYMBOL_TYPED:
             unreachable("");
         case NODE_LLVM_REGISTER_SYM:
             string_extend_cstr(&a_main, output, "%");
             string_extend_size_t(&a_main, output, get_llvm_id(node_unwrap_llvm_register_sym_const(operand)->node_src));
             break;
-        case NODE_SYMBOL_UNTYPED:
+        case NODE_E_SYMBOL_UNTYPED:
             unreachable("untyped symbols should not still be present");
         default:
             unreachable(NODE_FMT"\n", node_print(operand));
     }
 }
 
-static void emit_operator(const Env* env, String* output, const Node_operator* operator) {
+static void emit_operator(const Env* env, String* output, const Node_e_operator* operator) {
     string_extend_cstr(&a_main, output, "    %");
     string_extend_size_t(&a_main, output, get_llvm_id(node_wrap_operator(node_wrap_operator_generic(operator))));
     string_extend_cstr(&a_main, output, " = ");
@@ -425,8 +425,8 @@ static void emit_return(const Env* env, String* output, const Node_return* fun_r
     assert(get_lang_type(sym_to_return).str.count > 0);
 
     switch (sym_to_return->type) {
-        case NODE_LITERAL: {
-            const Node_literal* literal = node_unwrap_literal_const(sym_to_return);
+        case NODE_E_LITERAL: {
+            const Node_e_literal* literal = node_unwrap_literal_const(sym_to_return);
             string_extend_cstr(&a_main, output, "    ret ");
             extend_type_call_str(env, output, literal->lang_type);
             string_extend_cstr(&a_main, output, " ");
@@ -434,11 +434,11 @@ static void emit_return(const Env* env, String* output, const Node_return* fun_r
             string_extend_cstr(&a_main, output, "\n");
             break;
         }
-        case NODE_SYMBOL_TYPED:
+        case NODE_E_SYMBOL_TYPED:
            unreachable("");
-        case NODE_MEMBER_SYM_TYPED:
+        case NODE_E_MEMBER_SYM_TYPED:
              unreachable("");
-        case NODE_SYMBOL_UNTYPED:
+        case NODE_E_SYMBOL_UNTYPED:
             unreachable("untyped symbols should not still be present");
         case NODE_LLVM_REGISTER_SYM: {
             const Node_llvm_register_sym* memb_sym = node_unwrap_llvm_register_sym_const(sym_to_return);
@@ -530,7 +530,7 @@ static void emit_block(Env* env, String* output, const Node_block* block) {
             case NODE_FUNCTION_DEF:
                 emit_function_def(env, output, node_unwrap_function_def_const(statement));
                 break;
-            case NODE_FUNCTION_CALL:
+            case NODE_E_FUNCTION_CALL:
                 emit_function_call(env, output, node_unwrap_function_call_const(statement));
                 break;
             case NODE_RETURN:
@@ -567,7 +567,7 @@ static void emit_block(Env* env, String* output, const Node_block* block) {
             case NODE_STRUCT_DEF:
                 emit_struct_definition(env, output, node_unwrap_struct_def_const(statement));
                 break;
-            case NODE_OPERATOR:
+            case NODE_E_OPERATOR:
                 emit_operator(env, output, node_unwrap_operator_const(statement));
                 break;
             case NODE_LOAD_ELEMENT_PTR:
@@ -579,7 +579,7 @@ static void emit_block(Env* env, String* output, const Node_block* block) {
             case NODE_STORE_ANOTHER_NODE:
                 emit_store_another_node(env, output, node_unwrap_store_another_node_const(statement));
                 break;
-            case NODE_MEMBER_SYM_TYPED:
+            case NODE_E_MEMBER_SYM_TYPED:
                 break;
             case NODE_FOR_RANGE:
                 unreachable("for loop should not still be present at this point\n");
@@ -597,7 +597,7 @@ static void emit_block(Env* env, String* output, const Node_block* block) {
 
 static void emit_symbol(String* output, const Symbol_table_node node) {
     Str_view str_data;
-    const Node_literal* literal = node_unwrap_literal_const(node.node);
+    const Node_e_literal* literal = node_unwrap_literal_const(node.node);
     switch (literal->type) {
         case NODE_LIT_STRING:
             str_data = node_unwrap_lit_string_const(literal)->data;
@@ -620,7 +620,7 @@ static void emit_symbol(String* output, const Symbol_table_node node) {
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_struct_literal(const Env* env, String* output, const Node_struct_literal* struct_literal) {
+static void emit_struct_literal(const Env* env, String* output, const Node_e_struct_literal* struct_literal) {
     assert(struct_literal->lang_type.str.count > 0);
     string_extend_cstr(&a_main, output, "@__const.main.");
     string_extend_strv(&a_main, output, struct_literal->name);
@@ -650,17 +650,17 @@ static void emit_symbols(const Env* env, String* output) {
         }
 
         switch (curr_node.node->type) {
-            case NODE_LITERAL:
+            case NODE_E_LITERAL:
                 emit_symbol(output, curr_node);
                 break;
-            case NODE_STRUCT_LITERAL:
+            case NODE_E_STRUCT_LITERAL:
                 emit_struct_literal(env, output, node_unwrap_struct_literal(curr_node.node));
                 break;
             case NODE_VARIABLE_DEF:
                 // fallthrough
             case NODE_LANG_TYPE:
                 // fallthrough
-            case NODE_FUNCTION_CALL:
+            case NODE_E_FUNCTION_CALL:
                 // fallthrough
             case NODE_FUNCTION_DECL:
                 // fallthrough

@@ -19,19 +19,19 @@ void analysis_1(Env* env) {
         switch ((*curr_node)->type) {
             case NODE_ASSIGNMENT:
                 //fallthrough
-            case NODE_FUNCTION_CALL:
+            case NODE_E_FUNCTION_CALL:
                 //fallthrough
-            case NODE_SYMBOL_UNTYPED:
+            case NODE_E_SYMBOL_UNTYPED:
                 //fallthrough
             case NODE_RETURN:
                 //fallthrough
-            case NODE_OPERATOR:
+            case NODE_E_OPERATOR:
                 //fallthrough
             case NODE_IF:
                 //fallthrough
             case NODE_FOR_WITH_COND: {
                 Node* new_node;
-                try_set_node_type(env, &new_node, &dummy, *curr_node);
+                try_set_node_lang_type(env, &new_node, &dummy, *curr_node);
                 *curr_node = new_node;
                 break;
             }
@@ -56,10 +56,10 @@ void analysis_1(Env* env) {
             node_new(pos, NODE_RETURN)
         );
         rtn_statement->auto_inserted = true;
-        rtn_statement->child = node_wrap_literal(literal_new(str_view_from_cstr(""), TOKEN_VOID, pos));
+        rtn_statement->child = node_wrap_e_literal(literal_new(str_view_from_cstr(""), TOKEN_VOID, pos));
         Lang_type dummy;
         Node* new_rtn_statement;
-        try_set_node_type(env, &new_rtn_statement, &dummy, node_wrap_return(rtn_statement));
+        try_set_node_lang_type(env, &new_rtn_statement, &dummy, node_wrap_return(rtn_statement));
         vec_append(&a_main, block_children, new_rtn_statement);
     }
 
