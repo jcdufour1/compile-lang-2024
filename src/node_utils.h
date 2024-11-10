@@ -38,9 +38,7 @@ static inline Lang_type get_member_sym_piece_final_lang_type(const Node_struct_m
 
 static inline Llvm_id get_llvm_id(const Node* node) {
     switch (node->type) {
-        case NODE_NO_TYPE:
-            unreachable("");
-        case NODE_STRUCT_DEFINITION:
+        case NODE_STRUCT_DEF:
             return node_unwrap_struct_def_const(node)->llvm_id;
         case NODE_STRUCT_LITERAL:
             unreachable("");
@@ -56,7 +54,7 @@ static inline Llvm_id get_llvm_id(const Node* node) {
             unreachable("");
         case NODE_FUNCTION_DEFINITION:
             return node_unwrap_function_definition_const(node)->llvm_id;
-        case NODE_FUNCTION_PARAMETERS:
+        case NODE_FUNCTION_PARAMS:
             unreachable("");
         case NODE_FUNCTION_RETURN_TYPES:
             unreachable("");
@@ -67,7 +65,7 @@ static inline Llvm_id get_llvm_id(const Node* node) {
         case NODE_LANG_TYPE:
             unreachable("");
         case NODE_OPERATOR: {
-            const Node_operator* operator = node_unwrap_operation_const(node);
+            const Node_operator* operator = node_unwrap_operator_const(node);
             if (operator->type == NODE_OP_UNARY) {
                 return node_unwrap_op_unary_const(operator)->llvm_id;
             } else if (operator->type == NODE_OP_BINARY) {
@@ -83,7 +81,7 @@ static inline Llvm_id get_llvm_id(const Node* node) {
             unreachable("");
         case NODE_RETURN_STATEMENT:
             unreachable("");
-        case NODE_VARIABLE_DEFINITION:
+        case NODE_VARIABLE_DEF:
             return node_unwrap_variable_def_const(node)->llvm_id;
         case NODE_FUNCTION_DECLARATION:
             unreachable("");
@@ -97,7 +95,7 @@ static inline Llvm_id get_llvm_id(const Node* node) {
             unreachable("");
         case NODE_BREAK:
             unreachable("");
-        case NODE_IF_STATEMENT:
+        case NODE_IF:
             unreachable("");
         case NODE_IF_CONDITION:
             unreachable("");
@@ -117,8 +115,8 @@ static inline Llvm_id get_llvm_id(const Node* node) {
             return node_unwrap_load_another_node_const(node)->llvm_id;
         case NODE_STORE_ANOTHER_NODE:
             unreachable("");
-        case NODE_LOAD_STRUCT_ELEMENT_PTR:
-            return node_unwrap_load_elem_ptr_const(node)->llvm_id;
+        case NODE_LOAD_ELEMENT_PTR:
+            return node_unwrap_load_element_ptr_const(node)->llvm_id;
         case NODE_LLVM_STORE_LITERAL:
             unreachable("");
         default:
@@ -128,9 +126,7 @@ static inline Llvm_id get_llvm_id(const Node* node) {
 
 static inline Lang_type get_lang_type(const Node* node) {
     switch (node->type) {
-        case NODE_NO_TYPE:
-            unreachable("");
-        case NODE_STRUCT_DEFINITION:
+        case NODE_STRUCT_DEF:
             unreachable("");
         case NODE_STRUCT_LITERAL:
             return node_unwrap_struct_literal_const(node)->lang_type;
@@ -146,7 +142,7 @@ static inline Lang_type get_lang_type(const Node* node) {
             unreachable("");
         case NODE_FUNCTION_DEFINITION:
             unreachable("");
-        case NODE_FUNCTION_PARAMETERS:
+        case NODE_FUNCTION_PARAMS:
             unreachable("");
         case NODE_FUNCTION_RETURN_TYPES:
             unreachable("");
@@ -162,7 +158,7 @@ static inline Lang_type get_lang_type(const Node* node) {
             return node_unwrap_symbol_typed_const(node)->lang_type;
         case NODE_RETURN_STATEMENT:
             return get_lang_type(node_unwrap_return_statement_const(node)->child);
-        case NODE_VARIABLE_DEFINITION:
+        case NODE_VARIABLE_DEF:
             return node_unwrap_variable_def_const(node)->lang_type;
         case NODE_FUNCTION_DECLARATION:
             return node_unwrap_function_declaration_const(node)->return_types->child->lang_type;
@@ -176,7 +172,7 @@ static inline Lang_type get_lang_type(const Node* node) {
             unreachable("");
         case NODE_BREAK:
             unreachable("");
-        case NODE_IF_STATEMENT:
+        case NODE_IF:
             unreachable("");
         case NODE_IF_CONDITION:
             unreachable("");
@@ -196,8 +192,8 @@ static inline Lang_type get_lang_type(const Node* node) {
             return node_unwrap_load_another_node_const(node)->lang_type;
         case NODE_STORE_ANOTHER_NODE:
             return node_unwrap_store_another_node_const(node)->lang_type;
-        case NODE_LOAD_STRUCT_ELEMENT_PTR:
-            return node_unwrap_load_elem_ptr_const(node)->lang_type;
+        case NODE_LOAD_ELEMENT_PTR:
+            return node_unwrap_load_element_ptr_const(node)->lang_type;
         case NODE_LLVM_STORE_LITERAL:
             return node_unwrap_llvm_store_literal_const(node)->lang_type;
         case NODE_PTR_BYVAL_SYM:
@@ -205,16 +201,14 @@ static inline Lang_type get_lang_type(const Node* node) {
         case NODE_LLVM_REGISTER_SYM:
             return node_unwrap_llvm_register_sym_const(node)->lang_type;
         case NODE_OPERATOR:
-            return get_operator_lang_type(node_unwrap_operation_const(node));
+            return get_operator_lang_type(node_unwrap_operator_const(node));
     }
     unreachable("");
 }
 
 static inline Lang_type* get_lang_type_ref(Node* node) {
     switch (node->type) {
-        case NODE_NO_TYPE:
-            unreachable("");
-        case NODE_STRUCT_DEFINITION:
+        case NODE_STRUCT_DEF:
             unreachable("");
         case NODE_STRUCT_LITERAL:
             return &node_unwrap_struct_literal(node)->lang_type;
@@ -230,7 +224,7 @@ static inline Lang_type* get_lang_type_ref(Node* node) {
             unreachable("");
         case NODE_FUNCTION_DEFINITION:
             unreachable("");
-        case NODE_FUNCTION_PARAMETERS:
+        case NODE_FUNCTION_PARAMS:
             unreachable("");
         case NODE_FUNCTION_RETURN_TYPES:
             unreachable("");
@@ -246,7 +240,7 @@ static inline Lang_type* get_lang_type_ref(Node* node) {
             return &node_unwrap_symbol_typed(node)->lang_type;
         case NODE_RETURN_STATEMENT:
             return get_lang_type_ref(node_unwrap_return_statement(node)->child);
-        case NODE_VARIABLE_DEFINITION:
+        case NODE_VARIABLE_DEF:
             return &node_unwrap_variable_def(node)->lang_type;
         case NODE_FUNCTION_DECLARATION:
             return &node_unwrap_function_declaration(node)->return_types->child->lang_type;
@@ -260,7 +254,7 @@ static inline Lang_type* get_lang_type_ref(Node* node) {
             unreachable("");
         case NODE_BREAK:
             unreachable("");
-        case NODE_IF_STATEMENT:
+        case NODE_IF:
             unreachable("");
         case NODE_IF_CONDITION:
             unreachable("");
@@ -280,8 +274,8 @@ static inline Lang_type* get_lang_type_ref(Node* node) {
             return &node_unwrap_load_another_node(node)->lang_type;
         case NODE_STORE_ANOTHER_NODE:
             return &node_unwrap_store_another_node(node)->lang_type;
-        case NODE_LOAD_STRUCT_ELEMENT_PTR:
-            return &node_unwrap_load_elem_ptr(node)->lang_type;
+        case NODE_LOAD_ELEMENT_PTR:
+            return &node_unwrap_load_element_ptr(node)->lang_type;
         case NODE_LLVM_STORE_LITERAL:
             return &node_unwrap_llvm_store_literal(node)->lang_type;
         case NODE_PTR_BYVAL_SYM:
@@ -289,16 +283,14 @@ static inline Lang_type* get_lang_type_ref(Node* node) {
         case NODE_LLVM_REGISTER_SYM:
             return &node_unwrap_llvm_register_sym(node)->lang_type;
         case NODE_OPERATOR:
-            return get_operator_lang_type_ref(node_unwrap_operation(node));
+            return get_operator_lang_type_ref(node_unwrap_operator(node));
     }
     unreachable("");
 }
 
 static inline Node* get_node_src(Node* node) {
     switch (node->type) {
-        case NODE_NO_TYPE:
-            unreachable("");
-        case NODE_STRUCT_DEFINITION:
+        case NODE_STRUCT_DEF:
             unreachable("");
         case NODE_STRUCT_LITERAL:
             unreachable("");
@@ -314,7 +306,7 @@ static inline Node* get_node_src(Node* node) {
             unreachable("");
         case NODE_FUNCTION_DEFINITION:
             unreachable("");
-        case NODE_FUNCTION_PARAMETERS:
+        case NODE_FUNCTION_PARAMS:
             unreachable("");
         case NODE_FUNCTION_RETURN_TYPES:
             unreachable("");
@@ -330,7 +322,7 @@ static inline Node* get_node_src(Node* node) {
             unreachable("");
         case NODE_RETURN_STATEMENT:
             unreachable("");
-        case NODE_VARIABLE_DEFINITION:
+        case NODE_VARIABLE_DEF:
             unreachable("");
         case NODE_FUNCTION_DECLARATION:
             unreachable("");
@@ -344,7 +336,7 @@ static inline Node* get_node_src(Node* node) {
             unreachable("");
         case NODE_BREAK:
             unreachable("");
-        case NODE_IF_STATEMENT:
+        case NODE_IF:
             unreachable("");
         case NODE_IF_CONDITION:
             unreachable("");
@@ -364,8 +356,8 @@ static inline Node* get_node_src(Node* node) {
             return node_unwrap_load_another_node_const(node)->node_src;
         case NODE_STORE_ANOTHER_NODE:
             return node_unwrap_store_another_node_const(node)->node_src;
-        case NODE_LOAD_STRUCT_ELEMENT_PTR:
-            return node_unwrap_load_elem_ptr_const(node)->node_src;
+        case NODE_LOAD_ELEMENT_PTR:
+            return node_unwrap_load_element_ptr_const(node)->node_src;
         case NODE_LLVM_STORE_LITERAL:
             unreachable("");
         case NODE_PTR_BYVAL_SYM:
@@ -379,9 +371,7 @@ static inline Node* get_node_src(Node* node) {
 
 static inline Node* get_node_dest(Node* node) {
     switch (node->type) {
-        case NODE_NO_TYPE:
-            unreachable("");
-        case NODE_STRUCT_DEFINITION:
+        case NODE_STRUCT_DEF:
             unreachable("");
         case NODE_STRUCT_LITERAL:
             unreachable("");
@@ -397,7 +387,7 @@ static inline Node* get_node_dest(Node* node) {
             unreachable("");
         case NODE_FUNCTION_DEFINITION:
             unreachable("");
-        case NODE_FUNCTION_PARAMETERS:
+        case NODE_FUNCTION_PARAMS:
             unreachable("");
         case NODE_FUNCTION_RETURN_TYPES:
             unreachable("");
@@ -413,7 +403,7 @@ static inline Node* get_node_dest(Node* node) {
             unreachable("");
         case NODE_RETURN_STATEMENT:
             unreachable("");
-        case NODE_VARIABLE_DEFINITION:
+        case NODE_VARIABLE_DEF:
             unreachable("");
         case NODE_FUNCTION_DECLARATION:
             unreachable("");
@@ -427,7 +417,7 @@ static inline Node* get_node_dest(Node* node) {
             unreachable("");
         case NODE_BREAK:
             unreachable("");
-        case NODE_IF_STATEMENT:
+        case NODE_IF:
             unreachable("");
         case NODE_IF_CONDITION:
             unreachable("");
@@ -447,7 +437,7 @@ static inline Node* get_node_dest(Node* node) {
             unreachable("");
         case NODE_STORE_ANOTHER_NODE:
             return node_unwrap_store_another_node_const(node)->node_dest;
-        case NODE_LOAD_STRUCT_ELEMENT_PTR:
+        case NODE_LOAD_ELEMENT_PTR:
             unreachable("");
         case NODE_LLVM_STORE_LITERAL:
             return node_unwrap_llvm_store_literal_const(node)->node_dest;
@@ -458,9 +448,7 @@ static inline Node* get_node_dest(Node* node) {
 
 static inline Str_view get_node_name(const Node* node) {
     switch (node->type) {
-        case NODE_NO_TYPE:
-            unreachable("");
-        case NODE_STRUCT_DEFINITION:
+        case NODE_STRUCT_DEF:
             return node_unwrap_struct_def_const(node)->name;
         case NODE_STRUCT_LITERAL:
             return node_unwrap_struct_literal_const(node)->name;
@@ -479,7 +467,7 @@ static inline Str_view get_node_name(const Node* node) {
                 unreachable("");
             }
             return node_unwrap_function_definition_const(node)->declaration->name;
-        case NODE_FUNCTION_PARAMETERS:
+        case NODE_FUNCTION_PARAMS:
             unreachable("");
         case NODE_FUNCTION_RETURN_TYPES:
             unreachable("");
@@ -495,7 +483,7 @@ static inline Str_view get_node_name(const Node* node) {
             return node_unwrap_symbol_typed_const(node)->name;
         case NODE_RETURN_STATEMENT:
             unreachable("");
-        case NODE_VARIABLE_DEFINITION:
+        case NODE_VARIABLE_DEF:
             return node_unwrap_variable_def_const(node)->name;
         case NODE_FUNCTION_DECLARATION:
             return node_unwrap_function_declaration_const(node)->name;
@@ -509,7 +497,7 @@ static inline Str_view get_node_name(const Node* node) {
             unreachable("");
         case NODE_BREAK:
             unreachable("");
-        case NODE_IF_STATEMENT:
+        case NODE_IF:
             unreachable("");
         case NODE_IF_CONDITION:
             unreachable("");
@@ -529,8 +517,8 @@ static inline Str_view get_node_name(const Node* node) {
             unreachable("");
         case NODE_STORE_ANOTHER_NODE:
             unreachable("");
-        case NODE_LOAD_STRUCT_ELEMENT_PTR:
-            return node_unwrap_load_elem_ptr_const(node)->name;
+        case NODE_LOAD_ELEMENT_PTR:
+            return node_unwrap_load_element_ptr_const(node)->name;
         case NODE_LLVM_STORE_LITERAL:
             unreachable("");
         case NODE_LLVM_REGISTER_SYM:

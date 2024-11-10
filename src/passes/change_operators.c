@@ -44,7 +44,7 @@ void change_operators(Env* env) {
     }
     switch (curr_node->type) {
         case NODE_OPERATOR:
-            do_change_operator(node_unwrap_operation(curr_node));
+            do_change_operator(node_unwrap_operator(curr_node));
             break;
         default:
             break;

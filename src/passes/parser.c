@@ -503,7 +503,7 @@ static PARSE_EXPR_STATUS extract_function_parameter(Env* env, Node_variable_def*
 }
 
 static PARSE_STATUS extract_function_parameters(Env* env, Node_function_params** result, Tk_view* tokens) {
-    Node_function_params* fun_params = node_unwrap_function_params(node_new(tk_view_front(*tokens).pos, NODE_FUNCTION_PARAMETERS));
+    Node_function_params* fun_params = node_unwrap_function_params(node_new(tk_view_front(*tokens).pos, NODE_FUNCTION_PARAMS));
 
     Node_variable_def* param;
     bool done = false;
@@ -598,7 +598,7 @@ static PARSE_STATUS extract_struct_definition(Env* env, Node_struct_def** struct
 
     Token name = tk_view_consume(tokens);
 
-    *struct_def = node_unwrap_struct_def(node_new(name.pos, NODE_STRUCT_DEFINITION));
+    *struct_def = node_unwrap_struct_def(node_new(name.pos, NODE_STRUCT_DEF));
     (*struct_def)->name = name.text;
 
     if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
@@ -651,7 +651,7 @@ static PARSE_STATUS try_extract_variable_declaration(
         msg_parser_expected(tk_view_front(*tokens), TOKEN_SYMBOL);
         return PARSE_ERROR;
     }
-    Node_variable_def* variable_def = node_unwrap_variable_def(node_new(name_token.pos, NODE_VARIABLE_DEFINITION));
+    Node_variable_def* variable_def = node_unwrap_variable_def(node_new(name_token.pos, NODE_VARIABLE_DEF));
     variable_def->name = name_token.text;
     if (!try_consume(NULL, tokens, TOKEN_COLON)) {
         msg_parser_expected(tk_view_front(*tokens), TOKEN_COLON);
@@ -927,19 +927,19 @@ static PARSE_STATUS extract_assignment(Env* env, Node_assignment** assign, Tk_vi
 }
 
 static Node_if_condition* extract_if_condition(Env* env, Tk_view* tokens) {
-    Node* operation;
-    if (PARSE_EXPR_OK != try_extract_expression(env, &operation, tokens, false)) {
+    Node* operator;
+    if (PARSE_EXPR_OK != try_extract_expression(env, &operator, tokens, false)) {
         todo();
     }
-    Node_if_condition* condition = node_unwrap_if_condition(node_new(operation->pos, NODE_IF_CONDITION));
-    condition->child = operation;
+    Node_if_condition* condition = node_unwrap_if_condition(node_new(operator->pos, NODE_IF_CONDITION));
+    condition->child = operator;
     return condition;
 }
 
 static PARSE_STATUS extract_if_statement(Env* env, Node_if** if_statement, Tk_view* tokens) {
     Token if_start_token;
     try(try_consume(&if_start_token, tokens, TOKEN_IF));
-    *if_statement = node_unwrap_if(node_new(if_start_token.pos, NODE_IF_STATEMENT));
+    *if_statement = node_unwrap_if(node_new(if_start_token.pos, NODE_IF));
     (*if_statement)->condition = extract_if_condition(env, tokens);
     return extract_block(env, &(*if_statement)->body, tokens, false);
 }
@@ -1145,21 +1145,21 @@ static Node_struct_member_sym_untyped* extract_struct_member_call(Tk_view* token
     return member_call;
 }
 
-static Node_unary* parser_unary_new(Token operation_token, Node* child, Lang_type init_lang_type) {
-    Node_operator* operation = node_unwrap_operation(node_new(operation_token.pos, NODE_OPERATOR));
-    operation->type = NODE_OP_UNARY;
-    Node_unary* unary = node_unwrap_op_unary(operation);
-    unary->token_type = operation_token.type;
+static Node_unary* parser_unary_new(Token operator_token, Node* child, Lang_type init_lang_type) {
+    Node_operator* operator = node_unwrap_operator(node_new(operator_token.pos, NODE_OPERATOR));
+    operator->type = NODE_OP_UNARY;
+    Node_unary* unary = node_unwrap_op_unary(operator);
+    unary->token_type = operator_token.type;
     unary->child = child;
     unary->lang_type = init_lang_type;
     return unary;
 }
 
-static Node_binary* parser_binary_new(Node* lhs, Token operation_token, Node* rhs) {
-    Node_operator* operation = node_unwrap_operation(node_new(operation_token.pos, NODE_OPERATOR));
-    operation->type = NODE_OP_BINARY;
-    Node_binary* binary = node_unwrap_op_binary(operation);
-    binary->token_type = operation_token.type;
+static Node_binary* parser_binary_new(Node* lhs, Token operator_token, Node* rhs) {
+    Node_operator* operator = node_unwrap_operator(node_new(operator_token.pos, NODE_OPERATOR));
+    operator->type = NODE_OP_BINARY;
+    Node_binary* binary = node_unwrap_op_binary(operator);
+    binary->token_type = operator_token.type;
     binary->lhs = lhs;
     binary->rhs = rhs;
     return binary;
@@ -1199,9 +1199,9 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node** result, T
         }
         return PARSE_EXPR_OK;
     } else if (is_unary(tk_view_front(*tokens).type)) {
-        Token operation_token = tk_view_consume(tokens);
+        Token operator_token = tk_view_consume(tokens);
         Lang_type unary_lang_type = {0};
-        switch (operation_token.type) {
+        switch (operator_token.type) {
             case TOKEN_DEREF:
                 break;
             case TOKEN_REFER:
@@ -1232,13 +1232,13 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node** result, T
                 break;
             }
             default:
-                unreachable(TOKEN_TYPE_FMT"\n", token_type_print(operation_token.type));
+                unreachable(TOKEN_TYPE_FMT"\n", token_type_print(operator_token.type));
         }
         Node* inside_unary;
         if (PARSE_EXPR_OK != try_extract_expression_piece(env, &inside_unary, tokens, defer_sym_add)) {
             todo();
         }
-        *result = node_wrap(parser_unary_new(operation_token, inside_unary, unary_lang_type));
+        *result = node_wrap(parser_unary_new(operator_token, inside_unary, unary_lang_type));
         return PARSE_EXPR_OK;
     } else if (starts_with_variable_declaration(*tokens)) {
         Node_variable_def* var_def;
@@ -1331,12 +1331,12 @@ static PARSE_EXPR_STATUS try_extract_expression(Env* env, Node** result, Tk_view
                     unreachable("");
 
             }
-            Node_binary* operation = parser_binary_new(
+            Node_binary* operator = parser_binary_new(
                 node_auto_unwrap_op_binary(expression)->rhs,
                 operator_token,
                 rhs
             );
-            node_auto_unwrap_op_binary(expression)->rhs = node_wrap(operation);
+            node_auto_unwrap_op_binary(expression)->rhs = node_wrap(operator);
         } else {
             Node* lhs = expression;
             Node* rhs;
@@ -1355,8 +1355,8 @@ static PARSE_EXPR_STATUS try_extract_expression(Env* env, Node** result, Tk_view
                 default:
                     unreachable("");
             }
-            Node_binary* operation = parser_binary_new(lhs, operator_token, rhs);
-            expression = node_wrap(operation);
+            Node_binary* operator = parser_binary_new(lhs, operator_token, rhs);
+            expression = node_wrap(operator);
         }
 
         is_first_operator = false;

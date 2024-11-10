@@ -12,9 +12,9 @@ void assign_llvm_ids(Env* env) {
     switch (curr_node->type) {
         case NODE_STRUCT_LITERAL:
             return;
-        case NODE_STRUCT_DEFINITION:
+        case NODE_STRUCT_DEF:
             return;
-        case NODE_FUNCTION_PARAMETERS:
+        case NODE_FUNCTION_PARAMS:
             return;
         case NODE_SYMBOL_TYPED:
             return;
@@ -34,8 +34,8 @@ void assign_llvm_ids(Env* env) {
             return;
         case NODE_SYMBOL_UNTYPED:
             return;
-        case NODE_LOAD_STRUCT_ELEMENT_PTR:
-            node_unwrap_load_elem_ptr(curr_node)->llvm_id = llvm_id_for_next_var;
+        case NODE_LOAD_ELEMENT_PTR:
+            node_unwrap_load_element_ptr(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
             return;
         case NODE_LOAD_ANOTHER_NODE:
@@ -50,7 +50,7 @@ void assign_llvm_ids(Env* env) {
             node_unwrap_struct_member_sym_typed(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
             return;
-        case NODE_VARIABLE_DEFINITION:
+        case NODE_VARIABLE_DEF:
             node_unwrap_variable_def(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
             return;
@@ -76,7 +76,7 @@ void assign_llvm_ids(Env* env) {
         case NODE_IF_CONDITION:
             unreachable("");
         case NODE_OPERATOR: {
-            Node_operator* operator = node_unwrap_operation(curr_node);
+            Node_operator* operator = node_unwrap_operator(curr_node);
             if (operator->type == NODE_OP_UNARY) {
                 node_unwrap_op_unary(operator)->llvm_id = llvm_id_for_next_var;
                 llvm_id_for_next_var += 2;

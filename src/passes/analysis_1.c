@@ -27,7 +27,7 @@ void analysis_1(Env* env) {
                 //fallthrough
             case NODE_OPERATOR:
                 //fallthrough
-            case NODE_IF_STATEMENT:
+            case NODE_IF:
                 //fallthrough
             case NODE_FOR_WITH_CONDITION: {
                 Node* new_node;

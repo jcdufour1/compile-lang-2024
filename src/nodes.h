@@ -45,10 +45,10 @@ static inline void set_left_child(Node* parent, Node* left_child) {
         case NODE_STRUCT_LITERAL:
             unreachable("");
             return;
-        case NODE_LOAD_STRUCT_ELEMENT_PTR:
+        case NODE_LOAD_ELEMENT_PTR:
             unreachable("");
             return;
-        case NODE_VARIABLE_DEFINITION:
+        case NODE_VARIABLE_DEF:
             unreachable("");
             return;
         case NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED:
@@ -57,10 +57,10 @@ static inline void set_left_child(Node* parent, Node* left_child) {
         case NODE_STRUCT_MEMBER_SYM_PIECE_TYPED:
             unreachable("");
             return;
-        case NODE_STRUCT_DEFINITION:
+        case NODE_STRUCT_DEF:
             unreachable("");
             return;
-        case NODE_FUNCTION_PARAMETERS:
+        case NODE_FUNCTION_PARAMS:
             unreachable("");
             return;
         case NODE_FUNCTION_RETURN_TYPES:
@@ -93,7 +93,7 @@ static inline void set_left_child(Node* parent, Node* left_child) {
         case NODE_ASSIGNMENT:
             unreachable("");
             return;
-        case NODE_IF_STATEMENT:
+        case NODE_IF:
             unreachable("");
             return;
         case NODE_IF_CONDITION:
@@ -149,17 +149,17 @@ static inline Node* get_left_child(Node* node) {
             unreachable("");
         case NODE_STRUCT_LITERAL:
             unreachable("");
-        case NODE_LOAD_STRUCT_ELEMENT_PTR:
+        case NODE_LOAD_ELEMENT_PTR:
             unreachable("");
-        case NODE_VARIABLE_DEFINITION:
+        case NODE_VARIABLE_DEF:
             unreachable("");
         case NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED:
             unreachable("");
         case NODE_STRUCT_MEMBER_SYM_PIECE_TYPED:
             unreachable("");
-        case NODE_STRUCT_DEFINITION:
+        case NODE_STRUCT_DEF:
             unreachable("");
-        case NODE_FUNCTION_PARAMETERS:
+        case NODE_FUNCTION_PARAMS:
             unreachable("");
         case NODE_FUNCTION_RETURN_TYPES:
             unreachable("should not do it this way");
@@ -181,7 +181,7 @@ static inline Node* get_left_child(Node* node) {
             return node_unwrap_return_statement(node)->child;
         case NODE_ASSIGNMENT:
             unreachable("");
-        case NODE_IF_STATEMENT:
+        case NODE_IF:
             unreachable("");
         case NODE_IF_CONDITION:
             unreachable("");

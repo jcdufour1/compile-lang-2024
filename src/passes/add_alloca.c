@@ -40,7 +40,7 @@ static void do_assignment(
     size_t* idx_to_insert_before,
     Node_assignment* assignment
 ) {
-    if (assignment->lhs->type == NODE_VARIABLE_DEFINITION) {
+    if (assignment->lhs->type == NODE_VARIABLE_DEF) {
         insert_alloca(block_children, idx_to_insert_before, node_unwrap_variable_def(assignment->lhs));
     }
 }
@@ -57,7 +57,7 @@ void add_alloca(Env* env) {
         Node* curr_node = vec_at(block_children, idx);
 
         switch (curr_node->type) {
-            case NODE_VARIABLE_DEFINITION:
+            case NODE_VARIABLE_DEF:
                 insert_alloca(block_children, &idx, node_unwrap_variable_def(curr_node));
                 break;
             case NODE_FUNCTION_DEFINITION: {

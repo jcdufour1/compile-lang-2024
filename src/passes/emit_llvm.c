@@ -75,7 +75,7 @@ static void extend_type_call_str(const Env* env, String* output, Lang_type lang_
 
 static bool is_variadic(const Node* node) {
     switch (node->type) {
-        case NODE_VARIABLE_DEFINITION:
+        case NODE_VARIABLE_DEF:
             return node_unwrap_variable_def_const(node)->is_variadic;
         case NODE_LITERAL:
             return false;
@@ -256,7 +256,7 @@ static void emit_unary_type(const Env* env, String* output, const Node_unary* un
 
 // TODO: make Node_untyped_binary
 static void emit_binary_type(const Env* env, String* output, const Node_binary* binary) {
-    // TODO: do signed and unsigned operations correctly
+    // TODO: do signed and unsigned operators correctly
     switch (binary->token_type) {
         case TOKEN_SINGLE_MINUS:
             string_extend_cstr(&a_main, output, "sub nsw ");
@@ -536,7 +536,7 @@ static void emit_block(Env* env, String* output, const Node_block* block) {
             case NODE_RETURN_STATEMENT:
                 emit_return_statement(env, output, node_unwrap_return_statement_const(statement));
                 break;
-            case NODE_VARIABLE_DEFINITION:
+            case NODE_VARIABLE_DEF:
                 break;
             case NODE_FUNCTION_DECLARATION:
                 emit_function_declaration(env, output, node_unwrap_function_declaration_const(statement));
@@ -564,14 +564,14 @@ static void emit_block(Env* env, String* output, const Node_block* block) {
             case NODE_LLVM_STORE_STRUCT_LITERAL:
                 emit_llvm_store_struct_literal(env, output, node_unwrap_llvm_store_struct_literal_const(statement));
                 break;
-            case NODE_STRUCT_DEFINITION:
+            case NODE_STRUCT_DEF:
                 emit_struct_definition(env, output, node_unwrap_struct_def_const(statement));
                 break;
             case NODE_OPERATOR:
-                emit_operator(env, output, node_unwrap_operation_const(statement));
+                emit_operator(env, output, node_unwrap_operator_const(statement));
                 break;
-            case NODE_LOAD_STRUCT_ELEMENT_PTR:
-                emit_load_struct_element_pointer(output, node_unwrap_load_elem_ptr_const(statement));
+            case NODE_LOAD_ELEMENT_PTR:
+                emit_load_struct_element_pointer(output, node_unwrap_load_element_ptr_const(statement));
                 break;
             case NODE_LOAD_ANOTHER_NODE:
                 emit_load_another_node(env, output, node_unwrap_load_another_node_const(statement));
@@ -656,7 +656,7 @@ static void emit_symbols(const Env* env, String* output) {
             case NODE_STRUCT_LITERAL:
                 emit_struct_literal(env, output, node_unwrap_struct_literal(curr_node.node));
                 break;
-            case NODE_VARIABLE_DEFINITION:
+            case NODE_VARIABLE_DEF:
                 // fallthrough
             case NODE_LANG_TYPE:
                 // fallthrough
@@ -668,7 +668,7 @@ static void emit_symbols(const Env* env, String* output) {
                 // fallthrough
             case NODE_FUNCTION_DEFINITION:
                 // fallthrough
-            case NODE_STRUCT_DEFINITION:
+            case NODE_STRUCT_DEF:
                 break;
             default:
                 log(LOG_FETAL, NODE_FMT"\n", node_print(curr_node.node));

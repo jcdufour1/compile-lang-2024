@@ -269,11 +269,11 @@ Node_symbol_untyped* symbol_new(Str_view symbol_name, Pos pos) {
 }
 
 // TODO: make separate Node_unary_typed and Node_unary_untyped
-Node* unary_new(const Env* env, Node* child, TOKEN_TYPE operation_type, Lang_type init_lang_type) {
-    Node_operator* operator = node_unwrap_operation(node_new(child->pos, NODE_OPERATOR));
+Node* unary_new(const Env* env, Node* child, TOKEN_TYPE operator_type, Lang_type init_lang_type) {
+    Node_operator* operator = node_unwrap_operator(node_new(child->pos, NODE_OPERATOR));
     operator->type = NODE_OP_UNARY;
     Node_unary* unary = node_unwrap_op_unary(operator);
-    unary->token_type = operation_type;
+    unary->token_type = operator_type;
     unary->child = child;
     unary->lang_type = init_lang_type;
 
@@ -285,12 +285,12 @@ Node* unary_new(const Env* env, Node* child, TOKEN_TYPE operation_type, Lang_typ
 }
 
 // TODO: make Node_untyped_binary
-Node* binary_new(const Env* env, Node* lhs, Node* rhs, TOKEN_TYPE operation_type) {
+Node* binary_new(const Env* env, Node* lhs, Node* rhs, TOKEN_TYPE operator_type) {
     // TODO: check if lhs or rhs were already appended to the tree
-    Node_operator* operator = node_unwrap_operation(node_new(lhs->pos, NODE_OPERATOR));
+    Node_operator* operator = node_unwrap_operator(node_new(lhs->pos, NODE_OPERATOR));
     operator->type = NODE_OP_BINARY;
     Node_binary* binary = node_unwrap_op_binary(operator);
-    binary->token_type = operation_type;
+    binary->token_type = operator_type;
     binary->lhs = lhs;
     binary->rhs = rhs;
 
@@ -323,7 +323,7 @@ uint64_t sizeof_item(const Env* env, const Node* item) {
             todo();
         case NODE_LITERAL:
             return sizeof_lang_type(node_unwrap_literal_const(item)->lang_type);
-        case NODE_VARIABLE_DEFINITION:
+        case NODE_VARIABLE_DEF:
             return sizeof_lang_type(node_unwrap_variable_def_const(item)->lang_type);
         default:
             unreachable("");
@@ -351,7 +351,7 @@ uint64_t sizeof_struct_definition(const Env* env, const Node_struct_def* struct_
 
 uint64_t sizeof_struct(const Env* env, const Node* struct_literal_or_def) {
     switch (struct_literal_or_def->type) {
-        case NODE_STRUCT_DEFINITION:
+        case NODE_STRUCT_DEF:
             return sizeof_struct_definition(env, node_unwrap_struct_def_const(struct_literal_or_def));
         case NODE_STRUCT_LITERAL:
             return sizeof_struct_literal(env, node_unwrap_struct_literal_const(struct_literal_or_def));
@@ -367,7 +367,7 @@ bool is_corresponding_to_a_struct(const Env* env, const Node* node) {
     switch (node->type) {
         case NODE_STRUCT_LITERAL:
             return true;
-        case NODE_VARIABLE_DEFINITION:
+        case NODE_VARIABLE_DEF:
             // fallthrough
         case NODE_SYMBOL_TYPED:
             // fallthrough
@@ -399,7 +399,7 @@ bool try_get_struct_definition(const Env* env, Node_struct_def** struct_def, Nod
     switch (node->type) {
         case NODE_STRUCT_LITERAL:
             // fallthrough
-        case NODE_VARIABLE_DEFINITION: {
+        case NODE_VARIABLE_DEF: {
             assert(get_lang_type(node).str.count > 0);
             Node* struct_def_;
             if (!symbol_lookup(&struct_def_, env, get_lang_type(node).str)) {
@@ -607,7 +607,7 @@ bool try_set_unary_lang_type(const Env* env, Node** new_node, Lang_type* lang_ty
 }
 
 // returns false if unsuccessful
-bool try_set_operation_lang_type(const Env* env, Node** new_node, Lang_type* lang_type, Node_operator* operator) {
+bool try_set_operator_lang_type(const Env* env, Node** new_node, Lang_type* lang_type, Node_operator* operator) {
     if (operator->type == NODE_OP_UNARY) {
         return try_set_unary_lang_type(env, new_node, lang_type, node_unwrap_op_unary(operator));
     } else if (operator->type == NODE_OP_BINARY) {
@@ -990,16 +990,16 @@ bool try_set_node_type(const Env* env, Node** new_node, Lang_type* lang_type, No
             *lang_type = node_unwrap_symbol_typed(node)->lang_type;
             return true;
         case NODE_OPERATOR:
-            return try_set_operation_lang_type(env, new_node, lang_type, node_unwrap_operation(node));
+            return try_set_operator_lang_type(env, new_node, lang_type, node_unwrap_operator(node));
         case NODE_FUNCTION_CALL:
             return try_set_function_call_types(env, lang_type, node_unwrap_function_call(node));
-        case NODE_IF_STATEMENT:
+        case NODE_IF:
             return try_set_if_condition_types(env, lang_type, node_unwrap_if(node)->condition);
         case NODE_FOR_WITH_CONDITION:
             return try_set_if_condition_types(env, lang_type, node_unwrap_for_with_condition(node)->condition);
         case NODE_ASSIGNMENT:
             return try_set_assignment_operand_types(env, lang_type, node_unwrap_assignment(node));
-        case NODE_VARIABLE_DEFINITION:
+        case NODE_VARIABLE_DEF:
             *lang_type = node_unwrap_variable_def(node)->lang_type;
             return true;
         case NODE_RETURN_STATEMENT: {

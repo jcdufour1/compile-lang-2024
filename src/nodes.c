@@ -47,7 +47,6 @@ static const char* NODE_LOAD_ANOTHER_NODE_DESCRIPTION = "load_another_node";
 static const char* NODE_STORE_ANOTHER_NODE_DESCRIPTION = "store_another_node";
 static const char* NODE_PTR_BYVAL_SYM_DESCRIPTION = "byval_sym";
 static const char* NODE_LLVM_REGISTER_SYM_DESCRIPTION = "llvm_register_sym";
-static const char* NODE_NO_TYPE_DESCRIPTION = "<not_parsed>";
 
 void extend_lang_type_to_string(Arena* arena, String* string, Lang_type lang_type, bool surround_in_lt_gt) {
     if (surround_in_lt_gt) {
@@ -112,14 +111,14 @@ static Str_view node_type_get_strv(const Node* node) {
             return str_view_from_cstr(NODE_FUNCTION_CALL_DESCRIPTION);
         case NODE_FUNCTION_DEFINITION:
             return str_view_from_cstr(NODE_FUNCTION_DEFINITION_DESCRIPTION);
-        case NODE_FUNCTION_PARAMETERS:
+        case NODE_FUNCTION_PARAMS:
             return str_view_from_cstr(NODE_FUNCTION_PARAMETERS_DESCRIPTION);
         case NODE_FUNCTION_RETURN_TYPES:
             return str_view_from_cstr(NODE_FUNCTION_RETURN_TYPES_DESCRIPTION);
         case NODE_LANG_TYPE:
             return str_view_from_cstr(NODE_LANG_TYPE_DESCRIPTION);
         case NODE_OPERATOR: {
-            const Node_operator* operator = node_unwrap_operation_const(node);
+            const Node_operator* operator = node_unwrap_operator_const(node);
             if (operator->type == NODE_OP_UNARY) {
                 return str_view_from_cstr(NODE_UNARY_DESCRIPTION);
             } else if (operator->type == NODE_OP_BINARY) {
@@ -137,7 +136,7 @@ static Str_view node_type_get_strv(const Node* node) {
             return str_view_from_cstr(NODE_SYMBOL_TYPED_DESCRIPTION);
         case NODE_RETURN_STATEMENT:
             return str_view_from_cstr(NODE_RETURN_STATEMENT_DESCRIPTION);
-        case NODE_VARIABLE_DEFINITION:
+        case NODE_VARIABLE_DEF:
             return str_view_from_cstr(NODE_VARIABLE_DEFINITION_DESCRIPTION);
         case NODE_FUNCTION_DECLARATION:
             return str_view_from_cstr(NODE_FUNCTION_DECLARATION_DESCRIPTION);
@@ -159,11 +158,11 @@ static Str_view node_type_get_strv(const Node* node) {
             return str_view_from_cstr(NODE_LABEL_DESCRIPTION);
         case NODE_ALLOCA:
             return str_view_from_cstr(NODE_ALLOCA_DESCRIPTION);
-        case NODE_IF_STATEMENT:
+        case NODE_IF:
             return str_view_from_cstr(NODE_IF_STATEMENT_DESCRIPTION);
         case NODE_IF_CONDITION:
             return str_view_from_cstr(NODE_IF_CONDITION_DESCRIPTION);
-        case NODE_STRUCT_DEFINITION:
+        case NODE_STRUCT_DEF:
             return str_view_from_cstr(NODE_STRUCT_DEFINITION_DESCRIPTION);
         case NODE_STRUCT_MEMBER_SYM_UNTYPED:
             return str_view_from_cstr(NODE_STRUCT_MEMBER_SYM_UNTYPED_DESCRIPTION);
@@ -175,7 +174,7 @@ static Str_view node_type_get_strv(const Node* node) {
             return str_view_from_cstr(NODE_STRUCT_MEMBER_SYM_PIECE_UNTYPED_DESCRIPTION);
         case NODE_STRUCT_LITERAL:
             return str_view_from_cstr(NODE_STRUCT_LITERAL_DESCRIPTION);
-        case NODE_LOAD_STRUCT_ELEMENT_PTR:
+        case NODE_LOAD_ELEMENT_PTR:
             return str_view_from_cstr(NODE_LOAD_STRUCT_ELEMENT_PTR_DESCRIPTION);
         case NODE_LOAD_ANOTHER_NODE:
             return str_view_from_cstr(NODE_LOAD_ANOTHER_NODE_DESCRIPTION);
@@ -191,8 +190,6 @@ static Str_view node_type_get_strv(const Node* node) {
             return str_view_from_cstr(NODE_PTR_BYVAL_SYM_DESCRIPTION);
         case NODE_LLVM_REGISTER_SYM:
             return str_view_from_cstr(NODE_LLVM_REGISTER_SYM_DESCRIPTION);
-        case NODE_NO_TYPE:
-            return str_view_from_cstr(NODE_NO_TYPE_DESCRIPTION);
         default:
             log(LOG_FETAL, "node->type: %d\n", node->type);
             todo();
@@ -256,7 +253,7 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
         case NODE_FUNCTION_DEFINITION:
             string_extend_strv_in_par(arena, string, get_node_name(node));
             break;
-        case NODE_STRUCT_DEFINITION:
+        case NODE_STRUCT_DEF:
             break;
         case NODE_FUNCTION_CALL:
             string_extend_strv_in_par(arena, string, get_node_name(node));
@@ -266,7 +263,7 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             extend_lang_type_to_string(arena, string, node_unwrap_lang_type_const(node)->lang_type, true);
             break;
         case NODE_OPERATOR: {
-            const Node_operator* operator = node_unwrap_operation_const(node);
+            const Node_operator* operator = node_unwrap_operator_const(node);
             if (operator->type == NODE_OP_UNARY) {
                 extend_lang_type_to_string(arena, string, node_unwrap_op_unary_const(operator)->lang_type, true);
                 string_extend_strv(arena, string, token_type_to_str_view(node_unwrap_op_unary_const(operator)->token_type));
@@ -278,7 +275,7 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             }
         }
         break;
-        case NODE_VARIABLE_DEFINITION:
+        case NODE_VARIABLE_DEF:
             extend_lang_type_to_string(arena, string, node_unwrap_variable_def_const(node)->lang_type, true);
             string_extend_strv(arena, string, get_node_name(node));
             break;
@@ -289,7 +286,7 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
         case NODE_FUNCTION_DECLARATION:
             string_extend_strv_in_par(arena, string, get_node_name(node));
             break;
-        case NODE_FUNCTION_PARAMETERS:
+        case NODE_FUNCTION_PARAMS:
             // fallthrough
         case NODE_FUNCTION_RETURN_TYPES:
             // fallthrough
@@ -307,13 +304,11 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             // fallthrough
         case NODE_FOR_LOWER_BOUND:
             // fallthrough
-        case NODE_IF_STATEMENT:
+        case NODE_IF:
             // fallthrough
         case NODE_IF_CONDITION:
             // fallthrough
         case NODE_BREAK:
-            // fallthrough
-        case NODE_NO_TYPE:
             break;
         case NODE_LOAD_ANOTHER_NODE:
             extend_lang_type_to_string(arena, string, get_lang_type(node), true);
@@ -344,7 +339,7 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             extend_lang_type_to_string(arena, string, get_lang_type(node), true);
             string_extend_strv_in_par(arena, string, get_node_name(node));
             break;
-        case NODE_LOAD_STRUCT_ELEMENT_PTR:
+        case NODE_LOAD_ELEMENT_PTR:
             extend_lang_type_to_string(arena, string, get_lang_type(node), true);
             string_extend_strv_in_par(arena, string, get_node_name(node));
             print_node_src(arena, string, node, do_recursion);
