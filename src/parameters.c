@@ -36,7 +36,29 @@ static const char* consume_arg(int* argc, char*** argv, const char* msg_if_missi
 typedef struct {
     const char* str;
     EXPECT_FAIL_TYPE type;
-} Expect_fail_tuple;
+} Expect_fail_pair;
+
+static const Expect_fail_pair expect_fail_pair[] = {
+    {"missing-close-double-quote", EXPECT_FAIL_MISSING_CLOSE_DOUBLE_QUOTE},
+    {"no-new-line-after-statement", EXPECT_FAIL_NO_NEW_LINE_AFTER_STATEMENT},
+    {"missing-close-par", EXPECT_FAIL_MISSING_CLOSE_PAR},
+    {"missing-close-curly-brace", EXPECT_FAIL_MISSING_CLOSE_CURLY_BRACE},
+    {"invalid-extern-type", EXPECT_FAIL_INVALID_EXTERN_TYPE},
+    {"invalid-token", EXPECT_FAIL_INVALID_TOKEN},
+    {"parser-expected", EXPECT_FAIL_PARSER_EXPECTED},
+    {"redefinition-of-symbol", EXPECT_FAIL_REDEFINITION_SYMBOL},
+    {"invalid-struct-member-in-literal", EXPECT_FAIL_INVALID_STRUCT_MEMBER_IN_LITERAL},
+    {"invalid-struct-member", EXPECT_FAIL_INVALID_STRUCT_MEMBER},
+    {"missing-return-statement", EXPECT_FAIL_MISSING_RETURN_STATEMENT},
+    {"invalid-count-function-arguments", EXPECT_FAIL_INVALID_COUNT_FUN_ARGS},
+    {"invalid-function-arguments", EXPECT_FAIL_INVALID_FUN_ARG},
+    {"mismatched-return-type", EXPECT_FAIL_MISMATCHED_RETURN_TYPE},
+    {"assignment-mismatched-types", EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES},
+    {"binary-mismatched-types", EXPECT_FAIL_BINARY_MISMATCHED_TYPES},
+    {"expected-expression", EXPECT_FAIL_EXPECTED_EXPRESSION},
+    {"undefined-symbol", EXPECT_FAIL_UNDEFINED_SYMBOL},
+    {"undefined-function", EXPECT_FAIL_UNDEFINED_FUNCTION},
+};
 
 static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
     const char* curr_opt = consume_arg(argc, argv, "arg expected");
@@ -49,7 +71,6 @@ static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
         params->test_expected_fail = true;
 
         const char* count_args_cstr = consume_arg(argc, argv, "count expected");
-        // TODO: use size_t for count_args_
         size_t count_args = SIZE_MAX;
         if (!try_str_view_to_size_t(&count_args, str_view_from_cstr(count_args_cstr))) {
             todo();
@@ -58,38 +79,16 @@ static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
         log(LOG_DEBUG, "%s\n", count_args_cstr);
         log(LOG_DEBUG, "%zu\n", count_args);
 
-        static const Expect_fail_tuple expect_fail_tuple[] = {
-            {"missing-close-double-quote", EXPECT_FAIL_MISSING_CLOSE_DOUBLE_QUOTE},
-            {"no-new-line-after-statement", EXPECT_FAIL_NO_NEW_LINE_AFTER_STATEMENT},
-            {"missing-close-par", EXPECT_FAIL_MISSING_CLOSE_PAR},
-            {"missing-close-curly-brace", EXPECT_FAIL_MISSING_CLOSE_CURLY_BRACE},
-            {"invalid-extern-type", EXPECT_FAIL_INVALID_EXTERN_TYPE},
-            {"invalid-token", EXPECT_FAIL_INVALID_TOKEN},
-            {"parser-expected", EXPECT_FAIL_PARSER_EXPECTED},
-            {"redefinition-of-symbol", EXPECT_FAIL_REDEFINITION_SYMBOL},
-            {"invalid-struct-member-in-literal", EXPECT_FAIL_INVALID_STRUCT_MEMBER_IN_LITERAL},
-            {"invalid-struct-member", EXPECT_FAIL_INVALID_STRUCT_MEMBER},
-            {"missing-return-statement", EXPECT_FAIL_MISSING_RETURN_STATEMENT},
-            {"invalid-count-function-arguments", EXPECT_FAIL_INVALID_COUNT_FUN_ARGS},
-            {"invalid-function-arguments", EXPECT_FAIL_INVALID_FUN_ARG},
-            {"mismatched-return-type", EXPECT_FAIL_MISMATCHED_RETURN_TYPE},
-            {"assignment-mismatched-types", EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES},
-            {"binary-mismatched-types", EXPECT_FAIL_BINARY_MISMATCHED_TYPES},
-            {"expected-expression", EXPECT_FAIL_EXPECTED_EXPRESSION},
-            {"undefined-symbol", EXPECT_FAIL_UNDEFINED_SYMBOL},
-            {"undefined-function", EXPECT_FAIL_UNDEFINED_FUNCTION},
-        };
-
         bool found = false;
         for (size_t idx = 0; idx < count_args; idx++) {
             const char* expected_fail_type_str = consume_arg(
                 argc, argv, "expected fail type expected after `test_expected_fail`"
             );
 
-            for (size_t idx = 0; idx < sizeof(expect_fail_tuple)/sizeof(expect_fail_tuple[0]); idx++) {
-                if (0 == strcmp(expected_fail_type_str, expect_fail_tuple[idx].str)) {
+            for (size_t idx = 0; idx < sizeof(expect_fail_pair)/sizeof(expect_fail_pair[0]); idx++) {
+                if (0 == strcmp(expected_fail_type_str, expect_fail_pair[idx].str)) {
                     found = true;
-                    vec_append(&a_main, &params->expected_fail_types, expect_fail_tuple[idx].type);
+                    vec_append(&a_main, &params->expected_fail_types, expect_fail_pair[idx].type);
                     break;
                 }
             }
