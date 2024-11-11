@@ -16,41 +16,10 @@ void analysis_1(Env* env) {
     for (size_t idx = 0; idx < block_children->info.count; idx++) {
         Node** curr_node = vec_at_ref(block_children, idx);
         Lang_type dummy;
-        if ((*curr_node)->type == NODE_EXPR) {
-            Node_expr* expr = node_unwrap_expr(*curr_node);
-            switch (expr->type) {
-                case NODE_E_FUNCTION_CALL:
-                    //fallthrough
-                case NODE_E_OPERATOR:
-                    //fallthrough
-                case NODE_E_SYMBOL_UNTYPED: {
-                    Node* new_node;
-                    try_set_node_lang_type(env, &new_node, &dummy, *curr_node);
-                    *curr_node = new_node;
-                    break;
-                }
-                default:
-                    unreachable("");
-            }
-            *curr_node = node_wrap_expr(expr);
-        } else {
-            switch ((*curr_node)->type) {
-                case NODE_ASSIGNMENT:
-                    //fallthrough
-                case NODE_RETURN:
-                    //fallthrough
-                case NODE_IF:
-                    //fallthrough
-                case NODE_FOR_WITH_COND: {
-                    Node* new_node;
-                    try_set_node_lang_type(env, &new_node, &dummy, *curr_node);
-                    *curr_node = new_node;
-                    break;
-                }
-                default:
-                    break;
-            }
-        }
+        Node* new_node;
+        try_set_node_lang_type(env, &new_node, &dummy, *curr_node);
+        *curr_node = new_node;
+        assert(*curr_node);
 
         if (idx == block_children->info.count - 1 
             && (*curr_node)->type != NODE_RETURN
@@ -73,7 +42,9 @@ void analysis_1(Env* env) {
         Lang_type dummy;
         Node* new_rtn_statement;
         try_set_node_lang_type(env, &new_rtn_statement, &dummy, node_wrap_return(rtn_statement));
-        vec_append(&a_main, block_children, new_rtn_statement);
+        assert(rtn_statement);
+        assert(new_rtn_statement);
+        vec_append_safe(&a_main, block_children, new_rtn_statement);
     }
 
     return;

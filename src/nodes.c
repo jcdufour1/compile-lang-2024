@@ -9,7 +9,7 @@
 static void extend_node_text(Arena* arena, String* string, const Node* node, bool do_recursion);
 
 static const char* NODE_E_LITERAL_DESCRIPTION = "literal";
-//static const char* NODE_E_FUNCTION_CALL_DESCRIPTION = "fn_call";
+static const char* NODE_E_FUNCTION_CALL_DESCRIPTION = "fn_call";
 static const char* NODE_FUNCTION_DEF_DESCRIPTION = "fn_def";
 static const char* NODE_FUNCTION_PARAMETERS_DESCRIPTION = "fn_params";
 static const char* NODE_LANG_TYPE_DESCRIPTION = "lang_type";
@@ -51,6 +51,7 @@ void extend_lang_type_to_string(Arena* arena, String* string, Lang_type lang_typ
     if (surround_in_lt_gt) {
         vec_append(arena, string, '<');
     }
+
     string_extend_strv(arena, string, lang_type.str);
     if (lang_type.pointer_depth < 0) {
         todo();
@@ -124,7 +125,7 @@ static Str_view node_type_get_strv_expr(const Node_expr* node) {
         case NODE_E_STRUCT_LITERAL:
             return str_view_from_cstr(NODE_E_STRUCT_LITERAL_DESCRIPTION);
         case NODE_E_FUNCTION_CALL:
-            unreachable("");
+            return str_view_from_cstr(NODE_E_FUNCTION_CALL_DESCRIPTION);
         case NODE_E_SYMBOL_UNTYPED:
             return str_view_from_cstr(NODE_E_SYMBOL_UNTYPED_DESCRIPTION);
         case NODE_E_SYMBOL_TYPED:
@@ -211,11 +212,14 @@ static void print_node_dest(Arena* arena, String* string, const Node* node, bool
 }
 
 static void print_node_src(Arena* arena, String* string, const Node* node, bool do_recursion) {
+    (void) node;
+    (void) do_recursion;
     string_extend_cstr(arena, string, "[");
-    if (get_node_src_const(node) && do_recursion) {
-        string_extend_cstr(arena, string, "node_src:");
-        extend_node_text(arena, string, get_node_src_const(node), false);
-    }
+    // TODO: restore this?
+    //if (get_node_src_const(node) && do_recursion) {
+        //string_extend_cstr(arena, string, "node_src:");
+        //extend_node_text(arena, string, get_node_src_const(node), false);
+    //}
 }
 
 static void extend_expr_text(Arena* arena, String* string, const Node_expr* expr, bool do_recursion) {
@@ -240,7 +244,6 @@ static void extend_expr_text(Arena* arena, String* string, const Node_expr* expr
             string_extend_strv_in_par(arena, string, get_expr_name(expr));
             break;
         case NODE_E_MEMBER_SYM_UNTYPED:
-            todo();
             break;
         case NODE_E_OPERATOR: {
             const Node_e_operator* operator = node_unwrap_e_operator_const(expr);
@@ -268,7 +271,8 @@ static void extend_expr_text(Arena* arena, String* string, const Node_expr* expr
             string_extend_strv_in_par(arena, string, get_expr_name(expr));
             break;
         case NODE_E_FUNCTION_CALL:
-            unreachable("");
+            string_extend_strv_in_par(arena, string, get_expr_name(expr));
+            string_extend_size_t(arena, string, get_llvm_id_expr(expr));
         case NODE_E_LLVM_REGISTER_SYM:
             extend_lang_type_to_string(arena, string, get_lang_type_expr(expr), true);
             print_node_src(arena, string, node_wrap_expr_const(expr), do_recursion);
@@ -371,6 +375,7 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
         }
     }
 
+    assert(node->pos.line < 1e6);
     string_extend_cstr(arena, string, "    line:");
     string_extend_size_t(arena, string, node->pos.line);
 }

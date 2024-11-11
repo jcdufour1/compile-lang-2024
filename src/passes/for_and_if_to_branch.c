@@ -40,25 +40,37 @@ static void change_break_to_goto(Node_block* block, const Node_label* label_to_g
 
         Node** curr_node = vec_at_ref(&block->children, idx);
 
-        switch ((*curr_node)->type) {
-            case NODE_IF:
-                change_break_to_goto(node_unwrap_if(*curr_node)->body, label_to_goto);
-                break;
-            case NODE_E_FUNCTION_CALL:
-                break;
-            case NODE_ASSIGNMENT:
-                break;
-            case NODE_FOR_RANGE:
-                break;
-            case NODE_FOR_WITH_COND:
-                break;
-            case NODE_VARIABLE_DEF:
-                break;
-            case NODE_BREAK:
-                *curr_node = node_wrap_goto(goto_new(label_to_goto->name, node_wrap_label_const(label_to_goto)->pos));
-                break;
-            default:
-                unreachable(NODE_FMT, node_print(curr_node));
+        log_tree(LOG_DEBUG, *curr_node);
+
+        if ((*curr_node)->type == NODE_EXPR) {
+            Node_expr* expr = node_unwrap_expr(*curr_node);
+            switch (expr->type) {
+                case NODE_E_FUNCTION_CALL:
+                    break;
+                default:
+                    todo();
+            }
+        } else {
+            switch ((*curr_node)->type) {
+                case NODE_IF:
+                    change_break_to_goto(node_unwrap_if(*curr_node)->body, label_to_goto);
+                    break;
+                case NODE_ASSIGNMENT:
+                    break;
+                case NODE_FOR_RANGE:
+                    break;
+                case NODE_FOR_WITH_COND:
+                    break;
+                case NODE_VARIABLE_DEF:
+                    break;
+                case NODE_BREAK:
+                    *curr_node = node_wrap_goto(goto_new(label_to_goto->name, node_wrap_label_const(label_to_goto)->pos));
+                    assert(*curr_node);
+                    break;
+                default:
+                    log_tree(LOG_DEBUG, *curr_node);
+                    unreachable("");
+            }
         }
     }
 }
@@ -174,7 +186,7 @@ static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement) {
             }
         }
         default:
-            unreachable(NODE_FMT"\n", node_print(if_cond->child));
+            unreachable("");
     }
 
 
@@ -208,6 +220,7 @@ void for_and_if_to_branch(Env* env) {
     for (size_t idx = block->children.info.count - 1;; idx--) {
         Node** curr_node = vec_at_ref(&block->children, idx);
 
+        log_tree(LOG_DEBUG, *curr_node);
         switch ((*curr_node)->type) {
             case NODE_FOR_RANGE:
                 *curr_node = node_wrap_block(for_range_to_branch(env, node_unwrap_for_range(*curr_node)));

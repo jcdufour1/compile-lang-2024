@@ -59,7 +59,7 @@ static inline Llvm_id get_llvm_id_expr(const Node_expr* expr) {
         case NODE_E_SYMBOL_TYPED:
             unreachable("");
         case NODE_E_FUNCTION_CALL:
-            unreachable("");
+            return node_unwrap_e_function_call_const(expr)->llvm_id;
         case NODE_E_STRUCT_LITERAL:
             unreachable("");
         case NODE_E_LLVM_REGISTER_SYM:
@@ -499,7 +499,7 @@ static inline Str_view get_expr_name(const Node_expr* expr) {
         case NODE_E_SYMBOL_TYPED:
             return node_unwrap_e_symbol_typed_const(expr)->name;
         case NODE_E_FUNCTION_CALL:
-            unreachable("");
+            return node_unwrap_e_function_call_const(expr)->name;
         case NODE_E_LITERAL:
             return node_unwrap_e_literal_const(expr)->name;
             unreachable("");
@@ -508,10 +508,14 @@ static inline Str_view get_expr_name(const Node_expr* expr) {
     }
 }
 
-static inline Str_view get_node_name_expr(const Node_expr* node) {
-    switch (node->type) {
+static inline Str_view get_node_name_expr(const Node_expr* expr) {
+    switch (expr->type) {
+        case NODE_E_SYMBOL_TYPED:
+            return node_unwrap_e_symbol_typed_const(expr)->name;
+        case NODE_E_FUNCTION_CALL:
+            return node_unwrap_e_function_call_const(expr)->name;
         default:
-            unreachable("");
+            unreachable(NODE_FMT"\n", node_print(node_wrap_expr_const(expr)));
     }
     unreachable("");
 }

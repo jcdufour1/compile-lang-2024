@@ -53,6 +53,7 @@ bool symbol_add(Env* env, Node* node_of_symbol);
 
 // these nodes will be actually added to a symbol table when `symbol_do_add_defered` is called
 static inline void symbol_add_defer(Env* env, Node* node_of_symbol) {
+    assert(node_of_symbol);
     vec_append(&a_main, &env->defered_symbols_to_add, node_of_symbol);
 }
 

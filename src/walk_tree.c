@@ -208,7 +208,6 @@ INLINE void walk_node_ptr_vec(Env* env, Node_ptr_vec* vector, void (callback)(En
     //log(LOG_DEBUG, "-------------------------\n");
     for (size_t idx = 0; idx < vector->info.count; idx++) {
         assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
-        //log_tree(LOG_DEBUG, node_ptr_vec_at(vector, idx));
         assert(vec_at(vector, idx) && "a null element is in this vector");
         walk_tree_traverse(env, vec_at(vector, idx), callback);
         assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);

@@ -23,19 +23,27 @@ static void do_struct_literal(
     for (size_t idx = 0; idx < struct_literal->members.info.count; idx++) {
         Node** curr_memb = vec_at_ref(&struct_literal->members, idx);
 
-        switch ((*curr_memb)->type) {
-            case NODE_ASSIGNMENT:
-                *curr_memb = get_store_assignment(
-                    env,
-                    block_children,
-                    idx_to_insert_before,
-                    node_unwrap_assignment(*curr_memb)
-                );
-                break;
-            case NODE_E_LITERAL:
-                break;
-            default:
-                unreachable(NODE_FMT"\n", node_print(curr_memb));
+        if ((*curr_memb)->type == NODE_EXPR) {
+            Node_expr* expr = node_unwrap_expr(*curr_memb);
+            switch (expr->type) {
+                case NODE_E_LITERAL:
+                    break;
+                default:
+                    todo();
+            }
+        } else {
+            switch ((*curr_memb)->type) {
+                case NODE_ASSIGNMENT:
+                    *curr_memb = get_store_assignment(
+                        env,
+                        block_children,
+                        idx_to_insert_before,
+                        node_unwrap_assignment(*curr_memb)
+                    );
+                    break;
+                default:
+                    unreachable(NODE_FMT"\n", node_print(*curr_memb));
+            }
         }
     }
 }
@@ -157,15 +165,15 @@ static Node_load_another_node* insert_load(
                 load->node_src = get_storage_location(env, get_node_name(symbol_call));
                 load->lang_type = node_unwrap_variable_def(sym_def)->lang_type;
                 assert(load->lang_type.str.count > 0);
-                switch (symbol_call->type) {
-                    case NODE_E_SYMBOL_TYPED:
-                        log_tree(LOG_DEBUG, symbol_call);
-                        sym_typed_to_load_sym_rtn_value_sym(node_unwrap_e_symbol_typed(sym_call_expr), load);
-                        log_tree(LOG_DEBUG, symbol_call);
-                        break;
-                    default:
-                        unreachable(NODE_FMT, node_print(symbol_call));
-                }
+                log_tree(LOG_DEBUG, symbol_call);
+                sym_typed_to_load_sym_rtn_value_sym(node_unwrap_e_symbol_typed(sym_call_expr), load);
+                log_tree(LOG_DEBUG, symbol_call);
+                //switch (symbol_call->type) {
+                //    case NODE_E_SYMBOL_TYPED:
+                //        break;
+                //    default:
+                //        unreachable(NODE_FMT, node_print(symbol_call));
+                //}
                 insert_into_node_ptr_vec(
                     block_children,
                     idx_to_insert_before,
@@ -184,14 +192,14 @@ static Node_load_another_node* insert_load(
                 *new_symbol_call = node_wrap_expr(node_wrap_e_llvm_register_sym(refer_to_llvm_register_symbol(env, unary)));
                 return NULL;
             }
-            default:
-                unreachable("");
-        }
-    } else {
-        switch (symbol_call->type) {
             case NODE_E_LLVM_REGISTER_SYM:
                 *new_symbol_call = symbol_call;
                 return NULL;
+            default:
+                unreachable(NODE_FMT"\n", node_print(node_wrap_expr(sym_call_expr)));
+        }
+    } else {
+        switch (symbol_call->type) {
             case NODE_LOAD_ANOTHER_NODE: {
                 Node_load_another_node* load = node_unwrap_load_another_node(node_new(symbol_call->pos, NODE_LOAD_ANOTHER_NODE));
                 load->node_src = symbol_call;
@@ -559,7 +567,7 @@ static void add_load_return(
             }
             break;
         default:
-            unreachable(NODE_FMT"\n", node_print(return_statement->child));
+            unreachable("");
     }
 }
 

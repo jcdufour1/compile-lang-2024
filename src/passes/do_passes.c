@@ -35,6 +35,7 @@ void do_passes(String file_text, const Parameters* params) {
         fail();
     }
     arena_reset(&print_arena);
+    log_tree(LOG_DEBUG, node_wrap_block(root));
 
     Env env = {0};
     //log_tree(LOG_DEBUG, node_wrap_block(*root));
@@ -45,6 +46,7 @@ void do_passes(String file_text, const Parameters* params) {
     }
     arena_reset(&print_arena);
 
+    log_tree(LOG_DEBUG, node_wrap_block(root));
     start_walk(&env, &root, for_and_if_to_branch);
     log_tree(LOG_DEBUG, node_wrap_block(root));
     arena_reset(&print_arena);

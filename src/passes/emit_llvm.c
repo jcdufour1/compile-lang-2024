@@ -118,7 +118,6 @@ static void extend_literal_decl_prefix(String* output, const Node_e_literal* lit
         vec_append(&a_main, output, ' ');
         extend_literal(output, literal);
     } else {
-        log(LOG_ERROR, NODE_FMT"\n", node_print(literal));
         todo();
     }
 }
@@ -197,7 +196,7 @@ static void emit_function_call_arguments(const Env* env, String* output, const N
                 unreachable(""); // this function call should be changed to assign to a variable 
                                // before reaching emit_llvm stage, then assign that variable here. 
             default:
-                unreachable(NODE_FMT"\n", node_print(argument));
+                unreachable("");
             //case NODE_PTR_BYVAL_SYM:
             //    string_extend_cstr(&a_main, output, "ptr noundef byval(");
             //    extend_type_call_str(env, output, get_lang_type(argument));
@@ -256,7 +255,7 @@ static void emit_unary_type(const Env* env, String* output, const Node_op_unary*
             string_extend_cstr(&a_main, output, " ");
             break;
         default:
-            unreachable(NODE_FMT"\n", node_print(node_wrap_op_unary_const(unary)));
+            unreachable("");
     }
 }
 
@@ -306,7 +305,7 @@ static void emit_unary_suffix(const Env* env, String* output, const Node_op_unar
             extend_type_call_str(env, output, unary->lang_type);
             break;
         default:
-            unreachable(NODE_FMT"\n", node_print(node_wrap_op_unary_const(unary)));
+            unreachable("");
     }
 }
 
@@ -324,7 +323,7 @@ static void emit_operator_operand(String* output, const Node_expr* operand) {
         case NODE_E_SYMBOL_UNTYPED:
             unreachable("untyped symbols should not still be present");
         default:
-            unreachable(NODE_FMT"\n", node_print(operand));
+            unreachable("");
     }
 }
 
@@ -456,7 +455,7 @@ static void emit_return(const Env* env, String* output, const Node_return* fun_r
             break;
         }
         default:
-            unreachable(NODE_FMT, node_print(sym_to_return));
+            unreachable("");
     }
 }
 

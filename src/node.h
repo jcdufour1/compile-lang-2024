@@ -530,6 +530,7 @@ void extend_lang_type_to_string(
 
 static inline Lang_type lang_type_from_strv(Str_view str_view, int16_t pointer_depth) {
     Lang_type Lang_type = {.str = str_view, .pointer_depth = pointer_depth};
+    assert(str_view.count < 1e9);
     return Lang_type;
 }
 
@@ -553,7 +554,7 @@ Str_view lang_type_print_internal(Arena* arena, Lang_type lang_type, bool surrou
 
 Str_view node_print_internal(Arena* arena, const Node* node);
 
-#define node_print(root) str_view_print(node_print_internal(&print_arena, (const Node*)(root)))
+#define node_print(root) str_view_print(node_print_internal(&print_arena, root))
 
 #define node_printf(node) \
     do { \

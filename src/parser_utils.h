@@ -140,7 +140,7 @@ bool try_set_operation_lang_type(const Env* env, Node** new_node, Lang_type* lan
 // set symbol lang_type, and report error if symbol is undefined
 void set_symbol_type(Node_e_symbol_untyped* sym_untyped);
 
-bool try_set_function_call_types(const Env* env, Lang_type* lang_type, Node_e_function_call* fun_call);
+bool try_set_function_call_types(const Env* env, Node_expr** new_node, Lang_type* lang_type, Node_e_function_call* fun_call);
 
 bool try_set_member_symbol_types(const Env* env, Node** new_node, Lang_type* lang_type, Node_e_member_sym_untyped* struct_memb_sym);
 

@@ -37,6 +37,13 @@ typedef struct {
         (vector)->buf[(vector)->info.count++] = (item_to_append); \
     } while(0)
 
+#define vec_append_safe(arena, vector, item_to_append) \
+    assert(item_to_append != NULL); \
+    do { \
+        vec_reserve(arena, vector, 1); \
+        (vector)->buf[(vector)->info.count++] = (item_to_append); \
+    } while(0)
+
 #define vec_reset(vector) \
     do { \
         (vector)->info.count = 0; \

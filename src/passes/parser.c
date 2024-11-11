@@ -510,7 +510,7 @@ static PARSE_STATUS extract_function_parameters(Env* env, Node_function_params**
     while (!done) {
         switch (extract_function_parameter(env, &param, tokens)) {
             case PARSE_EXPR_OK:
-                vec_append(&a_main, &fun_params->params, node_wrap_variable_def(param));
+                vec_append_safe(&a_main, &fun_params->params, node_wrap_variable_def(param));
                 break;
             case PARSE_EXPR_ERROR:
                 return PARSE_ERROR;
@@ -616,7 +616,7 @@ static PARSE_STATUS extract_struct_definition(Env* env, Node_struct_def** struct
         }
         try_consume(NULL, tokens, TOKEN_SEMICOLON);
         while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
-        vec_append(&a_main, &(*struct_def)->members, node_wrap_variable_def(member));
+        vec_append_safe(&a_main, &(*struct_def)->members, node_wrap_variable_def(member));
     }
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
@@ -832,7 +832,9 @@ static PARSE_STATUS try_extract_function_call(Env* env, Node_e_function_call** c
         Node_expr* arg;
         switch (try_extract_expression(env, &arg, &curr_tokens, true)) {
             case PARSE_EXPR_OK:
-                vec_append(&a_main, &function_call->args, arg);
+                assert(arg);
+                vec_append_safe(&a_main, &function_call->args, arg);
+                log_tree(LOG_DEBUG, node_wrap_expr(vec_at(&function_call->args, 0)));
                 prev_is_comma = try_consume(NULL, &curr_tokens, TOKEN_COMMA);
                 break;
             case PARSE_EXPR_NONE:
@@ -994,7 +996,6 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
             return PARSE_EXPR_ERROR;
         }
         lhs = node_wrap_variable_def(var_def);
-        return PARSE_EXPR_OK;
     } else {
         Node_expr* lhs_ = NULL;
         switch (try_extract_expression(env, &lhs_, tokens, false)) {
@@ -1039,7 +1040,7 @@ static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens,
     PARSE_STATUS status = PARSE_OK;
 
     *block = node_unwrap_block(node_new(tk_view_front(*tokens).pos, NODE_BLOCK));
-    vec_append(&a_main, &env->ancesters, node_wrap_block(*block));
+    vec_append_safe(&a_main, &env->ancesters, node_wrap_block(*block));
     Node* redefined_symbol;
     if (!symbol_do_add_defered(&redefined_symbol, env)) {
         msg_redefinition_of_symbol(env, redefined_symbol);
@@ -1093,7 +1094,7 @@ static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens,
             break;
         }
         try_consume(NULL, tokens, TOKEN_SEMICOLON);
-        vec_append(&a_main, &(*block)->children, child);
+        vec_append_safe(&a_main, &(*block)->children, child);
     }
 
     Node* dummy = NULL;
@@ -1120,7 +1121,7 @@ static PARSE_STATUS extract_struct_literal(Env* env, Node_e_struct_literal** str
         bool delim_is_present = false;
         Node_assignment* assign;
         extract_assignment(env, &assign, tokens, NULL);
-        vec_append(&a_main, &(*struct_lit)->members, node_wrap_assignment(assign));
+        vec_append_safe(&a_main, &(*struct_lit)->members, node_wrap_assignment(assign));
         delim_is_present = try_consume(NULL, tokens, TOKEN_COMMA);
         while (try_consume(NULL, tokens, TOKEN_NEW_LINE)) {
             delim_is_present = true;
@@ -1151,7 +1152,7 @@ static Node_e_member_sym_untyped* extract_member_call(Tk_view* tokens) {
             node_new(member_token.pos, NODE_MEMBER_SYM_PIECE_UNTYPED)
         );
         member->name = member_token.text;
-        vec_append(&a_main, &member_call->children, node_wrap_member_sym_piece_untyped(member));
+        vec_append_safe(&a_main, &member_call->children, node_wrap_member_sym_piece_untyped(member));
     }
     return member_call;
 }

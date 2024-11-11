@@ -9,6 +9,7 @@
 #include "str_view_struct.h"
 
 static inline char str_view_front(Str_view str_view) {
+    assert(str_view.count < 1e6);
     if (str_view.count < 1) {
         todo();
     }
@@ -90,6 +91,7 @@ static inline Str_view str_view_from_cstr(const char* cstr) {
     Str_view str_view;
     str_view.str = cstr;
     str_view.count = strlen(cstr);
+    assert(str_view.count < 1e6);
     return str_view;
 }
 
