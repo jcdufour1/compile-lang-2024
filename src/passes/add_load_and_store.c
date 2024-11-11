@@ -427,7 +427,9 @@ static Node* get_store_assignment(
         }
         case NODE_E_SYMBOL_TYPED: {
             Node* new_rhs;
-            store_src = node_wrap_load_another_node(insert_load(env, &new_rhs, block_children, idx_to_insert_before, node_wrap_expr(assignment->rhs)));
+            store_src = node_wrap_load_another_node(insert_load(
+                env, &new_rhs, block_children, idx_to_insert_before, node_wrap_expr(assignment->rhs)
+            ));
             assignment->rhs = node_unwrap_expr(new_rhs);
             assert(store_src);
             rhs_load_lang_type = node_unwrap_e_llvm_register_sym(assignment->rhs)->lang_type;

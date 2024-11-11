@@ -156,7 +156,6 @@ Str_view token_print_internal(Arena* arena, Token token, bool msg_format) {
         string_add_int(arena, &buf, token.pos.line);
     }
 
-    assert(strlen(buf.buf) == buf.info.count);
     Str_view str_view = {.str = buf.buf, .count = buf.info.count};
     return str_view;
 }
