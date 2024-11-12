@@ -64,8 +64,8 @@ static inline Llvm_id get_llvm_id_expr(const Node_expr* expr) {
             return node_unwrap_e_function_call_const(expr)->llvm_id;
         case NODE_E_STRUCT_LITERAL:
             unreachable("");
-        case NODE_E_LLVM_REGISTER_SYM:
-            return get_llvm_id(node_unwrap_e_llvm_register_sym_const(expr)->node);
+        case NODE_E_LLVM_PLACEHOLDER:
+            return get_llvm_id(node_unwrap_e_llvm_placeholder_const(expr)->llvm_reg.node);
     }
     unreachable("");
 }
@@ -152,8 +152,8 @@ static inline Lang_type get_lang_type_expr(const Node_expr* expr) {
             unreachable("");
         case NODE_E_SYMBOL_TYPED:
             return node_unwrap_e_symbol_typed_const(expr)->lang_type;
-        case NODE_E_LLVM_REGISTER_SYM:
-            return node_unwrap_e_llvm_register_sym_const(expr)->lang_type;
+        case NODE_E_LLVM_PLACEHOLDER:
+            return node_unwrap_e_llvm_placeholder_const(expr)->lang_type;
     }
     unreachable("");
 }
@@ -176,8 +176,8 @@ static inline Lang_type* get_lang_type_expr_ref(Node_expr* expr) {
             return &node_unwrap_e_symbol_typed(expr)->lang_type;
         case NODE_E_OPERATOR:
             return get_operator_lang_type_ref(node_unwrap_e_operator(expr));
-        case NODE_E_LLVM_REGISTER_SYM:
-            return &node_unwrap_e_llvm_register_sym(expr)->lang_type;
+        case NODE_E_LLVM_PLACEHOLDER:
+            return &node_unwrap_e_llvm_placeholder(expr)->lang_type;
     }
     unreachable("");
 }
@@ -332,8 +332,8 @@ static inline Node* get_expr_src(Node_expr* expr) {
             unreachable("");
         case NODE_E_OPERATOR:
             unreachable("");
-        case NODE_E_LLVM_REGISTER_SYM:
-            return node_unwrap_e_llvm_register_sym(expr)->node;
+        case NODE_E_LLVM_PLACEHOLDER:
+            unreachable("");
     }
     unreachable("");
 }
@@ -391,15 +391,15 @@ static inline Node* get_node_src(Node* node) {
         case NODE_LLVM_STORE_STRUCT_LITERAL:
             unreachable("");
         case NODE_LOAD_ANOTHER_NODE:
-            return node_wrap_expr(node_wrap_e_llvm_register_sym(node_unwrap_load_another_node(node)->node_src));
+            return node_unwrap_load_another_node(node)->node_src.node;
         case NODE_STORE_ANOTHER_NODE:
-            return node_unwrap_store_another_node(node)->node_src->node;
+            return node_unwrap_store_another_node(node)->node_src.node;
         case NODE_LOAD_ELEMENT_PTR:
-            return node_unwrap_load_element_ptr(node)->node_src->node;
+            return node_unwrap_load_element_ptr(node)->node_src.node;
         case NODE_LLVM_STORE_LITERAL:
             unreachable("");
         case NODE_PTR_BYVAL_SYM:
-            return node_unwrap_ptr_byval_sym(node)->node_src->node;
+            return node_unwrap_ptr_byval_sym(node)->node_src.node;
     }
     unreachable("");
 }
@@ -422,7 +422,7 @@ static inline Node* get_expr_dest(Node_expr* expr) {
             unreachable("");
         case NODE_E_OPERATOR:
             unreachable("");
-        case NODE_E_LLVM_REGISTER_SYM:
+        case NODE_E_LLVM_PLACEHOLDER:
             unreachable("");
     }
     unreachable("");
@@ -479,15 +479,15 @@ static inline Node* get_node_dest(Node* node) {
         case NODE_ALLOCA:
             unreachable("");
         case NODE_LLVM_STORE_STRUCT_LITERAL:
-            return node_unwrap_llvm_store_struct_literal_const(node)->node_dest->node;
+            return node_unwrap_llvm_store_struct_literal_const(node)->node_dest.node;
         case NODE_LOAD_ANOTHER_NODE:
             unreachable("");
         case NODE_STORE_ANOTHER_NODE:
-            return node_unwrap_store_another_node_const(node)->node_dest->node;
+            return node_unwrap_store_another_node_const(node)->node_dest.node;
         case NODE_LOAD_ELEMENT_PTR:
             unreachable("");
         case NODE_LLVM_STORE_LITERAL:
-            return node_unwrap_llvm_store_literal_const(node)->node_dest->node;
+            return node_unwrap_llvm_store_literal_const(node)->node_dest.node;
         case NODE_PTR_BYVAL_SYM:
             unreachable("");
     }
@@ -512,10 +512,10 @@ static inline Str_view get_expr_name(const Node_expr* expr) {
             return node_unwrap_e_function_call_const(expr)->name;
         case NODE_E_LITERAL:
             return node_unwrap_e_literal_const(expr)->name;
-            unreachable("");
-        case NODE_E_LLVM_REGISTER_SYM:
+        case NODE_E_LLVM_PLACEHOLDER:
             unreachable("");
     }
+    unreachable("");
 }
 
 static inline Str_view get_node_name_expr(const Node_expr* expr) {

@@ -36,7 +36,7 @@ static inline Node* get_left_child_expr(Node_expr* expr) {
             unreachable("");
         case NODE_E_OPERATOR:
             unreachable("");
-        case NODE_E_LLVM_REGISTER_SYM:
+        case NODE_E_LLVM_PLACEHOLDER:
             unreachable("");
     }
     unreachable("");
@@ -120,6 +120,12 @@ static inline Node* node_new(Pos pos, NODE_TYPE node_type) {
     new_node->pos = pos;
     new_node->type = node_type;
     return new_node;
+}
+
+static inline Node_expr* node_expr_new(Pos pos, NODE_EXPR_TYPE expr_type) {
+    Node_expr* expr = node_unwrap_expr(node_new(pos, NODE_EXPR));
+    expr->type = expr_type;
+    return expr;
 }
 
 static inline Node* node_clone(const Node* node_to_clone) {

@@ -180,16 +180,13 @@ Str_view literal_name_new(void) {
     return str_view;
 }
 
-Node_e_llvm_register_sym* get_storage_location(const Env* env, Str_view sym_name) {
+Llvm_register_sym get_storage_location(const Env* env, Str_view sym_name) {
     Node* sym_def_;
     if (!symbol_lookup(&sym_def_, env, sym_name)) {
         symbol_log(LOG_DEBUG, env);
         unreachable("symbol definition for symbol "STR_VIEW_FMT" not found\n", str_view_print(sym_name));
     }
     Node_variable_def* sym_def = node_unwrap_variable_def(sym_def_);
-    if (!sym_def->storage_location) {
-        unreachable("no storage location associated with symbol definition");
-    }
     return sym_def->storage_location;
 }
 

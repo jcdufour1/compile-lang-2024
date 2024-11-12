@@ -7,7 +7,7 @@ static Node_alloca* alloca_new(Node_variable_def* var_def) {
     Node_alloca* alloca = node_unwrap_alloca(node_new(node_wrap_variable_def(var_def)->pos, NODE_ALLOCA));
     alloca->name = var_def->name;
     alloca->lang_type = var_def->lang_type;
-    var_def->storage_location = node_get_llvm_register_sym(node_wrap_alloca(alloca));
+    var_def->storage_location = llvm_register_sym_new(node_wrap_alloca(alloca));
     assert(alloca);
     return alloca;
 }
@@ -17,7 +17,7 @@ static void do_function_def(Env* env, Node_function_def* fun_def) {
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
         Node_variable_def* param = node_unwrap_variable_def(vec_at(&params->params, idx));
         if (is_corresponding_to_a_struct(env, node_wrap_variable_def(param))) {
-            param->storage_location = node_get_llvm_register_sym(node_wrap_variable_def(param));
+            param->storage_location = llvm_register_sym_new(node_wrap_variable_def(param));
             continue;
         }
         vec_insert(&a_main, &fun_def->body->children, 0, node_wrap_alloca(alloca_new(param)));

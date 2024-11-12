@@ -45,7 +45,7 @@ static const char* NODE_LOAD_STRUCT_ELEMENT_PTR_DESCRIPTION = "load_element_ptr"
 static const char* NODE_LOAD_ANOTHER_NODE_DESCRIPTION = "load_another_node";
 static const char* NODE_STORE_ANOTHER_NODE_DESCRIPTION = "store_another_node";
 static const char* NODE_PTR_BYVAL_SYM_DESCRIPTION = "byval_sym";
-static const char* NODE_E_LLVM_REGISTER_SYM_DESCRIPTION = "llvm_register_sym";
+static const char* NODE_E_LLVM_PLACEHOLDER_DESCRIPTION = "llvm_register_sym";
 static const char* NODE_RAW_UNION_DEF_DESCRIPTION = "raw_union";
 
 void extend_lang_type_to_string(Arena* arena, String* string, Lang_type lang_type, bool surround_in_lt_gt) {
@@ -131,8 +131,8 @@ static Str_view node_type_get_strv_expr(const Node_expr* node) {
             return str_view_from_cstr(NODE_E_SYMBOL_UNTYPED_DESCRIPTION);
         case NODE_E_SYMBOL_TYPED:
             return str_view_from_cstr(NODE_E_SYMBOL_TYPED_DESCRIPTION);
-        case NODE_E_LLVM_REGISTER_SYM:
-            return str_view_from_cstr(NODE_E_LLVM_REGISTER_SYM_DESCRIPTION);
+        case NODE_E_LLVM_PLACEHOLDER:
+            return str_view_from_cstr(NODE_E_LLVM_PLACEHOLDER_DESCRIPTION);
     }
     unreachable("");
 }
@@ -274,7 +274,8 @@ static void extend_expr_text(Arena* arena, String* string, const Node_expr* expr
         case NODE_E_FUNCTION_CALL:
             string_extend_strv_in_par(arena, string, get_expr_name(expr));
             string_extend_size_t(arena, string, get_llvm_id_expr(expr));
-        case NODE_E_LLVM_REGISTER_SYM:
+            break;
+        case NODE_E_LLVM_PLACEHOLDER:
             extend_lang_type_to_string(arena, string, get_lang_type_expr(expr), true);
             print_node_src(arena, string, node_wrap_expr_const(expr), do_recursion);
             break;

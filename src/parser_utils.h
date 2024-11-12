@@ -21,20 +21,39 @@ Str_view literal_name_new(void);
 
 Llvm_id get_prev_load_id(const Node* var_call);
 
-Node_e_llvm_register_sym* get_storage_location(const Env* env, Str_view sym_name);
+Llvm_register_sym get_storage_location(const Env* env, Str_view sym_name);
 
-static inline Node_e_llvm_register_sym* node_get_llvm_register_sym(Node* node) {
-    assert(node);
-    Node_e_llvm_register_sym* llvm_reg = node_unwrap_e_llvm_register_sym(node_make_expr(
-        node_new(node->pos, NODE_EXPR), NODE_E_LLVM_REGISTER_SYM
-    ));
-    llvm_reg->lang_type = get_lang_type(node);
-    llvm_reg->node = node;
-    return llvm_reg;
+static inline bool Llvm_register_sym_is_some(Llvm_register_sym llvm_reg) {
+    Llvm_register_sym reference = {0};
+    return 0 != memcmp(&reference, &llvm_reg, sizeof(llvm_reg));
 }
 
-static inline Node_e_llvm_register_sym* node_expr_get_llvm_register_sym(Node_expr* expr) {
-    return node_get_llvm_register_sym(node_wrap_expr(expr));
+static inline Llvm_register_sym llvm_register_sym_new(Node* node) {
+    if (node) {
+        Llvm_register_sym llvm_reg = {.lang_type = get_lang_type(node), .node = node};
+        return llvm_reg;
+    } else {
+        Llvm_register_sym llvm_reg = {0};
+        return llvm_reg;
+    }
+    unreachable("");
+}
+
+static inline Node_e_llvm_placeholder* node_e_llvm_placeholder_new_from_reg(
+    Llvm_register_sym llvm_reg, Lang_type lang_type
+) {
+    Node_e_llvm_placeholder* placeholder = node_unwrap_e_llvm_placeholder(node_expr_new(llvm_reg.node->pos, NODE_E_LLVM_PLACEHOLDER));
+    placeholder->llvm_reg = llvm_reg;
+    placeholder->lang_type = lang_type;
+    return placeholder;
+}
+
+static inline Llvm_register_sym llvm_register_sym_new_from_expr(Node_expr* expr) {
+    return llvm_register_sym_new(node_wrap_expr(expr));
+}
+
+static inline Llvm_register_sym llvm_register_sym_new_from_e_operator(Node_e_operator* operator) {
+    return llvm_register_sym_new_from_expr(node_wrap_e_operator(operator));
 }
 
 const Node_variable_def* get_symbol_def_from_alloca(const Env* env, const Node* alloca);

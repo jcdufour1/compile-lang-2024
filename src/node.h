@@ -91,14 +91,14 @@
         Llvm_id llvm_id; \
         Str_view name; \
     ) \
-    DO(llvm_register_sym, NODE_E_LLVM_REGISTER_SYM, \
+    DO(llvm_placeholder, NODE_E_LLVM_PLACEHOLDER, \
         Lang_type lang_type; \
-        struct Node_* node; \
+        Llvm_register_sym llvm_reg; \
     )
+
 
 struct Node_;
 struct Node_expr_;
-struct Node_e_llvm_register_sym;
 
 #define X(lower, upper) \
     upper,
@@ -120,6 +120,11 @@ typedef struct {
 } Lang_type;
 
 typedef struct {
+    Lang_type lang_type;
+    struct Node_* node;
+} Llvm_register_sym;
+
+typedef struct {
     Llvm_id llvm_id;
     Str_view name;
 } Node_label;
@@ -128,7 +133,7 @@ typedef struct {
     Lang_type lang_type;
     Llvm_id llvm_id;
     size_t struct_index;
-    struct Node_e_llvm_register_sym_* node_src;
+    Llvm_register_sym node_src;
     Str_view name;
 } Node_load_element_ptr;
 
@@ -239,7 +244,7 @@ typedef struct {
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     bool is_variadic : 1;
     Llvm_id llvm_id;
-    Node_e_llvm_register_sym* storage_location;
+    Llvm_register_sym storage_location;
     Str_view name;
 } Node_variable_def;
 
@@ -335,21 +340,21 @@ typedef struct {
 } Node_alloca;
 
 typedef struct {
-    Node_e_llvm_register_sym* node_src;
+    Llvm_register_sym node_src;
     Llvm_id llvm_id;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 } Node_load_another_node;
 
 typedef struct {
-    Node_e_llvm_register_sym* node_src;
-    Node_e_llvm_register_sym* node_dest;
+    Llvm_register_sym node_src;
+    Llvm_register_sym node_dest;
     Llvm_id llvm_id;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 } Node_store_another_node;
 
 typedef struct {
     Node_e_literal* child;
-    Node_e_llvm_register_sym* node_dest;
+    Llvm_register_sym node_dest;
     Llvm_id llvm_id;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 } Node_llvm_store_literal;
@@ -370,12 +375,12 @@ typedef struct {
     Node_e_struct_literal* child;
     Llvm_id llvm_id;
     Lang_type lang_type;
-    Node_e_llvm_register_sym* node_dest;
+    Llvm_register_sym node_dest;
 } Node_llvm_store_struct_literal;
 
 typedef struct {
     Lang_type lang_type;
-    Node_e_llvm_register_sym* node_src;
+    Llvm_register_sym node_src;
     Llvm_id llvm_id;
 } Node_ptr_byval_sym;
 

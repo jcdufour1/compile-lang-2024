@@ -193,10 +193,10 @@ static void emit_function_call_arguments(const Env* env, String* output, const N
                 unreachable("untyped symbols should not still be present");
             case NODE_E_SYMBOL_TYPED:
                 unreachable("typed symbols should not still be present");
-            case NODE_E_LLVM_REGISTER_SYM:
+            case NODE_E_LLVM_PLACEHOLDER:
                 extend_type_call_str(env, output, get_lang_type_expr(argument));
                 string_extend_cstr(&a_main, output, " %");
-                string_extend_size_t(&a_main, output, get_llvm_id(node_unwrap_e_llvm_register_sym_const(argument)->node));
+                string_extend_size_t(&a_main, output, get_llvm_id(node_unwrap_e_llvm_placeholder_const(argument)->llvm_reg.node));
                 break;
             case NODE_E_FUNCTION_CALL:
                 unreachable(""); // this function call should be changed to assign to a variable 
@@ -322,9 +322,13 @@ static void emit_operator_operand(String* output, const Node_expr* operand) {
             break;
         case NODE_E_SYMBOL_TYPED:
             unreachable("");
-        case NODE_E_LLVM_REGISTER_SYM:
+        case NODE_E_LLVM_PLACEHOLDER:
             string_extend_cstr(&a_main, output, "%");
-            string_extend_size_t(&a_main, output, get_llvm_id(node_unwrap_e_llvm_register_sym_const(operand)->node));
+            Llvm_id llvm_id = get_llvm_id(node_unwrap_e_llvm_placeholder_const(operand)->llvm_reg.node);
+            assert(llvm_id > 0);
+            log_tree(LOG_DEBUG, (Node*)operand);
+            log_tree(LOG_DEBUG, node_unwrap_e_llvm_placeholder_const(operand)->llvm_reg.node);
+            string_extend_size_t(&a_main, output, llvm_id);
             break;
         case NODE_E_SYMBOL_UNTYPED:
             unreachable("untyped symbols should not still be present");
@@ -368,7 +372,7 @@ static void emit_operator(const Env* env, String* output, const Node_e_operator*
 }
 
 static void emit_load_another_node(const Env* env, String* output, const Node_load_another_node* load_node) {
-    Llvm_id llvm_id = get_llvm_id(load_node->node_src->node);
+    Llvm_id llvm_id = get_llvm_id(load_node->node_src.node);
     log(LOG_DEBUG, NODE_FMT"\n", node_print(node_wrap_load_another_node_const(load_node)));
     assert(llvm_id > 0);
 
@@ -386,7 +390,7 @@ static void emit_load_another_node(const Env* env, String* output, const Node_lo
 
 static void emit_llvm_store_struct_literal(const Env* env, String* output, const Node_llvm_store_struct_literal* store) {
     string_extend_cstr(&a_main, output, "    call void @llvm.memcpy.p0.p0.i64(ptr align 4 %");
-    string_extend_size_t(&a_main, output, get_llvm_id(store->node_dest->node));
+    string_extend_size_t(&a_main, output, get_llvm_id(store->node_dest.node));
     string_extend_cstr(&a_main, output, ", ptr align 4 @__const.main.");
     string_extend_strv(&a_main, output, store->child->name);
     string_extend_cstr(&a_main, output, ", i64 ");
@@ -399,9 +403,9 @@ static void emit_store_another_node(const Env* env, String* output, const Node_s
     string_extend_cstr(&a_main, output, "    store ");
     extend_type_call_str(env, output, store->lang_type);
     string_extend_cstr(&a_main, output, " %");
-    string_extend_size_t(&a_main, output, get_llvm_id(store->node_src->node));
+    string_extend_size_t(&a_main, output, get_llvm_id(store->node_src.node));
     string_extend_cstr(&a_main, output, ", ptr %");
-    string_extend_size_t(&a_main, output, get_llvm_id(store->node_dest->node));
+    string_extend_size_t(&a_main, output, get_llvm_id(store->node_dest.node));
     string_extend_cstr(&a_main, output, ", align 8");
     string_extend_cstr(&a_main, output, "\n");
 }
@@ -411,7 +415,7 @@ static void emit_llvm_store_literal(const Env* env, String* output, const Node_l
     extend_type_call_str(env, output, store->lang_type);
     extend_literal_decl_prefix(output, store->child);
     string_extend_cstr(&a_main, output, ", ptr %");
-    string_extend_size_t(&a_main, output, get_llvm_id(store->node_dest->node));
+    string_extend_size_t(&a_main, output, get_llvm_id(store->node_dest.node));
     string_extend_cstr(&a_main, output, ", align 8");
     string_extend_cstr(&a_main, output, "\n");
 }
@@ -437,6 +441,7 @@ static void emit_return(const Env* env, String* output, const Node_return* fun_r
     const Node_expr* sym_to_return = fun_return->child;
     assert(get_lang_type_expr(sym_to_return).str.count > 0);
 
+    log_tree(LOG_DEBUG, (Node*)fun_return);
     switch (sym_to_return->type) {
         case NODE_E_LITERAL: {
             const Node_e_literal* literal = node_unwrap_e_literal_const(sym_to_return);
@@ -453,12 +458,12 @@ static void emit_return(const Env* env, String* output, const Node_return* fun_r
              unreachable("");
         case NODE_E_SYMBOL_UNTYPED:
             unreachable("untyped symbols should not still be present");
-        case NODE_E_LLVM_REGISTER_SYM: {
-            const Node_e_llvm_register_sym* memb_sym = node_unwrap_e_llvm_register_sym_const(sym_to_return);
+        case NODE_E_LLVM_PLACEHOLDER: {
+            const Node_e_llvm_placeholder* memb_sym = node_unwrap_e_llvm_placeholder_const(sym_to_return);
             string_extend_cstr(&a_main, output, "    ret ");
             extend_type_call_str(env, output, memb_sym->lang_type);
             string_extend_cstr(&a_main, output, " %");
-            string_extend_size_t(&a_main, output, get_llvm_id(memb_sym->node));
+            string_extend_size_t(&a_main, output, get_llvm_id(memb_sym->llvm_reg.node));
             string_extend_cstr(&a_main, output, "\n");
             break;
         }
@@ -529,11 +534,11 @@ static void emit_load_struct_element_pointer(String* output, const Node_load_ele
     string_extend_cstr(&a_main, output, "    %"); 
     string_extend_size_t(&a_main, output, load_elem_ptr->llvm_id);
     string_extend_cstr(&a_main, output, " = getelementptr inbounds %struct.");
-    Lang_type lang_type = get_lang_type(load_elem_ptr->node_src->node);
+    Lang_type lang_type = get_lang_type(load_elem_ptr->node_src.node);
     lang_type.pointer_depth = 0;
     extend_lang_type_to_string(&a_main, output, lang_type, false);
     string_extend_cstr(&a_main, output, ", ptr %");
-    string_extend_size_t(&a_main, output, get_llvm_id(load_elem_ptr->node_src->node));
+    string_extend_size_t(&a_main, output, get_llvm_id(load_elem_ptr->node_src.node));
     string_extend_cstr(&a_main, output, ", i32 0");
     string_extend_cstr(&a_main, output, ", i32 ");
     string_extend_size_t(&a_main, output, load_elem_ptr->struct_index);

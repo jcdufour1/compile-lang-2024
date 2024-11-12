@@ -41,9 +41,9 @@ void assign_llvm_ids_expr(Env* env) {
             } else {
                 unreachable("");
             }
+            unreachable("");
         }
-        break;
-        case NODE_E_LLVM_REGISTER_SYM:
+        case NODE_E_LLVM_PLACEHOLDER:
             return;
     }
     unreachable("");

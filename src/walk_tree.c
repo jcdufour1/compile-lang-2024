@@ -60,9 +60,11 @@ INLINE void walk_tree_expr(Env* env, void (callback)(Env* env)) {
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         }
-        case NODE_E_LLVM_REGISTER_SYM:
+        case NODE_E_LLVM_PLACEHOLDER:
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
+        default:
+            unreachable("");
     }
 }
 
