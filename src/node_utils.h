@@ -36,6 +36,8 @@ static inline Lang_type get_member_sym_piece_final_lang_type(const Node_e_member
     return lang_type;
 }
 
+static inline Llvm_id get_llvm_id(const Node* node);
+
 static inline Llvm_id get_llvm_id_expr(const Node_expr* expr) {
     switch (expr->type) {
         case NODE_E_MEMBER_SYM_UNTYPED:
@@ -63,7 +65,7 @@ static inline Llvm_id get_llvm_id_expr(const Node_expr* expr) {
         case NODE_E_STRUCT_LITERAL:
             unreachable("");
         case NODE_E_LLVM_REGISTER_SYM:
-            return node_unwrap_e_llvm_register_sym_const(expr)->llvm_id;
+            return get_llvm_id(node_unwrap_e_llvm_register_sym_const(expr)->node_src);
     }
     unreachable("");
 }
@@ -389,7 +391,7 @@ static inline Node* get_node_src(Node* node) {
         case NODE_LLVM_STORE_STRUCT_LITERAL:
             unreachable("");
         case NODE_LOAD_ANOTHER_NODE:
-            return node_unwrap_load_another_node(node)->node_src;
+            return node_wrap_expr(node_wrap_e_llvm_register_sym(node_unwrap_load_another_node(node)->node_src));
         case NODE_STORE_ANOTHER_NODE:
             return node_unwrap_store_another_node(node)->node_src;
         case NODE_LOAD_ELEMENT_PTR:

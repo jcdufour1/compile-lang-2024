@@ -94,7 +94,6 @@
     DO(llvm_register_sym, NODE_E_LLVM_REGISTER_SYM, \
         Lang_type lang_type; \
         struct Node_* node_src; \
-        Llvm_id llvm_id; \
     )
 
 struct Node_;
@@ -335,7 +334,7 @@ typedef struct {
 } Node_alloca;
 
 typedef struct {
-    struct Node_* node_src;
+    Node_e_llvm_register_sym* node_src;
     Llvm_id llvm_id;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 } Node_load_another_node;

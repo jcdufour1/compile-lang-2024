@@ -25,6 +25,19 @@ Node* get_storage_location(const Env* env, Str_view sym_name);
 
 Llvm_id get_store_dest_id(const Env* env, const Node* var_call);
 
+static inline Node_e_llvm_register_sym* node_get_llvm_register_sym(Node* node) {
+    Node_e_llvm_register_sym* llvm_reg = node_unwrap_e_llvm_register_sym(node_make_expr(
+        node_new(node->pos, NODE_EXPR), NODE_E_LLVM_REGISTER_SYM
+    ));
+    llvm_reg->lang_type = get_lang_type(node);
+    llvm_reg->node_src = node;
+    return llvm_reg;
+}
+
+static inline Node_e_llvm_register_sym* node_expr_get_llvm_register_sym(Node_expr* expr) {
+    return node_get_llvm_register_sym(node_wrap_expr(expr));
+}
+
 const Node_variable_def* get_symbol_def_from_alloca(const Env* env, const Node* alloca);
 
 Llvm_id get_matching_label_id(const Env* env, Str_view name);

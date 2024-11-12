@@ -44,8 +44,6 @@ void assign_llvm_ids_expr(Env* env) {
         }
         break;
         case NODE_E_LLVM_REGISTER_SYM:
-            node_unwrap_e_llvm_register_sym(curr_node)->llvm_id = llvm_id_for_next_var;
-            llvm_id_for_next_var += 2;
             return;
     }
     unreachable("");

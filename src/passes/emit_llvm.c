@@ -368,7 +368,9 @@ static void emit_operator(const Env* env, String* output, const Node_e_operator*
 }
 
 static void emit_load_another_node(const Env* env, String* output, const Node_load_another_node* load_node) {
-    assert(get_llvm_id(load_node->node_src) > 0);
+    Llvm_id llvm_id = get_llvm_id(load_node->node_src->node_src);
+    log(LOG_DEBUG, NODE_FMT"\n", node_print(node_wrap_load_another_node_const(load_node)));
+    assert(llvm_id > 0);
 
     string_extend_cstr(&a_main, output, "    %");
     string_extend_size_t(&a_main, output, load_node->llvm_id);
@@ -377,7 +379,7 @@ static void emit_load_another_node(const Env* env, String* output, const Node_lo
     string_extend_cstr(&a_main, output, ", ");
     string_extend_cstr(&a_main, output, "ptr");
     string_extend_cstr(&a_main, output, " %");
-    string_extend_size_t(&a_main, output, get_llvm_id(load_node->node_src));
+    string_extend_size_t(&a_main, output, llvm_id);
     string_extend_cstr(&a_main, output, ", align 8");
     string_extend_cstr(&a_main, output, "\n");
 }
