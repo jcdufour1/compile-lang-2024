@@ -5,6 +5,6 @@ raw_union Union {
 }
 
 fn main() i32 {
-    Union union = {.num = 82, .cstr = 21}
+    let union: Union = {.num = 82, .cstr = 21}
     return 0
 }

@@ -731,6 +731,20 @@ bool try_set_struct_literal_assignment_types(const Env* env, Node** new_node, La
     Node_variable_def* lhs_var_def = node_unwrap_variable_def(lhs_var_def_);
     Node* struct_def_;
     try(symbol_lookup(&struct_def_, env, lhs_var_def->lang_type.str));
+    switch (struct_def_->type) {
+        case NODE_STRUCT_DEF:
+            break;
+        case NODE_RAW_UNION_DEF:
+            // TODO: improve this
+            msg(
+                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION,
+                node_wrap_expr(node_wrap_e_struct_literal(struct_literal))->pos,
+                "struct literal cannot be assigned to union\n"
+            );
+            return false;
+        default:
+            unreachable("");
+    }
     Node_struct_def* struct_def = node_unwrap_struct_def(struct_def_);
     Lang_type new_lang_type = {.str = struct_def->base.name, .pointer_depth = 0};
     struct_literal->lang_type = new_lang_type;
