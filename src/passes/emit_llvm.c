@@ -386,7 +386,7 @@ static void emit_load_another_node(const Env* env, String* output, const Node_lo
 
 static void emit_llvm_store_struct_literal(const Env* env, String* output, const Node_llvm_store_struct_literal* store) {
     string_extend_cstr(&a_main, output, "    call void @llvm.memcpy.p0.p0.i64(ptr align 4 %");
-    string_extend_size_t(&a_main, output, get_llvm_id(store->node_dest));
+    string_extend_size_t(&a_main, output, get_llvm_id(store->node_dest->node));
     string_extend_cstr(&a_main, output, ", ptr align 4 @__const.main.");
     string_extend_strv(&a_main, output, store->child->name);
     string_extend_cstr(&a_main, output, ", i64 ");
@@ -411,7 +411,7 @@ static void emit_llvm_store_literal(const Env* env, String* output, const Node_l
     extend_type_call_str(env, output, store->lang_type);
     extend_literal_decl_prefix(output, store->child);
     string_extend_cstr(&a_main, output, ", ptr %");
-    string_extend_size_t(&a_main, output, get_llvm_id(store->node_dest));
+    string_extend_size_t(&a_main, output, get_llvm_id(store->node_dest->node));
     string_extend_cstr(&a_main, output, ", align 8");
     string_extend_cstr(&a_main, output, "\n");
 }

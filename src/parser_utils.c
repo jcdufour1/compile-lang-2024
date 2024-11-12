@@ -180,7 +180,7 @@ Str_view literal_name_new(void) {
     return str_view;
 }
 
-Node* get_storage_location(const Env* env, Str_view sym_name) {
+Node_e_llvm_register_sym* get_storage_location(const Env* env, Str_view sym_name) {
     Node* sym_def_;
     if (!symbol_lookup(&sym_def_, env, sym_name)) {
         symbol_log(LOG_DEBUG, env);
@@ -191,12 +191,6 @@ Node* get_storage_location(const Env* env, Str_view sym_name) {
         unreachable("no storage location associated with symbol definition");
     }
     return sym_def->storage_location;
-}
-
-Llvm_id get_store_dest_id(const Env* env, const Node* var_call) {
-    Llvm_id llvm_id = get_llvm_id(get_storage_location(env, get_node_name(var_call)));
-    assert(llvm_id > 0);
-    return llvm_id;
 }
 
 const Node_variable_def* get_normal_symbol_def_from_alloca(const Env* env, const Node* node) {

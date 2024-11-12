@@ -399,7 +399,7 @@ static inline Node* get_node_src(Node* node) {
         case NODE_LLVM_STORE_LITERAL:
             unreachable("");
         case NODE_PTR_BYVAL_SYM:
-            return node_unwrap_ptr_byval_sym(node)->node_src;
+            return node_unwrap_ptr_byval_sym(node)->node_src->node;
     }
     unreachable("");
 }
@@ -479,7 +479,7 @@ static inline Node* get_node_dest(Node* node) {
         case NODE_ALLOCA:
             unreachable("");
         case NODE_LLVM_STORE_STRUCT_LITERAL:
-            return node_unwrap_llvm_store_struct_literal_const(node)->node_dest;
+            return node_unwrap_llvm_store_struct_literal_const(node)->node_dest->node;
         case NODE_LOAD_ANOTHER_NODE:
             unreachable("");
         case NODE_STORE_ANOTHER_NODE:
@@ -487,7 +487,7 @@ static inline Node* get_node_dest(Node* node) {
         case NODE_LOAD_ELEMENT_PTR:
             unreachable("");
         case NODE_LLVM_STORE_LITERAL:
-            return node_unwrap_llvm_store_literal_const(node)->node_dest;
+            return node_unwrap_llvm_store_literal_const(node)->node_dest->node;
         case NODE_PTR_BYVAL_SYM:
             unreachable("");
     }

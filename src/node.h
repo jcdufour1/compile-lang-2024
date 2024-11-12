@@ -239,7 +239,7 @@ typedef struct {
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     bool is_variadic : 1;
     Llvm_id llvm_id;
-    struct Node_* storage_location;
+    Node_e_llvm_register_sym* storage_location;
     Str_view name;
 } Node_variable_def;
 
@@ -349,7 +349,7 @@ typedef struct {
 
 typedef struct {
     Node_e_literal* child;
-    struct Node_* node_dest;
+    Node_e_llvm_register_sym* node_dest;
     Llvm_id llvm_id;
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
 } Node_llvm_store_literal;
@@ -370,12 +370,12 @@ typedef struct {
     Node_e_struct_literal* child;
     Llvm_id llvm_id;
     Lang_type lang_type;
-    struct Node_* node_dest;
+    Node_e_llvm_register_sym* node_dest;
 } Node_llvm_store_struct_literal;
 
 typedef struct {
     Lang_type lang_type;
-    struct Node_* node_src;
+    Node_e_llvm_register_sym* node_src;
     Llvm_id llvm_id;
 } Node_ptr_byval_sym;
 

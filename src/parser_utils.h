@@ -21,11 +21,10 @@ Str_view literal_name_new(void);
 
 Llvm_id get_prev_load_id(const Node* var_call);
 
-Node* get_storage_location(const Env* env, Str_view sym_name);
-
-Llvm_id get_store_dest_id(const Env* env, const Node* var_call);
+Node_e_llvm_register_sym* get_storage_location(const Env* env, Str_view sym_name);
 
 static inline Node_e_llvm_register_sym* node_get_llvm_register_sym(Node* node) {
+    assert(node);
     Node_e_llvm_register_sym* llvm_reg = node_unwrap_e_llvm_register_sym(node_make_expr(
         node_new(node->pos, NODE_EXPR), NODE_E_LLVM_REGISTER_SYM
     ));
