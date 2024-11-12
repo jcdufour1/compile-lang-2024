@@ -90,6 +90,8 @@ static bool get_next_token(Pos* pos, Token* token, Str_view_col* file_text, Para
             token->type = TOKEN_IN;
         } else if (str_view_cstr_is_equal(text, "break")) {
             token->type = TOKEN_BREAK;
+        } else if (str_view_cstr_is_equal(text, "raw_union")) {
+            token->type = TOKEN_RAW_UNION;
         } else {
             token->text = text;
             token->type = TOKEN_SYMBOL;

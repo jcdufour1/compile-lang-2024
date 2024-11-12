@@ -46,6 +46,7 @@ static const char* NODE_LOAD_ANOTHER_NODE_DESCRIPTION = "load_another_node";
 static const char* NODE_STORE_ANOTHER_NODE_DESCRIPTION = "store_another_node";
 static const char* NODE_PTR_BYVAL_SYM_DESCRIPTION = "byval_sym";
 static const char* NODE_E_LLVM_REGISTER_SYM_DESCRIPTION = "llvm_register_sym";
+static const char* NODE_RAW_UNION_DEF_DESCRIPTION = "raw_union";
 
 void extend_lang_type_to_string(Arena* arena, String* string, Lang_type lang_type, bool surround_in_lt_gt) {
     if (surround_in_lt_gt) {
@@ -196,10 +197,10 @@ static Str_view node_type_get_strv(const Node* node) {
             return str_view_from_cstr(NODE_BREAK_DESCRIPTION);
         case NODE_PTR_BYVAL_SYM:
             return str_view_from_cstr(NODE_PTR_BYVAL_SYM_DESCRIPTION);
-        default:
-            log(LOG_FETAL, "node->type: %d\n", node->type);
-            todo();
+        case NODE_RAW_UNION_DEF:
+            return str_view_from_cstr(NODE_RAW_UNION_DEF_DESCRIPTION);
     }
+    unreachable( "node->type: %d\n", node->type)
 }
 
 static void print_node_dest(Arena* arena, String* string, const Node* node, bool do_recursion) {
@@ -306,6 +307,8 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
                 string_extend_strv_in_par(arena, string, get_node_name(node));
                 break;
             case NODE_STRUCT_DEF:
+                break;
+            case NODE_RAW_UNION_DEF:
                 break;
             case NODE_LANG_TYPE:
                 extend_lang_type_to_string(arena, string, node_unwrap_lang_type_const(node)->lang_type, true);

@@ -49,40 +49,57 @@ static void do_struct_literal(
 }
 
 // returns node of element pointer that should then be loaded
-static Node_load_element_ptr* do_load_struct_element_ptr(
+static bool do_load_struct_element_ptr(
     Env* env,
+    Node_load_element_ptr** load_element_ptr,
     Node_ptr_vec* block_children,
     size_t* idx_to_insert_before,
     Node_e_member_sym_typed* symbol_call
 ) {
     Node* prev_struct_sym = node_wrap_expr(node_wrap_e_member_sym_typed(symbol_call));
-    Node* sym_def_;
-    if (!symbol_lookup(&sym_def_, env, symbol_call->name)) {
-        unreachable("symbol definition not found");
-    }
     Node* node_element_ptr_to_load = get_storage_location(env, symbol_call->name);
-    Node_load_element_ptr* load_element_ptr = NULL;
+    *load_element_ptr = NULL;
+
+    Node* struct_var_def = NULL;
+    if (!symbol_lookup(&struct_var_def, env, symbol_call->name)) {
+        todo();
+    }
+    Lang_type type_load_from = get_lang_type(struct_var_def);
+
     for (size_t idx = 0; idx < symbol_call->children.info.count; idx++) {
         Node* element_sym_ = vec_at(&symbol_call->children, idx);
         Node_member_sym_piece_typed* element_sym = node_unwrap_member_sym_piece_typed(element_sym_);
 
-        load_element_ptr = node_unwrap_load_element_ptr(node_new(node_wrap_member_sym_piece_typed(element_sym)->pos, NODE_LOAD_ELEMENT_PTR));
-        load_element_ptr->name = get_node_name(prev_struct_sym);
-        load_element_ptr->lang_type = element_sym->lang_type;
-        load_element_ptr->struct_index = element_sym->struct_index;
-        load_element_ptr->node_src = node_element_ptr_to_load;
-        insert_into_node_ptr_vec(
-            block_children,
-            idx_to_insert_before,
-            *idx_to_insert_before,
-            node_wrap_load_element_ptr(load_element_ptr)
-        );
+        //log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(type_load_from));
+        log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(type_load_from));
+        log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(element_sym->lang_type));
+        log_tree(LOG_DEBUG, node_wrap_expr(node_wrap_e_member_sym_typed(symbol_call)));
+        log_tree(LOG_DEBUG, element_sym_);
 
+        if (lang_type_is_struct(env, type_load_from)) {
+            *load_element_ptr = node_unwrap_load_element_ptr(node_new(node_wrap_member_sym_piece_typed(element_sym)->pos, NODE_LOAD_ELEMENT_PTR));
+            (*load_element_ptr)->name = get_node_name(prev_struct_sym);
+            (*load_element_ptr)->lang_type = element_sym->lang_type;
+            (*load_element_ptr)->struct_index = element_sym->struct_index;
+            (*load_element_ptr)->node_src = node_element_ptr_to_load;
+            insert_into_node_ptr_vec(
+                block_children,
+                idx_to_insert_before,
+                *idx_to_insert_before,
+                node_wrap_load_element_ptr(*load_element_ptr)
+            );
+        }
+
+        type_load_from = element_sym->lang_type;
         prev_struct_sym = node_wrap_member_sym_piece_typed(element_sym);
-        node_element_ptr_to_load = node_wrap_load_element_ptr(load_element_ptr);
+        node_element_ptr_to_load = node_wrap_load_element_ptr(*load_element_ptr);
     }
-    assert(load_element_ptr);
-    return load_element_ptr;
+
+    if (*load_element_ptr) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 static void sym_typed_to_load_sym_rtn_value_sym(Node_e_symbol_typed* symbol, Node_load_another_node* node_src) {
@@ -139,24 +156,44 @@ static Node_load_another_node* insert_load(
                 return NULL;
             case NODE_E_MEMBER_SYM_TYPED: {
                 Node_load_another_node* load = node_unwrap_load_another_node(node_new(symbol_call->pos, NODE_LOAD_ANOTHER_NODE));
-                Node_load_element_ptr* load_element_ptr = do_load_struct_element_ptr(
+                Node_load_element_ptr* load_elem_ptr = NULL;
+                if (do_load_struct_element_ptr(
                     env,
+                    &load_elem_ptr,
                     block_children,
                     idx_to_insert_before,
                     node_unwrap_e_member_sym_typed(sym_call_expr)
-                );
-                load->node_src = node_wrap_load_element_ptr(load_element_ptr);
-                load->lang_type = load_element_ptr->lang_type;
-                assert(load->lang_type.str.count > 0);
-                insert_into_node_ptr_vec(
-                    block_children,
-                    idx_to_insert_before,
-                    *idx_to_insert_before,
-                    node_wrap_load_another_node(load)
-                );
-                struct_memb_to_load_memb_rtn_val_sym(node_unwrap_e_member_sym_typed(sym_call_expr), load);
-                *new_symbol_call = symbol_call;
-                return load;
+                )) {
+                    load->node_src = node_wrap_load_element_ptr(load_elem_ptr);
+                    load->lang_type = load_elem_ptr->lang_type;
+                    assert(load->lang_type.str.count > 0);
+                    insert_into_node_ptr_vec(
+                        block_children,
+                        idx_to_insert_before,
+                        *idx_to_insert_before,
+                        node_wrap_load_another_node(load)
+                    );
+                    struct_memb_to_load_memb_rtn_val_sym(node_unwrap_e_member_sym_typed(sym_call_expr), load);
+                    *new_symbol_call = symbol_call;
+                    return load;
+                } else {
+                    Node* struct_var_def = NULL;
+                    if (!symbol_lookup(&struct_var_def, env, get_node_name(symbol_call))) {
+                        todo();
+                    }
+                    load->node_src = get_storage_location(env, get_node_name(symbol_call));
+                    load->lang_type = get_lang_type(symbol_call);
+                    assert(load->lang_type.str.count > 0);
+                    insert_into_node_ptr_vec(
+                        block_children,
+                        idx_to_insert_before,
+                        *idx_to_insert_before,
+                        node_wrap_load_another_node(load)
+                    );
+                    struct_memb_to_load_memb_rtn_val_sym(node_unwrap_e_member_sym_typed(sym_call_expr), load);
+                    *new_symbol_call = symbol_call;
+                    return load;
+                }
             }
             case NODE_E_SYMBOL_TYPED: {
                 Node* sym_def;
@@ -372,15 +409,22 @@ static Node* get_store_assignment(
                 lhs_load_lang_type = node_unwrap_e_symbol_typed(lhs_expr)->lang_type;
                 break;
             case NODE_E_MEMBER_SYM_TYPED: {
-                store_dest = node_wrap_load_element_ptr(do_load_struct_element_ptr(
+                Node_load_element_ptr* load_elem_ptr = NULL;
+                if (do_load_struct_element_ptr(
                     env,
+                    &load_elem_ptr,
                     block_children,
                     idx_to_insert_before,
                     node_unwrap_e_member_sym_typed(lhs_expr)
-                ));
-                lhs_load_lang_type = get_member_sym_piece_final_lang_type(
-                    node_unwrap_e_member_sym_typed(lhs_expr)
-                );
+                )) {
+                    store_dest = node_wrap_load_element_ptr(load_elem_ptr);
+                    lhs_load_lang_type = get_member_sym_piece_final_lang_type(
+                        node_unwrap_e_member_sym_typed(lhs_expr)
+                    );
+                } else {
+                    store_dest = get_storage_location(env, get_node_name(assignment->lhs));
+                    lhs_load_lang_type = get_lang_type(assignment->lhs);
+                }
                 break;
             }
             case NODE_E_OPERATOR: {
@@ -798,6 +842,8 @@ void add_load_and_store(Env* env) {
                 case NODE_IF:
                     unreachable("if statement node should not still exist at this point\n");
                 case NODE_STRUCT_DEF:
+                    break;
+                case NODE_RAW_UNION_DEF:
                     break;
                 case NODE_LLVM_STORE_LITERAL:
                     break;

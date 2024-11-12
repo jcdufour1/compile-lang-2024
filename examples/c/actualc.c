@@ -36,10 +36,19 @@ void do_thing(Div div) {
 void do_thing_ptr(Div* div) {
 }
 
+typedef union {
+    int num;
+    char* cstr;
+} Thing;
+
 int main(void) {
     int num1 = 8;
     if (!num1) {
         puts("hello");
     }
+
+    Thing thing;
+    thing.num = 76;
+    print("hello", thing.num, "world\n");
     return 0;
 }

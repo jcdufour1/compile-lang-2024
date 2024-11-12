@@ -68,7 +68,13 @@ static void extend_type_call_str(const Env* env, String* output, Lang_type lang_
 
     Node* struct_def;
     if (symbol_lookup(&struct_def, env, lang_type.str)) {
-        string_extend_cstr(&a_main, output, "%struct.");
+        if (lang_type_is_struct(env, lang_type)) {
+            string_extend_cstr(&a_main, output, "%struct.");
+        } else if (lang_type_is_raw_union(env, lang_type)) {
+            string_extend_cstr(&a_main, output, "%union.");
+        } else {
+            unreachable("");
+        }
     }
     extend_lang_type_to_string(&a_main, output, lang_type, false);
 }
@@ -492,19 +498,28 @@ static void emit_cond_goto(const Env* env, String* output, const Node_cond_goto*
     vec_append(&a_main, output, '\n');
 }
 
-static void emit_struct_definition(const Env* env, String* output, const Node_struct_def* struct_def) {
-    string_extend_cstr(&a_main, output, "%struct.");
-    string_extend_strv(&a_main, output, struct_def->name);
+static void emit_struct_def_base(const Env* env, String* output, const Struct_def_base* base) {
+    string_extend_strv(&a_main, output, base->name);
     string_extend_cstr(&a_main, output, " = type { ");
     bool is_first = true;
-    for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
+    for (size_t idx = 0; idx < base->members.info.count; idx++) {
         if (!is_first) {
             string_extend_cstr(&a_main, output, ", ");
         }
-        extend_type_decl_str(env, output, vec_at(&struct_def->members, idx), false);
+        extend_type_decl_str(env, output, vec_at(&base->members, idx), false);
         is_first = false;
     }
     string_extend_cstr(&a_main, output, " }\n");
+}
+
+static void emit_struct_def(const Env* env, String* output, const Node_struct_def* struct_def) {
+    string_extend_cstr(&a_main, output, "%struct.");
+    emit_struct_def_base(env, output, &struct_def->base);
+}
+
+static void emit_raw_union_def(const Env* env, String* output, const Node_raw_union_def* raw_union_def) {
+    string_extend_cstr(&a_main, output, "%union.");
+    emit_struct_def_base(env, output, &raw_union_def->base);
 }
 
 static void emit_load_struct_element_pointer(String* output, const Node_load_element_ptr* load_elem_ptr) {
@@ -585,7 +600,10 @@ static void emit_block(Env* env, String* output, const Node_block* block) {
                     emit_llvm_store_struct_literal(env, output, node_unwrap_llvm_store_struct_literal_const(statement));
                     break;
                 case NODE_STRUCT_DEF:
-                    emit_struct_definition(env, output, node_unwrap_struct_def_const(statement));
+                    emit_struct_def(env, output, node_unwrap_struct_def_const(statement));
+                    break;
+                case NODE_RAW_UNION_DEF:
+                    emit_raw_union_def(env, output, node_unwrap_raw_union_def_const(statement));
                     break;
                 case NODE_LOAD_ELEMENT_PTR:
                     emit_load_struct_element_pointer(output, node_unwrap_load_element_ptr_const(statement));

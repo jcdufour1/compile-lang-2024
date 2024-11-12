@@ -63,6 +63,7 @@ typedef enum {
     TOKEN_LET,
     TOKEN_IN,
     TOKEN_BREAK,
+    TOKEN_RAW_UNION,
 
     // comment
     TOKEN_COMMENT,
@@ -161,6 +162,8 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_NEW_LINE:
             return false;
+        case TOKEN_RAW_UNION:
+            return false;
     }
     unreachable("");
 }
@@ -249,6 +252,8 @@ static inline bool token_is_operator(Token token) {
             return false;
         case TOKEN_TRIPLE_DOT:
             unreachable("");
+        case TOKEN_RAW_UNION:
+            return false;
     }
     unreachable(TOKEN_FMT"\n", token_print(token));
 }
@@ -267,6 +272,8 @@ static inline bool token_is_closing(Token curr_token) {
             return true;
         case TOKEN_CLOSE_CURLY_BRACE:
             return true;
+        case TOKEN_NONTYPE:
+            return false;
         case TOKEN_SINGLE_PLUS:
             return false;
         case TOKEN_SINGLE_MINUS:
@@ -275,9 +282,31 @@ static inline bool token_is_closing(Token curr_token) {
             return false;
         case TOKEN_SLASH:
             return false;
+        case TOKEN_LESS_THAN:
+            return false;
+        case TOKEN_GREATER_THAN:
+            return false;
+        case TOKEN_DOUBLE_EQUAL:
+            return false;
+        case TOKEN_NOT_EQUAL:
+            return false;
+        case TOKEN_XOR:
+            return false;
+        case TOKEN_NOT:
+            return false;
+        case TOKEN_DEREF:
+            return false;
+        case TOKEN_REFER:
+            return false;
+        case TOKEN_UNSAFE_CAST:
+            return false;
         case TOKEN_STRING_LITERAL:
             return false;
         case TOKEN_INT_LITERAL:
+            return false;
+        case TOKEN_VOID:
+            return false;
+        case TOKEN_NEW_LINE:
             return false;
         case TOKEN_SYMBOL:
             return false;
@@ -295,29 +324,36 @@ static inline bool token_is_closing(Token curr_token) {
             return false;
         case TOKEN_SINGLE_EQUAL:
             return false;
-        case TOKEN_DOUBLE_EQUAL:
-            return false;
         case TOKEN_SINGLE_DOT:
             return false;
         case TOKEN_DOUBLE_DOT:
             return false;
         case TOKEN_TRIPLE_DOT:
             return false;
-        case TOKEN_LESS_THAN:
+        case TOKEN_FN:
             return false;
-        case TOKEN_GREATER_THAN:
+        case TOKEN_FOR:
             return false;
-        case TOKEN_NOT_EQUAL:
+        case TOKEN_IF:
             return false;
-        case TOKEN_NOT:
+        case TOKEN_RETURN:
             return false;
-        case TOKEN_DEREF:
+        case TOKEN_EXTERN:
             return false;
-        case TOKEN_REFER:
+        case TOKEN_STRUCT:
             return false;
-        default:
-            unreachable("");
+        case TOKEN_LET:
+            return false;
+        case TOKEN_IN:
+            return false;
+        case TOKEN_BREAK:
+            return false;
+        case TOKEN_RAW_UNION:
+            return false;
+        case TOKEN_COMMENT:
+            return false;
     }
+    unreachable("");
 }
 
 static inline bool token_is_opening(Token curr_token) {
@@ -326,6 +362,8 @@ static inline bool token_is_opening(Token curr_token) {
             return true;
         case TOKEN_OPEN_CURLY_BRACE:
             return true;
+        case TOKEN_NONTYPE:
+            return false;
         case TOKEN_SINGLE_PLUS:
             return false;
         case TOKEN_SINGLE_MINUS:
@@ -334,9 +372,31 @@ static inline bool token_is_opening(Token curr_token) {
             return false;
         case TOKEN_SLASH:
             return false;
+        case TOKEN_LESS_THAN:
+            return false;
+        case TOKEN_GREATER_THAN:
+            return false;
+        case TOKEN_DOUBLE_EQUAL:
+            return false;
+        case TOKEN_NOT_EQUAL:
+            return false;
+        case TOKEN_XOR:
+            return false;
+        case TOKEN_NOT:
+            return false;
+        case TOKEN_DEREF:
+            return false;
+        case TOKEN_REFER:
+            return false;
+        case TOKEN_UNSAFE_CAST:
+            return false;
         case TOKEN_STRING_LITERAL:
             return false;
         case TOKEN_INT_LITERAL:
+            return false;
+        case TOKEN_VOID:
+            return false;
+        case TOKEN_NEW_LINE:
             return false;
         case TOKEN_SYMBOL:
             return false;
@@ -354,29 +414,36 @@ static inline bool token_is_opening(Token curr_token) {
             return false;
         case TOKEN_SINGLE_EQUAL:
             return false;
-        case TOKEN_DOUBLE_EQUAL:
-            return false;
         case TOKEN_SINGLE_DOT:
             return false;
         case TOKEN_DOUBLE_DOT:
             return false;
         case TOKEN_TRIPLE_DOT:
             return false;
-        case TOKEN_LESS_THAN:
+        case TOKEN_FN:
             return false;
-        case TOKEN_GREATER_THAN:
+        case TOKEN_FOR:
             return false;
-        case TOKEN_NOT_EQUAL:
+        case TOKEN_IF:
             return false;
-        case TOKEN_NOT:
+        case TOKEN_RETURN:
             return false;
-        case TOKEN_DEREF:
+        case TOKEN_EXTERN:
             return false;
-        case TOKEN_REFER:
+        case TOKEN_STRUCT:
             return false;
-        default:
-            unreachable("");
+        case TOKEN_LET:
+            return false;
+        case TOKEN_IN:
+            return false;
+        case TOKEN_BREAK:
+            return false;
+        case TOKEN_RAW_UNION:
+            return false;
+        case TOKEN_COMMENT:
+            return false;
     }
+    unreachable("");
 }
 
 static inline bool token_is_equal(const Token token, const char* cstr, TOKEN_TYPE token_type) {

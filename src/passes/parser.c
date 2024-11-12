@@ -122,11 +122,18 @@ static PARSE_STATUS msg_redefinition_of_symbol(const Env* env, const Node* new_s
     return PARSE_ERROR;
 }
 
-static bool starts_with_struct_definition(Tk_view tokens) {
+static bool starts_with_struct_def(Tk_view tokens) {
     if (tokens.count < 1) {
         return false;
     }
     return tk_view_front(tokens).type == TOKEN_STRUCT;
+}
+
+static bool starts_with_raw_union_definition(Tk_view tokens) {
+    if (tokens.count < 1) {
+        return false;
+    }
+    return tk_view_front(tokens).type == TOKEN_RAW_UNION;
 }
 
 static bool starts_with_function_decl(Tk_view tokens) {
@@ -224,7 +231,7 @@ static void sync(Tk_view* tokens) {
         }
 
         if (
-            starts_with_struct_definition(*tokens) ||
+            starts_with_struct_def(*tokens) ||
             starts_with_function_decl(*tokens) ||
             starts_with_function_def(*tokens) ||
             starts_with_return(*tokens) ||
@@ -368,6 +375,8 @@ static bool can_end_statement(Token token) {
             return true;
         case TOKEN_COMMENT:
             return true;
+        case TOKEN_RAW_UNION:
+            return false;
     }
     unreachable("");
 }
@@ -480,6 +489,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_NEW_LINE:
             return false;
+        case TOKEN_RAW_UNION:
+            return false;
     }
     unreachable("");
 }
@@ -590,13 +601,8 @@ static PARSE_STATUS extract_function_def(Env* env, Node_function_def** fun_def, 
     return extract_block(env, &(*fun_def)->body, tokens, false);
 }
 
-static PARSE_STATUS extract_struct_definition(Env* env, Node_struct_def** struct_def, Tk_view* tokens) {
-    try(try_consume(NULL, tokens, TOKEN_STRUCT));
-
-    Token name = tk_view_consume(tokens);
-
-    *struct_def = node_unwrap_struct_def(node_new(name.pos, NODE_STRUCT_DEF));
-    (*struct_def)->name = name.text;
+static PARSE_STATUS extract_struct_base_def(Env* env, Struct_def_base* base, Str_view name, Tk_view* tokens) {
+    base->name = name;
 
     if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
         msg_parser_expected(tk_view_front(*tokens), TOKEN_OPEN_CURLY_BRACE);
@@ -616,17 +622,52 @@ static PARSE_STATUS extract_struct_definition(Env* env, Node_struct_def** struct
         }
         try_consume(NULL, tokens, TOKEN_SEMICOLON);
         while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
-        vec_append_safe(&a_main, &(*struct_def)->members, node_wrap_variable_def(member));
+        vec_append_safe(&a_main, &base->members, node_wrap_variable_def(member));
     }
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
         msg_parser_expected(tk_view_front(*tokens), TOKEN_CLOSE_CURLY_BRACE);
         return PARSE_ERROR;
     }
+
+    return PARSE_OK;
+}
+
+static PARSE_STATUS extract_struct_def(Env* env, Node_struct_def** struct_def, Tk_view* tokens) {
+    try(try_consume(NULL, tokens, TOKEN_STRUCT));
+
+    Token name = tk_view_consume(tokens);
+
+    *struct_def = node_unwrap_struct_def(node_new(name.pos, NODE_STRUCT_DEF));
+
+    if (PARSE_OK != extract_struct_base_def(env, &(*struct_def)->base, name.text, tokens)) {
+        return PARSE_ERROR;
+    }
+
     if (!symbol_add(env, node_wrap_struct_def(*struct_def))) {
         msg_redefinition_of_symbol(env, node_wrap_struct_def(*struct_def));
         return PARSE_ERROR;
     }
+
+    return PARSE_OK;
+}
+
+static PARSE_STATUS extract_raw_union_def(Env* env, Node_raw_union_def** raw_union_def, Tk_view* tokens) {
+    try(try_consume(NULL, tokens, TOKEN_RAW_UNION));
+
+    Token name = tk_view_consume(tokens);
+
+    *raw_union_def = node_unwrap_raw_union_def(node_new(name.pos, NODE_RAW_UNION_DEF));
+
+    if (PARSE_OK != extract_struct_base_def(env, &(*raw_union_def)->base, name.text, tokens)) {
+        return PARSE_ERROR;
+    }
+
+    if (!symbol_add(env, node_wrap_raw_union_def(*raw_union_def))) {
+        msg_redefinition_of_symbol(env, node_wrap_raw_union_def(*raw_union_def));
+        return PARSE_ERROR;
+    }
+
     return PARSE_OK;
 }
 
@@ -952,12 +993,18 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
     Node* lhs;
-    if (starts_with_struct_definition(*tokens)) {
+    if (starts_with_struct_def(*tokens)) {
         Node_struct_def* struct_def;
-        if (PARSE_OK != extract_struct_definition(env, &struct_def, tokens)) {
+        if (PARSE_OK != extract_struct_def(env, &struct_def, tokens)) {
             return PARSE_EXPR_ERROR;
         }
         lhs = node_wrap_struct_def(struct_def);
+    } else if (starts_with_raw_union_definition(*tokens)) {
+        Node_raw_union_def* raw_union_def;
+        if (PARSE_OK != extract_raw_union_def(env, &raw_union_def, tokens)) {
+            return PARSE_EXPR_ERROR;
+        }
+        lhs = node_wrap_raw_union_def(raw_union_def);
     } else if (starts_with_function_decl(*tokens)) {
         Node_function_decl* fun_decl;
         if (PARSE_OK != extract_function_decl(env, &fun_decl, tokens)) {
@@ -1000,7 +1047,6 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
         Node_expr* lhs_ = NULL;
         switch (try_extract_expression(env, &lhs_, tokens, false)) {
             case PARSE_EXPR_OK:
-                lhs = node_wrap_expr(lhs_);
                 break;
             case PARSE_EXPR_ERROR:
                 return PARSE_EXPR_ERROR;
@@ -1009,6 +1055,21 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
             default:
                 unreachable("");
         }
+
+        switch (lhs_->type) {
+            case NODE_E_FUNCTION_CALL:
+                break;
+            case NODE_E_SYMBOL_UNTYPED:
+                break;
+            case NODE_E_MEMBER_SYM_UNTYPED:
+                break;
+            case NODE_E_OPERATOR:
+                break;
+            default:
+                unreachable(NODE_FMT"\n", node_print(node_wrap_expr(lhs_)));
+        }
+
+        lhs = node_wrap_expr(lhs_);
     }
 
     // do assignment if applicible
@@ -1026,6 +1087,7 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
     if (tokens->count < 1) {
         return PARSE_EXPR_NONE;
     }
+
     if (!try_consume(NULL, tokens, TOKEN_NEW_LINE)) {
         msg(
             LOG_ERROR, EXPECT_FAIL_NO_NEW_LINE_AFTER_STATEMENT, tk_view_front(*tokens).pos,

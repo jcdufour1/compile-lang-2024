@@ -60,6 +60,8 @@ void assign_llvm_ids(Env* env) {
             return;
         case NODE_STRUCT_DEF:
             return;
+        case NODE_RAW_UNION_DEF:
+            return;
         case NODE_FUNCTION_PARAMS:
             return;
         case NODE_BLOCK:

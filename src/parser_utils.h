@@ -50,7 +50,7 @@ uint64_t sizeof_item(const Env* env, const Node* item);
 
 uint64_t sizeof_struct(const Env* env, const Node* struct_literal);
 
-uint64_t sizeof_struct_definition(const Env* env, const Node_struct_def* struct_def);
+uint64_t sizeof_struct_def_base(const Env* env, const Struct_def_base* base);
 
 uint64_t sizeof_struct_literal(const Env* env, const Node_e_struct_literal* struct_literal);
 
@@ -58,6 +58,10 @@ static inline bool is_struct_variable_definition(const Env* env, const Node_vari
     Node* struct_def;
     return symbol_lookup(&struct_def, env, var_def->lang_type.str);
 }
+
+bool lang_type_is_struct(const Env* env, Lang_type lang_type);
+
+bool lang_type_is_raw_union(const Env* env, Lang_type lang_type);
 
 static inline bool is_struct_symbol(const Env* env, const Node* symbol) {
     assert(symbol->type == NODE_E_SYMBOL_TYPED || symbol->type == NODE_E_MEMBER_SYM_TYPED);
@@ -71,7 +75,7 @@ static inline bool is_struct_symbol(const Env* env, const Node* symbol) {
 
 bool is_corresponding_to_a_struct(const Env* env, const Node* node);
 
-static inline size_t get_member_index(const Node_struct_def* struct_def, const Node_member_sym_piece_typed* member_symbol) {
+static inline size_t get_member_index(const Struct_def_base* struct_def, const Node_member_sym_piece_typed* member_symbol) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         const Node* curr_member = vec_at(&struct_def->members, idx);
         if (str_view_is_equal(get_node_name(curr_member), get_node_name(node_wrap_member_sym_piece_typed_const(member_symbol)))) {
@@ -81,7 +85,7 @@ static inline size_t get_member_index(const Node_struct_def* struct_def, const N
     unreachable("member not found");
 }
 
-static inline bool try_get_member_def(Node_variable_def** member_def, const Node_struct_def* struct_def, const Node* member_symbol) {
+static inline bool try_get_member_def(Node_variable_def** member_def, const Struct_def_base* struct_def, const Node* member_symbol) {
     assert(
         member_symbol->type == NODE_MEMBER_SYM_PIECE_TYPED ||
         member_symbol->type == NODE_MEMBER_SYM_PIECE_UNTYPED
@@ -98,7 +102,7 @@ static inline bool try_get_member_def(Node_variable_def** member_def, const Node
     return false;
 }
 
-static inline const Node_variable_def* get_member_def(const Node_struct_def* struct_def, const Node* member_symbol) {
+static inline const Node_variable_def* get_member_def(const Struct_def_base* struct_def, const Node* member_symbol) {
     Node_variable_def* member_def;
     if (!try_get_member_def(&member_def, struct_def, member_symbol)) {
         unreachable("could not find member definition");
@@ -106,18 +110,18 @@ static inline const Node_variable_def* get_member_def(const Node_struct_def* str
     return member_def;
 }
 
-bool try_get_struct_definition(const Env* env, Node_struct_def** struct_def, Node* node);
+bool try_get_struct_def(const Env* env, Node_struct_def** struct_def, Node* node);
 
-static inline Node_struct_def* get_struct_definition(const Env* env, Node* node) {
+static inline Node_struct_def* get_struct_def(const Env* env, Node* node) {
     Node_struct_def* struct_def;
-    if (!try_get_struct_definition(env, &struct_def, node)) {
+    if (!try_get_struct_def(env, &struct_def, node)) {
         unreachable("could not find struct definition for "NODE_FMT"\n", node_print(node));
     }
     return struct_def;
 }
 
-static inline const Node_struct_def* get_struct_definition_const(const Env* env, const Node* node) {
-    return get_struct_definition(env, (Node*)node);
+static inline const Node_struct_def* get_struct_def_const(const Env* env, const Node* node) {
+    return get_struct_def(env, (Node*)node);
 }
 
 bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node_assignment* assignment);

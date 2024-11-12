@@ -73,7 +73,7 @@ static inline Llvm_id get_llvm_id(const Node* node) {
         case NODE_EXPR:
             return get_llvm_id_expr(node_unwrap_expr_const(node));
         case NODE_STRUCT_DEF:
-            return node_unwrap_struct_def_const(node)->llvm_id;
+            return node_unwrap_struct_def_const(node)->base.llvm_id;
         case NODE_MEMBER_SYM_PIECE_UNTYPED:
             unreachable("");
         case NODE_MEMBER_SYM_PIECE_TYPED:
@@ -240,6 +240,8 @@ static inline Lang_type get_lang_type(const Node* node) {
             return node_unwrap_llvm_store_literal_const(node)->lang_type;
         case NODE_PTR_BYVAL_SYM:
             return node_unwrap_ptr_byval_sym_const(node)->lang_type;
+        case NODE_RAW_UNION_DEF:
+            unreachable("");
     }
     unreachable("");
 }
@@ -249,6 +251,8 @@ static inline Lang_type* get_lang_type_ref(Node* node) {
         case NODE_EXPR:
             todo();
         case NODE_STRUCT_DEF:
+            unreachable("");
+        case NODE_RAW_UNION_DEF:
             unreachable("");
         case NODE_MEMBER_SYM_PIECE_UNTYPED:
             unreachable("NODE_MEMBER_SYM_PIECE_UNTYPED does not have lang_type");
@@ -338,6 +342,8 @@ static inline Node* get_node_src(Node* node) {
             return get_expr_src(node_unwrap_expr(node));
         case NODE_STRUCT_DEF:
             unreachable("");
+        case NODE_RAW_UNION_DEF:
+            unreachable("");
         case NODE_MEMBER_SYM_PIECE_UNTYPED:
             unreachable("");
         case NODE_MEMBER_SYM_PIECE_TYPED:
@@ -425,6 +431,8 @@ static inline Node* get_node_dest(Node* node) {
         case NODE_EXPR:
             return get_expr_dest(node_unwrap_expr(node));
         case NODE_STRUCT_DEF:
+            unreachable("");
+        case NODE_RAW_UNION_DEF:
             unreachable("");
         case NODE_MEMBER_SYM_PIECE_UNTYPED:
             unreachable("");
@@ -525,7 +533,9 @@ static inline Str_view get_node_name(const Node* node) {
         case NODE_EXPR:
             return get_expr_name(node_unwrap_expr_const(node));
         case NODE_STRUCT_DEF:
-            return node_unwrap_struct_def_const(node)->name;
+            return node_unwrap_struct_def_const(node)->base.name;
+        case NODE_RAW_UNION_DEF:
+            return node_unwrap_raw_union_def_const(node)->base.name;
         case NODE_MEMBER_SYM_PIECE_UNTYPED:
             return node_unwrap_member_sym_piece_untyped_const(node)->name;
         case NODE_MEMBER_SYM_PIECE_TYPED:

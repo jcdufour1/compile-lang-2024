@@ -29,6 +29,7 @@
     DO(function_def, NODE_FUNCTION_DEF) \
     DO(function_decl, NODE_FUNCTION_DECL) \
     DO(struct_def, NODE_STRUCT_DEF) \
+    DO(raw_union_def, NODE_RAW_UNION_DEF) \
     DO(member_sym_piece_typed, NODE_MEMBER_SYM_PIECE_TYPED) \
     DO(member_sym_piece_untyped, NODE_MEMBER_SYM_PIECE_UNTYPED) \
     DO(variable_def, NODE_VARIABLE_DEF) \
@@ -257,7 +258,15 @@ typedef struct {
     Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Llvm_id llvm_id;
     Str_view name;
+} Struct_def_base;
+
+typedef struct {
+    Struct_def_base base;
 } Node_struct_def;
+
+typedef struct {
+    Struct_def_base base;
+} Node_raw_union_def;
 
 typedef struct {
     Node_ptr_vec children;

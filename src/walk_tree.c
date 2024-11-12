@@ -190,7 +190,13 @@ void walk_tree(Env* env, void (callback)(Env* env)) {
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_STRUCT_DEF: {
-            Node_ptr_vec* vector = &node_unwrap_struct_def(curr_node)->members;
+            Node_ptr_vec* vector = &node_unwrap_struct_def(curr_node)->base.members;
+            walk_node_ptr_vec(env, vector, callback);
+            assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
+            break;
+        }
+        case NODE_RAW_UNION_DEF: {
+            Node_ptr_vec* vector = &node_unwrap_raw_union_def(curr_node)->base.members;
             walk_node_ptr_vec(env, vector, callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;

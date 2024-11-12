@@ -348,15 +348,17 @@ uint64_t sizeof_item(const Env* env, const Node* item) {
 }
 
 uint64_t sizeof_struct_literal(const Env* env, const Node_e_struct_literal* struct_literal) {
-    return sizeof_struct_definition(env, get_struct_definition_const(env, node_wrap_expr_const(node_wrap_e_struct_literal_const(struct_literal))));
+    const Node_struct_def* struct_def = 
+        get_struct_def_const(env, node_wrap_expr_const(node_wrap_e_struct_literal_const(struct_literal)));
+    return sizeof_struct_def_base(env, &struct_def->base);
 }
 
-uint64_t sizeof_struct_definition(const Env* env, const Node_struct_def* struct_def) {
+uint64_t sizeof_struct_def_base(const Env* env, const Struct_def_base* base) {
     uint64_t required_alignment = 8; // TODO: do not hardcode this
 
     uint64_t total = 0;
-    for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
-        const Node* memb_def = vec_at(&struct_def->members, idx);
+    for (size_t idx = 0; idx < base->members.info.count; idx++) {
+        const Node* memb_def = vec_at(&base->members, idx);
         uint64_t sizeof_curr_item = sizeof_item(env, memb_def);
         if (total%required_alignment + sizeof_curr_item > required_alignment) {
             total += required_alignment - total%required_alignment;
@@ -379,10 +381,44 @@ uint64_t sizeof_struct_expr(const Env* env, const Node_expr* struct_literal_or_d
 uint64_t sizeof_struct(const Env* env, const Node* struct_literal_or_def) {
     switch (struct_literal_or_def->type) {
         case NODE_STRUCT_DEF:
-            return sizeof_struct_definition(env, node_unwrap_struct_def_const(struct_literal_or_def));
+            return sizeof_struct_def_base(env, &node_unwrap_struct_def_const(struct_literal_or_def)->base);
         default:
             node_printf(struct_literal_or_def);
             todo();
+    }
+    unreachable("");
+}
+
+bool lang_type_is_struct(const Env* env, Lang_type lang_type) {
+    Node* def = NULL;
+    if (!symbol_lookup(&def, env, lang_type.str)) {
+        return false;
+    }
+
+    switch (def->type) {
+        case NODE_STRUCT_DEF:
+            return true;
+        case NODE_RAW_UNION_DEF:
+            return false;
+        default:
+            unreachable(NODE_FMT"    "LANG_TYPE_FMT"\n", node_print(def), lang_type_print(lang_type));
+    }
+    unreachable("");
+}
+
+bool lang_type_is_raw_union(const Env* env, Lang_type lang_type) {
+    Node* def = NULL;
+    if (!symbol_lookup(&def, env, lang_type.str)) {
+        return false;
+    }
+
+    switch (def->type) {
+        case NODE_STRUCT_DEF:
+            return false;
+        case NODE_RAW_UNION_DEF:
+            return true;
+        default:
+            unreachable(NODE_FMT"    "LANG_TYPE_FMT"\n", node_print(def), lang_type_print(lang_type));
     }
     unreachable("");
 }
@@ -422,6 +458,8 @@ bool is_corresponding_to_a_struct(const Env* env, const Node* node) {
             // fallthrough
         case NODE_STORE_ANOTHER_NODE:
             // fallthrough
+        case NODE_MEMBER_SYM_PIECE_TYPED:
+            // fallthrough
             assert(get_node_name(node).count > 0);
             if (!symbol_lookup(&var_def, env, get_node_name(node))) {
                 todo();
@@ -437,7 +475,7 @@ bool is_corresponding_to_a_struct(const Env* env, const Node* node) {
     }
 }
 
-bool try_get_struct_definition(const Env* env, Node_struct_def** struct_def, Node* node) {
+bool try_get_struct_def(const Env* env, Node_struct_def** struct_def, Node* node) {
     if (node->type == NODE_EXPR) {
         const Node_expr* expr = node_unwrap_expr_const(node);
         switch (expr->type) {
@@ -694,13 +732,13 @@ bool try_set_struct_literal_assignment_types(const Env* env, Node** new_node, La
     Node* struct_def_;
     try(symbol_lookup(&struct_def_, env, lhs_var_def->lang_type.str));
     Node_struct_def* struct_def = node_unwrap_struct_def(struct_def_);
-    Lang_type new_lang_type = {.str = struct_def->name, .pointer_depth = 0};
+    Lang_type new_lang_type = {.str = struct_def->base.name, .pointer_depth = 0};
     struct_literal->lang_type = new_lang_type;
     
     Node_ptr_vec new_literal_members = {0};
-    for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
+    for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
         log(LOG_DEBUG, "%zu\n", idx);
-        Node* memb_sym_def_ = vec_at(&struct_def->members, idx);
+        Node* memb_sym_def_ = vec_at(&struct_def->base.members, idx);
         Node_variable_def* memb_sym_def = node_unwrap_variable_def(memb_sym_def_);
         log_tree(LOG_DEBUG, node_wrap_expr_const(node_wrap_e_struct_literal_const(struct_literal)));
         Node_assignment* assign_memb_sym = node_unwrap_assignment(vec_at(&struct_literal->members, idx));
@@ -969,7 +1007,18 @@ bool try_set_member_symbol_types(const Env* env, Node** new_node, Lang_type* lan
     if (!symbol_lookup(&struct_def_, env, node_unwrap_variable_def(struct_var)->lang_type.str)) {
         todo(); // this should possibly never happen
     }
-    Node_struct_def* struct_def = node_unwrap_struct_def(struct_def_);
+
+    const Struct_def_base* def_base = NULL;
+    switch (struct_def_->type) {
+        case NODE_STRUCT_DEF:
+            def_base = &node_unwrap_struct_def(struct_def_)->base;
+            break;
+        case NODE_RAW_UNION_DEF:
+            def_base = &node_unwrap_raw_union_def(struct_def_)->base;
+            break;
+        default:
+            unreachable("");
+    }
 
     Node_expr* memb_sym_typed_ = node_unwrap_expr(node_new(node_wrap_expr(node_wrap_e_member_sym_untyped(memb_sym_untyped))->pos, NODE_EXPR));
     memb_sym_typed_->type = NODE_E_MEMBER_SYM_TYPED;
@@ -978,7 +1027,7 @@ bool try_set_member_symbol_types(const Env* env, Node** new_node, Lang_type* lan
     memb_sym_typed->name = memb_sym_untyped->name;
     assert(memb_sym_typed->name.count > 0);
     bool is_struct = true;
-    Node_struct_def* prev_struct_def = struct_def;
+    const Struct_def_base* prev_def_base = def_base;
     for (size_t idx = 0; idx < memb_sym_untyped->children.info.count; idx++) {
         Node* memb_sym_piece_untyped_ = vec_at(&memb_sym_untyped->children, idx);
         Node_member_sym_piece_untyped* memb_sym_piece_untyped = 
@@ -986,7 +1035,7 @@ bool try_set_member_symbol_types(const Env* env, Node** new_node, Lang_type* lan
         if (!is_struct) {
             todo();
         }
-        if (!try_get_member_def(&curr_memb_def, struct_def, node_wrap_member_sym_piece_untyped(memb_sym_piece_untyped))) {
+        if (!try_get_member_def(&curr_memb_def, def_base, node_wrap_member_sym_piece_untyped(memb_sym_piece_untyped))) {
             //msg_invalid_struct_member(env, memb_sym_typed, memb_sym_piece_untyped);
             msg(
                 LOG_ERROR, EXPECT_FAIL_INVALID_STRUCT_MEMBER, node_wrap_member_sym_piece_untyped(memb_sym_piece_untyped)->pos,
@@ -1012,7 +1061,11 @@ bool try_set_member_symbol_types(const Env* env, Node** new_node, Lang_type* lan
             *new_node = node_wrap_expr(node_wrap_e_member_sym_untyped(memb_sym_untyped));
             return false;
         }
-        if (!try_get_struct_definition(env, &struct_def, node_wrap_variable_def(curr_memb_def))) {
+
+        Node_struct_def* struct_def_ = NULL;
+        if (try_get_struct_def(env, &struct_def_, node_wrap_variable_def(curr_memb_def))) {
+            def_base = &struct_def_->base;
+        } else {
             is_struct = false;
         }
 
@@ -1024,9 +1077,9 @@ bool try_set_member_symbol_types(const Env* env, Node** new_node, Lang_type* lan
         memb_sym_piece_typed->lang_type = curr_memb_def->lang_type;
         *lang_type = memb_sym_piece_typed->lang_type;
         vec_append_safe(&a_main, &memb_sym_typed->children, node_wrap_member_sym_piece_typed(memb_sym_piece_typed));
-        memb_sym_piece_typed->struct_index = get_member_index(prev_struct_def, memb_sym_piece_typed);
+        memb_sym_piece_typed->struct_index = get_member_index(prev_def_base, memb_sym_piece_typed);
 
-        prev_struct_def = struct_def;
+        prev_def_base = def_base;
     }
 
     *new_node = node_wrap_expr(node_wrap_e_member_sym_typed(memb_sym_typed));
@@ -1173,6 +1226,9 @@ bool try_set_node_lang_type(const Env* env, Node** new_node, Lang_type* lang_typ
             *new_node = node;
             return true;
         case NODE_STRUCT_DEF:
+            *new_node = node;
+            return true;
+        case NODE_RAW_UNION_DEF:
             *new_node = node;
             return true;
         case NODE_FOR_RANGE:

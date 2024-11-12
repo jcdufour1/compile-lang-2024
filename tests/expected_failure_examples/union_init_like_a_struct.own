@@ -1,0 +1,10 @@
+
+raw_union Union {
+    num: i32
+    cstr: u8*
+}
+
+fn main() i32 {
+    Union union = {.num = 82, .cstr = 21}
+    return 0
+}
