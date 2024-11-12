@@ -85,7 +85,7 @@ static Node_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* for_loo
     Node_label* after_check_label = label_new(env, literal_name_new(), node_wrap_for_with_cond(for_loop)->pos);
     Node_label* after_for_loop_label = label_new(env, literal_name_new(), node_wrap_for_with_cond(for_loop)->pos);
     Node_e_llvm_register_sym* oper_rtn_sym = node_unwrap_e_llvm_register_sym(node_make_expr(node_new(node_wrap_expr(node_wrap_e_operator(operator))->pos, NODE_EXPR), NODE_E_LLVM_REGISTER_SYM));
-    oper_rtn_sym->node_src = node_wrap_expr(node_wrap_e_operator(operator));
+    oper_rtn_sym->node = node_wrap_expr(node_wrap_e_operator(operator));
     Node_cond_goto* check_cond_jmp = conditional_goto_new(
         operator,
         after_check_label->name, 
@@ -138,7 +138,7 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* for_loop) {
     Node_label* after_check_label = label_new(env, literal_name_new(), node_wrap_for_range(for_loop)->pos);
     Node_label* after_for_loop_label = label_new(env, literal_name_new(), node_wrap_for_range(for_loop)->pos);
     Node_e_llvm_register_sym* oper_rtn_sym = node_unwrap_e_llvm_register_sym(node_make_expr(node_new(node_wrap_expr(new_operator)->pos, NODE_EXPR), NODE_E_LLVM_REGISTER_SYM));
-    oper_rtn_sym->node_src = node_wrap_expr(new_operator);
+    oper_rtn_sym->node = node_wrap_expr(new_operator);
     Node_cond_goto* check_cond_jmp = conditional_goto_new(
         node_unwrap_e_operator(new_operator),
         after_check_label->name, 

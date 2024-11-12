@@ -65,7 +65,7 @@ static inline Llvm_id get_llvm_id_expr(const Node_expr* expr) {
         case NODE_E_STRUCT_LITERAL:
             unreachable("");
         case NODE_E_LLVM_REGISTER_SYM:
-            return get_llvm_id(node_unwrap_e_llvm_register_sym_const(expr)->node_src);
+            return get_llvm_id(node_unwrap_e_llvm_register_sym_const(expr)->node);
     }
     unreachable("");
 }
@@ -333,7 +333,7 @@ static inline Node* get_expr_src(Node_expr* expr) {
         case NODE_E_OPERATOR:
             unreachable("");
         case NODE_E_LLVM_REGISTER_SYM:
-            return node_unwrap_e_llvm_register_sym(expr)->node_src;
+            return node_unwrap_e_llvm_register_sym(expr)->node;
     }
     unreachable("");
 }
@@ -393,7 +393,7 @@ static inline Node* get_node_src(Node* node) {
         case NODE_LOAD_ANOTHER_NODE:
             return node_wrap_expr(node_wrap_e_llvm_register_sym(node_unwrap_load_another_node(node)->node_src));
         case NODE_STORE_ANOTHER_NODE:
-            return node_unwrap_store_another_node(node)->node_src;
+            return node_unwrap_store_another_node(node)->node_src->node;
         case NODE_LOAD_ELEMENT_PTR:
             return node_unwrap_load_element_ptr(node)->node_src;
         case NODE_LLVM_STORE_LITERAL:
@@ -483,7 +483,7 @@ static inline Node* get_node_dest(Node* node) {
         case NODE_LOAD_ANOTHER_NODE:
             unreachable("");
         case NODE_STORE_ANOTHER_NODE:
-            return node_unwrap_store_another_node_const(node)->node_dest;
+            return node_unwrap_store_another_node_const(node)->node_dest->node;
         case NODE_LOAD_ELEMENT_PTR:
             unreachable("");
         case NODE_LLVM_STORE_LITERAL:

@@ -30,7 +30,7 @@ static inline Node_e_llvm_register_sym* node_get_llvm_register_sym(Node* node) {
         node_new(node->pos, NODE_EXPR), NODE_E_LLVM_REGISTER_SYM
     ));
     llvm_reg->lang_type = get_lang_type(node);
-    llvm_reg->node_src = node;
+    llvm_reg->node = node;
     return llvm_reg;
 }
 
