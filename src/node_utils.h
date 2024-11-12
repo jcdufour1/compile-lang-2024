@@ -395,7 +395,7 @@ static inline Node* get_node_src(Node* node) {
         case NODE_STORE_ANOTHER_NODE:
             return node_unwrap_store_another_node(node)->node_src->node;
         case NODE_LOAD_ELEMENT_PTR:
-            return node_unwrap_load_element_ptr(node)->node_src;
+            return node_unwrap_load_element_ptr(node)->node_src->node;
         case NODE_LLVM_STORE_LITERAL:
             unreachable("");
         case NODE_PTR_BYVAL_SYM:

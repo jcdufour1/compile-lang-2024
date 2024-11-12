@@ -98,6 +98,7 @@
 
 struct Node_;
 struct Node_expr_;
+struct Node_e_llvm_register_sym;
 
 #define X(lower, upper) \
     upper,
@@ -127,7 +128,7 @@ typedef struct {
     Lang_type lang_type;
     Llvm_id llvm_id;
     size_t struct_index;
-    struct Node_* node_src;
+    struct Node_e_llvm_register_sym_* node_src;
     Str_view name;
 } Node_load_element_ptr;
 
@@ -213,7 +214,7 @@ typedef enum {
 #undef X
 
 #define X(lower, upper, members) \
-typedef struct { \
+typedef struct Node_e_##lower##_ { \
     members \
 } Node_e_##lower;
 

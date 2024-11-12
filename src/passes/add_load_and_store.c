@@ -81,7 +81,7 @@ static bool do_load_struct_element_ptr(
             load_element_ptr->name = get_node_name(prev_struct_sym);
             load_element_ptr->lang_type = element_sym->lang_type;
             load_element_ptr->struct_index = element_sym->struct_index;
-            load_element_ptr->node_src = node_element_ptr_to_load;
+            load_element_ptr->node_src = node_get_llvm_register_sym(node_element_ptr_to_load);
             insert_into_node_ptr_vec(
                 block_children,
                 idx_to_insert_before,
