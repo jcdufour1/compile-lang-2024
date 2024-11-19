@@ -72,7 +72,6 @@ static void show_location_error(Str_view file_text, Pos pos) {
             str_view_consume(&temp_file_text);
         }
     }
-    log(LOG_DEBUG, "%zu\n", count_curr);
     Str_view curr_line = str_view_slice(file_text, 0, count_curr);
     fprintf(stderr, " %5"PRIu32" | "STR_VIEW_FMT"\n", pos.line, str_view_print(curr_line));
     while (file_text.count > 0 && str_view_consume(&file_text) != '\n');

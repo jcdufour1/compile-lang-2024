@@ -276,6 +276,7 @@ typedef struct {
 typedef struct {
     Node_ptr_vec children;
     Symbol_table symbol_table;
+    Pos pos_end;
 } Node_block;
 
 typedef struct {

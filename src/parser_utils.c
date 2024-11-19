@@ -861,7 +861,7 @@ bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node
     switch (do_implicit_conversion_if_needed(lhs_lang_type, assignment->rhs)) {
         case IMPLICIT_CONV_INVALID_TYPES: {
             msg(
-                LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text, node_wrap_assignment(assignment)->pos,
+                LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text, node_wrap_expr(assignment->rhs)->pos,
                 "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
                 lang_type_print(rhs_lang_type), lang_type_print(lhs_lang_type)
             );

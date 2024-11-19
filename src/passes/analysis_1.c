@@ -33,10 +33,10 @@ void analysis_1(Env* env) {
     if (need_add_return && 
         env->ancesters.info.count > 1 && vec_at(&env->ancesters, env->ancesters.info.count - 2)
     ) {
-        Pos pos = vec_top(block_children)->pos;
-        Node_return* rtn_statement = node_unwrap_return(node_new(pos, NODE_RETURN));
+        assert(block->pos_end.line > 0);
+        Node_return* rtn_statement = node_unwrap_return(node_new(block->pos_end, NODE_RETURN));
         rtn_statement->is_auto_inserted = true;
-        rtn_statement->child = node_wrap_e_literal(literal_new(str_view_from_cstr(""), TOKEN_VOID, pos));
+        rtn_statement->child = node_wrap_e_literal(literal_new(str_view_from_cstr(""), TOKEN_VOID, block->pos_end));
         Lang_type dummy;
         Node* new_rtn_statement;
         try_set_node_lang_type(env, &new_rtn_statement, &dummy, node_wrap_return(rtn_statement));

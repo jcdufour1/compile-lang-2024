@@ -7,7 +7,7 @@
 #include "../parser_utils.h"
 #include "../tokens.h"
 
-static Token prev_token;
+static Token prev_token = {0};
 
 // functions return bool if they do not report error to the user
 // functions return PARSE_STATUS if they report error to the user
@@ -852,12 +852,11 @@ static Node_e_symbol_untyped* extract_symbol(Tk_view* tokens) {
 }
 
 static PARSE_STATUS try_extract_function_call(Env* env, Node_e_function_call** child, Tk_view* tokens) {
-    Tk_view curr_tokens = *tokens;
     Token fun_name_token;
-    if (!try_consume(&fun_name_token, &curr_tokens, TOKEN_SYMBOL)) {
+    if (!try_consume(&fun_name_token, tokens, TOKEN_SYMBOL)) {
         unreachable("this is not a function call");
     }
-    if (!try_consume(NULL, &curr_tokens, TOKEN_OPEN_PAR)) {
+    if (!try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
         unreachable("this is not a function call");
     }
     Node_expr* function_call_ = node_unwrap_expr(
@@ -871,12 +870,12 @@ static PARSE_STATUS try_extract_function_call(Env* env, Node_e_function_call** c
     bool prev_is_comma = false;
     while (is_first_time || prev_is_comma) {
         Node_expr* arg;
-        switch (try_extract_expression(env, &arg, &curr_tokens, true)) {
+        switch (try_extract_expression(env, &arg, tokens, true)) {
             case PARSE_EXPR_OK:
                 assert(arg);
                 vec_append_safe(&a_main, &function_call->args, arg);
                 log_tree(LOG_DEBUG, node_wrap_expr(vec_at(&function_call->args, 0)));
-                prev_is_comma = try_consume(NULL, &curr_tokens, TOKEN_COMMA);
+                prev_is_comma = try_consume(NULL, tokens, TOKEN_COMMA);
                 break;
             case PARSE_EXPR_NONE:
                 if (prev_is_comma) {
@@ -892,8 +891,8 @@ static PARSE_STATUS try_extract_function_call(Env* env, Node_e_function_call** c
         is_first_time = false;
     }
 
-    if (!try_consume(NULL, &curr_tokens, TOKEN_CLOSE_PAR)) {
-        msg_parser_expected(env->file_text, tk_view_front(curr_tokens), TOKEN_CLOSE_PAR, TOKEN_COMMA);
+    if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_CLOSE_PAR, TOKEN_COMMA);
         msg(
             LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, node_wrap_expr(node_wrap_e_function_call(function_call))->pos,
             "when parsing arguments for call to function `"STR_VIEW_FMT"`\n", 
@@ -903,7 +902,6 @@ static PARSE_STATUS try_extract_function_call(Env* env, Node_e_function_call** c
     }
 
     *child = function_call;
-    *tokens = curr_tokens;
     return PARSE_OK;
 }
 
@@ -1121,7 +1119,8 @@ static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens,
     }
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
-    while (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
+    Token close_brace_token = {0};
+    while (!try_consume(&close_brace_token, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
         if (tokens->count < 1) {
             // this means that there is no matching `}` found
             if (!is_top_level) {
@@ -1158,6 +1157,7 @@ static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens,
         try_consume(NULL, tokens, TOKEN_SEMICOLON);
         vec_append_safe(&a_main, &(*block)->children, child);
     }
+    (*block)->pos_end = close_brace_token.pos;
 
     Node* dummy = NULL;
 end:
