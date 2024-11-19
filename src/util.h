@@ -30,13 +30,19 @@ typedef enum {
 
 typedef int LOG_LEVEL;
 
+struct Env_;
+typedef struct Env_ Env;
+
 typedef struct {
     const char* file_path;
     uint32_t line;
     uint32_t column;
 } Pos;
 
+#define dummy_env (&(Env){0})
+
 static const Pos dummy_pos = {0};
+static const Str_view dummy_file_text = {0};
 
 // log* functions and macros print messages that are intended for debugging
 void log_internal(LOG_LEVEL log_level, const char* file, int line, int indent, const char* format, ...) 
@@ -59,12 +65,12 @@ __attribute__((format (printf, 5, 6)));
 // msg* functions and macros print messages that are intended for the user (eg. syntax errors)
 void msg_internal(
     const char* file, int line, LOG_LEVEL log_level, EXPECT_FAIL_TYPE expected_fail_type,
-    Pos pos, const char* format, ...
-) __attribute__((format (printf, 6, 7)));
+    Str_view file_text, Pos pos, const char* format, ...
+) __attribute__((format (printf, 7, 8)));
 
-#define msg(log_level, expected_fail_type, pos, ...) \
+#define msg(log_level, expected_fail_type, file_text, pos, ...) \
     do { \
-        msg_internal(__FILE__, __LINE__, log_level, expected_fail_type, pos, __VA_ARGS__); \
+        msg_internal(__FILE__, __LINE__, log_level, expected_fail_type, file_text, pos, __VA_ARGS__); \
     } while (0)
 
 #define todo() \

@@ -155,9 +155,9 @@ static IMPLICIT_CONV_STATUS do_implicit_conversion_if_needed(Lang_type dest_lang
     return IMPLICIT_CONV_CONVERTED;
 }
 
-static void msg_undefined_symbol(const Node* sym_call) {
+static void msg_undefined_symbol(Str_view file_text, const Node* sym_call) {
     msg(
-        LOG_ERROR, EXPECT_FAIL_UNDEFINED_SYMBOL, sym_call->pos,
+        LOG_ERROR, EXPECT_FAIL_UNDEFINED_SYMBOL, file_text, sym_call->pos,
         "symbol `"STR_VIEW_FMT"` is not defined\n", str_view_print(get_node_name(sym_call))
     );
 }
@@ -546,7 +546,7 @@ static void try_set_literal_lang_type(Lang_type* lang_type, Node_e_literal* lite
 bool try_set_symbol_type(const Env* env, Node_expr** new_node, Lang_type* lang_type, Node_e_symbol_untyped* sym_untyped) {
     Node* sym_def;
     if (!symbol_lookup(&sym_def, env, sym_untyped->name)) {
-        msg_undefined_symbol(node_wrap_expr(node_wrap_e_symbol_untyped(sym_untyped)));
+        msg_undefined_symbol(env->file_text, node_wrap_expr(node_wrap_e_symbol_untyped(sym_untyped)));
         return false;
     }
     Node_e_symbol_untyped temp = *sym_untyped;
@@ -600,7 +600,7 @@ bool try_set_binary_lang_type(const Env* env, Node_expr** new_node, Lang_type* l
             }
         } else {
             msg(
-                LOG_ERROR, EXPECT_FAIL_BINARY_MISMATCHED_TYPES, node_wrap_expr(node_wrap_e_operator(node_wrap_op_binary(operator)))->pos,
+                LOG_ERROR, EXPECT_FAIL_BINARY_MISMATCHED_TYPES, env->file_text, node_wrap_expr(node_wrap_e_operator(node_wrap_op_binary(operator)))->pos,
                 "types `"LANG_TYPE_FMT"` and `"LANG_TYPE_FMT"` are not valid operands to binary expression\n",
                 lang_type_print(get_lang_type_expr(operator->lhs)), lang_type_print(get_lang_type_expr(operator->rhs))
             );
@@ -728,7 +728,7 @@ bool try_set_struct_literal_assignment_types(const Env* env, Node** new_node, La
         case NODE_RAW_UNION_DEF:
             // TODO: improve this
             msg(
-                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION,
+                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION, env->file_text,
                 node_wrap_expr(node_wrap_e_struct_literal(struct_literal))->pos,
                 "struct literal cannot be assigned to union\n"
             );
@@ -753,17 +753,18 @@ bool try_set_struct_literal_assignment_types(const Env* env, Node** new_node, La
         assign_memb_sym_rhs->lang_type = memb_sym_def->lang_type;
         if (!str_view_is_equal(memb_sym_def->name, memb_sym_piece_untyped->name)) {
             msg(
-                LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL, node_wrap_expr(node_wrap_e_symbol_untyped(memb_sym_piece_untyped))->pos,
+                LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL, env->file_text,
+                node_wrap_expr(node_wrap_e_symbol_untyped(memb_sym_piece_untyped))->pos,
                 "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
                 str_view_print(memb_sym_def->name), str_view_print(memb_sym_piece_untyped->name)
             );
             msg(
-                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap_variable_def(lhs_var_def)->pos,
+                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, node_wrap_variable_def(lhs_var_def)->pos,
                 "variable `"STR_VIEW_FMT"` is defined as struct `"LANG_TYPE_FMT"`\n",
                 str_view_print(lhs_var_def->name), lang_type_print(lhs_var_def->lang_type)
             );
             msg(
-                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap_variable_def(memb_sym_def)->pos,
+                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, node_wrap_variable_def(memb_sym_def)->pos,
                 "member symbol `"STR_VIEW_FMT"` of struct `"STR_VIEW_FMT"` defined here\n", 
                 str_view_print(memb_sym_def->name), lang_type_print(lhs_var_def->lang_type)
             );
@@ -860,7 +861,7 @@ bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node
     switch (do_implicit_conversion_if_needed(lhs_lang_type, assignment->rhs)) {
         case IMPLICIT_CONV_INVALID_TYPES: {
             msg(
-                LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, node_wrap_assignment(assignment)->pos,
+                LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text, node_wrap_assignment(assignment)->pos,
                 "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
                 lang_type_print(rhs_lang_type), lang_type_print(lhs_lang_type)
             );
@@ -880,7 +881,7 @@ bool try_set_function_call_types(const Env* env, Node_expr** new_node, Lang_type
     Node* fun_def;
     if (!symbol_lookup(&fun_def, env, fun_call->name)) {
         msg(
-            LOG_ERROR, EXPECT_FAIL_UNDEFINED_FUNCTION, node_wrap_expr(node_wrap_e_function_call(fun_call))->pos,
+            LOG_ERROR, EXPECT_FAIL_UNDEFINED_FUNCTION, env->file_text, node_wrap_expr(node_wrap_e_function_call(fun_call))->pos,
             "function `"STR_VIEW_FMT"` is not defined\n", str_view_print(fun_call->name)
         );
         return false;
@@ -921,12 +922,12 @@ bool try_set_function_call_types(const Env* env, Node_expr** new_node, Lang_type
         }
         string_extend_cstr(&print_arena, &message, " arguments expected\n");
         msg(
-            LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, node_wrap_expr(node_wrap_e_function_call(fun_call))->pos,
+            LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, env->file_text, node_wrap_expr(node_wrap_e_function_call(fun_call))->pos,
             STR_VIEW_FMT, str_view_print(string_to_strv(message))
         );
 
         msg(
-            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, fun_def->pos,
+            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, fun_def->pos,
             "function `"STR_VIEW_FMT"` defined here\n", str_view_print(fun_decl->name)
         );
         return false;
@@ -978,7 +979,7 @@ bool try_set_function_call_types(const Env* env, Node_expr** new_node, Lang_type
                 }
             } else {
                 msg(
-                    LOG_ERROR, EXPECT_FAIL_INVALID_FUN_ARG, node_wrap_expr(*argument)->pos, 
+                    LOG_ERROR, EXPECT_FAIL_INVALID_FUN_ARG, env->file_text, node_wrap_expr(*argument)->pos, 
                     "argument is of type `"LANG_TYPE_FMT"`, "
                     "but the corresponding parameter `"STR_VIEW_FMT"` is of type `"LANG_TYPE_FMT"`\n",
                     lang_type_print(get_lang_type_expr(*argument)), 
@@ -986,7 +987,7 @@ bool try_set_function_call_types(const Env* env, Node_expr** new_node, Lang_type
                     lang_type_print(corres_param->lang_type)
                 );
                 msg(
-                    LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap_variable_def(corres_param)->pos,
+                    LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, node_wrap_variable_def(corres_param)->pos,
                     "corresponding parameter `"STR_VIEW_FMT"` defined here\n",
                     str_view_print(corres_param->name)
                 );
@@ -1005,7 +1006,7 @@ bool try_set_member_symbol_types(const Env* env, Node** new_node, Lang_type* lan
     Node* struct_def_;
     Node* struct_var;
     if (!symbol_lookup(&struct_var, env, memb_sym_untyped->name)) {
-        msg_undefined_symbol(node_wrap_expr(node_wrap_e_member_sym_untyped(memb_sym_untyped)));
+        msg_undefined_symbol(env->file_text, node_wrap_expr(node_wrap_e_member_sym_untyped(memb_sym_untyped)));
         *new_node = node_wrap_expr(node_wrap_e_member_sym_untyped(memb_sym_untyped));
         return false;
     }
@@ -1043,7 +1044,7 @@ bool try_set_member_symbol_types(const Env* env, Node** new_node, Lang_type* lan
         if (!try_get_member_def(&curr_memb_def, def_base, node_wrap_member_sym_piece_untyped(memb_sym_piece_untyped))) {
             //msg_invalid_struct_member(env, memb_sym_typed, memb_sym_piece_untyped);
             msg(
-                LOG_ERROR, EXPECT_FAIL_INVALID_STRUCT_MEMBER, node_wrap_member_sym_piece_untyped(memb_sym_piece_untyped)->pos,
+                LOG_ERROR, EXPECT_FAIL_INVALID_STRUCT_MEMBER, env->file_text, node_wrap_member_sym_piece_untyped(memb_sym_piece_untyped)->pos,
                 "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 
                 str_view_print(memb_sym_piece_untyped->name), str_view_print(memb_sym_typed->name)
             );
@@ -1051,7 +1052,7 @@ bool try_set_member_symbol_types(const Env* env, Node** new_node, Lang_type* lan
             try(symbol_lookup(&memb_sym_def_, env, memb_sym_typed->name));
             const Node_variable_def* memb_sym_def = node_unwrap_variable_def_const(memb_sym_def_);
             msg(
-                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap_variable_def_const(memb_sym_def)->pos,
+                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, node_wrap_variable_def_const(memb_sym_def)->pos,
                 "`"STR_VIEW_FMT"` defined here as type `"LANG_TYPE_FMT"`\n",
                 str_view_print(memb_sym_def->name),
                 lang_type_print(memb_sym_def->lang_type)
@@ -1059,7 +1060,7 @@ bool try_set_member_symbol_types(const Env* env, Node** new_node, Lang_type* lan
             Node* struct_def;
             try(symbol_lookup(&struct_def, env, memb_sym_def->lang_type.str));
             msg(
-                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, struct_def->pos,
+                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, struct_def->pos,
                 "struct `"LANG_TYPE_FMT"` defined here\n", 
                 lang_type_print(memb_sym_def->lang_type)
             );
@@ -1199,20 +1200,20 @@ bool try_set_node_lang_type(const Env* env, Node** new_node, Lang_type* lang_typ
             const Node_function_def* fun_def = get_parent_function_def_const(env);
             if (rtn_statement->auto_inserted) {
                 msg(
-                    LOG_ERROR, EXPECT_FAIL_MISSING_RETURN, node_wrap_return(rtn_statement)->pos,
+                    LOG_ERROR, EXPECT_FAIL_MISSING_RETURN, env->file_text, node_wrap_return(rtn_statement)->pos,
                     "no return statement in function that returns `"LANG_TYPE_FMT"`\n",
                     lang_type_print(fun_def->declaration->return_type->lang_type)
                 );
             } else {
                 msg(
-                    LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, node_wrap_return(rtn_statement)->pos,
+                    LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, env->file_text, node_wrap_return(rtn_statement)->pos,
                     "returning `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
                     lang_type_print(get_lang_type_expr(rtn_statement->child)), 
                     lang_type_print(fun_def->declaration->return_type->lang_type)
                 );
             }
             msg(
-                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap_lang_type(fun_def->declaration->return_type)->pos,
+                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, node_wrap_lang_type(fun_def->declaration->return_type)->pos,
                 "function return type `"LANG_TYPE_FMT"` defined here\n",
                 lang_type_print(fun_def->declaration->return_type->lang_type)
             );

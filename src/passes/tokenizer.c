@@ -5,10 +5,12 @@
 #include "../token_view.h"
 #include "../str_view_col.h"
 #include "../parameters.h"
+#include "../env.h"
+#include "passes.h"
 #include <ctype.h>
 
-static void msg_tokenizer_invalid_token(Str_view_col text, Pos pos) {
-    msg(LOG_ERROR, EXPECT_FAIL_INVALID_TOKEN, pos, "invalid token `"STR_VIEW_FMT"`\n", str_view_col_print(text));
+static void msg_tokenizer_invalid_token(Str_view file_text, Str_view_col token_text, Pos pos) {
+    msg(LOG_ERROR, EXPECT_FAIL_INVALID_TOKEN, file_text, pos, "invalid token `"STR_VIEW_COL_FMT"`\n", str_view_col_print(token_text));
 }
 
 static bool local_isalnum_or_underscore(char prev, char curr) {
@@ -49,7 +51,7 @@ static void trim_non_newline_whitespace(Str_view_col* file_text, Pos* pos) {
     }
 }
 
-static bool get_next_token(Pos* pos, Token* token, Str_view_col* file_text, Parameters params) {
+static bool get_next_token(const Env* env, Pos* pos, Token* token, Str_view_col* file_text, Parameters params) {
     memset(token, 0, sizeof(*token));
 
     trim_non_newline_whitespace(file_text, pos);
@@ -117,7 +119,7 @@ static bool get_next_token(Pos* pos, Token* token, Str_view_col* file_text, Para
         token->type = TOKEN_STRING_LITERAL;
         Str_view_col quote_str = {0};
         if (!str_view_col_try_consume_while(&quote_str, pos, file_text, is_not_quote)) {
-            msg(LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_DOUBLE_QUOTE, token->pos, "unmatched `\"`\n");
+            msg(LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_DOUBLE_QUOTE, env->file_text, token->pos, "unmatched `\"`\n");
             token->type = TOKEN_NONTYPE;
             return false;
         }
@@ -167,7 +169,7 @@ static bool get_next_token(Pos* pos, Token* token, Str_view_col* file_text, Para
             token->type = TOKEN_DOUBLE_EQUAL;
             return true;
         } else {
-            msg_tokenizer_invalid_token(equals, *pos);
+            msg_tokenizer_invalid_token(env->file_text, equals, *pos);
             token->type = TOKEN_NONTYPE;
             return true;
         }
@@ -191,7 +193,7 @@ static bool get_next_token(Pos* pos, Token* token, Str_view_col* file_text, Para
             token->type = TOKEN_TRIPLE_DOT;
             return true;
         } else {
-            msg_tokenizer_invalid_token(dots, *pos);
+            msg_tokenizer_invalid_token(env->file_text, dots, *pos);
             token->type = TOKEN_NONTYPE;
             return true;
         }
@@ -204,14 +206,14 @@ static bool get_next_token(Pos* pos, Token* token, Str_view_col* file_text, Para
     }
 }
 
-Tokens tokenize(const String file_text, const Parameters params) {
+Tokens tokenize(Env* env, const Parameters params) {
     Tokens tokens = {0};
 
-    Str_view_col curr_file_text = {.base = {.str = file_text.buf, .count = file_text.info.count}};
+    Str_view_col curr_file_text = {.base = env->file_text};
 
     Pos pos = {.line = 1, .column = 0};
     Token curr_token;
-    while (get_next_token(&pos, &curr_token, &curr_file_text, params)) {
+    while (get_next_token(env, &pos, &curr_token, &curr_file_text, params)) {
         //log(LOG_TRACE, "token received: "TOKEN_FMT"\n", token_print(curr_token));
         if (curr_token.type != TOKEN_COMMENT) {
             vec_append(&a_main, &tokens, curr_token);

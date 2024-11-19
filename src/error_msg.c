@@ -41,11 +41,33 @@ void log_internal(LOG_LEVEL log_level, const char* file, int line, int indent, c
     va_end(args);
 }
 
-void msg_internal(const char* file, int line, LOG_LEVEL log_level, EXPECT_FAIL_TYPE msg_expect_fail_type, Pos pos, const char* format, ...) {
+static Str_view get_curr_line(Str_view file_text, Pos pos) {
+    uint32_t line = 1;
+    for (; file_text.count > 0 && line < pos.line; line++) {
+        while (file_text.count > 0 && str_view_consume(&file_text) != '\n');
+    }
+
+    size_t count = 0;
+    {
+        Str_view temp_file_text = file_text;
+        while (file_text.count > 0 && str_view_front(temp_file_text) != '\n') {
+            count++;
+            str_view_consume(&temp_file_text);
+        }
+    }
+
+    log(LOG_DEBUG, "%zu %zu\n", file_text.count, count);
+    Str_view curr_line = str_view_slice(file_text, 0, count);
+    return curr_line;
+}
+
+void msg_internal(
+    const char* file, int line, LOG_LEVEL log_level, EXPECT_FAIL_TYPE msg_expect_fail_type,
+    Str_view file_text, Pos pos, const char* format, ...
+) {
     va_list args;
     va_start(args, format);
     bool fail_immediately = false;
-
 
     if (log_level >= LOG_ERROR) {
         fail_immediately = params.all_errors_fetal;
@@ -57,10 +79,12 @@ void msg_internal(const char* file, int line, LOG_LEVEL log_level, EXPECT_FAIL_T
     if (log_level >= CURR_LOG_LEVEL) {
         fprintf(stderr, "%s:%d:%d:%s:", pos.file_path, pos.line, pos.column, get_log_level_str(log_level));
         vfprintf(stderr, format, args);
+
+        fprintf(stderr, "    %"PRIu32" | "STR_VIEW_FMT"\n", pos.line, str_view_print(get_curr_line(file_text, pos)));
+
         log_internal(LOG_DEBUG, file, line, 0, "location of error\n");
     }
 
-    log(LOG_DEBUG, "%zu\n", params.expected_fail_types.info.count);
     if (log_level >= LOG_ERROR && params.test_expected_fail) {
         if (params.expected_fail_types.info.count <= expected_fail_count) {
             log(LOG_FETAL, "too many fails occured\n");
@@ -69,8 +93,7 @@ void msg_internal(const char* file, int line, LOG_LEVEL log_level, EXPECT_FAIL_T
         assert(expected_fail_count < params.expected_fail_types.info.count && "out of bounds");
         EXPECT_FAIL_TYPE expected_expect_fail = vec_at(&params.expected_fail_types, expected_fail_count);
         assert(expected_expect_fail != EXPECT_FAIL_TYPE_NONE);
-        log(LOG_DEBUG, "YES %d\n", msg_expect_fail_type);
-        log(LOG_DEBUG, "YES %d\n", expected_expect_fail);
+
         if (msg_expect_fail_type != expected_expect_fail) {
             log(LOG_FETAL, "incorrect fail type occured\n");
             exit(EXIT_CODE_FAIL);

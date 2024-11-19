@@ -17,9 +17,9 @@ static inline void insert_into_node_ptr_vec(
     }
 }
 
-Tokens tokenize(const String file_text, const Parameters params);
+Tokens tokenize(Env* env, const Parameters params);
 
-Node_block* parse(const Tokens tokens);
+Node_block* parse(Env* env, const Tokens tokens);
 
 void analysis_1(Env* env);
 

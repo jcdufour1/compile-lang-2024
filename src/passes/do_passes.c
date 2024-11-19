@@ -24,20 +24,21 @@ static void fail(void) {
     }
 }
 
-void do_passes(String file_text, const Parameters* params) {
-    Tokens tokens = tokenize(file_text, *params);
+void do_passes(Str_view file_text, const Parameters* params) {
+    Env env = {0};
+    env.file_text = file_text;
+    Tokens tokens = tokenize(&env, *params);
     if (error_count > 0) {
         fail();
     }
 
-    Node_block* root = parse(tokens);
+    Node_block* root = parse(&env, tokens);
     if (error_count > 0) {
         fail();
     }
     arena_reset(&print_arena);
     log_tree(LOG_DEBUG, node_wrap_block(root));
 
-    Env env = {0};
     //log_tree(LOG_DEBUG, node_wrap_block(*root));
     start_walk(&env, &root, analysis_1);
     log_tree(LOG_DEBUG, node_wrap_block(root));

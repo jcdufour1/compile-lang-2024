@@ -5,10 +5,10 @@
 #include <stdlib.h>
 #include <errno.h>
 
-bool read_file(String* file_text, const char* input_file_name) {
+bool read_file(Str_view* result, const char* input_file_name) {
     assert(input_file_name);
 
-    memset(file_text, 0, sizeof(*file_text));
+    String file_text = {0};
     FILE* file = fopen(input_file_name, "rb");
     if (!file) {
         return false;
@@ -18,12 +18,13 @@ bool read_file(String* file_text, const char* input_file_name) {
     size_t amount_read;
     // TODO: check for errors?
     do {
-        vec_reserve(&a_main, file_text, buf_size);
-        amount_read = fread(file_text->buf + file_text->info.count, 1, buf_size, file);
-        file_text->info.count += amount_read;
+        vec_reserve(&a_main, &file_text, buf_size);
+        amount_read = fread(file_text.buf + file_text.info.count, 1, buf_size, file);
+        file_text.info.count += amount_read;
     } while (amount_read > 0);
 
     fclose(file);
+    *result = string_to_strv(file_text);
     return true;
 }
 
@@ -31,7 +32,7 @@ void write_file(const char* file_path, Str_view text_to_write) {
     FILE* file = fopen(file_path, "w");
     if (!file) {
         msg(
-            LOG_FETAL, EXPECT_FAIL_TYPE_NONE, dummy_pos, "could not open file %s: errno %d (%s)\n",
+            LOG_FETAL, EXPECT_FAIL_TYPE_NONE, dummy_file_text, dummy_pos, "could not open file %s: errno %d (%s)\n",
             params.input_file_name, errno, strerror(errno)
         );
         exit(EXIT_CODE_FAIL);

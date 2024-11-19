@@ -65,12 +65,12 @@ static Pos get_curr_pos(Tk_view tokens) {
     return get_curr_token(tokens).pos;
 }
 
-#define msg_expected_expression(tokens) \
+#define msg_expected_expression(file_text, tokens) \
     do { \
-        msg(LOG_ERROR, EXPECT_FAIL_EXPECTED_EXPRESSION, get_curr_pos(tokens), "expected expression\n"); \
+        msg(LOG_ERROR, EXPECT_FAIL_EXPECTED_EXPRESSION, file_text, get_curr_pos(tokens), "expected expression\n"); \
     } while (0)
 
-static void msg_parser_expected_internal(const char* file, int line, Token got, int count_expected, ...) {
+static void msg_parser_expected_internal(Str_view file_text, const char* file, int line, Token got, int count_expected, ...) {
     va_list args;
     va_start(args, count_expected);
 
@@ -96,26 +96,26 @@ static void msg_parser_expected_internal(const char* file, int line, Token got, 
     if (got.type == TOKEN_NONTYPE) {
         expect_fail_type = EXPECT_FAIL_INVALID_TOKEN;
     }
-    msg_internal(file, line, LOG_ERROR, expect_fail_type, got.pos, STR_VIEW_FMT"\n", str_view_print(string_to_strv(message)));
+    msg_internal(file, line, LOG_ERROR, expect_fail_type, file_text, got.pos, STR_VIEW_FMT"\n", str_view_print(string_to_strv(message)));
 
     va_end(args);
 }
 
-#define msg_parser_expected(got, ...) \
+#define msg_parser_expected(file_text, got, ...) \
     do { \
-        msg_parser_expected_internal(__FILE__, __LINE__, got, sizeof((TOKEN_TYPE[]){__VA_ARGS__})/sizeof(TOKEN_TYPE), __VA_ARGS__); \
+        msg_parser_expected_internal(file_text, __FILE__, __LINE__, got, sizeof((TOKEN_TYPE[]){__VA_ARGS__})/sizeof(TOKEN_TYPE), __VA_ARGS__); \
     } while(0)
 
 static PARSE_STATUS msg_redefinition_of_symbol(const Env* env, const Node* new_sym_def) {
     msg(
-        LOG_ERROR, EXPECT_FAIL_REDEFINITION_SYMBOL, new_sym_def->pos,
+        LOG_ERROR, EXPECT_FAIL_REDEFINITION_SYMBOL, env->file_text, new_sym_def->pos,
         "redefinition of symbol "STR_VIEW_FMT"\n", str_view_print(get_node_name(new_sym_def))
     );
 
     Node* original_def;
     try(symbol_lookup(&original_def, env, get_node_name(new_sym_def)));
     msg(
-        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, original_def->pos,
+        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, original_def->pos,
         STR_VIEW_FMT " originally defined here\n", str_view_print(get_node_name(original_def))
     );
 
@@ -576,7 +576,7 @@ static PARSE_STATUS extract_function_decl_common(
         return msg_redefinition_of_symbol(env, node_wrap_function_decl(*fun_decl));
     }
     if (!try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
-        msg_parser_expected(tk_view_front(*tokens), TOKEN_OPEN_PAR);
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_OPEN_PAR);
         return PARSE_ERROR;
     }
     if (PARSE_OK != extract_function_parameters(env, &(*fun_decl)->parameters, tokens)) {
@@ -605,7 +605,7 @@ static PARSE_STATUS extract_struct_base_def(Env* env, Struct_def_base* base, Str
     base->name = name;
 
     if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-        msg_parser_expected(tk_view_front(*tokens), TOKEN_OPEN_CURLY_BRACE);
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_OPEN_CURLY_BRACE);
         return PARSE_ERROR;
     }
 
@@ -626,7 +626,7 @@ static PARSE_STATUS extract_struct_base_def(Env* env, Struct_def_base* base, Str
     }
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
-        msg_parser_expected(tk_view_front(*tokens), TOKEN_CLOSE_CURLY_BRACE);
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_CLOSE_CURLY_BRACE);
         return PARSE_ERROR;
     }
 
@@ -686,19 +686,19 @@ static PARSE_STATUS try_extract_variable_declaration(
     try_consume(NULL, tokens, TOKEN_NEW_LINE);
     Token name_token;
     if (!try_consume(&name_token, tokens, TOKEN_SYMBOL)) {
-        msg_parser_expected(tk_view_front(*tokens), TOKEN_SYMBOL);
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_SYMBOL);
         return PARSE_ERROR;
     }
     Node_variable_def* variable_def = node_unwrap_variable_def(node_new(name_token.pos, NODE_VARIABLE_DEF));
     variable_def->name = name_token.text;
     if (!try_consume(NULL, tokens, TOKEN_COLON)) {
-        msg_parser_expected(tk_view_front(*tokens), TOKEN_COLON);
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_COLON);
         return PARSE_ERROR;
     }
     Token lang_type_token;
     if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
         // TODO: make this message say that type is expected instead of `sym`
-        msg_parser_expected(tk_view_front(*tokens), TOKEN_SYMBOL);
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_SYMBOL);
         return PARSE_ERROR;
     }
     variable_def->lang_type.str = lang_type_token.text;
@@ -727,20 +727,20 @@ static PARSE_STATUS extract_for_range_internal(Env* env, Node_for_range* for_loo
 
     Node_expr* lower_bound_child;
     if (PARSE_EXPR_OK != try_extract_expression(env, &lower_bound_child, tokens, true)) {
-        msg_expected_expression(*tokens);
+        msg_expected_expression(env->file_text, *tokens);
         return PARSE_ERROR;
     }
     Node_for_lower_bound* lower_bound = node_unwrap_for_lower_bound(node_new(node_wrap_expr(lower_bound_child)->pos, NODE_FOR_LOWER_BOUND));
     lower_bound->child = lower_bound_child;
     for_loop->lower_bound = lower_bound;
     if (!try_consume(NULL, tokens, TOKEN_DOUBLE_DOT)) {
-        msg_parser_expected(tk_view_front(*tokens), TOKEN_DOUBLE_DOT);
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_DOUBLE_DOT);
         return PARSE_ERROR;
     }
 
     Node_expr* upper_bound_child;
     if (PARSE_EXPR_OK != try_extract_expression(env, &upper_bound_child, tokens, true)) {
-        msg_expected_expression(*tokens);
+        msg_expected_expression(env->file_text, *tokens);
         return PARSE_ERROR;
     }
     Node_for_upper_bound* upper_bound = node_unwrap_for_upper_bound(node_new(node_wrap_expr(upper_bound_child)->pos, NODE_FOR_UPPER_BOUND));
@@ -792,27 +792,27 @@ static PARSE_STATUS extract_function_decl(Env* env, Node_function_decl** fun_dec
 
     try(try_consume(NULL, tokens, TOKEN_EXTERN));
     if (!try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
-        msg_parser_expected(tk_view_front(*tokens), TOKEN_OPEN_PAR);
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_OPEN_PAR);
         goto error;
     }
     Token extern_type_token;
     if (!try_consume(&extern_type_token, tokens, TOKEN_STRING_LITERAL)) {
-        msg_parser_expected(tk_view_front(*tokens), TOKEN_STRING_LITERAL);
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_STRING_LITERAL);
         goto error;
     }
     if (!str_view_cstr_is_equal(extern_type_token.text, "c")) {
         msg(
-            LOG_ERROR, EXPECT_FAIL_INVALID_EXTERN_TYPE, extern_type_token.pos,
+            LOG_ERROR, EXPECT_FAIL_INVALID_EXTERN_TYPE, env->file_text, extern_type_token.pos,
             "invalid extern type `"STR_VIEW_FMT"`\n", str_view_print(extern_type_token.text)
         );
         goto error;
     }
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
-        msg_parser_expected(tk_view_front(*tokens), TOKEN_CLOSE_PAR);
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_CLOSE_PAR);
         goto error;
     }
     if (!try_consume(NULL, tokens, TOKEN_FN)) {
-        msg_parser_expected(tk_view_front(*tokens), TOKEN_FN);
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_FN);
         goto error;
     }
     if (PARSE_OK != extract_function_decl_common(env, fun_decl, tokens)) {
@@ -880,7 +880,7 @@ static PARSE_STATUS try_extract_function_call(Env* env, Node_e_function_call** c
                 break;
             case PARSE_EXPR_NONE:
                 if (prev_is_comma) {
-                    msg_expected_expression(*tokens);
+                    msg_expected_expression(env->file_text, *tokens);
                     return PARSE_ERROR;
                 }
                 break;
@@ -893,9 +893,9 @@ static PARSE_STATUS try_extract_function_call(Env* env, Node_e_function_call** c
     }
 
     if (!try_consume(NULL, &curr_tokens, TOKEN_CLOSE_PAR)) {
-        msg_parser_expected(tk_view_front(curr_tokens), TOKEN_CLOSE_PAR, TOKEN_COMMA);
+        msg_parser_expected(env->file_text, tk_view_front(curr_tokens), TOKEN_CLOSE_PAR, TOKEN_COMMA);
         msg(
-            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, node_wrap_expr(node_wrap_e_function_call(function_call))->pos,
+            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, node_wrap_expr(node_wrap_e_function_call(function_call))->pos,
             "when parsing arguments for call to function `"STR_VIEW_FMT"`\n", 
             str_view_print(function_call->name)
         );
@@ -951,7 +951,7 @@ static PARSE_STATUS extract_assignment(Env* env, Node_assignment** assign, Tk_vi
         }
         if (!try_consume(&equal_token, tokens, TOKEN_SINGLE_EQUAL)) {
             todo();
-            msg_parser_expected(tk_view_front(*tokens), TOKEN_SINGLE_EQUAL);
+            msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_SINGLE_EQUAL);
             return PARSE_ERROR;
         }
         *assign = node_unwrap_assignment(node_new(equal_token.pos, NODE_ASSIGNMENT));
@@ -961,7 +961,7 @@ static PARSE_STATUS extract_assignment(Env* env, Node_assignment** assign, Tk_vi
 
     switch (try_extract_expression(env, &(*assign)->rhs, tokens, false)) {
         case PARSE_EXPR_NONE:
-            msg_expected_expression(*tokens);
+            msg_expected_expression(env->file_text, *tokens);
             return PARSE_ERROR;
         case PARSE_EXPR_ERROR:
             return PARSE_ERROR;
@@ -1090,7 +1090,7 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
 
     if (!try_consume(NULL, tokens, TOKEN_NEW_LINE)) {
         msg(
-            LOG_ERROR, EXPECT_FAIL_NO_NEW_LINE_AFTER_STATEMENT, tk_view_front(*tokens).pos,
+            LOG_ERROR, EXPECT_FAIL_NO_NEW_LINE_AFTER_STATEMENT, env->file_text, tk_view_front(*tokens).pos,
             "expected newline after statement\n"
         );
         return PARSE_EXPR_ERROR;
@@ -1115,7 +1115,7 @@ static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens,
 
     Token open_brace_token = {0};
     if (!is_top_level && !try_consume(&open_brace_token, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-        msg_parser_expected(tk_view_front(*tokens), TOKEN_OPEN_CURLY_BRACE);
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_OPEN_CURLY_BRACE);
         status = PARSE_ERROR;
         goto end;
     }
@@ -1126,7 +1126,7 @@ static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens,
             // this means that there is no matching `}` found
             if (!is_top_level) {
                 msg(
-                    LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_CURLY_BRACE, open_brace_token.pos, 
+                    LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_CURLY_BRACE, env->file_text, open_brace_token.pos, 
                     "opening `{` is unmatched\n"
                 );
                 status = PARSE_ERROR;
@@ -1170,7 +1170,7 @@ end:
 static PARSE_STATUS extract_struct_literal(Env* env, Node_e_struct_literal** struct_lit, Tk_view* tokens) {
     Token start_token;
     if (!try_consume(&start_token, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-        msg_parser_expected(tk_view_front(*tokens), TOKEN_OPEN_CURLY_BRACE);
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_OPEN_CURLY_BRACE);
         return PARSE_ERROR;
     }
     Node_expr* struct_lit_ = node_unwrap_expr(node_new(start_token.pos, NODE_EXPR));
@@ -1194,7 +1194,7 @@ static PARSE_STATUS extract_struct_literal(Env* env, Node_e_struct_literal** str
     }
 
     if (!try_consume(&start_token, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
-        msg_parser_expected(tk_view_front(*tokens), TOKEN_COMMA, TOKEN_NEW_LINE, TOKEN_CLOSE_CURLY_BRACE);
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_COMMA, TOKEN_NEW_LINE, TOKEN_CLOSE_CURLY_BRACE);
         return PARSE_ERROR;
     }
 
@@ -1258,19 +1258,19 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node_expr** resu
                 // TODO: remove this if if it causes too many issues
                 if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
                     msg(
-                        LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_PAR, open_par_token.pos, 
+                        LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_PAR, env->file_text, open_par_token.pos, 
                         "opening `(` is unmatched\n"
                     );
                 }
                 return PARSE_EXPR_ERROR;
             case PARSE_EXPR_NONE:
                 todo();
-                msg_expected_expression(*tokens);
+                msg_expected_expression(env->file_text, *tokens);
                 return PARSE_EXPR_ERROR;
         }
         if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
             msg(
-                LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_PAR, open_par_token.pos, 
+                LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_PAR, env->file_text, open_par_token.pos, 
                 "opening `(` is unmatched\n"
             );
             return PARSE_EXPR_ERROR;
@@ -1291,18 +1291,18 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node_expr** resu
                 {
                     Token temp;
                     if (!try_consume(&temp, tokens, TOKEN_LESS_THAN)) {
-                        msg_parser_expected(temp, TOKEN_LESS_THAN);
+                        msg_parser_expected(env->file_text, temp, TOKEN_LESS_THAN);
                         return PARSE_EXPR_ERROR;
                     }
                 }
                 if (!try_consume(&symbol, tokens, TOKEN_SYMBOL)) {
-                    msg_parser_expected(symbol, TOKEN_SYMBOL);
+                    msg_parser_expected(env->file_text, symbol, TOKEN_SYMBOL);
                     return PARSE_EXPR_ERROR;
                 }
                 {
                     Token temp;
                     if (!try_consume(&temp, tokens, TOKEN_GREATER_THAN)) {
-                        msg_parser_expected(temp, TOKEN_GREATER_THAN);
+                        msg_parser_expected(env->file_text, temp, TOKEN_GREATER_THAN);
                         return PARSE_EXPR_ERROR;
                     }
                 }
@@ -1407,7 +1407,7 @@ static PARSE_EXPR_STATUS try_extract_expression(Env* env, Node_expr** result, Tk
                 case PARSE_EXPR_OK:
                     break;
                 case PARSE_EXPR_NONE: {
-                    msg_expected_expression(*tokens);
+                    msg_expected_expression(env->file_text, *tokens);
                     return PARSE_EXPR_ERROR;
                 }
                 case PARSE_EXPR_ERROR: {
@@ -1432,7 +1432,7 @@ static PARSE_EXPR_STATUS try_extract_expression(Env* env, Node_expr** result, Tk
                     break;
                 case PARSE_EXPR_NONE: {
                     log_tokens(LOG_DEBUG, *tokens);
-                    msg_expected_expression(*tokens);
+                    msg_expected_expression(env->file_text, *tokens);
                     return PARSE_EXPR_ERROR;
                 }
                 case PARSE_EXPR_ERROR: {
@@ -1455,14 +1455,13 @@ static PARSE_EXPR_STATUS try_extract_expression(Env* env, Node_expr** result, Tk
     return PARSE_EXPR_OK;
 }
 
-Node_block* parse(const Tokens tokens) {
+Node_block* parse(Env* env, const Tokens tokens) {
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
-    Env env = {0};
     Node_block* root;
-    extract_block(&env, &root, &token_view, true);
-    log(LOG_DEBUG, "%zu\n", env.ancesters.info.count);
-    assert(env.ancesters.info.count == 0);
+    extract_block(env, &root, &token_view, true);
+    log(LOG_DEBUG, "%zu\n", env->ancesters.info.count);
+    assert(env->ancesters.info.count == 0);
     log(LOG_DEBUG, "done with parsing:\n");
-    symbol_log(LOG_TRACE, &env);
+    symbol_log(LOG_TRACE, env);
     return root;
 }
