@@ -56,7 +56,6 @@ static Str_view get_curr_line(Str_view file_text, Pos pos) {
         }
     }
 
-    log(LOG_DEBUG, "%zu %zu\n", file_text.count, count);
     Str_view curr_line = str_view_slice(file_text, 0, count);
     return curr_line;
 }
@@ -80,7 +79,13 @@ void msg_internal(
         fprintf(stderr, "%s:%d:%d:%s:", pos.file_path, pos.line, pos.column, get_log_level_str(log_level));
         vfprintf(stderr, format, args);
 
-        fprintf(stderr, "    %"PRIu32" | "STR_VIEW_FMT"\n", pos.line, str_view_print(get_curr_line(file_text, pos)));
+        fprintf(stderr, " %5"PRIu32" | "STR_VIEW_FMT"\n", pos.line, str_view_print(get_curr_line(file_text, pos)));
+        fprintf(stderr, "       | ");
+        for (uint32_t idx = 1; idx < pos.column; idx++) {
+            fprintf(stderr, " ");
+        }
+        fprintf(stderr, "^");
+        fprintf(stderr, "\n");
 
         log_internal(LOG_DEBUG, file, line, 0, "location of error\n");
     }
