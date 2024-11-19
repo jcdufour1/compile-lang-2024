@@ -1198,7 +1198,7 @@ bool try_set_node_lang_type(const Env* env, Node** new_node, Lang_type* lang_typ
             }
 
             const Node_function_def* fun_def = get_parent_function_def_const(env);
-            if (rtn_statement->auto_inserted) {
+            if (rtn_statement->is_auto_inserted) {
                 msg(
                     LOG_ERROR, EXPECT_FAIL_MISSING_RETURN, env->file_text, node_wrap_return(rtn_statement)->pos,
                     "no return statement in function that returns `"LANG_TYPE_FMT"`\n",

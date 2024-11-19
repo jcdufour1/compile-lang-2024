@@ -316,7 +316,7 @@ typedef struct {
 
 typedef struct {
     struct Node_expr_* child;
-    bool auto_inserted : 1;
+    bool is_auto_inserted : 1;
 } Node_return;
 
 typedef struct {

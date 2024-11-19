@@ -35,7 +35,7 @@ void analysis_1(Env* env) {
     ) {
         Pos pos = vec_top(block_children)->pos;
         Node_return* rtn_statement = node_unwrap_return(node_new(pos, NODE_RETURN));
-        rtn_statement->auto_inserted = true;
+        rtn_statement->is_auto_inserted = true;
         rtn_statement->child = node_wrap_e_literal(literal_new(str_view_from_cstr(""), TOKEN_VOID, pos));
         Lang_type dummy;
         Node* new_rtn_statement;
