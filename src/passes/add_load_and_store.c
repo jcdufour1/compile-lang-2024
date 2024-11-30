@@ -307,7 +307,7 @@ static void insert_store(
         }
     }
 
-    if (symbol_call->type == NODE_E_MEMBER_SYM_TYPED) {
+    if (symbol_call->type == NODE_EXPR && node_unwrap_expr(symbol_call)) {
         todo();
     } else {
         Node_store_another_node* store = node_unwrap_store_another_node(node_new(symbol_call->pos, NODE_STORE_ANOTHER_NODE));

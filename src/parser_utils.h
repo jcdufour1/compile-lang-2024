@@ -94,11 +94,11 @@ bool lang_type_is_struct(const Env* env, Lang_type lang_type);
 
 bool lang_type_is_raw_union(const Env* env, Lang_type lang_type);
 
-static inline bool is_struct_symbol(const Env* env, const Node* symbol) {
+static inline bool is_struct_symbol(const Env* env, const Node_expr* symbol) {
     assert(symbol->type == NODE_E_SYMBOL_TYPED || symbol->type == NODE_E_MEMBER_SYM_TYPED);
 
     Node* var_def;
-    if (!symbol_lookup(&var_def, env, get_node_name(symbol))) {
+    if (!symbol_lookup(&var_def, env, get_node_name_expr(symbol))) {
         unreachable("");
     }
     return is_struct_variable_definition(env, node_unwrap_variable_def(var_def));
