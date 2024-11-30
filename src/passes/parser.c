@@ -195,12 +195,15 @@ static bool starts_with_variable_declaration(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_LET;
 }
 
-static bool starts_with_variable_type_declaration(Tk_view tokens) {
-    try_consume(NULL, &tokens, TOKEN_LET);
-    if (tokens.count < 2) {
+static bool starts_with_variable_type_declaration(Tk_view tokens, bool require_let) {
+    if (!try_consume(NULL, &tokens, TOKEN_LET) && require_let) {
         return false;
     }
-    return tk_view_front(tokens).type == TOKEN_SYMBOL && tk_view_at(tokens, 1).type == TOKEN_COLON;
+    if (!try_consume(NULL, &tokens, TOKEN_SYMBOL)) {
+        return false;
+    }
+    try_consume(NULL, &tokens, TOKEN_COLON);
+    return try_consume(NULL, &tokens, TOKEN_SYMBOL);
 }
 
 static bool starts_with_struct_literal(Tk_view tokens) {
@@ -691,10 +694,7 @@ static PARSE_STATUS try_extract_variable_declaration(
     }
     Node_variable_def* variable_def = node_unwrap_variable_def(node_new(name_token.pos, NODE_VARIABLE_DEF));
     variable_def->name = name_token.text;
-    if (!try_consume(NULL, tokens, TOKEN_COLON)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_COLON);
-        return PARSE_ERROR;
-    }
+    try_consume(NULL, tokens, TOKEN_COLON);
     Token lang_type_token;
     if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
         // TODO: make this message say that type is expected instead of `sym`
@@ -761,7 +761,7 @@ static PARSE_STATUS extract_for_loop(Env* env, Node** for_loop_result, Tk_view* 
     try(try_consume(&for_token, tokens, TOKEN_FOR));
     Node_for_range* for_loop = node_unwrap_for_range(node_new(for_token.pos, NODE_FOR_RANGE));
     
-    if (starts_with_variable_type_declaration(*tokens)) {
+    if (starts_with_variable_type_declaration(*tokens, false)) {
         if (PARSE_OK != try_extract_variable_declaration(env, &for_loop->var_def, tokens, false, true)) {
             todo();
             return PARSE_ERROR;

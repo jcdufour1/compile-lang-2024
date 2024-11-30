@@ -1,9 +1,0 @@
-
-struct Number {
-    num i32 
-    file: u8*
-}
-
-fn main() i32 {
-    return 0
-}

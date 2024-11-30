@@ -1,13 +1,13 @@
 
-extern("c") fn printf(format_string: u8*, args: any...) i32
+extern("c") fn printf(format_string u8*, args any...) i32
 
 raw_union Union {
-    num: i32
-    cstr: u8*
+    num i32
+    cstr u8*
 }
 
 fn main() i32 {
-    let union: Union
+    let union Union
 
     union.num = 45
     printf("%d\n", union.num)

@@ -1,5 +1,11 @@
-thing
-thing
+thing with colon
+thing with colon
+thing without colon
+thing without colon
+thing with colon no let
+thing with colon no let
+thing without colon no let
+thing without colon no let
 new programming language
 hello: 89
 67

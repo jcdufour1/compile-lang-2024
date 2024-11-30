@@ -1,25 +1,25 @@
 
-extern("c") fn printf(format_string: u8*, args: any...) i32
+extern("c") fn printf(format_string u8*, args any...) i32
 
 struct Token {
-    num: i32
-    string_data: u8*
-    div5: Div
+    num i32
+    string_data u8*
+    div5 Div
 }
 
 struct Div {
-    numerator: i32
-    denominator: i32
+    numerator i32
+    denominator i32
 }
 
-fn get_numerator(div: Div) i32 {
+fn get_numerator(div Div) i32 {
     div.numerator = 8
     div.denominator = 7
     printf("%d/%d\n", div.numerator, div.denominator)
     return div.numerator
 }
 
-fn get_div(div: Div) Div {
+fn get_div(div Div) Div {
     div.numerator = 14
     div.denominator = 34
     printf("%d/%d\n", div.numerator, div.denominator)
@@ -27,21 +27,21 @@ fn get_div(div: Div) Div {
 }
 
 fn main() i32 {
-    let div: Div
+    let div Div
     div = {.numerator = 9, .denominator = 2}
     printf("%d/%d\n", div.numerator, div.denominator)
     div.numerator = 11
     div.denominator = 10
-    let result: i32 = get_numerator(div)
+    let result i32 = get_numerator(div)
     printf("%d/%d\n", div.numerator, div.denominator)
     printf("%d/%d\n", result, div.denominator)
-    let new_div3: Div = get_div(div)
+    let new_div3 Div = get_div(div)
     printf("%d/%d\n", new_div3.numerator, new_div3.denominator)
     // confirm that div is not modified by get_div
     printf("%d/%d\n", div.numerator, div.denominator)
     printf("%d/%d\n", result, div.denominator)
 
-    let token: Token
+    let token Token
     token.num = 923;
     token.string_data = "hello";
     token.div5 = new_div3;
@@ -53,10 +53,10 @@ fn main() i32 {
     token.div5 = div;
     printf("%d/%d\n", token.div5.numerator, token.div5.denominator)
 
-    let token2: Token
+    let token2 Token
     token2.num = 82
     token2.string_data = "bye"
-    let div19: Div = {.numerator = 56, .denominator = 84}
+    let div19 Div = {.numerator = 56, .denominator = 84}
     token2.div5 = div19
 
     token = token2

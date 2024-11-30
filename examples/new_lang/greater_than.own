@@ -1,4 +1,4 @@
-extern("c") fn puts(str_to_print: u8*) i32
+extern("c") fn puts(str_to_print u8*) i32
 
 fn do_constants() {
     if 8 < 1 {
@@ -27,7 +27,7 @@ fn do_constants() {
 }
 
 fn do_var_lhs() {
-    let num1: i32 = 8
+    let num1 i32 = 8
 
     if num1 < 1 {
         puts("1")
@@ -55,7 +55,7 @@ fn do_var_lhs() {
 }
 
 fn do_var_rhs() {
-    let num2: i32 = 8
+    let num2 i32 = 8
 
     if 1 < num2  {
         puts("1")
@@ -83,8 +83,8 @@ fn do_var_rhs() {
 }
 
 fn do_var_both() {
-    let lhs: i32 = 8
-    let rhs: i32
+    let lhs i32 = 8
+    let rhs i32
 
     lhs = 1
     rhs = 8
@@ -122,12 +122,12 @@ fn do_var_both() {
         puts("6")
     }
 
-    let div: Div
+    let div Div
 }
 
 struct Div {
-    a: i32
-    b: i32
+    a i32
+    b i32
 }
 
 fn main() i32 {

@@ -67,7 +67,6 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_open_brace.own": ["parser-expected"],
     EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_name.own": ["parser-expected"],
     EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_memb_name.own": ["parser-expected"],
-    EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_memb_colon.own": ["parser-expected"],
     EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_memb_type.own": ["parser-expected"],
     EXPECTED_FAIL_EXAMPLES_DIR + "structs_missing_close_brace.own": ["parser-expected"],
     EXPECTED_FAIL_EXAMPLES_DIR + "struct_lit_no_close_brace.own": ["parser-expected"],
@@ -81,7 +80,6 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "not_is_first_op_and_lhs_lower_pres_than_rhs.own": ["expected-expression"],
     EXPECTED_FAIL_EXAMPLES_DIR + "unclosed_string_literal.own": ["missing-close-double-quote"],
     EXPECTED_FAIL_EXAMPLES_DIR + "union_init_like_a_struct.own": ["struct-init-on-raw-union"],
-
 }
 
 def to_str(a):
