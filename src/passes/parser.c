@@ -380,6 +380,8 @@ static bool can_end_statement(Token token) {
             return true;
         case TOKEN_RAW_UNION:
             return false;
+        case TOKEN_ELSE:
+            return false;
     }
     unreachable("");
 }
@@ -493,6 +495,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_NEW_LINE:
             return false;
         case TOKEN_RAW_UNION:
+            return false;
+        case TOKEN_ELSE:
             return false;
     }
     unreachable("");
@@ -979,12 +983,35 @@ static Node_condition* extract_condition(Env* env, Tk_view* tokens) {
     return condition;
 }
 
-static PARSE_STATUS extract_if_statement(Env* env, Node_if** if_statement, Tk_view* tokens) {
+static PARSE_STATUS extract_if_else_chain(Env* env, Node_if_else_chain** if_else_chain, Tk_view* tokens) {
     Token if_start_token;
     try(try_consume(&if_start_token, tokens, TOKEN_IF));
-    *if_statement = node_unwrap_if(node_new(if_start_token.pos, NODE_IF));
-    (*if_statement)->condition = extract_condition(env, tokens);
-    return extract_block(env, &(*if_statement)->body, tokens, false);
+
+
+    *if_else_chain = node_unwrap_if_else_chain(node_new(if_start_token.pos, NODE_IF_ELSE_CHAIN));
+
+    Node_if* if_statement = NULL;
+    if_statement = node_unwrap_if(node_new(if_start_token.pos, NODE_IF));
+    if_statement->condition = extract_condition(env, tokens);
+    if (PARSE_OK != extract_block(env, &if_statement->body, tokens, false)) {
+        return PARSE_ERROR;
+    }
+    vec_append(&a_main, &(*if_else_chain)->nodes, if_statement);
+
+    while(try_consume(NULL, tokens, TOKEN_NEW_LINE));
+    if (try_consume(NULL, tokens, TOKEN_ELSE)) {
+        try(try_consume(&if_start_token, tokens, TOKEN_IF));
+
+        if_statement = NULL;
+        if_statement = node_unwrap_if(node_new(if_start_token.pos, NODE_IF));
+        if_statement->condition = extract_condition(env, tokens);
+        if (PARSE_OK != extract_block(env, &if_statement->body, tokens, false)) {
+            return PARSE_ERROR;
+        }
+        vec_append(&a_main, &(*if_else_chain)->nodes, if_statement);
+    }
+
+    return PARSE_OK;
 }
 
 static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* tokens, bool defer_sym_add) {
@@ -1022,11 +1049,11 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
         }
         lhs = node_wrap_return(rtn_statement);
     } else if (starts_with_if(*tokens)) {
-        Node_if* if_statement;
-        if (PARSE_OK != extract_if_statement(env, &if_statement, tokens)) {
+        Node_if_else_chain* if_else_chain = NULL;
+        if (PARSE_OK != extract_if_else_chain(env, &if_else_chain, tokens)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = node_wrap_if(if_statement);
+        lhs = node_wrap_if_else_chain(if_else_chain);
     } else if (starts_with_for(*tokens)) {
         Node* for_loop;
         if (PARSE_OK != extract_for_loop(env, &for_loop, tokens)) {
@@ -1086,11 +1113,13 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
         return PARSE_EXPR_NONE;
     }
 
+    // TODO: allow else to be after closing bracket
     if (!try_consume(NULL, tokens, TOKEN_NEW_LINE)) {
         msg(
             LOG_ERROR, EXPECT_FAIL_NO_NEW_LINE_AFTER_STATEMENT, env->file_text, tk_view_front(*tokens).pos,
             "expected newline after statement\n"
         );
+        unreachable("");
         return PARSE_EXPR_ERROR;
     }
     return PARSE_EXPR_OK;

@@ -85,7 +85,7 @@ void msg_internal(
         fprintf(stderr, __VA_ARGS__); \
         fprintf(stderr, "\n"); \
         abort(); \
-    } while (0);
+    } while (0)
 
 #define BOOL_FMT "%s"
 

@@ -1243,6 +1243,16 @@ bool try_set_node_lang_type(const Env* env, Node** new_node, Lang_type* lang_typ
         case NODE_BREAK:
             *new_node = node;
             return true;
+        case NODE_IF_ELSE_CHAIN: {
+            Node_if_else_chain* if_else = node_unwrap_if_else_chain(node);
+            for (size_t idx = 0; idx < if_else->nodes.info.count; idx++) {
+                Node_if* curr = vec_at(&if_else->nodes, idx);
+                if (!try_set_condition_types(env, lang_type, curr->condition)) {
+                    return false;
+                }
+            }
+            return true;
+        }
         default:
             unreachable(NODE_FMT, node_print(node));
     }

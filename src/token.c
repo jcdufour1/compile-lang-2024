@@ -87,6 +87,8 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
             return str_view_from_cstr("newline");
         case TOKEN_RAW_UNION:
             return str_view_from_cstr("unsafe_union");
+        case TOKEN_ELSE:
+            return str_view_from_cstr("else");
     }
     unreachable("");
 }
@@ -135,6 +137,7 @@ Str_view token_print_internal(Arena* arena, Token token, bool msg_format) {
         case TOKEN_FN: // fallthrough
         case TOKEN_FOR: // fallthrough
         case TOKEN_IF: // fallthrough
+        case TOKEN_ELSE: // fallthrough
         case TOKEN_RETURN: // fallthrough
         case TOKEN_EXTERN: // fallthrough
         case TOKEN_STRUCT: // fallthrough

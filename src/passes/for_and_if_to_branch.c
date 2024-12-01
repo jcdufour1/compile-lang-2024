@@ -164,47 +164,77 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* for_loop) {
     return new_branch_block;
 }
 
-static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement) {
+static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement, Node_label* next_if, Node_label* after_chain) {
     Node_condition* if_cond = if_statement->condition;
-    Node_block* block = if_statement->body;
+    Node_block* old_block = if_statement->body;
 
-    Node_block* new_branch_block = node_unwrap_block(node_new(node_wrap_block(block)->pos, NODE_BLOCK));
+    Node_block* new_block = node_unwrap_block(node_new(node_wrap_block(old_block)->pos, NODE_BLOCK));
 
     Node_e_operator* operator;
     switch (if_cond->child->type) {
         case NODE_E_OPERATOR:
             operator = node_unwrap_e_operator(if_cond->child);
+
+            Node_label* if_body = label_new(env, literal_name_new(), node_wrap_block(old_block)->pos);
+
+            Node_cond_goto* check_cond_jmp = conditional_goto_new(operator, if_body->name, next_if->name);
+
+            vec_append(&a_main, &new_block->children, node_wrap_expr(node_wrap_e_operator(operator)));
+            vec_append(&a_main, &new_block->children, node_wrap_cond_goto(check_cond_jmp));
+            vec_append(&a_main, &new_block->children, node_wrap_label(if_body));
+            vec_extend(&a_main, &new_block->children, &old_block->children);
+
+            Node_goto* jmp_to_after_chain = goto_new(after_chain->name, node_wrap_block(old_block)->pos);
+            vec_append(&a_main, &new_block->children, node_wrap_goto(jmp_to_after_chain));
+
             break;
         case NODE_E_LITERAL: {
+            unreachable("");
             const Node_e_literal* literal = node_unwrap_e_literal_const(if_cond->child);
             int64_t value = node_unwrap_lit_number_const(literal)->data;
             if (value == 0) {
-                return new_branch_block;
+                return new_block;
             } else {
-                vec_extend(&a_main, &new_branch_block->children, &block->children);
-                return new_branch_block;
+                vec_extend(&a_main, &new_block->children, &old_block->children);
             }
+            break;
         }
         default:
             unreachable("");
     }
 
+    return new_block;
+}
 
-    Node_label* if_true = label_new(env, literal_name_new(), node_wrap_block(block)->pos);
-    Node_label* if_after = label_new(env, literal_name_new(), node_wrap_expr(node_wrap_e_operator(operator))->pos);
+static Node_block* if_else_chain_to_branch(Env* env, Node_if_else_chain* if_else) {
+    Node_label* if_after = label_new(env, literal_name_new(), node_wrap_if_else_chain(if_else)->pos);
+    Node_block* new_block = node_unwrap_block(node_new(node_wrap_if_else_chain(if_else)->pos, NODE_BLOCK));
 
-    Node_cond_goto* check_cond_jmp = conditional_goto_new(operator, if_true->name, if_after->name);
+    Node_label* next_if = NULL;
+    for (size_t idx = 0; idx < if_else->nodes.info.count; idx++) {
+        if (idx + 1 == if_else->nodes.info.count) {
+            next_if = if_after;
+        } else {
+            next_if = label_new(env, literal_name_new(), node_wrap_if(vec_at(&if_else->nodes, idx))->pos);
+        }
 
-    Node_goto* jmp_to_if_after = goto_new(if_after->name, node_wrap_block(block)->pos);
+        log(LOG_DEBUG, "yes\n");
+        Node_block* if_block = if_statement_to_branch(env, vec_at(&if_else->nodes, idx), next_if, if_after);
+        assert(if_block->children.info.count > 0);
+        vec_append(&a_main, &new_block->children, node_wrap_block(if_block));
 
-    vec_append(&a_main, &new_branch_block->children, node_wrap_expr(node_wrap_e_operator(operator)));
-    vec_append(&a_main, &new_branch_block->children, node_wrap_cond_goto(check_cond_jmp));
-    vec_append(&a_main, &new_branch_block->children, node_wrap_label(if_true));
-    vec_extend(&a_main, &new_branch_block->children, &block->children);
-    vec_append(&a_main, &new_branch_block->children, node_wrap_goto(jmp_to_if_after));
-    vec_append(&a_main, &new_branch_block->children, node_wrap_label(if_after));
+        if (idx + 1 < if_else->nodes.info.count) {
+            vec_append(&a_main, &new_block->children, node_wrap_label(next_if));
+        }
 
-    return new_branch_block;
+        log_tree(LOG_DEBUG, node_wrap_block(if_block));
+        log_tree(LOG_DEBUG, node_wrap_block(new_block));
+    }
+
+    vec_append(&a_main, &new_block->children, node_wrap_label(if_after));
+    log_tree(LOG_DEBUG, node_wrap_block(new_block));
+
+    return new_block;
 }
 
 void for_and_if_to_branch(Env* env) {
@@ -220,7 +250,6 @@ void for_and_if_to_branch(Env* env) {
     for (size_t idx = block->children.info.count - 1;; idx--) {
         Node** curr_node = vec_at_ref(&block->children, idx);
 
-        log_tree(LOG_DEBUG, *curr_node);
         switch ((*curr_node)->type) {
             case NODE_FOR_RANGE:
                 *curr_node = node_wrap_block(for_range_to_branch(env, node_unwrap_for_range(*curr_node)));
@@ -230,7 +259,9 @@ void for_and_if_to_branch(Env* env) {
                 assert(*curr_node);
                 break;
             case NODE_IF:
-                *curr_node = node_wrap_block(if_statement_to_branch(env, node_unwrap_if(*curr_node)));
+                unreachable("");
+            case NODE_IF_ELSE_CHAIN:
+                *curr_node = node_wrap_block(if_else_chain_to_branch(env, node_unwrap_if_else_chain(*curr_node)));
                 assert(*curr_node);
                 break;
             case NODE_BREAK:

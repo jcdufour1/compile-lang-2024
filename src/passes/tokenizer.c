@@ -80,6 +80,8 @@ static bool get_next_token(const Env* env, Pos* pos, Token* token, Str_view_col*
             token->type = TOKEN_FOR;
         } else if (str_view_cstr_is_equal(text, "if")) {
             token->type = TOKEN_IF;
+        } else if (str_view_cstr_is_equal(text, "else")) {
+            token->type = TOKEN_ELSE;
         } else if (str_view_cstr_is_equal(text, "return")) {
             token->type = TOKEN_RETURN;
         } else if (str_view_cstr_is_equal(text, "extern")) {

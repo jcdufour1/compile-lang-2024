@@ -203,6 +203,17 @@ void walk_tree(Env* env, void (callback)(Env* env)) {
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         }
+        case NODE_IF_ELSE_CHAIN: {
+            Node_if_ptr_vec* vector = &node_unwrap_if_else_chain(curr_node)->nodes;
+
+            for (size_t idx = 0; idx < vector->info.count; idx++) {
+                assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
+                assert(vec_at(vector, idx) && "a null element is in this vector");
+                walk_tree_traverse(env, node_wrap_if(vec_at(vector, idx)), callback);
+                assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
+            }
+            break;
+        }
         default:
             unreachable(NODE_FMT"\n", node_print(curr_node));
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);

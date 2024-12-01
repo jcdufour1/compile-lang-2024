@@ -57,6 +57,7 @@ typedef enum {
     TOKEN_FN,
     TOKEN_FOR,
     TOKEN_IF,
+    TOKEN_ELSE,
     TOKEN_RETURN,
     TOKEN_EXTERN,
     TOKEN_STRUCT,
@@ -147,6 +148,8 @@ static inline bool token_is_literal(Token token) {
         case TOKEN_FOR:
             return false;
         case TOKEN_IF:
+            return false;
+        case TOKEN_ELSE:
             return false;
         case TOKEN_EXTERN:
             return false;
@@ -254,6 +257,8 @@ static inline bool token_is_operator(Token token) {
             unreachable("");
         case TOKEN_RAW_UNION:
             return false;
+        case TOKEN_ELSE:
+            return false;
     }
     unreachable(TOKEN_FMT"\n", token_print(token));
 }
@@ -352,6 +357,8 @@ static inline bool token_is_closing(Token curr_token) {
             return false;
         case TOKEN_COMMENT:
             return false;
+        case TOKEN_ELSE:
+            return false;
     }
     unreachable("");
 }
@@ -441,6 +448,8 @@ static inline bool token_is_opening(Token curr_token) {
         case TOKEN_RAW_UNION:
             return false;
         case TOKEN_COMMENT:
+            return false;
+        case TOKEN_ELSE:
             return false;
     }
     unreachable("");

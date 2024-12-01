@@ -19,6 +19,7 @@
     DO(alloca, NODE_ALLOCA) \
     DO(block, NODE_BLOCK) \
     DO(condition, NODE_CONDITION) \
+    DO(if_else_chain, NODE_IF_ELSE_CHAIN) \
     DO(if, NODE_IF) \
     DO(assignment, NODE_ASSIGNMENT) \
     DO(break, NODE_BREAK) \
@@ -333,6 +334,15 @@ typedef struct {
     Node_condition* condition;
     Node_block* body;
 } Node_if;
+
+typedef struct {
+    Vec_base info;
+    Node_if** buf;
+} Node_if_ptr_vec;
+
+typedef struct {
+    Node_if_ptr_vec nodes;
+} Node_if_else_chain;
 
 typedef struct {
     Llvm_id llvm_id;
