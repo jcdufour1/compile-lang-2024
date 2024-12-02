@@ -1103,7 +1103,9 @@ INLINE Node_expr* condition_get_default_child(const Env* env, Node_expr* if_cond
 
 static bool try_set_condition_types(const Env* env, Lang_type* lang_type, Node_condition* if_cond) {
     Node_expr* new_if_cond_child;
-    try(try_set_expr_lang_type(env, &new_if_cond_child, lang_type, if_cond->child));
+    if (!try_set_expr_lang_type(env, &new_if_cond_child, lang_type, if_cond->child)) {
+        return false;
+    }
     if_cond->child = new_if_cond_child;
 
     switch (if_cond->child->type) {

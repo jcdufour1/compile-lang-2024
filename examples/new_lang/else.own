@@ -1,0 +1,146 @@
+
+extern("c") fn puts(str_to_print_2 u8*) 
+extern("c") fn printf(str_to_print_2 u8*, args any...) i32
+
+fn get_num() i32 {
+    return 87
+}
+
+fn is_false() i32 {
+    return 0
+}
+
+fn is_true() i32 {
+    return 1
+}
+
+fn literal_condition() {
+    if 1 {
+        puts("yes3")
+    } else if 1 {
+        puts("no3")
+    }
+
+    if 1 {
+        puts("yes4")
+    } else if 0 {
+        puts("no4")
+    }
+
+    if 0 {
+        puts("no5")
+    } else if 0 {
+        puts("no5")
+    }
+
+    if 0 {
+        puts("no6")
+    } else if 1 {
+        puts("yes6")
+    }
+
+    if 1 {
+        puts("yes7")
+    } else if 1 {
+        puts("no7")
+    } else if 1 {
+        puts("no7")
+    }
+
+    if 1 {
+        puts("yes8")
+    } else if 0 {
+        puts("no8")
+    } else if 1 {
+        puts("no8.2")
+    }
+
+    if 0 {
+        puts("no9")
+    } else if 0 {
+        puts("no9")
+    } else if 1 {
+        puts("yes9.2")
+    }
+
+    if 0 {
+        puts("no10")
+    } else if 1 {
+        puts("yes10")
+    } else if 1 {
+        puts("no10.2")
+    }
+
+    if 1 {
+        puts("yes11")
+    } else if 1 {
+        puts("no11")
+    } else {
+        puts("no11")
+    }
+
+    if 1 {
+        puts("yes12")
+    } else if 0 {
+        puts("no12")
+    } else {
+        puts("no12.2")
+    }
+
+    if 0 {
+        puts("no13")
+    } else if 0 {
+        puts("no13")
+    } else {
+        puts("yes13.2")
+    }
+
+    if 0 {
+        puts("no14")
+    } else if 1 {
+        puts("yes14")
+    } else {
+        puts("no14.2")
+    }
+
+}
+
+fn function_condition() {
+    if is_false() {
+        puts("no15");
+    } else if is_true() {
+        puts("yes15");
+    } else {
+        puts("no15.2");
+    }
+
+    if is_false() {
+        puts("no16");
+    } else if is_true() {
+        puts("yes16");
+    } else {
+        puts("no16.2");
+    }
+
+    if is_false() {
+        puts("no17");
+    } else if is_false() {
+        puts("no17.2");
+    } else {
+        puts("yes17");
+    }
+
+    if is_true() {
+        puts("yes18");
+    } else if is_true() {
+        puts("no18.2");
+    } else {
+        puts("no18.3");
+    }
+}
+
+fn main() i32 {
+    literal_condition()
+    function_condition()
+    return 0
+}

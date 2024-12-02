@@ -53,8 +53,7 @@ static void change_break_to_goto(Node_block* block, const Node_label* label_to_g
         } else {
             switch ((*curr_node)->type) {
                 case NODE_IF:
-                    change_break_to_goto(node_unwrap_if(*curr_node)->body, label_to_goto);
-                    break;
+                    unreachable("");
                 case NODE_ASSIGNMENT:
                     break;
                 case NODE_FOR_RANGE:
@@ -67,6 +66,13 @@ static void change_break_to_goto(Node_block* block, const Node_label* label_to_g
                     *curr_node = node_wrap_goto(goto_new(label_to_goto->name, node_wrap_label_const(label_to_goto)->pos));
                     assert(*curr_node);
                     break;
+                case NODE_IF_ELSE_CHAIN: {
+                    Node_if_else_chain* if_else = node_unwrap_if_else_chain(*curr_node);
+                    for (size_t idx = 0; idx < if_else->nodes.info.count; idx++) {
+                        change_break_to_goto(vec_at(&if_else->nodes, idx)->body, label_to_goto);
+                    }
+                    break;
+                }
                 default:
                     log_tree(LOG_DEBUG, *curr_node);
                     unreachable("");
@@ -189,13 +195,14 @@ static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement, Node_
 
             break;
         case NODE_E_LITERAL: {
-            unreachable("");
             const Node_e_literal* literal = node_unwrap_e_literal_const(if_cond->child);
-            int64_t value = node_unwrap_lit_number_const(literal)->data;
-            if (value == 0) {
-                return new_block;
+            if (node_unwrap_lit_number_const(literal)->data == 0) {
+                Node_goto* jmp = goto_new(next_if->name, node_wrap_block(old_block)->pos);
+                vec_append(&a_main, &new_block->children, node_wrap_goto(jmp));
             } else {
                 vec_extend(&a_main, &new_block->children, &old_block->children);
+                Node_goto* jmp_to_after_chain = goto_new(after_chain->name, node_wrap_block(old_block)->pos);
+                vec_append(&a_main, &new_block->children, node_wrap_goto(jmp_to_after_chain));
             }
             break;
         }
@@ -220,7 +227,6 @@ static Node_block* if_else_chain_to_branch(Env* env, Node_if_else_chain* if_else
 
         log(LOG_DEBUG, "yes\n");
         Node_block* if_block = if_statement_to_branch(env, vec_at(&if_else->nodes, idx), next_if, if_after);
-        assert(if_block->children.info.count > 0);
         vec_append(&a_main, &new_block->children, node_wrap_block(if_block));
 
         if (idx + 1 < if_else->nodes.info.count) {

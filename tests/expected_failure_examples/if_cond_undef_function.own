@@ -1,0 +1,10 @@
+
+extern("c") fn puts(str_to_print_2 u8*) 
+
+fn main() i32 {
+    if is_true() {
+        puts("hello")
+    }
+
+    return 0
+}

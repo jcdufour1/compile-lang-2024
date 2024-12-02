@@ -80,6 +80,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "not_is_first_op_and_lhs_lower_pres_than_rhs.own": ["expected-expression"],
     EXPECTED_FAIL_EXAMPLES_DIR + "unclosed_string_literal.own": ["missing-close-double-quote"],
     EXPECTED_FAIL_EXAMPLES_DIR + "union_init_like_a_struct.own": ["struct-init-on-raw-union"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "if_cond_undef_function.own": ["undefined-function"],
 }
 
 def to_str(a):
