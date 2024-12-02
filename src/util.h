@@ -10,13 +10,15 @@
 #include "str_view_struct.h"
 #include "expected_fail_type.h"
 
-#define LOG_TRACE   0
-#define LOG_DEBUG   1
-#define LOG_VERBOSE 2
-#define LOG_NOTE    3
-#define LOG_WARNING 4
-#define LOG_ERROR   5
-#define LOG_FETAL   6
+typedef enum {
+    LOG_TRACE   = 0,
+    LOG_DEBUG   = 1,
+    LOG_VERBOSE = 2,
+    LOG_NOTE    = 3,
+    LOG_WARNING = 4,
+    LOG_ERROR   = 5,
+    LOG_FETAL   = 6,
+} LOG_LEVEL;
 
 #ifndef CURR_LOG_LEVEL
 #define CURR_LOG_LEVEL LOG_TRACE
@@ -27,8 +29,6 @@ typedef enum {
     EXIT_CODE_FAIL = 1,
     EXIT_CODE_EXPECTED_FAIL = 2,
 } EXIT_CODE;
-
-typedef int LOG_LEVEL;
 
 struct Env_;
 typedef struct Env_ Env;

@@ -1482,7 +1482,6 @@ static PARSE_EXPR_STATUS try_extract_expression(Env* env, Node_expr** result, Tk
                 case PARSE_EXPR_OK:
                     break;
                 case PARSE_EXPR_NONE: {
-                    log_tokens(LOG_DEBUG, *tokens);
                     msg_expected_expression(env->file_text, *tokens);
                     return PARSE_EXPR_ERROR;
                 }
@@ -1502,7 +1501,6 @@ static PARSE_EXPR_STATUS try_extract_expression(Env* env, Node_expr** result, Tk
     }
 
     *result = expression;
-    //log_tree(LOG_DEBUG, *result);
     return PARSE_EXPR_OK;
 }
 
