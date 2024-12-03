@@ -136,6 +136,13 @@ static bool starts_with_raw_union_definition(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_RAW_UNION;
 }
 
+static bool starts_with_enum_definition(Tk_view tokens) {
+    if (tokens.count < 1) {
+        return false;
+    }
+    return tk_view_front(tokens).type == TOKEN_ENUM;
+}
+
 static bool starts_with_function_decl(Tk_view tokens) {
     if (tokens.count < 1) {
         return false;
@@ -382,6 +389,8 @@ static bool can_end_statement(Token token) {
             return false;
         case TOKEN_ELSE:
             return false;
+        case TOKEN_ENUM:
+            return false;
     }
     unreachable("");
 }
@@ -497,6 +506,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_RAW_UNION:
             return false;
         case TOKEN_ELSE:
+            return false;
+        case TOKEN_ENUM:
             return false;
     }
     unreachable("");
@@ -680,6 +691,53 @@ static PARSE_STATUS extract_raw_union_def(Env* env, Node_raw_union_def** raw_uni
         return PARSE_ERROR;
     }
 
+    return PARSE_OK;
+}
+
+static PARSE_STATUS extract_enum_def(Env* env, Node_enum_def** enum_def, Tk_view* tokens) {
+    try(try_consume(NULL, tokens, TOKEN_ENUM));
+
+    Token name = tk_view_consume(tokens);
+
+    *enum_def = node_unwrap_enum_def(node_new(name.pos, NODE_ENUM_DEF));
+    (*enum_def)->name = name.text;
+
+    Token open_brace = {0};
+    if (!try_consume(&open_brace, tokens, TOKEN_OPEN_CURLY_BRACE)) {
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_OPEN_CURLY_BRACE);
+        return PARSE_ERROR;
+    }
+
+    while (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
+        while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
+
+        if (tokens->count < 1) {
+            msg(LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_CURLY_BRACE, env->file_text, open_brace.pos, 
+                "unmatched `{`"
+            );
+            return PARSE_ERROR;
+        }
+
+        Token case_name = {0};
+        if (!try_consume(&case_name, tokens, TOKEN_SYMBOL)) {
+            msg_parser_expected(
+                env->file_text,
+                tk_view_front(*tokens),
+                TOKEN_SYMBOL,
+                TOKEN_CLOSE_CURLY_BRACE
+            );
+            return PARSE_ERROR;
+        }
+
+        while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
+    }
+
+    if (!symbol_add(env, node_wrap_enum_def(*enum_def))) {
+        msg_redefinition_of_symbol(env, node_wrap_enum_def(*enum_def));
+        return PARSE_ERROR;
+    }
+
+    log_tokens(LOG_DEBUG, *tokens);
     return PARSE_OK;
 }
 
@@ -1056,6 +1114,12 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
             return PARSE_EXPR_ERROR;
         }
         lhs = node_wrap_raw_union_def(raw_union_def);
+    } else if (starts_with_enum_definition(*tokens)) {
+        Node_enum_def* enum_def;
+        if (PARSE_OK != extract_enum_def(env, &enum_def, tokens)) {
+            return PARSE_EXPR_ERROR;
+        }
+        lhs = node_wrap_enum_def(enum_def);
     } else if (starts_with_function_decl(*tokens)) {
         Node_function_decl* fun_decl;
         if (PARSE_OK != extract_function_decl(env, &fun_decl, tokens)) {
@@ -1147,6 +1211,8 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
         );
         return PARSE_EXPR_ERROR;
     }
+
+    log_tokens(LOG_DEBUG, *tokens);
     return PARSE_EXPR_OK;
 }
 

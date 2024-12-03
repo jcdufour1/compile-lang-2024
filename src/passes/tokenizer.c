@@ -96,6 +96,8 @@ static bool get_next_token(const Env* env, Pos* pos, Token* token, Str_view_col*
             token->type = TOKEN_BREAK;
         } else if (str_view_cstr_is_equal(text, "raw_union")) {
             token->type = TOKEN_RAW_UNION;
+        } else if (str_view_cstr_is_equal(text, "enum")) {
+            token->type = TOKEN_ENUM;
         } else {
             token->text = text;
             token->type = TOKEN_SYMBOL;

@@ -1010,7 +1010,7 @@ bool try_set_member_symbol_types(const Env* env, Node** new_node, Lang_type* lan
         *new_node = node_wrap_expr(node_wrap_e_member_sym_untyped(memb_sym_untyped));
         return false;
     }
-    if (!symbol_lookup(&struct_def_, env, node_unwrap_variable_def(struct_var)->lang_type.str)) {
+    if (!symbol_lookup(&struct_def_, env, get_lang_type(struct_var).str)) {
         todo(); // this should possibly never happen
     }
 
@@ -1237,6 +1237,9 @@ bool try_set_node_lang_type(const Env* env, Node** new_node, Lang_type* lang_typ
             *new_node = node;
             return true;
         case NODE_RAW_UNION_DEF:
+            *new_node = node;
+            return true;
+        case NODE_ENUM_DEF:
             *new_node = node;
             return true;
         case NODE_FOR_RANGE:

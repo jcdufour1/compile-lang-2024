@@ -48,6 +48,7 @@ static const char* NODE_PTR_BYVAL_SYM_DESCRIPTION = "byval_sym";
 static const char* NODE_E_LLVM_PLACEHOLDER_DESCRIPTION = "llvm_register_sym";
 static const char* NODE_RAW_UNION_DEF_DESCRIPTION = "raw_union";
 static const char* NODE_IF_ELSE_CHAIN_DESCRIPTION = "if_else_chain";
+static const char* NODE_ENUM_CHAIN_DESCRIPTION = "enum";
 
 void extend_lang_type_to_string(Arena* arena, String* string, Lang_type lang_type, bool surround_in_lt_gt) {
     if (surround_in_lt_gt) {
@@ -202,6 +203,8 @@ static Str_view node_type_get_strv(const Node* node) {
             return str_view_from_cstr(NODE_RAW_UNION_DEF_DESCRIPTION);
         case NODE_IF_ELSE_CHAIN:
             return str_view_from_cstr(NODE_IF_ELSE_CHAIN_DESCRIPTION);
+        case NODE_ENUM_DEF:
+            return str_view_from_cstr(NODE_ENUM_CHAIN_DESCRIPTION);
     }
     unreachable( "node->type: %d\n", node->type);
 }
@@ -313,6 +316,8 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
             case NODE_STRUCT_DEF:
                 break;
             case NODE_RAW_UNION_DEF:
+                break;
+            case NODE_ENUM_DEF:
                 break;
             case NODE_LANG_TYPE:
                 extend_lang_type_to_string(arena, string, node_unwrap_lang_type_const(node)->lang_type, true);

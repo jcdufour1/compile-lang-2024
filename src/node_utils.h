@@ -246,6 +246,8 @@ static inline Lang_type get_lang_type(const Node* node) {
             unreachable("");
         case NODE_IF_ELSE_CHAIN:
             unreachable("");
+        case NODE_ENUM_DEF:
+            return node_unwrap_enum_def_const(node)->name;
     }
     unreachable("");
 }
@@ -313,6 +315,8 @@ static inline Lang_type* get_lang_type_ref(Node* node) {
         case NODE_PTR_BYVAL_SYM:
             return &node_unwrap_ptr_byval_sym(node)->lang_type;
         case NODE_IF_ELSE_CHAIN:
+            unreachable("");
+        case NODE_ENUM_DEF:
             unreachable("");
     }
     unreachable("");
@@ -406,6 +410,8 @@ static inline Node* get_node_src(Node* node) {
             return node_unwrap_ptr_byval_sym(node)->node_src.node;
         case NODE_IF_ELSE_CHAIN:
             unreachable("");
+        case NODE_ENUM_DEF:
+            unreachable("");
     }
     unreachable("");
 }
@@ -497,6 +503,8 @@ static inline Node* get_node_dest(Node* node) {
         case NODE_PTR_BYVAL_SYM:
             unreachable("");
         case NODE_IF_ELSE_CHAIN:
+            unreachable("");
+        case NODE_ENUM_DEF:
             unreachable("");
     }
     unreachable("");
@@ -605,6 +613,8 @@ static inline Str_view get_node_name(const Node* node) {
             unreachable("");
         case NODE_IF_ELSE_CHAIN:
             unreachable("");
+        case NODE_ENUM_DEF:
+            return node_unwrap_enum_def_const(node)->name;
     }
     unreachable("");
 }
