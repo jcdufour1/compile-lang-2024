@@ -3,16 +3,44 @@ extern("c") fn puts(str_to_print_2 u8*)
 extern("c") fn printf(str_to_print_2 u8*, args any...) i32
 
 enum TokenType {
-    num_integer TokenType
-    num_double TokenType
+    number TokenType
+    string TokenType
+}
+
+struct Token {
+    type TokenType
+    number_data i32
+    string_data u8*
+}
+
+fn print_token(token Token) {
+    if token.type == TokenType.number {
+        printf("%d\n", token.number_data)
+    } else if token.type == TokenType.string {
+        printf("%s\n", token.string_data)
+    } else {
+        printf("invalid token type\n")
+    }
 }
 
 fn main() i32 {
-    let token_type TokenType = TokenType.num_integer
+    let token_type TokenType = TokenType.number
     printf("%d\n", token_type);
 
-    token_type = TokenType.num_double
+    token_type = TokenType.string
     printf("%d\n", token_type);
+
+    let token1 Token
+    token1.type = TokenType.number
+    token1.number_data = 87
+    token1.string_data = "hello"
+    print_token(token1)
+
+    let token2 Token
+    token2.type = TokenType.string
+    token2.number_data = 87
+    token2.string_data = "hello"
+    print_token(token2)
 
     return 0
 }

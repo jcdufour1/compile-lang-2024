@@ -602,7 +602,7 @@ static inline Str_view get_node_name(const Node* node) {
         case NODE_LLVM_STORE_STRUCT_LITERAL:
             unreachable("");
         case NODE_LOAD_ANOTHER_NODE:
-            unreachable("");
+            return get_node_name(node_unwrap_load_another_node_const(node)->node_src.node);
         case NODE_STORE_ANOTHER_NODE:
             unreachable("");
         case NODE_LOAD_ELEMENT_PTR:

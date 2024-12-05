@@ -6,8 +6,10 @@ int mul(int a, int b) {
 }
 
 typedef struct {
-    long num;
+    int type;
+    int number_data;
     char* string_data;
+    int extra;
 } Token;
 
 typedef struct {
@@ -41,14 +43,16 @@ typedef union {
     char* cstr;
 } Thing;
 
-int main(void) {
-    int num1 = 8;
-    if (!num1) {
-        puts("hello");
-    }
+void print_token(Token token1) {
+    printf("%d\n", token1.type);
+}
 
-    Thing thing;
-    thing.num = 76;
-    print("hello", thing.num, "world\n");
+int main() {
+    Token token1;
+    token1.type = 0;
+    printf("%d\n", token1.type);
+    print_token(token1);
+    //printf("thing 23")
+
     return 0;
 }

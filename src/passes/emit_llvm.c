@@ -204,11 +204,33 @@ static void emit_function_call_arguments(const Env* env, String* output, const N
                 unreachable("untyped symbols should not still be present");
             case NODE_E_SYMBOL_TYPED:
                 unreachable("typed symbols should not still be present");
-            case NODE_E_LLVM_PLACEHOLDER:
-                extend_type_call_str(env, output, get_lang_type_expr(argument));
-                string_extend_cstr(&a_main, output, " %");
-                string_extend_size_t(&a_main, output, get_llvm_id(node_unwrap_e_llvm_placeholder_const(argument)->llvm_reg.node));
+            case NODE_E_LLVM_PLACEHOLDER: {
+                Llvm_id llvm_id = 0;
+
+                const Node_e_llvm_placeholder* placeholder = node_unwrap_e_llvm_placeholder_const(argument);
+                log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(placeholder->lang_type));
+                if (lang_type_is_struct(env, placeholder->lang_type) && placeholder->lang_type.pointer_depth == 0) {
+                    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(get_node_name(placeholder->llvm_reg.node)));
+                    llvm_id = get_llvm_id(get_storage_location(env, get_node_name(placeholder->llvm_reg.node)).node);
+                    assert(llvm_id > 0);
+                    string_extend_cstr(&a_main, output, "ptr noundef byval(");
+                    extend_type_call_str(env, output, placeholder->lang_type);
+                    string_extend_cstr(&a_main, output, ")");
+                    string_extend_cstr(&a_main, output, " %");
+                    string_extend_size_t(&a_main, output, llvm_id);
+                } else if (lang_type_is_enum(env, placeholder->lang_type)) {
+                    llvm_id = get_llvm_id_expr(argument);
+                    extend_type_call_str(env, output, get_lang_type_expr(argument));
+                    string_extend_cstr(&a_main, output, " %");
+                    string_extend_size_t(&a_main, output, llvm_id);
+                } else {
+                    llvm_id = get_llvm_id_expr(argument);
+                    extend_type_call_str(env, output, get_lang_type_expr(argument));
+                    string_extend_cstr(&a_main, output, " %");
+                    string_extend_size_t(&a_main, output, llvm_id);
+                }
                 break;
+            }
             case NODE_E_FUNCTION_CALL:
                 unreachable(""); // this function call should be changed to assign to a variable 
                                // before reaching emit_llvm stage, then assign that variable here. 
