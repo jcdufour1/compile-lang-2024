@@ -94,6 +94,8 @@ bool lang_type_is_struct(const Env* env, Lang_type lang_type);
 
 bool lang_type_is_raw_union(const Env* env, Lang_type lang_type);
 
+bool lang_type_is_enum(const Env* env, Lang_type lang_type);
+
 static inline bool is_struct_symbol(const Env* env, const Node_expr* symbol) {
     assert(symbol->type == NODE_E_SYMBOL_TYPED || symbol->type == NODE_E_MEMBER_SYM_TYPED);
 
@@ -123,10 +125,11 @@ static inline bool try_get_member_def(Node_variable_def** member_def, const Stru
     );
 
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
-        const Node* curr_member = vec_at(&struct_def->members, idx);
+        Node* curr_member = vec_at(&struct_def->members, idx);
         if (str_view_is_equal(get_node_name(curr_member), get_node_name(member_symbol))) {
             assert(get_lang_type(curr_member).str.count > 0);
-            *member_def = (Node_variable_def*)curr_member;
+            *member_def = node_unwrap_variable_def(curr_member);
+            log(LOG_DEBUG, "try_get_member_def: "NODE_FMT"\n", node_print(curr_member));
             return true;
         }
     }

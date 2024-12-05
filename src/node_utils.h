@@ -247,7 +247,7 @@ static inline Lang_type get_lang_type(const Node* node) {
         case NODE_IF_ELSE_CHAIN:
             unreachable("");
         case NODE_ENUM_DEF:
-            return node_unwrap_enum_def_const(node)->name;
+            unreachable("");
     }
     unreachable("");
 }
@@ -614,7 +614,7 @@ static inline Str_view get_node_name(const Node* node) {
         case NODE_IF_ELSE_CHAIN:
             unreachable("");
         case NODE_ENUM_DEF:
-            return node_unwrap_enum_def_const(node)->name;
+            return node_unwrap_enum_def_const(node)->base.name;
     }
     unreachable("");
 }

@@ -700,36 +700,9 @@ static PARSE_STATUS extract_enum_def(Env* env, Node_enum_def** enum_def, Tk_view
     Token name = tk_view_consume(tokens);
 
     *enum_def = node_unwrap_enum_def(node_new(name.pos, NODE_ENUM_DEF));
-    (*enum_def)->name = name.text;
 
-    Token open_brace = {0};
-    if (!try_consume(&open_brace, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_OPEN_CURLY_BRACE);
+    if (PARSE_OK != extract_struct_base_def(env, &(*enum_def)->base, name.text, tokens)) {
         return PARSE_ERROR;
-    }
-
-    while (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
-        while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
-
-        if (tokens->count < 1) {
-            msg(LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_CURLY_BRACE, env->file_text, open_brace.pos, 
-                "unmatched `{`"
-            );
-            return PARSE_ERROR;
-        }
-
-        Token case_name = {0};
-        if (!try_consume(&case_name, tokens, TOKEN_SYMBOL)) {
-            msg_parser_expected(
-                env->file_text,
-                tk_view_front(*tokens),
-                TOKEN_SYMBOL,
-                TOKEN_CLOSE_CURLY_BRACE
-            );
-            return PARSE_ERROR;
-        }
-
-        while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
     }
 
     if (!symbol_add(env, node_wrap_enum_def(*enum_def))) {
@@ -737,7 +710,6 @@ static PARSE_STATUS extract_enum_def(Env* env, Node_enum_def** enum_def, Tk_view
         return PARSE_ERROR;
     }
 
-    log_tokens(LOG_DEBUG, *tokens);
     return PARSE_OK;
 }
 
@@ -1212,7 +1184,6 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
         return PARSE_EXPR_ERROR;
     }
 
-    log_tokens(LOG_DEBUG, *tokens);
     return PARSE_EXPR_OK;
 }
 

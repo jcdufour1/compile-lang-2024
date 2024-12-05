@@ -19,6 +19,9 @@ static void extend_literal(String* output, const Node_e_literal* literal) {
         case NODE_LIT_NUMBER:
             string_extend_int64_t(&a_main, output, node_unwrap_lit_number_const(literal)->data);
             return;
+        case NODE_LIT_ENUM:
+            string_extend_int64_t(&a_main, output, node_unwrap_lit_enum_const(literal)->data);
+            return;
         case NODE_LIT_VOID:
             return;
     }
@@ -72,6 +75,8 @@ static void extend_type_call_str(const Env* env, String* output, Lang_type lang_
             string_extend_cstr(&a_main, output, "%struct.");
         } else if (lang_type_is_raw_union(env, lang_type)) {
             string_extend_cstr(&a_main, output, "%union.");
+        } else if (lang_type_is_enum(env, lang_type)) {
+            lang_type = lang_type_from_cstr("i32", 0);
         } else {
             unreachable("");
         }
@@ -109,7 +114,7 @@ static void extend_type_decl_str(const Env* env, String* output, const Node* var
     }
 }
 
-static void extend_literal_decl_prefix(String* output, const Node_e_literal* literal) {
+static void extend_literal_decl_prefix(const Env* env, String* output, const Node_e_literal* literal) {
     assert(literal->lang_type.str.count > 0);
     if (str_view_cstr_is_equal(literal->lang_type.str, "u8")) {
         if (literal->lang_type.pointer_depth != 1) {
@@ -123,6 +128,9 @@ static void extend_literal_decl_prefix(String* output, const Node_e_literal* lit
         }
         vec_append(&a_main, output, ' ');
         extend_literal(output, literal);
+    } else if (lang_type_is_enum(env, literal->lang_type)) {
+        vec_append(&a_main, output, ' ');
+        extend_literal(output, literal);
     } else {
         todo();
     }
@@ -130,7 +138,7 @@ static void extend_literal_decl_prefix(String* output, const Node_e_literal* lit
 
 static void extend_literal_decl(const Env* env, String* output, const Node_e_literal* literal, bool noundef) {
     extend_type_decl_str(env, output, node_wrap_expr_const(node_wrap_e_literal_const(literal)), noundef);
-    extend_literal_decl_prefix(output, literal);
+    extend_literal_decl_prefix(env, output, literal);
 }
 
 static const Node_lang_type* return_type_from_function_def(const Node_function_def* fun_def) {
@@ -413,7 +421,7 @@ static void emit_store_another_node(const Env* env, String* output, const Node_s
 static void emit_llvm_store_literal(const Env* env, String* output, const Node_llvm_store_literal* store) {
     string_extend_cstr(&a_main, output, "    store ");
     extend_type_call_str(env, output, store->lang_type);
-    extend_literal_decl_prefix(output, store->child);
+    extend_literal_decl_prefix(env, output, store->child);
     string_extend_cstr(&a_main, output, ", ptr %");
     string_extend_size_t(&a_main, output, get_llvm_id(store->node_dest.node));
     string_extend_cstr(&a_main, output, ", align 8");
@@ -623,6 +631,8 @@ static void emit_block(Env* env, String* output, const Node_block* block) {
                     unreachable("for loop should not still be present at this point\n");
                 case NODE_FOR_WITH_COND:
                     unreachable("for loop should not still be present at this point\n");
+                case NODE_ENUM_DEF:
+                    break;
                 default:
                     log(LOG_ERROR, STRING_FMT"\n", string_print(*output));
                     node_printf(statement);
@@ -642,6 +652,8 @@ static void emit_symbol(String* output, const Symbol_table_node node) {
             str_data = node_unwrap_lit_string_const(literal)->data;
             break;
         case NODE_LIT_NUMBER:
+            return;
+        case NODE_LIT_ENUM:
             return;
         default:
             unreachable("");

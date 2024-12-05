@@ -123,6 +123,8 @@ void assign_llvm_ids(Env* env) {
             node_unwrap_ptr_byval_sym(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
             return;
+        case NODE_ENUM_DEF:
+            return;
         default:
             unreachable(NODE_FMT"\n", node_print(curr_node));
     }

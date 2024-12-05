@@ -204,18 +204,9 @@ void walk_tree(Env* env, void (callback)(Env* env)) {
             break;
         }
         case NODE_ENUM_DEF: {
-            Node_sym_ptr_vec* vector = &node_unwrap_enum_def(curr_node)->symbols;
-
-            for (size_t idx = 0; idx < vector->info.count; idx++) {
-                assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
-                assert(vec_at(vector, idx) && "a null element is in this vector");
-                walk_tree_traverse(
-                    env,
-                    node_wrap_expr(node_wrap_e_symbol_untyped(vec_at(vector, idx))),
-                    callback
-                );
-                assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
-            }
+            Node_ptr_vec* vector = &node_unwrap_enum_def(curr_node)->base.members;
+            walk_node_ptr_vec(env, vector, callback);
+            assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         }
         case NODE_IF_ELSE_CHAIN: {

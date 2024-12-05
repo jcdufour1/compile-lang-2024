@@ -242,6 +242,9 @@ static void extend_expr_text(Arena* arena, String* string, const Node_expr* expr
                 string_extend_int64_t(arena, string, node_unwrap_lit_number_const(literal)->data);
             } else if (literal->type == NODE_LIT_VOID) {
                 string_extend_strv_in_par(arena, string, str_view_from_cstr("void"));
+            } else if (literal->type == NODE_LIT_ENUM) {
+                string_extend_strv_in_par(arena, string, str_view_from_cstr("enum"));
+                string_extend_int64_t(arena, string, node_unwrap_lit_enum_const(literal)->data);
             } else {
                 unreachable("");
             }

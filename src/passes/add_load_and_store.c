@@ -833,6 +833,8 @@ void add_load_and_store(Env* env) {
                     break;
                 case NODE_LLVM_STORE_STRUCT_LITERAL:
                     break;
+                case NODE_ENUM_DEF:
+                    break;
                 default:
                     unreachable(NODE_FMT"\n", node_print(curr_node));
             }

@@ -50,6 +50,7 @@
 #define FOR_LIST_OF_NODE_E_LITERALS(DO) \
     DO(number, NODE_LIT_NUMBER) \
     DO(string, NODE_LIT_STRING) \
+    DO(enum, NODE_LIT_ENUM) \
     DO(void, NODE_LIT_VOID)
 
 #define FOR_LIST_OF_NODE_EXPRS(DO) \
@@ -150,6 +151,10 @@ typedef struct {
 typedef struct {
     int dummy;
 } Node_lit_void;
+
+typedef struct {
+    int64_t data;
+} Node_lit_enum;
 
 #define X(lower, upper) \
     Node_lit_##lower _##lower;
@@ -262,7 +267,6 @@ typedef struct {
 
 typedef struct {
     Node_ptr_vec members;
-    Lang_type lang_type; // eg. "String" in "let string1: String = "hello""
     Llvm_id llvm_id;
     Str_view name;
 } Struct_def_base;
@@ -281,8 +285,7 @@ typedef struct {
 } Node_sym_ptr_vec;
 
 typedef struct {
-    Str_view name;
-    Node_sym_ptr_vec symbols;
+    Struct_def_base base;
 } Node_enum_def;
 
 typedef struct {

@@ -1,0 +1,19 @@
+
+extern("c") fn puts(str_to_print_2 u8*) 
+extern("c") fn printf(str_to_print_2 u8*, args any...) i32
+
+enum TokenType {
+    num_integer TokenType
+    num_double TokenType
+}
+
+fn main() i32 {
+    let token_type TokenType = TokenType.num_integer
+    printf("%d\n", token_type);
+
+    token_type = TokenType.num_double
+    printf("%d\n", token_type);
+
+    return 0
+}
+
