@@ -325,13 +325,15 @@ const Node* get_lang_type_from_sym_definition(const Node* sym_def) {
     todo();
 }
 
-uint64_t sizeof_lang_type(Lang_type lang_type) {
-    if (lang_type_is_equal(lang_type, lang_type_from_cstr("ptr", 0))) {
+uint64_t sizeof_lang_type(const Env* env, Lang_type lang_type) {
+    if (lang_type_is_enum(env, lang_type)) {
+        return 4;
+    } else if (lang_type_is_equal(lang_type, lang_type_from_cstr("u8", 1))) {
         return 8;
     } else if (lang_type_is_equal(lang_type, lang_type_from_cstr("i32", 0))) {
         return 4;
     } else {
-        unreachable("");
+        unreachable(LANG_TYPE_FMT"\n", lang_type_print(lang_type));
     }
 }
 
@@ -339,7 +341,7 @@ static uint64_t sizeof_expr(const Env* env, const Node_expr* expr) {
     (void) env;
     switch (expr->type) {
         case NODE_E_LITERAL:
-            return sizeof_lang_type(node_unwrap_e_literal_const(expr)->lang_type);
+            return sizeof_lang_type(env, node_unwrap_e_literal_const(expr)->lang_type);
         default:
             unreachable("");
     }
@@ -351,7 +353,7 @@ uint64_t sizeof_item(const Env* env, const Node* item) {
         case NODE_EXPR:
             return sizeof_expr(env, node_unwrap_expr_const(item));
         case NODE_VARIABLE_DEF:
-            return sizeof_lang_type(node_unwrap_variable_def_const(item)->lang_type);
+            return sizeof_lang_type(env, node_unwrap_variable_def_const(item)->lang_type);
         default:
             unreachable("");
     }
@@ -440,15 +442,19 @@ bool lang_type_is_raw_union(const Env* env, Lang_type lang_type) {
 bool lang_type_is_enum(const Env* env, Lang_type lang_type) {
     Node* def = NULL;
     if (!symbol_lookup(&def, env, lang_type.str)) {
+        log(LOG_DEBUG, LANG_TYPE_FMT" is not defined\n", lang_type_print(lang_type));
         return false;
     }
 
     switch (def->type) {
         case NODE_STRUCT_DEF:
+            log(LOG_DEBUG, "is struct def\n");
             return false;
         case NODE_RAW_UNION_DEF:
+            log(LOG_DEBUG, "is raw_union def\n");
             return false;
         case NODE_ENUM_DEF:
+            log(LOG_DEBUG, "is enum def\n");
             return true;
         default:
             unreachable(NODE_FMT"    "LANG_TYPE_FMT"\n", node_print(def), lang_type_print(lang_type));
@@ -530,8 +536,11 @@ bool try_get_generic_struct_def(const Env* env, Node** def, Node* node) {
             }
             case NODE_E_SYMBOL_UNTYPED:
                 unreachable("untyped symbols should not still be present");
+            case NODE_E_MEMBER_SYM_UNTYPED:
+                assert(get_lang_type(node).str.count > 0);
+                return symbol_lookup(def, env, get_lang_type(node).str);
             default:
-                unreachable("");
+                unreachable(NODE_FMT"\n", node_print(node));
         }
     }
 
@@ -773,6 +782,7 @@ bool try_set_struct_literal_assignment_types(const Env* env, Node** new_node, La
             );
             return false;
         default:
+            log(LOG_DEBUG, NODE_FMT"\n", node_print(struct_def_));
             unreachable("");
     }
     Node_struct_def* struct_def = node_unwrap_struct_def(struct_def_);
@@ -787,7 +797,12 @@ bool try_set_struct_literal_assignment_types(const Env* env, Node** new_node, La
         log_tree(LOG_DEBUG, node_wrap_expr_const(node_wrap_e_struct_literal_const(struct_literal)));
         Node_assignment* assign_memb_sym = node_unwrap_assignment(vec_at(&struct_literal->members, idx));
         Node_e_symbol_untyped* memb_sym_piece_untyped = node_unwrap_e_symbol_untyped(node_unwrap_expr(assign_memb_sym->lhs));
-        Node_e_literal* assign_memb_sym_rhs = node_unwrap_e_literal(assign_memb_sym->rhs);
+        Node_expr* new_rhs = NULL;
+        Lang_type dummy;
+        if (!try_set_expr_lang_type(env, &new_rhs, &dummy, assign_memb_sym->rhs)) {
+            unreachable("");
+        }
+        Node_e_literal* assign_memb_sym_rhs = node_unwrap_e_literal(new_rhs);
 
         assign_memb_sym_rhs->lang_type = memb_sym_def->lang_type;
         if (!str_view_is_equal(memb_sym_def->name, memb_sym_piece_untyped->name)) {
@@ -1105,39 +1120,72 @@ bool try_set_member_symbol_types_finish(
         memb_sym_piece_typed->lang_type = curr_memb_def->lang_type;
         *lang_type = memb_sym_piece_typed->lang_type;
 
-        Node* def = NULL;
-        if (try_get_generic_struct_def(env, &def, node_wrap_variable_def(curr_memb_def))) {
-            switch (def->type) {
-                case NODE_VARIABLE_DEF: {
-                    def_base = &node_unwrap_struct_def(def)->base;
-                    break;
+        Node* result = NULL;
+        try(symbol_lookup(&result, env, memb_sym_untyped->name));
+        log_tree(LOG_DEBUG, result);
+        switch (result->type) {
+            case NODE_VARIABLE_DEF: {
+                Node* def = NULL;
+                log_tree(LOG_DEBUG, (Node*)curr_memb_def);
+                if (try_get_generic_struct_def(env, &def, node_wrap_variable_def(curr_memb_def))) {
+                    switch (def->type) {
+                        case NODE_STRUCT_DEF: {
+                            def_base = &node_unwrap_struct_def(def)->base;
+                            break;
+                        }
+                        case NODE_ENUM_DEF:
+                            def_base = &node_unwrap_enum_def(def)->base;
+                            break;
+                        default:
+                            log(LOG_DEBUG, NODE_FMT"\n", node_print((Node*)def));
+                            log(LOG_DEBUG, NODE_FMT"\n", node_print((Node*)curr_memb_def));
+                            unreachable("");
+                    }
+                } else {
+                    is_struct = false;
                 }
-                case NODE_STRUCT_DEF: {
-                    def_base = &node_unwrap_struct_def(def)->base;
-                    break;
-                }
-                case NODE_ENUM_DEF:
-                    try(idx == 0);
-                    Node_expr* expr = node_unwrap_expr(
-                        node_new(node_wrap_expr(node_wrap_e_member_sym_untyped(memb_sym_untyped))->pos, NODE_EXPR)
-                    );
-                    expr->type = NODE_E_LITERAL;
-                    Node_e_literal* literal = node_unwrap_e_literal(expr);
-                    literal->type = NODE_LIT_ENUM;
-                    Node_lit_enum* enum_lit = node_unwrap_lit_enum(literal);
-                    literal->lang_type = curr_memb_def->lang_type;
-                    literal->name = literal_name_new();
-                    enum_lit->data = (int64_t)get_member_index(&node_unwrap_enum_def(def)->base, memb_sym_piece_typed);
-                    *new_node = node_wrap_expr(expr);
-                    return true;
-                default:
-                    log(LOG_DEBUG, NODE_FMT"\n", node_print((Node*)def));
-                    log(LOG_DEBUG, NODE_FMT"\n", node_print((Node*)curr_memb_def));
-                    unreachable("");
+                break;
             }
-        } else {
-            is_struct = false;
+            case NODE_ENUM_DEF: {
+                Node* def = NULL;
+                try(try_get_generic_struct_def(env, &def, node_wrap_variable_def(curr_memb_def)));
+
+                try(idx == 0);
+                Node_expr* expr = node_unwrap_expr(
+                    node_new(node_wrap_expr(node_wrap_e_member_sym_untyped(memb_sym_untyped))->pos, NODE_EXPR)
+                );
+                expr->type = NODE_E_LITERAL;
+                Node_e_literal* literal = node_unwrap_e_literal(expr);
+                literal->type = NODE_LIT_ENUM;
+                Node_lit_enum* enum_lit = node_unwrap_lit_enum(literal);
+                literal->lang_type = curr_memb_def->lang_type;
+                literal->name = literal_name_new();
+                enum_lit->data = (int64_t)get_member_index(&node_unwrap_enum_def(def)->base, memb_sym_piece_typed);
+                *new_node = node_wrap_expr(expr);
+                return true;
+            }
+            default:
+                unreachable("");
         }
+        //if (try_get_generic_struct_def(env, &def, node_wrap_variable_def(curr_memb_def))) {
+        ////if (try_get_generic_struct_def(env, &def, node_wrap_expr(node_wrap_e_member_sym_untyped(memb_sym_untyped)))) {
+        //    switch (def->type) {
+        //        case NODE_VARIABLE_DEF: {
+        //            break;
+        //        }
+        //        case NODE_STRUCT_DEF: {
+        //            def_base = &node_unwrap_struct_def(def)->base;
+        //            break;
+        //        }
+        //        case NODE_ENUM_DEF:
+        //        default:
+        //            log(LOG_DEBUG, NODE_FMT"\n", node_print((Node*)def));
+        //            log(LOG_DEBUG, NODE_FMT"\n", node_print((Node*)curr_memb_def));
+        //            unreachable("");
+        //    }
+        //} else {
+        //    is_struct = false;
+        //}
 
         vec_append_safe(&a_main, &memb_sym_typed->children, node_wrap_member_sym_piece_typed(memb_sym_piece_typed));
         memb_sym_piece_typed->struct_index = get_member_index(prev_def_base, memb_sym_piece_typed);

@@ -254,6 +254,7 @@ static void extend_expr_text(Arena* arena, String* string, const Node_expr* expr
             string_extend_strv_in_par(arena, string, get_expr_name(expr));
             break;
         case NODE_E_MEMBER_SYM_UNTYPED:
+            string_extend_strv_in_par(arena, string, get_expr_name(expr));
             break;
         case NODE_E_OPERATOR: {
             const Node_e_operator* operator = node_unwrap_e_operator_const(expr);
@@ -312,6 +313,7 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
                 print_node_src(arena, string, node, do_recursion);
                 break;
             case NODE_MEMBER_SYM_PIECE_UNTYPED:
+                string_extend_strv_in_par(arena, string, get_node_name(node));
                 break;
             case NODE_FUNCTION_DEF:
                 string_extend_strv_in_par(arena, string, get_node_name(node));

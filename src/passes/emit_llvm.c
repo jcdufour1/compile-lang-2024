@@ -115,6 +115,7 @@ static void extend_type_decl_str(const Env* env, String* output, const Node* var
 }
 
 static void extend_literal_decl_prefix(const Env* env, String* output, const Node_e_literal* literal) {
+    log(LOG_DEBUG, "entering thing\n");
     assert(literal->lang_type.str.count > 0);
     if (str_view_cstr_is_equal(literal->lang_type.str, "u8")) {
         if (literal->lang_type.pointer_depth != 1) {
@@ -132,7 +133,9 @@ static void extend_literal_decl_prefix(const Env* env, String* output, const Nod
         vec_append(&a_main, output, ' ');
         extend_literal(output, literal);
     } else {
-        todo();
+        log(LOG_DEBUG, BOOL_FMT"\n", bool_print(lang_type_is_enum(env, literal->lang_type)));
+        log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(literal->lang_type));
+        unreachable(NODE_FMT"\n", node_print(node_wrap_expr_const(node_wrap_e_literal_const(literal))));
     }
 }
 

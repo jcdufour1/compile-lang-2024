@@ -176,7 +176,9 @@ void symbol_log_internal(int log_level, const Env* env, const char* file_path, i
 }
 
 bool symbol_lookup(Node** result, const Env* env, Str_view key) {
+    //log(LOG_DEBUG, "entering symbol_lookup\n");
     if (env->ancesters.info.count < 1) {
+        //log(LOG_DEBUG, "symbol_lookup thing 1\n");
         return false;
     }
 
@@ -184,17 +186,20 @@ bool symbol_lookup(Node** result, const Env* env, Str_view key) {
         if (vec_at(&env->ancesters, idx)->type == NODE_BLOCK) {
             const Node_block* block = node_unwrap_block_const(vec_at(&env->ancesters, idx));
             if (sym_tbl_lookup(result, &block->symbol_table, key)) {
+                //log(LOG_DEBUG, "symbol_lookup thing true\n");
                 return true;
             }
         }
 
         if (idx < 1) {
+            //log(LOG_DEBUG, "symbol_lookup thing 3\n");
             return false;
         }
     }
 }
 
 bool symbol_add(Env* env, Node* node_of_symbol) {
+    log(LOG_DEBUG, "symbol_add: "NODE_FMT"\n", node_print(node_of_symbol));
     Node* dummy;
     if (symbol_lookup(&dummy, env, get_node_name(node_of_symbol))) {
         return false;

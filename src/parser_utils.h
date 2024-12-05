@@ -75,7 +75,7 @@ Llvm_id get_matching_fun_param_load_id(const Node* src);
 
 const Node* get_lang_type_from_sym_definition(const Node* sym_def);
 
-uint64_t sizeof_lang_type(Lang_type lang_type);
+uint64_t sizeof_lang_type(const Env* env, Lang_type lang_type);
 
 uint64_t sizeof_item(const Env* env, const Node* item);
 
@@ -111,7 +111,10 @@ bool is_corresponding_to_a_struct(const Env* env, const Node* node);
 static inline size_t get_member_index(const Struct_def_base* struct_def, const Node_member_sym_piece_typed* member_symbol) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         const Node* curr_member = vec_at(&struct_def->members, idx);
-        if (str_view_is_equal(get_node_name(curr_member), get_node_name(node_wrap_member_sym_piece_typed_const(member_symbol)))) {
+        log(LOG_DEBUG, NODE_FMT"\n", node_print(curr_member));
+        Str_view name_to_find = get_node_name(node_wrap_member_sym_piece_typed_const(member_symbol));
+        log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(name_to_find));
+        if (str_view_is_equal(get_node_name(curr_member), name_to_find)) {
             return idx;
         }
     }

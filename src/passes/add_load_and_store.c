@@ -12,13 +12,58 @@ static Node* get_store_assignment(
     Node_assignment* assignment
 );
 
+static void enum_to_i32(Node_lit_number** new_literal, Node_lit_enum* old_enum) {
+    node_wrap_lit_enum(old_enum)->type = NODE_LIT_NUMBER;
+    *new_literal = node_unwrap_lit_number(node_wrap_lit_enum(old_enum));
+    node_wrap_lit_number(*new_literal)->lang_type = lang_type_from_cstr("i32", 0);
+}
+
+static void do_struct_literal_thing(Node_e_struct_literal* struct_literal) {
+    for (size_t idx = 0; idx < struct_literal->members.info.count; idx++) {
+        Node* memb = vec_at(&struct_literal->members, idx);
+        Node_expr* memb_expr = NULL;
+        Node_e_literal* memb_literal = NULL;
+        Node_lit_enum* memb_enum = NULL;
+        switch (memb->type) {
+            case NODE_EXPR:
+                memb_expr = node_unwrap_expr(memb);
+                break;
+            default:
+                return;
+        }
+
+        switch (memb_expr->type) {
+            case NODE_E_LITERAL:
+                memb_literal = node_unwrap_e_literal(memb_expr);
+                break;
+            default:
+                return;
+        }
+
+        switch (memb_literal->type) {
+            case NODE_LIT_ENUM:
+                memb_enum = node_unwrap_lit_enum(memb_literal);
+                Node_lit_number* new_literal = NULL;
+                enum_to_i32(&new_literal, memb_enum);
+                *vec_at_ref(&struct_literal->members, idx) = node_wrap_expr(node_wrap_e_literal(node_wrap_lit_number(new_literal)));
+                break;
+            default:
+                return;
+        }
+    }
+
+}
+
 static void do_struct_literal(
     Env* env,
     Node_ptr_vec* block_children,
     size_t* idx_to_insert_before,
     Node_e_struct_literal* struct_literal
 ) {
+
+    do_struct_literal_thing(struct_literal);
     try(sym_tbl_add(&env->global_literals, node_wrap_expr(node_wrap_e_struct_literal(struct_literal))));
+    symbol_log_table_internal(LOG_DEBUG, env->global_literals, 4, __FILE__, __LINE__);
 
     for (size_t idx = 0; idx < struct_literal->members.info.count; idx++) {
         Node** curr_memb = vec_at_ref(&struct_literal->members, idx);
@@ -147,6 +192,33 @@ static Node_e_llvm_placeholder* refer_to_llvm_register_symbol(const Env* env, co
     return load_ref;
 }
 
+static Llvm_register_sym insert_load_literal(
+    Env* env,
+    Node** new_symbol_call,
+    Node_e_literal* literal
+) {
+    switch (literal->type) {
+        case NODE_LIT_NUMBER:
+            *new_symbol_call = node_wrap_expr(node_wrap_e_literal(literal));
+            return (Llvm_register_sym){0};
+        case NODE_LIT_STRING:
+            try(sym_tbl_add(&env->global_literals, node_wrap_expr(node_wrap_e_literal(literal))));
+            *new_symbol_call = node_wrap_expr(node_wrap_e_literal(literal));
+            return (Llvm_register_sym){0};
+        case NODE_LIT_ENUM: {
+            Node_lit_number* new_literal = NULL;
+            enum_to_i32(&new_literal, node_unwrap_lit_enum(literal));
+            *new_symbol_call = node_wrap_expr(node_wrap_e_literal(node_wrap_lit_number(new_literal)));
+            return (Llvm_register_sym){0};
+        }
+        case NODE_LIT_VOID:
+            *new_symbol_call = node_wrap_expr(node_wrap_e_literal(literal));
+            return (Llvm_register_sym){0};
+    }
+    unreachable("");
+}
+
+
 static Llvm_register_sym insert_load(
     Env* env,
     Node** new_symbol_call,
@@ -163,10 +235,7 @@ static Llvm_register_sym insert_load(
                 *new_symbol_call = symbol_call;
                 return (Llvm_register_sym){0};
             case NODE_E_LITERAL:
-                try(sym_tbl_add(&env->global_literals, symbol_call));
-                log(LOG_DEBUG, "env->global_literals: %p\n", (void*)&env->global_literals);
-                *new_symbol_call = symbol_call;
-                return (Llvm_register_sym){0};
+                return insert_load_literal(env, new_symbol_call, node_unwrap_e_literal(sym_call_expr));
             case NODE_E_MEMBER_SYM_TYPED: {
                 Node_load_another_node* load = node_unwrap_load_another_node(node_new(symbol_call->pos, NODE_LOAD_ANOTHER_NODE));
                 Llvm_register_sym llvm_reg = do_load_struct_element_ptr(
@@ -467,9 +536,10 @@ static Node* get_store_assignment(
         }
         case NODE_E_LITERAL: {
             Node* new_rhs;
+            log_tree(LOG_DEBUG, node_wrap_expr(assignment->rhs));
             store_src = insert_load(env, &new_rhs, block_children, idx_to_insert_before, node_wrap_expr(assignment->rhs));
             assignment->rhs = node_unwrap_expr(new_rhs);
-            rhs_load_lang_type = node_unwrap_e_literal(assignment->rhs)->lang_type;
+            rhs_load_lang_type = node_unwrap_e_literal(node_unwrap_expr(new_rhs))->lang_type;
             break;
         }
         case NODE_E_LLVM_PLACEHOLDER:
