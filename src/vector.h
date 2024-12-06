@@ -12,6 +12,31 @@ typedef struct {
     size_t capacity;
 } Vec_base;
 
+#define vec_reserve_no_arena(vector, min_count_empty_slots) \
+    do { \
+        size_t original_capacity = (vector)->info.capacity; \
+        size_t needs_resizing = false; \
+        while ((vector)->info.capacity < (vector)->info.count + (min_count_empty_slots)) { \
+            if ((vector)->info.capacity < 1) { \
+                (vector)->info.capacity = 2; \
+            } else { \
+                (vector)->info.capacity *= 2; \
+            } \
+            needs_resizing = true; \
+        } \
+        if (original_capacity == 0) { \
+            (vector)->buf = malloc(sizeof((vector)->buf[0])*(vector)->info.capacity)); \
+        } else if (needs_resizing) { \
+            (vector)->buf = realloc((vector)->buf, sizeof((vector)->buf[0])*(vector)->info.capacity)); \
+        } \
+    } while(0)
+
+#define vec_append_no_arena(vector, item_to_append) \
+    do { \
+        vec_reserve_no_arena(vector, 1); \
+        (vector)->buf[(vector)->info.count++] = (item_to_append); \
+    } while(0)
+
 #define vec_reserve(arena, vector, min_count_empty_slots) \
     do { \
         size_t original_capacity = (vector)->info.capacity; \

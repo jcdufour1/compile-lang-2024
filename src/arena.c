@@ -9,7 +9,7 @@ static void* safe_realloc(void* old_ptr, size_t old_capacity, size_t new_count_i
     size_t new_capacity = new_count_items*size_each_item;
     void* new_ptr = realloc(old_ptr, new_capacity);
     if (!new_ptr) {
-        msg(LOG_FETAL, EXPECT_FAIL_TYPE_NONE, dummy_file_text, dummy_pos, "realloc failed\n");
+        fprintf(stderr, "realloc failed\n");
         exit(EXIT_CODE_FAIL);
     }
     memset((char*)new_ptr + old_capacity, 0, new_capacity - old_capacity);
@@ -20,7 +20,7 @@ static void* safe_realloc(void* old_ptr, size_t old_capacity, size_t new_count_i
 static void* safe_malloc(size_t capacity) {
     void* new_ptr = malloc(capacity);
     if (!new_ptr) {
-        msg(LOG_FETAL, EXPECT_FAIL_TYPE_NONE, dummy_file_text, dummy_pos, "malloc failed\n");
+        fprintf(stderr, "malloc failed\n");
         exit(EXIT_CODE_FAIL);
     }
     memset(new_ptr, 0, capacity);
@@ -75,7 +75,7 @@ void* arena_realloc(Arena* arena, void* old_buf, size_t old_capacity, size_t new
 
 void arena_destroy(Arena* arena) {
     (void) arena;
-    todo();
+    abort();
 }
 
 // reset, but do not free, allocated area

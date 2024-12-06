@@ -3,11 +3,11 @@
 CC_COMPILER ?= clang
 
 C_FLAGS_DEBUG=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
-			  -std=c11 -pedantic -g -I ./third_party/ \
+			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} \
 			  -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			  -fsanitize=address -fno-omit-frame-pointer 
 C_FLAGS_RELEASE=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
-			    -std=c11 -pedantic -g -I ./third_party/ \
+			    -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} \
 			    -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			    -DNDEBUG \
 				-O2
@@ -46,7 +46,7 @@ OBJS=\
 	 ${BUILD_DIR}/passes/change_operators.o \
 	 ${BUILD_DIR}/passes/emit_llvm.o
 
-DEP_COMMON = Makefile src/*.h
+DEP_COMMON = Makefile src/*.h ${BUILD_DIR}/node.h
 
 FILE_TO_TEST ?= examples/new_lang/structs.own
 ARGS_PROGRAM ?= compile ${FILE_TO_TEST} --emit-llvm
@@ -63,6 +63,13 @@ build: ${BUILD_DIR}/main
 
 test_quick: run
 	${CC_COMPILER} test.ll -o a.out && ./a.out ; echo $$?
+
+# auto_gen
+${BUILD_DIR}/auto_gen: src/auto_gen.c
+	${CC_COMPILER} ${C_FLAGS} -o ${BUILD_DIR}/auto_gen src/arena.c src/auto_gen.c
+
+${BUILD_DIR}/node.h: ${BUILD_DIR}/auto_gen
+	./${BUILD_DIR}/auto_gen ${BUILD_DIR}/node.h
 
 # general
 ${BUILD_DIR}/main: ${DEP_COMMON} ${OBJS}
