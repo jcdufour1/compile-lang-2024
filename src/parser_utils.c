@@ -1068,20 +1068,36 @@ static void msg_invalid_member(
     );
     Node* memb_sym_def_;
     try(symbol_lookup(&memb_sym_def_, env, memb_sym_typed->name));
-    const Node_variable_def* memb_sym_def = node_unwrap_variable_def_const(memb_sym_def_);
-    msg(
-        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, node_wrap_variable_def_const(memb_sym_def)->pos,
-        "`"STR_VIEW_FMT"` defined here as type `"LANG_TYPE_FMT"`\n",
-        str_view_print(memb_sym_def->name),
-        lang_type_print(memb_sym_def->lang_type)
-    );
-    Node* struct_def;
-    try(symbol_lookup(&struct_def, env, memb_sym_def->lang_type.str));
-    msg(
-        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, struct_def->pos,
-        "struct `"LANG_TYPE_FMT"` defined here\n", 
-        lang_type_print(memb_sym_def->lang_type)
-    );
+    switch (memb_sym_def_->type) {
+        case NODE_VARIABLE_DEF: {
+            const Node_variable_def* memb_sym_def = node_unwrap_variable_def_const(memb_sym_def_);
+            msg(
+                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text,
+                node_wrap_variable_def_const(memb_sym_def)->pos,
+                "`"STR_VIEW_FMT"` defined here as type `"LANG_TYPE_FMT"`\n",
+                str_view_print(memb_sym_def->name), lang_type_print(memb_sym_def->lang_type)
+            );
+            Node* struct_def;
+            try(symbol_lookup(&struct_def, env, memb_sym_def->lang_type.str));
+            msg(
+                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, struct_def->pos,
+                "struct `"LANG_TYPE_FMT"` defined here\n", 
+                lang_type_print(memb_sym_def->lang_type)
+            );
+            break;
+        }
+        case NODE_ENUM_DEF: {
+            msg(
+                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, memb_sym_def_->pos,
+                "enum `"STR_VIEW_FMT"` defined here\n", 
+                str_view_print(node_unwrap_enum_def(memb_sym_def_)->base.name)
+            );
+            break;
+        }
+        default:
+            unreachable(NODE_FMT"\n", node_print(memb_sym_def_));
+    }
+
 }
 
 bool try_set_member_symbol_types_finish(
