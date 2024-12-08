@@ -83,6 +83,7 @@ static void change_break_to_goto(Node_block* block, const Node_label* label_to_g
 
 static Node_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* for_loop) {
     Node_block* for_block = for_loop->body;
+    vec_append(&a_main, &env->ancesters, node_wrap_block(for_block));
     Node_block* new_branch_block = node_block_new(node_wrap_for_with_cond(for_loop)->pos);
     Node_operator* operator = node_unwrap_operator(for_loop->condition->child);
 
@@ -109,6 +110,8 @@ static Node_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* for_loo
     vec_append(&a_main, &new_branch_block->children, node_wrap_goto(goto_new(check_cond_label->name, node_wrap_for_with_cond(for_loop)->pos)));
     vec_append(&a_main, &new_branch_block->children, node_wrap_label(after_for_loop_label));
 
+    new_branch_block->symbol_table = for_block->symbol_table;
+    vec_rem_last(&env->ancesters);
     return new_branch_block;
 }
 

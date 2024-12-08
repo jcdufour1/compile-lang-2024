@@ -908,7 +908,6 @@ static PARSE_STATUS try_extract_function_call(Env* env, Node_function_call** chi
             case PARSE_EXPR_OK:
                 assert(arg);
                 vec_append_safe(&a_main, &function_call->args, arg);
-                log_tree(LOG_DEBUG, node_wrap_expr(vec_at(&function_call->args, 0)));
                 prev_is_comma = try_consume(NULL, tokens, TOKEN_COMMA);
                 break;
             case PARSE_EXPR_NONE:
@@ -1183,19 +1182,10 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
 }
 
 static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens, bool is_top_level) {
-    for (size_t idx = 0; idx < env->ancesters.info.count; idx++) {
-        const Node* curr = vec_at(&env->ancesters, idx);
-        log(LOG_DEBUG, NODE_FMT"\n", node_print(curr));
-    }
-
     PARSE_STATUS status = PARSE_OK;
 
     *block = node_block_new(tk_view_front(*tokens).pos);
     vec_append_safe(&a_main, &env->ancesters, node_wrap_block(*block));
-    for (size_t idx = 0; idx < env->ancesters.info.count; idx++) {
-        const Node* curr = vec_at(&env->ancesters, idx);
-        log(LOG_DEBUG, NODE_FMT"\n", node_print(curr));
-    }
 
     Node* redefined_symbol;
     if (!symbol_do_add_defered(&redefined_symbol, env)) {

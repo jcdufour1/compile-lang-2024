@@ -256,6 +256,7 @@ static Llvm_register_sym insert_load(
             }
             case NODE_SYMBOL_TYPED: {
                 Node* sym_def;
+                log(LOG_DEBUG, NODE_FMT"\n", node_print(symbol_call));
                 try(symbol_lookup(&sym_def, env, get_node_name(symbol_call)));
                 Node_load_another_node* load = node_load_another_node_new(sym_def->pos);
                 load->node_src = get_storage_location(env, get_node_name(symbol_call));
