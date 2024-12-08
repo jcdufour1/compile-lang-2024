@@ -748,14 +748,6 @@ static void gen_llvm_store_struct_literal(Str_view prefix, Type_vec* type_vec, M
     gen_type(type_vec, member_types, type_new(prefix, "Node_llvm_store_struct_literal"), members);
 }
 
-static void gen_ptr_byval_sym(Str_view prefix, Type_vec* type_vec, Members* member_types) {
-    Members members = {0};
-    append_member(&members, "Lang_type", "lang_type");
-    append_member(&members, "Llvm_register_sym", "node_src");
-    append_member(&members, "Llvm_id", "llvm_id");
-    gen_type(type_vec, member_types, type_new(prefix, "Node_ptr_byval_sym"), members);
-}
-
 static void gen_if_else_chain(Str_view prefix, Type_vec* type_vec, Members* member_types) {
     Members members = {0};
     append_member(&members, "Node_if_ptr_vec", "nodes");
@@ -798,7 +790,6 @@ static void gen_node_part_1(Str_view prefix, Type_vec* type_vec, Members* member
     gen_load_another_node(prefix, type_vec, member_types);
     gen_store_another_node(prefix, type_vec, member_types);
     gen_llvm_store_struct_literal(prefix, type_vec, member_types);
-    gen_ptr_byval_sym(prefix, type_vec, member_types);
     gen_if_else_chain(prefix, type_vec, member_types);
     gen_enum_def(prefix, type_vec, member_types);
 

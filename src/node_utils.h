@@ -282,8 +282,6 @@ static inline Lang_type get_lang_type(const Node* node) {
             return node_unwrap_load_element_ptr_const(node)->lang_type;
         case NODE_LLVM_STORE_LITERAL:
             return node_unwrap_llvm_store_literal_const(node)->lang_type;
-        case NODE_PTR_BYVAL_SYM:
-            return node_unwrap_ptr_byval_sym_const(node)->lang_type;
         case NODE_RAW_UNION_DEF:
             unreachable("");
         case NODE_IF_ELSE_CHAIN:
@@ -354,8 +352,6 @@ static inline Lang_type* get_lang_type_ref(Node* node) {
             return &node_unwrap_load_element_ptr(node)->lang_type;
         case NODE_LLVM_STORE_LITERAL:
             return &node_unwrap_llvm_store_literal(node)->lang_type;
-        case NODE_PTR_BYVAL_SYM:
-            return &node_unwrap_ptr_byval_sym(node)->lang_type;
         case NODE_IF_ELSE_CHAIN:
             unreachable("");
         case NODE_ENUM_DEF:
@@ -448,8 +444,6 @@ static inline Node* get_node_src(Node* node) {
             return node_unwrap_load_element_ptr(node)->node_src.node;
         case NODE_LLVM_STORE_LITERAL:
             unreachable("");
-        case NODE_PTR_BYVAL_SYM:
-            return node_unwrap_ptr_byval_sym(node)->node_src.node;
         case NODE_IF_ELSE_CHAIN:
             unreachable("");
         case NODE_ENUM_DEF:
@@ -542,8 +536,6 @@ static inline Node* get_node_dest(Node* node) {
             unreachable("");
         case NODE_LLVM_STORE_LITERAL:
             return node_unwrap_llvm_store_literal_const(node)->node_dest.node;
-        case NODE_PTR_BYVAL_SYM:
-            unreachable("");
         case NODE_IF_ELSE_CHAIN:
             unreachable("");
         case NODE_ENUM_DEF:
@@ -650,8 +642,6 @@ static inline Str_view get_node_name(const Node* node) {
         case NODE_LOAD_ELEMENT_PTR:
             return node_unwrap_load_element_ptr_const(node)->name;
         case NODE_LLVM_STORE_LITERAL:
-            unreachable("");
-        case NODE_PTR_BYVAL_SYM:
             unreachable("");
         case NODE_IF_ELSE_CHAIN:
             unreachable("");

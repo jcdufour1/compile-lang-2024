@@ -82,8 +82,6 @@ static inline Node* get_left_child(Node* node) {
             unreachable("");
         case NODE_LLVM_STORE_STRUCT_LITERAL:
             unreachable("");
-        case NODE_PTR_BYVAL_SYM:
-            return NULL;
         default:
             unreachable(NODE_FMT, node_print(node));
     }

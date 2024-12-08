@@ -119,10 +119,6 @@ void assign_llvm_ids(Env* env) {
             return;
         case NODE_MEMBER_SYM_PIECE_TYPED:
             unreachable("");
-        case NODE_PTR_BYVAL_SYM:
-            node_unwrap_ptr_byval_sym(curr_node)->llvm_id = llvm_id_for_next_var;
-            llvm_id_for_next_var += 2;
-            return;
         case NODE_ENUM_DEF:
             return;
         default:

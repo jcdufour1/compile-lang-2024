@@ -44,7 +44,6 @@ static const char* NODE_LLVM_STORE_STRUCT_LITERAL_DESCRIPTION = "llvm_store_stru
 static const char* NODE_LOAD_STRUCT_ELEMENT_PTR_DESCRIPTION = "load_element_ptr";
 static const char* NODE_LOAD_ANOTHER_NODE_DESCRIPTION = "load_another_node";
 static const char* NODE_STORE_ANOTHER_NODE_DESCRIPTION = "store_another_node";
-static const char* NODE_PTR_BYVAL_SYM_DESCRIPTION = "byval_sym";
 static const char* NODE_LLVM_PLACEHOLDER_DESCRIPTION = "llvm_register_sym";
 static const char* NODE_RAW_UNION_DEF_DESCRIPTION = "raw_union";
 static const char* NODE_IF_ELSE_CHAIN_DESCRIPTION = "if_else_chain";
@@ -196,8 +195,6 @@ static Str_view node_type_get_strv(const Node* node) {
             return str_view_from_cstr(NODE_LLVM_STORE_STRUCT_LITERAL_DESCRIPTION);
         case NODE_BREAK:
             return str_view_from_cstr(NODE_BREAK_DESCRIPTION);
-        case NODE_PTR_BYVAL_SYM:
-            return str_view_from_cstr(NODE_PTR_BYVAL_SYM_DESCRIPTION);
         case NODE_RAW_UNION_DEF:
             return str_view_from_cstr(NODE_RAW_UNION_DEF_DESCRIPTION);
         case NODE_IF_ELSE_CHAIN:
@@ -379,10 +376,6 @@ static bool extend_node_text(Arena* arena, String* string, const Node* node, boo
             case NODE_LOAD_ELEMENT_PTR:
                 extend_lang_type_to_string(arena, string, get_lang_type(node), true);
                 string_extend_strv_in_par(arena, string, get_node_name(node));
-                print_node_src(arena, string, node, do_recursion);
-                break;
-            case NODE_PTR_BYVAL_SYM:
-                extend_lang_type_to_string(arena, string, get_lang_type(node), true);
                 print_node_src(arena, string, node, do_recursion);
                 break;
             case NODE_IF_ELSE_CHAIN:
