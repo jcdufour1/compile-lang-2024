@@ -32,7 +32,7 @@ void write_file(const char* file_path, Str_view text_to_write) {
     FILE* file = fopen(file_path, "w");
     if (!file) {
         msg(
-            LOG_FETAL, EXPECT_FAIL_TYPE_NONE, dummy_file_text, dummy_pos, "could not open file %s: errno %d (%s)\n",
+            LOG_FATAL, EXPECT_FAIL_TYPE_NONE, dummy_file_text, dummy_pos, "could not open file %s: errno %d (%s)\n",
             params.input_file_name, errno, strerror(errno)
         );
         exit(EXIT_CODE_FAIL);

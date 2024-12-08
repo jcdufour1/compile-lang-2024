@@ -16,7 +16,7 @@ static bool is_short_option(char** argv) {
 // this function will exclude - or -- part of arg if present
 static const char* consume_arg(int* argc, char*** argv, const char* msg_if_missing) {
     if (*argc < 1) {
-        msg(LOG_FETAL, EXPECT_FAIL_TYPE_NONE, dummy_file_text, dummy_pos, "%s\n", msg_if_missing);
+        msg(LOG_FATAL, EXPECT_FAIL_TYPE_NONE, dummy_file_text, dummy_pos, "%s\n", msg_if_missing);
         exit(EXIT_CODE_FAIL);
     }
     const char* curr_arg = argv[0][0];
@@ -96,7 +96,7 @@ static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
             }
 
             if (!found) {
-                log(LOG_FETAL, "invalid expected fail type `%s`\n", expected_fail_type_str);
+                log(LOG_FATAL, "invalid expected fail type `%s`\n", expected_fail_type_str);
                 exit(EXIT_CODE_FAIL);
             }
             assert(idx + 1 == params->expected_fail_types.info.count);
@@ -107,7 +107,7 @@ static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
             argc, argv, "input file path was expected after `test_expected_fail <fail type>`"
         );
     } else {
-        log(LOG_FETAL, "invalid option: %s\n", curr_opt);
+        log(LOG_FATAL, "invalid option: %s\n", curr_opt);
         exit(EXIT_CODE_FAIL);
     }
 }
@@ -117,10 +117,10 @@ static void parse_long_option(Parameters* params, int* argc, char*** argv) {
 
     if (0 == strcmp(curr_opt, "emit-llvm")) {
         params->emit_llvm = true;
-    } else if (0 == strcmp(curr_opt, "all-errors-fetal")) {
-        params->all_errors_fetal = true;
+    } else if (0 == strcmp(curr_opt, "all-errors-fatal")) {
+        params->all_errors_fatal = true;
     } else {
-        log(LOG_FETAL, "invalid option: %s\n", curr_opt);
+        log(LOG_FATAL, "invalid option: %s\n", curr_opt);
         exit(EXIT_CODE_FAIL);
     }
 }

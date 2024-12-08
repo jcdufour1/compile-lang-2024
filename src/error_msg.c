@@ -69,7 +69,7 @@ void msg_internal(
     bool fail_immediately = false;
 
     if (log_level >= LOG_ERROR) {
-        fail_immediately = params.all_errors_fetal;
+        fail_immediately = params.all_errors_fatal;
         error_count++;
     } else if (log_level == LOG_WARNING) {
         warning_count++;
@@ -84,7 +84,7 @@ void msg_internal(
 
     if (log_level >= LOG_ERROR && params.test_expected_fail) {
         if (params.expected_fail_types.info.count <= expected_fail_count) {
-            log(LOG_FETAL, "too many fails occured\n");
+            log(LOG_FATAL, "too many fails occured\n");
             exit(EXIT_CODE_FAIL);
         }
         assert(expected_fail_count < params.expected_fail_types.info.count && "out of bounds");
@@ -92,7 +92,7 @@ void msg_internal(
         assert(expected_expect_fail != EXPECT_FAIL_TYPE_NONE);
 
         if (msg_expect_fail_type != expected_expect_fail) {
-            log(LOG_FETAL, "incorrect fail type occured\n");
+            log(LOG_FATAL, "incorrect fail type occured\n");
             exit(EXIT_CODE_FAIL);
         }
         assert(expected_expect_fail != EXPECT_FAIL_TYPE_NONE);
@@ -102,7 +102,7 @@ void msg_internal(
     }
 
     if (fail_immediately) {
-        fprintf(stderr, "%s: fail_immediately option active\n", get_log_level_str(LOG_FETAL));
+        fprintf(stderr, "%s: fail_immediately option active\n", get_log_level_str(LOG_FATAL));
         abort();
     }
 

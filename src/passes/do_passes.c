@@ -17,7 +17,7 @@ static void fail(void) {
         exit(EXIT_CODE_EXPECTED_FAIL);
     } else {
         log(
-            LOG_FETAL, "%zu expected fails occured, but %zu expected fails were expected\n",
+            LOG_FATAL, "%zu expected fails occured, but %zu expected fails were expected\n",
             expected_fail_count, params.expected_fail_types.info.count
         );
         exit(EXIT_CODE_FAIL);

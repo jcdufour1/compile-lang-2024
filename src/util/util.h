@@ -17,7 +17,7 @@ typedef enum {
     LOG_NOTE    = 3,
     LOG_WARNING = 4,
     LOG_ERROR   = 5,
-    LOG_FETAL   = 6,
+    LOG_FATAL   = 6,
 } LOG_LEVEL;
 
 #ifndef CURR_LOG_LEVEL
@@ -77,13 +77,13 @@ void msg_internal(
 
 #define todo() \
     do { \
-        log(LOG_FETAL, "not implemented\n"); \
+        log(LOG_FATAL, "not implemented\n"); \
         abort(); \
     } while (0);
 
 #define unreachable(...) \
     do { \
-        log(LOG_FETAL, "unreachable:"); \
+        log(LOG_FATAL, "unreachable:"); \
         fprintf(stderr, __VA_ARGS__); \
         fprintf(stderr, "\n"); \
         abort(); \
@@ -107,7 +107,7 @@ static inline const char* bool_print(bool condition) {
 #define try(cond) \
     do { \
         if (!(cond)) { \
-            log(LOG_FETAL, "condition \""); \
+            log(LOG_FATAL, "condition \""); \
             fprintf(stderr, #cond); \
             fprintf(stderr, "\" failed\n"); \
             abort(); \

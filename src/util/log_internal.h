@@ -15,8 +15,8 @@ static inline const char* get_log_level_str(int log_level) {
             return "warning";
         case LOG_ERROR:
             return "error";
-        case LOG_FETAL:
-            return "fetal error";
+        case LOG_FATAL:
+            return "fatal error";
         default:
             abort();
     }

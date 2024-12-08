@@ -509,7 +509,7 @@ bool is_corresponding_to_a_struct(const Env* env, const Node* node) {
             }
             return true;
         default:
-            log_tree(LOG_FETAL, node);
+            log_tree(LOG_FATAL, node);
             todo();
     }
 }

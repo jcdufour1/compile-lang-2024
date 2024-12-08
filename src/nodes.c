@@ -381,7 +381,7 @@ static bool extend_node_text(Arena* arena, String* string, const Node* node, boo
             case NODE_IF_ELSE_CHAIN:
                 break;
             default:
-                log(LOG_FETAL, "type: "STR_VIEW_FMT"\n", str_view_print(node_type_get_strv(node)));
+                log(LOG_FATAL, "type: "STR_VIEW_FMT"\n", str_view_print(node_type_get_strv(node)));
                 unreachable("");
         }
     }

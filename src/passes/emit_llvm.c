@@ -737,7 +737,7 @@ static void emit_symbols(const Env* env, String* output) {
                 case NODE_FUNCTION_CALL:
                     break;
                 default:
-                    log(LOG_FETAL, NODE_FMT"\n", node_print(curr_node.node));
+                    log(LOG_FATAL, NODE_FMT"\n", node_print(curr_node.node));
                     todo();
             }
         } else {
@@ -755,7 +755,7 @@ static void emit_symbols(const Env* env, String* output) {
                 case NODE_STRUCT_DEF:
                     break;
                 default:
-                    log(LOG_FETAL, NODE_FMT"\n", node_print(curr_node.node));
+                    log(LOG_FATAL, NODE_FMT"\n", node_print(curr_node.node));
                     todo();
             }
         }
