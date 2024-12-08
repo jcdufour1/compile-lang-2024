@@ -1,6 +1,48 @@
 #ifndef NODE_UTIL_H
 #define NODE_UTIL_H
 
+#define LANG_TYPE_FMT STR_VIEW_FMT
+
+void extend_lang_type_to_string(
+    Arena* arena,
+    String* string,
+    Lang_type lang_type,
+    bool surround_in_lt_gt
+);
+
+static inline Lang_type lang_type_from_strv(Str_view str_view, int16_t pointer_depth) {
+    Lang_type Lang_type = {.str = str_view, .pointer_depth = pointer_depth};
+    assert(str_view.count < 1e9);
+    return Lang_type;
+}
+
+// only literals can be used here
+static inline Lang_type lang_type_from_cstr(const char* cstr, int16_t pointer_depth) {
+    return lang_type_from_strv(str_view_from_cstr(cstr), pointer_depth);
+}
+
+static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
+    if (a.pointer_depth != b.pointer_depth) {
+        return false;
+    }
+    return str_view_is_equal(a.str, b.str);
+}
+
+Str_view lang_type_print_internal(Arena* arena, Lang_type lang_type, bool surround_in_lt_gt);
+
+#define lang_type_print(lang_type) str_view_print(lang_type_print_internal(&print_arena, (lang_type), false))
+
+#define NODE_FMT STR_VIEW_FMT
+
+Str_view node_print_internal(Arena* arena, const Node* node);
+
+#define node_print(root) str_view_print(node_print_internal(&print_arena, root))
+
+#define node_printf(node) \
+    do { \
+        log(LOG_NOTE, NODE_FMT"\n", node_print(node)); \
+    } while (0);
+
 static inline Lang_type get_operator_lang_type(const Node_e_operator* operator) {
     if (operator->type == NODE_OP_UNARY) {
         return node_unwrap_op_unary_const(operator)->lang_type;

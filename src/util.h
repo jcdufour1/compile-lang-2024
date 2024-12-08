@@ -45,8 +45,10 @@ static const Pos dummy_pos = {0};
 static const Str_view dummy_file_text = {0};
 
 // log* functions and macros print messages that are intended for debugging
-void log_internal(LOG_LEVEL log_level, const char* file, int line, int indent, const char* format, ...) 
+static inline void log_internal(LOG_LEVEL log_level, const char* file, int line, int indent, const char* format, ...) 
 __attribute__((format (printf, 5, 6)));
+
+#include <log_internal.h>
 
 #define log_indent_file(...) \
     do { \
