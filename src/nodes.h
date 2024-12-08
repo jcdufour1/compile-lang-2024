@@ -93,18 +93,11 @@ static inline const Node* get_left_child_const(const Node* node) {
     return get_left_child((Node*)node);
 }
 
-static inline Node* node_new(Pos pos, NODE_TYPE node_type) {
-    Node* new_node = arena_alloc(&a_main, sizeof(*new_node));
-    new_node->pos = pos;
-    new_node->type = node_type;
-    return new_node;
-}
-
-static inline Node_expr* node_expr_new(Pos pos, NODE_EXPR_TYPE expr_type) {
-    Node_expr* expr = node_unwrap_expr(node_new(pos, NODE_EXPR));
-    expr->type = expr_type;
-    return expr;
-}
+//static inline Node_expr* node_expr_new(Pos pos, NODE_EXPR_TYPE expr_type) {
+//    Node_expr* expr = node_unwrap_expr(node_new(pos, NODE_EXPR));
+//    expr->type = expr_type;
+//    return expr;
+//}
 
 static inline Node* node_clone(const Node* node_to_clone) {
     (void) node_to_clone;

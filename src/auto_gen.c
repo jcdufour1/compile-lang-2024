@@ -274,7 +274,10 @@ static Type type_new_from_cstr(const char* prefix, const char* type_name) {
 }
 
 static Type type_new(Str_view prefix, const char* type_name) {
-    Type type = {.prefix = prefix, .type_name = str_view_from_cstr(type_name)};
+    Type type = {
+        .prefix = prefix,
+        .type_name = str_view_from_cstr(type_name),
+    };
     return type;
 }
 
@@ -815,6 +818,56 @@ static void gen_node_part_2(Type_vec types) {
     }
 }
 
+static void gen_new(Type type, bool implementation) {
+    String function = {0};
+
+    string_extend_cstr(&gen_a, &function, "static inline ");
+    string_extend_strv(&gen_a, &function, strv_first_upper(type.type_name));
+    string_extend_cstr(&gen_a, &function, "* ");
+    string_extend_strv(&gen_a, &function, strv_lower(type.type_name));
+    string_extend_cstr(&gen_a, &function, "_new(Pos pos)");
+
+    if (implementation) {
+        string_extend_cstr(&gen_a, &function, "{\n");
+
+        string_extend_cstr(&gen_a, &function, "    ");
+        string_extend_strv(&gen_a, &function, strv_first_upper(type.prefix));
+        string_extend_cstr(&gen_a, &function, "* base_node = ");
+        string_extend_strv(&gen_a, &function, strv_lower(type.prefix));
+        string_extend_cstr(&gen_a, &function, "_new(pos);\n");
+
+        string_extend_cstr(&gen_a, &function, "    base_node->type = ");
+        string_extend_strv(&gen_a, &function, strv_upper(type.type_name));
+        string_extend_cstr(&gen_a, &function, ";\n");
+
+        string_extend_cstr(&gen_a, &function, "    return node_unwrap_");
+        string_extend_strv(&gen_a, &function, 
+            str_view_slice(strv_lower(type.type_name), 5, type.type_name.count - 5)
+        );
+        string_extend_cstr(&gen_a, &function, "(base_node);\n");
+
+        string_extend_cstr(&gen_a, &function, "}");
+    } else {
+        string_extend_cstr(&gen_a, &function, ";");
+    }
+
+    gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
+}
+
+static void gen_node_part_3(Type_vec types) {
+    for (size_t idx = 0; idx < types.info.count; idx++) {
+        Type type = vec_at(&types, idx);
+        gen_new(type, false);
+    }
+}
+
+static void gen_node_part_4(Type_vec types) {
+    for (size_t idx = 0; idx < types.info.count; idx++) {
+        Type type = vec_at(&types, idx);
+        gen_new(type, true);
+    }
+}
+
 static void gen_node(void) {
     Str_view prefix = str_view_from_cstr("node");
     Members member_types = {0};
@@ -822,6 +875,15 @@ static void gen_node(void) {
 
     gen_node_part_1(prefix, &types, &member_types);
     gen_node_part_2(types);
+
+    gen_gen("%s\n", "static inline Node* node_new(Pos pos) {");
+    gen_gen("%s\n", "    Node* new_node = arena_alloc(&a_main, sizeof(*new_node));");
+    gen_gen("%s\n", "    new_node->pos = pos;");
+    gen_gen("%s\n", "    return new_node;");
+    gen_gen("%s\n", "}");
+
+    gen_node_part_3(types);
+    gen_node_part_4(types);
 }
 
 int main(int argc, char** argv) {

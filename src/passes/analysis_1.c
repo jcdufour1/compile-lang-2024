@@ -34,7 +34,7 @@ void analysis_1(Env* env) {
         env->ancesters.info.count > 1 && vec_at(&env->ancesters, env->ancesters.info.count - 2)
     ) {
         assert(block->pos_end.line > 0);
-        Node_return* rtn_statement = node_unwrap_return(node_new(block->pos_end, NODE_RETURN));
+        Node_return* rtn_statement = node_return_new(block->pos_end);
         rtn_statement->is_auto_inserted = true;
         rtn_statement->child = node_wrap_literal(literal_new(str_view_from_cstr(""), TOKEN_VOID, block->pos_end));
         Lang_type dummy;

@@ -42,7 +42,7 @@ static inline Llvm_register_sym llvm_register_sym_new(Node* node) {
 static inline Node_llvm_placeholder* node_e_llvm_placeholder_new_from_reg(
     Llvm_register_sym llvm_reg, Lang_type lang_type
 ) {
-    Node_llvm_placeholder* placeholder = node_unwrap_llvm_placeholder(node_expr_new(llvm_reg.node->pos, NODE_LLVM_PLACEHOLDER));
+    Node_llvm_placeholder* placeholder = node_llvm_placeholder_new(llvm_reg.node->pos);
     placeholder->llvm_reg = llvm_reg;
     placeholder->lang_type = lang_type;
     return placeholder;

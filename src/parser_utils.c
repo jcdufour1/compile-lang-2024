@@ -237,7 +237,7 @@ Llvm_id get_matching_label_id(const Env* env, Str_view name) {
 }
 
 Node_assignment* assignment_new(const Env* env, Node* lhs, Node_expr* rhs) {
-    Node_assignment* assignment = node_unwrap_assignment(node_new(lhs->pos, NODE_ASSIGNMENT));
+    Node_assignment* assignment = node_assignment_new(lhs->pos);
     assignment->lhs = lhs;
     assignment->rhs = rhs;
 
@@ -247,7 +247,7 @@ Node_assignment* assignment_new(const Env* env, Node* lhs, Node_expr* rhs) {
 }
 
 Node_literal* literal_new(Str_view value, TOKEN_TYPE token_type, Pos pos) {
-    Node_expr* literal_ = node_unwrap_expr(node_new(pos, NODE_EXPR));
+    Node_expr* literal_ = node_expr_new(pos);
     literal_->type = NODE_LITERAL;
     Node_literal* literal = node_unwrap_literal(literal_);
     literal->name = literal_name_new();
@@ -276,7 +276,7 @@ Node_literal* literal_new(Str_view value, TOKEN_TYPE token_type, Pos pos) {
 Node_symbol_untyped* symbol_new(Str_view symbol_name, Pos pos) {
     assert(symbol_name.count > 0);
 
-    Node_expr* symbol_ = node_unwrap_expr(node_new(pos, NODE_EXPR));
+    Node_expr* symbol_ = node_expr_new(pos);
     symbol_->type = NODE_SYMBOL_UNTYPED;
     Node_symbol_untyped* symbol = node_unwrap_symbol_untyped(symbol_);
     symbol->name = symbol_name;
@@ -285,7 +285,7 @@ Node_symbol_untyped* symbol_new(Str_view symbol_name, Pos pos) {
 
 // TODO: make separate Node_unary_typed and Node_unary_untyped
 Node_expr* unary_new(const Env* env, Node_expr* child, TOKEN_TYPE operator_type, Lang_type init_lang_type) {
-    Node_expr* operator_ = node_unwrap_expr(node_new(node_wrap_expr(child)->pos, NODE_EXPR));
+    Node_expr* operator_ = node_expr_new(node_wrap_expr(child)->pos);
     operator_->type = NODE_OPERATOR;
     Node_operator* operator = node_unwrap_operator(operator_);
     operator->type = NODE_UNARY;
@@ -304,7 +304,7 @@ Node_expr* unary_new(const Env* env, Node_expr* child, TOKEN_TYPE operator_type,
 // TODO: make Node_untyped_binary
 Node_expr* binary_new(const Env* env, Node_expr* lhs, Node_expr* rhs, TOKEN_TYPE operator_type) {
     // TODO: check if lhs or rhs were already appended to the tree
-    Node_expr* operator_ = node_unwrap_expr(node_new(node_wrap_expr(lhs)->pos, NODE_EXPR));
+    Node_expr* operator_ = node_expr_new(node_wrap_expr(lhs)->pos);
     operator_->type = NODE_OPERATOR;
     Node_operator* operator = node_unwrap_operator(operator_);
     operator->type = NODE_BINARY;
@@ -1108,7 +1108,7 @@ bool try_set_member_symbol_types_finish(
     const Struct_def_base* def_base,
     Node_variable_def* curr_memb_def
 ) {
-    Node_expr* memb_sym_typed_ = node_unwrap_expr(node_new(node_wrap_expr(node_wrap_member_sym_untyped(memb_sym_untyped))->pos, NODE_EXPR));
+    Node_expr* memb_sym_typed_ = node_expr_new(node_wrap_expr(node_wrap_member_sym_untyped(memb_sym_untyped))->pos);
     memb_sym_typed_->type = NODE_MEMBER_SYM_TYPED;
     Node_member_sym_typed* memb_sym_typed = node_unwrap_member_sym_typed(memb_sym_typed_);
 
@@ -1128,10 +1128,9 @@ bool try_set_member_symbol_types_finish(
             return false;
         }
 
-        Node_member_sym_piece_typed* memb_sym_piece_typed = 
-            node_unwrap_member_sym_piece_typed(node_new(
-                node_wrap_expr(node_wrap_member_sym_untyped(memb_sym_untyped))->pos, NODE_MEMBER_SYM_PIECE_TYPED
-            ));
+        Node_member_sym_piece_typed* memb_sym_piece_typed = node_member_sym_piece_typed_new(
+            node_wrap_expr(node_wrap_member_sym_untyped(memb_sym_untyped))->pos
+        );
         memb_sym_piece_typed->name = curr_memb_def->name;
         memb_sym_piece_typed->lang_type = curr_memb_def->lang_type;
         *lang_type = memb_sym_piece_typed->lang_type;
@@ -1167,8 +1166,8 @@ bool try_set_member_symbol_types_finish(
                 try(try_get_generic_struct_def(env, &def, node_wrap_variable_def(curr_memb_def)));
 
                 try(idx == 0);
-                Node_expr* expr = node_unwrap_expr(
-                    node_new(node_wrap_expr(node_wrap_member_sym_untyped(memb_sym_untyped))->pos, NODE_EXPR)
+                Node_expr* expr = node_expr_new(
+                    node_wrap_expr(node_wrap_member_sym_untyped(memb_sym_untyped))->pos
                 );
                 expr->type = NODE_LITERAL;
                 Node_literal* literal = node_unwrap_literal(expr);

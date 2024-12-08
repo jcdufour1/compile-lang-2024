@@ -4,14 +4,14 @@
 #include "passes.h"
 
 static Node_label* label_new(Env* env, Str_view label_name, Pos pos) {
-    Node_label* label = node_unwrap_label(node_new(pos, NODE_LABEL));
+    Node_label* label = node_label_new(pos);
     label->name = label_name;
     try(symbol_add(env, node_wrap_label(label)));
     return label;
 }
 
 static Node_goto* goto_new(Str_view name_label_to_jmp_to, Pos pos) {
-    Node_goto* lang_goto = node_unwrap_goto(node_new(pos, NODE_GOTO));
+    Node_goto* lang_goto = node_goto_new(pos);
     lang_goto->name = name_label_to_jmp_to;
     return lang_goto;
 }
@@ -21,7 +21,7 @@ static Node_cond_goto* conditional_goto_new(
     Str_view label_name_if_true,
     Str_view label_name_if_false
 ) {
-    Node_cond_goto* cond_goto = node_unwrap_cond_goto(node_new(node_wrap_expr(node_wrap_operator(operator))->pos, NODE_COND_GOTO));
+    Node_cond_goto* cond_goto = node_cond_goto_new(node_wrap_expr(node_wrap_operator(operator))->pos);
     cond_goto->node_src = operator;
     cond_goto->if_true = symbol_new(label_name_if_true, node_wrap_expr(node_wrap_operator(operator))->pos);
     cond_goto->if_false = symbol_new(label_name_if_false, node_wrap_expr(node_wrap_operator(operator))->pos);
@@ -83,7 +83,7 @@ static void change_break_to_goto(Node_block* block, const Node_label* label_to_g
 
 static Node_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* for_loop) {
     Node_block* for_block = for_loop->body;
-    Node_block* new_branch_block = node_unwrap_block(node_new(node_wrap_for_with_cond(for_loop)->pos, NODE_BLOCK));
+    Node_block* new_branch_block = node_block_new(node_wrap_for_with_cond(for_loop)->pos);
     Node_operator* operator = node_unwrap_operator(for_loop->condition->child);
 
     Node_label* check_cond_label = label_new(env, literal_name_new(), node_wrap_for_with_cond(for_loop)->pos);
@@ -121,7 +121,7 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* for_loop) {
     Node_expr* lhs_actual = for_loop->lower_bound->child;
     Node_expr* rhs_actual = for_loop->upper_bound->child;
 
-    Node_block* new_branch_block = node_unwrap_block(node_new(node_wrap_for_range(for_loop)->pos, NODE_BLOCK));
+    Node_block* new_branch_block = node_block_new(node_wrap_for_range(for_loop)->pos);
 
     Node_symbol_untyped* symbol_lhs_assign;
     Node_variable_def* for_var_def;
@@ -174,7 +174,7 @@ static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement, Node_
     Node_condition* if_cond = if_statement->condition;
     Node_block* old_block = if_statement->body;
 
-    Node_block* new_block = node_unwrap_block(node_new(node_wrap_block(old_block)->pos, NODE_BLOCK));
+    Node_block* new_block = node_block_new(node_wrap_block(old_block)->pos);
 
     Node_operator* operator;
     switch (if_cond->child->type) {
@@ -215,7 +215,7 @@ static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement, Node_
 
 static Node_block* if_else_chain_to_branch(Env* env, Node_if_else_chain* if_else) {
     Node_label* if_after = label_new(env, literal_name_new(), node_wrap_if_else_chain(if_else)->pos);
-    Node_block* new_block = node_unwrap_block(node_new(node_wrap_if_else_chain(if_else)->pos, NODE_BLOCK));
+    Node_block* new_block = node_block_new(node_wrap_if_else_chain(if_else)->pos);
 
     Node_label* next_if = NULL;
     for (size_t idx = 0; idx < if_else->nodes.info.count; idx++) {
