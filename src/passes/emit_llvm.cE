@@ -20,7 +20,7 @@ static void extend_literal(String* output, const Node_literal* literal) {
             string_extend_int64_t(&a_main, output, node_unwrap_number_const(literal)->data);
             return;
         case NODE_ENUM_LIT:
-            string_extend_int64_t(&a_main, output, node_unwrap_enum_lit_const(literal)->data);
+            string_extend_int64_t(&a_main, output, node_unwrap_enum_lit_lit_const(literal)->data);
             return;
         case NODE_VOID:
             return;

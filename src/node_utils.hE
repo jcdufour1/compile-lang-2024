@@ -669,11 +669,4 @@ static inline const Node* get_node_dest_const(const Node* node) {
     return get_node_dest((Node*)node);
 }
 
-static inline Node_expr* node_make_expr(Node* node, NODE_EXPR_TYPE expr_type) {
-    assert(node->type == NODE_EXPR);
-    Node_expr* expr = node_unwrap_expr(node);
-    expr->type = expr_type;
-    return expr;
-}
-
 #endif // NODE_UTIL_H
