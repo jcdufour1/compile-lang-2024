@@ -2,10 +2,10 @@
 #define NEWSTRING_H
 
 #include <string.h>
-#include "util.h"
-#include "str_view.h"
-#include "vector.h"
-#include "assert.h"
+#include <util.h>
+#include <str_view.h>
+#include <vector.h>
+#include <assert.h>
 #include <inttypes.h>
 #include <stdint.h>
 

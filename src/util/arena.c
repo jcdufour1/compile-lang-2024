@@ -1,6 +1,6 @@
-#include "arena.h"
-#include "util.h"
-#include "assert.h"
+#include <arena.h>
+#include <util.h>
+#include <assert.h>
 #include <stddef.h>
 
 #define ARENA_DEFAULT_CAPACITY (1 << 20) // 1 MB initial

@@ -7,8 +7,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdarg.h>
-#include "str_view_struct.h"
-#include "expected_fail_type.h"
+#include <str_view_struct.h>
+#include <expected_fail_type.h>
 
 typedef enum {
     LOG_TRACE   = 0,

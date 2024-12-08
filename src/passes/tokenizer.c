@@ -1,11 +1,11 @@
 #include <stdbool.h>
-#include "../util.h"
-#include "../token.h"
-#include "../tokens.h"
-#include "../token_view.h"
-#include "../str_view_col.h"
-#include "../parameters.h"
-#include "../env.h"
+#include <util.h>
+#include <token.h>
+#include <tokens.h>
+#include <token_view.h>
+#include <str_view_col.h>
+#include <parameters.h>
+#include <env.h>
 #include "passes.h"
 #include <ctype.h>
 
