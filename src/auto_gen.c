@@ -183,15 +183,15 @@ static void append_member(Members* members, const char* type, const char* name) 
 
 static Members node_expr_get_top_level(void) {
     Members top_level = {0};
-    append_member(&top_level, "NODE_EXPR_TYPE", "type");
     append_member(&top_level, "Node_expr_as", "as");
+    append_member(&top_level, "NODE_EXPR_TYPE", "type");
     return top_level;
 }
 
 static Members node_get_top_level(void) {
     Members top_level = {0};
-    append_member(&top_level, "NODE_TYPE", "type");
     append_member(&top_level, "Node_as", "as");
+    append_member(&top_level, "NODE_TYPE", "type");
     append_member(&top_level, "Pos", "pos");
     return top_level;
 }

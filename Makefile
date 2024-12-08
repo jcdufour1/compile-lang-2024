@@ -3,11 +3,11 @@
 CC_COMPILER ?= clang
 
 C_FLAGS_DEBUG=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
-			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} \
+			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ \
 			  -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			  -fsanitize=address -fno-omit-frame-pointer 
 C_FLAGS_RELEASE=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
-			    -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} \
+			    -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ \
 			    -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			    -DNDEBUG \
 				-O2

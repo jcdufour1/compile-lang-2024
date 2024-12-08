@@ -14,7 +14,7 @@ void symbol_log_table_internal(int log_level, const Symbol_table sym_table, int 
 
 #define symbol_log_table(log_level, sym_table) \
     do { \
-        symbol_log_table_internal(log_level, sym_table, __FILE__, __LINE__) \
+        symbol_log_table_internal(log_level, sym_table, 0, __FILE__, __LINE__) \
     } while(0)
 
 // returns false if symbol is already added to the table

@@ -199,7 +199,6 @@ bool symbol_lookup(Node** result, const Env* env, Str_view key) {
 }
 
 bool symbol_add(Env* env, Node* node_of_symbol) {
-    log(LOG_DEBUG, "symbol_add: "NODE_FMT"\n", node_print(node_of_symbol));
     Node* dummy;
     if (symbol_lookup(&dummy, env, get_node_name(node_of_symbol))) {
         return false;

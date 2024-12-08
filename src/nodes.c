@@ -6,7 +6,7 @@
 #include "do_passes.h"
 #include "symbol_table.h"
 
-static void extend_node_text(Arena* arena, String* string, const Node* node, bool do_recursion);
+static bool extend_node_text(Arena* arena, String* string, const Node* node, bool do_recursion);
 
 static const char* NODE_LITERAL_DESCRIPTION = "literal";
 static const char* NODE_FUNCTION_CALL_DESCRIPTION = "fn_call";
@@ -55,7 +55,11 @@ void extend_lang_type_to_string(Arena* arena, String* string, Lang_type lang_typ
         vec_append(arena, string, '<');
     }
 
-    string_extend_strv(arena, string, lang_type.str);
+    if (lang_type.str.count > 1) {
+        string_extend_strv(arena, string, lang_type.str);
+    } else {
+        string_extend_cstr(arena, string, "<null>");
+    }
     if (lang_type.pointer_depth < 0) {
         todo();
     }
@@ -289,7 +293,7 @@ static void extend_expr_text(Arena* arena, String* string, const Node_expr* expr
     }
 }
 
-static void extend_node_text(Arena* arena, String* string, const Node* node, bool do_recursion) {
+static bool extend_node_text(Arena* arena, String* string, const Node* node, bool do_recursion) {
     assert(node);
     string_extend_strv(arena, string, node_type_get_strv(node));
 
@@ -389,9 +393,15 @@ static void extend_node_text(Arena* arena, String* string, const Node* node, boo
         }
     }
 
-    assert(node->pos.line < 1e6);
+    if (node->pos.line > 1e6) {
+        // TODO: crash program later when this happens
+        log(LOG_ERROR, "possliyby corrupt\n");
+        return false;
+    }
+
     string_extend_cstr(arena, string, "    line:");
     string_extend_size_t(arena, string, node->pos.line);
+    return true;
 }
 
 Str_view node_print_internal(Arena* arena, const Node* node) {

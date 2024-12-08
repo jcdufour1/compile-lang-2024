@@ -590,9 +590,6 @@ static PARSE_STATUS extract_function_decl_common(
 
     Token name_token = tk_view_consume(tokens);
     (*fun_decl)->name = name_token.text;
-    if (!symbol_add(env, node_wrap_function_decl(*fun_decl))) {
-        return msg_redefinition_of_symbol(env, node_wrap_function_decl(*fun_decl));
-    }
     if (!try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
         msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_OPEN_PAR);
         return PARSE_ERROR;
@@ -600,8 +597,12 @@ static PARSE_STATUS extract_function_decl_common(
     if (PARSE_OK != extract_function_parameters(env, &(*fun_decl)->parameters, tokens)) {
         return PARSE_ERROR;
     }
+
     extract_return_type(&(*fun_decl)->return_type, tokens);
     assert((*fun_decl)->return_type->lang_type.str.count > 0);
+    if (!symbol_add(env, node_wrap_function_decl(*fun_decl))) {
+        return msg_redefinition_of_symbol(env, node_wrap_function_decl(*fun_decl));
+    }
 
     return PARSE_OK;
 }
@@ -1188,10 +1189,20 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
 }
 
 static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens, bool is_top_level) {
+    for (size_t idx = 0; idx < env->ancesters.info.count; idx++) {
+        const Node* curr = vec_at(&env->ancesters, idx);
+        log(LOG_DEBUG, NODE_FMT"\n", node_print(curr));
+    }
+
     PARSE_STATUS status = PARSE_OK;
 
     *block = node_unwrap_block(node_new(tk_view_front(*tokens).pos, NODE_BLOCK));
     vec_append_safe(&a_main, &env->ancesters, node_wrap_block(*block));
+    for (size_t idx = 0; idx < env->ancesters.info.count; idx++) {
+        const Node* curr = vec_at(&env->ancesters, idx);
+        log(LOG_DEBUG, NODE_FMT"\n", node_print(curr));
+    }
+
     Node* redefined_symbol;
     if (!symbol_do_add_defered(&redefined_symbol, env)) {
         msg_redefinition_of_symbol(env, redefined_symbol);
