@@ -67,7 +67,7 @@ Node_literal* literal_new(Str_view value, TOKEN_TYPE token_type, Pos pos);
 
 Node_symbol_untyped* symbol_new(Str_view symbol_name, Pos pos);
 
-Node_expr* binary_new(const Env* env, Node_expr* lhs, Node_expr* rhs, TOKEN_TYPE operation_type);
+Node_expr* util_binary_typed_new(const Env* env, Node_expr* lhs, Node_expr* rhs, TOKEN_TYPE operation_type);
 
 Node_expr* unary_new(const Env* env, Node_expr* child, TOKEN_TYPE operation_type, Lang_type init_lang_type);
 

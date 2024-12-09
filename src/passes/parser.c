@@ -1299,7 +1299,13 @@ static PARSE_STATUS extract_struct_literal(Env* env, Node_struct_literal** struc
     }
 
     if (!try_consume(&start_token, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_COMMA, TOKEN_NEW_LINE, TOKEN_CLOSE_CURLY_BRACE);
+        msg_parser_expected(
+            env->file_text,
+            tk_view_front(*tokens),
+            TOKEN_COMMA,
+            TOKEN_NEW_LINE,
+            TOKEN_CLOSE_CURLY_BRACE
+        );
         return PARSE_ERROR;
     }
 
@@ -1321,11 +1327,7 @@ static Node_member_sym_untyped* extract_member_call(Tk_view* tokens) {
 }
 
 static Node_unary* parser_unary_new(Token operator_token, Node_expr* child, Lang_type init_lang_type) {
-    Node_expr* operator_ = node_expr_new(operator_token.pos);
-    operator_->type = NODE_OPERATOR;
-    Node_operator* operator = node_unwrap_operator(operator_);
-    operator->type = NODE_UNARY;
-    Node_unary* unary = node_unwrap_unary(operator);
+    Node_unary* unary = node_unary_new(operator_token.pos);
     unary->token_type = operator_token.type;
     unary->child = child;
     unary->lang_type = init_lang_type;
@@ -1333,11 +1335,7 @@ static Node_unary* parser_unary_new(Token operator_token, Node_expr* child, Lang
 }
 
 static Node_binary* parser_binary_new(Node_expr* lhs, Token operator_token, Node_expr* rhs) {
-    Node_expr* operator_ = node_expr_new(operator_token.pos);
-    operator_->type = NODE_OPERATOR;
-    Node_operator* operator = node_unwrap_operator(operator_);
-    operator->type = NODE_BINARY;
-    Node_binary* binary = node_unwrap_binary(operator);
+    Node_binary* binary = node_binary_new(operator_token.pos);
     binary->token_type = operator_token.type;
     binary->lhs = lhs;
     binary->rhs = rhs;

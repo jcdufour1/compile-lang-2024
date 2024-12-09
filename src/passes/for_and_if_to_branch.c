@@ -30,7 +30,7 @@ static Node_cond_goto* conditional_goto_new(
 
 static Node_assignment* for_loop_cond_var_assign_new(Env* env, Str_view sym_name, Pos pos) {
     Node_literal* literal = literal_new(str_view_from_cstr("1"), TOKEN_INT_LITERAL, pos);
-    Node_expr* operator = binary_new(env, node_wrap_symbol_untyped(symbol_new(sym_name, pos)), node_wrap_literal(literal), TOKEN_SINGLE_PLUS);
+    Node_expr* operator = util_binary_typed_new(env, node_wrap_symbol_untyped(symbol_new(sym_name, pos)), node_wrap_literal(literal), TOKEN_SINGLE_PLUS);
     return assignment_new(env, node_wrap_expr(node_wrap_symbol_untyped(symbol_new(sym_name, pos))), operator);
 }
 
@@ -156,7 +156,7 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* for_loop) {
 
     Node_assignment* assignment_to_inc_cond_var = for_loop_cond_var_assign_new(env, for_var_def->name, node_wrap_expr(lhs_actual)->pos);
 
-    Node_expr* operator = binary_new(
+    Node_expr* operator = util_binary_typed_new(
         env, node_wrap_symbol_untyped(symbol_new(symbol_lhs_assign->name, node_wrap_expr(node_wrap_symbol_untyped(symbol_lhs_assign))->pos)), rhs_actual, TOKEN_LESS_THAN
     );
 

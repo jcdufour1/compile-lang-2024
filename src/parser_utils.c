@@ -302,7 +302,7 @@ Node_expr* unary_new(const Env* env, Node_expr* child, TOKEN_TYPE operator_type,
 }
 
 // TODO: make Node_untyped_binary
-Node_expr* binary_new(const Env* env, Node_expr* lhs, Node_expr* rhs, TOKEN_TYPE operator_type) {
+Node_expr* util_binary_typed_new(const Env* env, Node_expr* lhs, Node_expr* rhs, TOKEN_TYPE operator_type) {
     // TODO: check if lhs or rhs were already appended to the tree
     Node_expr* operator_ = node_expr_new(node_wrap_expr(lhs)->pos);
     operator_->type = NODE_OPERATOR;
@@ -1264,7 +1264,7 @@ bool try_set_member_symbol_types(
 }
 
 INLINE Node_expr* condition_get_default_child(const Env* env, Node_expr* if_cond_child) {
-    return binary_new(
+    return util_binary_typed_new(
         env,
         if_cond_child,
         node_wrap_literal(literal_new(str_view_from_cstr("0"), TOKEN_INT_LITERAL, node_wrap_expr(if_cond_child)->pos)),
