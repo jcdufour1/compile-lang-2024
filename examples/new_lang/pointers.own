@@ -46,6 +46,21 @@ fn set_string(string u8**) {
     deref(string) = "bye"
 }
 
+fn cast_to_pointer() {
+    let pointer u8* = unsafe_cast<u8*>0
+
+    if pointer == unsafe_cast<u8*>0 {
+        printf("yes\n");
+    }
+
+    if pointer == unsafe_cast<u8*>1 {
+        printf("no\n");
+    }
+
+    let zero i64 = unsafe_cast<i64>pointer
+    printf("pointer back to int: %d\n", zero);
+}
+
 fn main() i32 {
     let num i32 = 8
     printf("%d\n", num)
@@ -77,6 +92,8 @@ fn main() i32 {
     printf("%s\n", string)
     set_string(refer(string))
     printf("%s\n", string)
+
+    cast_to_pointer()
 
     return 0
 }

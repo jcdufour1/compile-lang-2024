@@ -1028,18 +1028,14 @@ static Node_condition* extract_condition(Env* env, Tk_view* tokens) {
 }
 
 static void if_else_chain_consume_newline(Tk_view* tokens) {
-    log_tokens(LOG_DEBUG, *tokens);
     while (1) {
         if (tokens->count < 2) {
-            log(LOG_DEBUG, "return 1\n");
             break;
         }
         if (tk_view_at(*tokens, 1).type != TOKEN_NEW_LINE && tk_view_at(*tokens, 1).type != TOKEN_ELSE) {
-            log(LOG_DEBUG, "return 2\n");
             break;
         }
         if (!try_consume(NULL, tokens, TOKEN_NEW_LINE)) {
-            log(LOG_DEBUG, "return 3\n");
             break;
         }
     }
@@ -1386,7 +1382,6 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node_expr** resu
             case TOKEN_NOT:
                 break;
             case TOKEN_UNSAFE_CAST: {
-                Token symbol;
                 {
                     Token temp;
                     if (!try_consume(&temp, tokens, TOKEN_LESS_THAN)) {
@@ -1394,8 +1389,7 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node_expr** resu
                         return PARSE_EXPR_ERROR;
                     }
                 }
-                if (!try_consume(&symbol, tokens, TOKEN_SYMBOL)) {
-                    msg_parser_expected(env->file_text, symbol, TOKEN_SYMBOL);
+                if (PARSE_OK != extract_lang_type_struct_require(env, &unary_lang_type, tokens)) {
                     return PARSE_EXPR_ERROR;
                 }
                 {
@@ -1405,7 +1399,6 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node_expr** resu
                         return PARSE_EXPR_ERROR;
                     }
                 }
-                unary_lang_type = lang_type_from_strv(symbol.text, 0);
                 break;
             }
             default:

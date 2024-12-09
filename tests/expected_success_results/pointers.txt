@@ -12,3 +12,5 @@
 134/1298
 hello
 bye
+yes
+pointer back to int: 0

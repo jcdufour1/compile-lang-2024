@@ -232,17 +232,9 @@ static void emit_function_call_arguments(const Env* env, String* output, const N
                 break;
             }
             case NODE_FUNCTION_CALL:
-                unreachable(""); // this function call should be changed to assign to a variable 
-                               // before reaching emit_llvm stage, then assign that variable here. 
+                unreachable("");
             default:
                 unreachable("");
-            //case NODE_PTR_BYVAL_SYM:
-            //    string_extend_cstr(&a_main, output, "ptr noundef byval(");
-            //    extend_type_call_str(env, output, get_lang_type(argument));
-            //    string_extend_cstr(&a_main, output, ")");
-            //    string_extend_cstr(&a_main, output, " %");
-            //    string_extend_size_t(&a_main, output, get_llvm_id(node_unwrap_ptr_byval_sym_const(argument)->node_src));
-            //    break;
         }
     }
 }
@@ -282,16 +274,25 @@ static void emit_alloca(const Env* env, String* output, const Node_alloca* alloc
 static void emit_unary_type(const Env* env, String* output, const Node_unary* unary) {
     switch (unary->token_type) {
         case TOKEN_UNSAFE_CAST:
-            if (!is_i_lang_type(unary->lang_type) || !is_i_lang_type(get_lang_type_expr(unary->child))) {
-                unreachable("");
-            }
-            if (i_lang_type_to_bit_width(unary->lang_type) > i_lang_type_to_bit_width(get_lang_type_expr(unary->child))) {
-                string_extend_cstr(&a_main, output, "zext ");
+            if (unary->lang_type.pointer_depth > 0 && is_i_lang_type(get_lang_type_expr(unary->child))) {
+                string_extend_cstr(&a_main, output, "inttoptr ");
+                extend_type_call_str(env, output, get_lang_type_expr(unary->child));
+                string_extend_cstr(&a_main, output, " ");
+            } else if (is_i_lang_type(unary->lang_type) && get_lang_type_expr(unary->child).pointer_depth > 0) {
+                string_extend_cstr(&a_main, output, "ptrtoint ");
+                extend_type_call_str(env, output, get_lang_type_expr(unary->child));
+                string_extend_cstr(&a_main, output, " ");
+            } else if (is_i_lang_type(unary->lang_type) && is_i_lang_type(get_lang_type_expr(unary->child))) {
+                if (i_lang_type_to_bit_width(unary->lang_type) > i_lang_type_to_bit_width(get_lang_type_expr(unary->child))) {
+                    string_extend_cstr(&a_main, output, "zext ");
+                } else {
+                    string_extend_cstr(&a_main, output, "trunc ");
+                }
+                extend_type_call_str(env, output, get_lang_type_expr(unary->child));
+                string_extend_cstr(&a_main, output, " ");
             } else {
-                string_extend_cstr(&a_main, output, "trunc ");
+                todo();
             }
-            extend_type_call_str(env, output, get_lang_type_expr(unary->child));
-            string_extend_cstr(&a_main, output, " ");
             break;
         default:
             unreachable("");
