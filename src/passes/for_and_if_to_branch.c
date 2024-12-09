@@ -62,6 +62,8 @@ static void change_break_to_goto(Node_block* block, const Node_label* label_to_g
                     break;
                 case NODE_VARIABLE_DEF:
                     break;
+                case NODE_RETURN:
+                    break;
                 case NODE_BREAK:
                     *curr_node = node_wrap_goto(goto_new(label_to_goto->name, node_wrap_label_const(label_to_goto)->pos));
                     assert(*curr_node);
@@ -85,7 +87,26 @@ static Node_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* for_loo
     Node_block* for_block = for_loop->body;
     vec_append(&a_main, &env->ancesters, node_wrap_block(for_block));
     Node_block* new_branch_block = node_block_new(node_wrap_for_with_cond(for_loop)->pos);
-    Node_operator* operator = node_unwrap_operator(for_loop->condition->child);
+
+    Node_operator* operator = NULL;
+    Node_expr* cond_child = for_loop->condition->child;
+    switch (cond_child->type) {
+        case NODE_OPERATOR:
+            operator = node_unwrap_operator(cond_child);
+            break;
+        case NODE_LITERAL: {
+            Pos pos = node_wrap_expr(cond_child)->pos;
+            Node_binary* binary = node_binary_new(pos);
+            binary->lhs = node_wrap_literal(literal_new(str_view_from_cstr("0"), TOKEN_INT_LITERAL, pos));
+            binary->rhs = cond_child;
+            binary->token_type = TOKEN_NOT_EQUAL;
+            binary->lang_type = get_lang_type_expr(cond_child);
+            operator = node_wrap_binary(binary);
+            break;
+        }
+        default:
+            unreachable("");
+    }
 
     Node_label* check_cond_label = label_new(env, literal_name_new(), node_wrap_for_with_cond(for_loop)->pos);
     Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label->name, node_wrap_for_with_cond(for_loop)->pos);

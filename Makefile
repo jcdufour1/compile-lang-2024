@@ -3,14 +3,19 @@
 CC_COMPILER ?= clang
 
 C_FLAGS_DEBUG=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
-			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ \
+			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ \
 			  -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			  -fsanitize=address -fno-omit-frame-pointer 
 C_FLAGS_RELEASE=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
-			    -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ \
+			    -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ \
 			    -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			    -DNDEBUG \
 				-O2
+
+C_FLAGS_AUTO_GEN=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
+			     -std=c11 -pedantic -g -I ./third_party/ -I src/util/ \
+			     -D CURR_LOG_LEVEL=${LOG_LEVEL} \
+			     -fsanitize=address -fno-omit-frame-pointer 
 
 DEBUG ?= 0
 ifeq ($(DEBUG), 1)
@@ -46,7 +51,8 @@ OBJS=\
 	 ${BUILD_DIR}/passes/change_operators.o \
 	 ${BUILD_DIR}/passes/emit_llvm.o
 
-DEP_COMMON = Makefile src/*.h ${BUILD_DIR}/node.h
+DEP_UTIL = Makefile src/util/*.h
+DEP_COMMON = ${DEP_UTIL} src/*.h ${BUILD_DIR}/node.h
 
 FILE_TO_TEST ?= examples/new_lang/structs.own
 ARGS_PROGRAM ?= compile ${FILE_TO_TEST} --emit-llvm
@@ -64,9 +70,9 @@ build: ${BUILD_DIR}/main
 test_quick: run
 	${CC_COMPILER} test.ll -o a.out && ./a.out ; echo $$?
 
-# auto_gen
-${BUILD_DIR}/auto_gen: src/auto_gen.c
-	${CC_COMPILER} ${C_FLAGS} -o ${BUILD_DIR}/auto_gen src/arena.c src/auto_gen.c
+# auto_gen and util
+${BUILD_DIR}/auto_gen: src/util/auto_gen.c
+	${CC_COMPILER} ${C_FLAGS_AUTO_GEN} -o ${BUILD_DIR}/auto_gen src/util/arena.c src/util/auto_gen.c
 
 ${BUILD_DIR}/node.h: ${BUILD_DIR}/auto_gen
 	./${BUILD_DIR}/auto_gen ${BUILD_DIR}/node.h
@@ -78,8 +84,8 @@ ${BUILD_DIR}/main: ${DEP_COMMON} ${OBJS}
 ${BUILD_DIR}/main.o: ${DEP_COMMON} src/main.c src/passes/*.h third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/main.o src/main.c
 
-${BUILD_DIR}/arena.o: ${DEP_COMMON} src/arena.c third_party/*
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/arena.o src/arena.c
+${BUILD_DIR}/arena.o: ${DEP_COMMON} src/util/arena.c third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/arena.o src/util/arena.c
 
 ${BUILD_DIR}/parser_utils.o: ${DEP_COMMON} src/parser_utils.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/parser_utils.o src/parser_utils.c

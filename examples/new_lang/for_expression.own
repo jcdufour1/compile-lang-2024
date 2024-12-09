@@ -1,10 +1,40 @@
 extern("c") fn printf(str_to_print u8*, args any...) i32
 
+fn is_true() i32 {
+    return 1
+}
+
+fn is_false() i32 {
+    return 0
+}
+
 fn main() i32 {
     let should_loop i32 = 1
     for should_loop {
-        printf("yes\n")
+        printf("yes1\n")
         should_loop = 0
+    }
+    for should_loop {
+        printf("no1\n")
+        return 1
+    }
+
+    for 0 {
+        printf("no2\n")
+        return 1
+    }
+    for 1 {
+        printf("yes2\n")
+        break
+    }
+
+    for is_false() {
+        printf("no3\n")
+        return 1
+    }
+    for is_true() {
+        printf("yes3\n")
+        break
     }
     printf("done\n")
     return 0
