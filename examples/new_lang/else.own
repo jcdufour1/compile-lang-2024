@@ -139,8 +139,49 @@ fn function_condition() {
     }
 }
 
+fn newlines() {
+    if is_true() {
+        puts("yes19");
+    } 
+    else if is_true() {
+        puts("no19.2");
+    } 
+    else {
+        puts("no19.3");
+    }
+
+
+    if is_true() {
+        puts("yes20");
+    } 
+
+    else if is_true() {
+        puts("no20.2");
+    } 
+
+    else {
+        puts("no20.3");
+    }
+
+
+    if is_true() {
+        puts("yes21");
+    } 
+    else {
+        puts("no21.3");
+    }
+
+
+    if is_true() {
+        puts("yes22");
+    } else {
+        puts("no22.3");
+    }
+}
+
 fn main() i32 {
     literal_condition()
     function_condition()
+    newlines()
     return 0
 }
