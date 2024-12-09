@@ -239,6 +239,45 @@ static inline Str_view tk_view_print_internal(Arena* arena, Tk_view token_view) 
     return str_view;
 }
 
+static inline bool tk_view_is_equal_internal(LOG_LEVEL log_level, Tk_view a, Tk_view b, bool do_log) {
+    for (size_t idx = 0; idx < MIN(a.count, b.count); idx++) {
+        if (!token_is_equal(tk_view_at(a, idx), tk_view_at(b, idx))) {
+            if (do_log) {
+                log(log_level, "TOKENS actual:\n");
+                log_tokens(log_level, a);
+                log(log_level, "TOKENS expected:\n");
+                log_tokens(log_level, b);
+                log(
+                    log_level, "idx %zu: "TOKEN_FMT" is not equal to "TOKEN_FMT"\n",
+                    idx, token_print(tk_view_at(a, idx)), token_print(tk_view_at(b, idx))
+                );
+            }
+            return false;
+        }
+    }
+
+    if (a.count != b.count) {
+        if (do_log) {
+            log(log_level, "count is not equal\n");
+            log(log_level, "TOKENS actual:\n");
+            log_tokens(log_level, a);
+            log(log_level, "TOKENS expected:\n");
+            log_tokens(log_level, b);
+        }
+        return false;
+    }
+
+    return true;
+}
+
+static inline bool tk_view_is_equal(Tk_view a, Tk_view b) {
+    return tk_view_is_equal_internal(LOG_TRACE, a, b, false);
+}
+
+static inline bool tk_view_is_equal_log(LOG_LEVEL log_level, Tk_view a, Tk_view b) {
+    return tk_view_is_equal_internal(log_level, a, b, true);
+}
+
 #define TK_VIEW_FMT STR_VIEW_FMT
 
 #define tk_view_print(token_view) str_view_print(tk_view_print_internal(token_view))

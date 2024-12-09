@@ -25,6 +25,9 @@ static void fail(void) {
 }
 
 void do_passes(Str_view file_text, const Parameters* params) {
+    // TODO: do this in a more proper way. this is temporary way to test
+    tokenize_do_test();
+
     Env env = {0};
     env.file_text = file_text;
     Tokens tokens = tokenize(&env, *params);

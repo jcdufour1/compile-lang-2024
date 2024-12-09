@@ -100,7 +100,6 @@ Str_view token_print_internal(Arena* arena, Token token, bool msg_format) {
     vec_reset(&buf);
 
     string_extend_strv(arena, &buf, token_type_to_str_view(token.type));
-    assert(strlen(buf.buf) == buf.info.count);
 
     // add token text
     switch (token.type) {

@@ -1013,20 +1013,25 @@ static Node_condition* extract_condition(Env* env, Tk_view* tokens) {
 }
 
 static void if_else_chain_consume_newline(Tk_view* tokens) {
+    log_tokens(LOG_DEBUG, *tokens);
     while (1) {
         if (tokens->count < 2) {
+            log(LOG_DEBUG, "return 1\n");
             break;
         }
         if (tk_view_at(*tokens, 1).type != TOKEN_NEW_LINE && tk_view_at(*tokens, 1).type != TOKEN_ELSE) {
+            log(LOG_DEBUG, "return 2\n");
             break;
         }
         if (!try_consume(NULL, tokens, TOKEN_NEW_LINE)) {
+            log(LOG_DEBUG, "return 3\n");
             break;
         }
     }
 }
 
 static PARSE_STATUS extract_if_else_chain(Env* env, Node_if_else_chain** if_else_chain, Tk_view* tokens) {
+    //log_tokens(LOG_DEBUG, *tokens);
     Token if_start_token;
     try(try_consume(&if_start_token, tokens, TOKEN_IF));
 
@@ -1061,6 +1066,7 @@ static PARSE_STATUS extract_if_else_chain(Env* env, Node_if_else_chain** if_else
         if_else_chain_consume_newline(tokens);
     }
 
+    log(LOG_DEBUG, "thing 1356\n");
     return PARSE_OK;
 }
 
@@ -1405,7 +1411,7 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node_expr** resu
         *result = node_wrap_function_call(fun_call);
         return PARSE_EXPR_OK;
     } else if (tokens->count > 1 && tk_view_front(*tokens).type == TOKEN_SYMBOL &&
-        token_is_equal(tk_view_at(*tokens, 1), "", TOKEN_SINGLE_DOT)
+        token_is_equal_2(tk_view_at(*tokens, 1), "", TOKEN_SINGLE_DOT)
     ) {
         *result = node_wrap_member_sym_untyped(extract_member_call(tokens));
         return PARSE_EXPR_OK;

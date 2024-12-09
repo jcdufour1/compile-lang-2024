@@ -179,9 +179,66 @@ fn newlines() {
     }
 }
 
+fn comments() {
+    if is_true() {
+        puts("yes23");
+    } 
+    else if is_true() {
+        puts("no23.2");
+    } 
+    else {
+        puts("no23.3");
+    }
+
+
+    if is_true() {
+        puts("yes24");
+    } 
+
+    else if is_true() {
+        puts("no24.2");
+    } 
+
+    else {
+        puts("no24.3");
+    }
+
+
+    if is_true() {
+        puts("yes25");
+    } 
+    // comment
+    else {
+        // comment
+        puts("no25.3");
+    }
+
+
+    if is_true() {
+        puts("yes26");
+
+        // comment
+
+    } else {
+        puts("no26.3");
+    }
+
+
+    if is_true() {
+        puts("yes27");
+
+    } else {
+
+        // comment
+
+        puts("no27.3");
+    }
+}
+
 fn main() i32 {
     literal_condition()
     function_condition()
     newlines()
+    comments()
     return 0
 }

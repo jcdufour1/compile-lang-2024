@@ -17,6 +17,8 @@ static inline void insert_into_node_ptr_vec(
     }
 }
 
+void tokenize_do_test(void);
+
 Tokens tokenize(Env* env, const Parameters params);
 
 Node_block* parse(Env* env, const Tokens tokens);

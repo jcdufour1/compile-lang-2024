@@ -464,11 +464,17 @@ static inline bool token_is_opening(Token curr_token) {
     unreachable("");
 }
 
-static inline bool token_is_equal(const Token token, const char* cstr, TOKEN_TYPE token_type) {
-    if (token.type != token_type) {
+static inline bool token_is_equal(const Token a, const Token b) {
+    if (a.type != b.type) {
         return false;
     }
-    return str_view_cstr_is_equal(token.text, cstr);
+    return str_view_is_equal(a.text, b.text);
+}
+
+// TODO: rename this function
+static inline bool token_is_equal_2(const Token a, const char* cstr, TOKEN_TYPE token_type) {
+    Token b = {.text = str_view_from_cstr(cstr), .type = token_type};
+    return token_is_equal(a, b);
 }
 
 #endif // TOKEN_H
