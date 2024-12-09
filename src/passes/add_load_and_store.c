@@ -101,6 +101,63 @@ static Llvm_register_sym load_symbol_typed(
     };
 }
 
+static Llvm_register_sym load_binary(
+    Env* env,
+    Node_block* new_block,
+    const Node_binary* old_bin
+) {
+    Pos pos = node_wrap_expr(node_wrap_operator(node_wrap_binary_const(old_bin)))->pos;
+
+    Node_binary* new_bin = node_binary_new(pos);
+
+    Node_llvm_placeholder* lhs = node_llvm_placeholder_new(pos);
+    lhs->lang_type = get_lang_type_expr(old_bin->lhs);
+    lhs->llvm_reg = load_expr(env, new_block, old_bin->lhs);
+    new_bin->lhs = node_wrap_llvm_placeholder(lhs);
+
+    Node_llvm_placeholder* rhs = node_llvm_placeholder_new(pos);
+    rhs->lang_type = get_lang_type_expr(old_bin->rhs);
+    rhs->llvm_reg = load_expr(env, new_block, old_bin->rhs);
+    new_bin->rhs = node_wrap_llvm_placeholder(rhs);
+
+    new_bin->token_type = old_bin->token_type;
+    new_bin->lang_type = old_bin->lang_type;
+
+    vec_append(&a_main, &new_block->children, node_wrap_expr(node_wrap_operator(node_wrap_binary(new_bin))));
+    return (Llvm_register_sym) {
+        .lang_type = new_bin->lang_type,
+        .node = node_wrap_expr(node_wrap_operator(node_wrap_binary(new_bin)))
+    };
+
+}
+
+static Llvm_register_sym load_unary(
+    Env* env,
+    Node_block* new_block,
+    const Node_unary* old_unary
+) {
+    (void) env;
+    (void) new_block;
+    (void) old_unary;
+    todo();
+}
+
+static Llvm_register_sym load_operator(
+    Env* env,
+    Node_block* new_block,
+    const Node_operator* old_oper
+) {
+    todo();
+    switch (old_oper->type) {
+        case NODE_BINARY:
+            return load_binary(env, new_block, node_unwrap_binary_const(old_oper));
+        case NODE_UNARY:
+            return load_unary(env, new_block, node_unwrap_unary_const(old_oper));
+        default:
+            unreachable("");
+    }
+}
+
 static Llvm_register_sym load_expr(Env* env, Node_block* new_block, const Node_expr* old_expr) {
     switch (old_expr->type) {
         case NODE_FUNCTION_CALL:
@@ -111,6 +168,8 @@ static Llvm_register_sym load_expr(Env* env, Node_block* new_block, const Node_e
             return load_symbol_typed(env, new_block, node_unwrap_symbol_typed_const(old_expr));
         case NODE_SYMBOL_UNTYPED:
             unreachable("NODE_SYMBOL_UNTYPED should not still be present at this point");
+        case NODE_OPERATOR:
+            return load_operator(env, new_block, node_unwrap_operator_const(old_expr));
         default:
             unreachable(NODE_FMT"\n", node_print(node_wrap_expr_const(old_expr)));
     }
@@ -287,6 +346,58 @@ static Llvm_register_sym load_variable_def(
     return new_var_def->storage_location;
 }
 
+static Llvm_register_sym load_goto(
+    Env* env,
+    Node_block* new_block,
+    const Node_goto* old_goto
+) {
+    (void) env;
+
+    // TODO: clone
+    vec_append(&a_main, &new_block->children, (Node*)old_goto);
+
+    return (Llvm_register_sym) {0};
+}
+
+static Llvm_register_sym load_cond_goto(
+    Env* env,
+    Node_block* new_block,
+    const Node_cond_goto* old_cond_goto
+) {
+    (void) env;
+
+    // TODO: clone
+    vec_append(&a_main, &new_block->children, (Node*)old_cond_goto);
+
+    return (Llvm_register_sym) {0};
+}
+
+static Llvm_register_sym load_label(
+    Env* env,
+    Node_block* new_block,
+    const Node_label* old_label
+) {
+    (void) env;
+
+    // TODO: clone
+    vec_append(&a_main, &new_block->children, (Node*)old_label);
+
+    return (Llvm_register_sym) {0};
+}
+
+static Llvm_register_sym load_struct_def(
+    Env* env,
+    Node_block* new_block,
+    const Node_struct_def* old_struct_def
+) {
+    (void) env;
+
+    // TODO: clone
+    vec_append(&a_main, &new_block->children, (Node*)old_struct_def);
+
+    return (Llvm_register_sym) {0};
+}
+
 static Llvm_register_sym load_ptr_variable_def(
     Env* env,
     Node_block* new_block,
@@ -329,6 +440,23 @@ static Llvm_register_sym load_node(Env* env, Node_block* new_block, const Node* 
             return load_alloca(env, new_block, node_unwrap_alloca_const(old_node));
         case NODE_ASSIGNMENT:
             return load_assignment(env, new_block, node_unwrap_assignment_const(old_node));
+        case NODE_VARIABLE_DEF:
+            return load_variable_def(env, new_block, node_unwrap_variable_def_const(old_node));
+        case NODE_GOTO:
+            return load_goto(env, new_block, node_unwrap_goto_const(old_node));
+        case NODE_COND_GOTO:
+            return load_cond_goto(env, new_block, node_unwrap_cond_goto_const(old_node));
+        case NODE_LABEL:
+            return load_label(env, new_block, node_unwrap_label_const(old_node));
+        case NODE_STRUCT_DEF:
+            return load_struct_def(env, new_block, node_unwrap_struct_def_const(old_node));
+        case NODE_BLOCK:
+            vec_append(
+                &a_main,
+                &new_block->children,
+                node_wrap_block(load_block(env, node_unwrap_block_const(old_node)))
+            );
+            return (Llvm_register_sym) {0};
         default:
             unreachable(NODE_FMT"\n", node_print(old_node));
     }

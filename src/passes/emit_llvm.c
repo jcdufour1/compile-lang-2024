@@ -366,6 +366,48 @@ static void emit_unary_suffix(const Env* env, String* output, const Node_unary* 
     }
 }
 
+static void emit_operator_operand_llvm_placeholder_expr(
+    String* output,
+    const Node_expr* expr
+) {
+    switch (expr->type) {
+        case NODE_LITERAL:
+            extend_literal(output, node_unwrap_literal_const(expr));
+            break;
+        case NODE_OPERATOR:
+            // fallthrough
+        case NODE_FUNCTION_CALL:
+            string_extend_cstr(&a_main, output, "%");
+            Llvm_id llvm_id = get_llvm_id_expr(expr);
+            assert(llvm_id > 0);
+            string_extend_size_t(&a_main, output, llvm_id);
+            break;
+        default:
+            unreachable(NODE_FMT"\n", node_print(node_wrap_expr_const(expr)));
+    }
+}
+
+static void emit_operator_operand_llvm_placeholder(
+    String* output,
+    const Node_llvm_placeholder* placeholder
+) {
+    const Node* node = placeholder->llvm_reg.node;
+
+    switch (node->type) {
+        case NODE_EXPR:
+            emit_operator_operand_llvm_placeholder_expr(output, node_unwrap_expr_const(node));
+            break;
+        case NODE_LOAD_ANOTHER_NODE:
+            string_extend_cstr(&a_main, output, "%");
+            Llvm_id llvm_id = get_llvm_id(node);
+            assert(llvm_id > 0);
+            string_extend_size_t(&a_main, output, llvm_id);
+            break;
+        default:
+            unreachable(NODE_FMT"\n", node_print(placeholder->llvm_reg.node));
+    }
+}
+
 static void emit_operator_operand(String* output, const Node_expr* operand) {
     switch (operand->type) {
         case NODE_LITERAL:
@@ -374,12 +416,9 @@ static void emit_operator_operand(String* output, const Node_expr* operand) {
         case NODE_SYMBOL_TYPED:
             unreachable("");
         case NODE_LLVM_PLACEHOLDER:
-            string_extend_cstr(&a_main, output, "%");
-            Llvm_id llvm_id = get_llvm_id(node_unwrap_llvm_placeholder_const(operand)->llvm_reg.node);
-            assert(llvm_id > 0);
-            log_tree(LOG_DEBUG, (Node*)operand);
-            log_tree(LOG_DEBUG, node_unwrap_llvm_placeholder_const(operand)->llvm_reg.node);
-            string_extend_size_t(&a_main, output, llvm_id);
+            emit_operator_operand_llvm_placeholder(
+                output, node_unwrap_llvm_placeholder_const(operand)
+            );
             break;
         case NODE_SYMBOL_UNTYPED:
             unreachable("untyped symbols should not still be present");
@@ -451,6 +490,8 @@ static void emit_llvm_store_struct_literal(const Env* env, String* output, const
 }
 
 static void emit_store_another_node_src_expr(const Env* env, String* output, const Node_expr* expr) {
+    (void) env;
+
     switch (expr->type) {
         case NODE_LITERAL: {
             const Node_literal* literal = node_unwrap_literal_const(expr);
@@ -458,8 +499,14 @@ static void emit_store_another_node_src_expr(const Env* env, String* output, con
             extend_literal(output, literal);
             break;
         }
+        case NODE_FUNCTION_CALL:
+            // fallthrough
+        case NODE_OPERATOR:
+            string_extend_cstr(&a_main, output, " %");
+            string_extend_size_t(&a_main, output, get_llvm_id_expr(expr));
+            break;
         default:
-            unreachable("");
+            unreachable(NODE_FMT"\n", node_print(node_wrap_expr_const(expr)));
     }
 }
 
