@@ -11,6 +11,13 @@
 
 static void emit_block(Env* env, String* output, const Node_block* fun_block);
 
+static bool node_is_literal(const Node* node) {
+    if (node->type != NODE_EXPR) {
+        return false;
+    }
+    return node_unwrap_expr_const(node)->type == NODE_LITERAL;
+}
+
 static void extend_literal(String* output, const Node_literal* literal) {
     switch (literal->type) {
         case NODE_STRING:
@@ -183,6 +190,38 @@ static void emit_function_params(const Env* env, String* output, const Node_func
     }
 }
 
+static void emit_function_call_arg_llvm_placeholder(
+    const Env* env,
+    String* output,
+    const Node_llvm_placeholder* placeholder
+) {
+    Llvm_id llvm_id = 0;
+    log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(placeholder->lang_type));
+    if (lang_type_is_struct(env, placeholder->lang_type) && placeholder->lang_type.pointer_depth == 0) {
+        log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(get_node_name(placeholder->llvm_reg.node)));
+        llvm_id = get_llvm_id(get_storage_location(env, get_node_name(placeholder->llvm_reg.node)).node);
+        assert(llvm_id > 0);
+        string_extend_cstr(&a_main, output, "ptr noundef byval(");
+        extend_type_call_str(env, output, placeholder->lang_type);
+        string_extend_cstr(&a_main, output, ")");
+        string_extend_cstr(&a_main, output, " %");
+        string_extend_size_t(&a_main, output, llvm_id);
+    } else if (lang_type_is_enum(env, placeholder->lang_type)) {
+        llvm_id = get_llvm_id(placeholder->llvm_reg.node);
+        extend_type_call_str(env, output, placeholder->lang_type);
+        string_extend_cstr(&a_main, output, " %");
+        string_extend_size_t(&a_main, output, llvm_id);
+    } else if (node_is_literal(placeholder->llvm_reg.node)) {
+        extend_literal_decl(env, output, node_unwrap_literal_const(node_unwrap_expr_const(placeholder->llvm_reg.node)), true);
+    } else {
+        log(LOG_DEBUG, NODE_FMT"\n", node_print(placeholder->llvm_reg.node));
+        llvm_id = get_llvm_id(placeholder->llvm_reg.node);
+        extend_type_call_str(env, output, placeholder->lang_type);
+        string_extend_cstr(&a_main, output, " %");
+        string_extend_size_t(&a_main, output, llvm_id);
+    }
+}
+
 static void emit_function_call_arguments(const Env* env, String* output, const Node_function_call* fun_call) {
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
         const Node_expr* argument = vec_at(&fun_call->args, idx);
@@ -205,30 +244,8 @@ static void emit_function_call_arguments(const Env* env, String* output, const N
             case NODE_SYMBOL_TYPED:
                 unreachable("typed symbols should not still be present");
             case NODE_LLVM_PLACEHOLDER: {
-                Llvm_id llvm_id = 0;
-
                 const Node_llvm_placeholder* placeholder = node_unwrap_llvm_placeholder_const(argument);
-                log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(placeholder->lang_type));
-                if (lang_type_is_struct(env, placeholder->lang_type) && placeholder->lang_type.pointer_depth == 0) {
-                    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(get_node_name(placeholder->llvm_reg.node)));
-                    llvm_id = get_llvm_id(get_storage_location(env, get_node_name(placeholder->llvm_reg.node)).node);
-                    assert(llvm_id > 0);
-                    string_extend_cstr(&a_main, output, "ptr noundef byval(");
-                    extend_type_call_str(env, output, placeholder->lang_type);
-                    string_extend_cstr(&a_main, output, ")");
-                    string_extend_cstr(&a_main, output, " %");
-                    string_extend_size_t(&a_main, output, llvm_id);
-                } else if (lang_type_is_enum(env, placeholder->lang_type)) {
-                    llvm_id = get_llvm_id_expr(argument);
-                    extend_type_call_str(env, output, get_lang_type_expr(argument));
-                    string_extend_cstr(&a_main, output, " %");
-                    string_extend_size_t(&a_main, output, llvm_id);
-                } else {
-                    llvm_id = get_llvm_id_expr(argument);
-                    extend_type_call_str(env, output, get_lang_type_expr(argument));
-                    string_extend_cstr(&a_main, output, " %");
-                    string_extend_size_t(&a_main, output, llvm_id);
-                }
+                emit_function_call_arg_llvm_placeholder(env, output, placeholder);
                 break;
             }
             case NODE_FUNCTION_CALL:
@@ -469,13 +486,6 @@ static void emit_function_def(Env* env, String* output, const Node_function_def*
     string_extend_cstr(&a_main, output, " {\n");
     emit_block(env, output, fun_def->body);
     string_extend_cstr(&a_main, output, "}\n");
-}
-
-static bool node_is_literal(const Node* node) {
-    if (node->type != NODE_EXPR) {
-        return false;
-    }
-    return node_unwrap_expr_const(node)->type == NODE_LITERAL;
 }
 
 static void emit_return(const Env* env, String* output, const Node_return* fun_return) {

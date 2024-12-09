@@ -7,15 +7,36 @@
 
 static Node_block* load_block(Env* env, const Node_block* old_block);
 
+static Llvm_register_sym load_expr(Env* env, Node_block* new_block, const Node_expr* old_expr);
+
 static Llvm_register_sym load_function_call(
     Env* env,
     Node_block* new_block,
     const Node_function_call* old_fun_call
 ) {
-    (void) env;
-    (void) new_block;
-    (void) old_fun_call;
-    todo();
+
+    Node_function_call* new_fun_call = node_function_call_new(
+        node_wrap_expr(node_wrap_function_call_const(old_fun_call))->pos
+    );
+
+    for (size_t idx = 0; idx < old_fun_call->args.info.count; idx++) {
+        const Node_expr* old_arg = vec_at(&old_fun_call->args, idx);
+        Pos arg_pos = node_wrap_expr_const(old_arg)->pos;
+
+        Node_llvm_placeholder* new_arg = node_llvm_placeholder_new(arg_pos);
+        new_arg->lang_type = get_lang_type_expr(old_arg);
+        new_arg->llvm_reg = load_expr(env, new_block, old_arg);
+        vec_append(&a_main, &new_fun_call->args, node_wrap_llvm_placeholder(new_arg));
+    }
+
+    new_fun_call->name = old_fun_call->name;
+    new_fun_call->lang_type = old_fun_call->lang_type;
+    
+    vec_append(&a_main, &new_block->children, node_wrap_expr(node_wrap_function_call(new_fun_call)));
+    return (Llvm_register_sym) {
+        .lang_type = old_fun_call->lang_type,
+        .node = node_wrap_expr(node_wrap_function_call(new_fun_call))
+    };
 }
 
 static Node_literal* node_literal_clone(const Node_literal* old_lit) {
@@ -32,9 +53,15 @@ static Llvm_register_sym load_literal(
     (void) env;
     (void) new_block;
 
+    Node_literal* new_lit = node_literal_clone(old_lit);
+
+    if (old_lit->type == NODE_STRING) {
+        try(sym_tbl_add(&env->global_literals, node_wrap_expr(node_wrap_literal(new_lit))));
+    }
+
     return (Llvm_register_sym) {
         .lang_type = old_lit->lang_type,
-        .node = node_wrap_expr(node_wrap_literal(node_literal_clone(old_lit)))
+        .node = node_wrap_expr(node_wrap_literal(new_lit))
     };
 }
 
@@ -119,6 +146,22 @@ static Llvm_register_sym load_function_def(
     };
 }
 
+static Llvm_register_sym load_function_decl(
+    Env* env,
+    Node_block* new_block,
+    const Node_function_decl* old_fun_decl
+) {
+    (void) env;
+
+    Node_function_decl* new_fun_decl = node_clone_function_decl(old_fun_decl);
+
+    vec_append(&a_main, &new_block->children, node_wrap_function_decl(new_fun_decl));
+    return (Llvm_register_sym) {
+        .lang_type = old_fun_decl->return_type->lang_type,
+        .node = node_wrap_function_decl(new_fun_decl)
+    };
+}
+
 static Llvm_register_sym load_return(
     Env* env,
     Node_block* new_block,
@@ -145,6 +188,8 @@ static Llvm_register_sym load_node(Env* env, Node_block* new_block, const Node* 
             return load_expr(env, new_block, node_unwrap_expr_const(old_node));
         case NODE_FUNCTION_DEF:
             return load_function_def(env, new_block, node_unwrap_function_def_const(old_node));
+        case NODE_FUNCTION_DECL:
+            return load_function_decl(env, new_block, node_unwrap_function_decl_const(old_node));
         case NODE_RETURN:
             return load_return(env, new_block, node_unwrap_return_const(old_node));
         default:
@@ -162,12 +207,8 @@ static Node_block* load_block(Env* env, const Node_block* old_block) {
     *new_block = *old_block;
     memset(&new_block->children, 0, sizeof(new_block->children));
 
-    for (size_t idx = old_block->children.info.count - 1;; idx--) {
+    for (size_t idx = 0; idx < old_block->children.info.count; idx++) {
         load_node(env, new_block, vec_at(&old_block->children, idx));
-
-        if (idx < 1) {
-            break;
-        }
     }
 
     return new_block;
