@@ -632,7 +632,7 @@ static void emit_goto(const Env* env, String* output, const Node_goto* lang_goto
 
 static void emit_cond_goto(const Env* env, String* output, const Node_cond_goto* cond_goto) {
     string_extend_cstr(&a_main, output, "    br i1 %");
-    string_extend_size_t(&a_main, output, get_llvm_id_expr(node_wrap_operator(cond_goto->node_src)));
+    string_extend_size_t(&a_main, output, get_llvm_id(cond_goto->node_src.node));
     string_extend_cstr(&a_main, output, ", label %");
     string_extend_size_t(&a_main, output, get_matching_label_id(env, cond_goto->if_true->name));
     string_extend_cstr(&a_main, output, ", label %");

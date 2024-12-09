@@ -50,10 +50,10 @@ void do_passes(Str_view file_text, const Parameters* params) {
     }
     arena_reset(&print_arena);
 
-    log_tree(LOG_DEBUG, node_wrap_block(root));
-    start_walk(&env, &root, for_and_if_to_branch);
-    log_tree(LOG_DEBUG, node_wrap_block(root));
-    arena_reset(&print_arena);
+    //log_tree(LOG_DEBUG, node_wrap_block(root));
+    //start_walk(&env, &root, for_and_if_to_branch);
+    //log_tree(LOG_DEBUG, node_wrap_block(root));
+    //arena_reset(&print_arena);
 
     start_walk(&env, &root, add_alloca);
     log_tree(LOG_DEBUG, node_wrap_block(root));

@@ -13,6 +13,43 @@ static Llvm_register_sym load_ptr(Env* env, Node_block* new_block, const Node* o
 
 static Llvm_register_sym load_ptr_expr(Env* env, Node_block* new_block, const Node_expr* old_expr);
 
+static Llvm_register_sym load_operator(
+    Env* env,
+    Node_block* new_block,
+    const Node_operator* old_oper
+);
+
+static Node_goto* goto_new(Str_view name_label_to_jmp_to, Pos pos) {
+    Node_goto* lang_goto = node_goto_new(pos);
+    lang_goto->name = name_label_to_jmp_to;
+    return lang_goto;
+}
+
+static void add_label(Env* env, Node_block* block, Str_view label_name, Pos pos) {
+    Node_label* label = node_label_new(pos);
+    label->name = label_name;
+    try(symbol_add(env, node_wrap_label(label)));
+
+    vec_append(&a_main, &block->children, node_wrap_label(label));
+}
+
+static void if_for_add_cond_goto(
+    Env* env,
+    const Node_operator* old_oper,
+    Node_block* block,
+    Str_view label_name_if_true,
+    Str_view label_name_if_false
+) {
+    Pos pos = node_wrap_expr_const(node_wrap_operator_const(old_oper))->pos;
+
+    Node_cond_goto* cond_goto = node_cond_goto_new(pos);
+    cond_goto->node_src = load_operator(env, block, old_oper);
+    cond_goto->if_true = symbol_new(label_name_if_true, pos);
+    cond_goto->if_false = symbol_new(label_name_if_false, pos);
+
+    vec_append(&a_main, &block->children, node_wrap_cond_goto(cond_goto));
+}
+
 static Llvm_register_sym load_function_call(
     Env* env,
     Node_block* new_block,
@@ -147,7 +184,6 @@ static Llvm_register_sym load_operator(
     Node_block* new_block,
     const Node_operator* old_oper
 ) {
-    todo();
     switch (old_oper->type) {
         case NODE_BINARY:
             return load_binary(env, new_block, node_unwrap_binary_const(old_oper));
@@ -351,6 +387,7 @@ static Llvm_register_sym load_goto(
     Node_block* new_block,
     const Node_goto* old_goto
 ) {
+    unreachable("");
     (void) env;
 
     // TODO: clone
@@ -364,6 +401,7 @@ static Llvm_register_sym load_cond_goto(
     Node_block* new_block,
     const Node_cond_goto* old_cond_goto
 ) {
+    unreachable("");
     (void) env;
 
     // TODO: clone
@@ -377,6 +415,7 @@ static Llvm_register_sym load_label(
     Node_block* new_block,
     const Node_label* old_label
 ) {
+    unreachable("");
     (void) env;
 
     // TODO: clone
@@ -394,6 +433,98 @@ static Llvm_register_sym load_struct_def(
 
     // TODO: clone
     vec_append(&a_main, &new_block->children, (Node*)old_struct_def);
+
+    return (Llvm_register_sym) {0};
+}
+
+static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement, Str_view next_if, Str_view after_chain) {
+    Node_condition* if_cond = if_statement->condition;
+    Node_block* old_block = if_statement->body;
+
+    Node_block* new_block = node_block_new(node_wrap_block(old_block)->pos);
+
+    switch (if_cond->child->type) {
+        case NODE_OPERATOR: {
+            Node_operator* old_oper = node_unwrap_operator(if_cond->child);
+
+            Str_view if_body = literal_name_new();
+
+            if_for_add_cond_goto(env, old_oper, new_block, if_body, next_if);
+
+            add_label(env, new_block, if_body, node_wrap_block(old_block)->pos);
+
+            {
+                Node_block* inner_block = load_block(env, old_block);
+                new_block->symbol_table = inner_block->symbol_table;
+                new_block->pos_end = inner_block->pos_end;
+                vec_extend(&a_main, &new_block->children, &inner_block->children);
+            }
+
+            Node_goto* jmp_to_after_chain = goto_new(after_chain, node_wrap_block(old_block)->pos);
+            vec_append(&a_main, &new_block->children, node_wrap_goto(jmp_to_after_chain));
+
+            break;
+        }
+        case NODE_LITERAL: {
+            unreachable("");
+            /*
+            const Node_literal* literal = node_unwrap_literal_const(if_cond->child);
+            if (node_unwrap_number_const(literal)->data == 0) {
+                Node_goto* jmp = goto_new(next_if->name, node_wrap_block(old_block)->pos);
+                vec_append(&a_main, &new_block->children, node_wrap_goto(jmp));
+            } else {
+                vec_extend(&a_main, &new_block->children, &old_block->children);
+                Node_goto* jmp_to_after_chain = goto_new(after_chain->name, node_wrap_block(old_block)->pos);
+                vec_append(&a_main, &new_block->children, node_wrap_goto(jmp_to_after_chain));
+            }
+            break;
+            */
+        }
+        default:
+            unreachable("");
+    }
+
+    return new_block;
+}
+
+static Node_block* if_else_chain_to_branch(Env* env, const Node_if_else_chain* if_else) {
+    Node_block* new_block = node_block_new(node_wrap_if_else_chain_const(if_else)->pos);
+
+    Str_view if_after = literal_name_new();
+
+    Str_view next_if = {0};
+    for (size_t idx = 0; idx < if_else->nodes.info.count; idx++) {
+        if (idx + 1 == if_else->nodes.info.count) {
+            next_if = if_after;
+        } else {
+            next_if = literal_name_new();
+        }
+
+        log(LOG_DEBUG, "yes\n");
+        Node_block* if_block = if_statement_to_branch(env, vec_at(&if_else->nodes, idx), next_if, if_after);
+        vec_append(&a_main, &new_block->children, node_wrap_block(if_block));
+
+        if (idx + 1 < if_else->nodes.info.count) {
+            add_label(env, new_block, next_if, node_wrap_if(vec_at(&if_else->nodes, idx))->pos);
+        }
+
+        log_tree(LOG_DEBUG, node_wrap_block(if_block));
+        log_tree(LOG_DEBUG, node_wrap_block(new_block));
+    }
+
+    add_label(env, new_block, if_after, node_wrap_if_else_chain_const(if_else)->pos);
+    log_tree(LOG_DEBUG, node_wrap_block(new_block));
+
+    return new_block;
+}
+
+static Llvm_register_sym load_if_else_chain(
+    Env* env,
+    Node_block* new_block,
+    const Node_if_else_chain* old_if_else
+) {
+    Node_block* new_if_else = if_else_chain_to_branch(env, old_if_else);
+    vec_append(&a_main, &new_block->children, node_wrap_block(new_if_else));
 
     return (Llvm_register_sym) {0};
 }
@@ -450,6 +581,8 @@ static Llvm_register_sym load_node(Env* env, Node_block* new_block, const Node* 
             return load_label(env, new_block, node_unwrap_label_const(old_node));
         case NODE_STRUCT_DEF:
             return load_struct_def(env, new_block, node_unwrap_struct_def_const(old_node));
+        case NODE_IF_ELSE_CHAIN:
+            return load_if_else_chain(env, new_block, node_unwrap_if_else_chain_const(old_node));
         case NODE_BLOCK:
             vec_append(
                 &a_main,

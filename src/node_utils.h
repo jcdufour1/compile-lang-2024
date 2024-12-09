@@ -43,7 +43,7 @@ Str_view node_print_internal(Arena* arena, const Node* node);
         log(LOG_NOTE, NODE_FMT"\n", node_print(node)); \
     } while (0);
 
-static inline Lang_type get_operator_lang_type(const Node_operator* operator) {
+static inline Lang_type get_lang_type_operator(const Node_operator* operator) {
     if (operator->type == NODE_UNARY) {
         return node_unwrap_unary_const(operator)->lang_type;
     } else if (operator->type == NODE_BINARY) {
@@ -189,7 +189,7 @@ static inline Lang_type get_lang_type_expr(const Node_expr* expr) {
         case NODE_LITERAL:
             return node_unwrap_literal_const(expr)->lang_type;
         case NODE_OPERATOR:
-            return get_operator_lang_type(node_unwrap_operator_const(expr));
+            return get_lang_type_operator(node_unwrap_operator_const(expr));
         case NODE_SYMBOL_UNTYPED:
             unreachable("");
         case NODE_SYMBOL_TYPED:
@@ -429,7 +429,8 @@ static inline Node* get_node_src(Node* node) {
         case NODE_GOTO:
             unreachable("");
         case NODE_COND_GOTO:
-            return node_wrap_expr(node_wrap_operator(node_unwrap_cond_goto(node)->node_src));
+            unreachable("");
+            //return node_wrap_expr(node_wrap_operator(node_unwrap_cond_goto(node)->node_src.node));
         case NODE_LABEL:
             unreachable("");
         case NODE_ALLOCA:

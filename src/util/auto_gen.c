@@ -700,7 +700,7 @@ static void gen_goto(Str_view prefix, Type_vec* type_vec, Members* member_types)
 
 static void gen_cond_goto(Str_view prefix, Type_vec* type_vec, Members* member_types) {
     Members members = {0};
-    append_member(&members, "Node_operator*", "node_src");
+    append_member(&members, "Llvm_register_sym", "node_src");
     append_member(&members, "Node_symbol_untyped*", "if_true");
     append_member(&members, "Node_symbol_untyped*", "if_false");
     append_member(&members, "Llvm_id", "llvm_id");
