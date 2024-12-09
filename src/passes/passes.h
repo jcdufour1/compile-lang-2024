@@ -31,7 +31,7 @@ void flatten_operations(Env* env);
 
 void add_alloca(Env* env);
 
-void add_load_and_store(Env* env);
+Node_block* add_load_and_store(Env* env, const Node_block* old_block);
 
 void change_operators(Env* env);
 

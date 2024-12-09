@@ -471,6 +471,13 @@ static void emit_function_def(Env* env, String* output, const Node_function_def*
     string_extend_cstr(&a_main, output, "}\n");
 }
 
+static bool node_is_literal(const Node* node) {
+    if (node->type != NODE_EXPR) {
+        return false;
+    }
+    return node_unwrap_expr_const(node)->type == NODE_LITERAL;
+}
+
 static void emit_return(const Env* env, String* output, const Node_return* fun_return) {
     const Node_expr* sym_to_return = fun_return->child;
     assert(get_lang_type_expr(sym_to_return).str.count > 0);
@@ -487,18 +494,29 @@ static void emit_return(const Env* env, String* output, const Node_return* fun_r
             break;
         }
         case NODE_SYMBOL_TYPED:
-           unreachable("");
+            unreachable("");
         case NODE_MEMBER_SYM_TYPED:
-             unreachable("");
+            unreachable("");
         case NODE_SYMBOL_UNTYPED:
             unreachable("untyped symbols should not still be present");
         case NODE_LLVM_PLACEHOLDER: {
             const Node_llvm_placeholder* memb_sym = node_unwrap_llvm_placeholder_const(sym_to_return);
-            string_extend_cstr(&a_main, output, "    ret ");
-            extend_type_call_str(env, output, memb_sym->lang_type);
-            string_extend_cstr(&a_main, output, " %");
-            string_extend_size_t(&a_main, output, get_llvm_id(memb_sym->llvm_reg.node));
-            string_extend_cstr(&a_main, output, "\n");
+            if (node_is_literal(memb_sym->llvm_reg.node)) {
+                const Node_expr* memb_expr = node_unwrap_expr_const(memb_sym->llvm_reg.node);
+                const Node_literal* literal = node_unwrap_literal_const(memb_expr);
+                string_extend_cstr(&a_main, output, "    ret ");
+                extend_type_call_str(env, output, literal->lang_type);
+                string_extend_cstr(&a_main, output, " ");
+                extend_literal(output, literal);
+                string_extend_cstr(&a_main, output, "\n");
+                break;
+            } else {
+                string_extend_cstr(&a_main, output, "    ret ");
+                extend_type_call_str(env, output, memb_sym->lang_type);
+                string_extend_cstr(&a_main, output, " %");
+                string_extend_size_t(&a_main, output, get_llvm_id(memb_sym->llvm_reg.node));
+                string_extend_cstr(&a_main, output, "\n");
+            }
             break;
         }
         default:
