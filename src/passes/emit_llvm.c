@@ -425,6 +425,7 @@ static void emit_operator(const Env* env, String* output, const Node_operator* o
 static void emit_load_another_node(const Env* env, String* output, const Node_load_another_node* load_node) {
     Llvm_id llvm_id = get_llvm_id(load_node->node_src.node);
     log(LOG_DEBUG, NODE_FMT"\n", node_print(node_wrap_load_another_node_const(load_node)));
+    log(LOG_DEBUG, NODE_FMT"\n", node_print(load_node->node_src.node));
     assert(llvm_id > 0);
 
     string_extend_cstr(&a_main, output, "    %");
@@ -449,12 +450,37 @@ static void emit_llvm_store_struct_literal(const Env* env, String* output, const
     string_extend_cstr(&a_main, output, ", i1 false)\n");
 }
 
+static void emit_store_another_node_src_expr(const Env* env, String* output, const Node_expr* expr) {
+    switch (expr->type) {
+        case NODE_LITERAL: {
+            const Node_literal* literal = node_unwrap_literal_const(expr);
+            string_extend_cstr(&a_main, output, " ");
+            extend_literal(output, literal);
+            break;
+        }
+        default:
+            unreachable("");
+    }
+}
+
 static void emit_store_another_node(const Env* env, String* output, const Node_store_another_node* store) {
     assert(store->lang_type.str.count > 0);
     string_extend_cstr(&a_main, output, "    store ");
     extend_type_call_str(env, output, store->lang_type);
-    string_extend_cstr(&a_main, output, " %");
-    string_extend_size_t(&a_main, output, get_llvm_id(store->node_src.node));
+
+    const Node* src = store->node_src.node;
+    switch (src->type) {
+        case NODE_VARIABLE_DEF:
+            todo();
+        case NODE_EXPR:
+            emit_store_another_node_src_expr(env, output, node_unwrap_expr_const(src));
+            break;
+        default:
+            unreachable(NODE_FMT"\n", node_print(src));
+    }
+    //string_extend_cstr(&a_main, output, " %");
+    //string_extend_size_t(&a_main, output, get_llvm_id(store->node_src.node));
+
     string_extend_cstr(&a_main, output, ", ptr %");
     string_extend_size_t(&a_main, output, get_llvm_id(store->node_dest.node));
     string_extend_cstr(&a_main, output, ", align 8");

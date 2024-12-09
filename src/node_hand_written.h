@@ -20,6 +20,11 @@ typedef struct {
     struct Node_* node;
 } Llvm_register_sym;
 
+#define LLVM_REGISTER_SYM_FMT LANG_TYPE_FMT"    "NODE_FMT
+
+#define llvm_register_sym_print(reg_sym) \
+    lang_type_print((reg_sym).lang_type), node_print((reg_sym).node)
+
 typedef struct {
     Node_ptr_vec members;
     Llvm_id llvm_id;
