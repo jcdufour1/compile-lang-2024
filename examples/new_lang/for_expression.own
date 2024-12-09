@@ -11,7 +11,9 @@ fn is_false() i32 {
 fn main() i32 {
     let should_loop i32 = 1
     for should_loop {
+        let temp i32 = 79
         printf("yes1\n")
+        printf("%d\n", temp)
         should_loop = 0
     }
     for should_loop {
@@ -24,7 +26,9 @@ fn main() i32 {
         return 1
     }
     for 1 {
+        let temp i32 = 80
         printf("yes2\n")
+        printf("%d\n", temp)
         break
     }
 
@@ -33,9 +37,12 @@ fn main() i32 {
         return 1
     }
     for is_true() {
+        let temp i32 = 81
         printf("yes3\n")
+        printf("%d\n", temp)
         break
     }
+
     printf("done\n")
     return 0
 }
