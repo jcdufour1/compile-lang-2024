@@ -513,6 +513,32 @@ static bool is_unary(TOKEN_TYPE token_type) {
     unreachable("");
 }
 
+// type will be parsed if possible
+static bool extract_lang_type_struct(Lang_type* lang_type, Tk_view* tokens) {
+    memset(lang_type, 0, sizeof(*lang_type));
+
+    Token lang_type_token;
+    if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
+        return false;
+    }
+
+    lang_type->str = lang_type_token.text;
+    while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
+        lang_type->pointer_depth++;
+    }
+    return true;
+}
+
+// require type to be parsed
+static PARSE_STATUS extract_lang_type_struct_require(Env* env, Lang_type* lang_type, Tk_view* tokens) {
+    if (extract_lang_type_struct(lang_type, tokens)) {
+        return PARSE_OK;
+    } else {
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_SYMBOL);
+        return PARSE_ERROR;
+    }
+}
+
 static PARSE_EXPR_STATUS extract_function_parameter(Env* env, Node_variable_def** child, Tk_view* tokens) {
     if (tokens->count < 1 || tk_view_front(*tokens).type == TOKEN_CLOSE_PAR) {
         return PARSE_EXPR_NONE;
@@ -566,16 +592,10 @@ static void extract_return_type(Node_lang_type** result, Tk_view* tokens) {
     bool is_comma = true;
     while (is_comma) {
         // a return type is only one token, at least for now
-        Token rtn_type_token;
-        if (!try_consume(&rtn_type_token, tokens, TOKEN_SYMBOL)) {
+        if (!extract_lang_type_struct(&(*result)->lang_type, tokens)) {
             (*result)->lang_type.str = str_view_from_cstr("void");
             break;
         }
-        (*result)->lang_type.str = rtn_type_token.text;
-        while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
-            (*result)->lang_type.pointer_depth++;
-        }
-        assert((*result)->lang_type.str.count > 0);
         is_comma = try_consume(NULL, tokens, TOKEN_COMMA);
     }
     assert((*result)->lang_type.str.count > 0);
@@ -733,16 +753,11 @@ static PARSE_STATUS try_extract_variable_declaration(
     Node_variable_def* variable_def = node_variable_def_new(name_token.pos);
     variable_def->name = name_token.text;
     try_consume(NULL, tokens, TOKEN_COLON);
-    Token lang_type_token;
-    if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
-        // TODO: make this message say that type is expected instead of `sym`
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_SYMBOL);
+
+    if (PARSE_OK != extract_lang_type_struct_require(env, &variable_def->lang_type, tokens)) {
         return PARSE_ERROR;
     }
-    variable_def->lang_type.str = lang_type_token.text;
-    while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
-        variable_def->lang_type.pointer_depth++;
-    }
+
     Node* dummy;
     if (defer_sym_add) {
         symbol_add_defer(env, node_wrap_variable_def(variable_def));
