@@ -725,6 +725,63 @@ static Llvm_register_sym load_for_range(
     return (Llvm_register_sym) {0};
 }
 
+static Node_block* for_with_cond_to_branch(Env* env, const Node_for_with_cond* old_for) {
+    Pos pos = node_wrap_for_with_cond_const(old_for)->pos;
+    Node_block* new_branch_block = node_block_new(pos);
+
+    Node_operator* operator = old_for->condition->child;
+    Str_view check_cond_label = literal_name_new();
+    Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label, node_wrap_for_with_cond_const(old_for)->pos);
+    Str_view after_check_label = literal_name_new();
+    Str_view after_for_loop_label = literal_name_new();
+    Llvm_register_sym oper_rtn_sym = llvm_register_sym_new_from_expr(node_wrap_operator(operator));
+    oper_rtn_sym.node = node_wrap_expr(node_wrap_operator(operator));
+
+    // TODO: implement this
+    //change_break_to_goto(for_block, after_for_loop_label);
+
+    vec_append(&a_main, &new_branch_block->children, node_wrap_goto(jmp_to_check_cond_label));
+    add_label(env, new_branch_block, check_cond_label, pos);
+    vec_append(&a_main, &new_branch_block->children, node_wrap_expr(node_wrap_operator(operator)));
+
+    if_for_add_cond_goto(
+        env,
+        operator,
+        new_branch_block,
+        after_check_label,
+        after_for_loop_label
+    );
+
+    add_label(env, new_branch_block, after_check_label, pos);
+
+    {
+        Node_block* inner_block = load_block(env, old_for->body);
+        new_branch_block->symbol_table = inner_block->symbol_table;
+        new_branch_block->pos_end = inner_block->pos_end;
+        vec_extend(&a_main, &new_branch_block->children, &inner_block->children);
+    }
+
+
+    vec_append(&a_main, &new_branch_block->children, node_wrap_goto(
+        goto_new(check_cond_label, node_wrap_for_with_cond_const(old_for)->pos)
+    ));
+    add_label(env, new_branch_block, after_for_loop_label, pos);
+
+    new_branch_block->symbol_table = old_for->body->symbol_table;
+    return new_branch_block;
+}
+
+static Llvm_register_sym load_for_with_cond(
+    Env* env,
+    Node_block* new_block,
+    const Node_for_with_cond* old_for
+) {
+    Node_block* new_for = for_with_cond_to_branch(env, old_for);
+    vec_append(&a_main, &new_block->children, node_wrap_block(new_for));
+
+    return (Llvm_register_sym) {0};
+}
+
 static Llvm_register_sym load_ptr_variable_def(
     Env* env,
     Node_block* new_block,
@@ -783,8 +840,12 @@ static Llvm_register_sym load_node(Env* env, Node_block* new_block, const Node* 
             return load_if_else_chain(env, new_block, node_unwrap_if_else_chain_const(old_node));
         case NODE_FOR_RANGE:
             return load_for_range(env, new_block, node_unwrap_for_range_const(old_node));
+        case NODE_FOR_WITH_COND:
+            return load_for_with_cond(env, new_block, node_unwrap_for_with_cond_const(old_node));
         case NODE_ENUM_DEF:
             return load_enum_def(env, new_block, node_unwrap_enum_def_const(old_node));
+        case NODE_BREAK:
+            return load_break(env, new_block, node_unwrap_enum_def_const(old_node));
         case NODE_BLOCK:
             vec_append(
                 &a_main,
