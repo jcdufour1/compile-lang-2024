@@ -660,7 +660,7 @@ static void gen_for_with_cond(Str_view prefix, Type_vec* type_vec, Members* memb
 
 static void gen_condition(Str_view prefix, Type_vec* type_vec, Members* member_types) {
     Members members = {0};
-    append_member(&members, "struct Node_expr_*", "child");
+    append_member(&members, "Node_operator*", "child");
     gen_type(type_vec, member_types, type_new(prefix, "Node_condition"), members);
 }
 

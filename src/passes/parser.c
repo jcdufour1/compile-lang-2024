@@ -1023,7 +1023,22 @@ static Node_condition* extract_condition(Env* env, Tk_view* tokens) {
         todo();
     }
     Node_condition* condition = node_condition_new(node_wrap_expr(cond_child)->pos);
-    condition->child = cond_child;
+
+    // TODO: make helper function that does this
+    switch (cond_child->type) {
+        case NODE_OPERATOR:
+            condition->child = node_unwrap_operator(cond_child);
+            break;
+        case NODE_LITERAL:
+            condition->child = condition_get_default_child(cond_child);
+            break;
+        case NODE_FUNCTION_CALL:
+            condition->child = condition_get_default_child(cond_child);
+            break;
+        default:
+            unreachable("");
+    }
+
     return condition;
 }
 
@@ -1042,7 +1057,6 @@ static void if_else_chain_consume_newline(Tk_view* tokens) {
 }
 
 static PARSE_STATUS extract_if_else_chain(Env* env, Node_if_else_chain** if_else_chain, Tk_view* tokens) {
-    //log_tokens(LOG_DEBUG, *tokens);
     Token if_start_token;
     try(try_consume(&if_start_token, tokens, TOKEN_IF));
 
@@ -1064,8 +1078,8 @@ static PARSE_STATUS extract_if_else_chain(Env* env, Node_if_else_chain** if_else
             if_statement->condition = extract_condition(env, tokens);
         } else {
             if_statement->condition = node_condition_new(if_start_token.pos);
-            if_statement->condition->child = node_wrap_literal(literal_new(
-                str_view_from_cstr("1"), TOKEN_INT_LITERAL, if_start_token.pos
+            if_statement->condition->child = condition_get_default_child(node_wrap_literal(
+                literal_new(str_view_from_cstr("1"), TOKEN_INT_LITERAL, if_start_token.pos)
             ));
         }
 

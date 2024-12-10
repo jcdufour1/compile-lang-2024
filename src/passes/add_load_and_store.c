@@ -50,6 +50,12 @@ static void if_for_add_cond_goto(
     vec_append(&a_main, &block->children, node_wrap_cond_goto(cond_goto));
 }
 
+static Node_assignment* for_loop_cond_var_assign_new(Env* env, Str_view sym_name, Pos pos) {
+    Node_literal* literal = literal_new(str_view_from_cstr("1"), TOKEN_INT_LITERAL, pos);
+    Node_operator* operator = util_binary_typed_new(env, node_wrap_symbol_untyped(symbol_new(sym_name, pos)), node_wrap_literal(literal), TOKEN_SINGLE_PLUS);
+    return assignment_new(env, node_wrap_expr(node_wrap_symbol_untyped(symbol_new(sym_name, pos))), node_wrap_operator(operator));
+}
+
 static Llvm_register_sym load_function_call(
     Env* env,
     Node_block* new_block,
@@ -115,8 +121,10 @@ static Llvm_register_sym load_ptr_symbol_typed(
     Node* var_def_ = NULL;
     try(symbol_lookup(&var_def_, env, old_sym->name));
     Node_variable_def* var_def = node_unwrap_variable_def(var_def_);
+    assert(var_def);
     assert(lang_type_is_equal(var_def->lang_type, old_sym->lang_type));
 
+    assert(var_def->storage_location.node);
     return var_def->storage_location;
 }
 
@@ -194,6 +202,97 @@ static Llvm_register_sym load_operator(
     }
 }
 
+// TODO: clone in this function
+static Llvm_register_sym do_load_struct_element_ptr(
+    Env* env,
+    Node_block* new_block,
+    const Node_member_sym_typed* symbol_call
+) {
+    Llvm_register_sym result;
+
+    Node* prev_struct_sym = node_wrap_expr(node_wrap_member_sym_typed_const(symbol_call));
+    Llvm_register_sym node_element_ptr_to_load = get_storage_location(env, symbol_call->name);
+
+    Node* struct_var_def = NULL;
+    if (!symbol_lookup(&struct_var_def, env, symbol_call->name)) {
+        todo();
+    }
+    Lang_type type_load_from = get_lang_type(struct_var_def);
+
+    Node_load_element_ptr* load_element_ptr = NULL;
+    for (size_t idx = 0; idx < symbol_call->children.info.count; idx++) {
+        Node* element_sym_ = vec_at(&symbol_call->children, idx);
+        Node_member_sym_piece_typed* element_sym = node_unwrap_member_sym_piece_typed(element_sym_);
+
+        //log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(type_load_from));
+        log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(type_load_from));
+        log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(element_sym->lang_type));
+        log_tree(LOG_DEBUG, node_wrap_expr(node_wrap_member_sym_typed_const(symbol_call)));
+        log_tree(LOG_DEBUG, element_sym_);
+
+        if (lang_type_is_struct(env, type_load_from)) {
+            load_element_ptr = node_load_element_ptr_new(node_wrap_member_sym_piece_typed(element_sym)->pos);
+            load_element_ptr->name = get_node_name(prev_struct_sym);
+            load_element_ptr->lang_type = element_sym->lang_type;
+            load_element_ptr->struct_index = element_sym->struct_index;
+            load_element_ptr->node_src = node_element_ptr_to_load;
+            vec_append(&a_main, &new_block->children, node_wrap_load_element_ptr(load_element_ptr));
+        }
+
+        type_load_from = element_sym->lang_type;
+        prev_struct_sym = node_wrap_member_sym_piece_typed(element_sym);
+        if (load_element_ptr) {
+            node_element_ptr_to_load = llvm_register_sym_new(node_wrap_load_element_ptr(load_element_ptr));
+        } else {
+            memset(&node_element_ptr_to_load, 0, sizeof(node_element_ptr_to_load));
+        }
+    }
+
+    if (load_element_ptr) {
+        result = llvm_register_sym_new(node_wrap_load_element_ptr(load_element_ptr));
+        result.lang_type = load_element_ptr->lang_type;
+        result.node = node_wrap_load_element_ptr(load_element_ptr);
+        return result;
+    } else {
+        result = get_storage_location(env, get_expr_name(node_wrap_member_sym_typed_const(symbol_call)));
+        Node* struct_var_def = NULL;
+        if (!symbol_lookup(&struct_var_def, env, get_expr_name(node_wrap_member_sym_typed_const(symbol_call)))) {
+            todo();
+        }
+        result.lang_type = get_member_sym_piece_final_lang_type(symbol_call);
+        return result;
+    }
+    unreachable("");
+}
+
+static Llvm_register_sym load_ptr_member_sym_typed(
+    Env* env,
+    Node_block* new_block,
+    const Node_member_sym_typed* old_memb_sym
+) {
+    return do_load_struct_element_ptr(env, new_block, old_memb_sym);
+}
+
+static Llvm_register_sym load_member_sym_typed(
+    Env* env,
+    Node_block* new_block,
+    const Node_member_sym_typed* old_memb_sym
+) {
+    Pos pos = node_wrap_expr(node_wrap_member_sym_typed_const(old_memb_sym))->pos;
+
+    Llvm_register_sym ptr = load_ptr_member_sym_typed(env, new_block, old_memb_sym);
+
+    Node_load_another_node* new_load = node_load_another_node_new(pos);
+    new_load->node_src = ptr;
+    new_load->lang_type = ptr.lang_type;
+
+    vec_append(&a_main, &new_block->children, node_wrap_load_another_node(new_load));
+    return (Llvm_register_sym) {
+        .lang_type = new_load->lang_type,
+        .node = node_wrap_load_another_node(new_load)
+    };
+}
+
 static Llvm_register_sym load_expr(Env* env, Node_block* new_block, const Node_expr* old_expr) {
     switch (old_expr->type) {
         case NODE_FUNCTION_CALL:
@@ -206,6 +305,8 @@ static Llvm_register_sym load_expr(Env* env, Node_block* new_block, const Node_e
             unreachable("NODE_SYMBOL_UNTYPED should not still be present at this point");
         case NODE_OPERATOR:
             return load_operator(env, new_block, node_unwrap_operator_const(old_expr));
+        case NODE_MEMBER_SYM_TYPED:
+            return load_member_sym_typed(env, new_block, node_unwrap_member_sym_typed_const(old_expr));
         default:
             unreachable(NODE_FMT"\n", node_print(node_wrap_expr_const(old_expr)));
     }
@@ -281,7 +382,13 @@ static Llvm_register_sym load_function_def(
     Node_function_def* new_fun_def = node_function_def_new(node_wrap_function_def_const(old_fun_def)->pos);
     new_fun_def->declaration = node_clone_function_decl(old_fun_def->declaration);
     new_fun_def->body = node_block_new(node_wrap_block(old_fun_def->body)->pos);
-    load_function_parameters(env, new_fun_def->body, old_fun_def->declaration->parameters->params);
+
+    {
+        vec_append(&a_main, &env->ancesters, node_wrap_block(old_fun_def->body));
+        load_function_parameters(env, new_fun_def->body, old_fun_def->declaration->parameters->params);
+        vec_rem_last(&env->ancesters);
+    }
+
     vec_extend(&a_main, &new_fun_def->body->children, &old_fun_def->body->children);
     new_fun_def->body->symbol_table = old_fun_def->body->symbol_table;
     new_fun_def->body = load_block(env, new_fun_def->body);
@@ -353,6 +460,9 @@ static Llvm_register_sym load_assignment(
     Node_block* new_block,
     const Node_assignment* old_assignment
 ) {
+    assert(old_assignment->lhs);
+    assert(old_assignment->rhs);
+
     (void) env;
     Pos pos = node_wrap_assignment_const(old_assignment)->pos;
 
@@ -360,6 +470,10 @@ static Llvm_register_sym load_assignment(
     new_store->lang_type = get_lang_type(old_assignment->lhs);
     new_store->node_src = load_expr(env, new_block, old_assignment->rhs);
     new_store->node_dest = load_ptr(env, new_block, old_assignment->lhs);
+
+    assert(new_store->node_src.node);
+    assert(new_store->node_dest.node);
+    assert(old_assignment->rhs);
 
     vec_append(&a_main, &new_block->children, node_wrap_store_another_node(new_store));
 
@@ -379,6 +493,7 @@ static Llvm_register_sym load_variable_def(
     Node_variable_def* new_var_def = node_clone_variable_def(old_var_def);
     vec_append(&a_main, &new_block->children, node_wrap_variable_def(new_var_def));
 
+    assert(new_var_def->storage_location.node);
     return new_var_def->storage_location;
 }
 
@@ -437,52 +552,42 @@ static Llvm_register_sym load_struct_def(
     return (Llvm_register_sym) {0};
 }
 
+static Llvm_register_sym load_enum_def(
+    Env* env,
+    Node_block* new_block,
+    const Node_enum_def* old_enum_def
+) {
+    (void) env;
+
+    // TODO: clone
+    vec_append(&a_main, &new_block->children, (Node*)old_enum_def);
+
+    return (Llvm_register_sym) {0};
+}
+
 static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement, Str_view next_if, Str_view after_chain) {
     Node_condition* if_cond = if_statement->condition;
     Node_block* old_block = if_statement->body;
 
     Node_block* new_block = node_block_new(node_wrap_block(old_block)->pos);
 
-    switch (if_cond->child->type) {
-        case NODE_OPERATOR: {
-            Node_operator* old_oper = node_unwrap_operator(if_cond->child);
+    Node_operator* old_oper = if_cond->child;
 
-            Str_view if_body = literal_name_new();
+    Str_view if_body = literal_name_new();
 
-            if_for_add_cond_goto(env, old_oper, new_block, if_body, next_if);
+    if_for_add_cond_goto(env, old_oper, new_block, if_body, next_if);
 
-            add_label(env, new_block, if_body, node_wrap_block(old_block)->pos);
+    add_label(env, new_block, if_body, node_wrap_block(old_block)->pos);
 
-            {
-                Node_block* inner_block = load_block(env, old_block);
-                new_block->symbol_table = inner_block->symbol_table;
-                new_block->pos_end = inner_block->pos_end;
-                vec_extend(&a_main, &new_block->children, &inner_block->children);
-            }
-
-            Node_goto* jmp_to_after_chain = goto_new(after_chain, node_wrap_block(old_block)->pos);
-            vec_append(&a_main, &new_block->children, node_wrap_goto(jmp_to_after_chain));
-
-            break;
-        }
-        case NODE_LITERAL: {
-            unreachable("");
-            /*
-            const Node_literal* literal = node_unwrap_literal_const(if_cond->child);
-            if (node_unwrap_number_const(literal)->data == 0) {
-                Node_goto* jmp = goto_new(next_if->name, node_wrap_block(old_block)->pos);
-                vec_append(&a_main, &new_block->children, node_wrap_goto(jmp));
-            } else {
-                vec_extend(&a_main, &new_block->children, &old_block->children);
-                Node_goto* jmp_to_after_chain = goto_new(after_chain->name, node_wrap_block(old_block)->pos);
-                vec_append(&a_main, &new_block->children, node_wrap_goto(jmp_to_after_chain));
-            }
-            break;
-            */
-        }
-        default:
-            unreachable("");
+    {
+        Node_block* inner_block = load_block(env, old_block);
+        new_block->symbol_table = inner_block->symbol_table;
+        new_block->pos_end = inner_block->pos_end;
+        vec_extend(&a_main, &new_block->children, &inner_block->children);
     }
+
+    Node_goto* jmp_to_after_chain = goto_new(after_chain, node_wrap_block(old_block)->pos);
+    vec_append(&a_main, &new_block->children, node_wrap_goto(jmp_to_after_chain));
 
     return new_block;
 }
@@ -500,16 +605,12 @@ static Node_block* if_else_chain_to_branch(Env* env, const Node_if_else_chain* i
             next_if = literal_name_new();
         }
 
-        log(LOG_DEBUG, "yes\n");
         Node_block* if_block = if_statement_to_branch(env, vec_at(&if_else->nodes, idx), next_if, if_after);
         vec_append(&a_main, &new_block->children, node_wrap_block(if_block));
 
         if (idx + 1 < if_else->nodes.info.count) {
             add_label(env, new_block, next_if, node_wrap_if(vec_at(&if_else->nodes, idx))->pos);
         }
-
-        log_tree(LOG_DEBUG, node_wrap_block(if_block));
-        log_tree(LOG_DEBUG, node_wrap_block(new_block));
     }
 
     add_label(env, new_block, if_after, node_wrap_if_else_chain_const(if_else)->pos);
@@ -529,6 +630,101 @@ static Llvm_register_sym load_if_else_chain(
     return (Llvm_register_sym) {0};
 }
 
+static Node_block* for_range_to_branch(Env* env, const Node_for_range* for_loop) {
+
+    Pos pos = node_wrap_for_range_const(for_loop)->pos;
+    (void) pos;
+
+    log_tree(LOG_TRACE, node_wrap_for_range_const(for_loop));
+
+    Node_block* for_block = for_loop->body;
+    //vec_append(&a_main, &env->ancesters, node_wrap_block(for_block));
+    symbol_log(LOG_DEBUG, env);
+    Node_expr* lhs_actual = for_loop->lower_bound->child;
+    Node_expr* rhs_actual = for_loop->upper_bound->child;
+
+    Node_block* new_branch_block = node_block_new(node_wrap_for_range_const(for_loop)->pos);
+
+    Node_symbol_untyped* symbol_lhs_assign;
+    Node_variable_def* for_var_def;
+    {
+        for_var_def = for_loop->var_def;
+        symbol_lhs_assign = symbol_new(for_var_def->name, node_wrap_variable_def(for_var_def)->pos);
+    }
+
+    symbol_add(env, node_wrap_variable_def(for_var_def));
+    Node* dummy = NULL;
+    assert(symbol_lookup(&dummy, env, for_var_def->name));
+    symbol_log(LOG_DEBUG, env);
+
+    Node_assignment* assignment_to_inc_cond_var = for_loop_cond_var_assign_new(env, for_var_def->name, node_wrap_expr(lhs_actual)->pos);
+
+    Node_operator* operator = util_binary_typed_new(
+        env, node_wrap_symbol_untyped(symbol_new(symbol_lhs_assign->name, node_wrap_expr(node_wrap_symbol_untyped(symbol_lhs_assign))->pos)), rhs_actual, TOKEN_LESS_THAN
+    );
+
+    // initial assignment
+    log_tree(LOG_DEBUG, (Node*)symbol_lhs_assign);
+    log_tree(LOG_DEBUG, (Node*)lhs_actual);
+    Node_assignment* new_var_assign = assignment_new(env, node_wrap_expr(node_wrap_symbol_untyped(symbol_lhs_assign)), lhs_actual);
+    log_tree(LOG_DEBUG, (Node*)new_var_assign);
+
+    Str_view check_cond_label = literal_name_new();
+    Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label, node_wrap_for_range_const(for_loop)->pos);
+    Str_view after_check_label = literal_name_new();
+    Str_view after_for_loop_label = literal_name_new();
+
+    // TODO: implement this
+    //change_break_to_goto(for_block, after_for_loop_label);
+
+    vec_append(&a_main, &new_branch_block->children, node_wrap_alloca(
+        add_alloca_alloca_new(for_var_def)
+    ));
+    vec_append(&a_main, &new_branch_block->children, node_wrap_variable_def(for_var_def));
+    log(LOG_DEBUG, "%zu\n", env->ancesters.info.count);
+
+    load_assignment(env, new_branch_block, new_var_assign);
+    vec_append(&a_main, &new_branch_block->children, node_wrap_goto(jmp_to_check_cond_label));
+
+    add_label(env, new_branch_block, check_cond_label, pos);
+    load_operator(env, new_branch_block, operator);
+
+    if_for_add_cond_goto(
+        env,
+        operator,
+        new_branch_block,
+        after_check_label,
+        after_for_loop_label
+    );
+
+    add_label(env, new_branch_block, after_check_label, pos);
+
+    {
+        Node_block* inner_block = load_block(env, for_block);
+        new_branch_block->symbol_table = inner_block->symbol_table;
+        new_branch_block->pos_end = inner_block->pos_end;
+        vec_extend(&a_main, &new_branch_block->children, &inner_block->children);
+    }
+
+    load_assignment(env, new_branch_block, assignment_to_inc_cond_var);
+    vec_append(&a_main, &new_branch_block->children, node_wrap_goto(goto_new(check_cond_label, node_wrap_for_range_const(for_loop)->pos)));
+    add_label(env, new_branch_block, after_for_loop_label, pos);
+
+    //vec_rem_last(&env->ancesters);
+    return new_branch_block;
+}
+
+static Llvm_register_sym load_for_range(
+    Env* env,
+    Node_block* new_block,
+    const Node_for_range* old_for
+) {
+    Node_block* new_for = for_range_to_branch(env, old_for);
+    vec_append(&a_main, &new_block->children, node_wrap_block(new_for));
+
+    return (Llvm_register_sym) {0};
+}
+
 static Llvm_register_sym load_ptr_variable_def(
     Env* env,
     Node_block* new_block,
@@ -541,6 +737,8 @@ static Llvm_register_sym load_ptr_expr(Env* env, Node_block* new_block, const No
     switch (old_expr->type) {
         case NODE_SYMBOL_TYPED:
             return load_ptr_symbol_typed(env, new_block, node_unwrap_symbol_typed_const(old_expr));
+        case NODE_MEMBER_SYM_TYPED:
+            return load_ptr_member_sym_typed(env, new_block, node_unwrap_member_sym_typed_const(old_expr));
         default:
             unreachable(NODE_FMT"\n", node_print(node_wrap_expr_const(old_expr)));
     }
@@ -583,6 +781,10 @@ static Llvm_register_sym load_node(Env* env, Node_block* new_block, const Node* 
             return load_struct_def(env, new_block, node_unwrap_struct_def_const(old_node));
         case NODE_IF_ELSE_CHAIN:
             return load_if_else_chain(env, new_block, node_unwrap_if_else_chain_const(old_node));
+        case NODE_FOR_RANGE:
+            return load_for_range(env, new_block, node_unwrap_for_range_const(old_node));
+        case NODE_ENUM_DEF:
+            return load_enum_def(env, new_block, node_unwrap_enum_def_const(old_node));
         case NODE_BLOCK:
             vec_append(
                 &a_main,

@@ -489,16 +489,35 @@ static void emit_llvm_store_struct_literal(const Env* env, String* output, const
     string_extend_cstr(&a_main, output, ", i1 false)\n");
 }
 
+static void emit_store_another_node_src_literal(
+    String* output,
+    const Node_literal* literal
+) {
+    string_extend_cstr(&a_main, output, " ");
+
+    switch (literal->type) {
+        case NODE_STRING:
+            string_extend_cstr(&a_main, output, " @.");
+            string_extend_strv(&a_main, output, literal->name);
+            return;
+        case NODE_NUMBER:
+            string_extend_int64_t(&a_main, output, node_unwrap_number_const(literal)->data);
+            return;
+        case NODE_ENUM_LIT:
+            string_extend_int64_t(&a_main, output, node_unwrap_enum_lit_const(literal)->data);
+            return;
+        case NODE_VOID:
+            return;
+    }
+}
+
 static void emit_store_another_node_src_expr(const Env* env, String* output, const Node_expr* expr) {
     (void) env;
 
     switch (expr->type) {
-        case NODE_LITERAL: {
-            const Node_literal* literal = node_unwrap_literal_const(expr);
-            string_extend_cstr(&a_main, output, " ");
-            extend_literal(output, literal);
-            break;
-        }
+        case NODE_LITERAL:
+            emit_store_another_node_src_literal(output, node_unwrap_literal_const(expr));
+            return;
         case NODE_FUNCTION_CALL:
             // fallthrough
         case NODE_OPERATOR:
@@ -528,6 +547,7 @@ static void emit_store_another_node(const Env* env, String* output, const Node_s
     //string_extend_cstr(&a_main, output, " %");
     //string_extend_size_t(&a_main, output, get_llvm_id(store->node_src.node));
 
+    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(string_to_strv(*output)));
     string_extend_cstr(&a_main, output, ", ptr %");
     string_extend_size_t(&a_main, output, get_llvm_id(store->node_dest.node));
     string_extend_cstr(&a_main, output, ", align 8");

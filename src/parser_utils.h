@@ -67,7 +67,7 @@ Node_literal* literal_new(Str_view value, TOKEN_TYPE token_type, Pos pos);
 
 Node_symbol_untyped* symbol_new(Str_view symbol_name, Pos pos);
 
-Node_expr* util_binary_typed_new(const Env* env, Node_expr* lhs, Node_expr* rhs, TOKEN_TYPE operation_type);
+Node_operator* util_binary_typed_new(const Env* env, Node_expr* lhs, Node_expr* rhs, TOKEN_TYPE operation_type);
 
 Node_expr* unary_new(const Env* env, Node_expr* child, TOKEN_TYPE operation_type, Lang_type init_lang_type);
 
@@ -184,6 +184,8 @@ void set_symbol_type(Node_symbol_untyped* sym_untyped);
 bool try_set_function_call_types(const Env* env, Node_expr** new_node, Lang_type* lang_type, Node_function_call* fun_call);
 
 bool try_set_member_symbol_types(const Env* env, Node** new_node, Lang_type* lang_type, Node_member_sym_untyped* struct_memb_sym);
+
+Node_operator* condition_get_default_child(Node_expr* if_cond_child);
 
 bool try_set_node_lang_type(const Env* env, Node** new_node, Lang_type* lang_type, Node* node);
 

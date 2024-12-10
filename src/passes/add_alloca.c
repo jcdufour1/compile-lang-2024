@@ -3,7 +3,7 @@
 #include <nodes.h>
 #include <parser_utils.h>
 
-static Node_alloca* alloca_new(Node_variable_def* var_def) {
+Node_alloca* add_alloca_alloca_new(Node_variable_def* var_def) {
     Node_alloca* alloca = node_alloca_new(node_wrap_variable_def(var_def)->pos);
     alloca->name = var_def->name;
     alloca->lang_type = var_def->lang_type;
@@ -20,7 +20,7 @@ static void do_function_def(Env* env, Node_function_def* fun_def) {
             param->storage_location = llvm_register_sym_new(node_wrap_variable_def(param));
             continue;
         }
-        vec_insert(&a_main, &fun_def->body->children, 0, node_wrap_alloca(alloca_new(param)));
+        vec_insert(&a_main, &fun_def->body->children, 0, node_wrap_alloca(add_alloca_alloca_new(param)));
     }
 }
 
@@ -31,7 +31,7 @@ static void insert_alloca(
     Node_variable_def* var_def
 ) {
     insert_into_node_ptr_vec(block_children, idx_to_insert_before, 0, node_wrap_alloca(
-        alloca_new(var_def)
+        add_alloca_alloca_new(var_def)
     ));
 }
 

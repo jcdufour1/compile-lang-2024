@@ -17,6 +17,8 @@ static inline void insert_into_node_ptr_vec(
     }
 }
 
+Node_alloca* add_alloca_alloca_new(Node_variable_def* var_def);
+
 void tokenize_do_test(void);
 
 Tokens tokenize(Env* env, const Parameters params);
