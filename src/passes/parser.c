@@ -1035,8 +1035,11 @@ static Node_condition* extract_condition(Env* env, Tk_view* tokens) {
         case NODE_FUNCTION_CALL:
             condition->child = condition_get_default_child(cond_child);
             break;
+        case NODE_SYMBOL_UNTYPED:
+            condition->child = condition_get_default_child(cond_child);
+            break;
         default:
-            unreachable("");
+            unreachable(NODE_FMT"\n", node_print(node_wrap_expr(cond_child)));
     }
 
     return condition;

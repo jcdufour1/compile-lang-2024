@@ -11,6 +11,8 @@ typedef struct Env_ {
     Symbol_table global_literals; // this is populated during add_load_and_store pass
     int recursion_depth;
     Str_view file_text;
+
+    Str_view label_if_break;
 } Env;
 
 #endif // ENV_H

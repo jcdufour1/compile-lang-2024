@@ -83,6 +83,9 @@ void assign_llvm_ids(Env* env) {
         case NODE_STORE_ANOTHER_NODE:
             node_unwrap_store_another_node(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
+            log_tree(LOG_DEBUG, curr_node);
+            log_tree(LOG_DEBUG, node_unwrap_store_another_node(curr_node)->node_src.node);
+            log_tree(LOG_DEBUG, node_unwrap_store_another_node(curr_node)->node_dest.node);
             return;
         case NODE_VARIABLE_DEF:
             node_unwrap_variable_def(curr_node)->llvm_id = llvm_id_for_next_var;

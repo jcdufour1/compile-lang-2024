@@ -312,7 +312,7 @@ static void emit_unary_type(const Env* env, String* output, const Node_unary* un
             }
             break;
         default:
-            unreachable("");
+            unreachable(NODE_FMT"\n", node_print(node_wrap_expr(node_wrap_operator(node_wrap_unary_const(unary)))));
     }
 }
 
@@ -479,13 +479,18 @@ static void emit_load_another_node(const Env* env, String* output, const Node_lo
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_llvm_store_struct_literal(const Env* env, String* output, const Node_llvm_store_struct_literal* store) {
+static void emit_memcpy_struct_literal(
+    const Env* env,
+    String* output,
+    Llvm_id dest,
+    const Node_struct_literal* literal
+) {
     string_extend_cstr(&a_main, output, "    call void @llvm.memcpy.p0.p0.i64(ptr align 4 %");
-    string_extend_size_t(&a_main, output, get_llvm_id(store->node_dest.node));
+    string_extend_size_t(&a_main, output, dest);
     string_extend_cstr(&a_main, output, ", ptr align 4 @__const.main.");
-    string_extend_strv(&a_main, output, store->child->name);
+    string_extend_strv(&a_main, output, literal->name);
     string_extend_cstr(&a_main, output, ", i64 ");
-    string_extend_size_t(&a_main, output, sizeof_struct_literal(env, store->child));
+    string_extend_size_t(&a_main, output, sizeof_struct_literal(env, literal));
     string_extend_cstr(&a_main, output, ", i1 false)\n");
 }
 
@@ -524,22 +529,68 @@ static void emit_store_another_node_src_expr(const Env* env, String* output, con
             string_extend_cstr(&a_main, output, " %");
             string_extend_size_t(&a_main, output, get_llvm_id_expr(expr));
             break;
+        case NODE_STRUCT_LITERAL:
+            unreachable("");
+            break;
         default:
             unreachable(NODE_FMT"\n", node_print(node_wrap_expr_const(expr)));
     }
 }
 
 static void emit_store_another_node(const Env* env, String* output, const Node_store_another_node* store) {
+    log_tree(LOG_DEBUG, (Node*)store);
+    log_tree(LOG_DEBUG, store->node_src.node);
+    log_tree(LOG_DEBUG, store->node_dest.node);
+    //log(LOG_DEBUG, "%zu\n", get_llvm_id(store->node_src.node));
+    //log(LOG_DEBUG, "%zu\n", get_llvm_id(store->node_dest.node));
+
+    const Node* src = store->node_src.node;
+
+    switch (src->type) {
+        case NODE_EXPR: {
+            const Node_expr* src_expr = node_unwrap_expr_const(src);
+            switch (src_expr->type) {
+                case NODE_STRUCT_LITERAL:
+                    emit_memcpy_struct_literal(
+                        env,
+                        output,
+                        get_llvm_id(store->node_dest.node),
+                        node_unwrap_struct_literal_const(src_expr)
+                    );
+                    return;
+                default:
+                    break;
+            }
+        }
+        default:
+            break;
+    }
+
     assert(store->lang_type.str.count > 0);
     string_extend_cstr(&a_main, output, "    store ");
     extend_type_call_str(env, output, store->lang_type);
+    string_extend_cstr(&a_main, output, " ");
 
-    const Node* src = store->node_src.node;
     switch (src->type) {
         case NODE_VARIABLE_DEF:
-            todo();
+            log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(string_to_strv(*output)));
+            string_extend_cstr(&a_main, output, " %");
+
+            //string_extend_size_t(&a_main, output, get_llvm_id(
+            //    get_storage_location(env, node_unwrap_variable_def_const(src)->name).node
+            //));
+            string_extend_size_t(&a_main, output, get_llvm_id(src));
+
+            log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(string_to_strv(*output)));
+            break;
         case NODE_EXPR:
             emit_store_another_node_src_expr(env, output, node_unwrap_expr_const(src));
+            break;
+        case NODE_LOAD_ANOTHER_NODE:
+            string_extend_cstr(&a_main, output, "%");
+            Llvm_id llvm_id = get_llvm_id(src);
+            assert(llvm_id > 0);
+            string_extend_size_t(&a_main, output, llvm_id);
             break;
         default:
             unreachable(NODE_FMT"\n", node_print(src));
@@ -757,7 +808,7 @@ static void emit_block(Env* env, String* output, const Node_block* block) {
                     emit_llvm_store_literal(env, output, node_unwrap_llvm_store_literal_const(statement));
                     break;
                 case NODE_LLVM_STORE_STRUCT_LITERAL:
-                    emit_llvm_store_struct_literal(env, output, node_unwrap_llvm_store_struct_literal_const(statement));
+                    unreachable("");
                     break;
                 case NODE_STRUCT_DEF:
                     emit_struct_def(env, output, node_unwrap_struct_def_const(statement));

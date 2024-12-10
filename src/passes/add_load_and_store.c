@@ -5,18 +5,20 @@
 
 #include "passes.h"
 
-static Node_block* load_block(Env* env, const Node_block* old_block);
+static Node_block* load_block(Env* env, Node_block* old_block);
 
-static Llvm_register_sym load_expr(Env* env, Node_block* new_block, const Node_expr* old_expr);
+static Llvm_register_sym load_expr(Env* env, Node_block* new_block, Node_expr* old_expr);
 
-static Llvm_register_sym load_ptr(Env* env, Node_block* new_block, const Node* old_node);
+static Llvm_register_sym load_ptr(Env* env, Node_block* new_block, Node* old_node);
 
-static Llvm_register_sym load_ptr_expr(Env* env, Node_block* new_block, const Node_expr* old_expr);
+static Llvm_register_sym load_ptr_expr(Env* env, Node_block* new_block, Node_expr* old_expr);
+
+static Llvm_register_sym load_node(Env* env, Node_block* new_block, Node* old_node);
 
 static Llvm_register_sym load_operator(
     Env* env,
     Node_block* new_block,
-    const Node_operator* old_oper
+    Node_operator* old_oper
 );
 
 static Node_goto* goto_new(Str_view name_label_to_jmp_to, Pos pos) {
@@ -35,12 +37,12 @@ static void add_label(Env* env, Node_block* block, Str_view label_name, Pos pos)
 
 static void if_for_add_cond_goto(
     Env* env,
-    const Node_operator* old_oper,
+    Node_operator* old_oper,
     Node_block* block,
     Str_view label_name_if_true,
     Str_view label_name_if_false
 ) {
-    Pos pos = node_wrap_expr_const(node_wrap_operator_const(old_oper))->pos;
+    Pos pos = node_wrap_expr(node_wrap_operator(old_oper))->pos;
 
     Node_cond_goto* cond_goto = node_cond_goto_new(pos);
     cond_goto->node_src = load_operator(env, block, old_oper);
@@ -59,16 +61,16 @@ static Node_assignment* for_loop_cond_var_assign_new(Env* env, Str_view sym_name
 static Llvm_register_sym load_function_call(
     Env* env,
     Node_block* new_block,
-    const Node_function_call* old_fun_call
+    Node_function_call* old_fun_call
 ) {
 
     Node_function_call* new_fun_call = node_function_call_new(
-        node_wrap_expr(node_wrap_function_call_const(old_fun_call))->pos
+        node_wrap_expr(node_wrap_function_call(old_fun_call))->pos
     );
 
     for (size_t idx = 0; idx < old_fun_call->args.info.count; idx++) {
-        const Node_expr* old_arg = vec_at(&old_fun_call->args, idx);
-        Pos arg_pos = node_wrap_expr_const(old_arg)->pos;
+        Node_expr* old_arg = vec_at(&old_fun_call->args, idx);
+        Pos arg_pos = node_wrap_expr(old_arg)->pos;
 
         Node_llvm_placeholder* new_arg = node_llvm_placeholder_new(arg_pos);
         new_arg->lang_type = get_lang_type_expr(old_arg);
@@ -86,8 +88,8 @@ static Llvm_register_sym load_function_call(
     };
 }
 
-static Node_literal* node_literal_clone(const Node_literal* old_lit) {
-    Node_literal* new_lit = node_literal_new(node_wrap_expr_const(node_wrap_literal_const(old_lit))->pos);
+static Node_literal* node_literal_clone(Node_literal* old_lit) {
+    Node_literal* new_lit = node_literal_new(node_wrap_expr(node_wrap_literal(old_lit))->pos);
     *new_lit = *old_lit;
     return new_lit;
 }
@@ -95,7 +97,7 @@ static Node_literal* node_literal_clone(const Node_literal* old_lit) {
 static Llvm_register_sym load_literal(
     Env* env,
     Node_block* new_block,
-    const Node_literal* old_lit
+    Node_literal* old_lit
 ) {
     (void) env;
     (void) new_block;
@@ -114,7 +116,7 @@ static Llvm_register_sym load_literal(
 static Llvm_register_sym load_ptr_symbol_typed(
     Env* env,
     Node_block* new_block,
-    const Node_symbol_typed* old_sym
+    Node_symbol_typed* old_sym
 ) {
     (void) new_block;
 
@@ -131,9 +133,9 @@ static Llvm_register_sym load_ptr_symbol_typed(
 static Llvm_register_sym load_symbol_typed(
     Env* env,
     Node_block* new_block,
-    const Node_symbol_typed* old_sym
+    Node_symbol_typed* old_sym
 ) {
-    Pos pos = node_wrap_expr(node_wrap_symbol_typed_const(old_sym))->pos;
+    Pos pos = node_wrap_expr(node_wrap_symbol_typed(old_sym))->pos;
 
     Node_load_another_node* new_load = node_load_another_node_new(pos);
     new_load->node_src = load_ptr_symbol_typed(env, new_block, old_sym);
@@ -149,9 +151,9 @@ static Llvm_register_sym load_symbol_typed(
 static Llvm_register_sym load_binary(
     Env* env,
     Node_block* new_block,
-    const Node_binary* old_bin
+    Node_binary* old_bin
 ) {
-    Pos pos = node_wrap_expr(node_wrap_operator(node_wrap_binary_const(old_bin)))->pos;
+    Pos pos = node_wrap_expr(node_wrap_operator(node_wrap_binary(old_bin)))->pos;
 
     Node_binary* new_bin = node_binary_new(pos);
 
@@ -173,30 +175,67 @@ static Llvm_register_sym load_binary(
         .lang_type = new_bin->lang_type,
         .node = node_wrap_expr(node_wrap_operator(node_wrap_binary(new_bin)))
     };
-
 }
 
 static Llvm_register_sym load_unary(
     Env* env,
     Node_block* new_block,
-    const Node_unary* old_unary
+    Node_unary* old_unary
 ) {
-    (void) env;
-    (void) new_block;
-    (void) old_unary;
-    todo();
+    Pos pos = node_wrap_expr(node_wrap_operator(node_wrap_unary(old_unary)))->pos;
+
+    switch (old_unary->token_type) {
+        case TOKEN_DEREF: {
+            if (is_struct_symbol(env, old_unary->child)) {
+                todo();
+            } else {
+                Llvm_register_sym ptr = load_expr(env, new_block, old_unary->child);
+                Node_load_another_node* new_load = node_load_another_node_new(pos);
+                new_load->node_src = ptr;
+                new_load->lang_type = old_unary->lang_type;
+
+                vec_append(&a_main, &new_block->children, node_wrap_load_another_node(new_load));
+                return (Llvm_register_sym) {
+                    .lang_type = old_unary->lang_type,
+                    .node = node_wrap_load_another_node(new_load)
+                };
+            }
+        }
+        case TOKEN_REFER: {
+            return load_ptr_expr(env, new_block, old_unary->child);
+        }
+        case TOKEN_UNSAFE_CAST: {
+            Node_unary* new_unary = node_unary_new(pos);
+
+            Node_llvm_placeholder* child = node_llvm_placeholder_new(pos);
+            child->lang_type = get_lang_type_expr(old_unary->child);
+            child->llvm_reg = load_expr(env, new_block, old_unary->child);
+            new_unary->child = node_wrap_llvm_placeholder(child);
+
+            new_unary->token_type = old_unary->token_type;
+            new_unary->lang_type = old_unary->lang_type;
+
+            vec_append(&a_main, &new_block->children, node_wrap_expr(node_wrap_operator(node_wrap_unary(new_unary))));
+            return (Llvm_register_sym) {
+                .lang_type = new_unary->lang_type,
+                .node = node_wrap_expr(node_wrap_operator(node_wrap_unary(new_unary)))
+            };
+        }
+        default:
+            unreachable(NODE_FMT"\n", node_print(node_wrap_expr(node_wrap_operator(node_wrap_unary(old_unary)))));
+    }
 }
 
 static Llvm_register_sym load_operator(
     Env* env,
     Node_block* new_block,
-    const Node_operator* old_oper
+    Node_operator* old_oper
 ) {
     switch (old_oper->type) {
         case NODE_BINARY:
-            return load_binary(env, new_block, node_unwrap_binary_const(old_oper));
+            return load_binary(env, new_block, node_unwrap_binary(old_oper));
         case NODE_UNARY:
-            return load_unary(env, new_block, node_unwrap_unary_const(old_oper));
+            return load_unary(env, new_block, node_unwrap_unary(old_oper));
         default:
             unreachable("");
     }
@@ -206,11 +245,11 @@ static Llvm_register_sym load_operator(
 static Llvm_register_sym do_load_struct_element_ptr(
     Env* env,
     Node_block* new_block,
-    const Node_member_sym_typed* symbol_call
+    Node_member_sym_typed* symbol_call
 ) {
     Llvm_register_sym result;
 
-    Node* prev_struct_sym = node_wrap_expr(node_wrap_member_sym_typed_const(symbol_call));
+    Node* prev_struct_sym = node_wrap_expr(node_wrap_member_sym_typed(symbol_call));
     Llvm_register_sym node_element_ptr_to_load = get_storage_location(env, symbol_call->name);
 
     Node* struct_var_def = NULL;
@@ -227,7 +266,7 @@ static Llvm_register_sym do_load_struct_element_ptr(
         //log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(type_load_from));
         log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(type_load_from));
         log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(element_sym->lang_type));
-        log_tree(LOG_DEBUG, node_wrap_expr(node_wrap_member_sym_typed_const(symbol_call)));
+        log_tree(LOG_DEBUG, node_wrap_expr(node_wrap_member_sym_typed(symbol_call)));
         log_tree(LOG_DEBUG, element_sym_);
 
         if (lang_type_is_struct(env, type_load_from)) {
@@ -254,9 +293,9 @@ static Llvm_register_sym do_load_struct_element_ptr(
         result.node = node_wrap_load_element_ptr(load_element_ptr);
         return result;
     } else {
-        result = get_storage_location(env, get_expr_name(node_wrap_member_sym_typed_const(symbol_call)));
+        result = get_storage_location(env, get_expr_name(node_wrap_member_sym_typed(symbol_call)));
         Node* struct_var_def = NULL;
-        if (!symbol_lookup(&struct_var_def, env, get_expr_name(node_wrap_member_sym_typed_const(symbol_call)))) {
+        if (!symbol_lookup(&struct_var_def, env, get_expr_name(node_wrap_member_sym_typed(symbol_call)))) {
             todo();
         }
         result.lang_type = get_member_sym_piece_final_lang_type(symbol_call);
@@ -268,7 +307,7 @@ static Llvm_register_sym do_load_struct_element_ptr(
 static Llvm_register_sym load_ptr_member_sym_typed(
     Env* env,
     Node_block* new_block,
-    const Node_member_sym_typed* old_memb_sym
+    Node_member_sym_typed* old_memb_sym
 ) {
     return do_load_struct_element_ptr(env, new_block, old_memb_sym);
 }
@@ -276,9 +315,9 @@ static Llvm_register_sym load_ptr_member_sym_typed(
 static Llvm_register_sym load_member_sym_typed(
     Env* env,
     Node_block* new_block,
-    const Node_member_sym_typed* old_memb_sym
+    Node_member_sym_typed* old_memb_sym
 ) {
-    Pos pos = node_wrap_expr(node_wrap_member_sym_typed_const(old_memb_sym))->pos;
+    Pos pos = node_wrap_expr(node_wrap_member_sym_typed(old_memb_sym))->pos;
 
     Llvm_register_sym ptr = load_ptr_member_sym_typed(env, new_block, old_memb_sym);
 
@@ -293,58 +332,78 @@ static Llvm_register_sym load_member_sym_typed(
     };
 }
 
-static Llvm_register_sym load_expr(Env* env, Node_block* new_block, const Node_expr* old_expr) {
+// TODO: consider struct_literal to be a literal type
+static Llvm_register_sym load_struct_literal(
+    Env* env,
+    Node_block* new_block,
+    Node_struct_literal* old_lit
+) {
+    (void) new_block;
+
+    try(sym_tbl_add(&env->global_literals, node_wrap_expr(node_wrap_struct_literal(old_lit))));
+
+    // TODO: clone
+    return (Llvm_register_sym) {
+        .lang_type = old_lit->lang_type,
+        .node = (Node*)old_lit
+    };
+    todo();
+}
+
+static Llvm_register_sym load_expr(Env* env, Node_block* new_block, Node_expr* old_expr) {
     switch (old_expr->type) {
         case NODE_FUNCTION_CALL:
-            return load_function_call(env, new_block, node_unwrap_function_call_const(old_expr));
+            return load_function_call(env, new_block, node_unwrap_function_call(old_expr));
         case NODE_LITERAL:
-            return load_literal(env, new_block, node_unwrap_literal_const(old_expr));
+            return load_literal(env, new_block, node_unwrap_literal(old_expr));
         case NODE_SYMBOL_TYPED:
-            return load_symbol_typed(env, new_block, node_unwrap_symbol_typed_const(old_expr));
+            return load_symbol_typed(env, new_block, node_unwrap_symbol_typed(old_expr));
         case NODE_SYMBOL_UNTYPED:
             unreachable("NODE_SYMBOL_UNTYPED should not still be present at this point");
         case NODE_OPERATOR:
-            return load_operator(env, new_block, node_unwrap_operator_const(old_expr));
+            return load_operator(env, new_block, node_unwrap_operator(old_expr));
         case NODE_MEMBER_SYM_TYPED:
-            return load_member_sym_typed(env, new_block, node_unwrap_member_sym_typed_const(old_expr));
+            return load_member_sym_typed(env, new_block, node_unwrap_member_sym_typed(old_expr));
+        case NODE_STRUCT_LITERAL:
+            return load_struct_literal(env, new_block, node_unwrap_struct_literal(old_expr));
         default:
-            unreachable(NODE_FMT"\n", node_print(node_wrap_expr_const(old_expr)));
+            unreachable(NODE_FMT"\n", node_print(node_wrap_expr(old_expr)));
     }
 }
 
-static Node_function_params* node_clone_function_params(const Node_function_params* old_params) {
-    Node_function_params* new_params = node_function_params_new(node_wrap_function_params_const(old_params)->pos);
+static Node_function_params* node_clone_function_params(Node_function_params* old_params) {
+    Node_function_params* new_params = node_function_params_new(node_wrap_function_params(old_params)->pos);
     *new_params = *old_params;
     return new_params;
 }
 
-static Node_lang_type* node_clone_lang_type(const Node_lang_type* old_lang_type) {
-    Node_lang_type* new_lang_type = node_lang_type_new(node_wrap_lang_type_const(old_lang_type)->pos);
+static Node_lang_type* node_clone_lang_type(Node_lang_type* old_lang_type) {
+    Node_lang_type* new_lang_type = node_lang_type_new(node_wrap_lang_type(old_lang_type)->pos);
     *new_lang_type = *old_lang_type;
     return new_lang_type;
 }
 
-static Node_alloca* node_clone_alloca(const Node_alloca* old_alloca) {
-    Node_alloca* new_alloca = node_alloca_new(node_wrap_alloca_const(old_alloca)->pos);
+static Node_alloca* node_clone_alloca(Node_alloca* old_alloca) {
+    Node_alloca* new_alloca = node_alloca_new(node_wrap_alloca(old_alloca)->pos);
     *new_alloca = *old_alloca;
     return new_alloca;
 }
 
-static Node_function_decl* node_clone_function_decl(const Node_function_decl* old_decl) {
-    Node_function_decl* new_decl = node_function_decl_new(node_wrap_function_decl_const(old_decl)->pos);
+static Node_function_decl* node_clone_function_decl(Node_function_decl* old_decl) {
+    Node_function_decl* new_decl = node_function_decl_new(node_wrap_function_decl(old_decl)->pos);
     new_decl->parameters = node_clone_function_params(old_decl->parameters);
     new_decl->return_type = node_clone_lang_type(old_decl->return_type);
     new_decl->name = old_decl->name;
     return new_decl;
 }
 
-static Node_variable_def* node_clone_variable_def(const Node_variable_def* old_var_def) {
-    Node_variable_def* new_var_def = node_variable_def_new(node_wrap_variable_def_const(old_var_def)->pos);
+static Node_variable_def* node_clone_variable_def(Node_variable_def* old_var_def) {
+    Node_variable_def* new_var_def = node_variable_def_new(node_wrap_variable_def(old_var_def)->pos);
     *new_var_def = *old_var_def;
     return new_var_def;
 }
 
-static size_t get_idx_node_after_last_alloca(const Node_block* block) {
+static size_t get_idx_node_after_last_alloca(Node_block* block) {
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         Node* node = vec_at(&block->children, idx);
         if (node->type != NODE_ALLOCA) {
@@ -366,20 +425,23 @@ static void load_function_parameters(
             continue;
         }
         Llvm_register_sym fun_param_call = llvm_register_sym_new(param);
-        (void) fun_param_call;
-        size_t idx_insert_before = get_idx_node_after_last_alloca(new_fun_body);
-        (void) idx_insert_before;
-        //insert_store(env, &fun_def->body->children, &idx_insert_before, fun_param_call.node);
-        todo();
+        
+        Node_store_another_node* new_store = node_store_another_node_new(param->pos);
+        new_store->node_src = fun_param_call;
+        new_store->node_dest = get_storage_location(env, get_node_name(param));
+        new_store->lang_type = get_lang_type(param);
+
+        // TODO: append to new function body instead of old
+        vec_append(&a_main, &new_fun_body->children, node_wrap_store_another_node(new_store));
     }
 }
 
 static Llvm_register_sym load_function_def(
     Env* env,
     Node_block* new_block,
-    const Node_function_def* old_fun_def
+    Node_function_def* old_fun_def
 ) {
-    Node_function_def* new_fun_def = node_function_def_new(node_wrap_function_def_const(old_fun_def)->pos);
+    Node_function_def* new_fun_def = node_function_def_new(node_wrap_function_def(old_fun_def)->pos);
     new_fun_def->declaration = node_clone_function_decl(old_fun_def->declaration);
     new_fun_def->body = node_block_new(node_wrap_block(old_fun_def->body)->pos);
 
@@ -403,7 +465,7 @@ static Llvm_register_sym load_function_def(
 static Llvm_register_sym load_function_decl(
     Env* env,
     Node_block* new_block,
-    const Node_function_decl* old_fun_decl
+    Node_function_decl* old_fun_decl
 ) {
     (void) env;
 
@@ -419,9 +481,9 @@ static Llvm_register_sym load_function_decl(
 static Llvm_register_sym load_return(
     Env* env,
     Node_block* new_block,
-    const Node_return* old_return
+    Node_return* old_return
 ) {
-    Pos pos = node_wrap_return_const(old_return)->pos;
+    Pos pos = node_wrap_return(old_return)->pos;
 
     Node_return* new_return = node_return_new(pos);
     Llvm_register_sym result = load_expr(env, new_block, old_return->child);
@@ -439,7 +501,7 @@ static Llvm_register_sym load_return(
 static Llvm_register_sym load_alloca(
     Env* env,
     Node_block* new_block,
-    const Node_alloca* old_alloca
+    Node_alloca* old_alloca
 ) {
     (void) env;
 
@@ -458,13 +520,13 @@ static Llvm_register_sym load_alloca(
 static Llvm_register_sym load_assignment(
     Env* env,
     Node_block* new_block,
-    const Node_assignment* old_assignment
+    Node_assignment* old_assignment
 ) {
     assert(old_assignment->lhs);
     assert(old_assignment->rhs);
 
     (void) env;
-    Pos pos = node_wrap_assignment_const(old_assignment)->pos;
+    Pos pos = node_wrap_assignment(old_assignment)->pos;
 
     Node_store_another_node* new_store = node_store_another_node_new(pos);
     new_store->lang_type = get_lang_type(old_assignment->lhs);
@@ -474,6 +536,12 @@ static Llvm_register_sym load_assignment(
     assert(new_store->node_src.node);
     assert(new_store->node_dest.node);
     assert(old_assignment->rhs);
+
+    log_tree(LOG_DEBUG, (Node*)new_store);
+    log_tree(LOG_DEBUG, (Node*)new_store->node_src.node);
+    log_tree(LOG_DEBUG, (Node*)new_store->node_dest.node);
+
+    log(LOG_DEBUG, "%zu\n", new_block->children.info.count);
 
     vec_append(&a_main, &new_block->children, node_wrap_store_another_node(new_store));
 
@@ -486,7 +554,7 @@ static Llvm_register_sym load_assignment(
 static Llvm_register_sym load_variable_def(
     Env* env,
     Node_block* new_block,
-    const Node_variable_def* old_var_def
+    Node_variable_def* old_var_def
 ) {
     (void) env;
 
@@ -500,7 +568,7 @@ static Llvm_register_sym load_variable_def(
 static Llvm_register_sym load_goto(
     Env* env,
     Node_block* new_block,
-    const Node_goto* old_goto
+    Node_goto* old_goto
 ) {
     unreachable("");
     (void) env;
@@ -514,7 +582,7 @@ static Llvm_register_sym load_goto(
 static Llvm_register_sym load_cond_goto(
     Env* env,
     Node_block* new_block,
-    const Node_cond_goto* old_cond_goto
+    Node_cond_goto* old_cond_goto
 ) {
     unreachable("");
     (void) env;
@@ -528,7 +596,7 @@ static Llvm_register_sym load_cond_goto(
 static Llvm_register_sym load_label(
     Env* env,
     Node_block* new_block,
-    const Node_label* old_label
+    Node_label* old_label
 ) {
     unreachable("");
     (void) env;
@@ -542,7 +610,7 @@ static Llvm_register_sym load_label(
 static Llvm_register_sym load_struct_def(
     Env* env,
     Node_block* new_block,
-    const Node_struct_def* old_struct_def
+    Node_struct_def* old_struct_def
 ) {
     (void) env;
 
@@ -555,7 +623,7 @@ static Llvm_register_sym load_struct_def(
 static Llvm_register_sym load_enum_def(
     Env* env,
     Node_block* new_block,
-    const Node_enum_def* old_enum_def
+    Node_enum_def* old_enum_def
 ) {
     (void) env;
 
@@ -592,8 +660,8 @@ static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement, Str_v
     return new_block;
 }
 
-static Node_block* if_else_chain_to_branch(Env* env, const Node_if_else_chain* if_else) {
-    Node_block* new_block = node_block_new(node_wrap_if_else_chain_const(if_else)->pos);
+static Node_block* if_else_chain_to_branch(Env* env, Node_if_else_chain* if_else) {
+    Node_block* new_block = node_block_new(node_wrap_if_else_chain(if_else)->pos);
 
     Str_view if_after = literal_name_new();
 
@@ -613,7 +681,7 @@ static Node_block* if_else_chain_to_branch(Env* env, const Node_if_else_chain* i
         }
     }
 
-    add_label(env, new_block, if_after, node_wrap_if_else_chain_const(if_else)->pos);
+    add_label(env, new_block, if_after, node_wrap_if_else_chain(if_else)->pos);
     log_tree(LOG_DEBUG, node_wrap_block(new_block));
 
     return new_block;
@@ -622,7 +690,7 @@ static Node_block* if_else_chain_to_branch(Env* env, const Node_if_else_chain* i
 static Llvm_register_sym load_if_else_chain(
     Env* env,
     Node_block* new_block,
-    const Node_if_else_chain* old_if_else
+    Node_if_else_chain* old_if_else
 ) {
     Node_block* new_if_else = if_else_chain_to_branch(env, old_if_else);
     vec_append(&a_main, &new_block->children, node_wrap_block(new_if_else));
@@ -630,12 +698,13 @@ static Llvm_register_sym load_if_else_chain(
     return (Llvm_register_sym) {0};
 }
 
-static Node_block* for_range_to_branch(Env* env, const Node_for_range* for_loop) {
+static Node_block* for_range_to_branch(Env* env, Node_for_range* for_loop) {
+    Str_view old_if_break = env->label_if_break;
 
-    Pos pos = node_wrap_for_range_const(for_loop)->pos;
+    Pos pos = node_wrap_for_range(for_loop)->pos;
     (void) pos;
 
-    log_tree(LOG_TRACE, node_wrap_for_range_const(for_loop));
+    log_tree(LOG_TRACE, node_wrap_for_range(for_loop));
 
     Node_block* for_block = for_loop->body;
     //vec_append(&a_main, &env->ancesters, node_wrap_block(for_block));
@@ -643,7 +712,7 @@ static Node_block* for_range_to_branch(Env* env, const Node_for_range* for_loop)
     Node_expr* lhs_actual = for_loop->lower_bound->child;
     Node_expr* rhs_actual = for_loop->upper_bound->child;
 
-    Node_block* new_branch_block = node_block_new(node_wrap_for_range_const(for_loop)->pos);
+    Node_block* new_branch_block = node_block_new(node_wrap_for_range(for_loop)->pos);
 
     Node_symbol_untyped* symbol_lhs_assign;
     Node_variable_def* for_var_def;
@@ -670,12 +739,11 @@ static Node_block* for_range_to_branch(Env* env, const Node_for_range* for_loop)
     log_tree(LOG_DEBUG, (Node*)new_var_assign);
 
     Str_view check_cond_label = literal_name_new();
-    Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label, node_wrap_for_range_const(for_loop)->pos);
+    Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label, node_wrap_for_range(for_loop)->pos);
     Str_view after_check_label = literal_name_new();
     Str_view after_for_loop_label = literal_name_new();
 
-    // TODO: implement this
-    //change_break_to_goto(for_block, after_for_loop_label);
+    env->label_if_break = after_for_loop_label;
 
     vec_append(&a_main, &new_branch_block->children, node_wrap_alloca(
         add_alloca_alloca_new(for_var_def)
@@ -707,17 +775,17 @@ static Node_block* for_range_to_branch(Env* env, const Node_for_range* for_loop)
     }
 
     load_assignment(env, new_branch_block, assignment_to_inc_cond_var);
-    vec_append(&a_main, &new_branch_block->children, node_wrap_goto(goto_new(check_cond_label, node_wrap_for_range_const(for_loop)->pos)));
+    vec_append(&a_main, &new_branch_block->children, node_wrap_goto(goto_new(check_cond_label, node_wrap_for_range(for_loop)->pos)));
     add_label(env, new_branch_block, after_for_loop_label, pos);
 
-    //vec_rem_last(&env->ancesters);
+    env->label_if_break = old_if_break;
     return new_branch_block;
 }
 
 static Llvm_register_sym load_for_range(
     Env* env,
     Node_block* new_block,
-    const Node_for_range* old_for
+    Node_for_range* old_for
 ) {
     Node_block* new_for = for_range_to_branch(env, old_for);
     vec_append(&a_main, &new_block->children, node_wrap_block(new_for));
@@ -725,24 +793,25 @@ static Llvm_register_sym load_for_range(
     return (Llvm_register_sym) {0};
 }
 
-static Node_block* for_with_cond_to_branch(Env* env, const Node_for_with_cond* old_for) {
-    Pos pos = node_wrap_for_with_cond_const(old_for)->pos;
+static Node_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* old_for) {
+    Str_view old_if_break = env->label_if_break;
+
+    Pos pos = node_wrap_for_with_cond(old_for)->pos;
     Node_block* new_branch_block = node_block_new(pos);
 
     Node_operator* operator = old_for->condition->child;
     Str_view check_cond_label = literal_name_new();
-    Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label, node_wrap_for_with_cond_const(old_for)->pos);
+    Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label, node_wrap_for_with_cond(old_for)->pos);
     Str_view after_check_label = literal_name_new();
     Str_view after_for_loop_label = literal_name_new();
     Llvm_register_sym oper_rtn_sym = llvm_register_sym_new_from_expr(node_wrap_operator(operator));
     oper_rtn_sym.node = node_wrap_expr(node_wrap_operator(operator));
 
-    // TODO: implement this
-    //change_break_to_goto(for_block, after_for_loop_label);
+    env->label_if_break = after_for_loop_label;
 
     vec_append(&a_main, &new_branch_block->children, node_wrap_goto(jmp_to_check_cond_label));
     add_label(env, new_branch_block, check_cond_label, pos);
-    vec_append(&a_main, &new_branch_block->children, node_wrap_expr(node_wrap_operator(operator)));
+    load_operator(env, new_branch_block, operator);
 
     if_for_add_cond_goto(
         env,
@@ -761,20 +830,20 @@ static Node_block* for_with_cond_to_branch(Env* env, const Node_for_with_cond* o
         vec_extend(&a_main, &new_branch_block->children, &inner_block->children);
     }
 
-
     vec_append(&a_main, &new_branch_block->children, node_wrap_goto(
-        goto_new(check_cond_label, node_wrap_for_with_cond_const(old_for)->pos)
+        goto_new(check_cond_label, node_wrap_for_with_cond(old_for)->pos)
     ));
     add_label(env, new_branch_block, after_for_loop_label, pos);
 
     new_branch_block->symbol_table = old_for->body->symbol_table;
+    env->label_if_break = old_if_break;
     return new_branch_block;
 }
 
 static Llvm_register_sym load_for_with_cond(
     Env* env,
     Node_block* new_block,
-    const Node_for_with_cond* old_for
+    Node_for_with_cond* old_for
 ) {
     Node_block* new_for = for_with_cond_to_branch(env, old_for);
     vec_append(&a_main, &new_block->children, node_wrap_block(new_for));
@@ -782,75 +851,141 @@ static Llvm_register_sym load_for_with_cond(
     return (Llvm_register_sym) {0};
 }
 
+static Llvm_register_sym load_break(
+    Env* env,
+    Node_block* new_block,
+    Node_break* old_break
+) {
+    // TODO: make expected failure test case for break in invalid location
+    if (env->label_if_break.count < 1) {
+        unreachable("cannot break here\n");
+    }
+
+    Node_goto* new_goto = node_goto_new(node_wrap_break(old_break)->pos);
+    new_goto->name = env->label_if_break;
+    vec_append(&a_main, &new_block->children, node_wrap_goto(new_goto));
+
+    return (Llvm_register_sym) {0};
+}
 static Llvm_register_sym load_ptr_variable_def(
     Env* env,
     Node_block* new_block,
-    const Node_variable_def* old_variable_def
+    Node_variable_def* old_variable_def
 ) {
     return load_variable_def(env, new_block, old_variable_def);
 }
 
-static Llvm_register_sym load_ptr_expr(Env* env, Node_block* new_block, const Node_expr* old_expr) {
-    switch (old_expr->type) {
-        case NODE_SYMBOL_TYPED:
-            return load_ptr_symbol_typed(env, new_block, node_unwrap_symbol_typed_const(old_expr));
-        case NODE_MEMBER_SYM_TYPED:
-            return load_ptr_member_sym_typed(env, new_block, node_unwrap_member_sym_typed_const(old_expr));
+static Llvm_register_sym load_ptr_unary(
+    Env* env,
+    Node_block* new_block,
+    Node_unary* old_unary
+) {
+    Pos pos = node_wrap_expr(node_wrap_operator(node_wrap_unary(old_unary)))->pos;
+
+    log_tree(LOG_DEBUG, (Node*)old_unary);
+
+    switch (old_unary->token_type) {
+        case TOKEN_DEREF: {
+            if (is_struct_symbol(env, old_unary->child)) {
+                return load_ptr_expr(env, new_block, old_unary->child);
+            } else {
+                Llvm_register_sym ptr = load_ptr_expr(env, new_block, old_unary->child);
+                Node_load_another_node* new_load = node_load_another_node_new(pos);
+                new_load->node_src = ptr;
+                new_load->lang_type = old_unary->lang_type;
+                new_load->lang_type.pointer_depth++;
+
+                vec_append(&a_main, &new_block->children, node_wrap_load_another_node(new_load));
+                return (Llvm_register_sym) {
+                    .lang_type = old_unary->lang_type,
+                    .node = node_wrap_load_another_node(new_load)
+                };
+            }
+        }
         default:
-            unreachable(NODE_FMT"\n", node_print(node_wrap_expr_const(old_expr)));
+            todo();
+    }
+    todo();
+}
+
+static Llvm_register_sym load_ptr_operator(Env* env, Node_block* new_block, Node_operator* old_oper) {
+    switch (old_oper->type) {
+        case NODE_BINARY:
+            todo();
+        case NODE_UNARY:
+            return load_ptr_unary(env, new_block, node_unwrap_unary(old_oper));
+        default:
+            unreachable("");
     }
 }
 
-static Llvm_register_sym load_ptr(Env* env, Node_block* new_block, const Node* old_node) {
+static Llvm_register_sym load_ptr_expr(Env* env, Node_block* new_block, Node_expr* old_expr) {
+    switch (old_expr->type) {
+        case NODE_SYMBOL_TYPED:
+            return load_ptr_symbol_typed(env, new_block, node_unwrap_symbol_typed(old_expr));
+        case NODE_MEMBER_SYM_TYPED:
+            return load_ptr_member_sym_typed(env, new_block, node_unwrap_member_sym_typed(old_expr));
+        case NODE_OPERATOR:
+            return load_ptr_operator(env, new_block, node_unwrap_operator(old_expr));
+        default:
+            unreachable(NODE_FMT"\n", node_print(node_wrap_expr(old_expr)));
+    }
+}
+
+static Llvm_register_sym load_ptr(Env* env, Node_block* new_block, Node* old_node) {
     switch (old_node->type) {
         case NODE_EXPR:
-            return load_ptr_expr(env, new_block, node_unwrap_expr_const(old_node));
+            return load_ptr_expr(env, new_block, node_unwrap_expr(old_node));
         case NODE_VARIABLE_DEF:
-            return load_ptr_variable_def(env, new_block, node_unwrap_variable_def_const(old_node));
+            return load_ptr_variable_def(env, new_block, node_unwrap_variable_def(old_node));
         default:
             unreachable(NODE_FMT"\n", node_print(old_node));
     }
 }
 
-static Llvm_register_sym load_node(Env* env, Node_block* new_block, const Node* old_node) {
+static Llvm_register_sym load_node(Env* env, Node_block* new_block, Node* old_node) {
     switch (old_node->type) {
         case NODE_EXPR:
-            return load_expr(env, new_block, node_unwrap_expr_const(old_node));
+            return load_expr(env, new_block, node_unwrap_expr(old_node));
         case NODE_FUNCTION_DEF:
-            return load_function_def(env, new_block, node_unwrap_function_def_const(old_node));
+            return load_function_def(env, new_block, node_unwrap_function_def(old_node));
         case NODE_FUNCTION_DECL:
-            return load_function_decl(env, new_block, node_unwrap_function_decl_const(old_node));
+            return load_function_decl(env, new_block, node_unwrap_function_decl(old_node));
         case NODE_RETURN:
-            return load_return(env, new_block, node_unwrap_return_const(old_node));
+            return load_return(env, new_block, node_unwrap_return(old_node));
         case NODE_ALLOCA:
-            return load_alloca(env, new_block, node_unwrap_alloca_const(old_node));
+            return load_alloca(env, new_block, node_unwrap_alloca(old_node));
         case NODE_ASSIGNMENT:
-            return load_assignment(env, new_block, node_unwrap_assignment_const(old_node));
+            return load_assignment(env, new_block, node_unwrap_assignment(old_node));
         case NODE_VARIABLE_DEF:
-            return load_variable_def(env, new_block, node_unwrap_variable_def_const(old_node));
+            return load_variable_def(env, new_block, node_unwrap_variable_def(old_node));
         case NODE_GOTO:
-            return load_goto(env, new_block, node_unwrap_goto_const(old_node));
+            return load_goto(env, new_block, node_unwrap_goto(old_node));
         case NODE_COND_GOTO:
-            return load_cond_goto(env, new_block, node_unwrap_cond_goto_const(old_node));
+            return load_cond_goto(env, new_block, node_unwrap_cond_goto(old_node));
         case NODE_LABEL:
-            return load_label(env, new_block, node_unwrap_label_const(old_node));
+            return load_label(env, new_block, node_unwrap_label(old_node));
         case NODE_STRUCT_DEF:
-            return load_struct_def(env, new_block, node_unwrap_struct_def_const(old_node));
+            return load_struct_def(env, new_block, node_unwrap_struct_def(old_node));
         case NODE_IF_ELSE_CHAIN:
-            return load_if_else_chain(env, new_block, node_unwrap_if_else_chain_const(old_node));
+            return load_if_else_chain(env, new_block, node_unwrap_if_else_chain(old_node));
         case NODE_FOR_RANGE:
-            return load_for_range(env, new_block, node_unwrap_for_range_const(old_node));
+            return load_for_range(env, new_block, node_unwrap_for_range(old_node));
         case NODE_FOR_WITH_COND:
-            return load_for_with_cond(env, new_block, node_unwrap_for_with_cond_const(old_node));
+            return load_for_with_cond(env, new_block, node_unwrap_for_with_cond(old_node));
         case NODE_ENUM_DEF:
-            return load_enum_def(env, new_block, node_unwrap_enum_def_const(old_node));
+            return load_enum_def(env, new_block, node_unwrap_enum_def(old_node));
         case NODE_BREAK:
-            return load_break(env, new_block, node_unwrap_enum_def_const(old_node));
+            return load_break(env, new_block, node_unwrap_break(old_node));
+        case NODE_STORE_ANOTHER_NODE:
+            // TODO: remove this eventually
+            vec_append(&a_main, &new_block->children, (Node*)old_node);
+            return (Llvm_register_sym) {0};
         case NODE_BLOCK:
             vec_append(
                 &a_main,
                 &new_block->children,
-                node_wrap_block(load_block(env, node_unwrap_block_const(old_node)))
+                node_wrap_block(load_block(env, node_unwrap_block(old_node)))
             );
             return (Llvm_register_sym) {0};
         default:
@@ -858,10 +993,10 @@ static Llvm_register_sym load_node(Env* env, Node_block* new_block, const Node* 
     }
 }
 
-static Node_block* load_block(Env* env, const Node_block* old_block) {
+static Node_block* load_block(Env* env, Node_block* old_block) {
     size_t init_count_ancesters = env->ancesters.info.count;
 
-    Node_block* new_block = node_block_new(node_wrap_block_const(old_block)->pos);
+    Node_block* new_block = node_block_new(node_wrap_block(old_block)->pos);
     *new_block = *old_block;
     memset(&new_block->children, 0, sizeof(new_block->children));
 
@@ -877,7 +1012,9 @@ static Node_block* load_block(Env* env, const Node_block* old_block) {
     return new_block;
 }
 
-Node_block* add_load_and_store(Env* env, const Node_block* old_root) {
-    return load_block(env, old_root);
+Node_block* add_load_and_store(Env* env, Node_block* old_root) {
+    Node_block* block = load_block(env, old_root);
+    log_tree(LOG_DEBUG, (Node*)block);
+    return block;
 }
 
