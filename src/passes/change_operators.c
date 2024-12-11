@@ -36,12 +36,11 @@ static void do_change_operator(Node_operator* operator) {
     }
 }
 
-void change_operators(Env* env) {
-    Node* curr_node = vec_top(&env->ancesters);
-    if (!curr_node) {
+void change_operators(Env* env, Node* node) {
+    if (!node) {
         return;
     }
-    if (curr_node->type != NODE_EXPR) {
+    if (node->type != NODE_EXPR) {
         return;
     }
 

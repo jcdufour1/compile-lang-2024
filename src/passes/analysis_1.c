@@ -4,12 +4,11 @@
 #include <symbol_table.h>
 #include <parser_utils.h>
 
-void analysis_1(Env* env) {
-    Node* block_ = vec_top(&env->ancesters);
-    if (block_->type != NODE_BLOCK) {
+void analysis_1(Env* env, Node* node) {
+    if (node->type != NODE_BLOCK) {
         return;
     }
-    Node_block* block = node_unwrap_block(block_);
+    Node_block* block = node_unwrap_block(node);
     Node_ptr_vec* block_children = &block->children;
 
     bool need_add_return = false;

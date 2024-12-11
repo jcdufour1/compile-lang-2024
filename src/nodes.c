@@ -81,8 +81,7 @@ Str_view lang_type_print_internal(Arena* arena, Lang_type lang_type, bool surrou
     return str_view;
 }
 
-void log_node_in_tree_internal(Env* env) {
-    Node* node = vec_top(&env->ancesters);
+void log_node_in_tree_internal(Env* env, Node* node) {
     String padding = {0};
     vec_reset(&padding);
 
@@ -100,8 +99,8 @@ void nodes_log_tree_internal(LOG_LEVEL log_level, const Node* root, const char* 
     log_line = line;
 
     Env env = {0};
-    vec_append(&a_main, &env.ancesters, (Node*)root);
-    walk_tree(&env, log_node_in_tree_internal);
+    vec_append(&a_main, &env.ancesters, (Symbol_table){0});
+    walk_tree(&env, (Node*)root, log_node_in_tree_internal);
 }
 
 static Str_view node_type_get_strv_expr(const Node_expr* node) {

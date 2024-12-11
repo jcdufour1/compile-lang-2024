@@ -8,8 +8,10 @@
 static size_t llvm_id_for_next_var = 1;
 static size_t prev_num = 1;
 
-void assign_llvm_ids_expr(Env* env) {
-    Node_expr* curr_node = node_unwrap_expr(vec_top(&env->ancesters));
+void assign_llvm_ids_expr(Env* env, Node* node) {
+    (void) env;
+
+    Node_expr* curr_node = node_unwrap_expr(node);
     switch (curr_node->type) {
         case NODE_SYMBOL_UNTYPED:
             return;
@@ -50,15 +52,15 @@ void assign_llvm_ids_expr(Env* env) {
     unreachable("");
 }
 
-void assign_llvm_ids(Env* env) {
-    Node* curr_node = vec_top(&env->ancesters);
+void assign_llvm_ids(Env* env, Node* node) {
+    Node* curr_node = node;
 
     //log(LOG_DEBUG, NODE_FMT"\n", node_print(curr_node));
     assert(llvm_id_for_next_var == prev_num);
 
     switch (curr_node->type) {
         case NODE_EXPR:
-            assign_llvm_ids_expr(env);
+            assign_llvm_ids_expr(env, curr_node);
             break;
         case NODE_STRUCT_DEF:
             break;

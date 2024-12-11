@@ -45,12 +45,11 @@ static void do_assignment(
     }
 }
 
-void add_alloca(Env* env) {
-    Node* block_ = vec_top(&env->ancesters);
-    if (block_->type != NODE_BLOCK) {
+void add_alloca(Env* env, Node* node) {
+    if (node->type != NODE_BLOCK) {
         return;
     }
-    Node_block* block = node_unwrap_block(block_);
+    Node_block* block = node_unwrap_block(node);
     Node_ptr_vec* block_children = &block->children;
 
     for (size_t idx = 0; idx < block_children->info.count; idx++) {
@@ -62,7 +61,7 @@ void add_alloca(Env* env) {
                 break;
             case NODE_FUNCTION_DEF: {
                 Node_block* fun_block = node_unwrap_function_def(curr_node)->body;
-                vec_append(&a_main, &env->ancesters, node_wrap_block(fun_block));
+                vec_append(&a_main, &env->ancesters, fun_block->symbol_table);
                 do_function_def(env, node_unwrap_function_def(curr_node));
                 vec_rem_last(&env->ancesters);
                 break;

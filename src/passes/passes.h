@@ -25,19 +25,19 @@ Tokens tokenize(Env* env, const Parameters params);
 
 Node_block* parse(Env* env, const Tokens tokens);
 
-void analysis_1(Env* env);
+void analysis_1(Env* env, Node* node);
 
-void for_and_if_to_branch(Env* env);
+void for_and_if_to_branch(Env* env, Node* node);
 
-void flatten_operations(Env* env);
+void flatten_operations(Env* env, Node* node);
 
-void add_alloca(Env* env);
+void add_alloca(Env* env, Node* node);
 
 Node_block* add_load_and_store(Env* env, Node_block* old_block);
 
-void change_operators(Env* env);
+void change_operators(Env* env, Node* node);
 
-void assign_llvm_ids(Env* env);
+void assign_llvm_ids(Env* env, Node* node);
 
 void emit_llvm_from_tree(Env* env, const Node_block* root);
 
