@@ -219,7 +219,9 @@ static Llvm_register_sym load_unary(
         case TOKEN_REFER: {
             return load_ptr_expr(env, new_block, old_unary->child);
         }
-        case TOKEN_UNSAFE_CAST: {
+        case TOKEN_UNSAFE_CAST:
+            // fallthrough
+        case TOKEN_NOT: {
             Node_unary* new_unary = node_unary_new(pos);
 
             Node_llvm_placeholder* child = node_llvm_placeholder_new(pos);
@@ -237,7 +239,11 @@ static Llvm_register_sym load_unary(
             };
         }
         default:
-            unreachable(NODE_FMT"\n", node_print(node_wrap_expr(node_wrap_operator(node_wrap_unary(old_unary)))));
+            unreachable(
+                NODE_FMT " %d\n",
+                node_print(node_wrap_expr(node_wrap_operator(node_wrap_unary(old_unary)))),
+                old_unary->token_type
+            );
     }
 }
 
@@ -445,11 +451,13 @@ static Llvm_register_sym load_function_def(
     Node_block* new_block,
     Node_function_def* old_fun_def
 ) {
-    Node_function_def* new_fun_def = node_function_def_new(node_wrap_function_def(old_fun_def)->pos);
+    Pos pos = node_wrap_function_def(old_fun_def)->pos;
+
+    Node_function_def* new_fun_def = node_function_def_new(pos);
     new_fun_def->declaration = node_clone_function_decl(old_fun_def->declaration);
-    new_fun_def->body = load_block(env, old_fun_def->body);
-    Node_ptr_vec inner_children = new_fun_def->body->children;
-    vec_reset(&new_fun_def->body->children);
+    new_fun_def->body = node_block_new(pos);
+    new_fun_def->body->symbol_table = old_fun_def->body->symbol_table;
+    new_fun_def->body->pos_end = old_fun_def->body->pos_end;
 
     {
         vec_append(&a_main, &env->ancesters, node_wrap_block(new_fun_def->body));
@@ -457,7 +465,17 @@ static Llvm_register_sym load_function_def(
         vec_rem_last(&env->ancesters);
     }
 
-    vec_extend(&a_main, &new_fun_def->body->children, &inner_children);
+    vec_append(&a_main, &env->ancesters, node_wrap_block(new_fun_def->body));
+    for (size_t idx = 0; idx < old_fun_def->body->children.info.count; idx++) {
+        //for (size_t idx = 0; idx < new_branch_block->children.info.count; idx++) {
+        //    log(LOG_DEBUG, NODE_FMT"\n", node_print(vec_at(&new_branch_block->children, idx)));
+        //}
+        load_node(env, new_fun_def->body, vec_at(&old_fun_def->body->children, idx));
+    }
+    vec_rem_last(&env->ancesters);
+    for (size_t idx = 0; idx < new_fun_def->body->children.info.count; idx++) {
+        log(LOG_DEBUG, NODE_FMT"\n", node_print(vec_at(&new_fun_def->body->children, idx)));
+    }
 
     vec_append(&a_main, &new_block->children, node_wrap_function_def(new_fun_def));
     return (Llvm_register_sym) {

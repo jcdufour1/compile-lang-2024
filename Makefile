@@ -2,11 +2,11 @@
 
 CC_COMPILER ?= clang
 
-C_FLAGS_DEBUG=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
+C_FLAGS_DEBUG=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types -Werror=return-type \
 			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ \
 			  -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			  -fsanitize=address -fno-omit-frame-pointer 
-C_FLAGS_RELEASE=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
+C_FLAGS_RELEASE=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types -Werror=return-type \
 			    -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ \
 			    -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			    -DNDEBUG \
@@ -43,7 +43,6 @@ OBJS=\
 	 ${BUILD_DIR}/passes/do_passes.o \
 	 ${BUILD_DIR}/passes/tokenizer.o \
 	 ${BUILD_DIR}/passes/parser.o \
-	 ${BUILD_DIR}/passes/for_and_if_to_branch.o \
 	 ${BUILD_DIR}/passes/assign_llvm_ids.o \
 	 ${BUILD_DIR}/passes/add_load_and_store.o \
 	 ${BUILD_DIR}/passes/add_alloca.o \
@@ -118,9 +117,6 @@ ${BUILD_DIR}/walk_tree.o: ${DEP_COMMON} src/walk_tree.c third_party/*
 # passes
 ${BUILD_DIR}/passes/do_passes.o: ${DEP_COMMON} src/passes/do_passes.c src/passes/*.h third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/do_passes.o src/passes/do_passes.c
-
-${BUILD_DIR}/passes/for_and_if_to_branch.o: ${DEP_COMMON} src/passes/for_and_if_to_branch.c src/passes/*.h third_party/*
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/for_and_if_to_branch.o src/passes/for_and_if_to_branch.c
 
 ${BUILD_DIR}/passes/assign_llvm_ids.o: ${DEP_COMMON} src/passes/assign_llvm_ids.c src/passes/*.h third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/assign_llvm_ids.o src/passes/assign_llvm_ids.c
