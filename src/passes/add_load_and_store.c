@@ -648,7 +648,7 @@ static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement, Str_v
 
     Node_operator* old_oper = if_cond->child;
 
-    Str_view if_body = literal_name_new();
+    Str_view if_body = literal_name_new_prefix("start_if_body");
 
     if_for_add_cond_goto(env, old_oper, new_block, if_body, next_if);
 
@@ -673,7 +673,7 @@ static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement, Str_v
 static Node_block* if_else_chain_to_branch(Env* env, Node_if_else_chain* if_else) {
     Node_block* new_block = node_block_new(node_wrap_if_else_chain(if_else)->pos);
 
-    Str_view if_after = literal_name_new();
+    Str_view if_after = literal_name_new_prefix("if_after");
     
     Node* dummy = NULL;
 
@@ -682,15 +682,14 @@ static Node_block* if_else_chain_to_branch(Env* env, Node_if_else_chain* if_else
         if (idx + 1 == if_else->nodes.info.count) {
             next_if = if_after;
         } else {
-            next_if = literal_name_new();
+            next_if = literal_name_new_prefix("next_if");
         }
 
         Node_block* if_block = if_statement_to_branch(env, vec_at(&if_else->nodes, idx), next_if, if_after);
         vec_append(&a_main, &new_block->children, node_wrap_block(if_block));
 
         if (idx + 1 < if_else->nodes.info.count) {
-            todo();
-            assert(symbol_lookup(&dummy, env, next_if));
+            assert(!symbol_lookup(&dummy, env, next_if));
             add_label(env, new_block, next_if, node_wrap_if(vec_at(&if_else->nodes, idx))->pos, false);
             assert(symbol_lookup(&dummy, env, next_if));
         } else {
@@ -874,10 +873,10 @@ static Node_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* old_for
 
 
     Node_operator* operator = old_for->condition->child;
-    Str_view check_cond_label = literal_name_new();
+    Str_view check_cond_label = literal_name_new_prefix("check_cond");
     Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label, node_wrap_for_with_cond(old_for)->pos);
-    Str_view after_check_label = literal_name_new();
-    Str_view after_for_loop_label = literal_name_new();
+    Str_view after_check_label = literal_name_new_prefix("for_body");
+    Str_view after_for_loop_label = literal_name_new_prefix("after_for_loop");
     Llvm_register_sym oper_rtn_sym = llvm_register_sym_new_from_expr(node_wrap_operator(operator));
     oper_rtn_sym.node = node_wrap_expr(node_wrap_operator(operator));
 
@@ -887,9 +886,7 @@ static Node_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* old_for
 
     add_label(env, new_branch_block, check_cond_label, pos, true);
 
-    load_operator(env, new_branch_block, operator);
-
-    add_label(env, new_branch_block, after_check_label, pos, true);
+    //load_operator(env, new_branch_block, operator);
     //Node* dummy = NULL;
     //try(symbol_lookup(&dummy, env, str_view_from_cstr("str18")));
 
@@ -900,11 +897,24 @@ static Node_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* old_for
         after_check_label,
         after_for_loop_label
     );
+
+    add_label(env, new_branch_block, after_check_label, pos, true);
+
+    //for (size_t idx = 0; idx < new_branch_block->children.info.count; idx++) {
+    //    log(LOG_DEBUG, NODE_FMT"\n", node_print(vec_at(&new_branch_block->children, idx)));
+    //}
     log(LOG_DEBUG, "DSFJKLKJDFS: "STR_VIEW_FMT"\n", str_view_print(after_check_label));
 
+
     //try(symbol_lookup(&dummy, env, str_view_from_cstr("str18")));
+    //for (size_t idx = 0; idx < old_for->body->children.info.count; idx++) {
+    //    log(LOG_DEBUG, NODE_FMT"\n", node_print(vec_at(&old_for->body->children, idx)));
+    //}
 
     for (size_t idx = 0; idx < old_for->body->children.info.count; idx++) {
+        //for (size_t idx = 0; idx < new_branch_block->children.info.count; idx++) {
+        //    log(LOG_DEBUG, NODE_FMT"\n", node_print(vec_at(&new_branch_block->children, idx)));
+        //}
         load_node(env, new_branch_block, vec_at(&old_for->body->children, idx));
     }
 
