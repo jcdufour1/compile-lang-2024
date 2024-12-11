@@ -12,6 +12,7 @@
 #include <string_vec.h>
 
 // TODO: use Str_view instead of Node_symbol_untyped for if_true and if_false in cond_goto
+// TODO: different symbol_typed node types for each of struct, raw_union, regular symbol, etc.
 
 FILE* global_output = NULL;
 Arena gen_a = {0};

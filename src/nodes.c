@@ -219,12 +219,7 @@ static void print_node_src(Arena* arena, String* string, const Node* node, bool 
     (void) string;
     (void) node;
     (void) do_recursion;
-    //string_extend_cstr(arena, string, "[");
-    // TODO: restore this?
-    //if (get_node_src_const(node) && do_recursion) {
-        //string_extend_cstr(arena, string, "node_src:");
-        //extend_node_text(arena, string, get_node_src_const(node), false);
-    //}
+    //extend_node_text(arena, string, node_unwrap_llvm_placeholder_const(node_unwrap_expr_const(node))->llvm_reg.node, false);
 }
 
 static void extend_expr_text(Arena* arena, String* string, const Node_expr* expr, bool do_recursion) {
@@ -365,6 +360,9 @@ static bool extend_node_text(Arena* arena, String* string, const Node* node, boo
             break;
         case NODE_STORE_ANOTHER_NODE:
             extend_lang_type_to_string(arena, string, get_lang_type(node), true);
+            if (do_recursion) {
+                extend_node_text(arena, string, node_unwrap_store_another_node_const(node)->node_src.node, false);
+            }
             print_node_src(arena, string, node, do_recursion);
             print_node_dest(arena, string, node, do_recursion);
             break;

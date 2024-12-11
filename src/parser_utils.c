@@ -192,6 +192,22 @@ Str_view literal_name_new(void) {
     return str_view;
 }
 
+Str_view literal_name_new_prefix(const char* debug_prefix) {
+    static String_vec literal_strings = {0};
+    static size_t count = 0;
+
+    char var_name[24];
+    sprintf(var_name, "%sstr%zu", debug_prefix, count);
+    String symbol_name = string_new_from_cstr(&a_main, var_name);
+    vec_append(&a_main, &literal_strings, symbol_name);
+
+    count++;
+
+    String symbol_in_vec = literal_strings.buf[literal_strings.info.count - 1];
+    Str_view str_view = {.str = symbol_in_vec.buf, .count = symbol_in_vec.info.count};
+    return str_view;
+}
+
 Llvm_register_sym get_storage_location(const Env* env, Str_view sym_name) {
     Node* sym_def_;
     if (!symbol_lookup(&sym_def_, env, sym_name)) {
@@ -231,7 +247,8 @@ const Node_variable_def* get_symbol_def_from_alloca(const Env* env, const Node* 
 Llvm_id get_matching_label_id(const Env* env, Str_view name) {
     Node* label_;
     if (!symbol_lookup(&label_, env, name)) {
-        unreachable("call to undefined label");
+        symbol_log(LOG_DEBUG, env);
+        unreachable("call to undefined label `"STR_VIEW_FMT"`", str_view_print(name));
     }
     Node_label* label = node_unwrap_label(label_);
     return label->llvm_id;
@@ -297,7 +314,7 @@ Node_expr* unary_new(const Env* env, Node_expr* child, TOKEN_TYPE operator_type,
 
     Lang_type dummy;
     Node_expr* new_node;
-    symbol_log(LOG_DEBUG, env);
+    //symbol_log(LOG_DEBUG, env);
     try(try_set_unary_lang_type(env, &new_node, &dummy, unary));
     return new_node;
 }
@@ -309,7 +326,7 @@ Node_operator* util_binary_typed_new(const Env* env, Node_expr* lhs, Node_expr* 
     binary->rhs = rhs;
 
     Lang_type dummy;
-    symbol_log(LOG_DEBUG, env);
+    //symbol_log(LOG_DEBUG, env);
     Node_expr* new_node;
     try(try_set_binary_lang_type(env, &new_node, &dummy, binary));
 
@@ -438,19 +455,19 @@ bool lang_type_is_raw_union(const Env* env, Lang_type lang_type) {
 bool lang_type_is_enum(const Env* env, Lang_type lang_type) {
     Node* def = NULL;
     if (!symbol_lookup(&def, env, lang_type.str)) {
-        log(LOG_DEBUG, LANG_TYPE_FMT" is not defined\n", lang_type_print(lang_type));
+        //log(LOG_DEBUG, LANG_TYPE_FMT" is not defined\n", lang_type_print(lang_type));
         return false;
     }
 
     switch (def->type) {
         case NODE_STRUCT_DEF:
-            log(LOG_DEBUG, "is struct def\n");
+            //log(LOG_DEBUG, "is struct def\n");
             return false;
         case NODE_RAW_UNION_DEF:
-            log(LOG_DEBUG, "is raw_union def\n");
+            //log(LOG_DEBUG, "is raw_union def\n");
             return false;
         case NODE_ENUM_DEF:
-            log(LOG_DEBUG, "is enum def\n");
+            //log(LOG_DEBUG, "is enum def\n");
             return true;
         default:
             unreachable(NODE_FMT"    "LANG_TYPE_FMT"\n", node_print(def), lang_type_print(lang_type));
@@ -497,8 +514,8 @@ bool is_corresponding_to_a_struct(const Env* env, const Node* node) {
             // fallthrough
             assert(get_node_name(node).count > 0);
             if (!symbol_lookup(&var_def, env, get_node_name(node))) {
-                symbol_log(LOG_FATAL, env);
-                log(LOG_DEBUG, NODE_FMT"\n", node_print(node));
+                //symbol_log(LOG_FATAL, env);
+                //log(LOG_DEBUG, NODE_FMT"\n", node_print(node));
                 todo();
                 return false;
             }
@@ -764,7 +781,7 @@ bool try_set_operator_lang_type(const Env* env, Node_expr** new_node, Lang_type*
 }
 
 bool try_set_struct_literal_assignment_types(const Env* env, Node** new_node, Lang_type* lang_type, const Node* lhs, Node_struct_literal* struct_literal) {
-    log(LOG_DEBUG, "------------------------------\n");
+    //log(LOG_DEBUG, "------------------------------\n");
     if (!is_corresponding_to_a_struct(env, lhs)) {
         todo(); // non_struct assigned struct literal
     }
@@ -794,7 +811,7 @@ bool try_set_struct_literal_assignment_types(const Env* env, Node** new_node, La
     
     Node_ptr_vec new_literal_members = {0};
     for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
-        log(LOG_DEBUG, "%zu\n", idx);
+        //log(LOG_DEBUG, "%zu\n", idx);
         Node* memb_sym_def_ = vec_at(&struct_def->base.members, idx);
         Node_variable_def* memb_sym_def = node_unwrap_variable_def(memb_sym_def_);
         log_tree(LOG_DEBUG, node_wrap_expr_const(node_wrap_struct_literal_const(struct_literal)));
@@ -893,7 +910,6 @@ bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node
         return false;
     }
     assignment->lhs = new_lhs;
-    log_tree(LOG_DEBUG, node_wrap_assignment(assignment));
 
     Node_expr* new_rhs;
     if (assignment->rhs->type == NODE_STRUCT_LITERAL) {
@@ -1155,8 +1171,8 @@ bool try_set_member_symbol_types_finish(
                             def_base = &node_unwrap_enum_def(def)->base;
                             break;
                         default:
-                            log(LOG_DEBUG, NODE_FMT"\n", node_print((Node*)def));
-                            log(LOG_DEBUG, NODE_FMT"\n", node_print((Node*)curr_memb_def));
+                            //log(LOG_DEBUG, NODE_FMT"\n", node_print((Node*)def));
+                            //log(LOG_DEBUG, NODE_FMT"\n", node_print((Node*)curr_memb_def));
                             unreachable("");
                     }
                 } else {
@@ -1354,10 +1370,10 @@ bool try_set_node_lang_type(const Env* env, Node** new_node, Lang_type* lang_typ
 
             Lang_type src_lang_type = get_lang_type_expr(rtn_statement->child);
             Lang_type dest_lang_type = get_parent_function_def_const(env)->declaration->return_type->lang_type;
-            log(
-                LOG_DEBUG, LANG_TYPE_FMT" to "LANG_TYPE_FMT"\n", lang_type_print(src_lang_type),
-                lang_type_print(dest_lang_type)
-            );
+            //log(
+            //    LOG_DEBUG, LANG_TYPE_FMT" to "LANG_TYPE_FMT"\n", lang_type_print(src_lang_type),
+            //    lang_type_print(dest_lang_type)
+            //);
 
             if (lang_type_is_equal(dest_lang_type, src_lang_type)) {
                 return true;

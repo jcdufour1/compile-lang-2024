@@ -19,6 +19,8 @@ bool try_str_view_to_size_t(size_t* result, Str_view str_view);
 
 Str_view literal_name_new(void);
 
+Str_view literal_name_new_prefix(const char* debug_prefix);
+
 Llvm_id get_prev_load_id(const Node* var_call);
 
 Llvm_register_sym get_storage_location(const Env* env, Str_view sym_name);

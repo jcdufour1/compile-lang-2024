@@ -21,16 +21,27 @@ static Llvm_register_sym load_operator(
     Node_operator* old_oper
 );
 
+static Llvm_register_sym load_alloca(
+    Env* env,
+    Node_block* new_block,
+    Node_alloca* old_alloca
+);
+
 static Node_goto* goto_new(Str_view name_label_to_jmp_to, Pos pos) {
     Node_goto* lang_goto = node_goto_new(pos);
     lang_goto->name = name_label_to_jmp_to;
     return lang_goto;
 }
 
-static void add_label(Env* env, Node_block* block, Str_view label_name, Pos pos) {
+static void add_label(Env* env, Node_block* block, Str_view label_name, Pos pos, bool defer_add_sym) {
     Node_label* label = node_label_new(pos);
     label->name = label_name;
-    try(symbol_add(env, node_wrap_label(label)));
+
+    if (defer_add_sym) {
+        symbol_add_defer(env, node_wrap_label(label));
+    } else {
+        try(symbol_add(env, node_wrap_label(label)));
+    }
 
     vec_append(&a_main, &block->children, node_wrap_label(label));
 }
@@ -121,12 +132,16 @@ static Llvm_register_sym load_ptr_symbol_typed(
     (void) new_block;
 
     Node* var_def_ = NULL;
+    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(old_sym->name));
     try(symbol_lookup(&var_def_, env, old_sym->name));
     Node_variable_def* var_def = node_unwrap_variable_def(var_def_);
+    if (!var_def->storage_location.node) {
+        var_def->storage_location = load_alloca(env, new_block, add_alloca_alloca_new(var_def));
+    }
+
     assert(var_def);
     assert(lang_type_is_equal(var_def->lang_type, old_sym->lang_type));
 
-    assert(var_def->storage_location.node);
     return var_def->storage_location;
 }
 
@@ -264,11 +279,6 @@ static Llvm_register_sym do_load_struct_element_ptr(
         Node_member_sym_piece_typed* element_sym = node_unwrap_member_sym_piece_typed(element_sym_);
 
         //log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(type_load_from));
-        log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(type_load_from));
-        log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(element_sym->lang_type));
-        log_tree(LOG_DEBUG, node_wrap_expr(node_wrap_member_sym_typed(symbol_call)));
-        log_tree(LOG_DEBUG, element_sym_);
-
         if (lang_type_is_struct(env, type_load_from)) {
             load_element_ptr = node_load_element_ptr_new(node_wrap_member_sym_piece_typed(element_sym)->pos);
             load_element_ptr->name = get_node_name(prev_struct_sym);
@@ -383,12 +393,6 @@ static Node_lang_type* node_clone_lang_type(Node_lang_type* old_lang_type) {
     return new_lang_type;
 }
 
-static Node_alloca* node_clone_alloca(Node_alloca* old_alloca) {
-    Node_alloca* new_alloca = node_alloca_new(node_wrap_alloca(old_alloca)->pos);
-    *new_alloca = *old_alloca;
-    return new_alloca;
-}
-
 static Node_function_decl* node_clone_function_decl(Node_function_decl* old_decl) {
     Node_function_decl* new_decl = node_function_decl_new(node_wrap_function_decl(old_decl)->pos);
     new_decl->parameters = node_clone_function_params(old_decl->parameters);
@@ -443,17 +447,17 @@ static Llvm_register_sym load_function_def(
 ) {
     Node_function_def* new_fun_def = node_function_def_new(node_wrap_function_def(old_fun_def)->pos);
     new_fun_def->declaration = node_clone_function_decl(old_fun_def->declaration);
-    new_fun_def->body = node_block_new(node_wrap_block(old_fun_def->body)->pos);
+    new_fun_def->body = load_block(env, old_fun_def->body);
+    Node_ptr_vec inner_children = new_fun_def->body->children;
+    vec_reset(&new_fun_def->body->children);
 
     {
-        vec_append(&a_main, &env->ancesters, node_wrap_block(old_fun_def->body));
+        vec_append(&a_main, &env->ancesters, node_wrap_block(new_fun_def->body));
         load_function_parameters(env, new_fun_def->body, old_fun_def->declaration->parameters->params);
         vec_rem_last(&env->ancesters);
     }
 
-    vec_extend(&a_main, &new_fun_def->body->children, &old_fun_def->body->children);
-    new_fun_def->body->symbol_table = old_fun_def->body->symbol_table;
-    new_fun_def->body = load_block(env, new_fun_def->body);
+    vec_extend(&a_main, &new_fun_def->body->children, &inner_children);
 
     vec_append(&a_main, &new_block->children, node_wrap_function_def(new_fun_def));
     return (Llvm_register_sym) {
@@ -537,12 +541,6 @@ static Llvm_register_sym load_assignment(
     assert(new_store->node_dest.node);
     assert(old_assignment->rhs);
 
-    log_tree(LOG_DEBUG, (Node*)new_store);
-    log_tree(LOG_DEBUG, (Node*)new_store->node_src.node);
-    log_tree(LOG_DEBUG, (Node*)new_store->node_dest.node);
-
-    log(LOG_DEBUG, "%zu\n", new_block->children.info.count);
-
     vec_append(&a_main, &new_block->children, node_wrap_store_another_node(new_store));
 
     return (Llvm_register_sym) {
@@ -559,9 +557,12 @@ static Llvm_register_sym load_variable_def(
     (void) env;
 
     Node_variable_def* new_var_def = node_clone_variable_def(old_var_def);
+    if (!new_var_def->storage_location.node) {
+        new_var_def->storage_location = load_alloca(env, new_block, add_alloca_alloca_new(new_var_def));
+    }
+
     vec_append(&a_main, &new_block->children, node_wrap_variable_def(new_var_def));
 
-    assert(new_var_def->storage_location.node);
     return new_var_def->storage_location;
 }
 
@@ -634,10 +635,16 @@ static Llvm_register_sym load_enum_def(
 }
 
 static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement, Str_view next_if, Str_view after_chain) {
-    Node_condition* if_cond = if_statement->condition;
     Node_block* old_block = if_statement->body;
-
     Node_block* new_block = node_block_new(node_wrap_block(old_block)->pos);
+
+    Node_block* inner_block = load_block(env, old_block);
+    new_block->symbol_table = inner_block->symbol_table;
+    new_block->pos_end = inner_block->pos_end;
+
+    vec_append(&a_main, &env->ancesters, node_wrap_block(new_block));
+
+    Node_condition* if_cond = if_statement->condition;
 
     Node_operator* old_oper = if_cond->child;
 
@@ -645,18 +652,21 @@ static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement, Str_v
 
     if_for_add_cond_goto(env, old_oper, new_block, if_body, next_if);
 
-    add_label(env, new_block, if_body, node_wrap_block(old_block)->pos);
+    add_label(env, new_block, if_body, node_wrap_block(old_block)->pos, false);
 
     {
-        Node_block* inner_block = load_block(env, old_block);
-        new_block->symbol_table = inner_block->symbol_table;
-        new_block->pos_end = inner_block->pos_end;
+        vec_rem_last(&env->ancesters);
+
         vec_extend(&a_main, &new_block->children, &inner_block->children);
+
+        vec_append(&a_main, &env->ancesters, node_wrap_block(new_block));
     }
+
 
     Node_goto* jmp_to_after_chain = goto_new(after_chain, node_wrap_block(old_block)->pos);
     vec_append(&a_main, &new_block->children, node_wrap_goto(jmp_to_after_chain));
 
+    vec_rem_last(&env->ancesters);
     return new_block;
 }
 
@@ -664,6 +674,8 @@ static Node_block* if_else_chain_to_branch(Env* env, Node_if_else_chain* if_else
     Node_block* new_block = node_block_new(node_wrap_if_else_chain(if_else)->pos);
 
     Str_view if_after = literal_name_new();
+    
+    Node* dummy = NULL;
 
     Str_view next_if = {0};
     for (size_t idx = 0; idx < if_else->nodes.info.count; idx++) {
@@ -677,12 +689,19 @@ static Node_block* if_else_chain_to_branch(Env* env, Node_if_else_chain* if_else
         vec_append(&a_main, &new_block->children, node_wrap_block(if_block));
 
         if (idx + 1 < if_else->nodes.info.count) {
-            add_label(env, new_block, next_if, node_wrap_if(vec_at(&if_else->nodes, idx))->pos);
+            todo();
+            assert(symbol_lookup(&dummy, env, next_if));
+            add_label(env, new_block, next_if, node_wrap_if(vec_at(&if_else->nodes, idx))->pos, false);
+            assert(symbol_lookup(&dummy, env, next_if));
+        } else {
+            assert(str_view_is_equal(next_if, if_after));
         }
     }
 
-    add_label(env, new_block, if_after, node_wrap_if_else_chain(if_else)->pos);
-    log_tree(LOG_DEBUG, node_wrap_block(new_block));
+    assert(!symbol_lookup(&dummy, env, next_if));
+    add_label(env, new_block, if_after, node_wrap_if_else_chain(if_else)->pos, false);
+    assert(symbol_lookup(&dummy, env, next_if));
+    //log_tree(LOG_DEBUG, node_wrap_block(new_block));
 
     return new_block;
 }
@@ -698,33 +717,41 @@ static Llvm_register_sym load_if_else_chain(
     return (Llvm_register_sym) {0};
 }
 
-static Node_block* for_range_to_branch(Env* env, Node_for_range* for_loop) {
+static Node_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
     Str_view old_if_break = env->label_if_break;
 
-    Pos pos = node_wrap_for_range(for_loop)->pos;
+    size_t init_count_ancesters = env->ancesters.info.count;
+
+    Pos pos = node_wrap_for_range(old_for)->pos;
+
+    Node_block* new_branch_block = node_block_new(pos);
+    new_branch_block->symbol_table = old_for->body->symbol_table;
+    new_branch_block->pos_end = old_for->body->pos_end;
+    for (size_t idx = 0; idx < old_for->body->children.info.count; idx++) {
+        log(LOG_DEBUG, NODE_FMT"\n", node_print(vec_at(&old_for->body->children, idx)));
+    }
+    for (size_t idx = 0; idx < new_branch_block->children.info.count; idx++) {
+        log(LOG_DEBUG, NODE_FMT"\n", node_print(vec_at(&new_branch_block->children, idx)));
+    }
+
+    vec_append(&a_main, &env->ancesters, node_wrap_block(new_branch_block));
+
     (void) pos;
 
-    log_tree(LOG_TRACE, node_wrap_for_range(for_loop));
-
-    Node_block* for_block = for_loop->body;
     //vec_append(&a_main, &env->ancesters, node_wrap_block(for_block));
-    symbol_log(LOG_DEBUG, env);
-    Node_expr* lhs_actual = for_loop->lower_bound->child;
-    Node_expr* rhs_actual = for_loop->upper_bound->child;
-
-    Node_block* new_branch_block = node_block_new(node_wrap_for_range(for_loop)->pos);
+    Node_expr* lhs_actual = old_for->lower_bound->child;
+    Node_expr* rhs_actual = old_for->upper_bound->child;
 
     Node_symbol_untyped* symbol_lhs_assign;
     Node_variable_def* for_var_def;
     {
-        for_var_def = for_loop->var_def;
+        for_var_def = old_for->var_def;
         symbol_lhs_assign = symbol_new(for_var_def->name, node_wrap_variable_def(for_var_def)->pos);
     }
 
-    symbol_add(env, node_wrap_variable_def(for_var_def));
+    //try(symbol_add(env, node_wrap_variable_def(for_var_def)));
     Node* dummy = NULL;
     assert(symbol_lookup(&dummy, env, for_var_def->name));
-    symbol_log(LOG_DEBUG, env);
 
     Node_assignment* assignment_to_inc_cond_var = for_loop_cond_var_assign_new(env, for_var_def->name, node_wrap_expr(lhs_actual)->pos);
 
@@ -733,29 +760,43 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* for_loop) {
     );
 
     // initial assignment
-    log_tree(LOG_DEBUG, (Node*)symbol_lhs_assign);
-    log_tree(LOG_DEBUG, (Node*)lhs_actual);
-    Node_assignment* new_var_assign = assignment_new(env, node_wrap_expr(node_wrap_symbol_untyped(symbol_lhs_assign)), lhs_actual);
-    log_tree(LOG_DEBUG, (Node*)new_var_assign);
 
-    Str_view check_cond_label = literal_name_new();
-    Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label, node_wrap_for_range(for_loop)->pos);
-    Str_view after_check_label = literal_name_new();
-    Str_view after_for_loop_label = literal_name_new();
+    Str_view check_cond_label = literal_name_new_prefix("check_cond");
+    Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label, node_wrap_for_range(old_for)->pos);
+    Str_view after_check_label = literal_name_new_prefix("after_check");
+    Str_view after_for_loop_label = literal_name_new_prefix("after_for");
 
     env->label_if_break = after_for_loop_label;
 
-    vec_append(&a_main, &new_branch_block->children, node_wrap_alloca(
-        add_alloca_alloca_new(for_var_def)
-    ));
-    vec_append(&a_main, &new_branch_block->children, node_wrap_variable_def(for_var_def));
-    log(LOG_DEBUG, "%zu\n", env->ancesters.info.count);
+    //vec_append(&a_main, &new_branch_block->children, node_wrap_variable_def(for_var_def));
 
+    Node_assignment* new_var_assign = assignment_new(env, node_wrap_expr(node_wrap_symbol_untyped(symbol_lhs_assign)), lhs_actual);
+    if (str_view_is_equal(symbol_lhs_assign->name, str_view_from_cstr("num2"))) {
+        todo();
+    }
+
+    load_variable_def(env, new_branch_block, for_var_def);
     load_assignment(env, new_branch_block, new_var_assign);
+    
+    //log_tree(LOG_DEBUG, (Node*)new_var_assign);
+
     vec_append(&a_main, &new_branch_block->children, node_wrap_goto(jmp_to_check_cond_label));
 
-    add_label(env, new_branch_block, check_cond_label, pos);
+    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(check_cond_label));
+    assert(!symbol_lookup(&dummy, env, check_cond_label));
+
+    {
+        vec_rem_last(&env->ancesters);
+        add_label(env, new_branch_block, check_cond_label, pos, false);
+        vec_append(&a_main, &env->ancesters, node_wrap_block(new_branch_block));
+    }
+
+    symbol_log(LOG_DEBUG, env);
+    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(check_cond_label));
+    assert(symbol_lookup(&dummy, env, check_cond_label));
+
     load_operator(env, new_branch_block, operator);
+    assert(symbol_lookup(&dummy, env, check_cond_label));
 
     if_for_add_cond_goto(
         env,
@@ -764,21 +805,48 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* for_loop) {
         after_check_label,
         after_for_loop_label
     );
-
-    add_label(env, new_branch_block, after_check_label, pos);
-
+    assert(symbol_lookup(&dummy, env, check_cond_label));
     {
-        Node_block* inner_block = load_block(env, for_block);
-        new_branch_block->symbol_table = inner_block->symbol_table;
-        new_branch_block->pos_end = inner_block->pos_end;
-        vec_extend(&a_main, &new_branch_block->children, &inner_block->children);
+        vec_rem_last(&env->ancesters);
+        add_label(env, new_branch_block, after_check_label, pos, false);
+        vec_append(&a_main, &env->ancesters, node_wrap_block(new_branch_block));
     }
 
-    load_assignment(env, new_branch_block, assignment_to_inc_cond_var);
-    vec_append(&a_main, &new_branch_block->children, node_wrap_goto(goto_new(check_cond_label, node_wrap_for_range(for_loop)->pos)));
-    add_label(env, new_branch_block, after_for_loop_label, pos);
+    log(LOG_DEBUG, "DSFJKLKJDFS: "STR_VIEW_FMT"\n", str_view_print(after_check_label));
+    log(LOG_DEBUG, "DSFJKLKJDFS: "STR_VIEW_FMT"\n", str_view_print(check_cond_label));
+    log(LOG_DEBUG, "DSFJKLKJDFS: "STR_VIEW_FMT"\n", str_view_print(after_for_loop_label));
 
+    assert(symbol_lookup(&dummy, env, check_cond_label));
+    {
+
+        for (size_t idx = 0; idx < old_for->body->children.info.count; idx++) {
+            for (size_t idx = 0; idx < new_branch_block->children.info.count; idx++) {
+                log(LOG_DEBUG, NODE_FMT"\n", node_print(vec_at(&new_branch_block->children, idx)));
+            }
+            load_node(env, new_branch_block, vec_at(&old_for->body->children, idx));
+        }
+    }
+    assert(symbol_lookup(&dummy, env, check_cond_label));
+
+    load_assignment(env, new_branch_block, assignment_to_inc_cond_var);
+    vec_append(&a_main, &new_branch_block->children, node_wrap_goto(goto_new(check_cond_label, pos)));
+    add_label(env, new_branch_block, after_for_loop_label, pos, true);
+    assert(symbol_lookup(&dummy, env, check_cond_label));
+
+    try(symbol_do_add_defered(&dummy, env));
+
+    assert(symbol_lookup(&dummy, env, check_cond_label));
     env->label_if_break = old_if_break;
+    assert(symbol_lookup(&dummy, env, check_cond_label));
+    //log(LOG_DEBUG, "DSFJKLKJDFS: "STR_VIEW_FMT"\n", str_view_print(check_cond_label));
+    //symbol_log(LOG_DEBUG, env);
+    vec_rem_last(&env->ancesters);
+
+    assert(init_count_ancesters == env->ancesters.info.count);
+
+    //log(LOG_DEBUG, "DSFJKLKJDFS: "STR_VIEW_FMT"\n", str_view_print(check_cond_label));
+    //symbol_log(LOG_DEBUG, env);
+
     return new_branch_block;
 }
 
@@ -797,7 +865,13 @@ static Node_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* old_for
     Str_view old_if_break = env->label_if_break;
 
     Pos pos = node_wrap_for_with_cond(old_for)->pos;
+
     Node_block* new_branch_block = node_block_new(pos);
+    new_branch_block->symbol_table = old_for->body->symbol_table;
+    new_branch_block->pos_end = old_for->body->pos_end;
+
+    vec_append(&a_main, &env->ancesters, node_wrap_block(new_branch_block));
+
 
     Node_operator* operator = old_for->condition->child;
     Str_view check_cond_label = literal_name_new();
@@ -810,8 +884,14 @@ static Node_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* old_for
     env->label_if_break = after_for_loop_label;
 
     vec_append(&a_main, &new_branch_block->children, node_wrap_goto(jmp_to_check_cond_label));
-    add_label(env, new_branch_block, check_cond_label, pos);
+
+    add_label(env, new_branch_block, check_cond_label, pos, true);
+
     load_operator(env, new_branch_block, operator);
+
+    add_label(env, new_branch_block, after_check_label, pos, true);
+    //Node* dummy = NULL;
+    //try(symbol_lookup(&dummy, env, str_view_from_cstr("str18")));
 
     if_for_add_cond_goto(
         env,
@@ -820,23 +900,25 @@ static Node_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* old_for
         after_check_label,
         after_for_loop_label
     );
+    log(LOG_DEBUG, "DSFJKLKJDFS: "STR_VIEW_FMT"\n", str_view_print(after_check_label));
 
-    add_label(env, new_branch_block, after_check_label, pos);
+    //try(symbol_lookup(&dummy, env, str_view_from_cstr("str18")));
 
-    {
-        Node_block* inner_block = load_block(env, old_for->body);
-        new_branch_block->symbol_table = inner_block->symbol_table;
-        new_branch_block->pos_end = inner_block->pos_end;
-        vec_extend(&a_main, &new_branch_block->children, &inner_block->children);
+    for (size_t idx = 0; idx < old_for->body->children.info.count; idx++) {
+        load_node(env, new_branch_block, vec_at(&old_for->body->children, idx));
     }
 
     vec_append(&a_main, &new_branch_block->children, node_wrap_goto(
         goto_new(check_cond_label, node_wrap_for_with_cond(old_for)->pos)
     ));
-    add_label(env, new_branch_block, after_for_loop_label, pos);
+    add_label(env, new_branch_block, after_for_loop_label, pos, true);
 
-    new_branch_block->symbol_table = old_for->body->symbol_table;
+    Node* dummy = NULL;
+
     env->label_if_break = old_if_break;
+    vec_rem_last(&env->ancesters);
+
+    try(symbol_do_add_defered(&dummy, env));
     return new_branch_block;
 }
 
@@ -867,6 +949,20 @@ static Llvm_register_sym load_break(
 
     return (Llvm_register_sym) {0};
 }
+
+static Llvm_register_sym load_raw_union_def(
+    Env* env,
+    Node_block* new_block,
+    Node_raw_union_def* old_def
+) {
+    (void) env;
+
+    // TODO: clone
+    vec_append(&a_main, &new_block->children, (Node*)old_def);
+
+    return (Llvm_register_sym) {0};
+}
+
 static Llvm_register_sym load_ptr_variable_def(
     Env* env,
     Node_block* new_block,
@@ -882,7 +978,6 @@ static Llvm_register_sym load_ptr_unary(
 ) {
     Pos pos = node_wrap_expr(node_wrap_operator(node_wrap_unary(old_unary)))->pos;
 
-    log_tree(LOG_DEBUG, (Node*)old_unary);
 
     switch (old_unary->token_type) {
         case TOKEN_DEREF: {
@@ -977,6 +1072,8 @@ static Llvm_register_sym load_node(Env* env, Node_block* new_block, Node* old_no
             return load_enum_def(env, new_block, node_unwrap_enum_def(old_node));
         case NODE_BREAK:
             return load_break(env, new_block, node_unwrap_break(old_node));
+        case NODE_RAW_UNION_DEF:
+            return load_raw_union_def(env, new_block, node_unwrap_raw_union_def(old_node));
         case NODE_STORE_ANOTHER_NODE:
             // TODO: remove this eventually
             vec_append(&a_main, &new_block->children, (Node*)old_node);
@@ -993,6 +1090,7 @@ static Llvm_register_sym load_node(Env* env, Node_block* new_block, Node* old_no
     }
 }
 
+// TODO: rethink how to do block, because this is simply not working
 static Node_block* load_block(Env* env, Node_block* old_block) {
     size_t init_count_ancesters = env->ancesters.info.count;
 
@@ -1014,7 +1112,6 @@ static Node_block* load_block(Env* env, Node_block* old_block) {
 
 Node_block* add_load_and_store(Env* env, Node_block* old_root) {
     Node_block* block = load_block(env, old_root);
-    log_tree(LOG_DEBUG, (Node*)block);
     return block;
 }
 

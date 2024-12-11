@@ -6,7 +6,6 @@
 // TODO: rewrite this pass, because this is unsafe
 // TODO: do not change type of existing node (or find better way), because this is error prone
 static void do_change_operator(Node_operator* operator) {
-    log_tree(LOG_DEBUG, node_wrap_expr(node_wrap_operator((operator))));
     Pos pos = node_wrap_expr(node_wrap_operator(operator))->pos;
     if (operator->type == NODE_UNARY) {
         Node_unary* unary = node_unwrap_unary(operator);

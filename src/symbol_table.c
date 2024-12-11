@@ -165,7 +165,8 @@ void symbol_log_internal(int log_level, const Env* env, const char* file_path, i
     for (size_t idx = env->ancesters.info.count - 1;; idx--) {
         Node* curr_node = vec_at(&env->ancesters, idx);
         if (curr_node->type == NODE_BLOCK) {
-            log_indent_file(log_level, file_path, line, 0, "at index: %zu\n", idx);
+            log_indent_file(log_level, file_path, line, 0, "at index: %zu (curr_node = %p)\n", idx, (void*)curr_node);
+            log(LOG_DEBUG, NODE_FMT"\n", node_print(curr_node));
             symbol_log_table_internal(log_level, node_unwrap_block(curr_node)->symbol_table, 4, file_path, line);
         }
 
@@ -199,6 +200,8 @@ bool symbol_lookup(Node** result, const Env* env, Str_view key) {
 }
 
 bool symbol_add(Env* env, Node* node_of_symbol) {
+    if (str_view_is_equal(str_view_from_cstr("str8"), get_node_name(node_of_symbol))) {
+    }
     Node* dummy;
     if (symbol_lookup(&dummy, env, get_node_name(node_of_symbol))) {
         return false;
@@ -222,6 +225,7 @@ bool symbol_add(Env* env, Node* node_of_symbol) {
 
 bool symbol_do_add_defered(Node** redefined_sym, Env* env) {
     for (size_t idx = 0; idx < env->defered_symbols_to_add.info.count; idx++) {
+        log(LOG_DEBUG, NODE_FMT"\n", node_print(vec_at(&env->defered_symbols_to_add, idx)));
         if (!symbol_add(env, vec_at(&env->defered_symbols_to_add, idx))) {
             *redefined_sym = vec_at(&env->defered_symbols_to_add, idx);
             vec_reset(&env->defered_symbols_to_add);
