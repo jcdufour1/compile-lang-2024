@@ -220,6 +220,9 @@ static Llvm_register_sym load_unary(
             return load_ptr_expr(env, new_block, old_unary->child);
         }
         case TOKEN_UNSAFE_CAST:
+            if (old_unary->lang_type.pointer_depth > 0 && get_lang_type_expr(old_unary->child).pointer_depth > 0) {
+                return load_expr(env, new_block, old_unary->child);
+            }
             // fallthrough
         case TOKEN_NOT: {
             Node_unary* new_unary = node_unary_new(pos);

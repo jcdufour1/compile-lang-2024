@@ -61,6 +61,18 @@ fn cast_to_pointer() {
     printf("pointer back to int: %d\n", zero);
 }
 
+fn cast_pointer_to_pointer() {
+    let ptr_u8 u8* = unsafe_cast<u8*>1
+
+    let ptr_i32 i32* = unsafe_cast<i32*>ptr_u8
+
+    if ptr_u8 == unsafe_cast<u8*>ptr_i32 {
+        printf("pointer_to_pointer: yes\n");
+    } else {
+        printf("pointer_to_pointer: no\n");
+    }
+}
+
 fn main() i32 {
     let num i32 = 8
     printf("%d\n", num)
@@ -94,6 +106,7 @@ fn main() i32 {
     printf("%s\n", string)
 
     cast_to_pointer()
+    cast_pointer_to_pointer()
 
     return 0
 }

@@ -757,6 +757,8 @@ bool try_set_unary_lang_type(const Env* env, Node_expr** new_node, Lang_type* la
                 *lang_type = init_lang_type;
             } else if (is_i_lang_type(unary->lang_type) && is_i_lang_type(get_lang_type_expr(unary->child))) {
                 *lang_type = init_lang_type;
+            } else if (unary->lang_type.pointer_depth > 0 && get_lang_type_expr(unary->child).pointer_depth > 0) {
+                *lang_type = init_lang_type;
             } else {
                 todo();
             }

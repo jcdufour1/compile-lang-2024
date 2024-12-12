@@ -14,3 +14,4 @@ hello
 bye
 yes
 pointer back to int: 0
+pointer_to_pointer: yes
