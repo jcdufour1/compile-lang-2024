@@ -1,0 +1,9 @@
+
+raw_union Token {
+    string NewString
+    num BigInt
+}
+
+fn main() i32 {
+    return 0
+}

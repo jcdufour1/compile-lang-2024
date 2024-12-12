@@ -1326,50 +1326,43 @@ Lang_type get_parent_function_return_type(const Env* env) {
     return get_parent_function_def_const(env)->declaration->return_type->lang_type;
 }
 
-bool try_set_enum_def_types(const Env* env, Node_enum_def** new_node, Lang_type* lang_type, Node_enum_def* node) {
+bool try_set_struct_base_types(const Env* env, Struct_def_base* base) {
     bool success = true;
 
-    for (size_t idx = 0; idx < node->base.members.info.count; idx++) {
-        Node* curr = vec_at(&node->base.members, idx);
+    if (base->members.info.count < 1) {
+        todo();
+    }
 
-        Node* dummy = NULL;
-        if (!try_set_node_lang_type(env, &dummy, lang_type, curr)) {
+    for (size_t idx = 0; idx < base->members.info.count; idx++) {
+        Node* curr = vec_at(&base->members, idx);
+
+        Node* result_dummy = NULL;
+        Lang_type lang_type_dummy = {0};
+        if (!try_set_node_lang_type(env, &result_dummy, &lang_type_dummy, curr)) {
             success = false;
         }
     }
 
+    return success;
+}
+
+bool try_set_enum_def_types(const Env* env, Node_enum_def** new_node, Lang_type* lang_type, Node_enum_def* node) {
+    bool success = try_set_struct_base_types(env, &node->base);
+    *lang_type = lang_type_new_from_strv(node->base.name, 0);
     *new_node = node;
     return success;
 }
 
 bool try_set_raw_union_def_types(const Env* env, Node_raw_union_def** new_node, Lang_type* lang_type, Node_raw_union_def* node) {
-    bool success = true;
-
-    for (size_t idx = 0; idx < node->base.members.info.count; idx++) {
-        Node* curr = vec_at(&node->base.members, idx);
-
-        Node* dummy = NULL;
-        if (!try_set_node_lang_type(env, &dummy, lang_type, curr)) {
-            success = false;
-        }
-    }
-
+    bool success = try_set_struct_base_types(env, &node->base);
+    *lang_type = lang_type_new_from_strv(node->base.name, 0);
     *new_node = node;
     return success;
 }
 
 bool try_set_struct_def_types(const Env* env, Node_struct_def** new_node, Lang_type* lang_type, Node_struct_def* node) {
-    bool success = true;
-
-    for (size_t idx = 0; idx < node->base.members.info.count; idx++) {
-        Node* curr = vec_at(&node->base.members, idx);
-
-        Node* dummy = NULL;
-        if (!try_set_node_lang_type(env, &dummy, lang_type, curr)) {
-            success = false;
-        }
-    }
-
+    bool success = try_set_struct_base_types(env, &node->base);
+    *lang_type = lang_type_new_from_strv(node->base.name, 0);
     *new_node = node;
     return success;
 }
@@ -1392,6 +1385,62 @@ bool try_set_variable_def_types(
 
     *lang_type = node->lang_type;
     *new_node = node;
+    return true;
+}
+
+bool try_set_return(const Env* env, Node_return** new_node, Lang_type* lang_type, Node_return* rtn) {
+    *new_node = NULL;
+
+    Node_expr* new_rtn_child;
+    if (!try_set_expr_lang_type(env, &new_rtn_child, lang_type, rtn->child)) {
+        todo();
+        return false;
+    }
+    rtn->child = new_rtn_child;
+
+    Lang_type src_lang_type = get_lang_type_expr(rtn->child);
+    Lang_type dest_lang_type = get_parent_function_def_const(env)->declaration->return_type->lang_type;
+
+    if (lang_type_is_equal(dest_lang_type, src_lang_type)) {
+        goto success;
+    }
+    if (can_be_implicitly_converted(env, dest_lang_type, src_lang_type)) {
+        log_tree(LOG_DEBUG, node_wrap_return(rtn));
+        if (rtn->child->type == NODE_LITERAL) {
+            node_unwrap_literal(rtn->child)->lang_type = dest_lang_type;
+            goto success;
+        }
+        Node_expr* unary = unary_new(env, rtn->child, TOKEN_UNSAFE_CAST, dest_lang_type);
+        rtn->child = unary;
+        goto success;
+    }
+
+    const Node_function_def* fun_def = get_parent_function_def_const(env);
+    if (rtn->is_auto_inserted) {
+        msg(
+            LOG_ERROR, EXPECT_FAIL_MISSING_RETURN, env->file_text, node_wrap_return(rtn)->pos,
+            "no return statement in function that returns `"LANG_TYPE_FMT"`\n",
+            lang_type_print(fun_def->declaration->return_type->lang_type)
+        );
+    } else {
+        msg(
+            LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, env->file_text, node_wrap_return(rtn)->pos,
+            "returning `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
+            lang_type_print(get_lang_type_expr(rtn->child)), 
+            lang_type_print(fun_def->declaration->return_type->lang_type)
+        );
+    }
+    msg(
+        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, node_wrap_lang_type(fun_def->declaration->return_type)->pos,
+        "function return type `"LANG_TYPE_FMT"` defined here\n",
+        lang_type_print(fun_def->declaration->return_type->lang_type)
+    );
+    return false;
+
+    unreachable("");
+
+success:
+    *new_node = rtn;
     return true;
 }
 
@@ -1422,61 +1471,12 @@ bool try_set_node_lang_type(const Env* env, Node** new_node, Lang_type* lang_typ
             return true;
         }
         case NODE_RETURN: {
-            Node_return* rtn_statement = node_unwrap_return(node);
-            Node_expr* new_rtn_child;
-            if (!try_set_expr_lang_type(env, &new_rtn_child, lang_type, rtn_statement->child)) {
-                todo();
+            Node_return* new_rtn = NULL;
+            if (!try_set_return(env, &new_rtn, lang_type, node_unwrap_return(node))) {
                 return false;
             }
-            rtn_statement->child = new_rtn_child;
-
-            Lang_type src_lang_type = get_lang_type_expr(rtn_statement->child);
-            Lang_type dest_lang_type = get_parent_function_def_const(env)->declaration->return_type->lang_type;
-            //log(
-            //    LOG_DEBUG, LANG_TYPE_FMT" to "LANG_TYPE_FMT"\n", lang_type_print(src_lang_type),
-            //    lang_type_print(dest_lang_type)
-            //);
-
-            if (lang_type_is_equal(dest_lang_type, src_lang_type)) {
-                return true;
-            }
-            if (can_be_implicitly_converted(env, dest_lang_type, src_lang_type)) {
-                log_tree(LOG_DEBUG, node_wrap_return(rtn_statement));
-                if (rtn_statement->child->type == NODE_LITERAL) {
-                    node_unwrap_literal(rtn_statement->child)->lang_type = dest_lang_type;
-                    return true;
-                }
-                Node_expr* unary = unary_new(env, rtn_statement->child, TOKEN_UNSAFE_CAST, dest_lang_type);
-                rtn_statement->child = unary;
-                return true;
-            }
-
-            const Node_function_def* fun_def = get_parent_function_def_const(env);
-            if (rtn_statement->is_auto_inserted) {
-                msg(
-                    LOG_ERROR, EXPECT_FAIL_MISSING_RETURN, env->file_text, node_wrap_return(rtn_statement)->pos,
-                    "no return statement in function that returns `"LANG_TYPE_FMT"`\n",
-                    lang_type_print(fun_def->declaration->return_type->lang_type)
-                );
-            } else {
-                msg(
-                    LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, env->file_text, node_wrap_return(rtn_statement)->pos,
-                    "returning `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
-                    lang_type_print(get_lang_type_expr(rtn_statement->child)), 
-                    lang_type_print(fun_def->declaration->return_type->lang_type)
-                );
-            }
-            msg(
-                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, node_wrap_lang_type(fun_def->declaration->return_type)->pos,
-                "function return type `"LANG_TYPE_FMT"` defined here\n",
-                lang_type_print(fun_def->declaration->return_type->lang_type)
-            );
-            return false;
-            //log(
-            //    LOG_DEBUG, LANG_TYPE_FMT" to "LANG_TYPE_FMT"\n", lang_type_print(src_lang_type),
-            //    lang_type_print(dest_lang_type)
-            //);
-            unreachable("");
+            *new_node = node_wrap_return(new_rtn);
+            return true;
         }
         case NODE_FUNCTION_DECL:
             // TODO: do this?
