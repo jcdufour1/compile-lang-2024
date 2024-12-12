@@ -99,7 +99,6 @@ static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
                 log(LOG_FATAL, "invalid expected fail type `%s`\n", expected_fail_type_str);
                 exit(EXIT_CODE_FAIL);
             }
-            assert(idx + 1 == params->expected_fail_types.info.count);
             assert(params->expected_fail_types.info.count > 0);
         }
 

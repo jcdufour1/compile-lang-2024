@@ -39,7 +39,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_fun_args.own": ["invalid-count-function-arguments"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_fun_args_2.own": ["invalid-count-function-arguments"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_fun_args_3.own": ["invalid-count-function-arguments"],
-    EXPECTED_FAIL_EXAMPLES_DIR + "missing_return.own": ["missing-return-statement"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "missing_return.own": ["missing-return-statement", "missing-return-statement"],
     EXPECTED_FAIL_EXAMPLES_DIR + "var_redef.own": ["redefinition-of-symbol"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_struct_memb.own": ["invalid-struct-member"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_struct_memb_in_literal.own": ["invalid-struct-member-in-literal"],

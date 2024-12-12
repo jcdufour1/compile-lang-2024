@@ -12,7 +12,7 @@ void analysis_1(Env* env) {
     Node_block* block = node_unwrap_block(block_);
     Node_ptr_vec* block_children = &block->children;
 
-    bool need_add_return = false;
+    bool need_add_return = block_children->info.count == 0;
     for (size_t idx = 0; idx < block_children->info.count; idx++) {
         Node** curr_node = vec_at_ref(block_children, idx);
         Lang_type dummy;

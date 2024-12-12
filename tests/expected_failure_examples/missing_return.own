@@ -1,4 +1,7 @@
 
+fn println() i32 {
+}
+
 fn main() i32 {
     let string: u8* = "hello"
 }
