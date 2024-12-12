@@ -50,6 +50,35 @@ void assign_llvm_ids_expr(Env* env) {
     unreachable("");
 }
 
+void assign_llvm_ids_def(Env* env) {
+    Node_def* curr_node = node_unwrap_def(vec_top(&env->ancesters));
+    switch (curr_node->type) {
+        case NODE_VARIABLE_DEF:
+            node_unwrap_variable_def(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var += 2;
+            return;
+        case NODE_LABEL:
+            node_unwrap_label(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var += 2;
+            return;
+        case NODE_STRUCT_DEF:
+            return;
+        case NODE_RAW_UNION_DEF:
+            return;
+        case NODE_ENUM_DEF:
+            return;
+        case NODE_FUNCTION_DECL:
+            return;
+        case NODE_FUNCTION_DEF:
+            return;
+        case NODE_PRIMITIVE_DEF:
+            return;
+        case NODE_LITERAL_DEF:
+            return;
+    }
+    unreachable("");
+}
+
 void assign_llvm_ids(Env* env) {
     Node* curr_node = vec_top(&env->ancesters);
 
@@ -60,17 +89,12 @@ void assign_llvm_ids(Env* env) {
         case NODE_EXPR:
             assign_llvm_ids_expr(env);
             break;
-        case NODE_STRUCT_DEF:
-            break;
-        case NODE_RAW_UNION_DEF:
+        case NODE_DEF:
+            assign_llvm_ids_def(env);
             break;
         case NODE_FUNCTION_PARAMS:
             break;
         case NODE_BLOCK:
-            break;
-        case NODE_FUNCTION_DECL:
-            break;
-        case NODE_FUNCTION_DEF:
             break;
         case NODE_RETURN:
             break;
@@ -91,10 +115,6 @@ void assign_llvm_ids(Env* env) {
             //log_tree(LOG_DEBUG, node_unwrap_store_another_node(curr_node)->node_src.node);
             //log_tree(LOG_DEBUG, node_unwrap_store_another_node(curr_node)->node_dest.node);
             break;
-        case NODE_VARIABLE_DEF:
-            node_unwrap_variable_def(curr_node)->llvm_id = llvm_id_for_next_var;
-            llvm_id_for_next_var += 2;
-            break;
         case NODE_ASSIGNMENT:
             log_tree(LOG_ERROR, curr_node);
             unreachable("");
@@ -113,10 +133,6 @@ void assign_llvm_ids(Env* env) {
             break;
         case NODE_CONDITION:
             unreachable("");
-        case NODE_LABEL:
-            node_unwrap_label(curr_node)->llvm_id = llvm_id_for_next_var;
-            llvm_id_for_next_var += 2;
-            break;
         case NODE_LLVM_STORE_LITERAL:
             node_unwrap_llvm_store_literal(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
@@ -127,8 +143,6 @@ void assign_llvm_ids(Env* env) {
             break;
         case NODE_MEMBER_SYM_PIECE_TYPED:
             unreachable("");
-        case NODE_ENUM_DEF:
-            break;
         default:
             unreachable(NODE_FMT"\n", node_print(curr_node));
     }

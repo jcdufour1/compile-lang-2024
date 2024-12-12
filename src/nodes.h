@@ -28,25 +28,15 @@ static inline Node* get_left_child(Node* node) {
     switch (node->type) {
         case NODE_EXPR:
             return get_left_child_expr(node_unwrap_expr(node));
-        case NODE_LABEL:
-            unreachable("");
         case NODE_LANG_TYPE:
             unreachable("");
         case NODE_LOAD_ELEMENT_PTR:
-            unreachable("");
-        case NODE_VARIABLE_DEF:
             unreachable("");
         case NODE_MEMBER_SYM_PIECE_UNTYPED:
             unreachable("");
         case NODE_MEMBER_SYM_PIECE_TYPED:
             unreachable("");
-        case NODE_STRUCT_DEF:
-            unreachable("");
         case NODE_FUNCTION_PARAMS:
-            unreachable("");
-        case NODE_FUNCTION_DECL:
-            unreachable("");
-        case NODE_FUNCTION_DEF:
             unreachable("");
         case NODE_FOR_RANGE:
             unreachable("");

@@ -21,22 +21,22 @@ void symbol_log_table_internal(int log_level, const Symbol_table sym_table, int 
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Symbol_table_node* sym_node = &sym_table.table_nodes[idx];
         if (sym_node->status == SYM_TBL_OCCUPIED) {
-            log_file_new(log_level, file_path, line, STRING_FMT NODE_FMT"\n", string_print(padding), node_print(sym_node->node));
+            log_file_new(log_level, file_path, line, STRING_FMT NODE_FMT"\n", string_print(padding), node_print(node_wrap_def_const(sym_node->node)));
         }
     }
 }
 
 // returns false if symbol is already added to the table
-bool sym_tbl_add_internal(Symbol_table_node* sym_tbl_nodes, size_t capacity, Node* node_of_symbol) {
+bool sym_tbl_add_internal(Symbol_table_node* sym_tbl_nodes, size_t capacity, Node_def* node_of_symbol) {
     assert(node_of_symbol);
-    Str_view symbol_name = get_node_name(node_of_symbol);
+    Str_view symbol_name = get_def_name(node_of_symbol);
     assert(symbol_name.count > 0 && "invalid node_of_symbol");
 
     assert(capacity > 0);
     size_t curr_table_idx = sym_tbl_calculate_idx(symbol_name, capacity);
     size_t init_table_idx = curr_table_idx; 
     while (sym_tbl_nodes[curr_table_idx].status == SYM_TBL_OCCUPIED) {
-        if (str_view_is_equal(get_node_name(sym_tbl_nodes[curr_table_idx].node), get_node_name(node_of_symbol))) {
+        if (str_view_is_equal(get_def_name(sym_tbl_nodes[curr_table_idx].node), symbol_name)) {
             return false;
         }
         curr_table_idx = (curr_table_idx + 1) % capacity;
@@ -122,22 +122,22 @@ bool sym_tbl_lookup_internal(Symbol_table_node** result, const Symbol_table* sym
 }
 
 // returns false if symbol has already been added to the table
-bool sym_tbl_add(Symbol_table* sym_table, Node* node_of_symbol) {
+bool sym_tbl_add(Symbol_table* sym_table, Node_def* node_of_symbol) {
     sym_tbl_expand_if_nessessary(sym_table);
     assert(sym_table->capacity > 0);
     if (!sym_tbl_add_internal(sym_table->table_nodes, sym_table->capacity, node_of_symbol)) {
         return false;
     }
-    Node* dummy;
+    Node_def* dummy;
     (void) dummy;
-    assert(sym_tbl_lookup(&dummy, sym_table, get_node_name(node_of_symbol)));
+    assert(sym_tbl_lookup(&dummy, sym_table, get_def_name(node_of_symbol)));
     sym_table->count++;
     return true;
 }
 
-void sym_tbl_update(Symbol_table* sym_table, Node* node_of_symbol) {
+void sym_tbl_update(Symbol_table* sym_table, Node_def* node_of_symbol) {
     Symbol_table_node* sym_node;
-    if (sym_tbl_lookup_internal(&sym_node, sym_table, get_node_name(node_of_symbol))) {
+    if (sym_tbl_lookup_internal(&sym_node, sym_table, get_def_name(node_of_symbol))) {
         sym_node->node = node_of_symbol;
         return;
     }
@@ -176,7 +176,7 @@ void symbol_log_internal(int log_level, const Env* env, const char* file_path, i
     }
 }
 
-bool symbol_lookup(Node** result, const Env* env, Str_view key) {
+bool symbol_lookup(Node_def** result, const Env* env, Str_view key) {
     if (sym_tbl_lookup(result, &env->primitives, key)) {
         return true;
     }
@@ -203,11 +203,11 @@ bool symbol_lookup(Node** result, const Env* env, Str_view key) {
     }
 }
 
-bool symbol_add(Env* env, Node* node_of_symbol) {
-    if (str_view_is_equal(str_view_from_cstr("str8"), get_node_name(node_of_symbol))) {
+bool symbol_add(Env* env, Node_def* node_of_symbol) {
+    if (str_view_is_equal(str_view_from_cstr("str8"), get_def_name(node_of_symbol))) {
     }
-    Node* dummy;
-    if (symbol_lookup(&dummy, env, get_node_name(node_of_symbol))) {
+    Node_def* dummy;
+    if (symbol_lookup(&dummy, env, get_def_name(node_of_symbol))) {
         return false;
     }
     if (env->ancesters.info.count < 1) {
@@ -227,9 +227,9 @@ bool symbol_add(Env* env, Node* node_of_symbol) {
     }
 }
 
-bool symbol_do_add_defered(Node** redefined_sym, Env* env) {
+bool symbol_do_add_defered(Node_def** redefined_sym, Env* env) {
     for (size_t idx = 0; idx < env->defered_symbols_to_add.info.count; idx++) {
-        log(LOG_DEBUG, NODE_FMT"\n", node_print(vec_at(&env->defered_symbols_to_add, idx)));
+        log(LOG_DEBUG, NODE_FMT"\n", node_print(node_wrap_def(vec_at(&env->defered_symbols_to_add, idx))));
         if (!symbol_add(env, vec_at(&env->defered_symbols_to_add, idx))) {
             *redefined_sym = vec_at(&env->defered_symbols_to_add, idx);
             vec_reset(&env->defered_symbols_to_add);

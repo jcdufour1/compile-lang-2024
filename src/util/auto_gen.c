@@ -13,7 +13,7 @@
 
 // TODO: make a node_def type that has var_def, struct_def, etc. subtypes
 // TODO: use Str_view instead of Node_symbol_untyped for if_true and if_false in cond_goto
-// TODO: different symbol_typed node types for each of struct, raw_union, regular symbol, etc.
+// TODO: use Node_def_vec instead of Node_ptr_vec for function parameters
 
 FILE* global_output = NULL;
 Arena gen_a = {0};
@@ -130,11 +130,15 @@ static void gen_struct_internal(
 
     for (size_t idx = 0; idx < members.info.count; idx++) {
         Member curr_memb = vec_at(&members, idx);
+        //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(curr_memb.type));
+        //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(curr_memb.name));
+        //log_member(curr_memb);
         string_extend_cstr(&gen_a, &buf, "    ");
         string_extend_strv(&gen_a, &buf, curr_memb.type);
         string_extend_cstr(&gen_a, &buf, " ");
         string_extend_strv(&gen_a, &buf, curr_memb.name);
         string_extend_cstr(&gen_a, &buf, ";");
+        //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(string_to_strv(buf)));
         gen_gen_internal(global_output, file, line, STR_VIEW_FMT, str_view_print(string_to_strv(buf)));
         vec_reset(&buf);
     }
@@ -164,6 +168,7 @@ static void gen_enum_internal(const char* file, int line, Str_view name, Members
         string_extend_cstr(&gen_a, &buf, "    ");
         string_extend_strv(&gen_a, &buf, curr_memb.name);
         string_extend_cstr(&gen_a, &buf, ",");
+        //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(string_to_strv(buf)));
         gen_gen_internal(global_output, file, line, STR_VIEW_FMT, str_view_print(string_to_strv(buf)));
         vec_reset(&buf);
     }
@@ -255,7 +260,9 @@ static Members members_to_upper(Members members) {
 static Members members_to_first_upper(Members members) {
     Members upper = {0};
     for (size_t idx = 0; idx < members.info.count; idx++) {
-        vec_append(&gen_a, &upper, member_to_first_upper(vec_at(&members, idx)));
+        Member new_member = member_to_first_upper(vec_at(&members, idx));
+        //log_member(new_member);
+        vec_append(&gen_a, &upper, new_member);
     }
     return upper;
 }
@@ -810,23 +817,88 @@ static void gen_primitive_def(Str_view prefix, Type_vec* type_vec, Members* memb
     gen_type(type_vec, member_types, type_new(prefix, "Node_primitive_def"), members);
 }
 
-static void gen_node_part_1(Str_view prefix, Type_vec* type_vec, Members* member_types) {
+static void gen_string_def(Str_view prefix, Type_vec* type_vec, Members* member_types) {
+    Members members = {0};
+    append_member(&members, "Str_view", "name");
+    append_member(&members, "Str_view", "data");
+    gen_type(type_vec, member_types, type_new(prefix, "Node_string_def"), members);
+}
+
+static void gen_struct_lit_def(Str_view prefix, Type_vec* type_vec, Members* member_types) {
+    Members members = {0};
+    append_member(&members, "Node_ptr_vec", "members");
+    append_member(&members, "Str_view", "name");
+    append_member(&members, "Lang_type", "lang_type");
+    append_member(&members, "Llvm_id", "llvm_id");
+    gen_type(type_vec, member_types, type_new(prefix, "Node_struct_lit_def"), members);
+}
+
+static void gen_literal_def_part_1(Str_view prefix, Type_vec* type_vec, Members* member_types) {
+    gen_string_def(prefix, type_vec, member_types);
+    gen_struct_lit_def(prefix, type_vec, member_types);
+
+    gen_union(str_view_from_cstr("Node_literal_def_as"), members_to_first_upper(*member_types));
+    gen_enum(str_view_from_cstr("NODE_LITERAL_DEF_TYPE"), members_to_upper(*member_types));
+    //log_members(*member_types);
+}
+
+static void gen_literal_def(Str_view prefix, Type_vec* type_vec, Members* member_types) {
+    Str_view def_prefix = str_view_from_cstr("Node_literal_def");
+    Members members = {0};
+    Members def_members = {0};
+    Type_vec def_type_vec = {0};
+
+    gen_literal_def_part_1(def_prefix, &def_type_vec, &def_members);
+    vec_extend(&gen_a, type_vec, &def_type_vec);
+
+    append_member(&members, "Node_literal_def_as", "as");
+    append_member(&members, "NODE_LITERAL_DEF_TYPE", "type");
+
+    gen_type(type_vec, member_types, type_new(prefix, "node_literal_def"), members);
+}
+
+static void gen_def_part_1(Str_view prefix, Type_vec* type_vec, Members* member_types) {
     gen_variable_def(prefix, type_vec, member_types);
+    gen_struct_def(prefix, type_vec, member_types);
+    gen_raw_union_def(prefix, type_vec, member_types);
+    gen_enum_def(prefix, type_vec, member_types);
+    gen_literal_def(prefix, type_vec, member_types);
+    gen_primitive_def(prefix, type_vec, member_types);
+    gen_function_decl(prefix, type_vec, member_types);
+    gen_function_def(prefix, type_vec, member_types);
+    gen_label(prefix, type_vec, member_types);
+
+    gen_union(str_view_from_cstr("Node_def_as"), members_to_first_upper(*member_types));
+    gen_enum(str_view_from_cstr("NODE_DEF_TYPE"), members_to_upper(*member_types));
+    //log_members(*member_types);
+}
+
+static void gen_def(Str_view prefix, Type_vec* type_vec, Members* member_types) {
+    Str_view def_prefix = str_view_from_cstr("Node_def");
+    Members members = {0};
+    Members def_members = {0};
+    Type_vec def_type_vec = {0};
+
+    gen_def_part_1(def_prefix, &def_type_vec, &def_members);
+    vec_extend(&gen_a, type_vec, &def_type_vec);
+
+    append_member(&members, "Node_def_as", "as");
+    append_member(&members, "NODE_DEF_TYPE", "type");
+
+    gen_type(type_vec, member_types, type_new(prefix, "node_def"), members);
+}
+
+static void gen_node_part_1(Str_view prefix, Type_vec* type_vec, Members* member_types) {
     gen_block(prefix, type_vec, member_types);
     gen_expr(prefix, type_vec, member_types);
-    gen_label(prefix, type_vec, member_types);
     gen_load_element_ptr(prefix, type_vec, member_types);
     gen_function_params(prefix, type_vec, member_types);
     gen_lang_type(prefix, type_vec, member_types);
     gen_member_sym_piece_untyped(prefix, type_vec, member_types);
     gen_member_sym_piece_typed(prefix, type_vec, member_types);
-    gen_primitive_def(prefix, type_vec, member_types);
-    gen_struct_def(prefix, type_vec, member_types);
-    gen_raw_union_def(prefix, type_vec, member_types);
-    gen_function_decl(prefix, type_vec, member_types);
-    gen_function_def(prefix, type_vec, member_types);
     gen_for_lower_bound(prefix, type_vec, member_types);
     gen_for_upper_bound(prefix, type_vec, member_types);
+    gen_def(prefix, type_vec, member_types);
     gen_for_range(prefix, type_vec, member_types);
     gen_condition(prefix, type_vec, member_types);
     gen_for_with_cond(prefix, type_vec, member_types);
@@ -842,10 +914,11 @@ static void gen_node_part_1(Str_view prefix, Type_vec* type_vec, Members* member
     gen_store_another_node(prefix, type_vec, member_types);
     gen_llvm_store_struct_literal(prefix, type_vec, member_types);
     gen_if_else_chain(prefix, type_vec, member_types);
-    gen_enum_def(prefix, type_vec, member_types);
 
     // TODO: use prefix variable here?
-    gen_union(str_view_from_cstr("Node_as"), members_to_first_upper(*member_types));
+    Members new_members = members_to_first_upper(*member_types);
+    gen_union(str_view_from_cstr("Node_as"), new_members);
+
     gen_enum(str_view_from_cstr("NODE_TYPE"), members_to_upper(*member_types));
     gen_struct(str_view_from_cstr("Node"), node_get_top_level());
 }

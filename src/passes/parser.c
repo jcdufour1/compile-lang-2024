@@ -106,17 +106,17 @@ static void msg_parser_expected_internal(Str_view file_text, const char* file, i
         msg_parser_expected_internal(file_text, __FILE__, __LINE__, got, sizeof((TOKEN_TYPE[]){__VA_ARGS__})/sizeof(TOKEN_TYPE), __VA_ARGS__); \
     } while(0)
 
-static PARSE_STATUS msg_redefinition_of_symbol(const Env* env, const Node* new_sym_def) {
+static PARSE_STATUS msg_redefinition_of_symbol(const Env* env, const Node_def* new_sym_def) {
     msg(
-        LOG_ERROR, EXPECT_FAIL_REDEFINITION_SYMBOL, env->file_text, new_sym_def->pos,
-        "redefinition of symbol "STR_VIEW_FMT"\n", str_view_print(get_node_name(new_sym_def))
+        LOG_ERROR, EXPECT_FAIL_REDEFINITION_SYMBOL, env->file_text, node_wrap_def_const(new_sym_def)->pos,
+        "redefinition of symbol "STR_VIEW_FMT"\n", str_view_print(get_def_name(new_sym_def))
     );
 
-    Node* original_def;
-    try(symbol_lookup(&original_def, env, get_node_name(new_sym_def)));
+    Node_def* original_def;
+    try(symbol_lookup(&original_def, env, get_def_name(new_sym_def)));
     msg(
-        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, original_def->pos,
-        STR_VIEW_FMT " originally defined here\n", str_view_print(get_node_name(original_def))
+        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, node_wrap_def(original_def)->pos,
+        STR_VIEW_FMT " originally defined here\n", str_view_print(get_def_name(original_def))
     );
 
     return PARSE_ERROR;
@@ -565,7 +565,7 @@ static PARSE_STATUS extract_function_parameters(Env* env, Node_function_params**
     while (!done) {
         switch (extract_function_parameter(env, &param, tokens)) {
             case PARSE_EXPR_OK:
-                vec_append_safe(&a_main, &fun_params->params, node_wrap_variable_def(param));
+                vec_append_safe(&a_main, &fun_params->params, node_wrap_def(node_wrap_variable_def(param)));
                 break;
             case PARSE_EXPR_ERROR:
                 return PARSE_ERROR;
@@ -633,7 +633,7 @@ static PARSE_STATUS extract_function_def(Env* env, Node_function_def** fun_def, 
     if (PARSE_OK != extract_function_decl_common(env, &fun_decl, tokens)) {
         return PARSE_ERROR;
     }
-    (*fun_def) = node_function_def_new(node_wrap_function_decl(fun_decl)->pos);
+    (*fun_def) = node_function_def_new(node_wrap_def(node_wrap_function_decl(fun_decl))->pos);
     (*fun_def)->declaration = fun_decl;
     return extract_block(env, &(*fun_def)->body, tokens, false);
 }
@@ -660,7 +660,7 @@ static PARSE_STATUS extract_struct_base_def(Env* env, Struct_def_base* base, Str
         }
         try_consume(NULL, tokens, TOKEN_SEMICOLON);
         while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
-        vec_append_safe(&a_main, &base->members, node_wrap_variable_def(member));
+        vec_append_safe(&a_main, &base->members, node_wrap_def(node_wrap_variable_def(member)));
     }
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
@@ -758,7 +758,7 @@ static PARSE_STATUS try_extract_variable_declaration(
         return PARSE_ERROR;
     }
 
-    Node* dummy;
+    Node_def* dummy;
     if (defer_sym_add) {
         symbol_add_defer(env, node_wrap_variable_def(variable_def));
     } else {
@@ -880,15 +880,18 @@ error:
 }
 
 static Node_literal* extract_literal(Env* env, Tk_view* tokens, bool defer_sym_add) {
+    (void) env;
     Token token = tk_view_consume(tokens);
     assert(token_is_literal(token));
 
     Node_literal* new_node = literal_new(token.text, token.type, token.pos);
 
     if (defer_sym_add) {
-        symbol_add_defer(env, node_wrap_expr(node_wrap_literal(new_node)));
+        // TODO: is this nessessary?
+        //symbol_add_defer(env, node_wrap_expr(node_wrap_literal(new_node)));
     } else {
-        try(symbol_add(env, node_wrap_expr(node_wrap_literal(new_node))));
+        // TODO: is this nessessary?
+        //try(symbol_add(env, node_wrap_expr(node_wrap_literal(new_node))));
     }
     return new_node;
 }
@@ -1107,31 +1110,31 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
         if (PARSE_OK != extract_struct_def(env, &struct_def, tokens)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = node_wrap_struct_def(struct_def);
+        lhs = node_wrap_def(node_wrap_struct_def(struct_def));
     } else if (starts_with_raw_union_definition(*tokens)) {
         Node_raw_union_def* raw_union_def;
         if (PARSE_OK != extract_raw_union_def(env, &raw_union_def, tokens)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = node_wrap_raw_union_def(raw_union_def);
+        lhs = node_wrap_def(node_wrap_raw_union_def(raw_union_def));
     } else if (starts_with_enum_definition(*tokens)) {
         Node_enum_def* enum_def;
         if (PARSE_OK != extract_enum_def(env, &enum_def, tokens)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = node_wrap_enum_def(enum_def);
+        lhs = node_wrap_def(node_wrap_enum_def(enum_def));
     } else if (starts_with_function_decl(*tokens)) {
         Node_function_decl* fun_decl;
         if (PARSE_OK != extract_function_decl(env, &fun_decl, tokens)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = node_wrap_function_decl(fun_decl);
+        lhs = node_wrap_def(node_wrap_function_decl(fun_decl));
     } else if (starts_with_function_def(*tokens)) {
         Node_function_def* fun_def;
         if (PARSE_OK != extract_function_def(env, &fun_def, tokens)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = node_wrap_function_def(fun_def);
+        lhs = node_wrap_def(node_wrap_function_def(fun_def));
     } else if (starts_with_return(*tokens)) {
         Node_return* rtn_statement = NULL;
         if (PARSE_OK != extract_function_return(env, &rtn_statement, tokens)) {
@@ -1157,7 +1160,7 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
         if (PARSE_OK != try_extract_variable_declaration(env, &var_def, tokens, true, defer_sym_add)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = node_wrap_variable_def(var_def);
+        lhs = node_wrap_def(node_wrap_variable_def(var_def));
     } else {
         Node_expr* lhs_ = NULL;
         switch (try_extract_expression(env, &lhs_, tokens, false)) {
@@ -1221,7 +1224,7 @@ static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens,
     *block = node_block_new(tk_view_front(*tokens).pos);
     vec_append_safe(&a_main, &env->ancesters, node_wrap_block(*block));
 
-    Node* redefined_symbol;
+    Node_def* redefined_symbol;
     if (!symbol_do_add_defered(&redefined_symbol, env)) {
         msg_redefinition_of_symbol(env, redefined_symbol);
         status = PARSE_ERROR;
@@ -1322,7 +1325,8 @@ static PARSE_STATUS extract_struct_literal(Env* env, Node_struct_literal** struc
         return PARSE_ERROR;
     }
 
-    try(symbol_add(env, node_wrap_expr(node_wrap_struct_literal(*struct_lit))));
+    // TODO: is this nessessary?
+    // try(symbol_add(env, node_wrap_expr(node_wrap_struct_literal(*struct_lit))));
     return PARSE_OK;
 }
 

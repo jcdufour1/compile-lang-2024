@@ -54,7 +54,7 @@ static inline String string_new_from_cstr(Arena* arena, const char* cstr) {
 
 static inline String string_new_from_strv(Arena* arena, Str_view str_view) {
     String string = {0};
-    for (size_t idx = 0; str_view.str[idx]; idx++) {
+    for (size_t idx = 0; idx < str_view.count; idx++) {
         vec_append(arena, &string, str_view.str[idx]);
     }
     return string;

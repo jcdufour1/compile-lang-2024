@@ -24,7 +24,8 @@ void analysis_1(Env* env) {
         if (idx == block_children->info.count - 1 
             && (*curr_node)->type != NODE_RETURN
             && env->ancesters.info.count > 1
-            && vec_at(&env->ancesters, env->ancesters.info.count - 2)->type == NODE_FUNCTION_DEF
+            && vec_at(&env->ancesters, env->ancesters.info.count - 2)->type == NODE_DEF
+            && node_unwrap_def(vec_at(&env->ancesters, env->ancesters.info.count - 2))->type == NODE_FUNCTION_DEF
         ) {
             need_add_return = true;
         }

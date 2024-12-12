@@ -1,8 +1,8 @@
 #ifndef SYMBOL_TABLE_STRUCT_H
 #define SYMBOL_TABLE_STRUCT_H
 
-struct Node_;
-typedef struct Node_ Node;
+struct Node_def_;
+typedef struct Node_def_ Node_def;
 
 typedef enum {
     SYM_TBL_NEVER_OCCUPIED = 0,
@@ -12,7 +12,7 @@ typedef enum {
 
 typedef struct {
     Str_view key;
-    Node* node;
+    Node_def* node;
     SYM_TBL_STATUS status;
 } Symbol_table_node;
 

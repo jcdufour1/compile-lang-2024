@@ -118,13 +118,26 @@ static inline bool try_get_member_def(Node_variable_def** member_def, const Stru
         Node* curr_member = vec_at(&struct_def->members, idx);
         if (str_view_is_equal(get_node_name(curr_member), get_node_name(member_symbol))) {
             assert(get_lang_type(curr_member).str.count > 0);
-            *member_def = node_unwrap_variable_def(curr_member);
+            *member_def = node_unwrap_variable_def(node_unwrap_def(curr_member));
             log(LOG_DEBUG, "try_get_member_def: "NODE_FMT"\n", node_print(curr_member));
             return true;
         }
     }
     return false;
 }
+
+bool try_set_variable_def_types(
+    const Env* env,
+    Node_variable_def** new_node,
+    Lang_type* lang_type,
+    Node_variable_def* node
+);
+
+bool try_set_struct_def_types(const Env* env, Node_struct_def** new_node, Lang_type* lang_type, Node_struct_def* node);
+
+bool try_set_raw_union_def_types(const Env* env, Node_raw_union_def** new_node, Lang_type* lang_type, Node_raw_union_def* node);
+
+bool try_set_enum_def_types(const Env* env, Node_enum_def** new_node, Lang_type* lang_type, Node_enum_def* node);
 
 static inline const Node_variable_def* get_member_def(const Struct_def_base* struct_def, const Node* member_symbol) {
     Node_variable_def* member_def;
