@@ -81,6 +81,9 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "unclosed_string_literal.own": ["missing-close-double-quote"],
     EXPECTED_FAIL_EXAMPLES_DIR + "union_init_like_a_struct.own": ["struct-init-on-raw-union"],
     EXPECTED_FAIL_EXAMPLES_DIR + "if_cond_undef_function.own": ["undefined-function"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "undefined_types.own": ["undefined-type"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "undef_type_in_struct_def_member.own": ["undefined-type"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "undef_type_in_raw_union_def_member.own": ["undefined-type", "undefined-type"],
 }
 
 def to_str(a):
