@@ -110,7 +110,7 @@ static Lang_type bit_width_to_i_lang_type(int64_t bit_width) {
     string_extend_cstr(&a_main, &string, "i");
     string_extend_int64_t(&a_main, &string, bit_width);
     Str_view str_view = {.str = string.buf, .count = string.info.count};
-    return lang_type_from_strv(str_view, 0);
+    return lang_type_new_from_strv(str_view, 0);
 }
 
 static Node_expr* auto_deref_to_0(const Env* env, Node_expr* expr) {
@@ -341,9 +341,9 @@ const Node* get_lang_type_from_sym_definition(const Node* sym_def) {
 uint64_t sizeof_lang_type(const Env* env, Lang_type lang_type) {
     if (lang_type_is_enum(env, lang_type)) {
         return 4;
-    } else if (lang_type_is_equal(lang_type, lang_type_from_cstr("u8", 1))) {
+    } else if (lang_type_is_equal(lang_type, lang_type_new_from_cstr("u8", 1))) {
         return 8;
-    } else if (lang_type_is_equal(lang_type, lang_type_from_cstr("i32", 0))) {
+    } else if (lang_type_is_equal(lang_type, lang_type_new_from_cstr("i32", 0))) {
         return 4;
     } else {
         unreachable(LANG_TYPE_FMT"\n", lang_type_print(lang_type));
@@ -414,10 +414,11 @@ uint64_t sizeof_struct(const Env* env, const Node* struct_literal_or_def) {
     unreachable("");
 }
 
+// TODO: deduplicate these functions to some degree
 bool lang_type_is_struct(const Env* env, Lang_type lang_type) {
     Node* def = NULL;
     if (!symbol_lookup(&def, env, lang_type.str)) {
-        return false;
+        unreachable(LANG_TYPE_FMT"", lang_type_print(lang_type));
     }
 
     switch (def->type) {
@@ -426,6 +427,8 @@ bool lang_type_is_struct(const Env* env, Lang_type lang_type) {
         case NODE_RAW_UNION_DEF:
             return false;
         case NODE_ENUM_DEF:
+            return false;
+        case NODE_PRIMITIVE_DEF:
             return false;
         default:
             unreachable(NODE_FMT"    "LANG_TYPE_FMT"\n", node_print(def), lang_type_print(lang_type));
@@ -435,9 +438,7 @@ bool lang_type_is_struct(const Env* env, Lang_type lang_type) {
 
 bool lang_type_is_raw_union(const Env* env, Lang_type lang_type) {
     Node* def = NULL;
-    if (!symbol_lookup(&def, env, lang_type.str)) {
-        return false;
-    }
+    try(symbol_lookup(&def, env, lang_type.str));
 
     switch (def->type) {
         case NODE_STRUCT_DEF:
@@ -445,6 +446,8 @@ bool lang_type_is_raw_union(const Env* env, Lang_type lang_type) {
         case NODE_RAW_UNION_DEF:
             return true;
         case NODE_ENUM_DEF:
+            return false;
+        case NODE_PRIMITIVE_DEF:
             return false;
         default:
             unreachable(NODE_FMT"    "LANG_TYPE_FMT"\n", node_print(def), lang_type_print(lang_type));
@@ -454,79 +457,40 @@ bool lang_type_is_raw_union(const Env* env, Lang_type lang_type) {
 
 bool lang_type_is_enum(const Env* env, Lang_type lang_type) {
     Node* def = NULL;
-    if (!symbol_lookup(&def, env, lang_type.str)) {
-        //log(LOG_DEBUG, LANG_TYPE_FMT" is not defined\n", lang_type_print(lang_type));
-        return false;
-    }
+    try(symbol_lookup(&def, env, lang_type.str));
 
     switch (def->type) {
         case NODE_STRUCT_DEF:
-            //log(LOG_DEBUG, "is struct def\n");
             return false;
         case NODE_RAW_UNION_DEF:
-            //log(LOG_DEBUG, "is raw_union def\n");
             return false;
         case NODE_ENUM_DEF:
-            //log(LOG_DEBUG, "is enum def\n");
             return true;
+        case NODE_PRIMITIVE_DEF:
+            return false;
         default:
             unreachable(NODE_FMT"    "LANG_TYPE_FMT"\n", node_print(def), lang_type_print(lang_type));
     }
     unreachable("");
 }
 
-bool is_corresponding_to_a_struct(const Env* env, const Node* node) {
-    Node* var_def;
-    Node* struct_def;
+bool lang_type_is_primitive(const Env* env, Lang_type lang_type) {
+    Node* def = NULL;
+    try(symbol_lookup(&def, env, lang_type.str));
 
-    if (node->type == NODE_EXPR) {
-        const Node_expr* expr = node_unwrap_expr_const(node);
-        switch (expr->type) {
-            case NODE_STRUCT_LITERAL:
-                return true;
-            case NODE_SYMBOL_TYPED:
-                assert(get_node_name(node).count > 0);
-                if (!symbol_lookup(&var_def, env, get_node_name(node))) {
-                    todo();
-                    return false;
-                }
-                if (!symbol_lookup(&struct_def, env, get_lang_type(var_def).str)) {
-                    return false;
-                }
-                return true;
-            case NODE_SYMBOL_UNTYPED:
-                unreachable("untyped symbols should not still be present");
-            case NODE_LITERAL:
-                unreachable("");
-            case NODE_MEMBER_SYM_TYPED:
-                return true;
-            default:
-                unreachable("");
-        }
-    }
-
-    switch (node->type) {
-        case NODE_VARIABLE_DEF:
-            // fallthrough
-        case NODE_STORE_ANOTHER_NODE:
-            // fallthrough
-        case NODE_MEMBER_SYM_PIECE_TYPED:
-            // fallthrough
-            assert(get_node_name(node).count > 0);
-            if (!symbol_lookup(&var_def, env, get_node_name(node))) {
-                //symbol_log(LOG_FATAL, env);
-                //log(LOG_DEBUG, NODE_FMT"\n", node_print(node));
-                todo();
-                return false;
-            }
-            if (!symbol_lookup(&struct_def, env, get_lang_type(var_def).str)) {
-                return false;
-            }
+    switch (def->type) {
+        case NODE_STRUCT_DEF:
+            return false;
+        case NODE_RAW_UNION_DEF:
+            return false;
+        case NODE_ENUM_DEF:
+            return false;
+        case NODE_PRIMITIVE_DEF:
             return true;
         default:
-            log_tree(LOG_FATAL, node);
-            todo();
+            unreachable(NODE_FMT"    "LANG_TYPE_FMT"\n", node_print(def), lang_type_print(lang_type));
     }
+    unreachable("");
 }
 
 bool try_get_generic_struct_def(const Env* env, Node** def, Node* node) {
@@ -585,18 +549,18 @@ bool try_get_struct_def(const Env* env, Node_struct_def** struct_def, Node* node
 static void try_set_literal_lang_type(Lang_type* lang_type, Node_literal* literal, TOKEN_TYPE token_type) {
     switch (token_type) {
         case TOKEN_STRING_LITERAL:
-            literal->lang_type = lang_type_from_cstr("u8", 1);
+            literal->lang_type = lang_type_new_from_cstr("u8", 1);
             break;
         case TOKEN_INT_LITERAL: {
             String lang_type_str = {0};
             string_extend_cstr(&a_main, &lang_type_str, "i");
             int64_t bit_width = bit_width_needed_signed(node_unwrap_number(literal)->data);
             string_extend_int64_t(&a_main, &lang_type_str, bit_width);
-            literal->lang_type = lang_type_from_strv(string_to_strv(lang_type_str), 0);
+            literal->lang_type = lang_type_new_from_strv(string_to_strv(lang_type_str), 0);
             break;
         }
         case TOKEN_VOID:
-            literal->lang_type = lang_type_from_cstr("void", 0);
+            literal->lang_type = lang_type_new_from_cstr("void", 0);
             break;
         default:
             unreachable("");
@@ -607,20 +571,43 @@ static void try_set_literal_lang_type(Lang_type* lang_type, Node_literal* litera
 
 // set symbol lang_type, and report error if symbol is undefined
 bool try_set_symbol_type(const Env* env, Node_expr** new_node, Lang_type* lang_type, Node_symbol_untyped* sym_untyped) {
+    Pos pos = node_wrap_expr(node_wrap_symbol_untyped(sym_untyped))->pos;
+
     Node* sym_def;
     if (!symbol_lookup(&sym_def, env, sym_untyped->name)) {
         msg_undefined_symbol(env->file_text, node_wrap_expr(node_wrap_symbol_untyped(sym_untyped)));
         return false;
     }
-    Node_symbol_untyped temp = *sym_untyped;
-    node_wrap_symbol_untyped(sym_untyped)->type = NODE_SYMBOL_TYPED;
-    Node_symbol_typed* sym_typed = node_unwrap_symbol_typed(node_wrap_symbol_untyped(sym_untyped));
-    sym_typed->name = temp.name;
-    sym_typed->lang_type = node_unwrap_variable_def_const(sym_def)->lang_type;
-    *lang_type = sym_typed->lang_type;
-    *new_node = node_wrap_symbol_typed(sym_typed);
-    assert(*new_node);
-    return true;
+
+    *lang_type = node_unwrap_variable_def_const(sym_def)->lang_type;
+
+    Sym_typed_base new_base = {.lang_type = *lang_type, .name = sym_untyped->name};
+    if (lang_type_is_struct(env, *lang_type)) {
+        Node_struct_sym* sym_typed = node_struct_sym_new(pos);
+        sym_typed->base = new_base;
+        *new_node = node_wrap_symbol_typed(node_wrap_struct_sym(sym_typed));
+        return true;
+    } else if (lang_type_is_raw_union(env, *lang_type)) {
+        Node_raw_union_sym* sym_typed = node_raw_union_sym_new(pos);
+        sym_typed->base = new_base;
+        *new_node = node_wrap_symbol_typed(node_wrap_raw_union_sym(sym_typed));
+        return true;
+    } else if (lang_type_is_enum(env, *lang_type)) {
+        Node_enum_sym* sym_typed = node_enum_sym_new(pos);
+        sym_typed->base = new_base;
+        *new_node = node_wrap_symbol_typed(node_wrap_enum_sym(sym_typed));
+        return true;
+    } else if (lang_type_is_primitive(env, *lang_type)) {
+        Node_primitive_sym* sym_typed = node_primitive_sym_new(pos);
+        sym_typed->base = new_base;
+        *new_node = node_wrap_symbol_typed(node_wrap_primitive_sym(sym_typed));
+        return true;
+    } else {
+        // TODO: make expected fail test for using undefined lang_type on variable
+        unreachable("invalid lang_type\n");
+    }
+
+    unreachable("");
 }
 
 // returns false if unsuccessful
@@ -784,9 +771,9 @@ bool try_set_operator_lang_type(const Env* env, Node_expr** new_node, Lang_type*
 
 bool try_set_struct_literal_assignment_types(const Env* env, Node** new_node, Lang_type* lang_type, const Node* lhs, Node_struct_literal* struct_literal) {
     //log(LOG_DEBUG, "------------------------------\n");
-    if (!is_corresponding_to_a_struct(env, lhs)) {
-        todo(); // non_struct assigned struct literal
-    }
+    //if (!is_corresponding_to_a_struct(env, lhs)) {
+    //    todo(); // non_struct assigned struct literal
+    //}
     Node* lhs_var_def_;
     try(symbol_lookup(&lhs_var_def_, env, get_node_name(lhs)));
     Node_variable_def* lhs_var_def = node_unwrap_variable_def(lhs_var_def_);
@@ -885,7 +872,7 @@ bool try_set_expr_lang_type(const Env* env, Node_expr** new_node, Lang_type* lan
             *new_node = node;
             return true;
         case NODE_SYMBOL_TYPED:
-            *lang_type = node_unwrap_symbol_typed(node)->lang_type;
+            *lang_type = get_lang_type_symbol_typed(node_unwrap_symbol_typed(node));
             *new_node = node;
             return true;
         case NODE_OPERATOR:
@@ -1036,7 +1023,7 @@ bool try_set_function_call_types(const Env* env, Node_expr** new_node, Lang_type
         assert(new_arg);
         *argument = new_arg;
 
-        if (lang_type_is_equal(corres_param->lang_type, lang_type_from_cstr("any", 0))) {
+        if (lang_type_is_equal(corres_param->lang_type, lang_type_new_from_cstr("any", 0))) {
             if (corres_param->is_variadic) {
                 // TODO: do type checking here if this function is not an extern "c" function
                 continue;
@@ -1163,22 +1150,22 @@ bool try_set_member_symbol_types_finish(
             case NODE_VARIABLE_DEF: {
                 Node* def = NULL;
                 log_tree(LOG_DEBUG, (Node*)curr_memb_def);
-                if (try_get_generic_struct_def(env, &def, node_wrap_variable_def(curr_memb_def))) {
-                    switch (def->type) {
-                        case NODE_STRUCT_DEF: {
-                            def_base = &node_unwrap_struct_def(def)->base;
-                            break;
-                        }
-                        case NODE_ENUM_DEF:
-                            def_base = &node_unwrap_enum_def(def)->base;
-                            break;
-                        default:
-                            //log(LOG_DEBUG, NODE_FMT"\n", node_print((Node*)def));
-                            //log(LOG_DEBUG, NODE_FMT"\n", node_print((Node*)curr_memb_def));
-                            unreachable("");
+                try(try_get_generic_struct_def(env, &def, node_wrap_variable_def(curr_memb_def)));
+                switch (def->type) {
+                    case NODE_STRUCT_DEF: {
+                        def_base = &node_unwrap_struct_def(def)->base;
+                        break;
                     }
-                } else {
-                    is_struct = false;
+                    case NODE_ENUM_DEF:
+                        def_base = &node_unwrap_enum_def(def)->base;
+                        break;
+                    case NODE_PRIMITIVE_DEF:
+                        is_struct = false;
+                        break;
+                    default:
+                        //log(LOG_DEBUG, NODE_FMT"\n", node_print((Node*)def));
+                        //log(LOG_DEBUG, NODE_FMT"\n", node_print((Node*)curr_memb_def));
+                        unreachable("");
                 }
                 break;
             }
@@ -1291,7 +1278,7 @@ Node_operator* condition_get_default_child(Node_expr* if_cond_child) {
     );
     new_oper->rhs = if_cond_child;
     new_oper->token_type = TOKEN_NOT_EQUAL;
-    new_oper->lang_type = lang_type_from_cstr("i32", 0);
+    new_oper->lang_type = lang_type_new_from_cstr("i32", 0);
 
     return node_wrap_binary(new_oper);
 }

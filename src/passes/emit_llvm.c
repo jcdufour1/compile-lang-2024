@@ -76,18 +76,17 @@ static void extend_type_call_str(const Env* env, String* output, Lang_type lang_
         return;
     }
 
-    Node* struct_def;
-    if (symbol_lookup(&struct_def, env, lang_type.str)) {
-        if (lang_type_is_struct(env, lang_type)) {
-            string_extend_cstr(&a_main, output, "%struct.");
-        } else if (lang_type_is_raw_union(env, lang_type)) {
-            string_extend_cstr(&a_main, output, "%union.");
-        } else if (lang_type_is_enum(env, lang_type)) {
-            lang_type = lang_type_from_cstr("i32", 0);
-        } else {
-            unreachable("");
-        }
+    if (lang_type_is_struct(env, lang_type)) {
+        string_extend_cstr(&a_main, output, "%struct.");
+    } else if (lang_type_is_raw_union(env, lang_type)) {
+        string_extend_cstr(&a_main, output, "%union.");
+    } else if (lang_type_is_enum(env, lang_type)) {
+        lang_type = lang_type_new_from_cstr("i32", 0);
+    } else if (lang_type_is_primitive(env, lang_type)) {
+    } else {
+        unreachable("");
     }
+
     extend_lang_type_to_string(&a_main, output, lang_type, false);
 }
 
@@ -169,7 +168,7 @@ static void emit_function_params(const Env* env, String* output, const Node_func
             string_extend_cstr(&a_main, output, ", ");
         }
 
-        if (is_struct_variable_definition(env, curr_param)) {
+        if (lang_type_is_struct(env, curr_param->lang_type) || lang_type_is_raw_union(env, curr_param->lang_type)) {
             if (curr_param->lang_type.pointer_depth < 0) {
                 unreachable("");
             } else if (curr_param->lang_type.pointer_depth > 0) {
@@ -179,9 +178,12 @@ static void emit_function_params(const Env* env, String* output, const Node_func
                 extend_type_call_str(env, output, curr_param->lang_type);
                 string_extend_cstr(&a_main, output, ")");
             }
-        } else {
+        } else if (lang_type_is_enum(env, curr_param->lang_type) || lang_type_is_primitive(env, curr_param->lang_type)) {
             extend_type_decl_str(env, output, node_wrap_variable_def_const(curr_param), true);
+        } else {
+            unreachable("");
         }
+
         if (curr_param->is_variadic) {
             return;
         }
@@ -261,7 +263,7 @@ static void emit_function_call(const Env* env, String* output, const Node_functi
 
     // start of actual function call
     string_extend_cstr(&a_main, output, "    ");
-    if (!lang_type_is_equal(fun_call->lang_type, lang_type_from_cstr("void", 0))) {
+    if (!lang_type_is_equal(fun_call->lang_type, lang_type_new_from_cstr("void", 0))) {
         string_extend_cstr(&a_main, output, "%");
         string_extend_size_t(&a_main, output, fun_call->llvm_id);
         string_extend_cstr(&a_main, output, " = ");
@@ -598,7 +600,7 @@ static void emit_store_another_node(const Env* env, String* output, const Node_s
     //string_extend_cstr(&a_main, output, " %");
     //string_extend_size_t(&a_main, output, get_llvm_id(store->node_src.node));
 
-    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(string_to_strv(*output)));
+    //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(string_to_strv(*output)));
     string_extend_cstr(&a_main, output, ", ptr %");
     string_extend_size_t(&a_main, output, get_llvm_id(store->node_dest.node));
     string_extend_cstr(&a_main, output, ", align 8");
@@ -697,7 +699,7 @@ static void emit_label(String* output, const Node_label* label) {
 
 static void emit_goto(const Env* env, String* output, const Node_goto* lang_goto) {
     string_extend_cstr(&a_main, output, "    br label %");
-    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(string_to_strv(*output)));
+    //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(string_to_strv(*output)));
     string_extend_size_t(&a_main, output, get_matching_label_id(env, lang_goto->name));
     vec_append(&a_main, output, '\n');
 }

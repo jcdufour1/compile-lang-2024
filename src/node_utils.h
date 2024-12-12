@@ -10,15 +10,15 @@ void extend_lang_type_to_string(
     bool surround_in_lt_gt
 );
 
-static inline Lang_type lang_type_from_strv(Str_view str_view, int16_t pointer_depth) {
+static inline Lang_type lang_type_new_from_strv(Str_view str_view, int16_t pointer_depth) {
     Lang_type Lang_type = {.str = str_view, .pointer_depth = pointer_depth};
     assert(str_view.count < 1e9);
     return Lang_type;
 }
 
 // only literals can be used here
-static inline Lang_type lang_type_from_cstr(const char* cstr, int16_t pointer_depth) {
-    return lang_type_from_strv(str_view_from_cstr(cstr), pointer_depth);
+static inline Lang_type lang_type_new_from_cstr(const char* cstr, int16_t pointer_depth) {
+    return lang_type_new_from_strv(str_view_from_cstr(cstr), pointer_depth);
 }
 
 static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
@@ -76,6 +76,38 @@ static inline Lang_type get_member_sym_piece_final_lang_type(const Node_member_s
     }
     assert(lang_type.str.count > 0);
     return lang_type;
+}
+
+static inline Sym_typed_base* node_symbol_typed_get_base_ref(Node_symbol_typed* sym) {
+    switch (sym->type) {
+        case NODE_PRIMITIVE_SYM:
+            return &node_unwrap_primitive_sym(sym)->base;
+        case NODE_STRUCT_SYM:
+            return &node_unwrap_struct_sym(sym)->base;
+        case NODE_ENUM_SYM:
+            return &node_unwrap_enum_sym(sym)->base;
+        case NODE_RAW_UNION_SYM:
+            return &node_unwrap_raw_union_sym(sym)->base;
+    }
+    unreachable("");
+}
+
+static inline Sym_typed_base node_symbol_typed_get_base_const(const Node_symbol_typed* sym) {
+    return *node_symbol_typed_get_base_ref((Node_symbol_typed*)sym);
+}
+
+static inline Str_view get_symbol_typed_name(const Node_symbol_typed* sym) {
+    switch (sym->type) {
+        case NODE_PRIMITIVE_SYM:
+            return node_unwrap_primitive_sym_const(sym)->base.name;
+        case NODE_STRUCT_SYM:
+            return node_unwrap_struct_sym_const(sym)->base.name;
+        case NODE_ENUM_SYM:
+            return node_unwrap_enum_sym_const(sym)->base.name;
+        case NODE_RAW_UNION_SYM:
+            return node_unwrap_raw_union_sym_const(sym)->base.name;
+    }
+    unreachable("");
 }
 
 static inline Llvm_id get_llvm_id(const Node* node);
@@ -176,6 +208,20 @@ static inline Llvm_id get_llvm_id(const Node* node) {
     }
 }
 
+static inline Lang_type get_lang_type_symbol_typed(const Node_symbol_typed* sym) {
+    switch (sym->type) {
+        case NODE_PRIMITIVE_SYM:
+            return node_unwrap_primitive_sym_const(sym)->base.lang_type;
+        case NODE_STRUCT_SYM:
+            return node_unwrap_struct_sym_const(sym)->base.lang_type;
+        case NODE_ENUM_SYM:
+            return node_unwrap_enum_sym_const(sym)->base.lang_type;
+        case NODE_RAW_UNION_SYM:
+            return node_unwrap_raw_union_sym_const(sym)->base.lang_type;
+    }
+    unreachable("");
+}
+
 static inline Lang_type get_lang_type_expr(const Node_expr* expr) {
     switch (expr->type) {
         case NODE_STRUCT_LITERAL:
@@ -193,7 +239,7 @@ static inline Lang_type get_lang_type_expr(const Node_expr* expr) {
         case NODE_SYMBOL_UNTYPED:
             unreachable("");
         case NODE_SYMBOL_TYPED:
-            return node_unwrap_symbol_typed_const(expr)->lang_type;
+            return node_symbol_typed_get_base_const(node_unwrap_symbol_typed_const(expr)).lang_type;
         case NODE_LLVM_PLACEHOLDER:
             return node_unwrap_llvm_placeholder_const(expr)->lang_type;
     }
@@ -215,7 +261,7 @@ static inline Lang_type* get_lang_type_expr_ref(Node_expr* expr) {
         case NODE_SYMBOL_UNTYPED:
             unreachable("");
         case NODE_SYMBOL_TYPED:
-            return &node_unwrap_symbol_typed(expr)->lang_type;
+            return &node_symbol_typed_get_base_ref(node_unwrap_symbol_typed(expr))->lang_type;
         case NODE_OPERATOR:
             return get_operator_lang_type_ref(node_unwrap_operator(expr));
         case NODE_LLVM_PLACEHOLDER:
@@ -288,6 +334,8 @@ static inline Lang_type get_lang_type(const Node* node) {
             unreachable("");
         case NODE_ENUM_DEF:
             unreachable("");
+        case NODE_PRIMITIVE_DEF:
+            unreachable("");
     }
     unreachable("");
 }
@@ -297,6 +345,8 @@ static inline Lang_type* get_lang_type_ref(Node* node) {
         case NODE_EXPR:
             todo();
         case NODE_STRUCT_DEF:
+            unreachable("");
+        case NODE_PRIMITIVE_DEF:
             unreachable("");
         case NODE_RAW_UNION_DEF:
             unreachable("");
@@ -389,6 +439,8 @@ static inline Node* get_node_src(Node* node) {
         case NODE_EXPR:
             return get_expr_src(node_unwrap_expr(node));
         case NODE_STRUCT_DEF:
+            unreachable("");
+        case NODE_PRIMITIVE_DEF:
             unreachable("");
         case NODE_RAW_UNION_DEF:
             unreachable("");
@@ -483,6 +535,8 @@ static inline Node* get_node_dest(Node* node) {
             return get_expr_dest(node_unwrap_expr(node));
         case NODE_STRUCT_DEF:
             unreachable("");
+        case NODE_PRIMITIVE_DEF:
+            unreachable("");
         case NODE_RAW_UNION_DEF:
             unreachable("");
         case NODE_MEMBER_SYM_PIECE_UNTYPED:
@@ -558,7 +612,7 @@ static inline Str_view get_expr_name(const Node_expr* expr) {
         case NODE_SYMBOL_UNTYPED:
             return node_unwrap_symbol_untyped_const(expr)->name;
         case NODE_SYMBOL_TYPED:
-            return node_unwrap_symbol_typed_const(expr)->name;
+            return get_symbol_typed_name(node_unwrap_symbol_typed_const(expr));
         case NODE_FUNCTION_CALL:
             return node_unwrap_function_call_const(expr)->name;
         case NODE_LITERAL:
@@ -572,7 +626,7 @@ static inline Str_view get_expr_name(const Node_expr* expr) {
 static inline Str_view get_node_name_expr(const Node_expr* expr) {
     switch (expr->type) {
         case NODE_SYMBOL_TYPED:
-            return node_unwrap_symbol_typed_const(expr)->name;
+            return get_symbol_typed_name(node_unwrap_symbol_typed_const(expr));
         case NODE_FUNCTION_CALL:
             return node_unwrap_function_call_const(expr)->name;
         default:
@@ -587,6 +641,8 @@ static inline Str_view get_node_name(const Node* node) {
             return get_expr_name(node_unwrap_expr_const(node));
         case NODE_STRUCT_DEF:
             return node_unwrap_struct_def_const(node)->base.name;
+        case NODE_PRIMITIVE_DEF:
+            return node_unwrap_primitive_def_const(node)->lang_type.str;
         case NODE_RAW_UNION_DEF:
             return node_unwrap_raw_union_def_const(node)->base.name;
         case NODE_MEMBER_SYM_PIECE_UNTYPED:

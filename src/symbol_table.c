@@ -177,6 +177,10 @@ void symbol_log_internal(int log_level, const Env* env, const char* file_path, i
 }
 
 bool symbol_lookup(Node** result, const Env* env, Str_view key) {
+    if (sym_tbl_lookup(result, &env->primitives, key)) {
+        return true;
+    }
+
     //log(LOG_DEBUG, "entering symbol_lookup\n");
     if (env->ancesters.info.count < 1) {
         //log(LOG_DEBUG, "symbol_lookup thing 1\n");

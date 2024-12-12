@@ -16,11 +16,18 @@ static void do_function_def(Env* env, Node_function_def* fun_def) {
     Node_function_params* params = fun_def->declaration->parameters;
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
         Node_variable_def* param = node_unwrap_variable_def(vec_at(&params->params, idx));
-        if (is_corresponding_to_a_struct(env, node_wrap_variable_def(param))) {
+
+        if (lang_type_is_struct(env, param->lang_type)) {
             param->storage_location = llvm_register_sym_new(node_wrap_variable_def(param));
-            continue;
+        } else if (lang_type_is_enum(env, param->lang_type)) {
+            vec_insert(&a_main, &fun_def->body->children, 0, node_wrap_alloca(add_alloca_alloca_new(param)));
+        } else if (lang_type_is_raw_union(env, param->lang_type)) {
+            param->storage_location = llvm_register_sym_new(node_wrap_variable_def(param));
+        } else if (lang_type_is_primitive(env, param->lang_type)) {
+            vec_insert(&a_main, &fun_def->body->children, 0, node_wrap_alloca(add_alloca_alloca_new(param)));
+        } else {
+            todo();
         }
-        vec_insert(&a_main, &fun_def->body->children, 0, node_wrap_alloca(add_alloca_alloca_new(param)));
     }
 }
 

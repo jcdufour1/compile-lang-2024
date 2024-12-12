@@ -9,6 +9,7 @@ typedef struct Env_ {
                             // index len - 1 is the current node
     Node_ptr_vec defered_symbols_to_add;
     Symbol_table global_literals; // this is populated during add_load_and_store pass
+    Symbol_table primitives;
     int recursion_depth;
     Str_view file_text;
 

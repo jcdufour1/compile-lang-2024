@@ -87,28 +87,13 @@ uint64_t sizeof_struct_def_base(const Env* env, const Struct_def_base* base);
 
 uint64_t sizeof_struct_literal(const Env* env, const Node_struct_literal* struct_literal);
 
-static inline bool is_struct_variable_definition(const Env* env, const Node_variable_def* var_def) {
-    Node* struct_def;
-    return symbol_lookup(&struct_def, env, var_def->lang_type.str);
-}
-
 bool lang_type_is_struct(const Env* env, Lang_type lang_type);
 
 bool lang_type_is_raw_union(const Env* env, Lang_type lang_type);
 
 bool lang_type_is_enum(const Env* env, Lang_type lang_type);
 
-static inline bool is_struct_symbol(const Env* env, const Node_expr* symbol) {
-    assert(symbol->type == NODE_SYMBOL_TYPED || symbol->type == NODE_MEMBER_SYM_TYPED);
-
-    Node* var_def;
-    if (!symbol_lookup(&var_def, env, get_node_name_expr(symbol))) {
-        unreachable("");
-    }
-    return is_struct_variable_definition(env, node_unwrap_variable_def(var_def));
-}
-
-bool is_corresponding_to_a_struct(const Env* env, const Node* node);
+bool lang_type_is_primitive(const Env* env, Lang_type lang_type);
 
 static inline size_t get_member_index(const Struct_def_base* struct_def, const Node_member_sym_piece_typed* member_symbol) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {

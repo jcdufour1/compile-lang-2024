@@ -31,4 +31,10 @@ typedef struct {
     Str_view name;
 } Struct_def_base;
 
+typedef struct {
+    Lang_type lang_type;
+    Str_view name;
+    Llvm_id llvm_id;
+} Sym_typed_base;
+
 #endif // NODE_HAND_WRITTEN_H

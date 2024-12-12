@@ -11,6 +11,7 @@
 #include <log_internal.h>
 #include <string_vec.h>
 
+// TODO: make a node_def type that has var_def, struct_def, etc. subtypes
 // TODO: use Str_view instead of Node_symbol_untyped for if_true and if_false in cond_goto
 // TODO: different symbol_typed node types for each of struct, raw_union, regular symbol, etc.
 
@@ -398,11 +399,51 @@ static void gen_member_symbol_untyped(Str_view prefix, Type_vec* type_vec, Membe
     gen_type(type_vec, member_types, type_new(prefix, "node_member_sym_untyped"), members);
 }
 
-static void gen_symbol_typed(Str_view prefix, Type_vec* type_vec, Members* member_types) {
+static void gen_primitive_sym(Str_view prefix, Type_vec* type_vec, Members* member_types) {
     Members members = {0};
-    append_member(&members, "Lang_type", "lang_type");
-    append_member(&members, "Str_view", "str_data"); // TODO: remove this?
-    append_member(&members, "Str_view", "name");
+    append_member(&members, "Sym_typed_base", "base");
+    gen_type(type_vec, member_types, type_new(prefix, "node_primitive_sym"), members);
+}
+
+static void gen_struct_sym(Str_view prefix, Type_vec* type_vec, Members* member_types) {
+    Members members = {0};
+    append_member(&members, "Sym_typed_base", "base");
+    gen_type(type_vec, member_types, type_new(prefix, "node_struct_sym"), members);
+}
+
+static void gen_raw_union_sym(Str_view prefix, Type_vec* type_vec, Members* member_types) {
+    Members members = {0};
+    append_member(&members, "Sym_typed_base", "base");
+    gen_type(type_vec, member_types, type_new(prefix, "node_raw_union_sym"), members);
+}
+
+static void gen_enum_sym(Str_view prefix, Type_vec* type_vec, Members* member_types) {
+    Members members = {0};
+    append_member(&members, "Sym_typed_base", "base");
+    gen_type(type_vec, member_types, type_new(prefix, "node_enum_sym"), members);
+}
+
+static void gen_node_symbol_typed_part_1(Str_view prefix, Type_vec* type_vec, Members* member_types) {
+    gen_primitive_sym(prefix, type_vec, member_types);
+    gen_struct_sym(prefix, type_vec, member_types);
+    gen_raw_union_sym(prefix, type_vec, member_types);
+    gen_enum_sym(prefix, type_vec, member_types);
+
+    gen_union(str_view_from_cstr("Node_symbol_typed_as"), members_to_first_upper(*member_types));
+    gen_enum(str_view_from_cstr("NODE_SYMBOL_TYPED_TYPE"), members_to_upper(*member_types));
+}
+
+static void gen_symbol_typed(Str_view prefix, Type_vec* type_vec, Members* member_types) {
+    Str_view symbol_typed_prefix = str_view_from_cstr("Node_symbol_typed");
+    Members members = {0};
+    Members symbol_typed_members = {0};
+    Type_vec symbol_typed_type_vec = {0};
+
+    gen_node_symbol_typed_part_1(symbol_typed_prefix, &symbol_typed_type_vec, &symbol_typed_members);
+    vec_extend(&gen_a, type_vec, &symbol_typed_type_vec);
+
+    append_member(&members, "Node_symbol_typed_as", "as");
+    append_member(&members, "NODE_SYMBOL_TYPED_TYPE", "type");
     gen_type(type_vec, member_types, type_new(prefix, "node_symbol_typed"), members);
 }
 
@@ -763,6 +804,12 @@ static void gen_enum_def(Str_view prefix, Type_vec* type_vec, Members* member_ty
     gen_type(type_vec, member_types, type_new(prefix, "Node_enum_def"), members);
 }
 
+static void gen_primitive_def(Str_view prefix, Type_vec* type_vec, Members* member_types) {
+    Members members = {0};
+    append_member(&members, "Lang_type", "lang_type");
+    gen_type(type_vec, member_types, type_new(prefix, "Node_primitive_def"), members);
+}
+
 static void gen_node_part_1(Str_view prefix, Type_vec* type_vec, Members* member_types) {
     gen_variable_def(prefix, type_vec, member_types);
     gen_block(prefix, type_vec, member_types);
@@ -773,6 +820,7 @@ static void gen_node_part_1(Str_view prefix, Type_vec* type_vec, Members* member
     gen_lang_type(prefix, type_vec, member_types);
     gen_member_sym_piece_untyped(prefix, type_vec, member_types);
     gen_member_sym_piece_typed(prefix, type_vec, member_types);
+    gen_primitive_def(prefix, type_vec, member_types);
     gen_struct_def(prefix, type_vec, member_types);
     gen_raw_union_def(prefix, type_vec, member_types);
     gen_function_decl(prefix, type_vec, member_types);

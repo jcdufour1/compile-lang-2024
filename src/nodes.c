@@ -11,6 +11,7 @@ static bool extend_node_text(Arena* arena, String* string, const Node* node, boo
 static const char* NODE_LITERAL_DESCRIPTION = "literal";
 static const char* NODE_FUNCTION_CALL_DESCRIPTION = "fn_call";
 static const char* NODE_FUNCTION_DEF_DESCRIPTION = "fn_def";
+static const char* NODE_PRIMITIVE_DEF_DESCRIPTION = "primitive_def";
 static const char* NODE_FUNCTION_PARAMETERS_DESCRIPTION = "fn_params";
 static const char* NODE_LANG_TYPE_DESCRIPTION = "lang_type";
 static const char* NODE_BINARY_DESCRIPTION = "binary";
@@ -47,7 +48,7 @@ static const char* NODE_STORE_ANOTHER_NODE_DESCRIPTION = "store_another_node";
 static const char* NODE_LLVM_PLACEHOLDER_DESCRIPTION = "llvm_register_sym";
 static const char* NODE_RAW_UNION_DEF_DESCRIPTION = "raw_union";
 static const char* NODE_IF_ELSE_CHAIN_DESCRIPTION = "if_else_chain";
-static const char* NODE_ENUM_LIT_CHAIN_DESCRIPTION = "enum";
+static const char* NODE_ENUM_LIT_DESCRIPTION = "enum_lit";
 
 void extend_lang_type_to_string(Arena* arena, String* string, Lang_type lang_type, bool surround_in_lt_gt) {
     if (surround_in_lt_gt) {
@@ -143,6 +144,8 @@ static Str_view node_type_get_strv(const Node* node) {
             return node_type_get_strv_expr(node_unwrap_expr_const(node));
         case NODE_FUNCTION_DEF:
             return str_view_from_cstr(NODE_FUNCTION_DEF_DESCRIPTION);
+        case NODE_PRIMITIVE_DEF:
+            return str_view_from_cstr(NODE_PRIMITIVE_DEF_DESCRIPTION);
         case NODE_FUNCTION_PARAMS:
             return str_view_from_cstr(NODE_FUNCTION_PARAMETERS_DESCRIPTION);
         case NODE_LANG_TYPE:
@@ -200,7 +203,7 @@ static Str_view node_type_get_strv(const Node* node) {
         case NODE_IF_ELSE_CHAIN:
             return str_view_from_cstr(NODE_IF_ELSE_CHAIN_DESCRIPTION);
         case NODE_ENUM_DEF:
-            return str_view_from_cstr(NODE_ENUM_LIT_CHAIN_DESCRIPTION);
+            return str_view_from_cstr(NODE_ENUM_LIT_DESCRIPTION);
     }
     unreachable( "node->type: %d\n", node->type);
 }
@@ -315,6 +318,8 @@ static bool extend_node_text(Arena* arena, String* string, const Node* node, boo
             break;
         case NODE_STRUCT_DEF:
             break;
+        case NODE_PRIMITIVE_DEF:
+            break;
         case NODE_RAW_UNION_DEF:
             break;
         case NODE_ENUM_DEF:
@@ -390,14 +395,17 @@ static bool extend_node_text(Arena* arena, String* string, const Node* node, boo
             unreachable("");
     }
 
-    if (node->pos.line > 1e6) {
-        // TODO: crash program later when this happens
-        log(LOG_ERROR, "possliyby corrupt\n");
-        return false;
+    if (node->pos.line != UINT32_MAX) {
+        if (node->pos.line > 1e6) {
+            // TODO: crash program later when this happens
+            log(LOG_ERROR, "possliyby corrupt\n");
+            return false;
+        }
+
+        string_extend_cstr(arena, string, "    line:");
+        string_extend_size_t(arena, string, node->pos.line);
     }
 
-    string_extend_cstr(arena, string, "    line:");
-    string_extend_size_t(arena, string, node->pos.line);
     return true;
 }
 

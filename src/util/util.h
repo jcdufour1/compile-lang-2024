@@ -42,6 +42,7 @@ typedef struct {
 #define dummy_env (&(Env){0})
 
 static const Pos dummy_pos = {0};
+static const Pos POS_BUILTIN = (Pos) {.line = UINT32_MAX};
 static const Str_view dummy_file_text = {0};
 
 // log* functions and macros print messages that are intended for debugging

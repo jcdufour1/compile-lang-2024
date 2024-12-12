@@ -132,15 +132,14 @@ static Llvm_register_sym load_ptr_symbol_typed(
     (void) new_block;
 
     Node* var_def_ = NULL;
-    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(old_sym->name));
-    try(symbol_lookup(&var_def_, env, old_sym->name));
+    try(symbol_lookup(&var_def_, env, get_symbol_typed_name(old_sym)));
     Node_variable_def* var_def = node_unwrap_variable_def(var_def_);
     if (!var_def->storage_location.node) {
         var_def->storage_location = load_alloca(env, new_block, add_alloca_alloca_new(var_def));
     }
 
     assert(var_def);
-    assert(lang_type_is_equal(var_def->lang_type, old_sym->lang_type));
+    assert(lang_type_is_equal(var_def->lang_type, get_lang_type_symbol_typed(old_sym)));
 
     return var_def->storage_location;
 }
@@ -154,11 +153,11 @@ static Llvm_register_sym load_symbol_typed(
 
     Node_load_another_node* new_load = node_load_another_node_new(pos);
     new_load->node_src = load_ptr_symbol_typed(env, new_block, old_sym);
-    new_load->lang_type = old_sym->lang_type;
+    new_load->lang_type = get_lang_type_symbol_typed(old_sym);
 
     vec_append(&a_main, &new_block->children, node_wrap_load_another_node(new_load));
     return (Llvm_register_sym) {
-        .lang_type = old_sym->lang_type,
+        .lang_type = get_lang_type_symbol_typed(old_sym),
         .node = node_wrap_load_another_node(new_load)
     };
 }
@@ -201,9 +200,9 @@ static Llvm_register_sym load_unary(
 
     switch (old_unary->token_type) {
         case TOKEN_DEREF: {
-            if (is_struct_symbol(env, old_unary->child)) {
+            if (lang_type_is_struct(env, get_lang_type_expr(old_unary->child))) {
                 todo();
-            } else {
+            } else if (lang_type_is_primitive(env, get_lang_type_expr(old_unary->child))) {
                 Llvm_register_sym ptr = load_expr(env, new_block, old_unary->child);
                 Node_load_another_node* new_load = node_load_another_node_new(pos);
                 new_load->node_src = ptr;
@@ -214,6 +213,8 @@ static Llvm_register_sym load_unary(
                     .lang_type = old_unary->lang_type,
                     .node = node_wrap_load_another_node(new_load)
                 };
+            } else {
+                unreachable("");
             }
         }
         case TOKEN_REFER: {
@@ -434,9 +435,17 @@ static void load_function_parameters(
     for (size_t idx = 0; idx < fun_params.info.count; idx++) {
         assert(env->ancesters.info.count > 0);
         Node* param = vec_at(&fun_params, idx);
-        if (is_corresponding_to_a_struct(env, param)) {
+
+        if (lang_type_is_struct(env, get_lang_type(param))) {
             continue;
+        } else if (lang_type_is_enum(env, get_lang_type(param))) {
+        } else if (lang_type_is_primitive(env, get_lang_type(param))) {
+        } else if (lang_type_is_raw_union(env, get_lang_type(param))) {
+            continue;
+        } else {
+            unreachable(NODE_FMT"\n", node_print(param));
         }
+
         Llvm_register_sym fun_param_call = llvm_register_sym_new(param);
         
         Node_store_another_node* new_store = node_store_another_node_new(param->pos);
@@ -791,9 +800,6 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
     //vec_append(&a_main, &new_branch_block->children, node_wrap_variable_def(for_var_def));
 
     Node_assignment* new_var_assign = assignment_new(env, node_wrap_expr(node_wrap_symbol_untyped(symbol_lhs_assign)), lhs_actual);
-    if (str_view_is_equal(symbol_lhs_assign->name, str_view_from_cstr("num2"))) {
-        todo();
-    }
 
     load_variable_def(env, new_branch_block, for_var_def);
     load_assignment(env, new_branch_block, new_var_assign);
@@ -1012,21 +1018,29 @@ static Llvm_register_sym load_ptr_unary(
 
     switch (old_unary->token_type) {
         case TOKEN_DEREF: {
-            if (is_struct_symbol(env, old_unary->child)) {
+            Lang_type lang_type = get_lang_type_expr(old_unary->child);
+
+            if (lang_type_is_struct(env, lang_type)) {
+                return load_ptr_expr(env, new_block, old_unary->child);
+            } else if (lang_type_is_enum(env, lang_type)) {
+            } else if (lang_type_is_primitive(env, lang_type)) {
+            } else if (lang_type_is_raw_union(env, lang_type)) {
                 return load_ptr_expr(env, new_block, old_unary->child);
             } else {
-                Llvm_register_sym ptr = load_ptr_expr(env, new_block, old_unary->child);
-                Node_load_another_node* new_load = node_load_another_node_new(pos);
-                new_load->node_src = ptr;
-                new_load->lang_type = old_unary->lang_type;
-                new_load->lang_type.pointer_depth++;
-
-                vec_append(&a_main, &new_block->children, node_wrap_load_another_node(new_load));
-                return (Llvm_register_sym) {
-                    .lang_type = old_unary->lang_type,
-                    .node = node_wrap_load_another_node(new_load)
-                };
+                unreachable("");
             }
+            
+            Llvm_register_sym ptr = load_ptr_expr(env, new_block, old_unary->child);
+            Node_load_another_node* new_load = node_load_another_node_new(pos);
+            new_load->node_src = ptr;
+            new_load->lang_type = old_unary->lang_type;
+            new_load->lang_type.pointer_depth++;
+
+            vec_append(&a_main, &new_block->children, node_wrap_load_another_node(new_load));
+            return (Llvm_register_sym) {
+                .lang_type = old_unary->lang_type,
+                .node = node_wrap_load_another_node(new_load)
+            };
         }
         default:
             todo();
