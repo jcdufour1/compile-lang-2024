@@ -83,10 +83,14 @@ static void extend_type_call_str(const Env* env, String* output, Lang_type lang_
     } else if (lang_type_is_enum(env, lang_type)) {
         lang_type = lang_type_new_from_cstr("i32", 0);
     } else if (lang_type_is_primitive(env, lang_type)) {
+        if (lang_type_is_unsigned(lang_type)) {
+            lang_type = lang_type_unsigned_to_signed(lang_type);
+        }
     } else {
         unreachable("");
     }
 
+    assert(lang_type.str.str[0] != 'u');
     extend_lang_type_to_string(&a_main, output, lang_type, false);
 }
 
@@ -130,7 +134,7 @@ static void extend_literal_decl_prefix(const Env* env, String* output, const Nod
         }
         string_extend_cstr(&a_main, output, " @.");
         string_extend_strv(&a_main, output, literal->name);
-    } else if (is_i_lang_type(literal->lang_type)) {
+    } else if (lang_type_is_signed(literal->lang_type)) {
         if (literal->lang_type.pointer_depth != 0) {
             todo();
         }
@@ -295,15 +299,15 @@ static void emit_alloca(const Env* env, String* output, const Node_alloca* alloc
 static void emit_unary_type(const Env* env, String* output, const Node_unary* unary) {
     switch (unary->token_type) {
         case TOKEN_UNSAFE_CAST:
-            if (unary->lang_type.pointer_depth > 0 && is_i_lang_type(get_lang_type_expr(unary->child))) {
+            if (unary->lang_type.pointer_depth > 0 && lang_type_is_signed(get_lang_type_expr(unary->child))) {
                 string_extend_cstr(&a_main, output, "inttoptr ");
                 extend_type_call_str(env, output, get_lang_type_expr(unary->child));
                 string_extend_cstr(&a_main, output, " ");
-            } else if (is_i_lang_type(unary->lang_type) && get_lang_type_expr(unary->child).pointer_depth > 0) {
+            } else if (lang_type_is_signed(unary->lang_type) && get_lang_type_expr(unary->child).pointer_depth > 0) {
                 string_extend_cstr(&a_main, output, "ptrtoint ");
                 extend_type_call_str(env, output, get_lang_type_expr(unary->child));
                 string_extend_cstr(&a_main, output, " ");
-            } else if (is_i_lang_type(unary->lang_type) && is_i_lang_type(get_lang_type_expr(unary->child))) {
+            } else if (lang_type_is_signed(unary->lang_type) && lang_type_is_signed(get_lang_type_expr(unary->child))) {
                 if (i_lang_type_to_bit_width(unary->lang_type) > i_lang_type_to_bit_width(get_lang_type_expr(unary->child))) {
                     string_extend_cstr(&a_main, output, "zext ");
                 } else {
@@ -426,8 +430,12 @@ static void emit_operator_operand(String* output, const Node_expr* operand) {
             break;
         case NODE_SYMBOL_UNTYPED:
             unreachable("untyped symbols should not still be present");
+        case NODE_FUNCTION_CALL:
+            string_extend_cstr(&a_main, output, "%");
+            string_extend_size_t(&a_main, output, node_unwrap_function_call_const(operand)->llvm_id);
+            break;
         default:
-            unreachable("");
+            unreachable(NODE_FMT, node_print((Node*)operand));
     }
 }
 
@@ -748,23 +756,20 @@ static void emit_load_struct_element_pointer(const Env* env, String* output, con
     string_extend_cstr(&a_main, output, "    %"); 
     string_extend_size_t(&a_main, output, load_elem_ptr->llvm_id);
 
-    if (lang_type_is_struct(env, get_lang_type(load_elem_ptr->node_src.node))) {
-        string_extend_cstr(&a_main, output, " = getelementptr inbounds %struct.");
-    } else if (lang_type_is_raw_union(env, get_lang_type(load_elem_ptr->node_src.node))) {
-        string_extend_cstr(&a_main, output, " = getelementptr inbounds %union.");
-    } else {
-        //unreachable(LANG_TYPE_FMT"\n", lang_type_print(load_elem_ptr->node_src.node));
-        todo();
-    }
+    string_extend_cstr(&a_main, output, " = getelementptr inbounds ");
 
     Lang_type lang_type = get_lang_type(load_elem_ptr->node_src.node);
     lang_type.pointer_depth = 0;
-    extend_lang_type_to_string(&a_main, output, lang_type, false);
+    extend_type_call_str(env, output, lang_type);
     string_extend_cstr(&a_main, output, ", ptr %");
     string_extend_size_t(&a_main, output, get_llvm_id(load_elem_ptr->node_src.node));
-    string_extend_cstr(&a_main, output, ", i32 0");
-    string_extend_cstr(&a_main, output, ", i32 ");
-    string_extend_size_t(&a_main, output, load_elem_ptr->struct_index);
+    if (load_elem_ptr->is_from_struct) {
+        string_extend_cstr(&a_main, output, ", i32 0");
+    }
+    string_extend_cstr(&a_main, output, ", ");
+    extend_type_call_str(env, output, get_lang_type(load_elem_ptr->struct_index.node));
+    string_extend_cstr(&a_main, output, " ");
+    emit_operator_operand(output, node_unwrap_expr_const(load_elem_ptr->struct_index.node));
     vec_append(&a_main, output, '\n');
 }
 

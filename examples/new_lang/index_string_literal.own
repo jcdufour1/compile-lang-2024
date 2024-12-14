@@ -1,10 +1,18 @@
 
 extern("c") fn printf(str_to_print u8*, args any...) i32
 
+fn get_zero() i32 {
+    return 0
+}
+
+fn get_four() i32 {
+    return 4
+}
+
 fn main() i32 {
     let string u8* = "hello"
 
-    printf("%c\n", string[0])
-    printf("%c\n", string[4])
+    printf("%c\n", string[get_zero()])
+    printf("%c\n", string[get_four()])
     return 0
 }

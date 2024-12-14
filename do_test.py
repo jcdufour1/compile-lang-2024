@@ -84,6 +84,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "undefined_types.own": ["undefined-type"],
     EXPECTED_FAIL_EXAMPLES_DIR + "undef_type_in_struct_def_member.own": ["undefined-type"],
     EXPECTED_FAIL_EXAMPLES_DIR + "undef_type_in_raw_union_def_member.own": ["undefined-type", "undefined-type"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "index_no_closing_sq_bracket.own": ["missing-close-sq-bracket"],
 }
 
 def to_str(a):

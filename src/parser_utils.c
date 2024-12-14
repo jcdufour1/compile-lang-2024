@@ -83,12 +83,7 @@ static Str_view int64_t_to_str_view(int64_t num) {
     return str_view;
 }
 
-// TODO: account for pointer_depth
-bool is_i_lang_type(Lang_type lang_type) {
-    if (lang_type.str.str[0] != 'i') {
-        return false;
-    }
-
+static bool lang_type_is_number_finish(Lang_type lang_type) {
     size_t idx;
     for (idx = 1; idx < lang_type.str.count; idx++) {
         if (!isdigit(lang_type.str.str[idx])) {
@@ -99,8 +94,22 @@ bool is_i_lang_type(Lang_type lang_type) {
     return idx > 1;
 }
 
+bool lang_type_is_signed(Lang_type lang_type) {
+    if (lang_type.str.str[0] != 'i') {
+        return false;
+    }
+    return lang_type_is_number_finish(lang_type);
+}
+
+bool lang_type_is_unsigned(Lang_type lang_type) {
+    if (lang_type.str.str[0] != 'u') {
+        return false;
+    }
+    return lang_type_is_number_finish(lang_type);
+}
+
 int64_t i_lang_type_to_bit_width(Lang_type lang_type) {
-    assert(is_i_lang_type(lang_type));
+    assert(lang_type_is_signed(lang_type));
     return str_view_to_int64_t(str_view_slice(lang_type.str, 1, lang_type.str.count - 1));
 }
 
@@ -109,6 +118,21 @@ static Lang_type bit_width_to_i_lang_type(int64_t bit_width) {
     String string = {0};
     string_extend_cstr(&a_main, &string, "i");
     string_extend_int64_t(&a_main, &string, bit_width);
+    Str_view str_view = {.str = string.buf, .count = string.info.count};
+    return lang_type_new_from_strv(str_view, 0);
+}
+
+Lang_type lang_type_unsigned_to_signed(Lang_type lang_type) {
+    assert(lang_type_is_unsigned(lang_type));
+
+    if (lang_type.pointer_depth != 0) {
+        todo();
+    }
+
+    String string = {0};
+    string_extend_cstr(&a_main, &string, "i");
+    string_extend_strv(&a_main, &string, str_view_slice(lang_type.str, 1, lang_type.str.count - 1));
+
     Str_view str_view = {.str = string.buf, .count = string.info.count};
     return lang_type_new_from_strv(str_view, 0);
 }
@@ -129,7 +153,7 @@ static bool can_be_implicitly_converted(const Env* env, Lang_type dest, Lang_typ
     //    unreachable("");
     //}
 
-    if (!is_i_lang_type(dest) || !is_i_lang_type(src)) {
+    if (!lang_type_is_signed(dest) || !lang_type_is_signed(src)) {
         return lang_type_is_equal(dest, src);
     }
     return i_lang_type_to_bit_width(dest) >= i_lang_type_to_bit_width(src);
@@ -738,11 +762,11 @@ bool try_set_unary_lang_type(const Env* env, Node_expr** new_node, Lang_type* la
             break;
         case TOKEN_UNSAFE_CAST:
             assert(unary->lang_type.str.count > 0);
-            if (unary->lang_type.pointer_depth > 0 && is_i_lang_type(get_lang_type_expr(unary->child))) {
+            if (unary->lang_type.pointer_depth > 0 && lang_type_is_signed(get_lang_type_expr(unary->child))) {
                 *lang_type = init_lang_type;
-            } else if (is_i_lang_type(unary->lang_type) && get_lang_type_expr(unary->child).pointer_depth > 0) {
+            } else if (lang_type_is_signed(unary->lang_type) && get_lang_type_expr(unary->child).pointer_depth > 0) {
                 *lang_type = init_lang_type;
-            } else if (is_i_lang_type(unary->lang_type) && is_i_lang_type(get_lang_type_expr(unary->child))) {
+            } else if (lang_type_is_signed(unary->lang_type) && lang_type_is_signed(get_lang_type_expr(unary->child))) {
                 *lang_type = init_lang_type;
             } else if (unary->lang_type.pointer_depth > 0 && get_lang_type_expr(unary->child).pointer_depth > 0) {
                 *lang_type = init_lang_type;

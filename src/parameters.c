@@ -60,6 +60,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"undefined-function", EXPECT_FAIL_UNDEFINED_FUNCTION},
     {"struct-init-on-raw-union", EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION},
     {"undefined-type", EXPECT_FAIL_UNDEFINED_TYPE},
+    {"missing-close-sq-bracket", EXPECT_FAIL_MISSING_CLOSE_SQ_BRACKET},
 };
 
 static void parse_normal_option(Parameters* params, int* argc, char*** argv) {

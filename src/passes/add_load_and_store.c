@@ -368,12 +368,17 @@ static Llvm_register_sym load_ptr_member_access_typed(
         default:
             unreachable("");
     }
+
+    Node_number* new_index = node_number_new(pos);
+    new_index->data = get_member_index(&def_base, old_access->member_name);
+    node_wrap_number(new_index)->lang_type = lang_type_new_from_cstr("i32", 0);
     
     Node_load_element_ptr* new_load = node_load_element_ptr_new(pos);
     new_load->lang_type = old_access->lang_type;
-    new_load->struct_index = get_member_index(&def_base, old_access->member_name);
+    new_load->struct_index = load_literal(env, new_block, node_wrap_number(new_index));
     new_load->node_src = new_callee;
     new_load->name = old_access->member_name;
+    new_load->is_from_struct = true;
 
     vec_append(&a_main, &new_block->children, node_wrap_load_element_ptr(new_load));
     return (Llvm_register_sym) {
@@ -391,22 +396,18 @@ static Llvm_register_sym load_ptr_index_typed(
 ) {
     Pos pos = node_wrap_expr(node_wrap_index_typed(old_index))->pos;
 
-    Llvm_register_sym new_callee = load_ptr_expr(env, new_block, old_index->callee);
-    Llvm_register_sym new_inner_index = load_ptr_expr(env, new_block, old_index->index);
-
     Node_load_element_ptr* new_load = node_load_element_ptr_new(pos);
     new_load->lang_type = old_index->lang_type;
-    new_load->struct_index = get_member_index(&def_base, old_index->member_name);
-    new_load->node_src = new_callee;
-    new_load->name = old_index->member_name;
+    new_load->struct_index = load_expr(env, new_block, old_index->index);
+    new_load->node_src = load_expr(env, new_block, old_index->callee);
+    new_load->name = str_view_from_cstr("");
+    new_load->is_from_struct = false;
 
     vec_append(&a_main, &new_block->children, node_wrap_load_element_ptr(new_load));
     return (Llvm_register_sym) {
         .lang_type = new_load->lang_type,
         .node = node_wrap_load_element_ptr(new_load)
     };
-    //assert(result.node);
-    //return result;
 }
 
 static Llvm_register_sym load_member_access_typed(
