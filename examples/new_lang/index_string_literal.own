@@ -14,5 +14,11 @@ fn main() i32 {
 
     printf("%c\n", string[get_zero()])
     printf("%c\n", string[get_four()])
+
+    printf("%c\n", string[0])
+    printf("%c\n", string[4])
+
+    printf("%c\n", string[2*2])
+
     return 0
 }
