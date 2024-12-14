@@ -63,21 +63,6 @@ static inline Lang_type* get_operator_lang_type_ref(Node_operator* operator) {
     }
 }
 
-static inline Lang_type get_member_sym_piece_final_lang_type(const Node_member_sym_typed* struct_memb_sym) {
-    Lang_type lang_type = {0};
-    for (size_t idx = 0; idx < struct_memb_sym->children.info.count; idx++) {
-        const Node* memb_piece_ = vec_at(&struct_memb_sym->children, idx);
-        if (memb_piece_->type != NODE_MEMBER_SYM_PIECE_TYPED) {
-            unreachable("invalid node is in here");
-        }
-        const Node_member_sym_piece_typed* memb_piece = 
-            node_unwrap_member_sym_piece_typed_const(memb_piece_);
-        lang_type = memb_piece->lang_type;
-    }
-    assert(lang_type.str.count > 0);
-    return lang_type;
-}
-
 static inline Sym_typed_base* node_symbol_typed_get_base_ref(Node_symbol_typed* sym) {
     switch (sym->type) {
         case NODE_PRIMITIVE_SYM:
@@ -114,9 +99,9 @@ static inline Llvm_id get_llvm_id(const Node* node);
 
 static inline Llvm_id get_llvm_id_expr(const Node_expr* expr) {
     switch (expr->type) {
-        case NODE_MEMBER_SYM_UNTYPED:
+        case NODE_MEMBER_ACCESS_TYPED:
             unreachable("");
-        case NODE_MEMBER_SYM_TYPED:
+        case NODE_MEMBER_ACCESS_UNTYPED:
             unreachable("");
         case NODE_LITERAL:
             unreachable("");
@@ -174,10 +159,6 @@ static inline Llvm_id get_llvm_id(const Node* node) {
             return get_llvm_id_expr(node_unwrap_expr_const(node));
         case NODE_DEF:
             return get_llvm_id_def(node_unwrap_def_const(node));
-        case NODE_MEMBER_SYM_PIECE_UNTYPED:
-            unreachable("");
-        case NODE_MEMBER_SYM_PIECE_TYPED:
-            unreachable("");
         case NODE_BLOCK:
             unreachable("");
         case NODE_FUNCTION_PARAMS:
@@ -244,10 +225,10 @@ static inline Lang_type get_lang_type_expr(const Node_expr* expr) {
             return node_unwrap_struct_literal_const(expr)->lang_type;
         case NODE_FUNCTION_CALL:
             return node_unwrap_function_call_const(expr)->lang_type;
-        case NODE_MEMBER_SYM_UNTYPED:
+        case NODE_MEMBER_ACCESS_UNTYPED:
             unreachable("");
-        case NODE_MEMBER_SYM_TYPED:
-            return get_member_sym_piece_final_lang_type(node_unwrap_member_sym_typed_const(expr));
+        case NODE_MEMBER_ACCESS_TYPED:
+            return node_unwrap_member_access_typed_const(expr)->lang_type;
         case NODE_LITERAL:
             return node_unwrap_literal_const(expr)->lang_type;
         case NODE_OPERATOR:
@@ -269,13 +250,13 @@ static inline Lang_type get_lang_type_def(const Node_def* def) {
         case NODE_RAW_UNION_DEF:
             unreachable("");
         case NODE_ENUM_DEF:
-            unreachable("");
+            return lang_type_new_from_strv(node_unwrap_enum_def_const(def)->base.name, 0);
         case NODE_VARIABLE_DEF:
             return node_unwrap_variable_def_const(def)->lang_type;
         case NODE_FUNCTION_DECL:
             unreachable("");
         case NODE_STRUCT_DEF:
-            unreachable("");
+            return lang_type_new_from_strv(node_unwrap_struct_def_const(def)->base.name, 0);
         case NODE_PRIMITIVE_DEF:
             unreachable("");
         case NODE_LABEL:
@@ -292,9 +273,9 @@ static inline Lang_type* get_lang_type_expr_ref(Node_expr* expr) {
             return &node_unwrap_struct_literal(expr)->lang_type;
         case NODE_FUNCTION_CALL:
             return &node_unwrap_function_call(expr)->lang_type;
-        case NODE_MEMBER_SYM_UNTYPED:
+        case NODE_MEMBER_ACCESS_UNTYPED:
             unreachable("");
-        case NODE_MEMBER_SYM_TYPED:
+        case NODE_MEMBER_ACCESS_TYPED:
             unreachable("");
         case NODE_LITERAL:
             return &node_unwrap_literal(expr)->lang_type;
@@ -316,10 +297,6 @@ static inline Lang_type get_lang_type(const Node* node) {
             return get_lang_type_def(node_unwrap_def_const(node));
         case NODE_EXPR:
             return get_lang_type_expr(node_unwrap_expr_const(node));
-        case NODE_MEMBER_SYM_PIECE_UNTYPED:
-            unreachable("NODE_MEMBER_SYM_PIECE_UNTYPED does not have lang_type");
-        case NODE_MEMBER_SYM_PIECE_TYPED:
-            return node_unwrap_member_sym_piece_typed_const(node)->lang_type;
         case NODE_BLOCK:
             unreachable("");
         case NODE_FUNCTION_PARAMS:
@@ -396,10 +373,6 @@ static inline Lang_type* get_lang_type_ref(Node* node) {
             return get_lang_type_def_ref(node_unwrap_def(node));
         case NODE_EXPR:
             return get_lang_type_expr_ref(node_unwrap_expr(node));
-        case NODE_MEMBER_SYM_PIECE_UNTYPED:
-            unreachable("NODE_MEMBER_SYM_PIECE_UNTYPED does not have lang_type");
-        case NODE_MEMBER_SYM_PIECE_TYPED:
-            return &node_unwrap_member_sym_piece_typed(node)->lang_type;
         case NODE_BLOCK:
             unreachable("");
         case NODE_FUNCTION_PARAMS:
@@ -450,9 +423,9 @@ static inline Node* get_expr_src(Node_expr* expr) {
     switch (expr->type) {
         case NODE_STRUCT_LITERAL:
             unreachable("");
-        case NODE_MEMBER_SYM_UNTYPED:
+        case NODE_MEMBER_ACCESS_UNTYPED:
             unreachable("");
-        case NODE_MEMBER_SYM_TYPED:
+        case NODE_MEMBER_ACCESS_TYPED:
             unreachable("");
         case NODE_LITERAL:
             unreachable("");
@@ -476,10 +449,6 @@ static inline Node* get_node_src(Node* node) {
             unreachable("");
         case NODE_EXPR:
             return get_expr_src(node_unwrap_expr(node));
-        case NODE_MEMBER_SYM_PIECE_UNTYPED:
-            unreachable("");
-        case NODE_MEMBER_SYM_PIECE_TYPED:
-            unreachable("");
         case NODE_BLOCK:
             unreachable("");
         case NODE_FUNCTION_PARAMS:
@@ -531,9 +500,9 @@ static inline Node* get_expr_dest(Node_expr* expr) {
     switch (expr->type) {
         case NODE_STRUCT_LITERAL:
             unreachable("");
-        case NODE_MEMBER_SYM_UNTYPED:
+        case NODE_MEMBER_ACCESS_UNTYPED:
             unreachable("");
-        case NODE_MEMBER_SYM_TYPED:
+        case NODE_MEMBER_ACCESS_TYPED:
             unreachable("");
         case NODE_LITERAL:
             unreachable("");
@@ -557,10 +526,6 @@ static inline Node* get_node_dest(Node* node) {
             unreachable("");
         case NODE_EXPR:
             return get_expr_dest(node_unwrap_expr(node));
-        case NODE_MEMBER_SYM_PIECE_UNTYPED:
-            unreachable("");
-        case NODE_MEMBER_SYM_PIECE_TYPED:
-            unreachable("");
         case NODE_BLOCK:
             unreachable("");
         case NODE_FUNCTION_PARAMS:
@@ -613,10 +578,10 @@ static inline Str_view get_expr_name(const Node_expr* expr) {
             unreachable("");
         case NODE_STRUCT_LITERAL:
             return node_unwrap_struct_literal_const(expr)->name;
-        case NODE_MEMBER_SYM_UNTYPED:
-            return node_unwrap_member_sym_untyped_const(expr)->name;
-        case NODE_MEMBER_SYM_TYPED:
-            return node_unwrap_member_sym_typed_const(expr)->name;
+        case NODE_MEMBER_ACCESS_UNTYPED:
+            return node_unwrap_member_access_untyped_const(expr)->member_name;
+        case NODE_MEMBER_ACCESS_TYPED:
+            return node_unwrap_member_access_typed_const(expr)->member_name;
         case NODE_SYMBOL_UNTYPED:
             return node_unwrap_symbol_untyped_const(expr)->name;
         case NODE_SYMBOL_TYPED:
@@ -683,10 +648,6 @@ static inline Str_view get_node_name(const Node* node) {
             return get_def_name(node_unwrap_def_const(node));
         case NODE_EXPR:
             return get_expr_name(node_unwrap_expr_const(node));
-        case NODE_MEMBER_SYM_PIECE_UNTYPED:
-            return node_unwrap_member_sym_piece_untyped_const(node)->name;
-        case NODE_MEMBER_SYM_PIECE_TYPED:
-            return node_unwrap_member_sym_piece_typed_const(node)->name;
         case NODE_BLOCK:
             unreachable("");
         case NODE_FUNCTION_PARAMS:

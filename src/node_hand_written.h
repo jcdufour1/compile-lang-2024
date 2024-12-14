@@ -37,4 +37,7 @@ typedef struct {
     Llvm_id llvm_id;
 } Sym_typed_base;
 
+struct Node_expr_;
+typedef struct Node_expr_ Node_expr;
+
 #endif // NODE_HAND_WRITTEN_H

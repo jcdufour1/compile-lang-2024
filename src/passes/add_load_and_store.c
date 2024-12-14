@@ -128,23 +128,28 @@ static Llvm_register_sym load_literal(
         .node = node_wrap_expr(node_wrap_literal(new_lit))
     };
 }
+
 static Llvm_register_sym load_ptr_symbol_typed(
     Env* env,
     Node_block* new_block,
     Node_symbol_typed* old_sym
 ) {
     (void) new_block;
+    log(LOG_DEBUG, "entering thing\n");
 
     Node_def* var_def_ = NULL;
     try(symbol_lookup(&var_def_, env, get_symbol_typed_name(old_sym)));
     Node_variable_def* var_def = node_unwrap_variable_def(var_def_);
     if (!var_def->storage_location.node) {
+        log(LOG_DEBUG, "yes\n");
         var_def->storage_location = load_alloca(env, new_block, add_alloca_alloca_new(var_def));
     }
 
     assert(var_def);
     assert(lang_type_is_equal(var_def->lang_type, get_lang_type_symbol_typed(old_sym)));
 
+    log(LOG_DEBUG, NODE_FMT"\n", node_print((Node*)var_def));
+    log(LOG_DEBUG, NODE_FMT"\n", node_print(var_def->storage_location.node));
     return var_def->storage_location;
 }
 
@@ -271,87 +276,122 @@ static Llvm_register_sym load_operator(
 }
 
 // TODO: clone in this function
-static Llvm_register_sym do_load_struct_element_ptr(
+//static Llvm_register_sym do_load_struct_element_ptr(
+//    Env* env,
+//    Node_block* new_block,
+//    Node_member_access_typed* symbol_call
+//) {
+//    Llvm_register_sym result;
+//
+//    Node* prev_struct_sym = node_wrap_expr(node_wrap_member_sym_typed(symbol_call));
+//    Llvm_register_sym node_element_ptr_to_load = get_storage_location(env, symbol_call->name);
+//
+//    Node_def* struct_var_def = NULL;
+//    if (!symbol_lookup(&struct_var_def, env, symbol_call->name)) {
+//        todo();
+//    }
+//    Lang_type type_load_from = get_lang_type_def(struct_var_def);
+//
+//    Node_load_element_ptr* load_element_ptr = NULL;
+//    for (size_t idx = 0; idx < symbol_call->children.info.count; idx++) {
+//        Node* element_sym_ = vec_at(&symbol_call->children, idx);
+//        Node_member_sym_piece_typed* element_sym = node_unwrap_member_sym_piece_typed(element_sym_);
+//
+//        //log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(type_load_from));
+//        if (lang_type_is_struct(env, type_load_from)) {
+//            load_element_ptr = node_load_element_ptr_new(node_wrap_member_sym_piece_typed(element_sym)->pos);
+//            load_element_ptr->name = get_node_name(prev_struct_sym);
+//            load_element_ptr->lang_type = element_sym->lang_type;
+//            load_element_ptr->struct_index = element_sym->struct_index;
+//            load_element_ptr->node_src = node_element_ptr_to_load;
+//            if (!load_element_ptr->node_src.node) {
+//                log_tree(LOG_DEBUG, (Node*)symbol_call);
+//                unreachable("idx: %zu\n", idx);
+//            }
+//            vec_append(&a_main, &new_block->children, node_wrap_load_element_ptr(load_element_ptr));
+//        }
+//
+//        type_load_from = element_sym->lang_type;
+//        prev_struct_sym = node_wrap_member_sym_piece_typed(element_sym);
+//        if (load_element_ptr) {
+//            node_element_ptr_to_load = llvm_register_sym_new(node_wrap_load_element_ptr(load_element_ptr));
+//        } else {
+//            memset(&node_element_ptr_to_load, 0, sizeof(node_element_ptr_to_load));
+//        }
+//    }
+//
+//    if (load_element_ptr) {
+//        result = llvm_register_sym_new(node_wrap_load_element_ptr(load_element_ptr));
+//        result.lang_type = load_element_ptr->lang_type;
+//        result.node = node_wrap_load_element_ptr(load_element_ptr);
+//        assert(result.node);
+//        return result;
+//    } else {
+//        result = get_storage_location(env, get_expr_name(node_wrap_member_sym_typed(symbol_call)));
+//        Node_def* struct_var_def = NULL;
+//        if (!symbol_lookup(&struct_var_def, env, get_expr_name(node_wrap_member_sym_typed(symbol_call)))) {
+//            todo();
+//        }
+//        result.lang_type = get_member_sym_piece_final_lang_type(symbol_call);
+//        assert(result.node);
+//        return result;
+//    }
+//    unreachable("");
+//}
+
+static Llvm_register_sym load_ptr_member_access_typed(
     Env* env,
     Node_block* new_block,
-    Node_member_sym_typed* symbol_call
+    Node_member_access_typed* old_access
 ) {
-    Llvm_register_sym result;
+    Pos pos = node_wrap_expr(node_wrap_member_access_typed(old_access))->pos;
 
-    Node* prev_struct_sym = node_wrap_expr(node_wrap_member_sym_typed(symbol_call));
-    Llvm_register_sym node_element_ptr_to_load = get_storage_location(env, symbol_call->name);
+    Llvm_register_sym new_callee = load_ptr_expr(env, new_block, old_access->callee);
 
-    Node_def* struct_var_def = NULL;
-    if (!symbol_lookup(&struct_var_def, env, symbol_call->name)) {
-        todo();
-    }
-    Lang_type type_load_from = get_lang_type_def(struct_var_def);
+    Node_def* def = NULL;
+    try(symbol_lookup(&def, env, get_lang_type(new_callee.node).str));
 
-    Node_load_element_ptr* load_element_ptr = NULL;
-    for (size_t idx = 0; idx < symbol_call->children.info.count; idx++) {
-        Node* element_sym_ = vec_at(&symbol_call->children, idx);
-        Node_member_sym_piece_typed* element_sym = node_unwrap_member_sym_piece_typed(element_sym_);
+    log_tree(LOG_DEBUG, node_wrap_def(def));
 
-        //log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(type_load_from));
-        if (lang_type_is_struct(env, type_load_from)) {
-            load_element_ptr = node_load_element_ptr_new(node_wrap_member_sym_piece_typed(element_sym)->pos);
-            load_element_ptr->name = get_node_name(prev_struct_sym);
-            load_element_ptr->lang_type = element_sym->lang_type;
-            load_element_ptr->struct_index = element_sym->struct_index;
-            load_element_ptr->node_src = node_element_ptr_to_load;
-            if (!load_element_ptr->node_src.node) {
-                log_tree(LOG_DEBUG, (Node*)symbol_call);
-                unreachable("idx: %zu\n", idx);
-            }
-            vec_append(&a_main, &new_block->children, node_wrap_load_element_ptr(load_element_ptr));
+    Struct_def_base def_base = {0};
+    switch (def->type) {
+        case NODE_STRUCT_DEF: {
+            Node_struct_def* struct_def = node_unwrap_struct_def(def);
+            def_base = struct_def->base;
+            break;
         }
-
-        type_load_from = element_sym->lang_type;
-        prev_struct_sym = node_wrap_member_sym_piece_typed(element_sym);
-        if (load_element_ptr) {
-            node_element_ptr_to_load = llvm_register_sym_new(node_wrap_load_element_ptr(load_element_ptr));
-        } else {
-            memset(&node_element_ptr_to_load, 0, sizeof(node_element_ptr_to_load));
+        case NODE_RAW_UNION_DEF: {
+            Node_raw_union_def* raw_union_def = node_unwrap_raw_union_def(def);
+            def_base = raw_union_def->base;
+            break;
         }
+        default:
+            unreachable("");
     }
+    
+    Node_load_element_ptr* new_load = node_load_element_ptr_new(pos);
+    new_load->lang_type = old_access->lang_type;
+    new_load->struct_index = get_member_index(&def_base, old_access->member_name);
+    new_load->node_src = new_callee;
+    new_load->name = old_access->member_name;
 
-    if (load_element_ptr) {
-        result = llvm_register_sym_new(node_wrap_load_element_ptr(load_element_ptr));
-        result.lang_type = load_element_ptr->lang_type;
-        result.node = node_wrap_load_element_ptr(load_element_ptr);
-        assert(result.node);
-        return result;
-    } else {
-        result = get_storage_location(env, get_expr_name(node_wrap_member_sym_typed(symbol_call)));
-        Node_def* struct_var_def = NULL;
-        if (!symbol_lookup(&struct_var_def, env, get_expr_name(node_wrap_member_sym_typed(symbol_call)))) {
-            todo();
-        }
-        result.lang_type = get_member_sym_piece_final_lang_type(symbol_call);
-        assert(result.node);
-        return result;
-    }
-    unreachable("");
+    vec_append(&a_main, &new_block->children, node_wrap_load_element_ptr(new_load));
+    return (Llvm_register_sym) {
+        .lang_type = new_load->lang_type,
+        .node = node_wrap_load_element_ptr(new_load)
+    };
+    //assert(result.node);
+    //return result;
 }
 
-static Llvm_register_sym load_ptr_member_sym_typed(
+static Llvm_register_sym load_member_access_typed(
     Env* env,
     Node_block* new_block,
-    Node_member_sym_typed* old_memb_sym
+    Node_member_access_typed* old_access
 ) {
-    Llvm_register_sym result = do_load_struct_element_ptr(env, new_block, old_memb_sym);
-    assert(result.node);
-    return result;
-}
+    Pos pos = node_wrap_expr(node_wrap_member_access_typed(old_access))->pos;
 
-static Llvm_register_sym load_member_sym_typed(
-    Env* env,
-    Node_block* new_block,
-    Node_member_sym_typed* old_memb_sym
-) {
-    Pos pos = node_wrap_expr(node_wrap_member_sym_typed(old_memb_sym))->pos;
-
-    Llvm_register_sym ptr = load_ptr_member_sym_typed(env, new_block, old_memb_sym);
+    Llvm_register_sym ptr = load_ptr_member_access_typed(env, new_block, old_access);
 
     Node_load_another_node* new_load = node_load_another_node_new(pos);
     new_load->node_src = ptr;
@@ -400,8 +440,8 @@ static Llvm_register_sym load_expr(Env* env, Node_block* new_block, Node_expr* o
             unreachable("NODE_SYMBOL_UNTYPED should not still be present at this point");
         case NODE_OPERATOR:
             return load_operator(env, new_block, node_unwrap_operator(old_expr));
-        case NODE_MEMBER_SYM_TYPED:
-            return load_member_sym_typed(env, new_block, node_unwrap_member_sym_typed(old_expr));
+        case NODE_MEMBER_ACCESS_TYPED:
+            return load_member_access_typed(env, new_block, node_unwrap_member_access_typed(old_expr));
         case NODE_STRUCT_LITERAL:
             return load_struct_literal(env, new_block, node_unwrap_struct_literal(old_expr));
         default:
@@ -433,16 +473,6 @@ static Node_variable_def* node_clone_variable_def(Node_variable_def* old_var_def
     Node_variable_def* new_var_def = node_variable_def_new(node_wrap_def(node_wrap_variable_def(old_var_def))->pos);
     *new_var_def = *old_var_def;
     return new_var_def;
-}
-
-static size_t get_idx_node_after_last_alloca(Node_block* block) {
-    for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        Node* node = vec_at(&block->children, idx);
-        if (node->type != NODE_ALLOCA) {
-            return idx;
-        }
-    }
-    unreachable("");
 }
 
 static void load_function_parameters(
@@ -1081,8 +1111,8 @@ static Llvm_register_sym load_ptr_expr(Env* env, Node_block* new_block, Node_exp
     switch (old_expr->type) {
         case NODE_SYMBOL_TYPED:
             return load_ptr_symbol_typed(env, new_block, node_unwrap_symbol_typed(old_expr));
-        case NODE_MEMBER_SYM_TYPED:
-            return load_ptr_member_sym_typed(env, new_block, node_unwrap_member_sym_typed(old_expr));
+        case NODE_MEMBER_ACCESS_TYPED:
+            return load_ptr_member_access_typed(env, new_block, node_unwrap_member_access_typed(old_expr));
         case NODE_OPERATOR:
             return load_ptr_operator(env, new_block, node_unwrap_operator(old_expr));
         default:

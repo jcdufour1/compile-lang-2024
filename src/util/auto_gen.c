@@ -576,12 +576,28 @@ static void gen_llvm_placeholder(Str_view prefix, Type_vec* type_vec, Members* m
     gen_type(type_vec, member_types, type_new(prefix, "node_llvm_placeholder"), members);
 }
 
+static void gen_member_access_untyped(Str_view prefix, Type_vec* type_vec, Members* member_types) {
+    Members members = {0};
+    append_member(&members, "Str_view", "member_name");
+    append_member(&members, "Node_expr*", "callee");
+    gen_type(type_vec, member_types, type_new(prefix, "node_member_access_untyped"), members);
+}
+
+static void gen_member_access_typed(Str_view prefix, Type_vec* type_vec, Members* member_types) {
+    Members members = {0};
+    append_member(&members, "Lang_type", "lang_type");
+    append_member(&members, "Str_view", "member_name");
+    append_member(&members, "Node_expr*", "callee");
+    append_member(&members, "Llvm_id", "llvm_id");
+    gen_type(type_vec, member_types, type_new(prefix, "node_member_access_typed"), members);
+}
+
 static void gen_node_expr_part_1(Str_view prefix, Type_vec* type_vec, Members* member_types) {
     gen_function_call(prefix, type_vec, member_types);
     gen_symbol_untyped(prefix, type_vec, member_types);
     gen_symbol_typed(prefix, type_vec, member_types);
-    gen_member_symbol_untyped(prefix, type_vec, member_types);
-    gen_member_symbol_typed(prefix, type_vec, member_types);
+    gen_member_access_untyped(prefix, type_vec, member_types);
+    gen_member_access_typed(prefix, type_vec, member_types);
     gen_literal(prefix, type_vec, member_types);
     gen_struct_literal(prefix, type_vec, member_types); // TODO: consider struct_literal to be a literal
     gen_operator(prefix, type_vec, member_types);
@@ -634,20 +650,6 @@ static void gen_lang_type(Str_view prefix, Type_vec* type_vec, Members* member_t
     Members members = {0};
     append_member(&members, "Lang_type", "lang_type");
     gen_type(type_vec, member_types, type_new(prefix, "node_lang_type"), members);
-}
-
-static void gen_member_sym_piece_untyped(Str_view prefix, Type_vec* type_vec, Members* member_types) {
-    Members members = {0};
-    append_member(&members, "Str_view", "name");
-    gen_type(type_vec, member_types, type_new(prefix, "node_member_sym_piece_untyped"), members);
-}
-
-static void gen_member_sym_piece_typed(Str_view prefix, Type_vec* type_vec, Members* member_types) {
-    Members members = {0};
-    append_member(&members, "Lang_type", "lang_type");
-    append_member(&members, "size_t", "struct_index");
-    append_member(&members, "Str_view", "name");
-    gen_type(type_vec, member_types, type_new(prefix, "node_member_sym_piece_typed"), members);
 }
 
 static void gen_struct_def(Str_view prefix, Type_vec* type_vec, Members* member_types) {
@@ -894,8 +896,6 @@ static void gen_node_part_1(Str_view prefix, Type_vec* type_vec, Members* member
     gen_load_element_ptr(prefix, type_vec, member_types);
     gen_function_params(prefix, type_vec, member_types);
     gen_lang_type(prefix, type_vec, member_types);
-    gen_member_sym_piece_untyped(prefix, type_vec, member_types);
-    gen_member_sym_piece_typed(prefix, type_vec, member_types);
     gen_for_lower_bound(prefix, type_vec, member_types);
     gen_for_upper_bound(prefix, type_vec, member_types);
     gen_def(prefix, type_vec, member_types);

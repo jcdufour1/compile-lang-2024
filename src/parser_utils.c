@@ -502,7 +502,7 @@ bool try_get_generic_struct_def(const Env* env, Node_def** def, Node* node) {
             }
             case NODE_SYMBOL_TYPED:
                 // fallthrough
-            case NODE_MEMBER_SYM_TYPED: {
+            case NODE_MEMBER_ACCESS_TYPED: {
                 Node_def* var_def;
                 assert(get_node_name(node).count > 0);
                 if (!symbol_lookup(&var_def, env, get_node_name(node))) {
@@ -514,7 +514,7 @@ bool try_get_generic_struct_def(const Env* env, Node_def** def, Node* node) {
             }
             case NODE_SYMBOL_UNTYPED:
                 unreachable("untyped symbols should not still be present");
-            case NODE_MEMBER_SYM_UNTYPED:
+            case NODE_MEMBER_ACCESS_UNTYPED:
                 assert(get_lang_type(node).str.count > 0);
                 return symbol_lookup(def, env, get_lang_type(node).str);
             default:
@@ -579,7 +579,7 @@ bool try_set_symbol_type(const Env* env, Node_expr** new_node, Lang_type* lang_t
         return false;
     }
 
-    *lang_type = node_unwrap_variable_def_const(sym_def)->lang_type;
+    *lang_type = get_lang_type_def(sym_def);
 
     Sym_typed_base new_base = {.lang_type = *lang_type, .name = sym_untyped->name};
     if (lang_type_is_struct(env, *lang_type)) {
@@ -627,6 +627,7 @@ bool try_set_binary_lang_type(const Env* env, Node_expr** new_node, Lang_type* l
     operator->rhs = new_rhs;
     assert(operator->lhs);
     assert(operator->rhs);
+    log_tree(LOG_DEBUG, (Node*)operator);
 
     if (!lang_type_is_equal(get_lang_type_expr(operator->lhs), get_lang_type_expr(operator->rhs))) {
         if (can_be_implicitly_converted(env, get_lang_type_expr(operator->lhs), get_lang_type_expr(operator->rhs))) {
@@ -858,18 +859,19 @@ bool try_set_expr_lang_type(const Env* env, Node_expr** new_node, Lang_type* lan
                 assert(*new_node);
             }
             return true;
-        case NODE_MEMBER_SYM_UNTYPED: {
+        case NODE_MEMBER_ACCESS_UNTYPED: {
             Node* new_node_ = NULL;
-            if (!try_set_member_symbol_types(env, &new_node_, lang_type, node_unwrap_member_sym_untyped(node))) {
+            if (!try_set_member_access_types(env, &new_node_, lang_type, node_unwrap_member_access_untyped(node))) {
                 return false;
             }
             *new_node = node_unwrap_expr(new_node_);
             return true;
         }
-        case NODE_MEMBER_SYM_TYPED:
-            *lang_type = get_member_sym_piece_final_lang_type(node_unwrap_member_sym_typed(node));
-            *new_node = node;
-            return true;
+        case NODE_MEMBER_ACCESS_TYPED:
+            todo();
+            //*lang_type = get_member_sym_piece_final_lang_type(node_unwrap_member_sym_typed(node));
+            //*new_node = node;
+            //return true;
         case NODE_SYMBOL_TYPED:
             *lang_type = get_lang_type_symbol_typed(node_unwrap_symbol_typed(node));
             *new_node = node;
@@ -1119,206 +1121,123 @@ bool try_set_function_call_types(const Env* env, Node_expr** new_node, Lang_type
 
 static void msg_invalid_member(
     const Env* env,
-    Node_member_sym_typed* memb_sym_typed,
-    Node_member_sym_piece_untyped* memb_sym_piece_untyped
+    Struct_def_base base,
+    const Node_member_access_untyped* access
 ) {
     msg(
-        LOG_ERROR, EXPECT_FAIL_INVALID_STRUCT_MEMBER, env->file_text, node_wrap_member_sym_piece_untyped(memb_sym_piece_untyped)->pos,
+        LOG_ERROR, EXPECT_FAIL_INVALID_STRUCT_MEMBER, env->file_text,
+        node_wrap_expr_const(node_wrap_member_access_untyped_const(access))->pos,
         "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 
-        str_view_print(memb_sym_piece_untyped->name), str_view_print(memb_sym_typed->name)
+        str_view_print(access->member_name), str_view_print(base.name)
     );
-    Node_def* memb_sym_def_;
-    try(symbol_lookup(&memb_sym_def_, env, memb_sym_typed->name));
-    switch (memb_sym_def_->type) {
-        case NODE_VARIABLE_DEF: {
-            const Node_variable_def* memb_sym_def = node_unwrap_variable_def_const(memb_sym_def_);
-            msg(
-                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text,
-                node_wrap_def(node_wrap_variable_def_const(memb_sym_def))->pos,
-                "`"STR_VIEW_FMT"` defined here as type `"LANG_TYPE_FMT"`\n",
-                str_view_print(memb_sym_def->name), lang_type_print(memb_sym_def->lang_type)
-            );
-            Node_def* struct_def;
-            try(symbol_lookup(&struct_def, env, memb_sym_def->lang_type.str));
-            msg(
-                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, node_wrap_def(struct_def)->pos,
-                "struct `"LANG_TYPE_FMT"` defined here\n", 
-                lang_type_print(memb_sym_def->lang_type)
-            );
-            break;
-        }
-        case NODE_ENUM_DEF: {
-            msg(
-                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, node_wrap_def(memb_sym_def_)->pos,
-                "enum `"STR_VIEW_FMT"` defined here\n", 
-                str_view_print(node_unwrap_enum_def(memb_sym_def_)->base.name)
-            );
-            break;
-        }
-        default:
-            unreachable(NODE_FMT"\n", node_print(node_wrap_def(memb_sym_def_)));
-    }
 
+    // TODO: add notes for where struct def of callee is defined, etc.
 }
 
-bool try_set_member_symbol_types_finish(
+bool try_set_member_access_types_finish_generic_struct(
     const Env* env,
     Node** new_node,
     Lang_type* lang_type,
-    Node_member_sym_untyped* memb_sym_untyped,
-    const Struct_def_base* def_base,
-    Node_variable_def* curr_memb_def
+    Node_member_access_untyped* access,
+    Struct_def_base def_base,
+    Node_expr* new_callee
 ) {
-    Node_expr* memb_sym_typed_ = node_expr_new(node_wrap_expr(node_wrap_member_sym_untyped(memb_sym_untyped))->pos);
-    memb_sym_typed_->type = NODE_MEMBER_SYM_TYPED;
-    Node_member_sym_typed* memb_sym_typed = node_unwrap_member_sym_typed(memb_sym_typed_);
-
-    memb_sym_typed->name = memb_sym_untyped->name;
-    assert(memb_sym_typed->name.count > 0);
-    bool is_struct = true;
-    const Struct_def_base* prev_def_base = def_base;
-    for (size_t idx = 0; idx < memb_sym_untyped->children.info.count; idx++) {
-        Node* memb_sym_piece_untyped_ = vec_at(&memb_sym_untyped->children, idx);
-        Node_member_sym_piece_untyped* memb_sym_piece_untyped = 
-            node_unwrap_member_sym_piece_untyped(memb_sym_piece_untyped_);
-        if (!is_struct) {
-            todo();
-        }
-        if (!try_get_member_def(&curr_memb_def, def_base, node_wrap_member_sym_piece_untyped(memb_sym_piece_untyped))) {
-            msg_invalid_member(env, memb_sym_typed, memb_sym_piece_untyped);
-            return false;
-        }
-
-        Node_member_sym_piece_typed* memb_sym_piece_typed = node_member_sym_piece_typed_new(
-            node_wrap_expr(node_wrap_member_sym_untyped(memb_sym_untyped))->pos
-        );
-        memb_sym_piece_typed->name = curr_memb_def->name;
-        memb_sym_piece_typed->lang_type = curr_memb_def->lang_type;
-        *lang_type = memb_sym_piece_typed->lang_type;
-
-        Node_def* result = NULL;
-        try(symbol_lookup(&result, env, memb_sym_untyped->name));
-        switch (result->type) {
-            case NODE_VARIABLE_DEF: {
-                Node_def* def = NULL;
-                try(try_get_generic_struct_def(env, &def, node_wrap_def(node_wrap_variable_def(curr_memb_def))));
-                switch (def->type) {
-                    case NODE_STRUCT_DEF: {
-                        def_base = &node_unwrap_struct_def(def)->base;
-                        break;
-                    }
-                    case NODE_ENUM_DEF:
-                        def_base = &node_unwrap_enum_def(def)->base;
-                        break;
-                    case NODE_PRIMITIVE_DEF:
-                        is_struct = false;
-                        break;
-                    default:
-                        //log(LOG_DEBUG, NODE_FMT"\n", node_print((Node*)def));
-                        //log(LOG_DEBUG, NODE_FMT"\n", node_print((Node*)curr_memb_def));
-                        unreachable("");
-                }
-                break;
-            }
-            case NODE_ENUM_DEF: {
-                Node_def* def = NULL;
-                try(try_get_generic_struct_def(env, &def, node_wrap_def(node_wrap_variable_def(curr_memb_def))));
-
-                try(idx == 0);
-                Node_expr* expr = node_expr_new(
-                    node_wrap_expr(node_wrap_member_sym_untyped(memb_sym_untyped))->pos
-                );
-                expr->type = NODE_LITERAL;
-                Node_literal* literal = node_unwrap_literal(expr);
-                literal->type = NODE_ENUM_LIT;
-                Node_enum_lit* enum_lit = node_unwrap_enum_lit(literal);
-                literal->lang_type = curr_memb_def->lang_type;
-                literal->name = literal_name_new();
-                enum_lit->data = (int64_t)get_member_index(&node_unwrap_enum_def(def)->base, memb_sym_piece_typed);
-                *new_node = node_wrap_expr(expr);
-                return true;
-            }
-            default:
-                unreachable("");
-        }
-        //if (try_get_generic_struct_def(env, &def, node_wrap_variable_def(curr_memb_def))) {
-        ////if (try_get_generic_struct_def(env, &def, node_wrap_expr(node_wrap_member_sym_untyped(memb_sym_untyped)))) {
-        //    switch (def->type) {
-        //        case NODE_VARIABLE_DEF: {
-        //            break;
-        //        }
-        //        case NODE_STRUCT_DEF: {
-        //            def_base = &node_unwrap_struct_def(def)->base;
-        //            break;
-        //        }
-        //        case NODE_ENUM_DEF:
-        //        default:
-        //            log(LOG_DEBUG, NODE_FMT"\n", node_print((Node*)def));
-        //            log(LOG_DEBUG, NODE_FMT"\n", node_print((Node*)curr_memb_def));
-        //            unreachable("");
-        //    }
-        //} else {
-        //    is_struct = false;
-        //}
-
-        vec_append_safe(&a_main, &memb_sym_typed->children, node_wrap_member_sym_piece_typed(memb_sym_piece_typed));
-        memb_sym_piece_typed->struct_index = get_member_index(prev_def_base, memb_sym_piece_typed);
-
-        prev_def_base = def_base;
+    Node_variable_def* member_def = NULL;
+    if (!try_get_member_def(&member_def, &def_base, access->member_name)) {
+        msg_invalid_member(env, def_base, access);
+        return false;
     }
+    *lang_type = member_def->lang_type;
 
-    *new_node = node_wrap_expr(node_wrap_member_sym_typed(memb_sym_typed));
+    Node_member_access_typed* new_access = node_member_access_typed_new(node_wrap_expr(node_wrap_member_access_untyped(access))->pos);
+    new_access->lang_type = *lang_type;
+    new_access->member_name = access->member_name;
+    new_access->callee = new_callee;
+
+    *new_node = node_wrap_expr(node_wrap_member_access_typed(new_access));
+
+    assert(lang_type->str.count > 0);
     return true;
 }
 
-bool try_set_member_symbol_types(
+bool try_set_member_access_types_finish(
     const Env* env,
     Node** new_node,
     Lang_type* lang_type,
-    Node_member_sym_untyped* memb_sym_untyped
+    Node_def* lang_type_def,
+    Node_member_access_untyped* access,
+    Node_expr* new_callee
 ) {
-    Node_variable_def* curr_memb_def = NULL;
-    Node_def* struct_def_;
-    Node_def* struct_var;
-    if (!symbol_lookup(&struct_var, env, memb_sym_untyped->name)) {
-        msg_undefined_symbol(env->file_text, node_wrap_expr(node_wrap_member_sym_untyped(memb_sym_untyped)));
-        *new_node = node_wrap_expr(node_wrap_member_sym_untyped(memb_sym_untyped));
+    switch (lang_type_def->type) {
+        case NODE_STRUCT_DEF: {
+            Node_struct_def* struct_def = node_unwrap_struct_def(lang_type_def);
+            return try_set_member_access_types_finish_generic_struct(
+                env, new_node, lang_type, access, struct_def->base, new_callee
+            );
+        }
+        case NODE_RAW_UNION_DEF: {
+            Node_raw_union_def* raw_union_def = node_unwrap_raw_union_def(lang_type_def);
+            return try_set_member_access_types_finish_generic_struct(
+                env, new_node, lang_type, access, raw_union_def->base, new_callee
+            );
+        }
+        case NODE_ENUM_DEF: {
+            Node_enum_def* enum_def = node_unwrap_enum_def(lang_type_def);
+            Node_variable_def* member_def = NULL;
+            if (!try_get_member_def(&member_def, &enum_def->base, access->member_name)) {
+                todo();
+            }
+            *lang_type = member_def->lang_type;
+            Node_enum_lit* new_lit = node_enum_lit_new(node_wrap_expr(node_wrap_member_access_untyped(access))->pos);
+            new_lit->data = get_member_index(&enum_def->base, access->member_name);
+            node_wrap_enum_lit(new_lit)->lang_type = *lang_type;
+
+            *new_node = node_wrap_expr(node_wrap_literal(node_wrap_enum_lit(new_lit)));
+            assert(lang_type->str.count > 0);
+            return true;
+        }
+        default:
+            unreachable(NODE_FMT"\n", node_print(node_wrap_def(lang_type_def)));
+    }
+
+    unreachable("");
+}
+
+bool try_set_member_access_types(
+    const Env* env,
+    Node** new_node,
+    Lang_type* lang_type,
+    Node_member_access_untyped* access
+) {
+    Node_expr* new_callee = NULL;
+    if (!try_set_expr_lang_type(env, &new_callee, lang_type, access->callee)) {
         return false;
     }
 
-    const Struct_def_base* def_base = NULL;
-    switch (struct_var->type) {
-        case NODE_VARIABLE_DEF:
-            try(symbol_lookup(&struct_def_, env, node_unwrap_variable_def(struct_var)->lang_type.str));
-            break;
-        case NODE_ENUM_DEF:
-            struct_def_ = struct_var;
-            break;
-        default:
-            log_tree(LOG_DEBUG, node_wrap_def(struct_var));
-            unreachable("");
-    }
+    switch (new_callee->type) {
+        case NODE_SYMBOL_TYPED: {
+            Node_symbol_typed* sym = node_unwrap_symbol_typed(new_callee);
+            Node_def* lang_type_def = NULL;
+            if (!symbol_lookup(&lang_type_def, env, get_lang_type_symbol_typed(sym).str)) {
+                todo();
+            }
 
-    switch (struct_def_->type) {
-        case NODE_STRUCT_DEF:
-            def_base = &node_unwrap_struct_def(struct_def_)->base;
-            return try_set_member_symbol_types_finish(
-                env, new_node, lang_type, memb_sym_untyped, def_base, curr_memb_def
-            );
-        case NODE_RAW_UNION_DEF:
-            def_base = &node_unwrap_raw_union_def(struct_def_)->base;
-            return try_set_member_symbol_types_finish(
-                env, new_node, lang_type, memb_sym_untyped, def_base, curr_memb_def
-            );
-        case NODE_ENUM_DEF:
-            def_base = &node_unwrap_enum_def(struct_var)->base;
-            return try_set_member_symbol_types_finish(
-                env, new_node, lang_type, memb_sym_untyped, def_base, curr_memb_def
-            );
+            return try_set_member_access_types_finish(env, new_node, lang_type, lang_type_def, access, new_callee);
+
+        }
+        case NODE_MEMBER_ACCESS_TYPED: {
+            Node_member_access_typed* sym = node_unwrap_member_access_typed(new_callee);
+
+            Node_def* lang_type_def = NULL;
+            if (!symbol_lookup(&lang_type_def, env, sym->lang_type.str)) {
+                todo();
+            }
+
+            return try_set_member_access_types_finish(env, new_node, lang_type, lang_type_def, access, new_callee);
+        }
         default:
             unreachable("");
     }
-
     unreachable("");
 }
 

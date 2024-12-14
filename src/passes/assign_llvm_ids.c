@@ -13,10 +13,10 @@ void assign_llvm_ids_expr(Env* env) {
     switch (curr_node->type) {
         case NODE_SYMBOL_UNTYPED:
             return;
-        case NODE_MEMBER_SYM_UNTYPED:
+        case NODE_MEMBER_ACCESS_UNTYPED:
             unreachable("");
-        case NODE_MEMBER_SYM_TYPED:
-            node_unwrap_member_sym_typed(curr_node)->llvm_id = llvm_id_for_next_var;
+        case NODE_MEMBER_ACCESS_TYPED:
+            node_unwrap_member_access_typed(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
             return;
         case NODE_STRUCT_LITERAL:
@@ -141,8 +141,6 @@ void assign_llvm_ids(Env* env) {
             node_unwrap_llvm_store_struct_literal(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
             break;
-        case NODE_MEMBER_SYM_PIECE_TYPED:
-            unreachable("");
         default:
             unreachable(NODE_FMT"\n", node_print(curr_node));
     }

@@ -1179,7 +1179,7 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
                 break;
             case NODE_SYMBOL_UNTYPED:
                 break;
-            case NODE_MEMBER_SYM_UNTYPED:
+            case NODE_MEMBER_ACCESS_UNTYPED:
                 break;
             case NODE_OPERATOR:
                 break;
@@ -1330,19 +1330,6 @@ static PARSE_STATUS extract_struct_literal(Env* env, Node_struct_literal** struc
     return PARSE_OK;
 }
 
-static Node_member_sym_untyped* extract_member_call(Tk_view* tokens) {
-    Token start_token = tk_view_consume(tokens);
-    Node_member_sym_untyped* member_call = node_member_sym_untyped_new(start_token.pos);
-    member_call->name = start_token.text;
-    while (try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
-        Token member_token = tk_view_consume(tokens);
-        Node_member_sym_piece_untyped* member = node_member_sym_piece_untyped_new(member_token.pos);
-        member->name = member_token.text;
-        vec_append_safe(&a_main, &member_call->children, node_wrap_member_sym_piece_untyped(member));
-    }
-    return member_call;
-}
-
 static Node_unary* parser_unary_new(Token operator_token, Node_expr* child, Lang_type init_lang_type) {
     Node_unary* unary = node_unary_new(operator_token.pos);
     unary->token_type = operator_token.type;
@@ -1391,7 +1378,6 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node_expr** resu
             );
             return PARSE_EXPR_ERROR;
         }
-        return PARSE_EXPR_OK;
     } else if (is_unary(tk_view_front(*tokens).type)) {
         Token operator_token = tk_view_consume(tokens);
         Lang_type unary_lang_type = {0};
@@ -1430,36 +1416,41 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node_expr** resu
             todo();
         }
         *result = node_wrap_operator(node_wrap_unary(parser_unary_new(operator_token, inside_unary, unary_lang_type)));
-        return PARSE_EXPR_OK;
     } else if (starts_with_function_call(*tokens)) {
         if (PARSE_OK != try_extract_function_call(env, &fun_call, tokens)) {
             return PARSE_EXPR_ERROR;
         }
         *result = node_wrap_function_call(fun_call);
-        return PARSE_EXPR_OK;
-    } else if (tokens->count > 1 && tk_view_front(*tokens).type == TOKEN_SYMBOL &&
-        token_is_equal_2(tk_view_at(*tokens, 1), "", TOKEN_SINGLE_DOT)
-    ) {
-        *result = node_wrap_member_sym_untyped(extract_member_call(tokens));
-        return PARSE_EXPR_OK;
     } else if (token_is_literal(tk_view_front(*tokens))) {
         *result = node_wrap_literal(extract_literal(env, tokens, defer_sym_add));
-        return PARSE_EXPR_OK;
     } else if (tk_view_front(*tokens).type == TOKEN_SYMBOL) {
         *result = node_wrap_symbol_untyped(extract_symbol(tokens));
-        return PARSE_EXPR_OK;
     } else if (starts_with_struct_literal(*tokens)) {
         Node_struct_literal* struct_lit;
         if (PARSE_OK != extract_struct_literal(env, &struct_lit, tokens)) {
             return PARSE_EXPR_ERROR;
         }
         *result = node_wrap_struct_literal(struct_lit);
-        return PARSE_EXPR_OK;
     } else if (tk_view_front(*tokens).type == TOKEN_NONTYPE) {
         return PARSE_EXPR_NONE;
     } else {
         return PARSE_EXPR_NONE;
     }
+
+    while (try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
+        Token member = {0};
+        if (!try_consume(&member, tokens, TOKEN_SYMBOL)) {
+            unreachable("");
+        }
+
+        Node_member_access_untyped* access = node_member_access_untyped_new(member.pos);
+        access->callee = *result;
+        access->member_name = member.text;
+
+        *result = node_wrap_member_access_untyped(access);
+    }
+
+    return PARSE_EXPR_OK;
 }
 
 static bool expr_is_unary(const Node_expr* expr) {

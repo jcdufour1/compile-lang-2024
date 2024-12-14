@@ -32,10 +32,6 @@ static inline Node* get_left_child(Node* node) {
             unreachable("");
         case NODE_LOAD_ELEMENT_PTR:
             unreachable("");
-        case NODE_MEMBER_SYM_PIECE_UNTYPED:
-            unreachable("");
-        case NODE_MEMBER_SYM_PIECE_TYPED:
-            unreachable("");
         case NODE_FUNCTION_PARAMS:
             unreachable("");
         case NODE_FOR_RANGE:

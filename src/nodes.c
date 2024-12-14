@@ -36,10 +36,8 @@ static const char* NODE_IF_STATEMENT_DESCRIPTION = "if_statement";
 static const char* NODE_CONDITION_DESCRIPTION = "condition";
 static const char* NODE_STRUCT_DEF_DESCRIPTION = "struct_def";
 static const char* NODE_STRUCT_LITERAL_DESCRIPTION = "struct_literal";
-static const char* NODE_MEMBER_SYM_TYPED_DESCRIPTION = "member_sym_typed";
-static const char* NODE_MEMBER_SYM_UNTYPED_DESCRIPTION = "member_sym_untyped";
-static const char* NODE_MEMBER_SYM_PIECE_TYPED_DESCRIPTION = "member_sym_piece_typed";
-static const char* NODE_MEMBER_SYM_PIECE_UNTYPED_DESCRIPTION = "member_sym_piece_untyped";
+static const char* NODE_MEMBER_ACCESS_TYPED_DESCRIPTION = "member_access_typed";
+static const char* NODE_MEMBER_ACCESS_UNTYPED_DESCRIPTION = "member_access_untyped";
 static const char* NODE_LLVM_STORE_LITERAL_DESCRIPTION = "llvm_store_literal";
 static const char* NODE_LLVM_STORE_STRUCT_LITERAL_DESCRIPTION = "llvm_store_struct_literal";
 static const char* NODE_LOAD_STRUCT_ELEMENT_PTR_DESCRIPTION = "load_element_ptr";
@@ -121,10 +119,10 @@ static Str_view node_type_get_strv_expr(const Node_expr* node) {
             }
         }
         break;
-        case NODE_MEMBER_SYM_UNTYPED:
-            return str_view_from_cstr(NODE_MEMBER_SYM_UNTYPED_DESCRIPTION);
-        case NODE_MEMBER_SYM_TYPED:
-            return str_view_from_cstr(NODE_MEMBER_SYM_TYPED_DESCRIPTION);
+        case NODE_MEMBER_ACCESS_UNTYPED:
+            return str_view_from_cstr(NODE_MEMBER_ACCESS_UNTYPED_DESCRIPTION);
+        case NODE_MEMBER_ACCESS_TYPED:
+            return str_view_from_cstr(NODE_MEMBER_ACCESS_TYPED_DESCRIPTION);
         case NODE_STRUCT_LITERAL:
             return str_view_from_cstr(NODE_STRUCT_LITERAL_DESCRIPTION);
         case NODE_FUNCTION_CALL:
@@ -197,10 +195,6 @@ static Str_view node_type_get_strv(const Node* node) {
             return str_view_from_cstr(NODE_IF_STATEMENT_DESCRIPTION);
         case NODE_CONDITION:
             return str_view_from_cstr(NODE_CONDITION_DESCRIPTION);
-        case NODE_MEMBER_SYM_PIECE_TYPED:
-            return str_view_from_cstr(NODE_MEMBER_SYM_PIECE_TYPED_DESCRIPTION);
-        case NODE_MEMBER_SYM_PIECE_UNTYPED:
-            return str_view_from_cstr(NODE_MEMBER_SYM_PIECE_UNTYPED_DESCRIPTION);
         case NODE_LOAD_ELEMENT_PTR:
             return str_view_from_cstr(NODE_LOAD_STRUCT_ELEMENT_PTR_DESCRIPTION);
         case NODE_LOAD_ANOTHER_NODE:
@@ -262,9 +256,6 @@ static void extend_expr_text(Arena* arena, String* string, const Node_expr* expr
         case NODE_SYMBOL_UNTYPED:
             string_extend_strv_in_par(arena, string, get_expr_name(expr));
             break;
-        case NODE_MEMBER_SYM_UNTYPED:
-            string_extend_strv_in_par(arena, string, get_expr_name(expr));
-            break;
         case NODE_OPERATOR: {
             const Node_operator* operator = node_unwrap_operator_const(expr);
             if (operator->type == NODE_UNARY) {
@@ -286,8 +277,11 @@ static void extend_expr_text(Arena* arena, String* string, const Node_expr* expr
             extend_lang_type_to_string(arena, string, get_lang_type_expr(expr), true);
             string_extend_strv_in_par(arena, string, get_expr_name(expr));
             break;
-        case NODE_MEMBER_SYM_TYPED:
+        case NODE_MEMBER_ACCESS_TYPED:
             extend_lang_type_to_string(arena, string, get_lang_type_expr(expr), true);
+            string_extend_strv_in_par(arena, string, get_expr_name(expr));
+            break;
+        case NODE_MEMBER_ACCESS_UNTYPED:
             string_extend_strv_in_par(arena, string, get_expr_name(expr));
             break;
         case NODE_FUNCTION_CALL:
@@ -356,9 +350,6 @@ static bool extend_node_text(Arena* arena, String* string, const Node* node, boo
         case NODE_COND_GOTO:
             print_node_src(arena, string, node, do_recursion);
             break;
-        case NODE_MEMBER_SYM_PIECE_UNTYPED:
-            string_extend_strv_in_par(arena, string, get_node_name(node));
-            break;
         case NODE_LANG_TYPE:
             extend_lang_type_to_string(arena, string, node_unwrap_lang_type_const(node)->lang_type, true);
             break;
@@ -403,10 +394,6 @@ static bool extend_node_text(Arena* arena, String* string, const Node* node, boo
         case NODE_LLVM_STORE_STRUCT_LITERAL:
             extend_lang_type_to_string(arena, string, get_lang_type(node), true);
             print_node_dest(arena, string, node, do_recursion);
-            break;
-        case NODE_MEMBER_SYM_PIECE_TYPED:
-            extend_lang_type_to_string(arena, string, get_lang_type(node), true);
-            string_extend_strv_in_par(arena, string, get_node_name(node));
             break;
         case NODE_LOAD_ELEMENT_PTR:
             extend_lang_type_to_string(arena, string, get_lang_type(node), true);

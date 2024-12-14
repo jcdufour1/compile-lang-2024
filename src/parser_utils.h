@@ -95,31 +95,26 @@ bool lang_type_is_enum(const Env* env, Lang_type lang_type);
 
 bool lang_type_is_primitive(const Env* env, Lang_type lang_type);
 
-static inline size_t get_member_index(const Struct_def_base* struct_def, const Node_member_sym_piece_typed* member_symbol) {
+static inline size_t get_member_index(const Struct_def_base* struct_def, Str_view member_name) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         const Node* curr_member = vec_at(&struct_def->members, idx);
-        log(LOG_DEBUG, NODE_FMT"\n", node_print(curr_member));
-        Str_view name_to_find = get_node_name(node_wrap_member_sym_piece_typed_const(member_symbol));
-        log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(name_to_find));
-        if (str_view_is_equal(get_node_name(curr_member), name_to_find)) {
+        if (str_view_is_equal(get_node_name(curr_member), member_name)) {
             return idx;
         }
     }
     unreachable("member not found");
 }
 
-static inline bool try_get_member_def(Node_variable_def** member_def, const Struct_def_base* struct_def, const Node* member_symbol) {
-    assert(
-        member_symbol->type == NODE_MEMBER_SYM_PIECE_TYPED ||
-        member_symbol->type == NODE_MEMBER_SYM_PIECE_UNTYPED
-    );
-
+static inline bool try_get_member_def(
+    Node_variable_def** member_def,
+    const Struct_def_base* struct_def,
+    Str_view member_name
+) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         Node* curr_member = vec_at(&struct_def->members, idx);
-        if (str_view_is_equal(get_node_name(curr_member), get_node_name(member_symbol))) {
+        if (str_view_is_equal(get_node_name(curr_member), member_name)) {
             assert(get_lang_type(curr_member).str.count > 0);
             *member_def = node_unwrap_variable_def(node_unwrap_def(curr_member));
-            log(LOG_DEBUG, "try_get_member_def: "NODE_FMT"\n", node_print(curr_member));
             return true;
         }
     }
@@ -139,13 +134,13 @@ bool try_set_raw_union_def_types(const Env* env, Node_raw_union_def** new_node, 
 
 bool try_set_enum_def_types(const Env* env, Node_enum_def** new_node, Lang_type* lang_type, Node_enum_def* node);
 
-static inline const Node_variable_def* get_member_def(const Struct_def_base* struct_def, const Node* member_symbol) {
-    Node_variable_def* member_def;
-    if (!try_get_member_def(&member_def, struct_def, member_symbol)) {
-        unreachable("could not find member definition");
-    }
-    return member_def;
-}
+//static inline const Node_variable_def* get_member_def(const Struct_def_base* struct_def, const Node* member_symbol) {
+//    Node_variable_def* member_def;
+//    if (!try_get_member_def(&member_def, struct_def, member_symbol)) {
+//        unreachable("could not find member definition");
+//    }
+//    return member_def;
+//}
 
 bool try_get_struct_def(const Env* env, Node_struct_def** struct_def, Node* node);
 
@@ -183,7 +178,7 @@ void set_symbol_type(Node_symbol_untyped* sym_untyped);
 
 bool try_set_function_call_types(const Env* env, Node_expr** new_node, Lang_type* lang_type, Node_function_call* fun_call);
 
-bool try_set_member_symbol_types(const Env* env, Node** new_node, Lang_type* lang_type, Node_member_sym_untyped* struct_memb_sym);
+bool try_set_member_access_types(const Env* env, Node** new_node, Lang_type* lang_type, Node_member_access_untyped* access);
 
 Node_operator* condition_get_default_child(Node_expr* if_cond_child);
 

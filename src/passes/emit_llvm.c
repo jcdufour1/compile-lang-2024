@@ -237,7 +237,8 @@ static void emit_function_call_arguments(const Env* env, String* output, const N
             case NODE_LITERAL:
                 extend_literal_decl(env, output, node_unwrap_literal_const(argument), true);
                 break;
-            case NODE_MEMBER_SYM_TYPED:
+            case NODE_MEMBER_ACCESS_TYPED:
+                // TODO: make test case with member access in function arg directly
                 unreachable("");
                 break;
             case NODE_STRUCT_LITERAL:
@@ -656,8 +657,6 @@ static void emit_return(const Env* env, String* output, const Node_return* fun_r
         }
         case NODE_SYMBOL_TYPED:
             unreachable("");
-        case NODE_MEMBER_SYM_TYPED:
-            unreachable("");
         case NODE_SYMBOL_UNTYPED:
             unreachable("untyped symbols should not still be present");
         case NODE_LLVM_PLACEHOLDER: {
@@ -744,11 +743,20 @@ static void emit_raw_union_def(const Env* env, String* output, const Node_raw_un
     emit_struct_def_base(env, output, &raw_union_def->base);
 }
 
-static void emit_load_struct_element_pointer(String* output, const Node_load_element_ptr* load_elem_ptr) {
+static void emit_load_struct_element_pointer(const Env* env, String* output, const Node_load_element_ptr* load_elem_ptr) {
     assert(load_elem_ptr->lang_type.str.count > 0);
     string_extend_cstr(&a_main, output, "    %"); 
     string_extend_size_t(&a_main, output, load_elem_ptr->llvm_id);
-    string_extend_cstr(&a_main, output, " = getelementptr inbounds %struct.");
+
+    if (lang_type_is_struct(env, get_lang_type(load_elem_ptr->node_src.node))) {
+        string_extend_cstr(&a_main, output, " = getelementptr inbounds %struct.");
+    } else if (lang_type_is_raw_union(env, get_lang_type(load_elem_ptr->node_src.node))) {
+        string_extend_cstr(&a_main, output, " = getelementptr inbounds %union.");
+    } else {
+        //unreachable(LANG_TYPE_FMT"\n", lang_type_print(load_elem_ptr->node_src.node));
+        todo();
+    }
+
     Lang_type lang_type = get_lang_type(load_elem_ptr->node_src.node);
     lang_type.pointer_depth = 0;
     extend_lang_type_to_string(&a_main, output, lang_type, false);
@@ -768,7 +776,7 @@ static void emit_expr(Env* env, String* output, const Node_expr* expr) {
         case NODE_FUNCTION_CALL:
             emit_function_call(env, output, node_unwrap_function_call_const(expr));
             break;
-        case NODE_MEMBER_SYM_TYPED:
+        case NODE_MEMBER_ACCESS_TYPED:
             break;
         case NODE_LITERAL:
             extend_literal_decl(env, output, node_unwrap_literal_const(expr), true);
@@ -841,7 +849,7 @@ static void emit_block(Env* env, String* output, const Node_block* block) {
                 unreachable("");
                 break;
             case NODE_LOAD_ELEMENT_PTR:
-                emit_load_struct_element_pointer(output, node_unwrap_load_element_ptr_const(statement));
+                emit_load_struct_element_pointer(env, output, node_unwrap_load_element_ptr_const(statement));
                 break;
             case NODE_LOAD_ANOTHER_NODE:
                 emit_load_another_node(env, output, node_unwrap_load_another_node_const(statement));
