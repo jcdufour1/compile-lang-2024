@@ -25,45 +25,56 @@ INLINE void walk_tree_expr(Env* env, void (callback)(Env* env)) {
                 unreachable("");
             }
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
-            break;
+            return;
         }
         case NODE_SYMBOL_TYPED:
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
-            break;
+            return;
         case NODE_SYMBOL_UNTYPED:
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
-            break;
+            return;
         case NODE_MEMBER_ACCESS_TYPED: {
             walk_tree_traverse(env, node_wrap_expr(node_unwrap_member_access_typed(expr)->callee), callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
-            break;
+            return;
         }
         case NODE_MEMBER_ACCESS_UNTYPED: {
             walk_tree_traverse(env, node_wrap_expr(node_unwrap_member_access_untyped(expr)->callee), callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
-            break;
+            return;
+        }
+        case NODE_INDEX_TYPED: {
+            walk_tree_traverse(env, node_wrap_expr(node_unwrap_index_typed(expr)->index), callback);
+            walk_tree_traverse(env, node_wrap_expr(node_unwrap_index_typed(expr)->callee), callback);
+            assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
+            return;
+        }
+        case NODE_INDEX_UNTYPED: {
+            walk_tree_traverse(env, node_wrap_expr(node_unwrap_index_untyped(expr)->index), callback);
+            walk_tree_traverse(env, node_wrap_expr(node_unwrap_index_untyped(expr)->callee), callback);
+            assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
+            return;
         }
         case NODE_LITERAL:
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
-            break;
+            return;
         case NODE_STRUCT_LITERAL: {
             Node_ptr_vec* vector = &node_unwrap_struct_literal(expr)->members;
             walk_node_ptr_vec(env, vector, callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
-            break;
+            return;
         }
         case NODE_FUNCTION_CALL: {
             Expr_ptr_vec* vector = &node_unwrap_function_call(expr)->args;
             walk_expr_ptr_vec(env, vector, callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
-            break;
+            return;
         }
         case NODE_LLVM_PLACEHOLDER:
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
-            break;
-        default:
-            unreachable("");
+            return;
     }
+    unreachable("");
 }
 
 INLINE void walk_tree_def(Env* env, void (callback)(Env* env)) {

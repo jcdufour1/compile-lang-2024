@@ -52,6 +52,8 @@ typedef enum {
     TOKEN_SINGLE_DOT,
     TOKEN_DOUBLE_DOT,
     TOKEN_TRIPLE_DOT,
+    TOKEN_OPEN_SQ_BRACKET,
+    TOKEN_CLOSE_SQ_BRACKET,
 
     // keywords
     TOKEN_FN,
@@ -170,6 +172,10 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_ENUM:
             return false;
+        case TOKEN_OPEN_SQ_BRACKET:
+            return false;
+        case TOKEN_CLOSE_SQ_BRACKET:
+            return false;
     }
     unreachable("");
 }
@@ -263,6 +269,10 @@ static inline bool token_is_operator(Token token) {
         case TOKEN_ELSE:
             return false;
         case TOKEN_ENUM:
+            return false;
+        case TOKEN_OPEN_SQ_BRACKET:
+            return false;
+        case TOKEN_CLOSE_SQ_BRACKET:
             return false;
     }
     unreachable(TOKEN_FMT"\n", token_print(token));
@@ -366,6 +376,10 @@ static inline bool token_is_closing(Token curr_token) {
             return false;
         case TOKEN_ENUM:
             return false;
+        case TOKEN_OPEN_SQ_BRACKET:
+            return false;
+        case TOKEN_CLOSE_SQ_BRACKET:
+            return true;
     }
     unreachable("");
 }
@@ -459,6 +473,10 @@ static inline bool token_is_opening(Token curr_token) {
         case TOKEN_ELSE:
             return false;
         case TOKEN_ENUM:
+            return false;
+        case TOKEN_OPEN_SQ_BRACKET:
+            return true;
+        case TOKEN_CLOSE_SQ_BRACKET:
             return false;
     }
     unreachable("");

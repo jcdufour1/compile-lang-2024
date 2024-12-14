@@ -384,6 +384,31 @@ static Llvm_register_sym load_ptr_member_access_typed(
     //return result;
 }
 
+static Llvm_register_sym load_ptr_index_typed(
+    Env* env,
+    Node_block* new_block,
+    Node_index_typed* old_index
+) {
+    Pos pos = node_wrap_expr(node_wrap_index_typed(old_index))->pos;
+
+    Llvm_register_sym new_callee = load_ptr_expr(env, new_block, old_index->callee);
+    Llvm_register_sym new_inner_index = load_ptr_expr(env, new_block, old_index->index);
+
+    Node_load_element_ptr* new_load = node_load_element_ptr_new(pos);
+    new_load->lang_type = old_index->lang_type;
+    new_load->struct_index = get_member_index(&def_base, old_index->member_name);
+    new_load->node_src = new_callee;
+    new_load->name = old_index->member_name;
+
+    vec_append(&a_main, &new_block->children, node_wrap_load_element_ptr(new_load));
+    return (Llvm_register_sym) {
+        .lang_type = new_load->lang_type,
+        .node = node_wrap_load_element_ptr(new_load)
+    };
+    //assert(result.node);
+    //return result;
+}
+
 static Llvm_register_sym load_member_access_typed(
     Env* env,
     Node_block* new_block,
@@ -392,6 +417,26 @@ static Llvm_register_sym load_member_access_typed(
     Pos pos = node_wrap_expr(node_wrap_member_access_typed(old_access))->pos;
 
     Llvm_register_sym ptr = load_ptr_member_access_typed(env, new_block, old_access);
+
+    Node_load_another_node* new_load = node_load_another_node_new(pos);
+    new_load->node_src = ptr;
+    new_load->lang_type = ptr.lang_type;
+
+    vec_append(&a_main, &new_block->children, node_wrap_load_another_node(new_load));
+    return (Llvm_register_sym) {
+        .lang_type = new_load->lang_type,
+        .node = node_wrap_load_another_node(new_load)
+    };
+}
+
+static Llvm_register_sym load_index_typed(
+    Env* env,
+    Node_block* new_block,
+    Node_index_typed* old_index
+) {
+    Pos pos = node_wrap_expr(node_wrap_index_typed(old_index))->pos;
+
+    Llvm_register_sym ptr = load_ptr_index_typed(env, new_block, old_index);
 
     Node_load_another_node* new_load = node_load_another_node_new(pos);
     new_load->node_src = ptr;
@@ -442,6 +487,8 @@ static Llvm_register_sym load_expr(Env* env, Node_block* new_block, Node_expr* o
             return load_operator(env, new_block, node_unwrap_operator(old_expr));
         case NODE_MEMBER_ACCESS_TYPED:
             return load_member_access_typed(env, new_block, node_unwrap_member_access_typed(old_expr));
+        case NODE_INDEX_TYPED:
+            return load_index_typed(env, new_block, node_unwrap_index_typed(old_expr));
         case NODE_STRUCT_LITERAL:
             return load_struct_literal(env, new_block, node_unwrap_struct_literal(old_expr));
         default:

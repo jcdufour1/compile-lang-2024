@@ -103,6 +103,10 @@ static inline Llvm_id get_llvm_id_expr(const Node_expr* expr) {
             unreachable("");
         case NODE_MEMBER_ACCESS_UNTYPED:
             unreachable("");
+        case NODE_INDEX_TYPED:
+            unreachable("");
+        case NODE_INDEX_UNTYPED:
+            unreachable("");
         case NODE_LITERAL:
             unreachable("");
         case NODE_OPERATOR: {
@@ -229,6 +233,10 @@ static inline Lang_type get_lang_type_expr(const Node_expr* expr) {
             unreachable("");
         case NODE_MEMBER_ACCESS_TYPED:
             return node_unwrap_member_access_typed_const(expr)->lang_type;
+        case NODE_INDEX_TYPED:
+            return node_unwrap_index_typed_const(expr)->lang_type;
+        case NODE_INDEX_UNTYPED:
+            unreachable("");
         case NODE_LITERAL:
             return node_unwrap_literal_const(expr)->lang_type;
         case NODE_OPERATOR:
@@ -276,6 +284,10 @@ static inline Lang_type* get_lang_type_expr_ref(Node_expr* expr) {
         case NODE_MEMBER_ACCESS_UNTYPED:
             unreachable("");
         case NODE_MEMBER_ACCESS_TYPED:
+            unreachable("");
+        case NODE_INDEX_TYPED:
+            unreachable("");
+        case NODE_INDEX_UNTYPED:
             unreachable("");
         case NODE_LITERAL:
             return &node_unwrap_literal(expr)->lang_type;
@@ -427,6 +439,10 @@ static inline Node* get_expr_src(Node_expr* expr) {
             unreachable("");
         case NODE_MEMBER_ACCESS_TYPED:
             unreachable("");
+        case NODE_INDEX_TYPED:
+            unreachable("");
+        case NODE_INDEX_UNTYPED:
+            unreachable("");
         case NODE_LITERAL:
             unreachable("");
         case NODE_SYMBOL_UNTYPED:
@@ -503,6 +519,10 @@ static inline Node* get_expr_dest(Node_expr* expr) {
         case NODE_MEMBER_ACCESS_UNTYPED:
             unreachable("");
         case NODE_MEMBER_ACCESS_TYPED:
+            unreachable("");
+        case NODE_INDEX_TYPED:
+            unreachable("");
+        case NODE_INDEX_UNTYPED:
             unreachable("");
         case NODE_LITERAL:
             unreachable("");
@@ -582,6 +602,10 @@ static inline Str_view get_expr_name(const Node_expr* expr) {
             return node_unwrap_member_access_untyped_const(expr)->member_name;
         case NODE_MEMBER_ACCESS_TYPED:
             return node_unwrap_member_access_typed_const(expr)->member_name;
+        case NODE_INDEX_TYPED:
+            unreachable("");
+        case NODE_INDEX_UNTYPED:
+            unreachable("");
         case NODE_SYMBOL_UNTYPED:
             return node_unwrap_symbol_untyped_const(expr)->name;
         case NODE_SYMBOL_TYPED:

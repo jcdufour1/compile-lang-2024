@@ -38,6 +38,8 @@ static const char* NODE_STRUCT_DEF_DESCRIPTION = "struct_def";
 static const char* NODE_STRUCT_LITERAL_DESCRIPTION = "struct_literal";
 static const char* NODE_MEMBER_ACCESS_TYPED_DESCRIPTION = "member_access_typed";
 static const char* NODE_MEMBER_ACCESS_UNTYPED_DESCRIPTION = "member_access_untyped";
+static const char* NODE_INDEX_TYPED_DESCRIPTION = "index_typed";
+static const char* NODE_INDEX_UNTYPED_DESCRIPTION = "index_untyped";
 static const char* NODE_LLVM_STORE_LITERAL_DESCRIPTION = "llvm_store_literal";
 static const char* NODE_LLVM_STORE_STRUCT_LITERAL_DESCRIPTION = "llvm_store_struct_literal";
 static const char* NODE_LOAD_STRUCT_ELEMENT_PTR_DESCRIPTION = "load_element_ptr";
@@ -123,6 +125,10 @@ static Str_view node_type_get_strv_expr(const Node_expr* node) {
             return str_view_from_cstr(NODE_MEMBER_ACCESS_UNTYPED_DESCRIPTION);
         case NODE_MEMBER_ACCESS_TYPED:
             return str_view_from_cstr(NODE_MEMBER_ACCESS_TYPED_DESCRIPTION);
+        case NODE_INDEX_TYPED:
+            return str_view_from_cstr(NODE_INDEX_UNTYPED_DESCRIPTION);
+        case NODE_INDEX_UNTYPED:
+            return str_view_from_cstr(NODE_INDEX_TYPED_DESCRIPTION);
         case NODE_STRUCT_LITERAL:
             return str_view_from_cstr(NODE_STRUCT_LITERAL_DESCRIPTION);
         case NODE_FUNCTION_CALL:
@@ -251,11 +257,11 @@ static void extend_expr_text(Arena* arena, String* string, const Node_expr* expr
             } else {
                 unreachable("");
             }
-            break;
+            return;
         }
         case NODE_SYMBOL_UNTYPED:
             string_extend_strv_in_par(arena, string, get_expr_name(expr));
-            break;
+            return;
         case NODE_OPERATOR: {
             const Node_operator* operator = node_unwrap_operator_const(expr);
             if (operator->type == NODE_UNARY) {
@@ -267,34 +273,38 @@ static void extend_expr_text(Arena* arena, String* string, const Node_expr* expr
             } else {
                 unreachable("");
             }
-            break;
+            return;
         }
         case NODE_STRUCT_LITERAL:
             extend_lang_type_to_string(arena, string, node_unwrap_struct_literal_const(expr)->lang_type, true);
             string_extend_strv(arena, string, get_expr_name(expr));
-            break;
+            return;
         case NODE_SYMBOL_TYPED:
             extend_lang_type_to_string(arena, string, get_lang_type_expr(expr), true);
             string_extend_strv_in_par(arena, string, get_expr_name(expr));
-            break;
+            return;
         case NODE_MEMBER_ACCESS_TYPED:
             extend_lang_type_to_string(arena, string, get_lang_type_expr(expr), true);
             string_extend_strv_in_par(arena, string, get_expr_name(expr));
-            break;
+            return;
         case NODE_MEMBER_ACCESS_UNTYPED:
             string_extend_strv_in_par(arena, string, get_expr_name(expr));
-            break;
+            return;
+        case NODE_INDEX_TYPED:
+            extend_lang_type_to_string(arena, string, get_lang_type_expr(expr), true);
+            return;
+        case NODE_INDEX_UNTYPED:
+            return;
         case NODE_FUNCTION_CALL:
             string_extend_strv_in_par(arena, string, get_expr_name(expr));
             string_extend_size_t(arena, string, get_llvm_id_expr(expr));
-            break;
+            return;
         case NODE_LLVM_PLACEHOLDER:
             extend_lang_type_to_string(arena, string, get_lang_type_expr(expr), true);
             print_node_src(arena, string, node_wrap_expr_const(expr), do_recursion);
-            break;
-        default:
-            unreachable("expr->type: %d\n", expr->type);
+            return;
     }
+    unreachable("");
 }
 
 static void extend_def_text(Arena* arena, String* string, const Node_def* def, bool do_recursion) {

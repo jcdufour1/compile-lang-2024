@@ -91,6 +91,10 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
             return str_view_from_cstr("else");
         case TOKEN_ENUM:
             return str_view_from_cstr("enum");
+        case TOKEN_OPEN_SQ_BRACKET:
+            return str_view_from_cstr("[");
+        case TOKEN_CLOSE_SQ_BRACKET:
+            return str_view_from_cstr("]");
     }
     unreachable("");
 }
@@ -147,7 +151,9 @@ Str_view token_print_internal(Arena* arena, Token token, bool msg_format) {
         case TOKEN_LET: // fallthrough
         case TOKEN_IN: // fallthrough
         case TOKEN_NEW_LINE: // fallthrough
-        case TOKEN_BREAK:
+        case TOKEN_BREAK: // fallthrough
+        case TOKEN_OPEN_SQ_BRACKET: // fallthrough
+        case TOKEN_CLOSE_SQ_BRACKET:
             break;
         case TOKEN_COMMENT: 
             // fallthrough

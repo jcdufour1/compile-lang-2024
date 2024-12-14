@@ -391,6 +391,10 @@ static bool can_end_statement(Token token) {
             return false;
         case TOKEN_ENUM:
             return false;
+        case TOKEN_OPEN_SQ_BRACKET:
+            return false;
+        case TOKEN_CLOSE_SQ_BRACKET:
+            return true;
     }
     unreachable("");
 }
@@ -508,6 +512,10 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_ELSE:
             return false;
         case TOKEN_ENUM:
+            return false;
+        case TOKEN_OPEN_SQ_BRACKET:
+            return false;
+        case TOKEN_CLOSE_SQ_BRACKET:
             return false;
     }
     unreachable("");
@@ -1437,17 +1445,43 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node_expr** resu
         return PARSE_EXPR_NONE;
     }
 
-    while (try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
-        Token member = {0};
-        if (!try_consume(&member, tokens, TOKEN_SYMBOL)) {
-            unreachable("");
+    while (1) {
+        Token bracket = {0};
+        if (try_consume(&bracket, tokens, TOKEN_SINGLE_DOT)) {
+            Token member = {0};
+            if (!try_consume(&member, tokens, TOKEN_SYMBOL)) {
+                unreachable("");
+            }
+
+            Node_member_access_untyped* access = node_member_access_untyped_new(bracket.pos);
+            access->callee = *result;
+            access->member_name = member.text;
+
+            *result = node_wrap_member_access_untyped(access);
+        } else if (try_consume(&bracket, tokens, TOKEN_OPEN_SQ_BRACKET)) {
+            Node_index_untyped* access = node_index_untyped_new(bracket.pos);
+
+            PARSE_EXPR_STATUS status = try_extract_expression(
+                env, &access->index, tokens, defer_sym_add
+            );
+            if (status != PARSE_EXPR_OK) {
+                return status;
+            }
+
+            access->callee = *result;
+
+            if (!try_consume(&bracket, tokens, TOKEN_CLOSE_SQ_BRACKET)) {
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_SQ_BRACKET, env->file_text,
+                    get_curr_pos(*tokens), "expected closing `]` after expression"
+                );
+                return PARSE_EXPR_ERROR;
+            }
+
+            *result = node_wrap_index_untyped(access);
+        } else {
+            break;
         }
-
-        Node_member_access_untyped* access = node_member_access_untyped_new(member.pos);
-        access->callee = *result;
-        access->member_name = member.text;
-
-        *result = node_wrap_member_access_untyped(access);
     }
 
     return PARSE_EXPR_OK;

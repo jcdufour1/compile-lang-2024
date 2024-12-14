@@ -19,6 +19,12 @@ void assign_llvm_ids_expr(Env* env) {
             node_unwrap_member_access_typed(curr_node)->llvm_id = llvm_id_for_next_var;
             llvm_id_for_next_var += 2;
             return;
+        case NODE_INDEX_UNTYPED:
+            unreachable("");
+        case NODE_INDEX_TYPED:
+            node_unwrap_index_typed(curr_node)->llvm_id = llvm_id_for_next_var;
+            llvm_id_for_next_var += 2;
+            return;
         case NODE_STRUCT_LITERAL:
             return;
         case NODE_SYMBOL_TYPED:

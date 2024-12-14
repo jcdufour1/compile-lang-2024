@@ -592,12 +592,30 @@ static void gen_member_access_typed(Str_view prefix, Type_vec* type_vec, Members
     gen_type(type_vec, member_types, type_new(prefix, "node_member_access_typed"), members);
 }
 
+static void gen_index_untyped(Str_view prefix, Type_vec* type_vec, Members* member_types) {
+    Members members = {0};
+    append_member(&members, "Node_expr*", "index");
+    append_member(&members, "Node_expr*", "callee");
+    gen_type(type_vec, member_types, type_new(prefix, "node_index_untyped"), members);
+}
+
+static void gen_index_typed(Str_view prefix, Type_vec* type_vec, Members* member_types) {
+    Members members = {0};
+    append_member(&members, "Lang_type", "lang_type");
+    append_member(&members, "Node_expr*", "index");
+    append_member(&members, "Node_expr*", "callee");
+    append_member(&members, "Llvm_id", "llvm_id");
+    gen_type(type_vec, member_types, type_new(prefix, "node_index_typed"), members);
+}
+
 static void gen_node_expr_part_1(Str_view prefix, Type_vec* type_vec, Members* member_types) {
     gen_function_call(prefix, type_vec, member_types);
     gen_symbol_untyped(prefix, type_vec, member_types);
     gen_symbol_typed(prefix, type_vec, member_types);
     gen_member_access_untyped(prefix, type_vec, member_types);
     gen_member_access_typed(prefix, type_vec, member_types);
+    gen_index_untyped(prefix, type_vec, member_types);
+    gen_index_typed(prefix, type_vec, member_types);
     gen_literal(prefix, type_vec, member_types);
     gen_struct_literal(prefix, type_vec, member_types); // TODO: consider struct_literal to be a literal
     gen_operator(prefix, type_vec, member_types);

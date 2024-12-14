@@ -180,6 +180,13 @@ bool try_set_function_call_types(const Env* env, Node_expr** new_node, Lang_type
 
 bool try_set_member_access_types(const Env* env, Node** new_node, Lang_type* lang_type, Node_member_access_untyped* access);
 
+bool try_set_index_types(
+    const Env* env,
+    Node** new_node,
+    Lang_type* lang_type,
+    Node_index_untyped* index
+);
+
 Node_operator* condition_get_default_child(Node_expr* if_cond_child);
 
 bool try_set_node_lang_type(const Env* env, Node** new_node, Lang_type* lang_type, Node* node);

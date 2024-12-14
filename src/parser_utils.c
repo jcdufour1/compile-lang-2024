@@ -872,6 +872,19 @@ bool try_set_expr_lang_type(const Env* env, Node_expr** new_node, Lang_type* lan
             //*lang_type = get_member_sym_piece_final_lang_type(node_unwrap_member_sym_typed(node));
             //*new_node = node;
             //return true;
+        case NODE_INDEX_UNTYPED: {
+            Node* new_node_ = NULL;
+            if (!try_set_index_types(env, &new_node_, lang_type, node_unwrap_index_untyped(node))) {
+                return false;
+            }
+            *new_node = node_unwrap_expr(new_node_);
+            return true;
+        }
+        case NODE_INDEX_TYPED:
+            todo();
+            //*lang_type = get_member_sym_piece_final_lang_type(node_unwrap_member_sym_typed(node));
+            //*new_node = node;
+            //return true;
         case NODE_SYMBOL_TYPED:
             *lang_type = get_lang_type_symbol_typed(node_unwrap_symbol_typed(node));
             *new_node = node;
@@ -886,7 +899,7 @@ bool try_set_expr_lang_type(const Env* env, Node_expr** new_node, Lang_type* lan
             return try_set_function_call_types(env, new_node, lang_type, node_unwrap_function_call(node));
         case NODE_STRUCT_LITERAL:
             unreachable("cannot set struct literal type here");
-        default:
+        case NODE_LLVM_PLACEHOLDER:
             unreachable("");
     }
     unreachable("");
@@ -1239,6 +1252,36 @@ bool try_set_member_access_types(
             unreachable("");
     }
     unreachable("");
+}
+
+bool try_set_index_types(
+    const Env* env,
+    Node** new_node,
+    Lang_type* lang_type,
+    Node_index_untyped* index
+) {
+    Node_expr* new_callee = NULL;
+    Node_expr* new_inner_index = NULL;
+    if (!try_set_expr_lang_type(env, &new_callee, lang_type, index->callee)) {
+        return false;
+    }
+    if (!try_set_expr_lang_type(env, &new_inner_index, lang_type, index->index)) {
+        return false;
+    }
+
+    Lang_type new_lang_type = get_lang_type_expr(new_callee);
+    if (new_lang_type.pointer_depth < 1) {
+        todo();
+    }
+    new_lang_type.pointer_depth--;
+
+    Node_index_typed* new_index = node_index_typed_new(node_wrap_expr(node_wrap_index_untyped(index))->pos);
+    new_index->lang_type = new_lang_type;
+    new_index->index = new_inner_index;
+    new_index->callee = new_callee;
+
+    *new_node = node_wrap_expr(node_wrap_index_typed(new_index));
+    return true;
 }
 
 Node_operator* condition_get_default_child(Node_expr* if_cond_child) {
