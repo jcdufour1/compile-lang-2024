@@ -813,6 +813,7 @@ bool try_set_binary_lang_type(const Env* env, Node_expr** new_node, Lang_type* l
 }
 
 bool try_set_unary_lang_type(const Env* env, Node_expr** new_node, Lang_type* lang_type, Node_unary* unary) {
+    Pos pos = node_wrap_expr(node_wrap_operator(node_wrap_unary(unary)))->pos;
     assert(lang_type);
     Lang_type init_lang_type;
     Node_expr* new_child;
@@ -828,7 +829,13 @@ bool try_set_unary_lang_type(const Env* env, Node_expr** new_node, Lang_type* la
             break;
         case TOKEN_DEREF:
             unary->lang_type = init_lang_type;
-            assert(unary->lang_type.pointer_depth > 0);
+            if (unary->lang_type.pointer_depth <= 0) {
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_DEREF_NON_POINTER, env->file_text, pos,
+                    "derefencing a type that is not a pointer\n"
+                );
+                return false;
+            }
             unary->lang_type.pointer_depth--;
             *lang_type = unary->lang_type;
             break;
