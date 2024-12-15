@@ -395,6 +395,8 @@ static bool can_end_statement(Token token) {
             return false;
         case TOKEN_CLOSE_SQ_BRACKET:
             return true;
+        case TOKEN_CHAR_LITERAL:
+            return true;
     }
     unreachable("");
 }
@@ -516,6 +518,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_OPEN_SQ_BRACKET:
             return false;
         case TOKEN_CLOSE_SQ_BRACKET:
+            return false;
+        case TOKEN_CHAR_LITERAL:
             return false;
     }
     unreachable("");

@@ -95,6 +95,8 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
             return str_view_from_cstr("[");
         case TOKEN_CLOSE_SQ_BRACKET:
             return str_view_from_cstr("]");
+        case TOKEN_CHAR_LITERAL:
+            return str_view_from_cstr("char");
     }
     unreachable("");
 }
@@ -158,6 +160,8 @@ Str_view token_print_internal(Arena* arena, Token token, bool msg_format) {
         case TOKEN_COMMENT: 
             // fallthrough
         case TOKEN_STRING_LITERAL: 
+            // fallthrough
+        case TOKEN_CHAR_LITERAL: 
             // fallthrough
         case TOKEN_INT_LITERAL:
             vec_append(arena, &buf, '(');

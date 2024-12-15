@@ -31,6 +31,9 @@ static void extend_literal(String* output, const Node_literal* literal) {
             return;
         case NODE_VOID:
             return;
+        case NODE_CHAR:
+            string_extend_int64_t(&a_main, output, node_unwrap_char_const(literal)->data);
+            return;
     }
     unreachable("");
 }
@@ -299,15 +302,15 @@ static void emit_alloca(const Env* env, String* output, const Node_alloca* alloc
 static void emit_unary_type(const Env* env, String* output, const Node_unary* unary) {
     switch (unary->token_type) {
         case TOKEN_UNSAFE_CAST:
-            if (unary->lang_type.pointer_depth > 0 && lang_type_is_signed(get_lang_type_expr(unary->child))) {
+            if (unary->lang_type.pointer_depth > 0 && lang_type_is_number(get_lang_type_expr(unary->child))) {
                 string_extend_cstr(&a_main, output, "inttoptr ");
                 extend_type_call_str(env, output, get_lang_type_expr(unary->child));
                 string_extend_cstr(&a_main, output, " ");
-            } else if (lang_type_is_signed(unary->lang_type) && get_lang_type_expr(unary->child).pointer_depth > 0) {
+            } else if (lang_type_is_number(unary->lang_type) && get_lang_type_expr(unary->child).pointer_depth > 0) {
                 string_extend_cstr(&a_main, output, "ptrtoint ");
                 extend_type_call_str(env, output, get_lang_type_expr(unary->child));
                 string_extend_cstr(&a_main, output, " ");
-            } else if (lang_type_is_signed(unary->lang_type) && lang_type_is_signed(get_lang_type_expr(unary->child))) {
+            } else if (lang_type_is_number(unary->lang_type) && lang_type_is_number(get_lang_type_expr(unary->child))) {
                 if (i_lang_type_to_bit_width(unary->lang_type) > i_lang_type_to_bit_width(get_lang_type_expr(unary->child))) {
                     string_extend_cstr(&a_main, output, "zext ");
                 } else {
@@ -525,7 +528,10 @@ static void emit_store_another_node_src_literal(
             return;
         case NODE_VOID:
             return;
+        case NODE_CHAR:
+            string_extend_int64_t(&a_main, output, node_unwrap_char_const(literal)->data);
     }
+    unreachable("");
 }
 
 static void emit_store_another_node_src_expr(const Env* env, String* output, const Node_expr* expr) {
@@ -769,7 +775,15 @@ static void emit_load_struct_element_pointer(const Env* env, String* output, con
     string_extend_cstr(&a_main, output, ", ");
     extend_type_call_str(env, output, get_lang_type(load_elem_ptr->struct_index.node));
     string_extend_cstr(&a_main, output, " ");
-    emit_operator_operand(output, node_unwrap_expr_const(load_elem_ptr->struct_index.node));
+    log_tree(LOG_DEBUG, load_elem_ptr->struct_index.node);
+
+    if (load_elem_ptr->struct_index.node->type == NODE_LOAD_ANOTHER_NODE) {
+        string_extend_cstr(&a_main, output, "%");
+        string_extend_size_t(&a_main, output, get_llvm_id(load_elem_ptr->struct_index.node));
+    } else {
+        emit_operator_operand(output, node_unwrap_expr_const(load_elem_ptr->struct_index.node));
+    }
+
     vec_append(&a_main, output, '\n');
 }
 

@@ -14,6 +14,17 @@ fn no() i32 {
     return 0
 }
 
+fn test_return_msg() i32 {
+    // test that there is no diagnostic "no return statement", etc.
+    if 8*3 == 0 {
+        return 0
+    } else if 8*1 == 1 {
+    } else {
+        return 2
+    }
+    return 4
+}
+
 fn main() i32 {
     if 8*3 < 5 {
         puts("no");
@@ -85,5 +96,8 @@ fn main() i32 {
     if !yes() {
         puts("no8");
     }
+
+    test_return_msg()
+
     return 0
 }

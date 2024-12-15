@@ -108,8 +108,12 @@ bool lang_type_is_unsigned(Lang_type lang_type) {
     return lang_type_is_number_finish(lang_type);
 }
 
+bool lang_type_is_number(Lang_type lang_type) {
+    return lang_type_is_unsigned(lang_type) || lang_type_is_signed(lang_type);
+}
+
 int64_t i_lang_type_to_bit_width(Lang_type lang_type) {
-    assert(lang_type_is_signed(lang_type));
+    //assert(lang_type_is_signed(lang_type));
     return str_view_to_int64_t(str_view_slice(lang_type.str, 1, lang_type.str.count - 1));
 }
 
@@ -305,6 +309,9 @@ Node_literal* literal_new(Str_view value, TOKEN_TYPE token_type, Pos pos) {
             break;
         case TOKEN_VOID:
             literal->type = NODE_VOID;
+            break;
+        case TOKEN_CHAR_LITERAL:
+            literal->type = NODE_CHAR;
             break;
         default:
             unreachable("");
@@ -586,6 +593,9 @@ static void try_set_literal_lang_type(Lang_type* lang_type, Node_literal* litera
         case TOKEN_VOID:
             literal->lang_type = lang_type_new_from_cstr("void", 0);
             break;
+        case TOKEN_CHAR_LITERAL:
+            literal->lang_type = lang_type_new_from_cstr("u8", 0);
+            break;
         default:
             unreachable("");
     }
@@ -762,11 +772,11 @@ bool try_set_unary_lang_type(const Env* env, Node_expr** new_node, Lang_type* la
             break;
         case TOKEN_UNSAFE_CAST:
             assert(unary->lang_type.str.count > 0);
-            if (unary->lang_type.pointer_depth > 0 && lang_type_is_signed(get_lang_type_expr(unary->child))) {
+            if (unary->lang_type.pointer_depth > 0 && lang_type_is_number(get_lang_type_expr(unary->child))) {
                 *lang_type = init_lang_type;
-            } else if (lang_type_is_signed(unary->lang_type) && get_lang_type_expr(unary->child).pointer_depth > 0) {
+            } else if (lang_type_is_number(unary->lang_type) && get_lang_type_expr(unary->child).pointer_depth > 0) {
                 *lang_type = init_lang_type;
-            } else if (lang_type_is_signed(unary->lang_type) && lang_type_is_signed(get_lang_type_expr(unary->child))) {
+            } else if (lang_type_is_number(unary->lang_type) && lang_type_is_number(get_lang_type_expr(unary->child))) {
                 *lang_type = init_lang_type;
             } else if (unary->lang_type.pointer_depth > 0 && get_lang_type_expr(unary->child).pointer_depth > 0) {
                 *lang_type = init_lang_type;

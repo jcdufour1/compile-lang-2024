@@ -146,10 +146,11 @@ static Llvm_register_sym load_ptr_symbol_typed(
     }
 
     assert(var_def);
+    log(LOG_DEBUG, NODE_FMT"\n", node_print((Node*)var_def));
+    log(LOG_DEBUG, NODE_FMT"\n", node_print((Node*)old_sym));
+    //log(LOG_DEBUG, NODE_FMT"\n", node_print(var_def->storage_location.node));
     assert(lang_type_is_equal(var_def->lang_type, get_lang_type_symbol_typed(old_sym)));
 
-    log(LOG_DEBUG, NODE_FMT"\n", node_print((Node*)var_def));
-    log(LOG_DEBUG, NODE_FMT"\n", node_print(var_def->storage_location.node));
     return var_def->storage_location;
 }
 
@@ -270,74 +271,9 @@ static Llvm_register_sym load_operator(
             return load_binary(env, new_block, node_unwrap_binary(old_oper));
         case NODE_UNARY:
             return load_unary(env, new_block, node_unwrap_unary(old_oper));
-        default:
-            unreachable("");
     }
+    unreachable("");
 }
-
-// TODO: clone in this function
-//static Llvm_register_sym do_load_struct_element_ptr(
-//    Env* env,
-//    Node_block* new_block,
-//    Node_member_access_typed* symbol_call
-//) {
-//    Llvm_register_sym result;
-//
-//    Node* prev_struct_sym = node_wrap_expr(node_wrap_member_sym_typed(symbol_call));
-//    Llvm_register_sym node_element_ptr_to_load = get_storage_location(env, symbol_call->name);
-//
-//    Node_def* struct_var_def = NULL;
-//    if (!symbol_lookup(&struct_var_def, env, symbol_call->name)) {
-//        todo();
-//    }
-//    Lang_type type_load_from = get_lang_type_def(struct_var_def);
-//
-//    Node_load_element_ptr* load_element_ptr = NULL;
-//    for (size_t idx = 0; idx < symbol_call->children.info.count; idx++) {
-//        Node* element_sym_ = vec_at(&symbol_call->children, idx);
-//        Node_member_sym_piece_typed* element_sym = node_unwrap_member_sym_piece_typed(element_sym_);
-//
-//        //log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(type_load_from));
-//        if (lang_type_is_struct(env, type_load_from)) {
-//            load_element_ptr = node_load_element_ptr_new(node_wrap_member_sym_piece_typed(element_sym)->pos);
-//            load_element_ptr->name = get_node_name(prev_struct_sym);
-//            load_element_ptr->lang_type = element_sym->lang_type;
-//            load_element_ptr->struct_index = element_sym->struct_index;
-//            load_element_ptr->node_src = node_element_ptr_to_load;
-//            if (!load_element_ptr->node_src.node) {
-//                log_tree(LOG_DEBUG, (Node*)symbol_call);
-//                unreachable("idx: %zu\n", idx);
-//            }
-//            vec_append(&a_main, &new_block->children, node_wrap_load_element_ptr(load_element_ptr));
-//        }
-//
-//        type_load_from = element_sym->lang_type;
-//        prev_struct_sym = node_wrap_member_sym_piece_typed(element_sym);
-//        if (load_element_ptr) {
-//            node_element_ptr_to_load = llvm_register_sym_new(node_wrap_load_element_ptr(load_element_ptr));
-//        } else {
-//            memset(&node_element_ptr_to_load, 0, sizeof(node_element_ptr_to_load));
-//        }
-//    }
-//
-//    if (load_element_ptr) {
-//        result = llvm_register_sym_new(node_wrap_load_element_ptr(load_element_ptr));
-//        result.lang_type = load_element_ptr->lang_type;
-//        result.node = node_wrap_load_element_ptr(load_element_ptr);
-//        assert(result.node);
-//        return result;
-//    } else {
-//        result = get_storage_location(env, get_expr_name(node_wrap_member_sym_typed(symbol_call)));
-//        Node_def* struct_var_def = NULL;
-//        if (!symbol_lookup(&struct_var_def, env, get_expr_name(node_wrap_member_sym_typed(symbol_call)))) {
-//            todo();
-//        }
-//        result.lang_type = get_member_sym_piece_final_lang_type(symbol_call);
-//        assert(result.node);
-//        return result;
-//    }
-//    unreachable("");
-//}
 
 static Llvm_register_sym load_ptr_member_access_typed(
     Env* env,
@@ -639,7 +575,7 @@ static Llvm_register_sym load_alloca(
     // make id system to make this actually possible
     //Node_alloca* new_alloca = node_clone_alloca(old_alloca);
 
-    vec_append(&a_main, &new_block->children, node_wrap_alloca((Node_alloca*)old_alloca));
+    vec_insert(&a_main, &new_block->children, 0, node_wrap_alloca((Node_alloca*)old_alloca));
 
     return (Llvm_register_sym) {
         .lang_type = old_alloca->lang_type,

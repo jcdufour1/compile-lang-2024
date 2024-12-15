@@ -11,6 +11,8 @@ bool lang_type_is_unsigned(Lang_type lang_type);
 
 bool lang_type_is_signed(Lang_type lang_type);
 
+bool lang_type_is_number(Lang_type lang_type);
+
 Lang_type lang_type_unsigned_to_signed(Lang_type lang_type);
 
 int64_t i_lang_type_to_bit_width(Lang_type lang_type);

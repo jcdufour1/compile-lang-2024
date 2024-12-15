@@ -485,6 +485,12 @@ static void gen_string(Str_view prefix, Type_vec* type_vec, Members* member_type
     gen_type(type_vec, member_types, type_new(prefix, "node_string"), members);
 }
 
+static void gen_char(Str_view prefix, Type_vec* type_vec, Members* member_types) {
+    Members members = {0};
+    append_member(&members, "char", "data");
+    gen_type(type_vec, member_types, type_new(prefix, "Node_char"), members);
+}
+
 static void gen_number(Str_view prefix, Type_vec* type_vec, Members* member_types) {
     Members members = {0};
     append_member(&members, "int64_t", "data");
@@ -508,6 +514,7 @@ static void gen_node_literal_part_1(Str_view prefix, Type_vec* type_vec, Members
     gen_string(prefix, type_vec, member_types);
     gen_void(prefix, type_vec, member_types);
     gen_enum_lit(prefix, type_vec, member_types);
+    gen_char(prefix, type_vec, member_types);
 
     gen_union(str_view_from_cstr("Node_literal_as"), members_to_first_upper(*member_types));
     gen_enum(str_view_from_cstr("NODE_LITERAL_TYPE"), members_to_upper(*member_types));

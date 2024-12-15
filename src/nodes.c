@@ -50,6 +50,7 @@ static const char* NODE_RAW_UNION_DEF_DESCRIPTION = "raw_union";
 static const char* NODE_IF_ELSE_CHAIN_DESCRIPTION = "if_else_chain";
 static const char* NODE_ENUM_DEF_DESCRIPTION = "enum_def";
 static const char* NODE_ENUM_LIT_DESCRIPTION = "enum_lit";
+static const char* NODE_CHAR_DESCRIPTION = "char";
 
 void extend_lang_type_to_string(Arena* arena, String* string, Lang_type lang_type, bool surround_in_lt_gt) {
     if (surround_in_lt_gt) {
@@ -236,29 +237,40 @@ static void print_node_src(Arena* arena, String* string, const Node* node, bool 
     //extend_node_text(arena, string, node_unwrap_llvm_placeholder_const(node_unwrap_expr_const(node))->llvm_reg.node, false);
 }
 
+static void extend_literal_text(Arena* arena, String* string, const Node_literal* literal) {
+    extend_lang_type_to_string(arena, string, literal->lang_type, true);
+    string_extend_strv(arena, string, literal->name);
+
+    switch (literal->type) {
+        case NODE_STRING:
+            string_extend_strv_in_par(arena, string, node_unwrap_string_const(literal)->data);
+            return;
+        case NODE_NUMBER:
+            string_extend_cstr(arena, string, "(");
+            string_extend_int64_t(arena, string, node_unwrap_number_const(literal)->data);
+            string_extend_cstr(arena, string, ")");
+            return;
+        case NODE_VOID:
+            string_extend_strv_in_par(arena, string, str_view_from_cstr("void"));
+            return;
+        case NODE_ENUM_LIT:
+            string_extend_strv_in_par(arena, string, str_view_from_cstr(NODE_ENUM_LIT_DESCRIPTION));
+            string_extend_int64_t(arena, string, node_unwrap_enum_lit_const(literal)->data);
+            return;
+        case NODE_CHAR:
+            string_extend_strv_in_par(arena, string, str_view_from_cstr(NODE_CHAR_DESCRIPTION));
+            string_extend_int64_t(arena, string, node_unwrap_char_const(literal)->data);
+            return;
+    }
+    unreachable("");
+}
+
 static void extend_expr_text(Arena* arena, String* string, const Node_expr* expr, bool do_recursion) {
     (void) do_recursion;
     switch (expr->type) {
-        case NODE_LITERAL: {
-            const Node_literal* literal = node_unwrap_literal_const(expr);
-            extend_lang_type_to_string(arena, string, literal->lang_type, true);
-            string_extend_strv(arena, string, literal->name);
-            if (literal->type == NODE_STRING) {
-                string_extend_strv_in_par(arena, string, node_unwrap_string_const(literal)->data);
-            } else if (literal->type == NODE_NUMBER) {
-                string_extend_cstr(arena, string, "(");
-                string_extend_int64_t(arena, string, node_unwrap_number_const(literal)->data);
-                string_extend_cstr(arena, string, ")");
-            } else if (literal->type == NODE_VOID) {
-                string_extend_strv_in_par(arena, string, str_view_from_cstr("void"));
-            } else if (literal->type == NODE_ENUM_LIT) {
-                string_extend_strv_in_par(arena, string, str_view_from_cstr(NODE_ENUM_LIT_DESCRIPTION));
-                string_extend_int64_t(arena, string, node_unwrap_enum_lit_const(literal)->data);
-            } else {
-                unreachable("");
-            }
+        case NODE_LITERAL:
+            extend_literal_text(arena, string, node_unwrap_literal_const(expr));
             return;
-        }
         case NODE_SYMBOL_UNTYPED:
             string_extend_strv_in_par(arena, string, get_expr_name(expr));
             return;

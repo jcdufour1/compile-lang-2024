@@ -4,6 +4,13 @@
 #include <symbol_table.h>
 #include <parser_utils.h>
 
+static bool is_directly_in_function_def(const Env* env) {
+    return 
+        env->ancesters.info.count > 1 &&
+        vec_at(&env->ancesters, env->ancesters.info.count - 2)->type == NODE_DEF && 
+        node_unwrap_def(vec_at(&env->ancesters, env->ancesters.info.count - 2))->type == NODE_FUNCTION_DEF;
+}
+
 void analysis_1(Env* env) {
     Node* block_ = vec_top(&env->ancesters);
     if (block_->type != NODE_BLOCK) {
@@ -12,7 +19,7 @@ void analysis_1(Env* env) {
     Node_block* block = node_unwrap_block(block_);
     Node_ptr_vec* block_children = &block->children;
 
-    bool need_add_return = block_children->info.count == 0;
+    bool need_add_return = is_directly_in_function_def(env) && block_children->info.count == 0;
     for (size_t idx = 0; idx < block_children->info.count; idx++) {
         Node** curr_node = vec_at_ref(block_children, idx);
         Lang_type dummy;
@@ -23,9 +30,7 @@ void analysis_1(Env* env) {
 
         if (idx == block_children->info.count - 1 
             && (*curr_node)->type != NODE_RETURN
-            && env->ancesters.info.count > 1
-            && vec_at(&env->ancesters, env->ancesters.info.count - 2)->type == NODE_DEF
-            && node_unwrap_def(vec_at(&env->ancesters, env->ancesters.info.count - 2))->type == NODE_FUNCTION_DEF
+            && is_directly_in_function_def(env)
         ) {
             need_add_return = true;
         }
@@ -40,7 +45,9 @@ void analysis_1(Env* env) {
         rtn_statement->child = node_wrap_literal(literal_new(str_view_from_cstr(""), TOKEN_VOID, block->pos_end));
         Lang_type dummy;
         Node* new_rtn_statement;
-        try_set_node_lang_type(env, &new_rtn_statement, &dummy, node_wrap_return(rtn_statement));
+        if (!try_set_node_lang_type(env, &new_rtn_statement, &dummy, node_wrap_return(rtn_statement))) {
+            return;
+        }
         assert(rtn_statement);
         assert(new_rtn_statement);
         vec_append_safe(&a_main, block_children, new_rtn_statement);

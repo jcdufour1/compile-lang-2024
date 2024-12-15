@@ -191,6 +191,16 @@ static bool get_next_token(const Env* env, Pos* pos, Token* token, Str_view_col*
     } else if (str_view_col_try_consume(pos, file_text, ']')) {
         token->type = TOKEN_CLOSE_SQ_BRACKET;
         return true;
+    } else if (str_view_col_try_consume(pos, file_text, '\'')) {
+        // TODO: error handling
+        token->type = TOKEN_CHAR_LITERAL;
+
+        token->text = (Str_view){.str = file_text->base.str, .count = 1};
+        str_view_col_advance_pos(pos, str_view_col_front(*file_text));
+        str_view_consume(&file_text->base);
+
+        try(str_view_col_try_consume(pos, file_text, '\''));
+        return true;
     } else if (str_view_col_front(*file_text) == '.') {
         Str_view_col dots = str_view_col_consume_while(pos, file_text, is_dot);
         if (dots.base.count == 1) {
