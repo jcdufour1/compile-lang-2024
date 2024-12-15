@@ -896,7 +896,7 @@ static Node_literal* extract_literal(Env* env, Tk_view* tokens, bool defer_sym_a
     Token token = tk_view_consume(tokens);
     assert(token_is_literal(token));
 
-    Node_literal* new_node = literal_new(token.text, token.type, token.pos);
+    Node_literal* new_node = util_literal_new_from_strv(token.text, token.type, token.pos);
 
     if (defer_sym_add) {
         // TODO: is this nessessary?
@@ -979,7 +979,7 @@ static PARSE_STATUS extract_function_return(Env* env, Node_return** rtn_statemen
             break;
         case PARSE_EXPR_NONE:
             *rtn_statement = node_return_new(prev_token.pos);
-            (*rtn_statement)->child = node_wrap_literal(literal_new(str_view_from_cstr(""), TOKEN_VOID, prev_token.pos));
+            (*rtn_statement)->child = node_wrap_literal(util_literal_new_from_strv(str_view_from_cstr(""), TOKEN_VOID, prev_token.pos));
             break;
         case PARSE_EXPR_ERROR:
             return PARSE_ERROR;
@@ -1097,7 +1097,7 @@ static PARSE_STATUS extract_if_else_chain(Env* env, Node_if_else_chain** if_else
         } else {
             if_statement->condition = node_condition_new(if_start_token.pos);
             if_statement->condition->child = condition_get_default_child(node_wrap_literal(
-                literal_new(str_view_from_cstr("1"), TOKEN_INT_LITERAL, if_start_token.pos)
+                util_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, if_start_token.pos)
             ));
         }
 

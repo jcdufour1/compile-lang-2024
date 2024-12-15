@@ -11,6 +11,7 @@
 #include <log_internal.h>
 #include <string_vec.h>
 
+// TODO: char literal with escape
 // TODO: lang_type subtypes for number, etc.
 //  lang_type_number should also have subtypes for signed, unsigned, etc.
 // TODO: use Str_view instead of Node_symbol_untyped for if_true and if_false in cond_goto

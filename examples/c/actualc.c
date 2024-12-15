@@ -48,11 +48,9 @@ void print_token(Token token1) {
 }
 
 int main() {
-    Token token1;
+    Token token1 = {0};
     token1.type = 0;
-    printf("%d\n", token1.type);
-    print_token(token1);
-    //printf("thing 23")
+    printf("%p\n", 'c');
 
     return 0;
 }

@@ -15,8 +15,8 @@ static void do_change_operator(Node_operator* operator) {
                 operator->type = NODE_BINARY;
                 Node_binary* binary = node_unwrap_binary(operator);
                 binary->lhs = temp.child;
-                binary->rhs = node_wrap_literal(literal_new(
-                    str_view_from_cstr("0"),
+                binary->rhs = node_wrap_literal(util_literal_new_from_int64_t(
+                    0,
                     TOKEN_INT_LITERAL,
                     pos
                 ));

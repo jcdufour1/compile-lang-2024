@@ -32,7 +32,7 @@ static void extend_literal(String* output, const Node_literal* literal) {
         case NODE_VOID:
             return;
         case NODE_CHAR:
-            string_extend_int64_t(&a_main, output, node_unwrap_char_const(literal)->data);
+            string_extend_int64_t(&a_main, output, (int64_t)node_unwrap_char_const(literal)->data);
             return;
     }
     unreachable("");

@@ -71,7 +71,9 @@ Llvm_id get_matching_label_id(const Env* env, Str_view name);
 // lhs and rhs should not be used for other tasks after this
 Node_assignment* assignment_new(const Env* env, Node* lhs, Node_expr* rhs);
 
-Node_literal* literal_new(Str_view value, TOKEN_TYPE token_type, Pos pos);
+Node_literal* util_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, Pos pos);
+
+Node_literal* util_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
 
 Node_symbol_untyped* symbol_new(Str_view symbol_name, Pos pos);
 

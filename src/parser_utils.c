@@ -292,7 +292,8 @@ Node_assignment* assignment_new(const Env* env, Node* lhs, Node_expr* rhs) {
     return assignment;
 }
 
-Node_literal* literal_new(Str_view value, TOKEN_TYPE token_type, Pos pos) {
+// TODO: try to deduplicate 2 below functions
+Node_literal* util_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, Pos pos) {
     Node_expr* literal_ = node_expr_new(pos);
     literal_->type = NODE_LITERAL;
     Node_literal* literal = node_unwrap_literal(literal_);
@@ -312,6 +313,37 @@ Node_literal* literal_new(Str_view value, TOKEN_TYPE token_type, Pos pos) {
             break;
         case TOKEN_CHAR_LITERAL:
             literal->type = NODE_CHAR;
+            node_unwrap_char(literal)->data = str_view_front(value);
+            break;
+        default:
+            unreachable("");
+    }
+
+    Lang_type dummy;
+    try_set_literal_lang_type(&dummy, literal, token_type);
+    return literal;
+}
+
+Node_literal* util_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {
+    Node_expr* literal_ = node_expr_new(pos);
+    literal_->type = NODE_LITERAL;
+    Node_literal* literal = node_unwrap_literal(literal_);
+    literal->name = literal_name_new();
+
+    switch (token_type) {
+        case TOKEN_INT_LITERAL:
+            literal->type = NODE_NUMBER;
+            node_unwrap_number(literal)->data = value;
+            break;
+        case TOKEN_STRING_LITERAL:
+            unreachable("");
+        case TOKEN_VOID:
+            literal->type = NODE_VOID;
+            break;
+        case TOKEN_CHAR_LITERAL:
+            assert(value < INT8_MAX);
+            literal->type = NODE_CHAR;
+            node_unwrap_char(literal)->data = value;
             break;
         default:
             unreachable("");
@@ -643,6 +675,50 @@ bool try_set_symbol_type(const Env* env, Node_expr** new_node, Lang_type* lang_t
     unreachable("");
 }
 
+static int64_t precalulate_number_internal(int64_t lhs_val, int64_t rhs_val, TOKEN_TYPE token_type) {
+    switch (token_type) {
+        case TOKEN_SINGLE_PLUS:
+            return lhs_val + rhs_val;
+        case TOKEN_SINGLE_MINUS:
+            return lhs_val - rhs_val;
+        case TOKEN_ASTERISK:
+            return lhs_val*rhs_val;
+        case TOKEN_SLASH:
+            return lhs_val/rhs_val;
+        case TOKEN_LESS_THAN:
+            return lhs_val < rhs_val ? 1 : 0;
+        case TOKEN_GREATER_THAN:
+            return lhs_val > rhs_val ? 1 : 0;
+        case TOKEN_DOUBLE_EQUAL:
+            return lhs_val == rhs_val ? 1 : 0;
+        case TOKEN_NOT_EQUAL:
+            return lhs_val != rhs_val ? 1 : 0;
+        default:
+            unreachable(TOKEN_TYPE_FMT"\n", token_type_print(token_type));
+    }
+    unreachable("");
+}
+
+static Node_literal* precalulate_number(
+    const Node_number* lhs,
+    const Node_number* rhs,
+    TOKEN_TYPE token_type,
+    Pos pos
+) {
+    int64_t result_val = precalulate_number_internal(lhs->data, rhs->data, token_type);
+    return util_literal_new_from_int64_t(result_val, TOKEN_INT_LITERAL, pos);
+}
+
+static Node_literal* precalulate_char(
+    const Node_char* lhs,
+    const Node_char* rhs,
+    TOKEN_TYPE token_type,
+    Pos pos
+) {
+    int64_t result_val = precalulate_number_internal(lhs->data, rhs->data, token_type);
+    return util_literal_new_from_int64_t(result_val, TOKEN_CHAR_LITERAL, pos);
+}
+
 // returns false if unsuccessful
 bool try_set_binary_lang_type(const Env* env, Node_expr** new_node, Lang_type* lang_type, Node_binary* operator) {
     Lang_type dummy;
@@ -698,41 +774,37 @@ bool try_set_binary_lang_type(const Env* env, Node_expr** new_node, Lang_type* l
 
     // precalcuate binary in some situations
     if (operator->lhs->type == NODE_LITERAL && operator->rhs->type == NODE_LITERAL) {
-        int64_t lhs_val = node_unwrap_number(node_unwrap_literal(operator->lhs))->data;
-        int64_t rhs_val = node_unwrap_number(node_unwrap_literal(operator->rhs))->data;
+        Node_literal* lhs_lit = node_unwrap_literal(operator->lhs);
+        Node_literal* rhs_lit = node_unwrap_literal(operator->rhs);
 
-        int64_t result_val;
-        switch (operator->token_type) {
-            case TOKEN_SINGLE_PLUS:
-                result_val = lhs_val + rhs_val;
-                break;
-            case TOKEN_SINGLE_MINUS:
-                result_val = lhs_val - rhs_val;
-                break;
-            case TOKEN_ASTERISK:
-                result_val = lhs_val*rhs_val;
-                break;
-            case TOKEN_SLASH:
-                result_val = lhs_val/rhs_val;
-                break;
-            case TOKEN_LESS_THAN:
-                result_val = lhs_val < rhs_val ? 1 : 0;
-                break;
-            case TOKEN_GREATER_THAN:
-                result_val = lhs_val > rhs_val ? 1 : 0;
-                break;
-            case TOKEN_DOUBLE_EQUAL:
-                result_val = lhs_val == rhs_val ? 1 : 0;
-                break;
-            case TOKEN_NOT_EQUAL:
-                result_val = lhs_val != rhs_val ? 1 : 0;
-                break;
-            default:
-                unreachable(TOKEN_TYPE_FMT"\n", token_type_print(operator->token_type));
+        if (lhs_lit->type != rhs_lit->type) {
+            // TODO: make expected failure test for this
+            unreachable("mismatched types");
         }
 
-        Str_view result_strv = int64_t_to_str_view(result_val);
-        Node_literal* literal = literal_new(result_strv, TOKEN_INT_LITERAL, node_wrap_expr(node_wrap_operator(node_wrap_binary(operator)))->pos);
+        Node_literal* literal = NULL;
+
+        switch (lhs_lit->type) {
+            case NODE_NUMBER:
+                literal = precalulate_number(
+                    node_unwrap_number_const(lhs_lit),
+                    node_unwrap_number_const(rhs_lit),
+                    operator->token_type,
+                    node_wrap_expr(node_wrap_operator(node_wrap_binary(operator)))->pos
+                );
+                break;
+            case NODE_CHAR:
+                literal = precalulate_char(
+                    node_unwrap_char_const(lhs_lit),
+                    node_unwrap_char_const(rhs_lit),
+                    operator->token_type,
+                    node_wrap_expr(node_wrap_operator(node_wrap_binary(operator)))->pos
+                );
+                break;
+            default:
+                unreachable("");
+        }
+
         *new_node = node_wrap_literal(literal);
         log_tree(LOG_DEBUG, node_wrap_expr(*new_node));
     } else {
@@ -821,7 +893,7 @@ bool try_set_struct_literal_assignment_types(const Env* env, Node** new_node, La
             msg(
                 LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION, env->file_text,
                 node_wrap_expr(node_wrap_struct_literal(struct_literal))->pos,
-                "struct literal cannot be assigned to union\n"
+                "struct literal cannot be assigned to raw_union\n"
             );
             return false;
         default:
@@ -1337,7 +1409,7 @@ bool try_set_index_types(
 Node_operator* condition_get_default_child(Node_expr* if_cond_child) {
     Node_binary* new_oper = node_binary_new(node_wrap_expr(if_cond_child)->pos);
     new_oper->lhs = node_wrap_literal(
-        literal_new(str_view_from_cstr("0"), TOKEN_INT_LITERAL, node_wrap_expr(if_cond_child)->pos)
+        util_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, node_wrap_expr(if_cond_child)->pos)
     );
     new_oper->rhs = if_cond_child;
     new_oper->token_type = TOKEN_NOT_EQUAL;

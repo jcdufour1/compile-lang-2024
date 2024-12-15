@@ -42,7 +42,7 @@ void analysis_1(Env* env) {
         assert(block->pos_end.line > 0);
         Node_return* rtn_statement = node_return_new(block->pos_end);
         rtn_statement->is_auto_inserted = true;
-        rtn_statement->child = node_wrap_literal(literal_new(str_view_from_cstr(""), TOKEN_VOID, block->pos_end));
+        rtn_statement->child = node_wrap_literal(util_literal_new_from_strv(str_view_from_cstr(""), TOKEN_VOID, block->pos_end));
         Lang_type dummy;
         Node* new_rtn_statement;
         if (!try_set_node_lang_type(env, &new_rtn_statement, &dummy, node_wrap_return(rtn_statement))) {
