@@ -294,9 +294,7 @@ Node_assignment* assignment_new(const Env* env, Node* lhs, Node_expr* rhs) {
 
 // TODO: try to deduplicate 2 below functions
 Node_literal* util_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, Pos pos) {
-    Node_expr* literal_ = node_expr_new(pos);
-    literal_->type = NODE_LITERAL;
-    Node_literal* literal = node_unwrap_literal(literal_);
+    Node_literal* literal = node_literal_new(pos);
     literal->name = literal_name_new();
 
     switch (token_type) {
@@ -325,9 +323,7 @@ Node_literal* util_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, 
 }
 
 Node_literal* util_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {
-    Node_expr* literal_ = node_expr_new(pos);
-    literal_->type = NODE_LITERAL;
-    Node_literal* literal = node_unwrap_literal(literal_);
+    Node_literal* literal = node_literal_new(pos);
     literal->name = literal_name_new();
 
     switch (token_type) {
