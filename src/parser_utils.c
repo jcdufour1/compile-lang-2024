@@ -1040,6 +1040,33 @@ bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node
     unreachable("");
 }
 
+static void msg_invalid_function_arg_internal(
+    const char* file,
+    int line,
+    const Env* env,
+    const Node_expr* argument,
+    const Node_variable_def* corres_param
+) {
+    msg_internal(
+        file, line,
+        LOG_ERROR, EXPECT_FAIL_INVALID_FUN_ARG, env->file_text, node_wrap_expr_const(argument)->pos, 
+        "argument is of type `"LANG_TYPE_FMT"`, "
+        "but the corresponding parameter `"STR_VIEW_FMT"` is of type `"LANG_TYPE_FMT"`\n",
+        lang_type_print(get_lang_type_expr(argument)), 
+        str_view_print(corres_param->name),
+        lang_type_print(corres_param->lang_type)
+    );
+    msg_internal(
+        file, line,
+        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, node_wrap_def(node_wrap_variable_def_const(corres_param))->pos,
+        "corresponding parameter `"STR_VIEW_FMT"` defined here\n",
+        str_view_print(corres_param->name)
+    );
+}
+
+#define msg_invalid_function_arg(env, argument, corres_param) \
+    msg_invalid_function_arg_internal(__FILE__, __LINE__, env, argument, corres_param)
+
 bool try_set_function_call_types(const Env* env, Node_expr** new_node, Lang_type* lang_type, Node_function_call* fun_call) {
     bool status = true;
 
@@ -1140,22 +1167,11 @@ bool try_set_function_call_types(const Env* env, Node_expr** new_node, Lang_type
                 if ((*argument)->type == NODE_LITERAL) {
                     node_unwrap_literal((*argument))->lang_type = corres_param->lang_type;
                 } else {
-                    *argument = unary_new(env, *argument, TOKEN_UNSAFE_CAST, corres_param->lang_type);
+                    msg_invalid_function_arg(env, *argument, corres_param);
+                    return false;
                 }
             } else {
-                msg(
-                    LOG_ERROR, EXPECT_FAIL_INVALID_FUN_ARG, env->file_text, node_wrap_expr(*argument)->pos, 
-                    "argument is of type `"LANG_TYPE_FMT"`, "
-                    "but the corresponding parameter `"STR_VIEW_FMT"` is of type `"LANG_TYPE_FMT"`\n",
-                    lang_type_print(get_lang_type_expr(*argument)), 
-                    str_view_print(corres_param->name),
-                    lang_type_print(corres_param->lang_type)
-                );
-                msg(
-                    LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, node_wrap_def(node_wrap_variable_def(corres_param))->pos,
-                    "corresponding parameter `"STR_VIEW_FMT"` defined here\n",
-                    str_view_print(corres_param->name)
-                );
+                msg_invalid_function_arg(env, *argument, corres_param);
                 return false;
             }
         }
@@ -1461,6 +1477,8 @@ bool try_set_return(const Env* env, Node_return** new_node, Lang_type* lang_type
         if (rtn->child->type == NODE_LITERAL) {
             node_unwrap_literal(rtn->child)->lang_type = dest_lang_type;
             goto success;
+        } else {
+            todo();
         }
         Node_expr* unary = unary_new(env, rtn->child, TOKEN_UNSAFE_CAST, dest_lang_type);
         rtn->child = unary;

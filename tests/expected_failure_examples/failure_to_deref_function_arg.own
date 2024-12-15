@@ -1,0 +1,20 @@
+
+extern("c") fn printf(format_string u8*, args any...) i32
+
+fn add_one(num i32*) {
+}
+
+fn add_one_not_ptr(num i32) {
+}
+
+fn main() i32 {
+    let num i32 = 4
+
+    // should be error
+    add_one(num)
+
+    // should be error
+    add_one_not_ptr(refer(num))
+
+    return 0
+}
