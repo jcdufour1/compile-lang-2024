@@ -192,6 +192,13 @@ static bool starts_with_continue(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_CONTINUE;
 }
 
+static bool starts_with_block(Tk_view tokens) {
+    if (tokens.count < 1) {
+        return false;
+    }
+    return tk_view_front(tokens).type == TOKEN_OPEN_CURLY_BRACE;
+}
+
 static bool starts_with_function_call(Tk_view tokens) {
     if (!try_consume(NULL, &tokens, TOKEN_SYMBOL)) {
         return false;
@@ -1186,8 +1193,14 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
         lhs = node_wrap_break(extract_break(tokens));
     } else if (starts_with_continue(*tokens)) {
         lhs = node_wrap_continue(extract_continue(tokens));
+    } else if (starts_with_block(*tokens)) {
+        Node_block* block_def = NULL;
+        if (PARSE_OK != extract_block(env, &block_def, tokens, false)) {
+            return PARSE_EXPR_ERROR;
+        }
+        lhs = node_wrap_block(block_def);
     } else if (starts_with_variable_declaration(*tokens)) {
-        Node_variable_def* var_def;
+        Node_variable_def* var_def = NULL;
         if (PARSE_OK != try_extract_variable_declaration(env, &var_def, tokens, true, defer_sym_add)) {
             return PARSE_EXPR_ERROR;
         }
