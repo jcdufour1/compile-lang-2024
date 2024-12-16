@@ -137,10 +137,17 @@ void walk_tree(Env* env, void (callback)(Env* env)) {
 
     Node* curr_node = vec_top(&env->ancesters);
     switch (curr_node->type) {
-        case NODE_FUNCTION_PARAMS:
-            walk_node_ptr_vec(env, &node_unwrap_function_params(curr_node)->params, callback);
+        case NODE_FUNCTION_PARAMS: {
+            Node_var_def_vec* vector = &node_unwrap_function_params(curr_node)->params;
+            for (size_t idx = 0; idx < vector->info.count; idx++) {
+                assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
+                assert(vec_at(vector, idx) && "a null element is in this vector");
+                walk_tree_traverse(env, node_wrap_def(node_wrap_variable_def(vec_at(vector, idx))), callback);
+                assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
+            }
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
+        }
         case NODE_ASSIGNMENT:
             walk_tree_traverse(env, (node_unwrap_assignment(curr_node)->lhs), callback);
             walk_tree_traverse(env, node_wrap_expr(node_unwrap_assignment(curr_node)->rhs), callback);

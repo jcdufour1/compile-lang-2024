@@ -15,7 +15,7 @@ Node_alloca* add_alloca_alloca_new(Node_variable_def* var_def) {
 static void do_function_def(Env* env, Node_function_def* fun_def) {
     Node_function_params* params = fun_def->declaration->parameters;
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
-        Node_variable_def* param = node_unwrap_variable_def(node_unwrap_def(vec_at(&params->params, idx)));
+        Node_variable_def* param = vec_at(&params->params, idx);
 
         if (lang_type_is_struct(env, param->lang_type)) {
             param->storage_location = llvm_register_sym_new(node_wrap_def(node_wrap_variable_def(param)));

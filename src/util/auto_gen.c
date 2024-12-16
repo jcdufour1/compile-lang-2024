@@ -672,7 +672,7 @@ static void gen_load_element_ptr(Str_view prefix, Type_vec* type_vec, Members* m
 
 static void gen_function_params(Str_view prefix, Type_vec* type_vec, Members* member_types) {
     Members members = {0};
-    append_member(&members, "Node_ptr_vec", "params");
+    append_member(&members, "Node_var_def_vec", "params");
     append_member(&members, "Llvm_id", "llvm_id");
     gen_type(type_vec, member_types, type_new(prefix, "node_function_params"), members);
 }

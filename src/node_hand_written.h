@@ -3,6 +3,8 @@
 
 #include <node_ptr_vec.h>
 #include <node_if_ptr_vec.h>
+#include <node_def_vec.h>
+#include <node_var_def_vec.h>
 #include <symbol_table_struct.h>
 
 typedef size_t Llvm_id;

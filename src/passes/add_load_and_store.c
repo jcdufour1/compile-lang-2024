@@ -462,28 +462,28 @@ static Node_variable_def* node_clone_variable_def(Node_variable_def* old_var_def
 static void load_function_parameters(
     Env* env,
     Node_block* new_fun_body,
-    Node_ptr_vec fun_params
+    Node_var_def_vec fun_params
 ) {
     for (size_t idx = 0; idx < fun_params.info.count; idx++) {
         assert(env->ancesters.info.count > 0);
-        Node* param = vec_at(&fun_params, idx);
+        Node_variable_def* param = vec_at(&fun_params, idx);
 
-        if (lang_type_is_struct(env, get_lang_type(param))) {
+        if (lang_type_is_struct(env, param->lang_type)) {
             continue;
-        } else if (lang_type_is_enum(env, get_lang_type(param))) {
-        } else if (lang_type_is_primitive(env, get_lang_type(param))) {
-        } else if (lang_type_is_raw_union(env, get_lang_type(param))) {
+        } else if (lang_type_is_enum(env, param->lang_type)) {
+        } else if (lang_type_is_primitive(env, param->lang_type)) {
+        } else if (lang_type_is_raw_union(env, param->lang_type)) {
             continue;
         } else {
-            unreachable(NODE_FMT"\n", node_print(param));
+            unreachable(NODE_FMT"\n", node_print((Node*)param));
         }
 
-        Llvm_register_sym fun_param_call = llvm_register_sym_new(param);
+        Llvm_register_sym fun_param_call = llvm_register_sym_new(node_wrap_def(node_wrap_variable_def(param)));
         
-        Node_store_another_node* new_store = node_store_another_node_new(param->pos);
+        Node_store_another_node* new_store = node_store_another_node_new(node_wrap_def(node_wrap_variable_def(param))->pos);
         new_store->node_src = fun_param_call;
-        new_store->node_dest = get_storage_location(env, get_node_name(param));
-        new_store->lang_type = get_lang_type(param);
+        new_store->node_dest = get_storage_location(env, param->name);
+        new_store->lang_type = param->lang_type;
 
         // TODO: append to new function body instead of old
         vec_append(&a_main, &new_fun_body->children, node_wrap_store_another_node(new_store));

@@ -577,7 +577,7 @@ static PARSE_STATUS extract_function_parameters(Env* env, Node_function_params**
     while (!done) {
         switch (extract_function_parameter(env, &param, tokens)) {
             case PARSE_EXPR_OK:
-                vec_append_safe(&a_main, &fun_params->params, node_wrap_def(node_wrap_variable_def(param)));
+                vec_append_safe(&a_main, &fun_params->params, param);
                 break;
             case PARSE_EXPR_ERROR:
                 return PARSE_ERROR;

@@ -168,9 +168,7 @@ static const Node_lang_type* return_type_from_function_def(const Node_function_d
 
 static void emit_function_params(const Env* env, String* output, const Node_function_params* fun_params) {
     for (size_t idx = 0; idx < fun_params->params.info.count; idx++) {
-        const Node_variable_def* curr_param = node_unwrap_variable_def_const(
-            node_unwrap_def(vec_at(&fun_params->params, idx))
-        );
+        const Node_variable_def* curr_param = vec_at(&fun_params->params, idx);
 
         if (idx > 0) {
             string_extend_cstr(&a_main, output, ", ");

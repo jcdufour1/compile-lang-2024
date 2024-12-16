@@ -656,7 +656,7 @@ bool try_set_function_call_types(const Env* env, Node_expr** new_node, Lang_type
     if (params->params.info.count < 1) {
         min_args = 0;
         max_args = 0;
-    } else if (node_unwrap_variable_def(node_unwrap_def(vec_top(&params->params)))->is_variadic) {
+    } else if (vec_top(&params->params)->is_variadic) {
         min_args = params->params.info.count - 1;
         max_args = SIZE_MAX;
     } else {
@@ -687,7 +687,7 @@ bool try_set_function_call_types(const Env* env, Node_expr** new_node, Lang_type
     }
 
     for (size_t arg_idx = 0; arg_idx < fun_call->args.info.count; arg_idx++) {
-        Node_variable_def* corres_param = node_unwrap_variable_def(node_unwrap_def(vec_at(&params->params, params_idx)));
+        Node_variable_def* corres_param = vec_at(&params->params, params_idx);
         Node_expr** argument = vec_at_ref(&fun_call->args, arg_idx);
         Node_expr* new_arg = NULL;
 
