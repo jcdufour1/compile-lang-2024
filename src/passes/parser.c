@@ -1195,6 +1195,8 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
                 break;
             case NODE_OPERATOR:
                 break;
+            case NODE_INDEX_UNTYPED:
+                break;
             default:
                 unreachable(NODE_FMT"\n", node_print(node_wrap_expr(lhs_)));
         }
@@ -1379,7 +1381,6 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node_expr** resu
                 }
                 return PARSE_EXPR_ERROR;
             case PARSE_EXPR_NONE:
-                todo();
                 msg_expected_expression(env->file_text, *tokens);
                 return PARSE_EXPR_ERROR;
         }

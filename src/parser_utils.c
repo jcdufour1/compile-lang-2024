@@ -149,13 +149,19 @@ static Node_expr* auto_deref_to_0(const Env* env, Node_expr* expr) {
     return expr;
 }
 
-static bool can_be_implicitly_converted(const Env* env, Lang_type dest, Lang_type src) {
+static bool can_be_implicitly_converted(const Env* env, Lang_type dest, Lang_type src, bool implicit_pointer_depth) {
     (void) env;
     //Node* result = NULL;
     //if (symbol_lookup(&result, env, dest.str)) {
     //    log_tree(LOG_DEBUG, result);
     //    unreachable("");
     //}
+
+    if (!implicit_pointer_depth) {
+        if (src.pointer_depth != dest.pointer_depth) {
+            return false;
+        }
+    }
 
     if (!lang_type_is_signed(dest) || !lang_type_is_signed(src)) {
         return lang_type_is_equal(dest, src);
@@ -172,7 +178,8 @@ typedef enum {
 static IMPLICIT_CONV_STATUS do_implicit_conversion_if_needed(
     const Env* env,
     Lang_type dest_lang_type,
-    Node_expr* src
+    Node_expr* src,
+    bool inplicit_pointer_depth
 ) {
     Lang_type src_lang_type = get_lang_type_expr(src);
     log(
@@ -183,7 +190,7 @@ static IMPLICIT_CONV_STATUS do_implicit_conversion_if_needed(
     if (lang_type_is_equal(dest_lang_type, src_lang_type)) {
         return IMPLICIT_CONV_OK;
     }
-    if (!can_be_implicitly_converted(env, dest_lang_type, src_lang_type)) {
+    if (!can_be_implicitly_converted(env, dest_lang_type, src_lang_type, inplicit_pointer_depth)) {
         return IMPLICIT_CONV_INVALID_TYPES;
     }
 
@@ -736,7 +743,7 @@ bool try_set_binary_lang_type(const Env* env, Node_expr** new_node, Lang_type* l
     log_tree(LOG_DEBUG, (Node*)operator);
 
     if (!lang_type_is_equal(get_lang_type_expr(operator->lhs), get_lang_type_expr(operator->rhs))) {
-        if (can_be_implicitly_converted(env, get_lang_type_expr(operator->lhs), get_lang_type_expr(operator->rhs))) {
+        if (can_be_implicitly_converted(env, get_lang_type_expr(operator->lhs), get_lang_type_expr(operator->rhs), true)) {
             if (operator->rhs->type == NODE_LITERAL) {
                 operator->lhs = auto_deref_to_0(env, operator->lhs);
                 operator->rhs = auto_deref_to_0(env, operator->rhs);
@@ -745,7 +752,7 @@ bool try_set_binary_lang_type(const Env* env, Node_expr** new_node, Lang_type* l
                 Node_expr* unary = unary_new(env, operator->rhs, TOKEN_UNSAFE_CAST, get_lang_type_expr(operator->lhs));
                 operator->rhs = unary;
             }
-        } else if (can_be_implicitly_converted(env, get_lang_type_expr(operator->rhs), get_lang_type_expr(operator->lhs))) {
+        } else if (can_be_implicitly_converted(env, get_lang_type_expr(operator->rhs), get_lang_type_expr(operator->lhs), true)) {
             if (operator->lhs->type == NODE_LITERAL) {
                 operator->lhs = auto_deref_to_0(env, operator->lhs);
                 operator->rhs = auto_deref_to_0(env, operator->rhs);
@@ -1097,7 +1104,7 @@ bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node
 
     assert(lhs_lang_type.str.count > 0);
     assert(get_lang_type_expr(assignment->rhs).str.count > 0);
-    switch (do_implicit_conversion_if_needed(env, lhs_lang_type, assignment->rhs)) {
+    switch (do_implicit_conversion_if_needed(env, lhs_lang_type, assignment->rhs, false)) {
         case IMPLICIT_CONV_INVALID_TYPES: {
             msg(
                 LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
@@ -1238,7 +1245,7 @@ bool try_set_function_call_types(const Env* env, Node_expr** new_node, Lang_type
 
         assert(*argument);
         if (!lang_type_is_equal(corres_param->lang_type, get_lang_type_expr(*argument))) {
-            if (can_be_implicitly_converted(env, corres_param->lang_type, get_lang_type_expr(*argument))) {
+            if (can_be_implicitly_converted(env, corres_param->lang_type, get_lang_type_expr(*argument), false)) {
                 if ((*argument)->type == NODE_LITERAL) {
                     node_unwrap_literal((*argument))->lang_type = corres_param->lang_type;
                 } else {
@@ -1547,7 +1554,7 @@ bool try_set_return(const Env* env, Node_return** new_node, Lang_type* lang_type
     if (lang_type_is_equal(dest_lang_type, src_lang_type)) {
         goto success;
     }
-    if (can_be_implicitly_converted(env, dest_lang_type, src_lang_type)) {
+    if (can_be_implicitly_converted(env, dest_lang_type, src_lang_type, false)) {
         log_tree(LOG_DEBUG, node_wrap_return(rtn));
         if (rtn->child->type == NODE_LITERAL) {
             node_unwrap_literal(rtn->child)->lang_type = dest_lang_type;

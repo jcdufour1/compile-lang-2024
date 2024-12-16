@@ -127,9 +127,9 @@ static Str_view node_type_get_strv_expr(const Node_expr* node) {
         case NODE_MEMBER_ACCESS_TYPED:
             return str_view_from_cstr(NODE_MEMBER_ACCESS_TYPED_DESCRIPTION);
         case NODE_INDEX_TYPED:
-            return str_view_from_cstr(NODE_INDEX_UNTYPED_DESCRIPTION);
-        case NODE_INDEX_UNTYPED:
             return str_view_from_cstr(NODE_INDEX_TYPED_DESCRIPTION);
+        case NODE_INDEX_UNTYPED:
+            return str_view_from_cstr(NODE_INDEX_UNTYPED_DESCRIPTION);
         case NODE_STRUCT_LITERAL:
             return str_view_from_cstr(NODE_STRUCT_LITERAL_DESCRIPTION);
         case NODE_FUNCTION_CALL:

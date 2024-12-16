@@ -4,7 +4,7 @@
 static inline const char* get_log_level_str(int log_level) {
     switch (log_level) {
         case LOG_TRACE:
-            return "";
+            return "trace";
         case LOG_DEBUG:
             return "debug";
         case LOG_VERBOSE:

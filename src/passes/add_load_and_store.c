@@ -1099,6 +1099,8 @@ static Llvm_register_sym load_ptr_expr(Env* env, Node_block* new_block, Node_exp
             return load_ptr_member_access_typed(env, new_block, node_unwrap_member_access_typed(old_expr));
         case NODE_OPERATOR:
             return load_ptr_operator(env, new_block, node_unwrap_operator(old_expr));
+        case NODE_INDEX_TYPED:
+            return load_ptr_index_typed(env, new_block, node_unwrap_index_typed(old_expr));
         default:
             unreachable(NODE_FMT"\n", node_print(node_wrap_expr(old_expr)));
     }
