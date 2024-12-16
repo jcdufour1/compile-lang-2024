@@ -57,8 +57,8 @@ static void if_for_add_cond_goto(
 
     Node_cond_goto* cond_goto = node_cond_goto_new(pos);
     cond_goto->node_src = load_operator(env, block, old_oper);
-    cond_goto->if_true = util_symbol_new(label_name_if_true, pos);
-    cond_goto->if_false = util_symbol_new(label_name_if_false, pos);
+    cond_goto->if_true = label_name_if_true;
+    cond_goto->if_false = label_name_if_false;
 
     vec_append(&a_main, &block->children, node_wrap_cond_goto(cond_goto));
 }

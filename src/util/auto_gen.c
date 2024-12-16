@@ -18,7 +18,6 @@
 // TODO: lang_type subtypes for number, etc.
 //  lang_type_number should also have subtypes for signed, unsigned, etc.
 // TODO: use Str_view instead of Node_symbol_untyped for if_true and if_false in cond_goto
-// TODO: use Node_def_vec instead of Node_ptr_vec for function parameters
 
 FILE* global_output = NULL;
 Arena gen_a = {0};
@@ -783,8 +782,8 @@ static void gen_goto(Str_view prefix, Type_vec* type_vec, Members* member_types)
 static void gen_cond_goto(Str_view prefix, Type_vec* type_vec, Members* member_types) {
     Members members = {0};
     append_member(&members, "Llvm_register_sym", "node_src");
-    append_member(&members, "Node_symbol_untyped*", "if_true");
-    append_member(&members, "Node_symbol_untyped*", "if_false");
+    append_member(&members, "Str_view", "if_true");
+    append_member(&members, "Str_view", "if_false");
     append_member(&members, "Llvm_id", "llvm_id");
     gen_type(type_vec, member_types, type_new(prefix, "Node_cond_goto"), members);
 }

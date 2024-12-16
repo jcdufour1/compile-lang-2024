@@ -724,10 +724,9 @@ static void emit_cond_goto(const Env* env, String* output, const Node_cond_goto*
     string_extend_cstr(&a_main, output, "    br i1 %");
     string_extend_size_t(&a_main, output, get_llvm_id(cond_goto->node_src.node));
     string_extend_cstr(&a_main, output, ", label %");
-    log_tree(LOG_DEBUG, (Node*)cond_goto->if_true);
-    string_extend_size_t(&a_main, output, get_matching_label_id(env, cond_goto->if_true->name));
+    string_extend_size_t(&a_main, output, get_matching_label_id(env, cond_goto->if_true));
     string_extend_cstr(&a_main, output, ", label %");
-    string_extend_size_t(&a_main, output, get_matching_label_id(env, cond_goto->if_false->name));
+    string_extend_size_t(&a_main, output, get_matching_label_id(env, cond_goto->if_false));
     vec_append(&a_main, output, '\n');
 }
 

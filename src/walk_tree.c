@@ -199,8 +199,6 @@ void walk_tree(Env* env, void (callback)(Env* env)) {
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_COND_GOTO:
-            walk_tree_traverse(env, (Node*)node_wrap_symbol_untyped(node_unwrap_cond_goto(curr_node)->if_true), callback);
-            walk_tree_traverse(env, (Node*)node_wrap_symbol_untyped(node_unwrap_cond_goto(curr_node)->if_false), callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
         case NODE_BLOCK: {

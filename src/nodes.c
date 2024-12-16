@@ -371,6 +371,8 @@ static bool extend_node_text(Arena* arena, String* string, const Node* node, boo
             break;
         case NODE_COND_GOTO:
             print_node_src(arena, string, node, do_recursion);
+            string_extend_strv_in_par(arena, string, node_unwrap_cond_goto_const(node)->if_true);
+            string_extend_strv_in_par(arena, string, node_unwrap_cond_goto_const(node)->if_false);
             break;
         case NODE_LANG_TYPE:
             extend_lang_type_to_string(arena, string, node_unwrap_lang_type_const(node)->lang_type, true);
