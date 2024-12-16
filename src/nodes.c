@@ -440,6 +440,8 @@ static bool extend_node_text(Arena* arena, String* string, const Node* node, boo
 
         string_extend_cstr(arena, string, "    line:");
         string_extend_size_t(arena, string, node->pos.line);
+        string_extend_cstr(arena, string, ":");
+        string_extend_size_t(arena, string, node->pos.column);
     }
 
     return true;

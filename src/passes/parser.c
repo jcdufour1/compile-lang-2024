@@ -990,13 +990,13 @@ static PARSE_STATUS extract_function_return(Env* env, Node_return** rtn_statemen
 }
 
 static PARSE_STATUS extract_assignment(Env* env, Node_assignment** assign, Tk_view* tokens, Node* lhs) {
-    Token equal_token;
+    Token equal_token = {0};
     *assign = NULL;
     if (lhs) {
-        *assign = node_assignment_new(lhs->pos);
         if (!try_consume(&equal_token, tokens, TOKEN_SINGLE_EQUAL)) {
             unreachable("extract_assignment should possibly never be called with no `=`, but it was");
         }
+        *assign = node_assignment_new(equal_token.pos);
     } else {
         Node_expr* lhs_ = NULL;
         switch (try_extract_expression(env, &lhs_, tokens, false)) {
@@ -1317,6 +1317,7 @@ static PARSE_STATUS extract_struct_literal(Env* env, Node_struct_literal** struc
     while (try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
         bool delim_is_present = false;
         Node_assignment* assign;
+        // TODO: check status of extract_assignment
         extract_assignment(env, &assign, tokens, NULL);
         vec_append_safe(&a_main, &(*struct_lit)->members, node_wrap_assignment(assign));
         delim_is_present = try_consume(NULL, tokens, TOKEN_COMMA);
@@ -1480,7 +1481,7 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(
             if (!try_consume(&bracket, tokens, TOKEN_CLOSE_SQ_BRACKET)) {
                 msg(
                     LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_SQ_BRACKET, env->file_text,
-                    get_curr_pos(*tokens), "expected closing `]` after expression"
+                    get_curr_pos(*tokens), "expected closing `]` after expression\n"
                 );
                 return PARSE_EXPR_ERROR;
             }

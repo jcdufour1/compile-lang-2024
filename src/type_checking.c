@@ -364,7 +364,7 @@ bool try_set_operator_types(const Env* env, Node_expr** new_node, Lang_type* lan
     }
 }
 
-bool try_set_struct_literal_assignment_types(const Env* env, Node** new_node, Lang_type* lang_type, const Node* lhs, Node_struct_literal* struct_literal) {
+bool try_set_struct_literal_assignment_types(const Env* env, Node** new_node, Lang_type* lang_type, const Node* lhs, Node_struct_literal* struct_literal, Pos assign_pos) {
     //log(LOG_DEBUG, "------------------------------\n");
     //if (!is_corresponding_to_a_struct(env, lhs)) {
     //    todo(); // non_struct assigned struct literal
@@ -381,8 +381,7 @@ bool try_set_struct_literal_assignment_types(const Env* env, Node** new_node, La
             // TODO: improve this
             msg(
                 LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION, env->file_text,
-                node_wrap_expr(node_wrap_struct_literal(struct_literal))->pos,
-                "struct literal cannot be assigned to raw_union\n"
+                assign_pos, "struct literal cannot be assigned to raw_union\n"
             );
             return false;
         default:
@@ -566,8 +565,9 @@ bool try_set_assignment_types(const Env* env, Lang_type* lang_type, Node_assignm
     Node_expr* new_rhs;
     if (assignment->rhs->type == NODE_STRUCT_LITERAL) {
         Node* new_rhs_ = NULL;
+        log(LOG_DEBUG, "%d\n", ((Node*)assignment)->pos.column);
         if (!try_set_struct_literal_assignment_types(
-            env, &new_rhs_, &rhs_lang_type, assignment->lhs, node_unwrap_struct_literal(assignment->rhs)
+            env, &new_rhs_, &rhs_lang_type, assignment->lhs, node_unwrap_struct_literal(assignment->rhs), node_wrap_assignment(assignment)->pos
         )) {
             return false;
         }
@@ -587,7 +587,7 @@ bool try_set_assignment_types(const Env* env, Lang_type* lang_type, Node_assignm
         case IMPLICIT_CONV_INVALID_TYPES: {
             msg(
                 LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
-                node_wrap_expr(assignment->rhs)->pos,
+                node_wrap_assignment(assignment)->pos,
                 "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
                 lang_type_print(rhs_lang_type), lang_type_print(lhs_lang_type)
             );
@@ -700,7 +700,12 @@ bool try_set_function_call_types(const Env* env, Node_expr** new_node, Lang_type
         if ((*argument)->type == NODE_STRUCT_LITERAL) {
             todo();
             try(try_set_struct_literal_assignment_types(
-                env, &new_arg_, &dummy, node_wrap_def(node_wrap_variable_def(corres_param)), node_unwrap_struct_literal(*argument)
+                env,
+                &new_arg_,
+                &dummy,
+                node_wrap_def(node_wrap_variable_def(corres_param)),
+                node_unwrap_struct_literal(*argument),
+                node_wrap_expr(node_wrap_function_call(fun_call))->pos
             ));
             new_arg = node_unwrap_expr(new_arg_);
         } else {
