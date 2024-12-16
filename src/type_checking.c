@@ -1108,6 +1108,9 @@ bool try_set_node_types(const Env* env, Node** new_node, Lang_type* lang_type, N
         case NODE_BREAK:
             *new_node = node;
             return true;
+        case NODE_CONTINUE:
+            *new_node = node;
+            return true;
         case NODE_IF_ELSE_CHAIN: {
             Node_if_else_chain* if_else = node_unwrap_if_else_chain(node);
             for (size_t idx = 0; idx < if_else->nodes.info.count; idx++) {

@@ -51,6 +51,7 @@ static const char* NODE_IF_ELSE_CHAIN_DESCRIPTION = "if_else_chain";
 static const char* NODE_ENUM_DEF_DESCRIPTION = "enum_def";
 static const char* NODE_ENUM_LIT_DESCRIPTION = "enum_lit";
 static const char* NODE_CHAR_DESCRIPTION = "char";
+static const char* NODE_CONTINUE_DESCRIPTION = "continue";
 
 void extend_lang_type_to_string(Arena* arena, String* string, Lang_type lang_type, bool surround_in_lt_gt) {
     if (surround_in_lt_gt) {
@@ -216,6 +217,8 @@ static Str_view node_type_get_strv(const Node* node) {
             return str_view_from_cstr(NODE_BREAK_DESCRIPTION);
         case NODE_IF_ELSE_CHAIN:
             return str_view_from_cstr(NODE_IF_ELSE_CHAIN_DESCRIPTION);
+        case NODE_CONTINUE:
+            return str_view_from_cstr(NODE_CONTINUE_DESCRIPTION);
     }
     unreachable( "node->type: %d\n", node->type);
 }
@@ -396,6 +399,8 @@ static bool extend_node_text(Arena* arena, String* string, const Node* node, boo
         case NODE_IF:
             // fallthrough
         case NODE_CONDITION:
+            // fallthrough
+        case NODE_CONTINUE:
             // fallthrough
         case NODE_BREAK:
             break;

@@ -780,6 +780,7 @@ static Llvm_register_sym load_if_else_chain(
 
 static Node_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
     Str_view old_if_break = env->label_if_break;
+    Str_view old_if_continue = env->label_if_continue;
 
     size_t init_count_ancesters = env->ancesters.info.count;
 
@@ -833,11 +834,14 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
     // initial assignment
 
     Str_view check_cond_label = util_literal_name_new_prefix("check_cond");
+    Str_view assign_label = util_literal_name_new_prefix("assign_for");
     Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label, node_wrap_for_range(old_for)->pos);
+    Node_goto* jmp_to_assign = goto_new(assign_label, node_wrap_for_range(old_for)->pos);
     Str_view after_check_label = util_literal_name_new_prefix("after_check");
     Str_view after_for_loop_label = util_literal_name_new_prefix("after_for");
 
     env->label_if_break = after_for_loop_label;
+    env->label_if_continue = assign_label;
 
     //vec_append(&a_main, &new_branch_block->children, node_wrap_variable_def(for_var_def));
 
@@ -896,6 +900,12 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
     }
     assert(symbol_lookup(&dummy, env, check_cond_label));
 
+    vec_append(&a_main, &new_branch_block->children, node_wrap_goto(jmp_to_assign));
+    {
+        vec_rem_last(&env->ancesters);
+        add_label(env, new_branch_block, assign_label, pos, false);
+        vec_append(&a_main, &env->ancesters, node_wrap_block(new_branch_block));
+    }
     load_assignment(env, new_branch_block, assignment_to_inc_cond_var);
     vec_append(&a_main, &new_branch_block->children, node_wrap_goto(goto_new(check_cond_label, pos)));
     add_label(env, new_branch_block, after_for_loop_label, pos, true);
@@ -905,6 +915,7 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
 
     assert(symbol_lookup(&dummy, env, check_cond_label));
     env->label_if_break = old_if_break;
+    env->label_if_continue = old_if_continue;
     assert(symbol_lookup(&dummy, env, check_cond_label));
     //log(LOG_DEBUG, "DSFJKLKJDFS: "STR_VIEW_FMT"\n", str_view_print(check_cond_label));
     //symbol_log(LOG_DEBUG, env);
@@ -931,6 +942,7 @@ static Llvm_register_sym load_for_range(
 
 static Node_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* old_for) {
     Str_view old_if_break = env->label_if_break;
+    Str_view old_if_continue = env->label_if_continue;
 
     Pos pos = node_wrap_for_with_cond(old_for)->pos;
 
@@ -944,12 +956,14 @@ static Node_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* old_for
     Node_operator* operator = old_for->condition->child;
     Str_view check_cond_label = util_literal_name_new_prefix("check_cond");
     Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label, node_wrap_for_with_cond(old_for)->pos);
+    Node_goto* jmp_to_assign = goto_new(check_cond_label, node_wrap_for_with_cond(old_for)->pos);
     Str_view after_check_label = util_literal_name_new_prefix("for_body");
     Str_view after_for_loop_label = util_literal_name_new_prefix("after_for_loop");
     Llvm_register_sym oper_rtn_sym = llvm_register_sym_new_from_expr(node_wrap_operator(operator));
     oper_rtn_sym.node = node_wrap_expr(node_wrap_operator(operator));
 
     env->label_if_break = after_for_loop_label;
+    env->label_if_continue = check_cond_label;
 
     vec_append(&a_main, &new_branch_block->children, node_wrap_goto(jmp_to_check_cond_label));
 
@@ -994,6 +1008,7 @@ static Node_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* old_for
 
     Node_def* dummy = NULL;
 
+    env->label_if_continue = old_if_continue;
     env->label_if_break = old_if_break;
     vec_rem_last(&env->ancesters);
 
@@ -1024,6 +1039,23 @@ static Llvm_register_sym load_break(
 
     Node_goto* new_goto = node_goto_new(node_wrap_break(old_break)->pos);
     new_goto->name = env->label_if_break;
+    vec_append(&a_main, &new_block->children, node_wrap_goto(new_goto));
+
+    return (Llvm_register_sym) {0};
+}
+
+static Llvm_register_sym load_continue(
+    Env* env,
+    Node_block* new_block,
+    Node_continue* old_continue
+) {
+    // TODO: make expected failure test case for continue in invalid location
+    if (env->label_if_continue.count < 1) {
+        unreachable("cannot continue here\n");
+    }
+
+    Node_goto* new_goto = node_goto_new(node_wrap_continue(old_continue)->pos);
+    new_goto->name = env->label_if_continue;
     vec_append(&a_main, &new_block->children, node_wrap_goto(new_goto));
 
     return (Llvm_register_sym) {0};
@@ -1184,6 +1216,8 @@ static Llvm_register_sym load_node(Env* env, Node_block* new_block, Node* old_no
             return load_for_with_cond(env, new_block, node_unwrap_for_with_cond(old_node));
         case NODE_BREAK:
             return load_break(env, new_block, node_unwrap_break(old_node));
+        case NODE_CONTINUE:
+            return load_continue(env, new_block, node_unwrap_continue(old_node));
         case NODE_STORE_ANOTHER_NODE:
             // TODO: remove this eventually
             vec_append(&a_main, &new_block->children, (Node*)old_node);

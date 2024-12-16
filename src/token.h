@@ -67,6 +67,7 @@ typedef enum {
     TOKEN_LET,
     TOKEN_IN,
     TOKEN_BREAK,
+    TOKEN_CONTINUE,
     TOKEN_RAW_UNION,
     TOKEN_ENUM,
 
@@ -179,6 +180,8 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_CHAR_LITERAL:
             return true;
+        case TOKEN_CONTINUE:
+            return false;
     }
     unreachable("");
 }
@@ -278,6 +281,8 @@ static inline bool token_is_operator(Token token) {
         case TOKEN_CLOSE_SQ_BRACKET:
             return false;
         case TOKEN_CHAR_LITERAL:
+            return false;
+        case TOKEN_CONTINUE:
             return false;
     }
     unreachable(TOKEN_FMT"\n", token_print(token));
@@ -387,6 +392,8 @@ static inline bool token_is_closing(Token curr_token) {
             return true;
         case TOKEN_CHAR_LITERAL:
             return false;
+        case TOKEN_CONTINUE:
+            return false;
     }
     unreachable("");
 }
@@ -486,6 +493,8 @@ static inline bool token_is_opening(Token curr_token) {
         case TOKEN_CLOSE_SQ_BRACKET:
             return false;
         case TOKEN_CHAR_LITERAL:
+            return false;
+        case TOKEN_CONTINUE:
             return false;
     }
     unreachable("");

@@ -1,0 +1,66 @@
+
+extern("c") fn printf(str_to_print u8*, args any...) i32
+
+fn for_range() {
+    for idx i32 in 0..100 {
+        printf("idx: %d\n", idx)
+
+        if idx < 2 {
+            continue
+        }
+
+        break
+    }
+
+    for idx i32 in 0..2 {
+        printf("idx: %d\n", idx)
+        continue
+        printf("no\n")
+    }
+
+    for idx i32 in 0..2 {
+        printf("idx: %d\n", idx)
+        continue
+    }
+
+    for idx i32 in 0..2 {
+        continue
+    }
+}
+
+fn for_cond() {
+    let idx1 i32 = 0
+    for idx1 < 100 {
+        printf("idx: %d\n", idx1)
+
+        idx1 = idx1 + 1
+
+        if idx1 < 3 {
+            continue
+        }
+
+        break
+    }
+
+    let idx2 i32 = 0
+    for idx2 < 2 {
+        printf("idx: %d\n", idx2)
+        idx2 = idx2 + 1
+        continue
+        printf("no\n")
+    }
+
+    let idx3 i32 = 0
+    for idx3 < 2 {
+        printf("idx: %d\n", idx3)
+        idx3 = idx3 + 1
+        continue
+    }
+}
+
+fn main() i32 {
+    for_range()
+    for_cond()
+
+    return 0
+}

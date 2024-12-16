@@ -749,6 +749,12 @@ static void gen_break(Str_view prefix, Type_vec* type_vec, Members* member_types
     gen_type(type_vec, member_types, type_new(prefix, "Node_break"), members);
 }
 
+static void gen_continue(Str_view prefix, Type_vec* type_vec, Members* member_types) {
+    Members members = {0};
+    append_member(&members, "struct Node_*", "child");
+    gen_type(type_vec, member_types, type_new(prefix, "Node_continue"), members);
+}
+
 static void gen_assignment(Str_view prefix, Type_vec* type_vec, Members* member_types) {
     Members members = {0};
     append_member(&members, "struct Node_*", "lhs");
@@ -931,6 +937,7 @@ static void gen_node_part_1(Str_view prefix, Type_vec* type_vec, Members* member
     gen_condition(prefix, type_vec, member_types);
     gen_for_with_cond(prefix, type_vec, member_types);
     gen_break(prefix, type_vec, member_types);
+    gen_continue(prefix, type_vec, member_types);
     gen_assignment(prefix, type_vec, member_types);
     gen_if(prefix, type_vec, member_types);
     gen_return(prefix, type_vec, member_types);

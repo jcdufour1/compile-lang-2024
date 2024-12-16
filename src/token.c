@@ -97,6 +97,8 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
             return str_view_from_cstr("]");
         case TOKEN_CHAR_LITERAL:
             return str_view_from_cstr("char");
+        case TOKEN_CONTINUE:
+            return str_view_from_cstr("continue");
     }
     unreachable("");
 }
@@ -154,6 +156,7 @@ Str_view token_print_internal(Arena* arena, Token token, bool msg_format) {
         case TOKEN_IN: // fallthrough
         case TOKEN_NEW_LINE: // fallthrough
         case TOKEN_BREAK: // fallthrough
+        case TOKEN_CONTINUE: // fallthrough
         case TOKEN_OPEN_SQ_BRACKET: // fallthrough
         case TOKEN_CLOSE_SQ_BRACKET:
             break;

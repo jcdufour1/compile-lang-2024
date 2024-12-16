@@ -351,6 +351,8 @@ static inline Lang_type get_lang_type(const Node* node) {
             return node_unwrap_llvm_store_literal_const(node)->lang_type;
         case NODE_IF_ELSE_CHAIN:
             unreachable("");
+        case NODE_CONTINUE:
+            unreachable("");
     }
     unreachable("");
 }
@@ -426,6 +428,8 @@ static inline Lang_type* get_lang_type_ref(Node* node) {
         case NODE_LLVM_STORE_LITERAL:
             return &node_unwrap_llvm_store_literal(node)->lang_type;
         case NODE_IF_ELSE_CHAIN:
+            unreachable("");
+        case NODE_CONTINUE:
             unreachable("");
     }
     unreachable("");
@@ -508,6 +512,8 @@ static inline Node* get_node_src(Node* node) {
             unreachable("");
         case NODE_IF_ELSE_CHAIN:
             unreachable("");
+        case NODE_CONTINUE:
+            unreachable("");
     }
     unreachable("");
 }
@@ -587,6 +593,8 @@ static inline Node* get_node_dest(Node* node) {
         case NODE_LLVM_STORE_LITERAL:
             return node_unwrap_llvm_store_literal_const(node)->node_dest.node;
         case NODE_IF_ELSE_CHAIN:
+            unreachable("");
+        case NODE_CONTINUE:
             unreachable("");
     }
     unreachable("");
@@ -713,6 +721,8 @@ static inline Str_view get_node_name(const Node* node) {
         case NODE_LLVM_STORE_LITERAL:
             unreachable("");
         case NODE_IF_ELSE_CHAIN:
+            unreachable("");
+        case NODE_CONTINUE:
             unreachable("");
     }
     unreachable("");

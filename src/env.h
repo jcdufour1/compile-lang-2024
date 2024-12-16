@@ -15,6 +15,7 @@ typedef struct Env_ {
     Str_view file_text;
 
     Str_view label_if_break;
+    Str_view label_if_continue;
 } Env;
 
 #endif // ENV_H

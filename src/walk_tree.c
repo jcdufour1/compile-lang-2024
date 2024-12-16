@@ -229,6 +229,10 @@ void walk_tree(Env* env, void (callback)(Env* env)) {
             walk_tree_traverse(env, node_unwrap_break(curr_node)->child, callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
             break;
+        case NODE_CONTINUE:
+            walk_tree_traverse(env, node_unwrap_continue(curr_node)->child, callback);
+            assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);
+            break;
         case NODE_LLVM_STORE_LITERAL:
             walk_tree_traverse(env, (Node*)node_wrap_literal(node_unwrap_llvm_store_literal(curr_node)->child), callback);
             assert((size_t)env->recursion_depth + 1 == env->ancesters.info.count);

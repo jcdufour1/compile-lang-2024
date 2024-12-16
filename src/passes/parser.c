@@ -185,6 +185,13 @@ static bool starts_with_break(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_BREAK;
 }
 
+static bool starts_with_continue(Tk_view tokens) {
+    if (tokens.count < 1) {
+        return false;
+    }
+    return tk_view_front(tokens).type == TOKEN_CONTINUE;
+}
+
 static bool starts_with_function_call(Tk_view tokens) {
     if (!try_consume(NULL, &tokens, TOKEN_SYMBOL)) {
         return false;
@@ -397,6 +404,8 @@ static bool can_end_statement(Token token) {
             return true;
         case TOKEN_CHAR_LITERAL:
             return true;
+        case TOKEN_CONTINUE:
+            return true;
     }
     unreachable("");
 }
@@ -520,6 +529,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_CLOSE_SQ_BRACKET:
             return false;
         case TOKEN_CHAR_LITERAL:
+            return false;
+        case TOKEN_CONTINUE:
             return false;
     }
     unreachable("");
@@ -852,6 +863,12 @@ static Node_break* extract_break(Tk_view* tokens) {
     return bk_statement;
 }
 
+static Node_continue* extract_continue(Tk_view* tokens) {
+    Token continue_token = tk_view_consume(tokens);
+    Node_continue* cont_statement = node_continue_new(continue_token.pos);
+    return cont_statement;
+}
+
 static PARSE_STATUS extract_function_decl(Env* env, Node_function_decl** fun_decl, Tk_view* tokens) {
     PARSE_STATUS status = PARSE_ERROR;
 
@@ -1167,6 +1184,8 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
         lhs = for_loop;
     } else if (starts_with_break(*tokens)) {
         lhs = node_wrap_break(extract_break(tokens));
+    } else if (starts_with_continue(*tokens)) {
+        lhs = node_wrap_continue(extract_continue(tokens));
     } else if (starts_with_variable_declaration(*tokens)) {
         Node_variable_def* var_def;
         if (PARSE_OK != try_extract_variable_declaration(env, &var_def, tokens, true, defer_sym_add)) {
