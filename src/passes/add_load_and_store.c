@@ -57,16 +57,16 @@ static void if_for_add_cond_goto(
 
     Node_cond_goto* cond_goto = node_cond_goto_new(pos);
     cond_goto->node_src = load_operator(env, block, old_oper);
-    cond_goto->if_true = symbol_new(label_name_if_true, pos);
-    cond_goto->if_false = symbol_new(label_name_if_false, pos);
+    cond_goto->if_true = util_symbol_new(label_name_if_true, pos);
+    cond_goto->if_false = util_symbol_new(label_name_if_false, pos);
 
     vec_append(&a_main, &block->children, node_wrap_cond_goto(cond_goto));
 }
 
 static Node_assignment* for_loop_cond_var_assign_new(Env* env, Str_view sym_name, Pos pos) {
     Node_literal* literal = util_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, pos);
-    Node_operator* operator = util_binary_typed_new(env, node_wrap_symbol_untyped(symbol_new(sym_name, pos)), node_wrap_literal(literal), TOKEN_SINGLE_PLUS);
-    return assignment_new(env, node_wrap_expr(node_wrap_symbol_untyped(symbol_new(sym_name, pos))), node_wrap_operator(operator));
+    Node_operator* operator = util_binary_typed_new(env, node_wrap_symbol_untyped(util_symbol_new(sym_name, pos)), node_wrap_literal(literal), TOKEN_SINGLE_PLUS);
+    return util_assignment_new(env, node_wrap_expr(node_wrap_symbol_untyped(util_symbol_new(sym_name, pos))), node_wrap_operator(operator));
 }
 
 static Llvm_register_sym load_function_call(
@@ -710,7 +710,7 @@ static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement, Str_v
 
     Node_operator* old_oper = if_cond->child;
 
-    Str_view if_body = literal_name_new_prefix("start_if_body");
+    Str_view if_body = util_literal_name_new_prefix("start_if_body");
 
     if_for_add_cond_goto(env, old_oper, new_block, if_body, next_if);
 
@@ -735,7 +735,7 @@ static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement, Str_v
 static Node_block* if_else_chain_to_branch(Env* env, Node_if_else_chain* if_else) {
     Node_block* new_block = node_block_new(node_wrap_if_else_chain(if_else)->pos);
 
-    Str_view if_after = literal_name_new_prefix("if_after");
+    Str_view if_after = util_literal_name_new_prefix("if_after");
     
     Node_def* dummy = NULL;
 
@@ -744,7 +744,7 @@ static Node_block* if_else_chain_to_branch(Env* env, Node_if_else_chain* if_else
         if (idx + 1 == if_else->nodes.info.count) {
             next_if = if_after;
         } else {
-            next_if = literal_name_new_prefix("next_if");
+            next_if = util_literal_name_new_prefix("next_if");
         }
 
         Node_block* if_block = if_statement_to_branch(env, vec_at(&if_else->nodes, idx), next_if, if_after);
@@ -807,31 +807,41 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
     Node_variable_def* for_var_def;
     {
         for_var_def = old_for->var_def;
-        symbol_lhs_assign = symbol_new(for_var_def->name, node_wrap_def(node_wrap_variable_def(for_var_def))->pos);
+        symbol_lhs_assign = util_symbol_new(for_var_def->name, node_wrap_def(node_wrap_variable_def(for_var_def))->pos);
     }
 
     //try(symbol_add(env, node_wrap_variable_def(for_var_def)));
     Node_def* dummy = NULL;
     assert(symbol_lookup(&dummy, env, for_var_def->name));
 
-    Node_assignment* assignment_to_inc_cond_var = for_loop_cond_var_assign_new(env, for_var_def->name, node_wrap_expr(lhs_actual)->pos);
+    Node_assignment* assignment_to_inc_cond_var = for_loop_cond_var_assign_new(
+        env, for_var_def->name, node_wrap_expr(lhs_actual)->pos
+    );
 
     Node_operator* operator = util_binary_typed_new(
-        env, node_wrap_symbol_untyped(symbol_new(symbol_lhs_assign->name, node_wrap_expr(node_wrap_symbol_untyped(symbol_lhs_assign))->pos)), rhs_actual, TOKEN_LESS_THAN
+        env,
+        node_wrap_symbol_untyped(
+            util_symbol_new(
+                symbol_lhs_assign->name,
+                node_wrap_expr(node_wrap_symbol_untyped(symbol_lhs_assign))->pos
+            )
+        ),
+        rhs_actual,
+        TOKEN_LESS_THAN
     );
 
     // initial assignment
 
-    Str_view check_cond_label = literal_name_new_prefix("check_cond");
+    Str_view check_cond_label = util_literal_name_new_prefix("check_cond");
     Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label, node_wrap_for_range(old_for)->pos);
-    Str_view after_check_label = literal_name_new_prefix("after_check");
-    Str_view after_for_loop_label = literal_name_new_prefix("after_for");
+    Str_view after_check_label = util_literal_name_new_prefix("after_check");
+    Str_view after_for_loop_label = util_literal_name_new_prefix("after_for");
 
     env->label_if_break = after_for_loop_label;
 
     //vec_append(&a_main, &new_branch_block->children, node_wrap_variable_def(for_var_def));
 
-    Node_assignment* new_var_assign = assignment_new(env, node_wrap_expr(node_wrap_symbol_untyped(symbol_lhs_assign)), lhs_actual);
+    Node_assignment* new_var_assign = util_assignment_new(env, node_wrap_expr(node_wrap_symbol_untyped(symbol_lhs_assign)), lhs_actual);
 
     load_variable_def(env, new_branch_block, for_var_def);
     load_assignment(env, new_branch_block, new_var_assign);
@@ -932,10 +942,10 @@ static Node_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* old_for
 
 
     Node_operator* operator = old_for->condition->child;
-    Str_view check_cond_label = literal_name_new_prefix("check_cond");
+    Str_view check_cond_label = util_literal_name_new_prefix("check_cond");
     Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label, node_wrap_for_with_cond(old_for)->pos);
-    Str_view after_check_label = literal_name_new_prefix("for_body");
-    Str_view after_for_loop_label = literal_name_new_prefix("after_for_loop");
+    Str_view after_check_label = util_literal_name_new_prefix("for_body");
+    Str_view after_for_loop_label = util_literal_name_new_prefix("after_for_loop");
     Llvm_register_sym oper_rtn_sym = llvm_register_sym_new_from_expr(node_wrap_operator(operator));
     oper_rtn_sym.node = node_wrap_expr(node_wrap_operator(operator));
 

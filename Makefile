@@ -40,6 +40,7 @@ OBJS=\
 	 ${BUILD_DIR}/parser_utils.o \
 	 ${BUILD_DIR}/error_msg.o \
 	 ${BUILD_DIR}/walk_tree.o \
+	 ${BUILD_DIR}/type_checking.o \
 	 ${BUILD_DIR}/passes/do_passes.o \
 	 ${BUILD_DIR}/passes/tokenizer.o \
 	 ${BUILD_DIR}/passes/parser.o \
@@ -97,6 +98,9 @@ ${BUILD_DIR}/nodes.o: ${DEP_COMMON} src/nodes.c third_party/*
 
 ${BUILD_DIR}/token.o: ${DEP_COMMON} src/token.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/token.o src/token.c
+
+${BUILD_DIR}/type_checking.o: ${DEP_COMMON} src/type_checking.c third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/type_checking.o src/type_checking.c
 
 ${BUILD_DIR}/symbol_table.o: ${DEP_COMMON} src/symbol_table.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/symbol_table.o src/symbol_table.c

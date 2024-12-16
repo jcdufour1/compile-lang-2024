@@ -3,6 +3,7 @@
 #include <nodes.h>
 #include <symbol_table.h>
 #include <parser_utils.h>
+#include <type_checking.h>
 
 static bool is_directly_in_function_def(const Env* env) {
     return 
@@ -24,7 +25,7 @@ void analysis_1(Env* env) {
         Node** curr_node = vec_at_ref(block_children, idx);
         Lang_type dummy;
         Node* new_node;
-        try_set_node_lang_type(env, &new_node, &dummy, *curr_node);
+        try_set_node_types(env, &new_node, &dummy, *curr_node);
         *curr_node = new_node;
         assert(*curr_node);
 
@@ -45,7 +46,7 @@ void analysis_1(Env* env) {
         rtn_statement->child = node_wrap_literal(util_literal_new_from_strv(str_view_from_cstr(""), TOKEN_VOID, block->pos_end));
         Lang_type dummy;
         Node* new_rtn_statement;
-        if (!try_set_node_lang_type(env, &new_rtn_statement, &dummy, node_wrap_return(rtn_statement))) {
+        if (!try_set_node_types(env, &new_rtn_statement, &dummy, node_wrap_return(rtn_statement))) {
             return;
         }
         assert(rtn_statement);

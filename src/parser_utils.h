@@ -23,9 +23,9 @@ bool try_str_view_to_int64_t(int64_t* result, Str_view str_view);
 
 bool try_str_view_to_size_t(size_t* result, Str_view str_view);
 
-Str_view literal_name_new(void);
+Str_view util_literal_name_new(void);
 
-Str_view literal_name_new_prefix(const char* debug_prefix);
+Str_view util_literal_name_new_prefix(const char* debug_prefix);
 
 Llvm_id get_prev_load_id(const Node* var_call);
 
@@ -69,17 +69,17 @@ const Node_variable_def* get_symbol_def_from_alloca(const Env* env, const Node* 
 Llvm_id get_matching_label_id(const Env* env, Str_view name);
 
 // lhs and rhs should not be used for other tasks after this
-Node_assignment* assignment_new(const Env* env, Node* lhs, Node_expr* rhs);
+Node_assignment* util_assignment_new(const Env* env, Node* lhs, Node_expr* rhs);
 
 Node_literal* util_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, Pos pos);
 
 Node_literal* util_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
 
-Node_symbol_untyped* symbol_new(Str_view symbol_name, Pos pos);
+Node_symbol_untyped* util_symbol_new(Str_view symbol_name, Pos pos);
 
 Node_operator* util_binary_typed_new(const Env* env, Node_expr* lhs, Node_expr* rhs, TOKEN_TYPE operation_type);
 
-Node_expr* unary_new(const Env* env, Node_expr* child, TOKEN_TYPE operation_type, Lang_type init_lang_type);
+Node_expr* util_unary_new(const Env* env, Node_expr* child, TOKEN_TYPE operation_type, Lang_type init_lang_type);
 
 Llvm_id get_matching_fun_param_load_id(const Node* src);
 
@@ -142,15 +142,9 @@ bool try_set_raw_union_def_types(const Env* env, Node_raw_union_def** new_node, 
 
 bool try_set_enum_def_types(const Env* env, Node_enum_def** new_node, Lang_type* lang_type, Node_enum_def* node);
 
-//static inline const Node_variable_def* get_member_def(const Struct_def_base* struct_def, const Node* member_symbol) {
-//    Node_variable_def* member_def;
-//    if (!try_get_member_def(&member_def, struct_def, member_symbol)) {
-//        unreachable("could not find member definition");
-//    }
-//    return member_def;
-//}
-
 bool try_get_struct_def(const Env* env, Node_struct_def** struct_def, Node* node);
+
+Node_operator* condition_get_default_child(Node_expr* if_cond_child);
 
 static inline Node_struct_def* get_struct_def(const Env* env, Node* node) {
     Node_struct_def* struct_def;
@@ -163,40 +157,5 @@ static inline Node_struct_def* get_struct_def(const Env* env, Node* node) {
 static inline const Node_struct_def* get_struct_def_const(const Env* env, const Node* node) {
     return get_struct_def(env, (Node*)node);
 }
-
-bool try_set_assignment_operand_types(const Env* env, Lang_type* lang_type, Node_assignment* assignment);
-
-// returns false if unsuccessful
-bool try_set_expr_lang_type(const Env* env, Node_expr** new_node, Lang_type* lang_type, Node_expr* expr);
-
-// returns false if unsuccessful
-bool try_set_binary_lang_type(const Env* env, Node_expr** new_node, Lang_type* lang_type, Node_binary* operator);
-
-// returns false if unsuccessful
-bool try_set_binary_operand_lang_type(Lang_type* lang_type, Node_expr* operand);
-
-Lang_type get_parent_function_return_type(const Env* env);
-
-bool try_set_unary_lang_type(const Env* env, Node_expr** new_node, Lang_type* lang_type, Node_unary* unary);
-
-bool try_set_operation_lang_type(const Env* env, Node** new_node, Lang_type* lang_type, Node_operator* operator);
-
-// set symbol lang_type, and report error if symbol is undefined
-void set_symbol_type(Node_symbol_untyped* sym_untyped);
-
-bool try_set_function_call_types(const Env* env, Node_expr** new_node, Lang_type* lang_type, Node_function_call* fun_call);
-
-bool try_set_member_access_types(const Env* env, Node** new_node, Lang_type* lang_type, Node_member_access_untyped* access);
-
-bool try_set_index_types(
-    const Env* env,
-    Node** new_node,
-    Lang_type* lang_type,
-    Node_index_untyped* index
-);
-
-Node_operator* condition_get_default_child(Node_expr* if_cond_child);
-
-bool try_set_node_lang_type(const Env* env, Node** new_node, Lang_type* lang_type, Node* node);
 
 #endif // PARSER_UTIL_H

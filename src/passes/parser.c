@@ -1311,7 +1311,7 @@ static PARSE_STATUS extract_struct_literal(Env* env, Node_struct_literal** struc
         return PARSE_ERROR;
     }
     *struct_lit = node_struct_literal_new(start_token.pos);
-    (*struct_lit)->name = literal_name_new();
+    (*struct_lit)->name = util_literal_name_new();
 
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
     while (try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
@@ -1344,7 +1344,7 @@ static PARSE_STATUS extract_struct_literal(Env* env, Node_struct_literal** struc
     return PARSE_OK;
 }
 
-static Node_unary* parser_unary_new(Token operator_token, Node_expr* child, Lang_type init_lang_type) {
+static Node_unary* parser_util_unary_new(Token operator_token, Node_expr* child, Lang_type init_lang_type) {
     Node_unary* unary = node_unary_new(operator_token.pos);
     unary->token_type = operator_token.type;
     unary->child = child;
@@ -1360,7 +1360,9 @@ static Node_binary* parser_binary_new(Node_expr* lhs, Token operator_token, Node
     return binary;
 }
 
-static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node_expr** result, Tk_view* tokens, bool defer_sym_add) {
+static PARSE_EXPR_STATUS try_extract_expression_piece(
+    Env* env, Node_expr** result, Tk_view* tokens, bool defer_sym_add
+) {
     if (tokens->count < 1) {
         return PARSE_EXPR_NONE;
     }
@@ -1428,7 +1430,7 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(Env* env, Node_expr** resu
         if (PARSE_EXPR_OK != try_extract_expression_piece(env, &inside_unary, tokens, defer_sym_add)) {
             todo();
         }
-        *result = node_wrap_operator(node_wrap_unary(parser_unary_new(operator_token, inside_unary, unary_lang_type)));
+        *result = node_wrap_operator(node_wrap_unary(parser_util_unary_new(operator_token, inside_unary, unary_lang_type)));
     } else if (starts_with_function_call(*tokens)) {
         if (PARSE_OK != try_extract_function_call(env, &fun_call, tokens)) {
             return PARSE_EXPR_ERROR;
