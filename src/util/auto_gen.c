@@ -69,14 +69,34 @@ static void gen_gen_internal(FILE* output, const char* file, int line, const cha
 #define gen_gen(...) \
     gen_gen_internal(global_output, __FILE__, __LINE__, __VA_ARGS__)
 
+static void extend_strv_upper(String* output, Str_view name) {
+    for (size_t idx = 0; idx < name.count; idx++) {
+        vec_append(&gen_a, output, toupper(str_view_at(name, idx)));
+    }
+}
+
+static void extend_strv_lower(String* output, Str_view name) {
+    for (size_t idx = 0; idx < name.count; idx++) {
+        vec_append(&gen_a, output, tolower(str_view_at(name, idx)));
+    }
+}
+
+static void extend_strv_first_upper(String* output, Str_view name) {
+    if (name.count < 1) {
+        return;
+    }
+    vec_append(&gen_a, output, toupper(str_view_front(name)));
+    for (size_t idx = 1; idx < name.count; idx++) {
+        vec_append(&gen_a, output, tolower(str_view_at(name, idx)));
+    }
+}
+
 static void extend_node_name_upper(String* output, Str_view name) {
     if (name.count < 1) {
-        string_extend_cstr(&gen_a, output, "node");
+        string_extend_cstr(&gen_a, output, "NODE");
     } else {
         string_extend_cstr(&gen_a, output, "NODE_");
-        for (size_t idx = 0; idx < name.count; idx++) {
-            vec_append(&gen_a, output, toupper(str_view_at(name, idx)));
-        }
+        extend_strv_upper(output, name);
     }
 }
 
@@ -85,9 +105,7 @@ static void extend_node_name_lower(String* output, Str_view name) {
         string_extend_cstr(&gen_a, output, "node");
     } else {
         string_extend_cstr(&gen_a, output, "node_");
-        for (size_t idx = 0; idx < name.count; idx++) {
-            vec_append(&gen_a, output, tolower(str_view_at(name, idx)));
-        }
+        extend_strv_lower(output, name);
     }
 }
 
@@ -96,9 +114,7 @@ static void extend_node_name_first_upper(String* output, Str_view name) {
         string_extend_cstr(&gen_a, output, "Node");
     } else {
         string_extend_cstr(&gen_a, output, "Node_");
-        for (size_t idx = 0; idx < name.count; idx++) {
-            vec_append(&gen_a, output, tolower(str_view_at(name, idx)));
-        }
+        extend_strv_lower(output, name);
     }
 }
 
@@ -126,14 +142,16 @@ static Type gen_node(void) {
 
     vec_append(&gen_a, &node.sub_types, gen_block());
     
+    append_member(&node.members, "Pos", "pos");
+
     return node;
 }
 
-static void gen_node_part_forward_decl(Type node) {
+static void gen_node_forward_decl(Type node) {
     String output = {0};
 
     for (size_t idx = 0; idx < node.sub_types.info.count; idx++) {
-        gen_node_part_forward_decl(vec_at(&node.sub_types, idx));
+        gen_node_forward_decl(vec_at(&node.sub_types, idx));
     }
 
     string_extend_cstr(&gen_a, &output, "struct ");
@@ -143,6 +161,106 @@ static void gen_node_part_forward_decl(Type node) {
     string_extend_cstr(&gen_a, &output, "typedef struct ");
     extend_node_name_first_upper(&output, node.name);
     string_extend_cstr(&gen_a, &output, "_ ");
+    extend_node_name_first_upper(&output, node.name);
+    string_extend_cstr(&gen_a, &output, ";\n");
+
+    gen_gen(STRING_FMT"\n", string_print(output));
+}
+
+static void extend_struct_member(String* output, Member member) {
+    string_extend_cstr(&gen_a, output, "    ");
+    string_extend_strv(&gen_a, output, member.type);
+    string_extend_cstr(&gen_a, output, " ");
+    string_extend_strv(&gen_a, output, member.name);
+    string_extend_cstr(&gen_a, output, ";\n");
+}
+
+static void gen_node_struct_as(String* output, Type node) {
+    string_extend_cstr(&gen_a, output, "typedef union ");
+    extend_node_name_first_upper(output, node.name);
+    string_extend_cstr(&gen_a, output, "_as");
+    string_extend_cstr(&gen_a, output, "_ ");
+    string_extend_cstr(&gen_a, output, "{\n");
+
+    for (size_t idx = 0; idx < node.sub_types.info.count; idx++) {
+        Type curr = vec_at(&node.sub_types, idx);
+        string_extend_cstr(&gen_a, output, "    ");
+        extend_node_name_first_upper(output, curr.name);
+        string_extend_cstr(&gen_a, output, " ");
+        extend_node_name_lower(output, curr.name);
+        string_extend_cstr(&gen_a, output, ";\n");
+    }
+
+    string_extend_cstr(&gen_a, output, "}");
+    extend_node_name_first_upper(output, node.name);
+    string_extend_cstr(&gen_a, output, "_as");
+    string_extend_cstr(&gen_a, output, ";\n");
+
+}
+
+static void gen_node_struct_enum(String* output, Type node) {
+    string_extend_cstr(&gen_a, output, "typedef enum ");
+    extend_node_name_upper(output, node.name);
+    string_extend_cstr(&gen_a, output, "_TYPE");
+    string_extend_cstr(&gen_a, output, "_ ");
+    string_extend_cstr(&gen_a, output, "{\n");
+
+    for (size_t idx = 0; idx < node.sub_types.info.count; idx++) {
+        Type curr = vec_at(&node.sub_types, idx);
+        string_extend_cstr(&gen_a, output, "    ");
+        extend_node_name_upper(output, curr.name);
+        string_extend_cstr(&gen_a, output, ",\n");
+    }
+
+    string_extend_cstr(&gen_a, output, "}");
+    extend_node_name_upper(output, node.name);
+    string_extend_cstr(&gen_a, output, "_TYPE");
+    string_extend_cstr(&gen_a, output, ";\n");
+
+}
+
+static void gen_node_struct(Type node) {
+    String output = {0};
+
+    for (size_t idx = 0; idx < node.sub_types.info.count; idx++) {
+        gen_node_struct(vec_at(&node.sub_types, idx));
+    }
+
+    if (node.sub_types.info.count > 0) {
+        gen_node_struct_as(&output, node);
+        gen_node_struct_enum(&output, node);
+    }
+
+    string_extend_cstr(&gen_a, &output, "typedef struct ");
+    extend_node_name_first_upper(&output, node.name);
+    string_extend_cstr(&gen_a, &output, "_ ");
+    string_extend_cstr(&gen_a, &output, "{\n");
+
+    if (node.sub_types.info.count > 0) {
+        String as_member_type = {0};
+        extend_node_name_first_upper(&as_member_type, node.name);
+        string_extend_cstr(&gen_a, &as_member_type, "_as");
+
+        String as_member_name = {0};
+        string_extend_cstr(&gen_a, &as_member_name, "as");
+
+        extend_struct_member(&output, (Member) {.type = string_to_strv(as_member_type), .name = string_to_strv(as_member_name)});
+
+        String enum_member_type = {0};
+        extend_node_name_upper(&enum_member_type, node.name);
+        string_extend_cstr(&gen_a, &enum_member_type, "_TYPE");
+
+        String enum_member_name = {0};
+        string_extend_cstr(&gen_a, &enum_member_name, "type");
+
+        extend_struct_member(&output, (Member) {.type = string_to_strv(enum_member_type), .name = string_to_strv(enum_member_name)});
+    }
+
+    for (size_t idx = 0; idx < node.members.info.count; idx++) {
+        extend_struct_member(&output, vec_at(&node.members, idx));
+    }
+
+    string_extend_cstr(&gen_a, &output, "}");
     extend_node_name_first_upper(&output, node.name);
     string_extend_cstr(&gen_a, &output, ";\n");
 
@@ -167,7 +285,8 @@ int main(int argc, char** argv) {
 
     Type node = gen_node();
 
-    gen_node_part_forward_decl(node);
+    gen_node_forward_decl(node);
+    gen_node_struct(node);
 
     gen_gen("#endif // NODE_H");
 }
