@@ -777,8 +777,6 @@ static Type gen_node(void) {
     vec_append(&gen_a, &node.sub_types, gen_store_another_node());
     vec_append(&gen_a, &node.sub_types, gen_llvm_store_struct_literal());
     vec_append(&gen_a, &node.sub_types, gen_if_else_chain());
-    
-    append_member(&node.members, "Pos", "pos");
 
     return node;
 }
@@ -894,6 +892,12 @@ static void gen_node_struct(Type node) {
 
     for (size_t idx = 0; idx < node.members.info.count; idx++) {
         extend_struct_member(&output, vec_at(&node.members, idx));
+    }
+
+    if (node.sub_types.info.count < 1) {
+        extend_struct_member(&output, (Member) {
+            .type = str_view_from_cstr("Pos"), .name = str_view_from_cstr("pos")
+        });
     }
 
     string_extend_cstr(&gen_a, &output, "}");
@@ -1012,7 +1016,13 @@ static void gen_new_internal(Type type, bool implementation) {
     extend_node_name_first_upper(&function, type.name);
     string_extend_cstr(&gen_a, &function, "* ");
     extend_node_name_lower(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "_new(Pos pos)");
+    string_extend_cstr(&gen_a, &function, "_new(");
+    if (type.sub_types.info.count > 0) {
+        string_extend_cstr(&gen_a, &function, "void");
+    } else {
+        string_extend_cstr(&gen_a, &function, "Pos pos");
+    }
+    string_extend_cstr(&gen_a, &function, ")");
 
     if (implementation) {
         string_extend_cstr(&gen_a, &function, "{\n");
@@ -1021,11 +1031,17 @@ static void gen_new_internal(Type type, bool implementation) {
         extend_parent_node_name_first_upper(&function, type.name);
         string_extend_cstr(&gen_a, &function, "* base_node = ");
         extend_parent_node_name_lower(&function, type.name);
-        string_extend_cstr(&gen_a, &function, "_new(pos);\n");
+        string_extend_cstr(&gen_a, &function, "_new();\n");
 
         string_extend_cstr(&gen_a, &function, "    base_node->type = ");
         extend_node_name_upper(&function, type.name);
         string_extend_cstr(&gen_a, &function, ";\n");
+
+        if (type.sub_types.info.count < 1) {
+            string_extend_cstr(&gen_a, &function, "    node_unwrap_");
+            extend_strv_lower(&function, type.name.base);
+            string_extend_cstr(&gen_a, &function, "(base_node)->pos = pos;\n");
+        }
 
         string_extend_cstr(&gen_a, &function, "    return node_unwrap_");
         extend_strv_lower(&function, type.name.base);
@@ -1040,12 +1056,75 @@ static void gen_new_internal(Type type, bool implementation) {
     gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
 }
 
+static void gen_get_pos_internal(Type type, bool implementation) {
+    for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
+        gen_get_pos_internal(vec_at(&type.sub_types, idx), implementation);
+    }
+
+    String function = {0};
+
+    string_extend_cstr(&gen_a, &function, "static inline Pos ");
+
+    if (type.name.is_topmost) {
+        string_extend_cstr(&gen_a, &function, "    node_get_pos(const Node* node)");
+    } else {
+        string_extend_cstr(&gen_a, &function, "    node_get_pos_");
+        extend_strv_lower(&function, type.name.base);
+        string_extend_cstr(&gen_a, &function, "(const ");
+        extend_node_name_first_upper(&function, type.name);
+        string_extend_cstr(&gen_a, &function, "* node)");
+    }
+
+    if (implementation) {
+        string_extend_cstr(&gen_a, &function, "{\n");
+
+        if (type.sub_types.info.count < 1) {
+            string_extend_cstr(&gen_a, &function, "    return node->pos;\n");
+        } else {
+            string_extend_cstr(&gen_a, &function, "    switch (node->type) {\n");
+
+            for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
+                Type curr = vec_at(&type.sub_types, idx);
+                string_extend_cstr(&gen_a, &function, "        case ");
+                extend_node_name_upper(&function, curr.name);
+                string_extend_cstr(&gen_a, &function, ":\n");
+
+
+                string_extend_cstr(&gen_a, &function, "            return node_get_pos_");
+                extend_strv_lower(&function, curr.name.base);
+                string_extend_cstr(&gen_a, &function, "(node_unwrap_");
+                extend_strv_lower(&function, curr.name.base);
+                string_extend_cstr(&gen_a, &function, "_const(node));\n");
+
+                string_extend_cstr(&gen_a, &function, "        break;\n");
+            }
+
+            string_extend_cstr(&gen_a, &function, "    }\n");
+        }
+
+        string_extend_cstr(&gen_a, &function, "}\n");
+
+    } else {
+        string_extend_cstr(&gen_a, &function, ";");
+    }
+
+    gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
+}
+
 static void gen_node_new_forward_decl(Type node) {
     gen_new_internal(node, false);
 }
 
 static void gen_node_new_define(Type node) {
     gen_new_internal(node, true);
+}
+
+static void gen_node_get_pos_forward_decl(Type node) {
+    gen_get_pos_internal(node, false);
+}
+
+static void gen_node_get_pos_define(Type node) {
+    gen_get_pos_internal(node, true);
 }
 
 int main(int argc, char** argv) {
@@ -1072,14 +1151,16 @@ int main(int argc, char** argv) {
     gen_node_unwrap(node);
     gen_node_wrap(node);
 
-    gen_gen("%s\n", "static inline Node* node_new(Pos pos) {");
+    gen_gen("%s\n", "static inline Node* node_new(void) {");
     gen_gen("%s\n", "    Node* new_node = arena_alloc(&a_main, sizeof(*new_node));");
-    gen_gen("%s\n", "    new_node->pos = pos;");
     gen_gen("%s\n", "    return new_node;");
     gen_gen("%s\n", "}");
 
     gen_node_new_forward_decl(node);
     gen_node_new_define(node);
+
+    gen_node_get_pos_forward_decl(node);
+    gen_node_get_pos_define(node);
 
     gen_gen("#endif // NODE_H");
 }

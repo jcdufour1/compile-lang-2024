@@ -108,14 +108,14 @@ static void msg_parser_expected_internal(Str_view file_text, const char* file, i
 
 static PARSE_STATUS msg_redefinition_of_symbol(const Env* env, const Node_def* new_sym_def) {
     msg(
-        LOG_ERROR, EXPECT_FAIL_REDEFINITION_SYMBOL, env->file_text, node_wrap_def_const(new_sym_def)->pos,
+        LOG_ERROR, EXPECT_FAIL_REDEFINITION_SYMBOL, env->file_text, node_get_pos_def(new_sym_def),
         "redefinition of symbol "STR_VIEW_FMT"\n", str_view_print(get_def_name(new_sym_def))
     );
 
     Node_def* original_def;
     try(symbol_lookup(&original_def, env, get_def_name(new_sym_def)));
     msg(
-        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, node_wrap_def(original_def)->pos,
+        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, node_get_pos_def(original_def),
         STR_VIEW_FMT " originally defined here\n", str_view_print(get_def_name(original_def))
     );
 
@@ -663,7 +663,7 @@ static PARSE_STATUS extract_function_def(Env* env, Node_function_def** fun_def, 
     if (PARSE_OK != extract_function_decl_common(env, &fun_decl, tokens)) {
         return PARSE_ERROR;
     }
-    (*fun_def) = node_function_def_new(node_wrap_def(node_wrap_function_decl(fun_decl))->pos);
+    (*fun_def) = node_function_def_new(fun_decl->pos);
     (*fun_def)->declaration = fun_decl;
     return extract_block(env, &(*fun_def)->body, tokens, false);
 }
@@ -813,7 +813,7 @@ static PARSE_STATUS extract_for_range_internal(Env* env, Node_for_range* for_loo
         msg_expected_expression(env->file_text, *tokens);
         return PARSE_ERROR;
     }
-    Node_for_lower_bound* lower_bound = node_for_lower_bound_new(node_wrap_expr(lower_bound_child)->pos);
+    Node_for_lower_bound* lower_bound = node_for_lower_bound_new(node_get_pos_expr(lower_bound_child));
     lower_bound->child = lower_bound_child;
     for_loop->lower_bound = lower_bound;
     if (!try_consume(NULL, tokens, TOKEN_DOUBLE_DOT)) {
@@ -826,7 +826,7 @@ static PARSE_STATUS extract_for_range_internal(Env* env, Node_for_range* for_loo
         msg_expected_expression(env->file_text, *tokens);
         return PARSE_ERROR;
     }
-    Node_for_upper_bound* upper_bound = node_for_upper_bound_new(node_wrap_expr(upper_bound_child)->pos);
+    Node_for_upper_bound* upper_bound = node_for_upper_bound_new(node_get_pos_expr(upper_bound_child));
     upper_bound->child = upper_bound_child;
     for_loop->upper_bound = upper_bound;
 
@@ -834,7 +834,7 @@ static PARSE_STATUS extract_for_range_internal(Env* env, Node_for_range* for_loo
 }
 
 static PARSE_STATUS extract_for_with_cond(Env* env, Node_for_with_cond** for_new, Node_for_range* for_range, Tk_view* tokens) {
-    *for_new = node_for_with_cond_new(node_wrap_for_range(for_range)->pos);
+    *for_new = node_for_with_cond_new(for_range->pos);
     (*for_new)->condition = extract_condition(env, tokens);
     return extract_block(env, &(*for_new)->body, tokens, false);
 }
@@ -936,9 +936,7 @@ static Node_symbol_untyped* extract_symbol(Tk_view* tokens) {
     Token token = tk_view_consume(tokens);
     assert(token.type == TOKEN_SYMBOL);
 
-    Node_expr* sym_node_ = node_expr_new(token.pos);
-    sym_node_->type = NODE_SYMBOL_UNTYPED;
-    Node_symbol_untyped* sym_node = node_unwrap_symbol_untyped(sym_node_);
+    Node_symbol_untyped* sym_node = util_symbol_new(token.text, token.pos);
     sym_node->name = token.text;
     return sym_node;
 }
@@ -981,7 +979,7 @@ static PARSE_STATUS try_extract_function_call(Env* env, Node_function_call** chi
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
         msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_CLOSE_PAR, TOKEN_COMMA);
         msg(
-            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, node_wrap_expr(node_wrap_function_call(function_call))->pos,
+            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, function_call->pos,
             "when parsing arguments for call to function `"STR_VIEW_FMT"`\n", 
             str_view_print(function_call->name)
         );
@@ -998,7 +996,7 @@ static PARSE_STATUS extract_function_return(Env* env, Node_return** rtn_statemen
     Node_expr* expression;
     switch (try_extract_expression(env, &expression, tokens, false)) {
         case PARSE_EXPR_OK:
-            *rtn_statement = node_return_new(node_wrap_expr(expression)->pos);
+            *rtn_statement = node_return_new(node_get_pos_expr(expression));
             (*rtn_statement)->child = expression;
             break;
         case PARSE_EXPR_NONE:
@@ -1061,7 +1059,7 @@ static Node_condition* extract_condition(Env* env, Tk_view* tokens) {
     if (PARSE_EXPR_OK != try_extract_expression(env, &cond_child, tokens, false)) {
         todo();
     }
-    Node_condition* condition = node_condition_new(node_wrap_expr(cond_child)->pos);
+    Node_condition* condition = node_condition_new(node_get_pos_expr(cond_child));
 
     // TODO: make helper function that does this
     switch (cond_child->type) {
@@ -1485,6 +1483,7 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(
         return PARSE_EXPR_NONE;
     }
 
+    // TODO: use exhausive switch case here?
     while (1) {
         Token bracket = {0};
         if (try_consume(&bracket, tokens, TOKEN_SINGLE_DOT)) {

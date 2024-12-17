@@ -436,17 +436,17 @@ static bool extend_node_text(Arena* arena, String* string, const Node* node, boo
             unreachable("");
     }
 
-    if (node->pos.line != UINT32_MAX) {
-        if (node->pos.line > 1e6) {
+    if (node_get_pos(node).line != UINT32_MAX) {
+        if (node_get_pos(node).line > 1e6) {
             // TODO: crash program later when this happens
             log(LOG_ERROR, "possliyby corrupt\n");
             return false;
         }
 
         string_extend_cstr(arena, string, "    line:");
-        string_extend_size_t(arena, string, node->pos.line);
+        string_extend_size_t(arena, string, node_get_pos(node).line);
         string_extend_cstr(arena, string, ":");
-        string_extend_size_t(arena, string, node->pos.column);
+        string_extend_size_t(arena, string, node_get_pos(node).column);
     }
 
     return true;

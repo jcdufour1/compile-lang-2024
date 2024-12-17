@@ -6,7 +6,7 @@
 // TODO: rewrite this pass, because this is unsafe
 // TODO: do not change type of existing node (or find better way), because this is error prone
 static void do_change_operator(Node_operator* operator) {
-    Pos pos = node_wrap_expr(node_wrap_operator(operator))->pos;
+    Pos pos = node_get_pos_operator(operator);
     if (operator->type == NODE_UNARY) {
         Node_unary* unary = node_unwrap_unary(operator);
         switch (unary->token_type) {
