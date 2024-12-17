@@ -185,7 +185,7 @@ static void emit_function_params(const Env* env, String* output, const Node_func
                 string_extend_cstr(&a_main, output, ")");
             }
         } else if (lang_type_is_enum(env, curr_param->lang_type) || lang_type_is_primitive(env, curr_param->lang_type)) {
-            extend_type_decl_str(env, output, node_wrap_def(node_wrap_variable_def_const(curr_param)), true);
+            extend_type_decl_str(env, output, node_wrap_def_const(node_wrap_variable_def_const(curr_param)), true);
         } else {
             unreachable("");
         }
@@ -321,7 +321,7 @@ static void emit_unary_type(const Env* env, String* output, const Node_unary* un
             }
             break;
         default:
-            unreachable(NODE_FMT"\n", node_print(node_wrap_expr(node_wrap_operator(node_wrap_unary_const(unary)))));
+            unreachable(NODE_FMT"\n", node_print(node_wrap_expr_const(node_wrap_operator_const(node_wrap_unary_const(unary)))));
     }
 }
 
@@ -641,7 +641,7 @@ static void emit_function_def(Env* env, String* output, const Node_function_def*
     extend_type_call_str(env, output, return_type_from_function_def(fun_def)->lang_type);
 
     string_extend_cstr(&a_main, output, " @");
-    string_extend_strv(&a_main, output, get_node_name(node_wrap_def(node_wrap_function_def_const(fun_def))));
+    string_extend_strv(&a_main, output, get_node_name(node_wrap_def_const(node_wrap_function_def_const(fun_def))));
 
     vec_append(&a_main, output, '(');
     emit_function_params(env, output, fun_def->declaration->parameters);

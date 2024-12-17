@@ -42,6 +42,7 @@ typedef struct {
 } Type_vec;
 
 typedef struct {
+    bool is_topmost;
     Str_view parent;
     Str_view base;
 } Node_name;
@@ -154,18 +155,18 @@ static void extend_parent_node_name_upper(String* output, Node_name name) {
 }
 
 static void extend_parent_node_name_lower(String* output, Node_name name) {
-    todo();
     assert(name.parent.count > 0);
 
     if (str_view_cstr_is_equal(name.parent, "node")) {
-        extend_strv_lower(output, name.parent);
-    } else {
         string_extend_cstr(&gen_a, output, "node");
+        return;
     }
-    if (name.base.count > 0) {
-        string_extend_cstr(&gen_a, output, "_");
-        extend_strv_lower(output, name.base);
-    }
+
+    assert(name.base.count > 0);
+
+    string_extend_cstr(&gen_a, output, "node");
+    string_extend_cstr(&gen_a, output, "_");
+    extend_strv_lower(output, name.parent);
 }
 
 static void extend_parent_node_name_first_upper(String* output, Node_name name) {
@@ -183,8 +184,8 @@ static void extend_parent_node_name_first_upper(String* output, Node_name name) 
     extend_strv_lower(output, name.parent);
 }
 
-static Node_name node_name_new(const char* parent, const char* base) {
-    return (Node_name) {.parent = str_view_from_cstr(parent), .base = str_view_from_cstr(base)};
+static Node_name node_name_new(const char* parent, const char* base, bool is_topmost) {
+    return (Node_name) {.parent = str_view_from_cstr(parent), .base = str_view_from_cstr(base), .is_topmost = is_topmost};
 }
 
 static void append_member(Members* members, const char* type, const char* name) {
@@ -196,7 +197,7 @@ static void append_member(Members* members, const char* type, const char* name) 
 }
 
 static Type gen_block(void) {
-    Type block = {.name = node_name_new("node", "block")};
+    Type block = {.name = node_name_new("node", "block", false)};
 
     append_member(&block.members, "bool", "is_variadic");
     append_member(&block.members, "Node_ptr_vec", "children");
@@ -207,7 +208,7 @@ static Type gen_block(void) {
 }
 
 static Type gen_unary(void) {
-    Type unary = {.name = node_name_new("operator", "unary")};
+    Type unary = {.name = node_name_new("operator", "unary", false)};
 
     append_member(&unary.members, "Node_expr*", "child");
     append_member(&unary.members, "TOKEN_TYPE", "token_type");
@@ -218,7 +219,7 @@ static Type gen_unary(void) {
 }
 
 static Type gen_binary(void) {
-    Type binary = {.name = node_name_new("operator", "binary")};
+    Type binary = {.name = node_name_new("operator", "binary", false)};
 
     append_member(&binary.members, "Node_expr*", "lhs");
     append_member(&binary.members, "Node_expr*", "rhs");
@@ -230,7 +231,7 @@ static Type gen_binary(void) {
 }
 
 static Type gen_primitive_sym(void) {
-    Type primitive = {.name = node_name_new("symbol_typed", "primitive_sym")};
+    Type primitive = {.name = node_name_new("symbol_typed", "primitive_sym", false)};
 
     append_member(&primitive.members, "Sym_typed_base", "base");
 
@@ -238,7 +239,7 @@ static Type gen_primitive_sym(void) {
 }
 
 static Type gen_enum_sym(void) {
-    Type lang_enum = {.name = node_name_new("symbol_typed", "enum_sym")};
+    Type lang_enum = {.name = node_name_new("symbol_typed", "enum_sym", false)};
 
     append_member(&lang_enum.members, "Sym_typed_base", "base");
 
@@ -246,7 +247,7 @@ static Type gen_enum_sym(void) {
 }
 
 static Type gen_struct_sym(void) {
-    Type lang_struct = {.name = node_name_new("symbol_typed", "struct_sym")};
+    Type lang_struct = {.name = node_name_new("symbol_typed", "struct_sym", false)};
 
     append_member(&lang_struct.members, "Sym_typed_base", "base");
 
@@ -254,7 +255,7 @@ static Type gen_struct_sym(void) {
 }
 
 static Type gen_raw_union_sym(void) {
-    Type raw_union = {.name = node_name_new("symbol_typed", "raw_union_sym")};
+    Type raw_union = {.name = node_name_new("symbol_typed", "raw_union_sym", false)};
 
     append_member(&raw_union.members, "Sym_typed_base", "base");
 
@@ -262,7 +263,7 @@ static Type gen_raw_union_sym(void) {
 }
 
 static Type gen_operator(void) {
-    Type operator = {.name = node_name_new("expr", "operator")};
+    Type operator = {.name = node_name_new("expr", "operator", false)};
 
     vec_append(&gen_a, &operator.sub_types, gen_unary());
     vec_append(&gen_a, &operator.sub_types, gen_binary());
@@ -271,7 +272,7 @@ static Type gen_operator(void) {
 }
 
 static Type gen_symbol_untyped(void) {
-    Type sym = {.name = node_name_new("expr", "symbol_untyped")};
+    Type sym = {.name = node_name_new("expr", "symbol_untyped", false)};
 
     append_member(&sym.members, "Str_view", "name");
 
@@ -279,7 +280,7 @@ static Type gen_symbol_untyped(void) {
 }
 
 static Type gen_symbol_typed(void) {
-    Type sym = {.name = node_name_new("expr", "symbol_typed")};
+    Type sym = {.name = node_name_new("expr", "symbol_typed", false)};
 
     vec_append(&gen_a, &sym.sub_types, gen_primitive_sym());
     vec_append(&gen_a, &sym.sub_types, gen_struct_sym());
@@ -290,7 +291,7 @@ static Type gen_symbol_typed(void) {
 }
 
 static Type gen_member_access_typed(void) {
-    Type access = {.name = node_name_new("expr", "member_access_typed")};
+    Type access = {.name = node_name_new("expr", "member_access_typed", false)};
 
     append_member(&access.members, "Lang_type", "lang_type");
     append_member(&access.members, "Str_view", "member_name");
@@ -301,7 +302,7 @@ static Type gen_member_access_typed(void) {
 }
 
 static Type gen_member_access_untyped(void) {
-    Type access = {.name = node_name_new("expr", "member_access_untyped")};
+    Type access = {.name = node_name_new("expr", "member_access_untyped", false)};
 
     append_member(&access.members, "Str_view", "member_name");
     append_member(&access.members, "Node_expr*", "callee");
@@ -310,7 +311,7 @@ static Type gen_member_access_untyped(void) {
 }
 
 static Type gen_index_untyped(void) {
-    Type index = {.name = node_name_new("expr", "index_untyped")};
+    Type index = {.name = node_name_new("expr", "index_untyped", false)};
 
     append_member(&index.members, "Node_expr*", "index");
     append_member(&index.members, "Node_expr*", "callee");
@@ -319,7 +320,7 @@ static Type gen_index_untyped(void) {
 }
 
 static Type gen_index_typed(void) {
-    Type index = {.name = node_name_new("expr", "index_typed")};
+    Type index = {.name = node_name_new("expr", "index_typed", false)};
 
     append_member(&index.members, "Lang_type", "lang_type");
     append_member(&index.members, "Node_expr*", "index");
@@ -330,7 +331,7 @@ static Type gen_index_typed(void) {
 }
 
 static Type gen_number(void) {
-    Type number = {.name = node_name_new("literal", "number")};
+    Type number = {.name = node_name_new("literal", "number", false)};
 
     append_member(&number.members, "int64_t", "data");
 
@@ -338,7 +339,7 @@ static Type gen_number(void) {
 }
 
 static Type gen_string(void) {
-    Type string = {.name = node_name_new("literal", "string")};
+    Type string = {.name = node_name_new("literal", "string", false)};
 
     append_member(&string.members, "Str_view", "data");
 
@@ -346,7 +347,7 @@ static Type gen_string(void) {
 }
 
 static Type gen_char(void) {
-    Type lang_char = {.name = node_name_new("literal", "char")};
+    Type lang_char = {.name = node_name_new("literal", "char", false)};
 
     append_member(&lang_char.members, "char", "data");
 
@@ -354,7 +355,7 @@ static Type gen_char(void) {
 }
 
 static Type gen_void(void) {
-    Type lang_void = {.name = node_name_new("literal", "void")};
+    Type lang_void = {.name = node_name_new("literal", "void", false)};
 
     append_member(&lang_void.members, "int", "dummy");
 
@@ -362,7 +363,7 @@ static Type gen_void(void) {
 }
 
 static Type gen_enum_lit(void) {
-    Type enum_lit = {.name = node_name_new("literal", "enum_lit")};
+    Type enum_lit = {.name = node_name_new("literal", "enum_lit", false)};
 
     append_member(&enum_lit.members, "int64_t", "data");
 
@@ -370,7 +371,7 @@ static Type gen_enum_lit(void) {
 }
 
 static Type gen_literal(void) {
-    Type lit = {.name = node_name_new("expr", "literal")};
+    Type lit = {.name = node_name_new("expr", "literal", false)};
 
     vec_append(&gen_a, &lit.sub_types, gen_number());
     vec_append(&gen_a, &lit.sub_types, gen_string());
@@ -385,7 +386,7 @@ static Type gen_literal(void) {
 }
 
 static Type gen_function_call(void) {
-    Type call = {.name = node_name_new("expr", "function_call")};
+    Type call = {.name = node_name_new("expr", "function_call", false)};
 
     append_member(&call.members, "Expr_ptr_vec", "args");
     append_member(&call.members, "Str_view", "name");
@@ -396,7 +397,7 @@ static Type gen_function_call(void) {
 }
 
 static Type gen_struct_literal(void) {
-    Type lit = {.name = node_name_new("expr", "struct_literal")};
+    Type lit = {.name = node_name_new("expr", "struct_literal", false)};
 
     append_member(&lit.members, "Node_ptr_vec", "members");
     append_member(&lit.members, "Str_view", "name");
@@ -407,7 +408,7 @@ static Type gen_struct_literal(void) {
 }
 
 static Type gen_llvm_placeholder(void) {
-    Type placeholder = {.name = node_name_new("expr", "llvm_placeholder")};
+    Type placeholder = {.name = node_name_new("expr", "llvm_placeholder", false)};
 
     append_member(&placeholder.members, "Lang_type", "lang_type");
     append_member(&placeholder.members, "Llvm_register_sym", "llvm_reg");
@@ -416,7 +417,7 @@ static Type gen_llvm_placeholder(void) {
 }
 
 static Type gen_expr(void) {
-    Type expr = {.name = node_name_new("node", "expr")};
+    Type expr = {.name = node_name_new("node", "expr", false)};
 
     vec_append(&gen_a, &expr.sub_types, gen_operator());
     vec_append(&gen_a, &expr.sub_types, gen_symbol_untyped());
@@ -434,7 +435,7 @@ static Type gen_expr(void) {
 }
 
 static Type gen_struct_def(void) {
-    Type def = {.name = node_name_new("def", "struct_def")};
+    Type def = {.name = node_name_new("def", "struct_def", false)};
 
     append_member(&def.members, "Struct_def_base", "base");
 
@@ -442,7 +443,7 @@ static Type gen_struct_def(void) {
 }
 
 static Type gen_raw_union_def(void) {
-    Type def = {.name = node_name_new("def", "raw_union_def")};
+    Type def = {.name = node_name_new("def", "raw_union_def", false)};
 
     append_member(&def.members, "Struct_def_base", "base");
 
@@ -450,7 +451,7 @@ static Type gen_raw_union_def(void) {
 }
 
 static Type gen_function_decl(void) {
-    Type def = {.name = node_name_new("def", "function_decl")};
+    Type def = {.name = node_name_new("def", "function_decl", false)};
 
     append_member(&def.members, "Node_function_params*", "parameters");
     append_member(&def.members, "Node_lang_type*", "return_type");
@@ -460,7 +461,7 @@ static Type gen_function_decl(void) {
 }
 
 static Type gen_function_def(void) {
-    Type def = {.name = node_name_new("def", "function_def")};
+    Type def = {.name = node_name_new("def", "function_def", false)};
 
     append_member(&def.members, "Node_function_decl*", "declaration");
     append_member(&def.members, "Node_block*", "body");
@@ -470,7 +471,7 @@ static Type gen_function_def(void) {
 }
 
 static Type gen_variable_def(void) {
-    Type def = {.name = node_name_new("def", "variable_def")};
+    Type def = {.name = node_name_new("def", "variable_def", false)};
 
     append_member(&def.members, "Lang_type", "lang_type");
     append_member(&def.members, "bool", "is_variadic"); // TODO: : 1
@@ -482,7 +483,7 @@ static Type gen_variable_def(void) {
 }
 
 static Type gen_enum_def(void) {
-    Type def = {.name = node_name_new("def", "enum_def")};
+    Type def = {.name = node_name_new("def", "enum_def", false)};
 
     append_member(&def.members, "Struct_def_base", "base");
 
@@ -490,7 +491,7 @@ static Type gen_enum_def(void) {
 }
 
 static Type gen_primitive_def(void) {
-    Type def = {.name = node_name_new("def", "primitive_def")};
+    Type def = {.name = node_name_new("def", "primitive_def", false)};
 
     append_member(&def.members, "Lang_type", "lang_type");
 
@@ -498,7 +499,7 @@ static Type gen_primitive_def(void) {
 }
 
 static Type gen_label(void) {
-    Type def = {.name = node_name_new("def", "label")};
+    Type def = {.name = node_name_new("def", "label", false)};
 
     append_member(&def.members, "Llvm_id", "llvm_id");
     append_member(&def.members, "Str_view", "name");
@@ -507,7 +508,7 @@ static Type gen_label(void) {
 }
 
 static Type gen_string_def(void) {
-    Type def = {.name = node_name_new("literal_def", "string_def")};
+    Type def = {.name = node_name_new("literal_def", "string_def", false)};
 
     append_member(&def.members, "Str_view", "name");
     append_member(&def.members, "Str_view", "data");
@@ -516,7 +517,7 @@ static Type gen_string_def(void) {
 }
 
 static Type gen_struct_lit_def(void) {
-    Type def = {.name = node_name_new("literal_def", "struct_lit_def")};
+    Type def = {.name = node_name_new("literal_def", "struct_lit_def", false)};
 
     append_member(&def.members, "Node_ptr_vec", "members");
     append_member(&def.members, "Str_view", "name");
@@ -527,7 +528,7 @@ static Type gen_struct_lit_def(void) {
 }
 
 static Type gen_literal_def(void) {
-    Type def = {.name = node_name_new("def", "literal_def")};
+    Type def = {.name = node_name_new("def", "literal_def", false)};
 
     vec_append(&gen_a, &def.sub_types, gen_string_def());
     vec_append(&gen_a, &def.sub_types, gen_struct_lit_def());
@@ -536,7 +537,7 @@ static Type gen_literal_def(void) {
 }
 
 static Type gen_def(void) {
-    Type def = {.name = node_name_new("node", "def")};
+    Type def = {.name = node_name_new("node", "def", false)};
 
     vec_append(&gen_a, &def.sub_types, gen_function_def());
     vec_append(&gen_a, &def.sub_types, gen_variable_def());
@@ -552,7 +553,7 @@ static Type gen_def(void) {
 }
 
 static Type gen_load_element_ptr(void) {
-    Type load = {.name = node_name_new("node", "load_element_ptr")};
+    Type load = {.name = node_name_new("node", "load_element_ptr", false)};
 
     append_member(&load.members, "Lang_type", "lang_type");
     append_member(&load.members, "Llvm_id", "llvm_id");
@@ -565,7 +566,7 @@ static Type gen_load_element_ptr(void) {
 }
 
 static Type gen_function_params(void) {
-    Type params = {.name = node_name_new("node", "function_params")};
+    Type params = {.name = node_name_new("node", "function_params", false)};
 
     append_member(&params.members, "Node_var_def_vec", "params");
     append_member(&params.members, "Llvm_id", "llvm_id");
@@ -574,7 +575,7 @@ static Type gen_function_params(void) {
 }
 
 static Type gen_lang_type(void) {
-    Type lang_type = {.name = node_name_new("node", "lang_type")};
+    Type lang_type = {.name = node_name_new("node", "lang_type", false)};
 
     append_member(&lang_type.members, "Lang_type", "lang_type");
 
@@ -582,7 +583,7 @@ static Type gen_lang_type(void) {
 }
 
 static Type gen_for_lower_bound(void) {
-    Type bound = {.name = node_name_new("node", "for_lower_bound")};
+    Type bound = {.name = node_name_new("node", "for_lower_bound", false)};
 
     append_member(&bound.members, "Node_expr*", "child");
 
@@ -590,7 +591,7 @@ static Type gen_for_lower_bound(void) {
 }
 
 static Type gen_for_upper_bound(void) {
-    Type bound = {.name = node_name_new("node", "for_upper_bound")};
+    Type bound = {.name = node_name_new("node", "for_upper_bound", false)};
 
     append_member(&bound.members, "Node_expr*", "child");
 
@@ -598,7 +599,7 @@ static Type gen_for_upper_bound(void) {
 }
 
 static Type gen_condition(void) {
-    Type bound = {.name = node_name_new("node", "condition")};
+    Type bound = {.name = node_name_new("node", "condition", false)};
 
     append_member(&bound.members, "Node_operator*", "child");
 
@@ -606,7 +607,7 @@ static Type gen_condition(void) {
 }
 
 static Type gen_for_range(void) {
-    Type range = {.name = node_name_new("node", "for_range")};
+    Type range = {.name = node_name_new("node", "for_range", false)};
 
     append_member(&range.members, "Node_variable_def*", "var_def");
     append_member(&range.members, "Node_for_lower_bound*", "lower_bound");
@@ -617,7 +618,7 @@ static Type gen_for_range(void) {
 }
 
 static Type gen_for_with_cond(void) {
-    Type for_cond = {.name = node_name_new("node", "for_with_cond")};
+    Type for_cond = {.name = node_name_new("node", "for_with_cond", false)};
 
     append_member(&for_cond.members, "Node_condition*", "condition");
     append_member(&for_cond.members, "Node_block*", "body");
@@ -626,7 +627,7 @@ static Type gen_for_with_cond(void) {
 }
 
 static Type gen_break(void) {
-    Type lang_break = {.name = node_name_new("node", "break")};
+    Type lang_break = {.name = node_name_new("node", "break", false)};
 
     append_member(&lang_break.members, "Node*", "child");
 
@@ -634,7 +635,7 @@ static Type gen_break(void) {
 }
 
 static Type gen_continue(void) {
-    Type lang_cont = {.name = node_name_new("node", "continue")};
+    Type lang_cont = {.name = node_name_new("node", "continue", false)};
 
     append_member(&lang_cont.members, "Node*", "child");
 
@@ -642,7 +643,7 @@ static Type gen_continue(void) {
 }
 
 static Type gen_assignment(void) {
-    Type assign = {.name = node_name_new("node", "assignment")};
+    Type assign = {.name = node_name_new("node", "assignment", false)};
 
     append_member(&assign.members, "Node*", "lhs");
     append_member(&assign.members, "Node_expr*", "rhs");
@@ -651,7 +652,7 @@ static Type gen_assignment(void) {
 }
 
 static Type gen_if(void) {
-    Type lang_if = {.name = node_name_new("node", "if")};
+    Type lang_if = {.name = node_name_new("node", "if", false)};
 
     append_member(&lang_if.members, "Node_condition*", "condition");
     append_member(&lang_if.members, "Node_block*", "body");
@@ -660,7 +661,7 @@ static Type gen_if(void) {
 }
 
 static Type gen_return(void) {
-    Type rtn = {.name = node_name_new("node", "return")};
+    Type rtn = {.name = node_name_new("node", "return", false)};
 
     append_member(&rtn.members, "Node_expr*", "child");
     append_member(&rtn.members, "bool", "is_auto_inserted"); // TODO: use : 1 size?
@@ -669,7 +670,7 @@ static Type gen_return(void) {
 }
 
 static Type gen_goto(void) {
-    Type lang_goto = {.name = node_name_new("node", "goto")};
+    Type lang_goto = {.name = node_name_new("node", "goto", false)};
 
     append_member(&lang_goto.members, "Str_view", "name");
     append_member(&lang_goto.members, "Llvm_id", "llvm_id");
@@ -678,7 +679,7 @@ static Type gen_goto(void) {
 }
 
 static Type gen_cond_goto(void) {
-    Type cond_goto = {.name = node_name_new("node", "cond_goto")};
+    Type cond_goto = {.name = node_name_new("node", "cond_goto", false)};
 
     append_member(&cond_goto.members, "Llvm_register_sym", "node_src");
     append_member(&cond_goto.members, "Str_view", "if_true");
@@ -689,7 +690,7 @@ static Type gen_cond_goto(void) {
 }
 
 static Type gen_alloca(void) {
-    Type lang_alloca = {.name = node_name_new("node", "alloca")};
+    Type lang_alloca = {.name = node_name_new("node", "alloca", false)};
 
     append_member(&lang_alloca.members, "Llvm_id", "llvm_id");
     append_member(&lang_alloca.members, "Lang_type", "lang_type");
@@ -699,7 +700,7 @@ static Type gen_alloca(void) {
 }
 
 static Type gen_llvm_store_literal(void) {
-    Type store = {.name = node_name_new("node", "llvm_store_literal")};
+    Type store = {.name = node_name_new("node", "llvm_store_literal", false)};
 
     append_member(&store.members, "Node_literal*", "child");
     append_member(&store.members, "Llvm_register_sym", "node_dest");
@@ -710,7 +711,7 @@ static Type gen_llvm_store_literal(void) {
 }
 
 static Type gen_load_another_node(void) {
-    Type load = {.name = node_name_new("node", "load_another_node")};
+    Type load = {.name = node_name_new("node", "load_another_node", false)};
 
     append_member(&load.members, "Llvm_register_sym", "node_src");
     append_member(&load.members, "Llvm_id", "llvm_id");
@@ -720,7 +721,7 @@ static Type gen_load_another_node(void) {
 }
 
 static Type gen_store_another_node(void) {
-    Type store = {.name = node_name_new("node", "store_another_node")};
+    Type store = {.name = node_name_new("node", "store_another_node", false)};
 
     append_member(&store.members, "Llvm_register_sym", "node_src");
     append_member(&store.members, "Llvm_register_sym", "node_dest");
@@ -731,7 +732,7 @@ static Type gen_store_another_node(void) {
 }
 
 static Type gen_llvm_store_struct_literal(void) {
-    Type store = {.name = node_name_new("node", "llvm_store_struct_literal")};
+    Type store = {.name = node_name_new("node", "llvm_store_struct_literal", false)};
 
     append_member(&store.members, "Node_struct_literal*", "child");
     append_member(&store.members, "Llvm_id", "llvm_id");
@@ -742,7 +743,7 @@ static Type gen_llvm_store_struct_literal(void) {
 }
 
 static Type gen_if_else_chain(void) {
-    Type chain = {.name = node_name_new("node", "if_else_chain")};
+    Type chain = {.name = node_name_new("node", "if_else_chain", false)};
 
     append_member(&chain.members, "Node_if_ptr_vec", "nodes");
 
@@ -750,7 +751,7 @@ static Type gen_if_else_chain(void) {
 }
 
 static Type gen_node(void) {
-    Type node = {.name = node_name_new("node", "")};
+    Type node = {.name = node_name_new("node", "", true)};
 
     vec_append(&gen_a, &node.sub_types, gen_block());
     vec_append(&gen_a, &node.sub_types, gen_expr());
@@ -996,6 +997,57 @@ void gen_node_wrap(Type node) {
     gen_wrap_internal(node, true);
 }
 
+static void gen_new_internal(Type type, bool implementation) {
+    for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
+        gen_new_internal(vec_at(&type.sub_types, idx), implementation);
+    }
+
+    if (type.name.is_topmost) {
+        return;
+    }
+
+    String function = {0};
+
+    string_extend_cstr(&gen_a, &function, "static inline ");
+    extend_node_name_first_upper(&function, type.name);
+    string_extend_cstr(&gen_a, &function, "* ");
+    extend_node_name_lower(&function, type.name);
+    string_extend_cstr(&gen_a, &function, "_new(Pos pos)");
+
+    if (implementation) {
+        string_extend_cstr(&gen_a, &function, "{\n");
+
+        string_extend_cstr(&gen_a, &function, "    ");
+        extend_parent_node_name_first_upper(&function, type.name);
+        string_extend_cstr(&gen_a, &function, "* base_node = ");
+        extend_parent_node_name_lower(&function, type.name);
+        string_extend_cstr(&gen_a, &function, "_new(pos);\n");
+
+        string_extend_cstr(&gen_a, &function, "    base_node->type = ");
+        extend_node_name_upper(&function, type.name);
+        string_extend_cstr(&gen_a, &function, ";\n");
+
+        string_extend_cstr(&gen_a, &function, "    return node_unwrap_");
+        extend_strv_lower(&function, type.name.base);
+        string_extend_cstr(&gen_a, &function, "(base_node);\n");
+
+        string_extend_cstr(&gen_a, &function, "}");
+
+    } else {
+        string_extend_cstr(&gen_a, &function, ";");
+    }
+
+    gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
+}
+
+static void gen_node_new_forward_decl(Type node) {
+    gen_new_internal(node, false);
+}
+
+static void gen_node_new_define(Type node) {
+    gen_new_internal(node, true);
+}
+
 int main(int argc, char** argv) {
     assert(argc == 2 && "output file path should be provided");
 
@@ -1019,6 +1071,15 @@ int main(int argc, char** argv) {
 
     gen_node_unwrap(node);
     gen_node_wrap(node);
+
+    gen_gen("%s\n", "static inline Node* node_new(Pos pos) {");
+    gen_gen("%s\n", "    Node* new_node = arena_alloc(&a_main, sizeof(*new_node));");
+    gen_gen("%s\n", "    new_node->pos = pos;");
+    gen_gen("%s\n", "    return new_node;");
+    gen_gen("%s\n", "}");
+
+    gen_node_new_forward_decl(node);
+    gen_node_new_define(node);
 
     gen_gen("#endif // NODE_H");
 }

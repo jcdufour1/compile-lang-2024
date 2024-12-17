@@ -140,7 +140,7 @@ static void msg_invalid_function_arg_internal(
     );
     msg_internal(
         file, line,
-        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, node_wrap_def(node_wrap_variable_def_const(corres_param))->pos,
+        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, node_wrap_def_const(node_wrap_variable_def_const(corres_param))->pos,
         "corresponding parameter `"STR_VIEW_FMT"` defined here\n",
         str_view_print(corres_param->name)
     );
