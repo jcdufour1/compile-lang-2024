@@ -956,7 +956,6 @@ static Node_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* old_for
     Node_operator* operator = old_for->condition->child;
     Str_view check_cond_label = util_literal_name_new_prefix("check_cond");
     Node_goto* jmp_to_check_cond_label = goto_new(check_cond_label, node_wrap_for_with_cond(old_for)->pos);
-    Node_goto* jmp_to_assign = goto_new(check_cond_label, node_wrap_for_with_cond(old_for)->pos);
     Str_view after_check_label = util_literal_name_new_prefix("for_body");
     Str_view after_for_loop_label = util_literal_name_new_prefix("after_for_loop");
     Llvm_register_sym oper_rtn_sym = llvm_register_sym_new_from_expr(node_wrap_operator(operator));
