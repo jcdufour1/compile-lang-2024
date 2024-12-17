@@ -65,8 +65,17 @@ static void if_for_add_cond_goto(
 
 static Node_assignment* for_loop_cond_var_assign_new(Env* env, Str_view sym_name, Pos pos) {
     Node_literal* literal = util_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, pos);
-    Node_operator* operator = util_binary_typed_new(env, node_wrap_symbol_untyped(util_symbol_new(sym_name, pos)), node_wrap_literal(literal), TOKEN_SINGLE_PLUS);
-    return util_assignment_new(env, node_wrap_expr(node_wrap_symbol_untyped(util_symbol_new(sym_name, pos))), node_wrap_operator(operator));
+    Node_operator* operator = util_binary_typed_new(
+        env,
+        node_wrap_symbol_untyped(util_symbol_new(sym_name, pos)),
+        node_wrap_literal(literal),
+        TOKEN_SINGLE_PLUS
+    );
+    return util_assignment_new(
+        env,
+        node_wrap_expr(node_wrap_symbol_untyped(util_symbol_new(sym_name, pos))),
+        node_wrap_operator(operator)
+    );
 }
 
 static Llvm_register_sym load_function_call(
