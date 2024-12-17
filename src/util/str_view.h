@@ -22,6 +22,11 @@ static inline Str_view str_view_slice(Str_view str_view, size_t start, size_t co
     return new_str_view;
 }
 
+static inline char str_view_at(Str_view str_view, size_t index) {
+    assert(index <= str_view.count && "out of bounds");
+    return str_view.str[index];
+}
+
 static inline Str_view str_view_consume_while(Str_view* str_view, bool (*should_continue)(char /* previous char */, char /* current char */)) {
     Str_view new_str_view;
     for (size_t idx = 0; str_view->count > idx; idx++) {
