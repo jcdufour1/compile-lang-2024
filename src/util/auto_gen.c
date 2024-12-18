@@ -335,7 +335,6 @@ static Type gen_number(void) {
 
     append_member(&number.members, "int64_t", "data");
     append_member(&number.members, "Lang_type", "lang_type");
-    append_member(&number.members, "Str_view", "name");
 
     return number;
 }
@@ -355,7 +354,6 @@ static Type gen_char(void) {
 
     append_member(&lang_char.members, "char", "data");
     append_member(&lang_char.members, "Lang_type", "lang_type");
-    append_member(&lang_char.members, "Str_view", "name");
 
     return lang_char;
 }
@@ -364,8 +362,6 @@ static Type gen_void(void) {
     Type lang_void = {.name = node_name_new("literal", "void", false)};
 
     append_member(&lang_void.members, "int", "dummy");
-    append_member(&lang_void.members, "Lang_type", "lang_type");
-    append_member(&lang_void.members, "Str_view", "name");
 
     return lang_void;
 }
@@ -375,7 +371,6 @@ static Type gen_enum_lit(void) {
 
     append_member(&enum_lit.members, "int64_t", "data");
     append_member(&enum_lit.members, "Lang_type", "lang_type");
-    append_member(&enum_lit.members, "Str_view", "name");
 
     return enum_lit;
 }

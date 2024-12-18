@@ -216,7 +216,6 @@ Node_literal* util_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, 
         case TOKEN_INT_LITERAL: {
             Node_number* literal = node_number_new(pos);
             literal->data = str_view_to_int64_t(value);
-            literal->name = util_literal_name_new();
             new_literal = node_wrap_number(literal);
             break;
         }
@@ -229,14 +228,12 @@ Node_literal* util_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, 
         }
         case TOKEN_VOID: {
             Node_void* literal = node_void_new(pos);
-            literal->name = util_literal_name_new();
             new_literal = node_wrap_void(literal);
             break;
         }
         case TOKEN_CHAR_LITERAL: {
             Node_char* literal = node_char_new(pos);
             literal->data = str_view_front(value);
-            literal->name = util_literal_name_new();
             new_literal = node_wrap_char(literal);
             break;
         }
@@ -258,7 +255,6 @@ Node_literal* util_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type
         case TOKEN_INT_LITERAL: {
             Node_number* literal = node_number_new(pos);
             literal->data = value;
-            literal->name = util_literal_name_new();
             new_literal = node_wrap_number(literal);
             break;
         }
@@ -266,14 +262,12 @@ Node_literal* util_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type
             unreachable("");
         case TOKEN_VOID: {
             Node_void* literal = node_void_new(pos);
-            literal->name = util_literal_name_new();
             new_literal = node_wrap_void(literal);
             break;
         }
         case TOKEN_CHAR_LITERAL: {
             Node_char* literal = node_char_new(pos);
             assert(value < INT8_MAX);
-            literal->name = util_literal_name_new();
             literal->data = value;
             new_literal = node_wrap_char(literal);
             break;

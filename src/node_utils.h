@@ -230,7 +230,7 @@ static inline Lang_type get_lang_type_literal(const Node_literal* lit) {
         case NODE_STRING:
             return node_unwrap_string_const(lit)->lang_type;
         case NODE_VOID:
-            return node_unwrap_void_const(lit)->lang_type;
+            return lang_type_new_from_cstr("void", 0);
         case NODE_ENUM_LIT:
             return node_unwrap_enum_lit_const(lit)->lang_type;
         case NODE_CHAR:
@@ -635,15 +635,15 @@ static inline Node* get_node_dest(Node* node) {
 static inline Str_view get_literal_name(const Node_literal* lit) {
     switch (lit->type) {
         case NODE_NUMBER:
-            return node_unwrap_number_const(lit)->name;
+            unreachable("");
         case NODE_STRING:
             return node_unwrap_string_const(lit)->name;
         case NODE_VOID:
-            return node_unwrap_void_const(lit)->name;
+            unreachable("");
         case NODE_ENUM_LIT:
-            return node_unwrap_enum_lit_const(lit)->name;
+            unreachable("");
         case NODE_CHAR:
-            return node_unwrap_char_const(lit)->name;
+            unreachable("");
     }
     unreachable("");
 }

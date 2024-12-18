@@ -242,11 +242,11 @@ static void print_node_src(Arena* arena, String* string, const Node* node, bool 
 
 static void extend_literal_text(Arena* arena, String* string, const Node_literal* literal) {
     extend_lang_type_to_string(arena, string, get_lang_type_literal(literal), true);
-    string_extend_strv(arena, string, get_literal_name(literal));
 
     switch (literal->type) {
         case NODE_STRING:
             string_extend_strv_in_par(arena, string, node_unwrap_string_const(literal)->data);
+            string_extend_strv(arena, string, get_literal_name(literal));
             return;
         case NODE_NUMBER:
             string_extend_cstr(arena, string, "(");

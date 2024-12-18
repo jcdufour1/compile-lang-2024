@@ -222,7 +222,6 @@ void try_set_literal_types(Lang_type* lang_type, Node_literal* literal, TOKEN_TY
             break;
         }
         case TOKEN_VOID:
-            node_unwrap_void(literal)->lang_type = lang_type_new_from_cstr("void", 0);
             break;
         case TOKEN_CHAR_LITERAL:
             node_unwrap_char(literal)->lang_type = lang_type_new_from_cstr("u8", 0);
