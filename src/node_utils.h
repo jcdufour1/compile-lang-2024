@@ -194,16 +194,12 @@ static inline Llvm_id get_llvm_id(const Node* node) {
             unreachable("");
         case NODE_ALLOCA:
             return node_unwrap_alloca_const(node)->llvm_id;
-        case NODE_LLVM_STORE_STRUCT_LITERAL:
-            unreachable("");
         case NODE_LOAD_ANOTHER_NODE:
             return node_unwrap_load_another_node_const(node)->llvm_id;
         case NODE_STORE_ANOTHER_NODE:
             unreachable("");
         case NODE_LOAD_ELEMENT_PTR:
             return node_unwrap_load_element_ptr_const(node)->llvm_id;
-        case NODE_LLVM_STORE_LITERAL:
-            unreachable("");
         default:
             unreachable(""); // we cannot print node_type because it will cause infinite recursion
     }
@@ -371,16 +367,12 @@ static inline Lang_type get_lang_type(const Node* node) {
             unreachable("");
         case NODE_ALLOCA:
             return node_unwrap_alloca_const(node)->lang_type;
-        case NODE_LLVM_STORE_STRUCT_LITERAL:
-            return node_unwrap_llvm_store_struct_literal_const(node)->lang_type;
         case NODE_LOAD_ANOTHER_NODE:
             return node_unwrap_load_another_node_const(node)->lang_type;
         case NODE_STORE_ANOTHER_NODE:
             return node_unwrap_store_another_node_const(node)->lang_type;
         case NODE_LOAD_ELEMENT_PTR:
             return node_unwrap_load_element_ptr_const(node)->lang_type;
-        case NODE_LLVM_STORE_LITERAL:
-            return node_unwrap_llvm_store_literal_const(node)->lang_type;
         case NODE_IF_ELSE_CHAIN:
             unreachable("");
         case NODE_CONTINUE:
@@ -449,16 +441,12 @@ static inline Lang_type* get_lang_type_ref(Node* node) {
             unreachable("");
         case NODE_ALLOCA:
             return &node_unwrap_alloca(node)->lang_type;
-        case NODE_LLVM_STORE_STRUCT_LITERAL:
-            return &node_unwrap_llvm_store_struct_literal(node)->lang_type;
         case NODE_LOAD_ANOTHER_NODE:
             return &node_unwrap_load_another_node(node)->lang_type;
         case NODE_STORE_ANOTHER_NODE:
             return &node_unwrap_store_another_node(node)->lang_type;
         case NODE_LOAD_ELEMENT_PTR:
             return &node_unwrap_load_element_ptr(node)->lang_type;
-        case NODE_LLVM_STORE_LITERAL:
-            return &node_unwrap_llvm_store_literal(node)->lang_type;
         case NODE_IF_ELSE_CHAIN:
             unreachable("");
         case NODE_CONTINUE:
@@ -532,16 +520,12 @@ static inline Node* get_node_src(Node* node) {
             //return node_wrap_expr(node_wrap_operator(node_unwrap_cond_goto(node)->node_src.node));
         case NODE_ALLOCA:
             unreachable("");
-        case NODE_LLVM_STORE_STRUCT_LITERAL:
-            unreachable("");
         case NODE_LOAD_ANOTHER_NODE:
             return node_unwrap_load_another_node(node)->node_src.node;
         case NODE_STORE_ANOTHER_NODE:
             return node_unwrap_store_another_node(node)->node_src.node;
         case NODE_LOAD_ELEMENT_PTR:
             return node_unwrap_load_element_ptr(node)->node_src.node;
-        case NODE_LLVM_STORE_LITERAL:
-            unreachable("");
         case NODE_IF_ELSE_CHAIN:
             unreachable("");
         case NODE_CONTINUE:
@@ -614,16 +598,12 @@ static inline Node* get_node_dest(Node* node) {
             unreachable("");
         case NODE_ALLOCA:
             unreachable("");
-        case NODE_LLVM_STORE_STRUCT_LITERAL:
-            return node_unwrap_llvm_store_struct_literal_const(node)->node_dest.node;
         case NODE_LOAD_ANOTHER_NODE:
             unreachable("");
         case NODE_STORE_ANOTHER_NODE:
             return node_unwrap_store_another_node_const(node)->node_dest.node;
         case NODE_LOAD_ELEMENT_PTR:
             unreachable("");
-        case NODE_LLVM_STORE_LITERAL:
-            return node_unwrap_llvm_store_literal_const(node)->node_dest.node;
         case NODE_IF_ELSE_CHAIN:
             unreachable("");
         case NODE_CONTINUE:
@@ -758,16 +738,12 @@ static inline Str_view get_node_name(const Node* node) {
             unreachable("");
         case NODE_ALLOCA:
             return node_unwrap_alloca_const(node)->name;
-        case NODE_LLVM_STORE_STRUCT_LITERAL:
-            unreachable("");
         case NODE_LOAD_ANOTHER_NODE:
             return get_node_name(node_unwrap_load_another_node_const(node)->node_src.node);
         case NODE_STORE_ANOTHER_NODE:
             unreachable("");
         case NODE_LOAD_ELEMENT_PTR:
             return node_unwrap_load_element_ptr_const(node)->name;
-        case NODE_LLVM_STORE_LITERAL:
-            unreachable("");
         case NODE_IF_ELSE_CHAIN:
             unreachable("");
         case NODE_CONTINUE:

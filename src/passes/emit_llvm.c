@@ -625,16 +625,6 @@ static void emit_store_another_node(const Env* env, String* output, const Node_s
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_llvm_store_literal(const Env* env, String* output, const Node_llvm_store_literal* store) {
-    string_extend_cstr(&a_main, output, "    store ");
-    extend_type_call_str(env, output, store->lang_type);
-    extend_literal_decl_prefix(env, output, store->child);
-    string_extend_cstr(&a_main, output, ", ptr %");
-    string_extend_size_t(&a_main, output, get_llvm_id(store->node_dest.node));
-    string_extend_cstr(&a_main, output, ", align 8");
-    string_extend_cstr(&a_main, output, "\n");
-}
-
 static void emit_function_def(Env* env, String* output, const Node_function_def* fun_def) {
     string_extend_cstr(&a_main, output, "define dso_local ");
 
@@ -857,12 +847,6 @@ static void emit_block(Env* env, String* output, const Node_block* block) {
                 break;
             case NODE_ALLOCA:
                 emit_alloca(env, output, node_unwrap_alloca_const(statement));
-                break;
-            case NODE_LLVM_STORE_LITERAL:
-                emit_llvm_store_literal(env, output, node_unwrap_llvm_store_literal_const(statement));
-                break;
-            case NODE_LLVM_STORE_STRUCT_LITERAL:
-                unreachable("");
                 break;
             case NODE_LOAD_ELEMENT_PTR:
                 emit_load_struct_element_pointer(env, output, node_unwrap_load_element_ptr_const(statement));

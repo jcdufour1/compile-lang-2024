@@ -40,8 +40,6 @@ static const char* NODE_MEMBER_ACCESS_TYPED_DESCRIPTION = "member_access_typed";
 static const char* NODE_MEMBER_ACCESS_UNTYPED_DESCRIPTION = "member_access_untyped";
 static const char* NODE_INDEX_TYPED_DESCRIPTION = "index_typed";
 static const char* NODE_INDEX_UNTYPED_DESCRIPTION = "index_untyped";
-static const char* NODE_LLVM_STORE_LITERAL_DESCRIPTION = "llvm_store_literal";
-static const char* NODE_LLVM_STORE_STRUCT_LITERAL_DESCRIPTION = "llvm_store_struct_literal";
 static const char* NODE_LOAD_STRUCT_ELEMENT_PTR_DESCRIPTION = "load_element_ptr";
 static const char* NODE_LOAD_ANOTHER_NODE_DESCRIPTION = "load_another_node";
 static const char* NODE_STORE_ANOTHER_NODE_DESCRIPTION = "store_another_node";
@@ -209,10 +207,6 @@ static Str_view node_type_get_strv(const Node* node) {
             return str_view_from_cstr(NODE_LOAD_ANOTHER_NODE_DESCRIPTION);
         case NODE_STORE_ANOTHER_NODE:
             return str_view_from_cstr(NODE_STORE_ANOTHER_NODE_DESCRIPTION);
-        case NODE_LLVM_STORE_LITERAL:
-            return str_view_from_cstr(NODE_LLVM_STORE_LITERAL_DESCRIPTION);
-        case NODE_LLVM_STORE_STRUCT_LITERAL:
-            return str_view_from_cstr(NODE_LLVM_STORE_STRUCT_LITERAL_DESCRIPTION);
         case NODE_BREAK:
             return str_view_from_cstr(NODE_BREAK_DESCRIPTION);
         case NODE_IF_ELSE_CHAIN:
@@ -414,14 +408,6 @@ static bool extend_node_text(Arena* arena, String* string, const Node* node, boo
                 extend_node_text(arena, string, node_unwrap_store_another_node_const(node)->node_src.node, false);
             }
             print_node_src(arena, string, node, do_recursion);
-            print_node_dest(arena, string, node, do_recursion);
-            break;
-        case NODE_LLVM_STORE_LITERAL:
-            extend_lang_type_to_string(arena, string, get_lang_type(node), true);
-            print_node_dest(arena, string, node, do_recursion);
-            break;
-        case NODE_LLVM_STORE_STRUCT_LITERAL:
-            extend_lang_type_to_string(arena, string, get_lang_type(node), true);
             print_node_dest(arena, string, node, do_recursion);
             break;
         case NODE_LOAD_ELEMENT_PTR:

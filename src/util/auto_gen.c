@@ -701,17 +701,6 @@ static Type gen_alloca(void) {
     return lang_alloca;
 }
 
-static Type gen_llvm_store_literal(void) {
-    Type store = {.name = node_name_new("node", "llvm_store_literal", false)};
-
-    append_member(&store.members, "Node_literal*", "child");
-    append_member(&store.members, "Llvm_register_sym", "node_dest");
-    append_member(&store.members, "Llvm_id", "llvm_id");
-    append_member(&store.members, "Lang_type", "lang_type");
-
-    return store;
-}
-
 static Type gen_load_another_node(void) {
     Type load = {.name = node_name_new("node", "load_another_node", false)};
 
@@ -729,17 +718,6 @@ static Type gen_store_another_node(void) {
     append_member(&store.members, "Llvm_register_sym", "node_dest");
     append_member(&store.members, "Llvm_id", "llvm_id");
     append_member(&store.members, "Lang_type", "lang_type");
-
-    return store;
-}
-
-static Type gen_llvm_store_struct_literal(void) {
-    Type store = {.name = node_name_new("node", "llvm_store_struct_literal", false)};
-
-    append_member(&store.members, "Node_struct_literal*", "child");
-    append_member(&store.members, "Llvm_id", "llvm_id");
-    append_member(&store.members, "Lang_type", "lang_type");
-    append_member(&store.members, "Llvm_register_sym", "node_dest");
 
     return store;
 }
@@ -774,10 +752,8 @@ static Type gen_node(void) {
     vec_append(&gen_a, &node.sub_types, gen_goto());
     vec_append(&gen_a, &node.sub_types, gen_cond_goto());
     vec_append(&gen_a, &node.sub_types, gen_alloca());
-    vec_append(&gen_a, &node.sub_types, gen_llvm_store_literal());
     vec_append(&gen_a, &node.sub_types, gen_load_another_node());
     vec_append(&gen_a, &node.sub_types, gen_store_another_node());
-    vec_append(&gen_a, &node.sub_types, gen_llvm_store_struct_literal());
     vec_append(&gen_a, &node.sub_types, gen_if_else_chain());
 
     return node;
