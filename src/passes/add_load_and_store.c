@@ -5,6 +5,68 @@
 
 #include "passes.h"
 
+static Node_function_params* node_clone_function_params(Node_function_params* old_params) {
+    Node_function_params* new_params = node_function_params_new(old_params->pos);
+    *new_params = *old_params;
+    return new_params;
+}
+
+static Node_lang_type* node_clone_lang_type(Node_lang_type* old_lang_type) {
+    Node_lang_type* new_lang_type = node_lang_type_new(old_lang_type->pos);
+    *new_lang_type = *old_lang_type;
+    return new_lang_type;
+}
+
+static Node_function_decl* node_clone_function_decl(Node_function_decl* old_decl) {
+    Node_function_decl* new_decl = node_function_decl_new(old_decl->pos);
+    new_decl->parameters = node_clone_function_params(old_decl->parameters);
+    new_decl->return_type = node_clone_lang_type(old_decl->return_type);
+    new_decl->name = old_decl->name;
+    return new_decl;
+}
+
+static Node_variable_def* node_clone_variable_def(Node_variable_def* old_var_def) {
+    Node_variable_def* new_var_def = node_variable_def_new(old_var_def->pos);
+    *new_var_def = *old_var_def;
+    return new_var_def;
+}
+
+static Node_alloca* node_clone_alloca(const Node_alloca* old_alloca) {
+    Node_alloca* new_alloca = node_alloca_new(old_alloca->pos);
+    *new_alloca = *old_alloca;
+    return new_alloca;
+}
+
+static Node_goto* node_clone_goto(const Node_goto* old_goto) {
+    Node_goto* new_goto = node_goto_new(old_goto->pos);
+    *new_goto = *old_goto;
+    return new_goto;
+}
+
+static Node_struct_literal* node_clone_struct_literal(const Node_struct_literal* old_lit) {
+    Node_struct_literal* new_lit = node_struct_literal_new(old_lit->pos);
+    *new_lit = *old_lit;
+    return new_lit;
+}
+
+static Node_struct_def* node_clone_struct_def(const Node_struct_def* old_def) {
+    Node_struct_def* new_def = node_struct_def_new(old_def->pos);
+    *new_def = *old_def;
+    return new_def;
+}
+
+static Node_enum_def* node_clone_enum_def(const Node_enum_def* old_def) {
+    Node_enum_def* new_def = node_enum_def_new(old_def->pos);
+    *new_def = *old_def;
+    return new_def;
+}
+
+static Node_raw_union_def* node_clone_raw_union_def(const Node_raw_union_def* old_def) {
+    Node_raw_union_def* new_def = node_raw_union_def_new(old_def->pos);
+    *new_def = *old_def;
+    return new_def;
+}
+
 static Node_block* load_block(Env* env, Node_block* old_block);
 
 static Llvm_register_sym load_expr(Env* env, Node_block* new_block, Node_expr* old_expr);
@@ -426,10 +488,9 @@ static Llvm_register_sym load_struct_literal(
 
     try(sym_tbl_add(&env->global_literals, node_wrap_literal_def(node_wrap_struct_lit_def(new_def))));
 
-    // TODO: clone
     return (Llvm_register_sym) {
         .lang_type = old_lit->lang_type,
-        .node = (Node*)old_lit
+        .node = node_wrap_expr(node_wrap_struct_literal(node_clone_struct_literal(old_lit)))
     };
     todo();
 }
@@ -455,32 +516,6 @@ static Llvm_register_sym load_expr(Env* env, Node_block* new_block, Node_expr* o
         default:
             unreachable(NODE_FMT"\n", node_print(node_wrap_expr(old_expr)));
     }
-}
-
-static Node_function_params* node_clone_function_params(Node_function_params* old_params) {
-    Node_function_params* new_params = node_function_params_new(old_params->pos);
-    *new_params = *old_params;
-    return new_params;
-}
-
-static Node_lang_type* node_clone_lang_type(Node_lang_type* old_lang_type) {
-    Node_lang_type* new_lang_type = node_lang_type_new(old_lang_type->pos);
-    *new_lang_type = *old_lang_type;
-    return new_lang_type;
-}
-
-static Node_function_decl* node_clone_function_decl(Node_function_decl* old_decl) {
-    Node_function_decl* new_decl = node_function_decl_new(old_decl->pos);
-    new_decl->parameters = node_clone_function_params(old_decl->parameters);
-    new_decl->return_type = node_clone_lang_type(old_decl->return_type);
-    new_decl->name = old_decl->name;
-    return new_decl;
-}
-
-static Node_variable_def* node_clone_variable_def(Node_variable_def* old_var_def) {
-    Node_variable_def* new_var_def = node_variable_def_new(old_var_def->pos);
-    *new_var_def = *old_var_def;
-    return new_var_def;
 }
 
 static void load_function_parameters(
@@ -584,7 +619,6 @@ static Llvm_register_sym load_return(
 
     vec_append(&a_main, &new_block->children, node_wrap_return(new_return));
 
-
     return (Llvm_register_sym) {0};
 }
 
@@ -596,14 +630,13 @@ static Llvm_register_sym load_alloca(
     (void) env;
 
     // TODO: clone alloca
-    // make id system to make this actually possible
+    // make id system, separate hash table, etc. to make this actually possible
     //Node_alloca* new_alloca = node_clone_alloca(old_alloca);
 
-    vec_insert(&a_main, &new_block->children, 0, node_wrap_alloca((Node_alloca*)old_alloca));
-
+    vec_insert(&a_main, &new_block->children, 0, node_wrap_alloca(old_alloca));
     return (Llvm_register_sym) {
         .lang_type = old_alloca->lang_type,
-        .node = node_wrap_alloca((Node_alloca*)old_alloca)
+        .node = node_wrap_alloca(old_alloca),
     };
 }
 
@@ -639,8 +672,6 @@ static Llvm_register_sym load_variable_def(
     Node_block* new_block,
     Node_variable_def* old_var_def
 ) {
-    (void) env;
-
     Node_variable_def* new_var_def = node_clone_variable_def(old_var_def);
     if (!new_var_def->storage_location.node) {
         new_var_def->storage_location = load_alloca(env, new_block, add_alloca_alloca_new(new_var_def));
@@ -656,13 +687,10 @@ static Llvm_register_sym load_goto(
     Node_block* new_block,
     Node_goto* old_goto
 ) {
-    unreachable("");
     (void) env;
-
-    // TODO: clone
-    vec_append(&a_main, &new_block->children, (Node*)old_goto);
-
-    return (Llvm_register_sym) {0};
+    (void) new_block;
+    (void) old_goto;
+    unreachable("");
 }
 
 static Llvm_register_sym load_cond_goto(
@@ -670,13 +698,10 @@ static Llvm_register_sym load_cond_goto(
     Node_block* new_block,
     Node_cond_goto* old_cond_goto
 ) {
-    unreachable("");
     (void) env;
-
-    // TODO: clone
-    vec_append(&a_main, &new_block->children, (Node*)old_cond_goto);
-
-    return (Llvm_register_sym) {0};
+    (void) new_block;
+    (void) old_cond_goto;
+    unreachable("");
 }
 
 static Llvm_register_sym load_label(
@@ -684,13 +709,10 @@ static Llvm_register_sym load_label(
     Node_block* new_block,
     Node_label* old_label
 ) {
-    unreachable("");
     (void) env;
-
-    // TODO: clone
-    vec_append(&a_main, &new_block->children, (Node*)old_label);
-
-    return (Llvm_register_sym) {0};
+    (void) new_block;
+    (void) old_label;
+    unreachable("");
 }
 
 static Llvm_register_sym load_struct_def(
@@ -700,8 +722,9 @@ static Llvm_register_sym load_struct_def(
 ) {
     (void) env;
 
-    // TODO: clone
-    vec_append(&a_main, &new_block->children, (Node*)old_struct_def);
+    vec_append(&a_main, &new_block->children, node_wrap_def(
+        node_wrap_struct_def(node_clone_struct_def(old_struct_def))
+    ));
 
     return (Llvm_register_sym) {0};
 }
@@ -713,8 +736,9 @@ static Llvm_register_sym load_enum_def(
 ) {
     (void) env;
 
-    // TODO: clone
-    vec_append(&a_main, &new_block->children, (Node*)old_enum_def);
+    vec_append(&a_main, &new_block->children, node_wrap_def(
+        node_wrap_enum_def(node_clone_enum_def(old_enum_def))
+    ));
 
     return (Llvm_register_sym) {0};
 }
@@ -1085,8 +1109,9 @@ static Llvm_register_sym load_raw_union_def(
 ) {
     (void) env;
 
-    // TODO: clone
-    vec_append(&a_main, &new_block->children, (Node*)old_def);
+    vec_append(&a_main, &new_block->children, node_wrap_def(
+        node_wrap_raw_union_def(node_clone_raw_union_def(old_def))
+    ));
 
     return (Llvm_register_sym) {0};
 }
@@ -1105,7 +1130,6 @@ static Llvm_register_sym load_ptr_unary(
     Node_unary* old_unary
 ) {
     Pos pos = old_unary->pos;
-
 
     switch (old_unary->token_type) {
         case TOKEN_DEREF: {
