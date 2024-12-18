@@ -157,12 +157,12 @@ static Llvm_register_sym load_literal(
     if (new_lit->type == NODE_STRING) {
         Node_string_def* new_def = node_string_def_new(pos);
         new_def->data = node_unwrap_string(old_lit)->data;
-        new_def->name = old_lit->name;
+        new_def->name = node_unwrap_string(old_lit)->name;
         try(sym_tbl_add(&env->global_literals, node_wrap_literal_def(node_wrap_string_def(new_def))));
     }
 
     return (Llvm_register_sym) {
-        .lang_type = old_lit->lang_type,
+        .lang_type = get_lang_type_literal(old_lit),
         .node = node_wrap_expr(node_wrap_literal(new_lit))
     };
 }
@@ -339,7 +339,7 @@ static Llvm_register_sym load_ptr_member_access_typed(
 
     Node_number* new_index = node_number_new(old_access->pos);
     new_index->data = get_member_index(&def_base, old_access->member_name);
-    node_wrap_number(new_index)->lang_type = lang_type_new_from_cstr("i32", 0);
+    new_index->lang_type = lang_type_new_from_cstr("i32", 0);
     
     Node_load_element_ptr* new_load = node_load_element_ptr_new(old_access->pos);
     new_load->lang_type = old_access->lang_type;

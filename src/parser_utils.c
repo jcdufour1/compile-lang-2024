@@ -216,27 +216,27 @@ Node_literal* util_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, 
         case TOKEN_INT_LITERAL: {
             Node_number* literal = node_number_new(pos);
             literal->data = str_view_to_int64_t(value);
-            node_wrap_number(literal)->name = util_literal_name_new();
+            literal->name = util_literal_name_new();
             new_literal = node_wrap_number(literal);
             break;
         }
         case TOKEN_STRING_LITERAL: {
             Node_string* literal = node_string_new(pos);
             literal->data = value;
-            node_wrap_string(literal)->name = util_literal_name_new();
+            literal->name = util_literal_name_new();
             new_literal = node_wrap_string(literal);
             break;
         }
         case TOKEN_VOID: {
             Node_void* literal = node_void_new(pos);
-            node_wrap_void(literal)->name = util_literal_name_new();
+            literal->name = util_literal_name_new();
             new_literal = node_wrap_void(literal);
             break;
         }
         case TOKEN_CHAR_LITERAL: {
             Node_char* literal = node_char_new(pos);
             literal->data = str_view_front(value);
-            node_wrap_char(literal)->name = util_literal_name_new();
+            literal->name = util_literal_name_new();
             new_literal = node_wrap_char(literal);
             break;
         }
@@ -258,7 +258,7 @@ Node_literal* util_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type
         case TOKEN_INT_LITERAL: {
             Node_number* literal = node_number_new(pos);
             literal->data = value;
-            node_wrap_number(literal)->name = util_literal_name_new();
+            literal->name = util_literal_name_new();
             new_literal = node_wrap_number(literal);
             break;
         }
@@ -266,14 +266,14 @@ Node_literal* util_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type
             unreachable("");
         case TOKEN_VOID: {
             Node_void* literal = node_void_new(pos);
-            node_wrap_void(literal)->name = util_literal_name_new();
+            literal->name = util_literal_name_new();
             new_literal = node_wrap_void(literal);
             break;
         }
         case TOKEN_CHAR_LITERAL: {
             Node_char* literal = node_char_new(pos);
             assert(value < INT8_MAX);
-            node_wrap_char(literal)->name = util_literal_name_new();
+            literal->name = util_literal_name_new();
             literal->data = value;
             new_literal = node_wrap_char(literal);
             break;
@@ -358,7 +358,7 @@ static uint64_t sizeof_expr(const Env* env, const Node_expr* expr) {
     (void) env;
     switch (expr->type) {
         case NODE_LITERAL:
-            return sizeof_lang_type(env, node_unwrap_literal_const(expr)->lang_type);
+            return sizeof_lang_type(env, get_lang_type_literal(node_unwrap_literal_const(expr)));
         default:
             unreachable("");
     }

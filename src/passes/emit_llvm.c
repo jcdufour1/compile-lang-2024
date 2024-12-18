@@ -130,25 +130,25 @@ static void extend_type_decl_str(const Env* env, String* output, const Node* var
 
 static void extend_literal_decl_prefix(const Env* env, String* output, const Node_literal* literal) {
     log(LOG_DEBUG, "entering thing\n");
-    assert(literal->lang_type.str.count > 0);
-    if (str_view_cstr_is_equal(literal->lang_type.str, "u8")) {
-        if (literal->lang_type.pointer_depth != 1) {
+    assert(get_lang_type_literal(literal).str.count > 0);
+    if (str_view_cstr_is_equal(get_lang_type_literal(literal).str, "u8")) {
+        if (get_lang_type_literal(literal).pointer_depth != 1) {
             todo();
         }
         string_extend_cstr(&a_main, output, " @.");
-        string_extend_strv(&a_main, output, literal->name);
-    } else if (lang_type_is_signed(literal->lang_type)) {
-        if (literal->lang_type.pointer_depth != 0) {
+        string_extend_strv(&a_main, output, get_literal_name(literal));
+    } else if (lang_type_is_signed(get_lang_type_literal(literal))) {
+        if (get_lang_type_literal(literal).pointer_depth != 0) {
             todo();
         }
         vec_append(&a_main, output, ' ');
         extend_literal(output, literal);
-    } else if (lang_type_is_enum(env, literal->lang_type)) {
+    } else if (lang_type_is_enum(env, get_lang_type_literal(literal))) {
         vec_append(&a_main, output, ' ');
         extend_literal(output, literal);
     } else {
-        log(LOG_DEBUG, BOOL_FMT"\n", bool_print(lang_type_is_enum(env, literal->lang_type)));
-        log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(literal->lang_type));
+        log(LOG_DEBUG, BOOL_FMT"\n", bool_print(lang_type_is_enum(env, get_lang_type_literal(literal))));
+        log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(get_lang_type_literal(literal)));
         unreachable(NODE_FMT"\n", node_print(node_wrap_expr_const(node_wrap_literal_const(literal))));
     }
 }
@@ -516,7 +516,7 @@ static void emit_store_another_node_src_literal(
     switch (literal->type) {
         case NODE_STRING:
             string_extend_cstr(&a_main, output, " @.");
-            string_extend_strv(&a_main, output, literal->name);
+            string_extend_strv(&a_main, output, node_unwrap_string_const(literal)->name);
             return;
         case NODE_NUMBER:
             string_extend_int64_t(&a_main, output, node_unwrap_number_const(literal)->data);
@@ -661,7 +661,7 @@ static void emit_return(const Env* env, String* output, const Node_return* fun_r
         case NODE_LITERAL: {
             const Node_literal* literal = node_unwrap_literal_const(sym_to_return);
             string_extend_cstr(&a_main, output, "    ret ");
-            extend_type_call_str(env, output, literal->lang_type);
+            extend_type_call_str(env, output, get_lang_type_literal(literal));
             string_extend_cstr(&a_main, output, " ");
             extend_literal(output, literal);
             string_extend_cstr(&a_main, output, "\n");
@@ -677,7 +677,7 @@ static void emit_return(const Env* env, String* output, const Node_return* fun_r
                 const Node_expr* memb_expr = node_unwrap_expr_const(memb_sym->llvm_reg.node);
                 const Node_literal* literal = node_unwrap_literal_const(memb_expr);
                 string_extend_cstr(&a_main, output, "    ret ");
-                extend_type_call_str(env, output, literal->lang_type);
+                extend_type_call_str(env, output, get_lang_type_literal(literal));
                 string_extend_cstr(&a_main, output, " ");
                 extend_literal(output, literal);
                 string_extend_cstr(&a_main, output, "\n");

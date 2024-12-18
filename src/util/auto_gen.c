@@ -334,6 +334,8 @@ static Type gen_number(void) {
     Type number = {.name = node_name_new("literal", "number", false)};
 
     append_member(&number.members, "int64_t", "data");
+    append_member(&number.members, "Lang_type", "lang_type");
+    append_member(&number.members, "Str_view", "name");
 
     return number;
 }
@@ -342,6 +344,8 @@ static Type gen_string(void) {
     Type string = {.name = node_name_new("literal", "string", false)};
 
     append_member(&string.members, "Str_view", "data");
+    append_member(&string.members, "Lang_type", "lang_type");
+    append_member(&string.members, "Str_view", "name");
 
     return string;
 }
@@ -350,6 +354,8 @@ static Type gen_char(void) {
     Type lang_char = {.name = node_name_new("literal", "char", false)};
 
     append_member(&lang_char.members, "char", "data");
+    append_member(&lang_char.members, "Lang_type", "lang_type");
+    append_member(&lang_char.members, "Str_view", "name");
 
     return lang_char;
 }
@@ -358,6 +364,8 @@ static Type gen_void(void) {
     Type lang_void = {.name = node_name_new("literal", "void", false)};
 
     append_member(&lang_void.members, "int", "dummy");
+    append_member(&lang_void.members, "Lang_type", "lang_type");
+    append_member(&lang_void.members, "Str_view", "name");
 
     return lang_void;
 }
@@ -366,6 +374,8 @@ static Type gen_enum_lit(void) {
     Type enum_lit = {.name = node_name_new("literal", "enum_lit", false)};
 
     append_member(&enum_lit.members, "int64_t", "data");
+    append_member(&enum_lit.members, "Lang_type", "lang_type");
+    append_member(&enum_lit.members, "Str_view", "name");
 
     return enum_lit;
 }
@@ -378,9 +388,6 @@ static Type gen_literal(void) {
     vec_append(&gen_a, &lit.sub_types, gen_void());
     vec_append(&gen_a, &lit.sub_types, gen_enum_lit());
     vec_append(&gen_a, &lit.sub_types, gen_char());
-
-    append_member(&lit.members, "Lang_type", "lang_type");
-    append_member(&lit.members, "Str_view", "name");
 
     return lit;
 }

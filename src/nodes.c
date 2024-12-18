@@ -241,8 +241,8 @@ static void print_node_src(Arena* arena, String* string, const Node* node, bool 
 }
 
 static void extend_literal_text(Arena* arena, String* string, const Node_literal* literal) {
-    extend_lang_type_to_string(arena, string, literal->lang_type, true);
-    string_extend_strv(arena, string, literal->name);
+    extend_lang_type_to_string(arena, string, get_lang_type_literal(literal), true);
+    string_extend_strv(arena, string, get_literal_name(literal));
 
     switch (literal->type) {
         case NODE_STRING:

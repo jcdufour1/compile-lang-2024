@@ -195,7 +195,7 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
     if (can_be_implicitly_converted(env, dest_lang_type, get_lang_type_expr(src), false)) {
         if (src->type == NODE_LITERAL) {
             *new_src = src;
-            node_unwrap_literal(*new_src)->lang_type = dest_lang_type;
+            *get_lang_type_literal_ref(node_unwrap_literal(*new_src)) = dest_lang_type;
             return CHECK_ASSIGN_OK;
         } else {
             todo();
@@ -211,27 +211,27 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
 void try_set_literal_types(Lang_type* lang_type, Node_literal* literal, TOKEN_TYPE token_type) {
     switch (token_type) {
         case TOKEN_STRING_LITERAL:
-            literal->lang_type = lang_type_new_from_cstr("u8", 1);
+            node_unwrap_string(literal)->lang_type = lang_type_new_from_cstr("u8", 1);
             break;
         case TOKEN_INT_LITERAL: {
             String lang_type_str = {0};
             string_extend_cstr(&a_main, &lang_type_str, "i");
             int64_t bit_width = bit_width_needed_signed(node_unwrap_number(literal)->data);
             string_extend_int64_t(&a_main, &lang_type_str, bit_width);
-            literal->lang_type = lang_type_new_from_strv(string_to_strv(lang_type_str), 0);
+            node_unwrap_number(literal)->lang_type = lang_type_new_from_strv(string_to_strv(lang_type_str), 0);
             break;
         }
         case TOKEN_VOID:
-            literal->lang_type = lang_type_new_from_cstr("void", 0);
+            node_unwrap_void(literal)->lang_type = lang_type_new_from_cstr("void", 0);
             break;
         case TOKEN_CHAR_LITERAL:
-            literal->lang_type = lang_type_new_from_cstr("u8", 0);
+            node_unwrap_char(literal)->lang_type = lang_type_new_from_cstr("u8", 0);
             break;
         default:
             unreachable("");
     }
 
-    *lang_type = literal->lang_type;
+    *lang_type = get_lang_type_literal(literal);
 }
 
 static void msg_undefined_symbol(Str_view file_text, const Node* sym_call) {
@@ -348,7 +348,7 @@ bool try_set_binary_types(const Env* env, Node_expr** new_node, Lang_type* lang_
             if (operator->rhs->type == NODE_LITERAL) {
                 operator->lhs = auto_deref_to_0(env, operator->lhs);
                 operator->rhs = auto_deref_to_0(env, operator->rhs);
-                node_unwrap_literal(operator->rhs)->lang_type = get_lang_type_expr(operator->lhs);
+                *get_lang_type_literal_ref(node_unwrap_literal(operator->rhs)) = get_lang_type_expr(operator->lhs);
             } else {
                 Node_expr* unary = util_unary_new(env, operator->rhs, TOKEN_UNSAFE_CAST, get_lang_type_expr(operator->lhs));
                 operator->rhs = unary;
@@ -357,7 +357,7 @@ bool try_set_binary_types(const Env* env, Node_expr** new_node, Lang_type* lang_
             if (operator->lhs->type == NODE_LITERAL) {
                 operator->lhs = auto_deref_to_0(env, operator->lhs);
                 operator->rhs = auto_deref_to_0(env, operator->rhs);
-                node_unwrap_literal(operator->lhs)->lang_type = get_lang_type_expr(operator->rhs);
+                *get_lang_type_literal_ref(node_unwrap_literal(operator->lhs)) = get_lang_type_expr(operator->rhs);
             } else {
                 Node_expr* unary = util_unary_new(env, operator->lhs, TOKEN_UNSAFE_CAST, get_lang_type_expr(operator->rhs));
                 operator->lhs = unary;
@@ -528,7 +528,7 @@ bool try_set_struct_literal_assignment_types(const Env* env, Node** new_node, La
         }
         Node_literal* assign_memb_sym_rhs = node_unwrap_literal(new_rhs);
 
-        assign_memb_sym_rhs->lang_type = memb_sym_def->lang_type;
+        *get_lang_type_literal_ref(assign_memb_sym_rhs) = memb_sym_def->lang_type;
         if (!str_view_is_equal(memb_sym_def->name, memb_sym_piece_untyped->name)) {
             msg(
                 LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL, env->file_text,
@@ -564,7 +564,7 @@ bool try_set_struct_literal_assignment_types(const Env* env, Node** new_node, La
 bool try_set_expr_types(const Env* env, Node_expr** new_node, Lang_type* lang_type, Node_expr* node) {
     switch (node->type) {
         case NODE_LITERAL:
-            *lang_type = node_unwrap_literal(node)->lang_type;
+            *lang_type = get_lang_type_literal(node_unwrap_literal(node));
             *new_node = node;
             return true;
         case NODE_SYMBOL_UNTYPED:
@@ -902,7 +902,7 @@ bool try_set_member_access_types_finish(
             *lang_type = member_def->lang_type;
             Node_enum_lit* new_lit = node_enum_lit_new(access->pos);
             new_lit->data = get_member_index(&enum_def->base, access->member_name);
-            node_wrap_enum_lit(new_lit)->lang_type = *lang_type;
+            new_lit->lang_type = *lang_type;
 
             *new_node = node_wrap_expr(node_wrap_literal(node_wrap_enum_lit(new_lit)));
             assert(lang_type->str.count > 0);

@@ -223,6 +223,38 @@ static inline Lang_type get_lang_type_symbol_typed(const Node_symbol_typed* sym)
     unreachable("");
 }
 
+static inline Lang_type get_lang_type_literal(const Node_literal* lit) {
+    switch (lit->type) {
+        case NODE_NUMBER:
+            return node_unwrap_number_const(lit)->lang_type;
+        case NODE_STRING:
+            return node_unwrap_string_const(lit)->lang_type;
+        case NODE_VOID:
+            return node_unwrap_void_const(lit)->lang_type;
+        case NODE_ENUM_LIT:
+            return node_unwrap_enum_lit_const(lit)->lang_type;
+        case NODE_CHAR:
+            return node_unwrap_char_const(lit)->lang_type;
+    }
+    unreachable("");
+}
+
+static inline Lang_type* get_lang_type_literal_ref(Node_literal* lit) {
+    switch (lit->type) {
+        case NODE_NUMBER:
+            return &node_unwrap_number(lit)->lang_type;
+        case NODE_STRING:
+            return &node_unwrap_string(lit)->lang_type;
+        case NODE_VOID:
+            unreachable("");
+        case NODE_ENUM_LIT:
+            return &node_unwrap_enum_lit(lit)->lang_type;
+        case NODE_CHAR:
+            return &node_unwrap_char(lit)->lang_type;
+    }
+    unreachable("");
+}
+
 static inline Lang_type get_lang_type_expr(const Node_expr* expr) {
     switch (expr->type) {
         case NODE_STRUCT_LITERAL:
@@ -238,7 +270,7 @@ static inline Lang_type get_lang_type_expr(const Node_expr* expr) {
         case NODE_INDEX_UNTYPED:
             unreachable("");
         case NODE_LITERAL:
-            return node_unwrap_literal_const(expr)->lang_type;
+            return get_lang_type_literal(node_unwrap_literal_const(expr));
         case NODE_OPERATOR:
             return get_lang_type_operator(node_unwrap_operator_const(expr));
         case NODE_SYMBOL_UNTYPED:
@@ -290,7 +322,7 @@ static inline Lang_type* get_lang_type_expr_ref(Node_expr* expr) {
         case NODE_INDEX_UNTYPED:
             unreachable("");
         case NODE_LITERAL:
-            return &node_unwrap_literal(expr)->lang_type;
+            return get_lang_type_literal_ref(node_unwrap_literal(expr));
         case NODE_SYMBOL_UNTYPED:
             unreachable("");
         case NODE_SYMBOL_TYPED:
@@ -600,6 +632,22 @@ static inline Node* get_node_dest(Node* node) {
     unreachable("");
 }
 
+static inline Str_view get_literal_name(const Node_literal* lit) {
+    switch (lit->type) {
+        case NODE_NUMBER:
+            return node_unwrap_number_const(lit)->name;
+        case NODE_STRING:
+            return node_unwrap_string_const(lit)->name;
+        case NODE_VOID:
+            return node_unwrap_void_const(lit)->name;
+        case NODE_ENUM_LIT:
+            return node_unwrap_enum_lit_const(lit)->name;
+        case NODE_CHAR:
+            return node_unwrap_char_const(lit)->name;
+    }
+    unreachable("");
+}
+
 static inline Str_view get_expr_name(const Node_expr* expr) {
     switch (expr->type) {
         case NODE_OPERATOR:
@@ -621,7 +669,7 @@ static inline Str_view get_expr_name(const Node_expr* expr) {
         case NODE_FUNCTION_CALL:
             return node_unwrap_function_call_const(expr)->name;
         case NODE_LITERAL:
-            return node_unwrap_literal_const(expr)->name;
+            return get_literal_name(node_unwrap_literal_const(expr));
         case NODE_LLVM_PLACEHOLDER:
             unreachable("");
     }
