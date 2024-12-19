@@ -74,7 +74,7 @@ ${BUILD_DIR}/auto_gen: src/util/auto_gen.c
 	${CC_COMPILER} ${C_FLAGS_AUTO_GEN} -o ${BUILD_DIR}/auto_gen src/util/arena.c src/util/auto_gen.c
 
 ${BUILD_DIR}/node.h: ${BUILD_DIR}/auto_gen
-	./${BUILD_DIR}/auto_gen ${BUILD_DIR}/node.h
+	./${BUILD_DIR}/auto_gen ${BUILD_DIR}/node.h ${BUILD_DIR}/symbol_table.h ${BUILD_DIR}/symbol_table.c
 
 # general
 ${BUILD_DIR}/main: ${DEP_COMMON} ${OBJS}
@@ -101,8 +101,8 @@ ${BUILD_DIR}/token.o: ${DEP_COMMON} src/token.c third_party/*
 ${BUILD_DIR}/type_checking.o: ${DEP_COMMON} src/type_checking.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/type_checking.o src/type_checking.c
 
-${BUILD_DIR}/symbol_table.o: ${DEP_COMMON} src/symbol_table.c third_party/*
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/symbol_table.o src/symbol_table.c
+${BUILD_DIR}/symbol_table.o: ${DEP_COMMON} ${BUILD_DIR}/symbol_table.c third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/symbol_table.o ${BUILD_DIR}/symbol_table.c
 
 ${BUILD_DIR}/file.o: ${DEP_COMMON} src/file.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/file.o src/file.c
