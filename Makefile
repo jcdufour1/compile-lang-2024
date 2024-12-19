@@ -46,7 +46,6 @@ OBJS=\
 	 ${BUILD_DIR}/passes/parser.o \
 	 ${BUILD_DIR}/passes/assign_llvm_ids.o \
 	 ${BUILD_DIR}/passes/add_load_and_store.o \
-	 ${BUILD_DIR}/passes/add_alloca.o \
 	 ${BUILD_DIR}/passes/analysis_1.o \
 	 ${BUILD_DIR}/passes/change_operators.o \
 	 ${BUILD_DIR}/passes/emit_llvm.o
@@ -130,9 +129,6 @@ ${BUILD_DIR}/passes/add_load_and_store.o: ${DEP_COMMON} src/passes/add_load_and_
 
 ${BUILD_DIR}/passes/analysis_1.o: ${DEP_COMMON} src/passes/analysis_1.c src/passes/*.h third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/analysis_1.o src/passes/analysis_1.c
-
-${BUILD_DIR}/passes/add_alloca.o: ${DEP_COMMON} src/passes/add_alloca.c src/passes/*.h third_party/*
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/add_alloca.o src/passes/add_alloca.c
 
 ${BUILD_DIR}/passes/change_operators.o: ${DEP_COMMON} src/passes/change_operators.c src/passes/*.h third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/change_operators.o src/passes/change_operators.c

@@ -17,8 +17,6 @@ static inline void insert_into_node_ptr_vec(
     }
 }
 
-Node_alloca* add_alloca_alloca_new(Node_variable_def* var_def);
-
 void tokenize_do_test(void);
 
 Tokens tokenize(Env* env, const Parameters params);
@@ -30,8 +28,6 @@ void analysis_1(Env* env);
 void for_and_if_to_branch(Env* env);
 
 void flatten_operations(Env* env);
-
-void add_alloca(Env* env);
 
 Node_block* add_load_and_store(Env* env, Node_block* old_block);
 

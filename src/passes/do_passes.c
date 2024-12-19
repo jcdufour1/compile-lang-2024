@@ -198,10 +198,6 @@ void do_passes(Str_view file_text, const Parameters* params) {
     //log_tree(LOG_DEBUG, node_wrap_block(root));
     //arena_reset(&print_arena);
 
-    start_walk(&env, &root, add_alloca);
-    log_tree(LOG_DEBUG, node_wrap_block(root));
-    arena_reset(&print_arena);
-
     root = add_load_and_store(&env, root);
     assert(root);
 

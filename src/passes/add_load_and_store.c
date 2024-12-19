@@ -5,6 +5,15 @@
 
 #include "passes.h"
 
+Node_alloca* add_load_and_store_alloca_new(Node_variable_def* var_def) {
+    Node_alloca* alloca = node_alloca_new(var_def->pos);
+    alloca->name = var_def->name;
+    alloca->lang_type = var_def->lang_type;
+    var_def->storage_location = llvm_register_sym_new(node_wrap_alloca(alloca));
+    assert(alloca);
+    return alloca;
+}
+
 static Node_function_params* node_clone_function_params(Node_function_params* old_params) {
     Node_function_params* new_params = node_function_params_new(old_params->pos);
     *new_params = *old_params;
@@ -65,6 +74,25 @@ static Node_raw_union_def* node_clone_raw_union_def(const Node_raw_union_def* ol
     Node_raw_union_def* new_def = node_raw_union_def_new(old_def->pos);
     *new_def = *old_def;
     return new_def;
+}
+
+static void do_function_def_alloca(Env* env, const Node_function_def* fun_def) {
+    Node_function_params* params = fun_def->declaration->parameters;
+    for (size_t idx = 0; idx < params->params.info.count; idx++) {
+        Node_variable_def* param = vec_at(&params->params, idx);
+
+        if (lang_type_is_struct(env, param->lang_type)) {
+            param->storage_location = llvm_register_sym_new(node_wrap_def(node_wrap_variable_def(param)));
+        } else if (lang_type_is_enum(env, param->lang_type)) {
+            vec_insert(&a_main, &fun_def->body->children, 0, node_wrap_alloca(add_load_and_store_alloca_new(param)));
+        } else if (lang_type_is_raw_union(env, param->lang_type)) {
+            param->storage_location = llvm_register_sym_new(node_wrap_def(node_wrap_variable_def(param)));
+        } else if (lang_type_is_primitive(env, param->lang_type)) {
+            vec_insert(&a_main, &fun_def->body->children, 0, node_wrap_alloca(add_load_and_store_alloca_new(param)));
+        } else {
+            todo();
+        }
+    }
 }
 
 static Node_block* load_block(Env* env, Node_block* old_block);
@@ -242,7 +270,7 @@ static Llvm_register_sym load_ptr_symbol_typed(
     Node_variable_def* var_def = node_unwrap_variable_def(var_def_);
     if (!var_def->storage_location.node) {
         log(LOG_DEBUG, "yes\n");
-        var_def->storage_location = load_alloca(env, new_block, add_alloca_alloca_new(var_def));
+        var_def->storage_location = load_alloca(env, new_block, add_load_and_store_alloca_new(var_def));
     }
 
     assert(var_def);
@@ -556,6 +584,8 @@ static Llvm_register_sym load_function_def(
 ) {
     Pos pos = old_fun_def->pos;
 
+    do_function_def_alloca(env, old_fun_def);
+
     Node_function_def* new_fun_def = node_function_def_new(pos);
     new_fun_def->declaration = node_clone_function_decl(old_fun_def->declaration);
     new_fun_def->body = node_block_new(pos);
@@ -672,14 +702,16 @@ static Llvm_register_sym load_variable_def(
     Node_block* new_block,
     Node_variable_def* old_var_def
 ) {
-    Node_variable_def* new_var_def = node_clone_variable_def(old_var_def);
-    if (!new_var_def->storage_location.node) {
-        new_var_def->storage_location = load_alloca(env, new_block, add_alloca_alloca_new(new_var_def));
+    // TODO: clone
+    // (cannot clone now because of storage_location system. 
+    // storage_location should be changed to not use raw pointer)
+    if (!old_var_def->storage_location.node) {
+        old_var_def->storage_location = load_alloca(env, new_block, add_load_and_store_alloca_new(old_var_def));
     }
 
-    vec_append(&a_main, &new_block->children, node_wrap_def(node_wrap_variable_def(new_var_def)));
+    vec_append(&a_main, &new_block->children, node_wrap_def(node_wrap_variable_def(old_var_def)));
 
-    return new_var_def->storage_location;
+    return old_var_def->storage_location;
 }
 
 static Llvm_register_sym load_goto(
