@@ -1608,7 +1608,6 @@ static void gen_symbol_table_header_internal(Symbol_tbl_type type) {
 }
 
 static void gen_symbol_table_header(const char* file_path, Sym_tbl_type_vec types) {
-    (void) types;
     global_output = fopen(file_path, "w");
     if (!global_output) {
         fprintf(stderr, "fatal error: could not open file %s: %s\n", file_path, strerror(errno));
@@ -1667,8 +1666,34 @@ static void gen_symbol_table_header(const char* file_path, Sym_tbl_type_vec type
     CLOSE_FILE(global_output);
 }
 
+static void gen_symbol_table_struct_internal(Symbol_tbl_type type) {
+    String text = {0};
+
+    string_extend_cstr(&gen_a, &text, "typedef struct {\n");
+    string_extend_cstr(&gen_a, &text, "    Str_view key;\n");
+    string_extend_cstr(&gen_a, &text, "    ");
+    extend_strv_first_upper(&text, type.type_name);
+    string_extend_cstr(&gen_a, &text, "* node;\n");
+    string_extend_cstr(&gen_a, &text, "    SYM_TBL_STATUS status;\n");
+    string_extend_cstr(&gen_a, &text, "} ");
+    extend_strv_first_upper(&text, type.normal_prefix);
+    string_extend_cstr(&gen_a, &text, "_table_node;\n");
+    string_extend_cstr(&gen_a, &text, "\n");
+    string_extend_cstr(&gen_a, &text, "typedef struct {\n");
+    string_extend_cstr(&gen_a, &text, "    ");
+    extend_strv_first_upper(&text, type.normal_prefix);
+    string_extend_cstr(&gen_a, &text, "_table_node* table_nodes;\n");
+    string_extend_cstr(&gen_a, &text, "    size_t count; // count elements in symbol_table\n");
+    string_extend_cstr(&gen_a, &text, "    size_t capacity; // count buckets in symbol_table\n");
+    string_extend_cstr(&gen_a, &text, "} ");
+    extend_strv_first_upper(&text, type.normal_prefix);
+    string_extend_cstr(&gen_a, &text, "_table;\n");
+    string_extend_cstr(&gen_a, &text, "\n");
+
+    gen_gen(STRING_FMT"\n", string_print(text));
+}
+
 static void gen_symbol_table_struct(const char* file_path, Sym_tbl_type_vec types) {
-    (void) types;
     global_output = fopen(file_path, "w");
     if (!global_output) {
         fprintf(stderr, "fatal error: could not open file %s: %s\n", file_path, strerror(errno));
@@ -1678,27 +1703,22 @@ static void gen_symbol_table_struct(const char* file_path, Sym_tbl_type_vec type
     gen_gen("%s\n", "#ifndef SYMBOL_TABLE_STRUCT_H");
     gen_gen("%s\n", "#define SYMBOL_TABLE_STRUCT_H");
     gen_gen("%s\n", "");
-    gen_gen("%s\n", "struct Node_def_;");
-    gen_gen("%s\n", "typedef struct Node_def_ Node_def;");
-    gen_gen("%s\n", "");
     gen_gen("%s\n", "typedef enum {");
     gen_gen("%s\n", "    SYM_TBL_NEVER_OCCUPIED = 0,");
     gen_gen("%s\n", "    SYM_TBL_PREVIOUSLY_OCCUPIED,");
     gen_gen("%s\n", "    SYM_TBL_OCCUPIED,");
     gen_gen("%s\n", "} SYM_TBL_STATUS;");
     gen_gen("%s\n", "");
-    gen_gen("%s\n", "typedef struct {");
-    gen_gen("%s\n", "    Str_view key;");
-    gen_gen("%s\n", "    Node_def* node;");
-    gen_gen("%s\n", "    SYM_TBL_STATUS status;");
-    gen_gen("%s\n", "} Symbol_table_node;");
     gen_gen("%s\n", "");
-    gen_gen("%s\n", "typedef struct {");
-    gen_gen("%s\n", "    Symbol_table_node* table_nodes;");
-    gen_gen("%s\n", "    size_t count; // count elements in symbol_table");
-    gen_gen("%s\n", "    size_t capacity; // count buckets in symbol_table");
-    gen_gen("%s\n", "} Symbol_table;");
-    gen_gen("%s\n", "");
+
+    // forward declarations
+    gen_gen("%s\n", "struct Node_def_;");
+    gen_gen("%s\n", "typedef struct Node_def_ Node_def;");
+
+    for (size_t idx = 0; idx < types.info.count; idx++) {
+        gen_symbol_table_struct_internal(vec_at(&types, idx));
+    }
+
     gen_gen("%s\n", "#endif // SYMBOL_TABLE_STRUCT_H");
 
     CLOSE_FILE(global_output);
@@ -1725,7 +1745,7 @@ static Sym_tbl_type_vec get_symbol_tbl_types(void) {
 }
 
 int main(int argc, char** argv) {
-    assert(argc == 5 && "output file path should be provided");
+    assert(argc == 5 && "invalid count of arguments provided");
 
     Sym_tbl_type_vec symbol_tbl_types = get_symbol_tbl_types();
 
