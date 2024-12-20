@@ -502,7 +502,6 @@ static Type gen_variable_def(void) {
     append_member(&def.members, "Lang_type", "lang_type");
     append_member(&def.members, "bool", "is_variadic"); // TODO: : 1
     append_member(&def.members, "Llvm_id", "llvm_id");
-    append_member(&def.members, "Llvm_register_sym", "storage_location");
     append_member(&def.members, "Str_view", "name");
 
     return def;
@@ -1730,6 +1729,8 @@ static void gen_symbol_table_struct(const char* file_path, Sym_tbl_type_vec type
     gen_gen("%s\n", "typedef struct Node_def_ Node_def;");
     gen_gen("%s\n", "struct Node_alloca_;");
     gen_gen("%s\n", "typedef struct Node_alloca_ Node_alloca;");
+    gen_gen("%s\n", "struct Node;");
+    gen_gen("%s\n", "typedef struct Node_ Node;");
     gen_gen("%s\n", "");
     gen_gen("%s\n", "static inline Str_view get_alloca_name(const Node_alloca* node);");
 
@@ -1767,7 +1768,7 @@ static Sym_tbl_type_vec get_symbol_tbl_types(void) {
         "Node_def", "symbol", "sym", "get_def_name", "symbol_table", true
     ));
     vec_append(&gen_a, &types, symbol_tbl_type_new( 
-        "Node_alloca", "alloca", "all", "get_alloca_name", "alloca_table", false
+        "Node", "alloca", "all", "get_node_name", "alloca_table", false
     ));
 
     return types;

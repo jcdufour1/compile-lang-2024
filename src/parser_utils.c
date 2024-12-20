@@ -163,7 +163,14 @@ Llvm_register_sym get_storage_location(const Env* env, Str_view sym_name) {
     switch (sym_def_->type) {
         case NODE_VARIABLE_DEF: {
             Node_variable_def* sym_def = node_unwrap_variable_def(sym_def_);
-            return sym_def->storage_location;
+            Node* result = NULL;
+            if (!alloca_lookup(&result, env, sym_def->name)) {
+                unreachable(STR_VIEW_FMT"\n", str_view_print(sym_def->name));
+            }
+            return (Llvm_register_sym) {
+                .lang_type = get_lang_type(result),
+                .node = result
+            };
         }
         default:
             unreachable("");
