@@ -1166,6 +1166,49 @@ static void gen_all_nodes(const char* file_path) {
     CLOSE_FILE(global_output);
 }
 
+static void gen_symbol_table_c_file_symbol_update(String* text, Symbol_tbl_type type) {
+    string_extend_cstr(&gen_a, text, "void ");
+    extend_strv_lower(text, type.normal_prefix);
+    string_extend_cstr(&gen_a, text, "_update(Env* env, ");
+    extend_strv_first_upper(text, type.type_name);
+    string_extend_cstr(&gen_a, text, "* node_of_symbol) {\n");
+    string_extend_cstr(&gen_a, text, "    if (");
+    extend_strv_lower(text, type.normal_prefix);
+    string_extend_cstr(&gen_a, text, "_add(env, ");
+    string_extend_cstr(&gen_a, text, "node_of_symbol)) {\n");
+    string_extend_cstr(&gen_a, text, "        return;\n");
+    string_extend_cstr(&gen_a, text, "    }\n");
+    string_extend_cstr(&gen_a, text, "    if (env->ancesters.info.count < 1) {\n");
+    string_extend_cstr(&gen_a, text, "        unreachable(\"no block ancester found\");\n");
+    string_extend_cstr(&gen_a, text, "    }\n");
+    string_extend_cstr(&gen_a, text, "\n");
+    string_extend_cstr(&gen_a, text, "    for (size_t idx = env->ancesters.info.count - 1;; idx--) {\n");
+    string_extend_cstr(&gen_a, text, "        if (vec_at(&env->ancesters, idx)->type == NODE_BLOCK) {\n");
+    string_extend_cstr(&gen_a, text, "            Node_block* block = node_unwrap_block(vec_at(&env->ancesters, idx));\n");
+    string_extend_cstr(&gen_a, text, "            ");
+    extend_strv_first_upper(text, type.normal_prefix);
+    string_extend_cstr(&gen_a, text, "_table_node* curr_node = NULL;\n");
+    string_extend_cstr(&gen_a, text, "            if (");
+    extend_strv_lower(text, type.internal_prefix);
+    string_extend_cstr(&gen_a, text, "_tbl_lookup_internal(&curr_node, ");
+    string_extend_cstr(&gen_a, text, "&block->");
+    extend_strv_lower(text, type.symbol_table_name);
+    string_extend_cstr(&gen_a, text, ", ");
+    extend_strv_lower(text, type.get_key_fn_name);
+    string_extend_cstr(&gen_a, text, "(node_of_symbol))) {\n");
+    string_extend_cstr(&gen_a, text, "                curr_node->node = node_of_symbol;\n");
+    string_extend_cstr(&gen_a, text, "                return;\n");
+    string_extend_cstr(&gen_a, text, "            }\n");
+    string_extend_cstr(&gen_a, text, "        }\n");
+    string_extend_cstr(&gen_a, text, "\n");
+    string_extend_cstr(&gen_a, text, "        if (idx < 1) {\n");
+    string_extend_cstr(&gen_a, text, "            unreachable(\"no block ancester found\");\n");
+    string_extend_cstr(&gen_a, text, "        }\n");
+    string_extend_cstr(&gen_a, text, "    }\n");
+    string_extend_cstr(&gen_a, text, "}\n");
+    string_extend_cstr(&gen_a, text, "\n");
+}
+
 static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     String text = {0};
 
@@ -1432,6 +1475,8 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "    }\n");
     string_extend_cstr(&gen_a, &text, "}\n");
     string_extend_cstr(&gen_a, &text, "\n");
+
+    // symbol_add
     string_extend_cstr(&gen_a, &text, "bool ");
     extend_strv_lower(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_add(Env* env, ");
@@ -1468,6 +1513,8 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "    }\n");
     string_extend_cstr(&gen_a, &text, "}\n");
     string_extend_cstr(&gen_a, &text, "\n");
+
+    gen_symbol_table_c_file_symbol_update(&text, type);
 
     if (str_view_cstr_is_equal(type.type_name, "Node_def")) {
         string_extend_cstr(&gen_a, &text, "bool symbol_do_add_defered(Node_def** redefined_sym, Env* env) {\n");
@@ -1620,6 +1667,12 @@ static void gen_symbol_table_header_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "* node_of_symbol);\n");
     string_extend_cstr(&gen_a, &text, "\n");
 
+    string_extend_cstr(&gen_a, &text, "void ");
+    extend_strv_lower(&text, type.normal_prefix);
+    string_extend_cstr(&gen_a, &text, "_update(Env* env, ");
+    extend_strv_first_upper(&text, type.type_name);
+    string_extend_cstr(&gen_a, &text, "* node_of_symbol);\n");
+
     gen_gen(STRING_FMT"\n", string_print(text));
 }
 
@@ -1657,14 +1710,6 @@ static void gen_symbol_table_header(const char* file_path, Sym_tbl_type_vec type
     gen_gen("%s\n", "");
     gen_gen("%s\n", "static inline void symbol_ignore_defered(Env* env) {");
     gen_gen("%s\n", "    vec_reset(&env->defered_symbols_to_add);");
-    gen_gen("%s\n", "}");
-    gen_gen("%s\n", "");
-    gen_gen("%s\n", "static inline void symbol_update(Env* env, Node* node_of_symbol) {");
-    gen_gen("%s\n", "    Node_def* existing;");
-    gen_gen("%s\n", "    if (symbol_lookup(&existing, env, get_node_name(node_of_symbol))) {");
-    gen_gen("%s\n", "        todo();");
-    gen_gen("%s\n", "    }");
-    gen_gen("%s\n", "    todo();");
     gen_gen("%s\n", "}");
     gen_gen("%s\n", "");
     gen_gen("%s\n", "Symbol_table* symbol_get_block(Env* env);");

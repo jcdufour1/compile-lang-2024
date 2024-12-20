@@ -678,10 +678,12 @@ static Llvm_register_sym load_alloca(
     // make id system, separate hash table, etc. to make this actually possible
     //Node_alloca* new_alloca = node_clone_alloca(old_alloca);
 
-    vec_insert(&a_main, &new_block->children, 0, node_wrap_alloca(old_alloca));
+    Node_alloca* new_alloca = node_clone_alloca(old_alloca);
+    vec_insert(&a_main, &new_block->children, 0, node_wrap_alloca(new_alloca));
+    alloca_update(env, node_wrap_alloca(new_alloca));
     return (Llvm_register_sym) {
-        .lang_type = old_alloca->lang_type,
-        .node = node_wrap_alloca(old_alloca),
+        .lang_type = new_alloca->lang_type,
+        .node = node_wrap_alloca(new_alloca),
     };
 }
 
