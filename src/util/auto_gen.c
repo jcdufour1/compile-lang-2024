@@ -37,6 +37,8 @@ typedef struct {
     Str_view normal_prefix;
     Str_view internal_prefix;
     Str_view get_key_fn_name;
+    Str_view symbol_table_name;
+    bool do_primitives;
 } Symbol_tbl_type;
 
 typedef struct {
@@ -223,6 +225,7 @@ static Type gen_block(void) {
     append_member(&block.members, "bool", "is_variadic");
     append_member(&block.members, "Node_ptr_vec", "children");
     append_member(&block.members, "Symbol_table", "symbol_table");
+    append_member(&block.members, "Alloca_table", "alloca_table");
     append_member(&block.members, "Pos", "pos_end");
 
     return block;
@@ -1239,7 +1242,6 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, ") {\n");
     string_extend_cstr(&gen_a, &text, "    for (size_t bucket_src = 0; bucket_src < count_nodes_to_cpy; bucket_src++) {\n");
     string_extend_cstr(&gen_a, &text, "        if (src[bucket_src].status == SYM_TBL_OCCUPIED) {\n");
-    string_extend_cstr(&gen_a, &text, "            sym_tbl_add_internal(dest, capacity, src[bucket_src].node);\n");
     extend_strv_lower(&text, type.internal_prefix);
     string_extend_cstr(&gen_a, &text, "_tbl_add_internal(dest, capacity, src[bucket_src].node);\n");
     string_extend_cstr(&gen_a, &text, "        }\n");
@@ -1272,10 +1274,9 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "\n");
     string_extend_cstr(&gen_a, &text, "    if (should_move_elements) {\n");
     string_extend_cstr(&gen_a, &text, "        new_table_nodes = arena_alloc(&a_main, sym_table->capacity*node_size);\n");
-    string_extend_cstr(&gen_a, &text, "        sym_tbl_cpy(new_table_nodes, sym_table->table_nodes, sym_table->capacity, old_capacity_node_count);\n");
-    string_extend_cstr(&gen_a, &text, "        if (sym_table->table_nodes) {\n");
-    string_extend_cstr(&gen_a, &text, "            // not freeing here currently\n");
-    string_extend_cstr(&gen_a, &text, "        }\n");
+    string_extend_cstr(&gen_a, &text, "        ");
+    extend_strv_lower(&text, type.internal_prefix);
+    string_extend_cstr(&gen_a, &text, "_tbl_cpy(new_table_nodes, sym_table->table_nodes, sym_table->capacity, old_capacity_node_count);\n");
     string_extend_cstr(&gen_a, &text, "        sym_table->table_nodes = new_table_nodes;\n");
     string_extend_cstr(&gen_a, &text, "    }\n");
     string_extend_cstr(&gen_a, &text, "}\n");
@@ -1291,9 +1292,7 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "    if (sym_table->capacity < 1) {\n");
     string_extend_cstr(&gen_a, &text, "        return false;\n");
     string_extend_cstr(&gen_a, &text, "    }\n");
-    string_extend_cstr(&gen_a, &text, "    size_t curr_table_idx = ");
-    extend_strv_lower(&text, type.internal_prefix);
-    string_extend_cstr(&gen_a, &text, "_tbl_calculate_idx(key, sym_table->capacity);\n");
+    string_extend_cstr(&gen_a, &text, "    size_t curr_table_idx = sym_tbl_calculate_idx(key, sym_table->capacity);\n");
     string_extend_cstr(&gen_a, &text, "    size_t init_table_idx = curr_table_idx; \n");
     string_extend_cstr(&gen_a, &text, "\n");
     string_extend_cstr(&gen_a, &text, "    while (1) {\n");
@@ -1327,8 +1326,7 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "_tbl_add(");
     extend_strv_first_upper(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_table* ");
-    extend_strv_lower(&text, type.internal_prefix);
-    string_extend_cstr(&gen_a, &text, "_table, ");
+    string_extend_cstr(&gen_a, &text, "sym_table, ");
     extend_strv_first_upper(&text, type.type_name);
     string_extend_cstr(&gen_a, &text, "* node_of_symbol) {\n");
     string_extend_cstr(&gen_a, &text, "    ");
@@ -1389,7 +1387,9 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "            log(LOG_DEBUG, NODE_FMT\"\\n\", node_print(curr_node));\n");
     string_extend_cstr(&gen_a, &text, "            ");
     extend_strv_lower(&text, type.normal_prefix);
-    string_extend_cstr(&gen_a, &text, "_log_table_internal(log_level, node_unwrap_block(curr_node)->symbol_table, 4, file_path, line);\n");
+    string_extend_cstr(&gen_a, &text, "_log_table_internal(log_level, node_unwrap_block(curr_node)->");
+    extend_strv_lower(&text, type.symbol_table_name);
+    string_extend_cstr(&gen_a, &text, ", 4, file_path, line);\n");
     string_extend_cstr(&gen_a, &text, "        }\n");
     string_extend_cstr(&gen_a, &text, "\n");
     string_extend_cstr(&gen_a, &text, "        if (idx < 1) {\n");
@@ -1403,12 +1403,14 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "_lookup(");
     extend_strv_first_upper(&text, type.type_name);
     string_extend_cstr(&gen_a, &text, "** result, const Env* env, Str_view key) {\n");
-    string_extend_cstr(&gen_a, &text, "    if (");
-    extend_strv_lower(&text, type.internal_prefix);
-    string_extend_cstr(&gen_a, &text, "_tbl_lookup(result, &env->primitives, key)) {\n");
-    string_extend_cstr(&gen_a, &text, "        return true;\n");
-    string_extend_cstr(&gen_a, &text, "    }\n");
-    string_extend_cstr(&gen_a, &text, "\n");
+    if (type.do_primitives) {
+        string_extend_cstr(&gen_a, &text, "    if (");
+        extend_strv_lower(&text, type.internal_prefix);
+        string_extend_cstr(&gen_a, &text, "_tbl_lookup(result, &env->primitives, key)) {\n");
+        string_extend_cstr(&gen_a, &text, "        return true;\n");
+        string_extend_cstr(&gen_a, &text, "    }\n");
+        string_extend_cstr(&gen_a, &text, "\n");
+    }
     string_extend_cstr(&gen_a, &text, "    if (env->ancesters.info.count < 1) {\n");
     string_extend_cstr(&gen_a, &text, "        return false;\n");
     string_extend_cstr(&gen_a, &text, "    }\n");
@@ -1418,7 +1420,9 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "            const Node_block* block = node_unwrap_block_const(vec_at(&env->ancesters, idx));\n");
     string_extend_cstr(&gen_a, &text, "            if (");
     extend_strv_lower(&text, type.internal_prefix);
-    string_extend_cstr(&gen_a, &text, "_tbl_lookup(result, &block->symbol_table, key)) {\n");
+    string_extend_cstr(&gen_a, &text, "_tbl_lookup(result, &block->");
+    extend_strv_lower(&text, type.symbol_table_name);
+    string_extend_cstr(&gen_a, &text, ", key)) {\n");
     string_extend_cstr(&gen_a, &text, "                return true;\n");
     string_extend_cstr(&gen_a, &text, "            }\n");
     string_extend_cstr(&gen_a, &text, "        }\n");
@@ -1453,7 +1457,9 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "            Node_block* block = node_unwrap_block(vec_at(&env->ancesters, idx));\n");
     string_extend_cstr(&gen_a, &text, "            try(");
     extend_strv_lower(&text, type.internal_prefix);
-    string_extend_cstr(&gen_a, &text, "_tbl_add(&block->symbol_table, node_of_symbol));\n");
+    string_extend_cstr(&gen_a, &text, "_tbl_add(&block->");
+    extend_strv_lower(&text, type.symbol_table_name);
+    string_extend_cstr(&gen_a, &text, ", node_of_symbol));\n");
     string_extend_cstr(&gen_a, &text, "            return true;\n");
     string_extend_cstr(&gen_a, &text, "        }\n");
     string_extend_cstr(&gen_a, &text, "\n");
@@ -1718,11 +1724,14 @@ static void gen_symbol_table_struct(const char* file_path, Sym_tbl_type_vec type
     gen_gen("%s\n", "    SYM_TBL_OCCUPIED,");
     gen_gen("%s\n", "} SYM_TBL_STATUS;");
     gen_gen("%s\n", "");
-    gen_gen("%s\n", "");
 
     // forward declarations
     gen_gen("%s\n", "struct Node_def_;");
     gen_gen("%s\n", "typedef struct Node_def_ Node_def;");
+    gen_gen("%s\n", "struct Node_alloca_;");
+    gen_gen("%s\n", "typedef struct Node_alloca_ Node_alloca;");
+    gen_gen("%s\n", "");
+    gen_gen("%s\n", "static inline Str_view get_alloca_name(const Node_alloca* node);");
 
     for (size_t idx = 0; idx < types.info.count; idx++) {
         gen_symbol_table_struct_internal(vec_at(&types, idx));
@@ -1737,20 +1746,29 @@ static Symbol_tbl_type symbol_tbl_type_new(
     const char* type_name,
     const char* normal_prefix,
     const char* internal_prefix,
-    const char* get_key_fn_name
+    const char* get_key_fn_name,
+    const char* symbol_table_name,
+    bool do_primitives
 ) {
     return (Symbol_tbl_type) {
         .type_name = str_view_from_cstr(type_name),
         .normal_prefix = str_view_from_cstr(normal_prefix),
         .internal_prefix = str_view_from_cstr(internal_prefix),
-        .get_key_fn_name = str_view_from_cstr(get_key_fn_name)
+        .get_key_fn_name = str_view_from_cstr(get_key_fn_name),
+        .symbol_table_name = str_view_from_cstr(symbol_table_name),
+        .do_primitives = do_primitives
     };
 }
 
 static Sym_tbl_type_vec get_symbol_tbl_types(void) {
     Sym_tbl_type_vec types = {0};
 
-    vec_append(&gen_a, &types, symbol_tbl_type_new("Node_def", "symbol", "sym", "get_def_name"));
+    vec_append(&gen_a, &types, symbol_tbl_type_new(
+        "Node_def", "symbol", "sym", "get_def_name", "symbol_table", true
+    ));
+    vec_append(&gen_a, &types, symbol_tbl_type_new( 
+        "Node_alloca", "alloca", "all", "get_alloca_name", "alloca_table", false
+    ));
 
     return types;
 }

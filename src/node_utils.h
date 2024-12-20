@@ -656,6 +656,11 @@ static inline Str_view get_expr_name(const Node_expr* expr) {
     unreachable("");
 }
 
+// TODO: make this better?
+Str_view get_alloca_name(const Node_alloca* node) {
+    return node->name;
+}
+
 static inline Str_view get_literal_def_name(const Node_literal_def* lit_def) {
     switch (lit_def->type) {
         case NODE_STRUCT_LIT_DEF:
