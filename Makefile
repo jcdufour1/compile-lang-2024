@@ -74,7 +74,7 @@ ${BUILD_DIR}/auto_gen: src/util/auto_gen.c
 	${CC_COMPILER} ${C_FLAGS_AUTO_GEN} -o ${BUILD_DIR}/auto_gen src/util/arena.c src/util/auto_gen.c
 
 ${BUILD_DIR}/node.h: ${BUILD_DIR}/auto_gen
-	./${BUILD_DIR}/auto_gen ${BUILD_DIR}/node.h ${BUILD_DIR}/symbol_table.h ${BUILD_DIR}/symbol_table.c
+	./${BUILD_DIR}/auto_gen ${BUILD_DIR}/symbol_table_struct.h ${BUILD_DIR}/node.h ${BUILD_DIR}/symbol_table.h ${BUILD_DIR}/symbol_table.c
 
 # general
 ${BUILD_DIR}/main: ${DEP_COMMON} ${OBJS}

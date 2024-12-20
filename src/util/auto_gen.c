@@ -1514,16 +1514,55 @@ static void gen_symbol_table_header(const char* file_path) {
     CLOSE_FILE(global_output);
 }
 
+static void gen_symbol_table_struct(const char* file_path) {
+    global_output = fopen(file_path, "w");
+    if (!global_output) {
+        fprintf(stderr, "fatal error: could not open file %s: %s\n", file_path, strerror(errno));
+        exit(1);
+    }
+
+    gen_gen("%s\n", "#ifndef SYMBOL_TABLE_STRUCT_H");
+    gen_gen("%s\n", "#define SYMBOL_TABLE_STRUCT_H");
+    gen_gen("%s\n", "");
+    gen_gen("%s\n", "struct Node_def_;");
+    gen_gen("%s\n", "typedef struct Node_def_ Node_def;");
+    gen_gen("%s\n", "");
+    gen_gen("%s\n", "typedef enum {");
+    gen_gen("%s\n", "    SYM_TBL_NEVER_OCCUPIED = 0,");
+    gen_gen("%s\n", "    SYM_TBL_PREVIOUSLY_OCCUPIED,");
+    gen_gen("%s\n", "    SYM_TBL_OCCUPIED,");
+    gen_gen("%s\n", "} SYM_TBL_STATUS;");
+    gen_gen("%s\n", "");
+    gen_gen("%s\n", "typedef struct {");
+    gen_gen("%s\n", "    Str_view key;");
+    gen_gen("%s\n", "    Node_def* node;");
+    gen_gen("%s\n", "    SYM_TBL_STATUS status;");
+    gen_gen("%s\n", "} Symbol_table_node;");
+    gen_gen("%s\n", "");
+    gen_gen("%s\n", "typedef struct {");
+    gen_gen("%s\n", "    Symbol_table_node* table_nodes;");
+    gen_gen("%s\n", "    size_t count; // count elements in symbol_table");
+    gen_gen("%s\n", "    size_t capacity; // count buckets in symbol_table");
+    gen_gen("%s\n", "} Symbol_table;");
+    gen_gen("%s\n", "");
+    gen_gen("%s\n", "#endif // SYMBOL_TABLE_STRUCT_H");
+
+    CLOSE_FILE(global_output);
+}
+
 int main(int argc, char** argv) {
-    assert(argc == 4 && "output file path should be provided");
+    assert(argc == 5 && "output file path should be provided");
 
-    gen_all_nodes(argv[1]);
+    gen_symbol_table_struct(argv[1]);
     assert(!global_output);
 
-    gen_symbol_table_header(argv[2]);
+    gen_all_nodes(argv[2]);
     assert(!global_output);
 
-    gen_symbol_table_c_file(argv[3]);
+    gen_symbol_table_header(argv[3]);
+    assert(!global_output);
+
+    gen_symbol_table_c_file(argv[4]);
     assert(!global_output);
 }
 
