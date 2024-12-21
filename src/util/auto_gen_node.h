@@ -894,6 +894,27 @@ void node_gen_node_wrap(Node_type node) {
     node_gen_wrap_internal(node, true);
 }
 
+// TODO: deduplicate these functions (use same function for Llvm and Node)
+static void node_gen_print_forward_decl(Node_type type) {
+    for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
+        node_gen_print_forward_decl(vec_at(&type.sub_types, idx));
+    }
+
+    if (type.name.is_topmost) {
+        return;
+    }
+
+    String function = {0};
+
+    string_extend_cstr(&gen_a, &function, "static inline Str_view ");
+    extend_node_name_lower(&function, type.name);
+    string_extend_cstr(&gen_a, &function, "_print(const ");
+    extend_node_name_first_upper(&function, type.name);
+    string_extend_cstr(&gen_a, &function, "* node);");
+
+    gen_gen(STRING_FMT"\n", string_print(function));
+}
+
 static void node_gen_new_internal(Node_type type, bool implementation) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
         node_gen_new_internal(vec_at(&type.sub_types, idx), implementation);
@@ -1048,6 +1069,7 @@ static void gen_all_nodes(const char* file_path) {
     gen_gen("%s\n", "}");
 
     gen_node_new_forward_decl(node);
+    node_gen_print_forward_decl(node);
     gen_node_new_define(node);
 
     gen_node_get_pos_forward_decl(node);
