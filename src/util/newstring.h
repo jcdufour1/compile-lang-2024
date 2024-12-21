@@ -66,6 +66,17 @@ static inline void string_extend_strv(Arena* arena, String* string, Str_view str
     }
 }
 
+static inline void string_extend_strv_indent(Arena* arena, String* string, Str_view str_view, size_t indent) {
+    for (size_t idx = 0; idx < indent; idx++) {
+        vec_append(arena, string, ' ');
+    }
+    string_extend_strv(arena, string, str_view);
+}
+
+static inline void string_extend_cstr_indent(Arena* arena, String* string, const char* cstr, size_t indent) {
+    string_extend_strv_indent(arena, string, str_view_from_cstr(cstr), indent);
+}
+
 static inline void string_add_int(Arena* arena, String* string, int num) {
     const char* fmt_str =  " (line %d)";
     static char num_str[20];

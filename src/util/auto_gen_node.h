@@ -906,9 +906,15 @@ static void node_gen_print_forward_decl(Node_type type) {
 
     String function = {0};
 
-    string_extend_cstr(&gen_a, &function, "static inline Str_view ");
+    string_extend_cstr(&gen_a, &function, "#define ");
     extend_node_name_lower(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "_print(const ");
+    string_extend_cstr(&gen_a, &function, "_print(node) str_view_print(");
+    extend_node_name_lower(&function, type.name);
+    string_extend_cstr(&gen_a, &function, "_print_internal(node));\n");
+
+    string_extend_cstr(&gen_a, &function, "Str_view ");
+    extend_node_name_lower(&function, type.name);
+    string_extend_cstr(&gen_a, &function, "_print_internal(const ");
     extend_node_name_first_upper(&function, type.name);
     string_extend_cstr(&gen_a, &function, "* node);");
 

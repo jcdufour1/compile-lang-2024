@@ -437,23 +437,3 @@ static bool extend_node_text(Arena* arena, String* string, const Node* node, boo
 
     return true;
 }
-
-Str_view node_print_internal(Arena* arena, const Node* node) {
-    if (!node) {
-        return str_view_from_cstr("<null>");
-    }
-
-    String buf = {0};
-
-    if (!node) {
-        string_extend_cstr(arena, &buf, "<null>");
-        Str_view str_view = {.str = buf.buf, .count = buf.info.count};
-        return str_view;
-    }
-
-    extend_node_text(arena, &buf, node, true);
-
-    Str_view str_view = {.str = buf.buf, .count = buf.info.count};
-    return str_view;
-}
-

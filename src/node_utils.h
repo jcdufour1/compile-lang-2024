@@ -34,9 +34,9 @@ Str_view lang_type_print_internal(Arena* arena, Lang_type lang_type, bool surrou
 
 #define NODE_FMT STR_VIEW_FMT
 
-Str_view node_print_internal(Arena* arena, const Node* node);
+Str_view node_print_internal(const Node* node);
 
-#define node_print(root) str_view_print(node_print_internal(&print_arena, root))
+#define node_print(root) str_view_print(node_print_internal(root))
 
 #define node_printf(node) \
     do { \
