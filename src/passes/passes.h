@@ -31,7 +31,7 @@ void flatten_operations(Env* env);
 
 Node_block* add_load_and_store(Env* env, Node_block* old_block);
 
-void change_operators(Env* env);
+Node_block* change_operators(Env* env, Node_block* root);
 
 void assign_llvm_ids(Env* env);
 

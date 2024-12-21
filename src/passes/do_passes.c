@@ -193,17 +193,12 @@ void do_passes(Str_view file_text, const Parameters* params) {
     }
     arena_reset(&print_arena);
 
-    //log_tree(LOG_DEBUG, node_wrap_block(root));
-    //start_walk(&env, &root, for_and_if_to_branch);
-    //log_tree(LOG_DEBUG, node_wrap_block(root));
-    //arena_reset(&print_arena);
+    root = change_operators(&env, root);
+    log_tree(LOG_DEBUG, node_wrap_block(root));
+    arena_reset(&print_arena);
 
     root = add_load_and_store(&env, root);
     assert(root);
-
-    start_walk(&env, &root, change_operators);
-    log_tree(LOG_DEBUG, node_wrap_block(root));
-    arena_reset(&print_arena);
 
     start_walk(&env, &root, assign_llvm_ids);
     log_tree(LOG_DEBUG, node_wrap_block(root));
