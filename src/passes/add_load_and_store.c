@@ -1,4 +1,5 @@
 #include <node.h>
+#include <llvm.h>
 #include <nodes.h>
 #include <symbol_table.h>
 #include <parser_utils.h>
@@ -1342,7 +1343,7 @@ static Node_block* load_block(Env* env, Node_block* old_block) {
     return new_block;
 }
 
-Node_block* add_load_and_store(Env* env, Node_block* old_root) {
+Llvm_block* add_load_and_store(Env* env, Node_block* old_root) {
     Node_block* block = load_block(env, old_root);
     return block;
 }

@@ -29,7 +29,7 @@ void for_and_if_to_branch(Env* env);
 
 void flatten_operations(Env* env);
 
-Node_block* add_load_and_store(Env* env, Node_block* old_block);
+Llvm_block* add_load_and_store(Env* env, Node_block* old_block);
 
 void change_operators(Env* env);
 
