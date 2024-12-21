@@ -8,6 +8,34 @@ typedef enum {
     INDENT_WIDTH = 2,
 } INDENT_WIDTH_;
 
+void extend_lang_type_to_string(Arena* arena, String* string, Lang_type lang_type, bool surround_in_lt_gt) {
+    if (surround_in_lt_gt) {
+        vec_append(arena, string, '<');
+    }
+
+    if (lang_type.str.count > 1) {
+        string_extend_strv(arena, string, lang_type.str);
+    } else {
+        string_extend_cstr(arena, string, "<null>");
+    }
+    if (lang_type.pointer_depth < 0) {
+        todo();
+    }
+    for (int16_t idx = 0; idx < lang_type.pointer_depth; idx++) {
+        vec_append(arena, string, '*');
+    }
+    if (surround_in_lt_gt) {
+        vec_append(arena, string, '>');
+    }
+}
+
+Str_view lang_type_print_internal(Arena* arena, Lang_type lang_type, bool surround_in_lt_gt) {
+    String buf = {0};
+    extend_lang_type_to_string(arena, &buf, lang_type, surround_in_lt_gt);
+    Str_view str_view = {.str = buf.buf, .count = buf.info.count};
+    return str_view;
+}
+
 void node_print_assert_recursion_depth_zero(void) {
     assert(recursion_depth == 0);
 }
