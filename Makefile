@@ -1,5 +1,7 @@
 .PHONY: all setup build gdb
 
+# TODO: auto_gen Makefile?
+
 CC_COMPILER ?= clang
 
 C_FLAGS_DEBUG=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types -Werror=return-type \
@@ -50,7 +52,9 @@ OBJS=\
 	 ${BUILD_DIR}/passes/change_operators.o \
 	 ${BUILD_DIR}/passes/emit_llvm.o
 
-DEP_UTIL = Makefile src/util/*.h
+DEP_UTIL = Makefile src/util/*.h src/util/auto_gen.c
+
+# TODO: this needs to be done better, because this is error prone
 DEP_COMMON = ${DEP_UTIL} src/*.h ${BUILD_DIR}/node.h
 
 FILE_TO_TEST ?= examples/new_lang/structs.own
@@ -66,15 +70,17 @@ gdb: build
 
 build: ${BUILD_DIR}/main
 
+${BUILD_DIR}/symbol_table.c: ${BUILD_DIR}/node.h
+
 test_quick: run
 	${CC_COMPILER} test.ll -o a.out && ./a.out ; echo $$?
 
 # auto_gen and util
-${BUILD_DIR}/auto_gen: src/util/auto_gen.c
+${BUILD_DIR}/auto_gen: src/util/auto_gen.c ${DEP_UTIL}
 	${CC_COMPILER} ${C_FLAGS_AUTO_GEN} -o ${BUILD_DIR}/auto_gen src/util/arena.c src/util/auto_gen.c
 
 ${BUILD_DIR}/node.h: ${BUILD_DIR}/auto_gen
-	./${BUILD_DIR}/auto_gen ${BUILD_DIR}/symbol_table_struct.h ${BUILD_DIR}/node.h ${BUILD_DIR}/symbol_table.h ${BUILD_DIR}/symbol_table.c
+	./${BUILD_DIR}/auto_gen ${BUILD_DIR}
 
 # general
 ${BUILD_DIR}/main: ${DEP_COMMON} ${OBJS}
