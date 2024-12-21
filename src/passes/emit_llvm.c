@@ -476,8 +476,6 @@ static void emit_operator(const Env* env, String* output, const Node_operator* o
 
 static void emit_load_another_node(const Env* env, String* output, const Node_load_another_node* load_node) {
     Llvm_id llvm_id = get_llvm_id(load_node->node_src.node);
-    log(LOG_DEBUG, NODE_FMT"\n", node_print(node_wrap_load_another_node_const(load_node)));
-    log(LOG_DEBUG, NODE_FMT"\n", node_print(load_node->node_src.node));
     assert(llvm_id > 0);
 
     string_extend_cstr(&a_main, output, "    %");
@@ -554,12 +552,6 @@ static void emit_store_another_node_src_expr(const Env* env, String* output, con
 }
 
 static void emit_store_another_node(const Env* env, String* output, const Node_store_another_node* store) {
-    log_tree(LOG_DEBUG, (Node*)store);
-    log_tree(LOG_DEBUG, store->node_src.node);
-    log_tree(LOG_DEBUG, store->node_dest.node);
-    //log(LOG_DEBUG, "%zu\n", get_llvm_id(store->node_src.node));
-    //log(LOG_DEBUG, "%zu\n", get_llvm_id(store->node_dest.node));
-
     const Node* src = store->node_src.node;
 
     switch (src->type) {
@@ -592,15 +584,8 @@ static void emit_store_another_node(const Env* env, String* output, const Node_s
             const Node_def* src_def = node_unwrap_def_const(src);
             const Node_variable_def* src_var_def = node_unwrap_variable_def_const(src_def);
             (void) src_var_def;
-            log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(string_to_strv(*output)));
             string_extend_cstr(&a_main, output, " %");
-
-            //string_extend_size_t(&a_main, output, get_llvm_id(
-            //    get_storage_location(env, node_unwrap_variable_def_const(src)->name).node
-            //));
             string_extend_size_t(&a_main, output, get_llvm_id(src));
-
-            log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(string_to_strv(*output)));
             break;
         }
         case NODE_EXPR:
@@ -618,7 +603,6 @@ static void emit_store_another_node(const Env* env, String* output, const Node_s
     //string_extend_cstr(&a_main, output, " %");
     //string_extend_size_t(&a_main, output, get_llvm_id(store->node_src.node));
 
-    //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(string_to_strv(*output)));
     string_extend_cstr(&a_main, output, ", ptr %");
     string_extend_size_t(&a_main, output, get_llvm_id(store->node_dest.node));
     string_extend_cstr(&a_main, output, ", align 8");
@@ -646,7 +630,6 @@ static void emit_return(const Env* env, String* output, const Node_return* fun_r
     const Node_expr* sym_to_return = fun_return->child;
     assert(get_lang_type_expr(sym_to_return).str.count > 0);
 
-    log_tree(LOG_DEBUG, (Node*)fun_return);
     switch (sym_to_return->type) {
         case NODE_LITERAL: {
             const Node_literal* literal = node_unwrap_literal_const(sym_to_return);
@@ -705,7 +688,6 @@ static void emit_label(String* output, const Node_label* label) {
 
 static void emit_goto(const Env* env, String* output, const Node_goto* lang_goto) {
     string_extend_cstr(&a_main, output, "    br label %");
-    //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(string_to_strv(*output)));
     string_extend_size_t(&a_main, output, get_matching_label_id(env, lang_goto->name));
     vec_append(&a_main, output, '\n');
 }
@@ -762,7 +744,6 @@ static void emit_load_struct_element_pointer(const Env* env, String* output, con
     string_extend_cstr(&a_main, output, ", ");
     extend_type_call_str(env, output, get_lang_type(load_elem_ptr->struct_index.node));
     string_extend_cstr(&a_main, output, " ");
-    log_tree(LOG_DEBUG, load_elem_ptr->struct_index.node);
 
     if (load_elem_ptr->struct_index.node->type == NODE_LOAD_ANOTHER_NODE) {
         string_extend_cstr(&a_main, output, "%");
@@ -906,7 +887,6 @@ static void emit_struct_literal(const Env* env, String* output, const Node_struc
 }
 
 static void emit_symbols(const Env* env, String* output) {
-    log(LOG_DEBUG, "env->global_literals: %p\n", (void*)&env->global_literals);
     for (size_t idx = 0; idx < env->global_literals.capacity; idx++) {
         const Symbol_table_node curr_node = env->global_literals.table_nodes[idx];
         if (curr_node.status != SYM_TBL_OCCUPIED) {
