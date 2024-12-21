@@ -132,15 +132,14 @@ static inline bool try_get_member_def(
 bool try_set_variable_def_types(
     const Env* env,
     Node_variable_def** new_node,
-    Lang_type* lang_type,
     Node_variable_def* node
 );
 
-bool try_set_struct_def_types(Env* env, Node_struct_def** new_node, Lang_type* lang_type, Node_struct_def* node);
+bool try_set_struct_def_types(Env* env, Node_struct_def** new_node, Node_struct_def* node);
 
-bool try_set_raw_union_def_types(Env* env, Node_raw_union_def** new_node, Lang_type* lang_type, Node_raw_union_def* node);
+bool try_set_raw_union_def_types(Env* env, Node_raw_union_def** new_node, Node_raw_union_def* node);
 
-bool try_set_enum_def_types(Env* env, Node_enum_def** new_node, Lang_type* lang_type, Node_enum_def* node);
+bool try_set_enum_def_types(Env* env, Node_enum_def** new_node, Node_enum_def* node);
 
 bool try_get_struct_def(const Env* env, Node_struct_def** struct_def, Node* node);
 

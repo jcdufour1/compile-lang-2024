@@ -7,8 +7,7 @@
 
 Node_block* analysis_1(Env* env, Node_block* root) {
     Node_block* new_block = NULL;
-    Lang_type dummy = {0};
-    if (!try_set_block_types(env, &new_block, &dummy, root)) {
+    if (!try_set_block_types(env, &new_block, root)) {
         new_block = NULL;
     }
     return new_block;

@@ -211,8 +211,7 @@ Node_assignment* util_assignment_new(Env* env, Node* lhs, Node_expr* rhs) {
     assignment->lhs = lhs;
     assignment->rhs = rhs;
 
-    Lang_type dummy;
-    try_set_assignment_types(env, &dummy, assignment);
+    try_set_assignment_types(env, assignment);
     return assignment;
 }
 
@@ -250,8 +249,7 @@ Node_literal* util_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, 
 
     assert(new_literal);
 
-    Lang_type dummy;
-    try_set_literal_types(&dummy, new_literal, token_type);
+    try_set_literal_types(new_literal, token_type);
     return new_literal;
 }
 
@@ -285,8 +283,7 @@ Node_literal* util_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type
 
     assert(new_literal);
 
-    Lang_type dummy;
-    try_set_literal_types(&dummy, new_literal, token_type);
+    try_set_literal_types(new_literal, token_type);
     return new_literal;
 }
 
@@ -305,10 +302,9 @@ Node_expr* util_unary_new(const Env* env, Node_expr* child, TOKEN_TYPE operator_
     unary->child = child;
     unary->lang_type = init_lang_type;
 
-    Lang_type dummy;
     Node_expr* new_node;
     //symbol_log(LOG_DEBUG, env);
-    try(try_set_unary_types(env, &new_node, &dummy, unary));
+    try(try_set_unary_types(env, &new_node, unary));
     return new_node;
 }
 
@@ -318,10 +314,8 @@ Node_operator* util_binary_typed_new(const Env* env, Node_expr* lhs, Node_expr* 
     binary->lhs = lhs;
     binary->rhs = rhs;
 
-    Lang_type dummy;
-    //symbol_log(LOG_DEBUG, env);
     Node_expr* new_node;
-    try(try_set_binary_types(env, &new_node, &dummy, binary));
+    try(try_set_binary_types(env, &new_node, binary));
 
     return node_unwrap_operator(new_node);
 }
