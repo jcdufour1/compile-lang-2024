@@ -672,12 +672,6 @@ static Llvm_register_sym load_alloca(
     Node_block* new_block,
     Node_alloca* old_alloca
 ) {
-    (void) env;
-
-    // TODO: clone alloca
-    // make id system, separate hash table, etc. to make this actually possible
-    //Node_alloca* new_alloca = node_clone_alloca(old_alloca);
-
     Node_alloca* new_alloca = node_clone_alloca(old_alloca);
     vec_insert(&a_main, &new_block->children, 0, node_wrap_alloca(new_alloca));
     alloca_update(env, node_wrap_alloca(new_alloca));
@@ -719,15 +713,14 @@ static Llvm_register_sym load_variable_def(
     Node_block* new_block,
     Node_variable_def* old_var_def
 ) {
-    // TODO: clone
-    // (cannot clone now because of storage_location system. 
-    // storage_location should be changed to not use raw pointer)
+    Node_variable_def* new_var_def = node_clone_variable_def(old_var_def);
+
     Node* alloca = NULL;
-    if (!alloca_lookup(&alloca, env, old_var_def->name)) {
-        alloca = load_alloca(env, new_block, add_load_and_store_alloca_new(env, old_var_def)).node;
+    if (!alloca_lookup(&alloca, env, new_var_def->name)) {
+        alloca = load_alloca(env, new_block, add_load_and_store_alloca_new(env, new_var_def)).node;
     }
 
-    vec_append(&a_main, &new_block->children, node_wrap_def(node_wrap_variable_def(old_var_def)));
+    vec_append(&a_main, &new_block->children, node_wrap_def(node_wrap_variable_def(new_var_def)));
 
     assert(alloca);
     return (Llvm_register_sym) {
