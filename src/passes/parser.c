@@ -1264,6 +1264,7 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Node** child, Tk_view* toke
 
 static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens, bool is_top_level) {
     PARSE_STATUS status = PARSE_OK;
+    bool did_consume_close_brace = false;
 
     *block = node_block_new(tk_view_front(*tokens).pos);
     vec_append_safe(&a_main, &env->ancesters, node_wrap_block(*block));
@@ -1287,7 +1288,14 @@ static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens,
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
     Token close_brace_token = {0};
-    while (!try_consume(&close_brace_token, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
+    while (1) {
+        if (try_consume(&close_brace_token, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
+            did_consume_close_brace = true;
+            assert(close_brace_token.pos.line > 0);
+            (*block)->pos_end = close_brace_token.pos;
+            assert((*block)->pos_end.line > 0);
+            break;
+        }
         if (tokens->count < 1) {
             // this means that there is no matching `}` found
             if (!is_top_level) {
@@ -1324,10 +1332,14 @@ static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens,
         try_consume(NULL, tokens, TOKEN_SEMICOLON);
         vec_append_safe(&a_main, &(*block)->children, child);
     }
-    (*block)->pos_end = close_brace_token.pos;
 
     Node* dummy = NULL;
 end:
+    if (did_consume_close_brace) {
+        try((*block)->pos_end.line > 0);
+    } else if (!is_top_level && status == PARSE_EXPR_OK) {
+        unreachable("");
+    }
     vec_pop(dummy, &env->ancesters);
     assert(dummy == node_wrap_block(*block));
     assert(*block);

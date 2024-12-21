@@ -186,7 +186,7 @@ void do_passes(Str_view file_text, const Parameters* params) {
     log_tree(LOG_DEBUG, node_wrap_block(root));
 
     //log_tree(LOG_DEBUG, node_wrap_block(*root));
-    start_walk(&env, &root, analysis_1);
+    root = analysis_1(&env, root);
     log_tree(LOG_DEBUG, node_wrap_block(root));
     if (error_count > 0) {
         fail();
@@ -198,6 +198,7 @@ void do_passes(Str_view file_text, const Parameters* params) {
     arena_reset(&print_arena);
 
     root = add_load_and_store(&env, root);
+    log_tree(LOG_DEBUG, node_wrap_block(root));
     assert(root);
 
     start_walk(&env, &root, assign_llvm_ids);

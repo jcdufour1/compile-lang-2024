@@ -206,7 +206,7 @@ Llvm_id get_matching_label_id(const Env* env, Str_view name) {
     return label->llvm_id;
 }
 
-Node_assignment* util_assignment_new(const Env* env, Node* lhs, Node_expr* rhs) {
+Node_assignment* util_assignment_new(Env* env, Node* lhs, Node_expr* rhs) {
     Node_assignment* assignment = node_assignment_new(node_get_pos(lhs));
     assignment->lhs = lhs;
     assignment->rhs = rhs;

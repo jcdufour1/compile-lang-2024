@@ -69,7 +69,7 @@ const Node_variable_def* get_symbol_def_from_alloca(const Env* env, const Node* 
 Llvm_id get_matching_label_id(const Env* env, Str_view name);
 
 // lhs and rhs should not be used for other tasks after this
-Node_assignment* util_assignment_new(const Env* env, Node* lhs, Node_expr* rhs);
+Node_assignment* util_assignment_new(Env* env, Node* lhs, Node_expr* rhs);
 
 Node_literal* util_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, Pos pos);
 
@@ -136,11 +136,11 @@ bool try_set_variable_def_types(
     Node_variable_def* node
 );
 
-bool try_set_struct_def_types(const Env* env, Node_struct_def** new_node, Lang_type* lang_type, Node_struct_def* node);
+bool try_set_struct_def_types(Env* env, Node_struct_def** new_node, Lang_type* lang_type, Node_struct_def* node);
 
-bool try_set_raw_union_def_types(const Env* env, Node_raw_union_def** new_node, Lang_type* lang_type, Node_raw_union_def* node);
+bool try_set_raw_union_def_types(Env* env, Node_raw_union_def** new_node, Lang_type* lang_type, Node_raw_union_def* node);
 
-bool try_set_enum_def_types(const Env* env, Node_enum_def** new_node, Lang_type* lang_type, Node_enum_def* node);
+bool try_set_enum_def_types(Env* env, Node_enum_def** new_node, Lang_type* lang_type, Node_enum_def* node);
 
 bool try_get_struct_def(const Env* env, Node_struct_def** struct_def, Node* node);
 

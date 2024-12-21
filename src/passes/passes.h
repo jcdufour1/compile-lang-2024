@@ -23,11 +23,7 @@ Tokens tokenize(Env* env, const Parameters params);
 
 Node_block* parse(Env* env, const Tokens tokens);
 
-void analysis_1(Env* env);
-
-void for_and_if_to_branch(Env* env);
-
-void flatten_operations(Env* env);
+Node_block* analysis_1(Env* env, Node_block* root);
 
 Node_block* add_load_and_store(Env* env, Node_block* old_block);
 

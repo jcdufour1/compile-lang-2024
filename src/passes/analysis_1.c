@@ -5,54 +5,11 @@
 #include <parser_utils.h>
 #include <type_checking.h>
 
-static bool is_directly_in_function_def(const Env* env) {
-    return 
-        env->ancesters.info.count > 1 &&
-        vec_at(&env->ancesters, env->ancesters.info.count - 2)->type == NODE_DEF && 
-        node_unwrap_def(vec_at(&env->ancesters, env->ancesters.info.count - 2))->type == NODE_FUNCTION_DEF;
-}
-
-void analysis_1(Env* env) {
-    Node* block_ = vec_top(&env->ancesters);
-    if (block_->type != NODE_BLOCK) {
-        return;
+Node_block* analysis_1(Env* env, Node_block* root) {
+    Node_block* new_block = NULL;
+    Lang_type dummy = {0};
+    if (!try_set_block_types(env, &new_block, &dummy, root)) {
+        new_block = NULL;
     }
-    Node_block* block = node_unwrap_block(block_);
-    Node_ptr_vec* block_children = &block->children;
-
-    bool need_add_return = is_directly_in_function_def(env) && block_children->info.count == 0;
-    for (size_t idx = 0; idx < block_children->info.count; idx++) {
-        Node** curr_node = vec_at_ref(block_children, idx);
-        Lang_type dummy;
-        Node* new_node;
-        try_set_node_types(env, &new_node, &dummy, *curr_node);
-        *curr_node = new_node;
-        assert(*curr_node);
-
-        if (idx == block_children->info.count - 1 
-            && (*curr_node)->type != NODE_RETURN
-            && is_directly_in_function_def(env)
-        ) {
-            need_add_return = true;
-        }
-    }
-
-    if (need_add_return && 
-        env->ancesters.info.count > 1 && vec_at(&env->ancesters, env->ancesters.info.count - 2)
-    ) {
-        assert(block->pos_end.line > 0);
-        Node_return* rtn_statement = node_return_new(block->pos_end);
-        rtn_statement->is_auto_inserted = true;
-        rtn_statement->child = node_wrap_literal(util_literal_new_from_strv(str_view_from_cstr(""), TOKEN_VOID, block->pos_end));
-        Lang_type dummy;
-        Node* new_rtn_statement;
-        if (!try_set_node_types(env, &new_rtn_statement, &dummy, node_wrap_return(rtn_statement))) {
-            return;
-        }
-        assert(rtn_statement);
-        assert(new_rtn_statement);
-        vec_append_safe(&a_main, block_children, new_rtn_statement);
-    }
-
-    return;
+    return new_block;
 }
