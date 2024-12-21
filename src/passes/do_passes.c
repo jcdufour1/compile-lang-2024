@@ -201,7 +201,7 @@ void do_passes(Str_view file_text, const Parameters* params) {
     log_tree(LOG_DEBUG, node_wrap_block(root));
     assert(root);
 
-    start_walk(&env, &root, assign_llvm_ids);
+    root = assign_llvm_ids(&env, root);
     log_tree(LOG_DEBUG, node_wrap_block(root));
     arena_reset(&print_arena);
 

@@ -1337,7 +1337,7 @@ static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens,
 end:
     if (did_consume_close_brace) {
         try((*block)->pos_end.line > 0);
-    } else if (!is_top_level && status == PARSE_EXPR_OK) {
+    } else if (!is_top_level && status == PARSE_OK) {
         unreachable("");
     }
     vec_pop(dummy, &env->ancesters);

@@ -29,7 +29,7 @@ Node_block* add_load_and_store(Env* env, Node_block* old_block);
 
 Node_block* change_operators(Env* env, Node_block* root);
 
-void assign_llvm_ids(Env* env);
+Node_block* assign_llvm_ids(Env* env, Node_block* root);
 
 void emit_llvm_from_tree(Env* env, const Node_block* root);
 
