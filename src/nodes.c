@@ -72,38 +72,11 @@ void extend_lang_type_to_string(Arena* arena, String* string, Lang_type lang_typ
     }
 }
 
-static int log_file_level = 0;
-static const char* log_file = NULL;
-static int log_line = 0;
-
 Str_view lang_type_print_internal(Arena* arena, Lang_type lang_type, bool surround_in_lt_gt) {
     String buf = {0};
     extend_lang_type_to_string(arena, &buf, lang_type, surround_in_lt_gt);
     Str_view str_view = {.str = buf.buf, .count = buf.info.count};
     return str_view;
-}
-
-void log_node_in_tree_internal(Env* env) {
-    Node* node = vec_top(&env->ancesters);
-    String padding = {0};
-    vec_reset(&padding);
-
-    for (int idx = 0; idx < 2*env->recursion_depth; idx++) {
-        vec_append(&print_arena, &padding, ' ');
-    }
-
-    log_file_new(log_file_level, log_file, log_line, STRING_FMT NODE_FMT"\n", string_print(padding), node_print(node));
-    log_symbol_table_if_block(env, log_file, log_line);
-}
-
-void nodes_log_tree_internal(LOG_LEVEL log_level, const Node* root, const char* file, int line) {
-    log_file_level = log_level;
-    log_file = file;
-    log_line = line;
-
-    Env env = {0};
-    vec_append(&a_main, &env.ancesters, (Node*)root);
-    walk_tree(&env, log_node_in_tree_internal);
 }
 
 static Str_view node_type_get_strv_expr(const Node_expr* node) {

@@ -34,6 +34,7 @@ OBJS=\
 	 ${BUILD_DIR}/main.o \
 	 ${BUILD_DIR}/arena.o \
 	 ${BUILD_DIR}/nodes.o \
+	 ${BUILD_DIR}/node_print.o \
 	 ${BUILD_DIR}/globals.o \
 	 ${BUILD_DIR}/token.o \
 	 ${BUILD_DIR}/symbol_table.o \
@@ -100,6 +101,9 @@ ${BUILD_DIR}/globals.o: ${DEP_COMMON} src/globals.c third_party/*
 
 ${BUILD_DIR}/nodes.o: ${DEP_COMMON} src/nodes.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/nodes.o src/nodes.c
+
+${BUILD_DIR}/node_print.o: ${DEP_COMMON} src/node_print.c third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/node_print.o src/node_print.c
 
 ${BUILD_DIR}/token.o: ${DEP_COMMON} src/token.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/token.o src/token.c
