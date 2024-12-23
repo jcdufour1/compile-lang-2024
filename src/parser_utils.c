@@ -197,12 +197,12 @@ const Node_variable_def* get_symbol_def_from_alloca(const Env* env, const Node* 
 }
 
 Llvm_id get_matching_label_id(const Env* env, Str_view name) {
-    Node_def* label_;
-    if (!symbol_lookup(&label_, env, name)) {
+    Node* label_;
+    if (!alloca_lookup(&label_, env, name)) {
         symbol_log(LOG_DEBUG, env);
         unreachable("call to undefined label `"STR_VIEW_FMT"`", str_view_print(name));
     }
-    Node_label* label = node_unwrap_label(label_);
+    Node_label* label = node_unwrap_label(node_unwrap_def(label_));
     return label->llvm_id;
 }
 

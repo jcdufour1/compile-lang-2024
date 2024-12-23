@@ -386,6 +386,7 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
         string_extend_cstr(&gen_a, &text, "}\n");
     }
 
+
     gen_gen(STRING_FMT"\n", string_print(text));
 }
 
@@ -408,6 +409,19 @@ static void gen_symbol_table_c_file(const char* file_path, Sym_tbl_type_vec type
     gen_gen("%s\n", "    return stbds_hash_bytes(key.str, key.count, 0)%capacity;");
     gen_gen("%s\n", "}");
     gen_gen("%s\n", "");
+    
+    gen_gen("%s\n", "bool alloca_do_add_defered(Node** redefined_sym, Env* env) {\n");
+    gen_gen("%s\n", "    for (size_t idx = 0; idx < env->defered_allocas_to_add.info.count; idx++) {\n");
+    gen_gen("%s\n", "        if (!alloca_add(env, vec_at(&env->defered_allocas_to_add, idx))) {\n");
+    gen_gen("%s\n", "            *redefined_sym = vec_at(&env->defered_allocas_to_add, idx);\n");
+    gen_gen("%s\n", "            vec_reset(&env->defered_allocas_to_add);\n");
+    gen_gen("%s\n", "            return false;\n");
+    gen_gen("%s\n", "        }\n");
+    gen_gen("%s\n", "    }\n");
+    gen_gen("%s\n", "\n");
+    gen_gen("%s\n", "    vec_reset(&env->defered_allocas_to_add);\n");
+    gen_gen("%s\n", "    return true;\n");
+    gen_gen("%s\n", "}\n");
 
     for (size_t idx = 0; idx < types.info.count; idx++) {
         gen_symbol_table_c_file_internal(vec_at(&types, idx));
@@ -544,6 +558,19 @@ static void gen_symbol_table_header(const char* file_path, Sym_tbl_type_vec type
     for (size_t idx = 0; idx < types.info.count; idx++) {
         gen_symbol_table_header_internal(vec_at(&types, idx));
     }
+
+    gen_gen("%s\n", "// these nodes will be actually added to a symbol table when `symbol_do_add_defered` is called");
+    gen_gen("%s\n", "static inline void alloca_add_defer(Env* env, Node* node_of_alloca) {");
+    gen_gen("%s\n", "    assert(node_of_alloca);");
+    gen_gen("%s\n", "    vec_append(&a_main, &env->defered_allocas_to_add, node_of_alloca);");
+    gen_gen("%s\n", "}");
+    gen_gen("%s\n", "");
+    gen_gen("%s\n", "bool alloca_do_add_defered(Node** redefined_sym, Env* env);");
+    gen_gen("%s\n", "");
+    gen_gen("%s\n", "static inline void alloca_ignore_defered(Env* env) {");
+    gen_gen("%s\n", "    vec_reset(&env->defered_allocas_to_add);");
+    gen_gen("%s\n", "}");
+    gen_gen("%s\n", "");
 
     gen_gen("%s\n", "// these nodes will be actually added to a symbol table when `symbol_do_add_defered` is called");
     gen_gen("%s\n", "static inline void symbol_add_defer(Env* env, Node_def* node_of_symbol) {");

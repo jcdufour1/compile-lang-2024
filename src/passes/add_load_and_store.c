@@ -137,9 +137,9 @@ static void add_label(Env* env, Node_block* block, Str_view label_name, Pos pos,
     label->name = label_name;
 
     if (defer_add_sym) {
-        symbol_add_defer(env, node_wrap_label(label));
+        alloca_add_defer(env, node_wrap_def(node_wrap_label(label)));
     } else {
-        try(symbol_add(env, node_wrap_label(label)));
+        try(alloca_add(env, node_wrap_def(node_wrap_label(label))));
     }
 
     vec_append(&a_main, &block->children, node_wrap_def(node_wrap_label(label)));
@@ -831,7 +831,8 @@ static Node_block* if_else_chain_to_branch(Env* env, Node_if_else_chain* if_else
 
     Str_view if_after = util_literal_name_new_prefix("if_after");
     
-    Node_def* dummy = NULL;
+    Node* dummy = NULL;
+    Node_def* dummy_def = NULL;
 
     Str_view next_if = {0};
     for (size_t idx = 0; idx < if_else->nodes.info.count; idx++) {
@@ -845,17 +846,17 @@ static Node_block* if_else_chain_to_branch(Env* env, Node_if_else_chain* if_else
         vec_append(&a_main, &new_block->children, node_wrap_block(if_block));
 
         if (idx + 1 < if_else->nodes.info.count) {
-            assert(!symbol_lookup(&dummy, env, next_if));
+            assert(!alloca_lookup(&dummy, env, next_if));
             add_label(env, new_block, next_if, vec_at(&if_else->nodes, idx)->pos, false);
-            assert(symbol_lookup(&dummy, env, next_if));
+            assert(alloca_lookup(&dummy, env, next_if));
         } else {
             assert(str_view_is_equal(next_if, if_after));
         }
     }
 
-    assert(!symbol_lookup(&dummy, env, next_if));
+    assert(!symbol_lookup(&dummy_def, env, next_if));
     add_label(env, new_block, if_after, if_else->pos, false);
-    assert(symbol_lookup(&dummy, env, next_if));
+    assert(alloca_lookup(&dummy, env, next_if));
     //log_tree(LOG_DEBUG, node_wrap_block(new_block));
 
     return new_block;
@@ -906,8 +907,10 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
     }
 
     //try(symbol_add(env, node_wrap_variable_def(for_var_def)));
-    Node_def* dummy = NULL;
-    assert(symbol_lookup(&dummy, env, for_var_def->name));
+    Node* dummy = NULL;
+    Node_def* dummy_def = NULL;
+
+    assert(symbol_lookup(&dummy_def, env, for_var_def->name));
 
     Node_assignment* assignment_to_inc_cond_var = for_loop_cond_var_assign_new(
         env, for_var_def->name, node_get_pos_expr(lhs_actual)
@@ -944,7 +947,7 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
     vec_append(&a_main, &new_branch_block->children, node_wrap_goto(jmp_to_check_cond_label));
 
     log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(check_cond_label));
-    assert(!symbol_lookup(&dummy, env, check_cond_label));
+    assert(!alloca_lookup(&dummy, env, check_cond_label));
 
     {
         vec_rem_last(&env->ancesters);
@@ -954,10 +957,10 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
 
     symbol_log(LOG_DEBUG, env);
     log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(check_cond_label));
-    assert(symbol_lookup(&dummy, env, check_cond_label));
+    assert(alloca_lookup(&dummy, env, check_cond_label));
 
     load_operator(env, new_branch_block, operator);
-    assert(symbol_lookup(&dummy, env, check_cond_label));
+    assert(alloca_lookup(&dummy, env, check_cond_label));
 
     if_for_add_cond_goto(
         env,
@@ -966,7 +969,7 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
         after_check_label,
         after_for_loop_label
     );
-    assert(symbol_lookup(&dummy, env, check_cond_label));
+    assert(alloca_lookup(&dummy, env, check_cond_label));
     {
         vec_rem_last(&env->ancesters);
         add_label(env, new_branch_block, after_check_label, pos, false);
@@ -977,7 +980,7 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
     log(LOG_DEBUG, "DSFJKLKJDFS: "STR_VIEW_FMT"\n", str_view_print(check_cond_label));
     log(LOG_DEBUG, "DSFJKLKJDFS: "STR_VIEW_FMT"\n", str_view_print(after_for_loop_label));
 
-    assert(symbol_lookup(&dummy, env, check_cond_label));
+    assert(alloca_lookup(&dummy, env, check_cond_label));
     {
 
         for (size_t idx = 0; idx < old_for->body->children.info.count; idx++) {
@@ -987,7 +990,7 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
             load_node(env, new_branch_block, vec_at(&old_for->body->children, idx));
         }
     }
-    assert(symbol_lookup(&dummy, env, check_cond_label));
+    assert(alloca_lookup(&dummy, env, check_cond_label));
 
     vec_append(&a_main, &new_branch_block->children, node_wrap_goto(jmp_to_assign));
     {
@@ -998,14 +1001,14 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
     load_assignment(env, new_branch_block, assignment_to_inc_cond_var);
     vec_append(&a_main, &new_branch_block->children, node_wrap_goto(goto_new(check_cond_label, pos)));
     add_label(env, new_branch_block, after_for_loop_label, pos, true);
-    assert(symbol_lookup(&dummy, env, check_cond_label));
+    assert(alloca_lookup(&dummy, env, check_cond_label));
 
-    try(symbol_do_add_defered(&dummy, env));
+    try(alloca_do_add_defered(&dummy, env));
 
-    assert(symbol_lookup(&dummy, env, check_cond_label));
+    assert(alloca_lookup(&dummy, env, check_cond_label));
     env->label_if_break = old_if_break;
     env->label_if_continue = old_if_continue;
-    assert(symbol_lookup(&dummy, env, check_cond_label));
+    assert(alloca_lookup(&dummy, env, check_cond_label));
     //log(LOG_DEBUG, "DSFJKLKJDFS: "STR_VIEW_FMT"\n", str_view_print(check_cond_label));
     //symbol_log(LOG_DEBUG, env);
     vec_rem_last(&env->ancesters);
@@ -1094,13 +1097,13 @@ static Node_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* old_for
     ));
     add_label(env, new_branch_block, after_for_loop_label, pos, true);
 
-    Node_def* dummy = NULL;
+    Node* dummy = NULL;
 
     env->label_if_continue = old_if_continue;
     env->label_if_break = old_if_break;
     vec_rem_last(&env->ancesters);
 
-    try(symbol_do_add_defered(&dummy, env));
+    try(alloca_do_add_defered(&dummy, env));
     return new_branch_block;
 }
 
