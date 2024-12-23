@@ -42,7 +42,6 @@ OBJS=\
 	 ${BUILD_DIR}/parameters.o \
 	 ${BUILD_DIR}/parser_utils.o \
 	 ${BUILD_DIR}/error_msg.o \
-	 ${BUILD_DIR}/walk_tree.o \
 	 ${BUILD_DIR}/type_checking.o \
 	 ${BUILD_DIR}/passes/do_passes.o \
 	 ${BUILD_DIR}/passes/tokenizer.o \
@@ -122,9 +121,6 @@ ${BUILD_DIR}/parameters.o: ${DEP_COMMON} src/parameters.c third_party/*
 
 ${BUILD_DIR}/error_msg.o: ${DEP_COMMON} src/error_msg.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/error_msg.o src/error_msg.c
-
-${BUILD_DIR}/walk_tree.o: ${DEP_COMMON} src/walk_tree.c third_party/*
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/walk_tree.o src/walk_tree.c
 
 
 # passes
