@@ -894,6 +894,33 @@ void llvm_gen_llvm_wrap(Llvm_type llvm) {
     llvm_gen_wrap_internal(llvm, true);
 }
 
+// TODO: deduplicate these functions (use same function for Llvm and Node)
+static void llvm_gen_print_forward_decl(Llvm_type type) {
+    for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
+        llvm_gen_print_forward_decl(vec_at(&type.sub_types, idx));
+    }
+
+    if (type.name.is_topmost) {
+        return;
+    }
+
+    String function = {0};
+
+    string_extend_cstr(&gen_a, &function, "#define ");
+    extend_llvm_name_lower(&function, type.name);
+    string_extend_cstr(&gen_a, &function, "_print(llvm) str_view_print(");
+    extend_llvm_name_lower(&function, type.name);
+    string_extend_cstr(&gen_a, &function, "_print_internal(llvm));\n");
+
+    string_extend_cstr(&gen_a, &function, "Str_view ");
+    extend_llvm_name_lower(&function, type.name);
+    string_extend_cstr(&gen_a, &function, "_print_internal(const ");
+    extend_llvm_name_first_upper(&function, type.name);
+    string_extend_cstr(&gen_a, &function, "* llvm);");
+
+    gen_gen(STRING_FMT"\n", string_print(function));
+}
+
 static void llvm_gen_new_internal(Llvm_type type, bool implementation) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
         llvm_gen_new_internal(vec_at(&type.sub_types, idx), implementation);
