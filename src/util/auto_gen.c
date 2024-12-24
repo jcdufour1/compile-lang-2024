@@ -28,22 +28,20 @@ static void gen_symbol_table_c_file_symbol_update(String* text, Symbol_tbl_type 
     string_extend_cstr(&gen_a, text, "    }\n");
     string_extend_cstr(&gen_a, text, "\n");
     string_extend_cstr(&gen_a, text, "    for (size_t idx = env->ancesters.info.count - 1;; idx--) {\n");
-    string_extend_cstr(&gen_a, text, "        if (vec_at(&env->ancesters, idx)->type == NODE_BLOCK) {\n");
-    string_extend_cstr(&gen_a, text, "            Node_block* block = node_unwrap_block(vec_at(&env->ancesters, idx));\n");
-    string_extend_cstr(&gen_a, text, "            ");
+    string_extend_cstr(&gen_a, text, "        Symbol_collection* sym_coll = vec_at(&env->ancesters, idx);\n");
+    string_extend_cstr(&gen_a, text, "        ");
     extend_strv_first_upper(text, type.normal_prefix);
     string_extend_cstr(&gen_a, text, "_table_node* curr_node = NULL;\n");
-    string_extend_cstr(&gen_a, text, "            if (");
+    string_extend_cstr(&gen_a, text, "        if (");
     extend_strv_lower(text, type.internal_prefix);
     string_extend_cstr(&gen_a, text, "_tbl_lookup_internal(&curr_node, ");
-    string_extend_cstr(&gen_a, text, "&block->");
+    string_extend_cstr(&gen_a, text, "&sym_coll->");
     extend_strv_lower(text, type.symbol_table_name);
     string_extend_cstr(&gen_a, text, ", ");
     extend_strv_lower(text, type.get_key_fn_name);
     string_extend_cstr(&gen_a, text, "(node_of_symbol))) {\n");
-    string_extend_cstr(&gen_a, text, "                curr_node->node = node_of_symbol;\n");
-    string_extend_cstr(&gen_a, text, "                return;\n");
-    string_extend_cstr(&gen_a, text, "            }\n");
+    string_extend_cstr(&gen_a, text, "            curr_node->node = node_of_symbol;\n");
+    string_extend_cstr(&gen_a, text, "            return;\n");
     string_extend_cstr(&gen_a, text, "        }\n");
     string_extend_cstr(&gen_a, text, "\n");
     string_extend_cstr(&gen_a, text, "        if (idx < 1) {\n");
@@ -269,15 +267,12 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "    }\n");
     string_extend_cstr(&gen_a, &text, "\n");
     string_extend_cstr(&gen_a, &text, "    for (size_t idx = env->ancesters.info.count - 1;; idx--) {\n");
-    string_extend_cstr(&gen_a, &text, "        Node* curr_node = vec_at(&env->ancesters, idx);\n");
-    string_extend_cstr(&gen_a, &text, "        if (curr_node->type == NODE_BLOCK) {\n");
-    string_extend_cstr(&gen_a, &text, "            log(LOG_DEBUG, NODE_FMT\"\\n\", node_print(curr_node));\n");
-    string_extend_cstr(&gen_a, &text, "            ");
+    string_extend_cstr(&gen_a, &text, "        Symbol_collection* curr_node = vec_at(&env->ancesters, idx);\n");
+    string_extend_cstr(&gen_a, &text, "        ");
     extend_strv_lower(&text, type.normal_prefix);
-    string_extend_cstr(&gen_a, &text, "_log_table_internal(log_level, node_unwrap_block(curr_node)->");
+    string_extend_cstr(&gen_a, &text, "_log_table_internal(log_level, curr_node->");
     extend_strv_lower(&text, type.symbol_table_name);
     string_extend_cstr(&gen_a, &text, ", 4, file_path, line);\n");
-    string_extend_cstr(&gen_a, &text, "        }\n");
     string_extend_cstr(&gen_a, &text, "\n");
     string_extend_cstr(&gen_a, &text, "        if (idx < 1) {\n");
     string_extend_cstr(&gen_a, &text, "            return;\n");
@@ -303,16 +298,14 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "    }\n");
     string_extend_cstr(&gen_a, &text, "\n");
     string_extend_cstr(&gen_a, &text, "    for (size_t idx = env->ancesters.info.count - 1;; idx--) {\n");
-    string_extend_cstr(&gen_a, &text, "        if (vec_at(&env->ancesters, idx)->type == NODE_BLOCK) {\n");
-    string_extend_cstr(&gen_a, &text, "            const Node_block* block = node_unwrap_block_const(vec_at(&env->ancesters, idx));\n");
-    string_extend_cstr(&gen_a, &text, "            if (");
+    string_extend_cstr(&gen_a, &text, "        const Symbol_collection* curr_node = vec_at(&env->ancesters, idx);\n");
+    string_extend_cstr(&gen_a, &text, "        if (");
     extend_strv_lower(&text, type.internal_prefix);
-    string_extend_cstr(&gen_a, &text, "_tbl_lookup(result, &block->");
+    string_extend_cstr(&gen_a, &text, "_tbl_lookup(result, &curr_node->");
     extend_strv_lower(&text, type.symbol_table_name);
     string_extend_cstr(&gen_a, &text, ", key)) {\n");
-    string_extend_cstr(&gen_a, &text, "                return true;\n");
-    string_extend_cstr(&gen_a, &text, "            }\n");
-    string_extend_cstr(&gen_a, &text, "        }\n");
+    string_extend_cstr(&gen_a, &text, "             return true;\n");
+    string_extend_cstr(&gen_a, &text, "         }\n");
     string_extend_cstr(&gen_a, &text, "\n");
     string_extend_cstr(&gen_a, &text, "        if (idx < 1) {\n");
     string_extend_cstr(&gen_a, &text, "            return false;\n");
@@ -342,15 +335,13 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "    }\n");
     string_extend_cstr(&gen_a, &text, "\n");
     string_extend_cstr(&gen_a, &text, "    for (size_t idx = env->ancesters.info.count - 1;; idx--) {\n");
-    string_extend_cstr(&gen_a, &text, "        if (vec_at(&env->ancesters, idx)->type == NODE_BLOCK) {\n");
-    string_extend_cstr(&gen_a, &text, "            Node_block* block = node_unwrap_block(vec_at(&env->ancesters, idx));\n");
-    string_extend_cstr(&gen_a, &text, "            try(");
+    string_extend_cstr(&gen_a, &text, "        Symbol_collection* curr_node = vec_at(&env->ancesters, idx);\n");
+    string_extend_cstr(&gen_a, &text, "        try(");
     extend_strv_lower(&text, type.internal_prefix);
-    string_extend_cstr(&gen_a, &text, "_tbl_add(&block->");
+    string_extend_cstr(&gen_a, &text, "_tbl_add(&curr_node->");
     extend_strv_lower(&text, type.symbol_table_name);
     string_extend_cstr(&gen_a, &text, ", node_of_symbol));\n");
     string_extend_cstr(&gen_a, &text, "            return true;\n");
-    string_extend_cstr(&gen_a, &text, "        }\n");
     string_extend_cstr(&gen_a, &text, "\n");
     string_extend_cstr(&gen_a, &text, "        if (idx < 1) {\n");
     string_extend_cstr(&gen_a, &text, "            unreachable(\"no block ancester found\");\n");
@@ -375,15 +366,6 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
         string_extend_cstr(&gen_a, &text, "    return true;\n");
         string_extend_cstr(&gen_a, &text, "}\n");
         string_extend_cstr(&gen_a, &text, "\n");
-        string_extend_cstr(&gen_a, &text, "void log_symbol_table_if_block(Env* env, const char* file_path, int line) {\n");
-        string_extend_cstr(&gen_a, &text, "    Node* curr_node = vec_top(&env->ancesters);\n");
-        string_extend_cstr(&gen_a, &text, "    if (curr_node->type != NODE_BLOCK)  {\n");
-        string_extend_cstr(&gen_a, &text, "        return;\n");
-        string_extend_cstr(&gen_a, &text, "    }\n");
-        string_extend_cstr(&gen_a, &text, "\n");
-        string_extend_cstr(&gen_a, &text, "    Node_block* block = node_unwrap_block(curr_node);\n");
-        string_extend_cstr(&gen_a, &text, "    symbol_log_table_internal(LOG_DEBUG, block->symbol_table, env->recursion_depth, file_path, line);\n");
-        string_extend_cstr(&gen_a, &text, "}\n");
     }
 
 
@@ -434,18 +416,18 @@ static void gen_symbol_table_header_internal(Symbol_tbl_type type) {
     String text = {0};
 
     string_extend_cstr(&gen_a, &text, "void ");
-    extend_strv_lower(&text, type.internal_prefix);
+    extend_strv_lower(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_log_table_internal(int log_level, const ");
     extend_strv_first_upper(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_table sym_table, int recursion_depth, const char* file_path, int line);\n");
     string_extend_cstr(&gen_a, &text, "\n");
     string_extend_cstr(&gen_a, &text, "#define ");
-    extend_strv_first_upper(&text, type.normal_prefix);
+    extend_strv_lower(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_log_table(log_level, sym_table) \\\n");
     string_extend_cstr(&gen_a, &text, "    do { \\\n");
     string_extend_cstr(&gen_a, &text, "        ");
     extend_strv_lower(&text, type.normal_prefix);
-    string_extend_cstr(&gen_a, &text, "_log_table_internal(log_level, sym_table, 0, __FILE__, __LINE__) \\\n");
+    string_extend_cstr(&gen_a, &text, "_log_table_internal(log_level, sym_table, 0, __FILE__, __LINE__); \\\n");
     string_extend_cstr(&gen_a, &text, "    } while(0)\n");
     string_extend_cstr(&gen_a, &text, "\n");
     string_extend_cstr(&gen_a, &text, "// returns false if symbol is already added to the table\n");
@@ -654,6 +636,12 @@ static void gen_symbol_table_struct(const char* file_path, Sym_tbl_type_vec type
     for (size_t idx = 0; idx < types.info.count; idx++) {
         gen_symbol_table_struct_internal(vec_at(&types, idx));
     }
+
+    gen_gen("typedef struct {\n");
+    gen_gen("    Symbol_table symbol_table;\n");
+    gen_gen("    Alloca_table alloca_table;\n");
+    gen_gen("} Symbol_collection;\n");
+    gen_gen("\n");
 
     gen_gen("%s\n", "#endif // SYMBOL_TABLE_STRUCT_H");
 

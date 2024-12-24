@@ -15,11 +15,11 @@ typedef struct Llvm_if_ Llvm_if;
 struct Llvm_expr_;
 typedef struct Llvm_expr_ Llvm_expr;
 
-typedef struct {
-    Lang_type lang_type;
-    Llvm* llvm;
-} Llvm_register_sym;
-
+//typedef struct {
+//    Lang_type lang_type;
+//    Llvm* llvm;
+//} Llvm_register_sym;
+//
 typedef struct {
     Vec_base info;
     Llvm** buf;

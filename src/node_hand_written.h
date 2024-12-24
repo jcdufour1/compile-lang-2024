@@ -6,16 +6,9 @@
 #include <node_def_vec.h>
 #include <node_var_def_vec.h>
 #include <symbol_table_struct.h>
+#include <lang_type_struct.h>
 
 typedef size_t Llvm_id;
-
-typedef struct {
-    Str_view str;
-    int16_t pointer_depth; // for function parameter: 2 means that function argument must also have 2 for this field
-                           // and that in function, variable is already referenced twice
-                           //
-                           // for function argument: 2 means to reference the variable twice
-} Lang_type;
 
 typedef struct {
     Lang_type lang_type;

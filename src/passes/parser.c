@@ -1267,7 +1267,7 @@ static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens,
     bool did_consume_close_brace = false;
 
     *block = node_block_new(tk_view_front(*tokens).pos);
-    vec_append_safe(&a_main, &env->ancesters, node_wrap_block(*block));
+    vec_append(&a_main, &env->ancesters, &(*block)->symbol_collection);
 
     Node_def* redefined_symbol;
     if (!symbol_do_add_defered(&redefined_symbol, env)) {
@@ -1333,15 +1333,13 @@ static PARSE_STATUS extract_block(Env* env, Node_block** block, Tk_view* tokens,
         vec_append_safe(&a_main, &(*block)->children, child);
     }
 
-    Node* dummy = NULL;
 end:
     if (did_consume_close_brace) {
         try((*block)->pos_end.line > 0);
     } else if (!is_top_level && status == PARSE_OK) {
         unreachable("");
     }
-    vec_pop(dummy, &env->ancesters);
-    assert(dummy == node_wrap_block(*block));
+    vec_rem_last(&env->ancesters);
     assert(*block);
     return status;
 }

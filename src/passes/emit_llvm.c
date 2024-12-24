@@ -800,7 +800,7 @@ static void emit_def(Env* env, String* output, const Node_def* def) {
 }
 
 static void emit_block(Env* env, String* output, const Node_block* block) {
-    vec_append(&a_main, &env->ancesters, (Node*)node_wrap_block_const(block));
+    vec_append(&a_main, &env->ancesters, (Symbol_collection*)&block->symbol_collection);
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         const Node* statement = vec_at(&block->children, idx);

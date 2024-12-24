@@ -124,8 +124,7 @@ static Node_type node_gen_block(void) {
 
     append_member(&block.members, "bool", "is_variadic");
     append_member(&block.members, "Node_ptr_vec", "children");
-    append_member(&block.members, "Symbol_table", "symbol_table");
-    append_member(&block.members, "Alloca_table", "alloca_table");
+    append_member(&block.members, "Symbol_collection", "symbol_collection");
     append_member(&block.members, "Pos", "pos_end");
 
     return block;
@@ -910,7 +909,7 @@ static void node_gen_print_forward_decl(Node_type type) {
     extend_node_name_lower(&function, type.name);
     string_extend_cstr(&gen_a, &function, "_print(node) str_view_print(");
     extend_node_name_lower(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "_print_internal(node));\n");
+    string_extend_cstr(&gen_a, &function, "_print_internal(node))\n");
 
     string_extend_cstr(&gen_a, &function, "Str_view ");
     extend_node_name_lower(&function, type.name);

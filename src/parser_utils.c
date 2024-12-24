@@ -296,7 +296,7 @@ Node_symbol_untyped* util_symbol_new(Str_view symbol_name, Pos pos) {
 }
 
 // TODO: make separate Node_unary_typed and Node_unary_untyped
-Node_expr* util_unary_new(const Env* env, Node_expr* child, TOKEN_TYPE operator_type, Lang_type init_lang_type) {
+Node_expr* util_unary_new(Env* env, Node_expr* child, TOKEN_TYPE operator_type, Lang_type init_lang_type) {
     Node_unary* unary = node_unary_new(node_get_pos_expr(child));
     unary->token_type = operator_type;
     unary->child = child;
@@ -308,7 +308,7 @@ Node_expr* util_unary_new(const Env* env, Node_expr* child, TOKEN_TYPE operator_
     return new_node;
 }
 
-Node_operator* util_binary_typed_new(const Env* env, Node_expr* lhs, Node_expr* rhs, TOKEN_TYPE operator_type) {
+Node_operator* util_binary_typed_new(Env* env, Node_expr* lhs, Node_expr* rhs, TOKEN_TYPE operator_type) {
     Node_binary* binary = node_binary_new(node_get_pos_expr(lhs));
     binary->token_type = operator_type;
     binary->lhs = lhs;

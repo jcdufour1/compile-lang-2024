@@ -602,18 +602,18 @@ static Llvm_register_sym load_function_def(
     Node_function_def* new_fun_def = node_function_def_new(pos);
     new_fun_def->declaration = node_clone_function_decl(old_fun_def->declaration);
     new_fun_def->body = node_block_new(pos);
-    new_fun_def->body->symbol_table = old_fun_def->body->symbol_table;
+    new_fun_def->body->symbol_collection = old_fun_def->body->symbol_collection;
     new_fun_def->body->pos_end = old_fun_def->body->pos_end;
 
 
     {
-        vec_append(&a_main, &env->ancesters, node_wrap_block(new_fun_def->body));
+        vec_append(&a_main, &env->ancesters, &new_fun_def->body->symbol_collection);
         do_function_def_alloca(env, new_fun_def->body, old_fun_def);
         load_function_parameters(env, new_fun_def->body, old_fun_def->declaration->parameters->params);
         vec_rem_last(&env->ancesters);
     }
 
-    vec_append(&a_main, &env->ancesters, node_wrap_block(new_fun_def->body));
+    vec_append(&a_main, &env->ancesters, &new_fun_def->body->symbol_collection);
     for (size_t idx = 0; idx < old_fun_def->body->children.info.count; idx++) {
         //for (size_t idx = 0; idx < new_branch_block->children.info.count; idx++) {
         //    log(LOG_DEBUG, NODE_FMT"\n", node_print(vec_at(&new_branch_block->children, idx)));
@@ -795,10 +795,10 @@ static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement, Str_v
     Node_block* new_block = node_block_new(old_block->pos);
 
     Node_block* inner_block = load_block(env, old_block);
-    new_block->symbol_table = inner_block->symbol_table;
+    new_block->symbol_collection = inner_block->symbol_collection;
     new_block->pos_end = inner_block->pos_end;
 
-    vec_append(&a_main, &env->ancesters, node_wrap_block(new_block));
+    vec_append(&a_main, &env->ancesters, &new_block->symbol_collection);
 
     Node_condition* if_cond = if_statement->condition;
 
@@ -815,7 +815,7 @@ static Node_block* if_statement_to_branch(Env* env, Node_if* if_statement, Str_v
 
         vec_extend(&a_main, &new_block->children, &inner_block->children);
 
-        vec_append(&a_main, &env->ancesters, node_wrap_block(new_block));
+        vec_append(&a_main, &env->ancesters, &new_block->symbol_collection);
     }
 
 
@@ -882,7 +882,7 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
     Pos pos = old_for->pos;
 
     Node_block* new_branch_block = node_block_new(pos);
-    new_branch_block->symbol_table = old_for->body->symbol_table;
+    new_branch_block->symbol_collection = old_for->body->symbol_collection;
     new_branch_block->pos_end = old_for->body->pos_end;
     for (size_t idx = 0; idx < old_for->body->children.info.count; idx++) {
         log(LOG_DEBUG, NODE_FMT"\n", node_print(vec_at(&old_for->body->children, idx)));
@@ -891,7 +891,7 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
         log(LOG_DEBUG, NODE_FMT"\n", node_print(vec_at(&new_branch_block->children, idx)));
     }
 
-    vec_append(&a_main, &env->ancesters, node_wrap_block(new_branch_block));
+    vec_append(&a_main, &env->ancesters, &new_branch_block->symbol_collection);
 
     (void) pos;
 
@@ -952,7 +952,7 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
     {
         vec_rem_last(&env->ancesters);
         add_label(env, new_branch_block, check_cond_label, pos, false);
-        vec_append(&a_main, &env->ancesters, node_wrap_block(new_branch_block));
+        vec_append(&a_main, &env->ancesters, &new_branch_block->symbol_collection);
     }
 
     symbol_log(LOG_DEBUG, env);
@@ -973,7 +973,7 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
     {
         vec_rem_last(&env->ancesters);
         add_label(env, new_branch_block, after_check_label, pos, false);
-        vec_append(&a_main, &env->ancesters, node_wrap_block(new_branch_block));
+        vec_append(&a_main, &env->ancesters, &new_branch_block->symbol_collection);
     }
 
     log(LOG_DEBUG, "DSFJKLKJDFS: "STR_VIEW_FMT"\n", str_view_print(after_check_label));
@@ -996,7 +996,7 @@ static Node_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
     {
         vec_rem_last(&env->ancesters);
         add_label(env, new_branch_block, assign_label, pos, false);
-        vec_append(&a_main, &env->ancesters, node_wrap_block(new_branch_block));
+        vec_append(&a_main, &env->ancesters, &new_branch_block->symbol_collection);
     }
     load_assignment(env, new_branch_block, assignment_to_inc_cond_var);
     vec_append(&a_main, &new_branch_block->children, node_wrap_goto(goto_new(check_cond_label, pos)));
@@ -1039,10 +1039,10 @@ static Node_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* old_for
     Pos pos = old_for->pos;
 
     Node_block* new_branch_block = node_block_new(pos);
-    new_branch_block->symbol_table = old_for->body->symbol_table;
+    new_branch_block->symbol_collection = old_for->body->symbol_collection;
     new_branch_block->pos_end = old_for->body->pos_end;
 
-    vec_append(&a_main, &env->ancesters, node_wrap_block(new_branch_block));
+    vec_append(&a_main, &env->ancesters, &new_branch_block->symbol_collection);
 
 
     Node_operator* operator = old_for->condition->child;
@@ -1333,7 +1333,7 @@ static Node_block* load_block(Env* env, Node_block* old_block) {
     *new_block = *old_block;
     memset(&new_block->children, 0, sizeof(new_block->children));
 
-    vec_append(&a_main, &env->ancesters, node_wrap_block(new_block));
+    vec_append(&a_main, &env->ancesters, &new_block->symbol_collection);
 
     for (size_t idx = 0; idx < old_block->children.info.count; idx++) {
         load_node(env, new_block, vec_at(&old_block->children, idx));

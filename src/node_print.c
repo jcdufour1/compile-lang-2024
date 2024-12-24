@@ -2,6 +2,8 @@
 #include <nodes.h>
 #include <util.h>
 
+#include <symbol_table.h>
+
 static int recursion_depth = 0;
 
 typedef enum {
@@ -334,6 +336,9 @@ Str_view node_block_print_internal(const Node_block* block) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "block\n", recursion_depth);
+    symbol_log_table(LOG_DEBUG, block->symbol_collection.symbol_table);
+    alloca_log_table(LOG_DEBUG, block->symbol_collection.alloca_table);
+
     recursion_depth += INDENT_WIDTH;
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         Str_view arg_text = node_print_internal(vec_at(&block->children, idx));

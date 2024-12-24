@@ -212,11 +212,10 @@ static Node* change_op_node(Env* env, Node* root) {
 static Node_block* change_op_block(Env* env, Node_block* root) {
     Node_block* new_block = node_block_new(root->pos);
     new_block->is_variadic = root->is_variadic;
-    new_block->symbol_table = root->symbol_table;
-    new_block->alloca_table = root->alloca_table;
+    new_block->symbol_collection = root->symbol_collection;
     new_block->pos_end = root->pos_end;
 
-    vec_append(&a_main, &env->ancesters, node_wrap_block(root));
+    vec_append(&a_main, &env->ancesters, &root->symbol_collection);
 
     for (size_t idx = 0; idx < root->children.info.count; idx++) {
         Node* curr = vec_at(&root->children, idx);

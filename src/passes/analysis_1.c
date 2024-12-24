@@ -7,7 +7,7 @@
 
 Node_block* analysis_1(Env* env, Node_block* root) {
     Node_block* new_block = NULL;
-    if (!try_set_block_types(env, &new_block, root)) {
+    if (!try_set_block_types(env, &new_block, root, false)) {
         new_block = NULL;
     }
     return new_block;

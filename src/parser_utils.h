@@ -77,9 +77,9 @@ Node_literal* util_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type
 
 Node_symbol_untyped* util_symbol_new(Str_view symbol_name, Pos pos);
 
-Node_operator* util_binary_typed_new(const Env* env, Node_expr* lhs, Node_expr* rhs, TOKEN_TYPE operation_type);
+Node_operator* util_binary_typed_new(Env* env, Node_expr* lhs, Node_expr* rhs, TOKEN_TYPE operation_type);
 
-Node_expr* util_unary_new(const Env* env, Node_expr* child, TOKEN_TYPE operation_type, Lang_type init_lang_type);
+Node_expr* util_unary_new(Env* env, Node_expr* child, TOKEN_TYPE operation_type, Lang_type init_lang_type);
 
 Llvm_id get_matching_fun_param_load_id(const Node* src);
 
