@@ -2,6 +2,23 @@
 #include <auto_gen_node.h>
 #include <auto_gen_llvm.h>
 
+// TODO: test for
+//struct Token {
+//    num i32
+//}
+//
+//fn do_thing(num i32) {
+//}
+
+// TODO: test for
+//struct Token {
+//    num i32
+//}
+//
+//fn do_thing(token Token) {
+//    let num i32 = deref(token).num
+//}
+
 // TODO: node_block_new, etc. should have arguments for every item
 // TODO: actually use newline to end statement depending on last token of line of line
 // TODO: expected failure case for invalid type in extern "c" function

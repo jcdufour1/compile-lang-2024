@@ -51,16 +51,9 @@ static Llvm_variable_def* node_clone_variable_def(Node_variable_def* old_var_def
 
 static Llvm_struct_literal* node_clone_struct_literal(const Node_struct_literal* old_lit) {
     Llvm_struct_literal* new_lit = llvm_struct_literal_new(old_lit->pos);
-
-    for (size_t idx = 0; idx < old_lit->members.info.count; idx++) {
-        const Node* curr = vec_at(&old_lit->members, idx);
-        switch (curr->type) {
-            default:
-                unreachable(NODE_FMT"\n", node_print(curr));
-        }
-        todo();
-        //vec_append(&a_main, &old_lit->params, node_clone_variable_def(vec_at(&old_lit->params, idx)));
-    }
+    new_lit->members = old_lit->members;
+    new_lit->name = old_lit->name;
+    new_lit->lang_type = old_lit->lang_type;
 
     return new_lit;
 }
@@ -79,7 +72,7 @@ static Llvm_enum_def* node_clone_enum_def(const Node_enum_def* old_def) {
 
 static Llvm_raw_union_def* node_clone_raw_union_def(const Node_raw_union_def* old_def) {
     Llvm_raw_union_def* new_def = llvm_raw_union_def_new(old_def->pos);
-    todo();
+    new_def->base = old_def->base;
     return new_def;
 }
 
@@ -572,14 +565,14 @@ static Llvm_register_sym load_expr(Env* env, Llvm_block* new_block, Node_expr* o
     }
 }
 
-static void load_function_parameters(
+static void do_function_parameters(
     Env* env,
     Llvm_block* new_fun_body,
-    Node_var_def_vec fun_params
+    Llvm_var_def_vec fun_params
 ) {
     for (size_t idx = 0; idx < fun_params.info.count; idx++) {
         assert(env->ancesters.info.count > 0);
-        Node_variable_def* param = vec_at(&fun_params, idx);
+        Llvm_variable_def* param = vec_at(&fun_params, idx);
 
         //symbol_log(LOG_DEBUG, env);
         //alloca_log(LOG_DEBUG, env);
@@ -594,7 +587,7 @@ static void load_function_parameters(
             unreachable(NODE_FMT"\n", node_print((Node*)param));
         }
 
-        Llvm_register_sym fun_param_call = llvm_register_sym_new(llvm_wrap_def(llvm_wrap_variable_def(node_clone_variable_def(param))));
+        Llvm_register_sym fun_param_call = llvm_register_sym_new(llvm_wrap_def(llvm_wrap_variable_def(param)));
         
         Llvm_store_another_llvm* new_store = llvm_store_another_llvm_new(param->pos);
         new_store->llvm_src = fun_param_call;
@@ -632,7 +625,7 @@ static Llvm_register_sym load_function_def(
         new_fun_def->declaration->parameters = do_function_def_alloca(env, new_fun_def->body, old_fun_def);
         alloca_log(LOG_DEBUG, env);
         log(LOG_DEBUG, LLVM_FMT"\n", llvm_block_print(new_fun_def->body));
-        load_function_parameters(env, new_fun_def->body, old_fun_def->declaration->parameters->params);
+        do_function_parameters(env, new_fun_def->body, new_fun_def->declaration->parameters->params);
         log(LOG_DEBUG, LLVM_FMT"\n", llvm_block_print(new_fun_def->body));
         vec_rem_last(&env->ancesters);
     }

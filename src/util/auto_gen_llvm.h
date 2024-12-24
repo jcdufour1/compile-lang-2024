@@ -324,7 +324,7 @@ static Llvm_type llvm_gen_function_call(void) {
 static Llvm_type llvm_gen_struct_literal(void) {
     Llvm_type lit = {.name = llvm_name_new("expr", "struct_literal", false)};
 
-    append_member(&lit.members, "Llvm_ptr_vec", "members");
+    append_member(&lit.members, "Node_ptr_vec", "members");
     append_member(&lit.members, "Str_view", "name");
     append_member(&lit.members, "Lang_type", "lang_type");
     append_member(&lit.members, "Llvm_id", "llvm_id");

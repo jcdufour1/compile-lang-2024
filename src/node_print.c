@@ -84,10 +84,11 @@ Str_view node_unary_print_internal(const Node_unary* unary) {
 
     string_extend_cstr_indent(&print_arena, &buf, "unary", recursion_depth);
     extend_lang_type(&buf, unary->lang_type, true);
+    string_extend_strv(&print_arena, &buf, token_type_to_str_view(unary->token_type));
+    string_extend_cstr(&print_arena, &buf, "\n");
 
     recursion_depth += INDENT_WIDTH;
-    string_extend_strv_indent(&print_arena, &buf, token_type_to_str_view(unary->token_type), recursion_depth);
-    string_extend_strv_indent(&print_arena, &buf, node_expr_print_internal(unary->child), recursion_depth);
+    string_extend_strv(&print_arena, &buf, node_expr_print_internal(unary->child));
     recursion_depth -= INDENT_WIDTH;
 
     return string_to_strv(buf);
@@ -163,9 +164,12 @@ Str_view node_member_access_untyped_print_internal(const Node_member_access_unty
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "member_access_untyped", recursion_depth);
-    string_extend_strv(&print_arena, &buf, access->member_name);
+    string_extend_strv_in_par(&print_arena, &buf, access->member_name);
+
+    string_extend_cstr(&print_arena, &buf, "\n");
+
     recursion_depth += INDENT_WIDTH;
-    string_extend_strv_indent(&print_arena, &buf, node_expr_print_internal(access->callee), recursion_depth);
+    string_extend_strv(&print_arena, &buf, node_expr_print_internal(access->callee));
     recursion_depth -= INDENT_WIDTH;
 
     return string_to_strv(buf);
@@ -174,10 +178,14 @@ Str_view node_member_access_untyped_print_internal(const Node_member_access_unty
 Str_view node_member_access_typed_print_internal(const Node_member_access_typed* access) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "member_access_typed", recursion_depth);
-    string_extend_strv(&print_arena, &buf, access->member_name);
+    string_extend_cstr_indent(&print_arena, &buf, "member_access_untyped", recursion_depth);
+    extend_lang_type(&buf, access->lang_type, true);
+    string_extend_strv_in_par(&print_arena, &buf, access->member_name);
+
+    string_extend_cstr(&print_arena, &buf, "\n");
+
     recursion_depth += INDENT_WIDTH;
-    string_extend_strv_indent(&print_arena, &buf, node_expr_print_internal(access->callee), recursion_depth);
+    string_extend_strv(&print_arena, &buf, node_expr_print_internal(access->callee));
     recursion_depth -= INDENT_WIDTH;
 
     return string_to_strv(buf);

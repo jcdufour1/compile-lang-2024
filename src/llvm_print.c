@@ -238,7 +238,7 @@ Str_view llvm_struct_literal_print_internal(const Llvm_struct_literal* lit) {
     string_extend_strv_indent(&print_arena, &buf, lit->name, recursion_depth);
     extend_lang_type(&buf, lit->lang_type, true);
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-        Str_view memb_text = llvm_print_internal(vec_at(&lit->members, idx));
+        Str_view memb_text = node_print_internal(vec_at(&lit->members, idx));
         string_extend_strv(&print_arena, &buf, memb_text);
     }
 
@@ -502,11 +502,10 @@ Str_view llvm_alloca_print_internal(const Llvm_alloca* alloca) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "alloca", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
     extend_lang_type(&buf, alloca->lang_type, true);
     string_extend_strv(&print_arena, &buf, alloca->name);
+    extend_pointer(&buf, "self", llvm_wrap_alloca_const(alloca));
     string_extend_cstr(&print_arena, &buf, "\n");
-    recursion_depth -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
