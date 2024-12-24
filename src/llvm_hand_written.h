@@ -2,6 +2,7 @@
 #define LLVM_HAND_WRITTEN_H
 
 #include <lang_type_struct.h>
+#include <vector.h>
 
 struct Llvm_;
 typedef struct Llvm_ Llvm;

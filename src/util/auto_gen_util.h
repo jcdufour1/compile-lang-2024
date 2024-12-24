@@ -33,6 +33,8 @@ typedef struct {
     Str_view internal_prefix;
     Str_view get_key_fn_name;
     Str_view symbol_table_name;
+    Str_view ancesters_type;
+    Str_view print_fn;
     bool do_primitives;
 } Symbol_tbl_type;
 

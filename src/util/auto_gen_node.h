@@ -332,15 +332,6 @@ static Node_type node_gen_struct_literal(void) {
     return lit;
 }
 
-static Node_type node_gen_llvm_placeholder(void) {
-    Node_type placeholder = {.name = node_name_new("expr", "llvm_placeholder", false)};
-
-    append_member(&placeholder.members, "Lang_type", "lang_type");
-    append_member(&placeholder.members, "Llvm_register_sym", "llvm_reg");
-
-    return placeholder;
-}
-
 static Node_type node_gen_expr(void) {
     Node_type expr = {.name = node_name_new("node", "expr", false)};
 
@@ -354,7 +345,6 @@ static Node_type node_gen_expr(void) {
     vec_append(&gen_a, &expr.sub_types, node_gen_literal());
     vec_append(&gen_a, &expr.sub_types, node_gen_function_call());
     vec_append(&gen_a, &expr.sub_types, node_gen_struct_literal());
-    vec_append(&gen_a, &expr.sub_types, node_gen_llvm_placeholder());
 
     return expr;
 }
@@ -476,19 +466,6 @@ static Node_type node_gen_def(void) {
     return def;
 }
 
-static Node_type node_gen_load_element_ptr(void) {
-    Node_type load = {.name = node_name_new("node", "load_element_ptr", false)};
-
-    append_member(&load.members, "Lang_type", "lang_type");
-    append_member(&load.members, "Llvm_id", "llvm_id");
-    append_member(&load.members, "Llvm_register_sym", "struct_index");
-    append_member(&load.members, "Llvm_register_sym", "node_src");
-    append_member(&load.members, "Str_view", "name");
-    append_member(&load.members, "bool", "is_from_struct");
-
-    return load;
-}
-
 static Node_type node_gen_function_params(void) {
     Node_type params = {.name = node_name_new("node", "function_params", false)};
 
@@ -593,57 +570,6 @@ static Node_type node_gen_return(void) {
     return rtn;
 }
 
-static Node_type node_gen_goto(void) {
-    Node_type lang_goto = {.name = node_name_new("node", "goto", false)};
-
-    append_member(&lang_goto.members, "Str_view", "name");
-    append_member(&lang_goto.members, "Llvm_id", "llvm_id");
-
-    return lang_goto;
-}
-
-static Node_type node_gen_cond_goto(void) {
-    Node_type cond_goto = {.name = node_name_new("node", "cond_goto", false)};
-
-    append_member(&cond_goto.members, "Llvm_register_sym", "node_src");
-    append_member(&cond_goto.members, "Str_view", "if_true");
-    append_member(&cond_goto.members, "Str_view", "if_false");
-    append_member(&cond_goto.members, "Llvm_id", "llvm_id");
-
-    return cond_goto;
-}
-
-static Node_type node_gen_alloca(void) {
-    Node_type lang_alloca = {.name = node_name_new("node", "alloca", false)};
-
-    append_member(&lang_alloca.members, "Llvm_id", "llvm_id");
-    append_member(&lang_alloca.members, "Lang_type", "lang_type");
-    append_member(&lang_alloca.members, "Str_view", "name");
-
-    return lang_alloca;
-}
-
-static Node_type node_gen_load_another_node(void) {
-    Node_type load = {.name = node_name_new("node", "load_another_node", false)};
-
-    append_member(&load.members, "Llvm_register_sym", "node_src");
-    append_member(&load.members, "Llvm_id", "llvm_id");
-    append_member(&load.members, "Lang_type", "lang_type");
-
-    return load;
-}
-
-static Node_type node_gen_store_another_node(void) {
-    Node_type store = {.name = node_name_new("node", "store_another_node", false)};
-
-    append_member(&store.members, "Llvm_register_sym", "node_src");
-    append_member(&store.members, "Llvm_register_sym", "node_dest");
-    append_member(&store.members, "Llvm_id", "llvm_id");
-    append_member(&store.members, "Lang_type", "lang_type");
-
-    return store;
-}
-
 static Node_type node_gen_if_else_chain(void) {
     Node_type chain = {.name = node_name_new("node", "if_else_chain", false)};
 
@@ -657,7 +583,6 @@ static Node_type node_gen_node(void) {
 
     vec_append(&gen_a, &node.sub_types, node_gen_block());
     vec_append(&gen_a, &node.sub_types, node_gen_expr());
-    vec_append(&gen_a, &node.sub_types, node_gen_load_element_ptr());
     vec_append(&gen_a, &node.sub_types, node_gen_function_params());
     vec_append(&gen_a, &node.sub_types, node_gen_lang_type());
     vec_append(&gen_a, &node.sub_types, node_gen_for_lower_bound());
@@ -671,11 +596,6 @@ static Node_type node_gen_node(void) {
     vec_append(&gen_a, &node.sub_types, node_gen_assignment());
     vec_append(&gen_a, &node.sub_types, node_gen_if());
     vec_append(&gen_a, &node.sub_types, node_gen_return());
-    vec_append(&gen_a, &node.sub_types, node_gen_goto());
-    vec_append(&gen_a, &node.sub_types, node_gen_cond_goto());
-    vec_append(&gen_a, &node.sub_types, node_gen_alloca());
-    vec_append(&gen_a, &node.sub_types, node_gen_load_another_node());
-    vec_append(&gen_a, &node.sub_types, node_gen_store_another_node());
     vec_append(&gen_a, &node.sub_types, node_gen_if_else_chain());
 
     return node;
@@ -1046,41 +966,52 @@ static void gen_node_get_pos_define(Node_type node) {
     node_gen_get_pos_internal(node, true);
 }
 
-static void gen_all_nodes(const char* file_path) {
+static void gen_all_nodes(const char* file_path, bool implementation) {
     global_output = fopen(file_path, "w");
     if (!global_output) {
         fprintf(stderr, "fatal error: could not open file %s: %s\n", file_path, strerror(errno));
         exit(1);
     }
 
+    Node_type node = node_gen_node();
+
     gen_gen("/* autogenerated */\n");
     gen_gen("#include <node_hand_written.h>\n");
     gen_gen("#include <expr_ptr_vec.h>\n");
     gen_gen("#include <token.h>\n");
-    gen_gen("#ifndef NODE_H\n");
-    gen_gen("#define NODE_H\n");
+    gen_gen("#include <symbol_table_struct.h>\n");
+    gen_gen("#include <symbol_table.h>\n");
 
-    Node_type node = node_gen_node();
+    if (implementation) {
+        gen_gen("#ifndef NODE_H\n");
+        gen_gen("#define NODE_H\n");
 
-    node_gen_node_forward_decl(node);
-    node_gen_node_struct(node);
+        node_gen_node_forward_decl(node);
+        node_gen_node_struct(node);
 
-    node_gen_node_unwrap(node);
-    node_gen_node_wrap(node);
+        node_gen_node_unwrap(node);
+        node_gen_node_wrap(node);
 
-    gen_gen("%s\n", "static inline Node* node_new(void) {");
-    gen_gen("%s\n", "    Node* new_node = arena_alloc(&a_main, sizeof(*new_node));");
-    gen_gen("%s\n", "    return new_node;");
-    gen_gen("%s\n", "}");
+        gen_gen("%s\n", "static inline Node* node_new(void) {");
+        gen_gen("%s\n", "    Node* new_node = arena_alloc(&a_main, sizeof(*new_node));");
+        gen_gen("%s\n", "    return new_node;");
+        gen_gen("%s\n", "}");
+    }
 
     gen_node_new_forward_decl(node);
     node_gen_print_forward_decl(node);
-    gen_node_new_define(node);
+    if (implementation) {
+        gen_node_new_define(node);
+    }
 
     gen_node_get_pos_forward_decl(node);
-    gen_node_get_pos_define(node);
+    if (implementation) {
+        gen_node_get_pos_define(node);
+    }
 
-    gen_gen("#endif // NODE_H\n");
+    if (implementation) {
+        gen_gen("#endif // NODE_H\n");
+    }
 
     CLOSE_FILE(global_output);
 }

@@ -93,7 +93,7 @@ Str_view node_unary_print_internal(const Node_unary* unary) {
     return string_to_strv(buf);
 }
 
-void extend_sym_typed_base(String* string, Sym_typed_base base) {
+void node_extend_sym_typed_base(String* string, Sym_typed_base base) {
     extend_lang_type(string, base.lang_type, true);
     string_extend_strv(&print_arena, string, base.name);
     string_extend_cstr(&print_arena, string, "\n");
@@ -103,7 +103,7 @@ Str_view node_primitive_sym_print_internal(const Node_primitive_sym* sym) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "primitive_sym", recursion_depth);
-    extend_sym_typed_base(&buf, sym->base);
+    node_extend_sym_typed_base(&buf, sym->base);
 
     return string_to_strv(buf);
 }
@@ -112,7 +112,7 @@ Str_view node_struct_sym_print_internal(const Node_struct_sym* sym) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "struct_sym", recursion_depth);
-    extend_sym_typed_base(&buf, sym->base);
+    node_extend_sym_typed_base(&buf, sym->base);
 
     return string_to_strv(buf);
 }
@@ -121,7 +121,7 @@ Str_view node_raw_union_sym_print_internal(const Node_raw_union_sym* sym) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "raw_union_sym", recursion_depth);
-    extend_sym_typed_base(&buf, sym->base);
+    node_extend_sym_typed_base(&buf, sym->base);
 
     return string_to_strv(buf);
 }
@@ -130,7 +130,7 @@ Str_view node_enum_sym_print_internal(const Node_enum_sym* sym) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "enum_sym", recursion_depth);
-    extend_sym_typed_base(&buf, sym->base);
+    node_extend_sym_typed_base(&buf, sym->base);
 
     return string_to_strv(buf);
 }
@@ -312,26 +312,6 @@ Str_view node_char_print_internal(const Node_char* num) {
     return string_to_strv(buf);
 }
 
-Str_view node_llvm_placeholder_print_internal(const Node_llvm_placeholder* lit) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "llvm_placeholder", recursion_depth);
-    extend_lang_type(&buf, lit->lang_type, true);
-    string_extend_cstr(&print_arena, &buf, "\n");
-
-    return string_to_strv(buf);
-}
-
-Str_view node_load_element_ptr_print_internal(const Node_load_element_ptr* lit) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "load_element_ptr", recursion_depth);
-    extend_lang_type(&buf, lit->lang_type, true);
-    string_extend_cstr(&print_arena, &buf, "\n");
-
-    return string_to_strv(buf);
-}
-
 Str_view node_block_print_internal(const Node_block* block) {
     String buf = {0};
 
@@ -480,67 +460,6 @@ Str_view node_return_print_internal(const Node_return* lang_rtn) {
     string_extend_cstr_indent(&print_arena, &buf, "return\n", recursion_depth);
     recursion_depth += INDENT_WIDTH;
     string_extend_strv(&print_arena, &buf, node_expr_print_internal(lang_rtn->child));
-    recursion_depth -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
-Str_view node_goto_print_internal(const Node_goto* lang_goto) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "goto\n", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, lang_goto->name);
-    string_extend_cstr(&print_arena, &buf, "\n");
-    recursion_depth -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
-Str_view node_cond_goto_print_internal(const Node_cond_goto* cond_goto) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "cond_goto", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    string_extend_strv_in_par(&print_arena, &buf, cond_goto->if_true);
-    string_extend_strv_in_par(&print_arena, &buf, cond_goto->if_false);
-    recursion_depth -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
-Str_view node_alloca_print_internal(const Node_alloca* alloca) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "alloca", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    extend_lang_type(&buf, alloca->lang_type, true);
-    string_extend_strv(&print_arena, &buf, alloca->name);
-    string_extend_cstr(&print_arena, &buf, "\n");
-    recursion_depth -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
-Str_view node_load_another_node_print_internal(const Node_load_another_node* load) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "load_another_node", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    extend_lang_type(&buf, load->lang_type, true);
-    string_extend_cstr(&print_arena, &buf, "\n");
-    recursion_depth -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
-Str_view node_store_another_node_print_internal(const Node_store_another_node* store) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "store_another_node", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    extend_lang_type(&buf, store->lang_type, true);
-    string_extend_cstr(&print_arena, &buf, "\n");
     recursion_depth -= INDENT_WIDTH;
 
     return string_to_strv(buf);
@@ -758,8 +677,6 @@ Str_view node_expr_print_internal(const Node_expr* expr) {
             return node_function_call_print_internal(node_unwrap_function_call_const(expr));
         case NODE_STRUCT_LITERAL:
             return node_struct_literal_print_internal(node_unwrap_struct_literal_const(expr));
-        case NODE_LLVM_PLACEHOLDER:
-            return node_llvm_placeholder_print_internal(node_unwrap_llvm_placeholder_const(expr));
     }
     unreachable("");
 }
@@ -770,8 +687,6 @@ Str_view node_print_internal(const Node* node) {
             return node_block_print_internal(node_unwrap_block_const(node));
         case NODE_EXPR:
             return node_expr_print_internal(node_unwrap_expr_const(node));
-        case NODE_LOAD_ELEMENT_PTR:
-            return node_load_element_ptr_print_internal(node_unwrap_load_element_ptr_const(node));
         case NODE_FUNCTION_PARAMS:
             return node_function_params_print_internal(node_unwrap_function_params_const(node));
         case NODE_LANG_TYPE:
@@ -798,16 +713,6 @@ Str_view node_print_internal(const Node* node) {
             return node_if_print_internal(node_unwrap_if_const(node));
         case NODE_RETURN:
             return node_return_print_internal(node_unwrap_return_const(node));
-        case NODE_GOTO:
-            return node_goto_print_internal(node_unwrap_goto_const(node));
-        case NODE_COND_GOTO:
-            return node_cond_goto_print_internal(node_unwrap_cond_goto_const(node));
-        case NODE_ALLOCA:
-            return node_alloca_print_internal(node_unwrap_alloca_const(node));
-        case NODE_LOAD_ANOTHER_NODE:
-            return node_load_another_node_print_internal(node_unwrap_load_another_node_const(node));
-        case NODE_STORE_ANOTHER_NODE:
-            return node_store_another_node_print_internal(node_unwrap_store_another_node_const(node));
         case NODE_IF_ELSE_CHAIN:
             return node_if_else_chain_print_internal(node_unwrap_if_else_chain_const(node));
     }

@@ -1,7 +1,9 @@
 
 #include <util.h>
 #include <node.h>
+#include <llvm.h>
 #include <nodes.h>
+#include <llvms.h>
 #include "passes.h"
 #include <do_passes.h>
 #include <symbol_table.h>
@@ -197,16 +199,16 @@ void do_passes(Str_view file_text, const Parameters* params) {
     log_tree(LOG_DEBUG, node_wrap_block(root));
     arena_reset(&print_arena);
 
-    root = add_load_and_store(&env, root);
-    log_tree(LOG_DEBUG, node_wrap_block(root));
+    Llvm_block* llvm_root = add_load_and_store(&env, root);
+    //log_tree(LOG_DEBUG, node_wrap_block(root));
     assert(root);
 
-    root = assign_llvm_ids(&env, root);
-    log_tree(LOG_DEBUG, node_wrap_block(root));
+    llvm_root = assign_llvm_ids(&env, llvm_root);
+    //log_tree(LOG_DEBUG, node_wrap_block(root));
     arena_reset(&print_arena);
 
     if (params->emit_llvm) {
-        emit_llvm_from_tree(&env, root);
+        emit_llvm_from_tree(&env, llvm_root);
     } else if (params->test_expected_fail) {
         fail();
     } else {

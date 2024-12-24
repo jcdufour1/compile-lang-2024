@@ -2,6 +2,7 @@
 #define LANG_TYPE_STRUCT
 
 #include <str_view_struct.h>
+#include <stdint.h>
 
 typedef struct {
     Str_view str;

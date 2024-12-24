@@ -25,7 +25,7 @@ static Node_operator* change_op_unary(Env* env, Node_unary* unary) {
                 node_get_pos_unary(unary)
             ));
             new_bin->token_type = TOKEN_DOUBLE_EQUAL;
-            new_bin->lang_type = get_lang_type_expr(new_bin->lhs);
+            new_bin->lang_type = node_get_lang_type_expr(new_bin->lhs);
             assert(new_bin->lang_type.str.count > 0);
             return node_wrap_binary(new_bin);
         }
@@ -66,8 +66,6 @@ static Node_expr* change_op_expr(Env* env, Node_expr* root) {
         case NODE_FUNCTION_CALL:
             return root;
         case NODE_STRUCT_LITERAL:
-            return root;
-        case NODE_LLVM_PLACEHOLDER:
             return root;
     }
     unreachable("");
@@ -165,8 +163,6 @@ static Node* change_op_node(Env* env, Node* root) {
             return node_wrap_block(change_op_block(env, node_unwrap_block(root)));
         case NODE_EXPR:
             return node_wrap_expr(change_op_expr(env, node_unwrap_expr(root)));
-        case NODE_LOAD_ELEMENT_PTR:
-            return root;
         case NODE_FUNCTION_PARAMS:
             return root;
         case NODE_LANG_TYPE:
@@ -193,16 +189,6 @@ static Node* change_op_node(Env* env, Node* root) {
             return node_wrap_if(change_op_if(env, node_unwrap_if(root)));
         case NODE_RETURN:
             return node_wrap_return(change_op_return(env, node_unwrap_return(root)));
-        case NODE_GOTO:
-            unreachable("");
-        case NODE_COND_GOTO:
-            unreachable("");
-        case NODE_ALLOCA:
-            unreachable("");
-        case NODE_LOAD_ANOTHER_NODE:
-            unreachable("");
-        case NODE_STORE_ANOTHER_NODE:
-            unreachable("");
         case NODE_IF_ELSE_CHAIN:
             return node_wrap_if_else_chain(change_op_if_else_chain(env, node_unwrap_if_else_chain(root)));
     }

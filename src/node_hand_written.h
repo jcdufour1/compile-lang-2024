@@ -12,7 +12,7 @@ typedef size_t Llvm_id;
 
 typedef struct {
     Lang_type lang_type;
-    struct Node_* node;
+    Llvm* llvm;
 } Llvm_register_sym;
 
 #define LLVM_REGISTER_SYM_FMT LANG_TYPE_FMT"    "NODE_FMT

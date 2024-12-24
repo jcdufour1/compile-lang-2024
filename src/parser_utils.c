@@ -163,13 +163,13 @@ Llvm_register_sym get_storage_location(const Env* env, Str_view sym_name) {
     switch (sym_def_->type) {
         case NODE_VARIABLE_DEF: {
             Node_variable_def* sym_def = node_unwrap_variable_def(sym_def_);
-            Node* result = NULL;
+            Llvm* result = NULL;
             if (!alloca_lookup(&result, env, sym_def->name)) {
                 unreachable(STR_VIEW_FMT"\n", str_view_print(sym_def->name));
             }
             return (Llvm_register_sym) {
-                .lang_type = get_lang_type(result),
-                .node = result
+                .lang_type = llvm_get_lang_type(result),
+                .llvm = result
             };
         }
         default:
@@ -186,23 +186,12 @@ const Node_variable_def* get_normal_symbol_def_from_alloca(const Env* env, const
     return node_unwrap_variable_def(sym_def);
 }
 
-// TODO: change this to only accept alloca?
-const Node_variable_def* get_symbol_def_from_alloca(const Env* env, const Node* alloca) {
-    switch (alloca->type) {
-        case NODE_ALLOCA:
-            return get_normal_symbol_def_from_alloca(env, alloca);
-        default:
-            unreachable(NODE_FMT"\n", node_print(alloca));
-    }
-}
-
 Llvm_id get_matching_label_id(const Env* env, Str_view name) {
-    Node* label_;
+    Llvm* label_;
     if (!alloca_lookup(&label_, env, name)) {
         symbol_log(LOG_DEBUG, env);
-        unreachable("call to undefined label `"STR_VIEW_FMT"`", str_view_print(name));
     }
-    Node_label* label = node_unwrap_label(node_unwrap_def(label_));
+    Llvm_label* label = llvm_unwrap_label(llvm_unwrap_def(label_));
     return label->llvm_id;
 }
 
@@ -353,7 +342,7 @@ static uint64_t sizeof_expr(const Env* env, const Node_expr* expr) {
     (void) env;
     switch (expr->type) {
         case NODE_LITERAL:
-            return sizeof_lang_type(env, get_lang_type_literal(node_unwrap_literal_const(expr)));
+            return sizeof_lang_type(env, node_get_lang_type_literal(node_unwrap_literal_const(expr)));
         default:
             unreachable("");
     }
@@ -406,6 +395,69 @@ uint64_t sizeof_struct_expr(const Env* env, const Node_expr* struct_literal_or_d
     switch (struct_literal_or_def->type) {
         case NODE_STRUCT_LITERAL:
             return sizeof_struct_literal(env, node_unwrap_struct_literal_const(struct_literal_or_def));
+        default:
+            unreachable("");
+    }
+    unreachable("");
+}
+
+static uint64_t llvm_sizeof_expr(const Env* env, const Llvm_expr* expr) {
+    (void) env;
+    switch (expr->type) {
+        case NODE_LITERAL:
+            return sizeof_lang_type(env, llvm_get_lang_type_literal(llvm_unwrap_literal_const(expr)));
+        default:
+            unreachable("");
+    }
+}
+
+static uint64_t llvm_sizeof_def(const Env* env, const Llvm_def* def) {
+    (void) env;
+    switch (def->type) {
+        case NODE_VARIABLE_DEF:
+            return sizeof_lang_type(env, llvm_unwrap_variable_def_const(def)->lang_type);
+        default:
+            unreachable("");
+    }
+}
+
+uint64_t llvm_sizeof_item(const Env* env, const Llvm* item) {
+    (void) env;
+    switch (item->type) {
+        case NODE_EXPR:
+            return llvm_sizeof_expr(env, llvm_unwrap_expr_const(item));
+        case NODE_DEF:
+            return llvm_sizeof_def(env, llvm_unwrap_def_const(item));
+        default:
+            unreachable("");
+    }
+}
+
+uint64_t llvm_sizeof_struct_literal(const Env* env, const Llvm_struct_literal* struct_literal) {
+    const Node_struct_def* struct_def = 
+        llvm_get_struct_def_const(env, llvm_wrap_expr_const(llvm_wrap_struct_literal_const(struct_literal)));
+    return sizeof_struct_def_base(env, &struct_def->base);
+}
+
+uint64_t llvm_sizeof_struct_def_base(const Env* env, const Struct_def_base* base) {
+    uint64_t required_alignment = 8; // TODO: do not hardcode this
+
+    uint64_t total = 0;
+    for (size_t idx = 0; idx < base->members.info.count; idx++) {
+        const Node* memb_def = vec_at(&base->members, idx);
+        uint64_t sizeof_curr_item = sizeof_item(env, memb_def);
+        if (total%required_alignment + sizeof_curr_item > required_alignment) {
+            total += required_alignment - total%required_alignment;
+        }
+        total += sizeof_curr_item;
+    }
+    return total;
+}
+
+uint64_t llvm_sizeof_struct_expr(const Env* env, const Llvm_expr* struct_literal_or_def) {
+    switch (struct_literal_or_def->type) {
+        case NODE_STRUCT_LITERAL:
+            return llvm_sizeof_struct_literal(env, llvm_unwrap_struct_literal_const(struct_literal_or_def));
         default:
             unreachable("");
     }
@@ -496,8 +548,8 @@ bool try_get_generic_struct_def(const Env* env, Node_def** def, Node* node) {
         const Node_expr* expr = node_unwrap_expr_const(node);
         switch (expr->type) {
             case NODE_STRUCT_LITERAL: {
-                assert(get_lang_type(node).str.count > 0);
-                return symbol_lookup(def, env, get_lang_type(node).str);
+                assert(node_get_lang_type(node).str.count > 0);
+                return symbol_lookup(def, env, node_get_lang_type(node).str);
             }
             case NODE_SYMBOL_TYPED:
                 // fallthrough
@@ -508,14 +560,14 @@ bool try_get_generic_struct_def(const Env* env, Node_def** def, Node* node) {
                     todo();
                     return false;
                 }
-                assert(get_lang_type_def(var_def).str.count > 0);
-                return symbol_lookup(def, env, get_lang_type_def(var_def).str);
+                assert(node_get_lang_type_def(var_def).str.count > 0);
+                return symbol_lookup(def, env, node_get_lang_type_def(var_def).str);
             }
             case NODE_SYMBOL_UNTYPED:
                 unreachable("untyped symbols should not still be present");
             case NODE_MEMBER_ACCESS_UNTYPED:
-                assert(get_lang_type(node).str.count > 0);
-                return symbol_lookup(def, env, get_lang_type(node).str);
+                assert(node_get_lang_type(node).str.count > 0);
+                return symbol_lookup(def, env, node_get_lang_type(node).str);
             default:
                 unreachable(NODE_FMT"\n", node_print(node));
         }
@@ -524,8 +576,49 @@ bool try_get_generic_struct_def(const Env* env, Node_def** def, Node* node) {
     Node_def* node_def = node_unwrap_def(node);
     switch (node_def->type) {
         case NODE_VARIABLE_DEF: {
-            assert(get_lang_type_def(node_def).str.count > 0);
-            return symbol_lookup(def, env, get_lang_type_def(node_def).str);
+            assert(node_get_lang_type_def(node_def).str.count > 0);
+            return symbol_lookup(def, env, node_get_lang_type_def(node_def).str);
+        }
+        default:
+            unreachable("");
+    }
+}
+
+bool llvm_try_get_generic_struct_def(const Env* env, Node_def** def, Llvm* llvm) {
+    if (llvm->type == LLVM_EXPR) {
+        const Llvm_expr* expr = llvm_unwrap_expr_const(llvm);
+        switch (expr->type) {
+            case LLVM_STRUCT_LITERAL: {
+                assert(llvm_get_lang_type(llvm).str.count > 0);
+                return symbol_lookup(def, env, llvm_get_lang_type(llvm).str);
+            }
+            case LLVM_SYMBOL_TYPED:
+                // fallthrough
+            case LLVM_MEMBER_ACCESS_TYPED: {
+                Node_def* var_def;
+                assert(llvm_get_node_name(llvm).count > 0);
+                if (!symbol_lookup(&var_def, env, llvm_get_node_name(llvm))) {
+                    todo();
+                    return false;
+                }
+                assert(node_get_lang_type_def(var_def).str.count > 0);
+                return symbol_lookup(def, env, node_get_lang_type_def(var_def).str);
+            }
+            case LLVM_SYMBOL_UNTYPED:
+                unreachable("untyped symbols should not still be present");
+            case LLVM_MEMBER_ACCESS_UNTYPED:
+                assert(llvm_get_lang_type(llvm).str.count > 0);
+                return symbol_lookup(def, env, llvm_get_lang_type(llvm).str);
+            default:
+                unreachable(LLVM_FMT"\n", llvm_print(llvm));
+        }
+    }
+
+    Llvm_def* llvm_def = llvm_unwrap_def(llvm);
+    switch (llvm_def->type) {
+        case LLVM_VARIABLE_DEF: {
+            assert(llvm_get_lang_type_def(llvm_def).str.count > 0);
+            return symbol_lookup(def, env, llvm_get_lang_type_def(llvm_def).str);
         }
         default:
             unreachable("");
@@ -535,6 +628,19 @@ bool try_get_generic_struct_def(const Env* env, Node_def** def, Node* node) {
 bool try_get_struct_def(const Env* env, Node_struct_def** struct_def, Node* node) {
     Node_def* def = NULL;
     if (!try_get_generic_struct_def(env, &def, node)) {
+        return false;
+    }
+    if (def->type != NODE_STRUCT_DEF) {
+        return false;
+    }
+
+    *struct_def = node_unwrap_struct_def(def);
+    return true;
+}
+
+bool llvm_try_get_struct_def(const Env* env, Node_struct_def** struct_def, Llvm* node) {
+    Node_def* def = NULL;
+    if (!llvm_try_get_generic_struct_def(env, &def, node)) {
         return false;
     }
     if (def->type != NODE_STRUCT_DEF) {

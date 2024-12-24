@@ -1,24 +1,44 @@
 
-#include <node.h>
-#include <nodes.h>
+#include <llvm.h>
+#include <llvms.h>
 #include <newstring.h>
 #include "passes.h"
 #include <symbol_table.h>
 #include <parameters.h>
 #include <file.h>
 #include <parser_utils.h>
-#include <node_utils.h>
+#include <llvm_utils.h>
 
-static void emit_block(Env* env, String* output, const Node_block* fun_block);
+static void emit_block(Env* env, String* output, const Llvm_block* fun_block);
 
-static bool node_is_literal(const Node* node) {
-    if (node->type != NODE_EXPR) {
+static bool llvm_is_literal(const Llvm* llvm) {
+    if (llvm->type != LLVM_EXPR) {
         return false;
     }
-    return node_unwrap_expr_const(node)->type == NODE_LITERAL;
+    return llvm_unwrap_expr_const(llvm)->type == LLVM_LITERAL;
 }
 
-static void extend_literal(String* output, const Node_literal* literal) {
+static void extend_literal(String* output, const Llvm_literal* literal) {
+    switch (literal->type) {
+        case LLVM_STRING:
+            string_extend_strv(&a_main, output, llvm_unwrap_string_const(literal)->data);
+            return;
+        case LLVM_NUMBER:
+            string_extend_int64_t(&a_main, output, llvm_unwrap_number_const(literal)->data);
+            return;
+        case LLVM_ENUM_LIT:
+            string_extend_int64_t(&a_main, output, llvm_unwrap_enum_lit_const(literal)->data);
+            return;
+        case LLVM_VOID:
+            return;
+        case LLVM_CHAR:
+            string_extend_int64_t(&a_main, output, (int64_t)llvm_unwrap_char_const(literal)->data);
+            return;
+    }
+    unreachable("");
+}
+
+static void node_extend_literal(String* output, const Node_literal* literal) {
     switch (literal->type) {
         case NODE_STRING:
             string_extend_strv(&a_main, output, node_unwrap_string_const(literal)->data);
@@ -38,7 +58,7 @@ static void extend_literal(String* output, const Node_literal* literal) {
     unreachable("");
 }
 
-// \n excapes are actually stored as is in tokens and nodes, but should be printed as \0a
+// \n excapes are actually stored as is in tokens and llvms, but should be printed as \0a
 static void string_extend_strv_eval_escapes(Arena* arena, String* string, Str_view str_view) {
     while (str_view.count > 0) {
         char front_char = str_view_consume(&str_view);
@@ -97,7 +117,26 @@ static void extend_type_call_str(const Env* env, String* output, Lang_type lang_
     extend_lang_type_to_string(&a_main, output, lang_type, false);
 }
 
-static bool is_variadic(const Node* node) {
+static bool llvm_is_variadic(const Llvm* llvm) {
+    if (llvm->type == LLVM_EXPR) {
+        switch (llvm_unwrap_expr_const(llvm)->type) {
+            case LLVM_LITERAL:
+                return false;
+            default:
+                unreachable(LLVM_FMT, llvm_print(llvm));
+        }
+    } else {
+        const Llvm_def* def = llvm_unwrap_def_const(llvm);
+        switch (def->type) {
+            case LLVM_VARIABLE_DEF:
+                return llvm_unwrap_variable_def_const(llvm_unwrap_def_const(llvm))->is_variadic;
+            default:
+                unreachable(LLVM_FMT, llvm_print(llvm));
+        }
+    }
+}
+
+static bool node_is_variadic(const Node* node) {
     if (node->type == NODE_EXPR) {
         switch (node_unwrap_expr_const(node)->type) {
             case NODE_LITERAL:
@@ -116,59 +155,101 @@ static bool is_variadic(const Node* node) {
     }
 }
 
-static void extend_type_decl_str(const Env* env, String* output, const Node* var_def_or_lit, bool noundef) {
-    if (is_variadic(var_def_or_lit)) {
+static void node_extend_type_decl_str(const Env* env, String* output, const Node* var_def_or_lit, bool noundef) {
+    if (node_is_variadic(var_def_or_lit)) {
         string_extend_cstr(&a_main, output, "...");
         return;
     }
 
-    extend_type_call_str(env, output, get_lang_type(var_def_or_lit));
+    extend_type_call_str(env, output, node_get_lang_type(var_def_or_lit));
     if (noundef) {
         string_extend_cstr(&a_main, output, " noundef");
     }
 }
 
-static void extend_literal_decl_prefix(const Env* env, String* output, const Node_literal* literal) {
+static void llvm_extend_type_decl_str(const Env* env, String* output, const Llvm* var_def_or_lit, bool noundef) {
+    if (llvm_is_variadic(var_def_or_lit)) {
+        string_extend_cstr(&a_main, output, "...");
+        return;
+    }
+
+    extend_type_call_str(env, output, llvm_get_lang_type(var_def_or_lit));
+    if (noundef) {
+        string_extend_cstr(&a_main, output, " noundef");
+    }
+}
+
+static void extend_literal_decl_prefix(const Env* env, String* output, const Llvm_literal* literal) {
     log(LOG_DEBUG, "entering thing\n");
-    assert(get_lang_type_literal(literal).str.count > 0);
-    if (str_view_cstr_is_equal(get_lang_type_literal(literal).str, "u8")) {
-        if (get_lang_type_literal(literal).pointer_depth != 1) {
+    assert(llvm_get_lang_type_literal(literal).str.count > 0);
+    if (str_view_cstr_is_equal(llvm_get_lang_type_literal(literal).str, "u8")) {
+        if (llvm_get_lang_type_literal(literal).pointer_depth != 1) {
+            todo();
+        }
+        string_extend_cstr(&a_main, output, " @.");
+        string_extend_strv(&a_main, output, llvm_get_literal_name(literal));
+    } else if (lang_type_is_signed(llvm_get_lang_type_literal(literal))) {
+        if (llvm_get_lang_type_literal(literal).pointer_depth != 0) {
+            todo();
+        }
+        vec_append(&a_main, output, ' ');
+        extend_literal(output, literal);
+    } else if (lang_type_is_enum(env, llvm_get_lang_type_literal(literal))) {
+        vec_append(&a_main, output, ' ');
+        extend_literal(output, literal);
+    } else {
+        log(LOG_DEBUG, BOOL_FMT"\n", bool_print(lang_type_is_enum(env, llvm_get_lang_type_literal(literal))));
+        log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(llvm_get_lang_type_literal(literal)));
+        unreachable(LLVM_FMT"\n", llvm_print(llvm_wrap_expr_const(llvm_wrap_literal_const(literal))));
+    }
+}
+
+static void node_extend_literal_decl_prefix(const Env* env, String* output, const Node_literal* literal) {
+    log(LOG_DEBUG, "entering thing\n");
+    assert(node_get_lang_type_literal(literal).str.count > 0);
+    if (str_view_cstr_is_equal(node_get_lang_type_literal(literal).str, "u8")) {
+        if (node_get_lang_type_literal(literal).pointer_depth != 1) {
             todo();
         }
         string_extend_cstr(&a_main, output, " @.");
         string_extend_strv(&a_main, output, get_literal_name(literal));
-    } else if (lang_type_is_signed(get_lang_type_literal(literal))) {
-        if (get_lang_type_literal(literal).pointer_depth != 0) {
+    } else if (lang_type_is_signed(node_get_lang_type_literal(literal))) {
+        if (node_get_lang_type_literal(literal).pointer_depth != 0) {
             todo();
         }
         vec_append(&a_main, output, ' ');
-        extend_literal(output, literal);
-    } else if (lang_type_is_enum(env, get_lang_type_literal(literal))) {
+        node_extend_literal(output, literal);
+    } else if (lang_type_is_enum(env, node_get_lang_type_literal(literal))) {
         vec_append(&a_main, output, ' ');
-        extend_literal(output, literal);
+        node_extend_literal(output, literal);
     } else {
-        log(LOG_DEBUG, BOOL_FMT"\n", bool_print(lang_type_is_enum(env, get_lang_type_literal(literal))));
-        log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(get_lang_type_literal(literal)));
-        unreachable(NODE_FMT"\n", node_print(node_wrap_expr_const(node_wrap_literal_const(literal))));
+        log(LOG_DEBUG, BOOL_FMT"\n", bool_print(lang_type_is_enum(env, node_get_lang_type_literal(literal))));
+        log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(node_get_lang_type_literal(literal)));
+        unreachable(LLVM_FMT"\n", node_print(node_wrap_expr_const(node_wrap_literal_const(literal))));
     }
 }
 
-static void extend_literal_decl(const Env* env, String* output, const Node_literal* literal, bool noundef) {
-    extend_type_decl_str(env, output, node_wrap_expr_const(node_wrap_literal_const(literal)), noundef);
+static void extend_literal_decl(const Env* env, String* output, const Llvm_literal* literal, bool noundef) {
+    llvm_extend_type_decl_str(env, output, llvm_wrap_expr_const(llvm_wrap_literal_const(literal)), noundef);
     extend_literal_decl_prefix(env, output, literal);
 }
 
-static const Node_lang_type* return_type_from_function_def(const Node_function_def* fun_def) {
-    const Node_lang_type* return_type = fun_def->declaration->return_type;
+static void node_extend_literal_decl(const Env* env, String* output, const Node_literal* literal, bool noundef) {
+    node_extend_type_decl_str(env, output, node_wrap_expr_const(node_wrap_literal_const(literal)), noundef);
+    node_extend_literal_decl_prefix(env, output, literal);
+}
+
+static const Llvm_lang_type* return_type_from_function_def(const Llvm_function_def* fun_def) {
+    const Llvm_lang_type* return_type = fun_def->declaration->return_type;
     if (return_type) {
         return return_type;
     }
     unreachable("");
 }
 
-static void emit_function_params(const Env* env, String* output, const Node_function_params* fun_params) {
+static void emit_function_params(const Env* env, String* output, const Llvm_function_params* fun_params) {
     for (size_t idx = 0; idx < fun_params->params.info.count; idx++) {
-        const Node_variable_def* curr_param = vec_at(&fun_params->params, idx);
+        const Llvm_variable_def* curr_param = vec_at(&fun_params->params, idx);
 
         if (idx > 0) {
             string_extend_cstr(&a_main, output, ", ");
@@ -185,7 +266,7 @@ static void emit_function_params(const Env* env, String* output, const Node_func
                 string_extend_cstr(&a_main, output, ")");
             }
         } else if (lang_type_is_enum(env, curr_param->lang_type) || lang_type_is_primitive(env, curr_param->lang_type)) {
-            extend_type_decl_str(env, output, node_wrap_def_const(node_wrap_variable_def_const(curr_param)), true);
+            llvm_extend_type_decl_str(env, output, llvm_wrap_def_const(llvm_wrap_variable_def_const(curr_param)), true);
         } else {
             unreachable("");
         }
@@ -201,13 +282,13 @@ static void emit_function_params(const Env* env, String* output, const Node_func
 static void emit_function_call_arg_llvm_placeholder(
     const Env* env,
     String* output,
-    const Node_llvm_placeholder* placeholder
+    const Llvm_llvm_placeholder* placeholder
 ) {
     Llvm_id llvm_id = 0;
     log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(placeholder->lang_type));
     if (lang_type_is_struct(env, placeholder->lang_type) && placeholder->lang_type.pointer_depth == 0) {
-        log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(get_node_name(placeholder->llvm_reg.node)));
-        llvm_id = get_llvm_id(get_storage_location(env, get_node_name(placeholder->llvm_reg.node)).node);
+        log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(llvm_get_node_name(placeholder->llvm_reg.llvm)));
+        llvm_id = llvm_get_llvm_id(get_storage_location(env, llvm_get_node_name(placeholder->llvm_reg.llvm)).llvm);
         assert(llvm_id > 0);
         string_extend_cstr(&a_main, output, "ptr noundef byval(");
         extend_type_call_str(env, output, placeholder->lang_type);
@@ -215,49 +296,49 @@ static void emit_function_call_arg_llvm_placeholder(
         string_extend_cstr(&a_main, output, " %");
         string_extend_size_t(&a_main, output, llvm_id);
     } else if (lang_type_is_enum(env, placeholder->lang_type)) {
-        llvm_id = get_llvm_id(placeholder->llvm_reg.node);
+        llvm_id = llvm_get_llvm_id(placeholder->llvm_reg.llvm);
         extend_type_call_str(env, output, placeholder->lang_type);
         string_extend_cstr(&a_main, output, " %");
         string_extend_size_t(&a_main, output, llvm_id);
-    } else if (node_is_literal(placeholder->llvm_reg.node)) {
-        extend_literal_decl(env, output, node_unwrap_literal_const(node_unwrap_expr_const(placeholder->llvm_reg.node)), true);
+    } else if (llvm_is_literal(placeholder->llvm_reg.llvm)) {
+        extend_literal_decl(env, output, llvm_unwrap_literal_const(llvm_unwrap_expr_const(placeholder->llvm_reg.llvm)), true);
     } else {
-        log(LOG_DEBUG, NODE_FMT"\n", node_print(placeholder->llvm_reg.node));
-        llvm_id = get_llvm_id(placeholder->llvm_reg.node);
+        log(LOG_DEBUG, LLVM_FMT"\n", llvm_print(placeholder->llvm_reg.llvm));
+        llvm_id = llvm_get_llvm_id(placeholder->llvm_reg.llvm);
         extend_type_call_str(env, output, placeholder->lang_type);
         string_extend_cstr(&a_main, output, " %");
         string_extend_size_t(&a_main, output, llvm_id);
     }
 }
 
-static void emit_function_call_arguments(const Env* env, String* output, const Node_function_call* fun_call) {
+static void emit_function_call_arguments(const Env* env, String* output, const Llvm_function_call* fun_call) {
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
-        const Node_expr* argument = vec_at(&fun_call->args, idx);
+        const Llvm_expr* argument = vec_at(&fun_call->args, idx);
 
         if (idx > 0) {
             string_extend_cstr(&a_main, output, ", ");
         }
 
         switch (argument->type) {
-            case NODE_LITERAL:
-                extend_literal_decl(env, output, node_unwrap_literal_const(argument), true);
+            case LLVM_LITERAL:
+                extend_literal_decl(env, output, llvm_unwrap_literal_const(argument), true);
                 break;
-            case NODE_MEMBER_ACCESS_TYPED:
+            case LLVM_MEMBER_ACCESS_TYPED:
                 // TODO: make test case with member access in function arg directly
                 unreachable("");
                 break;
-            case NODE_STRUCT_LITERAL:
+            case LLVM_STRUCT_LITERAL:
                 todo();
-            case NODE_SYMBOL_UNTYPED:
+            case LLVM_SYMBOL_UNTYPED:
                 unreachable("untyped symbols should not still be present");
-            case NODE_SYMBOL_TYPED:
+            case LLVM_SYMBOL_TYPED:
                 unreachable("typed symbols should not still be present");
-            case NODE_LLVM_PLACEHOLDER: {
-                const Node_llvm_placeholder* placeholder = node_unwrap_llvm_placeholder_const(argument);
+            case LLVM_LLVM_PLACEHOLDER: {
+                const Llvm_llvm_placeholder* placeholder = llvm_unwrap_llvm_placeholder_const(argument);
                 emit_function_call_arg_llvm_placeholder(env, output, placeholder);
                 break;
             }
-            case NODE_FUNCTION_CALL:
+            case LLVM_FUNCTION_CALL:
                 unreachable("");
             default:
                 unreachable("");
@@ -265,7 +346,7 @@ static void emit_function_call_arguments(const Env* env, String* output, const N
     }
 }
 
-static void emit_function_call(const Env* env, String* output, const Node_function_call* fun_call) {
+static void emit_function_call(const Env* env, String* output, const Llvm_function_call* fun_call) {
     //assert(fun_call->llvm_id == 0);
 
     // start of actual function call
@@ -288,45 +369,45 @@ static void emit_function_call(const Env* env, String* output, const Node_functi
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_alloca(const Env* env, String* output, const Node_alloca* alloca) {
+static void emit_alloca(const Env* env, String* output, const Llvm_alloca* alloca) {
     string_extend_cstr(&a_main, output, "    %");
     string_extend_size_t(&a_main, output, alloca->llvm_id);
     string_extend_cstr(&a_main, output, " = alloca ");
-    extend_type_call_str(env, output, get_symbol_def_from_alloca(env, node_wrap_alloca_const(alloca))->lang_type);
+    extend_type_call_str(env, output, alloca->lang_type);
     string_extend_cstr(&a_main, output, ", align 8");
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_unary_type(const Env* env, String* output, const Node_unary* unary) {
+static void emit_unary_type(const Env* env, String* output, const Llvm_unary* unary) {
     switch (unary->token_type) {
         case TOKEN_UNSAFE_CAST:
-            if (unary->lang_type.pointer_depth > 0 && lang_type_is_number(get_lang_type_expr(unary->child))) {
+            if (unary->lang_type.pointer_depth > 0 && lang_type_is_number(llvm_get_lang_type_expr(unary->child))) {
                 string_extend_cstr(&a_main, output, "inttoptr ");
-                extend_type_call_str(env, output, get_lang_type_expr(unary->child));
+                extend_type_call_str(env, output, llvm_get_lang_type_expr(unary->child));
                 string_extend_cstr(&a_main, output, " ");
-            } else if (lang_type_is_number(unary->lang_type) && get_lang_type_expr(unary->child).pointer_depth > 0) {
+            } else if (lang_type_is_number(unary->lang_type) && llvm_get_lang_type_expr(unary->child).pointer_depth > 0) {
                 string_extend_cstr(&a_main, output, "ptrtoint ");
-                extend_type_call_str(env, output, get_lang_type_expr(unary->child));
+                extend_type_call_str(env, output, llvm_get_lang_type_expr(unary->child));
                 string_extend_cstr(&a_main, output, " ");
-            } else if (lang_type_is_number(unary->lang_type) && lang_type_is_number(get_lang_type_expr(unary->child))) {
-                if (i_lang_type_to_bit_width(unary->lang_type) > i_lang_type_to_bit_width(get_lang_type_expr(unary->child))) {
+            } else if (lang_type_is_number(unary->lang_type) && lang_type_is_number(llvm_get_lang_type_expr(unary->child))) {
+                if (i_lang_type_to_bit_width(unary->lang_type) > i_lang_type_to_bit_width(llvm_get_lang_type_expr(unary->child))) {
                     string_extend_cstr(&a_main, output, "zext ");
                 } else {
                     string_extend_cstr(&a_main, output, "trunc ");
                 }
-                extend_type_call_str(env, output, get_lang_type_expr(unary->child));
+                extend_type_call_str(env, output, llvm_get_lang_type_expr(unary->child));
                 string_extend_cstr(&a_main, output, " ");
             } else {
                 todo();
             }
             break;
         default:
-            unreachable(NODE_FMT"\n", node_print(node_wrap_expr_const(node_wrap_operator_const(node_wrap_unary_const(unary)))));
+            unreachable(LLVM_FMT"\n", llvm_print(llvm_wrap_expr_const(llvm_wrap_operator_const(llvm_wrap_unary_const(unary)))));
     }
 }
 
-// TODO: make Node_untyped_binary
-static void emit_binary_type(const Env* env, String* output, const Node_binary* binary) {
+// TODO: make Llvm_untyped_binary
+static void emit_binary_type(const Env* env, String* output, const Llvm_binary* binary) {
     // TODO: do signed and unsigned operators correctly
     switch (binary->token_type) {
         case TOKEN_SINGLE_MINUS:
@@ -364,7 +445,7 @@ static void emit_binary_type(const Env* env, String* output, const Node_binary* 
     string_extend_cstr(&a_main, output, " ");
 }
 
-static void emit_unary_suffix(const Env* env, String* output, const Node_unary* unary) {
+static void emit_unary_suffix(const Env* env, String* output, const Llvm_unary* unary) {
     switch (unary->token_type) {
         case TOKEN_UNSAFE_CAST:
             string_extend_cstr(&a_main, output, " to ");
@@ -377,86 +458,86 @@ static void emit_unary_suffix(const Env* env, String* output, const Node_unary* 
 
 static void emit_operator_operand_llvm_placeholder_expr(
     String* output,
-    const Node_expr* expr
+    const Llvm_expr* expr
 ) {
     switch (expr->type) {
-        case NODE_LITERAL:
-            extend_literal(output, node_unwrap_literal_const(expr));
+        case LLVM_LITERAL:
+            extend_literal(output, llvm_unwrap_literal_const(expr));
             break;
-        case NODE_OPERATOR:
+        case LLVM_OPERATOR:
             // fallthrough
-        case NODE_FUNCTION_CALL:
+        case LLVM_FUNCTION_CALL:
             string_extend_cstr(&a_main, output, "%");
-            Llvm_id llvm_id = get_llvm_id_expr(expr);
+            Llvm_id llvm_id = llvm_get_llvm_id_expr(expr);
             assert(llvm_id > 0);
             string_extend_size_t(&a_main, output, llvm_id);
             break;
         default:
-            unreachable(NODE_FMT"\n", node_print(node_wrap_expr_const(expr)));
+            unreachable(LLVM_FMT"\n", llvm_print(llvm_wrap_expr_const(expr)));
     }
 }
 
 static void emit_operator_operand_llvm_placeholder(
     String* output,
-    const Node_llvm_placeholder* placeholder
+    const Llvm_llvm_placeholder* placeholder
 ) {
-    const Node* node = placeholder->llvm_reg.node;
+    const Llvm* llvm = placeholder->llvm_reg.llvm;
 
-    switch (node->type) {
-        case NODE_EXPR:
-            emit_operator_operand_llvm_placeholder_expr(output, node_unwrap_expr_const(node));
+    switch (llvm->type) {
+        case LLVM_EXPR:
+            emit_operator_operand_llvm_placeholder_expr(output, llvm_unwrap_expr_const(llvm));
             break;
-        case NODE_LOAD_ANOTHER_NODE:
+        case LLVM_LOAD_ANOTHER_LLVM:
             string_extend_cstr(&a_main, output, "%");
-            Llvm_id llvm_id = get_llvm_id(node);
+            Llvm_id llvm_id = llvm_get_llvm_id(llvm);
             assert(llvm_id > 0);
             string_extend_size_t(&a_main, output, llvm_id);
             break;
         default:
-            unreachable(NODE_FMT"\n", node_print(placeholder->llvm_reg.node));
+            unreachable(LLVM_FMT"\n", llvm_print(placeholder->llvm_reg.llvm));
     }
 }
 
-static void emit_operator_operand(String* output, const Node_expr* operand) {
+static void emit_operator_operand(String* output, const Llvm_expr* operand) {
     switch (operand->type) {
-        case NODE_LITERAL:
-            extend_literal(output, node_unwrap_literal_const(operand));
+        case LLVM_LITERAL:
+            extend_literal(output, llvm_unwrap_literal_const(operand));
             break;
-        case NODE_SYMBOL_TYPED:
+        case LLVM_SYMBOL_TYPED:
             unreachable("");
-        case NODE_LLVM_PLACEHOLDER:
+        case LLVM_LLVM_PLACEHOLDER:
             emit_operator_operand_llvm_placeholder(
-                output, node_unwrap_llvm_placeholder_const(operand)
+                output, llvm_unwrap_llvm_placeholder_const(operand)
             );
             break;
-        case NODE_SYMBOL_UNTYPED:
+        case LLVM_SYMBOL_UNTYPED:
             unreachable("untyped symbols should not still be present");
-        case NODE_FUNCTION_CALL:
+        case LLVM_FUNCTION_CALL:
             string_extend_cstr(&a_main, output, "%");
-            string_extend_size_t(&a_main, output, node_unwrap_function_call_const(operand)->llvm_id);
+            string_extend_size_t(&a_main, output, llvm_unwrap_function_call_const(operand)->llvm_id);
             break;
         default:
-            unreachable(NODE_FMT, node_print((Node*)operand));
+            unreachable(LLVM_FMT, llvm_print((Llvm*)operand));
     }
 }
 
-static void emit_operator(const Env* env, String* output, const Node_operator* operator) {
+static void emit_operator(const Env* env, String* output, const Llvm_operator* operator) {
     string_extend_cstr(&a_main, output, "    %");
-    string_extend_size_t(&a_main, output, get_llvm_id_expr(node_wrap_operator_const(operator)));
+    string_extend_size_t(&a_main, output, llvm_get_llvm_id_expr(llvm_wrap_operator_const(operator)));
     string_extend_cstr(&a_main, output, " = ");
 
-    if (operator->type == NODE_UNARY) {
-        emit_unary_type(env, output, node_unwrap_unary_const(operator));
-    } else if (operator->type == NODE_BINARY) {
-        emit_binary_type(env, output, node_unwrap_binary_const(operator));
+    if (operator->type == LLVM_UNARY) {
+        emit_unary_type(env, output, llvm_unwrap_unary_const(operator));
+    } else if (operator->type == LLVM_BINARY) {
+        emit_binary_type(env, output, llvm_unwrap_binary_const(operator));
     } else {
         unreachable("");
     }
 
-    if (operator->type == NODE_UNARY) {
-        emit_operator_operand(output, node_unwrap_unary_const(operator)->child);
-    } else if (operator->type == NODE_BINARY) {
-        const Node_binary* binary = node_unwrap_binary_const(operator);
+    if (operator->type == LLVM_UNARY) {
+        emit_operator_operand(output, llvm_unwrap_unary_const(operator)->child);
+    } else if (operator->type == LLVM_BINARY) {
+        const Llvm_binary* binary = llvm_unwrap_binary_const(operator);
         emit_operator_operand(output, binary->lhs);
         string_extend_cstr(&a_main, output, ", ");
         emit_operator_operand(output, binary->rhs);
@@ -464,9 +545,9 @@ static void emit_operator(const Env* env, String* output, const Node_operator* o
         unreachable("");
     }
 
-    if (operator->type == NODE_UNARY) {
-        emit_unary_suffix(env, output, node_unwrap_unary_const(operator));
-    } else if (operator->type == NODE_BINARY) {
+    if (operator->type == LLVM_UNARY) {
+        emit_unary_suffix(env, output, llvm_unwrap_unary_const(operator));
+    } else if (operator->type == LLVM_BINARY) {
     } else {
         unreachable("");
     }
@@ -474,14 +555,14 @@ static void emit_operator(const Env* env, String* output, const Node_operator* o
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_load_another_node(const Env* env, String* output, const Node_load_another_node* load_node) {
-    Llvm_id llvm_id = get_llvm_id(load_node->node_src.node);
+static void emit_load_another_llvm(const Env* env, String* output, const Llvm_load_another_llvm* load_llvm) {
+    Llvm_id llvm_id = llvm_get_llvm_id(load_llvm->llvm_src.llvm);
     assert(llvm_id > 0);
 
     string_extend_cstr(&a_main, output, "    %");
-    string_extend_size_t(&a_main, output, load_node->llvm_id);
+    string_extend_size_t(&a_main, output, load_llvm->llvm_id);
     string_extend_cstr(&a_main, output, " = load ");
-    extend_type_call_str(env, output, load_node->lang_type);
+    extend_type_call_str(env, output, load_llvm->lang_type);
     string_extend_cstr(&a_main, output, ", ");
     string_extend_cstr(&a_main, output, "ptr");
     string_extend_cstr(&a_main, output, " %");
@@ -494,76 +575,76 @@ static void emit_memcpy_struct_literal(
     const Env* env,
     String* output,
     Llvm_id dest,
-    const Node_struct_literal* literal
+    const Llvm_struct_literal* literal
 ) {
     string_extend_cstr(&a_main, output, "    call void @llvm.memcpy.p0.p0.i64(ptr align 4 %");
     string_extend_size_t(&a_main, output, dest);
     string_extend_cstr(&a_main, output, ", ptr align 4 @__const.main.");
     string_extend_strv(&a_main, output, literal->name);
     string_extend_cstr(&a_main, output, ", i64 ");
-    string_extend_size_t(&a_main, output, sizeof_struct_literal(env, literal));
+    string_extend_size_t(&a_main, output, llvm_sizeof_struct_literal(env, literal));
     string_extend_cstr(&a_main, output, ", i1 false)\n");
 }
 
-static void emit_store_another_node_src_literal(
+static void emit_store_another_llvm_src_literal(
     String* output,
-    const Node_literal* literal
+    const Llvm_literal* literal
 ) {
     string_extend_cstr(&a_main, output, " ");
 
     switch (literal->type) {
-        case NODE_STRING:
+        case LLVM_STRING:
             string_extend_cstr(&a_main, output, " @.");
-            string_extend_strv(&a_main, output, node_unwrap_string_const(literal)->name);
+            string_extend_strv(&a_main, output, llvm_unwrap_string_const(literal)->name);
             return;
-        case NODE_NUMBER:
-            string_extend_int64_t(&a_main, output, node_unwrap_number_const(literal)->data);
+        case LLVM_NUMBER:
+            string_extend_int64_t(&a_main, output, llvm_unwrap_number_const(literal)->data);
             return;
-        case NODE_ENUM_LIT:
-            string_extend_int64_t(&a_main, output, node_unwrap_enum_lit_const(literal)->data);
+        case LLVM_ENUM_LIT:
+            string_extend_int64_t(&a_main, output, llvm_unwrap_enum_lit_const(literal)->data);
             return;
-        case NODE_VOID:
+        case LLVM_VOID:
             return;
-        case NODE_CHAR:
-            string_extend_int64_t(&a_main, output, node_unwrap_char_const(literal)->data);
+        case LLVM_CHAR:
+            string_extend_int64_t(&a_main, output, llvm_unwrap_char_const(literal)->data);
     }
     unreachable("");
 }
 
-static void emit_store_another_node_src_expr(const Env* env, String* output, const Node_expr* expr) {
+static void emit_store_another_llvm_src_expr(const Env* env, String* output, const Llvm_expr* expr) {
     (void) env;
 
     switch (expr->type) {
-        case NODE_LITERAL:
-            emit_store_another_node_src_literal(output, node_unwrap_literal_const(expr));
+        case LLVM_LITERAL:
+            emit_store_another_llvm_src_literal(output, llvm_unwrap_literal_const(expr));
             return;
-        case NODE_FUNCTION_CALL:
+        case LLVM_FUNCTION_CALL:
             // fallthrough
-        case NODE_OPERATOR:
+        case LLVM_OPERATOR:
             string_extend_cstr(&a_main, output, " %");
-            string_extend_size_t(&a_main, output, get_llvm_id_expr(expr));
+            string_extend_size_t(&a_main, output, llvm_get_llvm_id_expr(expr));
             break;
-        case NODE_STRUCT_LITERAL:
+        case LLVM_STRUCT_LITERAL:
             unreachable("");
             break;
         default:
-            unreachable(NODE_FMT"\n", node_print(node_wrap_expr_const(expr)));
+            unreachable(LLVM_FMT"\n", llvm_print(llvm_wrap_expr_const(expr)));
     }
 }
 
-static void emit_store_another_node(const Env* env, String* output, const Node_store_another_node* store) {
-    const Node* src = store->node_src.node;
+static void emit_store_another_llvm(const Env* env, String* output, const Llvm_store_another_llvm* store) {
+    const Llvm* src = store->llvm_src.llvm;
 
     switch (src->type) {
-        case NODE_EXPR: {
-            const Node_expr* src_expr = node_unwrap_expr_const(src);
+        case LLVM_EXPR: {
+            const Llvm_expr* src_expr = llvm_unwrap_expr_const(src);
             switch (src_expr->type) {
-                case NODE_STRUCT_LITERAL:
+                case LLVM_STRUCT_LITERAL:
                     emit_memcpy_struct_literal(
                         env,
                         output,
-                        get_llvm_id(store->node_dest.node),
-                        node_unwrap_struct_literal_const(src_expr)
+                        llvm_get_llvm_id(store->llvm_dest.llvm),
+                        llvm_unwrap_struct_literal_const(src_expr)
                     );
                     return;
                 default:
@@ -580,42 +661,42 @@ static void emit_store_another_node(const Env* env, String* output, const Node_s
     string_extend_cstr(&a_main, output, " ");
 
     switch (src->type) {
-        case NODE_DEF: {
-            const Node_def* src_def = node_unwrap_def_const(src);
-            const Node_variable_def* src_var_def = node_unwrap_variable_def_const(src_def);
+        case LLVM_DEF: {
+            const Llvm_def* src_def = llvm_unwrap_def_const(src);
+            const Llvm_variable_def* src_var_def = llvm_unwrap_variable_def_const(src_def);
             (void) src_var_def;
             string_extend_cstr(&a_main, output, " %");
-            string_extend_size_t(&a_main, output, get_llvm_id(src));
+            string_extend_size_t(&a_main, output, llvm_get_llvm_id(src));
             break;
         }
-        case NODE_EXPR:
-            emit_store_another_node_src_expr(env, output, node_unwrap_expr_const(src));
+        case LLVM_EXPR:
+            emit_store_another_llvm_src_expr(env, output, llvm_unwrap_expr_const(src));
             break;
-        case NODE_LOAD_ANOTHER_NODE:
+        case LLVM_LOAD_ANOTHER_LLVM:
             string_extend_cstr(&a_main, output, "%");
-            Llvm_id llvm_id = get_llvm_id(src);
+            Llvm_id llvm_id = llvm_get_llvm_id(src);
             assert(llvm_id > 0);
             string_extend_size_t(&a_main, output, llvm_id);
             break;
         default:
-            unreachable(NODE_FMT"\n", node_print(src));
+            unreachable(LLVM_FMT"\n", llvm_print(src));
     }
     //string_extend_cstr(&a_main, output, " %");
-    //string_extend_size_t(&a_main, output, get_llvm_id(store->node_src.node));
+    //string_extend_size_t(&a_main, output, llvm_get_llvm_id(store->llvm_src.llvm));
 
     string_extend_cstr(&a_main, output, ", ptr %");
-    string_extend_size_t(&a_main, output, get_llvm_id(store->node_dest.node));
+    string_extend_size_t(&a_main, output, llvm_get_llvm_id(store->llvm_dest.llvm));
     string_extend_cstr(&a_main, output, ", align 8");
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_function_def(Env* env, String* output, const Node_function_def* fun_def) {
+static void emit_function_def(Env* env, String* output, const Llvm_function_def* fun_def) {
     string_extend_cstr(&a_main, output, "define dso_local ");
 
     extend_type_call_str(env, output, return_type_from_function_def(fun_def)->lang_type);
 
     string_extend_cstr(&a_main, output, " @");
-    string_extend_strv(&a_main, output, get_node_name(node_wrap_def_const(node_wrap_function_def_const(fun_def))));
+    string_extend_strv(&a_main, output, llvm_get_node_name(llvm_wrap_def_const(llvm_wrap_function_def_const(fun_def))));
 
     vec_append(&a_main, output, '(');
     emit_function_params(env, output, fun_def->declaration->parameters);
@@ -626,31 +707,31 @@ static void emit_function_def(Env* env, String* output, const Node_function_def*
     string_extend_cstr(&a_main, output, "}\n");
 }
 
-static void emit_return(const Env* env, String* output, const Node_return* fun_return) {
-    const Node_expr* sym_to_return = fun_return->child;
-    assert(get_lang_type_expr(sym_to_return).str.count > 0);
+static void emit_return(const Env* env, String* output, const Llvm_return* fun_return) {
+    const Llvm_expr* sym_to_return = fun_return->child;
+    assert(llvm_get_lang_type_expr(sym_to_return).str.count > 0);
 
     switch (sym_to_return->type) {
-        case NODE_LITERAL: {
-            const Node_literal* literal = node_unwrap_literal_const(sym_to_return);
+        case LLVM_LITERAL: {
+            const Llvm_literal* literal = llvm_unwrap_literal_const(sym_to_return);
             string_extend_cstr(&a_main, output, "    ret ");
-            extend_type_call_str(env, output, get_lang_type_literal(literal));
+            extend_type_call_str(env, output, llvm_get_lang_type_literal(literal));
             string_extend_cstr(&a_main, output, " ");
             extend_literal(output, literal);
             string_extend_cstr(&a_main, output, "\n");
             break;
         }
-        case NODE_SYMBOL_TYPED:
+        case LLVM_SYMBOL_TYPED:
             unreachable("");
-        case NODE_SYMBOL_UNTYPED:
+        case LLVM_SYMBOL_UNTYPED:
             unreachable("untyped symbols should not still be present");
-        case NODE_LLVM_PLACEHOLDER: {
-            const Node_llvm_placeholder* memb_sym = node_unwrap_llvm_placeholder_const(sym_to_return);
-            if (node_is_literal(memb_sym->llvm_reg.node)) {
-                const Node_expr* memb_expr = node_unwrap_expr_const(memb_sym->llvm_reg.node);
-                const Node_literal* literal = node_unwrap_literal_const(memb_expr);
+        case LLVM_LLVM_PLACEHOLDER: {
+            const Llvm_llvm_placeholder* memb_sym = llvm_unwrap_llvm_placeholder_const(sym_to_return);
+            if (llvm_is_literal(memb_sym->llvm_reg.llvm)) {
+                const Llvm_expr* memb_expr = llvm_unwrap_expr_const(memb_sym->llvm_reg.llvm);
+                const Llvm_literal* literal = llvm_unwrap_literal_const(memb_expr);
                 string_extend_cstr(&a_main, output, "    ret ");
-                extend_type_call_str(env, output, get_lang_type_literal(literal));
+                extend_type_call_str(env, output, llvm_get_lang_type_literal(literal));
                 string_extend_cstr(&a_main, output, " ");
                 extend_literal(output, literal);
                 string_extend_cstr(&a_main, output, "\n");
@@ -659,7 +740,7 @@ static void emit_return(const Env* env, String* output, const Node_return* fun_r
                 string_extend_cstr(&a_main, output, "    ret ");
                 extend_type_call_str(env, output, memb_sym->lang_type);
                 string_extend_cstr(&a_main, output, " %");
-                string_extend_size_t(&a_main, output, get_llvm_id(memb_sym->llvm_reg.node));
+                string_extend_size_t(&a_main, output, llvm_get_llvm_id(memb_sym->llvm_reg.llvm));
                 string_extend_cstr(&a_main, output, "\n");
             }
             break;
@@ -669,7 +750,7 @@ static void emit_return(const Env* env, String* output, const Node_return* fun_r
     }
 }
 
-static void emit_function_decl(const Env* env, String* output, const Node_function_decl* fun_decl) {
+static void emit_function_decl(const Env* env, String* output, const Llvm_function_decl* fun_decl) {
     string_extend_cstr(&a_main, output, "declare i32");
     //extend_literal_decl(output, fun_decl); // TODO
     string_extend_cstr(&a_main, output, " @");
@@ -680,21 +761,21 @@ static void emit_function_decl(const Env* env, String* output, const Node_functi
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_label(String* output, const Node_label* label) {
+static void emit_label(String* output, const Llvm_label* label) {
     string_extend_cstr(&a_main, output, "\n");
     string_extend_size_t(&a_main, output, label->llvm_id);
     string_extend_cstr(&a_main, output, ":\n");
 }
 
-static void emit_goto(const Env* env, String* output, const Node_goto* lang_goto) {
+static void emit_goto(const Env* env, String* output, const Llvm_goto* lang_goto) {
     string_extend_cstr(&a_main, output, "    br label %");
     string_extend_size_t(&a_main, output, get_matching_label_id(env, lang_goto->name));
     vec_append(&a_main, output, '\n');
 }
 
-static void emit_cond_goto(const Env* env, String* output, const Node_cond_goto* cond_goto) {
+static void emit_cond_goto(const Env* env, String* output, const Llvm_cond_goto* cond_goto) {
     string_extend_cstr(&a_main, output, "    br i1 %");
-    string_extend_size_t(&a_main, output, get_llvm_id(cond_goto->node_src.node));
+    string_extend_size_t(&a_main, output, llvm_get_llvm_id(cond_goto->llvm_src.llvm));
     string_extend_cstr(&a_main, output, ", label %");
     string_extend_size_t(&a_main, output, get_matching_label_id(env, cond_goto->if_true));
     string_extend_cstr(&a_main, output, ", label %");
@@ -710,141 +791,141 @@ static void emit_struct_def_base(const Env* env, String* output, const Struct_de
         if (!is_first) {
             string_extend_cstr(&a_main, output, ", ");
         }
-        extend_type_decl_str(env, output, vec_at(&base->members, idx), false);
+        node_extend_type_decl_str(env, output, vec_at(&base->members, idx), false);
         is_first = false;
     }
     string_extend_cstr(&a_main, output, " }\n");
 }
 
-static void emit_struct_def(const Env* env, String* output, const Node_struct_def* struct_def) {
+static void emit_struct_def(const Env* env, String* output, const Llvm_struct_def* struct_def) {
     string_extend_cstr(&a_main, output, "%struct.");
     emit_struct_def_base(env, output, &struct_def->base);
 }
 
-static void emit_raw_union_def(const Env* env, String* output, const Node_raw_union_def* raw_union_def) {
+static void emit_raw_union_def(const Env* env, String* output, const Llvm_raw_union_def* raw_union_def) {
     string_extend_cstr(&a_main, output, "%union.");
     emit_struct_def_base(env, output, &raw_union_def->base);
 }
 
-static void emit_load_struct_element_pointer(const Env* env, String* output, const Node_load_element_ptr* load_elem_ptr) {
+static void emit_load_struct_element_pointer(const Env* env, String* output, const Llvm_load_element_ptr* load_elem_ptr) {
     assert(load_elem_ptr->lang_type.str.count > 0);
     string_extend_cstr(&a_main, output, "    %"); 
     string_extend_size_t(&a_main, output, load_elem_ptr->llvm_id);
 
     string_extend_cstr(&a_main, output, " = getelementptr inbounds ");
 
-    Lang_type lang_type = get_lang_type(load_elem_ptr->node_src.node);
+    Lang_type lang_type = llvm_get_lang_type(load_elem_ptr->llvm_src.llvm);
     lang_type.pointer_depth = 0;
     extend_type_call_str(env, output, lang_type);
     string_extend_cstr(&a_main, output, ", ptr %");
-    string_extend_size_t(&a_main, output, get_llvm_id(load_elem_ptr->node_src.node));
+    string_extend_size_t(&a_main, output, llvm_get_llvm_id(load_elem_ptr->llvm_src.llvm));
     if (load_elem_ptr->is_from_struct) {
         string_extend_cstr(&a_main, output, ", i32 0");
     }
     string_extend_cstr(&a_main, output, ", ");
-    extend_type_call_str(env, output, get_lang_type(load_elem_ptr->struct_index.node));
+    extend_type_call_str(env, output, llvm_get_lang_type(load_elem_ptr->struct_index.llvm));
     string_extend_cstr(&a_main, output, " ");
 
-    if (load_elem_ptr->struct_index.node->type == NODE_LOAD_ANOTHER_NODE) {
+    if (load_elem_ptr->struct_index.llvm->type == LLVM_LOAD_ANOTHER_LLVM) {
         string_extend_cstr(&a_main, output, "%");
-        string_extend_size_t(&a_main, output, get_llvm_id(load_elem_ptr->struct_index.node));
+        string_extend_size_t(&a_main, output, llvm_get_llvm_id(load_elem_ptr->struct_index.llvm));
     } else {
-        emit_operator_operand(output, node_unwrap_expr_const(load_elem_ptr->struct_index.node));
+        emit_operator_operand(output, llvm_unwrap_expr_const(load_elem_ptr->struct_index.llvm));
     }
 
     vec_append(&a_main, output, '\n');
 }
 
-static void emit_expr(Env* env, String* output, const Node_expr* expr) {
+static void emit_expr(Env* env, String* output, const Llvm_expr* expr) {
     switch (expr->type) {
-        case NODE_OPERATOR:
-            emit_operator(env, output, node_unwrap_operator_const(expr));
+        case LLVM_OPERATOR:
+            emit_operator(env, output, llvm_unwrap_operator_const(expr));
             break;
-        case NODE_FUNCTION_CALL:
-            emit_function_call(env, output, node_unwrap_function_call_const(expr));
+        case LLVM_FUNCTION_CALL:
+            emit_function_call(env, output, llvm_unwrap_function_call_const(expr));
             break;
-        case NODE_MEMBER_ACCESS_TYPED:
+        case LLVM_MEMBER_ACCESS_TYPED:
             break;
-        case NODE_LITERAL:
-            extend_literal_decl(env, output, node_unwrap_literal_const(expr), true);
+        case LLVM_LITERAL:
+            extend_literal_decl(env, output, llvm_unwrap_literal_const(expr), true);
             break;
         default:
             unreachable("");
     }
 }
 
-static void emit_def(Env* env, String* output, const Node_def* def) {
+static void emit_def(Env* env, String* output, const Llvm_def* def) {
     switch (def->type) {
-        case NODE_FUNCTION_DEF:
-            emit_function_def(env, output, node_unwrap_function_def_const(def));
+        case LLVM_FUNCTION_DEF:
+            emit_function_def(env, output, llvm_unwrap_function_def_const(def));
             break;
-        case NODE_VARIABLE_DEF:
+        case LLVM_VARIABLE_DEF:
             break;
-        case NODE_FUNCTION_DECL:
-            emit_function_decl(env, output, node_unwrap_function_decl_const(def));
+        case LLVM_FUNCTION_DECL:
+            emit_function_decl(env, output, llvm_unwrap_function_decl_const(def));
             break;
-        case NODE_LABEL:
-            emit_label(output, node_unwrap_label_const(def));
+        case LLVM_LABEL:
+            emit_label(output, llvm_unwrap_label_const(def));
             break;
-        case NODE_STRUCT_DEF:
-            emit_struct_def(env, output, node_unwrap_struct_def_const(def));
+        case LLVM_STRUCT_DEF:
+            emit_struct_def(env, output, llvm_unwrap_struct_def_const(def));
             break;
-        case NODE_RAW_UNION_DEF:
-            emit_raw_union_def(env, output, node_unwrap_raw_union_def_const(def));
+        case LLVM_RAW_UNION_DEF:
+            emit_raw_union_def(env, output, llvm_unwrap_raw_union_def_const(def));
             break;
-        case NODE_ENUM_DEF:
+        case LLVM_ENUM_DEF:
             break;
         default:
             unreachable("");
     }
 }
 
-static void emit_block(Env* env, String* output, const Node_block* block) {
+static void emit_block(Env* env, String* output, const Llvm_block* block) {
     vec_append(&a_main, &env->ancesters, (Symbol_collection*)&block->symbol_collection);
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        const Node* statement = vec_at(&block->children, idx);
+        const Llvm* statement = vec_at(&block->children, idx);
 
         switch (statement->type) {
-            case NODE_EXPR:
-                emit_expr(env, output, node_unwrap_expr_const(statement));
+            case LLVM_EXPR:
+                emit_expr(env, output, llvm_unwrap_expr_const(statement));
                 break;
-            case NODE_DEF:
-                emit_def(env, output, node_unwrap_def_const(statement));
+            case LLVM_DEF:
+                emit_def(env, output, llvm_unwrap_def_const(statement));
                 break;
-            case NODE_RETURN:
-                emit_return(env, output, node_unwrap_return_const(statement));
+            case LLVM_RETURN:
+                emit_return(env, output, llvm_unwrap_return_const(statement));
                 break;
-            case NODE_ASSIGNMENT:
+            case LLVM_ASSIGNMENT:
                 unreachable("an assignment should not still be present at this point");
-            case NODE_BLOCK:
-                emit_block(env, output, node_unwrap_block_const(statement));
+            case LLVM_BLOCK:
+                emit_block(env, output, llvm_unwrap_block_const(statement));
                 break;
-            case NODE_COND_GOTO:
-                emit_cond_goto(env, output, node_unwrap_cond_goto_const(statement));
+            case LLVM_COND_GOTO:
+                emit_cond_goto(env, output, llvm_unwrap_cond_goto_const(statement));
                 break;
-            case NODE_GOTO:
-                emit_goto(env, output, node_unwrap_goto_const(statement));
+            case LLVM_GOTO:
+                emit_goto(env, output, llvm_unwrap_goto_const(statement));
                 break;
-            case NODE_ALLOCA:
-                emit_alloca(env, output, node_unwrap_alloca_const(statement));
+            case LLVM_ALLOCA:
+                emit_alloca(env, output, llvm_unwrap_alloca_const(statement));
                 break;
-            case NODE_LOAD_ELEMENT_PTR:
-                emit_load_struct_element_pointer(env, output, node_unwrap_load_element_ptr_const(statement));
+            case LLVM_LOAD_ELEMENT_PTR:
+                emit_load_struct_element_pointer(env, output, llvm_unwrap_load_element_ptr_const(statement));
                 break;
-            case NODE_LOAD_ANOTHER_NODE:
-                emit_load_another_node(env, output, node_unwrap_load_another_node_const(statement));
+            case LLVM_LOAD_ANOTHER_LLVM:
+                emit_load_another_llvm(env, output, llvm_unwrap_load_another_llvm_const(statement));
                 break;
-            case NODE_STORE_ANOTHER_NODE:
-                emit_store_another_node(env, output, node_unwrap_store_another_node_const(statement));
+            case LLVM_STORE_ANOTHER_LLVM:
+                emit_store_another_llvm(env, output, llvm_unwrap_store_another_llvm_const(statement));
                 break;
-            case NODE_FOR_RANGE:
+            case LLVM_FOR_RANGE:
                 unreachable("for loop should not still be present at this point\n");
-            case NODE_FOR_WITH_COND:
+            case LLVM_FOR_WITH_COND:
                 unreachable("for loop should not still be present at this point\n");
             default:
                 log(LOG_ERROR, STRING_FMT"\n", string_print(*output));
-                node_printf(statement);
+                llvm_printf(statement);
                 todo();
         }
     }
@@ -852,7 +933,7 @@ static void emit_block(Env* env, String* output, const Node_block* block) {
     vec_rem_last(&env->ancesters);
 }
 
-static void emit_symbol(String* output, Str_view key, const Node_string_def* def) {
+static void emit_symbol(String* output, Str_view key, const Llvm_string_def* def) {
     size_t literal_width = def->data.count + 1 - get_count_excape_seq(def->data);
 
     string_extend_cstr(&a_main, output, "@.");
@@ -865,7 +946,20 @@ static void emit_symbol(String* output, Str_view key, const Node_string_def* def
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_struct_literal(const Env* env, String* output, const Node_struct_lit_def* lit_def) {
+static void node_emit_symbol(String* output, Str_view key, const Node_string_def* def) {
+    size_t literal_width = def->data.count + 1 - get_count_excape_seq(def->data);
+
+    string_extend_cstr(&a_main, output, "@.");
+    string_extend_strv(&a_main, output, key);
+    string_extend_cstr(&a_main, output, " = private unnamed_addr constant [ ");
+    string_extend_size_t(&a_main, output, literal_width);
+    string_extend_cstr(&a_main, output, " x i8] c\"");
+    string_extend_strv_eval_escapes(&a_main, output, def->data);
+    string_extend_cstr(&a_main, output, "\\00\", align 1");
+    string_extend_cstr(&a_main, output, "\n");
+}
+
+static void node_emit_struct_literal(const Env* env, String* output, const Node_struct_lit_def* lit_def) {
     assert(lit_def->lang_type.str.count > 0);
     string_extend_cstr(&a_main, output, "@__const.main.");
     string_extend_strv(&a_main, output, lit_def->name);
@@ -879,7 +973,28 @@ static void emit_struct_literal(const Env* env, String* output, const Node_struc
         if (!is_first) {
             vec_append(&a_main, output, ',');
         }
-        extend_literal_decl(env, output, node_unwrap_literal_const(node_unwrap_expr_const(memb_literal)), false);
+        node_extend_literal_decl(env, output, node_unwrap_literal_const(node_unwrap_expr_const(memb_literal)), false);
+        is_first = false;
+    }
+
+    string_extend_cstr(&a_main, output, "} , align 4\n");
+}
+
+static void emit_struct_literal(const Env* env, String* output, const Llvm_struct_lit_def* lit_def) {
+    assert(lit_def->lang_type.str.count > 0);
+    string_extend_cstr(&a_main, output, "@__const.main.");
+    string_extend_strv(&a_main, output, lit_def->name);
+    string_extend_cstr(&a_main, output, " = private unnamed_addr constant %struct.");
+    extend_lang_type_to_string(&a_main, output, lit_def->lang_type, false);
+    string_extend_cstr(&a_main, output, " {");
+
+    size_t is_first = true;
+    for (size_t idx = 0; idx < lit_def->members.info.count; idx++) {
+        const Llvm* memb_literal = vec_at(&lit_def->members, idx);
+        if (!is_first) {
+            vec_append(&a_main, output, ',');
+        }
+        extend_literal_decl(env, output, llvm_unwrap_literal_const(llvm_unwrap_expr_const(memb_literal)), false);
         is_first = false;
     }
 
@@ -897,10 +1012,10 @@ static void emit_symbols(const Env* env, String* output) {
 
         switch (def->type) {
             case NODE_STRUCT_LIT_DEF:
-                emit_struct_literal(env, output, node_unwrap_struct_lit_def_const(def));
+                node_emit_struct_literal(env, output, node_unwrap_struct_lit_def_const(def));
                 break;
             case NODE_STRING_DEF:
-                emit_symbol(output, curr_node.key, node_unwrap_string_def_const(def));
+                node_emit_symbol(output, curr_node.key, node_unwrap_string_def_const(def));
                 break;
             default:
                 todo();
@@ -908,7 +1023,7 @@ static void emit_symbols(const Env* env, String* output) {
     }
 }
 
-void emit_llvm_from_tree(Env* env, const Node_block* root) {
+void emit_llvm_from_tree(Env* env, const Llvm_block* root) {
     String output = {0};
     emit_block(env, &output, root);
     emit_symbols(env, &output);

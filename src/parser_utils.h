@@ -3,9 +3,11 @@
 
 #include "str_view.h"
 #include "node.h"
+#include "llvm.h"
 #include "nodes.h"
 #include "symbol_table.h"
 #include "node_utils.h"
+#include "llvm_utils.h"
 
 bool lang_type_is_unsigned(Lang_type lang_type);
 
@@ -36,9 +38,9 @@ static inline bool Llvm_register_sym_is_some(Llvm_register_sym llvm_reg) {
     return 0 != memcmp(&reference, &llvm_reg, sizeof(llvm_reg));
 }
 
-static inline Llvm_register_sym llvm_register_sym_new(Node* node) {
-    if (node) {
-        Llvm_register_sym llvm_reg = {.lang_type = get_lang_type(node), .node = node};
+static inline Llvm_register_sym llvm_register_sym_new(Llvm* llvm) {
+    if (llvm) {
+        Llvm_register_sym llvm_reg = {.lang_type = llvm_get_lang_type(llvm), .llvm = llvm};
         return llvm_reg;
     } else {
         Llvm_register_sym llvm_reg = {0};
@@ -47,24 +49,22 @@ static inline Llvm_register_sym llvm_register_sym_new(Node* node) {
     unreachable("");
 }
 
-static inline Node_llvm_placeholder* node_e_llvm_placeholder_new_from_reg(
+static inline Llvm_llvm_placeholder* llvm_llvm_placeholder_new_from_reg(
     Llvm_register_sym llvm_reg, Lang_type lang_type
 ) {
-    Node_llvm_placeholder* placeholder = node_llvm_placeholder_new(node_get_pos(llvm_reg.node));
+    Llvm_llvm_placeholder* placeholder = llvm_llvm_placeholder_new(llvm_get_pos(llvm_reg.llvm));
     placeholder->llvm_reg = llvm_reg;
     placeholder->lang_type = lang_type;
     return placeholder;
 }
 
-static inline Llvm_register_sym llvm_register_sym_new_from_expr(Node_expr* expr) {
-    return llvm_register_sym_new(node_wrap_expr(expr));
+static inline Llvm_register_sym llvm_register_sym_new_from_expr(Llvm_expr* expr) {
+    return llvm_register_sym_new(llvm_wrap_expr(expr));
 }
 
-static inline Llvm_register_sym llvm_register_sym_new_from_e_operator(Node_operator* operator) {
-    return llvm_register_sym_new_from_expr(node_wrap_operator(operator));
+static inline Llvm_register_sym llvm_register_sym_new_from_operator(Llvm_operator* operator) {
+    return llvm_register_sym_new_from_expr(llvm_wrap_operator(operator));
 }
-
-const Node_variable_def* get_symbol_def_from_alloca(const Env* env, const Node* alloca);
 
 Llvm_id get_matching_label_id(const Env* env, Str_view name);
 
@@ -95,6 +95,18 @@ uint64_t sizeof_struct_def_base(const Env* env, const Struct_def_base* base);
 
 uint64_t sizeof_struct_literal(const Env* env, const Node_struct_literal* struct_literal);
 
+static uint64_t llvm_sizeof_expr(const Env* env, const Llvm_expr* expr);
+
+static uint64_t llvm_sizeof_def(const Env* env, const Llvm_def* def);
+
+uint64_t llvm_sizeof_item(const Env* env, const Llvm* item);
+
+uint64_t llvm_sizeof_struct_literal(const Env* env, const Llvm_struct_literal* struct_literal);
+
+uint64_t llvm_sizeof_struct_def_base(const Env* env, const Struct_def_base* base);
+
+uint64_t llvm_sizeof_struct_expr(const Env* env, const Llvm_expr* struct_literal_or_def);
+
 bool lang_type_is_struct(const Env* env, Lang_type lang_type);
 
 bool lang_type_is_raw_union(const Env* env, Lang_type lang_type);
@@ -121,7 +133,7 @@ static inline bool try_get_member_def(
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         Node* curr_member = vec_at(&struct_def->members, idx);
         if (str_view_is_equal(get_node_name(curr_member), member_name)) {
-            assert(get_lang_type(curr_member).str.count > 0);
+            assert(node_get_lang_type(curr_member).str.count > 0);
             *member_def = node_unwrap_variable_def(node_unwrap_def(curr_member));
             return true;
         }
@@ -143,6 +155,8 @@ bool try_set_enum_def_types(Env* env, Node_enum_def** new_node, Node_enum_def* n
 
 bool try_get_struct_def(const Env* env, Node_struct_def** struct_def, Node* node);
 
+bool llvm_try_get_struct_def(const Env* env, Node_struct_def** struct_def, Llvm* node);
+    
 Node_operator* condition_get_default_child(Node_expr* if_cond_child);
 
 static inline Node_struct_def* get_struct_def(const Env* env, Node* node) {
@@ -155,6 +169,18 @@ static inline Node_struct_def* get_struct_def(const Env* env, Node* node) {
 
 static inline const Node_struct_def* get_struct_def_const(const Env* env, const Node* node) {
     return get_struct_def(env, (Node*)node);
+}
+
+static inline Node_struct_def* llvm_get_struct_def(const Env* env, Llvm* node) {
+    Node_struct_def* struct_def;
+    if (!llvm_try_get_struct_def(env, &struct_def, node)) {
+        unreachable("could not find struct definition for "NODE_FMT"\n", llvm_print(node));
+    }
+    return struct_def;
+}
+
+static inline const Node_struct_def* llvm_get_struct_def_const(const Env* env, const Llvm* node) {
+    return llvm_get_struct_def(env, (Llvm*)node);
 }
 
 #endif // PARSER_UTIL_H

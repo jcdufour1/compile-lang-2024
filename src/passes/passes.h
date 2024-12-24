@@ -2,6 +2,7 @@
 #define PASSES_H
 
 #include <node.h>
+#include <llvm.h>
 #include <do_passes.h>
 #include <tokens.h>
 
@@ -25,12 +26,12 @@ Node_block* parse(Env* env, const Tokens tokens);
 
 Node_block* analysis_1(Env* env, Node_block* root);
 
-Node_block* add_load_and_store(Env* env, Node_block* old_block);
-
 Node_block* change_operators(Env* env, Node_block* root);
 
-Node_block* assign_llvm_ids(Env* env, Node_block* root);
+Llvm_block* add_load_and_store(Env* env, Node_block* old_block);
 
-void emit_llvm_from_tree(Env* env, const Node_block* root);
+Llvm_block* assign_llvm_ids(Env* env, Llvm_block* root);
+
+void emit_llvm_from_tree(Env* env, const Llvm_block* root);
 
 #endif // PASSES_H

@@ -29,8 +29,6 @@ static inline Node* get_left_child(Node* node) {
             return get_left_child_expr(node_unwrap_expr(node));
         case NODE_LANG_TYPE:
             unreachable("");
-        case NODE_LOAD_ELEMENT_PTR:
-            unreachable("");
         case NODE_FUNCTION_PARAMS:
             unreachable("");
         case NODE_FOR_RANGE:
@@ -52,16 +50,6 @@ static inline Node* get_left_child(Node* node) {
         case NODE_CONDITION:
             unreachable("");
         case NODE_BLOCK:
-            unreachable("");
-        case NODE_COND_GOTO:
-            unreachable("");
-        case NODE_GOTO:
-            unreachable("");
-        case NODE_ALLOCA:
-            unreachable("");
-        case NODE_LOAD_ANOTHER_NODE:
-            unreachable("");
-        case NODE_STORE_ANOTHER_NODE:
             unreachable("");
         default:
             unreachable(NODE_FMT, node_print(node));

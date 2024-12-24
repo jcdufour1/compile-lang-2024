@@ -1,12 +1,14 @@
 #include <node.h>
 #include <nodes.h>
+#include <llvm.h>
+#include <llvms.h>
 #include <symbol_table.h>
 #include <parser_utils.h>
-#include <nodes.h>
+#include <llvms.h>
 #include "passes.h"
 
-static Node_expr* id_expr(Node_expr* expr);
-static Node_block* id_block(Node_block* block);
+static Llvm_expr* id_expr(Llvm_expr* expr);
+static Llvm_block* id_block(Llvm_block* block);
 
 static Llvm_id llvm_id_new(void) {
     static Llvm_id llvm_id_for_next_var = 1;
@@ -15,33 +17,33 @@ static Llvm_id llvm_id_new(void) {
     return id_to_rtn;
 }
 
-static Node_unary* id_unary(Node_unary* unary) {
+static Llvm_unary* id_unary(Llvm_unary* unary) {
     unary->child = id_expr(unary->child);
     unary->llvm_id = llvm_id_new();
     return unary;
 }
    
 
-static Node_binary* id_binary(Node_binary* binary) {
+static Llvm_binary* id_binary(Llvm_binary* binary) {
     binary->lhs = id_expr(binary->lhs);
     binary->rhs = id_expr(binary->rhs);
     binary->llvm_id = llvm_id_new();
     return binary;
 }
 
-static Node_operator* id_operator(Node_operator* operator) {
+static Llvm_operator* id_operator(Llvm_operator* operator) {
     switch (operator->type) {
-        case NODE_UNARY:
-            return node_wrap_unary(id_unary(node_unwrap_unary(operator)));
-        case NODE_BINARY:
-            return node_wrap_binary(id_binary(node_unwrap_binary(operator)));
+        case LLVM_UNARY:
+            return llvm_wrap_unary(id_unary(llvm_unwrap_unary(operator)));
+        case LLVM_BINARY:
+            return llvm_wrap_binary(id_binary(llvm_unwrap_binary(operator)));
     }
     unreachable("");
 }
 
-static Node_function_call* id_function_call(Node_function_call* fun_call) {
+static Llvm_function_call* id_function_call(Llvm_function_call* fun_call) {
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
-        Node_expr** expr = vec_at_ref(&fun_call->args, idx);
+        Llvm_expr** expr = vec_at_ref(&fun_call->args, idx);
         *expr = id_expr(*expr);
     }
 
@@ -50,154 +52,153 @@ static Node_function_call* id_function_call(Node_function_call* fun_call) {
     return fun_call;
 }
 
-static Node_expr* id_expr(Node_expr* expr) {
+static Llvm_expr* id_expr(Llvm_expr* expr) {
     switch (expr->type) {
-        case NODE_SYMBOL_UNTYPED:
+        case LLVM_SYMBOL_UNTYPED:
             return expr;
-        case NODE_MEMBER_ACCESS_UNTYPED:
+        case LLVM_MEMBER_ACCESS_UNTYPED:
             unreachable("");
-        case NODE_MEMBER_ACCESS_TYPED:
-            node_unwrap_member_access_typed(expr)->llvm_id = llvm_id_new();
+        case LLVM_MEMBER_ACCESS_TYPED:
+            llvm_unwrap_member_access_typed(expr)->llvm_id = llvm_id_new();
             return expr;
-        case NODE_INDEX_UNTYPED:
+        case LLVM_INDEX_UNTYPED:
             unreachable("");
-        case NODE_INDEX_TYPED:
-            node_unwrap_index_typed(expr)->llvm_id = llvm_id_new();
+        case LLVM_INDEX_TYPED:
+            llvm_unwrap_index_typed(expr)->llvm_id = llvm_id_new();
             return expr;
-        case NODE_STRUCT_LITERAL:
+        case LLVM_STRUCT_LITERAL:
             return expr;
-        case NODE_SYMBOL_TYPED:
+        case LLVM_SYMBOL_TYPED:
             return expr;
-        case NODE_LITERAL:
+        case LLVM_LITERAL:
             return expr;
-        case NODE_FUNCTION_CALL:
-            return node_wrap_function_call(id_function_call(node_unwrap_function_call(expr)));
-        case NODE_OPERATOR:
-            return node_wrap_operator(id_operator(node_unwrap_operator(expr)));
-        case NODE_LLVM_PLACEHOLDER:
+        case LLVM_FUNCTION_CALL:
+            return llvm_wrap_function_call(id_function_call(llvm_unwrap_function_call(expr)));
+        case LLVM_OPERATOR:
+            return llvm_wrap_operator(id_operator(llvm_unwrap_operator(expr)));
+        case LLVM_LLVM_PLACEHOLDER:
             return expr;
     }
     unreachable("");
 }
 
-static Node_variable_def* id_variable_def(Node_variable_def* def) {
+static Llvm_variable_def* id_variable_def(Llvm_variable_def* def) {
     def->llvm_id = llvm_id_new();
     return def;
 }
 
-static Node_function_params* id_function_params(Node_function_params* params) {
+static Llvm_function_params* id_function_params(Llvm_function_params* params) {
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
-        Node_variable_def** curr = vec_at_ref(&params->params, idx);
+        Llvm_variable_def** curr = vec_at_ref(&params->params, idx);
         *curr = id_variable_def(*curr);
     }
 
     return params;
 }
 
-static Node_function_decl* id_function_decl(Node_function_decl* fun_decl) {
+static Llvm_function_decl* id_function_decl(Llvm_function_decl* fun_decl) {
     fun_decl->parameters = id_function_params(fun_decl->parameters);
     return fun_decl;
 }
 
-static Node_function_def* id_function_def(Node_function_def* fun_def) {
+static Llvm_function_def* id_function_def(Llvm_function_def* fun_def) {
     fun_def->llvm_id = llvm_id_new();
     fun_def->declaration = id_function_decl(fun_def->declaration);
     fun_def->body = id_block(fun_def->body);
     return fun_def;
 }
 
-static Node_def* id_def(Node_def* def) {
+static Llvm_def* id_def(Llvm_def* def) {
     switch (def->type) {
-        case NODE_VARIABLE_DEF:
-            return node_wrap_variable_def(id_variable_def(node_unwrap_variable_def(def)));
-        case NODE_LABEL:
-            node_unwrap_label(def)->llvm_id = llvm_id_new();
+        case LLVM_VARIABLE_DEF:
+            return llvm_wrap_variable_def(id_variable_def(llvm_unwrap_variable_def(def)));
+        case LLVM_LABEL:
+            llvm_unwrap_label(def)->llvm_id = llvm_id_new();
             return def;
-        case NODE_STRUCT_DEF:
+        case LLVM_STRUCT_DEF:
             return def;
-        case NODE_RAW_UNION_DEF:
+        case LLVM_RAW_UNION_DEF:
             return def;
-        case NODE_ENUM_DEF:
+        case LLVM_ENUM_DEF:
             return def;
-        case NODE_FUNCTION_DECL:
+        case LLVM_FUNCTION_DECL:
             return def;
-        case NODE_FUNCTION_DEF:
-            return node_wrap_function_def(id_function_def(node_unwrap_function_def(def)));
-        case NODE_PRIMITIVE_DEF:
+        case LLVM_FUNCTION_DEF:
+            return llvm_wrap_function_def(id_function_def(llvm_unwrap_function_def(def)));
+        case LLVM_PRIMITIVE_DEF:
             return def;
-        case NODE_LITERAL_DEF:
+        case LLVM_LITERAL_DEF:
             return def;
     }
     unreachable("");
 }
 
-static Node* id_node(Node* node) {
-    switch (node->type) {
-        case NODE_EXPR:
-            return node_wrap_expr(id_expr(node_unwrap_expr(node)));
-        case NODE_DEF:
-            return node_wrap_def(id_def(node_unwrap_def(node)));
-        case NODE_FUNCTION_PARAMS:
-            return node;
-        case NODE_BLOCK:
-            return node_wrap_block(id_block(node_unwrap_block(node)));
-        case NODE_RETURN:
-            return node;
-        case NODE_LANG_TYPE:
-            return node;
-        case NODE_LOAD_ELEMENT_PTR:
-            node_unwrap_load_element_ptr(node)->llvm_id = llvm_id_new();
-            return node;
-        case NODE_LOAD_ANOTHER_NODE:
-            node_unwrap_load_another_node(node)->llvm_id = llvm_id_new();
-            return node;
-        case NODE_STORE_ANOTHER_NODE:
-            node_unwrap_store_another_node(node)->llvm_id = llvm_id_new();
-            return node;
-        case NODE_ASSIGNMENT:
-            log_tree(LOG_ERROR, node);
+static Llvm* id_llvm(Llvm* llvm) {
+    switch (llvm->type) {
+        case LLVM_EXPR:
+            return llvm_wrap_expr(id_expr(llvm_unwrap_expr(llvm)));
+        case LLVM_DEF:
+            return llvm_wrap_def(id_def(llvm_unwrap_def(llvm)));
+        case LLVM_FUNCTION_PARAMS:
+            return llvm;
+        case LLVM_BLOCK:
+            return llvm_wrap_block(id_block(llvm_unwrap_block(llvm)));
+        case LLVM_RETURN:
+            return llvm;
+        case LLVM_LANG_TYPE:
+            return llvm;
+        case LLVM_LOAD_ELEMENT_PTR:
+            llvm_unwrap_load_element_ptr(llvm)->llvm_id = llvm_id_new();
+            return llvm;
+        case LLVM_LOAD_ANOTHER_LLVM:
+            llvm_unwrap_load_another_llvm(llvm)->llvm_id = llvm_id_new();
+            return llvm;
+        case LLVM_STORE_ANOTHER_LLVM:
+            llvm_unwrap_store_another_llvm(llvm)->llvm_id = llvm_id_new();
+            return llvm;
+        case LLVM_ASSIGNMENT:
             unreachable("");
-        case NODE_ALLOCA:
-            node_unwrap_alloca(node)->llvm_id = llvm_id_new();
-            return node;
-        case NODE_GOTO:
-            node_unwrap_goto(node)->llvm_id = llvm_id_new();
-            return node;
-        case NODE_COND_GOTO:
-            node_unwrap_cond_goto(node)->llvm_id = llvm_id_new();
-            return node;
-        case NODE_FOR_LOWER_BOUND:
+        case LLVM_ALLOCA:
+            llvm_unwrap_alloca(llvm)->llvm_id = llvm_id_new();
+            return llvm;
+        case LLVM_GOTO:
+            llvm_unwrap_goto(llvm)->llvm_id = llvm_id_new();
+            return llvm;
+        case LLVM_COND_GOTO:
+            llvm_unwrap_cond_goto(llvm)->llvm_id = llvm_id_new();
+            return llvm;
+        case LLVM_FOR_LOWER_BOUND:
             unreachable("");
-        case NODE_FOR_UPPER_BOUND:
+        case LLVM_FOR_UPPER_BOUND:
             unreachable("");
-        case NODE_FOR_RANGE:
+        case LLVM_FOR_RANGE:
             unreachable("");
-        case NODE_FOR_WITH_COND:
+        case LLVM_FOR_WITH_COND:
             unreachable("");
-        case NODE_BREAK:
+        case LLVM_BREAK:
             unreachable("");
-        case NODE_CONTINUE:
+        case LLVM_CONTINUE:
             unreachable("");
-        case NODE_IF:
+        case LLVM_IF:
             unreachable("");
-        case NODE_IF_ELSE_CHAIN:
+        case LLVM_IF_ELSE_CHAIN:
             unreachable("");
-        case NODE_CONDITION:
+        case LLVM_CONDITION:
             unreachable("");
     }
     unreachable("");
 }
 
-static Node_block* id_block(Node_block* block) {
+static Llvm_block* id_block(Llvm_block* block) {
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        Node** curr = vec_at_ref(&block->children, idx);
-        *curr = id_node(*curr);
+        Llvm** curr = vec_at_ref(&block->children, idx);
+        *curr = id_llvm(*curr);
     }
 
     return block;
 }
 
-Node_block* assign_llvm_ids(Env* env, Node_block* root) {
+Llvm_block* assign_llvm_ids(Env* env, Llvm_block* root) {
     (void) env;
     return id_block(root);
 }
