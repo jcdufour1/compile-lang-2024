@@ -38,6 +38,12 @@ static inline void string_extend_size_t(Arena* arena, String* str, size_t num) {
     string_extend_cstr(arena, str, num_str);
 }
 
+static inline void string_extend_pointer(Arena* arena, String* str, const void* pointer) {
+    char num_str[24] = {0};
+    sprintf(num_str, "%p", pointer);
+    string_extend_cstr(arena, str, num_str);
+}
+
 static inline void string_extend_int64_t(Arena* arena, String* str, int64_t num) {
     char num_str[21];
     sprintf(num_str, "%"PRId64, num);

@@ -14,6 +14,22 @@ void llvm_print_assert_recursion_depth_zero(void) {
     assert(recursion_depth == 0);
 }
 
+static void extend_llvm_id(String* buf, const char* location, Llvm_id llvm_id) {
+    string_extend_cstr(&print_arena, buf, " (& ");
+    string_extend_cstr(&print_arena, buf, location);
+    string_extend_cstr(&print_arena, buf, ":");
+    string_extend_size_t(&print_arena, buf, llvm_id);
+    string_extend_cstr(&print_arena, buf, " &) ");
+}
+
+static void extend_pointer(String* buf, const char* location, const Llvm* pointer) {
+    string_extend_cstr(&print_arena, buf, " (* ");
+    string_extend_cstr(&print_arena, buf, location);
+    string_extend_cstr(&print_arena, buf, ":");
+    string_extend_pointer(&print_arena, buf, pointer);
+    string_extend_cstr(&print_arena, buf, " *) ");
+}
+
 static void extend_lang_type(String* string, Lang_type lang_type, bool surround_in_lt_gt) {
     if (surround_in_lt_gt) {
         vec_append(&print_arena, string, '<');
@@ -294,11 +310,15 @@ Str_view llvm_llvm_placeholder_print_internal(const Llvm_llvm_placeholder* lit) 
     return string_to_strv(buf);
 }
 
-Str_view llvm_load_element_ptr_print_internal(const Llvm_load_element_ptr* lit) {
+Str_view llvm_load_element_ptr_print_internal(const Llvm_load_element_ptr* load) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "load_element_ptr", recursion_depth);
-    extend_lang_type(&buf, lit->lang_type, true);
+    extend_lang_type(&buf, load->lang_type, true);
+    extend_llvm_id(&buf, "self", load->llvm_id);
+    extend_pointer(&buf, "self", llvm_wrap_load_element_ptr_const(load));
+    extend_llvm_id(&buf, "src", llvm_get_llvm_id(load->llvm_src.llvm));
+    extend_pointer(&buf, "src", load->llvm_src.llvm);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
@@ -555,22 +575,24 @@ Str_view llvm_function_def_print_internal(const Llvm_function_def* fun_def) {
     return string_to_strv(buf);
 }
 
-static void extend_struct_def_base(String* buf, Struct_def_base base) {
-    string_extend_strv(&print_arena, buf, base.name);
+static void extend_struct_def_base(String* buf, const char* type_name, Struct_def_base base) {
+    string_extend_cstr_indent(&print_arena, buf, type_name, recursion_depth);
+    string_extend_strv_in_par(&print_arena, buf, base.name);
+    extend_llvm_id(buf, "self", base.llvm_id);
+    string_extend_cstr(&print_arena, buf, "\n");
 
+    recursion_depth += INDENT_WIDTH;
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
         Str_view memb_text = node_print_internal(vec_at(&base.members, idx));
         string_extend_strv(&print_arena, buf, memb_text);
     }
+    recursion_depth -= INDENT_WIDTH;
 }
 
 Str_view llvm_struct_def_print_internal(const Llvm_struct_def* def) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "struct_def\n", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    extend_struct_def_base(&buf, def->base);
-    recursion_depth -= INDENT_WIDTH;
+    extend_struct_def_base(&buf, "struct_def", def->base);
 
     return string_to_strv(buf);
 }
@@ -578,10 +600,7 @@ Str_view llvm_struct_def_print_internal(const Llvm_struct_def* def) {
 Str_view llvm_raw_union_def_print_internal(const Llvm_raw_union_def* def) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "raw_union_def\n", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    extend_struct_def_base(&buf, def->base);
-    recursion_depth -= INDENT_WIDTH;
+    extend_struct_def_base(&buf, "raw_union_def", def->base);
 
     return string_to_strv(buf);
 }
@@ -589,10 +608,7 @@ Str_view llvm_raw_union_def_print_internal(const Llvm_raw_union_def* def) {
 Str_view llvm_enum_def_print_internal(const Llvm_enum_def* def) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "enum_def\n", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    extend_struct_def_base(&buf, def->base);
-    recursion_depth -= INDENT_WIDTH;
+    extend_struct_def_base(&buf, "enum_def", def->base);
 
     return string_to_strv(buf);
 }
@@ -666,6 +682,8 @@ Str_view llvm_variable_def_print_internal(const Llvm_variable_def* def) {
     string_extend_cstr_indent(&print_arena, &buf, "variable_def", recursion_depth);
     extend_lang_type(&buf, def->lang_type, true);
     string_extend_strv_in_par(&print_arena, &buf, def->name);
+    extend_llvm_id(&buf, "self", def->llvm_id);
+    extend_pointer(&buf, "self", llvm_wrap_def_const(llvm_wrap_variable_def_const(def)));
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);

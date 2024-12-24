@@ -83,13 +83,14 @@ static Llvm_raw_union_def* node_clone_raw_union_def(const Node_raw_union_def* ol
     return new_def;
 }
 
-static void do_function_def_alloca(Env* env, Llvm_block* new_block, const Node_function_def* old_fun_def) {
-    Node_function_params* params = old_fun_def->declaration->parameters;
+static Llvm_function_params* do_function_def_alloca(Env* env, Llvm_block* new_block, const Node_function_def* old_fun_def) {
+    Node_function_params* old_params = old_fun_def->declaration->parameters;
+    Llvm_function_params* new_params = llvm_function_params_new(old_params->pos);
 
     Llvm* dummy = NULL;
 
-    for (size_t idx = 0; idx < params->params.info.count; idx++) {
-        Llvm_variable_def* param = node_clone_variable_def(vec_at(&params->params, idx));
+    for (size_t idx = 0; idx < old_params->params.info.count; idx++) {
+        Llvm_variable_def* param = node_clone_variable_def(vec_at(&old_params->params, idx));
 
         if (lang_type_is_struct(env, param->lang_type)) {
             alloca_add(env, llvm_wrap_def(llvm_wrap_variable_def(param)));
@@ -107,8 +108,12 @@ static void do_function_def_alloca(Env* env, Llvm_block* new_block, const Node_f
             todo();
         }
 
+        vec_append(&a_main, &new_params->params, param);
+
         assert(alloca_lookup(&dummy, env, param->name));
     }
+
+    return new_params;
 }
 
 static Llvm_block* load_block(Env* env, Node_block* old_block);
@@ -295,6 +300,7 @@ static Llvm_register_sym load_ptr_symbol_typed(
     assert(var_def);
     log(LOG_DEBUG, NODE_FMT"\n", llvm_variable_def_print(var_def));
     log(LOG_DEBUG, NODE_FMT"\n", node_symbol_typed_print(old_sym));
+    log(LOG_DEBUG, NODE_FMT"\n", llvm_print(alloca));
     //log(LOG_DEBUG, NODE_FMT"\n", node_print(var_def->storage_location.node));
     assert(lang_type_is_equal(var_def->lang_type, node_get_lang_type_symbol_typed(old_sym)));
 
@@ -575,8 +581,8 @@ static void load_function_parameters(
         assert(env->ancesters.info.count > 0);
         Node_variable_def* param = vec_at(&fun_params, idx);
 
-        symbol_log(LOG_DEBUG, env);
-        alloca_log(LOG_DEBUG, env);
+        //symbol_log(LOG_DEBUG, env);
+        //alloca_log(LOG_DEBUG, env);
 
         if (lang_type_is_struct(env, param->lang_type)) {
             continue;
@@ -608,18 +614,29 @@ static Llvm_register_sym load_function_def(
     Pos pos = old_fun_def->pos;
 
     Llvm_function_def* new_fun_def = llvm_function_def_new(pos);
-    new_fun_def->declaration = node_clone_function_decl(old_fun_def->declaration);
+    //new_fun_def->declaration = node_clone_function_decl(old_fun_def->declaration);
     new_fun_def->body = llvm_block_new(pos);
+
+    new_fun_def->declaration = llvm_function_decl_new(pos);
+    new_fun_def->declaration->return_type = node_clone_lang_type(old_fun_def->declaration->return_type);
+    new_fun_def->declaration->name = old_fun_def->declaration->name;
+
     new_fun_def->body->symbol_collection = old_fun_def->body->symbol_collection;
     new_fun_def->body->pos_end = old_fun_def->body->pos_end;
 
 
     {
+        log(LOG_DEBUG, LLVM_FMT"\n", llvm_block_print(new_fun_def->body));
         vec_append(&a_main, &env->ancesters, &new_fun_def->body->symbol_collection);
-        do_function_def_alloca(env, new_fun_def->body, old_fun_def);
+        log(LOG_DEBUG, LLVM_FMT"\n", llvm_block_print(new_fun_def->body));
+        new_fun_def->declaration->parameters = do_function_def_alloca(env, new_fun_def->body, old_fun_def);
+        alloca_log(LOG_DEBUG, env);
+        log(LOG_DEBUG, LLVM_FMT"\n", llvm_block_print(new_fun_def->body));
         load_function_parameters(env, new_fun_def->body, old_fun_def->declaration->parameters->params);
+        log(LOG_DEBUG, LLVM_FMT"\n", llvm_block_print(new_fun_def->body));
         vec_rem_last(&env->ancesters);
     }
+
 
     vec_append(&a_main, &env->ancesters, &new_fun_def->body->symbol_collection);
     for (size_t idx = 0; idx < old_fun_def->body->children.info.count; idx++) {
@@ -629,9 +646,6 @@ static Llvm_register_sym load_function_def(
         load_node(env, new_fun_def->body, vec_at(&old_fun_def->body->children, idx));
     }
     vec_rem_last(&env->ancesters);
-    for (size_t idx = 0; idx < new_fun_def->body->children.info.count; idx++) {
-        log(LOG_DEBUG, NODE_FMT"\n", llvm_print(vec_at(&new_fun_def->body->children, idx)));
-    }
 
     vec_append(&a_main, &new_block->children, llvm_wrap_def(llvm_wrap_function_def(new_fun_def)));
     return (Llvm_register_sym) {
@@ -1227,8 +1241,6 @@ static Llvm_register_sym load_def(Env* env, Llvm_block* new_block, Node_def* old
             return load_function_decl(env, new_block, node_unwrap_function_decl(old_def));
         case NODE_VARIABLE_DEF:
             return load_variable_def(env, new_block, node_unwrap_variable_def(old_def));
-        case NODE_LABEL:
-            unreachable("");
         case NODE_STRUCT_DEF:
             return load_struct_def(env, new_block, node_unwrap_struct_def(old_def));
         case NODE_ENUM_DEF:

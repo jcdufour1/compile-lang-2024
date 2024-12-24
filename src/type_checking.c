@@ -638,9 +638,6 @@ bool try_set_def_types(Env* env, Node_def** new_node, Node_def* node) {
         case NODE_PRIMITIVE_DEF:
             *new_node = node;
             return true;
-        case NODE_LABEL:
-            *new_node = node;
-            return true;
         case NODE_LITERAL_DEF:
             *new_node = node;
             return true;

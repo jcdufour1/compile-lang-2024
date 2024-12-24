@@ -505,22 +505,23 @@ Str_view node_function_def_print_internal(const Node_function_def* fun_def) {
     return string_to_strv(buf);
 }
 
-static void extend_struct_def_base(String* buf, Struct_def_base base) {
-    string_extend_strv(&print_arena, buf, base.name);
+static void extend_struct_def_base(String* buf, const char* type_name, Struct_def_base base) {
+    string_extend_cstr_indent(&print_arena, buf, type_name, recursion_depth);
+    string_extend_strv_in_par(&print_arena, buf, base.name);
+    string_extend_cstr(&print_arena, buf, "\n");
 
+    recursion_depth += INDENT_WIDTH;
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
         Str_view memb_text = node_print_internal(vec_at(&base.members, idx));
         string_extend_strv(&print_arena, buf, memb_text);
     }
+    recursion_depth -= INDENT_WIDTH;
 }
 
 Str_view node_struct_def_print_internal(const Node_struct_def* def) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "struct_def\n", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    extend_struct_def_base(&buf, def->base);
-    recursion_depth -= INDENT_WIDTH;
+    extend_struct_def_base(&buf, "struct_def", def->base);
 
     return string_to_strv(buf);
 }
@@ -528,10 +529,7 @@ Str_view node_struct_def_print_internal(const Node_struct_def* def) {
 Str_view node_raw_union_def_print_internal(const Node_raw_union_def* def) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "raw_union_def\n", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    extend_struct_def_base(&buf, def->base);
-    recursion_depth -= INDENT_WIDTH;
+    extend_struct_def_base(&buf, "raw_union_def", def->base);
 
     return string_to_strv(buf);
 }
@@ -539,10 +537,7 @@ Str_view node_raw_union_def_print_internal(const Node_raw_union_def* def) {
 Str_view node_enum_def_print_internal(const Node_enum_def* def) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "enum_def\n", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    extend_struct_def_base(&buf, def->base);
-    recursion_depth -= INDENT_WIDTH;
+    extend_struct_def_base(&buf, "enum_def", def->base);
 
     return string_to_strv(buf);
 }
@@ -586,16 +581,6 @@ Str_view node_struct_lit_def_print_internal(const Node_struct_lit_def* def) {
     }
 
     recursion_depth -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
-Str_view node_label_print_internal(const Node_label* label) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "label\n", recursion_depth);
-    string_extend_strv_indent(&print_arena, &buf, label->name, recursion_depth);
-    string_extend_cstr_indent(&print_arena, &buf, "\n", recursion_depth);
 
     return string_to_strv(buf);
 }
@@ -647,8 +632,6 @@ Str_view node_def_print_internal(const Node_def* def) {
             return node_enum_def_print_internal(node_unwrap_enum_def_const(def));
         case NODE_PRIMITIVE_DEF:
             return node_primitive_def_print_internal(node_unwrap_primitive_def_const(def));
-        case NODE_LABEL:
-            return node_label_print_internal(node_unwrap_label_const(def));
         case NODE_LITERAL_DEF:
             return node_literal_def_print_internal(node_unwrap_literal_def_const(def));
     }

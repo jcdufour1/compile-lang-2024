@@ -200,11 +200,11 @@ void do_passes(Str_view file_text, const Parameters* params) {
     arena_reset(&print_arena);
 
     Llvm_block* llvm_root = add_load_and_store(&env, root);
-    //log_tree(LOG_DEBUG, node_wrap_block(root));
+    log(LOG_DEBUG, "\n"NODE_FMT, llvm_block_print(llvm_root));
     assert(root);
 
     llvm_root = assign_llvm_ids(&env, llvm_root);
-    //log_tree(LOG_DEBUG, node_wrap_block(root));
+    log(LOG_DEBUG, "\n"NODE_FMT, llvm_block_print(llvm_root));
     arena_reset(&print_arena);
 
     if (params->emit_llvm) {

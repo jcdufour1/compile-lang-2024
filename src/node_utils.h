@@ -95,40 +95,6 @@ static inline Str_view get_symbol_typed_name(const Node_symbol_typed* sym) {
     unreachable("");
 }
 
-static inline Llvm_id get_llvm_id_expr(const Node_expr* expr) {
-    switch (expr->type) {
-        case NODE_MEMBER_ACCESS_TYPED:
-            unreachable("");
-        case NODE_MEMBER_ACCESS_UNTYPED:
-            unreachable("");
-        case NODE_INDEX_TYPED:
-            unreachable("");
-        case NODE_INDEX_UNTYPED:
-            unreachable("");
-        case NODE_LITERAL:
-            unreachable("");
-        case NODE_OPERATOR: {
-            const Node_operator* operator = node_unwrap_operator_const(expr);
-            if (operator->type == NODE_UNARY) {
-                return node_unwrap_unary_const(operator)->llvm_id;
-            } else if (operator->type == NODE_BINARY) {
-                return node_unwrap_binary_const(operator)->llvm_id;
-            } else {
-                unreachable("");
-            }
-        }
-        case NODE_SYMBOL_UNTYPED:
-            unreachable("");
-        case NODE_SYMBOL_TYPED:
-            unreachable("");
-        case NODE_FUNCTION_CALL:
-            return node_unwrap_function_call_const(expr)->llvm_id;
-        case NODE_STRUCT_LITERAL:
-            unreachable("");
-    }
-    unreachable("");
-}
-
 static inline Lang_type node_get_lang_type_symbol_typed(const Node_symbol_typed* sym) {
     switch (sym->type) {
         case NODE_PRIMITIVE_SYM:
@@ -217,8 +183,6 @@ static inline Lang_type node_get_lang_type_def(const Node_def* def) {
             return lang_type_new_from_strv(node_unwrap_struct_def_const(def)->base.name, 0);
         case NODE_PRIMITIVE_DEF:
             unreachable("");
-        case NODE_LABEL:
-            unreachable("");
         case NODE_LITERAL_DEF:
             unreachable("");
     }
@@ -304,8 +268,6 @@ static inline Lang_type* node_get_lang_type_def_ref(Node_def* def) {
         case NODE_STRUCT_DEF:
             unreachable("");
         case NODE_PRIMITIVE_DEF:
-            unreachable("");
-        case NODE_LABEL:
             unreachable("");
         case NODE_LITERAL_DEF:
             unreachable("");
@@ -547,8 +509,6 @@ static inline Str_view get_def_name(const Node_def* def) {
             return node_unwrap_function_decl_const(def)->name;
         case NODE_FUNCTION_DEF:
             return node_unwrap_function_def_const(def)->declaration->name;
-        case NODE_LABEL:
-            return node_unwrap_label_const(def)->name;
         case NODE_LITERAL_DEF:
             return get_literal_def_name(node_unwrap_literal_def_const(def));
     }

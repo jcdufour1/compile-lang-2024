@@ -102,8 +102,6 @@ static Node_def* change_op_def(Env* env, Node_def* root) {
             return root;
         case NODE_FUNCTION_DECL:
             return root;
-        case NODE_LABEL:
-            return root;
         case NODE_LITERAL_DEF:
             return root;
     }

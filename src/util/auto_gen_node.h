@@ -136,7 +136,6 @@ static Node_type node_gen_unary(void) {
     append_member(&unary.members, "Node_expr*", "child");
     append_member(&unary.members, "TOKEN_TYPE", "token_type");
     append_member(&unary.members, "Lang_type", "lang_type");
-    append_member(&unary.members, "Llvm_id", "llvm_id");
 
     return unary;
 }
@@ -148,7 +147,6 @@ static Node_type node_gen_binary(void) {
     append_member(&binary.members, "Node_expr*", "rhs");
     append_member(&binary.members, "TOKEN_TYPE", "token_type");
     append_member(&binary.members, "Lang_type", "lang_type");
-    append_member(&binary.members, "Llvm_id", "llvm_id");
 
     return binary;
 }
@@ -219,7 +217,6 @@ static Node_type node_gen_member_access_typed(void) {
     append_member(&access.members, "Lang_type", "lang_type");
     append_member(&access.members, "Str_view", "member_name");
     append_member(&access.members, "Node_expr*", "callee");
-    append_member(&access.members, "Llvm_id", "llvm_id");
 
     return access;
 }
@@ -248,7 +245,6 @@ static Node_type node_gen_index_typed(void) {
     append_member(&index.members, "Lang_type", "lang_type");
     append_member(&index.members, "Node_expr*", "index");
     append_member(&index.members, "Node_expr*", "callee");
-    append_member(&index.members, "Llvm_id", "llvm_id");
 
     return index;
 }
@@ -315,7 +311,6 @@ static Node_type node_gen_function_call(void) {
 
     append_member(&call.members, "Expr_ptr_vec", "args");
     append_member(&call.members, "Str_view", "name");
-    append_member(&call.members, "Llvm_id", "llvm_id");
     append_member(&call.members, "Lang_type", "lang_type");
 
     return call;
@@ -327,7 +322,6 @@ static Node_type node_gen_struct_literal(void) {
     append_member(&lit.members, "Node_ptr_vec", "members");
     append_member(&lit.members, "Str_view", "name");
     append_member(&lit.members, "Lang_type", "lang_type");
-    append_member(&lit.members, "Llvm_id", "llvm_id");
 
     return lit;
 }
@@ -380,7 +374,6 @@ static Node_type node_gen_function_def(void) {
 
     append_member(&def.members, "Node_function_decl*", "declaration");
     append_member(&def.members, "Node_block*", "body");
-    append_member(&def.members, "Llvm_id", "llvm_id");
 
     return def;
 }
@@ -390,7 +383,6 @@ static Node_type node_gen_variable_def(void) {
 
     append_member(&def.members, "Lang_type", "lang_type");
     append_member(&def.members, "bool", "is_variadic"); // TODO: : 1
-    append_member(&def.members, "Llvm_id", "llvm_id");
     append_member(&def.members, "Str_view", "name");
 
     return def;
@@ -412,15 +404,6 @@ static Node_type node_gen_primitive_def(void) {
     return def;
 }
 
-static Node_type node_gen_label(void) {
-    Node_type def = {.name = node_name_new("def", "label", false)};
-
-    append_member(&def.members, "Llvm_id", "llvm_id");
-    append_member(&def.members, "Str_view", "name");
-
-    return def;
-}
-
 static Node_type node_gen_string_def(void) {
     Node_type def = {.name = node_name_new("literal_def", "string_def", false)};
 
@@ -436,7 +419,6 @@ static Node_type node_gen_struct_lit_def(void) {
     append_member(&def.members, "Node_ptr_vec", "members");
     append_member(&def.members, "Str_view", "name");
     append_member(&def.members, "Lang_type", "lang_type");
-    append_member(&def.members, "Llvm_id", "llvm_id");
 
     return def;
 }
@@ -460,7 +442,6 @@ static Node_type node_gen_def(void) {
     vec_append(&gen_a, &def.sub_types, node_gen_enum_def());
     vec_append(&gen_a, &def.sub_types, node_gen_primitive_def());
     vec_append(&gen_a, &def.sub_types, node_gen_function_decl());
-    vec_append(&gen_a, &def.sub_types, node_gen_label());
     vec_append(&gen_a, &def.sub_types, node_gen_literal_def());
 
     return def;
@@ -470,7 +451,6 @@ static Node_type node_gen_function_params(void) {
     Node_type params = {.name = node_name_new("node", "function_params", false)};
 
     append_member(&params.members, "Node_var_def_vec", "params");
-    append_member(&params.members, "Llvm_id", "llvm_id");
 
     return params;
 }
