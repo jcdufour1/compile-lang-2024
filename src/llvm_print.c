@@ -137,28 +137,6 @@ Str_view llvm_symbol_typed_print_internal(const Llvm_symbol_typed* sym) {
     unreachable("");
 }
 
-Str_view llvm_symbol_untyped_print_internal(const Llvm_symbol_untyped* sym) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "symbol_untyped", recursion_depth);
-    string_extend_strv(&print_arena, &buf, sym->name);
-    string_extend_cstr(&print_arena, &buf, "\n");
-
-    return string_to_strv(buf);
-}
-
-Str_view llvm_member_access_untyped_print_internal(const Llvm_member_access_untyped* access) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "member_access_untyped", recursion_depth);
-    string_extend_strv(&print_arena, &buf, access->member_name);
-    recursion_depth += INDENT_WIDTH;
-    string_extend_strv_indent(&print_arena, &buf, llvm_expr_print_internal(access->callee), recursion_depth);
-    recursion_depth -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
 Str_view llvm_member_access_typed_print_internal(const Llvm_member_access_typed* access) {
     String buf = {0};
 
@@ -166,18 +144,6 @@ Str_view llvm_member_access_typed_print_internal(const Llvm_member_access_typed*
     string_extend_strv(&print_arena, &buf, access->member_name);
     recursion_depth += INDENT_WIDTH;
     string_extend_strv_indent(&print_arena, &buf, llvm_expr_print_internal(access->callee), recursion_depth);
-    recursion_depth -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
-Str_view llvm_index_untyped_print_internal(const Llvm_index_untyped* index) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "index_untyped", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    string_extend_strv_indent(&print_arena, &buf, llvm_expr_print_internal(index->index), recursion_depth);
-    string_extend_strv_indent(&print_arena, &buf, llvm_expr_print_internal(index->callee), recursion_depth);
     recursion_depth -= INDENT_WIDTH;
 
     return string_to_strv(buf);
@@ -362,107 +328,6 @@ Str_view llvm_lang_type_print_internal(const Llvm_lang_type* lang_type) {
     return string_to_strv(buf);
 }
 
-Str_view llvm_for_lower_bound_print_internal(const Llvm_for_lower_bound* lower) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "for_lower_bound\n", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, llvm_expr_print_internal(lower->child));
-    recursion_depth -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
-Str_view llvm_for_upper_bound_print_internal(const Llvm_for_upper_bound* upper) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "for_upper_bound\n", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, llvm_expr_print_internal(upper->child));
-    recursion_depth -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
-Str_view llvm_condition_print_internal(const Llvm_condition* cond) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "condition\n", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, llvm_operator_print_internal(cond->child));
-    recursion_depth -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
-Str_view llvm_for_range_print_internal(const Llvm_for_range* for_range) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "for_range\n", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, llvm_variable_def_print_internal(for_range->var_def));
-    string_extend_strv(&print_arena, &buf, llvm_for_lower_bound_print_internal(for_range->lower_bound));
-    string_extend_strv(&print_arena, &buf, llvm_for_upper_bound_print_internal(for_range->upper_bound));
-    string_extend_strv(&print_arena, &buf, llvm_block_print_internal(for_range->body));
-    recursion_depth -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
-Str_view llvm_for_with_cond_print_internal(const Llvm_for_with_cond* for_cond) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "for_with_cond\n", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, llvm_condition_print_internal(for_cond->condition));
-    string_extend_strv(&print_arena, &buf, llvm_block_print_internal(for_cond->body));
-    recursion_depth -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
-Str_view llvm_break_print_internal(const Llvm_break* lang_break) {
-    (void) lang_break;
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "break\n", recursion_depth);
-
-    return string_to_strv(buf);
-}
-
-Str_view llvm_continue_print_internal(const Llvm_continue* lang_continue) {
-    (void) lang_continue;
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "continue\n", recursion_depth);
-
-    return string_to_strv(buf);
-}
-
-Str_view llvm_assignment_print_internal(const Llvm_assignment* assign) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "assignment\n", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, llvm_print_internal(assign->lhs));
-    string_extend_strv(&print_arena, &buf, llvm_expr_print_internal(assign->rhs));
-    recursion_depth -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
-Str_view llvm_if_print_internal(const Llvm_if* lang_if) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "if\n", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, llvm_condition_print_internal(lang_if->condition));
-    string_extend_strv(&print_arena, &buf, llvm_block_print_internal(lang_if->body));
-    recursion_depth -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
 Str_view llvm_return_print_internal(const Llvm_return* lang_rtn) {
     String buf = {0};
 
@@ -529,20 +394,6 @@ Str_view llvm_store_another_llvm_print_internal(const Llvm_store_another_llvm* s
     recursion_depth += INDENT_WIDTH;
     extend_lang_type(&buf, store->lang_type, true);
     string_extend_cstr(&print_arena, &buf, "\n");
-    recursion_depth -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
-Str_view llvm_if_else_chain_print_internal(const Llvm_if_else_chain* if_else) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "if_else_chain\n", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    for (size_t idx = 0; idx < if_else->llvms.info.count; idx++) {
-        Str_view arg_text = llvm_if_print_internal(vec_at(&if_else->llvms, idx));
-        string_extend_strv(&print_arena, &buf, arg_text);
-    }
     recursion_depth -= INDENT_WIDTH;
 
     return string_to_strv(buf);
@@ -728,14 +579,8 @@ Str_view llvm_expr_print_internal(const Llvm_expr* expr) {
             return llvm_operator_print_internal(llvm_unwrap_operator_const(expr));
         case LLVM_SYMBOL_TYPED:
             return llvm_symbol_typed_print_internal(llvm_unwrap_symbol_typed_const(expr));
-        case LLVM_SYMBOL_UNTYPED:
-            return llvm_symbol_untyped_print_internal(llvm_unwrap_symbol_untyped_const(expr));
-        case LLVM_MEMBER_ACCESS_UNTYPED:
-            return llvm_member_access_untyped_print_internal(llvm_unwrap_member_access_untyped_const(expr));
         case LLVM_MEMBER_ACCESS_TYPED:
             return llvm_member_access_typed_print_internal(llvm_unwrap_member_access_typed_const(expr));
-        case LLVM_INDEX_UNTYPED:
-            return llvm_index_untyped_print_internal(llvm_unwrap_index_untyped_const(expr));
         case LLVM_INDEX_TYPED:
             return llvm_index_typed_print_internal(llvm_unwrap_index_typed_const(expr));
         case LLVM_LITERAL:
@@ -756,32 +601,14 @@ Str_view llvm_print_internal(const Llvm* llvm) {
             return llvm_block_print_internal(llvm_unwrap_block_const(llvm));
         case LLVM_EXPR:
             return llvm_expr_print_internal(llvm_unwrap_expr_const(llvm));
+        case LLVM_DEF:
+            return llvm_def_print_internal(llvm_unwrap_def_const(llvm));
         case LLVM_LOAD_ELEMENT_PTR:
             return llvm_load_element_ptr_print_internal(llvm_unwrap_load_element_ptr_const(llvm));
         case LLVM_FUNCTION_PARAMS:
             return llvm_function_params_print_internal(llvm_unwrap_function_params_const(llvm));
         case LLVM_LANG_TYPE:
             return llvm_lang_type_print_internal(llvm_unwrap_lang_type_const(llvm));
-        case LLVM_FOR_LOWER_BOUND:
-            return llvm_for_lower_bound_print_internal(llvm_unwrap_for_lower_bound_const(llvm));
-        case LLVM_FOR_UPPER_BOUND:
-            return llvm_for_upper_bound_print_internal(llvm_unwrap_for_upper_bound_const(llvm));
-        case LLVM_DEF:
-            return llvm_def_print_internal(llvm_unwrap_def_const(llvm));
-        case LLVM_CONDITION:
-            return llvm_condition_print_internal(llvm_unwrap_condition_const(llvm));
-        case LLVM_FOR_RANGE:
-            return llvm_for_range_print_internal(llvm_unwrap_for_range_const(llvm));
-        case LLVM_FOR_WITH_COND:
-            return llvm_for_with_cond_print_internal(llvm_unwrap_for_with_cond_const(llvm));
-        case LLVM_BREAK:
-            return llvm_break_print_internal(llvm_unwrap_break_const(llvm));
-        case LLVM_CONTINUE:
-            return llvm_continue_print_internal(llvm_unwrap_continue_const(llvm));
-        case LLVM_ASSIGNMENT:
-            return llvm_assignment_print_internal(llvm_unwrap_assignment_const(llvm));
-        case LLVM_IF:
-            return llvm_if_print_internal(llvm_unwrap_if_const(llvm));
         case LLVM_RETURN:
             return llvm_return_print_internal(llvm_unwrap_return_const(llvm));
         case LLVM_GOTO:
@@ -794,8 +621,6 @@ Str_view llvm_print_internal(const Llvm* llvm) {
             return llvm_load_another_llvm_print_internal(llvm_unwrap_load_another_llvm_const(llvm));
         case LLVM_STORE_ANOTHER_LLVM:
             return llvm_store_another_llvm_print_internal(llvm_unwrap_store_another_llvm_const(llvm));
-        case LLVM_IF_ELSE_CHAIN:
-            return llvm_if_else_chain_print_internal(llvm_unwrap_if_else_chain_const(llvm));
     }
     unreachable("");
 }

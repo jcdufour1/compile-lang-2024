@@ -194,14 +194,6 @@ static Llvm_type llvm_gen_operator(void) {
     return operator;
 }
 
-static Llvm_type llvm_gen_symbol_untyped(void) {
-    Llvm_type sym = {.name = llvm_name_new("expr", "symbol_untyped", false)};
-
-    append_member(&sym.members, "Str_view", "name");
-
-    return sym;
-}
-
 static Llvm_type llvm_gen_symbol_typed(void) {
     Llvm_type sym = {.name = llvm_name_new("expr", "symbol_typed", false)};
 
@@ -222,24 +214,6 @@ static Llvm_type llvm_gen_member_access_typed(void) {
     append_member(&access.members, "Llvm_id", "llvm_id");
 
     return access;
-}
-
-static Llvm_type llvm_gen_member_access_untyped(void) {
-    Llvm_type access = {.name = llvm_name_new("expr", "member_access_untyped", false)};
-
-    append_member(&access.members, "Str_view", "member_name");
-    append_member(&access.members, "Llvm_expr*", "callee");
-
-    return access;
-}
-
-static Llvm_type llvm_gen_index_untyped(void) {
-    Llvm_type index = {.name = llvm_name_new("expr", "index_untyped", false)};
-
-    append_member(&index.members, "Llvm_expr*", "index");
-    append_member(&index.members, "Llvm_expr*", "callee");
-
-    return index;
 }
 
 static Llvm_type llvm_gen_index_typed(void) {
@@ -345,11 +319,8 @@ static Llvm_type llvm_gen_expr(void) {
     Llvm_type expr = {.name = llvm_name_new("llvm", "expr", false)};
 
     vec_append(&gen_a, &expr.sub_types, llvm_gen_operator());
-    vec_append(&gen_a, &expr.sub_types, llvm_gen_symbol_untyped());
     vec_append(&gen_a, &expr.sub_types, llvm_gen_symbol_typed());
-    vec_append(&gen_a, &expr.sub_types, llvm_gen_member_access_untyped());
     vec_append(&gen_a, &expr.sub_types, llvm_gen_member_access_typed());
-    vec_append(&gen_a, &expr.sub_types, llvm_gen_index_untyped());
     vec_append(&gen_a, &expr.sub_types, llvm_gen_index_typed());
     vec_append(&gen_a, &expr.sub_types, llvm_gen_literal());
     vec_append(&gen_a, &expr.sub_types, llvm_gen_function_call());
@@ -506,84 +477,6 @@ static Llvm_type llvm_gen_lang_type(void) {
     return lang_type;
 }
 
-static Llvm_type llvm_gen_for_lower_bound(void) {
-    Llvm_type bound = {.name = llvm_name_new("llvm", "for_lower_bound", false)};
-
-    append_member(&bound.members, "Llvm_expr*", "child");
-
-    return bound;
-}
-
-static Llvm_type llvm_gen_for_upper_bound(void) {
-    Llvm_type bound = {.name = llvm_name_new("llvm", "for_upper_bound", false)};
-
-    append_member(&bound.members, "Llvm_expr*", "child");
-
-    return bound;
-}
-
-static Llvm_type llvm_gen_condition(void) {
-    Llvm_type bound = {.name = llvm_name_new("llvm", "condition", false)};
-
-    append_member(&bound.members, "Llvm_operator*", "child");
-
-    return bound;
-}
-
-static Llvm_type llvm_gen_for_range(void) {
-    Llvm_type range = {.name = llvm_name_new("llvm", "for_range", false)};
-
-    append_member(&range.members, "Llvm_variable_def*", "var_def");
-    append_member(&range.members, "Llvm_for_lower_bound*", "lower_bound");
-    append_member(&range.members, "Llvm_for_upper_bound*", "upper_bound");
-    append_member(&range.members, "Llvm_block*", "body");
-
-    return range;
-}
-
-static Llvm_type llvm_gen_for_with_cond(void) {
-    Llvm_type for_cond = {.name = llvm_name_new("llvm", "for_with_cond", false)};
-
-    append_member(&for_cond.members, "Llvm_condition*", "condition");
-    append_member(&for_cond.members, "Llvm_block*", "body");
-
-    return for_cond;
-}
-
-static Llvm_type llvm_gen_break(void) {
-    Llvm_type lang_break = {.name = llvm_name_new("llvm", "break", false)};
-
-    append_member(&lang_break.members, "Llvm*", "child");
-
-    return lang_break;
-}
-
-static Llvm_type llvm_gen_continue(void) {
-    Llvm_type lang_cont = {.name = llvm_name_new("llvm", "continue", false)};
-
-    append_member(&lang_cont.members, "Llvm*", "child");
-
-    return lang_cont;
-}
-
-static Llvm_type llvm_gen_assignment(void) {
-    Llvm_type assign = {.name = llvm_name_new("llvm", "assignment", false)};
-
-    append_member(&assign.members, "Llvm*", "lhs");
-    append_member(&assign.members, "Llvm_expr*", "rhs");
-
-    return assign;
-}
-
-static Llvm_type llvm_gen_if(void) {
-    Llvm_type lang_if = {.name = llvm_name_new("llvm", "if", false)};
-
-    append_member(&lang_if.members, "Llvm_condition*", "condition");
-    append_member(&lang_if.members, "Llvm_block*", "body");
-
-    return lang_if;
-}
-
 static Llvm_type llvm_gen_return(void) {
     Llvm_type rtn = {.name = llvm_name_new("llvm", "return", false)};
 
@@ -644,14 +537,6 @@ static Llvm_type llvm_gen_store_another_llvm(void) {
     return store;
 }
 
-static Llvm_type llvm_gen_if_else_chain(void) {
-    Llvm_type chain = {.name = llvm_name_new("llvm", "if_else_chain", false)};
-
-    append_member(&chain.members, "Llvm_if_ptr_vec", "llvms");
-
-    return chain;
-}
-
 static Llvm_type llvm_gen_llvm(void) {
     Llvm_type llvm = {.name = llvm_name_new("llvm", "", true)};
 
@@ -660,23 +545,13 @@ static Llvm_type llvm_gen_llvm(void) {
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_load_element_ptr());
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_function_params());
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_lang_type());
-    vec_append(&gen_a, &llvm.sub_types, llvm_gen_for_lower_bound());
-    vec_append(&gen_a, &llvm.sub_types, llvm_gen_for_upper_bound());
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_def());
-    vec_append(&gen_a, &llvm.sub_types, llvm_gen_condition());
-    vec_append(&gen_a, &llvm.sub_types, llvm_gen_for_range());
-    vec_append(&gen_a, &llvm.sub_types, llvm_gen_for_with_cond());
-    vec_append(&gen_a, &llvm.sub_types, llvm_gen_break());
-    vec_append(&gen_a, &llvm.sub_types, llvm_gen_continue());
-    vec_append(&gen_a, &llvm.sub_types, llvm_gen_assignment());
-    vec_append(&gen_a, &llvm.sub_types, llvm_gen_if());
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_return());
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_goto());
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_cond_goto());
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_alloca());
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_load_another_llvm());
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_store_another_llvm());
-    vec_append(&gen_a, &llvm.sub_types, llvm_gen_if_else_chain());
 
     return llvm;
 }

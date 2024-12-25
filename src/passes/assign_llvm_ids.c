@@ -54,15 +54,9 @@ static Llvm_function_call* id_function_call(Llvm_function_call* fun_call) {
 
 static Llvm_expr* id_expr(Llvm_expr* expr) {
     switch (expr->type) {
-        case LLVM_SYMBOL_UNTYPED:
-            return expr;
-        case LLVM_MEMBER_ACCESS_UNTYPED:
-            unreachable("");
         case LLVM_MEMBER_ACCESS_TYPED:
             llvm_unwrap_member_access_typed(expr)->llvm_id = llvm_id_new();
             return expr;
-        case LLVM_INDEX_UNTYPED:
-            unreachable("");
         case LLVM_INDEX_TYPED:
             llvm_unwrap_index_typed(expr)->llvm_id = llvm_id_new();
             return expr;
@@ -156,8 +150,6 @@ static Llvm* id_llvm(Llvm* llvm) {
         case LLVM_STORE_ANOTHER_LLVM:
             llvm_unwrap_store_another_llvm(llvm)->llvm_id = llvm_id_new();
             return llvm;
-        case LLVM_ASSIGNMENT:
-            unreachable("");
         case LLVM_ALLOCA:
             llvm_unwrap_alloca(llvm)->llvm_id = llvm_id_new();
             return llvm;
@@ -167,24 +159,6 @@ static Llvm* id_llvm(Llvm* llvm) {
         case LLVM_COND_GOTO:
             llvm_unwrap_cond_goto(llvm)->llvm_id = llvm_id_new();
             return llvm;
-        case LLVM_FOR_LOWER_BOUND:
-            unreachable("");
-        case LLVM_FOR_UPPER_BOUND:
-            unreachable("");
-        case LLVM_FOR_RANGE:
-            unreachable("");
-        case LLVM_FOR_WITH_COND:
-            unreachable("");
-        case LLVM_BREAK:
-            unreachable("");
-        case LLVM_CONTINUE:
-            unreachable("");
-        case LLVM_IF:
-            unreachable("");
-        case LLVM_IF_ELSE_CHAIN:
-            unreachable("");
-        case LLVM_CONDITION:
-            unreachable("");
     }
     unreachable("");
 }

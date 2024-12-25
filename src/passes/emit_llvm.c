@@ -329,8 +329,6 @@ static void emit_function_call_arguments(const Env* env, String* output, const L
                 break;
             case LLVM_STRUCT_LITERAL:
                 todo();
-            case LLVM_SYMBOL_UNTYPED:
-                unreachable("untyped symbols should not still be present");
             case LLVM_SYMBOL_TYPED:
                 unreachable("typed symbols should not still be present");
             case LLVM_LLVM_PLACEHOLDER: {
@@ -510,8 +508,6 @@ static void emit_operator_operand(String* output, const Llvm_expr* operand) {
                 output, llvm_unwrap_llvm_placeholder_const(operand)
             );
             break;
-        case LLVM_SYMBOL_UNTYPED:
-            unreachable("untyped symbols should not still be present");
         case LLVM_FUNCTION_CALL:
             string_extend_cstr(&a_main, output, "%");
             string_extend_size_t(&a_main, output, llvm_unwrap_function_call_const(operand)->llvm_id);
@@ -723,8 +719,6 @@ static void emit_return(const Env* env, String* output, const Llvm_return* fun_r
         }
         case LLVM_SYMBOL_TYPED:
             unreachable("");
-        case LLVM_SYMBOL_UNTYPED:
-            unreachable("untyped symbols should not still be present");
         case LLVM_LLVM_PLACEHOLDER: {
             const Llvm_llvm_placeholder* memb_sym = llvm_unwrap_llvm_placeholder_const(sym_to_return);
             if (llvm_is_literal(memb_sym->llvm_reg.llvm)) {
@@ -896,8 +890,6 @@ static void emit_block(Env* env, String* output, const Llvm_block* block) {
             case LLVM_RETURN:
                 emit_return(env, output, llvm_unwrap_return_const(statement));
                 break;
-            case LLVM_ASSIGNMENT:
-                unreachable("an assignment should not still be present at this point");
             case LLVM_BLOCK:
                 emit_block(env, output, llvm_unwrap_block_const(statement));
                 break;
@@ -919,10 +911,6 @@ static void emit_block(Env* env, String* output, const Llvm_block* block) {
             case LLVM_STORE_ANOTHER_LLVM:
                 emit_store_another_llvm(env, output, llvm_unwrap_store_another_llvm_const(statement));
                 break;
-            case LLVM_FOR_RANGE:
-                unreachable("for loop should not still be present at this point\n");
-            case LLVM_FOR_WITH_COND:
-                unreachable("for loop should not still be present at this point\n");
             default:
                 log(LOG_ERROR, STRING_FMT"\n", string_print(*output));
                 llvm_printf(statement);

@@ -324,6 +324,7 @@ Str_view node_block_print_internal(const Node_block* block) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "block\n", recursion_depth);
+    // TODO: extend table here to buf instead of this
     symbol_log_table(LOG_DEBUG, block->symbol_collection.symbol_table);
     alloca_log_table(LOG_DEBUG, block->symbol_collection.alloca_table);
 

@@ -96,11 +96,7 @@ static inline Llvm_id llvm_get_llvm_id_expr(const Llvm_expr* expr) {
     switch (expr->type) {
         case LLVM_MEMBER_ACCESS_TYPED:
             unreachable("");
-        case LLVM_MEMBER_ACCESS_UNTYPED:
-            unreachable("");
         case LLVM_INDEX_TYPED:
-            unreachable("");
-        case LLVM_INDEX_UNTYPED:
             unreachable("");
         case LLVM_LITERAL:
             unreachable("");
@@ -114,8 +110,6 @@ static inline Llvm_id llvm_get_llvm_id_expr(const Llvm_expr* expr) {
                 unreachable("");
             }
         }
-        case LLVM_SYMBOL_UNTYPED:
-            unreachable("");
         case LLVM_SYMBOL_TYPED:
             unreachable("");
         case LLVM_FUNCTION_CALL:
@@ -191,22 +185,6 @@ static inline Llvm_id llvm_get_llvm_id(const Llvm* llvm) {
         break;
         case LLVM_RETURN:
             unreachable("");
-        case LLVM_FOR_RANGE:
-            unreachable("");
-        case LLVM_FOR_WITH_COND:
-            unreachable("");
-        case LLVM_FOR_LOWER_BOUND:
-            unreachable("");
-        case LLVM_FOR_UPPER_BOUND:
-            unreachable("");
-        case LLVM_BREAK:
-            unreachable("");
-        case LLVM_IF:
-            unreachable("");
-        case LLVM_CONDITION:
-            unreachable("");
-        case LLVM_ASSIGNMENT:
-            unreachable("");
         case LLVM_GOTO:
             unreachable("");
         case LLVM_COND_GOTO:
@@ -276,20 +254,14 @@ static inline Lang_type llvm_get_lang_type_expr(const Llvm_expr* expr) {
             return llvm_unwrap_struct_literal_const(expr)->lang_type;
         case LLVM_FUNCTION_CALL:
             return llvm_unwrap_function_call_const(expr)->lang_type;
-        case LLVM_MEMBER_ACCESS_UNTYPED:
-            unreachable("");
         case LLVM_MEMBER_ACCESS_TYPED:
             return llvm_unwrap_member_access_typed_const(expr)->lang_type;
         case LLVM_INDEX_TYPED:
             return llvm_unwrap_index_typed_const(expr)->lang_type;
-        case LLVM_INDEX_UNTYPED:
-            unreachable("");
         case LLVM_LITERAL:
             return llvm_get_lang_type_literal(llvm_unwrap_literal_const(expr));
         case LLVM_OPERATOR:
             return llvm_get_lang_type_operator(llvm_unwrap_operator_const(expr));
-        case LLVM_SYMBOL_UNTYPED:
-            unreachable("");
         case LLVM_SYMBOL_TYPED:
             return llvm_symbol_typed_get_base_const(llvm_unwrap_symbol_typed_const(expr)).lang_type;
         case LLVM_LLVM_PLACEHOLDER:
@@ -328,18 +300,12 @@ static inline Lang_type* llvm_get_lang_type_expr_ref(Llvm_expr* expr) {
             return &llvm_unwrap_struct_literal(expr)->lang_type;
         case LLVM_FUNCTION_CALL:
             return &llvm_unwrap_function_call(expr)->lang_type;
-        case LLVM_MEMBER_ACCESS_UNTYPED:
-            unreachable("");
         case LLVM_MEMBER_ACCESS_TYPED:
             unreachable("");
         case LLVM_INDEX_TYPED:
             unreachable("");
-        case LLVM_INDEX_UNTYPED:
-            unreachable("");
         case LLVM_LITERAL:
             return llvm_get_lang_type_literal_ref(llvm_unwrap_literal(expr));
-        case LLVM_SYMBOL_UNTYPED:
-            unreachable("");
         case LLVM_SYMBOL_TYPED:
             return &llvm_symbol_typed_get_base_ref(llvm_unwrap_symbol_typed(expr))->lang_type;
         case LLVM_OPERATOR:
@@ -364,22 +330,6 @@ static inline Lang_type llvm_get_lang_type(const Llvm* llvm) {
             return llvm_unwrap_lang_type_const(llvm)->lang_type;
         case LLVM_RETURN:
             return llvm_get_lang_type_expr(llvm_unwrap_return_const(llvm)->child);
-        case LLVM_FOR_RANGE:
-            unreachable("");
-        case LLVM_FOR_WITH_COND:
-            unreachable("");
-        case LLVM_FOR_LOWER_BOUND:
-            unreachable("");
-        case LLVM_FOR_UPPER_BOUND:
-            unreachable("");
-        case LLVM_BREAK:
-            unreachable("");
-        case LLVM_IF:
-            unreachable("");
-        case LLVM_CONDITION:
-            unreachable("");
-        case LLVM_ASSIGNMENT:
-            unreachable("");
         case LLVM_GOTO:
             unreachable("");
         case LLVM_COND_GOTO:
@@ -392,10 +342,6 @@ static inline Lang_type llvm_get_lang_type(const Llvm* llvm) {
             return llvm_unwrap_store_another_llvm_const(llvm)->lang_type;
         case LLVM_LOAD_ELEMENT_PTR:
             return llvm_unwrap_load_element_ptr_const(llvm)->lang_type;
-        case LLVM_IF_ELSE_CHAIN:
-            unreachable("");
-        case LLVM_CONTINUE:
-            unreachable("");
     }
     unreachable("");
 }
@@ -438,22 +384,6 @@ static inline Lang_type* llvm_get_lang_type_ref(Llvm* llvm) {
             return &llvm_unwrap_lang_type(llvm)->lang_type;
         case LLVM_RETURN:
             return llvm_get_lang_type_expr_ref(llvm_unwrap_return(llvm)->child);
-        case LLVM_FOR_RANGE:
-            unreachable("");
-        case LLVM_FOR_WITH_COND:
-            unreachable("");
-        case LLVM_FOR_LOWER_BOUND:
-            unreachable("");
-        case LLVM_FOR_UPPER_BOUND:
-            unreachable("");
-        case LLVM_BREAK:
-            unreachable("");
-        case LLVM_IF:
-            unreachable("");
-        case LLVM_CONDITION:
-            unreachable("");
-        case LLVM_ASSIGNMENT:
-            unreachable("");
         case LLVM_GOTO:
             unreachable("");
         case LLVM_COND_GOTO:
@@ -466,10 +396,6 @@ static inline Lang_type* llvm_get_lang_type_ref(Llvm* llvm) {
             return &llvm_unwrap_store_another_llvm(llvm)->lang_type;
         case LLVM_LOAD_ELEMENT_PTR:
             return &llvm_unwrap_load_element_ptr(llvm)->lang_type;
-        case LLVM_IF_ELSE_CHAIN:
-            unreachable("");
-        case LLVM_CONTINUE:
-            unreachable("");
     }
     unreachable("");
 }
@@ -478,17 +404,11 @@ static inline Llvm* llvm_get_expr_src(Llvm_expr* expr) {
     switch (expr->type) {
         case LLVM_STRUCT_LITERAL:
             unreachable("");
-        case LLVM_MEMBER_ACCESS_UNTYPED:
-            unreachable("");
         case LLVM_MEMBER_ACCESS_TYPED:
             unreachable("");
         case LLVM_INDEX_TYPED:
             unreachable("");
-        case LLVM_INDEX_UNTYPED:
-            unreachable("");
         case LLVM_LITERAL:
-            unreachable("");
-        case LLVM_SYMBOL_UNTYPED:
             unreachable("");
         case LLVM_SYMBOL_TYPED:
             unreachable("");
@@ -516,22 +436,6 @@ static inline Llvm* get_llvm_src(Llvm* llvm) {
             unreachable("");
         case LLVM_RETURN:
             unreachable("");
-        case LLVM_FOR_RANGE:
-            unreachable("");
-        case LLVM_FOR_WITH_COND:
-            unreachable("");
-        case LLVM_FOR_LOWER_BOUND:
-            unreachable("");
-        case LLVM_FOR_UPPER_BOUND:
-            unreachable("");
-        case LLVM_BREAK:
-            unreachable("");
-        case LLVM_IF:
-            unreachable("");
-        case LLVM_CONDITION:
-            unreachable("");
-        case LLVM_ASSIGNMENT:
-            unreachable("");
         case LLVM_GOTO:
             unreachable("");
         case LLVM_COND_GOTO:
@@ -545,10 +449,6 @@ static inline Llvm* get_llvm_src(Llvm* llvm) {
             return llvm_unwrap_store_another_llvm(llvm)->llvm_src.llvm;
         case LLVM_LOAD_ELEMENT_PTR:
             return llvm_unwrap_load_element_ptr(llvm)->llvm_src.llvm;
-        case LLVM_IF_ELSE_CHAIN:
-            unreachable("");
-        case LLVM_CONTINUE:
-            unreachable("");
     }
     unreachable("");
 }
@@ -557,17 +457,11 @@ static inline Llvm* llvm_get_expr_dest(Llvm_expr* expr) {
     switch (expr->type) {
         case LLVM_STRUCT_LITERAL:
             unreachable("");
-        case LLVM_MEMBER_ACCESS_UNTYPED:
-            unreachable("");
         case LLVM_MEMBER_ACCESS_TYPED:
             unreachable("");
         case LLVM_INDEX_TYPED:
             unreachable("");
-        case LLVM_INDEX_UNTYPED:
-            unreachable("");
         case LLVM_LITERAL:
-            unreachable("");
-        case LLVM_SYMBOL_UNTYPED:
             unreachable("");
         case LLVM_SYMBOL_TYPED:
             unreachable("");
@@ -595,22 +489,6 @@ static inline Llvm* get_llvm_dest(Llvm* llvm) {
             unreachable("");
         case LLVM_RETURN:
             unreachable("");
-        case LLVM_FOR_RANGE:
-            unreachable("");
-        case LLVM_FOR_WITH_COND:
-            unreachable("");
-        case LLVM_FOR_LOWER_BOUND:
-            unreachable("");
-        case LLVM_FOR_UPPER_BOUND:
-            unreachable("");
-        case LLVM_BREAK:
-            unreachable("");
-        case LLVM_IF:
-            unreachable("");
-        case LLVM_CONDITION:
-            unreachable("");
-        case LLVM_ASSIGNMENT:
-            unreachable("");
         case LLVM_GOTO:
             unreachable("");
         case LLVM_COND_GOTO:
@@ -622,10 +500,6 @@ static inline Llvm* get_llvm_dest(Llvm* llvm) {
         case LLVM_STORE_ANOTHER_LLVM:
             return llvm_unwrap_store_another_llvm_const(llvm)->llvm_dest.llvm;
         case LLVM_LOAD_ELEMENT_PTR:
-            unreachable("");
-        case LLVM_IF_ELSE_CHAIN:
-            unreachable("");
-        case LLVM_CONTINUE:
             unreachable("");
     }
     unreachable("");
@@ -653,16 +527,10 @@ static inline Str_view llvm_get_expr_name(const Llvm_expr* expr) {
             unreachable("");
         case LLVM_STRUCT_LITERAL:
             return llvm_unwrap_struct_literal_const(expr)->name;
-        case LLVM_MEMBER_ACCESS_UNTYPED:
-            return llvm_unwrap_member_access_untyped_const(expr)->member_name;
         case LLVM_MEMBER_ACCESS_TYPED:
             return llvm_unwrap_member_access_typed_const(expr)->member_name;
         case LLVM_INDEX_TYPED:
             unreachable("");
-        case LLVM_INDEX_UNTYPED:
-            unreachable("");
-        case LLVM_SYMBOL_UNTYPED:
-            return llvm_unwrap_symbol_untyped_const(expr)->name;
         case LLVM_SYMBOL_TYPED:
             return llvm_get_symbol_typed_name(llvm_unwrap_symbol_typed_const(expr));
         case LLVM_FUNCTION_CALL:
@@ -735,22 +603,6 @@ static inline Str_view llvm_get_node_name(const Llvm* llvm) {
             unreachable("");
         case LLVM_RETURN:
             unreachable("");
-        case LLVM_FOR_RANGE:
-            unreachable("");
-        case LLVM_FOR_WITH_COND:
-            unreachable("");
-        case LLVM_FOR_LOWER_BOUND:
-            unreachable("");
-        case LLVM_FOR_UPPER_BOUND:
-            unreachable("");
-        case LLVM_BREAK:
-            unreachable("");
-        case LLVM_IF:
-            unreachable("");
-        case LLVM_CONDITION:
-            unreachable("");
-        case LLVM_ASSIGNMENT:
-            unreachable("");
         case LLVM_GOTO:
             return llvm_unwrap_goto_const(llvm)->name;
         case LLVM_COND_GOTO:
@@ -763,10 +615,6 @@ static inline Str_view llvm_get_node_name(const Llvm* llvm) {
             unreachable("");
         case LLVM_LOAD_ELEMENT_PTR:
             return llvm_unwrap_load_element_ptr_const(llvm)->name;
-        case LLVM_IF_ELSE_CHAIN:
-            unreachable("");
-        case LLVM_CONTINUE:
-            unreachable("");
     }
     unreachable("");
 }

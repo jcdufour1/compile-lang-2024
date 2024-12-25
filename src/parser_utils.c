@@ -456,7 +456,7 @@ uint64_t llvm_sizeof_struct_def_base(const Env* env, const Struct_def_base* base
 
 uint64_t llvm_sizeof_struct_expr(const Env* env, const Llvm_expr* struct_literal_or_def) {
     switch (struct_literal_or_def->type) {
-        case NODE_STRUCT_LITERAL:
+        case LLVM_STRUCT_LITERAL:
             return llvm_sizeof_struct_literal(env, llvm_unwrap_struct_literal_const(struct_literal_or_def));
         default:
             unreachable("");
@@ -604,11 +604,6 @@ bool llvm_try_get_generic_struct_def(const Env* env, Node_def** def, Llvm* llvm)
                 assert(node_get_lang_type_def(var_def).str.count > 0);
                 return symbol_lookup(def, env, node_get_lang_type_def(var_def).str);
             }
-            case LLVM_SYMBOL_UNTYPED:
-                unreachable("untyped symbols should not still be present");
-            case LLVM_MEMBER_ACCESS_UNTYPED:
-                assert(llvm_get_lang_type(llvm).str.count > 0);
-                return symbol_lookup(def, env, llvm_get_lang_type(llvm).str);
             default:
                 unreachable(LLVM_FMT"\n", llvm_print(llvm));
         }
