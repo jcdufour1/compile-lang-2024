@@ -3,7 +3,6 @@
 
 #include "util.h"
 #include <node.h>
-#include "node_ptr_vec.h"
 #include "env.h"
 #include "parameters.h"
 

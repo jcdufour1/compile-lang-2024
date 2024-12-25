@@ -1,13 +1,9 @@
 #ifndef LLVM_UTIL_H
 #define LLVM_UTIL_H
 
+#include <llvm.h>
+
 #define LANG_TYPE_FMT STR_VIEW_FMT
-
-struct Llvm_def_;
-typedef struct Llvm_def_ Llvm_def;
-
-struct Llvm_operator_;
-typedef struct Llvm_operator_ Llvm_operator;
 
 void extend_lang_type_to_string(
     Arena* arena,
@@ -32,8 +28,6 @@ static inline Lang_type llvm_lang_type_new_from_cstr(const char* cstr, int16_t p
 #define LLVM_FMT STR_VIEW_FMT
 
 Str_view llvm_print_internal(const Llvm* llvm);
-
-#define llvm_print(root) str_view_print(llvm_print_internal(root))
 
 #define llvm_printf(llvm) \
     do { \

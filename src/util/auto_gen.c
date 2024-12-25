@@ -1,3 +1,4 @@
+#include <auto_gen_vecs.h>
 #include <auto_gen_util.h>
 #include <auto_gen_node.h>
 #include <auto_gen_llvm.h>
@@ -401,6 +402,8 @@ static void gen_symbol_table_c_file(const char* file_path, Sym_tbl_type_vec type
     gen_gen("%s\n", "#define STB_DS_IMPLEMENTATION");
     gen_gen("%s\n", "#include <stb_ds.h>");
     gen_gen("%s\n", "#include \"symbol_table.h\"");
+    gen_gen("%s\n", "#include <node_utils.h>");
+    gen_gen("%s\n", "#include <llvm_utils.h>");
     gen_gen("%s\n", "");
     gen_gen("%s\n", "#define SYM_TBL_DEFAULT_CAPACITY 1");
     gen_gen("%s\n", "#define SYM_TBL_MAX_DENSITY (0.6f)");
@@ -549,12 +552,6 @@ static void gen_symbol_table_header(const char* file_path, Sym_tbl_type_vec type
     gen_gen("%s\n", "");
     gen_gen("%s\n", "#include \"str_view.h\"");
     gen_gen("%s\n", "#include \"string.h\"");
-    gen_gen("%s\n", "#include \"node.h\"");
-    gen_gen("%s\n", "#include \"llvm.h\"");
-    gen_gen("%s\n", "#include \"nodes.h\"");
-    gen_gen("%s\n", "#include \"llvms.h\"");
-    gen_gen("%s\n", "#include \"node_utils.h\"");
-    gen_gen("%s\n", "#include \"llvm_utils.h\"");
     gen_gen("%s\n", "#include \"env.h\"");
     gen_gen("%s\n", "#include \"symbol_table_struct.h\"");
     gen_gen("%s\n", "#include \"do_passes.h\"");
@@ -648,17 +645,12 @@ static void gen_symbol_table_struct(const char* file_path, Sym_tbl_type_vec type
     gen_gen("%s\n", "} SYM_TBL_STATUS;");
     gen_gen("%s\n", "");
 
-    // forward declarations
-    gen_gen("%s\n", "struct Node_def_;");
-    gen_gen("%s\n", "typedef struct Node_def_ Node_def;");
-    gen_gen("%s\n", "struct Llvm_alloca_;");
-    gen_gen("%s\n", "typedef struct Llvm_alloca_ Llvm_alloca;");
-    gen_gen("%s\n", "struct Llvm;");
-    gen_gen("%s\n", "typedef struct Llvm_ Llvm;");
-    gen_gen("%s\n", "struct Node;");
-    gen_gen("%s\n", "typedef struct Node_ Node;");
-    gen_gen("%s\n", "");
+    gen_gen("%s\n", "#include <node_forward_decl.h>");
+    gen_gen("%s\n", "#include <llvm_forward_decl.h>");
+
     gen_gen("%s\n", "static inline Str_view get_alloca_name(const Llvm_alloca* llvm);");
+    gen_gen("%s\n", "static inline Str_view get_def_name(const Node_def* def);");
+    gen_gen("%s\n", "static inline Str_view llvm_get_node_name(const Llvm* llvm);");
 
     for (size_t idx = 0; idx < types.info.count; idx++) {
         gen_symbol_table_struct_internal(vec_at(&types, idx));
@@ -730,7 +722,11 @@ int main(int argc, char** argv) {
     Sym_tbl_type_vec symbol_tbl_types = get_symbol_tbl_types();
 
     gen_all_nodes(get_path(argv[1], "node_forward_decl.h"), false);
+    assert(!global_output);
     gen_all_llvms(get_path(argv[1], "llvm_forward_decl.h"), false);
+    assert(!global_output);
+
+    gen_all_vecs(get_path(argv[1], "vecs.h"));
     assert(!global_output);
 
     gen_symbol_table_struct(get_path(argv[1], "symbol_table_struct.h"), symbol_tbl_types);

@@ -144,7 +144,7 @@ static Node_return* change_op_return(Env* env, Node_return* root) {
 }
 
 static Node_if_else_chain* change_op_if_else_chain(Env* env, Node_if_else_chain* root) {
-    Node_if_ptr_vec new_children = {0};
+    Node_if_vec new_children = {0};
 
     for (size_t idx = 0; idx < root->nodes.info.count; idx++) {
         Node_if* curr = vec_at(&root->nodes, idx);

@@ -3,6 +3,7 @@
 #include <node.h>
 #include <llvms.h>
 #include <util.h>
+#include <llvm_utils.h>
 
 static int recursion_depth = 0;
 

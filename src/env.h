@@ -1,10 +1,9 @@
 #ifndef ENV_H
 #define ENV_H
 
-#include "llvm_hand_written.h"
 #include "symbol_table_struct.h"
-#include "node_ptr_vec.h"
-#include "node_def_vec.h"
+#include <node_forward_decl.h>
+#include <llvm_forward_decl.h>
 
 typedef struct {
     Vec_base info;
@@ -14,10 +13,10 @@ typedef struct {
 typedef struct Env_ {
     Sym_coll_vec ancesters; // index 0 is the root of the tree
                             // index len - 1 is the current node
-    Llvm_ptr_vec llvm_ancesters; // index 0 is the root of the tree
+    Llvm_vec llvm_ancesters; // index 0 is the root of the tree
                                  // index len - 1 is the current node
     Node_def_vec defered_symbols_to_add;
-    Llvm_ptr_vec defered_allocas_to_add;
+    Llvm_vec defered_allocas_to_add;
     Symbol_table global_literals; // this is populated during add_load_and_store pass
     Symbol_table primitives;
     int recursion_depth;

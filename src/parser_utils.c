@@ -1,6 +1,5 @@
 #include <str_view.h>
 #include <string_vec.h>
-#include <node_ptr_vec.h>
 #include <node.h>
 #include <nodes.h>
 #include <symbol_table.h>

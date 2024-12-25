@@ -1,6 +1,8 @@
 #ifndef NODE_UTIL_H
 #define NODE_UTIL_H
 
+#include <node.h>
+
 #define LANG_TYPE_FMT STR_VIEW_FMT
 
 void extend_lang_type_to_string(

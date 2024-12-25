@@ -488,7 +488,7 @@ bool try_set_struct_literal_assignment_types(Env* env, Node** new_node, const No
     Lang_type new_lang_type = {.str = struct_def->base.name, .pointer_depth = 0};
     struct_literal->lang_type = new_lang_type;
     
-    Node_ptr_vec new_literal_members = {0};
+    Node_vec new_literal_members = {0};
     for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
         //log(LOG_DEBUG, "%zu\n", idx);
         Node* memb_sym_def_ = vec_at(&struct_def->base.members, idx);
@@ -1228,7 +1228,7 @@ bool try_set_if_else_chain(Env* env, Node_if_else_chain** new_node, Node_if_else
 
 // TODO: consider if lang_type result should be removed
 bool try_set_block_types(Env* env, Node_block** new_node, Node_block* block, bool is_directly_in_fun_def) {
-    Node_ptr_vec* block_children = &block->children;
+    Node_vec* block_children = &block->children;
 
     vec_append(&a_main, &env->ancesters, &block->symbol_collection);
 

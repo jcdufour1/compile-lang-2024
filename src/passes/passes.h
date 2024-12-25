@@ -6,8 +6,8 @@
 #include <do_passes.h>
 #include <tokens.h>
 
-static inline void insert_into_node_ptr_vec(
-    Node_ptr_vec* block_children,
+static inline void insert_into_node_vec(
+    Node_vec* block_children,
     size_t* idx_to_insert_before,
     size_t idx_to_insert_item,
     Node* node_to_insert

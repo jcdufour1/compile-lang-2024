@@ -3,6 +3,7 @@
 #define AUTO_GEN_LLVM_H
 
 #include <auto_gen_util.h>
+#include <auto_gen_vecs.h>
 
 struct Llvm_type_;
 typedef struct Llvm_type_ Llvm_type;
@@ -119,7 +120,7 @@ static Llvm_type llvm_gen_block(void) {
     Llvm_type block = {.name = llvm_name_new("llvm", "block", false)};
 
     append_member(&block.members, "bool", "is_variadic");
-    append_member(&block.members, "Llvm_ptr_vec", "children");
+    append_member(&block.members, "Llvm_vec", "children");
     append_member(&block.members, "Symbol_collection", "symbol_collection");
     append_member(&block.members, "Pos", "pos_end");
 
@@ -283,7 +284,7 @@ static Llvm_type llvm_gen_literal(void) {
 static Llvm_type llvm_gen_function_call(void) {
     Llvm_type call = {.name = llvm_name_new("expr", "function_call", false)};
 
-    append_member(&call.members, "Llvm_expr_ptr_vec", "args");
+    append_member(&call.members, "Llvm_expr_vec", "args");
     append_member(&call.members, "Str_view", "name");
     append_member(&call.members, "Llvm_id", "llvm_id");
     append_member(&call.members, "Lang_type", "lang_type");
@@ -294,7 +295,7 @@ static Llvm_type llvm_gen_function_call(void) {
 static Llvm_type llvm_gen_struct_literal(void) {
     Llvm_type lit = {.name = llvm_name_new("expr", "struct_literal", false)};
 
-    append_member(&lit.members, "Node_ptr_vec", "members");
+    append_member(&lit.members, "Node_vec", "members");
     append_member(&lit.members, "Str_view", "name");
     append_member(&lit.members, "Lang_type", "lang_type");
     append_member(&lit.members, "Llvm_id", "llvm_id");
@@ -410,7 +411,7 @@ static Llvm_type llvm_gen_string_def(void) {
 static Llvm_type llvm_gen_struct_lit_def(void) {
     Llvm_type def = {.name = llvm_name_new("literal_def", "struct_lit_def", false)};
 
-    append_member(&def.members, "Llvm_ptr_vec", "members");
+    append_member(&def.members, "Llvm_vec", "members");
     append_member(&def.members, "Str_view", "name");
     append_member(&def.members, "Lang_type", "lang_type");
     append_member(&def.members, "Llvm_id", "llvm_id");
@@ -459,7 +460,7 @@ static Llvm_type llvm_gen_load_element_ptr(void) {
 static Llvm_type llvm_gen_function_params(void) {
     Llvm_type params = {.name = llvm_name_new("llvm", "function_params", false)};
 
-    append_member(&params.members, "Llvm_var_def_vec", "params");
+    append_member(&params.members, "Llvm_variable_def_vec", "params");
     append_member(&params.members, "Llvm_id", "llvm_id");
 
     return params;
@@ -770,23 +771,28 @@ static void llvm_gen_print_forward_decl(Llvm_type type) {
         llvm_gen_print_forward_decl(vec_at(&type.sub_types, idx));
     }
 
-    if (type.name.is_topmost) {
-        return;
-    }
-
     String function = {0};
 
-    string_extend_cstr(&gen_a, &function, "#define ");
-    extend_llvm_name_lower(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "_print(llvm) str_view_print(");
-    extend_llvm_name_lower(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "_print_internal(llvm))\n");
+    if (type.name.is_topmost) {
+        string_extend_cstr(&gen_a, &function, "#define ");
+        string_extend_cstr(&gen_a, &function, "llvm_print(llvm) str_view_print(");
+        string_extend_cstr(&gen_a, &function, "llvm_print_internal(llvm))\n");
 
-    string_extend_cstr(&gen_a, &function, "Str_view ");
-    extend_llvm_name_lower(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "_print_internal(const ");
-    extend_llvm_name_first_upper(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "* llvm);");
+        string_extend_cstr(&gen_a, &function, "Str_view ");
+        string_extend_cstr(&gen_a, &function, "llvm_print_internal(const Llvm* llvm);\n");
+    } else {
+        string_extend_cstr(&gen_a, &function, "#define ");
+        extend_llvm_name_lower(&function, type.name);
+        string_extend_cstr(&gen_a, &function, "_print(llvm) str_view_print(");
+        extend_llvm_name_lower(&function, type.name);
+        string_extend_cstr(&gen_a, &function, "_print_internal(llvm))\n");
+
+        string_extend_cstr(&gen_a, &function, "Str_view ");
+        extend_llvm_name_lower(&function, type.name);
+        string_extend_cstr(&gen_a, &function, "_print_internal(const ");
+        extend_llvm_name_first_upper(&function, type.name);
+        string_extend_cstr(&gen_a, &function, "* llvm);");
+    }
 
     gen_gen(STRING_FMT"\n", string_print(function));
 }
@@ -941,6 +947,22 @@ static void gen_llvm_register_syms(Llvm_type llvm) {
     gen_gen(STRING_FMT"\n", string_print(function));
 }
 
+static void gen_llvm_vecs(Llvm_type llvm) {
+    for (size_t idx = 0; idx < llvm.sub_types.info.count; idx++) {
+        gen_llvm_vecs(vec_at(&llvm.sub_types, idx));
+    }
+
+    String vec_name = {0};
+    extend_llvm_name_first_upper(&vec_name, llvm.name);
+    string_extend_cstr(&gen_a, &vec_name, "_vec");
+
+    String item_name = {0};
+    extend_llvm_name_first_upper(&item_name, llvm.name);
+    string_extend_cstr(&gen_a, &item_name, "*");
+
+    gen_vec_from_strv(string_to_strv(vec_name), string_to_strv(item_name));
+}
+
 static void gen_all_llvms(const char* file_path, bool implementation) {
     global_output = fopen(file_path, "w");
     if (!global_output) {
@@ -951,18 +973,30 @@ static void gen_all_llvms(const char* file_path, bool implementation) {
     Llvm_type llvm = llvm_gen_llvm();
 
     gen_gen("/* autogenerated */\n");
-    gen_gen("#include <llvm_hand_written.h>\n");
-    gen_gen("#include <expr_ptr_vec.h>\n");
-    gen_gen("#include <symbol_table_struct.h>\n");
-    gen_gen("#include <symbol_table.h>\n");
-    gen_gen("#include <token.h>\n");
 
     if (implementation) {
         gen_gen("#ifndef LLVM_H\n");
         gen_gen("#define LLVM_H\n");
 
+        gen_gen("#include <llvm_hand_written.h>\n");
+        gen_gen("#include <symbol_table_struct.h>\n");
+        gen_gen("#include <symbol_table.h>\n");
+        gen_gen("#include <token.h>\n");
+        gen_gen("#include <vecs.h>\n");
+    } else {
+        gen_gen("#ifndef LLVM_FORWARD_DECL_H\n");
+        gen_gen("#define LLVM_FORWARD_DECL_H\n");
+        gen_gen("#include <lang_type_struct.h>\n");
+    }
+
+
+    if (!implementation) {
         llvm_gen_llvm_forward_decl(llvm);
         gen_llvm_register_syms(llvm);
+        gen_llvm_vecs(llvm);
+    }
+
+    if (implementation) {
         llvm_gen_llvm_struct(llvm);
 
         llvm_gen_llvm_unwrap(llvm);
@@ -987,6 +1021,8 @@ static void gen_all_llvms(const char* file_path, bool implementation) {
 
     if (implementation) {
         gen_gen("#endif // LLVM_H\n");
+    } else {
+        gen_gen("#endif // LLVM_FORWARD_DECL_H\n");
     }
 
     CLOSE_FILE(global_output);
