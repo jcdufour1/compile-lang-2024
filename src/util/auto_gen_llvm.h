@@ -18,10 +18,6 @@ typedef struct {
     Str_view base;
 } Llvm_name;
 
-// eg. in Node_symbol_typed
-//  prefix = "Node"
-//  base = "symbol_typed"
-//  sub_types = [{.prefix = "Node_symbol_typed", .base = "primitive", .sub_types = []}, ...]
 typedef struct Llvm_type_ {
     Llvm_name name;
     Members members;
@@ -310,7 +306,7 @@ static Llvm_type llvm_gen_llvm_placeholder(void) {
     Llvm_type placeholder = {.name = llvm_name_new("expr", "llvm_placeholder", false)};
 
     append_member(&placeholder.members, "Lang_type", "lang_type");
-    append_member(&placeholder.members, "Llvm_register_sym", "llvm_reg");
+    append_member(&placeholder.members, "Llvm_reg", "llvm_reg");
 
     return placeholder;
 }
@@ -452,8 +448,8 @@ static Llvm_type llvm_gen_load_element_ptr(void) {
 
     append_member(&load.members, "Lang_type", "lang_type");
     append_member(&load.members, "Llvm_id", "llvm_id");
-    append_member(&load.members, "Llvm_register_sym", "struct_index");
-    append_member(&load.members, "Llvm_register_sym", "llvm_src");
+    append_member(&load.members, "Llvm_reg", "struct_index");
+    append_member(&load.members, "Llvm_reg", "llvm_src");
     append_member(&load.members, "Str_view", "name");
     append_member(&load.members, "bool", "is_from_struct");
 
@@ -498,7 +494,7 @@ static Llvm_type llvm_gen_goto(void) {
 static Llvm_type llvm_gen_cond_goto(void) {
     Llvm_type cond_goto = {.name = llvm_name_new("llvm", "cond_goto", false)};
 
-    append_member(&cond_goto.members, "Llvm_register_sym", "llvm_src");
+    append_member(&cond_goto.members, "Llvm_reg", "llvm_src");
     append_member(&cond_goto.members, "Str_view", "if_true");
     append_member(&cond_goto.members, "Str_view", "if_false");
     append_member(&cond_goto.members, "Llvm_id", "llvm_id");
@@ -519,7 +515,7 @@ static Llvm_type llvm_gen_alloca(void) {
 static Llvm_type llvm_gen_load_another_llvm(void) {
     Llvm_type load = {.name = llvm_name_new("llvm", "load_another_llvm", false)};
 
-    append_member(&load.members, "Llvm_register_sym", "llvm_src");
+    append_member(&load.members, "Llvm_reg", "llvm_src");
     append_member(&load.members, "Llvm_id", "llvm_id");
     append_member(&load.members, "Lang_type", "lang_type");
 
@@ -529,8 +525,8 @@ static Llvm_type llvm_gen_load_another_llvm(void) {
 static Llvm_type llvm_gen_store_another_llvm(void) {
     Llvm_type store = {.name = llvm_name_new("llvm", "store_another_llvm", false)};
 
-    append_member(&store.members, "Llvm_register_sym", "llvm_src");
-    append_member(&store.members, "Llvm_register_sym", "llvm_dest");
+    append_member(&store.members, "Llvm_reg", "llvm_src");
+    append_member(&store.members, "Llvm_reg", "llvm_dest");
     append_member(&store.members, "Llvm_id", "llvm_id");
     append_member(&store.members, "Lang_type", "lang_type");
 
@@ -921,6 +917,30 @@ static void gen_llvm_get_pos_define(Llvm_type llvm) {
     llvm_gen_get_pos_internal(llvm, true);
 }
 
+static void gen_llvm_register_syms(Llvm_type llvm) {
+    for (size_t idx = 0; idx < llvm.sub_types.info.count; idx++) {
+        gen_llvm_register_syms(vec_at(&llvm.sub_types, idx));
+    }
+
+    String function = {0};
+
+    string_extend_cstr(&gen_a, &function, "typedef struct {\n");
+    string_extend_cstr(&gen_a, &function, "    Lang_type lang_type;\n");
+    string_extend_cstr(&gen_a, &function, "    ");
+    extend_llvm_name_first_upper(&function, llvm.name);
+    string_extend_cstr(&gen_a, &function, "* llvm;\n");
+
+    if (llvm.name.is_topmost) {
+        string_extend_cstr(&gen_a, &function, "} Llvm_reg;\n");
+    } else {
+        string_extend_cstr(&gen_a, &function, "} Llvm_");
+        extend_strv_lower(&function, llvm.name.base);
+        string_extend_cstr(&gen_a, &function, "_reg;\n");
+    }
+
+    gen_gen(STRING_FMT"\n", string_print(function));
+}
+
 static void gen_all_llvms(const char* file_path, bool implementation) {
     global_output = fopen(file_path, "w");
     if (!global_output) {
@@ -942,6 +962,7 @@ static void gen_all_llvms(const char* file_path, bool implementation) {
         gen_gen("#define LLVM_H\n");
 
         llvm_gen_llvm_forward_decl(llvm);
+        gen_llvm_register_syms(llvm);
         llvm_gen_llvm_struct(llvm);
 
         llvm_gen_llvm_unwrap(llvm);

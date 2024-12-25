@@ -10,11 +10,6 @@
 
 typedef size_t Llvm_id;
 
-typedef struct {
-    Lang_type lang_type;
-    Llvm* llvm;
-} Llvm_register_sym;
-
 #define LLVM_REGISTER_SYM_FMT LANG_TYPE_FMT"    "NODE_FMT
 
 #define llvm_register_sym_print(reg_sym) \

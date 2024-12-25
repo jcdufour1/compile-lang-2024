@@ -19,7 +19,7 @@ typedef struct Llvm_expr_ Llvm_expr;
 //typedef struct {
 //    Lang_type lang_type;
 //    Llvm* llvm;
-//} Llvm_register_sym;
+//} Llvm_reg;
 //
 typedef struct {
     Vec_base info;

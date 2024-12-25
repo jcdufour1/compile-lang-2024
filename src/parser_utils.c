@@ -153,7 +153,7 @@ Str_view util_literal_name_new_prefix(const char* debug_prefix) {
     return str_view;
 }
 
-Llvm_register_sym get_storage_location(const Env* env, Str_view sym_name) {
+Llvm_reg get_storage_location(const Env* env, Str_view sym_name) {
     Node_def* sym_def_;
     if (!symbol_lookup(&sym_def_, env, sym_name)) {
         symbol_log(LOG_DEBUG, env);
@@ -167,7 +167,7 @@ Llvm_register_sym get_storage_location(const Env* env, Str_view sym_name) {
             if (!alloca_lookup(&result, env, sym_def->name)) {
                 unreachable(STR_VIEW_FMT"\n", str_view_print(sym_def->name));
             }
-            return (Llvm_register_sym) {
+            return (Llvm_reg) {
                 .lang_type = llvm_get_lang_type(result),
                 .llvm = result
             };

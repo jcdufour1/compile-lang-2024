@@ -31,26 +31,26 @@ Str_view util_literal_name_new_prefix(const char* debug_prefix);
 
 Llvm_id get_prev_load_id(const Node* var_call);
 
-Llvm_register_sym get_storage_location(const Env* env, Str_view sym_name);
+Llvm_reg get_storage_location(const Env* env, Str_view sym_name);
 
-static inline bool Llvm_register_sym_is_some(Llvm_register_sym llvm_reg) {
-    Llvm_register_sym reference = {0};
+static inline bool Llvm_reg_is_some(Llvm_reg llvm_reg) {
+    Llvm_reg reference = {0};
     return 0 != memcmp(&reference, &llvm_reg, sizeof(llvm_reg));
 }
 
-static inline Llvm_register_sym llvm_register_sym_new(Llvm* llvm) {
+static inline Llvm_reg llvm_register_sym_new(Llvm* llvm) {
     if (llvm) {
-        Llvm_register_sym llvm_reg = {.lang_type = llvm_get_lang_type(llvm), .llvm = llvm};
+        Llvm_reg llvm_reg = {.lang_type = llvm_get_lang_type(llvm), .llvm = llvm};
         return llvm_reg;
     } else {
-        Llvm_register_sym llvm_reg = {0};
+        Llvm_reg llvm_reg = {0};
         return llvm_reg;
     }
     unreachable("");
 }
 
 static inline Llvm_llvm_placeholder* llvm_llvm_placeholder_new_from_reg(
-    Llvm_register_sym llvm_reg, Lang_type lang_type
+    Llvm_reg llvm_reg, Lang_type lang_type
 ) {
     Llvm_llvm_placeholder* placeholder = llvm_llvm_placeholder_new(llvm_get_pos(llvm_reg.llvm));
     placeholder->llvm_reg = llvm_reg;
@@ -58,11 +58,11 @@ static inline Llvm_llvm_placeholder* llvm_llvm_placeholder_new_from_reg(
     return placeholder;
 }
 
-static inline Llvm_register_sym llvm_register_sym_new_from_expr(Llvm_expr* expr) {
+static inline Llvm_reg llvm_register_sym_new_from_expr(Llvm_expr* expr) {
     return llvm_register_sym_new(llvm_wrap_expr(expr));
 }
 
-static inline Llvm_register_sym llvm_register_sym_new_from_operator(Llvm_operator* operator) {
+static inline Llvm_reg llvm_register_sym_new_from_operator(Llvm_operator* operator) {
     return llvm_register_sym_new_from_expr(llvm_wrap_operator(operator));
 }
 
