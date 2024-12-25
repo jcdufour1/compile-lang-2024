@@ -51,6 +51,13 @@ static void extend_lang_type(String* string, Lang_type lang_type, bool surround_
     }
 }
 
+static void print_llvm_register(String* buf, const char* location, Llvm_register_sym reg) {
+    string_extend_cstr(&print_arena, buf, location);
+    string_extend_cstr(&print_arena, buf, ":");
+    extend_lang_type(buf, reg.lang_type, true);
+    string_extend_strv(&print_arena, buf, llvm_print_internal(reg.llvm));
+}
+
 Str_view llvm_binary_print_internal(const Llvm_binary* binary) {
     String buf = {0};
 
@@ -72,10 +79,11 @@ Str_view llvm_unary_print_internal(const Llvm_unary* unary) {
 
     string_extend_cstr_indent(&print_arena, &buf, "unary", recursion_depth);
     extend_lang_type(&buf, unary->lang_type, true);
+    string_extend_strv(&print_arena, &buf, token_type_to_str_view(unary->token_type));
+    string_extend_cstr(&print_arena, &buf, "\n");
 
     recursion_depth += INDENT_WIDTH;
-    string_extend_strv_indent(&print_arena, &buf, token_type_to_str_view(unary->token_type), recursion_depth);
-    string_extend_strv_indent(&print_arena, &buf, llvm_expr_print_internal(unary->child), recursion_depth);
+    llvm_expr_print_internal(unary->child);
     recursion_depth -= INDENT_WIDTH;
 
     return string_to_strv(buf);

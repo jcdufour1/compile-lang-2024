@@ -852,26 +852,29 @@ static void emit_def(Env* env, String* output, const Llvm_def* def) {
     switch (def->type) {
         case LLVM_FUNCTION_DEF:
             emit_function_def(env, output, llvm_unwrap_function_def_const(def));
-            break;
+            return;
         case LLVM_VARIABLE_DEF:
-            break;
+            return;
         case LLVM_FUNCTION_DECL:
             emit_function_decl(env, output, llvm_unwrap_function_decl_const(def));
-            break;
+            return;
         case LLVM_LABEL:
             emit_label(output, llvm_unwrap_label_const(def));
-            break;
+            return;
         case LLVM_STRUCT_DEF:
             emit_struct_def(env, output, llvm_unwrap_struct_def_const(def));
-            break;
+            return;
         case LLVM_RAW_UNION_DEF:
             emit_raw_union_def(env, output, llvm_unwrap_raw_union_def_const(def));
-            break;
+            return;
         case LLVM_ENUM_DEF:
-            break;
-        default:
-            unreachable("");
+            return;
+        case LLVM_PRIMITIVE_DEF:
+            todo();
+        case LLVM_LITERAL_DEF:
+            todo();
     }
+    unreachable("");
 }
 
 static void emit_block(Env* env, String* output, const Llvm_block* block) {
