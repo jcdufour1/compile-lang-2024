@@ -76,8 +76,7 @@ static Llvm_raw_union_def* node_clone_raw_union_def(const Node_raw_union_def* ol
     return new_def;
 }
 
-static Llvm_function_params* do_function_def_alloca(Env* env, Llvm_block* new_block, const Node_function_def* old_fun_def) {
-    Node_function_params* old_params = old_fun_def->declaration->parameters;
+static Llvm_function_params* do_function_def_alloca(Env* env, Llvm_block* new_block, const Node_function_params* old_params) {
     Llvm_function_params* new_params = llvm_function_params_new(old_params->pos);
 
     Llvm* dummy = NULL;
@@ -565,14 +564,16 @@ static Llvm_register_sym load_expr(Env* env, Llvm_block* new_block, Node_expr* o
     }
 }
 
-static void do_function_parameters(
+static Llvm_register_sym load_function_parameters(
     Env* env,
     Llvm_block* new_fun_body,
-    Llvm_var_def_vec fun_params
+    Node_function_params* old_params
 ) {
-    for (size_t idx = 0; idx < fun_params.info.count; idx++) {
+    Llvm_function_params* new_params = do_function_def_alloca(env, new_fun_body, old_params);
+
+    for (size_t idx = 0; idx < new_params->params.info.count; idx++) {
         assert(env->ancesters.info.count > 0);
-        Llvm_variable_def* param = vec_at(&fun_params, idx);
+        Llvm_variable_def* param = vec_at(&new_params->params, idx);
 
         //symbol_log(LOG_DEBUG, env);
         //alloca_log(LOG_DEBUG, env);
@@ -597,6 +598,11 @@ static void do_function_parameters(
         // TODO: append to new function body instead of old
         vec_append(&a_main, &new_fun_body->children, llvm_wrap_store_another_llvm(new_store));
     }
+
+    return (Llvm_register_sym) {
+        .lang_type = {0},
+        .llvm = llvm_wrap_function_params(new_params)
+    };
 }
 
 static Llvm_register_sym load_function_def(
@@ -617,25 +623,11 @@ static Llvm_register_sym load_function_def(
     new_fun_def->body->symbol_collection = old_fun_def->body->symbol_collection;
     new_fun_def->body->pos_end = old_fun_def->body->pos_end;
 
-
-    {
-        log(LOG_DEBUG, LLVM_FMT"\n", llvm_block_print(new_fun_def->body));
-        vec_append(&a_main, &env->ancesters, &new_fun_def->body->symbol_collection);
-        log(LOG_DEBUG, LLVM_FMT"\n", llvm_block_print(new_fun_def->body));
-        new_fun_def->declaration->parameters = do_function_def_alloca(env, new_fun_def->body, old_fun_def);
-        alloca_log(LOG_DEBUG, env);
-        log(LOG_DEBUG, LLVM_FMT"\n", llvm_block_print(new_fun_def->body));
-        do_function_parameters(env, new_fun_def->body, new_fun_def->declaration->parameters->params);
-        log(LOG_DEBUG, LLVM_FMT"\n", llvm_block_print(new_fun_def->body));
-        vec_rem_last(&env->ancesters);
-    }
-
-
     vec_append(&a_main, &env->ancesters, &new_fun_def->body->symbol_collection);
+    new_fun_def->declaration->parameters = llvm_unwrap_function_params(load_function_parameters(
+            env, new_fun_def->body, old_fun_def->declaration->parameters
+    ).llvm);
     for (size_t idx = 0; idx < old_fun_def->body->children.info.count; idx++) {
-        //for (size_t idx = 0; idx < new_branch_block->children.info.count; idx++) {
-        //    log(LOG_DEBUG, NODE_FMT"\n", node_print(vec_at(&new_branch_block->children, idx)));
-        //}
         load_node(env, new_fun_def->body, vec_at(&old_fun_def->body->children, idx));
     }
     vec_rem_last(&env->ancesters);
