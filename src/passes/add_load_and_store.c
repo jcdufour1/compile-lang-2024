@@ -35,7 +35,7 @@ static Llvm_lang_type* node_clone_lang_type(Node_lang_type* old_lang_type) {
 
 static Llvm_function_decl* node_clone_function_decl(Node_function_decl* old_decl) {
     Llvm_function_decl* new_decl = llvm_function_decl_new(old_decl->pos);
-    new_decl->parameters = node_clone_function_params(old_decl->parameters);
+    new_decl->params = node_clone_function_params(old_decl->params);
     new_decl->return_type = node_clone_lang_type(old_decl->return_type);
     new_decl->name = old_decl->name;
     return new_decl;
@@ -616,16 +616,16 @@ static Llvm_reg load_function_def(
     //new_fun_def->declaration = node_clone_function_decl(old_fun_def->declaration);
     new_fun_def->body = llvm_block_new(pos);
 
-    new_fun_def->declaration = llvm_function_decl_new(pos);
-    new_fun_def->declaration->return_type = node_clone_lang_type(old_fun_def->declaration->return_type);
-    new_fun_def->declaration->name = old_fun_def->declaration->name;
+    new_fun_def->decl = llvm_function_decl_new(pos);
+    new_fun_def->decl->return_type = node_clone_lang_type(old_fun_def->decl->return_type);
+    new_fun_def->decl->name = old_fun_def->decl->name;
 
     new_fun_def->body->symbol_collection = old_fun_def->body->symbol_collection;
     new_fun_def->body->pos_end = old_fun_def->body->pos_end;
 
     vec_append(&a_main, &env->ancesters, &new_fun_def->body->symbol_collection);
-    new_fun_def->declaration->parameters = llvm_unwrap_function_params(load_function_parameters(
-            env, new_fun_def->body, old_fun_def->declaration->parameters
+    new_fun_def->decl->params = llvm_unwrap_function_params(load_function_parameters(
+            env, new_fun_def->body, old_fun_def->decl->params
     ).llvm);
     for (size_t idx = 0; idx < old_fun_def->body->children.info.count; idx++) {
         load_node(env, new_fun_def->body, vec_at(&old_fun_def->body->children, idx));
@@ -634,7 +634,7 @@ static Llvm_reg load_function_def(
 
     vec_append(&a_main, &new_block->children, llvm_wrap_def(llvm_wrap_function_def(new_fun_def)));
     return (Llvm_reg) {
-        .lang_type = old_fun_def->declaration->return_type->lang_type,
+        .lang_type = old_fun_def->decl->return_type->lang_type,
         .llvm = llvm_wrap_def(llvm_wrap_function_def(new_fun_def))
     };
 }

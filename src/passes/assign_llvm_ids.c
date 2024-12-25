@@ -91,13 +91,13 @@ static Llvm_function_params* id_function_params(Llvm_function_params* params) {
 }
 
 static Llvm_function_decl* id_function_decl(Llvm_function_decl* fun_decl) {
-    fun_decl->parameters = id_function_params(fun_decl->parameters);
+    fun_decl->params = id_function_params(fun_decl->params);
     return fun_decl;
 }
 
 static Llvm_function_def* id_function_def(Llvm_function_def* fun_def) {
     fun_def->llvm_id = llvm_id_new();
-    fun_def->declaration = id_function_decl(fun_def->declaration);
+    fun_def->decl = id_function_decl(fun_def->decl);
     fun_def->body = id_block(fun_def->body);
     return fun_def;
 }

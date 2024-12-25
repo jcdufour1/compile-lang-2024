@@ -34,8 +34,6 @@ Str_view lang_type_print_internal(Arena* arena, Lang_type lang_type, bool surrou
 
 #define lang_type_print(lang_type) str_view_print(lang_type_print_internal(&print_arena, (lang_type), false))
 
-#define NODE_FMT STR_VIEW_FMT
-
 Str_view node_print_internal(const Node* node);
 
 #define node_print(root) str_view_print(node_print_internal(root))
@@ -510,7 +508,7 @@ static inline Str_view get_def_name(const Node_def* def) {
         case NODE_FUNCTION_DECL:
             return node_unwrap_function_decl_const(def)->name;
         case NODE_FUNCTION_DEF:
-            return node_unwrap_function_def_const(def)->declaration->name;
+            return node_unwrap_function_def_const(def)->decl->name;
         case NODE_LITERAL_DEF:
             return get_literal_def_name(node_unwrap_literal_def_const(def));
     }

@@ -346,7 +346,7 @@ static Llvm_type llvm_gen_raw_union_def(void) {
 static Llvm_type llvm_gen_function_decl(void) {
     Llvm_type def = {.name = llvm_name_new("def", "function_decl", false)};
 
-    append_member(&def.members, "Llvm_function_params*", "parameters");
+    append_member(&def.members, "Llvm_function_params*", "params");
     append_member(&def.members, "Llvm_lang_type*", "return_type");
     append_member(&def.members, "Str_view", "name");
 
@@ -356,7 +356,7 @@ static Llvm_type llvm_gen_function_decl(void) {
 static Llvm_type llvm_gen_function_def(void) {
     Llvm_type def = {.name = llvm_name_new("def", "function_def", false)};
 
-    append_member(&def.members, "Llvm_function_decl*", "declaration");
+    append_member(&def.members, "Llvm_function_decl*", "decl");
     append_member(&def.members, "Llvm_block*", "body");
     append_member(&def.members, "Llvm_id", "llvm_id");
 

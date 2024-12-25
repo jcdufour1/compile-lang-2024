@@ -176,7 +176,6 @@ static inline Llvm_id llvm_get_llvm_id(const Llvm* llvm) {
             unreachable("");
         case LLVM_LANG_TYPE:
             unreachable("");
-        break;
         case LLVM_RETURN:
             unreachable("");
         case LLVM_GOTO:
@@ -562,7 +561,7 @@ static inline Str_view llvm_get_def_name(const Llvm_def* def) {
         case LLVM_FUNCTION_DECL:
             return llvm_unwrap_function_decl_const(def)->name;
         case LLVM_FUNCTION_DEF:
-            return llvm_unwrap_function_def_const(def)->declaration->name;
+            return llvm_unwrap_function_def_const(def)->decl->name;
         case LLVM_LABEL:
             return llvm_unwrap_label_const(def)->name;
         case LLVM_LITERAL_DEF:

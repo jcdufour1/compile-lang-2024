@@ -644,7 +644,7 @@ static PARSE_STATUS extract_function_decl_common(
         msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_OPEN_PAR);
         return PARSE_ERROR;
     }
-    if (PARSE_OK != extract_function_parameters(env, &(*fun_decl)->parameters, tokens)) {
+    if (PARSE_OK != extract_function_parameters(env, &(*fun_decl)->params, tokens)) {
         return PARSE_ERROR;
     }
 
@@ -664,7 +664,7 @@ static PARSE_STATUS extract_function_def(Env* env, Node_function_def** fun_def, 
         return PARSE_ERROR;
     }
     (*fun_def) = node_function_def_new(fun_decl->pos);
-    (*fun_def)->declaration = fun_decl;
+    (*fun_def)->decl = fun_decl;
     return extract_block(env, &(*fun_def)->body, tokens, false);
 }
 

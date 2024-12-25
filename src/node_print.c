@@ -495,7 +495,7 @@ Str_view node_function_decl_print_internal(const Node_function_decl* fun_decl) {
     recursion_depth += INDENT_WIDTH;
     string_extend_strv_in_par(&print_arena, &buf, fun_decl->name);
     string_extend_cstr(&print_arena, &buf, "\n");
-    string_extend_strv(&print_arena, &buf, node_function_params_print_internal(fun_decl->parameters));
+    string_extend_strv(&print_arena, &buf, node_function_params_print_internal(fun_decl->params));
     string_extend_strv(&print_arena, &buf, node_lang_type_print_internal(fun_decl->return_type));
     recursion_depth -= INDENT_WIDTH;
 
@@ -507,7 +507,7 @@ Str_view node_function_def_print_internal(const Node_function_def* fun_def) {
 
     string_extend_cstr_indent(&print_arena, &buf, "function_def\n", recursion_depth);
     recursion_depth += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, node_function_decl_print_internal(fun_def->declaration));
+    string_extend_strv(&print_arena, &buf, node_function_decl_print_internal(fun_def->decl));
     string_extend_strv(&print_arena, &buf, node_block_print_internal(fun_def->body));
     recursion_depth -= INDENT_WIDTH;
 

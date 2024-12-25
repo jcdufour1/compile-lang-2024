@@ -362,7 +362,7 @@ static Node_type node_gen_raw_union_def(void) {
 static Node_type node_gen_function_decl(void) {
     Node_type def = {.name = node_name_new("def", "function_decl", false)};
 
-    append_member(&def.members, "Node_function_params*", "parameters");
+    append_member(&def.members, "Node_function_params*", "params");
     append_member(&def.members, "Node_lang_type*", "return_type");
     append_member(&def.members, "Str_view", "name");
 
@@ -372,7 +372,7 @@ static Node_type node_gen_function_decl(void) {
 static Node_type node_gen_function_def(void) {
     Node_type def = {.name = node_name_new("def", "function_def", false)};
 
-    append_member(&def.members, "Node_function_decl*", "declaration");
+    append_member(&def.members, "Node_function_decl*", "decl");
     append_member(&def.members, "Node_block*", "body");
 
     return def;

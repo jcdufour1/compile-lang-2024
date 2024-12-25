@@ -240,7 +240,7 @@ static void node_extend_literal_decl(const Env* env, String* output, const Node_
 }
 
 static const Llvm_lang_type* return_type_from_function_def(const Llvm_function_def* fun_def) {
-    const Llvm_lang_type* return_type = fun_def->declaration->return_type;
+    const Llvm_lang_type* return_type = fun_def->decl->return_type;
     if (return_type) {
         return return_type;
     }
@@ -695,7 +695,7 @@ static void emit_function_def(Env* env, String* output, const Llvm_function_def*
     string_extend_strv(&a_main, output, llvm_get_node_name(llvm_wrap_def_const(llvm_wrap_function_def_const(fun_def))));
 
     vec_append(&a_main, output, '(');
-    emit_function_params(env, output, fun_def->declaration->parameters);
+    emit_function_params(env, output, fun_def->decl->params);
     vec_append(&a_main, output, ')');
 
     string_extend_cstr(&a_main, output, " {\n");
@@ -750,7 +750,7 @@ static void emit_function_decl(const Env* env, String* output, const Llvm_functi
     string_extend_cstr(&a_main, output, " @");
     string_extend_strv(&a_main, output, fun_decl->name);
     vec_append(&a_main, output, '(');
-    emit_function_params(env, output, fun_decl->parameters);
+    emit_function_params(env, output, fun_decl->params);
     vec_append(&a_main, output, ')');
     string_extend_cstr(&a_main, output, "\n");
 }

@@ -696,14 +696,14 @@ bool try_set_function_call_types(Env* env, Node_expr** new_node, Node_function_c
     }
     Node_function_decl* fun_decl;
     if (fun_def->type == NODE_FUNCTION_DEF) {
-        fun_decl = node_unwrap_function_def(fun_def)->declaration;
+        fun_decl = node_unwrap_function_def(fun_def)->decl;
     } else {
         fun_decl = node_unwrap_function_decl(fun_def);
     }
     Node_lang_type* fun_rtn_type = fun_decl->return_type;
     fun_call->lang_type = fun_rtn_type->lang_type;
     assert(fun_call->lang_type.str.count > 0);
-    Node_function_params* params = fun_decl->parameters;
+    Node_function_params* params = fun_decl->params;
     size_t params_idx = 0;
 
     size_t min_args;
@@ -1039,15 +1039,15 @@ bool try_set_function_def_types(
     Node_function_def* old_def
 ) {
     Str_view prev_par_fun = env->name_parent_function;
-    env->name_parent_function = old_def->declaration->name;
+    env->name_parent_function = old_def->decl->name;
     assert(env->name_parent_function.count > 0);
     bool status = true;
 
     Node_function_decl* new_decl = NULL;
-    if (!try_set_function_decl_types(env, &new_decl, old_def->declaration)) {
+    if (!try_set_function_decl_types(env, &new_decl, old_def->decl)) {
         status = false;
     }
-    old_def->declaration = new_decl;
+    old_def->decl = new_decl;
 
     size_t prev_ancesters_count = env->ancesters.info.count;
     Node_block* new_body = NULL;
@@ -1070,10 +1070,10 @@ bool try_set_function_decl_types(
     bool status = true;
 
     Node_function_params* new_params = NULL;
-    if (!try_set_function_params_types(env, &new_params, old_def->parameters)) {
+    if (!try_set_function_params_types(env, &new_params, old_def->params)) {
         status = false;
     }
-    old_def->parameters = new_params;
+    old_def->params = new_params;
 
     Node_lang_type* new_rtn_type = NULL;
     if (!try_set_lang_type_types(env, &new_rtn_type, old_def->return_type)) {
