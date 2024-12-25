@@ -322,7 +322,7 @@ static inline Lang_type llvm_get_lang_type(const Llvm* llvm) {
         case LLVM_LANG_TYPE:
             return llvm_unwrap_lang_type_const(llvm)->lang_type;
         case LLVM_RETURN:
-            return llvm_get_lang_type_expr(llvm_unwrap_return_const(llvm)->child);
+            return llvm_get_lang_type_expr(llvm_unwrap_return_const(llvm)->child.llvm);
         case LLVM_GOTO:
             unreachable("");
         case LLVM_COND_GOTO:
@@ -376,7 +376,7 @@ static inline Lang_type* llvm_get_lang_type_ref(Llvm* llvm) {
         case LLVM_LANG_TYPE:
             return &llvm_unwrap_lang_type(llvm)->lang_type;
         case LLVM_RETURN:
-            return llvm_get_lang_type_expr_ref(llvm_unwrap_return(llvm)->child);
+            return llvm_get_lang_type_expr_ref(llvm_unwrap_return(llvm)->child.llvm);
         case LLVM_GOTO:
             unreachable("");
         case LLVM_COND_GOTO:

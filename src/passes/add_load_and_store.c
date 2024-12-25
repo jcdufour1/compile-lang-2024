@@ -6,6 +6,13 @@
 
 #include "passes.h"
 
+static Llvm_reg llvm_expr_reg_wrap(Llvm_expr_reg old_reg) {
+    return (Llvm_reg) {
+        .lang_type = old_reg.lang_type,
+        .llvm = llvm_wrap_expr(old_reg.llvm)
+    };
+}
+
 static Llvm_variable_def* node_clone_variable_def(Node_variable_def* old_var_def);
 
 static Llvm_alloca* add_load_and_store_alloca_new(Env* env, Llvm_variable_def* var_def) {
@@ -110,7 +117,7 @@ static Llvm_function_params* do_function_def_alloca(Env* env, Llvm_block* new_bl
 
 static Llvm_block* load_block(Env* env, Node_block* old_block);
 
-static Llvm_reg load_expr(Env* env, Llvm_block* new_block, Node_expr* old_expr);
+static Llvm_expr_reg load_expr(Env* env, Llvm_block* new_block, Node_expr* old_expr);
 
 static Llvm_reg load_ptr(Env* env, Llvm_block* new_block, Node* old_node);
 
@@ -189,7 +196,7 @@ static Llvm_reg load_function_call(
 
         Llvm_llvm_placeholder* new_arg = llvm_llvm_placeholder_new(arg_pos);
         new_arg->lang_type = node_get_lang_type_expr(old_arg);
-        new_arg->llvm_reg = load_expr(env, new_block, old_arg);
+        new_arg->llvm_reg = llvm_expr_reg_wrap(load_expr(env, new_block, old_arg));
         vec_append(&a_main, &new_fun_call->args, llvm_wrap_llvm_placeholder(new_arg));
     }
 
@@ -248,7 +255,7 @@ static Llvm_literal* node_literal_clone(Node_literal* old_lit) {
     return new_lit;
 }
 
-static Llvm_reg load_literal(
+static Llvm_literal_reg load_literal(
     Env* env,
     Llvm_block* new_block,
     Node_literal* old_lit
@@ -266,9 +273,9 @@ static Llvm_reg load_literal(
         try(sym_tbl_add(&env->global_literals, node_wrap_literal_def(node_wrap_string_def(new_def))));
     }
 
-    return (Llvm_reg) {
+    return (Llvm_literal_reg) {
         .lang_type = node_get_lang_type_literal(old_lit),
-        .llvm = llvm_wrap_expr(llvm_wrap_literal(new_lit))
+        .llvm = new_lit
     };
 }
 
@@ -327,15 +334,8 @@ static Llvm_reg load_binary(
 ) {
     Llvm_binary* new_bin = llvm_binary_new(old_bin->pos);
 
-    Llvm_llvm_placeholder* lhs = llvm_llvm_placeholder_new(old_bin->pos);
-    lhs->lang_type = node_get_lang_type_expr(old_bin->lhs);
-    lhs->llvm_reg = load_expr(env, new_block, old_bin->lhs);
-    new_bin->lhs = llvm_wrap_llvm_placeholder(lhs);
-
-    Llvm_llvm_placeholder* rhs = llvm_llvm_placeholder_new(old_bin->pos);
-    rhs->lang_type = node_get_lang_type_expr(old_bin->rhs);
-    rhs->llvm_reg = load_expr(env, new_block, old_bin->rhs);
-    new_bin->rhs = llvm_wrap_llvm_placeholder(rhs);
+    new_bin->lhs = load_expr(env, new_block, old_bin->lhs);
+    new_bin->rhs = load_expr(env, new_block, old_bin->rhs);
 
     new_bin->token_type = old_bin->token_type;
     new_bin->lang_type = old_bin->lang_type;
@@ -357,9 +357,9 @@ static Llvm_reg load_unary(
             if (lang_type_is_struct(env, node_get_lang_type_expr(old_unary->child))) {
                 todo();
             } else if (lang_type_is_primitive(env, node_get_lang_type_expr(old_unary->child))) {
-                Llvm_reg ptr = load_expr(env, new_block, old_unary->child);
+                Llvm_expr_reg ptr = load_expr(env, new_block, old_unary->child);
                 Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(old_unary->pos);
-                new_load->llvm_src = ptr;
+                new_load->llvm_src = llvm_expr_reg_wrap(ptr);
                 new_load->lang_type = old_unary->lang_type;
 
                 vec_append(&a_main, &new_block->children, llvm_wrap_load_another_llvm(new_load));
@@ -376,15 +376,12 @@ static Llvm_reg load_unary(
         }
         case TOKEN_UNSAFE_CAST:
             if (old_unary->lang_type.pointer_depth > 0 && node_get_lang_type_expr(old_unary->child).pointer_depth > 0) {
-                return load_expr(env, new_block, old_unary->child);
+                return llvm_expr_reg_wrap(load_expr(env, new_block, old_unary->child));
             }
             // fallthrough
         case TOKEN_NOT: {
             Llvm_unary* new_unary = llvm_unary_new(old_unary->pos);
-            Llvm_llvm_placeholder* child = llvm_llvm_placeholder_new(old_unary->pos);
-            child->lang_type = node_get_lang_type_expr(old_unary->child);
-            child->llvm_reg = load_expr(env, new_block, old_unary->child);
-            new_unary->child = llvm_wrap_llvm_placeholder(child);
+            new_unary->child = load_expr(env, new_block, old_unary->child);
 
             new_unary->token_type = old_unary->token_type;
             new_unary->lang_type = old_unary->lang_type;
@@ -452,7 +449,7 @@ static Llvm_reg load_ptr_member_access_typed(
     
     Llvm_load_element_ptr* new_load = llvm_load_element_ptr_new(old_access->pos);
     new_load->lang_type = old_access->lang_type;
-    new_load->struct_index = load_literal(env, new_block, node_wrap_number(new_index));
+    new_load->struct_index = llvm_wrap_literal_reg(load_literal(env, new_block, node_wrap_number(new_index)));
     new_load->llvm_src = new_callee;
     new_load->name = old_access->member_name;
     new_load->is_from_struct = true;
