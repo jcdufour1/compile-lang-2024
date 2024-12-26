@@ -52,18 +52,11 @@ static void extend_lang_type(String* string, Lang_type lang_type, bool surround_
     }
 }
 
-static void llvm_reg_print(String* buf, const char* location, Llvm_reg reg) {
+static void print_llvm_register(String* buf, const char* location, Llvm_reg reg) {
     string_extend_cstr(&print_arena, buf, location);
     string_extend_cstr(&print_arena, buf, ":");
     extend_lang_type(buf, reg.lang_type, true);
     string_extend_strv(&print_arena, buf, llvm_print_internal(reg.llvm));
-}
-
-static void extend_llvm_expr_reg(String* buf, const char* location, Llvm_expr_reg reg) {
-    string_extend_cstr(&print_arena, buf, location);
-    string_extend_cstr(&print_arena, buf, ":");
-    extend_lang_type(buf, reg.lang_type, true);
-    string_extend_strv(&print_arena, buf, llvm_expr_print_internal(reg.llvm));
 }
 
 Str_view llvm_binary_print_internal(const Llvm_binary* binary) {
@@ -75,8 +68,8 @@ Str_view llvm_binary_print_internal(const Llvm_binary* binary) {
     string_extend_cstr(&print_arena, &buf, "\n");
 
     recursion_depth += INDENT_WIDTH;
-    extend_llvm_expr_reg(&buf, "lhs", binary->lhs);
-    extend_llvm_expr_reg(&buf, "rhs", binary->rhs);
+    string_extend_strv(&print_arena, &buf, llvm_expr_print_internal(binary->lhs));
+    string_extend_strv(&print_arena, &buf, llvm_expr_print_internal(binary->rhs));
     recursion_depth -= INDENT_WIDTH;
 
     return string_to_strv(buf);
@@ -91,7 +84,7 @@ Str_view llvm_unary_print_internal(const Llvm_unary* unary) {
     string_extend_cstr(&print_arena, &buf, "\n");
 
     recursion_depth += INDENT_WIDTH;
-    extend_llvm_expr_reg(&buf, "child", unary->child);
+    llvm_expr_print_internal(unary->child);
     recursion_depth -= INDENT_WIDTH;
 
     return string_to_strv(buf);
@@ -159,8 +152,7 @@ Str_view llvm_member_access_typed_print_internal(const Llvm_member_access_typed*
     string_extend_cstr_indent(&print_arena, &buf, "member_access_typed", recursion_depth);
     string_extend_strv(&print_arena, &buf, access->member_name);
     recursion_depth += INDENT_WIDTH;
-    string_extend_cstr_indent(&print_arena, &buf, "", recursion_depth);
-    extend_llvm_expr_reg(&buf, "callee", access->callee);
+    string_extend_strv_indent(&print_arena, &buf, llvm_expr_print_internal(access->callee), recursion_depth);
     recursion_depth -= INDENT_WIDTH;
 
     return string_to_strv(buf);
@@ -171,10 +163,8 @@ Str_view llvm_index_typed_print_internal(const Llvm_index_typed* index) {
 
     string_extend_cstr_indent(&print_arena, &buf, "index_typed", recursion_depth);
     recursion_depth += INDENT_WIDTH;
-    string_extend_cstr_indent(&print_arena, &buf, "", recursion_depth);
-    extend_llvm_expr_reg(&buf, "index", index->index);
-    string_extend_cstr_indent(&print_arena, &buf, "", recursion_depth);
-    extend_llvm_expr_reg(&buf, "callee", index->callee);
+    string_extend_strv_indent(&print_arena, &buf, llvm_expr_print_internal(index->index), recursion_depth);
+    string_extend_strv_indent(&print_arena, &buf, llvm_expr_print_internal(index->callee), recursion_depth);
     recursion_depth -= INDENT_WIDTH;
 
     return string_to_strv(buf);
@@ -352,8 +342,7 @@ Str_view llvm_return_print_internal(const Llvm_return* lang_rtn) {
 
     string_extend_cstr_indent(&print_arena, &buf, "return\n", recursion_depth);
     recursion_depth += INDENT_WIDTH;
-    string_extend_cstr_indent(&print_arena, &buf, "", recursion_depth);
-    extend_llvm_expr_reg(&buf, "child", lang_rtn->child);
+    string_extend_strv(&print_arena, &buf, llvm_expr_print_internal(lang_rtn->child));
     recursion_depth -= INDENT_WIDTH;
 
     return string_to_strv(buf);

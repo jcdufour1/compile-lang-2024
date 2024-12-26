@@ -10,15 +10,6 @@
 static Llvm_expr* id_expr(Llvm_expr* expr);
 static Llvm_block* id_block(Llvm_block* block);
 
-static Llvm_expr_reg id_expr_reg(Llvm_expr_reg expr);
-
-static Llvm_expr_reg id_expr_reg(Llvm_expr_reg old_reg) {
-    return (Llvm_expr_reg) {
-        .lang_type = old_reg.lang_type,
-        .llvm = id_expr(old_reg.llvm)
-    };
-}
-   
 static Llvm_id llvm_id_new(void) {
     static Llvm_id llvm_id_for_next_var = 1;
     Llvm_id id_to_rtn = llvm_id_for_next_var;
@@ -27,15 +18,15 @@ static Llvm_id llvm_id_new(void) {
 }
 
 static Llvm_unary* id_unary(Llvm_unary* unary) {
-    unary->child = id_expr_reg(unary->child);
+    unary->child = id_expr(unary->child);
     unary->llvm_id = llvm_id_new();
     return unary;
 }
    
 
 static Llvm_binary* id_binary(Llvm_binary* binary) {
-    binary->lhs = id_expr_reg(binary->lhs);
-    binary->rhs = id_expr_reg(binary->rhs);
+    binary->lhs = id_expr(binary->lhs);
+    binary->rhs = id_expr(binary->rhs);
     binary->llvm_id = llvm_id_new();
     return binary;
 }
