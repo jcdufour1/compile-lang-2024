@@ -10,12 +10,9 @@
 #include "assert.h"
 #include "vector.h"
 
-void node_print_assert_recursion_depth_zero(void);
-
 #define log_tree(log_level, root) \
     do { \
         log_file_new(log_level, __FILE__, __LINE__, "tree:\n"NODE_FMT, node_print(root)); \
-        node_print_assert_recursion_depth_zero(); \
     } while(0)
 
 static inline Node* get_left_child_expr(Node_expr* expr) {

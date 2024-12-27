@@ -73,6 +73,24 @@ static void gen_symbol_table_c_file_symbol_update(String* text, Symbol_tbl_type 
 static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     String text = {0};
 
+    string_extend_cstr(&gen_a, &text, "void ");
+    extend_strv_lower(&text, type.normal_prefix);
+    string_extend_cstr(&gen_a, &text, "_extend_table_internal(String* buf, const ");
+    extend_strv_first_upper(&text, type.normal_prefix);
+    string_extend_cstr(&gen_a, &text, "_table sym_table, int recursion_depth) {\n");
+    string_extend_cstr(&gen_a, &text, "    for (size_t idx = 0; idx < sym_table.capacity; idx++) {\n");
+    string_extend_cstr(&gen_a, &text, "        ");
+    extend_strv_first_upper(&text, type.normal_prefix);
+    string_extend_cstr(&gen_a, &text, "_table_node* sym_node = &sym_table.table_nodes[idx];\n");
+    string_extend_cstr(&gen_a, &text, "        if (sym_node->status == SYM_TBL_OCCUPIED) {\n");
+    string_extend_cstr(&gen_a, &text, "            string_extend_strv(&print_arena, buf, ");
+    extend_strv_lower(&text, type.print_fn);
+    string_extend_cstr(&gen_a, &text, "_internal(sym_node->node, recursion_depth));\n");
+    string_extend_cstr(&gen_a, &text, "        }\n");
+    string_extend_cstr(&gen_a, &text, "    }\n");
+    string_extend_cstr(&gen_a, &text, "}\n");
+    string_extend_cstr(&gen_a, &text, "\n");
+
     // TODO: callback, Str_view or other solution for getting node_name?
     string_extend_cstr(&gen_a, &text, "void ");
     extend_strv_lower(&text, type.normal_prefix);
@@ -98,6 +116,7 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "    }\n");
     string_extend_cstr(&gen_a, &text, "}\n");
     string_extend_cstr(&gen_a, &text, "\n");
+
     string_extend_cstr(&gen_a, &text, "// returns false if symbol is already added to the table\n");
     string_extend_cstr(&gen_a, &text, "bool ");
     extend_strv_lower(&text, type.internal_prefix);
@@ -437,6 +456,11 @@ static void gen_symbol_table_c_file(const char* file_path, Sym_tbl_type_vec type
 static void gen_symbol_table_header_internal(Symbol_tbl_type type) {
     String text = {0};
 
+    string_extend_cstr(&gen_a, &text, "void ");
+    extend_strv_lower(&text, type.normal_prefix);
+    string_extend_cstr(&gen_a, &text, "_extend_table_internal(String* buf, const ");
+    extend_strv_first_upper(&text, type.normal_prefix);
+    string_extend_cstr(&gen_a, &text, "_table sym_table, int recursion_depth);\n");
     string_extend_cstr(&gen_a, &text, "void ");
     extend_strv_lower(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_log_table_internal(int log_level, const ");

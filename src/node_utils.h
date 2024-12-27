@@ -34,9 +34,9 @@ Str_view lang_type_print_internal(Arena* arena, Lang_type lang_type, bool surrou
 
 #define lang_type_print(lang_type) str_view_print(lang_type_print_internal(&print_arena, (lang_type), false))
 
-Str_view node_print_internal(const Node* node);
+Str_view node_print_internal(const Node* node, int recursion_depth);
 
-#define node_print(root) str_view_print(node_print_internal(root))
+#define node_print(root) str_view_print(node_print_internal(root, 0))
 
 #define node_printf(node) \
     do { \

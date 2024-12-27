@@ -27,8 +27,6 @@ static inline Lang_type llvm_lang_type_new_from_cstr(const char* cstr, int16_t p
 
 #define LLVM_FMT STR_VIEW_FMT
 
-Str_view llvm_print_internal(const Llvm* llvm);
-
 #define llvm_printf(llvm) \
     do { \
         log(LOG_NOTE, LLVM_FMT"\n", llvm_print(llvm)); \

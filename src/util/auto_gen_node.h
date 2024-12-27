@@ -809,13 +809,13 @@ static void node_gen_print_forward_decl(Node_type type) {
     extend_node_name_lower(&function, type.name);
     string_extend_cstr(&gen_a, &function, "_print(node) str_view_print(");
     extend_node_name_lower(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "_print_internal(node))\n");
+    string_extend_cstr(&gen_a, &function, "_print_internal(node, 0))\n");
 
     string_extend_cstr(&gen_a, &function, "Str_view ");
     extend_node_name_lower(&function, type.name);
     string_extend_cstr(&gen_a, &function, "_print_internal(const ");
     extend_node_name_first_upper(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "* node);");
+    string_extend_cstr(&gen_a, &function, "* node, int recursion_depth);");
 
     gen_gen(STRING_FMT"\n", string_print(function));
 }

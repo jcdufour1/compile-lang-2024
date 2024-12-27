@@ -121,4 +121,8 @@ extern size_t error_count;
 extern size_t warning_count;
 extern size_t expected_fail_count;
 
+#ifndef INDENT_WIDTH
+#define INDENT_WIDTH 2
+#endif // INDENT_WIDTH
+
 #endif // UTIL_H

@@ -5,16 +5,6 @@
 #include <util.h>
 #include <llvm_utils.h>
 
-static int recursion_depth = 0;
-
-typedef enum {
-    INDENT_WIDTH = 2,
-} INDENT_WIDTH_;
-
-void llvm_print_assert_recursion_depth_zero(void) {
-    assert(recursion_depth == 0);
-}
-
 static void extend_llvm_id(String* buf, const char* location, Llvm_id llvm_id) {
     string_extend_cstr(&print_arena, buf, " (& ");
     string_extend_cstr(&print_arena, buf, location);
@@ -52,40 +42,40 @@ static void extend_lang_type(String* string, Lang_type lang_type, bool surround_
     }
 }
 
-static void print_llvm_register(String* buf, const char* location, Llvm_reg reg) {
+static void print_llvm_register(String* buf, const char* location, Llvm_reg reg, int indent) {
     string_extend_cstr(&print_arena, buf, location);
     string_extend_cstr(&print_arena, buf, ":");
     extend_lang_type(buf, reg.lang_type, true);
-    string_extend_strv(&print_arena, buf, llvm_print_internal(reg.llvm));
+    string_extend_strv(&print_arena, buf, llvm_print_internal(reg.llvm, indent));
 }
 
-Str_view llvm_binary_print_internal(const Llvm_binary* binary) {
+Str_view llvm_binary_print_internal(const Llvm_binary* binary, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "binary", recursion_depth);
+    string_extend_cstr_indent(&print_arena, &buf, "binary", indent);
     extend_lang_type(&buf, binary->lang_type, true);
     string_extend_strv(&print_arena, &buf, token_type_to_str_view(binary->token_type));
     string_extend_cstr(&print_arena, &buf, "\n");
 
-    recursion_depth += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, llvm_expr_print_internal(binary->lhs));
-    string_extend_strv(&print_arena, &buf, llvm_expr_print_internal(binary->rhs));
-    recursion_depth -= INDENT_WIDTH;
+    indent += INDENT_WIDTH;
+    string_extend_strv(&print_arena, &buf, llvm_expr_print_internal(binary->lhs, indent));
+    string_extend_strv(&print_arena, &buf, llvm_expr_print_internal(binary->rhs, indent));
+    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_unary_print_internal(const Llvm_unary* unary) {
+Str_view llvm_unary_print_internal(const Llvm_unary* unary, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "unary", recursion_depth);
+    string_extend_cstr_indent(&print_arena, &buf, "unary", indent);
     extend_lang_type(&buf, unary->lang_type, true);
     string_extend_strv(&print_arena, &buf, token_type_to_str_view(unary->token_type));
     string_extend_cstr(&print_arena, &buf, "\n");
 
-    recursion_depth += INDENT_WIDTH;
-    llvm_expr_print_internal(unary->child);
-    recursion_depth -= INDENT_WIDTH;
+    indent += INDENT_WIDTH;
+    llvm_expr_print_internal(unary->child, indent);
+    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
@@ -96,136 +86,136 @@ void llvm_extend_sym_typed_base(String* string, Sym_typed_base base) {
     string_extend_cstr(&print_arena, string, "\n");
 }
 
-Str_view llvm_primitive_sym_print_internal(const Llvm_primitive_sym* sym) {
+Str_view llvm_primitive_sym_print_internal(const Llvm_primitive_sym* sym, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "primitive_sym", recursion_depth);
+    string_extend_cstr_indent(&print_arena, &buf, "primitive_sym", indent);
     llvm_extend_sym_typed_base(&buf, sym->base);
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_struct_sym_print_internal(const Llvm_struct_sym* sym) {
+Str_view llvm_struct_sym_print_internal(const Llvm_struct_sym* sym, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "struct_sym", recursion_depth);
+    string_extend_cstr_indent(&print_arena, &buf, "struct_sym", indent);
     llvm_extend_sym_typed_base(&buf, sym->base);
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_raw_union_sym_print_internal(const Llvm_raw_union_sym* sym) {
+Str_view llvm_raw_union_sym_print_internal(const Llvm_raw_union_sym* sym, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "raw_union_sym", recursion_depth);
+    string_extend_cstr_indent(&print_arena, &buf, "raw_union_sym", indent);
     llvm_extend_sym_typed_base(&buf, sym->base);
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_enum_sym_print_internal(const Llvm_enum_sym* sym) {
+Str_view llvm_enum_sym_print_internal(const Llvm_enum_sym* sym, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "enum_sym", recursion_depth);
+    string_extend_cstr_indent(&print_arena, &buf, "enum_sym", indent);
     llvm_extend_sym_typed_base(&buf, sym->base);
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_symbol_typed_print_internal(const Llvm_symbol_typed* sym) {
+Str_view llvm_symbol_typed_print_internal(const Llvm_symbol_typed* sym, int indent) {
     switch (sym->type) {
         case LLVM_PRIMITIVE_SYM:
-            return llvm_primitive_sym_print_internal(llvm_unwrap_primitive_sym_const(sym));
+            return llvm_primitive_sym_print_internal(llvm_unwrap_primitive_sym_const(sym), indent);
         case LLVM_STRUCT_SYM:
-            return llvm_struct_sym_print_internal(llvm_unwrap_struct_sym_const(sym));
+            return llvm_struct_sym_print_internal(llvm_unwrap_struct_sym_const(sym), indent);
         case LLVM_RAW_UNION_SYM:
-            return llvm_raw_union_sym_print_internal(llvm_unwrap_raw_union_sym_const(sym));
+            return llvm_raw_union_sym_print_internal(llvm_unwrap_raw_union_sym_const(sym), indent);
         case LLVM_ENUM_SYM:
-            return llvm_enum_sym_print_internal(llvm_unwrap_enum_sym_const(sym));
+            return llvm_enum_sym_print_internal(llvm_unwrap_enum_sym_const(sym), indent);
     }
     unreachable("");
 }
 
-Str_view llvm_member_access_typed_print_internal(const Llvm_member_access_typed* access) {
+Str_view llvm_member_access_typed_print_internal(const Llvm_member_access_typed* access, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "member_access_typed", recursion_depth);
+    string_extend_cstr_indent(&print_arena, &buf, "member_access_typed", indent);
     string_extend_strv(&print_arena, &buf, access->member_name);
-    recursion_depth += INDENT_WIDTH;
-    string_extend_strv_indent(&print_arena, &buf, llvm_expr_print_internal(access->callee), recursion_depth);
-    recursion_depth -= INDENT_WIDTH;
+    indent += INDENT_WIDTH;
+    string_extend_strv_indent(&print_arena, &buf, llvm_expr_print_internal(access->callee, indent), indent);
+    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_index_typed_print_internal(const Llvm_index_typed* index) {
+Str_view llvm_index_typed_print_internal(const Llvm_index_typed* index, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "index_typed", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    string_extend_strv_indent(&print_arena, &buf, llvm_expr_print_internal(index->index), recursion_depth);
-    string_extend_strv_indent(&print_arena, &buf, llvm_expr_print_internal(index->callee), recursion_depth);
-    recursion_depth -= INDENT_WIDTH;
+    string_extend_cstr_indent(&print_arena, &buf, "index_typed", indent);
+    indent += INDENT_WIDTH;
+    string_extend_strv_indent(&print_arena, &buf, llvm_expr_print_internal(index->index, indent), indent);
+    string_extend_strv_indent(&print_arena, &buf, llvm_expr_print_internal(index->callee, indent), indent);
+    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_literal_print_internal(const Llvm_literal* lit) {
+Str_view llvm_literal_print_internal(const Llvm_literal* lit, int indent) {
     switch (lit->type) {
         case LLVM_NUMBER:
-            return llvm_number_print_internal(llvm_unwrap_number_const(lit));
+            return llvm_number_print_internal(llvm_unwrap_number_const(lit), indent);
         case LLVM_STRING:
-            return llvm_string_print_internal(llvm_unwrap_string_const(lit));
+            return llvm_string_print_internal(llvm_unwrap_string_const(lit), indent);
         case LLVM_VOID:
-            return llvm_void_print_internal(llvm_unwrap_void_const(lit));
+            return llvm_void_print_internal(llvm_unwrap_void_const(lit), indent);
         case LLVM_ENUM_LIT:
-            return llvm_enum_lit_print_internal(llvm_unwrap_enum_lit_const(lit));
+            return llvm_enum_lit_print_internal(llvm_unwrap_enum_lit_const(lit), indent);
         case LLVM_CHAR:
-            return llvm_char_print_internal(llvm_unwrap_char_const(lit));
+            return llvm_char_print_internal(llvm_unwrap_char_const(lit), indent);
     }
     unreachable("");
 }
 
-Str_view llvm_function_call_print_internal(const Llvm_function_call* fun_call) {
+Str_view llvm_function_call_print_internal(const Llvm_function_call* fun_call, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "function_call", recursion_depth);
+    string_extend_cstr_indent(&print_arena, &buf, "function_call", indent);
     string_extend_strv_in_par(&print_arena, &buf, fun_call->name);
     extend_lang_type(&buf, fun_call->lang_type, true);
     string_extend_cstr(&print_arena, &buf, "\n");
 
-    recursion_depth += INDENT_WIDTH;
+    indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
-        Str_view arg_text = llvm_expr_print_internal(vec_at(&fun_call->args, idx));
+        Str_view arg_text = llvm_expr_print_internal(vec_at(&fun_call->args, idx), indent);
         string_extend_strv(&print_arena, &buf, arg_text);
     }
-    recursion_depth -= INDENT_WIDTH;
+    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_struct_literal_print_internal(const Llvm_struct_literal* lit) {
+Str_view llvm_struct_literal_print_internal(const Llvm_struct_literal* lit, int indent) {
     String buf = {0};
 
-    recursion_depth += INDENT_WIDTH;
+    indent += INDENT_WIDTH;
 
-    string_extend_cstr_indent(&print_arena, &buf, "struct_literal", recursion_depth);
-    string_extend_strv_indent(&print_arena, &buf, lit->name, recursion_depth);
+    string_extend_cstr_indent(&print_arena, &buf, "struct_literal", indent);
+    string_extend_strv_indent(&print_arena, &buf, lit->name, indent);
     extend_lang_type(&buf, lit->lang_type, true);
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-        Str_view memb_text = node_print_internal(vec_at(&lit->members, idx));
+        Str_view memb_text = node_print_internal(vec_at(&lit->members, idx), indent);
         string_extend_strv(&print_arena, &buf, memb_text);
     }
 
-    recursion_depth -= INDENT_WIDTH;
+    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_number_print_internal(const Llvm_number* num) {
+Str_view llvm_number_print_internal(const Llvm_number* num, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "number", recursion_depth);
+    string_extend_cstr_indent(&print_arena, &buf, "number", indent);
     extend_lang_type(&buf, num->lang_type, true);
     string_extend_int64_t(&print_arena, &buf, num->data);
     string_extend_cstr(&print_arena, &buf, "\n");
@@ -233,10 +223,10 @@ Str_view llvm_number_print_internal(const Llvm_number* num) {
     return string_to_strv(buf);
 }
 
-Str_view llvm_string_print_internal(const Llvm_string* lit) {
+Str_view llvm_string_print_internal(const Llvm_string* lit, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "string", recursion_depth);
+    string_extend_cstr_indent(&print_arena, &buf, "string", indent);
     extend_lang_type(&buf, lit->lang_type, true);
     string_extend_strv_in_par(&print_arena, &buf, lit->data);
     string_extend_cstr(&print_arena, &buf, "\n");
@@ -244,10 +234,10 @@ Str_view llvm_string_print_internal(const Llvm_string* lit) {
     return string_to_strv(buf);
 }
 
-Str_view llvm_enum_lit_print_internal(const Llvm_enum_lit* num) {
+Str_view llvm_enum_lit_print_internal(const Llvm_enum_lit* num, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "enum_lit", recursion_depth);
+    string_extend_cstr_indent(&print_arena, &buf, "enum_lit", indent);
     extend_lang_type(&buf, num->lang_type, true);
     string_extend_int64_t(&print_arena, &buf, num->data);
     string_extend_cstr(&print_arena, &buf, "\n");
@@ -255,40 +245,40 @@ Str_view llvm_enum_lit_print_internal(const Llvm_enum_lit* num) {
     return string_to_strv(buf);
 }
 
-Str_view llvm_void_print_internal(const Llvm_void* num) {
+Str_view llvm_void_print_internal(const Llvm_void* num, int indent) {
     (void) num;
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "void\n", recursion_depth);
+    string_extend_cstr_indent(&print_arena, &buf, "void\n", indent);
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_char_print_internal(const Llvm_char* num) {
+Str_view llvm_char_print_internal(const Llvm_char* num, int indent) {
     (void) num;
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "char", recursion_depth);
+    string_extend_cstr_indent(&print_arena, &buf, "char", indent);
     vec_append(&print_arena, &buf, num->data);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_llvm_placeholder_print_internal(const Llvm_llvm_placeholder* lit) {
+Str_view llvm_llvm_placeholder_print_internal(const Llvm_llvm_placeholder* lit, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "llvm_placeholder", recursion_depth);
+    string_extend_cstr_indent(&print_arena, &buf, "llvm_placeholder", indent);
     extend_lang_type(&buf, lit->lang_type, true);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_load_element_ptr_print_internal(const Llvm_load_element_ptr* load) {
+Str_view llvm_load_element_ptr_print_internal(const Llvm_load_element_ptr* load, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "load_element_ptr", recursion_depth);
+    string_extend_cstr_indent(&print_arena, &buf, "load_element_ptr", indent);
     extend_lang_type(&buf, load->lang_type, true);
     extend_llvm_id(&buf, "self", load->llvm_id);
     extend_pointer(&buf, "self", llvm_wrap_load_element_ptr_const(load));
@@ -299,83 +289,88 @@ Str_view llvm_load_element_ptr_print_internal(const Llvm_load_element_ptr* load)
     return string_to_strv(buf);
 }
 
-Str_view llvm_block_print_internal(const Llvm_block* block) {
+Str_view llvm_block_print_internal(const Llvm_block* block, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "block\n", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
+    string_extend_cstr_indent(&print_arena, &buf, "block\n", indent);
+
+    string_extend_cstr_indent(&print_arena, &buf, "alloca_table\n", indent + INDENT_WIDTH);
+    alloca_extend_table_internal(&buf, block->symbol_collection.alloca_table, indent + 2*INDENT_WIDTH);
+
+    string_extend_cstr_indent(&print_arena, &buf, "symbol_table\n", indent + INDENT_WIDTH);
+    symbol_extend_table_internal(&buf, block->symbol_collection.symbol_table, indent + 2*INDENT_WIDTH);
+
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        Str_view arg_text = llvm_print_internal(vec_at(&block->children, idx));
+        Str_view arg_text = llvm_print_internal(vec_at(&block->children, idx), indent + INDENT_WIDTH);
         string_extend_strv(&print_arena, &buf, arg_text);
     }
-    recursion_depth -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_function_params_print_internal(const Llvm_function_params* function_params) {
+Str_view llvm_function_params_print_internal(const Llvm_function_params* function_params, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "function_params\n", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
+    string_extend_cstr_indent(&print_arena, &buf, "function_params\n", indent);
+    indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < function_params->params.info.count; idx++) {
-        Str_view arg_text = llvm_variable_def_print_internal(vec_at(&function_params->params, idx));
+        Str_view arg_text = llvm_variable_def_print_internal(vec_at(&function_params->params, idx), indent);
         string_extend_strv(&print_arena, &buf, arg_text);
     }
-    recursion_depth -= INDENT_WIDTH;
+    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_lang_type_print_internal(const Llvm_lang_type* lang_type) {
+Str_view llvm_lang_type_print_internal(const Llvm_lang_type* lang_type, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "lang_type", recursion_depth);
+    string_extend_cstr_indent(&print_arena, &buf, "lang_type", indent);
     extend_lang_type(&buf, lang_type->lang_type, true);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_return_print_internal(const Llvm_return* lang_rtn) {
+Str_view llvm_return_print_internal(const Llvm_return* lang_rtn, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "return\n", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, llvm_expr_print_internal(lang_rtn->child));
-    recursion_depth -= INDENT_WIDTH;
+    string_extend_cstr_indent(&print_arena, &buf, "return\n", indent);
+    indent += INDENT_WIDTH;
+    string_extend_strv(&print_arena, &buf, llvm_expr_print_internal(lang_rtn->child, indent));
+    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_goto_print_internal(const Llvm_goto* lang_goto) {
+Str_view llvm_goto_print_internal(const Llvm_goto* lang_goto, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "goto\n", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
+    string_extend_cstr_indent(&print_arena, &buf, "goto\n", indent);
+    indent += INDENT_WIDTH;
     string_extend_strv(&print_arena, &buf, lang_goto->name);
     string_extend_cstr(&print_arena, &buf, "\n");
-    recursion_depth -= INDENT_WIDTH;
+    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_cond_goto_print_internal(const Llvm_cond_goto* cond_goto) {
+Str_view llvm_cond_goto_print_internal(const Llvm_cond_goto* cond_goto, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "cond_goto", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
+    string_extend_cstr_indent(&print_arena, &buf, "cond_goto", indent);
+    indent += INDENT_WIDTH;
     string_extend_strv_in_par(&print_arena, &buf, cond_goto->if_true);
     string_extend_strv_in_par(&print_arena, &buf, cond_goto->if_false);
-    recursion_depth -= INDENT_WIDTH;
+    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_alloca_print_internal(const Llvm_alloca* alloca) {
+Str_view llvm_alloca_print_internal(const Llvm_alloca* alloca, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "alloca", recursion_depth);
+    string_extend_cstr_indent(&print_arena, &buf, "alloca", indent);
     extend_lang_type(&buf, alloca->lang_type, true);
     string_extend_strv(&print_arena, &buf, alloca->name);
     extend_pointer(&buf, "self", llvm_wrap_alloca_const(alloca));
@@ -384,161 +379,161 @@ Str_view llvm_alloca_print_internal(const Llvm_alloca* alloca) {
     return string_to_strv(buf);
 }
 
-Str_view llvm_load_another_llvm_print_internal(const Llvm_load_another_llvm* load) {
+Str_view llvm_load_another_llvm_print_internal(const Llvm_load_another_llvm* load, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "load_another_llvm", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
+    string_extend_cstr_indent(&print_arena, &buf, "load_another_llvm", indent);
+    indent += INDENT_WIDTH;
     extend_lang_type(&buf, load->lang_type, true);
     string_extend_cstr(&print_arena, &buf, "\n");
-    recursion_depth -= INDENT_WIDTH;
+    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_store_another_llvm_print_internal(const Llvm_store_another_llvm* store) {
+Str_view llvm_store_another_llvm_print_internal(const Llvm_store_another_llvm* store, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "store_another_llvm", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
+    string_extend_cstr_indent(&print_arena, &buf, "store_another_llvm", indent);
+    indent += INDENT_WIDTH;
     extend_lang_type(&buf, store->lang_type, true);
     string_extend_cstr(&print_arena, &buf, "\n");
-    recursion_depth -= INDENT_WIDTH;
+    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_function_decl_print_internal(const Llvm_function_decl* fun_decl) {
+Str_view llvm_function_decl_print_internal(const Llvm_function_decl* fun_decl, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "function_decl", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
+    string_extend_cstr_indent(&print_arena, &buf, "function_decl", indent);
+    indent += INDENT_WIDTH;
     string_extend_strv_in_par(&print_arena, &buf, fun_decl->name);
     string_extend_cstr(&print_arena, &buf, "\n");
-    string_extend_strv(&print_arena, &buf, llvm_function_params_print_internal(fun_decl->params));
-    string_extend_strv(&print_arena, &buf, llvm_lang_type_print_internal(fun_decl->return_type));
-    recursion_depth -= INDENT_WIDTH;
+    string_extend_strv(&print_arena, &buf, llvm_function_params_print_internal(fun_decl->params, indent));
+    string_extend_strv(&print_arena, &buf, llvm_lang_type_print_internal(fun_decl->return_type, indent));
+    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_function_def_print_internal(const Llvm_function_def* fun_def) {
+Str_view llvm_function_def_print_internal(const Llvm_function_def* fun_def, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "function_def\n", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, llvm_function_decl_print_internal(fun_def->decl));
-    string_extend_strv(&print_arena, &buf, llvm_block_print_internal(fun_def->body));
-    recursion_depth -= INDENT_WIDTH;
+    string_extend_cstr_indent(&print_arena, &buf, "function_def\n", indent);
+    indent += INDENT_WIDTH;
+    string_extend_strv(&print_arena, &buf, llvm_function_decl_print_internal(fun_def->decl, indent));
+    string_extend_strv(&print_arena, &buf, llvm_block_print_internal(fun_def->body, indent));
+    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
 
-static void extend_struct_def_base(String* buf, const char* type_name, Struct_def_base base) {
-    string_extend_cstr_indent(&print_arena, buf, type_name, recursion_depth);
+static void extend_struct_def_base(String* buf, const char* type_name, Struct_def_base base, int indent) {
+    string_extend_cstr_indent(&print_arena, buf, type_name, indent);
     string_extend_strv_in_par(&print_arena, buf, base.name);
     extend_llvm_id(buf, "self", base.llvm_id);
     string_extend_cstr(&print_arena, buf, "\n");
 
-    recursion_depth += INDENT_WIDTH;
+    indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        Str_view memb_text = node_print_internal(vec_at(&base.members, idx));
+        Str_view memb_text = node_print_internal(vec_at(&base.members, idx), indent);
         string_extend_strv(&print_arena, buf, memb_text);
     }
-    recursion_depth -= INDENT_WIDTH;
+    indent -= INDENT_WIDTH;
 }
 
-Str_view llvm_struct_def_print_internal(const Llvm_struct_def* def) {
+Str_view llvm_struct_def_print_internal(const Llvm_struct_def* def, int indent) {
     String buf = {0};
 
-    extend_struct_def_base(&buf, "struct_def", def->base);
+    extend_struct_def_base(&buf, "struct_def", def->base, indent);
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_raw_union_def_print_internal(const Llvm_raw_union_def* def) {
+Str_view llvm_raw_union_def_print_internal(const Llvm_raw_union_def* def, int indent) {
     String buf = {0};
 
-    extend_struct_def_base(&buf, "raw_union_def", def->base);
+    extend_struct_def_base(&buf, "raw_union_def", def->base, indent);
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_enum_def_print_internal(const Llvm_enum_def* def) {
+Str_view llvm_enum_def_print_internal(const Llvm_enum_def* def, int indent) {
     String buf = {0};
 
-    extend_struct_def_base(&buf, "enum_def", def->base);
+    extend_struct_def_base(&buf, "enum_def", def->base, indent);
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_primitive_def_print_internal(const Llvm_primitive_def* def) {
+Str_view llvm_primitive_def_print_internal(const Llvm_primitive_def* def, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "primitive_def\n", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
+    string_extend_cstr_indent(&print_arena, &buf, "primitive_def\n", indent);
+    indent += INDENT_WIDTH;
     extend_lang_type(&buf, def->lang_type, true);
     string_extend_cstr(&print_arena, &buf, "\n");
-    recursion_depth -= INDENT_WIDTH;
+    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_string_def_print_internal(const Llvm_string_def* def) {
+Str_view llvm_string_def_print_internal(const Llvm_string_def* def, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "string_def", recursion_depth);
-    recursion_depth += INDENT_WIDTH;
+    string_extend_cstr_indent(&print_arena, &buf, "string_def", indent);
+    indent += INDENT_WIDTH;
     string_extend_strv(&print_arena, &buf, def->name);
     string_extend_strv(&print_arena, &buf, def->data);
     string_extend_cstr(&print_arena, &buf, "\n");
-    recursion_depth -= INDENT_WIDTH;
+    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_struct_lit_def_print_internal(const Llvm_struct_lit_def* def) {
+Str_view llvm_struct_lit_def_print_internal(const Llvm_struct_lit_def* def, int indent) {
     String buf = {0};
 
-    recursion_depth += INDENT_WIDTH;
+    indent += INDENT_WIDTH;
 
-    string_extend_cstr_indent(&print_arena, &buf, "struct_lit_def\n", recursion_depth);
-    string_extend_strv_indent(&print_arena, &buf, def->name, recursion_depth);
+    string_extend_cstr_indent(&print_arena, &buf, "struct_lit_def\n", indent);
+    string_extend_strv_indent(&print_arena, &buf, def->name, indent);
     extend_lang_type(&buf, def->lang_type, true);
     for (size_t idx = 0; idx < def->members.info.count; idx++) {
-        Str_view memb_text = llvm_print_internal(vec_at(&def->members, idx));
+        Str_view memb_text = llvm_print_internal(vec_at(&def->members, idx), indent);
         string_extend_strv(&print_arena, &buf, memb_text);
     }
 
-    recursion_depth -= INDENT_WIDTH;
+    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_label_print_internal(const Llvm_label* label) {
+Str_view llvm_label_print_internal(const Llvm_label* label, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "label\n", recursion_depth);
-    string_extend_strv_indent(&print_arena, &buf, label->name, recursion_depth);
-    string_extend_cstr_indent(&print_arena, &buf, "\n", recursion_depth);
+    string_extend_cstr_indent(&print_arena, &buf, "label\n", indent);
+    string_extend_strv_indent(&print_arena, &buf, label->name, indent);
+    string_extend_cstr_indent(&print_arena, &buf, "\n", indent);
 
     return string_to_strv(buf);
 }
 
-Str_view llvm_literal_def_print_internal(const Llvm_literal_def* def) {
+Str_view llvm_literal_def_print_internal(const Llvm_literal_def* def, int indent) {
     switch (def->type) {
         case LLVM_STRING_DEF:
-            return llvm_string_def_print_internal(llvm_unwrap_string_def_const(def));
+            return llvm_string_def_print_internal(llvm_unwrap_string_def_const(def), indent);
         case LLVM_STRUCT_LIT_DEF:
-            return llvm_struct_lit_def_print_internal(llvm_unwrap_struct_lit_def_const(def));
+            return llvm_struct_lit_def_print_internal(llvm_unwrap_struct_lit_def_const(def), indent);
     }
     unreachable("");
 }
 
-Str_view llvm_variable_def_print_internal(const Llvm_variable_def* def) {
+Str_view llvm_variable_def_print_internal(const Llvm_variable_def* def, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "variable_def", recursion_depth);
+    string_extend_cstr_indent(&print_arena, &buf, "variable_def", indent);
     extend_lang_type(&buf, def->lang_type, true);
     string_extend_strv_in_par(&print_arena, &buf, def->name);
     extend_llvm_id(&buf, "self", def->llvm_id);
@@ -548,88 +543,88 @@ Str_view llvm_variable_def_print_internal(const Llvm_variable_def* def) {
     return string_to_strv(buf);
 }
 
-Str_view llvm_operator_print_internal(const Llvm_operator* operator) {
+Str_view llvm_operator_print_internal(const Llvm_operator* operator, int indent) {
     switch (operator->type) {
         case LLVM_BINARY:
-            return llvm_binary_print_internal(llvm_unwrap_binary_const(operator));
+            return llvm_binary_print_internal(llvm_unwrap_binary_const(operator), indent);
         case LLVM_UNARY:
-            return llvm_unary_print_internal(llvm_unwrap_unary_const(operator));
+            return llvm_unary_print_internal(llvm_unwrap_unary_const(operator), indent);
     }
     unreachable("");
 }
 
-Str_view llvm_def_print_internal(const Llvm_def* def) {
+Str_view llvm_def_print_internal(const Llvm_def* def, int indent) {
     switch (def->type) {
         case LLVM_FUNCTION_DEF:
-            return llvm_function_def_print_internal(llvm_unwrap_function_def_const(def));
+            return llvm_function_def_print_internal(llvm_unwrap_function_def_const(def), indent);
         case LLVM_FUNCTION_DECL:
-            return llvm_function_decl_print_internal(llvm_unwrap_function_decl_const(def));
+            return llvm_function_decl_print_internal(llvm_unwrap_function_decl_const(def), indent);
         case LLVM_VARIABLE_DEF:
-            return llvm_variable_def_print_internal(llvm_unwrap_variable_def_const(def));
+            return llvm_variable_def_print_internal(llvm_unwrap_variable_def_const(def), indent);
         case LLVM_STRUCT_DEF:
-            return llvm_struct_def_print_internal(llvm_unwrap_struct_def_const(def));
+            return llvm_struct_def_print_internal(llvm_unwrap_struct_def_const(def), indent);
         case LLVM_RAW_UNION_DEF:
-            return llvm_raw_union_def_print_internal(llvm_unwrap_raw_union_def_const(def));
+            return llvm_raw_union_def_print_internal(llvm_unwrap_raw_union_def_const(def), indent);
         case LLVM_ENUM_DEF:
-            return llvm_enum_def_print_internal(llvm_unwrap_enum_def_const(def));
+            return llvm_enum_def_print_internal(llvm_unwrap_enum_def_const(def), indent);
         case LLVM_PRIMITIVE_DEF:
-            return llvm_primitive_def_print_internal(llvm_unwrap_primitive_def_const(def));
+            return llvm_primitive_def_print_internal(llvm_unwrap_primitive_def_const(def), indent);
         case LLVM_LABEL:
-            return llvm_label_print_internal(llvm_unwrap_label_const(def));
+            return llvm_label_print_internal(llvm_unwrap_label_const(def), indent);
         case LLVM_LITERAL_DEF:
-            return llvm_literal_def_print_internal(llvm_unwrap_literal_def_const(def));
+            return llvm_literal_def_print_internal(llvm_unwrap_literal_def_const(def), indent);
     }
     unreachable("");
 }
 
-Str_view llvm_expr_print_internal(const Llvm_expr* expr) {
+Str_view llvm_expr_print_internal(const Llvm_expr* expr, int indent) {
     switch (expr->type) {
         case LLVM_OPERATOR:
-            return llvm_operator_print_internal(llvm_unwrap_operator_const(expr));
+            return llvm_operator_print_internal(llvm_unwrap_operator_const(expr), indent);
         case LLVM_SYMBOL_TYPED:
-            return llvm_symbol_typed_print_internal(llvm_unwrap_symbol_typed_const(expr));
+            return llvm_symbol_typed_print_internal(llvm_unwrap_symbol_typed_const(expr), indent);
         case LLVM_MEMBER_ACCESS_TYPED:
-            return llvm_member_access_typed_print_internal(llvm_unwrap_member_access_typed_const(expr));
+            return llvm_member_access_typed_print_internal(llvm_unwrap_member_access_typed_const(expr), indent);
         case LLVM_INDEX_TYPED:
-            return llvm_index_typed_print_internal(llvm_unwrap_index_typed_const(expr));
+            return llvm_index_typed_print_internal(llvm_unwrap_index_typed_const(expr), indent);
         case LLVM_LITERAL:
-            return llvm_literal_print_internal(llvm_unwrap_literal_const(expr));
+            return llvm_literal_print_internal(llvm_unwrap_literal_const(expr), indent);
         case LLVM_FUNCTION_CALL:
-            return llvm_function_call_print_internal(llvm_unwrap_function_call_const(expr));
+            return llvm_function_call_print_internal(llvm_unwrap_function_call_const(expr), indent);
         case LLVM_STRUCT_LITERAL:
-            return llvm_struct_literal_print_internal(llvm_unwrap_struct_literal_const(expr));
+            return llvm_struct_literal_print_internal(llvm_unwrap_struct_literal_const(expr), indent);
         case LLVM_LLVM_PLACEHOLDER:
-            return llvm_llvm_placeholder_print_internal(llvm_unwrap_llvm_placeholder_const(expr));
+            return llvm_llvm_placeholder_print_internal(llvm_unwrap_llvm_placeholder_const(expr), indent);
     }
     unreachable("");
 }
 
-Str_view llvm_print_internal(const Llvm* llvm) {
+Str_view llvm_print_internal(const Llvm* llvm, int indent) {
     switch (llvm->type) {
         case LLVM_BLOCK:
-            return llvm_block_print_internal(llvm_unwrap_block_const(llvm));
+            return llvm_block_print_internal(llvm_unwrap_block_const(llvm), indent);
         case LLVM_EXPR:
-            return llvm_expr_print_internal(llvm_unwrap_expr_const(llvm));
+            return llvm_expr_print_internal(llvm_unwrap_expr_const(llvm), indent);
         case LLVM_DEF:
-            return llvm_def_print_internal(llvm_unwrap_def_const(llvm));
+            return llvm_def_print_internal(llvm_unwrap_def_const(llvm), indent);
         case LLVM_LOAD_ELEMENT_PTR:
-            return llvm_load_element_ptr_print_internal(llvm_unwrap_load_element_ptr_const(llvm));
+            return llvm_load_element_ptr_print_internal(llvm_unwrap_load_element_ptr_const(llvm), indent);
         case LLVM_FUNCTION_PARAMS:
-            return llvm_function_params_print_internal(llvm_unwrap_function_params_const(llvm));
+            return llvm_function_params_print_internal(llvm_unwrap_function_params_const(llvm), indent);
         case LLVM_LANG_TYPE:
-            return llvm_lang_type_print_internal(llvm_unwrap_lang_type_const(llvm));
+            return llvm_lang_type_print_internal(llvm_unwrap_lang_type_const(llvm), indent);
         case LLVM_RETURN:
-            return llvm_return_print_internal(llvm_unwrap_return_const(llvm));
+            return llvm_return_print_internal(llvm_unwrap_return_const(llvm), indent);
         case LLVM_GOTO:
-            return llvm_goto_print_internal(llvm_unwrap_goto_const(llvm));
+            return llvm_goto_print_internal(llvm_unwrap_goto_const(llvm), indent);
         case LLVM_COND_GOTO:
-            return llvm_cond_goto_print_internal(llvm_unwrap_cond_goto_const(llvm));
+            return llvm_cond_goto_print_internal(llvm_unwrap_cond_goto_const(llvm), indent);
         case LLVM_ALLOCA:
-            return llvm_alloca_print_internal(llvm_unwrap_alloca_const(llvm));
+            return llvm_alloca_print_internal(llvm_unwrap_alloca_const(llvm), indent);
         case LLVM_LOAD_ANOTHER_LLVM:
-            return llvm_load_another_llvm_print_internal(llvm_unwrap_load_another_llvm_const(llvm));
+            return llvm_load_another_llvm_print_internal(llvm_unwrap_load_another_llvm_const(llvm), indent);
         case LLVM_STORE_ANOTHER_LLVM:
-            return llvm_store_another_llvm_print_internal(llvm_unwrap_store_another_llvm_const(llvm));
+            return llvm_store_another_llvm_print_internal(llvm_unwrap_store_another_llvm_const(llvm), indent);
     }
     unreachable("");
 }
