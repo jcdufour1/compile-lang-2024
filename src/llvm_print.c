@@ -55,6 +55,7 @@ Str_view llvm_binary_print_internal(const Llvm_binary* binary, int indent) {
     string_extend_cstr_indent(&print_arena, &buf, "binary", indent);
     extend_lang_type(&buf, binary->lang_type, true);
     string_extend_strv(&print_arena, &buf, token_type_to_str_view(binary->token_type));
+    string_extend_strv_in_par(&print_arena, &buf, binary->name);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     indent += INDENT_WIDTH;
@@ -71,6 +72,7 @@ Str_view llvm_unary_print_internal(const Llvm_unary* unary, int indent) {
     string_extend_cstr_indent(&print_arena, &buf, "unary", indent);
     extend_lang_type(&buf, unary->lang_type, true);
     string_extend_strv(&print_arena, &buf, token_type_to_str_view(unary->token_type));
+    string_extend_strv_in_par(&print_arena, &buf, unary->name);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     indent += INDENT_WIDTH;
@@ -346,11 +348,9 @@ Str_view llvm_return_print_internal(const Llvm_return* lang_rtn, int indent) {
 Str_view llvm_goto_print_internal(const Llvm_goto* lang_goto, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "goto\n", indent);
-    indent += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, lang_goto->name);
+    string_extend_cstr_indent(&print_arena, &buf, "goto", indent);
+    string_extend_strv_in_par(&print_arena, &buf, lang_goto->name);
     string_extend_cstr(&print_arena, &buf, "\n");
-    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
@@ -359,10 +359,9 @@ Str_view llvm_cond_goto_print_internal(const Llvm_cond_goto* cond_goto, int inde
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "cond_goto", indent);
-    indent += INDENT_WIDTH;
     string_extend_strv_in_par(&print_arena, &buf, cond_goto->if_true);
     string_extend_strv_in_par(&print_arena, &buf, cond_goto->if_false);
-    indent -= INDENT_WIDTH;
+    string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
 }
@@ -383,10 +382,9 @@ Str_view llvm_load_another_llvm_print_internal(const Llvm_load_another_llvm* loa
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "load_another_llvm", indent);
-    indent += INDENT_WIDTH;
     extend_lang_type(&buf, load->lang_type, true);
+    string_extend_strv_in_par(&print_arena, &buf, load->name);
     string_extend_cstr(&print_arena, &buf, "\n");
-    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
@@ -395,10 +393,8 @@ Str_view llvm_store_another_llvm_print_internal(const Llvm_store_another_llvm* s
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "store_another_llvm", indent);
-    indent += INDENT_WIDTH;
     extend_lang_type(&buf, store->lang_type, true);
     string_extend_cstr(&print_arena, &buf, "\n");
-    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
@@ -513,9 +509,9 @@ Str_view llvm_struct_lit_def_print_internal(const Llvm_struct_lit_def* def, int 
 Str_view llvm_label_print_internal(const Llvm_label* label, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "label\n", indent);
-    string_extend_strv_indent(&print_arena, &buf, label->name, indent);
-    string_extend_cstr_indent(&print_arena, &buf, "\n", indent);
+    string_extend_cstr_indent(&print_arena, &buf, "label", indent);
+    string_extend_strv_in_par(&print_arena, &buf, label->name);
+    string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
 }

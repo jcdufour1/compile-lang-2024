@@ -134,6 +134,7 @@ static Llvm_type llvm_gen_unary(void) {
     append_member(&unary.members, "TOKEN_TYPE", "token_type");
     append_member(&unary.members, "Lang_type", "lang_type");
     append_member(&unary.members, "Llvm_id", "llvm_id");
+    append_member(&unary.members, "Str_view", "name");
 
     return unary;
 }
@@ -146,6 +147,7 @@ static Llvm_type llvm_gen_binary(void) {
     append_member(&binary.members, "TOKEN_TYPE", "token_type");
     append_member(&binary.members, "Lang_type", "lang_type");
     append_member(&binary.members, "Llvm_id", "llvm_id");
+    append_member(&binary.members, "Str_view", "name");
 
     return binary;
 }
@@ -519,6 +521,7 @@ static Llvm_type llvm_gen_load_another_llvm(void) {
     append_member(&load.members, "Llvm_reg", "llvm_src");
     append_member(&load.members, "Llvm_id", "llvm_id");
     append_member(&load.members, "Lang_type", "lang_type");
+    append_member(&load.members, "Str_view", "name");
 
     return load;
 }

@@ -287,9 +287,19 @@ static void emit_function_call_arg_llvm_placeholder(
     Llvm_id llvm_id = 0;
     log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(placeholder->lang_type));
     if (lang_type_is_struct(env, placeholder->lang_type) && placeholder->lang_type.pointer_depth == 0) {
-        log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(llvm_get_node_name(placeholder->llvm_reg.llvm)));
-        llvm_id = llvm_get_llvm_id(get_storage_location(env, llvm_get_node_name(placeholder->llvm_reg.llvm)).llvm);
+        switch (placeholder->llvm_reg.llvm->type) {
+            case LLVM_LOAD_ANOTHER_LLVM: {
+                const Llvm_load_another_llvm* load = llvm_unwrap_load_another_llvm_const(placeholder->llvm_reg.llvm);
+                llvm_id = llvm_get_llvm_id(get_storage_location(env, llvm_get_node_name(load->llvm_src.llvm)).llvm);
+                break;
+            }
+            default:
+                unreachable("");
+                //llvm_id = llvm_get_llvm_id(get_storage_location(env, llvm_get_node_name(placeholder->llvm_reg.llvm)).llvm);
+
+        }
         assert(llvm_id > 0);
+
         string_extend_cstr(&a_main, output, "ptr noundef byval(");
         extend_type_call_str(env, output, placeholder->lang_type);
         string_extend_cstr(&a_main, output, ")");

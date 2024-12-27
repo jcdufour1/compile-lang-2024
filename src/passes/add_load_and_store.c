@@ -331,8 +331,10 @@ static Llvm_reg load_symbol_typed(
         pos,
         load_ptr_symbol_typed(env, new_block, old_sym),
         0,
-        node_get_lang_type_symbol_typed(old_sym)
+        node_get_lang_type_symbol_typed(old_sym),
+        util_literal_name_new()
     );
+    try(alloca_add(env, llvm_wrap_load_another_llvm(new_load)));
 
     vec_append(&a_main, &new_block->children, llvm_wrap_load_another_llvm(new_load));
     return (Llvm_reg) {
@@ -364,8 +366,10 @@ static Llvm_reg load_binary(
         llvm_wrap_llvm_placeholder(rhs),
         old_bin->token_type,
         old_bin->lang_type,
-        0
+        0,
+        util_literal_name_new()
     );
+    try(alloca_add(env, llvm_wrap_expr(llvm_wrap_operator(llvm_wrap_binary(new_bin)))));
 
     vec_append(&a_main, &new_block->children, llvm_wrap_expr(llvm_wrap_operator(llvm_wrap_binary(new_bin))));
     return (Llvm_reg) {
@@ -389,8 +393,10 @@ static Llvm_reg load_unary(
                     old_unary->pos,
                     ptr,
                     0,
-                    old_unary->lang_type
+                    old_unary->lang_type,
+                    util_literal_name_new()
                 );
+                try(alloca_add(env, llvm_wrap_load_another_llvm(new_load)));
 
                 vec_append(&a_main, &new_block->children, llvm_wrap_load_another_llvm(new_load));
                 return (Llvm_reg) {
@@ -420,8 +426,10 @@ static Llvm_reg load_unary(
                 llvm_wrap_llvm_placeholder(child),
                 old_unary->token_type,
                 old_unary->lang_type,
-                0
+                0,
+                util_literal_name_new()
             );
+            try(alloca_add(env, llvm_wrap_expr(llvm_wrap_operator(llvm_wrap_unary(new_unary)))));
 
             vec_append(&a_main, &new_block->children, llvm_wrap_expr(llvm_wrap_operator(llvm_wrap_unary(new_unary))));
             return (Llvm_reg) {
@@ -536,8 +544,10 @@ static Llvm_reg load_member_access_typed(
         old_access->pos,
         ptr,
         0,
-        ptr.lang_type
+        ptr.lang_type,
+        util_literal_name_new()
     );
+    try(alloca_add(env, llvm_wrap_load_another_llvm(new_load)));
 
     vec_append(&a_main, &new_block->children, llvm_wrap_load_another_llvm(new_load));
     return (Llvm_reg) {
@@ -557,8 +567,10 @@ static Llvm_reg load_index_typed(
         old_index->pos,
         ptr,
         0,
-        ptr.lang_type
+        ptr.lang_type,
+        util_literal_name_new()
     );
+    try(alloca_add(env, llvm_wrap_load_another_llvm(new_load)));
 
     vec_append(&a_main, &new_block->children, llvm_wrap_load_another_llvm(new_load));
     return (Llvm_reg) {
@@ -1247,8 +1259,10 @@ static Llvm_reg load_ptr_unary(
                 pos,
                 ptr,
                 0,
-                old_unary->lang_type
+                old_unary->lang_type,
+                util_literal_name_new()
             );
+            try(alloca_add(env, llvm_wrap_load_another_llvm(new_load)));
             new_load->lang_type.pointer_depth++;
 
             vec_append(&a_main, &new_block->children, llvm_wrap_load_another_llvm(new_load));

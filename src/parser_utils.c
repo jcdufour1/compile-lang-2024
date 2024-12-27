@@ -140,7 +140,8 @@ Str_view util_literal_name_new_prefix(const char* debug_prefix) {
     static String_vec literal_strings = {0};
     static size_t count = 0;
 
-    char var_name[24];
+    // TODO: is this buffer large enough?
+    char var_name[1024];
     sprintf(var_name, "%sstr%zu", debug_prefix, count);
     String symbol_name = string_new_from_cstr(&a_main, var_name);
     vec_append(&a_main, &literal_strings, symbol_name);

@@ -512,10 +512,20 @@ static inline Str_view llvm_get_literal_name(const Llvm_literal* lit) {
     unreachable("");
 }
 
+static inline Str_view llvm_get_operator_name(const Llvm_operator* operator) {
+    switch (operator->type) {
+        case LLVM_BINARY:
+            return llvm_unwrap_binary_const(operator)->name;
+        case LLVM_UNARY:
+            return llvm_unwrap_unary_const(operator)->name;
+    }
+    unreachable("");
+}
+
 static inline Str_view llvm_get_expr_name(const Llvm_expr* expr) {
     switch (expr->type) {
         case LLVM_OPERATOR:
-            unreachable("");
+            return llvm_get_operator_name(llvm_unwrap_operator_const(expr));
         case LLVM_STRUCT_LITERAL:
             return llvm_unwrap_struct_literal_const(expr)->name;
         case LLVM_MEMBER_ACCESS_TYPED:
@@ -601,7 +611,7 @@ static inline Str_view llvm_get_node_name(const Llvm* llvm) {
         case LLVM_ALLOCA:
             return llvm_unwrap_alloca_const(llvm)->name;
         case LLVM_LOAD_ANOTHER_LLVM:
-            return llvm_get_node_name(llvm_unwrap_load_another_llvm_const(llvm)->llvm_src.llvm);
+            return llvm_unwrap_load_another_llvm_const(llvm)->name;
         case LLVM_STORE_ANOTHER_LLVM:
             unreachable("");
         case LLVM_LOAD_ELEMENT_PTR:
