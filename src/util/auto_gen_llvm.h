@@ -533,6 +533,7 @@ static Llvm_type llvm_gen_store_another_llvm(void) {
     append_member(&store.members, "Llvm_reg", "llvm_dest");
     append_member(&store.members, "Llvm_id", "llvm_id");
     append_member(&store.members, "Lang_type", "lang_type");
+    append_member(&store.members, "Str_view", "name");
 
     return store;
 }

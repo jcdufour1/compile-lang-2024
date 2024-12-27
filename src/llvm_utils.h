@@ -613,7 +613,7 @@ static inline Str_view llvm_get_node_name(const Llvm* llvm) {
         case LLVM_LOAD_ANOTHER_LLVM:
             return llvm_unwrap_load_another_llvm_const(llvm)->name;
         case LLVM_STORE_ANOTHER_LLVM:
-            unreachable("");
+            return llvm_unwrap_store_another_llvm_const(llvm)->name;
         case LLVM_LOAD_ELEMENT_PTR:
             return llvm_unwrap_load_element_ptr_const(llvm)->name;
     }

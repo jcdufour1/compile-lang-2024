@@ -394,6 +394,7 @@ Str_view llvm_store_another_llvm_print_internal(const Llvm_store_another_llvm* s
 
     string_extend_cstr_indent(&print_arena, &buf, "store_another_llvm", indent);
     extend_lang_type(&buf, store->lang_type, true);
+    string_extend_strv_in_par(&print_arena, &buf, store->name);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);

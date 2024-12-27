@@ -653,8 +653,10 @@ static Llvm_reg load_function_parameters(
             fun_param_call,
             get_storage_location(env, param->name),
             0,
-            param->lang_type
+            param->lang_type,
+            util_literal_name_new()
         );
+        try(alloca_add(env, llvm_wrap_store_another_llvm(new_store)));
 
         // TODO: append to new function body instead of old
         vec_append(&a_main, &new_fun_body->children, llvm_wrap_store_another_llvm(new_store));
@@ -765,8 +767,10 @@ static Llvm_reg load_assignment(
         load_expr(env, new_block, old_assignment->rhs),
         load_ptr(env, new_block, old_assignment->lhs),
         0,
-        node_get_lang_type(old_assignment->lhs)
+        node_get_lang_type(old_assignment->lhs),
+        util_literal_name_new()
     );
+    try(alloca_add(env, llvm_wrap_store_another_llvm(new_store)));
 
     assert(new_store->llvm_src.llvm);
     assert(new_store->llvm_dest.llvm);
