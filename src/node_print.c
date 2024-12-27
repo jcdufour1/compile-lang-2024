@@ -184,11 +184,9 @@ Str_view node_member_access_typed_print_internal(const Node_member_access_typed*
 Str_view node_index_untyped_print_internal(const Node_index_untyped* index, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "index_untyped", indent);
-    indent += INDENT_WIDTH;
-    string_extend_strv_indent(&print_arena, &buf, node_expr_print_internal(index->index, indent), indent);
-    string_extend_strv_indent(&print_arena, &buf, node_expr_print_internal(index->callee, indent), indent);
-    indent -= INDENT_WIDTH;
+    string_extend_cstr_indent(&print_arena, &buf, "index_untyped\n", indent);
+    string_extend_strv(&print_arena, &buf, node_expr_print_internal(index->index, indent + INDENT_WIDTH));
+    string_extend_strv(&print_arena, &buf, node_expr_print_internal(index->callee, indent + INDENT_WIDTH));
 
     return string_to_strv(buf);
 }
@@ -196,11 +194,9 @@ Str_view node_index_untyped_print_internal(const Node_index_untyped* index, int 
 Str_view node_index_typed_print_internal(const Node_index_typed* index, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "index_typed", indent);
-    indent += INDENT_WIDTH;
-    string_extend_strv_indent(&print_arena, &buf, node_expr_print_internal(index->index, indent), indent);
-    string_extend_strv_indent(&print_arena, &buf, node_expr_print_internal(index->callee, indent), indent);
-    indent -= INDENT_WIDTH;
+    string_extend_cstr_indent(&print_arena, &buf, "index_typed\n", indent);
+    string_extend_strv(&print_arena, &buf, node_expr_print_internal(index->index, indent + INDENT_WIDTH));
+    string_extend_strv(&print_arena, &buf, node_expr_print_internal(index->callee, indent + INDENT_WIDTH));
 
     return string_to_strv(buf);
 }

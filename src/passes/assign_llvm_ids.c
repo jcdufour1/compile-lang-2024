@@ -45,12 +45,6 @@ static Llvm_function_call* id_function_call(Llvm_function_call* fun_call) {
 
 static Llvm_expr* id_expr(Llvm_expr* expr) {
     switch (expr->type) {
-        case LLVM_MEMBER_ACCESS_TYPED:
-            llvm_unwrap_member_access_typed(expr)->llvm_id = llvm_id_new();
-            return expr;
-        case LLVM_INDEX_TYPED:
-            llvm_unwrap_index_typed(expr)->llvm_id = llvm_id_new();
-            return expr;
         case LLVM_STRUCT_LITERAL:
             return expr;
         case LLVM_SYMBOL_TYPED:

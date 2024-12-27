@@ -401,7 +401,7 @@ uint64_t sizeof_struct_expr(const Env* env, const Node_expr* struct_literal_or_d
 static uint64_t llvm_sizeof_expr(const Env* env, const Llvm_expr* expr) {
     (void) env;
     switch (expr->type) {
-        case NODE_LITERAL:
+        case LLVM_LITERAL:
             return sizeof_lang_type(env, llvm_get_lang_type_literal(llvm_unwrap_literal_const(expr)));
         default:
             unreachable("");
@@ -589,9 +589,7 @@ bool llvm_try_get_generic_struct_def(const Env* env, Node_def** def, Llvm* llvm)
                 assert(llvm_get_lang_type(llvm).str.count > 0);
                 return symbol_lookup(def, env, llvm_get_lang_type(llvm).str);
             }
-            case LLVM_SYMBOL_TYPED:
-                // fallthrough
-            case LLVM_MEMBER_ACCESS_TYPED: {
+            case LLVM_SYMBOL_TYPED: {
                 Node_def* var_def;
                 assert(llvm_get_node_name(llvm).count > 0);
                 if (!symbol_lookup(&var_def, env, llvm_get_node_name(llvm))) {

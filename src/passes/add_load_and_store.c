@@ -484,6 +484,7 @@ static Str_view load_ptr_index_typed(
         str_view_from_cstr(""),
         false
     );
+    try(alloca_add(env, llvm_wrap_load_element_ptr(new_load)));
 
     vec_append(&a_main, &new_block->children, llvm_wrap_load_element_ptr(new_load));
     return new_load->name_self;

@@ -136,29 +136,6 @@ Str_view llvm_symbol_typed_print_internal(const Llvm_symbol_typed* sym, int inde
     unreachable("");
 }
 
-Str_view llvm_member_access_typed_print_internal(const Llvm_member_access_typed* access, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "member_access_typed", indent);
-    extend_name(&buf, access->member_name);
-    extend_child_name(&buf, "callee", access->callee);
-    string_extend_cstr(&print_arena, &buf, "\n");
-
-    return string_to_strv(buf);
-}
-
-Str_view llvm_index_typed_print_internal(const Llvm_index_typed* index, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "index_typed", indent);
-    extend_name(&buf, index->member_name);
-    extend_child_name(&buf, "callee", access->callee);
-    extend_child_name(&buf, "index", access->index);
-    string_extend_cstr(&print_arena, &buf, "\n");
-
-    return string_to_strv(buf);
-}
-
 Str_view llvm_literal_print_internal(const Llvm_literal* lit, int indent) {
     switch (lit->type) {
         case LLVM_NUMBER:
@@ -579,10 +556,6 @@ Str_view llvm_expr_print_internal(const Llvm_expr* expr, int indent) {
             return llvm_operator_print_internal(llvm_unwrap_operator_const(expr), indent);
         case LLVM_SYMBOL_TYPED:
             return llvm_symbol_typed_print_internal(llvm_unwrap_symbol_typed_const(expr), indent);
-        case LLVM_MEMBER_ACCESS_TYPED:
-            return llvm_member_access_typed_print_internal(llvm_unwrap_member_access_typed_const(expr), indent);
-        case LLVM_INDEX_TYPED:
-            return llvm_index_typed_print_internal(llvm_unwrap_index_typed_const(expr), indent);
         case LLVM_LITERAL:
             return llvm_literal_print_internal(llvm_unwrap_literal_const(expr), indent);
         case LLVM_FUNCTION_CALL:

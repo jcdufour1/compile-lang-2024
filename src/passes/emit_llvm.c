@@ -319,10 +319,6 @@ static void emit_function_arg_expr(const Env* env, String* output, const Llvm_ex
             case LLVM_LITERAL:
                 extend_literal_decl(env, output, llvm_unwrap_literal_const(argument), true);
                 break;
-            case LLVM_MEMBER_ACCESS_TYPED:
-                // TODO: make test case with member access in function arg directly
-                unreachable("");
-                break;
             case LLVM_STRUCT_LITERAL:
                 todo();
             case LLVM_SYMBOL_TYPED:
@@ -918,8 +914,6 @@ static void emit_expr(Env* env, String* output, const Llvm_expr* expr) {
             break;
         case LLVM_FUNCTION_CALL:
             emit_function_call(env, output, llvm_unwrap_function_call_const(expr));
-            break;
-        case LLVM_MEMBER_ACCESS_TYPED:
             break;
         case LLVM_LITERAL:
             extend_literal_decl(env, output, llvm_unwrap_literal_const(expr), true);

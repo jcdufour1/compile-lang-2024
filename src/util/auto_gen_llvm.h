@@ -204,28 +204,6 @@ static Llvm_type llvm_gen_symbol_typed(void) {
     return sym;
 }
 
-static Llvm_type llvm_gen_member_access_typed(void) {
-    Llvm_type access = {.name = llvm_name_new("expr", "member_access_typed", false)};
-
-    append_member(&access.members, "Lang_type", "lang_type");
-    append_member(&access.members, "Str_view", "member_name");
-    append_member(&access.members, "Str_view", "callee");
-    append_member(&access.members, "Llvm_id", "llvm_id");
-
-    return access;
-}
-
-static Llvm_type llvm_gen_index_typed(void) {
-    Llvm_type index = {.name = llvm_name_new("expr", "index_typed", false)};
-
-    append_member(&index.members, "Lang_type", "lang_type");
-    append_member(&index.members, "Str_view", "index");
-    append_member(&index.members, "Str_view", "callee");
-    append_member(&index.members, "Llvm_id", "llvm_id");
-
-    return index;
-}
-
 static Llvm_type llvm_gen_number(void) {
     Llvm_type number = {.name = llvm_name_new("literal", "number", false)};
 
@@ -323,8 +301,6 @@ static Llvm_type llvm_gen_expr(void) {
 
     vec_append(&gen_a, &expr.sub_types, llvm_gen_operator());
     vec_append(&gen_a, &expr.sub_types, llvm_gen_symbol_typed());
-    vec_append(&gen_a, &expr.sub_types, llvm_gen_member_access_typed());
-    vec_append(&gen_a, &expr.sub_types, llvm_gen_index_typed());
     vec_append(&gen_a, &expr.sub_types, llvm_gen_literal());
     vec_append(&gen_a, &expr.sub_types, llvm_gen_function_call());
     vec_append(&gen_a, &expr.sub_types, llvm_gen_struct_literal());

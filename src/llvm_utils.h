@@ -86,10 +86,6 @@ static inline Str_view llvm_get_symbol_typed_name(const Llvm_symbol_typed* sym) 
 
 static inline Llvm_id llvm_get_llvm_id_expr(const Llvm_expr* expr) {
     switch (expr->type) {
-        case LLVM_MEMBER_ACCESS_TYPED:
-            unreachable("");
-        case LLVM_INDEX_TYPED:
-            unreachable("");
         case LLVM_LITERAL:
             unreachable("");
         case LLVM_OPERATOR: {
@@ -251,10 +247,6 @@ static inline Lang_type llvm_get_lang_type_expr(const Llvm_expr* expr) {
             return llvm_unwrap_struct_literal_const(expr)->lang_type;
         case LLVM_FUNCTION_CALL:
             return llvm_unwrap_function_call_const(expr)->lang_type;
-        case LLVM_MEMBER_ACCESS_TYPED:
-            return llvm_unwrap_member_access_typed_const(expr)->lang_type;
-        case LLVM_INDEX_TYPED:
-            return llvm_unwrap_index_typed_const(expr)->lang_type;
         case LLVM_LITERAL:
             return llvm_get_lang_type_literal(llvm_unwrap_literal_const(expr));
         case LLVM_OPERATOR:
@@ -297,10 +289,6 @@ static inline Lang_type* llvm_get_lang_type_expr_ref(Llvm_expr* expr) {
             return &llvm_unwrap_struct_literal(expr)->lang_type;
         case LLVM_FUNCTION_CALL:
             return &llvm_unwrap_function_call(expr)->lang_type;
-        case LLVM_MEMBER_ACCESS_TYPED:
-            unreachable("");
-        case LLVM_INDEX_TYPED:
-            unreachable("");
         case LLVM_LITERAL:
             return llvm_get_lang_type_literal_ref(llvm_unwrap_literal(expr));
         case LLVM_SYMBOL_TYPED:
@@ -401,10 +389,6 @@ static inline Llvm* llvm_get_expr_src(Llvm_expr* expr) {
     switch (expr->type) {
         case LLVM_STRUCT_LITERAL:
             unreachable("");
-        case LLVM_MEMBER_ACCESS_TYPED:
-            unreachable("");
-        case LLVM_INDEX_TYPED:
-            unreachable("");
         case LLVM_LITERAL:
             unreachable("");
         case LLVM_SYMBOL_TYPED:
@@ -453,10 +437,6 @@ static inline Llvm* get_llvm_src(Llvm* llvm) {
 static inline Llvm* llvm_get_expr_dest(Llvm_expr* expr) {
     switch (expr->type) {
         case LLVM_STRUCT_LITERAL:
-            unreachable("");
-        case LLVM_MEMBER_ACCESS_TYPED:
-            unreachable("");
-        case LLVM_INDEX_TYPED:
             unreachable("");
         case LLVM_LITERAL:
             unreachable("");
@@ -534,10 +514,6 @@ static inline Str_view llvm_get_expr_name(const Llvm_expr* expr) {
             return llvm_get_operator_name(llvm_unwrap_operator_const(expr));
         case LLVM_STRUCT_LITERAL:
             return llvm_unwrap_struct_literal_const(expr)->name;
-        case LLVM_MEMBER_ACCESS_TYPED:
-            return llvm_unwrap_member_access_typed_const(expr)->member_name;
-        case LLVM_INDEX_TYPED:
-            unreachable("");
         case LLVM_SYMBOL_TYPED:
             return llvm_get_symbol_typed_name(llvm_unwrap_symbol_typed_const(expr));
         case LLVM_FUNCTION_CALL:
