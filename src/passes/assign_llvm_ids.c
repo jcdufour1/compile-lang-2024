@@ -101,7 +101,7 @@ static Llvm_def* id_def(Llvm_def* def) {
         case LLVM_ENUM_DEF:
             return def;
         case LLVM_FUNCTION_DECL:
-            return def;
+            return llvm_wrap_function_decl(id_function_decl(llvm_unwrap_function_decl(def)));
         case LLVM_FUNCTION_DEF:
             return llvm_wrap_function_def(id_function_def(llvm_unwrap_function_def(def)));
         case LLVM_PRIMITIVE_DEF:

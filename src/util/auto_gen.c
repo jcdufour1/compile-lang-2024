@@ -20,6 +20,7 @@
 //    let num i32 = deref(token).num
 //}
 
+// TODO: expected failure test with more than one non-variadic parameter in function decl or def
 // TODO: node_block_new, etc. should have arguments for every item
 // TODO: actually use newline to end statement depending on last token of line of line
 // TODO: expected failure case for invalid type in extern "c" function
