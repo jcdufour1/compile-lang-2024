@@ -18,15 +18,12 @@ static Llvm_id llvm_id_new(void) {
 }
 
 static Llvm_unary* id_unary(Llvm_unary* unary) {
-    unary->child = id_expr(unary->child);
     unary->llvm_id = llvm_id_new();
     return unary;
 }
    
 
 static Llvm_binary* id_binary(Llvm_binary* binary) {
-    binary->lhs = id_expr(binary->lhs);
-    binary->rhs = id_expr(binary->rhs);
     binary->llvm_id = llvm_id_new();
     return binary;
 }
@@ -42,13 +39,7 @@ static Llvm_operator* id_operator(Llvm_operator* operator) {
 }
 
 static Llvm_function_call* id_function_call(Llvm_function_call* fun_call) {
-    for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
-        Llvm_expr** expr = vec_at_ref(&fun_call->args, idx);
-        *expr = id_expr(*expr);
-    }
-
     fun_call->llvm_id = llvm_id_new();
-
     return fun_call;
 }
 

@@ -13,12 +13,16 @@ static void extend_llvm_id(String* buf, const char* location, Llvm_id llvm_id) {
     string_extend_cstr(&print_arena, buf, " &) ");
 }
 
-static void extend_pointer(String* buf, const char* location, const Llvm* pointer) {
+static void extend_child_name(String* buf, const char* location, Str_view child_name) {
     string_extend_cstr(&print_arena, buf, " (* ");
     string_extend_cstr(&print_arena, buf, location);
     string_extend_cstr(&print_arena, buf, ":");
-    string_extend_pointer(&print_arena, buf, pointer);
+    string_extend_strv(&print_arena, buf, child_name);
     string_extend_cstr(&print_arena, buf, " *) ");
+}
+
+static void extend_name(String* buf, Str_view name) {
+    string_extend_strv_in_par(&print_arena, buf, name);
 }
 
 static void extend_lang_type(String* string, Lang_type lang_type, bool surround_in_lt_gt) {
@@ -56,12 +60,9 @@ Str_view llvm_binary_print_internal(const Llvm_binary* binary, int indent) {
     extend_lang_type(&buf, binary->lang_type, true);
     string_extend_strv(&print_arena, &buf, token_type_to_str_view(binary->token_type));
     string_extend_strv_in_par(&print_arena, &buf, binary->name);
+    extend_child_name(&buf, "lhs", binary->lhs);
+    extend_child_name(&buf, "rhs", binary->rhs);
     string_extend_cstr(&print_arena, &buf, "\n");
-
-    indent += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, llvm_expr_print_internal(binary->lhs, indent));
-    string_extend_strv(&print_arena, &buf, llvm_expr_print_internal(binary->rhs, indent));
-    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
@@ -73,11 +74,8 @@ Str_view llvm_unary_print_internal(const Llvm_unary* unary, int indent) {
     extend_lang_type(&buf, unary->lang_type, true);
     string_extend_strv(&print_arena, &buf, token_type_to_str_view(unary->token_type));
     string_extend_strv_in_par(&print_arena, &buf, unary->name);
+    extend_child_name(&buf, "child", unary->child);
     string_extend_cstr(&print_arena, &buf, "\n");
-
-    indent += INDENT_WIDTH;
-    llvm_expr_print_internal(unary->child, indent);
-    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
@@ -142,10 +140,9 @@ Str_view llvm_member_access_typed_print_internal(const Llvm_member_access_typed*
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "member_access_typed", indent);
-    string_extend_strv(&print_arena, &buf, access->member_name);
-    indent += INDENT_WIDTH;
-    string_extend_strv_indent(&print_arena, &buf, llvm_expr_print_internal(access->callee, indent), indent);
-    indent -= INDENT_WIDTH;
+    extend_name(&buf, access->member_name);
+    extend_child_name(&buf, "callee", access->callee);
+    string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
 }
@@ -154,10 +151,10 @@ Str_view llvm_index_typed_print_internal(const Llvm_index_typed* index, int inde
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "index_typed", indent);
-    indent += INDENT_WIDTH;
-    string_extend_strv_indent(&print_arena, &buf, llvm_expr_print_internal(index->index, indent), indent);
-    string_extend_strv_indent(&print_arena, &buf, llvm_expr_print_internal(index->callee, indent), indent);
-    indent -= INDENT_WIDTH;
+    extend_name(&buf, index->member_name);
+    extend_child_name(&buf, "callee", access->callee);
+    extend_child_name(&buf, "index", access->index);
+    string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
 }
@@ -182,16 +179,15 @@ Str_view llvm_function_call_print_internal(const Llvm_function_call* fun_call, i
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "function_call", indent);
-    string_extend_strv_in_par(&print_arena, &buf, fun_call->name);
+    extend_name(&buf, fun_call->name_self);
+    extend_child_name(&buf, "function_to_call:", fun_call->name_fun_to_call);
     extend_lang_type(&buf, fun_call->lang_type, true);
     string_extend_cstr(&print_arena, &buf, "\n");
 
-    indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
-        Str_view arg_text = llvm_expr_print_internal(vec_at(&fun_call->args, idx), indent);
-        string_extend_strv(&print_arena, &buf, arg_text);
+        string_extend_strv_indent(&print_arena, &buf, vec_at(&fun_call->args, idx), indent + INDENT_WIDTH);
+        string_extend_cstr(&print_arena, &buf, "\n");
     }
-    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
@@ -219,6 +215,7 @@ Str_view llvm_number_print_internal(const Llvm_number* num, int indent) {
 
     string_extend_cstr_indent(&print_arena, &buf, "number", indent);
     extend_lang_type(&buf, num->lang_type, true);
+    extend_name(&buf, num->name);
     string_extend_int64_t(&print_arena, &buf, num->data);
     string_extend_cstr(&print_arena, &buf, "\n");
 
@@ -230,7 +227,8 @@ Str_view llvm_string_print_internal(const Llvm_string* lit, int indent) {
 
     string_extend_cstr_indent(&print_arena, &buf, "string", indent);
     extend_lang_type(&buf, lit->lang_type, true);
-    string_extend_strv_in_par(&print_arena, &buf, lit->data);
+    extend_name(&buf, lit->name);
+    string_extend_strv(&print_arena, &buf, lit->data);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
@@ -283,9 +281,9 @@ Str_view llvm_load_element_ptr_print_internal(const Llvm_load_element_ptr* load,
     string_extend_cstr_indent(&print_arena, &buf, "load_element_ptr", indent);
     extend_lang_type(&buf, load->lang_type, true);
     extend_llvm_id(&buf, "self", load->llvm_id);
-    extend_pointer(&buf, "self", llvm_wrap_load_element_ptr_const(load));
-    extend_llvm_id(&buf, "src", llvm_get_llvm_id(load->llvm_src.llvm));
-    extend_pointer(&buf, "src", load->llvm_src.llvm);
+    extend_name(&buf, load->name_self);
+    extend_child_name(&buf, "member_name", load->name_self);
+    extend_child_name(&buf, "src", load->llvm_src);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
@@ -337,10 +335,9 @@ Str_view llvm_lang_type_print_internal(const Llvm_lang_type* lang_type, int inde
 Str_view llvm_return_print_internal(const Llvm_return* lang_rtn, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "return\n", indent);
-    indent += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, llvm_expr_print_internal(lang_rtn->child, indent));
-    indent -= INDENT_WIDTH;
+    string_extend_cstr_indent(&print_arena, &buf, "return", indent);
+    extend_child_name(&buf, "child", lang_rtn->child);
+    string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
 }
@@ -371,8 +368,7 @@ Str_view llvm_alloca_print_internal(const Llvm_alloca* alloca, int indent) {
 
     string_extend_cstr_indent(&print_arena, &buf, "alloca", indent);
     extend_lang_type(&buf, alloca->lang_type, true);
-    string_extend_strv(&print_arena, &buf, alloca->name);
-    extend_pointer(&buf, "self", llvm_wrap_alloca_const(alloca));
+    extend_name(&buf, alloca->name);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
@@ -383,7 +379,8 @@ Str_view llvm_load_another_llvm_print_internal(const Llvm_load_another_llvm* loa
 
     string_extend_cstr_indent(&print_arena, &buf, "load_another_llvm", indent);
     extend_lang_type(&buf, load->lang_type, true);
-    string_extend_strv_in_par(&print_arena, &buf, load->name);
+    extend_name(&buf, load->name);
+    extend_child_name(&buf, "src", load->llvm_src);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
@@ -394,7 +391,9 @@ Str_view llvm_store_another_llvm_print_internal(const Llvm_store_another_llvm* s
 
     string_extend_cstr_indent(&print_arena, &buf, "store_another_llvm", indent);
     extend_lang_type(&buf, store->lang_type, true);
-    string_extend_strv_in_par(&print_arena, &buf, store->name);
+    extend_name(&buf, store->name);
+    extend_child_name(&buf, "src", store->llvm_src);
+    extend_child_name(&buf, "dest", store->llvm_dest);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
@@ -532,9 +531,9 @@ Str_view llvm_variable_def_print_internal(const Llvm_variable_def* def, int inde
 
     string_extend_cstr_indent(&print_arena, &buf, "variable_def", indent);
     extend_lang_type(&buf, def->lang_type, true);
-    string_extend_strv_in_par(&print_arena, &buf, def->name);
+    extend_name(&buf, def->name_self);
+    extend_child_name(&buf, "corrs_param", def->name_corr_param);
     extend_llvm_id(&buf, "self", def->llvm_id);
-    extend_pointer(&buf, "self", llvm_wrap_def_const(llvm_wrap_variable_def_const(def)));
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);

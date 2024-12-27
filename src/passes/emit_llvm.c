@@ -279,56 +279,42 @@ static void emit_function_params(const Env* env, String* output, const Llvm_func
     }
 }
 
-static void emit_function_call_arg_llvm_placeholder(
+static void emit_function_call_arg_load_another_llvm(
     const Env* env,
     String* output,
-    const Llvm_llvm_placeholder* placeholder
+    const Llvm_load_another_llvm* load
 ) {
     Llvm_id llvm_id = 0;
-    log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(placeholder->lang_type));
-    if (lang_type_is_struct(env, placeholder->lang_type) && placeholder->lang_type.pointer_depth == 0) {
-        switch (placeholder->llvm_reg.llvm->type) {
-            case LLVM_LOAD_ANOTHER_LLVM: {
-                const Llvm_load_another_llvm* load = llvm_unwrap_load_another_llvm_const(placeholder->llvm_reg.llvm);
-                llvm_id = llvm_get_llvm_id(get_storage_location(env, llvm_get_node_name(load->llvm_src.llvm)).llvm);
-                break;
-            }
-            default:
-                unreachable("");
-                //llvm_id = llvm_get_llvm_id(get_storage_location(env, llvm_get_node_name(placeholder->llvm_reg.llvm)).llvm);
+    log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(load->lang_type));
 
-        }
+    Llvm* src = NULL;
+    try(alloca_lookup(&src, env, load->name));
+    if (lang_type_is_struct(env, load->lang_type) && load->lang_type.pointer_depth == 0) {
+        llvm_id = get_llvm_id_from_name(env, get_storage_location(env, load->llvm_src));
         assert(llvm_id > 0);
 
         string_extend_cstr(&a_main, output, "ptr noundef byval(");
-        extend_type_call_str(env, output, placeholder->lang_type);
+        extend_type_call_str(env, output, load->lang_type);
         string_extend_cstr(&a_main, output, ")");
         string_extend_cstr(&a_main, output, " %");
         string_extend_size_t(&a_main, output, llvm_id);
-    } else if (lang_type_is_enum(env, placeholder->lang_type)) {
-        llvm_id = llvm_get_llvm_id(placeholder->llvm_reg.llvm);
-        extend_type_call_str(env, output, placeholder->lang_type);
+    } else if (lang_type_is_enum(env, load->lang_type)) {
+        llvm_id = load->llvm_id;
+        extend_type_call_str(env, output, load->lang_type);
         string_extend_cstr(&a_main, output, " %");
         string_extend_size_t(&a_main, output, llvm_id);
-    } else if (llvm_is_literal(placeholder->llvm_reg.llvm)) {
-        extend_literal_decl(env, output, llvm_unwrap_literal_const(llvm_unwrap_expr_const(placeholder->llvm_reg.llvm)), true);
+    } else if (llvm_is_literal(src)) {
+        extend_literal_decl(env, output, llvm_unwrap_literal_const(llvm_unwrap_expr_const(src)), true);
     } else {
-        log(LOG_DEBUG, LLVM_FMT"\n", llvm_print(placeholder->llvm_reg.llvm));
-        llvm_id = llvm_get_llvm_id(placeholder->llvm_reg.llvm);
-        extend_type_call_str(env, output, placeholder->lang_type);
+        log(LOG_DEBUG, LLVM_FMT"\n", llvm_print(src));
+        llvm_id = llvm_get_llvm_id(src);
+        extend_type_call_str(env, output, load->lang_type);
         string_extend_cstr(&a_main, output, " %");
         string_extend_size_t(&a_main, output, llvm_id);
     }
 }
 
-static void emit_function_call_arguments(const Env* env, String* output, const Llvm_function_call* fun_call) {
-    for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
-        const Llvm_expr* argument = vec_at(&fun_call->args, idx);
-
-        if (idx > 0) {
-            string_extend_cstr(&a_main, output, ", ");
-        }
-
+static void emit_function_arg_expr(const Env* env, String* output, const Llvm_expr* argument) {
         switch (argument->type) {
             case LLVM_LITERAL:
                 extend_literal_decl(env, output, llvm_unwrap_literal_const(argument), true);
@@ -342,14 +328,41 @@ static void emit_function_call_arguments(const Env* env, String* output, const L
             case LLVM_SYMBOL_TYPED:
                 unreachable("typed symbols should not still be present");
             case LLVM_LLVM_PLACEHOLDER: {
-                const Llvm_llvm_placeholder* placeholder = llvm_unwrap_llvm_placeholder_const(argument);
-                emit_function_call_arg_llvm_placeholder(env, output, placeholder);
+                unreachable("");
+                //const Llvm_llvm_placeholder* placeholder = llvm_unwrap_llvm_placeholder_const(argument);
+                //emit_function_call_arg_load_another_llvm(env, output, llvm_unwrap_load_another_llvm_const(placeholder->));
                 break;
             }
             case LLVM_FUNCTION_CALL:
                 unreachable("");
             default:
                 unreachable("");
+        }
+}
+
+static void emit_function_call_arguments(const Env* env, String* output, const Llvm_function_call* fun_call) {
+    for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
+        Str_view arg_name = vec_at(&fun_call->args, idx);
+        Llvm* argument = NULL;
+        try(alloca_lookup(&argument, env, arg_name));
+
+        if (idx > 0) {
+            string_extend_cstr(&a_main, output, ", ");
+        }
+
+        switch (argument->type) {
+            case LLVM_EXPR:
+                emit_function_arg_expr(env, output, llvm_unwrap_expr_const(argument));
+                break;
+            case LLVM_LOAD_ANOTHER_LLVM:
+                emit_function_call_arg_load_another_llvm(env, output, llvm_unwrap_load_another_llvm_const(argument));
+                break;
+            case LLVM_ALLOCA:
+                string_extend_cstr(&a_main, output, "ptr %");
+                string_extend_size_t(&a_main, output, llvm_get_llvm_id(argument));
+                break;
+            default:
+                unreachable(NODE_FMT"\n", llvm_print(argument));
         }
     }
 }
@@ -367,7 +380,7 @@ static void emit_function_call(const Env* env, String* output, const Llvm_functi
     string_extend_cstr(&a_main, output, "call ");
     extend_type_call_str(env, output, fun_call->lang_type);
     string_extend_cstr(&a_main, output, " @");
-    string_extend_strv(&a_main, output, fun_call->name);
+    string_extend_strv(&a_main, output, fun_call->name_fun_to_call);
 
     // arguments
     string_extend_cstr(&a_main, output, "(");
@@ -389,32 +402,31 @@ static void emit_alloca(const Env* env, String* output, const Llvm_alloca* alloc
 static void emit_unary_type(const Env* env, String* output, const Llvm_unary* unary) {
     switch (unary->token_type) {
         case TOKEN_UNSAFE_CAST:
-            if (unary->lang_type.pointer_depth > 0 && lang_type_is_number(llvm_get_lang_type_expr(unary->child))) {
+            if (unary->lang_type.pointer_depth > 0 && lang_type_is_number(get_lang_type_from_name(env, unary->child))) {
                 string_extend_cstr(&a_main, output, "inttoptr ");
-                extend_type_call_str(env, output, llvm_get_lang_type_expr(unary->child));
+                extend_type_call_str(env, output, get_lang_type_from_name(env, unary->child));
                 string_extend_cstr(&a_main, output, " ");
-            } else if (lang_type_is_number(unary->lang_type) && llvm_get_lang_type_expr(unary->child).pointer_depth > 0) {
+            } else if (lang_type_is_number(unary->lang_type) && get_lang_type_from_name(env, unary->child).pointer_depth > 0) {
                 string_extend_cstr(&a_main, output, "ptrtoint ");
-                extend_type_call_str(env, output, llvm_get_lang_type_expr(unary->child));
+                extend_type_call_str(env, output, get_lang_type_from_name(env, unary->child));
                 string_extend_cstr(&a_main, output, " ");
-            } else if (lang_type_is_number(unary->lang_type) && lang_type_is_number(llvm_get_lang_type_expr(unary->child))) {
-                if (i_lang_type_to_bit_width(unary->lang_type) > i_lang_type_to_bit_width(llvm_get_lang_type_expr(unary->child))) {
+            } else if (lang_type_is_number(unary->lang_type) && lang_type_is_number(get_lang_type_from_name(env, unary->child))) {
+                if (i_lang_type_to_bit_width(unary->lang_type) > i_lang_type_to_bit_width(get_lang_type_from_name(env, unary->child))) {
                     string_extend_cstr(&a_main, output, "zext ");
                 } else {
                     string_extend_cstr(&a_main, output, "trunc ");
                 }
-                extend_type_call_str(env, output, llvm_get_lang_type_expr(unary->child));
+                extend_type_call_str(env, output, get_lang_type_from_name(env, unary->child));
                 string_extend_cstr(&a_main, output, " ");
             } else {
                 todo();
             }
             break;
         default:
-            unreachable(LLVM_FMT"\n", llvm_print(llvm_wrap_expr_const(llvm_wrap_operator_const(llvm_wrap_unary_const(unary)))));
+            unreachable(LLVM_FMT"\n", llvm_unary_print(unary));
     }
 }
 
-// TODO: make Llvm_untyped_binary
 static void emit_binary_type(const Env* env, String* output, const Llvm_binary* binary) {
     // TODO: do signed and unsigned operators correctly
     switch (binary->token_type) {
@@ -506,7 +518,7 @@ static void emit_operator_operand_llvm_placeholder(
     }
 }
 
-static void emit_operator_operand(String* output, const Llvm_expr* operand) {
+static void emit_operator_operand_expr(String* output, const Llvm_expr* operand) {
     switch (operand->type) {
         case LLVM_LITERAL:
             extend_literal(output, llvm_unwrap_literal_const(operand));
@@ -522,8 +534,30 @@ static void emit_operator_operand(String* output, const Llvm_expr* operand) {
             string_extend_cstr(&a_main, output, "%");
             string_extend_size_t(&a_main, output, llvm_unwrap_function_call_const(operand)->llvm_id);
             break;
+        case LLVM_OPERATOR:
+            string_extend_cstr(&a_main, output, "%");
+            string_extend_size_t(&a_main, output, llvm_get_llvm_id_expr(operand));
+            break;
         default:
-            unreachable(LLVM_FMT, llvm_print((Llvm*)operand));
+            unreachable(LLVM_FMT, llvm_expr_print(operand));
+    }
+}
+
+static void emit_operator_operand(const Env* env, String* output, const Str_view operand_name) {
+    Llvm* operand = NULL;
+    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(operand_name));
+    try(alloca_lookup(&operand, env, operand_name));
+
+    switch (operand->type) {
+        case LLVM_EXPR:
+            emit_operator_operand_expr(output, llvm_unwrap_expr_const(operand));
+            break;
+        case LLVM_LOAD_ANOTHER_LLVM:
+            string_extend_cstr(&a_main, output, "%");
+            string_extend_size_t(&a_main, output, llvm_unwrap_load_another_llvm_const(operand)->llvm_id);
+            break;
+        default:
+            unreachable(LLVM_FMT, llvm_print(operand));
     }
 }
 
@@ -541,12 +575,12 @@ static void emit_operator(const Env* env, String* output, const Llvm_operator* o
     }
 
     if (operator->type == LLVM_UNARY) {
-        emit_operator_operand(output, llvm_unwrap_unary_const(operator)->child);
+        emit_operator_operand(env, output, llvm_unwrap_unary_const(operator)->child);
     } else if (operator->type == LLVM_BINARY) {
         const Llvm_binary* binary = llvm_unwrap_binary_const(operator);
-        emit_operator_operand(output, binary->lhs);
+        emit_operator_operand(env, output, binary->lhs);
         string_extend_cstr(&a_main, output, ", ");
-        emit_operator_operand(output, binary->rhs);
+        emit_operator_operand(env, output, binary->rhs);
     } else {
         unreachable("");
     }
@@ -562,7 +596,7 @@ static void emit_operator(const Env* env, String* output, const Llvm_operator* o
 }
 
 static void emit_load_another_llvm(const Env* env, String* output, const Llvm_load_another_llvm* load_llvm) {
-    Llvm_id llvm_id = llvm_get_llvm_id(load_llvm->llvm_src.llvm);
+    Llvm_id llvm_id = get_llvm_id_from_name(env, load_llvm->llvm_src);
     assert(llvm_id > 0);
 
     string_extend_cstr(&a_main, output, "    %");
@@ -639,7 +673,8 @@ static void emit_store_another_llvm_src_expr(const Env* env, String* output, con
 }
 
 static void emit_store_another_llvm(const Env* env, String* output, const Llvm_store_another_llvm* store) {
-    const Llvm* src = store->llvm_src.llvm;
+    Llvm* src = NULL;
+    try(alloca_lookup(&src, env, store->llvm_src));
 
     switch (src->type) {
         case LLVM_EXPR: {
@@ -649,7 +684,7 @@ static void emit_store_another_llvm(const Env* env, String* output, const Llvm_s
                     emit_memcpy_struct_literal(
                         env,
                         output,
-                        llvm_get_llvm_id(store->llvm_dest.llvm),
+                        get_llvm_id_from_name(env, store->llvm_dest),
                         llvm_unwrap_struct_literal_const(src_expr)
                     );
                     return;
@@ -684,6 +719,10 @@ static void emit_store_another_llvm(const Env* env, String* output, const Llvm_s
             assert(llvm_id > 0);
             string_extend_size_t(&a_main, output, llvm_id);
             break;
+        case LLVM_ALLOCA:
+            string_extend_cstr(&a_main, output, " %");
+            string_extend_size_t(&a_main, output, llvm_get_llvm_id(src));
+            break;
         default:
             unreachable(LLVM_FMT"\n", llvm_print(src));
     }
@@ -691,7 +730,7 @@ static void emit_store_another_llvm(const Env* env, String* output, const Llvm_s
     //string_extend_size_t(&a_main, output, llvm_get_llvm_id(store->llvm_src.llvm));
 
     string_extend_cstr(&a_main, output, ", ptr %");
-    string_extend_size_t(&a_main, output, llvm_get_llvm_id(store->llvm_dest.llvm));
+    string_extend_size_t(&a_main, output, get_llvm_id_from_name(env, store->llvm_dest));
     string_extend_cstr(&a_main, output, ", align 8");
     string_extend_cstr(&a_main, output, "\n");
 }
@@ -713,13 +752,10 @@ static void emit_function_def(Env* env, String* output, const Llvm_function_def*
     string_extend_cstr(&a_main, output, "}\n");
 }
 
-static void emit_return(const Env* env, String* output, const Llvm_return* fun_return) {
-    const Llvm_expr* sym_to_return = fun_return->child;
-    assert(llvm_get_lang_type_expr(sym_to_return).str.count > 0);
-
-    switch (sym_to_return->type) {
+static void emit_return_expr(const Env* env, String* output, const Llvm_expr* child) {
+    switch (child->type) {
         case LLVM_LITERAL: {
-            const Llvm_literal* literal = llvm_unwrap_literal_const(sym_to_return);
+            const Llvm_literal* literal = llvm_unwrap_literal_const(child);
             string_extend_cstr(&a_main, output, "    ret ");
             extend_type_call_str(env, output, llvm_get_lang_type_literal(literal));
             string_extend_cstr(&a_main, output, " ");
@@ -727,10 +763,19 @@ static void emit_return(const Env* env, String* output, const Llvm_return* fun_r
             string_extend_cstr(&a_main, output, "\n");
             break;
         }
+        case LLVM_OPERATOR: {
+            const Llvm_operator* operator = llvm_unwrap_operator_const(child);
+            string_extend_cstr(&a_main, output, "    ret ");
+            extend_type_call_str(env, output, llvm_get_lang_type_operator(operator));
+            string_extend_cstr(&a_main, output, " %");
+            string_extend_size_t(&a_main, output, llvm_get_llvm_id_expr(child));
+            string_extend_cstr(&a_main, output, "\n");
+            break;
+        }
         case LLVM_SYMBOL_TYPED:
             unreachable("");
         case LLVM_LLVM_PLACEHOLDER: {
-            const Llvm_llvm_placeholder* memb_sym = llvm_unwrap_llvm_placeholder_const(sym_to_return);
+            const Llvm_llvm_placeholder* memb_sym = llvm_unwrap_llvm_placeholder_const(child);
             if (llvm_is_literal(memb_sym->llvm_reg.llvm)) {
                 const Llvm_expr* memb_expr = llvm_unwrap_expr_const(memb_sym->llvm_reg.llvm);
                 const Llvm_literal* literal = llvm_unwrap_literal_const(memb_expr);
@@ -750,7 +795,31 @@ static void emit_return(const Env* env, String* output, const Llvm_return* fun_r
             break;
         }
         default:
-            unreachable("");
+            unreachable(NODE_FMT"\n", llvm_expr_print(child));
+    }
+}
+
+static void emit_return(const Env* env, String* output, const Llvm_return* fun_return) {
+    Llvm* sym_to_return = NULL;
+    try(alloca_lookup(&sym_to_return, env, fun_return->child));
+
+    assert(llvm_get_lang_type(sym_to_return).str.count > 0);
+
+    switch (sym_to_return->type) {
+        case LLVM_EXPR:
+            emit_return_expr(env, output, llvm_unwrap_expr_const(sym_to_return));
+            return;
+        case LLVM_LOAD_ANOTHER_LLVM: {
+            const Llvm_load_another_llvm* load = llvm_unwrap_load_another_llvm_const(sym_to_return);
+            string_extend_cstr(&a_main, output, "    ret ");
+            extend_type_call_str(env, output, load->lang_type);
+            string_extend_cstr(&a_main, output, " %");
+            string_extend_size_t(&a_main, output, load->llvm_id);
+            string_extend_cstr(&a_main, output, "\n");
+            return;
+        }
+        default:
+            unreachable(NODE_FMT"\n", llvm_print(sym_to_return));
     }
 }
 
@@ -779,7 +848,7 @@ static void emit_goto(const Env* env, String* output, const Llvm_goto* lang_goto
 
 static void emit_cond_goto(const Env* env, String* output, const Llvm_cond_goto* cond_goto) {
     string_extend_cstr(&a_main, output, "    br i1 %");
-    string_extend_size_t(&a_main, output, llvm_get_llvm_id(cond_goto->llvm_src.llvm));
+    string_extend_size_t(&a_main, output, get_llvm_id_from_name(env, cond_goto->condition));
     string_extend_cstr(&a_main, output, ", label %");
     string_extend_size_t(&a_main, output, get_matching_label_id(env, cond_goto->if_true));
     string_extend_cstr(&a_main, output, ", label %");
@@ -818,23 +887,25 @@ static void emit_load_struct_element_pointer(const Env* env, String* output, con
 
     string_extend_cstr(&a_main, output, " = getelementptr inbounds ");
 
-    Lang_type lang_type = llvm_get_lang_type(load_elem_ptr->llvm_src.llvm);
+    Lang_type lang_type = get_lang_type_from_name(env, load_elem_ptr->llvm_src);
     lang_type.pointer_depth = 0;
     extend_type_call_str(env, output, lang_type);
     string_extend_cstr(&a_main, output, ", ptr %");
-    string_extend_size_t(&a_main, output, llvm_get_llvm_id(load_elem_ptr->llvm_src.llvm));
+    string_extend_size_t(&a_main, output, get_llvm_id_from_name(env, load_elem_ptr->llvm_src));
     if (load_elem_ptr->is_from_struct) {
         string_extend_cstr(&a_main, output, ", i32 0");
     }
     string_extend_cstr(&a_main, output, ", ");
-    extend_type_call_str(env, output, llvm_get_lang_type(load_elem_ptr->struct_index.llvm));
+    extend_type_call_str(env, output, get_lang_type_from_name(env, load_elem_ptr->struct_index));
     string_extend_cstr(&a_main, output, " ");
 
-    if (load_elem_ptr->struct_index.llvm->type == LLVM_LOAD_ANOTHER_LLVM) {
+    Llvm* struct_index = NULL;
+    try(alloca_lookup(&struct_index, env, load_elem_ptr->struct_index));
+    if (struct_index->type == LLVM_LOAD_ANOTHER_LLVM) {
         string_extend_cstr(&a_main, output, "%");
-        string_extend_size_t(&a_main, output, llvm_get_llvm_id(load_elem_ptr->struct_index.llvm));
+        string_extend_size_t(&a_main, output, llvm_get_llvm_id(struct_index));
     } else {
-        emit_operator_operand(output, llvm_unwrap_expr_const(load_elem_ptr->struct_index.llvm));
+        emit_operator_operand(env, output, load_elem_ptr->struct_index);
     }
 
     vec_append(&a_main, output, '\n');

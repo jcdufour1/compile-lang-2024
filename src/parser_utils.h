@@ -31,7 +31,7 @@ Str_view util_literal_name_new_prefix(const char* debug_prefix);
 
 Llvm_id get_prev_load_id(const Node* var_call);
 
-Llvm_reg get_storage_location(const Env* env, Str_view sym_name);
+Str_view get_storage_location(const Env* env, Str_view sym_name);
 
 static inline bool Llvm_reg_is_some(Llvm_reg llvm_reg) {
     Llvm_reg reference = {0};

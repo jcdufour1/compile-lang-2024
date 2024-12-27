@@ -130,7 +130,7 @@ static Llvm_type llvm_gen_block(void) {
 static Llvm_type llvm_gen_unary(void) {
     Llvm_type unary = {.name = llvm_name_new("operator", "unary", false)};
 
-    append_member(&unary.members, "Llvm_expr*", "child");
+    append_member(&unary.members, "Str_view", "child");
     append_member(&unary.members, "TOKEN_TYPE", "token_type");
     append_member(&unary.members, "Lang_type", "lang_type");
     append_member(&unary.members, "Llvm_id", "llvm_id");
@@ -142,8 +142,8 @@ static Llvm_type llvm_gen_unary(void) {
 static Llvm_type llvm_gen_binary(void) {
     Llvm_type binary = {.name = llvm_name_new("operator", "binary", false)};
 
-    append_member(&binary.members, "Llvm_expr*", "lhs");
-    append_member(&binary.members, "Llvm_expr*", "rhs");
+    append_member(&binary.members, "Str_view", "lhs");
+    append_member(&binary.members, "Str_view", "rhs");
     append_member(&binary.members, "TOKEN_TYPE", "token_type");
     append_member(&binary.members, "Lang_type", "lang_type");
     append_member(&binary.members, "Llvm_id", "llvm_id");
@@ -209,7 +209,7 @@ static Llvm_type llvm_gen_member_access_typed(void) {
 
     append_member(&access.members, "Lang_type", "lang_type");
     append_member(&access.members, "Str_view", "member_name");
-    append_member(&access.members, "Llvm_expr*", "callee");
+    append_member(&access.members, "Str_view", "callee");
     append_member(&access.members, "Llvm_id", "llvm_id");
 
     return access;
@@ -219,8 +219,8 @@ static Llvm_type llvm_gen_index_typed(void) {
     Llvm_type index = {.name = llvm_name_new("expr", "index_typed", false)};
 
     append_member(&index.members, "Lang_type", "lang_type");
-    append_member(&index.members, "Llvm_expr*", "index");
-    append_member(&index.members, "Llvm_expr*", "callee");
+    append_member(&index.members, "Str_view", "index");
+    append_member(&index.members, "Str_view", "callee");
     append_member(&index.members, "Llvm_id", "llvm_id");
 
     return index;
@@ -231,6 +231,7 @@ static Llvm_type llvm_gen_number(void) {
 
     append_member(&number.members, "int64_t", "data");
     append_member(&number.members, "Lang_type", "lang_type");
+    append_member(&number.members, "Str_view", "name");
 
     return number;
 }
@@ -250,6 +251,7 @@ static Llvm_type llvm_gen_char(void) {
 
     append_member(&lang_char.members, "char", "data");
     append_member(&lang_char.members, "Lang_type", "lang_type");
+    append_member(&lang_char.members, "Str_view", "name");
 
     return lang_char;
 }
@@ -257,7 +259,7 @@ static Llvm_type llvm_gen_char(void) {
 static Llvm_type llvm_gen_void(void) {
     Llvm_type lang_void = {.name = llvm_name_new("literal", "void", false)};
 
-    append_member(&lang_void.members, "int", "dummy");
+    append_member(&lang_void.members, "Str_view", "name");
 
     return lang_void;
 }
@@ -267,6 +269,7 @@ static Llvm_type llvm_gen_enum_lit(void) {
 
     append_member(&enum_lit.members, "int64_t", "data");
     append_member(&enum_lit.members, "Lang_type", "lang_type");
+    append_member(&enum_lit.members, "Str_view", "name");
 
     return enum_lit;
 }
@@ -286,8 +289,9 @@ static Llvm_type llvm_gen_literal(void) {
 static Llvm_type llvm_gen_function_call(void) {
     Llvm_type call = {.name = llvm_name_new("expr", "function_call", false)};
 
-    append_member(&call.members, "Llvm_expr_vec", "args");
-    append_member(&call.members, "Str_view", "name");
+    append_member(&call.members, "Strv_vec", "args");
+    append_member(&call.members, "Str_view", "name_self");
+    append_member(&call.members, "Str_view", "name_fun_to_call");
     append_member(&call.members, "Llvm_id", "llvm_id");
     append_member(&call.members, "Lang_type", "lang_type");
 
@@ -371,7 +375,8 @@ static Llvm_type llvm_gen_variable_def(void) {
     append_member(&def.members, "Lang_type", "lang_type");
     append_member(&def.members, "bool", "is_variadic"); // TODO: : 1
     append_member(&def.members, "Llvm_id", "llvm_id");
-    append_member(&def.members, "Str_view", "name");
+    append_member(&def.members, "Str_view", "name_self"); // for loading from variable_def param
+    append_member(&def.members, "Str_view", "name_corr_param"); // for loading from alloca
 
     return def;
 }
@@ -451,9 +456,10 @@ static Llvm_type llvm_gen_load_element_ptr(void) {
 
     append_member(&load.members, "Lang_type", "lang_type");
     append_member(&load.members, "Llvm_id", "llvm_id");
-    append_member(&load.members, "Llvm_reg", "struct_index");
-    append_member(&load.members, "Llvm_reg", "llvm_src");
-    append_member(&load.members, "Str_view", "name");
+    append_member(&load.members, "Str_view", "struct_index");
+    append_member(&load.members, "Str_view", "llvm_src");
+    append_member(&load.members, "Str_view", "name_self");
+    append_member(&load.members, "Str_view", "name_member");
     append_member(&load.members, "bool", "is_from_struct");
 
     return load;
@@ -479,7 +485,7 @@ static Llvm_type llvm_gen_lang_type(void) {
 static Llvm_type llvm_gen_return(void) {
     Llvm_type rtn = {.name = llvm_name_new("llvm", "return", false)};
 
-    append_member(&rtn.members, "Llvm_expr*", "child");
+    append_member(&rtn.members, "Str_view", "child");
     append_member(&rtn.members, "bool", "is_auto_inserted"); // TODO: use : 1 size?
 
     return rtn;
@@ -497,7 +503,7 @@ static Llvm_type llvm_gen_goto(void) {
 static Llvm_type llvm_gen_cond_goto(void) {
     Llvm_type cond_goto = {.name = llvm_name_new("llvm", "cond_goto", false)};
 
-    append_member(&cond_goto.members, "Llvm_reg", "llvm_src");
+    append_member(&cond_goto.members, "Str_view", "condition");
     append_member(&cond_goto.members, "Str_view", "if_true");
     append_member(&cond_goto.members, "Str_view", "if_false");
     append_member(&cond_goto.members, "Llvm_id", "llvm_id");
@@ -518,7 +524,7 @@ static Llvm_type llvm_gen_alloca(void) {
 static Llvm_type llvm_gen_load_another_llvm(void) {
     Llvm_type load = {.name = llvm_name_new("llvm", "load_another_llvm", false)};
 
-    append_member(&load.members, "Llvm_reg", "llvm_src");
+    append_member(&load.members, "Str_view", "llvm_src");
     append_member(&load.members, "Llvm_id", "llvm_id");
     append_member(&load.members, "Lang_type", "lang_type");
     append_member(&load.members, "Str_view", "name");
@@ -529,8 +535,8 @@ static Llvm_type llvm_gen_load_another_llvm(void) {
 static Llvm_type llvm_gen_store_another_llvm(void) {
     Llvm_type store = {.name = llvm_name_new("llvm", "store_another_llvm", false)};
 
-    append_member(&store.members, "Llvm_reg", "llvm_src");
-    append_member(&store.members, "Llvm_reg", "llvm_dest");
+    append_member(&store.members, "Str_view", "llvm_src");
+    append_member(&store.members, "Str_view", "llvm_dest");
     append_member(&store.members, "Llvm_id", "llvm_id");
     append_member(&store.members, "Lang_type", "lang_type");
     append_member(&store.members, "Str_view", "name");
@@ -1015,6 +1021,7 @@ static void gen_all_llvms(const char* file_path, bool implementation) {
         gen_gen("#ifndef LLVM_FORWARD_DECL_H\n");
         gen_gen("#define LLVM_FORWARD_DECL_H\n");
         gen_gen("#include <lang_type_struct.h>\n");
+        gen_gen("#include <strv_vec.h>\n");
     }
 
 
