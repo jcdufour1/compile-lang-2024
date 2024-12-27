@@ -186,8 +186,8 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
             *new_src = src;
             *node_get_lang_type_literal_ref(node_unwrap_literal(*new_src)) = dest_lang_type;
             return CHECK_ASSIGN_OK;
-        } else {
-            todo();
+        } else if (src->type == NODE_SYMBOL_UNTYPED) {
+            unreachable(NODE_FMT"\n", node_expr_print(src));
         }
         log(LOG_DEBUG, LANG_TYPE_FMT "   "NODE_FMT"\n", lang_type_print(dest_lang_type), node_print((Node*)src));
         todo();
@@ -814,6 +814,21 @@ static void msg_invalid_member(
     // TODO: add notes for where struct def of callee is defined, etc.
 }
 
+static void msg_invalid_enum_member(
+    const Env* env,
+    Struct_def_base base,
+    const Node_member_access_untyped* access
+) {
+    msg(
+        LOG_ERROR, EXPECT_FAIL_INVALID_ENUM_MEMBER, env->file_text,
+        access->pos,
+        "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 
+        str_view_print(access->member_name), str_view_print(base.name)
+    );
+
+    // TODO: add notes for where struct def of callee is defined, etc.
+}
+
 bool try_set_member_access_types_finish_generic_struct(
     const Env* env,
     Node** new_node,
@@ -862,7 +877,8 @@ bool try_set_member_access_types_finish(
             Node_enum_def* enum_def = node_unwrap_enum_def(lang_type_def);
             Node_variable_def* member_def = NULL;
             if (!try_get_member_def(&member_def, &enum_def->base, access->member_name)) {
-                todo();
+                msg_invalid_enum_member(env, enum_def->base, access);
+                return false;
             }
 
             Node_enum_lit* new_lit = node_enum_lit_new(access->pos);

@@ -49,6 +49,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"redefinition-of-symbol", EXPECT_FAIL_REDEFINITION_SYMBOL},
     {"invalid-struct-member-in-literal", EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL},
     {"invalid-struct-member", EXPECT_FAIL_INVALID_STRUCT_MEMBER},
+    {"invalid-enum-member", EXPECT_FAIL_INVALID_ENUM_MEMBER},
     {"missing-return-statement", EXPECT_FAIL_MISSING_RETURN},
     {"invalid-count-function-arguments", EXPECT_FAIL_INVALID_COUNT_FUN_ARGS},
     {"invalid-function-arguments", EXPECT_FAIL_INVALID_FUN_ARG},

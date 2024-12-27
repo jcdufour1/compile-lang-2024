@@ -25,6 +25,12 @@ void extend_lang_type_to_string(Arena* arena, String* string, Lang_type lang_typ
     }
 }
 
+static void extend_pos(String* buf, Pos pos) {
+    string_extend_cstr(&print_arena, buf, "(( line:");
+    string_extend_int64_t(&print_arena, buf, pos.line);
+    string_extend_cstr(&print_arena, buf, " ))");
+}
+
 Str_view lang_type_print_internal(Arena* arena, Lang_type lang_type, bool surround_in_lt_gt) {
     String buf = {0};
     extend_lang_type_to_string(arena, &buf, lang_type, surround_in_lt_gt);
@@ -94,6 +100,7 @@ Str_view node_primitive_sym_print_internal(const Node_primitive_sym* sym, int in
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "primitive_sym", indent);
+    extend_pos(&buf, sym->pos);
     node_extend_sym_typed_base(&buf, sym->base);
 
     return string_to_strv(buf);

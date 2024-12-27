@@ -330,7 +330,15 @@ static void emit_function_arg_expr(const Env* env, String* output, const Llvm_ex
                 break;
             }
             case LLVM_FUNCTION_CALL:
-                unreachable("");
+                extend_type_call_str(env, output, llvm_get_lang_type_expr(argument));
+                string_extend_cstr(&a_main, output, "%");
+                string_extend_size_t(&a_main, output, llvm_get_llvm_id_expr(argument));
+                break;
+            case LLVM_OPERATOR:
+                extend_type_call_str(env, output, llvm_get_lang_type_expr(argument));
+                string_extend_cstr(&a_main, output, "%");
+                string_extend_size_t(&a_main, output, llvm_get_llvm_id_expr(argument));
+                break;
             default:
                 unreachable("");
         }
