@@ -52,10 +52,8 @@ static inline Llvm_reg llvm_register_sym_new(Llvm* llvm) {
 static inline Llvm_llvm_placeholder* llvm_llvm_placeholder_new_from_reg(
     Llvm_reg llvm_reg, Lang_type lang_type
 ) {
-    Llvm_llvm_placeholder* placeholder = llvm_llvm_placeholder_new(llvm_get_pos(llvm_reg.llvm));
-    placeholder->llvm_reg = llvm_reg;
-    placeholder->lang_type = lang_type;
-    return placeholder;
+    return llvm_llvm_placeholder_new(llvm_get_pos(llvm_reg.llvm), lang_type, llvm_reg);
+;
 }
 
 static inline Llvm_reg llvm_register_sym_new_from_expr(Llvm_expr* expr) {

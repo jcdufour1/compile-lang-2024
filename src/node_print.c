@@ -252,10 +252,12 @@ Str_view node_function_call_print_internal(const Node_function_call* fun_call) {
 Str_view node_struct_literal_print_internal(const Node_struct_literal* lit) {
     String buf = {0};
 
+    string_extend_cstr_indent(&print_arena, &buf, "struct_literal", recursion_depth);
+    string_extend_strv(&print_arena, &buf, lit->name);
+    string_extend_cstr(&print_arena, &buf, "\n");
+
     recursion_depth += INDENT_WIDTH;
 
-    string_extend_cstr_indent(&print_arena, &buf, "struct_literal", recursion_depth);
-    string_extend_strv_indent(&print_arena, &buf, lit->name, recursion_depth);
     extend_lang_type(&buf, lit->lang_type, true);
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
         Str_view memb_text = node_print_internal(vec_at(&lit->members, idx));

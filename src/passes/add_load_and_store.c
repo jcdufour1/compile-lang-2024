@@ -9,16 +9,14 @@
 static Llvm_variable_def* node_clone_variable_def(Node_variable_def* old_var_def);
 
 static Llvm_alloca* add_load_and_store_alloca_new(Env* env, Llvm_variable_def* var_def) {
-    Llvm_alloca* alloca = llvm_alloca_new(var_def->pos);
-    alloca->name = var_def->name;
-    alloca->lang_type = var_def->lang_type;
+    Llvm_alloca* alloca = llvm_alloca_new(var_def->pos, 0, var_def->lang_type, var_def->name);
     alloca_add(env, llvm_wrap_alloca(alloca));
     assert(alloca);
     return alloca;
 }
 
 static Llvm_function_params* node_clone_function_params(Node_function_params* old_params) {
-    Llvm_function_params* new_params = llvm_function_params_new(old_params->pos);
+    Llvm_function_params* new_params = llvm_function_params_new(old_params->pos, (Llvm_variable_def_vec){0}, 0);
 
     for (size_t idx = 0; idx < old_params->params.info.count; idx++) {
         vec_append(&a_main, &new_params->params, node_clone_variable_def(vec_at(&old_params->params, idx)));
@@ -28,56 +26,66 @@ static Llvm_function_params* node_clone_function_params(Node_function_params* ol
 }
 
 static Llvm_lang_type* node_clone_lang_type(Node_lang_type* old_lang_type) {
-    Llvm_lang_type* new_lang_type = llvm_lang_type_new(old_lang_type->pos);
-    new_lang_type->lang_type = old_lang_type->lang_type;
+    Llvm_lang_type* new_lang_type = llvm_lang_type_new(old_lang_type->pos, old_lang_type->lang_type);
     return new_lang_type;
 }
 
 static Llvm_function_decl* node_clone_function_decl(Node_function_decl* old_decl) {
-    Llvm_function_decl* new_decl = llvm_function_decl_new(old_decl->pos);
-    new_decl->params = node_clone_function_params(old_decl->params);
-    new_decl->return_type = node_clone_lang_type(old_decl->return_type);
-    new_decl->name = old_decl->name;
-    return new_decl;
+    return llvm_function_decl_new(
+        old_decl->pos,
+        node_clone_function_params(old_decl->params),
+        node_clone_lang_type(old_decl->return_type),
+        old_decl->name
+    );
 }
 
 static Llvm_variable_def* node_clone_variable_def(Node_variable_def* old_var_def) {
-    Llvm_variable_def* new_var_def = llvm_variable_def_new(old_var_def->pos);
-    new_var_def->lang_type = old_var_def->lang_type;
-    new_var_def->is_variadic = old_var_def->is_variadic;
-    new_var_def->name = old_var_def->name;
-    return new_var_def;
+    return llvm_variable_def_new(
+        old_var_def->pos,
+        old_var_def->lang_type,
+        old_var_def->is_variadic,
+        0,
+        old_var_def->name
+    );
 }
 
 static Llvm_struct_literal* node_clone_struct_literal(const Node_struct_literal* old_lit) {
-    Llvm_struct_literal* new_lit = llvm_struct_literal_new(old_lit->pos);
-    new_lit->members = old_lit->members;
-    new_lit->name = old_lit->name;
-    new_lit->lang_type = old_lit->lang_type;
-
-    return new_lit;
+    return llvm_struct_literal_new(
+        old_lit->pos,
+        old_lit->members,
+        old_lit->name,
+        old_lit->lang_type,
+        0
+    );
 }
 
 static Llvm_struct_def* node_clone_struct_def(const Node_struct_def* old_def) {
-    Llvm_struct_def* new_def = llvm_struct_def_new(old_def->pos);
-    new_def->base = old_def->base;
-    return new_def;
+    return llvm_struct_def_new(
+        old_def->pos,
+        old_def->base
+    );
 }
 
 static Llvm_enum_def* node_clone_enum_def(const Node_enum_def* old_def) {
-    Llvm_enum_def* new_def = llvm_enum_def_new(old_def->pos);
-    new_def->base = old_def->base;
-    return new_def;
+    return llvm_enum_def_new(
+        old_def->pos,
+        old_def->base
+    );
 }
 
 static Llvm_raw_union_def* node_clone_raw_union_def(const Node_raw_union_def* old_def) {
-    Llvm_raw_union_def* new_def = llvm_raw_union_def_new(old_def->pos);
-    new_def->base = old_def->base;
-    return new_def;
+    return llvm_raw_union_def_new(
+        old_def->pos,
+        old_def->base
+    );
 }
 
 static Llvm_function_params* do_function_def_alloca(Env* env, Llvm_block* new_block, const Node_function_params* old_params) {
-    Llvm_function_params* new_params = llvm_function_params_new(old_params->pos);
+    Llvm_function_params* new_params = llvm_function_params_new(
+        old_params->pos,
+        (Llvm_variable_def_vec) {0},
+        0
+    );
 
     Llvm* dummy = NULL;
 
@@ -124,14 +132,8 @@ static Llvm_reg load_operator(
     Node_operator* old_oper
 );
 
-static Llvm_goto* goto_new(Str_view name_label_to_jmp_to, Pos pos) {
-    Llvm_goto* lang_goto = llvm_goto_new(pos);
-    lang_goto->name = name_label_to_jmp_to;
-    return lang_goto;
-}
-
 static void add_label(Env* env, Llvm_block* block, Str_view label_name, Pos pos, bool defer_add_sym) {
-    Llvm_label* label = llvm_label_new(pos);
+    Llvm_label* label = llvm_label_new(pos, 0, label_name);
     label->name = label_name;
 
     if (defer_add_sym) {
@@ -152,10 +154,13 @@ static void if_for_add_cond_goto(
 ) {
     Pos pos = node_get_pos_operator(old_oper);
 
-    Llvm_cond_goto* cond_goto = llvm_cond_goto_new(pos);
-    cond_goto->llvm_src = load_operator(env, block, old_oper);
-    cond_goto->if_true = label_name_if_true;
-    cond_goto->if_false = label_name_if_false;
+    Llvm_cond_goto* cond_goto = llvm_cond_goto_new(
+        pos,
+        load_operator(env, block, old_oper),
+        label_name_if_true,
+        label_name_if_false,
+        0
+    );
 
     vec_append(&a_main, &block->children, llvm_wrap_cond_goto(cond_goto));
 }
@@ -181,21 +186,27 @@ static Llvm_reg load_function_call(
     Node_function_call* old_fun_call
 ) {
 
-    Llvm_function_call* new_fun_call = llvm_function_call_new(old_fun_call->pos);
+    Llvm_function_call* new_fun_call = llvm_function_call_new(
+        old_fun_call->pos,
+        (Llvm_expr_vec) {0},
+        old_fun_call->name,
+        0,
+        old_fun_call->lang_type
+    );
 
     for (size_t idx = 0; idx < old_fun_call->args.info.count; idx++) {
         Node_expr* old_arg = vec_at(&old_fun_call->args, idx);
         Pos arg_pos = node_get_pos_expr(old_arg);
 
-        Llvm_llvm_placeholder* new_arg = llvm_llvm_placeholder_new(arg_pos);
-        new_arg->lang_type = node_get_lang_type_expr(old_arg);
-        new_arg->llvm_reg = load_expr(env, new_block, old_arg);
+        Llvm_llvm_placeholder* new_arg = llvm_llvm_placeholder_new(
+            arg_pos,
+            node_get_lang_type_expr(old_arg),
+            load_expr(env, new_block, old_arg)
+        );
+        
         vec_append(&a_main, &new_fun_call->args, llvm_wrap_llvm_placeholder(new_arg));
     }
 
-    new_fun_call->name = old_fun_call->name;
-    new_fun_call->lang_type = old_fun_call->lang_type;
-    
     vec_append(&a_main, &new_block->children, llvm_wrap_expr(llvm_wrap_function_call(new_fun_call)));
     return (Llvm_reg) {
         .lang_type = old_fun_call->lang_type,
@@ -208,36 +219,43 @@ static Llvm_literal* node_literal_clone(Node_literal* old_lit) {
 
     switch (old_lit->type) {
         case NODE_STRING: {
-            Llvm_string* string = llvm_string_new(node_get_pos_literal(old_lit));
-            string->data = node_unwrap_string(old_lit)->data;
-            string->lang_type = node_unwrap_string(old_lit)->lang_type;
-            string->name = node_unwrap_string(old_lit)->name;
+            Llvm_string* string = llvm_string_new(
+                node_get_pos_literal(old_lit),
+                node_unwrap_string(old_lit)->data,
+                node_unwrap_string(old_lit)->lang_type,
+                node_unwrap_string(old_lit)->name
+            );
             new_lit = llvm_wrap_string(string);
             break;
         }
         case NODE_VOID: {
-            Llvm_void* lang_void = llvm_void_new(node_get_pos_literal(old_lit));
-            new_lit = llvm_wrap_void(lang_void);
+            new_lit = llvm_wrap_void(llvm_void_new(node_get_pos_literal(old_lit), 0));
             break;
         }
         case NODE_ENUM_LIT: {
-            Llvm_enum_lit* enum_lit = llvm_enum_lit_new(node_get_pos_literal(old_lit));
-            enum_lit->data = node_unwrap_enum_lit(old_lit)->data;
-            enum_lit->lang_type = node_unwrap_enum_lit(old_lit)->lang_type;
+            Llvm_enum_lit* enum_lit = llvm_enum_lit_new(
+                node_get_pos_literal(old_lit),
+                node_unwrap_enum_lit(old_lit)->data,
+                node_unwrap_enum_lit(old_lit)->lang_type
+            );
             new_lit = llvm_wrap_enum_lit(enum_lit);
             break;
         }
         case NODE_CHAR: {
-            Llvm_char* lang_char = llvm_char_new(node_get_pos_literal(old_lit));
-            lang_char->data = node_unwrap_char(old_lit)->data;
-            lang_char->lang_type = node_unwrap_char(old_lit)->lang_type;
+            Llvm_char* lang_char = llvm_char_new(
+                node_get_pos_literal(old_lit),
+                node_unwrap_char(old_lit)->data,
+                node_unwrap_char(old_lit)->lang_type
+            );
             new_lit = llvm_wrap_char(lang_char);
             break;
         }
         case NODE_NUMBER: {
-            Llvm_number* number = llvm_number_new(node_get_pos_literal(old_lit));
-            number->data = node_unwrap_number(old_lit)->data;
-            number->lang_type = node_unwrap_number(old_lit)->lang_type;
+            Llvm_number* number = llvm_number_new(
+                node_get_pos_literal(old_lit),
+                node_unwrap_number(old_lit)->data,
+                node_unwrap_number(old_lit)->lang_type
+            );
             new_lit = llvm_wrap_number(number);
             break;
         }
@@ -309,9 +327,12 @@ static Llvm_reg load_symbol_typed(
 ) {
     Pos pos = node_get_pos_symbol_typed(old_sym);
 
-    Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(pos);
-    new_load->llvm_src = load_ptr_symbol_typed(env, new_block, old_sym);
-    new_load->lang_type = node_get_lang_type_symbol_typed(old_sym);
+    Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
+        pos,
+        load_ptr_symbol_typed(env, new_block, old_sym),
+        0,
+        node_get_lang_type_symbol_typed(old_sym)
+    );
 
     vec_append(&a_main, &new_block->children, llvm_wrap_load_another_llvm(new_load));
     return (Llvm_reg) {
@@ -325,20 +346,26 @@ static Llvm_reg load_binary(
     Llvm_block* new_block,
     Node_binary* old_bin
 ) {
-    Llvm_binary* new_bin = llvm_binary_new(old_bin->pos);
+    Llvm_llvm_placeholder* lhs = llvm_llvm_placeholder_new(
+        old_bin->pos,
+        node_get_lang_type_expr(old_bin->lhs),
+        load_expr(env, new_block, old_bin->lhs)
+    );
 
-    Llvm_llvm_placeholder* lhs = llvm_llvm_placeholder_new(old_bin->pos);
-    lhs->lang_type = node_get_lang_type_expr(old_bin->lhs);
-    lhs->llvm_reg = load_expr(env, new_block, old_bin->lhs);
-    new_bin->lhs = llvm_wrap_llvm_placeholder(lhs);
+    Llvm_llvm_placeholder* rhs = llvm_llvm_placeholder_new(
+        old_bin->pos,
+        node_get_lang_type_expr(old_bin->rhs),
+        load_expr(env, new_block, old_bin->rhs)
+    );
 
-    Llvm_llvm_placeholder* rhs = llvm_llvm_placeholder_new(old_bin->pos);
-    rhs->lang_type = node_get_lang_type_expr(old_bin->rhs);
-    rhs->llvm_reg = load_expr(env, new_block, old_bin->rhs);
-    new_bin->rhs = llvm_wrap_llvm_placeholder(rhs);
-
-    new_bin->token_type = old_bin->token_type;
-    new_bin->lang_type = old_bin->lang_type;
+    Llvm_binary* new_bin = llvm_binary_new(
+        old_bin->pos,
+        llvm_wrap_llvm_placeholder(lhs),
+        llvm_wrap_llvm_placeholder(rhs),
+        old_bin->token_type,
+        old_bin->lang_type,
+        0
+    );
 
     vec_append(&a_main, &new_block->children, llvm_wrap_expr(llvm_wrap_operator(llvm_wrap_binary(new_bin))));
     return (Llvm_reg) {
@@ -358,9 +385,12 @@ static Llvm_reg load_unary(
                 todo();
             } else if (lang_type_is_primitive(env, node_get_lang_type_expr(old_unary->child))) {
                 Llvm_reg ptr = load_expr(env, new_block, old_unary->child);
-                Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(old_unary->pos);
-                new_load->llvm_src = ptr;
-                new_load->lang_type = old_unary->lang_type;
+                Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
+                    old_unary->pos,
+                    ptr,
+                    0,
+                    old_unary->lang_type
+                );
 
                 vec_append(&a_main, &new_block->children, llvm_wrap_load_another_llvm(new_load));
                 return (Llvm_reg) {
@@ -380,14 +410,18 @@ static Llvm_reg load_unary(
             }
             // fallthrough
         case TOKEN_NOT: {
-            Llvm_unary* new_unary = llvm_unary_new(old_unary->pos);
-            Llvm_llvm_placeholder* child = llvm_llvm_placeholder_new(old_unary->pos);
-            child->lang_type = node_get_lang_type_expr(old_unary->child);
-            child->llvm_reg = load_expr(env, new_block, old_unary->child);
-            new_unary->child = llvm_wrap_llvm_placeholder(child);
-
-            new_unary->token_type = old_unary->token_type;
-            new_unary->lang_type = old_unary->lang_type;
+            Llvm_llvm_placeholder* child = llvm_llvm_placeholder_new(
+                old_unary->pos,
+                node_get_lang_type_expr(old_unary->child),
+                load_expr(env, new_block, old_unary->child)
+            );
+            Llvm_unary* new_unary = llvm_unary_new(
+                old_unary->pos,
+                llvm_wrap_llvm_placeholder(child),
+                old_unary->token_type,
+                old_unary->lang_type,
+                0
+            );
 
             vec_append(&a_main, &new_block->children, llvm_wrap_expr(llvm_wrap_operator(llvm_wrap_unary(new_unary))));
             return (Llvm_reg) {
@@ -450,12 +484,15 @@ static Llvm_reg load_ptr_member_access_typed(
     new_index->data = get_member_index(&def_base, old_access->member_name);
     new_index->lang_type = lang_type_new_from_cstr("i32", 0);
     
-    Llvm_load_element_ptr* new_load = llvm_load_element_ptr_new(old_access->pos);
-    new_load->lang_type = old_access->lang_type;
-    new_load->struct_index = load_literal(env, new_block, node_wrap_number(new_index));
-    new_load->llvm_src = new_callee;
-    new_load->name = old_access->member_name;
-    new_load->is_from_struct = true;
+    Llvm_load_element_ptr* new_load = llvm_load_element_ptr_new(
+        old_access->pos,
+        old_access->lang_type,
+        0,
+        load_literal(env, new_block, node_wrap_number(new_index)),
+        new_callee,
+        old_access->member_name,
+        true
+    );
 
     vec_append(&a_main, &new_block->children, llvm_wrap_load_element_ptr(new_load));
     return (Llvm_reg) {
@@ -471,12 +508,15 @@ static Llvm_reg load_ptr_index_typed(
     Llvm_block* new_block,
     Node_index_typed* old_index
 ) {
-    Llvm_load_element_ptr* new_load = llvm_load_element_ptr_new(old_index->pos);
-    new_load->lang_type = old_index->lang_type;
-    new_load->struct_index = load_expr(env, new_block, old_index->index);
-    new_load->llvm_src = load_expr(env, new_block, old_index->callee);
-    new_load->name = str_view_from_cstr("");
-    new_load->is_from_struct = false;
+    Llvm_load_element_ptr* new_load = llvm_load_element_ptr_new(
+        old_index->pos,
+        old_index->lang_type,
+        0,
+        load_expr(env, new_block, old_index->index),
+        load_expr(env, new_block, old_index->callee),
+        str_view_from_cstr(""),
+        false
+    );
 
     vec_append(&a_main, &new_block->children, llvm_wrap_load_element_ptr(new_load));
     return (Llvm_reg) {
@@ -492,9 +532,12 @@ static Llvm_reg load_member_access_typed(
 ) {
     Llvm_reg ptr = load_ptr_member_access_typed(env, new_block, old_access);
 
-    Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(old_access->pos);
-    new_load->llvm_src = ptr;
-    new_load->lang_type = ptr.lang_type;
+    Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
+        old_access->pos,
+        ptr,
+        0,
+        ptr.lang_type
+    );
 
     vec_append(&a_main, &new_block->children, llvm_wrap_load_another_llvm(new_load));
     return (Llvm_reg) {
@@ -510,9 +553,12 @@ static Llvm_reg load_index_typed(
 ) {
     Llvm_reg ptr = load_ptr_index_typed(env, new_block, old_index);
 
-    Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(old_index->pos);
-    new_load->llvm_src = ptr;
-    new_load->lang_type = ptr.lang_type;
+    Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
+        old_index->pos,
+        ptr,
+        0,
+        ptr.lang_type
+    );
 
     vec_append(&a_main, &new_block->children, llvm_wrap_load_another_llvm(new_load));
     return (Llvm_reg) {
@@ -590,10 +636,13 @@ static Llvm_reg load_function_parameters(
 
         Llvm_reg fun_param_call = llvm_register_sym_new(llvm_wrap_def(llvm_wrap_variable_def(param)));
         
-        Llvm_store_another_llvm* new_store = llvm_store_another_llvm_new(param->pos);
-        new_store->llvm_src = fun_param_call;
-        new_store->llvm_dest = get_storage_location(env, param->name);
-        new_store->lang_type = param->lang_type;
+        Llvm_store_another_llvm* new_store = llvm_store_another_llvm_new(
+            param->pos,
+            fun_param_call,
+            get_storage_location(env, param->name),
+            0,
+            param->lang_type
+        );
 
         // TODO: append to new function body instead of old
         vec_append(&a_main, &new_fun_body->children, llvm_wrap_store_another_llvm(new_store));
@@ -612,16 +661,25 @@ static Llvm_reg load_function_def(
 ) {
     Pos pos = old_fun_def->pos;
 
-    Llvm_function_def* new_fun_def = llvm_function_def_new(pos);
-    //new_fun_def->declaration = node_clone_function_decl(old_fun_def->declaration);
-    new_fun_def->body = llvm_block_new(pos);
+    Llvm_function_decl* new_decl = llvm_function_decl_new(
+        pos,
+        NULL,
+        node_clone_lang_type(old_fun_def->decl->return_type),
+        old_fun_def->decl->name
+    );
 
-    new_fun_def->decl = llvm_function_decl_new(pos);
-    new_fun_def->decl->return_type = node_clone_lang_type(old_fun_def->decl->return_type);
-    new_fun_def->decl->name = old_fun_def->decl->name;
-
-    new_fun_def->body->symbol_collection = old_fun_def->body->symbol_collection;
-    new_fun_def->body->pos_end = old_fun_def->body->pos_end;
+    Llvm_function_def* new_fun_def = llvm_function_def_new(
+        pos,
+        new_decl,
+        llvm_block_new(
+            pos,
+            false,
+            (Llvm_vec) {0},
+            old_fun_def->body->symbol_collection,
+            old_fun_def->body->pos_end
+        ),
+        0
+    );
 
     vec_append(&a_main, &env->ancesters, &new_fun_def->body->symbol_collection);
     new_fun_def->decl->params = llvm_unwrap_function_params(load_function_parameters(
@@ -662,12 +720,18 @@ static Llvm_reg load_return(
 ) {
     Pos pos = old_return->pos;
 
-    Llvm_return* new_return = llvm_return_new(pos);
     Llvm_reg result = load_expr(env, new_block, old_return->child);
-    Llvm_llvm_placeholder* new_child = llvm_llvm_placeholder_new(pos);
-    new_child->llvm_reg = result;
-    new_child->lang_type = result.lang_type;
-    new_return->child = llvm_wrap_llvm_placeholder(new_child);
+    Llvm_llvm_placeholder* new_child = llvm_llvm_placeholder_new(
+        pos,
+        result.lang_type,
+        result
+    );
+
+    Llvm_return* new_return = llvm_return_new(
+        pos,
+        llvm_wrap_llvm_placeholder(new_child),
+        old_return->is_auto_inserted
+    );
 
     vec_append(&a_main, &new_block->children, llvm_wrap_return(new_return));
 
@@ -684,10 +748,13 @@ static Llvm_reg load_assignment(
 
     Pos pos = old_assignment->pos;
 
-    Llvm_store_another_llvm* new_store = llvm_store_another_llvm_new(pos);
-    new_store->lang_type = node_get_lang_type(old_assignment->lhs);
-    new_store->llvm_src = load_expr(env, new_block, old_assignment->rhs);
-    new_store->llvm_dest = load_ptr(env, new_block, old_assignment->lhs);
+    Llvm_store_another_llvm* new_store = llvm_store_another_llvm_new(
+        pos,
+        load_expr(env, new_block, old_assignment->rhs),
+        load_ptr(env, new_block, old_assignment->lhs),
+        0,
+        node_get_lang_type(old_assignment->lhs)
+    );
 
     assert(new_store->llvm_src.llvm);
     assert(new_store->llvm_dest.llvm);
@@ -753,11 +820,15 @@ static Llvm_reg load_enum_def(
 
 static Llvm_block* if_statement_to_branch(Env* env, Node_if* if_statement, Str_view next_if, Str_view after_chain) {
     Node_block* old_block = if_statement->body;
-    Llvm_block* new_block = llvm_block_new(old_block->pos);
-
     Llvm_block* inner_block = load_block(env, old_block);
-    new_block->symbol_collection = inner_block->symbol_collection;
-    new_block->pos_end = inner_block->pos_end;
+    Llvm_block* new_block = llvm_block_new(
+        old_block->pos,
+        false,
+        (Llvm_vec) {0},
+        inner_block->symbol_collection,
+        inner_block->pos_end
+    );
+
 
     vec_append(&a_main, &env->ancesters, &new_block->symbol_collection);
 
@@ -780,7 +851,11 @@ static Llvm_block* if_statement_to_branch(Env* env, Node_if* if_statement, Str_v
     }
 
 
-    Llvm_goto* jmp_to_after_chain = goto_new(after_chain, old_block->pos);
+    Llvm_goto* jmp_to_after_chain = llvm_goto_new(
+        old_block->pos,
+        after_chain,
+        0
+    );
     vec_append(&a_main, &new_block->children, llvm_wrap_goto(jmp_to_after_chain));
 
     vec_rem_last(&env->ancesters);
@@ -788,7 +863,13 @@ static Llvm_block* if_statement_to_branch(Env* env, Node_if* if_statement, Str_v
 }
 
 static Llvm_block* if_else_chain_to_branch(Env* env, Node_if_else_chain* if_else) {
-    Llvm_block* new_block = llvm_block_new(if_else->pos);
+    Llvm_block* new_block = llvm_block_new(
+        if_else->pos,
+        false,
+        (Llvm_vec) {0},
+        (Symbol_collection) {0},
+        (Pos) {0}
+    );
 
     Str_view if_after = util_literal_name_new_prefix("if_after");
     
@@ -842,9 +923,14 @@ static Llvm_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
 
     Pos pos = old_for->pos;
 
-    Llvm_block* new_branch_block = llvm_block_new(pos);
-    new_branch_block->symbol_collection = old_for->body->symbol_collection;
-    new_branch_block->pos_end = old_for->body->pos_end;
+    Llvm_block* new_branch_block = llvm_block_new(
+        pos,
+        false,
+        (Llvm_vec) {0},
+        old_for->body->symbol_collection,
+        old_for->body->pos_end
+    );
+
     for (size_t idx = 0; idx < old_for->body->children.info.count; idx++) {
         log(LOG_DEBUG, NODE_FMT"\n", node_print(vec_at(&old_for->body->children, idx)));
     }
@@ -888,8 +974,8 @@ static Llvm_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
 
     Str_view check_cond_label = util_literal_name_new_prefix("check_cond");
     Str_view assign_label = util_literal_name_new_prefix("assign_for");
-    Llvm_goto* jmp_to_check_cond_label = goto_new(check_cond_label, old_for->pos);
-    Llvm_goto* jmp_to_assign = goto_new(assign_label, old_for->pos);
+    Llvm_goto* jmp_to_check_cond_label = llvm_goto_new(old_for->pos, check_cond_label, 0);
+    Llvm_goto* jmp_to_assign = llvm_goto_new(old_for->pos, assign_label, 0);
     Str_view after_check_label = util_literal_name_new_prefix("after_check");
     Str_view after_for_loop_label = util_literal_name_new_prefix("after_for");
 
@@ -960,7 +1046,7 @@ static Llvm_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
         vec_append(&a_main, &env->ancesters, &new_branch_block->symbol_collection);
     }
     load_assignment(env, new_branch_block, assignment_to_inc_cond_var);
-    vec_append(&a_main, &new_branch_block->children, llvm_wrap_goto(goto_new(check_cond_label, pos)));
+    vec_append(&a_main, &new_branch_block->children, llvm_wrap_goto(llvm_goto_new(pos, check_cond_label, 0)));
     add_label(env, new_branch_block, after_for_loop_label, pos, true);
     assert(alloca_lookup(&dummy, env, check_cond_label));
 
@@ -999,16 +1085,20 @@ static Llvm_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* old_for
 
     Pos pos = old_for->pos;
 
-    Llvm_block* new_branch_block = llvm_block_new(pos);
-    new_branch_block->symbol_collection = old_for->body->symbol_collection;
-    new_branch_block->pos_end = old_for->body->pos_end;
+    Llvm_block* new_branch_block = llvm_block_new(
+        pos,
+        false,
+        (Llvm_vec) {0},
+        old_for->body->symbol_collection,
+        old_for->body->pos_end
+    );
 
     vec_append(&a_main, &env->ancesters, &new_branch_block->symbol_collection);
 
 
     Node_operator* operator = old_for->condition->child;
     Str_view check_cond_label = util_literal_name_new_prefix("check_cond");
-    Llvm_goto* jmp_to_check_cond_label = goto_new(check_cond_label, old_for->pos);
+    Llvm_goto* jmp_to_check_cond_label = llvm_goto_new(old_for->pos, check_cond_label, 0);
     Str_view after_check_label = util_literal_name_new_prefix("for_body");
     Str_view after_for_loop_label = util_literal_name_new_prefix("after_for_loop");
 
@@ -1052,7 +1142,7 @@ static Llvm_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* old_for
     }
 
     vec_append(&a_main, &new_branch_block->children, llvm_wrap_goto(
-        goto_new(check_cond_label, old_for->pos)
+        llvm_goto_new(old_for->pos, check_cond_label, 0)
     ));
     add_label(env, new_branch_block, after_for_loop_label, pos, true);
 
@@ -1087,8 +1177,7 @@ static Llvm_reg load_break(
         unreachable("cannot break here\n");
     }
 
-    Llvm_goto* new_goto = llvm_goto_new(old_break->pos);
-    new_goto->name = env->label_if_break;
+    Llvm_goto* new_goto = llvm_goto_new(old_break->pos, env->label_if_break, 0);
     vec_append(&a_main, &new_block->children, llvm_wrap_goto(new_goto));
 
     return (Llvm_reg) {0};
@@ -1104,8 +1193,7 @@ static Llvm_reg load_continue(
         unreachable("cannot continue here\n");
     }
 
-    Llvm_goto* new_goto = llvm_goto_new(old_continue->pos);
-    new_goto->name = env->label_if_continue;
+    Llvm_goto* new_goto = llvm_goto_new(old_continue->pos, env->label_if_continue, 0);
     vec_append(&a_main, &new_block->children, llvm_wrap_goto(new_goto));
 
     return (Llvm_reg) {0};
@@ -1155,9 +1243,12 @@ static Llvm_reg load_ptr_unary(
             }
             
             Llvm_reg ptr = load_ptr_expr(env, new_block, old_unary->child);
-    Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(pos);
-            new_load->llvm_src = ptr;
-            new_load->lang_type = old_unary->lang_type;
+            Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
+                pos,
+                ptr,
+                0,
+                old_unary->lang_type
+            );
             new_load->lang_type.pointer_depth++;
 
             vec_append(&a_main, &new_block->children, llvm_wrap_load_another_llvm(new_load));
@@ -1276,10 +1367,13 @@ static Llvm_reg load_node(Env* env, Llvm_block* new_block, Node* old_node) {
 static Llvm_block* load_block(Env* env, Node_block* old_block) {
     size_t init_count_ancesters = env->ancesters.info.count;
 
-    Llvm_block* new_block = llvm_block_new(old_block->pos);
-    new_block->is_variadic = old_block->is_variadic;
-    new_block->symbol_collection = old_block->symbol_collection;
-    new_block->pos_end = new_block->pos_end;
+    Llvm_block* new_block = llvm_block_new(
+        old_block->pos,
+        old_block->is_variadic,
+        (Llvm_vec) {0},
+        old_block->symbol_collection,
+        old_block->pos_end
+    );
 
     vec_append(&a_main, &env->ancesters, &new_block->symbol_collection);
 
