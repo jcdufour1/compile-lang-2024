@@ -73,8 +73,6 @@ Node_literal* util_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, 
 
 Node_literal* util_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
 
-Node_symbol_untyped* util_symbol_new(Str_view symbol_name, Pos pos);
-
 Node_operator* util_binary_typed_new(Env* env, Node_expr* lhs, Node_expr* rhs, TOKEN_TYPE operation_type);
 
 Node_expr* util_unary_new(Env* env, Node_expr* child, TOKEN_TYPE operation_type, Lang_type init_lang_type);

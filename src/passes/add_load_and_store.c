@@ -169,13 +169,13 @@ static Node_assignment* for_loop_cond_var_assign_new(Env* env, Str_view sym_name
     Node_literal* literal = util_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, pos);
     Node_operator* operator = util_binary_typed_new(
         env,
-        node_wrap_symbol_untyped(util_symbol_new(sym_name, pos)),
+        node_wrap_symbol_untyped(node_symbol_untyped_new(pos, sym_name)),
         node_wrap_literal(literal),
         TOKEN_SINGLE_PLUS
     );
     return util_assignment_new(
         env,
-        node_wrap_expr(node_wrap_symbol_untyped(util_symbol_new(sym_name, pos))),
+        node_wrap_expr(node_wrap_symbol_untyped(node_symbol_untyped_new(pos, sym_name))),
         node_wrap_operator(operator)
     );
 }
@@ -272,9 +272,11 @@ static Str_view load_literal(
     Llvm_literal* new_lit = node_literal_clone(old_lit);
 
     if (new_lit->type == LLVM_STRING) {
-        Node_string_def* new_def = node_string_def_new(pos);
-        new_def->data = node_unwrap_string(old_lit)->data;
-        new_def->name = node_unwrap_string(old_lit)->name;
+        Node_string_def* new_def = node_string_def_new(
+            pos,
+            node_unwrap_string(old_lit)->name,
+            node_unwrap_string(old_lit)->data
+        );
         try(sym_tbl_add(&env->global_literals, node_wrap_literal_def(node_wrap_string_def(new_def))));
     }
 
@@ -449,9 +451,11 @@ static Str_view load_ptr_member_access_typed(
             unreachable("");
     }
 
-    Node_number* new_index = node_number_new(old_access->pos);
-    new_index->data = get_member_index(&def_base, old_access->member_name);
-    new_index->lang_type = lang_type_new_from_cstr("i32", 0);
+    Node_number* new_index = node_number_new(
+        old_access->pos,
+        get_member_index(&def_base, old_access->member_name),
+        lang_type_new_from_cstr("i32", 0)
+    );
     
     Llvm_load_element_ptr* new_load = llvm_load_element_ptr_new(
         old_access->pos,
@@ -538,10 +542,12 @@ static Str_view load_struct_literal(
 ) {
     (void) new_block;
 
-    Node_struct_lit_def* new_def = node_struct_lit_def_new(old_lit->pos);
-    new_def->members = old_lit->members;
-    new_def->name = old_lit->name;
-    new_def->lang_type = old_lit->lang_type;
+    Node_struct_lit_def* new_def = node_struct_lit_def_new(
+        old_lit->pos,
+        old_lit->members,
+        old_lit->name,
+        old_lit->lang_type
+    );
 
     try(sym_tbl_add(&env->global_literals, node_wrap_literal_def(node_wrap_struct_lit_def(new_def))));
 
@@ -912,7 +918,7 @@ static Llvm_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
     Node_variable_def* for_var_def;
     {
         for_var_def = old_for->var_def;
-        symbol_lhs_assign = util_symbol_new(for_var_def->name, for_var_def->pos);
+        symbol_lhs_assign = node_symbol_untyped_new(for_var_def->pos, for_var_def->name);
     }
 
     //try(symbol_add(env, node_wrap_variable_def(for_var_def)));
@@ -927,7 +933,7 @@ static Llvm_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
 
     Node_operator* operator = util_binary_typed_new(
         env,
-        node_wrap_symbol_untyped(util_symbol_new(symbol_lhs_assign->name, symbol_lhs_assign->pos)),
+        node_wrap_symbol_untyped(node_symbol_untyped_new(symbol_lhs_assign->pos, symbol_lhs_assign->name)),
         rhs_actual,
         TOKEN_LESS_THAN
     );

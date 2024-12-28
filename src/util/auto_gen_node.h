@@ -18,10 +18,6 @@ typedef struct {
     Str_view base;
 } Node_name;
 
-// eg. in Node_symbol_typed
-//  prefix = "Node"
-//  base = "symbol_typed"
-//  sub_types = [{.prefix = "Node_symbol_typed", .base = "primitive", .sub_types = []}, ...]
 typedef struct Node_type_ {
     Node_name name;
     Members members;
@@ -836,11 +832,24 @@ static void node_gen_new_internal(Node_type type, bool implementation) {
     string_extend_cstr(&gen_a, &function, "* ");
     extend_node_name_lower(&function, type.name);
     string_extend_cstr(&gen_a, &function, "_new(");
+
     if (type.sub_types.info.count > 0) {
         string_extend_cstr(&gen_a, &function, "void");
     } else {
         string_extend_cstr(&gen_a, &function, "Pos pos");
     }
+    for (size_t idx = 0; idx < type.members.info.count; idx++) {
+        if (idx < type.members.info.count) {
+            string_extend_cstr(&gen_a, &function, ", ");
+        }
+
+        Member curr = vec_at(&type.members, idx);
+
+        string_extend_strv(&gen_a, &function, curr.type);
+        string_extend_cstr(&gen_a, &function, " ");
+        string_extend_strv(&gen_a, &function, curr.name);
+    }
+
     string_extend_cstr(&gen_a, &function, ")");
 
     if (implementation) {
@@ -860,6 +869,18 @@ static void node_gen_new_internal(Node_type type, bool implementation) {
             string_extend_cstr(&gen_a, &function, "    node_unwrap_");
             extend_strv_lower(&function, type.name.base);
             string_extend_cstr(&gen_a, &function, "(base_node)->pos = pos;\n");
+        }
+
+        for (size_t idx = 0; idx < type.members.info.count; idx++) {
+            Member curr = vec_at(&type.members, idx);
+
+            string_extend_cstr(&gen_a, &function, "    node_unwrap_");
+            extend_strv_lower(&function, type.name.base);
+            string_extend_cstr(&gen_a, &function, "(base_node)->");
+            extend_strv_lower(&function, curr.name);
+            string_extend_cstr(&gen_a, &function, " = ");
+            extend_strv_lower(&function, curr.name);
+            string_extend_cstr(&gen_a, &function, ";\n");
         }
 
         string_extend_cstr(&gen_a, &function, "    return node_unwrap_");
@@ -1005,7 +1026,9 @@ static void gen_all_nodes(const char* file_path, bool implementation) {
         gen_gen("%s\n", "}");
     }
 
-    gen_node_new_forward_decl(node);
+    if (implementation) {
+        gen_node_new_forward_decl(node);
+    }
     node_gen_print_forward_decl(node);
     if (implementation) {
         gen_node_new_define(node);

@@ -27,8 +27,9 @@ static void fail(void) {
 }
 
 static void add_primitive(Env* env, const char* base_name, int16_t pointer_depth) {
-    Node_primitive_def* def = node_primitive_def_new(POS_BUILTIN);
-    def->lang_type = lang_type_new_from_cstr(base_name, pointer_depth);
+    Node_primitive_def* def = node_primitive_def_new(
+        POS_BUILTIN, lang_type_new_from_cstr(base_name, pointer_depth)
+    );
     try(sym_tbl_add(&env->primitives, node_wrap_primitive_def(def)));
 }
 

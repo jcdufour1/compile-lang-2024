@@ -193,9 +193,7 @@ Llvm_id get_matching_label_id(const Env* env, Str_view name) {
 }
 
 Node_assignment* util_assignment_new(Env* env, Node* lhs, Node_expr* rhs) {
-    Node_assignment* assignment = node_assignment_new(node_get_pos(lhs));
-    assignment->lhs = lhs;
-    assignment->rhs = rhs;
+    Node_assignment* assignment = node_assignment_new(node_get_pos(lhs), lhs, rhs);
 
     try_set_assignment_types(env, assignment);
     return assignment;
@@ -206,26 +204,25 @@ Node_literal* util_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, 
     Node_literal* new_literal = NULL;
     switch (token_type) {
         case TOKEN_INT_LITERAL: {
-            Node_number* literal = node_number_new(pos);
-            literal->data = str_view_to_int64_t(value);
+            Node_number* literal = node_number_new(pos, str_view_to_int64_t(value), (Lang_type) {0});
             new_literal = node_wrap_number(literal);
             break;
         }
         case TOKEN_STRING_LITERAL: {
-            Node_string* literal = node_string_new(pos);
-            literal->data = value;
-            literal->name = util_literal_name_new();
+            Node_string* literal = node_string_new(pos, value, (Lang_type) {0}, util_literal_name_new());
             new_literal = node_wrap_string(literal);
             break;
         }
         case TOKEN_VOID: {
-            Node_void* literal = node_void_new(pos);
+            Node_void* literal = node_void_new(pos, 0);
             new_literal = node_wrap_void(literal);
             break;
         }
         case TOKEN_CHAR_LITERAL: {
-            Node_char* literal = node_char_new(pos);
-            literal->data = str_view_front(value);
+            Node_char* literal = node_char_new(pos, str_view_front(value), (Lang_type) {0});
+            if (value.count > 1) {
+                todo();
+            }
             new_literal = node_wrap_char(literal);
             break;
         }
@@ -244,7 +241,7 @@ Node_literal* util_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type
 
     switch (token_type) {
         case TOKEN_INT_LITERAL: {
-            Node_number* literal = node_number_new(pos);
+            Node_number* literal = node_number_new(pos, value, (Lang_type) {0});
             literal->data = value;
             new_literal = node_wrap_number(literal);
             break;
@@ -252,14 +249,13 @@ Node_literal* util_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type
         case TOKEN_STRING_LITERAL:
             unreachable("");
         case TOKEN_VOID: {
-            Node_void* literal = node_void_new(pos);
+            Node_void* literal = node_void_new(pos, 0);
             new_literal = node_wrap_void(literal);
             break;
         }
         case TOKEN_CHAR_LITERAL: {
-            Node_char* literal = node_char_new(pos);
             assert(value < INT8_MAX);
-            literal->data = value;
+            Node_char* literal = node_char_new(pos, value, (Lang_type) {0});
             new_literal = node_wrap_char(literal);
             break;
         }
@@ -273,20 +269,14 @@ Node_literal* util_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type
     return new_literal;
 }
 
-Node_symbol_untyped* util_symbol_new(Str_view symbol_name, Pos pos) {
-    assert(symbol_name.count > 0);
-
-    Node_symbol_untyped* symbol = node_symbol_untyped_new(pos);
-    symbol->name = symbol_name;
-    return symbol;
-}
-
 // TODO: make separate Node_unary_typed and Node_unary_untyped
 Node_expr* util_unary_new(Env* env, Node_expr* child, TOKEN_TYPE operator_type, Lang_type init_lang_type) {
-    Node_unary* unary = node_unary_new(node_get_pos_expr(child));
-    unary->token_type = operator_type;
-    unary->child = child;
-    unary->lang_type = init_lang_type;
+    Node_unary* unary = node_unary_new(
+        node_get_pos_expr(child),
+        child,
+        operator_type,
+        init_lang_type
+    );
 
     Node_expr* new_node;
     //symbol_log(LOG_DEBUG, env);
@@ -295,10 +285,13 @@ Node_expr* util_unary_new(Env* env, Node_expr* child, TOKEN_TYPE operator_type, 
 }
 
 Node_operator* util_binary_typed_new(Env* env, Node_expr* lhs, Node_expr* rhs, TOKEN_TYPE operator_type) {
-    Node_binary* binary = node_binary_new(node_get_pos_expr(lhs));
-    binary->token_type = operator_type;
-    binary->lhs = lhs;
-    binary->rhs = rhs;
+    Node_binary* binary = node_binary_new(
+        node_get_pos_expr(lhs),
+        lhs,
+        rhs,
+        operator_type,
+        (Lang_type) {0}
+    );
 
     Node_expr* new_node;
     try(try_set_binary_types(env, &new_node, binary));
@@ -312,15 +305,17 @@ const Node* get_lang_type_from_sym_definition(const Node* sym_def) {
 }
 
 Node_operator* condition_get_default_child(Node_expr* if_cond_child) {
-    Node_binary* new_oper = node_binary_new(node_get_pos_expr(if_cond_child));
-    new_oper->lhs = node_wrap_literal(
-        util_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, node_get_pos_expr(if_cond_child))
+    Node_binary* binary = node_binary_new(
+        node_get_pos_expr(if_cond_child),
+        node_wrap_literal(
+            util_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, node_get_pos_expr(if_cond_child))
+        ),
+        if_cond_child,
+        TOKEN_NOT_EQUAL,
+        lang_type_new_from_cstr("i32", 0)
     );
-    new_oper->rhs = if_cond_child;
-    new_oper->token_type = TOKEN_NOT_EQUAL;
-    new_oper->lang_type = lang_type_new_from_cstr("i32", 0);
 
-    return node_wrap_binary(new_oper);
+    return node_wrap_binary(binary);
 }
 
 uint64_t sizeof_lang_type(const Env* env, Lang_type lang_type) {

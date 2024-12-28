@@ -239,23 +239,19 @@ bool try_set_symbol_type(const Env* env, Node_expr** new_node, Node_symbol_untyp
 
     Sym_typed_base new_base = {.lang_type = lang_type, .name = sym_untyped->name};
     if (lang_type_is_struct(env, lang_type)) {
-        Node_struct_sym* sym_typed = node_struct_sym_new(sym_untyped->pos);
-        sym_typed->base = new_base;
+        Node_struct_sym* sym_typed = node_struct_sym_new(sym_untyped->pos, new_base);
         *new_node = node_wrap_symbol_typed(node_wrap_struct_sym(sym_typed));
         return true;
     } else if (lang_type_is_raw_union(env, lang_type)) {
-        Node_raw_union_sym* sym_typed = node_raw_union_sym_new(sym_untyped->pos);
-        sym_typed->base = new_base;
+        Node_raw_union_sym* sym_typed = node_raw_union_sym_new(sym_untyped->pos, new_base);
         *new_node = node_wrap_symbol_typed(node_wrap_raw_union_sym(sym_typed));
         return true;
     } else if (lang_type_is_enum(env, lang_type)) {
-        Node_enum_sym* sym_typed = node_enum_sym_new(sym_untyped->pos);
-        sym_typed->base = new_base;
+        Node_enum_sym* sym_typed = node_enum_sym_new(sym_untyped->pos, new_base);
         *new_node = node_wrap_symbol_typed(node_wrap_enum_sym(sym_typed));
         return true;
     } else if (lang_type_is_primitive(env, lang_type)) {
-        Node_primitive_sym* sym_typed = node_primitive_sym_new(sym_untyped->pos);
-        sym_typed->base = new_base;
+        Node_primitive_sym* sym_typed = node_primitive_sym_new(sym_untyped->pos, new_base);
         *new_node = node_wrap_symbol_typed(node_wrap_primitive_sym(sym_typed));
         return true;
     } else {
@@ -846,10 +842,12 @@ bool try_set_member_access_types_finish_generic_struct(
         return false;
     }
 
-    Node_member_access_typed* new_access = node_member_access_typed_new(access->pos);
-    new_access->lang_type = member_def->lang_type;
-    new_access->member_name = access->member_name;
-    new_access->callee = new_callee;
+    Node_member_access_typed* new_access = node_member_access_typed_new(
+        access->pos,
+        member_def->lang_type,
+        access->member_name,
+        new_callee
+    );
 
     *new_node = node_wrap_expr(node_wrap_member_access_typed(new_access));
 
@@ -885,9 +883,11 @@ bool try_set_member_access_types_finish(
                 return false;
             }
 
-            Node_enum_lit* new_lit = node_enum_lit_new(access->pos);
-            new_lit->data = get_member_index(&enum_def->base, access->member_name);
-            new_lit->lang_type = member_def->lang_type;
+            Node_enum_lit* new_lit = node_enum_lit_new(
+                access->pos,
+                get_member_index(&enum_def->base, access->member_name),
+                member_def->lang_type
+            );
 
             *new_node = node_wrap_expr(node_wrap_literal(node_wrap_enum_lit(new_lit)));
             assert(member_def->lang_type.str.count > 0);
@@ -953,10 +953,12 @@ bool try_set_index_untyped_types(Env* env, Node** new_node, Node_index_untyped* 
     }
     new_lang_type.pointer_depth--;
 
-    Node_index_typed* new_index = node_index_typed_new(index->pos);
-    new_index->lang_type = new_lang_type;
-    new_index->index = new_inner_index;
-    new_index->callee = new_callee;
+    Node_index_typed* new_index = node_index_typed_new(
+        index->pos,
+        new_lang_type,
+        new_inner_index,
+        new_callee
+    );
 
     *new_node = node_wrap_expr(node_wrap_index_typed(new_index));
     return true;
@@ -1265,13 +1267,17 @@ bool try_set_block_types(Env* env, Node_block** new_node, Node_block* block, boo
         block_children->info.count < 1 ||
         vec_at(block_children, block_children->info.count - 1)->type != NODE_RETURN
     )) {
-        Node_return* rtn_statement = node_return_new(block->pos_end);
+        Node_return* rtn_statement = node_return_new(
+            block->pos_end,
+            node_wrap_literal(util_literal_new_from_strv(
+                str_view_from_cstr(""), TOKEN_VOID, block->pos_end
+            )),
+            true
+        );
         if (rtn_statement->pos.line == 0) {
             symbol_log(LOG_DEBUG, env);
             unreachable("");
         }
-        rtn_statement->is_auto_inserted = true;
-        rtn_statement->child = node_wrap_literal(util_literal_new_from_strv(str_view_from_cstr(""), TOKEN_VOID, block->pos_end));
         Node* new_rtn_statement = NULL;
         if (!try_set_node_types(env, &new_rtn_statement, node_wrap_return(rtn_statement))) {
             goto error;
