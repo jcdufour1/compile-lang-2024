@@ -414,6 +414,10 @@ static bool can_end_statement(Token token) {
             return true;
         case TOKEN_CONTINUE:
             return true;
+        case TOKEN_LESS_OR_EQUAL:
+            return false;
+        case TOKEN_GREATER_OR_EQUAL:
+            return false;
     }
     unreachable("");
 }
@@ -422,15 +426,19 @@ static bool can_end_statement(Token token) {
 static uint32_t operator_precedence(Token token) {
     switch (token.type) {
         case TOKEN_LESS_THAN:
-            // fallthrough
+            return 1;
         case TOKEN_GREATER_THAN:
             return 1;
+        case TOKEN_LESS_OR_EQUAL:
+            return 1;
+        case TOKEN_GREATER_OR_EQUAL:
+            return 1;
         case TOKEN_SINGLE_PLUS:
-            // fallthrough
+            return 2;
         case TOKEN_SINGLE_MINUS:
             return 2;
         case TOKEN_ASTERISK:
-            // fallthrough
+            return 3;
         case TOKEN_SLASH:
             return 3;
         case TOKEN_DOUBLE_EQUAL:
@@ -539,6 +547,10 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_CHAR_LITERAL:
             return false;
         case TOKEN_CONTINUE:
+            return false;
+        case TOKEN_LESS_OR_EQUAL:
+            return false;
+        case TOKEN_GREATER_OR_EQUAL:
             return false;
     }
     unreachable("");

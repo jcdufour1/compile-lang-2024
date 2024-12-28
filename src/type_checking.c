@@ -283,6 +283,10 @@ static int64_t precalulate_number_internal(int64_t lhs_val, int64_t rhs_val, TOK
             return lhs_val == rhs_val ? 1 : 0;
         case TOKEN_NOT_EQUAL:
             return lhs_val != rhs_val ? 1 : 0;
+        case TOKEN_LESS_OR_EQUAL:
+            return lhs_val <= rhs_val ? 1 : 0;
+        case TOKEN_GREATER_OR_EQUAL:
+            return lhs_val >= rhs_val ? 1 : 0;
         default:
             unreachable(TOKEN_TYPE_FMT"\n", token_type_print(token_type));
     }

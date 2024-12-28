@@ -21,7 +21,9 @@ typedef enum {
     TOKEN_ASTERISK,
     TOKEN_SLASH,
     TOKEN_LESS_THAN,
+    TOKEN_LESS_OR_EQUAL,
     TOKEN_GREATER_THAN,
+    TOKEN_GREATER_OR_EQUAL,
     TOKEN_DOUBLE_EQUAL,
     TOKEN_NOT_EQUAL,
     TOKEN_XOR,
@@ -95,6 +97,10 @@ static inline bool token_is_literal(Token token) {
         case TOKEN_ASTERISK:
             return false;
         case TOKEN_SLASH:
+            return false;
+        case TOKEN_LESS_OR_EQUAL:
+            return false;
+        case TOKEN_GREATER_OR_EQUAL:
             return false;
         case TOKEN_LESS_THAN:
             return false;
@@ -284,6 +290,10 @@ static inline bool token_is_operator(Token token) {
             return false;
         case TOKEN_CONTINUE:
             return false;
+        case TOKEN_LESS_OR_EQUAL:
+            return true;
+        case TOKEN_GREATER_OR_EQUAL:
+            return true;
     }
     unreachable(TOKEN_FMT"\n", token_print(token));
 }
@@ -394,6 +404,10 @@ static inline bool token_is_closing(Token curr_token) {
             return false;
         case TOKEN_CONTINUE:
             return false;
+        case TOKEN_LESS_OR_EQUAL:
+            return false;
+        case TOKEN_GREATER_OR_EQUAL:
+            return false;
     }
     unreachable("");
 }
@@ -495,6 +509,10 @@ static inline bool token_is_opening(Token curr_token) {
         case TOKEN_CHAR_LITERAL:
             return false;
         case TOKEN_CONTINUE:
+            return false;
+        case TOKEN_LESS_OR_EQUAL:
+            return false;
+        case TOKEN_GREATER_OR_EQUAL:
             return false;
     }
     unreachable("");

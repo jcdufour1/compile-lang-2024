@@ -180,13 +180,21 @@ static bool get_next_token(const Env* env, Pos* pos, Token* token, Str_view_col*
             return true;
         }
     } else if (str_view_col_try_consume(pos, file_text, '>')) {
-        assert((file_text->base.count < 1 || str_view_col_front(*file_text) != '=') && ">= not implemented");
-        token->type = TOKEN_GREATER_THAN;
-        return true;
+        if (str_view_col_try_consume(pos, file_text, '=')) {
+            token->type = TOKEN_GREATER_OR_EQUAL;
+            return true;
+        } else {
+            token->type = TOKEN_GREATER_THAN;
+            return true;
+        }
     } else if (str_view_col_try_consume(pos, file_text, '<')) {
-        assert((file_text->base.count < 1 || str_view_col_front(*file_text) != '=') && ">= not implemented");
-        token->type = TOKEN_LESS_THAN;
-        return true;
+        if (str_view_col_try_consume(pos, file_text, '=')) {
+            token->type = TOKEN_LESS_OR_EQUAL;
+            return true;
+        } else {
+            token->type = TOKEN_LESS_THAN;
+            return true;
+        }
     } else if (str_view_col_try_consume(pos, file_text, '[')) {
         token->type = TOKEN_OPEN_SQ_BRACKET;
         return true;

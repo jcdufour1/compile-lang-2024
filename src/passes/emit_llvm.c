@@ -449,6 +449,12 @@ static void emit_binary_type(const Env* env, String* output, const Llvm_binary* 
         case TOKEN_LESS_THAN:
             string_extend_cstr(&a_main, output, "icmp slt ");
             break;
+        case TOKEN_LESS_OR_EQUAL:
+            string_extend_cstr(&a_main, output, "icmp sle ");
+            break;
+        case TOKEN_GREATER_OR_EQUAL:
+            string_extend_cstr(&a_main, output, "icmp sge ");
+            break;
         case TOKEN_GREATER_THAN:
             string_extend_cstr(&a_main, output, "icmp sgt ");
             break;

@@ -45,6 +45,8 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
             return str_view_from_cstr("...");
         case TOKEN_LESS_THAN:
             return str_view_from_cstr("<");
+        case TOKEN_LESS_OR_EQUAL:
+            return str_view_from_cstr("<=");
         case TOKEN_GREATER_THAN:
             return str_view_from_cstr(">");
         case TOKEN_SLASH:
@@ -99,6 +101,8 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
             return str_view_from_cstr("char");
         case TOKEN_CONTINUE:
             return str_view_from_cstr("continue");
+        case TOKEN_GREATER_OR_EQUAL:
+            return str_view_from_cstr(">=");
     }
     unreachable("");
 }
@@ -159,6 +163,8 @@ Str_view token_print_internal(Arena* arena, Token token, bool msg_format) {
         case TOKEN_CONTINUE: // fallthrough
         case TOKEN_OPEN_SQ_BRACKET: // fallthrough
         case TOKEN_CLOSE_SQ_BRACKET:
+        case TOKEN_LESS_OR_EQUAL:
+        case TOKEN_GREATER_OR_EQUAL:
             break;
         case TOKEN_COMMENT: 
             // fallthrough
