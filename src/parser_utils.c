@@ -187,6 +187,7 @@ Llvm_id get_matching_label_id(const Env* env, Str_view name) {
     Llvm* label_;
     if (!alloca_lookup(&label_, env, name)) {
         symbol_log(LOG_DEBUG, env);
+        unreachable(STR_VIEW_FMT"\n", str_view_print(name));
     }
     Llvm_label* label = llvm_unwrap_label(llvm_unwrap_def(label_));
     return label->llvm_id;
