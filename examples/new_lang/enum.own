@@ -23,6 +23,15 @@ fn print_token(token Token) {
     }
 }
 
+// check that scope rules are followed for enum subtypes
+enum NodeType {
+    NONE NodeType
+}
+
+enum LlvmType {
+    NONE LlvmType
+}
+
 fn main() i32 {
     let token_type TokenType = TokenType.number
     printf("%d\n", token_type);

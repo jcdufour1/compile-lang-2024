@@ -1,0 +1,11 @@
+
+
+enum Token_type {
+    NUM Token_type
+    STRING Token_type
+}
+
+fn main() i32 {
+    let token_type Token_type = Token_type.DOUBLE
+    return 0
+}

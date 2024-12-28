@@ -25,6 +25,57 @@ fn test_return_msg() i32 {
     return 4
 }
 
+fn greater_or_equal() {
+    let twenty_four i32 = 24
+
+    if 8*3 >= 24 {
+        puts("yes2.30");
+    }
+    if 8*3 + 1 >= 24 {
+        puts("yes2.30.2");
+    }
+    if 8*3 >= 25 {
+        puts("no2.30.3");
+    }
+
+    if 8*3 >= twenty_four {
+        puts("yes2.31");
+    }
+    if 8*3 + 1 >= twenty_four {
+        puts("yes2.31.2");
+    }
+    if 8*3 >= (twenty_four + 1) {
+        puts("no2.31.3");
+    }
+}
+
+fn less_or_equal() {
+    let twenty_four i32 = 24
+
+    if 8*3 <= 24 {
+        puts("yes2.2");
+    }
+    if 8*3 + 1 <= 24 {
+        puts("no2.2.2");
+    }
+    if 8*3 <= 23 {
+        puts("no2.2.3");
+    }
+
+    if 8*3 <= twenty_four {
+        puts("yes2.20");
+    }
+    if 8*3 < twenty_four {
+        puts("no2.20.1");
+    }
+    if 8*3 + 1 <= twenty_four {
+        puts("no2.20.2");
+    }
+    if 8*3 <= (twenty_four - 1) {
+        puts("no2.20.3");
+    }
+}
+
 fn main() i32 {
     if 8*3 < 5 {
         puts("no");
@@ -39,6 +90,13 @@ fn main() i32 {
     if 8*3 + 1 < 25 {
         puts("no2");
     }
+
+    if 8*3 < 24 {
+        puts("no2.2.1");
+    }
+
+    less_or_equal()
+    greater_or_equal()
 
     if yes() {
         puts("yes3");

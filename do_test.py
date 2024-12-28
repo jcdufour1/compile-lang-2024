@@ -88,6 +88,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "failure_to_deref_function_arg.own": ["invalid-function-arguments", "invalid-function-arguments"],
     EXPECTED_FAIL_EXAMPLES_DIR + "failure_deref_lhs_of_assignment.own": ["assignment-mismatched-types"],
     EXPECTED_FAIL_EXAMPLES_DIR + "deref_non_pointer.own": ["deref_non_pointer"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_enum_subtype_access.own": ["invalid-enum-member"],
 }
 
 def to_str(a):
