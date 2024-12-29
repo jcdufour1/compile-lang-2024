@@ -3,6 +3,7 @@
 #include <nodes.h>
 #include <symbol_table.h>
 #include <parser_utils.h>
+#include <log_env.h>
 
 #include "passes.h"
 
@@ -961,7 +962,6 @@ static Llvm_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
 
     vec_append(&a_main, &new_branch_block->children, llvm_wrap_goto(jmp_to_check_cond_label));
 
-    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(check_cond_label));
     assert(!alloca_lookup(&dummy, env, check_cond_label));
 
     {
@@ -970,8 +970,6 @@ static Llvm_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
         vec_append(&a_main, &env->ancesters, &new_branch_block->symbol_collection);
     }
 
-    symbol_log(LOG_DEBUG, env);
-    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(check_cond_label));
     assert(alloca_lookup(&dummy, env, check_cond_label));
 
     load_operator(env, new_branch_block, operator);
@@ -990,10 +988,6 @@ static Llvm_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
         add_label(env, new_branch_block, after_check_label, pos, false);
         vec_append(&a_main, &env->ancesters, &new_branch_block->symbol_collection);
     }
-
-    log(LOG_DEBUG, "DSFJKLKJDFS: "STR_VIEW_FMT"\n", str_view_print(after_check_label));
-    log(LOG_DEBUG, "DSFJKLKJDFS: "STR_VIEW_FMT"\n", str_view_print(check_cond_label));
-    log(LOG_DEBUG, "DSFJKLKJDFS: "STR_VIEW_FMT"\n", str_view_print(after_for_loop_label));
 
     assert(alloca_lookup(&dummy, env, check_cond_label));
     {
@@ -1024,14 +1018,9 @@ static Llvm_block* for_range_to_branch(Env* env, Node_for_range* old_for) {
     env->label_if_break = old_if_break;
     env->label_if_continue = old_if_continue;
     assert(alloca_lookup(&dummy, env, check_cond_label));
-    //log(LOG_DEBUG, "DSFJKLKJDFS: "STR_VIEW_FMT"\n", str_view_print(check_cond_label));
-    //symbol_log(LOG_DEBUG, env);
     vec_rem_last(&env->ancesters);
 
     assert(init_count_ancesters == env->ancesters.info.count);
-
-    //log(LOG_DEBUG, "DSFJKLKJDFS: "STR_VIEW_FMT"\n", str_view_print(check_cond_label));
-    //symbol_log(LOG_DEBUG, env);
 
     return new_branch_block;
 }
@@ -1118,9 +1107,16 @@ static Llvm_block* for_with_cond_to_branch(Env* env, Node_for_with_cond* old_for
 
     env->label_if_continue = old_if_continue;
     env->label_if_break = old_if_break;
+    for (size_t idx = 0; idx < env->defered_allocas_to_add.info.count; idx++) {
+        log(LOG_DEBUG, NODE_FMT, llvm_print(vec_at(&env->defered_allocas_to_add, idx)));
+    }
+    log_env(LOG_DEBUG, env);
     vec_rem_last(&env->ancesters);
-
+    Symbol_collection* popped = NULL;
+    vec_pop(popped, &env->ancesters);
     try(alloca_do_add_defered(&dummy, env));
+    vec_append(&a_main, &env->ancesters, popped);
+
     return new_branch_block;
 }
 
