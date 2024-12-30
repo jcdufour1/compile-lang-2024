@@ -1,40 +1,40 @@
-#ifndef NODES_H
-#define NODES_H
+#ifndef TASTS_H
+#define TASTS_H
 
 #include <stddef.h>
 #include <string.h>
 #include <strings.h>
 #include "util.h"
-#include <node.h>
-#include <node_utils.h>
+#include <tast.h>
+#include <tast_utils.h>
 #include "assert.h"
 #include "vector.h"
 
 #define log_tree(log_level, root) \
     do { \
-        log_file_new(log_level, __FILE__, __LINE__, "tree:\n"NODE_FMT, node_print(root)); \
+        log_file_new(log_level, __FILE__, __LINE__, "tree:\n"TAST_FMT, tast_print(root)); \
     } while(0)
 
-static inline Node* get_left_child_expr(Node_expr* expr) {
+static inline Tast* get_left_child_expr(Tast_expr* expr) {
     (void) expr;
     unreachable("");
 }
 
-//static inline Node_expr* node_expr_new(Pos pos, NODE_EXPR_TYPE expr_type) {
-//    Node_expr* expr = node_unwrap_expr(node_new(pos, NODE_EXPR));
+//static inline Tast_expr* tast_expr_new(Pos pos, TAST_EXPR_TYPE expr_type) {
+//    Tast_expr* expr = tast_unwrap_expr(tast_new(pos, TAST_EXPR));
 //    expr->type = expr_type;
 //    return expr;
 //}
 
-static inline Node* node_clone(const Node* node_to_clone) {
-    (void) node_to_clone;
+static inline Tast* tast_clone(const Tast* tast_to_clone) {
+    (void) tast_to_clone;
     todo();
 #if 0
-    Node* new_node = node_new(node_to_clone->pos, node_to_clone->type);
-    *new_node = *node_to_clone;
-    nodes_reset_links_of_self_only(new_node, false);
-    return new_node;
+    Tast* new_tast = tast_new(tast_to_clone->pos, tast_to_clone->type);
+    *new_tast = *tast_to_clone;
+    tasts_reset_links_of_self_only(new_tast, false);
+    return new_tast;
 #endif // 0
 }
 
-#endif // NODES_H
+#endif // TASTS_H

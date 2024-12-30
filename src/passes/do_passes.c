@@ -1,8 +1,8 @@
 
 #include <util.h>
-#include <node.h>
+#include <tast.h>
 #include <llvm.h>
-#include <nodes.h>
+#include <tasts.h>
 #include <llvms.h>
 #include "passes.h"
 #include <do_passes.h>
@@ -27,10 +27,10 @@ static void fail(void) {
 }
 
 static void add_primitive(Env* env, const char* base_name, int16_t pointer_depth) {
-    Node_primitive_def* def = node_primitive_def_new(
+    Tast_primitive_def* def = tast_primitive_def_new(
         POS_BUILTIN, lang_type_new_from_cstr(base_name, pointer_depth)
     );
-    try(sym_tbl_add(&env->primitives, node_wrap_primitive_def(def)));
+    try(sym_tbl_add(&env->primitives, tast_wrap_primitive_def(def)));
 }
 
 static void add_primitives(Env* env) {
@@ -181,31 +181,31 @@ void do_passes(Str_view file_text, const Parameters* params) {
         fail();
     }
 
-    Node_block* root = parse(&env, tokens);
+    Tast_block* root = parse(&env, tokens);
     if (error_count > 0) {
         fail();
     }
     arena_reset(&print_arena);
-    log_tree(LOG_DEBUG, node_wrap_block(root));
+    log_tree(LOG_DEBUG, tast_wrap_block(root));
 
-    //log_tree(LOG_DEBUG, node_wrap_block(*root));
+    //log_tree(LOG_DEBUG, tast_wrap_block(*root));
     root = analysis_1(&env, root);
-    log_tree(LOG_DEBUG, node_wrap_block(root));
+    log_tree(LOG_DEBUG, tast_wrap_block(root));
     if (error_count > 0) {
         fail();
     }
     arena_reset(&print_arena);
 
     root = change_operators(&env, root);
-    log_tree(LOG_DEBUG, node_wrap_block(root));
+    log_tree(LOG_DEBUG, tast_wrap_block(root));
     arena_reset(&print_arena);
 
     Llvm_block* llvm_root = add_load_and_store(&env, root);
-    log(LOG_DEBUG, "\n"NODE_FMT, llvm_block_print(llvm_root));
+    log(LOG_DEBUG, "\n"TAST_FMT, llvm_block_print(llvm_root));
     assert(root);
 
     llvm_root = assign_llvm_ids(&env, llvm_root);
-    log(LOG_DEBUG, "\n"NODE_FMT, llvm_block_print(llvm_root));
+    log(LOG_DEBUG, "\n"TAST_FMT, llvm_block_print(llvm_root));
     arena_reset(&print_arena);
 
     if (params->emit_llvm) {

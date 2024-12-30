@@ -2,7 +2,7 @@
 #define DO_PASSES_H
 
 #include "util.h"
-#include <node.h>
+#include <tast.h>
 #include "env.h"
 #include "parameters.h"
 

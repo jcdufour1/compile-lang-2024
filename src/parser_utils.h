@@ -2,11 +2,11 @@
 #define PARSER_UTIL_H
 
 #include "str_view.h"
-#include "node.h"
+#include "tast.h"
 #include "llvm.h"
-#include "nodes.h"
+#include "tasts.h"
 #include "symbol_table.h"
-#include "node_utils.h"
+#include "tast_utils.h"
 #include "llvm_utils.h"
 
 bool lang_type_is_unsigned(Lang_type lang_type);
@@ -29,7 +29,7 @@ Str_view util_literal_name_new(void);
 
 Str_view util_literal_name_new_prefix(const char* debug_prefix);
 
-Llvm_id get_prev_load_id(const Node* var_call);
+Llvm_id get_prev_load_id(const Tast* var_call);
 
 Str_view get_storage_location(const Env* env, Str_view sym_name);
 
@@ -67,29 +67,29 @@ static inline Llvm_reg llvm_register_sym_new_from_operator(Llvm_operator* operat
 Llvm_id get_matching_label_id(const Env* env, Str_view name);
 
 // lhs and rhs should not be used for other tasks after this
-Node_assignment* util_assignment_new(Env* env, Node* lhs, Node_expr* rhs);
+Tast_assignment* util_assignment_new(Env* env, Tast* lhs, Tast_expr* rhs);
 
-Node_literal* util_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, Pos pos);
+Tast_literal* util_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, Pos pos);
 
-Node_literal* util_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
+Tast_literal* util_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
 
-Node_operator* util_binary_typed_new(Env* env, Node_expr* lhs, Node_expr* rhs, TOKEN_TYPE operation_type);
+Tast_operator* util_binary_typed_new(Env* env, Tast_expr* lhs, Tast_expr* rhs, TOKEN_TYPE operation_type);
 
-Node_expr* util_unary_new(Env* env, Node_expr* child, TOKEN_TYPE operation_type, Lang_type init_lang_type);
+Tast_expr* util_unary_new(Env* env, Tast_expr* child, TOKEN_TYPE operation_type, Lang_type init_lang_type);
 
-Llvm_id get_matching_fun_param_load_id(const Node* src);
+Llvm_id get_matching_fun_param_load_id(const Tast* src);
 
-const Node* get_lang_type_from_sym_definition(const Node* sym_def);
+const Tast* get_lang_type_from_sym_definition(const Tast* sym_def);
 
 uint64_t sizeof_lang_type(const Env* env, Lang_type lang_type);
 
-uint64_t sizeof_item(const Env* env, const Node* item);
+uint64_t sizeof_item(const Env* env, const Tast* item);
 
-uint64_t sizeof_struct(const Env* env, const Node* struct_literal);
+uint64_t sizeof_struct(const Env* env, const Tast* struct_literal);
 
 uint64_t sizeof_struct_def_base(const Env* env, const Struct_def_base* base);
 
-uint64_t sizeof_struct_literal(const Env* env, const Node_struct_literal* struct_literal);
+uint64_t sizeof_struct_literal(const Env* env, const Tast_struct_literal* struct_literal);
 
 static uint64_t llvm_sizeof_expr(const Env* env, const Llvm_expr* expr);
 
@@ -113,8 +113,8 @@ bool lang_type_is_primitive(const Env* env, Lang_type lang_type);
 
 static inline size_t get_member_index(const Struct_def_base* struct_def, Str_view member_name) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
-        const Node* curr_member = vec_at(&struct_def->members, idx);
-        if (str_view_is_equal(get_node_name(curr_member), member_name)) {
+        const Tast* curr_member = vec_at(&struct_def->members, idx);
+        if (str_view_is_equal(get_tast_name(curr_member), member_name)) {
             return idx;
         }
     }
@@ -122,15 +122,15 @@ static inline size_t get_member_index(const Struct_def_base* struct_def, Str_vie
 }
 
 static inline bool try_get_member_def(
-    Node_variable_def** member_def,
+    Tast_variable_def** member_def,
     const Struct_def_base* struct_def,
     Str_view member_name
 ) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
-        Node* curr_member = vec_at(&struct_def->members, idx);
-        if (str_view_is_equal(get_node_name(curr_member), member_name)) {
-            assert(node_get_lang_type(curr_member).str.count > 0);
-            *member_def = node_unwrap_variable_def(node_unwrap_def(curr_member));
+        Tast* curr_member = vec_at(&struct_def->members, idx);
+        if (str_view_is_equal(get_tast_name(curr_member), member_name)) {
+            assert(tast_get_lang_type(curr_member).str.count > 0);
+            *member_def = tast_unwrap_variable_def(tast_unwrap_def(curr_member));
             return true;
         }
     }
@@ -139,44 +139,44 @@ static inline bool try_get_member_def(
 
 bool try_set_variable_def_types(
     const Env* env,
-    Node_variable_def** new_node,
-    Node_variable_def* node
+    Tast_variable_def** new_tast,
+    Tast_variable_def* tast
 );
 
-bool try_set_struct_def_types(Env* env, Node_struct_def** new_node, Node_struct_def* node);
+bool try_set_struct_def_types(Env* env, Tast_struct_def** new_tast, Tast_struct_def* tast);
 
-bool try_set_raw_union_def_types(Env* env, Node_raw_union_def** new_node, Node_raw_union_def* node);
+bool try_set_raw_union_def_types(Env* env, Tast_raw_union_def** new_tast, Tast_raw_union_def* tast);
 
-bool try_set_enum_def_types(Env* env, Node_enum_def** new_node, Node_enum_def* node);
+bool try_set_enum_def_types(Env* env, Tast_enum_def** new_tast, Tast_enum_def* tast);
 
-bool try_get_struct_def(const Env* env, Node_struct_def** struct_def, Node* node);
+bool try_get_struct_def(const Env* env, Tast_struct_def** struct_def, Tast* tast);
 
-bool llvm_try_get_struct_def(const Env* env, Node_struct_def** struct_def, Llvm* node);
+bool llvm_try_get_struct_def(const Env* env, Tast_struct_def** struct_def, Llvm* tast);
     
-Node_operator* condition_get_default_child(Node_expr* if_cond_child);
+Tast_operator* condition_get_default_child(Tast_expr* if_cond_child);
 
-static inline Node_struct_def* get_struct_def(const Env* env, Node* node) {
-    Node_struct_def* struct_def;
-    if (!try_get_struct_def(env, &struct_def, node)) {
-        unreachable("could not find struct definition for "NODE_FMT"\n", node_print(node));
+static inline Tast_struct_def* get_struct_def(const Env* env, Tast* tast) {
+    Tast_struct_def* struct_def;
+    if (!try_get_struct_def(env, &struct_def, tast)) {
+        unreachable("could not find struct definition for "TAST_FMT"\n", tast_print(tast));
     }
     return struct_def;
 }
 
-static inline const Node_struct_def* get_struct_def_const(const Env* env, const Node* node) {
-    return get_struct_def(env, (Node*)node);
+static inline const Tast_struct_def* get_struct_def_const(const Env* env, const Tast* tast) {
+    return get_struct_def(env, (Tast*)tast);
 }
 
-static inline Node_struct_def* llvm_get_struct_def(const Env* env, Llvm* node) {
-    Node_struct_def* struct_def;
-    if (!llvm_try_get_struct_def(env, &struct_def, node)) {
-        unreachable("could not find struct definition for "NODE_FMT"\n", llvm_print(node));
+static inline Tast_struct_def* llvm_get_struct_def(const Env* env, Llvm* tast) {
+    Tast_struct_def* struct_def;
+    if (!llvm_try_get_struct_def(env, &struct_def, tast)) {
+        unreachable("could not find struct definition for "TAST_FMT"\n", llvm_print(tast));
     }
     return struct_def;
 }
 
-static inline const Node_struct_def* llvm_get_struct_def_const(const Env* env, const Llvm* node) {
-    return llvm_get_struct_def(env, (Llvm*)node);
+static inline const Tast_struct_def* llvm_get_struct_def_const(const Env* env, const Llvm* tast) {
+    return llvm_get_struct_def(env, (Llvm*)tast);
 }
 
 #endif // PARSER_UTIL_H

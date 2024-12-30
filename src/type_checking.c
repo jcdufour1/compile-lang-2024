@@ -1,6 +1,6 @@
 #include <type_checking.h>
 #include <parser_utils.h>
-#include <node.h>
+#include <tast.h>
 
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
@@ -23,22 +23,22 @@ static int64_t bit_width_needed_signed(int64_t num) {
 //    return MAX(1, log2(num + 1));
 //}
 
-static Node_expr* auto_deref_to_0(Env* env, Node_expr* expr) {
-    while (node_get_lang_type_expr(expr).pointer_depth > 0) {
+static Tast_expr* auto_deref_to_0(Env* env, Tast_expr* expr) {
+    while (tast_get_lang_type_expr(expr).pointer_depth > 0) {
         Lang_type init_lang_type = {0};
         expr = util_unary_new(env, expr, TOKEN_DEREF, init_lang_type);
     }
     return expr;
 }
 
-const Node_function_decl* get_parent_function_decl_const(const Env* env) {
-    Node_def* def = NULL;
+const Tast_function_decl* get_parent_function_decl_const(const Env* env) {
+    Tast_def* def = NULL;
     try(env->name_parent_function.count > 0 && "no parent function here");
     try(symbol_lookup(&def, env, env->name_parent_function));
-    if (def->type != NODE_FUNCTION_DECL) {
-        unreachable(NODE_FMT, node_def_print(def));
+    if (def->type != TAST_FUNCTION_DECL) {
+        unreachable(TAST_FMT, tast_def_print(def));
     }
-    return node_unwrap_function_decl(def);
+    return tast_unwrap_function_decl(def);
 }
 
 Lang_type get_parent_function_return_type(const Env* env) {
@@ -71,10 +71,10 @@ typedef enum {
 static IMPLICIT_CONV_STATUS do_implicit_conversion_if_needed(
     const Env* env,
     Lang_type dest_lang_type,
-    Node_expr* src,
+    Tast_expr* src,
     bool inplicit_pointer_depth
 ) {
-    Lang_type src_lang_type = node_get_lang_type_expr(src);
+    Lang_type src_lang_type = tast_get_lang_type_expr(src);
     log(
         LOG_DEBUG, LANG_TYPE_FMT" to "LANG_TYPE_FMT"\n", lang_type_print(src_lang_type),
         lang_type_print(dest_lang_type)
@@ -87,7 +87,7 @@ static IMPLICIT_CONV_STATUS do_implicit_conversion_if_needed(
         return IMPLICIT_CONV_INVALID_TYPES;
     }
 
-    *node_get_lang_type_expr_ref(src) = dest_lang_type;
+    *tast_get_lang_type_expr_ref(src) = dest_lang_type;
     log(
         LOG_DEBUG, LANG_TYPE_FMT" to "LANG_TYPE_FMT"\n", lang_type_print(src_lang_type),
         lang_type_print(dest_lang_type)
@@ -97,30 +97,30 @@ static IMPLICIT_CONV_STATUS do_implicit_conversion_if_needed(
 
 bool check_generic_assignment_finish_symbol_untyped(
     const Env* env,
-    Node_expr** new_src,
-    Node_symbol_untyped* src
+    Tast_expr** new_src,
+    Tast_symbol_untyped* src
 ) {
     (void) env;
     (void) new_src;
     (void) src;
     todo();
     //switch (src->type) {
-    //    case NODE_STRING
+    //    case TAST_STRING
 }
 
 static void msg_invalid_function_arg_internal(
     const char* file,
     int line,
     const Env* env,
-    const Node_expr* argument,
-    const Node_variable_def* corres_param
+    const Tast_expr* argument,
+    const Tast_variable_def* corres_param
 ) {
     msg_internal(
         file, line,
-        LOG_ERROR, EXPECT_FAIL_INVALID_FUN_ARG, env->file_text, node_get_pos_expr(argument), 
+        LOG_ERROR, EXPECT_FAIL_INVALID_FUN_ARG, env->file_text, tast_get_pos_expr(argument), 
         "argument is of type `"LANG_TYPE_FMT"`, "
         "but the corresponding parameter `"STR_VIEW_FMT"` is of type `"LANG_TYPE_FMT"`\n",
-        lang_type_print(node_get_lang_type_expr(argument)), 
+        lang_type_print(tast_get_lang_type_expr(argument)), 
         str_view_print(corres_param->name),
         lang_type_print(corres_param->lang_type)
     );
@@ -135,8 +135,8 @@ static void msg_invalid_function_arg_internal(
 #define msg_invalid_function_arg(env, argument, corres_param) \
     msg_invalid_function_arg_internal(__FILE__, __LINE__, env, argument, corres_param)
 
-static void msg_invalid_return_type_internal(const char* file, int line, const Env* env, const Node_return* rtn) {
-    const Node_function_decl* fun_decl = get_parent_function_decl_const(env);
+static void msg_invalid_return_type_internal(const char* file, int line, const Env* env, const Tast_return* rtn) {
+    const Tast_function_decl* fun_decl = get_parent_function_decl_const(env);
     if (rtn->is_auto_inserted) {
         msg_internal(
             file, line,
@@ -149,7 +149,7 @@ static void msg_invalid_return_type_internal(const char* file, int line, const E
             file, line,
             LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, env->file_text, rtn->pos,
             "returning `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
-            lang_type_print(node_get_lang_type_expr(rtn->child)), 
+            lang_type_print(tast_get_lang_type_expr(rtn->child)), 
             lang_type_print(fun_decl->return_type->lang_type)
         );
     }
@@ -172,24 +172,24 @@ typedef enum {
 
 CHECK_ASSIGN_STATUS check_generic_assignment(
     const Env* env,
-    Node_expr** new_src,
+    Tast_expr** new_src,
     Lang_type dest_lang_type,
-    Node_expr* src
+    Tast_expr* src
 ) {
-    if (lang_type_is_equal(dest_lang_type, node_get_lang_type_expr(src))) {
+    if (lang_type_is_equal(dest_lang_type, tast_get_lang_type_expr(src))) {
         *new_src = src;
         return CHECK_ASSIGN_OK;
     }
 
-    if (can_be_implicitly_converted(env, dest_lang_type, node_get_lang_type_expr(src), false)) {
-        if (src->type == NODE_LITERAL) {
+    if (can_be_implicitly_converted(env, dest_lang_type, tast_get_lang_type_expr(src), false)) {
+        if (src->type == TAST_LITERAL) {
             *new_src = src;
-            *node_get_lang_type_literal_ref(node_unwrap_literal(*new_src)) = dest_lang_type;
+            *tast_get_lang_type_literal_ref(tast_unwrap_literal(*new_src)) = dest_lang_type;
             return CHECK_ASSIGN_OK;
-        } else if (src->type == NODE_SYMBOL_UNTYPED) {
-            unreachable(NODE_FMT"\n", node_expr_print(src));
+        } else if (src->type == TAST_SYMBOL_UNTYPED) {
+            unreachable(TAST_FMT"\n", tast_expr_print(src));
         }
-        log(LOG_DEBUG, LANG_TYPE_FMT "   "NODE_FMT"\n", lang_type_print(dest_lang_type), node_print((Node*)src));
+        log(LOG_DEBUG, LANG_TYPE_FMT "   "TAST_FMT"\n", lang_type_print(dest_lang_type), tast_print((Tast*)src));
         todo();
     } else {
         return CHECK_ASSIGN_INVALID;
@@ -197,62 +197,62 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
     unreachable("");
 }
 
-void try_set_literal_types(Node_literal* literal, TOKEN_TYPE token_type) {
+void try_set_literal_types(Tast_literal* literal, TOKEN_TYPE token_type) {
     switch (token_type) {
         case TOKEN_STRING_LITERAL:
-            node_unwrap_string(literal)->lang_type = lang_type_new_from_cstr("u8", 1);
+            tast_unwrap_string(literal)->lang_type = lang_type_new_from_cstr("u8", 1);
             break;
         case TOKEN_INT_LITERAL: {
             String lang_type_str = {0};
             string_extend_cstr(&a_main, &lang_type_str, "i");
-            int64_t bit_width = bit_width_needed_signed(node_unwrap_number(literal)->data);
+            int64_t bit_width = bit_width_needed_signed(tast_unwrap_number(literal)->data);
             string_extend_int64_t(&a_main, &lang_type_str, bit_width);
-            node_unwrap_number(literal)->lang_type = lang_type_new_from_strv(string_to_strv(lang_type_str), 0);
+            tast_unwrap_number(literal)->lang_type = lang_type_new_from_strv(string_to_strv(lang_type_str), 0);
             break;
         }
         case TOKEN_VOID:
             break;
         case TOKEN_CHAR_LITERAL:
-            node_unwrap_char(literal)->lang_type = lang_type_new_from_cstr("u8", 0);
+            tast_unwrap_char(literal)->lang_type = lang_type_new_from_cstr("u8", 0);
             break;
         default:
             unreachable("");
     }
 }
 
-static void msg_undefined_symbol(Str_view file_text, const Node* sym_call) {
+static void msg_undefined_symbol(Str_view file_text, const Tast* sym_call) {
     msg(
-        LOG_ERROR, EXPECT_FAIL_UNDEFINED_SYMBOL, file_text, node_get_pos(sym_call),
-        "symbol `"STR_VIEW_FMT"` is not defined\n", str_view_print(get_node_name(sym_call))
+        LOG_ERROR, EXPECT_FAIL_UNDEFINED_SYMBOL, file_text, tast_get_pos(sym_call),
+        "symbol `"STR_VIEW_FMT"` is not defined\n", str_view_print(get_tast_name(sym_call))
     );
 }
 
 // set symbol lang_type, and report error if symbol is undefined
-bool try_set_symbol_type(const Env* env, Node_expr** new_node, Node_symbol_untyped* sym_untyped) {
-    Node_def* sym_def;
+bool try_set_symbol_type(const Env* env, Tast_expr** new_tast, Tast_symbol_untyped* sym_untyped) {
+    Tast_def* sym_def;
     if (!symbol_lookup(&sym_def, env, sym_untyped->name)) {
-        msg_undefined_symbol(env->file_text, node_wrap_expr(node_wrap_symbol_untyped(sym_untyped)));
+        msg_undefined_symbol(env->file_text, tast_wrap_expr(tast_wrap_symbol_untyped(sym_untyped)));
         return false;
     }
 
-    Lang_type lang_type = node_get_lang_type_def(sym_def);
+    Lang_type lang_type = tast_get_lang_type_def(sym_def);
 
     Sym_typed_base new_base = {.lang_type = lang_type, .name = sym_untyped->name};
     if (lang_type_is_struct(env, lang_type)) {
-        Node_struct_sym* sym_typed = node_struct_sym_new(sym_untyped->pos, new_base);
-        *new_node = node_wrap_symbol_typed(node_wrap_struct_sym(sym_typed));
+        Tast_struct_sym* sym_typed = tast_struct_sym_new(sym_untyped->pos, new_base);
+        *new_tast = tast_wrap_symbol_typed(tast_wrap_struct_sym(sym_typed));
         return true;
     } else if (lang_type_is_raw_union(env, lang_type)) {
-        Node_raw_union_sym* sym_typed = node_raw_union_sym_new(sym_untyped->pos, new_base);
-        *new_node = node_wrap_symbol_typed(node_wrap_raw_union_sym(sym_typed));
+        Tast_raw_union_sym* sym_typed = tast_raw_union_sym_new(sym_untyped->pos, new_base);
+        *new_tast = tast_wrap_symbol_typed(tast_wrap_raw_union_sym(sym_typed));
         return true;
     } else if (lang_type_is_enum(env, lang_type)) {
-        Node_enum_sym* sym_typed = node_enum_sym_new(sym_untyped->pos, new_base);
-        *new_node = node_wrap_symbol_typed(node_wrap_enum_sym(sym_typed));
+        Tast_enum_sym* sym_typed = tast_enum_sym_new(sym_untyped->pos, new_base);
+        *new_tast = tast_wrap_symbol_typed(tast_wrap_enum_sym(sym_typed));
         return true;
     } else if (lang_type_is_primitive(env, lang_type)) {
-        Node_primitive_sym* sym_typed = node_primitive_sym_new(sym_untyped->pos, new_base);
-        *new_node = node_wrap_symbol_typed(node_wrap_primitive_sym(sym_typed));
+        Tast_primitive_sym* sym_typed = tast_primitive_sym_new(sym_untyped->pos, new_base);
+        *new_tast = tast_wrap_symbol_typed(tast_wrap_primitive_sym(sym_typed));
         return true;
     } else {
         unreachable("uncaught undefined lang_type");
@@ -289,9 +289,9 @@ static int64_t precalulate_number_internal(int64_t lhs_val, int64_t rhs_val, TOK
     unreachable("");
 }
 
-static Node_literal* precalulate_number(
-    const Node_number* lhs,
-    const Node_number* rhs,
+static Tast_literal* precalulate_number(
+    const Tast_number* lhs,
+    const Tast_number* rhs,
     TOKEN_TYPE token_type,
     Pos pos
 ) {
@@ -299,9 +299,9 @@ static Node_literal* precalulate_number(
     return util_literal_new_from_int64_t(result_val, TOKEN_INT_LITERAL, pos);
 }
 
-static Node_literal* precalulate_char(
-    const Node_char* lhs,
-    const Node_char* rhs,
+static Tast_literal* precalulate_char(
+    const Tast_char* lhs,
+    const Tast_char* rhs,
     TOKEN_TYPE token_type,
     Pos pos
 ) {
@@ -310,81 +310,81 @@ static Node_literal* precalulate_char(
 }
 
 // returns false if unsuccessful
-bool try_set_binary_types(Env* env, Node_expr** new_node, Node_binary* operator) {
-    log_tree(LOG_DEBUG, (Node*)operator->lhs);
-    Node_expr* new_lhs;
+bool try_set_binary_types(Env* env, Tast_expr** new_tast, Tast_binary* operator) {
+    log_tree(LOG_DEBUG, (Tast*)operator->lhs);
+    Tast_expr* new_lhs;
     if (!try_set_expr_types(env, &new_lhs, operator->lhs)) {
         return false;
     }
     assert(new_lhs);
     operator->lhs = new_lhs;
 
-    Node_expr* new_rhs;
+    Tast_expr* new_rhs;
     if (!try_set_expr_types(env, &new_rhs, operator->rhs)) {
         return false;
     }
     operator->rhs = new_rhs;
     assert(operator->lhs);
     assert(operator->rhs);
-    log_tree(LOG_DEBUG, (Node*)operator);
+    log_tree(LOG_DEBUG, (Tast*)operator);
 
-    if (!lang_type_is_equal(node_get_lang_type_expr(operator->lhs), node_get_lang_type_expr(operator->rhs))) {
-        if (can_be_implicitly_converted(env, node_get_lang_type_expr(operator->lhs), node_get_lang_type_expr(operator->rhs), true)) {
-            if (operator->rhs->type == NODE_LITERAL) {
+    if (!lang_type_is_equal(tast_get_lang_type_expr(operator->lhs), tast_get_lang_type_expr(operator->rhs))) {
+        if (can_be_implicitly_converted(env, tast_get_lang_type_expr(operator->lhs), tast_get_lang_type_expr(operator->rhs), true)) {
+            if (operator->rhs->type == TAST_LITERAL) {
                 operator->lhs = auto_deref_to_0(env, operator->lhs);
                 operator->rhs = auto_deref_to_0(env, operator->rhs);
-                *node_get_lang_type_literal_ref(node_unwrap_literal(operator->rhs)) = node_get_lang_type_expr(operator->lhs);
+                *tast_get_lang_type_literal_ref(tast_unwrap_literal(operator->rhs)) = tast_get_lang_type_expr(operator->lhs);
             } else {
-                Node_expr* unary = util_unary_new(env, operator->rhs, TOKEN_UNSAFE_CAST, node_get_lang_type_expr(operator->lhs));
+                Tast_expr* unary = util_unary_new(env, operator->rhs, TOKEN_UNSAFE_CAST, tast_get_lang_type_expr(operator->lhs));
                 operator->rhs = unary;
             }
-        } else if (can_be_implicitly_converted(env, node_get_lang_type_expr(operator->rhs), node_get_lang_type_expr(operator->lhs), true)) {
-            if (operator->lhs->type == NODE_LITERAL) {
+        } else if (can_be_implicitly_converted(env, tast_get_lang_type_expr(operator->rhs), tast_get_lang_type_expr(operator->lhs), true)) {
+            if (operator->lhs->type == TAST_LITERAL) {
                 operator->lhs = auto_deref_to_0(env, operator->lhs);
                 operator->rhs = auto_deref_to_0(env, operator->rhs);
-                *node_get_lang_type_literal_ref(node_unwrap_literal(operator->lhs)) = node_get_lang_type_expr(operator->rhs);
+                *tast_get_lang_type_literal_ref(tast_unwrap_literal(operator->lhs)) = tast_get_lang_type_expr(operator->rhs);
             } else {
-                Node_expr* unary = util_unary_new(env, operator->lhs, TOKEN_UNSAFE_CAST, node_get_lang_type_expr(operator->rhs));
+                Tast_expr* unary = util_unary_new(env, operator->lhs, TOKEN_UNSAFE_CAST, tast_get_lang_type_expr(operator->rhs));
                 operator->lhs = unary;
             }
         } else {
             msg(
                 LOG_ERROR, EXPECT_FAIL_BINARY_MISMATCHED_TYPES, env->file_text, operator->pos,
                 "types `"LANG_TYPE_FMT"` and `"LANG_TYPE_FMT"` are not valid operands to binary expression\n",
-                lang_type_print(node_get_lang_type_expr(operator->lhs)), lang_type_print(node_get_lang_type_expr(operator->rhs))
+                lang_type_print(tast_get_lang_type_expr(operator->lhs)), lang_type_print(tast_get_lang_type_expr(operator->rhs))
             );
             return false;
         }
     }
             
-    assert(node_get_lang_type_expr(operator->lhs).str.count > 0);
-    operator->lang_type = node_get_lang_type_expr(operator->lhs);
+    assert(tast_get_lang_type_expr(operator->lhs).str.count > 0);
+    operator->lang_type = tast_get_lang_type_expr(operator->lhs);
 
     // precalcuate binary in some situations
-    if (operator->lhs->type == NODE_LITERAL && operator->rhs->type == NODE_LITERAL) {
-        Node_literal* lhs_lit = node_unwrap_literal(operator->lhs);
-        Node_literal* rhs_lit = node_unwrap_literal(operator->rhs);
+    if (operator->lhs->type == TAST_LITERAL && operator->rhs->type == TAST_LITERAL) {
+        Tast_literal* lhs_lit = tast_unwrap_literal(operator->lhs);
+        Tast_literal* rhs_lit = tast_unwrap_literal(operator->rhs);
 
         if (lhs_lit->type != rhs_lit->type) {
             // TODO: make expected failure test for this
             unreachable("mismatched types");
         }
 
-        Node_literal* literal = NULL;
+        Tast_literal* literal = NULL;
 
         switch (lhs_lit->type) {
-            case NODE_NUMBER:
+            case TAST_NUMBER:
                 literal = precalulate_number(
-                    node_unwrap_number_const(lhs_lit),
-                    node_unwrap_number_const(rhs_lit),
+                    tast_unwrap_number_const(lhs_lit),
+                    tast_unwrap_number_const(rhs_lit),
                     operator->token_type,
                     operator->pos
                 );
                 break;
-            case NODE_CHAR:
+            case TAST_CHAR:
                 literal = precalulate_char(
-                    node_unwrap_char_const(lhs_lit),
-                    node_unwrap_char_const(rhs_lit),
+                    tast_unwrap_char_const(lhs_lit),
+                    tast_unwrap_char_const(rhs_lit),
                     operator->token_type,
                     operator->pos
                 );
@@ -393,19 +393,19 @@ bool try_set_binary_types(Env* env, Node_expr** new_node, Node_binary* operator)
                 unreachable("");
         }
 
-        *new_node = node_wrap_literal(literal);
-        log_tree(LOG_DEBUG, node_wrap_expr(*new_node));
+        *new_tast = tast_wrap_literal(literal);
+        log_tree(LOG_DEBUG, tast_wrap_expr(*new_tast));
     } else {
-        *new_node = node_wrap_operator(node_wrap_binary(operator));
+        *new_tast = tast_wrap_operator(tast_wrap_binary(operator));
     }
 
-    assert(node_get_lang_type_expr(*new_node).str.count > 0);
-    assert(*new_node);
+    assert(tast_get_lang_type_expr(*new_tast).str.count > 0);
+    assert(*new_tast);
     return true;
 }
 
-bool try_set_unary_types(Env* env, Node_expr** new_node, Node_unary* unary) {
-    Node_expr* new_child;
+bool try_set_unary_types(Env* env, Tast_expr** new_tast, Tast_unary* unary) {
+    Tast_expr* new_child;
     if (!try_set_expr_types(env, &new_child, unary->child)) {
         return false;
     }
@@ -413,10 +413,10 @@ bool try_set_unary_types(Env* env, Node_expr** new_node, Node_unary* unary) {
 
     switch (unary->token_type) {
         case TOKEN_NOT:
-            unary->lang_type = node_get_lang_type_expr(new_child);
+            unary->lang_type = tast_get_lang_type_expr(new_child);
             break;
         case TOKEN_DEREF:
-            unary->lang_type = node_get_lang_type_expr(new_child);
+            unary->lang_type = tast_get_lang_type_expr(new_child);
             if (unary->lang_type.pointer_depth <= 0) {
                 msg(
                     LOG_ERROR, EXPECT_FAIL_DEREF_NON_POINTER, env->file_text, unary->pos,
@@ -427,16 +427,16 @@ bool try_set_unary_types(Env* env, Node_expr** new_node, Node_unary* unary) {
             unary->lang_type.pointer_depth--;
             break;
         case TOKEN_REFER:
-            unary->lang_type = node_get_lang_type_expr(new_child);
+            unary->lang_type = tast_get_lang_type_expr(new_child);
             unary->lang_type.pointer_depth++;
             assert(unary->lang_type.pointer_depth > 0);
             break;
         case TOKEN_UNSAFE_CAST:
             assert(unary->lang_type.str.count > 0);
-            if (unary->lang_type.pointer_depth > 0 && lang_type_is_number(node_get_lang_type_expr(unary->child))) {
-            } else if (lang_type_is_number(unary->lang_type) && node_get_lang_type_expr(unary->child).pointer_depth > 0) {
-            } else if (lang_type_is_number(unary->lang_type) && lang_type_is_number(node_get_lang_type_expr(unary->child))) {
-            } else if (unary->lang_type.pointer_depth > 0 && node_get_lang_type_expr(unary->child).pointer_depth > 0) {
+            if (unary->lang_type.pointer_depth > 0 && lang_type_is_number(tast_get_lang_type_expr(unary->child))) {
+            } else if (lang_type_is_number(unary->lang_type) && tast_get_lang_type_expr(unary->child).pointer_depth > 0) {
+            } else if (lang_type_is_number(unary->lang_type) && lang_type_is_number(tast_get_lang_type_expr(unary->child))) {
+            } else if (unary->lang_type.pointer_depth > 0 && tast_get_lang_type_expr(unary->child).pointer_depth > 0) {
             } else {
                 todo();
             }
@@ -445,35 +445,35 @@ bool try_set_unary_types(Env* env, Node_expr** new_node, Node_unary* unary) {
             unreachable("");
     }
 
-    *new_node = node_wrap_operator(node_wrap_unary(unary));
+    *new_tast = tast_wrap_operator(tast_wrap_unary(unary));
     return true;
 }
 
 // returns false if unsuccessful
-bool try_set_operator_types(Env* env, Node_expr** new_node, Node_operator* operator) {
-    if (operator->type == NODE_UNARY) {
-        return try_set_unary_types(env, new_node, node_unwrap_unary(operator));
-    } else if (operator->type == NODE_BINARY) {
-        return try_set_binary_types(env, new_node, node_unwrap_binary(operator));
+bool try_set_operator_types(Env* env, Tast_expr** new_tast, Tast_operator* operator) {
+    if (operator->type == TAST_UNARY) {
+        return try_set_unary_types(env, new_tast, tast_unwrap_unary(operator));
+    } else if (operator->type == TAST_BINARY) {
+        return try_set_binary_types(env, new_tast, tast_unwrap_binary(operator));
     } else {
         unreachable("");
     }
 }
 
-bool try_set_struct_literal_assignment_types(Env* env, Node** new_node, const Node* lhs, Node_struct_literal* struct_literal, Pos assign_pos) {
+bool try_set_struct_literal_assignment_types(Env* env, Tast** new_tast, const Tast* lhs, Tast_struct_literal* struct_literal, Pos assign_pos) {
     //log(LOG_DEBUG, "------------------------------\n");
     //if (!is_corresponding_to_a_struct(env, lhs)) {
     //    todo(); // non_struct assigned struct literal
     //}
-    Node_def* lhs_var_def_;
-    try(symbol_lookup(&lhs_var_def_, env, get_node_name(lhs)));
-    Node_variable_def* lhs_var_def = node_unwrap_variable_def(lhs_var_def_);
-    Node_def* struct_def_;
+    Tast_def* lhs_var_def_;
+    try(symbol_lookup(&lhs_var_def_, env, get_tast_name(lhs)));
+    Tast_variable_def* lhs_var_def = tast_unwrap_variable_def(lhs_var_def_);
+    Tast_def* struct_def_;
     try(symbol_lookup(&struct_def_, env, lhs_var_def->lang_type.str));
     switch (struct_def_->type) {
-        case NODE_STRUCT_DEF:
+        case TAST_STRUCT_DEF:
             break;
-        case NODE_RAW_UNION_DEF:
+        case TAST_RAW_UNION_DEF:
             // TODO: improve this
             msg(
                 LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION, env->file_text,
@@ -481,28 +481,28 @@ bool try_set_struct_literal_assignment_types(Env* env, Node** new_node, const No
             );
             return false;
         default:
-            log(LOG_DEBUG, NODE_FMT"\n", node_print(node_wrap_def(struct_def_)));
+            log(LOG_DEBUG, TAST_FMT"\n", tast_print(tast_wrap_def(struct_def_)));
             unreachable("");
     }
-    Node_struct_def* struct_def = node_unwrap_struct_def(struct_def_);
+    Tast_struct_def* struct_def = tast_unwrap_struct_def(struct_def_);
     Lang_type new_lang_type = {.str = struct_def->base.name, .pointer_depth = 0};
     struct_literal->lang_type = new_lang_type;
     
-    Node_vec new_literal_members = {0};
+    Tast_vec new_literal_members = {0};
     for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
         //log(LOG_DEBUG, "%zu\n", idx);
-        Node* memb_sym_def_ = vec_at(&struct_def->base.members, idx);
-        Node_variable_def* memb_sym_def = node_unwrap_variable_def(node_unwrap_def(memb_sym_def_));
-        log_tree(LOG_DEBUG, node_wrap_expr_const(node_wrap_struct_literal_const(struct_literal)));
-        Node_assignment* assign_memb_sym = node_unwrap_assignment(vec_at(&struct_literal->members, idx));
-        Node_symbol_untyped* memb_sym_piece_untyped = node_unwrap_symbol_untyped(node_unwrap_expr(assign_memb_sym->lhs));
-        Node_expr* new_rhs = NULL;
+        Tast* memb_sym_def_ = vec_at(&struct_def->base.members, idx);
+        Tast_variable_def* memb_sym_def = tast_unwrap_variable_def(tast_unwrap_def(memb_sym_def_));
+        log_tree(LOG_DEBUG, tast_wrap_expr_const(tast_wrap_struct_literal_const(struct_literal)));
+        Tast_assignment* assign_memb_sym = tast_unwrap_assignment(vec_at(&struct_literal->members, idx));
+        Tast_symbol_untyped* memb_sym_piece_untyped = tast_unwrap_symbol_untyped(tast_unwrap_expr(assign_memb_sym->lhs));
+        Tast_expr* new_rhs = NULL;
         if (!try_set_expr_types(env, &new_rhs, assign_memb_sym->rhs)) {
             unreachable("");
         }
-        Node_literal* assign_memb_sym_rhs = node_unwrap_literal(new_rhs);
+        Tast_literal* assign_memb_sym_rhs = tast_unwrap_literal(new_rhs);
 
-        *node_get_lang_type_literal_ref(assign_memb_sym_rhs) = memb_sym_def->lang_type;
+        *tast_get_lang_type_literal_ref(assign_memb_sym_rhs) = memb_sym_def->lang_type;
         if (!str_view_is_equal(memb_sym_def->name, memb_sym_piece_untyped->name)) {
             msg(
                 LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL, env->file_text,
@@ -523,145 +523,145 @@ bool try_set_struct_literal_assignment_types(Env* env, Node** new_node, const No
             return false;
         }
 
-        vec_append_safe(&a_main, &new_literal_members, node_wrap_expr(node_wrap_literal(assign_memb_sym_rhs)));
+        vec_append_safe(&a_main, &new_literal_members, tast_wrap_expr(tast_wrap_literal(assign_memb_sym_rhs)));
     }
 
     struct_literal->members = new_literal_members;
 
     assert(struct_literal->lang_type.str.count > 0);
 
-    *new_node = node_wrap_expr(node_wrap_struct_literal(struct_literal));
+    *new_tast = tast_wrap_expr(tast_wrap_struct_literal(struct_literal));
     return true;
 }
 
-bool try_set_expr_types(Env* env, Node_expr** new_node, Node_expr* node) {
-    switch (node->type) {
-        case NODE_LITERAL:
-            *new_node = node;
+bool try_set_expr_types(Env* env, Tast_expr** new_tast, Tast_expr* tast) {
+    switch (tast->type) {
+        case TAST_LITERAL:
+            *new_tast = tast;
             return true;
-        case NODE_SYMBOL_UNTYPED:
-            if (!try_set_symbol_type(env, new_node, node_unwrap_symbol_untyped(node))) {
+        case TAST_SYMBOL_UNTYPED:
+            if (!try_set_symbol_type(env, new_tast, tast_unwrap_symbol_untyped(tast))) {
                 return false;
             } else {
-                assert(*new_node);
+                assert(*new_tast);
             }
             return true;
-        case NODE_MEMBER_ACCESS_UNTYPED: {
-            Node* new_node_ = NULL;
-            if (!try_set_member_access_types(env, &new_node_, node_unwrap_member_access_untyped(node))) {
+        case TAST_MEMBER_ACCESS_UNTYPED: {
+            Tast* new_tast_ = NULL;
+            if (!try_set_member_access_types(env, &new_tast_, tast_unwrap_member_access_untyped(tast))) {
                 return false;
             }
-            *new_node = node_unwrap_expr(new_node_);
+            *new_tast = tast_unwrap_expr(new_tast_);
             return true;
         }
-        case NODE_MEMBER_ACCESS_TYPED:
+        case TAST_MEMBER_ACCESS_TYPED:
             todo();
-            //*lang_type = get_member_sym_piece_final_types(node_unwrap_member_sym_typed(node));
-            //*new_node = node;
+            //*lang_type = get_member_sym_piece_final_types(tast_unwrap_member_sym_typed(tast));
+            //*new_tast = tast;
             //return true;
-        case NODE_INDEX_UNTYPED: {
-            Node* new_node_ = NULL;
-            if (!try_set_index_untyped_types(env, &new_node_, node_unwrap_index_untyped(node))) {
+        case TAST_INDEX_UNTYPED: {
+            Tast* new_tast_ = NULL;
+            if (!try_set_index_untyped_types(env, &new_tast_, tast_unwrap_index_untyped(tast))) {
                 return false;
             }
-            *new_node = node_unwrap_expr(new_node_);
+            *new_tast = tast_unwrap_expr(new_tast_);
             return true;
         }
-        case NODE_INDEX_TYPED:
+        case TAST_INDEX_TYPED:
             todo();
-            //*lang_type = get_member_sym_piece_final_types(node_unwrap_member_sym_typed(node));
-            //*new_node = node;
+            //*lang_type = get_member_sym_piece_final_types(tast_unwrap_member_sym_typed(tast));
+            //*new_tast = tast;
             //return true;
-        case NODE_SYMBOL_TYPED:
-            *new_node = node;
+        case TAST_SYMBOL_TYPED:
+            *new_tast = tast;
             return true;
-        case NODE_OPERATOR:
-            if (!try_set_operator_types(env, new_node, node_unwrap_operator(node))) {
+        case TAST_OPERATOR:
+            if (!try_set_operator_types(env, new_tast, tast_unwrap_operator(tast))) {
                 return false;
             }
-            assert(*new_node);
+            assert(*new_tast);
             return true;
-        case NODE_FUNCTION_CALL:
-            return try_set_function_call_types(env, new_node, node_unwrap_function_call(node));
-        case NODE_STRUCT_LITERAL:
+        case TAST_FUNCTION_CALL:
+            return try_set_function_call_types(env, new_tast, tast_unwrap_function_call(tast));
+        case TAST_STRUCT_LITERAL:
             unreachable("cannot set struct literal type here");
     }
     unreachable("");
 }
 
-bool try_set_def_types(Env* env, Node_def** new_node, Node_def* node) {
-    switch (node->type) {
-        case NODE_VARIABLE_DEF: {
-            Node_variable_def* new_def = NULL;
-            if (!try_set_variable_def_types(env, &new_def, node_unwrap_variable_def(node))) {
+bool try_set_def_types(Env* env, Tast_def** new_tast, Tast_def* tast) {
+    switch (tast->type) {
+        case TAST_VARIABLE_DEF: {
+            Tast_variable_def* new_def = NULL;
+            if (!try_set_variable_def_types(env, &new_def, tast_unwrap_variable_def(tast))) {
                 return false;
             }
-            *new_node = node_wrap_variable_def(new_def);
+            *new_tast = tast_wrap_variable_def(new_def);
             return true;
         }
-        case NODE_FUNCTION_DECL:
+        case TAST_FUNCTION_DECL:
             // TODO: do this?
-            *new_node = node;
+            *new_tast = tast;
             return true;
-        case NODE_FUNCTION_DEF: {
-            Node_function_def* new_def = NULL;
-            if (!try_set_function_def_types(env, &new_def, node_unwrap_function_def(node))) {
+        case TAST_FUNCTION_DEF: {
+            Tast_function_def* new_def = NULL;
+            if (!try_set_function_def_types(env, &new_def, tast_unwrap_function_def(tast))) {
                 return false;
             }
-            *new_node = node_wrap_function_def(new_def);
+            *new_tast = tast_wrap_function_def(new_def);
             return true;
         }
-        case NODE_STRUCT_DEF: {
-            Node_struct_def* new_def = NULL;
-            if (!try_set_struct_def_types(env, &new_def, node_unwrap_struct_def(node))) {
+        case TAST_STRUCT_DEF: {
+            Tast_struct_def* new_def = NULL;
+            if (!try_set_struct_def_types(env, &new_def, tast_unwrap_struct_def(tast))) {
                 return false;
             }
-            *new_node = node_wrap_struct_def(new_def);
+            *new_tast = tast_wrap_struct_def(new_def);
             return true;
         }
-        case NODE_RAW_UNION_DEF: {
-            Node_raw_union_def* new_def = NULL;
-            if (!try_set_raw_union_def_types(env, &new_def, node_unwrap_raw_union_def(node))) {
+        case TAST_RAW_UNION_DEF: {
+            Tast_raw_union_def* new_def = NULL;
+            if (!try_set_raw_union_def_types(env, &new_def, tast_unwrap_raw_union_def(tast))) {
                 return false;
             }
-            *new_node = node_wrap_raw_union_def(new_def);
+            *new_tast = tast_wrap_raw_union_def(new_def);
             return true;
         }
-        case NODE_ENUM_DEF: {
-            Node_enum_def* new_def = NULL;
-            if (!try_set_enum_def_types(env, &new_def, node_unwrap_enum_def(node))) {
+        case TAST_ENUM_DEF: {
+            Tast_enum_def* new_def = NULL;
+            if (!try_set_enum_def_types(env, &new_def, tast_unwrap_enum_def(tast))) {
                 return false;
             }
-            *new_node = node_wrap_enum_def(new_def);
+            *new_tast = tast_wrap_enum_def(new_def);
             return true;
         }
-        case NODE_PRIMITIVE_DEF:
-            *new_node = node;
+        case TAST_PRIMITIVE_DEF:
+            *new_tast = tast;
             return true;
-        case NODE_LITERAL_DEF:
-            *new_node = node;
+        case TAST_LITERAL_DEF:
+            *new_tast = tast;
             return true;
     }
     unreachable("");
 }
 
-bool try_set_assignment_types(Env* env, Node_assignment* assignment) {
-    Node* new_lhs = NULL;
-    if (!try_set_node_types(env, &new_lhs, assignment->lhs)) { 
+bool try_set_assignment_types(Env* env, Tast_assignment* assignment) {
+    Tast* new_lhs = NULL;
+    if (!try_set_tast_types(env, &new_lhs, assignment->lhs)) { 
         return false;
     }
     assignment->lhs = new_lhs;
 
-    Node_expr* new_rhs;
-    if (assignment->rhs->type == NODE_STRUCT_LITERAL) {
-        Node* new_rhs_ = NULL;
+    Tast_expr* new_rhs;
+    if (assignment->rhs->type == TAST_STRUCT_LITERAL) {
+        Tast* new_rhs_ = NULL;
         // TODO: do this in check_generic_assignment
         if (!try_set_struct_literal_assignment_types(
-            env, &new_rhs_, assignment->lhs, node_unwrap_struct_literal(assignment->rhs), assignment->pos
+            env, &new_rhs_, assignment->lhs, tast_unwrap_struct_literal(assignment->rhs), assignment->pos
         )) {
             return false;
         }
-        new_rhs = node_unwrap_expr(new_rhs_);
+        new_rhs = tast_unwrap_expr(new_rhs_);
     } else {
         if (!try_set_expr_types(env, &new_rhs, assignment->rhs)) {
             return false;
@@ -669,12 +669,12 @@ bool try_set_assignment_types(Env* env, Node_assignment* assignment) {
     }
     assignment->rhs = new_rhs;
 
-    if (CHECK_ASSIGN_OK != check_generic_assignment(env, &assignment->rhs, node_get_lang_type(assignment->lhs), new_rhs)) {
+    if (CHECK_ASSIGN_OK != check_generic_assignment(env, &assignment->rhs, tast_get_lang_type(assignment->lhs), new_rhs)) {
         msg(
             LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
             assignment->pos,
             "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
-            lang_type_print(node_get_lang_type_expr(new_rhs)), lang_type_print(node_get_lang_type(assignment->lhs))
+            lang_type_print(tast_get_lang_type_expr(new_rhs)), lang_type_print(tast_get_lang_type(assignment->lhs))
         );
         return false;
     }
@@ -682,10 +682,10 @@ bool try_set_assignment_types(Env* env, Node_assignment* assignment) {
     return true;
 }
 
-bool try_set_function_call_types(Env* env, Node_expr** new_node, Node_function_call* fun_call) {
+bool try_set_function_call_types(Env* env, Tast_expr** new_tast, Tast_function_call* fun_call) {
     bool status = true;
 
-    Node_def* fun_def;
+    Tast_def* fun_def;
     if (!symbol_lookup(&fun_def, env, fun_call->name)) {
         msg(
             LOG_ERROR, EXPECT_FAIL_UNDEFINED_FUNCTION, env->file_text, fun_call->pos,
@@ -694,16 +694,16 @@ bool try_set_function_call_types(Env* env, Node_expr** new_node, Node_function_c
         status = false;
         goto error;
     }
-    Node_function_decl* fun_decl;
-    if (fun_def->type == NODE_FUNCTION_DEF) {
-        fun_decl = node_unwrap_function_def(fun_def)->decl;
+    Tast_function_decl* fun_decl;
+    if (fun_def->type == TAST_FUNCTION_DEF) {
+        fun_decl = tast_unwrap_function_def(fun_def)->decl;
     } else {
-        fun_decl = node_unwrap_function_decl(fun_def);
+        fun_decl = tast_unwrap_function_decl(fun_def);
     }
-    Node_lang_type* fun_rtn_type = fun_decl->return_type;
+    Tast_lang_type* fun_rtn_type = fun_decl->return_type;
     fun_call->lang_type = fun_rtn_type->lang_type;
     assert(fun_call->lang_type.str.count > 0);
-    Node_function_params* params = fun_decl->params;
+    Tast_function_params* params = fun_decl->params;
     size_t params_idx = 0;
 
     size_t min_args;
@@ -735,7 +735,7 @@ bool try_set_function_call_types(Env* env, Node_expr** new_node, Node_function_c
         );
 
         msg(
-            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, node_get_pos_def(fun_def),
+            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, tast_get_pos_def(fun_def),
             "function `"STR_VIEW_FMT"` defined here\n", str_view_print(fun_decl->name)
         );
         status = false;
@@ -743,33 +743,33 @@ bool try_set_function_call_types(Env* env, Node_expr** new_node, Node_function_c
     }
 
     for (size_t arg_idx = 0; arg_idx < fun_call->args.info.count; arg_idx++) {
-        Node_variable_def* corres_param = vec_at(&params->params, params_idx);
-        Node_expr** argument = vec_at_ref(&fun_call->args, arg_idx);
-        Node_expr* new_arg = NULL;
+        Tast_variable_def* corres_param = vec_at(&params->params, params_idx);
+        Tast_expr** argument = vec_at_ref(&fun_call->args, arg_idx);
+        Tast_expr* new_arg = NULL;
 
         if (!corres_param->is_variadic) {
             params_idx++;
         }
 
-        Node* new_arg_ = NULL;
-        if ((*argument)->type == NODE_STRUCT_LITERAL) {
+        Tast* new_arg_ = NULL;
+        if ((*argument)->type == TAST_STRUCT_LITERAL) {
             todo();
             try(try_set_struct_literal_assignment_types(
                 env,
                 &new_arg_,
-                node_wrap_def(node_wrap_variable_def(corres_param)),
-                node_unwrap_struct_literal(*argument),
+                tast_wrap_def(tast_wrap_variable_def(corres_param)),
+                tast_unwrap_struct_literal(*argument),
                 fun_call->pos
             ));
-            new_arg = node_unwrap_expr(new_arg_);
+            new_arg = tast_unwrap_expr(new_arg_);
         } else {
             if (!try_set_expr_types(env, &new_arg, *argument)) {
                 status = false;
                 continue;
             }
         }
-        log_tree(LOG_DEBUG, node_wrap_expr(*argument));
-        log_tree(LOG_DEBUG, node_wrap_expr(new_arg));
+        log_tree(LOG_DEBUG, tast_wrap_expr(*argument));
+        log_tree(LOG_DEBUG, tast_wrap_expr(new_arg));
         assert(new_arg);
 
         *argument = new_arg;
@@ -783,7 +783,7 @@ bool try_set_function_call_types(Env* env, Node_expr** new_node, Node_function_c
             }
         }
 
-        Node_expr* new_new_arg = NULL;
+        Tast_expr* new_new_arg = NULL;
         if (CHECK_ASSIGN_OK != check_generic_assignment(env, &new_new_arg, corres_param->lang_type, new_arg)) {
             msg_invalid_function_arg(env, new_arg, corres_param);
             status = false;
@@ -791,18 +791,18 @@ bool try_set_function_call_types(Env* env, Node_expr** new_node, Node_function_c
         }
 
         *argument = new_new_arg;
-        log_tree(LOG_DEBUG, node_wrap_expr(*argument));
+        log_tree(LOG_DEBUG, tast_wrap_expr(*argument));
     }
 
 error:
-    *new_node = node_wrap_function_call(fun_call);
+    *new_tast = tast_wrap_function_call(fun_call);
     return status;
 }
 
 static void msg_invalid_member(
     const Env* env,
     Struct_def_base base,
-    const Node_member_access_untyped* access
+    const Tast_member_access_untyped* access
 ) {
     msg(
         LOG_ERROR, EXPECT_FAIL_INVALID_STRUCT_MEMBER, env->file_text,
@@ -817,7 +817,7 @@ static void msg_invalid_member(
 static void msg_invalid_enum_member(
     const Env* env,
     Struct_def_base base,
-    const Node_member_access_untyped* access
+    const Tast_member_access_untyped* access
 ) {
     msg(
         LOG_ERROR, EXPECT_FAIL_INVALID_ENUM_MEMBER, env->file_text,
@@ -831,25 +831,25 @@ static void msg_invalid_enum_member(
 
 bool try_set_member_access_types_finish_generic_struct(
     const Env* env,
-    Node** new_node,
-    Node_member_access_untyped* access,
+    Tast** new_tast,
+    Tast_member_access_untyped* access,
     Struct_def_base def_base,
-    Node_expr* new_callee
+    Tast_expr* new_callee
 ) {
-    Node_variable_def* member_def = NULL;
+    Tast_variable_def* member_def = NULL;
     if (!try_get_member_def(&member_def, &def_base, access->member_name)) {
         msg_invalid_member(env, def_base, access);
         return false;
     }
 
-    Node_member_access_typed* new_access = node_member_access_typed_new(
+    Tast_member_access_typed* new_access = tast_member_access_typed_new(
         access->pos,
         member_def->lang_type,
         access->member_name,
         new_callee
     );
 
-    *new_node = node_wrap_expr(node_wrap_member_access_typed(new_access));
+    *new_tast = tast_wrap_expr(tast_wrap_member_access_typed(new_access));
 
     assert(new_access->lang_type.str.count > 0);
     return true;
@@ -857,44 +857,44 @@ bool try_set_member_access_types_finish_generic_struct(
 
 bool try_set_member_access_types_finish(
     const Env* env,
-    Node** new_node,
-    Node_def* lang_type_def,
-    Node_member_access_untyped* access,
-    Node_expr* new_callee
+    Tast** new_tast,
+    Tast_def* lang_type_def,
+    Tast_member_access_untyped* access,
+    Tast_expr* new_callee
 ) {
     switch (lang_type_def->type) {
-        case NODE_STRUCT_DEF: {
-            Node_struct_def* struct_def = node_unwrap_struct_def(lang_type_def);
+        case TAST_STRUCT_DEF: {
+            Tast_struct_def* struct_def = tast_unwrap_struct_def(lang_type_def);
             return try_set_member_access_types_finish_generic_struct(
-                env, new_node, access, struct_def->base, new_callee
+                env, new_tast, access, struct_def->base, new_callee
             );
         }
-        case NODE_RAW_UNION_DEF: {
-            Node_raw_union_def* raw_union_def = node_unwrap_raw_union_def(lang_type_def);
+        case TAST_RAW_UNION_DEF: {
+            Tast_raw_union_def* raw_union_def = tast_unwrap_raw_union_def(lang_type_def);
             return try_set_member_access_types_finish_generic_struct(
-                env, new_node, access, raw_union_def->base, new_callee
+                env, new_tast, access, raw_union_def->base, new_callee
             );
         }
-        case NODE_ENUM_DEF: {
-            Node_enum_def* enum_def = node_unwrap_enum_def(lang_type_def);
-            Node_variable_def* member_def = NULL;
+        case TAST_ENUM_DEF: {
+            Tast_enum_def* enum_def = tast_unwrap_enum_def(lang_type_def);
+            Tast_variable_def* member_def = NULL;
             if (!try_get_member_def(&member_def, &enum_def->base, access->member_name)) {
                 msg_invalid_enum_member(env, enum_def->base, access);
                 return false;
             }
 
-            Node_enum_lit* new_lit = node_enum_lit_new(
+            Tast_enum_lit* new_lit = tast_enum_lit_new(
                 access->pos,
                 get_member_index(&enum_def->base, access->member_name),
                 member_def->lang_type
             );
 
-            *new_node = node_wrap_expr(node_wrap_literal(node_wrap_enum_lit(new_lit)));
+            *new_tast = tast_wrap_expr(tast_wrap_literal(tast_wrap_enum_lit(new_lit)));
             assert(member_def->lang_type.str.count > 0);
             return true;
         }
         default:
-            unreachable(NODE_FMT"\n", node_print(node_wrap_def(lang_type_def)));
+            unreachable(TAST_FMT"\n", tast_print(tast_wrap_def(lang_type_def)));
     }
 
     unreachable("");
@@ -902,34 +902,34 @@ bool try_set_member_access_types_finish(
 
 bool try_set_member_access_types(
     Env* env,
-    Node** new_node,
-    Node_member_access_untyped* access
+    Tast** new_tast,
+    Tast_member_access_untyped* access
 ) {
-    Node_expr* new_callee = NULL;
+    Tast_expr* new_callee = NULL;
     if (!try_set_expr_types(env, &new_callee, access->callee)) {
         return false;
     }
 
     switch (new_callee->type) {
-        case NODE_SYMBOL_TYPED: {
-            Node_symbol_typed* sym = node_unwrap_symbol_typed(new_callee);
-            Node_def* lang_type_def = NULL;
-            if (!symbol_lookup(&lang_type_def, env, node_get_lang_type_symbol_typed(sym).str)) {
+        case TAST_SYMBOL_TYPED: {
+            Tast_symbol_typed* sym = tast_unwrap_symbol_typed(new_callee);
+            Tast_def* lang_type_def = NULL;
+            if (!symbol_lookup(&lang_type_def, env, tast_get_lang_type_symbol_typed(sym).str)) {
                 todo();
             }
 
-            return try_set_member_access_types_finish(env, new_node, lang_type_def, access, new_callee);
+            return try_set_member_access_types_finish(env, new_tast, lang_type_def, access, new_callee);
 
         }
-        case NODE_MEMBER_ACCESS_TYPED: {
-            Node_member_access_typed* sym = node_unwrap_member_access_typed(new_callee);
+        case TAST_MEMBER_ACCESS_TYPED: {
+            Tast_member_access_typed* sym = tast_unwrap_member_access_typed(new_callee);
 
-            Node_def* lang_type_def = NULL;
+            Tast_def* lang_type_def = NULL;
             if (!symbol_lookup(&lang_type_def, env, sym->lang_type.str)) {
                 todo();
             }
 
-            return try_set_member_access_types_finish(env, new_node, lang_type_def, access, new_callee);
+            return try_set_member_access_types_finish(env, new_tast, lang_type_def, access, new_callee);
         }
         default:
             unreachable("");
@@ -937,9 +937,9 @@ bool try_set_member_access_types(
     unreachable("");
 }
 
-bool try_set_index_untyped_types(Env* env, Node** new_node, Node_index_untyped* index) {
-    Node_expr* new_callee = NULL;
-    Node_expr* new_inner_index = NULL;
+bool try_set_index_untyped_types(Env* env, Tast** new_tast, Tast_index_untyped* index) {
+    Tast_expr* new_callee = NULL;
+    Tast_expr* new_inner_index = NULL;
     if (!try_set_expr_types(env, &new_callee, index->callee)) {
         return false;
     }
@@ -947,37 +947,37 @@ bool try_set_index_untyped_types(Env* env, Node** new_node, Node_index_untyped* 
         return false;
     }
 
-    Lang_type new_lang_type = node_get_lang_type_expr(new_callee);
+    Lang_type new_lang_type = tast_get_lang_type_expr(new_callee);
     if (new_lang_type.pointer_depth < 1) {
         todo();
     }
     new_lang_type.pointer_depth--;
 
-    Node_index_typed* new_index = node_index_typed_new(
+    Tast_index_typed* new_index = tast_index_typed_new(
         index->pos,
         new_lang_type,
         new_inner_index,
         new_callee
     );
 
-    *new_node = node_wrap_expr(node_wrap_index_typed(new_index));
+    *new_tast = tast_wrap_expr(tast_wrap_index_typed(new_index));
     return true;
 }
 
-static bool try_set_condition_types(Env* env, Node_condition* if_cond) {
-    Node_expr* new_if_cond_child;
+static bool try_set_condition_types(Env* env, Tast_condition* if_cond) {
+    Tast_expr* new_if_cond_child;
     if (!try_set_operator_types(env, &new_if_cond_child, if_cond->child)) {
         return false;
     }
 
     switch (new_if_cond_child->type) {
-        case NODE_OPERATOR:
-            if_cond->child = node_unwrap_operator(new_if_cond_child);
+        case TAST_OPERATOR:
+            if_cond->child = tast_unwrap_operator(new_if_cond_child);
             break;
-        case NODE_LITERAL:
+        case TAST_LITERAL:
             if_cond->child = condition_get_default_child(new_if_cond_child);
             break;
-        case NODE_FUNCTION_CALL:
+        case TAST_FUNCTION_CALL:
             if_cond->child = condition_get_default_child(new_if_cond_child);
             break;
         default:
@@ -995,10 +995,10 @@ bool try_set_struct_base_types(Env* env, Struct_def_base* base) {
     }
 
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        Node* curr = vec_at(&base->members, idx);
+        Tast* curr = vec_at(&base->members, idx);
 
-        Node* result_dummy = NULL;
-        if (!try_set_node_types(env, &result_dummy, curr)) {
+        Tast* result_dummy = NULL;
+        if (!try_set_tast_types(env, &result_dummy, curr)) {
             success = false;
         }
     }
@@ -1006,21 +1006,21 @@ bool try_set_struct_base_types(Env* env, Struct_def_base* base) {
     return success;
 }
 
-bool try_set_enum_def_types(Env* env, Node_enum_def** new_node, Node_enum_def* node) {
-    bool success = try_set_struct_base_types(env, &node->base);
-    *new_node = node;
+bool try_set_enum_def_types(Env* env, Tast_enum_def** new_tast, Tast_enum_def* tast) {
+    bool success = try_set_struct_base_types(env, &tast->base);
+    *new_tast = tast;
     return success;
 }
 
-bool try_set_raw_union_def_types(Env* env, Node_raw_union_def** new_node, Node_raw_union_def* node) {
-    bool success = try_set_struct_base_types(env, &node->base);
-    *new_node = node;
+bool try_set_raw_union_def_types(Env* env, Tast_raw_union_def** new_tast, Tast_raw_union_def* tast) {
+    bool success = try_set_struct_base_types(env, &tast->base);
+    *new_tast = tast;
     return success;
 }
 
-bool try_set_struct_def_types(Env* env, Node_struct_def** new_node, Node_struct_def* node) {
-    bool success = try_set_struct_base_types(env, &node->base);
-    *new_node = node;
+bool try_set_struct_def_types(Env* env, Tast_struct_def** new_tast, Tast_struct_def* tast) {
+    bool success = try_set_struct_base_types(env, &tast->base);
+    *new_tast = tast;
     return success;
 }
 
@@ -1042,82 +1042,82 @@ static void msg_undefined_type_internal(
 
 bool try_set_variable_def_types(
     const Env* env,
-    Node_variable_def** new_node,
-    Node_variable_def* node
+    Tast_variable_def** new_tast,
+    Tast_variable_def* tast
 ) {
-    Node_def* dummy = NULL;
-    if (!symbol_lookup(&dummy, env, node->lang_type.str)) {
-        msg_undefined_type(env, node->pos, node->lang_type);
+    Tast_def* dummy = NULL;
+    if (!symbol_lookup(&dummy, env, tast->lang_type.str)) {
+        msg_undefined_type(env, tast->pos, tast->lang_type);
         return false;
     }
 
-    *new_node = node;
+    *new_tast = tast;
     return true;
 }
 
 bool try_set_function_def_types(
     Env* env,
-    Node_function_def** new_node,
-    Node_function_def* old_def
+    Tast_function_def** new_tast,
+    Tast_function_def* old_def
 ) {
     Str_view prev_par_fun = env->name_parent_function;
     env->name_parent_function = old_def->decl->name;
     assert(env->name_parent_function.count > 0);
     bool status = true;
 
-    Node_function_decl* new_decl = NULL;
+    Tast_function_decl* new_decl = NULL;
     if (!try_set_function_decl_types(env, &new_decl, old_def->decl)) {
         status = false;
     }
     old_def->decl = new_decl;
 
     size_t prev_ancesters_count = env->ancesters.info.count;
-    Node_block* new_body = NULL;
+    Tast_block* new_body = NULL;
     if (!try_set_block_types(env, &new_body, old_def->body, true)) {
         status = false;
     }
     old_def->body = new_body;
     assert(prev_ancesters_count == env->ancesters.info.count);
 
-    *new_node = old_def;
+    *new_tast = old_def;
     env->name_parent_function = prev_par_fun;
     return status;
 }
 
 bool try_set_function_decl_types(
     Env* env,
-    Node_function_decl** new_node,
-    Node_function_decl* old_def
+    Tast_function_decl** new_tast,
+    Tast_function_decl* old_def
 ) {
     bool status = true;
 
-    Node_function_params* new_params = NULL;
+    Tast_function_params* new_params = NULL;
     if (!try_set_function_params_types(env, &new_params, old_def->params)) {
         status = false;
     }
     old_def->params = new_params;
 
-    Node_lang_type* new_rtn_type = NULL;
+    Tast_lang_type* new_rtn_type = NULL;
     if (!try_set_lang_type_types(env, &new_rtn_type, old_def->return_type)) {
         status = false;
     }
     old_def->return_type = new_rtn_type;
 
-    *new_node = old_def;
+    *new_tast = old_def;
     return status;
 }
 
 bool try_set_function_params_types(
     Env* env,
-    Node_function_params** new_node,
-    Node_function_params* old_params
+    Tast_function_params** new_tast,
+    Tast_function_params* old_params
 ) {
     bool status = true;
 
     for (size_t idx = 0; idx < old_params->params.info.count; idx++) {
-        Node_variable_def* old_def = vec_at(&old_params->params, idx);
+        Tast_variable_def* old_def = vec_at(&old_params->params, idx);
 
-        Node_variable_def* new_def = NULL;
+        Tast_variable_def* new_def = NULL;
         if (!try_set_variable_def_types(env, &new_def, old_def)) {
             status = false;
         }
@@ -1125,29 +1125,29 @@ bool try_set_function_params_types(
         *vec_at_ref(&old_params->params, idx) = new_def;
     }
 
-    *new_node = old_params;
+    *new_tast = old_params;
     return status;
 }
 
 bool try_set_lang_type_types(
     Env* env,
-    Node_lang_type** new_node,
-    Node_lang_type* old_node
+    Tast_lang_type** new_tast,
+    Tast_lang_type* old_tast
 ) {
-    Node_def* dummy = NULL;
-    if (!symbol_lookup(&dummy, env, old_node->lang_type.str)) {
-        msg_undefined_type(env, old_node->pos, old_node->lang_type);
+    Tast_def* dummy = NULL;
+    if (!symbol_lookup(&dummy, env, old_tast->lang_type.str)) {
+        msg_undefined_type(env, old_tast->pos, old_tast->lang_type);
         return false;
     }
 
-    *new_node = old_node;
+    *new_tast = old_tast;
     return true;
 }
 
-bool try_set_return_types(Env* env, Node_return** new_node, Node_return* rtn) {
-    *new_node = NULL;
+bool try_set_return_types(Env* env, Tast_return** new_tast, Tast_return* rtn) {
+    *new_tast = NULL;
 
-    Node_expr* new_rtn_child;
+    Tast_expr* new_rtn_child;
     if (!try_set_expr_types(env, &new_rtn_child, rtn->child)) {
         todo();
         return false;
@@ -1162,114 +1162,114 @@ bool try_set_return_types(Env* env, Node_return** new_node, Node_return* rtn) {
     }
     rtn->child = new_rtn_child;
 
-    *new_node = rtn;
+    *new_tast = rtn;
     return true;
 }
 
-bool try_set_for_range_types(Env* env, Node_for_range** new_node, Node_for_range* old_for) {
+bool try_set_for_range_types(Env* env, Tast_for_range** new_tast, Tast_for_range* old_for) {
     bool status = true;
 
-    Node_variable_def* new_var_def = NULL;
+    Tast_variable_def* new_var_def = NULL;
     if (!try_set_variable_def_types(env, &new_var_def, old_for->var_def)) {
         status = false;
     }
     old_for->var_def = new_var_def;
 
-    Node_expr* new_lower = NULL;
+    Tast_expr* new_lower = NULL;
     if (!try_set_expr_types(env, &new_lower, old_for->lower_bound->child)) {
         status = false;
     }
     old_for->lower_bound->child = new_lower;
 
-    Node_expr* new_upper = NULL;
+    Tast_expr* new_upper = NULL;
     if (!try_set_expr_types(env, &new_upper, old_for->upper_bound->child)) {
         status = false;
     }
     old_for->upper_bound->child = new_upper;
 
-    Node_block* new_body = NULL;
+    Tast_block* new_body = NULL;
     if (!try_set_block_types(env, &new_body, old_for->body, false)) {
         status = false;
     }
     old_for->body = new_body;
 
-    *new_node = old_for;
+    *new_tast = old_for;
     return status;
 }
 
-bool try_set_for_with_cond_types(Env* env, Node_for_with_cond** new_node, Node_for_with_cond* old_for) {
+bool try_set_for_with_cond_types(Env* env, Tast_for_with_cond** new_tast, Tast_for_with_cond* old_for) {
     bool status = true;
 
     if (!try_set_condition_types(env, old_for->condition)) {
         status = false;
     }
 
-    Node_block* new_body = NULL;
+    Tast_block* new_body = NULL;
     if (!try_set_block_types(env, &new_body, old_for->body, false)) {
         status = false;
     }
     old_for->body = new_body;
 
-    *new_node = old_for;
+    *new_tast = old_for;
     return status;
 }
 
-bool try_set_if_types(Env* env, Node_if** new_node, Node_if* old_if) {
+bool try_set_if_types(Env* env, Tast_if** new_tast, Tast_if* old_if) {
     bool status = true;
 
     if (!try_set_condition_types(env, old_if->condition)) {
         status = false;
     }
 
-    Node_block* new_body = NULL;
+    Tast_block* new_body = NULL;
     if (!try_set_block_types(env, &new_body, old_if->body, false)) {
         status = false;
     }
     old_if->body = new_body;
 
-    *new_node = old_if;
+    *new_tast = old_if;
     return status;
 }
 
-bool try_set_if_else_chain(Env* env, Node_if_else_chain** new_node, Node_if_else_chain* old_if_else) {
+bool try_set_if_else_chain(Env* env, Tast_if_else_chain** new_tast, Tast_if_else_chain* old_if_else) {
     bool status = true;
 
-    for (size_t idx = 0; idx < old_if_else->nodes.info.count; idx++) {
-        Node_if** old_if = vec_at_ref(&old_if_else->nodes, idx);
+    for (size_t idx = 0; idx < old_if_else->tasts.info.count; idx++) {
+        Tast_if** old_if = vec_at_ref(&old_if_else->tasts, idx);
                 
-        Node_if* new_if = NULL;
+        Tast_if* new_if = NULL;
         if (!try_set_if_types(env, &new_if, *old_if)) {
             status = false;
         }
         *old_if = new_if;
     }
 
-    *new_node = old_if_else;
+    *new_tast = old_if_else;
     return status;
 }
 
 // TODO: consider if lang_type result should be removed
-bool try_set_block_types(Env* env, Node_block** new_node, Node_block* block, bool is_directly_in_fun_def) {
-    Node_vec* block_children = &block->children;
+bool try_set_block_types(Env* env, Tast_block** new_tast, Tast_block* block, bool is_directly_in_fun_def) {
+    Tast_vec* block_children = &block->children;
 
     vec_append(&a_main, &env->ancesters, &block->symbol_collection);
 
     for (size_t idx = 0; idx < block_children->info.count; idx++) {
-        Node** curr_node = vec_at_ref(block_children, idx);
-        Node* new_node;
-        try_set_node_types(env, &new_node, *curr_node);
-        *curr_node = new_node;
-        assert(*curr_node);
+        Tast** curr_tast = vec_at_ref(block_children, idx);
+        Tast* new_tast;
+        try_set_tast_types(env, &new_tast, *curr_tast);
+        *curr_tast = new_tast;
+        assert(*curr_tast);
 
     }
 
     if (is_directly_in_fun_def && (
         block_children->info.count < 1 ||
-        vec_at(block_children, block_children->info.count - 1)->type != NODE_RETURN
+        vec_at(block_children, block_children->info.count - 1)->type != TAST_RETURN
     )) {
-        Node_return* rtn_statement = node_return_new(
+        Tast_return* rtn_statement = tast_return_new(
             block->pos_end,
-            node_wrap_literal(util_literal_new_from_strv(
+            tast_wrap_literal(util_literal_new_from_strv(
                 str_view_from_cstr(""), TOKEN_VOID, block->pos_end
             )),
             true
@@ -1278,8 +1278,8 @@ bool try_set_block_types(Env* env, Node_block** new_node, Node_block* block, boo
             symbol_log(LOG_DEBUG, env);
             unreachable("");
         }
-        Node* new_rtn_statement = NULL;
-        if (!try_set_node_types(env, &new_rtn_statement, node_wrap_return(rtn_statement))) {
+        Tast* new_rtn_statement = NULL;
+        if (!try_set_tast_types(env, &new_rtn_statement, tast_wrap_return(rtn_statement))) {
             goto error;
         }
         assert(rtn_statement);
@@ -1289,82 +1289,82 @@ bool try_set_block_types(Env* env, Node_block** new_node, Node_block* block, boo
 
 error:
     vec_rem_last(&env->ancesters);
-    *new_node = block;
+    *new_tast = block;
     return true;
 }
 
-bool try_set_node_types(Env* env, Node** new_node, Node* node) {
-    *new_node = node;
+bool try_set_tast_types(Env* env, Tast** new_tast, Tast* tast) {
+    *new_tast = tast;
 
-    switch (node->type) {
-        case NODE_EXPR: {
-            Node_expr* new_node_ = NULL;
-            if (!try_set_expr_types(env, &new_node_, node_unwrap_expr(node))) {
+    switch (tast->type) {
+        case TAST_EXPR: {
+            Tast_expr* new_tast_ = NULL;
+            if (!try_set_expr_types(env, &new_tast_, tast_unwrap_expr(tast))) {
                 return false;
             }
-            *new_node = node_wrap_expr(new_node_);
+            *new_tast = tast_wrap_expr(new_tast_);
             return true;
         }
-        case NODE_DEF: {
-            Node_def* new_node_ = NULL;
-            if (!try_set_def_types(env, &new_node_, node_unwrap_def(node))) {
+        case TAST_DEF: {
+            Tast_def* new_tast_ = NULL;
+            if (!try_set_def_types(env, &new_tast_, tast_unwrap_def(tast))) {
                 return false;
             }
-            *new_node = node_wrap_def(new_node_);
+            *new_tast = tast_wrap_def(new_tast_);
             return true;
         }
-        case NODE_IF:
+        case TAST_IF:
             unreachable("");
-        case NODE_FOR_WITH_COND: {
-            Node_for_with_cond* new_node_ = NULL;
-            if (!try_set_for_with_cond_types(env, &new_node_, node_unwrap_for_with_cond(node))) {
+        case TAST_FOR_WITH_COND: {
+            Tast_for_with_cond* new_tast_ = NULL;
+            if (!try_set_for_with_cond_types(env, &new_tast_, tast_unwrap_for_with_cond(tast))) {
                 return false;
             }
-            *new_node = node_wrap_for_with_cond(new_node_);
+            *new_tast = tast_wrap_for_with_cond(new_tast_);
             return true;
         }
-        case NODE_ASSIGNMENT:
-            return try_set_assignment_types(env, node_unwrap_assignment(node));
-        case NODE_RETURN: {
-            Node_return* new_rtn = NULL;
-            if (!try_set_return_types(env, &new_rtn, node_unwrap_return(node))) {
+        case TAST_ASSIGNMENT:
+            return try_set_assignment_types(env, tast_unwrap_assignment(tast));
+        case TAST_RETURN: {
+            Tast_return* new_rtn = NULL;
+            if (!try_set_return_types(env, &new_rtn, tast_unwrap_return(tast))) {
                 return false;
             }
-            *new_node = node_wrap_return(new_rtn);
+            *new_tast = tast_wrap_return(new_rtn);
             return true;
         }
-        case NODE_FOR_RANGE: {
-            Node_for_range* new_for = NULL;
-            if (!try_set_for_range_types(env, &new_for, node_unwrap_for_range(node))) {
+        case TAST_FOR_RANGE: {
+            Tast_for_range* new_for = NULL;
+            if (!try_set_for_range_types(env, &new_for, tast_unwrap_for_range(tast))) {
                 return false;
             }
-            *new_node = node_wrap_for_range(new_for);
+            *new_tast = tast_wrap_for_range(new_for);
             return true;
         }
-        case NODE_BREAK:
-            *new_node = node;
+        case TAST_BREAK:
+            *new_tast = tast;
             return true;
-        case NODE_CONTINUE:
-            *new_node = node;
+        case TAST_CONTINUE:
+            *new_tast = tast;
             return true;
-        case NODE_BLOCK: {
-            assert(node_unwrap_block(node)->pos_end.line > 0);
-            Node_block* new_for = NULL;
-            if (!try_set_block_types(env, &new_for, node_unwrap_block(node), false)) {
+        case TAST_BLOCK: {
+            assert(tast_unwrap_block(tast)->pos_end.line > 0);
+            Tast_block* new_for = NULL;
+            if (!try_set_block_types(env, &new_for, tast_unwrap_block(tast), false)) {
                 return false;
             }
-            *new_node = node_wrap_block(new_for);
+            *new_tast = tast_wrap_block(new_for);
             return true;
         }
-        case NODE_IF_ELSE_CHAIN: {
-            Node_if_else_chain* new_for = NULL;
-            if (!try_set_if_else_chain(env, &new_for, node_unwrap_if_else_chain(node))) {
+        case TAST_IF_ELSE_CHAIN: {
+            Tast_if_else_chain* new_for = NULL;
+            if (!try_set_if_else_chain(env, &new_for, tast_unwrap_if_else_chain(tast))) {
                 return false;
             }
-            *new_node = node_wrap_if_else_chain(new_for);
+            *new_tast = tast_wrap_if_else_chain(new_for);
             return true;
         }
         default:
-            unreachable(NODE_FMT, node_print(node));
+            unreachable(TAST_FMT, tast_print(tast));
     }
 }

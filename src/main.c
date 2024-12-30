@@ -3,7 +3,7 @@
 #include <errno.h>
 #include <assert.h>
 #include "newstring.h"
-#include <node.h>
+#include <tast.h>
 #include "tokens.h"
 #include "parameters.h"
 #include "file.h"

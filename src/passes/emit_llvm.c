@@ -38,21 +38,21 @@ static void extend_literal(String* output, const Llvm_literal* literal) {
     unreachable("");
 }
 
-static void node_extend_literal(String* output, const Node_literal* literal) {
+static void tast_extend_literal(String* output, const Tast_literal* literal) {
     switch (literal->type) {
-        case NODE_STRING:
-            string_extend_strv(&a_main, output, node_unwrap_string_const(literal)->data);
+        case TAST_STRING:
+            string_extend_strv(&a_main, output, tast_unwrap_string_const(literal)->data);
             return;
-        case NODE_NUMBER:
-            string_extend_int64_t(&a_main, output, node_unwrap_number_const(literal)->data);
+        case TAST_NUMBER:
+            string_extend_int64_t(&a_main, output, tast_unwrap_number_const(literal)->data);
             return;
-        case NODE_ENUM_LIT:
-            string_extend_int64_t(&a_main, output, node_unwrap_enum_lit_const(literal)->data);
+        case TAST_ENUM_LIT:
+            string_extend_int64_t(&a_main, output, tast_unwrap_enum_lit_const(literal)->data);
             return;
-        case NODE_VOID:
+        case TAST_VOID:
             return;
-        case NODE_CHAR:
-            string_extend_int64_t(&a_main, output, (int64_t)node_unwrap_char_const(literal)->data);
+        case TAST_CHAR:
+            string_extend_int64_t(&a_main, output, (int64_t)tast_unwrap_char_const(literal)->data);
             return;
     }
     unreachable("");
@@ -136,32 +136,32 @@ static bool llvm_is_variadic(const Llvm* llvm) {
     }
 }
 
-static bool node_is_variadic(const Node* node) {
-    if (node->type == NODE_EXPR) {
-        switch (node_unwrap_expr_const(node)->type) {
-            case NODE_LITERAL:
+static bool tast_is_variadic(const Tast* tast) {
+    if (tast->type == TAST_EXPR) {
+        switch (tast_unwrap_expr_const(tast)->type) {
+            case TAST_LITERAL:
                 return false;
             default:
-                unreachable(NODE_FMT, node_print(node));
+                unreachable(TAST_FMT, tast_print(tast));
         }
     } else {
-        const Node_def* def = node_unwrap_def_const(node);
+        const Tast_def* def = tast_unwrap_def_const(tast);
         switch (def->type) {
-            case NODE_VARIABLE_DEF:
-                return node_unwrap_variable_def_const(node_unwrap_def_const(node))->is_variadic;
+            case TAST_VARIABLE_DEF:
+                return tast_unwrap_variable_def_const(tast_unwrap_def_const(tast))->is_variadic;
             default:
-                unreachable(NODE_FMT, node_print(node));
+                unreachable(TAST_FMT, tast_print(tast));
         }
     }
 }
 
-static void node_extend_type_decl_str(const Env* env, String* output, const Node* var_def_or_lit, bool noundef) {
-    if (node_is_variadic(var_def_or_lit)) {
+static void tast_extend_type_decl_str(const Env* env, String* output, const Tast* var_def_or_lit, bool noundef) {
+    if (tast_is_variadic(var_def_or_lit)) {
         string_extend_cstr(&a_main, output, "...");
         return;
     }
 
-    extend_type_call_str(env, output, node_get_lang_type(var_def_or_lit));
+    extend_type_call_str(env, output, tast_get_lang_type(var_def_or_lit));
     if (noundef) {
         string_extend_cstr(&a_main, output, " noundef");
     }
@@ -204,28 +204,28 @@ static void extend_literal_decl_prefix(const Env* env, String* output, const Llv
     }
 }
 
-static void node_extend_literal_decl_prefix(const Env* env, String* output, const Node_literal* literal) {
+static void tast_extend_literal_decl_prefix(const Env* env, String* output, const Tast_literal* literal) {
     log(LOG_DEBUG, "entering thing\n");
-    assert(node_get_lang_type_literal(literal).str.count > 0);
-    if (str_view_cstr_is_equal(node_get_lang_type_literal(literal).str, "u8")) {
-        if (node_get_lang_type_literal(literal).pointer_depth != 1) {
+    assert(tast_get_lang_type_literal(literal).str.count > 0);
+    if (str_view_cstr_is_equal(tast_get_lang_type_literal(literal).str, "u8")) {
+        if (tast_get_lang_type_literal(literal).pointer_depth != 1) {
             todo();
         }
         string_extend_cstr(&a_main, output, " @.");
         string_extend_strv(&a_main, output, get_literal_name(literal));
-    } else if (lang_type_is_signed(node_get_lang_type_literal(literal))) {
-        if (node_get_lang_type_literal(literal).pointer_depth != 0) {
+    } else if (lang_type_is_signed(tast_get_lang_type_literal(literal))) {
+        if (tast_get_lang_type_literal(literal).pointer_depth != 0) {
             todo();
         }
         vec_append(&a_main, output, ' ');
-        node_extend_literal(output, literal);
-    } else if (lang_type_is_enum(env, node_get_lang_type_literal(literal))) {
+        tast_extend_literal(output, literal);
+    } else if (lang_type_is_enum(env, tast_get_lang_type_literal(literal))) {
         vec_append(&a_main, output, ' ');
-        node_extend_literal(output, literal);
+        tast_extend_literal(output, literal);
     } else {
-        log(LOG_DEBUG, BOOL_FMT"\n", bool_print(lang_type_is_enum(env, node_get_lang_type_literal(literal))));
-        log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(node_get_lang_type_literal(literal)));
-        unreachable(LLVM_FMT"\n", node_print(node_wrap_expr_const(node_wrap_literal_const(literal))));
+        log(LOG_DEBUG, BOOL_FMT"\n", bool_print(lang_type_is_enum(env, tast_get_lang_type_literal(literal))));
+        log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(tast_get_lang_type_literal(literal)));
+        unreachable(LLVM_FMT"\n", tast_print(tast_wrap_expr_const(tast_wrap_literal_const(literal))));
     }
 }
 
@@ -234,9 +234,9 @@ static void extend_literal_decl(const Env* env, String* output, const Llvm_liter
     extend_literal_decl_prefix(env, output, literal);
 }
 
-static void node_extend_literal_decl(const Env* env, String* output, const Node_literal* literal, bool noundef) {
-    node_extend_type_decl_str(env, output, node_wrap_expr_const(node_wrap_literal_const(literal)), noundef);
-    node_extend_literal_decl_prefix(env, output, literal);
+static void tast_extend_literal_decl(const Env* env, String* output, const Tast_literal* literal, bool noundef) {
+    tast_extend_type_decl_str(env, output, tast_wrap_expr_const(tast_wrap_literal_const(literal)), noundef);
+    tast_extend_literal_decl_prefix(env, output, literal);
 }
 
 static const Llvm_lang_type* return_type_from_function_def(const Llvm_function_def* fun_def) {
@@ -366,7 +366,7 @@ static void emit_function_call_arguments(const Env* env, String* output, const L
                 string_extend_size_t(&a_main, output, llvm_get_llvm_id(argument));
                 break;
             default:
-                unreachable(NODE_FMT"\n", llvm_print(argument));
+                unreachable(TAST_FMT"\n", llvm_print(argument));
         }
     }
 }
@@ -751,7 +751,7 @@ static void emit_function_def(Env* env, String* output, const Llvm_function_def*
     extend_type_call_str(env, output, return_type_from_function_def(fun_def)->lang_type);
 
     string_extend_cstr(&a_main, output, " @");
-    string_extend_strv(&a_main, output, llvm_get_node_name(llvm_wrap_def_const(llvm_wrap_function_def_const(fun_def))));
+    string_extend_strv(&a_main, output, llvm_get_tast_name(llvm_wrap_def_const(llvm_wrap_function_def_const(fun_def))));
 
     vec_append(&a_main, output, '(');
     emit_function_params(env, output, fun_def->decl->params);
@@ -805,7 +805,7 @@ static void emit_return_expr(const Env* env, String* output, const Llvm_expr* ch
             break;
         }
         default:
-            unreachable(NODE_FMT"\n", llvm_expr_print(child));
+            unreachable(TAST_FMT"\n", llvm_expr_print(child));
     }
 }
 
@@ -829,7 +829,7 @@ static void emit_return(const Env* env, String* output, const Llvm_return* fun_r
             return;
         }
         default:
-            unreachable(NODE_FMT"\n", llvm_print(sym_to_return));
+            unreachable(TAST_FMT"\n", llvm_print(sym_to_return));
     }
 }
 
@@ -874,7 +874,7 @@ static void emit_struct_def_base(const Env* env, String* output, const Struct_de
         if (!is_first) {
             string_extend_cstr(&a_main, output, ", ");
         }
-        node_extend_type_decl_str(env, output, vec_at(&base->members, idx), false);
+        tast_extend_type_decl_str(env, output, vec_at(&base->members, idx), false);
         is_first = false;
     }
     string_extend_cstr(&a_main, output, " }\n");
@@ -1026,7 +1026,7 @@ static void emit_symbol(String* output, Str_view key, const Llvm_string_def* def
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void node_emit_symbol(String* output, Str_view key, const Node_string_def* def) {
+static void tast_emit_symbol(String* output, Str_view key, const Tast_string_def* def) {
     size_t literal_width = def->data.count + 1 - get_count_excape_seq(def->data);
 
     string_extend_cstr(&a_main, output, "@.");
@@ -1039,7 +1039,7 @@ static void node_emit_symbol(String* output, Str_view key, const Node_string_def
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void node_emit_struct_literal(const Env* env, String* output, const Node_struct_lit_def* lit_def) {
+static void tast_emit_struct_literal(const Env* env, String* output, const Tast_struct_lit_def* lit_def) {
     assert(lit_def->lang_type.str.count > 0);
     string_extend_cstr(&a_main, output, "@__const.main.");
     string_extend_strv(&a_main, output, lit_def->name);
@@ -1049,11 +1049,11 @@ static void node_emit_struct_literal(const Env* env, String* output, const Node_
 
     size_t is_first = true;
     for (size_t idx = 0; idx < lit_def->members.info.count; idx++) {
-        const Node* memb_literal = vec_at(&lit_def->members, idx);
+        const Tast* memb_literal = vec_at(&lit_def->members, idx);
         if (!is_first) {
             vec_append(&a_main, output, ',');
         }
-        node_extend_literal_decl(env, output, node_unwrap_literal_const(node_unwrap_expr_const(memb_literal)), false);
+        tast_extend_literal_decl(env, output, tast_unwrap_literal_const(tast_unwrap_expr_const(memb_literal)), false);
         is_first = false;
     }
 
@@ -1083,19 +1083,19 @@ static void emit_struct_literal(const Env* env, String* output, const Llvm_struc
 
 static void emit_symbols(const Env* env, String* output) {
     for (size_t idx = 0; idx < env->global_literals.capacity; idx++) {
-        const Symbol_table_node curr_node = env->global_literals.table_nodes[idx];
-        if (curr_node.status != SYM_TBL_OCCUPIED) {
+        const Symbol_table_tast curr_tast = env->global_literals.table_tasts[idx];
+        if (curr_tast.status != SYM_TBL_OCCUPIED) {
             continue;
         }
 
-        const Node_literal_def* def = node_unwrap_literal_def_const(curr_node.node);
+        const Tast_literal_def* def = tast_unwrap_literal_def_const(curr_tast.tast);
 
         switch (def->type) {
-            case NODE_STRUCT_LIT_DEF:
-                node_emit_struct_literal(env, output, node_unwrap_struct_lit_def_const(def));
+            case TAST_STRUCT_LIT_DEF:
+                tast_emit_struct_literal(env, output, tast_unwrap_struct_lit_def_const(def));
                 break;
-            case NODE_STRING_DEF:
-                node_emit_symbol(output, curr_node.key, node_unwrap_string_def_const(def));
+            case TAST_STRING_DEF:
+                tast_emit_symbol(output, curr_tast.key, tast_unwrap_string_def_const(def));
                 break;
             default:
                 todo();

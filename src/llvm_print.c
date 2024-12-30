@@ -1,6 +1,6 @@
 #include <llvm.h>
 #include <llvms.h>
-#include <node.h>
+#include <tast.h>
 #include <llvms.h>
 #include <util.h>
 #include <llvm_utils.h>
@@ -178,7 +178,7 @@ Str_view llvm_struct_literal_print_internal(const Llvm_struct_literal* lit, int 
     string_extend_strv_indent(&print_arena, &buf, lit->name, indent);
     extend_lang_type(&buf, lit->lang_type, true);
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-        Str_view memb_text = node_print_internal(vec_at(&lit->members, idx), indent);
+        Str_view memb_text = tast_print_internal(vec_at(&lit->members, idx), indent);
         string_extend_strv(&print_arena, &buf, memb_text);
     }
 
@@ -410,7 +410,7 @@ static void extend_struct_def_base(String* buf, const char* type_name, Struct_de
 
     indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        Str_view memb_text = node_print_internal(vec_at(&base.members, idx), indent);
+        Str_view memb_text = tast_print_internal(vec_at(&base.members, idx), indent);
         string_extend_strv(&print_arena, buf, memb_text);
     }
     indent -= INDENT_WIDTH;

@@ -1,6 +1,6 @@
 #include "util.h"
-#include "node.h"
-#include "nodes.h"
+#include "tast.h"
+#include "tasts.h"
 #include "symbol_table.h"
 #include "parser_utils.h"
 #include <stdarg.h>

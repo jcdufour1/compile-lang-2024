@@ -572,7 +572,7 @@ static inline Str_view llvm_get_llvm_name_expr(const Llvm_expr* expr) {
     unreachable("");
 }
 
-static inline Str_view llvm_get_node_name(const Llvm* llvm) {
+static inline Str_view llvm_get_tast_name(const Llvm* llvm) {
     switch (llvm->type) {
         case LLVM_DEF:
             return llvm_get_def_name(llvm_unwrap_def_const(llvm));
