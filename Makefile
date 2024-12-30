@@ -33,8 +33,7 @@ endif
 OBJS=\
 	 ${BUILD_DIR}/main.o \
 	 ${BUILD_DIR}/arena.o \
-	 ${BUILD_DIR}/nodes.o \
-	 ${BUILD_DIR}/node_print.o \
+	 ${BUILD_DIR}/tast_print.o \
 	 ${BUILD_DIR}/llvm_print.o \
 	 ${BUILD_DIR}/globals.o \
 	 ${BUILD_DIR}/token.o \
@@ -56,7 +55,7 @@ OBJS=\
 DEP_UTIL = Makefile src/util/*.h src/util/auto_gen.c
 
 # TODO: this needs to be done better, because this is error prone
-DEP_COMMON = ${DEP_UTIL} src/*.h ${BUILD_DIR}/node.h
+DEP_COMMON = ${DEP_UTIL} src/*.h ${BUILD_DIR}/tast.h
 
 FILE_TO_TEST ?= examples/new_lang/structs.own
 ARGS_PROGRAM ?= compile ${FILE_TO_TEST} --emit-llvm
@@ -71,7 +70,7 @@ gdb: build
 
 build: ${BUILD_DIR}/main
 
-${BUILD_DIR}/symbol_table.c: ${BUILD_DIR}/node.h
+${BUILD_DIR}/symbol_table.c: ${BUILD_DIR}/tast.h
 
 test_quick: run
 	${CC_COMPILER} test.ll -o a.out && ./a.out ; echo $$?
@@ -80,7 +79,7 @@ test_quick: run
 ${BUILD_DIR}/auto_gen: src/util/auto_gen.c ${DEP_UTIL}
 	${CC_COMPILER} ${C_FLAGS_AUTO_GEN} -o ${BUILD_DIR}/auto_gen src/util/arena.c src/util/auto_gen.c
 
-${BUILD_DIR}/node.h: ${BUILD_DIR}/auto_gen
+${BUILD_DIR}/tast.h: ${BUILD_DIR}/auto_gen
 	./${BUILD_DIR}/auto_gen ${BUILD_DIR}
 
 # general
@@ -99,11 +98,8 @@ ${BUILD_DIR}/parser_utils.o: ${DEP_COMMON} src/parser_utils.c third_party/*
 ${BUILD_DIR}/globals.o: ${DEP_COMMON} src/globals.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/globals.o src/globals.c
 
-${BUILD_DIR}/nodes.o: ${DEP_COMMON} src/nodes.c third_party/*
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/nodes.o src/nodes.c
-
-${BUILD_DIR}/node_print.o: ${DEP_COMMON} src/node_print.c third_party/*
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/node_print.o src/node_print.c
+${BUILD_DIR}/tast_print.o: ${DEP_COMMON} src/tast_print.c third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/tast_print.o src/tast_print.c
 
 ${BUILD_DIR}/llvm_print.o: ${DEP_COMMON} src/llvm_print.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/llvm_print.o src/llvm_print.c
