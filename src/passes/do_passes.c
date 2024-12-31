@@ -1,5 +1,6 @@
 
 #include <util.h>
+#include <uast.h>
 #include <tast.h>
 #include <llvm.h>
 #include <tasts.h>
@@ -181,28 +182,28 @@ void do_passes(Str_view file_text, const Parameters* params) {
         fail();
     }
 
-    Tast_block* root = parse(&env, tokens);
+    Uast_block* untyped = parse(&env, tokens);
     if (error_count > 0) {
         fail();
     }
     arena_reset(&print_arena);
-    log_tree(LOG_DEBUG, tast_wrap_block(root));
+    log(LOG_DEBUG, "\n"TAST_FMT, uast_block_print(untyped));
 
     //log_tree(LOG_DEBUG, tast_wrap_block(*root));
-    root = analysis_1(&env, root);
-    log_tree(LOG_DEBUG, tast_wrap_block(root));
+    Tast_block* typed = analysis_1(&env, untyped);
+    log_tree(LOG_DEBUG, tast_wrap_block(typed));
     if (error_count > 0) {
         fail();
     }
     arena_reset(&print_arena);
 
-    root = change_operators(&env, root);
-    log_tree(LOG_DEBUG, tast_wrap_block(root));
+    typed = change_operators(&env, typed);
+    log_tree(LOG_DEBUG, tast_wrap_block(typed));
     arena_reset(&print_arena);
 
-    Llvm_block* llvm_root = add_load_and_store(&env, root);
+    Llvm_block* llvm_root = add_load_and_store(&env, typed);
     log(LOG_DEBUG, "\n"TAST_FMT, llvm_block_print(llvm_root));
-    assert(root);
+    assert(llvm_root);
 
     llvm_root = assign_llvm_ids(&env, llvm_root);
     log(LOG_DEBUG, "\n"TAST_FMT, llvm_block_print(llvm_root));

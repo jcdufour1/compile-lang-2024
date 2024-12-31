@@ -22,9 +22,9 @@ void tokenize_do_test(void);
 
 Tokens tokenize(Env* env, const Parameters params);
 
-Tast_block* parse(Env* env, const Tokens tokens);
+Uast_block* parse(Env* env, const Tokens tokens);
 
-Tast_block* analysis_1(Env* env, Tast_block* root);
+Tast_block* analysis_1(Env* env, Uast_block* root);
 
 Tast_block* change_operators(Env* env, Tast_block* root);
 

@@ -1,6 +1,10 @@
 #include <type_checking.h>
 #include <parser_utils.h>
+#include <uast_utils.h>
+#include <uast.h>
 #include <tast.h>
+#include <tast_utils.h>
+#include <uast_hand_written.h>
 
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
@@ -25,20 +29,19 @@ static int64_t bit_width_needed_signed(int64_t num) {
 
 static Tast_expr* auto_deref_to_0(Env* env, Tast_expr* expr) {
     while (tast_get_lang_type_expr(expr).pointer_depth > 0) {
-        Lang_type init_lang_type = {0};
-        expr = util_unary_new(env, expr, TOKEN_DEREF, init_lang_type);
+        try(try_set_unary_types_finish(env, &expr, expr, tast_get_pos_expr(expr), TOKEN_DEREF));
     }
     return expr;
 }
 
-const Tast_function_decl* get_parent_function_decl_const(const Env* env) {
-    Tast_def* def = NULL;
+const Uast_function_decl* get_parent_function_decl_const(const Env* env) {
+    Uast_def* def = NULL;
     try(env->name_parent_function.count > 0 && "no parent function here");
-    try(symbol_lookup(&def, env, env->name_parent_function));
+    try(usymbol_lookup(&def, env, env->name_parent_function));
     if (def->type != TAST_FUNCTION_DECL) {
-        unreachable(TAST_FMT, tast_def_print(def));
+        unreachable(TAST_FMT, uast_def_print(def));
     }
-    return tast_unwrap_function_decl(def);
+    return uast_unwrap_function_decl(def);
 }
 
 Lang_type get_parent_function_return_type(const Env* env) {
@@ -135,21 +138,21 @@ static void msg_invalid_function_arg_internal(
 #define msg_invalid_function_arg(env, argument, corres_param) \
     msg_invalid_function_arg_internal(__FILE__, __LINE__, env, argument, corres_param)
 
-static void msg_invalid_return_type_internal(const char* file, int line, const Env* env, const Tast_return* rtn) {
-    const Tast_function_decl* fun_decl = get_parent_function_decl_const(env);
-    if (rtn->is_auto_inserted) {
+static void msg_invalid_return_type_internal(const char* file, int line, const Env* env, Pos pos, const Tast_expr* child, bool is_auto_inserted) {
+    const Uast_function_decl* fun_decl = get_parent_function_decl_const(env);
+    if (is_auto_inserted) {
         msg_internal(
             file, line,
-            LOG_ERROR, EXPECT_FAIL_MISSING_RETURN, env->file_text, rtn->pos,
+            LOG_ERROR, EXPECT_FAIL_MISSING_RETURN, env->file_text, pos,
             "no return statement in function that returns `"LANG_TYPE_FMT"`\n",
             lang_type_print(fun_decl->return_type->lang_type)
         );
     } else {
         msg_internal(
             file, line,
-            LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, env->file_text, rtn->pos,
+            LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, env->file_text, pos,
             "returning `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
-            lang_type_print(tast_get_lang_type_expr(rtn->child)), 
+            lang_type_print(tast_get_lang_type_expr(child)), 
             lang_type_print(fun_decl->return_type->lang_type)
         );
     }
@@ -162,8 +165,8 @@ static void msg_invalid_return_type_internal(const char* file, int line, const E
     );
 }
 
-#define msg_invalid_return_type(env, rtn) \
-    msg_invalid_return_type_internal(__FILE__, __LINE__, env, rtn)
+#define msg_invalid_return_type(env, pos, child, is_auto_inserted) \
+    msg_invalid_return_type_internal(__FILE__, __LINE__, env, pos, child, is_auto_inserted)
 
 typedef enum {
     CHECK_ASSIGN_OK,
@@ -172,19 +175,19 @@ typedef enum {
 
 CHECK_ASSIGN_STATUS check_generic_assignment(
     const Env* env,
-    Tast_expr** new_src,
+    Tast** new_src,
     Lang_type dest_lang_type,
     Tast_expr* src
 ) {
     if (lang_type_is_equal(dest_lang_type, tast_get_lang_type_expr(src))) {
-        *new_src = src;
+        *new_src = tast_wrap_expr(src);
         return CHECK_ASSIGN_OK;
     }
 
     if (can_be_implicitly_converted(env, dest_lang_type, tast_get_lang_type_expr(src), false)) {
         if (src->type == TAST_LITERAL) {
-            *new_src = src;
-            *tast_get_lang_type_literal_ref(tast_unwrap_literal(*new_src)) = dest_lang_type;
+            *new_src = tast_wrap_expr(src);
+            *tast_get_lang_type_ref(*new_src) = dest_lang_type;
             return CHECK_ASSIGN_OK;
         } else if (src->type == TAST_SYMBOL_UNTYPED) {
             unreachable(TAST_FMT"\n", tast_expr_print(src));
@@ -197,45 +200,65 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
     unreachable("");
 }
 
-void try_set_literal_types(Tast_literal* literal, TOKEN_TYPE token_type) {
-    switch (token_type) {
-        case TOKEN_STRING_LITERAL:
-            tast_unwrap_string(literal)->lang_type = lang_type_new_from_cstr("u8", 1);
-            break;
-        case TOKEN_INT_LITERAL: {
+Tast_literal* try_set_literal_types(Uast_literal* literal) {
+    switch (literal->type) {
+        case UAST_STRING: {
+            Uast_string* old_string = uast_unwrap_string(literal);
+            return tast_wrap_string(tast_string_new(
+                old_string->pos,
+                old_string->data,
+                lang_type_new_from_cstr("u8", 1),
+                old_string->name
+            ));
+        }
+        case UAST_NUMBER: {
+            Uast_number* old_number = uast_unwrap_number(literal);
+            int64_t bit_width = bit_width_needed_signed(old_number->data);
             String lang_type_str = {0};
             string_extend_cstr(&a_main, &lang_type_str, "i");
-            int64_t bit_width = bit_width_needed_signed(tast_unwrap_number(literal)->data);
             string_extend_int64_t(&a_main, &lang_type_str, bit_width);
-            tast_unwrap_number(literal)->lang_type = lang_type_new_from_strv(string_to_strv(lang_type_str), 0);
-            break;
+            return tast_wrap_number(tast_number_new(
+                old_number->pos,
+                old_number->data,
+                lang_type_new_from_strv(string_to_strv(lang_type_str), 0)
+            ));
         }
-        case TOKEN_VOID:
-            break;
-        case TOKEN_CHAR_LITERAL:
-            tast_unwrap_char(literal)->lang_type = lang_type_new_from_cstr("u8", 0);
-            break;
+        case UAST_VOID: {
+            Uast_void* old_void = uast_unwrap_void(literal);
+            return tast_wrap_void(tast_void_new(
+                old_void->pos,
+                0
+            ));
+        }
+        case UAST_CHAR: {
+            Uast_char* old_char = uast_unwrap_char(literal);
+            return tast_wrap_char(tast_char_new(
+                old_char->pos,
+                old_char->data,
+                lang_type_new_from_cstr("u8", 0)
+            ));
+        }
         default:
             unreachable("");
     }
 }
 
-static void msg_undefined_symbol(Str_view file_text, const Tast* sym_call) {
+static void msg_undefined_symbol(Str_view file_text, const Uast* sym_call) {
     msg(
-        LOG_ERROR, EXPECT_FAIL_UNDEFINED_SYMBOL, file_text, tast_get_pos(sym_call),
-        "symbol `"STR_VIEW_FMT"` is not defined\n", str_view_print(get_tast_name(sym_call))
+        LOG_ERROR, EXPECT_FAIL_UNDEFINED_SYMBOL, file_text, uast_get_pos(sym_call),
+        "symbol `"STR_VIEW_FMT"` is not defined\n", str_view_print(get_uast_name(sym_call))
     );
 }
 
 // set symbol lang_type, and report error if symbol is undefined
-bool try_set_symbol_type(const Env* env, Tast_expr** new_tast, Tast_symbol_untyped* sym_untyped) {
-    Tast_def* sym_def;
-    if (!symbol_lookup(&sym_def, env, sym_untyped->name)) {
-        msg_undefined_symbol(env->file_text, tast_wrap_expr(tast_wrap_symbol_untyped(sym_untyped)));
+bool try_set_symbol_type(const Env* env, Tast_expr** new_tast, Uast_symbol_untyped* sym_untyped) {
+    Uast_def* sym_def;
+    if (!usymbol_lookup(&sym_def, env, sym_untyped->name)) {
+        msg_undefined_symbol(env->file_text, uast_wrap_expr(uast_wrap_symbol_untyped(sym_untyped)));
         return false;
     }
 
-    Lang_type lang_type = tast_get_lang_type_def(sym_def);
+    Lang_type lang_type = uast_get_lang_type_def(sym_def);
 
     Sym_typed_base new_base = {.lang_type = lang_type, .name = sym_untyped->name};
     if (lang_type_is_struct(env, lang_type)) {
@@ -296,7 +319,7 @@ static Tast_literal* precalulate_number(
     Pos pos
 ) {
     int64_t result_val = precalulate_number_internal(lhs->data, rhs->data, token_type);
-    return util_literal_new_from_int64_t(result_val, TOKEN_INT_LITERAL, pos);
+    return util_tast_literal_new_from_int64_t(result_val, TOKEN_INT_LITERAL, pos);
 }
 
 static Tast_literal* precalulate_char(
@@ -306,64 +329,43 @@ static Tast_literal* precalulate_char(
     Pos pos
 ) {
     int64_t result_val = precalulate_number_internal(lhs->data, rhs->data, token_type);
-    return util_literal_new_from_int64_t(result_val, TOKEN_CHAR_LITERAL, pos);
+    return util_tast_literal_new_from_int64_t(result_val, TOKEN_CHAR_LITERAL, pos);
 }
 
-// returns false if unsuccessful
-bool try_set_binary_types(Env* env, Tast_expr** new_tast, Tast_binary* operator) {
-    log_tree(LOG_DEBUG, (Tast*)operator->lhs);
-    Tast_expr* new_lhs;
-    if (!try_set_expr_types(env, &new_lhs, operator->lhs)) {
-        return false;
-    }
-    assert(new_lhs);
-    operator->lhs = new_lhs;
-
-    Tast_expr* new_rhs;
-    if (!try_set_expr_types(env, &new_rhs, operator->rhs)) {
-        return false;
-    }
-    operator->rhs = new_rhs;
-    assert(operator->lhs);
-    assert(operator->rhs);
-    log_tree(LOG_DEBUG, (Tast*)operator);
-
-    if (!lang_type_is_equal(tast_get_lang_type_expr(operator->lhs), tast_get_lang_type_expr(operator->rhs))) {
-        if (can_be_implicitly_converted(env, tast_get_lang_type_expr(operator->lhs), tast_get_lang_type_expr(operator->rhs), true)) {
-            if (operator->rhs->type == TAST_LITERAL) {
-                operator->lhs = auto_deref_to_0(env, operator->lhs);
-                operator->rhs = auto_deref_to_0(env, operator->rhs);
-                *tast_get_lang_type_literal_ref(tast_unwrap_literal(operator->rhs)) = tast_get_lang_type_expr(operator->lhs);
+bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_lhs, Tast_expr* new_rhs, Pos oper_pos, TOKEN_TYPE oper_token_type) {
+    if (!lang_type_is_equal(tast_get_lang_type_expr(new_lhs), tast_get_lang_type_expr(new_rhs))) {
+        if (can_be_implicitly_converted(env, tast_get_lang_type_expr(new_lhs), tast_get_lang_type_expr(new_rhs), true)) {
+            if (new_rhs->type == TAST_LITERAL) {
+                new_lhs = auto_deref_to_0(env, new_lhs);
+                new_rhs = auto_deref_to_0(env, new_rhs);
+                *tast_get_lang_type_literal_ref(tast_unwrap_literal(new_rhs)) = tast_get_lang_type_expr(new_lhs);
             } else {
-                Tast_expr* unary = util_unary_new(env, operator->rhs, TOKEN_UNSAFE_CAST, tast_get_lang_type_expr(operator->lhs));
-                operator->rhs = unary;
+                try(try_set_unary_types_finish(env, &new_rhs, new_rhs, tast_get_pos_expr(new_rhs), TOKEN_UNSAFE_CAST));
             }
-        } else if (can_be_implicitly_converted(env, tast_get_lang_type_expr(operator->rhs), tast_get_lang_type_expr(operator->lhs), true)) {
-            if (operator->lhs->type == TAST_LITERAL) {
-                operator->lhs = auto_deref_to_0(env, operator->lhs);
-                operator->rhs = auto_deref_to_0(env, operator->rhs);
-                *tast_get_lang_type_literal_ref(tast_unwrap_literal(operator->lhs)) = tast_get_lang_type_expr(operator->rhs);
+        } else if (can_be_implicitly_converted(env, tast_get_lang_type_expr(new_rhs), tast_get_lang_type_expr(new_lhs), true)) {
+            if (new_lhs->type == TAST_LITERAL) {
+                new_lhs = auto_deref_to_0(env, new_lhs);
+                new_rhs = auto_deref_to_0(env, new_rhs);
+                *tast_get_lang_type_literal_ref(tast_unwrap_literal(new_lhs)) = tast_get_lang_type_expr(new_rhs);
             } else {
-                Tast_expr* unary = util_unary_new(env, operator->lhs, TOKEN_UNSAFE_CAST, tast_get_lang_type_expr(operator->rhs));
-                operator->lhs = unary;
+                try(try_set_unary_types_finish(env, &new_lhs, new_lhs, tast_get_pos_expr(new_lhs), TOKEN_UNSAFE_CAST));
             }
         } else {
             msg(
-                LOG_ERROR, EXPECT_FAIL_BINARY_MISMATCHED_TYPES, env->file_text, operator->pos,
+                LOG_ERROR, EXPECT_FAIL_BINARY_MISMATCHED_TYPES, env->file_text, oper_pos,
                 "types `"LANG_TYPE_FMT"` and `"LANG_TYPE_FMT"` are not valid operands to binary expression\n",
-                lang_type_print(tast_get_lang_type_expr(operator->lhs)), lang_type_print(tast_get_lang_type_expr(operator->rhs))
+                lang_type_print(tast_get_lang_type_expr(new_lhs)), lang_type_print(tast_get_lang_type_expr(new_rhs))
             );
             return false;
         }
     }
             
-    assert(tast_get_lang_type_expr(operator->lhs).str.count > 0);
-    operator->lang_type = tast_get_lang_type_expr(operator->lhs);
+    assert(tast_get_lang_type_expr(new_lhs).str.count > 0);
 
     // precalcuate binary in some situations
-    if (operator->lhs->type == TAST_LITERAL && operator->rhs->type == TAST_LITERAL) {
-        Tast_literal* lhs_lit = tast_unwrap_literal(operator->lhs);
-        Tast_literal* rhs_lit = tast_unwrap_literal(operator->rhs);
+    if (new_lhs->type == TAST_LITERAL && new_rhs->type == TAST_LITERAL) {
+        Tast_literal* lhs_lit = tast_unwrap_literal(new_lhs);
+        Tast_literal* rhs_lit = tast_unwrap_literal(new_rhs);
 
         if (lhs_lit->type != rhs_lit->type) {
             // TODO: make expected failure test for this
@@ -377,16 +379,16 @@ bool try_set_binary_types(Env* env, Tast_expr** new_tast, Tast_binary* operator)
                 literal = precalulate_number(
                     tast_unwrap_number_const(lhs_lit),
                     tast_unwrap_number_const(rhs_lit),
-                    operator->token_type,
-                    operator->pos
+                    oper_token_type,
+                    oper_pos
                 );
                 break;
             case TAST_CHAR:
                 literal = precalulate_char(
                     tast_unwrap_char_const(lhs_lit),
                     tast_unwrap_char_const(rhs_lit),
-                    operator->token_type,
-                    operator->pos
+                    oper_token_type,
+                    oper_pos
                 );
                 break;
             default:
@@ -396,7 +398,13 @@ bool try_set_binary_types(Env* env, Tast_expr** new_tast, Tast_binary* operator)
         *new_tast = tast_wrap_literal(literal);
         log_tree(LOG_DEBUG, tast_wrap_expr(*new_tast));
     } else {
-        *new_tast = tast_wrap_operator(tast_wrap_binary(operator));
+        *new_tast = tast_wrap_operator(tast_wrap_binary(tast_binary_new(
+            oper_pos,
+            new_lhs,
+            new_rhs,
+            oper_token_type,
+            tast_get_lang_type_expr(new_lhs)
+        )));
     }
 
     assert(tast_get_lang_type_expr(*new_tast).str.count > 0);
@@ -404,39 +412,54 @@ bool try_set_binary_types(Env* env, Tast_expr** new_tast, Tast_binary* operator)
     return true;
 }
 
-bool try_set_unary_types(Env* env, Tast_expr** new_tast, Tast_unary* unary) {
-    Tast_expr* new_child;
-    if (!try_set_expr_types(env, &new_child, unary->child)) {
+// returns false if unsuccessful
+bool try_set_binary_types(Env* env, Tast_expr** new_tast, Uast_binary* operator) {
+    Tast_expr* new_lhs;
+    if (!try_set_expr_types(env, &new_lhs, operator->lhs)) {
         return false;
     }
-    unary->child = new_child;
+    assert(new_lhs);
 
-    switch (unary->token_type) {
+    Tast_expr* new_rhs;
+    if (!try_set_expr_types(env, &new_rhs, operator->rhs)) {
+        return false;
+    }
+    assert(new_lhs);
+    assert(new_rhs);
+
+    return try_set_binary_types_finish(env, new_tast, new_lhs, new_rhs, operator->pos, operator->token_type);
+}
+
+bool try_set_unary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_child, Pos unary_pos, TOKEN_TYPE unary_token_type) {
+    Lang_type new_lang_type = {0};
+
+    switch (unary_token_type) {
         case TOKEN_NOT:
-            unary->lang_type = tast_get_lang_type_expr(new_child);
+            new_lang_type = tast_get_lang_type_expr(new_child);
             break;
         case TOKEN_DEREF:
-            unary->lang_type = tast_get_lang_type_expr(new_child);
-            if (unary->lang_type.pointer_depth <= 0) {
+            new_lang_type = tast_get_lang_type_expr(new_child);
+            if (new_lang_type.pointer_depth <= 0) {
                 msg(
-                    LOG_ERROR, EXPECT_FAIL_DEREF_NON_POINTER, env->file_text, unary->pos,
+                    LOG_ERROR, EXPECT_FAIL_DEREF_NON_POINTER, env->file_text, unary_pos,
                     "derefencing a type that is not a pointer\n"
                 );
                 return false;
             }
-            unary->lang_type.pointer_depth--;
+            new_lang_type.pointer_depth--;
             break;
         case TOKEN_REFER:
-            unary->lang_type = tast_get_lang_type_expr(new_child);
-            unary->lang_type.pointer_depth++;
-            assert(unary->lang_type.pointer_depth > 0);
+            new_lang_type = tast_get_lang_type_expr(new_child);
+            new_lang_type.pointer_depth++;
+            assert(new_lang_type.pointer_depth > 0);
             break;
         case TOKEN_UNSAFE_CAST:
-            assert(unary->lang_type.str.count > 0);
-            if (unary->lang_type.pointer_depth > 0 && lang_type_is_number(tast_get_lang_type_expr(unary->child))) {
-            } else if (lang_type_is_number(unary->lang_type) && tast_get_lang_type_expr(unary->child).pointer_depth > 0) {
-            } else if (lang_type_is_number(unary->lang_type) && lang_type_is_number(tast_get_lang_type_expr(unary->child))) {
-            } else if (unary->lang_type.pointer_depth > 0 && tast_get_lang_type_expr(unary->child).pointer_depth > 0) {
+            todo(); // need to set new_lang_type
+            assert(tast_get_lang_type_expr(new_child).str.count > 0);
+            if (tast_get_lang_type_expr(new_child).pointer_depth > 0 && lang_type_is_number(tast_get_lang_type_expr(new_child))) {
+            } else if (lang_type_is_number(tast_get_lang_type_expr(new_child)) && tast_get_lang_type_expr(new_child).pointer_depth > 0) {
+            } else if (lang_type_is_number(tast_get_lang_type_expr(new_child)) && lang_type_is_number(tast_get_lang_type_expr(new_child))) {
+            } else if (tast_get_lang_type_expr(new_child).pointer_depth > 0 && tast_get_lang_type_expr(new_child).pointer_depth > 0) {
             } else {
                 todo();
             }
@@ -445,102 +468,119 @@ bool try_set_unary_types(Env* env, Tast_expr** new_tast, Tast_unary* unary) {
             unreachable("");
     }
 
-    *new_tast = tast_wrap_operator(tast_wrap_unary(unary));
+    *new_tast = tast_wrap_operator(tast_wrap_unary(tast_unary_new(
+        unary_pos,
+        new_child,
+        unary_token_type,
+        new_lang_type
+    )));
     return true;
 }
 
+bool try_set_unary_types(Env* env, Tast_expr** new_tast, Uast_unary* unary) {
+    Tast_expr* new_child;
+    if (!try_set_expr_types(env, &new_child, unary->child)) {
+        return false;
+    }
+
+    return try_set_unary_types_finish(env, new_tast, new_child, uast_get_pos_unary(unary), unary->token_type);
+}
+
 // returns false if unsuccessful
-bool try_set_operator_types(Env* env, Tast_expr** new_tast, Tast_operator* operator) {
+bool try_set_operator_types(Env* env, Tast_expr** new_tast, Uast_operator* operator) {
     if (operator->type == TAST_UNARY) {
-        return try_set_unary_types(env, new_tast, tast_unwrap_unary(operator));
+        return try_set_unary_types(env, new_tast, uast_unwrap_unary(operator));
     } else if (operator->type == TAST_BINARY) {
-        return try_set_binary_types(env, new_tast, tast_unwrap_binary(operator));
+        return try_set_binary_types(env, new_tast, uast_unwrap_binary(operator));
     } else {
         unreachable("");
     }
 }
 
-bool try_set_struct_literal_assignment_types(Env* env, Tast** new_tast, const Tast* lhs, Tast_struct_literal* struct_literal, Pos assign_pos) {
-    //log(LOG_DEBUG, "------------------------------\n");
-    //if (!is_corresponding_to_a_struct(env, lhs)) {
-    //    todo(); // non_struct assigned struct literal
+bool try_set_struct_literal_assignment_types(Env* env, Tast** new_tast, const Uast* lhs, Uast_struct_literal* struct_literal, Pos assign_pos) {
+    (void) env;
+    (void) new_tast;
+    (void) lhs;
+    (void) struct_literal;
+    (void) assign_pos;
+    todo();
+    //Tast_def* lhs_var_def_;
+    //try(usymbol_lookup(&lhs_var_def_, env, get_uast_name(lhs)));
+    //Tast_variable_def* lhs_var_def = tast_unwrap_variable_def(lhs_var_def_);
+    //Tast_def* struct_def_;
+    //try(usymbol_lookup(&struct_def_, env, lhs_var_def->lang_type.str));
+    //switch (struct_def_->type) {
+    //    case TAST_STRUCT_DEF:
+    //        break;
+    //    case TAST_RAW_UNION_DEF:
+    //        // TODO: improve this
+    //        msg(
+    //            LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION, env->file_text,
+    //            assign_pos, "struct literal cannot be assigned to raw_union\n"
+    //        );
+    //        return false;
+    //    default:
+    //        log(LOG_DEBUG, TAST_FMT"\n", tast_print(tast_wrap_def(struct_def_)));
+    //        unreachable("");
     //}
-    Tast_def* lhs_var_def_;
-    try(symbol_lookup(&lhs_var_def_, env, get_tast_name(lhs)));
-    Tast_variable_def* lhs_var_def = tast_unwrap_variable_def(lhs_var_def_);
-    Tast_def* struct_def_;
-    try(symbol_lookup(&struct_def_, env, lhs_var_def->lang_type.str));
-    switch (struct_def_->type) {
-        case TAST_STRUCT_DEF:
-            break;
-        case TAST_RAW_UNION_DEF:
-            // TODO: improve this
-            msg(
-                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION, env->file_text,
-                assign_pos, "struct literal cannot be assigned to raw_union\n"
-            );
-            return false;
-        default:
-            log(LOG_DEBUG, TAST_FMT"\n", tast_print(tast_wrap_def(struct_def_)));
-            unreachable("");
-    }
-    Tast_struct_def* struct_def = tast_unwrap_struct_def(struct_def_);
-    Lang_type new_lang_type = {.str = struct_def->base.name, .pointer_depth = 0};
-    struct_literal->lang_type = new_lang_type;
-    
-    Tast_vec new_literal_members = {0};
-    for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
-        //log(LOG_DEBUG, "%zu\n", idx);
-        Tast* memb_sym_def_ = vec_at(&struct_def->base.members, idx);
-        Tast_variable_def* memb_sym_def = tast_unwrap_variable_def(tast_unwrap_def(memb_sym_def_));
-        log_tree(LOG_DEBUG, tast_wrap_expr_const(tast_wrap_struct_literal_const(struct_literal)));
-        Tast_assignment* assign_memb_sym = tast_unwrap_assignment(vec_at(&struct_literal->members, idx));
-        Tast_symbol_untyped* memb_sym_piece_untyped = tast_unwrap_symbol_untyped(tast_unwrap_expr(assign_memb_sym->lhs));
-        Tast_expr* new_rhs = NULL;
-        if (!try_set_expr_types(env, &new_rhs, assign_memb_sym->rhs)) {
-            unreachable("");
-        }
-        Tast_literal* assign_memb_sym_rhs = tast_unwrap_literal(new_rhs);
+    //Tast_struct_def* struct_def = tast_unwrap_struct_def(struct_def_);
+    //Lang_type new_lang_type = {.str = struct_def->base.name, .pointer_depth = 0};
+    //struct_literal->lang_type = new_lang_type;
+    //
+    //Tast_vec new_literal_members = {0};
+    //for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
+    //    //log(LOG_DEBUG, "%zu\n", idx);
+    //    Tast* memb_sym_def_ = vec_at(&struct_def->base.members, idx);
+    //    Tast_variable_def* memb_sym_def = tast_unwrap_variable_def(tast_unwrap_def(memb_sym_def_));
+    //    log(LOG_DEBUG, STR_VIEW_FMT, uast_print(uast_wrap_expr_const(uast_wrap_struct_literal_const(struct_literal))));
+    //    Uast_assignment* assign_memb_sym = uast_unwrap_assignment(vec_at(&struct_literal->members, idx));
+    //    Uast_symbol_untyped* memb_sym_piece_untyped = uast_unwrap_symbol_untyped(uast_unwrap_expr(assign_memb_sym->lhs));
+    //    Tast_expr* new_rhs = NULL;
+    //    if (!try_set_expr_types(env, &new_rhs, assign_memb_sym->rhs)) {
+    //        unreachable("");
+    //    }
+    //    Tast_literal* assign_memb_sym_rhs = tast_unwrap_literal(new_rhs);
 
-        *tast_get_lang_type_literal_ref(assign_memb_sym_rhs) = memb_sym_def->lang_type;
-        if (!str_view_is_equal(memb_sym_def->name, memb_sym_piece_untyped->name)) {
-            msg(
-                LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL, env->file_text,
-                memb_sym_piece_untyped->pos,
-                "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
-                str_view_print(memb_sym_def->name), str_view_print(memb_sym_piece_untyped->name)
-            );
-            msg(
-                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, lhs_var_def->pos,
-                "variable `"STR_VIEW_FMT"` is defined as struct `"LANG_TYPE_FMT"`\n",
-                str_view_print(lhs_var_def->name), lang_type_print(lhs_var_def->lang_type)
-            );
-            msg(
-                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, memb_sym_def->pos,
-                "member symbol `"STR_VIEW_FMT"` of struct `"STR_VIEW_FMT"` defined here\n", 
-                str_view_print(memb_sym_def->name), lang_type_print(lhs_var_def->lang_type)
-            );
-            return false;
-        }
+    //    *tast_get_lang_type_literal_ref(assign_memb_sym_rhs) = memb_sym_def->lang_type;
+    //    if (!str_view_is_equal(memb_sym_def->name, memb_sym_piece_untyped->name)) {
+    //        msg(
+    //            LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL, env->file_text,
+    //            memb_sym_piece_untyped->pos,
+    //            "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
+    //            str_view_print(memb_sym_def->name), str_view_print(memb_sym_piece_untyped->name)
+    //        );
+    //        msg(
+    //            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, lhs_var_def->pos,
+    //            "variable `"STR_VIEW_FMT"` is defined as struct `"LANG_TYPE_FMT"`\n",
+    //            str_view_print(lhs_var_def->name), lang_type_print(lhs_var_def->lang_type)
+    //        );
+    //        msg(
+    //            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, memb_sym_def->pos,
+    //            "member symbol `"STR_VIEW_FMT"` of struct `"STR_VIEW_FMT"` defined here\n", 
+    //            str_view_print(memb_sym_def->name), lang_type_print(lhs_var_def->lang_type)
+    //        );
+    //        return false;
+    //    }
 
-        vec_append_safe(&a_main, &new_literal_members, tast_wrap_expr(tast_wrap_literal(assign_memb_sym_rhs)));
-    }
+    //    vec_append_safe(&a_main, &new_literal_members, tast_wrap_expr(tast_wrap_literal(assign_memb_sym_rhs)));
+    //}
 
-    struct_literal->members = new_literal_members;
+    //struct_literal->members = new_literal_members;
 
-    assert(struct_literal->lang_type.str.count > 0);
+    //assert(struct_literal->lang_type.str.count > 0);
 
-    *new_tast = tast_wrap_expr(tast_wrap_struct_literal(struct_literal));
-    return true;
+    //*new_tast = tast_wrap_expr(tast_wrap_struct_literal(struct_literal));
+    //return true;
 }
 
-bool try_set_expr_types(Env* env, Tast_expr** new_tast, Tast_expr* tast) {
-    switch (tast->type) {
-        case TAST_LITERAL:
-            *new_tast = tast;
+bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
+    switch (uast->type) {
+        case TAST_LITERAL: {
+            *new_tast = tast_wrap_literal(try_set_literal_types(uast_unwrap_literal(uast)));
             return true;
+        }
         case TAST_SYMBOL_UNTYPED:
-            if (!try_set_symbol_type(env, new_tast, tast_unwrap_symbol_untyped(tast))) {
+            if (!try_set_symbol_type(env, new_tast, uast_unwrap_symbol_untyped(uast))) {
                 return false;
             } else {
                 assert(*new_tast);
@@ -548,7 +588,7 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Tast_expr* tast) {
             return true;
         case TAST_MEMBER_ACCESS_UNTYPED: {
             Tast* new_tast_ = NULL;
-            if (!try_set_member_access_types(env, &new_tast_, tast_unwrap_member_access_untyped(tast))) {
+            if (!try_set_member_access_types(env, &new_tast_, uast_unwrap_member_access_untyped(uast))) {
                 return false;
             }
             *new_tast = tast_unwrap_expr(new_tast_);
@@ -561,7 +601,7 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Tast_expr* tast) {
             //return true;
         case TAST_INDEX_UNTYPED: {
             Tast* new_tast_ = NULL;
-            if (!try_set_index_untyped_types(env, &new_tast_, tast_unwrap_index_untyped(tast))) {
+            if (!try_set_index_untyped_types(env, &new_tast_, uast_unwrap_index_untyped(uast))) {
                 return false;
             }
             *new_tast = tast_unwrap_expr(new_tast_);
@@ -573,39 +613,48 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Tast_expr* tast) {
             //*new_tast = tast;
             //return true;
         case TAST_SYMBOL_TYPED:
-            *new_tast = tast;
-            return true;
+            todo();
         case TAST_OPERATOR:
-            if (!try_set_operator_types(env, new_tast, tast_unwrap_operator(tast))) {
+            if (!try_set_operator_types(env, new_tast, uast_unwrap_operator(uast))) {
                 return false;
             }
             assert(*new_tast);
             return true;
-        case TAST_FUNCTION_CALL:
-            return try_set_function_call_types(env, new_tast, tast_unwrap_function_call(tast));
+        case TAST_FUNCTION_CALL: {
+            Tast_function_call* new_call = NULL;
+            if (!try_set_function_call_types(env, &new_call, uast_unwrap_function_call(uast))) {
+                return false;
+            }
+            *new_tast = tast_wrap_function_call(new_call);
+            return true;
+        }
         case TAST_STRUCT_LITERAL:
             unreachable("cannot set struct literal type here");
     }
     unreachable("");
 }
 
-bool try_set_def_types(Env* env, Tast_def** new_tast, Tast_def* tast) {
-    switch (tast->type) {
+bool try_set_def_types(Env* env, Tast_def** new_tast, Uast_def* uast) {
+    switch (uast->type) {
         case TAST_VARIABLE_DEF: {
             Tast_variable_def* new_def = NULL;
-            if (!try_set_variable_def_types(env, &new_def, tast_unwrap_variable_def(tast))) {
+            if (!try_set_variable_def_types(env, &new_def, uast_unwrap_variable_def(uast))) {
                 return false;
             }
             *new_tast = tast_wrap_variable_def(new_def);
             return true;
         }
-        case TAST_FUNCTION_DECL:
-            // TODO: do this?
-            *new_tast = tast;
+        case TAST_FUNCTION_DECL: {
+            Tast_function_decl* new_decl = NULL;
+            if (!try_set_function_decl_types(env, &new_decl, uast_unwrap_function_decl(uast))) {
+                return false;
+            }
+            *new_tast = tast_wrap_function_decl(new_decl);
             return true;
+        }
         case TAST_FUNCTION_DEF: {
             Tast_function_def* new_def = NULL;
-            if (!try_set_function_def_types(env, &new_def, tast_unwrap_function_def(tast))) {
+            if (!try_set_function_def_types(env, &new_def, uast_unwrap_function_def(uast))) {
                 return false;
             }
             *new_tast = tast_wrap_function_def(new_def);
@@ -613,7 +662,7 @@ bool try_set_def_types(Env* env, Tast_def** new_tast, Tast_def* tast) {
         }
         case TAST_STRUCT_DEF: {
             Tast_struct_def* new_def = NULL;
-            if (!try_set_struct_def_types(env, &new_def, tast_unwrap_struct_def(tast))) {
+            if (!try_set_struct_def_types(env, &new_def, uast_unwrap_struct_def(uast))) {
                 return false;
             }
             *new_tast = tast_wrap_struct_def(new_def);
@@ -621,7 +670,7 @@ bool try_set_def_types(Env* env, Tast_def** new_tast, Tast_def* tast) {
         }
         case TAST_RAW_UNION_DEF: {
             Tast_raw_union_def* new_def = NULL;
-            if (!try_set_raw_union_def_types(env, &new_def, tast_unwrap_raw_union_def(tast))) {
+            if (!try_set_raw_union_def_types(env, &new_def, uast_unwrap_raw_union_def(uast))) {
                 return false;
             }
             *new_tast = tast_wrap_raw_union_def(new_def);
@@ -629,35 +678,44 @@ bool try_set_def_types(Env* env, Tast_def** new_tast, Tast_def* tast) {
         }
         case TAST_ENUM_DEF: {
             Tast_enum_def* new_def = NULL;
-            if (!try_set_enum_def_types(env, &new_def, tast_unwrap_enum_def(tast))) {
+            if (!try_set_enum_def_types(env, &new_def, uast_unwrap_enum_def(uast))) {
                 return false;
             }
             *new_tast = tast_wrap_enum_def(new_def);
             return true;
         }
-        case TAST_PRIMITIVE_DEF:
-            *new_tast = tast;
+        case TAST_PRIMITIVE_DEF: {
+            Tast_primitive_def* new_def = NULL;
+            if (!try_set_primitive_def_types(env, &new_def, uast_unwrap_primitive_def(uast))) {
+                return false;
+            }
+            *new_tast = tast_wrap_primitive_def(new_def);
             return true;
-        case TAST_LITERAL_DEF:
-            *new_tast = tast;
+        }
+        case TAST_LITERAL_DEF: {
+            Tast_literal_def* new_def = NULL;
+            if (!try_set_literal_def_types(env, &new_def, uast_unwrap_literal_def(uast))) {
+                return false;
+            }
+            *new_tast = tast_wrap_literal_def(new_def);
             return true;
+        }
     }
     unreachable("");
 }
 
-bool try_set_assignment_types(Env* env, Tast_assignment* assignment) {
+bool try_set_assignment_types(Env* env, Tast_assignment** new_assign, Uast_assignment* assignment) {
     Tast* new_lhs = NULL;
-    if (!try_set_tast_types(env, &new_lhs, assignment->lhs)) { 
+    if (!try_set_uast_types(env, &new_lhs, assignment->lhs)) { 
         return false;
     }
-    assignment->lhs = new_lhs;
 
     Tast_expr* new_rhs;
     if (assignment->rhs->type == TAST_STRUCT_LITERAL) {
         Tast* new_rhs_ = NULL;
         // TODO: do this in check_generic_assignment
         if (!try_set_struct_literal_assignment_types(
-            env, &new_rhs_, assignment->lhs, tast_unwrap_struct_literal(assignment->rhs), assignment->pos
+            env, &new_rhs_, assignment->lhs, uast_unwrap_struct_literal(assignment->rhs), assignment->pos
         )) {
             return false;
         }
@@ -667,26 +725,26 @@ bool try_set_assignment_types(Env* env, Tast_assignment* assignment) {
             return false;
         }
     }
-    assignment->rhs = new_rhs;
 
-    if (CHECK_ASSIGN_OK != check_generic_assignment(env, &assignment->rhs, tast_get_lang_type(assignment->lhs), new_rhs)) {
+    if (CHECK_ASSIGN_OK != check_generic_assignment(env, &new_lhs, tast_get_lang_type(new_lhs), new_rhs)) {
         msg(
             LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
             assignment->pos,
             "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
-            lang_type_print(tast_get_lang_type_expr(new_rhs)), lang_type_print(tast_get_lang_type(assignment->lhs))
+            lang_type_print(tast_get_lang_type_expr(new_rhs)), lang_type_print(tast_get_lang_type(new_lhs))
         );
         return false;
     }
 
+    *new_assign = tast_assignment_new(assignment->pos, new_lhs, new_rhs);
     return true;
 }
 
-bool try_set_function_call_types(Env* env, Tast_expr** new_tast, Tast_function_call* fun_call) {
+bool try_set_function_call_types(Env* env, Tast_function_call** new_call, Uast_function_call* fun_call) {
     bool status = true;
 
     Tast_def* fun_def;
-    if (!symbol_lookup(&fun_def, env, fun_call->name)) {
+    if (!usymbol_lookup(&fun_def, env, fun_call->name)) {
         msg(
             LOG_ERROR, EXPECT_FAIL_UNDEFINED_FUNCTION, env->file_text, fun_call->pos,
             "function `"STR_VIEW_FMT"` is not defined\n", str_view_print(fun_call->name)
@@ -701,8 +759,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_tast, Tast_function_c
         fun_decl = tast_unwrap_function_decl(fun_def);
     }
     Tast_lang_type* fun_rtn_type = fun_decl->return_type;
-    fun_call->lang_type = fun_rtn_type->lang_type;
-    assert(fun_call->lang_type.str.count > 0);
+    assert(fun_rtn_type->lang_type.str.count > 0);
     Tast_function_params* params = fun_decl->params;
     size_t params_idx = 0;
 
@@ -742,37 +799,34 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_tast, Tast_function_c
         goto error;
     }
 
+    Tast_expr_vec new_args = {0};
     for (size_t arg_idx = 0; arg_idx < fun_call->args.info.count; arg_idx++) {
         Tast_variable_def* corres_param = vec_at(&params->params, params_idx);
-        Tast_expr** argument = vec_at_ref(&fun_call->args, arg_idx);
+        Uast_expr* argument = vec_at(&fun_call->args, arg_idx);
         Tast_expr* new_arg = NULL;
 
         if (!corres_param->is_variadic) {
             params_idx++;
         }
 
-        Tast* new_arg_ = NULL;
-        if ((*argument)->type == TAST_STRUCT_LITERAL) {
+        //Tast* new_arg_ = NULL;
+        if (argument->type == TAST_STRUCT_LITERAL) {
             todo();
-            try(try_set_struct_literal_assignment_types(
-                env,
-                &new_arg_,
-                tast_wrap_def(tast_wrap_variable_def(corres_param)),
-                tast_unwrap_struct_literal(*argument),
-                fun_call->pos
-            ));
-            new_arg = tast_unwrap_expr(new_arg_);
+            //try(try_set_struct_literal_assignment_types(
+            //    env,
+            //    &new_arg_,
+            //    tast_wrap_def(tast_wrap_variable_def(corres_param)),
+            //    tast_unwrap_struct_literal(argument),
+            //    fun_call->pos
+            //));
+            //new_arg = tast_unwrap_expr(new_arg_);
         } else {
-            if (!try_set_expr_types(env, &new_arg, *argument)) {
+            if (!try_set_expr_types(env, &new_arg, argument)) {
                 status = false;
                 continue;
             }
         }
-        log_tree(LOG_DEBUG, tast_wrap_expr(*argument));
-        log_tree(LOG_DEBUG, tast_wrap_expr(new_arg));
         assert(new_arg);
-
-        *argument = new_arg;
 
         if (lang_type_is_equal(corres_param->lang_type, lang_type_new_from_cstr("any", 0))) {
             if (corres_param->is_variadic) {
@@ -781,28 +835,34 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_tast, Tast_function_c
             } else {
                 todo();
             }
+        } else {
+            Tast* new_new_arg = NULL;
+            if (CHECK_ASSIGN_OK != check_generic_assignment(env, &new_new_arg, corres_param->lang_type, new_arg)) {
+                msg_invalid_function_arg(env, new_arg, corres_param);
+                status = false;
+                goto error;
+            }
+            new_arg = tast_unwrap_expr(new_new_arg);
         }
 
-        Tast_expr* new_new_arg = NULL;
-        if (CHECK_ASSIGN_OK != check_generic_assignment(env, &new_new_arg, corres_param->lang_type, new_arg)) {
-            msg_invalid_function_arg(env, new_arg, corres_param);
-            status = false;
-            goto error;
-        }
-
-        *argument = new_new_arg;
-        log_tree(LOG_DEBUG, tast_wrap_expr(*argument));
+        vec_append(&a_main, &new_args, new_arg);
     }
 
+    *new_call = tast_function_call_new(
+        fun_call->pos,
+        new_args,
+        fun_call->name,
+        fun_rtn_type->lang_type
+    );
+
 error:
-    *new_tast = tast_wrap_function_call(fun_call);
     return status;
 }
 
 static void msg_invalid_member(
     const Env* env,
     Struct_def_base base,
-    const Tast_member_access_untyped* access
+    const Uast_member_access_untyped* access
 ) {
     msg(
         LOG_ERROR, EXPECT_FAIL_INVALID_STRUCT_MEMBER, env->file_text,
@@ -817,7 +877,7 @@ static void msg_invalid_member(
 static void msg_invalid_enum_member(
     const Env* env,
     Struct_def_base base,
-    const Tast_member_access_untyped* access
+    const Uast_member_access_untyped* access
 ) {
     msg(
         LOG_ERROR, EXPECT_FAIL_INVALID_ENUM_MEMBER, env->file_text,
@@ -832,7 +892,7 @@ static void msg_invalid_enum_member(
 bool try_set_member_access_types_finish_generic_struct(
     const Env* env,
     Tast** new_tast,
-    Tast_member_access_untyped* access,
+    Uast_member_access_untyped* access,
     Struct_def_base def_base,
     Tast_expr* new_callee
 ) {
@@ -859,7 +919,7 @@ bool try_set_member_access_types_finish(
     const Env* env,
     Tast** new_tast,
     Tast_def* lang_type_def,
-    Tast_member_access_untyped* access,
+    Uast_member_access_untyped* access,
     Tast_expr* new_callee
 ) {
     switch (lang_type_def->type) {
@@ -903,7 +963,7 @@ bool try_set_member_access_types_finish(
 bool try_set_member_access_types(
     Env* env,
     Tast** new_tast,
-    Tast_member_access_untyped* access
+    Uast_member_access_untyped* access
 ) {
     Tast_expr* new_callee = NULL;
     if (!try_set_expr_types(env, &new_callee, access->callee)) {
@@ -914,7 +974,7 @@ bool try_set_member_access_types(
         case TAST_SYMBOL_TYPED: {
             Tast_symbol_typed* sym = tast_unwrap_symbol_typed(new_callee);
             Tast_def* lang_type_def = NULL;
-            if (!symbol_lookup(&lang_type_def, env, tast_get_lang_type_symbol_typed(sym).str)) {
+            if (!usymbol_lookup(&lang_type_def, env, tast_get_lang_type_symbol_typed(sym).str)) {
                 todo();
             }
 
@@ -925,7 +985,7 @@ bool try_set_member_access_types(
             Tast_member_access_typed* sym = tast_unwrap_member_access_typed(new_callee);
 
             Tast_def* lang_type_def = NULL;
-            if (!symbol_lookup(&lang_type_def, env, sym->lang_type.str)) {
+            if (!usymbol_lookup(&lang_type_def, env, sym->lang_type.str)) {
                 todo();
             }
 
@@ -937,7 +997,7 @@ bool try_set_member_access_types(
     unreachable("");
 }
 
-bool try_set_index_untyped_types(Env* env, Tast** new_tast, Tast_index_untyped* index) {
+bool try_set_index_untyped_types(Env* env, Tast** new_tast, Uast_index_untyped* index) {
     Tast_expr* new_callee = NULL;
     Tast_expr* new_inner_index = NULL;
     if (!try_set_expr_types(env, &new_callee, index->callee)) {
@@ -964,63 +1024,91 @@ bool try_set_index_untyped_types(Env* env, Tast** new_tast, Tast_index_untyped* 
     return true;
 }
 
-static bool try_set_condition_types(Env* env, Tast_condition* if_cond) {
-    Tast_expr* new_if_cond_child;
-    if (!try_set_operator_types(env, &new_if_cond_child, if_cond->child)) {
+static bool try_set_condition_types(Env* env, Tast_condition** new_cond, Uast_condition* cond) {
+    Tast_expr* new_child_ = NULL;
+    if (!try_set_operator_types(env, &new_child_, cond->child)) {
         return false;
     }
 
-    switch (new_if_cond_child->type) {
+    Tast_operator* new_child = NULL;
+    switch (new_child_->type) {
         case TAST_OPERATOR:
-            if_cond->child = tast_unwrap_operator(new_if_cond_child);
+            new_child = tast_unwrap_operator(new_child_);
             break;
         case TAST_LITERAL:
-            if_cond->child = condition_get_default_child(new_if_cond_child);
+            new_child = tast_condition_get_default_child(new_child_);
             break;
         case TAST_FUNCTION_CALL:
-            if_cond->child = condition_get_default_child(new_if_cond_child);
+            new_child = tast_condition_get_default_child(new_child_);
             break;
         default:
             unreachable("");
     }
 
+    *new_cond = tast_condition_new(
+        cond->pos,
+        new_child
+    );
     return true;
 }
 
-bool try_set_struct_base_types(Env* env, Struct_def_base* base) {
+bool try_set_struct_base_types(Env* env, Struct_def_base* new_base, Ustruct_def_base* base) {
     bool success = true;
+    Tast_vec new_members = {0};
 
     if (base->members.info.count < 1) {
         todo();
     }
 
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        Tast* curr = vec_at(&base->members, idx);
+        Uast* curr = vec_at(&base->members, idx);
 
-        Tast* result_dummy = NULL;
-        if (!try_set_tast_types(env, &result_dummy, curr)) {
+        Tast* new_memb = NULL;
+        if (!try_set_uast_types(env, &new_memb, curr)) {
             success = false;
         }
+        vec_append(&a_main, &new_members, new_memb);
     }
 
+    *new_base = (Struct_def_base) {
+        .members = new_members,
+        .llvm_id = 0,
+        .name = base->name
+    };
     return success;
 }
 
-bool try_set_enum_def_types(Env* env, Tast_enum_def** new_tast, Tast_enum_def* tast) {
-    bool success = try_set_struct_base_types(env, &tast->base);
-    *new_tast = tast;
+bool try_set_enum_def_types(Env* env, Tast_enum_def** new_tast, Uast_enum_def* tast) {
+    Struct_def_base new_base = {0};
+    bool success = try_set_struct_base_types(env, &new_base, &tast->base);
+    *new_tast = tast_enum_def_new(tast->pos, new_base);
     return success;
 }
 
-bool try_set_raw_union_def_types(Env* env, Tast_raw_union_def** new_tast, Tast_raw_union_def* tast) {
-    bool success = try_set_struct_base_types(env, &tast->base);
-    *new_tast = tast;
+bool try_set_primitive_def_types(Env* env, Tast_primitive_def** new_tast, Uast_primitive_def* tast) {
+    (void) env;
+    *new_tast = tast_primitive_def_new(tast->pos, tast->lang_type);
+    return true;
+}
+
+bool try_set_literal_def_types(Env* env, Tast_literal_def** new_tast, Uast_literal_def* tast) {
+    (void) env;
+    (void) new_tast;
+    (void) tast;
+    unreachable("");
+}
+
+bool try_set_raw_union_def_types(Env* env, Tast_raw_union_def** new_tast, Uast_raw_union_def* uast) {
+    Struct_def_base new_base = {0};
+    bool success = try_set_struct_base_types(env, &new_base, &uast->base);
+    *new_tast = tast_raw_union_def_new(uast->pos, new_base);
     return success;
 }
 
-bool try_set_struct_def_types(Env* env, Tast_struct_def** new_tast, Tast_struct_def* tast) {
-    bool success = try_set_struct_base_types(env, &tast->base);
-    *new_tast = tast;
+bool try_set_struct_def_types(Env* env, Tast_struct_def** new_tast, Uast_struct_def* uast) {
+    Struct_def_base new_base = {0};
+    bool success = try_set_struct_base_types(env, &new_base, &uast->base);
+    *new_tast = tast_struct_def_new(uast->pos, new_base);
     return success;
 }
 
@@ -1043,233 +1131,249 @@ static void msg_undefined_type_internal(
 bool try_set_variable_def_types(
     const Env* env,
     Tast_variable_def** new_tast,
-    Tast_variable_def* tast
+    Uast_variable_def* uast
 ) {
     Tast_def* dummy = NULL;
-    if (!symbol_lookup(&dummy, env, tast->lang_type.str)) {
-        msg_undefined_type(env, tast->pos, tast->lang_type);
+    if (!usymbol_lookup(&dummy, env, uast->lang_type.str)) {
+        msg_undefined_type(env, uast->pos, uast->lang_type);
         return false;
     }
 
-    *new_tast = tast;
+    *new_tast = tast_variable_def_new(uast->pos, uast->lang_type, uast->is_variadic, uast->name);
+    return true;
+}
+
+bool try_set_function_decl_types(
+    Env* env,
+    Tast_function_decl** new_tast,
+    Uast_function_decl* decl
+) {
+    Tast_function_params* new_params = NULL;
+    if (!try_set_function_params_types(env, &new_params, decl->params)) {
+        return false;
+    }
+
+    Tast_lang_type* new_rtn_type = NULL;
+    if (!try_set_lang_type_types(env, &new_rtn_type, decl->return_type)) {
+        return false;
+    }
+
+    *new_tast = tast_function_decl_new(decl->pos, new_params, new_rtn_type, decl->name);
     return true;
 }
 
 bool try_set_function_def_types(
     Env* env,
     Tast_function_def** new_tast,
-    Tast_function_def* old_def
+    Uast_function_def* def
 ) {
     Str_view prev_par_fun = env->name_parent_function;
-    env->name_parent_function = old_def->decl->name;
+    env->name_parent_function = def->decl->name;
     assert(env->name_parent_function.count > 0);
     bool status = true;
 
     Tast_function_decl* new_decl = NULL;
-    if (!try_set_function_decl_types(env, &new_decl, old_def->decl)) {
+    if (!try_set_function_decl_types(env, &new_decl, def->decl)) {
         status = false;
     }
-    old_def->decl = new_decl;
 
     size_t prev_ancesters_count = env->ancesters.info.count;
     Tast_block* new_body = NULL;
-    if (!try_set_block_types(env, &new_body, old_def->body, true)) {
+    if (!try_set_block_types(env, &new_body, def->body, true)) {
         status = false;
     }
-    old_def->body = new_body;
     assert(prev_ancesters_count == env->ancesters.info.count);
 
-    *new_tast = old_def;
+    *new_tast = tast_function_def_new(def->pos, new_decl, new_body);
     env->name_parent_function = prev_par_fun;
-    return status;
-}
-
-bool try_set_function_decl_types(
-    Env* env,
-    Tast_function_decl** new_tast,
-    Tast_function_decl* old_def
-) {
-    bool status = true;
-
-    Tast_function_params* new_params = NULL;
-    if (!try_set_function_params_types(env, &new_params, old_def->params)) {
-        status = false;
-    }
-    old_def->params = new_params;
-
-    Tast_lang_type* new_rtn_type = NULL;
-    if (!try_set_lang_type_types(env, &new_rtn_type, old_def->return_type)) {
-        status = false;
-    }
-    old_def->return_type = new_rtn_type;
-
-    *new_tast = old_def;
     return status;
 }
 
 bool try_set_function_params_types(
     Env* env,
     Tast_function_params** new_tast,
-    Tast_function_params* old_params
+    Uast_function_params* params
 ) {
     bool status = true;
 
-    for (size_t idx = 0; idx < old_params->params.info.count; idx++) {
-        Tast_variable_def* old_def = vec_at(&old_params->params, idx);
+    Tast_variable_def_vec new_params = {0};
+    for (size_t idx = 0; idx < params->params.info.count; idx++) {
+        Uast_variable_def* def = vec_at(&params->params, idx);
 
         Tast_variable_def* new_def = NULL;
-        if (!try_set_variable_def_types(env, &new_def, old_def)) {
+        if (!try_set_variable_def_types(env, &new_def, def)) {
             status = false;
         }
 
-        *vec_at_ref(&old_params->params, idx) = new_def;
+        vec_append(&a_main, &new_params, new_def);
     }
 
-    *new_tast = old_params;
+    *new_tast = tast_function_params_new(params->pos, new_params);
     return status;
 }
 
 bool try_set_lang_type_types(
     Env* env,
     Tast_lang_type** new_tast,
-    Tast_lang_type* old_tast
+    Uast_lang_type* uast
 ) {
     Tast_def* dummy = NULL;
-    if (!symbol_lookup(&dummy, env, old_tast->lang_type.str)) {
-        msg_undefined_type(env, old_tast->pos, old_tast->lang_type);
+    if (!usymbol_lookup(&dummy, env, uast->lang_type.str)) {
+        msg_undefined_type(env, uast->pos, uast->lang_type);
         return false;
     }
 
-    *new_tast = old_tast;
+    *new_tast = tast_lang_type_new(uast->pos, uast->lang_type);
     return true;
 }
 
-bool try_set_return_types(Env* env, Tast_return** new_tast, Tast_return* rtn) {
+bool try_set_return_types(Env* env, Tast_return** new_tast, Uast_return* rtn) {
     *new_tast = NULL;
 
-    Tast_expr* new_rtn_child;
-    if (!try_set_expr_types(env, &new_rtn_child, rtn->child)) {
+    Tast_expr* new_child;
+    // TODO: do this in check_generic_assignment
+    // TODO: expected failure test for error in return statement expression
+    if (!try_set_expr_types(env, &new_child, rtn->child)) {
         todo();
         return false;
     }
-    rtn->child = new_rtn_child;
 
     Lang_type dest_lang_type = get_parent_function_return_type(env);
 
-    if (CHECK_ASSIGN_OK != check_generic_assignment(env, &new_rtn_child, dest_lang_type, rtn->child)) {
-        msg_invalid_return_type(env, rtn);
+    Tast* new_child_ = NULL;
+    if (CHECK_ASSIGN_OK != check_generic_assignment(env, &new_child_, dest_lang_type, new_child)) {
+        msg_invalid_return_type(env, rtn->pos, new_child, rtn->is_auto_inserted);
         return false;
     }
-    rtn->child = new_rtn_child;
+    new_child = tast_unwrap_expr(new_child_);
 
-    *new_tast = rtn;
+    *new_tast = tast_return_new(rtn->pos, new_child, rtn->is_auto_inserted);
     return true;
 }
 
-bool try_set_for_range_types(Env* env, Tast_for_range** new_tast, Tast_for_range* old_for) {
+bool try_set_for_lower_bound_types(Env* env, Tast_for_lower_bound** new_tast, Uast_for_lower_bound* uast) {
+    Tast_expr* new_lower = NULL;
+    if (!try_set_expr_types(env, &new_lower, uast->child)) {
+        return false;
+    }
+    *new_tast = tast_for_lower_bound_new(uast->pos, new_lower);
+    return true;
+}
+
+bool try_set_for_upper_bound_types(Env* env, Tast_for_upper_bound** new_tast, Uast_for_upper_bound* uast) {
+    Tast_expr* new_upper = NULL;
+    if (!try_set_expr_types(env, &new_upper, uast->child)) {
+        return false;
+    }
+    *new_tast = tast_for_upper_bound_new(uast->pos, new_upper);
+    return true;
+}
+
+bool try_set_for_range_types(Env* env, Tast_for_range** new_tast, Uast_for_range* uast) {
     bool status = true;
 
     Tast_variable_def* new_var_def = NULL;
-    if (!try_set_variable_def_types(env, &new_var_def, old_for->var_def)) {
+    if (!try_set_variable_def_types(env, &new_var_def, uast->var_def)) {
         status = false;
     }
-    old_for->var_def = new_var_def;
 
-    Tast_expr* new_lower = NULL;
-    if (!try_set_expr_types(env, &new_lower, old_for->lower_bound->child)) {
+    Tast_for_lower_bound* new_lower = NULL;
+    if (!try_set_for_lower_bound_types(env, &new_lower, uast->lower_bound)) {
         status = false;
     }
-    old_for->lower_bound->child = new_lower;
 
-    Tast_expr* new_upper = NULL;
-    if (!try_set_expr_types(env, &new_upper, old_for->upper_bound->child)) {
-        status = false;
-    }
-    old_for->upper_bound->child = new_upper;
-
-    Tast_block* new_body = NULL;
-    if (!try_set_block_types(env, &new_body, old_for->body, false)) {
-        status = false;
-    }
-    old_for->body = new_body;
-
-    *new_tast = old_for;
-    return status;
-}
-
-bool try_set_for_with_cond_types(Env* env, Tast_for_with_cond** new_tast, Tast_for_with_cond* old_for) {
-    bool status = true;
-
-    if (!try_set_condition_types(env, old_for->condition)) {
+    Tast_for_upper_bound* new_upper = NULL;
+    if (!try_set_for_upper_bound_types(env, &new_upper, uast->upper_bound)) {
         status = false;
     }
 
     Tast_block* new_body = NULL;
-    if (!try_set_block_types(env, &new_body, old_for->body, false)) {
+    if (!try_set_block_types(env, &new_body, uast->body, false)) {
         status = false;
     }
-    old_for->body = new_body;
 
-    *new_tast = old_for;
+    *new_tast = tast_for_range_new(uast->pos, new_var_def, new_lower, new_upper, new_body);
     return status;
 }
 
-bool try_set_if_types(Env* env, Tast_if** new_tast, Tast_if* old_if) {
+bool try_set_for_with_cond_types(Env* env, Tast_for_with_cond** new_tast, Uast_for_with_cond* uast) {
     bool status = true;
 
-    if (!try_set_condition_types(env, old_if->condition)) {
+    Tast_condition* new_cond = NULL;
+    if (!try_set_condition_types(env, &new_cond, uast->condition)) {
         status = false;
     }
 
     Tast_block* new_body = NULL;
-    if (!try_set_block_types(env, &new_body, old_if->body, false)) {
+    if (!try_set_block_types(env, &new_body, uast->body, false)) {
         status = false;
     }
-    old_if->body = new_body;
 
-    *new_tast = old_if;
+    *new_tast = tast_for_with_cond_new(uast->pos, new_cond, new_body);
     return status;
 }
 
-bool try_set_if_else_chain(Env* env, Tast_if_else_chain** new_tast, Tast_if_else_chain* old_if_else) {
+bool try_set_if_types(Env* env, Tast_if** new_tast, Uast_if* uast) {
     bool status = true;
 
-    for (size_t idx = 0; idx < old_if_else->tasts.info.count; idx++) {
-        Tast_if** old_if = vec_at_ref(&old_if_else->tasts, idx);
+    Tast_condition* new_cond = NULL;
+    if (!try_set_condition_types(env, &new_cond, uast->condition)) {
+        status = false;
+    }
+
+    Tast_block* new_body = NULL;
+    if (!try_set_block_types(env, &new_body, uast->body, false)) {
+        status = false;
+    }
+
+    *new_tast = tast_if_new(uast->pos, new_cond, new_body);
+    return status;
+}
+
+bool try_set_if_else_chain(Env* env, Tast_if_else_chain** new_tast, Uast_if_else_chain* if_else) {
+    bool status = true;
+
+    Tast_if_vec new_ifs = {0};
+    for (size_t idx = 0; idx < if_else->uasts.info.count; idx++) {
+        Uast_if* old_if = vec_at(&if_else->uasts, idx);
                 
         Tast_if* new_if = NULL;
-        if (!try_set_if_types(env, &new_if, *old_if)) {
+        if (!try_set_if_types(env, &new_if, old_if)) {
             status = false;
         }
-        *old_if = new_if;
+
+        vec_append(&a_main, &new_ifs, new_if);
     }
 
-    *new_tast = old_if_else;
+    *new_tast = tast_if_else_chain_new(if_else->pos, new_ifs);
     return status;
 }
 
 // TODO: consider if lang_type result should be removed
-bool try_set_block_types(Env* env, Tast_block** new_tast, Tast_block* block, bool is_directly_in_fun_def) {
-    Tast_vec* block_children = &block->children;
+bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def) {
+    bool status = true;
 
     vec_append(&a_main, &env->ancesters, &block->symbol_collection);
 
-    for (size_t idx = 0; idx < block_children->info.count; idx++) {
-        Tast** curr_tast = vec_at_ref(block_children, idx);
-        Tast* new_tast;
-        try_set_tast_types(env, &new_tast, *curr_tast);
-        *curr_tast = new_tast;
-        assert(*curr_tast);
+    Tast_vec new_tasts = {0};
+    for (size_t idx = 0; idx < block->children.info.count; idx++) {
+        Uast* curr_tast = vec_at(&block->children, idx);
+        Tast* new_tast = NULL;
+        if (!try_set_uast_types(env, &new_tast, curr_tast)) {
+            status = false;
+        }
 
+        assert(curr_tast);
+        vec_append(&a_main, &new_tasts, new_tast);
     }
 
     if (is_directly_in_fun_def && (
-        block_children->info.count < 1 ||
-        vec_at(block_children, block_children->info.count - 1)->type != TAST_RETURN
+        block->children.info.count < 1 ||
+        vec_at(&block->children, block->children.info.count - 1)->type != TAST_RETURN
     )) {
-        Tast_return* rtn_statement = tast_return_new(
+        Uast_return* rtn_statement = uast_return_new(
             block->pos_end,
-            tast_wrap_literal(util_literal_new_from_strv(
+            uast_wrap_literal(util_uast_literal_new_from_strv(
                 str_view_from_cstr(""), TOKEN_VOID, block->pos_end
             )),
             true
@@ -1279,27 +1383,26 @@ bool try_set_block_types(Env* env, Tast_block** new_tast, Tast_block* block, boo
             unreachable("");
         }
         Tast* new_rtn_statement = NULL;
-        if (!try_set_tast_types(env, &new_rtn_statement, tast_wrap_return(rtn_statement))) {
+        if (!try_set_uast_types(env, &new_rtn_statement, uast_wrap_return(rtn_statement))) {
             goto error;
         }
         assert(rtn_statement);
         assert(new_rtn_statement);
-        vec_append_safe(&a_main, block_children, new_rtn_statement);
+        vec_append(&a_main, &new_tasts, new_rtn_statement);
     }
 
 error:
     vec_rem_last(&env->ancesters);
-    *new_tast = block;
-    return true;
+    todo();
+    *new_tast = tast_block_new(block->pos, block->is_variadic, new_tasts, (Symbol_collection) {0}, block->pos_end);
+    return status;
 }
 
-bool try_set_tast_types(Env* env, Tast** new_tast, Tast* tast) {
-    *new_tast = tast;
-
-    switch (tast->type) {
+bool try_set_uast_types(Env* env, Tast** new_tast, Uast* uast) {
+    switch (uast->type) {
         case TAST_EXPR: {
             Tast_expr* new_tast_ = NULL;
-            if (!try_set_expr_types(env, &new_tast_, tast_unwrap_expr(tast))) {
+            if (!try_set_expr_types(env, &new_tast_, uast_unwrap_expr(uast))) {
                 return false;
             }
             *new_tast = tast_wrap_expr(new_tast_);
@@ -1307,7 +1410,7 @@ bool try_set_tast_types(Env* env, Tast** new_tast, Tast* tast) {
         }
         case TAST_DEF: {
             Tast_def* new_tast_ = NULL;
-            if (!try_set_def_types(env, &new_tast_, tast_unwrap_def(tast))) {
+            if (!try_set_def_types(env, &new_tast_, uast_unwrap_def(uast))) {
                 return false;
             }
             *new_tast = tast_wrap_def(new_tast_);
@@ -1317,17 +1420,23 @@ bool try_set_tast_types(Env* env, Tast** new_tast, Tast* tast) {
             unreachable("");
         case TAST_FOR_WITH_COND: {
             Tast_for_with_cond* new_tast_ = NULL;
-            if (!try_set_for_with_cond_types(env, &new_tast_, tast_unwrap_for_with_cond(tast))) {
+            if (!try_set_for_with_cond_types(env, &new_tast_, uast_unwrap_for_with_cond(uast))) {
                 return false;
             }
             *new_tast = tast_wrap_for_with_cond(new_tast_);
             return true;
         }
-        case TAST_ASSIGNMENT:
-            return try_set_assignment_types(env, tast_unwrap_assignment(tast));
+        case TAST_ASSIGNMENT: {
+            Tast_assignment* new_tast_ = NULL;
+            if (!try_set_assignment_types(env, &new_tast_, uast_unwrap_assignment(uast))) {
+                return false;
+            }
+            *new_tast = tast_wrap_assignment(new_tast_);
+            return true;
+        }
         case TAST_RETURN: {
             Tast_return* new_rtn = NULL;
-            if (!try_set_return_types(env, &new_rtn, tast_unwrap_return(tast))) {
+            if (!try_set_return_types(env, &new_rtn, uast_unwrap_return(uast))) {
                 return false;
             }
             *new_tast = tast_wrap_return(new_rtn);
@@ -1335,22 +1444,23 @@ bool try_set_tast_types(Env* env, Tast** new_tast, Tast* tast) {
         }
         case TAST_FOR_RANGE: {
             Tast_for_range* new_for = NULL;
-            if (!try_set_for_range_types(env, &new_for, tast_unwrap_for_range(tast))) {
+            if (!try_set_for_range_types(env, &new_for, uast_unwrap_for_range(uast))) {
                 return false;
             }
             *new_tast = tast_wrap_for_range(new_for);
             return true;
         }
         case TAST_BREAK:
-            *new_tast = tast;
+            *new_tast = tast_wrap_break(tast_break_new(uast_unwrap_break(uast)->pos));
             return true;
         case TAST_CONTINUE:
-            *new_tast = tast;
+            *new_tast = tast_wrap_continue(tast_continue_new(uast_unwrap_continue(uast)->pos));
+            return true;
             return true;
         case TAST_BLOCK: {
-            assert(tast_unwrap_block(tast)->pos_end.line > 0);
+            assert(uast_unwrap_block(uast)->pos_end.line > 0);
             Tast_block* new_for = NULL;
-            if (!try_set_block_types(env, &new_for, tast_unwrap_block(tast), false)) {
+            if (!try_set_block_types(env, &new_for, uast_unwrap_block(uast), false)) {
                 return false;
             }
             *new_tast = tast_wrap_block(new_for);
@@ -1358,13 +1468,13 @@ bool try_set_tast_types(Env* env, Tast** new_tast, Tast* tast) {
         }
         case TAST_IF_ELSE_CHAIN: {
             Tast_if_else_chain* new_for = NULL;
-            if (!try_set_if_else_chain(env, &new_for, tast_unwrap_if_else_chain(tast))) {
+            if (!try_set_if_else_chain(env, &new_for, uast_unwrap_if_else_chain(uast))) {
                 return false;
             }
             *new_tast = tast_wrap_if_else_chain(new_for);
             return true;
         }
         default:
-            unreachable(TAST_FMT, tast_print(tast));
+            unreachable(TAST_FMT, uast_print(uast));
     }
 }

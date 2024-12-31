@@ -37,7 +37,7 @@ static inline Tast* get_left_child(Tast* tast) {
         case TAST_FOR_UPPER_BOUND:
             return tast_wrap_expr(tast_unwrap_for_upper_bound(tast)->child);
         case TAST_BREAK:
-            return tast_unwrap_break(tast)->child;
+            unreachable("");
         case TAST_RETURN:
             return tast_wrap_expr(tast_unwrap_return(tast)->child);
         case TAST_ASSIGNMENT:

@@ -506,15 +506,11 @@ static Tast_type tast_gen_for_with_cond(void) {
 static Tast_type tast_gen_break(void) {
     Tast_type lang_break = {.name = tast_name_new("tast", "break", false)};
 
-    append_member(&lang_break.members, "Tast*", "child");
-
     return lang_break;
 }
 
 static Tast_type tast_gen_continue(void) {
     Tast_type lang_cont = {.name = tast_name_new("tast", "continue", false)};
-
-    append_member(&lang_cont.members, "Tast*", "child");
 
     return lang_cont;
 }

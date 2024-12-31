@@ -81,7 +81,7 @@ static inline Sym_typed_base tast_symbol_typed_get_base_const(const Tast_symbol_
     return *tast_symbol_typed_get_base_ref((Tast_symbol_typed*)sym);
 }
 
-static inline Str_view get_symbol_typed_name(const Tast_symbol_typed* sym) {
+static inline Str_view tast_get_symbol_typed_name(const Tast_symbol_typed* sym) {
     switch (sym->type) {
         case TAST_PRIMITIVE_SYM:
             return tast_unwrap_primitive_sym_const(sym)->base.name;
@@ -474,7 +474,7 @@ static inline Str_view get_expr_name(const Tast_expr* expr) {
         case TAST_SYMBOL_UNTYPED:
             return tast_unwrap_symbol_untyped_const(expr)->name;
         case TAST_SYMBOL_TYPED:
-            return get_symbol_typed_name(tast_unwrap_symbol_typed_const(expr));
+            return tast_get_symbol_typed_name(tast_unwrap_symbol_typed_const(expr));
         case TAST_FUNCTION_CALL:
             return tast_unwrap_function_call_const(expr)->name;
         case TAST_LITERAL:
@@ -518,7 +518,7 @@ static inline Str_view get_def_name(const Tast_def* def) {
 static inline Str_view get_tast_name_expr(const Tast_expr* expr) {
     switch (expr->type) {
         case TAST_SYMBOL_TYPED:
-            return get_symbol_typed_name(tast_unwrap_symbol_typed_const(expr));
+            return tast_get_symbol_typed_name(tast_unwrap_symbol_typed_const(expr));
         case TAST_FUNCTION_CALL:
             return tast_unwrap_function_call_const(expr)->name;
         default:

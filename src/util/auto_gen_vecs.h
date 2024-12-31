@@ -25,6 +25,7 @@ static void gen_vec_from_cstr(const char* vec_name, const char* item_name) {
 
 static void gen_all_vecs_internal(void) {
     gen_vec_from_cstr("Tast_vec", "Tast*");
+    gen_vec_from_cstr("Uast_vec", "Uast*");
 }
 
 static void gen_all_vecs(const char* file_path) {
@@ -40,6 +41,7 @@ static void gen_all_vecs(const char* file_path) {
 
     gen_gen("#include <util.h>\n");
     gen_gen("#include <vector.h>\n");
+    gen_gen("#include <uast_forward_decl.h>\n");
     gen_gen("#include <tast_forward_decl.h>\n");
     gen_gen("#include <llvm_forward_decl.h>\n");
 

@@ -67,15 +67,19 @@ static inline Llvm_reg llvm_register_sym_new_from_operator(Llvm_operator* operat
 Llvm_id get_matching_label_id(const Env* env, Str_view name);
 
 // lhs and rhs should not be used for other tasks after this
-Tast_assignment* util_assignment_new(Env* env, Tast* lhs, Tast_expr* rhs);
+Tast_assignment* util_assignment_new(Env* env, Uast* lhs, Uast_expr* rhs);
 
-Tast_literal* util_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, Pos pos);
+Tast_literal* util_tast_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, Pos pos);
 
-Tast_literal* util_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
+Uast_literal* util_uast_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, Pos pos);
 
-Tast_operator* util_binary_typed_new(Env* env, Tast_expr* lhs, Tast_expr* rhs, TOKEN_TYPE operation_type);
+Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
 
-Tast_expr* util_unary_new(Env* env, Tast_expr* child, TOKEN_TYPE operation_type, Lang_type init_lang_type);
+Tast_literal* util_tast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
+
+Tast_operator* util_binary_typed_new(Env* env, Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operation_type);
+
+//Tast_expr* util_unary_new(Env* env, Tast_expr* child, TOKEN_TYPE operation_type, Lang_type init_lang_type);
 
 Llvm_id get_matching_fun_param_load_id(const Tast* src);
 
@@ -140,20 +144,22 @@ static inline bool try_get_member_def(
 bool try_set_variable_def_types(
     const Env* env,
     Tast_variable_def** new_tast,
-    Tast_variable_def* tast
+    Uast_variable_def* uast
 );
 
-bool try_set_struct_def_types(Env* env, Tast_struct_def** new_tast, Tast_struct_def* tast);
+bool try_set_struct_def_types(Env* env, Tast_struct_def** new_tast, Uast_struct_def* tast);
 
-bool try_set_raw_union_def_types(Env* env, Tast_raw_union_def** new_tast, Tast_raw_union_def* tast);
+bool try_set_raw_union_def_types(Env* env, Tast_raw_union_def** new_tast, Uast_raw_union_def* tast);
 
-bool try_set_enum_def_types(Env* env, Tast_enum_def** new_tast, Tast_enum_def* tast);
+bool try_set_enum_def_types(Env* env, Tast_enum_def** new_tast, Uast_enum_def* tast);
 
 bool try_get_struct_def(const Env* env, Tast_struct_def** struct_def, Tast* tast);
 
 bool llvm_try_get_struct_def(const Env* env, Tast_struct_def** struct_def, Llvm* tast);
     
-Tast_operator* condition_get_default_child(Tast_expr* if_cond_child);
+Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child);
+
+Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child);
 
 static inline Tast_struct_def* get_struct_def(const Env* env, Tast* tast) {
     Tast_struct_def* struct_def;

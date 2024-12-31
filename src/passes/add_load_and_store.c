@@ -1,8 +1,10 @@
 #include <tast.h>
+#include <uast.h>
 #include <llvm.h>
 #include <tasts.h>
 #include <symbol_table.h>
 #include <parser_utils.h>
+#include <type_checking.h>
 #include <log_env.h>
 
 #include "passes.h"
@@ -167,17 +169,17 @@ static void if_for_add_cond_goto(
 }
 
 static Tast_assignment* for_loop_cond_var_assign_new(Env* env, Str_view sym_name, Pos pos) {
-    Tast_literal* literal = util_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, pos);
-    Tast_operator* operator = util_binary_typed_new(
-        env,
-        tast_wrap_symbol_untyped(tast_symbol_untyped_new(pos, sym_name)),
-        tast_wrap_literal(literal),
+    Uast_literal* literal = util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, pos);
+    Uast_operator* operator = uast_wrap_binary(uast_binary_new(
+        pos,
+        uast_wrap_symbol_untyped(uast_symbol_untyped_new(pos, sym_name)),
+        uast_wrap_literal(literal),
         TOKEN_SINGLE_PLUS
-    );
+    ));
     return util_assignment_new(
         env,
-        tast_wrap_expr(tast_wrap_symbol_untyped(tast_symbol_untyped_new(pos, sym_name))),
-        tast_wrap_operator(operator)
+        uast_wrap_expr(uast_wrap_symbol_untyped(uast_symbol_untyped_new(pos, sym_name))),
+        uast_wrap_operator(operator)
     );
 }
 
@@ -295,7 +297,7 @@ static Str_view load_ptr_symbol_typed(
     log(LOG_DEBUG, "entering thing\n");
 
     Tast_def* var_def_ = NULL;
-    try(symbol_lookup(&var_def_, env, get_symbol_typed_name(old_sym)));
+    try(symbol_lookup(&var_def_, env, tast_get_symbol_typed_name(old_sym)));
     Llvm_variable_def* var_def = tast_clone_variable_def(tast_unwrap_variable_def(var_def_));
     Llvm* alloca = NULL;
     if (!alloca_lookup(&alloca, env, var_def->name_corr_param)) {
@@ -915,11 +917,15 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
     Tast_expr* lhs_actual = old_for->lower_bound->child;
     Tast_expr* rhs_actual = old_for->upper_bound->child;
 
+    Uast_symbol_untyped* symbol_lhs_assign_;
     Tast_symbol_untyped* symbol_lhs_assign;
     Tast_variable_def* for_var_def;
     {
         for_var_def = old_for->var_def;
-        symbol_lhs_assign = tast_symbol_untyped_new(for_var_def->pos, for_var_def->name);
+        symbol_lhs_assign_ = uast_symbol_untyped_new(for_var_def->pos, for_var_def->name);
+        Tast_expr* new_expr = NULL;
+        try(try_set_symbol_type(env, &new_expr, symbol_lhs_assign_));
+        symbol_lhs_assign = tast_unwrap_symbol_untyped(new_expr);
     }
 
     //try(symbol_add(env, tast_wrap_variable_def(for_var_def)));
@@ -932,12 +938,18 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
         env, for_var_def->name, tast_get_pos_expr(lhs_actual)
     );
 
-    Tast_operator* operator = util_binary_typed_new(
-        env,
-        tast_wrap_symbol_untyped(tast_symbol_untyped_new(symbol_lhs_assign->pos, symbol_lhs_assign->name)),
-        rhs_actual,
-        TOKEN_LESS_THAN
-    );
+    Uast_symbol_untyped* lhs_untyped = uast_symbol_untyped_new(symbol_lhs_assign->pos, symbol_lhs_assign->name);
+    Tast_expr* lhs_typed_ = NULL;
+    try(try_set_symbol_type(env, &lhs_typed_, lhs_untyped));
+    Tast_expr* operator_ = NULL;
+    try(try_set_binary_types_finish(env, &operator_, lhs_typed_, rhs_actual, old_for->pos, TOKEN_LESS_THAN)); 
+    Tast_operator* operator = tast_unwrap_operator(operator_);
+    //Tast_operator* operator = util_binary_typed_new(
+    //    env,
+    //    lhs_untyped,
+    //    rhs_actual,
+    //    TOKEN_LESS_THAN
+    //);
 
     // initial assignment
 
@@ -953,7 +965,8 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
 
     //vec_append(&a_main, &new_branch_block->children, tast_wrap_variable_def(for_var_def));
 
-    Tast_assignment* new_var_assign = util_assignment_new(env, tast_wrap_expr(tast_wrap_symbol_untyped(symbol_lhs_assign)), lhs_actual);
+    Tast_assignment* new_var_assign = tast_assignment_new(symbol_lhs_assign->pos, tast_wrap_expr(tast_wrap_symbol_untyped(symbol_lhs_assign)), lhs_actual);
+    //Tast_assignment* new_var_assign = util_assignment_new(env, uast_wrap_expr(uast_wrap_symbol_untyped(symbol_lhs_assign)), lhs_actual);
 
     load_variable_def(env, new_branch_block, for_var_def);
     load_assignment(env, new_branch_block, new_var_assign);

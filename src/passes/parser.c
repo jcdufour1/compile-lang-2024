@@ -1,11 +1,13 @@
 #include <assert.h>
 #include <util.h>
-#include <tast.h>
+#include <uast.h>
 #include <tasts.h>
+#include <uast_utils.h>
 #include <token_view.h>
 #include <symbol_table.h>
 #include <parser_utils.h>
 #include <tokens.h>
+#include "passes.h"
 
 static Token prev_token = {0};
 
@@ -23,19 +25,19 @@ typedef enum {
     PARSE_EXPR_ERROR, // tokens need to be synced by callers
 } PARSE_EXPR_STATUS;
 
-static PARSE_STATUS extract_block(Env* env, Tast_block** block, Tk_view* tokens, bool is_top_level);
-static PARSE_EXPR_STATUS extract_statement(Env* env, Tast** child, Tk_view* tokens, bool defer_sym_add);
-static PARSE_EXPR_STATUS try_extract_expression(Env* env, Tast_expr** result, Tk_view* tokens, bool defer_sym_add);
+static PARSE_STATUS extract_block(Env* env, Uast_block** block, Tk_view* tokens, bool is_top_level);
+static PARSE_EXPR_STATUS extract_statement(Env* env, Uast** child, Tk_view* tokens, bool defer_sym_add);
+static PARSE_EXPR_STATUS try_extract_expression(Env* env, Uast_expr** result, Tk_view* tokens, bool defer_sym_add);
 static PARSE_STATUS try_extract_variable_declaration(
     Env* env, 
-    Tast_variable_def** result,
+    Uast_variable_def** result,
     Tk_view* tokens,
     bool require_let,
     bool defer_sym_add, // if true, symbol will not be added to symbol table 
                        // until the next extract_block call
     bool add_to_sym_table
 );
-static Tast_condition* extract_condition(Env* env, Tk_view* tokens);
+static Uast_condition* extract_condition(Env* env, Tk_view* tokens);
 
 static bool try_consume(Token* result, Tk_view* tokens, TOKEN_TYPE type) {
     Token temp;
@@ -107,17 +109,17 @@ static void msg_parser_expected_internal(Str_view file_text, const char* file, i
         msg_parser_expected_internal(file_text, __FILE__, __LINE__, got, sizeof((TOKEN_TYPE[]){__VA_ARGS__})/sizeof(TOKEN_TYPE), __VA_ARGS__); \
     } while(0)
 
-static PARSE_STATUS msg_redefinition_of_symbol(const Env* env, const Tast_def* new_sym_def) {
+static PARSE_STATUS msg_redefinition_of_symbol(const Env* env, const Uast_def* new_sym_def) {
     msg(
-        LOG_ERROR, EXPECT_FAIL_REDEFINITION_SYMBOL, env->file_text, tast_get_pos_def(new_sym_def),
-        "redefinition of symbol "STR_VIEW_FMT"\n", str_view_print(get_def_name(new_sym_def))
+        LOG_ERROR, EXPECT_FAIL_REDEFINITION_SYMBOL, env->file_text, uast_get_pos_def(new_sym_def),
+        "redefinition of symbol "STR_VIEW_FMT"\n", str_view_print(get_uast_name_def(new_sym_def))
     );
 
-    Tast_def* original_def;
-    try(symbol_lookup(&original_def, env, get_def_name(new_sym_def)));
+    Uast_def* original_def;
+    try(usymbol_lookup(&original_def, env, get_uast_name_def(new_sym_def)));
     msg(
-        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, tast_get_pos_def(original_def),
-        STR_VIEW_FMT " originally defined here\n", str_view_print(get_def_name(original_def))
+        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, uast_get_pos_def(original_def),
+        STR_VIEW_FMT " originally defined here\n", str_view_print(get_uast_name_def(original_def))
     );
 
     return PARSE_ERROR;
@@ -582,12 +584,12 @@ static PARSE_STATUS extract_lang_type_struct_require(Env* env, Lang_type* lang_t
     }
 }
 
-static PARSE_EXPR_STATUS extract_function_parameter(Env* env, Tast_variable_def** child, Tk_view* tokens, bool add_to_sym_table) {
+static PARSE_EXPR_STATUS extract_function_parameter(Env* env, Uast_variable_def** child, Tk_view* tokens, bool add_to_sym_table) {
     if (tokens->count < 1 || tk_view_front(*tokens).type == TOKEN_CLOSE_PAR) {
         return PARSE_EXPR_NONE;
     }
 
-    Tast_variable_def* param;
+    Uast_variable_def* param;
     if (PARSE_OK != try_extract_variable_declaration(env, &param, tokens, false, true, add_to_sym_table)) {
         return PARSE_EXPR_ERROR;
     }
@@ -600,15 +602,15 @@ static PARSE_EXPR_STATUS extract_function_parameter(Env* env, Tast_variable_def*
     return PARSE_EXPR_OK;
 }
 
-static PARSE_STATUS extract_function_parameters(Env* env, Tast_function_params** result, Tk_view* tokens) {
-    Tast_variable_def_vec params = {0};
+static PARSE_STATUS extract_function_parameters(Env* env, Uast_function_params** result, Tk_view* tokens) {
+    Uast_variable_def_vec params = {0};
 
-    Tast_variable_def* param;
+    Uast_variable_def* param;
     bool done = false;
     while (!done) {
         switch (extract_function_parameter(env, &param, tokens, true)) {
             case PARSE_EXPR_OK:
-                vec_append_safe(&a_main, &params, param);
+                vec_append(&a_main, &params, param);
                 break;
             case PARSE_EXPR_ERROR:
                 return PARSE_ERROR;
@@ -626,11 +628,11 @@ static PARSE_STATUS extract_function_parameters(Env* env, Tast_function_params**
         }
     }
 
-    *result = tast_function_params_new(tk_view_front(*tokens).pos, params);
+    *result = uast_function_params_new(tk_view_front(*tokens).pos, params);
     return PARSE_OK;
 }
 
-static void extract_return_type(Tast_lang_type** result, Tk_view* tokens) {
+static void extract_return_type(Uast_lang_type** result, Tk_view* tokens) {
     Lang_type lang_type = {0};
     bool is_comma = true;
     while (is_comma) {
@@ -643,12 +645,12 @@ static void extract_return_type(Tast_lang_type** result, Tk_view* tokens) {
     }
 
     assert(lang_type.str.count > 0);
-    *result = tast_lang_type_new(tk_view_front(*tokens).pos, lang_type);
+    *result = uast_lang_type_new(tk_view_front(*tokens).pos, lang_type);
 }
 
 static PARSE_STATUS extract_function_decl_common(
     Env* env,
-    Tast_function_decl** fun_decl,
+    Uast_function_decl** fun_decl,
     Tk_view* tokens
 ) {
     Token name_token = tk_view_consume(tokens);
@@ -657,41 +659,41 @@ static PARSE_STATUS extract_function_decl_common(
         return PARSE_ERROR;
     }
 
-    Tast_function_params* params = NULL;
+    Uast_function_params* params = NULL;
     if (PARSE_OK != extract_function_parameters(env, &params, tokens)) {
         return PARSE_ERROR;
     }
 
-    Tast_lang_type* return_type = NULL;
+    Uast_lang_type* return_type = NULL;
     extract_return_type(&return_type, tokens);
     assert(return_type->lang_type.str.count > 0);
 
-    *fun_decl = tast_function_decl_new(name_token.pos, params, return_type, name_token.text);
-    if (!symbol_add(env, tast_wrap_function_decl(*fun_decl))) {
-        return msg_redefinition_of_symbol(env, tast_wrap_function_decl(*fun_decl));
+    *fun_decl = uast_function_decl_new(name_token.pos, params, return_type, name_token.text);
+    if (!usymbol_add(env, uast_wrap_function_decl(*fun_decl))) {
+        return msg_redefinition_of_symbol(env, uast_wrap_function_decl(*fun_decl));
     }
 
     return PARSE_OK;
 }
 
-static PARSE_STATUS extract_function_def(Env* env, Tast_function_def** fun_def, Tk_view* tokens) {
+static PARSE_STATUS extract_function_def(Env* env, Uast_function_def** fun_def, Tk_view* tokens) {
     try(try_consume(NULL, tokens, TOKEN_FN));
 
-    Tast_function_decl* fun_decl = NULL;
+    Uast_function_decl* fun_decl = NULL;
     if (PARSE_OK != extract_function_decl_common(env, &fun_decl, tokens)) {
         return PARSE_ERROR;
     }
 
-    Tast_block* fun_body = NULL;
+    Uast_block* fun_body = NULL;
     if (PARSE_OK != extract_block(env, &fun_body, tokens, false)) {
         return PARSE_ERROR;
     }
 
-    *fun_def = tast_function_def_new(fun_decl->pos, fun_decl, fun_body);
+    *fun_def = uast_function_def_new(fun_decl->pos, fun_decl, fun_body);
     return PARSE_OK;
 }
 
-static PARSE_STATUS extract_struct_base_def(Env* env, Struct_def_base* base, Str_view name, Tk_view* tokens) {
+static PARSE_STATUS extract_struct_base_def(Env* env, Ustruct_def_base* base, Str_view name, Tk_view* tokens) {
     base->name = name;
 
     if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
@@ -702,7 +704,7 @@ static PARSE_STATUS extract_struct_base_def(Env* env, Struct_def_base* base, Str
 
     bool done = false;
     while (!done && tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_CLOSE_CURLY_BRACE) {
-        Tast_variable_def* member;
+        Uast_variable_def* member;
         switch (extract_function_parameter(env, &member, tokens, false)) {
             case PARSE_EXPR_ERROR:
                 return PARSE_ERROR;
@@ -713,7 +715,7 @@ static PARSE_STATUS extract_struct_base_def(Env* env, Struct_def_base* base, Str
         }
         try_consume(NULL, tokens, TOKEN_SEMICOLON);
         while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
-        vec_append_safe(&a_main, &base->members, tast_wrap_def(tast_wrap_variable_def(member)));
+        vec_append(&a_main, &base->members, uast_wrap_def(uast_wrap_variable_def(member)));
     }
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
@@ -724,7 +726,7 @@ static PARSE_STATUS extract_struct_base_def(Env* env, Struct_def_base* base, Str
     return PARSE_OK;
 }
 
-static PARSE_STATUS extract_struct_def(Env* env, Tast_struct_def** struct_def, Tk_view* tokens) {
+static PARSE_STATUS extract_struct_def(Env* env, Uast_struct_def** struct_def, Tk_view* tokens) {
     try(try_consume(NULL, tokens, TOKEN_STRUCT));
 
     Token name = {0};
@@ -733,50 +735,50 @@ static PARSE_STATUS extract_struct_def(Env* env, Tast_struct_def** struct_def, T
         return PARSE_ERROR;
     }
 
-    Struct_def_base base = {0};
+    Ustruct_def_base base = {0};
     if (PARSE_OK != extract_struct_base_def(env, &base, name.text, tokens)) {
         return PARSE_ERROR;
     }
 
-    *struct_def = tast_struct_def_new(name.pos, base);
-    if (!symbol_add(env, tast_wrap_struct_def(*struct_def))) {
-        msg_redefinition_of_symbol(env, tast_wrap_struct_def(*struct_def));
+    *struct_def = uast_struct_def_new(name.pos, base);
+    if (!usymbol_add(env, uast_wrap_struct_def(*struct_def))) {
+        msg_redefinition_of_symbol(env, uast_wrap_struct_def(*struct_def));
         return PARSE_ERROR;
     }
     return PARSE_OK;
 }
 
-static PARSE_STATUS extract_raw_union_def(Env* env, Tast_raw_union_def** raw_union_def, Tk_view* tokens) {
+static PARSE_STATUS extract_raw_union_def(Env* env, Uast_raw_union_def** raw_union_def, Tk_view* tokens) {
     try(try_consume(NULL, tokens, TOKEN_RAW_UNION));
 
     Token name = tk_view_consume(tokens);
 
-    Struct_def_base base = {0};
+    Ustruct_def_base base = {0};
     if (PARSE_OK != extract_struct_base_def(env, &base, name.text, tokens)) {
         return PARSE_ERROR;
     }
 
-    *raw_union_def = tast_raw_union_def_new(name.pos, base);
-    if (!symbol_add(env, tast_wrap_raw_union_def(*raw_union_def))) {
-        msg_redefinition_of_symbol(env, tast_wrap_raw_union_def(*raw_union_def));
+    *raw_union_def = uast_raw_union_def_new(name.pos, base);
+    if (!usymbol_add(env, uast_wrap_raw_union_def(*raw_union_def))) {
+        msg_redefinition_of_symbol(env, uast_wrap_raw_union_def(*raw_union_def));
         return PARSE_ERROR;
     }
     return PARSE_OK;
 }
 
-static PARSE_STATUS extract_enum_def(Env* env, Tast_enum_def** enum_def, Tk_view* tokens) {
+static PARSE_STATUS extract_enum_def(Env* env, Uast_enum_def** enum_def, Tk_view* tokens) {
     try(try_consume(NULL, tokens, TOKEN_ENUM));
 
     Token name = tk_view_consume(tokens);
 
-    Struct_def_base base = {0};
+    Ustruct_def_base base = {0};
     if (PARSE_OK != extract_struct_base_def(env, &base, name.text, tokens)) {
         return PARSE_ERROR;
     }
 
-    *enum_def = tast_enum_def_new(name.pos, base);
-    if (!symbol_add(env, tast_wrap_enum_def(*enum_def))) {
-        msg_redefinition_of_symbol(env, tast_wrap_enum_def(*enum_def));
+    *enum_def = uast_enum_def_new(name.pos, base);
+    if (!usymbol_add(env, uast_wrap_enum_def(*enum_def))) {
+        msg_redefinition_of_symbol(env, uast_wrap_enum_def(*enum_def));
         return PARSE_ERROR;
     }
     return PARSE_OK;
@@ -784,7 +786,7 @@ static PARSE_STATUS extract_enum_def(Env* env, Tast_enum_def** enum_def, Tk_view
 
 static PARSE_STATUS try_extract_variable_declaration(
     Env* env,
-    Tast_variable_def** result,
+    Uast_variable_def** result,
     Tk_view* tokens,
     bool require_let,
     bool defer_sym_add,
@@ -808,7 +810,7 @@ static PARSE_STATUS try_extract_variable_declaration(
         return PARSE_ERROR;
     }
 
-    Tast_variable_def* variable_def = tast_variable_def_new(
+    Uast_variable_def* variable_def = uast_variable_def_new(
         name_token.pos,
         lang_type,
         false,
@@ -816,15 +818,15 @@ static PARSE_STATUS try_extract_variable_declaration(
     );
 
     if (add_to_sym_table) {
-        Tast_def* dummy;
+        Uast_def* dummy;
         if (defer_sym_add) {
-            symbol_add_defer(env, tast_wrap_variable_def(variable_def));
+            usymbol_add_defer(env, uast_wrap_variable_def(variable_def));
         } else {
-            if (symbol_lookup(&dummy, env, variable_def->name)) {
-                msg_redefinition_of_symbol(env, tast_wrap_variable_def(variable_def));
+            if (usymbol_lookup(&dummy, env, variable_def->name)) {
+                msg_redefinition_of_symbol(env, uast_wrap_variable_def(variable_def));
                 return PARSE_ERROR;
             }
-            symbol_add(env, tast_wrap_variable_def(variable_def));
+            usymbol_add(env, uast_wrap_variable_def(variable_def));
         }
     }
 
@@ -834,16 +836,16 @@ static PARSE_STATUS try_extract_variable_declaration(
     return PARSE_OK;
 }
 
-static PARSE_STATUS extract_for_range_internal(Env* env, Tast_for_range* for_loop, Tk_view* tokens) {
+static PARSE_STATUS extract_for_range_internal(Env* env, Uast_for_range* for_loop, Tk_view* tokens) {
     try(try_consume(NULL, tokens, TOKEN_IN));
 
-    Tast_expr* lower_bound_child;
+    Uast_expr* lower_bound_child;
     if (PARSE_EXPR_OK != try_extract_expression(env, &lower_bound_child, tokens, true)) {
         msg_expected_expression(env->file_text, *tokens);
         return PARSE_ERROR;
     }
-    Tast_for_lower_bound* lower_bound = tast_for_lower_bound_new(
-        tast_get_pos_expr(lower_bound_child), lower_bound_child
+    Uast_for_lower_bound* lower_bound = uast_for_lower_bound_new(
+        uast_get_pos_expr(lower_bound_child), lower_bound_child
     );
     for_loop->lower_bound = lower_bound;
     if (!try_consume(NULL, tokens, TOKEN_DOUBLE_DOT)) {
@@ -851,13 +853,13 @@ static PARSE_STATUS extract_for_range_internal(Env* env, Tast_for_range* for_loo
         return PARSE_ERROR;
     }
 
-    Tast_expr* upper_bound_child;
+    Uast_expr* upper_bound_child;
     if (PARSE_EXPR_OK != try_extract_expression(env, &upper_bound_child, tokens, true)) {
         msg_expected_expression(env->file_text, *tokens);
         return PARSE_ERROR;
     }
-    Tast_for_upper_bound* upper_bound = tast_for_upper_bound_new(
-        tast_get_pos_expr(upper_bound_child), upper_bound_child
+    Uast_for_upper_bound* upper_bound = uast_for_upper_bound_new(
+        uast_get_pos_expr(upper_bound_child), upper_bound_child
     );
     upper_bound->child = upper_bound_child;
     for_loop->upper_bound = upper_bound;
@@ -865,16 +867,16 @@ static PARSE_STATUS extract_for_range_internal(Env* env, Tast_for_range* for_loo
     return extract_block(env, &for_loop->body, tokens, false);
 }
 
-static PARSE_STATUS extract_for_with_cond(Env* env, Tast_for_with_cond** for_new, Tast_for_range* for_range, Tk_view* tokens) {
-    *for_new = tast_for_with_cond_new(for_range->pos, NULL, NULL);
+static PARSE_STATUS extract_for_with_cond(Env* env, Uast_for_with_cond** for_new, Uast_for_range* for_range, Tk_view* tokens) {
+    *for_new = uast_for_with_cond_new(for_range->pos, NULL, NULL);
     (*for_new)->condition = extract_condition(env, tokens);
     return extract_block(env, &(*for_new)->body, tokens, false);
 }
 
-static PARSE_STATUS extract_for_loop(Env* env, Tast** for_loop_result, Tk_view* tokens) {
+static PARSE_STATUS extract_for_loop(Env* env, Uast** for_loop_result, Tk_view* tokens) {
     Token for_token;
     try(try_consume(&for_token, tokens, TOKEN_FOR));
-    Tast_for_range* for_loop = tast_for_range_new(for_token.pos, NULL, NULL, NULL, NULL);
+    Uast_for_range* for_loop = uast_for_range_new(for_token.pos, NULL, NULL, NULL, NULL);
     
     if (starts_with_variable_type_declaration(*tokens, false)) {
         if (PARSE_OK != try_extract_variable_declaration(env, &for_loop->var_def, tokens, false, true, true)) {
@@ -884,31 +886,31 @@ static PARSE_STATUS extract_for_loop(Env* env, Tast** for_loop_result, Tk_view* 
         if (PARSE_OK != extract_for_range_internal(env, for_loop, tokens)) {
             return PARSE_ERROR;
         }
-        *for_loop_result = tast_wrap_for_range(for_loop);
+        *for_loop_result = uast_wrap_for_range(for_loop);
     } else {
-        Tast_for_with_cond* for_with_cond;
+        Uast_for_with_cond* for_with_cond;
         if (PARSE_OK != extract_for_with_cond(env, &for_with_cond, for_loop, tokens)) {
             return PARSE_ERROR;
         }
-        *for_loop_result = tast_wrap_for_with_cond(for_with_cond);
+        *for_loop_result = uast_wrap_for_with_cond(for_with_cond);
     }
 
     return PARSE_OK;
 }
 
-static Tast_break* extract_break(Tk_view* tokens) {
+static Uast_break* extract_break(Tk_view* tokens) {
     Token break_token = tk_view_consume(tokens);
-    Tast_break* bk_statement = tast_break_new(break_token.pos, NULL);
+    Uast_break* bk_statement = uast_break_new(break_token.pos);
     return bk_statement;
 }
 
-static Tast_continue* extract_continue(Tk_view* tokens) {
+static Uast_continue* extract_continue(Tk_view* tokens) {
     Token continue_token = tk_view_consume(tokens);
-    Tast_continue* cont_statement = tast_continue_new(continue_token.pos, NULL);
+    Uast_continue* cont_statement = uast_continue_new(continue_token.pos);
     return cont_statement;
 }
 
-static PARSE_STATUS extract_function_decl(Env* env, Tast_function_decl** fun_decl, Tk_view* tokens) {
+static PARSE_STATUS extract_function_decl(Env* env, Uast_function_decl** fun_decl, Tk_view* tokens) {
     PARSE_STATUS status = PARSE_ERROR;
 
     try(try_consume(NULL, tokens, TOKEN_EXTERN));
@@ -947,31 +949,31 @@ error:
     return status;
 }
 
-static Tast_literal* extract_literal(Env* env, Tk_view* tokens, bool defer_sym_add) {
+static Uast_literal* extract_literal(Env* env, Tk_view* tokens, bool defer_sym_add) {
     (void) env;
     Token token = tk_view_consume(tokens);
     assert(token_is_literal(token));
 
-    Tast_literal* new_tast = util_literal_new_from_strv(token.text, token.type, token.pos);
+    Uast_literal* new_uast = util_uast_literal_new_from_strv(token.text, token.type, token.pos);
 
     if (defer_sym_add) {
         // TODO: is this nessessary?
-        //symbol_add_defer(env, tast_wrap_expr(tast_wrap_literal(new_tast)));
+        //usymbol_add_defer(env, uast_wrap_expr(uast_wrap_literal(new_uast)));
     } else {
         // TODO: is this nessessary?
-        //try(symbol_add(env, tast_wrap_expr(tast_wrap_literal(new_tast))));
+        //try(usymbol_add(env, uast_wrap_expr(uast_wrap_literal(new_uast))));
     }
-    return new_tast;
+    return new_uast;
 }
 
-static Tast_symbol_untyped* extract_symbol(Tk_view* tokens) {
+static Uast_symbol_untyped* extract_symbol(Tk_view* tokens) {
     Token token = tk_view_consume(tokens);
     assert(token.type == TOKEN_SYMBOL);
 
-    return tast_symbol_untyped_new(token.pos, token.text);
+    return uast_symbol_untyped_new(token.pos, token.text);
 }
 
-static PARSE_STATUS try_extract_function_call(Env* env, Tast_function_call** child, Tk_view* tokens) {
+static PARSE_STATUS try_extract_function_call(Env* env, Uast_function_call** child, Tk_view* tokens) {
     Token fun_name_token;
     if (!try_consume(&fun_name_token, tokens, TOKEN_SYMBOL)) {
         unreachable("this is not a function call");
@@ -982,13 +984,13 @@ static PARSE_STATUS try_extract_function_call(Env* env, Tast_function_call** chi
 
     bool is_first_time = true;
     bool prev_is_comma = false;
-    Tast_expr_vec args = {0};
+    Uast_expr_vec args = {0};
     while (is_first_time || prev_is_comma) {
-        Tast_expr* arg;
+        Uast_expr* arg;
         switch (try_extract_expression(env, &arg, tokens, true)) {
             case PARSE_EXPR_OK:
                 assert(arg);
-                vec_append_safe(&a_main, &args, arg);
+                vec_append(&a_main, &args, arg);
                 prev_is_comma = try_consume(NULL, tokens, TOKEN_COMMA);
                 break;
             case PARSE_EXPR_NONE:
@@ -1015,22 +1017,22 @@ static PARSE_STATUS try_extract_function_call(Env* env, Tast_function_call** chi
         return PARSE_ERROR;
     }
 
-    *child = tast_function_call_new(fun_name_token.pos, args, fun_name_token.text, (Lang_type) {0});
+    *child = uast_function_call_new(fun_name_token.pos, args, fun_name_token.text);
     return PARSE_OK;
 }
 
-static PARSE_STATUS extract_function_return(Env* env, Tast_return** rtn_statement, Tk_view* tokens) {
+static PARSE_STATUS extract_function_return(Env* env, Uast_return** rtn_statement, Tk_view* tokens) {
     try(try_consume(NULL, tokens, TOKEN_RETURN));
 
-    Tast_expr* expression;
+    Uast_expr* expression;
     switch (try_extract_expression(env, &expression, tokens, false)) {
         case PARSE_EXPR_OK:
-            *rtn_statement = tast_return_new(tast_get_pos_expr(expression), expression, false);
+            *rtn_statement = uast_return_new(uast_get_pos_expr(expression), expression, false);
             break;
         case PARSE_EXPR_NONE:
-            *rtn_statement = tast_return_new(
+            *rtn_statement = uast_return_new(
                 prev_token.pos,
-                tast_wrap_literal(util_literal_new_from_strv(
+                uast_wrap_literal(util_uast_literal_new_from_strv(
                     str_view_from_cstr(""),
                     TOKEN_VOID,
                     prev_token.pos
@@ -1046,23 +1048,23 @@ static PARSE_STATUS extract_function_return(Env* env, Tast_return** rtn_statemen
     return PARSE_OK;
 }
 
-static PARSE_STATUS extract_assignment(Env* env, Tast_assignment** assign, Tk_view* tokens, Tast* lhs) {
+static PARSE_STATUS extract_assignment(Env* env, Uast_assignment** assign, Tk_view* tokens, Uast* lhs) {
     Token equal_token = {0};
     *assign = NULL;
     if (lhs) {
         if (!try_consume(&equal_token, tokens, TOKEN_SINGLE_EQUAL)) {
             unreachable("extract_assignment should possibly never be called with no `=`, but it was");
         }
-        *assign = tast_assignment_new(equal_token.pos, lhs, NULL);
+        *assign = uast_assignment_new(equal_token.pos, lhs, NULL);
     } else {
-        Tast_expr* lhs_ = NULL;
+        Uast_expr* lhs_ = NULL;
         switch (try_extract_expression(env, &lhs_, tokens, false)) {
             case PARSE_EXPR_NONE:
                 unreachable("extract_assignment should possibly never be called without lhs expression present, but it was");
             case PARSE_EXPR_ERROR:
                 return PARSE_ERROR;
             case PARSE_OK:
-                lhs = tast_wrap_expr(lhs_);
+                lhs = uast_wrap_expr(lhs_);
                 break;
             default:
                 unreachable("");
@@ -1072,7 +1074,7 @@ static PARSE_STATUS extract_assignment(Env* env, Tast_assignment** assign, Tk_vi
             msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_SINGLE_EQUAL);
             return PARSE_ERROR;
         }
-        *assign = tast_assignment_new(equal_token.pos, lhs, NULL);
+        *assign = uast_assignment_new(equal_token.pos, lhs, NULL);
     }
 
     (*assign)->lhs = lhs;
@@ -1089,33 +1091,33 @@ static PARSE_STATUS extract_assignment(Env* env, Tast_assignment** assign, Tk_vi
     unreachable("");
 }
 
-static Tast_condition* extract_condition(Env* env, Tk_view* tokens) {
-    Tast_expr* cond_child;
+static Uast_condition* extract_condition(Env* env, Tk_view* tokens) {
+    Uast_expr* cond_child;
     if (PARSE_EXPR_OK != try_extract_expression(env, &cond_child, tokens, false)) {
         todo();
     }
 
-    Tast_operator* cond_oper = NULL;
+    Uast_operator* cond_oper = NULL;
 
     // TODO: make helper function that does this
     switch (cond_child->type) {
-        case TAST_OPERATOR:
-            cond_oper = tast_unwrap_operator(cond_child);
+        case UAST_OPERATOR:
+            cond_oper = uast_unwrap_operator(cond_child);
             break;
-        case TAST_LITERAL:
-            cond_oper = condition_get_default_child(cond_child);
+        case UAST_LITERAL:
+            cond_oper = uast_condition_get_default_child(cond_child);
             break;
-        case TAST_FUNCTION_CALL:
-            cond_oper = condition_get_default_child(cond_child);
+        case UAST_FUNCTION_CALL:
+            cond_oper = uast_condition_get_default_child(cond_child);
             break;
-        case TAST_SYMBOL_UNTYPED:
-            cond_oper = condition_get_default_child(cond_child);
+        case UAST_SYMBOL_UNTYPED:
+            cond_oper = uast_condition_get_default_child(cond_child);
             break;
         default:
-            unreachable(TAST_FMT"\n", tast_print(tast_wrap_expr(cond_child)));
+            unreachable(UAST_FMT"\n", uast_print(uast_wrap_expr(cond_child)));
     }
 
-    Tast_condition* condition = tast_condition_new(tast_get_pos_expr(cond_child), cond_oper);
+    Uast_condition* condition = uast_condition_new(uast_get_pos_expr(cond_child), cond_oper);
     return condition;
 }
 
@@ -1133,14 +1135,14 @@ static void if_else_chain_consume_newline(Tk_view* tokens) {
     }
 }
 
-static PARSE_STATUS extract_if_else_chain(Env* env, Tast_if_else_chain** if_else_chain, Tk_view* tokens) {
+static PARSE_STATUS extract_if_else_chain(Env* env, Uast_if_else_chain** if_else_chain, Tk_view* tokens) {
     Token if_start_token;
     try(try_consume(&if_start_token, tokens, TOKEN_IF));
 
-    Tast_if_vec ifs = {0};
+    Uast_if_vec ifs = {0};
 
-    Tast_if* if_statement = tast_if_new(if_start_token.pos, NULL, NULL);
-    if_statement = tast_if_new(if_start_token.pos, NULL, NULL);
+    Uast_if* if_statement = uast_if_new(if_start_token.pos, NULL, NULL);
+    if_statement = uast_if_new(if_start_token.pos, NULL, NULL);
     if_statement->condition = extract_condition(env, tokens);
     if (PARSE_OK != extract_block(env, &if_statement->body, tokens, false)) {
         return PARSE_ERROR;
@@ -1149,14 +1151,14 @@ static PARSE_STATUS extract_if_else_chain(Env* env, Tast_if_else_chain** if_else
 
     if_else_chain_consume_newline(tokens);
     while (try_consume(NULL, tokens, TOKEN_ELSE)) {
-        if_statement = tast_if_new(if_start_token.pos, NULL, NULL);
+        if_statement = uast_if_new(if_start_token.pos, NULL, NULL);
 
         if (try_consume(&if_start_token, tokens, TOKEN_IF)) {
             if_statement->condition = extract_condition(env, tokens);
         } else {
-            if_statement->condition = tast_condition_new(if_start_token.pos, NULL);
-            if_statement->condition->child = condition_get_default_child(tast_wrap_literal(
-                util_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, if_start_token.pos)
+            if_statement->condition = uast_condition_new(if_start_token.pos, NULL);
+            if_statement->condition->child = uast_condition_get_default_child(uast_wrap_literal(
+                util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, if_start_token.pos)
             ));
         }
 
@@ -1168,80 +1170,80 @@ static PARSE_STATUS extract_if_else_chain(Env* env, Tast_if_else_chain** if_else
         if_else_chain_consume_newline(tokens);
     }
 
-    *if_else_chain = tast_if_else_chain_new(if_start_token.pos, ifs);
+    *if_else_chain = uast_if_else_chain_new(if_start_token.pos, ifs);
     return PARSE_OK;
 }
 
-static PARSE_EXPR_STATUS extract_statement(Env* env, Tast** child, Tk_view* tokens, bool defer_sym_add) {
+static PARSE_EXPR_STATUS extract_statement(Env* env, Uast** child, Tk_view* tokens, bool defer_sym_add) {
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
-    Tast* lhs;
+    Uast* lhs;
     if (starts_with_struct_def(*tokens)) {
-        Tast_struct_def* struct_def;
+        Uast_struct_def* struct_def;
         if (PARSE_OK != extract_struct_def(env, &struct_def, tokens)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = tast_wrap_def(tast_wrap_struct_def(struct_def));
+        lhs = uast_wrap_def(uast_wrap_struct_def(struct_def));
     } else if (starts_with_raw_union_definition(*tokens)) {
-        Tast_raw_union_def* raw_union_def;
+        Uast_raw_union_def* raw_union_def;
         if (PARSE_OK != extract_raw_union_def(env, &raw_union_def, tokens)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = tast_wrap_def(tast_wrap_raw_union_def(raw_union_def));
+        lhs = uast_wrap_def(uast_wrap_raw_union_def(raw_union_def));
     } else if (starts_with_enum_definition(*tokens)) {
-        Tast_enum_def* enum_def;
+        Uast_enum_def* enum_def;
         if (PARSE_OK != extract_enum_def(env, &enum_def, tokens)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = tast_wrap_def(tast_wrap_enum_def(enum_def));
+        lhs = uast_wrap_def(uast_wrap_enum_def(enum_def));
     } else if (starts_with_function_decl(*tokens)) {
-        Tast_function_decl* fun_decl;
+        Uast_function_decl* fun_decl;
         if (PARSE_OK != extract_function_decl(env, &fun_decl, tokens)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = tast_wrap_def(tast_wrap_function_decl(fun_decl));
+        lhs = uast_wrap_def(uast_wrap_function_decl(fun_decl));
     } else if (starts_with_function_def(*tokens)) {
-        Tast_function_def* fun_def;
+        Uast_function_def* fun_def;
         if (PARSE_OK != extract_function_def(env, &fun_def, tokens)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = tast_wrap_def(tast_wrap_function_def(fun_def));
+        lhs = uast_wrap_def(uast_wrap_function_def(fun_def));
     } else if (starts_with_return(*tokens)) {
-        Tast_return* rtn_statement = NULL;
+        Uast_return* rtn_statement = NULL;
         if (PARSE_OK != extract_function_return(env, &rtn_statement, tokens)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = tast_wrap_return(rtn_statement);
+        lhs = uast_wrap_return(rtn_statement);
     } else if (starts_with_if(*tokens)) {
-        Tast_if_else_chain* if_else_chain = NULL;
+        Uast_if_else_chain* if_else_chain = NULL;
         if (PARSE_OK != extract_if_else_chain(env, &if_else_chain, tokens)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = tast_wrap_if_else_chain(if_else_chain);
+        lhs = uast_wrap_if_else_chain(if_else_chain);
     } else if (starts_with_for(*tokens)) {
-        Tast* for_loop;
+        Uast* for_loop;
         if (PARSE_OK != extract_for_loop(env, &for_loop, tokens)) {
             return PARSE_EXPR_ERROR;
         }
         lhs = for_loop;
     } else if (starts_with_break(*tokens)) {
-        lhs = tast_wrap_break(extract_break(tokens));
+        lhs = uast_wrap_break(extract_break(tokens));
     } else if (starts_with_continue(*tokens)) {
-        lhs = tast_wrap_continue(extract_continue(tokens));
+        lhs = uast_wrap_continue(extract_continue(tokens));
     } else if (starts_with_block(*tokens)) {
-        Tast_block* block_def = NULL;
+        Uast_block* block_def = NULL;
         if (PARSE_OK != extract_block(env, &block_def, tokens, false)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = tast_wrap_block(block_def);
+        lhs = uast_wrap_block(block_def);
     } else if (starts_with_variable_declaration(*tokens)) {
-        Tast_variable_def* var_def = NULL;
+        Uast_variable_def* var_def = NULL;
         if (PARSE_OK != try_extract_variable_declaration(env, &var_def, tokens, true, defer_sym_add, true)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = tast_wrap_def(tast_wrap_variable_def(var_def));
+        lhs = uast_wrap_def(uast_wrap_variable_def(var_def));
     } else {
-        Tast_expr* lhs_ = NULL;
+        Uast_expr* lhs_ = NULL;
         switch (try_extract_expression(env, &lhs_, tokens, false)) {
             case PARSE_EXPR_OK:
                 break;
@@ -1254,30 +1256,30 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Tast** child, Tk_view* toke
         }
 
         switch (lhs_->type) {
-            case TAST_FUNCTION_CALL:
+            case UAST_FUNCTION_CALL:
                 break;
-            case TAST_SYMBOL_UNTYPED:
+            case UAST_SYMBOL_UNTYPED:
                 break;
-            case TAST_MEMBER_ACCESS_UNTYPED:
+            case UAST_MEMBER_ACCESS_UNTYPED:
                 break;
-            case TAST_OPERATOR:
+            case UAST_OPERATOR:
                 break;
-            case TAST_INDEX_UNTYPED:
+            case UAST_INDEX_UNTYPED:
                 break;
             default:
-                unreachable(TAST_FMT"\n", tast_print(tast_wrap_expr(lhs_)));
+                unreachable(UAST_FMT"\n", uast_print(uast_wrap_expr(lhs_)));
         }
 
-        lhs = tast_wrap_expr(lhs_);
+        lhs = uast_wrap_expr(lhs_);
     }
 
     // do assignment if applicible
     if (tokens->count > 0 && tk_view_front(*tokens).type == TOKEN_SINGLE_EQUAL) {
-        Tast_assignment* assign;
+        Uast_assignment* assign;
         if (PARSE_OK != extract_assignment(env, &assign, tokens, lhs)) {
             return PARSE_EXPR_ERROR;
         }
-        *child = tast_wrap_assignment(assign);
+        *child = uast_wrap_assignment(assign);
     } else {
         *child = lhs;
     }
@@ -1299,21 +1301,21 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Tast** child, Tk_view* toke
     return PARSE_EXPR_OK;
 }
 
-static PARSE_STATUS extract_block(Env* env, Tast_block** block, Tk_view* tokens, bool is_top_level) {
+static PARSE_STATUS extract_block(Env* env, Uast_block** block, Tk_view* tokens, bool is_top_level) {
     PARSE_STATUS status = PARSE_OK;
     bool did_consume_close_brace = false;
 
-    *block = tast_block_new(
+    *block = uast_block_new(
         tk_view_front(*tokens).pos,
         false,
-        (Tast_vec) {0},
+        (Uast_vec) {0},
         (Symbol_collection) {0},
         (Pos) {0}
     );
     vec_append(&a_main, &env->ancesters, &(*block)->symbol_collection);
 
-    Tast_def* redefined_symbol;
-    if (!symbol_do_add_defered(&redefined_symbol, env)) {
+    Uast_def* redefined_symbol;
+    if (!usymbol_do_add_defered(&redefined_symbol, env)) {
         msg_redefinition_of_symbol(env, redefined_symbol);
         status = PARSE_ERROR;
     }
@@ -1350,7 +1352,7 @@ static PARSE_STATUS extract_block(Env* env, Tast_block** block, Tk_view* tokens,
             }
             break;
         }
-        Tast* child;
+        Uast* child;
         bool should_stop = false;
         switch (extract_statement(env, &child, tokens, false)) {
             case PARSE_EXPR_OK:
@@ -1373,7 +1375,7 @@ static PARSE_STATUS extract_block(Env* env, Tast_block** block, Tk_view* tokens,
             break;
         }
         try_consume(NULL, tokens, TOKEN_SEMICOLON);
-        vec_append_safe(&a_main, &(*block)->children, child);
+        vec_append(&a_main, &(*block)->children, child);
     }
 
 end:
@@ -1387,21 +1389,21 @@ end:
     return status;
 }
 
-static PARSE_STATUS extract_struct_literal(Env* env, Tast_struct_literal** struct_lit, Tk_view* tokens) {
+static PARSE_STATUS extract_struct_literal(Env* env, Uast_struct_literal** struct_lit, Tk_view* tokens) {
     Token start_token;
     if (!try_consume(&start_token, tokens, TOKEN_OPEN_CURLY_BRACE)) {
         msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_OPEN_CURLY_BRACE);
         return PARSE_ERROR;
     }
-    Tast_vec members = {0};
+    Uast_vec members = {0};
 
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
     while (try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
         bool delim_is_present = false;
-        Tast_assignment* assign;
+        Uast_assignment* assign;
         // TODO: check status of extract_assignment
         extract_assignment(env, &assign, tokens, NULL);
-        vec_append_safe(&a_main, &members, tast_wrap_assignment(assign));
+        vec_append(&a_main, &members, uast_wrap_assignment(assign));
         delim_is_present = try_consume(NULL, tokens, TOKEN_COMMA);
         while (try_consume(NULL, tokens, TOKEN_NEW_LINE)) {
             delim_is_present = true;
@@ -1422,26 +1424,26 @@ static PARSE_STATUS extract_struct_literal(Env* env, Tast_struct_literal** struc
         return PARSE_ERROR;
     }
 
-    *struct_lit = tast_struct_literal_new(start_token.pos, members, util_literal_name_new(), (Lang_type) {0});
+    *struct_lit = uast_struct_literal_new(start_token.pos, members, util_literal_name_new(), (Lang_type) {0});
     return PARSE_OK;
 }
 
-static Tast_unary* parser_util_unary_new(Token operator_token, Tast_expr* child, Lang_type init_lang_type) {
-    return tast_unary_new(operator_token.pos, child, operator_token.type, init_lang_type);
+static Uast_unary* parser_util_unary_new(Token operator_token, Uast_expr* child) {
+    return uast_unary_new(operator_token.pos, child, operator_token.type);
 }
 
-static Tast_binary* parser_binary_new(Tast_expr* lhs, Token operator_token, Tast_expr* rhs) {
-    return tast_binary_new(operator_token.pos, lhs, rhs, operator_token.type, (Lang_type) {0});
+static Uast_binary* parser_binary_new(Uast_expr* lhs, Token operator_token, Uast_expr* rhs) {
+    return uast_binary_new(operator_token.pos, lhs, rhs, operator_token.type);
 }
 
 static PARSE_EXPR_STATUS try_extract_expression_piece(
-    Env* env, Tast_expr** result, Tk_view* tokens, bool defer_sym_add
+    Env* env, Uast_expr** result, Tk_view* tokens, bool defer_sym_add
 ) {
     if (tokens->count < 1) {
         return PARSE_EXPR_NONE;
     }
 
-    Tast_function_call* fun_call;
+    Uast_function_call* fun_call;
     Token open_par_token = {0};
     if (try_consume(&open_par_token, tokens, TOKEN_OPEN_PAR)) {
         switch (try_extract_expression(env, result, tokens, defer_sym_add)) {
@@ -1500,26 +1502,26 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(
             default:
                 unreachable(TOKEN_TYPE_FMT"\n", token_type_print(operator_token.type));
         }
-        Tast_expr* inside_unary;
+        Uast_expr* inside_unary;
         if (PARSE_EXPR_OK != try_extract_expression_piece(env, &inside_unary, tokens, defer_sym_add)) {
             todo();
         }
-        *result = tast_wrap_operator(tast_wrap_unary(parser_util_unary_new(operator_token, inside_unary, unary_lang_type)));
+        *result = uast_wrap_operator(uast_wrap_unary(parser_util_unary_new(operator_token, inside_unary)));
     } else if (starts_with_function_call(*tokens)) {
         if (PARSE_OK != try_extract_function_call(env, &fun_call, tokens)) {
             return PARSE_EXPR_ERROR;
         }
-        *result = tast_wrap_function_call(fun_call);
+        *result = uast_wrap_function_call(fun_call);
     } else if (token_is_literal(tk_view_front(*tokens))) {
-        *result = tast_wrap_literal(extract_literal(env, tokens, defer_sym_add));
+        *result = uast_wrap_literal(extract_literal(env, tokens, defer_sym_add));
     } else if (tk_view_front(*tokens).type == TOKEN_SYMBOL) {
-        *result = tast_wrap_symbol_untyped(extract_symbol(tokens));
+        *result = uast_wrap_symbol_untyped(extract_symbol(tokens));
     } else if (starts_with_struct_literal(*tokens)) {
-        Tast_struct_literal* struct_lit;
+        Uast_struct_literal* struct_lit;
         if (PARSE_OK != extract_struct_literal(env, &struct_lit, tokens)) {
             return PARSE_EXPR_ERROR;
         }
-        *result = tast_wrap_struct_literal(struct_lit);
+        *result = uast_wrap_struct_literal(struct_lit);
     } else if (tk_view_front(*tokens).type == TOKEN_NONTYPE) {
         return PARSE_EXPR_NONE;
     } else {
@@ -1535,15 +1537,15 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(
                 unreachable("");
             }
 
-            Tast_member_access_untyped* access = tast_member_access_untyped_new(
+            Uast_member_access_untyped* access = uast_member_access_untyped_new(
                 bracket.pos,
                 member.text,
                 *result
             );
 
-            *result = tast_wrap_member_access_untyped(access);
+            *result = uast_wrap_member_access_untyped(access);
         } else if (try_consume(&bracket, tokens, TOKEN_OPEN_SQ_BRACKET)) {
-            Tast_expr* index = NULL;
+            Uast_expr* index = NULL;
             PARSE_EXPR_STATUS status = try_extract_expression(
                 env, &index, tokens, defer_sym_add
             );
@@ -1559,7 +1561,7 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(
                 return PARSE_EXPR_ERROR;
             }
 
-            *result = tast_wrap_index_untyped(tast_index_untyped_new(bracket.pos, index, *result));
+            *result = uast_wrap_index_untyped(uast_index_untyped_new(bracket.pos, index, *result));
         } else {
             break;
         }
@@ -1568,29 +1570,29 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(
     return PARSE_EXPR_OK;
 }
 
-static bool expr_is_unary(const Tast_expr* expr) {
-    if (expr->type != TAST_OPERATOR) {
+static bool expr_is_unary(const Uast_expr* expr) {
+    if (expr->type != UAST_OPERATOR) {
         return false;
     }
-    const Tast_operator* operator = tast_unwrap_operator_const(expr);
-    return operator->type == TAST_UNARY;
+    const Uast_operator* operator = uast_unwrap_operator_const(expr);
+    return operator->type == UAST_UNARY;
 }
 
-static bool expr_is_binary(const Tast_expr* expr) {
-    if (expr->type != TAST_OPERATOR) {
+static bool expr_is_binary(const Uast_expr* expr) {
+    if (expr->type != UAST_OPERATOR) {
         return false;
     }
-    const Tast_operator* operator = tast_unwrap_operator_const(expr);
-    return operator->type == TAST_BINARY;
+    const Uast_operator* operator = uast_unwrap_operator_const(expr);
+    return operator->type == UAST_BINARY;
 }
 
-static PARSE_EXPR_STATUS try_extract_expression(Env* env, Tast_expr** result, Tk_view* tokens, bool defer_sym_add) {
+static PARSE_EXPR_STATUS try_extract_expression(Env* env, Uast_expr** result, Tk_view* tokens, bool defer_sym_add) {
     assert(tokens->tokens);
     if (tokens->count < 1) {
         return PARSE_EXPR_NONE;
     }
 
-    Tast_expr* expression = NULL;
+    Uast_expr* expression = NULL;
     switch (try_extract_expression_piece(env, &expression, tokens, defer_sym_add)) {
         case PARSE_EXPR_OK:
             break;
@@ -1618,7 +1620,7 @@ static PARSE_EXPR_STATUS try_extract_expression(Env* env, Tast_expr** result, Tk
         } else if (!is_first_operator && expr_is_binary(expression) &&
             operator_precedence(prev_operator_token) < operator_precedence(operator_token)
         ) {
-            Tast_expr* rhs;
+            Uast_expr* rhs;
             switch (try_extract_expression_piece(env, &rhs, tokens, defer_sym_add)) {
                 case PARSE_EXPR_OK:
                     break;
@@ -1634,15 +1636,15 @@ static PARSE_EXPR_STATUS try_extract_expression(Env* env, Tast_expr** result, Tk
                     unreachable("");
 
             }
-            Tast_binary* operator = parser_binary_new(
-                tast_unwrap_binary(tast_unwrap_operator(expression))->rhs,
+            Uast_binary* operator = parser_binary_new(
+                uast_unwrap_binary(uast_unwrap_operator(expression))->rhs,
                 operator_token,
                 rhs
             );
-            tast_unwrap_binary(tast_unwrap_operator(expression))->rhs = tast_wrap_operator(tast_wrap_binary(operator));
+            uast_unwrap_binary(uast_unwrap_operator(expression))->rhs = uast_wrap_operator(uast_wrap_binary(operator));
         } else {
-            Tast_expr* lhs = expression;
-            Tast_expr* rhs;
+            Uast_expr* lhs = expression;
+            Uast_expr* rhs;
             switch (try_extract_expression_piece(env, &rhs, tokens, defer_sym_add)) {
                 case PARSE_EXPR_OK:
                     break;
@@ -1657,8 +1659,8 @@ static PARSE_EXPR_STATUS try_extract_expression(Env* env, Tast_expr** result, Tk
                 default:
                     unreachable("");
             }
-            Tast_binary* operator = parser_binary_new(lhs, operator_token, rhs);
-            expression = tast_wrap_operator(tast_wrap_binary(operator));
+            Uast_binary* operator = parser_binary_new(lhs, operator_token, rhs);
+            expression = uast_wrap_operator(uast_wrap_binary(operator));
         }
 
         is_first_operator = false;
@@ -1669,9 +1671,9 @@ static PARSE_EXPR_STATUS try_extract_expression(Env* env, Tast_expr** result, Tk
     return PARSE_EXPR_OK;
 }
 
-Tast_block* parse(Env* env, const Tokens tokens) {
+Uast_block* parse(Env* env, const Tokens tokens) {
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
-    Tast_block* root;
+    Uast_block* root;
     extract_block(env, &root, &token_view, true);
     log(LOG_DEBUG, "%zu\n", env->ancesters.info.count);
     assert(env->ancesters.info.count == 0);

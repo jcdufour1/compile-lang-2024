@@ -21,7 +21,7 @@ static Tast_operator* change_op_unary(Env* env, Tast_unary* unary) {
             Tast_binary* new_bin = tast_binary_new(
                 tast_get_pos_unary(unary),
                 new_lhs,
-                tast_wrap_literal(util_literal_new_from_int64_t(
+                tast_wrap_literal(util_tast_literal_new_from_int64_t(
                     0,
                     TOKEN_INT_LITERAL,
                     tast_get_pos_unary(unary)

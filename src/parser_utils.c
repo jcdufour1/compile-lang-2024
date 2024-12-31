@@ -1,5 +1,6 @@
 #include <str_view.h>
 #include <string_vec.h>
+#include <uast.h>
 #include <tast.h>
 #include <tasts.h>
 #include <symbol_table.h>
@@ -193,38 +194,44 @@ Llvm_id get_matching_label_id(const Env* env, Str_view name) {
     return label->llvm_id;
 }
 
-Tast_assignment* util_assignment_new(Env* env, Tast* lhs, Tast_expr* rhs) {
-    Tast_assignment* assignment = tast_assignment_new(tast_get_pos(lhs), lhs, rhs);
+Tast_assignment* util_assignment_new(Env* env, Uast* lhs, Uast_expr* rhs) {
+    Uast_assignment* assignment = uast_assignment_new(uast_get_pos(lhs), lhs, rhs);
 
-    try_set_assignment_types(env, assignment);
-    return assignment;
+    Tast_assignment* new_assign = NULL;
+    try_set_assignment_types(env, &new_assign, assignment);
+    return new_assign;
 }
 
 // TODO: try to deduplicate 2 below functions
-Tast_literal* util_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, Pos pos) {
-    Tast_literal* new_literal = NULL;
+Tast_literal* util_tast_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, Pos pos) {
+    return try_set_literal_types(util_uast_literal_new_from_strv(value, token_type, pos));
+}
+
+// TODO: try to deduplicate 2 below functions
+Uast_literal* util_uast_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, Pos pos) {
+    Uast_literal* new_literal = NULL;
     switch (token_type) {
         case TOKEN_INT_LITERAL: {
-            Tast_number* literal = tast_number_new(pos, str_view_to_int64_t(value), (Lang_type) {0});
-            new_literal = tast_wrap_number(literal);
+            Uast_number* literal = uast_number_new(pos, str_view_to_int64_t(value));
+            new_literal = uast_wrap_number(literal);
             break;
         }
         case TOKEN_STRING_LITERAL: {
-            Tast_string* literal = tast_string_new(pos, value, (Lang_type) {0}, util_literal_name_new());
-            new_literal = tast_wrap_string(literal);
+            Uast_string* literal = uast_string_new(pos, value, util_literal_name_new());
+            new_literal = uast_wrap_string(literal);
             break;
         }
         case TOKEN_VOID: {
-            Tast_void* literal = tast_void_new(pos, 0);
-            new_literal = tast_wrap_void(literal);
+            Uast_void* literal = uast_void_new(pos, 0);
+            new_literal = uast_wrap_void(literal);
             break;
         }
         case TOKEN_CHAR_LITERAL: {
-            Tast_char* literal = tast_char_new(pos, str_view_front(value), (Lang_type) {0});
+            Uast_char* literal = uast_char_new(pos, str_view_front(value));
             if (value.count > 1) {
                 todo();
             }
-            new_literal = tast_wrap_char(literal);
+            new_literal = uast_wrap_char(literal);
             break;
         }
         default:
@@ -233,31 +240,30 @@ Tast_literal* util_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, 
 
     assert(new_literal);
 
-    try_set_literal_types(new_literal, token_type);
     return new_literal;
 }
 
-Tast_literal* util_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {
-    Tast_literal* new_literal = NULL;
+Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {
+    Uast_literal* new_literal = NULL;
 
     switch (token_type) {
         case TOKEN_INT_LITERAL: {
-            Tast_number* literal = tast_number_new(pos, value, (Lang_type) {0});
+            Uast_number* literal = uast_number_new(pos, value);
             literal->data = value;
-            new_literal = tast_wrap_number(literal);
+            new_literal = uast_wrap_number(literal);
             break;
         }
         case TOKEN_STRING_LITERAL:
             unreachable("");
         case TOKEN_VOID: {
-            Tast_void* literal = tast_void_new(pos, 0);
-            new_literal = tast_wrap_void(literal);
+            Uast_void* literal = uast_void_new(pos, 0);
+            new_literal = uast_wrap_void(literal);
             break;
         }
         case TOKEN_CHAR_LITERAL: {
             assert(value < INT8_MAX);
-            Tast_char* literal = tast_char_new(pos, value, (Lang_type) {0});
-            new_literal = tast_wrap_char(literal);
+            Uast_char* literal = uast_char_new(pos, value);
+            new_literal = uast_wrap_char(literal);
             break;
         }
         default:
@@ -266,33 +272,31 @@ Tast_literal* util_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type
 
     assert(new_literal);
 
-    try_set_literal_types(new_literal, token_type);
+    try_set_literal_types(new_literal);
     return new_literal;
 }
 
-// TODO: make separate Tast_unary_typed and Tast_unary_untyped
-Tast_expr* util_unary_new(Env* env, Tast_expr* child, TOKEN_TYPE operator_type, Lang_type init_lang_type) {
-    Tast_unary* unary = tast_unary_new(
-        tast_get_pos_expr(child),
-        child,
-        operator_type,
-        init_lang_type
-    );
-
-    Tast_expr* new_tast;
-    //symbol_log(LOG_DEBUG, env);
-    try(try_set_unary_types(env, &new_tast, unary));
-    return new_tast;
+Tast_literal* util_tast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {
+    return try_set_literal_types(util_uast_literal_new_from_int64_t(value, token_type, pos));
 }
 
-Tast_operator* util_binary_typed_new(Env* env, Tast_expr* lhs, Tast_expr* rhs, TOKEN_TYPE operator_type) {
-    Tast_binary* binary = tast_binary_new(
-        tast_get_pos_expr(lhs),
-        lhs,
-        rhs,
-        operator_type,
-        (Lang_type) {0}
-    );
+// TODO: make separate Tast_unary_typed and Tast_unary_untyped
+//Tast_expr* util_unary_new(Env* env, Tast_expr* child, TOKEN_TYPE operator_type, Lang_type init_lang_type) {
+//    Tast_unary* unary = tast_unary_new(
+//        tast_get_pos_expr(child),
+//        child,
+//        operator_type,
+//        init_lang_type
+//    );
+//
+//    Tast_expr* new_tast;
+//    //symbol_log(LOG_DEBUG, env);
+//    try(try_set_unary_types(env, &new_tast, unary));
+//    return new_tast;
+//}
+
+Tast_operator* util_binary_typed_new(Env* env, Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operator_type) {
+    Uast_binary* binary = uast_binary_new(uast_get_pos_expr(lhs), lhs, rhs, operator_type);
 
     Tast_expr* new_tast;
     try(try_set_binary_types(env, &new_tast, binary));
@@ -305,11 +309,11 @@ const Tast* get_lang_type_from_sym_definition(const Tast* sym_def) {
     todo();
 }
 
-Tast_operator* condition_get_default_child(Tast_expr* if_cond_child) {
+Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child) {
     Tast_binary* binary = tast_binary_new(
         tast_get_pos_expr(if_cond_child),
         tast_wrap_literal(
-            util_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, tast_get_pos_expr(if_cond_child))
+            util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, tast_get_pos_expr(if_cond_child))
         ),
         if_cond_child,
         TOKEN_NOT_EQUAL,
@@ -317,6 +321,19 @@ Tast_operator* condition_get_default_child(Tast_expr* if_cond_child) {
     );
 
     return tast_wrap_binary(binary);
+}
+
+Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child) {
+    Uast_binary* binary = uast_binary_new(
+        uast_get_pos_expr(if_cond_child),
+        uast_wrap_literal(
+            util_uast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, uast_get_pos_expr(if_cond_child))
+        ),
+        if_cond_child,
+        TOKEN_NOT_EQUAL
+    );
+
+    return uast_wrap_binary(binary);
 }
 
 uint64_t sizeof_lang_type(const Env* env, Lang_type lang_type) {

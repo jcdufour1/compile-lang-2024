@@ -1,7 +1,10 @@
 #include <auto_gen_vecs.h>
 #include <auto_gen_util.h>
 #include <auto_gen_tast.h>
+#include <auto_gen_uast.h>
 #include <auto_gen_llvm.h>
+
+// TODO: remove dummy members
 
 // TODO: test for
 //struct Token {
@@ -398,22 +401,6 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
 
     gen_symbol_table_c_file_symbol_update(&text, type);
 
-    if (str_view_cstr_is_equal(type.type_name, "Tast_def")) {
-        string_extend_cstr(&gen_a, &text, "bool symbol_do_add_defered(Tast_def** redefined_sym, Env* env) {\n");
-        string_extend_cstr(&gen_a, &text, "    for (size_t idx = 0; idx < env->defered_symbols_to_add.info.count; idx++) {\n");
-        string_extend_cstr(&gen_a, &text, "        if (!symbol_add(env, vec_at(&env->defered_symbols_to_add, idx))) {\n");
-        string_extend_cstr(&gen_a, &text, "            *redefined_sym = vec_at(&env->defered_symbols_to_add, idx);\n");
-        string_extend_cstr(&gen_a, &text, "            vec_reset(&env->defered_symbols_to_add);\n");
-        string_extend_cstr(&gen_a, &text, "            return false;\n");
-        string_extend_cstr(&gen_a, &text, "        }\n");
-        string_extend_cstr(&gen_a, &text, "    }\n");
-        string_extend_cstr(&gen_a, &text, "\n");
-        string_extend_cstr(&gen_a, &text, "    vec_reset(&env->defered_symbols_to_add);\n");
-        string_extend_cstr(&gen_a, &text, "    return true;\n");
-        string_extend_cstr(&gen_a, &text, "}\n");
-        string_extend_cstr(&gen_a, &text, "\n");
-    }
-
 
     gen_gen(STRING_FMT"\n", string_print(text));
 }
@@ -428,6 +415,7 @@ static void gen_symbol_table_c_file(const char* file_path, Sym_tbl_type_vec type
     gen_gen("%s\n", "#define STB_DS_IMPLEMENTATION");
     gen_gen("%s\n", "#include <stb_ds.h>");
     gen_gen("%s\n", "#include \"symbol_table.h\"");
+    gen_gen("%s\n", "#include <uast_utils.h>");
     gen_gen("%s\n", "#include <tast_utils.h>");
     gen_gen("%s\n", "#include <llvm_utils.h>");
     gen_gen("%s\n", "");
@@ -452,6 +440,34 @@ static void gen_symbol_table_c_file(const char* file_path, Sym_tbl_type_vec type
     gen_gen("%s\n", "    vec_reset(&env->defered_allocas_to_add);\n");
     gen_gen("%s\n", "    return true;\n");
     gen_gen("%s\n", "}\n");
+
+    gen_gen("%s\n", "bool symbol_do_add_defered(Tast_def** redefined_sym, Env* env) {\n");
+    gen_gen("%s\n", "    for (size_t idx = 0; idx < env->defered_symbols_to_add.info.count; idx++) {\n");
+    gen_gen("%s\n", "        if (!symbol_add(env, vec_at(&env->defered_symbols_to_add, idx))) {\n");
+    gen_gen("%s\n", "            *redefined_sym = vec_at(&env->defered_symbols_to_add, idx);\n");
+    gen_gen("%s\n", "            vec_reset(&env->defered_symbols_to_add);\n");
+    gen_gen("%s\n", "            return false;\n");
+    gen_gen("%s\n", "        }\n");
+    gen_gen("%s\n", "    }\n");
+    gen_gen("%s\n", "\n");
+    gen_gen("%s\n", "    vec_reset(&env->defered_symbols_to_add);\n");
+    gen_gen("%s\n", "    return true;\n");
+    gen_gen("%s\n", "}\n");
+    gen_gen("%s\n", "\n");
+   
+    gen_gen("%s\n", "bool usymbol_do_add_defered(Uast_def** redefined_sym, Env* env) {\n");
+    gen_gen("%s\n", "    for (size_t idx = 0; idx < env->udefered_symbols_to_add.info.count; idx++) {\n");
+    gen_gen("%s\n", "        if (!usymbol_add(env, vec_at(&env->udefered_symbols_to_add, idx))) {\n");
+    gen_gen("%s\n", "            *redefined_sym = vec_at(&env->udefered_symbols_to_add, idx);\n");
+    gen_gen("%s\n", "            vec_reset(&env->udefered_symbols_to_add);\n");
+    gen_gen("%s\n", "            return false;\n");
+    gen_gen("%s\n", "        }\n");
+    gen_gen("%s\n", "    }\n");
+    gen_gen("%s\n", "\n");
+    gen_gen("%s\n", "    vec_reset(&env->udefered_symbols_to_add);\n");
+    gen_gen("%s\n", "    return true;\n");
+    gen_gen("%s\n", "}\n");
+    gen_gen("%s\n", "\n");
 
     for (size_t idx = 0; idx < types.info.count; idx++) {
         gen_symbol_table_c_file_internal(vec_at(&types, idx));
@@ -586,6 +602,7 @@ static void gen_symbol_table_header(const char* file_path, Sym_tbl_type_vec type
     gen_gen("%s\n", "#include \"env.h\"");
     gen_gen("%s\n", "#include \"symbol_table_struct.h\"");
     gen_gen("%s\n", "#include \"do_passes.h\"");
+    gen_gen("%s\n", "#include <uast_forward_decl.h>");
     gen_gen("%s\n", "#include <tast_forward_decl.h>");
     gen_gen("%s\n", "#include <llvm_forward_decl.h>");
     gen_gen("%s\n", "");
@@ -619,6 +636,20 @@ static void gen_symbol_table_header(const char* file_path, Sym_tbl_type_vec type
     gen_gen("%s\n", "    vec_reset(&env->defered_symbols_to_add);");
     gen_gen("%s\n", "}");
     gen_gen("%s\n", "");
+
+    gen_gen("%s\n", "// these tasts will be actually added to a symbol table when `symbol_do_add_defered` is called");
+    gen_gen("%s\n", "static inline void usymbol_add_defer(Env* env, Uast_def* uast_of_symbol) {");
+    gen_gen("%s\n", "    assert(uast_of_symbol);");
+    gen_gen("%s\n", "    vec_append(&a_main, &env->udefered_symbols_to_add, uast_of_symbol);");
+    gen_gen("%s\n", "}");
+    gen_gen("%s\n", "");
+    gen_gen("%s\n", "bool usymbol_do_add_defered(Uast_def** redefined_sym, Env* env);");
+    gen_gen("%s\n", "");
+    gen_gen("%s\n", "static inline void usymbol_ignore_defered(Env* env) {");
+    gen_gen("%s\n", "    vec_reset(&env->udefered_symbols_to_add);");
+    gen_gen("%s\n", "}");
+    gen_gen("%s\n", "");
+
     gen_gen("%s\n", "Symbol_table* symbol_get_block(Env* env);");
     gen_gen("%s\n", "");
     gen_gen("%s\n", "void log_symbol_table_if_block(Env* env, const char* file_path, int line);");
@@ -676,11 +707,13 @@ static void gen_symbol_table_struct(const char* file_path, Sym_tbl_type_vec type
     gen_gen("%s\n", "} SYM_TBL_STATUS;");
     gen_gen("%s\n", "");
 
+    gen_gen("%s\n", "#include <uast_forward_decl.h>");
     gen_gen("%s\n", "#include <tast_forward_decl.h>");
     gen_gen("%s\n", "#include <llvm_forward_decl.h>");
 
     gen_gen("%s\n", "static inline Str_view get_alloca_name(const Llvm_alloca* llvm);");
     gen_gen("%s\n", "static inline Str_view get_def_name(const Tast_def* def);");
+    gen_gen("%s\n", "static inline Str_view get_uast_name_def(const Uast_def* def);");
     gen_gen("%s\n", "static inline Str_view llvm_get_tast_name(const Llvm* llvm);");
 
     for (size_t idx = 0; idx < types.info.count; idx++) {
@@ -688,6 +721,7 @@ static void gen_symbol_table_struct(const char* file_path, Sym_tbl_type_vec type
     }
 
     gen_gen("typedef struct {\n");
+    gen_gen("    Usymbol_table usymbol_table;\n");
     gen_gen("    Symbol_table symbol_table;\n");
     gen_gen("    Alloca_table alloca_table;\n");
     gen_gen("} Symbol_collection;\n");
@@ -724,6 +758,9 @@ static Sym_tbl_type_vec get_symbol_tbl_types(void) {
     Sym_tbl_type_vec types = {0};
 
     vec_append(&gen_a, &types, symbol_tbl_type_new(
+        "Uast_def", "usymbol", "usym", "get_uast_name_def", "usymbol_table", "uancesters", "uast_def_print", false
+    ));
+    vec_append(&gen_a, &types, symbol_tbl_type_new(
         "Tast_def", "symbol", "sym", "get_def_name", "symbol_table", "ancesters", "tast_def_print", true
     ));
     vec_append(&gen_a, &types, symbol_tbl_type_new( 
@@ -754,6 +791,8 @@ int main(int argc, char** argv) {
 
     gen_all_tasts(get_path(argv[1], "tast_forward_decl.h"), false);
     assert(!global_output);
+    gen_all_uasts(get_path(argv[1], "uast_forward_decl.h"), false);
+    assert(!global_output);
     gen_all_llvms(get_path(argv[1], "llvm_forward_decl.h"), false);
     assert(!global_output);
 
@@ -764,6 +803,9 @@ int main(int argc, char** argv) {
     assert(!global_output);
 
     gen_all_tasts(get_path(argv[1], "tast.h"), true);
+    assert(!global_output);
+
+    gen_all_uasts(get_path(argv[1], "uast.h"), true);
     assert(!global_output);
 
     gen_all_llvms(get_path(argv[1], "llvm.h"), true);
