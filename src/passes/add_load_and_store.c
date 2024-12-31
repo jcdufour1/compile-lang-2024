@@ -456,7 +456,7 @@ static Str_view load_ptr_member_access_typed(
 
     Tast_number* new_index = tast_number_new(
         old_access->pos,
-        get_member_index(&def_base, old_access->member_name),
+        tast_get_member_index(&def_base, old_access->member_name),
         lang_type_new_from_cstr("i32", 0)
     );
     

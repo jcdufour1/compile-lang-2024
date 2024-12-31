@@ -19,7 +19,7 @@ typedef struct Env_ {
     Tast_def_vec defered_symbols_to_add;
     Llvm_vec defered_allocas_to_add;
     Symbol_table global_literals; // this is populated during add_load_and_store pass
-    Symbol_table primitives;
+    Usymbol_table primitives;
     int recursion_depth;
     Str_view file_text;
 

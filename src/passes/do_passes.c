@@ -31,7 +31,7 @@ static void add_primitive(Env* env, const char* base_name, int16_t pointer_depth
     Tast_primitive_def* def = tast_primitive_def_new(
         POS_BUILTIN, lang_type_new_from_cstr(base_name, pointer_depth)
     );
-    try(sym_tbl_add(&env->primitives, tast_wrap_primitive_def(def)));
+    try(usym_tbl_add(&env->primitives, tast_wrap_primitive_def(def)));
 }
 
 static void add_primitives(Env* env) {

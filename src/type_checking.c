@@ -116,7 +116,7 @@ static void msg_invalid_function_arg_internal(
     int line,
     const Env* env,
     const Tast_expr* argument,
-    const Tast_variable_def* corres_param
+    const Uast_variable_def* corres_param
 ) {
     msg_internal(
         file, line,
@@ -743,7 +743,7 @@ bool try_set_assignment_types(Env* env, Tast_assignment** new_assign, Uast_assig
 bool try_set_function_call_types(Env* env, Tast_function_call** new_call, Uast_function_call* fun_call) {
     bool status = true;
 
-    Tast_def* fun_def;
+    Uast_def* fun_def;
     if (!usymbol_lookup(&fun_def, env, fun_call->name)) {
         msg(
             LOG_ERROR, EXPECT_FAIL_UNDEFINED_FUNCTION, env->file_text, fun_call->pos,
@@ -752,15 +752,18 @@ bool try_set_function_call_types(Env* env, Tast_function_call** new_call, Uast_f
         status = false;
         goto error;
     }
-    Tast_function_decl* fun_decl;
+    Uast_function_decl* fun_decl;
     if (fun_def->type == TAST_FUNCTION_DEF) {
-        fun_decl = tast_unwrap_function_def(fun_def)->decl;
+        fun_decl = uast_unwrap_function_def(fun_def)->decl;
     } else {
-        fun_decl = tast_unwrap_function_decl(fun_def);
+        fun_decl = uast_unwrap_function_decl(fun_def);
     }
-    Tast_lang_type* fun_rtn_type = fun_decl->return_type;
+    Tast_lang_type* fun_rtn_type = NULL;
+    if (!try_set_lang_type_types(env, &fun_rtn_type, fun_decl->return_type)) {
+        return false;
+    }
     assert(fun_rtn_type->lang_type.str.count > 0);
-    Tast_function_params* params = fun_decl->params;
+    Uast_function_params* params = fun_decl->params;
     size_t params_idx = 0;
 
     size_t min_args;
@@ -792,7 +795,7 @@ bool try_set_function_call_types(Env* env, Tast_function_call** new_call, Uast_f
         );
 
         msg(
-            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, tast_get_pos_def(fun_def),
+            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, uast_get_pos_def(fun_def),
             "function `"STR_VIEW_FMT"` defined here\n", str_view_print(fun_decl->name)
         );
         status = false;
@@ -801,7 +804,7 @@ bool try_set_function_call_types(Env* env, Tast_function_call** new_call, Uast_f
 
     Tast_expr_vec new_args = {0};
     for (size_t arg_idx = 0; arg_idx < fun_call->args.info.count; arg_idx++) {
-        Tast_variable_def* corres_param = vec_at(&params->params, params_idx);
+        Uast_variable_def* corres_param = vec_at(&params->params, params_idx);
         Uast_expr* argument = vec_at(&fun_call->args, arg_idx);
         Tast_expr* new_arg = NULL;
 
@@ -861,7 +864,7 @@ error:
 
 static void msg_invalid_member(
     const Env* env,
-    Struct_def_base base,
+    Ustruct_def_base base,
     const Uast_member_access_untyped* access
 ) {
     msg(
@@ -876,7 +879,7 @@ static void msg_invalid_member(
 
 static void msg_invalid_enum_member(
     const Env* env,
-    Struct_def_base base,
+    Ustruct_def_base base,
     const Uast_member_access_untyped* access
 ) {
     msg(
@@ -893,11 +896,11 @@ bool try_set_member_access_types_finish_generic_struct(
     const Env* env,
     Tast** new_tast,
     Uast_member_access_untyped* access,
-    Struct_def_base def_base,
+    Ustruct_def_base def_base,
     Tast_expr* new_callee
 ) {
-    Tast_variable_def* member_def = NULL;
-    if (!try_get_member_def(&member_def, &def_base, access->member_name)) {
+    Uast_variable_def* member_def = NULL;
+    if (!uast_try_get_member_def(&member_def, &def_base, access->member_name)) {
         msg_invalid_member(env, def_base, access);
         return false;
     }
@@ -918,34 +921,34 @@ bool try_set_member_access_types_finish_generic_struct(
 bool try_set_member_access_types_finish(
     const Env* env,
     Tast** new_tast,
-    Tast_def* lang_type_def,
+    Uast_def* lang_type_def,
     Uast_member_access_untyped* access,
     Tast_expr* new_callee
 ) {
     switch (lang_type_def->type) {
         case TAST_STRUCT_DEF: {
-            Tast_struct_def* struct_def = tast_unwrap_struct_def(lang_type_def);
+            Uast_struct_def* struct_def = uast_unwrap_struct_def(lang_type_def);
             return try_set_member_access_types_finish_generic_struct(
                 env, new_tast, access, struct_def->base, new_callee
             );
         }
         case TAST_RAW_UNION_DEF: {
-            Tast_raw_union_def* raw_union_def = tast_unwrap_raw_union_def(lang_type_def);
+            Uast_raw_union_def* raw_union_def = uast_unwrap_raw_union_def(lang_type_def);
             return try_set_member_access_types_finish_generic_struct(
                 env, new_tast, access, raw_union_def->base, new_callee
             );
         }
         case TAST_ENUM_DEF: {
-            Tast_enum_def* enum_def = tast_unwrap_enum_def(lang_type_def);
-            Tast_variable_def* member_def = NULL;
-            if (!try_get_member_def(&member_def, &enum_def->base, access->member_name)) {
+            Uast_enum_def* enum_def = uast_unwrap_enum_def(lang_type_def);
+            Uast_variable_def* member_def = NULL;
+            if (!uast_try_get_member_def(&member_def, &enum_def->base, access->member_name)) {
                 msg_invalid_enum_member(env, enum_def->base, access);
                 return false;
             }
 
             Tast_enum_lit* new_lit = tast_enum_lit_new(
                 access->pos,
-                get_member_index(&enum_def->base, access->member_name),
+                uast_get_member_index(&enum_def->base, access->member_name),
                 member_def->lang_type
             );
 
@@ -954,7 +957,7 @@ bool try_set_member_access_types_finish(
             return true;
         }
         default:
-            unreachable(TAST_FMT"\n", tast_print(tast_wrap_def(lang_type_def)));
+            unreachable(TAST_FMT"\n", uast_print(uast_wrap_def(lang_type_def)));
     }
 
     unreachable("");
@@ -973,7 +976,7 @@ bool try_set_member_access_types(
     switch (new_callee->type) {
         case TAST_SYMBOL_TYPED: {
             Tast_symbol_typed* sym = tast_unwrap_symbol_typed(new_callee);
-            Tast_def* lang_type_def = NULL;
+            Uast_def* lang_type_def = NULL;
             if (!usymbol_lookup(&lang_type_def, env, tast_get_lang_type_symbol_typed(sym).str)) {
                 todo();
             }
@@ -984,7 +987,7 @@ bool try_set_member_access_types(
         case TAST_MEMBER_ACCESS_TYPED: {
             Tast_member_access_typed* sym = tast_unwrap_member_access_typed(new_callee);
 
-            Tast_def* lang_type_def = NULL;
+            Uast_def* lang_type_def = NULL;
             if (!usymbol_lookup(&lang_type_def, env, sym->lang_type.str)) {
                 todo();
             }
@@ -1133,7 +1136,7 @@ bool try_set_variable_def_types(
     Tast_variable_def** new_tast,
     Uast_variable_def* uast
 ) {
-    Tast_def* dummy = NULL;
+    Uast_def* dummy = NULL;
     if (!usymbol_lookup(&dummy, env, uast->lang_type.str)) {
         msg_undefined_type(env, uast->pos, uast->lang_type);
         return false;
@@ -1217,7 +1220,7 @@ bool try_set_lang_type_types(
     Tast_lang_type** new_tast,
     Uast_lang_type* uast
 ) {
-    Tast_def* dummy = NULL;
+    Uast_def* dummy = NULL;
     if (!usymbol_lookup(&dummy, env, uast->lang_type.str)) {
         msg_undefined_type(env, uast->pos, uast->lang_type);
         return false;

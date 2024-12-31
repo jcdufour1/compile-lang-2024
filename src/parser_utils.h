@@ -7,6 +7,7 @@
 #include "tasts.h"
 #include "symbol_table.h"
 #include "tast_utils.h"
+#include "uast_utils.h"
 #include "llvm_utils.h"
 
 bool lang_type_is_unsigned(Lang_type lang_type);
@@ -115,7 +116,17 @@ bool lang_type_is_enum(const Env* env, Lang_type lang_type);
 
 bool lang_type_is_primitive(const Env* env, Lang_type lang_type);
 
-static inline size_t get_member_index(const Struct_def_base* struct_def, Str_view member_name) {
+static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, Str_view member_name) {
+    for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
+        const Uast* curr_member = vec_at(&struct_def->members, idx);
+        if (str_view_is_equal(get_uast_name(curr_member), member_name)) {
+            return idx;
+        }
+    }
+    unreachable("member not found");
+}
+
+static inline size_t tast_get_member_index(const Struct_def_base* struct_def, Str_view member_name) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         const Tast* curr_member = vec_at(&struct_def->members, idx);
         if (str_view_is_equal(get_tast_name(curr_member), member_name)) {
@@ -125,7 +136,23 @@ static inline size_t get_member_index(const Struct_def_base* struct_def, Str_vie
     unreachable("member not found");
 }
 
-static inline bool try_get_member_def(
+static inline bool uast_try_get_member_def(
+    Uast_variable_def** member_def,
+    const Ustruct_def_base* struct_def,
+    Str_view member_name
+) {
+    for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
+        Uast* curr_member = vec_at(&struct_def->members, idx);
+        if (str_view_is_equal(get_uast_name(curr_member), member_name)) {
+            assert(uast_get_lang_type(curr_member).str.count > 0);
+            *member_def = uast_unwrap_variable_def(uast_unwrap_def(curr_member));
+            return true;
+        }
+    }
+    return false;
+}
+
+static inline bool tast_try_get_member_def(
     Tast_variable_def** member_def,
     const Struct_def_base* struct_def,
     Str_view member_name
