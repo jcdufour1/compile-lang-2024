@@ -247,8 +247,6 @@ static inline bool token_is_operator(Token token) {
             // fallthrough
         case TOKEN_SINGLE_EQUAL:
             // fallthrough
-        case TOKEN_SINGLE_DOT:
-            // fallthrough
         case TOKEN_NONTYPE:
             // fallthrough
         case TOKEN_VOID:
@@ -286,7 +284,7 @@ static inline bool token_is_operator(Token token) {
         case TOKEN_ENUM:
             return false;
         case TOKEN_OPEN_SQ_BRACKET:
-            return false;
+            return true;
         case TOKEN_CLOSE_SQ_BRACKET:
             return false;
         case TOKEN_CHAR_LITERAL:
@@ -299,6 +297,8 @@ static inline bool token_is_operator(Token token) {
             return true;
         case TOKEN_TYPE_DEF:
             return false;
+        case TOKEN_SINGLE_DOT:
+            return true;
     }
     unreachable(TOKEN_FMT"\n", token_print(token));
 }

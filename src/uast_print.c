@@ -36,6 +36,7 @@ Str_view uast_binary_print_internal(const Uast_binary* binary, int indent) {
 
     string_extend_cstr_indent(&print_arena, &buf, "binary", indent);
     string_extend_strv(&print_arena, &buf, token_type_to_str_view(binary->token_type));
+    extend_pos(&buf, binary->pos);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     indent += INDENT_WIDTH;
@@ -51,11 +52,10 @@ Str_view uast_unary_print_internal(const Uast_unary* unary, int indent) {
 
     string_extend_cstr_indent(&print_arena, &buf, "unary", indent);
     string_extend_strv(&print_arena, &buf, token_type_to_str_view(unary->token_type));
+    extend_pos(&buf, unary->pos);
     string_extend_cstr(&print_arena, &buf, "\n");
 
-    indent += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, uast_expr_print_internal(unary->child, indent));
-    indent -= INDENT_WIDTH;
+    string_extend_strv(&print_arena, &buf, uast_expr_print_internal(unary->child, indent + INDENT_WIDTH));
 
     return string_to_strv(buf);
 }
@@ -71,6 +71,7 @@ Str_view uast_symbol_untyped_print_internal(const Uast_symbol_untyped* sym, int 
 
     string_extend_cstr_indent(&print_arena, &buf, "symbol_untyped", indent);
     string_extend_strv(&print_arena, &buf, sym->name);
+    extend_pos(&buf, sym->pos);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
@@ -81,12 +82,10 @@ Str_view uast_member_access_untyped_print_internal(const Uast_member_access_unty
 
     string_extend_cstr_indent(&print_arena, &buf, "member_access_untyped", indent);
     string_extend_strv_in_par(&print_arena, &buf, access->member_name);
-
+    extend_pos(&buf, access->pos);
     string_extend_cstr(&print_arena, &buf, "\n");
 
-    indent += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, uast_expr_print_internal(access->callee, indent));
-    indent -= INDENT_WIDTH;
+    string_extend_strv(&print_arena, &buf, uast_expr_print_internal(access->callee, indent + INDENT_WIDTH));
 
     return string_to_strv(buf);
 }
@@ -94,7 +93,9 @@ Str_view uast_member_access_untyped_print_internal(const Uast_member_access_unty
 Str_view uast_index_untyped_print_internal(const Uast_index_untyped* index, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "index_untyped\n", indent);
+    string_extend_cstr_indent(&print_arena, &buf, "index_untyped", indent);
+    extend_pos(&buf, index->pos);
+    string_extend_cstr(&print_arena, &buf, "\n");
     string_extend_strv(&print_arena, &buf, uast_expr_print_internal(index->index, indent + INDENT_WIDTH));
     string_extend_strv(&print_arena, &buf, uast_expr_print_internal(index->callee, indent + INDENT_WIDTH));
 
@@ -124,12 +125,10 @@ Str_view uast_function_call_print_internal(const Uast_function_call* fun_call, i
     string_extend_strv_in_par(&print_arena, &buf, fun_call->name);
     string_extend_cstr(&print_arena, &buf, "\n");
 
-    indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
-        Str_view arg_text = uast_expr_print_internal(vec_at(&fun_call->args, idx), indent);
+        Str_view arg_text = uast_expr_print_internal(vec_at(&fun_call->args, idx), indent + INDENT_WIDTH);
         string_extend_strv(&print_arena, &buf, arg_text);
     }
-    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
@@ -189,7 +188,6 @@ Str_view uast_void_print_internal(const Uast_void* num, int indent) {
 }
 
 Str_view uast_char_print_internal(const Uast_char* num, int indent) {
-    (void) num;
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "char", indent);
@@ -213,12 +211,10 @@ Str_view uast_block_print_internal(const Uast_block* block, int indent) {
     string_extend_cstr_indent(&print_arena, &buf, "symbol_table\n", indent + INDENT_WIDTH);
     symbol_extend_table_internal(&buf, block->symbol_collection.symbol_table, indent + 2*INDENT_WIDTH);
 
-    indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        Str_view arg_text = uast_print_internal(vec_at(&block->children, idx), indent);
+        Str_view arg_text = uast_print_internal(vec_at(&block->children, idx), indent + INDENT_WIDTH);
         string_extend_strv(&print_arena, &buf, arg_text);
     }
-    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }

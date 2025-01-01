@@ -449,7 +449,7 @@ static bool can_end_statement(Token token) {
 }
 
 // higher number returned from this function means that operator has higher precedence
-static uint32_t operator_precedence(Token token) {
+static uint32_t get_operator_precedence(Token token) {
     switch (token.type) {
         case TOKEN_DOUBLE_EQUAL:
             return 1;
@@ -471,6 +471,10 @@ static uint32_t operator_precedence(Token token) {
             return 5;
         case TOKEN_SLASH:
             return 5;
+        case TOKEN_SINGLE_DOT:
+            return 20;
+        case TOKEN_OPEN_SQ_BRACKET:
+            return 20;
         default:
             unreachable(TOKEN_FMT, token_print(token));
     }
@@ -1597,45 +1601,6 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(
         return PARSE_EXPR_NONE;
     }
 
-    // TODO: use exhausive switch case here?
-    while (1) {
-        Token bracket = {0};
-        if (try_consume(&bracket, tokens, TOKEN_SINGLE_DOT)) {
-            Token member = {0};
-            if (!try_consume(&member, tokens, TOKEN_SYMBOL)) {
-                unreachable("");
-            }
-
-            Uast_member_access_untyped* access = uast_member_access_untyped_new(
-                bracket.pos,
-                member.text,
-                *result
-            );
-
-            *result = uast_wrap_member_access_untyped(access);
-        } else if (try_consume(&bracket, tokens, TOKEN_OPEN_SQ_BRACKET)) {
-            Uast_expr* index = NULL;
-            PARSE_EXPR_STATUS status = try_extract_expression(
-                env, &index, tokens, defer_sym_add
-            );
-            if (status != PARSE_EXPR_OK) {
-                return status;
-            }
-
-            if (!try_consume(&bracket, tokens, TOKEN_CLOSE_SQ_BRACKET)) {
-                msg(
-                    LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_SQ_BRACKET, env->file_text,
-                    get_curr_pos(*tokens), "expected closing `]` after expression\n"
-                );
-                return PARSE_EXPR_ERROR;
-            }
-
-            *result = uast_wrap_index_untyped(uast_index_untyped_new(bracket.pos, index, *result));
-        } else {
-            break;
-        }
-    }
-
     return PARSE_EXPR_OK;
 }
 
@@ -1687,51 +1652,219 @@ static PARSE_EXPR_STATUS try_extract_expression(Env* env, Uast_expr** result, Tk
         if (is_unary(operator_token.type)) {
             unreachable("");
         } else if (!is_first_operator && expr_is_binary(expression) &&
-            operator_precedence(prev_operator_token) < operator_precedence(operator_token)
+            get_operator_precedence(prev_operator_token) < get_operator_precedence(operator_token)
         ) {
             Uast_expr* rhs;
-            switch (try_extract_expression_piece(env, &rhs, tokens, defer_sym_add)) {
-                case PARSE_EXPR_OK:
+            switch (operator_token.type) {
+                case TOKEN_SINGLE_DOT:
+                    // fallthrough
+                case TOKEN_SINGLE_PLUS:
+                    // fallthrough
+                case TOKEN_SINGLE_MINUS:
+                    // fallthrough
+                case TOKEN_ASTERISK:
+                    // fallthrough
+                case TOKEN_SLASH:
+                    // fallthrough
+                case TOKEN_DOUBLE_EQUAL:
+                    // fallthrough
+                case TOKEN_NOT_EQUAL:
+                    switch (try_extract_expression_piece(env, &rhs, tokens, defer_sym_add)) {
+                        case PARSE_EXPR_OK:
+                            break;
+                        case PARSE_EXPR_NONE: {
+                            msg_expected_expression(env->file_text, *tokens, "");
+                            return PARSE_EXPR_ERROR;
+                        }
+                        case PARSE_EXPR_ERROR: {
+                            assert(error_count > 0 && "error_count not incremented\n");
+                            return PARSE_EXPR_ERROR;
+                        }
+                        default:
+                            unreachable("");
+
+                    }
                     break;
-                case PARSE_EXPR_NONE: {
-                    msg_expected_expression(env->file_text, *tokens, "");
-                    return PARSE_EXPR_ERROR;
+                case TOKEN_OPEN_SQ_BRACKET:
+                    todo();
+                    log_tokens(LOG_DEBUG, *tokens);
+                    todo();
+                    switch (try_extract_expression(env, &rhs, tokens, defer_sym_add)) {
+                        case PARSE_EXPR_OK:
+                            break;
+                        case PARSE_EXPR_NONE: {
+                            msg_expected_expression(env->file_text, *tokens, "");
+                            return PARSE_EXPR_ERROR;
+                        }
+                        case PARSE_EXPR_ERROR: {
+                            assert(error_count > 0 && "error_count not incremented\n");
+                            return PARSE_EXPR_ERROR;
+                        }
+                        default:
+                            unreachable("");
+                    }
+                    break;
+                default:
+                    unreachable(TOKEN_TYPE_FMT, token_type_print(operator_token.type));
+            }
+
+            switch (operator_token.type) {
+                case TOKEN_SINGLE_DOT: {
+                    Uast_expr* access = uast_wrap_member_access_untyped(
+                        uast_member_access_untyped_new(
+                            operator_token.pos,
+                            uast_unwrap_symbol_untyped(rhs)->name,
+                            uast_unwrap_binary(uast_unwrap_operator(expression))->rhs
+                        )
+                    );
+                    uast_unwrap_binary(uast_unwrap_operator(expression))->rhs = access;
+                    break;
                 }
-                case PARSE_EXPR_ERROR: {
-                    assert(error_count > 0 && "error_count not incremented\n");
-                    return PARSE_EXPR_ERROR;
+                case TOKEN_SINGLE_PLUS:
+                    // fallthrough
+                case TOKEN_SINGLE_MINUS:
+                    // fallthrough
+                case TOKEN_ASTERISK:
+                    // fallthrough
+                case TOKEN_SLASH:
+                    // fallthrough
+                case TOKEN_LESS_THAN:
+                    // fallthrough
+                case TOKEN_GREATER_THAN:
+                    // fallthrough
+                case TOKEN_LESS_OR_EQUAL:
+                    // fallthrough
+                case TOKEN_GREATER_OR_EQUAL:
+                    // fallthrough
+                case TOKEN_DOUBLE_EQUAL:
+                    // fallthrough
+                case TOKEN_NOT_EQUAL: {
+                    Uast_binary* operator = parser_binary_new(
+                        uast_unwrap_binary(uast_unwrap_operator(expression))->rhs,
+                        operator_token,
+                        rhs
+                    );
+                    uast_unwrap_binary(uast_unwrap_operator(expression))->rhs = uast_wrap_operator(uast_wrap_binary(operator));
+                    break;
                 }
                 default:
-                    unreachable("");
-
+                    unreachable(TOKEN_TYPE_FMT, token_type_print(operator_token.type));
             }
-            Uast_binary* operator = parser_binary_new(
-                uast_unwrap_binary(uast_unwrap_operator(expression))->rhs,
-                operator_token,
-                rhs
-            );
-            uast_unwrap_binary(uast_unwrap_operator(expression))->rhs = uast_wrap_operator(uast_wrap_binary(operator));
         } else {
             Uast_expr* lhs = expression;
             Uast_expr* rhs;
-            switch (try_extract_expression_piece(env, &rhs, tokens, defer_sym_add)) {
-                case PARSE_EXPR_OK:
+            switch (operator_token.type) {
+                case TOKEN_SINGLE_DOT:
+                    // fallthrough
+                case TOKEN_SINGLE_PLUS:
+                    // fallthrough
+                case TOKEN_SINGLE_MINUS:
+                    // fallthrough
+                case TOKEN_ASTERISK:
+                    // fallthrough
+                case TOKEN_SLASH:
+                    // fallthrough
+                case TOKEN_LESS_THAN:
+                    // fallthrough
+                case TOKEN_GREATER_THAN:
+                    // fallthrough
+                case TOKEN_LESS_OR_EQUAL:
+                    // fallthrough
+                case TOKEN_GREATER_OR_EQUAL:
+                    // fallthrough
+                case TOKEN_DOUBLE_EQUAL:
+                    // fallthrough
+                case TOKEN_NOT_EQUAL:
+                    switch (try_extract_expression_piece(env, &rhs, tokens, defer_sym_add)) {
+                        case PARSE_EXPR_OK:
+                            break;
+                        case PARSE_EXPR_NONE: {
+                            log_tokens(LOG_DEBUG, *tokens);
+                            log(LOG_DEBUG, TAST_FMT, uast_expr_print(expression));
+                            msg_expected_expression(env->file_text, *tokens, "");
+                            return PARSE_EXPR_ERROR;
+                        }
+                        case PARSE_EXPR_ERROR: {
+                            assert(error_count > 0 && "error_count not incremented\n");
+                            return PARSE_EXPR_ERROR;
+                        }
+                        default:
+                            unreachable("");
+                    }
                     break;
-                case PARSE_EXPR_NONE: {
-                    msg_expected_expression(env->file_text, *tokens, "");
-                    return PARSE_EXPR_ERROR;
-                }
-                case PARSE_EXPR_ERROR: {
-                    assert(error_count > 0 && "error_count not incremented\n");
-                    return PARSE_EXPR_ERROR;
+                case TOKEN_OPEN_SQ_BRACKET:
+                    switch (try_extract_expression(env, &rhs, tokens, defer_sym_add)) {
+                        case PARSE_EXPR_OK:
+                            break;
+                        case PARSE_EXPR_NONE: {
+                            log_tokens(LOG_DEBUG, *tokens);
+                            log(LOG_DEBUG, TAST_FMT, uast_expr_print(expression));
+                            msg_expected_expression(env->file_text, *tokens, "");
+                            return PARSE_EXPR_ERROR;
+                        }
+                        case PARSE_EXPR_ERROR: {
+                            assert(error_count > 0 && "error_count not incremented\n");
+                            return PARSE_EXPR_ERROR;
+                        }
+                        default:
+                            unreachable("");
+                    }
+                    break;
+                default:
+                    unreachable(TOKEN_TYPE_FMT, token_type_print(operator_token.type));
+            }
+
+            switch (operator_token.type) {
+                case TOKEN_SINGLE_DOT:
+                    expression = uast_wrap_member_access_untyped(uast_member_access_untyped_new(
+                        operator_token.pos,
+                        uast_unwrap_symbol_untyped(rhs)->name,
+                        lhs
+                    ));
+                    break;
+                case TOKEN_OPEN_SQ_BRACKET:
+                    expression = uast_wrap_index_untyped(uast_index_untyped_new(
+                        operator_token.pos,
+                        rhs,
+                        lhs
+                    ));
+                    if (!try_consume(NULL, tokens, TOKEN_CLOSE_SQ_BRACKET)) {
+                        msg(
+                            LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_SQ_BRACKET, env->file_text,
+                            get_curr_pos(*tokens), "expected closing `]` after expression\n"
+                        );
+                        return PARSE_EXPR_ERROR;
+                    }
+                    break;
+                case TOKEN_SINGLE_PLUS:
+                    // fallthrough
+                case TOKEN_SINGLE_MINUS:
+                    // fallthrough
+                case TOKEN_ASTERISK:
+                    // fallthrough
+                case TOKEN_SLASH:
+                    // fallthrough
+                case TOKEN_LESS_THAN:
+                    // fallthrough
+                case TOKEN_GREATER_THAN:
+                    // fallthrough
+                case TOKEN_LESS_OR_EQUAL:
+                    // fallthrough
+                case TOKEN_GREATER_OR_EQUAL:
+                    // fallthrough
+                case TOKEN_DOUBLE_EQUAL:
+                    // fallthrough
+                case TOKEN_NOT_EQUAL: {
+                    Uast_binary* operator = parser_binary_new(lhs, operator_token, rhs);
+                    expression = uast_wrap_operator(uast_wrap_binary(operator));
+                    break;
                 }
                 default:
-                    unreachable("");
+                    unreachable(TOKEN_TYPE_FMT, token_type_print(operator_token.type));
             }
-            Uast_binary* operator = parser_binary_new(lhs, operator_token, rhs);
-            expression = uast_wrap_operator(uast_wrap_binary(operator));
         }
 
+        // TODO: use exhausive switch case here?
         is_first_operator = false;
         prev_operator_token = operator_token;
     }

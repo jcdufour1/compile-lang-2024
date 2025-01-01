@@ -1004,8 +1004,18 @@ bool try_set_member_access_types(
 
             return try_set_member_access_types_finish(env, new_tast, lang_type_def, access, new_callee);
         }
+        case TAST_OPERATOR: {
+            Tast_operator* sym = tast_unwrap_operator(new_callee);
+            Uast_def* lang_type_def = NULL;
+            if (!usymbol_lookup(&lang_type_def, env, tast_get_lang_type_operator(sym).str)) {
+                todo();
+            }
+
+            return try_set_member_access_types_finish(env, new_tast, lang_type_def, access, new_callee);
+
+        }
         default:
-            unreachable("");
+            unreachable(TAST_FMT, tast_expr_print(new_callee));
     }
     unreachable("");
 }
