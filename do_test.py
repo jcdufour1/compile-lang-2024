@@ -32,7 +32,7 @@ EXPECTED_SUCCESS_RESULTS_DIR = "./tests/expected_success_results/"
 EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "undef_symbol.own": ["undefined-symbol"],
     EXPECTED_FAIL_EXAMPLES_DIR + "undef_function.own": ["undefined-function", "missing-return-statement"],
-    EXPECTED_FAIL_EXAMPLES_DIR + "expected_expression.own": ["expected-expression"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "expected_expression.own": ["parser-expected"],
     EXPECTED_FAIL_EXAMPLES_DIR + "incomplete_var_def.own": ["parser-expected"],
     EXPECTED_FAIL_EXAMPLES_DIR + "binary_mismatched_types.own": ["binary-mismatched-types"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_fun_arg.own": ["invalid-function-arguments"],
@@ -90,6 +90,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_enum_subtype_access.own": ["invalid-enum-member"],
     EXPECTED_FAIL_EXAMPLES_DIR + "mismatched_literal_types_to_binary.own": ["binary-mismatched-types"],
     EXPECTED_FAIL_EXAMPLES_DIR + "semantic_error_in_return_expr.own": ["undefined-symbol"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "struct_literal_assign_parse_errors.own": ["parser-expected", "parser-expected", "expected-expression", "parser-expected", "parser-expected"],
 }
 
 def to_str(a):

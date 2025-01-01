@@ -1380,7 +1380,6 @@ bool try_set_if_else_chain(Env* env, Tast_if_else_chain** new_tast, Uast_if_else
     return status;
 }
 
-// TODO: consider if lang_type result should be removed
 bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def) {
     bool status = true;
 
