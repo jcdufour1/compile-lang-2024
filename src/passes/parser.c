@@ -68,10 +68,16 @@ static Pos get_curr_pos(Tk_view tokens) {
     return get_curr_token(tokens).pos;
 }
 
-#define msg_expected_expression(file_text, tokens) \
-    do { \
-        msg(LOG_ERROR, EXPECT_FAIL_EXPECTED_EXPRESSION, file_text, get_curr_pos(tokens), "expected expression\n"); \
-    } while (0)
+static void msg_expected_expression_internal(Str_view file_text, const char* file, int line, Tk_view tokens, const char* msg_suffix) {
+    String message = {0};
+    string_extend_cstr(&print_arena, &message, "expected expression ");
+    string_extend_cstr(&print_arena, &message, msg_suffix);
+
+    msg_internal(file, line, LOG_ERROR, EXPECT_FAIL_EXPECTED_EXPRESSION, file_text, get_curr_pos(tokens), STRING_FMT"\n", string_print(message)); \
+}
+
+#define msg_expected_expression(file_text, tokens, msg_suffix) \
+    msg_expected_expression_internal(file_text, __FILE__, __LINE__, tokens, msg_suffix) \
 
 static void msg_parser_expected_internal(Str_view file_text, const char* file, int line, Token got, const char* msg_suffix, int count_expected, ...) {
     va_list args;
@@ -863,7 +869,7 @@ static PARSE_STATUS extract_for_range_internal(Env* env, Uast_for_range* for_loo
 
     Uast_expr* lower_bound_child;
     if (PARSE_EXPR_OK != try_extract_expression(env, &lower_bound_child, tokens, true)) {
-        msg_expected_expression(env->file_text, *tokens);
+        msg_expected_expression(env->file_text, *tokens, "after in");
         return PARSE_ERROR;
     }
     Uast_for_lower_bound* lower_bound = uast_for_lower_bound_new(
@@ -882,7 +888,7 @@ static PARSE_STATUS extract_for_range_internal(Env* env, Uast_for_range* for_loo
         case PARSE_EXPR_ERROR:
             return PARSE_ERROR;
         case PARSE_EXPR_NONE:
-            msg_expected_expression(env->file_text, *tokens);
+            msg_expected_expression(env->file_text, *tokens, " after ..");
             return PARSE_ERROR;
         default:
             unreachable("");
@@ -1024,7 +1030,7 @@ static PARSE_STATUS try_extract_function_call(Env* env, Uast_function_call** chi
                 break;
             case PARSE_EXPR_NONE:
                 if (prev_is_comma) {
-                    msg_expected_expression(env->file_text, *tokens);
+                    msg_expected_expression(env->file_text, *tokens, "");
                     return PARSE_ERROR;
                 }
                 break;
@@ -1109,7 +1115,7 @@ static PARSE_STATUS extract_assignment(Env* env, Uast_assignment** assign, Tk_vi
 
     switch (try_extract_expression(env, &(*assign)->rhs, tokens, false)) {
         case PARSE_EXPR_NONE:
-            msg_expected_expression(env->file_text, *tokens);
+            msg_expected_expression(env->file_text, *tokens, "");
             return PARSE_ERROR;
         case PARSE_EXPR_ERROR:
             return PARSE_ERROR;
@@ -1122,7 +1128,7 @@ static PARSE_STATUS extract_assignment(Env* env, Uast_assignment** assign, Tk_vi
 static Uast_condition* extract_condition(Env* env, Tk_view* tokens) {
     Uast_expr* cond_child;
     if (PARSE_EXPR_OK != try_extract_expression(env, &cond_child, tokens, false)) {
-        todo();
+        todo(); // TODO: expected failure test for this
     }
 
     Uast_operator* cond_oper = NULL;
@@ -1495,7 +1501,7 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(
                 }
                 return PARSE_EXPR_ERROR;
             case PARSE_EXPR_NONE:
-                msg_expected_expression(env->file_text, *tokens);
+                msg_expected_expression(env->file_text, *tokens, "");
                 return PARSE_EXPR_ERROR;
         }
         if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
@@ -1565,6 +1571,28 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(
         *result = uast_wrap_struct_literal(struct_lit);
     } else if (tk_view_front(*tokens).type == TOKEN_NONTYPE) {
         return PARSE_EXPR_NONE;
+    } else if (tk_view_front(*tokens).type == TOKEN_SINGLE_MINUS) {
+        Token minus_token = {0};
+        try(try_consume(&minus_token, tokens, TOKEN_SINGLE_MINUS));
+        Uast_number* lhs = uast_number_new(minus_token.pos, 0);
+
+        Uast_expr* rhs = NULL;
+        switch (try_extract_expression_piece(env, &rhs, tokens, defer_sym_add)) {
+            case PARSE_EXPR_OK:
+                break;
+            case PARSE_EXPR_NONE:
+                msg_expected_expression(env->file_text, *tokens, "after - sign");
+            case PARSE_EXPR_ERROR:
+                return PARSE_EXPR_ERROR;
+            default:
+                unreachable("");
+        }
+        *result = uast_wrap_operator(uast_wrap_binary(uast_binary_new(
+            uast_get_pos_expr(rhs),
+            uast_wrap_literal(uast_wrap_number(lhs)),
+            rhs,
+            TOKEN_SINGLE_MINUS
+        )));
     } else {
         return PARSE_EXPR_NONE;
     }
@@ -1666,7 +1694,7 @@ static PARSE_EXPR_STATUS try_extract_expression(Env* env, Uast_expr** result, Tk
                 case PARSE_EXPR_OK:
                     break;
                 case PARSE_EXPR_NONE: {
-                    msg_expected_expression(env->file_text, *tokens);
+                    msg_expected_expression(env->file_text, *tokens, "");
                     return PARSE_EXPR_ERROR;
                 }
                 case PARSE_EXPR_ERROR: {
@@ -1690,7 +1718,7 @@ static PARSE_EXPR_STATUS try_extract_expression(Env* env, Uast_expr** result, Tk
                 case PARSE_EXPR_OK:
                     break;
                 case PARSE_EXPR_NONE: {
-                    msg_expected_expression(env->file_text, *tokens);
+                    msg_expected_expression(env->file_text, *tokens, "");
                     return PARSE_EXPR_ERROR;
                 }
                 case PARSE_EXPR_ERROR: {

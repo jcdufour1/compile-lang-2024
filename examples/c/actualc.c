@@ -47,10 +47,17 @@ void print_token(Token token1) {
     printf("%d\n", token1.type);
 }
 
+static int get_num(void) {
+    return 7;
+}
+
 int main() {
     Token token1 = {0};
     token1.type = 0;
     printf("%p\n", 'c');
+
+    int num = 8* -get_num();
+    printf("%d\n", num);
 
     return 0;
 }

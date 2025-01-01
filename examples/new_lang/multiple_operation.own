@@ -19,6 +19,24 @@ fn part_2() {
             printf("no2\n")
         }
     }
+
+    {
+        let num i32 = 7
+        if -1 == num {
+            printf("no3\n")
+        } else {
+            printf("yes3\n")
+        }
+    }
+
+    {
+        let num i32 = -1
+        if -1 == num {
+            printf("yes4\n")
+        } else {
+            printf("no4\n")
+        }
+    }
 }
 
 fn main() i32 {
