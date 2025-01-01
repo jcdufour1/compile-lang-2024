@@ -238,8 +238,7 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
         case UAST_VOID: {
             Uast_void* old_void = uast_unwrap_void(literal);
             return tast_wrap_void(tast_void_new(
-                old_void->pos,
-                0
+                old_void->pos
             ));
         }
         case UAST_CHAR: {

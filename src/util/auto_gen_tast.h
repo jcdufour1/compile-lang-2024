@@ -250,8 +250,6 @@ static Tast_type tast_gen_char(void) {
 static Tast_type tast_gen_void(void) {
     Tast_type lang_void = {.name = tast_name_new("literal", "void", false)};
 
-    append_member(&lang_void.members, "int", "dummy");
-
     return lang_void;
 }
 

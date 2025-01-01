@@ -22,15 +22,6 @@
 //fn do_thing(num i32) {
 //}
 
-// TODO: test for
-//struct Token {
-//    num i32
-//}
-//
-//fn do_thing(token* Token) {
-//    let num i32 = deref(token).num
-//}
-
 // TODO: actually use newline to end statement depending on last token of line of line
 // TODO: expected failure case for invalid type in extern "c" function
 // TODO: char literal with escape
