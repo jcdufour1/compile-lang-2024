@@ -37,7 +37,7 @@ static PARSE_STATUS try_extract_variable_declaration(
                        // until the next extract_block call
     bool add_to_sym_table
 );
-static Uast_condition* extract_condition(Env* env, Tk_view* tokens);
+static PARSE_EXPR_STATUS extract_condition(Env* env, Uast_condition**, Tk_view* tokens);
 
 static bool try_consume(Token* result, Tk_view* tokens, TOKEN_TYPE type) {
     Token temp;
@@ -908,7 +908,18 @@ static PARSE_STATUS extract_for_range_internal(Env* env, Uast_for_range* for_loo
 
 static PARSE_STATUS extract_for_with_cond(Env* env, Uast_for_with_cond** for_new, Uast_for_range* for_range, Tk_view* tokens) {
     *for_new = uast_for_with_cond_new(for_range->pos, NULL, NULL);
-    (*for_new)->condition = extract_condition(env, tokens);
+    
+    switch (extract_condition(env, &(*for_new)->condition, tokens)) {
+        case PARSE_EXPR_OK:
+            break;
+        case PARSE_EXPR_NONE:
+            msg_expected_expression(env->file_text, *tokens, "");
+            return PARSE_ERROR;
+        case PARSE_EXPR_ERROR:
+            return PARSE_ERROR;
+        default:
+            unreachable("");
+    }
     return extract_block(env, &(*for_new)->body, tokens, false);
 }
 
@@ -1129,10 +1140,17 @@ static PARSE_STATUS extract_assignment(Env* env, Uast_assignment** assign, Tk_vi
     unreachable("");
 }
 
-static Uast_condition* extract_condition(Env* env, Tk_view* tokens) {
+static PARSE_EXPR_STATUS extract_condition(Env* env, Uast_condition** result, Tk_view* tokens) {
     Uast_expr* cond_child;
-    if (PARSE_EXPR_OK != try_extract_expression(env, &cond_child, tokens, false)) {
-        todo(); // TODO: expected failure test for this
+    switch (try_extract_expression(env, &cond_child, tokens, false)) {
+        case PARSE_EXPR_OK:
+            break;
+        case PARSE_EXPR_ERROR:
+            return PARSE_EXPR_ERROR;
+        case PARSE_EXPR_NONE:
+            return PARSE_EXPR_NONE;
+        default:
+            unreachable("");
     }
 
     Uast_operator* cond_oper = NULL;
@@ -1155,8 +1173,8 @@ static Uast_condition* extract_condition(Env* env, Tk_view* tokens) {
             unreachable(UAST_FMT"\n", uast_print(uast_wrap_expr(cond_child)));
     }
 
-    Uast_condition* condition = uast_condition_new(uast_get_pos_expr(cond_child), cond_oper);
-    return condition;
+    *result = uast_condition_new(uast_get_pos_expr(cond_child), cond_oper);
+    return PARSE_EXPR_OK;
 }
 
 static void if_else_chain_consume_newline(Tk_view* tokens) {
@@ -1181,7 +1199,18 @@ static PARSE_STATUS extract_if_else_chain(Env* env, Uast_if_else_chain** if_else
 
     Uast_if* if_statement = uast_if_new(if_start_token.pos, NULL, NULL);
     if_statement = uast_if_new(if_start_token.pos, NULL, NULL);
-    if_statement->condition = extract_condition(env, tokens);
+    
+    switch (extract_condition(env, &if_statement->condition, tokens)) {
+        case PARSE_EXPR_OK:
+            break;
+        case PARSE_EXPR_ERROR:
+            return PARSE_ERROR;
+        case PARSE_EXPR_NONE:
+            msg_expected_expression(env->file_text, *tokens, "");
+            return PARSE_ERROR;
+        default:
+            unreachable("");
+    }
     if (PARSE_OK != extract_block(env, &if_statement->body, tokens, false)) {
         return PARSE_ERROR;
     }
@@ -1192,7 +1221,17 @@ static PARSE_STATUS extract_if_else_chain(Env* env, Uast_if_else_chain** if_else
         if_statement = uast_if_new(if_start_token.pos, NULL, NULL);
 
         if (try_consume(&if_start_token, tokens, TOKEN_IF)) {
-            if_statement->condition = extract_condition(env, tokens);
+            switch (extract_condition(env, &if_statement->condition, tokens)) {
+                case PARSE_EXPR_OK:
+                    break;
+                case PARSE_EXPR_ERROR:
+                    return PARSE_ERROR;
+                case PARSE_EXPR_NONE:
+                    msg_expected_expression(env->file_text, *tokens, "");
+                    return PARSE_ERROR;
+                default:
+                    unreachable("");
+            }
         } else {
             if_statement->condition = uast_condition_new(if_start_token.pos, NULL);
             if_statement->condition->child = uast_condition_get_default_child(uast_wrap_literal(

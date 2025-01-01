@@ -12,8 +12,6 @@
 // type Token {
 //
 
-// TODO: remove dummy members
-
 // TODO: test for
 //struct Token {
 //    num i32

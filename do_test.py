@@ -90,6 +90,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_enum_subtype_access.own": ["invalid-enum-member"],
     EXPECTED_FAIL_EXAMPLES_DIR + "mismatched_literal_types_to_binary.own": ["binary-mismatched-types"],
     EXPECTED_FAIL_EXAMPLES_DIR + "semantic_error_in_return_expr.own": ["undefined-symbol"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "parse_error_in_if_condition.own": ["expected-expression"],
     EXPECTED_FAIL_EXAMPLES_DIR + "struct_literal_assign_parse_errors.own": ["parser-expected", "parser-expected", "expected-expression", "parser-expected", "parser-expected"],
 }
 
