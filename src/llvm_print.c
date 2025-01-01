@@ -178,7 +178,7 @@ Str_view llvm_struct_literal_print_internal(const Llvm_struct_literal* lit, int 
     string_extend_cstr(&print_arena, &buf, "\n");
 
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-        Str_view memb_text = tast_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);
+        Str_view memb_text = tast_expr_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&print_arena, &buf, memb_text);
     }
 
@@ -475,7 +475,7 @@ Str_view llvm_struct_lit_def_print_internal(const Llvm_struct_lit_def* def, int 
     string_extend_strv_indent(&print_arena, &buf, def->name, indent);
     extend_lang_type(&buf, def->lang_type, true);
     for (size_t idx = 0; idx < def->members.info.count; idx++) {
-        Str_view memb_text = llvm_print_internal(vec_at(&def->members, idx), indent);
+        Str_view memb_text = llvm_expr_print_internal(vec_at(&def->members, idx), indent);
         string_extend_strv(&print_arena, &buf, memb_text);
     }
 

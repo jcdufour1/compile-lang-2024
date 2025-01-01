@@ -1056,11 +1056,11 @@ static void tast_emit_struct_literal(const Env* env, String* output, const Tast_
 
     size_t is_first = true;
     for (size_t idx = 0; idx < lit_def->members.info.count; idx++) {
-        const Tast* memb_literal = vec_at(&lit_def->members, idx);
+        const Tast_expr* memb_literal = vec_at(&lit_def->members, idx);
         if (!is_first) {
             vec_append(&a_main, output, ',');
         }
-        tast_extend_literal_decl(env, output, tast_unwrap_literal_const(tast_unwrap_expr_const(memb_literal)), false);
+        tast_extend_literal_decl(env, output, tast_unwrap_literal_const(memb_literal), false);
         is_first = false;
     }
 
@@ -1077,11 +1077,11 @@ static void emit_struct_literal(const Env* env, String* output, const Llvm_struc
 
     size_t is_first = true;
     for (size_t idx = 0; idx < lit_def->members.info.count; idx++) {
-        const Llvm* memb_literal = vec_at(&lit_def->members, idx);
+        const Llvm_expr* memb_literal = vec_at(&lit_def->members, idx);
         if (!is_first) {
             vec_append(&a_main, output, ',');
         }
-        extend_literal_decl(env, output, llvm_unwrap_literal_const(llvm_unwrap_expr_const(memb_literal)), false);
+        extend_literal_decl(env, output, llvm_unwrap_literal_const(memb_literal), false);
         is_first = false;
     }
 

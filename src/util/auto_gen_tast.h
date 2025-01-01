@@ -289,7 +289,7 @@ static Tast_type tast_gen_function_call(void) {
 static Tast_type tast_gen_struct_literal(void) {
     Tast_type lit = {.name = tast_name_new("expr", "struct_literal", false)};
 
-    append_member(&lit.members, "Tast_vec", "members");
+    append_member(&lit.members, "Tast_expr_vec", "members");
     append_member(&lit.members, "Str_view", "name");
     append_member(&lit.members, "Lang_type", "lang_type");
 
@@ -383,7 +383,7 @@ static Tast_type tast_gen_string_def(void) {
 static Tast_type tast_gen_struct_lit_def(void) {
     Tast_type def = {.name = tast_name_new("literal_def", "struct_lit_def", false)};
 
-    append_member(&def.members, "Tast_vec", "members");
+    append_member(&def.members, "Tast_expr_vec", "members");
     append_member(&def.members, "Str_view", "name");
     append_member(&def.members, "Lang_type", "lang_type");
 

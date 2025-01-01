@@ -524,8 +524,6 @@ bool try_set_struct_literal_assignment_types(
 ) {
     Uast_def* struct_def_;
     try(usymbol_lookup(&struct_def_, env, dest_lang_type.str));
-    // TODO: use dest_lang_type (below):
-    //try(usymbol_lookup(&struct_def_, env, dest_lang_type.str));
     switch (struct_def_->type) {
         case TAST_STRUCT_DEF:
             break;
@@ -542,7 +540,7 @@ bool try_set_struct_literal_assignment_types(
     }
     Uast_struct_def* struct_def = uast_unwrap_struct_def(struct_def_);
     
-    Tast_vec new_literal_members = {0};
+    Tast_expr_vec new_literal_members = {0};
     for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
         //log(LOG_DEBUG, "%zu\n", idx);
         Uast* memb_sym_def_ = vec_at(&struct_def->base.members, idx);
@@ -578,7 +576,7 @@ bool try_set_struct_literal_assignment_types(
             return false;
         }
 
-        vec_append(&a_main, &new_literal_members, tast_wrap_expr(tast_wrap_literal(assign_memb_sym_rhs)));
+        vec_append(&a_main, &new_literal_members, tast_wrap_literal(assign_memb_sym_rhs));
     }
 
     Tast_struct_literal* new_lit = tast_struct_literal_new(

@@ -279,7 +279,7 @@ static Llvm_type llvm_gen_function_call(void) {
 static Llvm_type llvm_gen_struct_literal(void) {
     Llvm_type lit = {.name = llvm_name_new("expr", "struct_literal", false)};
 
-    append_member(&lit.members, "Tast_vec", "members");
+    append_member(&lit.members, "Tast_expr_vec", "members");
     append_member(&lit.members, "Str_view", "name");
     append_member(&lit.members, "Lang_type", "lang_type");
     append_member(&lit.members, "Llvm_id", "llvm_id");
@@ -394,7 +394,7 @@ static Llvm_type llvm_gen_string_def(void) {
 static Llvm_type llvm_gen_struct_lit_def(void) {
     Llvm_type def = {.name = llvm_name_new("literal_def", "struct_lit_def", false)};
 
-    append_member(&def.members, "Llvm_vec", "members");
+    append_member(&def.members, "Llvm_expr_vec", "members");
     append_member(&def.members, "Str_view", "name");
     append_member(&def.members, "Lang_type", "lang_type");
     append_member(&def.members, "Llvm_id", "llvm_id");
