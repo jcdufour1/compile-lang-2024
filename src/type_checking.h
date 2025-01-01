@@ -43,7 +43,7 @@ bool try_set_unary_types(Env* env, Tast_expr** new_tast, Uast_unary* unary);
 bool try_set_struct_literal_assignment_types(
     Env* env,
     Tast** new_tast,
-    const Tast* lhs,
+    Lang_type dest_lang_type,
     Uast_struct_literal* struct_literal,
     Pos assign_pos
 );

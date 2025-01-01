@@ -157,8 +157,9 @@ static void msg_invalid_return_type_internal(const char* file, int line, const E
 
 typedef enum {
     CHECK_ASSIGN_OK,
-    CHECK_ASSIGN_INVALID, // error was not printed to the user (caller should print error)
-    CHECK_ASSIGN_ERROR, // error was printed
+    CHECK_ASSIGN_INVALID, // error was not printed to the user (caller should print error),
+                          // and new_src is valid for printing purposes
+    CHECK_ASSIGN_ERROR, // error was printed, and new_src is not valid for printing purposes
 } CHECK_ASSIGN_STATUS;
 
 CHECK_ASSIGN_STATUS check_generic_assignment_finish(
@@ -189,7 +190,7 @@ CHECK_ASSIGN_STATUS check_generic_assignment_finish(
 CHECK_ASSIGN_STATUS check_generic_assignment(
     Env* env,
     Tast_expr** new_src,
-    const Tast* dest,
+    Lang_type dest_lang_type,
     Uast_expr* src,
     Pos pos
 ) {
@@ -197,7 +198,7 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
         Tast* new_src_ = NULL;
         // TODO: do this in check_generic_assignment
         if (!try_set_struct_literal_assignment_types(
-            env, &new_src_, dest, uast_unwrap_struct_literal(src), pos
+            env, &new_src_, dest_lang_type, uast_unwrap_struct_literal(src), pos
         )) {
             return CHECK_ASSIGN_ERROR;
         }
@@ -208,7 +209,7 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
         }
     }
 
-    return check_generic_assignment_finish(env, new_src, tast_get_lang_type(dest), *new_src);
+    return check_generic_assignment_finish(env, new_src, dest_lang_type, *new_src);
 }
 
 Tast_literal* try_set_literal_types(Uast_literal* literal) {
@@ -517,15 +518,14 @@ bool try_set_operator_types(Env* env, Tast_expr** new_tast, Uast_operator* opera
 bool try_set_struct_literal_assignment_types(
     Env* env,
     Tast** new_tast,
-    const Tast* lhs,
+    Lang_type dest_lang_type,
     Uast_struct_literal* struct_literal,
     Pos assign_pos
 ) {
-    Uast_def* lhs_var_def_;
-    try(usymbol_lookup(&lhs_var_def_, env, get_tast_name(lhs)));
-    Uast_variable_def* lhs_var_def = uast_unwrap_variable_def(lhs_var_def_);
     Uast_def* struct_def_;
-    try(usymbol_lookup(&struct_def_, env, lhs_var_def->lang_type.str));
+    try(usymbol_lookup(&struct_def_, env, dest_lang_type.str));
+    // TODO: use dest_lang_type (below):
+    //try(usymbol_lookup(&struct_def_, env, dest_lang_type.str));
     switch (struct_def_->type) {
         case TAST_STRUCT_DEF:
             break;
@@ -564,29 +564,28 @@ bool try_set_struct_literal_assignment_types(
                 "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
                 str_view_print(memb_sym_def->name), str_view_print(memb_sym_piece_untyped->name)
             );
-            msg(
-                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, lhs_var_def->pos,
-                "variable `"STR_VIEW_FMT"` is defined as struct `"LANG_TYPE_FMT"`\n",
-                str_view_print(lhs_var_def->name), lang_type_print(lhs_var_def->lang_type)
-            );
-            msg(
-                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, memb_sym_def->pos,
-                "member symbol `"STR_VIEW_FMT"` of struct `"STR_VIEW_FMT"` defined here\n", 
-                str_view_print(memb_sym_def->name), lang_type_print(lhs_var_def->lang_type)
-            );
+            // TODO: consider how to handle this
+            //msg(
+            //    LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, lhs_var_def->pos,
+            //    "variable `"STR_VIEW_FMT"` is defined as struct `"LANG_TYPE_FMT"`\n",
+            //    str_view_print(lhs_var_def->name), lang_type_print(lhs_var_def->lang_type)
+            //);
+            //msg(
+            //    LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, memb_sym_def->pos,
+            //    "member symbol `"STR_VIEW_FMT"` of struct `"STR_VIEW_FMT"` defined here\n", 
+            //    str_view_print(memb_sym_def->name), lang_type_print(lhs_var_def->lang_type)
+            //);
             return false;
         }
 
         vec_append(&a_main, &new_literal_members, tast_wrap_expr(tast_wrap_literal(assign_memb_sym_rhs)));
     }
 
-    assert(lhs_var_def->lang_type.str.count > 0);
-
     Tast_struct_literal* new_lit = tast_struct_literal_new(
         struct_literal->pos,
         new_literal_members,
         struct_literal->name,
-        lhs_var_def->lang_type
+        dest_lang_type
     );
     *new_tast = tast_wrap_expr(tast_wrap_struct_literal(new_lit));
 
@@ -727,14 +726,23 @@ bool try_set_assignment_types(Env* env, Tast_assignment** new_assign, Uast_assig
     }
 
     Tast_expr* new_rhs = NULL;
-    if (CHECK_ASSIGN_OK != check_generic_assignment(env, &new_rhs, new_lhs, assignment->rhs, assignment->pos)) {
-        msg(
-            LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
-            assignment->pos,
-            "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
-            lang_type_print(tast_get_lang_type_expr(new_rhs)), lang_type_print(tast_get_lang_type(new_lhs))
-        );
-        return false;
+    switch (check_generic_assignment(
+        env, &new_rhs, tast_get_lang_type(new_lhs), assignment->rhs, assignment->pos
+    )) {
+        case CHECK_ASSIGN_OK:
+            break;
+        case CHECK_ASSIGN_INVALID:
+            msg(
+                LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
+                assignment->pos,
+                "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
+                lang_type_print(tast_get_lang_type_expr(new_rhs)), lang_type_print(tast_get_lang_type(new_lhs))
+            );
+            return false;
+        case CHECK_ASSIGN_ERROR:
+            return false;
+        default:
+            unreachable("");
     }
 
     *new_assign = tast_assignment_new(assignment->pos, new_lhs, new_rhs);
@@ -806,31 +814,12 @@ bool try_set_function_call_types(Env* env, Tast_function_call** new_call, Uast_f
     Tast_expr_vec new_args = {0};
     for (size_t arg_idx = 0; arg_idx < fun_call->args.info.count; arg_idx++) {
         Uast_variable_def* corres_param = vec_at(&params->params, params_idx);
-        Uast_expr* argument = vec_at(&fun_call->args, arg_idx);
+        Uast_expr* arg = vec_at(&fun_call->args, arg_idx);
         Tast_expr* new_arg = NULL;
 
         if (!corres_param->is_variadic) {
             params_idx++;
         }
-
-        //Tast* new_arg_ = NULL;
-        if (argument->type == UAST_STRUCT_LITERAL) {
-            todo();
-            //try(try_set_struct_literal_assignment_types(
-            //    env,
-            //    &new_arg_,
-            //    tast_wrap_def(tast_wrap_variable_def(corres_param)),
-            //    tast_unwrap_struct_literal(argument),
-            //    fun_call->pos
-            //));
-            //new_arg = tast_unwrap_expr(new_arg_);
-        } else {
-            if (!try_set_expr_types(env, &new_arg, argument)) {
-                status = false;
-                continue;
-            }
-        }
-        assert(new_arg);
 
         if (lang_type_is_equal(corres_param->lang_type, lang_type_new_from_cstr("any", 0))) {
             if (corres_param->is_variadic) {
@@ -848,7 +837,13 @@ bool try_set_function_call_types(Env* env, Tast_function_call** new_call, Uast_f
                 todo();
             }
         } else {
-            switch (check_generic_assignment(env, &new_arg, corres_param, new_arg, tast_get_pos_expr(new_arg))) {
+            switch (check_generic_assignment(
+                env,
+                &new_arg,
+                corres_param->lang_type,
+                arg,
+                uast_get_pos_expr(arg)
+            )) {
                 case CHECK_ASSIGN_OK:
                     break;
                 case CHECK_ASSIGN_INVALID:
@@ -1268,17 +1263,19 @@ bool try_set_lang_type_types(
 bool try_set_return_types(Env* env, Tast_return** new_tast, Uast_return* rtn) {
     *new_tast = NULL;
 
-    Tast_expr* new_child;
-    // TODO: do this in check_generic_assignment
-    if (!try_set_expr_types(env, &new_child, rtn->child)) {
-        return false;
-    }
+    const Lang_type fun_rtn_type = get_parent_function_return_type(env);
 
-    Lang_type dest_lang_type = get_parent_function_return_type(env);
-
-    if (CHECK_ASSIGN_OK != check_generic_assignment(env, &new_child, dest_lang_type, new_child)) {
-        msg_invalid_return_type(env, rtn->pos, new_child, rtn->is_auto_inserted);
-        return false;
+    Tast_expr* new_child = NULL;
+    switch (check_generic_assignment(env, &new_child, fun_rtn_type, rtn->child, rtn->pos)) {
+        case CHECK_ASSIGN_OK:
+            break;
+        case CHECK_ASSIGN_INVALID:
+            msg_invalid_return_type(env, rtn->pos, new_child, rtn->is_auto_inserted);
+            return false;
+        case CHECK_ASSIGN_ERROR:
+            return false;
+        default:
+            unreachable("");
     }
 
     *new_tast = tast_return_new(rtn->pos, new_child, rtn->is_auto_inserted);
