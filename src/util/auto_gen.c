@@ -31,7 +31,6 @@
 //    let num i32 = deref(token).num
 //}
 
-// TODO: negative numbers as actual language feature
 // TODO: expected failure test with more than one non-variadic parameter in function decl or def
 // TODO: tast_block_new, etc. should have arguments for every item
 // TODO: actually use newline to end statement depending on last token of line of line
