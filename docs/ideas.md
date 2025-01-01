@@ -177,18 +177,18 @@ fn void main() {
         println("file could not be opened:", err_text(file));
         return;
     }
-    // file is now a normal file
+    // file is a normal file
     ...
 }
 
 function returning an error (idea 5)
 '''c
 fn void main() {
-    File file = open("hello.txt", FILE::READ) orelse {
-        println("file could not be opened:", err_text(file));
+    File file = open("hello.txt", FILE::READ) orelse(error) {
+        println("file could not be opened:", error);
         return;
     }
-    // file is now a normal file
+    // file is a normal file
     ...
 }
 
@@ -282,5 +282,42 @@ fn main() i32 {
     let num1: i32 = 89;
     let num2: i32 = 76;
     println("num1: {num1 + num2}");
+}
+'''
+
+
+# function overloading (idea 1)
+'''c
+fn string_append(darray Darray<(u8*)>, character overload u8) {
+}
+
+fn string_append(darray Darray<(u8*)>, string overload Darray<(u8)>) {
+}
+
+fn string_append(darray Darray<(u8*)>, string overload [u8]) {
+}
+'''
+
+# function overloading (idea 2)
+'''c
+fn string_append<(ItemType = overload)>(string Darray<(u8*)>) {
+}
+'''
+
+# function overloading (idea 3)
+'''c
+fn string_append overload u8(string Darray<(u8)>, overload item) {
+}
+
+fn string_append overload Darray<(u8)>(string Darray<(u8)>, overload item) {
+}
+
+fn string_append overload [u8](string Darray<(u8)>, overload item) {
+}
+'''
+
+# should this be used instead for easier grepping?
+'''c
+type Token struct {
 }
 '''
