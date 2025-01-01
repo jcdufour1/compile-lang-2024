@@ -1,7 +1,7 @@
 
 extern("c") fn printf(format_string u8*, args any...) i32
 
-raw_union Union {
+type Union raw_union {
     num i32
     cstr u8*
 }

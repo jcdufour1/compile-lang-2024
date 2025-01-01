@@ -126,21 +126,39 @@ static PARSE_STATUS msg_redefinition_of_symbol(const Env* env, const Uast_def* n
 }
 
 static bool starts_with_struct_def(Tk_view tokens) {
-    if (tokens.count < 1) {
+    if (tokens.count < 3) {
+        return false;
+    }
+    if (!try_consume(NULL, &tokens, TOKEN_TYPE_DEF)) {
+        return false;
+    }
+    if (!try_consume(NULL, &tokens, TOKEN_SYMBOL)) {
         return false;
     }
     return tk_view_front(tokens).type == TOKEN_STRUCT;
 }
 
 static bool starts_with_raw_union_definition(Tk_view tokens) {
-    if (tokens.count < 1) {
+    if (tokens.count < 3) {
+        return false;
+    }
+    if (!try_consume(NULL, &tokens, TOKEN_TYPE_DEF)) {
+        return false;
+    }
+    if (!try_consume(NULL, &tokens, TOKEN_SYMBOL)) {
         return false;
     }
     return tk_view_front(tokens).type == TOKEN_RAW_UNION;
 }
 
 static bool starts_with_enum_definition(Tk_view tokens) {
-    if (tokens.count < 1) {
+    if (tokens.count < 3) {
+        return false;
+    }
+    if (!try_consume(NULL, &tokens, TOKEN_TYPE_DEF)) {
+        return false;
+    }
+    if (!try_consume(NULL, &tokens, TOKEN_SYMBOL)) {
         return false;
     }
     return tk_view_front(tokens).type == TOKEN_ENUM;
@@ -420,6 +438,8 @@ static bool can_end_statement(Token token) {
             return false;
         case TOKEN_GREATER_OR_EQUAL:
             return false;
+        case TOKEN_TYPE_DEF:
+            return false;
     }
     unreachable("");
 }
@@ -553,6 +573,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_LESS_OR_EQUAL:
             return false;
         case TOKEN_GREATER_OR_EQUAL:
+            return false;
+        case TOKEN_TYPE_DEF:
             return false;
     }
     unreachable("");
@@ -727,13 +749,11 @@ static PARSE_STATUS extract_struct_base_def(Env* env, Ustruct_def_base* base, St
 }
 
 static PARSE_STATUS extract_struct_def(Env* env, Uast_struct_def** struct_def, Tk_view* tokens) {
-    try(try_consume(NULL, tokens, TOKEN_STRUCT));
+    try(try_consume(NULL, tokens, TOKEN_TYPE_DEF));
 
     Token name = {0};
-    if (!try_consume(&name, tokens, TOKEN_SYMBOL)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), TOKEN_SYMBOL);
-        return PARSE_ERROR;
-    }
+    try(try_consume(&name, tokens, TOKEN_SYMBOL));
+    try(try_consume(NULL, tokens, TOKEN_STRUCT));
 
     Ustruct_def_base base = {0};
     if (PARSE_OK != extract_struct_base_def(env, &base, name.text, tokens)) {
@@ -749,9 +769,11 @@ static PARSE_STATUS extract_struct_def(Env* env, Uast_struct_def** struct_def, T
 }
 
 static PARSE_STATUS extract_raw_union_def(Env* env, Uast_raw_union_def** raw_union_def, Tk_view* tokens) {
-    try(try_consume(NULL, tokens, TOKEN_RAW_UNION));
+    try(try_consume(NULL, tokens, TOKEN_TYPE_DEF));
 
-    Token name = tk_view_consume(tokens);
+    Token name = {0};
+    try(try_consume(&name, tokens, TOKEN_SYMBOL));
+    try(try_consume(NULL, tokens, TOKEN_RAW_UNION));
 
     Ustruct_def_base base = {0};
     if (PARSE_OK != extract_struct_base_def(env, &base, name.text, tokens)) {
@@ -767,9 +789,11 @@ static PARSE_STATUS extract_raw_union_def(Env* env, Uast_raw_union_def** raw_uni
 }
 
 static PARSE_STATUS extract_enum_def(Env* env, Uast_enum_def** enum_def, Tk_view* tokens) {
-    try(try_consume(NULL, tokens, TOKEN_ENUM));
+    try(try_consume(NULL, tokens, TOKEN_TYPE_DEF));
 
-    Token name = tk_view_consume(tokens);
+    Token name = {0};
+    try(try_consume(&name, tokens, TOKEN_SYMBOL));
+    try(try_consume(NULL, tokens, TOKEN_ENUM));
 
     Ustruct_def_base base = {0};
     if (PARSE_OK != extract_struct_base_def(env, &base, name.text, tokens)) {
@@ -1177,7 +1201,7 @@ static PARSE_STATUS extract_if_else_chain(Env* env, Uast_if_else_chain** if_else
 static PARSE_EXPR_STATUS extract_statement(Env* env, Uast** child, Tk_view* tokens, bool defer_sym_add) {
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
-    Uast* lhs;
+    Uast* lhs = NULL;
     if (starts_with_struct_def(*tokens)) {
         Uast_struct_def* struct_def;
         if (PARSE_OK != extract_struct_def(env, &struct_def, tokens)) {

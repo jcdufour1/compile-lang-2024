@@ -1,5 +1,5 @@
 
-struct Number {
+type Number struct {
     num: 
     file: u8*
 }

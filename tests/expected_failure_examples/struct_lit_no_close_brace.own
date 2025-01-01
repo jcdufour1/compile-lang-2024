@@ -1,5 +1,5 @@
 
-struct Div {
+type Div struct {
     numerator: i32
     denominator: i32
 }

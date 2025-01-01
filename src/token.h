@@ -72,6 +72,7 @@ typedef enum {
     TOKEN_CONTINUE,
     TOKEN_RAW_UNION,
     TOKEN_ENUM,
+    TOKEN_TYPE_DEF,
 
     // comment
     TOKEN_COMMENT,
@@ -188,6 +189,8 @@ static inline bool token_is_literal(Token token) {
             return true;
         case TOKEN_CONTINUE:
             return false;
+        case TOKEN_TYPE_DEF:
+            return false;
     }
     unreachable("");
 }
@@ -294,6 +297,8 @@ static inline bool token_is_operator(Token token) {
             return true;
         case TOKEN_GREATER_OR_EQUAL:
             return true;
+        case TOKEN_TYPE_DEF:
+            return false;
     }
     unreachable(TOKEN_FMT"\n", token_print(token));
 }
@@ -408,6 +413,8 @@ static inline bool token_is_closing(Token curr_token) {
             return false;
         case TOKEN_GREATER_OR_EQUAL:
             return false;
+        case TOKEN_TYPE_DEF:
+            return false;
     }
     unreachable("");
 }
@@ -513,6 +520,8 @@ static inline bool token_is_opening(Token curr_token) {
         case TOKEN_LESS_OR_EQUAL:
             return false;
         case TOKEN_GREATER_OR_EQUAL:
+            return false;
+        case TOKEN_TYPE_DEF:
             return false;
     }
     unreachable("");

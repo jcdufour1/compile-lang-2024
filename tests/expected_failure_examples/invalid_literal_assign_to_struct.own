@@ -1,6 +1,6 @@
 extern("c") fn printf(str_to_print_2: u8*, args: any...) i32
 
-struct Div {
+type Div struct {
     numerator: i32
     denominator: i32
 }

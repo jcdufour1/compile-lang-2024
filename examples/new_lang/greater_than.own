@@ -125,7 +125,7 @@ fn do_var_both() {
     let div Div
 }
 
-struct Div {
+type Div struct {
     a i32
     b i32
 }

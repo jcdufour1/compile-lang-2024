@@ -1,6 +1,6 @@
 
 
-enum Token_type {
+type Token_type enum {
     NUM Token_type
     STRING Token_type
 }

@@ -1,5 +1,5 @@
 
-raw_union Union {
+type Union raw_union {
     num: i32
     cstr: u8*
 }

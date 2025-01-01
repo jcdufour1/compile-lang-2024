@@ -100,6 +100,8 @@ static bool get_next_token(const Env* env, Pos* pos, Token* token, Str_view_col*
             token->type = TOKEN_ENUM;
         } else if (str_view_cstr_is_equal(text, "continue")) {
             token->type = TOKEN_CONTINUE;
+        } else if (str_view_cstr_is_equal(text, "type")) {
+            token->type = TOKEN_TYPE_DEF;
         } else {
             token->text = text;
             token->type = TOKEN_SYMBOL;

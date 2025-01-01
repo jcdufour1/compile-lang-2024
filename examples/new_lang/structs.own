@@ -1,13 +1,13 @@
 
 extern("c") fn printf(format_string u8*, args any...) i32
 
-struct Token {
+type Token struct {
     num i32
     string_data u8*
     div5 Div
 }
 
-struct Div {
+type Div struct {
     numerator i32
     denominator i32
 }

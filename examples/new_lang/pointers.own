@@ -20,7 +20,7 @@ fn operation_2_explicit(num i32*) {
     deref(num) = 2*num + 1
 }
 
-struct Div {
+type Div struct {
     numerator i32
     denominator i32
 }

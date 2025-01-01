@@ -2,33 +2,33 @@
 extern("c") fn puts(str_to_print_2 u8*) 
 extern("c") fn printf(str_to_print_2 u8*, args any...) i32
 
-enum TokenType {
+type TokenType enum {
     number TokenType
     string TokenType
 }
 
-struct Token {
-    type TokenType
+type Token struct {
+    kind TokenType
     number_data i32
     string_data u8*
 }
 
 fn print_token(token Token) {
-    if token.type == TokenType.number {
+    if token.kind == TokenType.number {
         printf("%d\n", token.number_data)
-    } else if token.type == TokenType.string {
+    } else if token.kind == TokenType.string {
         printf("%s\n", token.string_data)
     } else {
         printf("invalid token type\n")
     }
 }
 
-// check that scope rules are followed for enum subtypes
-enum NodeType {
+// check that scope rules are followed for type subtypes enum
+type NodeType enum {
     NONE NodeType
 }
 
-enum LlvmType {
+type LlvmType enum {
     NONE LlvmType
 }
 
@@ -40,13 +40,13 @@ fn main() i32 {
     printf("%d\n", token_type);
 
     let token1 Token
-    token1.type = TokenType.number
+    token1.kind = TokenType.number
     token1.number_data = 87
     token1.string_data = "hello"
     print_token(token1)
 
     let token2 Token
-    token2.type = TokenType.string
+    token2.kind = TokenType.string
     token2.number_data = 87
     token2.string_data = "hello"
     print_token(token2)

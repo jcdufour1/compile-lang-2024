@@ -4,6 +4,14 @@
 #include <auto_gen_uast.h>
 #include <auto_gen_llvm.h>
 
+// TODO: expected failure test for 
+// type struct {
+//
+
+// TODO: expected failure test for 
+// type Token {
+//
+
 // TODO: remove dummy members
 
 // TODO: test for
