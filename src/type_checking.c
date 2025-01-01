@@ -510,8 +510,6 @@ bool try_set_struct_literal_assignment_types(Env* env, Tast** new_tast, const Ua
             unreachable("");
     }
     Uast_struct_def* struct_def = uast_unwrap_struct_def(struct_def_);
-    Lang_type new_lang_type = {.str = struct_def->base.name, .pointer_depth = 0};
-    struct_literal->lang_type = new_lang_type;
     
     Tast_vec new_literal_members = {0};
     for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
@@ -551,7 +549,7 @@ bool try_set_struct_literal_assignment_types(Env* env, Tast** new_tast, const Ua
         vec_append(&a_main, &new_literal_members, tast_wrap_expr(tast_wrap_literal(assign_memb_sym_rhs)));
     }
 
-    assert(struct_literal->lang_type.str.count > 0);
+    assert(lhs_var_def->lang_type.str.count > 0);
 
     Tast_struct_literal* new_lit = tast_struct_literal_new(
         struct_literal->pos,

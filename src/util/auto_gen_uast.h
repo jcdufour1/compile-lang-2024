@@ -248,7 +248,6 @@ static Uast_type uast_gen_struct_literal(void) {
 
     append_member(&lit.members, "Uast_vec", "members");
     append_member(&lit.members, "Str_view", "name");
-    append_member(&lit.members, "Lang_type", "lang_type");
 
     return lit;
 }

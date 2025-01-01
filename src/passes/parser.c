@@ -1448,7 +1448,7 @@ static PARSE_STATUS extract_struct_literal(Env* env, Uast_struct_literal** struc
         return PARSE_ERROR;
     }
 
-    *struct_lit = uast_struct_literal_new(start_token.pos, members, util_literal_name_new(), (Lang_type) {0});
+    *struct_lit = uast_struct_literal_new(start_token.pos, members, util_literal_name_new());
     return PARSE_OK;
 }
 

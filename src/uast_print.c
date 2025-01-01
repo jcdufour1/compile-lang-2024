@@ -138,7 +138,6 @@ Str_view uast_struct_literal_print_internal(const Uast_struct_literal* lit, int 
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "struct_literal", indent);
-    extend_lang_type(&buf, lit->lang_type, true);
     string_extend_strv(&print_arena, &buf, lit->name);
     string_extend_cstr(&print_arena, &buf, "\n");
 
