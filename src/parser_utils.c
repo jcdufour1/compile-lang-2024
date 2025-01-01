@@ -594,23 +594,24 @@ bool try_get_generic_struct_def(const Env* env, Tast_def** def, Tast* tast) {
     }
 }
 
-bool llvm_try_get_generic_struct_def(const Env* env, Tast_def** def, Llvm* llvm) {
+Tast_def* llvm_get_generic_struct_def(const Env* env, Llvm* llvm) {
+    Tast_def* def = NULL;
+
     if (llvm->type == LLVM_EXPR) {
         const Llvm_expr* expr = llvm_unwrap_expr_const(llvm);
         switch (expr->type) {
             case LLVM_STRUCT_LITERAL: {
                 assert(llvm_get_lang_type(llvm).str.count > 0);
-                return symbol_lookup(def, env, llvm_get_lang_type(llvm).str);
+                try(symbol_lookup(&def, env, llvm_get_lang_type(llvm).str));
+                return def;
             }
             case LLVM_SYMBOL_TYPED: {
                 Tast_def* var_def;
                 assert(llvm_get_tast_name(llvm).count > 0);
-                if (!symbol_lookup(&var_def, env, llvm_get_tast_name(llvm))) {
-                    todo();
-                    return false;
-                }
+                try(symbol_lookup(&var_def, env, llvm_get_tast_name(llvm)));
                 assert(tast_get_lang_type_def(var_def).str.count > 0);
-                return symbol_lookup(def, env, tast_get_lang_type_def(var_def).str);
+                try(symbol_lookup(&def, env, tast_get_lang_type_def(var_def).str));
+                return def;
             }
             default:
                 unreachable(LLVM_FMT"\n", llvm_print(llvm));
@@ -621,7 +622,8 @@ bool llvm_try_get_generic_struct_def(const Env* env, Tast_def** def, Llvm* llvm)
     switch (llvm_def->type) {
         case LLVM_VARIABLE_DEF: {
             assert(llvm_get_lang_type_def(llvm_def).str.count > 0);
-            return symbol_lookup(def, env, llvm_get_lang_type_def(llvm_def).str);
+            try(symbol_lookup(&def, env, llvm_get_lang_type_def(llvm_def).str));
+            return def;
         }
         default:
             unreachable("");
@@ -642,10 +644,7 @@ bool try_get_struct_def(const Env* env, Tast_struct_def** struct_def, Tast* tast
 }
 
 bool llvm_try_get_struct_def(const Env* env, Tast_struct_def** struct_def, Llvm* tast) {
-    Tast_def* def = NULL;
-    if (!llvm_try_get_generic_struct_def(env, &def, tast)) {
-        return false;
-    }
+    Tast_def* def = llvm_get_generic_struct_def(env, tast);
     if (def->type != TAST_STRUCT_DEF) {
         return false;
     }

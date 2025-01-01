@@ -505,79 +505,86 @@ bool try_set_operator_types(Env* env, Tast_expr** new_tast, Uast_operator* opera
 }
 
 bool try_set_struct_literal_assignment_types(Env* env, Tast** new_tast, const Uast* lhs, Uast_struct_literal* struct_literal, Pos assign_pos) {
-    (void) env;
-    (void) new_tast;
-    (void) lhs;
-    (void) struct_literal;
-    (void) assign_pos;
-    todo();
-    //Tast_def* lhs_var_def_;
-    //try(usymbol_lookup(&lhs_var_def_, env, get_uast_name(lhs)));
-    //Tast_variable_def* lhs_var_def = tast_unwrap_variable_def(lhs_var_def_);
-    //Tast_def* struct_def_;
-    //try(usymbol_lookup(&struct_def_, env, lhs_var_def->lang_type.str));
-    //switch (struct_def_->type) {
-    //    case TAST_STRUCT_DEF:
-    //        break;
-    //    case TAST_RAW_UNION_DEF:
-    //        // TODO: improve this
-    //        msg(
-    //            LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION, env->file_text,
-    //            assign_pos, "struct literal cannot be assigned to raw_union\n"
-    //        );
-    //        return false;
-    //    default:
-    //        log(LOG_DEBUG, TAST_FMT"\n", tast_print(tast_wrap_def(struct_def_)));
-    //        unreachable("");
-    //}
-    //Tast_struct_def* struct_def = tast_unwrap_struct_def(struct_def_);
-    //Lang_type new_lang_type = {.str = struct_def->base.name, .pointer_depth = 0};
-    //struct_literal->lang_type = new_lang_type;
-    //
-    //Tast_vec new_literal_members = {0};
-    //for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
-    //    //log(LOG_DEBUG, "%zu\n", idx);
-    //    Tast* memb_sym_def_ = vec_at(&struct_def->base.members, idx);
-    //    Tast_variable_def* memb_sym_def = tast_unwrap_variable_def(tast_unwrap_def(memb_sym_def_));
-    //    log(LOG_DEBUG, STR_VIEW_FMT, uast_print(uast_wrap_expr_const(uast_wrap_struct_literal_const(struct_literal))));
-    //    Uast_assignment* assign_memb_sym = uast_unwrap_assignment(vec_at(&struct_literal->members, idx));
-    //    Uast_symbol_untyped* memb_sym_piece_untyped = uast_unwrap_symbol_untyped(uast_unwrap_expr(assign_memb_sym->lhs));
-    //    Tast_expr* new_rhs = NULL;
-    //    if (!try_set_expr_types(env, &new_rhs, assign_memb_sym->rhs)) {
-    //        unreachable("");
-    //    }
-    //    Tast_literal* assign_memb_sym_rhs = tast_unwrap_literal(new_rhs);
+    Uast_def* lhs_var_def_;
+    try(usymbol_lookup(&lhs_var_def_, env, get_uast_name(lhs)));
+    Uast_variable_def* lhs_var_def = uast_unwrap_variable_def(lhs_var_def_);
+    Uast_def* struct_def_;
+    try(usymbol_lookup(&struct_def_, env, lhs_var_def->lang_type.str));
+    switch (struct_def_->type) {
+        case TAST_STRUCT_DEF:
+            break;
+        case TAST_RAW_UNION_DEF:
+            // TODO: improve this
+            msg(
+                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION, env->file_text,
+                assign_pos, "struct literal cannot be assigned to raw_union\n"
+            );
+            return false;
+        default:
+            log(LOG_DEBUG, TAST_FMT"\n", uast_print(uast_wrap_def(struct_def_)));
+            unreachable("");
+    }
+    Uast_struct_def* struct_def = uast_unwrap_struct_def(struct_def_);
+    Lang_type new_lang_type = {.str = struct_def->base.name, .pointer_depth = 0};
+    struct_literal->lang_type = new_lang_type;
+    
+    Tast_vec new_literal_members = {0};
+    for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
+        //log(LOG_DEBUG, "%zu\n", idx);
+        Uast* memb_sym_def_ = vec_at(&struct_def->base.members, idx);
+        Uast_variable_def* memb_sym_def = uast_unwrap_variable_def(uast_unwrap_def(memb_sym_def_));
+        log(LOG_DEBUG, STR_VIEW_FMT, uast_print(uast_wrap_expr_const(uast_wrap_struct_literal_const(struct_literal))));
+        Uast_assignment* assign_memb_sym = uast_unwrap_assignment(vec_at(&struct_literal->members, idx));
+        Uast_symbol_untyped* memb_sym_piece_untyped = uast_unwrap_symbol_untyped(uast_unwrap_expr(assign_memb_sym->lhs));
+        Tast_expr* new_rhs = NULL;
+        if (!try_set_expr_types(env, &new_rhs, assign_memb_sym->rhs)) {
+            unreachable("");
+        }
+        Tast_literal* assign_memb_sym_rhs = tast_unwrap_literal(new_rhs);
 
-    //    *tast_get_lang_type_literal_ref(assign_memb_sym_rhs) = memb_sym_def->lang_type;
-    //    if (!str_view_is_equal(memb_sym_def->name, memb_sym_piece_untyped->name)) {
-    //        msg(
-    //            LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL, env->file_text,
-    //            memb_sym_piece_untyped->pos,
-    //            "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
-    //            str_view_print(memb_sym_def->name), str_view_print(memb_sym_piece_untyped->name)
-    //        );
-    //        msg(
-    //            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, lhs_var_def->pos,
-    //            "variable `"STR_VIEW_FMT"` is defined as struct `"LANG_TYPE_FMT"`\n",
-    //            str_view_print(lhs_var_def->name), lang_type_print(lhs_var_def->lang_type)
-    //        );
-    //        msg(
-    //            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, memb_sym_def->pos,
-    //            "member symbol `"STR_VIEW_FMT"` of struct `"STR_VIEW_FMT"` defined here\n", 
-    //            str_view_print(memb_sym_def->name), lang_type_print(lhs_var_def->lang_type)
-    //        );
-    //        return false;
-    //    }
+        *tast_get_lang_type_literal_ref(assign_memb_sym_rhs) = memb_sym_def->lang_type;
+        if (!str_view_is_equal(memb_sym_def->name, memb_sym_piece_untyped->name)) {
+            msg(
+                LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL, env->file_text,
+                memb_sym_piece_untyped->pos,
+                "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
+                str_view_print(memb_sym_def->name), str_view_print(memb_sym_piece_untyped->name)
+            );
+            msg(
+                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, lhs_var_def->pos,
+                "variable `"STR_VIEW_FMT"` is defined as struct `"LANG_TYPE_FMT"`\n",
+                str_view_print(lhs_var_def->name), lang_type_print(lhs_var_def->lang_type)
+            );
+            msg(
+                LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, memb_sym_def->pos,
+                "member symbol `"STR_VIEW_FMT"` of struct `"STR_VIEW_FMT"` defined here\n", 
+                str_view_print(memb_sym_def->name), lang_type_print(lhs_var_def->lang_type)
+            );
+            return false;
+        }
 
-    //    vec_append_safe(&a_main, &new_literal_members, tast_wrap_expr(tast_wrap_literal(assign_memb_sym_rhs)));
-    //}
+        vec_append(&a_main, &new_literal_members, tast_wrap_expr(tast_wrap_literal(assign_memb_sym_rhs)));
+    }
 
-    //struct_literal->members = new_literal_members;
+    assert(struct_literal->lang_type.str.count > 0);
 
-    //assert(struct_literal->lang_type.str.count > 0);
+    Tast_struct_literal* new_lit = tast_struct_literal_new(
+        struct_literal->pos,
+        new_literal_members,
+        struct_literal->name,
+        lhs_var_def->lang_type
+    );
+    *new_tast = tast_wrap_expr(tast_wrap_struct_literal(new_lit));
 
-    //*new_tast = tast_wrap_expr(tast_wrap_struct_literal(struct_literal));
-    //return true;
+    Tast_struct_lit_def* new_def = tast_struct_lit_def_new(
+        new_lit->pos,
+        new_lit->members,
+        new_lit->name,
+        new_lit->lang_type
+    );
+
+    try(symbol_add(env, tast_wrap_literal_def(tast_wrap_struct_lit_def(new_def))));
+    return true;
 }
 
 bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
@@ -1127,6 +1134,7 @@ bool try_set_struct_def_types(Env* env, Tast_struct_def** new_tast, Uast_struct_
     Struct_def_base new_base = {0};
     bool success = try_set_struct_base_types(env, &new_base, &uast->base);
     *new_tast = tast_struct_def_new(uast->pos, new_base);
+    try(symbol_add(env, tast_wrap_struct_def(*new_tast)));
     return success;
 }
 

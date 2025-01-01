@@ -4,6 +4,10 @@
 
 #include <symbol_table.h>
 
+static void extend_name(String* buf, Str_view name) {
+    string_extend_strv_in_par(&print_arena, buf, name);
+}
+
 void extend_lang_type_to_string(Arena* arena, String* string, Lang_type lang_type, bool surround_in_lt_gt) {
     if (surround_in_lt_gt) {
         vec_append(arena, string, '<');
@@ -574,17 +578,15 @@ Str_view tast_string_def_print_internal(const Tast_string_def* def, int indent) 
 Str_view tast_struct_lit_def_print_internal(const Tast_struct_lit_def* def, int indent) {
     String buf = {0};
 
-    indent += INDENT_WIDTH;
-
-    string_extend_cstr_indent(&print_arena, &buf, "struct_lit_def\n", indent);
-    string_extend_strv_indent(&print_arena, &buf, def->name, indent);
+    string_extend_cstr_indent(&print_arena, &buf, "struct_lit_def", indent);
     extend_lang_type(&buf, def->lang_type, true);
+    extend_name(&buf, def->name);
+    string_extend_cstr(&print_arena, &buf, "\n");
+
     for (size_t idx = 0; idx < def->members.info.count; idx++) {
-        Str_view memb_text = tast_print_internal(vec_at(&def->members, idx), indent);
+        Str_view memb_text = tast_print_internal(vec_at(&def->members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&print_arena, &buf, memb_text);
     }
-
-    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
