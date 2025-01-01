@@ -88,6 +88,8 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "failure_deref_lhs_of_assignment.own": ["assignment-mismatched-types"],
     EXPECTED_FAIL_EXAMPLES_DIR + "deref_non_pointer.own": ["deref_non_pointer"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_enum_subtype_access.own": ["invalid-enum-member"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "mismatched_literal_types_to_binary.own": ["binary-mismatched-types"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "semantic_error_in_return_expr.own": ["undefined-symbol"],
 }
 
 def to_str(a):

@@ -4,8 +4,6 @@
 #include "vector.h"
 #include "newstring.h"
 
-#define STRING_VEC_DEFAULT_CAPACITY 8
-
 typedef struct {
     Vec_base info;
     String* buf;

@@ -353,8 +353,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
         Tast_literal* rhs_lit = tast_unwrap_literal(new_rhs);
 
         if (lhs_lit->type != rhs_lit->type) {
-            // TODO: make expected failure test for this
-            unreachable("mismatched types");
+            unreachable("this error should have been caught earlier\n");
         }
 
         Tast_literal* literal = NULL;
@@ -1246,9 +1245,7 @@ bool try_set_return_types(Env* env, Tast_return** new_tast, Uast_return* rtn) {
 
     Tast_expr* new_child;
     // TODO: do this in check_generic_assignment
-    // TODO: expected failure test for error in return statement expression
     if (!try_set_expr_types(env, &new_child, rtn->child)) {
-        todo();
         return false;
     }
 

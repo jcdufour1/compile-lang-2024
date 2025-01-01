@@ -1,4 +1,5 @@
 #include <str_view.h>
+#include <newstring.h>
 #include <string_vec.h>
 #include <uast.h>
 #include <tast.h>
@@ -121,14 +122,15 @@ Lang_type lang_type_unsigned_to_signed(Lang_type lang_type) {
     return lang_type_new_from_strv(str_view, 0);
 }
 
-Str_view util_literal_name_new(void) {
+Str_view util_literal_name_new_prefix(const char* debug_prefix) {
     static String_vec literal_strings = {0};
     static size_t count = 0;
 
-    char var_name[24];
-    sprintf(var_name, "str%zu", count);
-    String symbol_name = string_new_from_cstr(&a_main, var_name);
-    vec_append(&a_main, &literal_strings, symbol_name);
+    String var_name = {0};
+    string_extend_cstr(&a_main, &var_name, debug_prefix);
+    string_extend_cstr(&a_main, &var_name, "str");
+    string_extend_size_t(&a_main, &var_name, count);
+    vec_append(&a_main, &literal_strings, var_name);
 
     count++;
 
@@ -137,21 +139,8 @@ Str_view util_literal_name_new(void) {
     return str_view;
 }
 
-Str_view util_literal_name_new_prefix(const char* debug_prefix) {
-    static String_vec literal_strings = {0};
-    static size_t count = 0;
-
-    // TODO: is this buffer large enough?
-    char var_name[1024];
-    sprintf(var_name, "%sstr%zu", debug_prefix, count);
-    String symbol_name = string_new_from_cstr(&a_main, var_name);
-    vec_append(&a_main, &literal_strings, symbol_name);
-
-    count++;
-
-    String symbol_in_vec = literal_strings.buf[literal_strings.info.count - 1];
-    Str_view str_view = {.str = symbol_in_vec.buf, .count = symbol_in_vec.info.count};
-    return str_view;
+Str_view util_literal_name_new(void) {
+    return util_literal_name_new_prefix("");
 }
 
 Str_view get_storage_location(const Env* env, Str_view sym_name) {
@@ -279,21 +268,6 @@ Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token
 Tast_literal* util_tast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {
     return try_set_literal_types(util_uast_literal_new_from_int64_t(value, token_type, pos));
 }
-
-// TODO: make separate Tast_unary_typed and Tast_unary_untyped
-//Tast_expr* util_unary_new(Env* env, Tast_expr* child, TOKEN_TYPE operator_type, Lang_type init_lang_type) {
-//    Tast_unary* unary = tast_unary_new(
-//        tast_get_pos_expr(child),
-//        child,
-//        operator_type,
-//        init_lang_type
-//    );
-//
-//    Tast_expr* new_tast;
-//    //symbol_log(LOG_DEBUG, env);
-//    try(try_set_unary_types(env, &new_tast, unary));
-//    return new_tast;
-//}
 
 Tast_operator* util_binary_typed_new(Env* env, Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operator_type) {
     Uast_binary* binary = uast_binary_new(uast_get_pos_expr(lhs), lhs, rhs, operator_type);

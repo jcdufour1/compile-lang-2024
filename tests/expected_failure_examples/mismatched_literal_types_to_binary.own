@@ -1,0 +1,7 @@
+
+extern("c") fn printf(format_string u8*, args any...)
+
+fn main() i32 {
+    let num i32 = 7*"hello"
+    return 0
+}
