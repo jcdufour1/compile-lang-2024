@@ -29,34 +29,6 @@ Str_view uast_print_internal(const Uast* uast, int recursion_depth);
         log(LOG_NOTE, UAST_FMT"\n", uast_print(uast)); \
     } while (0);
 
-static inline Str_view uast_get_symbol_typed_name(const Uast_symbol_typed* sym) {
-    switch (sym->type) {
-        case UAST_PRIMITIVE_SYM:
-            return uast_unwrap_primitive_sym_const(sym)->base.name;
-        case UAST_STRUCT_SYM:
-            return uast_unwrap_struct_sym_const(sym)->base.name;
-        case UAST_ENUM_SYM:
-            return uast_unwrap_enum_sym_const(sym)->base.name;
-        case UAST_RAW_UNION_SYM:
-            return uast_unwrap_raw_union_sym_const(sym)->base.name;
-    }
-    unreachable("");
-}
-
-static inline Lang_type uast_get_lang_type_symbol_typed(const Uast_symbol_typed* sym) {
-    switch (sym->type) {
-        case UAST_PRIMITIVE_SYM:
-            return uast_unwrap_primitive_sym_const(sym)->base.lang_type;
-        case UAST_STRUCT_SYM:
-            return uast_unwrap_struct_sym_const(sym)->base.lang_type;
-        case UAST_ENUM_SYM:
-            return uast_unwrap_enum_sym_const(sym)->base.lang_type;
-        case UAST_RAW_UNION_SYM:
-            return uast_unwrap_raw_union_sym_const(sym)->base.lang_type;
-    }
-    unreachable("");
-}
-
 static inline Lang_type uast_get_lang_type_def(const Uast_def* def) {
     switch (def->type) {
         case UAST_FUNCTION_DEF:
@@ -183,17 +155,11 @@ static inline Uast* get_uast_expr_src(Uast_expr* expr) {
             unreachable("");
         case UAST_MEMBER_ACCESS_UNTYPED:
             unreachable("");
-        case UAST_MEMBER_ACCESS_TYPED:
-            unreachable("");
-        case UAST_INDEX_TYPED:
-            unreachable("");
         case UAST_INDEX_UNTYPED:
             unreachable("");
         case UAST_LITERAL:
             unreachable("");
         case UAST_SYMBOL_UNTYPED:
-            unreachable("");
-        case UAST_SYMBOL_TYPED:
             unreachable("");
         case UAST_FUNCTION_CALL:
             unreachable("");
@@ -265,16 +231,10 @@ static inline Str_view get_uast_expr_name(const Uast_expr* expr) {
             return uast_unwrap_struct_literal_const(expr)->name;
         case UAST_MEMBER_ACCESS_UNTYPED:
             return uast_unwrap_member_access_untyped_const(expr)->member_name;
-        case UAST_MEMBER_ACCESS_TYPED:
-            return uast_unwrap_member_access_typed_const(expr)->member_name;
-        case UAST_INDEX_TYPED:
-            unreachable("");
         case UAST_INDEX_UNTYPED:
             unreachable("");
         case UAST_SYMBOL_UNTYPED:
             return uast_unwrap_symbol_untyped_const(expr)->name;
-        case UAST_SYMBOL_TYPED:
-            return uast_get_symbol_typed_name(uast_unwrap_symbol_typed_const(expr));
         case UAST_FUNCTION_CALL:
             return uast_unwrap_function_call_const(expr)->name;
         case UAST_LITERAL:
@@ -317,8 +277,6 @@ static inline Str_view get_uast_name_def(const Uast_def* def) {
 
 static inline Str_view get_uast_name_expr(const Uast_expr* expr) {
     switch (expr->type) {
-        case UAST_SYMBOL_TYPED:
-            return uast_get_symbol_typed_name(uast_unwrap_symbol_typed_const(expr));
         case UAST_FUNCTION_CALL:
             return uast_unwrap_function_call_const(expr)->name;
         default:

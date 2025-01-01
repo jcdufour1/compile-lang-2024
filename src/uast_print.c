@@ -66,57 +66,6 @@ void uast_extend_sym_typed_base(String* string, Sym_typed_base base) {
     string_extend_cstr(&print_arena, string, "\n");
 }
 
-Str_view uast_primitive_sym_print_internal(const Uast_primitive_sym* sym, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "primitive_sym", indent);
-    extend_pos(&buf, sym->pos);
-    uast_extend_sym_typed_base(&buf, sym->base);
-
-    return string_to_strv(buf);
-}
-
-Str_view uast_struct_sym_print_internal(const Uast_struct_sym* sym, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "struct_sym", indent);
-    uast_extend_sym_typed_base(&buf, sym->base);
-
-    return string_to_strv(buf);
-}
-
-Str_view uast_raw_union_sym_print_internal(const Uast_raw_union_sym* sym, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "raw_union_sym", indent);
-    uast_extend_sym_typed_base(&buf, sym->base);
-
-    return string_to_strv(buf);
-}
-
-Str_view uast_enum_sym_print_internal(const Uast_enum_sym* sym, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "enum_sym", indent);
-    uast_extend_sym_typed_base(&buf, sym->base);
-
-    return string_to_strv(buf);
-}
-
-Str_view uast_symbol_typed_print_internal(const Uast_symbol_typed* sym, int indent) {
-    switch (sym->type) {
-        case UAST_PRIMITIVE_SYM:
-            return uast_primitive_sym_print_internal(uast_unwrap_primitive_sym_const(sym), indent);
-        case UAST_STRUCT_SYM:
-            return uast_struct_sym_print_internal(uast_unwrap_struct_sym_const(sym), indent);
-        case UAST_RAW_UNION_SYM:
-            return uast_raw_union_sym_print_internal(uast_unwrap_raw_union_sym_const(sym), indent);
-        case UAST_ENUM_SYM:
-            return uast_enum_sym_print_internal(uast_unwrap_enum_sym_const(sym), indent);
-    }
-    unreachable("");
-}
-
 Str_view uast_symbol_untyped_print_internal(const Uast_symbol_untyped* sym, int indent) {
     String buf = {0};
 
@@ -142,35 +91,10 @@ Str_view uast_member_access_untyped_print_internal(const Uast_member_access_unty
     return string_to_strv(buf);
 }
 
-Str_view uast_member_access_typed_print_internal(const Uast_member_access_typed* access, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "member_access_untyped", indent);
-    string_extend_strv_in_par(&print_arena, &buf, access->member_name);
-
-    string_extend_cstr(&print_arena, &buf, "\n");
-
-    indent += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, uast_expr_print_internal(access->callee, indent));
-    indent -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
 Str_view uast_index_untyped_print_internal(const Uast_index_untyped* index, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "index_untyped\n", indent);
-    string_extend_strv(&print_arena, &buf, uast_expr_print_internal(index->index, indent + INDENT_WIDTH));
-    string_extend_strv(&print_arena, &buf, uast_expr_print_internal(index->callee, indent + INDENT_WIDTH));
-
-    return string_to_strv(buf);
-}
-
-Str_view uast_index_typed_print_internal(const Uast_index_typed* index, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "index_typed\n", indent);
     string_extend_strv(&print_arena, &buf, uast_expr_print_internal(index->index, indent + INDENT_WIDTH));
     string_extend_strv(&print_arena, &buf, uast_expr_print_internal(index->callee, indent + INDENT_WIDTH));
 
@@ -612,18 +536,12 @@ Str_view uast_expr_print_internal(const Uast_expr* expr, int indent) {
     switch (expr->type) {
         case UAST_OPERATOR:
             return uast_operator_print_internal(uast_unwrap_operator_const(expr), indent);
-        case UAST_SYMBOL_TYPED:
-            return uast_symbol_typed_print_internal(uast_unwrap_symbol_typed_const(expr), indent);
         case UAST_SYMBOL_UNTYPED:
             return uast_symbol_untyped_print_internal(uast_unwrap_symbol_untyped_const(expr), indent);
         case UAST_MEMBER_ACCESS_UNTYPED:
             return uast_member_access_untyped_print_internal(uast_unwrap_member_access_untyped_const(expr), indent);
-        case UAST_MEMBER_ACCESS_TYPED:
-            return uast_member_access_typed_print_internal(uast_unwrap_member_access_typed_const(expr), indent);
         case UAST_INDEX_UNTYPED:
             return uast_index_untyped_print_internal(uast_unwrap_index_untyped_const(expr), indent);
-        case UAST_INDEX_TYPED:
-            return uast_index_typed_print_internal(uast_unwrap_index_typed_const(expr), indent);
         case UAST_LITERAL:
             return uast_literal_print_internal(uast_unwrap_literal_const(expr), indent);
         case UAST_FUNCTION_CALL:

@@ -151,31 +151,6 @@ Str_view tast_symbol_typed_print_internal(const Tast_symbol_typed* sym, int inde
     unreachable("");
 }
 
-Str_view tast_symbol_untyped_print_internal(const Tast_symbol_untyped* sym, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "symbol_untyped", indent);
-    string_extend_strv(&print_arena, &buf, sym->name);
-    string_extend_cstr(&print_arena, &buf, "\n");
-
-    return string_to_strv(buf);
-}
-
-Str_view tast_member_access_untyped_print_internal(const Tast_member_access_untyped* access, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "member_access_untyped", indent);
-    string_extend_strv_in_par(&print_arena, &buf, access->member_name);
-
-    string_extend_cstr(&print_arena, &buf, "\n");
-
-    indent += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, tast_expr_print_internal(access->callee, indent));
-    indent -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
 Str_view tast_member_access_typed_print_internal(const Tast_member_access_typed* access, int indent) {
     String buf = {0};
 
@@ -188,16 +163,6 @@ Str_view tast_member_access_typed_print_internal(const Tast_member_access_typed*
     indent += INDENT_WIDTH;
     string_extend_strv(&print_arena, &buf, tast_expr_print_internal(access->callee, indent));
     indent -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
-Str_view tast_index_untyped_print_internal(const Tast_index_untyped* index, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "index_untyped\n", indent);
-    string_extend_strv(&print_arena, &buf, tast_expr_print_internal(index->index, indent + INDENT_WIDTH));
-    string_extend_strv(&print_arena, &buf, tast_expr_print_internal(index->callee, indent + INDENT_WIDTH));
 
     return string_to_strv(buf);
 }
@@ -656,14 +621,8 @@ Str_view tast_expr_print_internal(const Tast_expr* expr, int indent) {
             return tast_operator_print_internal(tast_unwrap_operator_const(expr), indent);
         case TAST_SYMBOL_TYPED:
             return tast_symbol_typed_print_internal(tast_unwrap_symbol_typed_const(expr), indent);
-        case TAST_SYMBOL_UNTYPED:
-            return tast_symbol_untyped_print_internal(tast_unwrap_symbol_untyped_const(expr), indent);
-        case TAST_MEMBER_ACCESS_UNTYPED:
-            return tast_member_access_untyped_print_internal(tast_unwrap_member_access_untyped_const(expr), indent);
         case TAST_MEMBER_ACCESS_TYPED:
             return tast_member_access_typed_print_internal(tast_unwrap_member_access_typed_const(expr), indent);
-        case TAST_INDEX_UNTYPED:
-            return tast_index_untyped_print_internal(tast_unwrap_index_untyped_const(expr), indent);
         case TAST_INDEX_TYPED:
             return tast_index_typed_print_internal(tast_unwrap_index_typed_const(expr), indent);
         case TAST_LITERAL:

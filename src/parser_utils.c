@@ -573,11 +573,6 @@ bool try_get_generic_struct_def(const Env* env, Tast_def** def, Tast* tast) {
                 assert(tast_get_lang_type_def(var_def).str.count > 0);
                 return symbol_lookup(def, env, tast_get_lang_type_def(var_def).str);
             }
-            case TAST_SYMBOL_UNTYPED:
-                unreachable("untyped symbols should not still be present");
-            case TAST_MEMBER_ACCESS_UNTYPED:
-                assert(tast_get_lang_type(tast).str.count > 0);
-                return symbol_lookup(def, env, tast_get_lang_type(tast).str);
             default:
                 unreachable(TAST_FMT"\n", tast_print(tast));
         }

@@ -146,38 +146,6 @@ static Uast_type uast_gen_binary(void) {
     return binary;
 }
 
-static Uast_type uast_gen_primitive_sym(void) {
-    Uast_type primitive = {.name = uast_name_new("symbol_typed", "primitive_sym", false)};
-
-    append_member(&primitive.members, "Sym_typed_base", "base");
-
-    return primitive;
-}
-
-static Uast_type uast_gen_enum_sym(void) {
-    Uast_type lang_enum = {.name = uast_name_new("symbol_typed", "enum_sym", false)};
-
-    append_member(&lang_enum.members, "Sym_typed_base", "base");
-
-    return lang_enum;
-}
-
-static Uast_type uast_gen_struct_sym(void) {
-    Uast_type lang_struct = {.name = uast_name_new("symbol_typed", "struct_sym", false)};
-
-    append_member(&lang_struct.members, "Sym_typed_base", "base");
-
-    return lang_struct;
-}
-
-static Uast_type uast_gen_raw_union_sym(void) {
-    Uast_type raw_union = {.name = uast_name_new("symbol_typed", "raw_union_sym", false)};
-
-    append_member(&raw_union.members, "Sym_typed_base", "base");
-
-    return raw_union;
-}
-
 static Uast_type uast_gen_operator(void) {
     Uast_type operator = {.name = uast_name_new("expr", "operator", false)};
 
@@ -195,26 +163,6 @@ static Uast_type uast_gen_symbol_untyped(void) {
     return sym;
 }
 
-static Uast_type uast_gen_symbol_typed(void) {
-    Uast_type sym = {.name = uast_name_new("expr", "symbol_typed", false)};
-
-    vec_append(&gen_a, &sym.sub_types, uast_gen_primitive_sym());
-    vec_append(&gen_a, &sym.sub_types, uast_gen_struct_sym());
-    vec_append(&gen_a, &sym.sub_types, uast_gen_raw_union_sym());
-    vec_append(&gen_a, &sym.sub_types, uast_gen_enum_sym());
-
-    return sym;
-}
-
-static Uast_type uast_gen_member_access_typed(void) {
-    Uast_type access = {.name = uast_name_new("expr", "member_access_typed", false)};
-
-    append_member(&access.members, "Str_view", "member_name");
-    append_member(&access.members, "Uast_expr*", "callee");
-
-    return access;
-}
-
 static Uast_type uast_gen_member_access_untyped(void) {
     Uast_type access = {.name = uast_name_new("expr", "member_access_untyped", false)};
 
@@ -226,15 +174,6 @@ static Uast_type uast_gen_member_access_untyped(void) {
 
 static Uast_type uast_gen_index_untyped(void) {
     Uast_type index = {.name = uast_name_new("expr", "index_untyped", false)};
-
-    append_member(&index.members, "Uast_expr*", "index");
-    append_member(&index.members, "Uast_expr*", "callee");
-
-    return index;
-}
-
-static Uast_type uast_gen_index_typed(void) {
-    Uast_type index = {.name = uast_name_new("expr", "index_typed", false)};
 
     append_member(&index.members, "Uast_expr*", "index");
     append_member(&index.members, "Uast_expr*", "callee");
@@ -319,11 +258,8 @@ static Uast_type uast_gen_expr(void) {
 
     vec_append(&gen_a, &expr.sub_types, uast_gen_operator());
     vec_append(&gen_a, &expr.sub_types, uast_gen_symbol_untyped());
-    vec_append(&gen_a, &expr.sub_types, uast_gen_symbol_typed());
     vec_append(&gen_a, &expr.sub_types, uast_gen_member_access_untyped());
-    vec_append(&gen_a, &expr.sub_types, uast_gen_member_access_typed());
     vec_append(&gen_a, &expr.sub_types, uast_gen_index_untyped());
-    vec_append(&gen_a, &expr.sub_types, uast_gen_index_typed());
     vec_append(&gen_a, &expr.sub_types, uast_gen_literal());
     vec_append(&gen_a, &expr.sub_types, uast_gen_function_call());
     vec_append(&gen_a, &expr.sub_types, uast_gen_struct_literal());

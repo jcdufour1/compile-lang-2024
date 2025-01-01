@@ -188,14 +188,6 @@ static Tast_type tast_gen_operator(void) {
     return operator;
 }
 
-static Tast_type tast_gen_symbol_untyped(void) {
-    Tast_type sym = {.name = tast_name_new("expr", "symbol_untyped", false)};
-
-    append_member(&sym.members, "Str_view", "name");
-
-    return sym;
-}
-
 static Tast_type tast_gen_symbol_typed(void) {
     Tast_type sym = {.name = tast_name_new("expr", "symbol_typed", false)};
 
@@ -215,24 +207,6 @@ static Tast_type tast_gen_member_access_typed(void) {
     append_member(&access.members, "Tast_expr*", "callee");
 
     return access;
-}
-
-static Tast_type tast_gen_member_access_untyped(void) {
-    Tast_type access = {.name = tast_name_new("expr", "member_access_untyped", false)};
-
-    append_member(&access.members, "Str_view", "member_name");
-    append_member(&access.members, "Tast_expr*", "callee");
-
-    return access;
-}
-
-static Tast_type tast_gen_index_untyped(void) {
-    Tast_type index = {.name = tast_name_new("expr", "index_untyped", false)};
-
-    append_member(&index.members, "Tast_expr*", "index");
-    append_member(&index.members, "Tast_expr*", "callee");
-
-    return index;
 }
 
 static Tast_type tast_gen_index_typed(void) {
@@ -326,11 +300,8 @@ static Tast_type tast_gen_expr(void) {
     Tast_type expr = {.name = tast_name_new("tast", "expr", false)};
 
     vec_append(&gen_a, &expr.sub_types, tast_gen_operator());
-    vec_append(&gen_a, &expr.sub_types, tast_gen_symbol_untyped());
     vec_append(&gen_a, &expr.sub_types, tast_gen_symbol_typed());
-    vec_append(&gen_a, &expr.sub_types, tast_gen_member_access_untyped());
     vec_append(&gen_a, &expr.sub_types, tast_gen_member_access_typed());
-    vec_append(&gen_a, &expr.sub_types, tast_gen_index_untyped());
     vec_append(&gen_a, &expr.sub_types, tast_gen_index_typed());
     vec_append(&gen_a, &expr.sub_types, tast_gen_literal());
     vec_append(&gen_a, &expr.sub_types, tast_gen_function_call());

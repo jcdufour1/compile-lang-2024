@@ -640,8 +640,6 @@ static Str_view load_expr(Env* env, Llvm_block* new_block, Tast_expr* old_expr) 
             return load_literal(env, new_block, tast_unwrap_literal(old_expr));
         case TAST_SYMBOL_TYPED:
             return load_symbol_typed(env, new_block, tast_unwrap_symbol_typed(old_expr));
-        case TAST_SYMBOL_UNTYPED:
-            unreachable("TAST_SYMBOL_UNTYPED should not still be present at this point");
         case TAST_OPERATOR:
             return load_operator(env, new_block, tast_unwrap_operator(old_expr));
         case TAST_MEMBER_ACCESS_TYPED:
