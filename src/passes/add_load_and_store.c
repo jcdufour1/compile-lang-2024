@@ -371,9 +371,9 @@ static Str_view load_ptr_symbol_typed(
     (void) new_block;
     log(LOG_DEBUG, "entering thing\n");
 
-    Uast_def* var_def_ = NULL;
-    try(usymbol_lookup(&var_def_, env, tast_get_symbol_typed_name(old_sym)));
-    Llvm_variable_def* var_def = uast_clone_variable_def(uast_unwrap_variable_def(var_def_));
+    Tast_def* var_def_ = NULL;
+    try(symbol_lookup(&var_def_, env, tast_get_symbol_typed_name(old_sym)));
+    Llvm_variable_def* var_def = tast_clone_variable_def(tast_unwrap_variable_def(var_def_));
     Llvm* alloca = NULL;
     if (!alloca_lookup(&alloca, env, var_def->name_corr_param)) {
         log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(var_def->name_corr_param));
@@ -508,18 +508,18 @@ static Str_view load_ptr_member_access_typed(
 ) {
     Str_view new_callee = load_ptr_expr(env, new_block, old_access->callee);
 
-    Uast_def* def = NULL;
-    try(usymbol_lookup(&def, env, get_lang_type_from_name(env, new_callee).str));
+    Tast_def* def = NULL;
+    try(symbol_lookup(&def, env, get_lang_type_from_name(env, new_callee).str));
 
-    Ustruct_def_base def_base = {0};
+    Struct_def_base def_base = {0};
     switch (def->type) {
         case TAST_STRUCT_DEF: {
-            Uast_struct_def* struct_def = uast_unwrap_struct_def(def);
+            Tast_struct_def* struct_def = tast_unwrap_struct_def(def);
             def_base = struct_def->base;
             break;
         }
         case TAST_RAW_UNION_DEF: {
-            Uast_raw_union_def* raw_union_def = uast_unwrap_raw_union_def(def);
+            Tast_raw_union_def* raw_union_def = tast_unwrap_raw_union_def(def);
             def_base = raw_union_def->base;
             break;
         }
@@ -529,7 +529,7 @@ static Str_view load_ptr_member_access_typed(
 
     Tast_number* new_index = tast_number_new(
         old_access->pos,
-        uast_get_member_index(&def_base, old_access->member_name),
+        tast_get_member_index(&def_base, old_access->member_name),
         lang_type_new_from_cstr("i32", 0)
     );
     
@@ -919,7 +919,7 @@ static Llvm_block* if_else_chain_to_branch(Env* env, Tast_if_else_chain* if_else
     Str_view if_after = util_literal_name_new_prefix("if_after");
     
     Llvm* dummy = NULL;
-    Uast_def* dummy_def = NULL;
+    Tast_def* dummy_def = NULL;
 
     Str_view next_if = {0};
     for (size_t idx = 0; idx < if_else->tasts.info.count; idx++) {
@@ -941,7 +941,7 @@ static Llvm_block* if_else_chain_to_branch(Env* env, Tast_if_else_chain* if_else
         }
     }
 
-    assert(!usymbol_lookup(&dummy_def, env, next_if));
+    assert(!symbol_lookup(&dummy_def, env, next_if));
     add_label(env, new_block, if_after, if_else->pos, false);
     assert(alloca_lookup(&dummy, env, next_if));
     //log_tree(LOG_DEBUG, tast_wrap_block(new_block));
@@ -1005,9 +1005,9 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
 
     //try(symbol_add(env, tast_wrap_variable_def(for_var_def)));
     Llvm* dummy = NULL;
-    Uast_def* dummy_def = NULL;
+    Tast_def* dummy_def = NULL;
 
-    assert(usymbol_lookup(&dummy_def, env, for_var_def->name));
+    assert(symbol_lookup(&dummy_def, env, for_var_def->name));
 
     Tast_assignment* assignment_to_inc_cond_var = for_loop_cond_var_assign_new(
         env, for_var_def->name, tast_get_pos_expr(lhs_actual)
@@ -1156,7 +1156,7 @@ static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for
 
     //load_operator(env, new_branch_block, operator);
     //Tast* dummy = NULL;
-    //try(usymbol_lookup(&dummy, env, str_view_from_cstr("str18")));
+    //try(symbol_lookup(&dummy, env, str_view_from_cstr("str18")));
 
     if_for_add_cond_goto(
         env,
@@ -1174,7 +1174,7 @@ static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for
     log(LOG_DEBUG, "DSFJKLKJDFS: "STR_VIEW_FMT"\n", str_view_print(after_check_label));
 
 
-    //try(usymbol_lookup(&dummy, env, str_view_from_cstr("str18")));
+    //try(symbol_lookup(&dummy, env, str_view_from_cstr("str18")));
     //for (size_t idx = 0; idx < old_for->body->children.info.count; idx++) {
     //    log(LOG_DEBUG, TAST_FMT"\n", tast_print(vec_at(&old_for->body->children, idx)));
     //}

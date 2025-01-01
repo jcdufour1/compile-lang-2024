@@ -155,15 +155,15 @@ Str_view util_literal_name_new_prefix(const char* debug_prefix) {
 }
 
 Str_view get_storage_location(const Env* env, Str_view sym_name) {
-    Uast_def* sym_def_;
-    if (!usymbol_lookup(&sym_def_, env, sym_name)) {
+    Tast_def* sym_def_;
+    if (!symbol_lookup(&sym_def_, env, sym_name)) {
         symbol_log(LOG_DEBUG, env);
         unreachable("symbol definition for symbol "STR_VIEW_FMT" not found\n", str_view_print(sym_name));
     }
 
     switch (sym_def_->type) {
         case UAST_VARIABLE_DEF: {
-            Uast_variable_def* sym_def = uast_unwrap_variable_def(sym_def_);
+            Tast_variable_def* sym_def = tast_unwrap_variable_def(sym_def_);
             Llvm* result = NULL;
             if (!alloca_lookup(&result, env, sym_def->name)) {
                 unreachable(STR_VIEW_FMT"\n", str_view_print(sym_def->name));
