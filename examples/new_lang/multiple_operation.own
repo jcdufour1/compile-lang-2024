@@ -1,6 +1,26 @@
 
 extern("c") fn printf(format_string u8*, args any...) i32
 
+fn part_2() {
+    {
+        let num i32 = 7
+        if 0 - 1 == num {
+            printf("no1\n")
+        } else {
+            printf("yes1\n")
+        }
+    }
+
+    {
+        let num i32 = 0 - 1
+        if 0 - 1 == num {
+            printf("yes2\n")
+        } else {
+            printf("no2\n")
+        }
+    }
+}
+
 fn main() i32 {
     let num1 i32 = 2
     let num2 i32 = 93
@@ -36,5 +56,8 @@ fn main() i32 {
     let result_5 i32
     result_5 = (((1 + 7)*10) + (num11/num12))
     printf("%d\n", result_5)
+
+    part_2()
+
     return 0
 }

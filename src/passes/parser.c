@@ -445,26 +445,26 @@ static bool can_end_statement(Token token) {
 // higher number returned from this function means that operator has higher precedence
 static uint32_t operator_precedence(Token token) {
     switch (token.type) {
-        case TOKEN_LESS_THAN:
-            return 1;
-        case TOKEN_GREATER_THAN:
-            return 1;
-        case TOKEN_LESS_OR_EQUAL:
-            return 1;
-        case TOKEN_GREATER_OR_EQUAL:
-            return 1;
-        case TOKEN_SINGLE_PLUS:
-            return 2;
-        case TOKEN_SINGLE_MINUS:
-            return 2;
-        case TOKEN_ASTERISK:
-            return 3;
-        case TOKEN_SLASH:
-            return 3;
         case TOKEN_DOUBLE_EQUAL:
-            return 4;
+            return 1;
         case TOKEN_NOT_EQUAL:
+            return 1;
+        case TOKEN_LESS_THAN:
+            return 3;
+        case TOKEN_GREATER_THAN:
+            return 3;
+        case TOKEN_LESS_OR_EQUAL:
+            return 3;
+        case TOKEN_GREATER_OR_EQUAL:
+            return 3;
+        case TOKEN_SINGLE_PLUS:
             return 4;
+        case TOKEN_SINGLE_MINUS:
+            return 4;
+        case TOKEN_ASTERISK:
+            return 5;
+        case TOKEN_SLASH:
+            return 5;
         default:
             unreachable(TOKEN_FMT, token_print(token));
     }
@@ -1429,7 +1429,6 @@ static PARSE_STATUS extract_struct_literal(Env* env, Uast_struct_literal** struc
     while (try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
         bool delim_is_present = false;
         Uast_assignment* assign;
-        // TODO: check status of extract_assignment
         if (PARSE_OK != extract_assignment(env, &assign, tokens, NULL)) {
             return PARSE_ERROR;
         }
