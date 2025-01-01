@@ -23,6 +23,8 @@ typedef struct Env_ {
     int recursion_depth;
     Str_view file_text;
 
+    bool type_checking_is_in_struct_base_def;
+
     Str_view name_parent_function; // length is zero if no parent function exists
 
     Str_view label_if_break;

@@ -214,18 +214,14 @@ Str_view uast_struct_literal_print_internal(const Uast_struct_literal* lit, int 
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "struct_literal", indent);
+    extend_lang_type(&buf, lit->lang_type, true);
     string_extend_strv(&print_arena, &buf, lit->name);
     string_extend_cstr(&print_arena, &buf, "\n");
 
-    indent += INDENT_WIDTH;
-
-    extend_lang_type(&buf, lit->lang_type, true);
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-        Str_view memb_text = uast_print_internal(vec_at(&lit->members, idx), indent);
+        Str_view memb_text = uast_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&print_arena, &buf, memb_text);
     }
-
-    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
@@ -284,9 +280,15 @@ Str_view uast_block_print_internal(const Uast_block* block, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "block\n", indent);
-    // TODO: extend table here to buf instead of this
-    symbol_log_table(LOG_DEBUG, block->symbol_collection.symbol_table);
-    alloca_log_table(LOG_DEBUG, block->symbol_collection.alloca_table);
+
+    string_extend_cstr_indent(&print_arena, &buf, "alloca_table\n", indent + INDENT_WIDTH);
+    alloca_extend_table_internal(&buf, block->symbol_collection.alloca_table, indent + 2*INDENT_WIDTH);
+
+    string_extend_cstr_indent(&print_arena, &buf, "usymbol_table\n", indent + INDENT_WIDTH);
+    usymbol_extend_table_internal(&buf, block->symbol_collection.usymbol_table, indent + 2*INDENT_WIDTH);
+
+    string_extend_cstr_indent(&print_arena, &buf, "symbol_table\n", indent + INDENT_WIDTH);
+    symbol_extend_table_internal(&buf, block->symbol_collection.symbol_table, indent + 2*INDENT_WIDTH);
 
     indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < block->children.info.count; idx++) {

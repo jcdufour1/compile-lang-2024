@@ -652,7 +652,7 @@ bool try_set_def_types(Env* env, Tast_def** new_tast, Uast_def* uast) {
     switch (uast->type) {
         case TAST_VARIABLE_DEF: {
             Tast_variable_def* new_def = NULL;
-            if (!try_set_variable_def_types(env, &new_def, uast_unwrap_variable_def(uast))) {
+            if (!try_set_variable_def_types(env, &new_def, uast_unwrap_variable_def(uast), true)) {
                 return false;
             }
             *new_tast = tast_wrap_variable_def(new_def);
@@ -660,7 +660,7 @@ bool try_set_def_types(Env* env, Tast_def** new_tast, Uast_def* uast) {
         }
         case TAST_FUNCTION_DECL: {
             Tast_function_decl* new_decl = NULL;
-            if (!try_set_function_decl_types(env, &new_decl, uast_unwrap_function_decl(uast))) {
+            if (!try_set_function_decl_types(env, &new_decl, uast_unwrap_function_decl(uast), false)) {
                 return false;
             }
             *new_tast = tast_wrap_function_decl(new_decl);
@@ -1078,6 +1078,7 @@ static bool try_set_condition_types(Env* env, Tast_condition** new_cond, Uast_co
 }
 
 bool try_set_struct_base_types(Env* env, Struct_def_base* new_base, Ustruct_def_base* base) {
+    env->type_checking_is_in_struct_base_def = true;
     bool success = true;
     Tast_vec new_members = {0};
 
@@ -1100,6 +1101,8 @@ bool try_set_struct_base_types(Env* env, Struct_def_base* new_base, Ustruct_def_
         .llvm_id = 0,
         .name = base->name
     };
+
+    env->type_checking_is_in_struct_base_def = false;
     return success;
 }
 
@@ -1107,12 +1110,14 @@ bool try_set_enum_def_types(Env* env, Tast_enum_def** new_tast, Uast_enum_def* t
     Struct_def_base new_base = {0};
     bool success = try_set_struct_base_types(env, &new_base, &tast->base);
     *new_tast = tast_enum_def_new(tast->pos, new_base);
+    try(symbol_add(env, tast_wrap_enum_def(*new_tast)));
     return success;
 }
 
 bool try_set_primitive_def_types(Env* env, Tast_primitive_def** new_tast, Uast_primitive_def* tast) {
     (void) env;
     *new_tast = tast_primitive_def_new(tast->pos, tast->lang_type);
+    try(symbol_add(env, tast_wrap_primitive_def(*new_tast)));
     return true;
 }
 
@@ -1127,6 +1132,7 @@ bool try_set_raw_union_def_types(Env* env, Tast_raw_union_def** new_tast, Uast_r
     Struct_def_base new_base = {0};
     bool success = try_set_struct_base_types(env, &new_base, &uast->base);
     *new_tast = tast_raw_union_def_new(uast->pos, new_base);
+    try(symbol_add(env, tast_wrap_raw_union_def(*new_tast)));
     return success;
 }
 
@@ -1155,9 +1161,10 @@ static void msg_undefined_type_internal(
     msg_undefined_type_internal(__FILE__, __LINE__, env, pos, lang_type)
 
 bool try_set_variable_def_types(
-    const Env* env,
+    Env* env,
     Tast_variable_def** new_tast,
-    Uast_variable_def* uast
+    Uast_variable_def* uast,
+    bool add_to_sym_tbl
 ) {
     Uast_def* dummy = NULL;
     if (!usymbol_lookup(&dummy, env, uast->lang_type.str)) {
@@ -1166,16 +1173,22 @@ bool try_set_variable_def_types(
     }
 
     *new_tast = tast_variable_def_new(uast->pos, uast->lang_type, uast->is_variadic, uast->name);
+    log(LOG_DEBUG, "adding:"STR_VIEW_FMT, tast_variable_def_print(*new_tast));
+    symbol_log(LOG_DEBUG, env);
+    if (add_to_sym_tbl && !env->type_checking_is_in_struct_base_def) {
+        try(symbol_add(env, tast_wrap_variable_def(*new_tast)));
+    }
     return true;
 }
 
 bool try_set_function_decl_types(
     Env* env,
     Tast_function_decl** new_tast,
-    Uast_function_decl* decl
+    Uast_function_decl* decl,
+    bool add_to_sym_tbl
 ) {
     Tast_function_params* new_params = NULL;
-    if (!try_set_function_params_types(env, &new_params, decl->params)) {
+    if (!try_set_function_params_types(env, &new_params, decl->params, add_to_sym_tbl)) {
         return false;
     }
 
@@ -1185,6 +1198,7 @@ bool try_set_function_decl_types(
     }
 
     *new_tast = tast_function_decl_new(decl->pos, new_params, new_rtn_type, decl->name);
+    try(symbol_add(env, tast_wrap_function_decl(*new_tast)));
     return true;
 }
 
@@ -1199,9 +1213,11 @@ bool try_set_function_def_types(
     bool status = true;
 
     Tast_function_decl* new_decl = NULL;
-    if (!try_set_function_decl_types(env, &new_decl, def->decl)) {
+    vec_append(&a_main, &env->ancesters, &def->body->symbol_collection);
+    if (!try_set_function_decl_types(env, &new_decl, def->decl, true)) {
         status = false;
     }
+    vec_rem_last(&env->ancesters);
 
     size_t prev_ancesters_count = env->ancesters.info.count;
     Tast_block* new_body = NULL;
@@ -1218,7 +1234,8 @@ bool try_set_function_def_types(
 bool try_set_function_params_types(
     Env* env,
     Tast_function_params** new_tast,
-    Uast_function_params* params
+    Uast_function_params* params,
+    bool add_to_sym_tbl
 ) {
     bool status = true;
 
@@ -1227,7 +1244,7 @@ bool try_set_function_params_types(
         Uast_variable_def* def = vec_at(&params->params, idx);
 
         Tast_variable_def* new_def = NULL;
-        if (!try_set_variable_def_types(env, &new_def, def)) {
+        if (!try_set_variable_def_types(env, &new_def, def, add_to_sym_tbl)) {
             status = false;
         }
 
@@ -1297,9 +1314,11 @@ bool try_set_for_range_types(Env* env, Tast_for_range** new_tast, Uast_for_range
     bool status = true;
 
     Tast_variable_def* new_var_def = NULL;
-    if (!try_set_variable_def_types(env, &new_var_def, uast->var_def)) {
+    vec_append(&a_main, &env->ancesters, &uast->body->symbol_collection);
+    if (!try_set_variable_def_types(env, &new_var_def, uast->var_def, true)) {
         status = false;
     }
+    vec_rem_last(&env->ancesters);
 
     Tast_for_lower_bound* new_lower = NULL;
     if (!try_set_for_lower_bound_types(env, &new_lower, uast->lower_bound)) {

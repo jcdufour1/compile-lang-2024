@@ -169,9 +169,10 @@ static inline bool tast_try_get_member_def(
 }
 
 bool try_set_variable_def_types(
-    const Env* env,
+    Env* env,
     Tast_variable_def** new_tast,
-    Uast_variable_def* uast
+    Uast_variable_def* uast,
+    bool add_to_sym_tbl
 );
 
 bool try_set_struct_def_types(Env* env, Tast_struct_def** new_tast, Uast_struct_def* tast);

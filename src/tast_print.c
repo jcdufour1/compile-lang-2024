@@ -323,9 +323,15 @@ Str_view tast_block_print_internal(const Tast_block* block, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "block\n", indent);
-    // TODO: extend table here to buf instead of this
-    symbol_log_table(LOG_DEBUG, block->symbol_collection.symbol_table);
-    alloca_log_table(LOG_DEBUG, block->symbol_collection.alloca_table);
+
+    string_extend_cstr_indent(&print_arena, &buf, "alloca_table\n", indent + INDENT_WIDTH);
+    alloca_extend_table_internal(&buf, block->symbol_collection.alloca_table, indent + 2*INDENT_WIDTH);
+
+    string_extend_cstr_indent(&print_arena, &buf, "usymbol_table\n", indent + INDENT_WIDTH);
+    usymbol_extend_table_internal(&buf, block->symbol_collection.usymbol_table, indent + 2*INDENT_WIDTH);
+
+    string_extend_cstr_indent(&print_arena, &buf, "symbol_table\n", indent + INDENT_WIDTH);
+    symbol_extend_table_internal(&buf, block->symbol_collection.symbol_table, indent + 2*INDENT_WIDTH);
 
     indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < block->children.info.count; idx++) {

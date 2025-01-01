@@ -57,7 +57,8 @@ bool try_set_function_def_types(
 bool try_set_function_decl_types(
     Env* env,
     Tast_function_decl** new_tast,
-    Uast_function_decl* decl
+    Uast_function_decl* decl,
+    bool add_to_sym_tbl
 );
 
 bool try_set_index_untyped_types(Env* env, Tast** new_tast, Uast_index_untyped* index);
@@ -65,7 +66,8 @@ bool try_set_index_untyped_types(Env* env, Tast** new_tast, Uast_index_untyped* 
 bool try_set_function_params_types(
     Env* env,
     Tast_function_params** new_tast,
-    Uast_function_params* def
+    Uast_function_params* def,
+    bool add_to_sym_tbl
 );
 
 bool try_set_lang_type_types(
