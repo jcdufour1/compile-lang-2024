@@ -157,10 +157,11 @@ static void msg_invalid_return_type_internal(const char* file, int line, const E
 
 typedef enum {
     CHECK_ASSIGN_OK,
-    CHECK_ASSIGN_INVALID,
+    CHECK_ASSIGN_INVALID, // error was not printed to the user (caller should print error)
+    CHECK_ASSIGN_ERROR, // error was printed
 } CHECK_ASSIGN_STATUS;
 
-CHECK_ASSIGN_STATUS check_generic_assignment(
+CHECK_ASSIGN_STATUS check_generic_assignment_finish(
     const Env* env,
     Tast_expr** new_src,
     Lang_type dest_lang_type,
@@ -177,12 +178,37 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
             *tast_get_lang_type_expr_ref(*new_src) = dest_lang_type;
             return CHECK_ASSIGN_OK;
         }
-        log(LOG_DEBUG, LANG_TYPE_FMT "   "TAST_FMT"\n", lang_type_print(dest_lang_type), tast_print((Tast*)src));
+        log(LOG_DEBUG, LANG_TYPE_FMT "   "TAST_FMT"\n", lang_type_print(dest_lang_type), tast_expr_print(src));
         todo();
     } else {
         return CHECK_ASSIGN_INVALID;
     }
     unreachable("");
+}
+
+CHECK_ASSIGN_STATUS check_generic_assignment(
+    Env* env,
+    Tast_expr** new_src,
+    const Tast* dest,
+    Uast_expr* src,
+    Pos pos
+) {
+    if (src->type == UAST_STRUCT_LITERAL) {
+        Tast* new_src_ = NULL;
+        // TODO: do this in check_generic_assignment
+        if (!try_set_struct_literal_assignment_types(
+            env, &new_src_, dest, uast_unwrap_struct_literal(src), pos
+        )) {
+            return CHECK_ASSIGN_ERROR;
+        }
+        *new_src = tast_unwrap_expr(new_src_);
+    } else {
+        if (!try_set_expr_types(env, new_src, src)) {
+            return CHECK_ASSIGN_ERROR;
+        }
+    }
+
+    return check_generic_assignment_finish(env, new_src, tast_get_lang_type(dest), *new_src);
 }
 
 Tast_literal* try_set_literal_types(Uast_literal* literal) {
@@ -488,9 +514,15 @@ bool try_set_operator_types(Env* env, Tast_expr** new_tast, Uast_operator* opera
     }
 }
 
-bool try_set_struct_literal_assignment_types(Env* env, Tast** new_tast, const Uast* lhs, Uast_struct_literal* struct_literal, Pos assign_pos) {
+bool try_set_struct_literal_assignment_types(
+    Env* env,
+    Tast** new_tast,
+    const Tast* lhs,
+    Uast_struct_literal* struct_literal,
+    Pos assign_pos
+) {
     Uast_def* lhs_var_def_;
-    try(usymbol_lookup(&lhs_var_def_, env, get_uast_name(lhs)));
+    try(usymbol_lookup(&lhs_var_def_, env, get_tast_name(lhs)));
     Uast_variable_def* lhs_var_def = uast_unwrap_variable_def(lhs_var_def_);
     Uast_def* struct_def_;
     try(usymbol_lookup(&struct_def_, env, lhs_var_def->lang_type.str));
@@ -694,23 +726,8 @@ bool try_set_assignment_types(Env* env, Tast_assignment** new_assign, Uast_assig
         return false;
     }
 
-    Tast_expr* new_rhs;
-    if (assignment->rhs->type == UAST_STRUCT_LITERAL) {
-        Tast* new_rhs_ = NULL;
-        // TODO: do this in check_generic_assignment
-        if (!try_set_struct_literal_assignment_types(
-            env, &new_rhs_, assignment->lhs, uast_unwrap_struct_literal(assignment->rhs), assignment->pos
-        )) {
-            return false;
-        }
-        new_rhs = tast_unwrap_expr(new_rhs_);
-    } else {
-        if (!try_set_expr_types(env, &new_rhs, assignment->rhs)) {
-            return false;
-        }
-    }
-
-    if (CHECK_ASSIGN_OK != check_generic_assignment(env, &new_rhs, tast_get_lang_type(new_lhs), new_rhs)) {
+    Tast_expr* new_rhs = NULL;
+    if (CHECK_ASSIGN_OK != check_generic_assignment(env, &new_rhs, new_lhs, assignment->rhs, assignment->pos)) {
         msg(
             LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
             assignment->pos,
@@ -831,10 +848,18 @@ bool try_set_function_call_types(Env* env, Tast_function_call** new_call, Uast_f
                 todo();
             }
         } else {
-            if (CHECK_ASSIGN_OK != check_generic_assignment(env, &new_arg, corres_param->lang_type, new_arg)) {
-                msg_invalid_function_arg(env, new_arg, corres_param);
-                status = false;
-                goto error;
+            switch (check_generic_assignment(env, &new_arg, corres_param, new_arg, tast_get_pos_expr(new_arg))) {
+                case CHECK_ASSIGN_OK:
+                    break;
+                case CHECK_ASSIGN_INVALID:
+                    msg_invalid_function_arg(env, new_arg, corres_param);
+                    status = false;
+                    goto error;
+                case CHECK_ASSIGN_ERROR:
+                    status = false;
+                    goto error;
+                default:
+                    unreachable("");
             }
         }
 

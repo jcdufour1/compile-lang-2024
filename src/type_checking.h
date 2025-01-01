@@ -40,7 +40,13 @@ bool try_set_unary_types_finish(
 
 bool try_set_unary_types(Env* env, Tast_expr** new_tast, Uast_unary* unary);
 
-bool try_set_operation_types(const Env* env, Tast** new_tast, Tast_operator* operator);
+bool try_set_struct_literal_assignment_types(
+    Env* env,
+    Tast** new_tast,
+    const Tast* lhs,
+    Uast_struct_literal* struct_literal,
+    Pos assign_pos
+);
 
 Tast_literal* try_set_literal_types(Uast_literal* literal);
 
