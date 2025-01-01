@@ -448,6 +448,23 @@ uint64_t llvm_sizeof_struct_expr(const Env* env, const Llvm_expr* struct_literal
     unreachable("");
 }
 
+size_t struct_def_base_get_idx_largest_member(const Env* env, Struct_def_base base) {
+    assert(base.members.info.count > 0);
+
+    size_t result = 0;
+    uint64_t size_result = 0;
+
+    for (size_t idx = 0; idx < base.members.info.count; idx++) {
+        uint64_t curr_size = sizeof_item(env, vec_at(&base.members, idx));
+        if (curr_size > size_result) {
+            size_result = curr_size;
+            result = idx;
+        }
+    }
+
+    return result;
+}
+
 // TODO: deduplicate these functions to some degree
 bool lang_type_is_struct(const Env* env, Lang_type lang_type) {
     Uast_def* def = NULL;

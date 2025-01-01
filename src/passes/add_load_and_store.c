@@ -511,16 +511,15 @@ static Str_view load_ptr_member_access_typed(
     Tast_def* def = NULL;
     try(symbol_lookup(&def, env, get_lang_type_from_name(env, new_callee).str));
 
-    Struct_def_base def_base = {0};
+    int64_t struct_index = {0};
     switch (def->type) {
         case TAST_STRUCT_DEF: {
             Tast_struct_def* struct_def = tast_unwrap_struct_def(def);
-            def_base = struct_def->base;
+            struct_index = tast_get_member_index(&struct_def->base, old_access->member_name);
             break;
         }
         case TAST_RAW_UNION_DEF: {
-            Tast_raw_union_def* raw_union_def = tast_unwrap_raw_union_def(def);
-            def_base = raw_union_def->base;
+            struct_index = 0;
             break;
         }
         default:
@@ -529,7 +528,7 @@ static Str_view load_ptr_member_access_typed(
 
     Tast_number* new_index = tast_number_new(
         old_access->pos,
-        tast_get_member_index(&def_base, old_access->member_name),
+        struct_index,
         lang_type_new_from_cstr("i32", 0)
     );
     

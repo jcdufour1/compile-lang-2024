@@ -866,28 +866,35 @@ static void emit_cond_goto(const Env* env, String* output, const Llvm_cond_goto*
     vec_append(&a_main, output, '\n');
 }
 
-static void emit_struct_def_base(const Env* env, String* output, const Struct_def_base* base) {
+static void emit_struct_def_base(const Env* env, String* output, const Struct_def_base* base, bool largest_only) {
     string_extend_strv(&a_main, output, base->name);
     string_extend_cstr(&a_main, output, " = type { ");
     bool is_first = true;
-    for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        if (!is_first) {
-            string_extend_cstr(&a_main, output, ", ");
-        }
+
+    if (largest_only) {
+        size_t idx = struct_def_base_get_idx_largest_member(env, *base);
         tast_extend_type_decl_str(env, output, vec_at(&base->members, idx), false);
-        is_first = false;
+    } else {
+        for (size_t idx = 0; idx < base->members.info.count; idx++) {
+            if (!is_first) {
+                string_extend_cstr(&a_main, output, ", ");
+            }
+            tast_extend_type_decl_str(env, output, vec_at(&base->members, idx), false);
+            is_first = false;
+        }
     }
+
     string_extend_cstr(&a_main, output, " }\n");
 }
 
 static void emit_struct_def(const Env* env, String* output, const Llvm_struct_def* struct_def) {
     string_extend_cstr(&a_main, output, "%struct.");
-    emit_struct_def_base(env, output, &struct_def->base);
+    emit_struct_def_base(env, output, &struct_def->base, false);
 }
 
 static void emit_raw_union_def(const Env* env, String* output, const Llvm_raw_union_def* raw_union_def) {
     string_extend_cstr(&a_main, output, "%union.");
-    emit_struct_def_base(env, output, &raw_union_def->base);
+    emit_struct_def_base(env, output, &raw_union_def->base, true);
 }
 
 static void emit_load_struct_element_pointer(const Env* env, String* output, const Llvm_load_element_ptr* load_elem_ptr) {

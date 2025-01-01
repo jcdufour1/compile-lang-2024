@@ -108,6 +108,8 @@ uint64_t llvm_sizeof_struct_def_base(const Env* env, const Struct_def_base* base
 
 uint64_t llvm_sizeof_struct_expr(const Env* env, const Llvm_expr* struct_literal_or_def);
 
+size_t struct_def_base_get_idx_largest_member(const Env* env, Struct_def_base base);
+
 bool lang_type_is_struct(const Env* env, Lang_type lang_type);
 
 bool lang_type_is_raw_union(const Env* env, Lang_type lang_type);
