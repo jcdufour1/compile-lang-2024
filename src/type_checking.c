@@ -196,7 +196,7 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
 ) {
     if (src->type == UAST_STRUCT_LITERAL) {
         Tast* new_src_ = NULL;
-        // TODO: do this in check_generic_assignment
+        // TODO: tests for using struct literal as function argument (and later as an operand)
         if (!try_set_struct_literal_assignment_types(
             env, &new_src_, dest_lang_type, uast_unwrap_struct_literal(src), pos
         )) {

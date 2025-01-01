@@ -76,9 +76,14 @@ void msg_internal(
     }
 
     if (log_level >= CURR_LOG_LEVEL) {
-        fprintf(stderr, "%s:%d:%d:%s:", pos.file_path, pos.line, pos.column, get_log_level_str(log_level));
-        vfprintf(stderr, format, args);
-        show_location_error(file_text, pos);
+        if (pos.line < 1) {
+            fprintf(stderr, "%s:", get_log_level_str(log_level));
+            vfprintf(stderr, format, args);
+        } else {
+            fprintf(stderr, "%s:%d:%d:%s:", pos.file_path, pos.line, pos.column, get_log_level_str(log_level));
+            vfprintf(stderr, format, args);
+            show_location_error(file_text, pos);
+        }
         log_internal(LOG_DEBUG, file, line, 0, "location of error\n");
     }
 
