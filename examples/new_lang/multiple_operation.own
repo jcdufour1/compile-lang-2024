@@ -1,6 +1,10 @@
 
 extern("c") fn printf(format_string u8*, args any...) i32
 
+fn one() i32 {
+    return 1
+}
+
 fn part_2() {
     {
         let num i32 = 7
@@ -35,6 +39,24 @@ fn part_2() {
             printf("yes4\n")
         } else {
             printf("no4\n")
+        }
+    }
+
+    {
+        let num i32 = 7
+        if -one() == num {
+            printf("no5\n")
+        } else {
+            printf("yes5\n")
+        }
+    }
+
+    {
+        let num i32 = -one()
+        if -one() == num {
+            printf("yes6\n")
+        } else {
+            printf("no6\n")
         }
     }
 }
