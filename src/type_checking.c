@@ -29,7 +29,7 @@ static int64_t bit_width_needed_signed(int64_t num) {
 
 static Tast_expr* auto_deref_to_0(Env* env, Tast_expr* expr) {
     while (tast_get_lang_type_expr(expr).pointer_depth > 0) {
-        try(try_set_unary_types_finish(env, &expr, expr, tast_get_pos_expr(expr), TOKEN_DEREF));
+        try(try_set_unary_types_finish(env, &expr, expr, tast_get_pos_expr(expr), TOKEN_DEREF, (Lang_type) {0}));
     }
     return expr;
 }
@@ -175,19 +175,19 @@ typedef enum {
 
 CHECK_ASSIGN_STATUS check_generic_assignment(
     const Env* env,
-    Tast** new_src,
+    Tast_expr** new_src,
     Lang_type dest_lang_type,
     Tast_expr* src
 ) {
     if (lang_type_is_equal(dest_lang_type, tast_get_lang_type_expr(src))) {
-        *new_src = tast_wrap_expr(src);
+        *new_src = src;
         return CHECK_ASSIGN_OK;
     }
 
     if (can_be_implicitly_converted(env, dest_lang_type, tast_get_lang_type_expr(src), false)) {
         if (src->type == TAST_LITERAL) {
-            *new_src = tast_wrap_expr(src);
-            *tast_get_lang_type_ref(*new_src) = dest_lang_type;
+            *new_src = src;
+            *tast_get_lang_type_expr_ref(*new_src) = dest_lang_type;
             return CHECK_ASSIGN_OK;
         } else if (src->type == TAST_SYMBOL_UNTYPED) {
             unreachable(TAST_FMT"\n", tast_expr_print(src));
@@ -340,7 +340,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
                 new_rhs = auto_deref_to_0(env, new_rhs);
                 *tast_get_lang_type_literal_ref(tast_unwrap_literal(new_rhs)) = tast_get_lang_type_expr(new_lhs);
             } else {
-                try(try_set_unary_types_finish(env, &new_rhs, new_rhs, tast_get_pos_expr(new_rhs), TOKEN_UNSAFE_CAST));
+                try(try_set_unary_types_finish(env, &new_rhs, new_rhs, tast_get_pos_expr(new_rhs), TOKEN_UNSAFE_CAST, tast_get_lang_type_expr(new_lhs)));
             }
         } else if (can_be_implicitly_converted(env, tast_get_lang_type_expr(new_rhs), tast_get_lang_type_expr(new_lhs), true)) {
             if (new_lhs->type == TAST_LITERAL) {
@@ -348,7 +348,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
                 new_rhs = auto_deref_to_0(env, new_rhs);
                 *tast_get_lang_type_literal_ref(tast_unwrap_literal(new_lhs)) = tast_get_lang_type_expr(new_rhs);
             } else {
-                try(try_set_unary_types_finish(env, &new_lhs, new_lhs, tast_get_pos_expr(new_lhs), TOKEN_UNSAFE_CAST));
+                try(try_set_unary_types_finish(env, &new_lhs, new_lhs, tast_get_pos_expr(new_lhs), TOKEN_UNSAFE_CAST, tast_get_lang_type_expr(new_rhs)));
             }
         } else {
             msg(
@@ -430,7 +430,14 @@ bool try_set_binary_types(Env* env, Tast_expr** new_tast, Uast_binary* operator)
     return try_set_binary_types_finish(env, new_tast, new_lhs, new_rhs, operator->pos, operator->token_type);
 }
 
-bool try_set_unary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_child, Pos unary_pos, TOKEN_TYPE unary_token_type) {
+bool try_set_unary_types_finish(
+    Env* env,
+    Tast_expr** new_tast,
+    Tast_expr* new_child,
+    Pos unary_pos,
+    TOKEN_TYPE unary_token_type,
+    Lang_type cast_to
+) {
     Lang_type new_lang_type = {0};
 
     switch (unary_token_type) {
@@ -454,8 +461,8 @@ bool try_set_unary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_c
             assert(new_lang_type.pointer_depth > 0);
             break;
         case TOKEN_UNSAFE_CAST:
-            todo(); // need to set new_lang_type
-            assert(tast_get_lang_type_expr(new_child).str.count > 0);
+            new_lang_type = cast_to;
+            assert(cast_to.str.count > 0);
             if (tast_get_lang_type_expr(new_child).pointer_depth > 0 && lang_type_is_number(tast_get_lang_type_expr(new_child))) {
             } else if (lang_type_is_number(tast_get_lang_type_expr(new_child)) && tast_get_lang_type_expr(new_child).pointer_depth > 0) {
             } else if (lang_type_is_number(tast_get_lang_type_expr(new_child)) && lang_type_is_number(tast_get_lang_type_expr(new_child))) {
@@ -483,7 +490,7 @@ bool try_set_unary_types(Env* env, Tast_expr** new_tast, Uast_unary* unary) {
         return false;
     }
 
-    return try_set_unary_types_finish(env, new_tast, new_child, uast_get_pos_unary(unary), unary->token_type);
+    return try_set_unary_types_finish(env, new_tast, new_child, uast_get_pos_unary(unary), unary->token_type, unary->lang_type);
 }
 
 // returns false if unsuccessful
@@ -726,7 +733,7 @@ bool try_set_assignment_types(Env* env, Tast_assignment** new_assign, Uast_assig
         }
     }
 
-    if (CHECK_ASSIGN_OK != check_generic_assignment(env, &new_lhs, tast_get_lang_type(new_lhs), new_rhs)) {
+    if (CHECK_ASSIGN_OK != check_generic_assignment(env, &new_rhs, tast_get_lang_type(new_lhs), new_rhs)) {
         msg(
             LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
             assignment->pos,
@@ -834,22 +841,30 @@ bool try_set_function_call_types(Env* env, Tast_function_call** new_call, Uast_f
         if (lang_type_is_equal(corres_param->lang_type, lang_type_new_from_cstr("any", 0))) {
             if (corres_param->is_variadic) {
                 // TODO: do type checking here if this function is not an extern "c" function
-                continue;
+                for (size_t idx = arg_idx; idx < fun_call->args.info.count; idx++) {
+                    Tast_expr* new_sub_arg = NULL;
+                    if (!try_set_expr_types(env, &new_sub_arg, vec_at(&fun_call->args, idx))) {
+                        status = false;
+                        continue;
+                    }
+                    vec_append(&a_main, &new_args, new_sub_arg);
+                }
+                break;
             } else {
                 todo();
             }
         } else {
-            Tast* new_new_arg = NULL;
-            if (CHECK_ASSIGN_OK != check_generic_assignment(env, &new_new_arg, corres_param->lang_type, new_arg)) {
+            if (CHECK_ASSIGN_OK != check_generic_assignment(env, &new_arg, corres_param->lang_type, new_arg)) {
                 msg_invalid_function_arg(env, new_arg, corres_param);
                 status = false;
                 goto error;
             }
-            new_arg = tast_unwrap_expr(new_new_arg);
         }
 
         vec_append(&a_main, &new_args, new_arg);
     }
+
+    assert(!status || new_args.info.count == fun_call->args.info.count);
 
     *new_call = tast_function_call_new(
         fun_call->pos,
@@ -1243,12 +1258,10 @@ bool try_set_return_types(Env* env, Tast_return** new_tast, Uast_return* rtn) {
 
     Lang_type dest_lang_type = get_parent_function_return_type(env);
 
-    Tast* new_child_ = NULL;
-    if (CHECK_ASSIGN_OK != check_generic_assignment(env, &new_child_, dest_lang_type, new_child)) {
+    if (CHECK_ASSIGN_OK != check_generic_assignment(env, &new_child, dest_lang_type, new_child)) {
         msg_invalid_return_type(env, rtn->pos, new_child, rtn->is_auto_inserted);
         return false;
     }
-    new_child = tast_unwrap_expr(new_child_);
 
     *new_tast = tast_return_new(rtn->pos, new_child, rtn->is_auto_inserted);
     return true;
@@ -1356,7 +1369,9 @@ bool try_set_if_else_chain(Env* env, Tast_if_else_chain** new_tast, Uast_if_else
 bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def) {
     bool status = true;
 
-    vec_append(&a_main, &env->ancesters, &block->symbol_collection);
+    Symbol_collection new_sym_coll = block->symbol_collection;
+
+    vec_append(&a_main, &env->ancesters, &new_sym_coll);
 
     Tast_vec new_tasts = {0};
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
@@ -1396,8 +1411,7 @@ bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, boo
 
 error:
     vec_rem_last(&env->ancesters);
-    todo();
-    *new_tast = tast_block_new(block->pos, block->is_variadic, new_tasts, (Symbol_collection) {0}, block->pos_end);
+    *new_tast = tast_block_new(block->pos, block->is_variadic, new_tasts, new_sym_coll, block->pos_end);
     return status;
 }
 

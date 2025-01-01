@@ -131,6 +131,7 @@ static Uast_type uast_gen_unary(void) {
 
     append_member(&unary.members, "Uast_expr*", "child");
     append_member(&unary.members, "TOKEN_TYPE", "token_type");
+    append_member(&unary.members, "Lang_type", "lang_type");
 
     return unary;
 }

@@ -945,7 +945,7 @@ static PARSE_STATUS extract_function_decl(Env* env, Uast_function_decl** fun_dec
 
     status = PARSE_OK;
 error:
-    symbol_ignore_defered(env);
+    usymbol_ignore_defered(env);
     return status;
 }
 
@@ -1428,10 +1428,6 @@ static PARSE_STATUS extract_struct_literal(Env* env, Uast_struct_literal** struc
     return PARSE_OK;
 }
 
-static Uast_unary* parser_util_unary_new(Token operator_token, Uast_expr* child) {
-    return uast_unary_new(operator_token.pos, child, operator_token.type);
-}
-
 static Uast_binary* parser_binary_new(Uast_expr* lhs, Token operator_token, Uast_expr* rhs) {
     return uast_binary_new(operator_token.pos, lhs, rhs, operator_token.type);
 }
@@ -1506,7 +1502,12 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(
         if (PARSE_EXPR_OK != try_extract_expression_piece(env, &inside_unary, tokens, defer_sym_add)) {
             todo();
         }
-        *result = uast_wrap_operator(uast_wrap_unary(parser_util_unary_new(operator_token, inside_unary)));
+        *result = uast_wrap_operator(uast_wrap_unary(uast_unary_new(
+            operator_token.pos,
+            inside_unary,
+            operator_token.type,
+            unary_lang_type
+        )));
     } else if (starts_with_function_call(*tokens)) {
         if (PARSE_OK != try_extract_function_call(env, &fun_call, tokens)) {
             return PARSE_EXPR_ERROR;

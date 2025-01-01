@@ -33,6 +33,7 @@ endif
 OBJS=\
 	 ${BUILD_DIR}/main.o \
 	 ${BUILD_DIR}/arena.o \
+	 ${BUILD_DIR}/uast_print.o \
 	 ${BUILD_DIR}/tast_print.o \
 	 ${BUILD_DIR}/llvm_print.o \
 	 ${BUILD_DIR}/globals.o \
@@ -97,6 +98,9 @@ ${BUILD_DIR}/parser_utils.o: ${DEP_COMMON} src/parser_utils.c third_party/*
 
 ${BUILD_DIR}/globals.o: ${DEP_COMMON} src/globals.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/globals.o src/globals.c
+
+${BUILD_DIR}/uast_print.o: ${DEP_COMMON} src/uast_print.c third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/uast_print.o src/uast_print.c
 
 ${BUILD_DIR}/tast_print.o: ${DEP_COMMON} src/tast_print.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/tast_print.o src/tast_print.c

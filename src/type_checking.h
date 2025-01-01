@@ -29,7 +29,14 @@ bool try_set_uast_types(Env* env, Tast** new_tast, Uast* tast);
 // returns false if unsuccessful
 bool try_set_binary_operand_types(Tast_expr* operand);
 
-bool try_set_unary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_child, Pos unary_pos, TOKEN_TYPE token_type);
+bool try_set_unary_types_finish(
+    Env* env,
+    Tast_expr** new_tast,
+    Tast_expr* new_child,
+    Pos unary_pos,
+    TOKEN_TYPE unary_token_type,
+    Lang_type old_lang_type
+);
 
 bool try_set_unary_types(Env* env, Tast_expr** new_tast, Uast_unary* unary);
 

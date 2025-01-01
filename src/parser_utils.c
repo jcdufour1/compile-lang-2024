@@ -155,15 +155,15 @@ Str_view util_literal_name_new_prefix(const char* debug_prefix) {
 }
 
 Str_view get_storage_location(const Env* env, Str_view sym_name) {
-    Tast_def* sym_def_;
-    if (!symbol_lookup(&sym_def_, env, sym_name)) {
+    Uast_def* sym_def_;
+    if (!usymbol_lookup(&sym_def_, env, sym_name)) {
         symbol_log(LOG_DEBUG, env);
         unreachable("symbol definition for symbol "STR_VIEW_FMT" not found\n", str_view_print(sym_name));
     }
 
     switch (sym_def_->type) {
-        case TAST_VARIABLE_DEF: {
-            Tast_variable_def* sym_def = tast_unwrap_variable_def(sym_def_);
+        case UAST_VARIABLE_DEF: {
+            Uast_variable_def* sym_def = uast_unwrap_variable_def(sym_def_);
             Llvm* result = NULL;
             if (!alloca_lookup(&result, env, sym_def->name)) {
                 unreachable(STR_VIEW_FMT"\n", str_view_print(sym_def->name));
@@ -476,8 +476,8 @@ uint64_t llvm_sizeof_struct_expr(const Env* env, const Llvm_expr* struct_literal
 
 // TODO: deduplicate these functions to some degree
 bool lang_type_is_struct(const Env* env, Lang_type lang_type) {
-    Tast_def* def = NULL;
-    if (!symbol_lookup(&def, env, lang_type.str)) {
+    Uast_def* def = NULL;
+    if (!usymbol_lookup(&def, env, lang_type.str)) {
         unreachable(LANG_TYPE_FMT"", lang_type_print(lang_type));
     }
 
@@ -491,14 +491,14 @@ bool lang_type_is_struct(const Env* env, Lang_type lang_type) {
         case TAST_PRIMITIVE_DEF:
             return false;
         default:
-            unreachable(TAST_FMT"    "LANG_TYPE_FMT"\n", tast_print(tast_wrap_def(def)), lang_type_print(lang_type));
+            unreachable(TAST_FMT"    "LANG_TYPE_FMT"\n", uast_print(uast_wrap_def(def)), lang_type_print(lang_type));
     }
     unreachable("");
 }
 
 bool lang_type_is_raw_union(const Env* env, Lang_type lang_type) {
-    Tast_def* def = NULL;
-    try(symbol_lookup(&def, env, lang_type.str));
+    Uast_def* def = NULL;
+    try(usymbol_lookup(&def, env, lang_type.str));
 
     switch (def->type) {
         case TAST_STRUCT_DEF:
@@ -510,14 +510,14 @@ bool lang_type_is_raw_union(const Env* env, Lang_type lang_type) {
         case TAST_PRIMITIVE_DEF:
             return false;
         default:
-            unreachable(TAST_FMT"    "LANG_TYPE_FMT"\n", tast_print(tast_wrap_def(def)), lang_type_print(lang_type));
+            unreachable(TAST_FMT"    "LANG_TYPE_FMT"\n", uast_print(uast_wrap_def(def)), lang_type_print(lang_type));
     }
     unreachable("");
 }
 
 bool lang_type_is_enum(const Env* env, Lang_type lang_type) {
-    Tast_def* def = NULL;
-    try(symbol_lookup(&def, env, lang_type.str));
+    Uast_def* def = NULL;
+    try(usymbol_lookup(&def, env, lang_type.str));
 
     switch (def->type) {
         case TAST_STRUCT_DEF:
@@ -529,14 +529,14 @@ bool lang_type_is_enum(const Env* env, Lang_type lang_type) {
         case TAST_PRIMITIVE_DEF:
             return false;
         default:
-            unreachable(TAST_FMT"    "LANG_TYPE_FMT"\n", tast_print(tast_wrap_def(def)), lang_type_print(lang_type));
+            unreachable(TAST_FMT"    "LANG_TYPE_FMT"\n", uast_print(uast_wrap_def(def)), lang_type_print(lang_type));
     }
     unreachable("");
 }
 
 bool lang_type_is_primitive(const Env* env, Lang_type lang_type) {
-    Tast_def* def = NULL;
-    try(symbol_lookup(&def, env, lang_type.str));
+    Uast_def* def = NULL;
+    try(usymbol_lookup(&def, env, lang_type.str));
 
     switch (def->type) {
         case TAST_STRUCT_DEF:
@@ -548,7 +548,7 @@ bool lang_type_is_primitive(const Env* env, Lang_type lang_type) {
         case TAST_PRIMITIVE_DEF:
             return true;
         default:
-            unreachable(TAST_FMT"    "LANG_TYPE_FMT"\n", tast_print(tast_wrap_def(def)), lang_type_print(lang_type));
+            unreachable(TAST_FMT"    "LANG_TYPE_FMT"\n", uast_print(uast_wrap_def(def)), lang_type_print(lang_type));
     }
     unreachable("");
 }

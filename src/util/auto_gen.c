@@ -758,10 +758,10 @@ static Sym_tbl_type_vec get_symbol_tbl_types(void) {
     Sym_tbl_type_vec types = {0};
 
     vec_append(&gen_a, &types, symbol_tbl_type_new(
-        "Uast_def", "usymbol", "usym", "get_uast_name_def", "usymbol_table", "uancesters", "uast_def_print", false
+        "Uast_def", "usymbol", "usym", "get_uast_name_def", "usymbol_table", "uancesters", "uast_def_print", true
     ));
     vec_append(&gen_a, &types, symbol_tbl_type_new(
-        "Tast_def", "symbol", "sym", "get_def_name", "symbol_table", "ancesters", "tast_def_print", true
+        "Tast_def", "symbol", "sym", "get_def_name", "symbol_table", "ancesters", "tast_def_print", false
     ));
     vec_append(&gen_a, &types, symbol_tbl_type_new( 
         "Llvm", "alloca", "all", "llvm_get_tast_name", "alloca_table", "llvm_ancesters", "llvm_print", false

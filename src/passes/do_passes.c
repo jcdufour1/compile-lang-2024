@@ -28,10 +28,10 @@ static void fail(void) {
 }
 
 static void add_primitive(Env* env, const char* base_name, int16_t pointer_depth) {
-    Tast_primitive_def* def = tast_primitive_def_new(
+    Uast_primitive_def* def = uast_primitive_def_new(
         POS_BUILTIN, lang_type_new_from_cstr(base_name, pointer_depth)
     );
-    try(usym_tbl_add(&env->primitives, tast_wrap_primitive_def(def)));
+    try(usym_tbl_add(&env->primitives, uast_wrap_primitive_def(def)));
 }
 
 static void add_primitives(Env* env) {
@@ -191,10 +191,10 @@ void do_passes(Str_view file_text, const Parameters* params) {
 
     //log_tree(LOG_DEBUG, tast_wrap_block(*root));
     Tast_block* typed = analysis_1(&env, untyped);
-    log_tree(LOG_DEBUG, tast_wrap_block(typed));
     if (error_count > 0) {
         fail();
     }
+    log_tree(LOG_DEBUG, tast_wrap_block(typed));
     arena_reset(&print_arena);
 
     typed = change_operators(&env, typed);

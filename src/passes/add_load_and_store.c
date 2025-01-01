@@ -84,6 +84,81 @@ static Llvm_raw_union_def* tast_clone_raw_union_def(const Tast_raw_union_def* ol
     );
 }
 
+static Llvm_variable_def* uast_clone_variable_def(Uast_variable_def* old_var_def);
+
+//static Llvm_alloca* add_load_and_store_alloca_new(Env* env, Llvm_variable_def* var_def) {
+//    Llvm_alloca* alloca = llvm_alloca_new(var_def->pos, 0, var_def->lang_type, var_def->name_corr_param);
+//    alloca_add(env, llvm_wrap_alloca(alloca));
+//    assert(alloca);
+//    return alloca;
+//}
+
+static Llvm_function_params* uast_clone_function_params(Uast_function_params* old_params) {
+    Llvm_function_params* new_params = llvm_function_params_new(old_params->pos, (Llvm_variable_def_vec){0}, 0);
+
+    for (size_t idx = 0; idx < old_params->params.info.count; idx++) {
+        vec_append(&a_main, &new_params->params, uast_clone_variable_def(vec_at(&old_params->params, idx)));
+    }
+
+    return new_params;
+}
+
+static Llvm_lang_type* uast_clone_lang_type(Uast_lang_type* old_lang_type) {
+    Llvm_lang_type* new_lang_type = llvm_lang_type_new(old_lang_type->pos, old_lang_type->lang_type);
+    return new_lang_type;
+}
+
+static Llvm_function_decl* uast_clone_function_decl(Uast_function_decl* old_decl) {
+    return llvm_function_decl_new(
+        old_decl->pos,
+        uast_clone_function_params(old_decl->params),
+        uast_clone_lang_type(old_decl->return_type),
+        old_decl->name
+    );
+}
+
+static Llvm_variable_def* uast_clone_variable_def(Uast_variable_def* old_var_def) {
+    return llvm_variable_def_new(
+        old_var_def->pos,
+        old_var_def->lang_type,
+        old_var_def->is_variadic,
+        0,
+        util_literal_name_new(),
+        old_var_def->name
+    );
+}
+
+static Llvm_struct_literal* uast_clone_struct_literal(const Tast_struct_literal* old_lit) {
+    return llvm_struct_literal_new(
+        old_lit->pos,
+        old_lit->members,
+        old_lit->name,
+        old_lit->lang_type,
+        0
+    );
+}
+
+static Llvm_struct_def* uast_clone_struct_def(const Tast_struct_def* old_def) {
+    return llvm_struct_def_new(
+        old_def->pos,
+        old_def->base
+    );
+}
+
+static Llvm_enum_def* uast_clone_enum_def(const Tast_enum_def* old_def) {
+    return llvm_enum_def_new(
+        old_def->pos,
+        old_def->base
+    );
+}
+
+static Llvm_raw_union_def* uast_clone_raw_union_def(const Tast_raw_union_def* old_def) {
+    return llvm_raw_union_def_new(
+        old_def->pos,
+        old_def->base
+    );
+}
+
 static Llvm_function_params* do_function_def_alloca(Env* env, Llvm_block* new_block, const Tast_function_params* old_params) {
     Llvm_function_params* new_params = llvm_function_params_new(
         old_params->pos,
@@ -296,9 +371,9 @@ static Str_view load_ptr_symbol_typed(
     (void) new_block;
     log(LOG_DEBUG, "entering thing\n");
 
-    Tast_def* var_def_ = NULL;
-    try(symbol_lookup(&var_def_, env, tast_get_symbol_typed_name(old_sym)));
-    Llvm_variable_def* var_def = tast_clone_variable_def(tast_unwrap_variable_def(var_def_));
+    Uast_def* var_def_ = NULL;
+    try(usymbol_lookup(&var_def_, env, tast_get_symbol_typed_name(old_sym)));
+    Llvm_variable_def* var_def = uast_clone_variable_def(uast_unwrap_variable_def(var_def_));
     Llvm* alloca = NULL;
     if (!alloca_lookup(&alloca, env, var_def->name_corr_param)) {
         log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(var_def->name_corr_param));
@@ -433,20 +508,18 @@ static Str_view load_ptr_member_access_typed(
 ) {
     Str_view new_callee = load_ptr_expr(env, new_block, old_access->callee);
 
-    Tast_def* def = NULL;
-    try(symbol_lookup(&def, env, get_lang_type_from_name(env, new_callee).str));
+    Uast_def* def = NULL;
+    try(usymbol_lookup(&def, env, get_lang_type_from_name(env, new_callee).str));
 
-    log_tree(LOG_DEBUG, tast_wrap_def(def));
-
-    Struct_def_base def_base = {0};
+    Ustruct_def_base def_base = {0};
     switch (def->type) {
         case TAST_STRUCT_DEF: {
-            Tast_struct_def* struct_def = tast_unwrap_struct_def(def);
+            Uast_struct_def* struct_def = uast_unwrap_struct_def(def);
             def_base = struct_def->base;
             break;
         }
         case TAST_RAW_UNION_DEF: {
-            Tast_raw_union_def* raw_union_def = tast_unwrap_raw_union_def(def);
+            Uast_raw_union_def* raw_union_def = uast_unwrap_raw_union_def(def);
             def_base = raw_union_def->base;
             break;
         }
@@ -456,7 +529,7 @@ static Str_view load_ptr_member_access_typed(
 
     Tast_number* new_index = tast_number_new(
         old_access->pos,
-        tast_get_member_index(&def_base, old_access->member_name),
+        uast_get_member_index(&def_base, old_access->member_name),
         lang_type_new_from_cstr("i32", 0)
     );
     
@@ -672,6 +745,7 @@ static Str_view load_function_def(
             env, new_fun_def->body, old_fun_def->decl->params
     ).llvm);
     for (size_t idx = 0; idx < old_fun_def->body->children.info.count; idx++) {
+        log(LOG_DEBUG, STR_VIEW_FMT, tast_print(vec_at(&old_fun_def->body->children, idx)));
         load_tast(env, new_fun_def->body, vec_at(&old_fun_def->body->children, idx));
     }
     vec_rem_last(&env->ancesters);
@@ -845,7 +919,7 @@ static Llvm_block* if_else_chain_to_branch(Env* env, Tast_if_else_chain* if_else
     Str_view if_after = util_literal_name_new_prefix("if_after");
     
     Llvm* dummy = NULL;
-    Tast_def* dummy_def = NULL;
+    Uast_def* dummy_def = NULL;
 
     Str_view next_if = {0};
     for (size_t idx = 0; idx < if_else->tasts.info.count; idx++) {
@@ -867,7 +941,7 @@ static Llvm_block* if_else_chain_to_branch(Env* env, Tast_if_else_chain* if_else
         }
     }
 
-    assert(!symbol_lookup(&dummy_def, env, next_if));
+    assert(!usymbol_lookup(&dummy_def, env, next_if));
     add_label(env, new_block, if_after, if_else->pos, false);
     assert(alloca_lookup(&dummy, env, next_if));
     //log_tree(LOG_DEBUG, tast_wrap_block(new_block));
@@ -918,27 +992,28 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
     Tast_expr* rhs_actual = old_for->upper_bound->child;
 
     Uast_symbol_untyped* symbol_lhs_assign_;
-    Tast_symbol_untyped* symbol_lhs_assign;
+    Tast_symbol_typed* symbol_lhs_assign;
     Tast_variable_def* for_var_def;
     {
         for_var_def = old_for->var_def;
         symbol_lhs_assign_ = uast_symbol_untyped_new(for_var_def->pos, for_var_def->name);
         Tast_expr* new_expr = NULL;
         try(try_set_symbol_type(env, &new_expr, symbol_lhs_assign_));
-        symbol_lhs_assign = tast_unwrap_symbol_untyped(new_expr);
+        log(LOG_DEBUG, STR_VIEW_FMT, tast_expr_print(new_expr));
+        symbol_lhs_assign = tast_unwrap_symbol_typed(new_expr);
     }
 
     //try(symbol_add(env, tast_wrap_variable_def(for_var_def)));
     Llvm* dummy = NULL;
-    Tast_def* dummy_def = NULL;
+    Uast_def* dummy_def = NULL;
 
-    assert(symbol_lookup(&dummy_def, env, for_var_def->name));
+    assert(usymbol_lookup(&dummy_def, env, for_var_def->name));
 
     Tast_assignment* assignment_to_inc_cond_var = for_loop_cond_var_assign_new(
         env, for_var_def->name, tast_get_pos_expr(lhs_actual)
     );
 
-    Uast_symbol_untyped* lhs_untyped = uast_symbol_untyped_new(symbol_lhs_assign->pos, symbol_lhs_assign->name);
+    Uast_symbol_untyped* lhs_untyped = uast_symbol_untyped_new(tast_get_pos_symbol_typed(symbol_lhs_assign), tast_get_symbol_typed_name(symbol_lhs_assign));
     Tast_expr* lhs_typed_ = NULL;
     try(try_set_symbol_type(env, &lhs_typed_, lhs_untyped));
     Tast_expr* operator_ = NULL;
@@ -965,7 +1040,7 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
 
     //vec_append(&a_main, &new_branch_block->children, tast_wrap_variable_def(for_var_def));
 
-    Tast_assignment* new_var_assign = tast_assignment_new(symbol_lhs_assign->pos, tast_wrap_expr(tast_wrap_symbol_untyped(symbol_lhs_assign)), lhs_actual);
+    Tast_assignment* new_var_assign = tast_assignment_new(tast_get_pos_symbol_typed(symbol_lhs_assign), tast_wrap_expr(tast_wrap_symbol_typed(symbol_lhs_assign)), lhs_actual);
     //Tast_assignment* new_var_assign = util_assignment_new(env, uast_wrap_expr(uast_wrap_symbol_untyped(symbol_lhs_assign)), lhs_actual);
 
     load_variable_def(env, new_branch_block, for_var_def);
@@ -1081,7 +1156,7 @@ static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for
 
     //load_operator(env, new_branch_block, operator);
     //Tast* dummy = NULL;
-    //try(symbol_lookup(&dummy, env, str_view_from_cstr("str18")));
+    //try(usymbol_lookup(&dummy, env, str_view_from_cstr("str18")));
 
     if_for_add_cond_goto(
         env,
@@ -1099,7 +1174,7 @@ static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for
     log(LOG_DEBUG, "DSFJKLKJDFS: "STR_VIEW_FMT"\n", str_view_print(after_check_label));
 
 
-    //try(symbol_lookup(&dummy, env, str_view_from_cstr("str18")));
+    //try(usymbol_lookup(&dummy, env, str_view_from_cstr("str18")));
     //for (size_t idx = 0; idx < old_for->body->children.info.count; idx++) {
     //    log(LOG_DEBUG, TAST_FMT"\n", tast_print(vec_at(&old_for->body->children, idx)));
     //}
