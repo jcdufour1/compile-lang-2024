@@ -700,8 +700,6 @@ static Llvm_reg load_function_parameters(
 
         log(LOG_DEBUG, TAST_FMT"\n", llvm_variable_def_print(param));
         try(alloca_lookup(&dummy, env, param->name_corr_param));
-
-        // TODO: append to new function body instead of old
     }
 
     return (Llvm_reg) {
@@ -1223,7 +1221,11 @@ static Str_view load_break(
 ) {
     // TODO: make expected failure test case for break in invalid location
     if (env->label_if_break.count < 1) {
-        unreachable("cannot break here\n");
+        msg(
+            LOG_ERROR, EXPECT_FAIL_BREAK_INVALID_LOCATION, env->file_text, old_break->pos,
+            "break statement outside of a for loop\n"
+        );
+        return (Str_view) {0};
     }
 
     Llvm_goto* new_goto = llvm_goto_new(old_break->pos, env->label_if_break, 0);
@@ -1239,7 +1241,11 @@ static Str_view load_continue(
 ) {
     // TODO: make expected failure test case for continue in invalid location
     if (env->label_if_continue.count < 1) {
-        unreachable("cannot continue here\n");
+        msg(
+            LOG_ERROR, EXPECT_FAIL_CONTINUE_INVALID_LOCATION, env->file_text, old_continue->pos,
+            "continue statement outside of a for loop\n"
+        );
+        return (Str_view) {0};
     }
 
     Llvm_goto* new_goto = llvm_goto_new(old_continue->pos, env->label_if_continue, 0);

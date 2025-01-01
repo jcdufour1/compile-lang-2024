@@ -211,7 +211,7 @@ Uast_literal* util_uast_literal_new_from_strv(Str_view value, TOKEN_TYPE token_t
             break;
         }
         case TOKEN_VOID: {
-            Uast_void* literal = uast_void_new(pos, 0);
+            Uast_void* literal = uast_void_new(pos);
             new_literal = uast_wrap_void(literal);
             break;
         }
@@ -245,7 +245,7 @@ Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token
         case TOKEN_STRING_LITERAL:
             unreachable("");
         case TOKEN_VOID: {
-            Uast_void* literal = uast_void_new(pos, 0);
+            Uast_void* literal = uast_void_new(pos);
             new_literal = uast_wrap_void(literal);
             break;
         }

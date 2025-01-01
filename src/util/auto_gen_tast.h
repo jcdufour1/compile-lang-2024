@@ -347,7 +347,7 @@ static Tast_type tast_gen_variable_def(void) {
     Tast_type def = {.name = tast_name_new("def", "variable_def", false)};
 
     append_member(&def.members, "Lang_type", "lang_type");
-    append_member(&def.members, "bool", "is_variadic"); // TODO: : 1
+    append_member(&def.members, "bool", "is_variadic");
     append_member(&def.members, "Str_view", "name");
 
     return def;

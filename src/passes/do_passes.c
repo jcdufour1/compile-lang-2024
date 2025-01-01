@@ -203,11 +203,18 @@ void do_passes(Str_view file_text, const Parameters* params) {
 
     Llvm_block* llvm_root = add_load_and_store(&env, typed);
     log(LOG_DEBUG, "\n"TAST_FMT, llvm_block_print(llvm_root));
+    if (error_count > 0) {
+        fail();
+    }
     assert(llvm_root);
 
     llvm_root = assign_llvm_ids(&env, llvm_root);
     log(LOG_DEBUG, "\n"TAST_FMT, llvm_block_print(llvm_root));
     arena_reset(&print_arena);
+
+    if (error_count > 0) {
+        unreachable("should have exited before now\n");
+    }
 
     if (params->emit_llvm) {
         emit_llvm_from_tree(&env, llvm_root);

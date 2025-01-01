@@ -92,6 +92,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "semantic_error_in_return_expr.own": ["undefined-symbol"],
     EXPECTED_FAIL_EXAMPLES_DIR + "parse_error_in_if_condition.own": ["expected-expression"],
     EXPECTED_FAIL_EXAMPLES_DIR + "struct_literal_assign_parse_errors.own": ["parser-expected", "parser-expected", "expected-expression", "parser-expected", "parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "break_invalid_location.own": ["break-invalid-location", "continue-invalid-location"],
 }
 
 def to_str(a):

@@ -209,8 +209,6 @@ static Uast_type uast_gen_char(void) {
 static Uast_type uast_gen_void(void) {
     Uast_type lang_void = {.name = uast_name_new("literal", "void", false)};
 
-    append_member(&lang_void.members, "int", "dummy");
-
     return lang_void;
 }
 
@@ -305,7 +303,7 @@ static Uast_type uast_gen_variable_def(void) {
     Uast_type def = {.name = uast_name_new("def", "variable_def", false)};
 
     append_member(&def.members, "Lang_type", "lang_type");
-    append_member(&def.members, "bool", "is_variadic"); // TODO: : 1
+    append_member(&def.members, "bool", "is_variadic");
     append_member(&def.members, "Str_view", "name");
 
     return def;

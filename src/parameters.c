@@ -63,6 +63,8 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"undefined-type", EXPECT_FAIL_UNDEFINED_TYPE},
     {"missing-close-sq-bracket", EXPECT_FAIL_MISSING_CLOSE_SQ_BRACKET},
     {"deref_non_pointer", EXPECT_FAIL_DEREF_NON_POINTER},
+    {"break-invalid-location", EXPECT_FAIL_BREAK_INVALID_LOCATION},
+    {"continue-invalid-location", EXPECT_FAIL_CONTINUE_INVALID_LOCATION},
 };
 
 static void parse_normal_option(Parameters* params, int* argc, char*** argv) {

@@ -349,7 +349,7 @@ static Llvm_type llvm_gen_variable_def(void) {
     Llvm_type def = {.name = llvm_name_new("def", "variable_def", false)};
 
     append_member(&def.members, "Lang_type", "lang_type");
-    append_member(&def.members, "bool", "is_variadic"); // TODO: : 1
+    append_member(&def.members, "bool", "is_variadic");
     append_member(&def.members, "Llvm_id", "llvm_id");
     append_member(&def.members, "Str_view", "name_self"); // for loading from variable_def param
     append_member(&def.members, "Str_view", "name_corr_param"); // for loading from alloca
@@ -462,7 +462,7 @@ static Llvm_type llvm_gen_return(void) {
     Llvm_type rtn = {.name = llvm_name_new("llvm", "return", false)};
 
     append_member(&rtn.members, "Str_view", "child");
-    append_member(&rtn.members, "bool", "is_auto_inserted"); // TODO: use : 1 size?
+    append_member(&rtn.members, "bool", "is_auto_inserted");
 
     return rtn;
 }

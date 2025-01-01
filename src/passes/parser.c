@@ -1903,7 +1903,6 @@ static PARSE_EXPR_STATUS try_extract_expression(Env* env, Uast_expr** result, Tk
             }
         }
 
-        // TODO: use exhausive switch case here?
         is_first_operator = false;
         prev_operator_token = operator_token;
     }
