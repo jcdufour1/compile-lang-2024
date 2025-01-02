@@ -215,7 +215,7 @@ Str_view tast_function_call_print_internal(const Tast_function_call* fun_call, i
 
     string_extend_cstr_indent(&print_arena, &buf, "function_call", indent);
     string_extend_strv_in_par(&print_arena, &buf, fun_call->name);
-    extend_lang_type(&buf, fun_call->lang_type, true);
+    string_extend_strv(&print_arena, &buf, lang_type_vec_print_internal(fun_call->lang_type, false));
     string_extend_cstr(&print_arena, &buf, "\n");
 
     indent += INDENT_WIDTH;
@@ -343,7 +343,7 @@ Str_view tast_lang_type_print_internal(const Tast_lang_type* lang_type, int inde
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "lang_type", indent);
-    extend_lang_type(&buf, lang_type->lang_type, true);
+    string_extend_strv(&print_arena, &buf, lang_type_vec_print_internal(lang_type->lang_type, false));
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);

@@ -662,8 +662,26 @@ static PARSE_STATUS extract_function_parameters(Env* env, Uast_function_params**
     return PARSE_OK;
 }
 
-static void extract_return_type(Uast_lang_type** result, Tk_view* tokens) {
+static void extract_return_types(Uast_lang_type** result, Tk_view* tokens) {
     Lang_type lang_type = {0};
+    Lang_type_vec types = {0};
+
+    Token open_par = {0};
+    if (!try_consume(&open_par, tokens, TOKEN_OPEN_PAR)) {
+        if (extract_lang_type_struct(&lang_type, tokens)) {
+            assert(lang_type.str.count > 0);
+            vec_append(&a_main, &types, lang_type);
+            *result = uast_lang_type_new(tk_view_front(*tokens).pos, types);
+            return;
+        } else {
+            lang_type.str = str_view_from_cstr("void");
+            assert(lang_type.str.count > 0);
+            vec_append(&a_main, &types, lang_type);
+            *result = uast_lang_type_new(tk_view_front(*tokens).pos, types);
+            return;
+        }
+    }
+
     bool is_comma = true;
     while (is_comma) {
         // a return type is only one token, at least for now
@@ -671,11 +689,16 @@ static void extract_return_type(Uast_lang_type** result, Tk_view* tokens) {
             lang_type.str = str_view_from_cstr("void");
             break;
         }
+        vec_append(&a_main, &types, lang_type);
         is_comma = try_consume(NULL, tokens, TOKEN_COMMA);
     }
 
-    assert(lang_type.str.count > 0);
-    *result = uast_lang_type_new(tk_view_front(*tokens).pos, lang_type);
+    if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
+        log_tokens(LOG_DEBUG, *tokens);
+        todo();
+    }
+
+    *result = uast_lang_type_new(open_par.pos, types);
 }
 
 static PARSE_STATUS extract_function_decl_common(
@@ -695,8 +718,7 @@ static PARSE_STATUS extract_function_decl_common(
     }
 
     Uast_lang_type* return_type = NULL;
-    extract_return_type(&return_type, tokens);
-    assert(return_type->lang_type.str.count > 0);
+    extract_return_types(&return_type, tokens);
 
     *fun_decl = uast_function_decl_new(name_token.pos, params, return_type, name_token.text);
     if (!usymbol_add(env, uast_wrap_function_decl(*fun_decl))) {
@@ -1659,7 +1681,12 @@ static bool expr_is_binary(const Uast_expr* expr) {
     return operator->type == UAST_BINARY;
 }
 
-static PARSE_EXPR_STATUS try_extract_expression(Env* env, Uast_expr** result, Tk_view* tokens, bool defer_sym_add) {
+static PARSE_EXPR_STATUS try_extract_expression(
+    Env* env,
+    Uast_expr** result,
+    Tk_view* tokens,
+    bool defer_sym_add
+) {
     assert(tokens->tokens);
     if (tokens->count < 1) {
         return PARSE_EXPR_NONE;

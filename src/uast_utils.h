@@ -38,8 +38,7 @@ static inline Lang_type uast_get_lang_type_def(const Uast_def* def) {
         case UAST_ENUM_DEF:
             return lang_type_new_from_strv(uast_unwrap_enum_def_const(def)->base.name, 0);
         case UAST_VARIABLE_DEF:
-            todo();
-            //return uast_unwrap_variable_def_const(def)->lang_type;
+            return uast_unwrap_variable_def_const(def)->lang_type;
         case UAST_FUNCTION_DECL:
             unreachable("");
         case UAST_STRUCT_DEF:

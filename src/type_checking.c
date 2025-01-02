@@ -49,11 +49,7 @@ const Uast_lang_type* get_parent_function_return_type(const Env* env) {
     return get_parent_function_decl_const(env)->return_type;
 }
 
-static bool can_be_implicitly_converted(const Env* env, Lang_type dest, Lang_type src, bool implicit_pointer_depth) {
-    assert(dest.str.count > 0);
-    assert(src.str.count > 0);
-    (void) env;
-
+static bool can_be_implicitly_converted_lang_type(Lang_type dest, Lang_type src, bool implicit_pointer_depth) {
     if (!implicit_pointer_depth) {
         if (src.pointer_depth != dest.pointer_depth) {
             return false;
@@ -66,6 +62,22 @@ static bool can_be_implicitly_converted(const Env* env, Lang_type dest, Lang_typ
     return i_lang_type_to_bit_width(dest) >= i_lang_type_to_bit_width(src);
 }
 
+static bool can_be_implicitly_converted(Lang_type_vec dest, Lang_type_vec src, bool implicit_pointer_depth) {
+    if (dest.info.count != src.info.count) {
+        return false;
+    }
+
+    for (size_t idx = 0; idx < dest.info.count; idx++) {
+        if (!can_be_implicitly_converted_lang_type(
+            vec_at(&dest, idx), vec_at(&src, idx), implicit_pointer_depth
+        )) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 typedef enum {
     IMPLICIT_CONV_INVALID_TYPES,
     IMPLICIT_CONV_CONVERTED,
@@ -73,10 +85,9 @@ typedef enum {
 } IMPLICIT_CONV_STATUS;
 
 static IMPLICIT_CONV_STATUS do_implicit_conversion_if_needed(
-    const Env* env,
     Lang_type dest_lang_type,
     Tast_expr* src,
-    bool inplicit_pointer_depth
+    bool implicit_pointer_depth
 ) {
     Lang_type src_lang_type = tast_get_lang_type_expr(src);
     log(
@@ -87,7 +98,11 @@ static IMPLICIT_CONV_STATUS do_implicit_conversion_if_needed(
     if (lang_type_is_equal(dest_lang_type, src_lang_type)) {
         return IMPLICIT_CONV_OK;
     }
-    if (!can_be_implicitly_converted(env, dest_lang_type, src_lang_type, inplicit_pointer_depth)) {
+    if (!can_be_implicitly_converted(
+        lang_type_vec_from_lang_type(dest_lang_type),
+        lang_type_vec_from_lang_type(src_lang_type),
+        implicit_pointer_depth)
+    ) {
         return IMPLICIT_CONV_INVALID_TYPES;
     }
 
@@ -164,23 +179,22 @@ typedef enum {
 } CHECK_ASSIGN_STATUS;
 
 CHECK_ASSIGN_STATUS check_generic_assignment_finish(
-    const Env* env,
     Tast_expr** new_src,
-    Lang_type dest_lang_type,
+    Lang_type_vec dest_lang_type,
     Tast_expr* src
 ) {
-    if (lang_type_is_equal(dest_lang_type, tast_get_lang_type_expr(src))) {
+    if (lang_type_vec_is_equal(dest_lang_type, tast_get_lang_types_expr(src))) {
         *new_src = src;
         return CHECK_ASSIGN_OK;
     }
 
-    if (can_be_implicitly_converted(env, dest_lang_type, tast_get_lang_type_expr(src), false)) {
+    if (can_be_implicitly_converted(dest_lang_type, tast_get_lang_types_expr(src), false)) {
         if (src->type == TAST_LITERAL) {
             *new_src = src;
-            *tast_get_lang_type_expr_ref(*new_src) = dest_lang_type;
+            tast_set_lang_types_expr(*new_src, dest_lang_type);
             return CHECK_ASSIGN_OK;
         }
-        log(LOG_DEBUG, LANG_TYPE_FMT "   "TAST_FMT"\n", lang_type_print(dest_lang_type), tast_expr_print(src));
+        log(LOG_DEBUG, LANG_TYPE_FMT "   "TAST_FMT"\n", lang_type_vec_print(dest_lang_type), tast_expr_print(src));
         todo();
     } else {
         return CHECK_ASSIGN_INVALID;
@@ -191,15 +205,18 @@ CHECK_ASSIGN_STATUS check_generic_assignment_finish(
 CHECK_ASSIGN_STATUS check_generic_assignment(
     Env* env,
     Tast_expr** new_src,
-    Lang_type dest_lang_type,
+    Lang_type_vec dest_lang_type,
     Uast_expr* src,
     Pos pos
 ) {
     if (src->type == UAST_STRUCT_LITERAL) {
         Tast* new_src_ = NULL;
+        if (dest_lang_type.info.count != 1) {
+            todo();
+        }
         // TODO: tests for using struct literal as function argument (and later as an operand)
         if (!try_set_struct_literal_assignment_types(
-            env, &new_src_, dest_lang_type, uast_unwrap_struct_literal(src), pos
+            env, &new_src_, vec_at(&dest_lang_type, 0), uast_unwrap_struct_literal(src), pos
         )) {
             return CHECK_ASSIGN_ERROR;
         }
@@ -210,7 +227,7 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
         }
     }
 
-    return check_generic_assignment_finish(env, new_src, dest_lang_type, *new_src);
+    return check_generic_assignment_finish(new_src, dest_lang_type, *new_src);
 }
 
 Tast_literal* try_set_literal_types(Uast_literal* literal) {
@@ -346,7 +363,7 @@ static Tast_literal* precalulate_char(
 
 bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_lhs, Tast_expr* new_rhs, Pos oper_pos, TOKEN_TYPE oper_token_type) {
     if (!lang_type_is_equal(tast_get_lang_type_expr(new_lhs), tast_get_lang_type_expr(new_rhs))) {
-        if (can_be_implicitly_converted(env, tast_get_lang_type_expr(new_lhs), tast_get_lang_type_expr(new_rhs), true)) {
+        if (can_be_implicitly_converted(tast_get_lang_types_expr(new_lhs), tast_get_lang_types_expr(new_rhs), true)) {
             if (new_rhs->type == TAST_LITERAL) {
                 new_lhs = auto_deref_to_0(env, new_lhs);
                 new_rhs = auto_deref_to_0(env, new_rhs);
@@ -354,7 +371,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
             } else {
                 try(try_set_unary_types_finish(env, &new_rhs, new_rhs, tast_get_pos_expr(new_rhs), TOKEN_UNSAFE_CAST, tast_get_lang_type_expr(new_lhs)));
             }
-        } else if (can_be_implicitly_converted(env, tast_get_lang_type_expr(new_rhs), tast_get_lang_type_expr(new_lhs), true)) {
+        } else if (can_be_implicitly_converted(tast_get_lang_types_expr(new_rhs), tast_get_lang_types_expr(new_lhs), true)) {
             if (new_lhs->type == TAST_LITERAL) {
                 new_lhs = auto_deref_to_0(env, new_lhs);
                 new_rhs = auto_deref_to_0(env, new_rhs);
@@ -725,7 +742,7 @@ bool try_set_assignment_types(Env* env, Tast_assignment** new_assign, Uast_assig
 
     Tast_expr* new_rhs = NULL;
     switch (check_generic_assignment(
-        env, &new_rhs, tast_get_lang_type(new_lhs), assignment->rhs, assignment->pos
+        env, &new_rhs, lang_type_vec_from_lang_type(tast_get_lang_type(new_lhs)), assignment->rhs, assignment->pos
     )) {
         case CHECK_ASSIGN_OK:
             break;
@@ -769,7 +786,7 @@ bool try_set_function_call_types(Env* env, Tast_function_call** new_call, Uast_f
     if (!try_set_lang_type_types(env, &fun_rtn_type, fun_decl->return_type)) {
         return false;
     }
-    assert(fun_rtn_type->lang_type.str.count > 0);
+
     Uast_function_params* params = fun_decl->params;
     size_t params_idx = 0;
 
@@ -838,7 +855,7 @@ bool try_set_function_call_types(Env* env, Tast_function_call** new_call, Uast_f
             switch (check_generic_assignment(
                 env,
                 &new_arg,
-                corres_param->lang_type,
+                lang_type_vec_from_lang_type(corres_param->lang_type),
                 arg,
                 uast_get_pos_expr(arg)
             )) {
@@ -1258,10 +1275,12 @@ bool try_set_lang_type_types(
     Tast_lang_type** new_tast,
     Uast_lang_type* uast
 ) {
-    Uast_def* dummy = NULL;
-    if (!usymbol_lookup(&dummy, env, uast->lang_type.str)) {
-        msg_undefined_type(env, uast->pos, uast->lang_type);
-        return false;
+    for (size_t idx = 0; idx < uast->lang_type.info.count; idx++) {
+        Uast_def* dummy = NULL;
+        if (!usymbol_lookup(&dummy, env, vec_at(&uast->lang_type, idx).str)) {
+            msg_undefined_type(env, uast->pos, vec_at(&uast->lang_type, idx));
+            return false;
+        }
     }
 
     *new_tast = tast_lang_type_new(uast->pos, uast->lang_type);
@@ -1271,7 +1290,7 @@ bool try_set_lang_type_types(
 bool try_set_return_types(Env* env, Tast_return** new_tast, Uast_return* rtn) {
     *new_tast = NULL;
 
-    const Lang_type fun_rtn_type = get_parent_function_return_type(env);
+    const Lang_type_vec fun_rtn_type = get_parent_function_return_type(env)->lang_type;
 
     Tast_expr* new_child = NULL;
     switch (check_generic_assignment(env, &new_child, fun_rtn_type, rtn->child, rtn->pos)) {

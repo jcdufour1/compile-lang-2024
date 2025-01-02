@@ -279,7 +279,7 @@ static Tast_type tast_gen_function_call(void) {
 
     append_member(&call.members, "Tast_expr_vec", "args");
     append_member(&call.members, "Str_view", "name");
-    append_member(&call.members, "Lang_type", "lang_type");
+    append_member(&call.members, "Lang_type_vec", "lang_type");
 
     return call;
 }
@@ -423,7 +423,7 @@ static Tast_type tast_gen_function_params(void) {
 static Tast_type tast_gen_lang_type(void) {
     Tast_type lang_type = {.name = tast_name_new("tast", "lang_type", false)};
 
-    append_member(&lang_type.members, "Lang_type", "lang_type");
+    append_member(&lang_type.members, "Lang_type_vec", "lang_type");
 
     return lang_type;
 }
