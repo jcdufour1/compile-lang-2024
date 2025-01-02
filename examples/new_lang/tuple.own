@@ -1,0 +1,30 @@
+
+extern("c") fn printf(format_string u8*, args any...)
+
+type TokenType enum {
+    num TokenType
+    string TokenType
+}
+
+fn get_data() (i32, u8*) {
+    return 76, "hello"
+}
+
+fn get_data_3() (i32, u8*, TokenType) {
+    return 89, "bye", TokenType.string
+}
+
+fn main() i32 {
+    let num i32
+    let string u8*
+    let token_type TokenType
+    num, string = get_data()
+
+    printf("%d %s\n", num, string);
+
+    num, string, token_type = get_data_3()
+
+    printf("%d %s %d\n", num, string, token_type);
+
+    return 0
+}

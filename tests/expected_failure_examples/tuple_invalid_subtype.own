@@ -1,0 +1,19 @@
+
+
+fn get_data() (i32, u8*) {
+    return 87, "hello"
+}
+
+fn get_data_2() (u8*, i32) {
+    return "bye", 124
+}
+
+fn main() i32 {
+    let num1 i32
+    let num2 i32
+    let num3 i32
+
+    num1, num2 = get_data()
+    num1, num2 = get_data_2()
+    return 0
+}

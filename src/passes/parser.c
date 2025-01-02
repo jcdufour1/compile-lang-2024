@@ -1894,7 +1894,7 @@ static PARSE_EXPR_STATUS try_extract_expression(
             switch (operator_token.type) {
                 case TOKEN_COMMA:
                     if (expression->type == UAST_TUPLE) {
-                        todo();
+                        vec_append(&a_main, &uast_unwrap_tuple(expression)->members, rhs);
                     } else {
                         Uast_expr_vec members = {0};
                         vec_append(&a_main, &members, lhs);
@@ -1903,8 +1903,8 @@ static PARSE_EXPR_STATUS try_extract_expression(
                             operator_token.pos,
                             members
                         ));
-                        break;
                     }
+                    break;
                 case TOKEN_SINGLE_DOT:
                     expression = uast_wrap_member_access_untyped(uast_member_access_untyped_new(
                         operator_token.pos,

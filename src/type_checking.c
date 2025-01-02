@@ -552,7 +552,20 @@ bool try_set_tuple_assignment_types(
     Uast_tuple* tuple
 ) {
     if (dest_lang_type.info.count != tuple->members.info.count) {
-        todo();
+        // TODO: clean up these error messages
+        msg(
+            LOG_ERROR, EXPECT_FAIL_MISMATCHED_TUPLE_COUNT, env->file_text,
+            uast_get_pos_tuple(tuple),
+            "tuple `"UAST_FMT"` cannot be assigned to `"LANG_TYPE_FMT"`\n",
+            uast_tuple_print(tuple), lang_type_vec_print(dest_lang_type)
+        );
+        msg(
+            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text,
+            uast_get_pos_tuple(tuple),
+            "tuple `"UAST_FMT"` has %zu elements, but type `"LANG_TYPE_FMT" has %zu elements`\n",
+            uast_tuple_print(tuple), tuple->members.info.count,
+            lang_type_vec_print(dest_lang_type), dest_lang_type.info.count
+        );
         return false;
     }
 
@@ -822,7 +835,7 @@ bool try_set_assignment_types(Env* env, Tast_assignment** new_assign, Uast_assig
                 LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
                 assignment->pos,
                 "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
-                lang_type_print(tast_get_lang_type_expr(new_rhs)), lang_type_print(tast_get_lang_type(new_lhs))
+                lang_type_vec_print(tast_get_lang_types_expr(new_rhs)), lang_type_vec_print(tast_get_lang_types(new_lhs))
             );
             return false;
         case CHECK_ASSIGN_ERROR:
