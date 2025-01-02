@@ -66,7 +66,7 @@ static Tast_expr* change_op_expr(Env* env, Tast_expr* root) {
         case TAST_STRUCT_LITERAL:
             return root;
         case TAST_TUPLE:
-            todo();
+            return root;
     }
     unreachable("");
 }

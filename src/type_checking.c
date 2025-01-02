@@ -221,6 +221,15 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
             return CHECK_ASSIGN_ERROR;
         }
         *new_src = tast_unwrap_expr(new_src_);
+    } else if (src->type == UAST_TUPLE) {
+        Tast_tuple* new_src_ = NULL;
+        // TODO: tests for using struct literal as function argument (and later as an operand)
+        if (!try_set_tuple_assignment_types(
+            env, &new_src_, dest_lang_type, uast_unwrap_tuple(src)
+        )) {
+            return CHECK_ASSIGN_ERROR;
+        }
+        *new_src = tast_wrap_tuple(new_src_);
     } else {
         if (!try_set_expr_types(env, new_src, src)) {
             return CHECK_ASSIGN_ERROR;
@@ -532,6 +541,56 @@ bool try_set_operator_types(Env* env, Tast_expr** new_tast, Uast_operator* opera
     }
 }
 
+bool try_set_tuple_assignment_types(
+    Env* env,
+    Tast_tuple** new_tast,
+    Lang_type_vec dest_lang_type,
+    Uast_tuple* tuple
+) {
+    if (dest_lang_type.info.count != tuple->members.info.count) {
+        todo();
+        return false;
+    }
+
+    Tast_expr_vec new_members = {0};
+    Lang_type_vec new_lang_type = {0};
+
+    for (size_t idx = 0; idx < dest_lang_type.info.count; idx++) {
+        Uast_expr* curr_src = vec_at(&tuple->members, idx);
+        Lang_type curr_dest = vec_at(&dest_lang_type, idx);
+
+        Tast_expr* new_memb = NULL;
+        switch (check_generic_assignment(
+            env,
+            &new_memb,
+            lang_type_vec_from_lang_type(curr_dest),
+            curr_src,
+            uast_get_pos_expr(curr_src)
+        )) {
+            case CHECK_ASSIGN_OK:
+                break;
+            case CHECK_ASSIGN_INVALID:
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
+                    tast_get_pos_expr(new_memb),
+                    "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
+                    lang_type_print(tast_get_lang_type_expr(new_memb)), lang_type_print(curr_dest)
+                );
+                todo();
+            case CHECK_ASSIGN_ERROR:
+                return false;
+            default:
+                todo();
+        }
+
+        vec_append(&a_main, &new_members, new_memb);
+        vec_append(&a_main, &new_lang_type, tast_get_lang_type_expr(new_memb));
+    }
+
+    *new_tast = tast_tuple_new(tuple->pos, new_members, new_lang_type);
+    return true;
+}
+
 bool try_set_struct_literal_assignment_types(
     Env* env,
     Tast** new_tast,
@@ -750,7 +809,7 @@ bool try_set_assignment_types(Env* env, Tast_assignment** new_assign, Uast_assig
 
     Tast_expr* new_rhs = NULL;
     switch (check_generic_assignment(
-        env, &new_rhs, lang_type_vec_from_lang_type(tast_get_lang_type(new_lhs)), assignment->rhs, assignment->pos
+        env, &new_rhs, tast_get_lang_types(new_lhs), assignment->rhs, assignment->pos
     )) {
         case CHECK_ASSIGN_OK:
             break;
@@ -898,10 +957,20 @@ error:
 }
 
 bool try_set_tuple_types(Env* env, Tast_tuple** new_tuple, Uast_tuple* tuple) {
-    (void) env;
-    (void) new_tuple;
-    (void) tuple;
-    todo();
+    Tast_expr_vec new_members = {0};
+    Lang_type_vec new_lang_type = {0};
+
+    for (size_t idx = 0; idx < tuple->members.info.count; idx++) {
+        Tast_expr* new_memb = NULL;
+        if (!try_set_expr_types(env, &new_memb, vec_at(&tuple->members, idx))) {
+            return false;
+        }
+        vec_append(&a_main, &new_members, new_memb);
+        vec_append(&a_main, &new_lang_type, tast_get_lang_type_expr(new_memb));
+    }
+
+    *new_tuple = tast_tuple_new(tuple->pos, new_members, new_lang_type);
+    return true;
 }
 
 static void msg_invalid_member(
@@ -1530,7 +1599,6 @@ bool try_set_uast_types(Env* env, Tast** new_tast, Uast* uast) {
             return true;
         case TAST_CONTINUE:
             *new_tast = tast_wrap_continue(tast_continue_new(uast_unwrap_continue(uast)->pos));
-            return true;
             return true;
         case TAST_BLOCK: {
             assert(uast_unwrap_block(uast)->pos_end.line > 0);

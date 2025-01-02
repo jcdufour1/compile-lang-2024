@@ -206,7 +206,51 @@ static inline Lang_type_vec tast_get_lang_types_expr(const Tast_expr* expr) {
         case TAST_SYMBOL_TYPED:
             return lang_type_vec_from_lang_type(tast_symbol_typed_get_base_const(tast_unwrap_symbol_typed_const(expr)).lang_type);
         case TAST_TUPLE:
-            return lang_type_vec_from_lang_type(tast_symbol_typed_get_base_const(tast_unwrap_symbol_typed_const(expr)).lang_type);
+            return tast_unwrap_tuple_const(expr)->lang_type;
+    }
+    unreachable("");
+}
+
+static inline Lang_type_vec tast_get_lang_types_def(const Tast_def* def) {
+    (void) def;
+    unreachable("");
+}
+
+static inline Lang_type_vec tast_get_lang_types(const Tast* tast) {
+    switch (tast->type) {
+        case TAST_DEF:
+            return tast_get_lang_types_def(tast_unwrap_def_const(tast));
+        case TAST_EXPR:
+            return tast_get_lang_types_expr(tast_unwrap_expr_const(tast));
+        case TAST_BLOCK:
+            unreachable("");
+        case TAST_FUNCTION_PARAMS:
+            unreachable("");
+        case TAST_LANG_TYPE:
+            todo();
+            //return tast_unwrap_lang_type_const(tast)->lang_type;
+        case TAST_RETURN:
+            unreachable("");
+        case TAST_FOR_RANGE:
+            unreachable("");
+        case TAST_FOR_WITH_COND:
+            unreachable("");
+        case TAST_FOR_LOWER_BOUND:
+            unreachable("");
+        case TAST_FOR_UPPER_BOUND:
+            unreachable("");
+        case TAST_BREAK:
+            unreachable("");
+        case TAST_IF:
+            unreachable("");
+        case TAST_CONDITION:
+            unreachable("");
+        case TAST_ASSIGNMENT:
+            unreachable("");
+        case TAST_IF_ELSE_CHAIN:
+            unreachable("");
+        case TAST_CONTINUE:
+            unreachable("");
     }
     unreachable("");
 }

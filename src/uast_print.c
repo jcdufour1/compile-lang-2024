@@ -254,7 +254,6 @@ Str_view uast_lang_type_print_internal(const Uast_lang_type* lang_type, int inde
 
     string_extend_cstr_indent(&print_arena, &buf, "lang_type", indent);
     string_extend_strv(&print_arena, &buf, lang_type_vec_print_internal(lang_type->lang_type, false));
-    string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
 }
@@ -390,8 +389,8 @@ Str_view uast_function_decl_print_internal(const Uast_function_decl* fun_decl, i
 
     string_extend_cstr_indent(&print_arena, &buf, "function_decl", indent);
     string_extend_strv_in_par(&print_arena, &buf, fun_decl->name);
-    string_extend_strv(&print_arena, &buf, uast_lang_type_print_internal(fun_decl->return_type, indent + INDENT_WIDTH));
     string_extend_cstr(&print_arena, &buf, "\n");
+    string_extend_strv(&print_arena, &buf, uast_lang_type_print_internal(fun_decl->return_type, indent + INDENT_WIDTH));
 
     return string_to_strv(buf);
 }

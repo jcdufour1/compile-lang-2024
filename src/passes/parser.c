@@ -27,7 +27,13 @@ typedef enum {
 
 static PARSE_STATUS extract_block(Env* env, Uast_block** block, Tk_view* tokens, bool is_top_level);
 static PARSE_EXPR_STATUS extract_statement(Env* env, Uast** child, Tk_view* tokens, bool defer_sym_add);
-static PARSE_EXPR_STATUS try_extract_expression(Env* env, Uast_expr** result, Tk_view* tokens, bool defer_sym_add);
+static PARSE_EXPR_STATUS try_extract_expression(
+    Env* env,
+    Uast_expr** result,
+    Tk_view* tokens,
+    bool defer_sym_add,
+    bool can_be_tuple
+);
 static PARSE_STATUS try_extract_variable_declaration(
     Env* env, 
     Uast_variable_def** result,
@@ -894,7 +900,7 @@ static PARSE_STATUS extract_for_range_internal(Env* env, Uast_for_range* for_loo
     try(try_consume(NULL, tokens, TOKEN_IN));
 
     Uast_expr* lower_bound_child;
-    if (PARSE_EXPR_OK != try_extract_expression(env, &lower_bound_child, tokens, true)) {
+    if (PARSE_EXPR_OK != try_extract_expression(env, &lower_bound_child, tokens, true, false)) {
         msg_expected_expression(env->file_text, *tokens, "after in");
         return PARSE_ERROR;
     }
@@ -908,7 +914,7 @@ static PARSE_STATUS extract_for_range_internal(Env* env, Uast_for_range* for_loo
     }
 
     Uast_expr* upper_bound_child;
-    switch (try_extract_expression(env, &upper_bound_child, tokens, true)) {
+    switch (try_extract_expression(env, &upper_bound_child, tokens, true, false)) {
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_ERROR:
@@ -1059,7 +1065,7 @@ static PARSE_STATUS try_extract_function_call(Env* env, Uast_function_call** chi
     Uast_expr_vec args = {0};
     while (is_first_time || prev_is_comma) {
         Uast_expr* arg;
-        switch (try_extract_expression(env, &arg, tokens, true)) {
+        switch (try_extract_expression(env, &arg, tokens, true, false)) {
             case PARSE_EXPR_OK:
                 assert(arg);
                 vec_append(&a_main, &args, arg);
@@ -1097,7 +1103,7 @@ static PARSE_STATUS extract_function_return(Env* env, Uast_return** rtn_statemen
     try(try_consume(NULL, tokens, TOKEN_RETURN));
 
     Uast_expr* expression;
-    switch (try_extract_expression(env, &expression, tokens, false)) {
+    switch (try_extract_expression(env, &expression, tokens, false, true)) {
         case PARSE_EXPR_OK:
             *rtn_statement = uast_return_new(uast_get_pos_expr(expression), expression, false);
             break;
@@ -1130,7 +1136,7 @@ static PARSE_STATUS extract_assignment(Env* env, Uast_assignment** assign, Tk_vi
         *assign = uast_assignment_new(equal_token.pos, lhs, NULL);
     } else {
         Uast_expr* lhs_ = NULL;
-        switch (try_extract_expression(env, &lhs_, tokens, false)) {
+        switch (try_extract_expression(env, &lhs_, tokens, false, true)) {
             case PARSE_EXPR_NONE:
                 unreachable("extract_assignment should possibly never be called without lhs expression present, but it was");
             case PARSE_EXPR_ERROR:
@@ -1150,7 +1156,7 @@ static PARSE_STATUS extract_assignment(Env* env, Uast_assignment** assign, Tk_vi
 
     (*assign)->lhs = lhs;
 
-    switch (try_extract_expression(env, &(*assign)->rhs, tokens, false)) {
+    switch (try_extract_expression(env, &(*assign)->rhs, tokens, false, false)) {
         case PARSE_EXPR_NONE:
             msg_expected_expression(env->file_text, *tokens, "");
             return PARSE_ERROR;
@@ -1164,7 +1170,7 @@ static PARSE_STATUS extract_assignment(Env* env, Uast_assignment** assign, Tk_vi
 
 static PARSE_EXPR_STATUS extract_condition(Env* env, Uast_condition** result, Tk_view* tokens) {
     Uast_expr* cond_child;
-    switch (try_extract_expression(env, &cond_child, tokens, false)) {
+    switch (try_extract_expression(env, &cond_child, tokens, false, false)) {
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_ERROR:
@@ -1343,7 +1349,7 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Uast** child, Tk_view* toke
         lhs = uast_wrap_def(uast_wrap_variable_def(var_def));
     } else {
         Uast_expr* lhs_ = NULL;
-        switch (try_extract_expression(env, &lhs_, tokens, false)) {
+        switch (try_extract_expression(env, &lhs_, tokens, false, true)) {
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_ERROR:
@@ -1555,7 +1561,7 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(
     Uast_function_call* fun_call;
     Token open_par_token = {0};
     if (try_consume(&open_par_token, tokens, TOKEN_OPEN_PAR)) {
-        switch (try_extract_expression(env, result, tokens, defer_sym_add)) {
+        switch (try_extract_expression(env, result, tokens, defer_sym_add, false)) {
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_ERROR:
@@ -1687,6 +1693,8 @@ static PARSE_EXPR_STATUS try_extract_expression(
     Env* env,
     Uast_expr** result,
     Tk_view* tokens,
+    bool defer_sym_add,
+    bool can_be_tuple
 ) {
     assert(tokens->tokens);
     if (tokens->count < 1) {
@@ -1709,7 +1717,7 @@ static PARSE_EXPR_STATUS try_extract_expression(
 
     Token prev_operator_token = {0};
     bool is_first_operator = true;
-    while (tokens->count > 0 && token_is_operator(tk_view_front(*tokens)) && !is_unary(tk_view_front(*tokens).type)) {
+    while (tokens->count > 0 && token_is_operator(tk_view_front(*tokens), can_be_tuple) && !is_unary(tk_view_front(*tokens).type)) {
         while (try_consume(NULL, tokens, TOKEN_NEW_LINE)) {
             todo();
         }
@@ -1756,7 +1764,7 @@ static PARSE_EXPR_STATUS try_extract_expression(
                     todo();
                     log_tokens(LOG_DEBUG, *tokens);
                     todo();
-                    switch (try_extract_expression(env, &rhs, tokens, defer_sym_add)) {
+                    switch (try_extract_expression(env, &rhs, tokens, defer_sym_add, false)) {
                         case PARSE_EXPR_OK:
                             break;
                         case PARSE_EXPR_NONE: {
@@ -1862,7 +1870,7 @@ static PARSE_EXPR_STATUS try_extract_expression(
                 case TOKEN_OPEN_SQ_BRACKET:
                     // fallthrough
                 case TOKEN_COMMA:
-                    switch (try_extract_expression(env, &rhs, tokens, defer_sym_add)) {
+                    switch (try_extract_expression(env, &rhs, tokens, defer_sym_add, false)) {
                         case PARSE_EXPR_OK:
                             break;
                         case PARSE_EXPR_NONE: {

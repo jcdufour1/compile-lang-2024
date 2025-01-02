@@ -195,7 +195,7 @@ static inline bool token_is_literal(Token token) {
     unreachable("");
 }
 
-static inline bool token_is_operator(Token token) {
+static inline bool token_is_operator(Token token, bool can_be_tuple) {
     switch (token.type) {
         case TOKEN_SINGLE_MINUS:
             // fallthrough
@@ -298,7 +298,7 @@ static inline bool token_is_operator(Token token) {
         case TOKEN_SINGLE_DOT:
             return true;
         case TOKEN_COMMA:
-            return true;
+            return can_be_tuple;
     }
     unreachable(TOKEN_FMT"\n", token_print(token));
 }
