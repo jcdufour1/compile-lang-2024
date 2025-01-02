@@ -28,6 +28,8 @@ Tast_block* analysis_1(Env* env, Uast_block* root);
 
 Tast_block* change_operators(Env* env, Tast_block* root);
 
+Tast_block* remove_tuples(Env* env, Tast_block* root);
+
 Llvm_block* add_load_and_store(Env* env, Tast_block* old_block);
 
 Llvm_block* assign_llvm_ids(Env* env, Llvm_block* root);

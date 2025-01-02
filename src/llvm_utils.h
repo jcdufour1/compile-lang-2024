@@ -2,6 +2,7 @@
 #define LLVM_UTIL_H
 
 #include <llvm.h>
+#include <tast_utils.h>
 
 #define LANG_TYPE_FMT STR_VIEW_FMT
 

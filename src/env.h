@@ -27,6 +27,8 @@ typedef struct Env_ {
 
     Str_view name_parent_function; // length is zero if no parent function exists
 
+    Lang_type_vec rm_tuple_parent_fn_lang_type;
+
     Str_view label_if_break;
     Str_view label_if_continue;
 } Env;
