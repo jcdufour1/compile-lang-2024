@@ -212,8 +212,14 @@ static inline Lang_type_vec tast_get_lang_types_expr(const Tast_expr* expr) {
 }
 
 static inline Lang_type_vec tast_get_lang_types_def(const Tast_def* def) {
-    (void) def;
-    unreachable("");
+    switch (def->type) {
+        case TAST_FUNCTION_DEF:
+            return tast_unwrap_function_def_const(def)->decl->return_type->lang_type;
+        case TAST_VARIABLE_DEF:
+            return lang_type_vec_from_lang_type(tast_unwrap_variable_def_const(def)->lang_type);
+        default:
+            unreachable(TAST_FMT, tast_def_print(def));
+    }
 }
 
 static inline Lang_type_vec tast_get_lang_types(const Tast* tast) {

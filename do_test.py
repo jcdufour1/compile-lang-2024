@@ -272,7 +272,7 @@ def main() -> None:
 
     count_threads: int
     try:
-        count_threads =  multiprocessing.cpu_count()
+        count_threads = multiprocessing.cpu_count()
     except Exception as e:
         print_warning("could not determine number of cpus; assuming 2")
         print_warning(e, file=sys.stderr)
