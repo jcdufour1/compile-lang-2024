@@ -1,5 +1,7 @@
 #include <uast.h>
 #include <uast_utils.h>
+#include <tast_utils.h>
+#include <llvm_utils.h>
 #include <util.h>
 
 #include <symbol_table.h>
@@ -237,7 +239,7 @@ Str_view uast_lang_type_print_internal(const Uast_lang_type* lang_type, int inde
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "lang_type", indent);
-    extend_lang_type(&buf, lang_type->lang_type, true);
+    string_extend_strv(&print_arena, &buf, lang_type_vec_print_internal(lang_type->lang_type, false));
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
@@ -373,12 +375,9 @@ Str_view uast_function_decl_print_internal(const Uast_function_decl* fun_decl, i
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "function_decl", indent);
-    indent += INDENT_WIDTH;
     string_extend_strv_in_par(&print_arena, &buf, fun_decl->name);
+    string_extend_strv(&print_arena, &buf, uast_lang_type_print_internal(fun_decl->return_type, indent + INDENT_WIDTH));
     string_extend_cstr(&print_arena, &buf, "\n");
-    string_extend_strv(&print_arena, &buf, uast_function_params_print_internal(fun_decl->params, indent));
-    string_extend_strv(&print_arena, &buf, uast_lang_type_print_internal(fun_decl->return_type, indent));
-    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }

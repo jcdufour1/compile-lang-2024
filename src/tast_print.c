@@ -1,5 +1,6 @@
 #include <tast.h>
 #include <tasts.h>
+#include <llvm_utils.h>
 #include <util.h>
 
 #include <symbol_table.h>
@@ -38,8 +39,7 @@ static void extend_pos(String* buf, Pos pos) {
 Str_view lang_type_print_internal(Arena* arena, Lang_type lang_type, bool surround_in_lt_gt) {
     String buf = {0};
     extend_lang_type_to_string(arena, &buf, lang_type, surround_in_lt_gt);
-    Str_view str_view = {.str = buf.buf, .count = buf.info.count};
-    return str_view;
+    return string_to_strv(buf);
 }
 
 static void extend_lang_type(String* string, Lang_type lang_type, bool surround_in_lt_gt) {
@@ -61,6 +61,23 @@ static void extend_lang_type(String* string, Lang_type lang_type, bool surround_
     if (surround_in_lt_gt) {
         vec_append(&print_arena, string, '>');
     }
+}
+
+Str_view lang_type_vec_print_internal(Lang_type_vec types, bool surround_in_lt_gt) {
+    String buf = {0};
+
+    if (types.info.count > 1) {
+        string_extend_cstr(&a_main, &buf, "(");
+    }
+    for (size_t idx = 0; idx < types.info.count; idx++) {
+        extend_lang_type(&buf, vec_at(&types, idx), surround_in_lt_gt);
+    }
+    if (types.info.count > 1) {
+        string_extend_cstr(&a_main, &buf, ")");
+    }
+    string_extend_cstr(&a_main, &buf, "\n");
+
+    return string_to_strv(buf);
 }
 
 Str_view tast_binary_print_internal(const Tast_binary* binary, int indent) {

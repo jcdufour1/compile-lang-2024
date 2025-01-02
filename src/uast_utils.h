@@ -38,7 +38,8 @@ static inline Lang_type uast_get_lang_type_def(const Uast_def* def) {
         case UAST_ENUM_DEF:
             return lang_type_new_from_strv(uast_unwrap_enum_def_const(def)->base.name, 0);
         case UAST_VARIABLE_DEF:
-            return uast_unwrap_variable_def_const(def)->lang_type;
+            todo();
+            //return uast_unwrap_variable_def_const(def)->lang_type;
         case UAST_FUNCTION_DECL:
             unreachable("");
         case UAST_STRUCT_DEF:
@@ -62,7 +63,8 @@ static inline Lang_type uast_get_lang_type(const Uast* uast) {
         case UAST_FUNCTION_PARAMS:
             unreachable("");
         case UAST_LANG_TYPE:
-            return uast_unwrap_lang_type_const(uast)->lang_type;
+            todo();
+            //return uast_unwrap_lang_type_const(uast)->lang_type;
         case UAST_RETURN:
             unreachable("");
         case UAST_FOR_RANGE:
@@ -122,7 +124,8 @@ static inline Lang_type* uast_get_lang_type_ref(Uast* uast) {
         case UAST_FUNCTION_PARAMS:
             unreachable("");
         case UAST_LANG_TYPE:
-            return &uast_unwrap_lang_type(uast)->lang_type;
+            todo();
+            //return &uast_unwrap_lang_type(uast)->lang_type;
         case UAST_RETURN:
             unreachable("");
         case UAST_FOR_RANGE:

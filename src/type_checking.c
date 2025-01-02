@@ -4,6 +4,7 @@
 #include <uast.h>
 #include <tast.h>
 #include <tast_utils.h>
+#include <llvm_utils.h>
 #include <uast_hand_written.h>
 
 // result is rounded up
@@ -44,8 +45,8 @@ const Uast_function_decl* get_parent_function_decl_const(const Env* env) {
     return uast_unwrap_function_decl(def);
 }
 
-Lang_type get_parent_function_return_type(const Env* env) {
-    return get_parent_function_decl_const(env)->return_type->lang_type;
+const Uast_lang_type* get_parent_function_return_type(const Env* env) {
+    return get_parent_function_decl_const(env)->return_type;
 }
 
 static bool can_be_implicitly_converted(const Env* env, Lang_type dest, Lang_type src, bool implicit_pointer_depth) {
@@ -132,7 +133,7 @@ static void msg_invalid_return_type_internal(const char* file, int line, const E
             file, line,
             LOG_ERROR, EXPECT_FAIL_MISSING_RETURN, env->file_text, pos,
             "no return statement in function that returns `"LANG_TYPE_FMT"`\n",
-            lang_type_print(fun_decl->return_type->lang_type)
+            lang_type_vec_print(fun_decl->return_type->lang_type)
         );
     } else {
         msg_internal(
@@ -140,7 +141,7 @@ static void msg_invalid_return_type_internal(const char* file, int line, const E
             LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, env->file_text, pos,
             "returning `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
             lang_type_print(tast_get_lang_type_expr(child)), 
-            lang_type_print(fun_decl->return_type->lang_type)
+            lang_type_vec_print(fun_decl->return_type->lang_type)
         );
     }
 
@@ -148,7 +149,7 @@ static void msg_invalid_return_type_internal(const char* file, int line, const E
         file, line,
         LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, fun_decl->return_type->pos,
         "function return type `"LANG_TYPE_FMT"` defined here\n",
-        lang_type_print(fun_decl->return_type->lang_type)
+        lang_type_vec_print(fun_decl->return_type->lang_type)
     );
 }
 

@@ -378,7 +378,7 @@ static Uast_type uast_gen_function_params(void) {
 static Uast_type uast_gen_lang_type(void) {
     Uast_type lang_type = {.name = uast_name_new("uast", "lang_type", false)};
 
-    append_member(&lang_type.members, "Lang_type", "lang_type");
+    append_member(&lang_type.members, "Lang_type_vec", "lang_type");
 
     return lang_type;
 }

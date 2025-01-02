@@ -1,6 +1,7 @@
 #ifndef LANG_TYPE_STRUCT
 #define LANG_TYPE_STRUCT
 
+#include <vector.h>
 #include <str_view_struct.h>
 #include <stdint.h>
 
@@ -11,5 +12,10 @@ typedef struct {
                            //
                            // for function argument: 2 means to reference the variable twice
 } Lang_type;
+
+typedef struct {
+    Vec_base info;
+    Lang_type* buf;
+} Lang_type_vec;
 
 #endif // LANG_TYPE_STRUCT

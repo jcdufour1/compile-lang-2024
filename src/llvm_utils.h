@@ -23,7 +23,11 @@ static inline Lang_type llvm_lang_type_new_from_cstr(const char* cstr, int16_t p
     return lang_type_new_from_strv(str_view_from_cstr(cstr), pointer_depth);
 }
 
+Str_view lang_type_vec_print_internal(Lang_type_vec types, bool surround_in_lt_gt);
+
 #define lang_type_print(lang_type) str_view_print(lang_type_print_internal(&print_arena, (lang_type), false))
+
+#define lang_type_vec_print(types) str_view_print(lang_type_vec_print_internal((types), false))
 
 #define LLVM_FMT STR_VIEW_FMT
 
