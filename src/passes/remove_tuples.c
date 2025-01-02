@@ -56,9 +56,15 @@ static Tast_block* rm_tuple_return(Env* env, Tast_return* rtn) {
     for (size_t idx = 0; idx < old_tuple->members.info.count; idx++) {
         Tast_variable_def* curr_param = vec_at(&fun_decl->params->params, idx);
 
-        Uast_symbol_untyped* curr_dest_ = uast_symbol_untyped_new(curr_param->pos, curr_param->name);
+        Uast_symbol_untyped* curr_dest_inner = uast_symbol_untyped_new(curr_param->pos, curr_param->name);
+        Uast_unary* curr_dest_ = uast_unary_new(
+            curr_param->pos,
+            uast_wrap_symbol_untyped(curr_dest_inner),
+            TOKEN_DEREF,
+            (Lang_type) {0}
+        );
         Tast_expr* curr_dest = NULL;
-        try(try_set_symbol_type(env, &curr_dest, curr_dest_));
+        try(try_set_unary_types(env, &curr_dest, curr_dest_));
 
         Tast_expr* curr_src = vec_at(&old_tuple->members, idx);
 
@@ -71,7 +77,10 @@ static Tast_block* rm_tuple_return(Env* env, Tast_return* rtn) {
     }
     (void) env;
     (void) rtn;
+
+    log(LOG_DEBUG, UAST_FMT, tast_block_print(tast_block_new(rtn->pos, false, new_children, (Symbol_collection) {0}, rtn->pos)));
     todo();
+    //return 
 }
 
 static Tast_if* rm_tuple_if(Env* env, Tast_if* assign) {
@@ -101,9 +110,14 @@ static Tast_function_def* rm_tuple_function_def(Env* env, Tast_function_def* def
         for (size_t idx = 0; idx < rtn_type.info.count; idx++) {
             Lang_type curr = vec_at(&rtn_type, idx);
 
+            Str_view new_name = util_literal_name_new_prefix("tuple_param");
             Tast_variable_def* new_var = tast_variable_def_new(
-                def->decl->return_type->pos, curr, false, util_literal_name_new_prefix("tuple_param")
+                def->decl->return_type->pos, curr, false, new_name
             );
+            Uast_variable_def* new_var_untyped = uast_variable_def_new(
+                def->decl->return_type->pos, curr, false, new_name
+            );
+            try(usymbol_add(env, uast_wrap_variable_def(new_var_untyped)));
             try(symbol_add(env, tast_wrap_variable_def(new_var)));
             vec_append(&a_main, &new_params, new_var);
         }

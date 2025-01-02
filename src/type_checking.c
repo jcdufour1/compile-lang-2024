@@ -281,12 +281,16 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
     }
 }
 
-static void msg_undefined_symbol(Str_view file_text, const Uast* sym_call) {
-    msg(
+static void msg_undefined_symbol_internal(const char* file, int line, Str_view file_text, const Uast* sym_call) {
+    msg_internal(
+        file, line,
         LOG_ERROR, EXPECT_FAIL_UNDEFINED_SYMBOL, file_text, uast_get_pos(sym_call),
         "symbol `"STR_VIEW_FMT"` is not defined\n", str_view_print(get_uast_name(sym_call))
     );
 }
+
+#define msg_undefined_symbol(file_text, sym_call) \
+    msg_undefined_symbol_internal(__FILE__, __LINE__, file_text, sym_call)
 
 // set symbol lang_type, and report error if symbol is undefined
 bool try_set_symbol_type(const Env* env, Tast_expr** new_tast, Uast_symbol_untyped* sym_untyped) {
