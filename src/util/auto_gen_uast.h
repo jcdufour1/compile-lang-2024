@@ -250,6 +250,14 @@ static Uast_type uast_gen_struct_literal(void) {
     return lit;
 }
 
+static Uast_type uast_gen_tuple(void) {
+    Uast_type lit = {.name = uast_name_new("expr", "tuple", false)};
+
+    append_member(&lit.members, "Uast_expr_vec", "members");
+
+    return lit;
+}
+
 static Uast_type uast_gen_expr(void) {
     Uast_type expr = {.name = uast_name_new("uast", "expr", false)};
 
@@ -260,6 +268,7 @@ static Uast_type uast_gen_expr(void) {
     vec_append(&gen_a, &expr.sub_types, uast_gen_literal());
     vec_append(&gen_a, &expr.sub_types, uast_gen_function_call());
     vec_append(&gen_a, &expr.sub_types, uast_gen_struct_literal());
+    vec_append(&gen_a, &expr.sub_types, uast_gen_tuple());
 
     return expr;
 }

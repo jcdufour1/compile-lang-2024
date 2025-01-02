@@ -658,6 +658,14 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
             *new_tast = tast_wrap_function_call(new_call);
             return true;
         }
+        case UAST_TUPLE: {
+            Tast_tuple* new_call = NULL;
+            if (!try_set_tuple_types(env, &new_call, uast_unwrap_tuple(uast))) {
+                return false;
+            }
+            *new_tast = tast_wrap_tuple(new_call);
+            return true;
+        }
         case UAST_STRUCT_LITERAL:
             unreachable("");
     }
@@ -887,6 +895,13 @@ bool try_set_function_call_types(Env* env, Tast_function_call** new_call, Uast_f
 
 error:
     return status;
+}
+
+bool try_set_tuple_types(Env* env, Tast_tuple** new_tuple, Uast_tuple* tuple) {
+    (void) env;
+    (void) new_tuple;
+    (void) tuple;
+    todo();
 }
 
 static void msg_invalid_member(

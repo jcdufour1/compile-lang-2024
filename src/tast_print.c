@@ -248,6 +248,22 @@ Str_view tast_struct_literal_print_internal(const Tast_struct_literal* lit, int 
     return string_to_strv(buf);
 }
 
+Str_view tast_tuple_print_internal(const Tast_tuple* lit, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&print_arena, &buf, "tuple", indent);
+    
+    string_extend_strv(&print_arena, &buf, lang_type_vec_print_internal(lit->lang_type, true));
+    string_extend_cstr(&print_arena, &buf, "\n");
+
+    for (size_t idx = 0; idx < lit->members.info.count; idx++) {
+        Str_view memb_text = tast_expr_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);
+        string_extend_strv(&print_arena, &buf, memb_text);
+    }
+
+    return string_to_strv(buf);
+}
+
 Str_view tast_number_print_internal(const Tast_number* num, int indent) {
     String buf = {0};
 
@@ -648,6 +664,8 @@ Str_view tast_expr_print_internal(const Tast_expr* expr, int indent) {
             return tast_function_call_print_internal(tast_unwrap_function_call_const(expr), indent);
         case TAST_STRUCT_LITERAL:
             return tast_struct_literal_print_internal(tast_unwrap_struct_literal_const(expr), indent);
+        case TAST_TUPLE:
+            return tast_tuple_print_internal(tast_unwrap_tuple_const(expr), indent);
     }
     unreachable("");
 }

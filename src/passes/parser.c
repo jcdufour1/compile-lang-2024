@@ -1365,6 +1365,8 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Uast** child, Tk_view* toke
                 break;
             case UAST_INDEX_UNTYPED:
                 break;
+            case UAST_TUPLE:
+                break;
             default:
                 unreachable(UAST_FMT"\n", uast_print(uast_wrap_expr(lhs_)));
         }
@@ -1685,7 +1687,6 @@ static PARSE_EXPR_STATUS try_extract_expression(
     Env* env,
     Uast_expr** result,
     Tk_view* tokens,
-    bool defer_sym_add
 ) {
     assert(tokens->tokens);
     if (tokens->count < 1) {
@@ -1859,6 +1860,8 @@ static PARSE_EXPR_STATUS try_extract_expression(
                     }
                     break;
                 case TOKEN_OPEN_SQ_BRACKET:
+                    // fallthrough
+                case TOKEN_COMMA:
                     switch (try_extract_expression(env, &rhs, tokens, defer_sym_add)) {
                         case PARSE_EXPR_OK:
                             break;
@@ -1881,6 +1884,19 @@ static PARSE_EXPR_STATUS try_extract_expression(
             }
 
             switch (operator_token.type) {
+                case TOKEN_COMMA:
+                    if (expression->type == UAST_TUPLE) {
+                        todo();
+                    } else {
+                        Uast_expr_vec members = {0};
+                        vec_append(&a_main, &members, lhs);
+                        vec_append(&a_main, &members, rhs);
+                        expression = uast_wrap_tuple(uast_tuple_new(
+                            operator_token.pos,
+                            members
+                        ));
+                        break;
+                    }
                 case TOKEN_SINGLE_DOT:
                     expression = uast_wrap_member_access_untyped(uast_member_access_untyped_new(
                         operator_token.pos,

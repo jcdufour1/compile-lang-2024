@@ -294,6 +294,15 @@ static Tast_type tast_gen_struct_literal(void) {
     return lit;
 }
 
+static Tast_type tast_gen_tuple(void) {
+    Tast_type lit = {.name = tast_name_new("expr", "tuple", false)};
+
+    append_member(&lit.members, "Tast_expr_vec", "members");
+    append_member(&lit.members, "Lang_type_vec", "lang_type");
+
+    return lit;
+}
+
 static Tast_type tast_gen_expr(void) {
     Tast_type expr = {.name = tast_name_new("tast", "expr", false)};
 
@@ -304,6 +313,7 @@ static Tast_type tast_gen_expr(void) {
     vec_append(&gen_a, &expr.sub_types, tast_gen_literal());
     vec_append(&gen_a, &expr.sub_types, tast_gen_function_call());
     vec_append(&gen_a, &expr.sub_types, tast_gen_struct_literal());
+    vec_append(&gen_a, &expr.sub_types, tast_gen_tuple());
 
     return expr;
 }

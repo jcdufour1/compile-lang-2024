@@ -178,6 +178,12 @@ static inline Lang_type tast_get_lang_type_expr(const Tast_expr* expr) {
             return tast_get_lang_type_operator(tast_unwrap_operator_const(expr));
         case TAST_SYMBOL_TYPED:
             return tast_symbol_typed_get_base_const(tast_unwrap_symbol_typed_const(expr)).lang_type;
+        case TAST_TUPLE: {
+            const Tast_tuple* tuple = tast_unwrap_tuple_const(expr);
+            try(tuple->lang_type.info.count == tuple->members.info.count);
+            try(tuple->lang_type.info.count == 1);
+            return vec_at(&tuple->lang_type, 0);
+        }
     }
     unreachable("");
 }
@@ -198,6 +204,8 @@ static inline Lang_type_vec tast_get_lang_types_expr(const Tast_expr* expr) {
         case TAST_OPERATOR:
             return lang_type_vec_from_lang_type(tast_get_lang_type_operator(tast_unwrap_operator_const(expr)));
         case TAST_SYMBOL_TYPED:
+            return lang_type_vec_from_lang_type(tast_symbol_typed_get_base_const(tast_unwrap_symbol_typed_const(expr)).lang_type);
+        case TAST_TUPLE:
             return lang_type_vec_from_lang_type(tast_symbol_typed_get_base_const(tast_unwrap_symbol_typed_const(expr)).lang_type);
     }
     unreachable("");
@@ -240,6 +248,12 @@ static inline void tast_set_lang_types_expr(Tast_expr* expr, Lang_type_vec types
             todo();
         case TAST_SYMBOL_TYPED:
             todo();
+        case TAST_TUPLE: {
+            Tast_tuple* tuple = tast_unwrap_tuple(expr);
+            tuple->lang_type = types;
+            try(tuple->lang_type.info.count == tuple->members.info.count);
+            return;
+        }
     }
     unreachable("");
 }
@@ -283,6 +297,8 @@ static inline Lang_type* tast_get_lang_type_expr_ref(Tast_expr* expr) {
             return &tast_symbol_typed_get_base_ref(tast_unwrap_symbol_typed(expr))->lang_type;
         case TAST_OPERATOR:
             return get_operator_lang_type_ref(tast_unwrap_operator(expr));
+        case TAST_TUPLE:
+            unreachable("");
     }
     unreachable("");
 }
@@ -387,122 +403,6 @@ static inline Lang_type* tast_get_lang_type_ref(Tast* tast) {
     unreachable("");
 }
 
-static inline Tast* get_expr_src(Tast_expr* expr) {
-    switch (expr->type) {
-        case TAST_STRUCT_LITERAL:
-            unreachable("");
-        case TAST_MEMBER_ACCESS_TYPED:
-            unreachable("");
-        case TAST_INDEX_TYPED:
-            unreachable("");
-        case TAST_LITERAL:
-            unreachable("");
-        case TAST_SYMBOL_TYPED:
-            unreachable("");
-        case TAST_FUNCTION_CALL:
-            unreachable("");
-        case TAST_OPERATOR:
-            unreachable("");
-    }
-    unreachable("");
-}
-
-static inline Tast* get_tast_src(Tast* tast) {
-    switch (tast->type) {
-        case TAST_DEF:
-            unreachable("");
-        case TAST_EXPR:
-            return get_expr_src(tast_unwrap_expr(tast));
-        case TAST_BLOCK:
-            unreachable("");
-        case TAST_FUNCTION_PARAMS:
-            unreachable("");
-        case TAST_LANG_TYPE:
-            unreachable("");
-        case TAST_RETURN:
-            unreachable("");
-        case TAST_FOR_RANGE:
-            unreachable("");
-        case TAST_FOR_WITH_COND:
-            unreachable("");
-        case TAST_FOR_LOWER_BOUND:
-            unreachable("");
-        case TAST_FOR_UPPER_BOUND:
-            unreachable("");
-        case TAST_BREAK:
-            unreachable("");
-        case TAST_IF:
-            unreachable("");
-        case TAST_CONDITION:
-            unreachable("");
-        case TAST_ASSIGNMENT:
-            unreachable("");
-        case TAST_IF_ELSE_CHAIN:
-            unreachable("");
-        case TAST_CONTINUE:
-            unreachable("");
-    }
-    unreachable("");
-}
-
-static inline Tast* get_expr_dest(Tast_expr* expr) {
-    switch (expr->type) {
-        case TAST_STRUCT_LITERAL:
-            unreachable("");
-        case TAST_MEMBER_ACCESS_TYPED:
-            unreachable("");
-        case TAST_INDEX_TYPED:
-            unreachable("");
-        case TAST_LITERAL:
-            unreachable("");
-        case TAST_SYMBOL_TYPED:
-            unreachable("");
-        case TAST_FUNCTION_CALL:
-            unreachable("");
-        case TAST_OPERATOR:
-            unreachable("");
-    }
-    unreachable("");
-}
-
-static inline Tast* get_tast_dest(Tast* tast) {
-    switch (tast->type) {
-        case TAST_DEF:
-            unreachable("");
-        case TAST_EXPR:
-            return get_expr_dest(tast_unwrap_expr(tast));
-        case TAST_BLOCK:
-            unreachable("");
-        case TAST_FUNCTION_PARAMS:
-            unreachable("");
-        case TAST_LANG_TYPE:
-            unreachable("");
-        case TAST_RETURN:
-            unreachable("");
-        case TAST_FOR_RANGE:
-            unreachable("");
-        case TAST_FOR_WITH_COND:
-            unreachable("");
-        case TAST_FOR_LOWER_BOUND:
-            unreachable("");
-        case TAST_FOR_UPPER_BOUND:
-            unreachable("");
-        case TAST_BREAK:
-            unreachable("");
-        case TAST_IF:
-            unreachable("");
-        case TAST_CONDITION:
-            unreachable("");
-        case TAST_ASSIGNMENT:
-            unreachable("");
-        case TAST_IF_ELSE_CHAIN:
-            unreachable("");
-        case TAST_CONTINUE:
-            unreachable("");
-    }
-    unreachable("");
-}
-
 static inline Str_view get_literal_name(const Tast_literal* lit) {
     switch (lit->type) {
         case TAST_NUMBER:
@@ -535,6 +435,8 @@ static inline Str_view get_expr_name(const Tast_expr* expr) {
             return tast_unwrap_function_call_const(expr)->name;
         case TAST_LITERAL:
             return get_literal_name(tast_unwrap_literal_const(expr));
+        case TAST_TUPLE:
+            unreachable("");
     }
     unreachable("");
 }
@@ -619,14 +521,6 @@ static inline Str_view get_tast_name(const Tast* tast) {
             unreachable("");
     }
     unreachable("");
-}
-
-static inline const Tast* get_tast_src_const(const Tast* tast) {
-    return get_tast_src((Tast*)tast);
-}
-
-static inline const Tast* get_tast_dest_const(const Tast* tast) {
-    return get_tast_dest((Tast*)tast);
 }
 
 #endif // TAST_UTIL_H

@@ -231,8 +231,6 @@ static inline bool token_is_operator(Token token) {
             // fallthrough
         case TOKEN_OPEN_PAR:
             // fallthrough
-        case TOKEN_COMMA:
-            // fallthrough
         case TOKEN_DOUBLE_QUOTE:
             // fallthrough
         case TOKEN_OPEN_CURLY_BRACE:
@@ -298,6 +296,8 @@ static inline bool token_is_operator(Token token) {
         case TOKEN_TYPE_DEF:
             return false;
         case TOKEN_SINGLE_DOT:
+            return true;
+        case TOKEN_COMMA:
             return true;
     }
     unreachable(TOKEN_FMT"\n", token_print(token));

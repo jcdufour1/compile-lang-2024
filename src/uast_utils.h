@@ -151,64 +151,6 @@ static inline Lang_type* uast_get_lang_type_ref(Uast* uast) {
     unreachable("");
 }
 
-static inline Uast* get_uast_expr_src(Uast_expr* expr) {
-    switch (expr->type) {
-        case UAST_STRUCT_LITERAL:
-            unreachable("");
-        case UAST_MEMBER_ACCESS_UNTYPED:
-            unreachable("");
-        case UAST_INDEX_UNTYPED:
-            unreachable("");
-        case UAST_LITERAL:
-            unreachable("");
-        case UAST_SYMBOL_UNTYPED:
-            unreachable("");
-        case UAST_FUNCTION_CALL:
-            unreachable("");
-        case UAST_OPERATOR:
-            unreachable("");
-    }
-    unreachable("");
-}
-
-static inline Uast* get_uast_src(Uast* uast) {
-    switch (uast->type) {
-        case UAST_DEF:
-            unreachable("");
-        case UAST_EXPR:
-            return get_uast_expr_src(uast_unwrap_expr(uast));
-        case UAST_BLOCK:
-            unreachable("");
-        case UAST_FUNCTION_PARAMS:
-            unreachable("");
-        case UAST_LANG_TYPE:
-            unreachable("");
-        case UAST_RETURN:
-            unreachable("");
-        case UAST_FOR_RANGE:
-            unreachable("");
-        case UAST_FOR_WITH_COND:
-            unreachable("");
-        case UAST_FOR_LOWER_BOUND:
-            unreachable("");
-        case UAST_FOR_UPPER_BOUND:
-            unreachable("");
-        case UAST_BREAK:
-            unreachable("");
-        case UAST_IF:
-            unreachable("");
-        case UAST_CONDITION:
-            unreachable("");
-        case UAST_ASSIGNMENT:
-            unreachable("");
-        case UAST_IF_ELSE_CHAIN:
-            unreachable("");
-        case UAST_CONTINUE:
-            unreachable("");
-    }
-    unreachable("");
-}
-
 static inline Str_view uast_get_literal_name(const Uast_literal* lit) {
     switch (lit->type) {
         case UAST_NUMBER:
@@ -241,6 +183,8 @@ static inline Str_view get_uast_expr_name(const Uast_expr* expr) {
             return uast_unwrap_function_call_const(expr)->name;
         case UAST_LITERAL:
             return uast_get_literal_name(uast_unwrap_literal_const(expr));
+        case UAST_TUPLE:
+            unreachable("");
     }
     unreachable("");
 }

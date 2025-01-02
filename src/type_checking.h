@@ -67,6 +67,8 @@ bool try_set_function_decl_types(
     bool add_to_sym_tbl
 );
 
+bool try_set_tuple_types(Env* env, Tast_tuple** new_tuple, Uast_tuple* tuple);
+
 bool try_set_index_untyped_types(Env* env, Tast** new_tast, Uast_index_untyped* index);
 
 bool try_set_function_params_types(
