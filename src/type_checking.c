@@ -84,36 +84,6 @@ typedef enum {
     IMPLICIT_CONV_OK,
 } IMPLICIT_CONV_STATUS;
 
-static IMPLICIT_CONV_STATUS do_implicit_conversion_if_needed(
-    Lang_type dest_lang_type,
-    Tast_expr* src,
-    bool implicit_pointer_depth
-) {
-    Lang_type src_lang_type = tast_get_lang_type_expr(src);
-    log(
-        LOG_DEBUG, LANG_TYPE_FMT" to "LANG_TYPE_FMT"\n", lang_type_print(src_lang_type),
-        lang_type_print(dest_lang_type)
-    );
-
-    if (lang_type_is_equal(dest_lang_type, src_lang_type)) {
-        return IMPLICIT_CONV_OK;
-    }
-    if (!can_be_implicitly_converted(
-        lang_type_vec_from_lang_type(dest_lang_type),
-        lang_type_vec_from_lang_type(src_lang_type),
-        implicit_pointer_depth)
-    ) {
-        return IMPLICIT_CONV_INVALID_TYPES;
-    }
-
-    *tast_get_lang_type_expr_ref(src) = dest_lang_type;
-    log(
-        LOG_DEBUG, LANG_TYPE_FMT" to "LANG_TYPE_FMT"\n", lang_type_print(src_lang_type),
-        lang_type_print(dest_lang_type)
-    );
-    return IMPLICIT_CONV_CONVERTED;
-}
-
 static void msg_invalid_function_arg_internal(
     const char* file,
     int line,

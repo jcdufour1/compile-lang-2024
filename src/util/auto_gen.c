@@ -20,6 +20,7 @@
 //fn do_thing(num i32) {
 //}
 
+// TODO: do tuple removal in add_load_and_store pass to allow for more general use of tuples
 // TODO: actually use newline to end statement depending on last token of line of line
 // TODO: expected failure case for invalid type in extern "c" function
 // TODO: char literal with escape

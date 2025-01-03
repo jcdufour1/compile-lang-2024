@@ -46,13 +46,6 @@ static void extend_lang_type(String* string, Lang_type lang_type, bool surround_
     }
 }
 
-static void print_llvm_register(String* buf, const char* location, Llvm_reg reg, int indent) {
-    string_extend_cstr(&print_arena, buf, location);
-    string_extend_cstr(&print_arena, buf, ":");
-    extend_lang_type(buf, reg.lang_type, true);
-    string_extend_strv(&print_arena, buf, llvm_print_internal(reg.llvm, indent));
-}
-
 Str_view llvm_binary_print_internal(const Llvm_binary* binary, int indent) {
     String buf = {0};
 

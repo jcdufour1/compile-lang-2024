@@ -57,13 +57,6 @@ int64_t str_view_to_int64_t(Str_view str_view) {
     return result;
 }
 
-static Str_view int64_t_to_str_view(int64_t num) {
-    String string = {0};
-    string_extend_int64_t(&a_main, &string, num);
-    Str_view str_view = {.str = string.buf, .count = string.info.count};
-    return str_view;
-}
-
 static bool lang_type_is_number_finish(Lang_type lang_type) {
     size_t idx;
     for (idx = 1; idx < lang_type.str.count; idx++) {
@@ -99,14 +92,6 @@ int64_t i_lang_type_to_bit_width(Lang_type lang_type) {
 }
 
 // TODO: put strings in a hash table to avoid allocating duplicate types
-static Lang_type bit_width_to_i_lang_type(int64_t bit_width) {
-    String string = {0};
-    string_extend_cstr(&a_main, &string, "i");
-    string_extend_int64_t(&a_main, &string, bit_width);
-    Str_view str_view = {.str = string.buf, .count = string.info.count};
-    return lang_type_new_from_strv(str_view, 0);
-}
-
 Lang_type lang_type_unsigned_to_signed(Lang_type lang_type) {
     assert(lang_type_is_unsigned(lang_type));
 
