@@ -350,8 +350,8 @@ uint64_t sizeof_struct_def_base(const Env* env, const Struct_def_base* base) {
 
     uint64_t total = 0;
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        const Tast_stmt* memb_def = vec_at(&base->members, idx);
-        uint64_t sizeof_curr_item = sizeof_stmt(env, memb_def);
+        const Tast_variable_def* memb_def = vec_at(&base->members, idx);
+        uint64_t sizeof_curr_item = sizeof_lang_type(env, memb_def->lang_type);
         if (total%required_alignment + sizeof_curr_item > required_alignment) {
             total += required_alignment - total%required_alignment;
         }
@@ -413,8 +413,8 @@ uint64_t llvm_sizeof_struct_def_base(const Env* env, const Struct_def_base* base
 
     uint64_t total = 0;
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        const Tast_stmt* memb_def = vec_at(&base->members, idx);
-        uint64_t sizeof_curr_item = sizeof_stmt(env, memb_def);
+        const Tast_variable_def* memb_def = vec_at(&base->members, idx);
+        uint64_t sizeof_curr_item = sizeof_lang_type(env, memb_def->lang_type);
         if (total%required_alignment + sizeof_curr_item > required_alignment) {
             total += required_alignment - total%required_alignment;
         }
@@ -440,7 +440,7 @@ size_t struct_def_base_get_idx_largest_member(const Env* env, Struct_def_base ba
     uint64_t size_result = 0;
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        uint64_t curr_size = sizeof_stmt(env, vec_at(&base.members, idx));
+        uint64_t curr_size = sizeof_lang_type(env, vec_at(&base.members, idx)->lang_type);
         if (curr_size > size_result) {
             size_result = curr_size;
             result = idx;

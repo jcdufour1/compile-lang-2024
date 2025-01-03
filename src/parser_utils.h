@@ -126,8 +126,8 @@ static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, S
 
 static inline size_t tast_get_member_index(const Struct_def_base* struct_def, Str_view member_name) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
-        const Tast_stmt* curr_member = vec_at(&struct_def->members, idx);
-        if (str_view_is_equal(get_tast_name_stmt(curr_member), member_name)) {
+        const Tast_variable_def* curr_member = vec_at(&struct_def->members, idx);
+        if (str_view_is_equal(curr_member->name, member_name)) {
             return idx;
         }
     }
@@ -156,10 +156,10 @@ static inline bool tast_try_get_member_def(
     Str_view member_name
 ) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
-        Tast_stmt* curr_member = vec_at(&struct_def->members, idx);
-        if (str_view_is_equal(get_tast_name_stmt(curr_member), member_name)) {
-            assert(tast_get_lang_type_stmt(curr_member).str.count > 0);
-            *member_def = tast_unwrap_variable_def(tast_unwrap_def(curr_member));
+        Tast_variable_def* curr_member = vec_at(&struct_def->members, idx);
+        if (str_view_is_equal(curr_member->name, member_name)) {
+            assert(curr_member->lang_type.str.count > 0);
+            *member_def = curr_member;
             return true;
         }
     }

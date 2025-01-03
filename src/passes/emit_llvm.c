@@ -873,13 +873,13 @@ static void emit_struct_def_base(const Env* env, String* output, const Struct_de
 
     if (largest_only) {
         size_t idx = struct_def_base_get_idx_largest_member(env, *base);
-        tast_extend_type_decl_str(env, output, vec_at(&base->members, idx), false);
+        tast_extend_type_decl_str(env, output, tast_wrap_def(tast_wrap_variable_def(vec_at(&base->members, idx))), false);
     } else {
         for (size_t idx = 0; idx < base->members.info.count; idx++) {
             if (!is_first) {
                 string_extend_cstr(&a_main, output, ", ");
             }
-            tast_extend_type_decl_str(env, output, vec_at(&base->members, idx), false);
+            tast_extend_type_decl_str(env, output, tast_wrap_def(tast_wrap_variable_def(vec_at(&base->members, idx))), false);
             is_first = false;
         }
     }

@@ -1165,7 +1165,7 @@ static bool try_set_condition_types(Env* env, Tast_condition** new_cond, Uast_co
 bool try_set_struct_base_types(Env* env, Struct_def_base* new_base, Ustruct_def_base* base) {
     env->type_checking_is_in_struct_base_def = true;
     bool success = true;
-    Tast_stmt_vec new_members = {0};
+    Tast_variable_def_vec new_members = {0};
 
     if (base->members.info.count < 1) {
         todo();
@@ -1174,11 +1174,13 @@ bool try_set_struct_base_types(Env* env, Struct_def_base* new_base, Ustruct_def_
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
         Uast_stmt* curr = vec_at(&base->members, idx);
 
-        Tast_stmt* new_memb = NULL;
-        if (!try_set_stmt_types(env, &new_memb, curr)) {
+        Tast_stmt* new_memb_ = NULL;
+        if (try_set_stmt_types(env, &new_memb_, curr)) {
+            Tast_variable_def* new_memb = tast_unwrap_variable_def(tast_unwrap_def(new_memb_));
+            vec_append(&a_main, &new_members, new_memb);
+        } else {
             success = false;
         }
-        vec_append(&a_main, &new_members, new_memb);
     }
 
     *new_base = (Struct_def_base) {
