@@ -194,15 +194,15 @@ void do_passes(Str_view file_text, const Parameters* params) {
     if (error_count > 0) {
         fail();
     }
-    log_tree(LOG_DEBUG, tast_wrap_block(typed));
+    log(LOG_DEBUG, "\n"TAST_FMT, tast_block_print(typed));
     arena_reset(&print_arena);
 
     typed = change_operators(&env, typed);
-    log_tree(LOG_DEBUG, tast_wrap_block(typed));
+    log(LOG_DEBUG, "\n"TAST_FMT, tast_block_print(typed));
     arena_reset(&print_arena);
 
     typed = remove_tuples(&env, typed);
-    log_tree(LOG_DEBUG, tast_wrap_block(typed));
+    log(LOG_DEBUG, "\n"TAST_FMT, tast_block_print(typed));
     arena_reset(&print_arena);
 
     Llvm_block* llvm_root = add_load_and_store(&env, typed);

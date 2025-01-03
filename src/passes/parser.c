@@ -26,7 +26,7 @@ typedef enum {
 } PARSE_EXPR_STATUS;
 
 static PARSE_STATUS extract_block(Env* env, Uast_block** block, Tk_view* tokens, bool is_top_level);
-static PARSE_EXPR_STATUS extract_statement(Env* env, Uast** child, Tk_view* tokens, bool defer_sym_add);
+static PARSE_EXPR_STATUS extract_statement(Env* env, Uast_stmt** child, Tk_view* tokens, bool defer_sym_add);
 static PARSE_EXPR_STATUS try_extract_expression(
     Env* env,
     Uast_expr** result,
@@ -951,7 +951,7 @@ static PARSE_STATUS extract_for_with_cond(Env* env, Uast_for_with_cond** for_new
     return extract_block(env, &(*for_new)->body, tokens, false);
 }
 
-static PARSE_STATUS extract_for_loop(Env* env, Uast** for_loop_result, Tk_view* tokens) {
+static PARSE_STATUS extract_for_loop(Env* env, Uast_stmt** for_loop_result, Tk_view* tokens) {
     Token for_token;
     try(try_consume(&for_token, tokens, TOKEN_FOR));
     Uast_for_range* for_loop = uast_for_range_new(for_token.pos, NULL, NULL, NULL, NULL);
@@ -1126,7 +1126,7 @@ static PARSE_STATUS extract_function_return(Env* env, Uast_return** rtn_statemen
     return PARSE_OK;
 }
 
-static PARSE_STATUS extract_assignment(Env* env, Uast_assignment** assign, Tk_view* tokens, Uast* lhs) {
+static PARSE_STATUS extract_assignment(Env* env, Uast_assignment** assign, Tk_view* tokens, Uast_stmt* lhs) {
     Token equal_token = {0};
     *assign = NULL;
     if (lhs) {
@@ -1198,7 +1198,7 @@ static PARSE_EXPR_STATUS extract_condition(Env* env, Uast_condition** result, Tk
             cond_oper = uast_condition_get_default_child(cond_child);
             break;
         default:
-            unreachable(UAST_FMT"\n", uast_print(uast_wrap_expr(cond_child)));
+            unreachable(UAST_FMT"\n", uast_expr_print(cond_child));
     }
 
     *result = uast_condition_new(uast_get_pos_expr(cond_child), cond_oper);
@@ -1279,10 +1279,10 @@ static PARSE_STATUS extract_if_else_chain(Env* env, Uast_if_else_chain** if_else
     return PARSE_OK;
 }
 
-static PARSE_EXPR_STATUS extract_statement(Env* env, Uast** child, Tk_view* tokens, bool defer_sym_add) {
+static PARSE_EXPR_STATUS extract_statement(Env* env, Uast_stmt** child, Tk_view* tokens, bool defer_sym_add) {
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
-    Uast* lhs = NULL;
+    Uast_stmt* lhs = NULL;
     if (starts_with_struct_def(*tokens)) {
         Uast_struct_def* struct_def;
         if (PARSE_OK != extract_struct_def(env, &struct_def, tokens)) {
@@ -1326,7 +1326,7 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Uast** child, Tk_view* toke
         }
         lhs = uast_wrap_if_else_chain(if_else_chain);
     } else if (starts_with_for(*tokens)) {
-        Uast* for_loop;
+        Uast_stmt* for_loop;
         if (PARSE_OK != extract_for_loop(env, &for_loop, tokens)) {
             return PARSE_EXPR_ERROR;
         }
@@ -1374,7 +1374,7 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Uast** child, Tk_view* toke
             case UAST_TUPLE:
                 break;
             default:
-                unreachable(UAST_FMT"\n", uast_print(uast_wrap_expr(lhs_)));
+                unreachable(UAST_FMT"\n", uast_expr_print(lhs_));
         }
 
         lhs = uast_wrap_expr(lhs_);
@@ -1415,7 +1415,7 @@ static PARSE_STATUS extract_block(Env* env, Uast_block** block, Tk_view* tokens,
     *block = uast_block_new(
         tk_view_front(*tokens).pos,
         false,
-        (Uast_vec) {0},
+        (Uast_stmt_vec) {0},
         (Symbol_collection) {0},
         (Pos) {0}
     );
@@ -1459,7 +1459,7 @@ static PARSE_STATUS extract_block(Env* env, Uast_block** block, Tk_view* tokens,
             }
             break;
         }
-        Uast* child;
+        Uast_stmt* child;
         bool should_stop = false;
         switch (extract_statement(env, &child, tokens, false)) {
             case PARSE_EXPR_OK:
@@ -1502,7 +1502,7 @@ static PARSE_STATUS extract_struct_literal(Env* env, Uast_struct_literal** struc
         msg_parser_expected(env->file_text, tk_view_front(*tokens), "at start of struct literal", TOKEN_OPEN_CURLY_BRACE);
         return PARSE_ERROR;
     }
-    Uast_vec members = {0};
+    Uast_stmt_vec members = {0};
 
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
     while (try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {

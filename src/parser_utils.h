@@ -68,7 +68,7 @@ static inline Llvm_reg llvm_register_sym_new_from_operator(Llvm_operator* operat
 Llvm_id get_matching_label_id(const Env* env, Str_view name);
 
 // lhs and rhs should not be used for other tasks after this
-Tast_assignment* util_assignment_new(Env* env, Uast* lhs, Uast_expr* rhs);
+Tast_assignment* util_assignment_new(Env* env, Uast_stmt* lhs, Uast_expr* rhs);
 
 Tast_literal* util_tast_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, Pos pos);
 
@@ -120,8 +120,8 @@ bool lang_type_is_primitive(const Env* env, Lang_type lang_type);
 
 static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, Str_view member_name) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
-        const Uast* curr_member = vec_at(&struct_def->members, idx);
-        if (str_view_is_equal(get_uast_name(curr_member), member_name)) {
+        const Uast_stmt* curr_member = vec_at(&struct_def->members, idx);
+        if (str_view_is_equal(get_uast_name_stmt(curr_member), member_name)) {
             return idx;
         }
     }
@@ -130,8 +130,8 @@ static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, S
 
 static inline size_t tast_get_member_index(const Struct_def_base* struct_def, Str_view member_name) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
-        const Tast* curr_member = vec_at(&struct_def->members, idx);
-        if (str_view_is_equal(get_tast_name(curr_member), member_name)) {
+        const Tast_stmt* curr_member = vec_at(&struct_def->members, idx);
+        if (str_view_is_equal(get_tast_name_stmt(curr_member), member_name)) {
             return idx;
         }
     }
@@ -144,9 +144,9 @@ static inline bool uast_try_get_member_def(
     Str_view member_name
 ) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
-        Uast* curr_member = vec_at(&struct_def->members, idx);
-        if (str_view_is_equal(get_uast_name(curr_member), member_name)) {
-            assert(uast_get_lang_type(curr_member).str.count > 0);
+        Uast_stmt* curr_member = vec_at(&struct_def->members, idx);
+        if (str_view_is_equal(get_uast_name_stmt(curr_member), member_name)) {
+            assert(uast_get_lang_type_stmt(curr_member).str.count > 0);
             *member_def = uast_unwrap_variable_def(uast_unwrap_def(curr_member));
             return true;
         }
@@ -160,9 +160,9 @@ static inline bool tast_try_get_member_def(
     Str_view member_name
 ) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
-        Tast* curr_member = vec_at(&struct_def->members, idx);
-        if (str_view_is_equal(get_tast_name(curr_member), member_name)) {
-            assert(tast_get_lang_type(curr_member).str.count > 0);
+        Tast_stmt* curr_member = vec_at(&struct_def->members, idx);
+        if (str_view_is_equal(get_tast_name_stmt(curr_member), member_name)) {
+            assert(tast_get_lang_type_stmt(curr_member).str.count > 0);
             *member_def = tast_unwrap_variable_def(tast_unwrap_def(curr_member));
             return true;
         }
@@ -183,7 +183,7 @@ bool try_set_raw_union_def_types(Env* env, Tast_raw_union_def** new_tast, Uast_r
 
 bool try_set_enum_def_types(Env* env, Tast_enum_def** new_tast, Uast_enum_def* tast);
 
-bool try_get_struct_def(const Env* env, Tast_struct_def** struct_def, Tast* tast);
+bool try_get_struct_def(const Env* env, Tast_struct_def** struct_def, Tast_stmt* stmt);
 
 bool llvm_try_get_struct_def(const Env* env, Tast_struct_def** struct_def, Llvm* tast);
     
@@ -191,16 +191,16 @@ Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child);
 
 Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child);
 
-static inline Tast_struct_def* get_struct_def(const Env* env, Tast* tast) {
-    Tast_struct_def* struct_def;
-    if (!try_get_struct_def(env, &struct_def, tast)) {
-        unreachable("could not find struct definition for "TAST_FMT"\n", tast_print(tast));
+static inline Tast_struct_def* get_struct_def(const Env* env, Tast_stmt* stmt) {
+    Tast_struct_def* struct_def = NULL;
+    if (!try_get_struct_def(env, &struct_def, stmt)) {
+        unreachable("could not find struct definition for "TAST_FMT"\n", tast_stmt_print(stmt));
     }
     return struct_def;
 }
 
-static inline const Tast_struct_def* get_struct_def_const(const Env* env, const Tast* tast) {
-    return get_struct_def(env, (Tast*)tast);
+static inline const Tast_struct_def* get_struct_def_const(const Env* env, const Tast_stmt* stmt) {
+    return get_struct_def(env, (Tast_stmt*)stmt);
 }
 
 static inline Tast_struct_def* llvm_get_struct_def(const Env* env, Llvm* tast) {

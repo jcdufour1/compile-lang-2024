@@ -5,6 +5,8 @@
 
 static Tast* change_op_tast(Env* env, Tast* root);
 
+static Tast_stmt* change_op_stmt(Env* env, Tast_stmt* root);
+
 static Tast_block* change_op_block(Env* env, Tast_block* root);
 
 static Tast_expr* change_op_expr(Env* env, Tast_expr* root);
@@ -127,7 +129,7 @@ static Tast_for_with_cond* change_op_for_with_cond(Env* env, Tast_for_with_cond*
 }
 
 static Tast_assignment* change_op_assignment(Env* env, Tast_assignment* root) {
-    root->lhs = change_op_tast(env, root->lhs);
+    root->lhs = change_op_stmt(env, root->lhs);
     root->rhs = change_op_expr(env, root->rhs);
     return root;
 }
@@ -155,24 +157,14 @@ static Tast_if_else_chain* change_op_if_else_chain(Env* env, Tast_if_else_chain*
     return root;
 }
 
-static Tast* change_op_tast(Env* env, Tast* root) {
+static Tast_stmt* change_op_stmt(Env* env, Tast_stmt* root) {
     switch (root->type) {
         case TAST_BLOCK:
             return tast_wrap_block(change_op_block(env, tast_unwrap_block(root)));
         case TAST_EXPR:
             return tast_wrap_expr(change_op_expr(env, tast_unwrap_expr(root)));
-        case TAST_FUNCTION_PARAMS:
-            return root;
-        case TAST_LANG_TYPE:
-            return root;
-        case TAST_FOR_LOWER_BOUND:
-            return tast_wrap_for_lower_bound(change_op_for_lower_bound(env, tast_unwrap_for_lower_bound(root)));
-        case TAST_FOR_UPPER_BOUND:
-            return tast_wrap_for_upper_bound(change_op_for_upper_bound(env, tast_unwrap_for_upper_bound(root)));
         case TAST_DEF:
             return tast_wrap_def(change_op_def(env, tast_unwrap_def(root)));
-        case TAST_CONDITION:
-            return tast_wrap_condition(change_op_condition(env, tast_unwrap_condition(root)));
         case TAST_FOR_RANGE:
             return tast_wrap_for_range(change_op_for_range(env, tast_unwrap_for_range(root)));
         case TAST_FOR_WITH_COND:
@@ -183,8 +175,6 @@ static Tast* change_op_tast(Env* env, Tast* root) {
             return root;
         case TAST_ASSIGNMENT:
             return tast_wrap_assignment(change_op_assignment(env, tast_unwrap_assignment(root)));
-        case TAST_IF:
-            return tast_wrap_if(change_op_if(env, tast_unwrap_if(root)));
         case TAST_RETURN:
             return tast_wrap_return(change_op_return(env, tast_unwrap_return(root)));
         case TAST_IF_ELSE_CHAIN:
@@ -193,11 +183,31 @@ static Tast* change_op_tast(Env* env, Tast* root) {
     unreachable("");
 }
 
+static Tast* change_op_tast(Env* env, Tast* root) {
+    switch (root->type) {
+        case TAST_STMT:
+            return tast_wrap_stmt(change_op_stmt(env, tast_unwrap_stmt(root)));
+        case TAST_FUNCTION_PARAMS:
+            return root;
+        case TAST_LANG_TYPE:
+            return root;
+        case TAST_FOR_LOWER_BOUND:
+            return tast_wrap_for_lower_bound(change_op_for_lower_bound(env, tast_unwrap_for_lower_bound(root)));
+        case TAST_FOR_UPPER_BOUND:
+            return tast_wrap_for_upper_bound(change_op_for_upper_bound(env, tast_unwrap_for_upper_bound(root)));
+        case TAST_CONDITION:
+            return tast_wrap_condition(change_op_condition(env, tast_unwrap_condition(root)));
+        case TAST_IF:
+            return tast_wrap_if(change_op_if(env, tast_unwrap_if(root)));
+    }
+    unreachable("");
+}
+
 static Tast_block* change_op_block(Env* env, Tast_block* root) {
     Tast_block* new_block = tast_block_new(
         root->pos,
         root->is_variadic,
-        (Tast_vec) {0},
+        (Tast_stmt_vec) {0},
         root->symbol_collection,
         root->pos_end
     );
@@ -205,8 +215,8 @@ static Tast_block* change_op_block(Env* env, Tast_block* root) {
     vec_append(&a_main, &env->ancesters, &root->symbol_collection);
 
     for (size_t idx = 0; idx < root->children.info.count; idx++) {
-        Tast* curr = vec_at(&root->children, idx);
-        vec_append(&a_main, &new_block->children, change_op_tast(env, curr));
+        Tast_stmt* curr = vec_at(&root->children, idx);
+        vec_append(&a_main, &new_block->children, change_op_stmt(env, curr));
     }
 
     vec_rem_last(&env->ancesters);

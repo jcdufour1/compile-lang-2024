@@ -24,6 +24,8 @@ bool try_set_binary_types(Env* env, Tast_expr** new_tast, Uast_binary* operator)
 
 bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* tast, bool is_directly_in_fun_def);
 
+bool try_set_stmt_types(Env* env, Tast_stmt** new_stmt, Uast_stmt* stmt);
+
 bool try_set_uast_types(Env* env, Tast** new_tast, Uast* tast);
 
 // returns false if unsuccessful
@@ -49,7 +51,7 @@ bool try_set_tuple_assignment_types(
 
 bool try_set_struct_literal_assignment_types(
     Env* env,
-    Tast** new_tast,
+    Tast_stmt** new_tast,
     Lang_type dest_lang_type,
     Uast_struct_literal* struct_literal,
     Pos assign_pos
@@ -59,7 +61,7 @@ Tast_literal* try_set_literal_types(Uast_literal* literal);
 
 bool try_set_function_call_types(Env* env, Tast_function_call** new_call, Uast_function_call* fun_call);
 
-bool try_set_member_access_types(Env* env, Tast** new_tast, Uast_member_access_untyped* access);
+bool try_set_member_access_types(Env* env, Tast_stmt** new_tast, Uast_member_access_untyped* access);
 
 bool try_set_function_def_types(
     Env* env,
@@ -76,7 +78,7 @@ bool try_set_function_decl_types(
 
 bool try_set_tuple_types(Env* env, Tast_tuple** new_tuple, Uast_tuple* tuple);
 
-bool try_set_index_untyped_types(Env* env, Tast** new_tast, Uast_index_untyped* index);
+bool try_set_index_untyped_types(Env* env, Tast_stmt** new_tast, Uast_index_untyped* index);
 
 bool try_set_function_params_types(
     Env* env,

@@ -14,7 +14,7 @@ typedef size_t Llvm_id;
     lang_type_print((reg_sym).lang_type), tast_print((reg_sym).tast)
 
 typedef struct {
-    Uast_vec members;
+    Uast_stmt_vec members;
     Str_view name;
 } Ustruct_def_base;
 

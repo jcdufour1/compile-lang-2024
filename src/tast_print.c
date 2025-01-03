@@ -325,12 +325,10 @@ Str_view tast_block_print_internal(const Tast_block* block, int indent) {
     string_extend_cstr_indent(&print_arena, &buf, "symbol_table\n", indent + INDENT_WIDTH);
     symbol_extend_table_internal(&buf, block->symbol_collection.symbol_table, indent + 2*INDENT_WIDTH);
 
-    indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        Str_view arg_text = tast_print_internal(vec_at(&block->children, idx), indent);
+        Str_view arg_text = tast_stmt_print_internal(vec_at(&block->children, idx), indent + INDENT_WIDTH);
         string_extend_strv(&print_arena, &buf, arg_text);
     }
-    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }
@@ -439,10 +437,8 @@ Str_view tast_assignment_print_internal(const Tast_assignment* assign, int inden
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "assignment\n", indent);
-    indent += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, tast_print_internal(assign->lhs, indent));
-    string_extend_strv(&print_arena, &buf, tast_expr_print_internal(assign->rhs, indent));
-    indent -= INDENT_WIDTH;
+    string_extend_strv(&print_arena, &buf, tast_stmt_print_internal(assign->lhs, indent + INDENT_WIDTH));
+    string_extend_strv(&print_arena, &buf, tast_expr_print_internal(assign->rhs, indent + INDENT_WIDTH));
 
     return string_to_strv(buf);
 }
@@ -515,12 +511,10 @@ static void extend_struct_def_base(String* buf, const char* type_name, Struct_de
     string_extend_strv_in_par(&print_arena, buf, base.name);
     string_extend_cstr(&print_arena, buf, "\n");
 
-    indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        Str_view memb_text = tast_print_internal(vec_at(&base.members, idx), indent);
+        Str_view memb_text = tast_stmt_print_internal(vec_at(&base.members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&print_arena, buf, memb_text);
     }
-    indent -= INDENT_WIDTH;
 }
 
 Str_view tast_struct_def_print_internal(const Tast_struct_def* def, int indent) {
@@ -663,12 +657,36 @@ Str_view tast_expr_print_internal(const Tast_expr* expr, int indent) {
     unreachable("");
 }
 
+Str_view tast_stmt_print_internal(const Tast_stmt* stmt, int indent) {
+    switch (stmt->type) {
+        case TAST_BLOCK:
+            return tast_block_print_internal(tast_unwrap_block_const(stmt), indent);
+        case TAST_EXPR:
+            return tast_expr_print_internal(tast_unwrap_expr_const(stmt), indent);
+        case TAST_DEF:
+            return tast_def_print_internal(tast_unwrap_def_const(stmt), indent);
+        case TAST_FOR_WITH_COND:
+            return tast_for_with_cond_print_internal(tast_unwrap_for_with_cond_const(stmt), indent);
+        case TAST_FOR_RANGE:
+            return tast_for_range_print_internal(tast_unwrap_for_range_const(stmt), indent);
+        case TAST_BREAK:
+            return tast_break_print_internal(tast_unwrap_break_const(stmt), indent);
+        case TAST_CONTINUE:
+            return tast_continue_print_internal(tast_unwrap_continue_const(stmt), indent);
+        case TAST_ASSIGNMENT:
+            return tast_assignment_print_internal(tast_unwrap_assignment_const(stmt), indent);
+        case TAST_IF_ELSE_CHAIN:
+            return tast_if_else_chain_print_internal(tast_unwrap_if_else_chain_const(stmt), indent);
+        case TAST_RETURN:
+            return tast_return_print_internal(tast_unwrap_return_const(stmt), indent);
+    }
+    unreachable("");
+}
+
 Str_view tast_print_internal(const Tast* tast, int indent) {
     switch (tast->type) {
-        case TAST_BLOCK:
-            return tast_block_print_internal(tast_unwrap_block_const(tast), indent);
-        case TAST_EXPR:
-            return tast_expr_print_internal(tast_unwrap_expr_const(tast), indent);
+        case TAST_STMT:
+            return tast_stmt_print_internal(tast_unwrap_stmt_const(tast), indent);
         case TAST_FUNCTION_PARAMS:
             return tast_function_params_print_internal(tast_unwrap_function_params_const(tast), indent);
         case TAST_LANG_TYPE:
@@ -677,26 +695,10 @@ Str_view tast_print_internal(const Tast* tast, int indent) {
             return tast_for_lower_bound_print_internal(tast_unwrap_for_lower_bound_const(tast), indent);
         case TAST_FOR_UPPER_BOUND:
             return tast_for_upper_bound_print_internal(tast_unwrap_for_upper_bound_const(tast), indent);
-        case TAST_DEF:
-            return tast_def_print_internal(tast_unwrap_def_const(tast), indent);
         case TAST_CONDITION:
             return tast_condition_print_internal(tast_unwrap_condition_const(tast), indent);
-        case TAST_FOR_RANGE:
-            return tast_for_range_print_internal(tast_unwrap_for_range_const(tast), indent);
-        case TAST_FOR_WITH_COND:
-            return tast_for_with_cond_print_internal(tast_unwrap_for_with_cond_const(tast), indent);
-        case TAST_BREAK:
-            return tast_break_print_internal(tast_unwrap_break_const(tast), indent);
-        case TAST_CONTINUE:
-            return tast_continue_print_internal(tast_unwrap_continue_const(tast), indent);
-        case TAST_ASSIGNMENT:
-            return tast_assignment_print_internal(tast_unwrap_assignment_const(tast), indent);
         case TAST_IF:
             return tast_if_print_internal(tast_unwrap_if_const(tast), indent);
-        case TAST_RETURN:
-            return tast_return_print_internal(tast_unwrap_return_const(tast), indent);
-        case TAST_IF_ELSE_CHAIN:
-            return tast_if_else_chain_print_internal(tast_unwrap_if_else_chain_const(tast), indent);
     }
     unreachable("");
 }

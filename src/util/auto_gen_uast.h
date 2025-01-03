@@ -119,7 +119,7 @@ static Uast_type uast_gen_block(const char* prefix) {
     Uast_type block = {.name = uast_name_new(prefix, "block", false)};
 
     append_member(&block.members, "bool", "is_variadic");
-    append_member(&block.members, "Uast_vec", "children");
+    append_member(&block.members, "Uast_stmt_vec", "children");
     append_member(&block.members, "Symbol_collection", "symbol_collection");
     append_member(&block.members, "Pos", "pos_end");
 
@@ -246,7 +246,7 @@ static Uast_type uast_gen_function_call(const char* prefix) {
 static Uast_type uast_gen_struct_literal(const char* prefix) {
     Uast_type lit = {.name = uast_name_new(prefix, "struct_literal", false)};
 
-    append_member(&lit.members, "Uast_vec", "members");
+    append_member(&lit.members, "Uast_stmt_vec", "members");
     append_member(&lit.members, "Str_view", "name");
 
     return lit;
@@ -456,7 +456,7 @@ static Uast_type uast_gen_continue(const char* prefix) {
 static Uast_type uast_gen_assignment(const char* prefix) {
     Uast_type assign = {.name = uast_name_new(prefix, "assignment", false)};
 
-    append_member(&assign.members, "Uast*", "lhs");
+    append_member(&assign.members, "Uast_stmt*", "lhs");
     append_member(&assign.members, "Uast_expr*", "rhs");
 
     return assign;

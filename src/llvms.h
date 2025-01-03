@@ -15,11 +15,6 @@
         log_file_new(log_level, __FILE__, __LINE__, "tree:\n"TAST_FMT, tast_print(root)); \
     } while(0)
 
-static inline Tast* get_left_child_expr(Tast_expr* expr) {
-    (void) expr;
-    unreachable("");
-}
-
 //static inline Tast_expr* tast_expr_new(Pos pos, TAST_EXPR_TYPE expr_type) {
 //    Tast_expr* expr = tast_unwrap_expr(tast_new(pos, TAST_EXPR));
 //    expr->type = expr_type;

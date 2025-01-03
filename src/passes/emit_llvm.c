@@ -136,13 +136,13 @@ static bool llvm_is_variadic(const Llvm* llvm) {
     }
 }
 
-static bool tast_is_variadic(const Tast* tast) {
+static bool tast_is_variadic(const Tast_stmt* tast) {
     if (tast->type == TAST_EXPR) {
         switch (tast_unwrap_expr_const(tast)->type) {
             case TAST_LITERAL:
                 return false;
             default:
-                unreachable(TAST_FMT, tast_print(tast));
+                unreachable(TAST_FMT, tast_stmt_print(tast));
         }
     } else {
         const Tast_def* def = tast_unwrap_def_const(tast);
@@ -150,18 +150,18 @@ static bool tast_is_variadic(const Tast* tast) {
             case TAST_VARIABLE_DEF:
                 return tast_unwrap_variable_def_const(tast_unwrap_def_const(tast))->is_variadic;
             default:
-                unreachable(TAST_FMT, tast_print(tast));
+                unreachable(TAST_FMT, tast_stmt_print(tast));
         }
     }
 }
 
-static void tast_extend_type_decl_str(const Env* env, String* output, const Tast* var_def_or_lit, bool noundef) {
+static void tast_extend_type_decl_str(const Env* env, String* output, const Tast_stmt* var_def_or_lit, bool noundef) {
     if (tast_is_variadic(var_def_or_lit)) {
         string_extend_cstr(&a_main, output, "...");
         return;
     }
 
-    extend_type_call_str(env, output, tast_get_lang_type(var_def_or_lit));
+    extend_type_call_str(env, output, tast_get_lang_type_stmt(var_def_or_lit));
     if (noundef) {
         string_extend_cstr(&a_main, output, " noundef");
     }
@@ -225,7 +225,7 @@ static void tast_extend_literal_decl_prefix(const Env* env, String* output, cons
     } else {
         log(LOG_DEBUG, BOOL_FMT"\n", bool_print(lang_type_is_enum(env, tast_get_lang_type_literal(literal))));
         log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(tast_get_lang_type_literal(literal)));
-        unreachable(LLVM_FMT"\n", tast_print(tast_wrap_expr_const(tast_wrap_literal_const(literal))));
+        unreachable(LLVM_FMT"\n", tast_stmt_print(tast_wrap_expr_const(tast_wrap_literal_const(literal))));
     }
 }
 

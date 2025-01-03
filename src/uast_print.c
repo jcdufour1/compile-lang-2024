@@ -143,7 +143,7 @@ Str_view uast_struct_literal_print_internal(const Uast_struct_literal* lit, int 
     string_extend_cstr(&print_arena, &buf, "\n");
 
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-        Str_view memb_text = uast_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);
+        Str_view memb_text = uast_stmt_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&print_arena, &buf, memb_text);
     }
 
@@ -228,7 +228,7 @@ Str_view uast_block_print_internal(const Uast_block* block, int indent) {
     symbol_extend_table_internal(&buf, block->symbol_collection.symbol_table, indent + 2*INDENT_WIDTH);
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        Str_view arg_text = uast_print_internal(vec_at(&block->children, idx), indent + INDENT_WIDTH);
+        Str_view arg_text = uast_stmt_print_internal(vec_at(&block->children, idx), indent + INDENT_WIDTH);
         string_extend_strv(&print_arena, &buf, arg_text);
     }
 
@@ -340,7 +340,7 @@ Str_view uast_assignment_print_internal(const Uast_assignment* assign, int inden
 
     string_extend_cstr_indent(&print_arena, &buf, "assignment\n", indent);
     indent += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, uast_print_internal(assign->lhs, indent));
+    string_extend_strv(&print_arena, &buf, uast_stmt_print_internal(assign->lhs, indent));
     string_extend_strv(&print_arena, &buf, uast_expr_print_internal(assign->rhs, indent));
     indent -= INDENT_WIDTH;
 
@@ -414,7 +414,7 @@ static void extend_ustruct_def_base(String* buf, const char* type_name, Ustruct_
 
     indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        Str_view memb_text = uast_print_internal(vec_at(&base.members, idx), indent);
+        Str_view memb_text = uast_stmt_print_internal(vec_at(&base.members, idx), indent);
         string_extend_strv(&print_arena, buf, memb_text);
     }
     indent -= INDENT_WIDTH;
@@ -561,19 +561,36 @@ Str_view uast_expr_print_internal(const Uast_expr* expr, int indent) {
     unreachable("");
 }
 
-Str_view uast_print_stmt_internal(const Uast_stmt* stmt, int indent) {
+Str_view uast_stmt_print_internal(const Uast_stmt* stmt, int indent) {
     switch (stmt->type) {
+        case UAST_BLOCK:
+            return uast_block_print_internal(uast_unwrap_block_const(stmt), indent);
+        case UAST_EXPR:
+            return uast_expr_print_internal(uast_unwrap_expr_const(stmt), indent);
+        case UAST_DEF:
+            return uast_def_print_internal(uast_unwrap_def_const(stmt), indent);
+        case UAST_BREAK:
+            return uast_break_print_internal(uast_unwrap_break_const(stmt), indent);
+        case UAST_CONTINUE:
+            return uast_continue_print_internal(uast_unwrap_continue_const(stmt), indent);
+        case UAST_ASSIGNMENT:
+            return uast_assignment_print_internal(uast_unwrap_assignment_const(stmt), indent);
+        case UAST_RETURN:
+            return uast_return_print_internal(uast_unwrap_return_const(stmt), indent);
+        case UAST_IF_ELSE_CHAIN:
+            return uast_if_else_chain_print_internal(uast_unwrap_if_else_chain_const(stmt), indent);
+        case UAST_FOR_RANGE:
+            return uast_for_range_print_internal(uast_unwrap_for_range_const(stmt), indent);
+        case UAST_FOR_WITH_COND:
+            return uast_for_with_cond_print_internal(uast_unwrap_for_with_cond_const(stmt), indent);
     }
+    unreachable("");
 }
 
 Str_view uast_print_internal(const Uast* uast, int indent) {
     switch (uast->type) {
         case UAST_STMT:
             return uast_stmt_print_internal(uast_unwrap_stmt_const(uast), indent);
-        case UAST_BLOCK:
-            return uast_block_print_internal(uast_unwrap_block_const(uast), indent);
-        case UAST_EXPR:
-            return uast_expr_print_internal(uast_unwrap_expr_const(uast), indent);
         case UAST_FUNCTION_PARAMS:
             return uast_function_params_print_internal(uast_unwrap_function_params_const(uast), indent);
         case UAST_LANG_TYPE:
@@ -582,26 +599,10 @@ Str_view uast_print_internal(const Uast* uast, int indent) {
             return uast_for_lower_bound_print_internal(uast_unwrap_for_lower_bound_const(uast), indent);
         case UAST_FOR_UPPER_BOUND:
             return uast_for_upper_bound_print_internal(uast_unwrap_for_upper_bound_const(uast), indent);
-        case UAST_DEF:
-            return uast_def_print_internal(uast_unwrap_def_const(uast), indent);
         case UAST_CONDITION:
             return uast_condition_print_internal(uast_unwrap_condition_const(uast), indent);
-        case UAST_FOR_RANGE:
-            return uast_for_range_print_internal(uast_unwrap_for_range_const(uast), indent);
-        case UAST_FOR_WITH_COND:
-            return uast_for_with_cond_print_internal(uast_unwrap_for_with_cond_const(uast), indent);
-        case UAST_BREAK:
-            return uast_break_print_internal(uast_unwrap_break_const(uast), indent);
-        case UAST_CONTINUE:
-            return uast_continue_print_internal(uast_unwrap_continue_const(uast), indent);
-        case UAST_ASSIGNMENT:
-            return uast_assignment_print_internal(uast_unwrap_assignment_const(uast), indent);
         case UAST_IF:
             return uast_if_print_internal(uast_unwrap_if_const(uast), indent);
-        case UAST_RETURN:
-            return uast_return_print_internal(uast_unwrap_return_const(uast), indent);
-        case UAST_IF_ELSE_CHAIN:
-            return uast_if_else_chain_print_internal(uast_unwrap_if_else_chain_const(uast), indent);
     }
     unreachable("");
 }

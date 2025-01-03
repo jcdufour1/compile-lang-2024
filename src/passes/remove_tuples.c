@@ -7,13 +7,15 @@
 #include <parser_utils.h>
 #include <type_checking.h>
 
+static Tast_stmt* rm_tuple_stmt(Env* env, Tast_stmt* stmt);
+
 static Tast_block* rm_tuple_block(Env* env, Tast_block* block);
 
 static Tast_for_range* rm_tuple_for_range(Env* env, Tast_for_range* lang_for);
 
 static Tast_for_with_cond* rm_tuple_for_with_cond(Env* env, Tast_for_with_cond* lang_for);
 
-static Tast* rm_tuple_assignment(Env* env, Tast_assignment* assign);
+static Tast_stmt* rm_tuple_assignment(Env* env, Tast_assignment* assign);
 
 static Tast_block* rm_tuple_return(Env* env, Tast_return* rtn);
 
@@ -33,10 +35,10 @@ static Tast_for_with_cond* rm_tuple_for_with_cond(Env* env, Tast_for_with_cond* 
     return lang_for;
 }
 
-static Tast* rm_tuple_assignment(Env* env, Tast_assignment* assign) {
+static Tast_stmt* rm_tuple_assignment(Env* env, Tast_assignment* assign) {
     (void) env;
 
-    if (tast_get_lang_types(assign->lhs).info.count < 2 && tast_get_lang_types_expr(assign->rhs).info.count < 2) {
+    if (tast_get_lang_types_stmt(assign->lhs).info.count < 2 && tast_get_lang_types_expr(assign->rhs).info.count < 2) {
         return tast_wrap_assignment(assign);
     }
 
@@ -59,7 +61,7 @@ static Tast* rm_tuple_assignment(Env* env, Tast_assignment* assign) {
 }
 
 static Tast_block* rm_tuple_return(Env* env, Tast_return* rtn) {
-    Tast_vec new_children = {0};
+    Tast_stmt_vec new_children = {0};
 
     if (rtn->child->type != TAST_TUPLE) {
         vec_append(&a_main, &new_children, tast_wrap_return(rtn));
@@ -184,52 +186,60 @@ static Tast_def* rm_tuple_def(Env* env, Tast_def* def) {
     unreachable("");
 }
 
+static Tast_stmt* rm_tuple_stmt(Env* env, Tast_stmt* stmt) {
+    switch (stmt->type) {
+        case TAST_BLOCK:
+            return tast_wrap_block(rm_tuple_block(env, tast_unwrap_block(stmt)));
+        case TAST_EXPR:
+            return stmt;
+        case TAST_FOR_RANGE:
+            return tast_wrap_for_range(rm_tuple_for_range(env, tast_unwrap_for_range(stmt)));
+        case TAST_FOR_WITH_COND:
+            return tast_wrap_for_with_cond(rm_tuple_for_with_cond(env, tast_unwrap_for_with_cond(stmt)));
+        case TAST_IF_ELSE_CHAIN:
+            return tast_wrap_if_else_chain(rm_tuple_if_else_chain(env, tast_unwrap_if_else_chain(stmt)));
+        case TAST_RETURN:
+            return tast_wrap_block(rm_tuple_return(env, tast_unwrap_return(stmt)));
+        case TAST_BREAK:
+            return stmt;
+        case TAST_CONTINUE:
+            return stmt;
+        case TAST_ASSIGNMENT:
+            return rm_tuple_assignment(env, tast_unwrap_assignment(stmt));
+        case TAST_DEF:
+            return tast_wrap_def(rm_tuple_def(env, tast_unwrap_def(stmt)));
+    }
+    unreachable("");
+}
+
 static Tast* rm_tuple(Env* env, Tast* tast) {
     switch (tast->type) {
-        case TAST_EXPR:
-            return tast;
-        case TAST_BLOCK:
-            return tast_wrap_block(rm_tuple_block(env, tast_unwrap_block(tast)));
-        case TAST_FUNCTION_PARAMS:
-            return tast;
+        case TAST_STMT:
+            return tast_wrap_stmt(rm_tuple_stmt(env, tast_unwrap_stmt(tast)));
         case TAST_LANG_TYPE:
             return tast;
         case TAST_FOR_LOWER_BOUND:
             return tast;
+        case TAST_FUNCTION_PARAMS:
+            return tast;
         case TAST_FOR_UPPER_BOUND:
             return tast;
-        case TAST_DEF:
-            return tast_wrap_def(rm_tuple_def(env, tast_unwrap_def(tast)));
         case TAST_CONDITION:
             return tast;
-        case TAST_FOR_RANGE:
-            return tast_wrap_for_range(rm_tuple_for_range(env, tast_unwrap_for_range(tast)));
-        case TAST_FOR_WITH_COND:
-            return tast_wrap_for_with_cond(rm_tuple_for_with_cond(env, tast_unwrap_for_with_cond(tast)));
-        case TAST_BREAK:
-            return tast;
-        case TAST_CONTINUE:
-            return tast;
-        case TAST_ASSIGNMENT:
-            return rm_tuple_assignment(env, tast_unwrap_assignment(tast));
         case TAST_IF:
             return tast_wrap_if(rm_tuple_if(env, tast_unwrap_if(tast)));
-        case TAST_RETURN:
-            return tast_wrap_block(rm_tuple_return(env, tast_unwrap_return(tast)));
-        case TAST_IF_ELSE_CHAIN:
-            return tast_wrap_if_else_chain(rm_tuple_if_else_chain(env, tast_unwrap_if_else_chain(tast)));
     }
     unreachable("");
 }
 
 static Tast_block* rm_tuple_block(Env* env, Tast_block* block) {
-    Tast_vec new_children = {0};
+    Tast_stmt_vec new_children = {0};
 
     vec_append(&a_main, &env->ancesters, &block->symbol_collection);
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        Tast* curr = vec_at(&block->children, idx);
+        Tast_stmt* curr = vec_at(&block->children, idx);
 
-        vec_append(&a_main, &new_children, rm_tuple(env, curr));
+        vec_append(&a_main, &new_children, rm_tuple_stmt(env, curr));
         
     }
     vec_rem_last(&env->ancesters);
