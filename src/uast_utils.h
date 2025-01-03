@@ -51,40 +51,47 @@ static inline Lang_type uast_get_lang_type_def(const Uast_def* def) {
     unreachable("");
 }
 
-static inline Lang_type uast_get_lang_type(const Uast* uast) {
-    switch (uast->type) {
-        case UAST_DEF:
-            return uast_get_lang_type_def(uast_unwrap_def_const(uast));
+static inline Lang_type uast_get_lang_type_stmt(const Uast_stmt* stmt) {
+    switch (stmt->type) {
         case UAST_EXPR:
             unreachable("");
         case UAST_BLOCK:
             unreachable("");
-        case UAST_FUNCTION_PARAMS:
-            unreachable("");
-        case UAST_LANG_TYPE:
-            todo();
-            //return uast_unwrap_lang_type_const(uast)->lang_type;
+        case UAST_DEF:
+            return uast_get_lang_type_def(uast_unwrap_def_const(stmt));
         case UAST_RETURN:
+            unreachable("");
+        case UAST_BREAK:
+            unreachable("");
+        case UAST_CONTINUE:
             unreachable("");
         case UAST_FOR_RANGE:
             unreachable("");
         case UAST_FOR_WITH_COND:
             unreachable("");
-        case UAST_FOR_LOWER_BOUND:
-            unreachable("");
-        case UAST_FOR_UPPER_BOUND:
-            unreachable("");
-        case UAST_BREAK:
-            unreachable("");
-        case UAST_IF:
-            unreachable("");
-        case UAST_CONDITION:
-            unreachable("");
         case UAST_ASSIGNMENT:
             unreachable("");
         case UAST_IF_ELSE_CHAIN:
             unreachable("");
-        case UAST_CONTINUE:
+    }
+}
+
+static inline Lang_type uast_get_lang_type(const Uast* uast) {
+    switch (uast->type) {
+        case UAST_STMT:
+            return uast_get_lang_type_stmt(uast_unwrap_stmt_const(uast));
+        case UAST_FUNCTION_PARAMS:
+            unreachable("");
+        case UAST_LANG_TYPE:
+            todo();
+            //return uast_unwrap_lang_type_const(uast)->lang_type;
+        case UAST_FOR_LOWER_BOUND:
+            unreachable("");
+        case UAST_FOR_UPPER_BOUND:
+            unreachable("");
+        case UAST_IF:
+            unreachable("");
+        case UAST_CONDITION:
             unreachable("");
     }
     unreachable("");
@@ -112,40 +119,27 @@ static inline Lang_type* uast_get_lang_type_def_ref(Uast_def* def) {
     unreachable("");
 }
 
-static inline Lang_type* uast_get_lang_type_ref(Uast* uast) {
-    switch (uast->type) {
-        case UAST_DEF:
-            return uast_get_lang_type_def_ref(uast_unwrap_def(uast));
+static inline Lang_type* uast_get_lang_type_ref_stmt(Uast_stmt* stmt) {
+    switch (stmt->type) {
         case UAST_EXPR:
             unreachable("");
         case UAST_BLOCK:
             unreachable("");
-        case UAST_FUNCTION_PARAMS:
-            unreachable("");
-        case UAST_LANG_TYPE:
-            todo();
-            //return &uast_unwrap_lang_type(uast)->lang_type;
+        case UAST_DEF:
+            return uast_get_lang_type_def_ref(uast_unwrap_def(stmt));
         case UAST_RETURN:
+            unreachable("");
+        case UAST_BREAK:
+            unreachable("");
+        case UAST_CONTINUE:
             unreachable("");
         case UAST_FOR_RANGE:
             unreachable("");
         case UAST_FOR_WITH_COND:
             unreachable("");
-        case UAST_FOR_LOWER_BOUND:
-            unreachable("");
-        case UAST_FOR_UPPER_BOUND:
-            unreachable("");
-        case UAST_BREAK:
-            unreachable("");
-        case UAST_IF:
-            unreachable("");
-        case UAST_CONDITION:
-            unreachable("");
         case UAST_ASSIGNMENT:
             unreachable("");
         case UAST_IF_ELSE_CHAIN:
-            unreachable("");
-        case UAST_CONTINUE:
             unreachable("");
     }
     unreachable("");
@@ -226,44 +220,52 @@ static inline Str_view get_uast_name_expr(const Uast_expr* expr) {
         case UAST_FUNCTION_CALL:
             return uast_unwrap_function_call_const(expr)->name;
         default:
-            unreachable(UAST_FMT"\n", uast_print(uast_wrap_expr_const(expr)));
+            unreachable(UAST_FMT"\n", uast_expr_print(expr));
     }
     unreachable("");
 }
 
-static inline Str_view get_uast_name(const Uast* uast) {
-    switch (uast->type) {
+static inline Str_view get_uast_name_stmt(const Uast_stmt* stmt) {
+    switch (stmt->type) {
         case UAST_DEF:
-            return get_uast_name_def(uast_unwrap_def_const(uast));
-        case UAST_EXPR:
-            return get_uast_expr_name(uast_unwrap_expr_const(uast));
+            return get_uast_name_def(uast_unwrap_def_const(stmt));
         case UAST_BLOCK:
             unreachable("");
-        case UAST_FUNCTION_PARAMS:
-            unreachable("");
-        case UAST_LANG_TYPE:
-            unreachable("");
-        case UAST_RETURN:
-            unreachable("");
+        case UAST_EXPR:
+            return get_uast_expr_name(uast_unwrap_expr_const(stmt));
         case UAST_FOR_RANGE:
             unreachable("");
         case UAST_FOR_WITH_COND:
             unreachable("");
-        case UAST_FOR_LOWER_BOUND:
-            unreachable("");
-        case UAST_FOR_UPPER_BOUND:
-            unreachable("");
         case UAST_BREAK:
-            unreachable("");
-        case UAST_IF:
-            unreachable("");
-        case UAST_CONDITION:
             unreachable("");
         case UAST_ASSIGNMENT:
             unreachable("");
         case UAST_IF_ELSE_CHAIN:
             unreachable("");
         case UAST_CONTINUE:
+            unreachable("");
+        case UAST_RETURN:
+            unreachable("");
+    }
+    unreachable("");
+}
+
+static inline Str_view get_uast_name(const Uast* uast) {
+    switch (uast->type) {
+        case UAST_STMT:
+            return get_uast_name_stmt(uast_unwrap_stmt_const(uast));
+        case UAST_FUNCTION_PARAMS:
+            unreachable("");
+        case UAST_LANG_TYPE:
+            unreachable("");
+        case UAST_FOR_LOWER_BOUND:
+            unreachable("");
+        case UAST_FOR_UPPER_BOUND:
+            unreachable("");
+        case UAST_IF:
+            unreachable("");
+        case UAST_CONDITION:
             unreachable("");
     }
     unreachable("");

@@ -115,8 +115,8 @@ static Uast_name uast_name_new(const char* parent, const char* base, bool is_top
     return (Uast_name) {.parent = str_view_from_cstr(parent), .base = str_view_from_cstr(base), .is_topmost = is_topmost};
 }
 
-static Uast_type uast_gen_block(void) {
-    Uast_type block = {.name = uast_name_new("uast", "block", false)};
+static Uast_type uast_gen_block(const char* prefix) {
+    Uast_type block = {.name = uast_name_new(prefix, "block", false)};
 
     append_member(&block.members, "bool", "is_variadic");
     append_member(&block.members, "Uast_vec", "children");
@@ -126,8 +126,8 @@ static Uast_type uast_gen_block(void) {
     return block;
 }
 
-static Uast_type uast_gen_unary(void) {
-    Uast_type unary = {.name = uast_name_new("operator", "unary", false)};
+static Uast_type uast_gen_unary(const char* prefix) {
+    Uast_type unary = {.name = uast_name_new(prefix, "unary", false)};
 
     append_member(&unary.members, "Uast_expr*", "child");
     append_member(&unary.members, "TOKEN_TYPE", "token_type");
@@ -136,8 +136,8 @@ static Uast_type uast_gen_unary(void) {
     return unary;
 }
 
-static Uast_type uast_gen_binary(void) {
-    Uast_type binary = {.name = uast_name_new("operator", "binary", false)};
+static Uast_type uast_gen_binary(const char* prefix) {
+    Uast_type binary = {.name = uast_name_new(prefix, "binary", false)};
 
     append_member(&binary.members, "Uast_expr*", "lhs");
     append_member(&binary.members, "Uast_expr*", "rhs");
@@ -146,25 +146,26 @@ static Uast_type uast_gen_binary(void) {
     return binary;
 }
 
-static Uast_type uast_gen_operator(void) {
-    Uast_type operator = {.name = uast_name_new("expr", "operator", false)};
+static Uast_type uast_gen_operator(const char* prefix) {
+    const char* base_name = "operator";
+    Uast_type operator = {.name = uast_name_new(prefix, base_name, false)};
 
-    vec_append(&gen_a, &operator.sub_types, uast_gen_unary());
-    vec_append(&gen_a, &operator.sub_types, uast_gen_binary());
+    vec_append(&gen_a, &operator.sub_types, uast_gen_unary(base_name));
+    vec_append(&gen_a, &operator.sub_types, uast_gen_binary(base_name));
 
     return operator;
 }
 
-static Uast_type uast_gen_symbol_untyped(void) {
-    Uast_type sym = {.name = uast_name_new("expr", "symbol_untyped", false)};
+static Uast_type uast_gen_symbol_untyped(const char* prefix) {
+    Uast_type sym = {.name = uast_name_new(prefix, "symbol_untyped", false)};
 
     append_member(&sym.members, "Str_view", "name");
 
     return sym;
 }
 
-static Uast_type uast_gen_member_access_untyped(void) {
-    Uast_type access = {.name = uast_name_new("expr", "member_access_untyped", false)};
+static Uast_type uast_gen_member_access_untyped(const char* prefix) {
+    Uast_type access = {.name = uast_name_new(prefix, "member_access_untyped", false)};
 
     append_member(&access.members, "Str_view", "member_name");
     append_member(&access.members, "Uast_expr*", "callee");
@@ -172,8 +173,8 @@ static Uast_type uast_gen_member_access_untyped(void) {
     return access;
 }
 
-static Uast_type uast_gen_index_untyped(void) {
-    Uast_type index = {.name = uast_name_new("expr", "index_untyped", false)};
+static Uast_type uast_gen_index_untyped(const char* prefix) {
+    Uast_type index = {.name = uast_name_new(prefix, "index_untyped", false)};
 
     append_member(&index.members, "Uast_expr*", "index");
     append_member(&index.members, "Uast_expr*", "callee");
@@ -181,16 +182,16 @@ static Uast_type uast_gen_index_untyped(void) {
     return index;
 }
 
-static Uast_type uast_gen_number(void) {
-    Uast_type number = {.name = uast_name_new("literal", "number", false)};
+static Uast_type uast_gen_number(const char* prefix) {
+    Uast_type number = {.name = uast_name_new(prefix, "number", false)};
 
     append_member(&number.members, "int64_t", "data");
 
     return number;
 }
 
-static Uast_type uast_gen_string(void) {
-    Uast_type string = {.name = uast_name_new("literal", "string", false)};
+static Uast_type uast_gen_string(const char* prefix) {
+    Uast_type string = {.name = uast_name_new(prefix, "string", false)};
 
     append_member(&string.members, "Str_view", "data");
     append_member(&string.members, "Str_view", "name");
@@ -198,42 +199,43 @@ static Uast_type uast_gen_string(void) {
     return string;
 }
 
-static Uast_type uast_gen_char(void) {
-    Uast_type lang_char = {.name = uast_name_new("literal", "char", false)};
+static Uast_type uast_gen_char(const char* prefix) {
+    Uast_type lang_char = {.name = uast_name_new(prefix, "char", false)};
 
     append_member(&lang_char.members, "char", "data");
 
     return lang_char;
 }
 
-static Uast_type uast_gen_void(void) {
-    Uast_type lang_void = {.name = uast_name_new("literal", "void", false)};
+static Uast_type uast_gen_void(const char* prefix) {
+    Uast_type lang_void = {.name = uast_name_new(prefix, "void", false)};
 
     return lang_void;
 }
 
-static Uast_type uast_gen_enum_lit(void) {
-    Uast_type enum_lit = {.name = uast_name_new("literal", "enum_lit", false)};
+static Uast_type uast_gen_enum_lit(const char* prefix) {
+    Uast_type enum_lit = {.name = uast_name_new(prefix, "enum_lit", false)};
 
     append_member(&enum_lit.members, "int64_t", "data");
 
     return enum_lit;
 }
 
-static Uast_type uast_gen_literal(void) {
-    Uast_type lit = {.name = uast_name_new("expr", "literal", false)};
+static Uast_type uast_gen_literal(const char* prefix) {
+    const char* base_name = "literal";
+    Uast_type lit = {.name = uast_name_new(prefix, base_name, false)};
 
-    vec_append(&gen_a, &lit.sub_types, uast_gen_number());
-    vec_append(&gen_a, &lit.sub_types, uast_gen_string());
-    vec_append(&gen_a, &lit.sub_types, uast_gen_void());
-    vec_append(&gen_a, &lit.sub_types, uast_gen_enum_lit());
-    vec_append(&gen_a, &lit.sub_types, uast_gen_char());
+    vec_append(&gen_a, &lit.sub_types, uast_gen_number(base_name));
+    vec_append(&gen_a, &lit.sub_types, uast_gen_string(base_name));
+    vec_append(&gen_a, &lit.sub_types, uast_gen_void(base_name));
+    vec_append(&gen_a, &lit.sub_types, uast_gen_enum_lit(base_name));
+    vec_append(&gen_a, &lit.sub_types, uast_gen_char(base_name));
 
     return lit;
 }
 
-static Uast_type uast_gen_function_call(void) {
-    Uast_type call = {.name = uast_name_new("expr", "function_call", false)};
+static Uast_type uast_gen_function_call(const char* prefix) {
+    Uast_type call = {.name = uast_name_new(prefix, "function_call", false)};
 
     append_member(&call.members, "Uast_expr_vec", "args");
     append_member(&call.members, "Str_view", "name");
@@ -241,8 +243,8 @@ static Uast_type uast_gen_function_call(void) {
     return call;
 }
 
-static Uast_type uast_gen_struct_literal(void) {
-    Uast_type lit = {.name = uast_name_new("expr", "struct_literal", false)};
+static Uast_type uast_gen_struct_literal(const char* prefix) {
+    Uast_type lit = {.name = uast_name_new(prefix, "struct_literal", false)};
 
     append_member(&lit.members, "Uast_vec", "members");
     append_member(&lit.members, "Str_view", "name");
@@ -250,47 +252,48 @@ static Uast_type uast_gen_struct_literal(void) {
     return lit;
 }
 
-static Uast_type uast_gen_tuple(void) {
-    Uast_type lit = {.name = uast_name_new("expr", "tuple", false)};
+static Uast_type uast_gen_tuple(const char* prefix) {
+    Uast_type lit = {.name = uast_name_new(prefix, "tuple", false)};
 
     append_member(&lit.members, "Uast_expr_vec", "members");
 
     return lit;
 }
 
-static Uast_type uast_gen_expr(void) {
-    Uast_type expr = {.name = uast_name_new("uast", "expr", false)};
+static Uast_type uast_gen_expr(const char* prefix) {
+    const char* base_name = "expr";
+    Uast_type expr = {.name = uast_name_new(prefix, base_name, false)};
 
-    vec_append(&gen_a, &expr.sub_types, uast_gen_operator());
-    vec_append(&gen_a, &expr.sub_types, uast_gen_symbol_untyped());
-    vec_append(&gen_a, &expr.sub_types, uast_gen_member_access_untyped());
-    vec_append(&gen_a, &expr.sub_types, uast_gen_index_untyped());
-    vec_append(&gen_a, &expr.sub_types, uast_gen_literal());
-    vec_append(&gen_a, &expr.sub_types, uast_gen_function_call());
-    vec_append(&gen_a, &expr.sub_types, uast_gen_struct_literal());
-    vec_append(&gen_a, &expr.sub_types, uast_gen_tuple());
+    vec_append(&gen_a, &expr.sub_types, uast_gen_operator(base_name));
+    vec_append(&gen_a, &expr.sub_types, uast_gen_symbol_untyped(base_name));
+    vec_append(&gen_a, &expr.sub_types, uast_gen_member_access_untyped(base_name));
+    vec_append(&gen_a, &expr.sub_types, uast_gen_index_untyped(base_name));
+    vec_append(&gen_a, &expr.sub_types, uast_gen_literal(base_name));
+    vec_append(&gen_a, &expr.sub_types, uast_gen_function_call(base_name));
+    vec_append(&gen_a, &expr.sub_types, uast_gen_struct_literal(base_name));
+    vec_append(&gen_a, &expr.sub_types, uast_gen_tuple(base_name));
 
     return expr;
 }
 
-static Uast_type uast_gen_struct_def(void) {
-    Uast_type def = {.name = uast_name_new("def", "struct_def", false)};
+static Uast_type uast_gen_struct_def(const char* prefix) {
+    Uast_type def = {.name = uast_name_new(prefix, "struct_def", false)};
 
     append_member(&def.members, "Ustruct_def_base", "base");
 
     return def;
 }
 
-static Uast_type uast_gen_raw_union_def(void) {
-    Uast_type def = {.name = uast_name_new("def", "raw_union_def", false)};
+static Uast_type uast_gen_raw_union_def(const char* prefix) {
+    Uast_type def = {.name = uast_name_new(prefix, "raw_union_def", false)};
 
     append_member(&def.members, "Ustruct_def_base", "base");
 
     return def;
 }
 
-static Uast_type uast_gen_function_decl(void) {
-    Uast_type def = {.name = uast_name_new("def", "function_decl", false)};
+static Uast_type uast_gen_function_decl(const char* prefix) {
+    Uast_type def = {.name = uast_name_new(prefix, "function_decl", false)};
 
     append_member(&def.members, "Uast_function_params*", "params");
     append_member(&def.members, "Uast_lang_type*", "return_type");
@@ -299,8 +302,8 @@ static Uast_type uast_gen_function_decl(void) {
     return def;
 }
 
-static Uast_type uast_gen_function_def(void) {
-    Uast_type def = {.name = uast_name_new("def", "function_def", false)};
+static Uast_type uast_gen_function_def(const char* prefix) {
+    Uast_type def = {.name = uast_name_new(prefix, "function_def", false)};
 
     append_member(&def.members, "Uast_function_decl*", "decl");
     append_member(&def.members, "Uast_block*", "body");
@@ -308,8 +311,8 @@ static Uast_type uast_gen_function_def(void) {
     return def;
 }
 
-static Uast_type uast_gen_variable_def(void) {
-    Uast_type def = {.name = uast_name_new("def", "variable_def", false)};
+static Uast_type uast_gen_variable_def(const char* prefix) {
+    Uast_type def = {.name = uast_name_new(prefix, "variable_def", false)};
 
     append_member(&def.members, "Lang_type", "lang_type");
     append_member(&def.members, "bool", "is_variadic");
@@ -318,24 +321,24 @@ static Uast_type uast_gen_variable_def(void) {
     return def;
 }
 
-static Uast_type uast_gen_enum_def(void) {
-    Uast_type def = {.name = uast_name_new("def", "enum_def", false)};
+static Uast_type uast_gen_enum_def(const char* prefix) {
+    Uast_type def = {.name = uast_name_new(prefix, "enum_def", false)};
 
     append_member(&def.members, "Ustruct_def_base", "base");
 
     return def;
 }
 
-static Uast_type uast_gen_primitive_def(void) {
-    Uast_type def = {.name = uast_name_new("def", "primitive_def", false)};
+static Uast_type uast_gen_primitive_def(const char* prefix) {
+    Uast_type def = {.name = uast_name_new(prefix, "primitive_def", false)};
 
     append_member(&def.members, "Lang_type", "lang_type");
 
     return def;
 }
 
-static Uast_type uast_gen_string_def(void) {
-    Uast_type def = {.name = uast_name_new("literal_def", "string_def", false)};
+static Uast_type uast_gen_string_def(const char* prefix) {
+    Uast_type def = {.name = uast_name_new(prefix, "string_def", false)};
 
     append_member(&def.members, "Str_view", "name");
     append_member(&def.members, "Str_view", "data");
@@ -343,8 +346,8 @@ static Uast_type uast_gen_string_def(void) {
     return def;
 }
 
-static Uast_type uast_gen_struct_lit_def(void) {
-    Uast_type def = {.name = uast_name_new("literal_def", "struct_lit_def", false)};
+static Uast_type uast_gen_struct_lit_def(const char* prefix) {
+    Uast_type def = {.name = uast_name_new(prefix, "struct_lit_def", false)};
 
     append_member(&def.members, "Uast_vec", "members");
     append_member(&def.members, "Str_view", "name");
@@ -352,72 +355,74 @@ static Uast_type uast_gen_struct_lit_def(void) {
     return def;
 }
 
-static Uast_type uast_gen_literal_def(void) {
-    Uast_type def = {.name = uast_name_new("def", "literal_def", false)};
+static Uast_type uast_gen_literal_def(const char* prefix) {
+    const char* base_name = "literal_def";
+    Uast_type def = {.name = uast_name_new(prefix, base_name, false)};
 
-    vec_append(&gen_a, &def.sub_types, uast_gen_string_def());
-    vec_append(&gen_a, &def.sub_types, uast_gen_struct_lit_def());
-
-    return def;
-}
-
-static Uast_type uast_gen_def(void) {
-    Uast_type def = {.name = uast_name_new("uast", "def", false)};
-
-    vec_append(&gen_a, &def.sub_types, uast_gen_function_def());
-    vec_append(&gen_a, &def.sub_types, uast_gen_variable_def());
-    vec_append(&gen_a, &def.sub_types, uast_gen_struct_def());
-    vec_append(&gen_a, &def.sub_types, uast_gen_raw_union_def());
-    vec_append(&gen_a, &def.sub_types, uast_gen_enum_def());
-    vec_append(&gen_a, &def.sub_types, uast_gen_primitive_def());
-    vec_append(&gen_a, &def.sub_types, uast_gen_function_decl());
-    vec_append(&gen_a, &def.sub_types, uast_gen_literal_def());
+    vec_append(&gen_a, &def.sub_types, uast_gen_string_def(base_name));
+    vec_append(&gen_a, &def.sub_types, uast_gen_struct_lit_def(base_name));
 
     return def;
 }
 
-static Uast_type uast_gen_function_params(void) {
-    Uast_type params = {.name = uast_name_new("uast", "function_params", false)};
+static Uast_type uast_gen_def(const char* prefix) {
+    const char* base_name = "def";
+    Uast_type def = {.name = uast_name_new(prefix, base_name, false)};
+
+    vec_append(&gen_a, &def.sub_types, uast_gen_function_def(base_name));
+    vec_append(&gen_a, &def.sub_types, uast_gen_variable_def(base_name));
+    vec_append(&gen_a, &def.sub_types, uast_gen_struct_def(base_name));
+    vec_append(&gen_a, &def.sub_types, uast_gen_raw_union_def(base_name));
+    vec_append(&gen_a, &def.sub_types, uast_gen_enum_def(base_name));
+    vec_append(&gen_a, &def.sub_types, uast_gen_primitive_def(base_name));
+    vec_append(&gen_a, &def.sub_types, uast_gen_function_decl(base_name));
+    vec_append(&gen_a, &def.sub_types, uast_gen_literal_def(base_name));
+
+    return def;
+}
+
+static Uast_type uast_gen_function_params(const char* prefix) {
+    Uast_type params = {.name = uast_name_new(prefix, "function_params", false)};
 
     append_member(&params.members, "Uast_variable_def_vec", "params");
 
     return params;
 }
 
-static Uast_type uast_gen_lang_type(void) {
-    Uast_type lang_type = {.name = uast_name_new("uast", "lang_type", false)};
+static Uast_type uast_gen_lang_type(const char* prefix) {
+    Uast_type lang_type = {.name = uast_name_new(prefix, "lang_type", false)};
 
     append_member(&lang_type.members, "Lang_type_vec", "lang_type");
 
     return lang_type;
 }
 
-static Uast_type uast_gen_for_lower_bound(void) {
-    Uast_type bound = {.name = uast_name_new("uast", "for_lower_bound", false)};
+static Uast_type uast_gen_for_lower_bound(const char* prefix) {
+    Uast_type bound = {.name = uast_name_new(prefix, "for_lower_bound", false)};
 
     append_member(&bound.members, "Uast_expr*", "child");
 
     return bound;
 }
 
-static Uast_type uast_gen_for_upper_bound(void) {
-    Uast_type bound = {.name = uast_name_new("uast", "for_upper_bound", false)};
+static Uast_type uast_gen_for_upper_bound(const char* prefix) {
+    Uast_type bound = {.name = uast_name_new(prefix, "for_upper_bound", false)};
 
     append_member(&bound.members, "Uast_expr*", "child");
 
     return bound;
 }
 
-static Uast_type uast_gen_condition(void) {
-    Uast_type bound = {.name = uast_name_new("uast", "condition", false)};
+static Uast_type uast_gen_condition(const char* prefix) {
+    Uast_type bound = {.name = uast_name_new(prefix, "condition", false)};
 
     append_member(&bound.members, "Uast_operator*", "child");
 
     return bound;
 }
 
-static Uast_type uast_gen_for_range(void) {
-    Uast_type range = {.name = uast_name_new("uast", "for_range", false)};
+static Uast_type uast_gen_for_range(const char* prefix) {
+    Uast_type range = {.name = uast_name_new(prefix, "for_range", false)};
 
     append_member(&range.members, "Uast_variable_def*", "var_def");
     append_member(&range.members, "Uast_for_lower_bound*", "lower_bound");
@@ -427,8 +432,8 @@ static Uast_type uast_gen_for_range(void) {
     return range;
 }
 
-static Uast_type uast_gen_for_with_cond(void) {
-    Uast_type for_cond = {.name = uast_name_new("uast", "for_with_cond", false)};
+static Uast_type uast_gen_for_with_cond(const char* prefix) {
+    Uast_type for_cond = {.name = uast_name_new(prefix, "for_with_cond", false)};
 
     append_member(&for_cond.members, "Uast_condition*", "condition");
     append_member(&for_cond.members, "Uast_block*", "body");
@@ -436,20 +441,20 @@ static Uast_type uast_gen_for_with_cond(void) {
     return for_cond;
 }
 
-static Uast_type uast_gen_break(void) {
-    Uast_type lang_break = {.name = uast_name_new("uast", "break", false)};
+static Uast_type uast_gen_break(const char* prefix) {
+    Uast_type lang_break = {.name = uast_name_new(prefix, "break", false)};
 
     return lang_break;
 }
 
-static Uast_type uast_gen_continue(void) {
-    Uast_type lang_cont = {.name = uast_name_new("uast", "continue", false)};
+static Uast_type uast_gen_continue(const char* prefix) {
+    Uast_type lang_cont = {.name = uast_name_new(prefix, "continue", false)};
 
     return lang_cont;
 }
 
-static Uast_type uast_gen_assignment(void) {
-    Uast_type assign = {.name = uast_name_new("uast", "assignment", false)};
+static Uast_type uast_gen_assignment(const char* prefix) {
+    Uast_type assign = {.name = uast_name_new(prefix, "assignment", false)};
 
     append_member(&assign.members, "Uast*", "lhs");
     append_member(&assign.members, "Uast_expr*", "rhs");
@@ -457,8 +462,8 @@ static Uast_type uast_gen_assignment(void) {
     return assign;
 }
 
-static Uast_type uast_gen_if(void) {
-    Uast_type lang_if = {.name = uast_name_new("uast", "if", false)};
+static Uast_type uast_gen_if(const char* prefix) {
+    Uast_type lang_if = {.name = uast_name_new(prefix, "if", false)};
 
     append_member(&lang_if.members, "Uast_condition*", "condition");
     append_member(&lang_if.members, "Uast_block*", "body");
@@ -466,8 +471,8 @@ static Uast_type uast_gen_if(void) {
     return lang_if;
 }
 
-static Uast_type uast_gen_return(void) {
-    Uast_type rtn = {.name = uast_name_new("uast", "return", false)};
+static Uast_type uast_gen_return(const char* prefix) {
+    Uast_type rtn = {.name = uast_name_new(prefix, "return", false)};
 
     append_member(&rtn.members, "Uast_expr*", "child");
     append_member(&rtn.members, "bool", "is_auto_inserted"); // TODO: use : 1 size?
@@ -475,33 +480,43 @@ static Uast_type uast_gen_return(void) {
     return rtn;
 }
 
-static Uast_type uast_gen_if_else_chain(void) {
-    Uast_type chain = {.name = uast_name_new("uast", "if_else_chain", false)};
+static Uast_type uast_gen_if_else_chain(const char* prefix) {
+    Uast_type chain = {.name = uast_name_new(prefix, "if_else_chain", false)};
 
     append_member(&chain.members, "Uast_if_vec", "uasts");
 
     return chain;
 }
 
+static Uast_type uast_gen_stmt(const char* prefix) {
+    const char* base_name = "stmt";
+    Uast_type stmt = {.name = uast_name_new(prefix, base_name, false)};
+
+    vec_append(&gen_a, &stmt.sub_types, uast_gen_block(base_name));
+    vec_append(&gen_a, &stmt.sub_types, uast_gen_expr(base_name));
+    vec_append(&gen_a, &stmt.sub_types, uast_gen_def(base_name));
+    vec_append(&gen_a, &stmt.sub_types, uast_gen_for_range(base_name));
+    vec_append(&gen_a, &stmt.sub_types, uast_gen_for_with_cond(base_name));
+    vec_append(&gen_a, &stmt.sub_types, uast_gen_break(base_name));
+    vec_append(&gen_a, &stmt.sub_types, uast_gen_continue(base_name));
+    vec_append(&gen_a, &stmt.sub_types, uast_gen_assignment(base_name));
+    vec_append(&gen_a, &stmt.sub_types, uast_gen_return(base_name));
+    vec_append(&gen_a, &stmt.sub_types, uast_gen_if_else_chain(base_name));
+
+    return stmt;
+}
+
 static Uast_type uast_gen_uast(void) {
+    const char* base_name = "uast";
     Uast_type uast = {.name = uast_name_new("uast", "", true)};
 
-    vec_append(&gen_a, &uast.sub_types, uast_gen_block());
-    vec_append(&gen_a, &uast.sub_types, uast_gen_expr());
-    vec_append(&gen_a, &uast.sub_types, uast_gen_function_params());
-    vec_append(&gen_a, &uast.sub_types, uast_gen_lang_type());
-    vec_append(&gen_a, &uast.sub_types, uast_gen_for_lower_bound());
-    vec_append(&gen_a, &uast.sub_types, uast_gen_for_upper_bound());
-    vec_append(&gen_a, &uast.sub_types, uast_gen_def());
-    vec_append(&gen_a, &uast.sub_types, uast_gen_condition());
-    vec_append(&gen_a, &uast.sub_types, uast_gen_for_range());
-    vec_append(&gen_a, &uast.sub_types, uast_gen_for_with_cond());
-    vec_append(&gen_a, &uast.sub_types, uast_gen_break());
-    vec_append(&gen_a, &uast.sub_types, uast_gen_continue());
-    vec_append(&gen_a, &uast.sub_types, uast_gen_assignment());
-    vec_append(&gen_a, &uast.sub_types, uast_gen_if());
-    vec_append(&gen_a, &uast.sub_types, uast_gen_return());
-    vec_append(&gen_a, &uast.sub_types, uast_gen_if_else_chain());
+    vec_append(&gen_a, &uast.sub_types, uast_gen_stmt(base_name));
+    vec_append(&gen_a, &uast.sub_types, uast_gen_function_params(base_name));
+    vec_append(&gen_a, &uast.sub_types, uast_gen_lang_type(base_name));
+    vec_append(&gen_a, &uast.sub_types, uast_gen_for_lower_bound(base_name));
+    vec_append(&gen_a, &uast.sub_types, uast_gen_for_upper_bound(base_name));
+    vec_append(&gen_a, &uast.sub_types, uast_gen_condition(base_name));
+    vec_append(&gen_a, &uast.sub_types, uast_gen_if(base_name));
 
     return uast;
 }

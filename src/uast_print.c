@@ -561,8 +561,15 @@ Str_view uast_expr_print_internal(const Uast_expr* expr, int indent) {
     unreachable("");
 }
 
+Str_view uast_print_stmt_internal(const Uast_stmt* stmt, int indent) {
+    switch (stmt->type) {
+    }
+}
+
 Str_view uast_print_internal(const Uast* uast, int indent) {
     switch (uast->type) {
+        case UAST_STMT:
+            return uast_stmt_print_internal(uast_unwrap_stmt_const(uast), indent);
         case UAST_BLOCK:
             return uast_block_print_internal(uast_unwrap_block_const(uast), indent);
         case UAST_EXPR:
