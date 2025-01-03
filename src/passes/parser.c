@@ -83,7 +83,7 @@ static void msg_expected_expression_internal(Str_view file_text, const char* fil
 }
 
 #define msg_expected_expression(file_text, tokens, msg_suffix) \
-    msg_expected_expression_internal(file_text, __FILE__, __LINE__, tokens, msg_suffix) \
+    msg_expected_expression_internal(file_text, __FILE__, __LINE__, tokens, msg_suffix)
 
 static void msg_parser_expected_internal(Str_view file_text, const char* file, int line, Token got, const char* msg_suffix, int count_expected, ...) {
     va_list args;
@@ -1655,6 +1655,7 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(
                 break;
             case PARSE_EXPR_NONE:
                 msg_expected_expression(env->file_text, *tokens, "after - sign");
+                return PARSE_EXPR_ERROR;
             case PARSE_EXPR_ERROR:
                 return PARSE_EXPR_ERROR;
             default:

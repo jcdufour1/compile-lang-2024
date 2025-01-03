@@ -39,7 +39,7 @@ const Uast_function_decl* get_parent_function_decl_const(const Env* env) {
     Uast_def* def = NULL;
     try(env->name_parent_function.count > 0 && "no parent function here");
     try(usymbol_lookup(&def, env, env->name_parent_function));
-    if (def->type != TAST_FUNCTION_DECL) {
+    if (def->type != UAST_FUNCTION_DECL) {
         unreachable(TAST_FMT, uast_def_print(def));
     }
     return uast_unwrap_function_decl(def);
@@ -535,9 +535,9 @@ bool try_set_unary_types(Env* env, Tast_expr** new_tast, Uast_unary* unary) {
 
 // returns false if unsuccessful
 bool try_set_operator_types(Env* env, Tast_expr** new_tast, Uast_operator* operator) {
-    if (operator->type == TAST_UNARY) {
+    if (operator->type == UAST_UNARY) {
         return try_set_unary_types(env, new_tast, uast_unwrap_unary(operator));
-    } else if (operator->type == TAST_BINARY) {
+    } else if (operator->type == UAST_BINARY) {
         return try_set_binary_types(env, new_tast, uast_unwrap_binary(operator));
     } else {
         unreachable("");

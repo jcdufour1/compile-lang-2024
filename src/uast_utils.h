@@ -74,6 +74,7 @@ static inline Lang_type uast_get_lang_type_stmt(const Uast_stmt* stmt) {
         case UAST_IF_ELSE_CHAIN:
             unreachable("");
     }
+    unreachable("");
 }
 
 static inline Lang_type uast_get_lang_type(const Uast* uast) {

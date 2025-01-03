@@ -4,7 +4,7 @@
 
 CC_COMPILER ?= clang
 
-C_FLAGS_DEBUG=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types -Werror=return-type \
+C_FLAGS_DEBUG=-Wall -Wextra -Wenum-compare -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types \
 			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ \
 			  -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			  -fsanitize=address -fno-omit-frame-pointer 

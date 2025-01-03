@@ -886,6 +886,7 @@ static void uast_gen_get_pos_internal(Uast_type type, bool implementation) {
             string_extend_cstr(&gen_a, &function, "    }\n");
         }
 
+        string_extend_cstr(&gen_a, &function, "unreachable(\"\");\n");
         string_extend_cstr(&gen_a, &function, "}\n");
 
     } else {
