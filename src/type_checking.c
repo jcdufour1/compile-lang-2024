@@ -1224,6 +1224,8 @@ bool try_set_raw_union_def_types(Env* env, Tast_raw_union_def** new_tast, Uast_r
 }
 
 bool try_set_struct_def_types(Env* env, Tast_struct_def** new_tast, Uast_struct_def* uast) {
+    Uast_def* dummy = NULL;
+    assert(usymbol_lookup(&dummy, env, uast->base.name));
     Struct_def_base new_base = {0};
     bool success = try_set_struct_base_types(env, &new_base, &uast->base);
     *new_tast = tast_struct_def_new(uast->pos, new_base);
