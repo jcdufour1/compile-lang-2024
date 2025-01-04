@@ -382,6 +382,7 @@ static Str_view load_ptr_symbol_typed(
     log(LOG_DEBUG, "entering thing\n");
 
     Tast_def* var_def_ = NULL;
+    log(LOG_DEBUG, LLVM_FMT, tast_symbol_typed_print(old_sym));
     try(symbol_lookup(&var_def_, env, tast_get_symbol_typed_name(old_sym)));
     Llvm_variable_def* var_def = tast_clone_variable_def(tast_unwrap_variable_def(var_def_));
     Llvm* alloca = NULL;

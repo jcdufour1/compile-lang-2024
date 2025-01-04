@@ -155,7 +155,8 @@ static Tast_return* rm_tuple_return(Env* env, Tast_return* rtn) {
         Uast_variable_def* new_param_ = uast_variable_def_new(rtn->pos, curr_def->lang_type, false, curr_def->name);
         try(usym_tbl_add(&vec_at(&env->ancesters, 0)->usymbol_table, uast_wrap_variable_def(new_param_)));
         Tast_variable_def* new_param = NULL;
-        try(try_set_variable_def_types(env, &new_param, new_param_, true));
+        try(try_set_variable_def_types(env, &new_param, new_param_, false));
+        try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_wrap_variable_def(new_param)));
         vec_append(&a_main, &new_params, new_param);
         log(LOG_DEBUG, STR_VIEW_FMT, tast_variable_def_print(new_param));
 
@@ -173,6 +174,7 @@ static Tast_return* rm_tuple_return(Env* env, Tast_return* rtn) {
         new_fun_name
     );
     Tast_function_def* new_fun_def = rm_tuple_function_def_new(env, new_fun_decl);
+    try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_wrap_function_def(new_fun_def)));
     vec_append(&a_main, &env->extra_functions, new_fun_def);
 
     Tast_function_call* fun_call = tast_function_call_new(rtn->pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
@@ -351,5 +353,14 @@ static Tast_block* rm_tuple_block(Env* env, Tast_block* block) {
 }
 
 Tast_block* remove_tuples(Env* env, Tast_block* root) {
-    return rm_tuple_block(env, root);
+    Tast_block* new_block = rm_tuple_block(env, root);
+    for (size_t idx = 0; idx < env->extra_structs.info.count; idx++) {
+        assert(vec_at(&env->extra_structs, idx));
+        vec_append(&a_main, &new_block->children, tast_wrap_def(tast_wrap_struct_def(vec_at(&env->extra_structs, idx))));
+    }
+    for (size_t idx = 0; idx < env->extra_functions.info.count; idx++) {
+        assert(vec_at(&env->extra_functions, idx));
+        vec_append(&a_main, &new_block->children, tast_wrap_def(tast_wrap_function_def(vec_at(&env->extra_functions, idx))));
+    }
+    return new_block;
 }

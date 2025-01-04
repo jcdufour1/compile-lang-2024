@@ -804,6 +804,15 @@ static void emit_return_expr(const Env* env, String* output, const Llvm_expr* ch
             }
             break;
         }
+        case LLVM_FUNCTION_CALL: {
+            const Llvm_function_call* function_call = llvm_unwrap_function_call_const(child);
+            string_extend_cstr(&a_main, output, "    ret ");
+            extend_type_call_str(env, output, function_call->lang_type);
+            string_extend_cstr(&a_main, output, " %");
+            string_extend_size_t(&a_main, output, llvm_get_llvm_id_expr(child));
+            string_extend_cstr(&a_main, output, "\n");
+            break;
+        }
         default:
             unreachable(TAST_FMT"\n", llvm_expr_print(child));
     }
