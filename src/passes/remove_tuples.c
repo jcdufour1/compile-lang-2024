@@ -19,7 +19,7 @@ static Tast_for_with_cond* rm_tuple_for_with_cond(Env* env, Tast_for_with_cond* 
 
 static Tast_stmt* rm_tuple_assignment(Env* env, Tast_assignment* assign);
 
-static Tast_block* rm_tuple_return(Env* env, Tast_return* rtn);
+static Tast_return* rm_tuple_return(Env* env, Tast_return* rtn);
 
 static Tast_if* rm_tuple_if(Env* env, Tast_if* assign);
 
@@ -116,20 +116,14 @@ static Tast_function_def* rm_tuple_function_def_new(Env* env, Tast_function_decl
     Tast_return* new_rtn = tast_return_new(decl->pos, rtn_child, true);
     vec_append(&a_main, &body->children, tast_wrap_return(new_rtn));
     
-    log(LOG_DEBUG, TAST_FMT, tast_function_def_print(new_def));
-    todo();
-
     vec_rem_last(&env->ancesters);
 
-
+    return new_def;
 }
 
-static Tast_block* rm_tuple_return(Env* env, Tast_return* rtn) {
-    Tast_stmt_vec new_children = {0};
-
+static Tast_return* rm_tuple_return(Env* env, Tast_return* rtn) {
     if (rtn->child->type != TAST_TUPLE) {
-        vec_append(&a_main, &new_children, tast_wrap_return(rtn));
-        return tast_block_new(rtn->pos, false, new_children, (Symbol_collection) {0}, rtn->pos);
+        return rtn;
     }
 
     Tast_def* def = NULL;
@@ -145,6 +139,8 @@ static Tast_block* rm_tuple_return(Env* env, Tast_return* rtn) {
     //    false,
     //    util_literal_name_new_prefix("tuple_to_return")
     //);
+
+    Tast_expr_vec new_args = {0};
 
     Tast_def* struct_def_ = NULL;
     try(symbol_lookup(&struct_def_, env, vec_at(&fun_decl->return_type->lang_type, 0).str));
@@ -162,6 +158,8 @@ static Tast_block* rm_tuple_return(Env* env, Tast_return* rtn) {
         try(try_set_variable_def_types(env, &new_param, new_param_, true));
         vec_append(&a_main, &new_params, new_param);
         log(LOG_DEBUG, STR_VIEW_FMT, tast_variable_def_print(new_param));
+
+        vec_append(&a_main, &new_args, vec_at(&old_tuple->members, idx));
     }
 
     Tast_function_params* new_fun_params = tast_function_params_new(rtn->pos, new_params);
@@ -175,15 +173,11 @@ static Tast_block* rm_tuple_return(Env* env, Tast_return* rtn) {
         new_fun_name
     );
     Tast_function_def* new_fun_def = rm_tuple_function_def_new(env, new_fun_decl);
-    (void) new_fun_def;
-    todo();
+    vec_append(&a_main, &env->extra_functions, new_fun_def);
 
-    vec_append(&a_main, &new_children, tast_wrap_return(tast_return_new(
-        rtn->pos,
-        tast_wrap_literal(tast_wrap_void(tast_void_new(rtn->pos))),
-        true
-    )));
-    return tast_block_new(rtn->pos, false, new_children, (Symbol_collection) {0}, rtn->pos);
+    Tast_function_call* fun_call = tast_function_call_new(rtn->pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
+    rtn->child = tast_wrap_function_call(fun_call);
+    return rtn;
 }
 
 static Tast_if* rm_tuple_if(Env* env, Tast_if* lang_if) {
@@ -307,7 +301,7 @@ static Tast_stmt* rm_tuple_stmt(Env* env, Tast_stmt* stmt) {
         case TAST_IF_ELSE_CHAIN:
             return tast_wrap_if_else_chain(rm_tuple_if_else_chain(env, tast_unwrap_if_else_chain(stmt)));
         case TAST_RETURN:
-            return tast_wrap_block(rm_tuple_return(env, tast_unwrap_return(stmt)));
+            return tast_wrap_return(rm_tuple_return(env, tast_unwrap_return(stmt)));
         case TAST_BREAK:
             return stmt;
         case TAST_CONTINUE:

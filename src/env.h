@@ -29,6 +29,7 @@ typedef struct Env_ {
 
     Lang_type_vec rm_tuple_parent_fn_lang_type;
     Tast_struct_def_vec extra_structs;
+    Tast_function_def_vec extra_functions;
 
     Str_view label_if_break;
     Str_view label_if_continue;
