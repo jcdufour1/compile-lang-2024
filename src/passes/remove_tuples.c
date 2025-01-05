@@ -46,19 +46,47 @@ static Tast_stmt* rm_tuple_assignment(Env* env, Tast_assignment* assign) {
 
     Tast_tuple* dest = tast_unwrap_tuple(tast_unwrap_expr(assign->lhs));
     Tast_function_call* src = tast_unwrap_function_call(assign->rhs);
+    (void) dest;
+    (void) src;
 
-    Tast_expr_vec new_args = {0};
+    Uast_def* def_ = NULL;
+    try(usymbol_lookup(&def_, env, src->name));
+    Uast_function_decl* decl = uast_unwrap_function_decl(def_);
+    assert(decl->return_type->lang_type.info.count > 1);
+    log(LOG_DEBUG, TAST_FMT, uast_function_decl_print(decl));
+    Tast_lang_type* rtn_type = NULL;
+    try(try_set_lang_type_types(env, &rtn_type, decl->return_type));
+    log(LOG_DEBUG, TAST_FMT, tast_lang_type_print(rtn_type));
+    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(rm_tuple_struct_get_name_from_return_type(rtn_type)));
 
-    for (size_t idx = 0; idx < dest->members.info.count; idx++) {
-        Tast_expr* curr_dest = vec_at(&dest->members, idx);
-        Tast_unary* new_dest = tast_unary_new(tast_get_pos_expr(curr_dest), curr_dest, TOKEN_REFER, (Lang_type) {0});
-        vec_append(&a_main, &new_args, tast_wrap_operator(tast_wrap_unary(new_dest)));
-    }
+    //String buf = {0};
+    //string_extend_cstr_indent(&print_arena, &buf, "rm_tuple_struct_table\n", 0);
+    //alloca_extend_table_internal(&buf, block->symbol_collection.rm_tuple_struct_table, 0);
+    //log(LOG_DEBUG, STRING_FMT"\n", string_print(buf));
 
-    vec_extend(&a_main, &new_args, &src->args);
-    src->args = new_args;
-    src->lang_type = lang_type_vec_from_lang_type(lang_type_new_from_cstr("void", 0));
+    Tast_struct_def* struct_def = NULL;
+    try(rm_tuple_struct_lookup(&struct_def, env, rm_tuple_struct_get_name_from_return_type(rtn_type)));
 
+    Tast_variable_def_vec new_members = {0};
+    (void) new_members;
+    //for (size_t idx = 0; idx < decl->return_type->lang_type.info.count; idx++) {
+    //    vec_append(&a_main, &new_members, vec_at(&decl->return_type->lang_type, idx));
+    //}
+
+    
+    //Tast_expr_vec new_args = {0};
+
+    //for (size_t idx = 0; idx < dest->members.info.count; idx++) {
+    //    Tast_expr* curr_dest = vec_at(&dest->members, idx);
+    //    Tast_unary* new_dest = tast_unary_new(tast_get_pos_expr(curr_dest), curr_dest, TOKEN_REFER, (Lang_type) {0});
+    //    vec_append(&a_main, &new_args, tast_wrap_operator(tast_wrap_unary(new_dest)));
+    //}
+
+    //vec_extend(&a_main, &new_args, &src->args);
+    //src->args = new_args;
+    //src->lang_type = lang_type_vec_from_lang_type(lang_type_new_from_cstr("void", 0));
+
+    todo();
     return tast_wrap_expr(tast_wrap_function_call(src));
 }
 
@@ -162,6 +190,10 @@ static Tast_return* rm_tuple_return(Env* env, Tast_return* rtn) {
 
         vec_append(&a_main, &new_args, vec_at(&old_tuple->members, idx));
     }
+    try(rm_tuple_stru_tbl_add(&vec_at(&env->ancesters, 0)->rm_tuple_struct_table, struct_def));
+    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(rm_tuple_struct_get_name(struct_def)));
+    //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(rm_tuple_struct_get_name_from_return_type(struct_def)));
+    try(rm_tuple_struct_lookup(&struct_def, env, rm_tuple_struct_get_name(struct_def)));
 
     Tast_function_params* new_fun_params = tast_function_params_new(rtn->pos, new_params);
     Tast_function_decl* new_fun_decl = tast_function_decl_new(
