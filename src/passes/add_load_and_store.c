@@ -212,8 +212,8 @@ static Llvm_function_params* do_function_def_alloca(
         unreachable(TAST_FMT"\n", lang_type_print(vec_at(&rtn_type->lang_type, 0)));
     }
 
+    Lang_type rtn_lang_type = vec_at(&rtn_type->lang_type, 0);
     if (rtn_is_struct) {
-        Lang_type rtn_lang_type = vec_at(&rtn_type->lang_type, 0);
         rtn_lang_type.pointer_depth++;
         Tast_variable_def* new_def = tast_variable_def_new(
             rtn_type->pos,
@@ -226,7 +226,7 @@ static Llvm_function_params* do_function_def_alloca(
         *new_rtn_type = llvm_lang_type_new(param->pos, lang_type_new_from_cstr("void", 0));
         env->struct_rtn_name_parent_function = vec_at(&new_params->params, 0)->name_self;
     } else {
-        todo();
+        *new_rtn_type = llvm_lang_type_new(rtn_type->pos, rtn_lang_type);
     }
 
     for (size_t idx = 0; idx < old_params->params.info.count; idx++) {
@@ -255,6 +255,12 @@ static Str_view load_operator(
     Env* env,
     Llvm_block* new_block,
     Tast_operator* old_oper
+);
+
+static Str_view load_variable_def(
+    Env* env,
+    Llvm_block* new_block,
+    Tast_variable_def* old_var_def
 );
 
 static void add_label(Env* env, Llvm_block* block, Str_view label_name, Pos pos, bool defer_add_sym) {
@@ -315,9 +321,56 @@ static Str_view load_function_call(
         todo();
     }
 
+    Tast_def* fun_def_ = NULL;
+    try(symbol_lookup(&fun_def_, env, env->name_parent_function));
+    log(LOG_DEBUG, LLVM_FMT, tast_def_print(fun_def_));
+
+    Tast_function_decl* fun_decl = NULL;
+    switch (fun_def_->type) {
+        case TAST_FUNCTION_DEF:
+            fun_decl = tast_unwrap_function_def(fun_def_)->decl;
+            break;
+        case TAST_FUNCTION_DECL:
+            fun_decl = tast_unwrap_function_decl(fun_def_);
+            break;
+        default:
+            unreachable("");
+    }
+
+    bool rtn_is_struct = false;
+
+    assert(fun_decl->return_type->lang_type.info.count == 1);
+    Lang_type rtn_type = vec_at(&fun_decl->return_type->lang_type, 0);
+    if (lang_type_is_struct(env, rtn_type)) {
+        rtn_is_struct = true;
+    } else if (lang_type_is_enum(env, rtn_type)) {
+        rtn_is_struct = false;
+    } else if (lang_type_is_primitive(env, rtn_type)) {
+        rtn_is_struct = false;
+    } else if (lang_type_is_raw_union(env, rtn_type)) {
+        rtn_is_struct = true;
+    } else {
+        unreachable(TAST_FMT"\n", lang_type_print(rtn_type));
+    }
+
+    Strv_vec new_args = {0};
+
+    Str_view def_name = {0};
+    if (rtn_is_struct) {
+        def_name = util_literal_name_new_prefix("result_fun_call");
+        Uast_variable_def* def_ = uast_variable_def_new(old_fun_call->pos, rtn_type, false, def_name);
+        log(LOG_DEBUG, LANG_TYPE_FMT, lang_type_print(rtn_type));
+        try(usym_tbl_add(&vec_at(&env->ancesters, 0)->usymbol_table, uast_wrap_variable_def(def_)));
+        Tast_variable_def* def = tast_variable_def_new(old_fun_call->pos, rtn_type, false, def_name);
+        try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_wrap_variable_def(def)));
+        
+        vec_append(&a_main, &new_args, def_name);
+        load_variable_def(env, new_block, def);
+    }
+
     Llvm_function_call* new_fun_call = llvm_function_call_new(
         old_fun_call->pos,
-        (Strv_vec) {0},
+        new_args,
         util_literal_name_new(),
         old_fun_call->name,
         0,
@@ -331,7 +384,19 @@ static Str_view load_function_call(
     }
 
     vec_append(&a_main, &new_block->children, llvm_wrap_expr(llvm_wrap_function_call(new_fun_call)));
-    return new_fun_call->name_self;
+
+    if (rtn_is_struct) {
+        assert(def_name.count > 0);
+
+        Uast_symbol_untyped* new_sym_ = uast_symbol_untyped_new(old_fun_call->pos, def_name);
+        Tast_expr* new_sym = NULL;
+        try(try_set_symbol_type(env, &new_sym, new_sym_));
+
+        Str_view result = load_expr(env, new_block, new_sym);
+        return result;
+    } else {
+        return new_fun_call->name_self;
+    }
 }
 
 static Llvm_literal* tast_literal_clone(Tast_literal* old_lit) {
@@ -859,12 +924,12 @@ static Str_view load_return(
         unreachable(TAST_FMT"\n", lang_type_print(rtn_type));
     }
 
-    Llvm* dest_ = NULL;
-    try(alloca_lookup(&dest_, env, env->struct_rtn_name_parent_function));
-    log(LOG_DEBUG, LLVM_FMT, llvm_print(dest_));
-    Str_view dest = env->struct_rtn_name_parent_function;
-
     if (rtn_is_struct) {
+        Llvm* dest_ = NULL;
+        try(alloca_lookup(&dest_, env, env->struct_rtn_name_parent_function));
+        log(LOG_DEBUG, LLVM_FMT, llvm_print(dest_));
+        Str_view dest = env->struct_rtn_name_parent_function;
+
         log(LOG_DEBUG, LLVM_FMT, tast_expr_print(old_return->child));
         Str_view src = load_expr(env, new_block, old_return->child);
 
