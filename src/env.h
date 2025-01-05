@@ -31,6 +31,8 @@ typedef struct Env_ {
     Tast_struct_def_vec extra_structs;
     Tast_function_def_vec extra_functions;
 
+    Str_view struct_rtn_name_parent_function;
+
     Str_view label_if_break;
     Str_view label_if_continue;
 } Env;

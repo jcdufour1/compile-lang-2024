@@ -224,7 +224,11 @@ static Llvm_function_params* do_function_def_alloca(
         Llvm_variable_def* param = tast_clone_variable_def(new_def);
         do_function_def_alloca_param(env, new_params, new_block, param);
         *new_rtn_type = llvm_lang_type_new(param->pos, lang_type_new_from_cstr("void", 0));
+        env->struct_rtn_name_parent_function = vec_at(&new_params->params, 0)->name_self;
+    } else {
+        todo();
     }
+
     for (size_t idx = 0; idx < old_params->params.info.count; idx++) {
         Llvm_variable_def* param = tast_clone_variable_def(vec_at(&old_params->params, idx));
         do_function_def_alloca_param(env, new_params, new_block, param);
@@ -759,6 +763,8 @@ static Str_view load_function_def(
     Llvm_block* new_block,
     Tast_function_def* old_fun_def
 ) {
+    Str_view old_fun_name = env->name_parent_function;
+    env->name_parent_function = old_fun_def->decl->name;
     Pos pos = old_fun_def->pos;
 
     Llvm_function_decl* new_decl = llvm_function_decl_new(
@@ -797,6 +803,7 @@ static Str_view load_function_def(
     vec_rem_last(&env->ancesters);
 
     vec_append(&a_main, &new_block->children, llvm_wrap_def(llvm_wrap_function_def(new_fun_def)));
+    env->name_parent_function = old_fun_name;
     return (Str_view) {0};
 }
 
@@ -820,15 +827,74 @@ static Str_view load_return(
 ) {
     Pos pos = old_return->pos;
 
-    Str_view result = load_expr(env, new_block, old_return->child);
+    Tast_def* fun_def_ = NULL;
+    try(symbol_lookup(&fun_def_, env, env->name_parent_function));
+    log(LOG_DEBUG, LLVM_FMT, tast_def_print(fun_def_));
 
-    Llvm_return* new_return = llvm_return_new(
-        pos,
-        result,
-        old_return->is_auto_inserted
-    );
+    Tast_function_decl* fun_decl = NULL;
+    switch (fun_def_->type) {
+        case TAST_FUNCTION_DEF:
+            fun_decl = tast_unwrap_function_def(fun_def_)->decl;
+            break;
+        case TAST_FUNCTION_DECL:
+            fun_decl = tast_unwrap_function_decl(fun_def_);
+            break;
+        default:
+            unreachable("");
+    }
 
-    vec_append(&a_main, &new_block->children, llvm_wrap_return(new_return));
+    bool rtn_is_struct = false;
+
+    assert(fun_decl->return_type->lang_type.info.count == 1);
+    Lang_type rtn_type = vec_at(&fun_decl->return_type->lang_type, 0);
+    if (lang_type_is_struct(env, rtn_type)) {
+        rtn_is_struct = true;
+    } else if (lang_type_is_enum(env, rtn_type)) {
+        rtn_is_struct = false;
+    } else if (lang_type_is_primitive(env, rtn_type)) {
+        rtn_is_struct = false;
+    } else if (lang_type_is_raw_union(env, rtn_type)) {
+        rtn_is_struct = true;
+    } else {
+        unreachable(TAST_FMT"\n", lang_type_print(rtn_type));
+    }
+
+    Llvm* dest_ = NULL;
+    try(alloca_lookup(&dest_, env, env->struct_rtn_name_parent_function));
+    log(LOG_DEBUG, LLVM_FMT, llvm_print(dest_));
+    Str_view dest = env->struct_rtn_name_parent_function;
+
+    if (rtn_is_struct) {
+        log(LOG_DEBUG, LLVM_FMT, tast_expr_print(old_return->child));
+        Str_view src = load_expr(env, new_block, old_return->child);
+
+        Llvm_store_another_llvm* new_store = llvm_store_another_llvm_new(
+            pos,
+            src,
+            dest,
+            0,
+            rtn_type,
+            util_literal_name_new()
+        );
+        vec_append(&a_main, &new_block->children, llvm_wrap_store_another_llvm(new_store));
+        
+        Tast_void* new_void = tast_void_new(old_return->pos);
+        Llvm_return* new_return = llvm_return_new(
+            pos,
+            load_literal(env, new_block, tast_wrap_void(new_void)),
+            old_return->is_auto_inserted
+        );
+        vec_append(&a_main, &new_block->children, llvm_wrap_return(new_return));
+    } else {
+        Str_view result = load_expr(env, new_block, old_return->child);
+        Llvm_return* new_return = llvm_return_new(
+            pos,
+            result,
+            old_return->is_auto_inserted
+        );
+
+        vec_append(&a_main, &new_block->children, llvm_wrap_return(new_return));
+    }
 
     return (Str_view) {0};
 }
