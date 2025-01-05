@@ -162,35 +162,72 @@ static Llvm_raw_union_def* uast_clone_raw_union_def(const Tast_raw_union_def* ol
     );
 }
 
-static Llvm_function_params* do_function_def_alloca(Env* env, Llvm_block* new_block, const Tast_function_params* old_params) {
+static void do_function_def_alloca_param(Env* env, Llvm_function_params* new_params, Llvm_block* new_block, Llvm_variable_def* param) {
+    if (lang_type_is_struct(env, param->lang_type)) {
+        param->name_self = param->name_corr_param;
+        alloca_add(env, llvm_wrap_def(llvm_wrap_variable_def(param)));
+    } else if (lang_type_is_enum(env, param->lang_type)) {
+        vec_insert(&a_main, &new_block->children, 0, llvm_wrap_alloca(
+            add_load_and_store_alloca_new(env, param)
+        ));
+    } else if (lang_type_is_raw_union(env, param->lang_type)) {
+        param->name_self = param->name_corr_param;
+        alloca_add(env, llvm_wrap_def(llvm_wrap_variable_def(param)));
+    } else if (lang_type_is_primitive(env, param->lang_type)) {
+        vec_insert(&a_main, &new_block->children, 0, llvm_wrap_alloca(
+            add_load_and_store_alloca_new(env, param)
+        ));
+    } else {
+        todo();
+    }
+
+    vec_append(&a_main, &new_params->params, param);
+}
+
+static Llvm_function_params* do_function_def_alloca(
+    Env* env,
+    Llvm_lang_type** new_rtn_type,
+    Tast_lang_type* rtn_type,
+    Llvm_block* new_block,
+    const Tast_function_params* old_params
+) {
     Llvm_function_params* new_params = llvm_function_params_new(
         old_params->pos,
         (Llvm_variable_def_vec) {0},
         0
     );
 
+    bool rtn_is_struct = false;
+
+    assert(rtn_type->lang_type.info.count == 1);
+    if (lang_type_is_struct(env, vec_at(&rtn_type->lang_type, 0))) {
+        rtn_is_struct = true;
+    } else if (lang_type_is_enum(env, vec_at(&rtn_type->lang_type, 0))) {
+        rtn_is_struct = false;
+    } else if (lang_type_is_primitive(env, vec_at(&rtn_type->lang_type, 0))) {
+        rtn_is_struct = false;
+    } else if (lang_type_is_raw_union(env, vec_at(&rtn_type->lang_type, 0))) {
+        rtn_is_struct = true;
+    } else {
+        unreachable(TAST_FMT"\n", lang_type_print(vec_at(&rtn_type->lang_type, 0)));
+    }
+
+    if (rtn_is_struct) {
+        Lang_type rtn_lang_type = vec_at(&rtn_type->lang_type, 0);
+        rtn_lang_type.pointer_depth++;
+        Tast_variable_def* new_def = tast_variable_def_new(
+            rtn_type->pos,
+            rtn_lang_type,
+            false,
+            util_literal_name_new_prefix("return_as_parameter")
+        );
+        Llvm_variable_def* param = tast_clone_variable_def(new_def);
+        do_function_def_alloca_param(env, new_params, new_block, param);
+        *new_rtn_type = llvm_lang_type_new(param->pos, lang_type_new_from_cstr("void", 0));
+    }
     for (size_t idx = 0; idx < old_params->params.info.count; idx++) {
         Llvm_variable_def* param = tast_clone_variable_def(vec_at(&old_params->params, idx));
-
-        if (lang_type_is_struct(env, param->lang_type)) {
-            param->name_self = param->name_corr_param;
-            alloca_add(env, llvm_wrap_def(llvm_wrap_variable_def(param)));
-        } else if (lang_type_is_enum(env, param->lang_type)) {
-            vec_insert(&a_main, &new_block->children, 0, llvm_wrap_alloca(
-                add_load_and_store_alloca_new(env, param)
-            ));
-        } else if (lang_type_is_raw_union(env, param->lang_type)) {
-            param->name_self = param->name_corr_param;
-            alloca_add(env, llvm_wrap_def(llvm_wrap_variable_def(param)));
-        } else if (lang_type_is_primitive(env, param->lang_type)) {
-            vec_insert(&a_main, &new_block->children, 0, llvm_wrap_alloca(
-                add_load_and_store_alloca_new(env, param)
-            ));
-        } else {
-            todo();
-        }
-
-        vec_append(&a_main, &new_params->params, param);
+        do_function_def_alloca_param(env, new_params, new_block, param);
     }
 
     return new_params;
@@ -662,9 +699,11 @@ static Str_view load_expr(Env* env, Llvm_block* new_block, Tast_expr* old_expr) 
 static Llvm_reg load_function_parameters(
     Env* env,
     Llvm_block* new_fun_body,
+    Llvm_lang_type** new_lang_type,
+    Tast_lang_type* rtn_type,
     Tast_function_params* old_params
 ) {
-    Llvm_function_params* new_params = do_function_def_alloca(env, new_fun_body, old_params);
+    Llvm_function_params* new_params = do_function_def_alloca(env, new_lang_type, rtn_type, new_fun_body, old_params);
 
     for (size_t idx = 0; idx < new_params->params.info.count; idx++) {
         assert(env->ancesters.info.count > 0);
@@ -742,10 +781,15 @@ static Str_view load_function_def(
         0
     );
 
+    try(old_fun_def->decl->return_type->lang_type.info.count == 1);
+
     vec_append(&a_main, &env->ancesters, &new_fun_def->body->symbol_collection);
+    Llvm_lang_type* new_lang_type = NULL;
     new_fun_def->decl->params = llvm_unwrap_function_params(load_function_parameters(
-            env, new_fun_def->body, old_fun_def->decl->params
+            env, new_fun_def->body, &new_lang_type, old_fun_def->decl->return_type, old_fun_def->decl->params
     ).llvm);
+    assert(new_lang_type);
+    new_fun_def->decl->return_type = new_lang_type;
     for (size_t idx = 0; idx < old_fun_def->body->children.info.count; idx++) {
         log(LOG_DEBUG, STR_VIEW_FMT, tast_stmt_print(vec_at(&old_fun_def->body->children, idx)));
         load_stmt(env, new_fun_def->body, vec_at(&old_fun_def->body->children, idx));
