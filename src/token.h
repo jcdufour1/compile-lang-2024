@@ -62,6 +62,9 @@ typedef enum {
     TOKEN_FN,
     TOKEN_FOR,
     TOKEN_IF,
+    TOKEN_SWITCH,
+    TOKEN_CASE,
+    TOKEN_DEFAULT,
     TOKEN_ELSE,
     TOKEN_RETURN,
     TOKEN_EXTERN,
@@ -161,6 +164,8 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_IF:
             return false;
+        case TOKEN_SWITCH:
+            return false;
         case TOKEN_ELSE:
             return false;
         case TOKEN_EXTERN:
@@ -190,6 +195,10 @@ static inline bool token_is_literal(Token token) {
         case TOKEN_CONTINUE:
             return false;
         case TOKEN_TYPE_DEF:
+            return false;
+        case TOKEN_CASE:
+            return false;
+        case TOKEN_DEFAULT:
             return false;
     }
     unreachable("");
@@ -299,6 +308,12 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             return true;
         case TOKEN_COMMA:
             return can_be_tuple;
+        case TOKEN_SWITCH:
+            return false;
+        case TOKEN_CASE:
+            return false;
+        case TOKEN_DEFAULT:
+            return false;
     }
     unreachable(TOKEN_FMT"\n", token_print(token));
 }
@@ -415,6 +430,12 @@ static inline bool token_is_closing(Token curr_token) {
             return false;
         case TOKEN_TYPE_DEF:
             return false;
+        case TOKEN_SWITCH:
+            return false;
+        case TOKEN_CASE:
+            return false;
+        case TOKEN_DEFAULT:
+            return false;
     }
     unreachable("");
 }
@@ -522,6 +543,12 @@ static inline bool token_is_opening(Token curr_token) {
         case TOKEN_GREATER_OR_EQUAL:
             return false;
         case TOKEN_TYPE_DEF:
+            return false;
+        case TOKEN_SWITCH:
+            return false;
+        case TOKEN_CASE:
+            return false;
+        case TOKEN_DEFAULT:
             return false;
     }
     unreachable("");

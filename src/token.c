@@ -105,6 +105,12 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
             return str_view_from_cstr(">=");
         case TOKEN_TYPE_DEF:
             return str_view_from_cstr("type");
+        case TOKEN_SWITCH:
+            return str_view_from_cstr("switch");
+        case TOKEN_CASE:
+            return str_view_from_cstr("case");
+        case TOKEN_DEFAULT:
+            return str_view_from_cstr("default");
     }
     unreachable("");
 }
@@ -152,6 +158,9 @@ Str_view token_print_internal(Arena* arena, Token token, bool msg_format) {
         case TOKEN_FN: // fallthrough
         case TOKEN_FOR: // fallthrough
         case TOKEN_IF: // fallthrough
+        case TOKEN_SWITCH: // fallthrough
+        case TOKEN_CASE: // fallthrough
+        case TOKEN_DEFAULT: // fallthrough
         case TOKEN_ELSE: // fallthrough
         case TOKEN_RETURN: // fallthrough
         case TOKEN_EXTERN: // fallthrough

@@ -1502,6 +1502,55 @@ bool try_set_if_else_chain(Env* env, Tast_if_else_chain** new_tast, Uast_if_else
     return status;
 }
 
+bool try_set_case_types(Env* env, Tast_if** new_tast, const Uast_case* lang_case) {
+    (void) env;
+    (void) new_tast;
+    (void) lang_case;
+    todo();
+}
+
+bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_switch* lang_switch) {
+    bool status = true;
+
+    Tast_if_vec new_ifs = {0};
+    for (size_t idx = 0; idx < lang_switch->cases.info.count; idx++) {
+        Uast_case* old_case = vec_at(&lang_switch->cases, idx);
+        Uast_condition* cond = NULL;
+        if (old_case->is_default) {
+            cond = uast_condition_new(
+                old_case->pos,
+                uast_condition_get_default_child(uast_wrap_literal(
+                    util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, old_case->pos)
+                ))
+            );
+        } else {
+            cond = uast_condition_new(old_case->pos, uast_wrap_binary(uast_binary_new(
+                old_case->pos, lang_switch->operand, old_case->expr, TOKEN_DOUBLE_EQUAL
+            )));
+        }
+
+        Uast_stmt_vec if_true_children = {0};
+        vec_append(&a_main, &if_true_children, old_case->if_true);
+        Uast_block* if_true = uast_block_new(
+            old_case->pos,
+            false,
+            if_true_children,
+            (Symbol_collection) {0},
+            old_case->pos
+        );
+                
+        Tast_if* new_if = NULL;
+        if (!try_set_if_types(env, &new_if, uast_if_new(old_case->pos, cond, if_true))) {
+            status = false;
+        }
+
+        vec_append(&a_main, &new_ifs, new_if);
+    }
+
+    *new_tast = tast_if_else_chain_new(lang_switch->pos, new_ifs);
+    return status;
+}
+
 bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def) {
     bool status = true;
 
@@ -1622,6 +1671,14 @@ bool try_set_stmt_types(Env* env, Tast_stmt** new_tast, Uast_stmt* stmt) {
                 return false;
             }
             *new_tast = tast_wrap_if_else_chain(new_for);
+            return true;
+        }
+        case UAST_SWITCH: {
+            Tast_if_else_chain* new_if_else = NULL;
+            if (!try_set_switch_types(env, &new_if_else, uast_unwrap_switch(stmt))) {
+                return false;
+            }
+            *new_tast = tast_wrap_if_else_chain(new_if_else);
             return true;
         }
     }

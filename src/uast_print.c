@@ -317,6 +317,18 @@ Str_view uast_for_with_cond_print_internal(const Uast_for_with_cond* for_cond, i
     return string_to_strv(buf);
 }
 
+Str_view uast_switch_print_internal(const Uast_switch* lang_switch, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&print_arena, &buf, "switch\n", indent);
+    string_extend_strv(&print_arena, &buf, uast_expr_print_internal(lang_switch->operand, indent + INDENT_WIDTH));
+    for (size_t idx = 0; idx < lang_switch->cases.info.count; idx++) {
+        string_extend_strv(&print_arena, &buf, uast_case_print_internal(vec_at(&lang_switch->cases, idx), indent + INDENT_WIDTH));
+    }
+
+    return string_to_strv(buf);
+}
+
 Str_view uast_break_print_internal(const Uast_break* lang_break, int indent) {
     (void) lang_break;
     String buf = {0};
@@ -355,6 +367,20 @@ Str_view uast_if_print_internal(const Uast_if* lang_if, int indent) {
     string_extend_strv(&print_arena, &buf, uast_condition_print_internal(lang_if->condition, indent));
     string_extend_strv(&print_arena, &buf, uast_block_print_internal(lang_if->body, indent));
     indent -= INDENT_WIDTH;
+
+    return string_to_strv(buf);
+}
+
+Str_view uast_case_print_internal(const Uast_case* lang_case, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&print_arena, &buf, "case\n", indent);
+    if (lang_case->is_default) {
+        string_extend_cstr_indent(&print_arena, &buf, "default\n", indent + INDENT_WIDTH);
+    } else {
+        string_extend_strv(&print_arena, &buf, uast_expr_print_internal(lang_case->expr, indent + INDENT_WIDTH));
+    }
+    string_extend_strv(&print_arena, &buf, uast_stmt_print_internal(lang_case->if_true, indent + INDENT_WIDTH));
 
     return string_to_strv(buf);
 }
@@ -583,6 +609,8 @@ Str_view uast_stmt_print_internal(const Uast_stmt* stmt, int indent) {
             return uast_for_range_print_internal(uast_unwrap_for_range_const(stmt), indent);
         case UAST_FOR_WITH_COND:
             return uast_for_with_cond_print_internal(uast_unwrap_for_with_cond_const(stmt), indent);
+        case UAST_SWITCH:
+            return uast_switch_print_internal(uast_unwrap_switch_const(stmt), indent);
     }
     unreachable("");
 }
@@ -603,6 +631,8 @@ Str_view uast_print_internal(const Uast* uast, int indent) {
             return uast_condition_print_internal(uast_unwrap_condition_const(uast), indent);
         case UAST_IF:
             return uast_if_print_internal(uast_unwrap_if_const(uast), indent);
+        case UAST_CASE:
+            return uast_case_print_internal(uast_unwrap_case_const(uast), indent);
     }
     unreachable("");
 }

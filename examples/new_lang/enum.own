@@ -13,13 +13,28 @@ type Token struct {
     string_data u8*
 }
 
-fn print_token(token Token) {
+fn print_token_if(token Token) {
     if token.kind == TokenType.number {
         printf("%d\n", token.number_data)
     } else if token.kind == TokenType.string {
         printf("%s\n", token.string_data)
     } else {
         printf("invalid token type\n")
+    }
+}
+
+fn print_token_switch(token Token) {
+    switch token.kind {
+    case TokenType.number: printf("%d\n", token.number_data)
+    case TokenType.string: printf("%s\n", token.string_data)
+    default: printf("invalid token type\n")
+    }
+}
+
+fn print_token_switch_non_exhaustive(token Token) {
+    switch token.kind {
+    case TokenType.number: printf("%d\n", token.number_data)
+    default: printf("invalid token type\n")
     }
 }
 
@@ -39,18 +54,31 @@ fn main() i32 {
     token_type = TokenType.string
     printf("%d\n", token_type);
 
-    let token1 Token
-    token1.kind = TokenType.number
-    token1.number_data = 87
-    token1.string_data = "hello"
-    print_token(token1)
+    {
+        let token Token
+        token.kind = TokenType.number
+        token.number_data = 87
+        token.string_data = "hello"
+        print_token_if(token)
+        print_token_switch(token)
+    }
 
-    let token2 Token
-    token2.kind = TokenType.string
-    token2.number_data = 87
-    token2.string_data = "hello"
-    print_token(token2)
+    {
+        let token Token
+        token.kind = TokenType.string
+        token.number_data = 87
+        token.string_data = "hello"
+        print_token_if(token)
+        print_token_switch(token)
+    }
 
+    {
+        let token Token
+        token.kind = TokenType.string
+        token.number_data = 87
+        token.string_data = "hello"
+        print_token_switch_non_exhaustive(token)
+    }
     return 0
 }
 

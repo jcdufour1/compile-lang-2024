@@ -80,6 +80,12 @@ static bool get_next_token(const Env* env, Pos* pos, Token* token, Str_view_col*
             token->type = TOKEN_FOR;
         } else if (str_view_cstr_is_equal(text, "if")) {
             token->type = TOKEN_IF;
+        } else if (str_view_cstr_is_equal(text, "switch")) {
+            token->type = TOKEN_SWITCH;
+        } else if (str_view_cstr_is_equal(text, "case")) {
+            token->type = TOKEN_CASE;
+        } else if (str_view_cstr_is_equal(text, "default")) {
+            token->type = TOKEN_DEFAULT;
         } else if (str_view_cstr_is_equal(text, "else")) {
             token->type = TOKEN_ELSE;
         } else if (str_view_cstr_is_equal(text, "return")) {

@@ -73,6 +73,8 @@ static inline Lang_type uast_get_lang_type_stmt(const Uast_stmt* stmt) {
             unreachable("");
         case UAST_IF_ELSE_CHAIN:
             unreachable("");
+        case UAST_SWITCH:
+            unreachable("");
     }
     unreachable("");
 }
@@ -93,6 +95,8 @@ static inline Lang_type uast_get_lang_type(const Uast* uast) {
         case UAST_IF:
             unreachable("");
         case UAST_CONDITION:
+            unreachable("");
+        case UAST_CASE:
             unreachable("");
     }
     unreachable("");
@@ -141,6 +145,8 @@ static inline Lang_type* uast_get_lang_type_ref_stmt(Uast_stmt* stmt) {
         case UAST_ASSIGNMENT:
             unreachable("");
         case UAST_IF_ELSE_CHAIN:
+            unreachable("");
+        case UAST_SWITCH:
             unreachable("");
     }
     unreachable("");
@@ -248,6 +254,8 @@ static inline Str_view get_uast_name_stmt(const Uast_stmt* stmt) {
             unreachable("");
         case UAST_RETURN:
             unreachable("");
+        case UAST_SWITCH:
+            unreachable("");
     }
     unreachable("");
 }
@@ -267,6 +275,8 @@ static inline Str_view get_uast_name(const Uast* uast) {
         case UAST_IF:
             unreachable("");
         case UAST_CONDITION:
+            unreachable("");
+        case UAST_CASE:
             unreachable("");
     }
     unreachable("");

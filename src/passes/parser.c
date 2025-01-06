@@ -206,6 +206,13 @@ static bool starts_with_if(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_IF;
 }
 
+static bool starts_with_switch(Tk_view tokens) {
+    if (tokens.count < 1) {
+        return false;
+    }
+    return tk_view_front(tokens).type == TOKEN_SWITCH;
+}
+
 static bool starts_with_for(Tk_view tokens) {
     if (tokens.count < 1) {
         return false;
@@ -450,6 +457,12 @@ static bool can_end_statement(Token token) {
             return false;
         case TOKEN_TYPE_DEF:
             return false;
+        case TOKEN_SWITCH:
+            return false;
+        case TOKEN_CASE:
+            return false;
+        case TOKEN_DEFAULT:
+            return false;
     }
     unreachable("");
 }
@@ -589,6 +602,12 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_GREATER_OR_EQUAL:
             return false;
         case TOKEN_TYPE_DEF:
+            return false;
+        case TOKEN_SWITCH:
+            return false;
+        case TOKEN_CASE:
+            return false;
+        case TOKEN_DEFAULT:
             return false;
     }
     unreachable("");
@@ -755,7 +774,6 @@ static PARSE_STATUS extract_struct_base_def(Env* env, Ustruct_def_base* base, St
     base->name = name;
 
     if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-        log_tokens(LOG_DEBUG, *tokens);
         msg_parser_expected(env->file_text, tk_view_front(*tokens), "in struct, raw_union, or enum definition", TOKEN_OPEN_CURLY_BRACE);
         return PARSE_ERROR;
     }
@@ -1279,6 +1297,81 @@ static PARSE_STATUS extract_if_else_chain(Env* env, Uast_if_else_chain** if_else
     return PARSE_OK;
 }
 
+
+static PARSE_STATUS extract_switch(Env* env, Uast_switch** lang_switch, Tk_view* tokens) {
+    Token switch_start_token = {0};
+    try(try_consume(&switch_start_token, tokens, TOKEN_SWITCH));
+
+    Uast_expr* operand = NULL;
+    switch (try_extract_expression(env, &operand, tokens, false, false)) {
+        case PARSE_EXPR_OK:
+            break;
+        case PARSE_EXPR_ERROR:
+            return PARSE_ERROR;
+        case PARSE_EXPR_NONE:
+            msg_expected_expression(env->file_text, *tokens, "");
+            return PARSE_ERROR;
+        default:
+            unreachable("");
+    }
+
+    try(try_consume(&switch_start_token, tokens, TOKEN_OPEN_CURLY_BRACE));
+    try(try_consume(&switch_start_token, tokens, TOKEN_NEW_LINE));
+
+    Uast_case_vec cases = {0};
+
+    while (1) {
+        Uast_stmt* case_if_true = NULL;
+        Uast_expr* case_operand = NULL;
+        bool case_is_default = false;
+        if (try_consume(NULL, tokens, TOKEN_CASE)) {
+            switch (try_extract_expression(env, &case_operand, tokens, false, false)) {
+                case PARSE_EXPR_OK:
+                    break;
+                case PARSE_EXPR_ERROR:
+                    return PARSE_ERROR;
+                case PARSE_EXPR_NONE:
+                    msg_expected_expression(env->file_text, *tokens, "");
+                    return PARSE_ERROR;
+                default:
+                    unreachable("");
+            }
+        } else if (try_consume(NULL, tokens, TOKEN_DEFAULT)) {
+            case_is_default = true;
+        } else {
+            break;
+        }
+
+        try(try_consume(&switch_start_token, tokens, TOKEN_COLON));
+        switch (extract_statement(env, &case_if_true, tokens, false)) {
+            case PARSE_EXPR_OK:
+                break;
+            case PARSE_EXPR_ERROR:
+                return PARSE_ERROR;
+            case PARSE_EXPR_NONE:
+                msg_expected_expression(env->file_text, *tokens, "");
+                return PARSE_ERROR;
+            default:
+                unreachable("");
+        }
+        Uast_case* curr_case = uast_case_new(
+            switch_start_token.pos,
+            case_is_default,
+            case_operand,
+            case_if_true
+        );
+        vec_append(&a_main, &cases, curr_case);
+    }
+
+    if (cases.info.count < 1) {
+        todo();
+    }
+
+    *lang_switch = uast_switch_new(switch_start_token.pos, operand, cases);
+    try(try_consume(&switch_start_token, tokens, TOKEN_CLOSE_CURLY_BRACE));
+    return PARSE_OK;
+}
+
 static PARSE_EXPR_STATUS extract_statement(Env* env, Uast_stmt** child, Tk_view* tokens, bool defer_sym_add) {
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
@@ -1325,6 +1418,12 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Uast_stmt** child, Tk_view*
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_wrap_if_else_chain(if_else_chain);
+    } else if (starts_with_switch(*tokens)) {
+        Uast_switch* lang_switch = NULL;
+        if (PARSE_OK != extract_switch(env, &lang_switch, tokens)) {
+            return PARSE_EXPR_ERROR;
+        }
+        lhs = uast_wrap_switch(lang_switch);
     } else if (starts_with_for(*tokens)) {
         Uast_stmt* for_loop;
         if (PARSE_OK != extract_for_loop(env, &for_loop, tokens)) {
@@ -1376,7 +1475,6 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Uast_stmt** child, Tk_view*
             default:
                 unreachable(UAST_FMT"\n", uast_expr_print(lhs_));
         }
-
         lhs = uast_wrap_expr(lhs_);
     }
 
@@ -1762,9 +1860,6 @@ static PARSE_EXPR_STATUS try_extract_expression(
                     }
                     break;
                 case TOKEN_OPEN_SQ_BRACKET:
-                    todo();
-                    log_tokens(LOG_DEBUG, *tokens);
-                    todo();
                     switch (try_extract_expression(env, &rhs, tokens, defer_sym_add, false)) {
                         case PARSE_EXPR_OK:
                             break;
@@ -1855,8 +1950,6 @@ static PARSE_EXPR_STATUS try_extract_expression(
                         case PARSE_EXPR_OK:
                             break;
                         case PARSE_EXPR_NONE: {
-                            log_tokens(LOG_DEBUG, *tokens);
-                            log(LOG_DEBUG, TAST_FMT, uast_expr_print(expression));
                             msg_expected_expression(env->file_text, *tokens, "");
                             return PARSE_EXPR_ERROR;
                         }
@@ -1875,8 +1968,6 @@ static PARSE_EXPR_STATUS try_extract_expression(
                         case PARSE_EXPR_OK:
                             break;
                         case PARSE_EXPR_NONE: {
-                            log_tokens(LOG_DEBUG, *tokens);
-                            log(LOG_DEBUG, TAST_FMT, uast_expr_print(expression));
                             msg_expected_expression(env->file_text, *tokens, "");
                             return PARSE_EXPR_ERROR;
                         }
