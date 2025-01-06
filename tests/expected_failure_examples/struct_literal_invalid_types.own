@@ -1,0 +1,31 @@
+
+type Str_view struct {
+    data u8*
+    count i64
+}
+
+type Token struct {
+    file u8*
+    line i32
+    str_data Str_view
+}
+
+fn get_token() Token {
+    return {.file = "file.txt", .line = 21, .str_data = "hello world"}
+}
+
+fn get_line(token Token) i32 {
+    return token.line
+}
+
+fn get_num() i32 {
+    return 65
+}
+
+fn main() i32 {
+    let token Token = get_token()
+
+    let line i32 = get_line({.file = "second_file.txt", .line = get_num(), .str_data = "bye"})
+
+    return 0
+}
