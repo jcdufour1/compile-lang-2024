@@ -402,13 +402,14 @@ static Tast_block* rm_tuple_block(Env* env, Tast_block* block) {
 
 Tast_block* remove_tuples(Env* env, Tast_block* root) {
     Tast_block* new_block = rm_tuple_block(env, root);
-    for (size_t idx = 0; idx < env->extra_structs.info.count; idx++) {
-        assert(vec_at(&env->extra_structs, idx));
-        vec_append(&a_main, &new_block->children, tast_wrap_def(tast_wrap_struct_def(vec_at(&env->extra_structs, idx))));
-    }
+    // TODO: use faster algorithm for inserting extra structs and functions
     for (size_t idx = 0; idx < env->extra_functions.info.count; idx++) {
         assert(vec_at(&env->extra_functions, idx));
-        vec_append(&a_main, &new_block->children, tast_wrap_def(tast_wrap_function_def(vec_at(&env->extra_functions, idx))));
+        vec_insert(&a_main, &new_block->children, 0, tast_wrap_def(tast_wrap_function_def(vec_at(&env->extra_functions, idx))));
+    }
+    for (size_t idx = 0; idx < env->extra_structs.info.count; idx++) {
+        assert(vec_at(&env->extra_structs, idx));
+        vec_insert(&a_main, &new_block->children, 0, tast_wrap_def(tast_wrap_struct_def(vec_at(&env->extra_structs, idx))));
     }
     return new_block;
 }

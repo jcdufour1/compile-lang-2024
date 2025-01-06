@@ -345,6 +345,7 @@ static void emit_function_arg_expr(const Env* env, String* output, const Llvm_ex
 }
 
 static void emit_function_call_arguments(const Env* env, String* output, const Llvm_function_call* fun_call) {
+    log(LOG_DEBUG, LLVM_FMT, llvm_function_call_print(fun_call));
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
         Str_view arg_name = vec_at(&fun_call->args, idx);
         Llvm* argument = NULL;
