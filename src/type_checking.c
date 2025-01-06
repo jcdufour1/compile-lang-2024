@@ -6,6 +6,7 @@
 #include <tast_utils.h>
 #include <llvm_utils.h>
 #include <uast_hand_written.h>
+#include <bool_vec.h>
 
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
@@ -1509,9 +1510,54 @@ bool try_set_case_types(Env* env, Tast_if** new_tast, const Uast_case* lang_case
     todo();
 }
 
-bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_switch* lang_switch) {
-    bool status = true;
+static bool check_for_exhaustiveness(const Env* env, const Tast_if_else_chain* if_else) {
+    try(if_else->tasts.info.count > 0);
+    Lang_type lang_type = tast_get_lang_type_operator(vec_at(&if_else->tasts, 0)->condition->child);
 
+    Uast_def* enum_def_ = NULL;
+    if (!usymbol_lookup(&enum_def_, env, lang_type.str)) {
+        todo();
+    }
+    Uast_enum_def* enum_def = uast_unwrap_enum_def(enum_def_);
+    try(enum_def->base.members.info.count > 0);
+    size_t max_data = enum_def->base.members.info.count - 1;
+
+    Bool_vec covered = {0};
+    vec_reserve(&print_arena, &covered, max_data + 1);
+    bool default_is_pre = false;
+
+    if (lang_type_is_enum(env, lang_type)) {
+        for (size_t idx = 0; idx < if_else->tasts.info.count; idx++) {
+            Tast_enum_lit* curr_lit = tast_unwrap_enum_lit(
+                tast_unwrap_literal(
+                    tast_unwrap_binary(vec_at(&if_else->tasts, idx)->condition->child)->rhs
+                )
+            );
+            //if (vec_at(&if_else->tasts, idx)->is_default) {
+            //    default_is_pre = true;
+            //}
+            if (curr_lit->data > (int64_t)max_data) {
+                unreachable("invalid enum value\n");
+            }
+            if (vec_at(&covered, curr_lit->data)) {
+                unreachable("duplicate case");
+            }
+            *vec_at_ref(&covered, curr_lit->data) = true;
+        }
+
+        if (covered.info.count != max_data + 1) {
+            unreachable("non exhausive");
+        }
+        for (size_t idx = 0; idx < covered.info.count; idx++) {
+            
+        }
+        todo();
+    } else {
+        todo();
+    }
+}
+
+bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_switch* lang_switch) {
     Tast_if_vec new_ifs = {0};
     for (size_t idx = 0; idx < lang_switch->cases.info.count; idx++) {
         Uast_case* old_case = vec_at(&lang_switch->cases, idx);
@@ -1541,14 +1587,14 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
                 
         Tast_if* new_if = NULL;
         if (!try_set_if_types(env, &new_if, uast_if_new(old_case->pos, cond, if_true))) {
-            status = false;
+            return false;
         }
 
         vec_append(&a_main, &new_ifs, new_if);
     }
 
     *new_tast = tast_if_else_chain_new(lang_switch->pos, new_ifs);
-    return status;
+    return check_for_exhaustiveness(env, *new_tast);
 }
 
 bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def) {

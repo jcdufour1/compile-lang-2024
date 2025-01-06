@@ -66,6 +66,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"break-invalid-location", EXPECT_FAIL_BREAK_INVALID_LOCATION},
     {"continue-invalid-location", EXPECT_FAIL_CONTINUE_INVALID_LOCATION},
     {"mismatched-tuple-count", EXPECT_FAIL_MISMATCHED_TUPLE_COUNT},
+    {"non-exhaustive-switch", EXPECT_FAIL_NON_EXHAUSTIVE_SWITCH},
 };
 
 static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
