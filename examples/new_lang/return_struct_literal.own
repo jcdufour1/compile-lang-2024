@@ -11,9 +11,16 @@ fn get_token() Token {
     return {.file = "file.txt", .line = 21, .str_data = "hello world"}
 }
 
+fn get_line(token Token) i32 {
+    return token.line
+}
+
 fn main() i32 {
     let token Token = get_token()
     printf("%s %d %s\n", token.file, token.line, token.str_data)
+
+    let line i32 = get_line({.file = "second_file.txt", .line = 65, .str_data = "bye"})
+    printf("%d\n", line)
 
     return 0
 }
