@@ -227,18 +227,14 @@ Str_view tast_struct_literal_print_internal(const Tast_struct_literal* lit, int 
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "struct_literal", indent);
-    string_extend_strv(&print_arena, &buf, lit->name);
+    extend_lang_type(&buf, lit->lang_type, true);
+    extend_name(&buf, lit->name);
     string_extend_cstr(&print_arena, &buf, "\n");
 
-    indent += INDENT_WIDTH;
-
-    extend_lang_type(&buf, lit->lang_type, true);
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-        Str_view memb_text = tast_expr_print_internal(vec_at(&lit->members, idx), indent);
+        Str_view memb_text = tast_expr_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&print_arena, &buf, memb_text);
     }
-
-    indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
 }

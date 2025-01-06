@@ -107,8 +107,6 @@ static inline Llvm_id llvm_get_llvm_id_expr(const Llvm_expr* expr) {
             unreachable("");
         case LLVM_FUNCTION_CALL:
             return llvm_unwrap_function_call_const(expr)->llvm_id;
-        case LLVM_STRUCT_LITERAL:
-            unreachable("");
         case LLVM_LLVM_PLACEHOLDER:
             unreachable("");
     }
@@ -248,8 +246,6 @@ static inline Lang_type* llvm_get_lang_type_literal_ref(Llvm_literal* lit) {
 
 static inline Lang_type llvm_get_lang_type_expr(const Llvm_expr* expr) {
     switch (expr->type) {
-        case LLVM_STRUCT_LITERAL:
-            return llvm_unwrap_struct_literal_const(expr)->lang_type;
         case LLVM_FUNCTION_CALL:
             return llvm_unwrap_function_call_const(expr)->lang_type;
         case LLVM_LITERAL:
@@ -290,8 +286,6 @@ static inline Lang_type llvm_get_lang_type_def(const Llvm_def* def) {
 
 static inline Lang_type* llvm_get_lang_type_expr_ref(Llvm_expr* expr) {
     switch (expr->type) {
-        case LLVM_STRUCT_LITERAL:
-            return &llvm_unwrap_struct_literal(expr)->lang_type;
         case LLVM_FUNCTION_CALL:
             return &llvm_unwrap_function_call(expr)->lang_type;
         case LLVM_LITERAL:
@@ -392,8 +386,6 @@ static inline Lang_type* llvm_get_lang_type_ref(Llvm* llvm) {
 
 static inline Llvm* llvm_get_expr_src(Llvm_expr* expr) {
     switch (expr->type) {
-        case LLVM_STRUCT_LITERAL:
-            unreachable("");
         case LLVM_LITERAL:
             unreachable("");
         case LLVM_SYMBOL_TYPED:
@@ -441,8 +433,6 @@ static inline Llvm* get_llvm_src(Llvm* llvm) {
 
 static inline Llvm* llvm_get_expr_dest(Llvm_expr* expr) {
     switch (expr->type) {
-        case LLVM_STRUCT_LITERAL:
-            unreachable("");
         case LLVM_LITERAL:
             unreachable("");
         case LLVM_SYMBOL_TYPED:
@@ -517,8 +507,6 @@ static inline Str_view llvm_get_expr_name(const Llvm_expr* expr) {
     switch (expr->type) {
         case LLVM_OPERATOR:
             return llvm_get_operator_name(llvm_unwrap_operator_const(expr));
-        case LLVM_STRUCT_LITERAL:
-            return llvm_unwrap_struct_literal_const(expr)->name;
         case LLVM_SYMBOL_TYPED:
             return llvm_get_symbol_typed_name(llvm_unwrap_symbol_typed_const(expr));
         case LLVM_FUNCTION_CALL:

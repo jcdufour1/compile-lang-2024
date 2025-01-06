@@ -328,9 +328,6 @@ static void emit_function_arg_expr(const Env* env, String* output, String* liter
             case LLVM_LITERAL:
                 extend_literal_decl(env, output, literals, llvm_unwrap_literal_const(argument), true);
                 break;
-            case LLVM_STRUCT_LITERAL:
-                // TODO: consider removing LLVM_STRUCT_LITERAL
-                todo();
             case LLVM_SYMBOL_TYPED:
                 unreachable("typed symbols should not still be present");
             case LLVM_LLVM_PLACEHOLDER: {
@@ -632,21 +629,6 @@ static void emit_load_another_llvm(const Env* env, String* output, const Llvm_lo
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_memcpy_struct_literal(
-    const Env* env,
-    String* output,
-    Llvm_id dest,
-    const Llvm_struct_literal* literal
-) {
-    string_extend_cstr(&a_main, output, "    call void @llvm.memcpy.p0.p0.i64(ptr align 4 %");
-    string_extend_size_t(&a_main, output, dest);
-    string_extend_cstr(&a_main, output, ", ptr align 4 @__const.main.");
-    string_extend_strv(&a_main, output, literal->name);
-    string_extend_cstr(&a_main, output, ", i64 ");
-    string_extend_size_t(&a_main, output, llvm_sizeof_struct_literal(env, literal));
-    string_extend_cstr(&a_main, output, ", i1 false)\n");
-}
-
 static void emit_store_another_llvm_src_literal(
     String* output,
     const Llvm_literal* literal
@@ -685,9 +667,6 @@ static void emit_store_another_llvm_src_expr(const Env* env, String* output, con
             string_extend_cstr(&a_main, output, " %");
             string_extend_size_t(&a_main, output, llvm_get_llvm_id_expr(expr));
             break;
-        case LLVM_STRUCT_LITERAL:
-            unreachable("");
-            break;
         default:
             unreachable(LLVM_FMT"\n", llvm_print(llvm_wrap_expr_const(expr)));
     }
@@ -696,26 +675,6 @@ static void emit_store_another_llvm_src_expr(const Env* env, String* output, con
 static void emit_store_another_llvm(const Env* env, String* output, const Llvm_store_another_llvm* store) {
     Llvm* src = NULL;
     try(alloca_lookup(&src, env, store->llvm_src));
-
-    switch (src->type) {
-        case LLVM_EXPR: {
-            const Llvm_expr* src_expr = llvm_unwrap_expr_const(src);
-            switch (src_expr->type) {
-                case LLVM_STRUCT_LITERAL:
-                    emit_memcpy_struct_literal(
-                        env,
-                        output,
-                        get_llvm_id_from_name(env, store->llvm_dest),
-                        llvm_unwrap_struct_literal_const(src_expr)
-                    );
-                    return;
-                default:
-                    break;
-            }
-        }
-        default:
-            break;
-    }
 
     assert(store->lang_type.str.count > 0);
     string_extend_cstr(&a_main, output, "    store ");

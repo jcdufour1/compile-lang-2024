@@ -276,17 +276,6 @@ static Llvm_type llvm_gen_function_call(void) {
     return call;
 }
 
-static Llvm_type llvm_gen_struct_literal(void) {
-    Llvm_type lit = {.name = llvm_name_new("expr", "struct_literal", false)};
-
-    append_member(&lit.members, "Tast_expr_vec", "members");
-    append_member(&lit.members, "Str_view", "name");
-    append_member(&lit.members, "Lang_type", "lang_type");
-    append_member(&lit.members, "Llvm_id", "llvm_id");
-
-    return lit;
-}
-
 static Llvm_type llvm_gen_llvm_placeholder(void) {
     Llvm_type placeholder = {.name = llvm_name_new("expr", "llvm_placeholder", false)};
 
@@ -303,7 +292,6 @@ static Llvm_type llvm_gen_expr(void) {
     vec_append(&gen_a, &expr.sub_types, llvm_gen_symbol_typed());
     vec_append(&gen_a, &expr.sub_types, llvm_gen_literal());
     vec_append(&gen_a, &expr.sub_types, llvm_gen_function_call());
-    vec_append(&gen_a, &expr.sub_types, llvm_gen_struct_literal());
     vec_append(&gen_a, &expr.sub_types, llvm_gen_llvm_placeholder());
 
     return expr;

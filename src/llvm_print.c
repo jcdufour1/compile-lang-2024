@@ -162,22 +162,6 @@ Str_view llvm_function_call_print_internal(const Llvm_function_call* fun_call, i
     return string_to_strv(buf);
 }
 
-Str_view llvm_struct_literal_print_internal(const Llvm_struct_literal* lit, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "struct_literal", indent);
-    extend_lang_type(&buf, lit->lang_type, true);
-    extend_name(&buf, lit->name);
-    string_extend_cstr(&print_arena, &buf, "\n");
-
-    for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-        Str_view memb_text = tast_expr_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);
-        string_extend_strv(&print_arena, &buf, memb_text);
-    }
-
-    return string_to_strv(buf);
-}
-
 Str_view llvm_number_print_internal(const Llvm_number* num, int indent) {
     String buf = {0};
 
@@ -552,8 +536,6 @@ Str_view llvm_expr_print_internal(const Llvm_expr* expr, int indent) {
             return llvm_literal_print_internal(llvm_unwrap_literal_const(expr), indent);
         case LLVM_FUNCTION_CALL:
             return llvm_function_call_print_internal(llvm_unwrap_function_call_const(expr), indent);
-        case LLVM_STRUCT_LITERAL:
-            return llvm_struct_literal_print_internal(llvm_unwrap_struct_literal_const(expr), indent);
         case LLVM_LLVM_PLACEHOLDER:
             return llvm_llvm_placeholder_print_internal(llvm_unwrap_llvm_placeholder_const(expr), indent);
     }

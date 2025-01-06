@@ -54,16 +54,6 @@ static Llvm_variable_def* tast_clone_variable_def(Tast_variable_def* old_var_def
     );
 }
 
-static Llvm_struct_literal* tast_clone_struct_literal(const Tast_struct_literal* old_lit) {
-    return llvm_struct_literal_new(
-        old_lit->pos,
-        old_lit->members,
-        old_lit->name,
-        old_lit->lang_type,
-        0
-    );
-}
-
 static Llvm_struct_def* tast_clone_struct_def(const Tast_struct_def* old_def) {
     return llvm_struct_def_new(
         old_def->pos,
@@ -128,16 +118,6 @@ static Llvm_variable_def* uast_clone_variable_def(Uast_variable_def* old_var_def
         0,
         util_literal_name_new(),
         old_var_def->name
-    );
-}
-
-static Llvm_struct_literal* uast_clone_struct_literal(const Tast_struct_literal* old_lit) {
-    return llvm_struct_literal_new(
-        old_lit->pos,
-        old_lit->members,
-        old_lit->name,
-        old_lit->lang_type,
-        0
     );
 }
 
@@ -382,6 +362,7 @@ static Str_view load_function_call(
         
         vec_append(&a_main, &new_args, def_name);
         load_variable_def(env, new_block, def);
+        fun_lang_type = lang_type_new_from_cstr("void", 0);
         //unreachable(TAST_FMT, tast_function_call_print(old_fun_call));
     }
 
@@ -739,28 +720,6 @@ static Str_view load_index_typed(
     return new_load->name;
 }
 
-// TODO: consider struct_literal to be a literal type
-static Str_view load_struct_literal(
-    Env* env,
-    Llvm_block* new_block,
-    Tast_struct_literal* old_lit
-) {
-    (void) new_block;
-
-    Tast_struct_lit_def* new_def = tast_struct_lit_def_new(
-        old_lit->pos,
-        old_lit->members,
-        old_lit->name,
-        old_lit->lang_type
-    );
-
-    try(sym_tbl_add(&env->global_literals, tast_wrap_literal_def(tast_wrap_struct_lit_def(new_def))));
-
-    Llvm_struct_literal* new_lit = tast_clone_struct_literal(old_lit);
-    try(alloca_add(env, llvm_wrap_expr(llvm_wrap_struct_literal(new_lit))));
-    return new_lit->name;
-}
-
 static Str_view load_expr(Env* env, Llvm_block* new_block, Tast_expr* old_expr) {
     switch (old_expr->type) {
         case TAST_FUNCTION_CALL:
@@ -776,7 +735,7 @@ static Str_view load_expr(Env* env, Llvm_block* new_block, Tast_expr* old_expr) 
         case TAST_INDEX_TYPED:
             return load_index_typed(env, new_block, tast_unwrap_index_typed(old_expr));
         case TAST_STRUCT_LITERAL:
-            return load_struct_literal(env, new_block, tast_unwrap_struct_literal(old_expr));
+            unreachable("struct literal should have been converted in remove_tuple pass");
         default:
             unreachable(TAST_FMT"\n", tast_expr_print(old_expr));
     }

@@ -98,8 +98,6 @@ uint64_t sizeof_struct_literal(const Env* env, const Tast_struct_literal* struct
 
 uint64_t llvm_sizeof_item(const Env* env, const Llvm* item);
 
-uint64_t llvm_sizeof_struct_literal(const Env* env, const Llvm_struct_literal* struct_literal);
-
 uint64_t llvm_sizeof_struct_def_base(const Env* env, const Struct_def_base* base);
 
 uint64_t llvm_sizeof_struct_expr(const Env* env, const Llvm_expr* struct_literal_or_def);
