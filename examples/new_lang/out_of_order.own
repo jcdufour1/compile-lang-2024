@@ -1,0 +1,26 @@
+
+
+fn main() i32 {
+    let token Token = get_token("file57.txt", 914, {.data = "new data", .count = 8})
+    printf("%s %d %s\n", token.file, token.line, token.str_data.data)
+
+    return 0
+}
+
+fn get_token(file u8*, line i32, data Str_view) Token {
+    return {.file = file, .line = line, .str_data = data}
+}
+
+extern("c") fn printf(str_to_print u8*, args any...) i32
+
+type Str_view struct {
+    data u8*
+    count i64
+}
+
+type Token struct {
+    file u8*
+    line i32
+    str_data Str_view
+}
+

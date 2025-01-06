@@ -17,7 +17,7 @@ fn get_token() Token {
 }
 
 fn get_line(token Token) i32 {
-  return token.line
+    return token.line
 }
 
 fn get_num() i32 {
