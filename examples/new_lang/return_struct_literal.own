@@ -1,25 +1,34 @@
 
 extern("c") fn printf(str_to_print u8*, args any...) i32
 
+type Str_view struct {
+    data u8*
+    count i64
+}
+
 type Token struct {
     file u8*
     line i32
-    str_data u8*
+    str_data Str_view
 }
 
 fn get_token() Token {
-    return {.file = "file.txt", .line = 21, .str_data = "hello world"}
+    return {.file = "file.txt", .line = 21, .str_data = {.data = "hello world", .count = 11}}
 }
 
 fn get_line(token Token) i32 {
-    return token.line
+  return token.line
+}
+
+fn get_num() i32 {
+    return 65
 }
 
 fn main() i32 {
     let token Token = get_token()
-    printf("%s %d %s\n", token.file, token.line, token.str_data)
+    printf("%s %d %s\n", token.file, token.line, token.str_data.data)
 
-    let line i32 = get_line({.file = "second_file.txt", .line = 65, .str_data = "bye"})
+    let line i32 = get_line({.file = "second_file.txt", .line = get_num(), .str_data = {.data = "bye", .count = 3}})
     printf("%d\n", line)
 
     return 0

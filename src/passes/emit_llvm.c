@@ -654,13 +654,18 @@ static void emit_store_another_llvm_src_literal(
     unreachable("");
 }
 
-static void emit_store_another_llvm_src_expr(const Env* env, String* output, const Llvm_expr* expr) {
+static void emit_store_another_llvm_src_expr(const Env* env, String* output, String* literals, const Llvm_expr* expr) {
     (void) env;
 
     switch (expr->type) {
-        case LLVM_LITERAL:
-            emit_store_another_llvm_src_literal(output, llvm_unwrap_literal_const(expr));
+        case LLVM_LITERAL: {
+            const Llvm_literal* lit = llvm_unwrap_literal_const(expr);
+            if (lit->type == LLVM_STRING) {
+                emit_symbol_normal(literals, llvm_get_literal_name(lit), lit);
+            }
+            emit_store_another_llvm_src_literal(output, lit);
             return;
+        }
         case LLVM_FUNCTION_CALL:
             // fallthrough
         case LLVM_OPERATOR:
@@ -672,7 +677,7 @@ static void emit_store_another_llvm_src_expr(const Env* env, String* output, con
     }
 }
 
-static void emit_store_another_llvm(const Env* env, String* output, const Llvm_store_another_llvm* store) {
+static void emit_store_another_llvm(const Env* env, String* output, String* literals, const Llvm_store_another_llvm* store) {
     Llvm* src = NULL;
     try(alloca_lookup(&src, env, store->llvm_src));
 
@@ -691,7 +696,7 @@ static void emit_store_another_llvm(const Env* env, String* output, const Llvm_s
             break;
         }
         case LLVM_EXPR:
-            emit_store_another_llvm_src_expr(env, output, llvm_unwrap_expr_const(src));
+            emit_store_another_llvm_src_expr(env, output, literals, llvm_unwrap_expr_const(src));
             break;
         case LLVM_LOAD_ANOTHER_LLVM:
             string_extend_cstr(&a_main, output, "%");
@@ -987,7 +992,7 @@ static void emit_block(Env* env, String* struct_defs, String* output, String* li
                 emit_load_another_llvm(env, output, llvm_unwrap_load_another_llvm_const(statement));
                 break;
             case LLVM_STORE_ANOTHER_LLVM:
-                emit_store_another_llvm(env, output, llvm_unwrap_store_another_llvm_const(statement));
+                emit_store_another_llvm(env, output, literals, llvm_unwrap_store_another_llvm_const(statement));
                 break;
             default:
                 log(LOG_ERROR, STRING_FMT"\n", string_print(*output));

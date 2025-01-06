@@ -9,7 +9,7 @@
 
 static Tast_stmt* rm_tuple_stmt(Env* env, Tast_stmt* stmt);
 
-static Tast_expr* rm_tuple_expr_rhs(Env* env, Lang_type lhs_lang_type, Tast_expr* rhs, Pos assign_pos);
+static Tast_expr* rm_tuple_expr_rhs(Env* env, Lang_type_vec lhs_lang_type, Tast_expr* rhs, Pos assign_pos);
 
 static Tast_block* rm_tuple_block(Env* env, Tast_block* block);
 
@@ -45,7 +45,7 @@ static Tast_for_with_cond* rm_tuple_for_with_cond(Env* env, Tast_for_with_cond* 
 }
 
 static Tast_stmt* rm_tuple_assignment(Env* env, Tast_assignment* assign) {
-    assign->rhs = rm_tuple_expr_rhs(env, tast_get_lang_type_stmt(assign->lhs), assign->rhs, assign->pos);
+    assign->rhs = rm_tuple_expr_rhs(env, tast_get_lang_types_stmt(assign->lhs), assign->rhs, assign->pos);
 
     if (tast_get_lang_types_stmt(assign->lhs).info.count < 2 && tast_get_lang_types_expr(assign->rhs).info.count < 2) {
         return tast_wrap_assignment(assign);
@@ -400,7 +400,7 @@ static Tast_function_call* rm_tuple_function_call(Env* env, Tast_function_call* 
     return fun_call;
 }
 
-static Tast_expr* rm_tuple_expr_rhs(Env* env, Lang_type lhs_lang_type, Tast_expr* rhs, Pos assign_pos) {
+static Tast_expr* rm_tuple_expr_rhs(Env* env, Lang_type_vec lhs_lang_type, Tast_expr* rhs, Pos assign_pos) {
     switch (rhs->type) {
         case TAST_OPERATOR:
             return rhs;
@@ -413,11 +413,13 @@ static Tast_expr* rm_tuple_expr_rhs(Env* env, Lang_type lhs_lang_type, Tast_expr
         case TAST_LITERAL:
             return rhs;
         case TAST_STRUCT_LITERAL:
-            return rm_tuple_generic_assignment_rhs(env, rhs, lhs_lang_type, assign_pos);
+            try(lhs_lang_type.info.count == 1);
+            return rm_tuple_generic_assignment_rhs(env, rhs, vec_at(&lhs_lang_type, 0), assign_pos);
+        case TAST_TUPLE:
+            try(lhs_lang_type.info.count == 1);
+            return rm_tuple_generic_assignment_rhs(env, rhs, vec_at(&lhs_lang_type, 0), assign_pos);
         case TAST_FUNCTION_CALL:
             return tast_wrap_function_call(rm_tuple_function_call(env, tast_unwrap_function_call(rhs)));
-        case TAST_TUPLE:
-            return rm_tuple_generic_assignment_rhs(env, rhs, lhs_lang_type, assign_pos);
     }
     unreachable("");
 }
