@@ -596,6 +596,9 @@ bool try_set_struct_literal_assignment_types(
                 assign_pos, "struct literal cannot be assigned to raw_union\n"
             );
             return false;
+        case TAST_PRIMITIVE_DEF:
+            // TODO: expected failure case for this
+            unreachable("returning value in non void function");
         default:
             log(LOG_DEBUG, TAST_FMT"\n", uast_stmt_print(uast_wrap_def(struct_def_)));
             unreachable("");
@@ -611,12 +614,28 @@ bool try_set_struct_literal_assignment_types(
         Uast_assignment* assign_memb_sym = uast_unwrap_assignment(vec_at(&struct_literal->members, idx));
         Uast_symbol_untyped* memb_sym_piece_untyped = uast_unwrap_symbol_untyped(uast_unwrap_expr(assign_memb_sym->lhs));
         Tast_expr* new_rhs = NULL;
-        if (!try_set_expr_types(env, &new_rhs, assign_memb_sym->rhs)) {
-            unreachable("");
-        }
-        Tast_literal* assign_memb_sym_rhs = tast_unwrap_literal(new_rhs);
 
-        *tast_get_lang_type_literal_ref(assign_memb_sym_rhs) = memb_sym_def->lang_type;
+        switch (check_generic_assignment(
+            env, &new_rhs, lang_type_vec_from_lang_type(memb_sym_def->lang_type), assign_memb_sym->rhs, assign_memb_sym->pos
+        )) {
+            case CHECK_ASSIGN_OK:
+                break;
+            case CHECK_ASSIGN_INVALID:
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
+                    assign_memb_sym->pos,
+                    "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
+                    lang_type_vec_print(tast_get_lang_types_expr(new_rhs)), lang_type_print(memb_sym_def->lang_type)
+                );
+                return false;
+            case CHECK_ASSIGN_ERROR:
+                return false;
+            default:
+                unreachable("");
+        }
+
+
+        *tast_get_lang_type_expr_ref(new_rhs) = memb_sym_def->lang_type;
         if (!str_view_is_equal(memb_sym_def->name, memb_sym_piece_untyped->name)) {
             msg(
                 LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL, env->file_text,
@@ -638,7 +657,7 @@ bool try_set_struct_literal_assignment_types(
             return false;
         }
 
-        vec_append(&a_main, &new_literal_members, tast_wrap_literal(assign_memb_sym_rhs));
+        vec_append(&a_main, &new_literal_members, new_rhs);
     }
 
     Tast_struct_literal* new_lit = tast_struct_literal_new(

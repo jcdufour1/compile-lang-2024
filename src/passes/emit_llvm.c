@@ -291,6 +291,7 @@ static void emit_function_call_arg_load_another_llvm(
     Llvm* src = NULL;
     try(alloca_lookup(&src, env, load->name));
     if (lang_type_is_struct(env, load->lang_type) && load->lang_type.pointer_depth == 0) {
+        log(LOG_DEBUG, STR_VIEW_FMT, llvm_load_another_llvm_print(load));
         llvm_id = get_llvm_id_from_name(env, get_storage_location(env, load->llvm_src));
         assert(llvm_id > 0);
 
@@ -321,6 +322,7 @@ static void emit_function_arg_expr(const Env* env, String* output, const Llvm_ex
                 extend_literal_decl(env, output, llvm_unwrap_literal_const(argument), true);
                 break;
             case LLVM_STRUCT_LITERAL:
+                // TODO: consider removing LLVM_STRUCT_LITERAL
                 todo();
             case LLVM_SYMBOL_TYPED:
                 unreachable("typed symbols should not still be present");

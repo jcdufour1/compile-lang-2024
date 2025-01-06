@@ -296,11 +296,14 @@ Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child) {
 }
 
 uint64_t sizeof_lang_type(const Env* env, Lang_type lang_type) {
+    // TODO: make more generalized system for different bit widths, etc.
     if (lang_type_is_enum(env, lang_type)) {
         return 4;
     } else if (lang_type_is_equal(lang_type, lang_type_new_from_cstr("u8", 1))) {
         return 8;
     } else if (lang_type_is_equal(lang_type, lang_type_new_from_cstr("i32", 0))) {
+        return 4;
+    } else if (lang_type_is_equal(lang_type, lang_type_new_from_cstr("i64", 0))) {
         return 4;
     } else {
         unreachable(LANG_TYPE_FMT"\n", lang_type_print(lang_type));

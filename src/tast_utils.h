@@ -343,8 +343,8 @@ static inline Lang_type* tast_get_lang_type_expr_ref(Tast_expr* expr) {
         case TAST_STRUCT_LITERAL:
             return &tast_unwrap_struct_literal(expr)->lang_type;
         case TAST_FUNCTION_CALL:
-            unreachable("");
-            //return &tast_unwrap_function_call(expr)->lang_type;
+            try(tast_unwrap_function_call_const(expr)->lang_type.info.count == 1);
+            return &vec_at(&tast_unwrap_function_call(expr)->lang_type, 0);
         case TAST_MEMBER_ACCESS_TYPED:
             unreachable("");
         case TAST_INDEX_TYPED:

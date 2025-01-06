@@ -25,6 +25,13 @@ static Tast_if* rm_tuple_if(Env* env, Tast_if* assign);
 
 static Tast_if_else_chain* rm_tuple_if_else_chain(Env* env, Tast_if_else_chain* if_else);
 
+static Tast_expr* rm_tuple_generic_assignment_rhs(
+    Env* env,
+    Tast_expr* rhs,
+    Lang_type lhs_lang_type,
+    Pos assign_pos
+);
+
 static Tast_for_range* rm_tuple_for_range(Env* env, Tast_for_range* lang_for) {
     // TODO: tuples in for lower bound, etc.
     lang_for->body = rm_tuple_block(env, lang_for->body);
@@ -224,7 +231,14 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child(
         vec_append(&a_main, &new_params, new_param);
         log(LOG_DEBUG, STR_VIEW_FMT, tast_variable_def_print(new_param));
 
-        vec_append(&a_main, &new_args, vec_at(&members, idx));
+        Tast_expr* new_memb = rm_tuple_generic_assignment_rhs(
+            env,
+            vec_at(&members, idx),
+            curr_def->lang_type,
+            tast_get_pos_expr(vec_at(&members, idx))
+        );
+
+        vec_append(&a_main, &new_args, new_memb);
     }
     rm_tuple_stru_tbl_add(&vec_at(&env->ancesters, 0)->rm_tuple_struct_table, struct_def);
     log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(rm_tuple_struct_get_name(struct_def)));
