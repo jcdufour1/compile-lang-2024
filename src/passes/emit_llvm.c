@@ -8,8 +8,9 @@
 #include <file.h>
 #include <parser_utils.h>
 #include <llvm_utils.h>
+#include <errno.h>
 
-static void emit_block(Env* env, String* output, const Llvm_block* fun_block);
+static void emit_block(Env* env, String* struct_defs, String* output, const Llvm_block* fun_block);
 
 static bool llvm_is_literal(const Llvm* llvm) {
     if (llvm->type != LLVM_EXPR) {
@@ -746,7 +747,7 @@ static void emit_store_another_llvm(const Env* env, String* output, const Llvm_s
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_function_def(Env* env, String* output, const Llvm_function_def* fun_def) {
+static void emit_function_def(Env* env, String* struct_defs, String* output, const Llvm_function_def* fun_def) {
     string_extend_cstr(&a_main, output, "define dso_local ");
 
     extend_type_call_str(env, output, return_type_from_function_def(fun_def)->lang_type);
@@ -759,7 +760,7 @@ static void emit_function_def(Env* env, String* output, const Llvm_function_def*
     vec_append(&a_main, output, ')');
 
     string_extend_cstr(&a_main, output, " {\n");
-    emit_block(env, output, fun_def->body);
+    emit_block(env, struct_defs, output, fun_def->body);
     string_extend_cstr(&a_main, output, "}\n");
 }
 
@@ -954,10 +955,10 @@ static void emit_expr(Env* env, String* output, const Llvm_expr* expr) {
     }
 }
 
-static void emit_def(Env* env, String* output, const Llvm_def* def) {
+static void emit_def(Env* env, String* struct_defs, String* output, const Llvm_def* def) {
     switch (def->type) {
         case LLVM_FUNCTION_DEF:
-            emit_function_def(env, output, llvm_unwrap_function_def_const(def));
+            emit_function_def(env, struct_defs, output, llvm_unwrap_function_def_const(def));
             return;
         case LLVM_VARIABLE_DEF:
             return;
@@ -968,10 +969,10 @@ static void emit_def(Env* env, String* output, const Llvm_def* def) {
             emit_label(output, llvm_unwrap_label_const(def));
             return;
         case LLVM_STRUCT_DEF:
-            emit_struct_def(env, output, llvm_unwrap_struct_def_const(def));
+            emit_struct_def(env, struct_defs, llvm_unwrap_struct_def_const(def));
             return;
         case LLVM_RAW_UNION_DEF:
-            emit_raw_union_def(env, output, llvm_unwrap_raw_union_def_const(def));
+            emit_raw_union_def(env, struct_defs, llvm_unwrap_raw_union_def_const(def));
             return;
         case LLVM_ENUM_DEF:
             return;
@@ -983,7 +984,7 @@ static void emit_def(Env* env, String* output, const Llvm_def* def) {
     unreachable("");
 }
 
-static void emit_block(Env* env, String* output, const Llvm_block* block) {
+static void emit_block(Env* env, String* struct_defs, String* output, const Llvm_block* block) {
     vec_append(&a_main, &env->ancesters, (Symbol_collection*)&block->symbol_collection);
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
@@ -994,13 +995,13 @@ static void emit_block(Env* env, String* output, const Llvm_block* block) {
                 emit_expr(env, output, llvm_unwrap_expr_const(statement));
                 break;
             case LLVM_DEF:
-                emit_def(env, output, llvm_unwrap_def_const(statement));
+                emit_def(env, struct_defs, output, llvm_unwrap_def_const(statement));
                 break;
             case LLVM_RETURN:
                 emit_return(env, output, llvm_unwrap_return_const(statement));
                 break;
             case LLVM_BLOCK:
-                emit_block(env, output, llvm_unwrap_block_const(statement));
+                emit_block(env, struct_defs, output, llvm_unwrap_block_const(statement));
                 break;
             case LLVM_COND_GOTO:
                 emit_cond_goto(env, output, llvm_unwrap_cond_goto_const(statement));
@@ -1121,11 +1122,33 @@ static void emit_symbols(const Env* env, String* output) {
 }
 
 void emit_llvm_from_tree(Env* env, const Llvm_block* root) {
+    String struct_defs = {0};
     String output = {0};
-    emit_block(env, &output, root);
+    emit_block(env, &struct_defs, &output, root);
     emit_symbols(env, &output);
-    log(LOG_DEBUG, "\n"STRING_FMT"\n", string_print(output));
-    Str_view final_output = {.str = output.buf, .count = output.info.count};
-    write_file("test.ll", final_output);
+    log(LOG_DEBUG, "\n"STRING_FMT"\n"STRING_FMT"\n", string_print(struct_defs), string_print(output));
+
+    FILE* file = fopen("test.ll", "w");
+    if (!file) {
+        msg(
+            LOG_FATAL, EXPECT_FAIL_TYPE_NONE, dummy_file_text, dummy_pos, "could not open file %s: errno %d (%s)\n",
+            params.input_file_name, errno, strerror(errno)
+        );
+        exit(EXIT_CODE_FAIL);
+    }
+
+    for (size_t idx = 0; idx < struct_defs.info.count; idx++) {
+        if (EOF == fputc(vec_at(&struct_defs, idx), file)) {
+            todo();
+        }
+    }
+
+    for (size_t idx = 0; idx < output.info.count; idx++) {
+        if (EOF == fputc(vec_at(&output, idx), file)) {
+            todo();
+        }
+    }
+
+    fclose(file);
 }
 
