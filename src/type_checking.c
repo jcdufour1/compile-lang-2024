@@ -609,8 +609,7 @@ bool try_set_struct_literal_assignment_types(
     Tast_expr_vec new_literal_members = {0};
     for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
         //log(LOG_DEBUG, "%zu\n", idx);
-        Uast_stmt* memb_sym_def_ = vec_at(&struct_def->base.members, idx);
-        Uast_variable_def* memb_sym_def = uast_unwrap_variable_def(uast_unwrap_def(memb_sym_def_));
+        Uast_variable_def* memb_sym_def = vec_at(&struct_def->base.members, idx);
         log(LOG_DEBUG, STR_VIEW_FMT, uast_stmt_print(uast_wrap_expr_const(uast_wrap_struct_literal_const(struct_literal))));
         Uast_assignment* assign_memb_sym = uast_unwrap_assignment(vec_at(&struct_literal->members, idx));
         Uast_symbol_untyped* memb_sym_piece_untyped = uast_unwrap_symbol_untyped(uast_unwrap_expr(assign_memb_sym->lhs));
@@ -1192,11 +1191,10 @@ bool try_set_struct_base_types(Env* env, Struct_def_base* new_base, Ustruct_def_
     }
 
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        Uast_stmt* curr = vec_at(&base->members, idx);
+        Uast_variable_def* curr = vec_at(&base->members, idx);
 
-        Tast_stmt* new_memb_ = NULL;
-        if (try_set_stmt_types(env, &new_memb_, curr)) {
-            Tast_variable_def* new_memb = tast_unwrap_variable_def(tast_unwrap_def(new_memb_));
+        Tast_variable_def* new_memb = NULL;
+        if (try_set_variable_def_types(env, &new_memb, curr, false)) {
             vec_append(&a_main, &new_members, new_memb);
         } else {
             success = false;
@@ -1589,8 +1587,8 @@ static bool check_for_exhaustiveness_finish(const Env* env, Exhaustive_data exha
                 msg(
                     LOG_ERROR, EXPECT_FAIL_NON_EXHAUSTIVE_SWITCH, env->file_text, pos_switch,
                     "case `"LANG_TYPE_FMT"."STR_VIEW_FMT"` is not covered\n",
-                    lang_type_print(uast_get_lang_type_stmt(vec_at(&enum_def->base.members, idx))),
-                    str_view_print(uast_unwrap_variable_def(uast_unwrap_def(vec_at(&enum_def->base.members, idx)))->name)
+                    lang_type_print(vec_at(&enum_def->base.members, idx)->lang_type),
+                    str_view_print(vec_at(&enum_def->base.members, idx)->name)
                 );
                 return false;
             }

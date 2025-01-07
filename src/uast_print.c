@@ -440,7 +440,7 @@ static void extend_ustruct_def_base(String* buf, const char* type_name, Ustruct_
 
     indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        Str_view memb_text = uast_stmt_print_internal(vec_at(&base.members, idx), indent);
+        Str_view memb_text = uast_variable_def_print_internal(vec_at(&base.members, idx), indent);
         string_extend_strv(&print_arena, buf, memb_text);
     }
     indent -= INDENT_WIDTH;

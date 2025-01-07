@@ -325,15 +325,15 @@ static Tast_function_def* rm_tuple_function_def(Env* env, Tast_function_def* def
     vec_append(&a_main, &env->ancesters, &def->body->symbol_collection);
 
     if (def->decl->return_type->lang_type.info.count > 1) {
-        Uast_stmt_vec members = {0};
+        Uast_variable_def_vec members = {0};
 
         for (size_t idx = 0; idx < rtn_type.info.count; idx++) {
-            Uast_stmt* memb = uast_wrap_def(uast_wrap_variable_def(uast_variable_def_new(
+            Uast_variable_def* memb = uast_variable_def_new(
                 def->decl->return_type->pos,
                 vec_at(&rtn_type, idx),
                 false,
                 util_literal_name_new_prefix("tuple_struct_member")
-            )));
+            );
             vec_append(&a_main, &members, memb);
         }
 

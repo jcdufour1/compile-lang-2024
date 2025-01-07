@@ -791,7 +791,7 @@ static PARSE_STATUS extract_struct_base_def(Env* env, Ustruct_def_base* base, St
         }
         try_consume(NULL, tokens, TOKEN_SEMICOLON);
         while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
-        vec_append(&a_main, &base->members, uast_wrap_def(uast_wrap_variable_def(member)));
+        vec_append(&a_main, &base->members, member);
     }
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
