@@ -57,10 +57,11 @@ static bool try_consume(Token* result, Tk_view* tokens, TOKEN_TYPE type) {
     return true;
 }
 
-static void consume(Tk_view* tokens) {
+static Token consume(Tk_view* tokens) {
     Token temp = tk_view_front(*tokens);
     tk_view_consume(tokens);
     prev_token = temp;
+    return temp;
 }
 
 static Token get_curr_token(Tk_view tokens) {
@@ -490,9 +491,15 @@ static uint32_t get_operator_precedence(Token token) {
             return 5;
         case TOKEN_SLASH:
             return 5;
+        case TOKEN_NOT:
+            return 15;
+        case TOKEN_DEREF:
+            return 15;
         case TOKEN_SINGLE_DOT:
             return 20;
         case TOKEN_OPEN_SQ_BRACKET:
+            return 20;
+        case TOKEN_OPEN_PAR:
             return 20;
         default:
             unreachable(TOKEN_FMT, token_print(token));
@@ -1115,14 +1122,14 @@ static Uast_symbol_untyped* extract_symbol(Tk_view* tokens) {
     return uast_symbol_untyped_new(token.pos, token.text);
 }
 
-static PARSE_STATUS try_extract_function_call(Env* env, Uast_function_call** child, Tk_view* tokens) {
-    Token fun_name_token;
-    if (!try_consume(&fun_name_token, tokens, TOKEN_SYMBOL)) {
-        unreachable("this is not a function call");
-    }
-    if (!try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
-        unreachable("this is not a function call");
-    }
+static PARSE_STATUS try_extract_function_call(Env* env, Uast_function_call** child, Tk_view* tokens, Uast_symbol_untyped* name) {
+    //Token fun_name_token;
+    //if (!try_consume(&fun_name_token, tokens, TOKEN_SYMBOL)) {
+    //    unreachable("this is not a function call");
+    //}
+    //if (!try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
+    //    unreachable("this is not a function call");
+    //}
 
     bool is_first_time = true;
     bool prev_is_comma = false;
@@ -1149,17 +1156,7 @@ static PARSE_STATUS try_extract_function_call(Env* env, Uast_function_call** chi
         is_first_time = false;
     }
 
-    if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), "after function arguments", TOKEN_CLOSE_PAR, TOKEN_COMMA);
-        msg(
-            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, fun_name_token.pos,
-            "when parsing arguments for call to function `"STR_VIEW_FMT"`\n", 
-            str_view_print(fun_name_token.text)
-        );
-        return PARSE_ERROR;
-    }
-
-    *child = uast_function_call_new(fun_name_token.pos, args, fun_name_token.text);
+    *child = uast_function_call_new(name->pos, args, name->name);
     return PARSE_OK;
 }
 
@@ -1546,6 +1543,7 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Uast_stmt** child, Tk_view*
             LOG_ERROR, EXPECT_FAIL_NO_NEW_LINE_AFTER_STATEMENT, env->file_text, tk_view_front(*tokens).pos,
             "expected newline after statement\n"
         );
+        todo();
         return PARSE_EXPR_ERROR;
     }
 
@@ -1702,7 +1700,6 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(
         return PARSE_EXPR_NONE;
     }
 
-    Uast_function_call* fun_call;
     Token open_par_token = {0};
     if (try_consume(&open_par_token, tokens, TOKEN_OPEN_PAR)) {
         switch (try_extract_expression(env, result, tokens, defer_sym_add, false)) {
@@ -1728,54 +1725,6 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(
             );
             return PARSE_EXPR_ERROR;
         }
-    } else if (is_unary(tk_view_front(*tokens).type)) {
-        Token operator_token = tk_view_consume(tokens);
-        Lang_type unary_lang_type = {0};
-        switch (operator_token.type) {
-            case TOKEN_DEREF:
-                break;
-            case TOKEN_REFER:
-                break;
-            case TOKEN_NOT:
-                break;
-            case TOKEN_UNSAFE_CAST: {
-                {
-                    Token temp;
-                    if (!try_consume(&temp, tokens, TOKEN_LESS_THAN)) {
-                        msg_parser_expected(env->file_text, temp, "", TOKEN_LESS_THAN);
-                        return PARSE_EXPR_ERROR;
-                    }
-                }
-                if (PARSE_OK != extract_lang_type_struct_require(env, &unary_lang_type, tokens)) {
-                    return PARSE_EXPR_ERROR;
-                }
-                {
-                    Token temp;
-                    if (!try_consume(&temp, tokens, TOKEN_GREATER_THAN)) {
-                        msg_parser_expected(env->file_text, temp, "", TOKEN_GREATER_THAN);
-                        return PARSE_EXPR_ERROR;
-                    }
-                }
-                break;
-            }
-            default:
-                unreachable(TOKEN_TYPE_FMT"\n", token_type_print(operator_token.type));
-        }
-        Uast_expr* inside_unary;
-        if (PARSE_EXPR_OK != try_extract_expression_piece(env, &inside_unary, tokens, defer_sym_add)) {
-            todo();
-        }
-        *result = uast_wrap_operator(uast_wrap_unary(uast_unary_new(
-            operator_token.pos,
-            inside_unary,
-            operator_token.type,
-            unary_lang_type
-        )));
-    } else if (starts_with_function_call(*tokens)) {
-        if (PARSE_OK != try_extract_function_call(env, &fun_call, tokens)) {
-            return PARSE_EXPR_ERROR;
-        }
-        *result = uast_wrap_function_call(fun_call);
     } else if (token_is_literal(tk_view_front(*tokens))) {
         *result = uast_wrap_literal(extract_literal(env, tokens, defer_sym_add));
     } else if (tk_view_front(*tokens).type == TOKEN_SYMBOL) {
@@ -1846,6 +1795,8 @@ static PARSE_EXPR_STATUS try_extract_expression(
         return PARSE_EXPR_NONE;
     }
 
+    bool should_be_unary = false;
+
     Uast_expr* expression = NULL;
     switch (try_extract_expression_piece(env, &expression, tokens, defer_sym_add)) {
         case PARSE_EXPR_OK:
@@ -1854,26 +1805,84 @@ static PARSE_EXPR_STATUS try_extract_expression(
             assert(error_count > 0 && "error_count not incremented\n");
             return PARSE_EXPR_ERROR;
         case PARSE_EXPR_NONE:
-            return PARSE_EXPR_NONE;
+            if (!token_is_operator(tk_view_front(*tokens), can_be_tuple)) {
+                return PARSE_EXPR_NONE;
+            }
+            should_be_unary = true;
+            break;
         default:
             unreachable("");
     }
-    assert(expression);
 
+    Token operator_token = {0};
     Token prev_operator_token = {0};
-    bool is_first_operator = true;
-    while (tokens->count > 0 && token_is_operator(tk_view_front(*tokens), can_be_tuple) && !is_unary(tk_view_front(*tokens).type)) {
+    bool is_first_operator = !should_be_unary;
+
+    if (should_be_unary) {
+        operator_token = consume(tokens);
+        prev_operator_token = operator_token;
+
+        Lang_type unary_lang_type = {0};
+        switch (operator_token.type) {
+            case TOKEN_DEREF:
+                break;
+            case TOKEN_REFER:
+                break;
+            case TOKEN_NOT:
+                break;
+            case TOKEN_UNSAFE_CAST: {
+                {
+                    Token temp;
+                    if (!try_consume(&temp, tokens, TOKEN_LESS_THAN)) {
+                        msg_parser_expected(env->file_text, temp, "", TOKEN_LESS_THAN);
+                        return PARSE_EXPR_ERROR;
+                    }
+                }
+                if (PARSE_OK != extract_lang_type_struct_require(env, &unary_lang_type, tokens)) {
+                    return PARSE_EXPR_ERROR;
+                }
+                {
+                    Token temp;
+                    if (!try_consume(&temp, tokens, TOKEN_GREATER_THAN)) {
+                        msg_parser_expected(env->file_text, temp, "", TOKEN_GREATER_THAN);
+                        return PARSE_EXPR_ERROR;
+                    }
+                }
+                break;
+            }
+            default:
+                unreachable(TOKEN_TYPE_FMT"\n", token_type_print(operator_token.type));
+        }
+
+        try(!expression);
+        Uast_expr* child = NULL;
+        if (PARSE_EXPR_OK != try_extract_expression_piece(env, &child, tokens, defer_sym_add)) {
+            todo();
+        }
+        expression = uast_wrap_operator(uast_wrap_unary(uast_unary_new(
+            operator_token.pos,
+            child,
+            operator_token.type,
+            unary_lang_type
+        )));
+    }
+
+    while (tokens->count > 0 && token_is_operator(tk_view_front(*tokens), can_be_tuple)) {
         while (try_consume(NULL, tokens, TOKEN_NEW_LINE)) {
             todo();
         }
+        log_tokens(LOG_DEBUG, *tokens);
+        if (expression) {
+            log(LOG_DEBUG, TAST_FMT, uast_expr_print(expression));
+        }
 
-        Token operator_token = tk_view_consume(tokens);
+        operator_token = tk_view_consume(tokens);
         while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
-        if (is_unary(operator_token.type)) {
-            unreachable("");
-        } else if (!is_first_operator && expr_is_binary(expression) &&
+        if (!is_first_operator && 
             get_operator_precedence(prev_operator_token) < get_operator_precedence(operator_token)
         ) {
+            assert(expression);
+            is_first_operator = false;
             Uast_expr* rhs;
             switch (operator_token.type) {
                 case TOKEN_SINGLE_DOT:
@@ -1921,20 +1930,69 @@ static PARSE_EXPR_STATUS try_extract_expression(
                             unreachable("");
                     }
                     break;
+                case TOKEN_OPEN_PAR: {
+                    assert(expression);
+                    Uast_function_call* fun_call = NULL;
+
+                    switch (uast_unwrap_operator(expression)->type) {
+                        case UAST_BINARY:
+                            if (PARSE_OK != try_extract_function_call(env, &fun_call, tokens, uast_unwrap_symbol_untyped(uast_unwrap_binary(uast_unwrap_operator(expression))->rhs))) {
+                                return PARSE_EXPR_ERROR;
+                            }
+                            uast_unwrap_binary(uast_unwrap_operator(expression))->rhs = uast_wrap_function_call(fun_call);
+                            break;
+                        case UAST_UNARY:
+                            if (PARSE_OK != try_extract_function_call(env, &fun_call, tokens, uast_unwrap_symbol_untyped(uast_unwrap_unary(uast_unwrap_operator(expression))->child))) {
+                                return PARSE_EXPR_ERROR;
+                            }
+                            uast_unwrap_unary(uast_unwrap_operator(expression))->child = uast_wrap_function_call(fun_call);
+                            break;
+                        default:
+                            unreachable("");
+                    }
+
+                    if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
+                        msg(
+                            LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_PAR, env->file_text,
+                            get_curr_pos(*tokens), "expected closing `)` after expression\n"
+                        );
+                        todo();
+                        return PARSE_EXPR_ERROR;
+                    }
+                    break;
+                }
                 default:
                     unreachable(TOKEN_TYPE_FMT, token_type_print(operator_token.type));
             }
 
             switch (operator_token.type) {
                 case TOKEN_SINGLE_DOT: {
-                    Uast_expr* access = uast_wrap_member_access_untyped(
-                        uast_member_access_untyped_new(
-                            operator_token.pos,
-                            uast_unwrap_symbol_untyped(rhs)->name,
-                            uast_unwrap_binary(uast_unwrap_operator(expression))->rhs
-                        )
-                    );
-                    uast_unwrap_binary(uast_unwrap_operator(expression))->rhs = access;
+                    switch (uast_unwrap_operator(expression)->type) {
+                        case UAST_BINARY: {
+                            Uast_expr* access = uast_wrap_member_access_untyped(
+                                uast_member_access_untyped_new(
+                                    operator_token.pos,
+                                    uast_unwrap_symbol_untyped(rhs)->name,
+                                    uast_unwrap_binary(uast_unwrap_operator(expression))->rhs
+                                )
+                            );
+                            uast_unwrap_binary(uast_unwrap_operator(expression))->rhs = access;
+                            break;
+                        }
+                        case UAST_UNARY: {
+                            Uast_expr* access = uast_wrap_member_access_untyped(
+                                uast_member_access_untyped_new(
+                                    operator_token.pos,
+                                    uast_unwrap_symbol_untyped(rhs)->name,
+                                    uast_unwrap_unary(uast_unwrap_operator(expression))->child
+                                )
+                            );
+                            uast_unwrap_unary(uast_unwrap_operator(expression))->child = access;
+                            break;
+                        }
+                        default:
+                            unreachable("");
+                    }
                     break;
                 }
                 case TOKEN_SINGLE_PLUS:
@@ -1964,10 +2022,14 @@ static PARSE_EXPR_STATUS try_extract_expression(
                     uast_unwrap_binary(uast_unwrap_operator(expression))->rhs = uast_wrap_operator(uast_wrap_binary(operator));
                     break;
                 }
+                case TOKEN_OPEN_PAR:
+                    break;
                 default:
                     unreachable(TOKEN_TYPE_FMT, token_type_print(operator_token.type));
             }
         } else {
+            assert(expression);
+            is_first_operator = false;
             Uast_expr* lhs = expression;
             Uast_expr* rhs;
             switch (operator_token.type) {
@@ -2025,6 +2087,8 @@ static PARSE_EXPR_STATUS try_extract_expression(
                             unreachable("");
                     }
                     break;
+                case TOKEN_OPEN_PAR:
+                    break;
                 default:
                     unreachable(TOKEN_TYPE_FMT, token_type_print(operator_token.type));
             }
@@ -2064,6 +2128,23 @@ static PARSE_EXPR_STATUS try_extract_expression(
                         return PARSE_EXPR_ERROR;
                     }
                     break;
+                case TOKEN_OPEN_PAR: {
+                    Uast_function_call* fun_call = NULL;
+                    if (PARSE_OK != try_extract_function_call(env, &fun_call, tokens, uast_unwrap_symbol_untyped(lhs))) {
+                        return PARSE_EXPR_ERROR;
+                    }
+                    expression = uast_wrap_function_call(fun_call);
+
+                    if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
+                        msg(
+                            LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_PAR, env->file_text,
+                            get_curr_pos(*tokens), "expected closing `)` after expression\n"
+                        );
+                        todo();
+                        return PARSE_EXPR_ERROR;
+                    }
+                    break;
+                }
                 case TOKEN_SINGLE_PLUS:
                     // fallthrough
                 case TOKEN_SINGLE_MINUS:
@@ -2096,6 +2177,7 @@ static PARSE_EXPR_STATUS try_extract_expression(
         prev_operator_token = operator_token;
     }
 
+    assert(expression);
     *result = expression;
     return PARSE_EXPR_OK;
 }
