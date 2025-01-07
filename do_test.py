@@ -97,6 +97,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "tuple_invalid_subtype.own": ["assignment-mismatched-types", "assignment-mismatched-types"],
     EXPECTED_FAIL_EXAMPLES_DIR + "struct_literal_invalid_types.own": ["assignment-mismatched-types", "assignment-mismatched-types"],
     EXPECTED_FAIL_EXAMPLES_DIR + "non_exhaustive_switch.own": ["non-exhaustive-switch"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "enum_def_line_extra_tokens.own": ["parser-expected", "parser-expected", "parser-expected"],
 }
 
 def to_str(a):

@@ -1,8 +1,8 @@
 
 
 type Token_type enum {
-    NUM Token_type
-    STRING Token_type
+    NUM
+    STRING
 }
 
 fn main() i32 {

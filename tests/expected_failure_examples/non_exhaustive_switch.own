@@ -3,8 +3,8 @@ extern("c") fn puts(str_to_print_2 u8*)
 extern("c") fn printf(str_to_print_2 u8*, args any...) i32
 
 type TokenType enum {
-    number TokenType
-    string TokenType
+    number
+    string
 }
 
 type Token struct {
@@ -17,15 +17,6 @@ fn print_token_switch(token Token) {
     switch token.kind {
     case TokenType.number: printf("%d\n", token.number_data)
     }
-}
-
-// check that scope rules are followed for type subtypes enum
-type NodeType enum {
-    NONE NodeType
-}
-
-type LlvmType enum {
-    NONE LlvmType
 }
 
 fn main() i32 {

@@ -802,6 +802,52 @@ static PARSE_STATUS extract_struct_base_def(Env* env, Ustruct_def_base* base, St
     return PARSE_OK;
 }
 
+static PARSE_STATUS extract_struct_base_def_implicit_type(
+    Env* env,
+    Ustruct_def_base* base,
+    Str_view name,
+    Tk_view* tokens,
+    Lang_type lang_type
+) {
+    base->name = name;
+
+    if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), "in struct, raw_union, or enum definition", TOKEN_OPEN_CURLY_BRACE);
+        return PARSE_ERROR;
+    }
+    while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
+
+    bool done = false;
+    while (!done && tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_CLOSE_CURLY_BRACE) {
+        Token name_token;
+        if (!try_consume(&name_token, tokens, TOKEN_SYMBOL)) {
+            msg_parser_expected(env->file_text, tk_view_front(*tokens), "in variable definition", TOKEN_SYMBOL);
+            return PARSE_ERROR;
+        }
+        try_consume(NULL, tokens, TOKEN_SEMICOLON);
+        if (!try_consume(NULL, tokens, TOKEN_NEW_LINE) && !try_consume(NULL, tokens, TOKEN_COMMA)) {
+            msg_parser_expected(env->file_text, tk_view_front(*tokens), "", TOKEN_NEW_LINE, TOKEN_COMMA);
+            return PARSE_ERROR;
+        }
+
+        Uast_variable_def* member = uast_variable_def_new(
+            name_token.pos,
+            lang_type,
+            false,
+            name_token.text
+        );
+
+        vec_append(&a_main, &base->members, member);
+    }
+
+    if (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), "to end struct, raw_union, or enum definition", TOKEN_CLOSE_CURLY_BRACE);
+        return PARSE_ERROR;
+    }
+
+    return PARSE_OK;
+}
+
 static PARSE_STATUS extract_struct_def(Env* env, Uast_struct_def** struct_def, Tk_view* tokens) {
     try(try_consume(NULL, tokens, TOKEN_TYPE_DEF));
 
@@ -850,7 +896,7 @@ static PARSE_STATUS extract_enum_def(Env* env, Uast_enum_def** enum_def, Tk_view
     try(try_consume(NULL, tokens, TOKEN_ENUM));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != extract_struct_base_def(env, &base, name.text, tokens)) {
+    if (PARSE_OK != extract_struct_base_def_implicit_type(env, &base, name.text, tokens, lang_type_new_from_strv(name.text, 0))) {
         return PARSE_ERROR;
     }
 

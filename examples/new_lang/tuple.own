@@ -2,8 +2,8 @@
 extern("c") fn printf(format_string u8*, args any...)
 
 type TokenType enum {
-    num TokenType
-    string TokenType
+    num
+    string
 }
 
 fn get_data() (u8*, i32) {
