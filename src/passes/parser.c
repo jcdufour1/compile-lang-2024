@@ -1876,11 +1876,83 @@ static Uast_expr* get_left_child_expr(Uast_expr* expr) {
 }
 
 static Uast_expr* get_right_child_expr(Uast_expr* expr) {
-    return uast_unwrap_binary(uast_unwrap_operator(expr))->rhs;
+    Uast_operator* oper = uast_unwrap_operator(expr);
+
+    switch (oper->type) {
+        case UAST_UNARY:
+            return uast_unwrap_unary(oper)->child;
+        case UAST_BINARY:
+            return uast_unwrap_binary(oper)->rhs;
+        default:
+            unreachable("");
+    }
+    unreachable("");
 }
 
 static void get_right_child_expr_set(Uast_expr* expr, Uast_expr* new_rhs) {
-    uast_unwrap_binary(uast_unwrap_operator(expr))->rhs = new_rhs;
+    Uast_operator* oper = uast_unwrap_operator(expr);
+
+    switch (oper->type) {
+        case UAST_UNARY:
+            uast_unwrap_unary(oper)->child = new_rhs;
+            return;
+        case UAST_BINARY:
+            uast_unwrap_binary(oper)->rhs = new_rhs;
+            return;
+        default:
+            unreachable("");
+    }
+    unreachable("");
+}
+
+static PARSE_EXPR_STATUS extract_expression_function_call(
+    Env* env,
+    Uast_expr** result,
+    Uast_expr** lhs,
+    Tk_view* tokens
+) {
+    Uast_function_call* fun_call = NULL;
+    switch ((*lhs)->type) {
+        case UAST_SYMBOL_UNTYPED:
+            switch (try_extract_function_call(env, &fun_call, tokens, uast_unwrap_symbol_untyped(*lhs))) {
+                case PARSE_EXPR_OK:
+                    *result = uast_wrap_function_call(fun_call);
+                    *lhs = *result;
+                    return PARSE_EXPR_OK;
+                default:
+                    unreachable("");
+            }
+            unreachable("");
+        case UAST_OPERATOR:
+            switch (try_extract_function_call(env, &fun_call, tokens, uast_unwrap_symbol_untyped(get_right_child_expr(*lhs)))) {
+                case PARSE_EXPR_OK:
+                    get_right_child_expr_set(*lhs, uast_wrap_function_call(fun_call));
+                    *result = *lhs;
+                    return PARSE_EXPR_OK;
+                default:
+                    unreachable("");
+            }
+            unreachable("");
+        default:
+            unreachable("");
+    }
+    unreachable("");
+}
+
+static PARSE_EXPR_STATUS extract_expression_opening(
+    Env* env,
+    Uast_expr** result,
+    Uast_expr** lhs,
+    Tk_view* tokens
+) {
+    switch (tk_view_front(*tokens).type) {
+        case TOKEN_OPEN_PAR: {
+            return extract_expression_function_call(env, result, lhs, tokens);
+        }
+        default:
+            unreachable("");
+    }
+    unreachable("");
 }
 
 static PARSE_EXPR_STATUS try_extract_expression(
@@ -1935,19 +2007,9 @@ static PARSE_EXPR_STATUS try_extract_expression(
         if (is_unary(tk_view_front(*tokens).type)) {
             todo();
         } else if (token_is_opening(tk_view_front(*tokens))) {
-            switch (tk_view_front(*tokens).type) {
-                case TOKEN_OPEN_PAR: {
-                    Uast_function_call* fun_call = NULL;
-                    switch (try_extract_function_call(env, &fun_call, tokens, uast_unwrap_symbol_untyped(lhs))) {
-                        case PARSE_EXPR_OK:
-                            *result = uast_wrap_function_call(fun_call);
-                            lhs = *result;
-                            break;
-                        default:
-                            unreachable("");
-                    }
+            switch (extract_expression_opening(env, result, &lhs, tokens)) {
+                case PARSE_EXPR_OK:
                     break;
-                }
                 default:
                     unreachable("");
             }
