@@ -112,7 +112,7 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
         case TOKEN_DEFAULT:
             return str_view_from_cstr("default");
     }
-    unreachable("");
+    unreachable("%d\n", token_type);
 }
 
 Str_view token_print_internal(Arena* arena, Token token, bool msg_format) {

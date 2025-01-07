@@ -469,8 +469,8 @@ static bool can_end_statement(Token token) {
 }
 
 // higher number returned from this function means that operator has higher precedence
-static uint32_t get_operator_precedence(Token token) {
-    switch (token.type) {
+static int32_t get_operator_precedence(TOKEN_TYPE type) {
+    switch (type) {
         case TOKEN_DOUBLE_EQUAL:
             return 1;
         case TOKEN_NOT_EQUAL:
@@ -502,7 +502,7 @@ static uint32_t get_operator_precedence(Token token) {
         case TOKEN_OPEN_PAR:
             return 20;
         default:
-            unreachable(TOKEN_FMT, token_print(token));
+            unreachable(TOKEN_TYPE_FMT, token_type_print(type));
     }
 }
 
@@ -1867,6 +1867,18 @@ static PARSE_EXPR_STATUS extract_binary(
     todo();
 }
 
+static Uast_expr* get_left_child_expr(Uast_expr* expr) {
+    return uast_unwrap_binary(uast_unwrap_operator(expr))->lhs;
+}
+
+static Uast_expr* get_right_child_expr(Uast_expr* expr) {
+    return uast_unwrap_binary(uast_unwrap_operator(expr))->rhs;
+}
+
+static void get_right_child_expr_set(Uast_expr* expr, Uast_expr* new_rhs) {
+    uast_unwrap_binary(uast_unwrap_operator(expr))->rhs = new_rhs;
+}
+
 static PARSE_EXPR_STATUS try_extract_expression(
     Env* env,
     Uast_expr** result,
@@ -1877,10 +1889,10 @@ static PARSE_EXPR_STATUS try_extract_expression(
     Uast_expr* lhs = NULL;
     //Uast_expr* rhs = NULL;
 
-    uint32_t prev_oper_pres = UINT32_MAX;
+    int32_t prev_oper_pres = INT32_MAX;
 
     if (is_unary(tk_view_front(*tokens).type)) {
-        prev_oper_pres = get_operator_precedence(tk_view_front(*tokens));
+        prev_oper_pres = get_operator_precedence(tk_view_front(*tokens).type);
         Uast_unary* unary = NULL;
         switch (extract_unary(env, &unary, tokens, defer_sym_add, can_be_tuple)) {
             case PARSE_EXPR_OK:
@@ -1915,14 +1927,35 @@ static PARSE_EXPR_STATUS try_extract_expression(
         if (is_unary(tk_view_front(*tokens).type)) {
             todo();
         } else {
-            Uast_binary* binary = NULL;
-            assert(lhs);
-            switch (extract_binary(env, &binary, lhs, tokens, defer_sym_add, can_be_tuple)) {
-                case PARSE_EXPR_OK:
-                    *result = uast_wrap_operator(uast_wrap_binary(binary));
-                    break;
-                default:
-                    todo();
+            if (prev_oper_pres < get_operator_precedence(tk_view_front(*tokens).type)) {
+                prev_oper_pres = get_operator_precedence(tk_view_front(*tokens).type);
+                Uast_binary* binary = NULL;
+                assert(lhs);
+                log(LOG_DEBUG, UAST_FMT, uast_expr_print(lhs));
+                switch (extract_binary(env, &binary, get_right_child_expr(lhs), tokens, defer_sym_add, can_be_tuple)) {
+                    case PARSE_EXPR_OK:
+                        log(LOG_DEBUG, UAST_FMT, uast_binary_print(binary));
+                        get_right_child_expr_set(lhs, uast_wrap_operator(uast_wrap_binary(binary)));
+                        *result = lhs;
+                        log(LOG_DEBUG, UAST_FMT, uast_expr_print(lhs));
+                        break;
+                    default:
+                        todo();
+                }
+            } else {
+                prev_oper_pres = get_operator_precedence(tk_view_front(*tokens).type);
+                log(LOG_DEBUG, "%d\n", prev_oper_pres);
+                Uast_binary* binary = NULL;
+                assert(lhs);
+                switch (extract_binary(env, &binary, lhs, tokens, defer_sym_add, can_be_tuple)) {
+                    case PARSE_EXPR_OK:
+                        *result = uast_wrap_operator(uast_wrap_binary(binary));
+                        lhs = *result;
+                        log_tokens(LOG_DEBUG, *tokens);
+                        break;
+                    default:
+                        todo();
+                }
             }
         }
     }
