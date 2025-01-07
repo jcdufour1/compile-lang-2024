@@ -495,6 +495,10 @@ static int32_t get_operator_precedence(TOKEN_TYPE type) {
             return 15;
         case TOKEN_DEREF:
             return 15;
+        case TOKEN_REFER:
+            return 15;
+        case TOKEN_UNSAFE_CAST:
+            return 15;
         case TOKEN_SINGLE_DOT:
             return 20;
         case TOKEN_OPEN_SQ_BRACKET:
@@ -1804,20 +1808,61 @@ static PARSE_EXPR_STATUS extract_unary(
     try(is_unary(oper.type));
 
     Uast_expr* child = NULL;
+    Lang_type unary_lang_type = lang_type_new_from_cstr("i32", 0);
+
+    switch (oper.type) {
+        case TOKEN_NOT:
+            break;
+        case TOKEN_DEREF:
+            break;
+        case TOKEN_REFER:
+            break;
+        case TOKEN_UNSAFE_CAST: {
+            {
+                Token temp;
+                if (!try_consume(&temp, tokens, TOKEN_LESS_THAN)) {
+                    msg_parser_expected(env->file_text, temp, "", TOKEN_LESS_THAN);
+                    return PARSE_EXPR_ERROR;
+                }
+            }
+            if (PARSE_OK != extract_lang_type_struct_require(env, &unary_lang_type, tokens)) {
+                return PARSE_EXPR_ERROR;
+            }
+            {
+                Token temp;
+                if (!try_consume(&temp, tokens, TOKEN_GREATER_THAN)) {
+                    msg_parser_expected(env->file_text, temp, "", TOKEN_GREATER_THAN);
+                    return PARSE_EXPR_ERROR;
+                }
+            }
+            break;
+        }
+        default:
+            unreachable(TOKEN_FMT, token_print(oper));
+    }
 
     switch (try_extract_expression_piece(env, &child, tokens, defer_sym_add)) {
         case PARSE_EXPR_OK:
             break;
+        case PARSE_EXPR_NONE:
+            return PARSE_EXPR_NONE;
         default:
             todo();
     }
 
     switch (oper.type) {
         case TOKEN_NOT:
-            *result = uast_unary_new(oper.pos, child, oper.type, lang_type_new_from_cstr("i32", 0));
+            // fallthrough
+        case TOKEN_DEREF:
+            // fallthrough
+        case TOKEN_REFER:
+            // fallthrough
+        case TOKEN_UNSAFE_CAST:
+            *result = uast_unary_new(oper.pos, child, oper.type, unary_lang_type);
+            log(LOG_DEBUG, TAST_FMT"\n", uast_unary_print(*result));
             break;
         default:
-            todo();
+            unreachable(TOKEN_FMT, token_print(oper));
     }
 
     return PARSE_EXPR_OK;
@@ -1825,7 +1870,7 @@ static PARSE_EXPR_STATUS extract_unary(
 
 static PARSE_EXPR_STATUS extract_binary(
     Env* env,
-    Uast_binary** result,
+    Uast_expr** result,
     Uast_expr* lhs,
     Tk_view* tokens,
     bool defer_sym_add,
@@ -1865,7 +1910,34 @@ static PARSE_EXPR_STATUS extract_binary(
         }
     }
 
-    *result = uast_binary_new(oper.pos, lhs, rhs, oper.type);
+    switch (oper.type) {
+        case TOKEN_SINGLE_DOT:
+            *result = uast_wrap_member_access_untyped(uast_member_access_untyped_new(oper.pos, uast_unwrap_symbol_untyped(rhs)->name, lhs));
+            break;
+        case TOKEN_SINGLE_PLUS:
+            // fallthrough
+        case TOKEN_SINGLE_MINUS:
+            // fallthrough
+        case TOKEN_ASTERISK:
+            // fallthrough
+        case TOKEN_SLASH:
+            // fallthrough
+        case TOKEN_GREATER_OR_EQUAL:
+            // fallthrough
+        case TOKEN_LESS_OR_EQUAL:
+            // fallthrough
+        case TOKEN_LESS_THAN:
+            // fallthrough
+        case TOKEN_GREATER_THAN:
+            // fallthrough
+        case TOKEN_NOT_EQUAL:
+            // fallthrough
+        case TOKEN_DOUBLE_EQUAL:
+            *result = uast_wrap_operator(uast_wrap_binary(uast_binary_new(oper.pos, lhs, rhs, oper.type)));
+            break;
+        default:
+            unreachable(TOKEN_FMT, token_print(oper));
+    }
     return PARSE_EXPR_OK;
 
     todo();
@@ -1939,18 +2011,49 @@ static PARSE_EXPR_STATUS extract_expression_function_call(
     unreachable("");
 }
 
+static PARSE_EXPR_STATUS extract_expression_index(
+    Env* env,
+    Uast_expr** result,
+    Uast_expr** lhs,
+    Tk_view* tokens,
+    bool defer_sym_add
+) {
+    Token oper = consume(tokens);
+    try(oper.type == TOKEN_OPEN_SQ_BRACKET);
+
+    Uast_expr* index_index = NULL;
+    switch (try_extract_expression_piece(env, &index_index, tokens, defer_sym_add)) {
+        case PARSE_EXPR_OK:
+            break;
+        case PARSE_EXPR_NONE:
+            return PARSE_EXPR_NONE;
+        default:
+            todo();
+    }
+
+    try(try_consume(NULL, tokens, TOKEN_CLOSE_SQ_BRACKET));
+
+    *result = uast_wrap_index_untyped(uast_index_untyped_new(oper.pos, index_index, *lhs));
+    *lhs = *result;
+    return PARSE_EXPR_OK;
+}
+
 static PARSE_EXPR_STATUS extract_expression_opening(
     Env* env,
     Uast_expr** result,
     Uast_expr** lhs,
-    Tk_view* tokens
+    Tk_view* tokens,
+    bool defer_sym_add
 ) {
     switch (tk_view_front(*tokens).type) {
         case TOKEN_OPEN_PAR: {
             return extract_expression_function_call(env, result, lhs, tokens);
         }
+        case TOKEN_OPEN_SQ_BRACKET: {
+            return extract_expression_index(env, result, lhs, tokens, defer_sym_add);
+        }
         default:
-            unreachable("");
+            unreachable(TOKEN_FMT, token_print(tk_view_front(*tokens)));
     }
     unreachable("");
 }
@@ -1977,7 +2080,7 @@ static PARSE_EXPR_STATUS try_extract_expression(
             case PARSE_EXPR_ERROR:
                 todo();
             case PARSE_EXPR_NONE:
-                todo();
+                return PARSE_EXPR_NONE;
             default:
                 todo();
         }
@@ -1995,7 +2098,6 @@ static PARSE_EXPR_STATUS try_extract_expression(
     if (!token_is_operator(tk_view_front(*tokens), can_be_tuple)) {
         log_tokens(LOG_DEBUG, *tokens);
         if (lhs) {
-            todo();
             *result = lhs;
             return PARSE_EXPR_OK;
         } else {
@@ -2007,7 +2109,7 @@ static PARSE_EXPR_STATUS try_extract_expression(
         if (is_unary(tk_view_front(*tokens).type)) {
             todo();
         } else if (token_is_opening(tk_view_front(*tokens))) {
-            switch (extract_expression_opening(env, result, &lhs, tokens)) {
+            switch (extract_expression_opening(env, result, &lhs, tokens, defer_sym_add)) {
                 case PARSE_EXPR_OK:
                     break;
                 default:
@@ -2016,13 +2118,13 @@ static PARSE_EXPR_STATUS try_extract_expression(
         } else {
             if (prev_oper_pres < get_operator_precedence(tk_view_front(*tokens).type)) {
                 prev_oper_pres = get_operator_precedence(tk_view_front(*tokens).type);
-                Uast_binary* binary = NULL;
+                Uast_expr* binary = NULL;
                 assert(lhs);
                 log(LOG_DEBUG, UAST_FMT, uast_expr_print(lhs));
                 switch (extract_binary(env, &binary, get_right_child_expr(lhs), tokens, defer_sym_add, can_be_tuple)) {
                     case PARSE_EXPR_OK:
-                        log(LOG_DEBUG, UAST_FMT, uast_binary_print(binary));
-                        get_right_child_expr_set(lhs, uast_wrap_operator(uast_wrap_binary(binary)));
+                        log(LOG_DEBUG, UAST_FMT, uast_expr_print(binary));
+                        get_right_child_expr_set(lhs, binary);
                         *result = lhs;
                         log(LOG_DEBUG, UAST_FMT, uast_expr_print(lhs));
                         break;
@@ -2032,11 +2134,11 @@ static PARSE_EXPR_STATUS try_extract_expression(
             } else {
                 prev_oper_pres = get_operator_precedence(tk_view_front(*tokens).type);
                 log(LOG_DEBUG, "%d\n", prev_oper_pres);
-                Uast_binary* binary = NULL;
+                Uast_expr* binary = NULL;
                 assert(lhs);
                 switch (extract_binary(env, &binary, lhs, tokens, defer_sym_add, can_be_tuple)) {
                     case PARSE_EXPR_OK:
-                        *result = uast_wrap_operator(uast_wrap_binary(binary));
+                        *result = binary;
                         lhs = *result;
                         log_tokens(LOG_DEBUG, *tokens);
                         break;

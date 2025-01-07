@@ -309,7 +309,7 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
         case TOKEN_DEFAULT:
             return false;
         case TOKEN_OPEN_CURLY_BRACE:
-            return true;
+            return false;
         case TOKEN_OPEN_PAR:
             return true;
         case TOKEN_OPEN_SQ_BRACKET:

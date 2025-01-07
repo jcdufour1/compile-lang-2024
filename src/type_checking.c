@@ -369,6 +369,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
                 "types `"LANG_TYPE_FMT"` and `"LANG_TYPE_FMT"` are not valid operands to binary expression\n",
                 lang_type_print(tast_get_lang_type_expr(new_lhs)), lang_type_print(tast_get_lang_type_expr(new_rhs))
             );
+            todo();
             return false;
         }
     }
@@ -425,6 +426,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
 
 // returns false if unsuccessful
 bool try_set_binary_types(Env* env, Tast_expr** new_tast, Uast_binary* operator) {
+    log(LOG_DEBUG, UAST_FMT, uast_binary_print(operator));
     Tast_expr* new_lhs;
     if (!try_set_expr_types(env, &new_lhs, operator->lhs)) {
         return false;
