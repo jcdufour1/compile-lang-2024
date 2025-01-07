@@ -1127,9 +1127,9 @@ static PARSE_STATUS try_extract_function_call(Env* env, Uast_function_call** chi
     //if (!try_consume(&fun_name_token, tokens, TOKEN_SYMBOL)) {
     //    unreachable("this is not a function call");
     //}
-    //if (!try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
-    //    unreachable("this is not a function call");
-    //}
+    if (!try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
+        unreachable("this is not a function call");
+    }
 
     bool is_first_time = true;
     bool prev_is_comma = false;
@@ -1154,6 +1154,10 @@ static PARSE_STATUS try_extract_function_call(Env* env, Uast_function_call** chi
                 unreachable("");
         }
         is_first_time = false;
+    }
+
+    if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
+        unreachable("");
     }
 
     *child = uast_function_call_new(name->pos, args, name->name);
@@ -1909,13 +1913,17 @@ static PARSE_EXPR_STATUS try_extract_expression(
         switch (try_extract_expression_piece(env, &lhs, tokens, defer_sym_add)) {
             case PARSE_EXPR_OK:
                 break;
+            case PARSE_EXPR_NONE:
+                return PARSE_EXPR_NONE;
             default:
                 todo();
         }
     }
 
     if (!token_is_operator(tk_view_front(*tokens), can_be_tuple)) {
+        log_tokens(LOG_DEBUG, *tokens);
         if (lhs) {
+            todo();
             *result = lhs;
             return PARSE_EXPR_OK;
         } else {
@@ -1926,6 +1934,23 @@ static PARSE_EXPR_STATUS try_extract_expression(
     while (token_is_operator(tk_view_front(*tokens), can_be_tuple)) {
         if (is_unary(tk_view_front(*tokens).type)) {
             todo();
+        } else if (token_is_opening(tk_view_front(*tokens))) {
+            switch (tk_view_front(*tokens).type) {
+                case TOKEN_OPEN_PAR: {
+                    Uast_function_call* fun_call = NULL;
+                    switch (try_extract_function_call(env, &fun_call, tokens, uast_unwrap_symbol_untyped(lhs))) {
+                        case PARSE_EXPR_OK:
+                            *result = uast_wrap_function_call(fun_call);
+                            lhs = *result;
+                            break;
+                        default:
+                            unreachable("");
+                    }
+                    break;
+                }
+                default:
+                    unreachable("");
+            }
         } else {
             if (prev_oper_pres < get_operator_precedence(tk_view_front(*tokens).type)) {
                 prev_oper_pres = get_operator_precedence(tk_view_front(*tokens).type);

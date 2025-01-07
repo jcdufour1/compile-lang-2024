@@ -238,11 +238,7 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             // fallthrough
         case TOKEN_CLOSE_PAR:
             // fallthrough
-        case TOKEN_OPEN_PAR:
-            // fallthrough
         case TOKEN_DOUBLE_QUOTE:
-            // fallthrough
-        case TOKEN_OPEN_CURLY_BRACE:
             // fallthrough
         case TOKEN_CLOSE_CURLY_BRACE:
             // fallthrough
@@ -290,8 +286,6 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             return false;
         case TOKEN_ENUM:
             return false;
-        case TOKEN_OPEN_SQ_BRACKET:
-            return true;
         case TOKEN_CLOSE_SQ_BRACKET:
             return false;
         case TOKEN_CHAR_LITERAL:
@@ -314,6 +308,12 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             return false;
         case TOKEN_DEFAULT:
             return false;
+        case TOKEN_OPEN_CURLY_BRACE:
+            return true;
+        case TOKEN_OPEN_PAR:
+            return true;
+        case TOKEN_OPEN_SQ_BRACKET:
+            return true;
     }
     unreachable(TOKEN_FMT"\n", token_print(token));
 }
