@@ -1510,55 +1510,105 @@ bool try_set_case_types(Env* env, Tast_if** new_tast, const Uast_case* lang_case
     todo();
 }
 
-static bool check_for_exhaustiveness(const Env* env, const Tast_if_else_chain* if_else) {
-    try(if_else->tasts.info.count > 0);
-    Lang_type lang_type = tast_get_lang_type_operator(vec_at(&if_else->tasts, 0)->condition->child);
+typedef struct {
+    Lang_type oper_lang_type;
+    bool default_is_pre;
+    Bool_vec covered;
+    size_t max_data;
+} Exhaustive_data;
+
+static Exhaustive_data check_for_exhaustiveness_start(const Env* env, Lang_type oper_lang_type) {
+    Exhaustive_data exhaustive_data = {0};
+
+    exhaustive_data.oper_lang_type = oper_lang_type;
 
     Uast_def* enum_def_ = NULL;
-    if (!usymbol_lookup(&enum_def_, env, lang_type.str)) {
+    if (!usymbol_lookup(&enum_def_, env, exhaustive_data.oper_lang_type.str)) {
         todo();
     }
     Uast_enum_def* enum_def = uast_unwrap_enum_def(enum_def_);
     try(enum_def->base.members.info.count > 0);
-    size_t max_data = enum_def->base.members.info.count - 1;
+    exhaustive_data.max_data = enum_def->base.members.info.count - 1;
 
-    Bool_vec covered = {0};
-    vec_reserve(&print_arena, &covered, max_data + 1);
-    bool default_is_pre = false;
+    vec_reserve(&print_arena, &exhaustive_data.covered, exhaustive_data.max_data + 1);
+    for (size_t idx = 0; idx < exhaustive_data.max_data + 1; idx++) {
+        vec_append(&print_arena, &exhaustive_data.covered, false);
+    }
+    try(exhaustive_data.covered.info.count == exhaustive_data.max_data + 1);
 
-    if (lang_type_is_enum(env, lang_type)) {
-        for (size_t idx = 0; idx < if_else->tasts.info.count; idx++) {
-            Tast_enum_lit* curr_lit = tast_unwrap_enum_lit(
-                tast_unwrap_literal(
-                    tast_unwrap_binary(vec_at(&if_else->tasts, idx)->condition->child)->rhs
-                )
-            );
-            //if (vec_at(&if_else->tasts, idx)->is_default) {
-            //    default_is_pre = true;
-            //}
-            if (curr_lit->data > (int64_t)max_data) {
-                unreachable("invalid enum value\n");
-            }
-            if (vec_at(&covered, curr_lit->data)) {
-                unreachable("duplicate case");
-            }
-            *vec_at_ref(&covered, curr_lit->data) = true;
-        }
+    return exhaustive_data;
+}
 
-        if (covered.info.count != max_data + 1) {
-            unreachable("non exhausive");
+static bool check_for_exhaustiveness_inner(
+    const Env* env,
+    Exhaustive_data* exhaustive_data,
+    const Tast_if* curr_if,
+    bool is_default
+) {
+    if (is_default) {
+        if (exhaustive_data->default_is_pre) {
+            unreachable("muliple default cases present");
         }
-        for (size_t idx = 0; idx < covered.info.count; idx++) {
-            
+        exhaustive_data->default_is_pre = true;
+        return true;
+    }
+
+    if (lang_type_is_enum(env, exhaustive_data->oper_lang_type)) {
+        const Tast_enum_lit* curr_lit = tast_unwrap_enum_lit(
+            tast_unwrap_literal(
+                tast_unwrap_binary(curr_if->condition->child)->rhs
+            )
+        );
+        if (curr_lit->data > (int64_t)exhaustive_data->max_data) {
+            unreachable("invalid enum value\n");
         }
-        todo();
+        if (vec_at(&exhaustive_data->covered, curr_lit->data)) {
+            unreachable("duplicate case");
+        }
+        *vec_at_ref(&exhaustive_data->covered, curr_lit->data) = true;
+        return true;
     } else {
         todo();
     }
+    unreachable("");
+}
+
+static bool check_for_exhaustiveness_finish(const Env* env, Exhaustive_data exhaustive_data, Pos pos_switch) {
+        try(exhaustive_data.covered.info.count == exhaustive_data.max_data + 1);
+
+        if (exhaustive_data.default_is_pre) {
+            return true;
+        }
+
+        for (size_t idx = 0; idx < exhaustive_data.covered.info.count; idx++) {
+            if (!vec_at(&exhaustive_data.covered, idx)) {
+                Uast_def* enum_def_ = NULL;
+                try(usymbol_lookup(&enum_def_, env, exhaustive_data.oper_lang_type.str));
+                Uast_enum_def* enum_def = uast_unwrap_enum_def(enum_def_);
+
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_NON_EXHAUSTIVE_SWITCH, env->file_text, pos_switch,
+                    "case `"LANG_TYPE_FMT"."STR_VIEW_FMT"` is not covered\n",
+                    lang_type_print(uast_get_lang_type_stmt(vec_at(&enum_def->base.members, idx))),
+                    str_view_print(uast_unwrap_variable_def(uast_unwrap_def(vec_at(&enum_def->base.members, idx)))->name)
+                );
+                return false;
+            }
+        }
+
+        return true;
 }
 
 bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_switch* lang_switch) {
     Tast_if_vec new_ifs = {0};
+
+    Tast_expr* new_operand = NULL;
+    try(try_set_expr_types(env, &new_operand, lang_switch->operand));
+
+    Exhaustive_data exhaustive_data = check_for_exhaustiveness_start(
+        env, tast_get_lang_type_expr(new_operand)
+    );
+
     for (size_t idx = 0; idx < lang_switch->cases.info.count; idx++) {
         Uast_case* old_case = vec_at(&lang_switch->cases, idx);
         Uast_condition* cond = NULL;
@@ -1590,11 +1640,15 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
             return false;
         }
 
+        if (!check_for_exhaustiveness_inner(env, &exhaustive_data, new_if, old_case->is_default)) {
+            return false;
+        }
+
         vec_append(&a_main, &new_ifs, new_if);
     }
 
     *new_tast = tast_if_else_chain_new(lang_switch->pos, new_ifs);
-    return check_for_exhaustiveness(env, *new_tast);
+    return check_for_exhaustiveness_finish(env, exhaustive_data, lang_switch->pos);
 }
 
 bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def) {

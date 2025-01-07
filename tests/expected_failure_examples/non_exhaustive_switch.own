@@ -1,0 +1,47 @@
+
+extern("c") fn puts(str_to_print_2 u8*) 
+extern("c") fn printf(str_to_print_2 u8*, args any...) i32
+
+type TokenType enum {
+    number TokenType
+    string TokenType
+}
+
+type Token struct {
+    kind TokenType
+    number_data i32
+    string_data u8*
+}
+
+fn print_token_switch(token Token) {
+    switch token.kind {
+    case TokenType.number: printf("%d\n", token.number_data)
+    }
+}
+
+// check that scope rules are followed for type subtypes enum
+type NodeType enum {
+    NONE NodeType
+}
+
+type LlvmType enum {
+    NONE LlvmType
+}
+
+fn main() i32 {
+    let token_type TokenType = TokenType.number
+    printf("%d\n", token_type);
+
+    token_type = TokenType.string
+    printf("%d\n", token_type);
+
+    {
+        let token Token
+        token.kind = TokenType.string
+        token.number_data = 87
+        token.string_data = "hello"
+        print_token_switch(token)
+    }
+    return 0
+}
+
