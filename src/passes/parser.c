@@ -25,6 +25,7 @@ typedef enum {
     PARSE_EXPR_ERROR, // tokens need to be synced by callers
 } PARSE_EXPR_STATUS;
 
+static void get_right_child_expr_set(Uast_expr* expr, Uast_expr* new_rhs);
 static PARSE_STATUS extract_block(Env* env, Uast_block** block, Tk_view* tokens, bool is_top_level);
 static PARSE_EXPR_STATUS extract_statement(Env* env, Uast_stmt** child, Tk_view* tokens, bool defer_sym_add);
 static PARSE_EXPR_STATUS try_extract_expression(
@@ -61,6 +62,12 @@ static Token consume(Tk_view* tokens) {
     Token temp = tk_view_front(*tokens);
     tk_view_consume(tokens);
     prev_token = temp;
+    return temp;
+}
+
+static Token consume_operator(Tk_view* tokens) {
+    Token temp = consume(tokens);
+    try_consume(NULL, tokens, TOKEN_NEW_LINE);
     return temp;
 }
 
@@ -1702,7 +1709,7 @@ static Uast_binary* parser_binary_new(Uast_expr* lhs, Token operator_token, Uast
 }
 
 static PARSE_EXPR_STATUS try_extract_expression_piece(
-    Env* env, Uast_expr** result, Tk_view* tokens, bool defer_sym_add
+    Env* env, Uast_expr** result, Tk_view* tokens, int32_t* prev_oper_pres, bool defer_sym_add
 ) {
     if (tokens->count < 1) {
         return PARSE_EXPR_NONE;
@@ -1733,6 +1740,7 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(
             );
             return PARSE_EXPR_ERROR;
         }
+        *prev_oper_pres = get_operator_precedence(TOKEN_SINGLE_DOT);
     } else if (token_is_literal(tk_view_front(*tokens))) {
         *result = uast_wrap_literal(extract_literal(env, tokens, defer_sym_add));
     } else if (tk_view_front(*tokens).type == TOKEN_SYMBOL) {
@@ -1751,7 +1759,7 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(
         Uast_number* lhs = uast_number_new(minus_token.pos, 0);
 
         Uast_expr* rhs = NULL;
-        switch (try_extract_expression_piece(env, &rhs, tokens, defer_sym_add)) {
+        switch (try_extract_expression_piece(env, &rhs, tokens, prev_oper_pres, defer_sym_add)) {
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_NONE:
@@ -1795,17 +1803,16 @@ static PARSE_EXPR_STATUS extract_unary(
     Env* env,
     Uast_unary** result,
     Tk_view* tokens,
+    int32_t* prev_oper_pres,
     bool defer_sym_add,
     bool can_be_tuple
 ) {
-    (void) env;
-    (void) result;
-    (void) tokens;
-    (void) defer_sym_add;
     (void) can_be_tuple;
 
-    Token oper = consume(tokens);
+    Token oper = consume_operator(tokens);
     try(is_unary(oper.type));
+
+    *prev_oper_pres = get_operator_precedence(oper.type);
 
     Uast_expr* child = NULL;
     Lang_type unary_lang_type = lang_type_new_from_cstr("i32", 0);
@@ -1841,7 +1848,7 @@ static PARSE_EXPR_STATUS extract_unary(
             unreachable(TOKEN_FMT, token_print(oper));
     }
 
-    switch (try_extract_expression_piece(env, &child, tokens, defer_sym_add)) {
+    switch (try_extract_expression_piece(env, &child, tokens, prev_oper_pres, defer_sym_add)) {
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_NONE:
@@ -1859,6 +1866,7 @@ static PARSE_EXPR_STATUS extract_unary(
             // fallthrough
         case TOKEN_UNSAFE_CAST:
             *result = uast_unary_new(oper.pos, child, oper.type, unary_lang_type);
+            assert(*result);
             log(LOG_DEBUG, TAST_FMT"\n", uast_unary_print(*result));
             break;
         default:
@@ -1873,17 +1881,18 @@ static PARSE_EXPR_STATUS extract_binary(
     Uast_expr** result,
     Uast_expr* lhs,
     Tk_view* tokens,
+    int32_t* prev_oper_pres,
     bool defer_sym_add,
     bool can_be_tuple
 ) {
-    Token oper = consume(tokens);
+    Token oper = consume_operator(tokens);
     try(token_is_operator(oper, can_be_tuple) && !is_unary(oper.type));
 
     Uast_expr* rhs = NULL;
 
     if (is_unary(tk_view_front(*tokens).type)) {
         Uast_unary* unary = NULL;
-        switch (extract_unary(env, &unary, tokens, defer_sym_add, can_be_tuple)) {
+        switch (extract_unary(env, &unary, tokens, prev_oper_pres, defer_sym_add, can_be_tuple)) {
             case PARSE_EXPR_OK:
                 rhs = uast_wrap_operator(uast_wrap_unary(unary));
                 break;
@@ -1902,7 +1911,7 @@ static PARSE_EXPR_STATUS extract_binary(
     } else {
         try(!token_is_operator(tk_view_front(*tokens), can_be_tuple));
         
-        switch (try_extract_expression_piece(env, &rhs, tokens, defer_sym_add)) {
+        switch (try_extract_expression_piece(env, &rhs, tokens, prev_oper_pres, defer_sym_add)) {
             case PARSE_EXPR_OK:
                 break;
             default:
@@ -2016,13 +2025,14 @@ static PARSE_EXPR_STATUS extract_expression_index(
     Uast_expr** result,
     Uast_expr** lhs,
     Tk_view* tokens,
+    int32_t* prev_oper_pres,
     bool defer_sym_add
 ) {
-    Token oper = consume(tokens);
+    Token oper = consume_operator(tokens);
     try(oper.type == TOKEN_OPEN_SQ_BRACKET);
 
     Uast_expr* index_index = NULL;
-    switch (try_extract_expression_piece(env, &index_index, tokens, defer_sym_add)) {
+    switch (try_extract_expression_piece(env, &index_index, tokens, prev_oper_pres, defer_sym_add)) {
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_NONE:
@@ -2043,6 +2053,7 @@ static PARSE_EXPR_STATUS extract_expression_opening(
     Uast_expr** result,
     Uast_expr** lhs,
     Tk_view* tokens,
+    int32_t* prev_oper_pres,
     bool defer_sym_add
 ) {
     switch (tk_view_front(*tokens).type) {
@@ -2050,7 +2061,7 @@ static PARSE_EXPR_STATUS extract_expression_opening(
             return extract_expression_function_call(env, result, lhs, tokens);
         }
         case TOKEN_OPEN_SQ_BRACKET: {
-            return extract_expression_index(env, result, lhs, tokens, defer_sym_add);
+            return extract_expression_index(env, result, lhs, tokens, prev_oper_pres, defer_sym_add);
         }
         default:
             unreachable(TOKEN_FMT, token_print(tk_view_front(*tokens)));
@@ -2073,9 +2084,10 @@ static PARSE_EXPR_STATUS try_extract_expression(
     if (is_unary(tk_view_front(*tokens).type)) {
         prev_oper_pres = get_operator_precedence(tk_view_front(*tokens).type);
         Uast_unary* unary = NULL;
-        switch (extract_unary(env, &unary, tokens, defer_sym_add, can_be_tuple)) {
+        switch (extract_unary(env, &unary, tokens, &prev_oper_pres, defer_sym_add, can_be_tuple)) {
             case PARSE_EXPR_OK:
                 lhs = uast_wrap_operator(uast_wrap_unary(unary));
+                *result = lhs;
                 break;
             case PARSE_EXPR_ERROR:
                 todo();
@@ -2085,7 +2097,7 @@ static PARSE_EXPR_STATUS try_extract_expression(
                 todo();
         }
     } else {
-        switch (try_extract_expression_piece(env, &lhs, tokens, defer_sym_add)) {
+        switch (try_extract_expression_piece(env, &lhs, tokens, &prev_oper_pres, defer_sym_add)) {
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_NONE:
@@ -2109,7 +2121,7 @@ static PARSE_EXPR_STATUS try_extract_expression(
         if (is_unary(tk_view_front(*tokens).type)) {
             todo();
         } else if (token_is_opening(tk_view_front(*tokens))) {
-            switch (extract_expression_opening(env, result, &lhs, tokens, defer_sym_add)) {
+            switch (extract_expression_opening(env, result, &lhs, tokens, &prev_oper_pres, defer_sym_add)) {
                 case PARSE_EXPR_OK:
                     break;
                 default:
@@ -2117,11 +2129,17 @@ static PARSE_EXPR_STATUS try_extract_expression(
             }
         } else {
             if (prev_oper_pres < get_operator_precedence(tk_view_front(*tokens).type)) {
+                log(LOG_DEBUG, "%d\n", prev_oper_pres);
+                log(LOG_DEBUG, "%d\n", get_operator_precedence(tk_view_front(*tokens).type));
                 prev_oper_pres = get_operator_precedence(tk_view_front(*tokens).type);
                 Uast_expr* binary = NULL;
                 assert(lhs);
                 log(LOG_DEBUG, UAST_FMT, uast_expr_print(lhs));
-                switch (extract_binary(env, &binary, get_right_child_expr(lhs), tokens, defer_sym_add, can_be_tuple)) {
+                switch (extract_binary(
+                    env,
+                    &binary,
+                    get_right_child_expr(lhs), tokens, &prev_oper_pres, defer_sym_add, can_be_tuple)
+                ) {
                     case PARSE_EXPR_OK:
                         log(LOG_DEBUG, UAST_FMT, uast_expr_print(binary));
                         get_right_child_expr_set(lhs, binary);
@@ -2134,9 +2152,10 @@ static PARSE_EXPR_STATUS try_extract_expression(
             } else {
                 prev_oper_pres = get_operator_precedence(tk_view_front(*tokens).type);
                 log(LOG_DEBUG, "%d\n", prev_oper_pres);
+                log(LOG_DEBUG, TAST_FMT, uast_expr_print(lhs));
                 Uast_expr* binary = NULL;
                 assert(lhs);
-                switch (extract_binary(env, &binary, lhs, tokens, defer_sym_add, can_be_tuple)) {
+                switch (extract_binary(env, &binary, lhs, tokens, &prev_oper_pres, defer_sym_add, can_be_tuple)) {
                     case PARSE_EXPR_OK:
                         *result = binary;
                         lhs = *result;
