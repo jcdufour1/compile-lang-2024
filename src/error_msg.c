@@ -97,7 +97,7 @@ void msg_internal(
         assert(expected_expect_fail != EXPECT_FAIL_TYPE_NONE);
 
         if (msg_expect_fail_type != expected_expect_fail) {
-            log(LOG_FATAL, "incorrect fail type occured\n");
+            log(LOG_FATAL, "fail type %d occured, but %d was expected\n", msg_expect_fail_type, expected_expect_fail);
             exit(EXIT_CODE_FAIL);
         }
         assert(expected_expect_fail != EXPECT_FAIL_TYPE_NONE);
