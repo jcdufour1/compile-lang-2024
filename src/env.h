@@ -25,6 +25,8 @@ typedef struct Env_ {
 
     bool type_checking_is_in_struct_base_def;
 
+    Tast_variable_def_vec sum_case_vars;
+
     Str_view name_parent_function; // length is zero if no parent function exists
 
     Lang_type_vec rm_tuple_parent_fn_lang_type;

@@ -4,6 +4,8 @@
 #include <auto_gen_uast.h>
 #include <auto_gen_llvm.h>
 
+// TODO: expected failure test for mispelling struct, sum, enum, etc.
+
 // TODO: expected failure test for 
 // type struct {
 //

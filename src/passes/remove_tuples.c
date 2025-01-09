@@ -25,6 +25,8 @@ static Tast_if* rm_tuple_if(Env* env, Tast_if* assign);
 
 static Tast_if_else_chain* rm_tuple_if_else_chain(Env* env, Tast_if_else_chain* if_else);
 
+static Tast_expr* rm_tuple_expr_not_in_assignment(Env* env, Tast_expr* expr);
+
 static Tast_expr* rm_tuple_generic_assignment_rhs(
     Env* env,
     Tast_expr* rhs,
@@ -424,10 +426,30 @@ static Tast_expr* rm_tuple_expr_rhs(Env* env, Lang_type_vec lhs_lang_type, Tast_
     unreachable("");
 }
 
+static Tast_binary* rm_tuple_binary_not_in_assignment(Env* env, Tast_binary* oper) {
+    oper->lhs = rm_tuple_expr_not_in_assignment(env, oper->lhs);
+    oper->rhs = rm_tuple_expr_not_in_assignment(env, oper->rhs);
+    return oper;
+}
+
+static Tast_unary* rm_tuple_unary_not_in_assignment(Env* env, Tast_unary* unary) {
+    unary->child = rm_tuple_expr_not_in_assignment(env, unary->child);
+    return unary;
+}
+
+static Tast_operator* rm_tuple_operator_not_in_assignment(Env* env, Tast_operator* oper) {
+    switch (oper->type) {
+        case TAST_UNARY:
+            return tast_wrap_unary(rm_tuple_unary_not_in_assignment(env, tast_unwrap_unary(oper)));
+        case TAST_BINARY:
+            return tast_wrap_binary(rm_tuple_binary_not_in_assignment(env, tast_unwrap_binary(oper)));
+    }
+}
+
 static Tast_expr* rm_tuple_expr_not_in_assignment(Env* env, Tast_expr* expr) {
     switch (expr->type) {
         case TAST_OPERATOR:
-            unreachable("");
+            return tast_wrap_operator(rm_tuple_operator_not_in_assignment(env, tast_unwrap_operator(expr)));
         case TAST_SYMBOL_TYPED:
             unreachable("");
         case TAST_MEMBER_ACCESS_TYPED:

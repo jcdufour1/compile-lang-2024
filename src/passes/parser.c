@@ -186,6 +186,19 @@ static bool starts_with_enum_definition(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_ENUM;
 }
 
+static bool starts_with_sum_definition(Tk_view tokens) {
+    if (tokens.count < 3) {
+        return false;
+    }
+    if (!try_consume(NULL, &tokens, TOKEN_TYPE_DEF)) {
+        return false;
+    }
+    if (!try_consume(NULL, &tokens, TOKEN_SYMBOL)) {
+        return false;
+    }
+    return tk_view_front(tokens).type == TOKEN_SUM;
+}
+
 static bool starts_with_function_decl(Tk_view tokens) {
     if (tokens.count < 1) {
         return false;
@@ -471,6 +484,8 @@ static bool can_end_statement(Token token) {
             return false;
         case TOKEN_DEFAULT:
             return false;
+        case TOKEN_SUM:
+            return false;
     }
     unreachable("");
 }
@@ -628,6 +643,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_CASE:
             return false;
         case TOKEN_DEFAULT:
+            return false;
+        case TOKEN_SUM:
             return false;
     }
     unreachable("");
@@ -923,6 +940,26 @@ static PARSE_STATUS extract_enum_def(Env* env, Uast_enum_def** enum_def, Tk_view
     *enum_def = uast_enum_def_new(name.pos, base);
     if (!usymbol_add(env, uast_wrap_enum_def(*enum_def))) {
         msg_redefinition_of_symbol(env, uast_wrap_enum_def(*enum_def));
+        return PARSE_ERROR;
+    }
+    return PARSE_OK;
+}
+
+static PARSE_STATUS extract_sum_def(Env* env, Uast_sum_def** sum_def, Tk_view* tokens) {
+    try(try_consume(NULL, tokens, TOKEN_TYPE_DEF));
+
+    Token name = {0};
+    try(try_consume(&name, tokens, TOKEN_SYMBOL));
+    try(try_consume(NULL, tokens, TOKEN_SUM));
+
+    Ustruct_def_base base = {0};
+    if (PARSE_OK != extract_struct_base_def(env, &base, name.text, tokens)) {
+        return PARSE_ERROR;
+    }
+
+    *sum_def = uast_sum_def_new(name.pos, base);
+    if (!usymbol_add(env, uast_wrap_sum_def(*sum_def))) {
+        msg_redefinition_of_symbol(env, uast_wrap_sum_def(*sum_def));
         return PARSE_ERROR;
     }
     return PARSE_OK;
@@ -1455,6 +1492,12 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Uast_stmt** child, Tk_view*
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_wrap_def(uast_wrap_enum_def(enum_def));
+    } else if (starts_with_sum_definition(*tokens)) {
+        Uast_sum_def* sum_def;
+        if (PARSE_OK != extract_sum_def(env, &sum_def, tokens)) {
+            return PARSE_EXPR_ERROR;
+        }
+        lhs = uast_wrap_def(uast_wrap_sum_def(sum_def));
     } else if (starts_with_function_decl(*tokens)) {
         Uast_function_decl* fun_decl;
         if (PARSE_OK != extract_function_decl(env, &fun_decl, tokens)) {
@@ -1999,6 +2042,10 @@ static Uast_expr* get_right_child_expr(Uast_expr* expr) {
             try(tuple->members.info.count > 0);
             return vec_at(&tuple->members, tuple->members.info.count - 1);
         }
+        case UAST_MEMBER_ACCESS_UNTYPED: {
+            Uast_member_access_untyped* access = uast_unwrap_member_access_untyped(expr);
+            return access->callee;
+        }
         default:
             unreachable("");
     }
@@ -2031,6 +2078,10 @@ static void set_right_child_expr(Uast_expr* expr, Uast_expr* new_expr) {
             *vec_at_ref(&tuple->members, tuple->members.info.count - 1) = new_expr;
             return;
         }
+        case UAST_MEMBER_ACCESS_UNTYPED: {
+            uast_unwrap_member_access_untyped(expr)->callee = new_expr;
+            return;
+        }
         default:
             unreachable("");
     }
@@ -2058,6 +2109,8 @@ static PARSE_EXPR_STATUS extract_expression_function_call(
             }
             unreachable("");
         case UAST_OPERATOR:
+            // fallthrough
+        case UAST_MEMBER_ACCESS_UNTYPED:
             switch (try_extract_function_call(env, &fun_call, tokens, uast_unwrap_symbol_untyped(get_right_child_expr(*lhs)))) {
                 case PARSE_OK:
                     set_right_child_expr(*lhs, uast_wrap_function_call(fun_call));
@@ -2070,7 +2123,7 @@ static PARSE_EXPR_STATUS extract_expression_function_call(
             }
             unreachable("");
         default:
-            unreachable("");
+            unreachable(UAST_FMT, uast_expr_print(*lhs));
     }
     unreachable("");
 }

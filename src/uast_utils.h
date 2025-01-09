@@ -47,6 +47,8 @@ static inline Lang_type uast_get_lang_type_def(const Uast_def* def) {
             unreachable("");
         case UAST_LITERAL_DEF:
             unreachable("");
+        case UAST_SUM_DEF:
+            unreachable("");
     }
     unreachable("");
 }
@@ -119,6 +121,8 @@ static inline Lang_type* uast_get_lang_type_def_ref(Uast_def* def) {
         case UAST_PRIMITIVE_DEF:
             unreachable("");
         case UAST_LITERAL_DEF:
+            unreachable("");
+        case UAST_SUM_DEF:
             unreachable("");
     }
     unreachable("");
@@ -218,6 +222,8 @@ static inline Str_view get_uast_name_def(const Uast_def* def) {
             return uast_unwrap_function_def_const(def)->decl->name;
         case UAST_LITERAL_DEF:
             return uast_get_literal_def_name(uast_unwrap_literal_def_const(def));
+        case UAST_SUM_DEF:
+            return uast_unwrap_sum_def_const(def)->base.name;
     }
     unreachable("");
 }

@@ -42,6 +42,7 @@ typedef enum {
     TOKEN_CHAR_LITERAL,
 
     // miscellaneous
+    TOKEN_SUM,
     TOKEN_SYMBOL,
     TOKEN_OPEN_PAR,
     TOKEN_CLOSE_PAR,
@@ -200,6 +201,8 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_DEFAULT:
             return false;
+        case TOKEN_SUM:
+            return false;
     }
     unreachable("");
 }
@@ -207,75 +210,75 @@ static inline bool token_is_literal(Token token) {
 static inline bool token_is_operator(Token token, bool can_be_tuple) {
     switch (token.type) {
         case TOKEN_SINGLE_MINUS:
-            // fallthrough
+            return true;
         case TOKEN_SINGLE_PLUS:
-            // fallthrough
+            return true;
         case TOKEN_ASTERISK:
-            // fallthrough
+            return true;
         case TOKEN_SLASH:
-            // fallthrough
+            return true;
         case TOKEN_LESS_THAN:
-            // fallthrough
+            return true;
         case TOKEN_GREATER_THAN:
-            // fallthrough
+            return true;
         case TOKEN_DOUBLE_EQUAL:
-            // fallthrough
+            return true;
         case TOKEN_NOT_EQUAL:
-            // fallthrough
+            return true;
         case TOKEN_NOT:
-            // fallthrough
+            return true;
         case TOKEN_DEREF:
-            // fallthrough
+            return true;
         case TOKEN_XOR:
-            // fallthrough
+            return true;
         case TOKEN_REFER:
-            // fallthrough
+            return true;
         case TOKEN_UNSAFE_CAST:
             return true;
         case TOKEN_INT_LITERAL:
-            // fallthrough
+            return false;
         case TOKEN_STRING_LITERAL:
-            // fallthrough
+            return false;
         case TOKEN_CLOSE_PAR:
             // fallthrough
         case TOKEN_DOUBLE_QUOTE:
             // fallthrough
         case TOKEN_CLOSE_CURLY_BRACE:
-            // fallthrough
+            return false;
         case TOKEN_SYMBOL:
-            // fallthrough
+            return false;
         case TOKEN_SEMICOLON:
-            // fallthrough
+            return false;
         case TOKEN_COLON:
-            // fallthrough
+            return false;
         case TOKEN_SINGLE_EQUAL:
-            // fallthrough
+            return false;
         case TOKEN_NONTYPE:
-            // fallthrough
+            return false;
         case TOKEN_VOID:
-            // fallthrough
+            return false;
         case TOKEN_COMMENT:
-            // fallthrough
+            return false;
         case TOKEN_FOR:
-            // fallthrough
+            return false;
         case TOKEN_IF:
-            // fallthrough
+            return false;
         case TOKEN_RETURN:
-            // fallthrough
+            return false;
         case TOKEN_FN:
-            // fallthrough
+            return false;
         case TOKEN_STRUCT:
-            // fallthrough
+            return false;
         case TOKEN_EXTERN:
-            // fallthrough
+            return false;
         case TOKEN_LET:
-            // fallthrough
+            return false;
         case TOKEN_IN:
-            // fallthrough
+            return false;
         case TOKEN_BREAK:
-            // fallthrough
+            return false;
         case TOKEN_NEW_LINE:
-            // fallthrough
+            return false;
         case TOKEN_DOUBLE_DOT:
             return false;
         case TOKEN_TRIPLE_DOT:
@@ -314,6 +317,8 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             return true;
         case TOKEN_OPEN_SQ_BRACKET:
             return true;
+        case TOKEN_SUM:
+            return false;
     }
     unreachable(TOKEN_FMT"\n", token_print(token));
 }
@@ -436,6 +441,8 @@ static inline bool token_is_closing(Token curr_token) {
             return false;
         case TOKEN_DEFAULT:
             return false;
+        case TOKEN_SUM:
+            return false;
     }
     unreachable("");
 }
@@ -549,6 +556,8 @@ static inline bool token_is_opening(Token curr_token) {
         case TOKEN_CASE:
             return false;
         case TOKEN_DEFAULT:
+            return false;
+        case TOKEN_SUM:
             return false;
     }
     unreachable("");

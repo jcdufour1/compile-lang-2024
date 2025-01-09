@@ -59,7 +59,7 @@ bool try_set_struct_literal_assignment_types(
 
 Tast_literal* try_set_literal_types(Uast_literal* literal);
 
-bool try_set_function_call_types(Env* env, Tast_function_call** new_call, Uast_function_call* fun_call);
+bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_call* fun_call);
 
 bool try_set_member_access_types(Env* env, Tast_stmt** new_tast, Uast_member_access_untyped* access);
 
@@ -75,6 +75,8 @@ bool try_set_function_decl_types(
     Uast_function_decl* decl,
     bool add_to_sym_tbl
 );
+
+bool try_set_sum_def_types(Env* env, Tast_struct_def** new_tast, Uast_sum_def* tast);
 
 bool try_set_tuple_types(Env* env, Tast_tuple** new_tuple, Uast_tuple* tuple);
 

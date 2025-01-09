@@ -715,14 +715,8 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
             }
             assert(*new_tast);
             return true;
-        case UAST_FUNCTION_CALL: {
-            Tast_function_call* new_call = NULL;
-            if (!try_set_function_call_types(env, &new_call, uast_unwrap_function_call(uast))) {
-                return false;
-            }
-            *new_tast = tast_wrap_function_call(new_call);
-            return true;
-        }
+        case UAST_FUNCTION_CALL:
+            return try_set_function_call_types(env, new_tast, uast_unwrap_function_call(uast));
         case UAST_TUPLE: {
             Tast_tuple* new_call = NULL;
             if (!try_set_tuple_types(env, &new_call, uast_unwrap_tuple(uast))) {
@@ -803,6 +797,14 @@ bool try_set_def_types(Env* env, Tast_def** new_tast, Uast_def* uast) {
             *new_tast = tast_wrap_literal_def(new_def);
             return true;
         }
+        case UAST_SUM_DEF: {
+            Tast_struct_def* new_def = NULL;
+            if (!try_set_sum_def_types(env, &new_def, uast_unwrap_sum_def(uast))) {
+                return false;
+            }
+            *new_tast = tast_wrap_struct_def(new_def);
+            return true;
+        }
     }
     unreachable("");
 }
@@ -837,7 +839,7 @@ bool try_set_assignment_types(Env* env, Tast_assignment** new_assign, Uast_assig
     return true;
 }
 
-bool try_set_function_call_types(Env* env, Tast_function_call** new_call, Uast_function_call* fun_call) {
+bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_call* fun_call) {
     bool status = true;
 
     Uast_def* fun_def;
@@ -850,10 +852,21 @@ bool try_set_function_call_types(Env* env, Tast_function_call** new_call, Uast_f
         goto error;
     }
     Uast_function_decl* fun_decl;
-    if (fun_def->type == UAST_FUNCTION_DEF) {
-        fun_decl = uast_unwrap_function_def(fun_def)->decl;
-    } else {
-        fun_decl = uast_unwrap_function_decl(fun_def);
+    switch (fun_def->type) {
+        case UAST_FUNCTION_DEF:
+            fun_decl = uast_unwrap_function_def(fun_def)->decl;
+            break;
+        case UAST_FUNCTION_DECL:
+            fun_decl = uast_unwrap_function_decl(fun_def);
+            break;
+        case UAST_SUM_DEF: {
+            Uast_sum_def* sum_def = uast_unwrap_sum_def(fun_def);
+            (void) sum_def;
+            //*new_call = 
+            todo();
+        }
+        default:
+            unreachable("");
     }
     Tast_lang_type* fun_rtn_type = NULL;
     if (!try_set_lang_type_types(env, &fun_rtn_type, fun_decl->return_type)) {
@@ -951,12 +964,12 @@ bool try_set_function_call_types(Env* env, Tast_function_call** new_call, Uast_f
 
     assert(!status || new_args.info.count == fun_call->args.info.count);
 
-    *new_call = tast_function_call_new(
+    *new_call = tast_wrap_function_call(tast_function_call_new(
         fun_call->pos,
         new_args,
         fun_call->name,
         fun_rtn_type->lang_type
-    );
+    ));
 
 error:
     return status;
@@ -1215,8 +1228,41 @@ bool try_set_struct_base_types(Env* env, Struct_def_base* new_base, Ustruct_def_
 bool try_set_enum_def_types(Env* env, Tast_enum_def** new_tast, Uast_enum_def* tast) {
     Struct_def_base new_base = {0};
     bool success = try_set_struct_base_types(env, &new_base, &tast->base);
-    *new_tast = tast_enum_def_new(tast->pos, new_base);
-    try(symbol_add(env, tast_wrap_enum_def(*new_tast)));
+    Tast_enum_def* new_def = tast_enum_def_new(tast->pos, new_base);
+    try(symbol_add(env, tast_wrap_enum_def(new_def)));
+    *new_tast = new_def;
+    return success;
+}
+
+bool try_set_sum_def_types(Env* env, Tast_struct_def** new_tast, Uast_sum_def* tast) {
+    Struct_def_base union_base = {0};
+    bool success = try_set_struct_base_types(env, &union_base, &tast->base);
+    Tast_raw_union_def* new_union = tast_raw_union_def_new(tast->pos, union_base);
+
+    Struct_def_base enum_base = {0};
+    if (!try_set_struct_base_types(env, &enum_base, &tast->base)) {
+        success = false;
+    }
+    Tast_enum_def* new_enum = tast_enum_def_new(tast->pos, enum_base);
+
+    Tast_variable_def_vec members = {0};
+    vec_append(&a_main, &members, tast_variable_def_new(
+        tast->pos,
+        lang_type_new_from_strv(new_enum->base.name, 0),
+        false,
+        str_view_from_cstr("type")
+    ));
+    vec_append(&a_main, &members, tast_variable_def_new(
+        tast->pos,
+        lang_type_new_from_strv(new_union->base.name, 0),
+        false,
+        str_view_from_cstr("union")
+    ));
+    Tast_struct_def* new_sum = tast_struct_def_new(tast->pos, (Struct_def_base) {members, 0, tast->base.name});
+
+    log(LOG_DEBUG, TAST_FMT, tast_raw_union_def_print(new_union));
+    try(symbol_add(env, tast_wrap_struct_def(new_sum)));
+    *new_tast = new_sum;
     return success;
 }
 

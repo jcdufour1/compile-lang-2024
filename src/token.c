@@ -111,6 +111,8 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
             return str_view_from_cstr("case");
         case TOKEN_DEFAULT:
             return str_view_from_cstr("default");
+        case TOKEN_SUM:
+            return str_view_from_cstr("sum");
     }
     unreachable("%d\n", token_type);
 }
@@ -150,6 +152,7 @@ Str_view token_print_internal(Arena* arena, Token token, bool msg_format) {
         case TOKEN_GREATER_THAN: // fallthrough
         case TOKEN_NOT_EQUAL: // fallthrough
         case TOKEN_NOT: // fallthrough
+        case TOKEN_SUM: // fallthrough
         case TOKEN_DEREF: // fallthrough
         case TOKEN_XOR: // fallthrough
         case TOKEN_REFER: // fallthrough
