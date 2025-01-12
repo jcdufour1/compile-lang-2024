@@ -1172,7 +1172,7 @@ static Uast_symbol_untyped* extract_symbol(Tk_view* tokens) {
     return uast_symbol_untyped_new(token.pos, token.text);
 }
 
-static PARSE_STATUS try_extract_function_call(Env* env, Uast_function_call** child, Tk_view* tokens, Uast_symbol_untyped* name) {
+static PARSE_STATUS try_extract_function_call(Env* env, Uast_function_call** child, Tk_view* tokens, Uast_expr* callee) {
     //Token fun_name_token;
     //if (!try_consume(&fun_name_token, tokens, TOKEN_SYMBOL)) {
     //    unreachable("this is not a function call");
@@ -1211,7 +1211,7 @@ static PARSE_STATUS try_extract_function_call(Env* env, Uast_function_call** chi
         return PARSE_ERROR;
     }
 
-    *child = uast_function_call_new(name->pos, args, name->name);
+    *child = uast_function_call_new(uast_get_pos_expr(callee), args, callee);
     return PARSE_OK;
 }
 
@@ -2098,7 +2098,7 @@ static PARSE_EXPR_STATUS extract_expression_function_call(
     switch (lhs->type) {
         case UAST_SYMBOL_UNTYPED:
             log(LOG_DEBUG, UAST_FMT, uast_expr_print(lhs));
-            switch (try_extract_function_call(env, &fun_call, tokens, uast_unwrap_symbol_untyped(lhs))) {
+            switch (try_extract_function_call(env, &fun_call, tokens, lhs)) {
                 case PARSE_OK:
                     *result = uast_wrap_function_call(fun_call);
                     lhs = *result;
@@ -2112,7 +2112,7 @@ static PARSE_EXPR_STATUS extract_expression_function_call(
         case UAST_OPERATOR:
             // fallthrough
         case UAST_MEMBER_ACCESS_UNTYPED:
-            switch (try_extract_function_call(env, &fun_call, tokens, uast_unwrap_symbol_untyped(lhs))) {
+            switch (try_extract_function_call(env, &fun_call, tokens, lhs)) {
                 case PARSE_OK:
                     lhs = uast_wrap_function_call(fun_call);
                     *result = lhs;
@@ -2132,7 +2132,7 @@ static PARSE_EXPR_STATUS extract_expression_function_call(
 static PARSE_EXPR_STATUS extract_expression_index(
     Env* env,
     Uast_expr** result,
-    Uast_expr** lhs,
+    Uast_expr* lhs,
     Tk_view* tokens,
     int32_t* prev_oper_pres,
     bool defer_sym_add
@@ -2161,8 +2161,7 @@ static PARSE_EXPR_STATUS extract_expression_index(
         return PARSE_EXPR_ERROR;
     }
 
-    *result = uast_wrap_index_untyped(uast_index_untyped_new(oper.pos, index_index, *lhs));
-    *lhs = *result;
+    *result = uast_wrap_index_untyped(uast_index_untyped_new(oper.pos, index_index, lhs));
     return PARSE_EXPR_OK;
 }
 
@@ -2177,15 +2176,23 @@ static PARSE_EXPR_STATUS extract_expression_opening_prev_less_pres(
     switch (tk_view_front(*tokens).type) {
         case TOKEN_OPEN_PAR: {
             Uast_expr* new_right = NULL;
-            if (PARSE_EXPR_OK != extract_expression_function_call(env, &new_right, get_right_child_expr(*lhs), tokens)) {
-                todo();
+            PARSE_EXPR_STATUS status = extract_expression_function_call(env, &new_right, get_right_child_expr(*lhs), tokens);
+            if (status != PARSE_EXPR_OK) {
+                return status;
             }
             assert(new_right);
             set_right_child_expr(*result, new_right);
             return PARSE_EXPR_OK;
         }
         case TOKEN_OPEN_SQ_BRACKET: {
-            return extract_expression_index(env, result, lhs, tokens, prev_oper_pres, defer_sym_add);
+            Uast_expr* new_right = NULL;
+            PARSE_EXPR_STATUS status = extract_expression_index(env, &new_right, get_right_child_expr(*lhs), tokens, prev_oper_pres, defer_sym_add);
+            if (status != PARSE_EXPR_OK) {
+                return status;
+            }
+            assert(new_right);
+            set_right_child_expr(*result, new_right);
+            return PARSE_EXPR_OK;
         }
         default:
             unreachable(TOKEN_FMT, token_print(tk_view_front(*tokens)));
@@ -2203,13 +2210,10 @@ static PARSE_EXPR_STATUS extract_expression_opening_prev_equal_pres(
 ) {
     switch (tk_view_front(*tokens).type) {
         case TOKEN_OPEN_PAR: {
-            if (PARSE_EXPR_OK != extract_expression_function_call(env, result, *lhs, tokens)) {
-                todo();
-            }
+            return extract_expression_function_call(env, result, *lhs, tokens);
         }
         case TOKEN_OPEN_SQ_BRACKET: {
-            //return extract_expression_index(env, result, lhs, tokens, prev_oper_pres, defer_sym_add);
-            todo();
+            return extract_expression_index(env, result, *lhs, tokens, prev_oper_pres, defer_sym_add);
         }
         default:
             unreachable(TOKEN_FMT, token_print(tk_view_front(*tokens)));
@@ -2292,13 +2296,8 @@ static PARSE_EXPR_STATUS try_extract_expression(
         if (is_unary(tk_view_front(*tokens).type)) {
             todo();
         } else if (token_is_opening(tk_view_front(*tokens))) {
-            log(LOG_DEBUG, TAST_FMT, uast_expr_print(*result));
-            log(LOG_DEBUG, TAST_FMT, uast_expr_print(lhs));
             switch (extract_expression_opening(env, result, &lhs, tokens, &prev_oper_pres, defer_sym_add)) {
                 case PARSE_EXPR_OK:
-                    log(LOG_DEBUG, TAST_FMT, uast_expr_print(*result));
-                    log(LOG_DEBUG, TAST_FMT, uast_expr_print(lhs));
-                    todo();
                     break;
                 case PARSE_EXPR_NONE:
                     todo();

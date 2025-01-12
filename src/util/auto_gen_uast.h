@@ -238,7 +238,7 @@ static Uast_type uast_gen_function_call(const char* prefix) {
     Uast_type call = {.name = uast_name_new(prefix, "function_call", false)};
 
     append_member(&call.members, "Uast_expr_vec", "args");
-    append_member(&call.members, "Str_view", "name");
+    append_member(&call.members, "Uast_expr*", "callee");
 
     return call;
 }

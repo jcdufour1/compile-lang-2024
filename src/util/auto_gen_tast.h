@@ -278,6 +278,17 @@ static Tast_type tast_gen_enum_lit(const char* prefix) {
     return enum_lit;
 }
 
+static Tast_type tast_gen_sum_lit(const char* prefix) {
+    const char* base_name = "sum_lit";
+    Tast_type sum_lit = {.name = tast_name_new(prefix, base_name, false)};
+
+    append_member(&sum_lit.members, "Tast_enum_lit*", "tag");
+    append_member(&sum_lit.members, "Tast_expr*", "item");
+    append_member(&sum_lit.members, "Lang_type", "lang_type");
+
+    return sum_lit;
+}
+
 static Tast_type tast_gen_literal(const char* prefix) {
     const char* base_name = "literal";
     Tast_type lit = {.name = tast_name_new(prefix, base_name, false)};
@@ -286,6 +297,7 @@ static Tast_type tast_gen_literal(const char* prefix) {
     vec_append(&gen_a, &lit.sub_types, tast_gen_string(base_name));
     vec_append(&gen_a, &lit.sub_types, tast_gen_void(base_name));
     vec_append(&gen_a, &lit.sub_types, tast_gen_enum_lit(base_name));
+    vec_append(&gen_a, &lit.sub_types, tast_gen_sum_lit(base_name));
     vec_append(&gen_a, &lit.sub_types, tast_gen_char(base_name));
 
     return lit;

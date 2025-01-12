@@ -48,7 +48,7 @@ static inline Lang_type uast_get_lang_type_def(const Uast_def* def) {
         case UAST_LITERAL_DEF:
             unreachable("");
         case UAST_SUM_DEF:
-            unreachable("");
+            return lang_type_new_from_strv(uast_unwrap_sum_def_const(def)->base.name, 0);
     }
     unreachable("");
 }
@@ -185,7 +185,7 @@ static inline Str_view get_uast_expr_name(const Uast_expr* expr) {
         case UAST_SYMBOL_UNTYPED:
             return uast_unwrap_symbol_untyped_const(expr)->name;
         case UAST_FUNCTION_CALL:
-            return uast_unwrap_function_call_const(expr)->name;
+            todo();
         case UAST_LITERAL:
             return uast_get_literal_name(uast_unwrap_literal_const(expr));
         case UAST_TUPLE:
@@ -231,7 +231,7 @@ static inline Str_view get_uast_name_def(const Uast_def* def) {
 static inline Str_view get_uast_name_expr(const Uast_expr* expr) {
     switch (expr->type) {
         case UAST_FUNCTION_CALL:
-            return uast_unwrap_function_call_const(expr)->name;
+            todo();
         default:
             unreachable(UAST_FMT"\n", uast_expr_print(expr));
     }

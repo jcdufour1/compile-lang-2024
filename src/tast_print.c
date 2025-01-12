@@ -204,6 +204,8 @@ Str_view tast_literal_print_internal(const Tast_literal* lit, int indent) {
             return tast_enum_lit_print_internal(tast_unwrap_enum_lit_const(lit), indent);
         case TAST_CHAR:
             return tast_char_print_internal(tast_unwrap_char_const(lit), indent);
+        case TAST_SUM_LIT:
+            return tast_sum_lit_print_internal(tast_unwrap_sum_lit_const(lit), indent);
     }
     unreachable("");
 }
@@ -282,6 +284,18 @@ Str_view tast_enum_lit_print_internal(const Tast_enum_lit* num, int indent) {
     string_extend_cstr_indent(&print_arena, &buf, "enum_lit", indent);
     extend_lang_type(&buf, num->lang_type, true);
     string_extend_int64_t(&print_arena, &buf, num->data);
+    string_extend_cstr(&print_arena, &buf, "\n");
+
+    return string_to_strv(buf);
+}
+
+Str_view tast_sum_lit_print_internal(const Tast_sum_lit* sum, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&print_arena, &buf, "sum_lit", indent);
+    extend_lang_type(&buf, sum->lang_type, true);
+    string_extend_strv(&print_arena, &buf, tast_enum_lit_print_internal(sum->tag, indent + INDENT_WIDTH));
+    string_extend_strv(&print_arena, &buf, tast_expr_print_internal(sum->item, indent + INDENT_WIDTH));
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);

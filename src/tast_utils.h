@@ -141,6 +141,8 @@ static inline Lang_type tast_get_lang_type_literal(const Tast_literal* lit) {
             return tast_unwrap_enum_lit_const(lit)->lang_type;
         case TAST_CHAR:
             return tast_unwrap_char_const(lit)->lang_type;
+        case TAST_SUM_LIT:
+            return tast_unwrap_sum_lit_const(lit)->lang_type;
     }
     unreachable("");
 }
@@ -157,6 +159,8 @@ static inline Lang_type* tast_get_lang_type_literal_ref(Tast_literal* lit) {
             return &tast_unwrap_enum_lit(lit)->lang_type;
         case TAST_CHAR:
             return &tast_unwrap_char(lit)->lang_type;
+        case TAST_SUM_LIT:
+            return &tast_unwrap_sum_lit(lit)->lang_type;
     }
     unreachable("");
 }
@@ -282,6 +286,9 @@ static inline void tast_set_lang_types_literal(Tast_literal* lit, Lang_type_vec 
             unreachable("");
             return;
         case TAST_CHAR:
+            unreachable("");
+            return;
+        case TAST_SUM_LIT:
             unreachable("");
             return;
     }
@@ -488,6 +495,8 @@ static inline Str_view get_literal_name(const Tast_literal* lit) {
         case TAST_ENUM_LIT:
             unreachable("");
         case TAST_CHAR:
+            unreachable("");
+        case TAST_SUM_LIT:
             unreachable("");
     }
     unreachable("");

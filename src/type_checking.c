@@ -202,9 +202,11 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
         }
         *new_src = tast_wrap_tuple(new_src_);
     } else {
+        env->parent_of = PARENT_OF_ASSIGN_RHS;
         if (!try_set_expr_types(env, new_src, src)) {
             return CHECK_ASSIGN_ERROR;
         }
+        env->parent_of = PARENT_OF_NONE;
     }
 
     return check_generic_assignment_finish(new_src, dest_lang_type, *new_src);
@@ -842,15 +844,32 @@ bool try_set_assignment_types(Env* env, Tast_assignment** new_assign, Uast_assig
 bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_call* fun_call) {
     bool status = true;
 
-    Uast_def* fun_def;
-    if (!usymbol_lookup(&fun_def, env, fun_call->name)) {
-        msg(
-            LOG_ERROR, EXPECT_FAIL_UNDEFINED_FUNCTION, env->file_text, fun_call->pos,
-            "function `"STR_VIEW_FMT"` is not defined\n", str_view_print(fun_call->name)
-        );
-        status = false;
-        goto error;
+    Tast_expr* new_callee = NULL;
+    try(try_set_expr_types(env, &new_callee, fun_call->callee));
+
+    Uast_def* fun_def = NULL;
+    switch (fun_call->callee->type) {
+        case UAST_SYMBOL_UNTYPED: {
+            if (!usymbol_lookup(&fun_def, env, uast_unwrap_symbol_untyped(fun_call->callee)->name)) {
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_UNDEFINED_FUNCTION, env->file_text, fun_call->pos,
+                    "function `"STR_VIEW_FMT"` is not defined\n", str_view_print(uast_unwrap_symbol_untyped(fun_call->callee)->name)
+                );
+                status = false;
+                goto error;
+            }
+            break;
+        }
+        case UAST_MEMBER_ACCESS_UNTYPED:
+            if (tast_member_access_typed_is_sum(env, tast_unwrap_member_access_typed(new_callee))) {
+                todo();
+            } else {
+                unreachable("");
+            }
+        default:
+            unreachable("");
     }
+
     Uast_function_decl* fun_decl;
     switch (fun_def->type) {
         case UAST_FUNCTION_DEF:
@@ -892,7 +911,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
         String message = {0};
         string_extend_size_t(&print_arena, &message, fun_call->args.info.count);
         string_extend_cstr(&print_arena, &message, " arguments are passed to function `");
-        string_extend_strv(&print_arena, &message, fun_call->name);
+        string_extend_strv(&print_arena, &message, fun_decl->name);
         string_extend_cstr(&print_arena, &message, "`, but ");
         string_extend_size_t(&print_arena, &message, min_args);
         if (max_args > min_args) {
@@ -967,7 +986,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
     *new_call = tast_wrap_function_call(tast_function_call_new(
         fun_call->pos,
         new_args,
-        fun_call->name,
+        fun_decl->name,
         fun_rtn_type->lang_type
     ));
 
@@ -1048,6 +1067,58 @@ bool try_set_member_access_types_finish_generic_struct(
     return true;
 }
 
+bool try_set_member_access_types_finish_sum_def(
+    const Env* env,
+    Tast_stmt** new_tast,
+    Uast_sum_def* sum_def,
+    Uast_member_access_untyped* access,
+    Tast_expr* new_callee
+) {
+
+    switch (env->parent_of) {
+        case PARENT_OF_CASE:
+            todo();
+            //Uast_variable_def* member_def = NULL;
+            //if (!uast_try_get_member_def(&member_def, &enum_def->base, access->member_name)) {
+            //    msg_invalid_enum_member(env, enum_def->base, access);
+            //    return false;
+            //}
+
+            //Tast_enum_lit* new_lit = tast_enum_lit_new(
+            //    access->pos,
+            //    uast_get_member_index(&enum_def->base, access->member_name),
+            //    member_def->lang_type
+            //);
+
+            //*new_tast = tast_wrap_expr(tast_wrap_literal(tast_wrap_enum_lit(new_lit)));
+            //assert(member_def->lang_type.str.count > 0);
+            //return true;
+        case PARENT_OF_ASSIGN_RHS: {
+            Uast_variable_def* member_def = NULL;
+            if (!uast_try_get_member_def(&member_def, &sum_def->base, access->member_name)) {
+                todo();
+                //msg_invalid_enum_member(env, enum_def->base, access);
+                //return false;
+            }
+
+            Tast_sum_lit* new_lit = tast_sum_lit_new(
+                access->pos,
+                uast_get_member_index(&sum_def->base, access->member_name),
+                member_def->lang_type
+            );
+
+            *new_tast = tast_wrap_expr(tast_wrap_literal(tast_wrap_sum_lit(new_lit)));
+            assert(member_def->lang_type.str.count > 0);
+            return true;
+
+            todo();
+        }
+        case PARENT_OF_NONE:
+            unreachable("");
+    }
+    unreachable("");
+}
+
 bool try_set_member_access_types_finish(
     const Env* env,
     Tast_stmt** new_tast,
@@ -1086,6 +1157,8 @@ bool try_set_member_access_types_finish(
             assert(member_def->lang_type.str.count > 0);
             return true;
         }
+        case UAST_SUM_DEF:
+            return try_set_member_access_types_finish_sum_def(env, new_tast, uast_unwrap_sum_def(lang_type_def), access, new_callee);
         default:
             unreachable(UAST_FMT"\n", uast_stmt_print(uast_wrap_def(lang_type_def)));
     }
@@ -1680,10 +1753,12 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
             old_case->pos
         );
                 
+        env->parent_of = PARENT_OF_CASE;
         Tast_if* new_if = NULL;
         if (!try_set_if_types(env, &new_if, uast_if_new(old_case->pos, cond, if_true))) {
             return false;
         }
+        env->parent_of = PARENT_OF_NONE;
 
         if (!check_for_exhaustiveness_inner(env, &exhaustive_data, new_if, old_case->is_default)) {
             return false;

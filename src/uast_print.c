@@ -123,9 +123,8 @@ Str_view uast_literal_print_internal(const Uast_literal* lit, int indent) {
 Str_view uast_function_call_print_internal(const Uast_function_call* fun_call, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "function_call", indent);
-    string_extend_strv_in_par(&print_arena, &buf, fun_call->name);
-    string_extend_cstr(&print_arena, &buf, "\n");
+    string_extend_cstr_indent(&print_arena, &buf, "function_call\n", indent);
+    string_extend_strv(&print_arena, &buf, uast_expr_print_internal(fun_call->callee, indent + INDENT_WIDTH));
 
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
         Str_view arg_text = uast_expr_print_internal(vec_at(&fun_call->args, idx), indent + INDENT_WIDTH);
@@ -433,23 +432,22 @@ Str_view uast_function_def_print_internal(const Uast_function_def* fun_def, int 
     return string_to_strv(buf);
 }
 
-static void extend_ustruct_def_base(String* buf, const char* type_name, Ustruct_def_base base, int indent) {
+static void extend_ustruct_def_base(String* buf, const char* type_name, Ustruct_def_base base, int indent, Pos pos) {
     string_extend_cstr_indent(&print_arena, buf, type_name, indent);
+    extend_pos(buf, pos);
     string_extend_strv_in_par(&print_arena, buf, base.name);
     string_extend_cstr(&print_arena, buf, "\n");
 
-    indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        Str_view memb_text = uast_variable_def_print_internal(vec_at(&base.members, idx), indent);
+        Str_view memb_text = uast_variable_def_print_internal(vec_at(&base.members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&print_arena, buf, memb_text);
     }
-    indent -= INDENT_WIDTH;
 }
 
 Str_view uast_struct_def_print_internal(const Uast_struct_def* def, int indent) {
     String buf = {0};
 
-    extend_ustruct_def_base(&buf, "struct_def", def->base, indent);
+    extend_ustruct_def_base(&buf, "struct_def", def->base, indent, def->pos);
 
     return string_to_strv(buf);
 }
@@ -457,7 +455,7 @@ Str_view uast_struct_def_print_internal(const Uast_struct_def* def, int indent) 
 Str_view uast_raw_union_def_print_internal(const Uast_raw_union_def* def, int indent) {
     String buf = {0};
 
-    extend_ustruct_def_base(&buf, "raw_union_def", def->base, indent);
+    extend_ustruct_def_base(&buf, "raw_union_def", def->base, indent, def->pos);
 
     return string_to_strv(buf);
 }
@@ -465,7 +463,7 @@ Str_view uast_raw_union_def_print_internal(const Uast_raw_union_def* def, int in
 Str_view uast_enum_def_print_internal(const Uast_enum_def* def, int indent) {
     String buf = {0};
 
-    extend_ustruct_def_base(&buf, "enum_def", def->base, indent);
+    extend_ustruct_def_base(&buf, "enum_def", def->base, indent, def->pos);
 
     return string_to_strv(buf);
 }
@@ -473,7 +471,7 @@ Str_view uast_enum_def_print_internal(const Uast_enum_def* def, int indent) {
 Str_view uast_sum_def_print_internal(const Uast_sum_def* def, int indent) {
     String buf = {0};
 
-    extend_ustruct_def_base(&buf, "sum_def", def->base, indent);
+    extend_ustruct_def_base(&buf, "sum_def", def->base, indent, def->pos);
 
     return string_to_strv(buf);
 }

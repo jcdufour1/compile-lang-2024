@@ -10,6 +10,13 @@ typedef struct {
     Symbol_collection** buf;
 } Sym_coll_vec;
 
+// only used in type_checking.c
+typedef enum {
+    PARENT_OF_NONE = 0,
+    PARENT_OF_CASE,
+    PARENT_OF_ASSIGN_RHS,
+} PARENT_OF;
+
 typedef struct Env_ {
     Sym_coll_vec ancesters; // index 0 is the root of the tree
                             // index len - 1 is the current tast
@@ -34,6 +41,8 @@ typedef struct Env_ {
     Tast_function_def_vec extra_functions;
 
     Str_view struct_rtn_name_parent_function;
+
+    PARENT_OF parent_of;
 
     Str_view label_if_break;
     Str_view label_if_continue;

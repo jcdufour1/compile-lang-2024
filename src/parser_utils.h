@@ -209,4 +209,6 @@ static inline const Tast_struct_def* llvm_get_struct_def_const(const Env* env, c
     return llvm_get_struct_def(env, (Llvm*)tast);
 }
 
+bool tast_member_access_typed_is_sum(const Env* env, const Tast_member_access_typed* access);
+
 #endif // PARSER_UTIL_H

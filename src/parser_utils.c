@@ -606,3 +606,8 @@ bool llvm_try_get_struct_def(const Env* env, Tast_struct_def** struct_def, Llvm*
     return true;
 }
 
+bool tast_member_access_typed_is_sum(const Env* env, const Tast_member_access_typed* access) {
+    Uast_def* def = NULL;
+    try(usymbol_lookup(&def, env, tast_get_lang_type_expr(access->callee).str));
+    todo();
+}
