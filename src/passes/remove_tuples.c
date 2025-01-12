@@ -271,6 +271,8 @@ static Tast_expr* rm_tuple_generic_assignment_rhs(Env* env, Tast_expr* rhs, Lang
         return rm_tuple_generic_assign_struct_literal_child(env, rhs, lhs_lang_type, assign_pos);
     } else if (rhs->type == TAST_STRUCT_LITERAL) {
         return rm_tuple_generic_assign_struct_literal_child(env, rhs, lhs_lang_type, assign_pos);
+    } else if (rhs->type == TAST_LITERAL && tast_unwrap_literal(rhs)->type == TAST_SUM_LIT) {
+        todo();
     } else {
         return rhs;
     }
@@ -402,6 +404,28 @@ static Tast_function_call* rm_tuple_function_call(Env* env, Tast_function_call* 
     return fun_call;
 }
 
+static Tast_sum_lit* rm_tuple_sum_rhs(Env* env, Lang_type_vec lhs_lang_type, Tast_sum_lit* rhs, Pos assign_pos) {
+    todo();
+}
+
+static Tast_literal* rm_tuple_literal_rhs(Env* env, Lang_type_vec lhs_lang_type, Tast_literal* rhs, Pos assign_pos) {
+    switch (rhs->type) {
+        case TAST_NUMBER:
+            return rhs;
+        case TAST_STRING:
+            return rhs;
+        case TAST_VOID:
+            return rhs;
+        case TAST_ENUM_LIT:
+            return rhs;
+        case TAST_CHAR:
+            return rhs;
+        case TAST_SUM_LIT:
+            return tast_wrap_sum_lit(rm_tuple_sum_rhs(env, lhs_lang_type, tast_unwrap_sum_lit(rhs), assign_pos));
+    }
+    unreachable("");
+}
+
 static Tast_expr* rm_tuple_expr_rhs(Env* env, Lang_type_vec lhs_lang_type, Tast_expr* rhs, Pos assign_pos) {
     switch (rhs->type) {
         case TAST_OPERATOR:
@@ -413,7 +437,7 @@ static Tast_expr* rm_tuple_expr_rhs(Env* env, Lang_type_vec lhs_lang_type, Tast_
         case TAST_INDEX_TYPED:
             return rhs;
         case TAST_LITERAL:
-            return rhs;
+            return tast_wrap_literal(rm_tuple_literal_rhs(env, lhs_lang_type, tast_unwrap_literal(rhs), assign_pos));
         case TAST_STRUCT_LITERAL:
             try(lhs_lang_type.info.count == 1);
             return rm_tuple_generic_assignment_rhs(env, rhs, vec_at(&lhs_lang_type, 0), assign_pos);
@@ -422,6 +446,8 @@ static Tast_expr* rm_tuple_expr_rhs(Env* env, Lang_type_vec lhs_lang_type, Tast_
             return rm_tuple_generic_assignment_rhs(env, rhs, vec_at(&lhs_lang_type, 0), assign_pos);
         case TAST_FUNCTION_CALL:
             return tast_wrap_function_call(rm_tuple_function_call(env, tast_unwrap_function_call(rhs)));
+        case TAST_SUM_CALLEE:
+            todo();
     }
     unreachable("");
 }
@@ -463,6 +489,8 @@ static Tast_expr* rm_tuple_expr_not_in_assignment(Env* env, Tast_expr* expr) {
         case TAST_FUNCTION_CALL:
             return tast_wrap_function_call(rm_tuple_function_call(env, tast_unwrap_function_call(expr)));
         case TAST_TUPLE:
+            unreachable("");
+        case TAST_SUM_CALLEE:
             unreachable("");
     }
     unreachable("");

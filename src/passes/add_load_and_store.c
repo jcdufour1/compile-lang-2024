@@ -398,8 +398,6 @@ static Str_view load_function_call(
 }
 
 static Llvm_literal* tast_literal_clone(Tast_literal* old_lit) {
-    Llvm_literal* new_lit = NULL;
-
     switch (old_lit->type) {
         case TAST_STRING: {
             Llvm_string* string = llvm_string_new(
@@ -408,12 +406,10 @@ static Llvm_literal* tast_literal_clone(Tast_literal* old_lit) {
                 tast_unwrap_string(old_lit)->lang_type,
                 tast_unwrap_string(old_lit)->name
             );
-            new_lit = llvm_wrap_string(string);
-            break;
+            return llvm_wrap_string(string);
         }
         case TAST_VOID: {
-            new_lit = llvm_wrap_void(llvm_void_new(tast_get_pos_literal(old_lit), util_literal_name_new()));
-            break;
+            return llvm_wrap_void(llvm_void_new(tast_get_pos_literal(old_lit), util_literal_name_new()));
         }
         case TAST_ENUM_LIT: {
             Llvm_enum_lit* enum_lit = llvm_enum_lit_new(
@@ -422,8 +418,7 @@ static Llvm_literal* tast_literal_clone(Tast_literal* old_lit) {
                 tast_unwrap_enum_lit(old_lit)->lang_type,
                 util_literal_name_new()
             );
-            new_lit = llvm_wrap_enum_lit(enum_lit);
-            break;
+            return llvm_wrap_enum_lit(enum_lit);
         }
         case TAST_CHAR: {
             Llvm_char* lang_char = llvm_char_new(
@@ -432,8 +427,7 @@ static Llvm_literal* tast_literal_clone(Tast_literal* old_lit) {
                 tast_unwrap_char(old_lit)->lang_type,
                 util_literal_name_new()
             );
-            new_lit = llvm_wrap_char(lang_char);
-            break;
+            return llvm_wrap_char(lang_char);
         }
         case TAST_NUMBER: {
             Llvm_number* number = llvm_number_new(
@@ -442,14 +436,13 @@ static Llvm_literal* tast_literal_clone(Tast_literal* old_lit) {
                 tast_unwrap_number(old_lit)->lang_type,
                 util_literal_name_new()
             );
-            new_lit = llvm_wrap_number(number);
-            break;
+            return llvm_wrap_number(number);
         }
-        default:
-            unreachable(TAST_FMT"\n", tast_print((Tast*)old_lit));
+        case TAST_SUM_LIT: {
+            unreachable("should not still be present");
+        }
     }
-
-    return new_lit;
+    unreachable("");
 }
 
 static Str_view load_literal(
@@ -1504,6 +1497,8 @@ static Str_view load_ptr_expr(Env* env, Llvm_block* new_block, Tast_expr* old_ex
         case TAST_STRUCT_LITERAL:
             unreachable("");
         case TAST_TUPLE:
+            unreachable("");
+        case TAST_SUM_CALLEE:
             unreachable("");
     }
     unreachable("");
