@@ -152,6 +152,15 @@ Str_view tast_enum_sym_print_internal(const Tast_enum_sym* sym, int indent) {
     return string_to_strv(buf);
 }
 
+Str_view tast_sum_sym_print_internal(const Tast_sum_sym* sym, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&print_arena, &buf, "sum_sym", indent);
+    tast_extend_sym_typed_base(&buf, sym->base);
+
+    return string_to_strv(buf);
+}
+
 Str_view tast_symbol_typed_print_internal(const Tast_symbol_typed* sym, int indent) {
     switch (sym->type) {
         case TAST_PRIMITIVE_SYM:
@@ -162,6 +171,8 @@ Str_view tast_symbol_typed_print_internal(const Tast_symbol_typed* sym, int inde
             return tast_raw_union_sym_print_internal(tast_unwrap_raw_union_sym_const(sym), indent);
         case TAST_ENUM_SYM:
             return tast_enum_sym_print_internal(tast_unwrap_enum_sym_const(sym), indent);
+        case TAST_SUM_SYM:
+            return tast_sum_sym_print_internal(tast_unwrap_sum_sym_const(sym), indent);
     }
     unreachable("");
 }
@@ -294,9 +305,9 @@ Str_view tast_sum_lit_print_internal(const Tast_sum_lit* sum, int indent) {
 
     string_extend_cstr_indent(&print_arena, &buf, "sum_lit", indent);
     extend_lang_type(&buf, sum->lang_type, true);
+    string_extend_cstr(&print_arena, &buf, "\n");
     string_extend_strv(&print_arena, &buf, tast_enum_lit_print_internal(sum->tag, indent + INDENT_WIDTH));
     string_extend_strv(&print_arena, &buf, tast_expr_print_internal(sum->item, indent + INDENT_WIDTH));
-    string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
 }
@@ -663,6 +674,8 @@ Str_view tast_expr_print_internal(const Tast_expr* expr, int indent) {
             return tast_struct_literal_print_internal(tast_unwrap_struct_literal_const(expr), indent);
         case TAST_TUPLE:
             return tast_tuple_print_internal(tast_unwrap_tuple_const(expr), indent);
+        case TAST_SUM_CALLEE:
+            unreachable("");
     }
     unreachable("");
 }

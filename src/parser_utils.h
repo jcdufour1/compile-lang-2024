@@ -112,6 +112,8 @@ bool lang_type_is_enum(const Env* env, Lang_type lang_type);
 
 bool lang_type_is_primitive(const Env* env, Lang_type lang_type);
 
+bool lang_type_is_sum(const Env* env, Lang_type lang_type);
+
 static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, Str_view member_name) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         const Uast_variable_def* curr_member = vec_at(&struct_def->members, idx);

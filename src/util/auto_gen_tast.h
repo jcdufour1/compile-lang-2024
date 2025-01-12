@@ -159,6 +159,15 @@ static Tast_type tast_gen_primitive_sym(const char* prefix) {
     return primitive;
 }
 
+static Tast_type tast_gen_sum_sym(const char* prefix) {
+    const char* base_name = "sum_sym";
+    Tast_type sum = {.name = tast_name_new(prefix, base_name, false)};
+
+    append_member(&sum.members, "Sym_typed_base", "base");
+
+    return sum;
+}
+
 static Tast_type tast_gen_enum_sym(const char* prefix) {
     const char* base_name = "enum_sym";
     Tast_type lang_enum = {.name = tast_name_new(prefix, base_name, false)};
@@ -204,6 +213,7 @@ static Tast_type tast_gen_symbol_typed(const char* prefix) {
     vec_append(&gen_a, &sym.sub_types, tast_gen_struct_sym(base_name));
     vec_append(&gen_a, &sym.sub_types, tast_gen_raw_union_sym(base_name));
     vec_append(&gen_a, &sym.sub_types, tast_gen_enum_sym(base_name));
+    vec_append(&gen_a, &sym.sub_types, tast_gen_sum_sym(base_name));
 
     return sym;
 }
@@ -335,6 +345,16 @@ static Tast_type tast_gen_tuple(const char* prefix) {
     return lit;
 }
 
+static Tast_type tast_gen_sum_callee(const char* prefix) {
+    const char* base_name = "sum_callee";
+    Tast_type lit = {.name = tast_name_new(prefix, base_name, false)};
+
+    append_member(&lit.members, "Tast_enum_lit*", "tag");
+    append_member(&lit.members, "Lang_type", "sum_lang_type");
+
+    return lit;
+}
+
 static Tast_type tast_gen_expr(const char* prefix) {
     const char* base_name = "expr";
     Tast_type expr = {.name = tast_name_new(prefix, base_name, false)};
@@ -347,6 +367,7 @@ static Tast_type tast_gen_expr(const char* prefix) {
     vec_append(&gen_a, &expr.sub_types, tast_gen_function_call(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_struct_literal(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_tuple(base_name));
+    vec_append(&gen_a, &expr.sub_types, tast_gen_sum_callee(base_name));
 
     return expr;
 }

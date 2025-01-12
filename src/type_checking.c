@@ -292,6 +292,10 @@ bool try_set_symbol_type(const Env* env, Tast_expr** new_tast, Uast_symbol_untyp
         Tast_primitive_sym* sym_typed = tast_primitive_sym_new(sym_untyped->pos, new_base);
         *new_tast = tast_wrap_symbol_typed(tast_wrap_primitive_sym(sym_typed));
         return true;
+    } else if (lang_type_is_sum(env, lang_type)) {
+        Tast_sum_sym* sym_typed = tast_sum_sym_new(sym_untyped->pos, new_base);
+        *new_tast = tast_wrap_symbol_typed(tast_wrap_sum_sym(sym_typed));
+        return true;
     } else {
         unreachable("uncaught undefined lang_type");
     }
@@ -848,24 +852,41 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
     try(try_set_expr_types(env, &new_callee, fun_call->callee));
 
     Uast_def* fun_def = NULL;
-    switch (fun_call->callee->type) {
-        case UAST_SYMBOL_UNTYPED: {
-            if (!usymbol_lookup(&fun_def, env, uast_unwrap_symbol_untyped(fun_call->callee)->name)) {
+    switch (new_callee->type) {
+        case TAST_SYMBOL_TYPED: {
+            if (!usymbol_lookup(&fun_def, env, tast_get_symbol_typed_name(tast_unwrap_symbol_typed(new_callee)))) {
                 msg(
                     LOG_ERROR, EXPECT_FAIL_UNDEFINED_FUNCTION, env->file_text, fun_call->pos,
-                    "function `"STR_VIEW_FMT"` is not defined\n", str_view_print(uast_unwrap_symbol_untyped(fun_call->callee)->name)
+                    "function `"STR_VIEW_FMT"` is not defined\n", str_view_print(tast_get_symbol_typed_name(tast_unwrap_symbol_typed(new_callee)))
                 );
                 status = false;
                 goto error;
             }
             break;
         }
-        case UAST_MEMBER_ACCESS_UNTYPED:
+        case TAST_MEMBER_ACCESS_TYPED:
             if (tast_member_access_typed_is_sum(env, tast_unwrap_member_access_typed(new_callee))) {
                 todo();
             } else {
                 unreachable("");
             }
+        case TAST_SUM_CALLEE:
+            if (fun_call->args.info.count != 1) {
+                todo();
+            }
+            Tast_sum_callee* sum_callee = tast_unwrap_sum_callee(new_callee);
+
+            Tast_expr* new_item = NULL;
+            try(try_set_expr_types(env, &new_item, vec_at(&fun_call->args, 0)));
+
+            Tast_sum_lit* new_lit = tast_sum_lit_new(
+                sum_callee->pos,
+                sum_callee->tag,
+                new_item,
+                sum_callee->sum_lang_type
+            );
+            *new_call = tast_wrap_literal(tast_wrap_sum_lit(new_lit));
+            return true;
         default:
             unreachable("");
     }
@@ -1074,6 +1095,7 @@ bool try_set_member_access_types_finish_sum_def(
     Uast_member_access_untyped* access,
     Tast_expr* new_callee
 ) {
+    (void) new_callee;
 
     switch (env->parent_of) {
         case PARENT_OF_CASE:
@@ -1100,14 +1122,19 @@ bool try_set_member_access_types_finish_sum_def(
                 //msg_invalid_enum_member(env, enum_def->base, access);
                 //return false;
             }
-
-            Tast_sum_lit* new_lit = tast_sum_lit_new(
+            
+            Tast_enum_lit* new_tag = tast_enum_lit_new(
                 access->pos,
                 uast_get_member_index(&sum_def->base, access->member_name),
                 member_def->lang_type
             );
 
-            *new_tast = tast_wrap_expr(tast_wrap_literal(tast_wrap_sum_lit(new_lit)));
+            *new_tast = tast_wrap_expr(tast_wrap_sum_callee(tast_sum_callee_new(
+                access->pos,
+                new_tag,
+                lang_type_new_from_strv(sum_def->base.name, 0)
+            )));
+
             assert(member_def->lang_type.str.count > 0);
             return true;
 

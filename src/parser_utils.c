@@ -445,13 +445,15 @@ bool lang_type_is_struct(const Env* env, Lang_type lang_type) {
     }
 
     switch (def->type) {
-        case TAST_STRUCT_DEF:
+        case UAST_STRUCT_DEF:
             return true;
-        case TAST_RAW_UNION_DEF:
+        case UAST_RAW_UNION_DEF:
             return false;
-        case TAST_ENUM_DEF:
+        case UAST_ENUM_DEF:
             return false;
-        case TAST_PRIMITIVE_DEF:
+        case UAST_PRIMITIVE_DEF:
+            return false;
+        case UAST_SUM_DEF:
             return false;
         default:
             unreachable(TAST_FMT"    "LANG_TYPE_FMT"\n", uast_def_print(def), lang_type_print(lang_type));
@@ -464,13 +466,15 @@ bool lang_type_is_raw_union(const Env* env, Lang_type lang_type) {
     try(usymbol_lookup(&def, env, lang_type.str));
 
     switch (def->type) {
-        case TAST_STRUCT_DEF:
+        case UAST_STRUCT_DEF:
             return false;
-        case TAST_RAW_UNION_DEF:
+        case UAST_RAW_UNION_DEF:
             return true;
-        case TAST_ENUM_DEF:
+        case UAST_ENUM_DEF:
             return false;
-        case TAST_PRIMITIVE_DEF:
+        case UAST_PRIMITIVE_DEF:
+            return false;
+        case UAST_SUM_DEF:
             return false;
         default:
             unreachable(TAST_FMT"    "LANG_TYPE_FMT"\n", uast_def_print(def), lang_type_print(lang_type));
@@ -483,13 +487,15 @@ bool lang_type_is_enum(const Env* env, Lang_type lang_type) {
     try(usymbol_lookup(&def, env, lang_type.str));
 
     switch (def->type) {
-        case TAST_STRUCT_DEF:
+        case UAST_STRUCT_DEF:
             return false;
-        case TAST_RAW_UNION_DEF:
+        case UAST_RAW_UNION_DEF:
             return false;
-        case TAST_ENUM_DEF:
+        case UAST_ENUM_DEF:
             return true;
-        case TAST_PRIMITIVE_DEF:
+        case UAST_PRIMITIVE_DEF:
+            return false;
+        case UAST_SUM_DEF:
             return false;
         default:
             unreachable(TAST_FMT"    "LANG_TYPE_FMT"\n", uast_stmt_print(uast_wrap_def(def)), lang_type_print(lang_type));
@@ -502,13 +508,36 @@ bool lang_type_is_primitive(const Env* env, Lang_type lang_type) {
     try(usymbol_lookup(&def, env, lang_type.str));
 
     switch (def->type) {
-        case TAST_STRUCT_DEF:
+        case UAST_STRUCT_DEF:
             return false;
-        case TAST_RAW_UNION_DEF:
+        case UAST_RAW_UNION_DEF:
             return false;
-        case TAST_ENUM_DEF:
+        case UAST_ENUM_DEF:
             return false;
-        case TAST_PRIMITIVE_DEF:
+        case UAST_PRIMITIVE_DEF:
+            return true;
+        case UAST_SUM_DEF:
+            return false;
+        default:
+            unreachable(TAST_FMT"    "LANG_TYPE_FMT"\n", uast_stmt_print(uast_wrap_def(def)), lang_type_print(lang_type));
+    }
+    unreachable("");
+}
+
+bool lang_type_is_sum(const Env* env, Lang_type lang_type) {
+    Uast_def* def = NULL;
+    try(usymbol_lookup(&def, env, lang_type.str));
+
+    switch (def->type) {
+        case UAST_STRUCT_DEF:
+            return false;
+        case UAST_RAW_UNION_DEF:
+            return false;
+        case UAST_ENUM_DEF:
+            return false;
+        case UAST_PRIMITIVE_DEF:
+            return false;
+        case UAST_SUM_DEF:
             return true;
         default:
             unreachable(TAST_FMT"    "LANG_TYPE_FMT"\n", uast_stmt_print(uast_wrap_def(def)), lang_type_print(lang_type));

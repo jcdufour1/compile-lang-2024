@@ -57,6 +57,8 @@ static void tast_extend_literal(String* output, const Tast_literal* literal) {
         case TAST_CHAR:
             string_extend_int64_t(&a_main, output, (int64_t)tast_unwrap_char_const(literal)->data);
             return;
+        case TAST_SUM_LIT:
+            unreachable("");
     }
     unreachable("");
 }

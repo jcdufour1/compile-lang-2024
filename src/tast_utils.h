@@ -93,6 +93,8 @@ static inline Sym_typed_base* tast_symbol_typed_get_base_ref(Tast_symbol_typed* 
             return &tast_unwrap_enum_sym(sym)->base;
         case TAST_RAW_UNION_SYM:
             return &tast_unwrap_raw_union_sym(sym)->base;
+        case TAST_SUM_SYM:
+            return &tast_unwrap_sum_sym(sym)->base;
     }
     unreachable("");
 }
@@ -102,31 +104,11 @@ static inline Sym_typed_base tast_symbol_typed_get_base_const(const Tast_symbol_
 }
 
 static inline Str_view tast_get_symbol_typed_name(const Tast_symbol_typed* sym) {
-    switch (sym->type) {
-        case TAST_PRIMITIVE_SYM:
-            return tast_unwrap_primitive_sym_const(sym)->base.name;
-        case TAST_STRUCT_SYM:
-            return tast_unwrap_struct_sym_const(sym)->base.name;
-        case TAST_ENUM_SYM:
-            return tast_unwrap_enum_sym_const(sym)->base.name;
-        case TAST_RAW_UNION_SYM:
-            return tast_unwrap_raw_union_sym_const(sym)->base.name;
-    }
-    unreachable("");
+    return tast_symbol_typed_get_base_const(sym).name;
 }
 
 static inline Lang_type tast_get_lang_type_symbol_typed(const Tast_symbol_typed* sym) {
-    switch (sym->type) {
-        case TAST_PRIMITIVE_SYM:
-            return tast_unwrap_primitive_sym_const(sym)->base.lang_type;
-        case TAST_STRUCT_SYM:
-            return tast_unwrap_struct_sym_const(sym)->base.lang_type;
-        case TAST_ENUM_SYM:
-            return tast_unwrap_enum_sym_const(sym)->base.lang_type;
-        case TAST_RAW_UNION_SYM:
-            return tast_unwrap_raw_union_sym_const(sym)->base.lang_type;
-    }
-    unreachable("");
+    return tast_symbol_typed_get_base_const(sym).lang_type;
 }
 
 static inline Lang_type tast_get_lang_type_literal(const Tast_literal* lit) {
@@ -188,6 +170,8 @@ static inline Lang_type tast_get_lang_type_expr(const Tast_expr* expr) {
             try(tuple->lang_type.info.count == 1);
             return vec_at(&tuple->lang_type, 0);
         }
+        case TAST_SUM_CALLEE:
+            unreachable("");
     }
     unreachable("");
 }
@@ -211,6 +195,8 @@ static inline Lang_type_vec tast_get_lang_types_expr(const Tast_expr* expr) {
             return lang_type_vec_from_lang_type(tast_symbol_typed_get_base_const(tast_unwrap_symbol_typed_const(expr)).lang_type);
         case TAST_TUPLE:
             return tast_unwrap_tuple_const(expr)->lang_type;
+        case TAST_SUM_CALLEE:
+            unreachable("");
     }
     unreachable("");
 }
@@ -319,6 +305,8 @@ static inline void tast_set_lang_types_expr(Tast_expr* expr, Lang_type_vec types
             try(tuple->lang_type.info.count == tuple->members.info.count);
             return;
         }
+        case TAST_SUM_CALLEE:
+            unreachable("");
     }
     unreachable("");
 }
@@ -363,6 +351,8 @@ static inline Lang_type* tast_get_lang_type_expr_ref(Tast_expr* expr) {
         case TAST_OPERATOR:
             return get_operator_lang_type_ref(tast_unwrap_operator(expr));
         case TAST_TUPLE:
+            unreachable("");
+        case TAST_SUM_CALLEE:
             unreachable("");
     }
     unreachable("");
@@ -519,6 +509,8 @@ static inline Str_view get_expr_name(const Tast_expr* expr) {
         case TAST_LITERAL:
             return get_literal_name(tast_unwrap_literal_const(expr));
         case TAST_TUPLE:
+            unreachable("");
+        case TAST_SUM_CALLEE:
             unreachable("");
     }
     unreachable("");
