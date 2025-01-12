@@ -613,6 +613,14 @@ Str_view tast_literal_def_print_internal(const Tast_literal_def* def, int indent
     unreachable("");
 }
 
+Str_view tast_sum_def_print_internal(const Tast_sum_def* def, int indent) {
+    String buf = {0};
+
+    extend_struct_def_base(&buf, "enum_def", def->base, indent);
+
+    return string_to_strv(buf);
+}
+
 Str_view tast_variable_def_print_internal(const Tast_variable_def* def, int indent) {
     String buf = {0};
 
@@ -652,6 +660,8 @@ Str_view tast_def_print_internal(const Tast_def* def, int indent) {
             return tast_primitive_def_print_internal(tast_unwrap_primitive_def_const(def), indent);
         case TAST_LITERAL_DEF:
             return tast_literal_def_print_internal(tast_unwrap_literal_def_const(def), indent);
+        case TAST_SUM_DEF:
+            return tast_sum_def_print_internal(tast_unwrap_sum_def_const(def), indent);
     }
     unreachable("");
 }

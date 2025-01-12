@@ -69,6 +69,8 @@ static Tast_expr* change_op_expr(Env* env, Tast_expr* root) {
             return root;
         case TAST_TUPLE:
             return root;
+        case TAST_SUM_CALLEE:
+            todo();
     }
     unreachable("");
 }
@@ -105,6 +107,8 @@ static Tast_def* change_op_def(Env* env, Tast_def* root) {
         case TAST_FUNCTION_DECL:
             return root;
         case TAST_LITERAL_DEF:
+            return root;
+        case TAST_SUM_DEF:
             return root;
     }
     unreachable("");

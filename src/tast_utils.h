@@ -325,6 +325,8 @@ static inline Lang_type tast_get_lang_type_def(const Tast_def* def) {
             unreachable("");
         case TAST_STRUCT_DEF:
             return lang_type_new_from_strv(tast_unwrap_struct_def_const(def)->base.name, 0);
+        case TAST_SUM_DEF:
+            return lang_type_new_from_strv(tast_unwrap_sum_def_const(def)->base.name, 0);
         case TAST_PRIMITIVE_DEF:
             unreachable("");
         case TAST_LITERAL_DEF:
@@ -422,6 +424,8 @@ static inline Lang_type* tast_get_lang_type_def_ref(Tast_def* def) {
         case TAST_PRIMITIVE_DEF:
             unreachable("");
         case TAST_LITERAL_DEF:
+            unreachable("");
+        case TAST_SUM_DEF:
             unreachable("");
     }
     unreachable("");
@@ -544,6 +548,8 @@ static inline Str_view get_def_name(const Tast_def* def) {
             return tast_unwrap_function_def_const(def)->decl->name;
         case TAST_LITERAL_DEF:
             return get_literal_def_name(tast_unwrap_literal_def_const(def));
+        case TAST_SUM_DEF:
+            return tast_unwrap_sum_def_const(def)->base.name;
     }
     unreachable("");
 }
