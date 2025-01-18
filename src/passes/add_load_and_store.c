@@ -1547,6 +1547,8 @@ static Str_view load_def(Env* env, Llvm_block* new_block, Tast_def* old_def) {
             return load_enum_def(env, new_block, tast_unwrap_enum_def(old_def));
         case TAST_RAW_UNION_DEF:
             return load_raw_union_def(env, new_block, tast_unwrap_raw_union_def(old_def));
+        case TAST_SUM_DEF:
+            unreachable("");
         case TAST_LITERAL_DEF:
             unreachable("");
         case TAST_PRIMITIVE_DEF:

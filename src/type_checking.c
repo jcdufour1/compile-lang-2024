@@ -375,6 +375,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
                 "types `"LANG_TYPE_FMT"` and `"LANG_TYPE_FMT"` are not valid operands to binary expression\n",
                 lang_type_print(tast_get_lang_type_expr(new_lhs)), lang_type_print(tast_get_lang_type_expr(new_rhs))
             );
+            todo();
             return false;
         }
     }
@@ -888,7 +889,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             *new_call = tast_wrap_literal(tast_wrap_sum_lit(new_lit));
             return true;
         default:
-            unreachable("");
+            unreachable(TAST_FMT, tast_expr_print(new_callee));
     }
 
     Uast_function_decl* fun_decl;

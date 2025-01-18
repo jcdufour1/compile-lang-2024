@@ -6,6 +6,7 @@
 #include <uast_utils.h>
 #include <parser_utils.h>
 #include <type_checking.h>
+#include <serialize.h>
 
 static Tast_stmt* rm_tuple_stmt(Env* env, Tast_stmt* stmt);
 
@@ -66,15 +67,15 @@ static Tast_stmt* rm_tuple_assignment(Env* env, Tast_assignment* assign) {
     Tast_lang_type* rtn_type = NULL;
     try(try_set_lang_type_types(env, &rtn_type, decl->return_type));
     log(LOG_DEBUG, TAST_FMT, tast_lang_type_print(rtn_type));
-    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(rm_tuple_struct_get_name_from_return_type(rtn_type)));
+    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(serialize_lang_type(rtn_type)));
 
-    Tast_struct_def* struct_def = NULL;
+    Tast_def* struct_def_ = NULL;
     // TODO: think about out of order things
-    try(rm_tuple_struct_lookup(&struct_def, env, rm_tuple_struct_get_name_from_return_type(rtn_type)));
+    try(rm_tuple_struct_lookup(&struct_def_, env, serialize_lang_type(rtn_type)));
 
     Uast_variable_def* new_var_ = uast_variable_def_new(
         tast_get_pos_stmt(assign->lhs),
-        lang_type_new_from_strv(struct_def->base.name, 0),
+        lang_type_new_from_strv(tast_unwrap_struct_def(struct_def_)->base.name, 0),
         false,
         util_literal_name_new_prefix("tuple_assign_lhs")
     );
@@ -90,8 +91,8 @@ static Tast_stmt* rm_tuple_assignment(Env* env, Tast_assignment* assign) {
     vec_append(&a_main, &new_children, tast_wrap_assignment(new_assign));
 
     for (size_t idx = 0; idx < dest->members.info.count; idx++) {
-        try(idx < struct_def->base.members.info.count);
-        Tast_variable_def* curr_memb_def = vec_at(&struct_def->base.members, idx);
+        try(idx < tast_unwrap_struct_def(struct_def_)->base.members.info.count);
+        Tast_variable_def* curr_memb_def = vec_at(&tast_unwrap_struct_def(struct_def_)->base.members, idx);
 
         Uast_member_access_untyped* curr_src_ = uast_member_access_untyped_new(
             src->pos,
@@ -110,7 +111,7 @@ static Tast_stmt* rm_tuple_assignment(Env* env, Tast_assignment* assign) {
         vec_append(&a_main, &new_children, tast_wrap_assignment(curr_assign));
     }
 
-    src->lang_type = lang_type_vec_from_lang_type(lang_type_new_from_strv(struct_def->base.name, 0));
+    src->lang_type = lang_type_vec_from_lang_type(lang_type_new_from_strv(tast_unwrap_struct_def(struct_def_)->base.name, 0));
 
     //log(LOG_DEBUG, TAST_FMT, tast_block_print(tast_block_new(assign->pos, false, new_children, (Symbol_collection) {0}, assign->pos)));
     //todo();
@@ -227,7 +228,6 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child(
             unreachable("");
     }
 
-
     Tast_expr_vec new_args = {0};
 
     log(LOG_DEBUG, STR_VIEW_FMT, tast_function_decl_print(fun_decl));
@@ -261,10 +261,10 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child(
 
         vec_append(&a_main, &new_args, new_memb);
     }
-    rm_tuple_stru_tbl_add(&vec_at(&env->ancesters, 0)->rm_tuple_struct_table, struct_def);
-    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(rm_tuple_struct_get_name(struct_def)));
+    rm_tuple_stru_tbl_add(&vec_at(&env->ancesters, 0)->rm_tuple_struct_table, struct_def_);
+    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(serialize_def(struct_def_)));
     //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(rm_tuple_struct_get_name_from_return_type(struct_def)));
-    try(rm_tuple_struct_lookup(&struct_def, env, rm_tuple_struct_get_name(struct_def)));
+    try(rm_tuple_struct_lookup(&struct_def_, env, serialize_def(struct_def_)));
 
     Tast_function_params* new_fun_params = tast_function_params_new(assign_pos, new_params);
     Tast_function_decl* new_fun_decl = tast_function_decl_new(
@@ -272,7 +272,7 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child(
         new_fun_params,
         tast_lang_type_new(
             assign_pos,
-            lang_type_vec_from_lang_type(lang_type_new_from_strv(struct_def->base.name, 0))
+            lang_type_vec_from_lang_type(lang_type_new_from_strv(tast_unwrap_struct_def(struct_def_)->base.name, 0))
         ),
         new_fun_name
     );

@@ -40,7 +40,8 @@ static inline Lang_type uast_get_lang_type_def(const Uast_def* def) {
         case UAST_VARIABLE_DEF:
             return uast_unwrap_variable_def_const(def)->lang_type;
         case UAST_FUNCTION_DECL:
-            unreachable("");
+            try(uast_unwrap_function_decl_const(def)->return_type->lang_type.info.count == 1);
+            return vec_at(&uast_unwrap_function_decl_const(def)->return_type->lang_type, 0);
         case UAST_STRUCT_DEF:
             return lang_type_new_from_strv(uast_unwrap_struct_def_const(def)->base.name, 0);
         case UAST_PRIMITIVE_DEF:

@@ -612,35 +612,4 @@ static inline Str_view get_tast_name(const Tast* tast) {
     unreachable("");
 }
 
-static inline Str_view rm_tuple_struct_get_name(const Tast_struct_def* struct_def) {
-    String name = {0};
-    for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
-        Lang_type curr = vec_at(&struct_def->base.members, idx)->lang_type;
-        string_extend_size_t(&a_main, &name, curr.pointer_depth);
-        string_extend_cstr(&a_main, &name, "_");
-        string_extend_size_t(&a_main, &name, curr.str.count);
-        string_extend_cstr(&a_main, &name, "_");
-        string_extend_strv(&a_main, &name, curr.str);
-        string_extend_cstr(&a_main, &name, "__");
-    }
-    return string_to_strv(name);
-}
-
-static inline Str_view rm_tuple_struct_get_name_from_return_type(const Tast_lang_type* return_type) {
-    // TODO: think about memory allocation strategy here
-    // TODO: make function to serialize lang_type, and call it from here
-    // TODO: separate file for serialization functions
-    String name = {0};
-    for (size_t idx = 0; idx < return_type->lang_type.info.count; idx++) {
-        Lang_type curr = vec_at(&return_type->lang_type, idx);
-        string_extend_size_t(&a_main, &name, curr.pointer_depth);
-        string_extend_cstr(&a_main, &name, "_");
-        string_extend_size_t(&a_main, &name, curr.str.count);
-        string_extend_cstr(&a_main, &name, "_");
-        string_extend_strv(&a_main, &name, curr.str);
-        string_extend_cstr(&a_main, &name, "__");
-    }
-    return string_to_strv(name);
-}
-
 #endif // TAST_UTIL_H

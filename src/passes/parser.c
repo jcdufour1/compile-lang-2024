@@ -2230,7 +2230,6 @@ static PARSE_EXPR_STATUS extract_expression_opening(
     bool defer_sym_add
 ) {
     if (*prev_oper_pres < get_operator_precedence(tk_view_front(*tokens).type)) {
-        todo();
         return extract_expression_opening_prev_less_pres(env, result, lhs, tokens, prev_oper_pres, defer_sym_add);
     } else {
         return extract_expression_opening_prev_equal_pres(env, result, lhs, tokens, prev_oper_pres, defer_sym_add);
@@ -2298,6 +2297,7 @@ static PARSE_EXPR_STATUS try_extract_expression(
         } else if (token_is_opening(tk_view_front(*tokens))) {
             switch (extract_expression_opening(env, result, &lhs, tokens, &prev_oper_pres, defer_sym_add)) {
                 case PARSE_EXPR_OK:
+                    lhs = *result;
                     break;
                 case PARSE_EXPR_NONE:
                     todo();

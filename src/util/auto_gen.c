@@ -410,6 +410,7 @@ static void gen_symbol_table_c_file(const char* file_path, Sym_tbl_type_vec type
     gen_gen("%s\n", "#include <uast_utils.h>");
     gen_gen("%s\n", "#include <tast_utils.h>");
     gen_gen("%s\n", "#include <llvm_utils.h>");
+    gen_gen("%s\n", "#include <serialize.h>");
     gen_gen("%s\n", "");
     gen_gen("%s\n", "#define SYM_TBL_DEFAULT_CAPACITY 1");
     gen_gen("%s\n", "#define SYM_TBL_MAX_DENSITY (0.6f)");
@@ -761,7 +762,7 @@ static Sym_tbl_type_vec get_symbol_tbl_types(void) {
         "Llvm", "alloca", "all", "llvm_get_tast_name", "alloca_table", "llvm_ancesters", "llvm_print", false
     ));
     vec_append(&gen_a, &types, symbol_tbl_type_new( 
-        "Tast_struct_def", "rm_tuple_struct", "rm_tuple_stru", "rm_tuple_struct_get_name", "rm_tuple_struct_table", "", "tast_struct_def_print", false
+        "Tast_def", "rm_tuple_struct", "rm_tuple_stru", "serialize_def", "rm_tuple_struct_table", "", "tast_def_print", false
     ));
     //vec_append(&gen_a, &types, symbol_tbl_type_new( 
     //    "Llvm", "Llvm", "ll", "llvm_get_tast_name", "llvm_table", "llvm_ancesters", false
