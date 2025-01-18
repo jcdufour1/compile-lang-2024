@@ -169,6 +169,15 @@ static Lang_type_type lang_type_gen_tuple(const char* prefix) {
     return sym;
 }
 
+static Lang_type_type lang_type_gen_void(const char* prefix) {
+    const char* base_name = "void";
+    Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
+
+    append_member(&sym.members, "int", "dummy");
+
+    return sym;
+}
+
 static Lang_type_type lang_type_gen_lang_type(void) {
     const char* base_name = "lang_type";
     Lang_type_type lang_type = {.name = lang_type_name_new(base_name, "", true)};
@@ -179,6 +188,7 @@ static Lang_type_type lang_type_gen_lang_type(void) {
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_enum(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_sum(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_tuple(base_name));
+    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_void(base_name));
 
     return lang_type;
 }
@@ -288,12 +298,6 @@ static void lang_type_gen_lang_type_struct(Lang_type_type lang_type) {
         extend_struct_member(&output, vec_at(&lang_type.members, idx));
     }
 
-    if (lang_type.sub_types.info.count < 1) {
-        extend_struct_member(&output, (Member) {
-            .type = str_view_from_cstr("Pos"), .name = str_view_from_cstr("pos")
-        });
-    }
-
     string_extend_cstr(&gen_a, &output, "}");
     extend_lang_type_name_first_upper(&output, lang_type.name);
     string_extend_cstr(&gen_a, &output, ";\n");
@@ -313,11 +317,11 @@ static void lang_type_gen_unwrap_internal(Lang_type_type type, bool is_const) {
     String function = {0};
     //static inline Lang_type_##lower* lang_type_unwrap_##lower(Lang_type* lang_type) { 
     string_extend_cstr(&gen_a, &function, "static inline ");
-    if (is_const) {
-        string_extend_cstr(&gen_a, &function, "const ");
-    }
     extend_lang_type_name_first_upper(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "* lang_type_unwrap_");
+    if (!is_const) {
+        string_extend_cstr(&gen_a, &function, "*");
+    }
+    string_extend_cstr(&gen_a, &function, " lang_type_unwrap_");
     extend_strv_lower(&function, type.name.base);
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "_const");
@@ -328,17 +332,32 @@ static void lang_type_gen_unwrap_internal(Lang_type_type type, bool is_const) {
     }
 
     extend_parent_lang_type_name_first_upper(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "* lang_type) {\n");
+    if (!is_const) {
+        string_extend_cstr(&gen_a, &function, "*");
+    }
+    string_extend_cstr(&gen_a, &function, " lang_type) {\n");
 
     //    try(lang_type->type == upper); 
-    string_extend_cstr(&gen_a, &function, "    try(lang_type->type == ");
-    extend_lang_type_name_upper(&function, type.name);
-    string_extend_cstr(&gen_a, &function, ");\n");
+    if (is_const) {
+        string_extend_cstr(&gen_a, &function, "    try(lang_type.type == ");
+        extend_lang_type_name_upper(&function, type.name);
+        string_extend_cstr(&gen_a, &function, ");\n");
+    } else {
+        string_extend_cstr(&gen_a, &function, "    try(lang_type->type == ");
+        extend_lang_type_name_upper(&function, type.name);
+        string_extend_cstr(&gen_a, &function, ");\n");
+    }
 
     //    return &lang_type->as._##lower; 
-    string_extend_cstr(&gen_a, &function, "    return &lang_type->as.");
-    extend_lang_type_name_lower(&function, type.name);
-    string_extend_cstr(&gen_a, &function, ";\n");
+    if (is_const) {
+        string_extend_cstr(&gen_a, &function, "    return lang_type.as.");
+        extend_lang_type_name_lower(&function, type.name);
+        string_extend_cstr(&gen_a, &function, ";\n");
+    } else {
+        string_extend_cstr(&gen_a, &function, "    return &lang_type->as.");
+        extend_lang_type_name_lower(&function, type.name);
+        string_extend_cstr(&gen_a, &function, ";\n");
+    }
 
     //} 
     string_extend_cstr(&gen_a, &function, "}");
@@ -358,26 +377,29 @@ static void lang_type_gen_wrap_internal(Lang_type_type type, bool is_const) {
     String function = {0};
     //static inline Lang_type_##lower* lang_type_unwrap_##lower(Lang_type* lang_type) { 
     string_extend_cstr(&gen_a, &function, "static inline ");
-    if (is_const) {
-        string_extend_cstr(&gen_a, &function, "const ");
-    }
     extend_parent_lang_type_name_first_upper(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "* lang_type_wrap_");
+    if (!is_const) {
+        string_extend_cstr(&gen_a, &function, "* ");
+    }
+    string_extend_cstr(&gen_a, &function, " lang_type_wrap_");
     extend_strv_lower(&function, type.name.base);
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "_const");
     }
     string_extend_cstr(&gen_a, &function, "(");
-    if (is_const) {
-        string_extend_cstr(&gen_a, &function, "const ");
-    }
     extend_lang_type_name_first_upper(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "* lang_type) {\n");
+    if (!is_const) {
+        string_extend_cstr(&gen_a, &function, "* ");
+    }
+    string_extend_cstr(&gen_a, &function, " lang_type) {\n");
 
     //    return &lang_type->as._##lower; 
     string_extend_cstr(&gen_a, &function, "    return (");
     extend_parent_lang_type_name_first_upper(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "*) lang_type;\n");
+    if (!is_const) {
+        string_extend_cstr(&gen_a, &function, "*");
+    }
+    string_extend_cstr(&gen_a, &function, ") lang_type;\n");
 
     //} 
     string_extend_cstr(&gen_a, &function, "}");
@@ -441,11 +463,9 @@ static void lang_type_gen_new_internal(Lang_type_type type, bool implementation)
 
     if (type.sub_types.info.count > 0) {
         string_extend_cstr(&gen_a, &function, "void");
-    } else {
-        string_extend_cstr(&gen_a, &function, "Pos pos");
     }
     for (size_t idx = 0; idx < type.members.info.count; idx++) {
-        if (idx < type.members.info.count) {
+        if (idx > 0 && idx < type.members.info.count) {
             string_extend_cstr(&gen_a, &function, ", ");
         }
 
@@ -470,12 +490,6 @@ static void lang_type_gen_new_internal(Lang_type_type type, bool implementation)
         string_extend_cstr(&gen_a, &function, "    base_lang_type->type = ");
         extend_lang_type_name_upper(&function, type.name);
         string_extend_cstr(&gen_a, &function, ";\n");
-
-        if (type.sub_types.info.count < 1) {
-            string_extend_cstr(&gen_a, &function, "    lang_type_unwrap_");
-            extend_strv_lower(&function, type.name.base);
-            string_extend_cstr(&gen_a, &function, "(base_lang_type)->pos = pos;\n");
-        }
 
         for (size_t idx = 0; idx < type.members.info.count; idx++) {
             Member curr = vec_at(&type.members, idx);
@@ -502,76 +516,12 @@ static void lang_type_gen_new_internal(Lang_type_type type, bool implementation)
     gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
 }
 
-static void lang_type_gen_get_pos_internal(Lang_type_type type, bool implementation) {
-    for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        lang_type_gen_get_pos_internal(vec_at(&type.sub_types, idx), implementation);
-    }
-
-    String function = {0};
-
-    string_extend_cstr(&gen_a, &function, "static inline Pos ");
-
-    if (type.name.is_topmost) {
-        string_extend_cstr(&gen_a, &function, "    lang_type_get_pos(const Lang_type* lang_type)");
-    } else {
-        string_extend_cstr(&gen_a, &function, "    lang_type_get_pos_");
-        extend_strv_lower(&function, type.name.base);
-        string_extend_cstr(&gen_a, &function, "(const ");
-        extend_lang_type_name_first_upper(&function, type.name);
-        string_extend_cstr(&gen_a, &function, "* lang_type)");
-    }
-
-    if (implementation) {
-        string_extend_cstr(&gen_a, &function, "{\n");
-
-        if (type.sub_types.info.count < 1) {
-            string_extend_cstr(&gen_a, &function, "    return lang_type->pos;\n");
-        } else {
-            string_extend_cstr(&gen_a, &function, "    switch (lang_type->type) {\n");
-
-            for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-                Lang_type_type curr = vec_at(&type.sub_types, idx);
-                string_extend_cstr(&gen_a, &function, "        case ");
-                extend_lang_type_name_upper(&function, curr.name);
-                string_extend_cstr(&gen_a, &function, ":\n");
-
-
-                string_extend_cstr(&gen_a, &function, "            return lang_type_get_pos_");
-                extend_strv_lower(&function, curr.name.base);
-                string_extend_cstr(&gen_a, &function, "(lang_type_unwrap_");
-                extend_strv_lower(&function, curr.name.base);
-                string_extend_cstr(&gen_a, &function, "_const(lang_type));\n");
-
-                string_extend_cstr(&gen_a, &function, "        break;\n");
-            }
-
-            string_extend_cstr(&gen_a, &function, "    }\n");
-        }
-
-        string_extend_cstr(&gen_a, &function, "unreachable(\"\");\n");
-        string_extend_cstr(&gen_a, &function, "}\n");
-
-    } else {
-        string_extend_cstr(&gen_a, &function, ";");
-    }
-
-    gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
-}
-
 static void gen_lang_type_new_forward_decl(Lang_type_type lang_type) {
     lang_type_gen_new_internal(lang_type, false);
 }
 
 static void gen_lang_type_new_define(Lang_type_type lang_type) {
     lang_type_gen_new_internal(lang_type, true);
-}
-
-static void gen_lang_type_get_pos_forward_decl(Lang_type_type lang_type) {
-    lang_type_gen_get_pos_internal(lang_type, false);
-}
-
-static void gen_lang_type_get_pos_define(Lang_type_type lang_type) {
-    lang_type_gen_get_pos_internal(lang_type, true);
 }
 
 static void gen_lang_type_vecs(Lang_type_type lang_type) {
@@ -636,11 +586,6 @@ static void gen_lang_type(const char* file_path, bool implementation) {
     lang_type_gen_print_forward_decl(lang_type);
     if (implementation) {
         gen_lang_type_new_define(lang_type);
-    }
-
-    gen_lang_type_get_pos_forward_decl(lang_type);
-    if (implementation) {
-        gen_lang_type_get_pos_define(lang_type);
     }
 
     if (implementation) {

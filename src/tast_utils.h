@@ -12,28 +12,13 @@ void extend_lang_type_to_string(
     bool surround_in_lt_gt
 );
 
-static inline Lang_type lang_type_new_from_strv(Str_view str_view, int16_t pointer_depth) {
-    Lang_type Lang_type = {.str = str_view, .pointer_depth = pointer_depth};
-    assert(str_view.count < 1e9);
-    return Lang_type;
-}
+static inline bool lang_type_is_equal(Lang_type a, Lang_type b);
 
-// only literals can be used here
-static inline Lang_type lang_type_new_from_cstr(const char* cstr, int16_t pointer_depth) {
-    return lang_type_new_from_strv(str_view_from_cstr(cstr), pointer_depth);
-}
-
-static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
+static inline bool lang_type_atom_is_equal(Lang_type_atom a, Lang_type_atom b) {
     if (a.pointer_depth != b.pointer_depth) {
         return false;
     }
     return str_view_is_equal(a.str, b.str);
-}
-
-static inline Lang_type_vec lang_type_vec_from_lang_type(Lang_type lang_type) {
-    Lang_type_vec vec = {0};
-    vec_append(&a_main, &vec, lang_type);
-    return vec;
 }
 
 static inline bool lang_type_vec_is_equal(Lang_type_vec a, Lang_type_vec b) {
@@ -48,6 +33,40 @@ static inline bool lang_type_vec_is_equal(Lang_type_vec a, Lang_type_vec b) {
     }
 
     return true;
+}
+
+static inline bool lang_type_tuple_is_equal(Lang_type_tuple a, Lang_type_tuple b) {
+    return lang_type_vec_is_equal(a.lang_types, b.lang_types);
+}
+
+static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
+    if (a.type != b.type) {
+        return false;
+    }
+
+    switch (a.type) {
+        case LANG_TYPE_PRIMITIVE:
+            return lang_type_atom_is_equal(lang_type_unwrap_primitive_const(a).atom, lang_type_unwrap_primitive_const(b).atom);
+        case LANG_TYPE_SUM:
+            return lang_type_atom_is_equal(lang_type_unwrap_sum_const(a).atom, lang_type_unwrap_sum_const(b).atom);
+        case LANG_TYPE_STRUCT:
+            return lang_type_atom_is_equal(lang_type_unwrap_struct_const(a).atom, lang_type_unwrap_struct_const(b).atom);
+        case LANG_TYPE_ENUM:
+            return lang_type_atom_is_equal(lang_type_unwrap_enum_const(a).atom, lang_type_unwrap_enum_const(b).atom);
+        case LANG_TYPE_RAW_UNION:
+            return lang_type_atom_is_equal(lang_type_unwrap_raw_union_const(a).atom, lang_type_unwrap_raw_union_const(b).atom);
+        case LANG_TYPE_TUPLE:
+            return lang_type_tuple_is_equal(lang_type_unwrap_tuple_const(a), lang_type_unwrap_tuple_const(b));
+        case LANG_TYPE_VOID:
+            return true;
+    }
+    unreachable("");
+}
+
+static inline Lang_type_vec lang_type_vec_from_lang_type(Lang_type lang_type) {
+    Lang_type_vec vec = {0};
+    vec_append(&a_main, &vec, lang_type);
+    return vec;
 }
 
 Str_view lang_type_print_internal(Arena* arena, Lang_type lang_type, bool surround_in_lt_gt);
@@ -118,7 +137,7 @@ static inline Lang_type tast_get_lang_type_literal(const Tast_literal* lit) {
         case TAST_STRING:
             return tast_unwrap_string_const(lit)->lang_type;
         case TAST_VOID:
-            return lang_type_new_from_cstr("void", 0);
+            return lang_type_wrap_void_const(lang_type_void_new(0));
         case TAST_ENUM_LIT:
             return tast_unwrap_enum_lit_const(lit)->lang_type;
         case TAST_CHAR:
