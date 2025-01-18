@@ -17,4 +17,8 @@ typedef struct {
     Lang_type* buf;
 } Lang_type_vec;
 
+static inline Lang_type_atom lang_type_atom_new(Str_view str, int16_t pointer_depth) {
+    return (Lang_type_atom) {.str = str, .pointer_depth = pointer_depth};
+}
+
 #endif // LANG_TYPE_HAND_WRITTEN

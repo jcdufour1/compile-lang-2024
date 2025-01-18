@@ -338,15 +338,15 @@ static inline Lang_type tast_get_lang_type_def(const Tast_def* def) {
         case TAST_RAW_UNION_DEF:
             unreachable("");
         case TAST_ENUM_DEF:
-            return lang_type_new_from_strv(tast_unwrap_enum_def_const(def)->base.name, 0);
+            return lang_type_wrap_enum_const(lang_type_enum_new(lang_type_atom_new(tast_unwrap_enum_def_const(def)->base.name, 0)));
         case TAST_VARIABLE_DEF:
             return tast_unwrap_variable_def_const(def)->lang_type;
         case TAST_FUNCTION_DECL:
             unreachable("");
         case TAST_STRUCT_DEF:
-            return lang_type_new_from_strv(tast_unwrap_struct_def_const(def)->base.name, 0);
+            return lang_type_wrap_struct_const(lang_type_struct_new(lang_type_atom_new(tast_unwrap_struct_def_const(def)->base.name, 0)));
         case TAST_SUM_DEF:
-            return lang_type_new_from_strv(tast_unwrap_sum_def_const(def)->base.name, 0);
+            return lang_type_wrap_sum_const(lang_type_sum_new(lang_type_atom_new(tast_unwrap_sum_def_const(def)->base.name, 0)));
         case TAST_PRIMITIVE_DEF:
             unreachable("");
         case TAST_LITERAL_DEF:
@@ -360,8 +360,7 @@ static inline Lang_type* tast_get_lang_type_expr_ref(Tast_expr* expr) {
         case TAST_STRUCT_LITERAL:
             return &tast_unwrap_struct_literal(expr)->lang_type;
         case TAST_FUNCTION_CALL:
-            try(tast_unwrap_function_call_const(expr)->lang_type.info.count == 1);
-            return &vec_at(&tast_unwrap_function_call(expr)->lang_type, 0);
+            todo();
         case TAST_MEMBER_ACCESS_TYPED:
             unreachable("");
         case TAST_INDEX_TYPED:
@@ -369,7 +368,7 @@ static inline Lang_type* tast_get_lang_type_expr_ref(Tast_expr* expr) {
         case TAST_LITERAL:
             return tast_get_lang_type_literal_ref(tast_unwrap_literal(expr));
         case TAST_SYMBOL_TYPED:
-            return &tast_symbol_typed_get_base_ref(tast_unwrap_symbol_typed(expr))->lang_type;
+            return lang_type_wrap_symbol_const(lang_type_symbol_new(lang_type_atom_new(tast_unwrap_symbol_def_const(def)->base.name, 0)));
         case TAST_OPERATOR:
             return get_operator_lang_type_ref(tast_unwrap_operator(expr));
         case TAST_TUPLE:
