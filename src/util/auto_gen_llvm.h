@@ -984,7 +984,7 @@ static void gen_all_llvms(const char* file_path, bool implementation) {
     } else {
         gen_gen("#ifndef LLVM_FORWARD_DECL_H\n");
         gen_gen("#define LLVM_FORWARD_DECL_H\n");
-        gen_gen("#include <lang_type_struct.h>\n");
+        gen_gen("#include <lang_type.h>\n");
         gen_gen("#include <strv_vec.h>\n");
     }
 

@@ -4,7 +4,7 @@
 #include <vecs.h>
 #include <symbol_table_struct.h>
 #include <tast_forward_decl.h>
-#include <lang_type_struct.h>
+#include <lang_type.h>
 
 typedef size_t Llvm_id;
 

@@ -1,9 +1,5 @@
-#ifndef LANG_TYPE_STRUCT
-#define LANG_TYPE_STRUCT
-
-#include <vector.h>
-#include <str_view_struct.h>
-#include <stdint.h>
+#ifndef LANG_TYPE_HAND_WRITTEN
+#define LANG_TYPE_HAND_WRITTEN
 
 typedef struct {
     Str_view str;
@@ -11,11 +7,14 @@ typedef struct {
                            // and that in function, variable is already referenced twice
                            //
                            // for function argument: 2 means to reference the variable twice
-} Lang_type;
+} Lang_type_atom;
+
+struct Lang_type_;
+typedef struct Lang_type_ Lang_type;
 
 typedef struct {
     Vec_base info;
     Lang_type* buf;
 } Lang_type_vec;
 
-#endif // LANG_TYPE_STRUCT
+#endif // LANG_TYPE_HAND_WRITTEN
