@@ -31,7 +31,7 @@ EXPECTED_SUCCESS_RESULTS_DIR = "./tests/expected_success_results/"
 
 EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "undef_symbol.own": ["undefined-symbol"],
-    EXPECTED_FAIL_EXAMPLES_DIR + "undef_function.own": ["undefined-function", "missing-return-statement"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "undef_function.own": ["undefined-symbol", "missing-return-statement"],
     EXPECTED_FAIL_EXAMPLES_DIR + "expected_expression.own": ["parser-expected"],
     EXPECTED_FAIL_EXAMPLES_DIR + "incomplete_var_def.own": ["parser-expected"],
     EXPECTED_FAIL_EXAMPLES_DIR + "binary_mismatched_types.own": ["binary-mismatched-types"],
@@ -79,7 +79,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "not_is_first_op_and_lhs_lower_pres_than_rhs.own": ["expected-expression"],
     EXPECTED_FAIL_EXAMPLES_DIR + "unclosed_string_literal.own": ["missing-close-double-quote"],
     EXPECTED_FAIL_EXAMPLES_DIR + "union_init_like_a_struct.own": ["struct-init-on-raw-union"],
-    EXPECTED_FAIL_EXAMPLES_DIR + "if_cond_undef_function.own": ["undefined-function"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "if_cond_undef_function.own": ["undefined-symbol"],
     EXPECTED_FAIL_EXAMPLES_DIR + "undefined_types.own": ["undefined-type"],
     EXPECTED_FAIL_EXAMPLES_DIR + "undef_type_in_struct_def_member.own": ["undefined-type"],
     EXPECTED_FAIL_EXAMPLES_DIR + "undef_type_in_raw_union_def_member.own": ["undefined-type", "undefined-type"],
