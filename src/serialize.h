@@ -5,11 +5,11 @@ static inline Str_view serialize_struct_def(const Tast_struct_def* struct_def) {
     String name = {0};
     for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
         Lang_type curr = vec_at(&struct_def->base.members, idx)->lang_type;
-        string_extend_size_t(&a_main, &name, curr.pointer_depth);
+        string_extend_size_t(&a_main, &name, lang_type_get_pointer_depth(curr));
         string_extend_cstr(&a_main, &name, "_");
-        string_extend_size_t(&a_main, &name, curr.str.count);
+        string_extend_size_t(&a_main, &name, lang_type_get_str(curr).count);
         string_extend_cstr(&a_main, &name, "_");
-        string_extend_strv(&a_main, &name, curr.str);
+        string_extend_strv(&a_main, &name, lang_type_get_str(curr));
         string_extend_cstr(&a_main, &name, "__");
     }
     return string_to_strv(name);
@@ -22,11 +22,11 @@ static inline Str_view serialize_lang_type(const Tast_lang_type* return_type) {
     String name = {0};
     for (size_t idx = 0; idx < return_type->lang_type.info.count; idx++) {
         Lang_type curr = vec_at(&return_type->lang_type, idx);
-        string_extend_size_t(&a_main, &name, curr.pointer_depth);
+        string_extend_size_t(&a_main, &name, lang_type_get_pointer_depth(curr));
         string_extend_cstr(&a_main, &name, "_");
-        string_extend_size_t(&a_main, &name, curr.str.count);
+        string_extend_size_t(&a_main, &name, lang_type_get_str(curr).count);
         string_extend_cstr(&a_main, &name, "_");
-        string_extend_strv(&a_main, &name, curr.str);
+        string_extend_strv(&a_main, &name, lang_type_get_str(curr));
         string_extend_cstr(&a_main, &name, "__");
     }
     return string_to_strv(name);

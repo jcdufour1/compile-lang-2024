@@ -218,11 +218,7 @@ static Tast_type tast_gen_symbol_typed(const char* prefix) {
     const char* base_name = "symbol_typed";
     Tast_type sym = {.name = tast_name_new(prefix, base_name, false)};
 
-    vec_append(&gen_a, &sym.sub_types, tast_gen_primitive_sym(base_name));
-    vec_append(&gen_a, &sym.sub_types, tast_gen_struct_sym(base_name));
-    vec_append(&gen_a, &sym.sub_types, tast_gen_raw_union_sym(base_name));
-    vec_append(&gen_a, &sym.sub_types, tast_gen_enum_sym(base_name));
-    vec_append(&gen_a, &sym.sub_types, tast_gen_sum_sym(base_name));
+    append_member(&sym.members, "Sym_typed_base", "base");
 
     return sym;
 }

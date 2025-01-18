@@ -14,7 +14,6 @@
 #endif // UAST_FMT
 
 void extend_lang_type_to_string(
-    Arena* arena,
     String* string,
     Lang_type lang_type,
     bool surround_in_lt_gt
@@ -36,44 +35,20 @@ static inline Lang_type uast_get_lang_type_def(const Uast_def* def) {
         case UAST_RAW_UNION_DEF:
             unreachable("");
         case UAST_ENUM_DEF:
-            return lang_type_new_from_strv(uast_unwrap_enum_def_const(def)->base.name, 0);
+            return lang_type_wrap_enum_const(lang_type_enum_new(lang_type_atom_new(uast_unwrap_enum_def_const(def)->base.name, 0)));
         case UAST_VARIABLE_DEF:
             return uast_unwrap_variable_def_const(def)->lang_type;
         case UAST_FUNCTION_DECL:
             try(uast_unwrap_function_decl_const(def)->return_type->lang_type.info.count == 1);
             return vec_at(&uast_unwrap_function_decl_const(def)->return_type->lang_type, 0);
         case UAST_STRUCT_DEF:
-            return lang_type_new_from_strv(uast_unwrap_struct_def_const(def)->base.name, 0);
+            return lang_type_wrap_struct_const(lang_type_struct_new(lang_type_atom_new(uast_unwrap_struct_def_const(def)->base.name, 0)));
         case UAST_PRIMITIVE_DEF:
             unreachable("");
         case UAST_LITERAL_DEF:
             unreachable("");
         case UAST_SUM_DEF:
-            return lang_type_new_from_strv(uast_unwrap_sum_def_const(def)->base.name, 0);
-    }
-    unreachable("");
-}
-
-static inline Lang_type_vec uast_get_lang_types_def(const Uast_def* def) {
-    switch (def->type) {
-        case UAST_FUNCTION_DEF:
-            unreachable("");
-        case UAST_RAW_UNION_DEF:
-            unreachable("");
-        case UAST_ENUM_DEF:
-            return lang_type_vec_from_lang_type(lang_type_new_from_strv(uast_unwrap_enum_def_const(def)->base.name, 0));
-        case UAST_VARIABLE_DEF:
-            return lang_type_vec_from_lang_type(uast_unwrap_variable_def_const(def)->lang_type);
-        case UAST_FUNCTION_DECL:
-            return uast_unwrap_function_decl_const(def)->return_type->lang_type;
-        case UAST_STRUCT_DEF:
-            return lang_type_vec_from_lang_type(lang_type_new_from_strv(uast_unwrap_struct_def_const(def)->base.name, 0));
-        case UAST_PRIMITIVE_DEF:
-            unreachable("");
-        case UAST_LITERAL_DEF:
-            unreachable("");
-        case UAST_SUM_DEF:
-            return lang_type_vec_from_lang_type(lang_type_new_from_strv(uast_unwrap_sum_def_const(def)->base.name, 0));
+            return lang_type_wrap_sum_const(lang_type_sum_new(lang_type_atom_new(uast_unwrap_sum_def_const(def)->base.name, 0)));
     }
     unreachable("");
 }
@@ -232,7 +207,7 @@ static inline Str_view uast_get_literal_def_name(const Uast_literal_def* lit_def
 static inline Str_view get_uast_name_def(const Uast_def* def) {
     switch (def->type) {
         case UAST_PRIMITIVE_DEF:
-            return uast_unwrap_primitive_def_const(def)->lang_type.str;
+            return lang_type_get_str(uast_unwrap_primitive_def_const(def)->lang_type);
         case UAST_VARIABLE_DEF:
             return uast_unwrap_variable_def_const(def)->name;
         case UAST_STRUCT_DEF:

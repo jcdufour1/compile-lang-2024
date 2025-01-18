@@ -9,24 +9,24 @@ static void extend_name(String* buf, Str_view name) {
     string_extend_strv_in_par(&print_arena, buf, name);
 }
 
-void extend_lang_type_to_string(Arena* arena, String* string, Lang_type lang_type, bool surround_in_lt_gt) {
+void extend_lang_type_to_string(String* string, Lang_type lang_type, bool surround_in_lt_gt) {
     if (surround_in_lt_gt) {
-        vec_append(arena, string, '<');
+        vec_append(&print_arena, string, '<');
     }
 
-    if (lang_type.str.count > 1) {
-        string_extend_strv(arena, string, lang_type.str);
+    if (lang_type_get_str(lang_type).count > 1) {
+        string_extend_strv(&print_arena, string, lang_type_get_str(lang_type));
     } else {
-        string_extend_cstr(arena, string, "<null>");
+        string_extend_cstr(&print_arena, string, "<null>");
     }
-    if (lang_type.pointer_depth < 0) {
+    if (lang_type_get_pointer_depth(lang_type) < 0) {
         todo();
     }
-    for (int16_t idx = 0; idx < lang_type.pointer_depth; idx++) {
-        vec_append(arena, string, '*');
+    for (int16_t idx = 0; idx < lang_type_get_pointer_depth(lang_type); idx++) {
+        vec_append(&print_arena, string, '*');
     }
     if (surround_in_lt_gt) {
-        vec_append(arena, string, '>');
+        vec_append(&print_arena, string, '>');
     }
 }
 
@@ -36,31 +36,14 @@ static void extend_pos(String* buf, Pos pos) {
     string_extend_cstr(&print_arena, buf, " ))");
 }
 
-Str_view lang_type_print_internal(Arena* arena, Lang_type lang_type, bool surround_in_lt_gt) {
+Str_view lang_type_print_internal(Lang_type lang_type, bool surround_in_lt_gt) {
     String buf = {0};
-    extend_lang_type_to_string(arena, &buf, lang_type, surround_in_lt_gt);
+    extend_lang_type_to_string(&buf, lang_type, surround_in_lt_gt);
     return string_to_strv(buf);
 }
 
 static void extend_lang_type(String* string, Lang_type lang_type, bool surround_in_lt_gt) {
-    if (surround_in_lt_gt) {
-        vec_append(&print_arena, string, '<');
-    }
-
-    if (lang_type.str.count > 1) {
-        string_extend_strv(&print_arena, string, lang_type.str);
-    } else {
-        string_extend_cstr(&print_arena, string, "<null>");
-    }
-    if (lang_type.pointer_depth < 0) {
-        todo();
-    }
-    for (int16_t idx = 0; idx < lang_type.pointer_depth; idx++) {
-        vec_append(&print_arena, string, '*');
-    }
-    if (surround_in_lt_gt) {
-        vec_append(&print_arena, string, '>');
-    }
+    extend_lang_type_to_string(string, lang_type, surround_in_lt_gt);
 }
 
 Str_view lang_type_vec_print_internal(Lang_type_vec types, bool surround_in_lt_gt) {
@@ -115,66 +98,13 @@ void tast_extend_sym_typed_base(String* string, Sym_typed_base base) {
     string_extend_cstr(&print_arena, string, "\n");
 }
 
-Str_view tast_primitive_sym_print_internal(const Tast_primitive_sym* sym, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "primitive_sym", indent);
-    extend_pos(&buf, sym->pos);
-    tast_extend_sym_typed_base(&buf, sym->base);
-
-    return string_to_strv(buf);
-}
-
-Str_view tast_struct_sym_print_internal(const Tast_struct_sym* sym, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "struct_sym", indent);
-    tast_extend_sym_typed_base(&buf, sym->base);
-
-    return string_to_strv(buf);
-}
-
-Str_view tast_raw_union_sym_print_internal(const Tast_raw_union_sym* sym, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "raw_union_sym", indent);
-    tast_extend_sym_typed_base(&buf, sym->base);
-
-    return string_to_strv(buf);
-}
-
-Str_view tast_enum_sym_print_internal(const Tast_enum_sym* sym, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "enum_sym", indent);
-    tast_extend_sym_typed_base(&buf, sym->base);
-
-    return string_to_strv(buf);
-}
-
-Str_view tast_sum_sym_print_internal(const Tast_sum_sym* sym, int indent) {
+Str_view tast_symbol_typed_print_internal(const Tast_symbol_typed* sym, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "sum_sym", indent);
     tast_extend_sym_typed_base(&buf, sym->base);
 
     return string_to_strv(buf);
-}
-
-Str_view tast_symbol_typed_print_internal(const Tast_symbol_typed* sym, int indent) {
-    switch (sym->type) {
-        case TAST_PRIMITIVE_SYM:
-            return tast_primitive_sym_print_internal(tast_unwrap_primitive_sym_const(sym), indent);
-        case TAST_STRUCT_SYM:
-            return tast_struct_sym_print_internal(tast_unwrap_struct_sym_const(sym), indent);
-        case TAST_RAW_UNION_SYM:
-            return tast_raw_union_sym_print_internal(tast_unwrap_raw_union_sym_const(sym), indent);
-        case TAST_ENUM_SYM:
-            return tast_enum_sym_print_internal(tast_unwrap_enum_sym_const(sym), indent);
-        case TAST_SUM_SYM:
-            return tast_sum_sym_print_internal(tast_unwrap_sum_sym_const(sym), indent);
-    }
-    unreachable("");
 }
 
 Str_view tast_member_access_typed_print_internal(const Tast_member_access_typed* access, int indent) {

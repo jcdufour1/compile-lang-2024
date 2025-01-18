@@ -45,7 +45,7 @@ bool try_set_unary_types(Env* env, Tast_expr** new_tast, Uast_unary* unary);
 bool try_set_tuple_assignment_types(
     Env* env,
     Tast_tuple** new_tast,
-    Lang_type_vec dest_lang_type,
+    Lang_type dest_lang_type,
     Uast_tuple* tuple
 );
 

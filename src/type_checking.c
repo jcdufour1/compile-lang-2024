@@ -30,7 +30,7 @@ static int64_t bit_width_needed_signed(int64_t num) {
 //}
 
 static Tast_expr* auto_deref_to_0(Env* env, Tast_expr* expr) {
-    while (tast_get_lang_type_expr(expr).pointer_depth > 0) {
+    while (lang_type_get_pointer_depth(tast_get_lang_type_expr(expr)) > 0) {
         try(try_set_unary_types_finish(env, &expr, expr, tast_get_pos_expr(expr), TOKEN_DEREF, (Lang_type) {0}));
     }
     return expr;
@@ -50,7 +50,9 @@ const Uast_lang_type* get_parent_function_return_type(const Env* env) {
     return get_parent_function_decl_const(env)->return_type;
 }
 
-static bool can_be_implicitly_converted_lang_type(Lang_type dest, Lang_type src, bool implicit_pointer_depth) {
+static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool implicit_pointer_depth);
+
+static bool can_be_implicitly_converted_lang_type_atom(Lang_type_atom dest, Lang_type_atom src, bool implicit_pointer_depth) {
     if (!implicit_pointer_depth) {
         if (src.pointer_depth != dest.pointer_depth) {
             return false;
@@ -58,25 +60,49 @@ static bool can_be_implicitly_converted_lang_type(Lang_type dest, Lang_type src,
     }
 
     if (!lang_type_is_signed(dest) || !lang_type_is_signed(src)) {
-        return lang_type_is_equal(dest, src);
+        return lang_type_atom_is_equal(dest, src);
     }
     return i_lang_type_to_bit_width(dest) >= i_lang_type_to_bit_width(src);
 }
 
-static bool can_be_implicitly_converted(Lang_type_vec dest, Lang_type_vec src, bool implicit_pointer_depth) {
-    if (dest.info.count != src.info.count) {
+static bool can_be_implicitly_converted_tuple(Lang_type_tuple dest, Lang_type_tuple src, bool implicit_pointer_depth) {
+    if (dest.lang_types.info.count != src.lang_types.info.count) {
         return false;
     }
 
-    for (size_t idx = 0; idx < dest.info.count; idx++) {
-        if (!can_be_implicitly_converted_lang_type(
-            vec_at(&dest, idx), vec_at(&src, idx), implicit_pointer_depth
+    for (size_t idx = 0; idx < dest.lang_types.info.count; idx++) {
+        if (!can_be_implicitly_converted(
+            vec_at(&dest.lang_types, idx), vec_at(&src.lang_types, idx), implicit_pointer_depth
         )) {
             return false;
         }
     }
 
     return true;
+}
+
+static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool implicit_pointer_depth) {
+    if (dest.type != src.type) {
+        todo();
+    }
+
+    switch (dest.type) {
+        case LANG_TYPE_TUPLE:
+            return can_be_implicitly_converted_tuple(lang_type_unwrap_tuple_const(dest), lang_type_unwrap_tuple_const(src), implicit_pointer_depth);
+        case LANG_TYPE_PRIMITIVE:
+            return can_be_implicitly_converted_lang_type_atom(lang_type_unwrap_primitive_const(dest).atom, lang_type_unwrap_primitive_const(src).atom, implicit_pointer_depth);
+        case LANG_TYPE_SUM:
+            return can_be_implicitly_converted_lang_type_atom(lang_type_unwrap_sum_const(dest).atom, lang_type_unwrap_sum_const(src).atom, implicit_pointer_depth);
+        case LANG_TYPE_STRUCT:
+            return can_be_implicitly_converted_lang_type_atom(lang_type_unwrap_struct_const(dest).atom, lang_type_unwrap_struct_const(src).atom, implicit_pointer_depth);
+        case LANG_TYPE_RAW_UNION:
+            return can_be_implicitly_converted_lang_type_atom(lang_type_unwrap_raw_union_const(dest).atom, lang_type_unwrap_raw_union_const(src).atom, implicit_pointer_depth);
+        case LANG_TYPE_ENUM:
+            return can_be_implicitly_converted_lang_type_atom(lang_type_unwrap_enum_const(dest).atom, lang_type_unwrap_enum_const(src).atom, implicit_pointer_depth);
+        case LANG_TYPE_VOID:
+            return true;
+    }
+    unreachable("");
 }
 
 typedef enum {
@@ -151,21 +177,21 @@ typedef enum {
 
 CHECK_ASSIGN_STATUS check_generic_assignment_finish(
     Tast_expr** new_src,
-    Lang_type_vec dest_lang_type,
+    Lang_type dest_lang_type,
     Tast_expr* src
 ) {
-    if (lang_type_vec_is_equal(dest_lang_type, tast_get_lang_types_expr(src))) {
+    if (lang_type_is_equal(dest_lang_type, tast_get_lang_type_expr(src))) {
         *new_src = src;
         return CHECK_ASSIGN_OK;
     }
 
-    if (can_be_implicitly_converted(dest_lang_type, tast_get_lang_types_expr(src), false)) {
+    if (can_be_implicitly_converted(dest_lang_type, tast_get_lang_type_expr(src), false)) {
         if (src->type == TAST_LITERAL) {
             *new_src = src;
-            tast_set_lang_types_expr(*new_src, dest_lang_type);
+            *tast_get_lang_type_expr_ref(*new_src) = dest_lang_type;
             return CHECK_ASSIGN_OK;
         }
-        log(LOG_DEBUG, LANG_TYPE_FMT "   "TAST_FMT"\n", lang_type_vec_print(dest_lang_type), tast_expr_print(src));
+        log(LOG_DEBUG, LANG_TYPE_FMT "   "TAST_FMT"\n", lang_type_print(dest_lang_type), tast_expr_print(src));
         todo();
     } else {
         return CHECK_ASSIGN_INVALID;
@@ -176,18 +202,15 @@ CHECK_ASSIGN_STATUS check_generic_assignment_finish(
 CHECK_ASSIGN_STATUS check_generic_assignment(
     Env* env,
     Tast_expr** new_src,
-    Lang_type_vec dest_lang_type,
+    Lang_type dest_lang_type,
     Uast_expr* src,
     Pos pos
 ) {
     if (src->type == UAST_STRUCT_LITERAL) {
         Tast_stmt* new_src_ = NULL;
-        if (dest_lang_type.info.count != 1) {
-            todo();
-        }
         // TODO: tests for using struct literal as function argument (and later as an operand)
         if (!try_set_struct_literal_assignment_types(
-            env, &new_src_, vec_at(&dest_lang_type, 0), uast_unwrap_struct_literal(src), pos
+            env, &new_src_, dest_lang_type, uast_unwrap_struct_literal(src), pos
         )) {
             return CHECK_ASSIGN_ERROR;
         }
@@ -533,7 +556,7 @@ bool try_set_operator_types(Env* env, Tast_expr** new_tast, Uast_operator* opera
 bool try_set_tuple_assignment_types(
     Env* env,
     Tast_tuple** new_tast,
-    Lang_type_vec dest_lang_type,
+    Lang_type dest_lang_type,
     Uast_tuple* tuple
 ) {
     if (dest_lang_type.info.count != tuple->members.info.count) {

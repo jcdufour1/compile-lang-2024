@@ -13,24 +13,7 @@ static void extend_pos(String* buf, Pos pos) {
 }
 
 static void extend_lang_type(String* string, Lang_type lang_type, bool surround_in_lt_gt) {
-    if (surround_in_lt_gt) {
-        vec_append(&print_arena, string, '<');
-    }
-
-    if (lang_type.str.count > 1) {
-        string_extend_strv(&print_arena, string, lang_type.str);
-    } else {
-        string_extend_cstr(&print_arena, string, "<null>");
-    }
-    if (lang_type.pointer_depth < 0) {
-        todo();
-    }
-    for (int16_t idx = 0; idx < lang_type.pointer_depth; idx++) {
-        vec_append(&print_arena, string, '*');
-    }
-    if (surround_in_lt_gt) {
-        vec_append(&print_arena, string, '>');
-    }
+    extend_lang_type_to_string(string, lang_type, surround_in_lt_gt);
 }
 
 Str_view uast_binary_print_internal(const Uast_binary* binary, int indent) {

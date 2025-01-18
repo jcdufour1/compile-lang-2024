@@ -3,30 +3,17 @@
 
 #include <llvm.h>
 #include <tast_utils.h>
+#include <lang_type.h>
 
 #define LANG_TYPE_FMT STR_VIEW_FMT
 
 void extend_lang_type_to_string(
-    Arena* arena,
     String* string,
     Lang_type lang_type,
     bool surround_in_lt_gt
 );
 
-static inline Lang_type llvm_lang_type_new_from_strv(Str_view str_view, int16_t pointer_depth) {
-    Lang_type Lang_type = {.str = str_view, .pointer_depth = pointer_depth};
-    assert(str_view.count < 1e9);
-    return Lang_type;
-}
-
-// only literals can be used here
-static inline Lang_type llvm_lang_type_new_from_cstr(const char* cstr, int16_t pointer_depth) {
-    return lang_type_new_from_strv(str_view_from_cstr(cstr), pointer_depth);
-}
-
 Str_view lang_type_vec_print_internal(Lang_type_vec types, bool surround_in_lt_gt);
-
-#define lang_type_print(lang_type) str_view_print(lang_type_print_internal(&print_arena, (lang_type), false))
 
 #define lang_type_vec_print(types) str_view_print(lang_type_vec_print_internal((types), false))
 
@@ -219,7 +206,7 @@ static inline Lang_type llvm_get_lang_type_literal(const Llvm_literal* lit) {
         case LLVM_STRING:
             return llvm_unwrap_string_const(lit)->lang_type;
         case LLVM_VOID:
-            return lang_type_new_from_cstr("void", 0);
+            return lang_type_wrap_void_const(lang_type_void_new(0));
         case LLVM_ENUM_LIT:
             return llvm_unwrap_enum_lit_const(lit)->lang_type;
         case LLVM_CHAR:
@@ -267,13 +254,13 @@ static inline Lang_type llvm_get_lang_type_def(const Llvm_def* def) {
         case LLVM_RAW_UNION_DEF:
             unreachable("");
         case LLVM_ENUM_DEF:
-            return lang_type_new_from_strv(llvm_unwrap_enum_def_const(def)->base.name, 0);
+            return lang_type_wrap_enum_const(lang_type_enum_new(lang_type_atom_new(llvm_unwrap_enum_def_const(def)->base.name, 0)));
         case LLVM_VARIABLE_DEF:
             return llvm_unwrap_variable_def_const(def)->lang_type;
         case LLVM_FUNCTION_DECL:
             unreachable("");
         case LLVM_STRUCT_DEF:
-            return lang_type_new_from_strv(llvm_unwrap_struct_def_const(def)->base.name, 0);
+            return lang_type_wrap_struct_const(lang_type_struct_new(lang_type_atom_new(llvm_unwrap_struct_def_const(def)->base.name, 0)));
         case LLVM_PRIMITIVE_DEF:
             unreachable("");
         case LLVM_LABEL:
@@ -532,7 +519,7 @@ static inline Str_view llvm_get_literal_def_name(const Llvm_literal_def* lit_def
 static inline Str_view llvm_get_def_name(const Llvm_def* def) {
     switch (def->type) {
         case LLVM_PRIMITIVE_DEF:
-            return llvm_unwrap_primitive_def_const(def)->lang_type.str;
+            return lang_type_get_str(llvm_unwrap_primitive_def_const(def)->lang_type);
         case LLVM_VARIABLE_DEF:
             return llvm_unwrap_variable_def_const(def)->name_self;
         case LLVM_STRUCT_DEF:

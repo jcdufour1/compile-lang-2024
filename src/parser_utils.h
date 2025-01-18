@@ -10,15 +10,15 @@
 #include "uast_utils.h"
 #include "llvm_utils.h"
 
-bool lang_type_is_unsigned(Lang_type lang_type);
+bool lang_type_is_unsigned(Lang_type_atom atom);
 
-bool lang_type_is_signed(Lang_type lang_type);
+bool lang_type_is_signed(Lang_type_atom atom);
 
-bool lang_type_is_number(Lang_type lang_type);
+bool lang_type_is_number(Lang_type_atom atom);
 
-Lang_type lang_type_unsigned_to_signed(Lang_type lang_type);
+Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom atom);
 
-int64_t i_lang_type_to_bit_width(Lang_type lang_type);
+int64_t i_lang_type_to_bit_width(Lang_type_atom atom);
 
 int64_t str_view_to_int64_t(Str_view str_view);
 
@@ -86,33 +86,23 @@ Llvm_id get_matching_fun_param_load_id(const Tast* src);
 
 const Tast* get_lang_type_from_sym_definition(const Tast* sym_def);
 
-uint64_t sizeof_lang_type(const Env* env, Lang_type lang_type);
+uint64_t sizeof_lang_type(Lang_type lang_type);
 
 uint64_t sizeof_item(const Env* env, const Tast* item);
 
 uint64_t sizeof_struct(const Env* env, const Tast* struct_literal);
 
-uint64_t sizeof_struct_def_base(const Env* env, const Struct_def_base* base);
+uint64_t sizeof_struct_def_base(const Struct_def_base* base);
 
 uint64_t sizeof_struct_literal(const Env* env, const Tast_struct_literal* struct_literal);
 
 uint64_t llvm_sizeof_item(const Env* env, const Llvm* item);
 
-uint64_t llvm_sizeof_struct_def_base(const Env* env, const Struct_def_base* base);
+uint64_t llvm_sizeof_struct_def_base(const Struct_def_base* base);
 
 uint64_t llvm_sizeof_struct_expr(const Env* env, const Llvm_expr* struct_literal_or_def);
 
-size_t struct_def_base_get_idx_largest_member(const Env* env, Struct_def_base base);
-
-bool lang_type_is_struct(const Env* env, Lang_type lang_type);
-
-bool lang_type_is_raw_union(const Env* env, Lang_type lang_type);
-
-bool lang_type_is_enum(const Env* env, Lang_type lang_type);
-
-bool lang_type_is_primitive(const Env* env, Lang_type lang_type);
-
-bool lang_type_is_sum(const Env* env, Lang_type lang_type);
+size_t struct_def_base_get_idx_largest_member(Struct_def_base base);
 
 static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, Str_view member_name) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
@@ -142,7 +132,7 @@ static inline bool uast_try_get_member_def(
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         Uast_variable_def* curr_member = vec_at(&struct_def->members, idx);
         if (str_view_is_equal(curr_member->name, member_name)) {
-            assert(curr_member->lang_type.str.count > 0);
+            assert(lang_type_get_str(curr_member->lang_type).count > 0);
             *member_def = curr_member;
             return true;
         }
@@ -158,7 +148,7 @@ static inline bool tast_try_get_member_def(
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         Tast_variable_def* curr_member = vec_at(&struct_def->members, idx);
         if (str_view_is_equal(curr_member->name, member_name)) {
-            assert(curr_member->lang_type.str.count > 0);
+            assert(lang_type_get_str(curr_member->lang_type).count > 0);
             *member_def = curr_member;
             return true;
         }
