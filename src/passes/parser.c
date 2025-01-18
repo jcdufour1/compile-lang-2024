@@ -541,7 +541,7 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_SINGLE_PLUS:
             return false;
         case TOKEN_SINGLE_MINUS:
-            return false;
+            return true;
         case TOKEN_ASTERISK:
             return false;
         case TOKEN_SLASH:
@@ -636,6 +636,122 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_GREATER_OR_EQUAL:
             return false;
+        case TOKEN_TYPE_DEF:
+            return false;
+        case TOKEN_SWITCH:
+            return false;
+        case TOKEN_CASE:
+            return false;
+        case TOKEN_DEFAULT:
+            return false;
+        case TOKEN_SUM:
+            return false;
+    }
+    unreachable("");
+}
+
+static bool is_binary(TOKEN_TYPE token_type) {
+    switch (token_type) {
+        case TOKEN_NONTYPE:
+            return false;
+        case TOKEN_SINGLE_PLUS:
+            return true;
+        case TOKEN_SINGLE_MINUS:
+            return true;
+        case TOKEN_ASTERISK:
+            return true;
+        case TOKEN_SLASH:
+            return true;
+        case TOKEN_LESS_THAN:
+            return true;
+        case TOKEN_GREATER_THAN:
+            return true;
+        case TOKEN_DOUBLE_EQUAL:
+            return true;
+        case TOKEN_NOT_EQUAL:
+            return true;
+        case TOKEN_NOT:
+            return false;
+        case TOKEN_STRING_LITERAL:
+            return false;
+        case TOKEN_INT_LITERAL:
+            return false;
+        case TOKEN_SYMBOL:
+            return false;
+        case TOKEN_OPEN_PAR:
+            return true;
+        case TOKEN_CLOSE_PAR:
+            return true;
+        case TOKEN_OPEN_CURLY_BRACE:
+            return true;
+        case TOKEN_CLOSE_CURLY_BRACE:
+            return true;
+        case TOKEN_DOUBLE_QUOTE:
+            return false;
+        case TOKEN_SEMICOLON:
+            return false;
+        case TOKEN_COMMA:
+            return true;
+        case TOKEN_COLON:
+            return false;
+        case TOKEN_SINGLE_EQUAL:
+            return false;
+        case TOKEN_SINGLE_DOT:
+            return true;
+        case TOKEN_DOUBLE_DOT:
+            return false;
+        case TOKEN_TRIPLE_DOT:
+            return false;
+        case TOKEN_COMMENT:
+            return false;
+        case TOKEN_XOR:
+            return true;
+        case TOKEN_DEREF:
+            return true;
+        case TOKEN_REFER:
+            return true;
+        case TOKEN_VOID:
+            return false;
+        case TOKEN_UNSAFE_CAST:
+            return true;
+        case TOKEN_FN:
+            return false;
+        case TOKEN_FOR:
+            return false;
+        case TOKEN_IF:
+            return false;
+        case TOKEN_RETURN:
+            return false;
+        case TOKEN_EXTERN:
+            return false;
+        case TOKEN_STRUCT:
+            return false;
+        case TOKEN_LET:
+            return false;
+        case TOKEN_IN:
+            return false;
+        case TOKEN_BREAK:
+            return false;
+        case TOKEN_NEW_LINE:
+            return false;
+        case TOKEN_RAW_UNION:
+            return false;
+        case TOKEN_ELSE:
+            return false;
+        case TOKEN_ENUM:
+            return false;
+        case TOKEN_OPEN_SQ_BRACKET:
+            return true;
+        case TOKEN_CLOSE_SQ_BRACKET:
+            return true;
+        case TOKEN_CHAR_LITERAL:
+            return false;
+        case TOKEN_CONTINUE:
+            return false;
+        case TOKEN_LESS_OR_EQUAL:
+            return true;
+        case TOKEN_GREATER_OR_EQUAL:
+            return true;
         case TOKEN_TYPE_DEF:
             return false;
         case TOKEN_SWITCH:
@@ -1798,29 +1914,6 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(
         *result = uast_wrap_struct_literal(struct_lit);
     } else if (tk_view_front(*tokens).type == TOKEN_NONTYPE) {
         return PARSE_EXPR_NONE;
-    } else if (tk_view_front(*tokens).type == TOKEN_SINGLE_MINUS) {
-        Token minus_token = {0};
-        try(try_consume(&minus_token, tokens, TOKEN_SINGLE_MINUS));
-        Uast_number* lhs = uast_number_new(minus_token.pos, 0);
-
-        Uast_expr* rhs = NULL;
-        switch (try_extract_expression_piece(env, &rhs, tokens, prev_oper_pres, defer_sym_add)) {
-            case PARSE_EXPR_OK:
-                break;
-            case PARSE_EXPR_NONE:
-                msg_expected_expression(env->file_text, *tokens, "after - sign");
-                return PARSE_EXPR_ERROR;
-            case PARSE_EXPR_ERROR:
-                return PARSE_EXPR_ERROR;
-            default:
-                unreachable("");
-        }
-        *result = uast_wrap_operator(uast_wrap_binary(uast_binary_new(
-            uast_get_pos_expr(rhs),
-            uast_wrap_literal(uast_wrap_number(lhs)),
-            rhs,
-            TOKEN_SINGLE_MINUS
-        )));
     } else {
         return PARSE_EXPR_NONE;
     }
@@ -1846,7 +1939,7 @@ static bool expr_is_binary(const Uast_expr* expr) {
 
 static PARSE_EXPR_STATUS extract_unary(
     Env* env,
-    Uast_unary** result,
+    Uast_operator** result,
     Tk_view* tokens,
     int32_t* prev_oper_pres,
     bool defer_sym_add,
@@ -1869,6 +1962,8 @@ static PARSE_EXPR_STATUS extract_unary(
             break;
         case TOKEN_REFER:
             break;
+        case TOKEN_SINGLE_MINUS:
+            break;
         case TOKEN_UNSAFE_CAST: {
             {
                 Token temp;
@@ -1889,6 +1984,28 @@ static PARSE_EXPR_STATUS extract_unary(
             }
             break;
         }
+    //    Token minus_token = {0};
+    //    try(try_consume(&minus_token, tokens, TOKEN_SINGLE_MINUS));
+    //    Uast_number* lhs = uast_number_new(minus_token.pos, 0);
+
+    //    Uast_expr* rhs = NULL;
+    //    switch (try_extract_expression_piece(env, &rhs, tokens, prev_oper_pres, defer_sym_add)) {
+    //        case PARSE_EXPR_OK:
+    //            break;
+    //        case PARSE_EXPR_NONE:
+    //            msg_expected_expression(env->file_text, *tokens, "after - sign");
+    //            return PARSE_EXPR_ERROR;
+    //        case PARSE_EXPR_ERROR:
+    //            return PARSE_EXPR_ERROR;
+    //        default:
+    //            unreachable("");
+    //    }
+    //    *result = uast_wrap_operator(uast_wrap_binary(uast_binary_new(
+    //        uast_get_pos_expr(rhs),
+    //        uast_wrap_literal(uast_wrap_number(lhs)),
+    //        rhs,
+    //        TOKEN_SINGLE_MINUS
+    //    )));
         default:
             unreachable(TOKEN_FMT, token_print(oper));
     }
@@ -1910,10 +2027,16 @@ static PARSE_EXPR_STATUS extract_unary(
         case TOKEN_REFER:
             // fallthrough
         case TOKEN_UNSAFE_CAST:
-            *result = uast_unary_new(oper.pos, child, oper.type, unary_lang_type);
+            *result = uast_wrap_unary(uast_unary_new(oper.pos, child, oper.type, unary_lang_type));
             assert(*result);
-            log(LOG_DEBUG, TAST_FMT"\n", uast_unary_print(*result));
+            log(LOG_DEBUG, TAST_FMT"\n", uast_operator_print(*result));
             break;
+        case TOKEN_SINGLE_MINUS: {
+            *result = uast_wrap_binary(uast_binary_new(oper.pos, uast_wrap_literal(uast_wrap_number(uast_number_new(oper.pos, 0))), child, oper.type));
+            assert(*result);
+            log(LOG_DEBUG, TAST_FMT"\n", uast_operator_print(*result));
+            break;
+        }
         default:
             unreachable(TOKEN_FMT, token_print(oper));
     }
@@ -1931,15 +2054,15 @@ static PARSE_EXPR_STATUS extract_binary(
     bool can_be_tuple
 ) {
     Token oper = consume_operator(tokens);
-    try(token_is_operator(oper, can_be_tuple) && !is_unary(oper.type));
+    try(is_binary(oper.type));
 
     Uast_expr* rhs = NULL;
 
     if (is_unary(tk_view_front(*tokens).type)) {
-        Uast_unary* unary = NULL;
+        Uast_operator* unary = NULL;
         switch (extract_unary(env, &unary, tokens, prev_oper_pres, defer_sym_add, can_be_tuple)) {
             case PARSE_EXPR_OK:
-                rhs = uast_wrap_operator(uast_wrap_unary(unary));
+                rhs = uast_wrap_operator(unary);
                 break;
             case PARSE_EXPR_ERROR:
                 todo();
@@ -1949,7 +2072,7 @@ static PARSE_EXPR_STATUS extract_binary(
                 todo();
         }
 
-        rhs = uast_wrap_operator(uast_wrap_unary(unary));
+        rhs = uast_wrap_operator(unary);
         if (is_unary(tk_view_front(*tokens).type)) {
             todo();
         }
@@ -2254,15 +2377,17 @@ static PARSE_EXPR_STATUS try_extract_expression(
 
     if (is_unary(tk_view_front(*tokens).type)) {
         prev_oper_pres = get_operator_precedence(tk_view_front(*tokens).type);
-        Uast_unary* unary = NULL;
+        Uast_operator* unary = NULL;
         switch (extract_unary(env, &unary, tokens, &prev_oper_pres, defer_sym_add, can_be_tuple)) {
             case PARSE_EXPR_OK:
-                lhs = uast_wrap_operator(uast_wrap_unary(unary));
+                lhs = uast_wrap_operator(unary);
                 *result = lhs;
                 break;
             case PARSE_EXPR_ERROR:
+                todo();
                 return PARSE_EXPR_ERROR;
             case PARSE_EXPR_NONE:
+                todo();
                 return PARSE_EXPR_NONE;
             default:
                 todo();
@@ -2292,7 +2417,7 @@ static PARSE_EXPR_STATUS try_extract_expression(
     }
 
     while (token_is_operator(tk_view_front(*tokens), can_be_tuple)) {
-        if (is_unary(tk_view_front(*tokens).type)) {
+        if (!is_binary(tk_view_front(*tokens).type)) {
             todo();
         } else if (token_is_opening(tk_view_front(*tokens))) {
             switch (extract_expression_opening(env, result, &lhs, tokens, &prev_oper_pres, defer_sym_add)) {
