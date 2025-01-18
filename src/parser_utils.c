@@ -86,6 +86,13 @@ bool lang_type_atom_is_number(Lang_type_atom atom) {
     return lang_type_atom_is_unsigned(atom) || lang_type_atom_is_signed(atom);
 }
 
+bool lang_type_is_number(Lang_type lang_type) {
+    if (lang_type.type != LANG_TYPE_PRIMITIVE) {
+        return false;
+    }
+    return lang_type_atom_is_number(lang_type_unwrap_primitive_const(lang_type).atom);
+}
+
 int64_t i_lang_type_atom_to_bit_width(Lang_type_atom atom) {
     //assert(lang_type_atom_is_signed(lang_type));
     return str_view_to_int64_t(str_view_slice(atom.str, 1, atom.str.count - 1));
@@ -93,7 +100,7 @@ int64_t i_lang_type_atom_to_bit_width(Lang_type_atom atom) {
 
 // TODO: put strings in a hash table to avoid allocating duplicate types
 Lang_type_atom lang_type_unsigned_to_signed(Lang_type_atom lang_type) {
-    assert(lang_type_is_unsigned(lang_type));
+    assert(lang_type_atom_is_unsigned(lang_type));
 
     if (lang_type.pointer_depth != 0) {
         todo();

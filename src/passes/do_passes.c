@@ -29,7 +29,7 @@ static void fail(void) {
 
 static void add_primitive(Env* env, const char* base_name, int16_t pointer_depth) {
     Uast_primitive_def* def = uast_primitive_def_new(
-        POS_BUILTIN, lang_type_new_from_cstr(base_name, pointer_depth)
+        POS_BUILTIN, lang_type_wrap_primitive_const(lang_type_primitive_new(lang_type_atom_new_from_cstr(base_name, pointer_depth)))
     );
     try(usym_tbl_add(&env->primitives, uast_wrap_primitive_def(def)));
 }

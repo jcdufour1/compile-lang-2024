@@ -260,7 +260,7 @@ static Tast_type tast_gen_string(const char* prefix) {
     Tast_type string = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&string.members, "Str_view", "data");
-    append_member(&string.members, "Lang_type", "lang_type");
+    append_member(&string.members, "Lang_type_primitive", "lang_type");
     append_member(&string.members, "Str_view", "name");
 
     return string;
@@ -324,7 +324,7 @@ static Tast_type tast_gen_function_call(const char* prefix) {
 
     append_member(&call.members, "Tast_expr_vec", "args");
     append_member(&call.members, "Str_view", "name");
-    append_member(&call.members, "Lang_type_vec", "lang_type");
+    append_member(&call.members, "Lang_type", "lang_type");
 
     return call;
 }
@@ -515,7 +515,7 @@ static Tast_type tast_gen_lang_type(const char* prefix) {
     const char* base_name = "lang_type";
     Tast_type lang_type = {.name = tast_name_new(prefix, base_name, false)};
 
-    append_member(&lang_type.members, "Lang_type_vec", "lang_type");
+    append_member(&lang_type.members, "Lang_type", "lang_type");
 
     return lang_type;
 }

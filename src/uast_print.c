@@ -235,7 +235,7 @@ Str_view uast_lang_type_print_internal(const Uast_lang_type* lang_type, int inde
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "lang_type", indent);
-    string_extend_strv(&print_arena, &buf, lang_type_vec_print_internal(lang_type->lang_type, false));
+    string_extend_strv(&print_arena, &buf, lang_type_print_internal(lang_type->lang_type, false));
 
     return string_to_strv(buf);
 }

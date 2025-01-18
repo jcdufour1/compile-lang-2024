@@ -111,7 +111,7 @@ static inline Lang_type tast_get_lang_type_literal(const Tast_literal* lit) {
         case TAST_NUMBER:
             return tast_unwrap_number_const(lit)->lang_type;
         case TAST_STRING:
-            return tast_unwrap_string_const(lit)->lang_type;
+            return lang_type_wrap_primitive_const(tast_unwrap_string_const(lit)->lang_type);
         case TAST_VOID:
             return lang_type_wrap_void_const(lang_type_void_new(0));
         case TAST_ENUM_LIT:
@@ -129,7 +129,7 @@ static inline Lang_type* tast_get_lang_type_literal_ref(Tast_literal* lit) {
         case TAST_NUMBER:
             return &tast_unwrap_number(lit)->lang_type;
         case TAST_STRING:
-            return &tast_unwrap_string(lit)->lang_type;
+            todo();
         case TAST_VOID:
             unreachable("");
         case TAST_ENUM_LIT:
@@ -147,8 +147,7 @@ static inline Lang_type tast_get_lang_type_expr(const Tast_expr* expr) {
         case TAST_STRUCT_LITERAL:
             return tast_unwrap_struct_literal_const(expr)->lang_type;
         case TAST_FUNCTION_CALL:
-            try(tast_unwrap_function_call_const(expr)->lang_type.info.count == 1);
-            return vec_at(&tast_unwrap_function_call_const(expr)->lang_type, 0);
+            return tast_unwrap_function_call_const(expr)->lang_type;
         case TAST_MEMBER_ACCESS_TYPED:
             return tast_unwrap_member_access_typed_const(expr)->lang_type;
         case TAST_INDEX_TYPED:

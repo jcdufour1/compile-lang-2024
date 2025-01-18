@@ -30,6 +30,31 @@ void extend_lang_type_to_string(String* string, Lang_type lang_type, bool surrou
     }
 }
 
+void extend_lang_type_atom_to_string(
+    String* string,
+    Lang_type_atom atom,
+    bool surround_in_lt_gt
+) {
+    if (surround_in_lt_gt) {
+        vec_append(&print_arena, string, '<');
+    }
+
+    if (atom.str.count > 1) {
+        string_extend_strv(&print_arena, string, atom.str);
+    } else {
+        string_extend_cstr(&print_arena, string, "<null>");
+    }
+    if (atom.pointer_depth < 0) {
+        todo();
+    }
+    for (int16_t idx = 0; idx < atom.pointer_depth; idx++) {
+        vec_append(&print_arena, string, '*');
+    }
+    if (surround_in_lt_gt) {
+        vec_append(&print_arena, string, '>');
+    }
+}
+
 static void extend_pos(String* buf, Pos pos) {
     string_extend_cstr(&print_arena, buf, "(( line:");
     string_extend_int64_t(&print_arena, buf, pos.line);
@@ -44,6 +69,10 @@ Str_view lang_type_print_internal(Lang_type lang_type, bool surround_in_lt_gt) {
 
 static void extend_lang_type(String* string, Lang_type lang_type, bool surround_in_lt_gt) {
     extend_lang_type_to_string(string, lang_type, surround_in_lt_gt);
+}
+
+static void extend_lang_type_atom(String* string, Lang_type_atom atom, bool surround_in_lt_gt) {
+    extend_lang_type_atom_to_string(string, atom, surround_in_lt_gt);
 }
 
 Str_view lang_type_vec_print_internal(Lang_type_vec types, bool surround_in_lt_gt) {
@@ -156,7 +185,7 @@ Str_view tast_function_call_print_internal(const Tast_function_call* fun_call, i
 
     string_extend_cstr_indent(&print_arena, &buf, "function_call", indent);
     string_extend_strv_in_par(&print_arena, &buf, fun_call->name);
-    string_extend_strv(&print_arena, &buf, lang_type_vec_print_internal(fun_call->lang_type, false));
+    string_extend_strv(&print_arena, &buf, lang_type_print_internal(fun_call->lang_type, false));
 
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
         Str_view arg_text = tast_expr_print_internal(vec_at(&fun_call->args, idx), indent + INDENT_WIDTH);
@@ -212,7 +241,7 @@ Str_view tast_string_print_internal(const Tast_string* lit, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "string", indent);
-    extend_lang_type(&buf, lit->lang_type, true);
+    extend_lang_type_atom(&buf, lit->lang_type.atom, true);
     string_extend_strv_in_par(&print_arena, &buf, lit->data);
     string_extend_cstr(&print_arena, &buf, "\n");
 
@@ -302,7 +331,7 @@ Str_view tast_lang_type_print_internal(const Tast_lang_type* lang_type, int inde
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "lang_type", indent);
-    string_extend_strv(&print_arena, &buf, lang_type_vec_print_internal(lang_type->lang_type, false));
+    string_extend_strv(&print_arena, &buf, lang_type_print_internal(lang_type->lang_type, false));
 
     return string_to_strv(buf);
 }

@@ -13,6 +13,12 @@ void extend_lang_type_to_string(
     bool surround_in_lt_gt
 );
 
+void extend_lang_type_atom_to_string(
+    String* string,
+    Lang_type_atom atom,
+    bool surround_in_lt_gt
+);
+
 Str_view lang_type_vec_print_internal(Lang_type_vec types, bool surround_in_lt_gt);
 
 #define lang_type_vec_print(types) str_view_print(lang_type_vec_print_internal((types), false))

@@ -70,6 +70,10 @@ typedef struct {
 #define vec_at(vector, index) \
     ((vector)->buf[(index)])
 
+// TODO: make `vec_at_const` the new at function everywhere
+#define vec_at_const(vector, index) \
+    ((vector).buf[(index)])
+
 #define vec_at_ref(vector, index) \
     (&(vector)->buf[(index)])
 
