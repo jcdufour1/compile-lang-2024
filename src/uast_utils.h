@@ -54,6 +54,30 @@ static inline Lang_type uast_get_lang_type_def(const Uast_def* def) {
     unreachable("");
 }
 
+static inline Lang_type_vec uast_get_lang_types_def(const Uast_def* def) {
+    switch (def->type) {
+        case UAST_FUNCTION_DEF:
+            unreachable("");
+        case UAST_RAW_UNION_DEF:
+            unreachable("");
+        case UAST_ENUM_DEF:
+            return lang_type_vec_from_lang_type(lang_type_new_from_strv(uast_unwrap_enum_def_const(def)->base.name, 0));
+        case UAST_VARIABLE_DEF:
+            return lang_type_vec_from_lang_type(uast_unwrap_variable_def_const(def)->lang_type);
+        case UAST_FUNCTION_DECL:
+            return uast_unwrap_function_decl_const(def)->return_type->lang_type;
+        case UAST_STRUCT_DEF:
+            return lang_type_vec_from_lang_type(lang_type_new_from_strv(uast_unwrap_struct_def_const(def)->base.name, 0));
+        case UAST_PRIMITIVE_DEF:
+            unreachable("");
+        case UAST_LITERAL_DEF:
+            unreachable("");
+        case UAST_SUM_DEF:
+            return lang_type_vec_from_lang_type(lang_type_new_from_strv(uast_unwrap_sum_def_const(def)->base.name, 0));
+    }
+    unreachable("");
+}
+
 static inline Lang_type uast_get_lang_type_stmt(const Uast_stmt* stmt) {
     switch (stmt->type) {
         case UAST_EXPR:

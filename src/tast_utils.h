@@ -107,7 +107,7 @@ static inline Str_view tast_get_symbol_typed_name(const Tast_symbol_typed* sym) 
     return tast_symbol_typed_get_base_const(sym).name;
 }
 
-static inline Lang_type tast_get_lang_type_symbol_typed(const Tast_symbol_typed* sym) {
+static inline Lang_type_vec tast_get_lang_type_symbol_typed(const Tast_symbol_typed* sym) {
     return tast_symbol_typed_get_base_const(sym).lang_type;
 }
 
@@ -163,7 +163,8 @@ static inline Lang_type tast_get_lang_type_expr(const Tast_expr* expr) {
         case TAST_OPERATOR:
             return tast_get_lang_type_operator(tast_unwrap_operator_const(expr));
         case TAST_SYMBOL_TYPED:
-            return tast_symbol_typed_get_base_const(tast_unwrap_symbol_typed_const(expr)).lang_type;
+            try(tast_symbol_typed_get_base_const(tast_unwrap_symbol_typed_const(expr)).lang_type.info.count == 1);
+            return vec_at(&tast_symbol_typed_get_base_ref((Tast_symbol_typed*)tast_unwrap_symbol_typed_const(expr))->lang_type, 0);
         case TAST_TUPLE: {
             const Tast_tuple* tuple = tast_unwrap_tuple_const(expr);
             try(tuple->lang_type.info.count == tuple->members.info.count);
@@ -192,7 +193,7 @@ static inline Lang_type_vec tast_get_lang_types_expr(const Tast_expr* expr) {
         case TAST_OPERATOR:
             return lang_type_vec_from_lang_type(tast_get_lang_type_operator(tast_unwrap_operator_const(expr)));
         case TAST_SYMBOL_TYPED:
-            return lang_type_vec_from_lang_type(tast_symbol_typed_get_base_const(tast_unwrap_symbol_typed_const(expr)).lang_type);
+            return tast_symbol_typed_get_base_const(tast_unwrap_symbol_typed_const(expr)).lang_type;
         case TAST_TUPLE:
             return tast_unwrap_tuple_const(expr)->lang_type;
         case TAST_SUM_CALLEE:

@@ -273,7 +273,15 @@ bool try_set_symbol_type(const Env* env, Tast_expr** new_tast, Uast_symbol_untyp
         return false;
     }
 
-    Lang_type lang_type = uast_get_lang_type_def(sym_def);
+    Lang_type_vec lang_types = uast_get_lang_types_def(sym_def);
+    if (lang_types.info.count < 1) {
+        todo();
+    } else if (lang_types.info.count > 1) {
+        Tast_tuple_sym* sym_typed = tast_tuple_sym_new(sym_untyped->pos, new_base);
+        *new_tast = tast_wrap_symbol_typed(tast_wrap_tuple_sym(sym_typed));
+        return true;
+    }
+    Lang_type lang_type = vec_at(&lang_types, 0);
 
     Sym_typed_base new_base = {.lang_type = lang_type, .name = sym_untyped->name};
     if (lang_type_is_struct(env, lang_type)) {

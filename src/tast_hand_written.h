@@ -22,7 +22,7 @@ typedef struct {
 } Struct_def_base;
 
 typedef struct {
-    Lang_type lang_type;
+    Lang_type_vec lang_type;
     Str_view name;
     Llvm_id llvm_id;
 } Sym_typed_base;

@@ -186,6 +186,15 @@ static Tast_type tast_gen_struct_sym(const char* prefix) {
     return lang_struct;
 }
 
+static Tast_type tast_gen_tuple_sym(const char* prefix) {
+    const char* base_name = "tuple_sym";
+    Tast_type lang_tuple = {.name = tast_name_new(prefix, base_name, false)};
+
+    append_member(&lang_tuple.members, "Sym_typed_base", "base");
+
+    return lang_tuple;
+}
+
 static Tast_type tast_gen_raw_union_sym(const char* prefix) {
     const char* base_name = "raw_union_sym";
     Tast_type raw_union = {.name = tast_name_new(prefix, base_name, false)};
