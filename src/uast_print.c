@@ -16,6 +16,37 @@ static void extend_lang_type(String* string, Lang_type lang_type, bool surround_
     extend_lang_type_to_string(string, lang_type, surround_in_lt_gt);
 }
 
+void extend_ulang_type_to_string(String* string, ULang_type lang_type, bool surround_in_lt_gt) {
+    if (surround_in_lt_gt) {
+        vec_append(&print_arena, string, '<');
+    }
+
+    if (lang_type.str.count > 1) {
+        string_extend_strv(&print_arena, string, lang_type.str);
+    } else {
+        string_extend_cstr(&print_arena, string, "<null>");
+    }
+    if (lang_type.pointer_depth < 0) {
+        todo();
+    }
+    for (int16_t idx = 0; idx < lang_type.pointer_depth; idx++) {
+        vec_append(&print_arena, string, '*');
+    }
+    if (surround_in_lt_gt) {
+        vec_append(&print_arena, string, '>');
+    }
+}
+
+static void extend_ulang_type(String* string, ULang_type lang_type, bool surround_in_lt_gt) {
+    extend_ulang_type_to_string(string, lang_type, surround_in_lt_gt);
+}
+
+Str_view ulang_type_print_internal(ULang_type lang_type, bool surround_in_lt_gt) {
+    String buf = {0};
+    extend_ulang_type_to_string(&buf, lang_type, surround_in_lt_gt);
+    return string_to_strv(buf);
+}
+
 Str_view uast_binary_print_internal(const Uast_binary* binary, int indent) {
     String buf = {0};
 
@@ -235,7 +266,7 @@ Str_view uast_lang_type_print_internal(const Uast_lang_type* lang_type, int inde
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "lang_type", indent);
-    string_extend_strv(&print_arena, &buf, lang_type_print_internal(lang_type->lang_type, false));
+    string_extend_strv(&print_arena, &buf, ulang_type_print_internal(lang_type->lang_type, false));
 
     return string_to_strv(buf);
 }
@@ -515,7 +546,7 @@ Str_view uast_variable_def_print_internal(const Uast_variable_def* def, int inde
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "variable_def", indent);
-    extend_lang_type(&buf, def->lang_type, true);
+    extend_ulang_type(&buf, def->lang_type, true);
     string_extend_strv_in_par(&print_arena, &buf, def->name);
     string_extend_cstr(&print_arena, &buf, "\n");
 

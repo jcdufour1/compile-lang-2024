@@ -3,6 +3,7 @@
 
 #include <tast.h>
 #include <lang_type_after.h>
+#include <ulang_type.h>
 
 #define LANG_TYPE_FMT STR_VIEW_FMT
 
@@ -71,9 +72,13 @@ static inline Lang_type_vec lang_type_vec_from_lang_type(Lang_type lang_type) {
 
 Str_view lang_type_print_internal(Lang_type lang_type, bool surround_in_lt_gt);
 
+Str_view ulang_type_print_internal(ULang_type lang_type, bool surround_in_lt_gt);
+
 Str_view lang_type_atom_print_internal(Lang_type_atom atom, bool surround_in_lt_gt);
 
 #define lang_type_print(lang_type) str_view_print(lang_type_print_internal((lang_type), false))
+
+#define ulang_type_print(lang_type) str_view_print(ulang_type_print_internal((lang_type), false))
 
 #define lang_type_atom_print(atom) str_view_print(lang_type_atom_print_internal((atom), false))
 
@@ -217,27 +222,8 @@ static inline Lang_type tast_get_lang_type_def(const Tast_def* def) {
 }
 
 static inline Lang_type* tast_get_lang_type_expr_ref(Tast_expr* expr) {
-    switch (expr->type) {
-        case TAST_STRUCT_LITERAL:
-            return &tast_unwrap_struct_literal(expr)->lang_type;
-        case TAST_FUNCTION_CALL:
-            todo();
-        case TAST_MEMBER_ACCESS_TYPED:
-            unreachable("");
-        case TAST_INDEX_TYPED:
-            unreachable("");
-        case TAST_LITERAL:
-            return tast_get_lang_type_literal_ref(tast_unwrap_literal(expr));
-        case TAST_SYMBOL_TYPED:
-            return &tast_unwrap_symbol_typed(expr)->base.lang_type;
-        case TAST_OPERATOR:
-            return get_operator_lang_type_ref(tast_unwrap_operator(expr));
-        case TAST_TUPLE:
-            unreachable("");
-        case TAST_SUM_CALLEE:
-            unreachable("");
-    }
-    unreachable("");
+    (void) expr;
+    todo();
 }
 
 static inline Lang_type tast_get_lang_type_stmt(const Tast_stmt* stmt) {

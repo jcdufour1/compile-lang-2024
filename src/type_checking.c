@@ -6,6 +6,7 @@
 #include <tast_utils.h>
 #include <llvm_utils.h>
 #include <uast_hand_written.h>
+#include <lang_type_from_ulang_type.h>
 #include <bool_vec.h>
 
 // result is rounded up
@@ -125,7 +126,7 @@ static void msg_invalid_function_arg_internal(
         "but the corresponding parameter `"STR_VIEW_FMT"` is of type `"LANG_TYPE_FMT"`\n",
         lang_type_print(tast_get_lang_type_expr(argument)), 
         str_view_print(corres_param->name),
-        lang_type_print(corres_param->lang_type)
+        ulang_type_print(corres_param->lang_type)
     );
     msg_internal(
         file, line,
@@ -145,7 +146,7 @@ static void msg_invalid_return_type_internal(const char* file, int line, const E
             file, line,
             LOG_ERROR, EXPECT_FAIL_MISSING_RETURN, env->file_text, pos,
             "no return statement in function that returns `"LANG_TYPE_FMT"`\n",
-            lang_type_print(fun_decl->return_type->lang_type)
+            ulang_type_print(fun_decl->return_type->lang_type)
         );
     } else {
         msg_internal(
@@ -153,7 +154,7 @@ static void msg_invalid_return_type_internal(const char* file, int line, const E
             LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, env->file_text, pos,
             "returning `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
             lang_type_print(tast_get_lang_type_expr(child)), 
-            lang_type_print(fun_decl->return_type->lang_type)
+            ulang_type_print(fun_decl->return_type->lang_type)
         );
     }
 
@@ -161,7 +162,7 @@ static void msg_invalid_return_type_internal(const char* file, int line, const E
         file, line,
         LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, fun_decl->return_type->pos,
         "function return type `"LANG_TYPE_FMT"` defined here\n",
-        lang_type_print(fun_decl->return_type->lang_type)
+        ulang_type_print(fun_decl->return_type->lang_type)
     );
 }
 
@@ -643,7 +644,7 @@ bool try_set_struct_literal_assignment_types(
         Tast_expr* new_rhs = NULL;
 
         switch (check_generic_assignment(
-            env, &new_rhs, memb_sym_def->lang_type, assign_memb_sym->rhs, assign_memb_sym->pos
+            env, &new_rhs, lang_type_from_ulang_type(memb_sym_def->lang_type), assign_memb_sym->rhs, assign_memb_sym->pos
         )) {
             case CHECK_ASSIGN_OK:
                 break;
@@ -652,7 +653,7 @@ bool try_set_struct_literal_assignment_types(
                     LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
                     assign_memb_sym->pos,
                     "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
-                    lang_type_print(tast_get_lang_type_expr(new_rhs)), lang_type_print(memb_sym_def->lang_type)
+                    lang_type_print(tast_get_lang_type_expr(new_rhs)), ulang_type_print(memb_sym_def->lang_type)
                 );
                 return false;
             case CHECK_ASSIGN_ERROR:
@@ -662,7 +663,8 @@ bool try_set_struct_literal_assignment_types(
         }
 
 
-        *tast_get_lang_type_expr_ref(new_rhs) = memb_sym_def->lang_type;
+        todo();
+        //*tast_get_lang_type_expr_ref(new_rhs) = memb_sym_def->lang_type;
         if (!str_view_is_equal(memb_sym_def->name, memb_sym_piece_untyped->name)) {
             msg(
                 LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL, env->file_text,
@@ -984,7 +986,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             params_idx++;
         }
 
-        if (lang_type_is_equal(corres_param->lang_type, lang_type_wrap_primitive_const(lang_type_primitive_new(lang_type_atom_new_from_cstr("any", 0))))) {
+        if (lang_type_is_equal(lang_type_from_ulang_type(corres_param->lang_type), lang_type_wrap_primitive_const(lang_type_primitive_new(lang_type_atom_new_from_cstr("any", 0))))) {
             if (corres_param->is_variadic) {
                 // TODO: do type checking here if this function is not an extern "c" function
                 for (size_t idx = arg_idx; idx < fun_call->args.info.count; idx++) {
@@ -1003,7 +1005,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             switch (check_generic_assignment(
                 env,
                 &new_arg,
-                corres_param->lang_type,
+                lang_type_from_ulang_type(corres_param->lang_type),
                 arg,
                 uast_get_pos_expr(arg)
             )) {
@@ -1099,7 +1101,7 @@ bool try_set_member_access_types_finish_generic_struct(
 
     Tast_member_access_typed* new_access = tast_member_access_typed_new(
         access->pos,
-        member_def->lang_type,
+        lang_type_from_ulang_type(member_def->lang_type),
         access->member_name,
         new_callee
     );
@@ -1150,7 +1152,7 @@ bool try_set_member_access_types_finish_sum_def(
             Tast_enum_lit* new_tag = tast_enum_lit_new(
                 access->pos,
                 uast_get_member_index(&sum_def->base, access->member_name),
-                member_def->lang_type
+                lang_type_from_ulang_type(member_def->lang_type)
             );
 
             *new_tast = tast_wrap_expr(tast_wrap_sum_callee(tast_sum_callee_new(
@@ -1159,7 +1161,7 @@ bool try_set_member_access_types_finish_sum_def(
                 lang_type_wrap_sum_const(lang_type_sum_new(lang_type_atom_new(sum_def->base.name, 0)))
             )));
 
-            assert(lang_type_get_str(member_def->lang_type).count > 0);
+            assert(member_def->lang_type.str.count > 0);
             return true;
 
             todo();
@@ -1201,11 +1203,11 @@ bool try_set_member_access_types_finish(
             Tast_enum_lit* new_lit = tast_enum_lit_new(
                 access->pos,
                 uast_get_member_index(&enum_def->base, access->member_name),
-                member_def->lang_type
+                lang_type_from_ulang_type(member_def->lang_type)
             );
 
             *new_tast = tast_wrap_expr(tast_wrap_literal(tast_wrap_enum_lit(new_lit)));
-            assert(lang_type_get_str(member_def->lang_type).count > 0);
+            assert(member_def->lang_type.str.count > 0);
             return true;
         }
         case UAST_SUM_DEF:
@@ -1405,11 +1407,11 @@ static void msg_undefined_type_internal(
     int line,
     const Env* env,
     Pos pos,
-    Lang_type lang_type
+    ULang_type lang_type
 ) {
     msg_internal(
         file, line, LOG_ERROR, EXPECT_FAIL_UNDEFINED_TYPE, env->file_text, pos,
-        "type `"LANG_TYPE_FMT"` is not defined\n", lang_type_print(lang_type)
+        "type `"LANG_TYPE_FMT"` is not defined\n", ulang_type_print(lang_type)
     );
 }
 
@@ -1423,12 +1425,12 @@ bool try_set_variable_def_types(
     bool add_to_sym_tbl
 ) {
     Uast_def* dummy = NULL;
-    if (!usymbol_lookup(&dummy, env, lang_type_get_str(uast->lang_type))) {
+    if (!usymbol_lookup(&dummy, env, uast->lang_type.str)) {
         msg_undefined_type(env, uast->pos, uast->lang_type);
         return false;
     }
 
-    *new_tast = tast_variable_def_new(uast->pos, uast->lang_type, uast->is_variadic, uast->name);
+    *new_tast = tast_variable_def_new(uast->pos, lang_type_from_ulang_type(uast->lang_type), uast->is_variadic, uast->name);
     log(LOG_DEBUG, "adding:"STR_VIEW_FMT, tast_variable_def_print(*new_tast));
     symbol_log(LOG_DEBUG, env);
     if (add_to_sym_tbl && !env->type_checking_is_in_struct_base_def) {
@@ -1513,9 +1515,11 @@ bool try_set_function_params_types(
 
 static bool try_set_lang_type_types_internal(
     Env* env,
-    Lang_type lang_type,
+    ULang_type lang_type,
     Pos pos
 ) {
+    Uast_def* def = NULL;
+    try(usymbol_lookup(&def, env, lang_type.str));
     switch (lang_type.type) {
         case LANG_TYPE_TUPLE: {
             for (size_t idx = 0; idx < lang_type_unwrap_tuple_const(lang_type).lang_types.info.count; idx++) {
@@ -1535,7 +1539,8 @@ static bool try_set_lang_type_types_internal(
         case LANG_TYPE_ENUM: {
             Uast_def* dummy = NULL;
             if (!usymbol_lookup(&dummy, env, lang_type_get_str(lang_type))) {
-                msg_undefined_type(env, pos, lang_type);
+                todo();
+                //msg_undefined_type(env, pos, lang_type);
                 return false;
             }
         }

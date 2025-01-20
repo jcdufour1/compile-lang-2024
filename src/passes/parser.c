@@ -7,6 +7,7 @@
 #include <symbol_table.h>
 #include <parser_utils.h>
 #include <tokens.h>
+#include <ulang_type.h>
 #include "passes.h"
 
 static Token prev_token = {0};
@@ -767,7 +768,7 @@ static bool is_binary(TOKEN_TYPE token_type) {
 }
 
 // type will be parsed if possible
-static bool extract_lang_type_struct(Lang_type* lang_type, Tk_view* tokens) {
+static bool extract_lang_type_struct(ULang_type* lang_type, Tk_view* tokens) {
     memset(lang_type, 0, sizeof(*lang_type));
 
     Token lang_type_token;
@@ -783,7 +784,7 @@ static bool extract_lang_type_struct(Lang_type* lang_type, Tk_view* tokens) {
 }
 
 // require type to be parsed
-static PARSE_STATUS extract_lang_type_struct_require(Env* env, Lang_type* lang_type, Tk_view* tokens) {
+static PARSE_STATUS extract_lang_type_struct_require(Env* env, ULang_type* lang_type, Tk_view* tokens) {
     if (extract_lang_type_struct(lang_type, tokens)) {
         return PARSE_OK;
     } else {
@@ -841,8 +842,8 @@ static PARSE_STATUS extract_function_parameters(Env* env, Uast_function_params**
 }
 
 static void extract_return_types(Uast_lang_type** result, Tk_view* tokens) {
-    Lang_type lang_type = {0};
-    Lang_type_vec types = {0};
+    ULang_type lang_type = {0};
+    ULang_type_vec types = {0};
 
     Token open_par = {0};
     if (!try_consume(&open_par, tokens, TOKEN_OPEN_PAR)) {
