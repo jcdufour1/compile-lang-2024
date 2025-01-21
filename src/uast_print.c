@@ -3,6 +3,7 @@
 #include <tast_utils.h>
 #include <llvm_utils.h>
 #include <util.h>
+#include <ulang_type.h>
 
 #include <symbol_table.h>
 
@@ -16,32 +17,47 @@ static void extend_lang_type(String* string, Lang_type lang_type, bool surround_
     extend_lang_type_to_string(string, lang_type, surround_in_lt_gt);
 }
 
-void extend_ulang_type_to_string(String* string, ULang_type lang_type, bool surround_in_lt_gt) {
-    if (surround_in_lt_gt) {
-        vec_append(&print_arena, string, '<');
-    }
+void extend_ulang_type_to_string(String* string, Ulang_type lang_type, bool surround_in_lt_gt) {
+    switch (lang_type.type) {
+        case ULANG_TYPE_REGULAR: {
+            Ulang_type_atom atom = ulang_type_unwrap_regular_const(lang_type).atom;
 
-    if (lang_type.str.count > 1) {
-        string_extend_strv(&print_arena, string, lang_type.str);
-    } else {
-        string_extend_cstr(&print_arena, string, "<null>");
+            if (surround_in_lt_gt) {
+                vec_append(&print_arena, string, '<');
+            }
+
+            if (atom.str.count > 1) {
+                string_extend_strv(&print_arena, string, atom.str);
+            } else {
+                string_extend_cstr(&print_arena, string, "<null>");
+            }
+            if (atom.pointer_depth < 0) {
+                todo();
+            }
+            for (int16_t idx = 0; idx < atom.pointer_depth; idx++) {
+                vec_append(&print_arena, string, '*');
+            }
+            if (surround_in_lt_gt) {
+                vec_append(&print_arena, string, '>');
+            }
+            return;
+        }
+        case ULANG_TYPE_TUPLE: {
+            Ulang_type_tuple tuple = ulang_type_unwrap_tuple_const(lang_type);
+            for (size_t idx = 0; idx < tuple.ulang_types.info.count; idx++) {
+                extend_ulang_type_to_string(string, vec_at(&tuple.ulang_types, idx), false);
+            }
+            return;
+        }
     }
-    if (lang_type.pointer_depth < 0) {
-        todo();
-    }
-    for (int16_t idx = 0; idx < lang_type.pointer_depth; idx++) {
-        vec_append(&print_arena, string, '*');
-    }
-    if (surround_in_lt_gt) {
-        vec_append(&print_arena, string, '>');
-    }
+    unreachable("");
 }
 
-static void extend_ulang_type(String* string, ULang_type lang_type, bool surround_in_lt_gt) {
+static void extend_ulang_type(String* string, Ulang_type lang_type, bool surround_in_lt_gt) {
     extend_ulang_type_to_string(string, lang_type, surround_in_lt_gt);
 }
 
-Str_view ulang_type_print_internal(ULang_type lang_type, bool surround_in_lt_gt) {
+Str_view ulang_type_print_internal(Ulang_type lang_type, bool surround_in_lt_gt) {
     String buf = {0};
     extend_ulang_type_to_string(&buf, lang_type, surround_in_lt_gt);
     return string_to_strv(buf);

@@ -4,6 +4,7 @@
 #include <auto_gen_uast.h>
 #include <auto_gen_llvm.h>
 #include <auto_gen_lang_type.h>
+#include <auto_gen_ulang_type.h>
 
 // TODO: expected failure test for mispelling struct, sum, enum, etc.
 
@@ -787,6 +788,9 @@ int main(int argc, char** argv) {
     assert(argc == 2 && "invalid count of arguments provided");
 
     Sym_tbl_type_vec symbol_tbl_types = get_symbol_tbl_types();
+
+    gen_ulang_type(get_path(argv[1], "ulang_type.h"), true);
+    assert(!global_output);
 
     gen_lang_type(get_path(argv[1], "lang_type.h"), true);
     assert(!global_output);

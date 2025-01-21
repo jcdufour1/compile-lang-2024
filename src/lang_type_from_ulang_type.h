@@ -4,7 +4,7 @@
 #include <ulang_type.h>
 #include <uast_utils.h>
 
-static inline Lang_type lang_type_from_ulang_type(ULang_type lang_type) {
+static inline Lang_type lang_type_from_ulang_type(Ulang_type lang_type) {
     (void) lang_type;
     todo();
 }

@@ -768,7 +768,7 @@ static bool is_binary(TOKEN_TYPE token_type) {
 }
 
 // type will be parsed if possible
-static bool extract_lang_type_struct(ULang_type* lang_type, Tk_view* tokens) {
+static bool extract_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens) {
     memset(lang_type, 0, sizeof(*lang_type));
 
     Token lang_type_token;

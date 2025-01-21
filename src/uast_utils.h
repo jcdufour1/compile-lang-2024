@@ -28,31 +28,31 @@ Str_view uast_print_internal(const Uast* uast, int recursion_depth);
         log(LOG_NOTE, UAST_FMT"\n", uast_print(uast)); \
     } while (0);
 
-static inline ULang_type uast_get_ulang_type_def(const Uast_def* def) {
+static inline Ulang_type uast_get_ulang_type_def(const Uast_def* def) {
     switch (def->type) {
         case UAST_FUNCTION_DEF:
             unreachable("");
         case UAST_RAW_UNION_DEF:
             unreachable("");
         case UAST_ENUM_DEF:
-            return ulang_type_new(uast_unwrap_enum_def_const(def)->base.name, 0);
+            return ulang_type_wrap_regular_const(ulang_type_regular_new(ulang_type_atom_new(uast_unwrap_enum_def_const(def)->base.name, 0)));
         case UAST_VARIABLE_DEF:
             return uast_unwrap_variable_def_const(def)->lang_type;
         case UAST_FUNCTION_DECL:
             return uast_unwrap_function_decl_const(def)->return_type->lang_type;
         case UAST_STRUCT_DEF:
-            return ulang_type_new(uast_unwrap_struct_def_const(def)->base.name, 0);
+            return ulang_type_wrap_regular_const(ulang_type_regular_new(ulang_type_atom_new(uast_unwrap_struct_def_const(def)->base.name, 0)));
         case UAST_PRIMITIVE_DEF:
             unreachable("");
         case UAST_LITERAL_DEF:
             unreachable("");
         case UAST_SUM_DEF:
-            return ulang_type_new(uast_unwrap_sum_def_const(def)->base.name, 0);
+            return ulang_type_wrap_regular_const(ulang_type_regular_new(ulang_type_atom_new(uast_unwrap_sum_def_const(def)->base.name, 0)));
     }
     unreachable("");
 }
 
-static inline ULang_type uast_get_ulang_type_stmt(const Uast_stmt* stmt) {
+static inline Ulang_type uast_get_ulang_type_stmt(const Uast_stmt* stmt) {
     switch (stmt->type) {
         case UAST_EXPR:
             unreachable("");
@@ -80,7 +80,7 @@ static inline ULang_type uast_get_ulang_type_stmt(const Uast_stmt* stmt) {
     unreachable("");
 }
 
-static inline ULang_type uast_get_ulang_type(const Uast* uast) {
+static inline Ulang_type uast_get_ulang_type(const Uast* uast) {
     switch (uast->type) {
         case UAST_STMT:
             return uast_get_ulang_type_stmt(uast_unwrap_stmt_const(uast));

@@ -314,7 +314,7 @@ static Uast_type uast_gen_function_def(const char* prefix) {
 static Uast_type uast_gen_variable_def(const char* prefix) {
     Uast_type def = {.name = uast_name_new(prefix, "variable_def", false)};
 
-    append_member(&def.members, "ULang_type", "lang_type");
+    append_member(&def.members, "Ulang_type", "lang_type");
     append_member(&def.members, "bool", "is_variadic");
     append_member(&def.members, "Str_view", "name");
 
@@ -401,7 +401,7 @@ static Uast_type uast_gen_function_params(const char* prefix) {
 static Uast_type uast_gen_lang_type(const char* prefix) {
     Uast_type lang_type = {.name = uast_name_new(prefix, "lang_type", false)};
 
-    append_member(&lang_type.members, "ULang_type", "lang_type");
+    append_member(&lang_type.members, "Ulang_type", "lang_type");
 
     return lang_type;
 }

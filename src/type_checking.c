@@ -8,6 +8,7 @@
 #include <uast_hand_written.h>
 #include <lang_type_from_ulang_type.h>
 #include <bool_vec.h>
+#include <ulang_type.h>
 
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
@@ -1161,7 +1162,8 @@ bool try_set_member_access_types_finish_sum_def(
                 lang_type_wrap_sum_const(lang_type_sum_new(lang_type_atom_new(sum_def->base.name, 0)))
             )));
 
-            assert(member_def->lang_type.str.count > 0);
+            //assert(member_def->lang_type.str.count > 0);
+            todo();
             return true;
 
             todo();
@@ -1207,7 +1209,8 @@ bool try_set_member_access_types_finish(
             );
 
             *new_tast = tast_wrap_expr(tast_wrap_literal(tast_wrap_enum_lit(new_lit)));
-            assert(member_def->lang_type.str.count > 0);
+            todo();
+            //assert(member_def->lang_type.str.count > 0);
             return true;
         }
         case UAST_SUM_DEF:
@@ -1407,7 +1410,7 @@ static void msg_undefined_type_internal(
     int line,
     const Env* env,
     Pos pos,
-    ULang_type lang_type
+    Ulang_type lang_type
 ) {
     msg_internal(
         file, line, LOG_ERROR, EXPECT_FAIL_UNDEFINED_TYPE, env->file_text, pos,
@@ -1425,7 +1428,7 @@ bool try_set_variable_def_types(
     bool add_to_sym_tbl
 ) {
     Uast_def* dummy = NULL;
-    if (!usymbol_lookup(&dummy, env, uast->lang_type.str)) {
+    if (!usymbol_lookup(&dummy, env, ulang_type_unwrap_regular_const(uast->lang_type).atom.str)) {
         msg_undefined_type(env, uast->pos, uast->lang_type);
         return false;
     }
@@ -1515,37 +1518,20 @@ bool try_set_function_params_types(
 
 static bool try_set_lang_type_types_internal(
     Env* env,
-    ULang_type lang_type,
+    Ulang_type lang_type,
     Pos pos
 ) {
-    Uast_def* def = NULL;
-    try(usymbol_lookup(&def, env, lang_type.str));
     switch (lang_type.type) {
-        case LANG_TYPE_TUPLE: {
-            for (size_t idx = 0; idx < lang_type_unwrap_tuple_const(lang_type).lang_types.info.count; idx++) {
-                if (!try_set_lang_type_types_internal(env, vec_at_const(lang_type_unwrap_tuple_const(lang_type).lang_types, idx), pos)) {
+        case ULANG_TYPE_TUPLE: {
+            for (size_t idx = 0; idx < ulang_type_unwrap_tuple_const(lang_type).ulang_types.info.count; idx++) {
+                if (!try_set_lang_type_types_internal(env, vec_at_const(ulang_type_unwrap_tuple_const(lang_type).ulang_types, idx), pos)) {
                     return false;
                 }
             }
         }
-        case LANG_TYPE_PRIMITIVE:
-            // fallthrough
-        case LANG_TYPE_RAW_UNION:
-            // fallthrough
-        case LANG_TYPE_STRUCT:
-            // fallthrough
-        case LANG_TYPE_SUM:
-            // fallthrough
-        case LANG_TYPE_ENUM: {
-            Uast_def* dummy = NULL;
-            if (!usymbol_lookup(&dummy, env, lang_type_get_str(lang_type))) {
-                todo();
-                //msg_undefined_type(env, pos, lang_type);
-                return false;
-            }
+        case ULANG_TYPE_REGULAR: {
+            todo();
         }
-        case LANG_TYPE_VOID:
-            return true;
     }
     unreachable("");
 }
@@ -1559,17 +1545,17 @@ bool try_set_lang_type_types(
         return false;
     }
 
-    *new_tast = tast_lang_type_new(uast->pos, uast->lang_type);
+    *new_tast = tast_lang_type_new(uast->pos, lang_type_from_ulang_type(uast->lang_type));
     return true;
 }
 
 bool try_set_return_types(Env* env, Tast_return** new_tast, Uast_return* rtn) {
     *new_tast = NULL;
 
-    Lang_type fun_rtn_type = get_parent_function_return_type(env)->lang_type;
+    Ulang_type fun_rtn_type = get_parent_function_return_type(env)->lang_type;
 
     Tast_expr* new_child = NULL;
-    switch (check_generic_assignment(env, &new_child, fun_rtn_type, rtn->child, rtn->pos)) {
+    switch (check_generic_assignment(env, &new_child, lang_type_from_ulang_type(fun_rtn_type), rtn->child, rtn->pos)) {
         case CHECK_ASSIGN_OK:
             break;
         case CHECK_ASSIGN_INVALID:
@@ -1772,7 +1758,7 @@ static bool check_for_exhaustiveness_finish(const Env* env, Exhaustive_data exha
                 msg(
                     LOG_ERROR, EXPECT_FAIL_NON_EXHAUSTIVE_SWITCH, env->file_text, pos_switch,
                     "case `"LANG_TYPE_FMT"."STR_VIEW_FMT"` is not covered\n",
-                    lang_type_print(vec_at(&enum_def->base.members, idx)->lang_type),
+                    ulang_type_print(vec_at(&enum_def->base.members, idx)->lang_type),
                     str_view_print(vec_at(&enum_def->base.members, idx)->name)
                 );
                 return false;

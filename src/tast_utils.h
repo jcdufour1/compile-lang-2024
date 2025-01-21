@@ -72,7 +72,7 @@ static inline Lang_type_vec lang_type_vec_from_lang_type(Lang_type lang_type) {
 
 Str_view lang_type_print_internal(Lang_type lang_type, bool surround_in_lt_gt);
 
-Str_view ulang_type_print_internal(ULang_type lang_type, bool surround_in_lt_gt);
+Str_view ulang_type_print_internal(Ulang_type lang_type, bool surround_in_lt_gt);
 
 Str_view lang_type_atom_print_internal(Lang_type_atom atom, bool surround_in_lt_gt);
 
