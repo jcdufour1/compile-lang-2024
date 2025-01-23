@@ -418,7 +418,7 @@ static Tast_function_call* rm_tuple_function_call(Env* env, Tast_function_call* 
         *curr = rm_tuple_generic_assignment_rhs(
             env,
             *curr,
-            lang_type_from_ulang_type(vec_at(&fun_decl->params->params, idx)->lang_type),
+            lang_type_from_ulang_type(env, vec_at(&fun_decl->params->params, idx)->lang_type),
             tast_get_pos_expr(*curr)
         );
     }

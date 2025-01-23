@@ -530,7 +530,7 @@ bool try_set_unary_types(Env* env, Tast_expr** new_tast, Uast_unary* unary) {
         return false;
     }
 
-    return try_set_unary_types_finish(env, new_tast, new_child, uast_get_pos_unary(unary), unary->token_type, lang_type_from_ulang_type(unary->lang_type));
+    return try_set_unary_types_finish(env, new_tast, new_child, uast_get_pos_unary(unary), unary->token_type, lang_type_from_ulang_type(env, unary->lang_type));
 }
 
 // returns false if unsuccessful
@@ -645,7 +645,7 @@ bool try_set_struct_literal_assignment_types(
         Tast_expr* new_rhs = NULL;
 
         switch (check_generic_assignment(
-            env, &new_rhs, lang_type_from_ulang_type(memb_sym_def->lang_type), assign_memb_sym->rhs, assign_memb_sym->pos
+            env, &new_rhs, lang_type_from_ulang_type(env, memb_sym_def->lang_type), assign_memb_sym->rhs, assign_memb_sym->pos
         )) {
             case CHECK_ASSIGN_OK:
                 break;
@@ -988,7 +988,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             params_idx++;
         }
 
-        if (lang_type_is_equal(lang_type_from_ulang_type(corres_param->lang_type), lang_type_wrap_primitive_const(lang_type_primitive_new(lang_type_atom_new_from_cstr("any", 0))))) {
+        if (lang_type_is_equal(lang_type_from_ulang_type(env, corres_param->lang_type), lang_type_wrap_primitive_const(lang_type_primitive_new(lang_type_atom_new_from_cstr("any", 0))))) {
             if (corres_param->is_variadic) {
                 // TODO: do type checking here if this function is not an extern "c" function
                 for (size_t idx = arg_idx; idx < fun_call->args.info.count; idx++) {
@@ -1007,7 +1007,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             switch (check_generic_assignment(
                 env,
                 &new_arg,
-                lang_type_from_ulang_type(corres_param->lang_type),
+                lang_type_from_ulang_type(env, corres_param->lang_type),
                 arg,
                 uast_get_pos_expr(arg)
             )) {
@@ -1103,7 +1103,7 @@ bool try_set_member_access_types_finish_generic_struct(
 
     Tast_member_access_typed* new_access = tast_member_access_typed_new(
         access->pos,
-        lang_type_from_ulang_type(member_def->lang_type),
+        lang_type_from_ulang_type(env, member_def->lang_type),
         access->member_name,
         new_callee
     );
@@ -1154,7 +1154,7 @@ bool try_set_member_access_types_finish_sum_def(
             Tast_enum_lit* new_tag = tast_enum_lit_new(
                 access->pos,
                 uast_get_member_index(&sum_def->base, access->member_name),
-                lang_type_from_ulang_type(member_def->lang_type)
+                lang_type_from_ulang_type(env, member_def->lang_type)
             );
 
             *new_tast = tast_wrap_expr(tast_wrap_sum_callee(tast_sum_callee_new(
@@ -1206,7 +1206,7 @@ bool try_set_member_access_types_finish(
             Tast_enum_lit* new_lit = tast_enum_lit_new(
                 access->pos,
                 uast_get_member_index(&enum_def->base, access->member_name),
-                lang_type_from_ulang_type(member_def->lang_type)
+                lang_type_from_ulang_type(env, member_def->lang_type)
             );
 
             *new_tast = tast_wrap_expr(tast_wrap_literal(tast_wrap_enum_lit(new_lit)));
@@ -1434,7 +1434,7 @@ bool try_set_variable_def_types(
         return false;
     }
 
-    *new_tast = tast_variable_def_new(uast->pos, lang_type_from_ulang_type(uast->lang_type), uast->is_variadic, uast->name);
+    *new_tast = tast_variable_def_new(uast->pos, lang_type_from_ulang_type(env, uast->lang_type), uast->is_variadic, uast->name);
     log(LOG_DEBUG, "adding:"STR_VIEW_FMT, tast_variable_def_print(*new_tast));
     symbol_log(LOG_DEBUG, env);
     if (add_to_sym_tbl && !env->type_checking_is_in_struct_base_def) {
@@ -1530,9 +1530,9 @@ static bool try_set_lang_type_types_internal(
                 }
             }
         }
-        case ULANG_TYPE_REGULAR: {
-            todo();
-        }
+        case ULANG_TYPE_REGULAR:
+            lang_type_from_ulang_type(env, lang_type);
+            return true;
     }
     unreachable("");
 }
@@ -1546,7 +1546,7 @@ bool try_set_lang_type_types(
         return false;
     }
 
-    *new_tast = tast_lang_type_new(uast->pos, lang_type_from_ulang_type(uast->lang_type));
+    *new_tast = tast_lang_type_new(uast->pos, lang_type_from_ulang_type(env, uast->lang_type));
     return true;
 }
 
@@ -1556,7 +1556,7 @@ bool try_set_return_types(Env* env, Tast_return** new_tast, Uast_return* rtn) {
     Ulang_type fun_rtn_type = get_parent_function_return_type(env)->lang_type;
 
     Tast_expr* new_child = NULL;
-    switch (check_generic_assignment(env, &new_child, lang_type_from_ulang_type(fun_rtn_type), rtn->child, rtn->pos)) {
+    switch (check_generic_assignment(env, &new_child, lang_type_from_ulang_type(env, fun_rtn_type), rtn->child, rtn->pos)) {
         case CHECK_ASSIGN_OK:
             break;
         case CHECK_ASSIGN_INVALID:

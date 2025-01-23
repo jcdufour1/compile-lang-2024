@@ -1690,22 +1690,6 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Uast_stmt** child, Tk_view*
                 unreachable("");
         }
 
-        switch (lhs_->type) {
-            case UAST_FUNCTION_CALL:
-                break;
-            case UAST_SYMBOL_UNTYPED:
-                break;
-            case UAST_MEMBER_ACCESS_UNTYPED:
-                break;
-            case UAST_OPERATOR:
-                break;
-            case UAST_INDEX_UNTYPED:
-                break;
-            case UAST_TUPLE:
-                break;
-            default:
-                unreachable(UAST_FMT"\n", uast_expr_print(lhs_));
-        }
         lhs = uast_wrap_expr(lhs_);
     }
 
