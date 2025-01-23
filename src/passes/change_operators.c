@@ -32,7 +32,7 @@ static Tast_operator* change_op_unary(Env* env, Tast_unary* unary) {
                 tast_get_lang_type_expr(new_lhs)
             );
 
-            assert(new_bin->lang_type.str.count > 0);
+            assert(lang_type_get_str(new_bin->lang_type).count > 0);
             return tast_wrap_binary(new_bin);
         }
         default:

@@ -61,9 +61,17 @@ static void extend_pos(String* buf, Pos pos) {
     string_extend_cstr(&print_arena, buf, " ))");
 }
 
+// TODO: make separate .c file for these
 Str_view lang_type_print_internal(Lang_type lang_type, bool surround_in_lt_gt) {
     String buf = {0};
     extend_lang_type_to_string(&buf, lang_type, surround_in_lt_gt);
+    return string_to_strv(buf);
+}
+
+Str_view lang_type_atom_print_internal(Lang_type_atom atom, bool surround_in_lt_gt) {
+    String buf = {0};
+    // TODO: do not use `lang_type_primitive_new` here
+    extend_lang_type_to_string(&buf, lang_type_wrap_primitive_const(lang_type_primitive_new(atom)), surround_in_lt_gt);
     return string_to_strv(buf);
 }
 

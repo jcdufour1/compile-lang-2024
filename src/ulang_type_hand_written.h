@@ -19,6 +19,11 @@ typedef struct {
     Ulang_type* buf;
 } Ulang_type_vec;
 
+typedef struct {
+    Vec_base info;
+    Ulang_type_atom* buf;
+} Ulang_type_atom_vec;
+
 static inline Ulang_type_atom ulang_type_atom_new(Str_view str, int16_t pointer_depth) {
     return (Ulang_type_atom) {.str = str, .pointer_depth = pointer_depth};
 }

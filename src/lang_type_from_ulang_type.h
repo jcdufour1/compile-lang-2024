@@ -9,4 +9,9 @@ static inline Lang_type lang_type_from_ulang_type(Ulang_type lang_type) {
     todo();
 }
 
+static inline Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
+    (void) lang_type;
+    todo();
+}
+
 #endif // LANG_TYPE_FROM_ULANG_TYPE

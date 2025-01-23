@@ -6,6 +6,7 @@
 #include <parser_utils.h>
 #include <type_checking.h>
 #include <log_env.h>
+#include <lang_type_from_ulang_type.h>
 
 #include "passes.h"
 
@@ -29,9 +30,11 @@ static Llvm_function_params* tast_clone_function_params(Tast_function_params* ol
 }
 
 static Llvm_lang_type* tast_clone_lang_type(Tast_lang_type* old_lang_type) {
-    try(old_lang_type->lang_type.info.count == 1);
-    Llvm_lang_type* new_lang_type = llvm_lang_type_new(old_lang_type->pos, vec_at(&old_lang_type->lang_type, 0));
-    return new_lang_type;
+    todo();
+    (void) old_lang_type;
+    //try(old_lang_type->lang_type.info.count == 1);
+    //Llvm_lang_type* new_lang_type = llvm_lang_type_new(old_lang_type->pos, vec_at(&old_lang_type->lang_type, 0));
+    //return new_lang_type;
 }
 
 static Llvm_function_decl* tast_clone_function_decl(Tast_function_decl* old_decl) {
@@ -75,90 +78,28 @@ static Llvm_raw_union_def* tast_clone_raw_union_def(const Tast_raw_union_def* ol
     );
 }
 
-static Llvm_variable_def* uast_clone_variable_def(Uast_variable_def* old_var_def);
-
-//static Llvm_alloca* add_load_and_store_alloca_new(Env* env, Llvm_variable_def* var_def) {
-//    Llvm_alloca* alloca = llvm_alloca_new(var_def->pos, 0, var_def->lang_type, var_def->name_corr_param);
-//    alloca_add(env, llvm_wrap_alloca(alloca));
-//    assert(alloca);
-//    return alloca;
-//}
-
-static Llvm_function_params* uast_clone_function_params(Uast_function_params* old_params) {
-    Llvm_function_params* new_params = llvm_function_params_new(old_params->pos, (Llvm_variable_def_vec){0}, 0);
-
-    for (size_t idx = 0; idx < old_params->params.info.count; idx++) {
-        vec_append(&a_main, &new_params->params, uast_clone_variable_def(vec_at(&old_params->params, idx)));
-    }
-
-    return new_params;
-}
-
-static Llvm_lang_type* uast_clone_lang_type(Uast_lang_type* old_lang_type) {
-    (void) old_lang_type;
-    todo();
-    //Llvm_lang_type* new_lang_type = llvm_lang_type_new(old_lang_type->pos, old_lang_type->lang_type);
-    //return new_lang_type;
-}
-
-static Llvm_function_decl* uast_clone_function_decl(Uast_function_decl* old_decl) {
-    return llvm_function_decl_new(
-        old_decl->pos,
-        uast_clone_function_params(old_decl->params),
-        uast_clone_lang_type(old_decl->return_type),
-        old_decl->name
-    );
-}
-
-static Llvm_variable_def* uast_clone_variable_def(Uast_variable_def* old_var_def) {
-    return llvm_variable_def_new(
-        old_var_def->pos,
-        old_var_def->lang_type,
-        old_var_def->is_variadic,
-        0,
-        util_literal_name_new(),
-        old_var_def->name
-    );
-}
-
-static Llvm_struct_def* uast_clone_struct_def(const Tast_struct_def* old_def) {
-    return llvm_struct_def_new(
-        old_def->pos,
-        old_def->base
-    );
-}
-
-static Llvm_enum_def* uast_clone_enum_def(const Tast_enum_def* old_def) {
-    return llvm_enum_def_new(
-        old_def->pos,
-        old_def->base
-    );
-}
-
-static Llvm_raw_union_def* uast_clone_raw_union_def(const Tast_raw_union_def* old_def) {
-    return llvm_raw_union_def_new(
-        old_def->pos,
-        old_def->base
-    );
-}
-
 static void do_function_def_alloca_param(Env* env, Llvm_function_params* new_params, Llvm_block* new_block, Llvm_variable_def* param) {
-    if (lang_type_is_struct(env, param->lang_type)) {
-        param->name_self = param->name_corr_param;
-        alloca_add(env, llvm_wrap_def(llvm_wrap_variable_def(param)));
-    } else if (lang_type_is_enum(env, param->lang_type)) {
-        vec_insert(&a_main, &new_block->children, 0, llvm_wrap_alloca(
-            add_load_and_store_alloca_new(env, param)
-        ));
-    } else if (lang_type_is_raw_union(env, param->lang_type)) {
-        param->name_self = param->name_corr_param;
-        alloca_add(env, llvm_wrap_def(llvm_wrap_variable_def(param)));
-    } else if (lang_type_is_primitive(env, param->lang_type)) {
-        vec_insert(&a_main, &new_block->children, 0, llvm_wrap_alloca(
-            add_load_and_store_alloca_new(env, param)
-        ));
-    } else {
-        todo();
+    switch (param->lang_type.type) {
+        case LANG_TYPE_STRUCT:
+            param->name_self = param->name_corr_param;
+            alloca_add(env, llvm_wrap_def(llvm_wrap_variable_def(param)));
+            break;
+        case LANG_TYPE_ENUM:
+            vec_insert(&a_main, &new_block->children, 0, llvm_wrap_alloca(
+                add_load_and_store_alloca_new(env, param)
+            ));
+            break;
+        case LANG_TYPE_RAW_UNION:
+            param->name_self = param->name_corr_param;
+            alloca_add(env, llvm_wrap_def(llvm_wrap_variable_def(param)));
+            break;
+        case LANG_TYPE_PRIMITIVE:
+            vec_insert(&a_main, &new_block->children, 0, llvm_wrap_alloca(
+                add_load_and_store_alloca_new(env, param)
+            ));
+            break;
+        default:
+            unreachable("");
     }
 
     vec_append(&a_main, &new_params->params, param);
@@ -179,34 +120,38 @@ static Llvm_function_params* do_function_def_alloca(
 
     bool rtn_is_struct = false;
 
-    assert(rtn_type->lang_type.info.count == 1);
-    if (lang_type_is_struct(env, vec_at(&rtn_type->lang_type, 0))) {
-        rtn_is_struct = true;
-    } else if (lang_type_is_enum(env, vec_at(&rtn_type->lang_type, 0))) {
-        rtn_is_struct = false;
-    } else if (lang_type_is_primitive(env, vec_at(&rtn_type->lang_type, 0))) {
-        rtn_is_struct = false;
-    } else if (lang_type_is_raw_union(env, vec_at(&rtn_type->lang_type, 0))) {
-        rtn_is_struct = true;
-    } else {
-        unreachable(TAST_FMT"\n", lang_type_print(vec_at(&rtn_type->lang_type, 0)));
+    switch (rtn_type->lang_type.type) {
+        case LANG_TYPE_STRUCT:
+            rtn_is_struct = true;
+            break;
+        case LANG_TYPE_ENUM:
+            rtn_is_struct = false;
+            break;
+        case LANG_TYPE_PRIMITIVE:
+            rtn_is_struct = false;
+            break;
+        case LANG_TYPE_RAW_UNION:
+            rtn_is_struct = true;
+            break;
+        default:
+            unreachable("");
     }
 
-    Lang_type rtn_lang_type = vec_at(&rtn_type->lang_type, 0);
+    Lang_type_atom rtn_lang_type = lang_type_get_atom(rtn_type->lang_type);
     if (rtn_is_struct) {
         rtn_lang_type.pointer_depth++;
         Tast_variable_def* new_def = tast_variable_def_new(
             rtn_type->pos,
-            rtn_lang_type,
+            rtn_type->lang_type,
             false,
             util_literal_name_new_prefix("return_as_parameter")
         );
         Llvm_variable_def* param = tast_clone_variable_def(new_def);
         do_function_def_alloca_param(env, new_params, new_block, param);
-        *new_rtn_type = llvm_lang_type_new(param->pos, lang_type_new_from_cstr("void", 0));
+        *new_rtn_type = llvm_lang_type_new(param->pos, lang_type_wrap_void_const(lang_type_void_new(0)));
         env->struct_rtn_name_parent_function = vec_at(&new_params->params, 0)->name_self;
     } else {
-        *new_rtn_type = llvm_lang_type_new(rtn_type->pos, rtn_lang_type);
+        *new_rtn_type = llvm_lang_type_new(rtn_type->pos, rtn_type->lang_type);
     }
 
     for (size_t idx = 0; idx < old_params->params.info.count; idx++) {
@@ -297,72 +242,40 @@ static Str_view load_function_call(
     Llvm_block* new_block,
     Tast_function_call* old_fun_call
 ) {
-    if (old_fun_call->lang_type.info.count != 1) {
-        todo();
-    }
-
-    //Tast_def* fun_def_ = NULL;
-    //try(symbol_lookup(&fun_def_, env, env->name_parent_function));
-    //log(LOG_DEBUG, LLVM_FMT, tast_def_print(fun_def_));
-
-    //Tast_function_decl* fun_decl = NULL;
-    //switch (fun_def_->type) {
-    //    case TAST_FUNCTION_DEF:
-    //        fun_decl = tast_unwrap_function_def(fun_def_)->decl;
-    //        break;
-    //    case TAST_FUNCTION_DECL:
-    //        fun_decl = tast_unwrap_function_decl(fun_def_);
-    //        break;
-    //    default:
-    //        unreachable("");
-    //}
-
-    //bool rtn_is_struct = false;
-
-    //assert(fun_decl->return_type->lang_type.info.count == 1);
-    //Lang_type rtn_type = vec_at(&fun_decl->return_type->lang_type, 0);
-    //if (lang_type_is_struct(env, rtn_type)) {
-    //    rtn_is_struct = true;
-    //} else if (lang_type_is_enum(env, rtn_type)) {
-    //    rtn_is_struct = false;
-    //} else if (lang_type_is_primitive(env, rtn_type)) {
-    //    rtn_is_struct = false;
-    //} else if (lang_type_is_raw_union(env, rtn_type)) {
-    //    rtn_is_struct = true;
-    //} else {
-    //    unreachable(TAST_FMT"\n", lang_type_print(rtn_type));
-    //}
-
     bool rtn_is_struct = false;
-    assert(old_fun_call->lang_type.info.count == 1);
-    Lang_type rtn_type = vec_at(&old_fun_call->lang_type, 0);
-    if (lang_type_is_struct(env, rtn_type)) {
-        rtn_is_struct = true;
-    } else if (lang_type_is_enum(env, rtn_type)) {
-        rtn_is_struct = false;
-    } else if (lang_type_is_primitive(env, rtn_type)) {
-        rtn_is_struct = false;
-    } else if (lang_type_is_raw_union(env, rtn_type)) {
-        rtn_is_struct = true;
-    } else {
-        unreachable(TAST_FMT"\n", lang_type_print(rtn_type));
+
+    switch (old_fun_call->lang_type.type) {
+        case LANG_TYPE_STRUCT:
+            rtn_is_struct = true;
+            break;
+        case LANG_TYPE_ENUM:
+            rtn_is_struct = false;
+            break;
+        case LANG_TYPE_PRIMITIVE:
+            rtn_is_struct = false;
+            break;
+        case LANG_TYPE_RAW_UNION:
+            rtn_is_struct = true;
+            break;
+        default:
+            unreachable("");
     }
 
     Strv_vec new_args = {0};
 
     Str_view def_name = {0};
-    Lang_type fun_lang_type = vec_at(&old_fun_call->lang_type, 0);
+    Lang_type fun_lang_type = old_fun_call->lang_type;
     if (rtn_is_struct) {
         def_name = util_literal_name_new_prefix("result_fun_call");
-        Uast_variable_def* def_ = uast_variable_def_new(old_fun_call->pos, rtn_type, false, def_name);
-        log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(rtn_type));
+        Uast_variable_def* def_ = uast_variable_def_new(old_fun_call->pos, lang_type_to_ulang_type(old_fun_call->lang_type), false, def_name);
+        log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(old_fun_call->lang_type));
         try(usym_tbl_add(&vec_at(&env->ancesters, 0)->usymbol_table, uast_wrap_variable_def(def_)));
-        Tast_variable_def* def = tast_variable_def_new(old_fun_call->pos, rtn_type, false, def_name);
+        Tast_variable_def* def = tast_variable_def_new(old_fun_call->pos, old_fun_call->lang_type, false, def_name);
         try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_wrap_variable_def(def)));
         
         vec_append(&a_main, &new_args, def_name);
         load_variable_def(env, new_block, def);
-        fun_lang_type = lang_type_new_from_cstr("void", 0);
+        fun_lang_type = lang_type_wrap_void_const(lang_type_void_new(0));
         //unreachable(TAST_FMT, tast_function_call_print(old_fun_call));
     }
 
@@ -480,7 +393,7 @@ static Str_view load_ptr_symbol_typed(
 
     Tast_def* var_def_ = NULL;
     log(LOG_DEBUG, LLVM_FMT, tast_symbol_typed_print(old_sym));
-    try(symbol_lookup(&var_def_, env, tast_get_symbol_typed_name(old_sym)));
+    try(symbol_lookup(&var_def_, env, old_sym->base.name));
     Llvm_variable_def* var_def = tast_clone_variable_def(tast_unwrap_variable_def(var_def_));
     Llvm* alloca = NULL;
     if (!alloca_lookup(&alloca, env, var_def->name_corr_param)) {
@@ -493,7 +406,7 @@ static Str_view load_ptr_symbol_typed(
     log(LOG_DEBUG, TAST_FMT"\n", tast_symbol_typed_print(old_sym));
     log(LOG_DEBUG, TAST_FMT"\n", llvm_print(alloca));
     //log(LOG_DEBUG, TAST_FMT"\n", tast_print(var_def->storage_location.tast));
-    assert(lang_type_is_equal(var_def->lang_type, tast_get_lang_type_symbol_typed(old_sym)));
+    assert(lang_type_is_equal(var_def->lang_type, old_sym->base.lang_type));
 
     return llvm_get_tast_name(alloca);
 }
@@ -509,7 +422,7 @@ static Str_view load_symbol_typed(
         pos,
         load_ptr_symbol_typed(env, new_block, old_sym),
         0,
-        tast_get_lang_type_symbol_typed(old_sym),
+        old_sym->base.lang_type,
         util_literal_name_new()
     );
     try(alloca_add(env, llvm_wrap_load_another_llvm(new_load)));
@@ -538,37 +451,48 @@ static Str_view load_binary(
     return new_bin->name;
 }
 
+static Str_view load_deref(
+    Env* env,
+    Llvm_block* new_block,
+    Tast_unary* old_unary
+) {
+    assert(old_unary->token_type == TOKEN_DEREF);
+
+    switch (old_unary->lang_type.type) {
+        case LANG_TYPE_STRUCT:
+            todo();
+        case LANG_TYPE_PRIMITIVE: {
+            Str_view ptr = load_expr(env, new_block, old_unary->child);
+            Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
+                old_unary->pos,
+                ptr,
+                0,
+                old_unary->lang_type,
+                util_literal_name_new()
+            );
+            try(alloca_add(env, llvm_wrap_load_another_llvm(new_load)));
+
+            vec_append(&a_main, &new_block->children, llvm_wrap_load_another_llvm(new_load));
+            return new_load->name;
+        }
+        default:
+            todo();
+    }
+    unreachable("");
+}
+
 static Str_view load_unary(
     Env* env,
     Llvm_block* new_block,
     Tast_unary* old_unary
 ) {
     switch (old_unary->token_type) {
-        case TOKEN_DEREF: {
-            if (lang_type_is_struct(env, tast_get_lang_type_expr(old_unary->child))) {
-                todo();
-            } else if (lang_type_is_primitive(env, tast_get_lang_type_expr(old_unary->child))) {
-                Str_view ptr = load_expr(env, new_block, old_unary->child);
-                Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
-                    old_unary->pos,
-                    ptr,
-                    0,
-                    old_unary->lang_type,
-                    util_literal_name_new()
-                );
-                try(alloca_add(env, llvm_wrap_load_another_llvm(new_load)));
-
-                vec_append(&a_main, &new_block->children, llvm_wrap_load_another_llvm(new_load));
-                return new_load->name;
-            } else {
-                unreachable("");
-            }
-        }
-        case TOKEN_REFER: {
+        case TOKEN_DEREF:
+            return load_deref(env, new_block, old_unary);
+        case TOKEN_REFER:
             return load_ptr_expr(env, new_block, old_unary->child);
-        }
         case TOKEN_UNSAFE_CAST:
-            if (old_unary->lang_type.pointer_depth > 0 && tast_get_lang_type_expr(old_unary->child).pointer_depth > 0) {
+            if (lang_type_get_pointer_depth(old_unary->lang_type) > 0 && lang_type_get_pointer_depth(tast_get_lang_type_expr(old_unary->child)) > 0) {
                 return load_expr(env, new_block, old_unary->child);
             }
             // fallthrough
@@ -613,7 +537,7 @@ static Str_view load_ptr_member_access_typed(
     Str_view new_callee = load_ptr_expr(env, new_block, old_access->callee);
 
     Tast_def* def = NULL;
-    try(symbol_lookup(&def, env, get_lang_type_from_name(env, new_callee).str));
+    try(symbol_lookup(&def, env, lang_type_get_str(get_lang_type_from_name(env, new_callee))));
 
     int64_t struct_index = {0};
     switch (def->type) {
@@ -633,7 +557,7 @@ static Str_view load_ptr_member_access_typed(
     Tast_number* new_index = tast_number_new(
         old_access->pos,
         struct_index,
-        lang_type_new_from_cstr("i32", 0)
+        lang_type_wrap_primitive_const(lang_type_primitive_new(lang_type_atom_new_from_cstr("i32", 0)))
     );
     
     Llvm_load_element_ptr* new_load = llvm_load_element_ptr_new(
@@ -753,18 +677,22 @@ static Llvm_reg load_function_parameters(
 
         bool is_struct = false;
 
-        if (lang_type_is_struct(env, param->lang_type)) {
-            is_struct = true;
-        } else if (lang_type_is_enum(env, param->lang_type)) {
-            is_struct = false;
-        } else if (lang_type_is_primitive(env, param->lang_type)) {
-            is_struct = false;
-        } else if (lang_type_is_raw_union(env, param->lang_type)) {
-            is_struct = true;
-        } else {
-            unreachable(TAST_FMT"\n", llvm_variable_def_print(param));
+        switch (rtn_type->lang_type.type) {
+            case LANG_TYPE_STRUCT:
+                is_struct = true;
+                break;
+            case LANG_TYPE_ENUM:
+                is_struct = false;
+                break;
+            case LANG_TYPE_PRIMITIVE:
+                is_struct = false;
+                break;
+            case LANG_TYPE_RAW_UNION:
+                is_struct = true;
+                break;
+            default:
+                unreachable("");
         }
-
 
         if (!is_struct) {
             try(alloca_add(env, llvm_wrap_def(llvm_wrap_variable_def(param))));
@@ -821,7 +749,7 @@ static Str_view load_function_def(
         0
     );
 
-    try(old_fun_def->decl->return_type->lang_type.info.count == 1);
+    //try(old_fun_def->decl->return_type->lang_type.info.count == 1);
 
     vec_append(&a_main, &env->ancesters, &new_fun_def->body->symbol_collection);
     Llvm_lang_type* new_lang_type = NULL;
@@ -879,18 +807,23 @@ static Str_view load_return(
 
     bool rtn_is_struct = false;
 
-    assert(fun_decl->return_type->lang_type.info.count == 1);
-    Lang_type rtn_type = vec_at(&fun_decl->return_type->lang_type, 0);
-    if (lang_type_is_struct(env, rtn_type)) {
-        rtn_is_struct = true;
-    } else if (lang_type_is_enum(env, rtn_type)) {
-        rtn_is_struct = false;
-    } else if (lang_type_is_primitive(env, rtn_type)) {
-        rtn_is_struct = false;
-    } else if (lang_type_is_raw_union(env, rtn_type)) {
-        rtn_is_struct = true;
-    } else {
-        unreachable(TAST_FMT"\n", lang_type_print(rtn_type));
+    //assert(fun_decl->return_type->lang_type.info.count == 1);
+    Lang_type rtn_type = fun_decl->return_type->lang_type;
+    switch (rtn_type.type) {
+        case LANG_TYPE_STRUCT:
+            rtn_is_struct = true;
+            break;
+        case LANG_TYPE_ENUM:
+            rtn_is_struct = false;
+            break;
+        case LANG_TYPE_PRIMITIVE:
+            rtn_is_struct = false;
+            break;
+        case LANG_TYPE_RAW_UNION:
+            rtn_is_struct = true;
+            break;
+        default:
+            unreachable("");
     }
 
     if (rtn_is_struct) {
@@ -1159,7 +1092,7 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
         env, for_var_def->name, tast_get_pos_expr(lhs_actual)
     );
 
-    Uast_symbol_untyped* lhs_untyped = uast_symbol_untyped_new(tast_get_pos_symbol_typed(symbol_lhs_assign), tast_get_symbol_typed_name(symbol_lhs_assign));
+    Uast_symbol_untyped* lhs_untyped = uast_symbol_untyped_new(tast_get_pos_symbol_typed(symbol_lhs_assign), symbol_lhs_assign->base.name);
     Tast_expr* lhs_typed_ = NULL;
     try(try_set_symbol_type(env, &lhs_typed_, lhs_untyped));
     Tast_expr* operator_ = NULL;
@@ -1427,41 +1360,50 @@ static Str_view load_ptr_variable_def(
     return load_variable_def(env, new_block, old_variable_def);
 }
 
+static Str_view load_ptr_deref(
+    Env* env,
+    Llvm_block* new_block,
+    Tast_unary* old_unary
+) {
+    assert(old_unary->token_type == TOKEN_DEREF);
+
+    switch (old_unary->lang_type.type) {
+        case LANG_TYPE_STRUCT:
+            return load_ptr_expr(env, new_block, old_unary->child);
+        case LANG_TYPE_PRIMITIVE:
+            break;
+        case LANG_TYPE_RAW_UNION:
+            return load_ptr_expr(env, new_block, old_unary->child);
+        case LANG_TYPE_ENUM:
+            break;
+        default:
+            todo();
+    }
+
+    Str_view ptr = load_ptr_expr(env, new_block, old_unary->child);
+    Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
+        old_unary->pos,
+        ptr,
+        0,
+        old_unary->lang_type,
+        util_literal_name_new()
+    );
+    try(alloca_add(env, llvm_wrap_load_another_llvm(new_load)));
+    todo();// need increment pointer_depth
+    //new_load->lang_type.pointer_depth++;
+
+    vec_append(&a_main, &new_block->children, llvm_wrap_load_another_llvm(new_load));
+    return new_load->name;
+}
+
 static Str_view load_ptr_unary(
     Env* env,
     Llvm_block* new_block,
     Tast_unary* old_unary
 ) {
-    Pos pos = old_unary->pos;
-
     switch (old_unary->token_type) {
-        case TOKEN_DEREF: {
-            Lang_type lang_type = tast_get_lang_type_expr(old_unary->child);
-
-            if (lang_type_is_struct(env, lang_type)) {
-                return load_ptr_expr(env, new_block, old_unary->child);
-            } else if (lang_type_is_enum(env, lang_type)) {
-            } else if (lang_type_is_primitive(env, lang_type)) {
-            } else if (lang_type_is_raw_union(env, lang_type)) {
-                return load_ptr_expr(env, new_block, old_unary->child);
-            } else {
-                unreachable("");
-            }
-            
-            Str_view ptr = load_ptr_expr(env, new_block, old_unary->child);
-            Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
-                pos,
-                ptr,
-                0,
-                old_unary->lang_type,
-                util_literal_name_new()
-            );
-            try(alloca_add(env, llvm_wrap_load_another_llvm(new_load)));
-            new_load->lang_type.pointer_depth++;
-
-            vec_append(&a_main, &new_block->children, llvm_wrap_load_another_llvm(new_load));
-            return new_load->name;
-        }
+        case TOKEN_DEREF:
+            return load_ptr_deref(env, new_block, old_unary);
         default:
             todo();
     }

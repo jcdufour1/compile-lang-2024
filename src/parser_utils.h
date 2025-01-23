@@ -20,7 +20,7 @@ bool lang_type_is_number(Lang_type lang_type);
 
 Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom atom);
 
-int64_t i_lang_type_to_bit_width(Lang_type_atom atom);
+int64_t i_lang_type_atom_to_bit_width(Lang_type_atom atom);
 
 int64_t str_view_to_int64_t(Str_view str_view);
 
@@ -202,7 +202,5 @@ static inline Tast_struct_def* llvm_get_struct_def(const Env* env, Llvm* tast) {
 static inline const Tast_struct_def* llvm_get_struct_def_const(const Env* env, const Llvm* tast) {
     return llvm_get_struct_def(env, (Llvm*)tast);
 }
-
-bool tast_member_access_typed_is_sum(const Env* env, const Tast_member_access_typed* access);
 
 #endif // PARSER_UTIL_H

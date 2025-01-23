@@ -64,7 +64,7 @@ static bool can_be_implicitly_converted_lang_type_atom(Lang_type_atom dest, Lang
     if (!lang_type_atom_is_signed(dest) || !lang_type_atom_is_signed(src)) {
         return lang_type_atom_is_equal(dest, src);
     }
-    return i_lang_type_to_bit_width(dest) >= i_lang_type_to_bit_width(src);
+    return i_lang_type_atom_to_bit_width(dest) >= i_lang_type_atom_to_bit_width(src);
 }
 
 static bool can_be_implicitly_converted_tuple(Lang_type_tuple dest, Lang_type_tuple src, bool implicit_pointer_depth) {
@@ -530,7 +530,7 @@ bool try_set_unary_types(Env* env, Tast_expr** new_tast, Uast_unary* unary) {
         return false;
     }
 
-    return try_set_unary_types_finish(env, new_tast, new_child, uast_get_pos_unary(unary), unary->token_type, unary->lang_type);
+    return try_set_unary_types_finish(env, new_tast, new_child, uast_get_pos_unary(unary), unary->token_type, lang_type_from_ulang_type(unary->lang_type));
 }
 
 // returns false if unsuccessful
@@ -890,11 +890,12 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             break;
         }
         case TAST_MEMBER_ACCESS_TYPED:
-            if (tast_member_access_typed_is_sum(env, tast_unwrap_member_access_typed(new_callee))) {
-                todo();
-            } else {
-                unreachable("");
-            }
+            todo();
+            //if (tast_member_access_typed_is_sum(env, tast_unwrap_member_access_typed(new_callee))) {
+            //    todo();
+            //} else {
+            //    unreachable("");
+            //}
         case TAST_SUM_CALLEE:
             if (fun_call->args.info.count != 1) {
                 todo();

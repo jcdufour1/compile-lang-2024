@@ -768,7 +768,7 @@ static bool is_binary(TOKEN_TYPE token_type) {
 }
 
 // type will be parsed if possible
-static bool extract_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens) {
+static bool extract_lang_type_struct(Ulang_type_atom* lang_type, Tk_view* tokens) {
     memset(lang_type, 0, sizeof(*lang_type));
 
     Token lang_type_token;
@@ -784,7 +784,7 @@ static bool extract_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens) {
 }
 
 // require type to be parsed
-static PARSE_STATUS extract_lang_type_struct_require(Env* env, ULang_type* lang_type, Tk_view* tokens) {
+static PARSE_STATUS extract_lang_type_struct_require(Env* env, Ulang_type_atom* lang_type, Tk_view* tokens) {
     if (extract_lang_type_struct(lang_type, tokens)) {
         return PARSE_OK;
     } else {
@@ -842,21 +842,30 @@ static PARSE_STATUS extract_function_parameters(Env* env, Uast_function_params**
 }
 
 static void extract_return_types(Uast_lang_type** result, Tk_view* tokens) {
-    ULang_type lang_type = {0};
-    ULang_type_vec types = {0};
+    Ulang_type_atom lang_type = {0};
+    Ulang_type_vec types = {0};
 
     Token open_par = {0};
     if (!try_consume(&open_par, tokens, TOKEN_OPEN_PAR)) {
         if (extract_lang_type_struct(&lang_type, tokens)) {
             assert(lang_type.str.count > 0);
-            vec_append(&a_main, &types, lang_type);
-            *result = uast_lang_type_new(tk_view_front(*tokens).pos, types);
+            vec_append(&a_main, &types, ulang_type_wrap_regular_const(ulang_type_regular_new(lang_type)));
+            if (types.info.count < 1) {
+                todo();
+            } else if (types.info.count == 1) {
+                Ulang_type new_lang_type = ulang_type_wrap_regular_const(ulang_type_regular_new(lang_type));
+                *result = uast_lang_type_new(tk_view_front(*tokens).pos, new_lang_type);
+            } else {
+                todo();
+                Ulang_type new_lang_type = ulang_type_wrap_tuple_const(ulang_type_tuple_new(types));
+                *result = uast_lang_type_new(tk_view_front(*tokens).pos, new_lang_type);
+            }
             return;
         } else {
             lang_type.str = str_view_from_cstr("void");
             assert(lang_type.str.count > 0);
-            vec_append(&a_main, &types, lang_type);
-            *result = uast_lang_type_new(tk_view_front(*tokens).pos, types);
+            vec_append(&a_main, &types, ulang_type_wrap_regular_const(ulang_type_regular_new(lang_type)));
+            *result = uast_lang_type_new(tk_view_front(*tokens).pos, ulang_type_wrap_regular_const(ulang_type_regular_new(lang_type)));
             return;
         }
     }
@@ -868,7 +877,8 @@ static void extract_return_types(Uast_lang_type** result, Tk_view* tokens) {
             lang_type.str = str_view_from_cstr("void");
             break;
         }
-        vec_append(&a_main, &types, lang_type);
+        Ulang_type new_lang_type = ulang_type_wrap_regular_const(ulang_type_regular_new(lang_type));
+        vec_append(&a_main, &types, new_lang_type);
         is_comma = try_consume(NULL, tokens, TOKEN_COMMA);
     }
 
@@ -877,7 +887,7 @@ static void extract_return_types(Uast_lang_type** result, Tk_view* tokens) {
         todo();
     }
 
-    *result = uast_lang_type_new(open_par.pos, types);
+    *result = uast_lang_type_new(open_par.pos, ulang_type_wrap_tuple_const(ulang_type_tuple_new(types)));
 }
 
 static PARSE_STATUS extract_function_decl_common(
@@ -961,7 +971,7 @@ static PARSE_STATUS extract_struct_base_def_implicit_type(
     Ustruct_def_base* base,
     Str_view name,
     Tk_view* tokens,
-    Lang_type lang_type
+    Ulang_type_atom lang_type
 ) {
     base->name = name;
 
@@ -986,7 +996,7 @@ static PARSE_STATUS extract_struct_base_def_implicit_type(
 
         Uast_variable_def* member = uast_variable_def_new(
             name_token.pos,
-            lang_type,
+            ulang_type_wrap_regular_const(ulang_type_regular_new(lang_type)),
             false,
             name_token.text
         );
@@ -1050,7 +1060,7 @@ static PARSE_STATUS extract_enum_def(Env* env, Uast_enum_def** enum_def, Tk_view
     try(try_consume(NULL, tokens, TOKEN_ENUM));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != extract_struct_base_def_implicit_type(env, &base, name.text, tokens, lang_type_new_from_strv(name.text, 0))) {
+    if (PARSE_OK != extract_struct_base_def_implicit_type(env, &base, name.text, tokens, ulang_type_atom_new(name.text, 0))) {
         return PARSE_ERROR;
     }
 
@@ -1103,14 +1113,14 @@ static PARSE_STATUS try_extract_variable_declaration(
     }
     try_consume(NULL, tokens, TOKEN_COLON);
 
-    Lang_type lang_type = {0};
+    Ulang_type_atom lang_type = {0};
     if (PARSE_OK != extract_lang_type_struct_require(env, &lang_type, tokens)) {
         return PARSE_ERROR;
     }
 
     Uast_variable_def* variable_def = uast_variable_def_new(
         name_token.pos,
-        lang_type,
+        ulang_type_wrap_regular_const(ulang_type_regular_new(lang_type)),
         false,
         name_token.text
     );
@@ -1954,7 +1964,7 @@ static PARSE_EXPR_STATUS extract_unary(
     *prev_oper_pres = get_operator_precedence(oper.type);
 
     Uast_expr* child = NULL;
-    Lang_type unary_lang_type = lang_type_new_from_cstr("i32", 0);
+    Ulang_type_atom unary_lang_type = ulang_type_atom_new_from_cstr("i32", 0);
 
     switch (oper.type) {
         case TOKEN_NOT:
@@ -2028,7 +2038,7 @@ static PARSE_EXPR_STATUS extract_unary(
         case TOKEN_REFER:
             // fallthrough
         case TOKEN_UNSAFE_CAST:
-            *result = uast_wrap_unary(uast_unary_new(oper.pos, child, oper.type, unary_lang_type));
+            *result = uast_wrap_unary(uast_unary_new(oper.pos, child, oper.type, ulang_type_wrap_regular_const(ulang_type_regular_new(unary_lang_type))));
             assert(*result);
             log(LOG_DEBUG, TAST_FMT"\n", uast_operator_print(*result));
             break;

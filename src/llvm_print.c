@@ -161,7 +161,7 @@ Str_view llvm_string_print_internal(const Llvm_string* lit, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "string", indent);
-    extend_lang_type(&buf, lit->lang_type, true);
+    extend_lang_type(&buf, lang_type_wrap_primitive_const(lit->lang_type), true);
     extend_name(&buf, lit->name);
     string_extend_strv(&print_arena, &buf, lit->data);
     string_extend_cstr(&print_arena, &buf, "\n");

@@ -7,10 +7,11 @@
 #include <parser_utils.h>
 #include <type_checking.h>
 #include <serialize.h>
+#include <lang_type_from_ulang_type.h>
 
 static Tast_stmt* rm_tuple_stmt(Env* env, Tast_stmt* stmt);
 
-static Tast_expr* rm_tuple_expr_rhs(Env* env, Lang_type_vec lhs_lang_type, Tast_expr* rhs, Pos assign_pos);
+static Tast_expr* rm_tuple_expr_rhs(Env* env, Lang_type lhs_lang_type, Tast_expr* rhs, Pos assign_pos);
 
 static Tast_block* rm_tuple_block(Env* env, Tast_block* block);
 
@@ -48,81 +49,82 @@ static Tast_for_with_cond* rm_tuple_for_with_cond(Env* env, Tast_for_with_cond* 
 }
 
 static Tast_stmt* rm_tuple_assignment(Env* env, Tast_assignment* assign) {
-    assign->rhs = rm_tuple_expr_rhs(env, tast_get_lang_types_stmt(assign->lhs), assign->rhs, assign->pos);
+    assign->rhs = rm_tuple_expr_rhs(env, tast_get_lang_type_stmt(assign->lhs), assign->rhs, assign->pos);
 
-    if (tast_get_lang_types_stmt(assign->lhs).info.count < 2 && tast_get_lang_types_expr(assign->rhs).info.count < 2) {
+    if (tast_get_lang_type_stmt(assign->lhs).type != LANG_TYPE_TUPLE && tast_get_lang_type_expr(assign->rhs).type != LANG_TYPE_TUPLE) {
         return tast_wrap_assignment(assign);
     }
+    todo();
 
-    Tast_stmt_vec new_children = {0};
+    //Tast_stmt_vec new_children = {0};
 
-    Tast_tuple* dest = tast_unwrap_tuple(tast_unwrap_expr(assign->lhs));
-    Tast_function_call* src = tast_unwrap_function_call(assign->rhs);
+    //Tast_tuple* dest = tast_unwrap_tuple(tast_unwrap_expr(assign->lhs));
+    //Tast_function_call* src = tast_unwrap_function_call(assign->rhs);
 
-    Uast_def* def_ = NULL;
-    try(usymbol_lookup(&def_, env, src->name));
-    Uast_function_decl* decl = uast_unwrap_function_decl(def_);
-    assert(decl->return_type->lang_type.info.count > 1);
-    log(LOG_DEBUG, TAST_FMT, uast_function_decl_print(decl));
-    Tast_lang_type* rtn_type = NULL;
-    try(try_set_lang_type_types(env, &rtn_type, decl->return_type));
-    log(LOG_DEBUG, TAST_FMT, tast_lang_type_print(rtn_type));
-    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(serialize_lang_type(rtn_type)));
+    //Uast_def* def_ = NULL;
+    //try(usymbol_lookup(&def_, env, src->name));
+    //Uast_function_decl* decl = uast_unwrap_function_decl(def_);
+    //assert(decl->return_type->lang_type.info.count > 1);
+    //log(LOG_DEBUG, TAST_FMT, uast_function_decl_print(decl));
+    //Tast_lang_type* rtn_type = NULL;
+    //try(try_set_lang_type_types(env, &rtn_type, decl->return_type));
+    //log(LOG_DEBUG, TAST_FMT, tast_lang_type_print(rtn_type));
+    //log(LOG_DEBUG, TAST_FMT"\n", str_view_print(serialize_lang_type(rtn_type)));
 
-    Tast_def* struct_def_ = NULL;
-    // TODO: think about out of order things
-    try(rm_tuple_struct_lookup(&struct_def_, env, serialize_lang_type(rtn_type)));
+    //Tast_def* struct_def_ = NULL;
+    //// TODO: think about out of order things
+    //try(rm_tuple_struct_lookup(&struct_def_, env, serialize_lang_type(rtn_type)));
 
-    Uast_variable_def* new_var_ = uast_variable_def_new(
-        tast_get_pos_stmt(assign->lhs),
-        lang_type_new_from_strv(tast_unwrap_struct_def(struct_def_)->base.name, 0),
-        false,
-        util_literal_name_new_prefix("tuple_assign_lhs")
-    );
-    try(usym_tbl_add(&vec_at(&env->ancesters, 0)->usymbol_table, uast_wrap_variable_def(new_var_)));
-    Tast_variable_def* new_var = NULL;
-    try(try_set_variable_def_types(env, &new_var, new_var_, false));
-    try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_wrap_variable_def(new_var)));
-    Tast_assignment* new_assign = tast_assignment_new(
-        dest->pos,
-        tast_wrap_def(tast_wrap_variable_def(new_var)),
-        tast_wrap_function_call(src)
-    );
-    vec_append(&a_main, &new_children, tast_wrap_assignment(new_assign));
+    //Uast_variable_def* new_var_ = uast_variable_def_new(
+    //    tast_get_pos_stmt(assign->lhs),
+    //    lang_type_new_from_strv(tast_unwrap_struct_def(struct_def_)->base.name, 0),
+    //    false,
+    //    util_literal_name_new_prefix("tuple_assign_lhs")
+    //);
+    //try(usym_tbl_add(&vec_at(&env->ancesters, 0)->usymbol_table, uast_wrap_variable_def(new_var_)));
+    //Tast_variable_def* new_var = NULL;
+    //try(try_set_variable_def_types(env, &new_var, new_var_, false));
+    //try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_wrap_variable_def(new_var)));
+    //Tast_assignment* new_assign = tast_assignment_new(
+    //    dest->pos,
+    //    tast_wrap_def(tast_wrap_variable_def(new_var)),
+    //    tast_wrap_function_call(src)
+    //);
+    //vec_append(&a_main, &new_children, tast_wrap_assignment(new_assign));
 
-    for (size_t idx = 0; idx < dest->members.info.count; idx++) {
-        try(idx < tast_unwrap_struct_def(struct_def_)->base.members.info.count);
-        Tast_variable_def* curr_memb_def = vec_at(&tast_unwrap_struct_def(struct_def_)->base.members, idx);
+    //for (size_t idx = 0; idx < dest->members.info.count; idx++) {
+    //    try(idx < tast_unwrap_struct_def(struct_def_)->base.members.info.count);
+    //    Tast_variable_def* curr_memb_def = vec_at(&tast_unwrap_struct_def(struct_def_)->base.members, idx);
 
-        Uast_member_access_untyped* curr_src_ = uast_member_access_untyped_new(
-            src->pos,
-            curr_memb_def->name,
-            uast_wrap_symbol_untyped(uast_symbol_untyped_new(dest->pos, new_var->name))
-        );
-        Tast_stmt* curr_src = NULL;
-        try(try_set_member_access_types(env, &curr_src, curr_src_));
+    //    Uast_member_access_untyped* curr_src_ = uast_member_access_untyped_new(
+    //        src->pos,
+    //        curr_memb_def->name,
+    //        uast_wrap_symbol_untyped(uast_symbol_untyped_new(dest->pos, new_var->name))
+    //    );
+    //    Tast_stmt* curr_src = NULL;
+    //    try(try_set_member_access_types(env, &curr_src, curr_src_));
 
-        Tast_expr* curr_dest = vec_at(&dest->members, idx);
-        Tast_assignment* curr_assign = tast_assignment_new(
-            dest->pos,
-            tast_wrap_expr(curr_dest),
-            tast_unwrap_expr(curr_src)
-        );
-        vec_append(&a_main, &new_children, tast_wrap_assignment(curr_assign));
-    }
+    //    Tast_expr* curr_dest = vec_at(&dest->members, idx);
+    //    Tast_assignment* curr_assign = tast_assignment_new(
+    //        dest->pos,
+    //        tast_wrap_expr(curr_dest),
+    //        tast_unwrap_expr(curr_src)
+    //    );
+    //    vec_append(&a_main, &new_children, tast_wrap_assignment(curr_assign));
+    //}
 
-    src->lang_type = lang_type_vec_from_lang_type(lang_type_new_from_strv(tast_unwrap_struct_def(struct_def_)->base.name, 0));
+    //src->lang_type = lang_type_vec_from_lang_type(lang_type_new_from_strv(tast_unwrap_struct_def(struct_def_)->base.name, 0));
 
-    //log(LOG_DEBUG, TAST_FMT, tast_block_print(tast_block_new(assign->pos, false, new_children, (Symbol_collection) {0}, assign->pos)));
-    //todo();
-    return tast_wrap_block(tast_block_new(assign->pos, false, new_children, (Symbol_collection) {0}, assign->pos));
+    ////log(LOG_DEBUG, TAST_FMT, tast_block_print(tast_block_new(assign->pos, false, new_children, (Symbol_collection) {0}, assign->pos)));
+    ////todo();
+    //return tast_wrap_block(tast_block_new(assign->pos, false, new_children, (Symbol_collection) {0}, assign->pos));
 }
 
 static Tast_function_def* rm_tuple_function_def_new(Env* env, Tast_function_decl* decl) {
     Tast_block* body = tast_block_new(decl->pos, false, (Tast_stmt_vec) {0}, (Symbol_collection) {0}, decl->pos);
 
     Tast_def* struct_def_ = NULL;
-    try(symbol_lookup(&struct_def_, env, vec_at(&decl->return_type->lang_type, 0).str));
+    try(symbol_lookup(&struct_def_, env, lang_type_get_str(decl->return_type->lang_type)));
     Tast_struct_def* struct_def = tast_unwrap_struct_def(struct_def_);
 
     vec_append(&a_main, &env->ancesters, &body->symbol_collection);
@@ -130,7 +132,7 @@ static Tast_function_def* rm_tuple_function_def_new(Env* env, Tast_function_decl
     Str_view new_var_name = util_literal_name_new_prefix("struct_var_in_tuple_function");
     Uast_variable_def* new_var_untyped = uast_variable_def_new(
         decl->pos,
-        lang_type_new_from_strv(struct_def->base.name, 0),
+        ulang_type_wrap_regular_const(ulang_type_regular_new(ulang_type_atom_new(struct_def->base.name, 0))),
         false,
         new_var_name
     );
@@ -189,7 +191,7 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child(
     try(symbol_lookup(&def, env, env->name_parent_function));
     Tast_function_decl* fun_decl = tast_unwrap_function_decl(def);
 
-    try(fun_decl->return_type->lang_type.info.count == 1);
+    try(fun_decl->return_type->lang_type.type != LANG_TYPE_TUPLE);
     //Tast_variable_def* to_rtn = tast_variable_def_new(
     //    rtn->pos,
     //    vec_at(&fun_decl->return_type->lang_type, 0),
@@ -219,7 +221,7 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child(
 
     Tast_variable_def_vec struct_def_memb = {0};
     Tast_def* struct_def_ = NULL;
-    try(symbol_lookup(&struct_def_, env, lhs_lang_type.str));
+    try(symbol_lookup(&struct_def_, env, lang_type_get_str(lhs_lang_type)));
     switch (struct_def_->type) {
         case TAST_STRUCT_DEF:
             struct_def_memb = tast_unwrap_struct_def(struct_def_)->base.members;
@@ -241,7 +243,7 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child(
 
         Uast_variable_def* new_param_ = uast_variable_def_new(
             assign_pos,
-            curr_def->lang_type,
+            lang_type_to_ulang_type(curr_def->lang_type),
             false,
             util_literal_name_new_prefix("tuple_function_param")
         );
@@ -272,7 +274,7 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child(
         new_fun_params,
         tast_lang_type_new(
             assign_pos,
-            lang_type_vec_from_lang_type(lang_type_new_from_strv(tast_unwrap_struct_def(struct_def_)->base.name, 0))
+            lang_type_wrap_struct_const(lang_type_struct_new(lang_type_atom_new(tast_unwrap_struct_def(struct_def_)->base.name, 0)))
         ),
         new_fun_name
     );
@@ -306,17 +308,15 @@ static Tast_return* rm_tuple_return(Env* env, Tast_return* rtn) {
     try(symbol_lookup(&def, env, env->name_parent_function));
     Tast_function_decl* fun_decl = tast_unwrap_function_decl(def);
 
-    try(fun_decl->return_type->lang_type.info.count == 1);
-
     Tast_def* struct_def_ = NULL;
-    if (!symbol_lookup(&struct_def_, env, vec_at(&fun_decl->return_type->lang_type, 0).str)) {
+    if (!symbol_lookup(&struct_def_, env, lang_type_get_str(fun_decl->return_type->lang_type))) {
         return rtn;
     }
 
     rtn->child = rm_tuple_generic_assignment_rhs(
         env,
         rtn->child,
-        vec_at(&fun_decl->return_type->lang_type, 0),
+        fun_decl->return_type->lang_type,
         rtn->pos
     );
     return rtn;
@@ -342,18 +342,18 @@ static Tast_function_def* rm_tuple_function_def(Env* env, Tast_function_def* def
 
     env->name_parent_function = def->decl->name;
 
-    Lang_type_vec rtn_type = def->decl->return_type->lang_type;
+    Lang_type rtn_type = def->decl->return_type->lang_type;
     env->rm_tuple_parent_fn_lang_type = rtn_type;
 
     vec_append(&a_main, &env->ancesters, &def->body->symbol_collection);
 
-    if (def->decl->return_type->lang_type.info.count > 1) {
+    if (rtn_type.type == LANG_TYPE_TUPLE) {
         Uast_variable_def_vec members = {0};
 
-        for (size_t idx = 0; idx < rtn_type.info.count; idx++) {
+        for (size_t idx = 0; idx < lang_type_unwrap_tuple_const(rtn_type).lang_types.info.count; idx++) {
             Uast_variable_def* memb = uast_variable_def_new(
                 def->decl->return_type->pos,
-                vec_at(&rtn_type, idx),
+                lang_type_to_ulang_type(vec_at_const(lang_type_unwrap_tuple_const(rtn_type).lang_types, idx)),
                 false,
                 util_literal_name_new_prefix("tuple_struct_member")
             );
@@ -370,7 +370,7 @@ static Tast_function_def* rm_tuple_function_def(Env* env, Tast_function_def* def
         try(try_set_struct_def_types(env, &struct_def, struct_def_));
         vec_append(&a_main, &env->extra_structs, struct_def);
         log(LOG_DEBUG, STR_VIEW_FMT, tast_struct_def_print(struct_def));
-        def->decl->return_type->lang_type = lang_type_vec_from_lang_type(lang_type_new_from_strv(base.name, 0));
+        def->decl->return_type->lang_type = lang_type_wrap_struct_const(lang_type_struct_new(lang_type_atom_new(base.name, 0)));
         try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_wrap_struct_def(struct_def)));
     }
     
@@ -418,19 +418,18 @@ static Tast_function_call* rm_tuple_function_call(Env* env, Tast_function_call* 
         *curr = rm_tuple_generic_assignment_rhs(
             env,
             *curr,
-            vec_at(&fun_decl->params->params, idx)->lang_type,
+            lang_type_from_ulang_type(vec_at(&fun_decl->params->params, idx)->lang_type),
             tast_get_pos_expr(*curr)
         );
     }
     return fun_call;
 }
 
-static Tast_expr* rm_tuple_sum_rhs(Env* env, Lang_type_vec lhs_lang_type, Tast_sum_lit* rhs, Pos assign_pos) {
-    try(lhs_lang_type.info.count == 1);
-    return rm_tuple_generic_assignment_rhs(env, tast_wrap_literal(tast_wrap_sum_lit(rhs)), vec_at(&lhs_lang_type, 0), assign_pos);
+static Tast_expr* rm_tuple_sum_rhs(Env* env, Lang_type lhs_lang_type, Tast_sum_lit* rhs, Pos assign_pos) {
+    return rm_tuple_generic_assignment_rhs(env, tast_wrap_literal(tast_wrap_sum_lit(rhs)), lhs_lang_type, assign_pos);
 }
 
-static Tast_expr* rm_tuple_literal_rhs(Env* env, Lang_type_vec lhs_lang_type, Tast_literal* rhs, Pos assign_pos) {
+static Tast_expr* rm_tuple_literal_rhs(Env* env, Lang_type lhs_lang_type, Tast_literal* rhs, Pos assign_pos) {
     switch (rhs->type) {
         case TAST_NUMBER:
             return tast_wrap_literal(rhs);
@@ -448,7 +447,7 @@ static Tast_expr* rm_tuple_literal_rhs(Env* env, Lang_type_vec lhs_lang_type, Ta
     unreachable("");
 }
 
-static Tast_expr* rm_tuple_expr_rhs(Env* env, Lang_type_vec lhs_lang_type, Tast_expr* rhs, Pos assign_pos) {
+static Tast_expr* rm_tuple_expr_rhs(Env* env, Lang_type lhs_lang_type, Tast_expr* rhs, Pos assign_pos) {
     switch (rhs->type) {
         case TAST_OPERATOR:
             return rhs;
@@ -461,11 +460,9 @@ static Tast_expr* rm_tuple_expr_rhs(Env* env, Lang_type_vec lhs_lang_type, Tast_
         case TAST_LITERAL:
             return rm_tuple_literal_rhs(env, lhs_lang_type, tast_unwrap_literal(rhs), assign_pos);
         case TAST_STRUCT_LITERAL:
-            try(lhs_lang_type.info.count == 1);
-            return rm_tuple_generic_assignment_rhs(env, rhs, vec_at(&lhs_lang_type, 0), assign_pos);
+            return rm_tuple_generic_assignment_rhs(env, rhs, lhs_lang_type, assign_pos);
         case TAST_TUPLE:
-            try(lhs_lang_type.info.count == 1);
-            return rm_tuple_generic_assignment_rhs(env, rhs, vec_at(&lhs_lang_type, 0), assign_pos);
+            return rm_tuple_generic_assignment_rhs(env, rhs, lhs_lang_type, assign_pos);
         case TAST_FUNCTION_CALL:
             return tast_wrap_function_call(rm_tuple_function_call(env, tast_unwrap_function_call(rhs)));
         case TAST_SUM_CALLEE:

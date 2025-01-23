@@ -210,7 +210,7 @@ static inline Lang_type llvm_get_lang_type_literal(const Llvm_literal* lit) {
         case LLVM_NUMBER:
             return llvm_unwrap_number_const(lit)->lang_type;
         case LLVM_STRING:
-            return llvm_unwrap_string_const(lit)->lang_type;
+            return lang_type_wrap_primitive_const(llvm_unwrap_string_const(lit)->lang_type);
         case LLVM_VOID:
             return lang_type_wrap_void_const(lang_type_void_new(0));
         case LLVM_ENUM_LIT:
@@ -222,18 +222,20 @@ static inline Lang_type llvm_get_lang_type_literal(const Llvm_literal* lit) {
 }
 
 static inline Lang_type* llvm_get_lang_type_literal_ref(Llvm_literal* lit) {
-    switch (lit->type) {
-        case LLVM_NUMBER:
-            return &llvm_unwrap_number(lit)->lang_type;
-        case LLVM_STRING:
-            return &llvm_unwrap_string(lit)->lang_type;
-        case LLVM_VOID:
-            unreachable("");
-        case LLVM_ENUM_LIT:
-            return &llvm_unwrap_enum_lit(lit)->lang_type;
-        case LLVM_CHAR:
-            return &llvm_unwrap_char(lit)->lang_type;
-    }
+    (void) lit;
+    todo();
+    //switch (lit->type) {
+    //    case LLVM_NUMBER:
+    //        return &llvm_unwrap_number(lit)->lang_type;
+    //    case LLVM_STRING:
+    //        return &llvm_unwrap_string(lit)->lang_type;
+    //    case LLVM_VOID:
+    //        unreachable("");
+    //    case LLVM_ENUM_LIT:
+    //        return &llvm_unwrap_enum_lit(lit)->lang_type;
+    //    case LLVM_CHAR:
+    //        return &llvm_unwrap_char(lit)->lang_type;
+    //}
     unreachable("");
 }
 
