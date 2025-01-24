@@ -129,20 +129,24 @@ static inline Lang_type tast_get_lang_type_literal(const Tast_literal* lit) {
     unreachable("");
 }
 
-static inline Lang_type* tast_get_lang_type_literal_ref(Tast_literal* lit) {
+static inline void tast_set_lang_type_literal(Tast_literal* lit, Lang_type lang_type) {
     switch (lit->type) {
         case TAST_NUMBER:
-            return &tast_unwrap_number(lit)->lang_type;
+            tast_unwrap_number(lit)->lang_type = lang_type;
+            return;
         case TAST_STRING:
             todo();
         case TAST_VOID:
             unreachable("");
         case TAST_ENUM_LIT:
-            return &tast_unwrap_enum_lit(lit)->lang_type;
+            tast_unwrap_enum_lit(lit)->lang_type = lang_type;
+            return;
         case TAST_CHAR:
-            return &tast_unwrap_char(lit)->lang_type;
+            tast_unwrap_char(lit)->lang_type = lang_type;
+            return;
         case TAST_SUM_LIT:
-            return &tast_unwrap_sum_lit(lit)->lang_type;
+            tast_unwrap_sum_lit(lit)->lang_type = lang_type;
+            return;
     }
     unreachable("");
 }
@@ -221,8 +225,31 @@ static inline Lang_type tast_get_lang_type_def(const Tast_def* def) {
     unreachable("");
 }
 
-static inline Lang_type* tast_get_lang_type_expr_ref(Tast_expr* expr) {
+static inline void tast_set_lang_type_expr(Tast_expr* expr, Lang_type lang_type) {
     (void) expr;
+    (void) lang_type;
+
+    switch (expr->type) {
+        case TAST_OPERATOR:
+            todo();
+        case TAST_SYMBOL_TYPED:
+            todo();
+        case TAST_MEMBER_ACCESS_TYPED:
+            todo();
+        case TAST_INDEX_TYPED:
+            todo();
+        case TAST_LITERAL:
+            tast_set_lang_type_literal(tast_unwrap_literal(expr), lang_type);
+            return;
+        case TAST_FUNCTION_CALL:
+            todo();
+        case TAST_STRUCT_LITERAL:
+            todo();
+        case TAST_TUPLE:
+            todo();
+        case TAST_SUM_CALLEE:
+            todo();
+    }
     todo();
 }
 
@@ -273,7 +300,7 @@ static inline Lang_type tast_get_lang_type(const Tast* tast) {
     unreachable("");
 }
 
-static inline Lang_type* tast_get_lang_type_def_ref(Tast_def* def) {
+static inline Lang_type* tast_set_lang_type_def(Tast_def* def) {
     switch (def->type) {
         case TAST_FUNCTION_DEF:
             unreachable("");
@@ -297,16 +324,19 @@ static inline Lang_type* tast_get_lang_type_def_ref(Tast_def* def) {
     unreachable("");
 }
 
-static inline Lang_type* tast_get_lang_type_stmt_ref(Tast_stmt* stmt) {
+static inline void tast_set_lang_type_stmt(Tast_stmt* stmt, Lang_type lang_type) {
     switch (stmt->type) {
         case TAST_DEF:
-            return tast_get_lang_type_def_ref(tast_unwrap_def(stmt));
+            tast_set_lang_type_def(tast_unwrap_def(stmt));
+            return;
         case TAST_EXPR:
-            return tast_get_lang_type_expr_ref(tast_unwrap_expr(stmt));
+            tast_set_lang_type_expr(tast_unwrap_expr(stmt), lang_type);
+            return;
         case TAST_BLOCK:
             unreachable("");
         case TAST_RETURN:
-            return tast_get_lang_type_expr_ref(tast_unwrap_return(stmt)->child);
+            tast_set_lang_type_expr(tast_unwrap_return(stmt)->child, lang_type);
+            return;
         case TAST_FOR_RANGE:
             unreachable("");
         case TAST_FOR_WITH_COND:

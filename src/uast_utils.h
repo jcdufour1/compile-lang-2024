@@ -165,7 +165,7 @@ static inline Lang_type uast_get_lang_type_def(const Env* env, const Uast_def* d
         case UAST_ENUM_DEF:
             return lang_type_wrap_enum_const(lang_type_enum_new(lang_type_atom_new(uast_unwrap_enum_def_const(def)->base.name, 0)));
         case UAST_VARIABLE_DEF:
-            todo();
+            return lang_type_from_ulang_type(env, uast_unwrap_variable_def_const(def)->lang_type);
         case UAST_FUNCTION_DECL:
             return lang_type_from_ulang_type(env, uast_unwrap_function_decl_const(def)->return_type->lang_type);
         case UAST_STRUCT_DEF:
