@@ -57,13 +57,17 @@ static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool impl
 static bool can_be_implicitly_converted_lang_type_atom(Lang_type_atom dest, Lang_type_atom src, bool implicit_pointer_depth) {
     if (!implicit_pointer_depth) {
         if (src.pointer_depth != dest.pointer_depth) {
+            log(LOG_DEBUG, "%d %d\n", src.pointer_depth, dest.pointer_depth);
+            todo();
             return false;
         }
     }
 
     if (!lang_type_atom_is_signed(dest) || !lang_type_atom_is_signed(src)) {
+        assert(lang_type_atom_is_equal(dest, src));
         return lang_type_atom_is_equal(dest, src);
     }
+    assert(i_lang_type_atom_to_bit_width(dest) >= i_lang_type_atom_to_bit_width(src));
     return i_lang_type_atom_to_bit_width(dest) >= i_lang_type_atom_to_bit_width(src);
 }
 
@@ -299,7 +303,7 @@ bool try_set_symbol_type(const Env* env, Tast_expr** new_tast, Uast_symbol_untyp
         return false;
     }
 
-    Lang_type lang_type = uast_get_lang_type_def(sym_def);
+    Lang_type lang_type = uast_get_lang_type_def(env, sym_def);
     Sym_typed_base new_base = {.lang_type = lang_type, .name = sym_untyped->name};
     switch (lang_type.type) {
         case LANG_TYPE_VOID:
@@ -1004,6 +1008,8 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
                 todo();
             }
         } else {
+            log(LOG_DEBUG, LANG_TYPE_FMT"\n", ulang_type_print(corres_param->lang_type));
+            log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(lang_type_from_ulang_type(env, corres_param->lang_type)));
             switch (check_generic_assignment(
                 env,
                 &new_arg,

@@ -284,8 +284,11 @@ static void emit_function_params(String* output, const Llvm_function_params* fun
             case LANG_TYPE_ENUM:
                 llvm_extend_type_decl_str(output, llvm_wrap_def_const(llvm_wrap_variable_def_const(curr_param)), true);
                 break;
+            case LANG_TYPE_PRIMITIVE:
+                llvm_extend_type_decl_str(output, llvm_wrap_def_const(llvm_wrap_variable_def_const(curr_param)), true);
+                break;
             default:
-                unreachable("");
+                unreachable(LANG_TYPE_FMT, lang_type_print(curr_param->lang_type));
         }
 
         if (curr_param->is_variadic) {

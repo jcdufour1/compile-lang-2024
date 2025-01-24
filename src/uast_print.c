@@ -60,6 +60,7 @@ static void extend_ulang_type(String* string, Ulang_type lang_type, bool surroun
 Str_view ulang_type_print_internal(Ulang_type lang_type, bool surround_in_lt_gt) {
     String buf = {0};
     extend_ulang_type_to_string(&buf, lang_type, surround_in_lt_gt);
+    string_extend_cstr(&print_arena, &buf, "\n");
     return string_to_strv(buf);
 }
 
@@ -446,6 +447,7 @@ Str_view uast_function_decl_print_internal(const Uast_function_decl* fun_decl, i
     string_extend_strv_in_par(&print_arena, &buf, fun_decl->name);
     string_extend_cstr(&print_arena, &buf, "\n");
     string_extend_strv(&print_arena, &buf, uast_lang_type_print_internal(fun_decl->return_type, indent + INDENT_WIDTH));
+    string_extend_strv(&print_arena, &buf, uast_function_params_print_internal(fun_decl->params, indent + INDENT_WIDTH));
 
     return string_to_strv(buf);
 }

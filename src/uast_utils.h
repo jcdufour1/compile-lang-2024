@@ -6,6 +6,7 @@
 #include <tast_utils.h>
 #include <str_view.h>
 #include <str_view_struct.h>
+#include <lang_type_from_ulang_type.h>
 
 #define LANG_TYPE_FMT STR_VIEW_FMT
 
@@ -155,7 +156,7 @@ static inline Lang_type* uast_get_ulang_type_ref_stmt(Uast_stmt* stmt) {
     unreachable("");
 }
 
-static inline Lang_type uast_get_lang_type_def(const Uast_def* def) {
+static inline Lang_type uast_get_lang_type_def(const Env* env, const Uast_def* def) {
     switch (def->type) {
         case UAST_FUNCTION_DEF:
             unreachable("");
@@ -166,7 +167,7 @@ static inline Lang_type uast_get_lang_type_def(const Uast_def* def) {
         case UAST_VARIABLE_DEF:
             todo();
         case UAST_FUNCTION_DECL:
-            todo();
+            return lang_type_from_ulang_type(env, uast_unwrap_function_decl_const(def)->return_type->lang_type);
         case UAST_STRUCT_DEF:
             return lang_type_wrap_struct_const(lang_type_struct_new(lang_type_atom_new(uast_unwrap_struct_def_const(def)->base.name, 0)));
         case UAST_PRIMITIVE_DEF:
@@ -179,14 +180,14 @@ static inline Lang_type uast_get_lang_type_def(const Uast_def* def) {
     unreachable("");
 }
 
-static inline Lang_type uast_get_lang_type_stmt(const Uast_stmt* stmt) {
+static inline Lang_type uast_get_lang_type_stmt(const Env* env, const Uast_stmt* stmt) {
     switch (stmt->type) {
         case UAST_EXPR:
             unreachable("");
         case UAST_BLOCK:
             unreachable("");
         case UAST_DEF:
-            return uast_get_lang_type_def(uast_unwrap_def_const(stmt));
+            return uast_get_lang_type_def(env, uast_unwrap_def_const(stmt));
         case UAST_RETURN:
             unreachable("");
         case UAST_BREAK:
@@ -207,10 +208,10 @@ static inline Lang_type uast_get_lang_type_stmt(const Uast_stmt* stmt) {
     unreachable("");
 }
 
-static inline Lang_type uast_get_lang_type(const Uast* uast) {
+static inline Lang_type uast_get_lang_type(const Env* env, const Uast* uast) {
     switch (uast->type) {
         case UAST_STMT:
-            return uast_get_lang_type_stmt(uast_unwrap_stmt_const(uast));
+            return uast_get_lang_type_stmt(env, uast_unwrap_stmt_const(uast));
         case UAST_FUNCTION_PARAMS:
             unreachable("");
         case UAST_LANG_TYPE:

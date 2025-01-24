@@ -30,11 +30,8 @@ static Llvm_function_params* tast_clone_function_params(Tast_function_params* ol
 }
 
 static Llvm_lang_type* tast_clone_lang_type(Tast_lang_type* old_lang_type) {
-    todo();
-    (void) old_lang_type;
-    //try(old_lang_type->lang_type.info.count == 1);
-    //Llvm_lang_type* new_lang_type = llvm_lang_type_new(old_lang_type->pos, vec_at(&old_lang_type->lang_type, 0));
-    //return new_lang_type;
+    Llvm_lang_type* new_lang_type = llvm_lang_type_new(old_lang_type->pos, old_lang_type->lang_type);
+    return new_lang_type;
 }
 
 static Llvm_function_decl* tast_clone_function_decl(Tast_function_decl* old_decl) {
