@@ -345,7 +345,7 @@ static Tast_type tast_gen_tuple(const char* prefix) {
     Tast_type lit = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&lit.members, "Tast_expr_vec", "members");
-    append_member(&lit.members, "Lang_type_vec", "lang_type");
+    append_member(&lit.members, "Lang_type_tuple", "lang_type");
 
     return lit;
 }

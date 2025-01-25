@@ -161,12 +161,8 @@ static inline Lang_type tast_get_lang_type_expr(const Tast_expr* expr) {
             return tast_get_lang_type_operator(tast_unwrap_operator_const(expr));
         case TAST_SYMBOL_TYPED:
             return tast_unwrap_symbol_typed_const(expr)->base.lang_type;
-        case TAST_TUPLE: {
-            const Tast_tuple* tuple = tast_unwrap_tuple_const(expr);
-            try(tuple->lang_type.info.count == tuple->members.info.count);
-            try(tuple->lang_type.info.count == 1);
-            return vec_at(&tuple->lang_type, 0);
-        }
+        case TAST_TUPLE:
+            return lang_type_wrap_tuple_const(tast_unwrap_tuple_const(expr)->lang_type);
         case TAST_SUM_CALLEE:
             unreachable("");
     }

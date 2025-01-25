@@ -45,19 +45,26 @@ void extend_lang_type_to_string(String* string, Lang_type lang_type, bool surrou
         extend_lang_type_tag_to_string(string, lang_type.type);
     }
 
-    if (lang_type_get_str(lang_type).count > 1) {
-        string_extend_strv(&print_arena, string, lang_type_get_str(lang_type));
+    if (lang_type.type == LANG_TYPE_TUPLE) {
+        Lang_type_vec lang_types = lang_type_unwrap_tuple_const(lang_type).lang_types;
+        for (size_t idx = 0; idx < lang_types.info.count; idx++) {
+            extend_lang_type_to_string(string, vec_at(&lang_types, idx), surround_in_lt_gt, do_tag);
+        }
     } else {
-        string_extend_cstr(&print_arena, string, "<null>");
-    }
-    if (lang_type_get_pointer_depth(lang_type) < 0) {
-        todo();
-    }
-    for (int16_t idx = 0; idx < lang_type_get_pointer_depth(lang_type); idx++) {
-        vec_append(&print_arena, string, '*');
-    }
-    if (surround_in_lt_gt) {
-        vec_append(&print_arena, string, '>');
+        if (lang_type_get_str(lang_type).count > 1) {
+            string_extend_strv(&print_arena, string, lang_type_get_str(lang_type));
+        } else {
+            string_extend_cstr(&print_arena, string, "<null>");
+        }
+        if (lang_type_get_pointer_depth(lang_type) < 0) {
+            todo();
+        }
+        for (int16_t idx = 0; idx < lang_type_get_pointer_depth(lang_type); idx++) {
+            vec_append(&print_arena, string, '*');
+        }
+        if (surround_in_lt_gt) {
+            vec_append(&print_arena, string, '>');
+        }
     }
 }
 
@@ -256,7 +263,7 @@ Str_view tast_tuple_print_internal(const Tast_tuple* lit, int indent) {
 
     string_extend_cstr_indent(&print_arena, &buf, "tuple", indent);
     
-    string_extend_strv(&print_arena, &buf, lang_type_vec_print_internal(lit->lang_type, true));
+    string_extend_strv(&print_arena, &buf, lang_type_print_internal(lang_type_wrap_tuple_const(lit->lang_type), true, true));
 
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
         Str_view memb_text = tast_expr_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);

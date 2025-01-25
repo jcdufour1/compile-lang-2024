@@ -611,7 +611,7 @@ bool try_set_tuple_assignment_types(
         vec_append(&a_main, &new_lang_type, tast_get_lang_type_expr(new_memb));
     }
 
-    *new_tast = tast_tuple_new(tuple->pos, new_members, new_lang_type);
+    *new_tast = tast_tuple_new(tuple->pos, new_members, lang_type_tuple_new(new_lang_type));
     return true;
 }
 
@@ -1066,7 +1066,7 @@ bool try_set_tuple_types(Env* env, Tast_tuple** new_tuple, Uast_tuple* tuple) {
         vec_append(&a_main, &new_lang_type, tast_get_lang_type_expr(new_memb));
     }
 
-    *new_tuple = tast_tuple_new(tuple->pos, new_members, new_lang_type);
+    *new_tuple = tast_tuple_new(tuple->pos, new_members, lang_type_tuple_new(new_lang_type));
     return true;
 }
 
