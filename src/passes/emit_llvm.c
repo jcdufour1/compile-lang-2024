@@ -118,8 +118,7 @@ static void extend_type_call_str(String* output, Lang_type lang_type) {
             break;
         case LANG_TYPE_PRIMITIVE:
             if (lang_type_atom_is_unsigned(lang_type_get_atom(lang_type))) {
-                todo();
-                //lang_type = lang_type_unsigned_to_signed(lang_type);
+                lang_type_set_atom(&lang_type, lang_type_atom_unsigned_to_signed(lang_type_get_atom(lang_type)));
             }
             break;
         default:
@@ -911,8 +910,7 @@ static void emit_load_struct_element_pointer(const Env* env, String* output, con
     string_extend_cstr(&a_main, output, " = getelementptr inbounds ");
 
     Lang_type lang_type = get_lang_type_from_name(env, load_elem_ptr->llvm_src);
-    todo();
-    //lang_type.pointer_depth = 0;
+    lang_type_set_pointer_depth(&lang_type, 0);
     extend_type_call_str(output, lang_type);
     string_extend_cstr(&a_main, output, ", ptr %");
     string_extend_size_t(&a_main, output, get_llvm_id_from_name(env, load_elem_ptr->llvm_src));

@@ -22,12 +22,43 @@ static inline Lang_type_atom lang_type_get_atom(Lang_type lang_type) {
     unreachable("");
 }
 
+static inline void lang_type_set_atom(Lang_type* lang_type, Lang_type_atom atom) {
+    switch (lang_type->type) {
+        case LANG_TYPE_PRIMITIVE:
+            lang_type_unwrap_primitive(lang_type)->atom = atom;
+            return;
+        case LANG_TYPE_SUM:
+            lang_type_unwrap_sum(lang_type)->atom = atom;
+            return;
+        case LANG_TYPE_STRUCT:
+            lang_type_unwrap_struct(lang_type)->atom = atom;
+            return;
+        case LANG_TYPE_RAW_UNION:
+            lang_type_unwrap_raw_union(lang_type)->atom = atom;
+            return;
+        case LANG_TYPE_ENUM:
+            lang_type_unwrap_enum(lang_type)->atom = atom;
+            return;
+        case LANG_TYPE_TUPLE:
+            unreachable("");
+        case LANG_TYPE_VOID:
+            todo();
+    }
+    unreachable("");
+}
+
 static inline Str_view lang_type_get_str(Lang_type lang_type) {
     return lang_type_get_atom(lang_type).str;
 }
 
 static inline int16_t lang_type_get_pointer_depth(Lang_type lang_type) {
     return lang_type_get_atom(lang_type).pointer_depth;
+}
+
+static inline void lang_type_set_pointer_depth(Lang_type* lang_type, int16_t pointer_depth) {
+    Lang_type_atom atom = lang_type_get_atom(*lang_type);
+    atom.pointer_depth = pointer_depth;
+    lang_type_set_atom(lang_type, atom);
 }
 
 #endif // LANG_TYPE_AFTER_H

@@ -99,7 +99,7 @@ int64_t i_lang_type_atom_to_bit_width(Lang_type_atom atom) {
 }
 
 // TODO: put strings in a hash table to avoid allocating duplicate types
-Lang_type_atom lang_type_unsigned_to_signed(Lang_type_atom lang_type) {
+Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom lang_type) {
     assert(lang_type_atom_is_unsigned(lang_type));
 
     if (lang_type.pointer_depth != 0) {

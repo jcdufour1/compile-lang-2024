@@ -179,7 +179,7 @@ Str_view tast_symbol_typed_print_internal(const Tast_symbol_typed* sym, int inde
 Str_view tast_member_access_typed_print_internal(const Tast_member_access_typed* access, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "member_access_untyped", indent);
+    string_extend_cstr_indent(&print_arena, &buf, "member_access_typed", indent);
     extend_lang_type(&buf, access->lang_type, true);
     string_extend_strv_in_par(&print_arena, &buf, access->member_name);
 

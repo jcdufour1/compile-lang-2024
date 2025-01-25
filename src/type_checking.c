@@ -69,7 +69,7 @@ static bool can_be_implicitly_converted_lang_type_atom(Lang_type_atom dest, Lang
     }
     log(LOG_DEBUG, LANG_TYPE_FMT "    "LANG_TYPE_FMT"\n", lang_type_atom_print(dest), lang_type_atom_print(src));
     if (!is_literal) {
-        try(i_lang_type_atom_to_bit_width(dest) >= i_lang_type_atom_to_bit_width(src));
+        //try(i_lang_type_atom_to_bit_width(dest) >= i_lang_type_atom_to_bit_width(src));
     }
     return i_lang_type_atom_to_bit_width(dest) >= i_lang_type_atom_to_bit_width(src);
 }
@@ -502,14 +502,11 @@ bool try_set_unary_types_finish(
                 );
                 return false;
             }
-            todo();
-            //new_lang_type.pointer_depth--;
+            lang_type_set_pointer_depth(&new_lang_type, lang_type_get_pointer_depth(new_lang_type) - 1);
             break;
         case TOKEN_REFER:
             new_lang_type = tast_get_lang_type_expr(new_child);
-            todo();
-            //new_lang_type.pointer_depth++;
-            //assert(new_lang_type.pointer_depth > 0);
+            lang_type_set_pointer_depth(&new_lang_type, lang_type_get_pointer_depth(new_lang_type) + 1);
             break;
         case TOKEN_UNSAFE_CAST:
             new_lang_type = cast_to;
@@ -675,7 +672,6 @@ bool try_set_struct_literal_assignment_types(
         }
 
 
-        todo();
         //*tast_set_lang_type_expr(new_rhs) = memb_sym_def->lang_type;
         if (!str_view_is_equal(memb_sym_def->name, memb_sym_piece_untyped->name)) {
             msg(
@@ -684,6 +680,7 @@ bool try_set_struct_literal_assignment_types(
                 "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
                 str_view_print(memb_sym_def->name), str_view_print(memb_sym_piece_untyped->name)
             );
+            todo();
             // TODO: consider how to handle this
             //msg(
             //    LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, lhs_var_def->pos,
@@ -695,7 +692,7 @@ bool try_set_struct_literal_assignment_types(
             //    "member symbol `"STR_VIEW_FMT"` of struct `"STR_VIEW_FMT"` defined here\n", 
             //    str_view_print(memb_sym_def->name), lang_type_print(lhs_var_def->lang_type)
             //);
-            return false;
+            //return false;
         }
 
         vec_append(&a_main, &new_literal_members, new_rhs);
@@ -1299,8 +1296,7 @@ bool try_set_index_untyped_types(Env* env, Tast_stmt** new_tast, Uast_index_unty
     if (lang_type_get_pointer_depth(new_lang_type) < 1) {
         todo();
     }
-    todo();
-    //new_lang_type.pointer_depth--;
+    lang_type_set_pointer_depth(&new_lang_type, lang_type_get_pointer_depth(new_lang_type) - 1);
 
     Tast_index_typed* new_index = tast_index_typed_new(
         index->pos,

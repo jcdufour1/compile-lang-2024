@@ -29,8 +29,23 @@ static inline Lang_type lang_type_from_ulang_type(const Env* env, Ulang_type lan
 }
 
 static inline Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
-    (void) lang_type;
-    todo();
+    switch (lang_type.type) {
+        case LANG_TYPE_TUPLE:
+            todo();
+        case LANG_TYPE_VOID:
+            todo();
+        case LANG_TYPE_PRIMITIVE:
+            // fallthrough
+        case LANG_TYPE_STRUCT:
+            // fallthrough
+        case LANG_TYPE_RAW_UNION:
+            // fallthrough
+        case LANG_TYPE_ENUM:
+            // fallthrough
+        case LANG_TYPE_SUM:
+            // fallthrough
+            return ulang_type_wrap_regular_const(ulang_type_regular_new(ulang_type_atom_new(lang_type_get_str(lang_type), lang_type_get_pointer_depth(lang_type))));
+    }
 }
 
 #endif // LANG_TYPE_FROM_ULANG_TYPE

@@ -10,6 +10,26 @@
 
 #include "passes.h"
 
+static bool is_struct_like(LANG_TYPE_TYPE type) {
+    switch (type) {
+        case LANG_TYPE_STRUCT:
+            return true;
+        case LANG_TYPE_ENUM:
+            return false;
+        case LANG_TYPE_PRIMITIVE:
+            return false;
+        case LANG_TYPE_RAW_UNION:
+            return true;
+        case LANG_TYPE_VOID:
+            return false;
+        case LANG_TYPE_SUM:
+            unreachable("");
+        case LANG_TYPE_TUPLE:
+            unreachable("");
+    }
+    unreachable("");
+}
+
 static Llvm_variable_def* tast_clone_variable_def(Tast_variable_def* old_var_def);
 
 static Llvm_alloca* add_load_and_store_alloca_new(Env* env, Llvm_variable_def* var_def) {
@@ -115,24 +135,7 @@ static Llvm_function_params* do_function_def_alloca(
         0
     );
 
-    bool rtn_is_struct = false;
-
-    switch (rtn_type->lang_type.type) {
-        case LANG_TYPE_STRUCT:
-            rtn_is_struct = true;
-            break;
-        case LANG_TYPE_ENUM:
-            rtn_is_struct = false;
-            break;
-        case LANG_TYPE_PRIMITIVE:
-            rtn_is_struct = false;
-            break;
-        case LANG_TYPE_RAW_UNION:
-            rtn_is_struct = true;
-            break;
-        default:
-            unreachable("");
-    }
+    bool rtn_is_struct = is_struct_like(rtn_type->lang_type.type);
 
     Lang_type_atom rtn_lang_type = lang_type_get_atom(rtn_type->lang_type);
     if (rtn_is_struct) {
@@ -239,27 +242,7 @@ static Str_view load_function_call(
     Llvm_block* new_block,
     Tast_function_call* old_fun_call
 ) {
-    bool rtn_is_struct = false;
-
-    switch (old_fun_call->lang_type.type) {
-        case LANG_TYPE_STRUCT:
-            rtn_is_struct = true;
-            break;
-        case LANG_TYPE_ENUM:
-            rtn_is_struct = false;
-            break;
-        case LANG_TYPE_PRIMITIVE:
-            rtn_is_struct = false;
-            break;
-        case LANG_TYPE_RAW_UNION:
-            rtn_is_struct = true;
-            break;
-        case LANG_TYPE_VOID:
-            rtn_is_struct = false;
-            break;
-        default:
-            unreachable("");
-    }
+    bool rtn_is_struct = is_struct_like(old_fun_call->lang_type.type);
 
     Strv_vec new_args = {0};
 
@@ -675,26 +658,10 @@ static Llvm_reg load_function_parameters(
         //symbol_log(LOG_DEBUG, env);
         //alloca_log(LOG_DEBUG, env);
 
-        bool is_struct = false;
-
-        switch (rtn_type->lang_type.type) {
-            case LANG_TYPE_STRUCT:
-                is_struct = true;
-                break;
-            case LANG_TYPE_ENUM:
-                is_struct = false;
-                break;
-            case LANG_TYPE_PRIMITIVE:
-                is_struct = false;
-                break;
-            case LANG_TYPE_RAW_UNION:
-                is_struct = true;
-                break;
-            default:
-                unreachable("");
-        }
+        bool is_struct = is_struct_like(rtn_type->lang_type.type);
 
         if (!is_struct) {
+            log(LOG_DEBUG, TAST_FMT, llvm_variable_def_print(param));
             try(alloca_add(env, llvm_wrap_def(llvm_wrap_variable_def(param))));
 
             Llvm_store_another_llvm* new_store = llvm_store_another_llvm_new(
@@ -805,26 +772,10 @@ static Str_view load_return(
             unreachable("");
     }
 
-    bool rtn_is_struct = false;
-
     //assert(fun_decl->return_type->lang_type.info.count == 1);
     Lang_type rtn_type = fun_decl->return_type->lang_type;
-    switch (rtn_type.type) {
-        case LANG_TYPE_STRUCT:
-            rtn_is_struct = true;
-            break;
-        case LANG_TYPE_ENUM:
-            rtn_is_struct = false;
-            break;
-        case LANG_TYPE_PRIMITIVE:
-            rtn_is_struct = false;
-            break;
-        case LANG_TYPE_RAW_UNION:
-            rtn_is_struct = true;
-            break;
-        default:
-            unreachable("");
-    }
+
+    bool rtn_is_struct = is_struct_like(rtn_type.type);
 
     if (rtn_is_struct) {
         Llvm* dest_ = NULL;
@@ -1389,8 +1340,7 @@ static Str_view load_ptr_deref(
         util_literal_name_new()
     );
     try(alloca_add(env, llvm_wrap_load_another_llvm(new_load)));
-    todo();// need increment pointer_depth
-    //new_load->lang_type.pointer_depth++;
+    lang_type_set_pointer_depth(&new_load->lang_type, lang_type_get_pointer_depth(new_load->lang_type) + 1);
 
     vec_append(&a_main, &new_block->children, llvm_wrap_load_another_llvm(new_load));
     return new_load->name;
