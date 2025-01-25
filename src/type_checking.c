@@ -1222,8 +1222,6 @@ bool try_set_member_access_types_finish(
             );
 
             *new_tast = tast_wrap_expr(tast_wrap_literal(tast_wrap_enum_lit(new_lit)));
-            todo();
-            //assert(member_def->lang_type.str.count > 0);
             return true;
         }
         case UAST_SUM_DEF:

@@ -137,12 +137,12 @@ static Llvm_function_params* do_function_def_alloca(
 
     bool rtn_is_struct = is_struct_like(rtn_type->lang_type.type);
 
-    Lang_type_atom rtn_lang_type = lang_type_get_atom(rtn_type->lang_type);
+    Lang_type rtn_lang_type = rtn_type->lang_type;
     if (rtn_is_struct) {
-        rtn_lang_type.pointer_depth++;
+        lang_type_set_pointer_depth(&rtn_lang_type, lang_type_get_pointer_depth(rtn_lang_type) + 1);
         Tast_variable_def* new_def = tast_variable_def_new(
             rtn_type->pos,
-            rtn_type->lang_type,
+            rtn_lang_type,
             false,
             util_literal_name_new_prefix("return_as_parameter")
         );
@@ -658,7 +658,7 @@ static Llvm_reg load_function_parameters(
         //symbol_log(LOG_DEBUG, env);
         //alloca_log(LOG_DEBUG, env);
 
-        bool is_struct = is_struct_like(rtn_type->lang_type.type);
+        bool is_struct = is_struct_like(param->lang_type.type);
 
         if (!is_struct) {
             log(LOG_DEBUG, TAST_FMT, llvm_variable_def_print(param));
