@@ -6,6 +6,8 @@
 #include <auto_gen_lang_type.h>
 #include <auto_gen_ulang_type.h>
 
+// TODO: fix printing for lang_type in msg to not put newline
+
 // TODO: expected failure test for mispelling struct, sum, enum, etc.
 
 // TODO: expected failure test for 

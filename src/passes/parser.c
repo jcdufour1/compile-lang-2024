@@ -2402,7 +2402,6 @@ static PARSE_EXPR_STATUS try_extract_expression(
     }
 
     if (!token_is_operator(tk_view_front(*tokens), can_be_tuple)) {
-        log_tokens(LOG_DEBUG, *tokens);
         if (lhs) {
             *result = lhs;
             return PARSE_EXPR_OK;
