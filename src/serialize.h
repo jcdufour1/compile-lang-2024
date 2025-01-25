@@ -15,6 +15,8 @@ static inline Str_view serialize_struct_def(const Tast_struct_def* struct_def) {
     return string_to_strv(name);
 }
 
+// TODO: make separate function for Tast_lang_type and Lang_type
+// TODO: call serialize_struct_def serialize_tast_struct_def, etc.
 static inline Str_view serialize_lang_type(Lang_type lang_type) {
     // TODO: think about memory allocation strategy here
     // TODO: make function to serialize lang_type, and call it from here
