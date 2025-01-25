@@ -9,9 +9,40 @@ static void extend_name(String* buf, Str_view name) {
     string_extend_strv_in_par(&print_arena, buf, name);
 }
 
-void extend_lang_type_to_string(String* string, Lang_type lang_type, bool surround_in_lt_gt) {
+static void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
+    switch (type) {
+        case LANG_TYPE_PRIMITIVE:
+            string_extend_cstr(&print_arena, buf, "primitive");
+            return;
+        case LANG_TYPE_STRUCT:
+            string_extend_cstr(&print_arena, buf, "struct");
+            return;
+        case LANG_TYPE_RAW_UNION:
+            string_extend_cstr(&print_arena, buf, "raw_union");
+            return;
+        case LANG_TYPE_ENUM:
+            string_extend_cstr(&print_arena, buf, "enum");
+            return;
+        case LANG_TYPE_SUM:
+            string_extend_cstr(&print_arena, buf, "sum");
+            return;
+        case LANG_TYPE_TUPLE:
+            string_extend_cstr(&print_arena, buf, "tuple");
+            return;
+        case LANG_TYPE_VOID:
+            string_extend_cstr(&print_arena, buf, "void");
+            return;
+    }
+    unreachable("");
+}
+
+void extend_lang_type_to_string(String* string, Lang_type lang_type, bool surround_in_lt_gt, bool do_tag) {
     if (surround_in_lt_gt) {
         vec_append(&print_arena, string, '<');
+    }
+
+    if (do_tag) {
+        extend_lang_type_tag_to_string(string, lang_type.type);
     }
 
     if (lang_type_get_str(lang_type).count > 1) {
@@ -62,21 +93,22 @@ static void extend_pos(String* buf, Pos pos) {
 }
 
 // TODO: make separate .c file for these
-Str_view lang_type_print_internal(Lang_type lang_type, bool surround_in_lt_gt) {
+Str_view lang_type_print_internal(Lang_type lang_type, bool surround_in_lt_gt, bool do_tag) {
     String buf = {0};
-    extend_lang_type_to_string(&buf, lang_type, surround_in_lt_gt);
+    extend_lang_type_to_string(&buf, lang_type, surround_in_lt_gt, do_tag);
+    string_extend_cstr(&print_arena, &buf, "\n");
     return string_to_strv(buf);
 }
 
 Str_view lang_type_atom_print_internal(Lang_type_atom atom, bool surround_in_lt_gt) {
     String buf = {0};
     // TODO: do not use `lang_type_primitive_new` here
-    extend_lang_type_to_string(&buf, lang_type_wrap_primitive_const(lang_type_primitive_new(atom)), surround_in_lt_gt);
+    extend_lang_type_to_string(&buf, lang_type_wrap_primitive_const(lang_type_primitive_new(atom)), surround_in_lt_gt, true);
     return string_to_strv(buf);
 }
 
 static void extend_lang_type(String* string, Lang_type lang_type, bool surround_in_lt_gt) {
-    extend_lang_type_to_string(string, lang_type, surround_in_lt_gt);
+    extend_lang_type_to_string(string, lang_type, surround_in_lt_gt, true);
 }
 
 static void extend_lang_type_atom(String* string, Lang_type_atom atom, bool surround_in_lt_gt) {
@@ -193,7 +225,7 @@ Str_view tast_function_call_print_internal(const Tast_function_call* fun_call, i
 
     string_extend_cstr_indent(&print_arena, &buf, "function_call", indent);
     string_extend_strv_in_par(&print_arena, &buf, fun_call->name);
-    string_extend_strv(&print_arena, &buf, lang_type_print_internal(fun_call->lang_type, false));
+    string_extend_strv(&print_arena, &buf, lang_type_print_internal(fun_call->lang_type, false, true));
 
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
         Str_view arg_text = tast_expr_print_internal(vec_at(&fun_call->args, idx), indent + INDENT_WIDTH);
@@ -339,7 +371,7 @@ Str_view tast_lang_type_print_internal(const Tast_lang_type* lang_type, int inde
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "lang_type", indent);
-    string_extend_strv(&print_arena, &buf, lang_type_print_internal(lang_type->lang_type, false));
+    string_extend_strv(&print_arena, &buf, lang_type_print_internal(lang_type->lang_type, false, true));
 
     return string_to_strv(buf);
 }
@@ -475,8 +507,8 @@ Str_view tast_function_decl_print_internal(const Tast_function_decl* fun_decl, i
     indent += INDENT_WIDTH;
     string_extend_strv_in_par(&print_arena, &buf, fun_decl->name);
     string_extend_cstr(&print_arena, &buf, "\n");
-    string_extend_strv(&print_arena, &buf, tast_function_params_print_internal(fun_decl->params, indent));
     string_extend_strv(&print_arena, &buf, tast_lang_type_print_internal(fun_decl->return_type, indent));
+    string_extend_strv(&print_arena, &buf, tast_function_params_print_internal(fun_decl->params, indent));
     indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);

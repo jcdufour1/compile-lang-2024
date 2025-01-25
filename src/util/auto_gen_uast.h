@@ -345,6 +345,12 @@ static Uast_type uast_gen_primitive_def(const char* prefix) {
     return def;
 }
 
+static Uast_type uast_gen_void_def(const char* prefix) {
+    Uast_type def = {.name = uast_name_new(prefix, "void_def", false)};
+
+    return def;
+}
+
 static Uast_type uast_gen_string_def(const char* prefix) {
     Uast_type def = {.name = uast_name_new(prefix, "string_def", false)};
 
@@ -368,6 +374,7 @@ static Uast_type uast_gen_literal_def(const char* prefix) {
     Uast_type def = {.name = uast_name_new(prefix, base_name, false)};
 
     vec_append(&gen_a, &def.sub_types, uast_gen_string_def(base_name));
+    vec_append(&gen_a, &def.sub_types, uast_gen_void_def(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_struct_lit_def(base_name));
 
     return def;

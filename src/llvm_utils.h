@@ -10,7 +10,8 @@
 void extend_lang_type_to_string(
     String* string,
     Lang_type lang_type,
-    bool surround_in_lt_gt
+    bool surround_in_lt_gt,
+    bool do_tag
 );
 
 void extend_lang_type_atom_to_string(

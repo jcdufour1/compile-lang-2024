@@ -98,7 +98,6 @@ static size_t get_count_excape_seq(Str_view str_view) {
 }
 
 static void extend_type_call_str(String* output, Lang_type lang_type) {
-    assert(lang_type_get_str(lang_type).count > 0);
     if (lang_type_get_pointer_depth(lang_type) != 0) {
         string_extend_cstr(&a_main, output, "ptr");
         return;
@@ -114,6 +113,9 @@ static void extend_type_call_str(String* output, Lang_type lang_type) {
         case LANG_TYPE_ENUM:
             lang_type = lang_type_wrap_primitive_const(lang_type_primitive_new(lang_type_atom_new_from_cstr("i32", 0)));
             break;
+        case LANG_TYPE_VOID:
+            lang_type = lang_type_wrap_primitive_const(lang_type_primitive_new(lang_type_atom_new_from_cstr("void", 0)));
+            break;
         case LANG_TYPE_PRIMITIVE:
             if (lang_type_atom_is_unsigned(lang_type_get_atom(lang_type))) {
                 todo();
@@ -124,8 +126,7 @@ static void extend_type_call_str(String* output, Lang_type lang_type) {
             unreachable("");
     }
 
-    assert(lang_type_get_str(lang_type).str[0] != 'u');
-    extend_lang_type_to_string(output, lang_type, false);
+    extend_lang_type_to_string(output, lang_type, false, false);
 }
 
 static bool llvm_is_variadic(const Llvm* llvm) {
@@ -405,10 +406,14 @@ static void emit_function_call(const Env* env, String* output, String* literals,
 
     // start of actual function call
     string_extend_cstr(&a_main, output, "    ");
+    log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(fun_call->lang_type));
+    log(LOG_DEBUG, LANG_TYPE_FMT"\n", str_view_print(lang_type_get_str(fun_call->lang_type)));
     if (fun_call->lang_type.type != LANG_TYPE_VOID) {
         string_extend_cstr(&a_main, output, "%");
         string_extend_size_t(&a_main, output, fun_call->llvm_id);
         string_extend_cstr(&a_main, output, " = ");
+    } else {
+        assert(!str_view_cstr_is_equal(lang_type_get_str(fun_call->lang_type), "void"));
     }
     string_extend_cstr(&a_main, output, "call ");
     extend_type_call_str(output, fun_call->lang_type);
@@ -1074,7 +1079,7 @@ static void tast_emit_struct_literal(String* output, const Tast_struct_lit_def* 
     string_extend_cstr(&a_main, output, "@__const.main.");
     string_extend_strv(&a_main, output, lit_def->name);
     string_extend_cstr(&a_main, output, " = private unnamed_addr constant %struct.");
-    extend_lang_type_to_string(output, lit_def->lang_type, false);
+    extend_lang_type_to_string(output, lit_def->lang_type, false, false);
     string_extend_cstr(&a_main, output, " {");
 
     size_t is_first = true;
@@ -1094,7 +1099,7 @@ static void emit_struct_literal(String* output, String* literals, const Llvm_str
     string_extend_cstr(&a_main, output, "@__const.main.");
     string_extend_strv(&a_main, output, lit_def->name);
     string_extend_cstr(&a_main, output, " = private unnamed_addr constant %struct.");
-    extend_lang_type_to_string(output, lit_def->lang_type, false);
+    extend_lang_type_to_string(output, lit_def->lang_type, false, false);
     string_extend_cstr(&a_main, output, " {");
 
     size_t is_first = true;

@@ -26,7 +26,7 @@ static void extend_name(String* buf, Str_view name) {
 }
 
 static void extend_lang_type(String* string, Lang_type lang_type, bool surround_in_lt_gt) {
-    extend_lang_type_to_string(string, lang_type, surround_in_lt_gt);
+    extend_lang_type_to_string(string, lang_type, surround_in_lt_gt, true);
 }
 
 Str_view llvm_binary_print_internal(const Llvm_binary* binary, int indent) {

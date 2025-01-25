@@ -254,6 +254,9 @@ static Str_view load_function_call(
         case LANG_TYPE_RAW_UNION:
             rtn_is_struct = true;
             break;
+        case LANG_TYPE_VOID:
+            rtn_is_struct = false;
+            break;
         default:
             unreachable("");
     }

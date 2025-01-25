@@ -34,6 +34,11 @@ static void add_primitive(Env* env, const char* base_name, int16_t pointer_depth
     try(usym_tbl_add(&env->primitives, uast_wrap_primitive_def(def)));
 }
 
+static void add_void(Env* env) {
+    Uast_void_def* def = uast_void_def_new(POS_BUILTIN);
+    try(usym_tbl_add(&env->primitives, uast_wrap_literal_def(uast_wrap_void_def(def))));
+}
+
 static void add_primitives(Env* env) {
     // TODO: come up with a smarter system for primitives
     add_primitive(env, "i1", 0);
@@ -166,7 +171,7 @@ static void add_primitives(Env* env) {
     add_primitive(env, "u63", 0);
     add_primitive(env, "u64", 0);
 
-    add_primitive(env, "void", 0);
+    add_void(env);
     add_primitive(env, "any", 0);
 }
 

@@ -14,12 +14,6 @@
 #define UAST_FMT STR_VIEW_FMT
 #endif // UAST_FMT
 
-void extend_lang_type_to_string(
-    String* string,
-    Lang_type lang_type,
-    bool surround_in_lt_gt
-);
-
 Str_view uast_print_internal(const Uast* uast, int recursion_depth);
 
 #define uast_print(root) str_view_print(uast_print_internal(root, 0))
@@ -327,6 +321,8 @@ static inline Str_view uast_get_literal_def_name(const Uast_literal_def* lit_def
             return uast_unwrap_struct_lit_def_const(lit_def)->name;
         case UAST_STRING_DEF:
             return uast_unwrap_string_def_const(lit_def)->name;
+        case UAST_VOID_DEF:
+            return str_view_from_cstr("void");
     }
     unreachable("");
 }

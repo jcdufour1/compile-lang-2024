@@ -13,8 +13,8 @@ static void extend_pos(String* buf, Pos pos) {
     string_extend_cstr(&print_arena, buf, " ))");
 }
 
-static void extend_lang_type(String* string, Lang_type lang_type, bool surround_in_lt_gt) {
-    extend_lang_type_to_string(string, lang_type, surround_in_lt_gt);
+static void extend_lang_type(String* string, Lang_type lang_type, bool surround_in_lt_gt, bool do_tag) {
+    extend_lang_type_to_string(string, lang_type, surround_in_lt_gt, do_tag);
 }
 
 void extend_ulang_type_to_string(String* string, Ulang_type lang_type, bool surround_in_lt_gt) {
@@ -94,7 +94,7 @@ Str_view uast_unary_print_internal(const Uast_unary* unary, int indent) {
 }
 
 void uast_extend_sym_typed_base(String* string, Sym_typed_base base) {
-    extend_lang_type(string, base.lang_type, true);
+    extend_lang_type(string, base.lang_type, true, true);
     string_extend_strv(&print_arena, string, base.name);
     string_extend_cstr(&print_arena, string, "\n");
 }
@@ -513,7 +513,7 @@ Str_view uast_primitive_def_print_internal(const Uast_primitive_def* def, int in
 
     string_extend_cstr_indent(&print_arena, &buf, "primitive_def\n", indent);
     indent += INDENT_WIDTH;
-    extend_lang_type(&buf, def->lang_type, true);
+    extend_lang_type(&buf, def->lang_type, true, true);
     string_extend_cstr(&print_arena, &buf, "\n");
     indent -= INDENT_WIDTH;
 
@@ -538,12 +538,27 @@ Str_view uast_struct_lit_def_print_internal(const Uast_struct_lit_def* def, int 
 
     indent += INDENT_WIDTH;
 
-    string_extend_cstr_indent(&print_arena, &buf, "struct_lit_def\n", indent);
+    string_extend_cstr_indent(&print_arena, &buf, "struct_lit_def", indent);
     string_extend_strv_indent(&print_arena, &buf, def->name, indent);
+    string_extend_cstr(&print_arena, &buf, "\n");
     for (size_t idx = 0; idx < def->members.info.count; idx++) {
         Str_view memb_text = uast_print_internal(vec_at(&def->members, idx), indent);
         string_extend_strv(&print_arena, &buf, memb_text);
     }
+
+    indent -= INDENT_WIDTH;
+
+    return string_to_strv(buf);
+}
+
+Str_view uast_void_def_print_internal(const Uast_void_def* def, int indent) {
+    (void) def;
+    String buf = {0};
+
+    indent += INDENT_WIDTH;
+
+    string_extend_cstr_indent(&print_arena, &buf, "void_def", indent);
+    string_extend_cstr(&print_arena, &buf, "\n");
 
     indent -= INDENT_WIDTH;
 
@@ -556,6 +571,8 @@ Str_view uast_literal_def_print_internal(const Uast_literal_def* def, int indent
             return uast_string_def_print_internal(uast_unwrap_string_def_const(def), indent);
         case UAST_STRUCT_LIT_DEF:
             return uast_struct_lit_def_print_internal(uast_unwrap_struct_lit_def_const(def), indent);
+        case UAST_VOID_DEF:
+            return uast_void_def_print_internal(uast_unwrap_void_def_const(def), indent);
     }
     unreachable("");
 }

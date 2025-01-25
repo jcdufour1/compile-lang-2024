@@ -7,12 +7,6 @@
 
 #define LANG_TYPE_FMT STR_VIEW_FMT
 
-void extend_lang_type_to_string(
-    String* string,
-    Lang_type lang_type,
-    bool surround_in_lt_gt
-);
-
 static inline bool lang_type_is_equal(Lang_type a, Lang_type b);
 
 static inline bool lang_type_atom_is_equal(Lang_type_atom a, Lang_type_atom b) {
@@ -70,13 +64,13 @@ static inline Lang_type_vec lang_type_vec_from_lang_type(Lang_type lang_type) {
     return vec;
 }
 
-Str_view lang_type_print_internal(Lang_type lang_type, bool surround_in_lt_gt);
+Str_view lang_type_print_internal(Lang_type lang_type, bool surround_in_lt_gt, bool do_tag);
 
 Str_view ulang_type_print_internal(Ulang_type lang_type, bool surround_in_lt_gt);
 
 Str_view lang_type_atom_print_internal(Lang_type_atom atom, bool surround_in_lt_gt);
 
-#define lang_type_print(lang_type) str_view_print(lang_type_print_internal((lang_type), false))
+#define lang_type_print(lang_type) str_view_print(lang_type_print_internal((lang_type), false, true))
 
 #define ulang_type_print(lang_type) str_view_print(ulang_type_print_internal((lang_type), false))
 

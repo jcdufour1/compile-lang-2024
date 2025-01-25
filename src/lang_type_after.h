@@ -17,7 +17,7 @@ static inline Lang_type_atom lang_type_get_atom(Lang_type lang_type) {
         case LANG_TYPE_TUPLE:
             unreachable("");
         case LANG_TYPE_VOID:
-            todo();
+            return (Lang_type_atom) {0};
     }
     unreachable("");
 }

@@ -52,9 +52,9 @@ const Uast_lang_type* get_parent_function_return_type(const Env* env) {
     return get_parent_function_decl_const(env)->return_type;
 }
 
-static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool implicit_pointer_depth);
+static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool implicit_pointer_depth, bool is_literal);
 
-static bool can_be_implicitly_converted_lang_type_atom(Lang_type_atom dest, Lang_type_atom src, bool implicit_pointer_depth) {
+static bool can_be_implicitly_converted_lang_type_atom(Lang_type_atom dest, Lang_type_atom src, bool implicit_pointer_depth, bool is_literal) {
     if (!implicit_pointer_depth) {
         if (src.pointer_depth != dest.pointer_depth) {
             log(LOG_DEBUG, "%d %d\n", src.pointer_depth, dest.pointer_depth);
@@ -68,27 +68,31 @@ static bool can_be_implicitly_converted_lang_type_atom(Lang_type_atom dest, Lang
         return lang_type_atom_is_equal(dest, src);
     }
     log(LOG_DEBUG, LANG_TYPE_FMT "    "LANG_TYPE_FMT"\n", lang_type_atom_print(dest), lang_type_atom_print(src));
-    assert(i_lang_type_atom_to_bit_width(dest) >= i_lang_type_atom_to_bit_width(src));
+    if (!is_literal) {
+        try(i_lang_type_atom_to_bit_width(dest) >= i_lang_type_atom_to_bit_width(src));
+    }
     return i_lang_type_atom_to_bit_width(dest) >= i_lang_type_atom_to_bit_width(src);
 }
 
 static bool can_be_implicitly_converted_tuple(Lang_type_tuple dest, Lang_type_tuple src, bool implicit_pointer_depth) {
+    (void) implicit_pointer_depth;
     if (dest.lang_types.info.count != src.lang_types.info.count) {
         return false;
     }
 
     for (size_t idx = 0; idx < dest.lang_types.info.count; idx++) {
-        if (!can_be_implicitly_converted(
-            vec_at(&dest.lang_types, idx), vec_at(&src.lang_types, idx), implicit_pointer_depth
-        )) {
-            return false;
-        }
+        todo();
+ //       if (!can_be_implicitly_converted(
+//            vec_at(&dest.lang_types, idx), vec_at(&src.lang_types, idx), implicit_pointer_depth, 
+  //      )) {
+   //         return false;
+    //    }
     }
 
     return true;
 }
 
-static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool implicit_pointer_depth) {
+static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool implicit_pointer_depth, bool is_literal) {
     if (dest.type != src.type) {
         todo();
     }
@@ -97,15 +101,15 @@ static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool impl
         case LANG_TYPE_TUPLE:
             return can_be_implicitly_converted_tuple(lang_type_unwrap_tuple_const(dest), lang_type_unwrap_tuple_const(src), implicit_pointer_depth);
         case LANG_TYPE_PRIMITIVE:
-            return can_be_implicitly_converted_lang_type_atom(lang_type_unwrap_primitive_const(dest).atom, lang_type_unwrap_primitive_const(src).atom, implicit_pointer_depth);
+            return can_be_implicitly_converted_lang_type_atom(lang_type_unwrap_primitive_const(dest).atom, lang_type_unwrap_primitive_const(src).atom, implicit_pointer_depth, is_literal);
         case LANG_TYPE_SUM:
-            return can_be_implicitly_converted_lang_type_atom(lang_type_unwrap_sum_const(dest).atom, lang_type_unwrap_sum_const(src).atom, implicit_pointer_depth);
+            return can_be_implicitly_converted_lang_type_atom(lang_type_unwrap_sum_const(dest).atom, lang_type_unwrap_sum_const(src).atom, implicit_pointer_depth, is_literal);
         case LANG_TYPE_STRUCT:
-            return can_be_implicitly_converted_lang_type_atom(lang_type_unwrap_struct_const(dest).atom, lang_type_unwrap_struct_const(src).atom, implicit_pointer_depth);
+            return can_be_implicitly_converted_lang_type_atom(lang_type_unwrap_struct_const(dest).atom, lang_type_unwrap_struct_const(src).atom, implicit_pointer_depth, is_literal);
         case LANG_TYPE_RAW_UNION:
-            return can_be_implicitly_converted_lang_type_atom(lang_type_unwrap_raw_union_const(dest).atom, lang_type_unwrap_raw_union_const(src).atom, implicit_pointer_depth);
+            return can_be_implicitly_converted_lang_type_atom(lang_type_unwrap_raw_union_const(dest).atom, lang_type_unwrap_raw_union_const(src).atom, implicit_pointer_depth, is_literal);
         case LANG_TYPE_ENUM:
-            return can_be_implicitly_converted_lang_type_atom(lang_type_unwrap_enum_const(dest).atom, lang_type_unwrap_enum_const(src).atom, implicit_pointer_depth);
+            return can_be_implicitly_converted_lang_type_atom(lang_type_unwrap_enum_const(dest).atom, lang_type_unwrap_enum_const(src).atom, implicit_pointer_depth, is_literal);
         case LANG_TYPE_VOID:
             return true;
     }
@@ -192,7 +196,7 @@ CHECK_ASSIGN_STATUS check_generic_assignment_finish(
         return CHECK_ASSIGN_OK;
     }
 
-    if (can_be_implicitly_converted(dest_lang_type, tast_get_lang_type_expr(src), false)) {
+    if (can_be_implicitly_converted(dest_lang_type, tast_get_lang_type_expr(src), false, src->type == TAST_LITERAL)) {
         if (src->type == TAST_LITERAL) {
             *new_src = src;
             tast_set_lang_type_expr(*new_src, dest_lang_type);
@@ -380,7 +384,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
     log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_lhs));
     log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_rhs));
     if (!lang_type_is_equal(tast_get_lang_type_expr(new_lhs), tast_get_lang_type_expr(new_rhs))) {
-        if (can_be_implicitly_converted(tast_get_lang_type_expr(new_lhs), tast_get_lang_type_expr(new_rhs), true)) {
+        if (can_be_implicitly_converted(tast_get_lang_type_expr(new_lhs), tast_get_lang_type_expr(new_rhs), true, new_lhs->type == TAST_LITERAL && new_rhs->type == TAST_LITERAL)) {
             if (new_rhs->type == TAST_LITERAL) {
                 new_lhs = auto_deref_to_0(env, new_lhs);
                 new_rhs = auto_deref_to_0(env, new_rhs);
@@ -388,7 +392,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
             } else {
                 try(try_set_unary_types_finish(env, &new_rhs, new_rhs, tast_get_pos_expr(new_rhs), TOKEN_UNSAFE_CAST, tast_get_lang_type_expr(new_lhs)));
             }
-        } else if (can_be_implicitly_converted(tast_get_lang_type_expr(new_rhs), tast_get_lang_type_expr(new_lhs), true)) {
+        } else if (can_be_implicitly_converted(tast_get_lang_type_expr(new_rhs), tast_get_lang_type_expr(new_lhs), true, new_lhs->type == TAST_LITERAL && new_rhs->type == TAST_LITERAL)) {
             if (new_lhs->type == TAST_LITERAL) {
                 new_lhs = auto_deref_to_0(env, new_lhs);
                 new_rhs = auto_deref_to_0(env, new_rhs);
@@ -945,6 +949,8 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
     if (!try_set_lang_type_types(env, &fun_rtn_type, fun_decl->return_type)) {
         return false;
     }
+    log(LOG_DEBUG, TAST_FMT, uast_lang_type_print(fun_decl->return_type));
+    log(LOG_DEBUG, TAST_FMT, tast_lang_type_print(fun_rtn_type));
 
     Uast_function_params* params = fun_decl->params;
     size_t params_idx = 0;
