@@ -121,6 +121,9 @@ static void extend_type_call_str(String* output, Lang_type lang_type) {
                 lang_type_set_atom(&lang_type, lang_type_atom_unsigned_to_signed(lang_type_get_atom(lang_type)));
             }
             break;
+        case LANG_TYPE_SUM:
+            string_extend_cstr(&a_main, output, "%struct.");
+            break;
         default:
             unreachable("");
     }
@@ -903,6 +906,11 @@ static void emit_raw_union_def(String* output, const Llvm_raw_union_def* raw_uni
     emit_struct_def_base(output, &raw_union_def->base, true);
 }
 
+static void emit_sum_def(String* output, const Llvm_sum_def* sum_def) {
+    string_extend_cstr(&a_main, output, "%struct.");
+    emit_struct_def_base(output, &sum_def->base, true);
+}
+
 static void emit_load_struct_element_pointer(const Env* env, String* output, const Llvm_load_element_ptr* load_elem_ptr) {
     string_extend_cstr(&a_main, output, "    %"); 
     string_extend_size_t(&a_main, output, load_elem_ptr->llvm_id);
@@ -967,6 +975,9 @@ static void emit_def(Env* env, String* struct_defs, String* output, String* lite
             return;
         case LLVM_RAW_UNION_DEF:
             emit_raw_union_def(struct_defs, llvm_unwrap_raw_union_def_const(def));
+            return;
+        case LLVM_SUM_DEF:
+            emit_sum_def(struct_defs, llvm_unwrap_sum_def_const(def));
             return;
         case LLVM_ENUM_DEF:
             return;

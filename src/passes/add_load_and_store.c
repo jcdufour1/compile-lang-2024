@@ -95,6 +95,13 @@ static Llvm_raw_union_def* tast_clone_raw_union_def(const Tast_raw_union_def* ol
     );
 }
 
+static Llvm_sum_def* tast_clone_sum_def(const Tast_sum_def* old_def) {
+    return llvm_sum_def_new(
+        old_def->pos,
+        old_def->base
+    );
+}
+
 static void do_function_def_alloca_param(Env* env, Llvm_function_params* new_params, Llvm_block* new_block, Llvm_variable_def* param) {
     switch (param->lang_type.type) {
         case LANG_TYPE_STRUCT:
@@ -392,6 +399,23 @@ static Str_view load_ptr_symbol_typed(
     assert(lang_type_is_equal(var_def->lang_type, old_sym->base.lang_type));
 
     return llvm_get_tast_name(alloca);
+}
+
+static Str_view load_ptr_sum_callee(
+    Env* env,
+    Llvm_block* new_block,
+    Tast_sum_callee* old_callee
+) {
+    (void) new_block;
+    (void) env;
+    (void) old_callee;
+    log(LOG_DEBUG, "entering thing\n");
+
+    //Tast_def* var_def_ = NULL;
+    //try(symbol_lookup(&var_def_, env, old_callee->name));
+    todo();
+
+    //return llvm_get_tast_name(alloca);
 }
 
 static Str_view load_symbol_typed(
@@ -1303,6 +1327,20 @@ static Str_view load_raw_union_def(
     return (Str_view) {0};
 }
 
+static Str_view load_sum_def(
+    Env* env,
+    Llvm_block* new_block,
+    Tast_sum_def* old_def
+) {
+    (void) env;
+
+    vec_append(&a_main, &new_block->children, llvm_wrap_def(
+        llvm_wrap_sum_def(tast_clone_sum_def(old_def))
+    ));
+
+    return (Str_view) {0};
+}
+
 static Str_view load_ptr_variable_def(
     Env* env,
     Llvm_block* new_block,
@@ -1391,7 +1429,7 @@ static Str_view load_ptr_expr(Env* env, Llvm_block* new_block, Tast_expr* old_ex
         case TAST_TUPLE:
             unreachable("");
         case TAST_SUM_CALLEE:
-            unreachable("");
+            return load_ptr_sum_callee(env, new_block, tast_unwrap_sum_callee(old_expr));
     }
     unreachable("");
 }
@@ -1440,7 +1478,7 @@ static Str_view load_def(Env* env, Llvm_block* new_block, Tast_def* old_def) {
         case TAST_RAW_UNION_DEF:
             return load_raw_union_def(env, new_block, tast_unwrap_raw_union_def(old_def));
         case TAST_SUM_DEF:
-            unreachable("");
+            return load_sum_def(env, new_block, tast_unwrap_sum_def(old_def));
         case TAST_LITERAL_DEF:
             unreachable("");
         case TAST_PRIMITIVE_DEF:

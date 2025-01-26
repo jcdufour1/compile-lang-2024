@@ -22,15 +22,18 @@ static inline Lang_type lang_type_from_ulang_type_regular(const Env* env, Ulang_
         todo();
     }
 
+    Lang_type_atom new_atom = lang_type_atom_new(lang_type.atom.str, lang_type.atom.pointer_depth);
     switch (result->type) {
         case UAST_STRUCT_DEF:
-            return lang_type_wrap_struct_const(lang_type_struct_new(lang_type_atom_new(lang_type.atom.str, lang_type.atom.pointer_depth)));
+            return lang_type_wrap_struct_const(lang_type_struct_new(new_atom));
         case UAST_RAW_UNION_DEF:
-            return lang_type_wrap_raw_union_const(lang_type_raw_union_new(lang_type_atom_new(lang_type.atom.str, lang_type.atom.pointer_depth)));
+            return lang_type_wrap_raw_union_const(lang_type_raw_union_new(new_atom));
         case UAST_ENUM_DEF:
-            return lang_type_wrap_enum_const(lang_type_enum_new(lang_type_atom_new(lang_type.atom.str, lang_type.atom.pointer_depth)));
+            return lang_type_wrap_enum_const(lang_type_enum_new(new_atom));
+        case UAST_SUM_DEF:
+            return lang_type_wrap_sum_const(lang_type_sum_new(new_atom));
         case UAST_PRIMITIVE_DEF:
-            return lang_type_wrap_primitive_const(lang_type_primitive_new(lang_type_atom_new(lang_type.atom.str, lang_type.atom.pointer_depth)));
+            return lang_type_wrap_primitive_const(lang_type_primitive_new(new_atom));
         case UAST_LITERAL_DEF:
             try(uast_unwrap_literal_def_const(result)->type == UAST_VOID_DEF);
             return lang_type_wrap_void_const(lang_type_void_new(0));

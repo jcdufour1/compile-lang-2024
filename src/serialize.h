@@ -1,10 +1,10 @@
 #ifndef SERIALIZE_H
 #define SERIALIZE_H
 
-static inline Str_view serialize_struct_def(const Tast_struct_def* struct_def) {
+static inline Str_view serialize_struct_def_base(Struct_def_base base) {
     String name = {0};
-    for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
-        Lang_type curr = vec_at(&struct_def->base.members, idx)->lang_type;
+    for (size_t idx = 0; idx < base.members.info.count; idx++) {
+        Lang_type curr = vec_at(&base.members, idx)->lang_type;
         string_extend_size_t(&a_main, &name, lang_type_get_pointer_depth(curr));
         string_extend_cstr(&a_main, &name, "_");
         string_extend_size_t(&a_main, &name, lang_type_get_str(curr).count);
@@ -12,6 +12,18 @@ static inline Str_view serialize_struct_def(const Tast_struct_def* struct_def) {
         string_extend_strv(&a_main, &name, lang_type_get_str(curr));
         string_extend_cstr(&a_main, &name, "__");
     }
+    return string_to_strv(name);
+}
+
+static inline Str_view serialize_struct_def(const Tast_struct_def* struct_def) {
+    String name = {0};
+    string_extend_strv(&a_main, &name, serialize_struct_def_base(struct_def->base));
+    return string_to_strv(name);
+}
+
+static inline Str_view serialize_sum_def(const Tast_sum_def* sum_def) {
+    String name = {0};
+    string_extend_strv(&a_main, &name, serialize_struct_def_base(sum_def->base));
     return string_to_strv(name);
 }
 
@@ -72,7 +84,7 @@ static inline Str_view serialize_def(const Tast_def* def) {
         case TAST_ENUM_DEF:
             unreachable("");
         case TAST_SUM_DEF:
-            unreachable("");
+            return serialize_sum_def(tast_unwrap_sum_def_const(def));
         case TAST_PRIMITIVE_DEF:
             unreachable("");
         case TAST_LITERAL_DEF:

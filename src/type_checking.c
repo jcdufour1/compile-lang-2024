@@ -1166,8 +1166,6 @@ bool try_set_member_access_types_finish_sum_def(
                 lang_type_wrap_sum_const(lang_type_sum_new(lang_type_atom_new(sum_def->base.name, 0)))
             )));
 
-            //assert(member_def->lang_type.str.count > 0);
-            todo();
             return true;
 
             todo();

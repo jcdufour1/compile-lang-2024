@@ -273,6 +273,17 @@ Str_view tast_tuple_print_internal(const Tast_tuple* lit, int indent) {
     return string_to_strv(buf);
 }
 
+Str_view tast_sum_callee_print_internal(const Tast_sum_callee* lit, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&print_arena, &buf, "sum_callee", indent);
+    
+    string_extend_strv(&print_arena, &buf, lang_type_print_internal(lit->sum_lang_type, true, true));
+    string_extend_strv(&print_arena, &buf, tast_enum_lit_print_internal(lit->tag, indent + INDENT_WIDTH));
+
+    return string_to_strv(buf);
+}
+
 Str_view tast_number_print_internal(const Tast_number* num, int indent) {
     String buf = {0};
 
@@ -691,7 +702,7 @@ Str_view tast_expr_print_internal(const Tast_expr* expr, int indent) {
         case TAST_TUPLE:
             return tast_tuple_print_internal(tast_unwrap_tuple_const(expr), indent);
         case TAST_SUM_CALLEE:
-            unreachable("");
+            return tast_sum_callee_print_internal(tast_unwrap_sum_callee_const(expr), indent);
     }
     unreachable("");
 }
