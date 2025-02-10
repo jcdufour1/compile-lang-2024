@@ -633,7 +633,7 @@ Str_view tast_literal_def_print_internal(const Tast_literal_def* def, int indent
 Str_view tast_sum_def_print_internal(const Tast_sum_def* def, int indent) {
     String buf = {0};
 
-    extend_struct_def_base(&buf, "enum_def", def->base, indent);
+    extend_struct_def_base(&buf, "sum_def", def->base, indent);
 
     return string_to_strv(buf);
 }

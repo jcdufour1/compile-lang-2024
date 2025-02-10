@@ -201,7 +201,6 @@ void do_passes(Str_view file_text, const Parameters* params) {
     }
     log(LOG_DEBUG, "\n"TAST_FMT, tast_block_print(typed));
     arena_reset(&print_arena);
-    todo();
 
     typed = change_operators(&env, typed);
     log(LOG_DEBUG, "\n"TAST_FMT, tast_block_print(typed));
