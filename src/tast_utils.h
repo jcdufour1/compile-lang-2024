@@ -232,7 +232,8 @@ static inline void tast_set_lang_type_expr(Tast_expr* expr, Lang_type lang_type)
             tast_set_lang_type_literal(tast_unwrap_literal(expr), lang_type);
             return;
         case TAST_FUNCTION_CALL:
-            todo();
+            tast_unwrap_function_call(expr)->lang_type = lang_type;
+            return;
         case TAST_STRUCT_LITERAL:
             todo();
         case TAST_TUPLE:
