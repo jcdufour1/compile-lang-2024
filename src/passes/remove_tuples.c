@@ -34,13 +34,12 @@ static Tast_expr* rm_tuple_expr_not_in_assignment(Env* env, Tast_expr* expr);
 static Lang_type lang_type_thing(Env* env, Lang_type lang_type, Pos lang_type_pos) {
     switch (lang_type.type) {
         case LANG_TYPE_SUM: {
-            Uast_variable_def_vec members = {0};
 
             log(LOG_DEBUG, LANG_TYPE_FMT, lang_type_print(lang_type));
             Tast_def* lang_type_def_ = NULL; 
             try(symbol_lookup(&lang_type_def_, env, lang_type_get_str(lang_type)));
             log(LOG_DEBUG, LANG_TYPE_FMT, tast_def_print(lang_type_def_));
-            todo();
+            Tast_variable_def_vec members = tast_unwrap_sum_def(lang_type_def_)->base.members;
             //Uast_variable_def* memb = uast_variable_def_new(
             //    lang_type_pos,
             //    lang_type_to_ulang_type(vec_at_const(lang_type_unwrap_tuple_const(lang_type).lang_types, idx)),
@@ -56,18 +55,19 @@ static Lang_type lang_type_thing(Env* env, Lang_type lang_type, Pos lang_type_po
             //);
             //vec_append(&a_main, &members, memb);
 
-            Ustruct_def_base base = {
+            Struct_def_base base = {
                 .members = members,
+                .llvm_id = 0,
                 .name = util_literal_name_new_prefix("tuple_struct")
             };
-            Uast_struct_def* struct_def_ = uast_struct_def_new(lang_type_pos, base);
-            Tast_struct_def* struct_def = NULL;
-            try(usym_tbl_add(&vec_at(&env->ancesters, 0)->usymbol_table, uast_wrap_struct_def(struct_def_)));
-            try(try_set_struct_def_types(env, &struct_def, struct_def_));
-            vec_append(&a_main, &env->extra_structs, struct_def);
-            log(LOG_DEBUG, STR_VIEW_FMT, tast_struct_def_print(struct_def));
+            Tast_sum_def* sum_def = tast_sum_def_new(tast_unwrap_sum_def(lang_type_def_)->pos, base);
+            //try(usym_tbl_add(&vec_at(&env->ancesters, 0)->usymbol_table, uast_wrap_struct_def(struct_def_)));
+            //vec_append(&a_main, &struct_def->base.members, vec_at(&tast_unwrap_struct_def(lang_type_def_)->base.members, 0));
+            //try(try_set_struct_def_types(env, &struct_def, struct_def_));
+            vec_append(&a_main, &env->extra_sums, sum_def);
+            log(LOG_DEBUG, STR_VIEW_FMT, tast_sum_def_print(sum_def));
             Lang_type new_thing = lang_type_wrap_struct_const(lang_type_struct_new(lang_type_atom_new(base.name, 0)));
-            try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_wrap_struct_def(struct_def)));
+            try(rm_tuple_struct_add(env, tast_wrap_sum_def(sum_def)));
             return new_thing;
         }
         case LANG_TYPE_TUPLE: {
