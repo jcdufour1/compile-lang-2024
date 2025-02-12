@@ -23,7 +23,7 @@ static bool is_struct_like(LANG_TYPE_TYPE type) {
         case LANG_TYPE_VOID:
             return false;
         case LANG_TYPE_SUM:
-            unreachable("");
+            return true;
         case LANG_TYPE_TUPLE:
             unreachable("");
     }
@@ -103,27 +103,13 @@ static Llvm_sum_def* tast_clone_sum_def(const Tast_sum_def* old_def) {
 }
 
 static void do_function_def_alloca_param(Env* env, Llvm_function_params* new_params, Llvm_block* new_block, Llvm_variable_def* param) {
-    switch (param->lang_type.type) {
-        case LANG_TYPE_STRUCT:
-            param->name_self = param->name_corr_param;
-            alloca_add(env, llvm_wrap_def(llvm_wrap_variable_def(param)));
-            break;
-        case LANG_TYPE_ENUM:
-            vec_insert(&a_main, &new_block->children, 0, llvm_wrap_alloca(
-                add_load_and_store_alloca_new(env, param)
-            ));
-            break;
-        case LANG_TYPE_RAW_UNION:
-            param->name_self = param->name_corr_param;
-            alloca_add(env, llvm_wrap_def(llvm_wrap_variable_def(param)));
-            break;
-        case LANG_TYPE_PRIMITIVE:
-            vec_insert(&a_main, &new_block->children, 0, llvm_wrap_alloca(
-                add_load_and_store_alloca_new(env, param)
-            ));
-            break;
-        default:
-            unreachable("");
+    if (is_struct_like(param->lang_type.type)) {
+        param->name_self = param->name_corr_param;
+        alloca_add(env, llvm_wrap_def(llvm_wrap_variable_def(param)));
+    } else {
+        vec_insert(&a_main, &new_block->children, 0, llvm_wrap_alloca(
+            add_load_and_store_alloca_new(env, param)
+        ));
     }
 
     vec_append(&a_main, &new_params->params, param);
@@ -342,7 +328,7 @@ static Llvm_literal* tast_literal_clone(Tast_literal* old_lit) {
             return llvm_wrap_number(number);
         }
         case TAST_SUM_LIT: {
-            unreachable("should not still be present");
+            unreachable("sum literal should not be here");
         }
     }
     unreachable("");
@@ -379,10 +365,8 @@ static Str_view load_ptr_symbol_typed(
     Tast_symbol_typed* old_sym
 ) {
     (void) new_block;
-    log(LOG_DEBUG, "entering thing\n");
 
     Tast_def* var_def_ = NULL;
-    log(LOG_DEBUG, LLVM_FMT, tast_symbol_typed_print(old_sym));
     try(symbol_lookup(&var_def_, env, old_sym->base.name));
     Llvm_variable_def* var_def = tast_clone_variable_def(tast_unwrap_variable_def(var_def_));
     Llvm* alloca = NULL;
@@ -392,10 +376,6 @@ static Str_view load_ptr_symbol_typed(
     }
 
     assert(var_def);
-    log(LOG_DEBUG, TAST_FMT"\n", llvm_variable_def_print(var_def));
-    log(LOG_DEBUG, TAST_FMT"\n", tast_symbol_typed_print(old_sym));
-    log(LOG_DEBUG, TAST_FMT"\n", llvm_print(alloca));
-    //log(LOG_DEBUG, TAST_FMT"\n", tast_print(var_def->storage_location.tast));
     assert(lang_type_is_equal(var_def->lang_type, old_sym->base.lang_type));
 
     return llvm_get_tast_name(alloca);
@@ -409,10 +389,11 @@ static Str_view load_ptr_sum_callee(
     (void) new_block;
     (void) env;
     (void) old_callee;
-    log(LOG_DEBUG, "entering thing\n");
+    log(LOG_DEBUG, "entering thing: "TAST_FMT"\n", tast_sum_callee_print(old_callee));
 
     //Tast_def* var_def_ = NULL;
     //try(symbol_lookup(&var_def_, env, old_callee->name));
+
     todo();
 
     //return llvm_get_tast_name(alloca);
