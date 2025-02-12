@@ -201,14 +201,13 @@ static Tast_stmt* rm_tuple_assignment_sum(Env* env, Tast_assignment* assign) {
     log(LOG_DEBUG, TAST_FMT"\n", str_view_print(serialize_lang_type(env, tast_get_lang_type_expr(assign->rhs))));
     try(rm_tuple_struct_lookup(&struct_def_, env, serialize_lang_type(env, tast_get_lang_type_expr(assign->rhs))));
 
-    Ulang_type new_var_lang_type = ulang_type_wrap_regular_const(ulang_type_regular_new(ulang_type_atom_new(tast_unwrap_sum_def(struct_def_)->base.name, 0)));
+    Lang_type new_var_lang_type = lang_type_wrap_sum_const(lang_type_sum_new(lang_type_atom_new(tast_unwrap_sum_def(struct_def_)->base.name, 0)));
     Tast_variable_def* new_var = tast_variable_def_new(
         tast_get_pos_stmt(assign->lhs),
         new_var_lang_type,
         false,
         util_literal_name_new_prefix("sum_assign_lhs")
     );
-    try(try_set_variable_def_types(env, &new_var, new_var_, false));
     try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_wrap_variable_def(new_var)));
     Tast_assignment* new_assign = tast_assignment_new(
         src->pos,
@@ -216,20 +215,21 @@ static Tast_stmt* rm_tuple_assignment_sum(Env* env, Tast_assignment* assign) {
         tast_wrap_function_call(src)
     );
     log(LOG_DEBUG, TAST_FMT, tast_assignment_print(new_assign));
-    todo();
     vec_append(&a_main, &new_children, tast_wrap_assignment(new_assign));
 
     // tag
-    for (size_t idx = 0; idx < tast_unwrap_struct_def(struct_def_)->base.members.info.count; idx++) {
-        Tast_variable_def* curr_memb_def = vec_at(&tast_unwrap_struct_def(struct_def_)->base.members, 0);
+    for (size_t idx = 0; idx < tast_unwrap_sum_def(struct_def_)->base.members.info.count; idx++) {
+        Tast_variable_def* curr_memb_def = vec_at(&tast_unwrap_sum_def(struct_def_)->base.members, 0);
 
-        Uast_member_access_untyped* curr_src_ = uast_member_access_untyped_new(
-          src->pos,
+        Tast_member_access_typed* curr_src_ = tast_member_access_typed_new(
+            src->pos,
             curr_memb_def->name,
             uast_wrap_symbol_untyped(uast_symbol_untyped_new(src->pos, new_var->name))
         );
-        Tast_stmt* curr_src = NULL;
-        try(try_set_member_access_types(env, &curr_src, curr_src_));
+        //Tast_stmt* curr_src = NULL;
+        log(LOG_DEBUG, TAST_FMT, tast_variable_def_print(curr_memb_def));
+        todo();
+        //try(try_set_member_access_types(env, &curr_src, curr_src_));
 
         todo();
         //Tast_expr* curr_dest = vec_at(&dest->members, idx);
@@ -241,7 +241,7 @@ static Tast_stmt* rm_tuple_assignment_sum(Env* env, Tast_assignment* assign) {
         //vec_append(&a_main, &new_children, tast_wrap_assignment(curr_assign));
     }
 
-    src->lang_type = lang_type_from_ulang_type(env, new_var_lang_type);
+    src->lang_type = new_var_lang_type;
 
     //log(LOG_DEBUG, TAST_FMT, tast_block_print(tast_block_new(assign->pos, false, new_children, (Symbol_collection) {0}, assign->pos)));
     //todo();

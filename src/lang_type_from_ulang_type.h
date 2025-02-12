@@ -19,7 +19,7 @@ static inline Lang_type lang_type_from_ulang_type_tuple(const Env* env, Ulang_ty
 static inline Lang_type lang_type_from_ulang_type_regular(const Env* env, Ulang_type_regular lang_type) {
     Uast_def* result = NULL;
     if (!usymbol_lookup(&result, env, lang_type.atom.str)) {
-        todo();
+        unreachable(LANG_TYPE_FMT, ulang_type_print(ulang_type_wrap_regular_const(lang_type)));
     }
 
     Lang_type_atom new_atom = lang_type_atom_new(lang_type.atom.str, lang_type.atom.pointer_depth);
