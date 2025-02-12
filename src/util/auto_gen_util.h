@@ -36,6 +36,7 @@ typedef struct {
     Str_view ancesters_type;
     Str_view print_fn;
     bool do_primitives;
+    bool env_thing;
 } Symbol_tbl_type;
 
 typedef struct {

@@ -65,7 +65,12 @@ static void gen_symbol_table_c_file_symbol_update(String* text, Symbol_tbl_type 
     extend_strv_lower(text, type.symbol_table_name);
     string_extend_cstr(&gen_a, text, ", ");
     extend_strv_lower(text, type.get_key_fn_name);
-    string_extend_cstr(&gen_a, text, "(tast_of_symbol))) {\n");
+    if (type.env_thing) {
+        string_extend_cstr(&gen_a, text, "(env, ");
+    } else {
+        string_extend_cstr(&gen_a, text, "(");
+    }
+    string_extend_cstr(&gen_a, text, "tast_of_symbol))) {\n");
     string_extend_cstr(&gen_a, text, "            curr_tast->tast = tast_of_symbol;\n");
     string_extend_cstr(&gen_a, text, "            return;\n");
     string_extend_cstr(&gen_a, text, "        }\n");
@@ -129,6 +134,9 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "bool ");
     extend_strv_lower(&text, type.internal_prefix);
     string_extend_cstr(&gen_a, &text, "_tbl_add_internal(");
+    if (type.env_thing) {
+        string_extend_cstr(&gen_a, &text, "const Env* env, ");
+    }
     extend_strv_first_upper(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_table_tast* sym_tbl_tasts, size_t capacity, ");
     extend_strv_first_upper(&text, type.type_name);
@@ -136,7 +144,11 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "    assert(tast_of_symbol);\n");
     string_extend_cstr(&gen_a, &text, "    Str_view symbol_name = ");
     string_extend_strv(&gen_a, &text, type.get_key_fn_name);
-    string_extend_cstr(&gen_a, &text, "(tast_of_symbol);\n");
+    if (type.env_thing) {
+        string_extend_cstr(&gen_a, &text, "(env, tast_of_symbol);\n");
+    } else {
+        string_extend_cstr(&gen_a, &text, "(tast_of_symbol);\n");
+    }
     string_extend_cstr(&gen_a, &text, "    assert(symbol_name.count > 0 && \"invalid tast_of_symbol\");\n");
     string_extend_cstr(&gen_a, &text, "\n");
     string_extend_cstr(&gen_a, &text, "    assert(capacity > 0);\n");
@@ -145,7 +157,12 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "    while (sym_tbl_tasts[curr_table_idx].status == SYM_TBL_OCCUPIED) {\n");
     string_extend_cstr(&gen_a, &text, "        if (str_view_is_equal(");
     string_extend_strv(&gen_a, &text, type.get_key_fn_name);
-    string_extend_cstr(&gen_a, &text, "(sym_tbl_tasts[curr_table_idx].tast), symbol_name)) {\n");
+    if (type.env_thing) {
+        string_extend_cstr(&gen_a, &text, "(env, ");
+    } else {
+        string_extend_cstr(&gen_a, &text, "(");
+    }
+    string_extend_cstr(&gen_a, &text, "sym_tbl_tasts[curr_table_idx].tast), symbol_name)) {\n");
     string_extend_cstr(&gen_a, &text, "            return false;\n");
     string_extend_cstr(&gen_a, &text, "        }\n");
     string_extend_cstr(&gen_a, &text, "        curr_table_idx = (curr_table_idx + 1) % capacity;\n");
@@ -163,6 +180,9 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "static void ");
     extend_strv_lower(&text, type.internal_prefix);
     string_extend_cstr(&gen_a, &text, "_tbl_cpy(\n");
+    if (type.env_thing) {
+        string_extend_cstr(&gen_a, &text, "const Env* env, \n");
+    }
     string_extend_cstr(&gen_a, &text, "    ");
     extend_strv_first_upper(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_table_tast* dest,\n");
@@ -175,7 +195,11 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "    for (size_t bucket_src = 0; bucket_src < count_tasts_to_cpy; bucket_src++) {\n");
     string_extend_cstr(&gen_a, &text, "        if (src[bucket_src].status == SYM_TBL_OCCUPIED) {\n");
     extend_strv_lower(&text, type.internal_prefix);
-    string_extend_cstr(&gen_a, &text, "_tbl_add_internal(dest, capacity, src[bucket_src].tast);\n");
+    if (type.env_thing) {
+        string_extend_cstr(&gen_a, &text, "_tbl_add_internal(env, dest, capacity, src[bucket_src].tast);\n");
+    } else {
+        string_extend_cstr(&gen_a, &text, "_tbl_add_internal(dest, capacity, src[bucket_src].tast);\n");
+    }
     string_extend_cstr(&gen_a, &text, "        }\n");
     string_extend_cstr(&gen_a, &text, "    }\n");
     string_extend_cstr(&gen_a, &text, "}\n");
@@ -183,6 +207,9 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "static void ");
     extend_strv_lower(&text, type.internal_prefix);
     string_extend_cstr(&gen_a, &text, "_tbl_expand_if_nessessary(");
+    if (type.env_thing) {
+        string_extend_cstr(&gen_a, &text, "const Env* env, ");
+    }
     extend_strv_first_upper(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_table* sym_table) {\n");
     string_extend_cstr(&gen_a, &text, "    size_t old_capacity_tast_count = sym_table->capacity;\n");
@@ -208,7 +235,11 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "        new_table_tasts = arena_alloc(&a_main, sym_table->capacity*tast_size);\n");
     string_extend_cstr(&gen_a, &text, "        ");
     extend_strv_lower(&text, type.internal_prefix);
-    string_extend_cstr(&gen_a, &text, "_tbl_cpy(new_table_tasts, sym_table->table_tasts, sym_table->capacity, old_capacity_tast_count);\n");
+    string_extend_cstr(&gen_a, &text, "_tbl_cpy(");
+    if (type.env_thing) {
+        string_extend_cstr(&gen_a, &text, "env, ");
+    }
+    string_extend_cstr(&gen_a, &text, "new_table_tasts, sym_table->table_tasts, sym_table->capacity, old_capacity_tast_count);\n");
     string_extend_cstr(&gen_a, &text, "        sym_table->table_tasts = new_table_tasts;\n");
     string_extend_cstr(&gen_a, &text, "    }\n");
     string_extend_cstr(&gen_a, &text, "}\n");
@@ -256,6 +287,9 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "bool ");
     extend_strv_lower(&text, type.internal_prefix);
     string_extend_cstr(&gen_a, &text, "_tbl_add(");
+    if (type.env_thing) {
+        string_extend_cstr(&gen_a, &text, "const Env* env, ");
+    }
     extend_strv_first_upper(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_table* ");
     string_extend_cstr(&gen_a, &text, "sym_table, ");
@@ -263,11 +297,19 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "* tast_of_symbol) {\n");
     string_extend_cstr(&gen_a, &text, "    ");
     extend_strv_lower(&text, type.internal_prefix);
-    string_extend_cstr(&gen_a, &text, "_tbl_expand_if_nessessary(sym_table);\n");
+    if (type.env_thing) {
+        string_extend_cstr(&gen_a, &text, "_tbl_expand_if_nessessary(env, sym_table);\n");
+    } else {
+        string_extend_cstr(&gen_a, &text, "_tbl_expand_if_nessessary(sym_table);\n");
+    }
     string_extend_cstr(&gen_a, &text, "    assert(sym_table->capacity > 0);\n");
     string_extend_cstr(&gen_a, &text, "    if (!");
     extend_strv_lower(&text, type.internal_prefix);
-    string_extend_cstr(&gen_a, &text, "_tbl_add_internal(sym_table->table_tasts, sym_table->capacity, tast_of_symbol)) {\n");
+    if (type.env_thing) {
+        string_extend_cstr(&gen_a, &text, "_tbl_add_internal(env, sym_table->table_tasts, sym_table->capacity, tast_of_symbol)) {\n");
+    } else {
+        string_extend_cstr(&gen_a, &text, "_tbl_add_internal(sym_table->table_tasts, sym_table->capacity, tast_of_symbol)) {\n");
+    }
     string_extend_cstr(&gen_a, &text, "        return false;\n");
     string_extend_cstr(&gen_a, &text, "    }\n");
     string_extend_cstr(&gen_a, &text, "    ");
@@ -278,7 +320,12 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     extend_strv_lower(&text, type.internal_prefix);
     string_extend_cstr(&gen_a, &text, "_tbl_lookup(&dummy, sym_table, ");
     extend_strv_lower(&text, type.get_key_fn_name);
-    string_extend_cstr(&gen_a, &text, "(tast_of_symbol)));\n");
+    if (type.env_thing) {
+        string_extend_cstr(&gen_a, &text, "(env, ");
+    } else {
+        string_extend_cstr(&gen_a, &text, "(");
+    }
+    string_extend_cstr(&gen_a, &text, "tast_of_symbol)));\n");
     string_extend_cstr(&gen_a, &text, "    sym_table->count++;\n");
     string_extend_cstr(&gen_a, &text, "    return true;\n");
     string_extend_cstr(&gen_a, &text, "}\n");
@@ -286,6 +333,9 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "void ");
     extend_strv_lower(&text, type.internal_prefix);
     string_extend_cstr(&gen_a, &text, "_tbl_update(");
+    if (type.env_thing) {
+        string_extend_cstr(&gen_a, &text, "const Env* env, ");
+    }
     extend_strv_first_upper(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_table* sym_table, ");
     extend_strv_first_upper(&text, type.type_name);
@@ -297,13 +347,21 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     extend_strv_lower(&text, type.internal_prefix);
     string_extend_cstr(&gen_a, &text, "_tbl_lookup_internal(&sym_tast, sym_table, ");
     extend_strv_lower(&text, type.get_key_fn_name);
-    string_extend_cstr(&gen_a, &text, "(tast_of_symbol))) {\n");
+    if (type.env_thing) {
+        string_extend_cstr(&gen_a, &text, "(env, tast_of_symbol))) {\n");
+    } else {
+        string_extend_cstr(&gen_a, &text, "(tast_of_symbol))) {\n");
+    }
     string_extend_cstr(&gen_a, &text, "        sym_tast->tast = tast_of_symbol;\n");
     string_extend_cstr(&gen_a, &text, "        return;\n");
     string_extend_cstr(&gen_a, &text, "    }\n");
     string_extend_cstr(&gen_a, &text, "    try(");
     extend_strv_lower(&text, type.internal_prefix);
-    string_extend_cstr(&gen_a, &text, "_tbl_add(sym_table, tast_of_symbol));\n");
+    if (type.env_thing) {
+        string_extend_cstr(&gen_a, &text, "_tbl_add(env, sym_table, tast_of_symbol));\n");
+    } else {
+        string_extend_cstr(&gen_a, &text, "_tbl_add(sym_table, tast_of_symbol));\n");
+    }
     string_extend_cstr(&gen_a, &text, "}\n");
     string_extend_cstr(&gen_a, &text, "\n");
     string_extend_cstr(&gen_a, &text, "void ");
@@ -374,7 +432,12 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     extend_strv_lower(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_lookup(&dummy, env, ");
     extend_strv_lower(&text, type.get_key_fn_name);
-    string_extend_cstr(&gen_a, &text, "(tast_of_symbol))) {\n");
+    if (type.env_thing) {
+        string_extend_cstr(&gen_a, &text, "(env, ");
+    } else {
+        string_extend_cstr(&gen_a, &text, "(");
+    }
+    string_extend_cstr(&gen_a, &text, "tast_of_symbol))) {\n");
     string_extend_cstr(&gen_a, &text, "        return false;\n");
     string_extend_cstr(&gen_a, &text, "    }\n");
     string_extend_cstr(&gen_a, &text, "    if (env->ancesters.info.count < 1) {\n");
@@ -385,7 +448,11 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "        Symbol_collection* curr_tast = vec_at(&env->ancesters, idx);\n");
     string_extend_cstr(&gen_a, &text, "        try(");
     extend_strv_lower(&text, type.internal_prefix);
-    string_extend_cstr(&gen_a, &text, "_tbl_add(&curr_tast->");
+    if (type.env_thing) {
+        string_extend_cstr(&gen_a, &text, "_tbl_add(env, &curr_tast->");
+    } else {
+        string_extend_cstr(&gen_a, &text, "_tbl_add(&curr_tast->");
+    }
     extend_strv_lower(&text, type.symbol_table_name);
     string_extend_cstr(&gen_a, &text, ", tast_of_symbol));\n");
     string_extend_cstr(&gen_a, &text, "            return true;\n");
@@ -502,6 +569,9 @@ static void gen_symbol_table_header_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "bool ");
     extend_strv_lower(&text, type.internal_prefix);
     string_extend_cstr(&gen_a, &text, "_tbl_add_internal(");
+    if (type.env_thing) {
+        string_extend_cstr(&gen_a, &text, "const Env* env,");
+    }
     extend_strv_first_upper(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_table_tast* sym_tbl_tasts, size_t capacity, ");
     extend_strv_first_upper(&text, type.type_name);
@@ -538,6 +608,9 @@ static void gen_symbol_table_header_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "bool ");
     extend_strv_lower(&text, type.internal_prefix);
     string_extend_cstr(&gen_a, &text, "_tbl_add(");
+    if (type.env_thing) {
+        string_extend_cstr(&gen_a, &text, "const Env* env, ");
+    }
     extend_strv_first_upper(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_table* sym_table, ");
     extend_strv_first_upper(&text, type.type_name);
@@ -546,6 +619,9 @@ static void gen_symbol_table_header_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "void ");
     extend_strv_lower(&text, type.internal_prefix);
     string_extend_cstr(&gen_a, &text, "_tbl_update(");
+    if (type.env_thing) {
+        string_extend_cstr(&gen_a, &text, "const Env* env, ");
+    }
     extend_strv_first_upper(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_table* sym_table, ");
     extend_strv_first_upper(&text, type.type_name);
@@ -741,7 +817,8 @@ static Symbol_tbl_type symbol_tbl_type_new(
     const char* symbol_table_name,
     const char* ancesters_type,
     const char* print_fn,
-    bool do_primitives
+    bool do_primitives,
+    bool env_thing
 ) {
     return (Symbol_tbl_type) {
         .type_name = str_view_from_cstr(type_name),
@@ -751,7 +828,8 @@ static Symbol_tbl_type symbol_tbl_type_new(
         .symbol_table_name = str_view_from_cstr(symbol_table_name),
         .ancesters_type = str_view_from_cstr(ancesters_type),
         .print_fn = str_view_from_cstr(print_fn),
-        .do_primitives = do_primitives
+        .do_primitives = do_primitives,
+        .env_thing = env_thing,
     };
 }
 
@@ -759,16 +837,16 @@ static Sym_tbl_type_vec get_symbol_tbl_types(void) {
     Sym_tbl_type_vec types = {0};
 
     vec_append(&gen_a, &types, symbol_tbl_type_new(
-        "Uast_def", "usymbol", "usym", "get_uast_name_def", "usymbol_table", "uancesters", "uast_def_print", true
+        "Uast_def", "usymbol", "usym", "get_uast_name_def", "usymbol_table", "uancesters", "uast_def_print", true, false
     ));
     vec_append(&gen_a, &types, symbol_tbl_type_new(
-        "Tast_def", "symbol", "sym", "get_def_name", "symbol_table", "ancesters", "tast_def_print", false
+        "Tast_def", "symbol", "sym", "get_def_name", "symbol_table", "ancesters", "tast_def_print", false, false
     ));
     vec_append(&gen_a, &types, symbol_tbl_type_new( 
-        "Llvm", "alloca", "all", "llvm_get_tast_name", "alloca_table", "llvm_ancesters", "llvm_print", false
+        "Llvm", "alloca", "all", "llvm_get_tast_name", "alloca_table", "llvm_ancesters", "llvm_print", false, false
     ));
     vec_append(&gen_a, &types, symbol_tbl_type_new( 
-        "Tast_def", "rm_tuple_struct", "rm_tuple_stru", "serialize_def", "rm_tuple_struct_table", "", "tast_def_print", false
+        "Tast_def", "rm_tuple_struct", "rm_tuple_stru", "serialize_def", "rm_tuple_struct_table", "", "tast_def_print", false, true
     ));
     //vec_append(&gen_a, &types, symbol_tbl_type_new( 
     //    "Llvm", "Llvm", "ll", "llvm_get_tast_name", "llvm_table", "llvm_ancesters", false

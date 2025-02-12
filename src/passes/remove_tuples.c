@@ -67,7 +67,9 @@ static Lang_type lang_type_thing(Env* env, Lang_type lang_type, Pos lang_type_po
             vec_append(&a_main, &env->extra_sums, sum_def);
             log(LOG_DEBUG, STR_VIEW_FMT, tast_sum_def_print(sum_def));
             Lang_type new_thing = lang_type_wrap_struct_const(lang_type_struct_new(lang_type_atom_new(base.name, 0)));
+            log(LOG_DEBUG, STR_VIEW_FMT, tast_sum_def_print(sum_def));
             try(rm_tuple_struct_add(env, tast_wrap_sum_def(sum_def)));
+            log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(serialize_sum_def(env, sum_def)));
             return new_thing;
         }
         case LANG_TYPE_TUPLE: {
@@ -138,7 +140,7 @@ static Tast_stmt* rm_tuple_assignment_tuple(Env* env, Tast_assignment* assign) {
 
     Tast_def* struct_def_ = NULL;
     // TODO: think about out of order things
-    try(rm_tuple_struct_lookup(&struct_def_, env, serialize_lang_type(tast_get_lang_type_expr(src))));
+    try(rm_tuple_struct_lookup(&struct_def_, env, serialize_lang_type(env, tast_get_lang_type_expr(src))));
 
     Ulang_type new_var_lang_type = ulang_type_wrap_regular_const(ulang_type_regular_new(ulang_type_atom_new(tast_unwrap_struct_def(struct_def_)->base.name, 0)));
     Uast_variable_def* new_var_ = uast_variable_def_new(
@@ -196,17 +198,16 @@ static Tast_stmt* rm_tuple_assignment_sum(Env* env, Tast_assignment* assign) {
     Tast_def* struct_def_ = NULL;
     // TODO: think about out of order things
     log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
-    try(rm_tuple_struct_lookup(&struct_def_, env, serialize_lang_type(tast_get_lang_type_expr(assign->rhs))));
+    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(serialize_lang_type(env, tast_get_lang_type_expr(assign->rhs))));
+    try(rm_tuple_struct_lookup(&struct_def_, env, serialize_lang_type(env, tast_get_lang_type_expr(assign->rhs))));
 
-    Ulang_type new_var_lang_type = ulang_type_wrap_regular_const(ulang_type_regular_new(ulang_type_atom_new(tast_unwrap_struct_def(struct_def_)->base.name, 0)));
-    Uast_variable_def* new_var_ = uast_variable_def_new(
+    Ulang_type new_var_lang_type = ulang_type_wrap_regular_const(ulang_type_regular_new(ulang_type_atom_new(tast_unwrap_sum_def(struct_def_)->base.name, 0)));
+    Tast_variable_def* new_var = tast_variable_def_new(
         tast_get_pos_stmt(assign->lhs),
         new_var_lang_type,
         false,
         util_literal_name_new_prefix("sum_assign_lhs")
     );
-    try(usym_tbl_add(&vec_at(&env->ancesters, 0)->usymbol_table, uast_wrap_variable_def(new_var_)));
-    Tast_variable_def* new_var = NULL;
     try(try_set_variable_def_types(env, &new_var, new_var_, false));
     try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_wrap_variable_def(new_var)));
     Tast_assignment* new_assign = tast_assignment_new(
@@ -444,30 +445,57 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child(
 
         vec_append(&a_main, &new_args, new_memb);
     }
-    rm_tuple_stru_tbl_add(&vec_at(&env->ancesters, 0)->rm_tuple_struct_table, struct_def_);
+    rm_tuple_stru_tbl_add(env, &vec_at(&env->ancesters, 0)->rm_tuple_struct_table, struct_def_);
     log(LOG_DEBUG, TAST_FMT, tast_def_print(struct_def_));
-    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(serialize_def(struct_def_)));
+    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(serialize_def(env, struct_def_)));
     //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(rm_tuple_struct_get_name_from_return_type(struct_def)));
-    try(rm_tuple_struct_lookup(&struct_def_, env, serialize_def(struct_def_)));
+    try(rm_tuple_struct_lookup(&struct_def_, env, serialize_def(env, struct_def_)));
 
     Tast_function_params* new_fun_params = tast_function_params_new(assign_pos, new_params);
-    Tast_function_decl* new_fun_decl = tast_function_decl_new(
-        assign_pos,
-        new_fun_params,
-        tast_lang_type_new(
-            assign_pos,
-            lang_type_wrap_struct_const(lang_type_struct_new(lang_type_atom_new(base.name, 0)))
-        ),
-        new_fun_name
-    );
-    log(LOG_DEBUG, TAST_FMT, tast_function_decl_print(new_fun_decl));
-    Tast_function_def* new_fun_def = rm_tuple_function_def_new(env, new_fun_decl);
-    try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_wrap_function_def(new_fun_def)));
-    log(LOG_DEBUG, TAST_FMT, tast_function_def_print(new_fun_def));
-    vec_append(&a_main, &env->extra_functions, new_fun_def);
 
-    Tast_function_call* fun_call = tast_function_call_new(assign_pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
-    return tast_wrap_function_call(fun_call);
+    switch (struct_def_->type) {
+         case TAST_STRUCT_DEF: {
+            Tast_function_decl* new_fun_decl = tast_function_decl_new(
+                assign_pos,
+                new_fun_params,
+                tast_lang_type_new(
+                    assign_pos,
+                    lang_type_wrap_struct_const(lang_type_struct_new(lang_type_atom_new(base.name, 0)))
+                ),
+                new_fun_name
+            );
+            log(LOG_DEBUG, TAST_FMT, tast_function_decl_print(new_fun_decl));
+            Tast_function_def* new_fun_def = rm_tuple_function_def_new(env, new_fun_decl);
+            try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_wrap_function_def(new_fun_def)));
+            log(LOG_DEBUG, TAST_FMT, tast_function_def_print(new_fun_def));
+            vec_append(&a_main, &env->extra_functions, new_fun_def);
+
+            Tast_function_call* fun_call = tast_function_call_new(assign_pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
+            return tast_wrap_function_call(fun_call);
+         }
+        case TAST_SUM_DEF: {
+            Tast_function_decl* new_fun_decl = tast_function_decl_new(
+                assign_pos,
+                new_fun_params,
+                tast_lang_type_new(
+                    assign_pos,
+                    lang_type_wrap_sum_const(lang_type_sum_new(lang_type_atom_new(base.name, 0)))
+                ),
+                new_fun_name
+            );
+            log(LOG_DEBUG, TAST_FMT, tast_function_decl_print(new_fun_decl));
+            Tast_function_def* new_fun_def = rm_tuple_function_def_new(env, new_fun_decl);
+            try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_wrap_function_def(new_fun_def)));
+            log(LOG_DEBUG, TAST_FMT, tast_function_def_print(new_fun_def));
+            vec_append(&a_main, &env->extra_functions, new_fun_def);
+
+            Tast_function_call* fun_call = tast_function_call_new(assign_pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
+            return tast_wrap_function_call(fun_call);
+        }
+        default:
+            todo();
+    }
+
 }
 
 // returns new rhs
