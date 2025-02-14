@@ -37,7 +37,8 @@ static inline Str_view serialize_lang_type_struct_thing(const Env* env, Lang_typ
         case LANG_TYPE_STRUCT: {
             Tast_def* def = NULL;
             try(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
-            todo();
+            base = tast_unwrap_struct_def(def)->base;
+            break;
         }
         case LANG_TYPE_SUM: {
             Tast_def* def = NULL;

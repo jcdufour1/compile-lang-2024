@@ -648,6 +648,7 @@ static void emit_load_another_llvm(const Env* env, String* output, const Llvm_lo
     string_extend_cstr(&a_main, output, "    %");
     string_extend_size_t(&a_main, output, load_llvm->llvm_id);
     string_extend_cstr(&a_main, output, " = load ");
+    log(LOG_DEBUG, LLVM_FMT, llvm_load_another_llvm_print(load_llvm));
     extend_type_call_str(output, load_llvm->lang_type);
     string_extend_cstr(&a_main, output, ", ");
     string_extend_cstr(&a_main, output, "ptr");
