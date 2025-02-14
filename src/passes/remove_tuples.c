@@ -255,40 +255,57 @@ static Tast_function_def* rm_tuple_function_def_new(Env* env, Tast_function_decl
     try(try_set_variable_def_types(env, &new_var, new_var_untyped, true));
     vec_append(&a_main, &body->children, tast_wrap_def(tast_wrap_variable_def(new_var)));
 
-    for (size_t idx = 0; idx < decl->params->params.info.count; idx++) {
-        Uast_member_access_untyped* lhs_untyped = NULL;
-        switch (struct_def_->type) {
-            case TAST_STRUCT_DEF:
+    switch (struct_def_->type) {
+        case TAST_SUM_DEF:
+            env->parent_of = PARENT_OF_ASSIGN_RHS;
+            Uast_symbol_untyped* lhs_untyped = uast_symbol_untyped_new(decl->pos, new_var->name);
+            Tast_expr* lhs = NULL;
+            try(try_set_symbol_type(env, &lhs, lhs_untyped));
+            env->parent_of = PARENT_OF_NONE;
+
+            assert(decl->params->params.info.count == 1);
+            Tast_symbol_typed* rhs = tast_symbol_typed_new(decl->pos, (Sym_typed_base) {
+                .lang_type = vec_at(&decl->params->params, 0)->lang_type,
+                .name = vec_at(&decl->params->params, 0)->name,
+                .llvm_id = 0
+            });
+
+            Tast_assignment* assign = tast_assignment_new(decl->pos, tast_wrap_expr(lhs), tast_wrap_symbol_typed(rhs));
+            log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
+            vec_append(&a_main, &body->children, tast_wrap_assignment(assign));
+
+
+            break;
+        case TAST_STRUCT_DEF: {
+            for (size_t idx = 0; idx < decl->params->params.info.count; idx++) {
+                Uast_member_access_untyped* lhs_untyped = NULL;
                 lhs_untyped = uast_member_access_untyped_new(
                     decl->pos,
                     vec_at(&members, idx)->name,
                     uast_wrap_symbol_untyped(uast_symbol_untyped_new(decl->pos, new_var->name))
                 );
-                break;
-            case TAST_SUM_DEF:
-                lhs_untyped = uast_member_access_untyped_new(
-                    decl->pos,
-                    vec_at(&members, idx)->name,
-                    uast_wrap_symbol_untyped(uast_symbol_untyped_new(decl->pos, new_var->name))
-                );
-                break;
-            default:
-                unreachable("");
+                env->parent_of = PARENT_OF_ASSIGN_RHS;
+                Tast_stmt* lhs = NULL;
+                log(LOG_DEBUG, TAST_FMT, uast_member_access_untyped_print(lhs_untyped));
+                try(try_set_member_access_types(env, &lhs, lhs_untyped));
+                log(LOG_DEBUG, TAST_FMT, uast_member_access_untyped_print(lhs_untyped));
+                log(LOG_DEBUG, TAST_FMT, tast_stmt_print(lhs));
+                todo();
+                env->parent_of = PARENT_OF_NONE;
+
+                Uast_symbol_untyped* rhs_untyped = uast_symbol_untyped_new(decl->pos, vec_at(&decl->params->params, idx)->name);
+                Tast_expr* rhs = NULL;
+                try(try_set_symbol_type(env, &rhs, rhs_untyped));
+
+                Tast_assignment* assign = tast_assignment_new(decl->pos, lhs, rhs);
+                log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
+                vec_append(&a_main, &body->children, tast_wrap_assignment(assign));
+
+            }
+            break;
         }
-        env->parent_of = PARENT_OF_ASSIGN_RHS;
-        Tast_stmt* lhs = NULL;
-        log(LOG_DEBUG, TAST_FMT, uast_member_access_untyped_print(lhs_untyped));
-        try(try_set_member_access_types(env, &lhs, lhs_untyped));
-        env->parent_of = PARENT_OF_NONE;
-
-        Uast_symbol_untyped* rhs_untyped = uast_symbol_untyped_new(decl->pos, vec_at(&decl->params->params, idx)->name);
-        Tast_expr* rhs = NULL;
-        try(try_set_symbol_type(env, &rhs, rhs_untyped));
-
-        Tast_assignment* assign = tast_assignment_new(decl->pos, lhs, rhs);
-        log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
-        vec_append(&a_main, &body->children, tast_wrap_assignment(assign));
-
+        default:
+            todo();
     }
 
     log(LOG_DEBUG, TAST_FMT, tast_function_decl_print(decl));
@@ -331,7 +348,8 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child(
         case TAST_LITERAL: {
             Tast_sum_lit* sum_lit = tast_unwrap_sum_lit(tast_unwrap_literal(rhs));
             env->parent_of = PARENT_OF_CASE;
-            vec_append(&a_main, &members, tast_wrap_literal(tast_wrap_sum_lit(sum_lit)));
+            vec_append(&a_main, &members, tast_wrap_literal(tast_wrap_enum_lit(sum_lit->tag)));
+            vec_append(&a_main, &members, sum_lit->item);
             env->parent_of = PARENT_OF_NONE;
             break;
         }
@@ -395,30 +413,30 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child(
             //Tast_variable_def* curr_def = vec_at(&struct_def_memb, idx);
             //Tast_member_access_typed* access = 
 
-            Uast_variable_def* new_param_ = uast_variable_def_new(
+            Tast_variable_def* new_tag = tast_variable_def_new(
                 assign_pos,
-                lang_type_to_ulang_type(tast_get_lang_type_def(struct_def_)),
+                vec_at(&tast_unwrap_sum_def(struct_def_)->base.members, 0)->lang_type,
                 false,
-                util_literal_name_new_prefix("tuple_function_param")
+                util_literal_name_new_prefix("tuple_function_param_tag")
             );
-            try(usym_tbl_add(&vec_at(&env->ancesters, 0)->usymbol_table, uast_wrap_variable_def(new_param_)));
-            Tast_variable_def* new_param = NULL;
-            try(try_set_variable_def_types(env, &new_param, new_param_, false));
-            try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_wrap_variable_def(new_param)));
-            vec_append(&a_main, &new_params, new_param);
-            log(LOG_DEBUG, STR_VIEW_FMT, tast_variable_def_print(new_param));
-
-            //Tast_expr* new_memb = rm_tuple_generic_assignment_rhs(
-            //    env,
-            //    vec_at(&members, 0),
-            //    tast_get_lang_type_def(struct_def_),
-            //    tast_get_pos_expr(vec_at(&members, 0))
-            //);
-
-            //vec_append(&a_main, &new_args, new_memb);
+            try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_wrap_variable_def(new_tag)));
+            vec_append(&a_main, &new_params, new_tag);
             vec_append(&a_main, &new_args, vec_at(&members, 0));
-            assert(new_args.info.count == 1);
+
+            Tast_variable_def* new_item = tast_variable_def_new(
+                assign_pos,
+                vec_at(&tast_unwrap_sum_def(struct_def_)->base.members, 1)->lang_type,
+                false,
+                util_literal_name_new_prefix("tuple_function_param_item")
+            );
+            try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_wrap_variable_def(new_item)));
+            vec_append(&a_main, &new_params, new_item);
+            vec_append(&a_main, &new_args, vec_at(&members, 1));
+
             log(LOG_DEBUG, TAST_FMT, tast_expr_print(vec_at(&new_args, 0)));
+            log(LOG_DEBUG, TAST_FMT, tast_expr_print(vec_at(&new_args, 1)));
+            assert(new_args.info.count == 2);
+            todo();
             break;
         }
         default:
@@ -470,6 +488,8 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child(
             vec_append(&a_main, &env->extra_functions, new_fun_def);
 
             Tast_function_call* fun_call = tast_function_call_new(assign_pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
+            log(LOG_DEBUG, TAST_FMT, tast_function_call_print(fun_call));
+            todo();
             return tast_wrap_function_call(fun_call);
         }
         default:

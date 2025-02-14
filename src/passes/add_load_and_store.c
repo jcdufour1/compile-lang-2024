@@ -393,7 +393,11 @@ static Str_view load_ptr_sum_callee(
 
     //Tast_def* var_def_ = NULL;
     //try(symbol_lookup(&var_def_, env, old_callee->name));
-
+    //return load_ptr_member_access_typed(env, new_block, tast_member_access_typed_new(
+    //    old_callee->pos,
+    //    old_callee->lang_type,
+    //    old_callee->
+    //));
     todo();
 
     //return llvm_get_tast_name(alloca);
