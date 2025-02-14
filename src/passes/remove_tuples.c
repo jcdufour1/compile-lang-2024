@@ -47,7 +47,18 @@ static Lang_type lang_type_thing(Env* env, Lang_type lang_type, Pos lang_type_po
             Tast_def* lang_type_def_ = NULL; 
             try(symbol_lookup(&lang_type_def_, env, lang_type_get_str(lang_type)));
             log(LOG_DEBUG, LANG_TYPE_FMT, tast_def_print(lang_type_def_));
-            Tast_variable_def_vec members = tast_unwrap_sum_def(lang_type_def_)->base.members;
+            Uast_variable_def_vec members = {0};
+
+            for (size_t idx = 0; idx < tast_unwrap_sum_def(lang_type_def_)->base.members.info.count; idx++) {
+                Uast_variable_def* memb = uast_variable_def_new(
+                    lang_type_pos,
+                    lang_type_to_ulang_type(vec_at(&tast_unwrap_sum_def(lang_type_def_)->base.members, idx)->lang_type),
+                    false,
+                    util_literal_name_new_prefix("tuple_struct_member")
+                );
+                vec_append(&a_main, &members, memb);
+            }
+
             //Uast_variable_def* memb = uast_variable_def_new(
             //    lang_type_pos,
             //    lang_type_to_ulang_type(vec_at_const(lang_type_unwrap_tuple_const(lang_type).lang_types, idx)),
@@ -63,21 +74,29 @@ static Lang_type lang_type_thing(Env* env, Lang_type lang_type, Pos lang_type_po
             //);
             //vec_append(&a_main, &members, memb);
 
-            Struct_def_base base = {
+            Ustruct_def_base base = {
                 .members = members,
-                .llvm_id = 0,
-                .name = util_literal_name_new_prefix("tuple_struct")
+                .name = serialize_lang_type(env, lang_type)
             };
-            Tast_sum_def* sum_def = tast_sum_def_new(tast_unwrap_sum_def(lang_type_def_)->pos, base);
+            //Tast_sum_def* sum_def = tast_sum_def_new(tast_unwrap_sum_def(lang_type_def_)->pos, base);
             //try(usym_tbl_add(&vec_at(&env->ancesters, 0)->usymbol_table, uast_wrap_struct_def(struct_def_)));
             //vec_append(&a_main, &struct_def->base.members, vec_at(&tast_unwrap_struct_def(lang_type_def_)->base.members, 0));
             //try(try_set_struct_def_types(env, &struct_def, struct_def_));
-            vec_append(&a_main, &env->extra_sums, sum_def);
-            log(LOG_DEBUG, STR_VIEW_FMT, tast_sum_def_print(sum_def));
+            
+            Uast_struct_def* struct_def_ = uast_struct_def_new(lang_type_pos, base);
+            Tast_struct_def* struct_def = NULL;
+            // TODO: put struct_defs in different symbol_table, etc. to avoid collisions?
+            try(usym_tbl_add(&vec_at(&env->ancesters, 0)->usymbol_table, uast_wrap_struct_def(struct_def_)));
+            try(try_set_struct_def_types(env, &struct_def, struct_def_));
+            try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_wrap_struct_def(struct_def)));
+            vec_append(&a_main, &env->extra_structs, struct_def);
+
+            //vec_append(&a_main, &env->extra_sums, sum_def);
+            //log(LOG_DEBUG, STR_VIEW_FMT, tast_sum_def_print(sum_def));
             Lang_type new_thing = lang_type_wrap_struct_const(lang_type_struct_new(lang_type_atom_new(base.name, 0)));
-            log(LOG_DEBUG, STR_VIEW_FMT, tast_sum_def_print(sum_def));
-            try(rm_tuple_struct_add(env, tast_wrap_sum_def(sum_def)));
-            log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(serialize_sum_def(env, sum_def)));
+            //log(LOG_DEBUG, STR_VIEW_FMT, tast_sum_def_print(sum_def));
+            //try(rm_tuple_struct_add(env, tast_wrap_sum_def(sum_def)));
+            //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(serialize_sum_def(env, sum_def)));
             return new_thing;
         }
         case LANG_TYPE_TUPLE: {
@@ -580,7 +599,7 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child_sum_lit(
     Tast_sum_lit* rhs,
     Pos assign_pos
 ) {
-    Lang_type lhs_lang_type = lang_type_wrap_struct_const(lang_type_struct_new(lang_type_atom_new(serialize_lang_type(env, rhs->lang_type), 0)));
+    Lang_type lhs_lang_type = lang_type_thing(env, rhs->lang_type, rhs->pos);
     log(LOG_DEBUG, TAST_FMT, tast_sum_lit_print(rhs));
     log(LOG_DEBUG, TAST_FMT, lang_type_print(lhs_lang_type));
     //Tast_variable_def* to_rtn = tast_variable_def_new(
@@ -597,17 +616,11 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child_sum_lit(
     vec_append(&a_main, &members, sum_lit->item);
     env->parent_of = PARENT_OF_NONE;
 
-    Struct_def_base base = {0};
     Tast_def* struct_def_ = NULL;
-    log(LOG_DEBUG, TAST_FMT, lang_type_print(lhs_lang_type));
     try(symbol_lookup(&struct_def_, env, lang_type_get_str(lhs_lang_type)));
-    switch (struct_def_->type) {
-        case TAST_SUM_DEF:
-            base = tast_unwrap_sum_def(struct_def_)->base;
-            break;
-        default:
-            unreachable("");
-    }
+    Struct_def_base base = tast_unwrap_struct_def(struct_def_)->base;
+    log(LOG_DEBUG, TAST_FMT, lang_type_print(lhs_lang_type));
+    log(LOG_DEBUG, TAST_FMT, tast_def_print(struct_def_));
 
     Tast_expr_vec new_args = {0};
 
@@ -615,14 +628,14 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child_sum_lit(
     Tast_variable_def_vec new_params = {0};
     Str_view new_fun_name = util_literal_name_new_prefix("tuple_function");
     switch (struct_def_->type) {
-        case TAST_SUM_DEF: {
+        case TAST_STRUCT_DEF: {
             //try(idx < struct_def_memb.info.count);
             //Tast_variable_def* curr_def = vec_at(&struct_def_memb, idx);
             //Tast_member_access_typed* access = 
 
             Tast_variable_def* new_tag = tast_variable_def_new(
                 assign_pos,
-                vec_at(&tast_unwrap_sum_def(struct_def_)->base.members, 0)->lang_type,
+                vec_at(&tast_unwrap_struct_def(struct_def_)->base.members, 0)->lang_type,
                 false,
                 util_literal_name_new_prefix("tuple_function_param_tag")
             );
@@ -632,7 +645,7 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child_sum_lit(
 
             Tast_variable_def* new_item = tast_variable_def_new(
                 assign_pos,
-                vec_at(&tast_unwrap_sum_def(struct_def_)->base.members, 1)->lang_type,
+                vec_at(&tast_unwrap_struct_def(struct_def_)->base.members, 1)->lang_type,
                 false,
                 util_literal_name_new_prefix("tuple_function_param_item")
             );
@@ -651,7 +664,6 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child_sum_lit(
 
     rm_tuple_stru_tbl_add(env, &vec_at(&env->ancesters, 0)->rm_tuple_struct_table, struct_def_);
     log(LOG_DEBUG, TAST_FMT, tast_def_print(struct_def_));
-    todo();
     log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(serialize_def(env, struct_def_)));
     //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(rm_tuple_struct_get_name_from_return_type(struct_def)));
     try(rm_tuple_struct_lookup(&struct_def_, env, serialize_def(env, struct_def_)));
@@ -659,13 +671,13 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child_sum_lit(
     Tast_function_params* new_fun_params = tast_function_params_new(assign_pos, new_params);
 
     switch (struct_def_->type) {
-        case TAST_SUM_DEF: {
+        case TAST_STRUCT_DEF: {
             Tast_function_decl* new_fun_decl = tast_function_decl_new(
                 assign_pos,
                 new_fun_params,
                 tast_lang_type_new(
                     assign_pos,
-                    lang_type_wrap_sum_const(lang_type_sum_new(lang_type_atom_new(base.name, 0)))
+                    lang_type_wrap_struct_const(lang_type_struct_new(lang_type_atom_new(base.name, 0)))
                 ),
                 new_fun_name
             );
@@ -677,7 +689,6 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child_sum_lit(
 
             Tast_function_call* fun_call = tast_function_call_new(assign_pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
             log(LOG_DEBUG, TAST_FMT, tast_function_call_print(fun_call));
-            todo();
             return tast_wrap_function_call(fun_call);
         }
         default:
