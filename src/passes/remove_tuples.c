@@ -200,11 +200,14 @@ static Tast_stmt* rm_tuple_assignment(Env* env, Tast_assignment* assign) {
     log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
 
     log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
-    Lang_type thing = lang_type_thing(env, tast_get_lang_type_expr(assign->rhs), assign->pos);
-    log(LOG_DEBUG, LANG_TYPE_FMT, lang_type_print(thing));
-    //todo();
+    //Lang_type thing = lang_type_thing(env, tast_get_lang_type_expr(assign->rhs), assign->pos);
+    //tast_set_lang_type_expr(assign->rhs, thing);
+    //log(LOG_DEBUG, LANG_TYPE_FMT, lang_type_print(thing));
+    log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
+    //log(LOG_DEBUG, LANG_TYPE_FMT, lang_type_print(thing));
     assign->rhs = rm_tuple_expr_rhs(env, tast_get_lang_type_stmt(assign->lhs), assign->rhs, assign->pos);
     log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
+    todo();
 
     switch (tast_get_lang_type_stmt(assign->lhs).type) {
         case LANG_TYPE_TUPLE:
@@ -239,7 +242,7 @@ static Tast_function_def* rm_tuple_function_def_new(Env* env, Tast_function_decl
             break;
         case TAST_SUM_DEF:
             base = tast_unwrap_sum_def(struct_def_)->base;
-            base_lang_type = lang_type_wrap_sum_const(lang_type_sum_new(lang_type_atom_new(base.name, 0)));
+            base_lang_type = lang_type_wrap_struct_const(lang_type_struct_new(lang_type_atom_new(base.name, 0))); // TODO: change lang_type->str?
             break;
         default:
             unreachable("");
@@ -267,29 +270,34 @@ static Tast_function_def* rm_tuple_function_def_new(Env* env, Tast_function_decl
 
     switch (struct_def_->type) {
         case TAST_SUM_DEF:
+                log(LOG_DEBUG, TAST_FMT, tast_function_decl_print(decl));
+                log(LOG_DEBUG, TAST_FMT, tast_def_print(struct_def_));
+                log(LOG_DEBUG, TAST_FMT, tast_variable_def_print(new_var));
                 todo();
-                //Uast_member_access_untyped* lhs_untyped = NULL;
-                //lhs_untyped = uast_member_access_untyped_new(
+                // tag
+                //Tast_member_access_typed* lhs = tast_member_access_typed_new(
                 //    decl->pos,
+                //    vec_at(&members, idx)->lang_type,
                 //    vec_at(&members, idx)->name,
-                //    uast_wrap_symbol_untyped(uast_symbol_untyped_new(decl->pos, new_var->name))
+                //    tast_wrap_symbol_typed(tast_symbol_typed_new(decl->pos, (Sym_typed_base) {
+                //        .lang_type = new_var->lang_type,
+                //        .name = new_var->name,
+                //        .llvm_id = 0
+                //    }))
                 //);
-                //env->parent_of = PARENT_OF_ASSIGN_RHS;
-                //Tast_stmt* lhs = NULL;
-                //log(LOG_DEBUG, TAST_FMT, uast_member_access_untyped_print(lhs_untyped));
-                //try(try_set_member_access_types(env, &lhs, lhs_untyped));
-                //log(LOG_DEBUG, TAST_FMT, uast_member_access_untyped_print(lhs_untyped));
-                //log(LOG_DEBUG, TAST_FMT, tast_stmt_print(lhs));
-                //todo();
-                //env->parent_of = PARENT_OF_NONE;
 
-                //Uast_symbol_untyped* rhs_untyped = uast_symbol_untyped_new(decl->pos, vec_at(&decl->params->params, idx)->name);
-                //Tast_expr* rhs = NULL;
-                //try(try_set_symbol_type(env, &rhs, rhs_untyped));
+                //Tast_symbol_typed* rhs = tast_symbol_typed_new(decl->pos, (Sym_typed_base) {
+                //        .lang_type = vec_at(&decl->params->params, idx)->lang_type,
+                //        .name = vec_at(&decl->params->params, idx)->name,
+                //        .llvm_id = 0
+                //    }
+                //);
 
-                //Tast_assignment* assign = tast_assignment_new(decl->pos, lhs, rhs);
+                //Tast_assignment* assign = tast_assignment_new(decl->pos, tast_wrap_expr(tast_wrap_member_access_typed(lhs)), tast_wrap_symbol_typed(rhs));
                 //log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
                 //vec_append(&a_main, &body->children, tast_wrap_assignment(assign));
+
+                // 
 
             break;
         case TAST_STRUCT_DEF: {
@@ -305,10 +313,10 @@ static Tast_function_def* rm_tuple_function_def_new(Env* env, Tast_function_decl
                     }))
                 );
 
-                // TODD: rename tast_symbol_typed to tast_symbol
-                // TODD: rename uast_symbol_untyped to uast_symbol
-                // TODD: rename Uast_member_access_untyped to Uast_member_access
-                // TODD: rename Tast_member_access_typed to Tast_member_access
+                // TODO: rename tast_symbol_typed to tast_symbol
+                // TODO: rename uast_symbol_untyped to uast_symbol
+                // TODO: rename Uast_member_access_untyped to Uast_member_access
+                // TODO: rename Tast_member_access_typed to Tast_member_access
                 Tast_symbol_typed* rhs = tast_symbol_typed_new(decl->pos, (Sym_typed_base) {
                         .lang_type = vec_at(&decl->params->params, idx)->lang_type,
                         .name = vec_at(&decl->params->params, idx)->name,
@@ -343,12 +351,16 @@ static Tast_function_def* rm_tuple_function_def_new(Env* env, Tast_function_decl
     return new_def;
 }
 
+// TODO: use separate functions for these things
 static Tast_expr* rm_tuple_generic_assign_struct_literal_child(
     Env* env,
     Tast_expr* rhs,
     Lang_type lhs_lang_type,
     Pos assign_pos
 ) {
+    log(LOG_DEBUG, TAST_FMT, tast_expr_print(rhs));
+    log(LOG_DEBUG, TAST_FMT, lang_type_print(lhs_lang_type));
+    todo();
     log(LOG_DEBUG, TAST_FMT, tast_expr_print(rhs));
     //Tast_variable_def* to_rtn = tast_variable_def_new(
     //    rtn->pos,
@@ -464,6 +476,7 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child(
 
     rm_tuple_stru_tbl_add(env, &vec_at(&env->ancesters, 0)->rm_tuple_struct_table, struct_def_);
     log(LOG_DEBUG, TAST_FMT, tast_def_print(struct_def_));
+    todo();
     log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(serialize_def(env, struct_def_)));
     //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(rm_tuple_struct_get_name_from_return_type(struct_def)));
     try(rm_tuple_struct_lookup(&struct_def_, env, serialize_def(env, struct_def_)));
@@ -545,6 +558,7 @@ static Tast_return* rm_tuple_return(Env* env, Tast_return* rtn) {
         return rtn;
     }
 
+    todo();
     rtn->child = rm_tuple_generic_assignment_rhs(
         env,
         rtn->child,
