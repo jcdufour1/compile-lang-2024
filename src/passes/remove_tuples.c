@@ -336,7 +336,7 @@ static Tast_function_def* rm_tuple_function_def_new(Env* env, Tast_function_decl
 }
 
 // TODO: use separate functions for these things
-static Tast_expr* rm_tuple_generic_assign_struct_literal_child_struct_literal(
+static Tast_expr* rm_tuple_struct_literal_rhs(
     Env* env,
     Tast_struct_literal* rhs,
     Pos assign_pos
@@ -428,7 +428,7 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child_struct_literal(
 
 }
 
-static Tast_expr* rm_tuple_generic_assign_struct_literal_child_tuple(
+static Tast_expr* rm_tuple_tuple_rhs(
     Env* env,
     Tast_tuple* rhs,
     Pos assign_pos
@@ -533,7 +533,7 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child_tuple(
 
 }
 
-static Tast_expr* rm_tuple_generic_assign_struct_literal_child_sum_lit(
+static Tast_expr* rm_tuple_sum_lit_rhs(
     Env* env,
     Tast_sum_lit* rhs,
     Pos assign_pos
@@ -640,11 +640,11 @@ static Tast_expr* rm_tuple_generic_assign_struct_literal_child_sum_lit(
 static Tast_expr* rm_tuple_generic_assignment_rhs(Env* env, Tast_expr* rhs, Pos assign_pos) {
     log(LOG_DEBUG, TAST_FMT, tast_expr_print(rhs));
     if (rhs->type == TAST_TUPLE) {
-        return rm_tuple_generic_assign_struct_literal_child_tuple(env, tast_unwrap_tuple(rhs), assign_pos);
+        return rm_tuple_tuple_rhs(env, tast_unwrap_tuple(rhs), assign_pos);
     } else if (rhs->type == TAST_STRUCT_LITERAL) {
-        return rm_tuple_generic_assign_struct_literal_child_struct_literal(env, tast_unwrap_struct_literal(rhs), assign_pos);
+        return rm_tuple_struct_literal_rhs(env, tast_unwrap_struct_literal(rhs), assign_pos);
     } else if (rhs->type == TAST_LITERAL && tast_unwrap_literal(rhs)->type == TAST_SUM_LIT) {
-        return rm_tuple_generic_assign_struct_literal_child_sum_lit(env, tast_unwrap_sum_lit(tast_unwrap_literal(rhs)), assign_pos);
+        return rm_tuple_sum_lit_rhs(env, tast_unwrap_sum_lit(tast_unwrap_literal(rhs)), assign_pos);
     } else {
         return rhs;
     }
@@ -774,10 +774,6 @@ static Tast_function_call* rm_tuple_function_call(Env* env, Tast_function_call* 
     return fun_call;
 }
 
-static Tast_expr* rm_tuple_sum_rhs(Env* env, Tast_sum_lit* rhs, Pos assign_pos) {
-    return rm_tuple_generic_assignment_rhs(env, tast_wrap_literal(tast_wrap_sum_lit(rhs)), assign_pos);
-}
-
 static Tast_expr* rm_tuple_literal_rhs(Env* env, Tast_literal* rhs, Pos assign_pos) {
     switch (rhs->type) {
         case TAST_NUMBER:
@@ -791,7 +787,7 @@ static Tast_expr* rm_tuple_literal_rhs(Env* env, Tast_literal* rhs, Pos assign_p
         case TAST_CHAR:
             return tast_wrap_literal(rhs);
         case TAST_SUM_LIT:
-            return rm_tuple_sum_rhs(env, tast_unwrap_sum_lit(rhs), assign_pos);
+            return rm_tuple_sum_lit_rhs(env, tast_unwrap_sum_lit(rhs), assign_pos);
     }
     unreachable("");
 }
