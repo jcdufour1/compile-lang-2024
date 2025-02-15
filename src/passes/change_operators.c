@@ -29,7 +29,7 @@ static Tast_operator* change_op_unary(Env* env, Tast_unary* unary) {
                     tast_unary_get_pos(unary)
                 )),
                 TOKEN_DOUBLE_EQUAL,
-                tast_get_lang_type_expr(new_lhs)
+                tast_expr_get_lang_type(new_lhs)
             );
 
             assert(lang_type_get_str(new_bin->lang_type).count > 0);

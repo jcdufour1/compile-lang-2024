@@ -342,7 +342,7 @@ static Str_view load_literal(
 
     try(alloca_add(env, llvm_expr_wrap(llvm_literal_wrap(new_lit))));
 
-    return llvm_get_literal_name(new_lit);
+    return llvm_literal_get_name(new_lit);
 }
 
 static Str_view load_ptr_symbol(
@@ -364,7 +364,7 @@ static Str_view load_ptr_symbol(
     assert(var_def);
     assert(lang_type_is_equal(var_def->lang_type, old_sym->base.lang_type));
 
-    return llvm_get_tast_name(alloca);
+    return llvm_tast_get_name(alloca);
 }
 
 static Str_view load_ptr_sum_callee(
@@ -386,7 +386,7 @@ static Str_view load_ptr_sum_callee(
     //));
     todo();
 
-    //return llvm_get_tast_name(alloca);
+    //return llvm_tast_get_name(alloca);
 }
 
 static Str_view load_symbol(
@@ -470,7 +470,7 @@ static Str_view load_unary(
         case TOKEN_REFER:
             return load_ptr_expr(env, new_block, old_unary->child);
         case TOKEN_UNSAFE_CAST:
-            if (lang_type_get_pointer_depth(old_unary->lang_type) > 0 && lang_type_get_pointer_depth(tast_get_lang_type_expr(old_unary->child)) > 0) {
+            if (lang_type_get_pointer_depth(old_unary->lang_type) > 0 && lang_type_get_pointer_depth(tast_expr_get_lang_type(old_unary->child)) > 0) {
                 return load_expr(env, new_block, old_unary->child);
             }
             // fallthrough
@@ -516,8 +516,8 @@ static Str_view load_ptr_member_access(
 
     Tast_def* def = NULL;
     log(LOG_DEBUG, TAST_FMT, tast_member_access_print(old_access));
-    log(LOG_DEBUG, LANG_TYPE_FMT"\n", str_view_print(lang_type_get_str(get_lang_type_from_name(env, new_callee))));
-    try(symbol_lookup(&def, env, lang_type_get_str(get_lang_type_from_name(env, new_callee))));
+    log(LOG_DEBUG, LANG_TYPE_FMT"\n", str_view_print(lang_type_get_str(lang_type_from_get_name(env, new_callee))));
+    try(symbol_lookup(&def, env, lang_type_get_str(lang_type_from_get_name(env, new_callee))));
 
     int64_t struct_index = {0};
     switch (def->type) {
@@ -588,7 +588,7 @@ static Str_view load_member_access(
         old_access->pos,
         ptr,
         0,
-        get_lang_type_from_name(env, ptr),
+        lang_type_from_get_name(env, ptr),
         util_literal_name_new()
     );
     try(alloca_add(env, llvm_load_another_llvm_wrap(new_load)));
@@ -608,7 +608,7 @@ static Str_view load_index(
         old_index->pos,
         ptr,
         0,
-        get_lang_type_from_name(env, ptr),
+        lang_type_from_get_name(env, ptr),
         util_literal_name_new()
     );
     try(alloca_add(env, llvm_load_another_llvm_wrap(new_load)));
@@ -829,7 +829,7 @@ static Str_view load_assignment(
         load_expr(env, new_block, old_assignment->rhs),
         load_ptr_stmt(env, new_block, old_assignment->lhs),
         0,
-        tast_get_lang_type_stmt(old_assignment->lhs),
+        tast_stmt_get_lang_type(old_assignment->lhs),
         util_literal_name_new()
     );
     try(alloca_add(env, llvm_store_another_llvm_wrap(new_store)));
@@ -859,7 +859,7 @@ static Str_view load_variable_def(
     vec_append(&a_main, &new_block->children, llvm_def_wrap(llvm_variable_def_wrap(new_var_def)));
 
     assert(alloca);
-    return llvm_get_tast_name(alloca);
+    return llvm_tast_get_name(alloca);
 }
 
 static Str_view load_struct_def(

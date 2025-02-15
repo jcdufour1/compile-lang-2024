@@ -158,7 +158,7 @@ static Tast_stmt* rm_tuple_assignment_tuple(Env* env, Tast_assignment* assign) {
 
     Tast_def* struct_def_ = NULL;
     // TODO: think about out of order things
-    try(rm_tuple_struct_lookup(&struct_def_, env, serialize_lang_type(env, tast_get_lang_type_expr(src))));
+    try(rm_tuple_struct_lookup(&struct_def_, env, serialize_lang_type(env, tast_expr_get_lang_type(src))));
 
     Lang_type new_var_lang_type = lang_type_struct_const_wrap(
         lang_type_struct_new(lang_type_atom_new(tast_struct_def_unwrap(struct_def_)->base.name, 0))
@@ -198,7 +198,7 @@ static Tast_stmt* rm_tuple_assignment_tuple(Env* env, Tast_assignment* assign) {
         vec_append(&a_main, &new_children, tast_assignment_wrap(curr_assign));
     }
 
-    tast_set_lang_type_expr(src, new_var_lang_type);
+    tast_expr_set_lang_type(src, new_var_lang_type);
 
     return tast_block_wrap(tast_block_new(assign->pos, false, new_children, (Symbol_collection) {0}, assign->pos));
 }
@@ -207,8 +207,8 @@ static Tast_stmt* rm_tuple_assignment(Env* env, Tast_assignment* assign) {
     log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
 
     log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
-    //Lang_type thing = lang_type_thing(env, tast_get_lang_type_expr(assign->rhs), assign->pos);
-    //tast_set_lang_type_expr(assign->rhs, thing);
+    //Lang_type thing = lang_type_thing(env, tast_expr_get_lang_type(assign->rhs), assign->pos);
+    //tast_expr_set_lang_type(assign->rhs, thing);
     //log(LOG_DEBUG, LANG_TYPE_FMT, lang_type_print(thing));
     log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
     //log(LOG_DEBUG, LANG_TYPE_FMT, lang_type_print(thing));
@@ -216,7 +216,7 @@ static Tast_stmt* rm_tuple_assignment(Env* env, Tast_assignment* assign) {
     log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
     //todo();
 
-    switch (tast_get_lang_type_stmt(assign->lhs).type) {
+    switch (tast_stmt_get_lang_type(assign->lhs).type) {
         case LANG_TYPE_TUPLE:
             return rm_tuple_assignment_tuple(env, assign);
         case LANG_TYPE_SUM:

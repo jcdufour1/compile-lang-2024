@@ -86,7 +86,7 @@ Tast_operator* util_binary_typed_new(Env* env, Uast_expr* lhs, Uast_expr* rhs, T
 
 Llvm_id get_matching_fun_param_load_id(const Tast* src);
 
-const Tast* get_lang_type_from_sym_definition(const Tast* sym_def);
+const Tast* from_sym_definition_get_lang_type(const Tast* sym_def);
 
 uint64_t sizeof_lang_type(const Env* env, Lang_type lang_type);
 

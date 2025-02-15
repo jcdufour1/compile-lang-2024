@@ -175,7 +175,7 @@ static void tast_extend_type_decl_str(String* output, const Tast_stmt* var_def_o
         return;
     }
 
-    extend_type_call_str(output, tast_get_lang_type_stmt(var_def_or_lit));
+    extend_type_call_str(output, tast_stmt_get_lang_type(var_def_or_lit));
     if (noundef) {
         string_extend_cstr(&a_main, output, " noundef");
     }
@@ -195,22 +195,22 @@ static void llvm_extend_type_decl_str(String* output, const Llvm* var_def_or_lit
 
 static void extend_literal_decl_prefix(String* output, String* literals, const Llvm_literal* literal) {
     log(LOG_DEBUG, "entering thing\n");
-    assert(lang_type_get_str(llvm_get_lang_type_literal(literal)).count > 0);
-    if (str_view_cstr_is_equal(lang_type_get_str(llvm_get_lang_type_literal(literal)), "u8")) {
-        assert(llvm_get_lang_type_literal(literal).type == LANG_TYPE_PRIMITIVE);
-        if (lang_type_get_pointer_depth(llvm_get_lang_type_literal(literal)) != 1) {
+    assert(lang_type_get_str(llvm_literal_get_lang_type(literal)).count > 0);
+    if (str_view_cstr_is_equal(lang_type_get_str(llvm_literal_get_lang_type(literal)), "u8")) {
+        assert(llvm_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE);
+        if (lang_type_get_pointer_depth(llvm_literal_get_lang_type(literal)) != 1) {
             todo();
         }
         string_extend_cstr(&a_main, output, " @.");
-        string_extend_strv(&a_main, output, llvm_get_literal_name(literal));
-    } else if (lang_type_atom_is_signed(lang_type_get_atom(llvm_get_lang_type_literal(literal)))) {
-        assert(llvm_get_lang_type_literal(literal).type == LANG_TYPE_PRIMITIVE);
-        if (lang_type_get_pointer_depth(llvm_get_lang_type_literal(literal)) != 0) {
+        string_extend_strv(&a_main, output, llvm_literal_get_name(literal));
+    } else if (lang_type_atom_is_signed(lang_type_get_atom(llvm_literal_get_lang_type(literal)))) {
+        assert(llvm_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE);
+        if (lang_type_get_pointer_depth(llvm_literal_get_lang_type(literal)) != 0) {
             todo();
         }
         vec_append(&a_main, output, ' ');
         extend_literal(output, literal);
-    } else if (llvm_get_lang_type_literal(literal).type == LANG_TYPE_ENUM) {
+    } else if (llvm_literal_get_lang_type(literal).type == LANG_TYPE_ENUM) {
         vec_append(&a_main, output, ' ');
         extend_literal(output, literal);
     } else {
@@ -218,27 +218,27 @@ static void extend_literal_decl_prefix(String* output, String* literals, const L
     }
 
     if (literal->type == LLVM_STRING) {
-        emit_symbol_normal(literals, llvm_get_literal_name(literal), literal);
+        emit_symbol_normal(literals, llvm_literal_get_name(literal), literal);
     }
 }
 
 static void tast_extend_literal_decl_prefix(String* output, const Tast_literal* literal) {
     log(LOG_DEBUG, "entering thing\n");
-    assert(lang_type_get_str(tast_get_lang_type_literal(literal)).count > 0);
-    if (str_view_cstr_is_equal(lang_type_get_str(tast_get_lang_type_literal(literal)), "u8")) {
-        if (lang_type_get_pointer_depth(tast_get_lang_type_literal(literal)) != 1) {
+    assert(lang_type_get_str(tast_literal_get_lang_type(literal)).count > 0);
+    if (str_view_cstr_is_equal(lang_type_get_str(tast_literal_get_lang_type(literal)), "u8")) {
+        if (lang_type_get_pointer_depth(tast_literal_get_lang_type(literal)) != 1) {
             todo();
         }
         string_extend_cstr(&a_main, output, " @.");
-        string_extend_strv(&a_main, output, get_literal_name(literal));
-    } else if (lang_type_atom_is_signed(lang_type_get_atom(tast_get_lang_type_literal(literal)))) {
-        assert(tast_get_lang_type_literal(literal).type == LANG_TYPE_PRIMITIVE);
-        if (lang_type_get_pointer_depth(tast_get_lang_type_literal(literal)) != 0) {
+        string_extend_strv(&a_main, output, literal_get_name(literal));
+    } else if (lang_type_atom_is_signed(lang_type_get_atom(tast_literal_get_lang_type(literal)))) {
+        assert(tast_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE);
+        if (lang_type_get_pointer_depth(tast_literal_get_lang_type(literal)) != 0) {
             todo();
         }
         vec_append(&a_main, output, ' ');
         tast_extend_literal(output, literal);
-    } else if (tast_get_lang_type_literal(literal).type == LANG_TYPE_ENUM) {
+    } else if (tast_literal_get_lang_type(literal).type == LANG_TYPE_ENUM) {
         vec_append(&a_main, output, ' ');
         tast_extend_literal(output, literal);
     } else {
@@ -311,7 +311,7 @@ static void emit_function_call_arg_load_another_llvm(
     } else {
         if (is_struct_like(load->lang_type.type)) {
             log(LOG_DEBUG, STR_VIEW_FMT, llvm_load_another_llvm_print(load));
-            llvm_id = get_llvm_id_from_name(env, get_storage_location(env, load->llvm_src));
+            llvm_id = llvm_id_from_get_name(env, get_storage_location(env, load->llvm_src));
             assert(llvm_id > 0);
 
             string_extend_cstr(&a_main, output, "ptr noundef byval(");
@@ -342,12 +342,12 @@ static void emit_function_arg_expr(String* output, String* literals, const Llvm_
                 break;
             }
             case LLVM_FUNCTION_CALL:
-                extend_type_call_str(output, llvm_get_lang_type_expr(argument));
+                extend_type_call_str(output, llvm_expr_get_lang_type(argument));
                 string_extend_cstr(&a_main, output, "%");
                 string_extend_size_t(&a_main, output, llvm_get_llvm_id_expr(argument));
                 break;
             case LLVM_OPERATOR:
-                extend_type_call_str(output, llvm_get_lang_type_expr(argument));
+                extend_type_call_str(output, llvm_expr_get_lang_type(argument));
                 string_extend_cstr(&a_main, output, "%");
                 string_extend_size_t(&a_main, output, llvm_get_llvm_id_expr(argument));
                 break;
@@ -423,21 +423,21 @@ static void emit_alloca(String* output, const Llvm_alloca* alloca) {
 static void emit_unary_type(const Env* env, String* output, const Llvm_unary* unary) {
     switch (unary->token_type) {
         case TOKEN_UNSAFE_CAST:
-            if (lang_type_get_pointer_depth(unary->lang_type) > 0 && lang_type_is_number(get_lang_type_from_name(env, unary->child))) {
+            if (lang_type_get_pointer_depth(unary->lang_type) > 0 && lang_type_is_number(lang_type_from_get_name(env, unary->child))) {
                 string_extend_cstr(&a_main, output, "inttoptr ");
-                extend_type_call_str(output, get_lang_type_from_name(env, unary->child));
+                extend_type_call_str(output, lang_type_from_get_name(env, unary->child));
                 string_extend_cstr(&a_main, output, " ");
-            } else if (lang_type_is_number(unary->lang_type) && lang_type_get_pointer_depth(get_lang_type_from_name(env, unary->child)) > 0) {
+            } else if (lang_type_is_number(unary->lang_type) && lang_type_get_pointer_depth(lang_type_from_get_name(env, unary->child)) > 0) {
                 string_extend_cstr(&a_main, output, "ptrtoint ");
-                extend_type_call_str(output, get_lang_type_from_name(env, unary->child));
+                extend_type_call_str(output, lang_type_from_get_name(env, unary->child));
                 string_extend_cstr(&a_main, output, " ");
-            } else if (lang_type_is_number(unary->lang_type) && lang_type_is_number(get_lang_type_from_name(env, unary->child))) {
-                if (i_lang_type_atom_to_bit_width(lang_type_get_atom(unary->lang_type)) > i_lang_type_atom_to_bit_width(lang_type_get_atom(get_lang_type_from_name(env, unary->child)))) {
+            } else if (lang_type_is_number(unary->lang_type) && lang_type_is_number(lang_type_from_get_name(env, unary->child))) {
+                if (i_lang_type_atom_to_bit_width(lang_type_get_atom(unary->lang_type)) > i_lang_type_atom_to_bit_width(lang_type_get_atom(lang_type_from_get_name(env, unary->child)))) {
                     string_extend_cstr(&a_main, output, "zext ");
                 } else {
                     string_extend_cstr(&a_main, output, "trunc ");
                 }
-                extend_type_call_str(output, get_lang_type_from_name(env, unary->child));
+                extend_type_call_str(output, lang_type_from_get_name(env, unary->child));
                 string_extend_cstr(&a_main, output, " ");
             } else {
                 todo();
@@ -623,7 +623,7 @@ static void emit_operator(const Env* env, String* output, const Llvm_operator* o
 }
 
 static void emit_load_another_llvm(const Env* env, String* output, const Llvm_load_another_llvm* load_llvm) {
-    Llvm_id llvm_id = get_llvm_id_from_name(env, load_llvm->llvm_src);
+    Llvm_id llvm_id = llvm_id_from_get_name(env, load_llvm->llvm_src);
     assert(llvm_id > 0);
 
     string_extend_cstr(&a_main, output, "    %");
@@ -671,7 +671,7 @@ static void emit_store_another_llvm_src_expr(const Env* env, String* output, Str
         case LLVM_LITERAL: {
             const Llvm_literal* lit = llvm_literal_const_unwrap(expr);
             if (lit->type == LLVM_STRING) {
-                emit_symbol_normal(literals, llvm_get_literal_name(lit), lit);
+                emit_symbol_normal(literals, llvm_literal_get_name(lit), lit);
             }
             emit_store_another_llvm_src_literal(output, lit);
             return;
@@ -724,7 +724,7 @@ static void emit_store_another_llvm(const Env* env, String* output, String* lite
     //string_extend_size_t(&a_main, output, llvm_get_llvm_id(store->llvm_src.llvm));
 
     string_extend_cstr(&a_main, output, ", ptr %");
-    string_extend_size_t(&a_main, output, get_llvm_id_from_name(env, store->llvm_dest));
+    string_extend_size_t(&a_main, output, llvm_id_from_get_name(env, store->llvm_dest));
     string_extend_cstr(&a_main, output, ", align 8");
     string_extend_cstr(&a_main, output, "\n");
 }
@@ -735,7 +735,7 @@ static void emit_function_def(Env* env, String* struct_defs, String* output, Str
     extend_type_call_str(output, return_type_from_function_def(fun_def)->lang_type);
 
     string_extend_cstr(&a_main, output, " @");
-    string_extend_strv(&a_main, output, llvm_get_tast_name(llvm_def_const_wrap(llvm_function_def_const_wrap(fun_def))));
+    string_extend_strv(&a_main, output, llvm_tast_get_name(llvm_def_const_wrap(llvm_function_def_const_wrap(fun_def))));
 
     vec_append(&a_main, output, '(');
     emit_function_params(output, fun_def->decl->params);
@@ -751,7 +751,7 @@ static void emit_return_expr(String* output, const Llvm_expr* child) {
         case LLVM_LITERAL: {
             const Llvm_literal* literal = llvm_literal_const_unwrap(child);
             string_extend_cstr(&a_main, output, "    ret ");
-            extend_type_call_str(output, llvm_get_lang_type_literal(literal));
+            extend_type_call_str(output, llvm_literal_get_lang_type(literal));
             string_extend_cstr(&a_main, output, " ");
             extend_literal(output, literal);
             string_extend_cstr(&a_main, output, "\n");
@@ -760,7 +760,7 @@ static void emit_return_expr(String* output, const Llvm_expr* child) {
         case LLVM_OPERATOR: {
             const Llvm_operator* operator = llvm_operator_const_unwrap(child);
             string_extend_cstr(&a_main, output, "    ret ");
-            extend_type_call_str(output, llvm_get_lang_type_operator(operator));
+            extend_type_call_str(output, llvm_operator_get_lang_type(operator));
             string_extend_cstr(&a_main, output, " %");
             string_extend_size_t(&a_main, output, llvm_get_llvm_id_expr(child));
             string_extend_cstr(&a_main, output, "\n");
@@ -774,7 +774,7 @@ static void emit_return_expr(String* output, const Llvm_expr* child) {
                 const Llvm_expr* memb_expr = llvm_expr_const_unwrap(memb_sym->llvm_reg.llvm);
                 const Llvm_literal* literal = llvm_literal_const_unwrap(memb_expr);
                 string_extend_cstr(&a_main, output, "    ret ");
-                extend_type_call_str(output, llvm_get_lang_type_literal(literal));
+                extend_type_call_str(output, llvm_literal_get_lang_type(literal));
                 string_extend_cstr(&a_main, output, " ");
                 extend_literal(output, literal);
                 string_extend_cstr(&a_main, output, "\n");
@@ -849,7 +849,7 @@ static void emit_goto(const Env* env, String* output, const Llvm_goto* lang_goto
 
 static void emit_cond_goto(const Env* env, String* output, const Llvm_cond_goto* cond_goto) {
     string_extend_cstr(&a_main, output, "    br i1 %");
-    string_extend_size_t(&a_main, output, get_llvm_id_from_name(env, cond_goto->condition));
+    string_extend_size_t(&a_main, output, llvm_id_from_get_name(env, cond_goto->condition));
     string_extend_cstr(&a_main, output, ", label %");
     string_extend_size_t(&a_main, output, get_matching_label_id(env, cond_goto->if_true));
     string_extend_cstr(&a_main, output, ", label %");
@@ -899,16 +899,16 @@ static void emit_load_struct_element_pointer(const Env* env, String* output, con
 
     string_extend_cstr(&a_main, output, " = getelementptr inbounds ");
 
-    Lang_type lang_type = get_lang_type_from_name(env, load_elem_ptr->llvm_src);
+    Lang_type lang_type = lang_type_from_get_name(env, load_elem_ptr->llvm_src);
     lang_type_set_pointer_depth(&lang_type, 0);
     extend_type_call_str(output, lang_type);
     string_extend_cstr(&a_main, output, ", ptr %");
-    string_extend_size_t(&a_main, output, get_llvm_id_from_name(env, load_elem_ptr->llvm_src));
+    string_extend_size_t(&a_main, output, llvm_id_from_get_name(env, load_elem_ptr->llvm_src));
     if (load_elem_ptr->is_from_struct) {
         string_extend_cstr(&a_main, output, ", i32 0");
     }
     string_extend_cstr(&a_main, output, ", ");
-    extend_type_call_str(output, get_lang_type_from_name(env, load_elem_ptr->struct_index));
+    extend_type_call_str(output, lang_type_from_get_name(env, load_elem_ptr->struct_index));
     string_extend_cstr(&a_main, output, " ");
 
     Llvm* struct_index = NULL;

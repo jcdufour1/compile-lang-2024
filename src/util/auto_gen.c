@@ -6,7 +6,7 @@
 #include <auto_gen_lang_type.h>
 #include <auto_gen_ulang_type.h>
 
-// TODO: consistant naming scheme for tast_get_lang_type_expr, etc.
+// TODO: consistant naming scheme for tast_expr_get_lang_type, etc.
 
 // TODO: fix printing for lang_type in msg to not put newline
 
@@ -64,7 +64,7 @@ static void gen_symbol_table_c_file_symbol_update(String* text, Symbol_tbl_type 
     string_extend_cstr(&gen_a, text, "&sym_coll->");
     extend_strv_lower(text, type.symbol_table_name);
     string_extend_cstr(&gen_a, text, ", ");
-    extend_strv_lower(text, type.get_key_fn_name);
+    extend_strv_lower(text, type.key_fn_get_name);
     if (type.env_thing) {
         string_extend_cstr(&gen_a, text, "(env, ");
     } else {
@@ -143,7 +143,7 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "* tast_of_symbol) {\n");
     string_extend_cstr(&gen_a, &text, "    assert(tast_of_symbol);\n");
     string_extend_cstr(&gen_a, &text, "    Str_view symbol_name = ");
-    string_extend_strv(&gen_a, &text, type.get_key_fn_name);
+    string_extend_strv(&gen_a, &text, type.key_fn_get_name);
     if (type.env_thing) {
         string_extend_cstr(&gen_a, &text, "(env, tast_of_symbol);\n");
     } else {
@@ -156,7 +156,7 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "    size_t init_table_idx = curr_table_idx; \n");
     string_extend_cstr(&gen_a, &text, "    while (sym_tbl_tasts[curr_table_idx].status == SYM_TBL_OCCUPIED) {\n");
     string_extend_cstr(&gen_a, &text, "        if (str_view_is_equal(");
-    string_extend_strv(&gen_a, &text, type.get_key_fn_name);
+    string_extend_strv(&gen_a, &text, type.key_fn_get_name);
     if (type.env_thing) {
         string_extend_cstr(&gen_a, &text, "(env, ");
     } else {
@@ -319,7 +319,7 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "    assert(");
     extend_strv_lower(&text, type.internal_prefix);
     string_extend_cstr(&gen_a, &text, "_tbl_lookup(&dummy, sym_table, ");
-    extend_strv_lower(&text, type.get_key_fn_name);
+    extend_strv_lower(&text, type.key_fn_get_name);
     if (type.env_thing) {
         string_extend_cstr(&gen_a, &text, "(env, ");
     } else {
@@ -346,7 +346,7 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "    if (");
     extend_strv_lower(&text, type.internal_prefix);
     string_extend_cstr(&gen_a, &text, "_tbl_lookup_internal(&sym_tast, sym_table, ");
-    extend_strv_lower(&text, type.get_key_fn_name);
+    extend_strv_lower(&text, type.key_fn_get_name);
     if (type.env_thing) {
         string_extend_cstr(&gen_a, &text, "(env, tast_of_symbol))) {\n");
     } else {
@@ -431,7 +431,7 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "    if (");
     extend_strv_lower(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_lookup(&dummy, env, ");
-    extend_strv_lower(&text, type.get_key_fn_name);
+    extend_strv_lower(&text, type.key_fn_get_name);
     if (type.env_thing) {
         string_extend_cstr(&gen_a, &text, "(env, ");
     } else {
@@ -786,10 +786,10 @@ static void gen_symbol_table_struct(const char* file_path, Sym_tbl_type_vec type
     gen_gen("%s\n", "#include <tast_forward_decl.h>");
     gen_gen("%s\n", "#include <llvm_forward_decl.h>");
 
-    gen_gen("%s\n", "static inline Str_view get_alloca_name(const Llvm_alloca* llvm);");
-    gen_gen("%s\n", "static inline Str_view get_def_name(const Tast_def* def);");
-    gen_gen("%s\n", "static inline Str_view get_uast_name_def(const Uast_def* def);");
-    gen_gen("%s\n", "static inline Str_view llvm_get_tast_name(const Llvm* llvm);");
+    gen_gen("%s\n", "static inline Str_view alloca_get_name(const Llvm_alloca* llvm);");
+    gen_gen("%s\n", "static inline Str_view def_get_name(const Tast_def* def);");
+    gen_gen("%s\n", "static inline Str_view uast_get_name_def(const Uast_def* def);");
+    gen_gen("%s\n", "static inline Str_view llvm_tast_get_name(const Llvm* llvm);");
     gen_gen("%s\n", "static inline Str_view rm_tuple_struct_get_name(const Tast_struct_def* struct_def);");
 
     for (size_t idx = 0; idx < types.info.count; idx++) {
@@ -813,7 +813,7 @@ static Symbol_tbl_type symbol_tbl_type_new(
     const char* type_name,
     const char* normal_prefix,
     const char* internal_prefix,
-    const char* get_key_fn_name,
+    const char* key_fn_get_name,
     const char* symbol_table_name,
     const char* ancesters_type,
     const char* print_fn,
@@ -824,7 +824,7 @@ static Symbol_tbl_type symbol_tbl_type_new(
         .type_name = str_view_from_cstr(type_name),
         .normal_prefix = str_view_from_cstr(normal_prefix),
         .internal_prefix = str_view_from_cstr(internal_prefix),
-        .get_key_fn_name = str_view_from_cstr(get_key_fn_name),
+        .key_fn_get_name = str_view_from_cstr(key_fn_get_name),
         .symbol_table_name = str_view_from_cstr(symbol_table_name),
         .ancesters_type = str_view_from_cstr(ancesters_type),
         .print_fn = str_view_from_cstr(print_fn),
@@ -837,19 +837,19 @@ static Sym_tbl_type_vec get_symbol_tbl_types(void) {
     Sym_tbl_type_vec types = {0};
 
     vec_append(&gen_a, &types, symbol_tbl_type_new(
-        "Uast_def", "usymbol", "usym", "get_uast_name_def", "usymbol_table", "uancesters", "uast_def_print", true, false
+        "Uast_def", "usymbol", "usym", "uast_get_name_def", "usymbol_table", "uancesters", "uast_def_print", true, false
     ));
     vec_append(&gen_a, &types, symbol_tbl_type_new(
-        "Tast_def", "symbol", "sym", "get_def_name", "symbol_table", "ancesters", "tast_def_print", false, false
+        "Tast_def", "symbol", "sym", "def_get_name", "symbol_table", "ancesters", "tast_def_print", false, false
     ));
     vec_append(&gen_a, &types, symbol_tbl_type_new( 
-        "Llvm", "alloca", "all", "llvm_get_tast_name", "alloca_table", "llvm_ancesters", "llvm_print", false, false
+        "Llvm", "alloca", "all", "llvm_tast_get_name", "alloca_table", "llvm_ancesters", "llvm_print", false, false
     ));
     vec_append(&gen_a, &types, symbol_tbl_type_new( 
         "Tast_def", "rm_tuple_struct", "rm_tuple_stru", "serialize_def", "rm_tuple_struct_table", "", "tast_def_print", false, true
     ));
     //vec_append(&gen_a, &types, symbol_tbl_type_new( 
-    //    "Llvm", "Llvm", "ll", "llvm_get_tast_name", "llvm_table", "llvm_ancesters", false
+    //    "Llvm", "Llvm", "ll", "llvm_tast_get_name", "llvm_table", "llvm_ancesters", false
     //));
 
     return types;

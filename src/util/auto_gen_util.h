@@ -31,7 +31,7 @@ typedef struct {
     Str_view type_name;
     Str_view normal_prefix;
     Str_view internal_prefix;
-    Str_view get_key_fn_name;
+    Str_view key_fn_get_name;
     Str_view symbol_table_name;
     Str_view ancesters_type;
     Str_view print_fn;

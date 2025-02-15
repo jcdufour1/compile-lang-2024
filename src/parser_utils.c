@@ -151,7 +151,7 @@ Str_view get_storage_location(const Env* env, Str_view sym_name) {
             if (!alloca_lookup(&result, env, sym_def->name)) {
                 unreachable(STR_VIEW_FMT"\n", str_view_print(sym_def->name));
             }
-            return llvm_get_tast_name(result);
+            return llvm_tast_get_name(result);
         }
         default:
             unreachable("");
@@ -161,7 +161,7 @@ Str_view get_storage_location(const Env* env, Str_view sym_name) {
 
 const Tast_variable_def* get_normal_symbol_def_from_alloca(const Env* env, const Tast* tast) {
     Tast_def* sym_def;
-    if (!symbol_lookup(&sym_def, env, get_tast_name(tast))) {
+    if (!symbol_lookup(&sym_def, env, tast_get_name(tast))) {
         unreachable("tast call to undefined variable:"TAST_FMT"\n", tast_print(tast));
     }
     return tast_variable_def_unwrap(sym_def);
@@ -272,7 +272,7 @@ Tast_operator* util_binary_typed_new(Env* env, Uast_expr* lhs, Uast_expr* rhs, T
     return tast_operator_unwrap(new_tast);
 }
 
-const Tast* get_lang_type_from_sym_definition(const Tast* sym_def) {
+const Tast* from_sym_definition_get_lang_type(const Tast* sym_def) {
     (void) sym_def;
     todo();
 }
@@ -337,7 +337,7 @@ static uint64_t sizeof_expr(const Env* env, const Tast_expr* expr) {
     (void) env;
     switch (expr->type) {
         case TAST_LITERAL:
-            return sizeof_lang_type(env, tast_get_lang_type_literal(tast_literal_const_unwrap(expr)));
+            return sizeof_lang_type(env, tast_literal_get_lang_type(tast_literal_const_unwrap(expr)));
         default:
             unreachable("");
     }
@@ -402,7 +402,7 @@ static uint64_t llvm_sizeof_expr(const Env* env, const Llvm_expr* expr) {
     (void) env;
     switch (expr->type) {
         case LLVM_LITERAL:
-            return sizeof_lang_type(env, llvm_get_lang_type_literal(llvm_literal_const_unwrap(expr)));
+            return sizeof_lang_type(env, llvm_literal_get_lang_type(llvm_literal_const_unwrap(expr)));
         default:
             unreachable("");
     }
@@ -467,20 +467,20 @@ bool try_get_generic_struct_def(const Env* env, Tast_def** def, Tast_stmt* stmt)
         const Tast_expr* expr = tast_expr_const_unwrap(stmt);
         switch (expr->type) {
             case TAST_STRUCT_LITERAL: {
-                assert(lang_type_get_str(tast_get_lang_type_stmt(stmt)).count > 0);
-                return symbol_lookup(def, env, lang_type_get_str(tast_get_lang_type_stmt(stmt)));
+                assert(lang_type_get_str(tast_stmt_get_lang_type(stmt)).count > 0);
+                return symbol_lookup(def, env, lang_type_get_str(tast_stmt_get_lang_type(stmt)));
             }
             case TAST_SYMBOL:
                 // fallthrough
             case TAST_MEMBER_ACCESS: {
                 Tast_def* var_def;
-                assert(get_tast_name_stmt(stmt).count > 0);
-                if (!symbol_lookup(&var_def, env, get_tast_name_stmt(stmt))) {
+                assert(tast_get_name_stmt(stmt).count > 0);
+                if (!symbol_lookup(&var_def, env, tast_get_name_stmt(stmt))) {
                     todo();
                     return false;
                 }
-                assert(lang_type_get_str((tast_get_lang_type_def(var_def))).count > 0);
-                return symbol_lookup(def, env, lang_type_get_str((tast_get_lang_type_def(var_def))));
+                assert(lang_type_get_str((tast_def_get_lang_type(var_def))).count > 0);
+                return symbol_lookup(def, env, lang_type_get_str((tast_def_get_lang_type(var_def))));
             }
             default:
                 unreachable(TAST_FMT"\n", tast_stmt_print(stmt));
@@ -490,8 +490,8 @@ bool try_get_generic_struct_def(const Env* env, Tast_def** def, Tast_stmt* stmt)
     Tast_def* tast_def = tast_def_unwrap(stmt);
     switch (tast_def->type) {
         case TAST_VARIABLE_DEF: {
-            assert(lang_type_get_str((tast_get_lang_type_def(tast_def))).count > 0);
-            return symbol_lookup(def, env, lang_type_get_str((tast_get_lang_type_def(tast_def))));
+            assert(lang_type_get_str((tast_def_get_lang_type(tast_def))).count > 0);
+            return symbol_lookup(def, env, lang_type_get_str((tast_def_get_lang_type(tast_def))));
         }
         default:
             unreachable("");
@@ -506,10 +506,10 @@ Tast_def* llvm_get_generic_struct_def(const Env* env, Llvm* llvm) {
         switch (expr->type) {
             case LLVM_SYMBOL: {
                 Tast_def* var_def;
-                assert(llvm_get_tast_name(llvm).count > 0);
-                try(symbol_lookup(&var_def, env, llvm_get_tast_name(llvm)));
-                assert(lang_type_get_str((tast_get_lang_type_def(var_def))).count > 0);
-                try(symbol_lookup(&def, env, lang_type_get_str((tast_get_lang_type_def(var_def)))));
+                assert(llvm_tast_get_name(llvm).count > 0);
+                try(symbol_lookup(&var_def, env, llvm_tast_get_name(llvm)));
+                assert(lang_type_get_str((tast_def_get_lang_type(var_def))).count > 0);
+                try(symbol_lookup(&def, env, lang_type_get_str((tast_def_get_lang_type(var_def)))));
                 return def;
             }
             default:
@@ -520,8 +520,8 @@ Tast_def* llvm_get_generic_struct_def(const Env* env, Llvm* llvm) {
     Llvm_def* llvm_def = llvm_def_unwrap(llvm);
     switch (llvm_def->type) {
         case LLVM_VARIABLE_DEF: {
-            assert(lang_type_get_str(llvm_get_lang_type_def(llvm_def)).count > 0);
-            try(symbol_lookup(&def, env, lang_type_get_str(llvm_get_lang_type_def(llvm_def))));
+            assert(lang_type_get_str(llvm_def_get_lang_type(llvm_def)).count > 0);
+            try(symbol_lookup(&def, env, lang_type_get_str(llvm_def_get_lang_type(llvm_def))));
             return def;
         }
         default:

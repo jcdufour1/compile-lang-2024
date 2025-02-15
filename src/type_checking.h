@@ -89,7 +89,7 @@ bool try_set_function_params_types(
     bool add_to_sym_tbl
 );
 
-bool try_set_lang_type_types(
+bool try_types_set_lang_type(
     Env* env,
     Tast_lang_type** new_tast,
     Uast_lang_type* def
