@@ -235,6 +235,7 @@ static Str_view load_function_call(
     Llvm_block* new_block,
     Tast_function_call* old_fun_call
 ) {
+    log(LOG_DEBUG, TAST_FMT, tast_function_call_print(old_fun_call));
     bool rtn_is_struct = is_struct_like(old_fun_call->lang_type.type);
 
     Strv_vec new_args = {0};
@@ -275,11 +276,13 @@ static Str_view load_function_call(
     if (rtn_is_struct) {
         assert(def_name.count > 0);
 
-        Uast_symbol_untyped* new_sym_ = uast_symbol_untyped_new(old_fun_call->pos, def_name);
-        Tast_expr* new_sym = NULL;
-        try(try_set_symbol_type(env, &new_sym, new_sym_));
+        Tast_symbol_typed* new_sym = tast_symbol_typed_new(old_fun_call->pos, (Sym_typed_base) {
+           .name = def_name,
+           .lang_type = old_fun_call->lang_type,
+           .llvm_id = 0
+        });
 
-        Str_view result = load_expr(env, new_block, new_sym);
+        Str_view result = load_expr(env, new_block, tast_wrap_symbol_typed(new_sym));
         return result;
     } else {
         return new_fun_call->name_self;
