@@ -10,26 +10,6 @@
 
 #include "passes.h"
 
-static bool is_struct_like(LANG_TYPE_TYPE type) {
-    switch (type) {
-        case LANG_TYPE_STRUCT:
-            return true;
-        case LANG_TYPE_ENUM:
-            return false;
-        case LANG_TYPE_PRIMITIVE:
-            return false;
-        case LANG_TYPE_RAW_UNION:
-            return true;
-        case LANG_TYPE_VOID:
-            return false;
-        case LANG_TYPE_SUM:
-            return true;
-        case LANG_TYPE_TUPLE:
-            unreachable("");
-    }
-    unreachable("");
-}
-
 static Llvm_variable_def* tast_clone_variable_def(Tast_variable_def* old_var_def);
 
 static Llvm_alloca* add_load_and_store_alloca_new(Env* env, Llvm_variable_def* var_def) {

@@ -88,23 +88,23 @@ Llvm_id get_matching_fun_param_load_id(const Tast* src);
 
 const Tast* get_lang_type_from_sym_definition(const Tast* sym_def);
 
-uint64_t sizeof_lang_type(Lang_type lang_type);
+uint64_t sizeof_lang_type(const Env* env, Lang_type lang_type);
 
 uint64_t sizeof_item(const Env* env, const Tast* item);
 
 uint64_t sizeof_struct(const Env* env, const Tast* struct_literal);
 
-uint64_t sizeof_struct_def_base(const Struct_def_base* base);
+uint64_t sizeof_struct_def_base(const Env* env, const Struct_def_base* base);
 
 uint64_t sizeof_struct_literal(const Env* env, const Tast_struct_literal* struct_literal);
 
 uint64_t llvm_sizeof_item(const Env* env, const Llvm* item);
 
-uint64_t llvm_sizeof_struct_def_base(const Struct_def_base* base);
+uint64_t llvm_sizeof_struct_def_base(const Env* env, const Struct_def_base* base);
 
 uint64_t llvm_sizeof_struct_expr(const Env* env, const Llvm_expr* struct_literal_or_def);
 
-size_t struct_def_base_get_idx_largest_member(Struct_def_base base);
+size_t struct_def_base_get_idx_largest_member(const Env* env, Struct_def_base base);
 
 static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, Str_view member_name) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
@@ -201,6 +201,26 @@ static inline Tast_struct_def* llvm_get_struct_def(const Env* env, Llvm* tast) {
 
 static inline const Tast_struct_def* llvm_get_struct_def_const(const Env* env, const Llvm* tast) {
     return llvm_get_struct_def(env, (Llvm*)tast);
+}
+
+static inline bool is_struct_like(LANG_TYPE_TYPE type) {
+    switch (type) {
+        case LANG_TYPE_STRUCT:
+            return true;
+        case LANG_TYPE_ENUM:
+            return false;
+        case LANG_TYPE_PRIMITIVE:
+            return false;
+        case LANG_TYPE_RAW_UNION:
+            return true;
+        case LANG_TYPE_VOID:
+            return false;
+        case LANG_TYPE_SUM:
+            return true;
+        case LANG_TYPE_TUPLE:
+            unreachable("");
+    }
+    unreachable("");
 }
 
 #endif // PARSER_UTIL_H

@@ -10,6 +10,8 @@
 #include <limits.h>
 #include <ctype.h>
 
+static uint64_t sizeof_def(const Env* env, const Tast_def* def);
+
 bool try_str_view_to_int64_t(int64_t* result, Str_view str_view) {
     *result = 0;
     size_t idx = 0;
@@ -315,14 +317,19 @@ uint64_t sizeof_primitive(Lang_type_primitive primitive) {
     }
 }
 
-uint64_t sizeof_lang_type(Lang_type lang_type) {
+uint64_t sizeof_lang_type(const Env* env, Lang_type lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_ENUM:
             return 4;
         case LANG_TYPE_PRIMITIVE:
             return sizeof_primitive(lang_type_unwrap_primitive_const(lang_type));
+        case LANG_TYPE_STRUCT: {
+            Tast_def* def = NULL;
+            try(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
+            return sizeof_def(env, def);
+        }
         default:
-            todo();
+            unreachable(LANG_TYPE_FMT, lang_type_print(lang_type));
     }
 }
 
@@ -330,7 +337,7 @@ static uint64_t sizeof_expr(const Env* env, const Tast_expr* expr) {
     (void) env;
     switch (expr->type) {
         case TAST_LITERAL:
-            return sizeof_lang_type(tast_get_lang_type_literal(tast_unwrap_literal_const(expr)));
+            return sizeof_lang_type(env, tast_get_lang_type_literal(tast_unwrap_literal_const(expr)));
         default:
             unreachable("");
     }
@@ -340,7 +347,9 @@ static uint64_t sizeof_def(const Env* env, const Tast_def* def) {
     (void) env;
     switch (def->type) {
         case TAST_VARIABLE_DEF:
-            return sizeof_lang_type(tast_unwrap_variable_def_const(def)->lang_type);
+            return sizeof_lang_type(env, tast_unwrap_variable_def_const(def)->lang_type);
+        case TAST_STRUCT_DEF:
+            return sizeof_struct_def_base(env, &tast_unwrap_struct_def_const(def)->base);
         default:
             unreachable("");
     }
@@ -361,16 +370,16 @@ uint64_t sizeof_stmt(const Env* env, const Tast_stmt* stmt) {
 uint64_t sizeof_struct_literal(const Env* env, const Tast_struct_literal* struct_literal) {
     const Tast_struct_def* struct_def = 
         get_struct_def_const(env, tast_wrap_expr_const(tast_wrap_struct_literal_const(struct_literal)));
-    return sizeof_struct_def_base(&struct_def->base);
+    return sizeof_struct_def_base(env, &struct_def->base);
 }
 
-uint64_t sizeof_struct_def_base(const Struct_def_base* base) {
+uint64_t sizeof_struct_def_base(const Env* env, const Struct_def_base* base) {
     uint64_t required_alignment = 8; // TODO: do not hardcode this
 
     uint64_t total = 0;
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
         const Tast_variable_def* memb_def = vec_at(&base->members, idx);
-        uint64_t sizeof_curr_item = sizeof_lang_type(memb_def->lang_type);
+        uint64_t sizeof_curr_item = sizeof_lang_type(env, memb_def->lang_type);
         if (total%required_alignment + sizeof_curr_item > required_alignment) {
             total += required_alignment - total%required_alignment;
         }
@@ -393,7 +402,7 @@ static uint64_t llvm_sizeof_expr(const Env* env, const Llvm_expr* expr) {
     (void) env;
     switch (expr->type) {
         case LLVM_LITERAL:
-            return sizeof_lang_type(llvm_get_lang_type_literal(llvm_unwrap_literal_const(expr)));
+            return sizeof_lang_type(env, llvm_get_lang_type_literal(llvm_unwrap_literal_const(expr)));
         default:
             unreachable("");
     }
@@ -403,7 +412,7 @@ static uint64_t llvm_sizeof_def(const Env* env, const Llvm_def* def) {
     (void) env;
     switch (def->type) {
         case TAST_VARIABLE_DEF:
-            return sizeof_lang_type(llvm_unwrap_variable_def_const(def)->lang_type);
+            return sizeof_lang_type(env, llvm_unwrap_variable_def_const(def)->lang_type);
         default:
             unreachable("");
     }
@@ -421,13 +430,13 @@ uint64_t llvm_sizeof_item(const Env* env, const Llvm* item) {
     }
 }
 
-uint64_t llvm_sizeof_struct_def_base(const Struct_def_base* base) {
+uint64_t llvm_sizeof_struct_def_base(const Env* env, const Struct_def_base* base) {
     uint64_t required_alignment = 8; // TODO: do not hardcode this
 
     uint64_t total = 0;
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
         const Tast_variable_def* memb_def = vec_at(&base->members, idx);
-        uint64_t sizeof_curr_item = sizeof_lang_type(memb_def->lang_type);
+        uint64_t sizeof_curr_item = sizeof_lang_type(env, memb_def->lang_type);
         if (total%required_alignment + sizeof_curr_item > required_alignment) {
             total += required_alignment - total%required_alignment;
         }
@@ -436,14 +445,14 @@ uint64_t llvm_sizeof_struct_def_base(const Struct_def_base* base) {
     return total;
 }
 
-size_t struct_def_base_get_idx_largest_member(Struct_def_base base) {
+size_t struct_def_base_get_idx_largest_member(const Env* env, Struct_def_base base) {
     assert(base.members.info.count > 0);
 
     size_t result = 0;
     uint64_t size_result = 0;
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        uint64_t curr_size = sizeof_lang_type(vec_at(&base.members, idx)->lang_type);
+        uint64_t curr_size = sizeof_lang_type(env, vec_at(&base.members, idx)->lang_type);
         if (curr_size > size_result) {
             size_result = curr_size;
             result = idx;

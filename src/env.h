@@ -38,6 +38,7 @@ typedef struct Env_ {
 
     Lang_type rm_tuple_parent_fn_lang_type;
     Tast_struct_def_vec extra_structs;
+    Tast_raw_union_def_vec extra_raw_unions;
     Tast_sum_def_vec extra_sums;
     Tast_function_def_vec extra_functions;
 

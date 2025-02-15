@@ -47,7 +47,14 @@ static inline Str_view serialize_lang_type_struct_thing(const Env* env, Lang_typ
             break;
         }
         case LANG_TYPE_RAW_UNION: {
-            todo();
+            Tast_def* def = NULL;
+            log(LOG_DEBUG, "%zu\n", env->ancesters.info.count);
+            log(LOG_DEBUG, TAST_FMT, lang_type_print(lang_type));
+            log(LOG_DEBUG, TAST_FMT"\n", str_view_print(lang_type_get_str(lang_type)));
+            try(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
+            log(LOG_DEBUG, TAST_FMT, tast_def_print(def));
+            base = tast_unwrap_raw_union_def(def)->base;
+            break;
         }
         default:
             unreachable("");

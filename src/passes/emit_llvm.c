@@ -272,26 +272,18 @@ static void emit_function_params(String* output, const Llvm_function_params* fun
             string_extend_cstr(&a_main, output, ", ");
         }
 
-        switch (curr_param->lang_type.type) {
-            case LANG_TYPE_STRUCT:
-                if (lang_type_get_pointer_depth(curr_param->lang_type) < 0) {
-                    unreachable("");
-                } else if (lang_type_get_pointer_depth(curr_param->lang_type) > 0) {
-                    extend_type_call_str(output, curr_param->lang_type);
-                } else {
-                    string_extend_cstr(&a_main, output, "ptr noundef byval(");
-                    extend_type_call_str(output, curr_param->lang_type);
-                    string_extend_cstr(&a_main, output, ")");
-                }
-                break;
-            case LANG_TYPE_ENUM:
-                llvm_extend_type_decl_str(output, llvm_wrap_def_const(llvm_wrap_variable_def_const(curr_param)), true);
-                break;
-            case LANG_TYPE_PRIMITIVE:
-                llvm_extend_type_decl_str(output, llvm_wrap_def_const(llvm_wrap_variable_def_const(curr_param)), true);
-                break;
-            default:
-                unreachable(LANG_TYPE_FMT, lang_type_print(curr_param->lang_type));
+        if (is_struct_like(curr_param->lang_type.type)) {
+            if (lang_type_get_pointer_depth(curr_param->lang_type) < 0) {
+                unreachable("");
+            } else if (lang_type_get_pointer_depth(curr_param->lang_type) > 0) {
+                extend_type_call_str(output, curr_param->lang_type);
+            } else {
+                string_extend_cstr(&a_main, output, "ptr noundef byval(");
+                extend_type_call_str(output, curr_param->lang_type);
+                string_extend_cstr(&a_main, output, ")");
+            }
+        } else {
+            llvm_extend_type_decl_str(output, llvm_wrap_def_const(llvm_wrap_variable_def_const(curr_param)), true);
         }
 
         if (curr_param->is_variadic) {
@@ -317,32 +309,21 @@ static void emit_function_call_arg_load_another_llvm(
     if (llvm_is_literal(src)) {
         extend_literal_decl(output, literals, llvm_unwrap_literal_const(llvm_unwrap_expr_const(src)), true);
     } else {
+        if (is_struct_like(load->lang_type.type)) {
+            log(LOG_DEBUG, STR_VIEW_FMT, llvm_load_another_llvm_print(load));
+            llvm_id = get_llvm_id_from_name(env, get_storage_location(env, load->llvm_src));
+            assert(llvm_id > 0);
 
-        switch (load->lang_type.type) {
-            case LANG_TYPE_STRUCT:
-                log(LOG_DEBUG, STR_VIEW_FMT, llvm_load_another_llvm_print(load));
-                llvm_id = get_llvm_id_from_name(env, get_storage_location(env, load->llvm_src));
-                assert(llvm_id > 0);
-
-                string_extend_cstr(&a_main, output, "ptr noundef byval(");
-                extend_type_call_str(output, load->lang_type);
-                string_extend_cstr(&a_main, output, ")");
-                string_extend_cstr(&a_main, output, " %");
-                string_extend_size_t(&a_main, output, llvm_id);
-                break;
-            case LANG_TYPE_ENUM:
-                llvm_id = load->llvm_id;
-                extend_type_call_str(output, load->lang_type);
-                string_extend_cstr(&a_main, output, " %");
-                string_extend_size_t(&a_main, output, llvm_id);
-                break;
-            default:
-                log(LOG_DEBUG, LLVM_FMT"\n", llvm_print(src));
-                llvm_id = llvm_get_llvm_id(src);
-                extend_type_call_str(output, load->lang_type);
-                string_extend_cstr(&a_main, output, " %");
-                string_extend_size_t(&a_main, output, llvm_id);
-                break;
+            string_extend_cstr(&a_main, output, "ptr noundef byval(");
+            extend_type_call_str(output, load->lang_type);
+            string_extend_cstr(&a_main, output, ")");
+            string_extend_cstr(&a_main, output, " %");
+            string_extend_size_t(&a_main, output, llvm_id);
+        } else {
+            llvm_id = load->llvm_id;
+            extend_type_call_str(output, load->lang_type);
+            string_extend_cstr(&a_main, output, " %");
+            string_extend_size_t(&a_main, output, llvm_id);
         }
     }
 }
@@ -876,13 +857,13 @@ static void emit_cond_goto(const Env* env, String* output, const Llvm_cond_goto*
     vec_append(&a_main, output, '\n');
 }
 
-static void emit_struct_def_base(String* output, const Struct_def_base* base, bool largest_only) {
+static void emit_struct_def_base(const Env* env, String* output, const Struct_def_base* base, bool largest_only) {
     string_extend_strv(&a_main, output, base->name);
     string_extend_cstr(&a_main, output, " = type { ");
     bool is_first = true;
 
     if (largest_only) {
-        size_t idx = struct_def_base_get_idx_largest_member(*base);
+        size_t idx = struct_def_base_get_idx_largest_member(env, *base);
         tast_extend_type_decl_str(output, tast_wrap_def(tast_wrap_variable_def(vec_at(&base->members, idx))), false);
     } else {
         for (size_t idx = 0; idx < base->members.info.count; idx++) {
@@ -897,19 +878,19 @@ static void emit_struct_def_base(String* output, const Struct_def_base* base, bo
     string_extend_cstr(&a_main, output, " }\n");
 }
 
-static void emit_struct_def(String* output, const Llvm_struct_def* struct_def) {
+static void emit_struct_def(const Env* env, String* output, const Llvm_struct_def* struct_def) {
     string_extend_cstr(&a_main, output, "%struct.");
-    emit_struct_def_base(output, &struct_def->base, false);
+    emit_struct_def_base(env, output, &struct_def->base, false);
 }
 
-static void emit_raw_union_def(String* output, const Llvm_raw_union_def* raw_union_def) {
+static void emit_raw_union_def(const Env* env, String* output, const Llvm_raw_union_def* raw_union_def) {
     string_extend_cstr(&a_main, output, "%union.");
-    emit_struct_def_base(output, &raw_union_def->base, true);
+    emit_struct_def_base(env, output, &raw_union_def->base, true);
 }
 
-static void emit_sum_def(String* output, const Llvm_sum_def* sum_def) {
+static void emit_sum_def(const Env* env, String* output, const Llvm_sum_def* sum_def) {
     string_extend_cstr(&a_main, output, "%struct.");
-    emit_struct_def_base(output, &sum_def->base, true);
+    emit_struct_def_base(env, output, &sum_def->base, true);
 }
 
 static void emit_load_struct_element_pointer(const Env* env, String* output, const Llvm_load_element_ptr* load_elem_ptr) {
@@ -972,13 +953,13 @@ static void emit_def(Env* env, String* struct_defs, String* output, String* lite
             emit_label(output, llvm_unwrap_label_const(def));
             return;
         case LLVM_STRUCT_DEF:
-            emit_struct_def(struct_defs, llvm_unwrap_struct_def_const(def));
+            emit_struct_def(env, struct_defs, llvm_unwrap_struct_def_const(def));
             return;
         case LLVM_RAW_UNION_DEF:
-            emit_raw_union_def(struct_defs, llvm_unwrap_raw_union_def_const(def));
+            emit_raw_union_def(env, struct_defs, llvm_unwrap_raw_union_def_const(def));
             return;
         case LLVM_SUM_DEF:
-            emit_sum_def(struct_defs, llvm_unwrap_sum_def_const(def));
+            emit_sum_def(env, struct_defs, llvm_unwrap_sum_def_const(def));
             return;
         case LLVM_ENUM_DEF:
             return;

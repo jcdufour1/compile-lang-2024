@@ -52,28 +52,44 @@ static Lang_type lang_type_thing(Env* env, Lang_type lang_type, Pos lang_type_po
             log(LOG_DEBUG, LANG_TYPE_FMT, tast_def_print(lang_type_def_));
             Tast_variable_def_vec members = {0};
 
-            for (size_t idx = 0; idx < tast_unwrap_sum_def(lang_type_def_)->base.members.info.count; idx++) {
-                Tast_variable_def* memb = tast_variable_def_new(
-                    lang_type_pos,
-                    vec_at(&tast_unwrap_sum_def(lang_type_def_)->base.members, idx)->lang_type,
-                    false,
-                    util_literal_name_new_prefix("tuple_struct_member")
-                );
-                vec_append(&a_main, &members, memb);
+            Tast_variable_def* tag = tast_variable_def_new(
+                lang_type_pos,
+                lang_type_wrap_primitive_const(lang_type_primitive_new(lang_type_atom_new_from_cstr("i32", 0))),
+                false,
+                util_literal_name_new_prefix("tuple_struct_tag")
+            );
+            vec_append(&a_main, &members, tag);
+
+            Tast_raw_union_def* item_type_def = tast_raw_union_def_new(
+                lang_type_pos,
+                tast_unwrap_sum_def(lang_type_def_)->base
+            );
+            item_type_def->base.name = util_literal_name_new_prefix("item_type_def");
+            if (sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_wrap_raw_union_def(item_type_def))) {
+                vec_append(&a_main, &env->extra_raw_unions, item_type_def);
             }
+
+            Tast_variable_def* item = tast_variable_def_new(
+                lang_type_pos,
+                lang_type_wrap_raw_union_const(lang_type_raw_union_new(lang_type_atom_new(item_type_def->base.name, 0))),
+                false,
+                util_literal_name_new_prefix("tuple_struct_item")
+            );
+            vec_append(&a_main, &members, item);
 
             Struct_def_base base = {
                 .members = members,
-                .name = serialize_lang_type(env, lang_type)
+                .name = util_literal_name_new_prefix("temp")
             };
             
             Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
+            struct_def->base.name = serialize_struct_def(env, struct_def);
             // TODO: put struct_defs in different symbol_table, etc. to avoid collisions?
             if (sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_wrap_struct_def(struct_def))) {
                 vec_append(&a_main, &env->extra_structs, struct_def);
             }
 
-            return lang_type_wrap_struct_const(lang_type_struct_new(lang_type_atom_new(base.name, 0)));
+            return lang_type_wrap_struct_const(lang_type_struct_new(lang_type_atom_new(struct_def->base.name, 0)));
         }
         case LANG_TYPE_TUPLE: {
             Tast_variable_def_vec members = {0};
@@ -454,9 +470,6 @@ static Tast_expr* rm_tuple_tuple_rhs(
             base = tast_unwrap_struct_def(struct_def_)->base;
             log(LOG_DEBUG, TAST_FMT, tast_def_print(struct_def_));
             break;
-        case TAST_SUM_DEF:
-            base = tast_unwrap_sum_def(struct_def_)->base;
-            break;
         default:
             unreachable("");
     }
@@ -556,9 +569,9 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
     env->parent_of = PARENT_OF_NONE;
 
     Tast_def* struct_def_ = NULL;
+    log(LOG_DEBUG, TAST_FMT, lang_type_print(lhs_lang_type));
     try(symbol_lookup(&struct_def_, env, lang_type_get_str(lhs_lang_type)));
     Struct_def_base base = tast_unwrap_struct_def(struct_def_)->base;
-    log(LOG_DEBUG, TAST_FMT, lang_type_print(lhs_lang_type));
     log(LOG_DEBUG, TAST_FMT, tast_def_print(struct_def_));
 
     Tast_expr_vec new_args = {0};
@@ -601,6 +614,7 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
             unreachable("");
     }
 
+    log(LOG_DEBUG, TAST_FMT, tast_def_print(struct_def_));
     rm_tuple_stru_tbl_add(env, &vec_at(&env->ancesters, 0)->rm_tuple_struct_table, struct_def_);
     log(LOG_DEBUG, TAST_FMT, tast_def_print(struct_def_));
     log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(serialize_def(env, struct_def_)));
@@ -933,6 +947,10 @@ Tast_block* remove_tuples(Env* env, Tast_block* root) {
     for (size_t idx = 0; idx < env->extra_structs.info.count; idx++) {
         assert(vec_at(&env->extra_structs, idx));
         vec_insert(&a_main, &new_block->children, 0, tast_wrap_def(tast_wrap_struct_def(vec_at(&env->extra_structs, idx))));
+    }
+    for (size_t idx = 0; idx < env->extra_raw_unions.info.count; idx++) {
+        assert(vec_at(&env->extra_raw_unions, idx));
+        vec_insert(&a_main, &new_block->children, 0, tast_wrap_def(tast_wrap_raw_union_def(vec_at(&env->extra_raw_unions, idx))));
     }
     return new_block;
 }
