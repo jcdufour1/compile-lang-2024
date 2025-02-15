@@ -474,8 +474,8 @@ bool try_get_generic_struct_def(const Env* env, Tast_def** def, Tast_stmt* stmt)
                 // fallthrough
             case TAST_MEMBER_ACCESS: {
                 Tast_def* var_def;
-                assert(tast_get_name_stmt(stmt).count > 0);
-                if (!symbol_lookup(&var_def, env, tast_get_name_stmt(stmt))) {
+                assert(tast_stmt_get_name(stmt).count > 0);
+                if (!symbol_lookup(&var_def, env, tast_stmt_get_name(stmt))) {
                     todo();
                     return false;
                 }

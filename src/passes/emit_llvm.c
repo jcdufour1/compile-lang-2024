@@ -230,7 +230,7 @@ static void tast_extend_literal_decl_prefix(String* output, const Tast_literal* 
             todo();
         }
         string_extend_cstr(&a_main, output, " @.");
-        string_extend_strv(&a_main, output, literal_get_name(literal));
+        string_extend_strv(&a_main, output, tast_literal_get_name(literal));
     } else if (lang_type_atom_is_signed(lang_type_get_atom(tast_literal_get_lang_type(literal)))) {
         assert(tast_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE);
         if (lang_type_get_pointer_depth(tast_literal_get_lang_type(literal)) != 0) {

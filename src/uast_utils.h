@@ -327,7 +327,7 @@ static inline Str_view uast_literal_def_get_name(const Uast_literal_def* lit_def
     unreachable("");
 }
 
-static inline Str_view uast_get_name_def(const Uast_def* def) {
+static inline Str_view uast_def_get_name(const Uast_def* def) {
     switch (def->type) {
         case UAST_PRIMITIVE_DEF:
             return lang_type_get_str(uast_primitive_def_const_unwrap(def)->lang_type);
@@ -351,20 +351,10 @@ static inline Str_view uast_get_name_def(const Uast_def* def) {
     unreachable("");
 }
 
-static inline Str_view uast_get_name_expr(const Uast_expr* expr) {
-    switch (expr->type) {
-        case UAST_FUNCTION_CALL:
-            todo();
-        default:
-            unreachable(UAST_FMT"\n", uast_expr_print(expr));
-    }
-    unreachable("");
-}
-
-static inline Str_view uast_get_name_stmt(const Uast_stmt* stmt) {
+static inline Str_view uast_stmt_get_name(const Uast_stmt* stmt) {
     switch (stmt->type) {
         case UAST_DEF:
-            return uast_get_name_def(uast_def_const_unwrap(stmt));
+            return uast_def_get_name(uast_def_const_unwrap(stmt));
         case UAST_BLOCK:
             unreachable("");
         case UAST_EXPR:
@@ -392,7 +382,7 @@ static inline Str_view uast_get_name_stmt(const Uast_stmt* stmt) {
 static inline Str_view uast_get_name(const Uast* uast) {
     switch (uast->type) {
         case UAST_STMT:
-            return uast_get_name_stmt(uast_stmt_const_unwrap(uast));
+            return uast_stmt_get_name(uast_stmt_const_unwrap(uast));
         case UAST_FUNCTION_PARAMS:
             unreachable("");
         case UAST_LANG_TYPE:

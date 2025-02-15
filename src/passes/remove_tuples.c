@@ -414,7 +414,7 @@ static Tast_expr* rm_tuple_struct_literal_rhs(
     rm_tuple_stru_tbl_add(env, &vec_at(&env->ancesters, 0)->rm_tuple_struct_table, struct_def_);
     log(LOG_DEBUG, TAST_FMT, tast_def_print(struct_def_));
     log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(serialize_def(env, struct_def_)));
-    //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(rm_tuple_struct_get_name_from_return_type(struct_def)));
+    //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(rm_tuple_struct_from_return_type_get_name(struct_def)));
     try(rm_tuple_struct_lookup(&struct_def_, env, serialize_def(env, struct_def_)));
 
     Tast_function_params* new_fun_params = tast_function_params_new(assign_pos, new_params);
@@ -515,7 +515,7 @@ static Tast_expr* rm_tuple_tuple_rhs(
     rm_tuple_stru_tbl_add(env, &vec_at(&env->ancesters, 0)->rm_tuple_struct_table, struct_def_);
     log(LOG_DEBUG, TAST_FMT, tast_def_print(struct_def_));
     log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(serialize_def(env, struct_def_)));
-    //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(rm_tuple_struct_get_name_from_return_type(struct_def)));
+    //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(rm_tuple_struct_from_return_type_get_name(struct_def)));
     try(rm_tuple_struct_lookup(&struct_def_, env, serialize_def(env, struct_def_)));
 
     Tast_function_params* new_fun_params = tast_function_params_new(assign_pos, new_params);
@@ -619,7 +619,7 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
     rm_tuple_stru_tbl_add(env, &vec_at(&env->ancesters, 0)->rm_tuple_struct_table, struct_def_);
     log(LOG_DEBUG, TAST_FMT, tast_def_print(struct_def_));
     log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(serialize_def(env, struct_def_)));
-    //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(rm_tuple_struct_get_name_from_return_type(struct_def)));
+    //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(rm_tuple_struct_from_return_type_get_name(struct_def)));
     try(rm_tuple_struct_lookup(&struct_def_, env, serialize_def(env, struct_def_)));
 
     Tast_function_params* new_fun_params = tast_function_params_new(assign_pos, new_params);

@@ -787,8 +787,8 @@ static void gen_symbol_table_struct(const char* file_path, Sym_tbl_type_vec type
     gen_gen("%s\n", "#include <llvm_forward_decl.h>");
 
     gen_gen("%s\n", "static inline Str_view alloca_get_name(const Llvm_alloca* llvm);");
-    gen_gen("%s\n", "static inline Str_view def_get_name(const Tast_def* def);");
-    gen_gen("%s\n", "static inline Str_view uast_get_name_def(const Uast_def* def);");
+    gen_gen("%s\n", "static inline Str_view tast_def_get_name(const Tast_def* def);");
+    gen_gen("%s\n", "static inline Str_view uast_def_get_name(const Uast_def* def);");
     gen_gen("%s\n", "static inline Str_view llvm_tast_get_name(const Llvm* llvm);");
     gen_gen("%s\n", "static inline Str_view rm_tuple_struct_get_name(const Tast_struct_def* struct_def);");
 
@@ -837,10 +837,10 @@ static Sym_tbl_type_vec get_symbol_tbl_types(void) {
     Sym_tbl_type_vec types = {0};
 
     vec_append(&gen_a, &types, symbol_tbl_type_new(
-        "Uast_def", "usymbol", "usym", "uast_get_name_def", "usymbol_table", "uancesters", "uast_def_print", true, false
+        "Uast_def", "usymbol", "usym", "uast_def_get_name", "usymbol_table", "uancesters", "uast_def_print", true, false
     ));
     vec_append(&gen_a, &types, symbol_tbl_type_new(
-        "Tast_def", "symbol", "sym", "def_get_name", "symbol_table", "ancesters", "tast_def_print", false, false
+        "Tast_def", "symbol", "sym", "tast_def_get_name", "symbol_table", "ancesters", "tast_def_print", false, false
     ));
     vec_append(&gen_a, &types, symbol_tbl_type_new( 
         "Llvm", "alloca", "all", "llvm_tast_get_name", "alloca_table", "llvm_ancesters", "llvm_print", false, false
