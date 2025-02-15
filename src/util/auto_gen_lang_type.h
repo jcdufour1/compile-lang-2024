@@ -305,9 +305,9 @@ static void lang_type_gen_lang_type_struct(Lang_type_type lang_type) {
     gen_gen(STRING_FMT"\n", string_print(output));
 }
 
-static void lang_type_gen_unwrap_internal(Lang_type_type type, bool is_const) {
+static void lang_type_gen_internal_unwrap(Lang_type_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        lang_type_gen_unwrap_internal(vec_at(&type.sub_types, idx), is_const);
+        lang_type_gen_internal_unwrap(vec_at(&type.sub_types, idx), is_const);
     }
 
     if (type.name.base.count < 1) {
@@ -315,17 +315,18 @@ static void lang_type_gen_unwrap_internal(Lang_type_type type, bool is_const) {
     }
 
     String function = {0};
-    //static inline Lang_type_##lower* lang_type_unwrap_##lower(Lang_type* lang_type) { 
+    //static inline Lang_type_##lower* lang_type__unwrap##lower(Lang_type* lang_type) { 
     string_extend_cstr(&gen_a, &function, "static inline ");
     extend_lang_type_name_first_upper(&function, type.name);
     if (!is_const) {
         string_extend_cstr(&gen_a, &function, "*");
     }
-    string_extend_cstr(&gen_a, &function, " lang_type_unwrap_");
+    string_extend_cstr(&gen_a, &function, " lang_type_");
     extend_strv_lower(&function, type.name.base);
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "_const");
     }
+    string_extend_cstr(&gen_a, &function, "_unwrap");
     string_extend_cstr(&gen_a, &function, "(");
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "const ");
@@ -365,9 +366,9 @@ static void lang_type_gen_unwrap_internal(Lang_type_type type, bool is_const) {
     gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
 }
 
-static void lang_type_gen_wrap_internal(Lang_type_type type, bool is_const) {
+static void lang_type_gen_internal_wrap(Lang_type_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        lang_type_gen_wrap_internal(vec_at(&type.sub_types, idx), is_const);
+        lang_type_gen_internal_wrap(vec_at(&type.sub_types, idx), is_const);
     }
 
     if (type.name.base.count < 1) {
@@ -375,18 +376,18 @@ static void lang_type_gen_wrap_internal(Lang_type_type type, bool is_const) {
     }
 
     String function = {0};
-    //static inline Lang_type_##lower* lang_type_unwrap_##lower(Lang_type* lang_type) { 
+    //static inline Lang_type_##lower* lang_type__unwrap##lower(Lang_type* lang_type) { 
     string_extend_cstr(&gen_a, &function, "static inline ");
     extend_parent_lang_type_name_first_upper(&function, type.name);
     if (!is_const) {
         string_extend_cstr(&gen_a, &function, "* ");
     }
-    string_extend_cstr(&gen_a, &function, " lang_type_wrap_");
+    string_extend_cstr(&gen_a, &function, " lang_type_");
     extend_strv_lower(&function, type.name.base);
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "_const");
     }
-    string_extend_cstr(&gen_a, &function, "(");
+    string_extend_cstr(&gen_a, &function, "_wrap(");
     extend_lang_type_name_first_upper(&function, type.name);
     if (!is_const) {
         string_extend_cstr(&gen_a, &function, "* ");
@@ -414,13 +415,13 @@ static void lang_type_gen_wrap_internal(Lang_type_type type, bool is_const) {
 }
 
 void lang_type_gen_lang_type_unwrap(Lang_type_type lang_type) {
-    lang_type_gen_unwrap_internal(lang_type, false);
-    lang_type_gen_unwrap_internal(lang_type, true);
+    lang_type_gen_internal_unwrap(lang_type, false);
+    lang_type_gen_internal_unwrap(lang_type, true);
 }
 
 void lang_type_gen_lang_type_wrap(Lang_type_type lang_type) {
-    //lang_type_gen_wrap_internal(lang_type, false);
-    lang_type_gen_wrap_internal(lang_type, true);
+    //lang_type_gen_internal_wrap(lang_type, false);
+    lang_type_gen_internal_wrap(lang_type, true);
 }
 
 // TODO: deduplicate these functions (use same function for Llvm and Lang_type)

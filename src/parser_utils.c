@@ -92,7 +92,7 @@ bool lang_type_is_number(Lang_type lang_type) {
     if (lang_type.type != LANG_TYPE_PRIMITIVE) {
         return false;
     }
-    return lang_type_atom_is_number(lang_type_unwrap_primitive_const(lang_type).atom);
+    return lang_type_atom_is_number(lang_type_primitive_const_unwrap(lang_type).atom);
 }
 
 int64_t i_lang_type_atom_to_bit_width(Lang_type_atom atom) {
@@ -146,7 +146,7 @@ Str_view get_storage_location(const Env* env, Str_view sym_name) {
 
     switch (sym_def_->type) {
         case UAST_VARIABLE_DEF: {
-            Tast_variable_def* sym_def = tast_unwrap_variable_def(sym_def_);
+            Tast_variable_def* sym_def = tast_variable_def_unwrap(sym_def_);
             Llvm* result = NULL;
             if (!alloca_lookup(&result, env, sym_def->name)) {
                 unreachable(STR_VIEW_FMT"\n", str_view_print(sym_def->name));
@@ -164,7 +164,7 @@ const Tast_variable_def* get_normal_symbol_def_from_alloca(const Env* env, const
     if (!symbol_lookup(&sym_def, env, get_tast_name(tast))) {
         unreachable("tast call to undefined variable:"TAST_FMT"\n", tast_print(tast));
     }
-    return tast_unwrap_variable_def(sym_def);
+    return tast_variable_def_unwrap(sym_def);
 }
 
 Llvm_id get_matching_label_id(const Env* env, Str_view name) {
@@ -173,12 +173,12 @@ Llvm_id get_matching_label_id(const Env* env, Str_view name) {
         symbol_log(LOG_DEBUG, env);
         unreachable(STR_VIEW_FMT"\n", str_view_print(name));
     }
-    Llvm_label* label = llvm_unwrap_label(llvm_unwrap_def(label_));
+    Llvm_label* label = llvm_label_unwrap(llvm_def_unwrap(label_));
     return label->llvm_id;
 }
 
 Tast_assignment* util_assignment_new(Env* env, Uast_stmt* lhs, Uast_expr* rhs) {
-    Uast_assignment* assignment = uast_assignment_new(uast_get_pos_stmt(lhs), lhs, rhs);
+    Uast_assignment* assignment = uast_assignment_new(uast_stmt_get_pos(lhs), lhs, rhs);
 
     Tast_assignment* new_assign = NULL;
     try_set_assignment_types(env, &new_assign, assignment);
@@ -196,17 +196,17 @@ Uast_literal* util_uast_literal_new_from_strv(Str_view value, TOKEN_TYPE token_t
     switch (token_type) {
         case TOKEN_INT_LITERAL: {
             Uast_number* literal = uast_number_new(pos, str_view_to_int64_t(value));
-            new_literal = uast_wrap_number(literal);
+            new_literal = uast_number_wrap(literal);
             break;
         }
         case TOKEN_STRING_LITERAL: {
             Uast_string* literal = uast_string_new(pos, value, util_literal_name_new());
-            new_literal = uast_wrap_string(literal);
+            new_literal = uast_string_wrap(literal);
             break;
         }
         case TOKEN_VOID: {
             Uast_void* literal = uast_void_new(pos);
-            new_literal = uast_wrap_void(literal);
+            new_literal = uast_void_wrap(literal);
             break;
         }
         case TOKEN_CHAR_LITERAL: {
@@ -214,7 +214,7 @@ Uast_literal* util_uast_literal_new_from_strv(Str_view value, TOKEN_TYPE token_t
             if (value.count > 1) {
                 todo();
             }
-            new_literal = uast_wrap_char(literal);
+            new_literal = uast_char_wrap(literal);
             break;
         }
         default:
@@ -233,20 +233,20 @@ Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token
         case TOKEN_INT_LITERAL: {
             Uast_number* literal = uast_number_new(pos, value);
             literal->data = value;
-            new_literal = uast_wrap_number(literal);
+            new_literal = uast_number_wrap(literal);
             break;
         }
         case TOKEN_STRING_LITERAL:
             unreachable("");
         case TOKEN_VOID: {
             Uast_void* literal = uast_void_new(pos);
-            new_literal = uast_wrap_void(literal);
+            new_literal = uast_void_wrap(literal);
             break;
         }
         case TOKEN_CHAR_LITERAL: {
             assert(value < INT8_MAX);
             Uast_char* literal = uast_char_new(pos, value);
-            new_literal = uast_wrap_char(literal);
+            new_literal = uast_char_wrap(literal);
             break;
         }
         default:
@@ -264,12 +264,12 @@ Tast_literal* util_tast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token
 }
 
 Tast_operator* util_binary_typed_new(Env* env, Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operator_type) {
-    Uast_binary* binary = uast_binary_new(uast_get_pos_expr(lhs), lhs, rhs, operator_type);
+    Uast_binary* binary = uast_binary_new(uast_expr_get_pos(lhs), lhs, rhs, operator_type);
 
     Tast_expr* new_tast;
     try(try_set_binary_types(env, &new_tast, binary));
 
-    return tast_unwrap_operator(new_tast);
+    return tast_operator_unwrap(new_tast);
 }
 
 const Tast* get_lang_type_from_sym_definition(const Tast* sym_def) {
@@ -279,29 +279,29 @@ const Tast* get_lang_type_from_sym_definition(const Tast* sym_def) {
 
 Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child) {
     Tast_binary* binary = tast_binary_new(
-        tast_get_pos_expr(if_cond_child),
-        tast_wrap_literal(
-            util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, tast_get_pos_expr(if_cond_child))
+        tast_expr_get_pos(if_cond_child),
+        tast_literal_wrap(
+            util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, tast_expr_get_pos(if_cond_child))
         ),
         if_cond_child,
         TOKEN_NOT_EQUAL,
-        lang_type_wrap_primitive_const(lang_type_primitive_new(lang_type_atom_new_from_cstr("i32", 0)))
+        lang_type_primitive_const_wrap(lang_type_primitive_new(lang_type_atom_new_from_cstr("i32", 0)))
     );
 
-    return tast_wrap_binary(binary);
+    return tast_binary_wrap(binary);
 }
 
 Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child) {
     Uast_binary* binary = uast_binary_new(
-        uast_get_pos_expr(if_cond_child),
-        uast_wrap_literal(
-            util_uast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, uast_get_pos_expr(if_cond_child))
+        uast_expr_get_pos(if_cond_child),
+        uast_literal_wrap(
+            util_uast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, uast_expr_get_pos(if_cond_child))
         ),
         if_cond_child,
         TOKEN_NOT_EQUAL
     );
 
-    return uast_wrap_binary(binary);
+    return uast_binary_wrap(binary);
 }
 
 uint64_t sizeof_primitive(Lang_type_primitive primitive) {
@@ -322,7 +322,7 @@ uint64_t sizeof_lang_type(const Env* env, Lang_type lang_type) {
         case LANG_TYPE_ENUM:
             return 4;
         case LANG_TYPE_PRIMITIVE:
-            return sizeof_primitive(lang_type_unwrap_primitive_const(lang_type));
+            return sizeof_primitive(lang_type_primitive_const_unwrap(lang_type));
         case LANG_TYPE_STRUCT: {
             Tast_def* def = NULL;
             try(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
@@ -337,7 +337,7 @@ static uint64_t sizeof_expr(const Env* env, const Tast_expr* expr) {
     (void) env;
     switch (expr->type) {
         case TAST_LITERAL:
-            return sizeof_lang_type(env, tast_get_lang_type_literal(tast_unwrap_literal_const(expr)));
+            return sizeof_lang_type(env, tast_get_lang_type_literal(tast_literal_const_unwrap(expr)));
         default:
             unreachable("");
     }
@@ -347,9 +347,9 @@ static uint64_t sizeof_def(const Env* env, const Tast_def* def) {
     (void) env;
     switch (def->type) {
         case TAST_VARIABLE_DEF:
-            return sizeof_lang_type(env, tast_unwrap_variable_def_const(def)->lang_type);
+            return sizeof_lang_type(env, tast_variable_def_const_unwrap(def)->lang_type);
         case TAST_STRUCT_DEF:
-            return sizeof_struct_def_base(env, &tast_unwrap_struct_def_const(def)->base);
+            return sizeof_struct_def_base(env, &tast_struct_def_const_unwrap(def)->base);
         default:
             unreachable("");
     }
@@ -359,9 +359,9 @@ uint64_t sizeof_stmt(const Env* env, const Tast_stmt* stmt) {
     (void) env;
     switch (stmt->type) {
         case TAST_EXPR:
-            return sizeof_expr(env, tast_unwrap_expr_const(stmt));
+            return sizeof_expr(env, tast_expr_const_unwrap(stmt));
         case TAST_DEF:
-            return sizeof_def(env, tast_unwrap_def_const(stmt));
+            return sizeof_def(env, tast_def_const_unwrap(stmt));
         default:
             unreachable("");
     }
@@ -369,7 +369,7 @@ uint64_t sizeof_stmt(const Env* env, const Tast_stmt* stmt) {
 
 uint64_t sizeof_struct_literal(const Env* env, const Tast_struct_literal* struct_literal) {
     const Tast_struct_def* struct_def = 
-        get_struct_def_const(env, tast_wrap_expr_const(tast_wrap_struct_literal_const(struct_literal)));
+        get_struct_def_const(env, tast_expr_const_wrap(tast_struct_literal_const_wrap(struct_literal)));
     return sizeof_struct_def_base(env, &struct_def->base);
 }
 
@@ -391,7 +391,7 @@ uint64_t sizeof_struct_def_base(const Env* env, const Struct_def_base* base) {
 uint64_t sizeof_struct_expr(const Env* env, const Tast_expr* struct_literal_or_def) {
     switch (struct_literal_or_def->type) {
         case TAST_STRUCT_LITERAL:
-            return sizeof_struct_literal(env, tast_unwrap_struct_literal_const(struct_literal_or_def));
+            return sizeof_struct_literal(env, tast_struct_literal_const_unwrap(struct_literal_or_def));
         default:
             unreachable("");
     }
@@ -402,7 +402,7 @@ static uint64_t llvm_sizeof_expr(const Env* env, const Llvm_expr* expr) {
     (void) env;
     switch (expr->type) {
         case LLVM_LITERAL:
-            return sizeof_lang_type(env, llvm_get_lang_type_literal(llvm_unwrap_literal_const(expr)));
+            return sizeof_lang_type(env, llvm_get_lang_type_literal(llvm_literal_const_unwrap(expr)));
         default:
             unreachable("");
     }
@@ -412,7 +412,7 @@ static uint64_t llvm_sizeof_def(const Env* env, const Llvm_def* def) {
     (void) env;
     switch (def->type) {
         case TAST_VARIABLE_DEF:
-            return sizeof_lang_type(env, llvm_unwrap_variable_def_const(def)->lang_type);
+            return sizeof_lang_type(env, llvm_variable_def_const_unwrap(def)->lang_type);
         default:
             unreachable("");
     }
@@ -422,9 +422,9 @@ uint64_t llvm_sizeof_item(const Env* env, const Llvm* item) {
     (void) env;
     switch (item->type) {
         case TAST_EXPR:
-            return llvm_sizeof_expr(env, llvm_unwrap_expr_const(item));
+            return llvm_sizeof_expr(env, llvm_expr_const_unwrap(item));
         case TAST_DEF:
-            return llvm_sizeof_def(env, llvm_unwrap_def_const(item));
+            return llvm_sizeof_def(env, llvm_def_const_unwrap(item));
         default:
             unreachable("");
     }
@@ -464,7 +464,7 @@ size_t struct_def_base_get_idx_largest_member(const Env* env, Struct_def_base ba
 
 bool try_get_generic_struct_def(const Env* env, Tast_def** def, Tast_stmt* stmt) {
     if (stmt->type == TAST_EXPR) {
-        const Tast_expr* expr = tast_unwrap_expr_const(stmt);
+        const Tast_expr* expr = tast_expr_const_unwrap(stmt);
         switch (expr->type) {
             case TAST_STRUCT_LITERAL: {
                 assert(lang_type_get_str(tast_get_lang_type_stmt(stmt)).count > 0);
@@ -487,7 +487,7 @@ bool try_get_generic_struct_def(const Env* env, Tast_def** def, Tast_stmt* stmt)
         }
     }
 
-    Tast_def* tast_def = tast_unwrap_def(stmt);
+    Tast_def* tast_def = tast_def_unwrap(stmt);
     switch (tast_def->type) {
         case TAST_VARIABLE_DEF: {
             assert(lang_type_get_str((tast_get_lang_type_def(tast_def))).count > 0);
@@ -502,7 +502,7 @@ Tast_def* llvm_get_generic_struct_def(const Env* env, Llvm* llvm) {
     Tast_def* def = NULL;
 
     if (llvm->type == LLVM_EXPR) {
-        const Llvm_expr* expr = llvm_unwrap_expr_const(llvm);
+        const Llvm_expr* expr = llvm_expr_const_unwrap(llvm);
         switch (expr->type) {
             case LLVM_SYMBOL: {
                 Tast_def* var_def;
@@ -517,7 +517,7 @@ Tast_def* llvm_get_generic_struct_def(const Env* env, Llvm* llvm) {
         }
     }
 
-    Llvm_def* llvm_def = llvm_unwrap_def(llvm);
+    Llvm_def* llvm_def = llvm_def_unwrap(llvm);
     switch (llvm_def->type) {
         case LLVM_VARIABLE_DEF: {
             assert(lang_type_get_str(llvm_get_lang_type_def(llvm_def)).count > 0);
@@ -538,7 +538,7 @@ bool try_get_struct_def(const Env* env, Tast_struct_def** struct_def, Tast_stmt*
         return false;
     }
 
-    *struct_def = tast_unwrap_struct_def(def);
+    *struct_def = tast_struct_def_unwrap(def);
     return true;
 }
 
@@ -548,7 +548,7 @@ bool llvm_try_get_struct_def(const Env* env, Tast_struct_def** struct_def, Llvm*
         return false;
     }
 
-    *struct_def = tast_unwrap_struct_def(def);
+    *struct_def = tast_struct_def_unwrap(def);
     return true;
 }
 

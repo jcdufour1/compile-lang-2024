@@ -37,13 +37,13 @@ static inline Str_view serialize_lang_type_struct_thing(const Env* env, Lang_typ
         case LANG_TYPE_STRUCT: {
             Tast_def* def = NULL;
             try(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
-            base = tast_unwrap_struct_def(def)->base;
+            base = tast_struct_def_unwrap(def)->base;
             break;
         }
         case LANG_TYPE_SUM: {
             Tast_def* def = NULL;
             try(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
-            base = tast_unwrap_sum_def(def)->base;
+            base = tast_sum_def_unwrap(def)->base;
             break;
         }
         case LANG_TYPE_RAW_UNION: {
@@ -53,7 +53,7 @@ static inline Str_view serialize_lang_type_struct_thing(const Env* env, Lang_typ
             log(LOG_DEBUG, TAST_FMT"\n", str_view_print(lang_type_get_str(lang_type)));
             try(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
             log(LOG_DEBUG, TAST_FMT, tast_def_print(def));
-            base = tast_unwrap_raw_union_def(def)->base;
+            base = tast_raw_union_def_unwrap(def)->base;
             break;
         }
         default:
@@ -80,8 +80,8 @@ static inline Str_view serialize_lang_type(const Env* env, Lang_type lang_type) 
     switch (lang_type.type) {
         case LANG_TYPE_TUPLE: {
             String name = {0};
-            for (size_t idx = 0; idx < lang_type_unwrap_tuple_const(lang_type).lang_types.info.count; idx++) {
-                Lang_type curr = vec_at_const(lang_type_unwrap_tuple_const(lang_type).lang_types, idx);
+            for (size_t idx = 0; idx < lang_type_tuple_const_unwrap(lang_type).lang_types.info.count; idx++) {
+                Lang_type curr = vec_at_const(lang_type_tuple_const_unwrap(lang_type).lang_types, idx);
                 string_extend_strv(&a_main, &name, serialize_lang_type(env, curr));
             }
             return string_to_strv(name);
@@ -113,7 +113,7 @@ static inline Str_view serialize_lang_type(const Env* env, Lang_type lang_type) 
 static inline Str_view serialize_def(const Env* env, const Tast_def* def) {
     switch (def->type) {
         case TAST_STRUCT_DEF:
-            return serialize_struct_def(env, tast_unwrap_struct_def_const(def));
+            return serialize_struct_def(env, tast_struct_def_const_unwrap(def));
         case TAST_FUNCTION_DEF:
             unreachable("");
         case TAST_FUNCTION_DECL:
@@ -125,7 +125,7 @@ static inline Str_view serialize_def(const Env* env, const Tast_def* def) {
         case TAST_ENUM_DEF:
             unreachable("");
         case TAST_SUM_DEF:
-            return serialize_sum_def(env, tast_unwrap_sum_def_const(def));
+            return serialize_sum_def(env, tast_sum_def_const_unwrap(def));
         case TAST_PRIMITIVE_DEF:
             unreachable("");
         case TAST_LITERAL_DEF:

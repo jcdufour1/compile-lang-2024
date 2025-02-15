@@ -654,9 +654,9 @@ static void llvm_gen_llvm_struct(Llvm_type llvm) {
     gen_gen(STRING_FMT"\n", string_print(output));
 }
 
-static void llvm_gen_unwrap_internal(Llvm_type type, bool is_const) {
+static void llvm_gen_internal_unwrap(Llvm_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        llvm_gen_unwrap_internal(vec_at(&type.sub_types, idx), is_const);
+        llvm_gen_internal_unwrap(vec_at(&type.sub_types, idx), is_const);
     }
 
     if (type.name.base.count < 1) {
@@ -664,18 +664,18 @@ static void llvm_gen_unwrap_internal(Llvm_type type, bool is_const) {
     }
 
     String function = {0};
-    //static inline Llvm_##lower* llvm_unwrap_##lower(Llvm* llvm) { 
+    //static inline Llvm_##lower* llvm__unwrap##lower(Llvm* llvm) { 
     string_extend_cstr(&gen_a, &function, "static inline ");
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "const ");
     }
     extend_llvm_name_first_upper(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "* llvm_unwrap_");
+    string_extend_cstr(&gen_a, &function, "* llvm_");
     extend_strv_lower(&function, type.name.base);
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "_const");
     }
-    string_extend_cstr(&gen_a, &function, "(");
+    string_extend_cstr(&gen_a, &function, "_unwrap(");
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "const ");
     }
@@ -699,9 +699,9 @@ static void llvm_gen_unwrap_internal(Llvm_type type, bool is_const) {
     gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
 }
 
-static void llvm_gen_wrap_internal(Llvm_type type, bool is_const) {
+static void llvm_gen_internal_wrap(Llvm_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        llvm_gen_wrap_internal(vec_at(&type.sub_types, idx), is_const);
+        llvm_gen_internal_wrap(vec_at(&type.sub_types, idx), is_const);
     }
 
     if (type.name.base.count < 1) {
@@ -709,18 +709,18 @@ static void llvm_gen_wrap_internal(Llvm_type type, bool is_const) {
     }
 
     String function = {0};
-    //static inline Llvm_##lower* llvm_unwrap_##lower(Llvm* llvm) { 
+    //static inline Llvm_##lower* llvm__unwrap##lower(Llvm* llvm) { 
     string_extend_cstr(&gen_a, &function, "static inline ");
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "const ");
     }
     extend_parent_llvm_name_first_upper(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "* llvm_wrap_");
+    string_extend_cstr(&gen_a, &function, "* llvm_");
     extend_strv_lower(&function, type.name.base);
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "_const");
     }
-    string_extend_cstr(&gen_a, &function, "(");
+    string_extend_cstr(&gen_a, &function, "_wrap(");
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "const ");
     }
@@ -739,13 +739,13 @@ static void llvm_gen_wrap_internal(Llvm_type type, bool is_const) {
 }
 
 void llvm_gen_llvm_unwrap(Llvm_type llvm) {
-    llvm_gen_unwrap_internal(llvm, false);
-    llvm_gen_unwrap_internal(llvm, true);
+    llvm_gen_internal_unwrap(llvm, false);
+    llvm_gen_internal_unwrap(llvm, true);
 }
 
 void llvm_gen_llvm_wrap(Llvm_type llvm) {
-    llvm_gen_wrap_internal(llvm, false);
-    llvm_gen_wrap_internal(llvm, true);
+    llvm_gen_internal_wrap(llvm, false);
+    llvm_gen_internal_wrap(llvm, true);
 }
 
 static void llvm_gen_print_forward_decl(Llvm_type type) {
@@ -829,26 +829,26 @@ static void llvm_gen_new_internal(Llvm_type type, bool implementation) {
         string_extend_cstr(&gen_a, &function, ";\n");
 
         if (type.sub_types.info.count < 1) {
-            string_extend_cstr(&gen_a, &function, "    llvm_unwrap_");
+            string_extend_cstr(&gen_a, &function, "    llvm_");
             extend_strv_lower(&function, type.name.base);
-            string_extend_cstr(&gen_a, &function, "(base_llvm)->pos = pos;\n");
+            string_extend_cstr(&gen_a, &function, "_unwrap(base_llvm)->pos = pos;\n");
         }
 
         for (size_t idx = 0; idx < type.members.info.count; idx++) {
             Member curr = vec_at(&type.members, idx);
 
-            string_extend_cstr(&gen_a, &function, "    llvm_unwrap_");
+            string_extend_cstr(&gen_a, &function, "    llvm_");
             extend_strv_lower(&function, type.name.base);
-            string_extend_cstr(&gen_a, &function, "(base_llvm)->");
+            string_extend_cstr(&gen_a, &function, "_unwrap(base_llvm)->");
             extend_strv_lower(&function, curr.name);
             string_extend_cstr(&gen_a, &function, " = ");
             extend_strv_lower(&function, curr.name);
             string_extend_cstr(&gen_a, &function, ";\n");
         }
 
-        string_extend_cstr(&gen_a, &function, "    return llvm_unwrap_");
+        string_extend_cstr(&gen_a, &function, "    return llvm_");
         extend_strv_lower(&function, type.name.base);
-        string_extend_cstr(&gen_a, &function, "(base_llvm);\n");
+        string_extend_cstr(&gen_a, &function, "_unwrap(base_llvm);\n");
 
         string_extend_cstr(&gen_a, &function, "}");
 
@@ -859,9 +859,9 @@ static void llvm_gen_new_internal(Llvm_type type, bool implementation) {
     gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
 }
 
-static void llvm_gen_get_pos_internal(Llvm_type type, bool implementation) {
+static void llvm_gen_internal_get_pos(Llvm_type type, bool implementation) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        llvm_gen_get_pos_internal(vec_at(&type.sub_types, idx), implementation);
+        llvm_gen_internal_get_pos(vec_at(&type.sub_types, idx), implementation);
     }
 
     String function = {0};
@@ -871,9 +871,9 @@ static void llvm_gen_get_pos_internal(Llvm_type type, bool implementation) {
     if (type.name.is_topmost) {
         string_extend_cstr(&gen_a, &function, "    llvm_get_pos(const Llvm* llvm)");
     } else {
-        string_extend_cstr(&gen_a, &function, "    llvm_get_pos_");
+        string_extend_cstr(&gen_a, &function, "    llvm_");
         extend_strv_lower(&function, type.name.base);
-        string_extend_cstr(&gen_a, &function, "(const ");
+        string_extend_cstr(&gen_a, &function, "_get_pos(const ");
         extend_llvm_name_first_upper(&function, type.name);
         string_extend_cstr(&gen_a, &function, "* llvm)");
     }
@@ -893,11 +893,11 @@ static void llvm_gen_get_pos_internal(Llvm_type type, bool implementation) {
                 string_extend_cstr(&gen_a, &function, ":\n");
 
 
-                string_extend_cstr(&gen_a, &function, "            return llvm_get_pos_");
+                string_extend_cstr(&gen_a, &function, "            return llvm_");
                 extend_strv_lower(&function, curr.name.base);
-                string_extend_cstr(&gen_a, &function, "(llvm_unwrap_");
+                string_extend_cstr(&gen_a, &function, "_get_pos(llvm_");
                 extend_strv_lower(&function, curr.name.base);
-                string_extend_cstr(&gen_a, &function, "_const(llvm));\n");
+                string_extend_cstr(&gen_a, &function, "_const_unwrap(llvm));\n");
 
                 string_extend_cstr(&gen_a, &function, "        break;\n");
             }
@@ -922,12 +922,12 @@ static void gen_llvm_new_define(Llvm_type llvm) {
     llvm_gen_new_internal(llvm, true);
 }
 
-static void gen_llvm_get_pos_forward_decl(Llvm_type llvm) {
-    llvm_gen_get_pos_internal(llvm, false);
+static void gen_llvm_forward_decl_get_pos(Llvm_type llvm) {
+    llvm_gen_internal_get_pos(llvm, false);
 }
 
-static void gen_llvm_get_pos_define(Llvm_type llvm) {
-    llvm_gen_get_pos_internal(llvm, true);
+static void gen_llvm_define_get_pos(Llvm_type llvm) {
+    llvm_gen_internal_get_pos(llvm, true);
 }
 
 static void gen_llvm_register_syms(Llvm_type llvm) {
@@ -1024,9 +1024,9 @@ static void gen_all_llvms(const char* file_path, bool implementation) {
         gen_llvm_new_define(llvm);
     }
 
-    gen_llvm_get_pos_forward_decl(llvm);
+    gen_llvm_forward_decl_get_pos(llvm);
     if (implementation) {
-        gen_llvm_get_pos_define(llvm);
+        gen_llvm_define_get_pos(llvm);
     }
 
     if (implementation) {

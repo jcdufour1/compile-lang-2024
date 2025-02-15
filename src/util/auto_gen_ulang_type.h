@@ -255,9 +255,9 @@ static void ulang_type_gen_ulang_type_struct(Ulang_type_type ulang_type) {
     gen_gen(STRING_FMT"\n", string_print(output));
 }
 
-static void ulang_type_gen_unwrap_internal(Ulang_type_type type, bool is_const) {
+static void ulang_type_gen_internal_unwrap(Ulang_type_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        ulang_type_gen_unwrap_internal(vec_at(&type.sub_types, idx), is_const);
+        ulang_type_gen_internal_unwrap(vec_at(&type.sub_types, idx), is_const);
     }
 
     if (type.name.base.count < 1) {
@@ -265,18 +265,18 @@ static void ulang_type_gen_unwrap_internal(Ulang_type_type type, bool is_const) 
     }
 
     String function = {0};
-    //static inline Ulang_type_##lower* ulang_type_unwrap_##lower(Ulang_type* ulang_type) { 
+    //static inline Ulang_type_##lower* ulang_type__unwrap##lower(Ulang_type* ulang_type) { 
     string_extend_cstr(&gen_a, &function, "static inline ");
     extend_ulang_type_name_first_upper(&function, type.name);
     if (!is_const) {
         string_extend_cstr(&gen_a, &function, "*");
     }
-    string_extend_cstr(&gen_a, &function, " ulang_type_unwrap_");
+    string_extend_cstr(&gen_a, &function, " ulang_type_");
     extend_strv_lower(&function, type.name.base);
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "_const");
     }
-    string_extend_cstr(&gen_a, &function, "(");
+    string_extend_cstr(&gen_a, &function, "_unwrap(");
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "const ");
     }
@@ -315,9 +315,9 @@ static void ulang_type_gen_unwrap_internal(Ulang_type_type type, bool is_const) 
     gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
 }
 
-static void ulang_type_gen_wrap_internal(Ulang_type_type type, bool is_const) {
+static void ulang_type_gen_internal_wrap(Ulang_type_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        ulang_type_gen_wrap_internal(vec_at(&type.sub_types, idx), is_const);
+        ulang_type_gen_internal_wrap(vec_at(&type.sub_types, idx), is_const);
     }
 
     if (type.name.base.count < 1) {
@@ -325,18 +325,18 @@ static void ulang_type_gen_wrap_internal(Ulang_type_type type, bool is_const) {
     }
 
     String function = {0};
-    //static inline Ulang_type_##lower* ulang_type_unwrap_##lower(Ulang_type* ulang_type) { 
+    //static inline Ulang_type_##lower* ulang_type__unwrap##lower(Ulang_type* ulang_type) { 
     string_extend_cstr(&gen_a, &function, "static inline ");
     extend_parent_ulang_type_name_first_upper(&function, type.name);
     if (!is_const) {
         string_extend_cstr(&gen_a, &function, "* ");
     }
-    string_extend_cstr(&gen_a, &function, " ulang_type_wrap_");
+    string_extend_cstr(&gen_a, &function, " ulang_type_");
     extend_strv_lower(&function, type.name.base);
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "_const");
     }
-    string_extend_cstr(&gen_a, &function, "(");
+    string_extend_cstr(&gen_a, &function, "_wrap(");
     extend_ulang_type_name_first_upper(&function, type.name);
     if (!is_const) {
         string_extend_cstr(&gen_a, &function, "* ");
@@ -364,11 +364,11 @@ static void ulang_type_gen_wrap_internal(Ulang_type_type type, bool is_const) {
 }
 
 void ulang_type_gen_ulang_type_unwrap(Ulang_type_type ulang_type) {
-    ulang_type_gen_unwrap_internal(ulang_type, true);
+    ulang_type_gen_internal_unwrap(ulang_type, true);
 }
 
 void ulang_type_gen_ulang_type_wrap(Ulang_type_type ulang_type) {
-    ulang_type_gen_wrap_internal(ulang_type, true);
+    ulang_type_gen_internal_wrap(ulang_type, true);
 }
 
 // TODO: deduplicate these functions (use same function for Llvm and Ulang_type)

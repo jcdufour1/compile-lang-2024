@@ -20,7 +20,7 @@ static void extend_lang_type(String* string, Lang_type lang_type, bool surround_
 void extend_ulang_type_to_string(String* string, Ulang_type lang_type, bool surround_in_lt_gt) {
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR: {
-            Ulang_type_atom atom = ulang_type_unwrap_regular_const(lang_type).atom;
+            Ulang_type_atom atom = ulang_type_regular_const_unwrap(lang_type).atom;
 
             if (surround_in_lt_gt) {
                 vec_append(&print_arena, string, '<');
@@ -43,7 +43,7 @@ void extend_ulang_type_to_string(String* string, Ulang_type lang_type, bool surr
             return;
         }
         case ULANG_TYPE_TUPLE: {
-            Ulang_type_tuple tuple = ulang_type_unwrap_tuple_const(lang_type);
+            Ulang_type_tuple tuple = ulang_type_tuple_const_unwrap(lang_type);
             for (size_t idx = 0; idx < tuple.ulang_types.info.count; idx++) {
                 extend_ulang_type_to_string(string, vec_at(&tuple.ulang_types, idx), false);
             }
@@ -138,15 +138,15 @@ Str_view uast_index_print_internal(const Uast_index* index, int indent) {
 Str_view uast_literal_print_internal(const Uast_literal* lit, int indent) {
     switch (lit->type) {
         case UAST_NUMBER:
-            return uast_number_print_internal(uast_unwrap_number_const(lit), indent);
+            return uast_number_print_internal(uast_number_const_unwrap(lit), indent);
         case UAST_STRING:
-            return uast_string_print_internal(uast_unwrap_string_const(lit), indent);
+            return uast_string_print_internal(uast_string_const_unwrap(lit), indent);
         case UAST_VOID:
-            return uast_void_print_internal(uast_unwrap_void_const(lit), indent);
+            return uast_void_print_internal(uast_void_const_unwrap(lit), indent);
         case UAST_ENUM_LIT:
-            return uast_enum_lit_print_internal(uast_unwrap_enum_lit_const(lit), indent);
+            return uast_enum_lit_print_internal(uast_enum_lit_const_unwrap(lit), indent);
         case UAST_CHAR:
-            return uast_char_print_internal(uast_unwrap_char_const(lit), indent);
+            return uast_char_print_internal(uast_char_const_unwrap(lit), indent);
     }
     unreachable("");
 }
@@ -568,11 +568,11 @@ Str_view uast_void_def_print_internal(const Uast_void_def* def, int indent) {
 Str_view uast_literal_def_print_internal(const Uast_literal_def* def, int indent) {
     switch (def->type) {
         case UAST_STRING_DEF:
-            return uast_string_def_print_internal(uast_unwrap_string_def_const(def), indent);
+            return uast_string_def_print_internal(uast_string_def_const_unwrap(def), indent);
         case UAST_STRUCT_LIT_DEF:
-            return uast_struct_lit_def_print_internal(uast_unwrap_struct_lit_def_const(def), indent);
+            return uast_struct_lit_def_print_internal(uast_struct_lit_def_const_unwrap(def), indent);
         case UAST_VOID_DEF:
-            return uast_void_def_print_internal(uast_unwrap_void_def_const(def), indent);
+            return uast_void_def_print_internal(uast_void_def_const_unwrap(def), indent);
     }
     unreachable("");
 }
@@ -591,9 +591,9 @@ Str_view uast_variable_def_print_internal(const Uast_variable_def* def, int inde
 Str_view uast_operator_print_internal(const Uast_operator* operator, int indent) {
     switch (operator->type) {
         case UAST_BINARY:
-            return uast_binary_print_internal(uast_unwrap_binary_const(operator), indent);
+            return uast_binary_print_internal(uast_binary_const_unwrap(operator), indent);
         case UAST_UNARY:
-            return uast_unary_print_internal(uast_unwrap_unary_const(operator), indent);
+            return uast_unary_print_internal(uast_unary_const_unwrap(operator), indent);
     }
     unreachable("");
 }
@@ -601,23 +601,23 @@ Str_view uast_operator_print_internal(const Uast_operator* operator, int indent)
 Str_view uast_def_print_internal(const Uast_def* def, int indent) {
     switch (def->type) {
         case UAST_FUNCTION_DEF:
-            return uast_function_def_print_internal(uast_unwrap_function_def_const(def), indent);
+            return uast_function_def_print_internal(uast_function_def_const_unwrap(def), indent);
         case UAST_FUNCTION_DECL:
-            return uast_function_decl_print_internal(uast_unwrap_function_decl_const(def), indent);
+            return uast_function_decl_print_internal(uast_function_decl_const_unwrap(def), indent);
         case UAST_VARIABLE_DEF:
-            return uast_variable_def_print_internal(uast_unwrap_variable_def_const(def), indent);
+            return uast_variable_def_print_internal(uast_variable_def_const_unwrap(def), indent);
         case UAST_STRUCT_DEF:
-            return uast_struct_def_print_internal(uast_unwrap_struct_def_const(def), indent);
+            return uast_struct_def_print_internal(uast_struct_def_const_unwrap(def), indent);
         case UAST_RAW_UNION_DEF:
-            return uast_raw_union_def_print_internal(uast_unwrap_raw_union_def_const(def), indent);
+            return uast_raw_union_def_print_internal(uast_raw_union_def_const_unwrap(def), indent);
         case UAST_ENUM_DEF:
-            return uast_enum_def_print_internal(uast_unwrap_enum_def_const(def), indent);
+            return uast_enum_def_print_internal(uast_enum_def_const_unwrap(def), indent);
         case UAST_SUM_DEF:
-            return uast_sum_def_print_internal(uast_unwrap_sum_def_const(def), indent);
+            return uast_sum_def_print_internal(uast_sum_def_const_unwrap(def), indent);
         case UAST_PRIMITIVE_DEF:
-            return uast_primitive_def_print_internal(uast_unwrap_primitive_def_const(def), indent);
+            return uast_primitive_def_print_internal(uast_primitive_def_const_unwrap(def), indent);
         case UAST_LITERAL_DEF:
-            return uast_literal_def_print_internal(uast_unwrap_literal_def_const(def), indent);
+            return uast_literal_def_print_internal(uast_literal_def_const_unwrap(def), indent);
     }
     unreachable("");
 }
@@ -625,21 +625,21 @@ Str_view uast_def_print_internal(const Uast_def* def, int indent) {
 Str_view uast_expr_print_internal(const Uast_expr* expr, int indent) {
     switch (expr->type) {
         case UAST_OPERATOR:
-            return uast_operator_print_internal(uast_unwrap_operator_const(expr), indent);
+            return uast_operator_print_internal(uast_operator_const_unwrap(expr), indent);
         case TAST_SYMBOL:
-            return uast_symbol_print_internal(uast_unwrap_symbol_const(expr), indent);
+            return uast_symbol_print_internal(uast_symbol_const_unwrap(expr), indent);
         case UAST_MEMBER_ACCESS:
-            return uast_member_access_print_internal(uast_unwrap_member_access_const(expr), indent);
+            return uast_member_access_print_internal(uast_member_access_const_unwrap(expr), indent);
         case UAST_INDEX:
-            return uast_index_print_internal(uast_unwrap_index_const(expr), indent);
+            return uast_index_print_internal(uast_index_const_unwrap(expr), indent);
         case UAST_LITERAL:
-            return uast_literal_print_internal(uast_unwrap_literal_const(expr), indent);
+            return uast_literal_print_internal(uast_literal_const_unwrap(expr), indent);
         case UAST_FUNCTION_CALL:
-            return uast_function_call_print_internal(uast_unwrap_function_call_const(expr), indent);
+            return uast_function_call_print_internal(uast_function_call_const_unwrap(expr), indent);
         case UAST_STRUCT_LITERAL:
-            return uast_struct_literal_print_internal(uast_unwrap_struct_literal_const(expr), indent);
+            return uast_struct_literal_print_internal(uast_struct_literal_const_unwrap(expr), indent);
         case UAST_TUPLE:
-            return uast_tuple_print_internal(uast_unwrap_tuple_const(expr), indent);
+            return uast_tuple_print_internal(uast_tuple_const_unwrap(expr), indent);
     }
     unreachable("");
 }
@@ -647,27 +647,27 @@ Str_view uast_expr_print_internal(const Uast_expr* expr, int indent) {
 Str_view uast_stmt_print_internal(const Uast_stmt* stmt, int indent) {
     switch (stmt->type) {
         case UAST_BLOCK:
-            return uast_block_print_internal(uast_unwrap_block_const(stmt), indent);
+            return uast_block_print_internal(uast_block_const_unwrap(stmt), indent);
         case UAST_EXPR:
-            return uast_expr_print_internal(uast_unwrap_expr_const(stmt), indent);
+            return uast_expr_print_internal(uast_expr_const_unwrap(stmt), indent);
         case UAST_DEF:
-            return uast_def_print_internal(uast_unwrap_def_const(stmt), indent);
+            return uast_def_print_internal(uast_def_const_unwrap(stmt), indent);
         case UAST_BREAK:
-            return uast_break_print_internal(uast_unwrap_break_const(stmt), indent);
+            return uast_break_print_internal(uast_break_const_unwrap(stmt), indent);
         case UAST_CONTINUE:
-            return uast_continue_print_internal(uast_unwrap_continue_const(stmt), indent);
+            return uast_continue_print_internal(uast_continue_const_unwrap(stmt), indent);
         case UAST_ASSIGNMENT:
-            return uast_assignment_print_internal(uast_unwrap_assignment_const(stmt), indent);
+            return uast_assignment_print_internal(uast_assignment_const_unwrap(stmt), indent);
         case UAST_RETURN:
-            return uast_return_print_internal(uast_unwrap_return_const(stmt), indent);
+            return uast_return_print_internal(uast_return_const_unwrap(stmt), indent);
         case UAST_IF_ELSE_CHAIN:
-            return uast_if_else_chain_print_internal(uast_unwrap_if_else_chain_const(stmt), indent);
+            return uast_if_else_chain_print_internal(uast_if_else_chain_const_unwrap(stmt), indent);
         case UAST_FOR_RANGE:
-            return uast_for_range_print_internal(uast_unwrap_for_range_const(stmt), indent);
+            return uast_for_range_print_internal(uast_for_range_const_unwrap(stmt), indent);
         case UAST_FOR_WITH_COND:
-            return uast_for_with_cond_print_internal(uast_unwrap_for_with_cond_const(stmt), indent);
+            return uast_for_with_cond_print_internal(uast_for_with_cond_const_unwrap(stmt), indent);
         case UAST_SWITCH:
-            return uast_switch_print_internal(uast_unwrap_switch_const(stmt), indent);
+            return uast_switch_print_internal(uast_switch_const_unwrap(stmt), indent);
     }
     unreachable("");
 }
@@ -675,21 +675,21 @@ Str_view uast_stmt_print_internal(const Uast_stmt* stmt, int indent) {
 Str_view uast_print_internal(const Uast* uast, int indent) {
     switch (uast->type) {
         case UAST_STMT:
-            return uast_stmt_print_internal(uast_unwrap_stmt_const(uast), indent);
+            return uast_stmt_print_internal(uast_stmt_const_unwrap(uast), indent);
         case UAST_FUNCTION_PARAMS:
-            return uast_function_params_print_internal(uast_unwrap_function_params_const(uast), indent);
+            return uast_function_params_print_internal(uast_function_params_const_unwrap(uast), indent);
         case UAST_LANG_TYPE:
-            return uast_lang_type_print_internal(uast_unwrap_lang_type_const(uast), indent);
+            return uast_lang_type_print_internal(uast_lang_type_const_unwrap(uast), indent);
         case UAST_FOR_LOWER_BOUND:
-            return uast_for_lower_bound_print_internal(uast_unwrap_for_lower_bound_const(uast), indent);
+            return uast_for_lower_bound_print_internal(uast_for_lower_bound_const_unwrap(uast), indent);
         case UAST_FOR_UPPER_BOUND:
-            return uast_for_upper_bound_print_internal(uast_unwrap_for_upper_bound_const(uast), indent);
+            return uast_for_upper_bound_print_internal(uast_for_upper_bound_const_unwrap(uast), indent);
         case UAST_CONDITION:
-            return uast_condition_print_internal(uast_unwrap_condition_const(uast), indent);
+            return uast_condition_print_internal(uast_condition_const_unwrap(uast), indent);
         case UAST_IF:
-            return uast_if_print_internal(uast_unwrap_if_const(uast), indent);
+            return uast_if_print_internal(uast_if_const_unwrap(uast), indent);
         case UAST_CASE:
-            return uast_case_print_internal(uast_unwrap_case_const(uast), indent);
+            return uast_case_print_internal(uast_case_const_unwrap(uast), indent);
     }
     unreachable("");
 }

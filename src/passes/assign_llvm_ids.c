@@ -31,9 +31,9 @@ static Llvm_binary* id_binary(Llvm_binary* binary) {
 static Llvm_operator* id_operator(Llvm_operator* operator) {
     switch (operator->type) {
         case LLVM_UNARY:
-            return llvm_wrap_unary(id_unary(llvm_unwrap_unary(operator)));
+            return llvm_unary_wrap(id_unary(llvm_unary_unwrap(operator)));
         case LLVM_BINARY:
-            return llvm_wrap_binary(id_binary(llvm_unwrap_binary(operator)));
+            return llvm_binary_wrap(id_binary(llvm_binary_unwrap(operator)));
     }
     unreachable("");
 }
@@ -50,9 +50,9 @@ static Llvm_expr* id_expr(Llvm_expr* expr) {
         case LLVM_LITERAL:
             return expr;
         case LLVM_FUNCTION_CALL:
-            return llvm_wrap_function_call(id_function_call(llvm_unwrap_function_call(expr)));
+            return llvm_function_call_wrap(id_function_call(llvm_function_call_unwrap(expr)));
         case LLVM_OPERATOR:
-            return llvm_wrap_operator(id_operator(llvm_unwrap_operator(expr)));
+            return llvm_operator_wrap(id_operator(llvm_operator_unwrap(expr)));
         case LLVM_LLVM_PLACEHOLDER:
             return expr;
     }
@@ -88,9 +88,9 @@ static Llvm_function_def* id_function_def(Llvm_function_def* fun_def) {
 static Llvm_def* id_def(Llvm_def* def) {
     switch (def->type) {
         case LLVM_VARIABLE_DEF:
-            return llvm_wrap_variable_def(id_variable_def(llvm_unwrap_variable_def(def)));
+            return llvm_variable_def_wrap(id_variable_def(llvm_variable_def_unwrap(def)));
         case LLVM_LABEL:
-            llvm_unwrap_label(def)->llvm_id = llvm_id_new();
+            llvm_label_unwrap(def)->llvm_id = llvm_id_new();
             return def;
         case LLVM_STRUCT_DEF:
             return def;
@@ -101,9 +101,9 @@ static Llvm_def* id_def(Llvm_def* def) {
         case LLVM_ENUM_DEF:
             return def;
         case LLVM_FUNCTION_DECL:
-            return llvm_wrap_function_decl(id_function_decl(llvm_unwrap_function_decl(def)));
+            return llvm_function_decl_wrap(id_function_decl(llvm_function_decl_unwrap(def)));
         case LLVM_FUNCTION_DEF:
-            return llvm_wrap_function_def(id_function_def(llvm_unwrap_function_def(def)));
+            return llvm_function_def_wrap(id_function_def(llvm_function_def_unwrap(def)));
         case LLVM_PRIMITIVE_DEF:
             return def;
         case LLVM_LITERAL_DEF:
@@ -115,34 +115,34 @@ static Llvm_def* id_def(Llvm_def* def) {
 static Llvm* id_llvm(Llvm* llvm) {
     switch (llvm->type) {
         case LLVM_EXPR:
-            return llvm_wrap_expr(id_expr(llvm_unwrap_expr(llvm)));
+            return llvm_expr_wrap(id_expr(llvm_expr_unwrap(llvm)));
         case LLVM_DEF:
-            return llvm_wrap_def(id_def(llvm_unwrap_def(llvm)));
+            return llvm_def_wrap(id_def(llvm_def_unwrap(llvm)));
         case LLVM_FUNCTION_PARAMS:
             return llvm;
         case LLVM_BLOCK:
-            return llvm_wrap_block(id_block(llvm_unwrap_block(llvm)));
+            return llvm_block_wrap(id_block(llvm_block_unwrap(llvm)));
         case LLVM_RETURN:
             return llvm;
         case LLVM_LANG_TYPE:
             return llvm;
         case LLVM_LOAD_ELEMENT_PTR:
-            llvm_unwrap_load_element_ptr(llvm)->llvm_id = llvm_id_new();
+            llvm_load_element_ptr_unwrap(llvm)->llvm_id = llvm_id_new();
             return llvm;
         case LLVM_LOAD_ANOTHER_LLVM:
-            llvm_unwrap_load_another_llvm(llvm)->llvm_id = llvm_id_new();
+            llvm_load_another_llvm_unwrap(llvm)->llvm_id = llvm_id_new();
             return llvm;
         case LLVM_STORE_ANOTHER_LLVM:
-            llvm_unwrap_store_another_llvm(llvm)->llvm_id = llvm_id_new();
+            llvm_store_another_llvm_unwrap(llvm)->llvm_id = llvm_id_new();
             return llvm;
         case LLVM_ALLOCA:
-            llvm_unwrap_alloca(llvm)->llvm_id = llvm_id_new();
+            llvm_alloca_unwrap(llvm)->llvm_id = llvm_id_new();
             return llvm;
         case LLVM_GOTO:
-            llvm_unwrap_goto(llvm)->llvm_id = llvm_id_new();
+            llvm_goto_unwrap(llvm)->llvm_id = llvm_id_new();
             return llvm;
         case LLVM_COND_GOTO:
-            llvm_unwrap_cond_goto(llvm)->llvm_id = llvm_id_new();
+            llvm_cond_goto_unwrap(llvm)->llvm_id = llvm_id_new();
             return llvm;
     }
     unreachable("");

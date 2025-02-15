@@ -16,7 +16,7 @@
     } while(0)
 
 //static inline Tast_expr* tast_expr_new(Pos pos, TAST_EXPR_TYPE expr_type) {
-//    Tast_expr* expr = tast_unwrap_expr(tast_new(pos, TAST_EXPR));
+//    Tast_expr* expr = tast_expr_unwrap(tast_new(pos, TAST_EXPR));
 //    expr->type = expr_type;
 //    return expr;
 //}

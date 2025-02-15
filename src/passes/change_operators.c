@@ -21,22 +21,22 @@ static Tast_operator* change_op_unary(Env* env, Tast_unary* unary) {
         case TOKEN_NOT: {
             Tast_expr* new_lhs = change_op_expr(env, unary->child);
             Tast_binary* new_bin = tast_binary_new(
-                tast_get_pos_unary(unary),
+                tast_unary_get_pos(unary),
                 new_lhs,
-                tast_wrap_literal(util_tast_literal_new_from_int64_t(
+                tast_literal_wrap(util_tast_literal_new_from_int64_t(
                     0,
                     TOKEN_INT_LITERAL,
-                    tast_get_pos_unary(unary)
+                    tast_unary_get_pos(unary)
                 )),
                 TOKEN_DOUBLE_EQUAL,
                 tast_get_lang_type_expr(new_lhs)
             );
 
             assert(lang_type_get_str(new_bin->lang_type).count > 0);
-            return tast_wrap_binary(new_bin);
+            return tast_binary_wrap(new_bin);
         }
         default:
-            return tast_wrap_unary(unary);
+            return tast_unary_wrap(unary);
     }
     unreachable("");
 }
@@ -44,9 +44,9 @@ static Tast_operator* change_op_unary(Env* env, Tast_unary* unary) {
 static Tast_operator* change_op_operator(Env* env, Tast_operator* root) {
     switch (root->type) {
         case TAST_BINARY:
-            return tast_wrap_binary(change_op_binary(env, tast_unwrap_binary(root)));
+            return tast_binary_wrap(change_op_binary(env, tast_binary_unwrap(root)));
         case TAST_UNARY:
-            return change_op_unary(env, tast_unwrap_unary(root));
+            return change_op_unary(env, tast_unary_unwrap(root));
     }
     unreachable("");
 }
@@ -54,7 +54,7 @@ static Tast_operator* change_op_operator(Env* env, Tast_operator* root) {
 static Tast_expr* change_op_expr(Env* env, Tast_expr* root) {
     switch (root->type) {
         case TAST_OPERATOR:
-            return tast_wrap_operator(change_op_operator(env, tast_unwrap_operator(root)));
+            return tast_operator_wrap(change_op_operator(env, tast_operator_unwrap(root)));
         case TAST_SYMBOL:
             return root;
         case TAST_MEMBER_ACCESS:
@@ -93,7 +93,7 @@ static Tast_function_def* change_op_function_def(Env* env, Tast_function_def* ro
 static Tast_def* change_op_def(Env* env, Tast_def* root) {
     switch (root->type) {
         case TAST_FUNCTION_DEF:
-            return tast_wrap_function_def(change_op_function_def(env, tast_unwrap_function_def(root)));
+            return tast_function_def_wrap(change_op_function_def(env, tast_function_def_unwrap(root)));
         case TAST_VARIABLE_DEF:
             return root;
         case TAST_STRUCT_DEF:
@@ -164,25 +164,25 @@ static Tast_if_else_chain* change_op_if_else_chain(Env* env, Tast_if_else_chain*
 static Tast_stmt* change_op_stmt(Env* env, Tast_stmt* root) {
     switch (root->type) {
         case TAST_BLOCK:
-            return tast_wrap_block(change_op_block(env, tast_unwrap_block(root)));
+            return tast_block_wrap(change_op_block(env, tast_block_unwrap(root)));
         case TAST_EXPR:
-            return tast_wrap_expr(change_op_expr(env, tast_unwrap_expr(root)));
+            return tast_expr_wrap(change_op_expr(env, tast_expr_unwrap(root)));
         case TAST_DEF:
-            return tast_wrap_def(change_op_def(env, tast_unwrap_def(root)));
+            return tast_def_wrap(change_op_def(env, tast_def_unwrap(root)));
         case TAST_FOR_RANGE:
-            return tast_wrap_for_range(change_op_for_range(env, tast_unwrap_for_range(root)));
+            return tast_for_range_wrap(change_op_for_range(env, tast_for_range_unwrap(root)));
         case TAST_FOR_WITH_COND:
-            return tast_wrap_for_with_cond(change_op_for_with_cond(env, tast_unwrap_for_with_cond(root)));
+            return tast_for_with_cond_wrap(change_op_for_with_cond(env, tast_for_with_cond_unwrap(root)));
         case TAST_BREAK:
             return root;
         case TAST_CONTINUE:
             return root;
         case TAST_ASSIGNMENT:
-            return tast_wrap_assignment(change_op_assignment(env, tast_unwrap_assignment(root)));
+            return tast_assignment_wrap(change_op_assignment(env, tast_assignment_unwrap(root)));
         case TAST_RETURN:
-            return tast_wrap_return(change_op_return(env, tast_unwrap_return(root)));
+            return tast_return_wrap(change_op_return(env, tast_return_unwrap(root)));
         case TAST_IF_ELSE_CHAIN:
-            return tast_wrap_if_else_chain(change_op_if_else_chain(env, tast_unwrap_if_else_chain(root)));
+            return tast_if_else_chain_wrap(change_op_if_else_chain(env, tast_if_else_chain_unwrap(root)));
     }
     unreachable("");
 }
@@ -190,19 +190,19 @@ static Tast_stmt* change_op_stmt(Env* env, Tast_stmt* root) {
 static Tast* change_op_tast(Env* env, Tast* root) {
     switch (root->type) {
         case TAST_STMT:
-            return tast_wrap_stmt(change_op_stmt(env, tast_unwrap_stmt(root)));
+            return tast_stmt_wrap(change_op_stmt(env, tast_stmt_unwrap(root)));
         case TAST_FUNCTION_PARAMS:
             return root;
         case TAST_LANG_TYPE:
             return root;
         case TAST_FOR_LOWER_BOUND:
-            return tast_wrap_for_lower_bound(change_op_for_lower_bound(env, tast_unwrap_for_lower_bound(root)));
+            return tast_for_lower_bound_wrap(change_op_for_lower_bound(env, tast_for_lower_bound_unwrap(root)));
         case TAST_FOR_UPPER_BOUND:
-            return tast_wrap_for_upper_bound(change_op_for_upper_bound(env, tast_unwrap_for_upper_bound(root)));
+            return tast_for_upper_bound_wrap(change_op_for_upper_bound(env, tast_for_upper_bound_unwrap(root)));
         case TAST_CONDITION:
-            return tast_wrap_condition(change_op_condition(env, tast_unwrap_condition(root)));
+            return tast_condition_wrap(change_op_condition(env, tast_condition_unwrap(root)));
         case TAST_IF:
-            return tast_wrap_if(change_op_if(env, tast_unwrap_if(root)));
+            return tast_if_wrap(change_op_if(env, tast_if_unwrap(root)));
     }
     unreachable("");
 }

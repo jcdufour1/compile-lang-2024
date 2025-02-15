@@ -46,7 +46,7 @@ void extend_lang_type_to_string(String* string, Lang_type lang_type, bool surrou
     }
 
     if (lang_type.type == LANG_TYPE_TUPLE) {
-        Lang_type_vec lang_types = lang_type_unwrap_tuple_const(lang_type).lang_types;
+        Lang_type_vec lang_types = lang_type_tuple_const_unwrap(lang_type).lang_types;
         for (size_t idx = 0; idx < lang_types.info.count; idx++) {
             extend_lang_type_to_string(string, vec_at(&lang_types, idx), surround_in_lt_gt, do_tag);
         }
@@ -110,7 +110,7 @@ Str_view lang_type_print_internal(Lang_type lang_type, bool surround_in_lt_gt, b
 Str_view lang_type_atom_print_internal(Lang_type_atom atom, bool surround_in_lt_gt) {
     String buf = {0};
     // TODO: do not use `lang_type_primitive_new` here
-    extend_lang_type_to_string(&buf, lang_type_wrap_primitive_const(lang_type_primitive_new(atom)), surround_in_lt_gt, true);
+    extend_lang_type_to_string(&buf, lang_type_primitive_const_wrap(lang_type_primitive_new(atom)), surround_in_lt_gt, true);
     return string_to_strv(buf);
 }
 
@@ -212,17 +212,17 @@ Str_view tast_index_print_internal(const Tast_index* index, int indent) {
 Str_view tast_literal_print_internal(const Tast_literal* lit, int indent) {
     switch (lit->type) {
         case TAST_NUMBER:
-            return tast_number_print_internal(tast_unwrap_number_const(lit), indent);
+            return tast_number_print_internal(tast_number_const_unwrap(lit), indent);
         case TAST_STRING:
-            return tast_string_print_internal(tast_unwrap_string_const(lit), indent);
+            return tast_string_print_internal(tast_string_const_unwrap(lit), indent);
         case TAST_VOID:
-            return tast_void_print_internal(tast_unwrap_void_const(lit), indent);
+            return tast_void_print_internal(tast_void_const_unwrap(lit), indent);
         case TAST_ENUM_LIT:
-            return tast_enum_lit_print_internal(tast_unwrap_enum_lit_const(lit), indent);
+            return tast_enum_lit_print_internal(tast_enum_lit_const_unwrap(lit), indent);
         case TAST_CHAR:
-            return tast_char_print_internal(tast_unwrap_char_const(lit), indent);
+            return tast_char_print_internal(tast_char_const_unwrap(lit), indent);
         case TAST_SUM_LIT:
-            return tast_sum_lit_print_internal(tast_unwrap_sum_lit_const(lit), indent);
+            return tast_sum_lit_print_internal(tast_sum_lit_const_unwrap(lit), indent);
     }
     unreachable("");
 }
@@ -263,7 +263,7 @@ Str_view tast_tuple_print_internal(const Tast_tuple* lit, int indent) {
 
     string_extend_cstr_indent(&print_arena, &buf, "tuple", indent);
     
-    string_extend_strv(&print_arena, &buf, lang_type_print_internal(lang_type_wrap_tuple_const(lit->lang_type), true, true));
+    string_extend_strv(&print_arena, &buf, lang_type_print_internal(lang_type_tuple_const_wrap(lit->lang_type), true, true));
 
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
         Str_view memb_text = tast_expr_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);
@@ -623,9 +623,9 @@ Str_view tast_struct_lit_def_print_internal(const Tast_struct_lit_def* def, int 
 Str_view tast_literal_def_print_internal(const Tast_literal_def* def, int indent) {
     switch (def->type) {
         case TAST_STRING_DEF:
-            return tast_string_def_print_internal(tast_unwrap_string_def_const(def), indent);
+            return tast_string_def_print_internal(tast_string_def_const_unwrap(def), indent);
         case TAST_STRUCT_LIT_DEF:
-            return tast_struct_lit_def_print_internal(tast_unwrap_struct_lit_def_const(def), indent);
+            return tast_struct_lit_def_print_internal(tast_struct_lit_def_const_unwrap(def), indent);
     }
     unreachable("");
 }
@@ -652,9 +652,9 @@ Str_view tast_variable_def_print_internal(const Tast_variable_def* def, int inde
 Str_view tast_operator_print_internal(const Tast_operator* operator, int indent) {
     switch (operator->type) {
         case TAST_BINARY:
-            return tast_binary_print_internal(tast_unwrap_binary_const(operator), indent);
+            return tast_binary_print_internal(tast_binary_const_unwrap(operator), indent);
         case TAST_UNARY:
-            return tast_unary_print_internal(tast_unwrap_unary_const(operator), indent);
+            return tast_unary_print_internal(tast_unary_const_unwrap(operator), indent);
     }
     unreachable("");
 }
@@ -662,23 +662,23 @@ Str_view tast_operator_print_internal(const Tast_operator* operator, int indent)
 Str_view tast_def_print_internal(const Tast_def* def, int indent) {
     switch (def->type) {
         case TAST_FUNCTION_DEF:
-            return tast_function_def_print_internal(tast_unwrap_function_def_const(def), indent);
+            return tast_function_def_print_internal(tast_function_def_const_unwrap(def), indent);
         case TAST_FUNCTION_DECL:
-            return tast_function_decl_print_internal(tast_unwrap_function_decl_const(def), indent);
+            return tast_function_decl_print_internal(tast_function_decl_const_unwrap(def), indent);
         case TAST_VARIABLE_DEF:
-            return tast_variable_def_print_internal(tast_unwrap_variable_def_const(def), indent);
+            return tast_variable_def_print_internal(tast_variable_def_const_unwrap(def), indent);
         case TAST_STRUCT_DEF:
-            return tast_struct_def_print_internal(tast_unwrap_struct_def_const(def), indent);
+            return tast_struct_def_print_internal(tast_struct_def_const_unwrap(def), indent);
         case TAST_RAW_UNION_DEF:
-            return tast_raw_union_def_print_internal(tast_unwrap_raw_union_def_const(def), indent);
+            return tast_raw_union_def_print_internal(tast_raw_union_def_const_unwrap(def), indent);
         case TAST_ENUM_DEF:
-            return tast_enum_def_print_internal(tast_unwrap_enum_def_const(def), indent);
+            return tast_enum_def_print_internal(tast_enum_def_const_unwrap(def), indent);
         case TAST_PRIMITIVE_DEF:
-            return tast_primitive_def_print_internal(tast_unwrap_primitive_def_const(def), indent);
+            return tast_primitive_def_print_internal(tast_primitive_def_const_unwrap(def), indent);
         case TAST_LITERAL_DEF:
-            return tast_literal_def_print_internal(tast_unwrap_literal_def_const(def), indent);
+            return tast_literal_def_print_internal(tast_literal_def_const_unwrap(def), indent);
         case TAST_SUM_DEF:
-            return tast_sum_def_print_internal(tast_unwrap_sum_def_const(def), indent);
+            return tast_sum_def_print_internal(tast_sum_def_const_unwrap(def), indent);
     }
     unreachable("");
 }
@@ -686,23 +686,23 @@ Str_view tast_def_print_internal(const Tast_def* def, int indent) {
 Str_view tast_expr_print_internal(const Tast_expr* expr, int indent) {
     switch (expr->type) {
         case TAST_OPERATOR:
-            return tast_operator_print_internal(tast_unwrap_operator_const(expr), indent);
+            return tast_operator_print_internal(tast_operator_const_unwrap(expr), indent);
         case TAST_SYMBOL:
-            return tast_symbol_print_internal(tast_unwrap_symbol_const(expr), indent);
+            return tast_symbol_print_internal(tast_symbol_const_unwrap(expr), indent);
         case TAST_MEMBER_ACCESS:
-            return tast_member_access_print_internal(tast_unwrap_member_access_const(expr), indent);
+            return tast_member_access_print_internal(tast_member_access_const_unwrap(expr), indent);
         case TAST_INDEX:
-            return tast_index_print_internal(tast_unwrap_index_const(expr), indent);
+            return tast_index_print_internal(tast_index_const_unwrap(expr), indent);
         case TAST_LITERAL:
-            return tast_literal_print_internal(tast_unwrap_literal_const(expr), indent);
+            return tast_literal_print_internal(tast_literal_const_unwrap(expr), indent);
         case TAST_FUNCTION_CALL:
-            return tast_function_call_print_internal(tast_unwrap_function_call_const(expr), indent);
+            return tast_function_call_print_internal(tast_function_call_const_unwrap(expr), indent);
         case TAST_STRUCT_LITERAL:
-            return tast_struct_literal_print_internal(tast_unwrap_struct_literal_const(expr), indent);
+            return tast_struct_literal_print_internal(tast_struct_literal_const_unwrap(expr), indent);
         case TAST_TUPLE:
-            return tast_tuple_print_internal(tast_unwrap_tuple_const(expr), indent);
+            return tast_tuple_print_internal(tast_tuple_const_unwrap(expr), indent);
         case TAST_SUM_CALLEE:
-            return tast_sum_callee_print_internal(tast_unwrap_sum_callee_const(expr), indent);
+            return tast_sum_callee_print_internal(tast_sum_callee_const_unwrap(expr), indent);
     }
     unreachable("");
 }
@@ -710,25 +710,25 @@ Str_view tast_expr_print_internal(const Tast_expr* expr, int indent) {
 Str_view tast_stmt_print_internal(const Tast_stmt* stmt, int indent) {
     switch (stmt->type) {
         case TAST_BLOCK:
-            return tast_block_print_internal(tast_unwrap_block_const(stmt), indent);
+            return tast_block_print_internal(tast_block_const_unwrap(stmt), indent);
         case TAST_EXPR:
-            return tast_expr_print_internal(tast_unwrap_expr_const(stmt), indent);
+            return tast_expr_print_internal(tast_expr_const_unwrap(stmt), indent);
         case TAST_DEF:
-            return tast_def_print_internal(tast_unwrap_def_const(stmt), indent);
+            return tast_def_print_internal(tast_def_const_unwrap(stmt), indent);
         case TAST_FOR_WITH_COND:
-            return tast_for_with_cond_print_internal(tast_unwrap_for_with_cond_const(stmt), indent);
+            return tast_for_with_cond_print_internal(tast_for_with_cond_const_unwrap(stmt), indent);
         case TAST_FOR_RANGE:
-            return tast_for_range_print_internal(tast_unwrap_for_range_const(stmt), indent);
+            return tast_for_range_print_internal(tast_for_range_const_unwrap(stmt), indent);
         case TAST_BREAK:
-            return tast_break_print_internal(tast_unwrap_break_const(stmt), indent);
+            return tast_break_print_internal(tast_break_const_unwrap(stmt), indent);
         case TAST_CONTINUE:
-            return tast_continue_print_internal(tast_unwrap_continue_const(stmt), indent);
+            return tast_continue_print_internal(tast_continue_const_unwrap(stmt), indent);
         case TAST_ASSIGNMENT:
-            return tast_assignment_print_internal(tast_unwrap_assignment_const(stmt), indent);
+            return tast_assignment_print_internal(tast_assignment_const_unwrap(stmt), indent);
         case TAST_IF_ELSE_CHAIN:
-            return tast_if_else_chain_print_internal(tast_unwrap_if_else_chain_const(stmt), indent);
+            return tast_if_else_chain_print_internal(tast_if_else_chain_const_unwrap(stmt), indent);
         case TAST_RETURN:
-            return tast_return_print_internal(tast_unwrap_return_const(stmt), indent);
+            return tast_return_print_internal(tast_return_const_unwrap(stmt), indent);
     }
     unreachable("");
 }
@@ -736,19 +736,19 @@ Str_view tast_stmt_print_internal(const Tast_stmt* stmt, int indent) {
 Str_view tast_print_internal(const Tast* tast, int indent) {
     switch (tast->type) {
         case TAST_STMT:
-            return tast_stmt_print_internal(tast_unwrap_stmt_const(tast), indent);
+            return tast_stmt_print_internal(tast_stmt_const_unwrap(tast), indent);
         case TAST_FUNCTION_PARAMS:
-            return tast_function_params_print_internal(tast_unwrap_function_params_const(tast), indent);
+            return tast_function_params_print_internal(tast_function_params_const_unwrap(tast), indent);
         case TAST_LANG_TYPE:
-            return tast_lang_type_print_internal(tast_unwrap_lang_type_const(tast), indent);
+            return tast_lang_type_print_internal(tast_lang_type_const_unwrap(tast), indent);
         case TAST_FOR_LOWER_BOUND:
-            return tast_for_lower_bound_print_internal(tast_unwrap_for_lower_bound_const(tast), indent);
+            return tast_for_lower_bound_print_internal(tast_for_lower_bound_const_unwrap(tast), indent);
         case TAST_FOR_UPPER_BOUND:
-            return tast_for_upper_bound_print_internal(tast_unwrap_for_upper_bound_const(tast), indent);
+            return tast_for_upper_bound_print_internal(tast_for_upper_bound_const_unwrap(tast), indent);
         case TAST_CONDITION:
-            return tast_condition_print_internal(tast_unwrap_condition_const(tast), indent);
+            return tast_condition_print_internal(tast_condition_const_unwrap(tast), indent);
         case TAST_IF:
-            return tast_if_print_internal(tast_unwrap_if_const(tast), indent);
+            return tast_if_print_internal(tast_if_const_unwrap(tast), indent);
     }
     unreachable("");
 }

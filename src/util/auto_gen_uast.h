@@ -676,9 +676,9 @@ static void uast_gen_uast_struct(Uast_type uast) {
     gen_gen(STRING_FMT"\n", string_print(output));
 }
 
-static void uast_gen_unwrap_internal(Uast_type type, bool is_const) {
+static void uast_gen_internal_unwrap(Uast_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        uast_gen_unwrap_internal(vec_at(&type.sub_types, idx), is_const);
+        uast_gen_internal_unwrap(vec_at(&type.sub_types, idx), is_const);
     }
 
     if (type.name.base.count < 1) {
@@ -686,17 +686,18 @@ static void uast_gen_unwrap_internal(Uast_type type, bool is_const) {
     }
 
     String function = {0};
-    //static inline Uast_##lower* uast_unwrap_##lower(Uast* uast) { 
+    //static inline Uast_##lower* uast__unwrap##lower(Uast* uast) { 
     string_extend_cstr(&gen_a, &function, "static inline ");
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "const ");
     }
     extend_uast_name_first_upper(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "* uast_unwrap_");
+    string_extend_cstr(&gen_a, &function, "* uast_");
     extend_strv_lower(&function, type.name.base);
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "_const");
     }
+    string_extend_cstr(&gen_a, &function, "_unwrap");
     string_extend_cstr(&gen_a, &function, "(");
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "const ");
@@ -721,9 +722,9 @@ static void uast_gen_unwrap_internal(Uast_type type, bool is_const) {
     gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
 }
 
-static void uast_gen_wrap_internal(Uast_type type, bool is_const) {
+static void uast_gen_internal_wrap(Uast_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        uast_gen_wrap_internal(vec_at(&type.sub_types, idx), is_const);
+        uast_gen_internal_wrap(vec_at(&type.sub_types, idx), is_const);
     }
 
     if (type.name.base.count < 1) {
@@ -731,17 +732,18 @@ static void uast_gen_wrap_internal(Uast_type type, bool is_const) {
     }
 
     String function = {0};
-    //static inline Uast_##lower* uast_unwrap_##lower(Uast* uast) { 
+    //static inline Uast_##lower* uast__unwrap##lower(Uast* uast) { 
     string_extend_cstr(&gen_a, &function, "static inline ");
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "const ");
     }
     extend_parent_uast_name_first_upper(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "* uast_wrap_");
+    string_extend_cstr(&gen_a, &function, "* uast_");
     extend_strv_lower(&function, type.name.base);
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "_const");
     }
+    string_extend_cstr(&gen_a, &function, "_wrap");
     string_extend_cstr(&gen_a, &function, "(");
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "const ");
@@ -761,13 +763,13 @@ static void uast_gen_wrap_internal(Uast_type type, bool is_const) {
 }
 
 void uast_gen_uast_unwrap(Uast_type uast) {
-    uast_gen_unwrap_internal(uast, false);
-    uast_gen_unwrap_internal(uast, true);
+    uast_gen_internal_unwrap(uast, false);
+    uast_gen_internal_unwrap(uast, true);
 }
 
 void uast_gen_uast_wrap(Uast_type uast) {
-    uast_gen_wrap_internal(uast, false);
-    uast_gen_wrap_internal(uast, true);
+    uast_gen_internal_wrap(uast, false);
+    uast_gen_internal_wrap(uast, true);
 }
 
 // TODO: deduplicate these functions (use same function for Llvm and Uast)
@@ -847,16 +849,18 @@ static void uast_gen_new_internal(Uast_type type, bool implementation) {
         string_extend_cstr(&gen_a, &function, ";\n");
 
         if (type.sub_types.info.count < 1) {
-            string_extend_cstr(&gen_a, &function, "    uast_unwrap_");
+            string_extend_cstr(&gen_a, &function, "    uast_");
             extend_strv_lower(&function, type.name.base);
+            string_extend_cstr(&gen_a, &function, "_unwrap");
             string_extend_cstr(&gen_a, &function, "(base_uast)->pos = pos;\n");
         }
 
         for (size_t idx = 0; idx < type.members.info.count; idx++) {
             Member curr = vec_at(&type.members, idx);
 
-            string_extend_cstr(&gen_a, &function, "    uast_unwrap_");
+            string_extend_cstr(&gen_a, &function, "    uast_");
             extend_strv_lower(&function, type.name.base);
+            string_extend_cstr(&gen_a, &function, "_unwrap");
             string_extend_cstr(&gen_a, &function, "(base_uast)->");
             extend_strv_lower(&function, curr.name);
             string_extend_cstr(&gen_a, &function, " = ");
@@ -864,8 +868,9 @@ static void uast_gen_new_internal(Uast_type type, bool implementation) {
             string_extend_cstr(&gen_a, &function, ";\n");
         }
 
-        string_extend_cstr(&gen_a, &function, "    return uast_unwrap_");
+        string_extend_cstr(&gen_a, &function, "    return uast_");
         extend_strv_lower(&function, type.name.base);
+        string_extend_cstr(&gen_a, &function, "_unwrap");
         string_extend_cstr(&gen_a, &function, "(base_uast);\n");
 
         string_extend_cstr(&gen_a, &function, "}");
@@ -877,9 +882,9 @@ static void uast_gen_new_internal(Uast_type type, bool implementation) {
     gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
 }
 
-static void uast_gen_get_pos_internal(Uast_type type, bool implementation) {
+static void uast_gen_internal_get_pos(Uast_type type, bool implementation) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        uast_gen_get_pos_internal(vec_at(&type.sub_types, idx), implementation);
+        uast_gen_internal_get_pos(vec_at(&type.sub_types, idx), implementation);
     }
 
     String function = {0};
@@ -889,9 +894,9 @@ static void uast_gen_get_pos_internal(Uast_type type, bool implementation) {
     if (type.name.is_topmost) {
         string_extend_cstr(&gen_a, &function, "    uast_get_pos(const Uast* uast)");
     } else {
-        string_extend_cstr(&gen_a, &function, "    uast_get_pos_");
+        string_extend_cstr(&gen_a, &function, "    uast_");
         extend_strv_lower(&function, type.name.base);
-        string_extend_cstr(&gen_a, &function, "(const ");
+        string_extend_cstr(&gen_a, &function, "_get_pos(const ");
         extend_uast_name_first_upper(&function, type.name);
         string_extend_cstr(&gen_a, &function, "* uast)");
     }
@@ -911,11 +916,11 @@ static void uast_gen_get_pos_internal(Uast_type type, bool implementation) {
                 string_extend_cstr(&gen_a, &function, ":\n");
 
 
-                string_extend_cstr(&gen_a, &function, "            return uast_get_pos_");
+                string_extend_cstr(&gen_a, &function, "            return uast_");
                 extend_strv_lower(&function, curr.name.base);
-                string_extend_cstr(&gen_a, &function, "(uast_unwrap_");
+                string_extend_cstr(&gen_a, &function, "_get_pos(uast_");
                 extend_strv_lower(&function, curr.name.base);
-                string_extend_cstr(&gen_a, &function, "_const(uast));\n");
+                string_extend_cstr(&gen_a, &function, "_const_unwrap(uast));\n");
 
                 string_extend_cstr(&gen_a, &function, "        break;\n");
             }
@@ -941,12 +946,12 @@ static void gen_uast_new_define(Uast_type uast) {
     uast_gen_new_internal(uast, true);
 }
 
-static void gen_uast_get_pos_forward_decl(Uast_type uast) {
-    uast_gen_get_pos_internal(uast, false);
+static void gen_uast_forward_decl_get_pos(Uast_type uast) {
+    uast_gen_internal_get_pos(uast, false);
 }
 
-static void gen_uast_get_pos_define(Uast_type uast) {
-    uast_gen_get_pos_internal(uast, true);
+static void gen_uast_define_get_pos(Uast_type uast) {
+    uast_gen_internal_get_pos(uast, true);
 }
 
 static void gen_uast_vecs(Uast_type uast) {
@@ -1017,9 +1022,9 @@ static void gen_all_uasts(const char* file_path, bool implementation) {
         gen_uast_new_define(uast);
     }
 
-    gen_uast_get_pos_forward_decl(uast);
+    gen_uast_forward_decl_get_pos(uast);
     if (implementation) {
-        gen_uast_get_pos_define(uast);
+        gen_uast_define_get_pos(uast);
     }
 
     if (implementation) {

@@ -773,9 +773,9 @@ static void tast_gen_tast_struct(Tast_type tast) {
     gen_gen(STRING_FMT"\n", string_print(output));
 }
 
-static void tast_gen_unwrap_internal(Tast_type type, bool is_const) {
+static void tast_gen_internal_unwrap(Tast_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        tast_gen_unwrap_internal(vec_at(&type.sub_types, idx), is_const);
+        tast_gen_internal_unwrap(vec_at(&type.sub_types, idx), is_const);
     }
 
     if (type.name.base.count < 1) {
@@ -783,17 +783,18 @@ static void tast_gen_unwrap_internal(Tast_type type, bool is_const) {
     }
 
     String function = {0};
-    //static inline Tast_##lower* tast_unwrap_##lower(Tast* tast) { 
+    //static inline Tast_##lower* tast__unwrap##lower(Tast* tast) { 
     string_extend_cstr(&gen_a, &function, "static inline ");
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "const ");
     }
     extend_tast_name_first_upper(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "* tast_unwrap_");
+    string_extend_cstr(&gen_a, &function, "* tast_");
     extend_strv_lower(&function, type.name.base);
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "_const");
     }
+    string_extend_cstr(&gen_a, &function, "_unwrap");
     string_extend_cstr(&gen_a, &function, "(");
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "const ");
@@ -818,9 +819,9 @@ static void tast_gen_unwrap_internal(Tast_type type, bool is_const) {
     gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
 }
 
-static void tast_gen_wrap_internal(Tast_type type, bool is_const) {
+static void tast_gen_internal_wrap(Tast_type type, bool is_const) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        tast_gen_wrap_internal(vec_at(&type.sub_types, idx), is_const);
+        tast_gen_internal_wrap(vec_at(&type.sub_types, idx), is_const);
     }
 
     if (type.name.base.count < 1) {
@@ -828,18 +829,18 @@ static void tast_gen_wrap_internal(Tast_type type, bool is_const) {
     }
 
     String function = {0};
-    //static inline Tast_##lower* tast_unwrap_##lower(Tast* tast) { 
+    //static inline Tast_##lower* tast__unwrap##lower(Tast* tast) { 
     string_extend_cstr(&gen_a, &function, "static inline ");
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "const ");
     }
     extend_parent_tast_name_first_upper(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "* tast_wrap_");
+    string_extend_cstr(&gen_a, &function, "* tast_");
     extend_strv_lower(&function, type.name.base);
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "_const");
     }
-    string_extend_cstr(&gen_a, &function, "(");
+    string_extend_cstr(&gen_a, &function, "_wrap(");
     if (is_const) {
         string_extend_cstr(&gen_a, &function, "const ");
     }
@@ -858,13 +859,13 @@ static void tast_gen_wrap_internal(Tast_type type, bool is_const) {
 }
 
 void tast_gen_tast_unwrap(Tast_type tast) {
-    tast_gen_unwrap_internal(tast, false);
-    tast_gen_unwrap_internal(tast, true);
+    tast_gen_internal_unwrap(tast, false);
+    tast_gen_internal_unwrap(tast, true);
 }
 
 void tast_gen_tast_wrap(Tast_type tast) {
-    tast_gen_wrap_internal(tast, false);
-    tast_gen_wrap_internal(tast, true);
+    tast_gen_internal_wrap(tast, false);
+    tast_gen_internal_wrap(tast, true);
 }
 
 // TODO: deduplicate these functions (use same function for Llvm and Tast)
@@ -944,26 +945,27 @@ static void tast_gen_new_internal(Tast_type type, bool implementation) {
         string_extend_cstr(&gen_a, &function, ";\n");
 
         if (type.sub_types.info.count < 1) {
-            string_extend_cstr(&gen_a, &function, "    tast_unwrap_");
+            string_extend_cstr(&gen_a, &function, "    tast_");
             extend_strv_lower(&function, type.name.base);
+            string_extend_cstr(&gen_a, &function, "_unwrap");
             string_extend_cstr(&gen_a, &function, "(base_tast)->pos = pos;\n");
         }
 
         for (size_t idx = 0; idx < type.members.info.count; idx++) {
             Member curr = vec_at(&type.members, idx);
 
-            string_extend_cstr(&gen_a, &function, "    tast_unwrap_");
+            string_extend_cstr(&gen_a, &function, "    tast_");
             extend_strv_lower(&function, type.name.base);
-            string_extend_cstr(&gen_a, &function, "(base_tast)->");
+            string_extend_cstr(&gen_a, &function, "_unwrap(base_tast)->");
             extend_strv_lower(&function, curr.name);
             string_extend_cstr(&gen_a, &function, " = ");
             extend_strv_lower(&function, curr.name);
             string_extend_cstr(&gen_a, &function, ";\n");
         }
 
-        string_extend_cstr(&gen_a, &function, "    return tast_unwrap_");
+        string_extend_cstr(&gen_a, &function, "    return tast_");
         extend_strv_lower(&function, type.name.base);
-        string_extend_cstr(&gen_a, &function, "(base_tast);\n");
+        string_extend_cstr(&gen_a, &function, "_unwrap(base_tast);\n");
 
         string_extend_cstr(&gen_a, &function, "}");
 
@@ -974,9 +976,9 @@ static void tast_gen_new_internal(Tast_type type, bool implementation) {
     gen_gen(STR_VIEW_FMT"\n", str_view_print(string_to_strv(function)));
 }
 
-static void tast_gen_get_pos_internal(Tast_type type, bool implementation) {
+static void tast_gen_internal_get_pos(Tast_type type, bool implementation) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
-        tast_gen_get_pos_internal(vec_at(&type.sub_types, idx), implementation);
+        tast_gen_internal_get_pos(vec_at(&type.sub_types, idx), implementation);
     }
 
     String function = {0};
@@ -986,9 +988,9 @@ static void tast_gen_get_pos_internal(Tast_type type, bool implementation) {
     if (type.name.is_topmost) {
         string_extend_cstr(&gen_a, &function, "    tast_get_pos(const Tast* tast)");
     } else {
-        string_extend_cstr(&gen_a, &function, "    tast_get_pos_");
+        string_extend_cstr(&gen_a, &function, "    tast_");
         extend_strv_lower(&function, type.name.base);
-        string_extend_cstr(&gen_a, &function, "(const ");
+        string_extend_cstr(&gen_a, &function, "_get_pos(const ");
         extend_tast_name_first_upper(&function, type.name);
         string_extend_cstr(&gen_a, &function, "* tast)");
     }
@@ -1008,11 +1010,11 @@ static void tast_gen_get_pos_internal(Tast_type type, bool implementation) {
                 string_extend_cstr(&gen_a, &function, ":\n");
 
 
-                string_extend_cstr(&gen_a, &function, "            return tast_get_pos_");
+                string_extend_cstr(&gen_a, &function, "            return tast_");
                 extend_strv_lower(&function, curr.name.base);
-                string_extend_cstr(&gen_a, &function, "(tast_unwrap_");
+                string_extend_cstr(&gen_a, &function, "_get_pos(tast_");
                 extend_strv_lower(&function, curr.name.base);
-                string_extend_cstr(&gen_a, &function, "_const(tast));\n");
+                string_extend_cstr(&gen_a, &function, "_const_unwrap(tast));\n");
 
                 string_extend_cstr(&gen_a, &function, "        break;\n");
             }
@@ -1038,12 +1040,12 @@ static void gen_tast_new_define(Tast_type tast) {
     tast_gen_new_internal(tast, true);
 }
 
-static void gen_tast_get_pos_forward_decl(Tast_type tast) {
-    tast_gen_get_pos_internal(tast, false);
+static void gen_tast_forward_decl_get_pos(Tast_type tast) {
+    tast_gen_internal_get_pos(tast, false);
 }
 
-static void gen_tast_get_pos_define(Tast_type tast) {
-    tast_gen_get_pos_internal(tast, true);
+static void gen_tast_define_get_pos(Tast_type tast) {
+    tast_gen_internal_get_pos(tast, true);
 }
 
 static void gen_tast_vecs(Tast_type tast) {
@@ -1113,9 +1115,9 @@ static void gen_all_tasts(const char* file_path, bool implementation) {
         gen_tast_new_define(tast);
     }
 
-    gen_tast_get_pos_forward_decl(tast);
+    gen_tast_forward_decl_get_pos(tast);
     if (implementation) {
-        gen_tast_get_pos_define(tast);
+        gen_tast_define_get_pos(tast);
     }
 
     if (implementation) {

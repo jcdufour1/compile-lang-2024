@@ -101,13 +101,13 @@ Str_view llvm_enum_sym_print_internal(const Llvm_enum_sym* sym, int indent) {
 Str_view llvm_symbol_typed_print_internal(const Llvm_symbol* sym, int indent) {
     switch (sym->type) {
         case LLVM_PRIMITIVE_SYM:
-            return llvm_primitive_sym_print_internal(llvm_unwrap_primitive_sym_const(sym), indent);
+            return llvm_primitive_sym_print_internal(llvm_primitive_sym_const_unwrap(sym), indent);
         case LLVM_STRUCT_SYM:
-            return llvm_struct_sym_print_internal(llvm_unwrap_struct_sym_const(sym), indent);
+            return llvm_struct_sym_print_internal(llvm_struct_sym_const_unwrap(sym), indent);
         case LLVM_RAW_UNION_SYM:
-            return llvm_raw_union_sym_print_internal(llvm_unwrap_raw_union_sym_const(sym), indent);
+            return llvm_raw_union_sym_print_internal(llvm_raw_union_sym_const_unwrap(sym), indent);
         case LLVM_ENUM_SYM:
-            return llvm_enum_sym_print_internal(llvm_unwrap_enum_sym_const(sym), indent);
+            return llvm_enum_sym_print_internal(llvm_enum_sym_const_unwrap(sym), indent);
     }
     unreachable("");
 }
@@ -115,15 +115,15 @@ Str_view llvm_symbol_typed_print_internal(const Llvm_symbol* sym, int indent) {
 Str_view llvm_literal_print_internal(const Llvm_literal* lit, int indent) {
     switch (lit->type) {
         case LLVM_NUMBER:
-            return llvm_number_print_internal(llvm_unwrap_number_const(lit), indent);
+            return llvm_number_print_internal(llvm_number_const_unwrap(lit), indent);
         case LLVM_STRING:
-            return llvm_string_print_internal(llvm_unwrap_string_const(lit), indent);
+            return llvm_string_print_internal(llvm_string_const_unwrap(lit), indent);
         case LLVM_VOID:
-            return llvm_void_print_internal(llvm_unwrap_void_const(lit), indent);
+            return llvm_void_print_internal(llvm_void_const_unwrap(lit), indent);
         case LLVM_ENUM_LIT:
-            return llvm_enum_lit_print_internal(llvm_unwrap_enum_lit_const(lit), indent);
+            return llvm_enum_lit_print_internal(llvm_enum_lit_const_unwrap(lit), indent);
         case LLVM_CHAR:
-            return llvm_char_print_internal(llvm_unwrap_char_const(lit), indent);
+            return llvm_char_print_internal(llvm_char_const_unwrap(lit), indent);
     }
     unreachable("");
 }
@@ -161,7 +161,7 @@ Str_view llvm_string_print_internal(const Llvm_string* lit, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "string", indent);
-    extend_lang_type(&buf, lang_type_wrap_primitive_const(lit->lang_type), true);
+    extend_lang_type(&buf, lang_type_primitive_const_wrap(lit->lang_type), true);
     extend_name(&buf, lit->name);
     string_extend_strv(&print_arena, &buf, lit->data);
     string_extend_cstr(&print_arena, &buf, "\n");
@@ -463,9 +463,9 @@ Str_view llvm_label_print_internal(const Llvm_label* label, int indent) {
 Str_view llvm_literal_def_print_internal(const Llvm_literal_def* def, int indent) {
     switch (def->type) {
         case LLVM_STRING_DEF:
-            return llvm_string_def_print_internal(llvm_unwrap_string_def_const(def), indent);
+            return llvm_string_def_print_internal(llvm_string_def_const_unwrap(def), indent);
         case LLVM_STRUCT_LIT_DEF:
-            return llvm_struct_lit_def_print_internal(llvm_unwrap_struct_lit_def_const(def), indent);
+            return llvm_struct_lit_def_print_internal(llvm_struct_lit_def_const_unwrap(def), indent);
     }
     unreachable("");
 }
@@ -486,9 +486,9 @@ Str_view llvm_variable_def_print_internal(const Llvm_variable_def* def, int inde
 Str_view llvm_operator_print_internal(const Llvm_operator* operator, int indent) {
     switch (operator->type) {
         case LLVM_BINARY:
-            return llvm_binary_print_internal(llvm_unwrap_binary_const(operator), indent);
+            return llvm_binary_print_internal(llvm_binary_const_unwrap(operator), indent);
         case LLVM_UNARY:
-            return llvm_unary_print_internal(llvm_unwrap_unary_const(operator), indent);
+            return llvm_unary_print_internal(llvm_unary_const_unwrap(operator), indent);
     }
     unreachable("");
 }
@@ -496,25 +496,25 @@ Str_view llvm_operator_print_internal(const Llvm_operator* operator, int indent)
 Str_view llvm_def_print_internal(const Llvm_def* def, int indent) {
     switch (def->type) {
         case LLVM_FUNCTION_DEF:
-            return llvm_function_def_print_internal(llvm_unwrap_function_def_const(def), indent);
+            return llvm_function_def_print_internal(llvm_function_def_const_unwrap(def), indent);
         case LLVM_FUNCTION_DECL:
-            return llvm_function_decl_print_internal(llvm_unwrap_function_decl_const(def), indent);
+            return llvm_function_decl_print_internal(llvm_function_decl_const_unwrap(def), indent);
         case LLVM_VARIABLE_DEF:
-            return llvm_variable_def_print_internal(llvm_unwrap_variable_def_const(def), indent);
+            return llvm_variable_def_print_internal(llvm_variable_def_const_unwrap(def), indent);
         case LLVM_STRUCT_DEF:
-            return llvm_struct_def_print_internal(llvm_unwrap_struct_def_const(def), indent);
+            return llvm_struct_def_print_internal(llvm_struct_def_const_unwrap(def), indent);
         case LLVM_RAW_UNION_DEF:
-            return llvm_raw_union_def_print_internal(llvm_unwrap_raw_union_def_const(def), indent);
+            return llvm_raw_union_def_print_internal(llvm_raw_union_def_const_unwrap(def), indent);
         case LLVM_ENUM_DEF:
-            return llvm_enum_def_print_internal(llvm_unwrap_enum_def_const(def), indent);
+            return llvm_enum_def_print_internal(llvm_enum_def_const_unwrap(def), indent);
         case LLVM_PRIMITIVE_DEF:
-            return llvm_primitive_def_print_internal(llvm_unwrap_primitive_def_const(def), indent);
+            return llvm_primitive_def_print_internal(llvm_primitive_def_const_unwrap(def), indent);
         case LLVM_LABEL:
-            return llvm_label_print_internal(llvm_unwrap_label_const(def), indent);
+            return llvm_label_print_internal(llvm_label_const_unwrap(def), indent);
         case LLVM_LITERAL_DEF:
-            return llvm_literal_def_print_internal(llvm_unwrap_literal_def_const(def), indent);
+            return llvm_literal_def_print_internal(llvm_literal_def_const_unwrap(def), indent);
         case LLVM_SUM_DEF:
-            return llvm_sum_def_print_internal(llvm_unwrap_sum_def_const(def), indent);
+            return llvm_sum_def_print_internal(llvm_sum_def_const_unwrap(def), indent);
     }
     unreachable("");
 }
@@ -522,15 +522,15 @@ Str_view llvm_def_print_internal(const Llvm_def* def, int indent) {
 Str_view llvm_expr_print_internal(const Llvm_expr* expr, int indent) {
     switch (expr->type) {
         case LLVM_OPERATOR:
-            return llvm_operator_print_internal(llvm_unwrap_operator_const(expr), indent);
+            return llvm_operator_print_internal(llvm_operator_const_unwrap(expr), indent);
         case LLVM_SYMBOL:
-            return llvm_symbol_typed_print_internal(llvm_unwrap_symbol_const(expr), indent);
+            return llvm_symbol_typed_print_internal(llvm_symbol_const_unwrap(expr), indent);
         case LLVM_LITERAL:
-            return llvm_literal_print_internal(llvm_unwrap_literal_const(expr), indent);
+            return llvm_literal_print_internal(llvm_literal_const_unwrap(expr), indent);
         case LLVM_FUNCTION_CALL:
-            return llvm_function_call_print_internal(llvm_unwrap_function_call_const(expr), indent);
+            return llvm_function_call_print_internal(llvm_function_call_const_unwrap(expr), indent);
         case LLVM_LLVM_PLACEHOLDER:
-            return llvm_llvm_placeholder_print_internal(llvm_unwrap_llvm_placeholder_const(expr), indent);
+            return llvm_llvm_placeholder_print_internal(llvm_llvm_placeholder_const_unwrap(expr), indent);
     }
     unreachable("");
 }
@@ -538,29 +538,29 @@ Str_view llvm_expr_print_internal(const Llvm_expr* expr, int indent) {
 Str_view llvm_print_internal(const Llvm* llvm, int indent) {
     switch (llvm->type) {
         case LLVM_BLOCK:
-            return llvm_block_print_internal(llvm_unwrap_block_const(llvm), indent);
+            return llvm_block_print_internal(llvm_block_const_unwrap(llvm), indent);
         case LLVM_EXPR:
-            return llvm_expr_print_internal(llvm_unwrap_expr_const(llvm), indent);
+            return llvm_expr_print_internal(llvm_expr_const_unwrap(llvm), indent);
         case LLVM_DEF:
-            return llvm_def_print_internal(llvm_unwrap_def_const(llvm), indent);
+            return llvm_def_print_internal(llvm_def_const_unwrap(llvm), indent);
         case LLVM_LOAD_ELEMENT_PTR:
-            return llvm_load_element_ptr_print_internal(llvm_unwrap_load_element_ptr_const(llvm), indent);
+            return llvm_load_element_ptr_print_internal(llvm_load_element_ptr_const_unwrap(llvm), indent);
         case LLVM_FUNCTION_PARAMS:
-            return llvm_function_params_print_internal(llvm_unwrap_function_params_const(llvm), indent);
+            return llvm_function_params_print_internal(llvm_function_params_const_unwrap(llvm), indent);
         case LLVM_LANG_TYPE:
-            return llvm_lang_type_print_internal(llvm_unwrap_lang_type_const(llvm), indent);
+            return llvm_lang_type_print_internal(llvm_lang_type_const_unwrap(llvm), indent);
         case LLVM_RETURN:
-            return llvm_return_print_internal(llvm_unwrap_return_const(llvm), indent);
+            return llvm_return_print_internal(llvm_return_const_unwrap(llvm), indent);
         case LLVM_GOTO:
-            return llvm_goto_print_internal(llvm_unwrap_goto_const(llvm), indent);
+            return llvm_goto_print_internal(llvm_goto_const_unwrap(llvm), indent);
         case LLVM_COND_GOTO:
-            return llvm_cond_goto_print_internal(llvm_unwrap_cond_goto_const(llvm), indent);
+            return llvm_cond_goto_print_internal(llvm_cond_goto_const_unwrap(llvm), indent);
         case LLVM_ALLOCA:
-            return llvm_alloca_print_internal(llvm_unwrap_alloca_const(llvm), indent);
+            return llvm_alloca_print_internal(llvm_alloca_const_unwrap(llvm), indent);
         case LLVM_LOAD_ANOTHER_LLVM:
-            return llvm_load_another_llvm_print_internal(llvm_unwrap_load_another_llvm_const(llvm), indent);
+            return llvm_load_another_llvm_print_internal(llvm_load_another_llvm_const_unwrap(llvm), indent);
         case LLVM_STORE_ANOTHER_LLVM:
-            return llvm_store_another_llvm_print_internal(llvm_unwrap_store_another_llvm_const(llvm), indent);
+            return llvm_store_another_llvm_print_internal(llvm_store_another_llvm_const_unwrap(llvm), indent);
     }
     unreachable("");
 }
