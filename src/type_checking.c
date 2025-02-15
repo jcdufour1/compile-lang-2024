@@ -904,6 +904,9 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             Tast_expr* new_item = NULL;
             try(try_set_expr_types(env, &new_item, vec_at(&fun_call->args, 0)));
 
+            // TODO: is tag set to a type that makes sense?
+            // (right now, it is set to i64)
+            sum_callee->tag->lang_type = lang_type_wrap_primitive_const(lang_type_primitive_new(lang_type_atom_new_from_cstr("i64", 0)));
             Tast_sum_lit* new_lit = tast_sum_lit_new(
                 sum_callee->pos,
                 sum_callee->tag,

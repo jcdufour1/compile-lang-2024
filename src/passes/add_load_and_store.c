@@ -224,10 +224,8 @@ static Str_view load_function_call(
     Lang_type fun_lang_type = old_fun_call->lang_type;
     if (rtn_is_struct) {
         def_name = util_literal_name_new_prefix("result_fun_call");
-        Uast_variable_def* def_ = uast_variable_def_new(old_fun_call->pos, lang_type_to_ulang_type(old_fun_call->lang_type), false, def_name);
-        log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(old_fun_call->lang_type));
-        try(usym_tbl_add(&vec_at(&env->ancesters, 0)->usymbol_table, uast_wrap_variable_def(def_)));
         Tast_variable_def* def = tast_variable_def_new(old_fun_call->pos, old_fun_call->lang_type, false, def_name);
+        log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(old_fun_call->lang_type));
         try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_wrap_variable_def(def)));
         
         vec_append(&a_main, &new_args, def_name);
@@ -248,7 +246,12 @@ static Str_view load_function_call(
 
     for (size_t idx = 0; idx < old_fun_call->args.info.count; idx++) {
         Tast_expr* old_arg = vec_at(&old_fun_call->args, idx);
-        vec_append(&a_main, &new_fun_call->args, load_expr(env, new_block, old_arg));
+        Str_view thing = load_expr(env, new_block, old_arg);
+        vec_append(&a_main, &new_fun_call->args, thing);
+        Llvm* result = NULL;
+        try(alloca_lookup(&result, env, thing));
+        log(LOG_DEBUG, TAST_FMT, llvm_print(result));
+        log(LOG_DEBUG, TAST_FMT, llvm_function_call_print(new_fun_call));
     }
 
     vec_append(&a_main, &new_block->children, llvm_wrap_expr(llvm_wrap_function_call(new_fun_call)));

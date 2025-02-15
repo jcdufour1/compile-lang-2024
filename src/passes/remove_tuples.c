@@ -54,7 +54,8 @@ static Lang_type lang_type_thing(Env* env, Lang_type lang_type, Pos lang_type_po
 
             Tast_variable_def* tag = tast_variable_def_new(
                 lang_type_pos,
-                lang_type_wrap_primitive_const(lang_type_primitive_new(lang_type_atom_new_from_cstr("i32", 0))),
+                // TODO: make helper functions, etc. for line below, because this is too much to do every time
+                lang_type_wrap_primitive_const(lang_type_primitive_new(lang_type_atom_new_from_cstr("i64", 0))),
                 false,
                 util_literal_name_new_prefix("tuple_struct_tag")
             );
