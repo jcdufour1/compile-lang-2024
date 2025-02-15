@@ -42,6 +42,9 @@ typedef struct Env_ {
     Tast_sum_def_vec extra_sums;
     Tast_function_def_vec extra_functions;
 
+    Uast_stmt_vec switch_case_defer_add_if_true;
+    Uast_stmt_vec switch_case_defer_add_sum_case_part;
+
     Str_view struct_rtn_name_parent_function;
 
     PARENT_OF parent_of;

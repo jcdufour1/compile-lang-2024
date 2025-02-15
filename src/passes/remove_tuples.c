@@ -828,6 +828,8 @@ static Tast_expr* rm_tuple_expr_rhs(Env* env, Tast_expr* rhs, Pos assign_pos) {
             return tast_function_call_wrap(rm_tuple_function_call(env, tast_function_call_unwrap(rhs)));
         case TAST_SUM_CALLEE:
             todo();
+        case TAST_SUM_CASE:
+            todo();
     }
     unreachable("");
 }
@@ -872,6 +874,8 @@ static Tast_expr* rm_tuple_expr_not_in_assignment(Env* env, Tast_expr* expr) {
             unreachable("");
         case TAST_SUM_CALLEE:
             unreachable("");
+        case TAST_SUM_CASE:
+            todo();
     }
     unreachable("");
 }

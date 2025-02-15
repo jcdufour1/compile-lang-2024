@@ -156,7 +156,7 @@ static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr) {
         case TAST_SUM_CALLEE:
             unreachable("");
         case TAST_SUM_CASE:
-            unreachable("");
+            return tast_sum_case_const_unwrap(expr)->sum_lang_type;
     }
     unreachable("");
 }

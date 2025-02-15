@@ -398,7 +398,6 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
                 "types `"LANG_TYPE_FMT"` and `"LANG_TYPE_FMT"` are not valid operands to binary expression\n",
                 lang_type_print(tast_expr_get_lang_type(new_lhs)), lang_type_print(tast_expr_get_lang_type(new_rhs))
             );
-            todo();
             return false;
         }
     }
@@ -929,14 +928,20 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             // TODO: is tag set to a type that makes sense?
             // (right now, it is set to i64)
             //sum_case->tag->lang_type = lang_type_primitive_const_wrap(lang_type_primitive_new(lang_type_atom_new_from_cstr("i64", 0)));
-            Tast_variable_def* new_def = tast_variable_def_new(
+            Uast_variable_def* new_def = uast_variable_def_new(
                 sum_case->pos,
-                sum_case->tag->lang_type,
+                lang_type_to_ulang_type(sum_case->tag->lang_type),
                 false,
                 uast_expr_get_name(vec_at(&fun_call->args, 0))
             );
-            log(LOG_DEBUG, TAST_FMT, tast_variable_def_print(new_def));
-            *new_call = tast_literal_wrap(tast_number_wrap(tast_number_new(new_def->pos, 0, lang_type_primitive_const_wrap(lang_type_primitive_new(lang_type_atom_new_from_cstr("i32", 0))))));
+            usymbol_add_defer(env, uast_variable_def_wrap(new_def));
+            // TODO: add assignment here
+            log(LOG_DEBUG, TAST_FMT, uast_variable_def_print(new_def));
+            log(LOG_DEBUG, TAST_FMT, tast_sum_case_print(sum_case));
+
+            vec_append(&a_main, &env->switch_case_defer_add_sum_case_part, uast_def_wrap(uast_variable_def_wrap(new_def)));
+
+            *new_call = tast_sum_case_wrap(sum_case);
             return true;
         }
         default:
@@ -1689,6 +1694,14 @@ bool try_set_if_types(Env* env, Tast_if** new_tast, Uast_if* uast) {
         status = false;
     }
 
+    Uast_stmt_vec new_if_children = {0};
+    vec_extend(&a_main, &new_if_children, &env->switch_case_defer_add_sum_case_part);
+    vec_extend(&a_main, &new_if_children, &env->switch_case_defer_add_if_true);
+    vec_extend(&a_main, &new_if_children, &uast->body->children);
+    uast->body->children = new_if_children;
+    vec_reset(&env->switch_case_defer_add_sum_case_part);
+    vec_reset(&env->switch_case_defer_add_if_true);
+
     Tast_block* new_body = NULL;
     if (!try_set_block_types(env, &new_body, uast->body, false)) {
         status = false;
@@ -1792,6 +1805,22 @@ static bool check_for_exhaustiveness_inner(
             *vec_at_ref(&exhaustive_data->covered, curr_lit->data) = true;
             return true;
         }
+        case LANG_TYPE_SUM: {
+            log(LOG_DEBUG, TAST_FMT, tast_enum_lit_print(tast_sum_case_unwrap(tast_binary_unwrap(curr_if->condition->child)->rhs)->tag));
+
+            const Tast_enum_lit* curr_lit = tast_sum_case_unwrap(
+                tast_binary_unwrap(curr_if->condition->child)->rhs
+            )->tag;
+
+            if (curr_lit->data > (int64_t)exhaustive_data->max_data) {
+                unreachable("invalid enum value\n");
+            }
+            if (vec_at(&exhaustive_data->covered, curr_lit->data)) {
+                unreachable("duplicate case");
+            }
+            *vec_at_ref(&exhaustive_data->covered, curr_lit->data) = true;
+            return true;
+        }
         default:
             todo();
     }
@@ -1809,13 +1838,23 @@ static bool check_for_exhaustiveness_finish(const Env* env, Exhaustive_data exha
             if (!vec_at(&exhaustive_data.covered, idx)) {
                 Uast_def* enum_def_ = NULL;
                 try(usymbol_lookup(&enum_def_, env, lang_type_get_str(exhaustive_data.oper_lang_type)));
-                Uast_enum_def* enum_def = uast_enum_def_unwrap(enum_def_);
+                Ustruct_def_base enum_def = {0};
+                switch (enum_def_->type) {
+                    case UAST_ENUM_DEF:
+                        enum_def = uast_enum_def_unwrap(enum_def_)->base;
+                        break;
+                    case UAST_SUM_DEF:
+                        enum_def = uast_sum_def_unwrap(enum_def_)->base;
+                        break;
+                    default:
+                        todo();
+                }
 
                 msg(
                     LOG_ERROR, EXPECT_FAIL_NON_EXHAUSTIVE_SWITCH, env->file_text, pos_switch,
                     "case `"LANG_TYPE_FMT"."STR_VIEW_FMT"` is not covered\n",
-                    ulang_type_print(vec_at(&enum_def->base.members, idx)->lang_type),
-                    str_view_print(vec_at(&enum_def->base.members, idx)->name)
+                    ulang_type_print(vec_at(&enum_def.members, idx)->lang_type),
+                    str_view_print(vec_at(&enum_def.members, idx)->name)
                 );
                 return false;
             }
@@ -1850,12 +1889,11 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
             )));
         }
 
-        Uast_stmt_vec if_true_children = {0};
-        vec_append(&a_main, &if_true_children, old_case->if_true);
+        vec_append(&a_main, &env->switch_case_defer_add_if_true, old_case->if_true);
         Uast_block* if_true = uast_block_new(
             old_case->pos,
             false,
-            if_true_children,
+            (Uast_stmt_vec) {0},
             (Symbol_collection) {0},
             old_case->pos
         );
@@ -1866,7 +1904,6 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
             return false;
         }
         env->parent_of = PARENT_OF_NONE;
-        todo();
 
         if (!check_for_exhaustiveness_inner(&exhaustive_data, new_if, old_case->is_default)) {
             return false;
@@ -1885,6 +1922,9 @@ bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, boo
     Symbol_collection new_sym_coll = block->symbol_collection;
 
     vec_append(&a_main, &env->ancesters, &new_sym_coll);
+
+    Uast_def* redef_sym = NULL;
+    try(usymbol_do_add_defered(&redef_sym, env));
 
     Tast_stmt_vec new_tasts = {0};
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
