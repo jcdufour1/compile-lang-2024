@@ -398,6 +398,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
                 "types `"LANG_TYPE_FMT"` and `"LANG_TYPE_FMT"` are not valid operands to binary expression\n",
                 lang_type_print(tast_expr_get_lang_type(new_lhs)), lang_type_print(tast_expr_get_lang_type(new_rhs))
             );
+            todo();
             return false;
         }
     }
@@ -895,7 +896,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             //} else {
             //    unreachable("");
             //}
-        case TAST_SUM_CALLEE:
+        case TAST_SUM_CALLEE: {
             if (fun_call->args.info.count != 1) {
                 todo();
             }
@@ -915,6 +916,29 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             );
             *new_call = tast_literal_wrap(tast_sum_lit_wrap(new_lit));
             return true;
+        }
+        case TAST_SUM_CASE: {
+            if (fun_call->args.info.count != 1) {
+                todo();
+            }
+            Tast_sum_case* sum_case = tast_sum_case_unwrap(new_callee);
+
+            //Tast_expr* new_item = NULL;
+            //try(try_set_expr_types(env, &new_item, vec_at(&fun_call->args, 0)));
+
+            // TODO: is tag set to a type that makes sense?
+            // (right now, it is set to i64)
+            //sum_case->tag->lang_type = lang_type_primitive_const_wrap(lang_type_primitive_new(lang_type_atom_new_from_cstr("i64", 0)));
+            Tast_variable_def* new_def = tast_variable_def_new(
+                sum_case->pos,
+                sum_case->tag->lang_type,
+                false,
+                uast_expr_get_name(vec_at(&fun_call->args, 0))
+            );
+            log(LOG_DEBUG, TAST_FMT, tast_variable_def_print(new_def));
+            *new_call = tast_literal_wrap(tast_number_wrap(tast_number_new(new_def->pos, 0, lang_type_primitive_const_wrap(lang_type_primitive_new(lang_type_atom_new_from_cstr("i32", 0))))));
+            return true;
+        }
         default:
             unreachable(TAST_FMT, tast_expr_print(new_callee));
     }
@@ -1131,7 +1155,27 @@ bool try_set_member_access_types_finish_sum_def(
 
     switch (env->parent_of) {
         case PARENT_OF_CASE:
-            todo();
+            log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_callee));
+            log(LOG_DEBUG, TAST_FMT, uast_member_access_print(access));
+            Uast_variable_def* member_def = NULL;
+            if (!uast_try_get_member_def(&member_def, &sum_def->base, access->member_name)) {
+                todo();
+                //msg_invalid_enum_member(env, enum_def->base, access);
+                //return false;
+            }
+            Tast_enum_lit* new_tag = tast_enum_lit_new(
+                access->pos,
+                uast_get_member_index(&sum_def->base, access->member_name),
+                lang_type_from_ulang_type(env, member_def->lang_type)
+            );
+
+            *new_tast = tast_expr_wrap(tast_sum_case_wrap(tast_sum_case_new(
+                access->pos,
+                new_tag,
+                lang_type_sum_const_wrap(lang_type_sum_new(lang_type_atom_new(sum_def->base.name, 0)))
+            )));
+
+            return true;
             //Uast_variable_def* member_def = NULL;
             //if (!uast_try_get_member_def(&member_def, &enum_def->base, access->member_name)) {
             //    msg_invalid_enum_member(env, enum_def->base, access);
@@ -1696,9 +1740,19 @@ static Exhaustive_data check_for_exhaustiveness_start(const Env* env, Lang_type 
     if (!usymbol_lookup(&enum_def_, env, lang_type_get_str(exhaustive_data.oper_lang_type))) {
         todo();
     }
-    Uast_enum_def* enum_def = uast_enum_def_unwrap(enum_def_);
-    try(enum_def->base.members.info.count > 0);
-    exhaustive_data.max_data = enum_def->base.members.info.count - 1;
+    Ustruct_def_base enum_def = {0};
+    switch (enum_def_->type) {
+        case UAST_ENUM_DEF:
+            enum_def = uast_enum_def_unwrap(enum_def_)->base;
+            break;
+        case UAST_SUM_DEF:
+            enum_def = uast_sum_def_unwrap(enum_def_)->base;
+            break;
+        default:
+            todo();
+    }
+    try(enum_def.members.info.count > 0);
+    exhaustive_data.max_data = enum_def.members.info.count - 1;
 
     vec_reserve(&print_arena, &exhaustive_data.covered, exhaustive_data.max_data + 1);
     for (size_t idx = 0; idx < exhaustive_data.max_data + 1; idx++) {
@@ -1812,6 +1866,7 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
             return false;
         }
         env->parent_of = PARENT_OF_NONE;
+        todo();
 
         if (!check_for_exhaustiveness_inner(&exhaustive_data, new_if, old_case->is_default)) {
             return false;

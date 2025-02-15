@@ -155,6 +155,8 @@ static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr) {
             return lang_type_tuple_const_wrap(tast_tuple_const_unwrap(expr)->lang_type);
         case TAST_SUM_CALLEE:
             unreachable("");
+        case TAST_SUM_CASE:
+            unreachable("");
     }
     unreachable("");
 }
@@ -232,6 +234,8 @@ static inline void tast_expr_set_lang_type(Tast_expr* expr, Lang_type lang_type)
             todo();
         case TAST_SUM_CALLEE:
             todo();
+        case TAST_SUM_CASE:
+            unreachable("");
     }
     todo();
 }
@@ -373,6 +377,8 @@ static inline Str_view tast_expr_get_name(const Tast_expr* expr) {
         case TAST_TUPLE:
             unreachable("");
         case TAST_SUM_CALLEE:
+            unreachable("");
+        case TAST_SUM_CASE:
             unreachable("");
     }
     unreachable("");

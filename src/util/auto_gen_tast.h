@@ -360,6 +360,16 @@ static Tast_type tast_gen_sum_callee(const char* prefix) {
     return lit;
 }
 
+static Tast_type tast_gen_sum_case(const char* prefix) {
+    const char* base_name = "sum_case";
+    Tast_type lit = {.name = tast_name_new(prefix, base_name, false)};
+
+    append_member(&lit.members, "Tast_enum_lit*", "tag");
+    append_member(&lit.members, "Lang_type", "sum_lang_type");
+
+    return lit;
+}
+
 static Tast_type tast_gen_expr(const char* prefix) {
     const char* base_name = "expr";
     Tast_type expr = {.name = tast_name_new(prefix, base_name, false)};
@@ -373,6 +383,7 @@ static Tast_type tast_gen_expr(const char* prefix) {
     vec_append(&gen_a, &expr.sub_types, tast_gen_struct_literal(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_tuple(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_sum_callee(base_name));
+    vec_append(&gen_a, &expr.sub_types, tast_gen_sum_case(base_name));
 
     return expr;
 }

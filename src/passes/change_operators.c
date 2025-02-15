@@ -71,6 +71,8 @@ static Tast_expr* change_op_expr(Env* env, Tast_expr* root) {
             return root;
         case TAST_SUM_CALLEE:
             todo();
+        case TAST_SUM_CASE:
+            todo();
     }
     unreachable("");
 }

@@ -284,6 +284,17 @@ Str_view tast_sum_callee_print_internal(const Tast_sum_callee* lit, int indent) 
     return string_to_strv(buf);
 }
 
+Str_view tast_sum_case_print_internal(const Tast_sum_case* lit, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&print_arena, &buf, "sum_case", indent);
+    
+    string_extend_strv(&print_arena, &buf, lang_type_print_internal(lit->sum_lang_type, true, true));
+    string_extend_strv(&print_arena, &buf, tast_enum_lit_print_internal(lit->tag, indent + INDENT_WIDTH));
+
+    return string_to_strv(buf);
+}
+
 Str_view tast_number_print_internal(const Tast_number* num, int indent) {
     String buf = {0};
 
@@ -703,6 +714,8 @@ Str_view tast_expr_print_internal(const Tast_expr* expr, int indent) {
             return tast_tuple_print_internal(tast_tuple_const_unwrap(expr), indent);
         case TAST_SUM_CALLEE:
             return tast_sum_callee_print_internal(tast_sum_callee_const_unwrap(expr), indent);
+        case TAST_SUM_CASE:
+            return tast_sum_case_print_internal(tast_sum_case_const_unwrap(expr), indent);
     }
     unreachable("");
 }
