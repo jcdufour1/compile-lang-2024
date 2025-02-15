@@ -55,11 +55,11 @@ static Tast_expr* change_op_expr(Env* env, Tast_expr* root) {
     switch (root->type) {
         case TAST_OPERATOR:
             return tast_wrap_operator(change_op_operator(env, tast_unwrap_operator(root)));
-        case TAST_SYMBOL_TYPED:
+        case TAST_SYMBOL:
             return root;
-        case TAST_MEMBER_ACCESS_TYPED:
+        case TAST_MEMBER_ACCESS:
             return root;
-        case TAST_INDEX_TYPED:
+        case TAST_INDEX:
             return root;
         case TAST_LITERAL:
             return root;

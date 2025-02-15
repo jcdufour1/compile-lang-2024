@@ -174,7 +174,7 @@ void tast_extend_sym_typed_base(String* string, Sym_typed_base base) {
     string_extend_cstr(&print_arena, string, "\n");
 }
 
-Str_view tast_symbol_typed_print_internal(const Tast_symbol_typed* sym, int indent) {
+Str_view tast_symbol_print_internal(const Tast_symbol* sym, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "sum_sym", indent);
@@ -183,7 +183,7 @@ Str_view tast_symbol_typed_print_internal(const Tast_symbol_typed* sym, int inde
     return string_to_strv(buf);
 }
 
-Str_view tast_member_access_typed_print_internal(const Tast_member_access_typed* access, int indent) {
+Str_view tast_member_access_print_internal(const Tast_member_access* access, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "member_access_typed", indent);
@@ -199,7 +199,7 @@ Str_view tast_member_access_typed_print_internal(const Tast_member_access_typed*
     return string_to_strv(buf);
 }
 
-Str_view tast_index_typed_print_internal(const Tast_index_typed* index, int indent) {
+Str_view tast_index_print_internal(const Tast_index* index, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "index_typed\n", indent);
@@ -687,12 +687,12 @@ Str_view tast_expr_print_internal(const Tast_expr* expr, int indent) {
     switch (expr->type) {
         case TAST_OPERATOR:
             return tast_operator_print_internal(tast_unwrap_operator_const(expr), indent);
-        case TAST_SYMBOL_TYPED:
-            return tast_symbol_typed_print_internal(tast_unwrap_symbol_typed_const(expr), indent);
-        case TAST_MEMBER_ACCESS_TYPED:
-            return tast_member_access_typed_print_internal(tast_unwrap_member_access_typed_const(expr), indent);
-        case TAST_INDEX_TYPED:
-            return tast_index_typed_print_internal(tast_unwrap_index_typed_const(expr), indent);
+        case TAST_SYMBOL:
+            return tast_symbol_print_internal(tast_unwrap_symbol_const(expr), indent);
+        case TAST_MEMBER_ACCESS:
+            return tast_member_access_print_internal(tast_unwrap_member_access_const(expr), indent);
+        case TAST_INDEX:
+            return tast_index_print_internal(tast_unwrap_index_const(expr), indent);
         case TAST_LITERAL:
             return tast_literal_print_internal(tast_unwrap_literal_const(expr), indent);
         case TAST_FUNCTION_CALL:

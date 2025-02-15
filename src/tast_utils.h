@@ -151,16 +151,16 @@ static inline Lang_type tast_get_lang_type_expr(const Tast_expr* expr) {
             return tast_unwrap_struct_literal_const(expr)->lang_type;
         case TAST_FUNCTION_CALL:
             return tast_unwrap_function_call_const(expr)->lang_type;
-        case TAST_MEMBER_ACCESS_TYPED:
-            return tast_unwrap_member_access_typed_const(expr)->lang_type;
-        case TAST_INDEX_TYPED:
-            return tast_unwrap_index_typed_const(expr)->lang_type;
+        case TAST_MEMBER_ACCESS:
+            return tast_unwrap_member_access_const(expr)->lang_type;
+        case TAST_INDEX:
+            return tast_unwrap_index_const(expr)->lang_type;
         case TAST_LITERAL:
             return tast_get_lang_type_literal(tast_unwrap_literal_const(expr));
         case TAST_OPERATOR:
             return tast_get_lang_type_operator(tast_unwrap_operator_const(expr));
-        case TAST_SYMBOL_TYPED:
-            return tast_unwrap_symbol_typed_const(expr)->base.lang_type;
+        case TAST_SYMBOL:
+            return tast_unwrap_symbol_const(expr)->base.lang_type;
         case TAST_TUPLE:
             return lang_type_wrap_tuple_const(tast_unwrap_tuple_const(expr)->lang_type);
         case TAST_SUM_CALLEE:
@@ -222,11 +222,11 @@ static inline void tast_set_lang_type_expr(Tast_expr* expr, Lang_type lang_type)
     switch (expr->type) {
         case TAST_OPERATOR:
             todo();
-        case TAST_SYMBOL_TYPED:
+        case TAST_SYMBOL:
             todo();
-        case TAST_MEMBER_ACCESS_TYPED:
+        case TAST_MEMBER_ACCESS:
             todo();
-        case TAST_INDEX_TYPED:
+        case TAST_INDEX:
             todo();
         case TAST_LITERAL:
             tast_set_lang_type_literal(tast_unwrap_literal(expr), lang_type);
@@ -389,12 +389,12 @@ static inline Str_view get_expr_name(const Tast_expr* expr) {
             unreachable("");
         case TAST_STRUCT_LITERAL:
             return tast_unwrap_struct_literal_const(expr)->name;
-        case TAST_MEMBER_ACCESS_TYPED:
-            return tast_unwrap_member_access_typed_const(expr)->member_name;
-        case TAST_INDEX_TYPED:
+        case TAST_MEMBER_ACCESS:
+            return tast_unwrap_member_access_const(expr)->member_name;
+        case TAST_INDEX:
             unreachable("");
-        case TAST_SYMBOL_TYPED:
-            return tast_unwrap_symbol_typed_const(expr)->base.name;
+        case TAST_SYMBOL:
+            return tast_unwrap_symbol_const(expr)->base.name;
         case TAST_FUNCTION_CALL:
             return tast_unwrap_function_call_const(expr)->name;
         case TAST_LITERAL:
@@ -443,8 +443,8 @@ static inline Str_view get_def_name(const Tast_def* def) {
 
 static inline Str_view get_tast_name_expr(const Tast_expr* expr) {
     switch (expr->type) {
-        case TAST_SYMBOL_TYPED:
-            return tast_unwrap_symbol_typed_const(expr)->base.name;
+        case TAST_SYMBOL:
+            return tast_unwrap_symbol_const(expr)->base.name;
         case TAST_FUNCTION_CALL:
             return tast_unwrap_function_call_const(expr)->name;
         default:

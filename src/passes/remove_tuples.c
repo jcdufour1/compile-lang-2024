@@ -9,8 +9,8 @@
 #include <serialize.h>
 #include <lang_type_from_ulang_type.h>
 
-static Tast_symbol_typed* rm_tuple_symbol_typed_new_from_var_def(const Tast_variable_def* var_def) {
-    return tast_symbol_typed_new(var_def->pos, (Sym_typed_base) {
+static Tast_symbol* rm_tuple_symbol_typed_new_from_var_def(const Tast_variable_def* var_def) {
+    return tast_symbol_new(var_def->pos, (Sym_typed_base) {
         .lang_type = var_def->lang_type,
         .name = var_def->name,
         .llvm_id = 0
@@ -181,18 +181,18 @@ static Tast_stmt* rm_tuple_assignment_tuple(Env* env, Tast_assignment* assign) {
         try(idx < tast_unwrap_struct_def(struct_def_)->base.members.info.count);
         Tast_variable_def* curr_memb_def = vec_at(&tast_unwrap_struct_def(struct_def_)->base.members, idx);
 
-        Tast_member_access_typed* curr_src = tast_member_access_typed_new(
+        Tast_member_access* curr_src = tast_member_access_new(
             tast_get_pos_expr(src),
             curr_memb_def->lang_type,
             curr_memb_def->name,
-            tast_wrap_symbol_typed(rm_tuple_symbol_typed_new_from_var_def(new_var))
+            tast_wrap_symbol(rm_tuple_symbol_typed_new_from_var_def(new_var))
         );
 
         Tast_expr* curr_dest = vec_at(&dest->members, idx);
         Tast_assignment* curr_assign = tast_assignment_new(
             dest->pos,
             tast_wrap_expr(curr_dest),
-            tast_wrap_member_access_typed(curr_src)
+            tast_wrap_member_access(curr_src)
         );
 
         vec_append(&a_main, &new_children, tast_wrap_assignment(curr_assign));
@@ -277,25 +277,25 @@ static Tast_function_def* rm_tuple_function_def_new(Env* env, Tast_function_decl
                 log(LOG_DEBUG, TAST_FMT, tast_variable_def_print(new_var));
                 todo();
                 // tag
-                //Tast_member_access_typed* lhs = tast_member_access_typed_new(
+                //Tast_member_access* lhs = tast_member_access_new(
                 //    decl->pos,
                 //    vec_at(&members, idx)->lang_type,
                 //    vec_at(&members, idx)->name,
-                //    tast_wrap_symbol_typed(tast_symbol_typed_new(decl->pos, (Sym_typed_base) {
+                //    tast_wrap_symbol(tast_symbol_new(decl->pos, (Sym_typed_base) {
                 //        .lang_type = new_var->lang_type,
                 //        .name = new_var->name,
                 //        .llvm_id = 0
                 //    }))
                 //);
 
-                //Tast_symbol_typed* rhs = tast_symbol_typed_new(decl->pos, (Sym_typed_base) {
+                //Tast_symbol* rhs = tast_symbol_new(decl->pos, (Sym_typed_base) {
                 //        .lang_type = vec_at(&decl->params->params, idx)->lang_type,
                 //        .name = vec_at(&decl->params->params, idx)->name,
                 //        .llvm_id = 0
                 //    }
                 //);
 
-                //Tast_assignment* assign = tast_assignment_new(decl->pos, tast_wrap_expr(tast_wrap_member_access_typed(lhs)), tast_wrap_symbol_typed(rhs));
+                //Tast_assignment* assign = tast_assignment_new(decl->pos, tast_wrap_expr(tast_wrap_member_access(lhs)), tast_wrap_symbol(rhs));
                 //log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
                 //vec_append(&a_main, &body->children, tast_wrap_assignment(assign));
 
@@ -304,29 +304,29 @@ static Tast_function_def* rm_tuple_function_def_new(Env* env, Tast_function_decl
             break;
         case TAST_STRUCT_DEF: {
             for (size_t idx = 0; idx < decl->params->params.info.count; idx++) {
-                Tast_member_access_typed* lhs = tast_member_access_typed_new(
+                Tast_member_access* lhs = tast_member_access_new(
                     decl->pos,
                     vec_at(&members, idx)->lang_type,
                     vec_at(&members, idx)->name,
-                    tast_wrap_symbol_typed(tast_symbol_typed_new(decl->pos, (Sym_typed_base) {
+                    tast_wrap_symbol(tast_symbol_new(decl->pos, (Sym_typed_base) {
                         .lang_type = new_var->lang_type,
                         .name = new_var->name,
                         .llvm_id = 0
                     }))
                 );
 
-                // TODO: rename tast_symbol_typed to tast_symbol
-                // TODO: rename uast_symbol_untyped to uast_symbol
-                // TODO: rename Uast_member_access_untyped to Uast_member_access
-                // TODO: rename Tast_member_access_typed to Tast_member_access
-                Tast_symbol_typed* rhs = tast_symbol_typed_new(decl->pos, (Sym_typed_base) {
+                // TODO: rename tast_symbol to tast_symbol
+                // TODO: rename uast_symbol to uast_symbol
+                // TODO: rename Uast_member_access to Uast_member_access
+                // TODO: rename Tast_member_access to Tast_member_access
+                Tast_symbol* rhs = tast_symbol_new(decl->pos, (Sym_typed_base) {
                         .lang_type = vec_at(&decl->params->params, idx)->lang_type,
                         .name = vec_at(&decl->params->params, idx)->name,
                         .llvm_id = 0
                     }
                 );
 
-                Tast_assignment* assign = tast_assignment_new(decl->pos, tast_wrap_expr(tast_wrap_member_access_typed(lhs)), tast_wrap_symbol_typed(rhs));
+                Tast_assignment* assign = tast_assignment_new(decl->pos, tast_wrap_expr(tast_wrap_member_access(lhs)), tast_wrap_symbol(rhs));
                 log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
                 vec_append(&a_main, &body->children, tast_wrap_assignment(assign));
             }
@@ -338,13 +338,13 @@ static Tast_function_def* rm_tuple_function_def_new(Env* env, Tast_function_decl
 
     Tast_function_def* new_def = tast_function_def_new(decl->pos, decl, body);
 
-    Tast_symbol_typed* rtn_child = tast_symbol_typed_new(decl->pos, (Sym_typed_base) {
+    Tast_symbol* rtn_child = tast_symbol_new(decl->pos, (Sym_typed_base) {
         .lang_type = new_var->lang_type,
         .name = new_var->name,
         .llvm_id = 0
     });
 
-    Tast_return* new_rtn = tast_return_new(decl->pos, tast_wrap_symbol_typed(rtn_child), true);
+    Tast_return* new_rtn = tast_return_new(decl->pos, tast_wrap_symbol(rtn_child), true);
     vec_append(&a_main, &body->children, tast_wrap_return(new_rtn));
     
     vec_rem_last(&env->ancesters);
@@ -385,7 +385,7 @@ static Tast_expr* rm_tuple_struct_literal_rhs(
             for (size_t idx = 0; idx < members.info.count; idx++) {
                 try(idx < struct_def_memb.info.count);
                 Tast_variable_def* curr_def = vec_at(&struct_def_memb, idx);
-                //Tast_member_access_typed* access = 
+                //Tast_member_access* access = 
 
                 Tast_variable_def* new_param = tast_variable_def_new(
                     assign_pos,
@@ -486,7 +486,7 @@ static Tast_expr* rm_tuple_tuple_rhs(
             for (size_t idx = 0; idx < members.info.count; idx++) {
                 try(idx < struct_def_memb.info.count);
                 Tast_variable_def* curr_def = vec_at(&struct_def_memb, idx);
-                //Tast_member_access_typed* access = 
+                //Tast_member_access* access = 
 
                 Tast_variable_def* new_param = tast_variable_def_new(
                     assign_pos,
@@ -584,7 +584,7 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
         case TAST_STRUCT_DEF: {
             //try(idx < struct_def_memb.info.count);
             //Tast_variable_def* curr_def = vec_at(&struct_def_memb, idx);
-            //Tast_member_access_typed* access = 
+            //Tast_member_access* access = 
 
             Tast_variable_def* new_tag = tast_variable_def_new(
                 assign_pos,
@@ -812,11 +812,11 @@ static Tast_expr* rm_tuple_expr_rhs(Env* env, Tast_expr* rhs, Pos assign_pos) {
     switch (rhs->type) {
         case TAST_OPERATOR:
             return rhs;
-        case TAST_SYMBOL_TYPED:
+        case TAST_SYMBOL:
             return rhs;
-        case TAST_MEMBER_ACCESS_TYPED:
+        case TAST_MEMBER_ACCESS:
             return rhs;
-        case TAST_INDEX_TYPED:
+        case TAST_INDEX:
             return rhs;
         case TAST_LITERAL:
             return rm_tuple_literal_rhs(env, tast_unwrap_literal(rhs), assign_pos);
@@ -856,11 +856,11 @@ static Tast_expr* rm_tuple_expr_not_in_assignment(Env* env, Tast_expr* expr) {
     switch (expr->type) {
         case TAST_OPERATOR:
             return tast_wrap_operator(rm_tuple_operator_not_in_assignment(env, tast_unwrap_operator(expr)));
-        case TAST_SYMBOL_TYPED:
+        case TAST_SYMBOL:
             unreachable("");
-        case TAST_MEMBER_ACCESS_TYPED:
+        case TAST_MEMBER_ACCESS:
             unreachable("");
-        case TAST_INDEX_TYPED:
+        case TAST_INDEX:
             unreachable("");
         case TAST_LITERAL:
             unreachable("");

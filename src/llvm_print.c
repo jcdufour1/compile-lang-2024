@@ -98,7 +98,7 @@ Str_view llvm_enum_sym_print_internal(const Llvm_enum_sym* sym, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view llvm_symbol_typed_print_internal(const Llvm_symbol_typed* sym, int indent) {
+Str_view llvm_symbol_typed_print_internal(const Llvm_symbol* sym, int indent) {
     switch (sym->type) {
         case LLVM_PRIMITIVE_SYM:
             return llvm_primitive_sym_print_internal(llvm_unwrap_primitive_sym_const(sym), indent);
@@ -523,8 +523,8 @@ Str_view llvm_expr_print_internal(const Llvm_expr* expr, int indent) {
     switch (expr->type) {
         case LLVM_OPERATOR:
             return llvm_operator_print_internal(llvm_unwrap_operator_const(expr), indent);
-        case LLVM_SYMBOL_TYPED:
-            return llvm_symbol_typed_print_internal(llvm_unwrap_symbol_typed_const(expr), indent);
+        case LLVM_SYMBOL:
+            return llvm_symbol_typed_print_internal(llvm_unwrap_symbol_const(expr), indent);
         case LLVM_LITERAL:
             return llvm_literal_print_internal(llvm_unwrap_literal_const(expr), indent);
         case LLVM_FUNCTION_CALL:

@@ -61,7 +61,7 @@ Tast_literal* try_set_literal_types(Uast_literal* literal);
 
 bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_call* fun_call);
 
-bool try_set_member_access_types(Env* env, Tast_stmt** new_tast, Uast_member_access_untyped* access);
+bool try_set_member_access_types(Env* env, Tast_stmt** new_tast, Uast_member_access* access);
 
 bool try_set_function_def_types(
     Env* env,
@@ -80,7 +80,7 @@ bool try_set_sum_def_types(Env* env, Tast_sum_def** new_tast, Uast_sum_def* tast
 
 bool try_set_tuple_types(Env* env, Tast_tuple** new_tuple, Uast_tuple* tuple);
 
-bool try_set_index_untyped_types(Env* env, Tast_stmt** new_tast, Uast_index_untyped* index);
+bool try_set_index_untyped_types(Env* env, Tast_stmt** new_tast, Uast_index* index);
 
 bool try_set_function_params_types(
     Env* env,
@@ -95,7 +95,7 @@ bool try_set_lang_type_types(
     Uast_lang_type* def
 );
 
-bool try_set_symbol_type(const Env* env, Tast_expr** new_tast, Uast_symbol_untyped* sym_untyped);
+bool try_set_symbol_type(const Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyped);
 
 bool try_set_primitive_def_types(Env* env, Tast_primitive_def** new_tast, Uast_primitive_def* tast);
 

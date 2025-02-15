@@ -333,7 +333,7 @@ static void emit_function_arg_expr(String* output, String* literals, const Llvm_
             case LLVM_LITERAL:
                 extend_literal_decl(output, literals, llvm_unwrap_literal_const(argument), true);
                 break;
-            case LLVM_SYMBOL_TYPED:
+            case LLVM_SYMBOL:
                 unreachable("typed symbols should not still be present");
             case LLVM_LLVM_PLACEHOLDER: {
                 unreachable("");
@@ -550,7 +550,7 @@ static void emit_operator_operand_expr(String* output, const Llvm_expr* operand)
         case LLVM_LITERAL:
             extend_literal(output, llvm_unwrap_literal_const(operand));
             break;
-        case LLVM_SYMBOL_TYPED:
+        case LLVM_SYMBOL:
             unreachable("");
         case LLVM_LLVM_PLACEHOLDER:
             emit_operator_operand_llvm_placeholder(
@@ -766,7 +766,7 @@ static void emit_return_expr(String* output, const Llvm_expr* child) {
             string_extend_cstr(&a_main, output, "\n");
             break;
         }
-        case LLVM_SYMBOL_TYPED:
+        case LLVM_SYMBOL:
             unreachable("");
         case LLVM_LLVM_PLACEHOLDER: {
             const Llvm_llvm_placeholder* memb_sym = llvm_unwrap_llvm_placeholder_const(child);

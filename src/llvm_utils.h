@@ -51,7 +51,7 @@ static inline Lang_type* llvm_get_operator_lang_type_ref(Llvm_operator* operator
     }
 }
 
-static inline Sym_typed_base* llvm_symbol_typed_get_base_ref(Llvm_symbol_typed* sym) {
+static inline Sym_typed_base* llvm_symbol_typed_get_base_ref(Llvm_symbol* sym) {
     switch (sym->type) {
         case LLVM_PRIMITIVE_SYM:
             return &llvm_unwrap_primitive_sym(sym)->base;
@@ -65,11 +65,11 @@ static inline Sym_typed_base* llvm_symbol_typed_get_base_ref(Llvm_symbol_typed* 
     unreachable("");
 }
 
-static inline Sym_typed_base llvm_symbol_typed_get_base_const(const Llvm_symbol_typed* sym) {
-    return *llvm_symbol_typed_get_base_ref((Llvm_symbol_typed*)sym);
+static inline Sym_typed_base llvm_symbol_typed_get_base_const(const Llvm_symbol* sym) {
+    return *llvm_symbol_typed_get_base_ref((Llvm_symbol*)sym);
 }
 
-static inline Str_view llvm_get_symbol_typed_name(const Llvm_symbol_typed* sym) {
+static inline Str_view llvm_get_symbol_typed_name(const Llvm_symbol* sym) {
     switch (sym->type) {
         case LLVM_PRIMITIVE_SYM:
             return llvm_unwrap_primitive_sym_const(sym)->base.name;
@@ -97,7 +97,7 @@ static inline Llvm_id llvm_get_llvm_id_expr(const Llvm_expr* expr) {
                 unreachable("");
             }
         }
-        case LLVM_SYMBOL_TYPED:
+        case LLVM_SYMBOL:
             unreachable("");
         case LLVM_FUNCTION_CALL:
             return llvm_unwrap_function_call_const(expr)->llvm_id;
@@ -170,7 +170,7 @@ static inline Llvm_id get_llvm_id_from_name(const Env* env, Str_view llvm) {
     return llvm_get_llvm_id(result);
 }
 
-static inline Lang_type llvm_get_lang_type_symbol_typed(const Llvm_symbol_typed* sym) {
+static inline Lang_type llvm_get_lang_type_symbol_typed(const Llvm_symbol* sym) {
     switch (sym->type) {
         case LLVM_PRIMITIVE_SYM:
             return llvm_unwrap_primitive_sym_const(sym)->base.lang_type;
@@ -226,8 +226,8 @@ static inline Lang_type llvm_get_lang_type_expr(const Llvm_expr* expr) {
             return llvm_get_lang_type_literal(llvm_unwrap_literal_const(expr));
         case LLVM_OPERATOR:
             return llvm_get_lang_type_operator(llvm_unwrap_operator_const(expr));
-        case LLVM_SYMBOL_TYPED:
-            return llvm_symbol_typed_get_base_const(llvm_unwrap_symbol_typed_const(expr)).lang_type;
+        case LLVM_SYMBOL:
+            return llvm_symbol_typed_get_base_const(llvm_unwrap_symbol_const(expr)).lang_type;
         case LLVM_LLVM_PLACEHOLDER:
             return llvm_unwrap_llvm_placeholder_const(expr)->lang_type;
     }
@@ -266,8 +266,8 @@ static inline Lang_type* llvm_get_lang_type_expr_ref(Llvm_expr* expr) {
             return &llvm_unwrap_function_call(expr)->lang_type;
         case LLVM_LITERAL:
             return llvm_get_lang_type_literal_ref(llvm_unwrap_literal(expr));
-        case LLVM_SYMBOL_TYPED:
-            return &llvm_symbol_typed_get_base_ref(llvm_unwrap_symbol_typed(expr))->lang_type;
+        case LLVM_SYMBOL:
+            return &llvm_symbol_typed_get_base_ref(llvm_unwrap_symbol(expr))->lang_type;
         case LLVM_OPERATOR:
             return llvm_get_operator_lang_type_ref(llvm_unwrap_operator(expr));
         case LLVM_LLVM_PLACEHOLDER:
@@ -366,7 +366,7 @@ static inline Llvm* llvm_get_expr_src(Llvm_expr* expr) {
     switch (expr->type) {
         case LLVM_LITERAL:
             unreachable("");
-        case LLVM_SYMBOL_TYPED:
+        case LLVM_SYMBOL:
             unreachable("");
         case LLVM_FUNCTION_CALL:
             unreachable("");
@@ -413,7 +413,7 @@ static inline Llvm* llvm_get_expr_dest(Llvm_expr* expr) {
     switch (expr->type) {
         case LLVM_LITERAL:
             unreachable("");
-        case LLVM_SYMBOL_TYPED:
+        case LLVM_SYMBOL:
             unreachable("");
         case LLVM_FUNCTION_CALL:
             unreachable("");
@@ -485,8 +485,8 @@ static inline Str_view llvm_get_expr_name(const Llvm_expr* expr) {
     switch (expr->type) {
         case LLVM_OPERATOR:
             return llvm_get_operator_name(llvm_unwrap_operator_const(expr));
-        case LLVM_SYMBOL_TYPED:
-            return llvm_get_symbol_typed_name(llvm_unwrap_symbol_typed_const(expr));
+        case LLVM_SYMBOL:
+            return llvm_get_symbol_typed_name(llvm_unwrap_symbol_const(expr));
         case LLVM_FUNCTION_CALL:
             return llvm_unwrap_function_call_const(expr)->name_self;
         case LLVM_LITERAL:
@@ -535,8 +535,8 @@ static inline Str_view llvm_get_def_name(const Llvm_def* def) {
 
 static inline Str_view llvm_get_llvm_name_expr(const Llvm_expr* expr) {
     switch (expr->type) {
-        case LLVM_SYMBOL_TYPED:
-            return llvm_get_symbol_typed_name(llvm_unwrap_symbol_typed_const(expr));
+        case LLVM_SYMBOL:
+            return llvm_get_symbol_typed_name(llvm_unwrap_symbol_const(expr));
         case LLVM_FUNCTION_CALL:
             return llvm_unwrap_function_call_const(expr)->name_self;
         default:

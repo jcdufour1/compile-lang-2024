@@ -1292,11 +1292,11 @@ static Uast_literal* extract_literal(Env* env, Tk_view* tokens, bool defer_sym_a
     return new_uast;
 }
 
-static Uast_symbol_untyped* extract_symbol(Tk_view* tokens) {
+static Uast_symbol* extract_symbol(Tk_view* tokens) {
     Token token = tk_view_consume(tokens);
     assert(token.type == TOKEN_SYMBOL);
 
-    return uast_symbol_untyped_new(token.pos, token.text);
+    return uast_symbol_new(token.pos, token.text);
 }
 
 static PARSE_STATUS try_extract_function_call(Env* env, Uast_function_call** child, Tk_view* tokens, Uast_expr* callee) {
@@ -1437,7 +1437,7 @@ static PARSE_EXPR_STATUS extract_condition(Env* env, Uast_condition** result, Tk
         case UAST_FUNCTION_CALL:
             cond_oper = uast_condition_get_default_child(cond_child);
             break;
-        case UAST_SYMBOL_UNTYPED:
+        case TAST_SYMBOL:
             cond_oper = uast_condition_get_default_child(cond_child);
             break;
         default:
@@ -1900,7 +1900,7 @@ static PARSE_EXPR_STATUS try_extract_expression_piece(
     } else if (token_is_literal(tk_view_front(*tokens))) {
         *result = uast_wrap_literal(extract_literal(env, tokens, defer_sym_add));
     } else if (tk_view_front(*tokens).type == TOKEN_SYMBOL) {
-        *result = uast_wrap_symbol_untyped(extract_symbol(tokens));
+        *result = uast_wrap_symbol(extract_symbol(tokens));
     } else if (starts_with_struct_literal(*tokens)) {
         Uast_struct_literal* struct_lit;
         if (PARSE_OK != extract_struct_literal(env, &struct_lit, tokens)) {
@@ -2087,7 +2087,7 @@ static PARSE_EXPR_STATUS extract_binary(
 
     switch (oper.type) {
         case TOKEN_SINGLE_DOT:
-            *result = uast_wrap_member_access_untyped(uast_member_access_untyped_new(oper.pos, uast_unwrap_symbol_untyped(rhs)->name, lhs));
+            *result = uast_wrap_member_access(uast_member_access_new(oper.pos, uast_unwrap_symbol(rhs)->name, lhs));
             break;
         case TOKEN_SINGLE_PLUS:
             // fallthrough
@@ -2160,8 +2160,8 @@ static Uast_expr* get_right_child_expr(Uast_expr* expr) {
             try(tuple->members.info.count > 0);
             return vec_at(&tuple->members, tuple->members.info.count - 1);
         }
-        case UAST_MEMBER_ACCESS_UNTYPED: {
-            Uast_member_access_untyped* access = uast_unwrap_member_access_untyped(expr);
+        case UAST_MEMBER_ACCESS: {
+            Uast_member_access* access = uast_unwrap_member_access(expr);
             return access->callee;
         }
         default:
@@ -2196,8 +2196,8 @@ static void set_right_child_expr(Uast_expr* expr, Uast_expr* new_expr) {
             *vec_at_ref(&tuple->members, tuple->members.info.count - 1) = new_expr;
             return;
         }
-        case UAST_MEMBER_ACCESS_UNTYPED: {
-            uast_unwrap_member_access_untyped(expr)->callee = new_expr;
+        case UAST_MEMBER_ACCESS: {
+            uast_unwrap_member_access(expr)->callee = new_expr;
             return;
         }
         default:
@@ -2214,7 +2214,7 @@ static PARSE_EXPR_STATUS extract_expression_function_call(
 ) {
     Uast_function_call* fun_call = NULL;
     switch (lhs->type) {
-        case UAST_SYMBOL_UNTYPED:
+        case TAST_SYMBOL:
             log(LOG_DEBUG, UAST_FMT, uast_expr_print(lhs));
             switch (try_extract_function_call(env, &fun_call, tokens, lhs)) {
                 case PARSE_OK:
@@ -2229,7 +2229,7 @@ static PARSE_EXPR_STATUS extract_expression_function_call(
             unreachable("");
         case UAST_OPERATOR:
             // fallthrough
-        case UAST_MEMBER_ACCESS_UNTYPED:
+        case UAST_MEMBER_ACCESS:
             switch (try_extract_function_call(env, &fun_call, tokens, lhs)) {
                 case PARSE_OK:
                     lhs = uast_wrap_function_call(fun_call);
@@ -2279,7 +2279,7 @@ static PARSE_EXPR_STATUS extract_expression_index(
         return PARSE_EXPR_ERROR;
     }
 
-    *result = uast_wrap_index_untyped(uast_index_untyped_new(oper.pos, index_index, lhs));
+    *result = uast_wrap_index(uast_index_new(oper.pos, index_index, lhs));
     return PARSE_EXPR_OK;
 }
 

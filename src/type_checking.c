@@ -293,10 +293,10 @@ static void msg_undefined_symbol_internal(const char* file, int line, Str_view f
     msg_undefined_symbol_internal(__FILE__, __LINE__, file_text, sym_call)
 
 // set symbol lang_type, and report error if symbol is undefined
-bool try_set_symbol_type(const Env* env, Tast_expr** new_tast, Uast_symbol_untyped* sym_untyped) {
+bool try_set_symbol_type(const Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyped) {
     Uast_def* sym_def;
     if (!usymbol_lookup(&sym_def, env, sym_untyped->name)) {
-        msg_undefined_symbol(env->file_text, uast_wrap_expr(uast_wrap_symbol_untyped(sym_untyped)));
+        msg_undefined_symbol(env->file_text, uast_wrap_expr(uast_wrap_symbol(sym_untyped)));
         return false;
     }
 
@@ -316,8 +316,8 @@ bool try_set_symbol_type(const Env* env, Tast_expr** new_tast, Uast_symbol_untyp
         case LANG_TYPE_TUPLE:
             // fallthrough
         case LANG_TYPE_STRUCT: {
-            Tast_symbol_typed* sym_typed = tast_symbol_typed_new(sym_untyped->pos, new_base);
-            *new_tast = tast_wrap_symbol_typed(sym_typed);
+            Tast_symbol* sym_typed = tast_symbol_new(sym_untyped->pos, new_base);
+            *new_tast = tast_wrap_symbol(sym_typed);
             return true;
         }
     }
@@ -641,7 +641,7 @@ bool try_set_struct_literal_assignment_types(
         Uast_variable_def* memb_sym_def = vec_at(&struct_def->base.members, idx);
         log(LOG_DEBUG, STR_VIEW_FMT, uast_stmt_print(uast_wrap_expr_const(uast_wrap_struct_literal_const(struct_literal))));
         Uast_assignment* assign_memb_sym = uast_unwrap_assignment(vec_at(&struct_literal->members, idx));
-        Uast_symbol_untyped* memb_sym_piece_untyped = uast_unwrap_symbol_untyped(uast_unwrap_expr(assign_memb_sym->lhs));
+        Uast_symbol* memb_sym_piece_untyped = uast_unwrap_symbol(uast_unwrap_expr(assign_memb_sym->lhs));
         Tast_expr* new_rhs = NULL;
 
         switch (check_generic_assignment(
@@ -714,24 +714,24 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
             *new_tast = tast_wrap_literal(try_set_literal_types(uast_unwrap_literal(uast)));
             return true;
         }
-        case UAST_SYMBOL_UNTYPED:
-            if (!try_set_symbol_type(env, new_tast, uast_unwrap_symbol_untyped(uast))) {
+        case TAST_SYMBOL:
+            if (!try_set_symbol_type(env, new_tast, uast_unwrap_symbol(uast))) {
                 return false;
             } else {
                 assert(*new_tast);
             }
             return true;
-        case UAST_MEMBER_ACCESS_UNTYPED: {
+        case UAST_MEMBER_ACCESS: {
             Tast_stmt* new_tast_ = NULL;
-            if (!try_set_member_access_types(env, &new_tast_, uast_unwrap_member_access_untyped(uast))) {
+            if (!try_set_member_access_types(env, &new_tast_, uast_unwrap_member_access(uast))) {
                 return false;
             }
             *new_tast = tast_unwrap_expr(new_tast_);
             return true;
         }
-        case UAST_INDEX_UNTYPED: {
+        case UAST_INDEX: {
             Tast_stmt* new_tast_ = NULL;
-            if (!try_set_index_untyped_types(env, &new_tast_, uast_unwrap_index_untyped(uast))) {
+            if (!try_set_index_untyped_types(env, &new_tast_, uast_unwrap_index(uast))) {
                 return false;
             }
             *new_tast = tast_unwrap_expr(new_tast_);
@@ -877,20 +877,20 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
 
     Uast_def* fun_def = NULL;
     switch (new_callee->type) {
-        case TAST_SYMBOL_TYPED: {
-            if (!usymbol_lookup(&fun_def, env, tast_unwrap_symbol_typed(new_callee)->base.name)) {
+        case TAST_SYMBOL: {
+            if (!usymbol_lookup(&fun_def, env, tast_unwrap_symbol(new_callee)->base.name)) {
                 msg(
                     LOG_ERROR, EXPECT_FAIL_UNDEFINED_FUNCTION, env->file_text, fun_call->pos,
-                    "function `"STR_VIEW_FMT"` is not defined\n", str_view_print(tast_unwrap_symbol_typed(new_callee)->base.name)
+                    "function `"STR_VIEW_FMT"` is not defined\n", str_view_print(tast_unwrap_symbol(new_callee)->base.name)
                 );
                 status = false;
                 goto error;
             }
             break;
         }
-        case TAST_MEMBER_ACCESS_TYPED:
+        case TAST_MEMBER_ACCESS:
             todo();
-            //if (tast_member_access_typed_is_sum(env, tast_unwrap_member_access_typed(new_callee))) {
+            //if (tast_member_access_is_sum(env, tast_unwrap_member_access(new_callee))) {
             //    todo();
             //} else {
             //    unreachable("");
@@ -1067,7 +1067,7 @@ bool try_set_tuple_types(Env* env, Tast_tuple** new_tuple, Uast_tuple* tuple) {
 static void msg_invalid_member(
     const Env* env,
     Ustruct_def_base base,
-    const Uast_member_access_untyped* access
+    const Uast_member_access* access
 ) {
     msg(
         LOG_ERROR, EXPECT_FAIL_INVALID_STRUCT_MEMBER, env->file_text,
@@ -1082,7 +1082,7 @@ static void msg_invalid_member(
 static void msg_invalid_enum_member(
     const Env* env,
     Ustruct_def_base base,
-    const Uast_member_access_untyped* access
+    const Uast_member_access* access
 ) {
     msg(
         LOG_ERROR, EXPECT_FAIL_INVALID_ENUM_MEMBER, env->file_text,
@@ -1097,7 +1097,7 @@ static void msg_invalid_enum_member(
 bool try_set_member_access_types_finish_generic_struct(
     const Env* env,
     Tast_stmt** new_tast,
-    Uast_member_access_untyped* access,
+    Uast_member_access* access,
     Ustruct_def_base def_base,
     Tast_expr* new_callee
 ) {
@@ -1107,14 +1107,14 @@ bool try_set_member_access_types_finish_generic_struct(
         return false;
     }
 
-    Tast_member_access_typed* new_access = tast_member_access_typed_new(
+    Tast_member_access* new_access = tast_member_access_new(
         access->pos,
         lang_type_from_ulang_type(env, member_def->lang_type),
         access->member_name,
         new_callee
     );
 
-    *new_tast = tast_wrap_expr(tast_wrap_member_access_typed(new_access));
+    *new_tast = tast_wrap_expr(tast_wrap_member_access(new_access));
 
     assert(lang_type_get_str(new_access->lang_type).count > 0);
     return true;
@@ -1124,7 +1124,7 @@ bool try_set_member_access_types_finish_sum_def(
     const Env* env,
     Tast_stmt** new_tast,
     Uast_sum_def* sum_def,
-    Uast_member_access_untyped* access,
+    Uast_member_access* access,
     Tast_expr* new_callee
 ) {
     (void) new_callee;
@@ -1150,7 +1150,7 @@ bool try_set_member_access_types_finish_sum_def(
         case PARENT_OF_ASSIGN_RHS: {
             Uast_variable_def* member_def = NULL;
             log(LOG_DEBUG, TAST_FMT, uast_sum_def_print(sum_def));
-            log(LOG_DEBUG, TAST_FMT, uast_member_access_untyped_print(access));
+            log(LOG_DEBUG, TAST_FMT, uast_member_access_print(access));
             if (!uast_try_get_member_def(&member_def, &sum_def->base, access->member_name)) {
                 todo();
                 //msg_invalid_enum_member(env, enum_def->base, access);
@@ -1183,7 +1183,7 @@ bool try_set_member_access_types_finish(
     const Env* env,
     Tast_stmt** new_tast,
     Uast_def* lang_type_def,
-    Uast_member_access_untyped* access,
+    Uast_member_access* access,
     Tast_expr* new_callee
 ) {
     switch (lang_type_def->type) {
@@ -1228,7 +1228,7 @@ bool try_set_member_access_types_finish(
 bool try_set_member_access_types(
     Env* env,
     Tast_stmt** new_tast,
-    Uast_member_access_untyped* access
+    Uast_member_access* access
 ) {
     Tast_expr* new_callee = NULL;
     if (!try_set_expr_types(env, &new_callee, access->callee)) {
@@ -1236,8 +1236,8 @@ bool try_set_member_access_types(
     }
 
     switch (new_callee->type) {
-        case TAST_SYMBOL_TYPED: {
-            Tast_symbol_typed* sym = tast_unwrap_symbol_typed(new_callee);
+        case TAST_SYMBOL: {
+            Tast_symbol* sym = tast_unwrap_symbol(new_callee);
             Uast_def* lang_type_def = NULL;
             if (!usymbol_lookup(&lang_type_def, env, lang_type_get_str(sym->base.lang_type))) {
                 todo();
@@ -1246,8 +1246,8 @@ bool try_set_member_access_types(
             return try_set_member_access_types_finish(env, new_tast, lang_type_def, access, new_callee);
 
         }
-        case TAST_MEMBER_ACCESS_TYPED: {
-            Tast_member_access_typed* sym = tast_unwrap_member_access_typed(new_callee);
+        case TAST_MEMBER_ACCESS: {
+            Tast_member_access* sym = tast_unwrap_member_access(new_callee);
 
             Uast_def* lang_type_def = NULL;
             if (!usymbol_lookup(&lang_type_def, env, lang_type_get_str(sym->lang_type))) {
@@ -1272,7 +1272,7 @@ bool try_set_member_access_types(
     unreachable("");
 }
 
-bool try_set_index_untyped_types(Env* env, Tast_stmt** new_tast, Uast_index_untyped* index) {
+bool try_set_index_untyped_types(Env* env, Tast_stmt** new_tast, Uast_index* index) {
     Tast_expr* new_callee = NULL;
     Tast_expr* new_inner_index = NULL;
     if (!try_set_expr_types(env, &new_callee, index->callee)) {
@@ -1288,14 +1288,14 @@ bool try_set_index_untyped_types(Env* env, Tast_stmt** new_tast, Uast_index_unty
     }
     lang_type_set_pointer_depth(&new_lang_type, lang_type_get_pointer_depth(new_lang_type) - 1);
 
-    Tast_index_typed* new_index = tast_index_typed_new(
+    Tast_index* new_index = tast_index_new(
         index->pos,
         new_lang_type,
         new_inner_index,
         new_callee
     );
 
-    *new_tast = tast_wrap_expr(tast_wrap_index_typed(new_index));
+    *new_tast = tast_wrap_expr(tast_wrap_index(new_index));
     return true;
 }
 

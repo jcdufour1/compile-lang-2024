@@ -199,13 +199,13 @@ static Tast_assignment* for_loop_cond_var_assign_new(Env* env, Str_view sym_name
     Uast_literal* literal = util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, pos);
     Uast_operator* operator = uast_wrap_binary(uast_binary_new(
         pos,
-        uast_wrap_symbol_untyped(uast_symbol_untyped_new(pos, sym_name)),
+        uast_wrap_symbol(uast_symbol_new(pos, sym_name)),
         uast_wrap_literal(literal),
         TOKEN_SINGLE_PLUS
     ));
     return util_assignment_new(
         env,
-        uast_wrap_expr(uast_wrap_symbol_untyped(uast_symbol_untyped_new(pos, sym_name))),
+        uast_wrap_expr(uast_wrap_symbol(uast_symbol_new(pos, sym_name))),
         uast_wrap_operator(operator)
     );
 }
@@ -259,13 +259,13 @@ static Str_view load_function_call(
     if (rtn_is_struct) {
         assert(def_name.count > 0);
 
-        Tast_symbol_typed* new_sym = tast_symbol_typed_new(old_fun_call->pos, (Sym_typed_base) {
+        Tast_symbol* new_sym = tast_symbol_new(old_fun_call->pos, (Sym_typed_base) {
            .name = def_name,
            .lang_type = old_fun_call->lang_type,
            .llvm_id = 0
         });
 
-        Str_view result = load_expr(env, new_block, tast_wrap_symbol_typed(new_sym));
+        Str_view result = load_expr(env, new_block, tast_wrap_symbol(new_sym));
         return result;
     } else {
         return new_fun_call->name_self;
@@ -345,10 +345,10 @@ static Str_view load_literal(
     return llvm_get_literal_name(new_lit);
 }
 
-static Str_view load_ptr_symbol_typed(
+static Str_view load_ptr_symbol(
     Env* env,
     Llvm_block* new_block,
-    Tast_symbol_typed* old_sym
+    Tast_symbol* old_sym
 ) {
     (void) new_block;
 
@@ -379,7 +379,7 @@ static Str_view load_ptr_sum_callee(
 
     //Tast_def* var_def_ = NULL;
     //try(symbol_lookup(&var_def_, env, old_callee->name));
-    //return load_ptr_member_access_typed(env, new_block, tast_member_access_typed_new(
+    //return load_ptr_member_access(env, new_block, tast_member_access_new(
     //    old_callee->pos,
     //    old_callee->lang_type,
     //    old_callee->
@@ -389,16 +389,16 @@ static Str_view load_ptr_sum_callee(
     //return llvm_get_tast_name(alloca);
 }
 
-static Str_view load_symbol_typed(
+static Str_view load_symbol(
     Env* env,
     Llvm_block* new_block,
-    Tast_symbol_typed* old_sym
+    Tast_symbol* old_sym
 ) {
-    Pos pos = tast_get_pos_symbol_typed(old_sym);
+    Pos pos = tast_get_pos_symbol(old_sym);
 
     Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
         pos,
-        load_ptr_symbol_typed(env, new_block, old_sym),
+        load_ptr_symbol(env, new_block, old_sym),
         0,
         old_sym->base.lang_type,
         util_literal_name_new()
@@ -507,15 +507,15 @@ static Str_view load_operator(
     unreachable("");
 }
 
-static Str_view load_ptr_member_access_typed(
+static Str_view load_ptr_member_access(
     Env* env,
     Llvm_block* new_block,
-    Tast_member_access_typed* old_access
+    Tast_member_access* old_access
 ) {
     Str_view new_callee = load_ptr_expr(env, new_block, old_access->callee);
 
     Tast_def* def = NULL;
-    log(LOG_DEBUG, TAST_FMT, tast_member_access_typed_print(old_access));
+    log(LOG_DEBUG, TAST_FMT, tast_member_access_print(old_access));
     log(LOG_DEBUG, LANG_TYPE_FMT"\n", str_view_print(lang_type_get_str(get_lang_type_from_name(env, new_callee))));
     try(symbol_lookup(&def, env, lang_type_get_str(get_lang_type_from_name(env, new_callee))));
 
@@ -556,10 +556,10 @@ static Str_view load_ptr_member_access_typed(
     return new_load->name_self;
 }
 
-static Str_view load_ptr_index_typed(
+static Str_view load_ptr_index(
     Env* env,
     Llvm_block* new_block,
-    Tast_index_typed* old_index
+    Tast_index* old_index
 ) {
     Llvm_load_element_ptr* new_load = llvm_load_element_ptr_new(
         old_index->pos,
@@ -577,12 +577,12 @@ static Str_view load_ptr_index_typed(
     return new_load->name_self;
 }
 
-static Str_view load_member_access_typed(
+static Str_view load_member_access(
     Env* env,
     Llvm_block* new_block,
-    Tast_member_access_typed* old_access
+    Tast_member_access* old_access
 ) {
-    Str_view ptr = load_ptr_member_access_typed(env, new_block, old_access);
+    Str_view ptr = load_ptr_member_access(env, new_block, old_access);
 
     Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
         old_access->pos,
@@ -597,12 +597,12 @@ static Str_view load_member_access_typed(
     return new_load->name;
 }
 
-static Str_view load_index_typed(
+static Str_view load_index(
     Env* env,
     Llvm_block* new_block,
-    Tast_index_typed* old_index
+    Tast_index* old_index
 ) {
-    Str_view ptr = load_ptr_index_typed(env, new_block, old_index);
+    Str_view ptr = load_ptr_index(env, new_block, old_index);
 
     Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
         old_index->pos,
@@ -623,14 +623,14 @@ static Str_view load_expr(Env* env, Llvm_block* new_block, Tast_expr* old_expr) 
             return load_function_call(env, new_block, tast_unwrap_function_call(old_expr));
         case TAST_LITERAL:
             return load_literal(env, new_block, tast_unwrap_literal(old_expr));
-        case TAST_SYMBOL_TYPED:
-            return load_symbol_typed(env, new_block, tast_unwrap_symbol_typed(old_expr));
+        case TAST_SYMBOL:
+            return load_symbol(env, new_block, tast_unwrap_symbol(old_expr));
         case TAST_OPERATOR:
             return load_operator(env, new_block, tast_unwrap_operator(old_expr));
-        case TAST_MEMBER_ACCESS_TYPED:
-            return load_member_access_typed(env, new_block, tast_unwrap_member_access_typed(old_expr));
-        case TAST_INDEX_TYPED:
-            return load_index_typed(env, new_block, tast_unwrap_index_typed(old_expr));
+        case TAST_MEMBER_ACCESS:
+            return load_member_access(env, new_block, tast_unwrap_member_access(old_expr));
+        case TAST_INDEX:
+            return load_index(env, new_block, tast_unwrap_index(old_expr));
         case TAST_STRUCT_LITERAL:
             unreachable("struct literal should have been converted in remove_tuple pass");
         default:
@@ -1018,16 +1018,16 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
     Tast_expr* lhs_actual = old_for->lower_bound->child;
     Tast_expr* rhs_actual = old_for->upper_bound->child;
 
-    Uast_symbol_untyped* symbol_lhs_assign_;
-    Tast_symbol_typed* symbol_lhs_assign;
+    Uast_symbol* symbol_lhs_assign_;
+    Tast_symbol* symbol_lhs_assign;
     Tast_variable_def* for_var_def;
     {
         for_var_def = old_for->var_def;
-        symbol_lhs_assign_ = uast_symbol_untyped_new(for_var_def->pos, for_var_def->name);
+        symbol_lhs_assign_ = uast_symbol_new(for_var_def->pos, for_var_def->name);
         Tast_expr* new_expr = NULL;
         try(try_set_symbol_type(env, &new_expr, symbol_lhs_assign_));
         log(LOG_DEBUG, STR_VIEW_FMT, tast_expr_print(new_expr));
-        symbol_lhs_assign = tast_unwrap_symbol_typed(new_expr);
+        symbol_lhs_assign = tast_unwrap_symbol(new_expr);
     }
 
     //try(symbol_add(env, tast_wrap_variable_def(for_var_def)));
@@ -1040,7 +1040,7 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
         env, for_var_def->name, tast_get_pos_expr(lhs_actual)
     );
 
-    Uast_symbol_untyped* lhs_untyped = uast_symbol_untyped_new(tast_get_pos_symbol_typed(symbol_lhs_assign), symbol_lhs_assign->base.name);
+    Uast_symbol* lhs_untyped = uast_symbol_new(tast_get_pos_symbol(symbol_lhs_assign), symbol_lhs_assign->base.name);
     Tast_expr* lhs_typed_ = NULL;
     try(try_set_symbol_type(env, &lhs_typed_, lhs_untyped));
     Tast_expr* operator_ = NULL;
@@ -1067,8 +1067,8 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
 
     //vec_append(&a_main, &new_branch_block->children, tast_wrap_variable_def(for_var_def));
 
-    Tast_assignment* new_var_assign = tast_assignment_new(tast_get_pos_symbol_typed(symbol_lhs_assign), tast_wrap_expr(tast_wrap_symbol_typed(symbol_lhs_assign)), lhs_actual);
-    //Tast_assignment* new_var_assign = util_assignment_new(env, uast_wrap_expr(uast_wrap_symbol_untyped(symbol_lhs_assign)), lhs_actual);
+    Tast_assignment* new_var_assign = tast_assignment_new(tast_get_pos_symbol(symbol_lhs_assign), tast_wrap_expr(tast_wrap_symbol(symbol_lhs_assign)), lhs_actual);
+    //Tast_assignment* new_var_assign = util_assignment_new(env, uast_wrap_expr(uast_wrap_symbol(symbol_lhs_assign)), lhs_actual);
 
     load_variable_def(env, new_branch_block, for_var_def);
     load_assignment(env, new_branch_block, new_var_assign);
@@ -1384,14 +1384,14 @@ static Str_view load_ptr_operator(Env* env, Llvm_block* new_block, Tast_operator
 
 static Str_view load_ptr_expr(Env* env, Llvm_block* new_block, Tast_expr* old_expr) {
     switch (old_expr->type) {
-        case TAST_SYMBOL_TYPED:
-            return load_ptr_symbol_typed(env, new_block, tast_unwrap_symbol_typed(old_expr));
-        case TAST_MEMBER_ACCESS_TYPED:
-            return load_ptr_member_access_typed(env, new_block, tast_unwrap_member_access_typed(old_expr));
+        case TAST_SYMBOL:
+            return load_ptr_symbol(env, new_block, tast_unwrap_symbol(old_expr));
+        case TAST_MEMBER_ACCESS:
+            return load_ptr_member_access(env, new_block, tast_unwrap_member_access(old_expr));
         case TAST_OPERATOR:
             return load_ptr_operator(env, new_block, tast_unwrap_operator(old_expr));
-        case TAST_INDEX_TYPED:
-            return load_ptr_index_typed(env, new_block, tast_unwrap_index_typed(old_expr));
+        case TAST_INDEX:
+            return load_ptr_index(env, new_block, tast_unwrap_index(old_expr));
         case TAST_LITERAL:
             // TODO: expected fail test for this
             unreachable("");

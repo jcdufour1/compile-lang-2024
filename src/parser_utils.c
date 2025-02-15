@@ -470,9 +470,9 @@ bool try_get_generic_struct_def(const Env* env, Tast_def** def, Tast_stmt* stmt)
                 assert(lang_type_get_str(tast_get_lang_type_stmt(stmt)).count > 0);
                 return symbol_lookup(def, env, lang_type_get_str(tast_get_lang_type_stmt(stmt)));
             }
-            case TAST_SYMBOL_TYPED:
+            case TAST_SYMBOL:
                 // fallthrough
-            case TAST_MEMBER_ACCESS_TYPED: {
+            case TAST_MEMBER_ACCESS: {
                 Tast_def* var_def;
                 assert(get_tast_name_stmt(stmt).count > 0);
                 if (!symbol_lookup(&var_def, env, get_tast_name_stmt(stmt))) {
@@ -504,7 +504,7 @@ Tast_def* llvm_get_generic_struct_def(const Env* env, Llvm* llvm) {
     if (llvm->type == LLVM_EXPR) {
         const Llvm_expr* expr = llvm_unwrap_expr_const(llvm);
         switch (expr->type) {
-            case LLVM_SYMBOL_TYPED: {
+            case LLVM_SYMBOL: {
                 Tast_def* var_def;
                 assert(llvm_get_tast_name(llvm).count > 0);
                 try(symbol_lookup(&var_def, env, llvm_get_tast_name(llvm)));

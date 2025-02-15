@@ -156,16 +156,16 @@ static Uast_type uast_gen_operator(const char* prefix) {
     return operator;
 }
 
-static Uast_type uast_gen_symbol_untyped(const char* prefix) {
-    Uast_type sym = {.name = uast_name_new(prefix, "symbol_untyped", false)};
+static Uast_type uast_gen_symbol(const char* prefix) {
+    Uast_type sym = {.name = uast_name_new(prefix, "symbol", false)};
 
     append_member(&sym.members, "Str_view", "name");
 
     return sym;
 }
 
-static Uast_type uast_gen_member_access_untyped(const char* prefix) {
-    Uast_type access = {.name = uast_name_new(prefix, "member_access_untyped", false)};
+static Uast_type uast_gen_member_access(const char* prefix) {
+    Uast_type access = {.name = uast_name_new(prefix, "member_access", false)};
 
     append_member(&access.members, "Str_view", "member_name");
     append_member(&access.members, "Uast_expr*", "callee");
@@ -173,8 +173,8 @@ static Uast_type uast_gen_member_access_untyped(const char* prefix) {
     return access;
 }
 
-static Uast_type uast_gen_index_untyped(const char* prefix) {
-    Uast_type index = {.name = uast_name_new(prefix, "index_untyped", false)};
+static Uast_type uast_gen_index(const char* prefix) {
+    Uast_type index = {.name = uast_name_new(prefix, "index", false)};
 
     append_member(&index.members, "Uast_expr*", "index");
     append_member(&index.members, "Uast_expr*", "callee");
@@ -265,9 +265,9 @@ static Uast_type uast_gen_expr(const char* prefix) {
     Uast_type expr = {.name = uast_name_new(prefix, base_name, false)};
 
     vec_append(&gen_a, &expr.sub_types, uast_gen_operator(base_name));
-    vec_append(&gen_a, &expr.sub_types, uast_gen_symbol_untyped(base_name));
-    vec_append(&gen_a, &expr.sub_types, uast_gen_member_access_untyped(base_name));
-    vec_append(&gen_a, &expr.sub_types, uast_gen_index_untyped(base_name));
+    vec_append(&gen_a, &expr.sub_types, uast_gen_symbol(base_name));
+    vec_append(&gen_a, &expr.sub_types, uast_gen_member_access(base_name));
+    vec_append(&gen_a, &expr.sub_types, uast_gen_index(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_literal(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_function_call(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_struct_literal(base_name));

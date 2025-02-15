@@ -99,7 +99,7 @@ void uast_extend_sym_typed_base(String* string, Sym_typed_base base) {
     string_extend_cstr(&print_arena, string, "\n");
 }
 
-Str_view uast_symbol_untyped_print_internal(const Uast_symbol_untyped* sym, int indent) {
+Str_view uast_symbol_print_internal(const Uast_symbol* sym, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "symbol_untyped", indent);
@@ -110,7 +110,7 @@ Str_view uast_symbol_untyped_print_internal(const Uast_symbol_untyped* sym, int 
     return string_to_strv(buf);
 }
 
-Str_view uast_member_access_untyped_print_internal(const Uast_member_access_untyped* access, int indent) {
+Str_view uast_member_access_print_internal(const Uast_member_access* access, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "member_access_untyped", indent);
@@ -123,7 +123,7 @@ Str_view uast_member_access_untyped_print_internal(const Uast_member_access_unty
     return string_to_strv(buf);
 }
 
-Str_view uast_index_untyped_print_internal(const Uast_index_untyped* index, int indent) {
+Str_view uast_index_print_internal(const Uast_index* index, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "index_untyped", indent);
@@ -626,12 +626,12 @@ Str_view uast_expr_print_internal(const Uast_expr* expr, int indent) {
     switch (expr->type) {
         case UAST_OPERATOR:
             return uast_operator_print_internal(uast_unwrap_operator_const(expr), indent);
-        case UAST_SYMBOL_UNTYPED:
-            return uast_symbol_untyped_print_internal(uast_unwrap_symbol_untyped_const(expr), indent);
-        case UAST_MEMBER_ACCESS_UNTYPED:
-            return uast_member_access_untyped_print_internal(uast_unwrap_member_access_untyped_const(expr), indent);
-        case UAST_INDEX_UNTYPED:
-            return uast_index_untyped_print_internal(uast_unwrap_index_untyped_const(expr), indent);
+        case TAST_SYMBOL:
+            return uast_symbol_print_internal(uast_unwrap_symbol_const(expr), indent);
+        case UAST_MEMBER_ACCESS:
+            return uast_member_access_print_internal(uast_unwrap_member_access_const(expr), indent);
+        case UAST_INDEX:
+            return uast_index_print_internal(uast_unwrap_index_const(expr), indent);
         case UAST_LITERAL:
             return uast_literal_print_internal(uast_unwrap_literal_const(expr), indent);
         case UAST_FUNCTION_CALL:

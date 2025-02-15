@@ -214,8 +214,8 @@ static Tast_type tast_gen_operator(const char* prefix) {
     return operator;
 }
 
-static Tast_type tast_gen_symbol_typed(const char* prefix) {
-    const char* base_name = "symbol_typed";
+static Tast_type tast_gen_symbol(const char* prefix) {
+    const char* base_name = "symbol";
     Tast_type sym = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&sym.members, "Sym_typed_base", "base");
@@ -223,8 +223,8 @@ static Tast_type tast_gen_symbol_typed(const char* prefix) {
     return sym;
 }
 
-static Tast_type tast_gen_member_access_typed(const char* prefix) {
-    const char* base_name = "member_access_typed";
+static Tast_type tast_gen_member_access(const char* prefix) {
+    const char* base_name = "member_access";
     Tast_type access = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&access.members, "Lang_type", "lang_type");
@@ -234,8 +234,8 @@ static Tast_type tast_gen_member_access_typed(const char* prefix) {
     return access;
 }
 
-static Tast_type tast_gen_index_typed(const char* prefix) {
-    const char* base_name = "index_typed";
+static Tast_type tast_gen_index(const char* prefix) {
+    const char* base_name = "index";
     Tast_type index = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&index.members, "Lang_type", "lang_type");
@@ -365,9 +365,9 @@ static Tast_type tast_gen_expr(const char* prefix) {
     Tast_type expr = {.name = tast_name_new(prefix, base_name, false)};
 
     vec_append(&gen_a, &expr.sub_types, tast_gen_operator(base_name));
-    vec_append(&gen_a, &expr.sub_types, tast_gen_symbol_typed(base_name));
-    vec_append(&gen_a, &expr.sub_types, tast_gen_member_access_typed(base_name));
-    vec_append(&gen_a, &expr.sub_types, tast_gen_index_typed(base_name));
+    vec_append(&gen_a, &expr.sub_types, tast_gen_symbol(base_name));
+    vec_append(&gen_a, &expr.sub_types, tast_gen_member_access(base_name));
+    vec_append(&gen_a, &expr.sub_types, tast_gen_index(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_literal(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_function_call(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_struct_literal(base_name));

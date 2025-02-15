@@ -153,7 +153,7 @@ static Llvm_type llvm_gen_binary(void) {
 }
 
 static Llvm_type llvm_gen_primitive_sym(void) {
-    Llvm_type primitive = {.name = llvm_name_new("symbol_typed", "primitive_sym", false)};
+    Llvm_type primitive = {.name = llvm_name_new("symbol", "primitive_sym", false)};
 
     append_member(&primitive.members, "Sym_typed_base", "base");
 
@@ -161,7 +161,7 @@ static Llvm_type llvm_gen_primitive_sym(void) {
 }
 
 static Llvm_type llvm_gen_enum_sym(void) {
-    Llvm_type lang_enum = {.name = llvm_name_new("symbol_typed", "enum_sym", false)};
+    Llvm_type lang_enum = {.name = llvm_name_new("symbol", "enum_sym", false)};
 
     append_member(&lang_enum.members, "Sym_typed_base", "base");
 
@@ -169,7 +169,7 @@ static Llvm_type llvm_gen_enum_sym(void) {
 }
 
 static Llvm_type llvm_gen_struct_sym(void) {
-    Llvm_type lang_struct = {.name = llvm_name_new("symbol_typed", "struct_sym", false)};
+    Llvm_type lang_struct = {.name = llvm_name_new("symbol", "struct_sym", false)};
 
     append_member(&lang_struct.members, "Sym_typed_base", "base");
 
@@ -177,7 +177,7 @@ static Llvm_type llvm_gen_struct_sym(void) {
 }
 
 static Llvm_type llvm_gen_raw_union_sym(void) {
-    Llvm_type raw_union = {.name = llvm_name_new("symbol_typed", "raw_union_sym", false)};
+    Llvm_type raw_union = {.name = llvm_name_new("symbol", "raw_union_sym", false)};
 
     append_member(&raw_union.members, "Sym_typed_base", "base");
 
@@ -193,8 +193,8 @@ static Llvm_type llvm_gen_operator(void) {
     return operator;
 }
 
-static Llvm_type llvm_gen_symbol_typed(void) {
-    Llvm_type sym = {.name = llvm_name_new("expr", "symbol_typed", false)};
+static Llvm_type llvm_gen_symbol(void) {
+    Llvm_type sym = {.name = llvm_name_new("expr", "symbol", false)};
 
     vec_append(&gen_a, &sym.sub_types, llvm_gen_primitive_sym());
     vec_append(&gen_a, &sym.sub_types, llvm_gen_struct_sym());
@@ -289,7 +289,7 @@ static Llvm_type llvm_gen_expr(void) {
     Llvm_type expr = {.name = llvm_name_new("llvm", "expr", false)};
 
     vec_append(&gen_a, &expr.sub_types, llvm_gen_operator());
-    vec_append(&gen_a, &expr.sub_types, llvm_gen_symbol_typed());
+    vec_append(&gen_a, &expr.sub_types, llvm_gen_symbol());
     vec_append(&gen_a, &expr.sub_types, llvm_gen_literal());
     vec_append(&gen_a, &expr.sub_types, llvm_gen_function_call());
     vec_append(&gen_a, &expr.sub_types, llvm_gen_llvm_placeholder());

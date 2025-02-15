@@ -299,12 +299,12 @@ static inline Str_view get_uast_expr_name(const Uast_expr* expr) {
             unreachable("");
         case UAST_STRUCT_LITERAL:
             return uast_unwrap_struct_literal_const(expr)->name;
-        case UAST_MEMBER_ACCESS_UNTYPED:
-            return uast_unwrap_member_access_untyped_const(expr)->member_name;
-        case UAST_INDEX_UNTYPED:
+        case UAST_MEMBER_ACCESS:
+            return uast_unwrap_member_access_const(expr)->member_name;
+        case UAST_INDEX:
             unreachable("");
-        case UAST_SYMBOL_UNTYPED:
-            return uast_unwrap_symbol_untyped_const(expr)->name;
+        case UAST_SYMBOL:
+            return uast_unwrap_symbol_const(expr)->name;
         case UAST_FUNCTION_CALL:
             todo();
         case UAST_LITERAL:
