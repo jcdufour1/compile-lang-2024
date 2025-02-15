@@ -39,6 +39,9 @@ static Tast_if_else_chain* rm_tuple_if_else_chain(Env* env, Tast_if_else_chain* 
 
 static Tast_expr* rm_tuple_expr_not_in_assignment(Env* env, Tast_expr* expr);
 
+static Tast_variable_def* rm_tuple_variable_def_sum_to_struct(Env* env, Tast_variable_def* def);
+
+// TODO: give this function a real name
 static Lang_type lang_type_thing(Env* env, Lang_type lang_type, Pos lang_type_pos) {
     switch (lang_type.type) {
         case LANG_TYPE_SUM: {
@@ -86,10 +89,11 @@ static Lang_type lang_type_thing(Env* env, Lang_type lang_type, Pos lang_type_po
             Uast_struct_def* struct_def_ = uast_struct_def_new(lang_type_pos, base);
             Tast_struct_def* struct_def = NULL;
             // TODO: put struct_defs in different symbol_table, etc. to avoid collisions?
-            try(usym_tbl_add(&vec_at(&env->ancesters, 0)->usymbol_table, uast_wrap_struct_def(struct_def_)));
-            try(try_set_struct_def_types(env, &struct_def, struct_def_));
-            try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_wrap_struct_def(struct_def)));
-            vec_append(&a_main, &env->extra_structs, struct_def);
+            if (usym_tbl_add(&vec_at(&env->ancesters, 0)->usymbol_table, uast_wrap_struct_def(struct_def_))) {
+                try(try_set_struct_def_types(env, &struct_def, struct_def_));
+                try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_wrap_struct_def(struct_def)));
+                vec_append(&a_main, &env->extra_structs, struct_def);
+            }
 
             //vec_append(&a_main, &env->extra_sums, sum_def);
             //log(LOG_DEBUG, STR_VIEW_FMT, tast_sum_def_print(sum_def));
@@ -233,6 +237,7 @@ static Tast_stmt* rm_tuple_assignment(Env* env, Tast_assignment* assign) {
         case LANG_TYPE_TUPLE:
             return rm_tuple_assignment_tuple(env, assign);
         case LANG_TYPE_SUM:
+            assign->lhs = tast_wrap_def(tast_wrap_variable_def(rm_tuple_variable_def_sum_to_struct(env, tast_unwrap_variable_def(tast_unwrap_def(assign->lhs)))));
             return tast_wrap_assignment(assign);
         case LANG_TYPE_PRIMITIVE:
             return tast_wrap_assignment(assign);
@@ -748,6 +753,31 @@ static Tast_if_else_chain* rm_tuple_if_else_chain(Env* env, Tast_if_else_chain* 
     return if_else;
 }
 
+static Tast_variable_def* rm_tuple_variable_def_sum_to_struct(Env* env, Tast_variable_def* def) {
+    def->lang_type = lang_type_thing(env, def->lang_type, def->pos);
+    return def;
+}
+
+static Tast_variable_def* rm_tuple_variable_def(Env* env, Tast_variable_def* def) {
+    switch (def->lang_type.type) {
+        case LANG_TYPE_SUM:
+            return rm_tuple_variable_def_sum_to_struct(env, def);
+        case LANG_TYPE_STRUCT:
+            return def;
+        case LANG_TYPE_PRIMITIVE:
+            return def;
+        case LANG_TYPE_RAW_UNION:
+            return def;
+        case LANG_TYPE_ENUM:
+            return def;
+        case LANG_TYPE_TUPLE:
+            return def;
+        case LANG_TYPE_VOID:
+            return def;
+    }
+    unreachable("");
+}
+
 static Tast_function_def* rm_tuple_function_def(Env* env, Tast_function_def* def) {
     Str_view old_fun_name = env->name_parent_function;
 
@@ -774,7 +804,7 @@ static Tast_def* rm_tuple_def(Env* env, Tast_def* def) {
         case TAST_FUNCTION_DEF:
             return tast_wrap_function_def(rm_tuple_function_def(env, tast_unwrap_function_def(def)));
         case TAST_VARIABLE_DEF:
-            return def;
+            return tast_wrap_variable_def(rm_tuple_variable_def(env, tast_unwrap_variable_def(def)));
         case TAST_STRUCT_DEF:
             return def;
         case TAST_RAW_UNION_DEF:

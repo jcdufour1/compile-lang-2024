@@ -531,7 +531,6 @@ static Str_view load_ptr_member_access_typed(
     Tast_def* def = NULL;
     log(LOG_DEBUG, TAST_FMT, tast_member_access_typed_print(old_access));
     log(LOG_DEBUG, LANG_TYPE_FMT"\n", str_view_print(lang_type_get_str(get_lang_type_from_name(env, new_callee))));
-    try(symbol_lookup(&def, env, str_view_from_cstr("0_3_i32__1_2_u8__")));
     try(symbol_lookup(&def, env, lang_type_get_str(get_lang_type_from_name(env, new_callee))));
 
     int64_t struct_index = {0};
