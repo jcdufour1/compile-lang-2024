@@ -260,6 +260,17 @@ static Uast_type uast_gen_tuple(const char* prefix) {
     return lit;
 }
 
+static Uast_type uast_gen_sum_access(const char* prefix) {
+    const char* base_name = "sum_access";
+    Uast_type lit = {.name = uast_name_new(prefix, base_name, false)};
+
+    append_member(&lit.members, "Tast_enum_lit*", "tag");
+    append_member(&lit.members, "Lang_type", "lang_type");
+    append_member(&lit.members, "Uast_expr*", "callee");
+
+    return lit;
+}
+
 static Uast_type uast_gen_expr(const char* prefix) {
     const char* base_name = "expr";
     Uast_type expr = {.name = uast_name_new(prefix, base_name, false)};
@@ -272,6 +283,7 @@ static Uast_type uast_gen_expr(const char* prefix) {
     vec_append(&gen_a, &expr.sub_types, uast_gen_function_call(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_struct_literal(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_tuple(base_name));
+    vec_append(&gen_a, &expr.sub_types, uast_gen_sum_access(base_name));
 
     return expr;
 }

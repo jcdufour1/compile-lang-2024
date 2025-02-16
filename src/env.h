@@ -48,6 +48,7 @@ typedef struct Env_ {
     Str_view struct_rtn_name_parent_function;
 
     PARENT_OF parent_of;
+    Uast_expr* parent_of_operand;
 
     Str_view label_if_break;
     Str_view label_if_continue;

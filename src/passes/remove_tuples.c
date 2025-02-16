@@ -43,6 +43,8 @@ static Tast_variable_def* rm_tuple_variable_def_sum_to_struct(Env* env, Tast_var
 
 static Tast_operator* rm_tuple_operator_not_in_assignment(Env* env, Tast_operator* oper);
 
+static Tast_expr* rm_tuple_symbol_not_in_assignment(Env* env, Tast_symbol* sym);
+
 // TODO: give this function a real name
 static Lang_type lang_type_thing(Env* env, Lang_type lang_type, Pos lang_type_pos) {
     switch (lang_type.type) {
@@ -610,6 +612,7 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
 
             log(LOG_DEBUG, TAST_FMT, tast_expr_print(vec_at(&new_args, 0)));
             log(LOG_DEBUG, TAST_FMT, tast_expr_print(vec_at(&new_args, 1)));
+            todo();
             assert(new_args.info.count == 2);
             break;
         }
@@ -810,13 +813,43 @@ static Tast_expr* rm_tuple_literal_rhs(Env* env, Tast_literal* rhs, Pos assign_p
     unreachable("");
 }
 
+static Tast_member_access* rm_tuple_sum_access_rhs(Env* env, Tast_sum_access* rhs, Pos assign_pos) {
+    Tast_expr* new_union_callee = tast_member_access_unwrap(rm_tuple_expr_rhs(env, rhs->callee, assign_pos))->callee;
+
+    Tast_def* struct_def = NULL;
+    try(symbol_lookup(&struct_def, env, lang_type_get_str(tast_expr_get_lang_type(new_union_callee))));
+    log(LOG_DEBUG, TAST_FMT, tast_def_print(struct_def));
+    Tast_member_access* new_union = tast_member_access_new(
+        assign_pos,
+        vec_at(&tast_struct_def_unwrap(struct_def)->base.members, 1)->lang_type,
+        str_view_from_cstr("item"),
+        new_union_callee
+    );
+    log(LOG_DEBUG, TAST_FMT, tast_member_access_print(new_union));
+    Tast_def* union_def = NULL;
+    try(symbol_lookup(&union_def, env, lang_type_get_str(vec_at(&tast_struct_def_unwrap(struct_def)->base.members, 1)->lang_type)));
+    log(LOG_DEBUG, TAST_FMT, tast_def_print(union_def));
+    Str_view union_memb_name = vec_at(&tast_raw_union_def_unwrap(union_def)->base.members, rhs->tag->data)->name;
+    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(union_memb_name));
+
+    Tast_member_access* new_access = tast_member_access_new(
+        assign_pos,
+        rhs->lang_type,
+        union_memb_name,
+        tast_member_access_wrap(new_union)
+    );
+    log(LOG_DEBUG, TAST_FMT, tast_member_access_print(new_access));
+
+    return new_access;
+}
+
 static Tast_expr* rm_tuple_expr_rhs(Env* env, Tast_expr* rhs, Pos assign_pos) {
-    log(LOG_DEBUG, "THING: "TAST_FMT"\n", tast_expr_print(rhs));
+    log(LOG_DEBUG, "THING321: "TAST_FMT"\n", tast_expr_print(rhs));
     switch (rhs->type) {
         case TAST_OPERATOR:
             return rhs;
         case TAST_SYMBOL:
-            return rhs;
+            return rm_tuple_symbol_not_in_assignment(env, tast_symbol_unwrap(rhs));
         case TAST_MEMBER_ACCESS:
             return rhs;
         case TAST_INDEX:
@@ -833,6 +866,8 @@ static Tast_expr* rm_tuple_expr_rhs(Env* env, Tast_expr* rhs, Pos assign_pos) {
             todo();
         case TAST_SUM_CASE:
             todo();
+        case TAST_SUM_ACCESS:
+            return tast_member_access_wrap(rm_tuple_sum_access_rhs(env, tast_sum_access_unwrap(rhs), assign_pos));
     }
     unreachable("");
 }
@@ -916,6 +951,17 @@ static Tast_expr* rm_tuple_symbol_not_in_assignment(Env* env, Tast_symbol* sym) 
     unreachable("");
 }
 
+static Tast_index* rm_tuple_index_not_in_assignment(Env* env, Tast_index* index) {
+    index->index = rm_tuple_expr_not_in_assignment(env, index->index);
+    index->callee = rm_tuple_expr_not_in_assignment(env, index->callee);
+    return index;
+}
+
+static Tast_member_access* rm_tuple_member_access_not_in_assignment(Env* env, Tast_member_access* access) {
+    access->callee = rm_tuple_expr_not_in_assignment(env, access->callee);
+    return access;
+}
+
 static Tast_expr* rm_tuple_expr_not_in_assignment(Env* env, Tast_expr* expr) {
     switch (expr->type) {
         case TAST_OPERATOR:
@@ -923,11 +969,11 @@ static Tast_expr* rm_tuple_expr_not_in_assignment(Env* env, Tast_expr* expr) {
         case TAST_SYMBOL:
             return rm_tuple_symbol_not_in_assignment(env, tast_symbol_unwrap(expr));
         case TAST_MEMBER_ACCESS:
-            unreachable("");
+            return tast_member_access_wrap(rm_tuple_member_access_not_in_assignment(env, tast_member_access_unwrap(expr)));
         case TAST_INDEX:
-            unreachable("");
+            return tast_index_wrap(rm_tuple_index_not_in_assignment(env, tast_index_unwrap(expr)));
         case TAST_LITERAL:
-            unreachable("");
+            return expr;
         case TAST_STRUCT_LITERAL:
             unreachable("");
         case TAST_FUNCTION_CALL:
@@ -938,6 +984,8 @@ static Tast_expr* rm_tuple_expr_not_in_assignment(Env* env, Tast_expr* expr) {
             unreachable("");
         case TAST_SUM_CASE:
             return tast_literal_wrap(tast_enum_lit_wrap(tast_sum_case_unwrap(expr)->tag));
+        case TAST_SUM_ACCESS:
+            todo();
     }
     unreachable("");
 }

@@ -311,6 +311,8 @@ static inline Str_view uast_expr_get_name(const Uast_expr* expr) {
             return uast_literal_get_name(uast_literal_const_unwrap(expr));
         case UAST_TUPLE:
             unreachable("");
+        case UAST_SUM_ACCESS:
+            unreachable("");
     }
     unreachable("");
 }

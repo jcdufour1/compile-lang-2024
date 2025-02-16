@@ -1429,7 +1429,10 @@ static Str_view load_ptr_expr(Env* env, Llvm_block* new_block, Tast_expr* old_ex
         case TAST_SUM_CALLEE:
             return load_ptr_sum_callee(env, new_block, tast_sum_callee_unwrap(old_expr));
         case TAST_SUM_CASE:
+            // TODO: make this unreachable
             return load_ptr_sum_case(env, new_block, tast_sum_case_unwrap(old_expr));
+        case TAST_SUM_ACCESS:
+            unreachable("");
     }
     unreachable("");
 }

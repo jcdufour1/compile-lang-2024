@@ -755,6 +755,14 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
         }
         case UAST_STRUCT_LITERAL:
             unreachable("");
+        case UAST_SUM_ACCESS: {
+            Tast_sum_access* new_access = NULL;
+            if (!try_set_sum_access_types(env, &new_access, uast_sum_access_unwrap(uast))) {
+                return false;
+            }
+            *new_tast = tast_sum_access_wrap(new_access);
+            return true;
+        }
     }
     unreachable("");
 }
@@ -939,7 +947,21 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             log(LOG_DEBUG, TAST_FMT, uast_variable_def_print(new_def));
             log(LOG_DEBUG, TAST_FMT, tast_sum_case_print(sum_case));
 
-            vec_append(&a_main, &env->switch_case_defer_add_sum_case_part, uast_def_wrap(uast_variable_def_wrap(new_def)));
+            Uast_assignment* new_assign = uast_assignment_new(
+                new_def->pos,
+                uast_def_wrap(uast_variable_def_wrap(new_def)),
+                uast_sum_access_wrap(uast_sum_access_new(
+                    new_def->pos,
+                    sum_case->tag,
+                    lang_type_from_ulang_type(env, new_def->lang_type),
+                    uast_symbol_wrap(uast_symbol_new(
+                        new_def->pos,
+                        uast_expr_get_name(env->parent_of_operand)
+                    ))
+                ))
+            );
+
+            vec_append(&a_main, &env->switch_case_defer_add_sum_case_part, uast_assignment_wrap(new_assign));
 
             *new_call = tast_sum_case_wrap(sum_case);
             return true;
@@ -1090,6 +1112,22 @@ bool try_set_tuple_types(Env* env, Tast_tuple** new_tuple, Uast_tuple* tuple) {
     }
 
     *new_tuple = tast_tuple_new(tuple->pos, new_members, lang_type_tuple_new(new_lang_type));
+    return true;
+}
+
+bool try_set_sum_access_types(Env* env, Tast_sum_access** new_access, Uast_sum_access* access) {
+    Tast_expr* new_callee = NULL;
+    if (!try_set_expr_types(env, &new_callee, access->callee)) {
+        return false;
+    }
+
+    *new_access = tast_sum_access_new(
+        access->pos,
+        access->tag, 
+        access->lang_type,
+        new_callee
+    );
+
     return true;
 }
 
@@ -1899,10 +1937,12 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
         );
                 
         env->parent_of = PARENT_OF_CASE;
+        env->parent_of_operand = lang_switch->operand;
         Tast_if* new_if = NULL;
         if (!try_set_if_types(env, &new_if, uast_if_new(old_case->pos, cond, if_true))) {
             return false;
         }
+        env->parent_of_operand = NULL;
         env->parent_of = PARENT_OF_NONE;
 
         if (!check_for_exhaustiveness_inner(&exhaustive_data, new_if, old_case->is_default)) {

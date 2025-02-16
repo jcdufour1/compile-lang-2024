@@ -194,6 +194,18 @@ Str_view uast_tuple_print_internal(const Uast_tuple* lit, int indent) {
     return string_to_strv(buf);
 }
 
+Str_view uast_sum_access_print_internal(const Uast_sum_access* lit, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&print_arena, &buf, "sum_access", indent);
+    
+    string_extend_strv(&print_arena, &buf, lang_type_print_internal(lit->lang_type, true, true));
+    string_extend_strv(&print_arena, &buf, tast_enum_lit_print_internal(lit->tag, indent + INDENT_WIDTH));
+    string_extend_strv(&print_arena, &buf, uast_expr_print_internal(lit->callee, indent + INDENT_WIDTH));
+
+    return string_to_strv(buf);
+}
+
 Str_view uast_number_print_internal(const Uast_number* num, int indent) {
     String buf = {0};
 
@@ -640,6 +652,8 @@ Str_view uast_expr_print_internal(const Uast_expr* expr, int indent) {
             return uast_struct_literal_print_internal(uast_struct_literal_const_unwrap(expr), indent);
         case UAST_TUPLE:
             return uast_tuple_print_internal(uast_tuple_const_unwrap(expr), indent);
+        case UAST_SUM_ACCESS:
+            return uast_sum_access_print_internal(uast_sum_access_const_unwrap(expr), indent);
     }
     unreachable("");
 }
