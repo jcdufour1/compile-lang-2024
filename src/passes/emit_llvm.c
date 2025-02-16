@@ -893,7 +893,7 @@ static void emit_struct_def(const Env* env, String* output, const Llvm_struct_de
 }
 
 static void emit_raw_union_def(const Env* env, String* output, const Llvm_raw_union_def* raw_union_def) {
-    string_extend_cstr(&a_main, output, "%union.UNION");
+    string_extend_cstr(&a_main, output, "%union.RAW_UNION");
     emit_struct_def_base(env, output, &raw_union_def->base, true);
 }
 
