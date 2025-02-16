@@ -9,6 +9,10 @@
 
 static inline bool lang_type_is_equal(Lang_type a, Lang_type b);
 
+static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr);
+
+static inline void tast_expr_set_lang_type(Tast_expr* expr, Lang_type lang_type);
+    
 static inline bool lang_type_atom_is_equal(Lang_type_atom a, Lang_type_atom b) {
     if (a.pointer_depth != b.pointer_depth) {
         return false;
@@ -119,6 +123,8 @@ static inline Lang_type tast_literal_get_lang_type(const Tast_literal* lit) {
             return tast_char_const_unwrap(lit)->lang_type;
         case TAST_SUM_LIT:
             return tast_sum_lit_const_unwrap(lit)->lang_type;
+        case TAST_UNION_LIT:
+            return tast_expr_get_lang_type(tast_sum_lit_const_unwrap(lit)->item);
     }
     unreachable("");
 }
@@ -140,6 +146,9 @@ static inline void tast_literal_set_lang_type(Tast_literal* lit, Lang_type lang_
             return;
         case TAST_SUM_LIT:
             tast_sum_lit_unwrap(lit)->lang_type = lang_type;
+            return;
+        case TAST_UNION_LIT:
+            tast_expr_set_lang_type(tast_union_lit_unwrap(lit)->item, lang_type);
             return;
     }
     unreachable("");
@@ -191,6 +200,9 @@ static inline void tast_set_lang_types_literal(Tast_literal* lit, Lang_type_vec 
             unreachable("");
             return;
         case TAST_SUM_LIT:
+            unreachable("");
+            return;
+        case TAST_UNION_LIT:
             unreachable("");
             return;
     }
@@ -367,6 +379,8 @@ static inline Str_view tast_literal_get_name(const Tast_literal* lit) {
         case TAST_CHAR:
             unreachable("");
         case TAST_SUM_LIT:
+            unreachable("");
+        case TAST_UNION_LIT:
             unreachable("");
     }
     unreachable("");

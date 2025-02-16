@@ -3,6 +3,8 @@
 
 static inline Str_view serialize_lang_type(const Env* env, Lang_type lang_type);
 
+static inline Str_view serialize_lang_type_struct_thing(const Env* env, Lang_type lang_type);
+
 static inline Str_view serialize_struct_def_base(const Env* env, Struct_def_base base) {
     String name = {0};
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
@@ -17,55 +19,48 @@ static inline Str_view serialize_struct_def_base(const Env* env, Struct_def_base
     return string_to_strv(name);
 }
 
-static inline Str_view serialize_struct_def(const Env* env, const Tast_struct_def* struct_def) {
+static inline Str_view serialize_struct_def(const Env* env, const Tast_struct_def* def) {
     String name = {0};
-    string_extend_strv(&a_main, &name, serialize_struct_def_base(env, struct_def->base));
+    string_extend_cstr(&a_main, &name, "STRUCT");
+    string_extend_strv(&a_main, &name, serialize_struct_def_base(env, def->base));
     return string_to_strv(name);
 }
 
-static inline Str_view serialize_sum_def(const Env* env, const Tast_sum_def* sum_def) {
+static inline Str_view serialize_raw_union_def(const Env* env, const Tast_raw_union_def* def) {
     String name = {0};
-    string_extend_strv(&a_main, &name, serialize_struct_def_base(env, sum_def->base));
+    string_extend_cstr(&a_main, &name, "RAW_UNION");
+    string_extend_strv(&a_main, &name, serialize_struct_def_base(env, def->base));
+    return string_to_strv(name);
+}
+
+static inline Str_view serialize_sum_def(const Env* env, const Tast_sum_def* def) {
+    String name = {0};
+    string_extend_cstr(&a_main, &name, "SUM");
+    string_extend_strv(&a_main, &name, serialize_struct_def_base(env, def->base));
     return string_to_strv(name);
 }
 
 static inline Str_view serialize_lang_type_struct_thing(const Env* env, Lang_type lang_type) {
-    String name = {0};
-
-    Struct_def_base base = {0};
     switch (lang_type.type) {
         case LANG_TYPE_STRUCT: {
             Tast_def* def = NULL;
             try(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
-            base = tast_struct_def_unwrap(def)->base;
-            break;
+            return serialize_struct_def(env, tast_struct_def_unwrap(def));
         }
         case LANG_TYPE_SUM: {
             Tast_def* def = NULL;
             try(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
-            base = tast_sum_def_unwrap(def)->base;
-            break;
+            return serialize_sum_def(env, tast_sum_def_unwrap(def));
         }
         case LANG_TYPE_RAW_UNION: {
             Tast_def* def = NULL;
-            log(LOG_DEBUG, "%zu\n", env->ancesters.info.count);
-            log(LOG_DEBUG, TAST_FMT, lang_type_print(lang_type));
-            log(LOG_DEBUG, TAST_FMT"\n", str_view_print(lang_type_get_str(lang_type)));
             try(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
-            log(LOG_DEBUG, TAST_FMT, tast_def_print(def));
-            base = tast_raw_union_def_unwrap(def)->base;
-            break;
+            return serialize_raw_union_def(env, tast_raw_union_def_unwrap(def));
         }
         default:
             unreachable("");
     }
-
-    for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        Tast_variable_def* curr = vec_at(&base.members, idx);
-        string_extend_strv(&a_main, &name, serialize_lang_type(env, curr->lang_type));
-    }
-
-    return string_to_strv(name);
+    unreachable("");
 }
 
 // TODO: make separate function for Tast_lang_type and Lang_type
@@ -121,7 +116,7 @@ static inline Str_view serialize_def(const Env* env, const Tast_def* def) {
         case TAST_VARIABLE_DEF:
             unreachable("");
         case TAST_RAW_UNION_DEF:
-            unreachable("");
+            return serialize_raw_union_def(env, tast_raw_union_def_const_unwrap(def));
         case TAST_ENUM_DEF:
             unreachable("");
         case TAST_SUM_DEF:

@@ -316,6 +316,9 @@ static Llvm_literal* tast_literal_clone(Tast_literal* old_lit) {
         case TAST_SUM_LIT: {
             unreachable("sum literal should not be here");
         }
+        case TAST_UNION_LIT: {
+            unreachable("union literal should not be here");
+        }
     }
     unreachable("");
 }

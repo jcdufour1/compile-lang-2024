@@ -59,6 +59,8 @@ static void tast_extend_literal(String* output, const Tast_literal* literal) {
             return;
         case TAST_SUM_LIT:
             unreachable("");
+        case TAST_UNION_LIT:
+            unreachable("");
     }
     unreachable("");
 }
