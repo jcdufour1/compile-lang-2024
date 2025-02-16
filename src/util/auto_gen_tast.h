@@ -280,6 +280,7 @@ static Tast_type tast_gen_union_lit(const char* prefix) {
     const char* base_name = "union_lit";
     Tast_type union_lit = {.name = tast_name_new(prefix, base_name, false)};
 
+    append_member(&union_lit.members, "Tast_enum_lit*", "tag");
     append_member(&union_lit.members, "Lang_type", "lang_type");
     append_member(&union_lit.members, "Tast_expr*", "item");
 

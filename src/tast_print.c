@@ -177,7 +177,8 @@ void tast_extend_sym_typed_base(String* string, Sym_typed_base base) {
 Str_view tast_symbol_print_internal(const Tast_symbol* sym, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "sum_sym", indent);
+    string_extend_cstr_indent(&print_arena, &buf, "symbol", indent);
+    extend_pos(&buf, sym->pos);
     tast_extend_sym_typed_base(&buf, sym->base);
 
     return string_to_strv(buf);
@@ -347,6 +348,7 @@ Str_view tast_sum_lit_print_internal(const Tast_sum_lit* sum, int indent) {
 
     string_extend_cstr_indent(&print_arena, &buf, "sum_lit", indent);
     extend_lang_type(&buf, sum->lang_type, true);
+    extend_pos(&buf, sum->pos);
     string_extend_cstr(&print_arena, &buf, "\n");
     string_extend_strv(&print_arena, &buf, tast_enum_lit_print_internal(sum->tag, indent + INDENT_WIDTH));
     string_extend_strv(&print_arena, &buf, tast_expr_print_internal(sum->item, indent + INDENT_WIDTH));

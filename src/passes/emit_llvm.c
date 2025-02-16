@@ -442,6 +442,7 @@ static void emit_unary_type(const Env* env, String* output, const Llvm_unary* un
                 extend_type_call_str(output, lang_type_from_get_name(env, unary->child));
                 string_extend_cstr(&a_main, output, " ");
             } else {
+                log(LOG_DEBUG, TAST_FMT, llvm_unary_print(unary));
                 todo();
             }
             break;

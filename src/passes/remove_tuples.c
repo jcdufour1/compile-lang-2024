@@ -47,6 +47,10 @@ static Tast_expr* rm_tuple_symbol_not_in_assignment(Env* env, Tast_symbol* sym);
 
 static Tast_expr* rm_tuple_union_lit_rhs(Env* env, Tast_union_lit* rhs, Pos assign_pos);
 
+static Tast_member_access* rm_tuple_member_access_not_in_assignment(Env* env, Tast_member_access* access);
+
+static Tast_expr* rm_tuple_sum_symbol_not_in_assignment(Env* env, Tast_symbol* sym);
+
 // TODO: give this function a real name
 static Lang_type lang_type_thing(Env* env, Lang_type lang_type, Pos lang_type_pos, bool do_union) {
     switch (lang_type.type) {
@@ -273,6 +277,7 @@ static Tast_stmt* rm_tuple_assignment(Env* env, Tast_assignment* assign) {
             return rm_tuple_assignment_tuple(env, assign);
         case LANG_TYPE_SUM:
             assign->lhs = tast_def_wrap(tast_variable_def_wrap(rm_tuple_variable_def_sum_to_struct(env, tast_variable_def_unwrap(tast_def_unwrap(assign->lhs)))));
+            log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
             return tast_assignment_wrap(assign);
         case LANG_TYPE_PRIMITIVE:
             return tast_assignment_wrap(assign);
@@ -691,13 +696,14 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
                 env,
                 tast_union_lit_new(
                     tast_expr_get_pos(vec_at(&members, 1)),
+                    rhs->tag, // TODO: clone this?
                     lang_type_thing(
                         env,
                         vec_at(&tast_struct_def_unwrap(struct_def_)->base.members, 1)->lang_type,
                         vec_at(&tast_struct_def_unwrap(struct_def_)->base.members, 1)->pos,
                         true
                     ),
-                    vec_at(&members, 1)
+                    rm_tuple_expr_rhs(env, vec_at(&members, 1), tast_expr_get_pos(vec_at(&members, 1)))
                 ),
                 assign_pos
             ));
@@ -756,8 +762,10 @@ static Tast_expr* rm_tuple_generic_assignment_rhs(Env* env, Tast_expr* rhs, Pos 
         return rm_tuple_struct_literal_rhs(env, tast_struct_literal_unwrap(rhs), assign_pos);
     } else if (rhs->type == TAST_LITERAL && tast_literal_unwrap(rhs)->type == TAST_SUM_LIT) {
         return rm_tuple_sum_lit_rhs(env, tast_sum_lit_unwrap(tast_literal_unwrap(rhs)), assign_pos);
+    } else if (rhs->type == TAST_SYMBOL && tast_symbol_unwrap(rhs)->base.lang_type.type == LANG_TYPE_SUM) {
+        return rm_tuple_sum_symbol_not_in_assignment(env, tast_symbol_unwrap(rhs));
     } else {
-        return rhs;
+        return rm_tuple_expr_rhs(env, rhs, assign_pos);
     }
 }
 
@@ -784,8 +792,13 @@ static Tast_return* rm_tuple_return(Env* env, Tast_return* rtn) {
 }
 
 static Tast_if* rm_tuple_if(Env* env, Tast_if* lang_if) {
+    PARENT_OF old_parent_of = env->parent_of;
+    env->parent_of = PARENT_OF_CASE;
     lang_if->condition->child = rm_tuple_operator_not_in_assignment(env, lang_if->condition->child);
+    env->parent_of = old_parent_of;
+
     lang_if->body = rm_tuple_block(env, lang_if->body);
+
     return lang_if;
 }
 
@@ -826,6 +839,11 @@ static Tast_variable_def* rm_tuple_variable_def(Env* env, Tast_variable_def* def
 
 static Tast_function_def* rm_tuple_function_def(Env* env, Tast_function_def* def) {
     Str_view old_fun_name = env->name_parent_function;
+
+    for (size_t idx = 0; idx < def->decl->params->params.info.count; idx++) {
+        Tast_variable_def* new_param = rm_tuple_variable_def(env, vec_at(&def->decl->params->params, idx));
+        *vec_at_ref(&def->decl->params->params, idx) = new_param;
+    }
 
     env->name_parent_function = def->decl->name;
 
@@ -886,6 +904,7 @@ static Tast_function_call* rm_tuple_function_call(Env* env, Tast_function_call* 
     return fun_call;
 }
 
+// TODO: rename union_lit to raw_union_lit?
 static Tast_expr* rm_tuple_union_lit_rhs(Env* env, Tast_union_lit* rhs, Pos assign_pos) {
     log(LOG_DEBUG, TAST_FMT, tast_union_lit_print(rhs));
 
@@ -924,13 +943,20 @@ static Tast_expr* rm_tuple_union_lit_rhs(Env* env, Tast_union_lit* rhs, Pos assi
 
             Tast_variable_def* new_tag = tast_variable_def_new(
                 assign_pos,
-                tast_expr_get_lang_type(rhs->item),
+                vec_at(&tast_raw_union_def_unwrap(struct_def_)->base.members, rhs->tag->data)->lang_type,
                 false,
                 util_literal_name_new_prefix("tuple_function_param_item")
             );
             try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(new_tag)));
             vec_append(&a_main, &new_params, new_tag);
-            vec_append(&a_main, &new_args, vec_at(&members, 0));
+            //vec_append(&a_main, &new_args, vec_at(&members, 0));
+            vec_append(&a_main, &new_args, tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+                tast_expr_get_pos(vec_at(&members, 0)),
+                vec_at(&members, 0),
+                TOKEN_UNSAFE_CAST,
+                vec_at(&tast_raw_union_def_unwrap(struct_def_)->base.members, rhs->tag->data)->lang_type
+            ))));
+            log(LOG_DEBUG, TAST_FMT, tast_expr_print(vec_at(&new_args, 0)));
 
             assert(new_args.info.count == 1);
             break;
@@ -998,7 +1024,10 @@ static Tast_expr* rm_tuple_literal_rhs(Env* env, Tast_literal* rhs, Pos assign_p
 }
 
 static Tast_member_access* rm_tuple_sum_access_rhs(Env* env, Tast_sum_access* rhs, Pos assign_pos) {
-    Tast_expr* new_union_callee = tast_member_access_unwrap(rm_tuple_expr_rhs(env, rhs->callee, assign_pos))->callee;
+    log(LOG_DEBUG, TAST_FMT, tast_sum_access_print(rhs));
+    log(LOG_DEBUG, TAST_FMT, tast_expr_print(rhs->callee));
+    Tast_expr* new_union_callee = rm_tuple_expr_rhs(env, rhs->callee, assign_pos);
+    log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_union_callee));
 
     Tast_def* struct_def = NULL;
     try(symbol_lookup(&struct_def, env, lang_type_get_str(tast_expr_get_lang_type(new_union_callee))));
@@ -1022,9 +1051,8 @@ static Tast_member_access* rm_tuple_sum_access_rhs(Env* env, Tast_sum_access* rh
         union_memb_name,
         tast_member_access_wrap(new_union)
     );
-    log(LOG_DEBUG, TAST_FMT, tast_member_access_print(new_access));
 
-    return new_access;
+    return rm_tuple_member_access_not_in_assignment(env, new_access);
 }
 
 static Tast_expr* rm_tuple_expr_rhs(Env* env, Tast_expr* rhs, Pos assign_pos) {
@@ -1102,17 +1130,26 @@ static Tast_operator* rm_tuple_operator_not_in_assignment(Env* env, Tast_operato
     unreachable("");
 }
 
-static Tast_member_access* rm_tuple_sum_symbol_not_in_assignment(Env* env, Tast_symbol* sym) {
+static Tast_expr* rm_tuple_sum_symbol_not_in_assignment(Env* env, Tast_symbol* sym) {
     assert(sym->base.lang_type.type == LANG_TYPE_SUM);
 
-    sym->base.lang_type = lang_type_thing(env, sym->base.lang_type, sym->pos, false);
-    Tast_member_access* new_access = tast_member_access_new(
-        sym->pos,
-        lang_type_primitive_const_wrap(lang_type_primitive_new(lang_type_atom_new_from_cstr("i64", 0))),
-        str_view_from_cstr("tag"),
-        tast_symbol_wrap(sym)
-    );
-    return new_access;
+    switch (env->parent_of) {
+        case PARENT_OF_CASE:
+            sym->base.lang_type = lang_type_thing(env, sym->base.lang_type, sym->pos, false);
+            Tast_member_access* new_access = tast_member_access_new(
+                sym->pos,
+                lang_type_primitive_const_wrap(lang_type_primitive_new(lang_type_atom_new_from_cstr("i64", 0))),
+                str_view_from_cstr("tag"),
+                tast_symbol_wrap(sym)
+            );
+            return tast_member_access_wrap(new_access);
+        case PARENT_OF_NONE:
+            sym->base.lang_type = lang_type_thing(env, sym->base.lang_type, sym->pos, false);
+            return tast_symbol_wrap(sym);
+        default:
+            unreachable("");
+    }
+    unreachable("");
 }
 
 static Tast_expr* rm_tuple_symbol_not_in_assignment(Env* env, Tast_symbol* sym) {
@@ -1126,7 +1163,7 @@ static Tast_expr* rm_tuple_symbol_not_in_assignment(Env* env, Tast_symbol* sym) 
         case LANG_TYPE_RAW_UNION:
             return tast_symbol_wrap(sym);
         case LANG_TYPE_SUM:
-            return tast_member_access_wrap(rm_tuple_sum_symbol_not_in_assignment(env, sym));
+            return rm_tuple_sum_symbol_not_in_assignment(env, sym);
         case LANG_TYPE_TUPLE:
             return tast_symbol_wrap(sym);
         case LANG_TYPE_VOID:
@@ -1142,6 +1179,7 @@ static Tast_index* rm_tuple_index_not_in_assignment(Env* env, Tast_index* index)
 }
 
 static Tast_member_access* rm_tuple_member_access_not_in_assignment(Env* env, Tast_member_access* access) {
+    access->lang_type = lang_type_thing(env, access->lang_type, access->pos, false);
     access->callee = rm_tuple_expr_not_in_assignment(env, access->callee);
     return access;
 }

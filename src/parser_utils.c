@@ -328,6 +328,11 @@ uint64_t sizeof_lang_type(const Env* env, Lang_type lang_type) {
             try(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
             return sizeof_def(env, def);
         }
+        case LANG_TYPE_SUM: {
+            Tast_def* def = NULL;
+            try(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
+            return sizeof_def(env, def);
+        }
         default:
             unreachable(LANG_TYPE_FMT, lang_type_print(lang_type));
     }
@@ -350,6 +355,8 @@ static uint64_t sizeof_def(const Env* env, const Tast_def* def) {
             return sizeof_lang_type(env, tast_variable_def_const_unwrap(def)->lang_type);
         case TAST_STRUCT_DEF:
             return sizeof_struct_def_base(env, &tast_struct_def_const_unwrap(def)->base);
+        case TAST_SUM_DEF:
+            return sizeof_struct_def_base(env, &tast_sum_def_const_unwrap(def)->base);
         default:
             unreachable("");
     }

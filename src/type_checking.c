@@ -1206,6 +1206,7 @@ bool try_set_member_access_types_finish_sum_def(
                 //msg_invalid_enum_member(env, enum_def->base, access);
                 //return false;
             }
+            log(LOG_DEBUG, TAST_FMT, uast_variable_def_print(member_def));
             Tast_enum_lit* new_tag = tast_enum_lit_new(
                 access->pos,
                 uast_get_member_index(&sum_def->base, access->member_name),

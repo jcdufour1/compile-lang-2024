@@ -498,9 +498,17 @@ static Str_view load_unary(
         case TOKEN_REFER:
             return load_ptr_expr(env, new_block, old_unary->child);
         case TOKEN_UNSAFE_CAST:
+            switch (old_unary->lang_type.type) {
+                case LANG_TYPE_SUM:
+                    return load_expr(env, new_block, old_unary->child);
+                default:
+                    break;
+            }
+
             if (lang_type_get_pointer_depth(old_unary->lang_type) > 0 && lang_type_get_pointer_depth(tast_expr_get_lang_type(old_unary->child)) > 0) {
                 return load_expr(env, new_block, old_unary->child);
             }
+
             // fallthrough
         case TOKEN_NOT: {
             Llvm_unary* new_unary = llvm_unary_new(
