@@ -501,6 +501,10 @@ static Str_view load_unary(
             switch (old_unary->lang_type.type) {
                 case LANG_TYPE_SUM:
                     return load_expr(env, new_block, old_unary->child);
+                case LANG_TYPE_STRUCT:
+                    return load_expr(env, new_block, old_unary->child);
+                case LANG_TYPE_RAW_UNION:
+                    return load_expr(env, new_block, old_unary->child);
                 default:
                     break;
             }

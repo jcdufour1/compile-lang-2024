@@ -2,6 +2,7 @@
 #include <tasts.h>
 #include <llvm_utils.h>
 #include <util.h>
+#include <serialize.h>
 
 #include <symbol_table.h>
 
@@ -34,6 +35,31 @@ static void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
             return;
     }
     unreachable("");
+}
+
+void extend_serialize_lang_type_to_string(const Env* env, String* string, Lang_type lang_type, bool do_tag) {
+    if (do_tag) {
+        extend_lang_type_tag_to_string(string, lang_type.type);
+    }
+
+    if (lang_type.type == LANG_TYPE_TUPLE) {
+        Lang_type_vec lang_types = lang_type_tuple_const_unwrap(lang_type).lang_types;
+        for (size_t idx = 0; idx < lang_types.info.count; idx++) {
+            extend_serialize_lang_type_to_string(env, string, vec_at(&lang_types, idx), do_tag);
+        }
+    } else {
+        if (lang_type_get_str(lang_type).count > 1) {
+            string_extend_strv(&print_arena, string, serialize_lang_type(env, lang_type));
+        } else {
+            string_extend_cstr(&print_arena, string, "<null>");
+        }
+        if (lang_type_get_pointer_depth(lang_type) < 0) {
+            todo();
+        }
+        for (int16_t idx = 0; idx < lang_type_get_pointer_depth(lang_type); idx++) {
+            vec_append(&print_arena, string, '*');
+        }
+    }
 }
 
 void extend_lang_type_to_string(String* string, Lang_type lang_type, bool surround_in_lt_gt, bool do_tag) {

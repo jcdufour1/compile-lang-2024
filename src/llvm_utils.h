@@ -14,6 +14,13 @@ void extend_lang_type_to_string(
     bool do_tag
 );
 
+void extend_serialize_lang_type_to_string(
+    const Env* env,
+    String* string,
+    Lang_type lang_type,
+    bool do_tag
+);
+
 void extend_lang_type_atom_to_string(
     String* string,
     Lang_type_atom atom,

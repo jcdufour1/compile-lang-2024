@@ -211,7 +211,6 @@ void do_passes(Str_view file_text, const Parameters* params) {
     typed = remove_tuples(&env, typed);
     log(LOG_DEBUG, "\n"TAST_FMT, tast_block_print(typed));
     arena_reset(&print_arena);
-    todo();
     // TODO: remove llvm_sum
 
     Llvm_block* llvm_root = add_load_and_store(&env, typed);
