@@ -95,6 +95,16 @@ static inline Lang_type tast_operator_get_lang_type(const Tast_operator* operato
     }
 }
 
+static inline void tast_operator_set_lang_type(Tast_operator* operator, Lang_type lang_type) {
+    if (operator->type == TAST_UNARY) {
+        tast_unary_unwrap(operator)->lang_type = lang_type;
+    } else if (operator->type == TAST_BINARY) {
+        tast_binary_unwrap(operator)->lang_type = lang_type;
+    } else {
+        unreachable("");
+    }
+}
+
 static inline Lang_type tast_literal_get_lang_type(const Tast_literal* lit) {
     switch (lit->type) {
         case TAST_NUMBER:

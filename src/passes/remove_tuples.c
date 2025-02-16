@@ -41,6 +41,8 @@ static Tast_expr* rm_tuple_expr_not_in_assignment(Env* env, Tast_expr* expr);
 
 static Tast_variable_def* rm_tuple_variable_def_sum_to_struct(Env* env, Tast_variable_def* def);
 
+static Tast_operator* rm_tuple_operator_not_in_assignment(Env* env, Tast_operator* oper);
+
 // TODO: give this function a real name
 static Lang_type lang_type_thing(Env* env, Lang_type lang_type, Pos lang_type_pos) {
     switch (lang_type.type) {
@@ -57,7 +59,7 @@ static Lang_type lang_type_thing(Env* env, Lang_type lang_type, Pos lang_type_po
                 // TODO: make helper functions, etc. for line below, because this is too much to do every time
                 lang_type_primitive_const_wrap(lang_type_primitive_new(lang_type_atom_new_from_cstr("i64", 0))),
                 false,
-                util_literal_name_new_prefix("tuple_struct_tag")
+                str_view_from_cstr("tag")
             );
             vec_append(&a_main, &members, tag);
 
@@ -74,7 +76,7 @@ static Lang_type lang_type_thing(Env* env, Lang_type lang_type, Pos lang_type_po
                 lang_type_pos,
                 lang_type_raw_union_const_wrap(lang_type_raw_union_new(lang_type_atom_new(item_type_def->base.name, 0))),
                 false,
-                util_literal_name_new_prefix("tuple_struct_item")
+                str_view_from_cstr("item")
             );
             vec_append(&a_main, &members, item);
 
@@ -688,6 +690,7 @@ static Tast_return* rm_tuple_return(Env* env, Tast_return* rtn) {
 }
 
 static Tast_if* rm_tuple_if(Env* env, Tast_if* lang_if) {
+    lang_if->condition->child = rm_tuple_operator_not_in_assignment(env, lang_if->condition->child);
     lang_if->body = rm_tuple_block(env, lang_if->body);
     return lang_if;
 }
@@ -846,12 +849,71 @@ static Tast_unary* rm_tuple_unary_not_in_assignment(Env* env, Tast_unary* unary)
 }
 
 static Tast_operator* rm_tuple_operator_not_in_assignment(Env* env, Tast_operator* oper) {
+    switch (tast_operator_get_lang_type(oper).type) {
+        case LANG_TYPE_SUM:
+            tast_operator_set_lang_type(
+                oper,
+                lang_type_primitive_const_wrap(lang_type_primitive_new(
+                    lang_type_atom_new_from_cstr("i64", 0)
+                ))
+            );
+            break;
+        case LANG_TYPE_ENUM:
+            break;
+        case LANG_TYPE_PRIMITIVE:
+            break;
+        case LANG_TYPE_STRUCT:
+            break;
+        case LANG_TYPE_RAW_UNION:
+            break;
+        case LANG_TYPE_TUPLE:
+            break;
+        case LANG_TYPE_VOID:
+            break;
+        default:
+            unreachable("");
+    }
+
     switch (oper->type) {
         case TAST_UNARY:
             return tast_unary_wrap(rm_tuple_unary_not_in_assignment(env, tast_unary_unwrap(oper)));
         case TAST_BINARY:
             return tast_binary_wrap(rm_tuple_binary_not_in_assignment(env, tast_binary_unwrap(oper)));
     }
+    unreachable("");
+}
+
+static Tast_member_access* rm_tuple_sum_symbol_not_in_assignment(Env* env, Tast_symbol* sym) {
+    assert(sym->base.lang_type.type == LANG_TYPE_SUM);
+
+    sym->base.lang_type = lang_type_thing(env, sym->base.lang_type, sym->pos);
+    Tast_member_access* new_access = tast_member_access_new(
+        sym->pos,
+        lang_type_primitive_const_wrap(lang_type_primitive_new(lang_type_atom_new_from_cstr("i64", 0))),
+        str_view_from_cstr("tag"),
+        tast_symbol_wrap(sym)
+    );
+    return new_access;
+}
+
+static Tast_expr* rm_tuple_symbol_not_in_assignment(Env* env, Tast_symbol* sym) {
+    switch (sym->base.lang_type.type) {
+        case LANG_TYPE_PRIMITIVE:
+            return tast_symbol_wrap(sym);
+        case LANG_TYPE_ENUM:
+            return tast_symbol_wrap(sym);
+        case LANG_TYPE_STRUCT:
+            return tast_symbol_wrap(sym);
+        case LANG_TYPE_RAW_UNION:
+            return tast_symbol_wrap(sym);
+        case LANG_TYPE_SUM:
+            return tast_member_access_wrap(rm_tuple_sum_symbol_not_in_assignment(env, sym));
+        case LANG_TYPE_TUPLE:
+            return tast_symbol_wrap(sym);
+        case LANG_TYPE_VOID:
+            return tast_symbol_wrap(sym);
+    }
+    unreachable("");
 }
 
 static Tast_expr* rm_tuple_expr_not_in_assignment(Env* env, Tast_expr* expr) {
@@ -859,7 +921,7 @@ static Tast_expr* rm_tuple_expr_not_in_assignment(Env* env, Tast_expr* expr) {
         case TAST_OPERATOR:
             return tast_operator_wrap(rm_tuple_operator_not_in_assignment(env, tast_operator_unwrap(expr)));
         case TAST_SYMBOL:
-            unreachable("");
+            return rm_tuple_symbol_not_in_assignment(env, tast_symbol_unwrap(expr));
         case TAST_MEMBER_ACCESS:
             unreachable("");
         case TAST_INDEX:
@@ -875,7 +937,7 @@ static Tast_expr* rm_tuple_expr_not_in_assignment(Env* env, Tast_expr* expr) {
         case TAST_SUM_CALLEE:
             unreachable("");
         case TAST_SUM_CASE:
-            todo();
+            return tast_literal_wrap(tast_enum_lit_wrap(tast_sum_case_unwrap(expr)->tag));
     }
     unreachable("");
 }
