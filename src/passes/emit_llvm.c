@@ -867,7 +867,7 @@ static void emit_cond_goto(const Env* env, String* output, const Llvm_cond_goto*
 }
 
 static void emit_struct_def_base(const Env* env, String* output, const Struct_def_base* base, bool largest_only) {
-    string_extend_strv(&a_main, output, serialize_struct_def_base(env, *base));
+    string_extend_strv(&a_main, output, base->name);
     string_extend_cstr(&a_main, output, " = type { ");
     bool is_first = true;
 
@@ -888,12 +888,12 @@ static void emit_struct_def_base(const Env* env, String* output, const Struct_de
 }
 
 static void emit_struct_def(const Env* env, String* output, const Llvm_struct_def* struct_def) {
-    string_extend_cstr(&a_main, output, "%struct.STRUCT");
+    string_extend_cstr(&a_main, output, "%struct.");
     emit_struct_def_base(env, output, &struct_def->base, false);
 }
 
 static void emit_raw_union_def(const Env* env, String* output, const Llvm_raw_union_def* raw_union_def) {
-    string_extend_cstr(&a_main, output, "%union.RAW_UNION");
+    string_extend_cstr(&a_main, output, "%union.");
     emit_struct_def_base(env, output, &raw_union_def->base, true);
 }
 

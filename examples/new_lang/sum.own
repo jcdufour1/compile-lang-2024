@@ -1,0 +1,36 @@
+
+extern("c") fn printf(str_to_print u8*, args any...) i32
+
+type Token raw_union {
+    num i32
+    string u8*
+}
+
+type Thing sum {
+    token Token
+    num i32
+}
+
+fn thing_print(thing Thing) {
+    switch thing {
+        case Thing.token(currToken): {
+            printf("thing is token: ")
+            token_print(currToken)
+        }
+        case Thing.num(num): printf("thing is number: %d\n", 0)
+    }
+}
+
+fn token_print(token Token) {
+    printf("token is number: %d\n", token.num)
+}
+
+fn main() i32 {
+    let token Token 
+    token.num = 82
+    let thing2 Thing = Thing.token(token)
+
+    thing_print(thing2)
+
+    return 0
+}
