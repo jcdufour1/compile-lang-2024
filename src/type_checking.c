@@ -908,13 +908,46 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
                 todo();
             }
             Tast_sum_callee* sum_callee = tast_sum_callee_unwrap(new_callee);
+            log(LOG_DEBUG, TAST_FMT, tast_sum_callee_print(sum_callee));
+            log(LOG_DEBUG, TAST_FMT, tast_enum_lit_print(sum_callee->tag));
+
+            Uast_def* sum_def_ = NULL;
+            try(usymbol_lookup(&sum_def_, env, lang_type_get_str(sum_callee->sum_lang_type)));
+            Uast_sum_def* sum_def = uast_sum_def_unwrap(sum_def_);
+            log(LOG_DEBUG, TAST_FMT, uast_sum_def_print(uast_sum_def_unwrap(sum_def_)));
 
             Tast_expr* new_item = NULL;
-            try(try_set_expr_types(env, &new_item, vec_at(&fun_call->args, 0)));
+            switch (check_generic_assignment(
+                env,
+                &new_item,
+                lang_type_from_ulang_type(env, vec_at(&sum_def->base.members, sum_callee->tag->data)->lang_type),
+                vec_at(&fun_call->args, 0),
+                uast_expr_get_pos(vec_at(&fun_call->args, 0))
+            )) {
+                case CHECK_ASSIGN_OK:
+                    log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_item));
+                    break;
+                case CHECK_ASSIGN_INVALID:
+                    msg(
+                        LOG_ERROR, EXPECT_FAIL_SUM_LIT_INVALID_ARG, env->file_text, tast_expr_get_pos(new_item),
+                        "cannot assign "TAST_FMT" of type `"LANG_TYPE_FMT"` to '"LANG_TYPE_FMT"`\n", 
+                        tast_expr_print(new_item),
+                        lang_type_print(tast_expr_get_lang_type(new_item)), 
+                        lang_type_print(lang_type_from_ulang_type(
+                            env, vec_at(&sum_def->base.members, sum_callee->tag->data)->lang_type
+                        ))
+                   );
+                   break;
+                case CHECK_ASSIGN_ERROR:
+                    todo();
+                default:
+                    unreachable("");
+            }
 
             // TODO: is tag set to a type that makes sense?
             // (right now, it is set to i64)
             sum_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_primitive_new(lang_type_atom_new_from_cstr("i64", 0)));
+
             Tast_sum_lit* new_lit = tast_sum_lit_new(
                 sum_callee->pos,
                 sum_callee->tag,

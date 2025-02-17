@@ -950,13 +950,13 @@ static Tast_expr* rm_tuple_union_lit_rhs(Env* env, Tast_union_lit* rhs, Pos assi
             );
             try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(new_tag)));
             vec_append(&a_main, &new_params, new_tag);
-            //vec_append(&a_main, &new_args, vec_at(&members, 0));
-            vec_append(&a_main, &new_args, tast_operator_wrap(tast_unary_wrap(tast_unary_new(
-                tast_expr_get_pos(vec_at(&members, 0)),
-                vec_at(&members, 0),
-                TOKEN_UNSAFE_CAST,
-                vec_at(&tast_raw_union_def_unwrap(struct_def_)->base.members, rhs->tag->data)->lang_type
-            ))));
+            vec_append(&a_main, &new_args, vec_at(&members, 0));
+            //vec_append(&a_main, &new_args, tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+            //    tast_expr_get_pos(vec_at(&members, 0)),
+            //    vec_at(&members, 0),
+            //    TOKEN_UNSAFE_CAST,
+            //    vec_at(&tast_raw_union_def_unwrap(struct_def_)->base.members, rhs->tag->data)->lang_type
+            //))));
             log(LOG_DEBUG, TAST_FMT, tast_expr_print(vec_at(&new_args, 0)));
 
             assert(new_args.info.count == 1);
