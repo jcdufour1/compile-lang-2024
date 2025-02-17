@@ -23,6 +23,7 @@ static inline Str_view serialize_struct_def(const Env* env, const Tast_struct_de
     String name = {0};
     string_extend_cstr(&a_main, &name, "STRUCT");
     string_extend_strv(&a_main, &name, serialize_struct_def_base(env, def->base));
+    string_extend_cstr(&a_main, &name, "END_STRUCT");
     return string_to_strv(name);
 }
 
@@ -30,6 +31,7 @@ static inline Str_view serialize_raw_union_def(const Env* env, const Tast_raw_un
     String name = {0};
     string_extend_cstr(&a_main, &name, "RAW_UNION");
     string_extend_strv(&a_main, &name, serialize_struct_def_base(env, def->base));
+    string_extend_cstr(&a_main, &name, "END_RAW_UNION");
     return string_to_strv(name);
 }
 
@@ -37,6 +39,7 @@ static inline Str_view serialize_sum_def(const Env* env, const Tast_sum_def* def
     String name = {0};
     string_extend_cstr(&a_main, &name, "SUM");
     string_extend_strv(&a_main, &name, serialize_struct_def_base(env, def->base));
+    string_extend_cstr(&a_main, &name, "END_SUM");
     return string_to_strv(name);
 }
 

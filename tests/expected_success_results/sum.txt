@@ -1,0 +1,8 @@
+token is number: 23
+token is string: hello world
+token is number: 57
+token is number: 32
+thing is token: token is number: 23
+thing is token: token is string: hello world
+thing is number: 87
+thing is number: 25

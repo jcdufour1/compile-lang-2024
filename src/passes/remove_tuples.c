@@ -651,10 +651,12 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
     //
     Tast_expr_vec members = {0};
     Tast_sum_lit* sum_lit = rhs;
-    env->parent_of = PARENT_OF_CASE;
+    Tast_expr* inner_thing = rm_tuple_expr_rhs(env, sum_lit->item, assign_pos);
+    log(LOG_DEBUG, TAST_FMT, tast_sum_lit_print(rhs));
+    log(LOG_DEBUG, TAST_FMT, tast_expr_print(sum_lit->item));
+    log(LOG_DEBUG, TAST_FMT, tast_expr_print(inner_thing));
     vec_append(&a_main, &members, tast_literal_wrap(tast_enum_lit_wrap(sum_lit->tag)));
-    vec_append(&a_main, &members, rm_tuple_expr_rhs(env, sum_lit->item, assign_pos));
-    env->parent_of = PARENT_OF_NONE;
+    vec_append(&a_main, &members, inner_thing);
 
     Tast_def* struct_def_ = NULL;
     log(LOG_DEBUG, TAST_FMT, lang_type_print(lhs_lang_type));
