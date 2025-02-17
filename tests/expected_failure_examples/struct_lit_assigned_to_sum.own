@@ -1,0 +1,16 @@
+
+
+type Token sum {
+    number i32
+    string u8*
+}
+
+type Thing struct {
+    number i32
+    string u8*
+}
+
+fn main() i32 {
+    let token Token = {.number = 23, .string = "bye"}
+    return 0
+}

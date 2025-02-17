@@ -60,6 +60,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"undefined-symbol", EXPECT_FAIL_UNDEFINED_SYMBOL},
     {"undefined-function", EXPECT_FAIL_UNDEFINED_FUNCTION},
     {"struct-init-on-raw-union", EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION},
+    {"struct-init-on-sum", EXPECT_FAIL_STRUCT_INIT_ON_SUM},
     {"undefined-type", EXPECT_FAIL_UNDEFINED_TYPE},
     {"missing-close-sq-bracket", EXPECT_FAIL_MISSING_CLOSE_SQ_BRACKET},
     {"deref_non_pointer", EXPECT_FAIL_DEREF_NON_POINTER},

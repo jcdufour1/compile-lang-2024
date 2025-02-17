@@ -624,6 +624,13 @@ bool try_set_struct_literal_assignment_types(
                 assign_pos, "struct literal cannot be assigned to raw_union\n"
             );
             return false;
+        case LANG_TYPE_SUM:
+            // TODO: improve this
+            msg(
+                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_SUM, env->file_text,
+                assign_pos, "struct literal cannot be assigned to sum\n"
+            );
+            return false;
         case LANG_TYPE_PRIMITIVE:
             // TODO: expected failure case for this
             unreachable("returning value in non void function");
@@ -1763,7 +1770,7 @@ bool try_set_if_types(Env* env, Tast_if** new_tast, Uast_if* uast) {
 
     Tast_condition* new_cond = NULL;
     if (!try_set_condition_types(env, &new_cond, uast->condition)) {
-        status = false;
+        return false;
     }
 
     Uast_stmt_vec new_if_children = {0};
