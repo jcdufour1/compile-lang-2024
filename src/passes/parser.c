@@ -149,55 +149,26 @@ static PARSE_STATUS msg_redefinition_of_symbol(const Env* env, const Uast_def* n
 }
 
 static bool starts_with_struct_def(Tk_view tokens) {
-    if (tokens.count < 3) {
-        return false;
-    }
-    if (!try_consume(NULL, &tokens, TOKEN_TYPE_DEF)) {
-        return false;
-    }
-    if (!try_consume(NULL, &tokens, TOKEN_SYMBOL)) {
-        return false;
-    }
     return tk_view_front(tokens).type == TOKEN_STRUCT;
 }
 
-static bool starts_with_raw_union_definition(Tk_view tokens) {
-    if (tokens.count < 3) {
-        return false;
-    }
-    if (!try_consume(NULL, &tokens, TOKEN_TYPE_DEF)) {
-        return false;
-    }
-    if (!try_consume(NULL, &tokens, TOKEN_SYMBOL)) {
-        return false;
-    }
+static bool starts_with_raw_union_def(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_RAW_UNION;
 }
 
-static bool starts_with_enum_definition(Tk_view tokens) {
-    if (tokens.count < 3) {
-        return false;
-    }
-    if (!try_consume(NULL, &tokens, TOKEN_TYPE_DEF)) {
-        return false;
-    }
-    if (!try_consume(NULL, &tokens, TOKEN_SYMBOL)) {
-        return false;
-    }
+static bool starts_with_enum_def(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_ENUM;
 }
 
-static bool starts_with_sum_definition(Tk_view tokens) {
-    if (tokens.count < 3) {
-        return false;
-    }
-    if (!try_consume(NULL, &tokens, TOKEN_TYPE_DEF)) {
-        return false;
-    }
-    if (!try_consume(NULL, &tokens, TOKEN_SYMBOL)) {
-        return false;
-    }
+static bool starts_with_sum_def(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_SUM;
+}
+
+static bool starts_with_type_def(Tk_view tokens) {
+    if (tokens.count < 1) {
+        return false;
+    }
+    return tk_view_front(tokens).type == TOKEN_TYPE_DEF;
 }
 
 static bool starts_with_function_decl(Tk_view tokens) {
@@ -315,7 +286,7 @@ static void sync(Tk_view* tokens) {
         }
 
         if (
-            starts_with_struct_def(*tokens) ||
+            starts_with_type_def(*tokens) ||
             starts_with_function_decl(*tokens) ||
             starts_with_function_def(*tokens) ||
             starts_with_return(*tokens) ||
@@ -1012,11 +983,7 @@ static PARSE_STATUS extract_struct_base_def_implicit_type(
     return PARSE_OK;
 }
 
-static PARSE_STATUS extract_struct_def(Env* env, Uast_struct_def** struct_def, Tk_view* tokens) {
-    try(try_consume(NULL, tokens, TOKEN_TYPE_DEF));
-
-    Token name = {0};
-    try(try_consume(&name, tokens, TOKEN_SYMBOL));
+static PARSE_STATUS extract_struct_def(Env* env, Uast_struct_def** struct_def, Tk_view* tokens, Token name) {
     try(try_consume(NULL, tokens, TOKEN_STRUCT));
 
     Ustruct_def_base base = {0};
@@ -1032,11 +999,7 @@ static PARSE_STATUS extract_struct_def(Env* env, Uast_struct_def** struct_def, T
     return PARSE_OK;
 }
 
-static PARSE_STATUS extract_raw_union_def(Env* env, Uast_raw_union_def** raw_union_def, Tk_view* tokens) {
-    try(try_consume(NULL, tokens, TOKEN_TYPE_DEF));
-
-    Token name = {0};
-    try(try_consume(&name, tokens, TOKEN_SYMBOL));
+static PARSE_STATUS extract_raw_union_def(Env* env, Uast_raw_union_def** raw_union_def, Tk_view* tokens, Token name) {
     try(try_consume(NULL, tokens, TOKEN_RAW_UNION));
 
     Ustruct_def_base base = {0};
@@ -1052,11 +1015,7 @@ static PARSE_STATUS extract_raw_union_def(Env* env, Uast_raw_union_def** raw_uni
     return PARSE_OK;
 }
 
-static PARSE_STATUS extract_enum_def(Env* env, Uast_enum_def** enum_def, Tk_view* tokens) {
-    try(try_consume(NULL, tokens, TOKEN_TYPE_DEF));
-
-    Token name = {0};
-    try(try_consume(&name, tokens, TOKEN_SYMBOL));
+static PARSE_STATUS extract_enum_def(Env* env, Uast_enum_def** enum_def, Tk_view* tokens, Token name) {
     try(try_consume(NULL, tokens, TOKEN_ENUM));
 
     Ustruct_def_base base = {0};
@@ -1072,11 +1031,7 @@ static PARSE_STATUS extract_enum_def(Env* env, Uast_enum_def** enum_def, Tk_view
     return PARSE_OK;
 }
 
-static PARSE_STATUS extract_sum_def(Env* env, Uast_sum_def** sum_def, Tk_view* tokens) {
-    try(try_consume(NULL, tokens, TOKEN_TYPE_DEF));
-
-    Token name = {0};
-    try(try_consume(&name, tokens, TOKEN_SYMBOL));
+static PARSE_STATUS extract_sum_def(Env* env, Uast_sum_def** sum_def, Tk_view* tokens, Token name) {
     try(try_consume(NULL, tokens, TOKEN_SUM));
 
     Ustruct_def_base base = {0};
@@ -1087,6 +1042,47 @@ static PARSE_STATUS extract_sum_def(Env* env, Uast_sum_def** sum_def, Tk_view* t
     *sum_def = uast_sum_def_new(name.pos, base);
     if (!usymbol_add(env, uast_sum_def_wrap(*sum_def))) {
         msg_redefinition_of_symbol(env, uast_sum_def_wrap(*sum_def));
+        return PARSE_ERROR;
+    }
+    return PARSE_OK;
+}
+
+static PARSE_STATUS extract_type_def(Env* env, Uast_def** def, Tk_view* tokens) {
+    Token name = {0};
+    if (!try_consume(&name, tokens, TOKEN_SYMBOL)) {
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), "", TOKEN_SYMBOL);
+        return PARSE_ERROR;
+    }
+
+    if (starts_with_struct_def(*tokens)) {
+        Uast_struct_def* struct_def;
+        if (PARSE_OK != extract_struct_def(env, &struct_def, tokens, name)) {
+            return PARSE_ERROR;
+        }
+        *def = uast_struct_def_wrap(struct_def);
+    } else if (starts_with_raw_union_def(*tokens)) {
+        Uast_raw_union_def* raw_union_def;
+        if (PARSE_OK != extract_raw_union_def(env, &raw_union_def, tokens, name)) {
+            return PARSE_ERROR;
+        }
+        *def = uast_raw_union_def_wrap(raw_union_def);
+    } else if (starts_with_enum_def(*tokens)) {
+        Uast_enum_def* enum_def;
+        if (PARSE_OK != extract_enum_def(env, &enum_def, tokens, name)) {
+            return PARSE_ERROR;
+        }
+        *def = uast_enum_def_wrap(enum_def);
+    } else if (starts_with_sum_def(*tokens)) {
+        Uast_sum_def* sum_def;
+        if (PARSE_OK != extract_sum_def(env, &sum_def, tokens, name)) {
+            return PARSE_ERROR;
+        }
+        *def = uast_sum_def_wrap(sum_def);
+    } else {
+        msg_parser_expected(
+            env->file_text, tk_view_front(*tokens), "",
+            TOKEN_STRUCT, TOKEN_RAW_UNION, TOKEN_ENUM, TOKEN_SUM
+        );
         return PARSE_ERROR;
     }
     return PARSE_OK;
@@ -1599,32 +1595,18 @@ static PARSE_STATUS extract_switch(Env* env, Uast_switch** lang_switch, Tk_view*
 
 static PARSE_EXPR_STATUS extract_statement(Env* env, Uast_stmt** child, Tk_view* tokens, bool defer_sym_add) {
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
+    assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
     Uast_stmt* lhs = NULL;
-    if (starts_with_struct_def(*tokens)) {
-        Uast_struct_def* struct_def;
-        if (PARSE_OK != extract_struct_def(env, &struct_def, tokens)) {
+    if (starts_with_type_def(*tokens)) {
+        assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
+        try(try_consume(NULL, tokens, TOKEN_TYPE_DEF));
+        Uast_def* fun_decl;
+        if (PARSE_OK != extract_type_def(env, &fun_decl, tokens)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = uast_def_wrap(uast_struct_def_wrap(struct_def));
-    } else if (starts_with_raw_union_definition(*tokens)) {
-        Uast_raw_union_def* raw_union_def;
-        if (PARSE_OK != extract_raw_union_def(env, &raw_union_def, tokens)) {
-            return PARSE_EXPR_ERROR;
-        }
-        lhs = uast_def_wrap(uast_raw_union_def_wrap(raw_union_def));
-    } else if (starts_with_enum_definition(*tokens)) {
-        Uast_enum_def* enum_def;
-        if (PARSE_OK != extract_enum_def(env, &enum_def, tokens)) {
-            return PARSE_EXPR_ERROR;
-        }
-        lhs = uast_def_wrap(uast_enum_def_wrap(enum_def));
-    } else if (starts_with_sum_definition(*tokens)) {
-        Uast_sum_def* sum_def;
-        if (PARSE_OK != extract_sum_def(env, &sum_def, tokens)) {
-            return PARSE_EXPR_ERROR;
-        }
-        lhs = uast_def_wrap(uast_sum_def_wrap(sum_def));
+        lhs = uast_def_wrap(fun_decl);
+        log_tokens(LOG_DEBUG, *tokens);
     } else if (starts_with_function_decl(*tokens)) {
         Uast_function_decl* fun_decl;
         if (PARSE_OK != extract_function_decl(env, &fun_decl, tokens)) {
@@ -2460,7 +2442,6 @@ static PARSE_EXPR_STATUS try_extract_expression(
                     case PARSE_EXPR_OK:
                         *result = binary;
                         lhs = *result;
-                        log_tokens(LOG_DEBUG, *tokens);
                         assert(*result);
                         break;
                     case PARSE_EXPR_NONE:
