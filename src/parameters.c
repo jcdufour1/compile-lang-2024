@@ -55,6 +55,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"invalid-function-arguments", EXPECT_FAIL_INVALID_FUN_ARG},
     {"mismatched-return-type", EXPECT_FAIL_MISMATCHED_RETURN_TYPE},
     {"assignment-mismatched-types", EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES},
+    {"unary-mismatched-types", EXPECT_FAIL_UNARY_MISMATCHED_TYPES},
     {"binary-mismatched-types", EXPECT_FAIL_BINARY_MISMATCHED_TYPES},
     {"expected-expression", EXPECT_FAIL_EXPECTED_EXPRESSION},
     {"undefined-symbol", EXPECT_FAIL_UNDEFINED_SYMBOL},

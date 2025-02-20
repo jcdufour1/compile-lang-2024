@@ -308,6 +308,8 @@ uint64_t sizeof_primitive(Lang_type_primitive primitive) {
     // TODO: make more generalized system for different bit widths, etc.
     if (lang_type_atom_is_equal(primitive.atom, lang_type_atom_new_from_cstr("u8", 1))) {
         return 8;
+    } else if (lang_type_atom_is_equal(primitive.atom, lang_type_atom_new_from_cstr("i1", 0))) {
+        return 1;
     } else if (lang_type_atom_is_equal(primitive.atom, lang_type_atom_new_from_cstr("i32", 0))) {
         return 4;
     } else if (lang_type_atom_is_equal(primitive.atom, lang_type_atom_new_from_cstr("i64", 0))) {
