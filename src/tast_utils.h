@@ -173,7 +173,7 @@ static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr) {
         case TAST_TUPLE:
             return lang_type_tuple_const_wrap(tast_tuple_const_unwrap(expr)->lang_type);
         case TAST_SUM_CALLEE:
-            unreachable("");
+            return tast_sum_callee_const_unwrap(expr)->sum_lang_type;
         case TAST_SUM_CASE:
             return tast_sum_case_const_unwrap(expr)->sum_lang_type;
         case TAST_SUM_ACCESS:

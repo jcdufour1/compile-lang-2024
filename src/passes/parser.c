@@ -2223,6 +2223,20 @@ static PARSE_EXPR_STATUS extract_expression_function_call(
                     unreachable("");
             }
             unreachable("");
+        case UAST_TUPLE: {
+            Uast_tuple* tuple = uast_tuple_unwrap(lhs);
+            try(tuple->members.info.count > 0);
+            Uast_expr* new_last = NULL;
+            PARSE_EXPR_STATUS status = extract_expression_function_call(env, &new_last, vec_top(&tuple->members), tokens);
+            if (status != PARSE_EXPR_OK) {
+                return status;
+            }
+            vec_rem_last(&tuple->members);
+            vec_append(&a_main, &tuple->members, new_last);
+            *result = uast_tuple_wrap(tuple);
+            return PARSE_EXPR_OK;
+        }
+            unreachable(UAST_FMT, uast_expr_print(lhs));
         default:
             unreachable(UAST_FMT, uast_expr_print(lhs));
     }
@@ -2393,6 +2407,7 @@ static PARSE_EXPR_STATUS try_extract_expression(
     }
 
     while (token_is_operator(tk_view_front(*tokens), can_be_tuple)) {
+        log(LOG_DEBUG, TAST_FMT, uast_expr_print(lhs));
         if (!is_binary(tk_view_front(*tokens).type)) {
             todo();
         } else if (token_is_opening(tk_view_front(*tokens))) {

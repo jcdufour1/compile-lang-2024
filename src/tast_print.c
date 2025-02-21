@@ -598,7 +598,9 @@ Str_view tast_function_decl_print_internal(const Tast_function_decl* fun_decl, i
 Str_view tast_function_def_print_internal(const Tast_function_def* fun_def, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "function_def\n", indent);
+    string_extend_cstr_indent(&print_arena, &buf, "function_def", indent);
+    extend_pos(&buf, fun_def->pos);
+    string_extend_cstr(&print_arena, &buf, "\n");
     indent += INDENT_WIDTH;
     string_extend_strv(&print_arena, &buf, tast_function_decl_print_internal(fun_def->decl, indent));
     string_extend_strv(&print_arena, &buf, tast_block_print_internal(fun_def->body, indent));

@@ -6,6 +6,11 @@ type TokenType enum {
     string
 }
 
+type Token sum {
+    num i32
+    string u8*
+}
+
 fn get_data() (u8*, i32) {
     return "hello", 76
 }
@@ -14,17 +19,32 @@ fn get_data_3() (i32, u8*, TokenType) {
     return 89, "bye", TokenType.string
 }
 
+fn get_data_4() (i32, u8*, TokenType, Token) {
+    return 91, "getting a new token", TokenType.num, Token.num(12)
+}
+
+fn token_print(token Token) {
+    switch token {
+        case Token.num(num): printf("token is number: %d\n", num)
+        case Token.string(str): printf("token is string: %s\n", str)
+    }
+}
+
 fn main() i32 {
     let num i32
     let string u8*
     let token_type TokenType
-    string, num = get_data()
+    let token Token
 
+    string, num = get_data()
     printf("%d %s\n", num, string);
 
     num, string, token_type = get_data_3()
-
     printf("%d %s %d\n", num, string, token_type);
+
+    num, string, token_type, token = get_data_4()
+    printf("%d %s %d\n", num, string, token_type);
+    token_print(token)
 
     return 0
 }
