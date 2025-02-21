@@ -1,0 +1,18 @@
+
+type Opt_int sum {
+    some i32
+    none i1
+}
+
+fn opt_int_print(num Opt_int) {
+    switch num {
+        case Opt_int.some(num): printf("got number: %d\n", num)
+        case Opt_int.none(dummy): printf("got nothing\n")
+    }
+}
+
+fn main() i32 {
+    let num Opt_int = Opt_int.some(76)
+    opt_int_print(num)
+    return 0
+}

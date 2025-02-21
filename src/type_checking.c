@@ -1991,6 +1991,8 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
         env->parent_of_operand = lang_switch->operand;
         Tast_if* new_if = NULL;
         if (!try_set_if_types(env, &new_if, uast_if_new(old_case->pos, cond, if_true))) {
+            env->parent_of_operand = NULL;
+            env->parent_of = PARENT_OF_NONE;
             return false;
         }
         env->parent_of_operand = NULL;
@@ -2007,6 +2009,21 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
     return check_for_exhaustiveness_finish(env, exhaustive_data, lang_switch->pos);
 }
 
+// TODO: merge this with msg_redefinition_of_symbol?
+static void try_set_msg_redefinition_of_symbol(const Env* env, const Uast_def* new_sym_def) {
+    msg(
+        LOG_ERROR, EXPECT_FAIL_REDEFINITION_SYMBOL, env->file_text, uast_def_get_pos(new_sym_def),
+        "redefinition of symbol "STR_VIEW_FMT"\n", str_view_print(uast_def_get_name(new_sym_def))
+    );
+
+    Uast_def* original_def;
+    try(usymbol_lookup(&original_def, env, uast_def_get_name(new_sym_def)));
+    msg(
+        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, uast_def_get_pos(original_def),
+        STR_VIEW_FMT " originally defined here\n", str_view_print(uast_def_get_name(original_def))
+    );
+}
+
 bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def) {
     bool status = true;
 
@@ -2014,19 +2031,24 @@ bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, boo
 
     vec_append(&a_main, &env->ancesters, &new_sym_coll);
 
-    Uast_def* redef_sym = NULL;
-    try(usymbol_do_add_defered(&redef_sym, env));
-
     Tast_stmt_vec new_tasts = {0};
+
+    Uast_def* redef_sym = NULL;
+    if (!usymbol_do_add_defered(&redef_sym, env)) {
+        try_set_msg_redefinition_of_symbol(env, redef_sym);
+        status = false;
+        goto error;
+    }
+
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         Uast_stmt* curr_tast = vec_at(&block->children, idx);
         Tast_stmt* new_tast = NULL;
-        if (!try_set_stmt_types(env, &new_tast, curr_tast)) {
+        if (try_set_stmt_types(env, &new_tast, curr_tast)) {
+            assert(curr_tast);
+            vec_append(&a_main, &new_tasts, new_tast);
+        } else {
             status = false;
         }
-
-        assert(curr_tast);
-        vec_append(&a_main, &new_tasts, new_tast);
     }
 
     if (is_directly_in_fun_def && (

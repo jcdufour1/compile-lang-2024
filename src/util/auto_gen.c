@@ -38,6 +38,17 @@
 //  lang_type_number should also have subtypes for signed, unsigned, etc.
 //
 //
+//
+// TODO: expected failure test for 
+// type Token sum {
+//     string u8*
+//     number i32
+// }
+//
+// fn main() i32 {
+//     let token Token = Token.number
+//     return 0
+// }
 
 static void gen_symbol_table_c_file_symbol_update(String* text, Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, text, "void ");

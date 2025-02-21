@@ -23,6 +23,8 @@ static Tast_stmt* rm_tuple_stmt(Env* env, Tast_stmt* stmt);
 
 static Tast_expr* rm_tuple_expr_rhs(Env* env, Tast_expr* rhs, Pos assign_pos);
 
+static Tast_stmt* rm_tuple_stmt_rhs(Env* env, Tast_stmt* rhs, Pos assign_pos);
+
 static Tast_block* rm_tuple_block(Env* env, Tast_block* block);
 
 static Tast_for_range* rm_tuple_for_range(Env* env, Tast_for_range* lang_for);
@@ -306,7 +308,7 @@ static Tast_stmt* rm_tuple_assignment(Env* env, Tast_assignment* assign) {
         case LANG_TYPE_TUPLE:
             return rm_tuple_assignment_tuple(env, assign);
         case LANG_TYPE_SUM:
-            assign->lhs = tast_def_wrap(tast_variable_def_wrap(rm_tuple_variable_def_sum_to_struct(env, tast_variable_def_unwrap(tast_def_unwrap(assign->lhs)))));
+            assign->lhs = rm_tuple_stmt_rhs(env, assign->lhs, assign->pos);
             log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
             return tast_assignment_wrap(assign);
         case LANG_TYPE_PRIMITIVE:
@@ -1087,6 +1089,18 @@ static Tast_expr* rm_tuple_expr_rhs(Env* env, Tast_expr* rhs, Pos assign_pos) {
             todo();
         case TAST_SUM_ACCESS:
             return tast_member_access_wrap(rm_tuple_sum_access_rhs(env, tast_sum_access_unwrap(rhs), assign_pos));
+    }
+    unreachable("");
+}
+
+static Tast_stmt* rm_tuple_stmt_rhs(Env* env, Tast_stmt* rhs, Pos assign_pos) {
+    switch (rhs->type) {
+        case TAST_EXPR:
+            return tast_expr_wrap(rm_tuple_expr_rhs(env, tast_expr_unwrap(rhs), assign_pos));
+        case TAST_DEF:
+            return tast_def_wrap(tast_variable_def_wrap(rm_tuple_variable_def_sum_to_struct(env, tast_variable_def_unwrap(tast_def_unwrap(rhs)))));
+        default:
+            unreachable("");
     }
     unreachable("");
 }
