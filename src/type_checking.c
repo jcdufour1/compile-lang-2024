@@ -486,6 +486,7 @@ bool try_set_unary_types_finish(
             new_lang_type = tast_expr_get_lang_type(new_child);
             if (new_lang_type.type != LANG_TYPE_PRIMITIVE) {
                 // TODO: check if this primitive type can actually be valid operand to logical not
+                // TODO: make subtypes for LANG_TYPE_PRIMITIVE to make above easier
                 msg(
                     LOG_ERROR, EXPECT_FAIL_UNARY_MISMATCHED_TYPES, env->file_text, tast_expr_get_pos(new_child),
                     "type `"LANG_TYPE_FMT"` is not a valid operand to logical not operation\n",

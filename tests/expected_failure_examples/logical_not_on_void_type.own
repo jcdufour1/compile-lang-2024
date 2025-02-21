@@ -1,0 +1,27 @@
+
+extern("c") fn isdigit(character i32)
+
+type Opt_int sum {
+    number i32
+    none i1
+}
+
+type Token struct {
+    num i32
+    string u8*
+}
+
+fn get_token() Token {
+    return {.num = 34, .string = "hello"}
+}
+
+fn read_num(string u8*) Opt_int {
+    if (!get_token()) {
+        return Opt_int.none(0);
+    }
+    if (!isdigit(unsafe_cast<i32>string[0])) {
+        return Opt_int.none(0);
+    }
+    return Opt_int.number(9)
+}
+

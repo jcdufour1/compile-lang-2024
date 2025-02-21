@@ -6,6 +6,8 @@
 #include <auto_gen_lang_type.h>
 #include <auto_gen_ulang_type.h>
 
+// TODO: support alternative backend (such as qbe, cuik and c)
+
 // TODO: consistant naming scheme for tast_expr_get_lang_type, etc.
 
 // TODO: fix printing for lang_type in msg to not put newline

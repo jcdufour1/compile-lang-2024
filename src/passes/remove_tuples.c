@@ -54,6 +54,7 @@ static Tast_expr* rm_tuple_sum_symbol_not_in_assignment(Env* env, Tast_symbol* s
 static Tast_expr* rm_tuple_raw_union_symbol_not_in_assignment(Env* env, Tast_symbol* sym);
 
 // TODO: give this function a real name
+// TODO: remove parameter do_union
 static Lang_type lang_type_thing(Env* env, Lang_type lang_type, Pos lang_type_pos, bool do_union) {
     switch (lang_type.type) {
         case LANG_TYPE_SUM: {
@@ -243,7 +244,7 @@ static Tast_stmt* rm_tuple_assignment_tuple(Env* env, Tast_assignment* assign) {
 
     Tast_def* struct_def_ = NULL;
     // TODO: think about out of order things
-    try(symbol_lookup(&struct_def_, env, serialize_lang_type(env, tast_expr_get_lang_type(src))));
+    try(symbol_lookup(&struct_def_, env, lang_type_get_str(lang_type_thing(env, tast_expr_get_lang_type(src), tast_expr_get_pos(src), false))));
 
     Lang_type new_var_lang_type = lang_type_struct_const_wrap(
         lang_type_struct_new(lang_type_atom_new(tast_struct_def_unwrap(struct_def_)->base.name, 0))
@@ -893,14 +894,17 @@ static Tast_function_call* rm_tuple_function_call(Env* env, Tast_function_call* 
     Uast_def* fun_decl_ = NULL;
     try(usymbol_lookup(&fun_decl_, env, fun_call->name));
     Uast_function_decl* fun_decl = uast_function_decl_unwrap(fun_decl_);
+    fun_call->lang_type = lang_type_thing(env, fun_call->lang_type, fun_call->pos, false);
 
     for (size_t idx = 0; idx < MIN(fun_decl->params->params.info.count, fun_call->args.info.count); idx++) {
         Tast_expr** curr = vec_at_ref(&fun_call->args, idx);
+        log(LOG_DEBUG, TAST_FMT, tast_expr_print(*curr));
         *curr = rm_tuple_generic_assignment_rhs(
             env,
             *curr,
             tast_expr_get_pos(*curr)
         );
+        log(LOG_DEBUG, TAST_FMT, tast_expr_print(*curr));
     }
     return fun_call;
 }
