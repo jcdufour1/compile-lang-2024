@@ -124,7 +124,7 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
             
             Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
             struct_def->base.name = serialize_struct_def(env, struct_def);
-            // TODO: put struct_defs in different symbol_table, etc. to avoid collisions?
+            // TODO: consider collisions with generated structs and user defined structs
             if (sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def))) {
                 vec_append(&a_main, &env->extra_structs, struct_def);
             }
@@ -178,7 +178,7 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
             };
             // todo: remove untyped things here
             Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
-            // TODO: put struct_defs in different symbol_table, etc. to avoid collisions?
+            // TODO: consider collisions with generated structs and user defined structs
             log(LOG_DEBUG, STR_VIEW_FMT, tast_struct_def_print(struct_def));
             if (sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def))) {
                 vec_append(&a_main, &env->extra_structs, struct_def);
@@ -357,10 +357,6 @@ static Tast_function_def* rm_tuple_function_def_new(Env* env, Tast_function_decl
                     }))
                 );
 
-                // TODO: rename tast_symbol to tast_symbol
-                // TODO: rename uast_symbol to uast_symbol
-                // TODO: rename Uast_member_access to Uast_member_access
-                // TODO: rename Tast_member_access to Tast_member_access
                 Tast_expr* rhs = rm_tuple_expr_rhs(env, tast_symbol_wrap(tast_symbol_new(decl->pos, (Sym_typed_base) {
                         .lang_type = rm_tuple_lang_type(env, vec_at(&decl->params->params, idx)->lang_type, new_var->pos),
                         .name = vec_at(&decl->params->params, idx)->name,
