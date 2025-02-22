@@ -833,7 +833,6 @@ static void gen_symbol_table_struct(const char* file_path, Sym_tbl_type_vec type
     gen_gen("    Usymbol_table usymbol_table;\n");
     gen_gen("    Symbol_table symbol_table;\n");
     gen_gen("    Alloca_table alloca_table;\n");
-    gen_gen("    Rm_tuple_struct_table rm_tuple_struct_table;\n");
     gen_gen("} Symbol_collection;\n");
     gen_gen("\n");
 
@@ -877,9 +876,6 @@ static Sym_tbl_type_vec get_symbol_tbl_types(void) {
     ));
     vec_append(&gen_a, &types, symbol_tbl_type_new( 
         "Llvm", "alloca", "all", "llvm_tast_get_name", "alloca_table", "llvm_ancesters", "llvm_print", false, false
-    ));
-    vec_append(&gen_a, &types, symbol_tbl_type_new( 
-        "Tast_def", "rm_tuple_struct", "rm_tuple_stru", "serialize_def", "rm_tuple_struct_table", "", "tast_def_print", false, true
     ));
     //vec_append(&gen_a, &types, symbol_tbl_type_new( 
     //    "Llvm", "Llvm", "ll", "llvm_tast_get_name", "llvm_table", "llvm_ancesters", false
