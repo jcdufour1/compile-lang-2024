@@ -32,8 +32,11 @@ static int64_t bit_width_needed_signed(int64_t num) {
 //}
 
 static Tast_expr* auto_deref_to_0(Env* env, Tast_expr* expr) {
+    int16_t prev_pointer_depth = lang_type_get_pointer_depth(tast_expr_get_lang_type(expr));
     while (lang_type_get_pointer_depth(tast_expr_get_lang_type(expr)) > 0) {
         try(try_set_unary_types_finish(env, &expr, expr, tast_expr_get_pos(expr), TOKEN_DEREF, (Lang_type) {0}));
+        assert(lang_type_get_pointer_depth(tast_expr_get_lang_type(expr)) + 1 == prev_pointer_depth);
+        prev_pointer_depth = lang_type_get_pointer_depth(tast_expr_get_lang_type(expr));
     }
     return expr;
 }
@@ -254,7 +257,7 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
             return tast_number_wrap(tast_number_new(
                 old_number->pos,
                 old_number->data,
-                lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(bit_width))
+                lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(bit_width, 0))
             )));
         }
         case UAST_VOID: {
@@ -293,8 +296,10 @@ bool try_set_symbol_type(const Env* env, Tast_expr** new_tast, Uast_symbol* sym_
         msg_undefined_symbol(env->file_text, uast_expr_wrap(uast_symbol_wrap(sym_untyped)));
         return false;
     }
+    log(LOG_DEBUG, TAST_FMT, uast_def_print(sym_def));
 
     Lang_type lang_type = uast_def_get_lang_type(env, sym_def);
+    log(LOG_DEBUG, TAST_FMT, lang_type_print(lang_type));
     Sym_typed_base new_base = {.lang_type = lang_type, .name = sym_untyped->name};
     switch (lang_type.type) {
         case LANG_TYPE_VOID:
@@ -491,7 +496,6 @@ bool try_set_unary_types_finish(
             break;
         case TOKEN_DEREF:
             new_lang_type = tast_expr_get_lang_type(new_child);
-            log(LOG_DEBUG, TAST_FMT, lang_type_print(new_lang_type));
             if (lang_type_get_pointer_depth(new_lang_type) <= 0) {
                 msg(
                     LOG_ERROR, EXPECT_FAIL_DEREF_NON_POINTER, env->file_text, unary_pos,
@@ -534,10 +538,12 @@ bool try_set_unary_types_finish(
 }
 
 bool try_set_unary_types(Env* env, Tast_expr** new_tast, Uast_unary* unary) {
+    log(LOG_DEBUG, TAST_FMT, uast_unary_print(unary));
     Tast_expr* new_child;
     if (!try_set_expr_types(env, &new_child, unary->child)) {
         return false;
     }
+    log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_child));
 
     return try_set_unary_types_finish(env, new_tast, new_child, uast_unary_get_pos(unary), unary->token_type, lang_type_from_ulang_type(env, unary->lang_type));
 }
@@ -727,10 +733,12 @@ bool try_set_struct_literal_assignment_types(
 bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
     switch (uast->type) {
         case UAST_LITERAL: {
+            log(LOG_DEBUG, "thing 31\n");
             *new_tast = tast_literal_wrap(try_set_literal_types(uast_literal_unwrap(uast)));
             return true;
         }
         case TAST_SYMBOL:
+            log(LOG_DEBUG, "thing 32\n");
             if (!try_set_symbol_type(env, new_tast, uast_symbol_unwrap(uast))) {
                 return false;
             } else {
@@ -738,6 +746,7 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
             }
             return true;
         case UAST_MEMBER_ACCESS: {
+            log(LOG_DEBUG, "thing 33\n");
             Tast_stmt* new_tast_ = NULL;
             if (!try_set_member_access_types(env, &new_tast_, uast_member_access_unwrap(uast))) {
                 return false;
@@ -746,6 +755,7 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
             return true;
         }
         case UAST_INDEX: {
+            log(LOG_DEBUG, "thing 34\n");
             Tast_stmt* new_tast_ = NULL;
             if (!try_set_index_untyped_types(env, &new_tast_, uast_index_unwrap(uast))) {
                 return false;
@@ -754,12 +764,14 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
             return true;
         }
         case UAST_OPERATOR:
+            log(LOG_DEBUG, "thing 35\n");
             if (!try_set_operator_types(env, new_tast, uast_operator_unwrap(uast))) {
                 return false;
             }
             assert(*new_tast);
             return true;
         case UAST_FUNCTION_CALL:
+            log(LOG_DEBUG, "thing 36\n");
             return try_set_function_call_types(env, new_tast, uast_function_call_unwrap(uast));
         case UAST_TUPLE: {
             Tast_tuple* new_call = NULL;
@@ -1008,7 +1020,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
 
             // TODO: is tag set to a type that makes sense?
             // (right now, it is set to i64)
-            sum_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64)));
+            sum_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0)));
 
             Tast_sum_lit* new_lit = tast_sum_lit_new(
                 sum_callee->pos,
@@ -1326,7 +1338,7 @@ bool try_set_member_access_types_finish_sum_def(
                 return true;
             }
 
-            new_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64)));
+            new_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0)));
 
             Tast_sum_lit* new_lit = tast_sum_lit_new(
                 new_callee->pos,

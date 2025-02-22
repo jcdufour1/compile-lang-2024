@@ -120,6 +120,7 @@ static Lang_type_type lang_type_gen_signed_int(const char* prefix) {
     Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
 
     append_member(&sym.members, "uint32_t", "bit_width");
+    append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
 }
@@ -129,6 +130,7 @@ static Lang_type_type lang_type_gen_unsigned_int(const char* prefix) {
     Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
 
     append_member(&sym.members, "uint32_t", "bit_width");
+    append_member(&sym.members, "int16_t", "pointer_depth");
 
     return sym;
 }
@@ -548,6 +550,10 @@ static void lang_type_gen_new_internal(Lang_type_type type, bool implementation)
         string_extend_cstr(&gen_a, &function, ") {");
 
         for (size_t idx = 0; idx < type.members.info.count; idx++) {
+            if (idx > 0 && idx < type.members.info.count) {
+                string_extend_cstr(&gen_a, &function, ", ");
+            }
+
             Member curr = vec_at(&type.members, idx);
 
             string_extend_cstr(&gen_a, &function, " .");

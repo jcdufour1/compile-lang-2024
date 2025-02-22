@@ -71,9 +71,6 @@ static bool lang_type_atom_is_number_finish(Lang_type_atom atom) {
 }
 
 bool lang_type_atom_is_signed(Lang_type_atom atom) {
-    if (atom.pointer_depth != 0) {
-        return false;
-    }
     if (atom.str.str[0] != 'i') {
         return false;
     }
@@ -323,7 +320,7 @@ Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child) {
         ),
         if_cond_child,
         TOKEN_NOT_EQUAL,
-        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(32)))
+        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(32, 0)))
     );
 
     return tast_binary_wrap(binary);
@@ -342,6 +339,7 @@ Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child) {
     return uast_binary_wrap(binary);
 }
 
+// TODO: put sizeof functions in their own .c file
 uint64_t sizeof_primitive(Lang_type_primitive primitive) {
     // TODO: make more generalized system for different bit widths, etc.
     if (lang_type_atom_is_equal(lang_type_primitive_get_atom(primitive), lang_type_atom_new_from_cstr("u8", 1))) {

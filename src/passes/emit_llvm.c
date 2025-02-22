@@ -118,7 +118,7 @@ static void extend_type_call_str(const Env* env, String* output, Lang_type lang_
             extend_serialize_lang_type_to_string(env, output, lang_type, false);
             return;
         case LANG_TYPE_ENUM:
-            lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64))),
+            lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0))),
             extend_lang_type_to_string(output, lang_type, false, false);
             return;
         case LANG_TYPE_VOID:
@@ -918,7 +918,11 @@ static void emit_load_struct_element_pointer(const Env* env, String* output, con
         string_extend_cstr(&a_main, output, ", i32 0");
     }
     string_extend_cstr(&a_main, output, ", ");
-    extend_type_call_str(env, output, lang_type_from_get_name(env, load_elem_ptr->struct_index));
+    if (load_elem_ptr->is_from_struct) {
+        string_extend_cstr(&a_main, output, "i32");
+    } else {
+        extend_type_call_str(env, output, lang_type_from_get_name(env, load_elem_ptr->struct_index));
+    }
     string_extend_cstr(&a_main, output, " ");
 
     Llvm* struct_index = NULL;

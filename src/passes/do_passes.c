@@ -30,21 +30,15 @@ static void fail(void) {
 }
 
 static void add_signed_int(Env* env, int32_t bit_width, int16_t pointer_depth) {
-    if (pointer_depth != 0) {
-        todo();
-    }
     Uast_primitive_def* def = uast_primitive_def_new(
-        POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(bit_width)))
+        POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(bit_width, pointer_depth)))
     );
     try(usym_tbl_add(&env->primitives, uast_primitive_def_wrap(def)));
 }
 
 static void add_unsigned_int(Env* env, int32_t bit_width, int16_t pointer_depth) {
-    if (pointer_depth != 0) {
-        todo();
-    }
     Uast_primitive_def* def = uast_primitive_def_new(
-        POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(bit_width)))
+        POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(bit_width, pointer_depth)))
     );
     try(usym_tbl_add(&env->primitives, uast_primitive_def_wrap(def)));
 }

@@ -554,7 +554,7 @@ static Str_view load_ptr_member_access(
     Tast_number* new_index = tast_number_new(
         old_access->pos,
         struct_index,
-        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(32)))
+        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0)))
     );
     
     Llvm_load_element_ptr* new_load = llvm_load_element_ptr_new(
