@@ -37,7 +37,7 @@ static void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
     unreachable("");
 }
 
-void extend_serialize_lang_type_to_string(const Env* env, String* string, Lang_type lang_type, bool do_tag) {
+void extend_serialize_lang_type_to_string(Env* env, String* string, Lang_type lang_type, bool do_tag) {
     if (do_tag) {
         extend_lang_type_tag_to_string(string, lang_type.type);
     }

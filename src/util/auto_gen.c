@@ -148,7 +148,7 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     extend_strv_lower(&text, type.internal_prefix);
     string_extend_cstr(&gen_a, &text, "_tbl_add_internal(");
     if (type.env_thing) {
-        string_extend_cstr(&gen_a, &text, "const Env* env, ");
+        string_extend_cstr(&gen_a, &text, "Env* env, ");
     }
     extend_strv_first_upper(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_table_tast* sym_tbl_tasts, size_t capacity, ");
@@ -194,7 +194,7 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     extend_strv_lower(&text, type.internal_prefix);
     string_extend_cstr(&gen_a, &text, "_tbl_cpy(\n");
     if (type.env_thing) {
-        string_extend_cstr(&gen_a, &text, "const Env* env, \n");
+        string_extend_cstr(&gen_a, &text, "Env* env, \n");
     }
     string_extend_cstr(&gen_a, &text, "    ");
     extend_strv_first_upper(&text, type.normal_prefix);
@@ -221,7 +221,7 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     extend_strv_lower(&text, type.internal_prefix);
     string_extend_cstr(&gen_a, &text, "_tbl_expand_if_nessessary(");
     if (type.env_thing) {
-        string_extend_cstr(&gen_a, &text, "const Env* env, ");
+        string_extend_cstr(&gen_a, &text, "Env* env, ");
     }
     extend_strv_first_upper(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_table* sym_table) {\n");
@@ -301,7 +301,7 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     extend_strv_lower(&text, type.internal_prefix);
     string_extend_cstr(&gen_a, &text, "_tbl_add(");
     if (type.env_thing) {
-        string_extend_cstr(&gen_a, &text, "const Env* env, ");
+        string_extend_cstr(&gen_a, &text, "Env* env, ");
     }
     extend_strv_first_upper(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_table* ");
@@ -347,7 +347,7 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     extend_strv_lower(&text, type.internal_prefix);
     string_extend_cstr(&gen_a, &text, "_tbl_update(");
     if (type.env_thing) {
-        string_extend_cstr(&gen_a, &text, "const Env* env, ");
+        string_extend_cstr(&gen_a, &text, "Env* env, ");
     }
     extend_strv_first_upper(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_table* sym_table, ");
@@ -379,7 +379,7 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "\n");
     string_extend_cstr(&gen_a, &text, "void ");
     extend_strv_lower(&text, type.normal_prefix);
-    string_extend_cstr(&gen_a, &text, "_log_internal(int log_level, const Env* env, const char* file_path, int line) {\n");
+    string_extend_cstr(&gen_a, &text, "_log_internal(int log_level, Env* env, const char* file_path, int line) {\n");
     string_extend_cstr(&gen_a, &text, "    if (env->ancesters.info.count < 1) {\n");
     string_extend_cstr(&gen_a, &text, "        return;\n");
     string_extend_cstr(&gen_a, &text, "    }\n");
@@ -402,11 +402,29 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     extend_strv_lower(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_lookup(");
     extend_strv_first_upper(&text, type.type_name);
-    string_extend_cstr(&gen_a, &text, "** result, const Env* env, Str_view key) {\n");
+    string_extend_cstr(&gen_a, &text, "** result, Env* env, Str_view key) {\n");
     if (type.do_primitives) {
         string_extend_cstr(&gen_a, &text, "    if (");
         extend_strv_lower(&text, type.internal_prefix);
         string_extend_cstr(&gen_a, &text, "_tbl_lookup(result, &env->primitives, key)) {\n");
+        string_extend_cstr(&gen_a, &text, "        return true;\n");
+
+        string_extend_cstr(&gen_a, &text, "    }\n");
+        string_extend_cstr(&gen_a, &text, "    if (lang_type_atom_is_signed(lang_type_atom_new(key, 0))) {\n");
+        string_extend_cstr(&gen_a, &text, "        int32_t bit_width = str_view_to_int64_t(str_view_slice(key, 1, key.count - 1));\n");
+        string_extend_cstr(&gen_a, &text, "        Uast_primitive_def* def = uast_primitive_def_new(\n");
+        string_extend_cstr(&gen_a, &text, "            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(bit_width, 0)))\n");
+        string_extend_cstr(&gen_a, &text, "        );\n");
+        string_extend_cstr(&gen_a, &text, "        try(usym_tbl_add(&env->primitives, uast_primitive_def_wrap(def)));\n");
+        string_extend_cstr(&gen_a, &text, "        *result = uast_primitive_def_wrap(def);\n");
+        string_extend_cstr(&gen_a, &text, "        return true;\n");
+        string_extend_cstr(&gen_a, &text, "    } else if (lang_type_atom_is_unsigned(lang_type_atom_new(key, 0))) {\n");
+        string_extend_cstr(&gen_a, &text, "        int32_t bit_width = str_view_to_int64_t(str_view_slice(key, 1, key.count - 1));\n");
+        string_extend_cstr(&gen_a, &text, "        Uast_primitive_def* def = uast_primitive_def_new(\n");
+        string_extend_cstr(&gen_a, &text, "            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(bit_width, 0)))\n");
+        string_extend_cstr(&gen_a, &text, "        );\n");
+        string_extend_cstr(&gen_a, &text, "        try(usym_tbl_add(&env->primitives, uast_primitive_def_wrap(def)));\n");
+        string_extend_cstr(&gen_a, &text, "        *result = uast_primitive_def_wrap(def);\n");
         string_extend_cstr(&gen_a, &text, "        return true;\n");
         string_extend_cstr(&gen_a, &text, "    }\n");
         string_extend_cstr(&gen_a, &text, "\n");
@@ -478,7 +496,6 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "\n");
 
     gen_symbol_table_c_file_symbol_update(&text, type);
-
 
     gen_gen(STRING_FMT"\n", string_print(text));
 }
@@ -583,7 +600,7 @@ static void gen_symbol_table_header_internal(Symbol_tbl_type type) {
     extend_strv_lower(&text, type.internal_prefix);
     string_extend_cstr(&gen_a, &text, "_tbl_add_internal(");
     if (type.env_thing) {
-        string_extend_cstr(&gen_a, &text, "const Env* env,");
+        string_extend_cstr(&gen_a, &text, "Env* env,");
     }
     extend_strv_first_upper(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_table_tast* sym_tbl_tasts, size_t capacity, ");
@@ -622,7 +639,7 @@ static void gen_symbol_table_header_internal(Symbol_tbl_type type) {
     extend_strv_lower(&text, type.internal_prefix);
     string_extend_cstr(&gen_a, &text, "_tbl_add(");
     if (type.env_thing) {
-        string_extend_cstr(&gen_a, &text, "const Env* env, ");
+        string_extend_cstr(&gen_a, &text, "Env* env, ");
     }
     extend_strv_first_upper(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_table* sym_table, ");
@@ -633,7 +650,7 @@ static void gen_symbol_table_header_internal(Symbol_tbl_type type) {
     extend_strv_lower(&text, type.internal_prefix);
     string_extend_cstr(&gen_a, &text, "_tbl_update(");
     if (type.env_thing) {
-        string_extend_cstr(&gen_a, &text, "const Env* env, ");
+        string_extend_cstr(&gen_a, &text, "Env* env, ");
     }
     extend_strv_first_upper(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_table* sym_table, ");
@@ -641,7 +658,7 @@ static void gen_symbol_table_header_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "* tast_of_symbol);\n");
     string_extend_cstr(&gen_a, &text, "void ");
     extend_strv_lower(&text, type.normal_prefix);
-    string_extend_cstr(&gen_a, &text, "_log_internal(int log_level, const Env* env, const char* file_path, int line);\n");
+    string_extend_cstr(&gen_a, &text, "_log_internal(int log_level, Env* env, const char* file_path, int line);\n");
     string_extend_cstr(&gen_a, &text, "\n");
     string_extend_cstr(&gen_a, &text, "#define ");
     extend_strv_lower(&text, type.normal_prefix);
@@ -656,7 +673,7 @@ static void gen_symbol_table_header_internal(Symbol_tbl_type type) {
     extend_strv_lower(&text, type.normal_prefix);
     string_extend_cstr(&gen_a, &text, "_lookup(");
     extend_strv_first_upper(&text, type.type_name);
-    string_extend_cstr(&gen_a, &text, "** result, const Env* env, Str_view key);\n");
+    string_extend_cstr(&gen_a, &text, "** result, Env* env, Str_view key);\n");
     string_extend_cstr(&gen_a, &text, "\n");
     string_extend_cstr(&gen_a, &text, "bool ");
     extend_strv_lower(&text, type.normal_prefix);
@@ -804,6 +821,9 @@ static void gen_symbol_table_struct(const char* file_path, Sym_tbl_type_vec type
     gen_gen("%s\n", "static inline Str_view uast_def_get_name(const Uast_def* def);");
     gen_gen("%s\n", "static inline Str_view llvm_tast_get_name(const Llvm* llvm);");
     gen_gen("%s\n", "static inline Str_view rm_tuple_struct_get_name(const Tast_struct_def* struct_def);");
+    gen_gen("%s\n", "bool lang_type_atom_is_signed(Lang_type_atom atom);");
+    gen_gen("%s\n", "bool lang_type_atom_is_unsigned(Lang_type_atom atom);");
+
 
     for (size_t idx = 0; idx < types.info.count; idx++) {
         gen_symbol_table_struct_internal(vec_at(&types, idx));

@@ -97,7 +97,7 @@ bool try_types_set_lang_type(
     Uast_lang_type* def
 );
 
-bool try_set_symbol_type(const Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyped);
+bool try_set_symbol_type(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyped);
 
 bool try_set_primitive_def_types(Env* env, Tast_primitive_def** new_tast, Uast_primitive_def* tast);
 

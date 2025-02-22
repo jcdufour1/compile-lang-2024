@@ -41,7 +41,7 @@ static Tast_expr* auto_deref_to_0(Env* env, Tast_expr* expr) {
     return expr;
 }
 
-const Uast_function_decl* get_parent_function_decl_const(const Env* env) {
+const Uast_function_decl* get_parent_function_decl_const(Env* env) {
     Uast_def* def = NULL;
     try(env->name_parent_function.count > 0 && "no parent function here");
     try(usymbol_lookup(&def, env, env->name_parent_function));
@@ -51,7 +51,7 @@ const Uast_function_decl* get_parent_function_decl_const(const Env* env) {
     return uast_function_decl_unwrap(def);
 }
 
-const Uast_lang_type* get_parent_function_return_type(const Env* env) {
+const Uast_lang_type* get_parent_function_return_type(Env* env) {
     return get_parent_function_decl_const(env)->return_type;
 }
 
@@ -120,7 +120,7 @@ typedef enum {
 static void msg_invalid_function_arg_internal(
     const char* file,
     int line,
-    const Env* env,
+    Env* env,
     const Tast_expr* argument,
     const Uast_variable_def* corres_param
 ) {
@@ -144,7 +144,7 @@ static void msg_invalid_function_arg_internal(
 #define msg_invalid_function_arg(env, argument, corres_param) \
     msg_invalid_function_arg_internal(__FILE__, __LINE__, env, argument, corres_param)
 
-static void msg_invalid_return_type_internal(const char* file, int line, const Env* env, Pos pos, const Tast_expr* child, bool is_auto_inserted) {
+static void msg_invalid_return_type_internal(const char* file, int line, Env* env, Pos pos, const Tast_expr* child, bool is_auto_inserted) {
     const Uast_function_decl* fun_decl = get_parent_function_decl_const(env);
     if (is_auto_inserted) {
         msg_internal(
@@ -290,7 +290,7 @@ static void msg_undefined_symbol_internal(const char* file, int line, Str_view f
     msg_undefined_symbol_internal(__FILE__, __LINE__, file_text, sym_call)
 
 // set symbol lang_type, and report error if symbol is undefined
-bool try_set_symbol_type(const Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyped) {
+bool try_set_symbol_type(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyped) {
     Uast_def* sym_def;
     if (!usymbol_lookup(&sym_def, env, sym_untyped->name)) {
         msg_undefined_symbol(env->file_text, uast_expr_wrap(uast_symbol_wrap(sym_untyped)));
@@ -1208,7 +1208,7 @@ bool try_set_sum_access_types(Env* env, Tast_sum_access** new_access, Uast_sum_a
 }
 
 static void msg_invalid_member(
-    const Env* env,
+    Env* env,
     Ustruct_def_base base,
     const Uast_member_access* access
 ) {
@@ -1223,7 +1223,7 @@ static void msg_invalid_member(
 }
 
 static void msg_invalid_enum_member(
-    const Env* env,
+    Env* env,
     Ustruct_def_base base,
     const Uast_member_access* access
 ) {
@@ -1238,7 +1238,7 @@ static void msg_invalid_enum_member(
 }
 
 bool try_set_member_access_types_finish_generic_struct(
-    const Env* env,
+    Env* env,
     Tast_stmt** new_tast,
     Uast_member_access* access,
     Ustruct_def_base def_base,
@@ -1592,7 +1592,7 @@ bool try_set_struct_def_types(Env* env, Tast_struct_def** new_tast, Uast_struct_
 static void msg_undefined_type_internal(
     const char* file,
     int line,
-    const Env* env,
+    Env* env,
     Pos pos,
     Ulang_type lang_type
 ) {
@@ -1877,7 +1877,7 @@ typedef struct {
     size_t max_data;
 } Exhaustive_data;
 
-static Exhaustive_data check_for_exhaustiveness_start(const Env* env, Lang_type oper_lang_type) {
+static Exhaustive_data check_for_exhaustiveness_start(Env* env, Lang_type oper_lang_type) {
     Exhaustive_data exhaustive_data = {0};
 
     exhaustive_data.oper_lang_type = oper_lang_type;
@@ -1963,7 +1963,7 @@ static bool check_for_exhaustiveness_inner(
     unreachable("");
 }
 
-static bool check_for_exhaustiveness_finish(const Env* env, Exhaustive_data exhaustive_data, Pos pos_switch) {
+static bool check_for_exhaustiveness_finish(Env* env, Exhaustive_data exhaustive_data, Pos pos_switch) {
         try(exhaustive_data.covered.info.count == exhaustive_data.max_data + 1);
 
         if (exhaustive_data.default_is_pre) {
@@ -2058,7 +2058,7 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
 }
 
 // TODO: merge this with msg_redefinition_of_symbol?
-static void try_set_msg_redefinition_of_symbol(const Env* env, const Uast_def* new_sym_def) {
+static void try_set_msg_redefinition_of_symbol(Env* env, const Uast_def* new_sym_def) {
     msg(
         LOG_ERROR, EXPECT_FAIL_REDEFINITION_SYMBOL, env->file_text, uast_def_get_pos(new_sym_def),
         "redefinition of symbol "STR_VIEW_FMT"\n", str_view_print(uast_def_get_name(new_sym_def))

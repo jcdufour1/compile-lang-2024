@@ -5,14 +5,14 @@
 #include <lang_type.h>
 #include <uast_utils.h>
 
-static inline Lang_type lang_type_from_ulang_type(const Env* env, Ulang_type lang_type);
+static inline Lang_type lang_type_from_ulang_type(Env* env, Ulang_type lang_type);
 
 // TODO: remove these tow forward decls and replace with better system
 bool lang_type_atom_is_signed(Lang_type_atom atom);
 bool lang_type_atom_is_unsigned(Lang_type_atom atom);
 
 // TODO: figure out way to reduce duplicate vec allocations
-static inline Lang_type lang_type_from_ulang_type_tuple(const Env* env, Ulang_type_tuple lang_type) {
+static inline Lang_type lang_type_from_ulang_type_tuple(Env* env, Ulang_type_tuple lang_type) {
     Lang_type_vec new_lang_types = {0};
     for (size_t idx = 0; idx < lang_type.ulang_types.info.count; idx++) {
         vec_append(&a_main, &new_lang_types, lang_type_from_ulang_type(env, vec_at(&lang_type.ulang_types, idx)));
@@ -46,7 +46,7 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Env* e
     todo();
 }
 
-static inline Lang_type lang_type_from_ulang_type_regular(const Env* env, Ulang_type_regular lang_type) {
+static inline Lang_type lang_type_from_ulang_type_regular(Env* env, Ulang_type_regular lang_type) {
     log(LOG_DEBUG, TAST_FMT, ulang_type_print(ulang_type_regular_const_wrap(lang_type)));
     Uast_def* result = NULL;
     if (!usymbol_lookup(&result, env, lang_type.atom.str)) {
@@ -82,7 +82,7 @@ static inline Lang_type lang_type_from_ulang_type_regular(const Env* env, Ulang_
     unreachable("");
 }
 
-static inline Lang_type lang_type_from_ulang_type(const Env* env, Ulang_type lang_type) {
+static inline Lang_type lang_type_from_ulang_type(Env* env, Ulang_type lang_type) {
     log(LOG_DEBUG, TAST_FMT, ulang_type_print(lang_type));
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:

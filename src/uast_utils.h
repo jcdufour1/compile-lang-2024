@@ -150,7 +150,7 @@ static inline Lang_type* uast_get_ulang_type_ref_stmt(Uast_stmt* stmt) {
     unreachable("");
 }
 
-static inline Lang_type uast_def_get_lang_type(const Env* env, const Uast_def* def) {
+static inline Lang_type uast_def_get_lang_type(Env* env, const Uast_def* def) {
     switch (def->type) {
         case UAST_FUNCTION_DEF:
             unreachable("");
@@ -175,7 +175,7 @@ static inline Lang_type uast_def_get_lang_type(const Env* env, const Uast_def* d
     unreachable("");
 }
 
-static inline Lang_type uast_stmt_get_lang_type(const Env* env, const Uast_stmt* stmt) {
+static inline Lang_type uast_stmt_get_lang_type(Env* env, const Uast_stmt* stmt) {
     switch (stmt->type) {
         case UAST_EXPR:
             unreachable("");
@@ -203,7 +203,7 @@ static inline Lang_type uast_stmt_get_lang_type(const Env* env, const Uast_stmt*
     unreachable("");
 }
 
-static inline Lang_type uast_get_lang_type(const Env* env, const Uast* uast) {
+static inline Lang_type uast_get_lang_type(Env* env, const Uast* uast) {
     switch (uast->type) {
         case UAST_STMT:
             return uast_stmt_get_lang_type(env, uast_stmt_const_unwrap(uast));

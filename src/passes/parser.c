@@ -134,7 +134,7 @@ static void msg_parser_expected_internal(Str_view file_text, const char* file, i
         msg_parser_expected_internal(file_text, __FILE__, __LINE__, got, msg_suffix, sizeof((TOKEN_TYPE[]){__VA_ARGS__})/sizeof(TOKEN_TYPE), __VA_ARGS__); \
     } while(0)
 
-static PARSE_STATUS msg_redefinition_of_symbol(const Env* env, const Uast_def* new_sym_def) {
+static PARSE_STATUS msg_redefinition_of_symbol(Env* env, const Uast_def* new_sym_def) {
     msg(
         LOG_ERROR, EXPECT_FAIL_REDEFINITION_SYMBOL, env->file_text, uast_def_get_pos(new_sym_def),
         "redefinition of symbol "STR_VIEW_FMT"\n", str_view_print(uast_def_get_name(new_sym_def))

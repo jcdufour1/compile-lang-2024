@@ -100,7 +100,7 @@ static size_t get_count_excape_seq(Str_view str_view) {
     return count_excapes;
 }
 
-static void extend_type_call_str(const Env* env, String* output, Lang_type lang_type) {
+static void extend_type_call_str(Env* env, String* output, Lang_type lang_type) {
     if (lang_type_get_pointer_depth(lang_type) != 0) {
         string_extend_cstr(&a_main, output, "ptr");
         return;
@@ -177,7 +177,7 @@ static bool tast_is_variadic(const Tast_stmt* tast) {
     }
 }
 
-static void tast_extend_type_decl_str(const Env* env, String* output, const Tast_stmt* var_def_or_lit, bool noundef) {
+static void tast_extend_type_decl_str(Env* env, String* output, const Tast_stmt* var_def_or_lit, bool noundef) {
     if (tast_is_variadic(var_def_or_lit)) {
         string_extend_cstr(&a_main, output, "...");
         return;
@@ -189,7 +189,7 @@ static void tast_extend_type_decl_str(const Env* env, String* output, const Tast
     }
 }
 
-static void llvm_extend_type_decl_str(const Env* env, String* output, const Llvm* var_def_or_lit, bool noundef) {
+static void llvm_extend_type_decl_str(Env* env, String* output, const Llvm* var_def_or_lit, bool noundef) {
     if (llvm_is_variadic(var_def_or_lit)) {
         string_extend_cstr(&a_main, output, "...");
         return;
@@ -253,12 +253,12 @@ static void tast_extend_literal_decl_prefix(String* output, const Tast_literal* 
     }
 }
 
-static void extend_literal_decl(const Env* env, String* output, String* literals, const Llvm_literal* literal, bool noundef) {
+static void extend_literal_decl(Env* env, String* output, String* literals, const Llvm_literal* literal, bool noundef) {
     llvm_extend_type_decl_str(env, output, llvm_expr_const_wrap(llvm_literal_const_wrap(literal)), noundef);
     extend_literal_decl_prefix(output, literals, literal);
 }
 
-static void tast_extend_literal_decl(const Env* env, String* output, const Tast_literal* literal, bool noundef) {
+static void tast_extend_literal_decl(Env* env, String* output, const Tast_literal* literal, bool noundef) {
     tast_extend_type_decl_str(env, output, tast_expr_const_wrap(tast_literal_const_wrap(literal)), noundef);
     tast_extend_literal_decl_prefix(output, literal);
 }
@@ -271,7 +271,7 @@ static const Llvm_lang_type* return_type_from_function_def(const Llvm_function_d
     unreachable("");
 }
 
-static void emit_function_params(const Env* env, String* output, const Llvm_function_params* fun_params) {
+static void emit_function_params(Env* env, String* output, const Llvm_function_params* fun_params) {
     for (size_t idx = 0; idx < fun_params->params.info.count; idx++) {
         const Llvm_variable_def* curr_param = vec_at(&fun_params->params, idx);
 
@@ -302,7 +302,7 @@ static void emit_function_params(const Env* env, String* output, const Llvm_func
 }
 
 static void emit_function_call_arg_load_another_llvm(
-    const Env* env,
+    Env* env,
     String* output,
     String* literals,
     const Llvm_load_another_llvm* load
@@ -335,7 +335,7 @@ static void emit_function_call_arg_load_another_llvm(
     }
 }
 
-static void emit_function_arg_expr(const Env* env, String* output, String* literals, const Llvm_expr* argument) {
+static void emit_function_arg_expr(Env* env, String* output, String* literals, const Llvm_expr* argument) {
         switch (argument->type) {
             case LLVM_LITERAL:
                 extend_literal_decl(env, output, literals, llvm_literal_const_unwrap(argument), true);
@@ -363,7 +363,7 @@ static void emit_function_arg_expr(const Env* env, String* output, String* liter
         }
 }
 
-static void emit_function_call_arguments(const Env* env, String* output, String* literals, const Llvm_function_call* fun_call) {
+static void emit_function_call_arguments(Env* env, String* output, String* literals, const Llvm_function_call* fun_call) {
     log(LOG_DEBUG, LLVM_FMT, llvm_function_call_print(fun_call));
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
         Str_view arg_name = vec_at(&fun_call->args, idx);
@@ -391,7 +391,7 @@ static void emit_function_call_arguments(const Env* env, String* output, String*
     }
 }
 
-static void emit_function_call(const Env* env, String* output, String* literals, const Llvm_function_call* fun_call) {
+static void emit_function_call(Env* env, String* output, String* literals, const Llvm_function_call* fun_call) {
     //assert(fun_call->llvm_id == 0);
 
     // start of actual function call
@@ -418,7 +418,7 @@ static void emit_function_call(const Env* env, String* output, String* literals,
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_alloca(const Env* env, String* output, const Llvm_alloca* alloca) {
+static void emit_alloca(Env* env, String* output, const Llvm_alloca* alloca) {
     string_extend_cstr(&a_main, output, "    %");
     string_extend_size_t(&a_main, output, alloca->llvm_id);
     string_extend_cstr(&a_main, output, " = alloca ");
@@ -427,7 +427,7 @@ static void emit_alloca(const Env* env, String* output, const Llvm_alloca* alloc
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_unary_type(const Env* env, String* output, const Llvm_unary* unary) {
+static void emit_unary_type(Env* env, String* output, const Llvm_unary* unary) {
     switch (unary->token_type) {
         case TOKEN_UNSAFE_CAST:
             if (lang_type_get_pointer_depth(unary->lang_type) > 0 && lang_type_is_number(lang_type_from_get_name(env, unary->child))) {
@@ -456,7 +456,7 @@ static void emit_unary_type(const Env* env, String* output, const Llvm_unary* un
     }
 }
 
-static void emit_binary_type(const Env* env, String* output, const Llvm_binary* binary) {
+static void emit_binary_type(Env* env, String* output, const Llvm_binary* binary) {
     // TODO: do signed and unsigned operators correctly
     switch (binary->token_type) {
         case TOKEN_SINGLE_MINUS:
@@ -500,7 +500,7 @@ static void emit_binary_type(const Env* env, String* output, const Llvm_binary* 
     string_extend_cstr(&a_main, output, " ");
 }
 
-static void emit_unary_suffix(const Env* env, String* output, const Llvm_unary* unary) {
+static void emit_unary_suffix(Env* env, String* output, const Llvm_unary* unary) {
     switch (unary->token_type) {
         case TOKEN_UNSAFE_CAST:
             string_extend_cstr(&a_main, output, " to ");
@@ -578,7 +578,7 @@ static void emit_operator_operand_expr(String* output, const Llvm_expr* operand)
     }
 }
 
-static void emit_operator_operand(const Env* env, String* output, const Str_view operand_name) {
+static void emit_operator_operand(Env* env, String* output, const Str_view operand_name) {
     Llvm* operand = NULL;
     log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(operand_name));
     try(alloca_lookup(&operand, env, operand_name));
@@ -596,7 +596,7 @@ static void emit_operator_operand(const Env* env, String* output, const Str_view
     }
 }
 
-static void emit_operator(const Env* env, String* output, const Llvm_operator* operator) {
+static void emit_operator(Env* env, String* output, const Llvm_operator* operator) {
     string_extend_cstr(&a_main, output, "    %");
     string_extend_size_t(&a_main, output, llvm_get_llvm_id_expr(llvm_operator_const_wrap(operator)));
     string_extend_cstr(&a_main, output, " = ");
@@ -630,7 +630,7 @@ static void emit_operator(const Env* env, String* output, const Llvm_operator* o
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_load_another_llvm(const Env* env, String* output, const Llvm_load_another_llvm* load_llvm) {
+static void emit_load_another_llvm(Env* env, String* output, const Llvm_load_another_llvm* load_llvm) {
     Llvm_id llvm_id = llvm_id_from_get_name(env, load_llvm->llvm_src);
     assert(llvm_id > 0);
 
@@ -672,7 +672,7 @@ static void emit_store_another_llvm_src_literal(
     unreachable("");
 }
 
-static void emit_store_another_llvm_src_expr(const Env* env, String* output, String* literals, const Llvm_expr* expr) {
+static void emit_store_another_llvm_src_expr(Env* env, String* output, String* literals, const Llvm_expr* expr) {
     (void) env;
 
     switch (expr->type) {
@@ -695,7 +695,7 @@ static void emit_store_another_llvm_src_expr(const Env* env, String* output, Str
     }
 }
 
-static void emit_store_another_llvm(const Env* env, String* output, String* literals, const Llvm_store_another_llvm* store) {
+static void emit_store_another_llvm(Env* env, String* output, String* literals, const Llvm_store_another_llvm* store) {
     Llvm* src = NULL;
     try(alloca_lookup(&src, env, store->llvm_src));
 
@@ -754,7 +754,7 @@ static void emit_function_def(Env* env, String* struct_defs, String* output, Str
     string_extend_cstr(&a_main, output, "}\n");
 }
 
-static void emit_return_expr(const Env* env, String* output, const Llvm_expr* child) {
+static void emit_return_expr(Env* env, String* output, const Llvm_expr* child) {
     switch (child->type) {
         case LLVM_LITERAL: {
             const Llvm_literal* literal = llvm_literal_const_unwrap(child);
@@ -810,7 +810,7 @@ static void emit_return_expr(const Env* env, String* output, const Llvm_expr* ch
     }
 }
 
-static void emit_return(const Env* env, String* output, const Llvm_return* fun_return) {
+static void emit_return(Env* env, String* output, const Llvm_return* fun_return) {
     Llvm* sym_to_return = NULL;
     try(alloca_lookup(&sym_to_return, env, fun_return->child));
 
@@ -832,7 +832,7 @@ static void emit_return(const Env* env, String* output, const Llvm_return* fun_r
     }
 }
 
-static void emit_function_decl(const Env* env, String* output, const Llvm_function_decl* fun_decl) {
+static void emit_function_decl(Env* env, String* output, const Llvm_function_decl* fun_decl) {
     string_extend_cstr(&a_main, output, "declare i32");
     //extend_literal_decl(output, fun_decl); // TODO
     string_extend_cstr(&a_main, output, " @");
@@ -849,13 +849,13 @@ static void emit_label(String* output, const Llvm_label* label) {
     string_extend_cstr(&a_main, output, ":\n");
 }
 
-static void emit_goto(const Env* env, String* output, const Llvm_goto* lang_goto) {
+static void emit_goto(Env* env, String* output, const Llvm_goto* lang_goto) {
     string_extend_cstr(&a_main, output, "    br label %");
     string_extend_size_t(&a_main, output, get_matching_label_id(env, lang_goto->name));
     vec_append(&a_main, output, '\n');
 }
 
-static void emit_cond_goto(const Env* env, String* output, const Llvm_cond_goto* cond_goto) {
+static void emit_cond_goto(Env* env, String* output, const Llvm_cond_goto* cond_goto) {
     string_extend_cstr(&a_main, output, "    br i1 %");
     string_extend_size_t(&a_main, output, llvm_id_from_get_name(env, cond_goto->condition));
     string_extend_cstr(&a_main, output, ", label %");
@@ -865,7 +865,7 @@ static void emit_cond_goto(const Env* env, String* output, const Llvm_cond_goto*
     vec_append(&a_main, output, '\n');
 }
 
-static void emit_struct_def_base(const Env* env, String* output, const Struct_def_base* base, bool largest_only) {
+static void emit_struct_def_base(Env* env, String* output, const Struct_def_base* base, bool largest_only) {
     string_extend_strv(&a_main, output, base->name);
     string_extend_cstr(&a_main, output, " = type { ");
     bool is_first = true;
@@ -886,24 +886,24 @@ static void emit_struct_def_base(const Env* env, String* output, const Struct_de
     string_extend_cstr(&a_main, output, " }\n");
 }
 
-static void emit_struct_def(const Env* env, String* output, const Llvm_struct_def* struct_def) {
+static void emit_struct_def(Env* env, String* output, const Llvm_struct_def* struct_def) {
     string_extend_cstr(&a_main, output, "%struct.");
     emit_struct_def_base(env, output, &struct_def->base, false);
 }
 
-static void emit_raw_union_def(const Env* env, String* output, const Llvm_raw_union_def* raw_union_def) {
+static void emit_raw_union_def(Env* env, String* output, const Llvm_raw_union_def* raw_union_def) {
     string_extend_cstr(&a_main, output, "%union.");
     emit_struct_def_base(env, output, &raw_union_def->base, true);
 }
 
-static void emit_sum_def(const Env* env, String* output, const Llvm_sum_def* sum_def) {
+static void emit_sum_def(Env* env, String* output, const Llvm_sum_def* sum_def) {
     (void) env;
     (void) output;
     (void) sum_def;
     unreachable("");
 }
 
-static void emit_load_struct_element_pointer(const Env* env, String* output, const Llvm_load_element_ptr* load_elem_ptr) {
+static void emit_load_struct_element_pointer(Env* env, String* output, const Llvm_load_element_ptr* load_elem_ptr) {
     string_extend_cstr(&a_main, output, "    %"); 
     string_extend_size_t(&a_main, output, load_elem_ptr->llvm_id);
 
@@ -1080,7 +1080,7 @@ static void tast_emit_symbol(String* output, Str_view key, const Tast_string_def
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void tast_emit_struct_literal(const Env* env, String* output, const Tast_struct_lit_def* lit_def) {
+static void tast_emit_struct_literal(Env* env, String* output, const Tast_struct_lit_def* lit_def) {
     string_extend_cstr(&a_main, output, "@__const.main.");
     string_extend_strv(&a_main, output, lit_def->name);
     string_extend_cstr(&a_main, output, " = private unnamed_addr constant %struct.");
@@ -1100,7 +1100,7 @@ static void tast_emit_struct_literal(const Env* env, String* output, const Tast_
     string_extend_cstr(&a_main, output, "} , align 4\n");
 }
 
-static void emit_struct_literal(const Env* env, String* output, String* literals, const Llvm_struct_lit_def* lit_def) {
+static void emit_struct_literal(Env* env, String* output, String* literals, const Llvm_struct_lit_def* lit_def) {
     string_extend_cstr(&a_main, output, "@__const.main.");
     string_extend_strv(&a_main, output, lit_def->name);
     string_extend_cstr(&a_main, output, " = private unnamed_addr constant %struct.");
@@ -1120,7 +1120,7 @@ static void emit_struct_literal(const Env* env, String* output, String* literals
     string_extend_cstr(&a_main, output, "} , align 4\n");
 }
 
-static void emit_symbols(const Env* env, String* output) {
+static void emit_symbols(Env* env, String* output) {
     for (size_t idx = 0; idx < env->global_literals.capacity; idx++) {
         const Symbol_table_tast curr_tast = env->global_literals.table_tasts[idx];
         if (curr_tast.status != SYM_TBL_OCCUPIED) {

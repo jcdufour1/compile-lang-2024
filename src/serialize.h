@@ -1,11 +1,11 @@
 #ifndef SERIALIZE_H
 #define SERIALIZE_H
 
-static inline Str_view serialize_lang_type(const Env* env, Lang_type lang_type);
+static inline Str_view serialize_lang_type(Env* env, Lang_type lang_type);
 
-static inline Str_view serialize_lang_type_struct_thing(const Env* env, Lang_type lang_type);
+static inline Str_view serialize_lang_type_struct_thing(Env* env, Lang_type lang_type);
 
-static inline Str_view serialize_struct_def_base(const Env* env, Struct_def_base base) {
+static inline Str_view serialize_struct_def_base(Env* env, Struct_def_base base) {
     String name = {0};
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
         Lang_type curr = vec_at(&base.members, idx)->lang_type;
@@ -19,7 +19,7 @@ static inline Str_view serialize_struct_def_base(const Env* env, Struct_def_base
     return string_to_strv(name);
 }
 
-static inline Str_view serialize_struct_def(const Env* env, const Tast_struct_def* def) {
+static inline Str_view serialize_struct_def(Env* env, const Tast_struct_def* def) {
     String name = {0};
     string_extend_cstr(&a_main, &name, "STRUCT");
     string_extend_strv(&a_main, &name, serialize_struct_def_base(env, def->base));
@@ -27,7 +27,7 @@ static inline Str_view serialize_struct_def(const Env* env, const Tast_struct_de
     return string_to_strv(name);
 }
 
-static inline Str_view serialize_raw_union_def(const Env* env, const Tast_raw_union_def* def) {
+static inline Str_view serialize_raw_union_def(Env* env, const Tast_raw_union_def* def) {
     String name = {0};
     string_extend_cstr(&a_main, &name, "RAW_UNION");
     string_extend_strv(&a_main, &name, serialize_struct_def_base(env, def->base));
@@ -35,7 +35,7 @@ static inline Str_view serialize_raw_union_def(const Env* env, const Tast_raw_un
     return string_to_strv(name);
 }
 
-static inline Str_view serialize_sum_def(const Env* env, const Tast_sum_def* def) {
+static inline Str_view serialize_sum_def(Env* env, const Tast_sum_def* def) {
     String name = {0};
     string_extend_cstr(&a_main, &name, "SUM");
     string_extend_strv(&a_main, &name, serialize_struct_def_base(env, def->base));
@@ -43,7 +43,7 @@ static inline Str_view serialize_sum_def(const Env* env, const Tast_sum_def* def
     return string_to_strv(name);
 }
 
-static inline Str_view serialize_lang_type_struct_thing(const Env* env, Lang_type lang_type) {
+static inline Str_view serialize_lang_type_struct_thing(Env* env, Lang_type lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_STRUCT: {
             Tast_def* def = NULL;
@@ -68,7 +68,7 @@ static inline Str_view serialize_lang_type_struct_thing(const Env* env, Lang_typ
 
 // TODO: make separate function for Tast_lang_type and Lang_type
 // TODO: call serialize_struct_def serialize_tast_struct_def, etc.
-static inline Str_view serialize_lang_type(const Env* env, Lang_type lang_type) {
+static inline Str_view serialize_lang_type(Env* env, Lang_type lang_type) {
     // TODO: think about memory allocation strategy here
     // TODO: make function to serialize lang_type, and call it from here
     // TODO: separate file for serialization functions
@@ -111,7 +111,7 @@ static inline Str_view serialize_lang_type(const Env* env, Lang_type lang_type) 
     unreachable("");
 }
 
-static inline Str_view serialize_def(const Env* env, const Tast_def* def) {
+static inline Str_view serialize_def(Env* env, const Tast_def* def) {
     switch (def->type) {
         case TAST_STRUCT_DEF:
             return serialize_struct_def(env, tast_struct_def_const_unwrap(def));
