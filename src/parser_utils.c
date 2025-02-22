@@ -71,6 +71,9 @@ static bool lang_type_atom_is_number_finish(Lang_type_atom atom) {
 }
 
 bool lang_type_atom_is_signed(Lang_type_atom atom) {
+    if (atom.pointer_depth != 0) {
+        return false;
+    }
     if (atom.str.str[0] != 'i') {
         return false;
     }
@@ -88,6 +91,7 @@ bool lang_type_atom_is_number(Lang_type_atom atom) {
     return lang_type_atom_is_unsigned(atom) || lang_type_atom_is_signed(atom);
 }
 
+// only for unsafe_cast and similar cases
 bool lang_type_is_number_like(Lang_type lang_type) {
     if (lang_type_get_pointer_depth(lang_type) > 0) {
         return true;
@@ -102,22 +106,28 @@ bool lang_type_is_number_like(Lang_type lang_type) {
             return true;
         case LANG_TYPE_SIGNED_INT:
             return true;
+        case LANG_TYPE_UNSIGNED_INT:
+            return true;
         case LANG_TYPE_ANY:
             return false;
     }
     unreachable("");
 }
 
+// for general use
 bool lang_type_is_number(Lang_type lang_type) {
     if (lang_type.type != LANG_TYPE_PRIMITIVE) {
         return false;
     }
+    // TODO: return false when pointer_depth > 0?
     switch (lang_type_primitive_const_unwrap(lang_type).type) {
         case LANG_TYPE_CHAR:
             return false;
         case LANG_TYPE_STRING:
             return false;
         case LANG_TYPE_SIGNED_INT:
+            return true;
+        case LANG_TYPE_UNSIGNED_INT:
             return true;
         case LANG_TYPE_ANY:
             return false;
@@ -141,9 +151,7 @@ Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom lang_type) {
     String string = {0};
     string_extend_cstr(&a_main, &string, "i");
     string_extend_strv(&a_main, &string, str_view_slice(lang_type.str, 1, lang_type.str.count - 1));
-
-    Str_view str_view = {.str = string.buf, .count = string.info.count};
-    return lang_type_atom_new(str_view, 0);
+    return lang_type_atom_new(string_to_strv(string), 0);
 }
 
 Str_view util_literal_name_new_prefix(const char* debug_prefix) {
@@ -315,7 +323,7 @@ Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child) {
         ),
         if_cond_child,
         TOKEN_NOT_EQUAL,
-        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_atom_new_from_cstr("i32", 0))))
+        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(32)))
     );
 
     return tast_binary_wrap(binary);

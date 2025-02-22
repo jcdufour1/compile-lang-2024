@@ -70,7 +70,7 @@ static Lang_type lang_type_thing(Env* env, Lang_type lang_type, Pos lang_type_po
             Tast_variable_def* tag = tast_variable_def_new(
                 lang_type_pos,
                 // TODO: make helper functions, etc. for line below, because this is too much to do every time
-                lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_atom_new_from_cstr("i64", 0)))),
+                lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64))),
                 false,
                 str_view_from_cstr("tag")
             );
@@ -148,7 +148,7 @@ static Lang_type lang_type_thing(Env* env, Lang_type lang_type, Pos lang_type_po
             Tast_variable_def* tag = tast_variable_def_new(
                 lang_type_pos,
                 // TODO: make helper functions, etc. for line below, because this is too much to do every time
-                lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_atom_new_from_cstr("i64", 0)))),
+                lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64))),
                 false,
                 str_view_from_cstr("tag")
             );
@@ -1129,7 +1129,7 @@ static Tast_operator* rm_tuple_operator_not_in_assignment(Env* env, Tast_operato
         case LANG_TYPE_SUM:
             tast_operator_set_lang_type(
                 oper,
-                lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_atom_new_from_cstr("i64", 0))))
+                lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64)))
             );
             break;
         case LANG_TYPE_ENUM:
@@ -1165,7 +1165,7 @@ static Tast_expr* rm_tuple_sum_symbol_not_in_assignment(Env* env, Tast_symbol* s
             sym->base.lang_type = lang_type_thing(env, sym->base.lang_type, sym->pos, false);
             Tast_member_access* new_access = tast_member_access_new(
                 sym->pos,
-                lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_atom_new_from_cstr("i64", 0)))),
+                lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64))),
                 str_view_from_cstr("tag"),
                 tast_symbol_wrap(sym)
             );

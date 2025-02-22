@@ -251,13 +251,10 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
         case UAST_NUMBER: {
             Uast_number* old_number = uast_number_unwrap(literal);
             int64_t bit_width = bit_width_needed_signed(old_number->data);
-            String lang_type_str = {0};
-            string_extend_cstr(&a_main, &lang_type_str, "i");
-            string_extend_int64_t(&a_main, &lang_type_str, bit_width);
             return tast_number_wrap(tast_number_new(
                 old_number->pos,
                 old_number->data,
-                lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_atom_new(string_to_strv(lang_type_str), 0)))
+                lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(bit_width))
             )));
         }
         case UAST_VOID: {
@@ -494,6 +491,7 @@ bool try_set_unary_types_finish(
             break;
         case TOKEN_DEREF:
             new_lang_type = tast_expr_get_lang_type(new_child);
+            log(LOG_DEBUG, TAST_FMT, lang_type_print(new_lang_type));
             if (lang_type_get_pointer_depth(new_lang_type) <= 0) {
                 msg(
                     LOG_ERROR, EXPECT_FAIL_DEREF_NON_POINTER, env->file_text, unary_pos,
@@ -1010,7 +1008,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
 
             // TODO: is tag set to a type that makes sense?
             // (right now, it is set to i64)
-            sum_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_atom_new_from_cstr("i64", 0))));
+            sum_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64)));
 
             Tast_sum_lit* new_lit = tast_sum_lit_new(
                 sum_callee->pos,
@@ -1328,7 +1326,7 @@ bool try_set_member_access_types_finish_sum_def(
                 return true;
             }
 
-            new_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_atom_new_from_cstr("i64", 0))));
+            new_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64)));
 
             Tast_sum_lit* new_lit = tast_sum_lit_new(
                 new_callee->pos,

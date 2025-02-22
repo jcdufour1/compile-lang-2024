@@ -2,14 +2,29 @@
 #ifndef LANG_TYPE_AFTER_H
 #define LANG_TYPE_AFTER_H
 
+// TODO: do these things properly
+int64_t str_view_to_int64_t(Str_view str_view);
+
 static inline Lang_type_atom lang_type_primitive_get_atom(Lang_type_primitive lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_CHAR:
             return lang_type_char_const_unwrap(lang_type).atom;
         case LANG_TYPE_STRING:
             return lang_type_string_const_unwrap(lang_type).atom;
-        case LANG_TYPE_SIGNED_INT:
-            return lang_type_signed_int_const_unwrap(lang_type).atom;
+        case LANG_TYPE_SIGNED_INT: {
+            // TODO: use hashtable, etc. to reduce allocations
+            String string = {0};
+            string_extend_cstr(&a_main, &string, "i");
+            string_extend_int64_t(&a_main, &string, lang_type_signed_int_const_unwrap(lang_type).bit_width);
+            return lang_type_atom_new(string_to_strv(string), 0);
+        }
+        case LANG_TYPE_UNSIGNED_INT: {
+            // TODO: use hashtable, etc. to reduce allocations
+            String string = {0};
+            string_extend_cstr(&a_main, &string, "u");
+            string_extend_int64_t(&a_main, &string, lang_type_unsigned_int_const_unwrap(lang_type).bit_width);
+            return lang_type_atom_new(string_to_strv(string), 0);
+        }
         case LANG_TYPE_ANY:
             return lang_type_any_const_unwrap(lang_type).atom;
     }
@@ -45,7 +60,10 @@ static inline void lang_type_primitive_set_atom(Lang_type_primitive* lang_type, 
             lang_type_char_unwrap(lang_type)->atom = atom;
             return;
         case LANG_TYPE_SIGNED_INT:
-            lang_type_signed_int_unwrap(lang_type)->atom = atom;
+            lang_type_signed_int_unwrap(lang_type)->bit_width = str_view_to_int64_t(str_view_slice(atom.str, 1, atom.str.count - 1));
+            return;
+        case LANG_TYPE_UNSIGNED_INT:
+            lang_type_unsigned_int_unwrap(lang_type)->bit_width = str_view_to_int64_t(str_view_slice(atom.str, 1, atom.str.count - 1));
             return;
         case LANG_TYPE_ANY:
             lang_type_any_unwrap(lang_type)->atom = atom;
