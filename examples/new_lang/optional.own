@@ -3,7 +3,7 @@ extern("c") fn printf(str_to_print u8*, args any...) i32
 
 type Opt_int sum {
     some i32
-    none void
+    none
 }
 
 fn opt_int_print(opt_num Opt_int) {

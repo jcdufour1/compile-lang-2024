@@ -43,7 +43,9 @@ static PARSE_STATUS try_extract_variable_declaration(
     bool require_let,
     bool defer_sym_add, // if true, symbol will not be added to symbol table 
                        // until the next extract_block call
-    bool add_to_sym_table
+    bool add_to_sym_table,
+    bool require_type,
+    Ulang_type_atom lang_type_if_not_required
 );
 static PARSE_EXPR_STATUS extract_condition(Env* env, Uast_condition**, Tk_view* tokens);
 
@@ -770,7 +772,25 @@ static PARSE_EXPR_STATUS extract_function_parameter(Env* env, Uast_variable_def*
     }
 
     Uast_variable_def* param;
-    if (PARSE_OK != try_extract_variable_declaration(env, &param, tokens, false, true, add_to_sym_table)) {
+    if (PARSE_OK != try_extract_variable_declaration(env, &param, tokens, false, true, add_to_sym_table, true, (Ulang_type_atom) {0})) {
+        return PARSE_EXPR_ERROR;
+    }
+    if (try_consume(NULL, tokens, TOKEN_TRIPLE_DOT)) {
+        param->is_variadic = true;
+    }
+    try_consume(NULL, tokens, TOKEN_COMMA);
+
+    *child = param;
+    return PARSE_EXPR_OK;
+}
+
+static PARSE_EXPR_STATUS extract_optional_lang_type_parameter(Env* env, Uast_variable_def** child, Tk_view* tokens, Ulang_type_atom default_lang_type) {
+    if (tokens->count < 1 || tk_view_front(*tokens).type == TOKEN_CLOSE_PAR) {
+        return PARSE_EXPR_NONE;
+    }
+
+    Uast_variable_def* param;
+    if (PARSE_OK != try_extract_variable_declaration(env, &param, tokens, false, true, false, false, default_lang_type)) {
         return PARSE_EXPR_ERROR;
     }
     if (try_consume(NULL, tokens, TOKEN_TRIPLE_DOT)) {
@@ -905,7 +925,14 @@ static PARSE_STATUS extract_function_def(Env* env, Uast_function_def** fun_def, 
     return PARSE_OK;
 }
 
-static PARSE_STATUS extract_struct_base_def(Env* env, Ustruct_def_base* base, Str_view name, Tk_view* tokens) {
+static PARSE_STATUS extract_struct_base_def(
+    Env* env,
+    Ustruct_def_base* base,
+    Str_view name,
+    Tk_view* tokens,
+    bool require_sub_types,
+    Ulang_type_atom default_lang_type
+) {
     base->name = name;
 
     if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
@@ -916,11 +943,9 @@ static PARSE_STATUS extract_struct_base_def(Env* env, Ustruct_def_base* base, St
     bool done = false;
     while (!done && tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_CLOSE_CURLY_BRACE) {
         Uast_variable_def* member;
-        switch (extract_function_parameter(env, &member, tokens, false)) {
-            case PARSE_EXPR_ERROR:
+        switch (try_extract_variable_declaration(env, &member, tokens, false, false, false, require_sub_types, default_lang_type)) {
+            case PARSE_ERROR:
                 return PARSE_ERROR;
-            case PARSE_EXPR_NONE:
-                done = true;
             case PARSE_EXPR_OK:
                 break;
         }
@@ -987,7 +1012,7 @@ static PARSE_STATUS extract_struct_def(Env* env, Uast_struct_def** struct_def, T
     try(try_consume(NULL, tokens, TOKEN_STRUCT));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != extract_struct_base_def(env, &base, name.text, tokens)) {
+    if (PARSE_OK != extract_struct_base_def(env, &base, name.text, tokens, true, (Ulang_type_atom) {0})) {
         return PARSE_ERROR;
     }
 
@@ -1003,7 +1028,7 @@ static PARSE_STATUS extract_raw_union_def(Env* env, Uast_raw_union_def** raw_uni
     try(try_consume(NULL, tokens, TOKEN_RAW_UNION));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != extract_struct_base_def(env, &base, name.text, tokens)) {
+    if (PARSE_OK != extract_struct_base_def(env, &base, name.text, tokens, true, (Ulang_type_atom) {0})) {
         return PARSE_ERROR;
     }
 
@@ -1035,7 +1060,7 @@ static PARSE_STATUS extract_sum_def(Env* env, Uast_sum_def** sum_def, Tk_view* t
     try(try_consume(NULL, tokens, TOKEN_SUM));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != extract_struct_base_def(env, &base, name.text, tokens)) {
+    if (PARSE_OK != extract_struct_base_def(env, &base, name.text, tokens, false, ulang_type_atom_new_from_cstr("void", 0))) {
         return PARSE_ERROR;
     }
 
@@ -1094,7 +1119,9 @@ static PARSE_STATUS try_extract_variable_declaration(
     Tk_view* tokens,
     bool require_let,
     bool defer_sym_add,
-    bool add_to_sym_table
+    bool add_to_sym_table,
+    bool require_type,
+    Ulang_type_atom default_lang_type
 ) {
     (void) require_let;
     if (!try_consume(NULL, tokens, TOKEN_LET)) {
@@ -1110,8 +1137,14 @@ static PARSE_STATUS try_extract_variable_declaration(
     try_consume(NULL, tokens, TOKEN_COLON);
 
     Ulang_type_atom lang_type = {0};
+    if (require_type) {
     if (PARSE_OK != extract_lang_type_struct_require(env, &lang_type, tokens)) {
         return PARSE_ERROR;
+    }
+    } else {
+        if (!extract_lang_type_struct(&lang_type, tokens)) {
+            lang_type = default_lang_type;
+        }
     }
 
     Uast_variable_def* variable_def = uast_variable_def_new(
@@ -1201,7 +1234,7 @@ static PARSE_STATUS extract_for_loop(Env* env, Uast_stmt** for_loop_result, Tk_v
     Uast_for_range* for_loop = uast_for_range_new(for_token.pos, NULL, NULL, NULL, NULL);
     
     if (starts_with_variable_type_declaration(*tokens, false)) {
-        if (PARSE_OK != try_extract_variable_declaration(env, &for_loop->var_def, tokens, false, true, true)) {
+        if (PARSE_OK != try_extract_variable_declaration(env, &for_loop->var_def, tokens, false, true, true, true, (Ulang_type_atom) {0})) {
             todo();
             return PARSE_ERROR;
         }
@@ -1655,7 +1688,7 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Uast_stmt** child, Tk_view*
         lhs = uast_block_wrap(block_def);
     } else if (starts_with_variable_declaration(*tokens)) {
         Uast_variable_def* var_def = NULL;
-        if (PARSE_OK != try_extract_variable_declaration(env, &var_def, tokens, true, defer_sym_add, true)) {
+        if (PARSE_OK != try_extract_variable_declaration(env, &var_def, tokens, true, defer_sym_add, true, true, (Ulang_type_atom) {0})) {
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_def_wrap(uast_variable_def_wrap(var_def));
