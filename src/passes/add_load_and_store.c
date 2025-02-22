@@ -76,13 +76,6 @@ static Llvm_raw_union_def* tast_clone_raw_union_def(const Tast_raw_union_def* ol
     );
 }
 
-static Llvm_sum_def* tast_clone_sum_def(const Tast_sum_def* old_def) {
-    return llvm_sum_def_new(
-        old_def->pos,
-        old_def->base
-    );
-}
-
 static void do_function_def_alloca_param(Env* env, Llvm_function_params* new_params, Llvm_block* new_block, Llvm_variable_def* param) {
     if (is_struct_like(param->lang_type.type)) {
         param->name_self = param->name_corr_param;

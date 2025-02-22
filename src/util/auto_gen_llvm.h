@@ -311,14 +311,6 @@ static Llvm_type llvm_gen_raw_union_def(void) {
     return def;
 }
 
-static Llvm_type llvm_gen_sum_def(void) {
-    Llvm_type def = {.name = llvm_name_new("def", "sum_def", false)};
-
-    append_member(&def.members, "Struct_def_base", "base");
-
-    return def;
-}
-
 static Llvm_type llvm_gen_function_decl(void) {
     Llvm_type def = {.name = llvm_name_new("def", "function_decl", false)};
 
@@ -412,7 +404,6 @@ static Llvm_type llvm_gen_def(void) {
     vec_append(&gen_a, &def.sub_types, llvm_gen_variable_def());
     vec_append(&gen_a, &def.sub_types, llvm_gen_struct_def());
     vec_append(&gen_a, &def.sub_types, llvm_gen_raw_union_def());
-    vec_append(&gen_a, &def.sub_types, llvm_gen_sum_def());
     vec_append(&gen_a, &def.sub_types, llvm_gen_enum_def());
     vec_append(&gen_a, &def.sub_types, llvm_gen_primitive_def());
     vec_append(&gen_a, &def.sub_types, llvm_gen_function_decl());

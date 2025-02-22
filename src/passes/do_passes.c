@@ -49,7 +49,6 @@ static void add_void(Env* env) {
 }
 
 static void add_primitives(Env* env) {
-    // TODO: come up with a smarter system for primitives
     add_void(env);
     add_any(env, "any", 0);
 }

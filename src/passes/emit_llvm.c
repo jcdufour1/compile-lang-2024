@@ -896,13 +896,6 @@ static void emit_raw_union_def(Env* env, String* output, const Llvm_raw_union_de
     emit_struct_def_base(env, output, &raw_union_def->base, true);
 }
 
-static void emit_sum_def(Env* env, String* output, const Llvm_sum_def* sum_def) {
-    (void) env;
-    (void) output;
-    (void) sum_def;
-    unreachable("");
-}
-
 static void emit_load_struct_element_pointer(Env* env, String* output, const Llvm_load_element_ptr* load_elem_ptr) {
     string_extend_cstr(&a_main, output, "    %"); 
     string_extend_size_t(&a_main, output, load_elem_ptr->llvm_id);
@@ -971,9 +964,6 @@ static void emit_def(Env* env, String* struct_defs, String* output, String* lite
             return;
         case LLVM_RAW_UNION_DEF:
             emit_raw_union_def(env, struct_defs, llvm_raw_union_def_const_unwrap(def));
-            return;
-        case LLVM_SUM_DEF:
-            emit_sum_def(env, struct_defs, llvm_sum_def_const_unwrap(def));
             return;
         case LLVM_ENUM_DEF:
             return;

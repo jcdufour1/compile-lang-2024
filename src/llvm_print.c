@@ -398,14 +398,6 @@ Str_view llvm_enum_def_print_internal(const Llvm_enum_def* def, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view llvm_sum_def_print_internal(const Llvm_sum_def* def, int indent) {
-    String buf = {0};
-
-    extend_struct_def_base(&buf, "sum_def", def->base, indent);
-
-    return string_to_strv(buf);
-}
-
 Str_view llvm_primitive_def_print_internal(const Llvm_primitive_def* def, int indent) {
     String buf = {0};
 
@@ -512,8 +504,6 @@ Str_view llvm_def_print_internal(const Llvm_def* def, int indent) {
             return llvm_label_print_internal(llvm_label_const_unwrap(def), indent);
         case LLVM_LITERAL_DEF:
             return llvm_literal_def_print_internal(llvm_literal_def_const_unwrap(def), indent);
-        case LLVM_SUM_DEF:
-            return llvm_sum_def_print_internal(llvm_sum_def_const_unwrap(def), indent);
     }
     unreachable("");
 }

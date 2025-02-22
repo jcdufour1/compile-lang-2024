@@ -134,8 +134,6 @@ static inline Llvm_id llvm_get_llvm_id_def(const Llvm_def* def) {
             unreachable("");
         case LLVM_LITERAL_DEF:
             unreachable("");
-        case LLVM_SUM_DEF:
-            unreachable("");
     }
     unreachable("");
 }
@@ -261,8 +259,6 @@ static inline Lang_type llvm_def_get_lang_type(const Llvm_def* def) {
             unreachable("");
         case LLVM_LITERAL_DEF:
             unreachable("");
-        case LLVM_SUM_DEF:
-            unreachable("");
     }
     unreachable("");
 }
@@ -332,8 +328,6 @@ static inline Lang_type* llvm_def_ref_get_lang_type(Llvm_def* def) {
         case LLVM_LABEL:
             unreachable("");
         case LLVM_LITERAL_DEF:
-            unreachable("");
-        case LLVM_SUM_DEF:
             unreachable("");
     }
     unreachable("");
@@ -534,8 +528,6 @@ static inline Str_view llvm_def_get_name(const Llvm_def* def) {
             return llvm_label_const_unwrap(def)->name;
         case LLVM_LITERAL_DEF:
             return llvm_literal_def_get_name(llvm_literal_def_const_unwrap(def));
-        case LLVM_SUM_DEF:
-            return llvm_sum_def_const_unwrap(def)->base.name;
     }
     unreachable("");
 }
