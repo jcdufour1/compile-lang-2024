@@ -396,28 +396,6 @@ static Str_view load_ptr_sum_callee(
     //return llvm_tast_get_name(alloca);
 }
 
-static Str_view load_ptr_sum_case(
-    Env* env,
-    Llvm_block* new_block,
-    Tast_sum_case* old_case
-) {
-    (void) new_block;
-    (void) env;
-    (void) old_case;
-    log(LOG_DEBUG, "entering thing: "TAST_FMT"\n", tast_sum_case_print(old_case));
-
-    //Tast_def* var_def_ = NULL;
-    //try(symbol_lookup(&var_def_, env, old_case->name));
-    //return load_ptr_member_access(env, new_block, tast_member_access_new(
-    //    old_case->pos,
-    //    old_case->lang_type,
-    //    old_case->
-    //));
-    todo();
-
-    //return llvm_tast_get_name(alloca);
-}
-
 static Str_view load_symbol(
     Env* env,
     Llvm_block* new_block,
@@ -1465,8 +1443,7 @@ static Str_view load_ptr_expr(Env* env, Llvm_block* new_block, Tast_expr* old_ex
         case TAST_SUM_CALLEE:
             return load_ptr_sum_callee(env, new_block, tast_sum_callee_unwrap(old_expr));
         case TAST_SUM_CASE:
-            // TODO: make this unreachable
-            return load_ptr_sum_case(env, new_block, tast_sum_case_unwrap(old_expr));
+            unreachable("");
         case TAST_SUM_ACCESS:
             unreachable("");
     }

@@ -1309,16 +1309,7 @@ static Uast_literal* extract_literal(Env* env, Tk_view* tokens, bool defer_sym_a
     Token token = tk_view_consume(tokens);
     assert(token_is_literal(token));
 
-    Uast_literal* new_uast = util_uast_literal_new_from_strv(token.text, token.type, token.pos);
-
-    if (defer_sym_add) {
-        // TODO: is this nessessary?
-        //usymbol_add_defer(env, uast_expr_wrap(uast_literal_wrap(new_uast)));
-    } else {
-        // TODO: is this nessessary?
-        //try(usymbol_add(env, uast_expr_wrap(uast_literal_wrap(new_uast))));
-    }
-    return new_uast;
+    return util_uast_literal_new_from_strv(token.text, token.type, token.pos);
 }
 
 static Uast_symbol* extract_symbol(Tk_view* tokens) {

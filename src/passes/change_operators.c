@@ -16,6 +16,7 @@ static Tast_binary* change_op_binary(Env* env, Tast_binary* root) {
     return root;
 }
 
+// TODO: should this simply be done in the analysis_1 pass to avoid having this entire pass for this one thing?
 static Tast_operator* change_op_unary(Env* env, Tast_unary* unary) {
     switch (unary->token_type) {
         case TOKEN_NOT: {
@@ -73,7 +74,7 @@ static Tast_expr* change_op_expr(Env* env, Tast_expr* root) {
         case TAST_SUM_CASE:
             todo();
         case TAST_SUM_ACCESS:
-            // TODO: check callee?
+            tast_sum_access_unwrap(root)->callee = change_op_expr(env, tast_sum_access_unwrap(root)->callee);
             return root;
     }
     unreachable("");

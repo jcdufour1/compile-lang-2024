@@ -182,33 +182,6 @@ static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr) {
     unreachable("");
 }
 
-// TODO: remove set_lang_types functions
-// TODO: remove get_lang_types functions
-static inline void tast_set_lang_types_literal(Tast_literal* lit, Lang_type_vec types) {
-    switch (lit->type) {
-        case TAST_NUMBER:
-            tast_number_unwrap(lit)->lang_type = vec_at(&types, 0);
-            return;
-        case TAST_VOID:
-            unreachable("");
-        case TAST_ENUM_LIT:
-            unreachable("");
-        case TAST_STRING:
-            unreachable("");
-            return;
-        case TAST_CHAR:
-            unreachable("");
-            return;
-        case TAST_SUM_LIT:
-            unreachable("");
-            return;
-        case TAST_UNION_LIT:
-            unreachable("");
-            return;
-    }
-    unreachable("");
-}
-
 static inline Lang_type tast_def_get_lang_type(const Tast_def* def) {
     switch (def->type) {
         case TAST_FUNCTION_DEF:

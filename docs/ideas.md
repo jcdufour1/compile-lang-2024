@@ -16,11 +16,26 @@ struct Token {
 }
 '''
 
-struct (generics)
+# struct (generics)
 '''c
 def Token_types = String | int | uint;
 
 struct Token <T1: Token_types> {
+    String name;
+    T1 value;
+}
+'''
+## example 2
+'''c
+type Optional sum(<ValueType>) {
+    String name;
+    ValueType value;
+}
+'''
+
+## example 3
+'''c
+type vector_int(<ValueType: $int>) {
     String name;
     T1 value;
 }
@@ -316,7 +331,32 @@ fn string_append overload [u8](string Darray<(u8)>, overload item) {
 }
 '''
 
-# should this be used instead for easier grepping?
+# operator overloading (idea 1)
+'''c
+fn [] (lhs String, rhs i32) {
+}
+
+fn [] (lhs String, rhs i32) {
+}
+
+'''
+
+# using (put struct members directly in namespace)
+'''c
+type Token struct {
+    string u8*
+    pos Pos
+}
+
+fn token_print(using token Token) {
+    pos_print(pos)
+    string_print(string)
+}
+'''
+
+# 
+
+# this style of defining types is used for easier grepping
 '''c
 type Token struct {
 }

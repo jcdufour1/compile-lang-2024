@@ -10,7 +10,7 @@
 #include <symbol_table.h>
 #include <tokens.h>
  
-// TODO: make separate Env struct for every pass
+// TODO: make separate Env struct for every pass (each Env will need Env_common for things that all envs require (eg. for symbol table lookups))
 
 static void fail(void) {
     if (!params.test_expected_fail) {
