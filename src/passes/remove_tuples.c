@@ -661,7 +661,9 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
     log(LOG_DEBUG, TAST_FMT, tast_expr_print(sum_lit->item));
     log(LOG_DEBUG, TAST_FMT, tast_expr_print(inner_thing));
     vec_append(&a_main, &members, tast_literal_wrap(tast_enum_lit_wrap(sum_lit->tag)));
-    vec_append(&a_main, &members, inner_thing);
+    if (tast_expr_get_lang_type(inner_thing).type != LANG_TYPE_VOID) {
+        vec_append(&a_main, &members, inner_thing);
+    }
 
     Tast_def* struct_def_ = NULL;
     log(LOG_DEBUG, TAST_FMT, lang_type_print(lhs_lang_type));
@@ -698,25 +700,31 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
             );
             try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(new_item)));
             vec_append(&a_main, &new_params, new_item);
-            vec_append(&a_main, &new_args, rm_tuple_union_lit_rhs(
-                env,
-                tast_union_lit_new(
-                    tast_expr_get_pos(vec_at(&members, 1)),
-                    rhs->tag, // TODO: clone this?
-                    lang_type_thing(
-                        env,
-                        vec_at(&tast_struct_def_unwrap(struct_def_)->base.members, 1)->lang_type,
-                        vec_at(&tast_struct_def_unwrap(struct_def_)->base.members, 1)->pos,
-                        true
+            if (tast_expr_get_lang_type(inner_thing).type != LANG_TYPE_VOID) {
+                vec_append(&a_main, &new_args, rm_tuple_union_lit_rhs(
+                    env,
+                    tast_union_lit_new(
+                        tast_expr_get_pos(vec_at(&members, 1)),
+                        rhs->tag, // TODO: clone this?
+                        lang_type_thing(
+                            env,
+                            vec_at(&tast_struct_def_unwrap(struct_def_)->base.members, 1)->lang_type,
+                            vec_at(&tast_struct_def_unwrap(struct_def_)->base.members, 1)->pos,
+                            true
+                        ),
+                        rm_tuple_expr_rhs(env, vec_at(&members, 1), tast_expr_get_pos(vec_at(&members, 1)))
                     ),
-                    rm_tuple_expr_rhs(env, vec_at(&members, 1), tast_expr_get_pos(vec_at(&members, 1)))
-                ),
-                assign_pos
-            ));
+                    assign_pos
+                ));
+            }
 
             log(LOG_DEBUG, TAST_FMT, tast_expr_print(vec_at(&new_args, 0)));
-            log(LOG_DEBUG, TAST_FMT, tast_expr_print(vec_at(&new_args, 1)));
-            assert(new_args.info.count == 2);
+            if (tast_expr_get_lang_type(inner_thing).type == LANG_TYPE_VOID) {
+                assert(new_args.info.count == 1);
+            } else {
+                assert(new_args.info.count == 2);
+                log(LOG_DEBUG, TAST_FMT, tast_expr_print(vec_at(&new_args, 1)));
+            }
             break;
         }
         default:
@@ -1084,7 +1092,7 @@ static Tast_expr* rm_tuple_expr_rhs(Env* env, Tast_expr* rhs, Pos assign_pos) {
         case TAST_FUNCTION_CALL:
             return tast_function_call_wrap(rm_tuple_function_call(env, tast_function_call_unwrap(rhs)));
         case TAST_SUM_CALLEE:
-            todo();
+            unreachable("callee should not make it to this pass");
         case TAST_SUM_CASE:
             todo();
         case TAST_SUM_ACCESS:

@@ -102,8 +102,11 @@ static inline Str_view serialize_lang_type(const Env* env, Lang_type lang_type) 
             // fallthrough
         case LANG_TYPE_RAW_UNION:
             return serialize_lang_type_struct_thing(env, lang_type);
-        case LANG_TYPE_VOID:
-            todo();
+        case LANG_TYPE_VOID: {
+            String name = {0};
+            string_extend_cstr(&a_main, &name, "void");
+            return string_to_strv(name);
+        }
     }
     unreachable("");
 }

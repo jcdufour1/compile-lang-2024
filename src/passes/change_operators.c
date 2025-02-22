@@ -69,7 +69,7 @@ static Tast_expr* change_op_expr(Env* env, Tast_expr* root) {
         case TAST_TUPLE:
             return root;
         case TAST_SUM_CALLEE:
-            todo();
+            return root;
         case TAST_SUM_CASE:
             todo();
         case TAST_SUM_ACCESS:

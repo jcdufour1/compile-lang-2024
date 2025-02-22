@@ -203,7 +203,6 @@ static void llvm_extend_type_decl_str(const Env* env, String* output, const Llvm
 
 static void extend_literal_decl_prefix(String* output, String* literals, const Llvm_literal* literal) {
     log(LOG_DEBUG, "entering thing\n");
-    assert(lang_type_get_str(llvm_literal_get_lang_type(literal)).count > 0);
     if (str_view_cstr_is_equal(lang_type_get_str(llvm_literal_get_lang_type(literal)), "u8")) {
         assert(llvm_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE);
         if (lang_type_get_pointer_depth(llvm_literal_get_lang_type(literal)) != 1) {

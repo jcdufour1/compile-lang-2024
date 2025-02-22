@@ -340,6 +340,8 @@ uint64_t sizeof_lang_type(const Env* env, Lang_type lang_type) {
             try(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
             return sizeof_def(env, def);
         }
+        case LANG_TYPE_VOID:
+            return 0;
         default:
             unreachable(LANG_TYPE_FMT, lang_type_print(lang_type));
     }

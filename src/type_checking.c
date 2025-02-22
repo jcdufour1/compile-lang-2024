@@ -892,6 +892,52 @@ bool try_set_assignment_types(Env* env, Tast_assignment** new_assign, Uast_assig
     return true;
 }
 
+bool try_set_function_call_types_sum_case(Env* env, Tast_sum_case** new_case, Uast_expr_vec args, Tast_sum_case* sum_case) {
+    switch (sum_case->tag->lang_type.type) {
+        case LANG_TYPE_VOID: {
+            if (args.info.count > 0) {
+                // TODO: expected failure case
+                msg(LOG_DEBUG, EXPECT_FAIL_TYPE_NONE, env->file_text, uast_expr_get_pos(vec_at(&args, 0)), "no arguments expected here\n");
+                todo();
+            }
+            *new_case = sum_case;
+            return true;
+        }
+        default: {
+            // tast_sum_case->tag->lang_type is of selected varient of sum (maybe)
+            Uast_variable_def* new_def = uast_variable_def_new(
+                sum_case->pos,
+                lang_type_to_ulang_type(sum_case->tag->lang_type),
+                false,
+                uast_expr_get_name(vec_at(&args, 0))
+            );
+            usymbol_add_defer(env, uast_variable_def_wrap(new_def));
+            // TODO: add assignment here
+            log(LOG_DEBUG, TAST_FMT, uast_variable_def_print(new_def));
+            log(LOG_DEBUG, TAST_FMT, tast_sum_case_print(sum_case));
+
+            Uast_assignment* new_assign = uast_assignment_new(
+                new_def->pos,
+                uast_def_wrap(uast_variable_def_wrap(new_def)),
+                uast_sum_access_wrap(uast_sum_access_new(
+                    new_def->pos,
+                    sum_case->tag,
+                    lang_type_from_ulang_type(env, new_def->lang_type),
+                    uast_symbol_wrap(uast_symbol_new(
+                        new_def->pos,
+                        uast_expr_get_name(env->parent_of_operand)
+                    ))
+                ))
+            );
+
+            vec_append(&a_main, &env->switch_case_defer_add_sum_case_part, uast_assignment_wrap(new_assign));
+
+            *new_case = sum_case;
+            return true;
+        }
+    }
+}
+
 bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_call* fun_call) {
     bool status = true;
 
@@ -978,42 +1024,11 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             if (fun_call->args.info.count != 1) {
                 todo();
             }
-            Tast_sum_case* sum_case = tast_sum_case_unwrap(new_callee);
-
-            //Tast_expr* new_item = NULL;
-            //try(try_set_expr_types(env, &new_item, vec_at(&fun_call->args, 0)));
-
-            // TODO: is tag set to a type that makes sense?
-            // (right now, it is set to i64)
-            //sum_case->tag->lang_type = lang_type_primitive_const_wrap(lang_type_primitive_new(lang_type_atom_new_from_cstr("i64", 0)));
-            Uast_variable_def* new_def = uast_variable_def_new(
-                sum_case->pos,
-                lang_type_to_ulang_type(sum_case->tag->lang_type),
-                false,
-                uast_expr_get_name(vec_at(&fun_call->args, 0))
-            );
-            usymbol_add_defer(env, uast_variable_def_wrap(new_def));
-            // TODO: add assignment here
-            log(LOG_DEBUG, TAST_FMT, uast_variable_def_print(new_def));
-            log(LOG_DEBUG, TAST_FMT, tast_sum_case_print(sum_case));
-
-            Uast_assignment* new_assign = uast_assignment_new(
-                new_def->pos,
-                uast_def_wrap(uast_variable_def_wrap(new_def)),
-                uast_sum_access_wrap(uast_sum_access_new(
-                    new_def->pos,
-                    sum_case->tag,
-                    lang_type_from_ulang_type(env, new_def->lang_type),
-                    uast_symbol_wrap(uast_symbol_new(
-                        new_def->pos,
-                        uast_expr_get_name(env->parent_of_operand)
-                    ))
-                ))
-            );
-
-            vec_append(&a_main, &env->switch_case_defer_add_sum_case_part, uast_assignment_wrap(new_assign));
-
-            *new_call = tast_sum_case_wrap(sum_case);
+            Tast_sum_case* new_case = NULL;
+            if (!try_set_function_call_types_sum_case(env, &new_case, fun_call->args, tast_sum_case_unwrap(new_callee))) {
+                return false;
+            }
+            *new_call = tast_sum_case_wrap(new_case);
             return true;
         }
         default:
@@ -1238,7 +1253,7 @@ bool try_set_member_access_types_finish_generic_struct(
 }
 
 bool try_set_member_access_types_finish_sum_def(
-    const Env* env,
+    Env* env,
     Tast_stmt** new_tast,
     Uast_sum_def* sum_def,
     Uast_member_access* access,
@@ -1301,15 +1316,33 @@ bool try_set_member_access_types_finish_sum_def(
                 lang_type_from_ulang_type(env, member_def->lang_type)
             );
 
-            *new_tast = tast_expr_wrap(tast_sum_callee_wrap(tast_sum_callee_new(
+            Tast_sum_callee* new_callee = tast_sum_callee_new(
                 access->pos,
                 new_tag,
                 lang_type_sum_const_wrap(lang_type_sum_new(lang_type_atom_new(sum_def->base.name, 0)))
-            )));
+            );
 
+            if (new_tag->lang_type.type != LANG_TYPE_VOID) {
+                *new_tast = tast_expr_wrap(tast_sum_callee_wrap(new_callee));
+                return true;
+            }
+
+            new_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_primitive_new(lang_type_atom_new_from_cstr("i64", 0)));
+
+            Tast_sum_lit* new_lit = tast_sum_lit_new(
+                new_callee->pos,
+                new_callee->tag,
+                tast_literal_wrap(tast_void_wrap(tast_void_new(new_callee->pos))),
+                new_callee->sum_lang_type
+            );
+            *new_tast = tast_expr_wrap(tast_literal_wrap(tast_sum_lit_wrap(new_lit)));
             return true;
 
             todo();
+
+            //Tast_sum_case* new_call = NULL;
+            //*new_tast = tast_expr_wrap(tast_sum_callee_wrap(new_call));
+            //return true;
         }
         case PARENT_OF_NONE:
             unreachable("");
@@ -1318,7 +1351,7 @@ bool try_set_member_access_types_finish_sum_def(
 }
 
 bool try_set_member_access_types_finish(
-    const Env* env,
+    Env* env,
     Tast_stmt** new_tast,
     Uast_def* lang_type_def,
     Uast_member_access* access,
@@ -1872,6 +1905,7 @@ static bool check_for_exhaustiveness_inner(
 ) {
     if (is_default) {
         if (exhaustive_data->default_is_pre) {
+            // TODO: expected failure case
             unreachable("muliple default cases present");
         }
         exhaustive_data->default_is_pre = true;
@@ -1889,6 +1923,7 @@ static bool check_for_exhaustiveness_inner(
                 unreachable("invalid enum value\n");
             }
             if (vec_at(&exhaustive_data->covered, curr_lit->data)) {
+                // TODO: expected failure case
                 unreachable("duplicate case");
             }
             *vec_at_ref(&exhaustive_data->covered, curr_lit->data) = true;
@@ -1905,6 +1940,7 @@ static bool check_for_exhaustiveness_inner(
                 unreachable("invalid enum value\n");
             }
             if (vec_at(&exhaustive_data->covered, curr_lit->data)) {
+                // TODO: expected failure case
                 unreachable("duplicate case");
             }
             *vec_at_ref(&exhaustive_data->covered, curr_lit->data) = true;
@@ -1939,6 +1975,7 @@ static bool check_for_exhaustiveness_finish(const Env* env, Exhaustive_data exha
                         todo();
                 }
 
+                // TODO: list multiple uncovered cases
                 msg(
                     LOG_ERROR, EXPECT_FAIL_NON_EXHAUSTIVE_SWITCH, env->file_text, pos_switch,
                     "case `"LANG_TYPE_FMT"."STR_VIEW_FMT"` is not covered\n",
