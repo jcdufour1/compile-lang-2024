@@ -93,7 +93,7 @@ static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool impl
         case LANG_TYPE_TUPLE:
             return can_be_implicitly_converted_tuple(lang_type_tuple_const_unwrap(dest), lang_type_tuple_const_unwrap(src), implicit_pointer_depth);
         case LANG_TYPE_PRIMITIVE:
-            return can_be_implicitly_converted_lang_type_atom(lang_type_primitive_const_unwrap(dest).atom, lang_type_primitive_const_unwrap(src).atom, implicit_pointer_depth);
+            return can_be_implicitly_converted_lang_type_atom(lang_type_primitive_get_atom(lang_type_primitive_const_unwrap(dest)), lang_type_primitive_get_atom(lang_type_primitive_const_unwrap(src)), implicit_pointer_depth);
         case LANG_TYPE_SUM:
             return can_be_implicitly_converted_lang_type_atom(lang_type_sum_const_unwrap(dest).atom, lang_type_sum_const_unwrap(src).atom, implicit_pointer_depth);
         case LANG_TYPE_STRUCT:
@@ -245,7 +245,6 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
             return tast_string_wrap(tast_string_new(
                 old_string->pos,
                 old_string->data,
-                lang_type_primitive_new(lang_type_atom_new_from_cstr("u8", 1)),
                 old_string->name
             ));
         }
@@ -258,7 +257,7 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
             return tast_number_wrap(tast_number_new(
                 old_number->pos,
                 old_number->data,
-                lang_type_primitive_const_wrap(lang_type_primitive_new(lang_type_atom_new(string_to_strv(lang_type_str), 0))
+                lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_atom_new(string_to_strv(lang_type_str), 0)))
             )));
         }
         case UAST_VOID: {
@@ -271,9 +270,7 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
             Uast_char* old_char = uast_char_unwrap(literal);
             return tast_char_wrap(tast_char_new(
                 old_char->pos,
-                old_char->data,
-                lang_type_primitive_const_wrap(lang_type_primitive_new(lang_type_atom_new_from_cstr("u8", 0)))
-
+                old_char->data
             ));
         }
         default:
@@ -514,10 +511,14 @@ bool try_set_unary_types_finish(
             new_lang_type = cast_to;
             assert(lang_type_get_str(cast_to).count > 0);
             if (lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)) > 0 && lang_type_is_number(tast_expr_get_lang_type(new_child))) {
-            } else if (lang_type_is_number(tast_expr_get_lang_type(new_child)) && lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)) > 0) {
+            } else if (lang_type_is_number_like(tast_expr_get_lang_type(new_child))) {
             } else if (lang_type_is_number(tast_expr_get_lang_type(new_child)) && lang_type_is_number(tast_expr_get_lang_type(new_child))) {
             } else if (lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)) > 0 && lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)) > 0) {
             } else {
+                log(LOG_DEBUG, TAST_FMT, lang_type_print(tast_expr_get_lang_type(new_child)));
+                log(LOG_DEBUG, BOOL_FMT, bool_print(lang_type_is_number(tast_expr_get_lang_type(new_child))));
+                log(LOG_DEBUG, "%d\n", lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)));
+                log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_child));
                 todo();
             }
             break;
@@ -1009,7 +1010,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
 
             // TODO: is tag set to a type that makes sense?
             // (right now, it is set to i64)
-            sum_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_primitive_new(lang_type_atom_new_from_cstr("i64", 0)));
+            sum_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_atom_new_from_cstr("i64", 0))));
 
             Tast_sum_lit* new_lit = tast_sum_lit_new(
                 sum_callee->pos,
@@ -1108,7 +1109,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             params_idx++;
         }
 
-        if (lang_type_is_equal(lang_type_from_ulang_type(env, corres_param->lang_type), lang_type_primitive_const_wrap(lang_type_primitive_new(lang_type_atom_new_from_cstr("any", 0))))) {
+        if (lang_type_is_equal(lang_type_from_ulang_type(env, corres_param->lang_type), lang_type_primitive_const_wrap(lang_type_any_const_wrap(lang_type_any_new(lang_type_atom_new_from_cstr("any", 0)))))) {
             if (corres_param->is_variadic) {
                 // TODO: do type checking here if this function is not an extern "c" function
                 for (size_t idx = arg_idx; idx < fun_call->args.info.count; idx++) {
@@ -1327,7 +1328,7 @@ bool try_set_member_access_types_finish_sum_def(
                 return true;
             }
 
-            new_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_primitive_new(lang_type_atom_new_from_cstr("i64", 0)));
+            new_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_atom_new_from_cstr("i64", 0))));
 
             Tast_sum_lit* new_lit = tast_sum_lit_new(
                 new_callee->pos,

@@ -62,6 +62,23 @@ void extend_serialize_lang_type_to_string(const Env* env, String* string, Lang_t
     }
 }
 
+static void extend_lang_type_atom(String* string, Lang_type_atom atom, bool surround_in_lt_gt) {
+    if (atom.str.count > 1) {
+        string_extend_strv(&print_arena, string, atom.str);
+    } else {
+        string_extend_cstr(&print_arena, string, "void");
+    }
+    if (atom.pointer_depth < 0) {
+        todo();
+    }
+    for (int16_t idx = 0; idx < atom.pointer_depth; idx++) {
+        vec_append(&print_arena, string, '*');
+    }
+    if (surround_in_lt_gt) {
+        vec_append(&print_arena, string, '>');
+    }
+}
+
 void extend_lang_type_to_string(String* string, Lang_type lang_type, bool surround_in_lt_gt, bool do_tag) {
     if (surround_in_lt_gt) {
         vec_append(&print_arena, string, '<');
@@ -77,45 +94,7 @@ void extend_lang_type_to_string(String* string, Lang_type lang_type, bool surrou
             extend_lang_type_to_string(string, vec_at(&lang_types, idx), surround_in_lt_gt, do_tag);
         }
     } else {
-        if (lang_type_get_str(lang_type).count > 1) {
-            string_extend_strv(&print_arena, string, lang_type_get_str(lang_type));
-        } else {
-            string_extend_cstr(&print_arena, string, "<null>");
-        }
-        if (lang_type_get_pointer_depth(lang_type) < 0) {
-            todo();
-        }
-        for (int16_t idx = 0; idx < lang_type_get_pointer_depth(lang_type); idx++) {
-            vec_append(&print_arena, string, '*');
-        }
-        if (surround_in_lt_gt) {
-            vec_append(&print_arena, string, '>');
-        }
-    }
-}
-
-void extend_lang_type_atom_to_string(
-    String* string,
-    Lang_type_atom atom,
-    bool surround_in_lt_gt
-) {
-    if (surround_in_lt_gt) {
-        vec_append(&print_arena, string, '<');
-    }
-
-    if (atom.str.count > 1) {
-        string_extend_strv(&print_arena, string, atom.str);
-    } else {
-        string_extend_cstr(&print_arena, string, "<null>");
-    }
-    if (atom.pointer_depth < 0) {
-        todo();
-    }
-    for (int16_t idx = 0; idx < atom.pointer_depth; idx++) {
-        vec_append(&print_arena, string, '*');
-    }
-    if (surround_in_lt_gt) {
-        vec_append(&print_arena, string, '>');
+        extend_lang_type_atom(string, lang_type_get_atom(lang_type), surround_in_lt_gt);
     }
 }
 
@@ -125,7 +104,7 @@ static void extend_pos(String* buf, Pos pos) {
     string_extend_cstr(&print_arena, buf, " ))");
 }
 
-// TODO: make separate .c file for these
+// TODO: make separate .c file for these lang_type functions
 Str_view lang_type_print_internal(Lang_type lang_type, bool surround_in_lt_gt, bool do_tag) {
     String buf = {0};
     extend_lang_type_to_string(&buf, lang_type, surround_in_lt_gt, do_tag);
@@ -136,16 +115,12 @@ Str_view lang_type_print_internal(Lang_type lang_type, bool surround_in_lt_gt, b
 Str_view lang_type_atom_print_internal(Lang_type_atom atom, bool surround_in_lt_gt) {
     String buf = {0};
     // TODO: do not use `lang_type_primitive_new` here
-    extend_lang_type_to_string(&buf, lang_type_primitive_const_wrap(lang_type_primitive_new(atom)), surround_in_lt_gt, true);
+    extend_lang_type_atom(&buf, atom, surround_in_lt_gt);
     return string_to_strv(buf);
 }
 
 static void extend_lang_type(String* string, Lang_type lang_type, bool surround_in_lt_gt) {
     extend_lang_type_to_string(string, lang_type, surround_in_lt_gt, true);
-}
-
-static void extend_lang_type_atom(String* string, Lang_type_atom atom, bool surround_in_lt_gt) {
-    extend_lang_type_atom_to_string(string, atom, surround_in_lt_gt);
 }
 
 Str_view lang_type_vec_print_internal(Lang_type_vec types, bool surround_in_lt_gt) {
@@ -351,7 +326,6 @@ Str_view tast_string_print_internal(const Tast_string* lit, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "string", indent);
-    extend_lang_type_atom(&buf, lit->lang_type.atom, true);
     string_extend_strv_in_par(&print_arena, &buf, lit->data);
     string_extend_cstr(&print_arena, &buf, "\n");
 

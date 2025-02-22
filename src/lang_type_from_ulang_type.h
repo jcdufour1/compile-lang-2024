@@ -7,6 +7,10 @@
 
 static inline Lang_type lang_type_from_ulang_type(const Env* env, Ulang_type lang_type);
 
+// TODO: remove these tow forward decls and replace with better system
+bool lang_type_atom_is_signed(Lang_type_atom atom);
+bool lang_type_atom_is_unsigned(Lang_type_atom atom);
+
 // TODO: figure out way to reduce duplicate vec allocations
 static inline Lang_type lang_type_from_ulang_type_tuple(const Env* env, Ulang_type_tuple lang_type) {
     Lang_type_vec new_lang_types = {0};
@@ -14,6 +18,31 @@ static inline Lang_type lang_type_from_ulang_type_tuple(const Env* env, Ulang_ty
         vec_append(&a_main, &new_lang_types, lang_type_from_ulang_type(env, vec_at(&lang_type.ulang_types, idx)));
     }
     return lang_type_tuple_const_wrap(lang_type_tuple_new(new_lang_types));
+}
+
+static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Env* env, Ulang_type_regular lang_type, const Uast_primitive_def* def) {
+    (void) env;
+    (void) lang_type;
+    (void) def;
+
+    Lang_type_atom atom = lang_type_atom_new(lang_type.atom.str, lang_type.atom.pointer_depth);
+
+    if (lang_type_atom_is_signed(atom)) {
+        return lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(atom)));
+    } else if (str_view_cstr_is_equal(atom.str, "void")) {
+        todo();
+    } else if (lang_type_atom_is_equal(atom, lang_type_atom_new_from_cstr("u8", 0))) {
+        return lang_type_primitive_const_wrap(lang_type_string_const_wrap(lang_type_string_new(atom)));
+    } else if (str_view_cstr_is_equal(atom.str, "u8")) {
+        // TODO: does this make sense for u8**, etc.?
+        return lang_type_primitive_const_wrap(lang_type_string_const_wrap(lang_type_string_new(atom)));
+    } else if (str_view_cstr_is_equal(atom.str, "any")) {
+        return lang_type_primitive_const_wrap(lang_type_string_const_wrap(lang_type_string_new(atom)));
+    } else {
+        log(LOG_DEBUG, TAST_FMT, ulang_type_print(ulang_type_regular_const_wrap(lang_type)));
+        todo();
+    }
+    todo();
 }
 
 static inline Lang_type lang_type_from_ulang_type_regular(const Env* env, Ulang_type_regular lang_type) {
@@ -33,7 +62,7 @@ static inline Lang_type lang_type_from_ulang_type_regular(const Env* env, Ulang_
         case UAST_SUM_DEF:
             return lang_type_sum_const_wrap(lang_type_sum_new(new_atom));
         case UAST_PRIMITIVE_DEF:
-            return lang_type_primitive_const_wrap(lang_type_primitive_new(new_atom));
+            return lang_type_from_ulang_type_regular_primitive(env, lang_type, uast_primitive_def_unwrap(result));
         case UAST_LITERAL_DEF:
             try(uast_literal_def_const_unwrap(result)->type == UAST_VOID_DEF);
             return lang_type_void_const_wrap(lang_type_void_new(0));

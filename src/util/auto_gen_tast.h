@@ -260,7 +260,6 @@ static Tast_type tast_gen_string(const char* prefix) {
     Tast_type string = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&string.members, "Str_view", "data");
-    append_member(&string.members, "Lang_type_primitive", "lang_type");
     append_member(&string.members, "Str_view", "name");
 
     return string;
@@ -271,7 +270,6 @@ static Tast_type tast_gen_char(const char* prefix) {
     Tast_type lang_char = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&lang_char.members, "char", "data");
-    append_member(&lang_char.members, "Lang_type", "lang_type");
 
     return lang_char;
 }

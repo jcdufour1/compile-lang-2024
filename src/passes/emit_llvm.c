@@ -118,11 +118,11 @@ static void extend_type_call_str(const Env* env, String* output, Lang_type lang_
             extend_serialize_lang_type_to_string(env, output, lang_type, false);
             return;
         case LANG_TYPE_ENUM:
-            lang_type = lang_type_primitive_const_wrap(lang_type_primitive_new(lang_type_atom_new_from_cstr("i32", 0)));
+            lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_atom_new_from_cstr("i64", 0)))),
             extend_lang_type_to_string(output, lang_type, false, false);
             return;
         case LANG_TYPE_VOID:
-            lang_type = lang_type_primitive_const_wrap(lang_type_primitive_new(lang_type_atom_new_from_cstr("void", 0)));
+            lang_type = lang_type_void_const_wrap(lang_type_void_new(0));
             extend_lang_type_to_string(output, lang_type, false, false);
             return;
         case LANG_TYPE_PRIMITIVE:

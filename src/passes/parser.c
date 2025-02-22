@@ -1306,6 +1306,7 @@ error:
 
 static Uast_literal* extract_literal(Env* env, Tk_view* tokens, bool defer_sym_add) {
     (void) env;
+    (void) defer_sym_add;
     Token token = tk_view_consume(tokens);
     assert(token_is_literal(token));
 
@@ -1715,7 +1716,6 @@ static PARSE_EXPR_STATUS extract_statement(Env* env, Uast_stmt** child, Tk_view*
         return PARSE_EXPR_NONE;
     }
 
-    // TODO: allow else to be after closing bracket
     if (!try_consume(NULL, tokens, TOKEN_NEW_LINE)) {
         msg(
             LOG_ERROR, EXPECT_FAIL_NO_NEW_LINE_AFTER_STATEMENT, env->file_text, tk_view_front(*tokens).pos,

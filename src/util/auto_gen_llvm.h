@@ -218,7 +218,6 @@ static Llvm_type llvm_gen_string(void) {
     Llvm_type string = {.name = llvm_name_new("literal", "string", false)};
 
     append_member(&string.members, "Str_view", "data");
-    append_member(&string.members, "Lang_type_primitive", "lang_type");
     append_member(&string.members, "Str_view", "name");
 
     return string;
@@ -228,7 +227,6 @@ static Llvm_type llvm_gen_char(void) {
     Llvm_type lang_char = {.name = llvm_name_new("literal", "char", false)};
 
     append_member(&lang_char.members, "char", "data");
-    append_member(&lang_char.members, "Lang_type", "lang_type");
     append_member(&lang_char.members, "Str_view", "name");
 
     return lang_char;

@@ -42,22 +42,22 @@ static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
     if (a.type != b.type) {
         return false;
     }
-
+    
     switch (a.type) {
         case LANG_TYPE_PRIMITIVE:
-            return lang_type_atom_is_equal(lang_type_primitive_const_unwrap(a).atom, lang_type_primitive_const_unwrap(b).atom);
-        case LANG_TYPE_SUM:
-            return lang_type_atom_is_equal(lang_type_sum_const_unwrap(a).atom, lang_type_sum_const_unwrap(b).atom);
+            // fallthrough
         case LANG_TYPE_STRUCT:
-            return lang_type_atom_is_equal(lang_type_struct_const_unwrap(a).atom, lang_type_struct_const_unwrap(b).atom);
-        case LANG_TYPE_ENUM:
-            return lang_type_atom_is_equal(lang_type_enum_const_unwrap(a).atom, lang_type_enum_const_unwrap(b).atom);
+            // fallthrough
         case LANG_TYPE_RAW_UNION:
-            return lang_type_atom_is_equal(lang_type_raw_union_const_unwrap(a).atom, lang_type_raw_union_const_unwrap(b).atom);
+            // fallthrough
+        case LANG_TYPE_ENUM:
+            // fallthrough
+        case LANG_TYPE_SUM:
+            // fallthrough
+        case LANG_TYPE_VOID:
+            return lang_type_atom_is_equal(lang_type_get_atom(a), lang_type_get_atom(b));
         case LANG_TYPE_TUPLE:
             return lang_type_tuple_is_equal(lang_type_tuple_const_unwrap(a), lang_type_tuple_const_unwrap(b));
-        case LANG_TYPE_VOID:
-            return true;
     }
     unreachable("");
 }
@@ -114,13 +114,13 @@ static inline Lang_type tast_literal_get_lang_type(const Tast_literal* lit) {
         case TAST_NUMBER:
             return tast_number_const_unwrap(lit)->lang_type;
         case TAST_STRING:
-            return lang_type_primitive_const_wrap(tast_string_const_unwrap(lit)->lang_type);
+            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type_atom_new_from_cstr("u8", 1))));
         case TAST_VOID:
             return lang_type_void_const_wrap(lang_type_void_new(0));
         case TAST_ENUM_LIT:
             return tast_enum_lit_const_unwrap(lit)->lang_type;
         case TAST_CHAR:
-            return tast_char_const_unwrap(lit)->lang_type;
+            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type_atom_new_from_cstr("u8", 0))));
         case TAST_SUM_LIT:
             return tast_sum_lit_const_unwrap(lit)->lang_type;
         case TAST_UNION_LIT:
@@ -142,8 +142,7 @@ static inline void tast_literal_set_lang_type(Tast_literal* lit, Lang_type lang_
             tast_enum_lit_unwrap(lit)->lang_type = lang_type;
             return;
         case TAST_CHAR:
-            tast_char_unwrap(lit)->lang_type = lang_type;
-            return;
+            unreachable("");
         case TAST_SUM_LIT:
             tast_sum_lit_unwrap(lit)->lang_type = lang_type;
             return;

@@ -196,13 +196,13 @@ static inline Lang_type llvm_literal_get_lang_type(const Llvm_literal* lit) {
         case LLVM_NUMBER:
             return llvm_number_const_unwrap(lit)->lang_type;
         case LLVM_STRING:
-            return lang_type_primitive_const_wrap(llvm_string_const_unwrap(lit)->lang_type);
+            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type_atom_new_from_cstr("u8", 1))));
         case LLVM_VOID:
             return lang_type_void_const_wrap(lang_type_void_new(0));
         case LLVM_ENUM_LIT:
             return llvm_enum_lit_const_unwrap(lit)->lang_type;
         case LLVM_CHAR:
-            return llvm_char_const_unwrap(lit)->lang_type;
+            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type_atom_new_from_cstr("u8", 0))));
     }
     unreachable("");
 }

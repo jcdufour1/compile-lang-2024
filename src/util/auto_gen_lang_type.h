@@ -115,13 +115,54 @@ static Lang_type_name lang_type_name_new(const char* parent, const char* base, b
     return (Lang_type_name) {.parent = str_view_from_cstr(parent), .base = str_view_from_cstr(base), .is_topmost = is_topmost};
 }
 
-static Lang_type_type lang_type_gen_primitive(const char* prefix) {
-    const char* base_name = "primitive";
+static Lang_type_type lang_type_gen_signed_int(const char* prefix) {
+    const char* base_name = "signed_int";
     Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
 
     append_member(&sym.members, "Lang_type_atom", "atom");
 
     return sym;
+}
+
+static Lang_type_type lang_type_gen_char(const char* prefix) {
+    const char* base_name = "char";
+    Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
+
+    append_member(&sym.members, "Lang_type_atom", "atom");
+
+    return sym;
+}
+
+static Lang_type_type lang_type_gen_any(const char* prefix) {
+    const char* base_name = "any";
+    Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
+
+    // TODO: get rid of these unneeded atoms
+    append_member(&sym.members, "Lang_type_atom", "atom");
+
+    return sym;
+}
+
+static Lang_type_type lang_type_gen_string(const char* prefix) {
+    const char* base_name = "string";
+    Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
+
+    // TODO: get rid of these unneeded atoms
+    append_member(&sym.members, "Lang_type_atom", "atom");
+
+    return sym;
+}
+
+static Lang_type_type lang_type_gen_primitive(const char* prefix) {
+    const char* base_name = "primitive";
+    Lang_type_type lang_type = {.name = lang_type_name_new(prefix, base_name, false)};
+
+    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_string(base_name));
+    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_char(base_name));
+    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_signed_int(base_name));
+    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_any(base_name));
+
+    return lang_type;
 }
 
 static Lang_type_type lang_type_gen_struct(const char* prefix) {
@@ -395,7 +436,8 @@ static void lang_type_gen_internal_wrap(Lang_type_type type, bool is_const) {
     string_extend_cstr(&gen_a, &function, " lang_type) {\n");
 
     //    return &lang_type->as._##lower; 
-    string_extend_cstr(&gen_a, &function, "    Lang_type new_lang_type = {0};\n");
+    extend_parent_lang_type_name_first_upper(&function, type.name);
+    string_extend_cstr(&gen_a, &function, " new_lang_type = {0};\n");
     string_extend_cstr(&gen_a, &function, "    new_lang_type.type = ");
     extend_lang_type_name_upper(&function, type.name);
     string_extend_cstr(&gen_a, &function, ";\n");
@@ -457,6 +499,9 @@ static void lang_type_gen_new_internal(Lang_type_type type, bool implementation)
     }
 
     if (type.name.is_topmost) {
+        return;
+    }
+    if (type.sub_types.info.count > 0) {
         return;
     }
 

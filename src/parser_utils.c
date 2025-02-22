@@ -88,11 +88,41 @@ bool lang_type_atom_is_number(Lang_type_atom atom) {
     return lang_type_atom_is_unsigned(atom) || lang_type_atom_is_signed(atom);
 }
 
+bool lang_type_is_number_like(Lang_type lang_type) {
+    if (lang_type_get_pointer_depth(lang_type) > 0) {
+        return true;
+    }
+    if (lang_type.type != LANG_TYPE_PRIMITIVE) {
+        return false;
+    }
+    switch (lang_type_primitive_const_unwrap(lang_type).type) {
+        case LANG_TYPE_CHAR:
+            return true;
+        case LANG_TYPE_STRING:
+            return true;
+        case LANG_TYPE_SIGNED_INT:
+            return true;
+        case LANG_TYPE_ANY:
+            return false;
+    }
+    unreachable("");
+}
+
 bool lang_type_is_number(Lang_type lang_type) {
     if (lang_type.type != LANG_TYPE_PRIMITIVE) {
         return false;
     }
-    return lang_type_atom_is_number(lang_type_primitive_const_unwrap(lang_type).atom);
+    switch (lang_type_primitive_const_unwrap(lang_type).type) {
+        case LANG_TYPE_CHAR:
+            return false;
+        case LANG_TYPE_STRING:
+            return false;
+        case LANG_TYPE_SIGNED_INT:
+            return true;
+        case LANG_TYPE_ANY:
+            return false;
+    }
+    unreachable("");
 }
 
 int64_t i_lang_type_atom_to_bit_width(Lang_type_atom atom) {
@@ -285,7 +315,7 @@ Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child) {
         ),
         if_cond_child,
         TOKEN_NOT_EQUAL,
-        lang_type_primitive_const_wrap(lang_type_primitive_new(lang_type_atom_new_from_cstr("i32", 0)))
+        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_atom_new_from_cstr("i32", 0))))
     );
 
     return tast_binary_wrap(binary);
@@ -306,16 +336,16 @@ Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child) {
 
 uint64_t sizeof_primitive(Lang_type_primitive primitive) {
     // TODO: make more generalized system for different bit widths, etc.
-    if (lang_type_atom_is_equal(primitive.atom, lang_type_atom_new_from_cstr("u8", 1))) {
+    if (lang_type_atom_is_equal(lang_type_primitive_get_atom(primitive), lang_type_atom_new_from_cstr("u8", 1))) {
         return 8;
-    } else if (lang_type_atom_is_equal(primitive.atom, lang_type_atom_new_from_cstr("i1", 0))) {
+    } else if (lang_type_atom_is_equal(lang_type_primitive_get_atom(primitive), lang_type_atom_new_from_cstr("i1", 0))) {
         return 1;
-    } else if (lang_type_atom_is_equal(primitive.atom, lang_type_atom_new_from_cstr("i32", 0))) {
+    } else if (lang_type_atom_is_equal(lang_type_primitive_get_atom(primitive), lang_type_atom_new_from_cstr("i32", 0))) {
         return 4;
-    } else if (lang_type_atom_is_equal(primitive.atom, lang_type_atom_new_from_cstr("i64", 0))) {
+    } else if (lang_type_atom_is_equal(lang_type_primitive_get_atom(primitive), lang_type_atom_new_from_cstr("i64", 0))) {
         return 8;
     } else {
-        unreachable(LANG_TYPE_FMT"\n", lang_type_atom_print(primitive.atom));
+        unreachable(LANG_TYPE_FMT"\n", lang_type_print(lang_type_primitive_const_wrap(primitive)));
     }
 }
 

@@ -279,7 +279,6 @@ static Llvm_literal* tast_literal_clone(Tast_literal* old_lit) {
             Llvm_string* string = llvm_string_new(
                 tast_literal_get_pos(old_lit),
                 tast_string_unwrap(old_lit)->data,
-                tast_string_unwrap(old_lit)->lang_type,
                 tast_string_unwrap(old_lit)->name
             );
             return llvm_string_wrap(string);
@@ -300,7 +299,6 @@ static Llvm_literal* tast_literal_clone(Tast_literal* old_lit) {
             Llvm_char* lang_char = llvm_char_new(
                 tast_literal_get_pos(old_lit),
                 tast_char_unwrap(old_lit)->data,
-                tast_char_unwrap(old_lit)->lang_type,
                 util_literal_name_new()
             );
             return llvm_char_wrap(lang_char);
@@ -556,7 +554,7 @@ static Str_view load_ptr_member_access(
     Tast_number* new_index = tast_number_new(
         old_access->pos,
         struct_index,
-        lang_type_primitive_const_wrap(lang_type_primitive_new(lang_type_atom_new_from_cstr("i32", 0)))
+        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_atom_new_from_cstr("i32", 0))))
     );
     
     Llvm_load_element_ptr* new_load = llvm_load_element_ptr_new(
