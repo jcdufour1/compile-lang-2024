@@ -108,6 +108,10 @@ static inline int16_t lang_type_get_pointer_depth(Lang_type lang_type) {
     return lang_type_get_atom(lang_type).pointer_depth;
 }
 
+static inline int16_t lang_type_primitive_get_pointer_depth(Lang_type_primitive lang_type) {
+    return lang_type_primitive_get_atom(lang_type).pointer_depth;
+}
+
 static inline int32_t lang_type_primitive_get_bit_width(Lang_type_primitive lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_CHAR:

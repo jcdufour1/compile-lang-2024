@@ -117,7 +117,7 @@ bool lang_type_is_number(Lang_type lang_type) {
     if (lang_type.type != LANG_TYPE_PRIMITIVE) {
         return false;
     }
-    // TODO: return false when pointer_depth > 0?
+
     switch (lang_type_primitive_const_unwrap(lang_type).type) {
         case LANG_TYPE_CHAR:
             return false;
@@ -137,7 +137,7 @@ bool lang_type_is_signed(Lang_type lang_type) {
     if (lang_type.type != LANG_TYPE_PRIMITIVE) {
         return false;
     }
-    // TODO: return false when pointer_depth > 0?
+
     switch (lang_type_primitive_const_unwrap(lang_type).type) {
         case LANG_TYPE_CHAR:
             return false;
@@ -157,7 +157,7 @@ bool lang_type_is_unsigned(Lang_type lang_type) {
     if (lang_type.type != LANG_TYPE_PRIMITIVE) {
         return false;
     }
-    // TODO: return false when pointer_depth > 0?
+
     switch (lang_type_primitive_const_unwrap(lang_type).type) {
         case LANG_TYPE_CHAR:
             return false;
@@ -380,26 +380,31 @@ Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child) {
     return uast_binary_wrap(binary);
 }
 
-// TODO: put sizeof functions in their own .c file
 uint64_t sizeof_primitive(Lang_type_primitive primitive) {
-    // TODO: make more generalized system for different bit widths, etc.
-    if (lang_type_atom_is_equal(lang_type_primitive_get_atom(primitive), lang_type_atom_new_from_cstr("u8", 1))) {
+    // TODO: platform specific pointer size, etc.
+    if (lang_type_primitive_get_pointer_depth(primitive) > 0) {
         return 8;
-    } else if (lang_type_atom_is_equal(lang_type_primitive_get_atom(primitive), lang_type_atom_new_from_cstr("i1", 0))) {
-        return 1;
-    } else if (lang_type_atom_is_equal(lang_type_primitive_get_atom(primitive), lang_type_atom_new_from_cstr("i32", 0))) {
-        return 4;
-    } else if (lang_type_atom_is_equal(lang_type_primitive_get_atom(primitive), lang_type_atom_new_from_cstr("i64", 0))) {
-        return 8;
-    } else {
-        unreachable(LANG_TYPE_FMT"\n", lang_type_print(lang_type_primitive_const_wrap(primitive)));
     }
+
+    switch (primitive.type) {
+        case LANG_TYPE_SIGNED_INT:
+            return lang_type_signed_int_const_unwrap(primitive).bit_width/8;
+        case LANG_TYPE_UNSIGNED_INT:
+            return lang_type_unsigned_int_const_unwrap(primitive).bit_width/8;
+        case LANG_TYPE_CHAR:
+            return 1;
+        case LANG_TYPE_STRING:
+            unreachable("");
+        case LANG_TYPE_ANY:
+            unreachable("");
+    }
+    unreachable("");
 }
 
 uint64_t sizeof_lang_type(Env* env, Lang_type lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_ENUM:
-            return 4;
+            unreachable("");
         case LANG_TYPE_PRIMITIVE:
             return sizeof_primitive(lang_type_primitive_const_unwrap(lang_type));
         case LANG_TYPE_STRUCT: {

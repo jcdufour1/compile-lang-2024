@@ -108,6 +108,9 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "sum_case_var_is_redef.own": ["redefinition-of-symbol"],
     EXPECTED_FAIL_EXAMPLES_DIR + "signed_assigned_to_unsigned.own": ["assignment-mismatched-types", "assignment-mismatched-types"],
     EXPECTED_FAIL_EXAMPLES_DIR + "deref_literal.own": ["deref_non_pointer"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "assign_struct_literal_to_int.own": ["struct-init-on-primitive", "struct-init-on-primitive"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "duplicate_default.own": ["duplicate-default"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "duplicate_case.own": ["duplicate-case", "duplicate-case"],
 }
 
 def to_str(a):

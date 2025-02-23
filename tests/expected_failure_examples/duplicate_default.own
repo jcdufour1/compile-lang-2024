@@ -1,0 +1,16 @@
+
+extern("c") fn printf(str_to_print u8*, args any...) i32
+
+type TokenType enum {
+    num
+    string
+}
+
+fn main() i32 {
+    let token_type TokenType = TokenType.num
+    switch token_type {
+        default: printf("unhandled token_type")
+        default: printf("unhandled token_type")
+    }
+    return 0
+}
