@@ -127,8 +127,10 @@ static void extend_type_call_str(Env* env, String* output, Lang_type lang_type) 
             return;
         case LANG_TYPE_PRIMITIVE:
             if (lang_type_atom_is_unsigned(lang_type_get_atom(lang_type))) {
-                lang_type_set_atom(&lang_type, lang_type_atom_unsigned_to_signed(lang_type_get_atom(lang_type)));
+                Lang_type_unsigned_int old_num = lang_type_unsigned_int_const_unwrap(lang_type_primitive_const_unwrap(lang_type));
+                lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(old_num.bit_width, old_num.pointer_depth)));
             }
+            assert(lang_type_atom_is_signed(lang_type_get_atom(lang_type)));
             extend_lang_type_to_string(output, lang_type, false, false);
             return;
         case LANG_TYPE_SUM:

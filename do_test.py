@@ -101,11 +101,12 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "sum_lit_invalid_arg.own": ["sum-lit-invalid-arg", "sum-lit-invalid-arg"],
     EXPECTED_FAIL_EXAMPLES_DIR + "struct_lit_assigned_to_sum.own": ["struct-init-on-sum"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_assignment_to_sum.own": ["assignment-mismatched-types"],
-    EXPECTED_FAIL_EXAMPLES_DIR + "logical_not_on_void_type.own": ["unary-mismatched-types", "unary-mismatched-types"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "logical_not_on_void_type.own": ["unary-mismatched-types", "unary-mismatched-types", "unary-mismatched-types"],
     EXPECTED_FAIL_EXAMPLES_DIR + "sum_switch_invalid_case.own": ["binary-mismatched-types"],
     EXPECTED_FAIL_EXAMPLES_DIR + "type_token_struct_wrong_order.own": ["parser-expected", "parser-expected"],
     EXPECTED_FAIL_EXAMPLES_DIR + "type_token_no_sum_after.own": ["parser-expected"],
     EXPECTED_FAIL_EXAMPLES_DIR + "sum_case_var_is_redef.own": ["redefinition-of-symbol"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "signed_assigned_to_unsigned.own": ["invalid-assignment"],
 }
 
 def to_str(a):

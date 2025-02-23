@@ -28,6 +28,9 @@ static int64_t log2_int64_t(int64_t num) {
 }
 
 static int64_t bit_width_needed_unsigned(int64_t num) {
+    if (num == 0) {
+        return 1;
+    }
     if (num < 0) {
         return log2_int64_t(-num);
     }
@@ -227,7 +230,7 @@ CHECK_ASSIGN_STATUS check_generic_assignment_finish(
             tast_expr_set_lang_type(*new_src, dest_lang_type);
             return CHECK_ASSIGN_OK;
         }
-        log(LOG_DEBUG, LANG_TYPE_FMT "   "TAST_FMT"\n", lang_type_print(dest_lang_type), tast_expr_print(src));
+        log(LOG_DEBUG, LANG_TYPE_FMT "\n"TAST_FMT"\n", lang_type_print(dest_lang_type), tast_expr_print(src));
         todo();
     } else {
         return CHECK_ASSIGN_INVALID;
@@ -1498,6 +1501,20 @@ bool try_set_index_untyped_types(Env* env, Tast_stmt** new_tast, Uast_index* ind
     if (!try_set_expr_types(env, &new_inner_index, index->index)) {
         return false;
     }
+    if (lang_type_get_bit_width(tast_expr_get_lang_type(new_inner_index)) < 64) {
+        try(try_set_unary_types_finish(
+            env,
+            &new_inner_index,
+            new_inner_index,
+            tast_expr_get_pos(new_inner_index),
+            TOKEN_UNSAFE_CAST,
+            lang_type_primitive_const_wrap(
+                lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(64, 0))
+            )
+        ));
+    } else {
+        unreachable("");
+    }
 
     Lang_type new_lang_type = tast_expr_get_lang_type(new_callee);
     if (lang_type_get_pointer_depth(new_lang_type) < 1) {
@@ -2128,6 +2145,7 @@ static void do_test_bit_width(void) {
     assert(4 == bit_width_needed_signed(-8));
     assert(5 == bit_width_needed_signed(-9));
 
+    assert(1 == bit_width_needed_signed(0));
     assert(2 == bit_width_needed_signed(1));
     assert(3 == bit_width_needed_signed(2));
     assert(3 == bit_width_needed_signed(3));
@@ -2137,6 +2155,7 @@ static void do_test_bit_width(void) {
     assert(4 == bit_width_needed_signed(7));
     assert(5 == bit_width_needed_signed(8));
 
+    assert(1 == bit_width_needed_unsigned(0));
     assert(1 == bit_width_needed_unsigned(1));
     assert(2 == bit_width_needed_unsigned(2));
     assert(2 == bit_width_needed_unsigned(3));
@@ -2148,6 +2167,8 @@ static void do_test_bit_width(void) {
 }
 
 bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def) {
+    do_test_bit_width();
+
     bool status = true;
 
     Symbol_collection new_sym_coll = block->symbol_collection;

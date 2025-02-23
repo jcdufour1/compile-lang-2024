@@ -51,6 +51,7 @@ static inline Lang_type_atom lang_type_get_atom(Lang_type lang_type) {
     unreachable("");
 }
 
+// TODO: remove this function?
 static inline void lang_type_primitive_set_atom(Lang_type_primitive* lang_type, Lang_type_atom atom) {
     switch (lang_type->type) {
         case LANG_TYPE_STRING:
@@ -105,6 +106,26 @@ static inline Str_view lang_type_get_str(Lang_type lang_type) {
 
 static inline int16_t lang_type_get_pointer_depth(Lang_type lang_type) {
     return lang_type_get_atom(lang_type).pointer_depth;
+}
+
+static inline int32_t lang_type_primitive_get_bit_width(Lang_type_primitive lang_type) {
+    switch (lang_type.type) {
+        case LANG_TYPE_CHAR:
+            unreachable("");
+        case LANG_TYPE_STRING:
+            unreachable("");
+        case LANG_TYPE_UNSIGNED_INT:
+            return lang_type_unsigned_int_const_unwrap(lang_type).bit_width;
+        case LANG_TYPE_SIGNED_INT:
+            return lang_type_signed_int_const_unwrap(lang_type).bit_width;
+        case LANG_TYPE_ANY:
+            unreachable("");
+    }
+    unreachable("");
+}
+
+static inline int32_t lang_type_get_bit_width(Lang_type lang_type) {
+    return lang_type_primitive_get_bit_width(lang_type_primitive_const_unwrap(lang_type));
 }
 
 static inline void lang_type_set_pointer_depth(Lang_type* lang_type, int16_t pointer_depth) {
