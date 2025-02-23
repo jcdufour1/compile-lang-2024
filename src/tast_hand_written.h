@@ -17,7 +17,6 @@ typedef size_t Llvm_id;
 
 typedef struct {
     Tast_variable_def_vec members;
-    Llvm_id llvm_id; // TODO: remove this?
     Str_view name;
 } Struct_def_base;
 

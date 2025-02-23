@@ -62,6 +62,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"undefined-function", EXPECT_FAIL_UNDEFINED_FUNCTION},
     {"struct-init-on-raw-union", EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION},
     {"struct-init-on-sum", EXPECT_FAIL_STRUCT_INIT_ON_SUM},
+    {"struct-init-on-primitive", EXPECT_FAIL_STRUCT_INIT_ON_PRIMITIVE},
     {"undefined-type", EXPECT_FAIL_UNDEFINED_TYPE},
     {"missing-close-sq-bracket", EXPECT_FAIL_MISSING_CLOSE_SQ_BRACKET},
     {"deref_non_pointer", EXPECT_FAIL_DEREF_NON_POINTER},
@@ -71,6 +72,8 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"non-exhaustive-switch", EXPECT_FAIL_NON_EXHAUSTIVE_SWITCH},
     {"sum-lit-invalid-arg", EXPECT_FAIL_SUM_LIT_INVALID_ARG},
     {"not-yet-implemented", EXPECT_FAIL_NOT_YET_IMPLEMENTED},
+    {"duplicate-default", EXPECT_FAIL_DUPLICATE_DEFAULT},
+    {"duplicate-case", EXPECT_FAIL_DUPLICATE_CASE},
 };
 
 static void parse_normal_option(Parameters* params, int* argc, char*** argv) {

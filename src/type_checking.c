@@ -709,22 +709,24 @@ bool try_set_struct_literal_assignment_types(
         case LANG_TYPE_STRUCT:
             break;
         case LANG_TYPE_RAW_UNION:
-            // TODO: improve this
             msg(
                 LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION, env->file_text,
                 assign_pos, "struct literal cannot be assigned to raw_union\n"
             );
             return false;
         case LANG_TYPE_SUM:
-            // TODO: improve this
             msg(
                 LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_SUM, env->file_text,
                 assign_pos, "struct literal cannot be assigned to sum\n"
             );
             return false;
         case LANG_TYPE_PRIMITIVE:
-            // TODO: expected failure case for this
-            unreachable("returning value in non void function");
+            msg(
+                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_PRIMITIVE, env->file_text,
+                assign_pos, "struct literal cannot be assigned to primitive type `"LANG_TYPE_FMT"`\n",
+                lang_type_print(dest_lang_type)
+            );
+            return false;
         default:
             log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(dest_lang_type));
             unreachable("");
@@ -999,9 +1001,6 @@ bool try_set_function_call_types_sum_case(Env* env, Tast_sum_case** new_case, Ua
                 uast_expr_get_name(vec_at(&args, 0))
             );
             usymbol_add_defer(env, uast_variable_def_wrap(new_def));
-            // TODO: add assignment here
-            log(LOG_DEBUG, TAST_FMT, uast_variable_def_print(new_def));
-            log(LOG_DEBUG, TAST_FMT, tast_sum_case_print(sum_case));
 
             Uast_assignment* new_assign = uast_assignment_new(
                 new_def->pos,
@@ -1094,8 +1093,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
                     unreachable("");
             }
 
-            // TODO: is tag set to a type that makes sense?
-            // (right now, it is set to i64)
+            // TODO: set tag size based on target platform
             sum_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0)));
 
             Tast_sum_lit* new_lit = tast_sum_lit_new(
@@ -1283,7 +1281,7 @@ bool try_set_sum_access_types(Env* env, Tast_sum_access** new_access, Uast_sum_a
     return true;
 }
 
-static void msg_invalid_member(
+static void msg_invalid_struct_member(
     Env* env,
     Ustruct_def_base base,
     const Uast_member_access* access
@@ -1322,7 +1320,7 @@ bool try_set_member_access_types_finish_generic_struct(
 ) {
     Uast_variable_def* member_def = NULL;
     if (!uast_try_get_member_def(&member_def, &def_base, access->member_name)) {
-        msg_invalid_member(env, def_base, access);
+        msg_invalid_struct_member(env, def_base, access);
         return false;
     }
 
@@ -1621,7 +1619,6 @@ bool try_set_struct_base_types(Env* env, Struct_def_base* new_base, Ustruct_def_
 
     *new_base = (Struct_def_base) {
         .members = new_members,
-        .llvm_id = 0,
         .name = base->name
     };
 
@@ -2000,14 +1997,17 @@ static Exhaustive_data check_for_exhaustiveness_start(Env* env, Lang_type oper_l
 }
 
 static bool check_for_exhaustiveness_inner(
+    Env* env,
     Exhaustive_data* exhaustive_data,
     const Tast_if* curr_if,
     bool is_default
 ) {
     if (is_default) {
         if (exhaustive_data->default_is_pre) {
-            // TODO: expected failure case
-            unreachable("muliple default cases present");
+            msg(
+                LOG_ERROR, EXPECT_FAIL_DUPLICATE_DEFAULT, env->file_text, curr_if->pos,
+                "duplicate default in switch statement\n"
+            );
         }
         exhaustive_data->default_is_pre = true;
         return true;
@@ -2024,8 +2024,16 @@ static bool check_for_exhaustiveness_inner(
                 unreachable("invalid enum value\n");
             }
             if (vec_at(&exhaustive_data->covered, curr_lit->data)) {
-                // TODO: expected failure case
-                unreachable("duplicate case");
+                Uast_def* enum_def_ = NULL;
+                try(usymbol_lookup(&enum_def_, env, lang_type_get_str(exhaustive_data->oper_lang_type)));
+                Uast_enum_def* enum_def = uast_enum_def_unwrap(enum_def_);
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_DUPLICATE_CASE, env->file_text, curr_if->pos,
+                    "duplicate case `"STR_VIEW_FMT"."STR_VIEW_FMT"` in switch statement\n",
+                    str_view_print(enum_def->base.name), str_view_print(vec_at(&enum_def->base.members, curr_lit->data)->name)
+                );
+                // TODO: print where original case is
+                return false;
             }
             *vec_at_ref(&exhaustive_data->covered, curr_lit->data) = true;
             return true;
@@ -2041,8 +2049,16 @@ static bool check_for_exhaustiveness_inner(
                 unreachable("invalid enum value\n");
             }
             if (vec_at(&exhaustive_data->covered, curr_lit->data)) {
-                // TODO: expected failure case
-                unreachable("duplicate case");
+                Uast_def* sum_def_ = NULL;
+                try(usymbol_lookup(&sum_def_, env, lang_type_get_str(exhaustive_data->oper_lang_type)));
+                Uast_sum_def* sum_def = uast_sum_def_unwrap(sum_def_);
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_DUPLICATE_CASE, env->file_text, curr_if->pos,
+                    "duplicate case `"STR_VIEW_FMT"."STR_VIEW_FMT"` in switch statement\n",
+                    str_view_print(sum_def->base.name), str_view_print(vec_at(&sum_def->base.members, curr_lit->data)->name)
+                );
+                // TODO: print where original case is
+                return false;
             }
             *vec_at_ref(&exhaustive_data->covered, curr_lit->data) = true;
             return true;
@@ -2060,6 +2076,9 @@ static bool check_for_exhaustiveness_finish(Env* env, Exhaustive_data exhaustive
             return true;
         }
 
+        bool status = true;
+        String string = {0};
+
         for (size_t idx = 0; idx < exhaustive_data.covered.info.count; idx++) {
             if (!vec_at(&exhaustive_data.covered, idx)) {
                 Uast_def* enum_def_ = NULL;
@@ -2076,17 +2095,26 @@ static bool check_for_exhaustiveness_finish(Env* env, Exhaustive_data exhaustive
                         todo();
                 }
 
-                // TODO: list multiple uncovered cases
-                msg(
-                    LOG_ERROR, EXPECT_FAIL_NON_EXHAUSTIVE_SWITCH, env->file_text, pos_switch,
-                    "case `"LANG_TYPE_FMT"."STR_VIEW_FMT"` is not covered\n",
-                    ulang_type_print(vec_at(&enum_def.members, idx)->lang_type),
-                    str_view_print(vec_at(&enum_def.members, idx)->name)
-                );
-                return false;
+                if (status == true) {
+                    string_extend_cstr(&a_main, &string, "some cases are not covered:\n");
+                    status = false;
+                }
+
+                // TODO: make printing less ugly
+                string_extend_cstr(&a_main, &string, "    ");
+                string_extend_strv(&a_main, &string, ulang_type_print_internal(vec_at(&enum_def.members, idx)->lang_type, false));
+                string_extend_cstr(&a_main, &string, ".");
+                string_extend_strv(&a_main, &string, vec_at(&enum_def.members, idx)->name);
+
             }
         }
 
+        if (!status) {
+            msg(
+                LOG_ERROR, EXPECT_FAIL_NON_EXHAUSTIVE_SWITCH, env->file_text, pos_switch,
+                STR_VIEW_FMT"\n", string_print(string)
+            );
+        }
         return true;
 }
 
@@ -2136,7 +2164,7 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
         env->parent_of_operand = NULL;
         env->parent_of = PARENT_OF_NONE;
 
-        if (!check_for_exhaustiveness_inner(&exhaustive_data, new_if, old_case->is_default)) {
+        if (!check_for_exhaustiveness_inner(env, &exhaustive_data, new_if, old_case->is_default)) {
             return false;
         }
 

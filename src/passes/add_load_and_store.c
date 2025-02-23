@@ -886,7 +886,6 @@ static Str_view load_struct_def(
     if (!symbol_lookup(&dummy, env, serialize_tast_struct_def(env, old_struct_def))) {
         Tast_struct_def* new_def = tast_struct_def_new(old_struct_def->pos, (Struct_def_base) {
             .members = old_struct_def->base.members, 
-            .llvm_id = 0,
             .name = serialize_tast_struct_def(env, old_struct_def)
         });
         try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(new_def)));
@@ -1317,7 +1316,6 @@ static Str_view load_raw_union_def(
     if (!symbol_lookup(&dummy, env, serialize_tast_raw_union_def(env, old_def))) {
         Tast_raw_union_def* new_def = tast_raw_union_def_new(old_def->pos, (Struct_def_base) {
             .members = old_def->base.members, 
-            .llvm_id = 0,
             .name = serialize_tast_raw_union_def(env, old_def)
         });
         try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_raw_union_def_wrap(new_def)));

@@ -1618,10 +1618,6 @@ static PARSE_STATUS extract_switch(Env* env, Uast_switch** lang_switch, Tk_view*
         vec_append(&a_main, &cases, curr_case);
     }
 
-    if (cases.info.count < 1) {
-        todo();
-    }
-
     *lang_switch = uast_switch_new(switch_start_token.pos, operand, cases);
     try(try_consume(&switch_start_token, tokens, TOKEN_CLOSE_CURLY_BRACE));
     return PARSE_OK;

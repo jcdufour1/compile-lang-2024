@@ -365,7 +365,6 @@ Str_view llvm_function_def_print_internal(const Llvm_function_def* fun_def, int 
 static void extend_struct_def_base(String* buf, const char* type_name, Struct_def_base base, int indent) {
     string_extend_cstr_indent(&print_arena, buf, type_name, indent);
     string_extend_strv_in_par(&print_arena, buf, base.name);
-    extend_llvm_id(buf, "self", base.llvm_id);
     string_extend_cstr(&print_arena, buf, "\n");
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
