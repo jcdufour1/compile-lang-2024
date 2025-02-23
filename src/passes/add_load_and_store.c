@@ -308,7 +308,7 @@ static Llvm_literal* tast_literal_clone(Tast_literal* old_lit) {
         case TAST_SUM_LIT: {
             unreachable("sum literal should not be here");
         }
-        case TAST_UNION_LIT: {
+        case TAST_RAW_UNION_LIT: {
             unreachable("union literal should not be here");
         }
     }
@@ -1270,7 +1270,6 @@ static Str_view load_break(
     Llvm_block* new_block,
     Tast_break* old_break
 ) {
-    // TODO: make expected failure test case for break in invalid location
     if (env->label_if_break.count < 1) {
         msg(
             LOG_ERROR, EXPECT_FAIL_BREAK_INVALID_LOCATION, env->file_text, old_break->pos,
@@ -1290,7 +1289,6 @@ static Str_view load_continue(
     Llvm_block* new_block,
     Tast_continue* old_continue
 ) {
-    // TODO: make expected failure test case for continue in invalid location
     if (env->label_if_continue.count < 1) {
         msg(
             LOG_ERROR, EXPECT_FAIL_CONTINUE_INVALID_LOCATION, env->file_text, old_continue->pos,

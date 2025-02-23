@@ -225,8 +225,8 @@ Str_view tast_literal_print_internal(const Tast_literal* lit, int indent) {
             return tast_char_print_internal(tast_char_const_unwrap(lit), indent);
         case TAST_SUM_LIT:
             return tast_sum_lit_print_internal(tast_sum_lit_const_unwrap(lit), indent);
-        case TAST_UNION_LIT:
-            return tast_union_lit_print_internal(tast_union_lit_const_unwrap(lit), indent);
+        case TAST_RAW_UNION_LIT:
+            return tast_raw_union_lit_print_internal(tast_raw_union_lit_const_unwrap(lit), indent);
     }
     unreachable("");
 }
@@ -356,10 +356,10 @@ Str_view tast_sum_lit_print_internal(const Tast_sum_lit* sum, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view tast_union_lit_print_internal(const Tast_union_lit* sum, int indent) {
+Str_view tast_raw_union_lit_print_internal(const Tast_raw_union_lit* sum, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "union_lit", indent);
+    string_extend_cstr_indent(&print_arena, &buf, "raw_union_lit", indent);
     string_extend_cstr(&print_arena, &buf, "\n");
     string_extend_strv(&print_arena, &buf, tast_expr_print_internal(sum->item, indent + INDENT_WIDTH));
 

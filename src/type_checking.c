@@ -12,6 +12,10 @@
 
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
+    if (num <= 0) {
+        todo();
+    }
+
     int64_t reference = 1;
     for (unsigned int power = 0; power < 64; power++) {
         if (num <= reference) {
@@ -23,13 +27,19 @@ static int64_t log2_int64_t(int64_t num) {
     unreachable("");
 }
 
-static int64_t bit_width_needed_signed(int64_t num) {
-    return 1 + log2_int64_t(num + 1);
+static int64_t bit_width_needed_unsigned(int64_t num) {
+    if (num < 0) {
+        return log2_int64_t(-num);
+    }
+    return log2_int64_t(num + 1);
 }
 
-//static int64_t bit_width_needed_unsigned(int64_t num) {
-//    return MAX(1, log2(num + 1));
-//}
+static int64_t bit_width_needed_signed(int64_t num) {
+    if (num < 0) {
+        return log2_int64_t(-num) + 1;
+    }
+    return log2_int64_t(num + 1) + 1;
+}
 
 static Tast_expr* auto_deref_to_0(Env* env, Tast_expr* expr) {
     int16_t prev_pointer_depth = lang_type_get_pointer_depth(tast_expr_get_lang_type(expr));
@@ -64,10 +74,30 @@ static bool can_be_implicitly_converted_lang_type_atom(Lang_type_atom dest, Lang
         }
     }
 
-    if (!lang_type_atom_is_signed(dest) || !lang_type_atom_is_signed(src)) {
+    if (!lang_type_atom_is_number(dest) || !lang_type_atom_is_number(src)) {
         return lang_type_atom_is_equal(dest, src);
     }
-    return i_lang_type_atom_to_bit_width(dest) >= i_lang_type_atom_to_bit_width(src);
+
+    if (lang_type_atom_is_unsigned(dest) && lang_type_atom_is_signed(src)) {
+        return false;
+    }
+
+    int32_t dest_bit_width = i_lang_type_atom_to_bit_width(dest);
+    int32_t src_bit_width = i_lang_type_atom_to_bit_width(src);
+
+    if (lang_type_atom_is_signed(dest)) {
+        try(dest_bit_width > 0);
+        dest_bit_width--;
+    }
+    if (lang_type_atom_is_signed(src)) {
+        try(src_bit_width > 0);
+        src_bit_width--;
+    }
+
+    log(LOG_DEBUG, TAST_FMT"\n", lang_type_atom_print(dest));
+    log(LOG_DEBUG, TAST_FMT"\n", lang_type_atom_print(src));
+    log(LOG_DEBUG, "dest: %d; src: %d\n", dest_bit_width, src_bit_width);
+    return dest_bit_width >= src_bit_width;
 }
 
 static bool can_be_implicitly_converted_tuple(Lang_type_tuple dest, Lang_type_tuple src, bool implicit_pointer_depth) {
@@ -214,7 +244,6 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
 ) {
     if (src->type == UAST_STRUCT_LITERAL) {
         Tast_stmt* new_src_ = NULL;
-        // TODO: tests for using struct literal as function argument (and later as an operand)
         if (!try_set_struct_literal_assignment_types(
             env, &new_src_, dest_lang_type, uast_struct_literal_unwrap(src), pos
         )) {
@@ -223,7 +252,6 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
         *new_src = tast_expr_unwrap(new_src_);
     } else if (src->type == UAST_TUPLE) {
         Tast_tuple* new_src_ = NULL;
-        // TODO: tests for using struct literal as function argument (and later as an operand)
         if (!try_set_tuple_assignment_types(
             env, &new_src_, dest_lang_type, uast_tuple_unwrap(src)
         )) {
@@ -253,12 +281,21 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
         }
         case UAST_NUMBER: {
             Uast_number* old_number = uast_number_unwrap(literal);
-            int64_t bit_width = bit_width_needed_signed(old_number->data);
-            return tast_number_wrap(tast_number_new(
-                old_number->pos,
-                old_number->data,
-                lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(bit_width, 0))
-            )));
+            if (old_number->data < 0) {
+                int64_t bit_width = bit_width_needed_signed(old_number->data);
+                return tast_number_wrap(tast_number_new(
+                    old_number->pos,
+                    old_number->data,
+                    lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(bit_width, 0))
+                )));
+            } else {
+                int64_t bit_width = bit_width_needed_unsigned(old_number->data);
+                return tast_number_wrap(tast_number_new(
+                    old_number->pos,
+                    old_number->data,
+                    lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(bit_width, 0))
+                )));
+            }
         }
         case UAST_VOID: {
             Uast_void* old_void = uast_void_unwrap(literal);
@@ -483,9 +520,7 @@ bool try_set_unary_types_finish(
     switch (unary_token_type) {
         case TOKEN_NOT:
             new_lang_type = tast_expr_get_lang_type(new_child);
-            if (new_lang_type.type != LANG_TYPE_PRIMITIVE) {
-                // TODO: check if this primitive type can actually be valid operand to logical not
-                // TODO: make subtypes for LANG_TYPE_PRIMITIVE to make above easier
+            if (new_lang_type.type != LANG_TYPE_PRIMITIVE || !lang_type_is_number(new_lang_type)) {
                 msg(
                     LOG_ERROR, EXPECT_FAIL_UNARY_MISMATCHED_TYPES, env->file_text, tast_expr_get_pos(new_child),
                     "type `"LANG_TYPE_FMT"` is not a valid operand to logical not operation\n",
@@ -2072,6 +2107,46 @@ static void try_set_msg_redefinition_of_symbol(Env* env, const Uast_def* new_sym
     );
 }
 
+// TODO: consider how to do this
+static void do_test_bit_width(void) {
+    assert(0 == log2_int64_t(1));
+    assert(1 == log2_int64_t(2));
+    assert(2 == log2_int64_t(3));
+    assert(2 == log2_int64_t(4));
+    assert(3 == log2_int64_t(5));
+    assert(3 == log2_int64_t(6));
+    assert(3 == log2_int64_t(7));
+    assert(3 == log2_int64_t(8));
+
+    assert(1 == bit_width_needed_signed(-1));
+    assert(2 == bit_width_needed_signed(-2));
+    assert(3 == bit_width_needed_signed(-3));
+    assert(3 == bit_width_needed_signed(-4));
+    assert(4 == bit_width_needed_signed(-5));
+    assert(4 == bit_width_needed_signed(-6));
+    assert(4 == bit_width_needed_signed(-7));
+    assert(4 == bit_width_needed_signed(-8));
+    assert(5 == bit_width_needed_signed(-9));
+
+    assert(2 == bit_width_needed_signed(1));
+    assert(3 == bit_width_needed_signed(2));
+    assert(3 == bit_width_needed_signed(3));
+    assert(4 == bit_width_needed_signed(4));
+    assert(4 == bit_width_needed_signed(5));
+    assert(4 == bit_width_needed_signed(6));
+    assert(4 == bit_width_needed_signed(7));
+    assert(5 == bit_width_needed_signed(8));
+
+    assert(1 == bit_width_needed_unsigned(1));
+    assert(2 == bit_width_needed_unsigned(2));
+    assert(2 == bit_width_needed_unsigned(3));
+    assert(3 == bit_width_needed_unsigned(4));
+    assert(3 == bit_width_needed_unsigned(5));
+    assert(3 == bit_width_needed_unsigned(6));
+    assert(3 == bit_width_needed_unsigned(7));
+    assert(4 == bit_width_needed_unsigned(8));
+}
+
 bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def) {
     bool status = true;
 
@@ -2214,9 +2289,3 @@ bool try_set_stmt_types(Env* env, Tast_stmt** new_tast, Uast_stmt* stmt) {
     unreachable("");
 }
 
-bool try_set_uast_types(Env* env, Tast** new_tast, Uast* uast) {
-    (void) env;
-    (void) new_tast;
-    (void) uast;
-    unreachable(TAST_FMT, uast_print(uast));
-}

@@ -65,7 +65,7 @@ static inline void lang_type_primitive_set_atom(Lang_type_primitive* lang_type, 
             return;
         case LANG_TYPE_UNSIGNED_INT:
             lang_type_unsigned_int_unwrap(lang_type)->bit_width = str_view_to_int64_t(str_view_slice(atom.str, 1, atom.str.count - 1));
-            lang_type_signed_int_unwrap(lang_type)->pointer_depth = atom.pointer_depth;
+            lang_type_unsigned_int_unwrap(lang_type)->pointer_depth = atom.pointer_depth;
             return;
         case LANG_TYPE_ANY:
             lang_type_any_unwrap(lang_type)->atom = atom;

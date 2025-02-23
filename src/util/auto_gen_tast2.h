@@ -276,15 +276,15 @@ static Tast2_type tast2_gen_char(const char* prefix) {
     return lang_char;
 }
 
-static Tast2_type tast2_gen_union_lit(const char* prefix) {
-    const char* base_name = "union_lit";
-    Tast2_type union_lit = {.name = tast2_name_new(prefix, base_name, false)};
+static Tast2_type tast2_gen_raw_union_lit(const char* prefix) {
+    const char* base_name = "raw_union_lit";
+    Tast2_type raw_union_lit = {.name = tast2_name_new(prefix, base_name, false)};
 
-    append_member(&union_lit.members, "Tast2_enum_lit*", "tag");
-    append_member(&union_lit.members, "Lang_type", "lang_type");
-    append_member(&union_lit.members, "Tast2_expr*", "item");
+    append_member(&raw_union_lit.members, "Tast2_enum_lit*", "tag");
+    append_member(&raw_union_lit.members, "Lang_type", "lang_type");
+    append_member(&raw_union_lit.members, "Tast2_expr*", "item");
 
-    return union_lit;
+    return raw_union_lit;
 }
 
 static Tast2_type tast2_gen_void(const char* prefix) {
@@ -325,7 +325,7 @@ static Tast2_type tast2_gen_literal(const char* prefix) {
     vec_append(&gen_a, &lit.sub_types, tast2_gen_enum_lit(base_name));
     vec_append(&gen_a, &lit.sub_types, tast2_gen_sum_lit(base_name));
     vec_append(&gen_a, &lit.sub_types, tast2_gen_char(base_name));
-    vec_append(&gen_a, &lit.sub_types, tast2_gen_union_lit(base_name));
+    vec_append(&gen_a, &lit.sub_types, tast2_gen_raw_union_lit(base_name));
 
     return lit;
 }
