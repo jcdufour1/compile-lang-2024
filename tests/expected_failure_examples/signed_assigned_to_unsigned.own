@@ -1,0 +1,15 @@
+
+
+fn extern("c") fn printf(str_to_print u8*, args any...) i32
+
+fn get_unsigned() u32 {
+    return 76;
+}
+
+fn get_signed() i32 {
+    return -3
+}
+
+fn main() i32 {
+    let num u32 = get_signed()
+}

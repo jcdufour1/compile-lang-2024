@@ -9,6 +9,7 @@
 #include <lang_type_from_ulang_type.h>
 #include <bool_vec.h>
 #include <ulang_type.h>
+#include <msg_todo.h>
 
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
@@ -68,9 +69,9 @@ const Uast_lang_type* get_parent_function_return_type(Env* env) {
     return get_parent_function_decl_const(env)->return_type;
 }
 
-static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool implicit_pointer_depth);
+static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_is_zero, bool implicit_pointer_depth);
 
-static bool can_be_implicitly_converted_lang_type_atom(Lang_type_atom dest, Lang_type_atom src, bool implicit_pointer_depth) {
+static bool can_be_implicitly_converted_lang_type_atom(Lang_type_atom dest, Lang_type_atom src, bool src_is_zero, bool implicit_pointer_depth) {
     if (!implicit_pointer_depth) {
         if (src.pointer_depth != dest.pointer_depth) {
             return false;
@@ -83,6 +84,10 @@ static bool can_be_implicitly_converted_lang_type_atom(Lang_type_atom dest, Lang
 
     if (lang_type_atom_is_unsigned(dest) && lang_type_atom_is_signed(src)) {
         return false;
+    }
+
+    if (src_is_zero) {
+        return true;
     }
 
     int32_t dest_bit_width = i_lang_type_atom_to_bit_width(dest);
@@ -111,7 +116,7 @@ static bool can_be_implicitly_converted_tuple(Lang_type_tuple dest, Lang_type_tu
 
     for (size_t idx = 0; idx < dest.lang_types.info.count; idx++) {
         if (!can_be_implicitly_converted(
-            vec_at(&dest.lang_types, idx), vec_at(&src.lang_types, idx), implicit_pointer_depth
+            vec_at(&dest.lang_types, idx), vec_at(&src.lang_types, idx), false /* TODO: should this be always false? */, implicit_pointer_depth
         )) {
             return false;
         }
@@ -120,7 +125,7 @@ static bool can_be_implicitly_converted_tuple(Lang_type_tuple dest, Lang_type_tu
     return true;
 }
 
-static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool implicit_pointer_depth) {
+static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_is_zero, bool implicit_pointer_depth) {
     if (dest.type != src.type) {
         return false;
     }
@@ -129,15 +134,20 @@ static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool impl
         case LANG_TYPE_TUPLE:
             return can_be_implicitly_converted_tuple(lang_type_tuple_const_unwrap(dest), lang_type_tuple_const_unwrap(src), implicit_pointer_depth);
         case LANG_TYPE_PRIMITIVE:
-            return can_be_implicitly_converted_lang_type_atom(lang_type_primitive_get_atom(lang_type_primitive_const_unwrap(dest)), lang_type_primitive_get_atom(lang_type_primitive_const_unwrap(src)), implicit_pointer_depth);
+            return can_be_implicitly_converted_lang_type_atom(
+                lang_type_primitive_get_atom(lang_type_primitive_const_unwrap(dest)),
+                lang_type_primitive_get_atom(lang_type_primitive_const_unwrap(src)),
+                src_is_zero,
+                implicit_pointer_depth
+            );
         case LANG_TYPE_SUM:
-            return can_be_implicitly_converted_lang_type_atom(lang_type_sum_const_unwrap(dest).atom, lang_type_sum_const_unwrap(src).atom, implicit_pointer_depth);
+            return can_be_implicitly_converted_lang_type_atom(lang_type_sum_const_unwrap(dest).atom, lang_type_sum_const_unwrap(src).atom, false, implicit_pointer_depth);
         case LANG_TYPE_STRUCT:
-            return can_be_implicitly_converted_lang_type_atom(lang_type_struct_const_unwrap(dest).atom, lang_type_struct_const_unwrap(src).atom, implicit_pointer_depth);
+            return can_be_implicitly_converted_lang_type_atom(lang_type_struct_const_unwrap(dest).atom, lang_type_struct_const_unwrap(src).atom, false, implicit_pointer_depth);
         case LANG_TYPE_RAW_UNION:
-            return can_be_implicitly_converted_lang_type_atom(lang_type_raw_union_const_unwrap(dest).atom, lang_type_raw_union_const_unwrap(src).atom, implicit_pointer_depth);
+            return can_be_implicitly_converted_lang_type_atom(lang_type_raw_union_const_unwrap(dest).atom, lang_type_raw_union_const_unwrap(src).atom, false, implicit_pointer_depth);
         case LANG_TYPE_ENUM:
-            return can_be_implicitly_converted_lang_type_atom(lang_type_enum_const_unwrap(dest).atom, lang_type_enum_const_unwrap(src).atom, implicit_pointer_depth);
+            return can_be_implicitly_converted_lang_type_atom(lang_type_enum_const_unwrap(dest).atom, lang_type_enum_const_unwrap(src).atom, false, implicit_pointer_depth);
         case LANG_TYPE_VOID:
             return true;
     }
@@ -215,8 +225,10 @@ typedef enum {
 } CHECK_ASSIGN_STATUS;
 
 CHECK_ASSIGN_STATUS check_generic_assignment_finish(
+    const Env* env,
     Tast_expr** new_src,
     Lang_type dest_lang_type,
+    bool src_is_zero,
     Tast_expr* src
 ) {
     if (lang_type_is_equal(dest_lang_type, tast_expr_get_lang_type(src))) {
@@ -224,14 +236,14 @@ CHECK_ASSIGN_STATUS check_generic_assignment_finish(
         return CHECK_ASSIGN_OK;
     }
 
-    if (can_be_implicitly_converted(dest_lang_type, tast_expr_get_lang_type(src), false)) {
+    if (can_be_implicitly_converted(dest_lang_type, tast_expr_get_lang_type(src), src_is_zero, false)) {
         if (src->type == TAST_LITERAL) {
             *new_src = src;
             tast_expr_set_lang_type(*new_src, dest_lang_type);
             return CHECK_ASSIGN_OK;
         }
-        log(LOG_DEBUG, LANG_TYPE_FMT "\n"TAST_FMT"\n", lang_type_print(dest_lang_type), tast_expr_print(src));
-        todo();
+        msg_todo(env, "non literal implicit conversion", tast_expr_get_pos(src));
+        return CHECK_ASSIGN_ERROR;
     } else {
         return CHECK_ASSIGN_INVALID;
     }
@@ -269,7 +281,12 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
         env->parent_of = PARENT_OF_NONE;
     }
 
-    return check_generic_assignment_finish(new_src, dest_lang_type, *new_src);
+    bool src_is_zero = false;
+    if (src->type == UAST_LITERAL && uast_literal_unwrap(src)->type == UAST_NUMBER && uast_number_unwrap(uast_literal_unwrap(src))->data == 0) {
+        src_is_zero = true;
+    }
+
+    return check_generic_assignment_finish(env, new_src, dest_lang_type, src_is_zero, *new_src);
 }
 
 Tast_literal* try_set_literal_types(Uast_literal* literal) {
@@ -415,7 +432,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
     log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_lhs));
     log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_rhs));
     if (!lang_type_is_equal(tast_expr_get_lang_type(new_lhs), tast_expr_get_lang_type(new_rhs))) {
-        if (can_be_implicitly_converted(tast_expr_get_lang_type(new_lhs), tast_expr_get_lang_type(new_rhs), true)) {
+        if (can_be_implicitly_converted(tast_expr_get_lang_type(new_lhs), tast_expr_get_lang_type(new_rhs), new_rhs->type == TAST_LITERAL && tast_literal_unwrap(new_rhs)->type == TAST_NUMBER && tast_number_unwrap(tast_literal_unwrap(new_rhs))->data == 0, true)) {
             if (new_rhs->type == TAST_LITERAL) {
                 new_lhs = auto_deref_to_0(env, new_lhs);
                 new_rhs = auto_deref_to_0(env, new_rhs);
@@ -423,7 +440,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
             } else {
                 try(try_set_unary_types_finish(env, &new_rhs, new_rhs, tast_expr_get_pos(new_rhs), TOKEN_UNSAFE_CAST, tast_expr_get_lang_type(new_lhs)));
             }
-        } else if (can_be_implicitly_converted(tast_expr_get_lang_type(new_rhs), tast_expr_get_lang_type(new_lhs), true)) {
+        } else if (can_be_implicitly_converted(tast_expr_get_lang_type(new_rhs), tast_expr_get_lang_type(new_lhs), new_rhs->type == TAST_LITERAL && tast_literal_unwrap(new_rhs)->type == TAST_NUMBER && tast_number_unwrap(tast_literal_unwrap(new_rhs))->data == 0, true)) {
             if (new_lhs->type == TAST_LITERAL) {
                 new_lhs = auto_deref_to_0(env, new_lhs);
                 new_rhs = auto_deref_to_0(env, new_rhs);

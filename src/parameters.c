@@ -70,6 +70,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"mismatched-tuple-count", EXPECT_FAIL_MISMATCHED_TUPLE_COUNT},
     {"non-exhaustive-switch", EXPECT_FAIL_NON_EXHAUSTIVE_SWITCH},
     {"sum-lit-invalid-arg", EXPECT_FAIL_SUM_LIT_INVALID_ARG},
+    {"not-yet-implemented", EXPECT_FAIL_NOT_YET_IMPLEMENTED},
 };
 
 static void parse_normal_option(Parameters* params, int* argc, char*** argv) {

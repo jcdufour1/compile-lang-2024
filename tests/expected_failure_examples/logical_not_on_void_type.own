@@ -22,6 +22,7 @@ fn read_num(string u8*) Opt_int {
     if (!isdigit(unsafe_cast<i32>string[0])) {
         return Opt_int.none(0);
     }
+    // TODO: consider if last if should be an error
     if (!string[0]) {
         return Opt_int.none(0);
     }

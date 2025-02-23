@@ -6,6 +6,8 @@
 #include <auto_gen_lang_type.h>
 #include <auto_gen_ulang_type.h>
 
+// TODO: strings should actually be their own type (not just u8*)
+
 // TODO: support alternative backend (such as qbe, cuik and c)
 
 // TODO: consistant naming scheme for tast_expr_get_lang_type, etc.
