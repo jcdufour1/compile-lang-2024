@@ -16,7 +16,7 @@ bool try_set_binary_types_finish(
     Tast_expr* new_lhs,
     Tast_expr* new_rhs,
     Pos oper_pos,
-    TOKEN_TYPE oper_token_type
+    BINARY_TYPE oper_token_type
 );
 
 // returns false if unsuccessful
@@ -36,7 +36,7 @@ bool try_set_unary_types_finish(
     Tast_expr** new_tast,
     Tast_expr* new_child,
     Pos unary_pos,
-    TOKEN_TYPE unary_token_type,
+    UNARY_TYPE unary_token_type,
     Lang_type old_lang_type
 );
 

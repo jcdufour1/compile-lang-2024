@@ -8,6 +8,7 @@
 #include <log_env.h>
 #include <serialize.h>
 #include <lang_type_from_ulang_type.h>
+#include <token_type_to_operator_type.h>
 
 #include "passes.h"
 
@@ -195,7 +196,7 @@ static Tast_assignment* for_loop_cond_var_assign_new(Env* env, Str_view sym_name
         pos,
         uast_symbol_wrap(uast_symbol_new(pos, sym_name)),
         uast_literal_wrap(literal),
-        TOKEN_SINGLE_PLUS
+        BINARY_ADD
     ));
     return util_assignment_new(
         env,
@@ -432,7 +433,7 @@ static Str_view load_deref(
     Llvm_block* new_block,
     Tast_unary* old_unary
 ) {
-    assert(old_unary->token_type == TOKEN_DEREF);
+    assert(old_unary->token_type == UNARY_DEREF);
 
     switch (old_unary->lang_type.type) {
         case LANG_TYPE_STRUCT:
@@ -463,11 +464,11 @@ static Str_view load_unary(
     Tast_unary* old_unary
 ) {
     switch (old_unary->token_type) {
-        case TOKEN_DEREF:
+        case UNARY_DEREF:
             return load_deref(env, new_block, old_unary);
-        case TOKEN_REFER:
+        case UNARY_REFER:
             return load_ptr_expr(env, new_block, old_unary->child);
-        case TOKEN_UNSAFE_CAST:
+        case UNARY_UNSAFE_CAST:
             switch (old_unary->lang_type.type) {
                 case LANG_TYPE_SUM:
                     return load_expr(env, new_block, old_unary->child);
@@ -484,7 +485,7 @@ static Str_view load_unary(
             }
 
             // fallthrough
-        case TOKEN_NOT: {
+        case UNARY_NOT: {
             Llvm_unary* new_unary = llvm_unary_new(
                 old_unary->pos,
                 load_expr(env, new_block, old_unary->child),
@@ -498,9 +499,8 @@ static Str_view load_unary(
             vec_append(&a_main, &new_block->children, llvm_expr_wrap(llvm_operator_wrap(llvm_unary_wrap(new_unary))));
             return new_unary->name;
         }
-        default:
-            unreachable(TAST_FMT " %d\n", tast_unary_print(old_unary), old_unary->token_type);
     }
+    unreachable("");
 }
 
 static Str_view load_operator(
@@ -1063,7 +1063,7 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
     Tast_expr* lhs_typed_ = NULL;
     try(try_set_symbol_type(env, &lhs_typed_, lhs_untyped));
     Tast_expr* operator_ = NULL;
-    try(try_set_binary_types_finish(env, &operator_, lhs_typed_, rhs_actual, old_for->pos, TOKEN_LESS_THAN)); 
+    try(try_set_binary_types_finish(env, &operator_, lhs_typed_, rhs_actual, old_for->pos, BINARY_LESS_THAN)); 
     Tast_operator* operator = tast_operator_unwrap(operator_);
     //Tast_operator* operator = util_binary_typed_new(
     //    env,
@@ -1355,7 +1355,7 @@ static Str_view load_ptr_deref(
     Llvm_block* new_block,
     Tast_unary* old_unary
 ) {
-    assert(old_unary->token_type == TOKEN_DEREF);
+    assert(old_unary->token_type == UNARY_DEREF);
 
     switch (old_unary->lang_type.type) {
         case LANG_TYPE_STRUCT:
@@ -1391,7 +1391,7 @@ static Str_view load_ptr_unary(
     Tast_unary* old_unary
 ) {
     switch (old_unary->token_type) {
-        case TOKEN_DEREF:
+        case UNARY_DEREF:
             return load_ptr_deref(env, new_block, old_unary);
         default:
             todo();

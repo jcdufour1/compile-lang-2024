@@ -68,7 +68,7 @@ Str_view uast_binary_print_internal(const Uast_binary* binary, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "binary", indent);
-    string_extend_strv(&print_arena, &buf, token_type_to_str_view(binary->token_type));
+    string_extend_strv(&print_arena, &buf, binary_type_to_str_view(binary->token_type));
     extend_pos(&buf, binary->pos);
     string_extend_cstr(&print_arena, &buf, "\n");
 
@@ -84,7 +84,7 @@ Str_view uast_unary_print_internal(const Uast_unary* unary, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "unary", indent);
-    string_extend_strv(&print_arena, &buf, token_type_to_str_view(unary->token_type));
+    string_extend_strv(&print_arena, &buf, unary_type_to_str_view(unary->token_type));
     extend_pos(&buf, unary->pos);
     string_extend_cstr(&print_arena, &buf, "\n");
 

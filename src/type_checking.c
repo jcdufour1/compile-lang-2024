@@ -10,6 +10,7 @@
 #include <bool_vec.h>
 #include <ulang_type.h>
 #include <msg_todo.h>
+#include <token_type_to_operator_type.h>
 
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
@@ -48,7 +49,7 @@ static int64_t bit_width_needed_signed(int64_t num) {
 static Tast_expr* auto_deref_to_0(Env* env, Tast_expr* expr) {
     int16_t prev_pointer_depth = lang_type_get_pointer_depth(tast_expr_get_lang_type(expr));
     while (lang_type_get_pointer_depth(tast_expr_get_lang_type(expr)) > 0) {
-        try(try_set_unary_types_finish(env, &expr, expr, tast_expr_get_pos(expr), TOKEN_DEREF, (Lang_type) {0}));
+        try(try_set_unary_types_finish(env, &expr, expr, tast_expr_get_pos(expr), UNARY_DEREF, (Lang_type) {0}));
         assert(lang_type_get_pointer_depth(tast_expr_get_lang_type(expr)) + 1 == prev_pointer_depth);
         prev_pointer_depth = lang_type_get_pointer_depth(tast_expr_get_lang_type(expr));
     }
@@ -380,30 +381,32 @@ bool try_set_symbol_type(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untype
     unreachable("");
 }
 
-static int64_t precalulate_number_internal(int64_t lhs_val, int64_t rhs_val, TOKEN_TYPE token_type) {
+static int64_t precalulate_number_internal(int64_t lhs_val, int64_t rhs_val, BINARY_TYPE token_type) {
     switch (token_type) {
-        case TOKEN_SINGLE_PLUS:
+        case BINARY_ADD:
             return lhs_val + rhs_val;
-        case TOKEN_SINGLE_MINUS:
+        case BINARY_SUB:
             return lhs_val - rhs_val;
-        case TOKEN_ASTERISK:
+        case BINARY_MULTIPLY:
             return lhs_val*rhs_val;
-        case TOKEN_SLASH:
+        case BINARY_DIVIDE:
             return lhs_val/rhs_val;
-        case TOKEN_LESS_THAN:
+        case BINARY_LESS_THAN:
             return lhs_val < rhs_val ? 1 : 0;
-        case TOKEN_GREATER_THAN:
+        case BINARY_GREATER_THAN:
             return lhs_val > rhs_val ? 1 : 0;
-        case TOKEN_DOUBLE_EQUAL:
+        case BINARY_DOUBLE_EQUAL:
             return lhs_val == rhs_val ? 1 : 0;
-        case TOKEN_NOT_EQUAL:
+        case BINARY_NOT_EQUAL:
             return lhs_val != rhs_val ? 1 : 0;
-        case TOKEN_LESS_OR_EQUAL:
+        case BINARY_LESS_OR_EQUAL:
             return lhs_val <= rhs_val ? 1 : 0;
-        case TOKEN_GREATER_OR_EQUAL:
+        case BINARY_GREATER_OR_EQUAL:
             return lhs_val >= rhs_val ? 1 : 0;
-        default:
-            unreachable(TOKEN_TYPE_FMT"\n", token_type_print(token_type));
+        case BINARY_MODULO:
+            return lhs_val %= rhs_val ? 1 : 0;
+        case BINARY_XOR:
+            return lhs_val ^= rhs_val ? 1 : 0;
     }
     unreachable("");
 }
@@ -411,7 +414,7 @@ static int64_t precalulate_number_internal(int64_t lhs_val, int64_t rhs_val, TOK
 static Tast_literal* precalulate_number(
     const Tast_number* lhs,
     const Tast_number* rhs,
-    TOKEN_TYPE token_type,
+    BINARY_TYPE token_type,
     Pos pos
 ) {
     int64_t result_val = precalulate_number_internal(lhs->data, rhs->data, token_type);
@@ -421,14 +424,14 @@ static Tast_literal* precalulate_number(
 static Tast_literal* precalulate_char(
     const Tast_char* lhs,
     const Tast_char* rhs,
-    TOKEN_TYPE token_type,
+    BINARY_TYPE token_type,
     Pos pos
 ) {
     int64_t result_val = precalulate_number_internal(lhs->data, rhs->data, token_type);
     return util_tast_literal_new_from_int64_t(result_val, TOKEN_CHAR_LITERAL, pos);
 }
 
-bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_lhs, Tast_expr* new_rhs, Pos oper_pos, TOKEN_TYPE oper_token_type) {
+bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_lhs, Tast_expr* new_rhs, Pos oper_pos, BINARY_TYPE oper_token_type) {
     log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_lhs));
     log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_rhs));
     if (!lang_type_is_equal(tast_expr_get_lang_type(new_lhs), tast_expr_get_lang_type(new_rhs))) {
@@ -438,7 +441,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
                 new_rhs = auto_deref_to_0(env, new_rhs);
                 tast_literal_set_lang_type(tast_literal_unwrap(new_rhs), tast_expr_get_lang_type(new_lhs));
             } else {
-                try(try_set_unary_types_finish(env, &new_rhs, new_rhs, tast_expr_get_pos(new_rhs), TOKEN_UNSAFE_CAST, tast_expr_get_lang_type(new_lhs)));
+                try(try_set_unary_types_finish(env, &new_rhs, new_rhs, tast_expr_get_pos(new_rhs), UNARY_UNSAFE_CAST, tast_expr_get_lang_type(new_lhs)));
             }
         } else if (can_be_implicitly_converted(tast_expr_get_lang_type(new_rhs), tast_expr_get_lang_type(new_lhs), new_rhs->type == TAST_LITERAL && tast_literal_unwrap(new_rhs)->type == TAST_NUMBER && tast_number_unwrap(tast_literal_unwrap(new_rhs))->data == 0, true)) {
             if (new_lhs->type == TAST_LITERAL) {
@@ -446,7 +449,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
                 new_rhs = auto_deref_to_0(env, new_rhs);
                 tast_literal_set_lang_type(tast_literal_unwrap(new_lhs), tast_expr_get_lang_type(new_rhs));
             } else {
-                try(try_set_unary_types_finish(env, &new_lhs, new_lhs, tast_expr_get_pos(new_lhs), TOKEN_UNSAFE_CAST, tast_expr_get_lang_type(new_rhs)));
+                try(try_set_unary_types_finish(env, &new_lhs, new_lhs, tast_expr_get_pos(new_lhs), UNARY_UNSAFE_CAST, tast_expr_get_lang_type(new_rhs)));
             }
         } else {
             msg(
@@ -527,45 +530,43 @@ bool try_set_binary_types(Env* env, Tast_expr** new_tast, Uast_binary* operator)
     return try_set_binary_types_finish(env, new_tast, new_lhs, new_rhs, operator->pos, operator->token_type);
 }
 
-bool try_set_unary_types_finish(
+bool try_set_unary_types_finish_get_lang_type(
     Env* env,
-    Tast_expr** new_tast,
+    Lang_type* new_lang_type,
     Tast_expr* new_child,
     Pos unary_pos,
-    TOKEN_TYPE unary_token_type,
+    UNARY_TYPE unary_token_type,
     Lang_type cast_to
 ) {
-    Lang_type new_lang_type = {0};
-
     switch (unary_token_type) {
-        case TOKEN_NOT:
-            new_lang_type = tast_expr_get_lang_type(new_child);
-            if (new_lang_type.type != LANG_TYPE_PRIMITIVE || !lang_type_is_number(new_lang_type)) {
+        case UNARY_NOT:
+            *new_lang_type = tast_expr_get_lang_type(new_child);
+            if (new_lang_type->type != LANG_TYPE_PRIMITIVE || !lang_type_is_number(*new_lang_type)) {
                 msg(
                     LOG_ERROR, EXPECT_FAIL_UNARY_MISMATCHED_TYPES, env->file_text, tast_expr_get_pos(new_child),
                     "type `"LANG_TYPE_FMT"` is not a valid operand to logical not operation\n",
-                    lang_type_print(new_lang_type)
+                    lang_type_print(*new_lang_type)
                 );
                 return false;
             }
-            break;
-        case TOKEN_DEREF:
-            new_lang_type = tast_expr_get_lang_type(new_child);
-            if (lang_type_get_pointer_depth(new_lang_type) <= 0) {
+            return true;
+        case UNARY_DEREF:
+            *new_lang_type = tast_expr_get_lang_type(new_child);
+            if (lang_type_get_pointer_depth(*new_lang_type) <= 0) {
                 msg(
                     LOG_ERROR, EXPECT_FAIL_DEREF_NON_POINTER, env->file_text, unary_pos,
                     "derefencing a type that is not a pointer\n"
                 );
                 return false;
             }
-            lang_type_set_pointer_depth(&new_lang_type, lang_type_get_pointer_depth(new_lang_type) - 1);
-            break;
-        case TOKEN_REFER:
-            new_lang_type = tast_expr_get_lang_type(new_child);
-            lang_type_set_pointer_depth(&new_lang_type, lang_type_get_pointer_depth(new_lang_type) + 1);
-            break;
-        case TOKEN_UNSAFE_CAST:
-            new_lang_type = cast_to;
+            lang_type_set_pointer_depth(new_lang_type, lang_type_get_pointer_depth(*new_lang_type) - 1);
+            return true;
+        case UNARY_REFER:
+            *new_lang_type = tast_expr_get_lang_type(new_child);
+            lang_type_set_pointer_depth(new_lang_type, lang_type_get_pointer_depth(*new_lang_type) + 1);
+            return true;
+        case UNARY_UNSAFE_CAST:
+            *new_lang_type = cast_to;
             assert(lang_type_get_str(cast_to).count > 0);
             if (lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)) > 0 && lang_type_is_number(tast_expr_get_lang_type(new_child))) {
             } else if (lang_type_is_number_like(tast_expr_get_lang_type(new_child))) {
@@ -578,9 +579,29 @@ bool try_set_unary_types_finish(
                 log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_child));
                 todo();
             }
-            break;
-        default:
-            unreachable("");
+            return true;
+    }
+    unreachable("");
+}
+
+bool try_set_unary_types_finish(
+    Env* env,
+    Tast_expr** new_tast,
+    Tast_expr* new_child,
+    Pos unary_pos,
+    UNARY_TYPE unary_token_type,
+    Lang_type cast_to
+) {
+    Lang_type new_lang_type = {0};
+    if (!try_set_unary_types_finish_get_lang_type(
+        env,
+        &new_lang_type,
+        new_child,
+        unary_pos,
+        unary_token_type,
+        cast_to
+    )) {
+        return false;
     }
 
     *new_tast = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
@@ -1524,7 +1545,7 @@ bool try_set_index_untyped_types(Env* env, Tast_stmt** new_tast, Uast_index* ind
             &new_inner_index,
             new_inner_index,
             tast_expr_get_pos(new_inner_index),
-            TOKEN_UNSAFE_CAST,
+            UNARY_UNSAFE_CAST,
             lang_type_primitive_const_wrap(
                 lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(64, 0))
             )
@@ -2091,7 +2112,7 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
             );
         } else {
             cond = uast_condition_new(old_case->pos, uast_binary_wrap(uast_binary_new(
-                old_case->pos, lang_switch->operand, old_case->expr, TOKEN_DOUBLE_EQUAL
+                old_case->pos, lang_switch->operand, old_case->expr, BINARY_DOUBLE_EQUAL
             )));
         }
 

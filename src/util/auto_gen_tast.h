@@ -132,7 +132,7 @@ static Tast_type tast_gen_unary(const char* prefix) {
     Tast_type unary = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&unary.members, "Tast_expr*", "child");
-    append_member(&unary.members, "TOKEN_TYPE", "token_type");
+    append_member(&unary.members, "UNARY_TYPE", "token_type");
     append_member(&unary.members, "Lang_type", "lang_type");
 
     return unary;
@@ -144,7 +144,7 @@ static Tast_type tast_gen_binary(const char* prefix) {
 
     append_member(&binary.members, "Tast_expr*", "lhs");
     append_member(&binary.members, "Tast_expr*", "rhs");
-    append_member(&binary.members, "TOKEN_TYPE", "token_type");
+    append_member(&binary.members, "BINARY_TYPE", "token_type");
     append_member(&binary.members, "Lang_type", "lang_type");
 
     return binary;
@@ -1116,6 +1116,7 @@ static void gen_all_tasts(const char* file_path, bool implementation) {
         gen_gen("#include <symbol_table_struct.h>\n");
         gen_gen("#include <symbol_table.h>\n");
         gen_gen("#include <token.h>\n");
+        gen_gen("#include <operator_type.h>\n");
     } else {
         gen_gen("#ifndef TAST_FORWARD_DECL_H\n");
         gen_gen("#define TAST_FORWARD_DECL_H\n");

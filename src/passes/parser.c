@@ -8,6 +8,7 @@
 #include <parser_utils.h>
 #include <tokens.h>
 #include <ulang_type.h>
+#include <token_type_to_operator_type.h>
 #include "passes.h"
 
 static Token prev_token = {0};
@@ -1875,7 +1876,7 @@ static PARSE_STATUS extract_struct_literal(Env* env, Uast_struct_literal** struc
 }
 
 static Uast_binary* parser_binary_new(Uast_expr* lhs, Token operator_token, Uast_expr* rhs) {
-    return uast_binary_new(operator_token.pos, lhs, rhs, operator_token.type);
+    return uast_binary_new(operator_token.pos, lhs, rhs, token_type_to_binary_type(operator_token.type));
 }
 
 static PARSE_EXPR_STATUS try_extract_expression_piece(
@@ -2036,12 +2037,12 @@ static PARSE_EXPR_STATUS extract_unary(
         case TOKEN_REFER:
             // fallthrough
         case TOKEN_UNSAFE_CAST:
-            *result = uast_unary_wrap(uast_unary_new(oper.pos, child, oper.type, ulang_type_regular_const_wrap(ulang_type_regular_new(unary_lang_type))));
+            *result = uast_unary_wrap(uast_unary_new(oper.pos, child, token_type_to_unary_type(oper.type), ulang_type_regular_const_wrap(ulang_type_regular_new(unary_lang_type))));
             assert(*result);
             log(LOG_DEBUG, TAST_FMT"\n", uast_operator_print(*result));
             break;
         case TOKEN_SINGLE_MINUS: {
-            *result = uast_binary_wrap(uast_binary_new(oper.pos, uast_literal_wrap(uast_number_wrap(uast_number_new(oper.pos, 0))), child, oper.type));
+            *result = uast_binary_wrap(uast_binary_new(oper.pos, uast_literal_wrap(uast_number_wrap(uast_number_new(oper.pos, 0))), child, token_type_to_binary_type(oper.type)));
             assert(*result);
             log(LOG_DEBUG, TAST_FMT"\n", uast_operator_print(*result));
             break;
@@ -2124,7 +2125,7 @@ static PARSE_EXPR_STATUS extract_binary(
         case TOKEN_NOT_EQUAL:
             // fallthrough
         case TOKEN_DOUBLE_EQUAL:
-            *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, lhs, rhs, oper.type)));
+            *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, lhs, rhs, token_type_to_binary_type(oper.type))));
             break;
         case TOKEN_COMMA:
             if (lhs->type == UAST_TUPLE) {

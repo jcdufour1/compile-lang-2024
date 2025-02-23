@@ -19,7 +19,7 @@ static Tast_binary* change_op_binary(Env* env, Tast_binary* root) {
 // TODO: should this simply be done in the analysis_1 pass to avoid having this entire pass for this one thing?
 static Tast_operator* change_op_unary(Env* env, Tast_unary* unary) {
     switch (unary->token_type) {
-        case TOKEN_NOT: {
+        case UNARY_NOT: {
             Tast_expr* new_lhs = change_op_expr(env, unary->child);
             Tast_binary* new_bin = tast_binary_new(
                 tast_unary_get_pos(unary),
@@ -29,7 +29,7 @@ static Tast_operator* change_op_unary(Env* env, Tast_unary* unary) {
                     TOKEN_INT_LITERAL,
                     tast_unary_get_pos(unary)
                 )),
-                TOKEN_DOUBLE_EQUAL,
+                BINARY_DOUBLE_EQUAL,
                 tast_expr_get_lang_type(new_lhs)
             );
 

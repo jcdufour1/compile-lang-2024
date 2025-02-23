@@ -130,7 +130,7 @@ static Uast_type uast_gen_unary(const char* prefix) {
     Uast_type unary = {.name = uast_name_new(prefix, "unary", false)};
 
     append_member(&unary.members, "Uast_expr*", "child");
-    append_member(&unary.members, "TOKEN_TYPE", "token_type");
+    append_member(&unary.members, "UNARY_TYPE", "token_type");
     append_member(&unary.members, "Ulang_type", "lang_type");
 
     return unary;
@@ -141,7 +141,7 @@ static Uast_type uast_gen_binary(const char* prefix) {
 
     append_member(&binary.members, "Uast_expr*", "lhs");
     append_member(&binary.members, "Uast_expr*", "rhs");
-    append_member(&binary.members, "TOKEN_TYPE", "token_type");
+    append_member(&binary.members, "BINARY_TYPE", "token_type");
 
     return binary;
 }

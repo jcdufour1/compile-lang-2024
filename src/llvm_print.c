@@ -34,7 +34,7 @@ Str_view llvm_binary_print_internal(const Llvm_binary* binary, int indent) {
 
     string_extend_cstr_indent(&print_arena, &buf, "binary", indent);
     extend_lang_type(&buf, binary->lang_type, true);
-    string_extend_strv(&print_arena, &buf, token_type_to_str_view(binary->token_type));
+    string_extend_strv(&print_arena, &buf, binary_type_to_str_view(binary->token_type));
     string_extend_strv_in_par(&print_arena, &buf, binary->name);
     extend_child_name(&buf, "lhs", binary->lhs);
     extend_child_name(&buf, "rhs", binary->rhs);
@@ -48,7 +48,7 @@ Str_view llvm_unary_print_internal(const Llvm_unary* unary, int indent) {
 
     string_extend_cstr_indent(&print_arena, &buf, "unary", indent);
     extend_lang_type(&buf, unary->lang_type, true);
-    string_extend_strv(&print_arena, &buf, token_type_to_str_view(unary->token_type));
+    string_extend_strv(&print_arena, &buf, unary_type_to_str_view(unary->token_type));
     string_extend_strv_in_par(&print_arena, &buf, unary->name);
     extend_child_name(&buf, "child", unary->child);
     string_extend_cstr(&print_arena, &buf, "\n");

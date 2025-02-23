@@ -143,7 +143,7 @@ Str_view tast_binary_print_internal(const Tast_binary* binary, int indent) {
 
     string_extend_cstr_indent(&print_arena, &buf, "binary", indent);
     extend_lang_type(&buf, binary->lang_type, true);
-    string_extend_strv(&print_arena, &buf, token_type_to_str_view(binary->token_type));
+    string_extend_strv(&print_arena, &buf, binary_type_to_str_view(binary->token_type));
     string_extend_cstr(&print_arena, &buf, "\n");
 
     indent += INDENT_WIDTH;
@@ -159,7 +159,7 @@ Str_view tast_unary_print_internal(const Tast_unary* unary, int indent) {
 
     string_extend_cstr_indent(&print_arena, &buf, "unary", indent);
     extend_lang_type(&buf, unary->lang_type, true);
-    string_extend_strv(&print_arena, &buf, token_type_to_str_view(unary->token_type));
+    string_extend_strv(&print_arena, &buf, unary_type_to_str_view(unary->token_type));
     string_extend_cstr(&print_arena, &buf, "\n");
 
     indent += INDENT_WIDTH;

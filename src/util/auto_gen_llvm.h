@@ -131,7 +131,7 @@ static Llvm_type llvm_gen_unary(void) {
     Llvm_type unary = {.name = llvm_name_new("operator", "unary", false)};
 
     append_member(&unary.members, "Str_view", "child");
-    append_member(&unary.members, "TOKEN_TYPE", "token_type");
+    append_member(&unary.members, "UNARY_TYPE", "token_type");
     append_member(&unary.members, "Lang_type", "lang_type");
     append_member(&unary.members, "Llvm_id", "llvm_id");
     append_member(&unary.members, "Str_view", "name");
@@ -144,7 +144,7 @@ static Llvm_type llvm_gen_binary(void) {
 
     append_member(&binary.members, "Str_view", "lhs");
     append_member(&binary.members, "Str_view", "rhs");
-    append_member(&binary.members, "TOKEN_TYPE", "token_type");
+    append_member(&binary.members, "BINARY_TYPE", "token_type");
     append_member(&binary.members, "Lang_type", "lang_type");
     append_member(&binary.members, "Llvm_id", "llvm_id");
     append_member(&binary.members, "Str_view", "name");

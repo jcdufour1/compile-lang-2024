@@ -431,7 +431,7 @@ static void emit_alloca(Env* env, String* output, const Llvm_alloca* alloca) {
 
 static void emit_unary_type(Env* env, String* output, const Llvm_unary* unary) {
     switch (unary->token_type) {
-        case TOKEN_UNSAFE_CAST:
+        case UNARY_UNSAFE_CAST:
             if (lang_type_get_pointer_depth(unary->lang_type) > 0 && lang_type_is_number(lang_type_from_get_name(env, unary->child))) {
                 string_extend_cstr(&a_main, output, "inttoptr ");
                 extend_type_call_str(env, output, lang_type_from_get_name(env, unary->child));
@@ -466,116 +466,115 @@ static void emit_unary_type(Env* env, String* output, const Llvm_unary* unary) {
     }
 }
 
-static void emit_binary_type_signed(Env* env, String* output, const Llvm_binary* binary) {
+static void emit_binary_type_signed(String* output, const Llvm_binary* binary) {
     switch (binary->token_type) {
-        case TOKEN_SINGLE_MINUS:
+        case BINARY_SUB:
             string_extend_cstr(&a_main, output, "sub nsw ");
-            break;
-        case TOKEN_SINGLE_PLUS:
+            return;
+        case BINARY_ADD:
             string_extend_cstr(&a_main, output, "add nsw ");
-            break;
-        case TOKEN_ASTERISK:
+            return;
+        case BINARY_MULTIPLY:
             string_extend_cstr(&a_main, output, "mul nsw ");
-            break;
-        case TOKEN_SLASH:
+            return;
+        case BINARY_DIVIDE:
             string_extend_cstr(&a_main, output, "sdiv ");
-            break;
-        case TOKEN_MODULO:
+            return;
+        case BINARY_MODULO:
             string_extend_cstr(&a_main, output, "srem ");
-            break;
-        case TOKEN_LESS_THAN:
+            return;
+        case BINARY_LESS_THAN:
             string_extend_cstr(&a_main, output, "icmp slt ");
-            break;
-        case TOKEN_LESS_OR_EQUAL:
+            return;
+        case BINARY_LESS_OR_EQUAL:
             string_extend_cstr(&a_main, output, "icmp sle ");
-            break;
-        case TOKEN_GREATER_OR_EQUAL:
+            return;
+        case BINARY_GREATER_OR_EQUAL:
             string_extend_cstr(&a_main, output, "icmp sge ");
-            break;
-        case TOKEN_GREATER_THAN:
+            return;
+        case BINARY_GREATER_THAN:
             string_extend_cstr(&a_main, output, "icmp sgt ");
-            break;
-        case TOKEN_DOUBLE_EQUAL:
+            return;
+        case BINARY_DOUBLE_EQUAL:
             string_extend_cstr(&a_main, output, "icmp eq ");
-            break;
-        case TOKEN_NOT_EQUAL:
+            return;
+        case BINARY_NOT_EQUAL:
             string_extend_cstr(&a_main, output, "icmp ne ");
-            break;
-        case TOKEN_XOR:
+            return;
+        case BINARY_XOR:
             string_extend_cstr(&a_main, output, "xor ");
-            break;
-        default:
-            unreachable(TOKEN_TYPE_FMT"\n", token_type_print(binary->token_type));
+            return;
     }
-
-    extend_type_call_str(env, output, binary->lang_type);
-    string_extend_cstr(&a_main, output, " ");
+    unreachable("");
 }
 
-static void emit_binary_type_unsigned(Env* env, String* output, const Llvm_binary* binary) {
-    // TODO: make actual operator type enum instead of using TOKEN_TYPE
+static void emit_binary_type_unsigned(String* output, const Llvm_binary* binary) {
     switch (binary->token_type) {
-        case TOKEN_SINGLE_MINUS:
+        case BINARY_SUB:
             string_extend_cstr(&a_main, output, "sub nsw ");
-            break;
-        case TOKEN_SINGLE_PLUS:
+            return;
+        case BINARY_ADD:
             string_extend_cstr(&a_main, output, "add nsw ");
-            break;
-        case TOKEN_ASTERISK:
+            return;
+        case BINARY_MULTIPLY:
             string_extend_cstr(&a_main, output, "mul nsw ");
-            break;
-        case TOKEN_SLASH:
+            return;
+        case BINARY_DIVIDE:
             string_extend_cstr(&a_main, output, "udiv ");
-            break;
-        case TOKEN_MODULO:
+            return;
+        case BINARY_MODULO:
             string_extend_cstr(&a_main, output, "urem ");
-            break;
-        case TOKEN_LESS_THAN:
+            return;
+        case BINARY_LESS_THAN:
             string_extend_cstr(&a_main, output, "icmp ult ");
-            break;
-        case TOKEN_LESS_OR_EQUAL:
+            return;
+        case BINARY_LESS_OR_EQUAL:
             string_extend_cstr(&a_main, output, "icmp ule ");
-            break;
-        case TOKEN_GREATER_OR_EQUAL:
+            return;
+        case BINARY_GREATER_OR_EQUAL:
             string_extend_cstr(&a_main, output, "icmp uge ");
-            break;
-        case TOKEN_GREATER_THAN:
+            return;
+        case BINARY_GREATER_THAN:
             string_extend_cstr(&a_main, output, "icmp ugt ");
-            break;
-        case TOKEN_DOUBLE_EQUAL:
+            return;
+        case BINARY_DOUBLE_EQUAL:
             string_extend_cstr(&a_main, output, "icmp eq ");
-            break;
-        case TOKEN_NOT_EQUAL:
+            return;
+        case BINARY_NOT_EQUAL:
             string_extend_cstr(&a_main, output, "icmp ne ");
-            break;
-        case TOKEN_XOR:
+            return;
+        case BINARY_XOR:
             string_extend_cstr(&a_main, output, "xor ");
-            break;
-        default:
-            unreachable(TOKEN_TYPE_FMT"\n", token_type_print(binary->token_type));
+            return;
     }
-
-    extend_type_call_str(env, output, binary->lang_type);
-    string_extend_cstr(&a_main, output, " ");
+    unreachable("");
 }
 
 static void emit_binary_type(Env* env, String* output, const Llvm_binary* binary) {
     if (lang_type_is_signed(binary->lang_type)) {
-        emit_binary_type_signed(env, output, binary);
+        emit_binary_type_signed(output, binary);
     } else {
-        emit_binary_type_unsigned(env, output, binary);
+        emit_binary_type_unsigned(output, binary);
     }
+
+    extend_type_call_str(env, output, binary->lang_type);
+    string_extend_cstr(&a_main, output, " ");
 }
 
 static void emit_unary_suffix(Env* env, String* output, const Llvm_unary* unary) {
     switch (unary->token_type) {
-        case TOKEN_UNSAFE_CAST:
+        case UNARY_UNSAFE_CAST:
             string_extend_cstr(&a_main, output, " to ");
             extend_type_call_str(env, output, unary->lang_type);
-            break;
-        default:
-            unreachable("");
+            return;
+        case UNARY_DEREF:
+            unreachable("suffix not needed for UNARY_DEREF");
+        case UNARY_REFER:
+            unreachable("suffix not needed for UNARY_REFER");
+        case UNARY_NOT:
+            unreachable("not should not still be present here");
     }
+    unreachable("");
 }
 
 static void emit_operator_operand_llvm_placeholder_expr(

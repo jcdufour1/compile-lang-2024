@@ -9,6 +9,7 @@
 #include <type_checking.h>
 #include <limits.h>
 #include <ctype.h>
+#include <token_type_to_operator_type.h>
 
 static uint64_t sizeof_def(Env* env, const Tast_def* def);
 
@@ -339,7 +340,7 @@ Tast_literal* util_tast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token
 }
 
 Tast_operator* util_binary_typed_new(Env* env, Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operator_type) {
-    Uast_binary* binary = uast_binary_new(uast_expr_get_pos(lhs), lhs, rhs, operator_type);
+    Uast_binary* binary = uast_binary_new(uast_expr_get_pos(lhs), lhs, rhs, token_type_to_binary_type(operator_type));
 
     Tast_expr* new_tast;
     try(try_set_binary_types(env, &new_tast, binary));
@@ -359,7 +360,7 @@ Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child) {
             util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, tast_expr_get_pos(if_cond_child))
         ),
         if_cond_child,
-        TOKEN_NOT_EQUAL,
+        BINARY_NOT_EQUAL,
         lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(32, 0)))
     );
 
@@ -373,7 +374,7 @@ Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child) {
             util_uast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, uast_expr_get_pos(if_cond_child))
         ),
         if_cond_child,
-        TOKEN_NOT_EQUAL
+        BINARY_NOT_EQUAL
     );
 
     return uast_binary_wrap(binary);
