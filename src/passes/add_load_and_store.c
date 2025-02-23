@@ -1422,7 +1422,7 @@ static Str_view load_ptr_expr(Env* env, Llvm_block* new_block, Tast_expr* old_ex
         case TAST_INDEX:
             return load_ptr_index(env, new_block, tast_index_unwrap(old_expr));
         case TAST_LITERAL:
-            // TODO: expected fail test for this
+            // TODO: deref string literal
             unreachable("");
         case TAST_FUNCTION_CALL:
             unreachable("");

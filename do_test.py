@@ -107,6 +107,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "type_token_no_sum_after.own": ["parser-expected"],
     EXPECTED_FAIL_EXAMPLES_DIR + "sum_case_var_is_redef.own": ["redefinition-of-symbol"],
     EXPECTED_FAIL_EXAMPLES_DIR + "signed_assigned_to_unsigned.own": ["assignment-mismatched-types", "assignment-mismatched-types"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "deref_literal.own": ["deref_non_pointer"],
 }
 
 def to_str(a):

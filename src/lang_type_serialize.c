@@ -43,11 +43,9 @@ Str_view serialize_lang_type_struct_thing(Env* env, Lang_type lang_type) {
 }
 
 // TODO: make separate function for Tast_lang_type and Lang_type
-// TODO: call serialize_struct_def serialize_tast_struct_def, etc.
 Str_view serialize_lang_type(Env* env, Lang_type lang_type) {
     // TODO: think about memory allocation strategy here
     // TODO: make function to serialize lang_type, and call it from here
-    // TODO: separate file for serialization functions
     //
     //
     // TODO: factor in lang_type.type into serialization
