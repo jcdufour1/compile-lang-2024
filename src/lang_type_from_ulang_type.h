@@ -50,33 +50,24 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Env* e
 }
 
 static inline Lang_type lang_type_from_ulang_type_regular(Env* env, Ulang_type_regular lang_type) {
-    log(LOG_DEBUG, TAST_FMT, ulang_type_print(ulang_type_regular_const_wrap(lang_type)));
     Uast_def* result = NULL;
     if (!usymbol_lookup(&result, env, lang_type.atom.str)) {
         unreachable(LANG_TYPE_FMT, ulang_type_print(ulang_type_regular_const_wrap(lang_type)));
     }
-    log(LOG_DEBUG, TAST_FMT, uast_def_print(result));
-    log(LOG_DEBUG, TAST_FMT, ulang_type_print(ulang_type_regular_const_wrap(lang_type)));
 
     Lang_type_atom new_atom = lang_type_atom_new(lang_type.atom.str, lang_type.atom.pointer_depth);
-    log(LOG_DEBUG, TAST_FMT, ulang_type_print(ulang_type_regular_const_wrap(lang_type)));
     switch (result->type) {
         case UAST_STRUCT_DEF:
-            log(LOG_DEBUG, "thing 19\n");
             return lang_type_struct_const_wrap(lang_type_struct_new(new_atom));
         case UAST_RAW_UNION_DEF:
-            log(LOG_DEBUG, "thing 20\n");
             return lang_type_raw_union_const_wrap(lang_type_raw_union_new(new_atom));
         case UAST_ENUM_DEF:
-            log(LOG_DEBUG, "thing 21\n");
             return lang_type_enum_const_wrap(lang_type_enum_new(new_atom));
         case UAST_SUM_DEF:
-            log(LOG_DEBUG, "thing 22\n");
             return lang_type_sum_const_wrap(lang_type_sum_new(new_atom));
         case UAST_PRIMITIVE_DEF:
             return lang_type_from_ulang_type_regular_primitive(env, lang_type, uast_primitive_def_unwrap(result));
         case UAST_LITERAL_DEF:
-            log(LOG_DEBUG, "thing 24\n");
             try(uast_literal_def_const_unwrap(result)->type == UAST_VOID_DEF);
             return lang_type_void_const_wrap(lang_type_void_new(0));
         default:
@@ -86,7 +77,6 @@ static inline Lang_type lang_type_from_ulang_type_regular(Env* env, Ulang_type_r
 }
 
 static inline Lang_type lang_type_from_ulang_type(Env* env, Ulang_type lang_type) {
-    log(LOG_DEBUG, TAST_FMT, ulang_type_print(lang_type));
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
             return lang_type_from_ulang_type_regular(env, ulang_type_regular_const_unwrap(lang_type));

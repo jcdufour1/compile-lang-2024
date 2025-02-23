@@ -417,7 +417,6 @@ static Tast_function_def* rm_tuple_function_def_new(Env* env, Tast_function_decl
     return new_def;
 }
 
-// TODO: use separate functions for these things
 static Tast_expr* rm_tuple_struct_literal_rhs(
     Env* env,
     Tast_struct_literal* rhs,

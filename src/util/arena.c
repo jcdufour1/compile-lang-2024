@@ -3,6 +3,9 @@
 #include <assert.h>
 #include <stddef.h>
 
+// TODO: alignment in arena
+// TODO: use mmap instead of malloc
+
 #define ARENA_DEFAULT_CAPACITY (1 << 20) // 1 MB initial
 
 /*

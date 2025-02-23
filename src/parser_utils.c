@@ -132,6 +132,46 @@ bool lang_type_is_number(Lang_type lang_type) {
     unreachable("");
 }
 
+bool lang_type_is_signed(Lang_type lang_type) {
+    if (lang_type.type != LANG_TYPE_PRIMITIVE) {
+        return false;
+    }
+    // TODO: return false when pointer_depth > 0?
+    switch (lang_type_primitive_const_unwrap(lang_type).type) {
+        case LANG_TYPE_CHAR:
+            return false;
+        case LANG_TYPE_STRING:
+            return false;
+        case LANG_TYPE_SIGNED_INT:
+            return true;
+        case LANG_TYPE_UNSIGNED_INT:
+            return false;
+        case LANG_TYPE_ANY:
+            return false;
+    }
+    unreachable("");
+}
+
+bool lang_type_is_unsigned(Lang_type lang_type) {
+    if (lang_type.type != LANG_TYPE_PRIMITIVE) {
+        return false;
+    }
+    // TODO: return false when pointer_depth > 0?
+    switch (lang_type_primitive_const_unwrap(lang_type).type) {
+        case LANG_TYPE_CHAR:
+            return false;
+        case LANG_TYPE_STRING:
+            return false;
+        case LANG_TYPE_SIGNED_INT:
+            return false;
+        case LANG_TYPE_UNSIGNED_INT:
+            return true;
+        case LANG_TYPE_ANY:
+            return false;
+    }
+    unreachable("");
+}
+
 int64_t i_lang_type_atom_to_bit_width(Lang_type_atom atom) {
     //assert(lang_type_atom_is_signed(lang_type));
     return str_view_to_int64_t(str_view_slice(atom.str, 1, atom.str.count - 1));

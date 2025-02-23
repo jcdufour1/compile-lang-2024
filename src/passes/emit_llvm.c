@@ -440,9 +440,17 @@ static void emit_unary_type(Env* env, String* output, const Llvm_unary* unary) {
                 string_extend_cstr(&a_main, output, "ptrtoint ");
                 extend_type_call_str(env, output, lang_type_from_get_name(env, unary->child));
                 string_extend_cstr(&a_main, output, " ");
-            } else if (lang_type_is_number(unary->lang_type) && lang_type_is_number(lang_type_from_get_name(env, unary->child))) {
+            } else if (lang_type_is_unsigned(unary->lang_type) && lang_type_is_number(lang_type_from_get_name(env, unary->child))) {
                 if (i_lang_type_atom_to_bit_width(lang_type_get_atom(unary->lang_type)) > i_lang_type_atom_to_bit_width(lang_type_get_atom(lang_type_from_get_name(env, unary->child)))) {
                     string_extend_cstr(&a_main, output, "zext ");
+                } else {
+                    string_extend_cstr(&a_main, output, "trunc ");
+                }
+                extend_type_call_str(env, output, lang_type_from_get_name(env, unary->child));
+                string_extend_cstr(&a_main, output, " ");
+            } else if (lang_type_is_signed(unary->lang_type) && lang_type_is_number(lang_type_from_get_name(env, unary->child))) {
+                if (i_lang_type_atom_to_bit_width(lang_type_get_atom(unary->lang_type)) > i_lang_type_atom_to_bit_width(lang_type_get_atom(lang_type_from_get_name(env, unary->child)))) {
+                    string_extend_cstr(&a_main, output, "sext ");
                 } else {
                     string_extend_cstr(&a_main, output, "trunc ");
                 }
@@ -458,8 +466,7 @@ static void emit_unary_type(Env* env, String* output, const Llvm_unary* unary) {
     }
 }
 
-static void emit_binary_type(Env* env, String* output, const Llvm_binary* binary) {
-    // TODO: do signed and unsigned operators correctly
+static void emit_binary_type_signed(Env* env, String* output, const Llvm_binary* binary) {
     switch (binary->token_type) {
         case TOKEN_SINGLE_MINUS:
             string_extend_cstr(&a_main, output, "sub nsw ");
@@ -472,6 +479,9 @@ static void emit_binary_type(Env* env, String* output, const Llvm_binary* binary
             break;
         case TOKEN_SLASH:
             string_extend_cstr(&a_main, output, "sdiv ");
+            break;
+        case TOKEN_MODULO:
+            string_extend_cstr(&a_main, output, "srem ");
             break;
         case TOKEN_LESS_THAN:
             string_extend_cstr(&a_main, output, "icmp slt ");
@@ -500,6 +510,61 @@ static void emit_binary_type(Env* env, String* output, const Llvm_binary* binary
 
     extend_type_call_str(env, output, binary->lang_type);
     string_extend_cstr(&a_main, output, " ");
+}
+
+static void emit_binary_type_unsigned(Env* env, String* output, const Llvm_binary* binary) {
+    // TODO: make actual operator type enum instead of using TOKEN_TYPE
+    switch (binary->token_type) {
+        case TOKEN_SINGLE_MINUS:
+            string_extend_cstr(&a_main, output, "sub nsw ");
+            break;
+        case TOKEN_SINGLE_PLUS:
+            string_extend_cstr(&a_main, output, "add nsw ");
+            break;
+        case TOKEN_ASTERISK:
+            string_extend_cstr(&a_main, output, "mul nsw ");
+            break;
+        case TOKEN_SLASH:
+            string_extend_cstr(&a_main, output, "udiv ");
+            break;
+        case TOKEN_MODULO:
+            string_extend_cstr(&a_main, output, "urem ");
+            break;
+        case TOKEN_LESS_THAN:
+            string_extend_cstr(&a_main, output, "icmp ult ");
+            break;
+        case TOKEN_LESS_OR_EQUAL:
+            string_extend_cstr(&a_main, output, "icmp ule ");
+            break;
+        case TOKEN_GREATER_OR_EQUAL:
+            string_extend_cstr(&a_main, output, "icmp uge ");
+            break;
+        case TOKEN_GREATER_THAN:
+            string_extend_cstr(&a_main, output, "icmp ugt ");
+            break;
+        case TOKEN_DOUBLE_EQUAL:
+            string_extend_cstr(&a_main, output, "icmp eq ");
+            break;
+        case TOKEN_NOT_EQUAL:
+            string_extend_cstr(&a_main, output, "icmp ne ");
+            break;
+        case TOKEN_XOR:
+            string_extend_cstr(&a_main, output, "xor ");
+            break;
+        default:
+            unreachable(TOKEN_TYPE_FMT"\n", token_type_print(binary->token_type));
+    }
+
+    extend_type_call_str(env, output, binary->lang_type);
+    string_extend_cstr(&a_main, output, " ");
+}
+
+static void emit_binary_type(Env* env, String* output, const Llvm_binary* binary) {
+    if (lang_type_is_signed(binary->lang_type)) {
+        emit_binary_type_signed(env, output, binary);
+    } else {
+        emit_binary_type_unsigned(env, output, binary);
+    }
 }
 
 static void emit_unary_suffix(Env* env, String* output, const Llvm_unary* unary) {

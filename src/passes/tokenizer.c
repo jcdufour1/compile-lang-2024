@@ -158,6 +158,9 @@ static bool get_next_token(const Env* env, Pos* pos, Token* token, Str_view_col*
     } else if (str_view_col_try_consume(pos, file_text, '*')) {
         token->type = TOKEN_ASTERISK;
         return true;
+    } else if (str_view_col_try_consume(pos, file_text, '%')) {
+        token->type = TOKEN_MODULO;
+        return true;
     } else if (file_text->base.count > 1 && str_view_cstr_is_equal(str_view_slice(file_text->base, 0, 2), "//")) {
         str_view_col_consume_until(pos, file_text, '\n');
         trim_non_newline_whitespace(file_text, pos);

@@ -19,6 +19,7 @@ typedef enum {
     TOKEN_SINGLE_PLUS,
     TOKEN_SINGLE_MINUS,
     TOKEN_ASTERISK,
+    TOKEN_MODULO,
     TOKEN_SLASH,
     TOKEN_LESS_THAN,
     TOKEN_LESS_OR_EQUAL,
@@ -203,6 +204,8 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_SUM:
             return false;
+        case TOKEN_MODULO:
+            return false;
     }
     unreachable("");
 }
@@ -319,6 +322,8 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             return true;
         case TOKEN_SUM:
             return false;
+        case TOKEN_MODULO:
+            return true;
     }
     unreachable(TOKEN_FMT"\n", token_print(token));
 }
@@ -443,6 +448,8 @@ static inline bool token_is_closing(Token curr_token) {
             return false;
         case TOKEN_SUM:
             return false;
+        case TOKEN_MODULO:
+            return false;
     }
     unreachable("");
 }
@@ -558,6 +565,8 @@ static inline bool token_is_opening(Token curr_token) {
         case TOKEN_DEFAULT:
             return false;
         case TOKEN_SUM:
+            return false;
+        case TOKEN_MODULO:
             return false;
     }
     unreachable("");

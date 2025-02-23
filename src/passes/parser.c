@@ -460,6 +460,8 @@ static bool can_end_statement(Token token) {
             return false;
         case TOKEN_SUM:
             return false;
+        case TOKEN_MODULO:
+            return false;
     }
     unreachable("");
 }
@@ -488,6 +490,8 @@ static int32_t get_operator_precedence(TOKEN_TYPE type) {
         case TOKEN_ASTERISK:
             return 15;
         case TOKEN_SLASH:
+            return 15;
+        case TOKEN_MODULO:
             return 15;
         case TOKEN_NOT:
             return 25;
@@ -620,6 +624,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_SUM:
             return false;
+        case TOKEN_MODULO:
+            return false;
     }
     unreachable("");
 }
@@ -736,6 +742,8 @@ static bool is_binary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_SUM:
             return false;
+        case TOKEN_MODULO:
+            return true;
     }
     unreachable("");
 }
@@ -2102,6 +2110,8 @@ static PARSE_EXPR_STATUS extract_binary(
         case TOKEN_ASTERISK:
             // fallthrough
         case TOKEN_SLASH:
+            // fallthrough
+        case TOKEN_MODULO:
             // fallthrough
         case TOKEN_GREATER_OR_EQUAL:
             // fallthrough
