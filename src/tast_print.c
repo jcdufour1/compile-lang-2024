@@ -2,7 +2,7 @@
 #include <tasts.h>
 #include <llvm_utils.h>
 #include <util.h>
-#include <serialize.h>
+#include <tast_serialize.h>
 
 #include <symbol_table.h>
 

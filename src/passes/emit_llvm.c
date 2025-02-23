@@ -9,7 +9,8 @@
 #include <parser_utils.h>
 #include <llvm_utils.h>
 #include <errno.h>
-#include <serialize.h>
+#include <tast_serialize.h>
+#include <lang_type_serialize.h>
 
 static void emit_block(Env* env, String* struct_defs, String* output, String* literals, const Llvm_block* fun_block);
 

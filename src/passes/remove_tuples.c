@@ -6,7 +6,8 @@
 #include <uast_utils.h>
 #include <parser_utils.h>
 #include <type_checking.h>
-#include <serialize.h>
+#include <tast_serialize.h>
+#include <lang_type_serialize.h>
 #include <lang_type_from_ulang_type.h>
 
 static Tast_symbol* rm_tuple_symbol_typed_new_from_var_def(const Tast_variable_def* var_def) {
@@ -123,7 +124,8 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
             };
             
             Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
-            struct_def->base.name = serialize_struct_def(env, struct_def);
+            try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def)));
+            struct_def->base.name = serialize_tast_struct_def(env, struct_def);
             // TODO: consider collisions with generated structs and user defined structs
             if (sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def))) {
                 vec_append(&a_main, &env->extra_structs, struct_def);
@@ -152,7 +154,7 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
                 lang_type_pos,
                 tast_raw_union_def_unwrap(lang_type_def_)->base
             );
-            item_type_def->base.name = serialize_raw_union_def(env, item_type_def);
+            item_type_def->base.name = serialize_tast_raw_union_def(env, item_type_def);
             if (sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_raw_union_def_wrap(item_type_def))) {
                 vec_append(&a_main, &env->extra_raw_unions, item_type_def);
             }
@@ -476,7 +478,7 @@ static Tast_expr* rm_tuple_struct_literal_rhs(
     }
 
     log(LOG_DEBUG, TAST_FMT, tast_def_print(struct_def_));
-    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(serialize_def(env, struct_def_)));
+    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(serialize_tast_def(env, struct_def_)));
     //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(rm_tuple_struct_from_return_type_get_name(struct_def)));
 
     Tast_function_params* new_fun_params = tast_function_params_new(assign_pos, new_params);
@@ -576,7 +578,7 @@ static Tast_expr* rm_tuple_tuple_rhs(
     }
 
     log(LOG_DEBUG, TAST_FMT, tast_def_print(struct_def_));
-    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(serialize_def(env, struct_def_)));
+    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(serialize_tast_def(env, struct_def_)));
     //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(rm_tuple_struct_from_return_type_get_name(struct_def)));
 
     Tast_function_params* new_fun_params = tast_function_params_new(assign_pos, new_params);
@@ -701,7 +703,7 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
 
     log(LOG_DEBUG, TAST_FMT, tast_def_print(struct_def_));
     log(LOG_DEBUG, TAST_FMT, tast_def_print(struct_def_));
-    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(serialize_def(env, struct_def_)));
+    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(serialize_tast_def(env, struct_def_)));
     //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(rm_tuple_struct_from_return_type_get_name(struct_def)));
 
     Tast_function_params* new_fun_params = tast_function_params_new(assign_pos, new_params);
@@ -948,7 +950,7 @@ static Tast_expr* rm_tuple_raw_union_lit_rhs(Env* env, Tast_raw_union_lit* rhs, 
     }
 
     log(LOG_DEBUG, TAST_FMT, tast_def_print(struct_def_));
-    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(serialize_def(env, struct_def_)));
+    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(serialize_tast_def(env, struct_def_)));
     //log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(rm_tuple_struct_from_return_type_get_name(struct_def)));
 
     Tast_function_params* new_fun_params = tast_function_params_new(assign_pos, new_params);

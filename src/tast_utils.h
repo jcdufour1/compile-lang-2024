@@ -181,22 +181,38 @@ static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr) {
     unreachable("");
 }
 
+static inline Lang_type tast_raw_union_def_get_lang_type(const Tast_raw_union_def* def) {
+    return lang_type_raw_union_const_wrap(lang_type_raw_union_new(lang_type_atom_new(def->base.name, 0)));
+}
+
+static inline Lang_type tast_struct_def_get_lang_type(const Tast_struct_def* def) {
+    return lang_type_struct_const_wrap(lang_type_struct_new(lang_type_atom_new(def->base.name, 0)));
+}
+
+static inline Lang_type tast_sum_def_get_lang_type(const Tast_sum_def* def) {
+    return lang_type_sum_const_wrap(lang_type_sum_new(lang_type_atom_new(def->base.name, 0)));
+}
+
+static inline Lang_type tast_enum_def_get_lang_type(const Tast_enum_def* def) {
+    return lang_type_enum_const_wrap(lang_type_enum_new(lang_type_atom_new(def->base.name, 0)));
+}
+
 static inline Lang_type tast_def_get_lang_type(const Tast_def* def) {
     switch (def->type) {
         case TAST_FUNCTION_DEF:
             unreachable("");
         case TAST_RAW_UNION_DEF:
-            unreachable("");
+            return tast_raw_union_def_get_lang_type(tast_raw_union_def_const_unwrap(def));
         case TAST_ENUM_DEF:
-            return lang_type_enum_const_wrap(lang_type_enum_new(lang_type_atom_new(tast_enum_def_const_unwrap(def)->base.name, 0)));
+            return tast_enum_def_get_lang_type(tast_enum_def_const_unwrap(def));
         case TAST_VARIABLE_DEF:
             return tast_variable_def_const_unwrap(def)->lang_type;
         case TAST_FUNCTION_DECL:
             unreachable("");
         case TAST_STRUCT_DEF:
-            return lang_type_struct_const_wrap(lang_type_struct_new(lang_type_atom_new(tast_struct_def_const_unwrap(def)->base.name, 0)));
+            return tast_struct_def_get_lang_type(tast_struct_def_const_unwrap(def));
         case TAST_SUM_DEF:
-            return lang_type_sum_const_wrap(lang_type_sum_new(lang_type_atom_new(tast_sum_def_const_unwrap(def)->base.name, 0)));
+            return tast_sum_def_get_lang_type(tast_sum_def_const_unwrap(def));
         case TAST_PRIMITIVE_DEF:
             unreachable("");
         case TAST_LITERAL_DEF:
@@ -461,6 +477,30 @@ static inline Str_view tast_get_name(const Tast* tast) {
         case TAST_FOR_UPPER_BOUND:
             unreachable("");
         case TAST_IF:
+            unreachable("");
+    }
+    unreachable("");
+}
+
+static inline Struct_def_base tast_def_get_struct_def_base(const Tast_def* def) {
+    switch (def->type) {
+        case TAST_FUNCTION_DEF:
+            unreachable("");
+        case TAST_RAW_UNION_DEF:
+            return tast_raw_union_def_const_unwrap(def)->base;
+        case TAST_ENUM_DEF:
+            return tast_enum_def_const_unwrap(def)->base;
+        case TAST_VARIABLE_DEF:
+            unreachable("");
+        case TAST_FUNCTION_DECL:
+            unreachable("");
+        case TAST_STRUCT_DEF:
+            return tast_struct_def_const_unwrap(def)->base;
+        case TAST_SUM_DEF:
+            return tast_sum_def_const_unwrap(def)->base;
+        case TAST_PRIMITIVE_DEF:
+            unreachable("");
+        case TAST_LITERAL_DEF:
             unreachable("");
     }
     unreachable("");

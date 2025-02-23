@@ -519,7 +519,8 @@ static void gen_symbol_table_c_file(const char* file_path, Sym_tbl_type_vec type
     gen_gen("%s\n", "#include <uast_utils.h>");
     gen_gen("%s\n", "#include <tast_utils.h>");
     gen_gen("%s\n", "#include <llvm_utils.h>");
-    gen_gen("%s\n", "#include <serialize.h>");
+    gen_gen("%s\n", "#include <tast_serialize.h>");
+    gen_gen("%s\n", "#include <lang_type_serialize.h>");
     gen_gen("%s\n", "");
     gen_gen("%s\n", "#define SYM_TBL_DEFAULT_CAPACITY 1");
     gen_gen("%s\n", "#define SYM_TBL_MAX_DENSITY (0.6f)");

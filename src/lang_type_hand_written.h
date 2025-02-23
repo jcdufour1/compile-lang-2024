@@ -2,6 +2,7 @@
 #define LANG_TYPE_HAND_WRITTEN
 
 #include <str_view.h>
+#include <vector.h>
 
 typedef struct {
     Str_view str;
