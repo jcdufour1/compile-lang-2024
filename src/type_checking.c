@@ -1716,7 +1716,16 @@ bool try_set_function_decl_types(
     }
 
     *new_tast = tast_function_decl_new(decl->pos, new_params, new_rtn_type, decl->name);
+
+    Symbol_collection* top = vec_top(&env->ancesters);
+    if (add_to_sym_tbl) {
+        vec_rem_last(&env->ancesters);
+    }
     try(symbol_add(env, tast_function_decl_wrap(*new_tast)));
+    if (add_to_sym_tbl) {
+        vec_append(&a_main, &env->ancesters, top);
+    }
+
     return true;
 }
 
@@ -1744,6 +1753,10 @@ bool try_set_function_def_types(
     assert(prev_ancesters_count == env->ancesters.info.count);
 
     env->name_parent_function = prev_par_fun;
+    Tast_def* result = NULL;
+    //log(LOG_DEBUG, TAST_FMT, tast_print();
+    try(symbol_lookup(&result, env, new_decl->name));
+    symbol_update(env, tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
     return status;
 }
 
