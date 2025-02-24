@@ -66,7 +66,7 @@ static inline Str_view unary_type_to_str_view(UNARY_TYPE unary_type) {
         case UNARY_UNSAFE_CAST:
             return str_view_from_cstr("unsafe_cast");
         case UNARY_NOT:
-            return str_view_from_cstr("not");
+            return str_view_from_cstr("!");
     }
     unreachable("");
 }

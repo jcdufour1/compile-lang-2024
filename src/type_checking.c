@@ -539,17 +539,6 @@ bool try_set_unary_types_finish_get_lang_type(
     Lang_type cast_to
 ) {
     switch (unary_token_type) {
-        case UNARY_NOT:
-            *new_lang_type = tast_expr_get_lang_type(new_child);
-            if (new_lang_type->type != LANG_TYPE_PRIMITIVE || !lang_type_is_number(*new_lang_type)) {
-                msg(
-                    LOG_ERROR, EXPECT_FAIL_UNARY_MISMATCHED_TYPES, env->file_text, tast_expr_get_pos(new_child),
-                    "type `"LANG_TYPE_FMT"` is not a valid operand to logical not operation\n",
-                    lang_type_print(*new_lang_type)
-                );
-                return false;
-            }
-            return true;
         case UNARY_DEREF:
             *new_lang_type = tast_expr_get_lang_type(new_child);
             if (lang_type_get_pointer_depth(*new_lang_type) <= 0) {
@@ -580,6 +569,8 @@ bool try_set_unary_types_finish_get_lang_type(
                 todo();
             }
             return true;
+        case UNARY_NOT:
+            todo();
     }
     unreachable("");
 }

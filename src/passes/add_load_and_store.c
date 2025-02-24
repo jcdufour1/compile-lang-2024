@@ -486,7 +486,6 @@ static Str_view load_unary(
             }
 
             // fallthrough
-        case UNARY_NOT: {
             Llvm_unary* new_unary = llvm_unary_new(
                 old_unary->pos,
                 load_expr(env, new_block, old_unary->child),
@@ -499,7 +498,8 @@ static Str_view load_unary(
 
             vec_append(&a_main, &new_block->children, llvm_expr_wrap(llvm_operator_wrap(llvm_unary_wrap(new_unary))));
             return new_unary->name;
-        }
+        case UNARY_NOT:
+            unreachable("not should not still be present here");
     }
     unreachable("");
 }
@@ -1300,9 +1300,13 @@ static Str_view load_raw_union_def(
     Env* env,
     Tast_raw_union_def* old_def
 ) {
-    try(alloca_add(env, llvm_def_wrap(
+    log(LOG_DEBUG, TAST_FMT, tast_raw_union_def_print(old_def));
+    // TODO: crash if alloca_add fails (we need to prevent duplicates to crash on alloca_add fail)?
+    if (!alloca_add(env, llvm_def_wrap(
         llvm_raw_union_def_wrap(tast_clone_raw_union_def(old_def))
-    )));
+    ))) {
+        return (Str_view) {0};
+    };
 
     Tast_def* dummy = NULL;
     if (!symbol_lookup(&dummy, env, serialize_tast_raw_union_def(env, old_def))) {
