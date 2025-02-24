@@ -308,7 +308,7 @@ static Tast_type tast_gen_sum_lit(const char* prefix) {
 
     append_member(&sum_lit.members, "Tast_enum_lit*", "tag");
     append_member(&sum_lit.members, "Tast_expr*", "item");
-    append_member(&sum_lit.members, "Lang_type", "lang_type");
+    append_member(&sum_lit.members, "Lang_type", "sum_lang_type");
 
     return sum_lit;
 }

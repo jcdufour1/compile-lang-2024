@@ -1048,6 +1048,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             //}
         case TAST_SUM_CALLEE: {
             if (fun_call->args.info.count != 1) {
+                // TODO: expected failure case
                 todo();
             }
             Tast_sum_callee* sum_callee = tast_sum_callee_unwrap(new_callee);
@@ -1101,6 +1102,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
         }
         case TAST_SUM_CASE: {
             if (fun_call->args.info.count != 1) {
+                // TODO: expected failure case
                 todo();
             }
             Tast_sum_case* new_case = NULL;
@@ -1108,6 +1110,22 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
                 return false;
             }
             *new_call = tast_sum_case_wrap(new_case);
+            return true;
+        }
+        case TAST_LITERAL: {
+            Tast_sum_lit* sum_lit = tast_sum_lit_unwrap(tast_literal_unwrap(new_callee));
+            if (fun_call->args.info.count != 0) {
+                Uast_def* sum_def_ = NULL;
+                try(usymbol_lookup(&sum_def_, env, lang_type_get_str(sum_lit->sum_lang_type)));
+                Uast_sum_def* sum_def = uast_sum_def_unwrap(sum_def_);
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, env->file_text, fun_call->pos,
+                    "cannot assign argument to varient `"LANG_TYPE_FMT"."LANG_TYPE_FMT"`, because inner type is void\n",
+                    lang_type_print(sum_lit->sum_lang_type), str_view_print(vec_at(&sum_def->base.members, sum_lit->tag->data)->name)
+                );
+                return false;
+            }
+            *new_call = new_callee;
             return true;
         }
         default:

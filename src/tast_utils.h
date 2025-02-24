@@ -122,7 +122,7 @@ static inline Lang_type tast_literal_get_lang_type(const Tast_literal* lit) {
         case TAST_CHAR:
             return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type_atom_new_from_cstr("u8", 0))));
         case TAST_SUM_LIT:
-            return tast_sum_lit_const_unwrap(lit)->lang_type;
+            return tast_sum_lit_const_unwrap(lit)->sum_lang_type;
         case TAST_RAW_UNION_LIT:
             return tast_expr_get_lang_type(tast_sum_lit_const_unwrap(lit)->item);
     }
@@ -144,7 +144,7 @@ static inline void tast_literal_set_lang_type(Tast_literal* lit, Lang_type lang_
         case TAST_CHAR:
             unreachable("");
         case TAST_SUM_LIT:
-            tast_sum_lit_unwrap(lit)->lang_type = lang_type;
+            tast_sum_lit_unwrap(lit)->sum_lang_type = lang_type;
             return;
         case TAST_RAW_UNION_LIT:
             tast_expr_set_lang_type(tast_raw_union_lit_unwrap(lit)->item, lang_type);

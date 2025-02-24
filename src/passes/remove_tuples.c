@@ -609,7 +609,7 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
     Tast_sum_lit* rhs,
     Pos assign_pos
 ) {
-    Lang_type lhs_lang_type = rm_tuple_lang_type(env, rhs->lang_type, rhs->pos);
+    Lang_type lhs_lang_type = rm_tuple_lang_type(env, rhs->sum_lang_type, rhs->pos);
     log(LOG_DEBUG, TAST_FMT, tast_sum_lit_print(rhs));
     log(LOG_DEBUG, TAST_FMT, lang_type_print(lhs_lang_type));
     //Tast_variable_def* to_rtn = tast_variable_def_new(

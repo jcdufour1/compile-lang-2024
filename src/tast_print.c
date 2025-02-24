@@ -347,7 +347,7 @@ Str_view tast_sum_lit_print_internal(const Tast_sum_lit* sum, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "sum_lit", indent);
-    extend_lang_type(&buf, sum->lang_type, true);
+    extend_lang_type(&buf, sum->sum_lang_type, true);
     extend_pos(&buf, sum->pos);
     string_extend_cstr(&print_arena, &buf, "\n");
     string_extend_strv(&print_arena, &buf, tast_enum_lit_print_internal(sum->tag, indent + INDENT_WIDTH));

@@ -51,7 +51,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"invalid-struct-member", EXPECT_FAIL_INVALID_STRUCT_MEMBER},
     {"invalid-enum-member", EXPECT_FAIL_INVALID_ENUM_MEMBER},
     {"missing-return-statement", EXPECT_FAIL_MISSING_RETURN},
-    {"invalid-count-function-arguments", EXPECT_FAIL_INVALID_COUNT_FUN_ARGS},
+    {"invalid-count-fun-args", EXPECT_FAIL_INVALID_COUNT_FUN_ARGS},
     {"invalid-function-arguments", EXPECT_FAIL_INVALID_FUN_ARG},
     {"mismatched-return-type", EXPECT_FAIL_MISMATCHED_RETURN_TYPE},
     {"assignment-mismatched-types", EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES},
