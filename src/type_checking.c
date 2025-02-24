@@ -530,32 +530,45 @@ bool try_set_binary_types(Env* env, Tast_expr** new_tast, Uast_binary* operator)
     return try_set_binary_types_finish(env, new_tast, new_lhs, new_rhs, operator->pos, operator->token_type);
 }
 
-bool try_set_unary_types_finish_get_lang_type(
+bool try_set_unary_types_finish(
     Env* env,
-    Lang_type* new_lang_type,
+    Tast_expr** new_tast,
     Tast_expr* new_child,
     Pos unary_pos,
     UNARY_TYPE unary_token_type,
     Lang_type cast_to
 ) {
+    Lang_type new_lang_type = {0};
     switch (unary_token_type) {
         case UNARY_DEREF:
-            *new_lang_type = tast_expr_get_lang_type(new_child);
-            if (lang_type_get_pointer_depth(*new_lang_type) <= 0) {
+            new_lang_type = tast_expr_get_lang_type(new_child);
+            if (lang_type_get_pointer_depth(new_lang_type) <= 0) {
                 msg(
                     LOG_ERROR, EXPECT_FAIL_DEREF_NON_POINTER, env->file_text, unary_pos,
                     "derefencing a type that is not a pointer\n"
                 );
                 return false;
             }
-            lang_type_set_pointer_depth(new_lang_type, lang_type_get_pointer_depth(*new_lang_type) - 1);
+            lang_type_set_pointer_depth(&new_lang_type, lang_type_get_pointer_depth(new_lang_type) - 1);
+            *new_tast = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+                unary_pos,
+                new_child,
+                unary_token_type,
+                new_lang_type
+            )));
             return true;
         case UNARY_REFER:
-            *new_lang_type = tast_expr_get_lang_type(new_child);
-            lang_type_set_pointer_depth(new_lang_type, lang_type_get_pointer_depth(*new_lang_type) + 1);
+            new_lang_type = tast_expr_get_lang_type(new_child);
+            lang_type_set_pointer_depth(&new_lang_type, lang_type_get_pointer_depth(new_lang_type) + 1);
+            *new_tast = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+                unary_pos,
+                new_child,
+                unary_token_type,
+                new_lang_type
+            )));
             return true;
         case UNARY_UNSAFE_CAST:
-            *new_lang_type = cast_to;
+            new_lang_type = cast_to;
             assert(lang_type_get_str(cast_to).count > 0);
             if (lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)) > 0 && lang_type_is_number(tast_expr_get_lang_type(new_child))) {
             } else if (lang_type_is_number_like(tast_expr_get_lang_type(new_child))) {
@@ -568,40 +581,30 @@ bool try_set_unary_types_finish_get_lang_type(
                 log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_child));
                 todo();
             }
+            *new_tast = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+                unary_pos,
+                new_child,
+                unary_token_type,
+                new_lang_type
+            )));
             return true;
         case UNARY_NOT:
-            todo();
+            new_lang_type = tast_expr_get_lang_type(new_child);
+            *new_tast = tast_operator_wrap(tast_binary_wrap(tast_binary_new(
+                unary_pos,
+                new_child,
+                tast_literal_wrap(util_tast_literal_new_from_int64_t(
+                    0,
+                    TOKEN_INT_LITERAL,
+                    unary_pos
+                )),
+                BINARY_DOUBLE_EQUAL,
+                new_lang_type // TODO: make this u1?
+            )));
+            return true;
     }
     unreachable("");
-}
 
-bool try_set_unary_types_finish(
-    Env* env,
-    Tast_expr** new_tast,
-    Tast_expr* new_child,
-    Pos unary_pos,
-    UNARY_TYPE unary_token_type,
-    Lang_type cast_to
-) {
-    Lang_type new_lang_type = {0};
-    if (!try_set_unary_types_finish_get_lang_type(
-        env,
-        &new_lang_type,
-        new_child,
-        unary_pos,
-        unary_token_type,
-        cast_to
-    )) {
-        return false;
-    }
-
-    *new_tast = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
-        unary_pos,
-        new_child,
-        unary_token_type,
-        new_lang_type
-    )));
-    return true;
 }
 
 bool try_set_unary_types(Env* env, Tast_expr** new_tast, Uast_unary* unary) {
@@ -935,7 +938,7 @@ bool try_set_assignment_types(Env* env, Tast_assignment** new_assign, Uast_assig
         case STMT_NO_STMT:
             unreachable(TAST_FMT, uast_assignment_print(assignment));
         case STMT_ERROR:
-            todo();
+            return false;
         default:
             unreachable("");
     }
@@ -2249,13 +2252,11 @@ bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, boo
             case STMT_NO_STMT:
                 break;
             case STMT_ERROR:
-                unreachable(TAST_FMT, uast_stmt_print(curr_tast));
+                status = false;
+                break;
             default:
                 todo();
         }
-        //} else {
-        //    status = false;
-        //}
     }
 
     if (is_directly_in_fun_def && (
