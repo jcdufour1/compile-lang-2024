@@ -98,22 +98,6 @@ Llvm_id get_matching_fun_param_load_id(const Tast* src);
 
 const Tast* from_sym_definition_get_lang_type(const Tast* sym_def);
 
-uint64_t sizeof_lang_type(Env* env, Lang_type lang_type);
-
-uint64_t sizeof_item(Env* env, const Tast* item);
-
-uint64_t sizeof_struct(Env* env, const Tast* struct_literal);
-
-uint64_t sizeof_struct_def_base(Env* env, const Struct_def_base* base);
-
-uint64_t sizeof_struct_literal(Env* env, const Tast_struct_literal* struct_literal);
-
-uint64_t llvm_sizeof_item(Env* env, const Llvm* item);
-
-uint64_t llvm_sizeof_struct_def_base(Env* env, const Struct_def_base* base);
-
-uint64_t llvm_sizeof_struct_expr(Env* env, const Llvm_expr* struct_literal_or_def);
-
 size_t struct_def_base_get_idx_largest_member(Env* env, Struct_def_base base);
 
 static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, Str_view member_name) {
@@ -188,18 +172,6 @@ bool llvm_try_get_struct_def(Env* env, Tast_struct_def** struct_def, Llvm* tast)
 Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child);
 
 Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child);
-
-static inline Tast_struct_def* get_struct_def(Env* env, Tast_stmt* stmt) {
-    Tast_struct_def* struct_def = NULL;
-    if (!try_get_struct_def(env, &struct_def, stmt)) {
-        unreachable("could not find struct definition for "TAST_FMT"\n", tast_stmt_print(stmt));
-    }
-    return struct_def;
-}
-
-static inline const Tast_struct_def* get_struct_def_const(Env* env, const Tast_stmt* stmt) {
-    return get_struct_def(env, (Tast_stmt*)stmt);
-}
 
 static inline Tast_struct_def* llvm_get_struct_def(Env* env, Llvm* tast) {
     Tast_struct_def* struct_def;

@@ -10,8 +10,7 @@
 #include <limits.h>
 #include <ctype.h>
 #include <token_type_to_operator_type.h>
-
-static uint64_t sizeof_def(Env* env, const Tast_def* def);
+#include <sizeof.h>
 
 bool try_str_view_to_int64_t(int64_t* result, Str_view str_view) {
     *result = 0;
@@ -235,14 +234,6 @@ Str_view get_storage_location(Env* env, Str_view sym_name) {
     unreachable("");
 }
 
-const Tast_variable_def* get_normal_symbol_def_from_alloca(Env* env, const Tast* tast) {
-    Tast_def* sym_def;
-    if (!symbol_lookup(&sym_def, env, tast_get_name(tast))) {
-        unreachable("tast call to undefined variable:"TAST_FMT"\n", tast_print(tast));
-    }
-    return tast_variable_def_unwrap(sym_def);
-}
-
 Llvm_id get_matching_label_id(Env* env, Str_view name) {
     Llvm* label_;
     if (!alloca_lookup(&label_, env, name)) {
@@ -348,11 +339,6 @@ Tast_operator* util_binary_typed_new(Env* env, Uast_expr* lhs, Uast_expr* rhs, T
     return tast_operator_unwrap(new_tast);
 }
 
-const Tast* from_sym_definition_get_lang_type(const Tast* sym_def) {
-    (void) sym_def;
-    todo();
-}
-
 Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child) {
     Tast_binary* binary = tast_binary_new(
         tast_expr_get_pos(if_cond_child),
@@ -380,171 +366,6 @@ Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child) {
     return uast_binary_wrap(binary);
 }
 
-uint64_t sizeof_primitive(Lang_type_primitive primitive) {
-    // TODO: platform specific pointer size, etc.
-    if (lang_type_primitive_get_pointer_depth(primitive) > 0) {
-        return 8;
-    }
-
-    switch (primitive.type) {
-        case LANG_TYPE_SIGNED_INT:
-            return lang_type_signed_int_const_unwrap(primitive).bit_width/8;
-        case LANG_TYPE_UNSIGNED_INT:
-            return lang_type_unsigned_int_const_unwrap(primitive).bit_width/8;
-        case LANG_TYPE_CHAR:
-            return 1;
-        case LANG_TYPE_STRING:
-            unreachable("");
-        case LANG_TYPE_ANY:
-            unreachable("");
-    }
-    unreachable("");
-}
-
-uint64_t sizeof_lang_type(Env* env, Lang_type lang_type) {
-    switch (lang_type.type) {
-        case LANG_TYPE_ENUM:
-            unreachable("");
-        case LANG_TYPE_PRIMITIVE:
-            return sizeof_primitive(lang_type_primitive_const_unwrap(lang_type));
-        case LANG_TYPE_STRUCT: {
-            Tast_def* def = NULL;
-            try(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
-            return sizeof_def(env, def);
-        }
-        case LANG_TYPE_SUM: {
-            Tast_def* def = NULL;
-            try(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
-            return sizeof_def(env, def);
-        }
-        case LANG_TYPE_RAW_UNION: {
-            Tast_def* def = NULL;
-            try(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
-            return sizeof_def(env, def);
-        }
-        case LANG_TYPE_VOID:
-            return 0;
-        default:
-            unreachable(LANG_TYPE_FMT, lang_type_print(lang_type));
-    }
-}
-
-static uint64_t sizeof_expr(Env* env, const Tast_expr* expr) {
-    (void) env;
-    switch (expr->type) {
-        case TAST_LITERAL:
-            return sizeof_lang_type(env, tast_literal_get_lang_type(tast_literal_const_unwrap(expr)));
-        default:
-            unreachable("");
-    }
-}
-
-static uint64_t sizeof_def(Env* env, const Tast_def* def) {
-    (void) env;
-    switch (def->type) {
-        case TAST_VARIABLE_DEF:
-            return sizeof_lang_type(env, tast_variable_def_const_unwrap(def)->lang_type);
-        case TAST_STRUCT_DEF:
-            return sizeof_struct_def_base(env, &tast_struct_def_const_unwrap(def)->base);
-        case TAST_SUM_DEF:
-            return sizeof_struct_def_base(env, &tast_sum_def_const_unwrap(def)->base);
-        case TAST_RAW_UNION_DEF:
-            return sizeof_struct_def_base(env, &tast_raw_union_def_const_unwrap(def)->base);
-        default:
-            unreachable("");
-    }
-}
-
-uint64_t sizeof_stmt(Env* env, const Tast_stmt* stmt) {
-    (void) env;
-    switch (stmt->type) {
-        case TAST_EXPR:
-            return sizeof_expr(env, tast_expr_const_unwrap(stmt));
-        case TAST_DEF:
-            return sizeof_def(env, tast_def_const_unwrap(stmt));
-        default:
-            unreachable("");
-    }
-}
-
-uint64_t sizeof_struct_literal(Env* env, const Tast_struct_literal* struct_literal) {
-    const Tast_struct_def* struct_def = 
-        get_struct_def_const(env, tast_expr_const_wrap(tast_struct_literal_const_wrap(struct_literal)));
-    return sizeof_struct_def_base(env, &struct_def->base);
-}
-
-uint64_t sizeof_struct_def_base(Env* env, const Struct_def_base* base) {
-    uint64_t required_alignment = 8; // TODO: do not hardcode this
-
-    uint64_t total = 0;
-    for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        const Tast_variable_def* memb_def = vec_at(&base->members, idx);
-        uint64_t sizeof_curr_item = sizeof_lang_type(env, memb_def->lang_type);
-        if (total%required_alignment + sizeof_curr_item > required_alignment) {
-            total += required_alignment - total%required_alignment;
-        }
-        total += sizeof_curr_item;
-    }
-    return total;
-}
-
-uint64_t sizeof_struct_expr(Env* env, const Tast_expr* struct_literal_or_def) {
-    switch (struct_literal_or_def->type) {
-        case TAST_STRUCT_LITERAL:
-            return sizeof_struct_literal(env, tast_struct_literal_const_unwrap(struct_literal_or_def));
-        default:
-            unreachable("");
-    }
-    unreachable("");
-}
-
-static uint64_t llvm_sizeof_expr(Env* env, const Llvm_expr* expr) {
-    (void) env;
-    switch (expr->type) {
-        case LLVM_LITERAL:
-            return sizeof_lang_type(env, llvm_literal_get_lang_type(llvm_literal_const_unwrap(expr)));
-        default:
-            unreachable("");
-    }
-}
-
-static uint64_t llvm_sizeof_def(Env* env, const Llvm_def* def) {
-    (void) env;
-    switch (def->type) {
-        case TAST_VARIABLE_DEF:
-            return sizeof_lang_type(env, llvm_variable_def_const_unwrap(def)->lang_type);
-        default:
-            unreachable("");
-    }
-}
-
-uint64_t llvm_sizeof_item(Env* env, const Llvm* item) {
-    (void) env;
-    switch (item->type) {
-        case TAST_EXPR:
-            return llvm_sizeof_expr(env, llvm_expr_const_unwrap(item));
-        case TAST_DEF:
-            return llvm_sizeof_def(env, llvm_def_const_unwrap(item));
-        default:
-            unreachable("");
-    }
-}
-
-uint64_t llvm_sizeof_struct_def_base(Env* env, const Struct_def_base* base) {
-    uint64_t required_alignment = 8; // TODO: do not hardcode this
-
-    uint64_t total = 0;
-    for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        const Tast_variable_def* memb_def = vec_at(&base->members, idx);
-        uint64_t sizeof_curr_item = sizeof_lang_type(env, memb_def->lang_type);
-        if (total%required_alignment + sizeof_curr_item > required_alignment) {
-            total += required_alignment - total%required_alignment;
-        }
-        total += sizeof_curr_item;
-    }
-    return total;
-}
-
 size_t struct_def_base_get_idx_largest_member(Env* env, Struct_def_base base) {
     assert(base.members.info.count > 0);
 
@@ -560,95 +381,5 @@ size_t struct_def_base_get_idx_largest_member(Env* env, Struct_def_base base) {
     }
 
     return result;
-}
-
-bool try_get_generic_struct_def(Env* env, Tast_def** def, Tast_stmt* stmt) {
-    if (stmt->type == TAST_EXPR) {
-        const Tast_expr* expr = tast_expr_const_unwrap(stmt);
-        switch (expr->type) {
-            case TAST_STRUCT_LITERAL: {
-                assert(lang_type_get_str(tast_stmt_get_lang_type(stmt)).count > 0);
-                return symbol_lookup(def, env, lang_type_get_str(tast_stmt_get_lang_type(stmt)));
-            }
-            case TAST_SYMBOL:
-                // fallthrough
-            case TAST_MEMBER_ACCESS: {
-                Tast_def* var_def;
-                assert(tast_stmt_get_name(stmt).count > 0);
-                if (!symbol_lookup(&var_def, env, tast_stmt_get_name(stmt))) {
-                    todo();
-                    return false;
-                }
-                assert(lang_type_get_str((tast_def_get_lang_type(var_def))).count > 0);
-                return symbol_lookup(def, env, lang_type_get_str((tast_def_get_lang_type(var_def))));
-            }
-            default:
-                unreachable(TAST_FMT"\n", tast_stmt_print(stmt));
-        }
-    }
-
-    Tast_def* tast_def = tast_def_unwrap(stmt);
-    switch (tast_def->type) {
-        case TAST_VARIABLE_DEF: {
-            assert(lang_type_get_str((tast_def_get_lang_type(tast_def))).count > 0);
-            return symbol_lookup(def, env, lang_type_get_str((tast_def_get_lang_type(tast_def))));
-        }
-        default:
-            unreachable("");
-    }
-}
-
-Tast_def* llvm_get_generic_struct_def(Env* env, Llvm* llvm) {
-    Tast_def* def = NULL;
-
-    if (llvm->type == LLVM_EXPR) {
-        const Llvm_expr* expr = llvm_expr_const_unwrap(llvm);
-        switch (expr->type) {
-            case LLVM_SYMBOL: {
-                Tast_def* var_def;
-                assert(llvm_tast_get_name(llvm).count > 0);
-                try(symbol_lookup(&var_def, env, llvm_tast_get_name(llvm)));
-                assert(lang_type_get_str((tast_def_get_lang_type(var_def))).count > 0);
-                try(symbol_lookup(&def, env, lang_type_get_str((tast_def_get_lang_type(var_def)))));
-                return def;
-            }
-            default:
-                unreachable(LLVM_FMT"\n", llvm_print(llvm));
-        }
-    }
-
-    Llvm_def* llvm_def = llvm_def_unwrap(llvm);
-    switch (llvm_def->type) {
-        case LLVM_VARIABLE_DEF: {
-            assert(lang_type_get_str(llvm_def_get_lang_type(llvm_def)).count > 0);
-            try(symbol_lookup(&def, env, lang_type_get_str(llvm_def_get_lang_type(llvm_def))));
-            return def;
-        }
-        default:
-            unreachable("");
-    }
-}
-
-bool try_get_struct_def(Env* env, Tast_struct_def** struct_def, Tast_stmt* stmt) {
-    Tast_def* def = NULL;
-    if (!try_get_generic_struct_def(env, &def, stmt)) {
-        return false;
-    }
-    if (def->type != TAST_STRUCT_DEF) {
-        return false;
-    }
-
-    *struct_def = tast_struct_def_unwrap(def);
-    return true;
-}
-
-bool llvm_try_get_struct_def(Env* env, Tast_struct_def** struct_def, Llvm* tast) {
-    Tast_def* def = llvm_get_generic_struct_def(env, tast);
-    if (def->type != TAST_STRUCT_DEF) {
-        return false;
-    }
-
-    *struct_def = tast_struct_def_unwrap(def);
-    return true;
 }
 
