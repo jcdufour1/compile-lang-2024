@@ -5,6 +5,12 @@
 #include <util.h>
 #include <parser_utils.h>
 
+typedef enum {
+    STMT_OK,
+    STMT_NO_STMT, // new_tast is invalid and should not be added to block
+    STMT_ERROR,
+} STMT_STATUS;
+
 bool try_set_assignment_types(Env* env, Tast_assignment** new_assign, Uast_assignment* assignment);
 
 // returns false if unsuccessful
@@ -24,7 +30,7 @@ bool try_set_binary_types(Env* env, Tast_expr** new_tast, Uast_binary* operator)
 
 bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* tast, bool is_directly_in_fun_def);
 
-bool try_set_stmt_types(Env* env, Tast_stmt** new_stmt, Uast_stmt* stmt);
+STMT_STATUS try_set_stmt_types(Env* env, Tast_stmt** new_stmt, Uast_stmt* stmt);
 
 bool try_set_uast_types(Env* env, Tast** new_tast, Uast* tast);
 
@@ -65,18 +71,17 @@ bool try_set_member_access_types(Env* env, Tast_stmt** new_tast, Uast_member_acc
 
 bool try_set_function_def_types(
     Env* env,
-    Tast_function_def** new_tast,
     Uast_function_def* decl
 );
 
 bool try_set_function_decl_types(
     Env* env,
-    Tast_function_decl** new_tast,
+    Tast_function_decl** new_decl,
     Uast_function_decl* decl,
     bool add_to_sym_tbl
 );
 
-bool try_set_sum_def_types(Env* env, Tast_sum_def** new_tast, Uast_sum_def* tast);
+bool try_set_sum_def_types(Env* env, Uast_sum_def* tast);
 
 bool try_set_tuple_types(Env* env, Tast_tuple** new_tuple, Uast_tuple* tuple);
 
@@ -99,8 +104,8 @@ bool try_types_set_lang_type(
 
 bool try_set_symbol_type(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyped);
 
-bool try_set_primitive_def_types(Env* env, Tast_primitive_def** new_tast, Uast_primitive_def* tast);
+bool try_set_primitive_def_types(Env* env, Uast_primitive_def* tast);
 
-bool try_set_literal_def_types(Env* env, Tast_literal_def** new_tast, Uast_literal_def* tast);
+bool try_set_literal_def_types(Env* env, Uast_literal_def* tast);
 
 #endif // TYPE_CHECKING_H

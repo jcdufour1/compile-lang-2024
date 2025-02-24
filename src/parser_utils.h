@@ -159,11 +159,11 @@ bool try_set_variable_def_types(
     bool add_to_sym_tbl
 );
 
-bool try_set_struct_def_types(Env* env, Tast_struct_def** new_tast, Uast_struct_def* tast);
+bool try_set_struct_def_types(Env* env, Uast_struct_def* tast);
 
-bool try_set_raw_union_def_types(Env* env, Tast_raw_union_def** new_tast, Uast_raw_union_def* tast);
+bool try_set_raw_union_def_types(Env* env, Uast_raw_union_def* tast);
 
-bool try_set_enum_def_types(Env* env, Tast_enum_def** new_tast, Uast_enum_def* tast);
+bool try_set_enum_def_types(Env* env, Uast_enum_def* tast);
 
 bool try_get_struct_def(Env* env, Tast_struct_def** struct_def, Tast_stmt* stmt);
 

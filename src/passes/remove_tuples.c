@@ -81,9 +81,7 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
             );
 
             item_type_def->base.name = util_literal_name_new_prefix("item_type_def");
-            if (sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_raw_union_def_wrap(item_type_def))) {
-                vec_append(&a_main, &env->extra_raw_unions, item_type_def);
-            }
+            sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_raw_union_def_wrap(item_type_def));
             for (size_t idx = 0; idx < item_type_def->base.members.info.count; idx++) {
                 switch (vec_at(&item_type_def->base.members, idx)->lang_type.type) {
                     case LANG_TYPE_SUM:
@@ -128,10 +126,7 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
             struct_def->base.name = serialize_tast_struct_def(env, struct_def);
             // TODO: consider collisions with generated structs and user defined structs
             log(LOG_DEBUG, TAST_FMT, tast_struct_def_print(struct_def));
-            if (sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def))) {
-                todo();
-                vec_append(&a_main, &env->extra_structs, struct_def);
-            }
+            sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def));
 
             return lang_type_struct_const_wrap(lang_type_struct_new(lang_type_atom_new(struct_def->base.name, 0)));
         }
@@ -157,9 +152,7 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
                 tast_raw_union_def_unwrap(lang_type_def_)->base
             );
             item_type_def->base.name = serialize_tast_raw_union_def(env, item_type_def);
-            if (sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_raw_union_def_wrap(item_type_def))) {
-                vec_append(&a_main, &env->extra_raw_unions, item_type_def);
-            }
+            sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_raw_union_def_wrap(item_type_def));
 
             return lang_type_raw_union_const_wrap(lang_type_raw_union_new(lang_type_atom_new(item_type_def->base.name, 0)));
         }
@@ -184,9 +177,7 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
             Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
             // TODO: consider collisions with generated structs and user defined structs
             log(LOG_DEBUG, STR_VIEW_FMT, tast_struct_def_print(struct_def));
-            if (sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def))) {
-                vec_append(&a_main, &env->extra_structs, struct_def);
-            }
+            sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def));
             return lang_type_struct_const_wrap(lang_type_struct_new(lang_type_atom_new(base.name, 0)));
         }
         case LANG_TYPE_PRIMITIVE:
@@ -500,7 +491,6 @@ static Tast_expr* rm_tuple_struct_literal_rhs(
             Tast_function_def* new_fun_def = rm_tuple_function_def_new(env, new_fun_decl);
             try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_function_def_wrap(new_fun_def)));
             log(LOG_DEBUG, TAST_FMT, tast_function_def_print(new_fun_def));
-            vec_append(&a_main, &env->extra_functions, new_fun_def);
 
             Tast_function_call* fun_call = tast_function_call_new(assign_pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
             return tast_function_call_wrap(fun_call);
@@ -600,7 +590,6 @@ static Tast_expr* rm_tuple_tuple_rhs(
             Tast_function_def* new_fun_def = rm_tuple_function_def_new(env, new_fun_decl);
             try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_function_def_wrap(new_fun_def)));
             log(LOG_DEBUG, TAST_FMT, tast_function_def_print(new_fun_def));
-            vec_append(&a_main, &env->extra_functions, new_fun_def);
 
             Tast_function_call* fun_call = tast_function_call_new(assign_pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
             log(LOG_DEBUG, TAST_FMT, tast_function_call_print(fun_call));
@@ -725,7 +714,6 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
             Tast_function_def* new_fun_def = rm_tuple_function_def_new(env, new_fun_decl);
             try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_function_def_wrap(new_fun_def)));
             log(LOG_DEBUG, TAST_FMT, tast_function_def_print(new_fun_def));
-            vec_append(&a_main, &env->extra_functions, new_fun_def);
 
             Tast_function_call* fun_call = tast_function_call_new(assign_pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
             log(LOG_DEBUG, TAST_FMT, tast_function_call_print(fun_call));
@@ -760,10 +748,11 @@ static Tast_return* rm_tuple_return(Env* env, Tast_return* rtn) {
 
     Tast_def* def = NULL;
     try(symbol_lookup(&def, env, env->name_parent_function));
-    Tast_function_decl* fun_decl = tast_function_decl_unwrap(def);
+    log(LOG_DEBUG, TAST_FMT, tast_def_print(def));
+    Tast_function_def* fun_def = tast_function_def_unwrap(def);
 
     Tast_def* struct_def_ = NULL;
-    if (!symbol_lookup(&struct_def_, env, lang_type_get_str(fun_decl->return_type->lang_type))) {
+    if (!symbol_lookup(&struct_def_, env, lang_type_get_str(fun_def->decl->return_type->lang_type))) {
         return rtn;
     }
 
@@ -972,7 +961,6 @@ static Tast_expr* rm_tuple_raw_union_lit_rhs(Env* env, Tast_raw_union_lit* rhs, 
             Tast_function_def* new_fun_def = rm_tuple_function_def_new(env, new_fun_decl);
             try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_function_def_wrap(new_fun_def)));
             log(LOG_DEBUG, TAST_FMT, tast_function_def_print(new_fun_def));
-            vec_append(&a_main, &env->extra_functions, new_fun_def);
 
             assert(new_args.info.count == 1);
             Tast_function_call* fun_call = tast_function_call_new(assign_pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
@@ -1260,6 +1248,16 @@ static Tast_block* rm_tuple_block(Env* env, Tast_block* block) {
     Tast_stmt_vec new_children = {0};
 
     vec_append(&a_main, &env->ancesters, &block->symbol_collection);
+
+    Symbol_table table = vec_top(&env->ancesters)->symbol_table;
+    for (size_t idx = 0; idx < table.capacity; idx++) {
+        if (table.table_tasts[idx].status != SYM_TBL_OCCUPIED) {
+            continue;
+        }
+
+        rm_tuple_def(env, table.table_tasts[idx].tast);
+    }
+
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         Tast_stmt* curr = vec_at(&block->children, idx);
 
@@ -1275,18 +1273,5 @@ static Tast_block* rm_tuple_block(Env* env, Tast_block* block) {
 Tast_block* remove_tuples(Env* env, Tast_block* root) {
     Tast_block* new_block = rm_tuple_block(env, root);
     // TODO: use faster algorithm for inserting extra structs and functions
-    for (size_t idx = 0; idx < env->extra_functions.info.count; idx++) {
-        assert(vec_at(&env->extra_functions, idx));
-        vec_insert(&a_main, &new_block->children, 0, tast_def_wrap(tast_function_def_wrap(vec_at(&env->extra_functions, idx))));
-    }
-    for (size_t idx = 0; idx < env->extra_structs.info.count; idx++) {
-        log(LOG_DEBUG, TAST_FMT, tast_struct_def_print(vec_at(&env->extra_structs, idx)));
-        assert(vec_at(&env->extra_structs, idx));
-        vec_insert(&a_main, &new_block->children, 0, tast_def_wrap(tast_struct_def_wrap(vec_at(&env->extra_structs, idx))));
-    }
-    for (size_t idx = 0; idx < env->extra_raw_unions.info.count; idx++) {
-        assert(vec_at(&env->extra_raw_unions, idx));
-        vec_insert(&a_main, &new_block->children, 0, tast_def_wrap(tast_raw_union_def_wrap(vec_at(&env->extra_raw_unions, idx))));
-    }
     return new_block;
 }

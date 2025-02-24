@@ -14,6 +14,8 @@
 
 static void emit_block(Env* env, String* struct_defs, String* output, String* literals, const Llvm_block* fun_block);
 
+static void emit_sometimes(Env* env, String* struct_defs, String* output, String* literals, const Llvm* llvm);
+
 static void emit_symbol_normal(String* literals, Str_view key, const Llvm_literal* lit);
 
 static bool llvm_is_literal(const Llvm* llvm) {
@@ -963,7 +965,7 @@ static void emit_raw_union_def(Env* env, String* output, const Llvm_raw_union_de
     emit_struct_def_base(env, output, &raw_union_def->base, true);
 }
 
-static void emit_load_struct_element_pointer(Env* env, String* output, const Llvm_load_element_ptr* load_elem_ptr) {
+static void emit_load_element_ptr(Env* env, String* output, const Llvm_load_element_ptr* load_elem_ptr) {
     string_extend_cstr(&a_main, output, "    %"); 
     string_extend_size_t(&a_main, output, load_elem_ptr->llvm_id);
 
@@ -1071,7 +1073,7 @@ static void emit_block(Env* env, String* struct_defs, String* output, String* li
                 emit_alloca(env, output, llvm_alloca_const_unwrap(statement));
                 break;
             case LLVM_LOAD_ELEMENT_PTR:
-                emit_load_struct_element_pointer(env, output, llvm_load_element_ptr_const_unwrap(statement));
+                emit_load_element_ptr(env, output, llvm_load_element_ptr_const_unwrap(statement));
                 break;
             case LLVM_LOAD_ANOTHER_LLVM:
                 emit_load_another_llvm(env, output, llvm_load_another_llvm_const_unwrap(statement));
@@ -1085,8 +1087,92 @@ static void emit_block(Env* env, String* struct_defs, String* output, String* li
                 todo();
         }
     }
+
+    Alloca_table table = vec_top(&env->ancesters)->alloca_table;
+    for (size_t idx = 0; idx < table.capacity; idx++) {
+        if (table.table_tasts[idx].status != SYM_TBL_OCCUPIED) {
+            continue;
+        }
+
+        log(LOG_DEBUG, TAST_FMT, llvm_print(table.table_tasts[idx].tast));
+        log(LOG_DEBUG, TAST_FMT, string_print(*output));
+        emit_sometimes(env, struct_defs, output, literals, table.table_tasts[idx].tast);
+        log(LOG_DEBUG, TAST_FMT, string_print(*output));
+    }
+
     //get_block_return_id(fun_block) = get_block_return_id(fun_block->left_child);
     vec_rem_last(&env->ancesters);
+}
+
+// this is only intended for alloca_table, etc.
+static void emit_def_sometimes(Env* env, String* struct_defs, String* output, String* literals, const Llvm_def* def) {
+    switch (def->type) {
+        case LLVM_FUNCTION_DEF:
+            emit_function_def(env, struct_defs, output, literals, llvm_function_def_const_unwrap(def));
+            return;
+        case LLVM_VARIABLE_DEF:
+            return;
+        case LLVM_FUNCTION_DECL:
+            emit_function_decl(env, output, llvm_function_decl_const_unwrap(def));
+            return;
+        case LLVM_LABEL:
+            return;
+        case LLVM_STRUCT_DEF:
+            emit_struct_def(env, struct_defs, llvm_struct_def_const_unwrap(def));
+            return;
+        case LLVM_RAW_UNION_DEF:
+            emit_raw_union_def(env, struct_defs, llvm_raw_union_def_const_unwrap(def));
+            return;
+        case LLVM_ENUM_DEF:
+            return;
+        case LLVM_PRIMITIVE_DEF:
+            todo();
+        case LLVM_LITERAL_DEF:
+            todo();
+    }
+    unreachable("");
+}
+
+// this is only intended for alloca_table, etc.
+static void emit_sometimes(Env* env, String* struct_defs, String* output, String* literals, const Llvm* llvm) {
+    switch (llvm->type) {
+        case LLVM_DEF:
+            emit_def_sometimes(env, struct_defs, output, literals, llvm_def_const_unwrap(llvm));
+            return;
+        case LLVM_BLOCK:
+            todo();
+            emit_block(env, struct_defs, output, literals, llvm_block_const_unwrap(llvm));
+            return;
+        case LLVM_EXPR:
+            // TODO: make it where int literals are not in symbol table, and uncomment below?
+            //emit_expr(env, output, literals, llvm_expr_const_unwrap(llvm));
+            return;
+        case LLVM_LOAD_ELEMENT_PTR:
+            return;
+        case LLVM_FUNCTION_PARAMS:
+            todo();
+            emit_function_params(env, output, llvm_function_params_const_unwrap(llvm));
+            return;
+        case LLVM_LANG_TYPE:
+            unreachable("");
+            return;
+        case LLVM_RETURN:
+            unreachable("");
+            return;
+        case LLVM_GOTO:
+            unreachable("");
+            return;
+        case LLVM_ALLOCA:
+            return;
+        case LLVM_COND_GOTO:
+            unreachable("");
+            return;
+        case LLVM_STORE_ANOTHER_LLVM:
+            return;
+        case LLVM_LOAD_ANOTHER_LLVM:
+            return;
+    }
+    unreachable("");
 }
 
 static void emit_symbol_normal(String* literals, Str_view key, const Llvm_literal* lit) {

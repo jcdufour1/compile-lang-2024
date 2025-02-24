@@ -697,7 +697,6 @@ static Llvm_reg load_function_parameters(
 
 static Str_view load_function_def(
     Env* env,
-    Llvm_block* new_block,
     Tast_function_def* old_fun_def
 ) {
     Str_view old_fun_name = env->name_parent_function;
@@ -739,21 +738,17 @@ static Str_view load_function_def(
     }
     vec_rem_last(&env->ancesters);
 
-    vec_append(&a_main, &new_block->children, llvm_def_wrap(llvm_function_def_wrap(new_fun_def)));
+    try(alloca_add(env, llvm_def_wrap(llvm_function_def_wrap(new_fun_def))));
     env->name_parent_function = old_fun_name;
     return (Str_view) {0};
 }
 
 static Str_view load_function_decl(
     Env* env,
-    Llvm_block* new_block,
     Tast_function_decl* old_fun_decl
 ) {
-    (void) env;
+    try(alloca_add(env, llvm_def_wrap(llvm_function_decl_wrap(tast_clone_function_decl(old_fun_decl)))));
 
-    Llvm_function_decl* new_fun_decl = tast_clone_function_decl(old_fun_decl);
-
-    vec_append(&a_main, &new_block->children, llvm_def_wrap(llvm_function_decl_wrap(new_fun_decl)));
     return (Str_view) {0};
 }
 
@@ -875,10 +870,9 @@ static Str_view load_variable_def(
 
 static Str_view load_struct_def(
     Env* env,
-    Llvm_block* new_block,
     Tast_struct_def* old_struct_def
 ) {
-    vec_append(&a_main, &new_block->children, llvm_def_wrap(
+    alloca_add(env, llvm_def_wrap(
         llvm_struct_def_wrap(tast_clone_struct_def(old_struct_def))
     ));
 
@@ -889,7 +883,7 @@ static Str_view load_struct_def(
             .name = serialize_tast_struct_def(env, old_struct_def)
         });
         try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(new_def)));
-        load_struct_def(env, new_block, new_def);
+        load_struct_def(env, new_def);
     }
 
     return (Str_view) {0};
@@ -897,14 +891,13 @@ static Str_view load_struct_def(
 
 static Str_view load_enum_def(
     Env* env,
-    Llvm_block* new_block,
     Tast_enum_def* old_enum_def
 ) {
     (void) env;
 
-    vec_append(&a_main, &new_block->children, llvm_def_wrap(
+    try(alloca_add(env, llvm_def_wrap(
         llvm_enum_def_wrap(tast_clone_enum_def(old_enum_def))
-    ));
+    )));
 
     return (Str_view) {0};
 }
@@ -1305,12 +1298,11 @@ static Str_view load_continue(
 
 static Str_view load_raw_union_def(
     Env* env,
-    Llvm_block* new_block,
     Tast_raw_union_def* old_def
 ) {
-    vec_append(&a_main, &new_block->children, llvm_def_wrap(
+    try(alloca_add(env, llvm_def_wrap(
         llvm_raw_union_def_wrap(tast_clone_raw_union_def(old_def))
-    ));
+    )));
 
     Tast_def* dummy = NULL;
     if (!symbol_lookup(&dummy, env, serialize_tast_raw_union_def(env, old_def))) {
@@ -1319,24 +1311,8 @@ static Str_view load_raw_union_def(
             .name = serialize_tast_raw_union_def(env, old_def)
         });
         try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_raw_union_def_wrap(new_def)));
-        load_raw_union_def(env, new_block, new_def);
+        load_raw_union_def(env, new_def);
     }
-
-    return (Str_view) {0};
-}
-
-static Str_view load_sum_def(
-    Env* env,
-    Llvm_block* new_block,
-    Tast_sum_def* old_def
-) {
-    (void) env;
-    (void) new_block;
-    (void) old_def;
-
-    //vec_append(&a_main, &new_block->children, llvm_def_wrap(
-    //    llvm_sum_def_wrap(tast_clone_sum_def(old_def))
-    //));
 
     return (Str_view) {0};
 }
@@ -1470,19 +1446,19 @@ static Str_view load_ptr(Env* env, Llvm_block* new_block, Tast* old_tast) {
 static Str_view load_def(Env* env, Llvm_block* new_block, Tast_def* old_def) {
     switch (old_def->type) {
         case TAST_FUNCTION_DEF:
-            return load_function_def(env, new_block, tast_function_def_unwrap(old_def));
+            return load_function_def(env, tast_function_def_unwrap(old_def));
         case TAST_FUNCTION_DECL:
-            return load_function_decl(env, new_block, tast_function_decl_unwrap(old_def));
+            return load_function_decl(env, tast_function_decl_unwrap(old_def));
         case TAST_VARIABLE_DEF:
             return load_variable_def(env, new_block, tast_variable_def_unwrap(old_def));
         case TAST_STRUCT_DEF:
-            return load_struct_def(env, new_block, tast_struct_def_unwrap(old_def));
+            return load_struct_def(env, tast_struct_def_unwrap(old_def));
         case TAST_ENUM_DEF:
-            return load_enum_def(env, new_block, tast_enum_def_unwrap(old_def));
+            return load_enum_def(env, tast_enum_def_unwrap(old_def));
         case TAST_RAW_UNION_DEF:
-            return load_raw_union_def(env, new_block, tast_raw_union_def_unwrap(old_def));
+            return load_raw_union_def(env, tast_raw_union_def_unwrap(old_def));
         case TAST_SUM_DEF:
-            return load_sum_def(env, new_block, tast_sum_def_unwrap(old_def));
+            unreachable("sum def should not make it here");
         case TAST_LITERAL_DEF:
             unreachable("");
         case TAST_PRIMITIVE_DEF:
@@ -1546,6 +1522,15 @@ static Llvm_block* load_block(Env* env, Tast_block* old_block) {
     );
 
     vec_append(&a_main, &env->ancesters, &new_block->symbol_collection);
+
+    Symbol_table table = vec_top(&env->ancesters)->symbol_table;
+    for (size_t idx = 0; idx < table.capacity; idx++) {
+        if (table.table_tasts[idx].status != SYM_TBL_OCCUPIED) {
+            continue;
+        }
+
+        load_def(env, new_block, table.table_tasts[idx].tast);
+    }
 
     for (size_t idx = 0; idx < old_block->children.info.count; idx++) {
         load_stmt(env, new_block, vec_at(&old_block->children, idx));

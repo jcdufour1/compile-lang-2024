@@ -37,10 +37,6 @@ typedef struct Env_ {
     Str_view name_parent_function; // length is zero if no parent function exists
 
     Lang_type rm_tuple_parent_fn_lang_type;
-    Tast_struct_def_vec extra_structs;
-    Tast_raw_union_def_vec extra_raw_unions;
-    Tast_sum_def_vec extra_sums;
-    Tast_function_def_vec extra_functions;
 
     Uast_stmt_vec switch_case_defer_add_if_true;
     Uast_stmt_vec switch_case_defer_add_sum_case_part;

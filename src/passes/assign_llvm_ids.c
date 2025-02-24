@@ -8,7 +8,7 @@
 #include "passes.h"
 
 static Llvm_expr* id_expr(Llvm_expr* expr);
-static Llvm_block* id_block(Llvm_block* block);
+static Llvm_block* id_block(Env* env, Llvm_block* block);
 
 static Llvm_id llvm_id_new(void) {
     static Llvm_id llvm_id_for_next_var = 1;
@@ -78,14 +78,14 @@ static Llvm_function_decl* id_function_decl(Llvm_function_decl* fun_decl) {
     return fun_decl;
 }
 
-static Llvm_function_def* id_function_def(Llvm_function_def* fun_def) {
+static Llvm_function_def* id_function_def(Env* env, Llvm_function_def* fun_def) {
     fun_def->llvm_id = llvm_id_new();
     fun_def->decl = id_function_decl(fun_def->decl);
-    fun_def->body = id_block(fun_def->body);
+    fun_def->body = id_block(env, fun_def->body);
     return fun_def;
 }
 
-static Llvm_def* id_def(Llvm_def* def) {
+static Llvm_def* id_def(Env* env, Llvm_def* def) {
     switch (def->type) {
         case LLVM_VARIABLE_DEF:
             return llvm_variable_def_wrap(id_variable_def(llvm_variable_def_unwrap(def)));
@@ -101,7 +101,7 @@ static Llvm_def* id_def(Llvm_def* def) {
         case LLVM_FUNCTION_DECL:
             return llvm_function_decl_wrap(id_function_decl(llvm_function_decl_unwrap(def)));
         case LLVM_FUNCTION_DEF:
-            return llvm_function_def_wrap(id_function_def(llvm_function_def_unwrap(def)));
+            return llvm_function_def_wrap(id_function_def(env, llvm_function_def_unwrap(def)));
         case LLVM_PRIMITIVE_DEF:
             return def;
         case LLVM_LITERAL_DEF:
@@ -110,16 +110,16 @@ static Llvm_def* id_def(Llvm_def* def) {
     unreachable("");
 }
 
-static Llvm* id_llvm(Llvm* llvm) {
+static Llvm* id_llvm(Env* env, Llvm* llvm) {
     switch (llvm->type) {
         case LLVM_EXPR:
             return llvm_expr_wrap(id_expr(llvm_expr_unwrap(llvm)));
         case LLVM_DEF:
-            return llvm_def_wrap(id_def(llvm_def_unwrap(llvm)));
+            return llvm_def_wrap(id_def(env, llvm_def_unwrap(llvm)));
         case LLVM_FUNCTION_PARAMS:
             return llvm;
         case LLVM_BLOCK:
-            return llvm_block_wrap(id_block(llvm_block_unwrap(llvm)));
+            return llvm_block_wrap(id_block(env, llvm_block_unwrap(llvm)));
         case LLVM_RETURN:
             return llvm;
         case LLVM_LANG_TYPE:
@@ -146,16 +146,85 @@ static Llvm* id_llvm(Llvm* llvm) {
     unreachable("");
 }
 
-static Llvm_block* id_block(Llvm_block* block) {
+// only for alloca_table, etc.
+static Llvm_def* id_def_sometimes(Env* env, Llvm_def* def) {
+    switch (def->type) {
+        case LLVM_VARIABLE_DEF:
+            return def;
+        case LLVM_LABEL:
+            return def;
+        case LLVM_STRUCT_DEF:
+            return def;
+        case LLVM_RAW_UNION_DEF:
+            return def;
+        case LLVM_ENUM_DEF:
+            return def;
+        case LLVM_FUNCTION_DECL:
+            return def;
+        case LLVM_FUNCTION_DEF:
+            return llvm_function_def_wrap(id_function_def(env, llvm_function_def_unwrap(def)));
+        case LLVM_PRIMITIVE_DEF:
+            return def;
+        case LLVM_LITERAL_DEF:
+            return def;
+    }
+    unreachable("");
+}
+
+// only for alloca_table, etc.
+static Llvm* id_llvm_sometimes(Env* env, Llvm* llvm) {
+    switch (llvm->type) {
+        case LLVM_EXPR:
+            return llvm;
+        case LLVM_DEF:
+            return llvm_def_wrap(id_def_sometimes(env, llvm_def_unwrap(llvm)));
+        case LLVM_FUNCTION_PARAMS:
+            return llvm;
+        case LLVM_BLOCK:
+            return llvm;
+        case LLVM_RETURN:
+            return llvm;
+        case LLVM_LANG_TYPE:
+            return llvm;
+        case LLVM_LOAD_ELEMENT_PTR:
+            return llvm;
+        case LLVM_LOAD_ANOTHER_LLVM:
+            return llvm;
+        case LLVM_STORE_ANOTHER_LLVM:
+            return llvm;
+        case LLVM_ALLOCA:
+            return llvm;
+        case LLVM_GOTO:
+            return llvm;
+        case LLVM_COND_GOTO:
+            return llvm;
+    }
+    unreachable("");
+}
+
+static Llvm_block* id_block(Env* env, Llvm_block* block) {
+    vec_append(&a_main, &env->ancesters, &block->symbol_collection);
+
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         Llvm** curr = vec_at_ref(&block->children, idx);
-        *curr = id_llvm(*curr);
+        *curr = id_llvm(env, *curr);
     }
 
+    Alloca_table table = vec_top(&env->ancesters)->alloca_table;
+    for (size_t idx = 0; idx < table.capacity; idx++) {
+        if (table.table_tasts[idx].status != SYM_TBL_OCCUPIED) {
+            continue;
+        }
+
+        // TODO: come up with a better way to only id correct things
+        Llvm* new_llvm = id_llvm_sometimes(env, table.table_tasts[idx].tast);
+        alloca_update(env, new_llvm);
+    }
+
+    vec_rem_last(&env->ancesters);
     return block;
 }
 
 Llvm_block* assign_llvm_ids(Env* env, Llvm_block* root) {
-    (void) env;
-    return id_block(root);
+    return id_block(env, root);
 }
