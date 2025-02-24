@@ -36,9 +36,9 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "incomplete_var_def.own": ["parser-expected"],
     EXPECTED_FAIL_EXAMPLES_DIR + "binary_mismatched_types.own": ["not-yet-implemented"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_fun_arg.own": ["invalid-function-arguments"],
-    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_fun_args.own": ["invalid-count-function-arguments"],
-    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_fun_args_2.own": ["invalid-count-function-arguments"],
-    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_fun_args_3.own": ["invalid-count-function-arguments"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_fun_args.own": ["invalid-count-fun-args"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_fun_args_2.own": ["invalid-count-fun-args"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_fun_args_3.own": ["invalid-count-fun-args"],
     EXPECTED_FAIL_EXAMPLES_DIR + "missing_return.own": ["missing-return-statement", "missing-return-statement"],
     EXPECTED_FAIL_EXAMPLES_DIR + "var_redef.own": ["redefinition-of-symbol"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_struct_memb.own": ["invalid-struct-member"],
@@ -111,6 +111,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "assign_struct_literal_to_int.own": ["struct-init-on-primitive", "struct-init-on-primitive"],
     EXPECTED_FAIL_EXAMPLES_DIR + "duplicate_default.own": ["duplicate-default"],
     EXPECTED_FAIL_EXAMPLES_DIR + "duplicate_case.own": ["duplicate-case", "duplicate-case"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "sum_arg_with_void_varient.own": ["invalid-count-fun-args"],
 }
 
 def to_str(a):
