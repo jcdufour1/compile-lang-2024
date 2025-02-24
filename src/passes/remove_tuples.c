@@ -127,7 +127,9 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
             try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def)));
             struct_def->base.name = serialize_tast_struct_def(env, struct_def);
             // TODO: consider collisions with generated structs and user defined structs
+            log(LOG_DEBUG, TAST_FMT, tast_struct_def_print(struct_def));
             if (sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def))) {
+                todo();
                 vec_append(&a_main, &env->extra_structs, struct_def);
             }
 
@@ -1278,6 +1280,7 @@ Tast_block* remove_tuples(Env* env, Tast_block* root) {
         vec_insert(&a_main, &new_block->children, 0, tast_def_wrap(tast_function_def_wrap(vec_at(&env->extra_functions, idx))));
     }
     for (size_t idx = 0; idx < env->extra_structs.info.count; idx++) {
+        log(LOG_DEBUG, TAST_FMT, tast_struct_def_print(vec_at(&env->extra_structs, idx)));
         assert(vec_at(&env->extra_structs, idx));
         vec_insert(&a_main, &new_block->children, 0, tast_def_wrap(tast_struct_def_wrap(vec_at(&env->extra_structs, idx))));
     }

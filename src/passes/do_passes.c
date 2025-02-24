@@ -9,6 +9,7 @@
 #include <do_passes.h>
 #include <symbol_table.h>
 #include <tokens.h>
+#include <file.h>
  
 // TODO: make separate Env struct for every pass (each Env will need Env_common for things that all envs require (eg. for symbol table lookups))
 

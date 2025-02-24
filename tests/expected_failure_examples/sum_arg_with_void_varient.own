@@ -1,0 +1,12 @@
+
+
+type Token sum {
+    open_par
+    num i32
+    string u8*
+}
+
+fn main() i32 {
+    let token1 Token = Token.open_par
+    return 0
+}
