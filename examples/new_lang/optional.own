@@ -7,7 +7,19 @@ type Opt_int sum {
     string u8*
 }
 
+fn opt_int_print(opt_num Opt_int) {
+    switch opt_num {
+        case Opt_int.some(num): printf("got number: %d\n", num)
+        case Opt_int.none: printf("got nothing\n")
+        case Opt_int.string: return
+    }
+}
+
 fn main() i32 {
-    let num Opt_int = Opt_int.none
+    let num Opt_int = Opt_int.some(76)
+    opt_int_print(num)
+
+    num = Opt_int.none
+    opt_int_print(num)
     return 0
 }

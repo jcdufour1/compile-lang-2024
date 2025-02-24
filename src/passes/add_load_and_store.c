@@ -1528,7 +1528,7 @@ static Str_view load_def_sometimes(Env* env, Tast_def* old_def) {
         case TAST_RAW_UNION_DEF:
             return load_raw_union_def(env, tast_raw_union_def_unwrap(old_def));
         case TAST_SUM_DEF:
-            unreachable("sum def should not make it here");
+            return (Str_view) {0};
         case TAST_LITERAL_DEF:
             unreachable("");
         case TAST_PRIMITIVE_DEF:

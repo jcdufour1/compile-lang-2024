@@ -590,6 +590,14 @@ bool try_set_unary_types_finish(
             return true;
         case UNARY_NOT:
             new_lang_type = tast_expr_get_lang_type(new_child);
+            if (!lang_type_is_number(new_lang_type)) {
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_UNARY_MISMATCHED_TYPES, env->file_text, unary_pos,
+                    "`"LANG_TYPE_FMT"` is not valid operand to logical not operation\n",
+                    lang_type_print(new_lang_type)
+                );
+                return false;
+            }
             *new_tast = tast_operator_wrap(tast_binary_wrap(tast_binary_new(
                 unary_pos,
                 new_child,
