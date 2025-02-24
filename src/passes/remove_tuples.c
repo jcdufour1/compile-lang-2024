@@ -10,6 +10,8 @@
 #include <lang_type_serialize.h>
 #include <lang_type_from_ulang_type.h>
 
+// TODO: simplify everything (remove rhs specific thing if possible)
+
 static Tast_symbol* rm_tuple_symbol_typed_new_from_var_def(const Tast_variable_def* var_def) {
     return tast_symbol_new(var_def->pos, (Sym_typed_base) {
         .lang_type = var_def->lang_type,
@@ -452,6 +454,7 @@ static Tast_expr* rm_tuple_struct_literal_rhs(
                     false,
                     util_literal_name_new_prefix("tuple_function_param")
                 );
+                log(LOG_DEBUG, TAST_FMT, tast_variable_def_print(new_param));
                 try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(new_param)));
                 vec_append(&a_main, &new_params, new_param);
                 log(LOG_DEBUG, STR_VIEW_FMT, tast_variable_def_print(new_param));

@@ -1509,6 +1509,30 @@ static Str_view load_tast(Env* env, Llvm_block* new_block, Tast* old_tast) {
     }
 }
 
+static Str_view load_def_sometimes(Env* env, Tast_def* old_def) {
+    switch (old_def->type) {
+        case TAST_FUNCTION_DEF:
+            return load_function_def(env, tast_function_def_unwrap(old_def));
+        case TAST_FUNCTION_DECL:
+            return load_function_decl(env, tast_function_decl_unwrap(old_def));
+        case TAST_VARIABLE_DEF:
+            return (Str_view) {0};
+        case TAST_STRUCT_DEF:
+            return load_struct_def(env, tast_struct_def_unwrap(old_def));
+        case TAST_ENUM_DEF:
+            return load_enum_def(env, tast_enum_def_unwrap(old_def));
+        case TAST_RAW_UNION_DEF:
+            return load_raw_union_def(env, tast_raw_union_def_unwrap(old_def));
+        case TAST_SUM_DEF:
+            unreachable("sum def should not make it here");
+        case TAST_LITERAL_DEF:
+            unreachable("");
+        case TAST_PRIMITIVE_DEF:
+            unreachable("");
+    }
+    unreachable("");
+}
+
 // TODO: rethink how to do block, because this is simply not working
 static Llvm_block* load_block(Env* env, Tast_block* old_block) {
     size_t init_count_ancesters = env->ancesters.info.count;
@@ -1529,7 +1553,7 @@ static Llvm_block* load_block(Env* env, Tast_block* old_block) {
             continue;
         }
 
-        load_def(env, new_block, table.table_tasts[idx].tast);
+        load_def_sometimes(env, table.table_tasts[idx].tast);
     }
 
     for (size_t idx = 0; idx < old_block->children.info.count; idx++) {

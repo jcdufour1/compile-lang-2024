@@ -160,7 +160,7 @@ static Llvm_def* id_def_sometimes(Env* env, Llvm_def* def) {
         case LLVM_ENUM_DEF:
             return def;
         case LLVM_FUNCTION_DECL:
-            return def;
+            return llvm_function_decl_wrap(id_function_decl(llvm_function_decl_unwrap(def)));
         case LLVM_FUNCTION_DEF:
             return llvm_function_def_wrap(id_function_def(env, llvm_function_def_unwrap(def)));
         case LLVM_PRIMITIVE_DEF:

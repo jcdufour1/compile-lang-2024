@@ -2286,6 +2286,8 @@ bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, boo
         switch (try_set_stmt_types(env, &new_rtn_statement, uast_return_wrap(rtn_statement))) {
             case STMT_ERROR:
                 goto error;
+            case STMT_OK:
+                break;
             default:
                 todo();
         }

@@ -74,7 +74,8 @@ static inline void string_extend_strv(Arena* arena, String* string, Str_view str
 
 static inline void string_extend_strv_indent(Arena* arena, String* string, Str_view str_view, size_t indent) {
     for (size_t idx = 0; idx < indent; idx++) {
-        vec_append(arena, string, ' ');
+        // TODO: should this always be done this way?
+        vec_append(arena, string, '-');
     }
     string_extend_strv(arena, string, str_view);
 }
