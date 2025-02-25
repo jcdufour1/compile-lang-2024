@@ -283,7 +283,7 @@ Str_view uast_function_params_print_internal(const Uast_function_params* functio
     string_extend_cstr_indent(&print_arena, &buf, "function_params\n", indent);
     indent += INDENT_WIDTH;
     for (size_t idx = 0; idx < function_params->params.info.count; idx++) {
-        Str_view arg_text = uast_variable_def_print_internal(vec_at(&function_params->params, idx), indent);
+        Str_view arg_text = uast_param_print_internal(vec_at(&function_params->params, idx), indent);
         string_extend_strv(&print_arena, &buf, arg_text);
     }
     indent -= INDENT_WIDTH;
@@ -423,6 +423,18 @@ Str_view uast_case_print_internal(const Uast_case* lang_case, int indent) {
         string_extend_strv(&print_arena, &buf, uast_expr_print_internal(lang_case->expr, indent + INDENT_WIDTH));
     }
     string_extend_strv(&print_arena, &buf, uast_stmt_print_internal(lang_case->if_true, indent + INDENT_WIDTH));
+
+    return string_to_strv(buf);
+}
+
+Str_view uast_param_print_internal(const Uast_param* param, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&print_arena, &buf, "param\n", indent);
+    string_extend_strv(&print_arena, &buf, uast_variable_def_print_internal(param->base, indent + INDENT_WIDTH));
+    if (param->is_optional) {
+        string_extend_strv(&print_arena, &buf, uast_expr_print_internal(param->optional_default, indent + INDENT_WIDTH));
+    }
 
     return string_to_strv(buf);
 }
@@ -704,6 +716,8 @@ Str_view uast_print_internal(const Uast* uast, int indent) {
             return uast_if_print_internal(uast_if_const_unwrap(uast), indent);
         case UAST_CASE:
             return uast_case_print_internal(uast_case_const_unwrap(uast), indent);
+        case UAST_PARAM:
+            return uast_param_print_internal(uast_param_const_unwrap(uast), indent);
     }
     unreachable("");
 }

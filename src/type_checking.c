@@ -1164,7 +1164,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
     if (params->params.info.count < 1) {
         min_args = 0;
         max_args = 0;
-    } else if (vec_top(&params->params)->is_variadic) {
+    } else if (vec_top(&params->params)->base->is_variadic) {
         min_args = params->params.info.count - 1;
         max_args = SIZE_MAX;
     } else {
@@ -1197,16 +1197,16 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
 
     Tast_expr_vec new_args = {0};
     for (size_t arg_idx = 0; arg_idx < fun_call->args.info.count; arg_idx++) {
-        Uast_variable_def* corres_param = vec_at(&params->params, params_idx);
+        Uast_param* corres_param = vec_at(&params->params, params_idx);
         Uast_expr* arg = vec_at(&fun_call->args, arg_idx);
         Tast_expr* new_arg = NULL;
 
-        if (!corres_param->is_variadic) {
+        if (!corres_param->base->is_variadic) {
             params_idx++;
         }
 
-        if (lang_type_is_equal(lang_type_from_ulang_type(env, corres_param->lang_type), lang_type_primitive_const_wrap(lang_type_any_const_wrap(lang_type_any_new(lang_type_atom_new_from_cstr("any", 0)))))) {
-            if (corres_param->is_variadic) {
+        if (lang_type_is_equal(lang_type_from_ulang_type(env, corres_param->base->lang_type), lang_type_primitive_const_wrap(lang_type_any_const_wrap(lang_type_any_new(lang_type_atom_new_from_cstr("any", 0)))))) {
+            if (corres_param->base->is_variadic) {
                 // TODO: do type checking here if this function is not an extern "c" function
                 for (size_t idx = arg_idx; idx < fun_call->args.info.count; idx++) {
                     Tast_expr* new_sub_arg = NULL;
@@ -1221,19 +1221,19 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
                 todo();
             }
         } else {
-            log(LOG_DEBUG, LANG_TYPE_FMT"\n", ulang_type_print(corres_param->lang_type));
-            log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(lang_type_from_ulang_type(env, corres_param->lang_type)));
+            log(LOG_DEBUG, LANG_TYPE_FMT"\n", ulang_type_print(corres_param->base->lang_type));
+            log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(lang_type_from_ulang_type(env, corres_param->base->lang_type)));
             switch (check_generic_assignment(
                 env,
                 &new_arg,
-                lang_type_from_ulang_type(env, corres_param->lang_type),
+                lang_type_from_ulang_type(env, corres_param->base->lang_type),
                 arg,
                 uast_expr_get_pos(arg)
             )) {
                 case CHECK_ASSIGN_OK:
                     break;
                 case CHECK_ASSIGN_INVALID:
-                    msg_invalid_function_arg(env, new_arg, corres_param);
+                    msg_invalid_function_arg(env, new_arg, corres_param->base);
                     status = false;
                     goto error;
                 case CHECK_ASSIGN_ERROR:
@@ -1790,10 +1790,10 @@ bool try_set_function_params_types(
 
     Tast_variable_def_vec new_params = {0};
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
-        Uast_variable_def* def = vec_at(&params->params, idx);
+        Uast_param* def = vec_at(&params->params, idx);
 
         Tast_variable_def* new_def = NULL;
-        if (!try_set_variable_def_types(env, &new_def, def, add_to_sym_tbl)) {
+        if (!try_set_variable_def_types(env, &new_def, def->base, add_to_sym_tbl)) {
             status = false;
         }
 

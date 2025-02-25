@@ -94,6 +94,8 @@ static inline Ulang_type uast_get_ulang_type(const Uast* uast) {
             unreachable("");
         case UAST_CASE:
             unreachable("");
+        case UAST_PARAM:
+            unreachable("");
     }
     unreachable("");
 }
@@ -221,6 +223,8 @@ static inline Lang_type uast_get_lang_type(Env* env, const Uast* uast) {
         case UAST_CONDITION:
             unreachable("");
         case UAST_CASE:
+            unreachable("");
+        case UAST_PARAM:
             unreachable("");
     }
     unreachable("");
@@ -400,6 +404,8 @@ static inline Str_view uast_get_name(const Uast* uast) {
             unreachable("");
         case UAST_CASE:
             unreachable("");
+        case UAST_PARAM:
+            return uast_param_const_unwrap(uast)->base->name;
     }
     unreachable("");
 }

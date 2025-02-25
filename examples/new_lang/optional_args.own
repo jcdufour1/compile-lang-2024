@@ -1,0 +1,11 @@
+
+fn print(number i32, string u8* = "hello") {
+    printf("%d %s\n", number, string)
+}
+
+fn main() i32 {
+    print(76, "thing")
+    print(74)
+    
+    return 0
+}

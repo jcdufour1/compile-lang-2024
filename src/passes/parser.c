@@ -775,21 +775,28 @@ static PARSE_STATUS extract_lang_type_struct_require(Env* env, Ulang_type_atom* 
     }
 }
 
-static PARSE_EXPR_STATUS extract_function_parameter(Env* env, Uast_variable_def** child, Tk_view* tokens, bool add_to_sym_table) {
+static PARSE_EXPR_STATUS extract_function_parameter(Env* env, Uast_param** child, Tk_view* tokens, bool add_to_sym_table) {
     if (tokens->count < 1 || tk_view_front(*tokens).type == TOKEN_CLOSE_PAR) {
         return PARSE_EXPR_NONE;
     }
 
-    Uast_variable_def* param;
-    if (PARSE_OK != try_extract_variable_declaration(env, &param, tokens, false, true, add_to_sym_table, true, (Ulang_type_atom) {0})) {
+    Uast_variable_def* base = NULL;
+    if (PARSE_OK != try_extract_variable_declaration(env, &base, tokens, false, true, add_to_sym_table, true, (Ulang_type_atom) {0})) {
         return PARSE_EXPR_ERROR;
     }
     if (try_consume(NULL, tokens, TOKEN_TRIPLE_DOT)) {
-        param->is_variadic = true;
+        base->is_variadic = true;
+    }
+    if (try_consume(NULL, tokens, TOKEN_SINGLE_EQUAL)) {
+        if (base->is_variadic) {
+            // TODO: expected failure case
+            todo();
+        }
+        unreachable("opt arg todo");
     }
     try_consume(NULL, tokens, TOKEN_COMMA);
 
-    *child = param;
+    *child = uast_param_new(base->pos, base, false, NULL);
     return PARSE_EXPR_OK;
 }
 
@@ -812,9 +819,9 @@ static PARSE_EXPR_STATUS extract_optional_lang_type_parameter(Env* env, Uast_var
 }
 
 static PARSE_STATUS extract_function_parameters(Env* env, Uast_function_params** result, Tk_view* tokens) {
-    Uast_variable_def_vec params = {0};
+    Uast_param_vec params = {0};
 
-    Uast_variable_def* param;
+    Uast_param* param = NULL;
     bool done = false;
     while (!done) {
         switch (extract_function_parameter(env, &param, tokens, true)) {
