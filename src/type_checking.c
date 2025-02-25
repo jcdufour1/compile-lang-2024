@@ -1157,83 +1157,104 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
     log(LOG_DEBUG, TAST_FMT, tast_lang_type_print(fun_rtn_type));
 
     Uast_function_params* params = fun_decl->params;
-    size_t params_idx = 0;
 
-    size_t min_args;
-    size_t max_args;
-    if (params->params.info.count < 1) {
-        min_args = 0;
-        max_args = 0;
-    } else if (vec_top(&params->params)->base->is_variadic) {
-        min_args = params->params.info.count - 1;
-        max_args = SIZE_MAX;
-    } else {
-        min_args = params->params.info.count;
-        max_args = params->params.info.count;
-    }
-    if (fun_call->args.info.count < min_args || fun_call->args.info.count > max_args) {
-        String message = {0};
-        string_extend_size_t(&print_arena, &message, fun_call->args.info.count);
-        string_extend_cstr(&print_arena, &message, " arguments are passed to function `");
-        string_extend_strv(&print_arena, &message, fun_decl->name);
-        string_extend_cstr(&print_arena, &message, "`, but ");
-        string_extend_size_t(&print_arena, &message, min_args);
-        if (max_args > min_args) {
-            string_extend_cstr(&print_arena, &message, " or more");
-        }
-        string_extend_cstr(&print_arena, &message, " arguments expected\n");
-        msg(
-            LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, env->file_text, fun_call->pos,
-            STR_VIEW_FMT, str_view_print(string_to_strv(message))
-        );
+    //size_t min_args;
+    //size_t max_args;
+    //if (params->params.info.count < 1) {
+    //    min_args = 0;
+    //    max_args = 0;
+    //} else if (vec_top(&params->params)->base->is_variadic) {
+    //    min_args = params->params.info.count - 1;
+    //    max_args = SIZE_MAX;
+    //} else {
+    //    min_args = params->params.info.count;
+    //    max_args = params->params.info.count;
+    //}
+    //if (fun_call->args.info.count < min_args || fun_call->args.info.count > max_args) {
+    //    String message = {0};
+    //    string_extend_size_t(&print_arena, &message, fun_call->args.info.count);
+    //    string_extend_cstr(&print_arena, &message, " arguments are passed to function `");
+    //    string_extend_strv(&print_arena, &message, fun_decl->name);
+    //    string_extend_cstr(&print_arena, &message, "`, but ");
+    //    string_extend_size_t(&print_arena, &message, min_args);
+    //    if (max_args > min_args) {
+    //        string_extend_cstr(&print_arena, &message, " or more");
+    //    }
+    //    string_extend_cstr(&print_arena, &message, " arguments expected\n");
+    //    msg(
+    //        LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, env->file_text, fun_call->pos,
+    //        STR_VIEW_FMT, str_view_print(string_to_strv(message))
+    //    );
 
-        msg(
-            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, uast_def_get_pos(fun_def),
-            "function `"STR_VIEW_FMT"` defined here\n", str_view_print(fun_decl->name)
-        );
-        status = false;
-        goto error;
-    }
+    //    msg(
+    //        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, uast_def_get_pos(fun_def),
+    //        "function `"STR_VIEW_FMT"` defined here\n", str_view_print(fun_decl->name)
+    //    );
+    //    status = false;
+    //    goto error;
+    //}
 
     Tast_expr_vec new_args = {0};
-    for (size_t arg_idx = 0; arg_idx < fun_call->args.info.count; arg_idx++) {
-        Uast_param* corres_param = vec_at(&params->params, params_idx);
-        Uast_expr* arg = vec_at(&fun_call->args, arg_idx);
+    log(LOG_DEBUG, "before thing\n");
+    for (size_t param_idx = 0; param_idx < params->params.info.count; param_idx++) {
+        log(LOG_DEBUG, "thing: %zu\n", param_idx);
+        Uast_param* param = vec_at(&params->params, param_idx);
+        Uast_expr* corres_arg = NULL;
+        if (fun_call->args.info.count <= param_idx) {
+            if (param->base->is_variadic) {
+                log(LOG_DEBUG, UAST_FMT, uast_param_print(param));
+                todo();
+            } else if (param->is_optional) {
+                corres_arg = param->optional_default;
+            } else {
+                unreachable("too many args");
+            }
+        } else {
+            corres_arg = vec_at(&fun_call->args, param_idx);
+        }
+        log(LOG_DEBUG, TAST_FMT, uast_expr_print(corres_arg));
+        log(LOG_DEBUG, TAST_FMT, uast_param_print(param));
         Tast_expr* new_arg = NULL;
 
-        if (!corres_param->base->is_variadic) {
-            params_idx++;
+        if (param->base->is_variadic) {
+            todo();
+        } else {
+            //params_idx++;
         }
 
-        if (lang_type_is_equal(lang_type_from_ulang_type(env, corres_param->base->lang_type), lang_type_primitive_const_wrap(lang_type_any_const_wrap(lang_type_any_new(lang_type_atom_new_from_cstr("any", 0)))))) {
-            if (corres_param->base->is_variadic) {
+        if (lang_type_is_equal(lang_type_from_ulang_type(env, param->base->lang_type), lang_type_primitive_const_wrap(lang_type_any_const_wrap(lang_type_any_new(lang_type_atom_new_from_cstr("any", 0)))))) {
+            if (param->base->is_variadic) {
+                todo();
                 // TODO: do type checking here if this function is not an extern "c" function
-                for (size_t idx = arg_idx; idx < fun_call->args.info.count; idx++) {
-                    Tast_expr* new_sub_arg = NULL;
-                    if (!try_set_expr_types(env, &new_sub_arg, vec_at(&fun_call->args, idx))) {
-                        status = false;
-                        continue;
-                    }
-                    vec_append(&a_main, &new_args, new_sub_arg);
-                }
+                //for (size_t idx = arg_idx; idx < fun_call->args.info.count; idx++) {
+                //    Tast_expr* new_sub_arg = NULL;
+                //    if (!try_set_expr_types(env, &new_sub_arg, vec_at(&fun_call->args, idx))) {
+                //        status = false;
+                //        continue;
+                //    }
+                //    vec_append(&a_main, &new_args, new_sub_arg);
+                //}
                 break;
             } else {
                 todo();
             }
         } else {
-            log(LOG_DEBUG, LANG_TYPE_FMT"\n", ulang_type_print(corres_param->base->lang_type));
-            log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(lang_type_from_ulang_type(env, corres_param->base->lang_type)));
+            log(LOG_DEBUG, LANG_TYPE_FMT"\n", ulang_type_print(param->base->lang_type));
+            log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(lang_type_from_ulang_type(env, param->base->lang_type)));
             switch (check_generic_assignment(
                 env,
                 &new_arg,
-                lang_type_from_ulang_type(env, corres_param->base->lang_type),
-                arg,
-                uast_expr_get_pos(arg)
+                lang_type_from_ulang_type(env, param->base->lang_type),
+                corres_arg,
+                uast_expr_get_pos(corres_arg)
             )) {
                 case CHECK_ASSIGN_OK:
                     break;
                 case CHECK_ASSIGN_INVALID:
-                    msg_invalid_function_arg(env, new_arg, corres_param->base);
+                    log(LOG_DEBUG, "param_idx: %zu\n", param_idx);
+                    log(LOG_DEBUG, TAST_FMT, uast_expr_print(corres_arg));
+                    log(LOG_DEBUG, TAST_FMT, uast_param_print(param));
+                    msg_invalid_function_arg(env, new_arg, param->base);
                     status = false;
                     goto error;
                 case CHECK_ASSIGN_ERROR:
@@ -1246,8 +1267,6 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
 
         vec_append(&a_main, &new_args, new_arg);
     }
-
-    assert(!status || new_args.info.count == fun_call->args.info.count);
 
     *new_call = tast_function_call_wrap(tast_function_call_new(
         fun_call->pos,

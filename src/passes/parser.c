@@ -11,6 +11,8 @@
 #include <token_type_to_operator_type.h>
 #include "passes.h"
 
+// TODO: make naming more consistant in this file
+
 static Token prev_token = {0};
 
 // functions return bool if they do not report error to the user
@@ -781,6 +783,8 @@ static PARSE_EXPR_STATUS extract_function_parameter(Env* env, Uast_param** child
     }
 
     Uast_variable_def* base = NULL;
+    bool is_optional = false;
+    Uast_expr* opt_default = NULL;
     if (PARSE_OK != try_extract_variable_declaration(env, &base, tokens, false, true, add_to_sym_table, true, (Ulang_type_atom) {0})) {
         return PARSE_EXPR_ERROR;
     }
@@ -792,11 +796,28 @@ static PARSE_EXPR_STATUS extract_function_parameter(Env* env, Uast_param** child
             // TODO: expected failure case
             todo();
         }
-        unreachable("opt arg todo");
+        is_optional = true;
+        switch (try_extract_expression(
+            env,
+            &opt_default,
+            tokens,
+            false,
+            false
+        )) {
+            case PARSE_EXPR_OK:
+                break;
+            case PARSE_EXPR_NONE:
+                msg_expected_expression(env->file_text, *tokens, "after = for optional argument");
+                return PARSE_EXPR_ERROR;
+            case PARSE_EXPR_ERROR:
+                return PARSE_EXPR_ERROR;
+            default:
+                unreachable("");
+        }
     }
     try_consume(NULL, tokens, TOKEN_COMMA);
 
-    *child = uast_param_new(base->pos, base, false, NULL);
+    *child = uast_param_new(base->pos, base, is_optional, opt_default);
     return PARSE_EXPR_OK;
 }
 
@@ -1145,7 +1166,7 @@ static PARSE_STATUS try_extract_variable_declaration(
     }
 
     try_consume(NULL, tokens, TOKEN_NEW_LINE);
-    Token name_token;
+    Token name_token = {0};
     if (!try_consume(&name_token, tokens, TOKEN_SYMBOL)) {
         msg_parser_expected(env->file_text, tk_view_front(*tokens), "in variable definition", TOKEN_SYMBOL);
         return PARSE_ERROR;
@@ -1154,9 +1175,9 @@ static PARSE_STATUS try_extract_variable_declaration(
 
     Ulang_type_atom lang_type = {0};
     if (require_type) {
-    if (PARSE_OK != extract_lang_type_struct_require(env, &lang_type, tokens)) {
-        return PARSE_ERROR;
-    }
+        if (PARSE_OK != extract_lang_type_struct_require(env, &lang_type, tokens)) {
+            return PARSE_ERROR;
+        }
     } else {
         if (!extract_lang_type_struct(&lang_type, tokens)) {
             lang_type = default_lang_type;
@@ -1320,6 +1341,7 @@ error:
     return status;
 }
 
+// TODO: remove bool defer_sym_add from here
 static Uast_literal* extract_literal(Env* env, Tk_view* tokens, bool defer_sym_add) {
     (void) env;
     (void) defer_sym_add;
