@@ -334,6 +334,7 @@ static Str_view load_literal(
             tast_string_unwrap(old_lit)->name,
             tast_string_unwrap(old_lit)->data
         );
+        log(LOG_DEBUG, TAST_FMT, tast_string_def_print(new_def));
         try(sym_tbl_add(&env->global_literals, tast_literal_def_wrap(tast_string_def_wrap(new_def))));
     }
 

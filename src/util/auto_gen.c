@@ -8,6 +8,8 @@
 
 // TODO: move todos to somewhere else
 
+// TODO: remove env->global_literals
+
 // TODO: in type_checking.c, logical binary operators less than, etc. should return bit_width of only one
 
 // TODO: strings should actually be their own type (not just u8*)
