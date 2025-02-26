@@ -119,7 +119,6 @@ static Tast_type tast_gen_block(const char* prefix) {
     const char* base_name = "block";
     Tast_type block = {.name = tast_name_new(prefix, base_name, false)};
 
-    append_member(&block.members, "bool", "is_variadic");
     append_member(&block.members, "Tast_stmt_vec", "children");
     append_member(&block.members, "Symbol_collection", "symbol_collection");
     append_member(&block.members, "Pos", "pos_end");

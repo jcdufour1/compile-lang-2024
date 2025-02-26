@@ -1767,7 +1767,6 @@ static PARSE_STATUS extract_block(Env* env, Uast_block** block, Tk_view* tokens,
 
     *block = uast_block_new(
         tk_view_front(*tokens).pos,
-        false,
         (Uast_stmt_vec) {0},
         (Symbol_collection) {0},
         (Pos) {0}

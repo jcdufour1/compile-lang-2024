@@ -119,7 +119,6 @@ static Llvm_name llvm_name_new(const char* parent, const char* base, bool is_top
 static Llvm_type llvm_gen_block(void) {
     Llvm_type block = {.name = llvm_name_new("llvm", "block", false)};
 
-    append_member(&block.members, "bool", "is_variadic");
     append_member(&block.members, "Llvm_vec", "children");
     append_member(&block.members, "Symbol_collection", "symbol_collection");
     append_member(&block.members, "Pos", "pos_end");

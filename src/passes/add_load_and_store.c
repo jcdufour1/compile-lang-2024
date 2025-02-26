@@ -716,7 +716,6 @@ static Str_view load_function_def(
         new_decl,
         llvm_block_new(
             pos,
-            false,
             (Llvm_vec) {0},
             old_fun_def->body->symbol_collection,
             old_fun_def->body->pos_end
@@ -908,7 +907,6 @@ static Llvm_block* if_statement_to_branch(Env* env, Tast_if* if_statement, Str_v
     Llvm_block* inner_block = load_block(env, old_block);
     Llvm_block* new_block = llvm_block_new(
         old_block->pos,
-        false,
         (Llvm_vec) {0},
         inner_block->symbol_collection,
         inner_block->pos_end
@@ -950,7 +948,6 @@ static Llvm_block* if_statement_to_branch(Env* env, Tast_if* if_statement, Str_v
 static Llvm_block* if_else_chain_to_branch(Env* env, Tast_if_else_chain* if_else) {
     Llvm_block* new_block = llvm_block_new(
         if_else->pos,
-        false,
         (Llvm_vec) {0},
         (Symbol_collection) {0},
         (Pos) {0}
@@ -1010,7 +1007,6 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
 
     Llvm_block* new_branch_block = llvm_block_new(
         pos,
-        false,
         (Llvm_vec) {0},
         old_for->body->symbol_collection,
         old_for->body->pos_end
@@ -1172,7 +1168,6 @@ static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for
 
     Llvm_block* new_branch_block = llvm_block_new(
         pos,
-        false,
         (Llvm_vec) {0},
         old_for->body->symbol_collection,
         old_for->body->pos_end
@@ -1544,7 +1539,6 @@ static Llvm_block* load_block(Env* env, Tast_block* old_block) {
 
     Llvm_block* new_block = llvm_block_new(
         old_block->pos,
-        old_block->is_variadic,
         (Llvm_vec) {0},
         old_block->symbol_collection,
         old_block->pos_end

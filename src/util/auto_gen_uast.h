@@ -118,7 +118,6 @@ static Uast_name uast_name_new(const char* parent, const char* base, bool is_top
 static Uast_type uast_gen_block(const char* prefix) {
     Uast_type block = {.name = uast_name_new(prefix, "block", false)};
 
-    append_member(&block.members, "bool", "is_variadic"); // TODO: remove this?
     append_member(&block.members, "Uast_stmt_vec", "children");
     append_member(&block.members, "Symbol_collection", "symbol_collection");
     append_member(&block.members, "Pos", "pos_end");

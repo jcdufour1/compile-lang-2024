@@ -2160,7 +2160,6 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
         vec_append(&a_main, &env->switch_case_defer_add_if_true, old_case->if_true);
         Uast_block* if_true = uast_block_new(
             old_case->pos,
-            false,
             (Uast_stmt_vec) {0},
             (Symbol_collection) {0},
             old_case->pos
@@ -2311,7 +2310,7 @@ bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, boo
 
 error:
     vec_rem_last(&env->ancesters);
-    *new_tast = tast_block_new(block->pos, block->is_variadic, new_tasts, new_sym_coll, block->pos_end);
+    *new_tast = tast_block_new(block->pos, new_tasts, new_sym_coll, block->pos_end);
     return status;
 }
 

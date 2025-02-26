@@ -263,8 +263,8 @@ static Tast_stmt* rm_tuple_assignment_tuple(Env* env, Tast_assignment* assign) {
 
     tast_expr_set_lang_type(src, new_var_lang_type);
 
-    log(LOG_DEBUG, TAST_FMT, tast_block_print(tast_block_new(assign->pos, false, new_children, (Symbol_collection) {0}, assign->pos)));
-    return tast_block_wrap(tast_block_new(assign->pos, false, new_children, (Symbol_collection) {0}, assign->pos));
+    log(LOG_DEBUG, TAST_FMT, tast_block_print(tast_block_new(assign->pos, new_children, (Symbol_collection) {0}, assign->pos)));
+    return tast_block_wrap(tast_block_new(assign->pos, new_children, (Symbol_collection) {0}, assign->pos));
 }
 
 static Tast_stmt* rm_tuple_assignment(Env* env, Tast_assignment* assign) {
@@ -303,7 +303,7 @@ static Tast_stmt* rm_tuple_assignment(Env* env, Tast_assignment* assign) {
 
 static Tast_function_def* rm_tuple_function_def_new(Env* env, Tast_function_decl* decl) {
     log(LOG_DEBUG, TAST_FMT, tast_function_decl_print(decl));
-    Tast_block* body = tast_block_new(decl->pos, false, (Tast_stmt_vec) {0}, (Symbol_collection) {0}, decl->pos);
+    Tast_block* body = tast_block_new(decl->pos, (Tast_stmt_vec) {0}, (Symbol_collection) {0}, decl->pos);
 
     Tast_def* struct_def_ = NULL;
     try(symbol_lookup(&struct_def_, env, lang_type_get_str(decl->return_type->lang_type)));
