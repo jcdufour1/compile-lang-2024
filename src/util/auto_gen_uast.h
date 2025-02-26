@@ -118,7 +118,7 @@ static Uast_name uast_name_new(const char* parent, const char* base, bool is_top
 static Uast_type uast_gen_block(const char* prefix) {
     Uast_type block = {.name = uast_name_new(prefix, "block", false)};
 
-    append_member(&block.members, "bool", "is_variadic");
+    append_member(&block.members, "bool", "is_variadic"); // TODO: remove this?
     append_member(&block.members, "Uast_stmt_vec", "children");
     append_member(&block.members, "Symbol_collection", "symbol_collection");
     append_member(&block.members, "Pos", "pos_end");
@@ -327,7 +327,6 @@ static Uast_type uast_gen_variable_def(const char* prefix) {
     Uast_type def = {.name = uast_name_new(prefix, "variable_def", false)};
 
     append_member(&def.members, "Ulang_type", "lang_type");
-    append_member(&def.members, "bool", "is_variadic");
     append_member(&def.members, "Str_view", "name");
 
     return def;
@@ -514,6 +513,7 @@ static Uast_type uast_gen_param(const char* prefix) {
 
     append_member(&lang_if.members, "Uast_variable_def*", "base");
     append_member(&lang_if.members, "bool", "is_optional");
+    append_member(&lang_if.members, "bool", "is_variadic");
     append_member(&lang_if.members, "Uast_expr*", "optional_default");
 
     return lang_if;

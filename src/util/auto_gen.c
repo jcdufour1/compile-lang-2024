@@ -7,7 +7,8 @@
 #include <auto_gen_ulang_type.h>
 
 // TODO: move todos to somewhere else
-
+//
+// TODO: make print functions check for null and print <null> or something instead of seg fault
 // TODO: figure out if I should de-duplilcate string literals, etc.
 
 // TODO: remove env->global_literals

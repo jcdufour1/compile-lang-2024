@@ -784,15 +784,17 @@ static PARSE_EXPR_STATUS extract_function_parameter(Env* env, Uast_param** child
 
     Uast_variable_def* base = NULL;
     bool is_optional = false;
+    bool is_variadic = false;
     Uast_expr* opt_default = NULL;
     if (PARSE_OK != try_extract_variable_declaration(env, &base, tokens, false, true, add_to_sym_table, true, (Ulang_type_atom) {0})) {
         return PARSE_EXPR_ERROR;
     }
     if (try_consume(NULL, tokens, TOKEN_TRIPLE_DOT)) {
-        base->is_variadic = true;
+        todo();
+        is_variadic = true;
     }
     if (try_consume(NULL, tokens, TOKEN_SINGLE_EQUAL)) {
-        if (base->is_variadic) {
+        if (is_variadic) {
             // TODO: expected failure case
             todo();
         }
@@ -817,7 +819,7 @@ static PARSE_EXPR_STATUS extract_function_parameter(Env* env, Uast_param** child
     }
     try_consume(NULL, tokens, TOKEN_COMMA);
 
-    *child = uast_param_new(base->pos, base, is_optional, opt_default);
+    *child = uast_param_new(base->pos, base, is_optional, is_variadic, opt_default);
     return PARSE_EXPR_OK;
 }
 
@@ -831,7 +833,8 @@ static PARSE_EXPR_STATUS extract_optional_lang_type_parameter(Env* env, Uast_var
         return PARSE_EXPR_ERROR;
     }
     if (try_consume(NULL, tokens, TOKEN_TRIPLE_DOT)) {
-        param->is_variadic = true;
+        // TODO: expected failure case
+        todo();
     }
     try_consume(NULL, tokens, TOKEN_COMMA);
 
@@ -1030,7 +1033,6 @@ static PARSE_STATUS extract_struct_base_def_implicit_type(
         Uast_variable_def* member = uast_variable_def_new(
             name_token.pos,
             ulang_type_regular_const_wrap(ulang_type_regular_new(lang_type)),
-            false,
             name_token.text
         );
 
@@ -1187,7 +1189,6 @@ static PARSE_STATUS try_extract_variable_declaration(
     Uast_variable_def* variable_def = uast_variable_def_new(
         name_token.pos,
         ulang_type_regular_const_wrap(ulang_type_regular_new(lang_type)),
-        false,
         name_token.text
     );
 
