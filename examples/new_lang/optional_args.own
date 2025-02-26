@@ -1,6 +1,5 @@
 
-extern("c") fn printf(str_to_print u8*, arg i32, string u8*) i32
-//extern("c") fn printf(str_to_print u8*, args any...) i32
+extern("c") fn printf(str_to_print u8*, args any...) i32
 extern("c") fn puts(str_to_print u8*) i32
 
 fn print(number i32 = 43, string u8* = "hello") {

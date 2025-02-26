@@ -156,7 +156,8 @@ bool try_set_variable_def_types(
     Env* env,
     Tast_variable_def** new_tast,
     Uast_variable_def* uast,
-    bool add_to_sym_tbl
+    bool add_to_sym_tbl,
+    bool is_variadic
 );
 
 bool try_set_struct_def_types(Env* env, Uast_struct_def* tast);

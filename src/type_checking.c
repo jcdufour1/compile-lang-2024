@@ -105,9 +105,6 @@ static bool can_be_implicitly_converted_lang_type_atom(Lang_type_atom dest, Lang
         src_bit_width--;
     }
 
-    log(LOG_DEBUG, TAST_FMT"\n", lang_type_atom_print(dest));
-    log(LOG_DEBUG, TAST_FMT"\n", lang_type_atom_print(src));
-    log(LOG_DEBUG, "dest: %d; src: %d\n", dest_bit_width, src_bit_width);
     return dest_bit_width >= src_bit_width;
 }
 
@@ -389,10 +386,8 @@ bool try_set_symbol_type(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untype
         msg_undefined_symbol(env->file_text, uast_expr_wrap(uast_symbol_wrap(sym_untyped)));
         return false;
     }
-    log(LOG_DEBUG, TAST_FMT, uast_def_print(sym_def));
 
     Lang_type lang_type = uast_def_get_lang_type(env, sym_def);
-    log(LOG_DEBUG, TAST_FMT, lang_type_print(lang_type));
     Sym_typed_base new_base = {.lang_type = lang_type, .name = sym_untyped->name};
     switch (lang_type.type) {
         case LANG_TYPE_VOID:
@@ -467,8 +462,6 @@ static Tast_literal* precalulate_char(
 }
 
 bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_lhs, Tast_expr* new_rhs, Pos oper_pos, BINARY_TYPE oper_token_type) {
-    log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_lhs));
-    log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_rhs));
     if (!lang_type_is_equal(tast_expr_get_lang_type(new_lhs), tast_expr_get_lang_type(new_rhs))) {
         if (can_be_implicitly_converted(tast_expr_get_lang_type(new_lhs), tast_expr_get_lang_type(new_rhs), new_rhs->type == TAST_LITERAL && tast_literal_unwrap(new_rhs)->type == TAST_NUMBER && tast_number_unwrap(tast_literal_unwrap(new_rhs))->data == 0, true)) {
             if (new_rhs->type == TAST_LITERAL) {
@@ -548,7 +541,6 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
 
 // returns false if unsuccessful
 bool try_set_binary_types(Env* env, Tast_expr** new_tast, Uast_binary* operator) {
-    log(LOG_DEBUG, UAST_FMT, uast_binary_print(operator));
     Tast_expr* new_lhs;
     if (!try_set_expr_types(env, &new_lhs, operator->lhs)) {
         return false;
@@ -651,12 +643,10 @@ bool try_set_unary_types_finish(
 }
 
 bool try_set_unary_types(Env* env, Tast_expr** new_tast, Uast_unary* unary) {
-    log(LOG_DEBUG, TAST_FMT, uast_unary_print(unary));
     Tast_expr* new_child;
     if (!try_set_expr_types(env, &new_child, unary->child)) {
         return false;
     }
-    log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_child));
 
     return try_set_unary_types_finish(env, new_tast, new_child, uast_unary_get_pos(unary), unary->token_type, lang_type_from_ulang_type(env, unary->lang_type));
 }
@@ -776,7 +766,6 @@ bool try_set_struct_literal_assignment_types(
     for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
         //log(LOG_DEBUG, "%zu\n", idx);
         Uast_variable_def* memb_sym_def = vec_at(&struct_def->base.members, idx);
-        log(LOG_DEBUG, STR_VIEW_FMT, uast_stmt_print(uast_expr_const_wrap(uast_struct_literal_const_wrap(struct_literal))));
         Uast_assignment* assign_memb_sym = uast_assignment_unwrap(vec_at(&struct_literal->members, idx));
         Uast_symbol* memb_sym_piece_untyped = uast_symbol_unwrap(uast_expr_unwrap(assign_memb_sym->lhs));
         Tast_expr* new_rhs = NULL;
@@ -848,12 +837,10 @@ bool try_set_struct_literal_assignment_types(
 bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
     switch (uast->type) {
         case UAST_LITERAL: {
-            log(LOG_DEBUG, "thing 31\n");
             *new_tast = tast_literal_wrap(try_set_literal_types(uast_literal_unwrap(uast)));
             return true;
         }
         case TAST_SYMBOL:
-            log(LOG_DEBUG, "thing 32\n");
             if (!try_set_symbol_type(env, new_tast, uast_symbol_unwrap(uast))) {
                 return false;
             } else {
@@ -861,7 +848,6 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
             }
             return true;
         case UAST_MEMBER_ACCESS: {
-            log(LOG_DEBUG, "thing 33\n");
             Tast_stmt* new_tast_ = NULL;
             if (!try_set_member_access_types(env, &new_tast_, uast_member_access_unwrap(uast))) {
                 return false;
@@ -870,7 +856,6 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
             return true;
         }
         case UAST_INDEX: {
-            log(LOG_DEBUG, "thing 34\n");
             Tast_stmt* new_tast_ = NULL;
             if (!try_set_index_untyped_types(env, &new_tast_, uast_index_unwrap(uast))) {
                 return false;
@@ -879,14 +864,12 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
             return true;
         }
         case UAST_OPERATOR:
-            log(LOG_DEBUG, "thing 35\n");
             if (!try_set_operator_types(env, new_tast, uast_operator_unwrap(uast))) {
                 return false;
             }
             assert(*new_tast);
             return true;
         case UAST_FUNCTION_CALL:
-            log(LOG_DEBUG, "thing 36\n");
             return try_set_function_call_types(env, new_tast, uast_function_call_unwrap(uast));
         case UAST_TUPLE: {
             Tast_tuple* new_call = NULL;
@@ -914,7 +897,7 @@ STMT_STATUS try_set_def_types(Env* env, Tast_def** new_tast, Uast_def* uast) {
     switch (uast->type) {
         case UAST_VARIABLE_DEF: {
             Tast_variable_def* new_def = NULL;
-            if (!try_set_variable_def_types(env, &new_def, uast_variable_def_unwrap(uast), true)) {
+            if (!try_set_variable_def_types(env, &new_def, uast_variable_def_unwrap(uast), true, false)) {
                 return STMT_ERROR;
             }
             *new_tast = tast_variable_def_wrap(new_def);
@@ -1086,13 +1069,10 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
                 todo();
             }
             Tast_sum_callee* sum_callee = tast_sum_callee_unwrap(new_callee);
-            log(LOG_DEBUG, TAST_FMT, tast_sum_callee_print(sum_callee));
-            log(LOG_DEBUG, TAST_FMT, tast_enum_lit_print(sum_callee->tag));
 
             Uast_def* sum_def_ = NULL;
             try(usymbol_lookup(&sum_def_, env, lang_type_get_str(sum_callee->sum_lang_type)));
             Uast_sum_def* sum_def = uast_sum_def_unwrap(sum_def_);
-            log(LOG_DEBUG, TAST_FMT, uast_sum_def_print(uast_sum_def_unwrap(sum_def_)));
 
             Tast_expr* new_item = NULL;
             switch (check_generic_assignment(
@@ -1103,7 +1083,6 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
                 uast_expr_get_pos(vec_at(&fun_call->args, 0))
             )) {
                 case CHECK_ASSIGN_OK:
-                    log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_item));
                     break;
                 case CHECK_ASSIGN_INVALID:
                     msg(
@@ -1187,8 +1166,6 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
     if (!try_types_set_lang_type(env, &fun_rtn_type, fun_decl->return_type)) {
         return false;
     }
-    log(LOG_DEBUG, TAST_FMT, uast_lang_type_print(fun_decl->return_type));
-    log(LOG_DEBUG, TAST_FMT, tast_lang_type_print(fun_rtn_type));
 
     Uast_function_params* params = fun_decl->params;
 
@@ -1209,18 +1186,17 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
 
     Tast_expr_vec new_args = {0};
     bool is_variadic = false;
-    log(LOG_DEBUG, "before thing\n");
     // TODO: consider case of optional arguments and variadic arguments being used in same function
     for (size_t param_idx = 0; param_idx < params->params.info.count; param_idx++) {
-        log(LOG_DEBUG, "thing: %zu\n", param_idx);
-        log(LOG_DEBUG, TAST_FMT, uast_param_print(vec_at(&params->params, param_idx)));
         Uast_param* param = vec_at(&params->params, param_idx);
         Uast_expr* corres_arg = NULL;
+        if (param->is_variadic) {
+            is_variadic = true;
+        }
+
         if (fun_call->args.info.count > param_idx) {
             corres_arg = vec_at(&fun_call->args, param_idx);
-        } else if (param->is_variadic) {
-            todo();
-            is_variadic = true;
+        } else if (is_variadic) {
         } else if (param->is_optional) {
             try(!is_variadic && "cannot mix variadic args and optional args right now");
             corres_arg = uast_expr_clone(param->optional_default);
@@ -1228,10 +1204,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             msg_invalid_count_function_args(env, fun_call, fun_decl, param_idx + 1, param_idx + 1);
             goto error;
         }
-        if (corres_arg) {
-            log(LOG_DEBUG, TAST_FMT, uast_expr_print(corres_arg));
-        }
-        log(LOG_DEBUG, TAST_FMT, uast_param_print(param));
+
         Tast_expr* new_arg = NULL;
 
         if (lang_type_is_equal(lang_type_from_ulang_type(env, param->base->lang_type), lang_type_primitive_const_wrap(lang_type_any_const_wrap(lang_type_any_new(lang_type_atom_new_from_cstr("any", 0)))))) {
@@ -1250,8 +1223,6 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
                 todo();
             }
         } else {
-            log(LOG_DEBUG, LANG_TYPE_FMT"\n", ulang_type_print(param->base->lang_type));
-            log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(lang_type_from_ulang_type(env, param->base->lang_type)));
             switch (check_generic_assignment(
                 env,
                 &new_arg,
@@ -1262,9 +1233,6 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
                 case CHECK_ASSIGN_OK:
                     break;
                 case CHECK_ASSIGN_INVALID:
-                    log(LOG_DEBUG, "param_idx: %zu\n", param_idx);
-                    log(LOG_DEBUG, TAST_FMT, uast_expr_print(corres_arg));
-                    log(LOG_DEBUG, TAST_FMT, uast_param_print(param));
                     msg_invalid_function_arg(env, new_arg, param->base);
                     status = false;
                     goto error;
@@ -1394,16 +1362,14 @@ bool try_set_member_access_types_finish_sum_def(
     (void) new_callee;
 
     switch (env->parent_of) {
-        case PARENT_OF_CASE:
-            log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_callee));
-            log(LOG_DEBUG, TAST_FMT, uast_member_access_print(access));
+        case PARENT_OF_CASE: {
             Uast_variable_def* member_def = NULL;
             if (!uast_try_get_member_def(&member_def, &sum_def->base, access->member_name)) {
                 todo();
                 //msg_invalid_enum_member(env, enum_def->base, access);
                 //return false;
             }
-            log(LOG_DEBUG, TAST_FMT, uast_variable_def_print(member_def));
+
             Tast_enum_lit* new_tag = tast_enum_lit_new(
                 access->pos,
                 uast_get_member_index(&sum_def->base, access->member_name),
@@ -1432,10 +1398,9 @@ bool try_set_member_access_types_finish_sum_def(
             //*new_tast = tast_expr_wrap(tast_literal_wrap(tast_enum_lit_wrap(new_lit)));
             //assert(member_def->lang_type.str.count > 0);
             //return true;
+        }
         case PARENT_OF_ASSIGN_RHS: {
             Uast_variable_def* member_def = NULL;
-            log(LOG_DEBUG, TAST_FMT, uast_sum_def_print(sum_def));
-            log(LOG_DEBUG, TAST_FMT, uast_member_access_print(access));
             if (!uast_try_get_member_def(&member_def, &sum_def->base, access->member_name)) {
                 todo();
                 //msg_invalid_enum_member(env, enum_def->base, access);
@@ -1657,7 +1622,7 @@ bool try_set_struct_base_types(Env* env, Struct_def_base* new_base, Ustruct_def_
         Uast_variable_def* curr = vec_at(&base->members, idx);
 
         Tast_variable_def* new_memb = NULL;
-        if (try_set_variable_def_types(env, &new_memb, curr, false)) {
+        if (try_set_variable_def_types(env, &new_memb, curr, false, false)) {
             vec_append(&a_main, &new_members, new_memb);
         } else {
             success = false;
@@ -1737,7 +1702,8 @@ bool try_set_variable_def_types(
     Env* env,
     Tast_variable_def** new_tast,
     Uast_variable_def* uast,
-    bool add_to_sym_tbl
+    bool add_to_sym_tbl,
+    bool is_variadic
 ) {
     Uast_def* dummy = NULL;
     if (!usymbol_lookup(&dummy, env, ulang_type_regular_const_unwrap(uast->lang_type).atom.str)) {
@@ -1745,9 +1711,7 @@ bool try_set_variable_def_types(
         return false;
     }
 
-    *new_tast = tast_variable_def_new(uast->pos, lang_type_from_ulang_type(env, uast->lang_type), uast->name);
-    log(LOG_DEBUG, "adding:"STR_VIEW_FMT, tast_variable_def_print(*new_tast));
-    symbol_log(LOG_DEBUG, env);
+    *new_tast = tast_variable_def_new(uast->pos, lang_type_from_ulang_type(env, uast->lang_type), is_variadic, uast->name);
     if (add_to_sym_tbl && !env->type_checking_is_in_struct_base_def) {
         try(symbol_add(env, tast_variable_def_wrap(*new_tast)));
     }
@@ -1809,7 +1773,6 @@ bool try_set_function_def_types(
 
     env->name_parent_function = prev_par_fun;
     Tast_def* result = NULL;
-    //log(LOG_DEBUG, TAST_FMT, tast_print();
     try(symbol_lookup(&result, env, new_decl->name));
     symbol_update(env, tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
     return status;
@@ -1828,7 +1791,7 @@ bool try_set_function_params_types(
         Uast_param* def = vec_at(&params->params, idx);
 
         Tast_variable_def* new_def = NULL;
-        if (!try_set_variable_def_types(env, &new_def, def->base, add_to_sym_tbl)) {
+        if (!try_set_variable_def_types(env, &new_def, def->base, add_to_sym_tbl, def->is_variadic)) {
             status = false;
         }
 
@@ -1917,7 +1880,7 @@ bool try_set_for_range_types(Env* env, Tast_for_range** new_tast, Uast_for_range
 
     Tast_variable_def* new_var_def = NULL;
     vec_append(&a_main, &env->ancesters, &uast->body->symbol_collection);
-    if (!try_set_variable_def_types(env, &new_var_def, uast->var_def, true)) {
+    if (!try_set_variable_def_types(env, &new_var_def, uast->var_def, true, false)) {
         status = false;
     }
     vec_rem_last(&env->ancesters);
@@ -2091,8 +2054,6 @@ static bool check_for_exhaustiveness_inner(
             return true;
         }
         case LANG_TYPE_SUM: {
-            log(LOG_DEBUG, TAST_FMT, tast_enum_lit_print(tast_sum_case_unwrap(tast_binary_unwrap(curr_if->condition->child)->rhs)->tag));
-
             const Tast_enum_lit* curr_lit = tast_sum_case_unwrap(
                 tast_binary_unwrap(curr_if->condition->child)->rhs
             )->tag;
@@ -2332,7 +2293,6 @@ bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, boo
             true
         );
         if (rtn_statement->pos.line == 0) {
-            symbol_log(LOG_DEBUG, env);
             unreachable("");
         }
         Tast_stmt* new_rtn_statement = NULL;

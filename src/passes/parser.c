@@ -790,7 +790,6 @@ static PARSE_EXPR_STATUS extract_function_parameter(Env* env, Uast_param** child
         return PARSE_EXPR_ERROR;
     }
     if (try_consume(NULL, tokens, TOKEN_TRIPLE_DOT)) {
-        todo();
         is_variadic = true;
     }
     if (try_consume(NULL, tokens, TOKEN_SINGLE_EQUAL)) {

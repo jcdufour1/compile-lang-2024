@@ -435,6 +435,9 @@ Str_view uast_param_print_internal(const Uast_param* param, int indent) {
     if (param->is_optional) {
         string_extend_strv(&print_arena, &buf, uast_expr_print_internal(param->optional_default, indent + INDENT_WIDTH));
     }
+    if (param->is_variadic) {
+        string_extend_cstr_indent(&print_arena, &buf, "is_variadic\n", indent + INDENT_WIDTH);
+    }
 
     return string_to_strv(buf);
 }
