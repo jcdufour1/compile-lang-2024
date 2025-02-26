@@ -13,7 +13,7 @@
 
 #include "passes.h"
 
-static Llvm_variable_def* tast_clone_variable_def(Tast_variable_def* old_var_def);
+static Llvm_variable_def* load_variable_def_clone(Tast_variable_def* old_var_def);
 
 static Llvm_alloca* add_load_and_store_alloca_new(Env* env, Llvm_variable_def* var_def) {
     Llvm_alloca* alloca = llvm_alloca_new(var_def->pos, 0, var_def->lang_type, var_def->name_corr_param);
@@ -22,31 +22,31 @@ static Llvm_alloca* add_load_and_store_alloca_new(Env* env, Llvm_variable_def* v
     return alloca;
 }
 
-static Llvm_function_params* tast_clone_function_params(Tast_function_params* old_params) {
+static Llvm_function_params* load_function_params_clone(Tast_function_params* old_params) {
     Llvm_function_params* new_params = llvm_function_params_new(old_params->pos, (Llvm_variable_def_vec){0}, 0);
 
     for (size_t idx = 0; idx < old_params->params.info.count; idx++) {
-        vec_append(&a_main, &new_params->params, tast_clone_variable_def(vec_at(&old_params->params, idx)));
+        vec_append(&a_main, &new_params->params, load_variable_def_clone(vec_at(&old_params->params, idx)));
     }
 
     return new_params;
 }
 
-static Llvm_lang_type* tast_clone_lang_type(Tast_lang_type* old_lang_type) {
+static Llvm_lang_type* load_lang_type_clone(Tast_lang_type* old_lang_type) {
     Llvm_lang_type* new_lang_type = llvm_lang_type_new(old_lang_type->pos, old_lang_type->lang_type);
     return new_lang_type;
 }
 
-static Llvm_function_decl* tast_clone_function_decl(Tast_function_decl* old_decl) {
+static Llvm_function_decl* load_function_decl_clone(Tast_function_decl* old_decl) {
     return llvm_function_decl_new(
         old_decl->pos,
-        tast_clone_function_params(old_decl->params),
-        tast_clone_lang_type(old_decl->return_type),
+        load_function_params_clone(old_decl->params),
+        load_lang_type_clone(old_decl->return_type),
         old_decl->name
     );
 }
 
-static Llvm_variable_def* tast_clone_variable_def(Tast_variable_def* old_var_def) {
+static Llvm_variable_def* load_variable_def_clone(Tast_variable_def* old_var_def) {
     return llvm_variable_def_new(
         old_var_def->pos,
         old_var_def->lang_type,
@@ -57,21 +57,21 @@ static Llvm_variable_def* tast_clone_variable_def(Tast_variable_def* old_var_def
     );
 }
 
-static Llvm_struct_def* tast_clone_struct_def(const Tast_struct_def* old_def) {
+static Llvm_struct_def* load_struct_def_clone(const Tast_struct_def* old_def) {
     return llvm_struct_def_new(
         old_def->pos,
         old_def->base
     );
 }
 
-static Llvm_enum_def* tast_clone_enum_def(const Tast_enum_def* old_def) {
+static Llvm_enum_def* load_enum_def_clone(const Tast_enum_def* old_def) {
     return llvm_enum_def_new(
         old_def->pos,
         old_def->base
     );
 }
 
-static Llvm_raw_union_def* tast_clone_raw_union_def(const Tast_raw_union_def* old_def) {
+static Llvm_raw_union_def* load_raw_union_def_clone(const Tast_raw_union_def* old_def) {
     return llvm_raw_union_def_new(
         old_def->pos,
         old_def->base
@@ -115,7 +115,7 @@ static Llvm_function_params* do_function_def_alloca(
             false,
             util_literal_name_new_prefix("return_as_parameter")
         );
-        Llvm_variable_def* param = tast_clone_variable_def(new_def);
+        Llvm_variable_def* param = load_variable_def_clone(new_def);
         do_function_def_alloca_param(env, new_params, new_block, param);
         *new_rtn_type = llvm_lang_type_new(param->pos, lang_type_void_const_wrap(lang_type_void_new(0)));
         env->struct_rtn_name_parent_function = vec_at(&new_params->params, 0)->name_self;
@@ -124,7 +124,7 @@ static Llvm_function_params* do_function_def_alloca(
     }
 
     for (size_t idx = 0; idx < old_params->params.info.count; idx++) {
-        Llvm_variable_def* param = tast_clone_variable_def(vec_at(&old_params->params, idx));
+        Llvm_variable_def* param = load_variable_def_clone(vec_at(&old_params->params, idx));
         do_function_def_alloca_param(env, new_params, new_block, param);
     }
 
@@ -353,7 +353,7 @@ static Str_view load_ptr_symbol(
     Tast_def* var_def_ = NULL;
     log(LOG_DEBUG, TAST_FMT, tast_symbol_print(old_sym));
     try(symbol_lookup(&var_def_, env, old_sym->base.name));
-    Llvm_variable_def* var_def = tast_clone_variable_def(tast_variable_def_unwrap(var_def_));
+    Llvm_variable_def* var_def = load_variable_def_clone(tast_variable_def_unwrap(var_def_));
     Llvm* alloca = NULL;
     if (!alloca_lookup(&alloca, env, var_def->name_corr_param)) {
         log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(var_def->name_corr_param));
@@ -707,7 +707,7 @@ static Str_view load_function_def(
     Llvm_function_decl* new_decl = llvm_function_decl_new(
         pos,
         NULL,
-        tast_clone_lang_type(old_fun_def->decl->return_type),
+        load_lang_type_clone(old_fun_def->decl->return_type),
         old_fun_def->decl->name
     );
 
@@ -748,7 +748,7 @@ static Str_view load_function_decl(
     Env* env,
     Tast_function_decl* old_fun_decl
 ) {
-    try(alloca_add(env, llvm_def_wrap(llvm_function_decl_wrap(tast_clone_function_decl(old_fun_decl)))));
+    try(alloca_add(env, llvm_def_wrap(llvm_function_decl_wrap(load_function_decl_clone(old_fun_decl)))));
 
     return (Str_view) {0};
 }
@@ -855,7 +855,7 @@ static Str_view load_variable_def(
     Llvm_block* new_block,
     Tast_variable_def* old_var_def
 ) {
-    Llvm_variable_def* new_var_def = tast_clone_variable_def(old_var_def);
+    Llvm_variable_def* new_var_def = load_variable_def_clone(old_var_def);
 
     Llvm* alloca = NULL;
     if (!alloca_lookup(&alloca, env, new_var_def->name_self)) {
@@ -874,7 +874,7 @@ static Str_view load_struct_def(
     Tast_struct_def* old_struct_def
 ) {
     alloca_add(env, llvm_def_wrap(
-        llvm_struct_def_wrap(tast_clone_struct_def(old_struct_def))
+        llvm_struct_def_wrap(load_struct_def_clone(old_struct_def))
     ));
 
     Tast_def* dummy = NULL;
@@ -897,7 +897,7 @@ static Str_view load_enum_def(
     (void) env;
 
     try(alloca_add(env, llvm_def_wrap(
-        llvm_enum_def_wrap(tast_clone_enum_def(old_enum_def))
+        llvm_enum_def_wrap(load_enum_def_clone(old_enum_def))
     )));
 
     return (Str_view) {0};
@@ -1304,7 +1304,7 @@ static Str_view load_raw_union_def(
     log(LOG_DEBUG, TAST_FMT, tast_raw_union_def_print(old_def));
     // TODO: crash if alloca_add fails (we need to prevent duplicates to crash on alloca_add fail)?
     if (!alloca_add(env, llvm_def_wrap(
-        llvm_raw_union_def_wrap(tast_clone_raw_union_def(old_def))
+        llvm_raw_union_def_wrap(load_raw_union_def_clone(old_def))
     ))) {
         return (Str_view) {0};
     };

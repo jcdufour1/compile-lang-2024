@@ -11,6 +11,8 @@
 #include <ulang_type.h>
 #include <msg_todo.h>
 #include <token_type_to_operator_type.h>
+#include <tast_clone.h>
+#include <uast_clone.h>
 
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
@@ -1205,7 +1207,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
                 log(LOG_DEBUG, UAST_FMT, uast_param_print(param));
                 todo();
             } else if (param->is_optional) {
-                corres_arg = param->optional_default;
+                corres_arg = uast_expr_clone(param->optional_default);
             } else {
                 unreachable("too many args");
             }

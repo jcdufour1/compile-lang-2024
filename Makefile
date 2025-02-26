@@ -45,6 +45,8 @@ OBJS=\
 	 ${BUILD_DIR}/error_msg.o \
 	 ${BUILD_DIR}/tast_serialize.o \
 	 ${BUILD_DIR}/lang_type_serialize.o \
+	 ${BUILD_DIR}/uast_clone.o \
+	 ${BUILD_DIR}/tast_clone.o \
 	 ${BUILD_DIR}/type_checking.o \
 	 ${BUILD_DIR}/sizeof.o \
 	 ${BUILD_DIR}/passes/do_passes.o \
@@ -137,6 +139,12 @@ ${BUILD_DIR}/tast_serialize.o: ${DEP_COMMON} src/tast_serialize.c third_party/*
 
 ${BUILD_DIR}/lang_type_serialize.o: ${DEP_COMMON} src/lang_type_serialize.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type_serialize.o src/lang_type_serialize.c
+
+${BUILD_DIR}/uast_clone.o: ${DEP_COMMON} src/uast_clone.c third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/uast_clone.o src/uast_clone.c
+
+${BUILD_DIR}/tast_clone.o: ${DEP_COMMON} src/tast_clone.c third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/tast_clone.o src/tast_clone.c
 
 
 # passes

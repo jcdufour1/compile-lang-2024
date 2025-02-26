@@ -8,6 +8,8 @@
 
 // TODO: move todos to somewhere else
 
+// TODO: figure out if I should de-duplilcate string literals, etc.
+
 // TODO: remove env->global_literals
 
 // TODO: in type_checking.c, logical binary operators less than, etc. should return bit_width of only one
