@@ -9,8 +9,6 @@ static inline Lang_type_atom lang_type_primitive_get_atom(Lang_type_primitive la
     switch (lang_type.type) {
         case LANG_TYPE_CHAR:
             return lang_type_char_const_unwrap(lang_type).atom;
-        case LANG_TYPE_STRING:
-            return lang_type_string_const_unwrap(lang_type).atom;
         case LANG_TYPE_SIGNED_INT: {
             // TODO: use hashtable, etc. to reduce allocations
             String string = {0};
@@ -54,9 +52,6 @@ static inline Lang_type_atom lang_type_get_atom(Lang_type lang_type) {
 // TODO: remove this function?
 static inline void lang_type_primitive_set_atom(Lang_type_primitive* lang_type, Lang_type_atom atom) {
     switch (lang_type->type) {
-        case LANG_TYPE_STRING:
-            lang_type_string_unwrap(lang_type)->atom = atom;
-            return;
         case LANG_TYPE_CHAR:
             lang_type_char_unwrap(lang_type)->atom = atom;
             return;
@@ -115,8 +110,6 @@ static inline int16_t lang_type_primitive_get_pointer_depth(Lang_type_primitive 
 static inline int32_t lang_type_primitive_get_bit_width(Lang_type_primitive lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_CHAR:
-            unreachable("");
-        case LANG_TYPE_STRING:
             unreachable("");
         case LANG_TYPE_UNSIGNED_INT:
             return lang_type_unsigned_int_const_unwrap(lang_type).bit_width;

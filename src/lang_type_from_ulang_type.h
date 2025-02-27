@@ -35,13 +35,13 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Env* e
     } else if (str_view_cstr_is_equal(atom.str, "void")) {
         todo();
     } else if (lang_type_atom_is_equal(atom, lang_type_atom_new_from_cstr("u8", 0))) {
-        return lang_type_primitive_const_wrap(lang_type_string_const_wrap(lang_type_string_new(atom)));
+        return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(atom)));
     } else if (str_view_cstr_is_equal(atom.str, "u8")) {
         // TODO: does this make sense for u8**, etc.?
-        return lang_type_primitive_const_wrap(lang_type_string_const_wrap(lang_type_string_new(atom)));
+        return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(atom)));
     } else if (str_view_cstr_is_equal(atom.str, "any")) {
         // TODO: does this make sense?
-        return lang_type_primitive_const_wrap(lang_type_string_const_wrap(lang_type_string_new(atom)));
+        return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(atom)));
     } else {
         log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(lang_type)));
         todo();

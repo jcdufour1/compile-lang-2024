@@ -208,7 +208,7 @@ static void llvm_extend_type_decl_str(Env* env, String* output, const Llvm* var_
 
 static void extend_literal_decl_prefix(String* output, String* literals, const Llvm_literal* literal) {
     //if (lang_type_is_equal(llvm_literal_get_lang_type(literal), lang_type_primitive_wrap(lang_type_string_const_wrap(lang_type_string_new(lang_type_atom_new_from_cstr("u8", 1)))))) {
-    if (llvm_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE && lang_type_primitive_const_unwrap(llvm_literal_get_lang_type(literal)).type == LANG_TYPE_STRING) {
+    if (llvm_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE && lang_type_primitive_const_unwrap(llvm_literal_get_lang_type(literal)).type == LANG_TYPE_CHAR && lang_type_get_pointer_depth(llvm_literal_get_lang_type(literal)) > 0) {
         if (lang_type_get_pointer_depth(llvm_literal_get_lang_type(literal)) != 1) {
             todo();
         }

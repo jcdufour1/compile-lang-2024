@@ -154,21 +154,10 @@ static Lang_type_type lang_type_gen_any(const char* prefix) {
     return sym;
 }
 
-static Lang_type_type lang_type_gen_string(const char* prefix) {
-    const char* base_name = "string";
-    Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
-
-    // TODO: get rid of these unneeded atoms
-    append_member(&sym.members, "Lang_type_atom", "atom");
-
-    return sym;
-}
-
 static Lang_type_type lang_type_gen_primitive(const char* prefix) {
     const char* base_name = "primitive";
     Lang_type_type lang_type = {.name = lang_type_name_new(prefix, base_name, false)};
 
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_string(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_char(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_signed_int(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_unsigned_int(base_name));
