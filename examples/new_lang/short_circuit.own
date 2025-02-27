@@ -3,9 +3,8 @@ extern("c") fn printf(str_to_print u8*, args any...) i32
 
 fn one() i32 {
     printf("one called\n")
-    return 1
+    return 4
 }
-
 
 fn zero() i32 {
     printf("zero called\n")
@@ -86,6 +85,26 @@ fn main() i32 {
         printf("yes13\n")
     } else {
         printf("no13\n")
+    }
+
+    // "one called" should only be printed once
+    if one() || one() || one() {
+        printf("yes14\n")
+    } else {
+        printf("no14\n")
+    }
+
+    // "one called" should only be printed once
+    if zero() || one() || one() {
+        printf("yes15\n")
+    } else {
+        printf("no15\n")
+    }
+
+    if zero() || zero() || zero() {
+        printf("no16\n")
+    } else {
+        printf("yes16\n")
     }
 
     return 0

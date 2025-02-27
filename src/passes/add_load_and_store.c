@@ -495,8 +495,14 @@ static Str_view load_binary_short_circuit(
             .name = new_var_def->name,
             .llvm_id = 0
         }))),
-        tast_operator_wrap(tast_unary_wrap(tast_unary_new(
-            old_bin->pos, old_bin->rhs, UNARY_UNSAFE_CAST, u1_lang_type // TODO: this may not work
+        tast_operator_wrap(tast_binary_wrap(tast_binary_new(
+            old_bin->pos,
+            tast_literal_wrap(
+                util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
+            ),
+            old_bin->rhs,
+            BINARY_NOT_EQUAL,
+            tast_expr_get_lang_type(old_bin->rhs)
         )))
     )));
 
@@ -517,8 +523,14 @@ static Str_view load_binary_short_circuit(
         old_bin->pos,
         tast_condition_new(old_bin->pos, tast_binary_wrap(tast_binary_new(
             old_bin->pos,
-            tast_operator_wrap(tast_unary_wrap(tast_unary_new(
-                old_bin->pos, old_bin->lhs, UNARY_UNSAFE_CAST, u1_lang_type // TODO: this may not work
+            tast_operator_wrap(tast_binary_wrap(tast_binary_new(
+                old_bin->pos,
+                old_bin->lhs,
+                tast_literal_wrap(
+                    util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
+                ),
+                BINARY_NOT_EQUAL,
+                tast_expr_get_lang_type(old_bin->lhs) // TODO: this may not work
             ))),
             tast_literal_wrap(
                 util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)

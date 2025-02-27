@@ -582,13 +582,13 @@ static void emit_binary_type_unsigned(String* output, const Llvm_binary* binary)
 }
 
 static void emit_binary_type(Env* env, String* output, const Llvm_binary* binary) {
-    if (lang_type_is_signed(binary->lang_type)) {
+    if (lang_type_is_signed(lang_type_from_get_name(env, binary->lhs))) {
         emit_binary_type_signed(output, binary);
     } else {
         emit_binary_type_unsigned(output, binary);
     }
 
-    extend_type_call_str(env, output, binary->lang_type);
+    extend_type_call_str(env, output, lang_type_from_get_name(env, binary->lhs));
     string_extend_cstr(&a_main, output, " ");
 }
 
