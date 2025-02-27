@@ -30,6 +30,8 @@ typedef enum {
     TOKEN_BITWISE_AND,
     TOKEN_BITWISE_OR,
     TOKEN_BITWISE_XOR,
+    TOKEN_LOGICAL_AND,
+    TOKEN_LOGICAL_OR,
 
     // unary operators
     TOKEN_NOT,
@@ -123,8 +125,6 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_NOT_EQUAL:
             return false;
-        case TOKEN_BITWISE_XOR:
-            return false;
         case TOKEN_NOT:
             return false;
         case TOKEN_DEREF:
@@ -217,6 +217,12 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_BITWISE_OR:
             return false;
+        case TOKEN_BITWISE_XOR:
+            return false;
+        case TOKEN_LOGICAL_AND:
+            return false;
+        case TOKEN_LOGICAL_OR:
+            return false;
     }
     unreachable("");
 }
@@ -242,8 +248,6 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
         case TOKEN_NOT:
             return true;
         case TOKEN_DEREF:
-            return true;
-        case TOKEN_BITWISE_XOR:
             return true;
         case TOKEN_REFER:
             return true;
@@ -338,6 +342,12 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
         case TOKEN_BITWISE_AND:
             return true;
         case TOKEN_BITWISE_OR:
+            return true;
+        case TOKEN_BITWISE_XOR:
+            return true;
+        case TOKEN_LOGICAL_AND:
+            return true;
+        case TOKEN_LOGICAL_OR:
             return true;
     }
     unreachable(TOKEN_FMT"\n", token_print(TOKEN_MODE_LOG, token));
@@ -481,6 +491,10 @@ static inline bool token_is_closing(Token curr_token) {
             return false;
         case TOKEN_BITWISE_OR:
             return false;
+        case TOKEN_LOGICAL_AND:
+            return false;
+        case TOKEN_LOGICAL_OR:
+            return false;
     }
     unreachable("");
 }
@@ -602,6 +616,10 @@ static inline bool token_is_opening(Token curr_token) {
         case TOKEN_BITWISE_AND:
             return false;
         case TOKEN_BITWISE_OR:
+            return false;
+        case TOKEN_LOGICAL_AND:
+            return false;
+        case TOKEN_LOGICAL_OR:
             return false;
     }
     unreachable("");

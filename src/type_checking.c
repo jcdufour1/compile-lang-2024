@@ -442,6 +442,10 @@ static int64_t precalulate_number_internal(int64_t lhs_val, int64_t rhs_val, BIN
             return lhs_val&rhs_val;
         case BINARY_BITWISE_OR:
             return lhs_val|rhs_val;
+        case BINARY_LOGICAL_AND:
+            return lhs_val && rhs_val;
+        case BINARY_LOGICAL_OR:
+            return lhs_val || rhs_val;
     }
     unreachable("");
 }

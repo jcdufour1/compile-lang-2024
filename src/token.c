@@ -120,6 +120,10 @@ Str_view token_type_to_str_view_msg(TOKEN_TYPE token_type) {
             return str_view_from_cstr("&");
         case TOKEN_BITWISE_OR:
             return str_view_from_cstr("|");
+        case TOKEN_LOGICAL_AND:
+            return str_view_from_cstr("&&");
+        case TOKEN_LOGICAL_OR:
+            return str_view_from_cstr("||");
     }
     unreachable("%d\n", token_type);
 }
@@ -242,6 +246,10 @@ Str_view token_type_to_str_view_log(TOKEN_TYPE token_type) {
             return str_view_from_cstr("&");
         case TOKEN_BITWISE_OR:
             return str_view_from_cstr("|");
+        case TOKEN_LOGICAL_AND:
+            return str_view_from_cstr("&&");
+        case TOKEN_LOGICAL_OR:
+            return str_view_from_cstr("||");
     }
     unreachable("%d\n", token_type);
 }
@@ -320,6 +328,8 @@ Str_view token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         case TOKEN_MODULO: // fallthrough
         case TOKEN_BITWISE_AND: // fallthrough
         case TOKEN_BITWISE_OR: // fallthrough
+        case TOKEN_LOGICAL_AND: // fallthrough
+        case TOKEN_LOGICAL_OR: // fallthrough
         case TOKEN_TYPE_DEF:
             break;
         case TOKEN_COMMENT: 

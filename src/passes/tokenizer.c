@@ -32,6 +32,21 @@ static bool is_equal(char prev, char curr) {
     return curr == '=';
 }
 
+static bool is_and(char prev, char curr) {
+    (void) prev;
+    return curr == '&';
+}
+
+static bool is_or(char prev, char curr) {
+    (void) prev;
+    return curr == '|';
+}
+
+static bool is_xor(char prev, char curr) {
+    (void) prev;
+    return curr == '^';
+}
+
 static bool is_dot(char prev, char curr) {
     (void) prev;
     return curr == '.';
@@ -169,15 +184,46 @@ static bool get_next_token(const Env* env, Pos* pos, Token* token, Str_view_col*
     } else if (str_view_col_try_consume(pos, file_text, '/')) {
         token->type = TOKEN_SLASH;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text, '&')) {
-        token->type = TOKEN_BITWISE_AND;
-        return true;
-    } else if (str_view_col_try_consume(pos, file_text, '^')) {
-        token->type = TOKEN_BITWISE_XOR;
-        return true;
-    } else if (str_view_col_try_consume(pos, file_text, '|')) {
-        token->type = TOKEN_BITWISE_OR;
-        return true;
+    } else if (str_view_col_front(*file_text) == '&') {
+        Str_view_col equals = str_view_col_consume_while(pos, file_text, is_and);
+        if (equals.base.count == 1) {
+            token->type = TOKEN_BITWISE_AND;
+            return true;
+        } else if (equals.base.count == 2) {
+            token->type = TOKEN_LOGICAL_AND;
+            return true;
+        } else {
+            msg_tokenizer_invalid_token(env->file_text, equals, *pos);
+            token->type = TOKEN_NONTYPE;
+            return true;
+        }
+    } else if (str_view_col_front(*file_text) == '^') {
+        Str_view_col equals = str_view_col_consume_while(pos, file_text, is_xor);
+        if (equals.base.count == 1) {
+            token->type = TOKEN_BITWISE_XOR;
+            return true;
+        } else if (equals.base.count == 2) {
+            msg_tokenizer_invalid_token(env->file_text, equals, *pos);
+            token->type = TOKEN_NONTYPE;
+            return true;
+        } else {
+            msg_tokenizer_invalid_token(env->file_text, equals, *pos);
+            token->type = TOKEN_NONTYPE;
+            return true;
+        }
+    } else if (str_view_col_front(*file_text) == '|') {
+        Str_view_col equals = str_view_col_consume_while(pos, file_text, is_or);
+        if (equals.base.count == 1) {
+            token->type = TOKEN_BITWISE_OR;
+            return true;
+        } else if (equals.base.count == 2) {
+            token->type = TOKEN_LOGICAL_OR;
+            return true;
+        } else {
+            msg_tokenizer_invalid_token(env->file_text, equals, *pos);
+            token->type = TOKEN_NONTYPE;
+            return true;
+        }
     } else if (str_view_col_try_consume(pos, file_text, ':')) {
         token->type = TOKEN_COLON;
         return true;

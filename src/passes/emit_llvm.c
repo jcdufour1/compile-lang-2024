@@ -521,6 +521,10 @@ static void emit_binary_type_signed(String* output, const Llvm_binary* binary) {
         case BINARY_BITWISE_OR:
             string_extend_cstr(&a_main, output, "or ");
             return;
+        case BINARY_LOGICAL_AND:
+            // fallthrough
+        case BINARY_LOGICAL_OR:
+            unreachable("logical operators should not make it this far");
     }
     unreachable("");
 }
@@ -569,6 +573,10 @@ static void emit_binary_type_unsigned(String* output, const Llvm_binary* binary)
         case BINARY_BITWISE_OR:
             string_extend_cstr(&a_main, output, "or ");
             return;
+        case BINARY_LOGICAL_AND:
+            // fallthrough
+        case BINARY_LOGICAL_OR:
+            unreachable("logical operators should not make it this far");
     }
     unreachable("");
 }

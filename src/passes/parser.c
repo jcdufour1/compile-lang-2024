@@ -469,6 +469,10 @@ static bool can_end_statement(Token token) {
             return false;
         case TOKEN_BITWISE_OR:
             return false;
+        case TOKEN_LOGICAL_AND:
+            return false;
+        case TOKEN_LOGICAL_OR:
+            return false;
     }
     unreachable("");
 }
@@ -478,48 +482,52 @@ static int32_t get_operator_precedence(TOKEN_TYPE type) {
     switch (type) {
         case TOKEN_COMMA:
             return 1;
-        case TOKEN_BITWISE_AND:
-            return 10;
+        case TOKEN_LOGICAL_OR:
+            return 8;
+        case TOKEN_LOGICAL_AND:
+            return 9;
         case TOKEN_BITWISE_OR:
             return 10;
         case TOKEN_BITWISE_XOR:
-            return 10;
+            return 11;
+        case TOKEN_BITWISE_AND:
+            return 12;
         case TOKEN_NOT_EQUAL:
-            return 11;
+            return 13;
         case TOKEN_DOUBLE_EQUAL:
-            return 11;
+            return 13;
         case TOKEN_LESS_THAN:
-            return 13;
+            return 15;
         case TOKEN_GREATER_THAN:
-            return 13;
+            return 15;
         case TOKEN_LESS_OR_EQUAL:
-            return 13;
+            return 15;
         case TOKEN_GREATER_OR_EQUAL:
-            return 13;
+            return 15;
         case TOKEN_SINGLE_PLUS:
-            return 14;
+            return 16;
         case TOKEN_SINGLE_MINUS:
-            return 14;
+            return 16;
         case TOKEN_ASTERISK:
-            return 15;
+            return 17;
         case TOKEN_SLASH:
-            return 15;
+            return 17;
         case TOKEN_MODULO:
-            return 15;
+            return 17;
         case TOKEN_NOT:
-            return 25;
+            return 27;
         case TOKEN_DEREF:
-            return 25;
+            return 27;
         case TOKEN_REFER:
-            return 25;
+            return 27;
         case TOKEN_UNSAFE_CAST:
-            return 25;
+            return 27;
         case TOKEN_SINGLE_DOT:
-            return 30;
+            return 32;
         case TOKEN_OPEN_SQ_BRACKET:
-            return 30;
+            return 32;
         case TOKEN_OPEN_PAR:
-            return 30;
+            return 32;
         default:
             unreachable(TOKEN_TYPE_FMT, token_type_print(TOKEN_MODE_LOG, type));
     }
@@ -643,6 +651,10 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_BITWISE_OR:
             return false;
+        case TOKEN_LOGICAL_AND:
+            return false;
+        case TOKEN_LOGICAL_OR:
+            return false;
     }
     unreachable("");
 }
@@ -764,6 +776,10 @@ static bool is_binary(TOKEN_TYPE token_type) {
         case TOKEN_BITWISE_AND:
             return true;
         case TOKEN_BITWISE_OR:
+            return true;
+        case TOKEN_LOGICAL_AND:
+            return true;
+        case TOKEN_LOGICAL_OR:
             return true;
     }
     unreachable("");
@@ -2172,6 +2188,10 @@ static PARSE_EXPR_STATUS extract_binary(
         case TOKEN_BITWISE_OR:
             // fallthrough
         case TOKEN_BITWISE_XOR:
+            // fallthrough
+        case TOKEN_LOGICAL_AND:
+            // fallthrough
+        case TOKEN_LOGICAL_OR:
             // fallthrough
         case TOKEN_DOUBLE_EQUAL:
             *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, lhs, rhs, token_type_to_binary_type(oper.type))));
