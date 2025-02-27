@@ -20,6 +20,8 @@ typedef enum {
     BINARY_BITWISE_OR,
     BINARY_LOGICAL_AND,
     BINARY_LOGICAL_OR,
+    BINARY_SHIFT_LEFT,
+    BINARY_SHIFT_RIGHT,
 } BINARY_TYPE;
 
 static inline Str_view binary_type_to_str_view(BINARY_TYPE bin_type) {
@@ -56,6 +58,10 @@ static inline Str_view binary_type_to_str_view(BINARY_TYPE bin_type) {
             return str_view_from_cstr("&&");
         case BINARY_LOGICAL_OR:
             return str_view_from_cstr("||");
+        case BINARY_SHIFT_LEFT:
+            return str_view_from_cstr("<<");
+        case BINARY_SHIFT_RIGHT:
+            return str_view_from_cstr(">>");
     }
     unreachable("");
 }

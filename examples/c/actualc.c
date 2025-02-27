@@ -47,17 +47,28 @@ void print_token(Token token1) {
     printf("%d\n", token1.type);
 }
 
-static int get_num(void) {
+static int get_num_1(void) {
+    printf("get_num_1\n");
     return 7;
 }
 
+static int get_num_2(void) {
+    printf("get_num_2\n");
+    return 6;
+}
+
+static int get_num_3(void) {
+    printf("get_num_3\n");
+    return 5;
+}
+
 int main() {
-    Token token1 = {0};
-    token1.type = 0;
-    printf("%p\n", 'c');
+    //if (get_num_1() < 4 && get_num_2() > 5 || get_num_3() < 6) {
+    //    printf("yes\n");
+    //}
 
-    int num = 8* -get_num();
-    printf("%d\n", num);
-
+    if (get_num_1() && get_num_2() && get_num_3() < 6) {
+        printf("yes\n");
+    }
     return 0;
 }

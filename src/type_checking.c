@@ -446,6 +446,10 @@ static int64_t precalulate_number_internal(int64_t lhs_val, int64_t rhs_val, BIN
             return lhs_val && rhs_val;
         case BINARY_LOGICAL_OR:
             return lhs_val || rhs_val;
+        case BINARY_SHIFT_LEFT:
+            return lhs_val<<rhs_val;
+        case BINARY_SHIFT_RIGHT:
+            return lhs_val>>rhs_val;
     }
     unreachable("");
 }
@@ -540,6 +544,10 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
         ));
 
         switch (oper_token_type) {
+            case BINARY_SHIFT_LEFT:
+                // fallthrough
+            case BINARY_SHIFT_RIGHT:
+                // fallthrough
             case BINARY_BITWISE_XOR:
                 // fallthrough
             case BINARY_BITWISE_AND:

@@ -19,3 +19,10 @@ yes num16
 no num17
 yes num18
 no num19
+num20: 0
+num21: 2
+num22: 4
+num23: 0
+num24: 0
+num25: 0
+num26: 32

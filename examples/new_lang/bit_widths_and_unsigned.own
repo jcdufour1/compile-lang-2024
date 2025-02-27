@@ -109,6 +109,31 @@ fn less_than_or_equal() {
     }
 }
 
+fn bit_shift_right() {
+    let num20 u8 = 0
+    printf("num20: %d\n", num20<<1)
+
+    let num21 u8 = 1
+    printf("num21: %d\n", num21<<1)
+
+    let num22 u8 = 1
+    printf("num22: %d\n", num22<<2)
+
+    let num23 u8 = 1
+    printf("num23: %d\n", num23<<8)
+}
+
+fn bit_shift_left() {
+    let num24 u8 = 0
+    printf("num24: %d\n", num24>>1)
+
+    let num25 u8 = 1
+    printf("num25: %d\n", num25>>1)
+
+    let num26 u8 = 128
+    printf("num26: %d\n", num26>>2)
+}
+
 fn main() i32 {
     let num1 u32 = 8 
     let num2 u32 = 3 
@@ -132,6 +157,9 @@ fn main() i32 {
     greater_than_or_equal()
     less_than()
     less_than_or_equal()
+
+    bit_shift_right()
+    bit_shift_left()
 
     //let num7 u8 = 255;
     //printf("num7: %d\n", num7)

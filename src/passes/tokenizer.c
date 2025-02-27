@@ -251,6 +251,9 @@ static bool get_next_token(const Env* env, Pos* pos, Token* token, Str_view_col*
         if (str_view_col_try_consume(pos, file_text, '=')) {
             token->type = TOKEN_GREATER_OR_EQUAL;
             return true;
+        } else if (str_view_col_try_consume(pos, file_text, '>')) {
+            token->type = TOKEN_SHIFT_RIGHT;
+            return true;
         } else {
             token->type = TOKEN_GREATER_THAN;
             return true;
@@ -258,6 +261,9 @@ static bool get_next_token(const Env* env, Pos* pos, Token* token, Str_view_col*
     } else if (str_view_col_try_consume(pos, file_text, '<')) {
         if (str_view_col_try_consume(pos, file_text, '=')) {
             token->type = TOKEN_LESS_OR_EQUAL;
+            return true;
+        } else if (str_view_col_try_consume(pos, file_text, '<')) {
+            token->type = TOKEN_SHIFT_LEFT;
             return true;
         } else {
             token->type = TOKEN_LESS_THAN;

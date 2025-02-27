@@ -47,6 +47,10 @@ static bool binary_is_short_circuit(BINARY_TYPE type) {
             return true;
         case BINARY_LOGICAL_OR:
             return true;
+        case BINARY_SHIFT_LEFT:
+            return false;
+        case BINARY_SHIFT_RIGHT:
+            return false;
     }
     unreachable("");
 }

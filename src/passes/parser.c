@@ -473,6 +473,10 @@ static bool can_end_statement(Token token) {
             return false;
         case TOKEN_LOGICAL_OR:
             return false;
+        case TOKEN_SHIFT_LEFT:
+            return false;
+        case TOKEN_SHIFT_RIGHT:
+            return false;
     }
     unreachable("");
 }
@@ -504,30 +508,34 @@ static int32_t get_operator_precedence(TOKEN_TYPE type) {
             return 15;
         case TOKEN_GREATER_OR_EQUAL:
             return 15;
+        case TOKEN_SHIFT_LEFT:
+            return 16;
+        case TOKEN_SHIFT_RIGHT:
+            return 16;
         case TOKEN_SINGLE_PLUS:
-            return 16;
+            return 17;
         case TOKEN_SINGLE_MINUS:
-            return 16;
+            return 17;
         case TOKEN_ASTERISK:
-            return 17;
+            return 18;
         case TOKEN_SLASH:
-            return 17;
+            return 18;
         case TOKEN_MODULO:
-            return 17;
+            return 18;
         case TOKEN_NOT:
-            return 27;
+            return 28;
         case TOKEN_DEREF:
-            return 27;
+            return 28;
         case TOKEN_REFER:
-            return 27;
+            return 28;
         case TOKEN_UNSAFE_CAST:
-            return 27;
+            return 28;
         case TOKEN_SINGLE_DOT:
-            return 32;
+            return 33;
         case TOKEN_OPEN_SQ_BRACKET:
-            return 32;
+            return 33;
         case TOKEN_OPEN_PAR:
-            return 32;
+            return 33;
         default:
             unreachable(TOKEN_TYPE_FMT, token_type_print(TOKEN_MODE_LOG, type));
     }
@@ -655,6 +663,10 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_LOGICAL_OR:
             return false;
+        case TOKEN_SHIFT_LEFT:
+            return false;
+        case TOKEN_SHIFT_RIGHT:
+            return false;
     }
     unreachable("");
 }
@@ -780,6 +792,10 @@ static bool is_binary(TOKEN_TYPE token_type) {
         case TOKEN_LOGICAL_AND:
             return true;
         case TOKEN_LOGICAL_OR:
+            return true;
+        case TOKEN_SHIFT_LEFT:
+            return true;
+        case TOKEN_SHIFT_RIGHT:
             return true;
     }
     unreachable("");
@@ -2192,6 +2208,10 @@ static PARSE_EXPR_STATUS extract_binary(
         case TOKEN_LOGICAL_AND:
             // fallthrough
         case TOKEN_LOGICAL_OR:
+            // fallthrough
+        case TOKEN_SHIFT_LEFT:
+            // fallthrough
+        case TOKEN_SHIFT_RIGHT:
             // fallthrough
         case TOKEN_DOUBLE_EQUAL:
             *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, lhs, rhs, token_type_to_binary_type(oper.type))));
