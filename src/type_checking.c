@@ -179,7 +179,7 @@ static void msg_invalid_function_arg_internal(
     );
     msg_internal(
         file, line,
-        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, corres_param->pos,
+        LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, corres_param->pos,
         "corresponding parameter `"STR_VIEW_FMT"` defined here\n",
         str_view_print(corres_param->name)
     );
@@ -210,7 +210,7 @@ static void msg_invalid_count_function_args_internal(
     );
 
     msg_internal(
-        file, line, LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, uast_function_decl_get_pos(fun_decl),
+        file, line, LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, uast_function_decl_get_pos(fun_decl),
         "function `"STR_VIEW_FMT"` defined here\n", str_view_print(fun_decl->name)
     );
 }
@@ -242,7 +242,7 @@ static void msg_invalid_return_type_internal(const char* file, int line, Env* en
 
     msg_internal(
         file, line,
-        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, fun_decl->return_type->pos,
+        LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, fun_decl->return_type->pos,
         "function return type `"LANG_TYPE_FMT"` defined here\n",
         ulang_type_print(LANG_TYPE_MODE_MSG, fun_decl->return_type->lang_type)
     );
@@ -679,7 +679,7 @@ bool try_set_tuple_assignment_types(
             uast_tuple_print(tuple), lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type)
         );
         msg(
-            LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text,
+            LOG_NOTE, EXPECT_FAIL_NONE, env->file_text,
             uast_tuple_get_pos(tuple),
             "tuple `"UAST_FMT"` has %zu elements, but type `"LANG_TYPE_FMT" has %zu elements`\n",
             uast_tuple_print(tuple), tuple->members.info.count,
@@ -803,12 +803,12 @@ bool try_set_struct_literal_assignment_types(
             );
             // TODO: consider how to handle this
             //msg(
-            //    LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, lhs_var_def->pos,
+            //    LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, lhs_var_def->pos,
             //    "variable `"STR_VIEW_FMT"` is defined as struct `"LANG_TYPE_FMT"`\n",
             //    str_view_print(lhs_var_def->name), lang_type_print(lhs_var_def->lang_type)
             //);
             //msg(
-            //    LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, memb_sym_def->pos,
+            //    LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, memb_sym_def->pos,
             //    "member symbol `"STR_VIEW_FMT"` of struct `"STR_VIEW_FMT"` defined here\n", 
             //    str_view_print(memb_sym_def->name), lang_type_print(lhs_var_def->lang_type)
             //);
@@ -1002,7 +1002,7 @@ bool try_set_function_call_types_sum_case(Env* env, Tast_sum_case** new_case, Ua
         case LANG_TYPE_VOID: {
             if (args.info.count > 0) {
                 // TODO: expected failure case
-                msg(LOG_DEBUG, EXPECT_FAIL_TYPE_NONE, env->file_text, uast_expr_get_pos(vec_at(&args, 0)), "no arguments expected here\n");
+                msg(LOG_DEBUG, EXPECT_FAIL_NONE, env->file_text, uast_expr_get_pos(vec_at(&args, 0)), "no arguments expected here\n");
                 todo();
             }
             *new_case = sum_case;
@@ -2113,16 +2113,15 @@ static bool check_for_exhaustiveness_finish(Env* env, Exhaustive_data exhaustive
                 }
 
                 if (status == true) {
-                    string_extend_cstr(&a_main, &string, "some cases are not covered:\n");
+                    string_extend_cstr(&a_main, &string, "some cases are not covered: ");
                     status = false;
+                } else {
+                    string_extend_cstr(&a_main, &string, ", ");
                 }
 
-                // TODO: make printing less ugly
-                string_extend_cstr(&a_main, &string, "    ");
                 string_extend_strv(&a_main, &string, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(&enum_def.members, idx)->lang_type));
                 string_extend_cstr(&a_main, &string, ".");
                 string_extend_strv(&a_main, &string, vec_at(&enum_def.members, idx)->name);
-
             }
         }
 
@@ -2201,7 +2200,7 @@ static void try_set_msg_redefinition_of_symbol(Env* env, const Uast_def* new_sym
     Uast_def* original_def;
     try(usymbol_lookup(&original_def, env, uast_def_get_name(new_sym_def)));
     msg(
-        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, uast_def_get_pos(original_def),
+        LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, uast_def_get_pos(original_def),
         STR_VIEW_FMT " originally defined here\n", str_view_print(uast_def_get_name(original_def))
     );
 }

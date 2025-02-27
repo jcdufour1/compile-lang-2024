@@ -146,7 +146,7 @@ static PARSE_STATUS msg_redefinition_of_symbol(Env* env, const Uast_def* new_sym
     Uast_def* original_def;
     try(usymbol_lookup(&original_def, env, uast_def_get_name(new_sym_def)));
     msg(
-        LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, uast_def_get_pos(original_def),
+        LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, uast_def_get_pos(original_def),
         STR_VIEW_FMT " originally defined here\n", str_view_print(uast_def_get_name(original_def))
     );
 
@@ -1583,8 +1583,8 @@ static PARSE_STATUS extract_if_else_chain(Env* env, Uast_if_else_chain** if_else
 
 
 static PARSE_STATUS extract_switch(Env* env, Uast_switch** lang_switch, Tk_view* tokens) {
-    Token switch_start_token = {0};
-    try(try_consume(&switch_start_token, tokens, TOKEN_SWITCH));
+    Token start_token = {0};
+    try(try_consume(&start_token, tokens, TOKEN_SWITCH));
 
     Uast_expr* operand = NULL;
     switch (try_extract_expression(env, &operand, tokens, false, false)) {
@@ -1599,8 +1599,8 @@ static PARSE_STATUS extract_switch(Env* env, Uast_switch** lang_switch, Tk_view*
             unreachable("");
     }
 
-    try(try_consume(&switch_start_token, tokens, TOKEN_OPEN_CURLY_BRACE));
-    try(try_consume(&switch_start_token, tokens, TOKEN_NEW_LINE));
+    try(try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE));
+    try(try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
     Uast_case_vec cases = {0};
 
@@ -1626,7 +1626,8 @@ static PARSE_STATUS extract_switch(Env* env, Uast_switch** lang_switch, Tk_view*
             break;
         }
 
-        try(try_consume(&switch_start_token, tokens, TOKEN_COLON));
+        Token case_start_token = {0};
+        try(try_consume(&case_start_token, tokens, TOKEN_COLON));
         switch (extract_statement(env, &case_if_true, tokens, false)) {
             case PARSE_EXPR_OK:
                 break;
@@ -1639,7 +1640,7 @@ static PARSE_STATUS extract_switch(Env* env, Uast_switch** lang_switch, Tk_view*
                 unreachable("");
         }
         Uast_case* curr_case = uast_case_new(
-            switch_start_token.pos,
+            case_start_token.pos,
             case_is_default,
             case_operand,
             case_if_true
@@ -1647,8 +1648,8 @@ static PARSE_STATUS extract_switch(Env* env, Uast_switch** lang_switch, Tk_view*
         vec_append(&a_main, &cases, curr_case);
     }
 
-    *lang_switch = uast_switch_new(switch_start_token.pos, operand, cases);
-    try(try_consume(&switch_start_token, tokens, TOKEN_CLOSE_CURLY_BRACE));
+    *lang_switch = uast_switch_new(start_token.pos, operand, cases);
+    try(try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
     return PARSE_OK;
 }
 

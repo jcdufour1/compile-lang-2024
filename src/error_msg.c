@@ -94,13 +94,13 @@ void msg_internal(
         }
         assert(expected_fail_count < params.expected_fail_types.info.count && "out of bounds");
         EXPECT_FAIL_TYPE expected_expect_fail = vec_at(&params.expected_fail_types, expected_fail_count);
-        assert(expected_expect_fail != EXPECT_FAIL_TYPE_NONE);
+        assert(expected_expect_fail != EXPECT_FAIL_NONE);
 
         if (msg_expect_fail_type != expected_expect_fail) {
             log(LOG_FATAL, "fail type %d occured, but %d was expected\n", msg_expect_fail_type, expected_expect_fail);
             exit(EXIT_CODE_FAIL);
         }
-        assert(expected_expect_fail != EXPECT_FAIL_TYPE_NONE);
+        assert(expected_expect_fail != EXPECT_FAIL_NONE);
 
         log(LOG_NOTE, "expected fail occured\n");
         expected_fail_count++;
