@@ -13,6 +13,44 @@
 
 #include "passes.h"
 
+static bool binary_is_short_circuit(BINARY_TYPE type) {
+    switch (type) {
+        case BINARY_SUB:
+            return false;
+        case BINARY_ADD:
+            return false;
+        case BINARY_MULTIPLY:
+            return false;
+        case BINARY_DIVIDE:
+            return false;
+        case BINARY_MODULO:
+            return false;
+        case BINARY_LESS_THAN:
+            return false;
+        case BINARY_LESS_OR_EQUAL:
+            return false;
+        case BINARY_GREATER_OR_EQUAL:
+            return false;
+        case BINARY_GREATER_THAN:
+            return false;
+        case BINARY_DOUBLE_EQUAL:
+            return false;
+        case BINARY_NOT_EQUAL:
+            return false;
+        case BINARY_BITWISE_XOR:
+            return false;
+        case BINARY_BITWISE_AND:
+            return false;
+        case BINARY_BITWISE_OR:
+            return false;
+        case BINARY_LOGICAL_AND:
+            return true;
+        case BINARY_LOGICAL_OR:
+            return true;
+    }
+    unreachable("");
+}
+
 static Llvm_variable_def* load_variable_def_clone(Tast_variable_def* old_var_def);
 
 static Llvm_alloca* add_load_and_store_alloca_new(Env* env, Llvm_variable_def* var_def) {
@@ -155,6 +193,12 @@ static Str_view load_variable_def(
     Env* env,
     Llvm_block* new_block,
     Tast_variable_def* old_var_def
+);
+
+static Str_view load_if_else_chain(
+    Env* env,
+    Llvm_block* new_block,
+    Tast_if_else_chain* old_if_else
 );
 
 static void add_label(Env* env, Llvm_block* block, Str_view label_name, Pos pos, bool defer_add_sym) {
@@ -410,11 +454,137 @@ static Str_view load_symbol(
     return new_load->name;
 }
 
+static Str_view load_binary_short_circuit(
+    Env* env,
+    Llvm_block* new_block,
+    Tast_binary* old_bin
+) {
+    Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
+        lang_type_unsigned_int_new(1, 0)
+    ));
+
+    Tast_variable_def* new_var_def = tast_variable_def_new(
+        old_bin->pos,
+        u1_lang_type,
+        false,
+        util_literal_name_new_prefix("short_cir")
+    );
+    try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(new_var_def)));
+
+    Tast_stmt_vec if_true_stmts = {0};
+    vec_append(&a_main, &if_true_stmts, tast_assignment_wrap(tast_assignment_new(
+        old_bin->pos,
+        tast_expr_wrap(tast_symbol_wrap(tast_symbol_new(old_bin->pos, (Sym_typed_base) {
+            .lang_type = u1_lang_type,
+            .name = new_var_def->name,
+            .llvm_id = 0
+        }))),
+        tast_literal_wrap(
+            util_tast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, old_bin->pos)
+        )
+    )));
+
+    Tast_stmt_vec if_false_stmts = {0};
+    vec_append(&a_main, &if_false_stmts, tast_assignment_wrap(tast_assignment_new(
+        old_bin->pos,
+        tast_expr_wrap(tast_symbol_wrap(tast_symbol_new(old_bin->pos, (Sym_typed_base) {
+            .lang_type = u1_lang_type,
+            .name = new_var_def->name,
+            .llvm_id = 0
+        }))),
+        tast_literal_wrap(
+            util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
+        )
+    )));
+
+    switch (old_bin->token_type) {
+        case BINARY_LOGICAL_AND: {
+            Tast_if* if_true = tast_if_new(
+                old_bin->pos,
+                tast_condition_new(old_bin->pos, tast_binary_wrap(tast_binary_new(
+                    old_bin->pos,
+                    tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+                        old_bin->pos, old_bin->lhs, UNARY_UNSAFE_CAST, u1_lang_type
+                    ))),
+                    tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+                        old_bin->pos, old_bin->rhs, UNARY_UNSAFE_CAST, u1_lang_type
+                    ))),
+                    BINARY_BITWISE_AND,
+                    u1_lang_type
+                ))),
+                // TODO: load inner expr in block, and update new symbol
+                tast_block_new(old_bin->pos, if_true_stmts, (Symbol_collection) {0}, old_bin->pos)
+            );
+
+            Tast_if* if_false = tast_if_new(
+                old_bin->pos,
+                tast_condition_new(old_bin->pos, tast_binary_wrap(tast_binary_new(
+                    old_bin->pos,
+                    tast_literal_wrap(
+                        util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
+                    ),
+                    tast_literal_wrap(
+                        util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
+                    ),
+                    BINARY_DOUBLE_EQUAL,
+                    u1_lang_type
+                ))),
+                // TODO: load inner expr in block, and update new symbol
+                tast_block_new(old_bin->pos, if_false_stmts, (Symbol_collection) {0}, old_bin->pos)
+            );
+
+            Tast_if_vec ifs = {0};
+            vec_append(&a_main, &ifs, if_true);
+            vec_append(&a_main, &ifs, if_false);
+            Tast_if_else_chain* if_else = tast_if_else_chain_new(old_bin->pos, ifs);
+            
+            //log(LOG_DEBUG, TAST_FMT, tast_if_print(if_true));
+            //log(LOG_DEBUG, TAST_FMT, tast_if_print(if_false));
+            log(LOG_DEBUG, TAST_FMT, tast_if_else_chain_print(if_else));
+            load_variable_def(env, new_block, new_var_def);
+            load_if_else_chain(env, new_block, if_else);
+            return load_symbol(env, new_block, tast_symbol_new(old_bin->pos, (Sym_typed_base) {
+                .lang_type = u1_lang_type,
+                .name = new_var_def->name,
+                .llvm_id = 0
+            }));
+        }
+        case BINARY_LOGICAL_OR:
+            todo();
+        default:
+            unreachable("");
+    }
+}
+
+//static Str_view load_binary_short_circuit(
+//    Env* env,
+//    Llvm_block* new_block,
+//    Tast_binary* old_bin
+//) {
+//    Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
+//        lang_type_unsigned_int_new(1, 0)
+//    ));
+//
+//    switch (old_bin->token_type) {
+//        case BINARY_LOGICAL_AND: {
+//
+//        }
+//        case BINARY_LOGICAL_OR:
+//            todo();
+//        default:
+//            unreachable("");
+//    }
+//}
+
 static Str_view load_binary(
     Env* env,
     Llvm_block* new_block,
     Tast_binary* old_bin
 ) {
+    if (binary_is_short_circuit(old_bin->token_type)) {
+        return load_binary_short_circuit(env, new_block, old_bin);
+    }
+
     Llvm_binary* new_bin = llvm_binary_new(
         old_bin->pos,
         load_expr(env, new_block, old_bin->lhs),
@@ -424,6 +594,7 @@ static Str_view load_binary(
         0,
         util_literal_name_new()
     );
+
     try(alloca_add(env, llvm_expr_wrap(llvm_operator_wrap(llvm_binary_wrap(new_bin)))));
 
     vec_append(&a_main, &new_block->children, llvm_expr_wrap(llvm_operator_wrap(llvm_binary_wrap(new_bin))));

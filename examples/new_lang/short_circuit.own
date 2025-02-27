@@ -1,0 +1,63 @@
+
+extern("c") fn printf(str_to_print u8*, args any...) i32
+
+fn one() i32 {
+    return 1
+}
+
+
+fn zero() i32 {
+    return 0
+}
+
+fn main() i32 {
+    {
+        let thing u1 = 2 < 7
+        if thing {
+            printf("yes\n")
+        } else {
+            printf("no\n")
+        }
+    }
+
+    {
+        let thing u1 = 7 < 2
+        if thing {
+            printf("no\n")
+        } else {
+            printf("yes\n")
+        }
+    }
+
+    if 1 && 1 {
+        printf("yes5\n")
+    } else {
+        printf("no5\n")
+    }
+
+    if one() && 1 {
+        printf("yes6\n")
+    } else {
+        printf("no6\n")
+    }
+
+    if one() && 0 {
+        printf("no7\n")
+    } else {
+        printf("yes7\n")
+    }
+
+    if zero() && 1 {
+        printf("no8\n")
+    } else {
+        printf("yes8\n")
+    }
+
+    if zero() && 0 {
+        printf("no9\n")
+    } else {
+        printf("yes9\n")
+    }
+
+    return 0
+}
