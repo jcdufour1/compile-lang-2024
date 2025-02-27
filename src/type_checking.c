@@ -435,9 +435,13 @@ static int64_t precalulate_number_internal(int64_t lhs_val, int64_t rhs_val, BIN
         case BINARY_GREATER_OR_EQUAL:
             return lhs_val >= rhs_val ? 1 : 0;
         case BINARY_MODULO:
-            return lhs_val %= rhs_val ? 1 : 0;
+            return lhs_val%rhs_val;
         case BINARY_XOR:
-            return lhs_val ^= rhs_val ? 1 : 0;
+            return lhs_val^rhs_val;
+        case BINARY_BITWISE_AND:
+            return lhs_val&rhs_val;
+        case BINARY_BITWISE_OR:
+            return lhs_val|rhs_val;
     }
     unreachable("");
 }

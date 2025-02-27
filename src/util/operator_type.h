@@ -15,6 +15,8 @@ typedef enum {
     BINARY_GREATER_THAN,
     BINARY_DOUBLE_EQUAL,
     BINARY_NOT_EQUAL,
+    BINARY_BITWISE_AND,
+    BINARY_BITWISE_OR,
     BINARY_XOR,
 } BINARY_TYPE;
 
@@ -44,6 +46,10 @@ static inline Str_view binary_type_to_str_view(BINARY_TYPE bin_type) {
             return str_view_from_cstr("!=");
         case BINARY_XOR:
             return str_view_from_cstr("xor");
+        case BINARY_BITWISE_AND:
+            return str_view_from_cstr("&");
+        case BINARY_BITWISE_OR:
+            return str_view_from_cstr("|");
     }
     unreachable("");
 }

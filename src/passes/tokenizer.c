@@ -169,6 +169,12 @@ static bool get_next_token(const Env* env, Pos* pos, Token* token, Str_view_col*
     } else if (str_view_col_try_consume(pos, file_text, '/')) {
         token->type = TOKEN_SLASH;
         return true;
+    } else if (str_view_col_try_consume(pos, file_text, '&')) {
+        token->type = TOKEN_BITWISE_AND;
+        return true;
+    } else if (str_view_col_try_consume(pos, file_text, '|')) {
+        token->type = TOKEN_BITWISE_OR;
+        return true;
     } else if (str_view_col_try_consume(pos, file_text, ':')) {
         token->type = TOKEN_COLON;
         return true;

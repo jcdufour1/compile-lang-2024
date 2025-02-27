@@ -61,6 +61,81 @@ fn part_2() {
     }
 }
 
+fn bitwise_and() {
+    printf("bitwise and:\n")
+    {
+        let num i32 = 0
+        num = num & 0
+        printf("%d\n", num)
+    }
+
+    {
+        let num i32 = 0
+        num = num & 1
+        printf("%d\n", num)
+    }
+
+    {
+        let num i32 = 1
+        num = num & 1
+        printf("%d\n", num)
+    }
+
+    {
+        let num i32 = 2
+        num = num & 1
+        printf("%d\n", num)
+    }
+
+    {
+        let num i32 = 2
+        num = num & 2
+        printf("%d\n", num)
+    }
+
+    printf("%d\n", 76 & 23)
+}
+
+fn bitwise_or() {
+    printf("bitwise or:\n")
+    {
+        let num i32 = 0
+        num = num | 0
+        printf("%d\n", num)
+    }
+
+    {
+        let num i32 = 0
+        num = num | 1
+        printf("%d\n", num)
+    }
+
+    {
+        let num i32 = 1
+        num = num | 1
+        printf("%d\n", num)
+    }
+
+    {
+        let num i32 = 2
+        num = num | 1
+        printf("%d\n", num)
+    }
+
+    {
+        let num i32 = 2
+        num = num | 2
+        printf("%d\n", num)
+    }
+
+    printf("%d\n", 76 | 23)
+}
+
+fn bitwise() {
+    bitwise_and()
+    bitwise_or()
+}
+
 fn main() i32 {
     let num1 i32 = 2
     let num2 i32 = 93
@@ -98,6 +173,8 @@ fn main() i32 {
     printf("%d\n", result_5)
 
     part_2()
+
+    bitwise()
 
     return 0
 }

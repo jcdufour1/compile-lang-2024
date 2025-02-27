@@ -28,6 +28,8 @@ typedef enum {
     TOKEN_DOUBLE_EQUAL,
     TOKEN_NOT_EQUAL,
     TOKEN_XOR,
+    TOKEN_BITWISE_AND,
+    TOKEN_BITWISE_OR,
 
     // unary operators
     TOKEN_NOT,
@@ -211,6 +213,10 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_MODULO:
             return false;
+        case TOKEN_BITWISE_AND:
+            return false;
+        case TOKEN_BITWISE_OR:
+            return false;
     }
     unreachable("");
 }
@@ -328,6 +334,10 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
         case TOKEN_SUM:
             return false;
         case TOKEN_MODULO:
+            return true;
+        case TOKEN_BITWISE_AND:
+            return true;
+        case TOKEN_BITWISE_OR:
             return true;
     }
     unreachable(TOKEN_FMT"\n", token_print(TOKEN_MODE_LOG, token));
@@ -467,6 +477,10 @@ static inline bool token_is_closing(Token curr_token) {
             return false;
         case TOKEN_MODULO:
             return false;
+        case TOKEN_BITWISE_AND:
+            return false;
+        case TOKEN_BITWISE_OR:
+            return false;
     }
     unreachable("");
 }
@@ -584,6 +598,10 @@ static inline bool token_is_opening(Token curr_token) {
         case TOKEN_SUM:
             return false;
         case TOKEN_MODULO:
+            return false;
+        case TOKEN_BITWISE_AND:
+            return false;
+        case TOKEN_BITWISE_OR:
             return false;
     }
     unreachable("");

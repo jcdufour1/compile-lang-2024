@@ -465,6 +465,10 @@ static bool can_end_statement(Token token) {
             return false;
         case TOKEN_MODULO:
             return false;
+        case TOKEN_BITWISE_AND:
+            return false;
+        case TOKEN_BITWISE_OR:
+            return false;
     }
     unreachable("");
 }
@@ -503,6 +507,10 @@ static int32_t get_operator_precedence(TOKEN_TYPE type) {
         case TOKEN_REFER:
             return 25;
         case TOKEN_UNSAFE_CAST:
+            return 25;
+        case TOKEN_BITWISE_AND:
+            return 25;
+        case TOKEN_BITWISE_OR:
             return 25;
         case TOKEN_SINGLE_DOT:
             return 30;
@@ -629,6 +637,10 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_MODULO:
             return false;
+        case TOKEN_BITWISE_AND:
+            return false;
+        case TOKEN_BITWISE_OR:
+            return false;
     }
     unreachable("");
 }
@@ -746,6 +758,10 @@ static bool is_binary(TOKEN_TYPE token_type) {
         case TOKEN_SUM:
             return false;
         case TOKEN_MODULO:
+            return true;
+        case TOKEN_BITWISE_AND:
+            return true;
+        case TOKEN_BITWISE_OR:
             return true;
     }
     unreachable("");
@@ -2148,6 +2164,10 @@ static PARSE_EXPR_STATUS extract_binary(
         case TOKEN_GREATER_THAN:
             // fallthrough
         case TOKEN_NOT_EQUAL:
+            // fallthrough
+        case TOKEN_BITWISE_AND:
+            // fallthrough
+        case TOKEN_BITWISE_OR:
             // fallthrough
         case TOKEN_DOUBLE_EQUAL:
             *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, lhs, rhs, token_type_to_binary_type(oper.type))));

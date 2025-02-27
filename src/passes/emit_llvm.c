@@ -208,8 +208,8 @@ static void llvm_extend_type_decl_str(Env* env, String* output, const Llvm* var_
 
 static void extend_literal_decl_prefix(String* output, String* literals, const Llvm_literal* literal) {
     log(LOG_DEBUG, "entering thing\n");
-    if (str_view_cstr_is_equal(lang_type_get_str(llvm_literal_get_lang_type(literal)), "u8")) {
-        assert(llvm_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE);
+    //if (lang_type_is_equal(llvm_literal_get_lang_type(literal), lang_type_primitive_wrap(lang_type_string_const_wrap(lang_type_string_new(lang_type_atom_new_from_cstr("u8", 1)))))) {
+    if (llvm_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE && lang_type_primitive_const_unwrap(llvm_literal_get_lang_type(literal)).type == LANG_TYPE_STRING) {
         if (lang_type_get_pointer_depth(llvm_literal_get_lang_type(literal)) != 1) {
             todo();
         }
@@ -222,10 +222,18 @@ static void extend_literal_decl_prefix(String* output, String* literals, const L
         }
         vec_append(&a_main, output, ' ');
         extend_literal(output, literal);
+    } else if (lang_type_atom_is_unsigned(lang_type_get_atom(llvm_literal_get_lang_type(literal)))) {
+        assert(llvm_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE);
+        if (lang_type_get_pointer_depth(llvm_literal_get_lang_type(literal)) != 0) {
+            todo();
+        }
+        vec_append(&a_main, output, ' ');
+        extend_literal(output, literal);
     } else if (llvm_literal_get_lang_type(literal).type == LANG_TYPE_ENUM) {
         vec_append(&a_main, output, ' ');
         extend_literal(output, literal);
     } else {
+        log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, llvm_literal_get_lang_type(literal)));
         unreachable(LLVM_FMT"\n", llvm_print(llvm_expr_const_wrap(llvm_literal_const_wrap(literal))));
     }
 
@@ -507,6 +515,12 @@ static void emit_binary_type_signed(String* output, const Llvm_binary* binary) {
         case BINARY_XOR:
             string_extend_cstr(&a_main, output, "xor ");
             return;
+        case BINARY_BITWISE_AND:
+            string_extend_cstr(&a_main, output, "and ");
+            return;
+        case BINARY_BITWISE_OR:
+            string_extend_cstr(&a_main, output, "or ");
+            return;
     }
     unreachable("");
 }
@@ -548,6 +562,12 @@ static void emit_binary_type_unsigned(String* output, const Llvm_binary* binary)
             return;
         case BINARY_XOR:
             string_extend_cstr(&a_main, output, "xor ");
+            return;
+        case BINARY_BITWISE_AND:
+            string_extend_cstr(&a_main, output, "and ");
+            return;
+        case BINARY_BITWISE_OR:
+            string_extend_cstr(&a_main, output, "or ");
             return;
     }
     unreachable("");
