@@ -29,7 +29,7 @@ static inline BINARY_TYPE token_type_to_binary_type(TOKEN_TYPE token_type) {
         case TOKEN_NOT_EQUAL:
             return BINARY_NOT_EQUAL;
         default:
-            unreachable(TOKEN_TYPE_FMT, token_type_print(token_type));
+            unreachable(TOKEN_TYPE_FMT, token_type_print(TOKEN_MODE_LOG, token_type));
     }
     unreachable("");
 }
@@ -45,7 +45,7 @@ static inline UNARY_TYPE token_type_to_unary_type(TOKEN_TYPE token_type) {
         case TOKEN_NOT:
             return UNARY_NOT;
         default:
-            unreachable(TOKEN_TYPE_FMT, token_type_print(token_type));
+            unreachable(TOKEN_TYPE_FMT, token_type_print(TOKEN_MODE_LOG, token_type));
     }
     unreachable("");
 }

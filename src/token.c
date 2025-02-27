@@ -1,7 +1,126 @@
 #include "token.h"
 #include "assert.h"
 
-Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
+Str_view token_type_to_str_view_msg(TOKEN_TYPE token_type) {
+    switch (token_type) {
+        case TOKEN_NONTYPE:
+            return str_view_from_cstr("nontype");
+        case TOKEN_SYMBOL:
+            // TODO: change "`symbol`" in msg errors to "symbol"
+            return str_view_from_cstr("symbol");
+        case TOKEN_OPEN_PAR:
+            return str_view_from_cstr("(");
+        case TOKEN_CLOSE_PAR:
+            return str_view_from_cstr(")");
+        case TOKEN_OPEN_CURLY_BRACE:
+            return str_view_from_cstr("{");
+        case TOKEN_CLOSE_CURLY_BRACE:
+            return str_view_from_cstr("}");
+        case TOKEN_DOUBLE_QUOTE:
+            return str_view_from_cstr("\"");
+        case TOKEN_SEMICOLON:
+            return str_view_from_cstr(";");
+        case TOKEN_COMMA:
+            return str_view_from_cstr(",");
+        case TOKEN_SINGLE_PLUS:
+            return str_view_from_cstr("+");
+        case TOKEN_SINGLE_MINUS:
+            return str_view_from_cstr("-");
+        case TOKEN_ASTERISK:
+            return str_view_from_cstr("*");
+        case TOKEN_STRING_LITERAL:
+            return str_view_from_cstr("string");
+        case TOKEN_INT_LITERAL:
+            return str_view_from_cstr("int literal");
+        case TOKEN_COLON:
+            return str_view_from_cstr(":");
+        case TOKEN_SINGLE_EQUAL:
+            return str_view_from_cstr("=");
+        case TOKEN_DOUBLE_EQUAL:
+            return str_view_from_cstr("==");
+        case TOKEN_SINGLE_DOT:
+            return str_view_from_cstr(".");
+        case TOKEN_DOUBLE_DOT:
+            return str_view_from_cstr("..");
+        case TOKEN_TRIPLE_DOT:
+            return str_view_from_cstr("...");
+        case TOKEN_LESS_THAN:
+            return str_view_from_cstr("<");
+        case TOKEN_LESS_OR_EQUAL:
+            return str_view_from_cstr("<=");
+        case TOKEN_GREATER_THAN:
+            return str_view_from_cstr(">");
+        case TOKEN_SLASH:
+            return str_view_from_cstr("/");
+        case TOKEN_COMMENT:
+            return str_view_from_cstr("comment");
+        case TOKEN_NOT_EQUAL:
+            return str_view_from_cstr("!=");
+        case TOKEN_NOT:
+            return str_view_from_cstr("!");
+        case TOKEN_XOR:
+            return str_view_from_cstr("xor");
+        case TOKEN_DEREF:
+            return str_view_from_cstr("deref");
+        case TOKEN_REFER:
+            return str_view_from_cstr("refer");
+        case TOKEN_UNSAFE_CAST:
+            return str_view_from_cstr("unsafe_cast");
+        case TOKEN_VOID:
+            return str_view_from_cstr("void");
+        case TOKEN_FN:
+            return str_view_from_cstr("fn");
+        case TOKEN_FOR:
+            return str_view_from_cstr("for");
+        case TOKEN_IF:
+            return str_view_from_cstr("if");
+        case TOKEN_RETURN:
+            return str_view_from_cstr("return");
+        case TOKEN_EXTERN:
+            return str_view_from_cstr("extern");
+        case TOKEN_STRUCT:
+            return str_view_from_cstr("struct");
+        case TOKEN_LET:
+            return str_view_from_cstr("let");
+        case TOKEN_IN:
+            return str_view_from_cstr("in");
+        case TOKEN_BREAK:
+            return str_view_from_cstr("break");
+        case TOKEN_NEW_LINE:
+            return str_view_from_cstr("newline");
+        case TOKEN_RAW_UNION:
+            return str_view_from_cstr("unsafe_union");
+        case TOKEN_ELSE:
+            return str_view_from_cstr("else");
+        case TOKEN_ENUM:
+            return str_view_from_cstr("enum");
+        case TOKEN_OPEN_SQ_BRACKET:
+            return str_view_from_cstr("[");
+        case TOKEN_CLOSE_SQ_BRACKET:
+            return str_view_from_cstr("]");
+        case TOKEN_CHAR_LITERAL:
+            return str_view_from_cstr("char");
+        case TOKEN_CONTINUE:
+            return str_view_from_cstr("continue");
+        case TOKEN_GREATER_OR_EQUAL:
+            return str_view_from_cstr(">=");
+        case TOKEN_TYPE_DEF:
+            return str_view_from_cstr("type");
+        case TOKEN_SWITCH:
+            return str_view_from_cstr("switch");
+        case TOKEN_CASE:
+            return str_view_from_cstr("case");
+        case TOKEN_DEFAULT:
+            return str_view_from_cstr("default");
+        case TOKEN_SUM:
+            return str_view_from_cstr("sum");
+        case TOKEN_MODULO:
+            return str_view_from_cstr("%");
+    }
+    unreachable("%d\n", token_type);
+}
+
+Str_view token_type_to_str_view_log(TOKEN_TYPE token_type) {
     switch (token_type) {
         case TOKEN_NONTYPE:
             return str_view_from_cstr("nontype");
@@ -119,11 +238,20 @@ Str_view token_type_to_str_view(TOKEN_TYPE token_type) {
     unreachable("%d\n", token_type);
 }
 
-Str_view token_print_internal(Arena* arena, Token token, bool msg_format) {
+Str_view token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
     String buf = {0};
     vec_reset(&buf);
 
-    string_extend_strv(arena, &buf, token_type_to_str_view(token.type));
+    switch (mode) {
+        case TOKEN_MODE_LOG:
+            string_extend_strv(arena, &buf, token_type_to_str_view_log(token.type));
+            break;
+        case TOKEN_MODE_MSG:
+            string_extend_strv(arena, &buf, token_type_to_str_view_msg(token.type));
+            break;
+        default:
+            unreachable("");
+    }
 
     // add token text
     switch (token.type) {
@@ -195,9 +323,11 @@ Str_view token_print_internal(Arena* arena, Token token, bool msg_format) {
             string_extend_strv(arena, &buf, token.text);
             vec_append(arena, &buf, ')');
             break;
+        default:
+            unreachable("");
     }
 
-    if (!msg_format) {
+    if (mode == TOKEN_MODE_LOG) {
         string_add_int(arena, &buf, token.pos.line);
     }
 

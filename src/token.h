@@ -7,7 +7,7 @@
 #include "str_view.h"
 #include "newstring.h"
 
-#define token_print(token) str_view_print(token_print_internal(&print_arena, token, false))
+#define token_print(mode, token) str_view_print(token_print_internal(&print_arena, mode, token))
 
 #define TOKEN_FMT STR_VIEW_FMT
 
@@ -90,7 +90,12 @@ typedef struct {
     Pos pos;
 } Token;
 
-Str_view token_print_internal(Arena* arena, Token token, bool msg_format);
+typedef enum {
+    TOKEN_MODE_LOG,
+    TOKEN_MODE_MSG,
+} TOKEN_MODE;
+
+Str_view token_print_internal(Arena* arena, TOKEN_MODE mode, Token token);
 
 static inline bool token_is_literal(Token token) {
     switch (token.type) {
@@ -325,16 +330,28 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
         case TOKEN_MODULO:
             return true;
     }
-    unreachable(TOKEN_FMT"\n", token_print(token));
+    unreachable(TOKEN_FMT"\n", token_print(TOKEN_MODE_LOG, token));
 }
 
 static const uint32_t TOKEN_MAX_PRECEDENCE = 20;
 
 #define TOKEN_TYPE_FMT STR_VIEW_FMT
 
-#define token_type_print(token_type) str_view_print(token_type_to_str_view(token_type))
+Str_view token_type_to_str_view_msg(TOKEN_TYPE token_type);
 
-Str_view token_type_to_str_view(TOKEN_TYPE token_type);
+Str_view token_type_to_str_view_log(TOKEN_TYPE token_type);
+
+static inline Str_view token_type_to_str_view(TOKEN_MODE mode, TOKEN_TYPE token_type) {
+    switch (mode) {
+        case TOKEN_MODE_LOG:
+            return token_type_to_str_view_log(token_type);
+        case TOKEN_MODE_MSG:
+            return token_type_to_str_view_msg(token_type);
+    }
+    unreachable("");
+}
+
+#define token_type_print(mode, token_type) str_view_print(token_type_to_str_view(mode, token_type))
 
 static inline bool token_is_closing(Token curr_token) {
     switch (curr_token.type) {

@@ -105,7 +105,7 @@ static void msg_parser_expected_internal(Str_view file_text, const char* file, i
 
     String message = {0};
     string_extend_cstr(&print_arena, &message, "got token `");
-    string_extend_strv(&print_arena, &message, token_print_internal(&print_arena, got, true));
+    string_extend_strv(&print_arena, &message, token_print_internal(&print_arena, TOKEN_MODE_MSG, got));
     string_extend_cstr(&print_arena, &message, "`, but expected ");
 
     for (int idx = 0; idx < count_expected; idx++) {
@@ -117,7 +117,7 @@ static void msg_parser_expected_internal(Str_view file_text, const char* file, i
             }
         }
         string_extend_cstr(&print_arena, &message, "`");
-        string_extend_strv(&print_arena, &message, token_type_to_str_view(va_arg(args, TOKEN_TYPE)));
+        string_extend_strv(&print_arena, &message, token_type_to_str_view(TOKEN_MODE_MSG, va_arg(args, TOKEN_TYPE)));
         string_extend_cstr(&print_arena, &message, "` ");
     }
 
@@ -511,7 +511,7 @@ static int32_t get_operator_precedence(TOKEN_TYPE type) {
         case TOKEN_OPEN_PAR:
             return 30;
         default:
-            unreachable(TOKEN_TYPE_FMT, token_type_print(type));
+            unreachable(TOKEN_TYPE_FMT, token_type_print(TOKEN_MODE_LOG, type));
     }
 }
 
@@ -2042,7 +2042,7 @@ static PARSE_EXPR_STATUS extract_unary(
     //        TOKEN_SINGLE_MINUS
     //    )));
         default:
-            unreachable(TOKEN_FMT, token_print(oper));
+            unreachable(TOKEN_FMT, token_print(TOKEN_MODE_LOG, oper));
     }
 
     switch (try_extract_expression_piece(env, &child, tokens, prev_oper_pres, defer_sym_add)) {
@@ -2073,7 +2073,7 @@ static PARSE_EXPR_STATUS extract_unary(
             break;
         }
         default:
-            unreachable(TOKEN_FMT, token_print(oper));
+            unreachable(TOKEN_FMT, token_print(TOKEN_MODE_LOG, oper));
     }
 
     return PARSE_EXPR_OK;
@@ -2167,10 +2167,10 @@ static PARSE_EXPR_STATUS extract_binary(
             }
             break;
         default:
-            unreachable(TOKEN_FMT, token_print(oper));
+            unreachable(TOKEN_FMT, token_print(TOKEN_MODE_LOG, oper));
     }
 
-    log(LOG_DEBUG, TOKEN_FMT"\n", token_print(oper));
+    log(LOG_DEBUG, TOKEN_FMT"\n", token_print(TOKEN_MODE_LOG, oper));
     assert(*result);
     return PARSE_EXPR_OK;
 
@@ -2369,7 +2369,7 @@ static PARSE_EXPR_STATUS extract_expression_opening_prev_less_pres(
             return PARSE_EXPR_OK;
         }
         default:
-            unreachable(TOKEN_FMT, token_print(tk_view_front(*tokens)));
+            unreachable(TOKEN_FMT, token_print(TOKEN_MODE_LOG, tk_view_front(*tokens)));
     }
     unreachable("");
 }
@@ -2390,7 +2390,7 @@ static PARSE_EXPR_STATUS extract_expression_opening_prev_equal_pres(
             return extract_expression_index(env, result, *lhs, tokens, prev_oper_pres, defer_sym_add);
         }
         default:
-            unreachable(TOKEN_FMT, token_print(tk_view_front(*tokens)));
+            unreachable(TOKEN_FMT, token_print(TOKEN_MODE_LOG, tk_view_front(*tokens)));
     }
     unreachable("");
 }

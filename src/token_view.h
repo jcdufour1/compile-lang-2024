@@ -14,7 +14,7 @@ typedef struct {
     do { \
         log((log_level), "tokens:\n"); \
         for (size_t idx = 0; idx < (token_view).count; idx++) { \
-            log((log_level), TOKEN_FMT"\n", token_print((token_view).tokens[idx])); \
+            log((log_level), TOKEN_FMT"\n", token_print(TOKEN_MODE_LOG, (token_view).tokens[idx])); \
         } \
         log(log_level, "\n"); \
     } while(0);
@@ -231,7 +231,7 @@ static inline Str_view tk_view_print_internal(Arena* arena, Tk_view token_view) 
     vec_reset(&buf);
 
     for (size_t idx = 0; idx < token_view.count; idx++) {
-        string_extend_strv(&print_arena, &buf, token_print_internal(arena, token_view.tokens[idx], false));
+        string_extend_strv(&print_arena, &buf, token_print_internal(arena, TOKEN_MODE_LOG, token_view.tokens[idx]));
         string_extend_cstr(&print_arena, &buf, ";    ");
     }
 
@@ -249,7 +249,7 @@ static inline bool tk_view_is_equal_internal(LOG_LEVEL log_level, Tk_view a, Tk_
                 log_tokens(log_level, b);
                 log(
                     log_level, "idx %zu: "TOKEN_FMT" is not equal to "TOKEN_FMT"\n",
-                    idx, token_print(tk_view_at(a, idx)), token_print(tk_view_at(b, idx))
+                    idx, token_print(TOKEN_MODE_LOG, tk_view_at(a, idx)), token_print(TOKEN_MODE_LOG, tk_view_at(b, idx))
                 );
             }
             return false;
