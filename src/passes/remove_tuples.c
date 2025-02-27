@@ -1154,7 +1154,5 @@ static Tast_block* rm_tuple_block(Env* env, Tast_block* block) {
 }
 
 Tast_block* remove_tuples(Env* env, Tast_block* root) {
-    Tast_block* new_block = rm_tuple_block(env, root);
-    // TODO: use faster algorithm for inserting extra structs and functions
-    return new_block;
+    return rm_tuple_block(env, root);
 }

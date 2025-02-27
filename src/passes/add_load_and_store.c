@@ -377,7 +377,7 @@ static Str_view load_literal(
             tast_string_unwrap(old_lit)->name,
             tast_string_unwrap(old_lit)->data
         );
-        try(sym_tbl_add(&env->global_literals, tast_literal_def_wrap(tast_string_def_wrap(new_def))));
+        try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_literal_def_wrap(tast_string_def_wrap(new_def))));
     }
 
     try(alloca_add(env, llvm_expr_wrap(llvm_literal_wrap(new_lit))));
@@ -1690,7 +1690,7 @@ static Str_view load_def_sometimes(Env* env, Tast_def* old_def) {
         case TAST_SUM_DEF:
             return (Str_view) {0};
         case TAST_LITERAL_DEF:
-            unreachable("");
+            return (Str_view) {0};
         case TAST_PRIMITIVE_DEF:
             unreachable("");
     }
