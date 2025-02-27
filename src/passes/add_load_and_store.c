@@ -488,15 +488,7 @@ static Str_view load_binary_short_circuit(
             .name = new_var_def->name,
             .llvm_id = 0
         }))),
-        tast_operator_wrap(tast_binary_wrap(tast_binary_new(
-            old_bin->pos,
-            tast_literal_wrap(
-                util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
-            ),
-            old_bin->rhs,
-            BINARY_NOT_EQUAL,
-            tast_expr_get_lang_type(old_bin->rhs)
-        )))
+        old_bin->rhs
     )));
 
     Tast_stmt_vec if_false_stmts = {0};
@@ -516,15 +508,7 @@ static Str_view load_binary_short_circuit(
         old_bin->pos,
         tast_condition_new(old_bin->pos, tast_binary_wrap(tast_binary_new(
             old_bin->pos,
-            tast_operator_wrap(tast_binary_wrap(tast_binary_new(
-                old_bin->pos,
-                old_bin->lhs,
-                tast_literal_wrap(
-                    util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
-                ),
-                BINARY_NOT_EQUAL,
-                tast_expr_get_lang_type(old_bin->lhs)
-            ))),
+            old_bin->lhs,
             tast_literal_wrap(
                 util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
             ),
