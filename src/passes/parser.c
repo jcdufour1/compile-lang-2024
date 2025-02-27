@@ -371,7 +371,7 @@ static bool can_end_statement(Token token) {
             return false;
         case TOKEN_NOT_EQUAL:
             return false;
-        case TOKEN_XOR:
+        case TOKEN_BITWISE_XOR:
             return false;
         case TOKEN_NOT:
             return false;
@@ -478,9 +478,15 @@ static int32_t get_operator_precedence(TOKEN_TYPE type) {
     switch (type) {
         case TOKEN_COMMA:
             return 1;
-        case TOKEN_DOUBLE_EQUAL:
-            return 11;
+        case TOKEN_BITWISE_AND:
+            return 10;
+        case TOKEN_BITWISE_OR:
+            return 10;
+        case TOKEN_BITWISE_XOR:
+            return 10;
         case TOKEN_NOT_EQUAL:
+            return 11;
+        case TOKEN_DOUBLE_EQUAL:
             return 11;
         case TOKEN_LESS_THAN:
             return 13;
@@ -507,10 +513,6 @@ static int32_t get_operator_precedence(TOKEN_TYPE type) {
         case TOKEN_REFER:
             return 25;
         case TOKEN_UNSAFE_CAST:
-            return 25;
-        case TOKEN_BITWISE_AND:
-            return 25;
-        case TOKEN_BITWISE_OR:
             return 25;
         case TOKEN_SINGLE_DOT:
             return 30;
@@ -577,7 +579,7 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_COMMENT:
             return false;
-        case TOKEN_XOR:
+        case TOKEN_BITWISE_XOR:
             return false;
         case TOKEN_DEREF:
             return true;
@@ -699,7 +701,7 @@ static bool is_binary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_COMMENT:
             return false;
-        case TOKEN_XOR:
+        case TOKEN_BITWISE_XOR:
             return true;
         case TOKEN_DEREF:
             return true;
@@ -2168,6 +2170,8 @@ static PARSE_EXPR_STATUS extract_binary(
         case TOKEN_BITWISE_AND:
             // fallthrough
         case TOKEN_BITWISE_OR:
+            // fallthrough
+        case TOKEN_BITWISE_XOR:
             // fallthrough
         case TOKEN_DOUBLE_EQUAL:
             *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, lhs, rhs, token_type_to_binary_type(oper.type))));

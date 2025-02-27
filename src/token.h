@@ -27,9 +27,9 @@ typedef enum {
     TOKEN_GREATER_OR_EQUAL,
     TOKEN_DOUBLE_EQUAL,
     TOKEN_NOT_EQUAL,
-    TOKEN_XOR,
     TOKEN_BITWISE_AND,
     TOKEN_BITWISE_OR,
+    TOKEN_BITWISE_XOR,
 
     // unary operators
     TOKEN_NOT,
@@ -123,7 +123,7 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_NOT_EQUAL:
             return false;
-        case TOKEN_XOR:
+        case TOKEN_BITWISE_XOR:
             return false;
         case TOKEN_NOT:
             return false;
@@ -243,7 +243,7 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             return true;
         case TOKEN_DEREF:
             return true;
-        case TOKEN_XOR:
+        case TOKEN_BITWISE_XOR:
             return true;
         case TOKEN_REFER:
             return true;
@@ -387,7 +387,7 @@ static inline bool token_is_closing(Token curr_token) {
             return false;
         case TOKEN_NOT_EQUAL:
             return false;
-        case TOKEN_XOR:
+        case TOKEN_BITWISE_XOR:
             return false;
         case TOKEN_NOT:
             return false;
@@ -509,7 +509,7 @@ static inline bool token_is_opening(Token curr_token) {
             return false;
         case TOKEN_NOT_EQUAL:
             return false;
-        case TOKEN_XOR:
+        case TOKEN_BITWISE_XOR:
             return false;
         case TOKEN_NOT:
             return false;

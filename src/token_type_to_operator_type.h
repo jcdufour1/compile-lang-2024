@@ -32,6 +32,8 @@ static inline BINARY_TYPE token_type_to_binary_type(TOKEN_TYPE token_type) {
             return BINARY_BITWISE_AND;
         case TOKEN_BITWISE_OR:
             return BINARY_BITWISE_OR;
+        case TOKEN_BITWISE_XOR:
+            return BINARY_BITWISE_XOR;
         default:
             unreachable(TOKEN_TYPE_FMT, token_type_print(TOKEN_MODE_LOG, token_type));
     }

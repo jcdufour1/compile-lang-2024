@@ -58,7 +58,7 @@ Str_view token_type_to_str_view_msg(TOKEN_TYPE token_type) {
             return str_view_from_cstr("!=");
         case TOKEN_NOT:
             return str_view_from_cstr("!");
-        case TOKEN_XOR:
+        case TOKEN_BITWISE_XOR:
             return str_view_from_cstr("xor");
         case TOKEN_DEREF:
             return str_view_from_cstr("deref");
@@ -180,7 +180,7 @@ Str_view token_type_to_str_view_log(TOKEN_TYPE token_type) {
             return str_view_from_cstr("!=");
         case TOKEN_NOT:
             return str_view_from_cstr("!");
-        case TOKEN_XOR:
+        case TOKEN_BITWISE_XOR:
             return str_view_from_cstr("xor");
         case TOKEN_DEREF:
             return str_view_from_cstr("deref");
@@ -292,7 +292,7 @@ Str_view token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         case TOKEN_NOT: // fallthrough
         case TOKEN_SUM: // fallthrough
         case TOKEN_DEREF: // fallthrough
-        case TOKEN_XOR: // fallthrough
+        case TOKEN_BITWISE_XOR: // fallthrough
         case TOKEN_REFER: // fallthrough
         case TOKEN_VOID: // fallthrough
         case TOKEN_UNSAFE_CAST: // fallthrough

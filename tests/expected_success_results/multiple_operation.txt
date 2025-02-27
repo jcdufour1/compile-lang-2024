@@ -9,6 +9,13 @@ yes3
 yes4
 yes5
 yes6
+bitwise xor:
+0
+1
+0
+3
+0
+91
 bitwise and:
 0
 0

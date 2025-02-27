@@ -512,7 +512,7 @@ static void emit_binary_type_signed(String* output, const Llvm_binary* binary) {
         case BINARY_NOT_EQUAL:
             string_extend_cstr(&a_main, output, "icmp ne ");
             return;
-        case BINARY_XOR:
+        case BINARY_BITWISE_XOR:
             string_extend_cstr(&a_main, output, "xor ");
             return;
         case BINARY_BITWISE_AND:
@@ -560,7 +560,7 @@ static void emit_binary_type_unsigned(String* output, const Llvm_binary* binary)
         case BINARY_NOT_EQUAL:
             string_extend_cstr(&a_main, output, "icmp ne ");
             return;
-        case BINARY_XOR:
+        case BINARY_BITWISE_XOR:
             string_extend_cstr(&a_main, output, "xor ");
             return;
         case BINARY_BITWISE_AND:
