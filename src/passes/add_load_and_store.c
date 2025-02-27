@@ -631,11 +631,7 @@ static Str_view load_deref(
     unreachable("");
 }
 
-static Str_view load_unary(
-    Env* env,
-    Llvm_block* new_block,
-    Tast_unary* old_unary
-) {
+static Str_view load_unary(Env* env, Llvm_block* new_block, Tast_unary* old_unary) {
     switch (old_unary->token_type) {
         case UNARY_DEREF:
             return load_deref(env, new_block, old_unary);
@@ -653,14 +649,18 @@ static Str_view load_unary(
                     break;
             }
 
-            if (lang_type_get_pointer_depth(old_unary->lang_type) > 0 && lang_type_get_pointer_depth(tast_expr_get_lang_type(old_unary->child)) > 0) {
-                return load_expr(env, new_block, old_unary->child);
+            Str_view new_child = load_expr(env, new_block, old_unary->child);
+            if (lang_type_is_equal(old_unary->lang_type, lang_type_from_get_name(env, new_child))) {
+                return new_child;
             }
 
-            // fallthrough
+            if (lang_type_get_pointer_depth(old_unary->lang_type) > 0 && lang_type_get_pointer_depth(tast_expr_get_lang_type(old_unary->child)) > 0) {
+                return new_child;
+            }
+
             Llvm_unary* new_unary = llvm_unary_new(
                 old_unary->pos,
-                load_expr(env, new_block, old_unary->child),
+                new_child,
                 old_unary->token_type,
                 old_unary->lang_type,
                 0,

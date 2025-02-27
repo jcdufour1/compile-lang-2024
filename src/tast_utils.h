@@ -78,7 +78,7 @@ Str_view lang_type_atom_print_internal(LANG_TYPE_MODE mode, Lang_type_atom atom)
 
 #define ulang_type_print(mode, lang_type) str_view_print(ulang_type_print_internal((mode), (lang_type)))
 
-#define lang_type_atom_print(atom) str_view_print(lang_type_atom_print_internal((atom), false))
+#define lang_type_atom_print(mode, atom) str_view_print(lang_type_atom_print_internal(mode, atom))
 
 Str_view tast_print_internal(const Tast* tast, int recursion_depth);
 

@@ -2,11 +2,13 @@
 extern("c") fn printf(str_to_print u8*, args any...) i32
 
 fn one() i32 {
+    printf("one called\n")
     return 1
 }
 
 
 fn zero() i32 {
+    printf("zero called\n")
     return 0
 }
 
@@ -14,18 +16,18 @@ fn main() i32 {
     {
         let thing u1 = 2 < 7
         if thing {
-            printf("yes\n")
+            printf("yes1\n")
         } else {
-            printf("no\n")
+            printf("no1\n")
         }
     }
 
     {
         let thing u1 = 7 < 2
         if thing {
-            printf("no\n")
+            printf("no2\n")
         } else {
-            printf("yes\n")
+            printf("yes2\n")
         }
     }
 
@@ -57,6 +59,33 @@ fn main() i32 {
         printf("no9\n")
     } else {
         printf("yes9\n")
+    }
+
+    // "one called" should not be printed 
+    if zero() && one() {
+        printf("no10\n")
+    } else {
+        printf("yes10\n")
+    }
+
+    // "one called" should not be printed, and "zero printed" should only be called once
+    if zero() && zero() && one() {
+        printf("no11\n")
+    } else {
+        printf("yes11\n")
+    }
+
+    // "one called" and "zero called" should each be printed only once
+    if one() && zero() && one() {
+        printf("no12\n")
+    } else {
+        printf("yes12\n")
+    }
+
+    if one() && one() && one() {
+        printf("yes13\n")
+    } else {
+        printf("no13\n")
     }
 
     return 0
