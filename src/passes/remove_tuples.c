@@ -24,9 +24,7 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
 
 static Tast_stmt* rm_tuple_stmt(Env* env, Tast_stmt* stmt);
 
-static Tast_expr* rm_tuple_expr_rhs(Env* env, Tast_expr* rhs, Pos assign_pos);
-
-static Tast_stmt* rm_tuple_stmt_rhs(Env* env, Tast_stmt* rhs, Pos assign_pos);
+static Tast_expr* rm_tuple_expr(Env* env, Tast_expr* rhs, Pos assign_pos);
 
 static Tast_block* rm_tuple_block(Env* env, Tast_block* block);
 
@@ -245,7 +243,7 @@ static Tast_stmt* rm_tuple_assignment_tuple(Env* env, Tast_assignment* assign) {
             tast_symbol_wrap(rm_tuple_symbol_typed_new_from_var_def(new_var))
         );
 
-        Tast_expr* curr_dest = rm_tuple_expr_rhs(env, vec_at(&dest->members, idx), tast_expr_get_pos(vec_at(&dest->members, idx)));
+        Tast_expr* curr_dest = rm_tuple_expr(env, vec_at(&dest->members, idx), tast_expr_get_pos(vec_at(&dest->members, idx)));
         Tast_assignment* curr_assign = tast_assignment_new(
             dest->pos,
             tast_expr_wrap(curr_dest),
@@ -261,13 +259,13 @@ static Tast_stmt* rm_tuple_assignment_tuple(Env* env, Tast_assignment* assign) {
 }
 
 static Tast_stmt* rm_tuple_assignment(Env* env, Tast_assignment* assign) {
-    assign->rhs = rm_tuple_expr_rhs(env, assign->rhs, assign->pos);
+    assign->rhs = rm_tuple_expr(env, assign->rhs, assign->pos);
 
     switch (tast_stmt_get_lang_type(assign->lhs).type) {
         case LANG_TYPE_TUPLE:
             return rm_tuple_assignment_tuple(env, assign);
         case LANG_TYPE_SUM:
-            assign->lhs = rm_tuple_stmt_rhs(env, assign->lhs, assign->pos);
+            assign->lhs = rm_tuple_stmt(env, assign->lhs);
             return tast_assignment_wrap(assign);
         case LANG_TYPE_PRIMITIVE:
             return tast_assignment_wrap(assign);
@@ -335,7 +333,7 @@ static Tast_function_def* rm_tuple_function_def_new(Env* env, Tast_function_decl
                     }))
                 );
 
-                Tast_expr* rhs = rm_tuple_expr_rhs(env, tast_symbol_wrap(tast_symbol_new(decl->pos, (Sym_typed_base) {
+                Tast_expr* rhs = rm_tuple_expr(env, tast_symbol_wrap(tast_symbol_new(decl->pos, (Sym_typed_base) {
                         .lang_type = rm_tuple_lang_type(env, vec_at(&decl->params->params, idx)->lang_type, new_var->pos),
                         .name = vec_at(&decl->params->params, idx)->name,
                         .llvm_id = 0
@@ -559,7 +557,7 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
     Lang_type lhs_lang_type = rm_tuple_lang_type(env, rhs->sum_lang_type, rhs->pos);
     Tast_expr_vec members = {0};
     Tast_sum_lit* sum_lit = rhs;
-    Tast_expr* inner_thing = rm_tuple_expr_rhs(env, sum_lit->item, assign_pos);
+    Tast_expr* inner_thing = rm_tuple_expr(env, sum_lit->item, assign_pos);
     vec_append(&a_main, &members, tast_literal_wrap(tast_enum_lit_wrap(sum_lit->tag)));
     if (tast_expr_get_lang_type(inner_thing).type != LANG_TYPE_VOID) {
         vec_append(&a_main, &members, inner_thing);
@@ -609,7 +607,7 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
                             vec_at(&tast_struct_def_unwrap(struct_def_)->base.members, 1)->lang_type,
                             vec_at(&tast_struct_def_unwrap(struct_def_)->base.members, 1)->pos
                         ),
-                        rm_tuple_expr_rhs(env, vec_at(&members, 1), tast_expr_get_pos(vec_at(&members, 1)))
+                        rm_tuple_expr(env, vec_at(&members, 1), tast_expr_get_pos(vec_at(&members, 1)))
                     ),
                     assign_pos
                 ));
@@ -662,7 +660,7 @@ static Tast_expr* rm_tuple_generic_assignment_rhs(Env* env, Tast_expr* rhs, Pos 
     } else if (rhs->type == TAST_SYMBOL && tast_symbol_unwrap(rhs)->base.lang_type.type == LANG_TYPE_SUM) {
         return rm_tuple_sum_symbol_not_in_assignment(env, tast_symbol_unwrap(rhs));
     } else {
-        return rm_tuple_expr_rhs(env, rhs, assign_pos);
+        return rm_tuple_expr(env, rhs, assign_pos);
     }
 }
 
@@ -888,7 +886,7 @@ static Tast_expr* rm_tuple_literal_rhs(Env* env, Tast_literal* rhs, Pos assign_p
 }
 
 static Tast_member_access* rm_tuple_sum_access_rhs(Env* env, Tast_sum_access* rhs, Pos assign_pos) {
-    Tast_expr* new_union_callee = rm_tuple_expr_rhs(env, rhs->callee, assign_pos);
+    Tast_expr* new_union_callee = rm_tuple_expr(env, rhs->callee, assign_pos);
 
     Tast_def* struct_def = NULL;
     try(symbol_lookup(&struct_def, env, lang_type_get_str(tast_expr_get_lang_type(new_union_callee))));
@@ -912,7 +910,7 @@ static Tast_member_access* rm_tuple_sum_access_rhs(Env* env, Tast_sum_access* rh
     return rm_tuple_member_access_not_in_assignment(env, new_access);
 }
 
-static Tast_expr* rm_tuple_expr_rhs(Env* env, Tast_expr* rhs, Pos assign_pos) {
+static Tast_expr* rm_tuple_expr(Env* env, Tast_expr* rhs, Pos assign_pos) {
     switch (rhs->type) {
         case TAST_OPERATOR:
             return rhs;
@@ -943,7 +941,7 @@ static Tast_expr* rm_tuple_expr_rhs(Env* env, Tast_expr* rhs, Pos assign_pos) {
 static Tast_stmt* rm_tuple_stmt_rhs(Env* env, Tast_stmt* rhs, Pos assign_pos) {
     switch (rhs->type) {
         case TAST_EXPR:
-            return tast_expr_wrap(rm_tuple_expr_rhs(env, tast_expr_unwrap(rhs), assign_pos));
+            return tast_expr_wrap(rm_tuple_expr(env, tast_expr_unwrap(rhs), assign_pos));
         case TAST_DEF:
             return tast_def_wrap(tast_variable_def_wrap(rm_tuple_variable_def_sum_to_struct(env, tast_variable_def_unwrap(tast_def_unwrap(rhs)))));
         default:
