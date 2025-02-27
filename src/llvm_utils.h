@@ -7,12 +7,7 @@
 
 #define LANG_TYPE_FMT STR_VIEW_FMT
 
-void extend_lang_type_to_string(
-    String* string,
-    Lang_type lang_type,
-    bool surround_in_lt_gt,
-    bool do_tag
-);
+void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type lang_type);
 
 void extend_serialize_lang_type_to_string(
     Env* env,
@@ -27,7 +22,7 @@ void extend_lang_type_atom_to_string(
     bool surround_in_lt_gt
 );
 
-Str_view lang_type_vec_print_internal(Lang_type_vec types, bool surround_in_lt_gt);
+Str_view lang_type_vec_print_internal(Lang_type_vec types);
 
 #define lang_type_vec_print(types) str_view_print(lang_type_vec_print_internal((types), false))
 

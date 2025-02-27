@@ -62,7 +62,7 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
     switch (lang_type.type) {
         case LANG_TYPE_SUM: {
 
-            log(LOG_DEBUG, LANG_TYPE_FMT, lang_type_print(lang_type));
+            log(LOG_DEBUG, LANG_TYPE_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
             Tast_def* lang_type_def_ = NULL; 
             try(symbol_lookup(&lang_type_def_, env, lang_type_get_str(lang_type)));
             log(LOG_DEBUG, LANG_TYPE_FMT, tast_def_print(lang_type_def_));
@@ -134,7 +134,7 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
         }
         case LANG_TYPE_RAW_UNION: {
 
-            log(LOG_DEBUG, LANG_TYPE_FMT, lang_type_print(lang_type));
+            log(LOG_DEBUG, LANG_TYPE_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
             Tast_def* lang_type_def_ = NULL; 
             try(symbol_lookup(&lang_type_def_, env, lang_type_get_str(lang_type)));
             log(LOG_DEBUG, LANG_TYPE_FMT, tast_def_print(lang_type_def_));
@@ -191,7 +191,7 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
         case LANG_TYPE_ENUM:
             return lang_type;
         default:
-            unreachable(LANG_TYPE_FMT, lang_type_print(lang_type));
+            unreachable(LANG_TYPE_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
     }
     unreachable("");
 }
@@ -512,7 +512,7 @@ static Tast_expr* rm_tuple_tuple_rhs(
     // TODO: change lang_type_tuple_const_wrap to lang_type_tuple_wrap
     Lang_type lhs_lang_type = rm_tuple_lang_type(env, lang_type_tuple_const_wrap(rhs->lang_type), rhs->pos);
     log(LOG_DEBUG, TAST_FMT, tast_tuple_print(rhs));
-    log(LOG_DEBUG, TAST_FMT, lang_type_print(lhs_lang_type));
+    log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lhs_lang_type));
     //Tast_variable_def* to_rtn = tast_variable_def_new(
     //    rtn->pos,
     //    vec_at(&fun_decl->return_type->lang_type, 0),
@@ -524,7 +524,7 @@ static Tast_expr* rm_tuple_tuple_rhs(
 
     Struct_def_base base = {0};
     Tast_def* struct_def_ = NULL;
-    log(LOG_DEBUG, TAST_FMT, lang_type_print(lhs_lang_type));
+    log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lhs_lang_type));
     try(symbol_lookup(&struct_def_, env, lang_type_get_str(lhs_lang_type)));
     switch (struct_def_->type) {
         case TAST_STRUCT_DEF:
@@ -611,7 +611,7 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
 ) {
     Lang_type lhs_lang_type = rm_tuple_lang_type(env, rhs->sum_lang_type, rhs->pos);
     log(LOG_DEBUG, TAST_FMT, tast_sum_lit_print(rhs));
-    log(LOG_DEBUG, TAST_FMT, lang_type_print(lhs_lang_type));
+    log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lhs_lang_type));
     //Tast_variable_def* to_rtn = tast_variable_def_new(
     //    rtn->pos,
     //    vec_at(&fun_decl->return_type->lang_type, 0),
@@ -631,7 +631,7 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
     }
 
     Tast_def* struct_def_ = NULL;
-    log(LOG_DEBUG, TAST_FMT, lang_type_print(lhs_lang_type));
+    log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lhs_lang_type));
     try(symbol_lookup(&struct_def_, env, lang_type_get_str(lhs_lang_type)));
     Struct_def_base base = tast_struct_def_unwrap(struct_def_)->base;
     log(LOG_DEBUG, TAST_FMT, tast_def_print(struct_def_));
@@ -888,7 +888,7 @@ static Tast_expr* rm_tuple_raw_union_lit_rhs(Env* env, Tast_raw_union_lit* rhs, 
 
     Lang_type lhs_lang_type = rm_tuple_lang_type(env, rhs->lang_type, rhs->pos);
     log(LOG_DEBUG, TAST_FMT, tast_raw_union_lit_print(rhs));
-    log(LOG_DEBUG, TAST_FMT, lang_type_print(lhs_lang_type));
+    log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lhs_lang_type));
     //Tast_variable_def* to_rtn = tast_variable_def_new(
     //    rtn->pos,
     //    vec_at(&fun_decl->return_type->lang_type, 0),
@@ -903,7 +903,7 @@ static Tast_expr* rm_tuple_raw_union_lit_rhs(Env* env, Tast_raw_union_lit* rhs, 
     env->parent_of = PARENT_OF_NONE;
 
     Tast_def* struct_def_ = NULL;
-    log(LOG_DEBUG, TAST_FMT, lang_type_print(lhs_lang_type));
+    log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lhs_lang_type));
     try(symbol_lookup(&struct_def_, env, lang_type_get_str(lhs_lang_type)));
     Struct_def_base base = tast_raw_union_def_unwrap(struct_def_)->base;
     log(LOG_DEBUG, TAST_FMT, tast_def_print(struct_def_));

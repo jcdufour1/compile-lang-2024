@@ -51,7 +51,7 @@ uint64_t sizeof_lang_type(Env* env, Lang_type lang_type) {
         case LANG_TYPE_VOID:
             return 0;
         default:
-            unreachable(LANG_TYPE_FMT, lang_type_print(lang_type));
+            unreachable(LANG_TYPE_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
     }
 }
 

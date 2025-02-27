@@ -43,7 +43,7 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Env* e
         // TODO: does this make sense?
         return lang_type_primitive_const_wrap(lang_type_string_const_wrap(lang_type_string_new(atom)));
     } else {
-        log(LOG_DEBUG, TAST_FMT, ulang_type_print(ulang_type_regular_const_wrap(lang_type)));
+        log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(lang_type)));
         todo();
     }
     todo();
@@ -52,7 +52,7 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Env* e
 static inline Lang_type lang_type_from_ulang_type_regular(Env* env, Ulang_type_regular lang_type) {
     Uast_def* result = NULL;
     if (!usymbol_lookup(&result, env, lang_type.atom.str)) {
-        unreachable(LANG_TYPE_FMT, ulang_type_print(ulang_type_regular_const_wrap(lang_type)));
+        unreachable(LANG_TYPE_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(lang_type)));
     }
 
     Lang_type_atom new_atom = lang_type_atom_new(lang_type.atom.str, lang_type.atom.pointer_depth);

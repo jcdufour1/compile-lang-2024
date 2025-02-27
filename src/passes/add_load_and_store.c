@@ -221,7 +221,7 @@ static Str_view load_function_call(
     if (rtn_is_struct) {
         def_name = util_literal_name_new_prefix("result_fun_call");
         Tast_variable_def* def = tast_variable_def_new(old_fun_call->pos, old_fun_call->lang_type, false, def_name);
-        log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(old_fun_call->lang_type));
+        log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, old_fun_call->lang_type));
         try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(def)));
         
         vec_append(&a_main, &new_args, def_name);

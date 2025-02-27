@@ -13,16 +13,12 @@ static void extend_pos(String* buf, Pos pos) {
     string_extend_cstr(&print_arena, buf, " ))");
 }
 
-static void extend_lang_type(String* string, Lang_type lang_type, bool surround_in_lt_gt, bool do_tag) {
-    extend_lang_type_to_string(string, lang_type, surround_in_lt_gt, do_tag);
-}
-
-void extend_ulang_type_to_string(String* string, Ulang_type lang_type, bool surround_in_lt_gt) {
+void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR: {
             Ulang_type_atom atom = ulang_type_regular_const_unwrap(lang_type).atom;
 
-            if (surround_in_lt_gt) {
+            if (mode == LANG_TYPE_MODE_LOG) {
                 vec_append(&print_arena, string, '<');
             }
 
@@ -37,7 +33,7 @@ void extend_ulang_type_to_string(String* string, Ulang_type lang_type, bool surr
             for (int16_t idx = 0; idx < atom.pointer_depth; idx++) {
                 vec_append(&print_arena, string, '*');
             }
-            if (surround_in_lt_gt) {
+            if (mode == LANG_TYPE_MODE_LOG) {
                 vec_append(&print_arena, string, '>');
             }
             return;
@@ -45,7 +41,7 @@ void extend_ulang_type_to_string(String* string, Ulang_type lang_type, bool surr
         case ULANG_TYPE_TUPLE: {
             Ulang_type_tuple tuple = ulang_type_tuple_const_unwrap(lang_type);
             for (size_t idx = 0; idx < tuple.ulang_types.info.count; idx++) {
-                extend_ulang_type_to_string(string, vec_at(&tuple.ulang_types, idx), false);
+                extend_ulang_type_to_string(string, mode, vec_at(&tuple.ulang_types, idx));
             }
             return;
         }
@@ -53,14 +49,12 @@ void extend_ulang_type_to_string(String* string, Ulang_type lang_type, bool surr
     unreachable("");
 }
 
-static void extend_ulang_type(String* string, Ulang_type lang_type, bool surround_in_lt_gt) {
-    extend_ulang_type_to_string(string, lang_type, surround_in_lt_gt);
-}
-
-Str_view ulang_type_print_internal(Ulang_type lang_type, bool surround_in_lt_gt) {
+Str_view ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type) {
     String buf = {0};
-    extend_ulang_type_to_string(&buf, lang_type, surround_in_lt_gt);
-    string_extend_cstr(&print_arena, &buf, "\n");
+    extend_ulang_type_to_string(&buf, mode, lang_type);
+    if (mode == LANG_TYPE_MODE_LOG) {
+        string_extend_cstr(&print_arena, &buf, "\n");
+    }
     return string_to_strv(buf);
 }
 
@@ -94,7 +88,7 @@ Str_view uast_unary_print_internal(const Uast_unary* unary, int indent) {
 }
 
 void uast_extend_sym_typed_base(String* string, Sym_typed_base base) {
-    extend_lang_type(string, base.lang_type, true, true);
+    extend_lang_type_to_string(string, LANG_TYPE_MODE_LOG, base.lang_type);
     string_extend_strv(&print_arena, string, base.name);
     string_extend_cstr(&print_arena, string, "\n");
 }
@@ -199,7 +193,7 @@ Str_view uast_sum_access_print_internal(const Uast_sum_access* lit, int indent) 
 
     string_extend_cstr_indent(&print_arena, &buf, "sum_access", indent);
     
-    string_extend_strv(&print_arena, &buf, lang_type_print_internal(lit->lang_type, true, true));
+    string_extend_strv(&print_arena, &buf, lang_type_print_internal(LANG_TYPE_MODE_LOG, lit->lang_type));
     string_extend_strv(&print_arena, &buf, tast_enum_lit_print_internal(lit->tag, indent + INDENT_WIDTH));
     string_extend_strv(&print_arena, &buf, uast_expr_print_internal(lit->callee, indent + INDENT_WIDTH));
 
@@ -295,7 +289,7 @@ Str_view uast_lang_type_print_internal(const Uast_lang_type* lang_type, int inde
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "lang_type", indent);
-    string_extend_strv(&print_arena, &buf, ulang_type_print_internal(lang_type->lang_type, false));
+    string_extend_strv(&print_arena, &buf, ulang_type_print_internal(LANG_TYPE_MODE_LOG, lang_type->lang_type));
 
     return string_to_strv(buf);
 }
@@ -540,7 +534,7 @@ Str_view uast_primitive_def_print_internal(const Uast_primitive_def* def, int in
 
     string_extend_cstr_indent(&print_arena, &buf, "primitive_def\n", indent);
     indent += INDENT_WIDTH;
-    extend_lang_type(&buf, def->lang_type, true, true);
+    extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
     string_extend_cstr(&print_arena, &buf, "\n");
     indent -= INDENT_WIDTH;
 
@@ -608,7 +602,7 @@ Str_view uast_variable_def_print_internal(const Uast_variable_def* def, int inde
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "variable_def", indent);
-    extend_ulang_type(&buf, def->lang_type, true);
+    extend_ulang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
     string_extend_strv_in_par(&print_arena, &buf, def->name);
     string_extend_cstr(&print_arena, &buf, "\n");
 

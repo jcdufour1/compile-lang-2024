@@ -28,4 +28,11 @@ static inline Lang_type_atom lang_type_atom_new_from_cstr(const char* cstr, int1
     return lang_type_atom_new(str_view_from_cstr(cstr), pointer_depth);
 }
 
+typedef enum {
+    LANG_TYPE_MODE_LOG,
+    LANG_TYPE_MODE_MSG_NORMAL,
+    LANG_TYPE_MODE_MSG_MINIMAL,
+    LANG_TYPE_MODE_EMIT_LLVM,
+} LANG_TYPE_MODE;
+
 #endif // LANG_TYPE_HAND_WRITTEN
