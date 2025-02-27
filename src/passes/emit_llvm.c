@@ -207,7 +207,6 @@ static void llvm_extend_type_decl_str(Env* env, String* output, const Llvm* var_
 }
 
 static void extend_literal_decl_prefix(String* output, String* literals, const Llvm_literal* literal) {
-    log(LOG_DEBUG, "entering thing\n");
     //if (lang_type_is_equal(llvm_literal_get_lang_type(literal), lang_type_primitive_wrap(lang_type_string_const_wrap(lang_type_string_new(lang_type_atom_new_from_cstr("u8", 1)))))) {
     if (llvm_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE && lang_type_primitive_const_unwrap(llvm_literal_get_lang_type(literal)).type == LANG_TYPE_STRING) {
         if (lang_type_get_pointer_depth(llvm_literal_get_lang_type(literal)) != 1) {
@@ -243,7 +242,6 @@ static void extend_literal_decl_prefix(String* output, String* literals, const L
 }
 
 static void tast_extend_literal_decl_prefix(String* output, const Tast_literal* literal) {
-    log(LOG_DEBUG, "entering thing\n");
     assert(lang_type_get_str(tast_literal_get_lang_type(literal)).count > 0);
     if (str_view_cstr_is_equal(lang_type_get_str(tast_literal_get_lang_type(literal)), "u8")) {
         if (lang_type_get_pointer_depth(tast_literal_get_lang_type(literal)) != 1) {
@@ -321,7 +319,6 @@ static void emit_function_call_arg_load_another_llvm(
     const Llvm_load_another_llvm* load
 ) {
     Llvm_id llvm_id = 0;
-    log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, load->lang_type));
 
     Llvm* src = NULL;
     try(alloca_lookup(&src, env, load->name));
@@ -330,7 +327,6 @@ static void emit_function_call_arg_load_another_llvm(
         extend_literal_decl(env, output, literals, llvm_literal_const_unwrap(llvm_expr_const_unwrap(src)), true);
     } else {
         if (is_struct_like(load->lang_type.type)) {
-            log(LOG_DEBUG, STR_VIEW_FMT, llvm_load_another_llvm_print(load));
             llvm_id = llvm_id_from_get_name(env, get_storage_location(env, load->llvm_src));
             assert(llvm_id > 0);
 
@@ -377,7 +373,6 @@ static void emit_function_arg_expr(Env* env, String* output, String* literals, c
 }
 
 static void emit_function_call_arguments(Env* env, String* output, String* literals, const Llvm_function_call* fun_call) {
-    log(LOG_DEBUG, LLVM_FMT, llvm_function_call_print(fun_call));
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
         Str_view arg_name = vec_at(&fun_call->args, idx);
         Llvm* argument = NULL;
@@ -409,8 +404,6 @@ static void emit_function_call(Env* env, String* output, String* literals, const
 
     // start of actual function call
     string_extend_cstr(&a_main, output, "    ");
-    log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, fun_call->lang_type));
-    log(LOG_DEBUG, LANG_TYPE_FMT"\n", str_view_print(lang_type_get_str(fun_call->lang_type)));
     if (fun_call->lang_type.type != LANG_TYPE_VOID) {
         string_extend_cstr(&a_main, output, "%");
         string_extend_size_t(&a_main, output, fun_call->llvm_id);
@@ -687,7 +680,6 @@ static void emit_operator_operand_expr(String* output, const Llvm_expr* operand)
 
 static void emit_operator_operand(Env* env, String* output, const Str_view operand_name) {
     Llvm* operand = NULL;
-    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(operand_name));
     try(alloca_lookup(&operand, env, operand_name));
 
     switch (operand->type) {
@@ -744,7 +736,6 @@ static void emit_load_another_llvm(Env* env, String* output, const Llvm_load_ano
     string_extend_cstr(&a_main, output, "    %");
     string_extend_size_t(&a_main, output, load_llvm->llvm_id);
     string_extend_cstr(&a_main, output, " = load ");
-    log(LOG_DEBUG, LLVM_FMT, llvm_load_another_llvm_print(load_llvm));
     extend_type_call_str(env, output, load_llvm->lang_type);
     string_extend_cstr(&a_main, output, ", ");
     string_extend_cstr(&a_main, output, "ptr");
@@ -1131,11 +1122,7 @@ static void emit_block(Env* env, String* struct_defs, String* output, String* li
         if (table.table_tasts[idx].status != SYM_TBL_OCCUPIED) {
             continue;
         }
-
-        log(LOG_DEBUG, TAST_FMT, llvm_print(table.table_tasts[idx].tast));
-        log(LOG_DEBUG, TAST_FMT, string_print(*output));
         emit_sometimes(env, struct_defs, output, literals, table.table_tasts[idx].tast);
-        log(LOG_DEBUG, TAST_FMT, string_print(*output));
     }
 
     //get_block_return_id(fun_block) = get_block_return_id(fun_block->left_child);
@@ -1328,8 +1315,6 @@ void emit_llvm_from_tree(Env* env, const Llvm_block* root) {
     String output = {0};
     String literals = {0};
     emit_block(env, &struct_defs, &output, &literals, root);
-    //emit_symbols(env, &output);
-    log(LOG_DEBUG, "\n"STRING_FMT"\n"STRING_FMT"\n", string_print(struct_defs), string_print(output));
 
     FILE* file = fopen("test.ll", "w");
     if (!file) {

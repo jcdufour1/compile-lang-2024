@@ -234,7 +234,6 @@ static void if_for_add_cond_goto(
         label_name_if_false,
         0
     );
-    log(LOG_DEBUG, TAST_FMT"\n", llvm_cond_goto_print(cond_goto));
 
     vec_append(&a_main, &block->children, llvm_cond_goto_wrap(cond_goto));
 }
@@ -259,7 +258,6 @@ static Str_view load_function_call(
     Llvm_block* new_block,
     Tast_function_call* old_fun_call
 ) {
-    log(LOG_DEBUG, TAST_FMT, tast_function_call_print(old_fun_call));
     bool rtn_is_struct = is_struct_like(old_fun_call->lang_type.type);
 
     Strv_vec new_args = {0};
@@ -269,7 +267,6 @@ static Str_view load_function_call(
     if (rtn_is_struct) {
         def_name = util_literal_name_new_prefix("result_fun_call");
         Tast_variable_def* def = tast_variable_def_new(old_fun_call->pos, old_fun_call->lang_type, false, def_name);
-        log(LOG_DEBUG, LANG_TYPE_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, old_fun_call->lang_type));
         try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(def)));
         
         vec_append(&a_main, &new_args, def_name);
@@ -294,8 +291,6 @@ static Str_view load_function_call(
         vec_append(&a_main, &new_fun_call->args, thing);
         Llvm* result = NULL;
         try(alloca_lookup(&result, env, thing));
-        log(LOG_DEBUG, TAST_FMT, llvm_print(result));
-        log(LOG_DEBUG, TAST_FMT, llvm_function_call_print(new_fun_call));
     }
 
     vec_append(&a_main, &new_block->children, llvm_expr_wrap(llvm_function_call_wrap(new_fun_call)));
@@ -382,7 +377,6 @@ static Str_view load_literal(
             tast_string_unwrap(old_lit)->name,
             tast_string_unwrap(old_lit)->data
         );
-        log(LOG_DEBUG, TAST_FMT, tast_string_def_print(new_def));
         try(sym_tbl_add(&env->global_literals, tast_literal_def_wrap(tast_string_def_wrap(new_def))));
     }
 
@@ -399,18 +393,14 @@ static Str_view load_ptr_symbol(
     (void) new_block;
 
     Tast_def* var_def_ = NULL;
-    log(LOG_DEBUG, TAST_FMT, tast_symbol_print(old_sym));
     try(symbol_lookup(&var_def_, env, old_sym->base.name));
     Llvm_variable_def* var_def = load_variable_def_clone(tast_variable_def_unwrap(var_def_));
     Llvm* alloca = NULL;
     if (!alloca_lookup(&alloca, env, var_def->name_corr_param)) {
-        log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(var_def->name_corr_param));
         unreachable("");
     }
 
     assert(var_def);
-    log(LOG_DEBUG, TAST_FMT, llvm_variable_def_print(var_def));
-    log(LOG_DEBUG, TAST_FMT, tast_symbol_print(old_sym));
     assert(lang_type_is_equal(var_def->lang_type, old_sym->base.lang_type));
 
     return llvm_tast_get_name(alloca);
@@ -424,7 +414,6 @@ static Str_view load_ptr_sum_callee(
     (void) new_block;
     (void) env;
     (void) old_callee;
-    log(LOG_DEBUG, "entering thing: "TAST_FMT"\n", tast_sum_callee_print(old_callee));
 
     //Tast_def* var_def_ = NULL;
     //try(symbol_lookup(&var_def_, env, old_callee->name));
@@ -534,7 +523,7 @@ static Str_view load_binary_short_circuit(
                     util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
                 ),
                 BINARY_NOT_EQUAL,
-                tast_expr_get_lang_type(old_bin->lhs) // TODO: this may not work
+                tast_expr_get_lang_type(old_bin->lhs)
             ))),
             tast_literal_wrap(
                 util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
@@ -570,7 +559,6 @@ static Str_view load_binary_short_circuit(
     
     //log(LOG_DEBUG, TAST_FMT, tast_if_print(if_true));
     //log(LOG_DEBUG, TAST_FMT, tast_if_print(if_false));
-    log(LOG_DEBUG, TAST_FMT, tast_if_else_chain_print(if_else));
     load_variable_def(env, new_block, new_var_def);
     load_if_else_chain(env, new_block, if_else);
     return load_symbol(env, new_block, tast_symbol_new(old_bin->pos, (Sym_typed_base) {
@@ -723,8 +711,6 @@ static Str_view load_ptr_member_access(
     Str_view new_callee = load_ptr_expr(env, new_block, old_access->callee);
 
     Tast_def* def = NULL;
-    log(LOG_DEBUG, TAST_FMT, tast_member_access_print(old_access));
-    log(LOG_DEBUG, LANG_TYPE_FMT"\n", str_view_print(lang_type_get_str(lang_type_from_get_name(env, new_callee))));
     try(symbol_lookup(&def, env, lang_type_get_str(lang_type_from_get_name(env, new_callee))));
 
     int64_t struct_index = {0};
@@ -866,7 +852,6 @@ static Llvm_reg load_function_parameters(
         bool is_struct = is_struct_like(param->lang_type.type);
 
         if (!is_struct) {
-            log(LOG_DEBUG, TAST_FMT, llvm_variable_def_print(param));
             try(alloca_add(env, llvm_def_wrap(llvm_variable_def_wrap(param))));
 
             Llvm_store_another_llvm* new_store = llvm_store_another_llvm_new(
@@ -882,7 +867,6 @@ static Llvm_reg load_function_parameters(
             vec_append(&a_main, &new_fun_body->children, llvm_store_another_llvm_wrap(new_store));
         }
 
-        log(LOG_DEBUG, TAST_FMT"\n", llvm_variable_def_print(param));
         try(alloca_lookup(&dummy, env, param->name_corr_param));
     }
 
@@ -929,7 +913,6 @@ static Str_view load_function_def(
     assert(new_lang_type);
     new_fun_def->decl->return_type = new_lang_type;
     for (size_t idx = 0; idx < old_fun_def->body->children.info.count; idx++) {
-        log(LOG_DEBUG, STR_VIEW_FMT, tast_stmt_print(vec_at(&old_fun_def->body->children, idx)));
         load_stmt(env, new_fun_def->body, vec_at(&old_fun_def->body->children, idx));
     }
     vec_rem_last(&env->ancesters);
@@ -957,7 +940,6 @@ static Str_view load_return(
 
     Tast_def* fun_def_ = NULL;
     try(symbol_lookup(&fun_def_, env, env->name_parent_function));
-    log(LOG_DEBUG, LLVM_FMT, tast_def_print(fun_def_));
 
     Tast_function_decl* fun_decl = NULL;
     switch (fun_def_->type) {
@@ -979,10 +961,7 @@ static Str_view load_return(
     if (rtn_is_struct) {
         Llvm* dest_ = NULL;
         try(alloca_lookup(&dest_, env, env->struct_rtn_name_parent_function));
-        log(LOG_DEBUG, LLVM_FMT, llvm_print(dest_));
         Str_view dest = env->struct_rtn_name_parent_function;
-
-        log(LOG_DEBUG, LLVM_FMT, tast_expr_print(old_return->child));
         Str_view src = load_expr(env, new_block, old_return->child);
 
         Llvm_store_another_llvm* new_store = llvm_store_another_llvm_new(
@@ -1208,13 +1187,6 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
         old_for->body->pos_end
     );
 
-    for (size_t idx = 0; idx < old_for->body->children.info.count; idx++) {
-        log(LOG_DEBUG, TAST_FMT"\n", tast_stmt_print(vec_at(&old_for->body->children, idx)));
-    }
-    for (size_t idx = 0; idx < new_branch_block->children.info.count; idx++) {
-        log(LOG_DEBUG, TAST_FMT"\n", llvm_print(vec_at(&new_branch_block->children, idx)));
-    }
-
     vec_append(&a_main, &env->ancesters, &new_branch_block->symbol_collection);
 
     (void) pos;
@@ -1231,7 +1203,6 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
         symbol_lhs_assign_ = uast_symbol_new(for_var_def->pos, for_var_def->name);
         Tast_expr* new_expr = NULL;
         try(try_set_symbol_type(env, &new_expr, symbol_lhs_assign_));
-        log(LOG_DEBUG, STR_VIEW_FMT, tast_expr_print(new_expr));
         symbol_lhs_assign = tast_symbol_unwrap(new_expr);
     }
 
@@ -1314,7 +1285,7 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
 
         for (size_t idx = 0; idx < old_for->body->children.info.count; idx++) {
             for (size_t idx = 0; idx < new_branch_block->children.info.count; idx++) {
-                log(LOG_DEBUG, TAST_FMT"\n", llvm_print(vec_at(&new_branch_block->children, idx)));
+                //log(LOG_DEBUG, TAST_FMT"\n", llvm_print(vec_at(&new_branch_block->children, idx)));
             }
             load_stmt(env, new_branch_block, vec_at(&old_for->body->children, idx));
         }
@@ -1402,8 +1373,6 @@ static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for
     //for (size_t idx = 0; idx < new_branch_block->children.info.count; idx++) {
     //    log(LOG_DEBUG, TAST_FMT"\n", tast_print(vec_at(&new_branch_block->children, idx)));
     //}
-    log(LOG_DEBUG, "DSFJKLKJDFS: "STR_VIEW_FMT"\n", str_view_print(after_check_label));
-
 
     //try(symbol_lookup(&dummy, env, str_view_from_cstr("str18")));
     //for (size_t idx = 0; idx < old_for->body->children.info.count; idx++) {
@@ -1427,9 +1396,9 @@ static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for
     env->label_if_continue = old_if_continue;
     env->label_if_break = old_if_break;
     for (size_t idx = 0; idx < env->defered_allocas_to_add.info.count; idx++) {
-        log(LOG_DEBUG, TAST_FMT, llvm_print(vec_at(&env->defered_allocas_to_add, idx)));
+        //log(LOG_DEBUG, TAST_FMT, llvm_print(vec_at(&env->defered_allocas_to_add, idx)));
     }
-    log_env(LOG_DEBUG, env);
+    //log_env(LOG_DEBUG, env);
     vec_rem_last(&env->ancesters);
     Symbol_collection* popped = NULL;
     vec_pop(popped, &env->ancesters);
@@ -1492,7 +1461,6 @@ static Str_view load_raw_union_def(
     Env* env,
     Tast_raw_union_def* old_def
 ) {
-    log(LOG_DEBUG, TAST_FMT, tast_raw_union_def_print(old_def));
     // TODO: crash if alloca_add fails (we need to prevent duplicates to crash on alloca_add fail)?
     if (!alloca_add(env, llvm_def_wrap(
         llvm_raw_union_def_wrap(load_raw_union_def_clone(old_def))

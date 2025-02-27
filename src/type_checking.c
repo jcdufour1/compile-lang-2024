@@ -856,7 +856,6 @@ bool try_set_struct_literal_assignment_types(
     
     Tast_expr_vec new_literal_members = {0};
     for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
-        //log(LOG_DEBUG, "%zu\n", idx);
         Uast_variable_def* memb_sym_def = vec_at(&struct_def->base.members, idx);
         Uast_assignment* assign_memb_sym = uast_assignment_unwrap(vec_at(&struct_literal->members, idx));
         Uast_symbol* memb_sym_piece_untyped = uast_symbol_unwrap(uast_expr_unwrap(assign_memb_sym->lhs));

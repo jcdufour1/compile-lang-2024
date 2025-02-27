@@ -92,8 +92,6 @@ static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
             todo();
         }
         assert(count_args < SIZE_MAX && "count_args unset");
-        log(LOG_DEBUG, "%s\n", count_args_cstr);
-        log(LOG_DEBUG, "%zu\n", count_args);
 
         bool found = false;
         for (size_t idx = 0; idx < count_args; idx++) {
