@@ -459,6 +459,22 @@ static Str_view load_binary_short_circuit(
     Llvm_block* new_block,
     Tast_binary* old_bin
 ) {
+    BINARY_TYPE if_true_type = {0};
+    int if_false_val = 0;
+
+    switch (old_bin->token_type) {
+        case BINARY_LOGICAL_AND:
+            if_true_type = BINARY_NOT_EQUAL;
+            if_false_val = 0;
+            break;
+        case BINARY_LOGICAL_OR:
+            if_true_type = BINARY_DOUBLE_EQUAL;
+            if_false_val = 1;
+            break;
+        default:
+            unreachable("");
+    }
+
     Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
         lang_type_unsigned_int_new(1, 0)
     ));
@@ -493,67 +509,60 @@ static Str_view load_binary_short_circuit(
             .llvm_id = 0
         }))),
         tast_literal_wrap(
-            util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
+            util_tast_literal_new_from_int64_t(if_false_val, TOKEN_INT_LITERAL, old_bin->pos)
         )
     )));
 
-    switch (old_bin->token_type) {
-        case BINARY_LOGICAL_AND: {
-            Tast_if* if_true = tast_if_new(
-                old_bin->pos,
-                tast_condition_new(old_bin->pos, tast_binary_wrap(tast_binary_new(
-                    old_bin->pos,
-                    tast_operator_wrap(tast_unary_wrap(tast_unary_new(
-                        old_bin->pos, old_bin->lhs, UNARY_UNSAFE_CAST, u1_lang_type // TODO: this may not work
-                    ))),
-                    tast_literal_wrap(
-                        util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
-                    ),
-                    BINARY_NOT_EQUAL,
-                    u1_lang_type
-                ))),
-                // TODO: load inner expr in block, and update new symbol
-                tast_block_new(old_bin->pos, if_true_stmts, (Symbol_collection) {0}, old_bin->pos)
-            );
+    Tast_if* if_true = tast_if_new(
+        old_bin->pos,
+        tast_condition_new(old_bin->pos, tast_binary_wrap(tast_binary_new(
+            old_bin->pos,
+            tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+                old_bin->pos, old_bin->lhs, UNARY_UNSAFE_CAST, u1_lang_type // TODO: this may not work
+            ))),
+            tast_literal_wrap(
+                util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
+            ),
+            if_true_type,
+            u1_lang_type
+        ))),
+        // TODO: load inner expr in block, and update new symbol
+        tast_block_new(old_bin->pos, if_true_stmts, (Symbol_collection) {0}, old_bin->pos)
+    );
 
-            Tast_if* if_false = tast_if_new(
-                old_bin->pos,
-                tast_condition_new(old_bin->pos, tast_binary_wrap(tast_binary_new(
-                    old_bin->pos,
-                    tast_literal_wrap(
-                        util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
-                    ),
-                    tast_literal_wrap(
-                        util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
-                    ),
-                    BINARY_DOUBLE_EQUAL,
-                    u1_lang_type
-                ))),
-                // TODO: load inner expr in block, and update new symbol
-                tast_block_new(old_bin->pos, if_false_stmts, (Symbol_collection) {0}, old_bin->pos)
-            );
+    Tast_if* if_false = tast_if_new(
+        old_bin->pos,
+        tast_condition_new(old_bin->pos, tast_binary_wrap(tast_binary_new(
+            old_bin->pos,
+            tast_literal_wrap(
+                util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
+            ),
+            tast_literal_wrap(
+                util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, old_bin->pos)
+            ),
+            BINARY_DOUBLE_EQUAL,
+            u1_lang_type
+        ))),
+        // TODO: load inner expr in block, and update new symbol
+        tast_block_new(old_bin->pos, if_false_stmts, (Symbol_collection) {0}, old_bin->pos)
+    );
 
-            Tast_if_vec ifs = {0};
-            vec_append(&a_main, &ifs, if_true);
-            vec_append(&a_main, &ifs, if_false);
-            Tast_if_else_chain* if_else = tast_if_else_chain_new(old_bin->pos, ifs);
-            
-            //log(LOG_DEBUG, TAST_FMT, tast_if_print(if_true));
-            //log(LOG_DEBUG, TAST_FMT, tast_if_print(if_false));
-            log(LOG_DEBUG, TAST_FMT, tast_if_else_chain_print(if_else));
-            load_variable_def(env, new_block, new_var_def);
-            load_if_else_chain(env, new_block, if_else);
-            return load_symbol(env, new_block, tast_symbol_new(old_bin->pos, (Sym_typed_base) {
-                .lang_type = u1_lang_type,
-                .name = new_var_def->name,
-                .llvm_id = 0
-            }));
-        }
-        case BINARY_LOGICAL_OR:
-            todo();
-        default:
-            unreachable("");
-    }
+    Tast_if_vec ifs = {0};
+    vec_append(&a_main, &ifs, if_true);
+    vec_append(&a_main, &ifs, if_false);
+    Tast_if_else_chain* if_else = tast_if_else_chain_new(old_bin->pos, ifs);
+    
+    //log(LOG_DEBUG, TAST_FMT, tast_if_print(if_true));
+    //log(LOG_DEBUG, TAST_FMT, tast_if_print(if_false));
+    log(LOG_DEBUG, TAST_FMT, tast_if_else_chain_print(if_else));
+    load_variable_def(env, new_block, new_var_def);
+    load_if_else_chain(env, new_block, if_else);
+    return load_symbol(env, new_block, tast_symbol_new(old_bin->pos, (Sym_typed_base) {
+        .lang_type = u1_lang_type,
+        .name = new_var_def->name,
+        .llvm_id = 0
+    }));
+
 }
 
 //static Str_view load_binary_short_circuit(
