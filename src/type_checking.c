@@ -173,9 +173,9 @@ static void msg_invalid_function_arg_internal(
         LOG_ERROR, EXPECT_FAIL_INVALID_FUN_ARG, env->file_text, tast_expr_get_pos(argument), 
         "argument is of type `"LANG_TYPE_FMT"`, "
         "but the corresponding parameter `"STR_VIEW_FMT"` is of type `"LANG_TYPE_FMT"`\n",
-        lang_type_print(LANG_TYPE_MODE_MSG_NORMAL, tast_expr_get_lang_type(argument)), 
+        lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(argument)), 
         str_view_print(corres_param->name),
-        ulang_type_print(LANG_TYPE_MODE_MSG_NORMAL, corres_param->lang_type)
+        ulang_type_print(LANG_TYPE_MODE_MSG, corres_param->lang_type)
     );
     msg_internal(
         file, line,
@@ -228,15 +228,15 @@ static void msg_invalid_return_type_internal(const char* file, int line, Env* en
             file, line,
             LOG_ERROR, EXPECT_FAIL_MISSING_RETURN, env->file_text, pos,
             "no return statement in function that returns `"LANG_TYPE_FMT"`\n",
-            ulang_type_print(LANG_TYPE_MODE_MSG_NORMAL, fun_decl->return_type->lang_type)
+            ulang_type_print(LANG_TYPE_MODE_MSG, fun_decl->return_type->lang_type)
         );
     } else {
         msg_internal(
             file, line,
             LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, env->file_text, pos,
             "returning `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
-            lang_type_print(LANG_TYPE_MODE_MSG_NORMAL, tast_expr_get_lang_type(child)), 
-            ulang_type_print(LANG_TYPE_MODE_MSG_NORMAL, fun_decl->return_type->lang_type)
+            lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(child)), 
+            ulang_type_print(LANG_TYPE_MODE_MSG, fun_decl->return_type->lang_type)
         );
     }
 
@@ -244,7 +244,7 @@ static void msg_invalid_return_type_internal(const char* file, int line, Env* en
         file, line,
         LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text, fun_decl->return_type->pos,
         "function return type `"LANG_TYPE_FMT"` defined here\n",
-        ulang_type_print(LANG_TYPE_MODE_MSG_NORMAL, fun_decl->return_type->lang_type)
+        ulang_type_print(LANG_TYPE_MODE_MSG, fun_decl->return_type->lang_type)
     );
 }
 
@@ -484,8 +484,8 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
             msg(
                 LOG_ERROR, EXPECT_FAIL_BINARY_MISMATCHED_TYPES, env->file_text, oper_pos,
                 "types `"LANG_TYPE_FMT"` and `"LANG_TYPE_FMT"` are not valid operands to binary expression\n",
-                lang_type_print(LANG_TYPE_MODE_MSG_NORMAL, tast_expr_get_lang_type(new_lhs)),
-                lang_type_print(LANG_TYPE_MODE_MSG_NORMAL, tast_expr_get_lang_type(new_rhs))
+                lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_lhs)),
+                lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs))
             );
             return false;
         }
@@ -604,7 +604,7 @@ bool try_set_unary_types_finish(
             } else if (lang_type_is_number(tast_expr_get_lang_type(new_child)) && lang_type_is_number(tast_expr_get_lang_type(new_child))) {
             } else if (lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)) > 0 && lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)) > 0) {
             } else {
-                log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_MSG_NORMAL, tast_expr_get_lang_type(new_child)));
+                log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_child)));
                 log(LOG_DEBUG, BOOL_FMT, bool_print(lang_type_is_number(tast_expr_get_lang_type(new_child))));
                 log(LOG_DEBUG, "%d\n", lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)));
                 log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_child));
@@ -623,7 +623,7 @@ bool try_set_unary_types_finish(
                 msg(
                     LOG_ERROR, EXPECT_FAIL_UNARY_MISMATCHED_TYPES, env->file_text, unary_pos,
                     "`"LANG_TYPE_FMT"` is not valid operand to logical not operation\n",
-                    lang_type_print(LANG_TYPE_MODE_MSG_NORMAL, new_lang_type)
+                    lang_type_print(LANG_TYPE_MODE_MSG, new_lang_type)
                 );
                 return false;
             }
@@ -676,14 +676,14 @@ bool try_set_tuple_assignment_types(
             LOG_ERROR, EXPECT_FAIL_MISMATCHED_TUPLE_COUNT, env->file_text,
             uast_tuple_get_pos(tuple),
             "tuple `"UAST_FMT"` cannot be assigned to `"LANG_TYPE_FMT"`\n",
-            uast_tuple_print(tuple), lang_type_print(LANG_TYPE_MODE_MSG_NORMAL, dest_lang_type)
+            uast_tuple_print(tuple), lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type)
         );
         msg(
             LOG_NOTE, EXPECT_FAIL_TYPE_NONE, env->file_text,
             uast_tuple_get_pos(tuple),
             "tuple `"UAST_FMT"` has %zu elements, but type `"LANG_TYPE_FMT" has %zu elements`\n",
             uast_tuple_print(tuple), tuple->members.info.count,
-            lang_type_print(LANG_TYPE_MODE_MSG_NORMAL, dest_lang_type), lang_type_tuple_const_unwrap(dest_lang_type).lang_types.info.count
+            lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type), lang_type_tuple_const_unwrap(dest_lang_type).lang_types.info.count
         );
         return false;
     }
@@ -710,8 +710,8 @@ bool try_set_tuple_assignment_types(
                     LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
                     tast_expr_get_pos(new_memb),
                     "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
-                    lang_type_print(LANG_TYPE_MODE_MSG_NORMAL, tast_expr_get_lang_type(new_memb)),
-                    lang_type_print(LANG_TYPE_MODE_MSG_NORMAL, curr_dest)
+                    lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_memb)),
+                    lang_type_print(LANG_TYPE_MODE_MSG, curr_dest)
                 );
                 todo();
             case CHECK_ASSIGN_ERROR:
@@ -754,7 +754,7 @@ bool try_set_struct_literal_assignment_types(
             msg(
                 LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_PRIMITIVE, env->file_text,
                 assign_pos, "struct literal cannot be assigned to primitive type `"LANG_TYPE_FMT"`\n",
-                lang_type_print(LANG_TYPE_MODE_MSG_NORMAL, dest_lang_type)
+                lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type)
             );
             return false;
         default:
@@ -782,8 +782,8 @@ bool try_set_struct_literal_assignment_types(
                     LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
                     assign_memb_sym->pos,
                     "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
-                    lang_type_print(LANG_TYPE_MODE_MSG_NORMAL, tast_expr_get_lang_type(new_rhs)),
-                    ulang_type_print(LANG_TYPE_MODE_MSG_NORMAL, memb_sym_def->lang_type)
+                    lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
+                    ulang_type_print(LANG_TYPE_MODE_MSG, memb_sym_def->lang_type)
                 );
                 return false;
             case CHECK_ASSIGN_ERROR:
@@ -983,8 +983,8 @@ bool try_set_assignment_types(Env* env, Tast_assignment** new_assign, Uast_assig
                 LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
                 assignment->pos,
                 "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
-                lang_type_print(LANG_TYPE_MODE_MSG_NORMAL, tast_expr_get_lang_type(new_rhs)),
-                lang_type_print(LANG_TYPE_MODE_MSG_NORMAL, tast_stmt_get_lang_type(new_lhs))
+                lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
+                lang_type_print(LANG_TYPE_MODE_MSG, tast_stmt_get_lang_type(new_lhs))
             );
             return false;
         case CHECK_ASSIGN_ERROR:
@@ -1093,8 +1093,8 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
                         LOG_ERROR, EXPECT_FAIL_SUM_LIT_INVALID_ARG, env->file_text, tast_expr_get_pos(new_item),
                         "cannot assign "TAST_FMT" of type `"LANG_TYPE_FMT"` to '"LANG_TYPE_FMT"`\n", 
                         tast_expr_print(new_item),
-                        lang_type_print(LANG_TYPE_MODE_MSG_NORMAL, tast_expr_get_lang_type(new_item)), 
-                        lang_type_print(LANG_TYPE_MODE_MSG_NORMAL, lang_type_from_ulang_type(
+                        lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_item)), 
+                        lang_type_print(LANG_TYPE_MODE_MSG, lang_type_from_ulang_type(
                             env, vec_at(&sum_def->base.members, sum_callee->tag->data)->lang_type
                         ))
                    );
@@ -1138,7 +1138,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
                 msg(
                     LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, env->file_text, fun_call->pos,
                     "cannot assign argument to varient `"LANG_TYPE_FMT"."LANG_TYPE_FMT"`, because inner type is void\n",
-                    lang_type_print(LANG_TYPE_MODE_MSG_MINIMAL, sum_lit->sum_lang_type), str_view_print(vec_at(&sum_def->base.members, sum_lit->tag->data)->name)
+                    lang_type_print(LANG_TYPE_MODE_MSG, sum_lit->sum_lang_type), str_view_print(vec_at(&sum_def->base.members, sum_lit->tag->data)->name)
                 );
                 return false;
             }
@@ -1695,7 +1695,7 @@ static void msg_undefined_type_internal(
 ) {
     msg_internal(
         file, line, LOG_ERROR, EXPECT_FAIL_UNDEFINED_TYPE, env->file_text, pos,
-        "type `"LANG_TYPE_FMT"` is not defined\n", ulang_type_print(LANG_TYPE_MODE_MSG_NORMAL, lang_type)
+        "type `"LANG_TYPE_FMT"` is not defined\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type)
     );
 }
 
@@ -2119,7 +2119,7 @@ static bool check_for_exhaustiveness_finish(Env* env, Exhaustive_data exhaustive
 
                 // TODO: make printing less ugly
                 string_extend_cstr(&a_main, &string, "    ");
-                string_extend_strv(&a_main, &string, ulang_type_print_internal(LANG_TYPE_MODE_MSG_NORMAL, vec_at(&enum_def.members, idx)->lang_type));
+                string_extend_strv(&a_main, &string, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(&enum_def.members, idx)->lang_type));
                 string_extend_cstr(&a_main, &string, ".");
                 string_extend_strv(&a_main, &string, vec_at(&enum_def.members, idx)->name);
 

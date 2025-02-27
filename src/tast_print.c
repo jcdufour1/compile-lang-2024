@@ -86,12 +86,10 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
 
     switch (mode) {
         case LANG_TYPE_MODE_LOG:
-            // fallthrough
-        case LANG_TYPE_MODE_MSG_NORMAL:
             extend_lang_type_tag_to_string(string, lang_type.type);
             string_extend_cstr(&a_main, string, " ");
             break;
-        case LANG_TYPE_MODE_MSG_MINIMAL:
+        case LANG_TYPE_MODE_MSG:
             break;
         case LANG_TYPE_MODE_EMIT_LLVM:
             break;
@@ -100,9 +98,18 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
     }
 
     if (lang_type.type == LANG_TYPE_TUPLE) {
+        if (mode == LANG_TYPE_MODE_MSG) {
+            string_extend_cstr(&a_main, string, "(");
+        }
         Lang_type_vec lang_types = lang_type_tuple_const_unwrap(lang_type).lang_types;
         for (size_t idx = 0; idx < lang_types.info.count; idx++) {
+            if (mode == LANG_TYPE_MODE_MSG && idx > 0) {
+                string_extend_cstr(&a_main, string, ", ");
+            }
             extend_lang_type_to_string(string, mode, vec_at(&lang_types, idx));
+        }
+        if (mode == LANG_TYPE_MODE_MSG) {
+            string_extend_cstr(&a_main, string, ")");
         }
     } else {
         extend_lang_type_atom(string, mode, lang_type_get_atom(lang_type));
@@ -121,10 +128,8 @@ Str_view lang_type_print_internal(LANG_TYPE_MODE mode, Lang_type lang_type) {
     extend_lang_type_to_string(&buf, mode, lang_type);
     switch (mode) {
         case LANG_TYPE_MODE_EMIT_LLVM:
-            // fallthrough
-        case LANG_TYPE_MODE_MSG_NORMAL:
-            // fallthrough
-        case LANG_TYPE_MODE_MSG_MINIMAL:
+            break;
+        case LANG_TYPE_MODE_MSG:
             break;
         case LANG_TYPE_MODE_LOG:
             string_extend_cstr(&print_arena, &buf, "\n");
