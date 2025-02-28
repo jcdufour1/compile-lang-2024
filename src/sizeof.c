@@ -5,6 +5,7 @@
 #include <llvm_utils.h>
 #include <tast.h>
 #include <llvm.h>
+#include <lang_type_print.h>
 
 uint64_t sizeof_primitive(Lang_type_primitive primitive) {
     // TODO: platform specific pointer size, etc.

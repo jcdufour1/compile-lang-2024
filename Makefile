@@ -36,6 +36,8 @@ OBJS=\
 	 ${BUILD_DIR}/uast_print.o \
 	 ${BUILD_DIR}/tast_print.o \
 	 ${BUILD_DIR}/llvm_print.o \
+	 ${BUILD_DIR}/lang_type_print.o \
+	 ${BUILD_DIR}/ulang_type_print.o \
 	 ${BUILD_DIR}/globals.o \
 	 ${BUILD_DIR}/token.o \
 	 ${BUILD_DIR}/symbol_table.o \
@@ -112,6 +114,12 @@ ${BUILD_DIR}/tast_print.o: ${DEP_COMMON} src/tast_print.c third_party/*
 
 ${BUILD_DIR}/llvm_print.o: ${DEP_COMMON} src/llvm_print.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/llvm_print.o src/llvm_print.c
+
+${BUILD_DIR}/lang_type_print.o: ${DEP_COMMON} src/lang_type_print.c third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type_print.o src/lang_type_print.c
+
+${BUILD_DIR}/ulang_type_print.o: ${DEP_COMMON} src/ulang_type_print.c third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ulang_type_print.o src/ulang_type_print.c
 
 ${BUILD_DIR}/token.o: ${DEP_COMMON} src/token.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/token.o src/token.c

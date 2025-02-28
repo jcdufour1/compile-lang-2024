@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <tast_serialize.h>
 #include <lang_type_serialize.h>
+#include <lang_type_print.h>
 
 static void emit_block(Env* env, String* struct_defs, String* output, String* literals, const Llvm_block* fun_block);
 
@@ -116,11 +117,11 @@ static void extend_type_call_str(Env* env, String* output, Lang_type lang_type) 
             unreachable("");
         case LANG_TYPE_STRUCT:
             string_extend_cstr(&a_main, output, "%struct.");
-            extend_serialize_lang_type_to_string(env, output, lang_type, false);
+            string_extend_strv(&a_main, output, serialize_lang_type(env, lang_type));
             return;
         case LANG_TYPE_RAW_UNION:
             string_extend_cstr(&a_main, output, "%union.");
-            extend_serialize_lang_type_to_string(env, output, lang_type, false);
+            string_extend_strv(&a_main, output, serialize_lang_type(env, lang_type));
             return;
         case LANG_TYPE_ENUM:
             lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0))),
@@ -128,7 +129,7 @@ static void extend_type_call_str(Env* env, String* output, Lang_type lang_type) 
             return;
         case LANG_TYPE_VOID:
             lang_type = lang_type_void_const_wrap(lang_type_void_new(0));
-            extend_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_LLVM, lang_type);
+            string_extend_strv(&a_main, output, serialize_lang_type(env, lang_type));
             return;
         case LANG_TYPE_PRIMITIVE:
             if (lang_type_atom_is_unsigned(lang_type_get_atom(lang_type))) {
@@ -140,7 +141,7 @@ static void extend_type_call_str(Env* env, String* output, Lang_type lang_type) 
             return;
         case LANG_TYPE_SUM:
             string_extend_cstr(&a_main, output, "%struct.");
-            extend_serialize_lang_type_to_string(env, output, lang_type, false);
+            string_extend_strv(&a_main, output, serialize_lang_type(env, lang_type));
             return;
     }
     unreachable("");

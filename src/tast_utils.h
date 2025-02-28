@@ -74,17 +74,9 @@ static inline Lang_type_vec lang_type_vec_from_lang_type(Lang_type lang_type) {
     return vec;
 }
 
-Str_view lang_type_print_internal(LANG_TYPE_MODE mode, Lang_type lang_type);
-
 Str_view ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type);
 
 Str_view lang_type_atom_print_internal(LANG_TYPE_MODE mode, Lang_type_atom atom);
-
-#define lang_type_print(mode, lang_type) str_view_print(lang_type_print_internal((mode), (lang_type)))
-
-#define ulang_type_print(mode, lang_type) str_view_print(ulang_type_print_internal((mode), (lang_type)))
-
-#define lang_type_atom_print(mode, atom) str_view_print(lang_type_atom_print_internal(mode, atom))
 
 Str_view tast_print_internal(const Tast* tast, int recursion_depth);
 

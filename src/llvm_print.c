@@ -4,6 +4,7 @@
 #include <llvms.h>
 #include <util.h>
 #include <llvm_utils.h>
+#include <lang_type_print.h>
 
 static void extend_llvm_id(String* buf, const char* location, Llvm_id llvm_id) {
     string_extend_cstr(&print_arena, buf, " (& ");

@@ -4,6 +4,7 @@
 #include <ulang_type.h>
 #include <lang_type.h>
 #include <uast_utils.h>
+#include <ulang_type_print.h>
 
 static inline Lang_type lang_type_from_ulang_type(Env* env, Ulang_type lang_type);
 
