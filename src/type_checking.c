@@ -14,6 +14,7 @@
 #include <tast_clone.h>
 #include <uast_clone.h>
 #include <lang_type_hand_written.h>
+#include <ulang_type_serialize.h>
 
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
@@ -1139,6 +1140,17 @@ bool try_set_function_call_types_sum_case(Env* env, Tast_sum_case** new_case, Ua
     }
 }
 
+static Uast_function_decl* uast_function_decl_from_ulang_type(Env* env, Ulang_type lang_type) {
+    if (lang_type.type != ULANG_TYPE_FN) {
+        todo();
+    }
+
+    log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
+    Str_view name = serialize_ulang_type(lang_type);
+    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(name));
+    todo();
+}
+
 bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_call* fun_call) {
     bool status = true;
 
@@ -1262,6 +1274,9 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             (void) sum_def;
             //*new_call = 
             todo();
+        }
+        case UAST_VARIABLE_DEF: {
+            fun_decl = uast_function_decl_from_ulang_type(env, uast_variable_def_unwrap(fun_def)->lang_type);
         }
         default:
             unreachable(TAST_FMT, uast_def_print(fun_def));
