@@ -45,6 +45,13 @@ void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type
             }
             return;
         }
+        case ULANG_TYPE_FN: {
+            string_extend_cstr(&a_main, string, "fn");
+            Ulang_type_fn fn = ulang_type_fn_const_unwrap(lang_type);
+            extend_ulang_type_to_string(string, mode, ulang_type_tuple_const_wrap(fn.params));
+            extend_ulang_type_to_string(string, mode, *fn.return_type);
+            return;
+        }
     }
     unreachable("");
 }

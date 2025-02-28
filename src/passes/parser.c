@@ -803,6 +803,7 @@ static bool parse_lang_type_struct_atom(Ulang_type_atom* lang_type, Tk_view* tok
     memset(lang_type, 0, sizeof(*lang_type));
     Token lang_type_token = {0};
 
+
     if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
         return false;
     }
@@ -816,30 +817,16 @@ static bool parse_lang_type_struct_atom(Ulang_type_atom* lang_type, Tk_view* tok
 }
 
 // type will be parsed if possible
-static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens) {
-    memset(lang_type, 0, sizeof(*lang_type));
-
+static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* tokens) {
     Ulang_type_atom atom = {0};
     Ulang_type_vec types = {0};
+    bool is_comma = true;
 
-    Token open_par = {0};
-    if (!try_consume(&open_par, tokens, TOKEN_OPEN_PAR)) {
-        if (parse_lang_type_struct_atom(&atom, tokens)) {
-            vec_append(&a_main, &types, ulang_type_regular_const_wrap(ulang_type_regular_new(atom)));
-            if (types.info.count < 1) {
-                todo();
-            } else if (types.info.count == 1) {
-                *lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(atom));
-            } else {
-                *lang_type = ulang_type_tuple_const_wrap(ulang_type_tuple_new(types));
-            }
-            return true;
-        } else {
-            return false;
-        }
+    if (!try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
+        log_tokens(LOG_DEBUG, *tokens);
+        todo();
     }
 
-    bool is_comma = true;
     while (is_comma) {
         // a return type is only one token, at least for now
         if (!parse_lang_type_struct_atom(&atom, tokens)) {
@@ -856,8 +843,44 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens) {
         todo();
     }
 
-    *lang_type = ulang_type_tuple_const_wrap(ulang_type_tuple_new(types));
+    *lang_type = ulang_type_tuple_new(types);
     return true;
+}
+
+// type will be parsed if possible
+static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens) {
+    memset(lang_type, 0, sizeof(*lang_type));
+
+    Token lang_type_token = {0};
+    if (try_consume(&lang_type_token, tokens, TOKEN_FN)) {
+        Ulang_type_tuple params = {0};
+        if (!parse_lang_type_struct_tuple(&params, tokens)) {
+            return false;
+        }
+        Ulang_type* rtn_type = arena_alloc(&a_main, sizeof(*rtn_type)); // TODO: make function, etc. to call arena_alloc automatically
+        if (!parse_lang_type_struct(rtn_type, tokens)) {
+            return false;
+        }
+        *lang_type = ulang_type_fn_const_wrap(ulang_type_fn_new(params, rtn_type));
+        return true;
+    }
+
+    Ulang_type_atom atom = {0};
+    if (tk_view_front(*tokens).type ==  TOKEN_OPEN_PAR) {
+        Ulang_type_tuple new_tuple = {0};
+        if (!parse_lang_type_struct_tuple(&new_tuple, tokens)) {
+            return false;
+        }
+        *lang_type = ulang_type_tuple_const_wrap(new_tuple);
+        return true;
+    }
+
+    if (parse_lang_type_struct_atom(&atom, tokens)) {
+        *lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(atom));
+        return true;
+    } else {
+        return false;
+    }
 }
 
 // require type to be parsed

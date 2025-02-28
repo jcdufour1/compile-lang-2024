@@ -133,11 +133,22 @@ static Ulang_type_type ulang_type_gen_tuple(const char* prefix) {
     return sym;
 }
 
+static Ulang_type_type ulang_type_gen_fn(const char* prefix) {
+    const char* base_name = "fn";
+    Ulang_type_type sym = {.name = ulang_type_name_new(prefix, base_name, false)};
+
+    append_member(&sym.members, "Ulang_type_tuple", "params");
+    append_member(&sym.members, "Ulang_type*", "return_type");
+
+    return sym;
+}
+
 static Ulang_type_type ulang_type_gen_ulang_type(void) {
     const char* base_name = "ulang_type";
     Ulang_type_type ulang_type = {.name = ulang_type_name_new(base_name, "", true)};
 
     vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_tuple(base_name));
+    vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_fn(base_name));
     vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_regular(base_name));
 
     return ulang_type;
@@ -440,6 +451,10 @@ static void ulang_type_gen_new_internal(Ulang_type_type type, bool implementatio
         string_extend_cstr(&gen_a, &function, ") {");
 
         for (size_t idx = 0; idx < type.members.info.count; idx++) {
+            if (idx > 0 && idx < type.members.info.count) {
+                string_extend_cstr(&gen_a, &function, ", ");
+            }
+
             Member curr = vec_at(&type.members, idx);
 
             string_extend_cstr(&gen_a, &function, " .");

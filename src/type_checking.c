@@ -117,7 +117,7 @@ static bool can_be_implicitly_converted_tuple(Lang_type_tuple dest, Lang_type_tu
 
     for (size_t idx = 0; idx < dest.lang_types.info.count; idx++) {
         if (!can_be_implicitly_converted(
-            vec_at(&dest.lang_types, idx), vec_at(&src.lang_types, idx), false /* TODO: should this be always false? */, implicit_pointer_depth
+            vec_at(&dest.lang_types, idx), vec_at(&src.lang_types, idx), false, implicit_pointer_depth
         )) {
             return false;
         }
@@ -126,12 +126,21 @@ static bool can_be_implicitly_converted_tuple(Lang_type_tuple dest, Lang_type_tu
     return true;
 }
 
+static bool can_be_implicitly_converted_fn(Lang_type_fn dest, Lang_type_fn src, bool implicit_pointer_depth) {
+    if (!can_be_implicitly_converted_tuple(dest.params, src.params, implicit_pointer_depth)) {
+        return false;
+    }
+    return can_be_implicitly_converted(*dest.return_type, *src.return_type, false, implicit_pointer_depth);
+}
+
 static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_is_zero, bool implicit_pointer_depth) {
     if (dest.type != src.type) {
         return false;
     }
 
     switch (dest.type) {
+        case LANG_TYPE_FN:
+            return can_be_implicitly_converted_fn(lang_type_fn_const_unwrap(dest), lang_type_fn_const_unwrap(src), implicit_pointer_depth);
         case LANG_TYPE_TUPLE:
             return can_be_implicitly_converted_tuple(lang_type_tuple_const_unwrap(dest), lang_type_tuple_const_unwrap(src), implicit_pointer_depth);
         case LANG_TYPE_PRIMITIVE:
@@ -402,6 +411,8 @@ bool try_set_symbol_type(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untype
         case LANG_TYPE_PRIMITIVE:
             // fallthrough
         case LANG_TYPE_TUPLE:
+            // fallthrough
+        case LANG_TYPE_FN:
             // fallthrough
         case LANG_TYPE_STRUCT: {
             Tast_symbol* sym_typed = tast_symbol_new(sym_untyped->pos, new_base);
@@ -1253,7 +1264,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             todo();
         }
         default:
-            unreachable("");
+            unreachable(TAST_FMT, uast_def_print(fun_def));
     }
     Tast_lang_type* fun_rtn_type = NULL;
     if (!try_types_set_lang_type(env, &fun_rtn_type, fun_decl->return_type)) {
@@ -1911,6 +1922,8 @@ static bool try_types_internal_set_lang_type(
         case ULANG_TYPE_REGULAR:
             lang_type_from_ulang_type(env, lang_type);
             return true;
+        case ULANG_TYPE_FN:
+            todo();
     }
     unreachable("");
 }

@@ -38,6 +38,10 @@ static inline bool lang_type_tuple_is_equal(Lang_type_tuple a, Lang_type_tuple b
     return lang_type_vec_is_equal(a.lang_types, b.lang_types);
 }
 
+static inline bool lang_type_fn_is_equal(Lang_type_fn a, Lang_type_fn b) {
+    return lang_type_tuple_is_equal(a.params, b.params) && lang_type_is_equal(*a.return_type, *b.return_type);
+}
+
 static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
     if (a.type != b.type) {
         return false;
@@ -58,6 +62,8 @@ static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
             return lang_type_atom_is_equal(lang_type_get_atom(a), lang_type_get_atom(b));
         case LANG_TYPE_TUPLE:
             return lang_type_tuple_is_equal(lang_type_tuple_const_unwrap(a), lang_type_tuple_const_unwrap(b));
+        case LANG_TYPE_FN:
+            return lang_type_fn_is_equal(lang_type_fn_const_unwrap(a), lang_type_fn_const_unwrap(b));
     }
     unreachable("");
 }

@@ -553,26 +553,6 @@ static Str_view load_binary_short_circuit(
 
 }
 
-//static Str_view load_binary_short_circuit(
-//    Env* env,
-//    Llvm_block* new_block,
-//    Tast_binary* old_bin
-//) {
-//    Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
-//        lang_type_unsigned_int_new(1, 0)
-//    ));
-//
-//    switch (old_bin->token_type) {
-//        case BINARY_LOGICAL_AND: {
-//
-//        }
-//        case BINARY_LOGICAL_OR:
-//            todo();
-//        default:
-//            unreachable("");
-//    }
-//}
-
 static Str_view load_binary(
     Env* env,
     Llvm_block* new_block,

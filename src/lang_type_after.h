@@ -43,6 +43,8 @@ static inline Lang_type_atom lang_type_get_atom(Lang_type lang_type) {
             return lang_type_enum_const_unwrap(lang_type).atom;
         case LANG_TYPE_TUPLE:
             unreachable("");
+        case LANG_TYPE_FN:
+            unreachable("");
         case LANG_TYPE_VOID:
             return (Lang_type_atom) {0};
     }
@@ -88,6 +90,8 @@ static inline void lang_type_set_atom(Lang_type* lang_type, Lang_type_atom atom)
             lang_type_enum_unwrap(lang_type)->atom = atom;
             return;
         case LANG_TYPE_TUPLE:
+            unreachable("");
+        case LANG_TYPE_FN:
             unreachable("");
         case LANG_TYPE_VOID:
             todo();

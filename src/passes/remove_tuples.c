@@ -282,6 +282,8 @@ static Tast_stmt* rm_tuple_assignment(Env* env, Tast_assignment* assign) {
             return tast_assignment_wrap(assign);
         case LANG_TYPE_VOID:
             return tast_assignment_wrap(assign);
+        case LANG_TYPE_FN:
+            return tast_assignment_wrap(assign);
     }
     unreachable("");
 }
@@ -733,6 +735,8 @@ static Tast_variable_def* rm_tuple_variable_def(Env* env, Tast_variable_def* def
             return def;
         case LANG_TYPE_VOID:
             return def;
+        case LANG_TYPE_FN:
+            return def;
     }
     unreachable("");
 }
@@ -1042,6 +1046,8 @@ static Tast_expr* rm_tuple_symbol_not_in_assignment(Env* env, Tast_symbol* sym) 
             return tast_symbol_wrap(sym);
         case LANG_TYPE_VOID:
             return tast_symbol_wrap(sym);
+        case LANG_TYPE_FN:
+            todo();
     }
     unreachable("");
 }

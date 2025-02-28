@@ -33,6 +33,9 @@ static void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
         case LANG_TYPE_VOID:
             string_extend_cstr(&print_arena, buf, "void");
             return;
+        case LANG_TYPE_FN:
+            string_extend_cstr(&print_arena, buf, "fn");
+            return;
     }
     unreachable("");
 }

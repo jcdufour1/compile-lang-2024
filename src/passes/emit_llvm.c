@@ -110,6 +110,8 @@ static void extend_type_call_str(Env* env, String* output, Lang_type lang_type) 
     }
 
     switch (lang_type.type) {
+        case LANG_TYPE_FN:
+            todo();
         case LANG_TYPE_TUPLE:
             unreachable("");
         case LANG_TYPE_STRUCT:

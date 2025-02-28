@@ -166,6 +166,16 @@ static Lang_type_type lang_type_gen_primitive(const char* prefix) {
     return lang_type;
 }
 
+static Lang_type_type lang_type_gen_fn(const char* prefix) {
+    const char* base_name = "fn";
+    Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
+
+    append_member(&sym.members, "Lang_type_tuple", "params");
+    append_member(&sym.members, "Lang_type*", "return_type");
+
+    return sym;
+}
+
 static Lang_type_type lang_type_gen_struct(const char* prefix) {
     const char* base_name = "struct";
     Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
@@ -231,6 +241,7 @@ static Lang_type_type lang_type_gen_lang_type(void) {
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_sum(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_tuple(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_void(base_name));
+    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_fn(base_name));
 
     return lang_type;
 }

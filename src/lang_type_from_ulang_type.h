@@ -15,18 +15,37 @@ static inline Ulang_type lang_type_to_ulang_type(Lang_type lang_type);
 
 static inline bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Env* env, Ulang_type lang_type, Pos pos);
 
+static inline bool try_lang_type_from_ulang_type_tuple(
+    Lang_type_tuple* new_lang_type,
+    Env* env,
+    Ulang_type_tuple lang_type,
+    Pos pos
+);
+
+static inline bool try_lang_type_from_ulang_type_fn(
+    Lang_type_fn* new_lang_type,
+    Env* env,
+    Ulang_type_fn lang_type,
+    Pos pos
+);
+
 // TODO: figure out way to reduce duplicate vec allocations
 static inline Lang_type lang_type_from_ulang_type_tuple(Env* env, Ulang_type_tuple lang_type) {
-    Lang_type_vec new_lang_types = {0};
-    for (size_t idx = 0; idx < lang_type.ulang_types.info.count; idx++) {
-        vec_append(&a_main, &new_lang_types, lang_type_from_ulang_type(env, vec_at(&lang_type.ulang_types, idx)));
-    }
-    return lang_type_tuple_const_wrap(lang_type_tuple_new(new_lang_types));
+    Lang_type_tuple new_tuple = {0};
+    try(try_lang_type_from_ulang_type_tuple(&new_tuple, env, lang_type, (Pos) {0}));
+    return lang_type_tuple_const_wrap(new_tuple);
+}
+
+// TODO: figure out way to reduce duplicate vec allocations
+static inline Lang_type lang_type_from_ulang_type_fn(Env* env, Ulang_type_fn lang_type) {
+    Lang_type_fn new_fn = {0};
+    try(try_lang_type_from_ulang_type_fn(&new_fn, env, lang_type, (Pos) {0}));
+    return lang_type_fn_const_wrap(new_fn);
 }
 
 // TODO: figure out way to reduce duplicate vec allocations
 static inline bool try_lang_type_from_ulang_type_tuple(
-    Lang_type* new_lang_type,
+    Lang_type_tuple* new_lang_type,
     Env* env,
     Ulang_type_tuple lang_type,
     Pos pos
@@ -39,7 +58,26 @@ static inline bool try_lang_type_from_ulang_type_tuple(
         }
         vec_append(&a_main, &new_lang_types, new_child);
     }
-    *new_lang_type = lang_type_tuple_const_wrap(lang_type_tuple_new(new_lang_types));
+    *new_lang_type = lang_type_tuple_new(new_lang_types);
+    return true;
+}
+
+// TODO: figure out way to reduce duplicate vec allocations
+static inline bool try_lang_type_from_ulang_type_fn(
+    Lang_type_fn* new_lang_type,
+    Env* env,
+    Ulang_type_fn lang_type,
+    Pos pos
+) {
+    Lang_type_tuple new_params = {0};
+    if (!try_lang_type_from_ulang_type_tuple(&new_params, env, lang_type.params, pos)) {
+        return false;
+    }
+    Lang_type* new_rtn_type = arena_alloc(&a_main, sizeof(*new_rtn_type));
+    if (!try_lang_type_from_ulang_type(new_rtn_type, env, *lang_type.return_type, pos)) {
+        return false;
+    }
+    *new_lang_type = lang_type_fn_new(new_params, new_rtn_type);
     return true;
 }
 
@@ -123,11 +161,22 @@ static inline bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Env* 
                 return false;
             }
             return true;
-        case ULANG_TYPE_TUPLE:
-            if (!try_lang_type_from_ulang_type_tuple(new_lang_type, env, ulang_type_tuple_const_unwrap(lang_type), pos)) {
+        case ULANG_TYPE_TUPLE: {
+            Lang_type_tuple new_tuple = {0};
+            if (!try_lang_type_from_ulang_type_tuple(&new_tuple, env, ulang_type_tuple_const_unwrap(lang_type), pos)) {
                 return false;
             }
+            *new_lang_type = lang_type_tuple_const_wrap(new_tuple);
             return true;
+        }
+        case ULANG_TYPE_FN: {
+            Lang_type_fn new_fn = {0};
+            if (!try_lang_type_from_ulang_type_fn(&new_fn, env, ulang_type_fn_const_unwrap(lang_type), pos)) {
+                return false;
+            }
+            *new_lang_type = lang_type_fn_const_wrap(new_fn);
+            return true;
+        }
     }
     unreachable("");
 }
@@ -138,12 +187,14 @@ static inline Lang_type lang_type_from_ulang_type(Env* env, Ulang_type lang_type
             return lang_type_from_ulang_type_regular(env, ulang_type_regular_const_unwrap(lang_type));
         case ULANG_TYPE_TUPLE:
             return lang_type_from_ulang_type_tuple(env, ulang_type_tuple_const_unwrap(lang_type));
+        case ULANG_TYPE_FN:
+            return lang_type_from_ulang_type_fn(env, ulang_type_fn_const_unwrap(lang_type));
     }
     unreachable("");
 }
 
 static inline Ulang_type_tuple lang_type_tuple_to_ulang_type_tuple(Lang_type_tuple lang_type) {
-    // TODO: heap allocations
+    // TODO: reduce heap allocations (do sym_tbl_lookup for this?)
     Ulang_type_vec new_types = {0};
     for (size_t idx = 0; idx < lang_type.lang_types.info.count; idx++) {
         vec_append(&a_main, &new_types, lang_type_to_ulang_type(vec_at(&lang_type.lang_types, idx)));
@@ -168,6 +219,8 @@ static inline Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
         case LANG_TYPE_SUM:
             // fallthrough
             return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(lang_type_get_str(lang_type), lang_type_get_pointer_depth(lang_type))));
+        case LANG_TYPE_FN:
+            todo();
     }
     unreachable("");
 }
