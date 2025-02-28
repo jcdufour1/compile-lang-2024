@@ -1800,7 +1800,11 @@ bool try_set_variable_def_types(
     bool add_to_sym_tbl,
     bool is_variadic
 ) {
-    *new_tast = tast_variable_def_new(uast->pos, lang_type_from_ulang_type(env, uast->lang_type), is_variadic, uast->name);
+    Lang_type new_lang_type = {0};
+    if (!try_lang_type_from_ulang_type(&new_lang_type, env, uast->lang_type, uast->pos)) {
+        return false;
+    }
+    *new_tast = tast_variable_def_new(uast->pos, new_lang_type, is_variadic, uast->name);
     if (add_to_sym_tbl && !env->type_checking_is_in_struct_base_def) {
         try(symbol_add(env, tast_variable_def_wrap(*new_tast)));
     }
@@ -1880,11 +1884,11 @@ bool try_set_function_params_types(
         Uast_param* def = vec_at(&params->params, idx);
 
         Tast_variable_def* new_def = NULL;
-        if (!try_set_variable_def_types(env, &new_def, def->base, add_to_sym_tbl, def->is_variadic)) {
+        if (try_set_variable_def_types(env, &new_def, def->base, add_to_sym_tbl, def->is_variadic)) {
+            vec_append(&a_main, &new_params, new_def);
+        } else {
             status = false;
         }
-
-        vec_append(&a_main, &new_params, new_def);
     }
 
     *new_tast = tast_function_params_new(params->pos, new_params);

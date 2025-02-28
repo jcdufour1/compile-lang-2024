@@ -1,0 +1,13 @@
+
+fn add_fn(a i32, b i32) i32 {
+    return a + b;
+}
+
+fn print_result(a i32, b i32, callback fn(i32, i32) i32) {
+    printf("%d\n", callback(a, b))
+}
+
+fn main() i32 {
+    print_result(7, 3, add_fn)
+    return 0
+}

@@ -9,6 +9,7 @@ type TokenType enum {
 type Token sum {
     num i32
     string u8*
+    //both (u8*, i32) // TODO: uncomment this
 }
 
 fn get_data() (u8*, i32) {
@@ -27,6 +28,12 @@ fn token_print(token Token) {
     switch token {
         case Token.num(num): printf("token is number: %d\n", num)
         case Token.string(str): printf("token is string: %s\n", str)
+        //case Token.both(both): { // TODO: uncomment this
+        //    let string u8*
+        //    let num i32 
+        //    string, num = both
+        //    printf("token is all: %s %d\n", both)
+        //}
     }
 }
 

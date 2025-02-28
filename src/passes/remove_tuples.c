@@ -214,7 +214,6 @@ static Tast_for_with_cond* rm_tuple_for_with_cond(Env* env, Tast_for_with_cond* 
 static Tast_stmt* rm_tuple_assignment_tuple(Env* env, Tast_assignment* assign) {
     Tast_stmt_vec new_children = {0};
 
-    log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
     Tast_tuple* dest = tast_tuple_unwrap(tast_expr_unwrap(assign->lhs));
     Tast_expr* src = assign->rhs;
 

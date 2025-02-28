@@ -835,11 +835,7 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens) {
             }
             return true;
         } else {
-            atom.str = str_view_from_cstr("void");
-            assert(atom.str.count > 0);
-            vec_append(&a_main, &types, ulang_type_regular_const_wrap(ulang_type_regular_new(atom)));
-            *lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(atom));
-            return true;
+            return false;
         }
     }
 
@@ -979,7 +975,8 @@ static void parse_return_types(Uast_lang_type** result, Tk_view* tokens) {
     Pos pos = tk_view_front(*tokens).pos;
 
     if (!parse_lang_type_struct(&lang_type, tokens)) {
-        todo();
+        *result = uast_lang_type_new(pos, ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0))));
+        return;
     }
     log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
     *result = uast_lang_type_new(pos, lang_type);
