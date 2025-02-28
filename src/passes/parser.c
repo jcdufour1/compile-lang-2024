@@ -46,7 +46,7 @@ static PARSE_STATUS parse_variable_decl(
                        // until the next parse_block call
     bool add_to_sym_table,
     bool require_type,
-    Ulang_type_atom lang_type_if_not_required
+    Ulang_type lang_type_if_not_required
 );
 static PARSE_EXPR_STATUS parse_condition(Env* env, Uast_condition**, Tk_view* tokens);
 
@@ -893,7 +893,7 @@ static PARSE_EXPR_STATUS parse_function_parameter(Env* env, Uast_param** child, 
     bool is_optional = false;
     bool is_variadic = false;
     Uast_expr* opt_default = NULL;
-    if (PARSE_OK != parse_variable_decl(env, &base, tokens, false, true, add_to_sym_table, true, (Ulang_type_atom) {0})) {
+    if (PARSE_OK != parse_variable_decl(env, &base, tokens, false, true, add_to_sym_table, true, (Ulang_type) {0})) {
         return PARSE_EXPR_ERROR;
     }
     if (try_consume(NULL, tokens, TOKEN_TRIPLE_DOT)) {
@@ -929,7 +929,7 @@ static PARSE_EXPR_STATUS parse_function_parameter(Env* env, Uast_param** child, 
     return PARSE_EXPR_OK;
 }
 
-static PARSE_EXPR_STATUS parse_optional_lang_type_parameter(Env* env, Uast_variable_def** child, Tk_view* tokens, Ulang_type_atom default_lang_type) {
+static PARSE_EXPR_STATUS parse_optional_lang_type_parameter(Env* env, Uast_variable_def** child, Tk_view* tokens, Ulang_type default_lang_type) {
     if (tokens->count < 1 || tk_view_front(*tokens).type == TOKEN_CLOSE_PAR) {
         return PARSE_EXPR_NONE;
     }
@@ -1035,7 +1035,7 @@ static PARSE_STATUS parse_struct_base_def(
     Str_view name,
     Tk_view* tokens,
     bool require_sub_types,
-    Ulang_type_atom default_lang_type
+    Ulang_type default_lang_type
 ) {
     base->name = name;
 
@@ -1115,7 +1115,7 @@ static PARSE_STATUS parse_struct_def(Env* env, Uast_struct_def** struct_def, Tk_
     try(try_consume(NULL, tokens, TOKEN_STRUCT));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def(env, &base, name.text, tokens, true, (Ulang_type_atom) {0})) {
+    if (PARSE_OK != parse_struct_base_def(env, &base, name.text, tokens, true, (Ulang_type) {0})) {
         return PARSE_ERROR;
     }
 
@@ -1131,7 +1131,7 @@ static PARSE_STATUS parse_raw_union_def(Env* env, Uast_raw_union_def** raw_union
     try(try_consume(NULL, tokens, TOKEN_RAW_UNION));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def(env, &base, name.text, tokens, true, (Ulang_type_atom) {0})) {
+    if (PARSE_OK != parse_struct_base_def(env, &base, name.text, tokens, true, (Ulang_type) {0})) {
         return PARSE_ERROR;
     }
 
@@ -1163,7 +1163,7 @@ static PARSE_STATUS parse_sum_def(Env* env, Uast_sum_def** sum_def, Tk_view* tok
     try(try_consume(NULL, tokens, TOKEN_SUM));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def(env, &base, name.text, tokens, false, ulang_type_atom_new_from_cstr("void", 0))) {
+    if (PARSE_OK != parse_struct_base_def(env, &base, name.text, tokens, false, ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0))))) {
         return PARSE_ERROR;
     }
 
@@ -1224,7 +1224,7 @@ static PARSE_STATUS parse_variable_decl(
     bool defer_sym_add,
     bool add_to_sym_table,
     bool require_type,
-    Ulang_type_atom default_lang_type
+    Ulang_type default_lang_type
 ) {
     (void) require_let;
     if (!try_consume(NULL, tokens, TOKEN_LET)) {
@@ -1239,20 +1239,20 @@ static PARSE_STATUS parse_variable_decl(
     }
     try_consume(NULL, tokens, TOKEN_COLON);
 
-    Ulang_type_atom lang_type = {0};
+    Ulang_type lang_type = {0};
     if (require_type) {
-        if (PARSE_OK != parse_lang_type_struct_atom_require(env, &lang_type, tokens)) {
+        if (PARSE_OK != parse_lang_type_struct_require(env, &lang_type, tokens)) {
             return PARSE_ERROR;
         }
     } else {
-        if (!parse_lang_type_struct_atom(&lang_type, tokens)) {
+        if (!parse_lang_type_struct(&lang_type, tokens)) {
             lang_type = default_lang_type;
         }
     }
 
     Uast_variable_def* variable_def = uast_variable_def_new(
         name_token.pos,
-        ulang_type_regular_const_wrap(ulang_type_regular_new(lang_type)),
+        lang_type,
         name_token.text
     );
 
@@ -1336,7 +1336,7 @@ static PARSE_STATUS parse_for_loop(Env* env, Uast_stmt** for_loop_result, Tk_vie
     Uast_for_range* for_loop = uast_for_range_new(for_token.pos, NULL, NULL, NULL, NULL);
     
     if (starts_with_variable_type_decl(*tokens, false)) {
-        if (PARSE_OK != parse_variable_decl(env, &for_loop->var_def, tokens, false, true, true, true, (Ulang_type_atom) {0})) {
+        if (PARSE_OK != parse_variable_decl(env, &for_loop->var_def, tokens, false, true, true, true, (Ulang_type) {0})) {
             todo();
             return PARSE_ERROR;
         }
@@ -1777,7 +1777,7 @@ static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens
         lhs = uast_block_wrap(block_def);
     } else if (starts_with_variable_decl(*tokens)) {
         Uast_variable_def* var_def = NULL;
-        if (PARSE_OK != parse_variable_decl(env, &var_def, tokens, true, defer_sym_add, true, true, (Ulang_type_atom) {0})) {
+        if (PARSE_OK != parse_variable_decl(env, &var_def, tokens, true, defer_sym_add, true, true, (Ulang_type) {0})) {
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_def_wrap(uast_variable_def_wrap(var_def));

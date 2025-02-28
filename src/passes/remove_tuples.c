@@ -99,7 +99,12 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
                     case LANG_TYPE_ENUM:
                         break;
                     case LANG_TYPE_TUPLE:
-                        todo();
+                        vec_at(&item_type_def->base.members, idx)->lang_type = rm_tuple_lang_type(
+                            env, 
+                            vec_at(&item_type_def->base.members, idx)->lang_type,
+                            item_type_def->pos
+                        );
+                        break;
                     case LANG_TYPE_VOID:
                         break;
                     default:
@@ -209,6 +214,7 @@ static Tast_for_with_cond* rm_tuple_for_with_cond(Env* env, Tast_for_with_cond* 
 static Tast_stmt* rm_tuple_assignment_tuple(Env* env, Tast_assignment* assign) {
     Tast_stmt_vec new_children = {0};
 
+    log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
     Tast_tuple* dest = tast_tuple_unwrap(tast_expr_unwrap(assign->lhs));
     Tast_expr* src = assign->rhs;
 

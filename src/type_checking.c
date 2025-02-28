@@ -1458,6 +1458,8 @@ bool try_set_member_access_types_finish_sum_def(
         case PARENT_OF_CASE: {
             Uast_variable_def* member_def = NULL;
             if (!uast_try_get_member_def(&member_def, &sum_def->base, access->member_name)) {
+                // TODO: expected failure case
+                log(LOG_DEBUG, TAST_FMT, uast_member_access_print(access));
                 todo();
                 //msg_invalid_enum_member(env, enum_def->base, access);
                 //return false;
@@ -1798,12 +1800,6 @@ bool try_set_variable_def_types(
     bool add_to_sym_tbl,
     bool is_variadic
 ) {
-    Uast_def* dummy = NULL;
-    if (!usymbol_lookup(&dummy, env, ulang_type_regular_const_unwrap(uast->lang_type).atom.str)) {
-        msg_undefined_type(env, uast->pos, uast->lang_type);
-        return false;
-    }
-
     *new_tast = tast_variable_def_new(uast->pos, lang_type_from_ulang_type(env, uast->lang_type), is_variadic, uast->name);
     if (add_to_sym_tbl && !env->type_checking_is_in_struct_base_def) {
         try(symbol_add(env, tast_variable_def_wrap(*new_tast)));

@@ -128,7 +128,6 @@ static inline bool uast_try_get_member_def(
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         Uast_variable_def* curr_member = vec_at(&struct_def->members, idx);
         if (str_view_is_equal(curr_member->name, member_name)) {
-            assert(ulang_type_regular_const_unwrap(curr_member->lang_type).atom.str.count > 0);
             *member_def = curr_member;
             return true;
         }

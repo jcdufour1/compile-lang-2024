@@ -11,6 +11,8 @@ static inline Lang_type lang_type_from_ulang_type(Env* env, Ulang_type lang_type
 bool lang_type_atom_is_signed(Lang_type_atom atom);
 bool lang_type_atom_is_unsigned(Lang_type_atom atom);
 
+static inline Ulang_type lang_type_to_ulang_type(Lang_type lang_type);
+
 // TODO: figure out way to reduce duplicate vec allocations
 static inline Lang_type lang_type_from_ulang_type_tuple(Env* env, Ulang_type_tuple lang_type) {
     Lang_type_vec new_lang_types = {0};
@@ -86,10 +88,19 @@ static inline Lang_type lang_type_from_ulang_type(Env* env, Ulang_type lang_type
     unreachable("");
 }
 
+static inline Ulang_type_tuple lang_type_tuple_to_ulang_type_tuple(Lang_type_tuple lang_type) {
+    // TODO: heap allocations
+    Ulang_type_vec new_types = {0};
+    for (size_t idx = 0; idx < lang_type.lang_types.info.count; idx++) {
+        vec_append(&a_main, &new_types, lang_type_to_ulang_type(vec_at(&lang_type.lang_types, idx)));
+    }
+    return ulang_type_tuple_new(new_types);
+}
+
 static inline Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_TUPLE:
-            todo();
+            return ulang_type_tuple_const_wrap(lang_type_tuple_to_ulang_type_tuple(lang_type_tuple_const_unwrap(lang_type)));
         case LANG_TYPE_VOID:
             todo();
         case LANG_TYPE_PRIMITIVE:
