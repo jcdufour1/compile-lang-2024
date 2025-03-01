@@ -1321,21 +1321,6 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
 
     Uast_function_params* params = fun_decl->params;
 
-    //size_t min_args;
-    //size_t max_args;
-    //if (params->params.info.count < 1) {
-    //    min_args = 0;
-    //    max_args = 0;
-    //} else if (vec_top(&params->params)->base->is_variadic) {
-    //    min_args = params->params.info.count - 1;
-    //    max_args = SIZE_MAX;
-    //} else {
-    //    min_args = params->params.info.count;
-    //    max_args = params->params.info.count;
-    //}
-    //if (fun_call->args.info.count < min_args || fun_call->args.info.count > max_args) {
-    //}
-
     Tast_expr_vec new_args = {0};
     bool is_variadic = false;
     // TODO: consider case of optional arguments and variadic arguments being used in same function
@@ -1351,6 +1336,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
         } else if (is_variadic) {
         } else if (param->is_optional) {
             try(!is_variadic && "cannot mix variadic args and optional args right now");
+            // TODO: expected failure case for invalid optional_default
             corres_arg = uast_expr_clone(param->optional_default);
         } else {
             msg_invalid_count_function_args(env, fun_call, fun_decl, param_idx + 1, param_idx + 1);
@@ -1407,7 +1393,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
     *new_call = tast_function_call_wrap(tast_function_call_new(
         fun_call->pos,
         new_args,
-        fun_decl->name,
+        tast_symbol_new(fun_call->pos, (Sym_typed_base) {.lang_type = fun_decl->lang_type, .name = fun_call->name, .llvm_id = 0}),
         fun_rtn_type->lang_type
     ));
 

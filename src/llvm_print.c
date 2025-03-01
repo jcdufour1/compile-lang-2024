@@ -130,7 +130,7 @@ Str_view llvm_function_call_print_internal(const Llvm_function_call* fun_call, i
 
     string_extend_cstr_indent(&print_arena, &buf, "function_call", indent);
     extend_name(&buf, fun_call->name_self);
-    extend_child_name(&buf, "function_to_call:", fun_call->name_fun_to_call);
+    extend_child_name(&buf, "function_to_call:", fun_call->name_self);
     extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, fun_call->lang_type);
     string_extend_cstr(&print_arena, &buf, "\n");
 

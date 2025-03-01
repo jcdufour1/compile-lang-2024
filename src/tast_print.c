@@ -113,8 +113,8 @@ Str_view tast_literal_print_internal(const Tast_literal* lit, int indent) {
 Str_view tast_function_call_print_internal(const Tast_function_call* fun_call, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "function_call", indent);
-    string_extend_strv_in_par(&print_arena, &buf, fun_call->name);
+    string_extend_cstr_indent(&print_arena, &buf, "function_call\n", indent);
+    string_extend_strv(&print_arena, &buf, tast_expr_print_internal(fun_call->callee, indent + INDENT_WIDTH));
     string_extend_strv(&print_arena, &buf, lang_type_print_internal(LANG_TYPE_MODE_LOG, fun_call->lang_type));
 
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {

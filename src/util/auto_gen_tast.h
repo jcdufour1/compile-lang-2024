@@ -332,7 +332,7 @@ static Tast_type tast_gen_function_call(const char* prefix) {
     Tast_type call = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&call.members, "Tast_expr_vec", "args");
-    append_member(&call.members, "Str_view", "name");
+    append_member(&call.members, "Tast_expr*", "callee");
     append_member(&call.members, "Lang_type", "lang_type");
 
     return call;

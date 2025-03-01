@@ -266,7 +266,7 @@ static Llvm_type llvm_gen_function_call(void) {
 
     append_member(&call.members, "Strv_vec", "args");
     append_member(&call.members, "Str_view", "name_self");
-    append_member(&call.members, "Str_view", "name_fun_to_call");
+    append_member(&call.members, "Str_view", "callee");
     append_member(&call.members, "Llvm_id", "llvm_id");
     append_member(&call.members, "Lang_type", "lang_type");
 

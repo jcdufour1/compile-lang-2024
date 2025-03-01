@@ -460,8 +460,9 @@ static Tast_expr* rm_tuple_struct_literal_rhs(
             Tast_function_def* new_fun_def = rm_tuple_function_def_new(env, new_fun_decl);
             try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_function_def_wrap(new_fun_def)));
 
-            Tast_function_call* fun_call = tast_function_call_new(assign_pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
-            return tast_function_call_wrap(fun_call);
+            //Tast_function_call* fun_call = tast_function_call_new(assign_pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
+            todo();
+            //return tast_function_call_wrap(fun_call);
          }
         default:
             todo();
@@ -548,8 +549,9 @@ static Tast_expr* rm_tuple_tuple_rhs(
             Tast_function_def* new_fun_def = rm_tuple_function_def_new(env, new_fun_decl);
             try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_function_def_wrap(new_fun_def)));
 
-            Tast_function_call* fun_call = tast_function_call_new(assign_pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
-            return tast_function_call_wrap(fun_call);
+            //Tast_function_call* fun_call = tast_function_call_new(assign_pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
+            todo();
+            //return tast_function_call_wrap(fun_call);
          }
         default:
             todo();
@@ -648,8 +650,9 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
             Tast_function_def* new_fun_def = rm_tuple_function_def_new(env, new_fun_decl);
             try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_function_def_wrap(new_fun_def)));
 
-            Tast_function_call* fun_call = tast_function_call_new(assign_pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
-            return tast_function_call_wrap(fun_call);
+            //Tast_function_call* fun_call = tast_function_call_new(assign_pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
+            todo();
+            //return tast_function_call_wrap(fun_call);
         }
         default:
             todo();
@@ -795,7 +798,8 @@ static Tast_def* rm_tuple_def(Env* env, Tast_def* def) {
 
 static Tast_function_call* rm_tuple_function_call(Env* env, Tast_function_call* fun_call) {
     Uast_def* fun_decl_ = NULL;
-    try(usymbol_lookup(&fun_decl_, env, fun_call->name));
+    //try(usymbol_lookup(&fun_decl_, env, fun_call->name));
+    todo();
     Uast_function_decl* fun_decl = uast_function_decl_unwrap(fun_decl_);
     fun_call->lang_type = rm_tuple_lang_type(env, fun_call->lang_type, fun_call->pos);
 
@@ -865,9 +869,10 @@ static Tast_expr* rm_tuple_raw_union_lit_rhs(Env* env, Tast_raw_union_lit* rhs, 
             try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_function_def_wrap(new_fun_def)));
 
             assert(new_args.info.count == 1);
-            Tast_function_call* fun_call = tast_function_call_new(assign_pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
-            assert(fun_call->args.info.count == 1);
-            return tast_function_call_wrap(fun_call);
+            //Tast_function_call* fun_call = tast_function_call_new(assign_pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
+            todo();
+            //assert(fun_call->args.info.count == 1);
+            //return tast_function_call_wrap(fun_call);
         }
         default:
             todo();

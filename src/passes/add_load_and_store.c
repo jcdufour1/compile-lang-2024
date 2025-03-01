@@ -279,7 +279,7 @@ static Str_view load_function_call(
         old_fun_call->pos,
         new_args,
         util_literal_name_new(),
-        old_fun_call->name,
+        load_expr(env, new_block, old_fun_call->callee),
         0,
         fun_lang_type
     );

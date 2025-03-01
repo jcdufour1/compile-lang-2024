@@ -385,7 +385,7 @@ static inline Str_view tast_expr_get_name(const Tast_expr* expr) {
         case TAST_SYMBOL:
             return tast_symbol_const_unwrap(expr)->base.name;
         case TAST_FUNCTION_CALL:
-            return tast_function_call_const_unwrap(expr)->name;
+            return tast_expr_get_name(tast_function_call_const_unwrap(expr)->callee);
         case TAST_LITERAL:
             return tast_literal_get_name(tast_literal_const_unwrap(expr));
         case TAST_TUPLE:

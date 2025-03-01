@@ -416,8 +416,12 @@ static void emit_function_call(Env* env, String* output, String* literals, const
     }
     string_extend_cstr(&a_main, output, "call ");
     extend_type_call_str(env, output, fun_call->lang_type);
+    Llvm* callee = NULL;
+    try(alloca_lookup(&callee, env, fun_call->callee));
     string_extend_cstr(&a_main, output, " @");
-    string_extend_strv(&a_main, output, fun_call->name_fun_to_call);
+    log(LOG_DEBUG, TAST_FMT, llvm_print(callee));
+    todo();
+    //string_extend_strv(&a_main, output, fun_call->name_fun_to_call);
 
     // arguments
     string_extend_cstr(&a_main, output, "(");
