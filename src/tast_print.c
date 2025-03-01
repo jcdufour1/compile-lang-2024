@@ -59,7 +59,9 @@ Str_view tast_symbol_print_internal(const Tast_symbol* sym, int indent) {
 
     string_extend_cstr_indent(&print_arena, &buf, "symbol", indent);
     extend_pos(&buf, sym->pos);
+    log(LOG_DEBUG, TAST_FMT"\n", string_print(buf));
     tast_extend_sym_typed_base(&buf, sym->base);
+    log(LOG_DEBUG, TAST_FMT"\n", string_print(buf));
 
     return string_to_strv(buf);
 }
@@ -106,6 +108,8 @@ Str_view tast_literal_print_internal(const Tast_literal* lit, int indent) {
             return tast_sum_lit_print_internal(tast_sum_lit_const_unwrap(lit), indent);
         case TAST_RAW_UNION_LIT:
             return tast_raw_union_lit_print_internal(tast_raw_union_lit_const_unwrap(lit), indent);
+        case TAST_FUNCTION_LIT:
+            return tast_function_lit_print_internal(tast_function_lit_const_unwrap(lit), indent);
     }
     unreachable("");
 }
@@ -113,9 +117,9 @@ Str_view tast_literal_print_internal(const Tast_literal* lit, int indent) {
 Str_view tast_function_call_print_internal(const Tast_function_call* fun_call, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "function_call\n", indent);
-    string_extend_strv(&print_arena, &buf, tast_expr_print_internal(fun_call->callee, indent + INDENT_WIDTH));
+    string_extend_cstr_indent(&print_arena, &buf, "function_call", indent);
     string_extend_strv(&print_arena, &buf, lang_type_print_internal(LANG_TYPE_MODE_LOG, fun_call->lang_type));
+    string_extend_strv(&print_arena, &buf, tast_expr_print_internal(fun_call->callee, indent + INDENT_WIDTH));
 
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
         Str_view arg_text = tast_expr_print_internal(vec_at(&fun_call->args, idx), indent + INDENT_WIDTH);
@@ -241,6 +245,16 @@ Str_view tast_raw_union_lit_print_internal(const Tast_raw_union_lit* sum, int in
     string_extend_cstr_indent(&print_arena, &buf, "raw_union_lit", indent);
     string_extend_cstr(&print_arena, &buf, "\n");
     string_extend_strv(&print_arena, &buf, tast_expr_print_internal(sum->item, indent + INDENT_WIDTH));
+
+    return string_to_strv(buf);
+}
+
+Str_view tast_function_lit_print_internal(const Tast_function_lit* name, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&print_arena, &buf, "function_lit", indent);
+    extend_name(&buf, name->name);
+    string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
 }

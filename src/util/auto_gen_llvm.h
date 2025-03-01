@@ -231,6 +231,15 @@ static Llvm_type llvm_gen_char(void) {
     return lang_char;
 }
 
+static Llvm_type llvm_gen_function_name(void) {
+    Llvm_type lang_char = {.name = llvm_name_new("literal", "function_name", false)};
+
+    append_member(&lang_char.members, "Str_view", "fun_name");
+    append_member(&lang_char.members, "Str_view", "name_self");
+
+    return lang_char;
+}
+
 static Llvm_type llvm_gen_void(void) {
     Llvm_type lang_void = {.name = llvm_name_new("literal", "void", false)};
 
@@ -257,6 +266,7 @@ static Llvm_type llvm_gen_literal(void) {
     vec_append(&gen_a, &lit.sub_types, llvm_gen_void());
     vec_append(&gen_a, &lit.sub_types, llvm_gen_enum_lit());
     vec_append(&gen_a, &lit.sub_types, llvm_gen_char());
+    vec_append(&gen_a, &lit.sub_types, llvm_gen_function_name());
 
     return lit;
 }

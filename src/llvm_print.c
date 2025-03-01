@@ -121,6 +121,8 @@ Str_view llvm_literal_print_internal(const Llvm_literal* lit, int indent) {
             return llvm_enum_lit_print_internal(llvm_enum_lit_const_unwrap(lit), indent);
         case LLVM_CHAR:
             return llvm_char_print_internal(llvm_char_const_unwrap(lit), indent);
+        case LLVM_FUNCTION_NAME:
+            return llvm_function_name_print_internal(llvm_function_name_const_unwrap(lit), indent);
     }
     unreachable("");
 }
@@ -191,6 +193,17 @@ Str_view llvm_char_print_internal(const Llvm_char* num, int indent) {
 
     string_extend_cstr_indent(&print_arena, &buf, "char", indent);
     vec_append(&print_arena, &buf, num->data);
+    string_extend_cstr(&print_arena, &buf, "\n");
+
+    return string_to_strv(buf);
+}
+
+Str_view llvm_function_name_print_internal(const Llvm_function_name* name, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&print_arena, &buf, "function_name", indent);
+    extend_child_name(&buf, "name_self", name->name_self);
+    extend_child_name(&buf, "fun_name", name->fun_name);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);

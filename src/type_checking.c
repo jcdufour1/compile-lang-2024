@@ -393,35 +393,26 @@ static void msg_undefined_symbol_internal(const char* file, int line, Str_view f
     msg_undefined_symbol_internal(__FILE__, __LINE__, file_text, sym_call)
 
 // set symbol lang_type, and report error if symbol is undefined
-bool try_set_symbol_type(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyped) {
-    Uast_def* sym_def;
+bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyped) {
+    Uast_def* sym_def = NULL;
     if (!usymbol_lookup(&sym_def, env, sym_untyped->name)) {
         msg_undefined_symbol(env->file_text, uast_expr_wrap(uast_symbol_wrap(sym_untyped)));
         return false;
     }
 
-    Lang_type lang_type = uast_def_get_lang_type(env, sym_def);
-    Sym_typed_base new_base = {.lang_type = lang_type, .name = sym_untyped->name};
-    switch (lang_type.type) {
-        case LANG_TYPE_VOID:
-            // fallthrough
-        case LANG_TYPE_ENUM:
-            // fallthrough
-        case LANG_TYPE_SUM:
-            // fallthrough
-        case LANG_TYPE_RAW_UNION:
-            // fallthrough
-        case LANG_TYPE_PRIMITIVE:
-            // fallthrough
-        case LANG_TYPE_TUPLE:
-            // fallthrough
-        case LANG_TYPE_FN:
-            // fallthrough
-        case LANG_TYPE_STRUCT: {
+    switch (sym_def->type) {
+        case UAST_FUNCTION_DECL:
+            *new_tast = tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(sym_untyped->pos, sym_untyped->name)));
+            return true;
+        case UAST_VARIABLE_DEF: {
+            Lang_type lang_type = uast_def_get_lang_type(env, sym_def);
+            Sym_typed_base new_base = {.lang_type = lang_type, .name = sym_untyped->name};
             Tast_symbol* sym_typed = tast_symbol_new(sym_untyped->pos, new_base);
             *new_tast = tast_symbol_wrap(sym_typed);
             return true;
         }
+        default:
+            unreachable("");
     }
     unreachable("");
 }
@@ -947,7 +938,7 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
             return true;
         }
         case TAST_SYMBOL:
-            if (!try_set_symbol_type(env, new_tast, uast_symbol_unwrap(uast))) {
+            if (!try_set_symbol_types(env, new_tast, uast_symbol_unwrap(uast))) {
                 return false;
             } else {
                 assert(*new_tast);
@@ -1265,20 +1256,25 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             return true;
         }
         case TAST_LITERAL: {
-            Tast_sum_lit* sum_lit = tast_sum_lit_unwrap(tast_literal_unwrap(new_callee));
-            if (fun_call->args.info.count != 0) {
-                Uast_def* sum_def_ = NULL;
-                try(usymbol_lookup(&sum_def_, env, lang_type_get_str(sum_lit->sum_lang_type)));
-                Uast_sum_def* sum_def = uast_sum_def_unwrap(sum_def_);
-                msg(
-                    LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, env->file_text, fun_call->pos,
-                    "cannot assign argument to varient `"LANG_TYPE_FMT"."LANG_TYPE_FMT"`, because inner type is void\n",
-                    lang_type_print(LANG_TYPE_MODE_MSG, sum_lit->sum_lang_type), str_view_print(vec_at(&sum_def->base.members, sum_lit->tag->data)->name)
-                );
-                return false;
+            if (tast_literal_unwrap(new_callee)->type == TAST_SUM_LIT) {
+                Tast_sum_lit* sum_lit = tast_sum_lit_unwrap(tast_literal_unwrap(new_callee));
+                if (fun_call->args.info.count != 0) {
+                    Uast_def* sum_def_ = NULL;
+                    try(usymbol_lookup(&sum_def_, env, lang_type_get_str(sum_lit->sum_lang_type)));
+                    Uast_sum_def* sum_def = uast_sum_def_unwrap(sum_def_);
+                    msg(
+                        LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, env->file_text, fun_call->pos,
+                        "cannot assign argument to varient `"LANG_TYPE_FMT"."LANG_TYPE_FMT"`, because inner type is void\n",
+                        lang_type_print(LANG_TYPE_MODE_MSG, sum_lit->sum_lang_type), str_view_print(vec_at(&sum_def->base.members, sum_lit->tag->data)->name)
+                    );
+                    return false;
+                }
+                *new_call = new_callee;
+                return true;
+            } else {
+                try(usymbol_lookup(&fun_def, env, tast_function_lit_unwrap(tast_literal_unwrap(new_callee))->name));
+                break;
             }
-            *new_call = new_callee;
-            return true;
         }
         default:
             unreachable(TAST_FMT, tast_expr_print(new_callee));
@@ -1393,7 +1389,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
     *new_call = tast_function_call_wrap(tast_function_call_new(
         fun_call->pos,
         new_args,
-        tast_symbol_new(fun_call->pos, (Sym_typed_base) {.lang_type = fun_decl->lang_type, .name = fun_call->name, .llvm_id = 0}),
+        new_callee,
         fun_rtn_type->lang_type
     ));
 

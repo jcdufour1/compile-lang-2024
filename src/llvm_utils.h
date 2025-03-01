@@ -182,6 +182,9 @@ static inline Lang_type llvm_literal_get_lang_type(const Llvm_literal* lit) {
         case LLVM_CHAR:
             // TODO: remove lang_type_atom from lang_type_char and lang_type_string
             return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type_atom_new_from_cstr("u8", 0))));
+        case LLVM_FUNCTION_NAME:
+            // TODO: remove lang_type_atom from lang_type_char and lang_type_string
+            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type_atom_new_from_cstr("u8", 0))));
     }
     unreachable("");
 }
@@ -449,6 +452,8 @@ static inline Str_view llvm_literal_get_name(const Llvm_literal* lit) {
             return llvm_enum_lit_const_unwrap(lit)->name;
         case LLVM_CHAR:
             return llvm_char_const_unwrap(lit)->name;
+        case LLVM_FUNCTION_NAME:
+            return llvm_function_name_const_unwrap(lit)->name_self;
     }
     unreachable("");
 }

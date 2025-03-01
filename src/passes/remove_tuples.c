@@ -896,6 +896,8 @@ static Tast_expr* rm_tuple_literal_rhs(Env* env, Tast_literal* rhs, Pos assign_p
             return rm_tuple_sum_lit_rhs(env, tast_sum_lit_unwrap(rhs), assign_pos);
         case TAST_RAW_UNION_LIT:
             return rm_tuple_raw_union_lit_rhs(env, tast_raw_union_lit_unwrap(rhs), assign_pos);
+        case TAST_FUNCTION_LIT:
+            todo();
     }
     unreachable("");
 }

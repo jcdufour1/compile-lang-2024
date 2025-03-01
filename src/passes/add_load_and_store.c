@@ -356,6 +356,13 @@ static Llvm_literal* tast_literal_clone(Tast_literal* old_lit) {
         case TAST_RAW_UNION_LIT: {
             unreachable("union literal should not be here");
         }
+        case TAST_FUNCTION_LIT: {
+            return llvm_function_name_wrap(llvm_function_name_new(
+                tast_literal_get_pos(old_lit),
+                tast_function_lit_unwrap(old_lit)->name,
+                util_literal_name_new()
+            ));
+        }
     }
     unreachable("");
 }
@@ -1166,7 +1173,7 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
         for_var_def = old_for->var_def;
         symbol_lhs_assign_ = uast_symbol_new(for_var_def->pos, for_var_def->name);
         Tast_expr* new_expr = NULL;
-        try(try_set_symbol_type(env, &new_expr, symbol_lhs_assign_));
+        try(try_set_symbol_types(env, &new_expr, symbol_lhs_assign_));
         symbol_lhs_assign = tast_symbol_unwrap(new_expr);
     }
 
@@ -1182,7 +1189,7 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
 
     Uast_symbol* lhs_untyped = uast_symbol_new(tast_symbol_get_pos(symbol_lhs_assign), symbol_lhs_assign->base.name);
     Tast_expr* lhs_typed_ = NULL;
-    try(try_set_symbol_type(env, &lhs_typed_, lhs_untyped));
+    try(try_set_symbol_types(env, &lhs_typed_, lhs_untyped));
     Tast_expr* operator_ = NULL;
     try(try_set_binary_types_finish(env, &operator_, lhs_typed_, rhs_actual, old_for->pos, BINARY_LESS_THAN)); 
     Tast_operator* operator = tast_operator_unwrap(operator_);

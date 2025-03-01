@@ -42,10 +42,14 @@ static void extend_literal(String* output, const Llvm_literal* literal) {
         case LLVM_CHAR:
             string_extend_int64_t(&a_main, output, (int64_t)llvm_char_const_unwrap(literal)->data);
             return;
+        case LLVM_FUNCTION_NAME:
+            string_extend_strv(&a_main, output, llvm_function_name_const_unwrap(literal)->fun_name);
+            return;
     }
     unreachable("");
 }
 
+// TODO: remove tast_extend* functions
 static void tast_extend_literal(String* output, const Tast_literal* literal) {
     switch (literal->type) {
         case TAST_STRING:
@@ -65,6 +69,8 @@ static void tast_extend_literal(String* output, const Tast_literal* literal) {
         case TAST_SUM_LIT:
             unreachable("");
         case TAST_RAW_UNION_LIT:
+            unreachable("");
+        case TAST_FUNCTION_LIT:
             unreachable("");
     }
     unreachable("");
@@ -418,9 +424,20 @@ static void emit_function_call(Env* env, String* output, String* literals, const
     extend_type_call_str(env, output, fun_call->lang_type);
     Llvm* callee = NULL;
     try(alloca_lookup(&callee, env, fun_call->callee));
-    string_extend_cstr(&a_main, output, " @");
     log(LOG_DEBUG, TAST_FMT, llvm_print(callee));
-    todo();
+
+    switch (callee->type) {
+        case LLVM_EXPR:
+            string_extend_cstr(&a_main, output, " @");
+            string_extend_strv(&a_main, output, llvm_function_name_unwrap(llvm_literal_unwrap(llvm_expr_unwrap(((callee)))))->fun_name);
+            break;
+        case LLVM_LOAD_ANOTHER_LLVM:
+            string_extend_cstr(&a_main, output, "%");
+            string_extend_size_t(&a_main, output, llvm_load_another_llvm_const_unwrap(callee)->llvm_id);
+            break;
+        default:
+            unreachable("");
+    }
     //string_extend_strv(&a_main, output, fun_call->name_fun_to_call);
 
     // arguments
@@ -773,6 +790,9 @@ static void emit_store_another_llvm_src_literal(
             return;
         case LLVM_CHAR:
             string_extend_int64_t(&a_main, output, llvm_char_const_unwrap(literal)->data);
+            return;
+        case LLVM_FUNCTION_NAME:
+            unreachable("");
     }
     unreachable("");
 }
