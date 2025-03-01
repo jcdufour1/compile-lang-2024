@@ -1142,16 +1142,37 @@ bool try_set_function_call_types_sum_case(Env* env, Tast_sum_case** new_case, Ua
     }
 }
 
-static Uast_function_decl* uast_function_decl_from_ulang_type(Ulang_type lang_type) {
-    if (lang_type.type != ULANG_TYPE_FN) {
-        todo();
+static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Env* env, Ulang_type_fn lang_type, Pos pos) {
+    Str_view name = serialize_ulang_type(ulang_type_fn_const_wrap(lang_type));
+    Uast_def* fun_decl_ = NULL;
+    if (usym_tbl_lookup(&fun_decl_, &vec_at(&env->ancesters, 0)->usymbol_table, name)) {
+        return uast_function_decl_unwrap(fun_decl_);
     }
 
-    log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
-    Str_view name = serialize_ulang_type(lang_type);
-    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(name));
+    Uast_param_vec params = {0};
+    for (size_t idx = 0; idx < lang_type.params.ulang_types.info.count; idx++) {
+        vec_append(&a_main, &params, uast_param_new(
+            pos,
+            uast_variable_def_new(pos, vec_at(&lang_type.params.ulang_types, idx), util_literal_name_new()),
+            false, // TODO: test case for optional in function callback
+            false, // TODO: test case for variadic in function callback
+            NULL
+        ));
+    }
+
+    Uast_function_decl* fun_decl = uast_function_decl_new(
+        pos,
+        uast_function_params_new(pos, params),
+        uast_lang_type_new(pos, *lang_type.return_type),
+        name
+    );
+    usym_tbl_add(&vec_at(&env->ancesters, 0)->usymbol_table, uast_function_decl_wrap(fun_decl));
+    log(LOG_DEBUG, TAST_FMT"\n", uast_function_decl_print(fun_decl));
+    return fun_decl;
+
     todo();
 }
+
 
 bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_call* fun_call) {
     bool status = true;
@@ -1266,6 +1287,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
     Uast_function_decl* fun_decl;
     switch (fun_def->type) {
         case UAST_FUNCTION_DEF:
+            todo();
             fun_decl = uast_function_def_unwrap(fun_def)->decl;
             break;
         case UAST_FUNCTION_DECL:
@@ -1278,7 +1300,16 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             todo();
         }
         case UAST_VARIABLE_DEF: {
-            fun_decl = uast_function_decl_from_ulang_type(uast_variable_def_unwrap(fun_def)->lang_type);
+            if (uast_variable_def_unwrap(fun_def)->lang_type.type != ULANG_TYPE_FN) {
+                todo();
+            }
+            fun_decl = uast_function_decl_from_ulang_type_fn(
+                env,
+                ulang_type_fn_const_unwrap(uast_variable_def_unwrap(fun_def)->lang_type),
+                uast_variable_def_unwrap(fun_def)->pos
+            );
+            log(LOG_DEBUG, TAST_FMT, uast_function_decl_print(fun_decl));
+            break;
         }
         default:
             unreachable(TAST_FMT, uast_def_print(fun_def));

@@ -202,7 +202,7 @@ static inline bool is_struct_like(LANG_TYPE_TYPE type) {
         case LANG_TYPE_TUPLE:
             unreachable("");
         case LANG_TYPE_FN:
-            todo();
+            return false;
     }
     unreachable("");
 }

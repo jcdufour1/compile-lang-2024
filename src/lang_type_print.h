@@ -11,7 +11,7 @@ Str_view lang_type_print_internal(LANG_TYPE_MODE mode, Lang_type lang_type);
 
 void extend_serialize_lang_type_to_string(Env* env, String* string, Lang_type lang_type, bool do_tag);
 
-void extend_lang_type_atom(String* string, LANG_TYPE_MODE mode, Lang_type_atom atom);
+void extend_lang_type_atom(String* string, Lang_type_atom atom);
 
 void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type lang_type);
 

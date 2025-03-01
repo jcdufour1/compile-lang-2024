@@ -44,7 +44,7 @@ static inline Lang_type_atom lang_type_get_atom(Lang_type lang_type) {
         case LANG_TYPE_TUPLE:
             unreachable("");
         case LANG_TYPE_FN:
-            unreachable("");
+            return lang_type_atom_new_from_cstr("", 1);
         case LANG_TYPE_VOID:
             return (Lang_type_atom) {0};
     }

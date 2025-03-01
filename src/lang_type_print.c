@@ -75,7 +75,7 @@ Str_view lang_type_vec_print_internal(Lang_type_vec types) {
 //    }
 //}
 
-void extend_lang_type_atom(String* string, LANG_TYPE_MODE mode, Lang_type_atom atom) {
+void extend_lang_type_atom(String* string, Lang_type_atom atom) {
     if (atom.str.count > 1) {
         string_extend_strv(&print_arena, string, atom.str);
     } else {
@@ -86,9 +86,6 @@ void extend_lang_type_atom(String* string, LANG_TYPE_MODE mode, Lang_type_atom a
     }
     for (int16_t idx = 0; idx < atom.pointer_depth; idx++) {
         vec_append(&print_arena, string, '*');
-    }
-    if (mode == LANG_TYPE_MODE_LOG) {
-        vec_append(&print_arena, string, '>');
     }
 }
 
@@ -109,10 +106,10 @@ Str_view lang_type_print_internal(LANG_TYPE_MODE mode, Lang_type lang_type) {
     return string_to_strv(buf);
 }
 
-Str_view lang_type_atom_print_internal(LANG_TYPE_MODE mode, Lang_type_atom atom) {
+Str_view lang_type_atom_print_internal(Lang_type_atom atom) {
     String buf = {0};
     // TODO: do not use `lang_type_primitive_new` here
-    extend_lang_type_atom(&buf, mode, atom);
+    extend_lang_type_atom(&buf, atom);
     return string_to_strv(buf);
 }
 
@@ -134,22 +131,47 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             unreachable("");
     }
 
-    if (lang_type.type == LANG_TYPE_TUPLE) {
-        if (mode == LANG_TYPE_MODE_MSG) {
-            string_extend_cstr(&a_main, string, "(");
-        }
-        Lang_type_vec lang_types = lang_type_tuple_const_unwrap(lang_type).lang_types;
-        for (size_t idx = 0; idx < lang_types.info.count; idx++) {
-            if (mode == LANG_TYPE_MODE_MSG && idx > 0) {
-                string_extend_cstr(&a_main, string, ", ");
+    switch (lang_type.type) {
+        case LANG_TYPE_TUPLE:
+            if (mode == LANG_TYPE_MODE_MSG) {
+                string_extend_cstr(&a_main, string, "(");
             }
-            extend_lang_type_to_string(string, mode, vec_at(&lang_types, idx));
+            Lang_type_vec lang_types = lang_type_tuple_const_unwrap(lang_type).lang_types;
+            for (size_t idx = 0; idx < lang_types.info.count; idx++) {
+                if (mode == LANG_TYPE_MODE_MSG && idx > 0) {
+                    string_extend_cstr(&a_main, string, ", ");
+                }
+                extend_lang_type_to_string(string, mode, vec_at(&lang_types, idx));
+            }
+            if (mode == LANG_TYPE_MODE_MSG) {
+                string_extend_cstr(&a_main, string, ")");
+            }
+            goto end;
+        case LANG_TYPE_FN: {
+            Lang_type_fn fn = lang_type_fn_const_unwrap(lang_type);
+            extend_lang_type_to_string(string, mode, lang_type_tuple_const_wrap(fn.params));
+            extend_lang_type_to_string(string, mode, *fn.return_type);
+            goto end;
         }
-        if (mode == LANG_TYPE_MODE_MSG) {
-            string_extend_cstr(&a_main, string, ")");
-        }
-    } else {
-        extend_lang_type_atom(string, mode, lang_type_get_atom(lang_type));
+        case LANG_TYPE_VOID:
+            // fallthrough
+        case LANG_TYPE_SUM:
+            // fallthrough
+        case LANG_TYPE_ENUM:
+            // fallthrough
+        case LANG_TYPE_RAW_UNION:
+            // fallthrough
+        case LANG_TYPE_STRUCT:
+            // fallthrough
+        case LANG_TYPE_PRIMITIVE:
+            extend_lang_type_atom(string, lang_type_get_atom(lang_type));
+            goto end;
+    }
+    unreachable("");
+
+end:
+    if (mode == LANG_TYPE_MODE_LOG) {
+        vec_append(&print_arena, string, '>');
     }
 }
 
