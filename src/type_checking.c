@@ -17,6 +17,7 @@
 #include <ulang_type_serialize.h>
 #include <lang_type_print.h>
 #include <ulang_type_print.h>
+#include <ulang_type_from_uast_function_decl.h>
 
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
@@ -402,7 +403,11 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
 
     switch (sym_def->type) {
         case UAST_FUNCTION_DECL:
-            *new_tast = tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(sym_untyped->pos, sym_untyped->name)));
+            *new_tast = tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
+                sym_untyped->pos,
+                sym_untyped->name,
+                lang_type_from_ulang_type(env, ulang_type_from_uast_function_decl(uast_function_decl_unwrap(sym_def)))
+            )));
             return true;
         case UAST_VARIABLE_DEF: {
             Lang_type lang_type = uast_def_get_lang_type(env, sym_def);

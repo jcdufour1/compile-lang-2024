@@ -124,7 +124,7 @@ static inline Lang_type tast_literal_get_lang_type(const Tast_literal* lit) {
         case TAST_RAW_UNION_LIT:
             return tast_expr_get_lang_type(tast_sum_lit_const_unwrap(lit)->item);
         case TAST_FUNCTION_LIT:
-            unreachable("");
+            return tast_function_lit_const_unwrap(lit)->lang_type;
     }
     unreachable("");
 }

@@ -184,7 +184,7 @@ static inline Lang_type llvm_literal_get_lang_type(const Llvm_literal* lit) {
             return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type_atom_new_from_cstr("u8", 0))));
         case LLVM_FUNCTION_NAME:
             // TODO: remove lang_type_atom from lang_type_char and lang_type_string
-            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type_atom_new_from_cstr("u8", 0))));
+            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type_atom_new_from_cstr("ptr", 1))));
     }
     unreachable("");
 }
@@ -440,6 +440,7 @@ static inline Llvm* get_llvm_dest(Llvm* llvm) {
     unreachable("");
 }
 
+// TODO: should I make *get_name_print_to_llvm?
 static inline Str_view llvm_literal_get_name(const Llvm_literal* lit) {
     switch (lit->type) {
         case LLVM_NUMBER:

@@ -139,6 +139,8 @@ static void extend_type_call_str(Env* env, String* output, Lang_type lang_type) 
             return;
         case LANG_TYPE_PRIMITIVE:
             if (lang_type_atom_is_unsigned(lang_type_get_atom(lang_type))) {
+                log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
+                log(LOG_DEBUG, "%d\n", lang_type_primitive_const_unwrap(lang_type).type);
                 Lang_type_unsigned_int old_num = lang_type_unsigned_int_const_unwrap(lang_type_primitive_const_unwrap(lang_type));
                 lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(old_num.bit_width, old_num.pointer_depth)));
             }
@@ -209,6 +211,8 @@ static void llvm_extend_type_decl_str(Env* env, String* output, const Llvm* var_
         return;
     }
 
+    log(LOG_DEBUG, TAST_FMT, llvm_print(var_def_or_lit));
+    log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, llvm_get_lang_type(var_def_or_lit)));
     extend_type_call_str(env, output, llvm_get_lang_type(var_def_or_lit));
     if (noundef) {
         string_extend_cstr(&a_main, output, " noundef");
@@ -216,8 +220,14 @@ static void llvm_extend_type_decl_str(Env* env, String* output, const Llvm* var_
 }
 
 static void extend_literal_decl_prefix(String* output, String* literals, const Llvm_literal* literal) {
-    //if (lang_type_is_equal(llvm_literal_get_lang_type(literal), lang_type_primitive_wrap(lang_type_string_const_wrap(lang_type_string_new(lang_type_atom_new_from_cstr("u8", 1)))))) {
-    if (llvm_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE && lang_type_primitive_const_unwrap(llvm_literal_get_lang_type(literal)).type == LANG_TYPE_CHAR && lang_type_get_pointer_depth(llvm_literal_get_lang_type(literal)) > 0) {
+    if (literal->type == LLVM_FUNCTION_NAME) {
+        string_extend_cstr(&a_main, output, " @");
+        string_extend_strv(&a_main, output, llvm_function_name_const_unwrap(literal)->fun_name);
+    } else if (
+        llvm_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE &&
+        lang_type_primitive_const_unwrap(llvm_literal_get_lang_type(literal)).type == LANG_TYPE_CHAR &&
+        lang_type_get_pointer_depth(llvm_literal_get_lang_type(literal)) > 0
+    ) {
         if (lang_type_get_pointer_depth(llvm_literal_get_lang_type(literal)) != 1) {
             todo();
         }
@@ -356,6 +366,7 @@ static void emit_function_call_arg_load_another_llvm(
 static void emit_function_arg_expr(Env* env, String* output, String* literals, const Llvm_expr* argument) {
         switch (argument->type) {
             case LLVM_LITERAL:
+                log(LOG_DEBUG, TAST_FMT, llvm_expr_print(argument));
                 extend_literal_decl(env, output, literals, llvm_literal_const_unwrap(argument), true);
                 break;
             case LLVM_SYMBOL:

@@ -249,6 +249,7 @@ static Tast_type tast_gen_function_lit(const char* prefix) {
     Tast_type lit = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&lit.members, "Str_view", "name");
+    append_member(&lit.members, "Lang_type", "lang_type");
 
     return lit;
 }
