@@ -62,13 +62,15 @@ static int get_num_3(void) {
     return 5;
 }
 
-int main() {
-    //if (get_num_1() < 4 && get_num_2() > 5 || get_num_3() < 6) {
-    //    printf("yes\n");
-    //}
+static int add(int a, int b) {
+    return a + b;
+}
 
-    if (get_num_1() && get_num_2() && get_num_3() < 6) {
-        printf("yes\n");
-    }
+static int do_operation(int a, int b, int (*callback)(int, int)) {
+    return callback(a, b);
+}
+
+int main() {
+    do_operation(45, 32, add);
     return 0;
 }
