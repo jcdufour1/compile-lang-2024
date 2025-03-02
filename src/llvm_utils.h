@@ -151,7 +151,7 @@ static inline Llvm_id llvm_get_llvm_id(const Llvm* llvm) {
 
 static inline Llvm_id llvm_id_from_get_name(Env* env, Str_view llvm) {
     Llvm* result = NULL;
-    try(alloca_lookup(&result, env, llvm));
+    unwrap(alloca_lookup(&result, env, llvm));
     return llvm_get_llvm_id(result);
 }
 
@@ -571,7 +571,7 @@ static inline const Llvm* get_llvm_dest_const(const Llvm* llvm) {
 
 static inline Lang_type lang_type_from_get_name(Env* env, Str_view name) {
     Llvm* result = NULL;
-    try(alloca_lookup(&result, env, name));
+    unwrap(alloca_lookup(&result, env, name));
     return llvm_get_lang_type(result);
 }
 

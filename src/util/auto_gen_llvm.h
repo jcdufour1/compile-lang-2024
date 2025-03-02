@@ -681,8 +681,8 @@ static void llvm_gen_internal_unwrap(Llvm_type type, bool is_const) {
     extend_parent_llvm_name_first_upper(&function, type.name);
     string_extend_cstr(&gen_a, &function, "* llvm) {\n");
 
-    //    try(llvm->type == upper); 
-    string_extend_cstr(&gen_a, &function, "    try(llvm->type == ");
+    //    unwrap(llvm->type == upper); 
+    string_extend_cstr(&gen_a, &function, "    unwrap(llvm->type == ");
     extend_llvm_name_upper(&function, type.name);
     string_extend_cstr(&gen_a, &function, ");\n");
 

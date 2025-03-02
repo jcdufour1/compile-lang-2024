@@ -838,8 +838,8 @@ static void tast1_gen_internal_unwrap(Tast1_type type, bool is_const) {
     extend_parent_tast1_name_first_upper(&function, type.name);
     string_extend_cstr(&gen_a, &function, "* tast1) {\n");
 
-    //    try(tast1->type == upper); 
-    string_extend_cstr(&gen_a, &function, "    try(tast1->type == ");
+    //    unwrap(tast1->type == upper); 
+    string_extend_cstr(&gen_a, &function, "    unwrap(tast1->type == ");
     extend_tast1_name_upper(&function, type.name);
     string_extend_cstr(&gen_a, &function, ");\n");
 

@@ -63,7 +63,7 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
 
             log(LOG_DEBUG, LANG_TYPE_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
             Tast_def* lang_type_def_ = NULL; 
-            try(symbol_lookup(&lang_type_def_, env, lang_type_get_str(lang_type)));
+            unwrap(symbol_lookup(&lang_type_def_, env, lang_type_get_str(lang_type)));
             Tast_variable_def_vec members = {0};
 
             Tast_variable_def* tag = tast_variable_def_new(
@@ -127,7 +127,7 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
             };
             
             Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
-            try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def)));
+            unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def)));
             struct_def->base.name = serialize_tast_struct_def(env, struct_def);
             // TODO: consider collisions with generated structs and user defined structs
             sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def));
@@ -136,7 +136,7 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
         }
         case LANG_TYPE_RAW_UNION: {
             Tast_def* lang_type_def_ = NULL; 
-            try(symbol_lookup(&lang_type_def_, env, lang_type_get_str(lang_type)));
+            unwrap(symbol_lookup(&lang_type_def_, env, lang_type_get_str(lang_type)));
             Tast_variable_def_vec members = {0};
 
             Tast_variable_def* tag = tast_variable_def_new(
@@ -220,7 +220,7 @@ static Tast_stmt* rm_tuple_assignment_tuple(Env* env, Tast_assignment* assign) {
 
     Tast_def* struct_def_ = NULL;
     // TODO: think about out of order things
-    try(symbol_lookup(&struct_def_, env, lang_type_get_str(rm_tuple_lang_type(env, tast_expr_get_lang_type(src), tast_expr_get_pos(src)))));
+    unwrap(symbol_lookup(&struct_def_, env, lang_type_get_str(rm_tuple_lang_type(env, tast_expr_get_lang_type(src), tast_expr_get_pos(src)))));
 
     Lang_type new_var_lang_type = rm_tuple_lang_type(env, tast_expr_get_lang_type(src), tast_expr_get_pos(src));
 
@@ -230,7 +230,7 @@ static Tast_stmt* rm_tuple_assignment_tuple(Env* env, Tast_assignment* assign) {
         false,
         util_literal_name_new_prefix("tuple_assign_lhs")
     );
-    try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(new_var)));
+    unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(new_var)));
     Tast_assignment* new_assign = tast_assignment_new(
         dest->pos,
         tast_def_wrap(tast_variable_def_wrap(new_var)),
@@ -239,7 +239,7 @@ static Tast_stmt* rm_tuple_assignment_tuple(Env* env, Tast_assignment* assign) {
     vec_append(&a_main, &new_children, tast_assignment_wrap(new_assign));
 
     for (size_t idx = 0; idx < dest->members.info.count; idx++) {
-        try(idx < tast_struct_def_unwrap(struct_def_)->base.members.info.count);
+        unwrap(idx < tast_struct_def_unwrap(struct_def_)->base.members.info.count);
         Tast_variable_def* curr_memb_def = vec_at(&tast_struct_def_unwrap(struct_def_)->base.members, idx);
 
         Tast_member_access* curr_src = tast_member_access_new(
@@ -293,7 +293,7 @@ static Tast_function_def* rm_tuple_function_def_new(Env* env, Tast_function_decl
     Tast_block* body = tast_block_new(decl->pos, (Tast_stmt_vec) {0}, (Symbol_collection) {0}, decl->pos);
 
     Tast_def* struct_def_ = NULL;
-    try(symbol_lookup(&struct_def_, env, lang_type_get_str(decl->return_type->lang_type)));
+    unwrap(symbol_lookup(&struct_def_, env, lang_type_get_str(decl->return_type->lang_type)));
     Struct_def_base base = {0};
     Lang_type base_lang_type = {0};
     switch (struct_def_->type) {
@@ -323,7 +323,7 @@ static Tast_function_def* rm_tuple_function_def_new(Env* env, Tast_function_decl
         false,
         new_var_name
     );
-    try(symbol_add(env, tast_variable_def_wrap(new_var)));
+    unwrap(symbol_add(env, tast_variable_def_wrap(new_var)));
 
     vec_append(&a_main, &body->children, tast_def_wrap(tast_variable_def_wrap(new_var)));
 
@@ -404,20 +404,20 @@ static Tast_expr* rm_tuple_struct_literal_rhs(
 
     Struct_def_base base = {0};
     Tast_def* struct_def_ = NULL;
-    try(symbol_lookup(&struct_def_, env, lang_type_get_str(rhs->lang_type)));
+    unwrap(symbol_lookup(&struct_def_, env, lang_type_get_str(rhs->lang_type)));
     base = tast_struct_def_unwrap(struct_def_)->base;
 
     Tast_variable_def_vec struct_def_memb = base.members;
 
     Tast_expr_vec new_args = {0};
 
-    //try(symbol_lookup(&struct_def_, env, vec_at(&fun_decl->return_type->lang_type, 0).str));
+    //unwrap(symbol_lookup(&struct_def_, env, vec_at(&fun_decl->return_type->lang_type, 0).str));
     Tast_variable_def_vec new_params = {0};
     Str_view new_fun_name = util_literal_name_new_prefix("tuple_function");
     switch (struct_def_->type) {
         case TAST_STRUCT_DEF: {
             for (size_t idx = 0; idx < members.info.count; idx++) {
-                try(idx < struct_def_memb.info.count);
+                unwrap(idx < struct_def_memb.info.count);
                 Tast_variable_def* curr_def = vec_at(&struct_def_memb, idx);
                 //Tast_member_access* access = 
 
@@ -427,7 +427,7 @@ static Tast_expr* rm_tuple_struct_literal_rhs(
                     false,
                     util_literal_name_new_prefix("tuple_function_param")
                 );
-                try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(new_param)));
+                unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(new_param)));
                 vec_append(&a_main, &new_params, new_param);
 
                 Tast_expr* new_memb = rm_tuple_generic_assignment_rhs(
@@ -458,7 +458,7 @@ static Tast_expr* rm_tuple_struct_literal_rhs(
                 new_fun_name
             );
             Tast_function_def* new_fun_def = rm_tuple_function_def_new(env, new_fun_decl);
-            try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_function_def_wrap(new_fun_def)));
+            unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_function_def_wrap(new_fun_def)));
 
             //Tast_function_call* fun_call = tast_function_call_new(assign_pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
             todo();
@@ -488,7 +488,7 @@ static Tast_expr* rm_tuple_tuple_rhs(
 
     Struct_def_base base = {0};
     Tast_def* struct_def_ = NULL;
-    try(symbol_lookup(&struct_def_, env, lang_type_get_str(lhs_lang_type)));
+    unwrap(symbol_lookup(&struct_def_, env, lang_type_get_str(lhs_lang_type)));
     switch (struct_def_->type) {
         case TAST_STRUCT_DEF:
             base = tast_struct_def_unwrap(struct_def_)->base;
@@ -500,13 +500,13 @@ static Tast_expr* rm_tuple_tuple_rhs(
 
     Tast_expr_vec new_args = {0};
 
-    //try(symbol_lookup(&struct_def_, env, vec_at(&fun_decl->return_type->lang_type, 0).str));
+    //unwrap(symbol_lookup(&struct_def_, env, vec_at(&fun_decl->return_type->lang_type, 0).str));
     Tast_variable_def_vec new_params = {0};
     Str_view new_fun_name = util_literal_name_new_prefix("tuple_function");
     switch (struct_def_->type) {
         case TAST_STRUCT_DEF:
             for (size_t idx = 0; idx < members.info.count; idx++) {
-                try(idx < struct_def_memb.info.count);
+                unwrap(idx < struct_def_memb.info.count);
                 Tast_variable_def* curr_def = vec_at(&struct_def_memb, idx);
                 //Tast_member_access* access = 
 
@@ -547,7 +547,7 @@ static Tast_expr* rm_tuple_tuple_rhs(
                 new_fun_name
             );
             Tast_function_def* new_fun_def = rm_tuple_function_def_new(env, new_fun_decl);
-            try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_function_def_wrap(new_fun_def)));
+            unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_function_def_wrap(new_fun_def)));
 
             //Tast_function_call* fun_call = tast_function_call_new(assign_pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
             todo();
@@ -574,17 +574,17 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
     }
 
     Tast_def* struct_def_ = NULL;
-    try(symbol_lookup(&struct_def_, env, lang_type_get_str(lhs_lang_type)));
+    unwrap(symbol_lookup(&struct_def_, env, lang_type_get_str(lhs_lang_type)));
     Struct_def_base base = tast_struct_def_unwrap(struct_def_)->base;
 
     Tast_expr_vec new_args = {0};
 
-    //try(symbol_lookup(&struct_def_, env, vec_at(&fun_decl->return_type->lang_type, 0).str));
+    //unwrap(symbol_lookup(&struct_def_, env, vec_at(&fun_decl->return_type->lang_type, 0).str));
     Tast_variable_def_vec new_params = {0};
     Str_view new_fun_name = util_literal_name_new_prefix("tuple_function");
     switch (struct_def_->type) {
         case TAST_STRUCT_DEF: {
-            //try(idx < struct_def_memb.info.count);
+            //unwrap(idx < struct_def_memb.info.count);
             //Tast_variable_def* curr_def = vec_at(&struct_def_memb, idx);
             //Tast_member_access* access = 
 
@@ -594,7 +594,7 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
                 false,
                 util_literal_name_new_prefix("tuple_function_param_tag")
             );
-            try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(new_tag)));
+            unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(new_tag)));
             vec_append(&a_main, &new_params, new_tag);
             vec_append(&a_main, &new_args, vec_at(&members, 0));
 
@@ -604,7 +604,7 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
                 false,
                 util_literal_name_new_prefix("tuple_function_param_item")
             );
-            try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(new_item)));
+            unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(new_item)));
             vec_append(&a_main, &new_params, new_item);
             if (tast_expr_get_lang_type(inner_thing).type != LANG_TYPE_VOID) {
                 vec_append(&a_main, &new_args, rm_tuple_raw_union_lit_rhs(
@@ -648,7 +648,7 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
                 new_fun_name
             );
             Tast_function_def* new_fun_def = rm_tuple_function_def_new(env, new_fun_decl);
-            try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_function_def_wrap(new_fun_def)));
+            unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_function_def_wrap(new_fun_def)));
 
             //Tast_function_call* fun_call = tast_function_call_new(assign_pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
             todo();
@@ -681,7 +681,7 @@ static Tast_return* rm_tuple_return(Env* env, Tast_return* rtn) {
     }
 
     Tast_def* def = NULL;
-    try(symbol_lookup(&def, env, env->name_parent_function));
+    unwrap(symbol_lookup(&def, env, env->name_parent_function));
     Tast_function_def* fun_def = tast_function_def_unwrap(def);
 
     Tast_def* struct_def_ = NULL;
@@ -798,7 +798,7 @@ static Tast_def* rm_tuple_def(Env* env, Tast_def* def) {
 
 static Tast_function_call* rm_tuple_function_call(Env* env, Tast_function_call* fun_call) {
     Uast_def* fun_decl_ = NULL;
-    //try(usymbol_lookup(&fun_decl_, env, fun_call->name));
+    //unwrap(usymbol_lookup(&fun_decl_, env, fun_call->name));
     todo();
     Uast_function_decl* fun_decl = uast_function_decl_unwrap(fun_decl_);
     fun_call->lang_type = rm_tuple_lang_type(env, fun_call->lang_type, fun_call->pos);
@@ -821,27 +821,27 @@ static Tast_expr* rm_tuple_raw_union_lit_rhs(Env* env, Tast_raw_union_lit* rhs, 
     vec_append(&a_main, &members, raw_union_lit->item);
 
     Tast_def* struct_def_ = NULL;
-    try(symbol_lookup(&struct_def_, env, lang_type_get_str(lhs_lang_type)));
+    unwrap(symbol_lookup(&struct_def_, env, lang_type_get_str(lhs_lang_type)));
     Struct_def_base base = tast_raw_union_def_unwrap(struct_def_)->base;
 
     Tast_expr_vec new_args = {0};
 
-    //try(symbol_lookup(&struct_def_, env, vec_at(&fun_decl->return_type->lang_type, 0).str));
+    //unwrap(symbol_lookup(&struct_def_, env, vec_at(&fun_decl->return_type->lang_type, 0).str));
     Tast_variable_def_vec new_params = {0};
     Str_view new_fun_name = util_literal_name_new_prefix("tuple_function");
     switch (struct_def_->type) {
         case TAST_RAW_UNION_DEF: {
-            //try(idx < struct_def_memb.info.count);
+            //unwrap(idx < struct_def_memb.info.count);
             //Tast_variable_def* curr_def = vec_at(&struct_def_memb, idx);
             //Tast_member_access* access = 
 
             Tast_variable_def* new_tag = tast_variable_def_new(
                 assign_pos,
-                vec_at(&tast_raw_union_def_unwrap(struct_def_)->base.members, rhs->tag->data)->lang_type,
+                vec_at(&tast_raw_union_def_unwrap(struct_def_)->base.members, (size_t)rhs->tag->data)->lang_type,
                 false,
                 util_literal_name_new_prefix("tuple_function_param_item")
             );
-            try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(new_tag)));
+            unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(new_tag)));
             vec_append(&a_main, &new_params, new_tag);
             vec_append(&a_main, &new_args, vec_at(&members, 0));
 
@@ -866,7 +866,7 @@ static Tast_expr* rm_tuple_raw_union_lit_rhs(Env* env, Tast_raw_union_lit* rhs, 
                 new_fun_name
             );
             Tast_function_def* new_fun_def = rm_tuple_function_def_new(env, new_fun_decl);
-            try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_function_def_wrap(new_fun_def)));
+            unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_function_def_wrap(new_fun_def)));
 
             assert(new_args.info.count == 1);
             //Tast_function_call* fun_call = tast_function_call_new(assign_pos, new_args, new_fun_decl->name, new_fun_decl->return_type->lang_type);
@@ -906,7 +906,7 @@ static Tast_member_access* rm_tuple_sum_access_rhs(Env* env, Tast_sum_access* rh
     Tast_expr* new_union_callee = rm_tuple_expr(env, rhs->callee, assign_pos);
 
     Tast_def* struct_def = NULL;
-    try(symbol_lookup(&struct_def, env, lang_type_get_str(tast_expr_get_lang_type(new_union_callee))));
+    unwrap(symbol_lookup(&struct_def, env, lang_type_get_str(tast_expr_get_lang_type(new_union_callee))));
     Tast_member_access* new_union = tast_member_access_new(
         assign_pos,
         vec_at(&tast_struct_def_unwrap(struct_def)->base.members, 1)->lang_type,
@@ -914,8 +914,8 @@ static Tast_member_access* rm_tuple_sum_access_rhs(Env* env, Tast_sum_access* rh
         new_union_callee
     );
     Tast_def* union_def = NULL;
-    try(symbol_lookup(&union_def, env, lang_type_get_str(vec_at(&tast_struct_def_unwrap(struct_def)->base.members, 1)->lang_type)));
-    Str_view union_memb_name = vec_at(&tast_raw_union_def_unwrap(union_def)->base.members, rhs->tag->data)->name;
+    unwrap(symbol_lookup(&union_def, env, lang_type_get_str(vec_at(&tast_struct_def_unwrap(struct_def)->base.members, 1)->lang_type)));
+    Str_view union_memb_name = vec_at(&tast_raw_union_def_unwrap(union_def)->base.members, (size_t)rhs->tag->data)->name;
 
     Tast_member_access* new_access = tast_member_access_new(
         assign_pos,

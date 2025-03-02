@@ -212,7 +212,7 @@ static void add_label(Env* env, Llvm_block* block, Str_view label_name, Pos pos,
     if (defer_add_sym) {
         alloca_add_defer(env, llvm_def_wrap(llvm_label_wrap(label)));
     } else {
-        try(alloca_add(env, llvm_def_wrap(llvm_label_wrap(label))));
+        unwrap(alloca_add(env, llvm_def_wrap(llvm_label_wrap(label))));
     }
 
     vec_append(&a_main, &block->children, llvm_def_wrap(llvm_label_wrap(label)));
@@ -267,7 +267,7 @@ static Str_view load_function_call(
     if (rtn_is_struct) {
         def_name = util_literal_name_new_prefix("result_fun_call");
         Tast_variable_def* def = tast_variable_def_new(old_fun_call->pos, old_fun_call->lang_type, false, def_name);
-        try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(def)));
+        unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(def)));
         
         vec_append(&a_main, &new_args, def_name);
         load_variable_def(env, new_block, def);
@@ -283,14 +283,14 @@ static Str_view load_function_call(
         0,
         fun_lang_type
     );
-    try(alloca_add(env, llvm_expr_wrap(llvm_function_call_wrap(new_fun_call))));
+    unwrap(alloca_add(env, llvm_expr_wrap(llvm_function_call_wrap(new_fun_call))));
 
     for (size_t idx = 0; idx < old_fun_call->args.info.count; idx++) {
         Tast_expr* old_arg = vec_at(&old_fun_call->args, idx);
         Str_view thing = load_expr(env, new_block, old_arg);
         vec_append(&a_main, &new_fun_call->args, thing);
         Llvm* result = NULL;
-        try(alloca_lookup(&result, env, thing));
+        unwrap(alloca_lookup(&result, env, thing));
     }
 
     vec_append(&a_main, &new_block->children, llvm_expr_wrap(llvm_function_call_wrap(new_fun_call)));
@@ -384,10 +384,10 @@ static Str_view load_literal(
             tast_string_unwrap(old_lit)->name,
             tast_string_unwrap(old_lit)->data
         );
-        try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_literal_def_wrap(tast_string_def_wrap(new_def))));
+        unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_literal_def_wrap(tast_string_def_wrap(new_def))));
     }
 
-    try(alloca_add(env, llvm_expr_wrap(llvm_literal_wrap(new_lit))));
+    unwrap(alloca_add(env, llvm_expr_wrap(llvm_literal_wrap(new_lit))));
 
     return llvm_literal_get_name(new_lit);
 }
@@ -400,7 +400,7 @@ static Str_view load_ptr_symbol(
     (void) new_block;
 
     Tast_def* var_def_ = NULL;
-    try(symbol_lookup(&var_def_, env, old_sym->base.name));
+    unwrap(symbol_lookup(&var_def_, env, old_sym->base.name));
     Llvm_variable_def* var_def = load_variable_def_clone(tast_variable_def_unwrap(var_def_));
     Llvm* alloca = NULL;
     if (!alloca_lookup(&alloca, env, var_def->name_corr_param)) {
@@ -423,7 +423,7 @@ static Str_view load_ptr_sum_callee(
     (void) old_callee;
 
     //Tast_def* var_def_ = NULL;
-    //try(symbol_lookup(&var_def_, env, old_callee->name));
+    //unwrap(symbol_lookup(&var_def_, env, old_callee->name));
     //return load_ptr_member_access(env, new_block, tast_member_access_new(
     //    old_callee->pos,
     //    old_callee->lang_type,
@@ -448,7 +448,7 @@ static Str_view load_symbol(
         old_sym->base.lang_type,
         util_literal_name_new()
     );
-    try(alloca_add(env, llvm_load_another_llvm_wrap(new_load)));
+    unwrap(alloca_add(env, llvm_load_another_llvm_wrap(new_load)));
 
     vec_append(&a_main, &new_block->children, llvm_load_another_llvm_wrap(new_load));
     return new_load->name;
@@ -485,7 +485,7 @@ static Str_view load_binary_short_circuit(
         false,
         util_literal_name_new_prefix("short_cir")
     );
-    try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(new_var_def)));
+    unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(new_var_def)));
 
     Tast_stmt_vec if_true_stmts = {0};
     vec_append(&a_main, &if_true_stmts, tast_assignment_wrap(tast_assignment_new(
@@ -579,7 +579,7 @@ static Str_view load_binary(
         util_literal_name_new()
     );
 
-    try(alloca_add(env, llvm_expr_wrap(llvm_operator_wrap(llvm_binary_wrap(new_bin)))));
+    unwrap(alloca_add(env, llvm_expr_wrap(llvm_operator_wrap(llvm_binary_wrap(new_bin)))));
 
     vec_append(&a_main, &new_block->children, llvm_expr_wrap(llvm_operator_wrap(llvm_binary_wrap(new_bin))));
     return new_bin->name;
@@ -604,7 +604,7 @@ static Str_view load_deref(
                 old_unary->lang_type,
                 util_literal_name_new()
             );
-            try(alloca_add(env, llvm_load_another_llvm_wrap(new_load)));
+            unwrap(alloca_add(env, llvm_load_another_llvm_wrap(new_load)));
 
             vec_append(&a_main, &new_block->children, llvm_load_another_llvm_wrap(new_load));
             return new_load->name;
@@ -650,7 +650,7 @@ static Str_view load_unary(Env* env, Llvm_block* new_block, Tast_unary* old_unar
                 0,
                 util_literal_name_new()
             );
-            try(alloca_add(env, llvm_expr_wrap(llvm_operator_wrap(llvm_unary_wrap(new_unary)))));
+            unwrap(alloca_add(env, llvm_expr_wrap(llvm_operator_wrap(llvm_unary_wrap(new_unary)))));
 
             vec_append(&a_main, &new_block->children, llvm_expr_wrap(llvm_operator_wrap(llvm_unary_wrap(new_unary))));
             return new_unary->name;
@@ -682,7 +682,7 @@ static Str_view load_ptr_member_access(
     Str_view new_callee = load_ptr_expr(env, new_block, old_access->callee);
 
     Tast_def* def = NULL;
-    try(symbol_lookup(&def, env, lang_type_get_str(lang_type_from_get_name(env, new_callee))));
+    unwrap(symbol_lookup(&def, env, lang_type_get_str(lang_type_from_get_name(env, new_callee))));
 
     int64_t struct_index = {0};
     switch (def->type) {
@@ -715,7 +715,7 @@ static Str_view load_ptr_member_access(
         old_access->member_name,
         true
     );
-    try(alloca_add(env, llvm_load_element_ptr_wrap(new_load)));
+    unwrap(alloca_add(env, llvm_load_element_ptr_wrap(new_load)));
 
     vec_append(&a_main, &new_block->children, llvm_load_element_ptr_wrap(new_load));
     return new_load->name_self;
@@ -736,7 +736,7 @@ static Str_view load_ptr_index(
         str_view_from_cstr(""),
         false
     );
-    try(alloca_add(env, llvm_load_element_ptr_wrap(new_load)));
+    unwrap(alloca_add(env, llvm_load_element_ptr_wrap(new_load)));
 
     vec_append(&a_main, &new_block->children, llvm_load_element_ptr_wrap(new_load));
     return new_load->name_self;
@@ -756,7 +756,7 @@ static Str_view load_member_access(
         lang_type_from_get_name(env, ptr),
         util_literal_name_new()
     );
-    try(alloca_add(env, llvm_load_another_llvm_wrap(new_load)));
+    unwrap(alloca_add(env, llvm_load_another_llvm_wrap(new_load)));
 
     vec_append(&a_main, &new_block->children, llvm_load_another_llvm_wrap(new_load));
     return new_load->name;
@@ -776,7 +776,7 @@ static Str_view load_index(
         lang_type_from_get_name(env, ptr),
         util_literal_name_new()
     );
-    try(alloca_add(env, llvm_load_another_llvm_wrap(new_load)));
+    unwrap(alloca_add(env, llvm_load_another_llvm_wrap(new_load)));
 
     vec_append(&a_main, &new_block->children, llvm_load_another_llvm_wrap(new_load));
     return new_load->name;
@@ -823,7 +823,7 @@ static Llvm_reg load_function_parameters(
         bool is_struct = is_struct_like(param->lang_type.type);
 
         if (!is_struct) {
-            try(alloca_add(env, llvm_def_wrap(llvm_variable_def_wrap(param))));
+            unwrap(alloca_add(env, llvm_def_wrap(llvm_variable_def_wrap(param))));
 
             Llvm_store_another_llvm* new_store = llvm_store_another_llvm_new(
                 param->pos,
@@ -833,12 +833,12 @@ static Llvm_reg load_function_parameters(
                 param->lang_type,
                 util_literal_name_new()
             );
-            try(alloca_add(env, llvm_store_another_llvm_wrap(new_store)));
+            unwrap(alloca_add(env, llvm_store_another_llvm_wrap(new_store)));
 
             vec_append(&a_main, &new_fun_body->children, llvm_store_another_llvm_wrap(new_store));
         }
 
-        try(alloca_lookup(&dummy, env, param->name_corr_param));
+        unwrap(alloca_lookup(&dummy, env, param->name_corr_param));
     }
 
     return (Llvm_reg) {
@@ -874,7 +874,7 @@ static Str_view load_function_def(
         0
     );
 
-    //try(old_fun_def->decl->return_type->lang_type.info.count == 1);
+    //unwrap(old_fun_def->decl->return_type->lang_type.info.count == 1);
 
     vec_append(&a_main, &env->ancesters, &new_fun_def->body->symbol_collection);
     Llvm_lang_type* new_lang_type = NULL;
@@ -888,7 +888,7 @@ static Str_view load_function_def(
     }
     vec_rem_last(&env->ancesters);
 
-    try(alloca_add(env, llvm_def_wrap(llvm_function_def_wrap(new_fun_def))));
+    unwrap(alloca_add(env, llvm_def_wrap(llvm_function_def_wrap(new_fun_def))));
     env->name_parent_function = old_fun_name;
     return (Str_view) {0};
 }
@@ -897,7 +897,7 @@ static Str_view load_function_decl(
     Env* env,
     Tast_function_decl* old_fun_decl
 ) {
-    try(alloca_add(env, llvm_def_wrap(llvm_function_decl_wrap(load_function_decl_clone(old_fun_decl)))));
+    unwrap(alloca_add(env, llvm_def_wrap(llvm_function_decl_wrap(load_function_decl_clone(old_fun_decl)))));
 
     return (Str_view) {0};
 }
@@ -910,7 +910,7 @@ static Str_view load_return(
     Pos pos = old_return->pos;
 
     Tast_def* fun_def_ = NULL;
-    try(symbol_lookup(&fun_def_, env, env->name_parent_function));
+    unwrap(symbol_lookup(&fun_def_, env, env->name_parent_function));
 
     Tast_function_decl* fun_decl = NULL;
     switch (fun_def_->type) {
@@ -931,7 +931,7 @@ static Str_view load_return(
 
     if (rtn_is_struct) {
         Llvm* dest_ = NULL;
-        try(alloca_lookup(&dest_, env, env->struct_rtn_name_parent_function));
+        unwrap(alloca_lookup(&dest_, env, env->struct_rtn_name_parent_function));
         Str_view dest = env->struct_rtn_name_parent_function;
         Str_view src = load_expr(env, new_block, old_return->child);
 
@@ -984,7 +984,7 @@ static Str_view load_assignment(
         tast_stmt_get_lang_type(old_assignment->lhs),
         util_literal_name_new()
     );
-    try(alloca_add(env, llvm_store_another_llvm_wrap(new_store)));
+    unwrap(alloca_add(env, llvm_store_another_llvm_wrap(new_store)));
 
     assert(new_store->llvm_src.count > 0);
     assert(new_store->llvm_dest.count > 0);
@@ -1028,7 +1028,7 @@ static Str_view load_struct_def(
             .members = old_struct_def->base.members, 
             .name = serialize_tast_struct_def(env, old_struct_def)
         });
-        try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(new_def)));
+        unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(new_def)));
         load_struct_def(env, new_def);
     }
 
@@ -1041,7 +1041,7 @@ static Str_view load_enum_def(
 ) {
     (void) env;
 
-    try(alloca_add(env, llvm_def_wrap(
+    unwrap(alloca_add(env, llvm_def_wrap(
         llvm_enum_def_wrap(load_enum_def_clone(old_enum_def))
     )));
 
@@ -1173,11 +1173,11 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
         for_var_def = old_for->var_def;
         symbol_lhs_assign_ = uast_symbol_new(for_var_def->pos, for_var_def->name);
         Tast_expr* new_expr = NULL;
-        try(try_set_symbol_types(env, &new_expr, symbol_lhs_assign_));
+        unwrap(try_set_symbol_types(env, &new_expr, symbol_lhs_assign_));
         symbol_lhs_assign = tast_symbol_unwrap(new_expr);
     }
 
-    //try(symbol_add(env, tast_variable_def_wrap(for_var_def)));
+    //unwrap(symbol_add(env, tast_variable_def_wrap(for_var_def)));
     Llvm* dummy = NULL;
     Tast_def* dummy_def = NULL;
 
@@ -1189,9 +1189,9 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
 
     Uast_symbol* lhs_untyped = uast_symbol_new(tast_symbol_get_pos(symbol_lhs_assign), symbol_lhs_assign->base.name);
     Tast_expr* lhs_typed_ = NULL;
-    try(try_set_symbol_types(env, &lhs_typed_, lhs_untyped));
+    unwrap(try_set_symbol_types(env, &lhs_typed_, lhs_untyped));
     Tast_expr* operator_ = NULL;
-    try(try_set_binary_types_finish(env, &operator_, lhs_typed_, rhs_actual, old_for->pos, BINARY_LESS_THAN)); 
+    unwrap(try_set_binary_types_finish(env, &operator_, lhs_typed_, rhs_actual, old_for->pos, BINARY_LESS_THAN)); 
     Tast_operator* operator = tast_operator_unwrap(operator_);
     //Tast_operator* operator = util_binary_typed_new(
     //    env,
@@ -1274,7 +1274,7 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
     add_label(env, new_branch_block, after_for_loop_label, pos, true);
     assert(alloca_lookup(&dummy, env, check_cond_label));
 
-    try(alloca_do_add_defered(&dummy, env));
+    unwrap(alloca_do_add_defered(&dummy, env));
 
     assert(alloca_lookup(&dummy, env, check_cond_label));
     env->label_if_break = old_if_break;
@@ -1329,7 +1329,7 @@ static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for
 
     //load_operator(env, new_branch_block, operator);
     //Tast* dummy = NULL;
-    //try(symbol_lookup(&dummy, env, str_view_from_cstr("str18")));
+    //unwrap(symbol_lookup(&dummy, env, str_view_from_cstr("str18")));
 
     if_for_add_cond_goto(
         env,
@@ -1345,7 +1345,7 @@ static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for
     //    log(LOG_DEBUG, TAST_FMT"\n", tast_print(vec_at(&new_branch_block->children, idx)));
     //}
 
-    //try(symbol_lookup(&dummy, env, str_view_from_cstr("str18")));
+    //unwrap(symbol_lookup(&dummy, env, str_view_from_cstr("str18")));
     //for (size_t idx = 0; idx < old_for->body->children.info.count; idx++) {
     //    log(LOG_DEBUG, TAST_FMT"\n", tast_print(vec_at(&old_for->body->children, idx)));
     //}
@@ -1373,7 +1373,7 @@ static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for
     vec_rem_last(&env->ancesters);
     Symbol_collection* popped = NULL;
     vec_pop(popped, &env->ancesters);
-    try(alloca_do_add_defered(&dummy, env));
+    unwrap(alloca_do_add_defered(&dummy, env));
     vec_append(&a_main, &env->ancesters, popped);
 
     return new_branch_block;
@@ -1445,7 +1445,7 @@ static Str_view load_raw_union_def(
             .members = old_def->base.members, 
             .name = serialize_tast_raw_union_def(env, old_def)
         });
-        try(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_raw_union_def_wrap(new_def)));
+        unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_raw_union_def_wrap(new_def)));
         load_raw_union_def(env, new_def);
     }
 
@@ -1488,7 +1488,7 @@ static Str_view load_ptr_deref(
         old_unary->lang_type,
         util_literal_name_new()
     );
-    try(alloca_add(env, llvm_load_another_llvm_wrap(new_load)));
+    unwrap(alloca_add(env, llvm_load_another_llvm_wrap(new_load)));
     lang_type_set_pointer_depth(&new_load->lang_type, lang_type_get_pointer_depth(new_load->lang_type) + 1);
 
     vec_append(&a_main, &new_block->children, llvm_load_another_llvm_wrap(new_load));
@@ -1696,7 +1696,7 @@ static Llvm_block* load_block(Env* env, Tast_block* old_block) {
 
     vec_rem_last(&env->ancesters);
 
-    try(init_count_ancesters == env->ancesters.info.count);
+    unwrap(init_count_ancesters == env->ancesters.info.count);
     return new_block;
 }
 

@@ -340,7 +340,7 @@ static void emit_function_call_arg_load_another_llvm(
     Llvm_id llvm_id = 0;
 
     Llvm* src = NULL;
-    try(alloca_lookup(&src, env, load->name));
+    unwrap(alloca_lookup(&src, env, load->name));
 
     if (llvm_is_literal(src)) {
         extend_literal_decl(env, output, literals, llvm_literal_const_unwrap(llvm_expr_const_unwrap(src)), true);
@@ -396,7 +396,7 @@ static void emit_function_call_arguments(Env* env, String* output, String* liter
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
         Str_view arg_name = vec_at(&fun_call->args, idx);
         Llvm* argument = NULL;
-        try(alloca_lookup(&argument, env, arg_name));
+        unwrap(alloca_lookup(&argument, env, arg_name));
 
         if (idx > 0) {
             string_extend_cstr(&a_main, output, ", ");
@@ -434,7 +434,7 @@ static void emit_function_call(Env* env, String* output, String* literals, const
     string_extend_cstr(&a_main, output, "call ");
     extend_type_call_str(env, output, fun_call->lang_type);
     Llvm* callee = NULL;
-    try(alloca_lookup(&callee, env, fun_call->callee));
+    unwrap(alloca_lookup(&callee, env, fun_call->callee));
     log(LOG_DEBUG, TAST_FMT, llvm_print(callee));
 
     switch (callee->type) {
@@ -715,7 +715,7 @@ static void emit_operator_operand_expr(String* output, const Llvm_expr* operand)
 
 static void emit_operator_operand(Env* env, String* output, const Str_view operand_name) {
     Llvm* operand = NULL;
-    try(alloca_lookup(&operand, env, operand_name));
+    unwrap(alloca_lookup(&operand, env, operand_name));
 
     switch (operand->type) {
         case LLVM_EXPR:
@@ -833,7 +833,7 @@ static void emit_store_another_llvm_src_expr(Env* env, String* output, String* l
 
 static void emit_store_another_llvm(Env* env, String* output, String* literals, const Llvm_store_another_llvm* store) {
     Llvm* src = NULL;
-    try(alloca_lookup(&src, env, store->llvm_src));
+    unwrap(alloca_lookup(&src, env, store->llvm_src));
 
     string_extend_cstr(&a_main, output, "    store ");
     extend_type_call_str(env, output, store->lang_type);
@@ -948,7 +948,7 @@ static void emit_return_expr(Env* env, String* output, const Llvm_expr* child) {
 
 static void emit_return(Env* env, String* output, const Llvm_return* fun_return) {
     Llvm* sym_to_return = NULL;
-    try(alloca_lookup(&sym_to_return, env, fun_return->child));
+    unwrap(alloca_lookup(&sym_to_return, env, fun_return->child));
 
     switch (sym_to_return->type) {
         case LLVM_EXPR:
@@ -1055,7 +1055,7 @@ static void emit_load_element_ptr(Env* env, String* output, const Llvm_load_elem
     string_extend_cstr(&a_main, output, " ");
 
     Llvm* struct_index = NULL;
-    try(alloca_lookup(&struct_index, env, load_elem_ptr->struct_index));
+    unwrap(alloca_lookup(&struct_index, env, load_elem_ptr->struct_index));
     if (struct_index->type == LLVM_LOAD_ANOTHER_LLVM) {
         string_extend_cstr(&a_main, output, "%");
         string_extend_size_t(&a_main, output, llvm_get_llvm_id(struct_index));

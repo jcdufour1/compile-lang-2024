@@ -327,7 +327,7 @@ Tast_operator* util_binary_typed_new(Env* env, Uast_expr* lhs, Uast_expr* rhs, T
     Uast_binary* binary = uast_binary_new(uast_expr_get_pos(lhs), lhs, rhs, token_type_to_binary_type(operator_type));
 
     Tast_expr* new_tast;
-    try(try_set_binary_types(env, &new_tast, binary));
+    unwrap(try_set_binary_types(env, &new_tast, binary));
 
     return tast_operator_unwrap(new_tast);
 }

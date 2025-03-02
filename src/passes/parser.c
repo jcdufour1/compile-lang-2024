@@ -142,7 +142,7 @@ static PARSE_STATUS msg_redefinition_of_symbol(Env* env, const Uast_def* new_sym
     );
 
     Uast_def* original_def;
-    try(usymbol_lookup(&original_def, env, uast_def_get_name(new_sym_def)));
+    unwrap(usymbol_lookup(&original_def, env, uast_def_get_name(new_sym_def)));
     msg(
         LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, uast_def_get_pos(original_def),
         STR_VIEW_FMT " originally defined here\n", str_view_print(uast_def_get_name(original_def))
@@ -329,10 +329,10 @@ static Tk_view parse_items_inside_brackets(Tk_view* tokens, TOKEN_TYPE closing_b
     // the opening_bracket type should be the opening bracket type that corresponds to closing_brace_type
     switch (closing_bracket_type) {
         case TOKEN_CLOSE_CURLY_BRACE:
-            try(try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE));
+            unwrap(try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE));
             break;
         case TOKEN_CLOSE_PAR:
-            try(try_consume(NULL, tokens, TOKEN_OPEN_PAR));
+            unwrap(try_consume(NULL, tokens, TOKEN_OPEN_PAR));
             break;
         default:
             unreachable("invalid or unimplemented bracket type");
@@ -344,7 +344,7 @@ static Tk_view parse_items_inside_brackets(Tk_view* tokens, TOKEN_TYPE closing_b
     }
     Tk_view inside_brackets = tk_view_consume_count(tokens, idx_closing_bracket);
 
-    try(try_consume(NULL, tokens, closing_bracket_type));
+    unwrap(try_consume(NULL, tokens, closing_bracket_type));
     return inside_brackets;
 }
 
@@ -1033,7 +1033,7 @@ static PARSE_STATUS parse_function_decl_common(
 }
 
 static PARSE_STATUS parse_function_def(Env* env, Uast_function_def** fun_def, Tk_view* tokens) {
-    try(try_consume(NULL, tokens, TOKEN_FN));
+    unwrap(try_consume(NULL, tokens, TOKEN_FN));
 
     Uast_function_decl* fun_decl = NULL;
     if (PARSE_OK != parse_function_decl_common(env, &fun_decl, tokens)) {
@@ -1132,7 +1132,7 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
 }
 
 static PARSE_STATUS parse_struct_def(Env* env, Uast_struct_def** struct_def, Tk_view* tokens, Token name) {
-    try(try_consume(NULL, tokens, TOKEN_STRUCT));
+    unwrap(try_consume(NULL, tokens, TOKEN_STRUCT));
 
     Ustruct_def_base base = {0};
     if (PARSE_OK != parse_struct_base_def(env, &base, name.text, tokens, true, (Ulang_type) {0})) {
@@ -1148,7 +1148,7 @@ static PARSE_STATUS parse_struct_def(Env* env, Uast_struct_def** struct_def, Tk_
 }
 
 static PARSE_STATUS parse_raw_union_def(Env* env, Uast_raw_union_def** raw_union_def, Tk_view* tokens, Token name) {
-    try(try_consume(NULL, tokens, TOKEN_RAW_UNION));
+    unwrap(try_consume(NULL, tokens, TOKEN_RAW_UNION));
 
     Ustruct_def_base base = {0};
     if (PARSE_OK != parse_struct_base_def(env, &base, name.text, tokens, true, (Ulang_type) {0})) {
@@ -1164,7 +1164,7 @@ static PARSE_STATUS parse_raw_union_def(Env* env, Uast_raw_union_def** raw_union
 }
 
 static PARSE_STATUS parse_enum_def(Env* env, Uast_enum_def** enum_def, Tk_view* tokens, Token name) {
-    try(try_consume(NULL, tokens, TOKEN_ENUM));
+    unwrap(try_consume(NULL, tokens, TOKEN_ENUM));
 
     Ustruct_def_base base = {0};
     if (PARSE_OK != parse_struct_base_def_implicit_type(env, &base, name.text, tokens, ulang_type_atom_new(name.text, 0))) {
@@ -1180,7 +1180,7 @@ static PARSE_STATUS parse_enum_def(Env* env, Uast_enum_def** enum_def, Tk_view* 
 }
 
 static PARSE_STATUS parse_sum_def(Env* env, Uast_sum_def** sum_def, Tk_view* tokens, Token name) {
-    try(try_consume(NULL, tokens, TOKEN_SUM));
+    unwrap(try_consume(NULL, tokens, TOKEN_SUM));
 
     Ustruct_def_base base = {0};
     if (PARSE_OK != parse_struct_base_def(env, &base, name.text, tokens, false, ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0))))) {
@@ -1296,7 +1296,7 @@ static PARSE_STATUS parse_variable_decl(
 }
 
 static PARSE_STATUS parse_for_range_internal(Env* env, Uast_for_range* for_loop, Tk_view* tokens) {
-    try(try_consume(NULL, tokens, TOKEN_IN));
+    unwrap(try_consume(NULL, tokens, TOKEN_IN));
 
     Uast_expr* lower_bound_child;
     if (PARSE_EXPR_OK != parse_expr(env, &lower_bound_child, tokens, true, false)) {
@@ -1352,7 +1352,7 @@ static PARSE_STATUS parse_for_with_cond(Env* env, Uast_for_with_cond** for_new, 
 
 static PARSE_STATUS parse_for_loop(Env* env, Uast_stmt** for_loop_result, Tk_view* tokens) {
     Token for_token;
-    try(try_consume(&for_token, tokens, TOKEN_FOR));
+    unwrap(try_consume(&for_token, tokens, TOKEN_FOR));
     Uast_for_range* for_loop = uast_for_range_new(for_token.pos, NULL, NULL, NULL, NULL);
     
     if (starts_with_variable_type_decl(*tokens, false)) {
@@ -1390,7 +1390,7 @@ static Uast_continue* parse_continue(Tk_view* tokens) {
 static PARSE_STATUS parse_function_decl(Env* env, Uast_function_decl** fun_decl, Tk_view* tokens) {
     PARSE_STATUS status = PARSE_ERROR;
 
-    try(try_consume(NULL, tokens, TOKEN_EXTERN));
+    unwrap(try_consume(NULL, tokens, TOKEN_EXTERN));
     if (!try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
         msg_parser_expected(env->file_text, tk_view_front(*tokens), "in function decl", TOKEN_OPEN_PAR);
         goto error;
@@ -1485,7 +1485,7 @@ static PARSE_STATUS parse_function_call(Env* env, Uast_function_call** child, Tk
 }
 
 static PARSE_STATUS parse_function_return(Env* env, Uast_return** rtn_stmt, Tk_view* tokens) {
-    try(try_consume(NULL, tokens, TOKEN_RETURN));
+    unwrap(try_consume(NULL, tokens, TOKEN_RETURN));
 
     Uast_expr* expr;
     switch (parse_expr(env, &expr, tokens, false, true)) {
@@ -1606,7 +1606,7 @@ static void if_else_chain_consume_newline(Tk_view* tokens) {
 
 static PARSE_STATUS parse_if_else_chain(Env* env, Uast_if_else_chain** if_else_chain, Tk_view* tokens) {
     Token if_start_token;
-    try(try_consume(&if_start_token, tokens, TOKEN_IF));
+    unwrap(try_consume(&if_start_token, tokens, TOKEN_IF));
 
     Uast_if_vec ifs = {0};
 
@@ -1667,7 +1667,7 @@ static PARSE_STATUS parse_if_else_chain(Env* env, Uast_if_else_chain** if_else_c
 
 static PARSE_STATUS parse_switch(Env* env, Uast_switch** lang_switch, Tk_view* tokens) {
     Token start_token = {0};
-    try(try_consume(&start_token, tokens, TOKEN_SWITCH));
+    unwrap(try_consume(&start_token, tokens, TOKEN_SWITCH));
 
     Uast_expr* operand = NULL;
     switch (parse_expr(env, &operand, tokens, false, false)) {
@@ -1682,8 +1682,8 @@ static PARSE_STATUS parse_switch(Env* env, Uast_switch** lang_switch, Tk_view* t
             unreachable("");
     }
 
-    try(try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE));
-    try(try_consume(NULL, tokens, TOKEN_NEW_LINE));
+    unwrap(try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE));
+    unwrap(try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
     Uast_case_vec cases = {0};
 
@@ -1710,7 +1710,7 @@ static PARSE_STATUS parse_switch(Env* env, Uast_switch** lang_switch, Tk_view* t
         }
 
         Token case_start_token = {0};
-        try(try_consume(&case_start_token, tokens, TOKEN_COLON));
+        unwrap(try_consume(&case_start_token, tokens, TOKEN_COLON));
         switch (parse_stmt(env, &case_if_true, tokens, false)) {
             case PARSE_EXPR_OK:
                 break;
@@ -1732,7 +1732,7 @@ static PARSE_STATUS parse_switch(Env* env, Uast_switch** lang_switch, Tk_view* t
     }
 
     *lang_switch = uast_switch_new(start_token.pos, operand, cases);
-    try(try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
+    unwrap(try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
     return PARSE_OK;
 }
 
@@ -1743,7 +1743,7 @@ static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens
     Uast_stmt* lhs = NULL;
     if (starts_with_type_def(*tokens)) {
         assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
-        try(try_consume(NULL, tokens, TOKEN_TYPE_DEF));
+        unwrap(try_consume(NULL, tokens, TOKEN_TYPE_DEF));
         Uast_def* fun_decl;
         if (PARSE_OK != parse_type_def(env, &fun_decl, tokens)) {
             return PARSE_EXPR_ERROR;
@@ -1922,7 +1922,7 @@ static PARSE_STATUS parse_block(Env* env, Uast_block** block, Tk_view* tokens, b
 
 end:
     if (did_consume_close_brace) {
-        try((*block)->pos_end.line > 0);
+        unwrap((*block)->pos_end.line > 0);
     } else if (!is_top_level && status == PARSE_OK) {
         unreachable("");
     }
@@ -2065,7 +2065,7 @@ static PARSE_EXPR_STATUS parse_unary(
     (void) can_be_tuple;
 
     Token oper = consume_operator(tokens);
-    try(is_unary(oper.type));
+    unwrap(is_unary(oper.type));
 
     *prev_oper_pres = get_operator_precedence(oper.type);
 
@@ -2102,7 +2102,7 @@ static PARSE_EXPR_STATUS parse_unary(
             break;
         }
     //    Token minus_token = {0};
-    //    try(try_consume(&minus_token, tokens, TOKEN_SINGLE_MINUS));
+    //    unwrap(try_consume(&minus_token, tokens, TOKEN_SINGLE_MINUS));
     //    Uast_number* lhs = uast_number_new(minus_token.pos, 0);
 
     //    Uast_expr* rhs = NULL;
@@ -2169,7 +2169,7 @@ static PARSE_EXPR_STATUS parse_binary(
     bool can_be_tuple
 ) {
     Token oper = consume_operator(tokens);
-    try(is_binary(oper.type));
+    unwrap(is_binary(oper.type));
 
     Uast_expr* rhs = NULL;
 
@@ -2292,7 +2292,7 @@ static Uast_expr* get_right_child_expr(Uast_expr* expr) {
             return get_right_child_operator(uast_operator_unwrap(expr));
         case UAST_TUPLE: {
             Uast_tuple* tuple = uast_tuple_unwrap(expr);
-            try(tuple->members.info.count > 0);
+            unwrap(tuple->members.info.count > 0);
             return vec_at(&tuple->members, tuple->members.info.count - 1);
         }
         case UAST_MEMBER_ACCESS: {
@@ -2327,7 +2327,7 @@ static void set_right_child_expr(Uast_expr* expr, Uast_expr* new_expr) {
             return;
         case UAST_TUPLE: {
             Uast_tuple* tuple = uast_tuple_unwrap(expr);
-            try(tuple->members.info.count > 0);
+            unwrap(tuple->members.info.count > 0);
             *vec_at_ref(&tuple->members, tuple->members.info.count - 1) = new_expr;
             return;
         }
@@ -2377,7 +2377,7 @@ static PARSE_EXPR_STATUS parse_expr_function_call(
             unreachable("");
         case UAST_TUPLE: {
             Uast_tuple* tuple = uast_tuple_unwrap(lhs);
-            try(tuple->members.info.count > 0);
+            unwrap(tuple->members.info.count > 0);
             Uast_expr* new_last = NULL;
             PARSE_EXPR_STATUS status = parse_expr_function_call(env, &new_last, vec_top(&tuple->members), tokens);
             if (status != PARSE_EXPR_OK) {
@@ -2404,7 +2404,7 @@ static PARSE_EXPR_STATUS parse_expr_index(
     bool defer_sym_add
 ) {
     Token oper = consume_operator(tokens);
-    try(oper.type == TOKEN_OPEN_SQ_BRACKET);
+    unwrap(oper.type == TOKEN_OPEN_SQ_BRACKET);
 
     Uast_expr* index_index = NULL;
     switch (parse_expr(env, &index_index, tokens, prev_oper_pres, defer_sym_add)) {

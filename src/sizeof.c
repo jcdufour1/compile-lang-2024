@@ -34,17 +34,17 @@ uint64_t sizeof_lang_type(Env* env, Lang_type lang_type) {
             return sizeof_primitive(lang_type_primitive_const_unwrap(lang_type));
         case LANG_TYPE_STRUCT: {
             Tast_def* def = NULL;
-            try(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
+            unwrap(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
             return sizeof_def(env, def);
         }
         case LANG_TYPE_SUM: {
             Tast_def* def = NULL;
-            try(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
+            unwrap(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
             return sizeof_def(env, def);
         }
         case LANG_TYPE_RAW_UNION: {
             Tast_def* def = NULL;
-            try(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
+            unwrap(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
             return sizeof_def(env, def);
         }
         case LANG_TYPE_VOID:
@@ -94,7 +94,7 @@ uint64_t sizeof_stmt(Env* env, const Tast_stmt* stmt) {
 
 uint64_t sizeof_struct_literal(Env* env, const Tast_struct_literal* struct_literal) {
     Tast_def* def_ = NULL;
-    try(symbol_lookup(&def_, env, lang_type_get_str(struct_literal->lang_type)));
+    unwrap(symbol_lookup(&def_, env, lang_type_get_str(struct_literal->lang_type)));
     return sizeof_struct_def_base(env, &tast_struct_def_unwrap(def_)->base);
 }
 

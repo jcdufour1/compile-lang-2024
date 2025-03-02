@@ -391,13 +391,13 @@ static void lang_type_gen_internal_unwrap(Lang_type_type type, bool is_const) {
     }
     string_extend_cstr(&gen_a, &function, " lang_type) {\n");
 
-    //    try(lang_type->type == upper); 
+    //    unwrap(lang_type->type == upper); 
     if (is_const) {
-        string_extend_cstr(&gen_a, &function, "    try(lang_type.type == ");
+        string_extend_cstr(&gen_a, &function, "    unwrap(lang_type.type == ");
         extend_lang_type_name_upper(&function, type.name);
         string_extend_cstr(&gen_a, &function, ");\n");
     } else {
-        string_extend_cstr(&gen_a, &function, "    try(lang_type->type == ");
+        string_extend_cstr(&gen_a, &function, "    unwrap(lang_type->type == ");
         extend_lang_type_name_upper(&function, type.name);
         string_extend_cstr(&gen_a, &function, ");\n");
     }

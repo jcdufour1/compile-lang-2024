@@ -33,14 +33,14 @@ static inline bool try_lang_type_from_ulang_type_fn(
 // TODO: figure out way to reduce duplicate vec allocations
 static inline Lang_type lang_type_from_ulang_type_tuple(Env* env, Ulang_type_tuple lang_type) {
     Lang_type_tuple new_tuple = {0};
-    try(try_lang_type_from_ulang_type_tuple(&new_tuple, env, lang_type, (Pos) {0}));
+    unwrap(try_lang_type_from_ulang_type_tuple(&new_tuple, env, lang_type, (Pos) {0}));
     return lang_type_tuple_const_wrap(new_tuple);
 }
 
 // TODO: figure out way to reduce duplicate vec allocations
 static inline Lang_type lang_type_from_ulang_type_fn(Env* env, Ulang_type_fn lang_type) {
     Lang_type_fn new_fn = {0};
-    try(try_lang_type_from_ulang_type_fn(&new_fn, env, lang_type, (Pos) {0}));
+    unwrap(try_lang_type_from_ulang_type_fn(&new_fn, env, lang_type, (Pos) {0}));
     return lang_type_fn_const_wrap(new_fn);
 }
 
@@ -140,7 +140,7 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
             *new_lang_type = lang_type_from_ulang_type_regular_primitive(env, lang_type, uast_primitive_def_unwrap(result));
             return true;
         case UAST_LITERAL_DEF:
-            try(uast_literal_def_const_unwrap(result)->type == UAST_VOID_DEF);
+            unwrap(uast_literal_def_const_unwrap(result)->type == UAST_VOID_DEF);
             *new_lang_type = lang_type_void_const_wrap(lang_type_void_new(0));
             return true;
         default:
@@ -151,7 +151,7 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
 
 static inline Lang_type lang_type_from_ulang_type_regular(Env* env, Ulang_type_regular lang_type) {
     Lang_type new_lang_type = {0};
-    try(try_lang_type_from_ulang_type_regular(&new_lang_type, env, lang_type, (Pos) {0}));
+    unwrap(try_lang_type_from_ulang_type_regular(&new_lang_type, env, lang_type, (Pos) {0}));
     return new_lang_type;
 }
 

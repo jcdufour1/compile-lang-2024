@@ -105,15 +105,14 @@ static inline const char* bool_print(bool condition) {
 
 #define INLINE static inline __attribute__((always_inline))
 
-#define try(cond) \
-    do { \
-        if (!(cond)) { \
-            log(LOG_FATAL, "condition \""); \
-            fprintf(stderr, #cond); \
-            fprintf(stderr, "\" failed\n"); \
-            abort(); \
-        } \
-    } while(0);
+static inline void unwrap_internal(bool cond, const char* cond_text, const char* file, int line) {
+    if (!(cond)) {
+        log_internal(LOG_FATAL, file, line, 0, "condition \"%s\" failed\n", cond_text);
+        abort();
+    }
+}
+
+#define unwrap(cond) unwrap_internal(cond, #cond, __FILE__, __LINE__)
 
 extern uint8_t zero_block[100000000];
 

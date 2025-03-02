@@ -728,8 +728,8 @@ static void uast_gen_internal_unwrap(Uast_type type, bool is_const) {
     extend_parent_uast_name_first_upper(&function, type.name);
     string_extend_cstr(&gen_a, &function, "* uast) {\n");
 
-    //    try(uast->type == upper); 
-    string_extend_cstr(&gen_a, &function, "    try(uast->type == ");
+    //    unwrap(uast->type == upper); 
+    string_extend_cstr(&gen_a, &function, "    unwrap(uast->type == ");
     extend_uast_name_upper(&function, type.name);
     string_extend_cstr(&gen_a, &function, ");\n");
 

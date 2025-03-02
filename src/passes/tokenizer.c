@@ -154,7 +154,7 @@ static bool get_next_token(const Env* env, Pos* pos, Token* token, Str_view_col*
             token->type = TOKEN_NONTYPE;
             return false;
         }
-        try(str_view_col_try_consume(pos, file_text, '"'));
+        unwrap(str_view_col_try_consume(pos, file_text, '"'));
         token->text = quote_str.base;
         return true;
     } else if (str_view_col_try_consume(pos, file_text, ';')) {
@@ -282,7 +282,7 @@ static bool get_next_token(const Env* env, Pos* pos, Token* token, Str_view_col*
         str_view_col_advance_pos(pos, str_view_col_front(*file_text));
         str_view_consume(&file_text->base);
 
-        try(str_view_col_try_consume(pos, file_text, '\''));
+        unwrap(str_view_col_try_consume(pos, file_text, '\''));
         return true;
     } else if (str_view_col_front(*file_text) == '.') {
         Str_view_col dots = str_view_col_consume_while(pos, file_text, is_dot);
@@ -319,7 +319,7 @@ static void test(const char* file_text, Tk_view expected) {
     Tokens tokens = tokenize(&env, (Parameters){0});
     Tk_view tk_view = {.tokens = tokens.buf, .count = tokens.info.count};
 
-    try(tk_view_is_equal_log(LOG_TRACE, tk_view, expected));
+    unwrap(tk_view_is_equal_log(LOG_TRACE, tk_view, expected));
 }
 
 static inline Tk_view tokens_to_tk_view(Tokens tokens) {

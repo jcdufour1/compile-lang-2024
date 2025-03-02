@@ -68,14 +68,14 @@ typedef struct {
     } while(0)
 
 #define vec_at(vector, index) \
-    ((vector)->buf[(index)])
+    (unwrap((vector)->info.count > index && "out of bounds"), (vector)->buf[(index)])
 
 // TODO: make `vec_at_const` the new at function everywhere
 #define vec_at_const(vector, index) \
-    ((vector).buf[(index)])
+    (unwrap((vector).info.count > index && "out of bounds"), (vector).buf[(index)])
 
 #define vec_at_ref(vector, index) \
-    (&(vector)->buf[(index)])
+    (unwrap((vector)->info.count > index && "out of bounds"), &(vector)->buf[(index)])
 
 #define vec_insert(arena, vector, index, item_to_insert) \
     do { \

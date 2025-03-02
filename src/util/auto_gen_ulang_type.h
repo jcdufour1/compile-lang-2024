@@ -298,13 +298,13 @@ static void ulang_type_gen_internal_unwrap(Ulang_type_type type, bool is_const) 
     }
     string_extend_cstr(&gen_a, &function, " ulang_type) {\n");
 
-    //    try(ulang_type->type == upper); 
+    //    unwrap(ulang_type->type == upper); 
     if (is_const) {
-        string_extend_cstr(&gen_a, &function, "    try(ulang_type.type == ");
+        string_extend_cstr(&gen_a, &function, "    unwrap(ulang_type.type == ");
         extend_ulang_type_name_upper(&function, type.name);
         string_extend_cstr(&gen_a, &function, ");\n");
     } else {
-        string_extend_cstr(&gen_a, &function, "    try(ulang_type->type == ");
+        string_extend_cstr(&gen_a, &function, "    unwrap(ulang_type->type == ");
         extend_ulang_type_name_upper(&function, type.name);
         string_extend_cstr(&gen_a, &function, ");\n");
     }

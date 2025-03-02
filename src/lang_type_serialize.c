@@ -35,7 +35,7 @@ Str_view serialize_lang_type_struct_thing(Env* env, Lang_type lang_type) {
     string_extend_strv(&a_main, &name, serialize_lang_type_struct_thing_get_prefix(lang_type));
 
     Tast_def* def = NULL;
-    try(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
+    unwrap(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
     string_extend_strv(&a_main, &name, serialize_struct_def_base(env, tast_def_get_struct_def_base(def)));
 
     return string_to_strv(name);

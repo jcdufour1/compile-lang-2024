@@ -56,7 +56,7 @@ static int64_t bit_width_needed_signed(int64_t num) {
 static Tast_expr* auto_deref_to_0(Env* env, Tast_expr* expr) {
     int16_t prev_pointer_depth = lang_type_get_pointer_depth(tast_expr_get_lang_type(expr));
     while (lang_type_get_pointer_depth(tast_expr_get_lang_type(expr)) > 0) {
-        try(try_set_unary_types_finish(env, &expr, expr, tast_expr_get_pos(expr), UNARY_DEREF, (Lang_type) {0}));
+        unwrap(try_set_unary_types_finish(env, &expr, expr, tast_expr_get_pos(expr), UNARY_DEREF, (Lang_type) {0}));
         assert(lang_type_get_pointer_depth(tast_expr_get_lang_type(expr)) + 1 == prev_pointer_depth);
         prev_pointer_depth = lang_type_get_pointer_depth(tast_expr_get_lang_type(expr));
     }
@@ -65,8 +65,8 @@ static Tast_expr* auto_deref_to_0(Env* env, Tast_expr* expr) {
 
 const Uast_function_decl* get_parent_function_decl_const(Env* env) {
     Uast_def* def = NULL;
-    try(env->name_parent_function.count > 0 && "no parent function here");
-    try(usymbol_lookup(&def, env, env->name_parent_function));
+    unwrap(env->name_parent_function.count > 0 && "no parent function here");
+    unwrap(usymbol_lookup(&def, env, env->name_parent_function));
     if (def->type != UAST_FUNCTION_DECL) {
         unreachable(TAST_FMT, uast_def_print(def));
     }
@@ -102,11 +102,11 @@ static bool can_be_implicitly_converted_lang_type_atom(Lang_type_atom dest, Lang
     int32_t src_bit_width = i_lang_type_atom_to_bit_width(src);
 
     if (lang_type_atom_is_signed(dest)) {
-        try(dest_bit_width > 0);
+        unwrap(dest_bit_width > 0);
         dest_bit_width--;
     }
     if (lang_type_atom_is_signed(src)) {
-        try(src_bit_width > 0);
+        unwrap(src_bit_width > 0);
         src_bit_width--;
     }
 
@@ -492,7 +492,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
                 new_rhs = auto_deref_to_0(env, new_rhs);
                 tast_literal_set_lang_type(tast_literal_unwrap(new_rhs), tast_expr_get_lang_type(new_lhs));
             } else {
-                try(try_set_unary_types_finish(env, &new_rhs, new_rhs, tast_expr_get_pos(new_rhs), UNARY_UNSAFE_CAST, tast_expr_get_lang_type(new_lhs)));
+                unwrap(try_set_unary_types_finish(env, &new_rhs, new_rhs, tast_expr_get_pos(new_rhs), UNARY_UNSAFE_CAST, tast_expr_get_lang_type(new_lhs)));
             }
         } else if (can_be_implicitly_converted(tast_expr_get_lang_type(new_rhs), tast_expr_get_lang_type(new_lhs), new_rhs->type == TAST_LITERAL && tast_literal_unwrap(new_rhs)->type == TAST_NUMBER && tast_number_unwrap(tast_literal_unwrap(new_rhs))->data == 0, true)) {
             if (new_lhs->type == TAST_LITERAL) {
@@ -500,7 +500,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
                 new_rhs = auto_deref_to_0(env, new_rhs);
                 tast_literal_set_lang_type(tast_literal_unwrap(new_lhs), tast_expr_get_lang_type(new_rhs));
             } else {
-                try(try_set_unary_types_finish(env, &new_lhs, new_lhs, tast_expr_get_pos(new_lhs), UNARY_UNSAFE_CAST, tast_expr_get_lang_type(new_rhs)));
+                unwrap(try_set_unary_types_finish(env, &new_lhs, new_lhs, tast_expr_get_pos(new_lhs), UNARY_UNSAFE_CAST, tast_expr_get_lang_type(new_rhs)));
             }
         } else {
             msg(
@@ -861,7 +861,7 @@ bool try_set_struct_literal_assignment_types(
             unreachable("");
     }
     Uast_def* struct_def_ = NULL;
-    try(usymbol_lookup(&struct_def_, env, lang_type_struct_const_unwrap(dest_lang_type).atom.str));
+    unwrap(usymbol_lookup(&struct_def_, env, lang_type_struct_const_unwrap(dest_lang_type).atom.str));
     Uast_struct_def* struct_def = uast_struct_def_unwrap(struct_def_);
     
     Tast_expr_vec new_literal_members = {0};
@@ -932,7 +932,7 @@ bool try_set_struct_literal_assignment_types(
         new_lit->lang_type
     );
 
-    try(symbol_add(env, tast_literal_def_wrap(tast_struct_lit_def_wrap(new_def))));
+    unwrap(symbol_add(env, tast_literal_def_wrap(tast_struct_lit_def_wrap(new_def))));
     return true;
 }
 
@@ -1206,14 +1206,14 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             Tast_sum_callee* sum_callee = tast_sum_callee_unwrap(new_callee);
 
             Uast_def* sum_def_ = NULL;
-            try(usymbol_lookup(&sum_def_, env, lang_type_get_str(sum_callee->sum_lang_type)));
+            unwrap(usymbol_lookup(&sum_def_, env, lang_type_get_str(sum_callee->sum_lang_type)));
             Uast_sum_def* sum_def = uast_sum_def_unwrap(sum_def_);
 
             Tast_expr* new_item = NULL;
             switch (check_generic_assignment(
                 env,
                 &new_item,
-                lang_type_from_ulang_type(env, vec_at(&sum_def->base.members, sum_callee->tag->data)->lang_type),
+                lang_type_from_ulang_type(env, vec_at(&sum_def->base.members, (size_t)sum_callee->tag->data)->lang_type),
                 vec_at(&fun_call->args, 0),
                 uast_expr_get_pos(vec_at(&fun_call->args, 0))
             )) {
@@ -1226,7 +1226,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
                         tast_expr_print(new_item),
                         lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_item)), 
                         lang_type_print(LANG_TYPE_MODE_MSG, lang_type_from_ulang_type(
-                            env, vec_at(&sum_def->base.members, sum_callee->tag->data)->lang_type
+                            env, vec_at(&sum_def->base.members, (size_t)sum_callee->tag->data)->lang_type
                         ))
                    );
                    break;
@@ -1265,19 +1265,19 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
                 Tast_sum_lit* sum_lit = tast_sum_lit_unwrap(tast_literal_unwrap(new_callee));
                 if (fun_call->args.info.count != 0) {
                     Uast_def* sum_def_ = NULL;
-                    try(usymbol_lookup(&sum_def_, env, lang_type_get_str(sum_lit->sum_lang_type)));
+                    unwrap(usymbol_lookup(&sum_def_, env, lang_type_get_str(sum_lit->sum_lang_type)));
                     Uast_sum_def* sum_def = uast_sum_def_unwrap(sum_def_);
                     msg(
                         LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, env->file_text, fun_call->pos,
                         "cannot assign argument to varient `"LANG_TYPE_FMT"."LANG_TYPE_FMT"`, because inner type is void\n",
-                        lang_type_print(LANG_TYPE_MODE_MSG, sum_lit->sum_lang_type), str_view_print(vec_at(&sum_def->base.members, sum_lit->tag->data)->name)
+                        lang_type_print(LANG_TYPE_MODE_MSG, sum_lit->sum_lang_type), str_view_print(vec_at(&sum_def->base.members, (size_t)sum_lit->tag->data)->name)
                     );
                     return false;
                 }
                 *new_call = new_callee;
                 return true;
             } else {
-                try(usymbol_lookup(&fun_def, env, tast_function_lit_unwrap(tast_literal_unwrap(new_callee))->name));
+                unwrap(usymbol_lookup(&fun_def, env, tast_function_lit_unwrap(tast_literal_unwrap(new_callee))->name));
                 break;
             }
         }
@@ -1336,7 +1336,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             corres_arg = vec_at(&fun_call->args, param_idx);
         } else if (is_variadic) {
         } else if (param->is_optional) {
-            try(!is_variadic && "cannot mix variadic args and optional args right now");
+            unwrap(!is_variadic && "cannot mix variadic args and optional args right now");
             // TODO: expected failure case for invalid optional_default
             corres_arg = uast_expr_clone(param->optional_default);
         } else {
@@ -1691,7 +1691,7 @@ bool try_set_index_untyped_types(Env* env, Tast_stmt** new_tast, Uast_index* ind
         return false;
     }
     if (lang_type_get_bit_width(tast_expr_get_lang_type(new_inner_index)) < 64) {
-        try(try_set_unary_types_finish(
+        unwrap(try_set_unary_types_finish(
             env,
             &new_inner_index,
             new_inner_index,
@@ -1783,7 +1783,7 @@ bool try_set_enum_def_types(Env* env, Uast_enum_def* tast) {
     Struct_def_base new_base = {0};
     bool success = try_set_struct_base_types(env, &new_base, &tast->base);
     Tast_enum_def* new_def = tast_enum_def_new(tast->pos, new_base);
-    try(symbol_add(env, tast_enum_def_wrap(new_def)));
+    unwrap(symbol_add(env, tast_enum_def_wrap(new_def)));
     return success;
 }
 
@@ -1791,13 +1791,13 @@ bool try_set_sum_def_types(Env* env, Uast_sum_def* tast) {
     Struct_def_base new_base = {0};
     bool success = try_set_struct_base_types(env, &new_base, &tast->base);
     Tast_sum_def* new_def = tast_sum_def_new(tast->pos, new_base);
-    try(symbol_add(env, tast_sum_def_wrap(new_def)));
+    unwrap(symbol_add(env, tast_sum_def_wrap(new_def)));
     return success;
 }
 
 bool try_set_primitive_def_types(Env* env, Uast_primitive_def* tast) {
     (void) env;
-    try(symbol_add(env, tast_primitive_def_wrap(tast_primitive_def_new(tast->pos, tast->lang_type))));
+    unwrap(symbol_add(env, tast_primitive_def_wrap(tast_primitive_def_new(tast->pos, tast->lang_type))));
     return true;
 }
 
@@ -1810,7 +1810,7 @@ bool try_set_literal_def_types(Env* env, Uast_literal_def* tast) {
 bool try_set_raw_union_def_types(Env* env, Uast_raw_union_def* uast) {
     Struct_def_base new_base = {0};
     bool success = try_set_struct_base_types(env, &new_base, &uast->base);
-    try(symbol_add(env, tast_raw_union_def_wrap(tast_raw_union_def_new(uast->pos, new_base))));
+    unwrap(symbol_add(env, tast_raw_union_def_wrap(tast_raw_union_def_new(uast->pos, new_base))));
     return success;
 }
 
@@ -1819,7 +1819,7 @@ bool try_set_struct_def_types(Env* env, Uast_struct_def* uast) {
     assert(usymbol_lookup(&dummy, env, uast->base.name));
     Struct_def_base new_base = {0};
     bool success = try_set_struct_base_types(env, &new_base, &uast->base);
-    try(symbol_add(env, tast_struct_def_wrap(tast_struct_def_new(uast->pos, new_base))));
+    unwrap(symbol_add(env, tast_struct_def_wrap(tast_struct_def_new(uast->pos, new_base))));
     return success;
 }
 
@@ -1852,7 +1852,7 @@ bool try_set_variable_def_types(
     }
     *new_tast = tast_variable_def_new(uast->pos, new_lang_type, is_variadic, uast->name);
     if (add_to_sym_tbl && !env->type_checking_is_in_struct_base_def) {
-        try(symbol_add(env, tast_variable_def_wrap(*new_tast)));
+        unwrap(symbol_add(env, tast_variable_def_wrap(*new_tast)));
     }
     return true;
 }
@@ -1879,7 +1879,7 @@ bool try_set_function_decl_types(
     if (add_to_sym_tbl) {
         vec_rem_last(&env->ancesters);
     }
-    try(symbol_add(env, tast_function_decl_wrap(*new_tast)));
+    unwrap(symbol_add(env, tast_function_decl_wrap(*new_tast)));
     if (add_to_sym_tbl) {
         vec_append(&a_main, &env->ancesters, top);
     }
@@ -1912,7 +1912,7 @@ bool try_set_function_def_types(
 
     env->name_parent_function = prev_par_fun;
     Tast_def* result = NULL;
-    try(symbol_lookup(&result, env, new_decl->name));
+    unwrap(symbol_lookup(&result, env, new_decl->name));
     symbol_update(env, tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
     return status;
 }
@@ -2140,14 +2140,14 @@ static Exhaustive_data check_for_exhaustiveness_start(Env* env, Lang_type oper_l
         default:
             todo();
     }
-    try(enum_def.members.info.count > 0);
+    unwrap(enum_def.members.info.count > 0);
     exhaustive_data.max_data = enum_def.members.info.count - 1;
 
     vec_reserve(&print_arena, &exhaustive_data.covered, exhaustive_data.max_data + 1);
     for (size_t idx = 0; idx < exhaustive_data.max_data + 1; idx++) {
         vec_append(&print_arena, &exhaustive_data.covered, false);
     }
-    try(exhaustive_data.covered.info.count == exhaustive_data.max_data + 1);
+    unwrap(exhaustive_data.covered.info.count == exhaustive_data.max_data + 1);
 
     return exhaustive_data;
 }
@@ -2179,19 +2179,19 @@ static bool check_for_exhaustiveness_inner(
             if (curr_lit->data > (int64_t)exhaustive_data->max_data) {
                 unreachable("invalid enum value\n");
             }
-            if (vec_at(&exhaustive_data->covered, curr_lit->data)) {
+            if (vec_at(&exhaustive_data->covered, (size_t)curr_lit->data)) {
                 Uast_def* enum_def_ = NULL;
-                try(usymbol_lookup(&enum_def_, env, lang_type_get_str(exhaustive_data->oper_lang_type)));
+                unwrap(usymbol_lookup(&enum_def_, env, lang_type_get_str(exhaustive_data->oper_lang_type)));
                 Uast_enum_def* enum_def = uast_enum_def_unwrap(enum_def_);
                 msg(
                     LOG_ERROR, EXPECT_FAIL_DUPLICATE_CASE, env->file_text, curr_if->pos,
                     "duplicate case `"STR_VIEW_FMT"."STR_VIEW_FMT"` in switch statement\n",
-                    str_view_print(enum_def->base.name), str_view_print(vec_at(&enum_def->base.members, curr_lit->data)->name)
+                    str_view_print(enum_def->base.name), str_view_print(vec_at(&enum_def->base.members, (size_t)curr_lit->data)->name)
                 );
                 // TODO: print where original case is
                 return false;
             }
-            *vec_at_ref(&exhaustive_data->covered, curr_lit->data) = true;
+            *vec_at_ref(&exhaustive_data->covered, (size_t)curr_lit->data) = true;
             return true;
         }
         case LANG_TYPE_SUM: {
@@ -2202,19 +2202,19 @@ static bool check_for_exhaustiveness_inner(
             if (curr_lit->data > (int64_t)exhaustive_data->max_data) {
                 unreachable("invalid enum value\n");
             }
-            if (vec_at(&exhaustive_data->covered, curr_lit->data)) {
+            if (vec_at(&exhaustive_data->covered, (size_t)curr_lit->data)) {
                 Uast_def* sum_def_ = NULL;
-                try(usymbol_lookup(&sum_def_, env, lang_type_get_str(exhaustive_data->oper_lang_type)));
+                unwrap(usymbol_lookup(&sum_def_, env, lang_type_get_str(exhaustive_data->oper_lang_type)));
                 Uast_sum_def* sum_def = uast_sum_def_unwrap(sum_def_);
                 msg(
                     LOG_ERROR, EXPECT_FAIL_DUPLICATE_CASE, env->file_text, curr_if->pos,
                     "duplicate case `"STR_VIEW_FMT"."STR_VIEW_FMT"` in switch statement\n",
-                    str_view_print(sum_def->base.name), str_view_print(vec_at(&sum_def->base.members, curr_lit->data)->name)
+                    str_view_print(sum_def->base.name), str_view_print(vec_at(&sum_def->base.members, (size_t)curr_lit->data)->name)
                 );
                 // TODO: print where original case is
                 return false;
             }
-            *vec_at_ref(&exhaustive_data->covered, curr_lit->data) = true;
+            *vec_at_ref(&exhaustive_data->covered, (size_t)curr_lit->data) = true;
             return true;
         }
         default:
@@ -2224,7 +2224,7 @@ static bool check_for_exhaustiveness_inner(
 }
 
 static bool check_for_exhaustiveness_finish(Env* env, Exhaustive_data exhaustive_data, Pos pos_switch) {
-        try(exhaustive_data.covered.info.count == exhaustive_data.max_data + 1);
+        unwrap(exhaustive_data.covered.info.count == exhaustive_data.max_data + 1);
 
         if (exhaustive_data.default_is_pre) {
             return true;
@@ -2236,7 +2236,7 @@ static bool check_for_exhaustiveness_finish(Env* env, Exhaustive_data exhaustive
         for (size_t idx = 0; idx < exhaustive_data.covered.info.count; idx++) {
             if (!vec_at(&exhaustive_data.covered, idx)) {
                 Uast_def* enum_def_ = NULL;
-                try(usymbol_lookup(&enum_def_, env, lang_type_get_str(exhaustive_data.oper_lang_type)));
+                unwrap(usymbol_lookup(&enum_def_, env, lang_type_get_str(exhaustive_data.oper_lang_type)));
                 Ustruct_def_base enum_def = {0};
                 switch (enum_def_->type) {
                     case UAST_ENUM_DEF:
@@ -2275,7 +2275,7 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
     Tast_if_vec new_ifs = {0};
 
     Tast_expr* new_operand = NULL;
-    try(try_set_expr_types(env, &new_operand, lang_switch->operand));
+    unwrap(try_set_expr_types(env, &new_operand, lang_switch->operand));
 
     Exhaustive_data exhaustive_data = check_for_exhaustiveness_start(
         env, tast_expr_get_lang_type(new_operand)
@@ -2335,7 +2335,7 @@ static void try_set_msg_redefinition_of_symbol(Env* env, const Uast_def* new_sym
     );
 
     Uast_def* original_def;
-    try(usymbol_lookup(&original_def, env, uast_def_get_name(new_sym_def)));
+    unwrap(usymbol_lookup(&original_def, env, uast_def_get_name(new_sym_def)));
     msg(
         LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, uast_def_get_pos(original_def),
         STR_VIEW_FMT " originally defined here\n", str_view_print(uast_def_get_name(original_def))
