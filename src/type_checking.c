@@ -436,6 +436,8 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
 
 static int64_t precalulate_number_internal(int64_t lhs_val, int64_t rhs_val, BINARY_TYPE token_type) {
     switch (token_type) {
+        case BINARY_SINGLE_EQUAL:
+            unreachable("");
         case BINARY_ADD:
             return lhs_val + rhs_val;
         case BINARY_SUB:

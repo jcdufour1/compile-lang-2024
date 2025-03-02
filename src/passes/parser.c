@@ -484,6 +484,8 @@ static int32_t get_operator_precedence(TOKEN_TYPE type) {
     switch (type) {
         case TOKEN_COMMA:
             return 1;
+        case TOKEN_SINGLE_EQUAL:
+            return 3;
         case TOKEN_LOGICAL_OR:
             return 8;
         case TOKEN_LOGICAL_AND:
@@ -714,7 +716,7 @@ static bool is_binary(TOKEN_TYPE token_type) {
         case TOKEN_COLON:
             return false;
         case TOKEN_SINGLE_EQUAL:
-            return false;
+            return true;
         case TOKEN_SINGLE_DOT:
             return true;
         case TOKEN_DOUBLE_DOT:
@@ -1511,48 +1513,6 @@ static PARSE_STATUS parse_function_return(Env* env, Uast_return** rtn_stmt, Tk_v
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_assignment(Env* env, Uast_assignment** assign, Tk_view* tokens, Uast_stmt* lhs) {
-    Token equal_token = {0};
-    *assign = NULL;
-    if (lhs) {
-        if (!try_consume(&equal_token, tokens, TOKEN_SINGLE_EQUAL)) {
-            unreachable("parse_assignment should possibly never be called with no `=`, but it was");
-        }
-        *assign = uast_assignment_new(equal_token.pos, lhs, NULL);
-    } else {
-        Uast_expr* lhs_ = NULL;
-        switch (parse_expr(env, &lhs_, tokens, false, true)) {
-            case PARSE_EXPR_NONE:
-                unreachable("parse_assignment should possibly never be called without lhs expr present, but it was");
-            case PARSE_EXPR_ERROR:
-                return PARSE_ERROR;
-            case PARSE_OK:
-                lhs = uast_expr_wrap(lhs_);
-                break;
-            default:
-                unreachable("");
-        }
-        if (!try_consume(&equal_token, tokens, TOKEN_SINGLE_EQUAL)) {
-            msg_parser_expected(env->file_text, tk_view_front(*tokens), "after lhs of assignment", TOKEN_SINGLE_EQUAL);
-            return PARSE_ERROR;
-        }
-        *assign = uast_assignment_new(equal_token.pos, lhs, NULL);
-    }
-
-    (*assign)->lhs = lhs;
-
-    switch (parse_expr(env, &(*assign)->rhs, tokens, false, false)) {
-        case PARSE_EXPR_NONE:
-            msg_expected_expr(env->file_text, *tokens, "");
-            return PARSE_ERROR;
-        case PARSE_EXPR_ERROR:
-            return PARSE_ERROR;
-        case PARSE_OK:
-            return PARSE_OK;
-    }
-    unreachable("");
-}
-
 static PARSE_EXPR_STATUS parse_condition(Env* env, Uast_condition** result, Tk_view* tokens) {
     Uast_expr* cond_child;
     switch (parse_expr(env, &cond_child, tokens, false, false)) {
@@ -1741,6 +1701,7 @@ static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens
     assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
     Uast_stmt* lhs = NULL;
+    bool expr_init = false;
     if (starts_with_type_def(*tokens)) {
         assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
         unwrap(try_consume(NULL, tokens, TOKEN_TYPE_DEF));
@@ -1802,6 +1763,10 @@ static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens
         }
         lhs = uast_def_wrap(uast_variable_def_wrap(var_def));
     } else {
+        expr_init = true;
+    }
+
+    if (expr_init) {
         Uast_expr* lhs_ = NULL;
         switch (parse_expr(env, &lhs_, tokens, false, true)) {
             case PARSE_EXPR_OK:
@@ -1814,18 +1779,19 @@ static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens
                 unreachable("");
         }
 
-        lhs = uast_expr_wrap(lhs_);
-    }
-
-    // do assignment if applicible
-    if (tokens->count > 0 && tk_view_front(*tokens).type == TOKEN_SINGLE_EQUAL) {
-        Uast_assignment* assign;
-        if (PARSE_OK != parse_assignment(env, &assign, tokens, lhs)) {
-            return PARSE_EXPR_ERROR;
-        }
-        *child = uast_assignment_wrap(assign);
+        *child = uast_expr_wrap(lhs_);
     } else {
-        *child = lhs;
+        if (tk_view_front(*tokens).type == TOKEN_SINGLE_EQUAL) {
+            Uast_expr* rhs = NULL;
+            PARSE_EXPR_STATUS status = parse_expr(env, &rhs, tokens, false, false);
+            if (status != PARSE_EXPR_OK) {
+                return status;
+            }
+            *child = uast_operator_wrap(uast_binary_wrap(uast_binary_new(uast_expr_get_pos(rhs), lhs, rhs, BINARY_SINGLE_EQUAL)));
+            unreachable("= after stmt thing");
+        } else {
+            *child = lhs;
+        }
     }
 
     try_consume(NULL, tokens, TOKEN_SEMICOLON);
@@ -1942,11 +1908,19 @@ static PARSE_STATUS parse_struct_literal(Env* env, Uast_struct_literal** struct_
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
     while (try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
         bool delim_is_present = false;
-        Uast_assignment* assign;
-        if (PARSE_OK != parse_assignment(env, &assign, tokens, NULL)) {
-            return PARSE_ERROR;
+        Uast_expr* memb = NULL;
+        switch (parse_expr(env, &memb, tokens, false, false)) {
+            case PARSE_EXPR_OK:
+                break;
+            case PARSE_EXPR_ERROR:
+                return PARSE_ERROR;
+            case PARSE_EXPR_NONE:
+                msg_expected_expr(env->file_text, *tokens, "");
+                return PARSE_ERROR;
+            default:
+                unreachable("");
         }
-        vec_append(&a_main, &members, uast_assignment_wrap(assign));
+        vec_append(&a_main, &members, uast_expr_wrap(memb));
         delim_is_present = try_consume(NULL, tokens, TOKEN_COMMA);
         while (try_consume(NULL, tokens, TOKEN_NEW_LINE)) {
             delim_is_present = true;
@@ -2191,6 +2165,8 @@ static PARSE_EXPR_STATUS parse_binary(
         if (is_unary(tk_view_front(*tokens).type)) {
             todo();
         }
+    } else if (tk_view_front(*tokens).type == TOKEN_SINGLE_EQUAL) {
+        unreachable("+= and similar not implemented");
     } else {
         switch (parse_expr_piece(env, &rhs, tokens, prev_oper_pres, defer_sym_add)) {
             case PARSE_EXPR_OK:

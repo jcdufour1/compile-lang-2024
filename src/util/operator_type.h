@@ -4,6 +4,7 @@
 #include <str_view.h>
 
 typedef enum {
+    BINARY_SINGLE_EQUAL,
     BINARY_SUB,
     BINARY_ADD,
     BINARY_MULTIPLY,
@@ -26,6 +27,8 @@ typedef enum {
 
 static inline Str_view binary_type_to_str_view(BINARY_TYPE bin_type) {
     switch (bin_type) {
+        case BINARY_SINGLE_EQUAL:
+            return str_view_from_cstr("=");
         case BINARY_SUB:
             return str_view_from_cstr("-");
         case BINARY_ADD:
