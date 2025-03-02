@@ -409,6 +409,20 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
                 lang_type_from_ulang_type(env, ulang_type_from_uast_function_decl(uast_function_decl_unwrap(sym_def)))
             )));
             return true;
+        case UAST_FUNCTION_DEF:
+            unreachable("");
+        case UAST_STRUCT_DEF:
+            // fallthrough
+        case UAST_SUM_DEF:
+            // fallthrough
+        case UAST_ENUM_DEF:
+            // fallthrough
+        case UAST_RAW_UNION_DEF:
+            // fallthrough
+        case UAST_PRIMITIVE_DEF:
+            // fallthrough
+        case UAST_LITERAL_DEF:
+            // fallthrough
         case UAST_VARIABLE_DEF: {
             Lang_type lang_type = uast_def_get_lang_type(env, sym_def);
             Sym_typed_base new_base = {.lang_type = lang_type, .name = sym_untyped->name};
@@ -416,8 +430,6 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
             *new_tast = tast_symbol_wrap(sym_typed);
             return true;
         }
-        default:
-            unreachable("");
     }
     unreachable("");
 }
