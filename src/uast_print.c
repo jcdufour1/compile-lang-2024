@@ -23,7 +23,7 @@ Str_view uast_binary_print_internal(const Uast_binary* binary, int indent) {
     string_extend_cstr(&print_arena, &buf, "\n");
 
     indent += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, uast_expr_print_internal(binary->lhs, indent));
+    string_extend_strv(&print_arena, &buf, uast_stmt_print_internal(binary->lhs, indent));
     string_extend_strv(&print_arena, &buf, uast_expr_print_internal(binary->rhs, indent));
     indent -= INDENT_WIDTH;
 

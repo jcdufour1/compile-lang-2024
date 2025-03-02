@@ -90,7 +90,7 @@ Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token
 
 Tast_literal* util_tast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
 
-Tast_operator* util_binary_typed_new(Env* env, Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operation_type);
+Tast_operator* util_binary_typed_new(Env* env, Uast_stmt* lhs, Uast_expr* rhs, TOKEN_TYPE operation_type);
 
 //Tast_expr* util_unary_new(Env* env, Tast_expr* child, TOKEN_TYPE operation_type, Lang_type init_lang_type);
 

@@ -15,6 +15,8 @@
 
 static bool binary_is_short_circuit(BINARY_TYPE type) {
     switch (type) {
+        case BINARY_SINGLE_EQUAL:
+            return false;
         case BINARY_SUB:
             return false;
         case BINARY_ADD:
@@ -242,7 +244,7 @@ static Tast_assignment* for_loop_cond_var_assign_new(Env* env, Str_view sym_name
     Uast_literal* literal = util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, pos);
     Uast_operator* operator = uast_binary_wrap(uast_binary_new(
         pos,
-        uast_symbol_wrap(uast_symbol_new(pos, sym_name)),
+        uast_expr_wrap(uast_symbol_wrap(uast_symbol_new(pos, sym_name))),
         uast_literal_wrap(literal),
         BINARY_ADD
     ));

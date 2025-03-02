@@ -70,6 +70,7 @@ void do_passes(Str_view file_text, const Parameters* params) {
     if (error_count > 0) {
         fail();
     }
+    unwrap(untyped);
     arena_reset(&print_arena);
     log(LOG_DEBUG, "\n"TAST_FMT, uast_block_print(untyped));
 
@@ -78,6 +79,7 @@ void do_passes(Str_view file_text, const Parameters* params) {
     if (error_count > 0) {
         fail();
     }
+    unwrap(typed);
     arena_reset(&print_arena);
     log(LOG_DEBUG, "\n"TAST_FMT, tast_block_print(typed));
 

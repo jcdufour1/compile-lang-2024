@@ -1781,14 +1781,16 @@ static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens
 
         *child = uast_expr_wrap(lhs_);
     } else {
-        if (tk_view_front(*tokens).type == TOKEN_SINGLE_EQUAL) {
+        Token equal_tk = {0};
+        if (try_consume(&equal_tk, tokens, TOKEN_SINGLE_EQUAL)) {
             Uast_expr* rhs = NULL;
             PARSE_EXPR_STATUS status = parse_expr(env, &rhs, tokens, false, false);
             if (status != PARSE_EXPR_OK) {
                 return status;
             }
-            *child = uast_operator_wrap(uast_binary_wrap(uast_binary_new(uast_expr_get_pos(rhs), lhs, rhs, BINARY_SINGLE_EQUAL)));
-            unreachable("= after stmt thing");
+            *child = uast_expr_wrap(uast_operator_wrap(uast_binary_wrap(uast_binary_new(
+                equal_tk.pos, lhs, rhs, BINARY_SINGLE_EQUAL
+            ))));
         } else {
             *child = lhs;
         }
@@ -1806,6 +1808,7 @@ static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens
         );
         return PARSE_EXPR_ERROR;
     }
+    assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
     return PARSE_EXPR_OK;
 }
@@ -1829,6 +1832,7 @@ static PARSE_STATUS parse_block(Env* env, Uast_block** block, Tk_view* tokens, b
     }
 
     if (tokens->count < 1) {
+        // TODO: expected test case
         unreachable("empty file not implemented\n");
     }
 
@@ -1882,7 +1886,7 @@ static PARSE_STATUS parse_block(Env* env, Uast_block** block, Tk_view* tokens, b
         if (should_stop) {
             break;
         }
-        try_consume(NULL, tokens, TOKEN_SEMICOLON);
+        assert(!try_consume(NULL, tokens, TOKEN_SEMICOLON) && !try_consume(NULL, tokens, TOKEN_NEW_LINE));
         vec_append(&a_main, &(*block)->children, child);
     }
 
@@ -1956,7 +1960,7 @@ static PARSE_STATUS parse_struct_literal(Env* env, Uast_struct_literal** struct_
     return PARSE_OK;
 }
 
-static Uast_binary* parser_binary_new(Uast_expr* lhs, Token operator_token, Uast_expr* rhs) {
+static Uast_binary* parser_binary_new(Uast_stmt* lhs, Token operator_token, Uast_expr* rhs) {
     return uast_binary_new(operator_token.pos, lhs, rhs, token_type_to_binary_type(operator_token.type));
 }
 
@@ -2075,28 +2079,6 @@ static PARSE_EXPR_STATUS parse_unary(
             }
             break;
         }
-    //    Token minus_token = {0};
-    //    unwrap(try_consume(&minus_token, tokens, TOKEN_SINGLE_MINUS));
-    //    Uast_number* lhs = uast_number_new(minus_token.pos, 0);
-
-    //    Uast_expr* rhs = NULL;
-    //    switch (parse_expr_piece(env, &rhs, tokens, prev_oper_pres, defer_sym_add)) {
-    //        case PARSE_EXPR_OK:
-    //            break;
-    //        case PARSE_EXPR_NONE:
-    //            msg_expected_expr(env->file_text, *tokens, "after - sign");
-    //            return PARSE_EXPR_ERROR;
-    //        case PARSE_EXPR_ERROR:
-    //            return PARSE_EXPR_ERROR;
-    //        default:
-    //            unreachable("");
-    //    }
-    //    *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(
-    //        uast_expr_get_pos(rhs),
-    //        uast_literal_wrap(uast_number_wrap(lhs)),
-    //        rhs,
-    //        TOKEN_SINGLE_MINUS
-    //    )));
         default:
             unreachable(TOKEN_FMT, token_print(TOKEN_MODE_LOG, oper));
     }
@@ -2122,7 +2104,7 @@ static PARSE_EXPR_STATUS parse_unary(
             assert(*result);
             break;
         case TOKEN_SINGLE_MINUS: {
-            *result = uast_binary_wrap(uast_binary_new(oper.pos, uast_literal_wrap(uast_number_wrap(uast_number_new(oper.pos, 0))), child, token_type_to_binary_type(oper.type)));
+            *result = uast_binary_wrap(uast_binary_new(oper.pos, uast_expr_wrap(uast_literal_wrap(uast_number_wrap(uast_number_new(oper.pos, 0)))), child, token_type_to_binary_type(oper.type)));
             assert(*result);
             break;
         }
@@ -2220,7 +2202,7 @@ static PARSE_EXPR_STATUS parse_binary(
         case TOKEN_SHIFT_RIGHT:
             // fallthrough
         case TOKEN_DOUBLE_EQUAL:
-            *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, lhs, rhs, token_type_to_binary_type(oper.type))));
+            *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, uast_expr_wrap(lhs), rhs, token_type_to_binary_type(oper.type))));
             break;
         case TOKEN_COMMA:
             if (lhs->type == UAST_TUPLE) {
@@ -2242,12 +2224,6 @@ static PARSE_EXPR_STATUS parse_binary(
 
     assert(*result);
     return PARSE_EXPR_OK;
-
-    todo();
-}
-
-static Uast_expr* get_left_child_expr(Uast_expr* expr) {
-    return uast_binary_unwrap(uast_operator_unwrap(expr))->lhs;
 }
 
 static Uast_expr* get_right_child_operator(Uast_operator* oper) {

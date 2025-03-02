@@ -657,20 +657,48 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
 
 // returns false if unsuccessful
 bool try_set_binary_types(Env* env, Tast_expr** new_tast, Uast_binary* operator) {
-    Tast_expr* new_lhs;
-    if (!try_set_expr_types(env, &new_lhs, operator->lhs)) {
-        return false;
+    Tast_stmt* new_lhs;
+    STMT_STATUS status = try_set_stmt_types(env, &new_lhs, operator->lhs);
+    if (status != STMT_OK) {
+        todo();
     }
     assert(new_lhs);
 
-    Tast_expr* new_rhs;
+    Tast_expr* new_rhs = NULL;
+    if (operator->token_type == BINARY_SINGLE_EQUAL) {
+        switch (check_generic_assignment(env, &new_rhs, tast_stmt_get_lang_type(new_lhs), operator->rhs, operator->pos)) {
+            case CHECK_ASSIGN_OK:
+                *new_tast = tast_assignment_wrap(tast_assignment_new(operator->pos, new_lhs, new_rhs));
+                return true;
+            case CHECK_ASSIGN_INVALID:
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
+                    assignment->pos,
+                    "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
+                    lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
+                    lang_type_print(LANG_TYPE_MODE_MSG, tast_stmt_get_lang_type(new_lhs))
+                );
+                return false;
+        }
+    }
+
     if (!try_set_expr_types(env, &new_rhs, operator->rhs)) {
         return false;
     }
-    assert(new_lhs);
-    assert(new_rhs);
 
-    return try_set_binary_types_finish(env, new_tast, new_lhs, new_rhs, operator->pos, operator->token_type);
+    if (operator->lhs->type != UAST_EXPR) {
+        // TODO: expected failure case
+        unreachable("not-expr cannot be lhs of this operator");
+    }
+
+    return try_set_binary_types_finish(
+        env,
+        new_tast,
+        tast_expr_unwrap(new_lhs),
+        new_rhs,
+        operator->pos,
+        operator->token_type
+    );
 }
 
 bool try_set_unary_types_finish(
@@ -1022,6 +1050,7 @@ STMT_STATUS try_set_def_types(Env* env, Tast_def** new_tast, Uast_def* uast) {
         case UAST_FUNCTION_DECL: {
             Tast_function_decl* dummy = NULL;
             if (!try_set_function_decl_types(env, &dummy, uast_function_decl_unwrap(uast), false)) {
+                assert(error_count > 0);
                 return STMT_ERROR;
             }
             return STMT_NO_STMT;
@@ -1033,36 +1062,42 @@ STMT_STATUS try_set_def_types(Env* env, Tast_def** new_tast, Uast_def* uast) {
             return STMT_NO_STMT;
         }
         case UAST_STRUCT_DEF: {
+            todo();
             if (!try_set_struct_def_types(env, uast_struct_def_unwrap(uast))) {
                 return STMT_ERROR;
             }
             return STMT_NO_STMT;
         }
         case UAST_RAW_UNION_DEF: {
+            todo();
             if (!try_set_raw_union_def_types(env, uast_raw_union_def_unwrap(uast))) {
                 return STMT_ERROR;
             }
             return STMT_NO_STMT;
         }
         case UAST_ENUM_DEF: {
+            todo();
             if (!try_set_enum_def_types(env, uast_enum_def_unwrap(uast))) {
                 return STMT_ERROR;
             }
             return STMT_NO_STMT;
         }
         case UAST_PRIMITIVE_DEF: {
+            todo();
             if (!try_set_primitive_def_types(env, uast_primitive_def_unwrap(uast))) {
                 return STMT_ERROR;
             }
             return STMT_NO_STMT;
         }
         case UAST_LITERAL_DEF: {
+            todo();
             if (!try_set_literal_def_types(env, uast_literal_def_unwrap(uast))) {
                 return STMT_ERROR;
             }
             return STMT_NO_STMT;
         }
         case UAST_SUM_DEF: {
+            todo();
             if (!try_set_sum_def_types(env, uast_sum_def_unwrap(uast))) {
                 return STMT_ERROR;
             }
@@ -1072,6 +1107,7 @@ STMT_STATUS try_set_def_types(Env* env, Tast_def** new_tast, Uast_def* uast) {
     unreachable("");
 }
 
+// TODO: remove this function and Uast_assignment
 bool try_set_assignment_types(Env* env, Tast_assignment** new_assign, Uast_assignment* assignment) {
     Tast_stmt* new_lhs = NULL;
     switch (try_set_stmt_types(env, &new_lhs, assignment->lhs)) { 
@@ -1879,11 +1915,13 @@ bool try_set_function_decl_types(
 ) {
     Tast_function_params* new_params = NULL;
     if (!try_set_function_params_types(env, &new_params, decl->params, add_to_sym_tbl)) {
+        assert(error_count > 0);
         return false;
     }
 
     Tast_lang_type* new_rtn_type = NULL;
     if (!try_types_set_lang_type(env, &new_rtn_type, decl->return_type)) {
+        assert(error_count > 0);
         return false;
     }
 
@@ -1964,6 +2002,7 @@ static bool try_types_internal_set_lang_type(
         case ULANG_TYPE_TUPLE: {
             for (size_t idx = 0; idx < ulang_type_tuple_const_unwrap(lang_type).ulang_types.info.count; idx++) {
                 if (!try_types_internal_set_lang_type(env, vec_at_const(ulang_type_tuple_const_unwrap(lang_type).ulang_types, idx), pos)) {
+                    assert(error_count > 0);
                     return false;
                 }
             }
@@ -1983,6 +2022,7 @@ bool try_types_set_lang_type(
     Uast_lang_type* uast
 ) {
     if (!try_types_internal_set_lang_type(env, uast->lang_type, uast->pos)) {
+        assert(error_count > 0);
         return false;
     }
 
@@ -2307,7 +2347,7 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
             );
         } else {
             cond = uast_condition_new(old_case->pos, uast_binary_wrap(uast_binary_new(
-                old_case->pos, lang_switch->operand, old_case->expr, BINARY_DOUBLE_EQUAL
+                old_case->pos, uast_expr_wrap(lang_switch->operand), old_case->expr, BINARY_DOUBLE_EQUAL
             )));
         }
 
@@ -2465,6 +2505,11 @@ bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, boo
 error:
     vec_rem_last(&env->ancesters);
     *new_tast = tast_block_new(block->pos, new_tasts, new_sym_coll, block->pos_end);
+    if (status) {
+        assert(*new_tast);
+    } else {
+        assert(error_count > 0);
+    }
     return status;
 }
 
@@ -2488,6 +2533,7 @@ STMT_STATUS try_set_stmt_types(Env* env, Tast_stmt** new_tast, Uast_stmt* stmt) 
             return STMT_OK;
         }
         case UAST_FOR_WITH_COND: {
+            todo();
             Tast_for_with_cond* new_tast_ = NULL;
             if (!try_set_for_with_cond_types(env, &new_tast_, uast_for_with_cond_unwrap(stmt))) {
                 return STMT_ERROR;
@@ -2496,6 +2542,7 @@ STMT_STATUS try_set_stmt_types(Env* env, Tast_stmt** new_tast, Uast_stmt* stmt) 
             return STMT_OK;
         }
         case UAST_ASSIGNMENT: {
+            todo();
             Tast_assignment* new_tast_ = NULL;
             if (!try_set_assignment_types(env, &new_tast_, uast_assignment_unwrap(stmt))) {
                 return STMT_ERROR;
@@ -2512,6 +2559,7 @@ STMT_STATUS try_set_stmt_types(Env* env, Tast_stmt** new_tast, Uast_stmt* stmt) 
             return STMT_OK;
         }
         case UAST_FOR_RANGE: {
+            todo();
             Tast_for_range* new_for = NULL;
             if (!try_set_for_range_types(env, &new_for, uast_for_range_unwrap(stmt))) {
                 return STMT_ERROR;
@@ -2520,9 +2568,11 @@ STMT_STATUS try_set_stmt_types(Env* env, Tast_stmt** new_tast, Uast_stmt* stmt) 
             return STMT_OK;
         }
         case UAST_BREAK:
+            todo();
             *new_tast = tast_break_wrap(tast_break_new(uast_break_unwrap(stmt)->pos));
             return STMT_OK;
         case UAST_CONTINUE:
+            todo();
             *new_tast = tast_continue_wrap(tast_continue_new(uast_continue_unwrap(stmt)->pos));
             return STMT_OK;
         case UAST_BLOCK: {
@@ -2543,6 +2593,7 @@ STMT_STATUS try_set_stmt_types(Env* env, Tast_stmt** new_tast, Uast_stmt* stmt) 
             return STMT_OK;
         }
         case UAST_SWITCH: {
+            todo();
             Tast_if_else_chain* new_if_else = NULL;
             if (!try_set_switch_types(env, &new_if_else, uast_switch_unwrap(stmt))) {
                 return STMT_ERROR;

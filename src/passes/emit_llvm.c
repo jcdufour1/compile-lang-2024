@@ -507,6 +507,9 @@ static void emit_unary_type(Env* env, String* output, const Llvm_unary* unary) {
 
 static void emit_binary_type_signed(String* output, const Llvm_binary* binary) {
     switch (binary->token_type) {
+        case BINARY_SINGLE_EQUAL:
+            unreachable("= should not still be a binary expr at this point");
+            return;
         case BINARY_SUB:
             string_extend_cstr(&a_main, output, "sub nsw ");
             return;
@@ -563,6 +566,9 @@ static void emit_binary_type_signed(String* output, const Llvm_binary* binary) {
 
 static void emit_binary_type_unsigned(String* output, const Llvm_binary* binary) {
     switch (binary->token_type) {
+        case BINARY_SINGLE_EQUAL:
+            unreachable("= should not still be a binary expr at this point");
+            return;
         case BINARY_SUB:
             string_extend_cstr(&a_main, output, "sub nsw ");
             return;
