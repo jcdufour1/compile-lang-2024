@@ -658,9 +658,13 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
 // returns false if unsuccessful
 bool try_set_binary_types(Env* env, Tast_expr** new_tast, Uast_binary* operator) {
     Tast_stmt* new_lhs;
-    STMT_STATUS status = try_set_stmt_types(env, &new_lhs, operator->lhs);
-    if (status != STMT_OK) {
-        todo();
+    switch (try_set_stmt_types(env, &new_lhs, operator->lhs)) {
+        case STMT_OK:
+            break;
+        case STMT_NO_STMT:
+            unreachable("");
+        case STMT_ERROR:
+            return false;
     }
     assert(new_lhs);
 
@@ -1075,28 +1079,24 @@ STMT_STATUS try_set_def_types(Env* env, Tast_def** new_tast, Uast_def* uast) {
             return STMT_NO_STMT;
         }
         case UAST_RAW_UNION_DEF: {
-            todo();
             if (!try_set_raw_union_def_types(env, uast_raw_union_def_unwrap(uast))) {
                 return STMT_ERROR;
             }
             return STMT_NO_STMT;
         }
         case UAST_ENUM_DEF: {
-            todo();
             if (!try_set_enum_def_types(env, uast_enum_def_unwrap(uast))) {
                 return STMT_ERROR;
             }
             return STMT_NO_STMT;
         }
         case UAST_PRIMITIVE_DEF: {
-            todo();
             if (!try_set_primitive_def_types(env, uast_primitive_def_unwrap(uast))) {
                 return STMT_ERROR;
             }
             return STMT_NO_STMT;
         }
         case UAST_LITERAL_DEF: {
-            todo();
             if (!try_set_literal_def_types(env, uast_literal_def_unwrap(uast))) {
                 return STMT_ERROR;
             }

@@ -248,6 +248,7 @@ static bool starts_with_function_call(Tk_view tokens) {
     return true;
 }
 
+// TODO: rename variable_decl to variable_def for consistancy
 static bool starts_with_variable_decl(Tk_view tokens) {
     if (tokens.count < 1) {
         return false;
@@ -486,7 +487,7 @@ static int32_t get_operator_precedence(TOKEN_TYPE type) {
         case TOKEN_COMMA:
             return 1;
         case TOKEN_SINGLE_EQUAL:
-            return 3;
+            unreachable("not a regular operator");
         case TOKEN_LOGICAL_OR:
             return 8;
         case TOKEN_LOGICAL_AND:
@@ -672,6 +673,7 @@ static bool is_unary(TOKEN_TYPE token_type) {
     unreachable("");
 }
 
+// TOKEN_SINGLE_PLUS is treated differently from other binary operators for now
 static bool is_binary(TOKEN_TYPE token_type) {
     switch (token_type) {
         case TOKEN_NONTYPE:
@@ -717,7 +719,7 @@ static bool is_binary(TOKEN_TYPE token_type) {
         case TOKEN_COLON:
             return false;
         case TOKEN_SINGLE_EQUAL:
-            return true;
+            return false;
         case TOKEN_SINGLE_DOT:
             return true;
         case TOKEN_DOUBLE_DOT:
@@ -1781,13 +1783,20 @@ static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens
     Token equal_tk = {0};
     if (try_consume(&equal_tk, tokens, TOKEN_SINGLE_EQUAL)) {
         Uast_expr* rhs = NULL;
-        PARSE_EXPR_STATUS status = parse_expr(env, &rhs, tokens, false, false);
-        if (status != PARSE_EXPR_OK) {
-            return status;
+        switch (parse_expr(env, &rhs, tokens, false, false)) {
+            case PARSE_EXPR_OK:
+                *child = uast_expr_wrap(uast_operator_wrap(uast_binary_wrap(uast_binary_new(
+                    equal_tk.pos, lhs, rhs, BINARY_SINGLE_EQUAL
+                ))));
+                break;
+            case PARSE_EXPR_ERROR:
+                return PARSE_EXPR_ERROR;
+            case PARSE_EXPR_NONE:
+                msg_expected_expr(env->file_text, *tokens, "");
+                return PARSE_EXPR_ERROR;
+            default:
+                unreachable("");
         }
-        *child = uast_expr_wrap(uast_operator_wrap(uast_binary_wrap(uast_binary_new(
-            equal_tk.pos, lhs, rhs, BINARY_SINGLE_EQUAL
-        ))));
     } else {
         *child = lhs;
     }
@@ -2458,7 +2467,8 @@ static PARSE_EXPR_STATUS parse_expr_opening(
     }
 }
 
-static PARSE_EXPR_STATUS parse_expr(
+// parse expression, ignoring single equal
+static PARSE_EXPR_STATUS parse_expr_side(
     Env* env,
     Uast_expr** result,
     Tk_view* tokens,
@@ -2576,6 +2586,41 @@ static PARSE_EXPR_STATUS parse_expr(
     return PARSE_EXPR_OK;
 }
 
+static PARSE_EXPR_STATUS parse_expr(
+    Env* env,
+    Uast_expr** result,
+    Tk_view* tokens,
+    bool defer_sym_add,
+    bool can_be_tuple
+) {
+    Uast_expr* lhs = NULL;
+    PARSE_EXPR_STATUS status = parse_expr_side(env, &lhs, tokens, defer_sym_add, can_be_tuple);
+    if (status != PARSE_EXPR_OK) {
+        return status;
+    }
+
+    Token equal_tk = {0};
+    if (!try_consume(&equal_tk, tokens, TOKEN_SINGLE_EQUAL)) {
+        *result = lhs;
+        return PARSE_EXPR_OK;
+    }
+    
+    // TODO: remove BINARY_SINGLE_EQUAL?
+    Uast_expr* rhs = NULL;
+    switch (parse_expr_side(env, &rhs, tokens, defer_sym_add, can_be_tuple)) {
+        case PARSE_EXPR_OK:
+            // TODO: do uast_assignment?
+            //*result = uast_assignment_wrap(uast_assignment_new(equal_tk.pos, uast_expr_wrap(lhs), rhs));
+            *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(equal_tk.pos, uast_expr_wrap(lhs), rhs, BINARY_SINGLE_EQUAL)));
+            return PARSE_EXPR_OK;
+        case PARSE_EXPR_NONE:
+            msg_expected_expr(env->file_text, *tokens, "after `=`");
+            return PARSE_EXPR_ERROR;
+        case PARSE_EXPR_ERROR:
+            return PARSE_EXPR_ERROR;
+    }
+    unreachable("");
+}
 
 static void parser_do_tests(void);
 
@@ -2600,7 +2645,7 @@ static inline Tk_view tokens_to_tk_view(Tokens tokens) {
     return tk_view;
 }
 
-static void parser_test_template(const char* input, int test) {
+static void parser_test_parse_expr(const char* input, int test) {
     log(LOG_DEBUG, "start parser_test_%d:\n", test);
     Env env = {0};
     Str_view file_text = str_view_from_cstr(input);
@@ -2611,7 +2656,7 @@ static void parser_test_template(const char* input, int test) {
     log_tokens(LOG_DEBUG, tokens);
     Uast_expr* result = NULL;
     switch (parse_expr(&env, &result, &tokens, false, false)) {
-        case PARSE_OK:
+        case PARSE_EXPR_OK:
             log(LOG_DEBUG, "\n"TAST_FMT, uast_expr_print(result));
             break;
         default:
@@ -2620,16 +2665,42 @@ static void parser_test_template(const char* input, int test) {
     log(LOG_DEBUG, "end parser_test_%d:\n\n", test);
 }
 
+static void parser_test_parse_stmt(const char* input, int test) {
+    log(LOG_DEBUG, "start parser_test_%d:\n", test);
+    Env env = {0};
+    Str_view file_text = str_view_from_cstr(input);
+    env.file_text = file_text;
+
+    Tokens tokens_ = tokenize(&env, (Parameters) {0});
+    Tk_view tokens = tokens_to_tk_view(tokens_);
+    log_tokens(LOG_DEBUG, tokens);
+    Uast_stmt* result = NULL;
+    switch (parse_stmt(&env, &result, &tokens, true)) {
+        case PARSE_EXPR_OK:
+            log(LOG_DEBUG, "\n"TAST_FMT, uast_stmt_print(result));
+            break;
+        default:
+            assert(error_count > 0);
+            unreachable("");
+    }
+    log(LOG_DEBUG, "end parser_test_%d:\n\n", test);
+}
+
 static void parser_do_tests(void) {
+    // TODO: automate checking if these tests fail
+    // TODO: expected failures?
     int test = 1;
-    parser_test_template("4\n", test++);
-    parser_test_template("5*3\n", test++);
-    parser_test_template("num = 5\n", test++);
-    parser_test_template("deref(num) = 5*2\n", test++);
-    parser_test_template("deref(num) = deref(5)\n", test++);
-    parser_test_template("deref(num) + deref(5)/6\n", test++);
-    parser_test_template("deref(num) = 2*num\n", test++);
-    parser_test_template("deref(num) = 2 + num*3\n", test++);
-    parser_test_template("deref(num) = 2*num + 1\n", test++);
-    todo();
+    parser_test_parse_expr("4\n", test++);
+    parser_test_parse_expr("5*3\n", test++);
+    parser_test_parse_expr("num = 5\n", test++);
+    parser_test_parse_expr("deref(num) = 5*2\n", test++);
+    parser_test_parse_expr("deref(num) = deref(5)\n", test++);
+    parser_test_parse_expr("deref(num) + deref(5)/6\n", test++);
+    parser_test_parse_expr("deref(num) = 2*num\n", test++);
+    parser_test_parse_expr("deref(num) = 2 + num*3\n", test++);
+    parser_test_parse_expr("deref(num) = 2*num + 1\n", test++);
+
+    parser_test_parse_stmt("deref(num) = 2*num + 1\n", test++);
+    parser_test_parse_stmt("let num i32\n", test++);
+    parser_test_parse_stmt("let num i32 = 0\n", test++);
 }

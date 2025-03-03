@@ -138,7 +138,7 @@ static Uast_type uast_gen_unary(const char* prefix) {
 static Uast_type uast_gen_binary(const char* prefix) {
     Uast_type binary = {.name = uast_name_new(prefix, "binary", false)};
 
-    append_member(&binary.members, "Uast_stmt*", "lhs");
+    append_member(&binary.members, "Uast_stmt*", "lhs"); // TODO: change this to Uast_expr
     append_member(&binary.members, "Uast_expr*", "rhs");
     append_member(&binary.members, "BINARY_TYPE", "token_type");
 

@@ -276,7 +276,7 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
         case TOKEN_COLON:
             return false;
         case TOKEN_SINGLE_EQUAL:
-            return true;
+            return false;
         case TOKEN_NONTYPE:
             return false;
         case TOKEN_VOID:
