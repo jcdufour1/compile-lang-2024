@@ -673,12 +673,16 @@ bool try_set_binary_types(Env* env, Tast_expr** new_tast, Uast_binary* operator)
             case CHECK_ASSIGN_INVALID:
                 msg(
                     LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
-                    assignment->pos,
+                    operator->pos,
                     "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_stmt_get_lang_type(new_lhs))
                 );
                 return false;
+            case CHECK_ASSIGN_ERROR:
+                return false;
+            default:
+                unreachable("");
         }
     }
 
@@ -691,6 +695,8 @@ bool try_set_binary_types(Env* env, Tast_expr** new_tast, Uast_binary* operator)
         unreachable("not-expr cannot be lhs of this operator");
     }
 
+    log(LOG_DEBUG, TAST_FMT"\n", binary_type_print(operator->token_type));
+    log(LOG_DEBUG, TAST_FMT, uast_binary_print(operator));
     return try_set_binary_types_finish(
         env,
         new_tast,
@@ -909,7 +915,8 @@ bool try_set_struct_literal_assignment_types(
     Tast_expr_vec new_literal_members = {0};
     for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
         Uast_variable_def* memb_sym_def = vec_at(&struct_def->base.members, idx);
-        Uast_assignment* assign_memb_sym = uast_assignment_unwrap(vec_at(&struct_literal->members, idx));
+        log(LOG_DEBUG, TAST_FMT, uast_stmt_print(vec_at(&struct_literal->members, idx)));
+        Uast_binary* assign_memb_sym = uast_binary_unwrap(uast_operator_unwrap(uast_expr_unwrap(vec_at(&struct_literal->members, idx))));
         Uast_symbol* memb_sym_piece_untyped = uast_symbol_unwrap(uast_expr_unwrap(assign_memb_sym->lhs));
         Tast_expr* new_rhs = NULL;
 
@@ -984,7 +991,7 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
             *new_tast = tast_literal_wrap(try_set_literal_types(uast_literal_unwrap(uast)));
             return true;
         }
-        case TAST_SYMBOL:
+        case UAST_SYMBOL:
             if (!try_set_symbol_types(env, new_tast, uast_symbol_unwrap(uast))) {
                 return false;
             } else {
@@ -1062,7 +1069,6 @@ STMT_STATUS try_set_def_types(Env* env, Tast_def** new_tast, Uast_def* uast) {
             return STMT_NO_STMT;
         }
         case UAST_STRUCT_DEF: {
-            todo();
             if (!try_set_struct_def_types(env, uast_struct_def_unwrap(uast))) {
                 return STMT_ERROR;
             }
@@ -1097,7 +1103,6 @@ STMT_STATUS try_set_def_types(Env* env, Tast_def** new_tast, Uast_def* uast) {
             return STMT_NO_STMT;
         }
         case UAST_SUM_DEF: {
-            todo();
             if (!try_set_sum_def_types(env, uast_sum_def_unwrap(uast))) {
                 return STMT_ERROR;
             }
@@ -2533,7 +2538,6 @@ STMT_STATUS try_set_stmt_types(Env* env, Tast_stmt** new_tast, Uast_stmt* stmt) 
             return STMT_OK;
         }
         case UAST_FOR_WITH_COND: {
-            todo();
             Tast_for_with_cond* new_tast_ = NULL;
             if (!try_set_for_with_cond_types(env, &new_tast_, uast_for_with_cond_unwrap(stmt))) {
                 return STMT_ERROR;
@@ -2542,12 +2546,11 @@ STMT_STATUS try_set_stmt_types(Env* env, Tast_stmt** new_tast, Uast_stmt* stmt) 
             return STMT_OK;
         }
         case UAST_ASSIGNMENT: {
-            todo();
             Tast_assignment* new_tast_ = NULL;
             if (!try_set_assignment_types(env, &new_tast_, uast_assignment_unwrap(stmt))) {
                 return STMT_ERROR;
             }
-            *new_tast = tast_assignment_wrap(new_tast_);
+            *new_tast = tast_expr_wrap(tast_assignment_wrap(new_tast_));
             return STMT_OK;
         }
         case UAST_RETURN: {
@@ -2559,7 +2562,6 @@ STMT_STATUS try_set_stmt_types(Env* env, Tast_stmt** new_tast, Uast_stmt* stmt) 
             return STMT_OK;
         }
         case UAST_FOR_RANGE: {
-            todo();
             Tast_for_range* new_for = NULL;
             if (!try_set_for_range_types(env, &new_for, uast_for_range_unwrap(stmt))) {
                 return STMT_ERROR;
@@ -2568,11 +2570,9 @@ STMT_STATUS try_set_stmt_types(Env* env, Tast_stmt** new_tast, Uast_stmt* stmt) 
             return STMT_OK;
         }
         case UAST_BREAK:
-            todo();
             *new_tast = tast_break_wrap(tast_break_new(uast_break_unwrap(stmt)->pos));
             return STMT_OK;
         case UAST_CONTINUE:
-            todo();
             *new_tast = tast_continue_wrap(tast_continue_new(uast_continue_unwrap(stmt)->pos));
             return STMT_OK;
         case UAST_BLOCK: {
@@ -2593,7 +2593,6 @@ STMT_STATUS try_set_stmt_types(Env* env, Tast_stmt** new_tast, Uast_stmt* stmt) 
             return STMT_OK;
         }
         case UAST_SWITCH: {
-            todo();
             Tast_if_else_chain* new_if_else = NULL;
             if (!try_set_switch_types(env, &new_if_else, uast_switch_unwrap(stmt))) {
                 return STMT_ERROR;

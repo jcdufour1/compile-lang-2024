@@ -179,6 +179,8 @@ static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr) {
             return tast_sum_case_const_unwrap(expr)->sum_lang_type;
         case TAST_SUM_ACCESS:
             return tast_sum_access_const_unwrap(expr)->lang_type;
+        case TAST_ASSIGNMENT:
+            unreachable("");
     }
     unreachable("");
 }
@@ -252,6 +254,8 @@ static inline void tast_expr_set_lang_type(Tast_expr* expr, Lang_type lang_type)
             unreachable("");
         case TAST_SUM_ACCESS:
             unreachable("");
+        case TAST_ASSIGNMENT:
+            unreachable("");
     }
     todo();
 }
@@ -271,8 +275,6 @@ static inline Lang_type tast_stmt_get_lang_type(const Tast_stmt* stmt) {
         case TAST_FOR_WITH_COND:
             unreachable("");
         case TAST_BREAK:
-            unreachable("");
-        case TAST_ASSIGNMENT:
             unreachable("");
         case TAST_IF_ELSE_CHAIN:
             unreachable("");
@@ -346,8 +348,6 @@ static inline void tast_stmt_set_lang_type(Tast_stmt* stmt, Lang_type lang_type)
             unreachable("");
         case TAST_BREAK:
             unreachable("");
-        case TAST_ASSIGNMENT:
-            unreachable("");
         case TAST_IF_ELSE_CHAIN:
             unreachable("");
         case TAST_CONTINUE:
@@ -402,6 +402,8 @@ static inline Str_view tast_expr_get_name(const Tast_expr* expr) {
             unreachable("");
         case TAST_SUM_ACCESS:
             unreachable("");
+        case TAST_ASSIGNMENT:
+            unreachable("");
     }
     unreachable("");
 }
@@ -455,8 +457,6 @@ static inline Str_view tast_stmt_get_name(const Tast_stmt* stmt) {
         case TAST_FOR_WITH_COND:
             unreachable("");
         case TAST_BREAK:
-            unreachable("");
-        case TAST_ASSIGNMENT:
             unreachable("");
         case TAST_IF_ELSE_CHAIN:
             unreachable("");

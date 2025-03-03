@@ -2,6 +2,8 @@
 
 Tast_expr* tast_expr_clone(const Tast_expr* expr) {
     switch (expr->type) {
+        case TAST_ASSIGNMENT:
+            todo();
         case TAST_OPERATOR:
             todo();
         case TAST_SYMBOL:

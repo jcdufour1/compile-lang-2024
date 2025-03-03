@@ -603,7 +603,7 @@ Str_view uast_expr_print_internal(const Uast_expr* expr, int indent) {
     switch (expr->type) {
         case UAST_OPERATOR:
             return uast_operator_print_internal(uast_operator_const_unwrap(expr), indent);
-        case TAST_SYMBOL:
+        case UAST_SYMBOL:
             return uast_symbol_print_internal(uast_symbol_const_unwrap(expr), indent);
         case UAST_MEMBER_ACCESS:
             return uast_member_access_print_internal(uast_member_access_const_unwrap(expr), indent);

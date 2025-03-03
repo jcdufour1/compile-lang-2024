@@ -135,6 +135,12 @@ static void do_function_def_alloca_param(Env* env, Llvm_function_params* new_par
     vec_append(&a_main, &new_params->params, param);
 }
 
+static Str_view load_assignment(
+    Env* env,
+    Llvm_block* new_block,
+    Tast_assignment* old_assignment
+);
+
 static Llvm_function_params* do_function_def_alloca(
     Env* env,
     Llvm_lang_type** new_rtn_type,
@@ -490,7 +496,7 @@ static Str_view load_binary_short_circuit(
     unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(new_var_def)));
 
     Tast_stmt_vec if_true_stmts = {0};
-    vec_append(&a_main, &if_true_stmts, tast_assignment_wrap(tast_assignment_new(
+    vec_append(&a_main, &if_true_stmts, tast_expr_wrap(tast_assignment_wrap(tast_assignment_new(
         old_bin->pos,
         tast_expr_wrap(tast_symbol_wrap(tast_symbol_new(old_bin->pos, (Sym_typed_base) {
             .lang_type = u1_lang_type,
@@ -498,10 +504,10 @@ static Str_view load_binary_short_circuit(
             .llvm_id = 0
         }))),
         old_bin->rhs
-    )));
+    ))));
 
     Tast_stmt_vec if_false_stmts = {0};
-    vec_append(&a_main, &if_false_stmts, tast_assignment_wrap(tast_assignment_new(
+    vec_append(&a_main, &if_false_stmts, tast_expr_wrap(tast_assignment_wrap(tast_assignment_new(
         old_bin->pos,
         tast_expr_wrap(tast_symbol_wrap(tast_symbol_new(old_bin->pos, (Sym_typed_base) {
             .lang_type = u1_lang_type,
@@ -511,7 +517,7 @@ static Str_view load_binary_short_circuit(
         tast_literal_wrap(
             util_tast_literal_new_from_int64_t(if_false_val, TOKEN_INT_LITERAL, old_bin->pos)
         )
-    )));
+    ))));
 
     Tast_if* if_true = tast_if_new(
         old_bin->pos,
@@ -786,6 +792,8 @@ static Str_view load_index(
 
 static Str_view load_expr(Env* env, Llvm_block* new_block, Tast_expr* old_expr) {
     switch (old_expr->type) {
+        case TAST_ASSIGNMENT:
+            return load_assignment(env, new_block, tast_assignment_unwrap(old_expr));
         case TAST_FUNCTION_CALL:
             return load_function_call(env, new_block, tast_function_call_unwrap(old_expr));
         case TAST_LITERAL:
@@ -1547,6 +1555,8 @@ static Str_view load_ptr_expr(Env* env, Llvm_block* new_block, Tast_expr* old_ex
             unreachable("");
         case TAST_SUM_ACCESS:
             unreachable("");
+        case TAST_ASSIGNMENT:
+            unreachable("");
     }
     unreachable("");
 }
@@ -1612,8 +1622,6 @@ static Str_view load_stmt(Env* env, Llvm_block* new_block, Tast_stmt* old_stmt) 
             return load_def(env, new_block, tast_def_unwrap(old_stmt));
         case TAST_RETURN:
             return load_return(env, new_block, tast_return_unwrap(old_stmt));
-        case TAST_ASSIGNMENT:
-            return load_assignment(env, new_block, tast_assignment_unwrap(old_stmt));
         case TAST_IF_ELSE_CHAIN:
             return load_if_else_chain(env, new_block, tast_if_else_chain_unwrap(old_stmt));
         case TAST_FOR_RANGE:

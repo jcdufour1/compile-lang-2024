@@ -401,10 +401,21 @@ static Tast_type tast_gen_sum_access(const char* prefix) {
     return lit;
 }
 
+static Tast_type tast_gen_assignment(const char* prefix) {
+    const char* base_name = "assignment";
+    Tast_type assign = {.name = tast_name_new(prefix, base_name, false)};
+
+    append_member(&assign.members, "Tast_stmt*", "lhs");
+    append_member(&assign.members, "Tast_expr*", "rhs");
+
+    return assign;
+}
+
 static Tast_type tast_gen_expr(const char* prefix) {
     const char* base_name = "expr";
     Tast_type expr = {.name = tast_name_new(prefix, base_name, false)};
 
+    vec_append(&gen_a, &expr.sub_types, tast_gen_assignment(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_operator(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_symbol(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_member_access(base_name));
@@ -626,16 +637,6 @@ static Tast_type tast_gen_continue(const char* prefix) {
     return lang_cont;
 }
 
-static Tast_type tast_gen_assignment(const char* prefix) {
-    const char* base_name = "assignment";
-    Tast_type assign = {.name = tast_name_new(prefix, base_name, false)};
-
-    append_member(&assign.members, "Tast_stmt*", "lhs");
-    append_member(&assign.members, "Tast_expr*", "rhs");
-
-    return assign;
-}
-
 static Tast_type tast_gen_if(const char* prefix) {
     const char* base_name = "if";
     Tast_type lang_if = {.name = tast_name_new(prefix, base_name, false)};
@@ -677,7 +678,6 @@ static Tast_type tast_gen_stmt(const char* prefix) {
     vec_append(&gen_a, &stmt.sub_types, tast_gen_return(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_break(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_continue(base_name));
-    vec_append(&gen_a, &stmt.sub_types, tast_gen_assignment(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_def(base_name));
 
     return stmt;

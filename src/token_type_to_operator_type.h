@@ -42,6 +42,8 @@ static inline BINARY_TYPE token_type_to_binary_type(TOKEN_TYPE token_type) {
             return BINARY_SHIFT_LEFT;
         case TOKEN_SHIFT_RIGHT:
             return BINARY_SHIFT_RIGHT;
+        case TOKEN_SINGLE_EQUAL:
+            return BINARY_SINGLE_EQUAL;
         default:
             unreachable(TOKEN_TYPE_FMT, token_type_print(TOKEN_MODE_LOG, token_type));
     }

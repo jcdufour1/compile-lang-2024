@@ -7,6 +7,7 @@
 #include <symbol_table.h>
 #include <parser_utils.h>
 #include <tokens.h>
+#include <do_passes.h>
 #include <ulang_type.h>
 #include <token_type_to_operator_type.h>
 #include "passes.h"
@@ -1539,7 +1540,7 @@ static PARSE_EXPR_STATUS parse_condition(Env* env, Uast_condition** result, Tk_v
         case UAST_FUNCTION_CALL:
             cond_oper = uast_condition_get_default_child(cond_child);
             break;
-        case TAST_SYMBOL:
+        case UAST_SYMBOL:
             cond_oper = uast_condition_get_default_child(cond_child);
             break;
         default:
@@ -1701,7 +1702,6 @@ static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens
     assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
     Uast_stmt* lhs = NULL;
-    bool expr_init = false;
     if (starts_with_type_def(*tokens)) {
         assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
         unwrap(try_consume(NULL, tokens, TOKEN_TYPE_DEF));
@@ -1763,10 +1763,6 @@ static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens
         }
         lhs = uast_def_wrap(uast_variable_def_wrap(var_def));
     } else {
-        expr_init = true;
-    }
-
-    if (expr_init) {
         Uast_expr* lhs_ = NULL;
         switch (parse_expr(env, &lhs_, tokens, false, true)) {
             case PARSE_EXPR_OK:
@@ -1779,29 +1775,25 @@ static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens
                 unreachable("");
         }
 
-        *child = uast_expr_wrap(lhs_);
-    } else {
-        Token equal_tk = {0};
-        if (try_consume(&equal_tk, tokens, TOKEN_SINGLE_EQUAL)) {
-            Uast_expr* rhs = NULL;
-            PARSE_EXPR_STATUS status = parse_expr(env, &rhs, tokens, false, false);
-            if (status != PARSE_EXPR_OK) {
-                return status;
-            }
-            *child = uast_expr_wrap(uast_operator_wrap(uast_binary_wrap(uast_binary_new(
-                equal_tk.pos, lhs, rhs, BINARY_SINGLE_EQUAL
-            ))));
-        } else {
-            *child = lhs;
+        lhs = uast_expr_wrap(lhs_);
+    }
+
+    Token equal_tk = {0};
+    if (try_consume(&equal_tk, tokens, TOKEN_SINGLE_EQUAL)) {
+        Uast_expr* rhs = NULL;
+        PARSE_EXPR_STATUS status = parse_expr(env, &rhs, tokens, false, false);
+        if (status != PARSE_EXPR_OK) {
+            return status;
         }
+        *child = uast_expr_wrap(uast_operator_wrap(uast_binary_wrap(uast_binary_new(
+            equal_tk.pos, lhs, rhs, BINARY_SINGLE_EQUAL
+        ))));
+    } else {
+        *child = lhs;
     }
 
     try_consume(NULL, tokens, TOKEN_SEMICOLON);
-    if (tokens->count < 1) {
-        return PARSE_EXPR_NONE;
-    }
-
-    if (!try_consume(NULL, tokens, TOKEN_NEW_LINE)) {
+    if (tokens->count < 1 || !try_consume(NULL, tokens, TOKEN_NEW_LINE)) {
         msg(
             LOG_ERROR, EXPECT_FAIL_NO_NEW_LINE_AFTER_STATEMENT, env->file_text, tk_view_front(*tokens).pos,
             "expected newline after stmt\n"
@@ -2130,6 +2122,8 @@ static PARSE_EXPR_STATUS parse_binary(
     Uast_expr* rhs = NULL;
 
     if (is_unary(tk_view_front(*tokens).type)) {
+        int32_t unary_pres = get_operator_precedence(tk_view_front(*tokens).type);
+        log_tokens(LOG_DEBUG, *tokens);
         Uast_operator* unary = NULL;
         switch (parse_unary(env, &unary, tokens, prev_oper_pres, defer_sym_add, can_be_tuple)) {
             case PARSE_EXPR_OK:
@@ -2143,10 +2137,17 @@ static PARSE_EXPR_STATUS parse_binary(
                 todo();
         }
 
+        unwrap(
+            (unary_pres > get_operator_precedence(oper.type)) &&
+            "case of unary operator having lower or equal precedence than adjacent binary not implemented"
+        );
+
         rhs = uast_operator_wrap(unary);
-        if (is_unary(tk_view_front(*tokens).type)) {
-            todo();
-        }
+        log_tokens(LOG_DEBUG, *tokens);
+        log(LOG_DEBUG, TAST_FMT, uast_expr_print(rhs));
+        //if (is_unary(tk_view_front(*tokens).type)) {
+        //    todo();
+        //}
     } else if (tk_view_front(*tokens).type == TOKEN_SINGLE_EQUAL) {
         unreachable("+= and similar not implemented");
     } else {
@@ -2201,6 +2202,8 @@ static PARSE_EXPR_STATUS parse_binary(
             // fallthrough
         case TOKEN_SHIFT_RIGHT:
             // fallthrough
+        case TOKEN_SINGLE_EQUAL:
+            // fallthrough
         case TOKEN_DOUBLE_EQUAL:
             *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, uast_expr_wrap(lhs), rhs, token_type_to_binary_type(oper.type))));
             break;
@@ -2223,6 +2226,7 @@ static PARSE_EXPR_STATUS parse_binary(
     }
 
     assert(*result);
+    *prev_oper_pres = get_operator_precedence(oper.type);
     return PARSE_EXPR_OK;
 }
 
@@ -2301,7 +2305,7 @@ static PARSE_EXPR_STATUS parse_expr_function_call(
 ) {
     Uast_function_call* fun_call = NULL;
     switch (lhs->type) {
-        case TAST_SYMBOL:
+        case UAST_SYMBOL:
             switch (parse_function_call(env, &fun_call, tokens, lhs)) {
                 case PARSE_OK:
                     *result = uast_function_call_wrap(fun_call);
@@ -2526,6 +2530,8 @@ static PARSE_EXPR_STATUS parse_expr(
                     unreachable("");
             }
         } else {
+            log(LOG_DEBUG, "prev_oper_pres: %"PRIi32"\n", prev_oper_pres);
+            log(LOG_DEBUG, "curr_oper_pres: %"PRIi32"\n", get_operator_precedence(tk_view_front(*tokens).type));
             if (prev_oper_pres < get_operator_precedence(tk_view_front(*tokens).type)) {
                 prev_oper_pres = get_operator_precedence(tk_view_front(*tokens).type);
                 Uast_expr* binary = NULL;
@@ -2570,7 +2576,14 @@ static PARSE_EXPR_STATUS parse_expr(
     return PARSE_EXPR_OK;
 }
 
+
+static void parser_do_tests(void);
+
 Uast_block* parse(Env* env, const Tokens tokens) {
+#ifndef DNDEBUG
+    parser_do_tests();
+#endif // DNDEBUG
+
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
     Uast_block* root;
     parse_block(env, &root, &token_view, true);
@@ -2579,4 +2592,44 @@ Uast_block* parse(Env* env, const Tokens tokens) {
     log(LOG_DEBUG, "done with parsing:\n");
     symbol_log(LOG_TRACE, env);
     return root;
+}
+
+// TODO: put this in src/tokens.h or whatever
+static inline Tk_view tokens_to_tk_view(Tokens tokens) {
+    Tk_view tk_view = {.tokens = tokens.buf, .count = tokens.info.count};
+    return tk_view;
+}
+
+static void parser_test_template(const char* input, int test) {
+    log(LOG_DEBUG, "start parser_test_%d:\n", test);
+    Env env = {0};
+    Str_view file_text = str_view_from_cstr(input);
+    env.file_text = file_text;
+
+    Tokens tokens_ = tokenize(&env, (Parameters) {0});
+    Tk_view tokens = tokens_to_tk_view(tokens_);
+    log_tokens(LOG_DEBUG, tokens);
+    Uast_expr* result = NULL;
+    switch (parse_expr(&env, &result, &tokens, false, false)) {
+        case PARSE_OK:
+            log(LOG_DEBUG, "\n"TAST_FMT, uast_expr_print(result));
+            break;
+        default:
+            unreachable("");
+    }
+    log(LOG_DEBUG, "end parser_test_%d:\n\n", test);
+}
+
+static void parser_do_tests(void) {
+    int test = 1;
+    parser_test_template("4\n", test++);
+    parser_test_template("5*3\n", test++);
+    parser_test_template("num = 5\n", test++);
+    parser_test_template("deref(num) = 5*2\n", test++);
+    parser_test_template("deref(num) = deref(5)\n", test++);
+    parser_test_template("deref(num) + deref(5)/6\n", test++);
+    parser_test_template("deref(num) = 2*num\n", test++);
+    parser_test_template("deref(num) = 2 + num*3\n", test++);
+    parser_test_template("deref(num) = 2*num + 1\n", test++);
+    todo();
 }

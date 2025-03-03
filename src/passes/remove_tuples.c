@@ -41,7 +41,7 @@ static Tast_if* rm_tuple_if(Env* env, Tast_if* assign);
 
 static Tast_if_else_chain* rm_tuple_if_else_chain(Env* env, Tast_if_else_chain* if_else);
 
-static Tast_expr* rm_tuple_expr_not_in_assignment(Env* env, Tast_expr* expr);
+static Tast_stmt* rm_tuple_expr_not_in_assignment(Env* env, Tast_expr* expr);
 
 static Tast_variable_def* rm_tuple_variable_def_sum_to_struct(Env* env, Tast_variable_def* def);
 
@@ -236,7 +236,7 @@ static Tast_stmt* rm_tuple_assignment_tuple(Env* env, Tast_assignment* assign) {
         tast_def_wrap(tast_variable_def_wrap(new_var)),
         src
     );
-    vec_append(&a_main, &new_children, tast_assignment_wrap(new_assign));
+    vec_append(&a_main, &new_children, tast_expr_wrap(tast_assignment_wrap(new_assign)));
 
     for (size_t idx = 0; idx < dest->members.info.count; idx++) {
         unwrap(idx < tast_struct_def_unwrap(struct_def_)->base.members.info.count);
@@ -256,7 +256,7 @@ static Tast_stmt* rm_tuple_assignment_tuple(Env* env, Tast_assignment* assign) {
             tast_member_access_wrap(curr_src)
         );
 
-        vec_append(&a_main, &new_children, tast_assignment_wrap(curr_assign));
+        vec_append(&a_main, &new_children, tast_expr_wrap(tast_assignment_wrap(curr_assign)));
     }
 
     tast_expr_set_lang_type(src, new_var_lang_type);
@@ -272,19 +272,19 @@ static Tast_stmt* rm_tuple_assignment(Env* env, Tast_assignment* assign) {
             return rm_tuple_assignment_tuple(env, assign);
         case LANG_TYPE_SUM:
             assign->lhs = rm_tuple_stmt(env, assign->lhs);
-            return tast_assignment_wrap(assign);
+            return tast_expr_wrap(tast_assignment_wrap(assign));
         case LANG_TYPE_PRIMITIVE:
-            return tast_assignment_wrap(assign);
+            return tast_expr_wrap(tast_assignment_wrap(assign));
         case LANG_TYPE_STRUCT:
-            return tast_assignment_wrap(assign);
+            return tast_expr_wrap(tast_assignment_wrap(assign));
         case LANG_TYPE_RAW_UNION:
-            return tast_assignment_wrap(assign);
+            return tast_expr_wrap(tast_assignment_wrap(assign));
         case LANG_TYPE_ENUM:
-            return tast_assignment_wrap(assign);
+            return tast_expr_wrap(tast_assignment_wrap(assign));
         case LANG_TYPE_VOID:
-            return tast_assignment_wrap(assign);
+            return tast_expr_wrap(tast_assignment_wrap(assign));
         case LANG_TYPE_FN:
-            return tast_assignment_wrap(assign);
+            return tast_expr_wrap(tast_assignment_wrap(assign));
     }
     unreachable("");
 }
@@ -349,7 +349,7 @@ static Tast_function_def* rm_tuple_function_def_new(Env* env, Tast_function_decl
                 , POS_BUILTIN);
 
                 Tast_assignment* assign = tast_assignment_new(decl->pos, tast_expr_wrap(tast_member_access_wrap(lhs)), rhs);
-                vec_append(&a_main, &body->children, tast_assignment_wrap(assign));
+                vec_append(&a_main, &body->children, tast_expr_wrap(tast_assignment_wrap(assign)));
             }
             break;
         }
@@ -372,7 +372,7 @@ static Tast_function_def* rm_tuple_function_def_new(Env* env, Tast_function_decl
             });
 
             Tast_assignment* assign = tast_assignment_new(decl->pos, tast_expr_wrap(tast_member_access_wrap(lhs)), tast_symbol_wrap(rhs));
-            vec_append(&a_main, &body->children, tast_assignment_wrap(assign));
+            vec_append(&a_main, &body->children, tast_expr_wrap(tast_assignment_wrap(assign)));
             break;
         }
         default:
@@ -982,6 +982,8 @@ static Tast_expr* rm_tuple_expr(Env* env, Tast_expr* rhs, Pos assign_pos) {
             todo();
         case TAST_SUM_ACCESS:
             return tast_member_access_wrap(rm_tuple_sum_access_rhs(env, tast_sum_access_unwrap(rhs), assign_pos));
+        case TAST_ASSIGNMENT:
+            todo();
     }
     unreachable("");
 }
@@ -999,13 +1001,13 @@ static Tast_stmt* rm_tuple_stmt_rhs(Env* env, Tast_stmt* rhs, Pos assign_pos) {
 }
 
 static Tast_binary* rm_tuple_binary_not_in_assignment(Env* env, Tast_binary* oper) {
-    oper->lhs = rm_tuple_expr_not_in_assignment(env, oper->lhs);
-    oper->rhs = rm_tuple_expr_not_in_assignment(env, oper->rhs);
+    oper->lhs = tast_expr_unwrap(rm_tuple_expr_not_in_assignment(env, oper->lhs));
+    oper->rhs = tast_expr_unwrap(rm_tuple_expr_not_in_assignment(env, oper->rhs));
     return oper;
 }
 
 static Tast_unary* rm_tuple_unary_not_in_assignment(Env* env, Tast_unary* unary) {
-    unary->child = rm_tuple_expr_not_in_assignment(env, unary->child);
+    unary->child = tast_expr_unwrap(rm_tuple_expr_not_in_assignment(env, unary->child));
     return unary;
 }
 
@@ -1092,41 +1094,43 @@ static Tast_expr* rm_tuple_symbol_not_in_assignment(Env* env, Tast_symbol* sym) 
 }
 
 static Tast_index* rm_tuple_index_not_in_assignment(Env* env, Tast_index* index) {
-    index->index = rm_tuple_expr_not_in_assignment(env, index->index);
-    index->callee = rm_tuple_expr_not_in_assignment(env, index->callee);
+    index->index = tast_expr_unwrap(rm_tuple_expr_not_in_assignment(env, index->index));
+    index->callee = tast_expr_unwrap(rm_tuple_expr_not_in_assignment(env, index->callee));
     return index;
 }
 
 static Tast_member_access* rm_tuple_member_access_not_in_assignment(Env* env, Tast_member_access* access) {
     access->lang_type = rm_tuple_lang_type(env, access->lang_type, access->pos);
-    access->callee = rm_tuple_expr_not_in_assignment(env, access->callee);
+    access->callee = tast_expr_unwrap(rm_tuple_expr_not_in_assignment(env, access->callee));
     return access;
 }
 
-static Tast_expr* rm_tuple_expr_not_in_assignment(Env* env, Tast_expr* expr) {
+static Tast_stmt* rm_tuple_expr_not_in_assignment(Env* env, Tast_expr* expr) {
     switch (expr->type) {
         case TAST_OPERATOR:
-            return tast_operator_wrap(rm_tuple_operator_not_in_assignment(env, tast_operator_unwrap(expr)));
+            return tast_expr_wrap(tast_operator_wrap(rm_tuple_operator_not_in_assignment(env, tast_operator_unwrap(expr))));
         case TAST_SYMBOL:
-            return rm_tuple_symbol_not_in_assignment(env, tast_symbol_unwrap(expr));
+            return tast_expr_wrap(rm_tuple_symbol_not_in_assignment(env, tast_symbol_unwrap(expr)));
         case TAST_MEMBER_ACCESS:
-            return tast_member_access_wrap(rm_tuple_member_access_not_in_assignment(env, tast_member_access_unwrap(expr)));
+            return tast_expr_wrap(tast_member_access_wrap(rm_tuple_member_access_not_in_assignment(env, tast_member_access_unwrap(expr))));
         case TAST_INDEX:
-            return tast_index_wrap(rm_tuple_index_not_in_assignment(env, tast_index_unwrap(expr)));
+            return tast_expr_wrap(tast_index_wrap(rm_tuple_index_not_in_assignment(env, tast_index_unwrap(expr))));
         case TAST_LITERAL:
-            return expr;
+            return tast_expr_wrap(expr);
         case TAST_STRUCT_LITERAL:
             unreachable("");
         case TAST_FUNCTION_CALL:
-            return tast_function_call_wrap(rm_tuple_function_call(env, tast_function_call_unwrap(expr)));
+            return tast_expr_wrap(tast_function_call_wrap(rm_tuple_function_call(env, tast_function_call_unwrap(expr))));
         case TAST_TUPLE:
             unreachable("");
         case TAST_SUM_CALLEE:
             unreachable("");
         case TAST_SUM_CASE:
-            return tast_literal_wrap(tast_enum_lit_wrap(tast_sum_case_unwrap(expr)->tag));
+            return tast_expr_wrap(tast_literal_wrap(tast_enum_lit_wrap(tast_sum_case_unwrap(expr)->tag)));
         case TAST_SUM_ACCESS:
             todo();
+        case TAST_ASSIGNMENT:
+            return rm_tuple_assignment(env, tast_assignment_unwrap(expr));
     }
     unreachable("");
 }
@@ -1136,7 +1140,7 @@ static Tast_stmt* rm_tuple_stmt(Env* env, Tast_stmt* stmt) {
         case TAST_BLOCK:
             return tast_block_wrap(rm_tuple_block(env, tast_block_unwrap(stmt)));
         case TAST_EXPR:
-            return tast_expr_wrap(rm_tuple_expr_not_in_assignment(env, tast_expr_unwrap(stmt)));
+            return rm_tuple_expr_not_in_assignment(env, tast_expr_unwrap(stmt));
         case TAST_FOR_RANGE:
             return tast_for_range_wrap(rm_tuple_for_range(env, tast_for_range_unwrap(stmt)));
         case TAST_FOR_WITH_COND:
@@ -1149,8 +1153,6 @@ static Tast_stmt* rm_tuple_stmt(Env* env, Tast_stmt* stmt) {
             return stmt;
         case TAST_CONTINUE:
             return stmt;
-        case TAST_ASSIGNMENT:
-            return rm_tuple_assignment(env, tast_assignment_unwrap(stmt));
         case TAST_DEF:
             return tast_def_wrap(rm_tuple_def(env, tast_def_unwrap(stmt)));
     }
