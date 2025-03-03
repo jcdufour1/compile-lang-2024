@@ -25,12 +25,16 @@ Uast_literal* uast_literal_clone(const Uast_literal* lit) {
     unreachable("");
 }
 
+Uast_symbol* uast_symbol_clone(const Uast_symbol* symbol) {
+    return uast_symbol_new(symbol->pos, symbol->name);
+}
+
 Uast_expr* uast_expr_clone(const Uast_expr* expr) {
     switch (expr->type) {
         case UAST_OPERATOR:
             todo();
         case UAST_SYMBOL:
-            todo();
+            return uast_symbol_wrap(uast_symbol_clone(uast_symbol_const_unwrap(expr)));
         case UAST_MEMBER_ACCESS:
             todo();
         case UAST_INDEX:

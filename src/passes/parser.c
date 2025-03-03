@@ -11,6 +11,7 @@
 #include <ulang_type.h>
 #include <token_type_to_operator_type.h>
 #include "passes.h"
+#include <uast_clone.h>
 
 static Token prev_token = {0};
 
@@ -2126,6 +2127,12 @@ static PARSE_EXPR_STATUS parse_binary(
     bool can_be_tuple
 ) {
     Token oper = consume_operator(tokens);
+
+    bool is_equal_thing = false;
+    if (try_consume(NULL, tokens, TOKEN_SINGLE_EQUAL)) {
+        is_equal_thing = true;
+    }
+
     unwrap(is_binary(oper.type));
 
     Uast_expr* rhs = NULL;
@@ -2157,8 +2164,6 @@ static PARSE_EXPR_STATUS parse_binary(
         //if (is_unary(tk_view_front(*tokens).type)) {
         //    todo();
         //}
-    } else if (tk_view_front(*tokens).type == TOKEN_SINGLE_EQUAL) {
-        unreachable("+= and similar not implemented");
     } else {
         switch (parse_expr_piece(env, &rhs, tokens, prev_oper_pres, defer_sym_add)) {
             case PARSE_EXPR_OK:
@@ -2234,9 +2239,17 @@ static PARSE_EXPR_STATUS parse_binary(
             unreachable(TOKEN_FMT, token_print(TOKEN_MODE_LOG, oper));
     }
 
-    assert(*result);
-    *prev_oper_pres = get_operator_precedence(oper.type);
-    return PARSE_EXPR_OK;
+    if (is_equal_thing) {
+        *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(
+            oper.pos, uast_expr_wrap(uast_expr_clone(lhs)), *result, BINARY_SINGLE_EQUAL
+        )));
+        return PARSE_EXPR_OK;
+    } else {
+        assert(*result);
+        *prev_oper_pres = get_operator_precedence(oper.type);
+        return PARSE_EXPR_OK;
+    }
+    unreachable("");
 }
 
 static Uast_expr* get_right_child_operator(Uast_operator* oper) {
@@ -2703,4 +2716,5 @@ static void parser_do_tests(void) {
     parser_test_parse_stmt("deref(num) = 2*num + 1\n", test++);
     parser_test_parse_stmt("let num i32\n", test++);
     parser_test_parse_stmt("let num i32 = 0\n", test++);
+    parser_test_parse_stmt("num += deref(num2)\n", test++);
 }
