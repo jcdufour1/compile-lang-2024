@@ -15,4 +15,6 @@ Str_view serialize_lang_type_struct_thing(Env* env, Lang_type lang_type);
 
 Str_view serialize_lang_type(Env* env, Lang_type lang_type);
 
+Str_view serialize_lang_type_tuple(Env* env, Lang_type_tuple lang_type);
+
 #endif // LANG_TYPE_SERIALIZE_H

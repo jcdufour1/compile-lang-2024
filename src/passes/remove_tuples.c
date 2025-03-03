@@ -57,6 +57,30 @@ static Tast_expr* rm_tuple_sum_symbol_not_in_assignment(Env* env, Tast_symbol* s
 
 static Tast_expr* rm_tuple_raw_union_symbol_not_in_assignment(Env* env, Tast_symbol* sym);
 
+static Lang_type_struct rm_tuple_lang_type_tuple(Env* env, Lang_type_tuple lang_type, Pos lang_type_pos) {
+    Tast_variable_def_vec members = {0};
+
+    for (size_t idx = 0; idx < lang_type.lang_types.info.count; idx++) {
+        Tast_variable_def* memb = tast_variable_def_new(
+            lang_type_pos,
+            rm_tuple_lang_type(env, vec_at_const(lang_type.lang_types, idx), lang_type_pos),
+            false,
+            util_literal_name_new_prefix("tuple_struct_member")
+        );
+        vec_append(&a_main, &members, memb);
+    }
+
+    Struct_def_base base = {
+        .members = members,
+        .name = serialize_lang_type_tuple(env, lang_type)
+    };
+    // todo: remove untyped things here
+    Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
+    // TODO: consider collisions with generated structs and user defined structs
+    sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def));
+    return lang_type_struct_new(lang_type_atom_new(base.name, 0));
+}
+
 static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type_pos) {
     switch (lang_type.type) {
         case LANG_TYPE_SUM: {
@@ -157,29 +181,8 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
 
             return lang_type_raw_union_const_wrap(lang_type_raw_union_new(lang_type_atom_new(item_type_def->base.name, 0)));
         }
-        case LANG_TYPE_TUPLE: {
-            Tast_variable_def_vec members = {0};
-
-            for (size_t idx = 0; idx < lang_type_tuple_const_unwrap(lang_type).lang_types.info.count; idx++) {
-                Tast_variable_def* memb = tast_variable_def_new(
-                    lang_type_pos,
-                    rm_tuple_lang_type(env, vec_at_const(lang_type_tuple_const_unwrap(lang_type).lang_types, idx), lang_type_pos),
-                    false,
-                    util_literal_name_new_prefix("tuple_struct_member")
-                );
-                vec_append(&a_main, &members, memb);
-            }
-
-            Struct_def_base base = {
-                .members = members,
-                .name = serialize_lang_type(env, lang_type)
-            };
-            // todo: remove untyped things here
-            Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
-            // TODO: consider collisions with generated structs and user defined structs
-            sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def));
-            return lang_type_struct_const_wrap(lang_type_struct_new(lang_type_atom_new(base.name, 0)));
-        }
+        case LANG_TYPE_TUPLE:
+            return lang_type_struct_const_wrap(rm_tuple_lang_type_tuple(env, lang_type_tuple_const_unwrap(lang_type), lang_type_pos));
         case LANG_TYPE_PRIMITIVE:
             return lang_type;
         case LANG_TYPE_STRUCT:
@@ -188,6 +191,12 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
             return lang_type;
         case LANG_TYPE_ENUM:
             return lang_type;
+        case LANG_TYPE_FN: {
+            Lang_type_fn fn = lang_type_fn_const_unwrap(lang_type);
+            memset(&fn, 0, sizeof(fn)); // because fn lang_type info is really only needed for type checking
+                        // (which has already occured), and this makes things easier (for now)
+            return (Lang_type) {0};
+        }
         default:
             unreachable(LANG_TYPE_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
     }
@@ -911,6 +920,11 @@ static Tast_expr* rm_tuple_raw_union_lit_rhs(Env* env, Tast_raw_union_lit* rhs, 
 
 }
 
+static Tast_function_lit* rm_tuple_function_lit_rhs(Env* env, Tast_function_lit* rhs, Pos assign_pos) {
+    rhs->lang_type = rm_tuple_lang_type(env, rhs->lang_type, assign_pos);
+    return rhs;
+}
+
 static Tast_expr* rm_tuple_literal_rhs(Env* env, Tast_literal* rhs, Pos assign_pos) {
     switch (rhs->type) {
         case TAST_NUMBER:
@@ -928,7 +942,7 @@ static Tast_expr* rm_tuple_literal_rhs(Env* env, Tast_literal* rhs, Pos assign_p
         case TAST_RAW_UNION_LIT:
             return rm_tuple_raw_union_lit_rhs(env, tast_raw_union_lit_unwrap(rhs), assign_pos);
         case TAST_FUNCTION_LIT:
-            todo();
+            return tast_literal_wrap(tast_function_lit_wrap(rm_tuple_function_lit_rhs(env, tast_function_lit_unwrap(rhs), assign_pos)));
     }
     unreachable("");
 }

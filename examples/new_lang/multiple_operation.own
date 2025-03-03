@@ -212,5 +212,9 @@ fn main() i32 {
 
     bitwise()
 
+    let num100 i32 = 87
+    num100 += 2
+    printf("num100: %d\n", num100)
+
     return 0
 }

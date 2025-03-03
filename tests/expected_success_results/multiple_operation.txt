@@ -30,3 +30,4 @@ bitwise or:
 3
 2
 95
+num100: 89
