@@ -29,27 +29,83 @@ Uast_symbol* uast_symbol_clone(const Uast_symbol* symbol) {
     return uast_symbol_new(symbol->pos, symbol->name);
 }
 
+Uast_member_access* uast_member_access_clone(const Uast_member_access* access) {
+    return uast_member_access_new(access->pos, access->member_name, uast_expr_clone(access->callee));
+}
+
+Uast_unary* uast_unary_clone(const Uast_unary* unary) {
+    return uast_unary_new(unary->pos, uast_expr_clone(unary->child), unary->token_type, unary->lang_type);
+}
+
+Uast_binary* uast_binary_clone(const Uast_binary* binary) {
+    return uast_binary_new(binary->pos, uast_stmt_clone(binary->lhs), uast_expr_clone(binary->rhs), binary->token_type);
+}
+
+Uast_index* uast_index_clone(const Uast_index* index) {
+    return uast_index_new(index->pos, uast_expr_clone(index->index), uast_expr_clone(index->callee));
+}
+
+Uast_expr_vec uast_expr_vec_clone(Uast_expr_vec vec) {
+    Uast_expr_vec new_vec = {0};
+    for (size_t idx = 0; idx < vec.info.count; idx++) {
+        vec_append(&a_main, &new_vec, uast_expr_clone(vec_at(&vec, idx)));
+    }
+    return new_vec;
+}
+
+Uast_function_call* uast_function_call_clone(const Uast_function_call* fun_call) {
+    return uast_function_call_new(
+        fun_call->pos,
+        uast_expr_vec_clone(fun_call->args),
+        uast_expr_clone(fun_call->callee)
+    );
+}
+
+Uast_tuple* uast_tuple_clone(const Uast_tuple* tuple) {
+    return uast_tuple_new(
+        tuple->pos,
+        uast_expr_vec_clone(tuple->members)
+    );
+}
+
+Uast_operator* uast_operator_clone(const Uast_operator* oper) {
+    switch (oper->type) {
+        case UAST_UNARY:
+            return uast_unary_wrap(uast_unary_clone(uast_unary_const_unwrap(oper)));
+        case UAST_BINARY:
+            return uast_binary_wrap(uast_binary_clone(uast_binary_const_unwrap(oper)));
+    }
+    unreachable("");
+}
+
 Uast_expr* uast_expr_clone(const Uast_expr* expr) {
     switch (expr->type) {
         case UAST_OPERATOR:
-            todo();
+            return uast_operator_wrap(uast_operator_clone(uast_operator_const_unwrap(expr)));
         case UAST_SYMBOL:
             return uast_symbol_wrap(uast_symbol_clone(uast_symbol_const_unwrap(expr)));
         case UAST_MEMBER_ACCESS:
-            todo();
+            return uast_member_access_wrap(uast_member_access_clone(uast_member_access_const_unwrap(expr)));
         case UAST_INDEX:
-            todo();
+            return uast_index_wrap(uast_index_clone(uast_index_const_unwrap(expr)));
         case UAST_LITERAL:
             return uast_literal_wrap(uast_literal_clone(uast_literal_const_unwrap(expr)));
         case UAST_FUNCTION_CALL:
-            todo();
+            return uast_function_call_wrap(uast_function_call_clone(uast_function_call_const_unwrap(expr)));
         case UAST_STRUCT_LITERAL:
             todo();
         case UAST_TUPLE:
-            todo();
+            return uast_tuple_wrap(uast_tuple_clone(uast_tuple_const_unwrap(expr)));
         case UAST_SUM_ACCESS: // TODO: remove uast_sum_access if not used
             todo();
     }
     unreachable("");
+}
+
+Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt) {
+    if (stmt->type != UAST_EXPR) {
+        todo();
+    }
+    return uast_expr_wrap(uast_expr_clone(uast_expr_const_unwrap(stmt)));
 }
 
