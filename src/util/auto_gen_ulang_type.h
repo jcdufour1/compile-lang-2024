@@ -124,6 +124,16 @@ static Ulang_type_type ulang_type_gen_regular(const char* prefix) {
     return sym;
 }
 
+static Ulang_type_type ulang_type_gen_reg_generic(const char* prefix) {
+    const char* base_name = "reg_generic";
+    Ulang_type_type sym = {.name = ulang_type_name_new(prefix, base_name, false)};
+
+    append_member(&sym.members, "Ulang_type_atom", "atom");
+    append_member(&sym.members, "Ulang_type_vec", "generic_args");
+
+    return sym;
+}
+
 static Ulang_type_type ulang_type_gen_tuple(const char* prefix) {
     const char* base_name = "tuple";
     Ulang_type_type sym = {.name = ulang_type_name_new(prefix, base_name, false)};
@@ -150,6 +160,7 @@ static Ulang_type_type ulang_type_gen_ulang_type(void) {
     vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_tuple(base_name));
     vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_fn(base_name));
     vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_regular(base_name));
+    vec_append(&gen_a, &ulang_type.sub_types, ulang_type_gen_reg_generic(base_name));
 
     return ulang_type;
 }
@@ -382,7 +393,6 @@ void ulang_type_gen_ulang_type_wrap(Ulang_type_type ulang_type) {
     ulang_type_gen_internal_wrap(ulang_type, true);
 }
 
-// TODO: deduplicate these functions (use same function for Llvm and Ulang_type)
 static void ulang_type_gen_print_forward_decl(Ulang_type_type type) {
     for (size_t idx = 0; idx < type.sub_types.info.count; idx++) {
         ulang_type_gen_print_forward_decl(vec_at(&type.sub_types, idx));

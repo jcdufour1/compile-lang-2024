@@ -48,13 +48,21 @@ typedef enum {
     TOKEN_NEW_LINE,
     TOKEN_CHAR_LITERAL,
 
+    // opening
+    TOKEN_OPEN_PAR,
+    TOKEN_OPEN_CURLY_BRACE,
+    TOKEN_OPEN_SQ_BRACKET,
+    TOKEN_OPEN_GENERIC,
+
+    // closing
+    TOKEN_CLOSE_PAR,
+    TOKEN_CLOSE_CURLY_BRACE,
+    TOKEN_CLOSE_SQ_BRACKET,
+    TOKEN_CLOSE_GENERIC,
+
     // miscellaneous
     TOKEN_SUM,
     TOKEN_SYMBOL,
-    TOKEN_OPEN_PAR,
-    TOKEN_CLOSE_PAR,
-    TOKEN_OPEN_CURLY_BRACE,
-    TOKEN_CLOSE_CURLY_BRACE,
     TOKEN_DOUBLE_QUOTE,
     TOKEN_SEMICOLON,
     TOKEN_COMMA,
@@ -63,8 +71,6 @@ typedef enum {
     TOKEN_SINGLE_DOT,
     TOKEN_DOUBLE_DOT,
     TOKEN_TRIPLE_DOT,
-    TOKEN_OPEN_SQ_BRACKET,
-    TOKEN_CLOSE_SQ_BRACKET,
 
     // keywords
     TOKEN_FN,
@@ -229,6 +235,10 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_SHIFT_RIGHT:
             return false;
+        case TOKEN_OPEN_GENERIC:
+            return false;
+        case TOKEN_CLOSE_GENERIC:
+            return false;
     }
     unreachable("");
 }
@@ -358,6 +368,10 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
         case TOKEN_SHIFT_LEFT:
             return true;
         case TOKEN_SHIFT_RIGHT:
+            return true;
+        case TOKEN_OPEN_GENERIC:
+            return true;
+        case TOKEN_CLOSE_GENERIC:
             return true;
     }
     unreachable(TOKEN_FMT"\n", token_print(TOKEN_MODE_LOG, token));
@@ -509,6 +523,10 @@ static inline bool token_is_closing(Token curr_token) {
             return false;
         case TOKEN_SHIFT_RIGHT:
             return false;
+        case TOKEN_OPEN_GENERIC:
+            return false;
+        case TOKEN_CLOSE_GENERIC:
+            return true;
     }
     unreachable("");
 }
@@ -638,6 +656,10 @@ static inline bool token_is_opening(Token curr_token) {
         case TOKEN_SHIFT_LEFT:
             return false;
         case TOKEN_SHIFT_RIGHT:
+            return false;
+        case TOKEN_OPEN_GENERIC:
+            return true;
+        case TOKEN_CLOSE_GENERIC:
             return false;
     }
     unreachable("");

@@ -51,6 +51,7 @@ static PARSE_STATUS parse_variable_decl(
     Ulang_type lang_type_if_not_required
 );
 static PARSE_EXPR_STATUS parse_condition(Env* env, Uast_condition**, Tk_view* tokens);
+static PARSE_STATUS parse_generics_args(Env* env, Ulang_type_vec* args, Tk_view* tokens);
 
 static bool try_consume(Token* result, Tk_view* tokens, TOKEN_TYPE type) {
     Token temp;
@@ -478,6 +479,10 @@ static bool can_end_stmt(Token token) {
             return false;
         case TOKEN_SHIFT_RIGHT:
             return false;
+        case TOKEN_OPEN_GENERIC:
+            return false;
+        case TOKEN_CLOSE_GENERIC:
+            return true;
     }
     unreachable("");
 }
@@ -670,6 +675,10 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_SHIFT_RIGHT:
             return false;
+        case TOKEN_OPEN_GENERIC:
+            return false;
+        case TOKEN_CLOSE_GENERIC:
+            return false;
     }
     unreachable("");
 }
@@ -801,6 +810,10 @@ static bool is_binary(TOKEN_TYPE token_type) {
             return true;
         case TOKEN_SHIFT_RIGHT:
             return true;
+        case TOKEN_OPEN_GENERIC:
+            return true;
+        case TOKEN_CLOSE_GENERIC:
+            return true;
     }
     unreachable("");
 }
@@ -808,7 +821,6 @@ static bool is_binary(TOKEN_TYPE token_type) {
 static bool parse_lang_type_struct_atom(Ulang_type_atom* lang_type, Tk_view* tokens) {
     memset(lang_type, 0, sizeof(*lang_type));
     Token lang_type_token = {0};
-
 
     if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
         return false;
@@ -854,7 +866,7 @@ static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* t
 }
 
 // type will be parsed if possible
-static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens) {
+static bool parse_lang_type_struct(Env* env, Ulang_type* lang_type, Tk_view* tokens) {
     memset(lang_type, 0, sizeof(*lang_type));
 
     Token lang_type_token = {0};
@@ -864,7 +876,7 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens) {
             return false;
         }
         Ulang_type* rtn_type = arena_alloc(&a_main, sizeof(*rtn_type)); // TODO: make function, etc. to call arena_alloc automatically
-        if (!parse_lang_type_struct(rtn_type, tokens)) {
+        if (!parse_lang_type_struct(env, rtn_type, tokens)) {
             return false;
         }
         *lang_type = ulang_type_fn_const_wrap(ulang_type_fn_new(params, rtn_type));
@@ -881,12 +893,21 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens) {
         return true;
     }
 
-    if (parse_lang_type_struct_atom(&atom, tokens)) {
-        *lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(atom));
-        return true;
-    } else {
+    if (!parse_lang_type_struct_atom(&atom, tokens)) {
         return false;
     }
+
+    if (tk_view_front(*tokens).type != TOKEN_OPEN_GENERIC) {
+        *lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(atom));
+        return true;
+    }
+
+    Ulang_type_vec gen_args = {0};
+    if (PARSE_OK != parse_generics_args(env, &gen_args, tokens)) {
+        return false;
+    }
+    *lang_type = ulang_type_reg_generic_const_wrap(ulang_type_reg_generic_new(atom, gen_args));
+    return true;
 }
 
 // require type to be parsed
@@ -901,7 +922,7 @@ static PARSE_STATUS parse_lang_type_struct_atom_require(Env* env, Ulang_type_ato
 
 // require type to be parsed
 static PARSE_STATUS parse_lang_type_struct_require(Env* env, Ulang_type* lang_type, Tk_view* tokens) {
-    if (parse_lang_type_struct(lang_type, tokens)) {
+    if (parse_lang_type_struct(env, lang_type, tokens)) {
         return PARSE_OK;
     } else {
         msg_parser_expected(env->file_text, tk_view_front(*tokens), "", TOKEN_SYMBOL);
@@ -999,11 +1020,11 @@ static PARSE_STATUS parse_function_parameters(Env* env, Uast_function_params** r
     return PARSE_OK;
 }
 
-static void parse_return_types(Uast_lang_type** result, Tk_view* tokens) {
+static void parse_return_types(Env* env, Uast_lang_type** result, Tk_view* tokens) {
     Ulang_type lang_type = {0};
     Pos pos = tk_view_front(*tokens).pos;
 
-    if (!parse_lang_type_struct(&lang_type, tokens)) {
+    if (!parse_lang_type_struct(env, &lang_type, tokens)) {
         *result = uast_lang_type_new(pos, ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0))));
         return;
     }
@@ -1028,7 +1049,7 @@ static PARSE_STATUS parse_function_decl_common(
     }
 
     Uast_lang_type* return_type = NULL;
-    parse_return_types(&return_type, tokens);
+    parse_return_types(env, &return_type, tokens);
 
     *fun_decl = uast_function_decl_new(name_token.pos, params, return_type, name_token.text);
     if (!usymbol_add(env, uast_function_decl_wrap(*fun_decl))) {
@@ -1055,6 +1076,51 @@ static PARSE_STATUS parse_function_def(Env* env, Uast_function_def** fun_def, Tk
     return PARSE_OK;
 }
 
+static PARSE_STATUS parse_generics_params(Env* env, Uast_generic_param_vec* params, Tk_view* tokens) {
+    memset(params, 0, sizeof(*params));
+    unwrap(try_consume(NULL, tokens, TOKEN_OPEN_GENERIC));
+
+    do {
+        Token symbol = {0};
+        if (!try_consume(&symbol, tokens, TOKEN_SYMBOL)) {
+            msg_parser_expected(env->file_text, tk_view_front(*tokens), "", TOKEN_SYMBOL);
+            return PARSE_ERROR;
+        }
+        Uast_generic_param* param = uast_generic_param_new(symbol.pos, uast_symbol_new(symbol.pos, symbol.text));
+        vec_append(&a_main, params, param);
+    } while (try_consume(NULL, tokens, TOKEN_COMMA));
+
+    if (!try_consume(NULL, tokens, TOKEN_CLOSE_GENERIC)) {
+        msg_parser_expected(
+            env->file_text, tk_view_front(*tokens), "", TOKEN_COMMA, TOKEN_CLOSE_GENERIC
+        );
+        return PARSE_ERROR;
+    }
+
+    return PARSE_OK;
+}
+
+static PARSE_STATUS parse_generics_args(Env* env, Ulang_type_vec* args, Tk_view* tokens) {
+    memset(args, 0, sizeof(*args));
+    unwrap(try_consume(NULL, tokens, TOKEN_OPEN_GENERIC));
+
+    do {
+        Ulang_type arg = {0};
+        if (PARSE_ERROR == parse_lang_type_struct_require(env, &arg, tokens)) {
+            return PARSE_ERROR;
+        }
+        vec_append(&a_main, args, arg);
+    } while (try_consume(NULL, tokens, TOKEN_COMMA));
+
+    if (!try_consume(NULL, tokens, TOKEN_CLOSE_GENERIC)) {
+        msg_parser_expected(
+            env->file_text, tk_view_front(*tokens), "", TOKEN_COMMA, TOKEN_CLOSE_GENERIC
+        );
+        return PARSE_ERROR;
+    }
+    return PARSE_OK;
+}
+
 static PARSE_STATUS parse_struct_base_def(
     Env* env,
     Ustruct_def_base* base,
@@ -1063,10 +1129,16 @@ static PARSE_STATUS parse_struct_base_def(
     bool require_sub_types,
     Ulang_type default_lang_type
 ) {
+    memset(base, 0, sizeof(*base));
     base->name = name;
 
+    if (tk_view_front(*tokens).type == TOKEN_OPEN_GENERIC) {
+        parse_generics_params(env, &base->generics, tokens);
+    }
+
     if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), "in struct, raw_union, or enum definition", TOKEN_OPEN_CURLY_BRACE);
+        todo();
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), "in struct, raw_union, or enum definition", TOKEN_OPEN_CURLY_BRACE, TOKEN_OPEN_GENERIC);
         return PARSE_ERROR;
     }
 
@@ -1075,9 +1147,12 @@ static PARSE_STATUS parse_struct_base_def(
         Uast_variable_def* member;
         switch (parse_variable_decl(env, &member, tokens, false, false, false, require_sub_types, default_lang_type)) {
             case PARSE_ERROR:
+                todo();
                 return PARSE_ERROR;
-            case PARSE_EXPR_OK:
+            case PARSE_OK:
                 break;
+            default:
+                unreachable("");
         }
         try_consume(NULL, tokens, TOKEN_SEMICOLON);
         while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
@@ -1271,7 +1346,7 @@ static PARSE_STATUS parse_variable_decl(
             return PARSE_ERROR;
         }
     } else {
-        if (!parse_lang_type_struct(&lang_type, tokens)) {
+        if (!parse_lang_type_struct(env, &lang_type, tokens)) {
             lang_type = default_lang_type;
         }
     }

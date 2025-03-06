@@ -135,7 +135,11 @@ static bool get_next_token(const Env* env, Pos* pos, Token* token, Str_view_col*
         token->type = TOKEN_INT_LITERAL;
         return true;
     } else if (str_view_col_try_consume(pos, file_text, '(')) {
-        token->type = TOKEN_OPEN_PAR;
+        if (str_view_col_try_consume(pos, file_text, '<')) {
+            token->type = TOKEN_OPEN_GENERIC;
+        } else {
+            token->type = TOKEN_OPEN_PAR;
+        }
         return true;
     } else if (str_view_col_try_consume(pos, file_text, ')')) {
         token->type = TOKEN_CLOSE_PAR;
@@ -253,6 +257,9 @@ static bool get_next_token(const Env* env, Pos* pos, Token* token, Str_view_col*
             return true;
         } else if (str_view_col_try_consume(pos, file_text, '>')) {
             token->type = TOKEN_SHIFT_RIGHT;
+            return true;
+        } else if (str_view_col_try_consume(pos, file_text, ')')) {
+            token->type = TOKEN_CLOSE_GENERIC;
             return true;
         } else {
             token->type = TOKEN_GREATER_THAN;

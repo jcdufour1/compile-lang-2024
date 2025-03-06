@@ -128,6 +128,10 @@ Str_view token_type_to_str_view_msg(TOKEN_TYPE token_type) {
             return str_view_from_cstr("<<");
         case TOKEN_SHIFT_RIGHT:
             return str_view_from_cstr(">>");
+        case TOKEN_OPEN_GENERIC:
+            return str_view_from_cstr("(<");
+        case TOKEN_CLOSE_GENERIC:
+            return str_view_from_cstr(">)");
     }
     unreachable("%d\n", token_type);
 }
@@ -258,6 +262,10 @@ Str_view token_type_to_str_view_log(TOKEN_TYPE token_type) {
             return str_view_from_cstr("<<");
         case TOKEN_SHIFT_RIGHT:
             return str_view_from_cstr(">>");
+        case TOKEN_OPEN_GENERIC:
+            return str_view_from_cstr("(<");
+        case TOKEN_CLOSE_GENERIC:
+            return str_view_from_cstr(">)");
     }
     unreachable("%d\n", token_type);
 }
@@ -340,6 +348,8 @@ Str_view token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         case TOKEN_LOGICAL_OR: // fallthrough
         case TOKEN_SHIFT_LEFT: // fallthrough
         case TOKEN_SHIFT_RIGHT: // fallthrough
+        case TOKEN_OPEN_GENERIC: // fallthrough
+        case TOKEN_CLOSE_GENERIC: // fallthrough
         case TOKEN_TYPE_DEF:
             break;
         case TOKEN_COMMENT: 

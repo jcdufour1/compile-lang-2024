@@ -392,6 +392,15 @@ Str_view uast_param_print_internal(const Uast_param* param, int indent) {
     return string_to_strv(buf);
 }
 
+Str_view uast_generic_param_print_internal(const Uast_generic_param* params, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&print_arena, &buf, "generic_params\n", indent);
+    string_extend_strv(&print_arena, &buf, uast_symbol_print_internal(params->child, indent + INDENT_WIDTH));
+
+    return string_to_strv(buf);
+}
+
 Str_view uast_return_print_internal(const Uast_return* lang_rtn, int indent) {
     String buf = {0};
 
@@ -595,6 +604,8 @@ Str_view uast_def_print_internal(const Uast_def* def, int indent) {
             return uast_primitive_def_print_internal(uast_primitive_def_const_unwrap(def), indent);
         case UAST_LITERAL_DEF:
             return uast_literal_def_print_internal(uast_literal_def_const_unwrap(def), indent);
+        case UAST_GENERIC_PARAM:
+            return uast_generic_param_print_internal(uast_generic_param_const_unwrap(def), indent);
     }
     unreachable("");
 }

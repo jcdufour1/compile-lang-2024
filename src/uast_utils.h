@@ -43,6 +43,8 @@ static inline Ulang_type uast_get_ulang_type_def(const Uast_def* def) {
             unreachable("");
         case UAST_SUM_DEF:
             return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(uast_sum_def_const_unwrap(def)->base.name, 0)));
+        case UAST_GENERIC_PARAM:
+            unreachable("");
     }
     unreachable("");
 }
@@ -120,6 +122,8 @@ static inline Lang_type* uast_get_ulang_type_def_ref(Uast_def* def) {
             unreachable("");
         case UAST_SUM_DEF:
             unreachable("");
+        case UAST_GENERIC_PARAM:
+            unreachable("");
     }
     unreachable("");
 }
@@ -172,6 +176,8 @@ static inline Lang_type uast_def_get_lang_type(Env* env, const Uast_def* def) {
             unreachable("");
         case UAST_SUM_DEF:
             return lang_type_sum_const_wrap(lang_type_sum_new(lang_type_atom_new(uast_sum_def_const_unwrap(def)->base.name, 0)));
+        case UAST_GENERIC_PARAM:
+            unreachable("");
     }
     unreachable("");
 }
@@ -248,6 +254,8 @@ static inline Lang_type* uast_def_ref_get_lang_type(Uast_def* def) {
         case UAST_LITERAL_DEF:
             unreachable("");
         case UAST_SUM_DEF:
+            unreachable("");
+        case UAST_GENERIC_PARAM:
             unreachable("");
     }
     unreachable("");
@@ -353,6 +361,8 @@ static inline Str_view uast_def_get_name(const Uast_def* def) {
             return uast_literal_def_get_name(uast_literal_def_const_unwrap(def));
         case UAST_SUM_DEF:
             return uast_sum_def_const_unwrap(def)->base.name;
+        case UAST_GENERIC_PARAM:
+            return uast_generic_param_const_unwrap(def)->child->name;
     }
     unreachable("");
 }

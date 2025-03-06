@@ -390,10 +390,19 @@ static Uast_type uast_gen_literal_def(const char* prefix) {
     return def;
 }
 
+static Uast_type uast_gen_generic_param(const char* prefix) {
+    Uast_type param = {.name = uast_name_new(prefix, "generic_param", false)};
+
+    append_member(&param.members, "Uast_symbol*", "child");
+
+    return param;
+}
+
 static Uast_type uast_gen_def(const char* prefix) {
     const char* base_name = "def";
     Uast_type def = {.name = uast_name_new(prefix, base_name, false)};
 
+    vec_append(&gen_a, &def.sub_types, uast_gen_generic_param(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_function_def(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_variable_def(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_struct_def(base_name));

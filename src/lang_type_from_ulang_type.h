@@ -178,6 +178,8 @@ static inline bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Env* 
             *new_lang_type = lang_type_fn_const_wrap(new_fn);
             return true;
         }
+        case ULANG_TYPE_REG_GENERIC:
+            todo();
     }
     unreachable("");
 }
@@ -190,6 +192,8 @@ static inline Lang_type lang_type_from_ulang_type(Env* env, Ulang_type lang_type
             return lang_type_from_ulang_type_tuple(env, ulang_type_tuple_const_unwrap(lang_type));
         case ULANG_TYPE_FN:
             return lang_type_from_ulang_type_fn(env, ulang_type_fn_const_unwrap(lang_type));
+        case ULANG_TYPE_REG_GENERIC:
+            todo();
     }
     unreachable("");
 }

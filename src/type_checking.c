@@ -430,6 +430,8 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
             *new_tast = tast_symbol_wrap(sym_typed);
             return true;
         }
+        case UAST_GENERIC_PARAM:
+            unreachable("cannot set symbol of template parameter here");
     }
     unreachable("");
 }
@@ -1107,6 +1109,9 @@ STMT_STATUS try_set_def_types(Env* env, Tast_def** new_tast, Uast_def* uast) {
                 return STMT_ERROR;
             }
             return STMT_NO_STMT;
+        }
+        case UAST_GENERIC_PARAM: {
+            todo();
         }
     }
     unreachable("");
@@ -2016,6 +2021,8 @@ static bool try_types_internal_set_lang_type(
             lang_type_from_ulang_type(env, lang_type);
             return true;
         case ULANG_TYPE_FN:
+            todo();
+        case ULANG_TYPE_REG_GENERIC:
             todo();
     }
     unreachable("");
