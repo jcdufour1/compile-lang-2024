@@ -39,6 +39,12 @@ type vector_int(<ValueType: $int>) {
     String name;
     T1 value;
 }
+
+type Darr struct (<ValueType, IndexType: $int = usize>) {
+    items* ItemType
+    count IndexType
+    capacity IndexType
+}
 '''
 
 for loop (index (0 inclusive, 10 exclusive))
@@ -331,7 +337,42 @@ fn string_append overload [u8](string Darray<(u8)>, overload item) {
 }
 '''
 
+# function overloading (idea 4)
+'''c
+fn string_append u8(string Darray<(u8)>, overload item) {
+}
+
+fn string_append Darray<(u8)>(string Darray<(u8)>, overload item) {
+}
+
+fn string_append [u8](string Darray<(u8)>, overload item) {
+}
+'''
+
+# function overloading (idea 5)
+'''c
+@overload
+fn string_append u8(string Darray<(u8)>, overload item) {
+}
+
+@overload
+fn string_append Darray<(u8)>(string Darray<(u8)>, overload item) {
+}
+
+@overload
+fn string_append [u8](string Darray<(u8)>, overload item) {
+}
+'''
+
 # operator overloading (idea 1)
+'''c
+fn operator [] (lhs String, rhs i32) {
+}
+
+fn operator [] (lhs String, rhs i32) {
+}
+
+# operator overloading (idea 2)
 '''c
 fn [] (lhs String, rhs i32) {
 }
@@ -339,6 +380,10 @@ fn [] (lhs String, rhs i32) {
 fn [] (lhs String, rhs i32) {
 }
 
+# operator overloading (idea 3)
+'''c
+fn [] String, i32 (lhs, rhs) {
+}
 '''
 
 # using (put struct members directly in namespace)

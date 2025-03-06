@@ -1,0 +1,32 @@
+, operator (like in "vec_at" macro)
+should := be assignment operator?
+
+
+for generics:
+    check_<whatever> should see if constraints qualify template parameter
+    if assigning template parameter to i32, call get_constraints_lang_type(i32), and compare that way
+
+
+
+
+# roadmap to try to get bootstrap compiler done:
+- implement generics
+- implement defer
+- implement modules
+- implement slices
+- implement orelse, !!, etc.
+- implement #pos to get position
+- implement extern("c") defintions
+- implement non-hard coded size_t, etc.
+- implement printing features
+- implement named scopes
+- implement global constants
+- implement way to get tag of sum
+- implement automatic zero initialization
+- implement manual zero initialization
+- implement hex and binary literal
+
+# optional things:
+- implement designated args
+- implement iterators and foreach
+
