@@ -159,12 +159,6 @@ bool try_set_variable_def_types(
     bool is_variadic
 );
 
-bool try_set_struct_def_types(Env* env, Uast_struct_def* tast);
-
-bool try_set_raw_union_def_types(Env* env, Uast_raw_union_def* tast);
-
-bool try_set_enum_def_types(Env* env, Uast_enum_def* tast);
-
 bool try_get_struct_def(Env* env, Tast_struct_def** struct_def, Tast_stmt* stmt);
 
 bool llvm_try_get_struct_def(Env* env, Tast_struct_def** struct_def, Llvm* tast);

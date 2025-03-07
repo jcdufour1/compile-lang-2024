@@ -18,6 +18,7 @@
 #include <lang_type_print.h>
 #include <ulang_type_print.h>
 #include <ulang_type_from_uast_function_decl.h>
+#include <resolve_generics.h>
 
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
@@ -1075,21 +1076,12 @@ STMT_STATUS try_set_def_types(Env* env, Tast_def** new_tast, Uast_def* uast) {
             return STMT_NO_STMT;
         }
         case UAST_STRUCT_DEF: {
-            if (!try_set_struct_def_types(env, uast_struct_def_unwrap(uast))) {
-                return STMT_ERROR;
-            }
             return STMT_NO_STMT;
         }
         case UAST_RAW_UNION_DEF: {
-            if (!try_set_raw_union_def_types(env, uast_raw_union_def_unwrap(uast))) {
-                return STMT_ERROR;
-            }
             return STMT_NO_STMT;
         }
         case UAST_ENUM_DEF: {
-            if (!try_set_enum_def_types(env, uast_enum_def_unwrap(uast))) {
-                return STMT_ERROR;
-            }
             return STMT_NO_STMT;
         }
         case UAST_PRIMITIVE_DEF: {
@@ -1105,9 +1097,6 @@ STMT_STATUS try_set_def_types(Env* env, Tast_def** new_tast, Uast_def* uast) {
             return STMT_NO_STMT;
         }
         case UAST_SUM_DEF: {
-            if (!try_set_sum_def_types(env, uast_sum_def_unwrap(uast))) {
-                return STMT_ERROR;
-            }
             return STMT_NO_STMT;
         }
         case UAST_GENERIC_PARAM: {
@@ -1810,51 +1799,6 @@ static bool try_set_condition_types(Env* env, Tast_condition** new_cond, Uast_co
     return true;
 }
 
-bool try_set_struct_base_types(Env* env, Struct_def_base* new_base, Ustruct_def_base* base) {
-    env->type_checking_is_in_struct_base_def = true;
-    bool success = true;
-    Tast_variable_def_vec new_members = {0};
-
-    if (base->members.info.count < 1) {
-        todo();
-    }
-
-    for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        Uast_variable_def* curr = vec_at(&base->members, idx);
-
-        Tast_variable_def* new_memb = NULL;
-        if (try_set_variable_def_types(env, &new_memb, curr, false, false)) {
-            vec_append(&a_main, &new_members, new_memb);
-        } else {
-            success = false;
-        }
-    }
-
-    *new_base = (Struct_def_base) {
-        .members = new_members,
-        .name = base->name
-    };
-
-    env->type_checking_is_in_struct_base_def = false;
-    return success;
-}
-
-bool try_set_enum_def_types(Env* env, Uast_enum_def* tast) {
-    Struct_def_base new_base = {0};
-    bool success = try_set_struct_base_types(env, &new_base, &tast->base);
-    Tast_enum_def* new_def = tast_enum_def_new(tast->pos, new_base);
-    unwrap(symbol_add(env, tast_enum_def_wrap(new_def)));
-    return success;
-}
-
-bool try_set_sum_def_types(Env* env, Uast_sum_def* tast) {
-    Struct_def_base new_base = {0};
-    bool success = try_set_struct_base_types(env, &new_base, &tast->base);
-    Tast_sum_def* new_def = tast_sum_def_new(tast->pos, new_base);
-    unwrap(symbol_add(env, tast_sum_def_wrap(new_def)));
-    return success;
-}
-
 bool try_set_primitive_def_types(Env* env, Uast_primitive_def* tast) {
     (void) env;
     unwrap(symbol_add(env, tast_primitive_def_wrap(tast_primitive_def_new(tast->pos, tast->lang_type))));
@@ -1865,22 +1809,6 @@ bool try_set_literal_def_types(Env* env, Uast_literal_def* tast) {
     (void) env;
     (void) tast;
     unreachable("");
-}
-
-bool try_set_raw_union_def_types(Env* env, Uast_raw_union_def* uast) {
-    Struct_def_base new_base = {0};
-    bool success = try_set_struct_base_types(env, &new_base, &uast->base);
-    unwrap(symbol_add(env, tast_raw_union_def_wrap(tast_raw_union_def_new(uast->pos, new_base))));
-    return success;
-}
-
-bool try_set_struct_def_types(Env* env, Uast_struct_def* uast) {
-    Uast_def* dummy = NULL;
-    assert(usymbol_lookup(&dummy, env, uast->base.name));
-    Struct_def_base new_base = {0};
-    bool success = try_set_struct_base_types(env, &new_base, &uast->base);
-    unwrap(symbol_add(env, tast_struct_def_wrap(tast_struct_def_new(uast->pos, new_base))));
-    return success;
 }
 
 static void msg_undefined_type_internal(
@@ -1907,6 +1835,7 @@ bool try_set_variable_def_types(
     bool is_variadic
 ) {
     Lang_type new_lang_type = {0};
+    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, uast->lang_type));
     if (!try_lang_type_from_ulang_type(&new_lang_type, env, uast->lang_type, uast->pos)) {
         return false;
     }
@@ -2003,6 +1932,7 @@ bool try_set_function_params_types(
     return status;
 }
 
+// TODO: remove this function
 static bool try_types_internal_set_lang_type(
     Env* env,
     Ulang_type lang_type,

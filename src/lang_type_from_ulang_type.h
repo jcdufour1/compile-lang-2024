@@ -5,6 +5,7 @@
 #include <lang_type.h>
 #include <uast_utils.h>
 #include <ulang_type_print.h>
+#include <resolve_generics.h>
 
 static inline Lang_type lang_type_from_ulang_type(Env* env, Ulang_type lang_type);
 
@@ -114,11 +115,13 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Env* e
 // TODO: add Pos as member to Ulang_type and Lang_type?
 static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_type, Env* env, Ulang_type_regular lang_type, Pos pos) {
     Uast_def* result = NULL;
+    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(lang_type.atom.str));
     if (!usymbol_lookup(&result, env, lang_type.atom.str)) {
         msg(
             LOG_ERROR, EXPECT_FAIL_UNDEFINED_TYPE, env->file_text, pos,
             "undefined type `"TAST_FMT"`\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type))
         );
+        todo();
         return false;
     }
 
@@ -179,7 +182,10 @@ static inline bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Env* 
             return true;
         }
         case ULANG_TYPE_REG_GENERIC:
-            todo();
+            *new_lang_type = lang_type_from_ulang_type(env, resolve_generics_ulang_type_reg_generic(
+                env, ulang_type_reg_generic_const_unwrap(lang_type)
+            ));
+            return true;
     }
     unreachable("");
 }

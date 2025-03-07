@@ -81,8 +81,6 @@ bool try_set_function_decl_types(
     bool add_to_sym_tbl
 );
 
-bool try_set_sum_def_types(Env* env, Uast_sum_def* tast);
-
 bool try_set_tuple_types(Env* env, Tast_tuple** new_tuple, Uast_tuple* tuple);
 
 bool try_set_sum_access_types(Env* env, Tast_sum_access** new_sum_access, Uast_sum_access* sum_access);

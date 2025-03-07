@@ -419,4 +419,8 @@ static inline Str_view uast_get_name(const Uast* uast) {
     unreachable("");
 }
 
+static inline Ulang_type ustruct_def_base_get_lang_type(Ustruct_def_base base) {
+    return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(base.name, 0)));
+}
+
 #endif // UAST_UTIL_H
