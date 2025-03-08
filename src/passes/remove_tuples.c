@@ -87,6 +87,7 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
 
             log(LOG_DEBUG, LANG_TYPE_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
             Tast_def* lang_type_def_ = NULL; 
+            log(LOG_DEBUG, TAST_FMT"\n", str_view_print(lang_type_get_str(lang_type)));
             unwrap(symbol_lookup(&lang_type_def_, env, lang_type_get_str(lang_type)));
             Tast_variable_def_vec members = {0};
 

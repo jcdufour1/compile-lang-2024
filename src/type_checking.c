@@ -1676,6 +1676,9 @@ bool try_set_member_access_types_finish(
         }
         case UAST_SUM_DEF:
             return try_set_member_access_types_finish_sum_def(env, new_tast, uast_sum_def_unwrap(lang_type_def), access, new_callee);
+        case UAST_PRIMITIVE_DEF:
+            // TODO: expected failure case
+            unreachable("trying to access primitive defintion member");
         default:
             unreachable(UAST_FMT"\n", uast_stmt_print(uast_def_wrap(lang_type_def)));
     }

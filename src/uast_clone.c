@@ -109,3 +109,7 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt) {
     return uast_expr_wrap(uast_expr_clone(uast_expr_const_unwrap(stmt)));
 }
 
+Uast_variable_def* uast_variable_def_clone(const Uast_variable_def* def) {
+    return uast_variable_def_new(def->pos, def->lang_type, def->name);
+}
+

@@ -419,6 +419,32 @@ static inline Str_view uast_get_name(const Uast* uast) {
     unreachable("");
 }
 
+static inline Ustruct_def_base uast_def_get_struct_def_base(Uast_def* def) {
+    switch (def->type) {
+        case UAST_SUM_DEF:
+            return uast_sum_def_unwrap(def)->base;
+        case UAST_ENUM_DEF:
+            return uast_enum_def_unwrap(def)->base;
+        case UAST_STRUCT_DEF:
+            return uast_struct_def_unwrap(def)->base;
+        case UAST_RAW_UNION_DEF:
+            return uast_raw_union_def_unwrap(def)->base;
+        case UAST_FUNCTION_DEF:
+            unreachable("");
+        case UAST_VARIABLE_DEF:
+            unreachable("");
+        case UAST_GENERIC_PARAM:
+            unreachable("");
+        case UAST_PRIMITIVE_DEF:
+            unreachable("");
+        case UAST_LITERAL_DEF:
+            unreachable("");
+        case UAST_FUNCTION_DECL:
+            unreachable("");
+    }
+    unreachable("");
+}
+
 static inline Ulang_type ustruct_def_base_get_lang_type(Ustruct_def_base base) {
     return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(base.name, 0)));
 }
