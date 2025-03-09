@@ -1139,7 +1139,6 @@ static PARSE_STATUS parse_struct_base_def(
     }
 
     if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-        todo();
         msg_parser_expected(env->file_text, tk_view_front(*tokens), "in struct, raw_union, or enum definition", TOKEN_OPEN_CURLY_BRACE, TOKEN_OPEN_GENERIC);
         return PARSE_ERROR;
     }

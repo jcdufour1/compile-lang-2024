@@ -169,12 +169,6 @@ static inline Lang_type uast_def_get_lang_type(Env* env, const Uast_def* def, Ul
     switch (def->type) {
         case UAST_FUNCTION_DEF:
             unreachable("");
-        case UAST_RAW_UNION_DEF:
-            todo();
-            //return lang_type_from_ulang_type(env, ustruct_def_base_get_lang_type(uast_def_get_struct_def_base(def)));
-        case UAST_ENUM_DEF:
-            todo();
-            //return lang_type_from_ulang_type(env, ustruct_def_base_get_lang_type(uast_def_get_struct_def_base(def)));
         case UAST_VARIABLE_DEF:
             return lang_type_from_ulang_type(env, uast_variable_def_const_unwrap(def)->lang_type);
         case UAST_FUNCTION_DECL:
@@ -186,16 +180,12 @@ static inline Lang_type uast_def_get_lang_type(Env* env, const Uast_def* def, Ul
             unreachable("");
         case UAST_LITERAL_DEF:
             unreachable("");
+        case UAST_RAW_UNION_DEF:
+            // fallthrough
+        case UAST_ENUM_DEF:
+            // fallthrough
         case UAST_SUM_DEF: {
-            for (size_t idx = 0; idx < generics.info.count; idx++) {
-                log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, vec_at(&generics, idx)));
-            }
-            //log(LOG_DEBUG, TAST_FMT, uast_symbol_print(sym_untyped));
             Ulang_type ulang_type = ustruct_def_base_get_lang_type_(env, uast_def_get_struct_def_base(def), generics);
-            log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type));
-            //Lang_type lang_type = lang_type_from_ulang_type(env, ustruct_def_base_get_lang_type(uast_def_get_struct_def_base(def)));
-            //log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
-            //todo();
             return lang_type_from_ulang_type(env, ulang_type);
         }
         case UAST_GENERIC_PARAM:
@@ -469,7 +459,6 @@ static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def)
 
 static inline Ulang_type ustruct_def_base_get_lang_type_(Env* env, Ustruct_def_base base, Ulang_type_vec generics) {
     if (generics.info.count < 1) {
-        todo();
         return resolve_generics_ulang_type_regular(env, ulang_type_regular_new(ulang_type_atom_new(base.name, 0)));
     }
     unwrap(generics.info.count > 0);

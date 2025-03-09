@@ -61,7 +61,7 @@ static inline Str_view serialize_ulang_type(Ulang_type ulang_type) {
         case ULANG_TYPE_REG_GENERIC:
             todo();
         case ULANG_TYPE_FN:
-            todo();
+            return serialize_ulang_type_fn(ulang_type_fn_const_unwrap(ulang_type));
         case ULANG_TYPE_TUPLE:
             todo();
     }

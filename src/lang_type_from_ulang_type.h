@@ -151,6 +151,9 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     }
 
     Lang_type_atom new_atom = lang_type_atom_new(ulang_type_regular_const_unwrap(resolved).atom.str, ulang_type_regular_const_unwrap(resolved).atom.pointer_depth);
+    if (str_view_cstr_is_equal(new_atom.str, "Div")) {
+        log(LOG_DEBUG, "pointer_depth: %d\n", new_atom.pointer_depth);
+    }
     switch (result->type) {
         case UAST_STRUCT_DEF:
             *new_lang_type = lang_type_struct_const_wrap(lang_type_struct_new(new_atom));
@@ -179,6 +182,8 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
 
 static inline Lang_type lang_type_from_ulang_type_regular(Env* env, Ulang_type_regular lang_type) {
     Lang_type new_lang_type = {0};
+    log(LOG_DEBUG, "THING_THING 432\n");
+    log(LOG_DEBUG, "%d\n", lang_type.atom.pointer_depth);
     unwrap(try_lang_type_from_ulang_type_regular(&new_lang_type, env, lang_type, (Pos) {0}));
     return new_lang_type;
 }
@@ -218,12 +223,18 @@ static inline bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Env* 
 static inline Lang_type lang_type_from_ulang_type(Env* env, Ulang_type lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
+            log(LOG_DEBUG, "ULANG_TYPE_REGULAR\n");
+            log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
+            log(LOG_DEBUG, "%d\n", ulang_type_regular_const_unwrap(lang_type).atom.pointer_depth);
             return lang_type_from_ulang_type_regular(env, ulang_type_regular_const_unwrap(lang_type));
         case ULANG_TYPE_TUPLE:
+            log(LOG_DEBUG, "ULANG_TYPE_TUPLE\n");
             return lang_type_from_ulang_type_tuple(env, ulang_type_tuple_const_unwrap(lang_type));
         case ULANG_TYPE_FN:
+            log(LOG_DEBUG, " ULANG_TYPE_FN\n");
             return lang_type_from_ulang_type_fn(env, ulang_type_fn_const_unwrap(lang_type));
         case ULANG_TYPE_REG_GENERIC:
+            log(LOG_DEBUG, " ULANG_TYPE_REG_GENERIC\n");
             return lang_type_from_ulang_type_reg_generic(env, ulang_type_reg_generic_const_unwrap(lang_type));
     }
     unreachable("");

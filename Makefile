@@ -49,6 +49,7 @@ OBJS=\
 	 ${BUILD_DIR}/uast_clone.o \
 	 ${BUILD_DIR}/tast_clone.o \
 	 ${BUILD_DIR}/type_checking.o \
+	 ${BUILD_DIR}/resolve_generics.o \
 	 ${BUILD_DIR}/sizeof.o \
 	 ${BUILD_DIR}/passes/do_passes.o \
 	 ${BUILD_DIR}/passes/tokenizer.o \
@@ -125,6 +126,9 @@ ${BUILD_DIR}/token.o: ${DEP_COMMON} src/token.c third_party/*
 
 ${BUILD_DIR}/type_checking.o: ${DEP_COMMON} src/type_checking.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/type_checking.o src/type_checking.c
+
+${BUILD_DIR}/resolve_generics.o: ${DEP_COMMON} src/resolve_generics.c third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/resolve_generics.o src/resolve_generics.c
 
 ${BUILD_DIR}/symbol_table.o: ${DEP_COMMON} ${BUILD_DIR}/symbol_table.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/symbol_table.o ${BUILD_DIR}/symbol_table.c

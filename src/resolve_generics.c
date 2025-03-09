@@ -17,7 +17,7 @@
 //    return name;
 //}
 
-static bool try_set_struct_base_types(Env* env, Struct_def_base* new_base, Ustruct_def_base* base) {
+static bool try_set_struct_base_types(Env* env, Struct_def_base* new_base, Ustruct_def_base* base, bool is_enum) {
     env->type_checking_is_in_struct_base_def = true;
     bool success = true;
     Tast_variable_def_vec new_members = {0};
@@ -29,12 +29,22 @@ static bool try_set_struct_base_types(Env* env, Struct_def_base* new_base, Ustru
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
         Uast_variable_def* curr = vec_at(&base->members, idx);
 
-        Tast_variable_def* new_memb = NULL;
-        log(LOG_DEBUG, TAST_FMT, uast_variable_def_print(curr));
-        if (try_set_variable_def_types(env, &new_memb, curr, false, false)) {
+        if (is_enum) {
+            Tast_variable_def* new_memb = tast_variable_def_new(
+                curr->pos,
+                lang_type_enum_const_wrap(lang_type_enum_new(lang_type_atom_new(base->name, 0))),
+                false,
+                curr->name
+            );
             vec_append(&a_main, &new_members, new_memb);
         } else {
-            success = false;
+            Tast_variable_def* new_memb = NULL;
+            log(LOG_DEBUG, TAST_FMT, uast_variable_def_print(curr));
+            if (try_set_variable_def_types(env, &new_memb, curr, false, false)) {
+                vec_append(&a_main, &new_members, new_memb);
+            } else {
+                success = false;
+            }
         }
     }
 
@@ -63,8 +73,12 @@ static bool try_set_struct_base_types(Env* env, Struct_def_base* new_base, Ustru
     } while (0)
 
 static bool try_set_struct_def_types(Env* env, Uast_struct_def* before_res, Uast_struct_def* after_res) {
+    // TODO: consider nested thing:
+    // type struct Token {
+    //      token Token
+    // }
     Struct_def_base new_base = {0};
-    bool success = try_set_struct_base_types(env, &new_base, &after_res->base);
+    bool success = try_set_struct_base_types(env, &new_base, &after_res->base, false);
     try_set_def_types_internal(
         env,
         uast_struct_def_wrap(after_res),
@@ -75,8 +89,12 @@ static bool try_set_struct_def_types(Env* env, Uast_struct_def* before_res, Uast
 }
 
 static bool try_set_raw_union_def_types(Env* env, Uast_raw_union_def* before_res, Uast_raw_union_def* after_res) {
+    // TODO: consider nested thing:
+    // type raw_union Token {
+    //      token Token
+    // }
     Struct_def_base new_base = {0};
-    bool success = try_set_struct_base_types(env, &new_base, &after_res->base);
+    bool success = try_set_struct_base_types(env, &new_base, &after_res->base, false);
     try_set_def_types_internal(
         env,
         uast_raw_union_def_wrap(after_res),
@@ -88,7 +106,7 @@ static bool try_set_raw_union_def_types(Env* env, Uast_raw_union_def* before_res
 
 static bool try_set_enum_def_types(Env* env, Uast_enum_def* before_res, Uast_enum_def* after_res) {
     Struct_def_base new_base = {0};
-    bool success = try_set_struct_base_types(env, &new_base, &after_res->base);
+    bool success = try_set_struct_base_types(env, &new_base, &after_res->base, true);
     try_set_def_types_internal(
         env,
         uast_enum_def_wrap(after_res),
@@ -100,8 +118,12 @@ static bool try_set_enum_def_types(Env* env, Uast_enum_def* before_res, Uast_enu
 
 // TODO: inline this function?
 static bool try_set_sum_def_types(Env* env, Uast_sum_def* before_res, Uast_sum_def* after_res) {
+    // TODO: consider nested thing:
+    // type sum Token {
+    //      token Token
+    // }
     Struct_def_base new_base = {0};
-    bool success = try_set_struct_base_types(env, &new_base, &after_res->base);
+    bool success = try_set_struct_base_types(env, &new_base, &after_res->base, false);
     try_set_def_types_internal(
         env,
         uast_sum_def_wrap(after_res),
@@ -171,38 +193,51 @@ static void resolve_generics_struct_def(
 static Ulang_type resolve_generics_ulang_type_internal(Env* env, Uast_def* before_res, Ulang_type lang_type, Ulang_type_vec gen_args) {
     Uast_def* after_res = NULL;
     switch (before_res->type) {
-        case UAST_SUM_DEF: {
-            for (size_t idx = 0; idx < gen_args.info.count; idx++) {
-                log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, vec_at(&gen_args, idx)));
-            }
-            for (size_t idx = 0; idx < uast_def_get_struct_def_base(before_res).generics.info.count; idx++) {
-                log(LOG_DEBUG, TAST_FMT, uast_generic_param_print(vec_at_const(uast_def_get_struct_def_base(before_res).generics, idx)));
-            }
+        case UAST_RAW_UNION_DEF: {
             Ustruct_def_base new_base = {0};
-            Str_view name = resolve_generics_serialize_struct_def_base(&new_base, uast_sum_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res));
-            log(LOG_DEBUG, TAST_FMT"\n", str_view_print(name));
-            log(LOG_DEBUG, TAST_FMT, ustruct_def_base_print(new_base));
+            Str_view name = resolve_generics_serialize_struct_def_base(&new_base, uast_raw_union_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res));
             Uast_def* new_def_ = NULL;
             if (usymbol_lookup(&new_def_, env, name)) {
-                log(LOG_DEBUG, "thing true\n");
                 after_res = new_def_;
             } else {
-                log(LOG_DEBUG, "thing false\n");
+                after_res = uast_raw_union_def_wrap(uast_raw_union_def_new(uast_def_get_pos(before_res), new_base));
+            }
+            unwrap(try_set_raw_union_def_types(env, uast_raw_union_def_unwrap(before_res), uast_raw_union_def_unwrap(after_res)));
+            break;
+        }
+        case UAST_ENUM_DEF: {
+            Ustruct_def_base new_base = {0};
+            Str_view name = resolve_generics_serialize_struct_def_base(&new_base, uast_enum_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res));
+            Uast_def* new_def_ = NULL;
+            if (usymbol_lookup(&new_def_, env, name)) {
+                after_res = new_def_;
+            } else {
+                after_res = uast_enum_def_wrap(uast_enum_def_new(uast_def_get_pos(before_res), new_base));
+            }
+            unwrap(try_set_enum_def_types(env, uast_enum_def_unwrap(before_res), uast_enum_def_unwrap(after_res)));
+            break;
+        }
+        case UAST_SUM_DEF: {
+            Ustruct_def_base new_base = {0};
+            Str_view name = resolve_generics_serialize_struct_def_base(&new_base, uast_sum_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res));
+            Uast_def* new_def_ = NULL;
+            if (usymbol_lookup(&new_def_, env, name)) {
+                after_res = new_def_;
+            } else {
                 after_res = uast_sum_def_wrap(uast_sum_def_new(uast_def_get_pos(before_res), new_base));
             }
             unwrap(try_set_sum_def_types(env, uast_sum_def_unwrap(before_res), uast_sum_def_unwrap(after_res)));
             break;
         }
         case UAST_STRUCT_DEF: {
-            todo();
             Ustruct_def_base new_base = {0};
-            Str_view name = resolve_generics_serialize_struct_def_base(&new_base, uast_struct_def_unwrap(before_res)->base, (Ulang_type_vec) {0}, uast_def_get_pos(before_res));
+            Str_view name = resolve_generics_serialize_struct_def_base(&new_base, uast_struct_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res));
             Uast_def* new_def_ = NULL;
             if (usymbol_lookup(&new_def_, env, name)) {
                 after_res = new_def_;
-                break;
+            } else {
+                after_res = uast_struct_def_wrap(uast_struct_def_new(uast_def_get_pos(before_res), new_base));
             }
-            after_res = uast_struct_def_wrap(uast_struct_def_new(uast_def_get_pos(before_res), new_base));
             unwrap(try_set_struct_def_types(env, uast_struct_def_unwrap(before_res), uast_struct_def_unwrap(after_res)));
             break;
         }
@@ -214,7 +249,7 @@ static Ulang_type resolve_generics_ulang_type_internal(Env* env, Uast_def* befor
             unreachable(TAST_FMT, uast_def_print(before_res));
     }
 
-    return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(uast_def_get_struct_def_base(after_res).name, 0)));
+    return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(uast_def_get_struct_def_base(after_res).name, ulang_type_regular_const_unwrap(lang_type).atom.pointer_depth)));
 }
 
 Ulang_type resolve_generics_ulang_type_reg_generic(Env* env, Ulang_type_reg_generic lang_type) {

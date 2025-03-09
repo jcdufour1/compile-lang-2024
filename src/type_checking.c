@@ -279,6 +279,8 @@ CHECK_ASSIGN_STATUS check_generic_assignment_finish(
     bool src_is_zero,
     Tast_expr* src
 ) {
+    log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type));
+    log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(src)));
     if (lang_type_is_equal(dest_lang_type, tast_expr_get_lang_type(src))) {
         *new_src = src;
         return CHECK_ASSIGN_OK;
@@ -305,6 +307,7 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
     Uast_expr* src,
     Pos pos
 ) {
+    log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type));
     if (src->type == UAST_STRUCT_LITERAL) {
         Tast_stmt* new_src_ = NULL;
         if (!try_set_struct_literal_assignment_types(
