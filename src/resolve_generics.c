@@ -54,8 +54,8 @@ static bool try_set_struct_base_types(Env* env, Struct_def_base* new_base, Ustru
                 break; \
             } \
         } \
-        unwrap(usym_tbl_add(&vec_at(&(env)->ancesters, idx)->usymbol_table, (after_res))); \
-        unwrap(sym_tbl_add(&vec_at(&(env)->ancesters, idx)->symbol_table, (new_def))); \
+        usym_tbl_add(&vec_at(&(env)->ancesters, idx)->usymbol_table, (after_res)); \
+        sym_tbl_add(&vec_at(&(env)->ancesters, idx)->symbol_table, (new_def)); \
         log(LOG_DEBUG, "thing fdlksaf: %zu\n", idx); \
     } while (0)
 
@@ -117,6 +117,11 @@ static Str_view resolve_generics_serialize_struct_def_base(
     (void) pos;
     // TODO: figure out way to avoid making new Ustruct_def_base every time
     memset(new_base, 0, sizeof(*new_base));
+
+    if (gen_args.info.count < 1) {
+        *new_base = old_base;
+        return new_base->name;
+    }
 
     for (size_t idx_memb = 0; idx_memb < old_base.members.info.count; idx_memb++) {
         vec_append(&a_main, &new_base->members, uast_variable_def_clone(vec_at(&old_base.members, idx_memb)));
@@ -202,6 +207,7 @@ Ulang_type resolve_generics_ulang_type_regular(Env* env, Ulang_type_regular lang
     log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(lang_type)));
     Uast_def* before_res = NULL;
     unwrap(usymbol_lookup(&before_res, env, lang_type.atom.str));
+    assert(before_res);
 
     Uast_def* after_res = NULL;
     switch (before_res->type) {
@@ -210,29 +216,29 @@ Ulang_type resolve_generics_ulang_type_regular(Env* env, Ulang_type_regular lang
             Str_view name = resolve_generics_serialize_struct_def_base(&new_base, uast_sum_def_unwrap(before_res)->base, (Ulang_type_vec) {0}, uast_def_get_pos(before_res));
             Uast_def* new_def_ = NULL;
             if (usymbol_lookup(&new_def_, env, name)) {
-                todo();
-                //*new_def = uast_sum_def_unwrap(new_def_);
-                //return;
+                after_res = new_def_;
+            } else {
+                after_res = uast_sum_def_wrap(uast_sum_def_new(uast_def_get_pos(before_res), new_base));
             }
-
-            after_res = uast_sum_def_wrap(uast_sum_def_new(uast_def_get_pos(before_res), new_base));
+            unwrap(try_set_sum_def_types(env, uast_sum_def_unwrap(before_res), uast_sum_def_unwrap(after_res)));
             break;
         }
         case UAST_STRUCT_DEF: {
+            todo();
             Ustruct_def_base new_base = {0};
             Str_view name = resolve_generics_serialize_struct_def_base(&new_base, uast_struct_def_unwrap(before_res)->base, (Ulang_type_vec) {0}, uast_def_get_pos(before_res));
             Uast_def* new_def_ = NULL;
             if (usymbol_lookup(&new_def_, env, name)) {
-                todo();
-                //*new_def = uast_struct_def_unwrap(new_def_);
-                //return;
+                after_res = new_def_;
+                break;
             }
-
             after_res = uast_struct_def_wrap(uast_struct_def_new(uast_def_get_pos(before_res), new_base));
             unwrap(try_set_struct_def_types(env, uast_struct_def_unwrap(before_res), uast_struct_def_unwrap(after_res)));
             break;
         }
         case UAST_PRIMITIVE_DEF:
+            return ulang_type_regular_const_wrap(lang_type);
+        case UAST_LITERAL_DEF:
             return ulang_type_regular_const_wrap(lang_type);
         default:
             unreachable(TAST_FMT, uast_def_print(before_res));

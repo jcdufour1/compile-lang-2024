@@ -70,6 +70,7 @@ static bool lang_type_atom_is_number_finish(Lang_type_atom atom) {
     return idx > 1;
 }
 
+// TODO: get rid of this function?
 bool lang_type_atom_is_signed(Lang_type_atom atom) {
     if (atom.str.str[0] != 'i') {
         return false;
@@ -77,6 +78,7 @@ bool lang_type_atom_is_signed(Lang_type_atom atom) {
     return lang_type_atom_is_number_finish(atom);
 }
 
+// TODO: get rid of this function?
 bool lang_type_atom_is_unsigned(Lang_type_atom atom) {
     if (atom.str.str[0] != 'u') {
         return false;
