@@ -425,7 +425,8 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
         case UAST_LITERAL_DEF:
             // fallthrough
         case UAST_VARIABLE_DEF: {
-            Lang_type lang_type = uast_def_get_lang_type(env, sym_def);
+            log(LOG_DEBUG, TAST_FMT, uast_symbol_print(sym_untyped));
+            Lang_type lang_type = uast_def_get_lang_type(env, sym_def, sym_untyped->generic_args);
             Sym_typed_base new_base = {.lang_type = lang_type, .name = sym_untyped->name};
             Tast_symbol* sym_typed = tast_symbol_new(sym_untyped->pos, new_base);
             *new_tast = tast_symbol_wrap(sym_typed);
@@ -1554,6 +1555,7 @@ bool try_set_member_access_types_finish_sum_def(
     switch (env->parent_of) {
         case PARENT_OF_CASE: {
             Uast_variable_def* member_def = NULL;
+            log(LOG_DEBUG, TAST_FMT, uast_sum_def_print(sum_def));
             if (!uast_try_get_member_def(&member_def, &sum_def->base, access->member_name)) {
                 // TODO: expected failure case
                 log(LOG_DEBUG, TAST_FMT, uast_member_access_print(access));

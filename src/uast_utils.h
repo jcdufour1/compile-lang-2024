@@ -9,6 +9,10 @@
 #include <lang_type_from_ulang_type.h>
 #include <lang_type_print.h>
 
+// TODO: figure out where to put these things
+Str_view ustruct_def_base_print_internal(Ustruct_def_base base, int indent);
+#define ustruct_def_base_print(base) str_view_print(ustruct_def_base_print_internal(base, 0))
+
 #define LANG_TYPE_FMT STR_VIEW_FMT
 
 #ifndef UAST_FMT
@@ -19,7 +23,7 @@ Str_view uast_print_internal(const Uast* uast, int recursion_depth);
 
 static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def);
     
-static inline Ulang_type ustruct_def_base_get_lang_type_(Env* env, Ustruct_def_base base);
+static inline Ulang_type ustruct_def_base_get_lang_type_(Env* env, Ustruct_def_base base, Ulang_type_vec generics);
 
 #define uast_print(root) str_view_print(uast_print_internal(root, 0))
 
@@ -161,7 +165,7 @@ static inline Lang_type* uast_get_ulang_type_ref_stmt(Uast_stmt* stmt) {
     unreachable("");
 }
 
-static inline Lang_type uast_def_get_lang_type(Env* env, const Uast_def* def) {
+static inline Lang_type uast_def_get_lang_type(Env* env, const Uast_def* def, Ulang_type_vec generics) {
     switch (def->type) {
         case UAST_FUNCTION_DEF:
             unreachable("");
@@ -183,12 +187,16 @@ static inline Lang_type uast_def_get_lang_type(Env* env, const Uast_def* def) {
         case UAST_LITERAL_DEF:
             unreachable("");
         case UAST_SUM_DEF: {
-            Ulang_type ulang_type = ustruct_def_base_get_lang_type_(env, uast_def_get_struct_def_base(def));
+            for (size_t idx = 0; idx < generics.info.count; idx++) {
+                log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, vec_at(&generics, idx)));
+            }
+            //log(LOG_DEBUG, TAST_FMT, uast_symbol_print(sym_untyped));
+            Ulang_type ulang_type = ustruct_def_base_get_lang_type_(env, uast_def_get_struct_def_base(def), generics);
             log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type));
-            todo();
             //Lang_type lang_type = lang_type_from_ulang_type(env, ustruct_def_base_get_lang_type(uast_def_get_struct_def_base(def)));
             //log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
             //todo();
+            return lang_type_from_ulang_type(env, ulang_type);
         }
         case UAST_GENERIC_PARAM:
             unreachable("");
@@ -196,14 +204,14 @@ static inline Lang_type uast_def_get_lang_type(Env* env, const Uast_def* def) {
     unreachable("");
 }
 
-static inline Lang_type uast_stmt_get_lang_type(Env* env, const Uast_stmt* stmt) {
+static inline Lang_type uast_stmt_get_lang_type(Env* env, const Uast_stmt* stmt, Ulang_type_vec generics) {
     switch (stmt->type) {
         case UAST_EXPR:
             unreachable("");
         case UAST_BLOCK:
             unreachable("");
         case UAST_DEF:
-            return uast_def_get_lang_type(env, uast_def_const_unwrap(stmt));
+            return uast_def_get_lang_type(env, uast_def_const_unwrap(stmt), generics);
         case UAST_RETURN:
             unreachable("");
         case UAST_BREAK:
@@ -224,10 +232,10 @@ static inline Lang_type uast_stmt_get_lang_type(Env* env, const Uast_stmt* stmt)
     unreachable("");
 }
 
-static inline Lang_type uast_get_lang_type(Env* env, const Uast* uast) {
+static inline Lang_type uast_get_lang_type(Env* env, const Uast* uast, Ulang_type_vec generics) {
     switch (uast->type) {
         case UAST_STMT:
-            return uast_stmt_get_lang_type(env, uast_stmt_const_unwrap(uast));
+            return uast_stmt_get_lang_type(env, uast_stmt_const_unwrap(uast), generics);
         case UAST_FUNCTION_PARAMS:
             unreachable("");
         case UAST_LANG_TYPE:
@@ -459,17 +467,15 @@ static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def)
     unreachable("");
 }
 
-static inline Ulang_type ustruct_def_base_get_lang_type_(Env* env, Ustruct_def_base base) {
-    if (base.generics.info.count < 1) {
+static inline Ulang_type ustruct_def_base_get_lang_type_(Env* env, Ustruct_def_base base, Ulang_type_vec generics) {
+    if (generics.info.count < 1) {
         todo();
         return resolve_generics_ulang_type_regular(env, ulang_type_regular_new(ulang_type_atom_new(base.name, 0)));
     }
-    Ulang_type_vec generics = {0};
-    for (size_t idx = 0; idx < base.generics.info.count; idx++) {
-        log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(vec_at(&base.generics, idx)->child->name, 0)))));
-        vec_append(&a_main, &generics, ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(vec_at(&base.generics, idx)->child->name, 0))));
-    }
     unwrap(generics.info.count > 0);
+    for (size_t idx = 0; idx < generics.info.count; idx++) {
+        log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, vec_at(&generics, idx)));
+    }
     return resolve_generics_ulang_type_reg_generic(env, ulang_type_reg_generic_new(ulang_type_atom_new(base.name, 0), generics));
 }
 

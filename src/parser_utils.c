@@ -214,7 +214,7 @@ Str_view get_storage_location(Env* env, Str_view sym_name) {
     }
 
     switch (sym_def_->type) {
-        case UAST_VARIABLE_DEF: {
+        case TAST_VARIABLE_DEF: {
             Tast_variable_def* sym_def = tast_variable_def_unwrap(sym_def_);
             Llvm* result = NULL;
             if (!alloca_lookup(&result, env, sym_def->name)) {
@@ -223,7 +223,7 @@ Str_view get_storage_location(Env* env, Str_view sym_name) {
             return llvm_tast_get_name(result);
         }
         default:
-            unreachable("");
+            unreachable(TAST_FMT, tast_def_print(sym_def_));
     }
     unreachable("");
 }

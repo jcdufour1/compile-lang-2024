@@ -31,6 +31,13 @@ static inline bool try_lang_type_from_ulang_type_fn(
     Pos pos
 );
 
+static inline bool try_lang_type_from_ulang_type_reg_generic(
+    Lang_type* new_lang_type,
+    Env* env,
+    Ulang_type_reg_generic lang_type,
+    Pos pos
+);
+
 // TODO: figure out way to reduce duplicate vec allocations
 static inline Lang_type lang_type_from_ulang_type_tuple(Env* env, Ulang_type_tuple lang_type) {
     Lang_type_tuple new_tuple = {0};
@@ -43,6 +50,13 @@ static inline Lang_type lang_type_from_ulang_type_fn(Env* env, Ulang_type_fn lan
     Lang_type_fn new_fn = {0};
     unwrap(try_lang_type_from_ulang_type_fn(&new_fn, env, lang_type, (Pos) {0}));
     return lang_type_fn_const_wrap(new_fn);
+}
+
+// TODO: figure out way to reduce duplicate vec allocations
+static inline Lang_type lang_type_from_ulang_type_reg_generic(Env* env, Ulang_type_reg_generic lang_type) {
+    Lang_type new_gen = {0};
+    unwrap(try_lang_type_from_ulang_type_reg_generic(&new_gen, env, lang_type, (Pos) {0}));
+    return new_gen;
 }
 
 // TODO: figure out way to reduce duplicate vec allocations
@@ -81,6 +95,17 @@ static inline bool try_lang_type_from_ulang_type_fn(
     }
     *new_lang_type = lang_type_fn_new(new_params, new_rtn_type);
     return true;
+}
+
+// TODO: figure out way to reduce duplicate vec allocations
+static inline bool try_lang_type_from_ulang_type_reg_generic(
+    Lang_type* new_lang_type,
+    Env* env,
+    Ulang_type_reg_generic lang_type,
+    Pos pos
+) {
+    Ulang_type after_res = resolve_generics_ulang_type_reg_generic(env, lang_type);
+    return try_lang_type_from_ulang_type(new_lang_type, env, after_res, pos);
 }
 
 static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Env* env, Ulang_type_regular lang_type, const Uast_primitive_def* def) {
@@ -199,7 +224,7 @@ static inline Lang_type lang_type_from_ulang_type(Env* env, Ulang_type lang_type
         case ULANG_TYPE_FN:
             return lang_type_from_ulang_type_fn(env, ulang_type_fn_const_unwrap(lang_type));
         case ULANG_TYPE_REG_GENERIC:
-            todo();
+            return lang_type_from_ulang_type_reg_generic(env, ulang_type_reg_generic_const_unwrap(lang_type));
     }
     unreachable("");
 }

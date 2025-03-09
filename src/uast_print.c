@@ -43,6 +43,7 @@ Str_view uast_unary_print_internal(const Uast_unary* unary, int indent) {
     return string_to_strv(buf);
 }
 
+// TODO: remove
 void uast_extend_sym_typed_base(String* string, Sym_typed_base base) {
     extend_lang_type_to_string(string, LANG_TYPE_MODE_LOG, base.lang_type);
     string_extend_strv(&print_arena, string, base.name);
@@ -56,6 +57,9 @@ Str_view uast_symbol_print_internal(const Uast_symbol* sym, int indent) {
     extend_pos(&buf, sym->pos);
     string_extend_strv(&print_arena, &buf, sym->name);
     string_extend_cstr(&print_arena, &buf, "\n");
+    for (size_t idx = 0; idx < sym->generic_args.info.count; idx++) {
+        string_extend_strv(&print_arena, &buf, ulang_type_print_internal(LANG_TYPE_MODE_LOG, vec_at(&sym->generic_args, idx)));
+    }
 
     return string_to_strv(buf);
 }
@@ -460,6 +464,12 @@ static void extend_ustruct_def_base(String* buf, const char* type_name, Ustruct_
         Str_view memb_text = uast_variable_def_print_internal(vec_at(&base.members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&print_arena, buf, memb_text);
     }
+}
+
+Str_view ustruct_def_base_print_internal(Ustruct_def_base base, int indent) {
+    String buf = {0};
+    extend_ustruct_def_base(&buf, "<unknown>", base, indent, (Pos) {0});
+    return string_to_strv(buf);
 }
 
 Str_view uast_struct_def_print_internal(const Uast_struct_def* def, int indent) {

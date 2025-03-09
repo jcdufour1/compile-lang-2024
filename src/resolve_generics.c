@@ -1,9 +1,11 @@
 #include <resolve_generics.h>
 #include <type_checking.h>
 #include <lang_type_serialize.h>
+#include <ulang_type_serialize.h>
 #include <uast_serialize.h>
 #include <ulang_type.h>
 #include <uast_clone.h>
+#include <uast_utils.h>
 
 //static Str_view resolve_generics_serialize_struct_def_base(Struct_def_base base) {
 //    String name = {0};
@@ -28,6 +30,7 @@ static bool try_set_struct_base_types(Env* env, Struct_def_base* new_base, Ustru
         Uast_variable_def* curr = vec_at(&base->members, idx);
 
         Tast_variable_def* new_memb = NULL;
+        log(LOG_DEBUG, TAST_FMT, uast_variable_def_print(curr));
         if (try_set_variable_def_types(env, &new_memb, curr, false, false)) {
             vec_append(&a_main, &new_members, new_memb);
         } else {
@@ -132,6 +135,7 @@ static Str_view resolve_generics_serialize_struct_def_base(
     for (size_t idx_gen = 0; idx_gen < gen_args.info.count; idx_gen++) {
         Str_view gen_def = vec_at(&old_base.generics, idx_gen)->child->name;
         for (size_t idx_memb = 0; idx_memb < old_base.members.info.count; idx_memb++) {
+            string_extend_strv(&a_main, &name, serialize_ulang_type(vec_at(&old_base.members, idx_memb)->lang_type));
             Str_view memb = ulang_type_regular_const_unwrap(vec_at(&old_base.members, idx_memb)->lang_type).atom.str;
             if (str_view_is_equal(gen_def, memb)) {
                 vec_at(&new_base->members, idx_memb)->lang_type = vec_at(&gen_args, idx_gen);
@@ -168,15 +172,24 @@ static Ulang_type resolve_generics_ulang_type_internal(Env* env, Uast_def* befor
     Uast_def* after_res = NULL;
     switch (before_res->type) {
         case UAST_SUM_DEF: {
+            for (size_t idx = 0; idx < gen_args.info.count; idx++) {
+                log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, vec_at(&gen_args, idx)));
+            }
+            for (size_t idx = 0; idx < uast_def_get_struct_def_base(before_res).generics.info.count; idx++) {
+                log(LOG_DEBUG, TAST_FMT, uast_generic_param_print(vec_at_const(uast_def_get_struct_def_base(before_res).generics, idx)));
+            }
             Ustruct_def_base new_base = {0};
             Str_view name = resolve_generics_serialize_struct_def_base(&new_base, uast_sum_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res));
+            log(LOG_DEBUG, TAST_FMT"\n", str_view_print(name));
+            log(LOG_DEBUG, TAST_FMT, ustruct_def_base_print(new_base));
             Uast_def* new_def_ = NULL;
             if (usymbol_lookup(&new_def_, env, name)) {
+                log(LOG_DEBUG, "thing true\n");
                 after_res = new_def_;
             } else {
+                log(LOG_DEBUG, "thing false\n");
                 after_res = uast_sum_def_wrap(uast_sum_def_new(uast_def_get_pos(before_res), new_base));
             }
-            log(LOG_DEBUG, TAST_FMT, uast_def_print(after_res));
             unwrap(try_set_sum_def_types(env, uast_sum_def_unwrap(before_res), uast_sum_def_unwrap(after_res)));
             break;
         }
@@ -221,6 +234,12 @@ Ulang_type resolve_generics_ulang_type_reg_generic(Env* env, Ulang_type_reg_gene
         unreachable("invalid count template args or parameters");
     }
 
+    for (size_t idx = 0; idx < lang_type.generic_args.info.count; idx++) {
+        log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, vec_at(&lang_type.generic_args, idx)));
+    }
+    for (size_t idx = 0; idx < uast_def_get_struct_def_base(before_res).generics.info.count; idx++) {
+        log(LOG_DEBUG, TAST_FMT, uast_generic_param_print(vec_at_const(uast_def_get_struct_def_base(before_res).generics, idx)));
+    }
     return resolve_generics_ulang_type_internal(env, before_res, ulang_type_reg_generic_const_wrap(lang_type), lang_type.generic_args);
 }
 
