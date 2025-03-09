@@ -429,7 +429,10 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
             // fallthrough
         case UAST_VARIABLE_DEF: {
             log(LOG_DEBUG, TAST_FMT, uast_symbol_print(sym_untyped));
-            Lang_type lang_type = uast_def_get_lang_type(env, sym_def, sym_untyped->generic_args);
+            Lang_type lang_type = {0};
+            if (!uast_def_get_lang_type(&lang_type, env, sym_def, sym_untyped->generic_args)) {
+                return false;
+            }
             Sym_typed_base new_base = {.lang_type = lang_type, .name = sym_untyped->name};
             Tast_symbol* sym_typed = tast_symbol_new(sym_untyped->pos, new_base);
             *new_tast = tast_symbol_wrap(sym_typed);
@@ -1822,22 +1825,6 @@ bool try_set_literal_def_types(Env* env, Uast_literal_def* tast) {
     unreachable("");
 }
 
-static void msg_undefined_type_internal(
-    const char* file,
-    int line,
-    Env* env,
-    Pos pos,
-    Ulang_type lang_type
-) {
-    msg_internal(
-        file, line, LOG_ERROR, EXPECT_FAIL_UNDEFINED_TYPE, env->file_text, pos,
-        "type `"LANG_TYPE_FMT"` is not defined\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type)
-    );
-}
-
-#define msg_undefined_type(env, pos, lang_type) \
-    msg_undefined_type_internal(__FILE__, __LINE__, env, pos, lang_type)
-
 bool try_set_variable_def_types(
     Env* env,
     Tast_variable_def** new_tast,
@@ -1846,8 +1833,6 @@ bool try_set_variable_def_types(
     bool is_variadic
 ) {
     Lang_type new_lang_type = {0};
-    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, uast->lang_type));
-    log(LOG_DEBUG, "%d\n", uast->lang_type.type);
     if (!try_lang_type_from_ulang_type(&new_lang_type, env, uast->lang_type, uast->pos)) {
         return false;
     }

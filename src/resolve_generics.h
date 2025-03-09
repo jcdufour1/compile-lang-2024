@@ -5,10 +5,10 @@
 #include <env.h>
 #include <uast.h>
 
-Ulang_type resolve_generics_ulang_type_reg_generic(Env* env, Ulang_type_reg_generic lang_type);
+bool resolve_generics_ulang_type_reg_generic(Ulang_type* result, Env* env, Ulang_type_reg_generic lang_type);
 
-Ulang_type resolve_generics_ulang_type(Env* env, Ulang_type lang_type);
+bool resolve_generics_ulang_type(Ulang_type* result, Env* env, Ulang_type lang_type, Pos pos);
 
-Ulang_type resolve_generics_ulang_type_regular(Env* env, Ulang_type_regular lang_type);
+bool resolve_generics_ulang_type_regular(Ulang_type* result, Env* env, Ulang_type_regular lang_type, Pos pos);
 
 #endif // RESOLVE_GENERICS_H

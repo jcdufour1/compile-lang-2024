@@ -39,7 +39,6 @@ static bool try_set_struct_base_types(Env* env, Struct_def_base* new_base, Ustru
             vec_append(&a_main, &new_members, new_memb);
         } else {
             Tast_variable_def* new_memb = NULL;
-            log(LOG_DEBUG, TAST_FMT, uast_variable_def_print(curr));
             if (try_set_variable_def_types(env, &new_memb, curr, false, false)) {
                 vec_append(&a_main, &new_members, new_memb);
             } else {
@@ -252,8 +251,7 @@ static Ulang_type resolve_generics_ulang_type_internal(Env* env, Uast_def* befor
     return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(uast_def_get_struct_def_base(after_res).name, ulang_type_regular_const_unwrap(lang_type).atom.pointer_depth)));
 }
 
-Ulang_type resolve_generics_ulang_type_reg_generic(Env* env, Ulang_type_reg_generic lang_type) {
-    log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_reg_generic_const_wrap(lang_type)));
+bool resolve_generics_ulang_type_reg_generic(Ulang_type* result, Env* env, Ulang_type_reg_generic lang_type) {
     Uast_def* before_res = NULL;
     unwrap(usymbol_lookup(&before_res, env, lang_type.atom.str));
 
@@ -269,30 +267,48 @@ Ulang_type resolve_generics_ulang_type_reg_generic(Env* env, Ulang_type_reg_gene
         unreachable("invalid count template args or parameters");
     }
 
-    for (size_t idx = 0; idx < lang_type.generic_args.info.count; idx++) {
-        log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, vec_at(&lang_type.generic_args, idx)));
-    }
-    for (size_t idx = 0; idx < uast_def_get_struct_def_base(before_res).generics.info.count; idx++) {
-        log(LOG_DEBUG, TAST_FMT, uast_generic_param_print(vec_at_const(uast_def_get_struct_def_base(before_res).generics, idx)));
-    }
-    return resolve_generics_ulang_type_internal(env, before_res, ulang_type_reg_generic_const_wrap(lang_type), lang_type.generic_args);
+    *result = resolve_generics_ulang_type_internal(env, before_res, ulang_type_reg_generic_const_wrap(lang_type), lang_type.generic_args);
+    return true;
 }
 
-Ulang_type resolve_generics_ulang_type_regular(Env* env, Ulang_type_regular lang_type) {
-    log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(lang_type)));
+// TODO: move this function and macro to better place
+static void msg_undefined_type_internal(
+    const char* file,
+    int line,
+    Env* env,
+    Pos pos,
+    Ulang_type lang_type
+) {
+    msg_internal(
+        file, line, LOG_ERROR, EXPECT_FAIL_UNDEFINED_TYPE, env->file_text, pos,
+        "type `"LANG_TYPE_FMT"` is not defined\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type)
+    );
+}
+
+#define msg_undefined_type(env, pos, lang_type) \
+    msg_undefined_type_internal(__FILE__, __LINE__, env, pos, lang_type)
+
+bool resolve_generics_ulang_type_regular(Ulang_type* result, Env* env, Ulang_type_regular lang_type, Pos pos) {
     Uast_def* before_res = NULL;
-    unwrap(usymbol_lookup(&before_res, env, lang_type.atom.str));
-    assert(before_res);
+    if (!usymbol_lookup(&before_res, env, lang_type.atom.str)) {
+        msg_undefined_type(env, pos, ulang_type_regular_const_wrap(lang_type));
+        return false;
+    }
 
-    return resolve_generics_ulang_type_internal(env, before_res, ulang_type_regular_const_wrap(lang_type), (Ulang_type_vec) {0});
+    *result = resolve_generics_ulang_type_internal(
+        env,
+        before_res,
+        ulang_type_regular_const_wrap(lang_type), (Ulang_type_vec) {0}
+    );
+    return true;
 }
 
-Ulang_type resolve_generics_ulang_type(Env* env, Ulang_type lang_type) {
+bool resolve_generics_ulang_type(Ulang_type* result, Env* env, Ulang_type lang_type, Pos pos) {
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
-            return resolve_generics_ulang_type_regular(env, ulang_type_regular_const_unwrap(lang_type));
+            return resolve_generics_ulang_type_regular(result, env, ulang_type_regular_const_unwrap(lang_type));
         case ULANG_TYPE_REG_GENERIC:
-            return resolve_generics_ulang_type_reg_generic(env, ulang_type_reg_generic_const_unwrap(lang_type));
+            return resolve_generics_ulang_type_reg_generic(result, env, ulang_type_reg_generic_const_unwrap(lang_type));
         case ULANG_TYPE_TUPLE:
             todo();
         case ULANG_TYPE_FN:

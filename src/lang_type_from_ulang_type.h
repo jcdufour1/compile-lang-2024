@@ -104,7 +104,10 @@ static inline bool try_lang_type_from_ulang_type_reg_generic(
     Ulang_type_reg_generic lang_type,
     Pos pos
 ) {
-    Ulang_type after_res = resolve_generics_ulang_type_reg_generic(env, lang_type);
+    Ulang_type after_res = {0};
+    if (!resolve_generics_ulang_type_reg_generic(&after_res, env, lang_type)) {
+        return false;
+    }
     return try_lang_type_from_ulang_type(new_lang_type, env, after_res, pos);
 }
 
@@ -139,7 +142,10 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Env* e
 
 // TODO: add Pos as member to Ulang_type and Lang_type?
 static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_type, Env* env, Ulang_type_regular lang_type_, Pos pos) {
-    Ulang_type resolved = resolve_generics_ulang_type_regular(env, lang_type_);
+    Ulang_type resolved = {0};
+    if (!resolve_generics_ulang_type_regular(&resolved, env, lang_type_, pos)) {
+        return false;
+    }
     Uast_def* result = NULL;
     if (!usymbol_lookup(&result, env, ulang_type_regular_const_unwrap(resolved).atom.str)) {
         msg(
@@ -182,8 +188,6 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
 
 static inline Lang_type lang_type_from_ulang_type_regular(Env* env, Ulang_type_regular lang_type) {
     Lang_type new_lang_type = {0};
-    log(LOG_DEBUG, "THING_THING 432\n");
-    log(LOG_DEBUG, "%d\n", lang_type.atom.pointer_depth);
     unwrap(try_lang_type_from_ulang_type_regular(&new_lang_type, env, lang_type, (Pos) {0}));
     return new_lang_type;
 }
@@ -211,11 +215,14 @@ static inline bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Env* 
             *new_lang_type = lang_type_fn_const_wrap(new_fn);
             return true;
         }
-        case ULANG_TYPE_REG_GENERIC:
-            *new_lang_type = lang_type_from_ulang_type(env, resolve_generics_ulang_type_reg_generic(
-                env, ulang_type_reg_generic_const_unwrap(lang_type)
-            ));
+        case ULANG_TYPE_REG_GENERIC: {
+            Ulang_type after_res = {0};
+            resolve_generics_ulang_type_reg_generic(
+                &after_res, env, ulang_type_reg_generic_const_unwrap(lang_type)
+            );
+            *new_lang_type = lang_type_from_ulang_type(env, after_res);
             return true;
+        }
     }
     unreachable("");
 }
@@ -223,18 +230,12 @@ static inline bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Env* 
 static inline Lang_type lang_type_from_ulang_type(Env* env, Ulang_type lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
-            log(LOG_DEBUG, "ULANG_TYPE_REGULAR\n");
-            log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
-            log(LOG_DEBUG, "%d\n", ulang_type_regular_const_unwrap(lang_type).atom.pointer_depth);
             return lang_type_from_ulang_type_regular(env, ulang_type_regular_const_unwrap(lang_type));
         case ULANG_TYPE_TUPLE:
-            log(LOG_DEBUG, "ULANG_TYPE_TUPLE\n");
             return lang_type_from_ulang_type_tuple(env, ulang_type_tuple_const_unwrap(lang_type));
         case ULANG_TYPE_FN:
-            log(LOG_DEBUG, " ULANG_TYPE_FN\n");
             return lang_type_from_ulang_type_fn(env, ulang_type_fn_const_unwrap(lang_type));
         case ULANG_TYPE_REG_GENERIC:
-            log(LOG_DEBUG, " ULANG_TYPE_REG_GENERIC\n");
             return lang_type_from_ulang_type_reg_generic(env, ulang_type_reg_generic_const_unwrap(lang_type));
     }
     unreachable("");
