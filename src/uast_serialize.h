@@ -7,19 +7,22 @@
 static inline Str_view serialize_uast_struct_def(Env* env, const Uast_struct_def* def) {
     Uast_def* dummy = NULL;
     assert(usymbol_lookup(&dummy, env, def->base.name) && "struct def must be in symbol table to be serialized");
-    return serialize_ulang_type(ustruct_def_base_get_lang_type(def->base));
+    todo();
+    //return serialize_ulang_type(ustruct_def_base_get_lang_type(def->base));
 }
 
 static inline Str_view serialize_uast_raw_union_def(Env* env, const Uast_raw_union_def* def) {
     Uast_def* dummy = NULL;
     assert(usymbol_lookup(&dummy, env, def->base.name) && "raw_union def must be in symbol table to be serialized");
-    return serialize_ulang_type(ustruct_def_base_get_lang_type(def->base));
+    todo();
+    //return serialize_ulang_type(ustruct_def_base_get_lang_type(def->base));
 }
 
 static inline Str_view serialize_uast_sum_def(Env* env, const Uast_sum_def* def) {
     Uast_def* dummy = NULL;
     assert(usymbol_lookup(&dummy, env, def->base.name) && "sum def must be in symbol table to be serialized");
-    return serialize_ulang_type(ustruct_def_base_get_lang_type(def->base));
+    todo();
+    //return serialize_ulang_type(ustruct_def_base_get_lang_type(def->base));
 }
 
 static inline Str_view serialize_uast_def(Env* env, const Uast_def* def) {

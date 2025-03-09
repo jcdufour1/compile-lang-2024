@@ -544,6 +544,8 @@ static int32_t get_operator_precedence(TOKEN_TYPE type) {
             return 33;
         case TOKEN_OPEN_PAR:
             return 33;
+        case TOKEN_OPEN_GENERIC:
+            return 33;
         default:
             unreachable(TOKEN_TYPE_FMT, token_type_print(TOKEN_MODE_LOG, type));
     }
@@ -1086,7 +1088,7 @@ static PARSE_STATUS parse_generics_params(Env* env, Uast_generic_param_vec* para
             msg_parser_expected(env->file_text, tk_view_front(*tokens), "", TOKEN_SYMBOL);
             return PARSE_ERROR;
         }
-        Uast_generic_param* param = uast_generic_param_new(symbol.pos, uast_symbol_new(symbol.pos, symbol.text));
+        Uast_generic_param* param = uast_generic_param_new(symbol.pos, uast_symbol_new(symbol.pos, symbol.text, (Ulang_type_vec) {0}));
         vec_append(&a_main, params, param);
     } while (try_consume(NULL, tokens, TOKEN_COMMA));
 
@@ -1519,7 +1521,7 @@ static Uast_symbol* parse_symbol(Tk_view* tokens) {
     Token token = tk_view_consume(tokens);
     assert(token.type == TOKEN_SYMBOL);
 
-    return uast_symbol_new(token.pos, token.text);
+    return uast_symbol_new(token.pos, token.text, (Ulang_type_vec) {0});
 }
 
 static PARSE_STATUS parse_function_call(Env* env, Uast_function_call** child, Tk_view* tokens, Uast_expr* callee) {
@@ -2484,6 +2486,24 @@ static PARSE_EXPR_STATUS parse_expr_index(
     return PARSE_EXPR_OK;
 }
 
+static PARSE_EXPR_STATUS parse_expr_generic(
+    Env* env,
+    Uast_expr** result,
+    Uast_expr* lhs,
+    Tk_view* tokens,
+    int32_t* prev_oper_pres,
+    bool defer_sym_add
+) {
+    (void) result;
+    (void) prev_oper_pres;
+    (void) defer_sym_add;
+    
+    if (PARSE_OK != parse_generics_args(env, &uast_symbol_unwrap(lhs)->generic_args, tokens)) {
+        return PARSE_EXPR_ERROR;
+    }
+    return PARSE_EXPR_OK;
+}
+
 static PARSE_EXPR_STATUS parse_expr_opening_prev_less_pres(
     Env* env,
     Uast_expr** result,
@@ -2533,6 +2553,9 @@ static PARSE_EXPR_STATUS parse_expr_opening_prev_equal_pres(
         }
         case TOKEN_OPEN_SQ_BRACKET: {
             return parse_expr_index(env, result, *lhs, tokens, prev_oper_pres, defer_sym_add);
+        }
+        case TOKEN_OPEN_GENERIC: {
+            return parse_expr_generic(env, result, *lhs, tokens, prev_oper_pres, defer_sym_add);
         }
         default:
             unreachable(TOKEN_FMT, token_print(TOKEN_MODE_LOG, tk_view_front(*tokens)));

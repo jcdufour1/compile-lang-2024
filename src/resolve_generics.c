@@ -128,7 +128,7 @@ static Str_view resolve_generics_serialize_struct_def_base(
     }
 
     String name = {0};
-    string_extend_strv(&a_main, &name, serialize_ulang_type(ustruct_def_base_get_lang_type(old_base)));
+    string_extend_strv(&a_main, &name, old_base.name);
     for (size_t idx_gen = 0; idx_gen < gen_args.info.count; idx_gen++) {
         Str_view gen_def = vec_at(&old_base.generics, idx_gen)->child->name;
         for (size_t idx_memb = 0; idx_memb < old_base.members.info.count; idx_memb++) {
@@ -201,7 +201,7 @@ static Ulang_type resolve_generics_ulang_type_internal(Env* env, Uast_def* befor
             unreachable(TAST_FMT, uast_def_print(before_res));
     }
 
-    return ustruct_def_base_get_lang_type(uast_def_get_struct_def_base(after_res));
+    return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(uast_def_get_struct_def_base(after_res).name, 0)));
 }
 
 Ulang_type resolve_generics_ulang_type_reg_generic(Env* env, Ulang_type_reg_generic lang_type) {

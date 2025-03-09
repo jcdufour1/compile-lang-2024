@@ -25,8 +25,16 @@ Uast_literal* uast_literal_clone(const Uast_literal* lit) {
     unreachable("");
 }
 
+Ulang_type_vec ulang_type_vec_clone(Ulang_type_vec vec) {
+    Ulang_type_vec new_vec = {0};
+    for (size_t idx = 0; idx < vec.info.count; idx++) {
+        vec_append(&a_main, &new_vec, vec_at(&vec, idx));
+    }
+    return new_vec;
+}
+
 Uast_symbol* uast_symbol_clone(const Uast_symbol* symbol) {
-    return uast_symbol_new(symbol->pos, symbol->name);
+    return uast_symbol_new(symbol->pos, symbol->name, ulang_type_vec_clone(symbol->generic_args));
 }
 
 Uast_member_access* uast_member_access_clone(const Uast_member_access* access) {

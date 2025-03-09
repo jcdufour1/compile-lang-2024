@@ -247,18 +247,22 @@ static void if_for_add_cond_goto(
 }
 
 static Tast_assignment* for_loop_cond_var_assign_new(Env* env, Str_view sym_name, Pos pos) {
-    Uast_literal* literal = util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, pos);
-    Uast_operator* operator = uast_binary_wrap(uast_binary_new(
-        pos,
-        uast_expr_wrap(uast_symbol_wrap(uast_symbol_new(pos, sym_name))),
-        uast_literal_wrap(literal),
-        BINARY_ADD
-    ));
-    return util_assignment_new(
-        env,
-        uast_expr_wrap(uast_symbol_wrap(uast_symbol_new(pos, sym_name))),
-        uast_operator_wrap(operator)
-    );
+    (void) env;
+    (void) sym_name;
+    (void) pos;
+    todo();
+    //Uast_literal* literal = util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, pos);
+    //Uast_operator* operator = uast_binary_wrap(uast_binary_new(
+    //    pos,
+    //    uast_expr_wrap(uast_symbol_wrap(uast_symbol_new(pos, sym_name))),
+    //    uast_literal_wrap(literal),
+    //    BINARY_ADD
+    //));
+    //return util_assignment_new(
+    //    env,
+    //    uast_expr_wrap(uast_symbol_wrap(uast_symbol_new(pos, sym_name))),
+    //    uast_operator_wrap(operator)
+    //);
 }
 
 static Str_view load_function_call(
@@ -1181,7 +1185,7 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
     Tast_variable_def* for_var_def;
     {
         for_var_def = old_for->var_def;
-        symbol_lhs_assign_ = uast_symbol_new(for_var_def->pos, for_var_def->name);
+        symbol_lhs_assign_ = uast_symbol_new(for_var_def->pos, for_var_def->name, (Ulang_type_vec) {0});
         Tast_expr* new_expr = NULL;
         unwrap(try_set_symbol_types(env, &new_expr, symbol_lhs_assign_));
         symbol_lhs_assign = tast_symbol_unwrap(new_expr);
@@ -1197,7 +1201,7 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
         env, for_var_def->name, tast_expr_get_pos(lhs_actual)
     );
 
-    Uast_symbol* lhs_untyped = uast_symbol_new(tast_symbol_get_pos(symbol_lhs_assign), symbol_lhs_assign->base.name);
+    Uast_symbol* lhs_untyped = uast_symbol_new(tast_symbol_get_pos(symbol_lhs_assign), symbol_lhs_assign->base.name, (Ulang_type_vec) {0});
     Tast_expr* lhs_typed_ = NULL;
     unwrap(try_set_symbol_types(env, &lhs_typed_, lhs_untyped));
     Tast_expr* operator_ = NULL;

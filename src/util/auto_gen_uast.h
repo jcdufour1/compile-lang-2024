@@ -159,6 +159,7 @@ static Uast_type uast_gen_symbol(const char* prefix) {
     Uast_type sym = {.name = uast_name_new(prefix, "symbol", false)};
 
     append_member(&sym.members, "Str_view", "name");
+    append_member(&sym.members, "Ulang_type_vec", "generic_args");
 
     return sym;
 }

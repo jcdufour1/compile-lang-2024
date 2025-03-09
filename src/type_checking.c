@@ -999,6 +999,7 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
             return true;
         }
         case UAST_SYMBOL:
+            log(LOG_DEBUG, TAST_FMT, uast_expr_print(uast));
             if (!try_set_symbol_types(env, new_tast, uast_symbol_unwrap(uast))) {
                 return false;
             } else {
@@ -1174,7 +1175,8 @@ bool try_set_function_call_types_sum_case(Env* env, Tast_sum_case** new_case, Ua
                     lang_type_from_ulang_type(env, new_def->lang_type),
                     uast_symbol_wrap(uast_symbol_new(
                         new_def->pos,
-                        uast_expr_get_name(env->parent_of_operand)
+                        uast_expr_get_name(env->parent_of_operand),
+                        (Ulang_type_vec) {0}
                     ))
                 ))
             );
@@ -1597,6 +1599,7 @@ bool try_set_member_access_types_finish_sum_def(
                 //return false;
             }
             
+            log(LOG_DEBUG, TAST_FMT, uast_variable_def_print(member_def));
             Tast_enum_lit* new_tag = tast_enum_lit_new(
                 access->pos,
                 uast_get_member_index(&sum_def->base, access->member_name),
