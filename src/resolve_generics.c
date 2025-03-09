@@ -164,62 +164,19 @@ static void resolve_generics_struct_def(
     //todo();
 }
 
-Ulang_type resolve_generics_ulang_type_reg_generic(Env* env, Ulang_type_reg_generic lang_type) {
-    log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_reg_generic_const_wrap(lang_type)));
-    Uast_def* result = NULL;
-    unwrap(usymbol_lookup(&result, env, lang_type.atom.str));
-
-    size_t def_count = uast_def_get_struct_def_base(result).generics.info.count;
-    if (lang_type.generic_args.info.count != def_count) {
-        log(
-            LOG_DEBUG,
-            "lang_type.generic_args.info.count: %zu; new_def->base.generics.info.count: %zu\n",
-            lang_type.generic_args.info.count,
-            def_count
-        );
-        // TODO: expected failure case
-        unreachable("invalid count template args or parameters");
-    }
-
-    Uast_def* new_def = NULL;
-    switch (result->type) {
-        case UAST_SUM_DEF: {
-            Ustruct_def_base new_base = {0};
-            Str_view name = resolve_generics_serialize_struct_def_base(&new_base, uast_sum_def_unwrap(result)->base, lang_type.generic_args, uast_def_get_pos(result));
-            Uast_def* new_def_ = NULL;
-            if (usymbol_lookup(&new_def_, env, name)) {
-                todo();
-                //*new_def = uast_sum_def_unwrap(new_def_);
-                //return;
-            }
-
-            new_def = uast_sum_def_wrap(uast_sum_def_new(uast_def_get_pos(result), new_base));
-            break;
-        }
-        default:
-            unreachable(TAST_FMT, uast_def_print(result));
-    }
-
-    return ustruct_def_base_get_lang_type(uast_def_get_struct_def_base(new_def));
-}
-
-Ulang_type resolve_generics_ulang_type_regular(Env* env, Ulang_type_regular lang_type) {
-    log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(lang_type)));
-    Uast_def* before_res = NULL;
-    unwrap(usymbol_lookup(&before_res, env, lang_type.atom.str));
-    assert(before_res);
-
+static Ulang_type resolve_generics_ulang_type_internal(Env* env, Uast_def* before_res, Ulang_type lang_type, Ulang_type_vec gen_args) {
     Uast_def* after_res = NULL;
     switch (before_res->type) {
         case UAST_SUM_DEF: {
             Ustruct_def_base new_base = {0};
-            Str_view name = resolve_generics_serialize_struct_def_base(&new_base, uast_sum_def_unwrap(before_res)->base, (Ulang_type_vec) {0}, uast_def_get_pos(before_res));
+            Str_view name = resolve_generics_serialize_struct_def_base(&new_base, uast_sum_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res));
             Uast_def* new_def_ = NULL;
             if (usymbol_lookup(&new_def_, env, name)) {
                 after_res = new_def_;
             } else {
                 after_res = uast_sum_def_wrap(uast_sum_def_new(uast_def_get_pos(before_res), new_base));
             }
+            log(LOG_DEBUG, TAST_FMT, uast_def_print(after_res));
             unwrap(try_set_sum_def_types(env, uast_sum_def_unwrap(before_res), uast_sum_def_unwrap(after_res)));
             break;
         }
@@ -237,14 +194,43 @@ Ulang_type resolve_generics_ulang_type_regular(Env* env, Ulang_type_regular lang
             break;
         }
         case UAST_PRIMITIVE_DEF:
-            return ulang_type_regular_const_wrap(lang_type);
+            return lang_type;
         case UAST_LITERAL_DEF:
-            return ulang_type_regular_const_wrap(lang_type);
+            return lang_type;
         default:
             unreachable(TAST_FMT, uast_def_print(before_res));
     }
 
     return ustruct_def_base_get_lang_type(uast_def_get_struct_def_base(after_res));
+}
+
+Ulang_type resolve_generics_ulang_type_reg_generic(Env* env, Ulang_type_reg_generic lang_type) {
+    log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_reg_generic_const_wrap(lang_type)));
+    Uast_def* before_res = NULL;
+    unwrap(usymbol_lookup(&before_res, env, lang_type.atom.str));
+
+    size_t def_count = uast_def_get_struct_def_base(before_res).generics.info.count;
+    if (lang_type.generic_args.info.count != def_count) {
+        log(
+            LOG_DEBUG,
+            "lang_type.generic_args.info.count: %zu; new_def->base.generics.info.count: %zu\n",
+            lang_type.generic_args.info.count,
+            def_count
+        );
+        // TODO: expected failure case
+        unreachable("invalid count template args or parameters");
+    }
+
+    return resolve_generics_ulang_type_internal(env, before_res, ulang_type_reg_generic_const_wrap(lang_type), lang_type.generic_args);
+}
+
+Ulang_type resolve_generics_ulang_type_regular(Env* env, Ulang_type_regular lang_type) {
+    log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(lang_type)));
+    Uast_def* before_res = NULL;
+    unwrap(usymbol_lookup(&before_res, env, lang_type.atom.str));
+    assert(before_res);
+
+    return resolve_generics_ulang_type_internal(env, before_res, ulang_type_regular_const_wrap(lang_type), (Ulang_type_vec) {0});
 }
 
 Ulang_type resolve_generics_ulang_type(Env* env, Ulang_type lang_type) {

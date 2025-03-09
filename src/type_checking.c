@@ -1839,6 +1839,7 @@ bool try_set_variable_def_types(
 ) {
     Lang_type new_lang_type = {0};
     log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, uast->lang_type));
+    log(LOG_DEBUG, "%d\n", uast->lang_type.type);
     if (!try_lang_type_from_ulang_type(&new_lang_type, env, uast->lang_type, uast->pos)) {
         return false;
     }
