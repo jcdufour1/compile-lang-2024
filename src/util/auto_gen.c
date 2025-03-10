@@ -101,32 +101,6 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "}\n");
     string_extend_cstr(&gen_a, &text, "\n");
 
-    // TODO: callback, Str_view or other solution for getting tast_name?
-    string_extend_cstr(&gen_a, &text, "void ");
-    extend_strv_lower(&text, type.normal_prefix);
-    string_extend_cstr(&gen_a, &text, "_log_table_internal(int log_level, const ");
-    extend_strv_first_upper(&text, type.normal_prefix);
-    string_extend_cstr(&gen_a, &text, "_table sym_table, int recursion_depth, const char* file_path, int line) {\n");
-    string_extend_cstr(&gen_a, &text, "    String padding = {0};\n");
-    string_extend_cstr(&gen_a, &text, "    int indent_amt = 2*(recursion_depth + 4);\n");
-    string_extend_cstr(&gen_a, &text, "    vec_reserve(&print_arena, &padding, indent_amt);\n");
-    string_extend_cstr(&gen_a, &text, "    for (int idx = 0; idx < indent_amt; idx++) {\n");
-    string_extend_cstr(&gen_a, &text, "        vec_append(&print_arena, &padding, ' ');\n");
-    string_extend_cstr(&gen_a, &text, "    }\n");
-    string_extend_cstr(&gen_a, &text, "\n");
-    string_extend_cstr(&gen_a, &text, "    for (size_t idx = 0; idx < sym_table.capacity; idx++) {\n");
-    string_extend_cstr(&gen_a, &text, "        ");
-    extend_strv_first_upper(&text, type.normal_prefix);
-    string_extend_cstr(&gen_a, &text, "_table_tast* sym_tast = &sym_table.table_tasts[idx];\n");
-    string_extend_cstr(&gen_a, &text, "        if (sym_tast->status == SYM_TBL_OCCUPIED) {\n");
-    string_extend_cstr(&gen_a, &text, "            log_file_new(log_level, file_path, line, STRING_FMT TAST_FMT\"\\n\", string_print(padding), ");
-    extend_strv_lower(&text, type.print_fn);
-    string_extend_cstr(&gen_a, &text, "((sym_tast->tast)));\n");
-    string_extend_cstr(&gen_a, &text, "        }\n");
-    string_extend_cstr(&gen_a, &text, "    }\n");
-    string_extend_cstr(&gen_a, &text, "}\n");
-    string_extend_cstr(&gen_a, &text, "\n");
-
     string_extend_cstr(&gen_a, &text, "// returns false if symbol is already added to the table\n");
     string_extend_cstr(&gen_a, &text, "bool ");
     extend_strv_lower(&text, type.internal_prefix);
@@ -359,27 +333,6 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     } else {
         string_extend_cstr(&gen_a, &text, "_tbl_add(sym_table, tast_of_symbol));\n");
     }
-    string_extend_cstr(&gen_a, &text, "}\n");
-    string_extend_cstr(&gen_a, &text, "\n");
-    string_extend_cstr(&gen_a, &text, "void ");
-    extend_strv_lower(&text, type.normal_prefix);
-    string_extend_cstr(&gen_a, &text, "_log_internal(int log_level, Env* env, const char* file_path, int line) {\n");
-    string_extend_cstr(&gen_a, &text, "    if (env->ancesters.info.count < 1) {\n");
-    string_extend_cstr(&gen_a, &text, "        return;\n");
-    string_extend_cstr(&gen_a, &text, "    }\n");
-    string_extend_cstr(&gen_a, &text, "\n");
-    string_extend_cstr(&gen_a, &text, "    for (size_t idx = env->ancesters.info.count - 1;; idx--) {\n");
-    string_extend_cstr(&gen_a, &text, "        Symbol_collection* curr_tast = vec_at(&env->ancesters, idx);\n");
-    string_extend_cstr(&gen_a, &text, "        ");
-    extend_strv_lower(&text, type.normal_prefix);
-    string_extend_cstr(&gen_a, &text, "_log_table_internal(log_level, curr_tast->");
-    extend_strv_lower(&text, type.symbol_table_name);
-    string_extend_cstr(&gen_a, &text, ", 4, file_path, line);\n");
-    string_extend_cstr(&gen_a, &text, "\n");
-    string_extend_cstr(&gen_a, &text, "        if (idx < 1) {\n");
-    string_extend_cstr(&gen_a, &text, "            return;\n");
-    string_extend_cstr(&gen_a, &text, "        }\n");
-    string_extend_cstr(&gen_a, &text, "    }\n");
     string_extend_cstr(&gen_a, &text, "}\n");
     string_extend_cstr(&gen_a, &text, "\n");
     string_extend_cstr(&gen_a, &text, "bool ");
@@ -641,18 +594,6 @@ static void gen_symbol_table_header_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "_table* sym_table, ");
     extend_strv_first_upper(&text, type.type_name);
     string_extend_cstr(&gen_a, &text, "* tast_of_symbol);\n");
-    string_extend_cstr(&gen_a, &text, "void ");
-    extend_strv_lower(&text, type.normal_prefix);
-    string_extend_cstr(&gen_a, &text, "_log_internal(int log_level, Env* env, const char* file_path, int line);\n");
-    string_extend_cstr(&gen_a, &text, "\n");
-    string_extend_cstr(&gen_a, &text, "#define ");
-    extend_strv_lower(&text, type.normal_prefix);
-    string_extend_cstr(&gen_a, &text, "_log(log_level, env) \\\n");
-    string_extend_cstr(&gen_a, &text, "    do { \\\n");
-    string_extend_cstr(&gen_a, &text, "        ");
-    extend_strv_lower(&text, type.normal_prefix);
-    string_extend_cstr(&gen_a, &text, "_log_internal(log_level, env, __FILE__, __LINE__); \\\n");
-    string_extend_cstr(&gen_a, &text, "    } while(0)\n");
     string_extend_cstr(&gen_a, &text, "\n");
     string_extend_cstr(&gen_a, &text, "bool ");
     extend_strv_lower(&text, type.normal_prefix);

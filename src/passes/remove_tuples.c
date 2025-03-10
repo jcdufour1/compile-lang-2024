@@ -10,6 +10,7 @@
 #include <lang_type_serialize.h>
 #include <lang_type_from_ulang_type.h>
 #include <lang_type_print.h>
+#include <symbol_log.h>
 
 // TODO: simplify everything (remove rhs specific thing if possible)
 
@@ -154,8 +155,14 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
             Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
             unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def)));
             struct_def->base.name = serialize_tast_struct_def(env, struct_def);
+            log(LOG_DEBUG, TAST_FMT, tast_struct_def_print(struct_def));
             // TODO: consider collisions with generated structs and user defined structs
-            sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def));
+            bool status = sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def));
+            log(LOG_DEBUG, "%zu\n", env->ancesters.info.count);
+            log(LOG_DEBUG, BOOL_FMT"\n", bool_print(status));
+            Tast_def* dummy = NULL;
+            status = sym_tbl_lookup(&dummy, &vec_at(&env->ancesters, 0)->symbol_table, struct_def->base.name);
+            log(LOG_DEBUG, BOOL_FMT"\n", bool_print(status));
 
             return lang_type_struct_const_wrap(lang_type_struct_new(lang_type_atom_new(struct_def->base.name, 0)));
         }
@@ -592,6 +599,7 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
     Tast_sum_lit* rhs,
     Pos assign_pos
 ) {
+    log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, rhs->sum_lang_type));
     Lang_type lhs_lang_type = rm_tuple_lang_type(env, rhs->sum_lang_type, rhs->pos);
     Tast_expr_vec members = {0};
     Tast_sum_lit* sum_lit = rhs;
@@ -602,6 +610,8 @@ static Tast_expr* rm_tuple_sum_lit_rhs(
     }
 
     Tast_def* struct_def_ = NULL;
+    symbol_log(LOG_DEBUG, env);
+    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(lang_type_get_str(lhs_lang_type)));
     unwrap(symbol_lookup(&struct_def_, env, lang_type_get_str(lhs_lang_type)));
     Struct_def_base base = tast_struct_def_unwrap(struct_def_)->base;
 

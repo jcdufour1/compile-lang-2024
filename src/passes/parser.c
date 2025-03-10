@@ -12,6 +12,7 @@
 #include <token_type_to_operator_type.h>
 #include "passes.h"
 #include <uast_clone.h>
+#include <symbol_log.h>
 
 static Token prev_token = {0};
 

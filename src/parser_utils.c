@@ -11,6 +11,7 @@
 #include <ctype.h>
 #include <token_type_to_operator_type.h>
 #include <sizeof.h>
+#include <symbol_log.h>
 
 bool try_str_view_to_int64_t(int64_t* result, Str_view str_view) {
     *result = 0;

@@ -20,6 +20,7 @@
 #include <ulang_type_from_uast_function_decl.h>
 #include <resolve_generics.h>
 #include <ulang_type_get_atom.h>
+#include <symbol_log.h>
 
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
@@ -280,8 +281,6 @@ CHECK_ASSIGN_STATUS check_generic_assignment_finish(
     bool src_is_zero,
     Tast_expr* src
 ) {
-    log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type));
-    log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(src)));
     if (lang_type_is_equal(dest_lang_type, tast_expr_get_lang_type(src))) {
         *new_src = src;
         return CHECK_ASSIGN_OK;
@@ -308,7 +307,6 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
     Uast_expr* src,
     Pos pos
 ) {
-    log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type));
     if (src->type == UAST_STRUCT_LITERAL) {
         Tast_stmt* new_src_ = NULL;
         if (!try_set_struct_literal_assignment_types(
@@ -403,7 +401,6 @@ static void msg_undefined_symbol_internal(const char* file, int line, Str_view f
 // set symbol lang_type, and report error if symbol is undefined
 bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyped) {
     Uast_def* sym_def = NULL;
-    log(LOG_DEBUG, TAST_FMT, uast_symbol_print(sym_untyped));
     if (!usymbol_lookup(&sym_def, env, sym_untyped->name)) {
         msg_undefined_symbol(env->file_text, uast_expr_wrap(uast_symbol_wrap(sym_untyped)));
         return false;
@@ -432,7 +429,6 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
         case UAST_LITERAL_DEF:
             // fallthrough
         case UAST_VARIABLE_DEF: {
-            log(LOG_DEBUG, TAST_FMT, uast_symbol_print(sym_untyped));
             Lang_type lang_type = {0};
             if (!uast_def_get_lang_type(&lang_type, env, sym_def, sym_untyped->generic_args)) {
                 return false;
@@ -716,8 +712,6 @@ bool try_set_binary_types(Env* env, Tast_expr** new_tast, Uast_binary* operator)
         unreachable("not-expr cannot be lhs of this operator");
     }
 
-    log(LOG_DEBUG, TAST_FMT"\n", binary_type_print(operator->token_type));
-    log(LOG_DEBUG, TAST_FMT, uast_binary_print(operator));
     return try_set_binary_types_finish(
         env,
         new_tast,
@@ -936,7 +930,6 @@ bool try_set_struct_literal_assignment_types(
     Tast_expr_vec new_literal_members = {0};
     for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
         Uast_variable_def* memb_sym_def = vec_at(&struct_def->base.members, idx);
-        log(LOG_DEBUG, TAST_FMT, uast_stmt_print(vec_at(&struct_literal->members, idx)));
         Uast_binary* assign_memb_sym = uast_binary_unwrap(uast_operator_unwrap(uast_expr_unwrap(vec_at(&struct_literal->members, idx))));
         Uast_symbol* memb_sym_piece_untyped = uast_symbol_unwrap(uast_expr_unwrap(assign_memb_sym->lhs));
         Tast_expr* new_rhs = NULL;
@@ -1013,7 +1006,6 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
             return true;
         }
         case UAST_SYMBOL:
-            log(LOG_DEBUG, TAST_FMT, uast_expr_print(uast));
             if (!try_set_symbol_types(env, new_tast, uast_symbol_unwrap(uast))) {
                 return false;
             } else {
@@ -1235,7 +1227,6 @@ static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Env* env, Ulang
         name
     );
     usym_tbl_add(&vec_at(&env->ancesters, 0)->usymbol_table, uast_function_decl_wrap(fun_decl));
-    log(LOG_DEBUG, TAST_FMT"\n", uast_function_decl_print(fun_decl));
     return fun_decl;
 
     todo();
@@ -1381,7 +1372,6 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
                 ulang_type_fn_const_unwrap(uast_variable_def_unwrap(fun_def)->lang_type),
                 uast_variable_def_unwrap(fun_def)->pos
             );
-            log(LOG_DEBUG, TAST_FMT, uast_function_decl_print(fun_decl));
             break;
         }
         default:
@@ -1602,7 +1592,6 @@ bool try_set_member_access_types_finish_sum_def(
                 //return false;
             }
             
-            log(LOG_DEBUG, TAST_FMT, uast_variable_def_print(member_def));
             Tast_enum_lit* new_tag = tast_enum_lit_new(
                 access->pos,
                 uast_get_member_index(&sum_def->base, access->member_name),
