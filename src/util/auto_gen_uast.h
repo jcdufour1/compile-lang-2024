@@ -314,6 +314,7 @@ static Uast_type uast_gen_raw_union_def(const char* prefix) {
 static Uast_type uast_gen_function_decl(const char* prefix) {
     Uast_type def = {.name = uast_name_new(prefix, "function_decl", false)};
 
+    append_member(&def.members, "Uast_generic_param_vec", "generics");
     append_member(&def.members, "Uast_function_params*", "params");
     append_member(&def.members, "Uast_lang_type*", "return_type");
     append_member(&def.members, "Str_view", "name");

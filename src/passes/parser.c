@@ -53,6 +53,7 @@ static PARSE_STATUS parse_variable_decl(
 );
 static PARSE_EXPR_STATUS parse_condition(Env* env, Uast_condition**, Tk_view* tokens);
 static PARSE_STATUS parse_generics_args(Env* env, Ulang_type_vec* args, Tk_view* tokens);
+static PARSE_STATUS parse_generics_params(Env* env, Uast_generic_param_vec* params, Tk_view* tokens);
 
 static bool try_consume(Token* result, Tk_view* tokens, TOKEN_TYPE type) {
     Token temp;
@@ -1047,6 +1048,14 @@ static PARSE_STATUS parse_function_decl_common(
     Tk_view* tokens
 ) {
     Token name_token = tk_view_consume(tokens);
+
+    Uast_generic_param_vec gen_params = {0};
+    if (tk_view_front(*tokens).type ==  TOKEN_OPEN_GENERIC) {
+        if (PARSE_OK != parse_generics_params(env, &gen_params, tokens)) {
+            return PARSE_ERROR;
+        }
+    }
+
     if (!try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
         msg_parser_expected(env->file_text, tk_view_front(*tokens), " in function decl", TOKEN_OPEN_PAR);
         return PARSE_ERROR;
@@ -1060,7 +1069,7 @@ static PARSE_STATUS parse_function_decl_common(
     Uast_lang_type* return_type = NULL;
     parse_return_types(env, &return_type, tokens);
 
-    *fun_decl = uast_function_decl_new(name_token.pos, params, return_type, name_token.text);
+    *fun_decl = uast_function_decl_new(name_token.pos, gen_params, params, return_type, name_token.text);
     if (!usymbol_add(env, uast_function_decl_wrap(*fun_decl))) {
         return msg_redefinition_of_symbol(env, uast_function_decl_wrap(*fun_decl));
     }

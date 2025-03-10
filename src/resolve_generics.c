@@ -176,28 +176,6 @@ static Str_view resolve_generics_serialize_struct_def_base(
     return string_to_strv(name);
 }
 
-// TODO: deduplicate this and above function
-static void resolve_generics_struct_def(
-    Env* env,
-    Uast_struct_def** new_def,
-    const Uast_struct_def* old_def,
-    Ulang_type_vec gen_args
-) {
-    Ustruct_def_base new_base = {0};
-    Str_view name = resolve_generics_serialize_struct_def_base(&new_base, old_def->base, gen_args, old_def->pos);
-    Uast_def* new_def_ = NULL;
-    if (usymbol_lookup(&new_def_, env, name)) {
-        todo();
-        *new_def = uast_struct_def_unwrap(new_def_);
-        return;
-    }
-
-    *new_def = uast_struct_def_new(old_def->pos, new_base);
-    return;
-    //log(LOG_DEBUG, TAST_FMT"\n", uast_struct_def_print(*new_def));
-    //todo();
-}
-
 static bool resolve_generics_ulang_type_internal(Ulang_type* result, Env* env, Uast_def* before_res, Ulang_type lang_type, Ulang_type_vec gen_args) {
     Uast_def* after_res = NULL;
     switch (before_res->type) {
@@ -289,7 +267,13 @@ bool resolve_generics_ulang_type_reg_generic(Ulang_type* result, Env* env, Ulang
         unreachable("invalid count template args or parameters");
     }
 
-    return resolve_generics_ulang_type_internal(result, env, before_res, ulang_type_reg_generic_const_wrap(lang_type), lang_type.generic_args);
+    return resolve_generics_ulang_type_internal(
+        result,
+        env,
+        before_res,
+        ulang_type_reg_generic_const_wrap(lang_type),
+        lang_type.generic_args
+    );
 }
 
 // TODO: move this function and macro to better place
@@ -336,15 +320,20 @@ bool resolve_generics_ulang_type(Ulang_type* result, Env* env, Ulang_type lang_t
         case ULANG_TYPE_FN:
             todo();
     }
-    todo();
+    unreachable("");
 }
 
-static Str_view resolve_generics_serialize_function_decl(
+static void resolve_generics_serialize_function_decl(
     Uast_function_decl** new_decl,
-    Uast_function_decl* old_decl
+    Uast_function_decl* old_decl,
+    Ulang_type_vec gen_args
 ) {
     // TODO: figure out way to avoid making new Uast_function_decl every time
     memset(new_decl, 0, sizeof(*new_decl));
+    String name = {0};
+    string_extend_cstr(&a_main, &name, "_");
+    string_extend_size_t(&a_main, &name, old_decl->name.count);
+    string_extend_strv(&a_main, &name, old_decl->name);
 
     Uast_param_vec params = {0};
     for (size_t idx = 0; idx < old_decl->params->params.info.count; idx++) {
@@ -356,22 +345,63 @@ static Str_view resolve_generics_serialize_function_decl(
         todo();
     }
 
-    Ulang_type result = {0};
-    unwrap(resolve_generics_ulang_type(env, old_decl->return_type->lang_type));
+    Ulang_type new_rtn_type = {0};
+
+    Str_view rtn_str = ulang_type_regular_const_unwrap(old_decl->return_type->lang_type).atom.str;
+    for (size_t idx = 0; idx < gen_args.info.count; idx++) {
+        Str_view gen_param = vec_at(&old_decl->generics, idx)->child->name;
+        log(
+            LOG_DEBUG, "gen_str: "STR_VIEW_FMT"    rtn_str: "STR_VIEW_FMT"\n",
+            str_view_print(gen_param), str_view_print(rtn_str)
+        );
 
 
-    todo();
+        if (str_view_is_equal(gen_param, rtn_str)) {
+            new_rtn_type = vec_at(&gen_args, idx);
+            string_extend_strv(&a_main, &name, serialize_ulang_type(new_rtn_type));
+            break;
+        }
+    }
 
+    *new_decl = uast_function_decl_new(
+        old_decl->pos,
+        (Uast_generic_param_vec) {0},
+        uast_function_params_new(old_decl->params->pos, params),
+        uast_lang_type_new(ulang_type_get_pos(new_rtn_type), new_rtn_type),
+        string_to_strv(name)
+    );
 }
 
 // only generic function decls can be passed in here
-bool resolve_generics_function_decl(Uast_function_decl** result, Env* env, Uast_function_decl* decl) {
+bool resolve_generics_function_decl(
+    Uast_function_decl** new_decl,
+    Env* env,
+    Uast_function_decl* decl,
+    Ulang_type_vec gen_args
+) {
+    (void) env;
     if (!function_decl_generics_are_present(decl)) {
         unreachable("non generic function decls should not be passed here");
     }
-    Uast_function_decl* new_decl = NULL;
-    Str_view name = resolve_generics_serialize_function_decl(&new_decl, decl);
-    todo();
+
+    resolve_generics_serialize_function_decl(new_decl, decl, gen_args);
+    Uast_function_def* new_def = uast_function_def_new(Pos pos, Uast_function_decl* decl, Uast_block* body);
+
+    {
+        size_t idx = 0;
+        for (; idx < env->ancesters.info.count; idx++) {
+            Uast_def* result = NULL;
+            if (usym_tbl_lookup(&result, &vec_at(&env->ancesters, idx)->usymbol_table, decl->name)) {
+                break;
+            }
+        }
+        usym_tbl_add(&vec_at(&env->ancesters, idx)->usymbol_table, uast_function_decl_wrap(*new_decl));
+        sym_tbl_add(&vec_at(&env->ancesters, idx)->symbol_table, new_def);
+        log(LOG_DEBUG, "thing fdlksaf: %zu\n", idx);
+    }
+
+    log(LOG_DEBUG, TAST_FMT, uast_function_decl_print(*new_decl));
+    return true;
 }
 
 static bool ulang_type_generics_are_present_tuple(Ulang_type_tuple lang_type) {
@@ -405,13 +435,19 @@ static bool ulang_type_generics_are_present(Ulang_type lang_type) {
 }
 
 bool function_decl_generics_are_present(const Uast_function_decl* decl) {
-    if (ulang_type_generics_are_present(decl->return_type->lang_type)) {
+    if (decl->generics.info.count > 0) {
         return true;
+    }
+
+    if (ulang_type_generics_are_present(decl->return_type->lang_type)) {
+        // TODO: expected failure test
+        unreachable("generics in return type, but not in function decl. this is wrong");
     }
 
     for (size_t idx = 0; idx < decl->params->params.info.count; idx++) {
         if (ulang_type_generics_are_present(vec_at(&decl->params->params, idx)->base->lang_type)) {
-            return true;
+            // TODO: expected failure test
+            unreachable("generics in function parameters, but not in function decl. this is wrong");
         }
     }
 

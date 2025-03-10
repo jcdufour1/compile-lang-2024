@@ -410,7 +410,7 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
         case UAST_FUNCTION_DECL: {
             Uast_function_decl* new_decl = NULL;
             if (function_decl_generics_are_present(uast_function_decl_unwrap(sym_def))) {
-                if (!resolve_generics_function_decl(&new_decl, env, uast_function_decl_unwrap(sym_def))) {
+                if (!resolve_generics_function_decl(&new_decl, env, uast_function_decl_unwrap(sym_def), sym_untyped->generic_args)) {
                     return false;
                 }
             } else {
@@ -418,9 +418,10 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
             }
             *new_tast = tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
                 sym_untyped->pos,
-                sym_untyped->name,
+                new_decl->name,
                 lang_type_from_ulang_type(env, ulang_type_from_uast_function_decl(new_decl))
             )));
+            log(LOG_DEBUG, TAST_FMT, tast_expr_print(*new_tast));
             return true;
         }
         case UAST_FUNCTION_DEF:
@@ -1231,6 +1232,7 @@ static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Env* env, Ulang
 
     Uast_function_decl* fun_decl = uast_function_decl_new(
         pos,
+        (Uast_generic_param_vec) {0},
         uast_function_params_new(pos, params),
         uast_lang_type_new(pos, *lang_type.return_type),
         name
