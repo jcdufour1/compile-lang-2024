@@ -143,7 +143,7 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Env* e
 // TODO: add Pos as member to Ulang_type and Lang_type?
 static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_type, Env* env, Ulang_type_regular lang_type_, Pos pos) {
     Ulang_type resolved = {0};
-    if (!resolve_generics_ulang_type_regular(&resolved, env, lang_type_, pos)) {
+    if (!resolve_generics_ulang_type_regular(&resolved, env, lang_type_)) {
         return false;
     }
     Uast_def* result = NULL;
@@ -247,7 +247,7 @@ static inline Ulang_type_tuple lang_type_tuple_to_ulang_type_tuple(Lang_type_tup
     for (size_t idx = 0; idx < lang_type.lang_types.info.count; idx++) {
         vec_append(&a_main, &new_types, lang_type_to_ulang_type(vec_at(&lang_type.lang_types, idx)));
     }
-    return ulang_type_tuple_new(new_types);
+    return ulang_type_tuple_new(new_types, lang_type.pos);
 }
 
 static inline Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
@@ -266,7 +266,8 @@ static inline Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
             // fallthrough
         case LANG_TYPE_SUM:
             // fallthrough
-            return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(lang_type_get_str(lang_type), lang_type_get_pointer_depth(lang_type))));
+            todo();
+            //return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(lang_type_get_str(lang_type), lang_type_get_pointer_depth(lang_type)), ));
         case LANG_TYPE_FN:
             todo();
     }

@@ -820,13 +820,14 @@ static bool is_binary(TOKEN_TYPE token_type) {
     unreachable("");
 }
 
-static bool parse_lang_type_struct_atom(Ulang_type_atom* lang_type, Tk_view* tokens) {
+static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk_view* tokens) {
     memset(lang_type, 0, sizeof(*lang_type));
     Token lang_type_token = {0};
 
     if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
         return false;
     }
+    *pos = lang_type_token.pos;
 
     lang_type->str = lang_type_token.text;
     while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
@@ -842,18 +843,21 @@ static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* t
     Ulang_type_vec types = {0};
     bool is_comma = true;
 
-    if (!try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
+    // TODO: make token naming more consistant
+    Token tk_start = {0};
+    if (!try_consume(&tk_start, tokens, TOKEN_OPEN_PAR)) {
         log_tokens(LOG_DEBUG, *tokens);
         todo();
     }
 
     while (is_comma) {
         // a return type is only one token, at least for now
-        if (!parse_lang_type_struct_atom(&atom, tokens)) {
+        Pos atom_pos = {0};
+        if (!parse_lang_type_struct_atom(&atom_pos, &atom, tokens)) {
             atom.str = str_view_from_cstr("void");
             break;
         }
-        Ulang_type new_child = ulang_type_regular_const_wrap(ulang_type_regular_new(atom));
+        Ulang_type new_child = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, atom_pos));
         vec_append(&a_main, &types, new_child);
         is_comma = try_consume(NULL, tokens, TOKEN_COMMA);
     }
@@ -863,7 +867,7 @@ static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* t
         todo();
     }
 
-    *lang_type = ulang_type_tuple_new(types);
+    *lang_type = ulang_type_tuple_new(types, tk_start.pos);
     return true;
 }
 
@@ -881,7 +885,7 @@ static bool parse_lang_type_struct(Env* env, Ulang_type* lang_type, Tk_view* tok
         if (!parse_lang_type_struct(env, rtn_type, tokens)) {
             return false;
         }
-        *lang_type = ulang_type_fn_const_wrap(ulang_type_fn_new(params, rtn_type));
+        *lang_type = ulang_type_fn_const_wrap(ulang_type_fn_new(params, rtn_type, lang_type_token.pos));
         return true;
     }
 
@@ -895,12 +899,13 @@ static bool parse_lang_type_struct(Env* env, Ulang_type* lang_type, Tk_view* tok
         return true;
     }
 
-    if (!parse_lang_type_struct_atom(&atom, tokens)) {
+    Pos pos = {0};
+    if (!parse_lang_type_struct_atom(&pos, &atom, tokens)) {
         return false;
     }
 
     if (tk_view_front(*tokens).type != TOKEN_OPEN_GENERIC) {
-        *lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(atom));
+        *lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, pos));
         return true;
     }
 
@@ -908,13 +913,14 @@ static bool parse_lang_type_struct(Env* env, Ulang_type* lang_type, Tk_view* tok
     if (PARSE_OK != parse_generics_args(env, &gen_args, tokens)) {
         return false;
     }
-    *lang_type = ulang_type_reg_generic_const_wrap(ulang_type_reg_generic_new(atom, gen_args));
+    *lang_type = ulang_type_reg_generic_const_wrap(ulang_type_reg_generic_new(atom, gen_args, pos));
     return true;
 }
 
 // require type to be parsed
 static PARSE_STATUS parse_lang_type_struct_atom_require(Env* env, Ulang_type_atom* lang_type, Tk_view* tokens) {
-    if (parse_lang_type_struct_atom(lang_type, tokens)) {
+    Pos pos = {0};
+    if (parse_lang_type_struct_atom(&pos, lang_type, tokens)) {
         return PARSE_OK;
     } else {
         msg_parser_expected(env->file_text, tk_view_front(*tokens), "", TOKEN_SYMBOL);
@@ -1027,7 +1033,7 @@ static void parse_return_types(Env* env, Uast_lang_type** result, Tk_view* token
     Pos pos = tk_view_front(*tokens).pos;
 
     if (!parse_lang_type_struct(env, &lang_type, tokens)) {
-        *result = uast_lang_type_new(pos, ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0))));
+        *result = uast_lang_type_new(pos, ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0), pos)));
         return;
     }
     log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
@@ -1175,6 +1181,7 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
     Tk_view* tokens,
     Ulang_type_atom lang_type
 ) {
+    (void) lang_type;
     base->name = name;
 
     if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
@@ -1196,13 +1203,14 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
             return PARSE_ERROR;
         }
 
-        Uast_variable_def* member = uast_variable_def_new(
-            name_token.pos,
-            ulang_type_regular_const_wrap(ulang_type_regular_new(lang_type)),
-            name_token.text
-        );
+        todo();
+        //Uast_variable_def* member = uast_variable_def_new(
+        //    name_token.pos,
+        //    ulang_type_regular_const_wrap(ulang_type_regular_new(lang_type, lang_type_pos)),
+        //    name_token.text
+        //);
 
-        vec_append(&a_main, &base->members, member);
+        //vec_append(&a_main, &base->members, member);
     }
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
@@ -1262,10 +1270,11 @@ static PARSE_STATUS parse_enum_def(Env* env, Uast_enum_def** enum_def, Tk_view* 
 }
 
 static PARSE_STATUS parse_sum_def(Env* env, Uast_sum_def** sum_def, Tk_view* tokens, Token name) {
-    unwrap(try_consume(NULL, tokens, TOKEN_SUM));
+    Token sum_tk = {0};
+    unwrap(try_consume(&sum_tk, tokens, TOKEN_SUM));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def(env, &base, name.text, tokens, false, ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0))))) {
+    if (PARSE_OK != parse_struct_base_def(env, &base, name.text, tokens, false, ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0), sum_tk.pos)))) {
         return PARSE_ERROR;
     }
 
@@ -2178,7 +2187,7 @@ static PARSE_EXPR_STATUS parse_unary(
         case TOKEN_REFER:
             // fallthrough
         case TOKEN_UNSAFE_CAST:
-            *result = uast_unary_wrap(uast_unary_new(oper.pos, child, token_type_to_unary_type(oper.type), ulang_type_regular_const_wrap(ulang_type_regular_new(unary_lang_type))));
+            *result = uast_unary_wrap(uast_unary_new(oper.pos, child, token_type_to_unary_type(oper.type), ulang_type_regular_const_wrap(ulang_type_regular_new(unary_lang_type, oper.pos))));
             assert(*result);
             break;
         case TOKEN_SINGLE_MINUS: {

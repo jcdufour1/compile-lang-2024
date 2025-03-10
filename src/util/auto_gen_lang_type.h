@@ -351,6 +351,12 @@ static void lang_type_gen_lang_type_struct(Lang_type_type lang_type) {
         extend_struct_member(&output, vec_at(&lang_type.members, idx));
     }
 
+    if (lang_type.sub_types.info.count < 1) {
+        extend_struct_member(&output, (Member) {
+            .type = str_view_from_cstr("Pos"), .name = str_view_from_cstr("pos")
+        });
+    }
+
     string_extend_cstr(&gen_a, &output, "}");
     extend_lang_type_name_first_upper(&output, lang_type.name);
     string_extend_cstr(&gen_a, &output, ";\n");

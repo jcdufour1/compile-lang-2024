@@ -6,6 +6,7 @@
 #include <ulang_type.h>
 #include <uast_clone.h>
 #include <uast_utils.h>
+#include <ulang_type_get_pos.h>
 
 //static Str_view resolve_generics_serialize_struct_def_base(Struct_def_base base) {
 //    String name = {0};
@@ -248,7 +249,9 @@ static Ulang_type resolve_generics_ulang_type_internal(Env* env, Uast_def* befor
             unreachable(TAST_FMT, uast_def_print(before_res));
     }
 
-    return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(uast_def_get_struct_def_base(after_res).name, ulang_type_regular_const_unwrap(lang_type).atom.pointer_depth)));
+    return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
+        uast_def_get_struct_def_base(after_res).name, ulang_type_regular_const_unwrap(lang_type).atom.pointer_depth
+    ), ulang_type_get_pos(lang_type)));
 }
 
 bool resolve_generics_ulang_type_reg_generic(Ulang_type* result, Env* env, Ulang_type_reg_generic lang_type) {
@@ -288,10 +291,10 @@ static void msg_undefined_type_internal(
 #define msg_undefined_type(env, pos, lang_type) \
     msg_undefined_type_internal(__FILE__, __LINE__, env, pos, lang_type)
 
-bool resolve_generics_ulang_type_regular(Ulang_type* result, Env* env, Ulang_type_regular lang_type, Pos pos) {
+bool resolve_generics_ulang_type_regular(Ulang_type* result, Env* env, Ulang_type_regular lang_type) {
     Uast_def* before_res = NULL;
     if (!usymbol_lookup(&before_res, env, lang_type.atom.str)) {
-        msg_undefined_type(env, pos, ulang_type_regular_const_wrap(lang_type));
+        msg_undefined_type(env, lang_type.pos, ulang_type_regular_const_wrap(lang_type));
         return false;
     }
 
@@ -303,7 +306,7 @@ bool resolve_generics_ulang_type_regular(Ulang_type* result, Env* env, Ulang_typ
     return true;
 }
 
-bool resolve_generics_ulang_type(Ulang_type* result, Env* env, Ulang_type lang_type, Pos pos) {
+bool resolve_generics_ulang_type(Ulang_type* result, Env* env, Ulang_type lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
             return resolve_generics_ulang_type_regular(result, env, ulang_type_regular_const_unwrap(lang_type));
