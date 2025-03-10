@@ -164,6 +164,12 @@ static Uast_type uast_gen_symbol(const char* prefix) {
     return sym;
 }
 
+static Uast_type uast_gen_unknown(const char* prefix) {
+    Uast_type access = {.name = uast_name_new(prefix, "unknown", false)};
+
+    return access;
+}
+
 static Uast_type uast_gen_member_access(const char* prefix) {
     Uast_type access = {.name = uast_name_new(prefix, "member_access", false)};
 
@@ -275,6 +281,7 @@ static Uast_type uast_gen_expr(const char* prefix) {
     const char* base_name = "expr";
     Uast_type expr = {.name = uast_name_new(prefix, base_name, false)};
 
+    vec_append(&gen_a, &expr.sub_types, uast_gen_unknown(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_operator(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_symbol(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_member_access(base_name));

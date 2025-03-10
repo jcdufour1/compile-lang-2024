@@ -86,6 +86,10 @@ Uast_operator* uast_operator_clone(const Uast_operator* oper) {
     unreachable("");
 }
 
+Uast_unknown* uast_unknown_clone(const Uast_unknown* unknown) {
+    return uast_unknown_new(unknown->pos);
+}
+
 Uast_expr* uast_expr_clone(const Uast_expr* expr) {
     switch (expr->type) {
         case UAST_OPERATOR:
@@ -106,6 +110,8 @@ Uast_expr* uast_expr_clone(const Uast_expr* expr) {
             return uast_tuple_wrap(uast_tuple_clone(uast_tuple_const_unwrap(expr)));
         case UAST_SUM_ACCESS: // TODO: remove uast_sum_access if not used
             todo();
+        case UAST_UNKNOWN: // TODO: remove uast_sum_access if not used
+            return uast_unknown_wrap(uast_unknown_clone(uast_unknown_const_unwrap(expr)));
     }
     unreachable("");
 }

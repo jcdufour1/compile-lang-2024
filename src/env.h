@@ -42,6 +42,7 @@ typedef struct Env_ {
 
     Str_view struct_rtn_name_parent_function;
 
+    Lang_type lhs_lang_type;
     PARENT_OF parent_of;
     Uast_expr* parent_of_operand;
 

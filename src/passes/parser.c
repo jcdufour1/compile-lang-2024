@@ -2593,15 +2593,16 @@ static PARSE_EXPR_STATUS parse_expr_side(
     bool can_be_tuple
 ) {
     Uast_expr* lhs = NULL;
-    //Uast_expr* rhs = NULL;
 
     int32_t prev_oper_pres = INT32_MAX;
 
     if (tokens->count < 1) {
         return PARSE_EXPR_NONE;
     }
-
-    if (is_unary(tk_view_front(*tokens).type)) {
+    
+    if (tk_view_front(*tokens).type == TOKEN_SINGLE_DOT) {
+        lhs = uast_unknown_wrap(uast_unknown_new(tk_view_front(*tokens).pos));
+    } else if (is_unary(tk_view_front(*tokens).type)) {
         prev_oper_pres = get_operator_precedence(tk_view_front(*tokens).type);
         Uast_operator* unary = NULL;
         switch (parse_unary(env, &unary, tokens, &prev_oper_pres, defer_sym_add, can_be_tuple)) {
@@ -2610,13 +2611,15 @@ static PARSE_EXPR_STATUS parse_expr_side(
                 *result = lhs;
                 break;
             case PARSE_EXPR_ERROR:
+                // TODO
                 todo();
                 return PARSE_EXPR_ERROR;
             case PARSE_EXPR_NONE:
+                // TODO
                 todo();
                 return PARSE_EXPR_NONE;
             default:
-                todo();
+                unreachable("");
         }
     } else {
         switch (parse_expr_piece(env, &lhs, tokens, &prev_oper_pres, defer_sym_add)) {

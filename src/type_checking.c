@@ -19,6 +19,7 @@
 #include <ulang_type_print.h>
 #include <ulang_type_from_uast_function_decl.h>
 #include <resolve_generics.h>
+#include <ulang_type_get_atom.h>
 
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
@@ -326,9 +327,11 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
         *new_src = tast_tuple_wrap(new_src_);
     } else {
         env->parent_of = PARENT_OF_ASSIGN_RHS;
+        env->lhs_lang_type = dest_lang_type;
         if (!try_set_expr_types(env, new_src, src)) {
             return CHECK_ASSIGN_ERROR;
         }
+        memset(&env->lhs_lang_type, 0, sizeof(env->lhs_lang_type));
         env->parent_of = PARENT_OF_NONE;
     }
 
@@ -400,6 +403,7 @@ static void msg_undefined_symbol_internal(const char* file, int line, Str_view f
 // set symbol lang_type, and report error if symbol is undefined
 bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyped) {
     Uast_def* sym_def = NULL;
+    log(LOG_DEBUG, TAST_FMT, uast_symbol_print(sym_untyped));
     if (!usymbol_lookup(&sym_def, env, sym_untyped->name)) {
         msg_undefined_symbol(env->file_text, uast_expr_wrap(uast_symbol_wrap(sym_untyped)));
         return false;
@@ -700,9 +704,12 @@ bool try_set_binary_types(Env* env, Tast_expr** new_tast, Uast_binary* operator)
         }
     }
 
+    env->lhs_lang_type = tast_stmt_get_lang_type(new_lhs);
     if (!try_set_expr_types(env, &new_rhs, operator->rhs)) {
+        memset(&env->lhs_lang_type, 0, sizeof(env->lhs_lang_type));
         return false;
     }
+    memset(&env->lhs_lang_type, 0, sizeof(env->lhs_lang_type));
 
     if (operator->lhs->type != UAST_EXPR) {
         // TODO: expected failure case
@@ -1013,6 +1020,13 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
                 assert(*new_tast);
             }
             return true;
+        case UAST_UNKNOWN:
+            assert(lang_type_get_str(env->lhs_lang_type).count > 0);
+            return try_set_symbol_types(env, new_tast, uast_symbol_new(
+                uast_expr_get_pos(uast),
+                lang_type_get_str(env->lhs_lang_type),
+                (Ulang_type_vec) {0}
+            ));
         case UAST_MEMBER_ACCESS: {
             Tast_stmt* new_tast_ = NULL;
             if (!try_set_member_access_types(env, &new_tast_, uast_member_access_unwrap(uast))) {

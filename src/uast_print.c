@@ -160,6 +160,15 @@ Str_view uast_sum_access_print_internal(const Uast_sum_access* lit, int indent) 
     return string_to_strv(buf);
 }
 
+Str_view uast_unknown_print_internal(const Uast_unknown* unknown, int indent) {
+    (void) unknown;
+    String buf = {0};
+
+    string_extend_cstr_indent(&print_arena, &buf, "unknown", indent);
+    
+    return string_to_strv(buf);
+}
+
 Str_view uast_number_print_internal(const Uast_number* num, int indent) {
     String buf = {0};
 
@@ -640,6 +649,8 @@ Str_view uast_expr_print_internal(const Uast_expr* expr, int indent) {
             return uast_tuple_print_internal(uast_tuple_const_unwrap(expr), indent);
         case UAST_SUM_ACCESS:
             return uast_sum_access_print_internal(uast_sum_access_const_unwrap(expr), indent);
+        case UAST_UNKNOWN:
+            return uast_unknown_print_internal(uast_unknown_const_unwrap(expr), indent);
     }
     unreachable("");
 }

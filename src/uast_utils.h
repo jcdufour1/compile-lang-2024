@@ -342,6 +342,8 @@ static inline Str_view uast_expr_get_name(const Uast_expr* expr) {
             unreachable("");
         case UAST_SUM_ACCESS:
             unreachable("");
+        case UAST_UNKNOWN:
+            unreachable("");
     }
     unreachable("");
 }
