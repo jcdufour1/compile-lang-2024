@@ -7,6 +7,7 @@
 #include <uast_clone.h>
 #include <uast_utils.h>
 #include <ulang_type_get_pos.h>
+#include <ulang_type_get_atom.h>
 
 //static Str_view resolve_generics_serialize_struct_def_base(Struct_def_base base) {
 //    String name = {0};
@@ -157,13 +158,18 @@ static Str_view resolve_generics_serialize_struct_def_base(
     for (size_t idx_gen = 0; idx_gen < gen_args.info.count; idx_gen++) {
         Str_view gen_def = vec_at(&old_base.generics, idx_gen)->child->name;
         for (size_t idx_memb = 0; idx_memb < old_base.members.info.count; idx_memb++) {
-            string_extend_strv(&a_main, &name, serialize_ulang_type(vec_at(&old_base.members, idx_memb)->lang_type));
             Str_view memb = ulang_type_regular_const_unwrap(vec_at(&old_base.members, idx_memb)->lang_type).atom.str;
             if (str_view_is_equal(gen_def, memb)) {
                 vec_at(&new_base->members, idx_memb)->lang_type = vec_at(&gen_args, idx_gen);
             }
         }
     }
+
+    assert(old_base.members.info.count == new_base->members.info.count);
+    for (size_t idx_memb = 0; idx_memb < new_base->members.info.count; idx_memb++) {
+        string_extend_strv(&a_main, &name, serialize_ulang_type(vec_at(&new_base->members, idx_memb)->lang_type));
+    }
+
     new_base->name = string_to_strv(name);
     return string_to_strv(name);
 }
@@ -259,8 +265,8 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Env* env, U
             unreachable(TAST_FMT, uast_def_print(before_res));
     }
 
-    *result =  ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
-        uast_def_get_struct_def_base(after_res).name, ulang_type_regular_const_unwrap(lang_type).atom.pointer_depth
+    *result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
+        uast_def_get_struct_def_base(after_res).name, ulang_type_get_atom(lang_type).pointer_depth
     ), ulang_type_get_pos(lang_type)));
     return true;
 }
