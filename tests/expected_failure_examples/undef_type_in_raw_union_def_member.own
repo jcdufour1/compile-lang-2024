@@ -5,5 +5,7 @@ type Token raw_union {
 }
 
 fn main() i32 {
+    // TODO: remove this statement
+    let token Token
     return 0
 }

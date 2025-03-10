@@ -190,7 +190,7 @@ static void resolve_generics_struct_def(
     //todo();
 }
 
-static Ulang_type resolve_generics_ulang_type_internal(Env* env, Uast_def* before_res, Ulang_type lang_type, Ulang_type_vec gen_args) {
+static bool resolve_generics_ulang_type_internal(Ulang_type* result, Env* env, Uast_def* before_res, Ulang_type lang_type, Ulang_type_vec gen_args) {
     Uast_def* after_res = NULL;
     switch (before_res->type) {
         case UAST_RAW_UNION_DEF: {
@@ -202,7 +202,9 @@ static Ulang_type resolve_generics_ulang_type_internal(Env* env, Uast_def* befor
             } else {
                 after_res = uast_raw_union_def_wrap(uast_raw_union_def_new(uast_def_get_pos(before_res), new_base));
             }
-            unwrap(try_set_raw_union_def_types(env, uast_raw_union_def_unwrap(before_res), uast_raw_union_def_unwrap(after_res)));
+            if (!try_set_raw_union_def_types(env, uast_raw_union_def_unwrap(before_res), uast_raw_union_def_unwrap(after_res))) {
+                return false;
+            }
             break;
         }
         case UAST_ENUM_DEF: {
@@ -214,7 +216,9 @@ static Ulang_type resolve_generics_ulang_type_internal(Env* env, Uast_def* befor
             } else {
                 after_res = uast_enum_def_wrap(uast_enum_def_new(uast_def_get_pos(before_res), new_base));
             }
-            unwrap(try_set_enum_def_types(env, uast_enum_def_unwrap(before_res), uast_enum_def_unwrap(after_res)));
+            if (!try_set_enum_def_types(env, uast_enum_def_unwrap(before_res), uast_enum_def_unwrap(after_res))) {
+                return false;
+            }
             break;
         }
         case UAST_SUM_DEF: {
@@ -226,7 +230,9 @@ static Ulang_type resolve_generics_ulang_type_internal(Env* env, Uast_def* befor
             } else {
                 after_res = uast_sum_def_wrap(uast_sum_def_new(uast_def_get_pos(before_res), new_base));
             }
-            unwrap(try_set_sum_def_types(env, uast_sum_def_unwrap(before_res), uast_sum_def_unwrap(after_res)));
+            if (!try_set_sum_def_types(env, uast_sum_def_unwrap(before_res), uast_sum_def_unwrap(after_res))) {
+                return false;
+            }
             break;
         }
         case UAST_STRUCT_DEF: {
@@ -238,20 +244,25 @@ static Ulang_type resolve_generics_ulang_type_internal(Env* env, Uast_def* befor
             } else {
                 after_res = uast_struct_def_wrap(uast_struct_def_new(uast_def_get_pos(before_res), new_base));
             }
-            unwrap(try_set_struct_def_types(env, uast_struct_def_unwrap(before_res), uast_struct_def_unwrap(after_res)));
+            if (!try_set_struct_def_types(env, uast_struct_def_unwrap(before_res), uast_struct_def_unwrap(after_res))) {
+                return false;
+            }
             break;
         }
         case UAST_PRIMITIVE_DEF:
-            return lang_type;
+            *result = lang_type;
+            return true;
         case UAST_LITERAL_DEF:
-            return lang_type;
+            *result = lang_type;
+            return true;
         default:
             unreachable(TAST_FMT, uast_def_print(before_res));
     }
 
-    return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
+    *result =  ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
         uast_def_get_struct_def_base(after_res).name, ulang_type_regular_const_unwrap(lang_type).atom.pointer_depth
     ), ulang_type_get_pos(lang_type)));
+    return true;
 }
 
 bool resolve_generics_ulang_type_reg_generic(Ulang_type* result, Env* env, Ulang_type_reg_generic lang_type) {
@@ -270,8 +281,7 @@ bool resolve_generics_ulang_type_reg_generic(Ulang_type* result, Env* env, Ulang
         unreachable("invalid count template args or parameters");
     }
 
-    *result = resolve_generics_ulang_type_internal(env, before_res, ulang_type_reg_generic_const_wrap(lang_type), lang_type.generic_args);
-    return true;
+    return resolve_generics_ulang_type_internal(result, env, before_res, ulang_type_reg_generic_const_wrap(lang_type), lang_type.generic_args);
 }
 
 // TODO: move this function and macro to better place
@@ -298,12 +308,12 @@ bool resolve_generics_ulang_type_regular(Ulang_type* result, Env* env, Ulang_typ
         return false;
     }
 
-    *result = resolve_generics_ulang_type_internal(
+    return resolve_generics_ulang_type_internal(
+        result,
         env,
         before_res,
         ulang_type_regular_const_wrap(lang_type), (Ulang_type_vec) {0}
     );
-    return true;
 }
 
 bool resolve_generics_ulang_type(Ulang_type* result, Env* env, Ulang_type lang_type) {

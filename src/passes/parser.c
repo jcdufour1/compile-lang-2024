@@ -1154,7 +1154,6 @@ static PARSE_STATUS parse_struct_base_def(
         Uast_variable_def* member;
         switch (parse_variable_decl(env, &member, tokens, false, false, false, require_sub_types, default_lang_type)) {
             case PARSE_ERROR:
-                todo();
                 return PARSE_ERROR;
             case PARSE_OK:
                 break;
@@ -1192,7 +1191,7 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
 
     bool done = false;
     while (!done && tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_CLOSE_CURLY_BRACE) {
-        Token name_token;
+        Token name_token = {0};
         if (!try_consume(&name_token, tokens, TOKEN_SYMBOL)) {
             msg_parser_expected(env->file_text, tk_view_front(*tokens), "in variable definition", TOKEN_SYMBOL);
             return PARSE_ERROR;
@@ -1203,14 +1202,13 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
             return PARSE_ERROR;
         }
 
-        todo();
-        //Uast_variable_def* member = uast_variable_def_new(
-        //    name_token.pos,
-        //    ulang_type_regular_const_wrap(ulang_type_regular_new(lang_type, lang_type_pos)),
-        //    name_token.text
-        //);
+        Uast_variable_def* member = uast_variable_def_new(
+            name_token.pos,
+            ulang_type_regular_const_wrap(ulang_type_regular_new(lang_type, name_token.pos)),
+            name_token.text
+        );
 
-        //vec_append(&a_main, &base->members, member);
+        vec_append(&a_main, &base->members, member);
     }
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {

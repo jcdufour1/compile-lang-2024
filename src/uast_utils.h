@@ -23,7 +23,7 @@ Str_view uast_print_internal(const Uast* uast, int recursion_depth);
 
 static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def);
     
-static inline bool ustruct_def_base_get_lang_type_(Ulang_type* result, Env* env, Ustruct_def_base base, Ulang_type_vec generics);
+static inline bool ustruct_def_base_get_lang_type_(Ulang_type* result, Env* env, Ustruct_def_base base, Ulang_type_vec generics, Pos pos);
 
 #define uast_print(root) str_view_print(uast_print_internal(root, 0))
 
@@ -187,7 +187,7 @@ static inline bool uast_def_get_lang_type(Lang_type* result, Env* env, const Uas
             // fallthrough
         case UAST_SUM_DEF: {
             Ulang_type ulang_type = {0};
-            if (!ustruct_def_base_get_lang_type_(&ulang_type, env, uast_def_get_struct_def_base(def), generics)) {
+            if (!ustruct_def_base_get_lang_type_(&ulang_type, env, uast_def_get_struct_def_base(def), generics, uast_def_get_pos(def))) {
                 return false;
             }
             *result = lang_type_from_ulang_type(env, ulang_type);
@@ -462,17 +462,15 @@ static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def)
     unreachable("");
 }
 
-static inline bool ustruct_def_base_get_lang_type_(Ulang_type* result, Env* env, Ustruct_def_base base, Ulang_type_vec generics) {
+static inline bool ustruct_def_base_get_lang_type_(Ulang_type* result, Env* env, Ustruct_def_base base, Ulang_type_vec generics, Pos pos) {
     (void) result;
     (void) env;
     (void) base;
     if (generics.info.count < 1) {
-        todo();
-        //return resolve_generics_ulang_type_regular(result, env, ulang_type_regular_new(ulang_type_atom_new(base.name, 0)));
+        return resolve_generics_ulang_type_regular(result, env, ulang_type_regular_new(ulang_type_atom_new(base.name, 0), pos));
     }
     unwrap(generics.info.count > 0);
-    todo();
-    //return resolve_generics_ulang_type_reg_generic(result, env, ulang_type_reg_generic_new(ulang_type_atom_new(base.name, 0), generics));
+    return resolve_generics_ulang_type_reg_generic(result, env, ulang_type_reg_generic_new(ulang_type_atom_new(base.name, 0), generics, pos));
 }
 
 #endif // UAST_UTIL_H
