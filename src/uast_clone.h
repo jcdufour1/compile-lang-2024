@@ -13,4 +13,6 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt);
 
 Uast_variable_def* uast_variable_def_clone(const Uast_variable_def* def);
 
+Uast_param* uast_param_clone(const Uast_param* param);
+
 #endif // UAST_CLONE_H

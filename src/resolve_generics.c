@@ -9,6 +9,8 @@
 #include <ulang_type_get_pos.h>
 #include <ulang_type_get_atom.h>
 
+static bool ulang_type_generics_are_present(Ulang_type lang_type);
+
 //static Str_view resolve_generics_serialize_struct_def_base(Struct_def_base base) {
 //    String name = {0};
 //
@@ -311,6 +313,7 @@ bool resolve_generics_ulang_type_regular(Ulang_type* result, Env* env, Ulang_typ
     Uast_def* before_res = NULL;
     if (!usymbol_lookup(&before_res, env, lang_type.atom.str)) {
         msg_undefined_type(env, lang_type.pos, ulang_type_regular_const_wrap(lang_type));
+        todo();
         return false;
     }
 
@@ -334,4 +337,83 @@ bool resolve_generics_ulang_type(Ulang_type* result, Env* env, Ulang_type lang_t
             todo();
     }
     todo();
+}
+
+static Str_view resolve_generics_serialize_function_decl(
+    Uast_function_decl** new_decl,
+    Uast_function_decl* old_decl
+) {
+    // TODO: figure out way to avoid making new Uast_function_decl every time
+    memset(new_decl, 0, sizeof(*new_decl));
+
+    Uast_param_vec params = {0};
+    for (size_t idx = 0; idx < old_decl->params->params.info.count; idx++) {
+        vec_append(&a_main, &params, uast_param_clone(vec_at(&old_decl->params->params, idx)));
+    }
+
+    for (size_t idx = 0; idx < params.info.count; idx++) {
+        // TODO: resolve parameter generics
+        todo();
+    }
+
+    Ulang_type result = {0};
+    unwrap(resolve_generics_ulang_type(env, old_decl->return_type->lang_type));
+
+
+    todo();
+
+}
+
+// only generic function decls can be passed in here
+bool resolve_generics_function_decl(Uast_function_decl** result, Env* env, Uast_function_decl* decl) {
+    if (!function_decl_generics_are_present(decl)) {
+        unreachable("non generic function decls should not be passed here");
+    }
+    Uast_function_decl* new_decl = NULL;
+    Str_view name = resolve_generics_serialize_function_decl(&new_decl, decl);
+    todo();
+}
+
+static bool ulang_type_generics_are_present_tuple(Ulang_type_tuple lang_type) {
+    for (size_t idx = 0; idx < lang_type.ulang_types.info.count; idx++) {
+        if (ulang_type_generics_are_present(vec_at(&lang_type.ulang_types, idx))) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool ulang_type_generics_are_present_fn(Ulang_type_fn lang_type) {
+    if (ulang_type_generics_are_present_tuple(lang_type.params)) {
+        return true;
+    }
+    return ulang_type_generics_are_present(*lang_type.return_type);
+}
+
+static bool ulang_type_generics_are_present(Ulang_type lang_type) {
+    switch (lang_type.type) {
+        case ULANG_TYPE_REGULAR:
+            return false;
+        case ULANG_TYPE_REG_GENERIC:
+            return true;
+        case ULANG_TYPE_TUPLE:
+            return ulang_type_generics_are_present_tuple(ulang_type_tuple_const_unwrap(lang_type));
+        case ULANG_TYPE_FN:
+            return ulang_type_generics_are_present_fn(ulang_type_fn_const_unwrap(lang_type));
+    }
+    unreachable("");
+}
+
+bool function_decl_generics_are_present(const Uast_function_decl* decl) {
+    if (ulang_type_generics_are_present(decl->return_type->lang_type)) {
+        return true;
+    }
+
+    for (size_t idx = 0; idx < decl->params->params.info.count; idx++) {
+        if (ulang_type_generics_are_present(vec_at(&decl->params->params, idx)->base->lang_type)) {
+            return true;
+        }
+    }
+
+    return false;
 }

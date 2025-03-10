@@ -407,13 +407,22 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
     }
 
     switch (sym_def->type) {
-        case UAST_FUNCTION_DECL:
+        case UAST_FUNCTION_DECL: {
+            Uast_function_decl* new_decl = NULL;
+            if (function_decl_generics_are_present(uast_function_decl_unwrap(sym_def))) {
+                if (!resolve_generics_function_decl(&new_decl, env, uast_function_decl_unwrap(sym_def))) {
+                    return false;
+                }
+            } else {
+                new_decl = uast_function_decl_unwrap(sym_def);
+            }
             *new_tast = tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
                 sym_untyped->pos,
                 sym_untyped->name,
-                lang_type_from_ulang_type(env, ulang_type_from_uast_function_decl(uast_function_decl_unwrap(sym_def)))
+                lang_type_from_ulang_type(env, ulang_type_from_uast_function_decl(new_decl))
             )));
             return true;
+        }
         case UAST_FUNCTION_DEF:
             unreachable("");
         case UAST_STRUCT_DEF:
@@ -1864,6 +1873,11 @@ bool try_set_function_def_types(
     Env* env,
     Uast_function_def* def
 ) {
+    if (function_decl_generics_are_present(def->decl)) {
+        // if function defintion has generics, varients will be lazily instanciated elsewhere
+        return true;
+    }
+
     Str_view prev_par_fun = env->name_parent_function;
     env->name_parent_function = def->decl->name;
     assert(env->name_parent_function.count > 0);

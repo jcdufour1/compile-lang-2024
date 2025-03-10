@@ -90,6 +90,10 @@ Uast_unknown* uast_unknown_clone(const Uast_unknown* unknown) {
     return uast_unknown_new(unknown->pos);
 }
 
+Uast_param* uast_param_clone(const Uast_param* param) {
+    return uast_param_new(param->pos, uast_variable_def_clone(param->base), param->is_optional, param->is_variadic, param->optional_default);
+}
+
 Uast_expr* uast_expr_clone(const Uast_expr* expr) {
     switch (expr->type) {
         case UAST_OPERATOR:
