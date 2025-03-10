@@ -82,7 +82,6 @@ void do_passes(Str_view file_text, const Parameters* params) {
     unwrap(typed);
     arena_reset(&print_arena);
     log(LOG_DEBUG, "\n"TAST_FMT, tast_block_print(typed));
-    todo();
 
     typed = remove_tuples(&env, typed);
     log(LOG_DEBUG, "\n"TAST_FMT, tast_block_print(typed));

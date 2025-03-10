@@ -1,0 +1,28 @@
+
+
+type Token sum(<NumberType>) {
+    number NumberType
+    string u8*
+}
+
+fn placeholder() {
+}
+
+fn main() i32 {
+    let token Token(<i32>) = Token(<i32>).number(54)
+
+    switch token {
+        case Token(<i64>).number(num): placeholder()
+        case Token(<i64>).string(str): placeholder()
+    }
+
+    // ensure that redefinition of num is not displayed as an error
+    switch token {
+        case Token(<i32>).number(num):
+            placeholder()
+        case Token(<i32>).string(str):
+            placeholder()
+    }
+
+    return 0
+}

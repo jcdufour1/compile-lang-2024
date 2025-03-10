@@ -112,6 +112,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "duplicate_default.own": ["duplicate-default"],
     EXPECTED_FAIL_EXAMPLES_DIR + "duplicate_case.own": ["duplicate-case", "duplicate-case"],
     EXPECTED_FAIL_EXAMPLES_DIR + "sum_arg_with_void_varient.own": ["invalid-count-fun-args"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "sum_case_invalid_cond_defered_symbols.own": ["binary-mismatched-types"],
 }
 
 def to_str(a):

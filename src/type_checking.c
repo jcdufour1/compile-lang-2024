@@ -1508,7 +1508,7 @@ static void msg_invalid_struct_member(
     // TODO: add notes for where struct def of callee is defined, etc.
 }
 
-static void msg_invalid_enum_member(
+static void msg_invalid_member(
     Env* env,
     Ustruct_def_base base,
     const Uast_member_access* access
@@ -1561,13 +1561,9 @@ bool try_set_member_access_types_finish_sum_def(
     switch (env->parent_of) {
         case PARENT_OF_CASE: {
             Uast_variable_def* member_def = NULL;
-            log(LOG_DEBUG, TAST_FMT, uast_sum_def_print(sum_def));
             if (!uast_try_get_member_def(&member_def, &sum_def->base, access->member_name)) {
-                // TODO: expected failure case
-                log(LOG_DEBUG, TAST_FMT, uast_member_access_print(access));
-                todo();
-                //msg_invalid_enum_member(env, enum_def->base, access);
-                //return false;
+                msg_invalid_member(env, sum_def->base, access);
+                return false;
             }
 
             Tast_enum_lit* new_tag = tast_enum_lit_new(
@@ -1583,27 +1579,12 @@ bool try_set_member_access_types_finish_sum_def(
             )));
 
             return true;
-            //Uast_variable_def* member_def = NULL;
-            //if (!uast_try_get_member_def(&member_def, &enum_def->base, access->member_name)) {
-            //    msg_invalid_enum_member(env, enum_def->base, access);
-            //    return false;
-            //}
-
-            //Tast_enum_lit* new_lit = tast_enum_lit_new(
-            //    access->pos,
-            //    uast_get_member_index(&enum_def->base, access->member_name),
-            //    member_def->lang_type
-            //);
-
-            //*new_tast = tast_expr_wrap(tast_literal_wrap(tast_enum_lit_wrap(new_lit)));
-            //assert(member_def->lang_type.str.count > 0);
-            //return true;
         }
         case PARENT_OF_ASSIGN_RHS: {
             Uast_variable_def* member_def = NULL;
             if (!uast_try_get_member_def(&member_def, &sum_def->base, access->member_name)) {
                 todo();
-                //msg_invalid_enum_member(env, enum_def->base, access);
+                //msg_invalid_member(env, enum_def->base, access);
                 //return false;
             }
             
@@ -1672,7 +1653,7 @@ bool try_set_member_access_types_finish(
             Uast_enum_def* enum_def = uast_enum_def_unwrap(lang_type_def);
             Uast_variable_def* member_def = NULL;
             if (!uast_try_get_member_def(&member_def, &enum_def->base, access->member_name)) {
-                msg_invalid_enum_member(env, enum_def->base, access);
+                msg_invalid_member(env, enum_def->base, access);
                 return false;
             }
 
@@ -1788,6 +1769,7 @@ bool try_set_index_untyped_types(Env* env, Tast_stmt** new_tast, Uast_index* ind
 static bool try_set_condition_types(Env* env, Tast_condition** new_cond, Uast_condition* cond) {
     Tast_expr* new_child_ = NULL;
     if (!try_set_operator_types(env, &new_child_, cond->child)) {
+        vec_reset(&env->udefered_symbols_to_add);
         return false;
     }
 
@@ -2060,7 +2042,7 @@ bool try_set_if_types(Env* env, Tast_if** new_tast, Uast_if* uast) {
 
     Tast_condition* new_cond = NULL;
     if (!try_set_condition_types(env, &new_cond, uast->condition)) {
-        return false;
+        status = false;
     }
 
     Uast_stmt_vec new_if_children = {0};
@@ -2072,11 +2054,13 @@ bool try_set_if_types(Env* env, Tast_if** new_tast, Uast_if* uast) {
     vec_reset(&env->switch_case_defer_add_if_true);
 
     Tast_block* new_body = NULL;
-    if (!try_set_block_types(env, &new_body, uast->body, false)) {
+    if (!(status && try_set_block_types(env, &new_body, uast->body, false))) {
         status = false;
     }
 
-    *new_tast = tast_if_new(uast->pos, new_cond, new_body);
+    if (status) {
+        *new_tast = tast_if_new(uast->pos, new_cond, new_body);
+    }
     return status;
 }
 
