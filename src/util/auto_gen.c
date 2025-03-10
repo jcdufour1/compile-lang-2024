@@ -143,7 +143,7 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "\n");
     string_extend_cstr(&gen_a, &text, "    ");
     extend_strv_first_upper(&text, type.normal_prefix);
-    string_extend_cstr(&gen_a, &text, "_table_tast tast = {.key = symbol_name, .tast = tast_of_symbol, .status = SYM_TBL_OCCUPIED};\n");
+    string_extend_cstr(&gen_a, &text, "_table_tast tast = {.tast = tast_of_symbol, .status = SYM_TBL_OCCUPIED};\n");
     string_extend_cstr(&gen_a, &text, "    sym_tbl_tasts[curr_table_idx] = tast;\n");
     string_extend_cstr(&gen_a, &text, "    return true;\n");
     string_extend_cstr(&gen_a, &text, "}\n");
@@ -235,7 +235,9 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
     string_extend_cstr(&gen_a, &text, "_table_tast* curr_tast = &sym_table->table_tasts[curr_table_idx];\n");
     string_extend_cstr(&gen_a, &text, "\n");
     string_extend_cstr(&gen_a, &text, "        if (curr_tast->status == SYM_TBL_OCCUPIED) {\n");
-    string_extend_cstr(&gen_a, &text, "            if (str_view_is_equal(curr_tast->key, key)) {\n");
+    string_extend_cstr(&gen_a, &text, "            if (str_view_is_equal(");
+    extend_strv_lower(&text, type.key_fn_get_name);
+    string_extend_cstr(&gen_a, &text, "(curr_tast->tast), key)) {\n");
     string_extend_cstr(&gen_a, &text, "                *result = curr_tast;\n");
     string_extend_cstr(&gen_a, &text, "                return true;\n");
     string_extend_cstr(&gen_a, &text, "            }\n");
@@ -698,7 +700,6 @@ static void gen_symbol_table_struct_internal(Symbol_tbl_type type) {
     String text = {0};
 
     string_extend_cstr(&gen_a, &text, "typedef struct {\n");
-    string_extend_cstr(&gen_a, &text, "    Str_view key;\n");
     string_extend_cstr(&gen_a, &text, "    ");
     extend_strv_first_upper(&text, type.type_name);
     string_extend_cstr(&gen_a, &text, "* tast;\n");
