@@ -1914,42 +1914,12 @@ bool try_set_function_params_types(
     return status;
 }
 
-// TODO: remove this function
-static bool try_types_internal_set_lang_type(
-    Env* env,
-    Ulang_type lang_type,
-    Pos pos
-) {
-    switch (lang_type.type) {
-        case ULANG_TYPE_TUPLE: {
-            for (size_t idx = 0; idx < ulang_type_tuple_const_unwrap(lang_type).ulang_types.info.count; idx++) {
-                if (!try_types_internal_set_lang_type(env, vec_at_const(ulang_type_tuple_const_unwrap(lang_type).ulang_types, idx), pos)) {
-                    assert(error_count > 0);
-                    return false;
-                }
-            }
-        }
-        case ULANG_TYPE_REGULAR:
-            lang_type_from_ulang_type(env, lang_type);
-            return true;
-        case ULANG_TYPE_FN:
-            todo();
-        case ULANG_TYPE_REG_GENERIC:
-            todo();
-    }
-    unreachable("");
-}
 
 bool try_types_set_lang_type(
     Env* env,
     Tast_lang_type** new_tast,
     Uast_lang_type* uast
 ) {
-    if (!try_types_internal_set_lang_type(env, uast->lang_type, uast->pos)) {
-        assert(error_count > 0);
-        return false;
-    }
-
     *new_tast = tast_lang_type_new(uast->pos, lang_type_from_ulang_type(env, uast->lang_type));
     return true;
 }
