@@ -11,10 +11,10 @@ bool resolve_generics_ulang_type(Ulang_type* result, Env* env, Ulang_type lang_t
 
 bool resolve_generics_ulang_type_regular(Ulang_type* result, Env* env, Ulang_type_regular lang_type);
 
-bool resolve_generics_function_decl(
-    Uast_function_decl** result,
+bool resolve_generics_function_def(
+    Uast_function_def** new_def,
     Env* env,
-    Uast_function_decl* decl,
+    Uast_function_def* def,
     Ulang_type_vec gen_args
 );
 

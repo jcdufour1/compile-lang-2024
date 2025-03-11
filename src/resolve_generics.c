@@ -373,34 +373,36 @@ static void resolve_generics_serialize_function_decl(
 }
 
 // only generic function decls can be passed in here
-bool resolve_generics_function_decl(
-    Uast_function_decl** new_decl,
+bool resolve_generics_function_def(
+    Uast_function_def** new_def,
     Env* env,
-    Uast_function_decl* decl,
+    Uast_function_def* def,
     Ulang_type_vec gen_args
 ) {
-    (void) env;
-    if (!function_decl_generics_are_present(decl)) {
+    Uast_function_decl* new_decl = NULL;
+    if (!function_decl_generics_are_present(def->decl)) {
         unreachable("non generic function decls should not be passed here");
     }
 
-    resolve_generics_serialize_function_decl(new_decl, decl, gen_args);
-    Uast_function_def* new_def = uast_function_def_new(Pos pos, Uast_function_decl* decl, Uast_block* body);
+    resolve_generics_serialize_function_decl(&new_decl, def->decl, gen_args);
+    *new_def = uast_function_def_new(new_decl->pos, new_decl, def->body);
+
+    // TODO: think about scopes for symbol_table if non-top-level functions are implemented
+    unwrap(try_set_function_def_types(env, *new_def));
 
     {
         size_t idx = 0;
         for (; idx < env->ancesters.info.count; idx++) {
             Uast_def* result = NULL;
-            if (usym_tbl_lookup(&result, &vec_at(&env->ancesters, idx)->usymbol_table, decl->name)) {
+            if (usym_tbl_lookup(&result, &vec_at(&env->ancesters, idx)->usymbol_table, def->decl->name)) {
                 break;
             }
         }
-        usym_tbl_add(&vec_at(&env->ancesters, idx)->usymbol_table, uast_function_decl_wrap(*new_decl));
-        sym_tbl_add(&vec_at(&env->ancesters, idx)->symbol_table, new_def);
+        usym_tbl_add(&vec_at(&env->ancesters, idx)->usymbol_table, uast_function_decl_wrap(new_decl));
         log(LOG_DEBUG, "thing fdlksaf: %zu\n", idx);
     }
 
-    log(LOG_DEBUG, TAST_FMT, uast_function_decl_print(*new_decl));
+    log(LOG_DEBUG, TAST_FMT, uast_function_def_print(*new_def));
     return true;
 }
 

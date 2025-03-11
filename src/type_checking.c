@@ -408,9 +408,9 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
 
     switch (sym_def->type) {
         case UAST_FUNCTION_DECL: {
-            Uast_function_decl* new_decl = NULL;
+            Uast_function_def* new_def = NULL;
             if (function_decl_generics_are_present(uast_function_decl_unwrap(sym_def))) {
-                if (!resolve_generics_function_decl(&new_decl, env, uast_function_decl_unwrap(sym_def), sym_untyped->generic_args)) {
+                if (!resolve_generics_function_def(&new_def, env, uast_function_decl_unwrap(sym_def), sym_untyped->generic_args)) {
                     return false;
                 }
             } else {
