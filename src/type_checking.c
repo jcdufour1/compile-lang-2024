@@ -69,11 +69,17 @@ static Tast_expr* auto_deref_to_0(Env* env, Tast_expr* expr) {
 const Uast_function_decl* get_parent_function_decl_const(Env* env) {
     Uast_def* def = NULL;
     unwrap(env->name_parent_function.count > 0 && "no parent function here");
+    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(env->name_parent_function));
     unwrap(usymbol_lookup(&def, env, env->name_parent_function));
-    if (def->type != UAST_FUNCTION_DECL) {
-        unreachable(TAST_FMT, uast_def_print(def));
+    switch (def->type) {
+        case UAST_FUNCTION_DECL:
+            return uast_function_decl_unwrap(def);
+        case UAST_FUNCTION_DEF:
+            return uast_function_def_unwrap(def)->decl;
+        default:
+            unreachable(TAST_FMT, uast_def_print(def));
     }
-    return uast_function_decl_unwrap(def);
+    unreachable("");
 }
 
 const Uast_lang_type* get_parent_function_return_type(Env* env) {
@@ -408,14 +414,7 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
 
     switch (sym_def->type) {
         case UAST_FUNCTION_DECL: {
-            Uast_function_def* new_def = NULL;
-            if (function_decl_generics_are_present(uast_function_decl_unwrap(sym_def))) {
-                if (!resolve_generics_function_def(&new_def, env, uast_function_decl_unwrap(sym_def), sym_untyped->generic_args)) {
-                    return false;
-                }
-            } else {
-                new_decl = uast_function_decl_unwrap(sym_def);
-            }
+            Uast_function_decl* new_decl = uast_function_decl_unwrap(sym_def);
             *new_tast = tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
                 sym_untyped->pos,
                 new_decl->name,
@@ -424,8 +423,23 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
             log(LOG_DEBUG, TAST_FMT, tast_expr_print(*new_tast));
             return true;
         }
-        case UAST_FUNCTION_DEF:
-            unreachable("");
+        case UAST_FUNCTION_DEF: {
+            Uast_function_def* new_def = NULL;
+            if (function_decl_generics_are_present(uast_function_def_unwrap(sym_def)->decl)) {
+                if (!resolve_generics_function_def(&new_def, env, uast_function_def_unwrap(sym_def), sym_untyped->generic_args)) {
+                    return false;
+                }
+            } else {
+                new_def = uast_function_def_unwrap(sym_def);
+            }
+            *new_tast = tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
+                sym_untyped->pos,
+                new_def->decl->name,
+                lang_type_from_ulang_type(env, ulang_type_from_uast_function_decl(new_def->decl))
+            )));
+            log(LOG_DEBUG, TAST_FMT, tast_expr_print(*new_tast));
+            return true;
+        }
         case UAST_STRUCT_DEF:
             // fallthrough
         case UAST_SUM_DEF:
@@ -1094,7 +1108,7 @@ STMT_STATUS try_set_def_types(Env* env, Tast_def** new_tast, Uast_def* uast) {
             return STMT_NO_STMT;
         }
         case UAST_FUNCTION_DEF: {
-            if (!try_set_function_def_types(env, uast_function_def_unwrap(uast))) {
+            if (!try_set_function_def_types(env, uast_function_def_unwrap(uast), false)) {
                 return STMT_ERROR;
             }
             return STMT_NO_STMT;
@@ -1362,7 +1376,6 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
     Uast_function_decl* fun_decl;
     switch (fun_def->type) {
         case UAST_FUNCTION_DEF:
-            todo();
             fun_decl = uast_function_def_unwrap(fun_def)->decl;
             break;
         case UAST_FUNCTION_DECL:
@@ -1873,7 +1886,8 @@ bool try_set_function_decl_types(
 
 bool try_set_function_def_types(
     Env* env,
-    Uast_function_def* def
+    Uast_function_def* def,
+    bool always_top_level // if true, new Tast_def will always be put in top_level
 ) {
     if (function_decl_generics_are_present(def->decl)) {
         // if function defintion has generics, varients will be lazily instanciated elsewhere
@@ -1902,7 +1916,11 @@ bool try_set_function_def_types(
     env->name_parent_function = prev_par_fun;
     Tast_def* result = NULL;
     unwrap(symbol_lookup(&result, env, new_decl->name));
-    symbol_update(env, tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
+    if (always_top_level) {
+        sym_tbl_update(&vec_at(&env->ancesters, 0)->symbol_table, tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
+    } else {
+        symbol_update(env, tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
+    }
     return status;
 }
 

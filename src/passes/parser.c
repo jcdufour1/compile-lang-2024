@@ -1091,6 +1091,7 @@ static PARSE_STATUS parse_function_def(Env* env, Uast_function_def** fun_def, Tk
     }
 
     *fun_def = uast_function_def_new(fun_decl->pos, fun_decl, fun_body);
+    usymbol_update(env, uast_function_def_wrap(*fun_def));
     return PARSE_OK;
 }
 

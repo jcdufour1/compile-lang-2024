@@ -71,7 +71,8 @@ bool try_set_member_access_types(Env* env, Tast_stmt** new_tast, Uast_member_acc
 
 bool try_set_function_def_types(
     Env* env,
-    Uast_function_def* decl
+    Uast_function_def* decl,
+    bool always_top_level // if true, new Tast_def will always be put in top_level
 );
 
 bool try_set_function_decl_types(

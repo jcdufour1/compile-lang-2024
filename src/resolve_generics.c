@@ -297,7 +297,6 @@ bool resolve_generics_ulang_type_regular(Ulang_type* result, Env* env, Ulang_typ
     Uast_def* before_res = NULL;
     if (!usymbol_lookup(&before_res, env, lang_type.atom.str)) {
         msg_undefined_type(env, lang_type.pos, ulang_type_regular_const_wrap(lang_type));
-        todo();
         return false;
     }
 
@@ -388,7 +387,6 @@ bool resolve_generics_function_def(
     *new_def = uast_function_def_new(new_decl->pos, new_decl, def->body);
 
     // TODO: think about scopes for symbol_table if non-top-level functions are implemented
-    unwrap(try_set_function_def_types(env, *new_def));
 
     {
         size_t idx = 0;
@@ -402,7 +400,11 @@ bool resolve_generics_function_def(
         log(LOG_DEBUG, "thing fdlksaf: %zu\n", idx);
     }
 
+    unwrap(try_set_function_def_types(env, *new_def, true));
+
     log(LOG_DEBUG, TAST_FMT, uast_function_def_print(*new_def));
+    Tast_def* dummy = NULL;
+    unwrap(symbol_lookup(&dummy, env, (*new_def)->decl->name));
     return true;
 }
 
