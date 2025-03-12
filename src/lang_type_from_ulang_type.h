@@ -228,6 +228,7 @@ static inline bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Env* 
 }
 
 static inline Lang_type lang_type_from_ulang_type(Env* env, Ulang_type lang_type) {
+    log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
             return lang_type_from_ulang_type_regular(env, ulang_type_regular_const_unwrap(lang_type));

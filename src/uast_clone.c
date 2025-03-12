@@ -1,5 +1,6 @@
 #include <uast_clone.h>
 #include <parser_utils.h>
+#include <symbol_collection_clone.h>
 
 Uast_number* uast_number_clone(const Uast_number* lit) {
     return uast_number_new(lit->pos, lit->data);
@@ -129,5 +130,13 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt) {
 
 Uast_variable_def* uast_variable_def_clone(const Uast_variable_def* def) {
     return uast_variable_def_new(def->pos, def->lang_type, def->name);
+}
+
+Uast_block* uast_block_clone(const Uast_block* block) {
+    Uast_stmt_vec new_children = {0};
+    for (size_t idx = 0; idx < block->children.info.count; idx++) {
+        vec_append(&a_main, &new_children, vec_at(&block->children, idx));
+    }
+    return uast_block_new(block->pos, new_children, symbol_collection_clone(block->symbol_collection), block->pos_end);
 }
 

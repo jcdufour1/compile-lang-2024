@@ -8,6 +8,8 @@
 #include <uast_utils.h>
 #include <ulang_type_get_pos.h>
 #include <ulang_type_get_atom.h>
+#include <generic_sub.h>
+#include <symbol_log.h>
 
 static bool ulang_type_generics_are_present(Ulang_type lang_type);
 
@@ -168,6 +170,7 @@ static Str_view resolve_generics_serialize_struct_def_base(
     }
 
     assert(old_base.members.info.count == new_base->members.info.count);
+    // TODO: use gen_args instead of new_base?
     for (size_t idx_memb = 0; idx_memb < new_base->members.info.count; idx_memb++) {
         string_extend_strv(&a_main, &name, serialize_ulang_type(vec_at(&new_base->members, idx_memb)->lang_type));
     }
@@ -324,7 +327,8 @@ bool resolve_generics_ulang_type(Ulang_type* result, Env* env, Ulang_type lang_t
 
 static void resolve_generics_serialize_function_decl(
     Uast_function_decl** new_decl,
-    Uast_function_decl* old_decl,
+    const Uast_function_decl* old_decl,
+    Uast_block* new_block,
     Ulang_type_vec gen_args
 ) {
     // TODO: figure out way to avoid making new Uast_function_decl every time
@@ -339,9 +343,18 @@ static void resolve_generics_serialize_function_decl(
         vec_append(&a_main, &params, uast_param_clone(vec_at(&old_decl->params->params, idx)));
     }
 
-    for (size_t idx = 0; idx < params.info.count; idx++) {
-        // TODO: resolve parameter generics
-        todo();
+    for (size_t idx_gen = 0; idx_gen < old_decl->generics.info.count; idx_gen++) {
+        for (size_t idx_param = 0; idx_param < params.info.count; idx_param++) {
+            Str_view curr_gen = vec_at(&old_decl->generics, idx_gen)->child->name;
+            generic_sub_param(vec_at(&params, idx_param), curr_gen, vec_at(&gen_args, idx_gen));
+            //log(LOG_DEBUG, "curr_gen:"STR_VIEW_FMT"    curr_param:"STR_VIEW_FMT"\n", str_view_print(curr_gen), str_view_print(curr_param));
+            //if (str_view_is_equal(curr_gen, curr_param)) {
+                //vec_at(&params, idx_param)->base->lang_type = vec_at(&gen_args, idx_gen);
+            //}
+        }
+    }
+    for (size_t idx_memb = 0; idx_memb < gen_args.info.count; idx_memb++) {
+        string_extend_strv(&a_main, &name, serialize_ulang_type(vec_at(&gen_args, idx_memb)));
     }
 
     Ulang_type new_rtn_type = {0};
@@ -362,6 +375,11 @@ static void resolve_generics_serialize_function_decl(
         }
     }
 
+    for (size_t idx_gen = 0; idx_gen < old_decl->generics.info.count; idx_gen++) {
+        Str_view curr_gen = vec_at(&old_decl->generics, idx_gen)->child->name;
+        generic_sub_block(new_block, curr_gen, vec_at(&gen_args, idx_gen));
+    }
+
     *new_decl = uast_function_decl_new(
         old_decl->pos,
         (Uast_generic_param_vec) {0},
@@ -369,6 +387,7 @@ static void resolve_generics_serialize_function_decl(
         uast_lang_type_new(ulang_type_get_pos(new_rtn_type), new_rtn_type),
         string_to_strv(name)
     );
+    log(LOG_DEBUG, TAST_FMT, uast_function_decl_print(*new_decl));
 }
 
 // only generic function decls can be passed in here
@@ -383,8 +402,13 @@ bool resolve_generics_function_def(
         unreachable("non generic function decls should not be passed here");
     }
 
-    resolve_generics_serialize_function_decl(&new_decl, def->decl, gen_args);
-    *new_def = uast_function_def_new(new_decl->pos, new_decl, def->body);
+    Uast_block* new_block = uast_block_clone(def->body);
+
+    resolve_generics_serialize_function_decl(&new_decl, def->decl, new_block, gen_args);
+    *new_def = uast_function_def_new(new_decl->pos, new_decl, new_block);
+    log(LOG_DEBUG, TAST_FMT, uast_function_def_print(*new_def));
+    //vec_rem_last(&env->ancesters);
+    //vec_append(&a_main, &env->ancesters, &new_block->symbol_collection);
 
     // TODO: think about scopes for symbol_table if non-top-level functions are implemented
 
@@ -402,7 +426,6 @@ bool resolve_generics_function_def(
 
     unwrap(try_set_function_def_types(env, *new_def, true));
 
-    log(LOG_DEBUG, TAST_FMT, uast_function_def_print(*new_def));
     Tast_def* dummy = NULL;
     unwrap(symbol_lookup(&dummy, env, (*new_def)->decl->name));
     return true;

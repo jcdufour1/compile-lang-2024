@@ -454,6 +454,8 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
             // fallthrough
         case UAST_VARIABLE_DEF: {
             Lang_type lang_type = {0};
+            log(LOG_DEBUG, TAST_FMT, uast_symbol_print(sym_untyped));
+            log(LOG_DEBUG, TAST_FMT, uast_def_print(sym_def));
             if (!uast_def_get_lang_type(&lang_type, env, sym_def, sym_untyped->generic_args)) {
                 return false;
             }
@@ -1847,6 +1849,7 @@ bool try_set_variable_def_types(
     }
     *new_tast = tast_variable_def_new(uast->pos, new_lang_type, is_variadic, uast->name);
     if (add_to_sym_tbl && !env->type_checking_is_in_struct_base_def) {
+        log(LOG_DEBUG, TAST_FMT, tast_variable_def_print(*new_tast));
         unwrap(symbol_add(env, tast_variable_def_wrap(*new_tast)));
     }
     return true;

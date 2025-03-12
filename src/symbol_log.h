@@ -4,6 +4,34 @@
 #include <env.h>
 #include <symbol_table.h>
 
+// ----------------
+// ---- usymbol ---
+// ----------------
+
+#define usymbol_log(log_level, env) usymbol_log_internal(log_level, __FILE__, __LINE__, env, 0);
+
+#define usymbol_level_log(log_level, level) usymbol_level_log_internal(log_level, __FILE__, __LINE__, level, 0);
+
+static inline void usymbol_level_log_internal(LOG_LEVEL log_level, const char* file, int line, Usymbol_table level, int recursion_depth) {
+    String buf = {0};
+    usymbol_extend_table_internal(&buf, level, recursion_depth);
+    log_internal(log_level, file, line, recursion_depth + 1, STR_VIEW_FMT"\n", string_print(buf));
+}
+
+static inline void usymbol_log_internal(LOG_LEVEL log_level, const char* file, int line, const Env* env, int recursion_depth) {
+    log(log_level, "----start usymbol table----\n");
+    for (size_t idx = 0; idx < env->ancesters.info.count; idx++) {
+        Usymbol_table curr = vec_at(&env->ancesters, idx)->usymbol_table;
+        log(log_level, "level %zu:\n", idx);
+        usymbol_level_log_internal(log_level, file, line, curr, recursion_depth);
+    }
+    log(log_level, "----end usymbol table----\n");
+}
+
+// ----------------
+// ---- symbol ----
+// ----------------
+
 #define symbol_log(log_level, env) symbol_log_internal(log_level, __FILE__, __LINE__, env, 0);
 
 #define symbol_level_log(log_level, level) symbol_level_log_internal(log_level, __FILE__, __LINE__, level, 0);
