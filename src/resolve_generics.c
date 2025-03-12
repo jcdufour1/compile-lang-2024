@@ -421,13 +421,17 @@ bool resolve_generics_function_def(
         log(LOG_DEBUG, "thing fdlksaf: %zu\n", idx);
     }
 
-    Tast_def* dummy1 = NULL;
-    if (!symbol_lookup(&dummy1, env, (*new_def)->decl->name)) {
+    Tast_def* dummy = NULL;
+    if (!symbol_lookup(&dummy, env, (*new_def)->decl->name)) {
+        // TODO: see if there is less hacky way to do this
+        Sym_coll_vec tbls = env->ancesters;
+        memset(&env->ancesters, 0, sizeof(env->ancesters));
+        vec_append(&a_main, &env->ancesters, vec_at(&tbls, 0));
         unwrap(try_set_function_def_types(env, *new_def, true));
+        env->ancesters = tbls;
     }
 
-    Tast_def* dummy2 = NULL;
-    unwrap(symbol_lookup(&dummy2, env, (*new_def)->decl->name));
+    unwrap(symbol_lookup(&dummy, env, (*new_def)->decl->name));
     return true;
 }
 
