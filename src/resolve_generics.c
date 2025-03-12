@@ -347,10 +347,6 @@ static void resolve_generics_serialize_function_decl(
         for (size_t idx_param = 0; idx_param < params.info.count; idx_param++) {
             Str_view curr_gen = vec_at(&old_decl->generics, idx_gen)->child->name;
             generic_sub_param(vec_at(&params, idx_param), curr_gen, vec_at(&gen_args, idx_gen));
-            //log(LOG_DEBUG, "curr_gen:"STR_VIEW_FMT"    curr_param:"STR_VIEW_FMT"\n", str_view_print(curr_gen), str_view_print(curr_param));
-            //if (str_view_is_equal(curr_gen, curr_param)) {
-                //vec_at(&params, idx_param)->base->lang_type = vec_at(&gen_args, idx_gen);
-            //}
         }
     }
     for (size_t idx_memb = 0; idx_memb < gen_args.info.count; idx_memb++) {
@@ -369,6 +365,7 @@ static void resolve_generics_serialize_function_decl(
 
 
         if (str_view_is_equal(gen_param, rtn_str)) {
+            // TODO: call generic_sub_param here
             new_rtn_type = vec_at(&gen_args, idx);
             string_extend_strv(&a_main, &name, serialize_ulang_type(new_rtn_type));
             break;
@@ -424,10 +421,13 @@ bool resolve_generics_function_def(
         log(LOG_DEBUG, "thing fdlksaf: %zu\n", idx);
     }
 
-    unwrap(try_set_function_def_types(env, *new_def, true));
+    Tast_def* dummy1 = NULL;
+    if (!symbol_lookup(&dummy1, env, (*new_def)->decl->name)) {
+        unwrap(try_set_function_def_types(env, *new_def, true));
+    }
 
-    Tast_def* dummy = NULL;
-    unwrap(symbol_lookup(&dummy, env, (*new_def)->decl->name));
+    Tast_def* dummy2 = NULL;
+    unwrap(symbol_lookup(&dummy2, env, (*new_def)->decl->name));
     return true;
 }
 

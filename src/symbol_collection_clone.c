@@ -1,4 +1,5 @@
 #include <symbol_collection_clone.h>
+#include <uast_clone.h>
 
 Usymbol_table usymbol_table_clone(Usymbol_table tbl) {
     Usymbol_table new_tbl = {0};
@@ -11,7 +12,7 @@ Usymbol_table usymbol_table_clone(Usymbol_table tbl) {
             continue;
         }
 
-        usym_tbl_add(&new_tbl, tbl.table_tasts[idx].tast);
+        usym_tbl_add(&new_tbl, uast_def_clone(tbl.table_tasts[idx].tast));
     }
 
     return new_tbl;

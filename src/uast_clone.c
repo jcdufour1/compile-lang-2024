@@ -121,6 +121,31 @@ Uast_expr* uast_expr_clone(const Uast_expr* expr) {
     unreachable("");
 }
 
+Uast_def* uast_def_clone(const Uast_def* def) {
+    switch (def->type) {
+        case UAST_GENERIC_PARAM:
+            todo();
+        case UAST_FUNCTION_DEF:
+            todo();
+        case UAST_FUNCTION_DECL:
+            todo();
+        case UAST_STRUCT_DEF:
+            todo();
+        case UAST_RAW_UNION_DEF:
+            todo();
+        case UAST_SUM_DEF:
+            todo();
+        case UAST_ENUM_DEF:
+            todo();
+        case UAST_PRIMITIVE_DEF:
+            todo();
+        case UAST_LITERAL_DEF:
+            todo();
+        case UAST_VARIABLE_DEF:
+            return uast_variable_def_wrap(uast_variable_def_clone(uast_variable_def_const_unwrap(def)));
+    }
+    unreachable("");
+}
 Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt) {
     if (stmt->type != UAST_EXPR) {
         todo();
