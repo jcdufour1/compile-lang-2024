@@ -48,8 +48,10 @@ OBJS=\
 	 ${BUILD_DIR}/lang_type_serialize.o \
 	 ${BUILD_DIR}/uast_clone.o \
 	 ${BUILD_DIR}/tast_clone.o \
+	 ${BUILD_DIR}/symbol_collection_clone.o \
 	 ${BUILD_DIR}/type_checking.o \
 	 ${BUILD_DIR}/resolve_generics.o \
+	 ${BUILD_DIR}/generic_sub.o \
 	 ${BUILD_DIR}/sizeof.o \
 	 ${BUILD_DIR}/passes/do_passes.o \
 	 ${BUILD_DIR}/passes/tokenizer.o \
@@ -130,6 +132,9 @@ ${BUILD_DIR}/type_checking.o: ${DEP_COMMON} src/type_checking.c third_party/*
 ${BUILD_DIR}/resolve_generics.o: ${DEP_COMMON} src/resolve_generics.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/resolve_generics.o src/resolve_generics.c
 
+${BUILD_DIR}/generic_sub.o: ${DEP_COMMON} src/generic_sub.c third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/generic_sub.o src/generic_sub.c
+
 ${BUILD_DIR}/symbol_table.o: ${DEP_COMMON} ${BUILD_DIR}/symbol_table.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/symbol_table.o ${BUILD_DIR}/symbol_table.c
 
@@ -147,6 +152,9 @@ ${BUILD_DIR}/sizeof.o: ${DEP_COMMON} src/sizeof.c third_party/*
 
 ${BUILD_DIR}/lang_type_serialize.o: ${DEP_COMMON} src/lang_type_serialize.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type_serialize.o src/lang_type_serialize.c
+
+${BUILD_DIR}/symbol_collection_clone.o: ${DEP_COMMON} src/symbol_collection_clone.c third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/symbol_collection_clone.o src/symbol_collection_clone.c
 
 ${BUILD_DIR}/uast_clone.o: ${DEP_COMMON} src/uast_clone.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/uast_clone.o src/uast_clone.c
