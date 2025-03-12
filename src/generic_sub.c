@@ -1,4 +1,5 @@
 #include <generic_sub.h>
+#include <ulang_type_serialize.h>
 
 void generic_sub_return(Uast_return* rtn, Str_view gen_param, Ulang_type gen_arg) {
     log(LOG_DEBUG, TAST_FMT, uast_return_print(rtn));
@@ -15,6 +16,15 @@ void generic_sub_variable_def(Uast_variable_def* def, Str_view gen_param, Ulang_
     Str_view reg_param = ulang_type_regular_const_unwrap(def->lang_type).atom.str;
     if (str_view_is_equal(gen_param, reg_param)) {
         def->lang_type = gen_arg;
+    }
+}
+
+void generic_sub_struct_def_base(Ustruct_def_base* base, Str_view gen_param, Ulang_type gen_arg) {
+    for (size_t idx = 0; idx < base->members.info.count; idx++) {
+        Str_view memb = ulang_type_regular_const_unwrap(vec_at(&base->members, idx)->lang_type).atom.str;
+        if (str_view_is_equal(gen_param, memb)) {
+            vec_at(&base->members, idx)->lang_type = gen_arg;
+        }
     }
 }
 

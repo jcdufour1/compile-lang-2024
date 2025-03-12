@@ -145,7 +145,7 @@ static Str_view resolve_generics_serialize_struct_def_base(
     Pos pos
 ) {
     (void) pos;
-    // TODO: figure out way to avoid making new Ustruct_def_base every time
+    // TODO: figure out way to avoid making new Ustruct_def_base every time (do name thing here, and check if varient with name already exists)
     memset(new_base, 0, sizeof(*new_base));
 
     if (gen_args.info.count < 1) {
@@ -154,27 +154,23 @@ static Str_view resolve_generics_serialize_struct_def_base(
     }
 
     for (size_t idx_memb = 0; idx_memb < old_base.members.info.count; idx_memb++) {
+        // TODO: gen thign
         vec_append(&a_main, &new_base->members, uast_variable_def_clone(vec_at(&old_base.members, idx_memb)));
     }
 
-    String name = {0};
-    string_extend_strv(&a_main, &name, old_base.name);
     for (size_t idx_gen = 0; idx_gen < gen_args.info.count; idx_gen++) {
         Str_view gen_def = vec_at(&old_base.generics, idx_gen)->child->name;
-        for (size_t idx_memb = 0; idx_memb < old_base.members.info.count; idx_memb++) {
-            Str_view memb = ulang_type_regular_const_unwrap(vec_at(&old_base.members, idx_memb)->lang_type).atom.str;
-            if (str_view_is_equal(gen_def, memb)) {
-                vec_at(&new_base->members, idx_memb)->lang_type = vec_at(&gen_args, idx_gen);
-            }
-        }
+        generic_sub_struct_def_base(new_base, gen_def, vec_at(&gen_args, idx_gen));
     }
 
     assert(old_base.members.info.count == new_base->members.info.count);
-    // TODO: use gen_args instead of new_base?
-    for (size_t idx_memb = 0; idx_memb < new_base->members.info.count; idx_memb++) {
-        string_extend_strv(&a_main, &name, serialize_ulang_type(vec_at(&new_base->members, idx_memb)->lang_type));
-    }
 
+    // TODO: refactor this name thing into a separate function
+    String name = {0};
+    string_extend_strv(&a_main, &name, old_base.name);
+    for (size_t idx = 0; idx < gen_args.info.count; idx++) {
+        string_extend_strv(&a_main, &name, serialize_ulang_type(vec_at(&gen_args, idx)));
+    }
     new_base->name = string_to_strv(name);
     return string_to_strv(name);
 }
@@ -333,10 +329,6 @@ static void resolve_generics_serialize_function_decl(
 ) {
     // TODO: figure out way to avoid making new Uast_function_decl every time
     memset(new_decl, 0, sizeof(*new_decl));
-    String name = {0};
-    string_extend_cstr(&a_main, &name, "_");
-    string_extend_size_t(&a_main, &name, old_decl->name.count);
-    string_extend_strv(&a_main, &name, old_decl->name);
 
     Uast_param_vec params = {0};
     for (size_t idx = 0; idx < old_decl->params->params.info.count; idx++) {
@@ -349,9 +341,6 @@ static void resolve_generics_serialize_function_decl(
             generic_sub_param(vec_at(&params, idx_param), curr_gen, vec_at(&gen_args, idx_gen));
         }
     }
-    for (size_t idx_memb = 0; idx_memb < gen_args.info.count; idx_memb++) {
-        string_extend_strv(&a_main, &name, serialize_ulang_type(vec_at(&gen_args, idx_memb)));
-    }
 
     Ulang_type new_rtn_type = {0};
 
@@ -363,11 +352,9 @@ static void resolve_generics_serialize_function_decl(
             str_view_print(gen_param), str_view_print(rtn_str)
         );
 
-
         if (str_view_is_equal(gen_param, rtn_str)) {
             // TODO: call generic_sub_param here
             new_rtn_type = vec_at(&gen_args, idx);
-            string_extend_strv(&a_main, &name, serialize_ulang_type(new_rtn_type));
             break;
         }
     }
@@ -375,6 +362,14 @@ static void resolve_generics_serialize_function_decl(
     for (size_t idx_gen = 0; idx_gen < old_decl->generics.info.count; idx_gen++) {
         Str_view curr_gen = vec_at(&old_decl->generics, idx_gen)->child->name;
         generic_sub_block(new_block, curr_gen, vec_at(&gen_args, idx_gen));
+    }
+
+    String name = {0};
+    string_extend_cstr(&a_main, &name, "_");
+    string_extend_size_t(&a_main, &name, old_decl->name.count);
+    string_extend_strv(&a_main, &name, old_decl->name);
+    for (size_t idx = 0; idx < gen_args.info.count; idx++) {
+        string_extend_strv(&a_main, &name, serialize_ulang_type(vec_at(&gen_args, idx)));
     }
 
     *new_decl = uast_function_decl_new(
