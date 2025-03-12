@@ -1,5 +1,7 @@
 #include <generic_sub.h>
 #include <ulang_type_serialize.h>
+#include <ulang_type.h>
+#include <ulang_type_print.h>
 
 void generic_sub_return(Uast_return* rtn, Str_view gen_param, Ulang_type gen_arg) {
     log(LOG_DEBUG, TAST_FMT, uast_return_print(rtn));
@@ -10,6 +12,31 @@ void generic_sub_return(Uast_return* rtn, Str_view gen_param, Ulang_type gen_arg
 
 void generic_sub_param(Uast_param* def, Str_view gen_param, Ulang_type gen_arg) {
     generic_sub_variable_def(def->base, gen_param, gen_arg);
+}
+
+void generic_sub_lang_type(
+    Ulang_type* new_lang_type,
+    Ulang_type lang_type,
+    Str_view gen_param,
+    Ulang_type gen_arg
+) {
+    Str_view lang_type_str = ulang_type_regular_const_unwrap(lang_type).atom.str;
+    if (str_view_is_equal(gen_param, lang_type_str)) {
+        // TODO: call generic_sub_param here
+        *new_lang_type = gen_arg;
+    } else {
+        *new_lang_type = lang_type;
+    }
+    log(
+        LOG_DEBUG, "gen_str: "STR_VIEW_FMT"    rtn_str: "STR_VIEW_FMT"\n",
+        str_view_print(gen_param), str_view_print(lang_type_str)
+    );
+
+    ulang_type_regular_const_unwrap(*new_lang_type);
+    //log(
+    //    LOG_DEBUG, "new_lang_type: "STR_VIEW_FMT"\n",
+    //    ulang_type_print(*new_lang_type)
+    //);
 }
 
 void generic_sub_variable_def(Uast_variable_def* def, Str_view gen_param, Ulang_type gen_arg) {

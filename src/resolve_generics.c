@@ -342,21 +342,10 @@ static void resolve_generics_serialize_function_decl(
         }
     }
 
-    Ulang_type new_rtn_type = {0};
-
-    Str_view rtn_str = ulang_type_regular_const_unwrap(old_decl->return_type->lang_type).atom.str;
+    Ulang_type new_rtn_type = old_decl->return_type->lang_type;
     for (size_t idx = 0; idx < gen_args.info.count; idx++) {
-        Str_view gen_param = vec_at(&old_decl->generics, idx)->child->name;
-        log(
-            LOG_DEBUG, "gen_str: "STR_VIEW_FMT"    rtn_str: "STR_VIEW_FMT"\n",
-            str_view_print(gen_param), str_view_print(rtn_str)
-        );
-
-        if (str_view_is_equal(gen_param, rtn_str)) {
-            // TODO: call generic_sub_param here
-            new_rtn_type = vec_at(&gen_args, idx);
-            break;
-        }
+        Str_view curr_gen = vec_at(&old_decl->generics, idx)->child->name;
+        generic_sub_lang_type(&new_rtn_type, new_rtn_type, curr_gen, vec_at(&gen_args, idx));
     }
 
     for (size_t idx_gen = 0; idx_gen < old_decl->generics.info.count; idx_gen++) {
