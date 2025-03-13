@@ -74,7 +74,6 @@ static bool try_set_struct_base_types(Env* env, Struct_def_base* new_base, Ustru
         } \
         usym_tbl_add(&vec_at(&(env)->ancesters, idx)->usymbol_table, (after_res)); \
         sym_tbl_add(&vec_at(&(env)->ancesters, idx)->symbol_table, (new_def)); \
-        log(LOG_DEBUG, "thing fdlksaf: %zu\n", idx); \
     } while (0)
 
 static bool try_set_struct_def_types(Env* env, Uast_struct_def* before_res, Uast_struct_def* after_res) {
@@ -369,7 +368,6 @@ static void resolve_generics_serialize_function_decl(
         uast_lang_type_new(ulang_type_get_pos(new_rtn_type), new_rtn_type),
         string_to_strv(name)
     );
-    log(LOG_DEBUG, TAST_FMT, uast_function_decl_print(*new_decl));
 }
 
 // only generic function decls can be passed in here
@@ -388,7 +386,6 @@ bool resolve_generics_function_def(
 
     resolve_generics_serialize_function_decl(env, &new_decl, def->decl, new_block, gen_args);
     *new_def = uast_function_def_new(new_decl->pos, new_decl, new_block);
-    log(LOG_DEBUG, TAST_FMT, uast_function_def_print(*new_def));
     //vec_rem_last(&env->ancesters);
     //vec_append(&a_main, &env->ancesters, &new_block->symbol_collection);
 
@@ -403,7 +400,6 @@ bool resolve_generics_function_def(
             }
         }
         usym_tbl_add(&vec_at(&env->ancesters, idx)->usymbol_table, uast_function_decl_wrap(new_decl));
-        log(LOG_DEBUG, "thing fdlksaf: %zu\n", idx);
     }
 
     Tast_def* dummy = NULL;

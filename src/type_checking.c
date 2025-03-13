@@ -1213,11 +1213,7 @@ bool try_set_function_call_types_sum_case(Env* env, Tast_sum_case** new_case, Ua
                     new_def->pos,
                     sum_case->tag,
                     lang_type_from_ulang_type(env, new_def->lang_type),
-                    uast_symbol_wrap(uast_symbol_new(
-                        new_def->pos,
-                        uast_expr_get_name(env->parent_of_operand),
-                        (Ulang_type_vec) {0}
-                    ))
+                    uast_expr_clone(env->parent_of_operand)
                 ))
             );
 
