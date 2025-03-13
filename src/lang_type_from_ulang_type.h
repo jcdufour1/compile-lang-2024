@@ -40,7 +40,6 @@ static inline bool try_lang_type_from_ulang_type_reg_generic(
 
 // TODO: figure out way to reduce duplicate vec allocations
 static inline Lang_type lang_type_from_ulang_type_tuple(Env* env, Ulang_type_tuple lang_type) {
-    todo();
     Lang_type_tuple new_tuple = {0};
     unwrap(try_lang_type_from_ulang_type_tuple(&new_tuple, env, lang_type, (Pos) {0}));
     return lang_type_tuple_const_wrap(new_tuple);

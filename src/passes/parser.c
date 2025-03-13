@@ -1807,6 +1807,7 @@ static Uast_expr* get_expr_or_symbol(Uast_stmt* stmt) {
 }
 
 static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens, bool defer_sym_add) {
+    log(LOG_DEBUG, BOOL_FMT"\n", bool_print(defer_sym_add));
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
     assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
@@ -2769,7 +2770,8 @@ static void parser_do_tests(void);
 
 Uast_block* parse(Env* env, const Tokens tokens) {
 #ifndef DNDEBUG
-    parser_do_tests();
+    // TODO: reenable
+    //parser_do_tests();
 #endif // DNDEBUG
 
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};

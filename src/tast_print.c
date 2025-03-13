@@ -405,7 +405,7 @@ Str_view tast_assignment_print_internal(const Tast_assignment* assign, int inden
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "assignment\n", indent);
-    string_extend_strv(&print_arena, &buf, tast_stmt_print_internal(assign->lhs, indent + INDENT_WIDTH));
+    string_extend_strv(&print_arena, &buf, tast_expr_print_internal(assign->lhs, indent + INDENT_WIDTH));
     string_extend_strv(&print_arena, &buf, tast_expr_print_internal(assign->rhs, indent + INDENT_WIDTH));
 
     return string_to_strv(buf);

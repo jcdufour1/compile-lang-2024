@@ -10,6 +10,7 @@
 #include <lang_type_serialize.h>
 #include <lang_type_from_ulang_type.h>
 #include <token_type_to_operator_type.h>
+#include <symbol_log.h>
 
 #include "passes.h"
 
@@ -415,7 +416,8 @@ static Str_view load_ptr_symbol(
     Llvm_variable_def* var_def = load_variable_def_clone(tast_variable_def_unwrap(var_def_));
     Llvm* alloca = NULL;
     if (!alloca_lookup(&alloca, env, var_def->name_corr_param)) {
-        unreachable("");
+        load_variable_def(env, new_block, tast_variable_def_unwrap(var_def_));
+        unwrap(alloca_lookup(&alloca, env, var_def->name_corr_param));
     }
 
     assert(var_def);
@@ -501,22 +503,22 @@ static Str_view load_binary_short_circuit(
     Tast_stmt_vec if_true_stmts = {0};
     vec_append(&a_main, &if_true_stmts, tast_expr_wrap(tast_assignment_wrap(tast_assignment_new(
         old_bin->pos,
-        tast_expr_wrap(tast_symbol_wrap(tast_symbol_new(old_bin->pos, (Sym_typed_base) {
+        tast_symbol_wrap(tast_symbol_new(old_bin->pos, (Sym_typed_base) {
             .lang_type = u1_lang_type,
             .name = new_var_def->name,
             .llvm_id = 0
-        }))),
+        })),
         old_bin->rhs
     ))));
 
     Tast_stmt_vec if_false_stmts = {0};
     vec_append(&a_main, &if_false_stmts, tast_expr_wrap(tast_assignment_wrap(tast_assignment_new(
         old_bin->pos,
-        tast_expr_wrap(tast_symbol_wrap(tast_symbol_new(old_bin->pos, (Sym_typed_base) {
+        tast_symbol_wrap(tast_symbol_new(old_bin->pos, (Sym_typed_base) {
             .lang_type = u1_lang_type,
             .name = new_var_def->name,
             .llvm_id = 0
-        }))),
+        })),
         tast_literal_wrap(
             util_tast_literal_new_from_int64_t(if_false_val, TOKEN_INT_LITERAL, old_bin->pos)
         )
@@ -992,9 +994,9 @@ static Str_view load_assignment(
     Llvm_store_another_llvm* new_store = llvm_store_another_llvm_new(
         pos,
         load_expr(env, new_block, old_assignment->rhs),
-        load_ptr_stmt(env, new_block, old_assignment->lhs),
+        load_ptr_expr(env, new_block, old_assignment->lhs),
         0,
-        tast_stmt_get_lang_type(old_assignment->lhs),
+        tast_expr_get_lang_type(old_assignment->lhs),
         util_literal_name_new()
     );
     unwrap(alloca_add(env, llvm_store_another_llvm_wrap(new_store)));
@@ -1227,7 +1229,7 @@ static Llvm_block* for_range_to_branch(Env* env, Tast_for_range* old_for) {
 
     //vec_append(&a_main, &new_branch_block->children, tast_variable_def_wrap(for_var_def));
 
-    Tast_assignment* new_var_assign = tast_assignment_new(tast_symbol_get_pos(symbol_lhs_assign), tast_expr_wrap(tast_symbol_wrap(symbol_lhs_assign)), lhs_actual);
+    Tast_assignment* new_var_assign = tast_assignment_new(tast_symbol_get_pos(symbol_lhs_assign), tast_symbol_wrap(symbol_lhs_assign), lhs_actual);
     //Tast_assignment* new_var_assign = util_assignment_new(env, uast_expr_wrap(uast_symbol_wrap(symbol_lhs_assign)), lhs_actual);
 
     load_variable_def(env, new_branch_block, for_var_def);
@@ -1657,13 +1659,14 @@ static Str_view load_tast(Env* env, Llvm_block* new_block, Tast* old_tast) {
     }
 }
 
-static Str_view load_def_sometimes(Env* env, Tast_def* old_def) {
+static Str_view load_def_sometimes(Env* env, Llvm_block* new_block, Tast_def* old_def) {
     switch (old_def->type) {
         case TAST_FUNCTION_DEF:
             return load_function_def(env, tast_function_def_unwrap(old_def));
         case TAST_FUNCTION_DECL:
             return load_function_decl(env, tast_function_decl_unwrap(old_def));
         case TAST_VARIABLE_DEF:
+            //return load_variable_def(env, new_block, tast_variable_def_unwrap(old_def));
             return (Str_view) {0};
         case TAST_STRUCT_DEF:
             return load_struct_def(env, tast_struct_def_unwrap(old_def));
@@ -1695,12 +1698,14 @@ static Llvm_block* load_block(Env* env, Tast_block* old_block) {
     vec_append(&a_main, &env->ancesters, &new_block->symbol_collection);
 
     Symbol_table table = vec_top(&env->ancesters)->symbol_table;
+    symbol_level_log(LOG_DEBUG, table);
     for (size_t idx = 0; idx < table.capacity; idx++) {
         if (table.table_tasts[idx].status != SYM_TBL_OCCUPIED) {
             continue;
         }
 
-        load_def_sometimes(env, table.table_tasts[idx].tast);
+        log(LOG_DEBUG, TAST_FMT, tast_def_print(table.table_tasts[idx].tast));
+        load_def_sometimes(env, new_block, table.table_tasts[idx].tast);
     }
 
     for (size_t idx = 0; idx < old_block->children.info.count; idx++) {

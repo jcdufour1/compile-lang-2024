@@ -700,7 +700,7 @@ bool try_set_binary_types(Env* env, Tast_expr** new_tast, Uast_binary* operator)
     if (operator->token_type == BINARY_SINGLE_EQUAL) {
         switch (check_generic_assignment(env, &new_rhs, tast_expr_get_lang_type(new_lhs), operator->rhs, operator->pos)) {
             case CHECK_ASSIGN_OK:
-                *new_tast = tast_assignment_wrap(tast_assignment_new(operator->pos, tast_expr_wrap(new_lhs), new_rhs));
+                *new_tast = tast_assignment_wrap(tast_assignment_new(operator->pos, new_lhs, new_rhs));
                 return true;
             case CHECK_ASSIGN_INVALID:
                 msg(
@@ -1078,15 +1078,14 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
     unreachable("");
 }
 
-STMT_STATUS try_set_def_types(Env* env, Tast_def** new_tast, Uast_def* uast) {
+STMT_STATUS try_set_def_types(Env* env, Uast_def* uast) {
     switch (uast->type) {
         case UAST_VARIABLE_DEF: {
             Tast_variable_def* new_def = NULL;
             if (!try_set_variable_def_types(env, &new_def, uast_variable_def_unwrap(uast), true, false)) {
                 return STMT_ERROR;
             }
-            *new_tast = tast_variable_def_wrap(new_def);
-            return STMT_OK;
+            return STMT_NO_STMT;
         }
         case UAST_FUNCTION_DECL: {
             Tast_function_decl* dummy = NULL;
@@ -1161,7 +1160,7 @@ bool try_set_assignment_types(Env* env, Tast_assignment** new_assign, Uast_assig
             unreachable("");
     }
 
-    *new_assign = tast_assignment_new(assignment->pos, tast_expr_wrap(new_lhs), new_rhs);
+    *new_assign = tast_assignment_new(assignment->pos, new_lhs, new_rhs);
     return true;
 }
 
@@ -1828,7 +1827,7 @@ bool try_set_variable_def_types(
     }
     *new_tast = tast_variable_def_new(uast->pos, new_lang_type, is_variadic, uast->name);
     if (add_to_sym_tbl && !env->type_checking_is_in_struct_base_def) {
-        unwrap(symbol_add(env, tast_variable_def_wrap(*new_tast)));
+        symbol_add(env, tast_variable_def_wrap(*new_tast));
     }
     return true;
 }
@@ -2378,16 +2377,31 @@ bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, boo
         goto error;
     }
 
-    for (size_t idx = 0; idx < block->symbol_collection.usymbol_table.count; idx++) {
-        const Usymbol_table_tast* node = block->symbol_collection.usymbol_table.table_tasts;
-        if (node->status != SYM_TBL_OCCUPIED) {
+    usymbol_log(LOG_DEBUG, env);
+    usymbol_level_log(LOG_DEBUG, new_sym_coll.usymbol_table);
+    // TODO: make "iterator" function to do less stuff manually every time. this is too much.
+    for (size_t idx = 0; idx < new_sym_coll.usymbol_table.capacity; idx++) {
+        Usymbol_table_tast node = new_sym_coll.usymbol_table.table_tasts[idx];
+        if (node.status != SYM_TBL_OCCUPIED) {
             continue;
         }
 
-        if (node->tast->type != UAST_VARIABLE_DEF) {
+        if (node.tast->type != UAST_VARIABLE_DEF) {
             // TODO: eventually, we should do also function defs, etc. in this for loop
             // (change parser to not put function defs, etc. in block)
             continue;
+        }
+
+        switch (try_set_def_types(env, node.tast)) {
+            case STMT_NO_STMT:
+                break;
+            case STMT_ERROR:
+                status = false;
+                goto error;
+            case STMT_OK:
+                unreachable("");
+            default:
+                unreachable("");
         }
     }
 
@@ -2459,13 +2473,9 @@ STMT_STATUS try_set_stmt_types(Env* env, Tast_stmt** new_tast, Uast_stmt* stmt) 
             return STMT_OK;
         }
         case UAST_DEF: {
-            Tast_def* new_tast_ = NULL;
-            STMT_STATUS status = try_set_def_types(env, &new_tast_, uast_def_unwrap(stmt));
-            if (status != STMT_OK) {
-                return status;
-            }
-            *new_tast = tast_def_wrap(new_tast_);
-            return STMT_OK;
+            STMT_STATUS status = try_set_def_types(env, uast_def_unwrap(stmt));
+            unwrap(status != STMT_OK);
+            return status;
         }
         case UAST_FOR_WITH_COND: {
             Tast_for_with_cond* new_tast_ = NULL;

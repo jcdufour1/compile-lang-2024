@@ -405,7 +405,7 @@ static Tast_type tast_gen_assignment(const char* prefix) {
     const char* base_name = "assignment";
     Tast_type assign = {.name = tast_name_new(prefix, base_name, false)};
 
-    append_member(&assign.members, "Tast_stmt*", "lhs");
+    append_member(&assign.members, "Tast_expr*", "lhs");
     append_member(&assign.members, "Tast_expr*", "rhs");
 
     return assign;

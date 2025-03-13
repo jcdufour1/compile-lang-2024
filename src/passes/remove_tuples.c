@@ -232,7 +232,7 @@ static Tast_for_with_cond* rm_tuple_for_with_cond(Env* env, Tast_for_with_cond* 
 static Tast_stmt* rm_tuple_assignment_tuple(Env* env, Tast_assignment* assign) {
     Tast_stmt_vec new_children = {0};
 
-    Tast_tuple* dest = tast_tuple_unwrap(tast_expr_unwrap(assign->lhs));
+    Tast_tuple* dest = tast_tuple_unwrap(assign->lhs);
     Tast_expr* src = assign->rhs;
 
     Tast_def* struct_def_ = NULL;
@@ -242,7 +242,7 @@ static Tast_stmt* rm_tuple_assignment_tuple(Env* env, Tast_assignment* assign) {
     Lang_type new_var_lang_type = rm_tuple_lang_type(env, tast_expr_get_lang_type(src), tast_expr_get_pos(src));
 
     Tast_variable_def* new_var = tast_variable_def_new(
-        tast_stmt_get_pos(assign->lhs),
+        tast_expr_get_pos(assign->lhs),
         new_var_lang_type,
         false,
         util_literal_name_new_prefix("tuple_assign_lhs")
@@ -250,7 +250,14 @@ static Tast_stmt* rm_tuple_assignment_tuple(Env* env, Tast_assignment* assign) {
     unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(new_var)));
     Tast_assignment* new_assign = tast_assignment_new(
         dest->pos,
-        tast_def_wrap(tast_variable_def_wrap(new_var)),
+        tast_symbol_wrap(tast_symbol_new(
+            new_var->pos,
+            (Sym_typed_base) {
+                .lang_type = new_var->lang_type, 
+                .name = new_var->name, 
+                .llvm_id = 0
+            }
+        )),
         src
     );
     vec_append(&a_main, &new_children, tast_expr_wrap(tast_assignment_wrap(new_assign)));
@@ -269,7 +276,7 @@ static Tast_stmt* rm_tuple_assignment_tuple(Env* env, Tast_assignment* assign) {
         Tast_expr* curr_dest = rm_tuple_expr(env, vec_at(&dest->members, idx), tast_expr_get_pos(vec_at(&dest->members, idx)));
         Tast_assignment* curr_assign = tast_assignment_new(
             dest->pos,
-            tast_expr_wrap(curr_dest),
+            curr_dest,
             tast_member_access_wrap(curr_src)
         );
 
@@ -284,11 +291,11 @@ static Tast_stmt* rm_tuple_assignment_tuple(Env* env, Tast_assignment* assign) {
 static Tast_stmt* rm_tuple_assignment(Env* env, Tast_assignment* assign) {
     assign->rhs = rm_tuple_expr(env, assign->rhs, assign->pos);
 
-    switch (tast_stmt_get_lang_type(assign->lhs).type) {
+    switch (tast_expr_get_lang_type(assign->lhs).type) {
         case LANG_TYPE_TUPLE:
             return rm_tuple_assignment_tuple(env, assign);
         case LANG_TYPE_SUM:
-            assign->lhs = rm_tuple_stmt(env, assign->lhs);
+            assign->lhs = rm_tuple_expr(env, assign->lhs, assign->pos);
             return tast_expr_wrap(tast_assignment_wrap(assign));
         case LANG_TYPE_PRIMITIVE:
             return tast_expr_wrap(tast_assignment_wrap(assign));
@@ -365,7 +372,7 @@ static Tast_function_def* rm_tuple_function_def_new(Env* env, Tast_function_decl
                     }))
                 , POS_BUILTIN);
 
-                Tast_assignment* assign = tast_assignment_new(decl->pos, tast_expr_wrap(tast_member_access_wrap(lhs)), rhs);
+                Tast_assignment* assign = tast_assignment_new(decl->pos, tast_member_access_wrap(lhs), rhs);
                 vec_append(&a_main, &body->children, tast_expr_wrap(tast_assignment_wrap(assign)));
             }
             break;
@@ -388,7 +395,7 @@ static Tast_function_def* rm_tuple_function_def_new(Env* env, Tast_function_decl
                 .llvm_id = 0
             });
 
-            Tast_assignment* assign = tast_assignment_new(decl->pos, tast_expr_wrap(tast_member_access_wrap(lhs)), tast_symbol_wrap(rhs));
+            Tast_assignment* assign = tast_assignment_new(decl->pos, tast_member_access_wrap(lhs), tast_symbol_wrap(rhs));
             vec_append(&a_main, &body->children, tast_expr_wrap(tast_assignment_wrap(assign)));
             break;
         }
@@ -585,6 +592,7 @@ static Tast_expr* rm_tuple_tuple_rhs(
                 ))),
                 new_fun_decl->return_type->lang_type
             );
+            log(LOG_DEBUG, TAST_FMT, tast_function_call_print(fun_call));
 
             return tast_function_call_wrap(fun_call);
          }
@@ -853,6 +861,7 @@ static Tast_function_call* rm_tuple_function_call(Env* env, Tast_function_call* 
             tast_expr_get_pos(*curr)
         );
     }
+    log(LOG_DEBUG, TAST_FMT, tast_function_call_print(fun_call));
     return fun_call;
 }
 
