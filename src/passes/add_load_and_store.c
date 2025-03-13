@@ -14,7 +14,31 @@
 
 #include "passes.h"
 
+// forward declarations
+
 static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type_pos);
+
+static Str_view load_assignment(
+    Env* env,
+    Llvm_block* new_block,
+    Tast_assignment* old_assignment
+);
+
+static Str_view load_symbol(
+    Env* env,
+    Llvm_block* new_block,
+    Tast_symbol* old_symbol
+);
+
+static Str_view load_struct_def(
+    Env* env,
+    Tast_struct_def* old_struct_def
+);
+
+static Str_view load_raw_union_def(
+    Env* env,
+    Tast_raw_union_def* old_def
+);
 
 static Lang_type_struct rm_tuple_lang_type_tuple(Env* env, Lang_type_tuple lang_type, Pos lang_type_pos) {
     Tast_variable_def_vec members = {0};
@@ -40,89 +64,95 @@ static Lang_type_struct rm_tuple_lang_type_tuple(Env* env, Lang_type_tuple lang_
     return lang_type_struct_new(lang_type_atom_new(base.name, 0));
 }
 
+static Lang_type rm_tuple_lang_type_sum(Env* env, Str_view* union_name, Lang_type_sum lang_type, Pos lang_type_pos) {
+    Tast_def* lang_type_def_ = NULL; 
+    unwrap(symbol_lookup(&lang_type_def_, env, lang_type.atom.str));
+    Tast_variable_def_vec members = {0};
+
+    Tast_variable_def* tag = tast_variable_def_new(
+        lang_type_pos,
+        // TODO: make helper functions, etc. for line below, because this is too much to do every time
+        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0))),
+        false,
+        str_view_from_cstr("tag")
+    );
+    vec_append(&a_main, &members, tag);
+
+    Tast_raw_union_def* item_type_def = tast_raw_union_def_new(
+        lang_type_pos,
+        tast_sum_def_unwrap(lang_type_def_)->base
+    );
+    item_type_def->base.name = util_literal_name_new_prefix("item_type_def");
+    *union_name = item_type_def->base.name;
+    sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_raw_union_def_wrap(item_type_def));
+    load_raw_union_def(env, item_type_def);
+
+    for (size_t idx = 0; idx < item_type_def->base.members.info.count; idx++) {
+        // TODO: do not do switch case; just call rm_tuple_lang_type
+        switch (vec_at(&item_type_def->base.members, idx)->lang_type.type) {
+            case LANG_TYPE_SUM:
+                vec_at(&item_type_def->base.members, idx)->lang_type = rm_tuple_lang_type(
+                    env, 
+                    vec_at(&item_type_def->base.members, idx)->lang_type,
+                    item_type_def->pos
+                );
+                break;
+            case LANG_TYPE_STRUCT:
+                break;
+            case LANG_TYPE_RAW_UNION:
+                break;
+            case LANG_TYPE_PRIMITIVE:
+                break;
+            case LANG_TYPE_ENUM:
+                break;
+            case LANG_TYPE_TUPLE:
+                vec_at(&item_type_def->base.members, idx)->lang_type = rm_tuple_lang_type(
+                    env, 
+                    vec_at(&item_type_def->base.members, idx)->lang_type,
+                    item_type_def->pos
+                );
+                break;
+            case LANG_TYPE_VOID:
+                break;
+            default:
+                unreachable("");
+        }
+    }
+
+    Tast_variable_def* item = tast_variable_def_new(
+        lang_type_pos,
+        rm_tuple_lang_type(env, lang_type_raw_union_const_wrap(lang_type_raw_union_new(lang_type_atom_new(item_type_def->base.name, 0))), lang_type_pos),
+        false,
+        str_view_from_cstr("item")
+    );
+    vec_append(&a_main, &members, item);
+
+    Struct_def_base base = {
+        .members = members,
+        .name = util_literal_name_new_prefix("temp")
+    };
+    
+    Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
+    unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def)));
+    struct_def->base.name = serialize_tast_struct_def(env, struct_def);
+    log(LOG_DEBUG, TAST_FMT, tast_struct_def_print(struct_def));
+    // TODO: consider collisions with generated structs and user defined structs
+    bool status = sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def));
+    log(LOG_DEBUG, "%zu\n", env->ancesters.info.count);
+    log(LOG_DEBUG, BOOL_FMT"\n", bool_print(status));
+    Tast_def* dummy = NULL;
+    status = sym_tbl_lookup(&dummy, &vec_at(&env->ancesters, 0)->symbol_table, struct_def->base.name);
+    log(LOG_DEBUG, BOOL_FMT"\n", bool_print(status));
+
+    load_struct_def(env, struct_def);
+    return tast_struct_def_get_lang_type(struct_def);
+}
+
 static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type_pos) {
     switch (lang_type.type) {
         case LANG_TYPE_SUM: {
-
-            log(LOG_DEBUG, LANG_TYPE_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
-            Tast_def* lang_type_def_ = NULL; 
-            log(LOG_DEBUG, TAST_FMT"\n", str_view_print(lang_type_get_str(lang_type)));
-            unwrap(symbol_lookup(&lang_type_def_, env, lang_type_get_str(lang_type)));
-            Tast_variable_def_vec members = {0};
-
-            Tast_variable_def* tag = tast_variable_def_new(
-                lang_type_pos,
-                // TODO: make helper functions, etc. for line below, because this is too much to do every time
-                lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0))),
-                false,
-                str_view_from_cstr("tag")
-            );
-            vec_append(&a_main, &members, tag);
-
-            Tast_raw_union_def* item_type_def = tast_raw_union_def_new(
-                lang_type_pos,
-                tast_sum_def_unwrap(lang_type_def_)->base
-            );
-
-            item_type_def->base.name = util_literal_name_new_prefix("item_type_def");
-            sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_raw_union_def_wrap(item_type_def));
-            for (size_t idx = 0; idx < item_type_def->base.members.info.count; idx++) {
-                switch (vec_at(&item_type_def->base.members, idx)->lang_type.type) {
-                    case LANG_TYPE_SUM:
-                        vec_at(&item_type_def->base.members, idx)->lang_type = rm_tuple_lang_type(
-                            env, 
-                            vec_at(&item_type_def->base.members, idx)->lang_type,
-                            item_type_def->pos
-                        );
-                        break;
-                    case LANG_TYPE_STRUCT:
-                        break;
-                    case LANG_TYPE_RAW_UNION:
-                        break;
-                    case LANG_TYPE_PRIMITIVE:
-                        break;
-                    case LANG_TYPE_ENUM:
-                        break;
-                    case LANG_TYPE_TUPLE:
-                        vec_at(&item_type_def->base.members, idx)->lang_type = rm_tuple_lang_type(
-                            env, 
-                            vec_at(&item_type_def->base.members, idx)->lang_type,
-                            item_type_def->pos
-                        );
-                        break;
-                    case LANG_TYPE_VOID:
-                        break;
-                    default:
-                        unreachable("");
-                }
-            }
-
-            Tast_variable_def* item = tast_variable_def_new(
-                lang_type_pos,
-                rm_tuple_lang_type(env, lang_type_raw_union_const_wrap(lang_type_raw_union_new(lang_type_atom_new(item_type_def->base.name, 0))), lang_type_pos),
-                false,
-                str_view_from_cstr("item")
-            );
-            vec_append(&a_main, &members, item);
-
-            Struct_def_base base = {
-                .members = members,
-                .name = util_literal_name_new_prefix("temp")
-            };
-            
-            Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
-            unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def)));
-            struct_def->base.name = serialize_tast_struct_def(env, struct_def);
-            log(LOG_DEBUG, TAST_FMT, tast_struct_def_print(struct_def));
-            // TODO: consider collisions with generated structs and user defined structs
-            bool status = sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def));
-            log(LOG_DEBUG, "%zu\n", env->ancesters.info.count);
-            log(LOG_DEBUG, BOOL_FMT"\n", bool_print(status));
-            Tast_def* dummy = NULL;
-            status = sym_tbl_lookup(&dummy, &vec_at(&env->ancesters, 0)->symbol_table, struct_def->base.name);
-            log(LOG_DEBUG, BOOL_FMT"\n", bool_print(status));
-
-            return lang_type_struct_const_wrap(lang_type_struct_new(lang_type_atom_new(struct_def->base.name, 0)));
+            Str_view dummy = {0};
+            return rm_tuple_lang_type_sum(env, &dummy, lang_type_sum_const_unwrap(lang_type), lang_type_pos);
         }
         case LANG_TYPE_RAW_UNION: {
             Tast_def* lang_type_def_ = NULL; 
@@ -138,6 +168,8 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
             );
             vec_append(&a_main, &members, tag);
 
+            log(LOG_DEBUG, TAST_FMT, tast_def_print(lang_type_def_));
+            log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
             Tast_raw_union_def* item_type_def = tast_raw_union_def_new(
                 lang_type_pos,
                 tast_raw_union_def_unwrap(lang_type_def_)->base
@@ -145,7 +177,8 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
             item_type_def->base.name = serialize_tast_raw_union_def(env, item_type_def);
             sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_raw_union_def_wrap(item_type_def));
 
-            return lang_type_raw_union_const_wrap(lang_type_raw_union_new(lang_type_atom_new(item_type_def->base.name, 0)));
+            load_raw_union_def(env, item_type_def);
+            return tast_raw_union_def_get_lang_type(item_type_def);
         }
         case LANG_TYPE_TUPLE:
             return lang_type_struct_const_wrap(rm_tuple_lang_type_tuple(env, lang_type_tuple_const_unwrap(lang_type), lang_type_pos));
@@ -213,7 +246,7 @@ static bool binary_is_short_circuit(BINARY_TYPE type) {
     unreachable("");
 }
 
-static Llvm_variable_def* load_variable_def_clone(Tast_variable_def* old_var_def);
+static Llvm_variable_def* load_variable_def_clone(Env* env, Tast_variable_def* old_var_def);
 
 static Llvm_alloca* add_load_and_store_alloca_new(Env* env, Llvm_variable_def* var_def) {
     Llvm_alloca* alloca = llvm_alloca_new(var_def->pos, 0, var_def->lang_type, var_def->name_corr_param);
@@ -222,11 +255,11 @@ static Llvm_alloca* add_load_and_store_alloca_new(Env* env, Llvm_variable_def* v
     return alloca;
 }
 
-static Llvm_function_params* load_function_params_clone(Tast_function_params* old_params) {
+static Llvm_function_params* load_function_params_clone(Env* env, Tast_function_params* old_params) {
     Llvm_function_params* new_params = llvm_function_params_new(old_params->pos, (Llvm_variable_def_vec){0}, 0);
 
     for (size_t idx = 0; idx < old_params->params.info.count; idx++) {
-        vec_append(&a_main, &new_params->params, load_variable_def_clone(vec_at(&old_params->params, idx)));
+        vec_append(&a_main, &new_params->params, load_variable_def_clone(env, vec_at(&old_params->params, idx)));
     }
 
     return new_params;
@@ -237,19 +270,19 @@ static Llvm_lang_type* load_lang_type_clone(Tast_lang_type* old_lang_type) {
     return new_lang_type;
 }
 
-static Llvm_function_decl* load_function_decl_clone(Tast_function_decl* old_decl) {
+static Llvm_function_decl* load_function_decl_clone(Env* env, Tast_function_decl* old_decl) {
     return llvm_function_decl_new(
         old_decl->pos,
-        load_function_params_clone(old_decl->params),
+        load_function_params_clone(env, old_decl->params),
         load_lang_type_clone(old_decl->return_type),
         old_decl->name
     );
 }
 
-static Llvm_variable_def* load_variable_def_clone(Tast_variable_def* old_var_def) {
+static Llvm_variable_def* load_variable_def_clone(Env* env, Tast_variable_def* old_var_def) {
     return llvm_variable_def_new(
         old_var_def->pos,
-        old_var_def->lang_type,
+        rm_tuple_lang_type(env, old_var_def->lang_type, old_var_def->pos),
         old_var_def->is_variadic,
         0,
         util_literal_name_new(),
@@ -291,18 +324,6 @@ static void do_function_def_alloca_param(Env* env, Llvm_function_params* new_par
     vec_append(&a_main, &new_params->params, param);
 }
 
-static Str_view load_assignment(
-    Env* env,
-    Llvm_block* new_block,
-    Tast_assignment* old_assignment
-);
-
-static Str_view load_symbol(
-    Env* env,
-    Llvm_block* new_block,
-    Tast_symbol* old_symbol
-);
-
 static Llvm_function_params* do_function_def_alloca(
     Env* env,
     Llvm_lang_type** new_rtn_type,
@@ -327,7 +348,7 @@ static Llvm_function_params* do_function_def_alloca(
             false,
             util_literal_name_new_prefix("return_as_parameter")
         );
-        Llvm_variable_def* param = load_variable_def_clone(new_def);
+        Llvm_variable_def* param = load_variable_def_clone(env, new_def);
         do_function_def_alloca_param(env, new_params, new_block, param);
         *new_rtn_type = llvm_lang_type_new(param->pos, lang_type_void_const_wrap(lang_type_void_new(0)));
         env->struct_rtn_name_parent_function = vec_at(&new_params->params, 0)->name_self;
@@ -336,7 +357,7 @@ static Llvm_function_params* do_function_def_alloca(
     }
 
     for (size_t idx = 0; idx < old_params->params.info.count; idx++) {
-        Llvm_variable_def* param = load_variable_def_clone(vec_at(&old_params->params, idx));
+        Llvm_variable_def* param = load_variable_def_clone(env, vec_at(&old_params->params, idx));
         do_function_def_alloca_param(env, new_params, new_block, param);
     }
 
@@ -603,9 +624,19 @@ static Str_view load_literal(
             Tast_def* sum_def_ = NULL;
             unwrap(symbol_lookup(&sum_def_, env, lang_type_get_str(sum_lit->sum_lang_type)));
             Tast_sum_def* sum_def = tast_sum_def_unwrap(sum_def_);
-            Lang_type new_lang_type = rm_tuple_lang_type(env, sum_lit->sum_lang_type, sum_lit->pos);
+            Str_view union_name = {0};
+            Lang_type new_lang_type = rm_tuple_lang_type_sum(
+                env,
+                &union_name,
+                lang_type_sum_const_unwrap(sum_lit->sum_lang_type),
+                sum_lit->pos
+            );
 
-            Tast_raw_union_def* item_def = tast_raw_union_def_new(sum_def->pos, sum_def->base);
+            Tast_def* item_def_ = NULL;
+            unwrap(symbol_lookup(&item_def_, env, union_name));
+            log(LOG_DEBUG, TAST_FMT"\n", str_view_print(union_name));
+            log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, new_lang_type));
+            Tast_raw_union_def* item_def = tast_raw_union_def_unwrap(item_def_);
 
             Tast_expr_vec members = {0};
             vec_append(&a_main, &members, tast_literal_wrap(tast_enum_lit_wrap(sum_lit->tag)));
@@ -617,6 +648,12 @@ static Str_view load_literal(
                     sum_lit->item
                 )
             )));
+            log(LOG_DEBUG, TAST_FMT, tast_struct_literal_print(tast_struct_literal_new(
+                sum_lit->pos,
+                members,
+                util_literal_name_new(),
+                new_lang_type
+            )));
 
             return load_struct_literal(env, new_block, tast_struct_literal_new(
                 sum_lit->pos,
@@ -625,8 +662,49 @@ static Str_view load_literal(
                 new_lang_type
             ));
         }
-        case TAST_RAW_UNION_LIT:
+        case TAST_RAW_UNION_LIT: {
+            Tast_raw_union_lit* union_lit = tast_raw_union_lit_unwrap(old_lit);
+            Tast_def* union_def_ = NULL;
+            unwrap(symbol_lookup(&union_def_, env, lang_type_get_str(rm_tuple_lang_type(env, union_lit->lang_type, (Pos) {0}))));
+            log(LOG_DEBUG, TAST_FMT, tast_def_print(union_def_));
+            Tast_raw_union_def* union_def = tast_raw_union_def_unwrap(union_def_);
+
+            Tast_variable_def* new_var = tast_variable_def_new(
+                union_def->pos,
+                union_lit->lang_type,
+                false,
+                util_literal_name_new()
+            );
+            unwrap(symbol_add(env, tast_variable_def_wrap(new_var)));
+            load_variable_def(env, new_block, new_var);
+            Tast_member_access* access = tast_member_access_new(
+                new_var->pos,
+                vec_at(&union_def->base.members, (size_t)union_lit->tag->data)->lang_type,
+                vec_at(&union_def->base.members, (size_t)union_lit->tag->data)->name,
+                tast_symbol_wrap(tast_symbol_new(new_var->pos, (Sym_typed_base) {
+                    .lang_type = new_var->lang_type,
+                    .name = new_var->name,
+                    .llvm_id = 0
+                }))
+            );
+
+            Tast_assignment* assign = tast_assignment_new(
+                new_var->pos,
+                tast_member_access_wrap(access),
+                union_lit->item
+            );
+            log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
+            load_assignment(env, new_block, assign);
+            return load_symbol(env, new_block, tast_symbol_new(
+                new_var->pos,
+                (Sym_typed_base) {
+                    .lang_type = new_var->lang_type,
+                    .name = new_var->name,
+                    .llvm_id = 0
+                }
+            ));
             todo();
+        }
     }
     unreachable("");
 
@@ -642,8 +720,9 @@ static Str_view load_ptr_symbol(
     (void) new_block;
 
     Tast_def* var_def_ = NULL;
+    log(LOG_DEBUG, TAST_FMT, tast_symbol_print(old_sym));
     unwrap(symbol_lookup(&var_def_, env, old_sym->base.name));
-    Llvm_variable_def* var_def = load_variable_def_clone(tast_variable_def_unwrap(var_def_));
+    Llvm_variable_def* var_def = load_variable_def_clone(env, tast_variable_def_unwrap(var_def_));
     Llvm* alloca = NULL;
     if (!alloca_lookup(&alloca, env, var_def->name_corr_param)) {
         load_variable_def(env, new_block, tast_variable_def_unwrap(var_def_));
@@ -651,7 +730,6 @@ static Str_view load_ptr_symbol(
     }
 
     assert(var_def);
-    assert(lang_type_is_equal(var_def->lang_type, old_sym->base.lang_type));
 
     return llvm_tast_get_name(alloca);
 }
@@ -871,7 +949,10 @@ static Str_view load_unary(Env* env, Llvm_block* new_block, Tast_unary* old_unar
                 case LANG_TYPE_STRUCT:
                     return load_expr(env, new_block, old_unary->child);
                 case LANG_TYPE_RAW_UNION:
-                    return load_expr(env, new_block, old_unary->child);
+                    if (lang_type_is_equal(tast_expr_get_lang_type(old_unary->child), old_unary->lang_type)) {
+                        return load_expr(env, new_block, old_unary->child);
+                    }
+                    break;
                 default:
                     break;
             }
@@ -1168,7 +1249,7 @@ static Str_view load_function_decl(
     Env* env,
     Tast_function_decl* old_fun_decl
 ) {
-    unwrap(alloca_add(env, llvm_def_wrap(llvm_function_decl_wrap(load_function_decl_clone(old_fun_decl)))));
+    unwrap(alloca_add(env, llvm_def_wrap(llvm_function_decl_wrap(load_function_decl_clone(env, old_fun_decl)))));
 
     return (Str_view) {0};
 }
@@ -1271,7 +1352,7 @@ static Str_view load_variable_def(
     Llvm_block* new_block,
     Tast_variable_def* old_var_def
 ) {
-    Llvm_variable_def* new_var_def = load_variable_def_clone(old_var_def);
+    Llvm_variable_def* new_var_def = load_variable_def_clone(env, old_var_def);
 
     Llvm* alloca = NULL;
     if (!alloca_lookup(&alloca, env, new_var_def->name_self)) {

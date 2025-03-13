@@ -495,6 +495,11 @@ static void emit_unary_type(Env* env, String* output, const Llvm_unary* unary) {
                 }
                 extend_type_call_str(env, output, lang_type_from_get_name(env, unary->child));
                 string_extend_cstr(&a_main, output, " ");
+            } else if (unary->lang_type.type == LANG_TYPE_RAW_UNION) {
+                todo();
+                //string_extend_cstr(&a_main, output, "bitcast ");
+                //extend_type_call_str(env, output, lang_type_from_get_name(env, unary->child));
+                //string_extend_cstr(&a_main, output, " ");
             } else {
                 log(LOG_DEBUG, TAST_FMT, llvm_unary_print(unary));
                 todo();
