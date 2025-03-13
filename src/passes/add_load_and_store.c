@@ -297,6 +297,12 @@ static Str_view load_assignment(
     Tast_assignment* old_assignment
 );
 
+static Str_view load_symbol(
+    Env* env,
+    Llvm_block* new_block,
+    Tast_symbol* old_symbol
+);
+
 static Llvm_function_params* do_function_def_alloca(
     Env* env,
     Llvm_lang_type** new_rtn_type,
@@ -479,10 +485,51 @@ static Str_view load_function_call(
 }
 
 static Str_view load_struct_literal(Env* env, Llvm_block* new_block, Tast_struct_literal* old_lit) {
-    (void) env;
-    (void) new_block;
-    (void) old_lit;
-    todo();
+    Tast_variable_def* new_var = tast_variable_def_new(
+        old_lit->pos,
+        old_lit->lang_type,
+        false,
+        util_literal_name_new()
+    );
+    unwrap(symbol_add(env, tast_variable_def_wrap(new_var)));
+    load_variable_def(env, new_block, new_var);
+
+    Tast_def* struct_def_ = NULL;
+    unwrap(symbol_lookup(&struct_def_, env, lang_type_get_str(old_lit->lang_type)));
+    Tast_struct_def* struct_def = tast_struct_def_unwrap(struct_def_);
+
+    for (size_t idx = 0; idx < old_lit->members.info.count; idx++) {
+        Str_view memb_name = vec_at(&struct_def->base.members, idx)->name;
+        Lang_type memb_lang_type = vec_at(&struct_def->base.members, idx)->lang_type;
+        Tast_member_access* access = tast_member_access_new(
+            old_lit->pos,
+            memb_lang_type,
+            memb_name,
+            tast_symbol_wrap(tast_symbol_new(old_lit->pos, (Sym_typed_base) {
+                .lang_type = new_var->lang_type, 
+                .name = new_var->name,
+                .llvm_id = 0
+            }))
+        );
+
+        Tast_assignment* assign = tast_assignment_new(
+            access->pos,
+            tast_member_access_wrap(access),
+            vec_at(&old_lit->members, idx)
+        );
+
+        load_assignment(env, new_block, assign);
+
+        log(LOG_DEBUG, TAST_FMT, tast_member_access_print(access));
+        log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
+    }
+
+    // TODO: make helper function "tast_symbol_new_from_variable_def" or similar
+    return load_symbol(env, new_block, tast_symbol_new(new_var->pos, (Sym_typed_base) {
+        .lang_type = new_var->lang_type,
+        .name = new_var->name,
+        .llvm_id = 0
+    }));
 }
 
 static Str_view load_literal(
