@@ -164,7 +164,7 @@ Str_view uast_unknown_print_internal(const Uast_unknown* unknown, int indent) {
     (void) unknown;
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "unknown", indent);
+    string_extend_cstr_indent(&print_arena, &buf, "unknown\n", indent);
     
     return string_to_strv(buf);
 }

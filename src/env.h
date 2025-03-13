@@ -15,6 +15,7 @@ typedef enum {
     PARENT_OF_NONE = 0,
     PARENT_OF_CASE,
     PARENT_OF_ASSIGN_RHS,
+    PARENT_OF_RETURN,
 } PARENT_OF;
 
 typedef struct Env_ {

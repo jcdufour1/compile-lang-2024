@@ -322,6 +322,7 @@ bool resolve_generics_ulang_type(Ulang_type* result, Env* env, Ulang_type lang_t
 }
 
 static void resolve_generics_serialize_function_decl(
+    Env* env,
     Uast_function_decl** new_decl,
     const Uast_function_decl* old_decl,
     Uast_block* new_block,
@@ -345,7 +346,7 @@ static void resolve_generics_serialize_function_decl(
     Ulang_type new_rtn_type = old_decl->return_type->lang_type;
     for (size_t idx = 0; idx < gen_args.info.count; idx++) {
         Str_view curr_gen = vec_at(&old_decl->generics, idx)->child->name;
-        generic_sub_lang_type(&new_rtn_type, new_rtn_type, curr_gen, vec_at(&gen_args, idx));
+        generic_sub_lang_type(env, &new_rtn_type, new_rtn_type, curr_gen, vec_at(&gen_args, idx));
     }
 
     for (size_t idx_gen = 0; idx_gen < old_decl->generics.info.count; idx_gen++) {
@@ -385,7 +386,7 @@ bool resolve_generics_function_def(
 
     Uast_block* new_block = uast_block_clone(def->body);
 
-    resolve_generics_serialize_function_decl(&new_decl, def->decl, new_block, gen_args);
+    resolve_generics_serialize_function_decl(env, &new_decl, def->decl, new_block, gen_args);
     *new_def = uast_function_def_new(new_decl->pos, new_decl, new_block);
     log(LOG_DEBUG, TAST_FMT, uast_function_def_print(*new_def));
     //vec_rem_last(&env->ancesters);

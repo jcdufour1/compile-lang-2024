@@ -330,13 +330,14 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
         }
         *new_src = tast_tuple_wrap(new_src_);
     } else {
+        PARENT_OF old_parent_of = env->parent_of;
         env->parent_of = PARENT_OF_ASSIGN_RHS;
         env->lhs_lang_type = dest_lang_type;
         if (!try_set_expr_types(env, new_src, src)) {
             return CHECK_ASSIGN_ERROR;
         }
         memset(&env->lhs_lang_type, 0, sizeof(env->lhs_lang_type));
-        env->parent_of = PARENT_OF_NONE;
+        env->parent_of = old_parent_of;
     }
 
     bool src_is_zero = false;
@@ -1587,6 +1588,7 @@ bool try_set_member_access_types_finish_sum_def(
     Tast_expr* new_callee
 ) {
     (void) new_callee;
+    log(LOG_DEBUG, TAST_FMT, uast_member_access_print(access));
 
     switch (env->parent_of) {
         case PARENT_OF_CASE: {
@@ -1610,6 +1612,9 @@ bool try_set_member_access_types_finish_sum_def(
 
             return true;
         }
+        case PARENT_OF_RETURN:
+            todo();
+            // fallthrough
         case PARENT_OF_ASSIGN_RHS: {
             Uast_variable_def* member_def = NULL;
             if (!uast_try_get_member_def(&member_def, &sum_def->base, access->member_name)) {
@@ -1964,6 +1969,10 @@ bool try_types_set_lang_type(
 bool try_set_return_types(Env* env, Tast_return** new_tast, Uast_return* rtn) {
     *new_tast = NULL;
 
+    bool status = true;
+    PARENT_OF old_parent_of = env->parent_of;
+    env->parent_of = PARENT_OF_RETURN;
+
     Ulang_type fun_rtn_type = get_parent_function_return_type(env)->lang_type;
 
     Tast_expr* new_child = NULL;
@@ -1972,15 +1981,20 @@ bool try_set_return_types(Env* env, Tast_return** new_tast, Uast_return* rtn) {
             break;
         case CHECK_ASSIGN_INVALID:
             msg_invalid_return_type(env, rtn->pos, new_child, rtn->is_auto_inserted);
-            return false;
+            status = false;
+            goto error;
         case CHECK_ASSIGN_ERROR:
-            return false;
+            status = false;
+            goto error;
         default:
             unreachable("");
     }
 
     *new_tast = tast_return_new(rtn->pos, new_child, rtn->is_auto_inserted);
-    return true;
+
+error:
+    env->parent_of = old_parent_of;
+    return status;
 }
 
 bool try_set_for_lower_bound_types(Env* env, Tast_for_lower_bound** new_tast, Uast_for_lower_bound* uast) {
