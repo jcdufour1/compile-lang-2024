@@ -69,7 +69,6 @@ static Tast_expr* auto_deref_to_0(Env* env, Tast_expr* expr) {
 const Uast_function_decl* get_parent_function_decl_const(Env* env) {
     Uast_def* def = NULL;
     unwrap(env->name_parent_function.count > 0 && "no parent function here");
-    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(env->name_parent_function));
     unwrap(usymbol_lookup(&def, env, env->name_parent_function));
     switch (def->type) {
         case UAST_FUNCTION_DECL:
@@ -421,16 +420,17 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
                 new_decl->name,
                 lang_type_from_ulang_type(env, ulang_type_from_uast_function_decl(new_decl))
             )));
-            log(LOG_DEBUG, TAST_FMT, tast_expr_print(*new_tast));
             return true;
         }
         case UAST_FUNCTION_DEF: {
             Uast_function_def* new_def = NULL;
             if (function_decl_generics_are_present(uast_function_def_unwrap(sym_def)->decl)) {
+                log(LOG_DEBUG, TAST_FMT, uast_def_print(sym_def));
                 if (!resolve_generics_function_def(&new_def, env, uast_function_def_unwrap(sym_def), sym_untyped->generic_args)) {
                     return false;
                 }
             } else {
+                todo();
                 new_def = uast_function_def_unwrap(sym_def);
             }
             *new_tast = tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
@@ -438,7 +438,6 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
                 new_def->decl->name,
                 lang_type_from_ulang_type(env, ulang_type_from_uast_function_decl(new_def->decl))
             )));
-            log(LOG_DEBUG, TAST_FMT, tast_expr_print(*new_tast));
             return true;
         }
         case UAST_STRUCT_DEF:
@@ -455,8 +454,6 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
             // fallthrough
         case UAST_VARIABLE_DEF: {
             Lang_type lang_type = {0};
-            log(LOG_DEBUG, TAST_FMT, uast_symbol_print(sym_untyped));
-            log(LOG_DEBUG, TAST_FMT, uast_def_print(sym_def));
             if (!uast_def_get_lang_type(&lang_type, env, sym_def, sym_untyped->generic_args)) {
                 return false;
             }
@@ -1584,7 +1581,6 @@ bool try_set_member_access_types_finish_sum_def(
     Tast_expr* new_callee
 ) {
     (void) new_callee;
-    log(LOG_DEBUG, TAST_FMT, uast_member_access_print(access));
 
     switch (env->parent_of) {
         case PARENT_OF_CASE: {
@@ -1850,7 +1846,6 @@ bool try_set_variable_def_types(
     }
     *new_tast = tast_variable_def_new(uast->pos, new_lang_type, is_variadic, uast->name);
     if (add_to_sym_tbl && !env->type_checking_is_in_struct_base_def) {
-        log(LOG_DEBUG, TAST_FMT, tast_variable_def_print(*new_tast));
         unwrap(symbol_add(env, tast_variable_def_wrap(*new_tast)));
     }
     return true;
@@ -1905,6 +1900,13 @@ bool try_set_function_def_types(
 
     Tast_function_decl* new_decl = NULL;
     vec_append(&a_main, &env->ancesters, &def->body->symbol_collection);
+    log(LOG_DEBUG, "thing 123: %p\n", (void*)def->body->symbol_collection.usymbol_table.table_tasts);
+    Uast_def* dummy = NULL;
+    symbol_log(LOG_DEBUG, env);
+    unwrap(usymbol_lookup(&dummy, env, str_view_from_cstr("num")));
+    unwrap(usymbol_lookup(&dummy, env, str_view_from_cstr("dummy")));
+    log(LOG_DEBUG, TAST_FMT, uast_def_print(dummy));
+    log(LOG_DEBUG, "thing 123: %p\n", (void*)dummy);
     if (!try_set_function_decl_types(env, &new_decl, def->decl, true)) {
         status = false;
     }

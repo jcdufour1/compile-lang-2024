@@ -158,9 +158,6 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     }
 
     Lang_type_atom new_atom = lang_type_atom_new(ulang_type_regular_const_unwrap(resolved).atom.str, ulang_type_regular_const_unwrap(resolved).atom.pointer_depth);
-    if (str_view_cstr_is_equal(new_atom.str, "Div")) {
-        log(LOG_DEBUG, "pointer_depth: %d\n", new_atom.pointer_depth);
-    }
     switch (result->type) {
         case UAST_STRUCT_DEF:
             *new_lang_type = lang_type_struct_const_wrap(lang_type_struct_new(new_atom));
@@ -229,7 +226,6 @@ static inline bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Env* 
 }
 
 static inline Lang_type lang_type_from_ulang_type(Env* env, Ulang_type lang_type) {
-    log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
             return lang_type_from_ulang_type_regular(env, ulang_type_regular_const_unwrap(lang_type));

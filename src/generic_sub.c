@@ -4,6 +4,8 @@
 #include <ulang_type_print.h>
 #include <ulang_type_clone.h>
 #include <resolve_generics.h>
+#include <uast_clone.h>
+#include <uast_utils.h>
 #include <env.h>
 
 void generic_sub_return(Uast_return* rtn, Str_view gen_param, Ulang_type gen_arg) {
@@ -24,9 +26,9 @@ void generic_sub_lang_type_regular(
     Ulang_type gen_arg
 ) {
     if (str_view_is_equal(gen_param, lang_type.atom.str)) {
-        *new_lang_type = gen_arg;
+        *new_lang_type = ulang_type_clone(gen_arg);
     } else {
-        *new_lang_type = ulang_type_regular_const_wrap(lang_type);
+        *new_lang_type = ulang_type_clone(ulang_type_regular_const_wrap(lang_type));
     }
     return;
 }
@@ -46,7 +48,7 @@ void generic_sub_lang_type_reg_generic(
             vec_at_ref(&new_reg.generic_args, idx),
             vec_at(&new_reg.generic_args, idx),
             gen_param,
-            gen_arg
+            ulang_type_clone(gen_arg)
         );
     }
 
@@ -102,7 +104,7 @@ void generic_sub_lang_type(
 void generic_sub_variable_def(Uast_variable_def* def, Str_view gen_param, Ulang_type gen_arg) {
     Str_view reg_param = ulang_type_regular_const_unwrap(def->lang_type).atom.str;
     if (str_view_is_equal(gen_param, reg_param)) {
-        def->lang_type = gen_arg;
+        def->lang_type = ulang_type_clone(gen_arg);
     }
 }
 
@@ -110,7 +112,7 @@ void generic_sub_struct_def_base(Ustruct_def_base* base, Str_view gen_param, Ula
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
         Str_view memb = ulang_type_regular_const_unwrap(vec_at(&base->members, idx)->lang_type).atom.str;
         if (str_view_is_equal(gen_param, memb)) {
-            vec_at(&base->members, idx)->lang_type = gen_arg;
+            vec_at(&base->members, idx)->lang_type = ulang_type_clone(gen_arg);
         }
     }
 }
@@ -142,15 +144,17 @@ void generic_sub_def(Uast_def* def, Str_view gen_param, Ulang_type gen_arg) {
     unreachable("");
 }
 
-void generic_sub_stmt(Uast_stmt* stmt, Str_view gen_param, Ulang_type gen_arg) {
+void generic_sub_stmt(Env* env, Uast_stmt* stmt, Str_view gen_param, Ulang_type gen_arg) {
     switch (stmt->type) {
         case UAST_BLOCK:
-            generic_sub_block(uast_block_unwrap(stmt), gen_param, gen_arg);
+            generic_sub_block(env, uast_block_unwrap(stmt), gen_param, gen_arg);
             return;
         case UAST_EXPR:
-            todo();
+            generic_sub_expr(uast_expr_unwrap(stmt), gen_param, gen_arg);
+            return;
         case UAST_DEF:
-            todo();
+            generic_sub_def(uast_def_unwrap(stmt), gen_param, gen_arg);
+            return;
         case UAST_FOR_RANGE:
             todo();
         case UAST_FOR_WITH_COND:
@@ -172,17 +176,118 @@ void generic_sub_stmt(Uast_stmt* stmt, Str_view gen_param, Ulang_type gen_arg) {
     unreachable("");
 }
 
-void generic_sub_block(Uast_block* block, Str_view gen_param, Ulang_type gen_arg) {
+void generic_sub_block(Env* env, Uast_block* block, Str_view gen_param, Ulang_type gen_arg) {
+    (void) env;
     Usymbol_table tbl = block->symbol_collection.usymbol_table;
     for (size_t idx = 0; idx < tbl.capacity; idx++) {
         if (tbl.table_tasts[idx].status != SYM_TBL_OCCUPIED) {
             continue;
         }
 
+
+        log(LOG_DEBUG, TAST_FMT, uast_variable_def_print(uast_variable_def_unwrap(tbl.table_tasts[idx].tast)));
+        log(LOG_DEBUG, LANG_TYPE_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, uast_variable_def_unwrap(tbl.table_tasts[idx].tast)->lang_type));
+        //log(LOG_DEBUG, "thing 9870: %p\n", ulang_type_regular_const_unwrap(uast_variable_def_unwrap(tbl.table_tasts[idx].tast)->lang_type));
+        
+        log(LOG_DEBUG, TAST_FMT, uast_def_print(tbl.table_tasts[idx].tast));
+        log(LOG_DEBUG, "thing 9877: %p\n", (void*)tbl.table_tasts[idx].tast);
+
+        //log(LOG_DEBUG, "old_block: %p  new_block: %p\n", (void*)def->body, (void*)new_block);
         generic_sub_def(tbl.table_tasts[idx].tast, gen_param, gen_arg);
     }
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        generic_sub_stmt(vec_at(&block->children, idx), gen_param, gen_arg);
+        generic_sub_stmt(env, vec_at(&block->children, idx), gen_param, gen_arg);
     }
+}
+
+void generic_sub_expr(Uast_expr* expr, Str_view gen_param, Ulang_type gen_arg) {
+    switch (expr->type) {
+        case UAST_OPERATOR:
+            generic_sub_operator(uast_operator_unwrap(expr), gen_param, gen_arg);
+            return;
+        case UAST_UNKNOWN:
+            return;
+        case UAST_SYMBOL:
+            return;
+        case UAST_MEMBER_ACCESS:
+            todo();
+        case UAST_INDEX:
+            todo();
+        case UAST_FUNCTION_CALL:
+            todo();
+        case UAST_LITERAL:
+            todo();
+        case UAST_STRUCT_LITERAL:
+            todo();
+        case UAST_TUPLE:
+            todo();
+        case UAST_SUM_ACCESS:
+            todo();
+    }
+    unreachable("");
+}
+
+void generic_sub_operator(Uast_operator* oper, Str_view gen_param, Ulang_type gen_arg) {
+    switch (oper->type) {
+        case UAST_BINARY:
+            generic_sub_binary(uast_binary_unwrap(oper), gen_param, gen_arg);
+            return;
+        case UAST_UNARY:
+            generic_sub_unary(uast_unary_unwrap(oper), gen_param, gen_arg);
+            return;
+    }
+}
+
+void generic_sub_binary(Uast_binary* bin, Str_view gen_param, Ulang_type gen_arg) {
+    (void) bin;
+    (void) gen_param;
+    (void) gen_arg;
+    switch (bin->token_type) {
+        case BINARY_SINGLE_EQUAL:
+            return;
+        case BINARY_SUB:
+            todo();
+        case BINARY_ADD:
+            todo();
+        case BINARY_MULTIPLY:
+            todo();
+        case BINARY_DIVIDE:
+            todo();
+        case BINARY_MODULO:
+            todo();
+        case BINARY_LESS_THAN:
+            todo();
+        case BINARY_LESS_OR_EQUAL:
+            todo();
+        case BINARY_GREATER_OR_EQUAL:
+            todo();
+        case BINARY_GREATER_THAN:
+            todo();
+        case BINARY_DOUBLE_EQUAL:
+            todo();
+        case BINARY_NOT_EQUAL:
+            todo();
+        case BINARY_BITWISE_XOR:
+            todo();
+        case BINARY_BITWISE_AND:
+            todo();
+        case BINARY_BITWISE_OR:
+            todo();
+        case BINARY_LOGICAL_AND:
+            todo();
+        case BINARY_LOGICAL_OR:
+            todo();
+        case BINARY_SHIFT_LEFT:
+            todo();
+        case BINARY_SHIFT_RIGHT:
+            todo();
+    }
+    unreachable("");
+}
+
+void generic_sub_unary(Uast_unary* unary, Str_view gen_param, Ulang_type gen_arg) {
+    (void) unary;
+    (void) gen_param;
+    (void) gen_arg;
 }

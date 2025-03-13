@@ -141,8 +141,12 @@ Uast_def* uast_def_clone(const Uast_def* def) {
             todo();
         case UAST_LITERAL_DEF:
             todo();
-        case UAST_VARIABLE_DEF:
-            return uast_variable_def_wrap(uast_variable_def_clone(uast_variable_def_const_unwrap(def)));
+        case UAST_VARIABLE_DEF: {
+            Uast_variable_def* new_def = uast_variable_def_clone(uast_variable_def_const_unwrap(def));
+            assert(uast_variable_def_const_unwrap(def) != new_def);
+            assert(def != uast_variable_def_wrap(new_def));
+            return uast_variable_def_wrap(new_def);
+        }
     }
     unreachable("");
 }
@@ -154,6 +158,10 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt) {
 }
 
 Uast_variable_def* uast_variable_def_clone(const Uast_variable_def* def) {
+    log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, def->lang_type));
+    if (str_view_cstr_is_equal(ulang_type_regular_const_unwrap(def->lang_type).atom.str, "i32")) {
+        todo();
+    }
     return uast_variable_def_new(def->pos, def->lang_type, def->name);
 }
 

@@ -8,9 +8,9 @@ void generic_sub_param(Uast_param* def, Str_view gen_param, Ulang_type gen_arg);
 
 void generic_sub_variable_def(Uast_variable_def* def, Str_view gen_param, Ulang_type gen_arg);
 
-void generic_sub_stmt(Uast_stmt* stmt, Str_view gen_param, Ulang_type gen_arg);
+void generic_sub_stmt(Env* env, Uast_stmt* stmt, Str_view gen_param, Ulang_type gen_arg);
 
-void generic_sub_block(Uast_block* block, Str_view gen_param, Ulang_type gen_arg);
+void generic_sub_block(Env* env, Uast_block* block, Str_view gen_param, Ulang_type gen_arg);
 
 void generic_sub_struct_def_base(Ustruct_def_base* base, Str_view gen_param, Ulang_type gen_arg);
 
@@ -21,5 +21,13 @@ void generic_sub_lang_type(
     Str_view gen_param,
     Ulang_type gen_arg
 );
+
+void generic_sub_expr(Uast_expr* expr, Str_view gen_param, Ulang_type gen_arg);
+
+void generic_sub_operator(Uast_operator* operator, Str_view gen_param, Ulang_type gen_arg);
+
+void generic_sub_binary(Uast_binary* oper, Str_view gen_param, Ulang_type gen_arg);
+
+void generic_sub_unary(Uast_unary* unary, Str_view gen_param, Ulang_type gen_arg);
 
 #endif // GENERIC_SUB_H

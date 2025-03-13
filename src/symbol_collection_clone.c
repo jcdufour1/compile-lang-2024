@@ -4,6 +4,7 @@
 Usymbol_table usymbol_table_clone(Usymbol_table tbl) {
     Usymbol_table new_tbl = {0};
     if (tbl.count < 1) {
+        todo();
         return new_tbl;
     }
 
@@ -13,6 +14,7 @@ Usymbol_table usymbol_table_clone(Usymbol_table tbl) {
         }
 
         usym_tbl_add(&new_tbl, uast_def_clone(tbl.table_tasts[idx].tast));
+        assert(new_tbl.table_tasts[idx].tast != tbl.table_tasts[idx].tast);
     }
 
     return new_tbl;

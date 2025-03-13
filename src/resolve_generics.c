@@ -350,7 +350,7 @@ static void resolve_generics_serialize_function_decl(
 
     for (size_t idx_gen = 0; idx_gen < old_decl->generics.info.count; idx_gen++) {
         Str_view curr_gen = vec_at(&old_decl->generics, idx_gen)->child->name;
-        generic_sub_block(new_block, curr_gen, vec_at(&gen_args, idx_gen));
+        generic_sub_block(env, new_block, curr_gen, vec_at(&gen_args, idx_gen));
     }
 
     String name = {0};
@@ -383,7 +383,19 @@ bool resolve_generics_function_def(
     }
 
     Uast_block* new_block = uast_block_clone(def->body);
+    assert(new_block != def->body);
+    assert(new_block->symbol_collection.usymbol_table.table_tasts != def->body->symbol_collection.usymbol_table.table_tasts);
+    Uast_def* symbol_dummy1 = NULL;
+    Uast_def* symbol_dummy2 = NULL;
+    //assert(usym_tbl_lookup(&symbol_dummy1, &new_block->symbol_collection.usymbol_table, str_view_from_cstr("dummy")));
+    //assert(usym_tbl_lookup(&symbol_dummy2, &def->body->symbol_collection.usymbol_table, str_view_from_cstr("dummy")));
+    //assert(symbol_dummy1 != symbol_dummy2);
+    assert(usym_tbl_lookup(&symbol_dummy1, &new_block->symbol_collection.usymbol_table, str_view_from_cstr("num")));
+    assert(usym_tbl_lookup(&symbol_dummy2, &def->body->symbol_collection.usymbol_table, str_view_from_cstr("num")));
+    assert(symbol_dummy1 != symbol_dummy2);
+    log(LOG_DEBUG, TAST_FMT, uast_block_print(new_block));
 
+    log(LOG_DEBUG, "old_block: %p  new_block: %p\n", (void*)def->body, (void*)new_block);
     resolve_generics_serialize_function_decl(env, &new_decl, def->decl, new_block, gen_args);
     *new_def = uast_function_def_new(new_decl->pos, new_decl, new_block);
     //vec_rem_last(&env->ancesters);
@@ -408,6 +420,9 @@ bool resolve_generics_function_def(
         Sym_coll_vec tbls = env->ancesters;
         memset(&env->ancesters, 0, sizeof(env->ancesters));
         vec_append(&a_main, &env->ancesters, vec_at(&tbls, 0));
+        Uast_def* dummy2 = NULL;
+        unwrap(!usymbol_lookup(&dummy2, env, str_view_from_cstr("num")));
+        log(LOG_DEBUG, TAST_FMT, uast_function_def_print(*new_def));
         unwrap(try_set_function_def_types(env, *new_def, true));
         env->ancesters = tbls;
     }
