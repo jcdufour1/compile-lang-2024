@@ -253,13 +253,13 @@ static Tast_assignment* for_loop_cond_var_assign_new(Env* env, Str_view sym_name
     Uast_literal* literal = util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, pos);
     Uast_operator* operator = uast_binary_wrap(uast_binary_new(
         pos,
-        uast_expr_wrap(uast_symbol_wrap(uast_symbol_new(pos, sym_name, (Ulang_type_vec) {0}))),
+        uast_symbol_wrap(uast_symbol_new(pos, sym_name, (Ulang_type_vec) {0})),
         uast_literal_wrap(literal),
         BINARY_ADD
     ));
     return util_assignment_new(
         env,
-        uast_expr_wrap(uast_symbol_wrap(uast_symbol_new(pos, sym_name, (Ulang_type_vec) {0}))),
+        uast_symbol_wrap(uast_symbol_new(pos, sym_name, (Ulang_type_vec) {0})),
         uast_operator_wrap(operator)
     );
 }

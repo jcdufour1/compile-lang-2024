@@ -47,7 +47,7 @@ Uast_unary* uast_unary_clone(const Uast_unary* unary) {
 }
 
 Uast_binary* uast_binary_clone(const Uast_binary* binary) {
-    return uast_binary_new(binary->pos, uast_stmt_clone(binary->lhs), uast_expr_clone(binary->rhs), binary->token_type);
+    return uast_binary_new(binary->pos, uast_expr_clone(binary->lhs), uast_expr_clone(binary->rhs), binary->token_type);
 }
 
 Uast_index* uast_index_clone(const Uast_index* index) {
@@ -168,7 +168,7 @@ Uast_variable_def* uast_variable_def_clone(const Uast_variable_def* def) {
 Uast_block* uast_block_clone(const Uast_block* block) {
     Uast_stmt_vec new_children = {0};
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        vec_append(&a_main, &new_children, vec_at(&block->children, idx));
+        //vec_append(&a_main, &new_children, uast_stmt_clone(vec_at(&block->children, idx)));
     }
     return uast_block_new(block->pos, new_children, symbol_collection_clone(block->symbol_collection), block->pos_end);
 }

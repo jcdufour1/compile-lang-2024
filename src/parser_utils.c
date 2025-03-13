@@ -239,8 +239,8 @@ Llvm_id get_matching_label_id(Env* env, Str_view name) {
     return label->llvm_id;
 }
 
-Tast_assignment* util_assignment_new(Env* env, Uast_stmt* lhs, Uast_expr* rhs) {
-    Uast_assignment* assignment = uast_assignment_new(uast_stmt_get_pos(lhs), lhs, rhs);
+Tast_assignment* util_assignment_new(Env* env, Uast_expr* lhs, Uast_expr* rhs) {
+    Uast_assignment* assignment = uast_assignment_new(uast_expr_get_pos(lhs), lhs, rhs);
 
     Tast_assignment* new_assign = NULL;
     try_set_assignment_types(env, &new_assign, assignment);
@@ -326,8 +326,8 @@ Tast_literal* util_tast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token
     return try_set_literal_types(util_uast_literal_new_from_int64_t(value, token_type, pos));
 }
 
-Tast_operator* util_binary_typed_new(Env* env, Uast_stmt* lhs, Uast_expr* rhs, TOKEN_TYPE operator_type) {
-    Uast_binary* binary = uast_binary_new(uast_stmt_get_pos(lhs), lhs, rhs, token_type_to_binary_type(operator_type));
+Tast_operator* util_binary_typed_new(Env* env, Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operator_type) {
+    Uast_binary* binary = uast_binary_new(uast_expr_get_pos(lhs), lhs, rhs, token_type_to_binary_type(operator_type));
 
     Tast_expr* new_tast;
     unwrap(try_set_binary_types(env, &new_tast, binary));
@@ -352,9 +352,9 @@ Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child) {
 Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child) {
     Uast_binary* binary = uast_binary_new(
         uast_expr_get_pos(if_cond_child),
-        uast_expr_wrap(uast_literal_wrap(
+        uast_literal_wrap(
             util_uast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, uast_expr_get_pos(if_cond_child))
-        )),
+        ),
         if_cond_child,
         BINARY_NOT_EQUAL
     );

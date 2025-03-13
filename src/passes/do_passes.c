@@ -74,6 +74,7 @@ void do_passes(Str_view file_text, const Parameters* params) {
     unwrap(untyped);
     arena_reset(&print_arena);
     log(LOG_DEBUG, "\n"TAST_FMT, uast_block_print(untyped));
+    todo();
 
     //log_tree(LOG_DEBUG, tast_block_wrap(*root));
     Tast_block* typed = analysis_1(&env, untyped);

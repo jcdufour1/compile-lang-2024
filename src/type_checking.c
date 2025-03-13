@@ -430,7 +430,6 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
                     return false;
                 }
             } else {
-                todo();
                 new_def = uast_function_def_unwrap(sym_def);
             }
             *new_tast = tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
@@ -691,22 +690,17 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
 
 // returns false if unsuccessful
 bool try_set_binary_types(Env* env, Tast_expr** new_tast, Uast_binary* operator) {
-    Tast_stmt* new_lhs;
-    switch (try_set_stmt_types(env, &new_lhs, operator->lhs)) {
-        case STMT_OK:
-            break;
-        case STMT_NO_STMT:
-            unreachable("");
-        case STMT_ERROR:
-            return false;
+    Tast_expr* new_lhs;
+    if (!try_set_expr_types(env, &new_lhs, operator->lhs)) {
+        todo();
     }
     assert(new_lhs);
 
     Tast_expr* new_rhs = NULL;
     if (operator->token_type == BINARY_SINGLE_EQUAL) {
-        switch (check_generic_assignment(env, &new_rhs, tast_stmt_get_lang_type(new_lhs), operator->rhs, operator->pos)) {
+        switch (check_generic_assignment(env, &new_rhs, tast_expr_get_lang_type(new_lhs), operator->rhs, operator->pos)) {
             case CHECK_ASSIGN_OK:
-                *new_tast = tast_assignment_wrap(tast_assignment_new(operator->pos, new_lhs, new_rhs));
+                *new_tast = tast_assignment_wrap(tast_assignment_new(operator->pos, tast_expr_wrap(new_lhs), new_rhs));
                 return true;
             case CHECK_ASSIGN_INVALID:
                 msg(
@@ -714,7 +708,7 @@ bool try_set_binary_types(Env* env, Tast_expr** new_tast, Uast_binary* operator)
                     operator->pos,
                     "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
-                    lang_type_print(LANG_TYPE_MODE_MSG, tast_stmt_get_lang_type(new_lhs))
+                    lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_lhs))
                 );
                 return false;
             case CHECK_ASSIGN_ERROR:
@@ -724,22 +718,17 @@ bool try_set_binary_types(Env* env, Tast_expr** new_tast, Uast_binary* operator)
         }
     }
 
-    env->lhs_lang_type = tast_stmt_get_lang_type(new_lhs);
+    env->lhs_lang_type = tast_expr_get_lang_type(new_lhs);
     if (!try_set_expr_types(env, &new_rhs, operator->rhs)) {
         memset(&env->lhs_lang_type, 0, sizeof(env->lhs_lang_type));
         return false;
     }
     memset(&env->lhs_lang_type, 0, sizeof(env->lhs_lang_type));
 
-    if (operator->lhs->type != UAST_EXPR) {
-        // TODO: expected failure case
-        unreachable("not-expr cannot be lhs of this operator");
-    }
-
     return try_set_binary_types_finish(
         env,
         new_tast,
-        tast_expr_unwrap(new_lhs),
+        new_lhs,
         new_rhs,
         operator->pos,
         operator->token_type
@@ -955,7 +944,7 @@ bool try_set_struct_literal_assignment_types(
     for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
         Uast_variable_def* memb_sym_def = vec_at(&struct_def->base.members, idx);
         Uast_binary* assign_memb_sym = uast_binary_unwrap(uast_operator_unwrap(uast_expr_unwrap(vec_at(&struct_literal->members, idx))));
-        Uast_symbol* memb_sym_piece_untyped = uast_symbol_unwrap(uast_expr_unwrap(assign_memb_sym->lhs));
+        Uast_symbol* memb_sym_piece_untyped = uast_symbol_unwrap(assign_memb_sym->lhs);
         Tast_expr* new_rhs = NULL;
 
         switch (check_generic_assignment(
@@ -1146,21 +1135,14 @@ STMT_STATUS try_set_def_types(Env* env, Tast_def** new_tast, Uast_def* uast) {
 
 // TODO: remove this function and Uast_assignment
 bool try_set_assignment_types(Env* env, Tast_assignment** new_assign, Uast_assignment* assignment) {
-    Tast_stmt* new_lhs = NULL;
-    switch (try_set_stmt_types(env, &new_lhs, assignment->lhs)) { 
-        case STMT_OK:
-            break;
-        case STMT_NO_STMT:
-            unreachable(TAST_FMT, uast_assignment_print(assignment));
-        case STMT_ERROR:
-            return false;
-        default:
-            unreachable("");
+    Tast_expr* new_lhs = NULL;
+    if (!try_set_expr_types(env, &new_lhs, assignment->lhs)) {
+        return false;
     }
 
     Tast_expr* new_rhs = NULL;
     switch (check_generic_assignment(
-        env, &new_rhs, tast_stmt_get_lang_type(new_lhs), assignment->rhs, assignment->pos
+        env, &new_rhs, tast_expr_get_lang_type(new_lhs), assignment->rhs, assignment->pos
     )) {
         case CHECK_ASSIGN_OK:
             break;
@@ -1170,7 +1152,7 @@ bool try_set_assignment_types(Env* env, Tast_assignment** new_assign, Uast_assig
                 assignment->pos,
                 "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
                 lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
-                lang_type_print(LANG_TYPE_MODE_MSG, tast_stmt_get_lang_type(new_lhs))
+                lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_lhs))
             );
             return false;
         case CHECK_ASSIGN_ERROR:
@@ -1179,7 +1161,7 @@ bool try_set_assignment_types(Env* env, Tast_assignment** new_assign, Uast_assig
             unreachable("");
     }
 
-    *new_assign = tast_assignment_new(assignment->pos, new_lhs, new_rhs);
+    *new_assign = tast_assignment_new(assignment->pos, tast_expr_wrap(new_lhs), new_rhs);
     return true;
 }
 
@@ -1205,7 +1187,7 @@ bool try_set_function_call_types_sum_case(Env* env, Tast_sum_case** new_case, Ua
 
             Uast_assignment* new_assign = uast_assignment_new(
                 new_def->pos,
-                uast_def_wrap(uast_variable_def_wrap(new_def)),
+                uast_symbol_wrap(uast_symbol_new(new_def->pos, new_def->name, (Ulang_type_vec) {0})),
                 uast_sum_access_wrap(uast_sum_access_new(
                     new_def->pos,
                     sum_case->tag,
@@ -1901,12 +1883,7 @@ bool try_set_function_def_types(
     Tast_function_decl* new_decl = NULL;
     vec_append(&a_main, &env->ancesters, &def->body->symbol_collection);
     log(LOG_DEBUG, "thing 123: %p\n", (void*)def->body->symbol_collection.usymbol_table.table_tasts);
-    Uast_def* dummy = NULL;
     symbol_log(LOG_DEBUG, env);
-    unwrap(usymbol_lookup(&dummy, env, str_view_from_cstr("num")));
-    unwrap(usymbol_lookup(&dummy, env, str_view_from_cstr("dummy")));
-    log(LOG_DEBUG, TAST_FMT, uast_def_print(dummy));
-    log(LOG_DEBUG, "thing 123: %p\n", (void*)dummy);
     if (!try_set_function_decl_types(env, &new_decl, def->decl, true)) {
         status = false;
     }
@@ -2292,7 +2269,7 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
             );
         } else {
             cond = uast_condition_new(old_case->pos, uast_binary_wrap(uast_binary_new(
-                old_case->pos, uast_expr_wrap(lang_switch->operand), old_case->expr, BINARY_DOUBLE_EQUAL
+                old_case->pos, lang_switch->operand, old_case->expr, BINARY_DOUBLE_EQUAL
             )));
         }
 
@@ -2399,6 +2376,19 @@ bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, boo
         try_set_msg_redefinition_of_symbol(env, redef_sym);
         status = false;
         goto error;
+    }
+
+    for (size_t idx = 0; idx < block->symbol_collection.usymbol_table.count; idx++) {
+        const Usymbol_table_tast* node = block->symbol_collection.usymbol_table.table_tasts;
+        if (node->status != SYM_TBL_OCCUPIED) {
+            continue;
+        }
+
+        if (node->tast->type != UAST_VARIABLE_DEF) {
+            // TODO: eventually, we should do also function defs, etc. in this for loop
+            // (change parser to not put function defs, etc. in block)
+            continue;
+        }
     }
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
