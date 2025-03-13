@@ -59,9 +59,7 @@ Str_view tast_symbol_print_internal(const Tast_symbol* sym, int indent) {
 
     string_extend_cstr_indent(&print_arena, &buf, "symbol", indent);
     extend_pos(&buf, sym->pos);
-    log(LOG_DEBUG, TAST_FMT"\n", string_print(buf));
     tast_extend_sym_typed_base(&buf, sym->base);
-    log(LOG_DEBUG, TAST_FMT"\n", string_print(buf));
 
     return string_to_strv(buf);
 }
