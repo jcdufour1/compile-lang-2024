@@ -495,11 +495,6 @@ static void emit_unary_type(Env* env, String* output, const Llvm_unary* unary) {
                 }
                 extend_type_call_str(env, output, lang_type_from_get_name(env, unary->child));
                 string_extend_cstr(&a_main, output, " ");
-            } else if (unary->lang_type.type == LANG_TYPE_RAW_UNION) {
-                todo();
-                //string_extend_cstr(&a_main, output, "bitcast ");
-                //extend_type_call_str(env, output, lang_type_from_get_name(env, unary->child));
-                //string_extend_cstr(&a_main, output, " ");
             } else {
                 log(LOG_DEBUG, TAST_FMT, llvm_unary_print(unary));
                 todo();
@@ -648,6 +643,7 @@ static void emit_unary_suffix(Env* env, String* output, const Llvm_unary* unary)
             extend_type_call_str(env, output, unary->lang_type);
             return;
         case UNARY_DEREF:
+            // TODO: return here to simplify things?
             unreachable("suffix not needed for UNARY_DEREF");
         case UNARY_REFER:
             unreachable("suffix not needed for UNARY_REFER");
@@ -1034,11 +1030,13 @@ static void emit_struct_def_base(Env* env, String* output, const Struct_def_base
 }
 
 static void emit_struct_def(Env* env, String* output, const Llvm_struct_def* struct_def) {
+    log(LOG_DEBUG, TAST_FMT, llvm_struct_def_print(struct_def));
     string_extend_cstr(&a_main, output, "%struct.");
     emit_struct_def_base(env, output, &struct_def->base, false);
 }
 
 static void emit_raw_union_def(Env* env, String* output, const Llvm_raw_union_def* raw_union_def) {
+    log(LOG_DEBUG, TAST_FMT, llvm_raw_union_def_print(raw_union_def));
     string_extend_cstr(&a_main, output, "%union.");
     emit_struct_def_base(env, output, &raw_union_def->base, true);
 }

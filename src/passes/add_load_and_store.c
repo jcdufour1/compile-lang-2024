@@ -623,7 +623,7 @@ static Str_view load_literal(
             const Tast_sum_lit* sum_lit = tast_sum_lit_unwrap(old_lit);
             Tast_def* sum_def_ = NULL;
             unwrap(symbol_lookup(&sum_def_, env, lang_type_get_str(sum_lit->sum_lang_type)));
-            Tast_sum_def* sum_def = tast_sum_def_unwrap(sum_def_);
+            //Tast_sum_def* sum_def = tast_sum_def_unwrap(sum_def_);
             Str_view union_name = {0};
             Lang_type new_lang_type = rm_tuple_lang_type_sum(
                 env,
@@ -1328,12 +1328,15 @@ static Str_view load_assignment(
 
     Pos pos = old_assignment->pos;
 
+    Str_view new_lhs = load_ptr_expr(env, new_block, old_assignment->lhs);
+    Str_view new_rhs = load_expr(env, new_block, old_assignment->rhs);
+
     Llvm_store_another_llvm* new_store = llvm_store_another_llvm_new(
         pos,
-        load_expr(env, new_block, old_assignment->rhs),
-        load_ptr_expr(env, new_block, old_assignment->lhs),
+        new_rhs,
+        new_lhs,
         0,
-        tast_expr_get_lang_type(old_assignment->lhs),
+        lang_type_from_get_name(env, new_lhs),
         util_literal_name_new()
     );
     unwrap(alloca_add(env, llvm_store_another_llvm_wrap(new_store)));
@@ -1785,7 +1788,7 @@ static Str_view load_raw_union_def(
     Tast_raw_union_def* old_def
 ) {
     // TODO: crash if alloca_add fails (we need to prevent duplicates to crash on alloca_add fail)?
-    if (!alloca_add(env, llvm_def_wrap(
+    if (!all_tbl_add(&vec_at(&env->ancesters, 0)->alloca_table, llvm_def_wrap(
         llvm_raw_union_def_wrap(load_raw_union_def_clone(old_def))
     ))) {
         return (Str_view) {0};
