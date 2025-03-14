@@ -64,7 +64,23 @@ static Lang_type_struct rm_tuple_lang_type_tuple(Env* env, Lang_type_tuple lang_
     return lang_type_struct_new(lang_type_atom_new(base.name, 0));
 }
 
-static Lang_type rm_tuple_lang_type_sum(Env* env, Str_view* union_name, Lang_type_sum lang_type, Pos lang_type_pos) {
+// note: will not clone everything
+static Tast_raw_union_def* get_raw_union_def_from_sum_def(Env* env, Tast_sum_def* sum_def) {
+    // TODO: find way to avoid making new Tast_raw_union_def every time
+    Tast_raw_union_def* union_def = tast_raw_union_def_new(sum_def->pos, sum_def->base);
+    union_def->base.name = serialize_tast_raw_union_def(env, union_def);
+    Tast_def* cached_def = NULL;
+    if (symbol_lookup(&cached_def, env, union_def->base.name)) {
+        todo();
+        return tast_raw_union_def_unwrap(cached_def);
+    }
+    todo();
+    sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_raw_union_def_wrap(union_def));
+    load_raw_union_def(env, union_def);
+    return union_def;
+}
+
+static Lang_type rm_tuple_lang_type_sum(Env* env, Lang_type_sum lang_type, Pos lang_type_pos) {
     Tast_def* lang_type_def_ = NULL; 
     unwrap(symbol_lookup(&lang_type_def_, env, lang_type.atom.str));
     Tast_variable_def_vec members = {0};
@@ -78,14 +94,7 @@ static Lang_type rm_tuple_lang_type_sum(Env* env, Str_view* union_name, Lang_typ
     );
     vec_append(&a_main, &members, tag);
 
-    Tast_raw_union_def* item_type_def = tast_raw_union_def_new(
-        lang_type_pos,
-        tast_sum_def_unwrap(lang_type_def_)->base
-    );
-    item_type_def->base.name = util_literal_name_new_prefix("item_type_def");
-    *union_name = item_type_def->base.name;
-    sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_raw_union_def_wrap(item_type_def));
-    load_raw_union_def(env, item_type_def);
+    Tast_raw_union_def* item_type_def = get_raw_union_def_from_sum_def(env, tast_sum_def_unwrap(lang_type_def_));
 
     for (size_t idx = 0; idx < item_type_def->base.members.info.count; idx++) {
         // TODO: do not do switch case; just call rm_tuple_lang_type
@@ -151,8 +160,7 @@ static Lang_type rm_tuple_lang_type_sum(Env* env, Str_view* union_name, Lang_typ
 static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type_pos) {
     switch (lang_type.type) {
         case LANG_TYPE_SUM: {
-            Str_view dummy = {0};
-            return rm_tuple_lang_type_sum(env, &dummy, lang_type_sum_const_unwrap(lang_type), lang_type_pos);
+            return rm_tuple_lang_type_sum(env, lang_type_sum_const_unwrap(lang_type), lang_type_pos);
         }
         case LANG_TYPE_RAW_UNION: {
             Tast_def* lang_type_def_ = NULL; 
@@ -624,19 +632,16 @@ static Str_view load_literal(
             Tast_def* sum_def_ = NULL;
             unwrap(symbol_lookup(&sum_def_, env, lang_type_get_str(sum_lit->sum_lang_type)));
             //Tast_sum_def* sum_def = tast_sum_def_unwrap(sum_def_);
-            Str_view union_name = {0};
             Lang_type new_lang_type = rm_tuple_lang_type_sum(
                 env,
-                &union_name,
                 lang_type_sum_const_unwrap(sum_lit->sum_lang_type),
                 sum_lit->pos
             );
 
-            Tast_def* item_def_ = NULL;
-            unwrap(symbol_lookup(&item_def_, env, union_name));
-            log(LOG_DEBUG, TAST_FMT"\n", str_view_print(union_name));
-            log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, new_lang_type));
-            Tast_raw_union_def* item_def = tast_raw_union_def_unwrap(item_def_);
+            Tast_raw_union_def* item_def = get_raw_union_def_from_sum_def(
+                env,
+                tast_sum_def_unwrap(sum_def_)
+            );
 
             Tast_expr_vec members = {0};
             vec_append(&a_main, &members, tast_literal_wrap(tast_enum_lit_wrap(sum_lit->tag)));
@@ -1106,25 +1111,64 @@ static Str_view load_index(
     return new_load->name;
 }
 
+static Str_view load_ptr_sum_access_1(
+    Env* env,
+    Llvm_block* new_block,
+    Tast_sum_access* old_access
+) {
+    (void) env;
+    (void) new_block;
+    (void) old_access;
+    //Tast_def* sum_def_ = NULL;
+    //unwrap(symbol_lookup(&sum_def_, env, lang_type_get_str(tast_expr_get_lang_type(old_access->callee))));
+    //Tast_sum_def* sum_def = tast_sum_def_unwrap(sum_def_);
+    //Str_view new_callee = load_ptr_expr(env, new_block, old_access->callee);
+    //Tast_raw_union_def* union_def = get_raw_union_def_from_sum_def( env, sum_def);
+    ////Str_view union_name_sum = get_union_name_from_lang_type_sum();
+    //
+    //Tast_member_access* access = tast_member_access_new(
+    //    old_access->pos,
+    //    tast_raw_union_def_get_lang_type(union_def),
+    //    Str_view member_name,
+    //    Tast_expr* callee
+    //);
+
+    //Llvm* new_callee_actual = NULL;
+    //unwrap(alloca_lookup(&new_callee_actual, env, new_callee));
+
+    //serialize_tast_struct_def(env, old_struct_def);
+    todo();
+}
+
 static Str_view load_ptr_sum_access(
     Env* env,
     Llvm_block* new_block,
     Tast_sum_access* old_access
 ) {
+    Tast_def* sum_def_ = NULL;
+    unwrap(symbol_lookup(&sum_def_, env, lang_type_get_str(tast_expr_get_lang_type(old_access->callee))));
+    Tast_sum_def* sum_def = tast_sum_def_unwrap(sum_def_);
     Str_view new_callee = load_ptr_expr(env, new_block, old_access->callee);
-    //Tast_symbol* new_sym = tast_symbol_new(old_access->pos, (Sym_typed_base) {
-    //    .lang_type = rm_tuple_lang_type(env, lang_type_from_get_name(env, new_callee), old_access->pos),
-    //    .name = 
-    //});
-    //
-    //Tast_member_access* access = tast_member_access_new(
-    //    old_access->pos, old_access->lang_type, Str_view member_name, Tast_expr* callee
-    //);
+    Tast_raw_union_def* union_def = get_raw_union_def_from_sum_def( env, sum_def);
+    //Str_view union_name_sum = get_union_name_from_lang_type_sum();
+    
+    Tast_number* new_index = tast_number_new(
+        old_access->pos,
+        1,
+        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0)))
+    );
 
-    Llvm* new_callee_actual = NULL;
-    unwrap(alloca_lookup(&new_callee_actual, env, new_callee));
-
-    serialize_tast_struct_def(env, old_struct_def);
+    Llvm_load_element_ptr* new_load = llvm_load_element_ptr_new(
+        old_access->pos,
+        tast_raw_union_def_get_lang_type(union_def),
+        0,
+        load_literal(env, new_block, tast_number_wrap(new_index)),
+        new_callee,
+        util_literal_name_new(),
+        old_access->member_name,
+        true
+    );
+    unwrap(alloca_add(env, llvm_load_element_ptr_wrap(new_load)));
     log(LOG_DEBUG, TAST_FMT, tast_sum_access_print(old_access));
     log(LOG_DEBUG, TAST_FMT, llvm_print(new_callee_actual));
     todo();
