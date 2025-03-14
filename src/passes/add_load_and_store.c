@@ -542,6 +542,7 @@ static Str_view load_struct_literal(Env* env, Llvm_block* new_block, Tast_struct
     for (size_t idx = 0; idx < old_lit->members.info.count; idx++) {
         Str_view memb_name = vec_at(&struct_def->base.members, idx)->name;
         Lang_type memb_lang_type = vec_at(&struct_def->base.members, idx)->lang_type;
+        log(LOG_DEBUG, LANG_TYPE_FMT, lang_type_print(LANG_TYPE_MODE_LOG, memb_lang_type));
         Tast_member_access* access = tast_member_access_new(
             old_lit->pos,
             memb_lang_type,
@@ -703,6 +704,7 @@ static Str_view load_raw_union_lit(
     Tast_def* union_def_ = NULL;
     unwrap(symbol_lookup(&union_def_, env, lang_type_get_str(rm_tuple_lang_type(env, old_lit->lang_type, (Pos) {0}))));
     Tast_raw_union_def* union_def = tast_raw_union_def_unwrap(union_def_);
+    Tast_variable_def* active_memb = vec_at(&union_def->base.members, (size_t)old_lit->tag->data);
 
     Tast_variable_def* new_var = tast_variable_def_new(
         union_def->pos,
@@ -714,8 +716,8 @@ static Str_view load_raw_union_lit(
     load_variable_def(env, new_block, new_var);
     Tast_member_access* access = tast_member_access_new(
         new_var->pos,
-        vec_at(&union_def->base.members, (size_t)old_lit->tag->data)->lang_type,
-        vec_at(&union_def->base.members, (size_t)old_lit->tag->data)->name,
+        active_memb->lang_type,
+        active_memb->name,
         tast_symbol_wrap(tast_symbol_new(new_var->pos, (Sym_typed_base) {
             .lang_type = new_var->lang_type,
             .name = new_var->name,
@@ -723,13 +725,16 @@ static Str_view load_raw_union_lit(
         }))
     );
 
-    Tast_assignment* assign = tast_assignment_new(
-        new_var->pos,
-        tast_member_access_wrap(access),
-        old_lit->item
-    );
-    log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
-    load_assignment(env, new_block, assign);
+    if (active_memb->lang_type.type != LANG_TYPE_VOID) {
+        Tast_assignment* assign = tast_assignment_new(
+            new_var->pos,
+            tast_member_access_wrap(access),
+            old_lit->item
+        );
+        log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
+        load_assignment(env, new_block, assign);
+    }
+
     return load_symbol(env, new_block, tast_symbol_new(
         new_var->pos,
         (Sym_typed_base) {
@@ -789,7 +794,6 @@ static Str_view load_ptr_symbol(
     switch (old_sym->base.lang_type.type) {
         case LANG_TYPE_SUM:
             // TODO: should this always be interpreted as loading the tag of the sum?
-            todo();
         case LANG_TYPE_STRUCT:
             // fallthrough
         case LANG_TYPE_ENUM:
@@ -1215,16 +1219,15 @@ static Str_view load_ptr_sum_get_tag(
     Llvm_block* new_block,
     Tast_sum_get_tag* old_access
 ) {
-    todo();
     Tast_def* sum_def_ = NULL;
-    unwrap(symbol_lookup(&sum_def_, env, lang_type_get_str(old_access->lang_type)));
+    unwrap(symbol_lookup(&sum_def_, env, lang_type_get_str(tast_expr_get_lang_type(old_access->callee))));
     //Tast_sum_def* sum_def = tast_sum_def_unwrap(sum_def_);
     Str_view new_sum = load_ptr_expr(env, new_block, old_access->callee);
     //Tast_enum_def* union_def = get_enum_def_from_sum_def(env, sum_def);
     
     Tast_number* zero = tast_number_new(
         old_access->pos,
-        1,
+        0,
         lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0)))
     );
 
@@ -1255,6 +1258,24 @@ static Str_view load_ptr_sum_get_tag(
     return new_enum->name_self;
 }
 
+static Str_view load_sum_get_tag(
+    Env* env,
+    Llvm_block* new_block,
+    Tast_sum_get_tag* old_access
+) {
+    Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
+        old_access->pos,
+        load_ptr_sum_get_tag(env, new_block, old_access),
+        0,
+        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0))),
+        util_literal_name_new()
+    );
+    unwrap(alloca_add(env, llvm_load_another_llvm_wrap(new_load)));
+
+    vec_append(&a_main, &new_block->children, llvm_load_another_llvm_wrap(new_load));
+    return new_load->name;
+}
+
 static Str_view load_ptr_sum_access(
     Env* env,
     Llvm_block* new_block,
@@ -1268,7 +1289,7 @@ static Str_view load_ptr_sum_access(
     
     Tast_number* zero = tast_number_new(
         old_access->pos,
-        1,
+        0,
         lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0)))
     );
     Tast_number* one = tast_number_new(
@@ -1352,9 +1373,14 @@ static Str_view load_expr(Env* env, Llvm_block* new_block, Tast_expr* old_expr) 
             return load_sum_case(env, tast_sum_case_unwrap(old_expr));
         case TAST_STRUCT_LITERAL:
             return load_struct_literal(env, new_block, tast_struct_literal_unwrap(old_expr));
-        default:
-            unreachable(TAST_FMT"\n", tast_expr_print(old_expr));
+        case TAST_TUPLE:
+            todo();
+        case TAST_SUM_CALLEE:
+            todo();
+        case TAST_SUM_GET_TAG:
+            return load_sum_get_tag(env, new_block, tast_sum_get_tag_unwrap(old_expr));
     }
+    unreachable("");
 }
 
 static Llvm_reg load_function_parameters(

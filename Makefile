@@ -59,7 +59,6 @@ OBJS=\
 	 ${BUILD_DIR}/passes/assign_llvm_ids.o \
 	 ${BUILD_DIR}/passes/add_load_and_store.o \
 	 ${BUILD_DIR}/passes/analysis_1.o \
-	 ${BUILD_DIR}/passes/remove_tuples.o \
 	 ${BUILD_DIR}/passes/emit_llvm.o
 
 DEP_UTIL = Makefile src/util/*.h src/util/auto_gen.c
@@ -178,9 +177,6 @@ ${BUILD_DIR}/passes/analysis_1.o: ${DEP_COMMON} src/passes/analysis_1.c src/pass
 
 ${BUILD_DIR}/passes/emit_llvm.o: ${DEP_COMMON} src/passes/emit_llvm.c src/passes/*.h third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/emit_llvm.o src/passes/emit_llvm.c
-
-${BUILD_DIR}/passes/remove_tuples.o: ${DEP_COMMON} src/passes/remove_tuples.c src/passes/*.h third_party/*
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/remove_tuples.o src/passes/remove_tuples.c
 
 ${BUILD_DIR}/passes/parser.o: ${DEP_COMMON} src/passes/parser.c src/passes/*.h third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/parser.o src/passes/parser.c

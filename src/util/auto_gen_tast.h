@@ -405,7 +405,6 @@ static Tast_type tast_gen_sum_get_tag(const char* prefix) {
     const char* base_name = "sum_get_tag";
     Tast_type access = {.name = tast_name_new(prefix, base_name, false)};
 
-    append_member(&access.members, "Lang_type", "lang_type");
     append_member(&access.members, "Tast_expr*", "callee");
 
     return access;

@@ -197,7 +197,6 @@ Str_view tast_sum_get_tag_print_internal(const Tast_sum_get_tag* lit, int indent
 
     string_extend_cstr_indent(&print_arena, &buf, "sum_get_tag", indent);
     
-    string_extend_strv(&print_arena, &buf, lang_type_print_internal(LANG_TYPE_MODE_LOG, lit->lang_type));
     string_extend_strv(&print_arena, &buf, tast_expr_print_internal(lit->callee, indent + INDENT_WIDTH));
 
     return string_to_strv(buf);

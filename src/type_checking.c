@@ -532,13 +532,6 @@ static Tast_literal* precalulate_char(
 }
 
 bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_lhs, Tast_expr* new_rhs, Pos oper_pos, BINARY_TYPE oper_token_type) {
-    if (new_rhs->type == TAST_SUM_GET_TAG) {
-        todo();
-    }
-    if (new_lhs->type == TAST_SUM_GET_TAG) {
-        todo();
-    }
-
     if (!lang_type_is_equal(tast_expr_get_lang_type(new_lhs), tast_expr_get_lang_type(new_rhs))) {
         if (can_be_implicitly_converted(
             tast_expr_get_lang_type(new_lhs),
@@ -1542,7 +1535,6 @@ bool try_set_sum_get_tag_types(Env* env, Tast_sum_get_tag** new_access, Uast_sum
 
     *new_access = tast_sum_get_tag_new(
         access->pos,
-        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0))),
         new_callee
     );
 

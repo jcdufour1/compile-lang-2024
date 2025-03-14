@@ -180,7 +180,7 @@ static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr) {
         case TAST_SUM_ACCESS:
             return tast_sum_access_const_unwrap(expr)->lang_type;
         case TAST_SUM_GET_TAG:
-            return tast_sum_get_tag_const_unwrap(expr)->lang_type;
+            return tast_expr_get_lang_type(tast_sum_get_tag_const_unwrap(expr)->callee);
         case TAST_ASSIGNMENT:
             unreachable("");
     }
