@@ -532,8 +532,24 @@ static Tast_literal* precalulate_char(
 }
 
 bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_lhs, Tast_expr* new_rhs, Pos oper_pos, BINARY_TYPE oper_token_type) {
+    if (new_rhs->type == TAST_SUM_GET_TAG) {
+        todo();
+    }
+    if (new_lhs->type == TAST_SUM_GET_TAG) {
+        todo();
+    }
+
     if (!lang_type_is_equal(tast_expr_get_lang_type(new_lhs), tast_expr_get_lang_type(new_rhs))) {
-        if (can_be_implicitly_converted(tast_expr_get_lang_type(new_lhs), tast_expr_get_lang_type(new_rhs), new_rhs->type == TAST_LITERAL && tast_literal_unwrap(new_rhs)->type == TAST_NUMBER && tast_number_unwrap(tast_literal_unwrap(new_rhs))->data == 0, true)) {
+        if (can_be_implicitly_converted(
+            tast_expr_get_lang_type(new_lhs),
+            tast_expr_get_lang_type(new_rhs),
+            (
+                new_rhs->type == TAST_LITERAL &&
+                tast_literal_unwrap(new_rhs)->type == TAST_NUMBER &&
+                tast_number_unwrap(tast_literal_unwrap(new_rhs))->data == 0
+            ),
+            true
+        )) {
             if (new_rhs->type == TAST_LITERAL) {
                 new_lhs = auto_deref_to_0(env, new_lhs);
                 new_rhs = auto_deref_to_0(env, new_rhs);
@@ -541,7 +557,16 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
             } else {
                 unwrap(try_set_unary_types_finish(env, &new_rhs, new_rhs, tast_expr_get_pos(new_rhs), UNARY_UNSAFE_CAST, tast_expr_get_lang_type(new_lhs)));
             }
-        } else if (can_be_implicitly_converted(tast_expr_get_lang_type(new_rhs), tast_expr_get_lang_type(new_lhs), new_rhs->type == TAST_LITERAL && tast_literal_unwrap(new_rhs)->type == TAST_NUMBER && tast_number_unwrap(tast_literal_unwrap(new_rhs))->data == 0, true)) {
+        } else if (can_be_implicitly_converted(
+            tast_expr_get_lang_type(new_rhs),
+            tast_expr_get_lang_type(new_lhs),
+            (
+                new_rhs->type == TAST_LITERAL &&
+                tast_literal_unwrap(new_rhs)->type == TAST_NUMBER &&
+                tast_number_unwrap(tast_literal_unwrap(new_rhs))->data == 0
+            ),
+            true
+        )) {
             if (new_lhs->type == TAST_LITERAL) {
                 new_lhs = auto_deref_to_0(env, new_lhs);
                 new_rhs = auto_deref_to_0(env, new_rhs);
@@ -556,6 +581,9 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
                 lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_lhs)),
                 lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs))
             );
+            log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_lhs));
+            log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_rhs));
+            todo();
             return false;
         }
     }
@@ -1074,6 +1102,14 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
             *new_tast = tast_sum_access_wrap(new_access);
             return true;
         }
+        case UAST_SUM_GET_TAG: {
+            Tast_sum_get_tag* new_access = NULL;
+            if (!try_set_sum_get_tag_types(env, &new_access, uast_sum_get_tag_unwrap(uast))) {
+                return false;
+            }
+            *new_tast = tast_sum_get_tag_wrap(new_access);
+            return true;
+        }
     }
     unreachable("");
 }
@@ -1169,7 +1205,7 @@ bool try_set_function_call_types_sum_case(Env* env, Tast_sum_case** new_case, Ua
         case LANG_TYPE_VOID: {
             if (args.info.count > 0) {
                 // TODO: expected failure case
-                msg(LOG_DEBUG, EXPECT_FAIL_NONE, env->file_text, uast_expr_get_pos(vec_at(&args, 0)), "no arguments expected here\n");
+                msg(LOG_ERROR, EXPECT_FAIL_NONE, env->file_text, uast_expr_get_pos(vec_at(&args, 0)), "no arguments expected here\n");
                 todo();
             }
             *new_case = sum_case;
@@ -1492,6 +1528,21 @@ bool try_set_sum_access_types(Env* env, Tast_sum_access** new_access, Uast_sum_a
         access->pos,
         access->tag, 
         access->lang_type,
+        new_callee
+    );
+
+    return true;
+}
+
+bool try_set_sum_get_tag_types(Env* env, Tast_sum_get_tag** new_access, Uast_sum_get_tag* access) {
+    Tast_expr* new_callee = NULL;
+    if (!try_set_expr_types(env, &new_callee, access->callee)) {
+        return false;
+    }
+
+    *new_access = tast_sum_get_tag_new(
+        access->pos,
+        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0))),
         new_callee
     );
 
@@ -2259,6 +2310,23 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
     for (size_t idx = 0; idx < lang_switch->cases.info.count; idx++) {
         Uast_case* old_case = vec_at(&lang_switch->cases, idx);
         Uast_condition* cond = NULL;
+
+        Uast_expr* operand = NULL;
+
+        switch (tast_expr_get_lang_type(new_operand).type) {
+            case LANG_TYPE_SUM:
+                operand = uast_sum_get_tag_wrap(uast_sum_get_tag_new(
+                    uast_expr_get_pos(lang_switch->operand), lang_switch->operand
+                ));
+                break;
+            case LANG_TYPE_ENUM:
+                operand = lang_switch->operand;
+                break;
+            default:
+                unreachable(TAST_FMT, uast_expr_print(lang_switch->operand));
+                todo();
+        }
+
         if (old_case->is_default) {
             cond = uast_condition_new(
                 old_case->pos,
@@ -2268,7 +2336,7 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
             );
         } else {
             cond = uast_condition_new(old_case->pos, uast_binary_wrap(uast_binary_new(
-                old_case->pos, lang_switch->operand, old_case->expr, BINARY_DOUBLE_EQUAL
+                old_case->pos, operand, old_case->expr, BINARY_DOUBLE_EQUAL
             )));
         }
 

@@ -86,6 +86,8 @@ bool try_set_tuple_types(Env* env, Tast_tuple** new_tuple, Uast_tuple* tuple);
 
 bool try_set_sum_access_types(Env* env, Tast_sum_access** new_sum_access, Uast_sum_access* sum_access);
 
+bool try_set_sum_get_tag_types(Env* env, Tast_sum_get_tag** new_access, Uast_sum_get_tag* access);
+
 bool try_set_index_untyped_types(Env* env, Tast_stmt** new_tast, Uast_index* index);
 
 bool try_set_function_params_types(

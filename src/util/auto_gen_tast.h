@@ -392,13 +392,23 @@ static Tast_type tast_gen_sum_case(const char* prefix) {
 
 static Tast_type tast_gen_sum_access(const char* prefix) {
     const char* base_name = "sum_access";
-    Tast_type lit = {.name = tast_name_new(prefix, base_name, false)};
+    Tast_type access = {.name = tast_name_new(prefix, base_name, false)};
 
-    append_member(&lit.members, "Tast_enum_lit*", "tag");
-    append_member(&lit.members, "Lang_type", "lang_type");
-    append_member(&lit.members, "Tast_expr*", "callee");
+    append_member(&access.members, "Tast_enum_lit*", "tag");
+    append_member(&access.members, "Lang_type", "lang_type");
+    append_member(&access.members, "Tast_expr*", "callee");
 
-    return lit;
+    return access;
+}
+
+static Tast_type tast_gen_sum_get_tag(const char* prefix) {
+    const char* base_name = "sum_get_tag";
+    Tast_type access = {.name = tast_name_new(prefix, base_name, false)};
+
+    append_member(&access.members, "Lang_type", "lang_type");
+    append_member(&access.members, "Tast_expr*", "callee");
+
+    return access;
 }
 
 static Tast_type tast_gen_assignment(const char* prefix) {
@@ -426,6 +436,7 @@ static Tast_type tast_gen_expr(const char* prefix) {
     vec_append(&gen_a, &expr.sub_types, tast_gen_tuple(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_sum_callee(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_sum_case(base_name));
+    vec_append(&gen_a, &expr.sub_types, tast_gen_sum_get_tag(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_sum_access(base_name));
 
     return expr;

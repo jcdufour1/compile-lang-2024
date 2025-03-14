@@ -224,6 +224,8 @@ void generic_sub_expr(Uast_expr* expr, Str_view gen_param, Ulang_type gen_arg) {
             todo();
         case UAST_SUM_ACCESS:
             todo();
+        case UAST_SUM_GET_TAG:
+            todo();
     }
     unreachable("");
 }

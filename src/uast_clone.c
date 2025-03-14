@@ -117,6 +117,8 @@ Uast_expr* uast_expr_clone(const Uast_expr* expr) {
             todo();
         case UAST_UNKNOWN: // TODO: remove uast_sum_access if not used
             return uast_unknown_wrap(uast_unknown_clone(uast_unknown_const_unwrap(expr)));
+        case UAST_SUM_GET_TAG: // TODO: remove uast_sum_access if not used
+            todo();
     }
     unreachable("");
 }

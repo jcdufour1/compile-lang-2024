@@ -1210,26 +1210,26 @@ static Str_view load_ptr_sum_access_1(
     todo();
 }
 
-// TODO: condider making sum_get_tag node, and pass that in here
-static Str_view load_ptr_sum_tag(
+static Str_view load_ptr_sum_get_tag(
     Env* env,
     Llvm_block* new_block,
-    Tast_symbol* old_sym
+    Tast_sum_get_tag* old_access
 ) {
+    todo();
     Tast_def* sum_def_ = NULL;
-    unwrap(symbol_lookup(&sum_def_, env, lang_type_get_str(old_sym->base.lang_type)));
-    Tast_sum_def* sum_def = tast_sum_def_unwrap(sum_def_);
-    Str_view new_sum = load_ptr_symbol(env, new_block, old_sym);
+    unwrap(symbol_lookup(&sum_def_, env, lang_type_get_str(old_access->lang_type)));
+    //Tast_sum_def* sum_def = tast_sum_def_unwrap(sum_def_);
+    Str_view new_sum = load_ptr_expr(env, new_block, old_access->callee);
     //Tast_enum_def* union_def = get_enum_def_from_sum_def(env, sum_def);
     
     Tast_number* zero = tast_number_new(
-        old_sym->pos,
+        old_access->pos,
         1,
         lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0)))
     );
 
     Llvm_load_element_ptr* new_enum = llvm_load_element_ptr_new(
-        old_sym->pos,
+        old_access->pos,
         lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0))),
         0,
         load_literal(env, new_block, tast_number_wrap(zero)),
@@ -2104,6 +2104,8 @@ static Str_view load_ptr_expr(Env* env, Llvm_block* new_block, Tast_expr* old_ex
             unreachable("");
         case TAST_ASSIGNMENT:
             unreachable("");
+        case TAST_SUM_GET_TAG:
+            return load_ptr_sum_get_tag(env, new_block, tast_sum_get_tag_unwrap(old_expr));
     }
     unreachable("");
 }
