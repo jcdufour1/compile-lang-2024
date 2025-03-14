@@ -569,6 +569,7 @@ static inline const Llvm* get_llvm_dest_const(const Llvm* llvm) {
     return get_llvm_dest((Llvm*)llvm);
 }
 
+// TODO: rename this function
 static inline Lang_type lang_type_from_get_name(Env* env, Str_view name) {
     Llvm* result = NULL;
     unwrap(alloca_lookup(&result, env, name));

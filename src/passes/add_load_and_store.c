@@ -1106,16 +1106,42 @@ static Str_view load_index(
     return new_load->name;
 }
 
+static Str_view load_ptr_sum_access(
+    Env* env,
+    Llvm_block* new_block,
+    Tast_sum_access* old_access
+) {
+    Str_view new_callee = load_ptr_expr(env, new_block, old_access->callee);
+    //Tast_symbol* new_sym = tast_symbol_new(old_access->pos, (Sym_typed_base) {
+    //    .lang_type = rm_tuple_lang_type(env, lang_type_from_get_name(env, new_callee), old_access->pos),
+    //    .name = 
+    //});
+    //
+    //Tast_member_access* access = tast_member_access_new(
+    //    old_access->pos, old_access->lang_type, Str_view member_name, Tast_expr* callee
+    //);
+
+    Llvm* new_callee_actual = NULL;
+    unwrap(alloca_lookup(&new_callee_actual, env, new_callee));
+
+    serialize_tast_struct_def(env, old_struct_def);
+    log(LOG_DEBUG, TAST_FMT, tast_sum_access_print(old_access));
+    log(LOG_DEBUG, TAST_FMT, llvm_print(new_callee_actual));
+    todo();
+}
+
 static Str_view load_sum_access(
     Env* env,
     Llvm_block* new_block,
     Tast_sum_access* old_access
 ) {
+    log(LOG_DEBUG, TAST_FMT, tast_sum_access_print(old_access));
     (void) env;
     (void) new_block;
     (void) old_access;
+    Str_view ptr = load_ptr_sum_access(env, new_block, old_access);
+    (void) ptr;
     todo();
-    //Str_view ptr = load_ptr_sum_access(env, new_block, old_sum_access);
 
     //Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
     //    old_sum_access->pos,
