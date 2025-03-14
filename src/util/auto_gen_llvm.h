@@ -430,7 +430,6 @@ static Llvm_type llvm_gen_load_element_ptr(void) {
     append_member(&load.members, "Str_view", "struct_index");
     append_member(&load.members, "Str_view", "llvm_src");
     append_member(&load.members, "Str_view", "name_self");
-    append_member(&load.members, "Str_view", "name_member");
     append_member(&load.members, "bool", "is_from_struct");
 
     return load;
