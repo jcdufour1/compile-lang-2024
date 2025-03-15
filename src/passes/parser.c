@@ -1456,10 +1456,16 @@ static PARSE_STATUS parse_for_loop(Env* env, Uast_stmt** for_loop_result, Tk_vie
     Uast_for_range* for_loop = uast_for_range_new(for_token.pos, NULL, NULL, NULL, NULL);
     
     if (starts_with_variable_type_decl(*tokens, false)) {
-        if (PARSE_OK != parse_variable_decl(env, &for_loop->var_def, tokens, false, true, true, true, (Ulang_type) {0})) {
+        Uast_variable_def* var_def = NULL;
+        if (PARSE_OK != parse_variable_decl(env, &var_def, tokens, false, false, false, true, (Ulang_type) {0})) {
             todo();
             return PARSE_ERROR;
         }
+        for_loop->var_def_view = uast_symbol_new(
+            var_def->pos,
+            var_def->name,
+            (Ulang_type_vec) {0}
+        );
         if (PARSE_OK != parse_for_range_internal(env, for_loop, tokens)) {
             return PARSE_ERROR;
         }

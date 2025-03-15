@@ -310,7 +310,7 @@ Str_view uast_for_range_print_internal(const Uast_for_range* for_range, int inde
 
     string_extend_cstr_indent(&print_arena, &buf, "for_range\n", indent);
     indent += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, uast_variable_def_print_internal(for_range->var_def, indent));
+    string_extend_strv(&print_arena, &buf, uast_symbol_print_internal(for_range->var_def_view, indent));
     string_extend_strv(&print_arena, &buf, uast_for_lower_bound_print_internal(for_range->lower_bound, indent));
     string_extend_strv(&print_arena, &buf, uast_for_upper_bound_print_internal(for_range->upper_bound, indent));
     string_extend_strv(&print_arena, &buf, uast_block_print_internal(for_range->body, indent));

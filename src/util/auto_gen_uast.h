@@ -478,7 +478,7 @@ static Uast_type uast_gen_condition(const char* prefix) {
 static Uast_type uast_gen_for_range(const char* prefix) {
     Uast_type range = {.name = uast_name_new(prefix, "for_range", false)};
 
-    append_member(&range.members, "Uast_variable_def*", "var_def");
+    append_member(&range.members, "Uast_symbol*", "var_def_view");
     append_member(&range.members, "Uast_for_lower_bound*", "lower_bound");
     append_member(&range.members, "Uast_for_upper_bound*", "upper_bound");
     append_member(&range.members, "Uast_block*", "body");

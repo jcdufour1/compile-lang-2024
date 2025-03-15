@@ -2030,9 +2030,15 @@ bool try_set_for_range_types(Env* env, Tast_for_with_cond** new_tast, Uast_for_r
     (void) status;
 
     Uast_stmt_vec out_children = {0};
-    Uast_assignment* init_assign = uast_assignment_new(uast->pos, uast->var_def, uast->lower_bound->child);
+    Uast_assignment* init_assign = uast_assignment_new(uast->pos, uast_symbol_wrap(uast->var_def_view), uast->lower_bound->child);
     Uast_block* outer = uast_block_new(uast->pos, out_children, (Symbol_collection) {0}, uast->body->pos_end);
-    vec_append(&a_main, &env->ancesters, &uast->body->symbol_collection);
+    vec_append(&a_main, &env->ancesters, &outer->symbol_collection);
+
+
+error:
+    symbol_log(LOG_DEBUG, env);
+    vec_rem_last(&env->ancesters);
+
     todo();
 
 }
