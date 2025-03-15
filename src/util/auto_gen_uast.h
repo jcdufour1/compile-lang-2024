@@ -475,17 +475,6 @@ static Uast_type uast_gen_condition(const char* prefix) {
     return bound;
 }
 
-static Uast_type uast_gen_for_range(const char* prefix) {
-    Uast_type range = {.name = uast_name_new(prefix, "for_range", false)};
-
-    append_member(&range.members, "Uast_symbol*", "var_def_view");
-    append_member(&range.members, "Uast_for_lower_bound*", "lower_bound");
-    append_member(&range.members, "Uast_for_upper_bound*", "upper_bound");
-    append_member(&range.members, "Uast_block*", "body");
-
-    return range;
-}
-
 static Uast_type uast_gen_for_with_cond(const char* prefix) {
     Uast_type for_cond = {.name = uast_name_new(prefix, "for_with_cond", false)};
 
@@ -579,7 +568,6 @@ static Uast_type uast_gen_stmt(const char* prefix) {
     vec_append(&gen_a, &stmt.sub_types, uast_gen_block(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_expr(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_def(base_name));
-    vec_append(&gen_a, &stmt.sub_types, uast_gen_for_range(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_for_with_cond(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_break(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_continue(base_name));

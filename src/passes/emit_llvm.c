@@ -1390,6 +1390,11 @@ void emit_llvm_from_tree(Env* env, const Llvm_block* root) {
         }
     }
 
+    msg(
+        LOG_NOTE, EXPECT_FAIL_NONE, dummy_file_text, dummy_pos, "file %s built\n",
+        params.input_file_name
+    );
+
     fclose(file);
 }
 

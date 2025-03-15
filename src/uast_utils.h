@@ -72,8 +72,6 @@ static inline Ulang_type uast_get_ulang_type_stmt(const Uast_stmt* stmt) {
             unreachable("");
         case UAST_CONTINUE:
             unreachable("");
-        case UAST_FOR_RANGE:
-            unreachable("");
         case UAST_FOR_WITH_COND:
             unreachable("");
         case UAST_ASSIGNMENT:
@@ -151,8 +149,6 @@ static inline Lang_type* uast_get_ulang_type_ref_stmt(Uast_stmt* stmt) {
             unreachable("");
         case UAST_CONTINUE:
             unreachable("");
-        case UAST_FOR_RANGE:
-            unreachable("");
         case UAST_FOR_WITH_COND:
             unreachable("");
         case UAST_ASSIGNMENT:
@@ -212,8 +208,6 @@ static inline bool uast_stmt_get_lang_type(Lang_type* result, Env* env, const Ua
         case UAST_BREAK:
             unreachable("");
         case UAST_CONTINUE:
-            unreachable("");
-        case UAST_FOR_RANGE:
             unreachable("");
         case UAST_FOR_WITH_COND:
             unreachable("");
@@ -291,8 +285,6 @@ static inline Lang_type* uast_ref_stmt_get_lang_type(Uast_stmt* stmt) {
         case UAST_BREAK:
             unreachable("");
         case UAST_CONTINUE:
-            unreachable("");
-        case UAST_FOR_RANGE:
             unreachable("");
         case UAST_FOR_WITH_COND:
             unreachable("");
@@ -396,8 +388,6 @@ static inline Str_view uast_stmt_get_name(const Uast_stmt* stmt) {
             unreachable("");
         case UAST_EXPR:
             return uast_expr_get_name(uast_expr_const_unwrap(stmt));
-        case UAST_FOR_RANGE:
-            unreachable("");
         case UAST_FOR_WITH_COND:
             unreachable("");
         case UAST_BREAK:

@@ -305,20 +305,6 @@ Str_view uast_condition_print_internal(const Uast_condition* cond, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_for_range_print_internal(const Uast_for_range* for_range, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "for_range\n", indent);
-    indent += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, uast_symbol_print_internal(for_range->var_def_view, indent));
-    string_extend_strv(&print_arena, &buf, uast_for_lower_bound_print_internal(for_range->lower_bound, indent));
-    string_extend_strv(&print_arena, &buf, uast_for_upper_bound_print_internal(for_range->upper_bound, indent));
-    string_extend_strv(&print_arena, &buf, uast_block_print_internal(for_range->body, indent));
-    indent -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
 Str_view uast_for_with_cond_print_internal(const Uast_for_with_cond* for_cond, int indent) {
     String buf = {0};
 
@@ -684,8 +670,6 @@ Str_view uast_stmt_print_internal(const Uast_stmt* stmt, int indent) {
             return uast_return_print_internal(uast_return_const_unwrap(stmt), indent);
         case UAST_IF_ELSE_CHAIN:
             return uast_if_else_chain_print_internal(uast_if_else_chain_const_unwrap(stmt), indent);
-        case UAST_FOR_RANGE:
-            return uast_for_range_print_internal(uast_for_range_const_unwrap(stmt), indent);
         case UAST_FOR_WITH_COND:
             return uast_for_with_cond_print_internal(uast_for_with_cond_const_unwrap(stmt), indent);
         case UAST_SWITCH:

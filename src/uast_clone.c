@@ -169,12 +169,6 @@ Uast_def* uast_def_clone(const Uast_def* def) {
     unreachable("");
 }
 
-Uast_for_range* uast_for_range_clone(const Uast_for_range* lang_for) {
-    (void) lang_for;
-    // TODO: for_range should just be wrapper around for_with_cond to simplify things
-    todo();
-}
-
 Uast_for_with_cond* uast_for_with_cond_clone(const Uast_for_with_cond* lang_for) {
     (void) lang_for;
     // TODO: for loop: have symbol instead of variable_def
@@ -213,8 +207,6 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt) {
             return uast_block_wrap(uast_block_clone(uast_block_const_unwrap(stmt)));
         case UAST_DEF:
             return uast_def_wrap(uast_def_clone(uast_def_const_unwrap(stmt)));
-        case UAST_FOR_RANGE:
-            return uast_for_range_wrap(uast_for_range_clone(uast_for_range_const_unwrap(stmt)));
         case UAST_FOR_WITH_COND:
             return uast_for_with_cond_wrap(uast_for_with_cond_clone(uast_for_with_cond_const_unwrap(stmt)));
         case UAST_BREAK:

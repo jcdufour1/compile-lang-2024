@@ -2025,24 +2025,6 @@ bool try_set_for_with_cond_types(Env* env, Tast_for_with_cond** new_tast, Uast_f
     return status;
 }
 
-bool try_set_for_range_types(Env* env, Tast_for_with_cond** new_tast, Uast_for_range* uast) {
-    bool status = true;
-    (void) status;
-
-    Uast_stmt_vec out_children = {0};
-    Uast_assignment* init_assign = uast_assignment_new(uast->pos, uast_symbol_wrap(uast->var_def_view), uast->lower_bound->child);
-    Uast_block* outer = uast_block_new(uast->pos, out_children, (Symbol_collection) {0}, uast->body->pos_end);
-    vec_append(&a_main, &env->ancesters, &outer->symbol_collection);
-
-
-error:
-    symbol_log(LOG_DEBUG, env);
-    vec_rem_last(&env->ancesters);
-
-    todo();
-
-}
-
 bool try_set_if_types(Env* env, Tast_if** new_tast, Uast_if* uast) {
     bool status = true;
 
@@ -2506,14 +2488,6 @@ STMT_STATUS try_set_stmt_types(Env* env, Tast_stmt** new_tast, Uast_stmt* stmt) 
                 return STMT_ERROR;
             }
             *new_tast = tast_for_with_cond_wrap(new_tast_);
-            return STMT_OK;
-        }
-        case UAST_FOR_RANGE: {
-            Tast_for_with_cond* new_for = NULL;
-            if (!try_set_for_range_types(env, &new_for, uast_for_range_unwrap(stmt))) {
-                return STMT_ERROR;
-            }
-            *new_tast = tast_for_with_cond_wrap(new_for);
             return STMT_OK;
         }
         case UAST_ASSIGNMENT: {

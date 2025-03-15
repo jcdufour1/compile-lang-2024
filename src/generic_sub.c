@@ -155,8 +155,6 @@ void generic_sub_stmt(Env* env, Uast_stmt* stmt, Str_view gen_param, Ulang_type 
         case UAST_DEF:
             generic_sub_def(uast_def_unwrap(stmt), gen_param, gen_arg);
             return;
-        case UAST_FOR_RANGE:
-            todo();
         case UAST_FOR_WITH_COND:
             todo();
         case UAST_BREAK:
