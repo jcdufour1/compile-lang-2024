@@ -199,6 +199,10 @@ Uast_switch* uast_switch_clone(const Uast_switch* lang_switch) {
     return uast_switch_new(lang_switch->pos, uast_expr_clone(lang_switch->operand), uast_case_vec_clone(lang_switch->cases));
 }
 
+Uast_label* uast_label_clone(const Uast_label* lang_label) {
+    return uast_label_new(lang_label->pos, lang_label->name);
+}
+
 Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt) {
     switch (stmt->type) {
         case UAST_EXPR:
@@ -221,6 +225,8 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt) {
             return uast_if_else_chain_wrap(uast_if_else_chain_clone(uast_if_else_chain_const_unwrap(stmt)));
         case UAST_SWITCH:
             return uast_switch_wrap(uast_switch_clone(uast_switch_const_unwrap(stmt)));
+        case UAST_LABEL:
+            return uast_label_wrap(uast_label_clone(uast_label_const_unwrap(stmt)));
     }
     unreachable("");
 }

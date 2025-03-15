@@ -170,6 +170,8 @@ void generic_sub_stmt(Env* env, Uast_stmt* stmt, Str_view gen_param, Ulang_type 
             todo();
         case UAST_SWITCH:
             todo();
+        case UAST_LABEL:
+            todo();
     }
     unreachable("");
 }

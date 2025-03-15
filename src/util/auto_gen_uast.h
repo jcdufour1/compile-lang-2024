@@ -480,6 +480,8 @@ static Uast_type uast_gen_for_with_cond(const char* prefix) {
 
     append_member(&for_cond.members, "Uast_condition*", "condition");
     append_member(&for_cond.members, "Uast_block*", "body");
+    append_member(&for_cond.members, "Str_view", "continue_label");
+    append_member(&for_cond.members, "bool", "do_cont_label");
 
     return for_cond;
 }
@@ -512,6 +514,14 @@ static Uast_type uast_gen_if(const char* prefix) {
     append_member(&lang_if.members, "Uast_block*", "body");
 
     return lang_if;
+}
+
+static Uast_type uast_gen_label(const char* prefix) {
+    Uast_type lang_label = {.name = uast_name_new(prefix, "label", false)};
+
+    append_member(&lang_label.members, "Str_view", "name");
+
+    return lang_label;
 }
 
 static Uast_type uast_gen_case(const char* prefix) {
@@ -565,6 +575,7 @@ static Uast_type uast_gen_stmt(const char* prefix) {
     const char* base_name = "stmt";
     Uast_type stmt = {.name = uast_name_new(prefix, base_name, false)};
 
+    vec_append(&gen_a, &stmt.sub_types, uast_gen_label(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_block(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_expr(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_def(base_name));

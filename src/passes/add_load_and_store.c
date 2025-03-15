@@ -1787,7 +1787,12 @@ static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for
     Str_view after_for_loop_label = util_literal_name_new_prefix("after_for_loop");
 
     env->label_if_break = after_for_loop_label;
-    env->label_if_continue = check_cond_label;
+
+    if (old_for->do_cont_label) {
+        env->label_if_continue = old_for->continue_label;
+    } else {
+        env->label_if_continue = check_cond_label;
+    }
 
     vec_append(&a_main, &new_branch_block->children, llvm_goto_wrap(jmp_to_check_cond_label));
 
@@ -1821,6 +1826,10 @@ static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for
         //    log(LOG_DEBUG, TAST_FMT"\n", tast_print(vec_at(&new_branch_block->children, idx)));
         //}
         load_stmt(env, new_branch_block, vec_at(&old_for->body->children, idx));
+    }
+
+    for (size_t idx = 0; idx < new_branch_block->children.info.count; idx++) {
+        log(LOG_DEBUG, TAST_FMT"", llvm_print(vec_at(&new_branch_block->children, idx)));
     }
 
     vec_append(&a_main, &new_branch_block->children, llvm_goto_wrap(
@@ -1871,6 +1880,18 @@ static Str_view load_break(
 
     Llvm_goto* new_goto = llvm_goto_new(old_break->pos, env->label_if_break, 0);
     vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
+
+    return (Str_view) {0};
+}
+
+static Str_view load_label(
+    Env* env,
+    Llvm_block* new_block,
+    Tast_label* old_label
+) {
+    Llvm_label* new_label = llvm_label_new(old_label->pos, 0, old_label->name);
+    vec_append(&a_main, &new_block->children, llvm_def_wrap(llvm_label_wrap(new_label)));
+    alloca_add(env, llvm_def_wrap(llvm_label_wrap(new_label)));
 
     return (Str_view) {0};
 }
@@ -2095,9 +2116,10 @@ static Str_view load_stmt(Env* env, Llvm_block* new_block, Tast_stmt* old_stmt) 
                 llvm_block_wrap(load_block(env, tast_block_unwrap(old_stmt)))
             );
             return (Str_view) {0};
-        default:
-            unreachable("");
+        case TAST_LABEL:
+            return load_label(env, new_block, tast_label_unwrap(old_stmt));
     }
+    unreachable("");
 }
 
 static Str_view load_tast(Env* env, Llvm_block* new_block, Tast* old_tast) {

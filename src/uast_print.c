@@ -329,6 +329,17 @@ Str_view uast_switch_print_internal(const Uast_switch* lang_switch, int indent) 
     return string_to_strv(buf);
 }
 
+Str_view uast_label_print_internal(const Uast_label* label, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&print_arena, &buf, "label", indent);
+    string_extend_strv(&a_main, &buf, label->name);
+    extend_pos(&buf, label->pos);
+    string_extend_cstr(&a_main, &buf, "\n");
+
+    return string_to_strv(buf);
+}
+
 Str_view uast_break_print_internal(const Uast_break* lang_break, int indent) {
     (void) lang_break;
     String buf = {0};
@@ -674,6 +685,8 @@ Str_view uast_stmt_print_internal(const Uast_stmt* stmt, int indent) {
             return uast_for_with_cond_print_internal(uast_for_with_cond_const_unwrap(stmt), indent);
         case UAST_SWITCH:
             return uast_switch_print_internal(uast_switch_const_unwrap(stmt), indent);
+        case UAST_LABEL:
+            return uast_label_print_internal(uast_label_const_unwrap(stmt), indent);
     }
     unreachable("");
 }

@@ -2021,7 +2021,7 @@ bool try_set_for_with_cond_types(Env* env, Tast_for_with_cond** new_tast, Uast_f
         status = false;
     }
 
-    *new_tast = tast_for_with_cond_new(uast->pos, new_cond, new_body);
+    *new_tast = tast_for_with_cond_new(uast->pos, new_cond, new_body, uast->continue_label, uast->do_cont_label);
     return status;
 }
 
@@ -2309,6 +2309,12 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
     return check_for_exhaustiveness_finish(env, exhaustive_data, lang_switch->pos);
 }
 
+bool try_set_label_types(Env* env, Tast_label** new_tast, const Uast_label* lang_label) {
+    (void) env;
+    *new_tast = tast_label_new(lang_label->pos, lang_label->name);
+    return lang_label;
+}
+
 // TODO: merge this with msg_redefinition_of_symbol?
 static void try_set_msg_redefinition_of_symbol(Env* env, const Uast_def* new_sym_def) {
     msg(
@@ -2535,6 +2541,14 @@ STMT_STATUS try_set_stmt_types(Env* env, Tast_stmt** new_tast, Uast_stmt* stmt) 
                 return STMT_ERROR;
             }
             *new_tast = tast_if_else_chain_wrap(new_if_else);
+            return STMT_OK;
+        }
+        case UAST_LABEL: {
+            Tast_label* new_label = NULL;
+            if (!try_set_label_types(env, &new_label, uast_label_unwrap(stmt))) {
+                return STMT_ERROR;
+            }
+            *new_tast = tast_label_wrap(new_label);
             return STMT_OK;
         }
     }

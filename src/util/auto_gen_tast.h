@@ -599,8 +599,19 @@ static Tast_type tast_gen_for_with_cond(const char* prefix) {
 
     append_member(&for_cond.members, "Tast_condition*", "condition");
     append_member(&for_cond.members, "Tast_block*", "body");
+    append_member(&for_cond.members, "Str_view", "continue_label");
+    append_member(&for_cond.members, "bool", "do_cont_label");
 
     return for_cond;
+}
+
+static Tast_type tast_gen_label(const char* prefix) {
+    const char* base_name = "label";
+    Tast_type lang_label = {.name = tast_name_new(prefix, base_name, false)};
+
+    append_member(&lang_label.members, "Str_view", "name");
+
+    return lang_label;
 }
 
 static Tast_type tast_gen_break(const char* prefix) {
@@ -650,6 +661,7 @@ static Tast_type tast_gen_stmt(const char* prefix) {
     const char* base_name = "stmt";
     Tast_type stmt = {.name = tast_name_new(prefix, base_name, false)};
 
+    vec_append(&gen_a, &stmt.sub_types, tast_gen_label(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_block(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_expr(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_for_with_cond(base_name));

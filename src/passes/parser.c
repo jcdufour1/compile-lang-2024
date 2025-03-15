@@ -1434,6 +1434,8 @@ static PARSE_STATUS parse_for_range_internal(Env* env, Uast_block** result, Uast
     );
     vec_append(&a_main, &outer->children, uast_assignment_wrap(init_assign));
 
+    Str_view incre_name = util_literal_name_new();
+
     Uast_for_with_cond* inner_for = uast_for_with_cond_new(
         outer->pos,
         uast_condition_new(
@@ -1445,9 +1447,17 @@ static PARSE_STATUS parse_for_range_internal(Env* env, Uast_block** result, Uast
                 BINARY_LESS_THAN
             ))
         ),
-        inner
+        inner,
+        incre_name,
+        true
     );
     vec_append(&a_main, &outer->children, uast_for_with_cond_wrap(inner_for));
+
+    Uast_continue* cont = uast_continue_new(uast_expr_get_pos(upper_bound));
+    vec_append(&a_main, &inner->children, uast_continue_wrap(cont));
+
+    Uast_label* incre_label = uast_label_new(uast_expr_get_pos(upper_bound), incre_name);
+    vec_append(&a_main, &inner->children, uast_label_wrap(incre_label));
 
     Uast_assignment* increment = uast_assignment_new(
         uast_expr_get_pos(upper_bound),
@@ -1466,7 +1476,7 @@ static PARSE_STATUS parse_for_range_internal(Env* env, Uast_block** result, Uast
 }
 
 static PARSE_STATUS parse_for_with_cond(Env* env, Uast_for_with_cond** for_new, Pos pos, Tk_view* tokens) {
-    *for_new = uast_for_with_cond_new(pos, NULL, NULL);
+    *for_new = uast_for_with_cond_new(pos, NULL, NULL, (Str_view) {0}, false);
     
     switch (parse_condition(env, &(*for_new)->condition, tokens)) {
         case PARSE_EXPR_OK:
@@ -1487,19 +1497,25 @@ static PARSE_STATUS parse_for_loop(Env* env, Uast_stmt** result, Tk_view* tokens
     unwrap(try_consume(&for_token, tokens, TOKEN_FOR));
     
     if (starts_with_variable_type_decl(*tokens, false)) {
+        PARSE_STATUS status = PARSE_OK;
         Uast_block* outer = uast_block_new(for_token.pos, (Uast_stmt_vec) {0}, (Symbol_collection) {0}, for_token.pos);
         vec_append(&a_main, &env->ancesters, &outer->symbol_collection);
         Uast_variable_def* var_def = NULL;
         if (PARSE_OK != parse_variable_decl(env, &var_def, tokens, false, false, true, true, (Ulang_type) {0})) {
-            todo();
+            status = PARSE_ERROR;
+            goto for_range_error;
         }
 
         Uast_block* new_for = NULL;
         if (PARSE_OK != parse_for_range_internal(env, &new_for, var_def, outer, tokens)) {
-            todo();
+            status = PARSE_ERROR;
+            goto for_range_error;
         }
         *result = uast_block_wrap(new_for);
+
+for_range_error:
         vec_rem_last(&env->ancesters);
+        return status;
     } else {
         Uast_for_with_cond* new_for = NULL;
         if (PARSE_OK != parse_for_with_cond(env, &new_for, for_token.pos, tokens)) {
