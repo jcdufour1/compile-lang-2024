@@ -269,7 +269,7 @@ static bool binary_is_short_circuit(BINARY_TYPE type) {
 static Llvm_variable_def* load_variable_def_clone(Env* env, Tast_variable_def* old_var_def);
 
 static Llvm_alloca* add_load_and_store_alloca_new(Env* env, Llvm_variable_def* var_def) {
-    Llvm_alloca* alloca = llvm_alloca_new(var_def->pos, 0, var_def->lang_type, var_def->name_corr_param);
+    Llvm_alloca* alloca = llvm_alloca_new(var_def->pos, 0, rm_tuple_lang_type(env, var_def->lang_type, var_def->pos), var_def->name_corr_param);
     alloca_add(env, llvm_alloca_wrap(alloca));
     assert(alloca);
     return alloca;
@@ -841,11 +841,13 @@ static Str_view load_symbol(
 ) {
     Pos pos = tast_symbol_get_pos(old_sym);
 
+    Str_view ptr = load_ptr_symbol(env, new_block, old_sym);
+
     Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
         pos,
-        load_ptr_symbol(env, new_block, old_sym),
+        ptr,
         0,
-        old_sym->base.lang_type,
+        rm_tuple_lang_type(env, old_sym->base.lang_type, old_sym->pos),
         util_literal_name_new()
     );
     unwrap(alloca_add(env, llvm_load_another_llvm_wrap(new_load)));
@@ -1373,6 +1375,7 @@ static Str_view load_tuple_ptr(
     Llvm_block* new_block,
     Tast_tuple* old_tuple
 ) {
+    (void) new_block;
     Lang_type new_lang_type = lang_type_struct_const_wrap(rm_tuple_lang_type_tuple(
         env, old_tuple->lang_type, old_tuple->pos
     ));

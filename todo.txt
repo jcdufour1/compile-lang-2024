@@ -1,32 +1,63 @@
+#
 , operator (like in "vec_at" macro)
 should := be assignment operator?
 
 
+
+# generics
 for generics:
     check_<whatever> should see if constraints qualify template parameter
     if assigning template parameter to i32, call get_constraints_lang_type(i32), and compare that way
 
+# directory stucture
+- util
+- tokenizer
+- parser
+- load
+- codegen
 
+## miscellaneous 
+- remove lang_type_nodes
+- optional regular args mixed with generics?
+- lang_type suffix/prefix should be changed to ulang_type in some functions?
+- directory structure above
+- function call returning Optional(<ItemType>) directly switched on
+- symbol_at function, whatever
+- separate lang_type for Llvm stuff
+- fix this: sum.own:12:5:error:some cases are not covered: u8*.string
+- fix lang_type system for void, etc. (it is a mess)
+- tuple on lhs changed to individual accesses in type_checking pass?
 
 
 # roadmap to try to get bootstrap compiler done:
-- implement generics
-- implement defer
-- implement modules
-- implement slices
-- implement orelse, !!, etc.
-- implement #pos to get position
-- implement extern("c") defintions
-- implement non-hard coded size_t, etc.
-- implement printing features
-- implement named scopes
-- implement global constants
-- implement way to get tag of sum
-- implement automatic zero initialization
-- implement manual zero initialization
-- implement hex and binary literal
+## needed features
+- generics
+- nested generics
+- constraints in generics
+- defer
+- modules
+- slices
+- orelse, !!, ??, etc.
+- #pos to get position
+- extern("c") defintions
+- non-hard coded size_t, etc.
+- printing features
+- global constants
+- way to get tag of sum (be sure that checking if sums are equal is possible)
+- automatic zero initialization
+- manual zero initialization
+- hex and binary literal
+- safe cast (use "i64(num)" to cast num to i64)?
+- prevent collisions with user defined names and compiler defined names
+
+## needed tests
+- let token* Token = <...>; switch token {<...>}
 
 # optional things:
-- implement designated args
-- implement iterators and foreach
+- const, etc.
+- named scopes
+- designated args
+- iterators and foreach
+- int literal "1_000_000"
+- floats
 
