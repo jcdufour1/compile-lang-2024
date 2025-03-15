@@ -1395,46 +1395,78 @@ static PARSE_STATUS parse_variable_decl(
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_for_range_internal(Env* env, Uast_for_range* for_loop, Tk_view* tokens) {
+static PARSE_STATUS parse_for_range_internal(Env* env, Uast_for_with_cond** result, Uast_variable_def* var_def, Uast_block* outer, Tk_view* tokens) {
     unwrap(try_consume(NULL, tokens, TOKEN_IN));
 
-    Uast_expr* lower_bound_child;
-    if (PARSE_EXPR_OK != parse_expr(env, &lower_bound_child, tokens, true, false)) {
+    Uast_expr* lower_bound = NULL;
+    if (PARSE_EXPR_OK != parse_expr(env, &lower_bound, tokens, true, false)) {
         msg_expected_expr(env->file_text, *tokens, "after in");
         return PARSE_ERROR;
     }
-    Uast_for_lower_bound* lower_bound = uast_for_lower_bound_new(
-        uast_expr_get_pos(lower_bound_child), lower_bound_child
-    );
-    for_loop->lower_bound = lower_bound;
+
     if (!try_consume(NULL, tokens, TOKEN_DOUBLE_DOT)) {
         msg_parser_expected(env->file_text, tk_view_front(*tokens), "after for loop lower bound", TOKEN_DOUBLE_DOT);
         return PARSE_ERROR;
     }
 
-    Uast_expr* upper_bound_child;
-    switch (parse_expr(env, &upper_bound_child, tokens, true, false)) {
+    Uast_expr* upper_bound = NULL;
+    switch (parse_expr(env, &upper_bound, tokens, true, false)) {
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_ERROR:
             return PARSE_ERROR;
         case PARSE_EXPR_NONE:
-            msg_expected_expr(env->file_text, *tokens, " after ..");
+            msg_expected_expr(env->file_text, *tokens, "after ..");
             return PARSE_ERROR;
         default:
             unreachable("");
     }
-    Uast_for_upper_bound* upper_bound = uast_for_upper_bound_new(
-        uast_expr_get_pos(upper_bound_child), upper_bound_child
-    );
-    upper_bound->child = upper_bound_child;
-    for_loop->upper_bound = upper_bound;
 
-    return parse_block(env, &for_loop->body, tokens, false);
+    Uast_block* inner = NULL;
+    if (PARSE_OK != parse_block(env, &inner, tokens, false)) {
+        return PARSE_ERROR;
+    }
+
+    Uast_assignment* init_assign = uast_assignment_new(
+        uast_expr_get_pos(lower_bound),
+        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name, (Ulang_type_vec) {0})),
+        lower_bound
+    );
+    vec_append(&a_main, &outer->children, uast_assignment_wrap(init_assign));
+
+    Uast_for_with_cond* inner_for = uast_for_with_cond_new(
+        outer->pos,
+        uast_condition_new(
+            outer->pos,
+            uast_binary_wrap(uast_binary_new(
+                outer->pos,
+                uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name, (Ulang_type_vec) {0})),
+                upper_bound,
+                BINARY_LESS_THAN
+            ))
+        ),
+        inner
+    );
+    vec_append(&a_main, &outer->children, uast_for_with_cond_wrap(inner_for));
+
+    Uast_assignment* increment = uast_assignment_new(
+        uast_expr_get_pos(upper_bound),
+        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name, (Ulang_type_vec) {0})),
+        uast_operator_wrap(uast_binary_wrap(uast_binary_new(
+            var_def->pos,
+            uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name, (Ulang_type_vec) {0})),
+            uast_literal_wrap(util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, uast_expr_get_pos(upper_bound))),
+            BINARY_ADD
+        )))
+    );
+    vec_append(&a_main, &inner->children, uast_assignment_wrap(increment));
+
+    log(LOG_DEBUG, TAST_FMT, uast_block_print(outer));
+    todo();
 }
 
-static PARSE_STATUS parse_for_with_cond(Env* env, Uast_for_with_cond** for_new, Uast_for_range* for_range, Tk_view* tokens) {
-    *for_new = uast_for_with_cond_new(for_range->pos, NULL, NULL);
+static PARSE_STATUS parse_for_with_cond(Env* env, Uast_for_with_cond** for_new, Pos pos, Tk_view* tokens) {
+    *for_new = uast_for_with_cond_new(pos, NULL, NULL);
     
     switch (parse_condition(env, &(*for_new)->condition, tokens)) {
         case PARSE_EXPR_OK:
@@ -1450,32 +1482,27 @@ static PARSE_STATUS parse_for_with_cond(Env* env, Uast_for_with_cond** for_new, 
     return parse_block(env, &(*for_new)->body, tokens, false);
 }
 
-static PARSE_STATUS parse_for_loop(Env* env, Uast_stmt** for_loop_result, Tk_view* tokens) {
+static PARSE_STATUS parse_for_loop(Env* env, Uast_for_with_cond** result, Tk_view* tokens) {
     Token for_token;
     unwrap(try_consume(&for_token, tokens, TOKEN_FOR));
-    Uast_for_range* for_loop = uast_for_range_new(for_token.pos, NULL, NULL, NULL, NULL);
     
     if (starts_with_variable_type_decl(*tokens, false)) {
+        // TODO: should pos_end be set below?
+        Uast_block* outer = uast_block_new(for_token.pos, (Uast_stmt_vec) {0}, (Symbol_collection) {0}, (Pos) {0});
+        vec_append(&a_main, &env->ancesters, &outer->symbol_collection);
         Uast_variable_def* var_def = NULL;
-        if (PARSE_OK != parse_variable_decl(env, &var_def, tokens, false, false, false, true, (Ulang_type) {0})) {
+        if (PARSE_OK != parse_variable_decl(env, &var_def, tokens, false, false, true, true, (Ulang_type) {0})) {
             todo();
-            return PARSE_ERROR;
         }
-        for_loop->var_def_view = uast_symbol_new(
-            var_def->pos,
-            var_def->name,
-            (Ulang_type_vec) {0}
-        );
-        if (PARSE_OK != parse_for_range_internal(env, for_loop, tokens)) {
-            return PARSE_ERROR;
+
+        if (PARSE_OK != parse_for_range_internal(env, result, var_def, outer, tokens)) {
+            todo();
         }
-        *for_loop_result = uast_for_range_wrap(for_loop);
+        vec_rem_last(&env->ancesters);
     } else {
-        Uast_for_with_cond* for_with_cond;
-        if (PARSE_OK != parse_for_with_cond(env, &for_with_cond, for_loop, tokens)) {
+        if (PARSE_OK != parse_for_with_cond(env, result, for_token.pos, tokens)) {
             return PARSE_ERROR;
         }
-        *for_loop_result = uast_for_with_cond_wrap(for_with_cond);
     }
 
     return PARSE_OK;
@@ -1857,11 +1884,11 @@ static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens
         }
         lhs = uast_switch_wrap(lang_switch);
     } else if (starts_with_for(*tokens)) {
-        Uast_stmt* for_loop;
+        Uast_for_with_cond* for_loop;
         if (PARSE_OK != parse_for_loop(env, &for_loop, tokens)) {
             return PARSE_EXPR_ERROR;
         }
-        lhs = for_loop;
+        lhs = uast_for_with_cond_wrap(for_loop);
     } else if (starts_with_break(*tokens)) {
         lhs = uast_break_wrap(parse_break(tokens));
     } else if (starts_with_continue(*tokens)) {
