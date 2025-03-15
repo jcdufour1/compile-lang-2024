@@ -357,10 +357,8 @@ static Llvm_function_params* do_function_def_alloca(
         0
     );
 
-    bool rtn_is_struct = is_struct_like(rtn_type->lang_type.type);
-
-    Lang_type rtn_lang_type = rtn_type->lang_type;
-    if (rtn_is_struct) {
+    Lang_type rtn_lang_type = rm_tuple_lang_type(env, rtn_type->lang_type, (Pos) {0});
+    if (is_struct_like(rtn_type->lang_type.type)) {
         lang_type_set_pointer_depth(&rtn_lang_type, lang_type_get_pointer_depth(rtn_lang_type) + 1);
         Tast_variable_def* new_def = tast_variable_def_new(
             rtn_type->pos,
@@ -1351,6 +1349,47 @@ static Str_view load_sum_case(
     return load_enum_lit(env, old_case->tag);
 }
 
+static Str_view load_tuple(
+    Env* env,
+    Llvm_block* new_block,
+    Tast_tuple* old_tuple
+) {
+    Lang_type new_lang_type = lang_type_struct_const_wrap(rm_tuple_lang_type_tuple(
+        env, old_tuple->lang_type, old_tuple->pos
+    ));
+    Str_view new_lit = load_struct_literal(env, new_block, tast_struct_literal_new(
+        old_tuple->pos, old_tuple->members, util_literal_name_new(), new_lang_type
+    ));
+
+    Llvm* dummy = NULL;
+    unwrap(alloca_lookup(&dummy, env, new_lit));
+    log(LOG_DEBUG, TAST_FMT, llvm_print(dummy));
+    return new_lit;
+}
+
+// TODO: make separate tuple types for lhs and rhs
+static Str_view load_tuple_ptr(
+    Env* env,
+    Llvm_block* new_block,
+    Tast_tuple* old_tuple
+) {
+    Lang_type new_lang_type = lang_type_struct_const_wrap(rm_tuple_lang_type_tuple(
+        env, old_tuple->lang_type, old_tuple->pos
+    ));
+    (void) new_lang_type;
+
+    for (size_t idx = 0; idx < old_tuple->members.info.count; idx++) {
+        //Tast_expr* curr_lhs = vec_at(&old_tuple->members, idx);
+        todo();
+    }
+
+    //Llvm* dummy = NULL;
+    //unwrap(alloca_lookup(&dummy, env, new_lit));
+    //log(LOG_DEBUG, TAST_FMT, llvm_print(dummy));
+    todo();
+    //return new_lit;
+}
+
 static Str_view load_expr(Env* env, Llvm_block* new_block, Tast_expr* old_expr) {
     switch (old_expr->type) {
         case TAST_ASSIGNMENT:
@@ -1374,7 +1413,7 @@ static Str_view load_expr(Env* env, Llvm_block* new_block, Tast_expr* old_expr) 
         case TAST_STRUCT_LITERAL:
             return load_struct_literal(env, new_block, tast_struct_literal_unwrap(old_expr));
         case TAST_TUPLE:
-            todo();
+            return load_tuple(env, new_block, tast_tuple_unwrap(old_expr));
         case TAST_SUM_CALLEE:
             todo();
         case TAST_SUM_GET_TAG:
@@ -1505,7 +1544,7 @@ static Str_view load_return(
     }
 
     //assert(fun_decl->return_type->lang_type.info.count == 1);
-    Lang_type rtn_type = fun_decl->return_type->lang_type;
+    Lang_type rtn_type = rm_tuple_lang_type(env, fun_decl->return_type->lang_type, fun_decl->pos);
 
     bool rtn_is_struct = is_struct_like(rtn_type.type);
 

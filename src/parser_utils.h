@@ -194,7 +194,7 @@ static inline bool is_struct_like(LANG_TYPE_TYPE type) {
         case LANG_TYPE_SUM:
             return true;
         case LANG_TYPE_TUPLE:
-            unreachable("");
+            return true;
         case LANG_TYPE_FN:
             return false;
     }
