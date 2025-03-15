@@ -210,12 +210,8 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
             return lang_type;
         case LANG_TYPE_ENUM:
             return lang_type;
-        case LANG_TYPE_FN: {
-            Lang_type_fn fn = lang_type_fn_const_unwrap(lang_type);
-            memset(&fn, 0, sizeof(fn)); // because fn lang_type info is really only needed for type checking
-                        // (which has already occured), and this makes things easier (for now)
-            return (Lang_type) {0};
-        }
+        case LANG_TYPE_FN:
+            return lang_type;
         default:
             unreachable(LANG_TYPE_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
     }

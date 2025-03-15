@@ -574,9 +574,6 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
                 lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_lhs)),
                 lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs))
             );
-            log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_lhs));
-            log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_rhs));
-            todo();
             return false;
         }
     }
@@ -713,7 +710,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
 bool try_set_binary_types(Env* env, Tast_expr** new_tast, Uast_binary* operator) {
     Tast_expr* new_lhs;
     if (!try_set_expr_types(env, &new_lhs, operator->lhs)) {
-        todo();
+        return false;
     }
     assert(new_lhs);
 
