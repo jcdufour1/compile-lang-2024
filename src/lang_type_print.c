@@ -1,8 +1,6 @@
 #include <lang_type_print.h>
 #include <lang_type_after.h>
 
-#define lang_type_atom_print(mode, atom) str_view_print(lang_type_atom_print_internal(mode, atom))
-
 void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
     switch (type) {
         case LANG_TYPE_PRIMITIVE:

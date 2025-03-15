@@ -1606,7 +1606,7 @@ static Str_view load_assignment(
         new_rhs,
         new_lhs,
         0,
-        lang_type_from_get_name(env, new_lhs),
+        rm_tuple_lang_type(env, tast_expr_get_lang_type(old_assignment->lhs), old_assignment->pos),
         util_literal_name_new()
     );
     unwrap(alloca_add(env, llvm_store_another_llvm_wrap(new_store)));

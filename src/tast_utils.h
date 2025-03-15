@@ -76,8 +76,6 @@ static inline Lang_type_vec lang_type_vec_from_lang_type(Lang_type lang_type) {
 
 Str_view ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type);
 
-Str_view lang_type_atom_print_internal(LANG_TYPE_MODE mode, Lang_type_atom atom);
-
 Str_view tast_print_internal(const Tast* tast, int recursion_depth);
 
 #define tast_print(root) str_view_print(tast_print_internal(root, 0))

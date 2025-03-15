@@ -138,13 +138,15 @@ static void extend_type_call_str(Env* env, String* output, Lang_type lang_type) 
             string_extend_strv(&a_main, output, serialize_lang_type(env, lang_type));
             return;
         case LANG_TYPE_PRIMITIVE:
-            if (lang_type_atom_is_unsigned(lang_type_get_atom(lang_type))) {
+            log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
+            if (lang_type_primitive_const_unwrap(lang_type).type == LANG_TYPE_UNSIGNED_INT) {
                 log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
                 log(LOG_DEBUG, "%d\n", lang_type_primitive_const_unwrap(lang_type).type);
                 Lang_type_unsigned_int old_num = lang_type_unsigned_int_const_unwrap(lang_type_primitive_const_unwrap(lang_type));
                 lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(old_num.bit_width, old_num.pointer_depth)));
             }
-            assert(lang_type_atom_is_signed(lang_type_get_atom(lang_type)));
+            log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
+            //assert(lang_type_primitive_const_unwrap(lang_type).type == LANG_TYPE_SIGNED_INT);
             extend_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_LLVM, lang_type);
             return;
         case LANG_TYPE_SUM:

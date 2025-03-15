@@ -2,6 +2,8 @@
 #ifndef LANG_TYPE_AFTER_H
 #define LANG_TYPE_AFTER_H
 
+#include <lang_type_print.h>
+
 // TODO: do these things properly
 int64_t str_view_to_int64_t(Str_view str_view);
 
@@ -45,8 +47,12 @@ static inline Lang_type_atom lang_type_get_atom(Lang_type lang_type) {
             unreachable("");
         case LANG_TYPE_FN:
             return lang_type_atom_new_from_cstr("", 1);
-        case LANG_TYPE_VOID:
-            return (Lang_type_atom) {0};
+        case LANG_TYPE_VOID: {
+            Lang_type_atom thing = (Lang_type_atom) {0};
+            log(LOG_DEBUG, STR_VIEW_FMT"\n", lang_type_atom_print(LANG_TYPE_MODE_LOG, thing));
+            log(LOG_DEBUG, "len: %zu\n", thing.str.count);
+            return thing;
+        }
     }
     unreachable("");
 }
