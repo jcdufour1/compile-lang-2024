@@ -76,7 +76,6 @@ bool lang_type_atom_is_signed(Lang_type_atom atom) {
     if (atom.str.count < 1) {
         return false;
     }
-    log(LOG_DEBUG, "count: %zu\n", atom.str.count);
     if (atom.str.str[0] != 'i') {
         return false;
     }
@@ -88,7 +87,6 @@ bool lang_type_atom_is_unsigned(Lang_type_atom atom) {
     if (atom.str.count < 1) {
         return false;
     }
-    log(LOG_DEBUG, "count: %zu\n", atom.str.count);
     if (atom.str.str[0] != 'u') {
         return false;
     }

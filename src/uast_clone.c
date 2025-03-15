@@ -34,6 +34,30 @@ Ulang_type_vec ulang_type_vec_clone(Ulang_type_vec vec) {
     return new_vec;
 }
 
+Uast_if_vec uast_if_vec_clone(Uast_if_vec vec) {
+    Uast_if_vec new_vec = {0};
+    for (size_t idx = 0; idx < vec.info.count; idx++) {
+        vec_append(&a_main, &new_vec, vec_at(&vec, idx));
+    }
+    return new_vec;
+}
+
+Uast_expr_vec uast_expr_vec_clone(Uast_expr_vec vec) {
+    Uast_expr_vec new_vec = {0};
+    for (size_t idx = 0; idx < vec.info.count; idx++) {
+        vec_append(&a_main, &new_vec, uast_expr_clone(vec_at(&vec, idx)));
+    }
+    return new_vec;
+}
+
+Uast_case_vec uast_case_vec_clone(Uast_case_vec vec) {
+    Uast_case_vec new_vec = {0};
+    for (size_t idx = 0; idx < vec.info.count; idx++) {
+        vec_append(&a_main, &new_vec, uast_case_clone(vec_at(&vec, idx)));
+    }
+    return new_vec;
+}
+
 Uast_symbol* uast_symbol_clone(const Uast_symbol* symbol) {
     return uast_symbol_new(symbol->pos, symbol->name, ulang_type_vec_clone(symbol->generic_args));
 }
@@ -52,14 +76,6 @@ Uast_binary* uast_binary_clone(const Uast_binary* binary) {
 
 Uast_index* uast_index_clone(const Uast_index* index) {
     return uast_index_new(index->pos, uast_expr_clone(index->index), uast_expr_clone(index->callee));
-}
-
-Uast_expr_vec uast_expr_vec_clone(Uast_expr_vec vec) {
-    Uast_expr_vec new_vec = {0};
-    for (size_t idx = 0; idx < vec.info.count; idx++) {
-        vec_append(&a_main, &new_vec, uast_expr_clone(vec_at(&vec, idx)));
-    }
-    return new_vec;
 }
 
 Uast_function_call* uast_function_call_clone(const Uast_function_call* fun_call) {
@@ -152,11 +168,73 @@ Uast_def* uast_def_clone(const Uast_def* def) {
     }
     unreachable("");
 }
+
+Uast_for_range* uast_for_range_clone(const Uast_for_range* lang_for) {
+    (void) lang_for;
+    // TODO: for_range should just be wrapper around for_with_cond to simplify things
+    todo();
+}
+
+Uast_for_with_cond* uast_for_with_cond_clone(const Uast_for_with_cond* lang_for) {
+    (void) lang_for;
+    // TODO: for loop: have symbol instead of variable_def
+    todo();
+}
+
+Uast_break* uast_break_clone(const Uast_break* lang_break) {
+    return uast_break_new(lang_break->pos);
+}
+
+Uast_continue* uast_continue_clone(const Uast_continue* cont) {
+    return uast_continue_new(cont->pos);
+}
+
+Uast_assignment* uast_assignment_clone(const Uast_assignment* assign) {
+    return uast_assignment_new(assign->pos, uast_expr_clone(assign->lhs), uast_expr_clone(assign->rhs));
+}
+
+Uast_return* uast_return_clone(const Uast_return* rtn) {
+    return uast_return_new(rtn->pos, uast_expr_clone(rtn->child), rtn->is_auto_inserted);
+}
+
+Uast_if_else_chain* uast_if_else_chain_clone(const Uast_if_else_chain* if_else) {
+    return uast_if_else_chain_new(if_else->pos, uast_if_vec_clone(if_else->uasts));
+}
+
+Uast_switch* uast_switch_clone(const Uast_switch* lang_switch) {
+    return uast_switch_new(lang_switch->pos, uast_expr_clone(lang_switch->operand), uast_case_vec_clone(lang_switch->cases));
+}
+
 Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt) {
-    if (stmt->type != UAST_EXPR) {
-        todo();
+    switch (stmt->type) {
+        case UAST_EXPR:
+            return uast_expr_wrap(uast_expr_clone(uast_expr_const_unwrap(stmt)));
+        case UAST_BLOCK:
+            return uast_block_wrap(uast_block_clone(uast_block_const_unwrap(stmt)));
+        case UAST_DEF:
+            return uast_def_wrap(uast_def_clone(uast_def_const_unwrap(stmt)));
+        case UAST_FOR_RANGE:
+            return uast_for_range_wrap(uast_for_range_clone(uast_for_range_const_unwrap(stmt)));
+        case UAST_FOR_WITH_COND:
+            return uast_for_with_cond_wrap(uast_for_with_cond_clone(uast_for_with_cond_const_unwrap(stmt)));
+        case UAST_BREAK:
+            return uast_break_wrap(uast_break_clone(uast_break_const_unwrap(stmt)));
+        case UAST_CONTINUE:
+            return uast_continue_wrap(uast_continue_clone(uast_continue_const_unwrap(stmt)));
+        case UAST_ASSIGNMENT:
+            return uast_assignment_wrap(uast_assignment_clone(uast_assignment_const_unwrap(stmt)));
+        case UAST_RETURN:
+            return uast_return_wrap(uast_return_clone(uast_return_const_unwrap(stmt)));
+        case UAST_IF_ELSE_CHAIN:
+            return uast_if_else_chain_wrap(uast_if_else_chain_clone(uast_if_else_chain_const_unwrap(stmt)));
+        case UAST_SWITCH:
+            return uast_switch_wrap(uast_switch_clone(uast_switch_const_unwrap(stmt)));
     }
-    return uast_expr_wrap(uast_expr_clone(uast_expr_const_unwrap(stmt)));
+    unreachable("");
+}
+
+Uast_case* uast_case_clone(const Uast_case* lang_case) {
+    return uast_case_new(lang_case->pos, lang_case->is_default, uast_expr_clone(lang_case->expr), uast_stmt_clone(lang_case->if_true));
 }
 
 Uast_variable_def* uast_variable_def_clone(const Uast_variable_def* def) {
@@ -170,7 +248,7 @@ Uast_variable_def* uast_variable_def_clone(const Uast_variable_def* def) {
 Uast_block* uast_block_clone(const Uast_block* block) {
     Uast_stmt_vec new_children = {0};
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        //vec_append(&a_main, &new_children, uast_stmt_clone(vec_at(&block->children, idx)));
+        vec_append(&a_main, &new_children, uast_stmt_clone(vec_at(&block->children, idx)));
     }
     return uast_block_new(block->pos, new_children, symbol_collection_clone(block->symbol_collection), block->pos_end);
 }

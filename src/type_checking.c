@@ -425,7 +425,6 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
         case UAST_FUNCTION_DEF: {
             Uast_function_def* new_def = NULL;
             if (function_decl_generics_are_present(uast_function_def_unwrap(sym_def)->decl)) {
-                log(LOG_DEBUG, TAST_FMT, uast_def_print(sym_def));
                 if (!resolve_generics_function_def(&new_def, env, uast_function_def_unwrap(sym_def), sym_untyped->generic_args)) {
                     return false;
                 }
@@ -798,10 +797,10 @@ bool try_set_unary_types_finish(
             } else if (lang_type_is_number(tast_expr_get_lang_type(new_child)) && lang_type_is_number(tast_expr_get_lang_type(new_child))) {
             } else if (lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)) > 0 && lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)) > 0) {
             } else {
-                log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_child)));
-                log(LOG_DEBUG, BOOL_FMT, bool_print(lang_type_is_number(tast_expr_get_lang_type(new_child))));
-                log(LOG_DEBUG, "%d\n", lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)));
-                log(LOG_DEBUG, TAST_FMT, tast_expr_print(new_child));
+                log(LOG_NOTE, TAST_FMT, lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_child)));
+                log(LOG_NOTE, BOOL_FMT, bool_print(lang_type_is_number(tast_expr_get_lang_type(new_child))));
+                log(LOG_NOTE, "%d\n", lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)));
+                log(LOG_NOTE, TAST_FMT, tast_expr_print(new_child));
                 todo();
             }
             *new_tast = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
@@ -1921,8 +1920,6 @@ bool try_set_function_def_types(
 
     Tast_function_decl* new_decl = NULL;
     vec_append(&a_main, &env->ancesters, &def->body->symbol_collection);
-    log(LOG_DEBUG, "thing 123: %p\n", (void*)def->body->symbol_collection.usymbol_table.table_tasts);
-    symbol_log(LOG_DEBUG, env);
     if (!try_set_function_decl_types(env, &new_decl, def->decl, true)) {
         status = false;
     }
@@ -2434,8 +2431,6 @@ bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, boo
         goto error;
     }
 
-    usymbol_log(LOG_DEBUG, env);
-    usymbol_level_log(LOG_DEBUG, new_sym_coll.usymbol_table);
     // TODO: make "iterator" function to do less stuff manually every time. this is too much.
     for (size_t idx = 0; idx < new_sym_coll.usymbol_table.capacity; idx++) {
         Usymbol_table_tast node = new_sym_coll.usymbol_table.table_tasts[idx];

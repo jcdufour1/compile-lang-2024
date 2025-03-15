@@ -56,10 +56,10 @@ Str_view uast_symbol_print_internal(const Uast_symbol* sym, int indent) {
     string_extend_cstr_indent(&print_arena, &buf, "symbol_untyped", indent);
     extend_pos(&buf, sym->pos);
     string_extend_strv(&print_arena, &buf, sym->name);
-    string_extend_cstr(&print_arena, &buf, "\n");
     for (size_t idx = 0; idx < sym->generic_args.info.count; idx++) {
-        string_extend_strv(&print_arena, &buf, ulang_type_print_internal(LANG_TYPE_MODE_LOG, vec_at(&sym->generic_args, idx)));
+        extend_ulang_type_to_string(&buf, LANG_TYPE_MODE_LOG, vec_at(&sym->generic_args, idx));
     }
+    string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
 }

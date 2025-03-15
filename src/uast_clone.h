@@ -19,4 +19,6 @@ Uast_block* uast_block_clone(const Uast_block* block);
 
 Uast_def* uast_def_clone(const Uast_def* def);
 
+Uast_case* uast_case_clone(const Uast_case* lang_case);
+
 #endif // UAST_CLONE_H

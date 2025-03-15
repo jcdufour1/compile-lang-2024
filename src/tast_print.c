@@ -195,7 +195,7 @@ Str_view tast_sum_access_print_internal(const Tast_sum_access* lit, int indent) 
 Str_view tast_sum_get_tag_print_internal(const Tast_sum_get_tag* lit, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "sum_get_tag", indent);
+    string_extend_cstr_indent(&print_arena, &buf, "sum_get_tag\n", indent);
     
     string_extend_strv(&print_arena, &buf, tast_expr_print_internal(lit->callee, indent + INDENT_WIDTH));
 
