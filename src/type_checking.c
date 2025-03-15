@@ -2008,53 +2008,6 @@ error:
     return status;
 }
 
-bool try_set_for_lower_bound_types(Env* env, Tast_for_lower_bound** new_tast, Uast_for_lower_bound* uast) {
-    Tast_expr* new_lower = NULL;
-    if (!try_set_expr_types(env, &new_lower, uast->child)) {
-        return false;
-    }
-    *new_tast = tast_for_lower_bound_new(uast->pos, new_lower);
-    return true;
-}
-
-bool try_set_for_upper_bound_types(Env* env, Tast_for_upper_bound** new_tast, Uast_for_upper_bound* uast) {
-    Tast_expr* new_upper = NULL;
-    if (!try_set_expr_types(env, &new_upper, uast->child)) {
-        return false;
-    }
-    *new_tast = tast_for_upper_bound_new(uast->pos, new_upper);
-    return true;
-}
-
-bool try_set_for_range_types(Env* env, Tast_for_range** new_tast, Uast_for_range* uast) {
-    bool status = true;
-
-    Tast_variable_def* new_var_def = NULL;
-    vec_append(&a_main, &env->ancesters, &uast->body->symbol_collection);
-    if (!try_set_variable_def_types(env, &new_var_def, uast->var_def, true, false)) {
-        status = false;
-    }
-    vec_rem_last(&env->ancesters);
-
-    Tast_for_lower_bound* new_lower = NULL;
-    if (!try_set_for_lower_bound_types(env, &new_lower, uast->lower_bound)) {
-        status = false;
-    }
-
-    Tast_for_upper_bound* new_upper = NULL;
-    if (!try_set_for_upper_bound_types(env, &new_upper, uast->upper_bound)) {
-        status = false;
-    }
-
-    Tast_block* new_body = NULL;
-    if (!try_set_block_types(env, &new_body, uast->body, false)) {
-        status = false;
-    }
-
-    *new_tast = tast_for_range_new(uast->pos, new_var_def, new_lower, new_upper, new_body);
-    return status;
-}
-
 bool try_set_for_with_cond_types(Env* env, Tast_for_with_cond** new_tast, Uast_for_with_cond* uast) {
     bool status = true;
 
@@ -2070,6 +2023,18 @@ bool try_set_for_with_cond_types(Env* env, Tast_for_with_cond** new_tast, Uast_f
 
     *new_tast = tast_for_with_cond_new(uast->pos, new_cond, new_body);
     return status;
+}
+
+bool try_set_for_range_types(Env* env, Tast_for_with_cond** new_tast, Uast_for_range* uast) {
+    bool status = true;
+    (void) status;
+
+    Uast_stmt_vec out_children = {0};
+    Uast_assignment* init_assign = uast_assignment_new(uast->pos, uast->var_def, uast->lower_bound->child);
+    Uast_block* outer = uast_block_new(uast->pos, out_children, (Symbol_collection) {0}, uast->body->pos_end);
+    vec_append(&a_main, &env->ancesters, &uast->body->symbol_collection);
+    todo();
+
 }
 
 bool try_set_if_types(Env* env, Tast_if** new_tast, Uast_if* uast) {
@@ -2537,6 +2502,14 @@ STMT_STATUS try_set_stmt_types(Env* env, Tast_stmt** new_tast, Uast_stmt* stmt) 
             *new_tast = tast_for_with_cond_wrap(new_tast_);
             return STMT_OK;
         }
+        case UAST_FOR_RANGE: {
+            Tast_for_with_cond* new_for = NULL;
+            if (!try_set_for_range_types(env, &new_for, uast_for_range_unwrap(stmt))) {
+                return STMT_ERROR;
+            }
+            *new_tast = tast_for_with_cond_wrap(new_for);
+            return STMT_OK;
+        }
         case UAST_ASSIGNMENT: {
             Tast_assignment* new_tast_ = NULL;
             if (!try_set_assignment_types(env, &new_tast_, uast_assignment_unwrap(stmt))) {
@@ -2551,14 +2524,6 @@ STMT_STATUS try_set_stmt_types(Env* env, Tast_stmt** new_tast, Uast_stmt* stmt) 
                 return STMT_ERROR;
             }
             *new_tast = tast_return_wrap(new_rtn);
-            return STMT_OK;
-        }
-        case UAST_FOR_RANGE: {
-            Tast_for_range* new_for = NULL;
-            if (!try_set_for_range_types(env, &new_for, uast_for_range_unwrap(stmt))) {
-                return STMT_ERROR;
-            }
-            *new_tast = tast_for_range_wrap(new_for);
             return STMT_OK;
         }
         case UAST_BREAK:

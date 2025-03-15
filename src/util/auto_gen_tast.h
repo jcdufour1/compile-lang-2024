@@ -584,24 +584,6 @@ static Tast_type tast_gen_lang_type(const char* prefix) {
     return lang_type;
 }
 
-static Tast_type tast_gen_for_lower_bound(const char* prefix) {
-    const char* base_name = "for_lower_bound";
-    Tast_type bound = {.name = tast_name_new(prefix, base_name, false)};
-
-    append_member(&bound.members, "Tast_expr*", "child");
-
-    return bound;
-}
-
-static Tast_type tast_gen_for_upper_bound(const char* prefix) {
-    const char* base_name = "for_upper_bound";
-    Tast_type bound = {.name = tast_name_new(prefix, base_name, false)};
-
-    append_member(&bound.members, "Tast_expr*", "child");
-
-    return bound;
-}
-
 static Tast_type tast_gen_condition(const char* prefix) {
     const char* base_name = "condition";
     Tast_type bound = {.name = tast_name_new(prefix, base_name, false)};
@@ -609,18 +591,6 @@ static Tast_type tast_gen_condition(const char* prefix) {
     append_member(&bound.members, "Tast_operator*", "child");
 
     return bound;
-}
-
-static Tast_type tast_gen_for_range(const char* prefix) {
-    const char* base_name = "for_range";
-    Tast_type range = {.name = tast_name_new(prefix, base_name, false)};
-
-    append_member(&range.members, "Tast_variable_def*", "var_def");
-    append_member(&range.members, "Tast_for_lower_bound*", "lower_bound");
-    append_member(&range.members, "Tast_for_upper_bound*", "upper_bound");
-    append_member(&range.members, "Tast_block*", "body");
-
-    return range;
 }
 
 static Tast_type tast_gen_for_with_cond(const char* prefix) {
@@ -682,7 +652,6 @@ static Tast_type tast_gen_stmt(const char* prefix) {
 
     vec_append(&gen_a, &stmt.sub_types, tast_gen_block(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_expr(base_name));
-    vec_append(&gen_a, &stmt.sub_types, tast_gen_for_range(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_for_with_cond(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_if_else_chain(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_return(base_name));
@@ -700,8 +669,6 @@ static Tast_type tast_gen_tast(void) {
     vec_append(&gen_a, &tast.sub_types, tast_gen_stmt(base_name));
     vec_append(&gen_a, &tast.sub_types, tast_gen_function_params(base_name));
     vec_append(&gen_a, &tast.sub_types, tast_gen_lang_type(base_name));
-    vec_append(&gen_a, &tast.sub_types, tast_gen_for_lower_bound(base_name));
-    vec_append(&gen_a, &tast.sub_types, tast_gen_for_upper_bound(base_name));
     vec_append(&gen_a, &tast.sub_types, tast_gen_condition(base_name));
     vec_append(&gen_a, &tast.sub_types, tast_gen_if(base_name));
 

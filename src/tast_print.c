@@ -332,48 +332,12 @@ Str_view tast_lang_type_print_internal(const Tast_lang_type* lang_type, int inde
     return string_to_strv(buf);
 }
 
-Str_view tast_for_lower_bound_print_internal(const Tast_for_lower_bound* lower, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "for_lower_bound\n", indent);
-    indent += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, tast_expr_print_internal(lower->child, indent));
-    indent -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
-Str_view tast_for_upper_bound_print_internal(const Tast_for_upper_bound* upper, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "for_upper_bound\n", indent);
-    indent += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, tast_expr_print_internal(upper->child, indent));
-    indent -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
 Str_view tast_condition_print_internal(const Tast_condition* cond, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "condition\n", indent);
     indent += INDENT_WIDTH;
     string_extend_strv(&print_arena, &buf, tast_operator_print_internal(cond->child, indent));
-    indent -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
-Str_view tast_for_range_print_internal(const Tast_for_range* for_range, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "for_range\n", indent);
-    indent += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, tast_variable_def_print_internal(for_range->var_def, indent));
-    string_extend_strv(&print_arena, &buf, tast_for_lower_bound_print_internal(for_range->lower_bound, indent));
-    string_extend_strv(&print_arena, &buf, tast_for_upper_bound_print_internal(for_range->upper_bound, indent));
-    string_extend_strv(&print_arena, &buf, tast_block_print_internal(for_range->body, indent));
     indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
@@ -665,8 +629,6 @@ Str_view tast_stmt_print_internal(const Tast_stmt* stmt, int indent) {
             return tast_def_print_internal(tast_def_const_unwrap(stmt), indent);
         case TAST_FOR_WITH_COND:
             return tast_for_with_cond_print_internal(tast_for_with_cond_const_unwrap(stmt), indent);
-        case TAST_FOR_RANGE:
-            return tast_for_range_print_internal(tast_for_range_const_unwrap(stmt), indent);
         case TAST_BREAK:
             return tast_break_print_internal(tast_break_const_unwrap(stmt), indent);
         case TAST_CONTINUE:
@@ -687,10 +649,6 @@ Str_view tast_print_internal(const Tast* tast, int indent) {
             return tast_function_params_print_internal(tast_function_params_const_unwrap(tast), indent);
         case TAST_LANG_TYPE:
             return tast_lang_type_print_internal(tast_lang_type_const_unwrap(tast), indent);
-        case TAST_FOR_LOWER_BOUND:
-            return tast_for_lower_bound_print_internal(tast_for_lower_bound_const_unwrap(tast), indent);
-        case TAST_FOR_UPPER_BOUND:
-            return tast_for_upper_bound_print_internal(tast_for_upper_bound_const_unwrap(tast), indent);
         case TAST_CONDITION:
             return tast_condition_print_internal(tast_condition_const_unwrap(tast), indent);
         case TAST_IF:

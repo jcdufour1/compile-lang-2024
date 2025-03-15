@@ -269,8 +269,6 @@ static inline Lang_type tast_stmt_get_lang_type(const Tast_stmt* stmt) {
             unreachable("");
         case TAST_RETURN:
             return tast_expr_get_lang_type(tast_return_const_unwrap(stmt)->child);
-        case TAST_FOR_RANGE:
-            unreachable("");
         case TAST_FOR_WITH_COND:
             unreachable("");
         case TAST_BREAK:
@@ -284,23 +282,7 @@ static inline Lang_type tast_stmt_get_lang_type(const Tast_stmt* stmt) {
 }
 
 static inline Lang_type tast_get_lang_type(const Tast* tast) {
-    switch (tast->type) {
-        case TAST_BLOCK:
-            unreachable("");
-        case TAST_FUNCTION_PARAMS:
-            unreachable("");
-        case TAST_LANG_TYPE:
-            todo();
-            //return tast_lang_type_const_unwrap(tast)->lang_type;
-        case TAST_FOR_LOWER_BOUND:
-            unreachable("");
-        case TAST_FOR_UPPER_BOUND:
-            unreachable("");
-        case TAST_BREAK:
-            unreachable("");
-        case TAST_CONDITION:
-            unreachable("");
-    }
+    (void) tast;
     unreachable("");
 }
 
@@ -341,8 +323,6 @@ static inline void tast_stmt_set_lang_type(Tast_stmt* stmt, Lang_type lang_type)
         case TAST_RETURN:
             tast_expr_set_lang_type(tast_return_unwrap(stmt)->child, lang_type);
             return;
-        case TAST_FOR_RANGE:
-            unreachable("");
         case TAST_FOR_WITH_COND:
             unreachable("");
         case TAST_BREAK:
@@ -453,8 +433,6 @@ static inline Str_view tast_stmt_get_name(const Tast_stmt* stmt) {
             unreachable("");
         case TAST_RETURN:
             unreachable("");
-        case TAST_FOR_RANGE:
-            unreachable("");
         case TAST_FOR_WITH_COND:
             unreachable("");
         case TAST_BREAK:
@@ -468,22 +446,7 @@ static inline Str_view tast_stmt_get_name(const Tast_stmt* stmt) {
 }
 
 static inline Str_view tast_get_name(const Tast* tast) {
-    switch (tast->type) {
-        case TAST_BLOCK:
-            unreachable("");
-        case TAST_FUNCTION_PARAMS:
-            unreachable("");
-        case TAST_LANG_TYPE:
-            unreachable("");
-        case TAST_RETURN:
-            unreachable("");
-        case TAST_FOR_LOWER_BOUND:
-            unreachable("");
-        case TAST_FOR_UPPER_BOUND:
-            unreachable("");
-        case TAST_IF:
-            unreachable("");
-    }
+    (void) tast;
     unreachable("");
 }
 
