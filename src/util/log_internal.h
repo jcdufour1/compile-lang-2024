@@ -26,10 +26,10 @@ static inline void log_internal(LOG_LEVEL log_level, const char* file, int line,
     va_list args;
     va_start(args, format);
 
-    for (int idx = 0; idx < indent; idx++) {
-        fprintf(stderr, " ");
-    }
     if (log_level >= CURR_LOG_LEVEL) {
+        for (int idx = 0; idx < indent; idx++) {
+            fprintf(stderr, " ");
+        }
         fprintf(stderr, "%s:%d:%s:", file, line, get_log_level_str(log_level));
         vfprintf(stderr, format, args);
     }
