@@ -30,4 +30,16 @@ void generic_sub_binary(Uast_binary* oper, Str_view gen_param, Ulang_type gen_ar
 
 void generic_sub_unary(Uast_unary* unary, Str_view gen_param, Ulang_type gen_arg);
 
+void generic_sub_assignment(Uast_assignment* assign, Str_view gen_param, Ulang_type gen_arg);
+
+void generic_sub_literal(Uast_literal* lit, Str_view gen_param, Ulang_type gen_arg);
+
+void generic_sub_for_with_cond(Env* env, Uast_for_with_cond* lang_for, Str_view gen_param, Ulang_type gen_arg);
+
+void generic_sub_condition(Uast_condition* cond, Str_view gen_param, Ulang_type gen_arg);
+
+void generic_sub_if_else_chain(Env* env, Uast_if_else_chain* if_else, Str_view gen_param, Ulang_type gen_arg);
+
+void generic_sub_function_call(Uast_function_call* fun_call, Str_view gen_param, Ulang_type gen_arg);
+
 #endif // GENERIC_SUB_H

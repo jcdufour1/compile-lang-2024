@@ -4,7 +4,6 @@
 Usymbol_table usymbol_table_clone(Usymbol_table tbl) {
     Usymbol_table new_tbl = {0};
     if (tbl.count < 1) {
-        todo();
         return new_tbl;
     }
 

@@ -21,4 +21,8 @@ Uast_def* uast_def_clone(const Uast_def* def);
 
 Uast_case* uast_case_clone(const Uast_case* lang_case);
 
+Uast_condition* uast_condition_clone(const Uast_condition* cond);
+
+Uast_if* uast_if_clone(const Uast_if* lang_if);
+
 #endif // UAST_CLONE_H

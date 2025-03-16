@@ -1,6 +1,7 @@
 #include <uast_clone.h>
 #include <parser_utils.h>
 #include <symbol_collection_clone.h>
+#include <ulang_type_clone.h>
 
 Uast_number* uast_number_clone(const Uast_number* lit) {
     return uast_number_new(lit->pos, lit->data);
@@ -26,18 +27,10 @@ Uast_literal* uast_literal_clone(const Uast_literal* lit) {
     unreachable("");
 }
 
-Ulang_type_vec ulang_type_vec_clone(Ulang_type_vec vec) {
-    Ulang_type_vec new_vec = {0};
-    for (size_t idx = 0; idx < vec.info.count; idx++) {
-        vec_append(&a_main, &new_vec, vec_at(&vec, idx));
-    }
-    return new_vec;
-}
-
 Uast_if_vec uast_if_vec_clone(Uast_if_vec vec) {
     Uast_if_vec new_vec = {0};
     for (size_t idx = 0; idx < vec.info.count; idx++) {
-        vec_append(&a_main, &new_vec, vec_at(&vec, idx));
+        vec_append(&a_main, &new_vec, uast_if_clone(vec_at(&vec, idx)));
     }
     return new_vec;
 }
@@ -170,9 +163,17 @@ Uast_def* uast_def_clone(const Uast_def* def) {
 }
 
 Uast_for_with_cond* uast_for_with_cond_clone(const Uast_for_with_cond* lang_for) {
-    (void) lang_for;
-    // TODO: for loop: have symbol instead of variable_def
-    todo();
+    return uast_for_with_cond_new(
+        lang_for->pos,
+        uast_condition_clone(lang_for->condition),
+        uast_block_clone(lang_for->body),
+        lang_for->continue_label,
+        lang_for->do_cont_label
+    );
+}
+
+Uast_condition* uast_condition_clone(const Uast_condition* cond) {
+    return uast_condition_new(cond->pos, uast_operator_clone(cond->child));
 }
 
 Uast_break* uast_break_clone(const Uast_break* lang_break) {
@@ -236,10 +237,6 @@ Uast_case* uast_case_clone(const Uast_case* lang_case) {
 }
 
 Uast_variable_def* uast_variable_def_clone(const Uast_variable_def* def) {
-    log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, def->lang_type));
-    if (str_view_cstr_is_equal(ulang_type_regular_const_unwrap(def->lang_type).atom.str, "i32")) {
-        todo();
-    }
     return uast_variable_def_new(def->pos, def->lang_type, def->name);
 }
 
@@ -251,3 +248,6 @@ Uast_block* uast_block_clone(const Uast_block* block) {
     return uast_block_new(block->pos, new_children, symbol_collection_clone(block->symbol_collection), block->pos_end);
 }
 
+Uast_if* uast_if_clone(const Uast_if* lang_if) {
+    return uast_if_new(lang_if->pos, uast_condition_clone(lang_if->condition), uast_block_clone(lang_if->body));
+}

@@ -144,6 +144,14 @@ void generic_sub_def(Uast_def* def, Str_view gen_param, Ulang_type gen_arg) {
     unreachable("");
 }
 
+void generic_sub_continue(Uast_continue* cont) {
+    (void) cont;
+}
+
+void generic_sub_label(Uast_label* label) {
+    (void) label;
+}
+
 void generic_sub_stmt(Env* env, Uast_stmt* stmt, Str_view gen_param, Ulang_type gen_arg) {
     switch (stmt->type) {
         case UAST_BLOCK:
@@ -156,24 +164,54 @@ void generic_sub_stmt(Env* env, Uast_stmt* stmt, Str_view gen_param, Ulang_type 
             generic_sub_def(uast_def_unwrap(stmt), gen_param, gen_arg);
             return;
         case UAST_FOR_WITH_COND:
-            todo();
+            generic_sub_for_with_cond(env, uast_for_with_cond_unwrap(stmt), gen_param, gen_arg);
+            return;
         case UAST_BREAK:
             todo();
         case UAST_CONTINUE:
-            todo();
+            generic_sub_continue(uast_continue_unwrap(stmt));
+            return;
         case UAST_ASSIGNMENT:
-            todo();
+            generic_sub_assignment(uast_assignment_unwrap(stmt), gen_param, gen_arg);
+            return;
         case UAST_RETURN:
             generic_sub_return(uast_return_unwrap(stmt), gen_param, gen_arg);
             return;
         case UAST_IF_ELSE_CHAIN:
-            todo();
+            generic_sub_if_else_chain(env, uast_if_else_chain_unwrap(stmt), gen_param, gen_arg);
+            return;
         case UAST_SWITCH:
             todo();
         case UAST_LABEL:
-            todo();
+            generic_sub_label(uast_label_unwrap(stmt));
+            return;
     }
     unreachable("");
+}
+
+void generic_sub_if(Env* env, Uast_if* lang_if, Str_view gen_param, Ulang_type gen_arg) {
+    generic_sub_condition(lang_if->condition, gen_param, gen_arg);
+    generic_sub_block(env, lang_if->body, gen_param, gen_arg);
+}
+
+void generic_sub_if_else_chain(Env* env, Uast_if_else_chain* if_else, Str_view gen_param, Ulang_type gen_arg) {
+    for (size_t idx = 0; idx < if_else->uasts.info.count; idx++) {
+        generic_sub_if(env, vec_at(&if_else->uasts, idx), gen_param, gen_arg);
+    }
+}
+
+void generic_sub_for_with_cond(Env* env, Uast_for_with_cond* lang_for, Str_view gen_param, Ulang_type gen_arg) {
+    generic_sub_condition(lang_for->condition, gen_param, gen_arg);
+    generic_sub_block(env, lang_for->body, gen_param, gen_arg);
+}
+
+void generic_sub_condition(Uast_condition* cond, Str_view gen_param, Ulang_type gen_arg) {
+    generic_sub_operator(cond->child, gen_param, gen_arg);
+}
+
+void generic_sub_assignment(Uast_assignment* assign, Str_view gen_param, Ulang_type gen_arg) {
+    generic_sub_expr(assign->lhs, gen_param, gen_arg);
+    generic_sub_expr(assign->rhs, gen_param, gen_arg);
 }
 
 void generic_sub_block(Env* env, Uast_block* block, Str_view gen_param, Ulang_type gen_arg) {
@@ -203,8 +241,8 @@ void generic_sub_block(Env* env, Uast_block* block, Str_view gen_param, Ulang_ty
 
 void generic_sub_expr(Uast_expr* expr, Str_view gen_param, Ulang_type gen_arg) {
     switch (expr->type) {
-        case UAST_OPERATOR:
-            generic_sub_operator(uast_operator_unwrap(expr), gen_param, gen_arg);
+        case UAST_LITERAL:
+            generic_sub_literal(uast_literal_unwrap(expr), gen_param, gen_arg);
             return;
         case UAST_UNKNOWN:
             return;
@@ -215,9 +253,8 @@ void generic_sub_expr(Uast_expr* expr, Str_view gen_param, Ulang_type gen_arg) {
         case UAST_INDEX:
             todo();
         case UAST_FUNCTION_CALL:
-            todo();
-        case UAST_LITERAL:
-            todo();
+            generic_sub_function_call(uast_function_call_unwrap(expr), gen_param, gen_arg);
+            return;
         case UAST_STRUCT_LITERAL:
             todo();
         case UAST_TUPLE:
@@ -226,66 +263,43 @@ void generic_sub_expr(Uast_expr* expr, Str_view gen_param, Ulang_type gen_arg) {
             todo();
         case UAST_SUM_GET_TAG:
             todo();
+        case UAST_OPERATOR:
+            generic_sub_operator(uast_operator_unwrap(expr), gen_param, gen_arg);
+            return;
     }
     unreachable("");
+}
+
+void generic_sub_function_call(Uast_function_call* fun_call, Str_view gen_param, Ulang_type gen_arg) {
+    for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
+        generic_sub_expr(vec_at(&fun_call->args, idx), gen_param, gen_arg);
+    }
+    generic_sub_expr(fun_call->callee, gen_param, gen_arg);
+}
+
+void generic_sub_literal(Uast_literal* lit, Str_view gen_param, Ulang_type gen_arg) {
+    (void) lit;
+    (void) gen_param;
+    (void) gen_arg;
+    return;
 }
 
 void generic_sub_operator(Uast_operator* oper, Str_view gen_param, Ulang_type gen_arg) {
     switch (oper->type) {
-        case UAST_BINARY:
-            generic_sub_binary(uast_binary_unwrap(oper), gen_param, gen_arg);
-            return;
         case UAST_UNARY:
             generic_sub_unary(uast_unary_unwrap(oper), gen_param, gen_arg);
             return;
+        case UAST_BINARY:
+            generic_sub_binary(uast_binary_unwrap(oper), gen_param, gen_arg);
+            return;
     }
+    unreachable("");
 }
 
 void generic_sub_binary(Uast_binary* bin, Str_view gen_param, Ulang_type gen_arg) {
-    (void) bin;
-    (void) gen_param;
-    (void) gen_arg;
-    switch (bin->token_type) {
-        case BINARY_SINGLE_EQUAL:
-            return;
-        case BINARY_SUB:
-            todo();
-        case BINARY_ADD:
-            todo();
-        case BINARY_MULTIPLY:
-            todo();
-        case BINARY_DIVIDE:
-            todo();
-        case BINARY_MODULO:
-            todo();
-        case BINARY_LESS_THAN:
-            todo();
-        case BINARY_LESS_OR_EQUAL:
-            todo();
-        case BINARY_GREATER_OR_EQUAL:
-            todo();
-        case BINARY_GREATER_THAN:
-            todo();
-        case BINARY_DOUBLE_EQUAL:
-            todo();
-        case BINARY_NOT_EQUAL:
-            todo();
-        case BINARY_BITWISE_XOR:
-            todo();
-        case BINARY_BITWISE_AND:
-            todo();
-        case BINARY_BITWISE_OR:
-            todo();
-        case BINARY_LOGICAL_AND:
-            todo();
-        case BINARY_LOGICAL_OR:
-            todo();
-        case BINARY_SHIFT_LEFT:
-            todo();
-        case BINARY_SHIFT_RIGHT:
-            todo();
-    }
-    unreachable("");
+    generic_sub_expr(bin->lhs, gen_param, gen_arg);
+    generic_sub_expr(bin->rhs, gen_param, gen_arg);
+    return;
 }
 
 void generic_sub_unary(Uast_unary* unary, Str_view gen_param, Ulang_type gen_arg) {
