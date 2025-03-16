@@ -16,6 +16,9 @@ void generic_sub_return(Uast_return* rtn, Str_view gen_param, Ulang_type gen_arg
 
 void generic_sub_param(Env* env, Uast_param* def, Str_view gen_param, Ulang_type gen_arg) {
     generic_sub_variable_def(env, def->base, gen_param, gen_arg);
+    if (def->is_optional) {
+        generic_sub_expr(env, def->optional_default, gen_param, gen_arg);
+    }
 }
 
 void generic_sub_lang_type_regular(
@@ -152,7 +155,7 @@ void generic_sub_stmt(Env* env, Uast_stmt* stmt, Str_view gen_param, Ulang_type 
             generic_sub_block(env, uast_block_unwrap(stmt), gen_param, gen_arg);
             return;
         case UAST_EXPR:
-            generic_sub_expr(uast_expr_unwrap(stmt), gen_param, gen_arg);
+            generic_sub_expr(env, uast_expr_unwrap(stmt), gen_param, gen_arg);
             return;
         case UAST_DEF:
             generic_sub_def(env, uast_def_unwrap(stmt), gen_param, gen_arg);
@@ -166,7 +169,7 @@ void generic_sub_stmt(Env* env, Uast_stmt* stmt, Str_view gen_param, Ulang_type 
             generic_sub_continue(uast_continue_unwrap(stmt));
             return;
         case UAST_ASSIGNMENT:
-            generic_sub_assignment(uast_assignment_unwrap(stmt), gen_param, gen_arg);
+            generic_sub_assignment(env, uast_assignment_unwrap(stmt), gen_param, gen_arg);
             return;
         case UAST_RETURN:
             generic_sub_return(uast_return_unwrap(stmt), gen_param, gen_arg);
@@ -185,7 +188,7 @@ void generic_sub_stmt(Env* env, Uast_stmt* stmt, Str_view gen_param, Ulang_type 
 }
 
 void generic_sub_if(Env* env, Uast_if* lang_if, Str_view gen_param, Ulang_type gen_arg) {
-    generic_sub_condition(lang_if->condition, gen_param, gen_arg);
+    generic_sub_condition(env, lang_if->condition, gen_param, gen_arg);
     generic_sub_block(env, lang_if->body, gen_param, gen_arg);
 }
 
@@ -196,29 +199,29 @@ void generic_sub_if_else_chain(Env* env, Uast_if_else_chain* if_else, Str_view g
 }
 
 void generic_sub_switch(Env* env, Uast_switch* lang_switch, Str_view gen_param, Ulang_type gen_arg) {
-    generic_sub_expr(lang_switch->operand, gen_param, gen_arg);
+    generic_sub_expr(env, lang_switch->operand, gen_param, gen_arg);
     for (size_t idx = 0; idx < lang_switch->cases.info.count; idx++) {
         generic_sub_case(env, vec_at(&lang_switch->cases, idx), gen_param, gen_arg);
     }
 }
 
 void generic_sub_for_with_cond(Env* env, Uast_for_with_cond* lang_for, Str_view gen_param, Ulang_type gen_arg) {
-    generic_sub_condition(lang_for->condition, gen_param, gen_arg);
+    generic_sub_condition(env, lang_for->condition, gen_param, gen_arg);
     generic_sub_block(env, lang_for->body, gen_param, gen_arg);
 }
 
-void generic_sub_condition(Uast_condition* cond, Str_view gen_param, Ulang_type gen_arg) {
-    generic_sub_operator(cond->child, gen_param, gen_arg);
+void generic_sub_condition(Env* env, Uast_condition* cond, Str_view gen_param, Ulang_type gen_arg) {
+    generic_sub_operator(env, cond->child, gen_param, gen_arg);
 }
 
 void generic_sub_case(Env* env, Uast_case* lang_case, Str_view gen_param, Ulang_type gen_arg) {
-    generic_sub_expr(lang_case->expr, gen_param, gen_arg);
+    generic_sub_expr(env, lang_case->expr, gen_param, gen_arg);
     generic_sub_stmt(env, lang_case->if_true, gen_param, gen_arg);
 }
 
-void generic_sub_assignment(Uast_assignment* assign, Str_view gen_param, Ulang_type gen_arg) {
-    generic_sub_expr(assign->lhs, gen_param, gen_arg);
-    generic_sub_expr(assign->rhs, gen_param, gen_arg);
+void generic_sub_assignment(Env* env, Uast_assignment* assign, Str_view gen_param, Ulang_type gen_arg) {
+    generic_sub_expr(env, assign->lhs, gen_param, gen_arg);
+    generic_sub_expr(env, assign->rhs, gen_param, gen_arg);
 }
 
 void generic_sub_block(Env* env, Uast_block* block, Str_view gen_param, Ulang_type gen_arg) {
@@ -236,7 +239,7 @@ void generic_sub_block(Env* env, Uast_block* block, Str_view gen_param, Ulang_ty
     }
 }
 
-void generic_sub_expr(Uast_expr* expr, Str_view gen_param, Ulang_type gen_arg) {
+void generic_sub_expr(Env* env, Uast_expr* expr, Str_view gen_param, Ulang_type gen_arg) {
     switch (expr->type) {
         case UAST_LITERAL:
             generic_sub_literal(uast_literal_unwrap(expr), gen_param, gen_arg);
@@ -244,14 +247,15 @@ void generic_sub_expr(Uast_expr* expr, Str_view gen_param, Ulang_type gen_arg) {
         case UAST_UNKNOWN:
             return;
         case UAST_SYMBOL:
+            generic_sub_symbol(env, uast_symbol_unwrap(expr), gen_param, gen_arg);
             return;
         case UAST_MEMBER_ACCESS:
-            generic_sub_member_access(uast_member_access_unwrap(expr), gen_param, gen_arg);
+            generic_sub_member_access(env, uast_member_access_unwrap(expr), gen_param, gen_arg);
             return;
         case UAST_INDEX:
             todo();
         case UAST_FUNCTION_CALL:
-            generic_sub_function_call(uast_function_call_unwrap(expr), gen_param, gen_arg);
+            generic_sub_function_call(env, uast_function_call_unwrap(expr), gen_param, gen_arg);
             return;
         case UAST_STRUCT_LITERAL:
             todo();
@@ -262,21 +266,27 @@ void generic_sub_expr(Uast_expr* expr, Str_view gen_param, Ulang_type gen_arg) {
         case UAST_SUM_GET_TAG:
             todo();
         case UAST_OPERATOR:
-            generic_sub_operator(uast_operator_unwrap(expr), gen_param, gen_arg);
+            generic_sub_operator(env, uast_operator_unwrap(expr), gen_param, gen_arg);
             return;
     }
     unreachable("");
 }
 
-void generic_sub_function_call(Uast_function_call* fun_call, Str_view gen_param, Ulang_type gen_arg) {
+void generic_sub_function_call(Env* env, Uast_function_call* fun_call, Str_view gen_param, Ulang_type gen_arg) {
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
-        generic_sub_expr(vec_at(&fun_call->args, idx), gen_param, gen_arg);
+        generic_sub_expr(env, vec_at(&fun_call->args, idx), gen_param, gen_arg);
     }
-    generic_sub_expr(fun_call->callee, gen_param, gen_arg);
+    generic_sub_expr(env, fun_call->callee, gen_param, gen_arg);
 }
 
-void generic_sub_member_access(Uast_member_access* access, Str_view gen_param, Ulang_type gen_arg) {
-    generic_sub_expr(access->callee, gen_param, gen_arg);
+void generic_sub_member_access(Env* env, Uast_member_access* access, Str_view gen_param, Ulang_type gen_arg) {
+    generic_sub_expr(env, access->callee, gen_param, gen_arg);
+}
+
+void generic_sub_symbol(Env* env, Uast_symbol* sym, Str_view gen_param, Ulang_type gen_arg) {
+    for (size_t idx = 0; idx < sym->generic_args.info.count; idx++) {
+        generic_sub_lang_type(env, vec_at_ref(&sym->generic_args, idx), vec_at(&sym->generic_args, idx), gen_param, gen_arg);
+    }
 }
 
 void generic_sub_literal(Uast_literal* lit, Str_view gen_param, Ulang_type gen_arg) {
@@ -286,25 +296,26 @@ void generic_sub_literal(Uast_literal* lit, Str_view gen_param, Ulang_type gen_a
     return;
 }
 
-void generic_sub_operator(Uast_operator* oper, Str_view gen_param, Ulang_type gen_arg) {
+void generic_sub_operator(Env* env, Uast_operator* oper, Str_view gen_param, Ulang_type gen_arg) {
     switch (oper->type) {
         case UAST_UNARY:
-            generic_sub_unary(uast_unary_unwrap(oper), gen_param, gen_arg);
+            generic_sub_unary(env, uast_unary_unwrap(oper), gen_param, gen_arg);
             return;
         case UAST_BINARY:
-            generic_sub_binary(uast_binary_unwrap(oper), gen_param, gen_arg);
+            generic_sub_binary(env, uast_binary_unwrap(oper), gen_param, gen_arg);
             return;
     }
     unreachable("");
 }
 
-void generic_sub_binary(Uast_binary* bin, Str_view gen_param, Ulang_type gen_arg) {
-    generic_sub_expr(bin->lhs, gen_param, gen_arg);
-    generic_sub_expr(bin->rhs, gen_param, gen_arg);
+void generic_sub_binary(Env* env, Uast_binary* bin, Str_view gen_param, Ulang_type gen_arg) {
+    generic_sub_expr(env, bin->lhs, gen_param, gen_arg);
+    generic_sub_expr(env, bin->rhs, gen_param, gen_arg);
     return;
 }
 
-void generic_sub_unary(Uast_unary* unary, Str_view gen_param, Ulang_type gen_arg) {
+void generic_sub_unary(Env* env, Uast_unary* unary, Str_view gen_param, Ulang_type gen_arg) {
+    (void) env;
     (void) unary;
     (void) gen_param;
     (void) gen_arg;

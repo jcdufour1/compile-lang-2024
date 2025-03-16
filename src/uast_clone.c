@@ -60,7 +60,7 @@ Uast_member_access* uast_member_access_clone(const Uast_member_access* access) {
 }
 
 Uast_unary* uast_unary_clone(const Uast_unary* unary) {
-    return uast_unary_new(unary->pos, uast_expr_clone(unary->child), unary->token_type, unary->lang_type);
+    return uast_unary_new(unary->pos, uast_expr_clone(unary->child), unary->token_type, ulang_type_clone(unary->lang_type));
 }
 
 Uast_binary* uast_binary_clone(const Uast_binary* binary) {
@@ -237,7 +237,7 @@ Uast_case* uast_case_clone(const Uast_case* lang_case) {
 }
 
 Uast_variable_def* uast_variable_def_clone(const Uast_variable_def* def) {
-    return uast_variable_def_new(def->pos, def->lang_type, def->name);
+    return uast_variable_def_new(def->pos, ulang_type_clone(def->lang_type), def->name);
 }
 
 Uast_block* uast_block_clone(const Uast_block* block) {

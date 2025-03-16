@@ -21,3 +21,11 @@ test 46: got number: 10
 test 47: got number 8
 test 48: got number 13
 test 49: got number 85
+test 50: got number 71
+test 51: got number 72
+test 52: got number 16
+test 53: got number 832
+test 54: got number 78
+test 55: got number 79
+test 56: got number 30
+test 57: got number 846

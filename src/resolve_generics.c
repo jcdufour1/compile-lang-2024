@@ -273,7 +273,10 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Env* env, U
 
 bool resolve_generics_ulang_type_reg_generic(Ulang_type* result, Env* env, Ulang_type_reg_generic lang_type) {
     Uast_def* before_res = NULL;
-    unwrap(usymbol_lookup(&before_res, env, lang_type.atom.str));
+    if (!usymbol_lookup(&before_res, env, lang_type.atom.str)) {
+        // TODO: expected failure test
+        unreachable("undef symbol "TAST_FMT, str_view_print(lang_type.atom.str));
+    }
 
     size_t def_count = uast_def_get_struct_def_base(before_res).generics.info.count;
     if (lang_type.generic_args.info.count != def_count) {
@@ -317,6 +320,7 @@ bool resolve_generics_ulang_type_regular(Ulang_type* result, Env* env, Ulang_typ
     Uast_def* before_res = NULL;
     if (!usymbol_lookup(&before_res, env, lang_type.atom.str)) {
         msg_undefined_type(env, lang_type.pos, ulang_type_regular_const_wrap(lang_type));
+        todo();
         return false;
     }
 
