@@ -320,7 +320,6 @@ bool resolve_generics_ulang_type_regular(Ulang_type* result, Env* env, Ulang_typ
     Uast_def* before_res = NULL;
     if (!usymbol_lookup(&before_res, env, lang_type.atom.str)) {
         msg_undefined_type(env, lang_type.pos, ulang_type_regular_const_wrap(lang_type));
-        todo();
         return false;
     }
 
@@ -361,7 +360,7 @@ static bool resolve_generics_serialize_function_decl(
         vec_append(&a_main, &params, uast_param_clone(vec_at(&old_decl->params->params, idx)));
     }
 
-    Ulang_type new_rtn_type = old_decl->return_type->lang_type;
+    Ulang_type new_rtn_type = old_decl->return_type;
 
     size_t idx_arg = 0;
     for (; idx_arg < gen_args.info.count; idx_arg++) {
@@ -408,7 +407,7 @@ static bool resolve_generics_serialize_function_decl(
         old_decl->pos,
         (Uast_generic_param_vec) {0},
         uast_function_params_new(old_decl->params->pos, params),
-        uast_lang_type_new(ulang_type_get_pos(new_rtn_type), new_rtn_type),
+        new_rtn_type,
         string_to_strv(name)
     );
 
@@ -505,7 +504,7 @@ bool function_decl_generics_are_present(const Uast_function_decl* decl) {
         return true;
     }
 
-    if (ulang_type_generics_are_present(decl->return_type->lang_type)) {
+    if (ulang_type_generics_are_present(decl->return_type)) {
         // TODO: expected failure test
         unreachable("generics in return type, but not in function decl. this is wrong");
     }

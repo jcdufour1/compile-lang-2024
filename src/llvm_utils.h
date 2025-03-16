@@ -128,8 +128,6 @@ static inline Llvm_id llvm_get_llvm_id(const Llvm* llvm) {
             unreachable("");
         case LLVM_FUNCTION_PARAMS:
             unreachable("");
-        case LLVM_LANG_TYPE:
-            unreachable("");
         case LLVM_RETURN:
             unreachable("");
         case LLVM_GOTO:
@@ -273,8 +271,6 @@ static inline Lang_type llvm_get_lang_type(const Llvm* llvm) {
             unreachable("");
         case LLVM_FUNCTION_PARAMS:
             unreachable("");
-        case LLVM_LANG_TYPE:
-            return llvm_lang_type_const_unwrap(llvm)->lang_type;
         case LLVM_RETURN:
             unreachable("");
         case LLVM_GOTO:
@@ -327,8 +323,6 @@ static inline Lang_type* llvm_ref_get_lang_type(Llvm* llvm) {
             unreachable("");
         case LLVM_FUNCTION_PARAMS:
             unreachable("");
-        case LLVM_LANG_TYPE:
-            return &llvm_lang_type_unwrap(llvm)->lang_type;
         case LLVM_RETURN:
             unreachable("");
         case LLVM_GOTO:
@@ -372,8 +366,6 @@ static inline Llvm* get_llvm_src(Llvm* llvm) {
         case LLVM_BLOCK:
             unreachable("");
         case LLVM_FUNCTION_PARAMS:
-            unreachable("");
-        case LLVM_LANG_TYPE:
             unreachable("");
         case LLVM_RETURN:
             unreachable("");
@@ -419,8 +411,6 @@ static inline Llvm* get_llvm_dest(Llvm* llvm) {
         case LLVM_BLOCK:
             unreachable("");
         case LLVM_FUNCTION_PARAMS:
-            unreachable("");
-        case LLVM_LANG_TYPE:
             unreachable("");
         case LLVM_RETURN:
             unreachable("");
@@ -540,8 +530,6 @@ static inline Str_view llvm_tast_get_name(const Llvm* llvm) {
         case LLVM_BLOCK:
             unreachable("");
         case LLVM_FUNCTION_PARAMS:
-            unreachable("");
-        case LLVM_LANG_TYPE:
             unreachable("");
         case LLVM_RETURN:
             unreachable("");

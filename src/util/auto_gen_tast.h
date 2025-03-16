@@ -464,7 +464,7 @@ static Tast_type tast_gen_function_decl(const char* prefix) {
     Tast_type def = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&def.members, "Tast_function_params*", "params");
-    append_member(&def.members, "Tast_lang_type*", "return_type");
+    append_member(&def.members, "Lang_type", "return_type");
     append_member(&def.members, "Str_view", "name");
 
     return def;
@@ -585,15 +585,6 @@ static Tast_type tast_gen_function_params(const char* prefix) {
     return params;
 }
 
-static Tast_type tast_gen_lang_type(const char* prefix) {
-    const char* base_name = "lang_type";
-    Tast_type lang_type = {.name = tast_name_new(prefix, base_name, false)};
-
-    append_member(&lang_type.members, "Lang_type", "lang_type");
-
-    return lang_type;
-}
-
 static Tast_type tast_gen_condition(const char* prefix) {
     const char* base_name = "condition";
     Tast_type bound = {.name = tast_name_new(prefix, base_name, false)};
@@ -690,7 +681,6 @@ static Tast_type tast_gen_tast(void) {
 
     vec_append(&gen_a, &tast.sub_types, tast_gen_stmt(base_name));
     vec_append(&gen_a, &tast.sub_types, tast_gen_function_params(base_name));
-    vec_append(&gen_a, &tast.sub_types, tast_gen_lang_type(base_name));
     vec_append(&gen_a, &tast.sub_types, tast_gen_condition(base_name));
     vec_append(&gen_a, &tast.sub_types, tast_gen_if(base_name));
 

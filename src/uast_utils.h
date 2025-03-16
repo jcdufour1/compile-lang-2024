@@ -44,7 +44,7 @@ static inline Ulang_type uast_get_ulang_type_def(const Uast_def* def) {
         case UAST_VARIABLE_DEF:
             return uast_variable_def_const_unwrap(def)->lang_type;
         case UAST_FUNCTION_DECL:
-            return uast_function_decl_const_unwrap(def)->return_type->lang_type;
+            return uast_function_decl_const_unwrap(def)->return_type;
         case UAST_STRUCT_DEF:
             return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(uast_struct_def_const_unwrap(def)->base.name, 0), uast_def_get_pos(def)));
         case UAST_PRIMITIVE_DEF:
@@ -93,9 +93,6 @@ static inline Ulang_type uast_get_ulang_type(const Uast* uast) {
             return uast_get_ulang_type_stmt(uast_stmt_const_unwrap(uast));
         case UAST_FUNCTION_PARAMS:
             unreachable("");
-        case UAST_LANG_TYPE:
-            todo();
-            //return uast_lang_type_const_unwrap(uast)->lang_type;
         case UAST_FOR_LOWER_BOUND:
             unreachable("");
         case UAST_FOR_UPPER_BOUND:
@@ -173,7 +170,7 @@ static inline bool uast_def_get_lang_type(Lang_type* result, Env* env, const Uas
         case UAST_VARIABLE_DEF:
             return try_lang_type_from_ulang_type(result, env, uast_variable_def_const_unwrap(def)->lang_type, ulang_type_get_pos(uast_variable_def_const_unwrap(def)->lang_type));
         case UAST_FUNCTION_DECL:
-            *result = lang_type_from_ulang_type(env, uast_function_decl_const_unwrap(def)->return_type->lang_type);
+            *result = lang_type_from_ulang_type(env, uast_function_decl_const_unwrap(def)->return_type);
             return true;
         case UAST_PRIMITIVE_DEF:
             unreachable("");
@@ -233,9 +230,6 @@ static inline bool uast_get_lang_type(Lang_type* result, Env* env, const Uast* u
             return uast_stmt_get_lang_type(result, env, uast_stmt_const_unwrap(uast), generics);
         case UAST_FUNCTION_PARAMS:
             unreachable("");
-        case UAST_LANG_TYPE:
-            todo();
-            //return uast_lang_type_const_unwrap(uast)->lang_type;
         case UAST_FOR_LOWER_BOUND:
             unreachable("");
         case UAST_FOR_UPPER_BOUND:
@@ -421,8 +415,6 @@ static inline Str_view uast_get_name(const Uast* uast) {
         case UAST_STMT:
             return uast_stmt_get_name(uast_stmt_const_unwrap(uast));
         case UAST_FUNCTION_PARAMS:
-            unreachable("");
-        case UAST_LANG_TYPE:
             unreachable("");
         case UAST_FOR_LOWER_BOUND:
             unreachable("");

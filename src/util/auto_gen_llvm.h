@@ -324,7 +324,7 @@ static Llvm_type llvm_gen_function_decl(void) {
     Llvm_type def = {.name = llvm_name_new("def", "function_decl", false)};
 
     append_member(&def.members, "Llvm_function_params*", "params");
-    append_member(&def.members, "Llvm_lang_type*", "return_type");
+    append_member(&def.members, "Lang_type", "return_type");
     append_member(&def.members, "Str_view", "name");
 
     return def;
@@ -444,14 +444,6 @@ static Llvm_type llvm_gen_function_params(void) {
     return params;
 }
 
-static Llvm_type llvm_gen_lang_type(void) {
-    Llvm_type lang_type = {.name = llvm_name_new("llvm", "lang_type", false)};
-
-    append_member(&lang_type.members, "Lang_type", "lang_type");
-
-    return lang_type;
-}
-
 static Llvm_type llvm_gen_return(void) {
     Llvm_type rtn = {.name = llvm_name_new("llvm", "return", false)};
 
@@ -521,7 +513,6 @@ static Llvm_type llvm_gen_llvm(void) {
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_expr());
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_load_element_ptr());
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_function_params());
-    vec_append(&gen_a, &llvm.sub_types, llvm_gen_lang_type());
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_def());
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_return());
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_goto());

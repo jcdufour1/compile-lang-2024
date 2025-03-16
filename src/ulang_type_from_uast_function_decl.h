@@ -9,7 +9,7 @@ static inline Ulang_type ulang_type_from_uast_function_decl(const Uast_function_
     }
 
     Ulang_type* return_type = arena_alloc(&a_main, sizeof(*return_type));
-    *return_type = decl->return_type->lang_type;
+    *return_type = decl->return_type;
     Ulang_type_fn fn = ulang_type_fn_new(ulang_type_tuple_new(params, decl->pos), return_type, decl->pos);
     return ulang_type_fn_const_wrap(fn);
 }

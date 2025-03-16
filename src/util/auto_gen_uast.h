@@ -326,7 +326,7 @@ static Uast_type uast_gen_function_decl(const char* prefix) {
 
     append_member(&def.members, "Uast_generic_param_vec", "generics");
     append_member(&def.members, "Uast_function_params*", "params");
-    append_member(&def.members, "Uast_lang_type*", "return_type");
+    append_member(&def.members, "Ulang_type", "return_type");
     append_member(&def.members, "Str_view", "name");
 
     return def;
@@ -441,14 +441,6 @@ static Uast_type uast_gen_function_params(const char* prefix) {
     append_member(&params.members, "Uast_param_vec", "params");
 
     return params;
-}
-
-static Uast_type uast_gen_lang_type(const char* prefix) {
-    Uast_type lang_type = {.name = uast_name_new(prefix, "lang_type", false)};
-
-    append_member(&lang_type.members, "Ulang_type", "lang_type");
-
-    return lang_type;
 }
 
 static Uast_type uast_gen_for_lower_bound(const char* prefix) {
@@ -596,7 +588,6 @@ static Uast_type uast_gen_uast(void) {
 
     vec_append(&gen_a, &uast.sub_types, uast_gen_stmt(base_name));
     vec_append(&gen_a, &uast.sub_types, uast_gen_function_params(base_name));
-    vec_append(&gen_a, &uast.sub_types, uast_gen_lang_type(base_name));
     vec_append(&gen_a, &uast.sub_types, uast_gen_for_lower_bound(base_name));
     vec_append(&gen_a, &uast.sub_types, uast_gen_for_upper_bound(base_name));
     vec_append(&gen_a, &uast.sub_types, uast_gen_condition(base_name));

@@ -269,16 +269,6 @@ Str_view llvm_function_params_print_internal(const Llvm_function_params* functio
     return string_to_strv(buf);
 }
 
-Str_view llvm_lang_type_print_internal(const Llvm_lang_type* lang_type, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "lang_type", indent);
-    extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, lang_type->lang_type);
-    string_extend_cstr(&print_arena, &buf, "\n");
-
-    return string_to_strv(buf);
-}
-
 Str_view llvm_return_print_internal(const Llvm_return* lang_rtn, int indent) {
     String buf = {0};
 
@@ -352,9 +342,9 @@ Str_view llvm_function_decl_print_internal(const Llvm_function_decl* fun_decl, i
     string_extend_cstr_indent(&print_arena, &buf, "function_decl", indent);
     indent += INDENT_WIDTH;
     string_extend_strv_in_par(&print_arena, &buf, fun_decl->name);
+    extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, fun_decl->return_type);
     string_extend_cstr(&print_arena, &buf, "\n");
     string_extend_strv(&print_arena, &buf, llvm_function_params_print_internal(fun_decl->params, indent));
-    string_extend_strv(&print_arena, &buf, llvm_lang_type_print_internal(fun_decl->return_type, indent));
     indent -= INDENT_WIDTH;
 
     return string_to_strv(buf);
@@ -545,8 +535,6 @@ Str_view llvm_print_internal(const Llvm* llvm, int indent) {
             return llvm_load_element_ptr_print_internal(llvm_load_element_ptr_const_unwrap(llvm), indent);
         case LLVM_FUNCTION_PARAMS:
             return llvm_function_params_print_internal(llvm_function_params_const_unwrap(llvm), indent);
-        case LLVM_LANG_TYPE:
-            return llvm_lang_type_print_internal(llvm_lang_type_const_unwrap(llvm), indent);
         case LLVM_RETURN:
             return llvm_return_print_internal(llvm_return_const_unwrap(llvm), indent);
         case LLVM_GOTO:

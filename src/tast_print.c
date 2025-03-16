@@ -323,15 +323,6 @@ Str_view tast_function_params_print_internal(const Tast_function_params* functio
     return string_to_strv(buf);
 }
 
-Str_view tast_lang_type_print_internal(const Tast_lang_type* lang_type, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "lang_type", indent);
-    string_extend_strv(&print_arena, &buf, lang_type_print_internal(LANG_TYPE_MODE_LOG, lang_type->lang_type));
-
-    return string_to_strv(buf);
-}
-
 Str_view tast_condition_print_internal(const Tast_condition* cond, int indent) {
     String buf = {0};
 
@@ -437,8 +428,8 @@ Str_view tast_function_decl_print_internal(const Tast_function_decl* fun_decl, i
     string_extend_cstr_indent(&print_arena, &buf, "function_decl", indent);
     indent += INDENT_WIDTH;
     string_extend_strv_in_par(&print_arena, &buf, fun_decl->name);
+    extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, fun_decl->return_type);
     string_extend_cstr(&print_arena, &buf, "\n");
-    string_extend_strv(&print_arena, &buf, tast_lang_type_print_internal(fun_decl->return_type, indent));
     string_extend_strv(&print_arena, &buf, tast_function_params_print_internal(fun_decl->params, indent));
     indent -= INDENT_WIDTH;
 
@@ -662,8 +653,6 @@ Str_view tast_print_internal(const Tast* tast, int indent) {
             return tast_stmt_print_internal(tast_stmt_const_unwrap(tast), indent);
         case TAST_FUNCTION_PARAMS:
             return tast_function_params_print_internal(tast_function_params_const_unwrap(tast), indent);
-        case TAST_LANG_TYPE:
-            return tast_lang_type_print_internal(tast_lang_type_const_unwrap(tast), indent);
         case TAST_CONDITION:
             return tast_condition_print_internal(tast_condition_const_unwrap(tast), indent);
         case TAST_IF:

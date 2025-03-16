@@ -122,8 +122,6 @@ static Llvm* id_llvm(Env* env, Llvm* llvm) {
             return llvm_block_wrap(id_block(env, llvm_block_unwrap(llvm)));
         case LLVM_RETURN:
             return llvm;
-        case LLVM_LANG_TYPE:
-            return llvm;
         case LLVM_LOAD_ELEMENT_PTR:
             llvm_load_element_ptr_unwrap(llvm)->llvm_id = llvm_id_new();
             return llvm;
@@ -183,8 +181,6 @@ static Llvm* id_llvm_sometimes(Env* env, Llvm* llvm) {
         case LLVM_BLOCK:
             return llvm;
         case LLVM_RETURN:
-            return llvm;
-        case LLVM_LANG_TYPE:
             return llvm;
         case LLVM_LOAD_ELEMENT_PTR:
             return llvm;

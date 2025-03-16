@@ -1020,26 +1020,8 @@ static PARSE_STATUS parse_function_parameters(Env* env, Uast_function_params** r
         }
     }
 
-    if (tokens->count > 0) {
-        if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
-            unreachable("message not implemented\n");
-        }
-    }
-
     *result = uast_function_params_new(tk_view_front(*tokens).pos, params);
     return PARSE_OK;
-}
-
-static void parse_return_types(Env* env, Uast_lang_type** result, Tk_view* tokens) {
-    Ulang_type lang_type = {0};
-    Pos pos = tk_view_front(*tokens).pos;
-
-    if (!parse_lang_type_struct(env, &lang_type, tokens)) {
-        *result = uast_lang_type_new(pos, ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0), pos)));
-        return;
-    }
-    log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
-    *result = uast_lang_type_new(pos, lang_type);
 }
 
 static PARSE_STATUS parse_function_decl_common(
@@ -1066,10 +1048,19 @@ static PARSE_STATUS parse_function_decl_common(
         return PARSE_ERROR;
     }
 
-    Uast_lang_type* return_type = NULL;
-    parse_return_types(env, &return_type, tokens);
+    Token close_par_tk = {0};
+    if (tokens->count > 0) {
+        if (!try_consume(&close_par_tk, tokens, TOKEN_CLOSE_PAR)) {
+            unreachable("message not implemented\n");
+        }
+    }
 
-    *fun_decl = uast_function_decl_new(name_token.pos, gen_params, params, return_type, name_token.text);
+    Ulang_type rtn_type = {0};
+    if (!parse_lang_type_struct(env, &rtn_type, tokens)) {
+        rtn_type = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0), close_par_tk.pos));
+    }
+
+    *fun_decl = uast_function_decl_new(name_token.pos, gen_params, params, rtn_type, name_token.text);
     if (!usymbol_add(env, uast_function_decl_wrap(*fun_decl))) {
         return msg_redefinition_of_symbol(env, uast_function_decl_wrap(*fun_decl));
     }

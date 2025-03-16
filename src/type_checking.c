@@ -81,7 +81,7 @@ const Uast_function_decl* get_parent_function_decl_const(Env* env) {
     unreachable("");
 }
 
-const Uast_lang_type* get_parent_function_return_type(Env* env) {
+Ulang_type get_parent_function_return_type(Env* env) {
     return get_parent_function_decl_const(env)->return_type;
 }
 
@@ -249,7 +249,7 @@ static void msg_invalid_return_type_internal(const char* file, int line, Env* en
             file, line,
             LOG_ERROR, EXPECT_FAIL_MISSING_RETURN, env->file_text, pos,
             "no return statement in function that returns `"LANG_TYPE_FMT"`\n",
-            ulang_type_print(LANG_TYPE_MODE_MSG, fun_decl->return_type->lang_type)
+            ulang_type_print(LANG_TYPE_MODE_MSG, fun_decl->return_type)
         );
     } else {
         msg_internal(
@@ -257,15 +257,15 @@ static void msg_invalid_return_type_internal(const char* file, int line, Env* en
             LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, env->file_text, pos,
             "returning `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
             lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(child)), 
-            ulang_type_print(LANG_TYPE_MODE_MSG, fun_decl->return_type->lang_type)
+            ulang_type_print(LANG_TYPE_MODE_MSG, fun_decl->return_type)
         );
     }
 
     msg_internal(
         file, line,
-        LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, fun_decl->return_type->pos,
+        LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, ulang_type_get_pos(fun_decl->return_type),
         "function return type `"LANG_TYPE_FMT"` defined here\n",
-        ulang_type_print(LANG_TYPE_MODE_MSG, fun_decl->return_type->lang_type)
+        ulang_type_print(LANG_TYPE_MODE_MSG, fun_decl->return_type)
     );
 }
 
@@ -1245,7 +1245,7 @@ static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Env* env, Ulang
         pos,
         (Uast_generic_param_vec) {0},
         uast_function_params_new(pos, params),
-        uast_lang_type_new(pos, *lang_type.return_type),
+        *lang_type.return_type,
         name
     );
     usym_tbl_add(&vec_at(&env->ancesters, 0)->usymbol_table, uast_function_decl_wrap(fun_decl));
@@ -1398,11 +1398,8 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
         default:
             unreachable(TAST_FMT, uast_def_print(fun_def));
     }
-    Tast_lang_type* fun_rtn_type = NULL;
-    if (!try_types_set_lang_type(env, &fun_rtn_type, fun_decl->return_type)) {
-        return false;
-    }
 
+    Lang_type fun_rtn_type = lang_type_from_ulang_type(env, fun_decl->return_type);
     Uast_function_params* params = fun_decl->params;
 
     Tast_expr_vec new_args = {0};
@@ -1478,7 +1475,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
         fun_call->pos,
         new_args,
         new_callee,
-        fun_rtn_type->lang_type
+        fun_rtn_type
     ));
 
 error:
@@ -1887,13 +1884,9 @@ bool try_set_function_decl_types(
         return false;
     }
 
-    Tast_lang_type* new_rtn_type = NULL;
-    if (!try_types_set_lang_type(env, &new_rtn_type, decl->return_type)) {
-        assert(error_count > 0);
-        return false;
-    }
+    Lang_type fun_rtn_type = lang_type_from_ulang_type(env, decl->return_type);
 
-    *new_tast = tast_function_decl_new(decl->pos, new_params, new_rtn_type, decl->name);
+    *new_tast = tast_function_decl_new(decl->pos, new_params, fun_rtn_type, decl->name);
 
     Symbol_collection* top = vec_top(&env->ancesters);
     if (add_to_sym_tbl) {
@@ -1971,16 +1964,6 @@ bool try_set_function_params_types(
     return status;
 }
 
-
-bool try_types_set_lang_type(
-    Env* env,
-    Tast_lang_type** new_tast,
-    Uast_lang_type* uast
-) {
-    *new_tast = tast_lang_type_new(uast->pos, lang_type_from_ulang_type(env, uast->lang_type));
-    return true;
-}
-
 bool try_set_return_types(Env* env, Tast_return** new_tast, Uast_return* rtn) {
     *new_tast = NULL;
 
@@ -1988,7 +1971,7 @@ bool try_set_return_types(Env* env, Tast_return** new_tast, Uast_return* rtn) {
     PARENT_OF old_parent_of = env->parent_of;
     env->parent_of = PARENT_OF_RETURN;
 
-    Ulang_type fun_rtn_type = get_parent_function_return_type(env)->lang_type;
+    Ulang_type fun_rtn_type = get_parent_function_return_type(env);
 
     Tast_expr* new_child = NULL;
     switch (check_generic_assignment(env, &new_child, lang_type_from_ulang_type(env, fun_rtn_type), rtn->child, rtn->pos)) {

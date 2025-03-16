@@ -281,16 +281,11 @@ static Llvm_function_params* load_function_params_clone(Env* env, Tast_function_
     return new_params;
 }
 
-static Llvm_lang_type* load_lang_type_clone(Tast_lang_type* old_lang_type) {
-    Llvm_lang_type* new_lang_type = llvm_lang_type_new(old_lang_type->pos, old_lang_type->lang_type);
-    return new_lang_type;
-}
-
 static Llvm_function_decl* load_function_decl_clone(Env* env, Tast_function_decl* old_decl) {
     return llvm_function_decl_new(
         old_decl->pos,
         load_function_params_clone(env, old_decl->params),
-        load_lang_type_clone(old_decl->return_type),
+        rm_tuple_lang_type(env, old_decl->return_type, old_decl->pos),
         old_decl->name
     );
 }
@@ -342,8 +337,8 @@ static void do_function_def_alloca_param(Env* env, Llvm_function_params* new_par
 
 static Llvm_function_params* do_function_def_alloca(
     Env* env,
-    Llvm_lang_type** new_rtn_type,
-    Tast_lang_type* rtn_type,
+    Lang_type* new_rtn_type,
+    Lang_type rtn_type,
     Llvm_block* new_block,
     const Tast_function_params* old_params
 ) {
@@ -353,21 +348,21 @@ static Llvm_function_params* do_function_def_alloca(
         0
     );
 
-    Lang_type rtn_lang_type = rm_tuple_lang_type(env, rtn_type->lang_type, (Pos) {0});
-    if (is_struct_like(rtn_type->lang_type.type)) {
+    Lang_type rtn_lang_type = rm_tuple_lang_type(env, rtn_type, (Pos) {0});
+    if (is_struct_like(rtn_type.type)) {
         lang_type_set_pointer_depth(&rtn_lang_type, lang_type_get_pointer_depth(rtn_lang_type) + 1);
         Tast_variable_def* new_def = tast_variable_def_new(
-            rtn_type->pos,
+            (Pos) {0} /* TODO */,
             rtn_lang_type,
             false,
             util_literal_name_new_prefix("return_as_parameter")
         );
         Llvm_variable_def* param = load_variable_def_clone(env, new_def);
         do_function_def_alloca_param(env, new_params, new_block, param);
-        *new_rtn_type = llvm_lang_type_new(param->pos, lang_type_void_const_wrap(lang_type_void_new(0)));
+        *new_rtn_type = lang_type_void_const_wrap(lang_type_void_new(0));
         env->struct_rtn_name_parent_function = vec_at(&new_params->params, 0)->name_self;
     } else {
-        *new_rtn_type = llvm_lang_type_new(rtn_type->pos, rtn_type->lang_type);
+        *new_rtn_type = rtn_type;
     }
 
     for (size_t idx = 0; idx < old_params->params.info.count; idx++) {
@@ -1424,8 +1419,8 @@ static Str_view load_expr(Env* env, Llvm_block* new_block, Tast_expr* old_expr) 
 static Llvm_reg load_function_parameters(
     Env* env,
     Llvm_block* new_fun_body,
-    Llvm_lang_type** new_lang_type,
-    Tast_lang_type* rtn_type,
+    Lang_type* new_lang_type,
+    Lang_type rtn_type,
     Tast_function_params* old_params
 ) {
     Llvm_function_params* new_params = do_function_def_alloca(env, new_lang_type, rtn_type, new_fun_body, old_params);
@@ -1476,7 +1471,7 @@ static Str_view load_function_def(
     Llvm_function_decl* new_decl = llvm_function_decl_new(
         pos,
         NULL,
-        load_lang_type_clone(old_fun_def->decl->return_type),
+        old_fun_def->decl->return_type,
         old_fun_def->decl->name
     );
 
@@ -1495,11 +1490,10 @@ static Str_view load_function_def(
     //unwrap(old_fun_def->decl->return_type->lang_type.info.count == 1);
 
     vec_append(&a_main, &env->ancesters, &new_fun_def->body->symbol_collection);
-    Llvm_lang_type* new_lang_type = NULL;
+    Lang_type new_lang_type = {0};
     new_fun_def->decl->params = llvm_function_params_unwrap(load_function_parameters(
             env, new_fun_def->body, &new_lang_type, old_fun_def->decl->return_type, old_fun_def->decl->params
     ).llvm);
-    assert(new_lang_type);
     new_fun_def->decl->return_type = new_lang_type;
     for (size_t idx = 0; idx < old_fun_def->body->children.info.count; idx++) {
         load_stmt(env, new_fun_def->body, vec_at(&old_fun_def->body->children, idx));
@@ -1543,7 +1537,7 @@ static Str_view load_return(
     }
 
     //assert(fun_decl->return_type->lang_type.info.count == 1);
-    Lang_type rtn_type = rm_tuple_lang_type(env, fun_decl->return_type->lang_type, fun_decl->pos);
+    Lang_type rtn_type = rm_tuple_lang_type(env, fun_decl->return_type, fun_decl->pos);
 
     bool rtn_is_struct = is_struct_like(rtn_type.type);
 

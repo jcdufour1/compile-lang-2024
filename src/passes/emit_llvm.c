@@ -295,14 +295,6 @@ static void tast_extend_literal_decl(Env* env, String* output, const Tast_litera
     tast_extend_literal_decl_prefix(output, literal);
 }
 
-static const Llvm_lang_type* return_type_from_function_def(const Llvm_function_def* fun_def) {
-    const Llvm_lang_type* return_type = fun_def->decl->return_type;
-    if (return_type) {
-        return return_type;
-    }
-    unreachable("");
-}
-
 static void emit_function_params(Env* env, String* output, const Llvm_function_params* fun_params) {
     for (size_t idx = 0; idx < fun_params->params.info.count; idx++) {
         const Llvm_variable_def* curr_param = vec_at(&fun_params->params, idx);
@@ -885,7 +877,7 @@ static void emit_store_another_llvm(Env* env, String* output, String* literals, 
 static void emit_function_def(Env* env, String* struct_defs, String* output, String* literals, const Llvm_function_def* fun_def) {
     string_extend_cstr(&a_main, output, "define dso_local ");
 
-    extend_type_call_str(env, output, return_type_from_function_def(fun_def)->lang_type);
+    extend_type_call_str(env, output, fun_def->decl->return_type);
 
     string_extend_cstr(&a_main, output, " @");
     string_extend_strv(&a_main, output, llvm_tast_get_name(llvm_def_const_wrap(llvm_function_def_const_wrap(fun_def))));
@@ -1224,9 +1216,6 @@ static void emit_sometimes(Env* env, String* struct_defs, String* output, String
         case LLVM_FUNCTION_PARAMS:
             todo();
             emit_function_params(env, output, llvm_function_params_const_unwrap(llvm));
-            return;
-        case LLVM_LANG_TYPE:
-            unreachable("");
             return;
         case LLVM_RETURN:
             unreachable("");

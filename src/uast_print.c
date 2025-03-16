@@ -263,15 +263,6 @@ Str_view uast_function_params_print_internal(const Uast_function_params* functio
     return string_to_strv(buf);
 }
 
-Str_view uast_lang_type_print_internal(const Uast_lang_type* lang_type, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "lang_type", indent);
-    string_extend_strv(&print_arena, &buf, ulang_type_print_internal(LANG_TYPE_MODE_LOG, lang_type->lang_type));
-
-    return string_to_strv(buf);
-}
-
 Str_view uast_for_lower_bound_print_internal(const Uast_for_lower_bound* lower, int indent) {
     String buf = {0};
 
@@ -450,8 +441,8 @@ Str_view uast_function_decl_print_internal(const Uast_function_decl* fun_decl, i
 
     string_extend_cstr_indent(&print_arena, &buf, "function_decl", indent);
     string_extend_strv_in_par(&print_arena, &buf, fun_decl->name);
+    extend_ulang_type_to_string(&buf, LANG_TYPE_MODE_LOG, fun_decl->return_type);
     string_extend_cstr(&print_arena, &buf, "\n");
-    string_extend_strv(&print_arena, &buf, uast_lang_type_print_internal(fun_decl->return_type, indent + INDENT_WIDTH));
     string_extend_strv(&print_arena, &buf, uast_function_params_print_internal(fun_decl->params, indent + INDENT_WIDTH));
 
     return string_to_strv(buf);
@@ -697,8 +688,6 @@ Str_view uast_print_internal(const Uast* uast, int indent) {
             return uast_stmt_print_internal(uast_stmt_const_unwrap(uast), indent);
         case UAST_FUNCTION_PARAMS:
             return uast_function_params_print_internal(uast_function_params_const_unwrap(uast), indent);
-        case UAST_LANG_TYPE:
-            return uast_lang_type_print_internal(uast_lang_type_const_unwrap(uast), indent);
         case UAST_FOR_LOWER_BOUND:
             return uast_for_lower_bound_print_internal(uast_for_lower_bound_const_unwrap(uast), indent);
         case UAST_FOR_UPPER_BOUND:
