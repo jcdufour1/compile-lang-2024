@@ -2227,7 +2227,9 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
     Tast_if_vec new_ifs = {0};
 
     Tast_expr* new_operand = NULL;
-    unwrap(try_set_expr_types(env, &new_operand, lang_switch->operand));
+    if (!try_set_expr_types(env, &new_operand, lang_switch->operand)) {
+        return false;
+    }
 
     Exhaustive_data exhaustive_data = check_for_exhaustiveness_start(
         env, tast_expr_get_lang_type(new_operand)
