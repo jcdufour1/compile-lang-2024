@@ -177,6 +177,11 @@ fn concise() {
         case .none: printf("test 44: got nothing")
     }
 
+    switch try_add_one(<i32>)(13) {
+        case .some(num): printf("test 45: got number: %d\n", num)
+        case .none: printf("test 45: got nothing")
+    }
+
     printf("test 46: got number: %d\n", triangle(<i33>)(num2))
 
     printf("test 47: got number %d\n", add_one_or_two(<i32>)(8, .none))

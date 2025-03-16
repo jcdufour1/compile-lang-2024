@@ -40,6 +40,12 @@ static Str_view load_raw_union_def(
     Tast_raw_union_def* old_def
 );
 
+static Str_view load_ptr_symbol(
+    Env* env,
+    Llvm_block* new_block,
+    Tast_symbol* old_sym
+);
+
 static Lang_type_struct rm_tuple_lang_type_tuple(Env* env, Lang_type_tuple lang_type, Pos lang_type_pos) {
     Tast_variable_def_vec members = {0};
 
@@ -156,14 +162,10 @@ static Lang_type rm_tuple_lang_type_sum(Env* env, Lang_type_sum lang_type, Pos l
     Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
     unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def)));
     struct_def->base.name = serialize_tast_struct_def(env, struct_def);
-    log(LOG_DEBUG, TAST_FMT, tast_struct_def_print(struct_def));
     // TODO: consider collisions with generated structs and user defined structs
-    bool status = sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def));
-    log(LOG_DEBUG, "%zu\n", env->ancesters.info.count);
-    log(LOG_DEBUG, BOOL_FMT"\n", bool_print(status));
+    sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def));
     Tast_def* dummy = NULL;
-    status = sym_tbl_lookup(&dummy, &vec_at(&env->ancesters, 0)->symbol_table, struct_def->base.name);
-    log(LOG_DEBUG, BOOL_FMT"\n", bool_print(status));
+    unwrap(sym_tbl_lookup(&dummy, &vec_at(&env->ancesters, 0)->symbol_table, struct_def->base.name));
 
     load_struct_def(env, struct_def);
     return tast_struct_def_get_lang_type(struct_def);
@@ -188,8 +190,6 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
             );
             vec_append(&a_main, &members, tag);
 
-            log(LOG_DEBUG, TAST_FMT, tast_def_print(lang_type_def_));
-            log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
             Tast_raw_union_def* item_type_def = tast_raw_union_def_new(
                 lang_type_pos,
                 tast_raw_union_def_unwrap(lang_type_def_)->base
@@ -459,59 +459,90 @@ static Tast_assignment* for_loop_cond_var_assign_new(Env* env, Str_view sym_name
 static Str_view load_function_call(
     Env* env,
     Llvm_block* new_block,
-    Tast_function_call* old_fun_call
+    Tast_function_call* old_call
 ) {
-    bool rtn_is_struct = is_struct_like(old_fun_call->lang_type.type);
+    bool rtn_is_struct = is_struct_like(old_call->lang_type.type);
 
     Strv_vec new_args = {0};
 
     Str_view def_name = {0};
-    Lang_type fun_lang_type = old_fun_call->lang_type;
+    Lang_type fun_lang_type = old_call->lang_type;
     if (rtn_is_struct) {
         def_name = util_literal_name_new_prefix("result_fun_call");
-        Tast_variable_def* def = tast_variable_def_new(old_fun_call->pos, old_fun_call->lang_type, false, def_name);
+        Tast_variable_def* def = tast_variable_def_new(old_call->pos, old_call->lang_type, false, def_name);
         unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(def)));
         
         vec_append(&a_main, &new_args, def_name);
         load_variable_def(env, new_block, def);
         fun_lang_type = lang_type_void_const_wrap(lang_type_void_new(0));
-        //unreachable(TAST_FMT, tast_function_call_print(old_fun_call));
+        //unreachable(TAST_FMT, tast_function_call_print(old_call));
     }
 
-    Llvm_function_call* new_fun_call = llvm_function_call_new(
-        old_fun_call->pos,
+    Llvm_function_call* new_call = llvm_function_call_new(
+        old_call->pos,
         new_args,
         util_literal_name_new(),
-        load_expr(env, new_block, old_fun_call->callee),
+        load_expr(env, new_block, old_call->callee),
         0,
         fun_lang_type
     );
-    unwrap(alloca_add(env, llvm_expr_wrap(llvm_function_call_wrap(new_fun_call))));
+    unwrap(alloca_add(env, llvm_expr_wrap(llvm_function_call_wrap(new_call))));
 
-    for (size_t idx = 0; idx < old_fun_call->args.info.count; idx++) {
-        Tast_expr* old_arg = vec_at(&old_fun_call->args, idx);
+    for (size_t idx = 0; idx < old_call->args.info.count; idx++) {
+        Tast_expr* old_arg = vec_at(&old_call->args, idx);
         Str_view thing = load_expr(env, new_block, old_arg);
-        vec_append(&a_main, &new_fun_call->args, thing);
+        vec_append(&a_main, &new_call->args, thing);
         Llvm* result = NULL;
         unwrap(alloca_lookup(&result, env, thing));
     }
 
-    vec_append(&a_main, &new_block->children, llvm_expr_wrap(llvm_function_call_wrap(new_fun_call)));
+    vec_append(&a_main, &new_block->children, llvm_expr_wrap(llvm_function_call_wrap(new_call)));
 
     if (rtn_is_struct) {
         assert(def_name.count > 0);
 
-        Tast_symbol* new_sym = tast_symbol_new(old_fun_call->pos, (Sym_typed_base) {
+        Tast_symbol* new_sym = tast_symbol_new(old_call->pos, (Sym_typed_base) {
            .name = def_name,
-           .lang_type = old_fun_call->lang_type,
+           .lang_type = old_call->lang_type,
            .llvm_id = 0
         });
 
         Str_view result = load_expr(env, new_block, tast_symbol_wrap(new_sym));
         return result;
     } else {
-        return new_fun_call->name_self;
+        return new_call->name_self;
     }
+}
+
+// this function is needed for situations such as switching directly on sum
+static Str_view load_ptr_function_call(
+    Env* env,
+    Llvm_block* new_block,
+    Tast_function_call* old_call
+) {
+    Tast_variable_def* new_var = tast_variable_def_new(
+        old_call->pos,
+        old_call->lang_type,
+        false,
+        util_literal_name_new()
+    );
+    unwrap(symbol_add(env, tast_variable_def_wrap(new_var)));
+    load_variable_def(env, new_block, new_var);
+
+    Tast_assignment* new_assign = tast_assignment_new(
+        old_call->pos,
+        tast_symbol_wrap(tast_symbol_new(
+            old_call->pos,
+            (Sym_typed_base) {.lang_type = new_var->lang_type, .name = new_var->name, .llvm_id = 0}
+        )),
+        tast_function_call_wrap(old_call)
+    );
+    load_assignment(env, new_block, new_assign);
+
+    return load_ptr_symbol(env, new_block, tast_symbol_new(
+        old_call->pos,
+        (Sym_typed_base) {.lang_type = new_var->lang_type, .name = new_var->name, .llvm_id = 0}
+    ));
 }
 
 static Str_view load_struct_literal(Env* env, Llvm_block* new_block, Tast_struct_literal* old_lit) {
@@ -531,7 +562,6 @@ static Str_view load_struct_literal(Env* env, Llvm_block* new_block, Tast_struct
     for (size_t idx = 0; idx < old_lit->members.info.count; idx++) {
         Str_view memb_name = vec_at(&struct_def->base.members, idx)->name;
         Lang_type memb_lang_type = vec_at(&struct_def->base.members, idx)->lang_type;
-        log(LOG_DEBUG, LANG_TYPE_FMT, lang_type_print(LANG_TYPE_MODE_LOG, memb_lang_type));
         Tast_member_access* access = tast_member_access_new(
             old_lit->pos,
             memb_lang_type,
@@ -550,9 +580,6 @@ static Str_view load_struct_literal(Env* env, Llvm_block* new_block, Tast_struct
         );
 
         load_assignment(env, new_block, assign);
-
-        log(LOG_DEBUG, TAST_FMT, tast_member_access_print(access));
-        log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
     }
 
     // TODO: make helper function "tast_symbol_new_from_variable_def" or similar
@@ -670,12 +697,6 @@ static Str_view load_sum_lit(
             old_lit->item
         )
     )));
-    log(LOG_DEBUG, TAST_FMT, tast_struct_literal_print(tast_struct_literal_new(
-        old_lit->pos,
-        members,
-        util_literal_name_new(),
-        new_lang_type
-    )));
 
     return load_struct_literal(env, new_block, tast_struct_literal_new(
         old_lit->pos,
@@ -720,7 +741,6 @@ static Str_view load_raw_union_lit(
             tast_member_access_wrap(access),
             old_lit->item
         );
-        log(LOG_DEBUG, TAST_FMT, tast_assignment_print(assign));
         load_assignment(env, new_block, assign);
     }
 
@@ -768,7 +788,6 @@ static Str_view load_ptr_symbol(
     (void) new_block;
 
     Tast_def* var_def_ = NULL;
-    log(LOG_DEBUG, TAST_FMT, tast_symbol_print(old_sym));
     unwrap(symbol_lookup(&var_def_, env, old_sym->base.name));
     Llvm_variable_def* var_def = load_variable_def_clone(env, tast_variable_def_unwrap(var_def_));
     Llvm* alloca = NULL;
@@ -941,8 +960,6 @@ static Str_view load_binary_short_circuit(
     vec_append(&a_main, &ifs, if_false);
     Tast_if_else_chain* if_else = tast_if_else_chain_new(old_bin->pos, ifs);
     
-    //log(LOG_DEBUG, TAST_FMT, tast_if_print(if_true));
-    //log(LOG_DEBUG, TAST_FMT, tast_if_print(if_false));
     load_variable_def(env, new_block, new_var_def);
     load_if_else_chain(env, new_block, if_else);
     return load_symbol(env, new_block, tast_symbol_new(old_bin->pos, (Sym_typed_base) {
@@ -1276,7 +1293,7 @@ static Str_view load_ptr_sum_access(
     unwrap(symbol_lookup(&sum_def_, env, lang_type_get_str(tast_expr_get_lang_type(old_access->callee))));
     Tast_sum_def* sum_def = tast_sum_def_unwrap(sum_def_);
     Str_view new_callee = load_ptr_expr(env, new_block, old_access->callee);
-    Tast_raw_union_def* union_def = get_raw_union_def_from_sum_def( env, sum_def);
+    Tast_raw_union_def* union_def = get_raw_union_def_from_sum_def(env, sum_def);
     
     Tast_number* zero = tast_number_new(
         old_access->pos,
@@ -1356,7 +1373,6 @@ static Str_view load_tuple(
 
     Llvm* dummy = NULL;
     unwrap(alloca_lookup(&dummy, env, new_lit));
-    log(LOG_DEBUG, TAST_FMT, llvm_print(dummy));
     return new_lit;
 }
 
@@ -1379,7 +1395,6 @@ static Str_view load_tuple_ptr(
 
     //Llvm* dummy = NULL;
     //unwrap(alloca_lookup(&dummy, env, new_lit));
-    //log(LOG_DEBUG, TAST_FMT, llvm_print(dummy));
     todo();
     //return new_lit;
 }
@@ -1430,8 +1445,6 @@ static Llvm_reg load_function_parameters(
         Llvm_variable_def* param = vec_at(&new_params->params, idx);
 
         Llvm* dummy = NULL;
-        //symbol_log(LOG_DEBUG, env);
-        //alloca_log(LOG_DEBUG, env);
 
         bool is_struct = is_struct_like(param->lang_type.type);
 
@@ -1742,7 +1755,6 @@ static Llvm_block* if_else_chain_to_branch(Env* env, Tast_if_else_chain* if_else
     assert(!symbol_lookup(&dummy_def, env, next_if));
     add_label(env, new_block, if_after, if_else->pos, false);
     assert(alloca_lookup(&dummy, env, next_if));
-    //log_tree(LOG_DEBUG, tast_block_wrap(new_block));
 
     return new_block;
 }
@@ -1823,7 +1835,7 @@ static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for
     }
 
     for (size_t idx = 0; idx < new_branch_block->children.info.count; idx++) {
-        log(LOG_DEBUG, TAST_FMT"", llvm_print(vec_at(&new_branch_block->children, idx)));
+        //log(LOG_DEBUG, TAST_FMT"", llvm_print(vec_at(&new_branch_block->children, idx)));
     }
 
     vec_append(&a_main, &new_branch_block->children, llvm_goto_wrap(
@@ -2015,7 +2027,7 @@ static Str_view load_ptr_expr(Env* env, Llvm_block* new_block, Tast_expr* old_ex
             // TODO: deref string literal
             unreachable("");
         case TAST_FUNCTION_CALL:
-            unreachable("");
+            return load_ptr_function_call(env, new_block, tast_function_call_unwrap(old_expr));
         case TAST_STRUCT_LITERAL:
             unreachable("");
         case TAST_TUPLE:
@@ -2170,13 +2182,13 @@ static Llvm_block* load_block(Env* env, Tast_block* old_block) {
     vec_append(&a_main, &env->ancesters, &new_block->symbol_collection);
 
     Symbol_table table = vec_top(&env->ancesters)->symbol_table;
-    symbol_level_log(LOG_DEBUG, table);
+    //symbol_level_log(LOG_DEBUG, table);
     for (size_t idx = 0; idx < table.capacity; idx++) {
         if (table.table_tasts[idx].status != SYM_TBL_OCCUPIED) {
             continue;
         }
 
-        log(LOG_DEBUG, TAST_FMT, tast_def_print(table.table_tasts[idx].tast));
+        //log(LOG_DEBUG, TAST_FMT, tast_def_print(table.table_tasts[idx].tast));
         load_def_sometimes(env, new_block, table.table_tasts[idx].tast);
     }
 
