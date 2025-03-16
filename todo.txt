@@ -27,6 +27,19 @@ for generics:
 - fix this: sum.own:12:5:error:some cases are not covered: u8*.string
 - fix lang_type system for void, etc. (it is a mess)
 - tuple on lhs changed to individual accesses in type_checking pass?
+- fix this to report also the (<i32>) to reduce confusion:
+  optional_for_loop.own:150:57:error:argument is of type `u8*`, but the corresponding parameter `num` is of type `i32`
+     149 |     let num2 i33 = 5
+     150 |     printf("test 40: got number: %d\n", triangle(<i32>)("sdfa"))
+         |                                                         ^
+     151 |     printf("test 41: got number: %d\n", triangle(<i32>)(num3 + 2))
+  src/type_checking.c:1463:debug:location of error
+  optional_for_loop.own:48:25:note:corresponding parameter `num` defined here
+      47 |
+      48 | fn triangle(<ItemType>)(num ItemType) ItemType {
+         |                         ^
+      49 |     let result ItemType = 0
+
 
 
 # roadmap to try to get bootstrap compiler done:

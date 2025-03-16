@@ -9,7 +9,6 @@
 #include <env.h>
 
 void generic_sub_return(Uast_return* rtn, Str_view gen_param, Ulang_type gen_arg) {
-    log(LOG_DEBUG, TAST_FMT, uast_return_print(rtn));
     (void) rtn;
     (void) gen_param;
     (void) gen_arg;
@@ -53,8 +52,6 @@ void generic_sub_lang_type_reg_generic(
     }
 
     resolve_generics_ulang_type_reg_generic(new_lang_type, env, new_reg);
-    log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_reg_generic_const_wrap(lang_type)));
-    log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, *new_lang_type));
 }
 
 void generic_sub_lang_type(
@@ -231,15 +228,6 @@ void generic_sub_block(Env* env, Uast_block* block, Str_view gen_param, Ulang_ty
             continue;
         }
 
-
-        log(LOG_DEBUG, TAST_FMT, uast_variable_def_print(uast_variable_def_unwrap(tbl.table_tasts[idx].tast)));
-        log(LOG_DEBUG, LANG_TYPE_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, uast_variable_def_unwrap(tbl.table_tasts[idx].tast)->lang_type));
-        //log(LOG_DEBUG, "thing 9870: %p\n", ulang_type_regular_const_unwrap(uast_variable_def_unwrap(tbl.table_tasts[idx].tast)->lang_type));
-        
-        log(LOG_DEBUG, TAST_FMT, uast_def_print(tbl.table_tasts[idx].tast));
-        log(LOG_DEBUG, "thing 9877: %p\n", (void*)tbl.table_tasts[idx].tast);
-
-        //log(LOG_DEBUG, "old_block: %p  new_block: %p\n", (void*)def->body, (void*)new_block);
         generic_sub_def(env, tbl.table_tasts[idx].tast, gen_param, gen_arg);
     }
 

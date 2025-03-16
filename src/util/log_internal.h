@@ -1,6 +1,11 @@
 #ifndef LOG_INTERNAL_H
 #define LOG_INTERNAL_H
 
+#define LOG_BLUE "\033[1;34m"
+#define LOG_YELLOW "\033[1;33m"
+#define LOG_RED "\033[1;31m"
+#define LOG_NORMAL "\033[0;39m"
+
 static inline const char* get_log_level_str(int log_level) {
     switch (log_level) {
         case LOG_TRACE:
@@ -10,13 +15,13 @@ static inline const char* get_log_level_str(int log_level) {
         case LOG_VERBOSE:
             return "debug";
         case LOG_NOTE:
-            return "note";
+            return LOG_BLUE"note"LOG_NORMAL;
         case LOG_WARNING:
-            return "warning";
+            return LOG_YELLOW"warning"LOG_NORMAL;
         case LOG_ERROR:
-            return "error";
+            return LOG_RED"error"LOG_NORMAL;
         case LOG_FATAL:
-            return "fatal error";
+            return LOG_RED"fatal error"LOG_NORMAL;
         default:
             abort();
     }
