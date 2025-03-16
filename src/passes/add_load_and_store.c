@@ -46,6 +46,13 @@ static Str_view load_ptr_symbol(
     Tast_symbol* old_sym
 );
 
+static Tast_symbol* tast_symbol_new_from_variable_def(Pos pos, const Tast_variable_def* def) {
+    return tast_symbol_new(
+        pos,
+        (Sym_typed_base) {.lang_type = def->lang_type, .name = def->name, .llvm_id = 0}
+    );
+}
+
 static Lang_type_struct rm_tuple_lang_type_tuple(Env* env, Lang_type_tuple lang_type, Pos lang_type_pos) {
     Tast_variable_def_vec members = {0};
 
@@ -531,18 +538,12 @@ static Str_view load_ptr_function_call(
 
     Tast_assignment* new_assign = tast_assignment_new(
         old_call->pos,
-        tast_symbol_wrap(tast_symbol_new(
-            old_call->pos,
-            (Sym_typed_base) {.lang_type = new_var->lang_type, .name = new_var->name, .llvm_id = 0}
-        )),
+        tast_symbol_wrap(tast_symbol_new_from_variable_def(old_call->pos, new_var)),
         tast_function_call_wrap(old_call)
     );
     load_assignment(env, new_block, new_assign);
 
-    return load_ptr_symbol(env, new_block, tast_symbol_new(
-        old_call->pos,
-        (Sym_typed_base) {.lang_type = new_var->lang_type, .name = new_var->name, .llvm_id = 0}
-    ));
+    return load_ptr_symbol(env, new_block, tast_symbol_new_from_variable_def(old_call->pos, new_var));
 }
 
 static Str_view load_struct_literal(Env* env, Llvm_block* new_block, Tast_struct_literal* old_lit) {
@@ -566,11 +567,7 @@ static Str_view load_struct_literal(Env* env, Llvm_block* new_block, Tast_struct
             old_lit->pos,
             memb_lang_type,
             memb_name,
-            tast_symbol_wrap(tast_symbol_new(old_lit->pos, (Sym_typed_base) {
-                .lang_type = new_var->lang_type, 
-                .name = new_var->name,
-                .llvm_id = 0
-            }))
+            tast_symbol_wrap(tast_symbol_new_from_variable_def(old_lit->pos, new_var))
         );
 
         Tast_assignment* assign = tast_assignment_new(
@@ -582,12 +579,7 @@ static Str_view load_struct_literal(Env* env, Llvm_block* new_block, Tast_struct
         load_assignment(env, new_block, assign);
     }
 
-    // TODO: make helper function "tast_symbol_new_from_variable_def" or similar
-    return load_symbol(env, new_block, tast_symbol_new(new_var->pos, (Sym_typed_base) {
-        .lang_type = new_var->lang_type,
-        .name = new_var->name,
-        .llvm_id = 0
-    }));
+    return load_symbol(env, new_block, tast_symbol_new_from_variable_def(new_var->pos, new_var));
 }
 
 static Str_view load_string(
@@ -728,11 +720,7 @@ static Str_view load_raw_union_lit(
         new_var->pos,
         active_memb->lang_type,
         active_memb->name,
-        tast_symbol_wrap(tast_symbol_new(new_var->pos, (Sym_typed_base) {
-            .lang_type = new_var->lang_type,
-            .name = new_var->name,
-            .llvm_id = 0
-        }))
+        tast_symbol_wrap(tast_symbol_new_from_variable_def(new_var->pos, new_var))
     );
 
     if (active_memb->lang_type.type != LANG_TYPE_VOID) {
@@ -744,14 +732,7 @@ static Str_view load_raw_union_lit(
         load_assignment(env, new_block, assign);
     }
 
-    return load_symbol(env, new_block, tast_symbol_new(
-        new_var->pos,
-        (Sym_typed_base) {
-            .lang_type = new_var->lang_type,
-            .name = new_var->name,
-            .llvm_id = 0
-        }
-    ));
+    return load_symbol(env, new_block, tast_symbol_new_from_variable_def(new_var->pos, new_var));
 }
 
 static Str_view load_literal(
@@ -891,33 +872,25 @@ static Str_view load_binary_short_circuit(
         lang_type_unsigned_int_new(1, 0)
     ));
 
-    Tast_variable_def* new_var_def = tast_variable_def_new(
+    Tast_variable_def* new_var = tast_variable_def_new(
         old_bin->pos,
         u1_lang_type,
         false,
         util_literal_name_new_prefix("short_cir")
     );
-    unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(new_var_def)));
+    unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_variable_def_wrap(new_var)));
 
     Tast_stmt_vec if_true_stmts = {0};
     vec_append(&a_main, &if_true_stmts, tast_expr_wrap(tast_assignment_wrap(tast_assignment_new(
         old_bin->pos,
-        tast_symbol_wrap(tast_symbol_new(old_bin->pos, (Sym_typed_base) {
-            .lang_type = u1_lang_type,
-            .name = new_var_def->name,
-            .llvm_id = 0
-        })),
+        tast_symbol_wrap(tast_symbol_new_from_variable_def(old_bin->pos, new_var)),
         old_bin->rhs
     ))));
 
     Tast_stmt_vec if_false_stmts = {0};
     vec_append(&a_main, &if_false_stmts, tast_expr_wrap(tast_assignment_wrap(tast_assignment_new(
         old_bin->pos,
-        tast_symbol_wrap(tast_symbol_new(old_bin->pos, (Sym_typed_base) {
-            .lang_type = u1_lang_type,
-            .name = new_var_def->name,
-            .llvm_id = 0
-        })),
+        tast_symbol_wrap(tast_symbol_new_from_variable_def(old_bin->pos, new_var)),
         tast_literal_wrap(
             util_tast_literal_new_from_int64_t(if_false_val, TOKEN_INT_LITERAL, old_bin->pos)
         )
@@ -960,13 +933,9 @@ static Str_view load_binary_short_circuit(
     vec_append(&a_main, &ifs, if_false);
     Tast_if_else_chain* if_else = tast_if_else_chain_new(old_bin->pos, ifs);
     
-    load_variable_def(env, new_block, new_var_def);
+    load_variable_def(env, new_block, new_var);
     load_if_else_chain(env, new_block, if_else);
-    return load_symbol(env, new_block, tast_symbol_new(old_bin->pos, (Sym_typed_base) {
-        .lang_type = u1_lang_type,
-        .name = new_var_def->name,
-        .llvm_id = 0
-    }));
+    return load_symbol(env, new_block, tast_symbol_new_from_variable_def(old_bin->pos, new_var));
 
 }
 
