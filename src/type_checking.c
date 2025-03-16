@@ -2208,7 +2208,7 @@ static bool check_for_exhaustiveness_finish(Env* env, Exhaustive_data exhaustive
                     string_extend_cstr(&a_main, &string, ", ");
                 }
 
-                string_extend_strv(&a_main, &string, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(&enum_def.members, idx)->lang_type));
+                string_extend_strv(&a_main, &string, enum_def.name);
                 string_extend_cstr(&a_main, &string, ".");
                 string_extend_strv(&a_main, &string, vec_at(&enum_def.members, idx)->name);
             }
