@@ -113,6 +113,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "duplicate_case.own": ["duplicate-case", "duplicate-case"],
     EXPECTED_FAIL_EXAMPLES_DIR + "sum_arg_with_void_varient.own": ["invalid-count-fun-args"],
     EXPECTED_FAIL_EXAMPLES_DIR + "sum_case_invalid_cond_defered_symbols.own": ["binary-mismatched-types"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "undef_symbol_in_generic.own": ["undefined-symbol"],
 }
 
 def to_str(a):
@@ -130,15 +131,15 @@ def print_success(*base, **kargs) -> None:
 def print_info(*base, **kargs) -> None:
     print(StatusColors.BLUE, *base, StatusColors.TO_NORMAL, file=sys.stderr, sep = "", **kargs)
 
-def get_files_to_test(files_to_exclude: list[str]) -> list[FileItem]:
+def get_files_to_test(files_to_test: list[str]) -> list[FileItem]:
     files: list[FileItem] = []
     for possible_file_base in map(to_str, os.listdir(EXAMPLES_DIR)):
         possible_file_path: str = os.path.realpath(os.path.join(EXAMPLES_DIR, possible_file_base))
-        if os.path.isfile(possible_file_path) and possible_file_path not in files_to_exclude:
+        if os.path.isfile(possible_file_path) and possible_file_path in files_to_test:
             files.append(FileItem(possible_file_path, True, None))
     for possible_file_base in map(to_str, os.listdir(EXPECTED_FAIL_EXAMPLES_DIR)):
         possible_file_path: str = os.path.realpath(os.path.join(EXPECTED_FAIL_EXAMPLES_DIR, possible_file_base))
-        if os.path.isfile(possible_file_path) and possible_file_path not in files_to_exclude:
+        if os.path.isfile(possible_file_path) and possible_file_path in files_to_test:
             files.append(FileItem(possible_file_path, False, EXPECT_FAIL_FILE_PATH_TO_TYPE[os.path.join(EXPECTED_FAIL_EXAMPLES_DIR, possible_file_base)]))
     return files
 
@@ -239,7 +240,7 @@ def do_test(file: FileItem, do_debug: bool, expected_output: str) -> bool:
     print_success("testing: " + file.path + " (" + debug_release_text + ") success")
     print()
 
-def do_debug(files_to_exclude: list[str], count_threads: int) -> None:
+def do_debug(files_to_test: list[str], count_threads: int) -> None:
     cmd = ["make", "-j", str(count_threads), "build"]
     print_info("compiling debug:")
     process = subprocess.run(cmd, env=dict(os.environ | {"DEBUG": "1"}))
@@ -248,7 +249,7 @@ def do_debug(files_to_exclude: list[str], count_threads: int) -> None:
         sys.exit(1)
     print_success("compiling debug: done")
 
-    for file in get_files_to_test(files_to_exclude):
+    for file in get_files_to_test(files_to_test):
         expected_output: str
         if file.expected_success:
             expected_output = get_expected_output(file)
@@ -258,7 +259,7 @@ def do_debug(files_to_exclude: list[str], count_threads: int) -> None:
     print_success("testing debug: done")
     print()
 
-def do_release(files_to_exclude: list[str], count_threads: int) -> None:
+def do_release(files_to_test: list[str], count_threads: int) -> None:
     cmd = ["make", "-j", str(count_threads), "build"]
     print_info("compiling release:")
     process = subprocess.run(cmd, env=dict(os.environ | {"DEBUG": "0"}))
@@ -268,7 +269,7 @@ def do_release(files_to_exclude: list[str], count_threads: int) -> None:
     print_success("compiling release: done")
     print()
 
-    for file in get_files_to_test(files_to_exclude):
+    for file in get_files_to_test(files_to_test):
         expected_output: str
         if file.expected_success:
             expected_output = get_expected_output(file)
@@ -278,17 +279,48 @@ def do_release(files_to_exclude: list[str], count_threads: int) -> None:
     print_success("testing release: done")
     print()
 
+def append_all_files(list_or_map, callback):
+    for possible_file_base in map(to_str, os.listdir(EXAMPLES_DIR)):
+        possible_file_path: str = os.path.realpath(os.path.join(EXAMPLES_DIR, possible_file_base))
+        if os.path.isfile(possible_file_path):
+            callback(list_or_map, possible_file_path)
+    for possible_file_base in map(to_str, os.listdir(EXPECTED_FAIL_EXAMPLES_DIR)):
+        possible_file_path: str = os.path.realpath(os.path.join(EXPECTED_FAIL_EXAMPLES_DIR, possible_file_base))
+        if os.path.isfile(possible_file_path):
+            callback(list_or_map, possible_file_path)
+
+def add_to_map(map, path):
+    map[path] = 0
+
 def parse_args() -> list[str]:
-    list_files: list[str] = []
+    to_include: dict[str, int] = {}
+    has_found_flag = False
     for arg in sys.argv:
         if arg.startswith("--exclude="):
-            files_to_exclude = arg[len("--exclude="):]
-            for idx, path in enumerate(files_to_exclude.split(",")):
-                list_files.append(os.path.realpath(path))
-    return list_files
+            to_exclude_raw = arg[len("--exclude="):]
+            for idx, path in enumerate(to_exclude_raw.split(",")):
+                if not has_found_flag:
+                    append_all_files(to_include, add_to_map)
+                    has_found_flag = True
+                if os.path.realpath(path) in to_include:
+                    del to_include[os.path.realpath(path)]
+        elif arg.startswith("--include="):
+            has_found_flag = True
+            to_include_raw = arg[len("--include="):]
+            for idx, path in enumerate(to_include_raw.split(",")):
+                if not os.path.realpath(path) in to_include:
+                    to_include[os.path.realpath(path)] = 0
+
+    if not has_found_flag:
+        append_all_files(to_include, add_to_map)
+
+    to_include_list: list[str] = []
+    for path in to_include:
+        to_include_list.append(path)
+    return to_include_list
 
 def main() -> None:
-    files_to_exclude: list[str] = parse_args()
+    files_to_test: list[str] = parse_args()
 
     count_threads: int
     try:
@@ -298,8 +330,8 @@ def main() -> None:
         print_warning(e, file=sys.stderr)
         count_threads = 2
 
-    do_debug(files_to_exclude, count_threads)
-    do_release(files_to_exclude, count_threads)
+    do_debug(files_to_test, count_threads)
+    do_release(files_to_test, count_threads)
     print_success("all tests passed")
 
 if __name__ == '__main__':
