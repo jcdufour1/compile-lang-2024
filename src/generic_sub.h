@@ -4,9 +4,9 @@
 #include <uast.h>
 #include <ulang_type.h>
 
-void generic_sub_param(Uast_param* def, Str_view gen_param, Ulang_type gen_arg);
+void generic_sub_param(Env* env, Uast_param* def, Str_view gen_param, Ulang_type gen_arg);
 
-void generic_sub_variable_def(Uast_variable_def* def, Str_view gen_param, Ulang_type gen_arg);
+void generic_sub_variable_def(Env* env, Uast_variable_def* def, Str_view gen_param, Ulang_type gen_arg);
 
 void generic_sub_stmt(Env* env, Uast_stmt* stmt, Str_view gen_param, Ulang_type gen_arg);
 
@@ -41,5 +41,11 @@ void generic_sub_condition(Uast_condition* cond, Str_view gen_param, Ulang_type 
 void generic_sub_if_else_chain(Env* env, Uast_if_else_chain* if_else, Str_view gen_param, Ulang_type gen_arg);
 
 void generic_sub_function_call(Uast_function_call* fun_call, Str_view gen_param, Ulang_type gen_arg);
+
+void generic_sub_switch(Env* env, Uast_switch* lang_switch, Str_view gen_param, Ulang_type gen_arg);
+
+void generic_sub_case(Env* env, Uast_case* lang_case, Str_view gen_param, Ulang_type gen_arg);
+
+void generic_sub_member_access(Uast_member_access* access, Str_view gen_param, Ulang_type gen_arg);
 
 #endif // GENERIC_SUB_H

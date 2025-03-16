@@ -338,7 +338,7 @@ static void resolve_generics_serialize_function_decl(
     for (size_t idx_gen = 0; idx_gen < old_decl->generics.info.count; idx_gen++) {
         for (size_t idx_param = 0; idx_param < params.info.count; idx_param++) {
             Str_view curr_gen = vec_at(&old_decl->generics, idx_gen)->child->name;
-            generic_sub_param(vec_at(&params, idx_param), curr_gen, vec_at(&gen_args, idx_gen));
+            generic_sub_param(env, vec_at(&params, idx_param), curr_gen, vec_at(&gen_args, idx_gen));
         }
     }
 
@@ -385,14 +385,6 @@ bool resolve_generics_function_def(
     Uast_block* new_block = uast_block_clone(def->body);
     assert(new_block != def->body);
     assert(new_block->symbol_collection.usymbol_table.table_tasts != def->body->symbol_collection.usymbol_table.table_tasts);
-    Uast_def* symbol_dummy1 = NULL;
-    Uast_def* symbol_dummy2 = NULL;
-    //assert(usym_tbl_lookup(&symbol_dummy1, &new_block->symbol_collection.usymbol_table, str_view_from_cstr("dummy")));
-    //assert(usym_tbl_lookup(&symbol_dummy2, &def->body->symbol_collection.usymbol_table, str_view_from_cstr("dummy")));
-    //assert(symbol_dummy1 != symbol_dummy2);
-    assert(usym_tbl_lookup(&symbol_dummy1, &new_block->symbol_collection.usymbol_table, str_view_from_cstr("num")));
-    assert(usym_tbl_lookup(&symbol_dummy2, &def->body->symbol_collection.usymbol_table, str_view_from_cstr("num")));
-    assert(symbol_dummy1 != symbol_dummy2);
     log(LOG_DEBUG, TAST_FMT, uast_block_print(new_block));
 
     log(LOG_DEBUG, "old_block: %p  new_block: %p\n", (void*)def->body, (void*)new_block);

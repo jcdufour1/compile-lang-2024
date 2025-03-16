@@ -1,25 +1,171 @@
 
-extern("c") fn printf(str_to_print u8*, args any...) i32
+// TODO: test case for this
+//let temp Optional(<i32>) = number.some
 
-type Opt_int sum {
+extern("c") fn printf(str_to_print u8*, args any...) i32
+extern("c") fn isdigit(character i32) i32
+
+type Optional sum(<ItemType>) {
+    some ItemType
     none
+}
+
+type Optional_int sum {
     some i32
+    none
+}
+
+type ParseError struct {
+    dummy i32
+}
+
+type Result sum(<SuccessType, ErrorType>) {
+    ok SuccessType
+    error ErrorType
+}
+
+type Token sum {
+    number i32
     string u8*
 }
 
-fn opt_int_print(opt_num Opt_int) {
-    switch opt_num {
-        case Opt_int.some(num): printf("got number: %d\n", num)
-        case Opt_int.none: printf("got nothing\n")
-        case Opt_int.string: return
+fn token_print(token Token) {
+    switch token {
+        case Token.number(num): printf("token is number: %d\n", num)
+        case Token.string(str): printf("token is string: %s\n", str)
     }
 }
 
-fn main() i32 {
-    let num Opt_int = Opt_int.some(76)
-    opt_int_print(num)
+// TODO: uncomment this
+//fn get_num_2(<ItemType>)() Optional(<ItemType>) {
+//    return .some(52)
+//}
 
-    num = Opt_int.none
-    opt_int_print(num)
-    return 0
+//fn get_num(<ItemType>)() ItemType {
+//    return 52
+//}
+
+fn triangle(<ItemType>)(num ItemType) ItemType {
+    let result ItemType = 0
+    for curr i32 in 0..num {
+        result += curr
+    }
+
+    if (num > 4) {
+        printf("result is more than 4\n")
+    } else {
+        printf("result is no more than 4\n")
+    }
+    return result
+}
+
+fn try_add_one(<ItemType>)(num ItemType) Optional(<ItemType>) {
+    let dummy ItemType = num
+    return .some(num + 1)
+}
+
+fn add_one_or_two(<ItemType>)(lhs ItemType, rhs Optional(<ItemType>)) ItemType {
+    switch rhs {
+        case .some(rhs_val):
+            return lhs + rhs_val
+        case .none:
+            return lhs
+    }
+    return lhs
+}
+
+fn verbose() {
+    let number Optional(<i32>) = Optional(<i32>).some(84)
+    let number2 Optional(<i32>) = Optional(<i32>).some(87)
+    let number3 Optional(<i64>) = Optional(<i64>).none
+    let number4 Optional(<i64>) = Optional(<i64>).some(91)
+    let result Result(<i32, ParseError>) = Result(<i32, ParseError>).error({.dummy = 8})
+
+    switch number {
+        case Optional(<i32>).some(num): printf("test 2: got number: %d\n", num)
+        case Optional(<i32>).none: printf("test 2: got nothing\n")
+    }
+
+    switch number2 {
+        case Optional(<i32>).some(num): printf("test 4: got number: %d\n", num)
+        case Optional(<i32>).none: printf("test 4: got nothing\n")
+    }
+
+    switch number3 {
+        case Optional(<i64>).some(num): printf("test 6: got number: %d\n", num)
+        case Optional(<i64>).none: printf("test 6: got nothing\n")
+    }
+
+    switch number4 {
+        case Optional(<i64>).some(num): printf("test 8: got number: %d\n", num)
+        case Optional(<i64>).none: printf("test 8: got nothing\n")
+    }
+
+    switch result {
+        case Result(<i32, ParseError>).ok(num): printf("test 10: got success: %d\n", num)
+        case Result(<i32, ParseError>).error(error): printf("test 10: got error: %d\n", error.dummy)
+    }
+}
+
+fn concise() {
+    let number Optional(<i32>) = .some(84)
+    let number2 Optional(<i32>) = .some(87)
+    let number3 Optional(<i64>) = .none
+    let number4 Optional(<i64>) = .some(91)
+    let result Result(<i32, ParseError>) = .error({.dummy = 8})
+    let result2 Result(<Token, ParseError>) = .ok(.number(7))
+
+    switch number {
+        case .some(num): printf("test 21: got number: %d\n", num)
+        case .none: printf("test 21: got nothing\n")
+    }
+
+    switch number2 {
+        case .some(num): printf("test 23: got number: %d\n", num)
+        case .none: printf("test 23: got nothing\n")
+    }
+
+    switch number3 {
+        case .some(num): printf("test 25: got number: %d\n", num)
+        case .none: printf("test 25: got nothing\n")
+    }
+
+    switch number4 {
+        case .some(num): printf("test 27: got number: %d\n", num)
+        case .none: printf("test 27: got nothing\n")
+    }
+
+    switch result {
+        case .ok(num): printf("test 29: got success: %d\n", num)
+        case .error(error): printf("test 29: got error: %d\n", error.dummy)
+    }
+
+    switch result2 {
+        case .ok(token): token_print(token)
+        case .error(error): printf("test 31: got error: %d\n", error.dummy)
+    }
+
+    let num3 i32 = 4
+    let num2 i33 = 5
+    printf("test 40: got number: %d\n", triangle(<i32>)(num3))
+    printf("test 41: got number: %d\n", triangle(<i32>)(num3 + 2))
+    printf("test 42: got number: %d\n", triangle(<i33>)(num2))
+
+    let result10 Optional(<i32>) = try_add_one(<i32>)(12)
+    switch result10 {
+        case .some(num): printf("test 44: got number: %d\n", num)
+        case .none: printf("test 44: got nothing")
+    }
+
+    printf("test 46: got number: %d\n", triangle(<i33>)(num2))
+
+    printf("test 47: got number %d\n", add_one_or_two(<i32>)(8, .none))
+    printf("test 48: got number %d\n", add_one_or_two(<i32>)(6, .some(7)))
+    printf("test 49: got number %d\n", add_one_or_two(<i33>)(82, .some(3)))
+}
+
+fn main() i32 {
+    verbose()
+    concise()
+    return 0;
 }
