@@ -4,6 +4,7 @@
 #include "symbol_table.h"
 #include "parser_utils.h"
 #include <stdarg.h>
+#include <expected_fail_type_print.h>
 
 static void show_location_error(Str_view file_text, Pos pos) {
     assert(pos.line > 0);
@@ -92,12 +93,17 @@ void msg_internal(
             log(LOG_FATAL, "too many fails occured\n");
             exit(EXIT_CODE_FAIL);
         }
-        assert(expected_fail_count < params.expected_fail_types.info.count && "out of bounds");
+        unwrap(expected_fail_count < params.expected_fail_types.info.count && "out of bounds");
         EXPECT_FAIL_TYPE expected_expect_fail = vec_at(&params.expected_fail_types, expected_fail_count);
         assert(expected_expect_fail != EXPECT_FAIL_NONE);
 
         if (msg_expect_fail_type != expected_expect_fail) {
-            log(LOG_FATAL, "fail type %d occured, but %d was expected\n", msg_expect_fail_type, expected_expect_fail);
+            log(
+                LOG_FATAL,
+                "fail type `"STR_VIEW_FMT"` occured, but `"STR_VIEW_FMT"` was expected\n",
+                expect_fail_type_print(msg_expect_fail_type),
+                expect_fail_type_print(expected_expect_fail)
+            );
             exit(EXIT_CODE_FAIL);
         }
         assert(expected_expect_fail != EXPECT_FAIL_NONE);

@@ -121,6 +121,9 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "sum_case_invalid_cond_defered_symbols.own": ["binary-mismatched-types"],
     EXPECTED_FAIL_EXAMPLES_DIR + "undef_symbol_in_generic.own": ["undefined-symbol"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_generic_args.own": 4*["invalid-count-generic-args"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "undef_member_in_generic_sum.own": ["undefined-type"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "switch_undef_operand.own": ["undefined-symbol"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "no_generic_args_when_required.own": ["invalid-count-generic-args"],
 }
 
 def to_str(a):

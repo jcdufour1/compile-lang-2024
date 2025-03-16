@@ -13,15 +13,15 @@
 
 static bool ulang_type_generics_are_present(Ulang_type lang_type);
 
-#define msg_invalid_count_generic_args(env, gen_args, gen_params, min_args, max_args) \
-    msg_invalid_count_generic_args_internal(__FILE__, __LINE__, env, gen_args, gen_params, min_args, max_args)
+#define msg_invalid_count_generic_args(env, pos, gen_args, min_args, max_args) \
+    msg_invalid_count_generic_args_internal(__FILE__, __LINE__, env, pos, gen_args, min_args, max_args)
 
 static void msg_invalid_count_generic_args_internal(
     const char* file,
     int line,
     Env* env,
+    Pos pos,
     Ulang_type_vec gen_args,
-    Uast_generic_param_vec gen_params,
     size_t min_args,
     size_t max_args
 ) {
@@ -35,12 +35,12 @@ static void msg_invalid_count_generic_args_internal(
     }
     string_extend_cstr(&print_arena, &message, " generic arguments expected\n");
     msg_internal(
-        file, line, LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_GENERIC_ARGS, env->file_text, ulang_type_get_pos(vec_at(&gen_args, 0)),
+        file, line, LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_GENERIC_ARGS, env->file_text, pos,
         STR_VIEW_FMT, str_view_print(string_to_strv(message))
     );
 
     msg_internal(
-        file, line, LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, vec_at(&gen_params, 0)->pos,
+        file, line, LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, pos,
         "generic parameters defined here\n" 
     );
 }
@@ -159,19 +159,31 @@ static bool try_set_sum_def_types(Env* env, Uast_sum_def* before_res, Uast_sum_d
     return success;
 }
 
-static Str_view resolve_generics_serialize_struct_def_base(
+static bool resolve_generics_serialize_struct_def_base(
+    Env* env,
     Ustruct_def_base* new_base,
     Ustruct_def_base old_base,
     Ulang_type_vec gen_args,
     Pos pos
 ) {
-    (void) pos;
     // TODO: figure out way to avoid making new Ustruct_def_base every time (do name thing here, and check if varient with name already exists)
     memset(new_base, 0, sizeof(*new_base));
 
+    if (old_base.generics.info.count != gen_args.info.count) {
+        msg_invalid_count_generic_args(
+            env,
+            pos,
+            gen_args,
+            old_base.generics.info.count,
+            old_base.generics.info.count
+        );
+        return false;
+    }
+
+    //if (gen_args.info.count != ) {
     if (gen_args.info.count < 1) {
         *new_base = old_base;
-        return new_base->name;
+        return true;
     }
 
     for (size_t idx_memb = 0; idx_memb < old_base.members.info.count; idx_memb++) {
@@ -193,7 +205,7 @@ static Str_view resolve_generics_serialize_struct_def_base(
         string_extend_strv(&a_main, &name, serialize_ulang_type(vec_at(&gen_args, idx)));
     }
     new_base->name = string_to_strv(name);
-    return string_to_strv(name);
+    return true;
 }
 
 static bool resolve_generics_ulang_type_internal(Ulang_type* result, Env* env, Uast_def* before_res, Ulang_type lang_type, Ulang_type_vec gen_args) {
@@ -201,9 +213,11 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Env* env, U
     switch (before_res->type) {
         case UAST_RAW_UNION_DEF: {
             Ustruct_def_base new_base = {0};
-            Str_view name = resolve_generics_serialize_struct_def_base(&new_base, uast_raw_union_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res));
+            if (!resolve_generics_serialize_struct_def_base(env, &new_base, uast_raw_union_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res))) {
+                return false;
+            }
             Uast_def* new_def_ = NULL;
-            if (usymbol_lookup(&new_def_, env, name)) {
+            if (usymbol_lookup(&new_def_, env, new_base.name)) {
                 after_res = new_def_;
             } else {
                 after_res = uast_raw_union_def_wrap(uast_raw_union_def_new(uast_def_get_pos(before_res), new_base));
@@ -215,9 +229,11 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Env* env, U
         }
         case UAST_ENUM_DEF: {
             Ustruct_def_base new_base = {0};
-            Str_view name = resolve_generics_serialize_struct_def_base(&new_base, uast_enum_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res));
+            if (!resolve_generics_serialize_struct_def_base(env, &new_base, uast_enum_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res))) {
+                return false;
+            }
             Uast_def* new_def_ = NULL;
-            if (usymbol_lookup(&new_def_, env, name)) {
+            if (usymbol_lookup(&new_def_, env, new_base.name)) {
                 after_res = new_def_;
             } else {
                 after_res = uast_enum_def_wrap(uast_enum_def_new(uast_def_get_pos(before_res), new_base));
@@ -229,9 +245,11 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Env* env, U
         }
         case UAST_SUM_DEF: {
             Ustruct_def_base new_base = {0};
-            Str_view name = resolve_generics_serialize_struct_def_base(&new_base, uast_sum_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res));
+            if (!resolve_generics_serialize_struct_def_base(env, &new_base, uast_sum_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res))) {
+                return false;
+            }
             Uast_def* new_def_ = NULL;
-            if (usymbol_lookup(&new_def_, env, name)) {
+            if (usymbol_lookup(&new_def_, env, new_base.name)) {
                 after_res = new_def_;
             } else {
                 after_res = uast_sum_def_wrap(uast_sum_def_new(uast_def_get_pos(before_res), new_base));
@@ -243,9 +261,11 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Env* env, U
         }
         case UAST_STRUCT_DEF: {
             Ustruct_def_base new_base = {0};
-            Str_view name = resolve_generics_serialize_struct_def_base(&new_base, uast_struct_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res));
+            if (!resolve_generics_serialize_struct_def_base(env, &new_base, uast_struct_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res))) {
+                return false;
+            }
             Uast_def* new_def_ = NULL;
-            if (usymbol_lookup(&new_def_, env, name)) {
+            if (usymbol_lookup(&new_def_, env, new_base.name)) {
                 after_res = new_def_;
             } else {
                 after_res = uast_struct_def_wrap(uast_struct_def_new(uast_def_get_pos(before_res), new_base));
@@ -276,18 +296,6 @@ bool resolve_generics_ulang_type_reg_generic(Ulang_type* result, Env* env, Ulang
     if (!usymbol_lookup(&before_res, env, lang_type.atom.str)) {
         // TODO: expected failure test
         unreachable("undef symbol "TAST_FMT, str_view_print(lang_type.atom.str));
-    }
-
-    size_t def_count = uast_def_get_struct_def_base(before_res).generics.info.count;
-    if (lang_type.generic_args.info.count != def_count) {
-        msg_invalid_count_generic_args(
-            env,
-            lang_type.generic_args,
-            uast_def_get_struct_def_base(before_res).generics,
-            uast_def_get_struct_def_base(before_res).generics.info.count,
-            uast_def_get_struct_def_base(before_res).generics.info.count
-        );
-        return false;
     }
 
     return resolve_generics_ulang_type_internal(
@@ -367,8 +375,8 @@ static bool resolve_generics_serialize_function_decl(
         if (idx_arg >= old_decl->generics.info.count) {
             msg_invalid_count_generic_args(
                 env,
+                old_decl->pos,
                 gen_args,
-                old_decl->generics,
                 old_decl->generics.info.count,
                 old_decl->generics.info.count
             );
@@ -387,8 +395,8 @@ static bool resolve_generics_serialize_function_decl(
     if (idx_arg < old_decl->generics.info.count) {
         msg_invalid_count_generic_args(
             env,
+            old_decl->pos,
             gen_args,
-            old_decl->generics,
             old_decl->generics.info.count,
             old_decl->generics.info.count
         );

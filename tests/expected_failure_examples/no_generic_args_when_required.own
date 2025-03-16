@@ -1,0 +1,11 @@
+
+type Token sum(<NumType>) {
+    string u8*
+    number NumType
+}
+
+fn main() i32 {
+    let token1 Token = .number(76)
+
+    return 0
+}
