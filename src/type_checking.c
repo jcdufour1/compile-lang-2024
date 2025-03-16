@@ -951,7 +951,7 @@ bool try_set_struct_literal_assignment_types(
             );
             return false;
         default:
-            unreachable("");
+            unreachable(TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type));
     }
     Uast_def* struct_def_ = NULL;
     unwrap(usymbol_lookup(&struct_def_, env, lang_type_struct_const_unwrap(dest_lang_type).atom.str));
@@ -1860,10 +1860,16 @@ bool try_set_variable_def_types(
     bool add_to_sym_tbl,
     bool is_variadic
 ) {
+    if (variable_def_generics_are_present(uast)) {
+        // if variable defintion has generics, varients will be lazily instanciated elsewhere
+        return true;
+    }
+
     Lang_type new_lang_type = {0};
     if (!try_lang_type_from_ulang_type(&new_lang_type, env, uast->lang_type, uast->pos)) {
         return false;
     }
+
     *new_tast = tast_variable_def_new(uast->pos, new_lang_type, is_variadic, uast->name);
     if (add_to_sym_tbl && !env->type_checking_is_in_struct_base_def) {
         symbol_add(env, tast_variable_def_wrap(*new_tast));

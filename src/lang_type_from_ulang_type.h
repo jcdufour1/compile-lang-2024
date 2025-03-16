@@ -189,6 +189,7 @@ static inline Lang_type lang_type_from_ulang_type_regular(Env* env, Ulang_type_r
     return new_lang_type;
 }
 
+// TODO: remove Pos parameter
 static inline bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Env* env, Ulang_type lang_type, Pos pos) {
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
@@ -214,9 +215,11 @@ static inline bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Env* 
         }
         case ULANG_TYPE_REG_GENERIC: {
             Ulang_type after_res = {0};
-            resolve_generics_ulang_type_reg_generic(
+            if (!resolve_generics_ulang_type_reg_generic(
                 &after_res, env, ulang_type_reg_generic_const_unwrap(lang_type)
-            );
+            )) {
+                return false;
+            }
             *new_lang_type = lang_type_from_ulang_type(env, after_res);
             return true;
         }

@@ -20,4 +20,6 @@ bool resolve_generics_function_def(
 
 bool function_decl_generics_are_present(const Uast_function_decl* decl);
 
+bool variable_def_generics_are_present(const Uast_variable_def* def);
+
 #endif // RESOLVE_GENERICS_H

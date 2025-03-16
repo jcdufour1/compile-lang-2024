@@ -13,15 +13,37 @@
 
 static bool ulang_type_generics_are_present(Ulang_type lang_type);
 
-//static Str_view resolve_generics_serialize_struct_def_base(Struct_def_base base) {
-//    String name = {0};
-//
-//    for (size_t idx = 0; idx < base.members.info.count; idx++) {
-//        string_extend_strv(&name, serialize_ulang_type(env, vec_at(&base.members, idx)->lang_type));
-//    }
-//
-//    return name;
-//}
+#define msg_invalid_count_generic_args(env, gen_args, gen_params, min_args, max_args) \
+    msg_invalid_count_generic_args_internal(__FILE__, __LINE__, env, gen_args, gen_params, min_args, max_args)
+
+static void msg_invalid_count_generic_args_internal(
+    const char* file,
+    int line,
+    Env* env,
+    Ulang_type_vec gen_args,
+    Uast_generic_param_vec gen_params,
+    size_t min_args,
+    size_t max_args
+) {
+    String message = {0};
+    string_extend_size_t(&print_arena, &message, gen_args.info.count);
+    string_extend_cstr(&print_arena, &message, " generic arguments are passed");
+    string_extend_cstr(&print_arena, &message, ", but ");
+    string_extend_size_t(&print_arena, &message, min_args);
+    if (max_args > min_args) {
+        string_extend_cstr(&print_arena, &message, " or more");
+    }
+    string_extend_cstr(&print_arena, &message, " generic arguments expected\n");
+    msg_internal(
+        file, line, LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_GENERIC_ARGS, env->file_text, ulang_type_get_pos(vec_at(&gen_args, 0)),
+        STR_VIEW_FMT, str_view_print(string_to_strv(message))
+    );
+
+    msg_internal(
+        file, line, LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, vec_at(&gen_params, 0)->pos,
+        "generic parameters defined here\n" 
+    );
+}
 
 static bool try_set_struct_base_types(Env* env, Struct_def_base* new_base, Ustruct_def_base* base, bool is_enum) {
     env->type_checking_is_in_struct_base_def = true;
@@ -255,14 +277,14 @@ bool resolve_generics_ulang_type_reg_generic(Ulang_type* result, Env* env, Ulang
 
     size_t def_count = uast_def_get_struct_def_base(before_res).generics.info.count;
     if (lang_type.generic_args.info.count != def_count) {
-        log(
-            LOG_NOTE,
-            "lang_type.generic_args.info.count: %zu; new_def->base.generics.info.count: %zu\n",
-            lang_type.generic_args.info.count,
-            def_count
+        msg_invalid_count_generic_args(
+            env,
+            lang_type.generic_args,
+            uast_def_get_struct_def_base(before_res).generics,
+            uast_def_get_struct_def_base(before_res).generics.info.count,
+            uast_def_get_struct_def_base(before_res).generics.info.count
         );
-        // TODO: expected failure case
-        unreachable("invalid count template args or parameters");
+        return false;
     }
 
     return resolve_generics_ulang_type_internal(
@@ -320,7 +342,7 @@ bool resolve_generics_ulang_type(Ulang_type* result, Env* env, Ulang_type lang_t
     unreachable("");
 }
 
-static void resolve_generics_serialize_function_decl(
+static bool resolve_generics_serialize_function_decl(
     Env* env,
     Uast_function_decl** new_decl,
     const Uast_function_decl* old_decl,
@@ -335,22 +357,39 @@ static void resolve_generics_serialize_function_decl(
         vec_append(&a_main, &params, uast_param_clone(vec_at(&old_decl->params->params, idx)));
     }
 
-    for (size_t idx_gen = 0; idx_gen < old_decl->generics.info.count; idx_gen++) {
-        for (size_t idx_param = 0; idx_param < params.info.count; idx_param++) {
-            Str_view curr_gen = vec_at(&old_decl->generics, idx_gen)->child->name;
-            generic_sub_param(env, vec_at(&params, idx_param), curr_gen, vec_at(&gen_args, idx_gen));
-        }
-    }
-
     Ulang_type new_rtn_type = old_decl->return_type->lang_type;
-    for (size_t idx = 0; idx < gen_args.info.count; idx++) {
-        Str_view curr_gen = vec_at(&old_decl->generics, idx)->child->name;
-        generic_sub_lang_type(env, &new_rtn_type, new_rtn_type, curr_gen, vec_at(&gen_args, idx));
+
+    size_t idx_arg = 0;
+    for (; idx_arg < gen_args.info.count; idx_arg++) {
+        if (idx_arg >= old_decl->generics.info.count) {
+            msg_invalid_count_generic_args(
+                env,
+                gen_args,
+                old_decl->generics,
+                old_decl->generics.info.count,
+                old_decl->generics.info.count
+            );
+            return false;
+        }
+
+        for (size_t idx_fun_param = 0; idx_fun_param < params.info.count; idx_fun_param++) {
+            Str_view curr_arg = vec_at(&old_decl->generics, idx_arg)->child->name;
+            generic_sub_param(env, vec_at(&params, idx_fun_param), curr_arg, vec_at(&gen_args, idx_arg));
+        }
+        Str_view curr_gen = vec_at(&old_decl->generics, idx_arg)->child->name;
+        generic_sub_lang_type(env, &new_rtn_type, new_rtn_type, curr_gen, vec_at(&gen_args, idx_arg));
+        generic_sub_block(env, new_block, curr_gen, vec_at(&gen_args, idx_arg));
     }
 
-    for (size_t idx_gen = 0; idx_gen < old_decl->generics.info.count; idx_gen++) {
-        Str_view curr_gen = vec_at(&old_decl->generics, idx_gen)->child->name;
-        generic_sub_block(env, new_block, curr_gen, vec_at(&gen_args, idx_gen));
+    if (idx_arg < old_decl->generics.info.count) {
+        msg_invalid_count_generic_args(
+            env,
+            gen_args,
+            old_decl->generics,
+            old_decl->generics.info.count,
+            old_decl->generics.info.count
+        );
+        return false;
     }
 
     String name = {0};
@@ -368,6 +407,8 @@ static void resolve_generics_serialize_function_decl(
         uast_lang_type_new(ulang_type_get_pos(new_rtn_type), new_rtn_type),
         string_to_strv(name)
     );
+
+    return true;
 }
 
 // only generic function decls can be passed in here
@@ -377,16 +418,21 @@ bool resolve_generics_function_def(
     Uast_function_def* def,
     Ulang_type_vec gen_args
 ) {
+    bool status = true;
+
     Uast_function_decl* new_decl = NULL;
     if (!function_decl_generics_are_present(def->decl)) {
         unreachable("non generic function decls should not be passed here");
     }
 
+    // TODO: try to avoid cloning block if resolve_generics_serialize_function_decl fails
     Uast_block* new_block = uast_block_clone(def->body);
     assert(new_block != def->body);
     assert(new_block->symbol_collection.usymbol_table.table_tasts != def->body->symbol_collection.usymbol_table.table_tasts);
 
-    resolve_generics_serialize_function_decl(env, &new_decl, def->decl, new_block, gen_args);
+    if (!resolve_generics_serialize_function_decl(env, &new_decl, def->decl, new_block, gen_args)) {
+        return false;
+    }
     *new_def = uast_function_def_new(new_decl->pos, new_decl, new_block);
     //vec_rem_last(&env->ancesters);
     //vec_append(&a_main, &env->ancesters, &new_block->symbol_collection);
@@ -410,14 +456,14 @@ bool resolve_generics_function_def(
         Sym_coll_vec tbls = env->ancesters;
         memset(&env->ancesters, 0, sizeof(env->ancesters));
         vec_append(&a_main, &env->ancesters, vec_at(&tbls, 0));
-        Uast_def* dummy2 = NULL;
-        unwrap(!usymbol_lookup(&dummy2, env, str_view_from_cstr("num")));
-        unwrap(try_set_function_def_types(env, *new_def, true));
+        if (!try_set_function_def_types(env, *new_def, true)) {
+            status = false;
+        }
         env->ancesters = tbls;
     }
 
     unwrap(symbol_lookup(&dummy, env, (*new_def)->decl->name));
-    return true;
+    return status;
 }
 
 static bool ulang_type_generics_are_present_tuple(Ulang_type_tuple lang_type) {
@@ -468,4 +514,8 @@ bool function_decl_generics_are_present(const Uast_function_decl* decl) {
     }
 
     return false;
+}
+
+bool variable_def_generics_are_present(const Uast_variable_def* def) {
+    return ulang_type_generics_are_present(def->lang_type);
 }

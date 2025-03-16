@@ -8,6 +8,7 @@
 #include <str_view_struct.h>
 #include <lang_type_from_ulang_type.h>
 #include <lang_type_print.h>
+#include <ulang_type_get_pos.h>
 
 // TODO: figure out where to put these things
 Str_view ustruct_def_base_print_internal(Ustruct_def_base base, int indent);
@@ -170,8 +171,7 @@ static inline bool uast_def_get_lang_type(Lang_type* result, Env* env, const Uas
         case UAST_FUNCTION_DEF:
             unreachable("");
         case UAST_VARIABLE_DEF:
-            *result = lang_type_from_ulang_type(env, uast_variable_def_const_unwrap(def)->lang_type);
-            return true;
+            return try_lang_type_from_ulang_type(result, env, uast_variable_def_const_unwrap(def)->lang_type, ulang_type_get_pos(uast_variable_def_const_unwrap(def)->lang_type));
         case UAST_FUNCTION_DECL:
             *result = lang_type_from_ulang_type(env, uast_function_decl_const_unwrap(def)->return_type->lang_type);
             return true;

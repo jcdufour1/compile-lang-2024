@@ -74,6 +74,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"not-yet-implemented", EXPECT_FAIL_NOT_YET_IMPLEMENTED},
     {"duplicate-default", EXPECT_FAIL_DUPLICATE_DEFAULT},
     {"duplicate-case", EXPECT_FAIL_DUPLICATE_CASE},
+    {"invalid-count-generic-args", EXPECT_FAIL_INVALID_COUNT_GENERIC_ARGS},
 };
 
 static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
