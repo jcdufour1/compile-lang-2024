@@ -451,6 +451,12 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
         case UAST_LITERAL_DEF:
             // fallthrough
         case UAST_VARIABLE_DEF: {
+            Tast_def* result = NULL;
+            if (symbol_lookup(&result, env, sym_untyped->name) && result->type == TAST_POISON_DEF) {
+                unwrap(error_count > 0);
+                return false;
+            }
+
             Lang_type lang_type = {0};
             if (!uast_def_get_lang_type(&lang_type, env, sym_def, sym_untyped->generic_args)) {
                 return false;
@@ -1860,13 +1866,16 @@ bool try_set_variable_def_types(
     bool add_to_sym_tbl,
     bool is_variadic
 ) {
-    if (variable_def_generics_are_present(uast)) {
-        // if variable defintion has generics, varients will be lazily instanciated elsewhere
-        return true;
+    Tast_def* result = NULL;
+    if (symbol_lookup(&result, env, uast->name) && result->type == TAST_POISON_DEF) {
+        unwrap(error_count > 0);
+        return false;
     }
 
     Lang_type new_lang_type = {0};
     if (!try_lang_type_from_ulang_type(&new_lang_type, env, uast->lang_type, uast->pos)) {
+        Tast_poison_def* new_poison = tast_poison_def_new(uast->pos, uast->name);
+        unwrap(symbol_add(env, tast_poison_def_wrap(new_poison)));
         return false;
     }
 
@@ -2414,7 +2423,7 @@ bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, boo
                 break;
             case STMT_ERROR:
                 status = false;
-                goto error;
+                break;
             case STMT_OK:
                 unreachable("");
             default:

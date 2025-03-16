@@ -203,6 +203,8 @@ static inline Lang_type tast_enum_def_get_lang_type(const Tast_enum_def* def) {
 
 static inline Lang_type tast_def_get_lang_type(const Tast_def* def) {
     switch (def->type) {
+        case TAST_POISON_DEF:
+            unreachable("");
         case TAST_FUNCTION_DEF:
             unreachable("");
         case TAST_RAW_UNION_DEF:
@@ -307,6 +309,8 @@ static inline Lang_type* tast_def_set_lang_type(Tast_def* def) {
         case TAST_LITERAL_DEF:
             unreachable("");
         case TAST_SUM_DEF:
+            unreachable("");
+        case TAST_POISON_DEF:
             unreachable("");
     }
     unreachable("");
@@ -423,6 +427,8 @@ static inline Str_view tast_def_get_name(const Tast_def* def) {
             return tast_literal_def_get_name(tast_literal_def_const_unwrap(def));
         case TAST_SUM_DEF:
             return tast_sum_def_const_unwrap(def)->base.name;
+        case TAST_POISON_DEF:
+            return tast_poison_def_const_unwrap(def)->name;
     }
     unreachable("");
 }
@@ -475,6 +481,8 @@ static inline Struct_def_base tast_def_get_struct_def_base(const Tast_def* def) 
         case TAST_PRIMITIVE_DEF:
             unreachable("");
         case TAST_LITERAL_DEF:
+            unreachable("");
+        case TAST_POISON_DEF:
             unreachable("");
     }
     unreachable("");
