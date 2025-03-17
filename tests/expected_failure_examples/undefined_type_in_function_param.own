@@ -1,0 +1,8 @@
+
+fn add(lhs i32, rhs Token) {
+}
+
+fn main() i32 {
+    add(8)
+    return 0
+}

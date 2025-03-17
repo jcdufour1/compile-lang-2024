@@ -413,6 +413,10 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
         }
         case UAST_FUNCTION_DEF: {
             Uast_function_def* new_def = NULL;
+            Tast_def* dummy = NULL;
+            if (symbol_lookup(&dummy, env, uast_function_def_unwrap(sym_def)->decl->name) && dummy->type == TAST_POISON_DEF) {
+                return false;
+            }
             if (function_decl_generics_are_present(uast_function_def_unwrap(sym_def)->decl)) {
                 if (!resolve_generics_function_def(&new_def, env, uast_function_def_unwrap(sym_def), sym_untyped->generic_args)) {
                     return false;
@@ -1880,7 +1884,8 @@ bool try_set_function_decl_types(
 ) {
     Tast_function_params* new_params = NULL;
     if (!try_set_function_params_types(env, &new_params, decl->params, add_to_sym_tbl)) {
-        assert(error_count > 0);
+        Tast_poison_def* poison = tast_poison_def_new(decl->pos, decl->name);
+        unwrap(symbol_add(env, tast_poison_def_wrap(poison)));
         return false;
     }
 
@@ -1919,6 +1924,7 @@ bool try_set_function_def_types(
     vec_append(&a_main, &env->ancesters, &def->body->symbol_collection);
     if (!try_set_function_decl_types(env, &new_decl, def->decl, true)) {
         status = false;
+        goto error;
     }
     vec_rem_last(&env->ancesters);
 
@@ -1926,10 +1932,10 @@ bool try_set_function_def_types(
     Tast_block* new_body = NULL;
     if (!try_set_block_types(env, &new_body, def->body, true)) {
         status = false;
+        goto error;
     }
     assert(prev_ancesters_count == env->ancesters.info.count);
 
-    env->name_parent_function = prev_par_fun;
     Tast_def* result = NULL;
     unwrap(symbol_lookup(&result, env, new_decl->name));
     if (always_top_level) {
@@ -1937,6 +1943,9 @@ bool try_set_function_def_types(
     } else {
         symbol_update(env, tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
     }
+
+error:
+    env->name_parent_function = prev_par_fun;
     return status;
 }
 

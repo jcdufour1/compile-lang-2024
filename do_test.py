@@ -124,6 +124,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "undef_member_in_generic_sum.own": ["undefined-type"],
     EXPECTED_FAIL_EXAMPLES_DIR + "switch_undef_operand.own": ["undefined-symbol"],
     EXPECTED_FAIL_EXAMPLES_DIR + "no_generic_args_when_required.own": ["invalid-count-generic-args"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "undefined_type_in_function_param.own": ["undefined-type"],
 }
 
 def to_str(a):

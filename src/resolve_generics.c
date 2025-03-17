@@ -508,23 +508,7 @@ static bool ulang_type_generics_are_present(Ulang_type lang_type) {
 }
 
 bool function_decl_generics_are_present(const Uast_function_decl* decl) {
-    if (decl->generics.info.count > 0) {
-        return true;
-    }
-
-    if (ulang_type_generics_are_present(decl->return_type)) {
-        // TODO: expected failure test
-        unreachable("generics in return type, but not in function decl. this is wrong");
-    }
-
-    for (size_t idx = 0; idx < decl->params->params.info.count; idx++) {
-        if (ulang_type_generics_are_present(vec_at(&decl->params->params, idx)->base->lang_type)) {
-            // TODO: expected failure test
-            unreachable("generics in function parameters, but not in function decl. this is wrong");
-        }
-    }
-
-    return false;
+    return decl->generics.info.count > 0;
 }
 
 bool variable_def_generics_are_present(const Uast_variable_def* def) {
