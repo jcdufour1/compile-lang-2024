@@ -1424,6 +1424,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             // TODO: expected failure case for invalid optional_default
             corres_arg = uast_expr_clone(param->optional_default);
         } else {
+            // TODO: print max count correctly for variadic fucntions
             msg_invalid_count_function_args(env, fun_call, fun_decl, param_idx + 1, param_idx + 1);
             goto error;
         }
@@ -1533,31 +1534,16 @@ bool try_set_sum_get_tag_types(Env* env, Tast_sum_get_tag** new_access, Uast_sum
     return true;
 }
 
-static void msg_invalid_struct_member(
-    Env* env,
-    Ustruct_def_base base,
-    const Uast_member_access* access
-) {
-    msg(
-        LOG_ERROR, EXPECT_FAIL_INVALID_STRUCT_MEMBER, env->file_text,
-        access->pos,
-        "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 
-        str_view_print(access->member_name), str_view_print(base.name)
-    );
-
-    // TODO: add notes for where struct def of callee is defined, etc.
-}
-
 static void msg_invalid_member(
     Env* env,
-    Ustruct_def_base base,
+    Str_view base_name,
     const Uast_member_access* access
 ) {
     msg(
-        LOG_ERROR, EXPECT_FAIL_INVALID_ENUM_MEMBER, env->file_text,
+        LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_ACCESS, env->file_text,
         access->pos,
         "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 
-        str_view_print(access->member_name), str_view_print(base.name)
+        str_view_print(access->member_name), str_view_print(base_name)
     );
 
     // TODO: add notes for where struct def of callee is defined, etc.
@@ -1572,7 +1558,7 @@ bool try_set_member_access_types_finish_generic_struct(
 ) {
     Uast_variable_def* member_def = NULL;
     if (!uast_try_get_member_def(&member_def, &def_base, access->member_name)) {
-        msg_invalid_struct_member(env, def_base, access);
+        msg_invalid_member(env, def_base.name, access);
         return false;
     }
 
@@ -1602,7 +1588,7 @@ bool try_set_member_access_types_finish_sum_def(
         case PARENT_OF_CASE: {
             Uast_variable_def* member_def = NULL;
             if (!uast_try_get_member_def(&member_def, &sum_def->base, access->member_name)) {
-                msg_invalid_member(env, sum_def->base, access);
+                msg_invalid_member(env, sum_def->base.name, access);
                 return false;
             }
 
@@ -1695,7 +1681,7 @@ bool try_set_member_access_types_finish(
             Uast_enum_def* enum_def = uast_enum_def_unwrap(lang_type_def);
             Uast_variable_def* member_def = NULL;
             if (!uast_try_get_member_def(&member_def, &enum_def->base, access->member_name)) {
-                msg_invalid_member(env, enum_def->base, access);
+                msg_invalid_member(env, enum_def->base.name, access);
                 return false;
             }
 
@@ -1711,12 +1697,19 @@ bool try_set_member_access_types_finish(
         case UAST_SUM_DEF:
             return try_set_member_access_types_finish_sum_def(env, new_tast, uast_sum_def_unwrap(lang_type_def), access, new_callee);
         case UAST_PRIMITIVE_DEF:
-            // TODO: expected failure case
-            unreachable("trying to access primitive defintion member");
-        default:
-            unreachable(UAST_FMT"\n", uast_stmt_print(uast_def_wrap(lang_type_def)));
+            msg_invalid_member(env, lang_type_get_str(uast_primitive_def_unwrap(lang_type_def)->lang_type), access);
+            return false;
+        case UAST_LITERAL_DEF:
+            unreachable("");
+        case UAST_FUNCTION_DECL:
+            unreachable("");
+        case UAST_GENERIC_PARAM:
+            unreachable("");
+        case UAST_FUNCTION_DEF:
+            unreachable("");
+        case UAST_VARIABLE_DEF:
+            unreachable("");
     }
-
     unreachable("");
 }
 

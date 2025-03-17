@@ -28,10 +28,8 @@ static inline Str_view expect_fail_type_print_internal(EXPECT_FAIL_TYPE type) {
             return str_view_from_cstr("missing_return");
         case EXPECT_FAIL_REDEFINITION_SYMBOL:
             return str_view_from_cstr("redefinition_symbol");
-        case EXPECT_FAIL_INVALID_ENUM_MEMBER:
-            return str_view_from_cstr("invalid_enum_member");
-        case EXPECT_FAIL_INVALID_STRUCT_MEMBER:
-            return str_view_from_cstr("invalid_struct_member");
+        case EXPECT_FAIL_INVALID_MEMBER_ACCESS:
+            return str_view_from_cstr("invalid_member_access");
         case EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL:
             return str_view_from_cstr("invalid_member_in_literal");
         case EXPECT_FAIL_MISMATCHED_RETURN_TYPE:

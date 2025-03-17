@@ -41,7 +41,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_fun_args_3.own": ["invalid-count-fun-args"],
     EXPECTED_FAIL_EXAMPLES_DIR + "missing_return.own": ["missing-return-statement", "missing-return-statement"],
     EXPECTED_FAIL_EXAMPLES_DIR + "var_redef.own": ["redefinition-of-symbol"],
-    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_struct_memb.own": ["invalid-struct-member"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_struct_memb.own": ["invalid-member-access"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_struct_memb_in_literal.own": ["invalid-struct-member-in-literal"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_literal_assign_to_struct.own": ["assignment-mismatched-types"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_literal_assign.own": ["assignment-mismatched-types"],
@@ -82,12 +82,12 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "if_cond_undef_function.own": ["undefined-symbol"],
     EXPECTED_FAIL_EXAMPLES_DIR + "undefined_types.own": ["undefined-type"],
     EXPECTED_FAIL_EXAMPLES_DIR + "undef_type_in_struct_def_member.own": ["undefined-type"],
-    EXPECTED_FAIL_EXAMPLES_DIR + "undef_type_in_raw_union_def_member.own": ["undefined-type", "undefined-type"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "undef_type_in_raw_union_def_member.own": 2*["undefined-type"],
     EXPECTED_FAIL_EXAMPLES_DIR + "index_no_closing_sq_bracket.own": ["missing-close-sq-bracket"],
-    EXPECTED_FAIL_EXAMPLES_DIR + "failure_to_deref_function_arg.own": ["invalid-function-arguments", "invalid-function-arguments"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "failure_to_deref_function_arg.own": 2*["invalid-function-arguments"],
     EXPECTED_FAIL_EXAMPLES_DIR + "failure_deref_lhs_of_assignment.own": ["assignment-mismatched-types"],
     EXPECTED_FAIL_EXAMPLES_DIR + "deref_non_pointer.own": ["deref_non_pointer"],
-    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_enum_subtype_access.own": ["invalid-enum-member"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_enum_subtype_access.own": ["invalid-member-access"],
     EXPECTED_FAIL_EXAMPLES_DIR + "mismatched_literal_types_to_binary.own": ["not-yet-implemented"],
     EXPECTED_FAIL_EXAMPLES_DIR + "semantic_error_in_return_expr.own": ["undefined-symbol"],
     EXPECTED_FAIL_EXAMPLES_DIR + "parse_error_in_if_condition.own": ["expected-expression"],
@@ -125,6 +125,8 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "switch_undef_operand.own": ["undefined-symbol"],
     EXPECTED_FAIL_EXAMPLES_DIR + "no_generic_args_when_required.own": ["invalid-count-generic-args"],
     EXPECTED_FAIL_EXAMPLES_DIR + "undefined_type_in_function_param.own": ["undefined-type"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "undefined_generic_type_in_fun_param.own": ["undefined-type"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "member_access_on_primitive.own": ["invalid-member-access"],
 }
 
 def to_str(a):

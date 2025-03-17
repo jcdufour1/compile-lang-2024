@@ -1,0 +1,8 @@
+
+fn add(lhs i32, rhs Optional(<i32>)) {
+}
+
+fn main() i32 {
+    add(56, .none)
+    return 0
+}

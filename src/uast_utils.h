@@ -173,7 +173,8 @@ static inline bool uast_def_get_lang_type(Lang_type* result, Env* env, const Uas
             *result = lang_type_from_ulang_type(env, uast_function_decl_const_unwrap(def)->return_type);
             return true;
         case UAST_PRIMITIVE_DEF:
-            unreachable("");
+            *result = uast_primitive_def_const_unwrap(def)->lang_type;
+            return true;
         case UAST_LITERAL_DEF:
             unreachable("");
         case UAST_STRUCT_DEF:
