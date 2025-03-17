@@ -650,6 +650,10 @@ Str_view uast_expr_print_internal(const Uast_expr* expr, int indent) {
             return uast_unknown_print_internal(uast_unknown_const_unwrap(expr), indent);
         case UAST_SUM_GET_TAG:
             return uast_sum_get_tag_print_internal(uast_sum_get_tag_const_unwrap(expr), indent);
+        case UAST_SWITCH:
+            return uast_switch_print_internal(uast_switch_const_unwrap(expr), indent);
+        case UAST_IF_ELSE_CHAIN:
+            return uast_if_else_chain_print_internal(uast_if_else_chain_const_unwrap(expr), indent);
     }
     unreachable("");
 }
@@ -670,12 +674,8 @@ Str_view uast_stmt_print_internal(const Uast_stmt* stmt, int indent) {
             return uast_assignment_print_internal(uast_assignment_const_unwrap(stmt), indent);
         case UAST_RETURN:
             return uast_return_print_internal(uast_return_const_unwrap(stmt), indent);
-        case UAST_IF_ELSE_CHAIN:
-            return uast_if_else_chain_print_internal(uast_if_else_chain_const_unwrap(stmt), indent);
         case UAST_FOR_WITH_COND:
             return uast_for_with_cond_print_internal(uast_for_with_cond_const_unwrap(stmt), indent);
-        case UAST_SWITCH:
-            return uast_switch_print_internal(uast_switch_const_unwrap(stmt), indent);
         case UAST_LABEL:
             return uast_label_print_internal(uast_label_const_unwrap(stmt), indent);
     }

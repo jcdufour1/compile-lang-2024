@@ -1098,6 +1098,22 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
             *new_tast = tast_sum_get_tag_wrap(new_access);
             return true;
         }
+        case UAST_SWITCH: {
+            Tast_if_else_chain* new_if_else = NULL;
+            if (!try_set_switch_types(env, &new_if_else, uast_switch_unwrap(uast))) {
+                return false;
+            }
+            *new_tast = tast_if_else_chain_wrap(new_if_else);
+            return true;
+        }
+        case UAST_IF_ELSE_CHAIN: {
+            Tast_if_else_chain* new_for = NULL;
+            if (!try_set_if_else_chain(env, &new_for, uast_if_else_chain_unwrap(uast))) {
+                return false;
+            }
+            *new_tast = tast_if_else_chain_wrap(new_for);
+            return true;
+        }
     }
     unreachable("");
 }
@@ -2516,22 +2532,6 @@ STMT_STATUS try_set_stmt_types(Env* env, Tast_stmt** new_tast, Uast_stmt* stmt) 
                 return STMT_ERROR;
             }
             *new_tast = tast_block_wrap(new_for);
-            return STMT_OK;
-        }
-        case UAST_IF_ELSE_CHAIN: {
-            Tast_if_else_chain* new_for = NULL;
-            if (!try_set_if_else_chain(env, &new_for, uast_if_else_chain_unwrap(stmt))) {
-                return STMT_ERROR;
-            }
-            *new_tast = tast_if_else_chain_wrap(new_for);
-            return STMT_OK;
-        }
-        case UAST_SWITCH: {
-            Tast_if_else_chain* new_if_else = NULL;
-            if (!try_set_switch_types(env, &new_if_else, uast_switch_unwrap(stmt))) {
-                return STMT_ERROR;
-            }
-            *new_tast = tast_if_else_chain_wrap(new_if_else);
             return STMT_OK;
         }
         case UAST_LABEL: {

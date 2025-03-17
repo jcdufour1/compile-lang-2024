@@ -1396,6 +1396,8 @@ static Str_view load_expr(Env* env, Llvm_block* new_block, Tast_expr* old_expr) 
             todo();
         case TAST_SUM_GET_TAG:
             return load_sum_get_tag(env, new_block, tast_sum_get_tag_unwrap(old_expr));
+        case TAST_IF_ELSE_CHAIN:
+            return load_if_else_chain(env, new_block, tast_if_else_chain_unwrap(old_expr));
     }
     unreachable("");
 }
@@ -2078,8 +2080,6 @@ static Str_view load_stmt(Env* env, Llvm_block* new_block, Tast_stmt* old_stmt) 
             return load_def(env, new_block, tast_def_unwrap(old_stmt));
         case TAST_RETURN:
             return load_return(env, new_block, tast_return_unwrap(old_stmt));
-        case TAST_IF_ELSE_CHAIN:
-            return load_if_else_chain(env, new_block, tast_if_else_chain_unwrap(old_stmt));
         case TAST_FOR_WITH_COND:
             return load_for_with_cond(env, new_block, tast_for_with_cond_unwrap(old_stmt));
         case TAST_BREAK:

@@ -1881,18 +1881,6 @@ static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_return_wrap(rtn_stmt);
-    } else if (starts_with_if(*tokens)) {
-        Uast_if_else_chain* if_else_chain = NULL;
-        if (PARSE_OK != parse_if_else_chain(env, &if_else_chain, tokens)) {
-            return PARSE_EXPR_ERROR;
-        }
-        lhs = uast_if_else_chain_wrap(if_else_chain);
-    } else if (starts_with_switch(*tokens)) {
-        Uast_switch* lang_switch = NULL;
-        if (PARSE_OK != parse_switch(env, &lang_switch, tokens)) {
-            return PARSE_EXPR_ERROR;
-        }
-        lhs = uast_switch_wrap(lang_switch);
     } else if (starts_with_for(*tokens)) {
         if (PARSE_OK != parse_for_loop(env, &lhs, tokens)) {
             return PARSE_EXPR_ERROR;
@@ -2151,6 +2139,18 @@ static PARSE_EXPR_STATUS parse_expr_piece(
         *result = uast_literal_wrap(parse_literal(env, tokens));
     } else if (tk_view_front(*tokens).type == TOKEN_SYMBOL) {
         *result = uast_symbol_wrap(parse_symbol(tokens));
+    } else if (starts_with_switch(*tokens)) {
+        Uast_switch* lang_switch = NULL;
+        if (PARSE_OK != parse_switch(env, &lang_switch, tokens)) {
+            return PARSE_EXPR_ERROR;
+        }
+        *result = uast_switch_wrap(lang_switch);
+    } else if (starts_with_if(*tokens)) {
+        Uast_if_else_chain* if_else = NULL;
+        if (PARSE_OK != parse_if_else_chain(env, &if_else, tokens)) {
+            return PARSE_EXPR_ERROR;
+        }
+        *result = uast_if_else_chain_wrap(if_else);
     } else if (starts_with_struct_literal(*tokens)) {
         Uast_struct_literal* struct_lit;
         if (PARSE_OK != parse_struct_literal(env, &struct_lit, tokens)) {

@@ -128,6 +128,10 @@ Uast_expr* uast_expr_clone(const Uast_expr* expr) {
             return uast_unknown_wrap(uast_unknown_clone(uast_unknown_const_unwrap(expr)));
         case UAST_SUM_GET_TAG: // TODO: remove uast_sum_access if not used
             todo();
+        case UAST_SWITCH:
+            return uast_switch_wrap(uast_switch_clone(uast_switch_const_unwrap(expr)));
+        case UAST_IF_ELSE_CHAIN:
+            return uast_if_else_chain_wrap(uast_if_else_chain_clone(uast_if_else_chain_const_unwrap(expr)));
     }
     unreachable("");
 }
@@ -222,10 +226,6 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt) {
             return uast_assignment_wrap(uast_assignment_clone(uast_assignment_const_unwrap(stmt)));
         case UAST_RETURN:
             return uast_return_wrap(uast_return_clone(uast_return_const_unwrap(stmt)));
-        case UAST_IF_ELSE_CHAIN:
-            return uast_if_else_chain_wrap(uast_if_else_chain_clone(uast_if_else_chain_const_unwrap(stmt)));
-        case UAST_SWITCH:
-            return uast_switch_wrap(uast_switch_clone(uast_switch_const_unwrap(stmt)));
         case UAST_LABEL:
             return uast_label_wrap(uast_label_clone(uast_label_const_unwrap(stmt)));
     }

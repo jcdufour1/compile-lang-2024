@@ -174,12 +174,6 @@ void generic_sub_stmt(Env* env, Uast_stmt* stmt, Str_view gen_param, Ulang_type 
         case UAST_RETURN:
             generic_sub_return(uast_return_unwrap(stmt), gen_param, gen_arg);
             return;
-        case UAST_IF_ELSE_CHAIN:
-            generic_sub_if_else_chain(env, uast_if_else_chain_unwrap(stmt), gen_param, gen_arg);
-            return;
-        case UAST_SWITCH:
-            generic_sub_switch(env, uast_switch_unwrap(stmt), gen_param, gen_arg);
-            return;
         case UAST_LABEL:
             generic_sub_label(uast_label_unwrap(stmt));
             return;
@@ -267,6 +261,12 @@ void generic_sub_expr(Env* env, Uast_expr* expr, Str_view gen_param, Ulang_type 
             todo();
         case UAST_OPERATOR:
             generic_sub_operator(env, uast_operator_unwrap(expr), gen_param, gen_arg);
+            return;
+        case UAST_SWITCH:
+            generic_sub_switch(env, uast_switch_unwrap(expr), gen_param, gen_arg);
+            return;
+        case UAST_IF_ELSE_CHAIN:
+            generic_sub_if_else_chain(env, uast_if_else_chain_unwrap(expr), gen_param, gen_arg);
             return;
     }
     unreachable("");

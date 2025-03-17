@@ -25,4 +25,8 @@ Uast_condition* uast_condition_clone(const Uast_condition* cond);
 
 Uast_if* uast_if_clone(const Uast_if* lang_if);
 
+Uast_switch* uast_switch_clone(const Uast_switch* lang_switch);
+
+Uast_if_else_chain* uast_if_else_chain_clone(const Uast_if_else_chain* if_else);
+
 #endif // UAST_CLONE_H

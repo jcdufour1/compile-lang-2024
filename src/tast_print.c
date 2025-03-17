@@ -619,6 +619,8 @@ Str_view tast_expr_print_internal(const Tast_expr* expr, int indent) {
             return tast_sum_get_tag_print_internal(tast_sum_get_tag_const_unwrap(expr), indent);
         case TAST_ASSIGNMENT:
             return tast_assignment_print_internal(tast_assignment_const_unwrap(expr), indent);
+        case TAST_IF_ELSE_CHAIN:
+            return tast_if_else_chain_print_internal(tast_if_else_chain_const_unwrap(expr), indent);
     }
     unreachable("");
 }
@@ -637,8 +639,6 @@ Str_view tast_stmt_print_internal(const Tast_stmt* stmt, int indent) {
             return tast_break_print_internal(tast_break_const_unwrap(stmt), indent);
         case TAST_CONTINUE:
             return tast_continue_print_internal(tast_continue_const_unwrap(stmt), indent);
-        case TAST_IF_ELSE_CHAIN:
-            return tast_if_else_chain_print_internal(tast_if_else_chain_const_unwrap(stmt), indent);
         case TAST_RETURN:
             return tast_return_print_internal(tast_return_const_unwrap(stmt), indent);
         case TAST_LABEL:

@@ -77,10 +77,6 @@ static inline Ulang_type uast_get_ulang_type_stmt(const Uast_stmt* stmt) {
             unreachable("");
         case UAST_ASSIGNMENT:
             unreachable("");
-        case UAST_IF_ELSE_CHAIN:
-            unreachable("");
-        case UAST_SWITCH:
-            unreachable("");
         case UAST_LABEL:
             unreachable("");
     }
@@ -153,10 +149,6 @@ static inline Lang_type* uast_get_ulang_type_ref_stmt(Uast_stmt* stmt) {
             unreachable("");
         case UAST_ASSIGNMENT:
             unreachable("");
-        case UAST_IF_ELSE_CHAIN:
-            unreachable("");
-        case UAST_SWITCH:
-            unreachable("");
         case UAST_LABEL:
             unreachable("");
     }
@@ -214,10 +206,6 @@ static inline bool uast_stmt_get_lang_type(Lang_type* result, Env* env, const Ua
         case UAST_FOR_WITH_COND:
             unreachable("");
         case UAST_ASSIGNMENT:
-            unreachable("");
-        case UAST_IF_ELSE_CHAIN:
-            unreachable("");
-        case UAST_SWITCH:
             unreachable("");
         case UAST_LABEL:
             unreachable("");
@@ -291,10 +279,6 @@ static inline Lang_type* uast_ref_stmt_get_lang_type(Uast_stmt* stmt) {
             unreachable("");
         case UAST_ASSIGNMENT:
             unreachable("");
-        case UAST_IF_ELSE_CHAIN:
-            unreachable("");
-        case UAST_SWITCH:
-            unreachable("");
         case UAST_LABEL:
             unreachable("");
     }
@@ -340,6 +324,10 @@ static inline Str_view uast_expr_get_name(const Uast_expr* expr) {
         case UAST_UNKNOWN:
             unreachable("");
         case UAST_SUM_GET_TAG:
+            unreachable("");
+        case UAST_SWITCH:
+            unreachable("");
+        case UAST_IF_ELSE_CHAIN:
             unreachable("");
     }
     unreachable("");
@@ -397,13 +385,9 @@ static inline Str_view uast_stmt_get_name(const Uast_stmt* stmt) {
             unreachable("");
         case UAST_ASSIGNMENT:
             unreachable("");
-        case UAST_IF_ELSE_CHAIN:
-            unreachable("");
         case UAST_CONTINUE:
             unreachable("");
         case UAST_RETURN:
-            unreachable("");
-        case UAST_SWITCH:
             unreachable("");
         case UAST_LABEL:
             unreachable("");

@@ -170,6 +170,15 @@ static Uast_type uast_gen_unknown(const char* prefix) {
     return access;
 }
 
+static Uast_type uast_gen_switch(const char* prefix) {
+    Uast_type lang_if = {.name = uast_name_new(prefix, "switch", false)};
+
+    append_member(&lang_if.members, "Uast_expr*", "operand");
+    append_member(&lang_if.members, "Uast_case_vec", "cases");
+
+    return lang_if;
+}
+
 static Uast_type uast_gen_member_access(const char* prefix) {
     Uast_type access = {.name = uast_name_new(prefix, "member_access", false)};
 
@@ -286,10 +295,20 @@ static Uast_type uast_gen_sum_get_tag(const char* prefix) {
     return lit;
 }
 
+static Uast_type uast_gen_if_else_chain(const char* prefix) {
+    Uast_type chain = {.name = uast_name_new(prefix, "if_else_chain", false)};
+
+    append_member(&chain.members, "Uast_if_vec", "uasts");
+
+    return chain;
+}
+
 static Uast_type uast_gen_expr(const char* prefix) {
     const char* base_name = "expr";
     Uast_type expr = {.name = uast_name_new(prefix, base_name, false)};
 
+    vec_append(&gen_a, &expr.sub_types, uast_gen_if_else_chain(base_name));
+    vec_append(&gen_a, &expr.sub_types, uast_gen_switch(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_unknown(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_operator(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_symbol(base_name));
@@ -537,15 +556,6 @@ static Uast_type uast_gen_param(const char* prefix) {
     return lang_if;
 }
 
-static Uast_type uast_gen_switch(const char* prefix) {
-    Uast_type lang_if = {.name = uast_name_new(prefix, "switch", false)};
-
-    append_member(&lang_if.members, "Uast_expr*", "operand");
-    append_member(&lang_if.members, "Uast_case_vec", "cases");
-
-    return lang_if;
-}
-
 static Uast_type uast_gen_return(const char* prefix) {
     Uast_type rtn = {.name = uast_name_new(prefix, "return", false)};
 
@@ -553,14 +563,6 @@ static Uast_type uast_gen_return(const char* prefix) {
     append_member(&rtn.members, "bool", "is_auto_inserted"); // TODO: use : 1 size?
 
     return rtn;
-}
-
-static Uast_type uast_gen_if_else_chain(const char* prefix) {
-    Uast_type chain = {.name = uast_name_new(prefix, "if_else_chain", false)};
-
-    append_member(&chain.members, "Uast_if_vec", "uasts");
-
-    return chain;
 }
 
 static Uast_type uast_gen_stmt(const char* prefix) {
@@ -576,8 +578,6 @@ static Uast_type uast_gen_stmt(const char* prefix) {
     vec_append(&gen_a, &stmt.sub_types, uast_gen_continue(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_assignment(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_return(base_name));
-    vec_append(&gen_a, &stmt.sub_types, uast_gen_if_else_chain(base_name));
-    vec_append(&gen_a, &stmt.sub_types, uast_gen_switch(base_name));
 
     return stmt;
 }

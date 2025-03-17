@@ -28,6 +28,8 @@ Tast_expr* tast_expr_clone(const Tast_expr* expr) {
             todo();
         case TAST_SUM_GET_TAG:
             todo();
+        case TAST_IF_ELSE_CHAIN:
+            todo();
     }
     unreachable("");
 }

@@ -420,10 +420,20 @@ static Tast_type tast_gen_assignment(const char* prefix) {
     return assign;
 }
 
+static Tast_type tast_gen_if_else_chain(const char* prefix) {
+    const char* base_name = "if_else_chain";
+    Tast_type chain = {.name = tast_name_new(prefix, base_name, false)};
+
+    append_member(&chain.members, "Tast_if_vec", "tasts");
+
+    return chain;
+}
+
 static Tast_type tast_gen_expr(const char* prefix) {
     const char* base_name = "expr";
     Tast_type expr = {.name = tast_name_new(prefix, base_name, false)};
 
+    vec_append(&gen_a, &expr.sub_types, tast_gen_if_else_chain(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_assignment(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_operator(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_symbol(base_name));
@@ -649,15 +659,6 @@ static Tast_type tast_gen_return(const char* prefix) {
     return rtn;
 }
 
-static Tast_type tast_gen_if_else_chain(const char* prefix) {
-    const char* base_name = "if_else_chain";
-    Tast_type chain = {.name = tast_name_new(prefix, base_name, false)};
-
-    append_member(&chain.members, "Tast_if_vec", "tasts");
-
-    return chain;
-}
-
 static Tast_type tast_gen_stmt(const char* prefix) {
     const char* base_name = "stmt";
     Tast_type stmt = {.name = tast_name_new(prefix, base_name, false)};
@@ -666,7 +667,6 @@ static Tast_type tast_gen_stmt(const char* prefix) {
     vec_append(&gen_a, &stmt.sub_types, tast_gen_block(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_expr(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_for_with_cond(base_name));
-    vec_append(&gen_a, &stmt.sub_types, tast_gen_if_else_chain(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_return(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_break(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_continue(base_name));
