@@ -14,6 +14,12 @@ void generic_sub_return(Uast_return* rtn, Str_view gen_param, Ulang_type gen_arg
     (void) gen_arg;
 }
 
+void generic_sub_yield(Uast_yield* rtn, Str_view gen_param, Ulang_type gen_arg) {
+    (void) rtn;
+    (void) gen_param;
+    (void) gen_arg;
+}
+
 void generic_sub_param(Env* env, Uast_param* def, Str_view gen_param, Ulang_type gen_arg) {
     generic_sub_variable_def(env, def->base, gen_param, gen_arg);
     if (def->is_optional) {
@@ -173,6 +179,9 @@ void generic_sub_stmt(Env* env, Uast_stmt* stmt, Str_view gen_param, Ulang_type 
             return;
         case UAST_RETURN:
             generic_sub_return(uast_return_unwrap(stmt), gen_param, gen_arg);
+            return;
+        case UAST_YIELD:
+            generic_sub_yield(uast_yield_unwrap(stmt), gen_param, gen_arg);
             return;
         case UAST_LABEL:
             generic_sub_label(uast_label_unwrap(stmt));

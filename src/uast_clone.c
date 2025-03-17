@@ -196,6 +196,10 @@ Uast_return* uast_return_clone(const Uast_return* rtn) {
     return uast_return_new(rtn->pos, uast_expr_clone(rtn->child), rtn->is_auto_inserted);
 }
 
+Uast_yield* uast_yield_clone(const Uast_yield* rtn) {
+    return uast_yield_new(rtn->pos, uast_expr_clone(rtn->child), rtn->is_auto_inserted);
+}
+
 Uast_if_else_chain* uast_if_else_chain_clone(const Uast_if_else_chain* if_else) {
     return uast_if_else_chain_new(if_else->pos, uast_if_vec_clone(if_else->uasts));
 }
@@ -226,6 +230,8 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt) {
             return uast_assignment_wrap(uast_assignment_clone(uast_assignment_const_unwrap(stmt)));
         case UAST_RETURN:
             return uast_return_wrap(uast_return_clone(uast_return_const_unwrap(stmt)));
+        case UAST_YIELD:
+            return uast_yield_wrap(uast_yield_clone(uast_yield_const_unwrap(stmt)));
         case UAST_LABEL:
             return uast_label_wrap(uast_label_clone(uast_label_const_unwrap(stmt)));
     }

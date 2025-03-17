@@ -153,6 +153,13 @@ static inline void tast_literal_set_lang_type(Tast_literal* lit, Lang_type lang_
     unreachable("");
 }
 
+static inline Lang_type tast_if_else_chain_get_lang_type(const Tast_if_else_chain* if_else) {
+    if (if_else->tasts.info.count < 1) {
+        return lang_type_void_const_wrap(lang_type_void_new(0));
+    }
+    return vec_at(&if_else->tasts, 0)->yield_type;
+}
+
 static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr) {
     switch (expr->type) {
         case TAST_STRUCT_LITERAL:
@@ -182,7 +189,7 @@ static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr) {
         case TAST_ASSIGNMENT:
             unreachable("");
         case TAST_IF_ELSE_CHAIN:
-            unreachable("");
+            return tast_if_else_chain_get_lang_type(tast_if_else_chain_const_unwrap(expr));
     }
     unreachable("");
 }
@@ -275,6 +282,8 @@ static inline Lang_type tast_stmt_get_lang_type(const Tast_stmt* stmt) {
             unreachable("");
         case TAST_RETURN:
             return tast_expr_get_lang_type(tast_return_const_unwrap(stmt)->child);
+        case TAST_YIELD:
+            return tast_expr_get_lang_type(tast_yield_const_unwrap(stmt)->child);
         case TAST_FOR_WITH_COND:
             unreachable("");
         case TAST_BREAK:
@@ -330,6 +339,9 @@ static inline void tast_stmt_set_lang_type(Tast_stmt* stmt, Lang_type lang_type)
             unreachable("");
         case TAST_RETURN:
             tast_expr_set_lang_type(tast_return_unwrap(stmt)->child, lang_type);
+            return;
+        case TAST_YIELD:
+            tast_expr_set_lang_type(tast_yield_unwrap(stmt)->child, lang_type);
             return;
         case TAST_FOR_WITH_COND:
             unreachable("");
@@ -444,6 +456,8 @@ static inline Str_view tast_stmt_get_name(const Tast_stmt* stmt) {
         case TAST_BLOCK:
             unreachable("");
         case TAST_RETURN:
+            unreachable("");
+        case TAST_YIELD:
             unreachable("");
         case TAST_FOR_WITH_COND:
             unreachable("");

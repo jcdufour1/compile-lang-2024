@@ -200,6 +200,13 @@ static bool starts_with_return(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_RETURN;
 }
 
+static bool starts_with_yield(Tk_view tokens) {
+    if (tokens.count < 1) {
+        return false;
+    }
+    return tk_view_front(tokens).type == TOKEN_YIELD;
+}
+
 static bool starts_with_if(Tk_view tokens) {
     if (tokens.count < 1) {
         return false;
@@ -485,6 +492,8 @@ static bool can_end_stmt(Token token) {
             return false;
         case TOKEN_CLOSE_GENERIC:
             return true;
+        case TOKEN_YIELD:
+            return false;
     }
     unreachable("");
 }
@@ -683,6 +692,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_CLOSE_GENERIC:
             return false;
+        case TOKEN_YIELD:
+            return false;
     }
     unreachable("");
 }
@@ -818,6 +829,8 @@ static bool is_binary(TOKEN_TYPE token_type) {
             return true;
         case TOKEN_CLOSE_GENERIC:
             return true;
+        case TOKEN_YIELD:
+            return false;
     }
     unreachable("");
 }
@@ -1654,6 +1667,33 @@ static PARSE_STATUS parse_function_return(Env* env, Uast_return** rtn_stmt, Tk_v
     return PARSE_OK;
 }
 
+static PARSE_STATUS parse_function_yield(Env* env, Uast_yield** rtn_stmt, Tk_view* tokens) {
+    unwrap(try_consume(NULL, tokens, TOKEN_YIELD));
+
+    Uast_expr* expr;
+    switch (parse_expr(env, &expr, tokens, false, true)) {
+        case PARSE_EXPR_OK:
+            *rtn_stmt = uast_yield_new(uast_expr_get_pos(expr), expr, false);
+            break;
+        case PARSE_EXPR_NONE:
+            *rtn_stmt = uast_yield_new(
+                prev_token.pos,
+                uast_literal_wrap(util_uast_literal_new_from_strv(
+                    str_view_from_cstr(""),
+                    TOKEN_VOID,
+                    prev_token.pos
+                )),
+                false
+            );
+            break;
+        case PARSE_EXPR_ERROR:
+            return PARSE_ERROR;
+    }
+
+    try_consume(NULL, tokens, TOKEN_SEMICOLON);
+    return PARSE_OK;
+}
+
 static PARSE_EXPR_STATUS parse_condition(Env* env, Uast_condition** result, Tk_view* tokens) {
     Uast_expr* cond_child;
     switch (parse_expr(env, &cond_child, tokens, false, false)) {
@@ -1881,6 +1921,12 @@ static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_return_wrap(rtn_stmt);
+    } else if (starts_with_yield(*tokens)) {
+        Uast_yield* rtn_stmt = NULL;
+        if (PARSE_OK != parse_function_yield(env, &rtn_stmt, tokens)) {
+            return PARSE_EXPR_ERROR;
+        }
+        lhs = uast_yield_wrap(rtn_stmt);
     } else if (starts_with_for(*tokens)) {
         if (PARSE_OK != parse_for_loop(env, &lhs, tokens)) {
             return PARSE_EXPR_ERROR;

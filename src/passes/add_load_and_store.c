@@ -908,7 +908,8 @@ static Str_view load_binary_short_circuit(
             u1_lang_type
         ))),
         // TODO: load inner expr in block, and update new symbol
-        tast_block_new(old_bin->pos, if_true_stmts, (Symbol_collection) {0}, old_bin->pos)
+        tast_block_new(old_bin->pos, if_true_stmts, (Symbol_collection) {0}, old_bin->pos),
+        lang_type_void_const_wrap(lang_type_void_new(0))
     );
 
     Tast_if* if_false = tast_if_new(
@@ -925,7 +926,8 @@ static Str_view load_binary_short_circuit(
             u1_lang_type
         ))),
         // TODO: load inner expr in block, and update new symbol
-        tast_block_new(old_bin->pos, if_false_stmts, (Symbol_collection) {0}, old_bin->pos)
+        tast_block_new(old_bin->pos, if_false_stmts, (Symbol_collection) {0}, old_bin->pos),
+        lang_type_void_const_wrap(lang_type_void_new(0))
     );
 
     Tast_if_vec ifs = {0};
@@ -1562,6 +1564,17 @@ static Str_view load_return(
     return (Str_view) {0};
 }
 
+static Str_view load_yield(
+    Env* env,
+    Llvm_block* new_block,
+    Tast_yield* old_yield
+) {
+    (void) env;
+    (void) new_block;
+    log(LOG_DEBUG, TAST_FMT, tast_yield_print(old_yield));
+    todo();
+}
+
 static Str_view load_assignment(
     Env* env,
     Llvm_block* new_block,
@@ -2013,6 +2026,8 @@ static Str_view load_ptr_expr(Env* env, Llvm_block* new_block, Tast_expr* old_ex
             unreachable("");
         case TAST_SUM_GET_TAG:
             return load_ptr_sum_get_tag(env, new_block, tast_sum_get_tag_unwrap(old_expr));
+        case TAST_IF_ELSE_CHAIN:
+            todo();
     }
     unreachable("");
 }
@@ -2080,6 +2095,8 @@ static Str_view load_stmt(Env* env, Llvm_block* new_block, Tast_stmt* old_stmt) 
             return load_def(env, new_block, tast_def_unwrap(old_stmt));
         case TAST_RETURN:
             return load_return(env, new_block, tast_return_unwrap(old_stmt));
+        case TAST_YIELD:
+            return load_yield(env, new_block, tast_yield_unwrap(old_stmt));
         case TAST_FOR_WITH_COND:
             return load_for_with_cond(env, new_block, tast_for_with_cond_unwrap(old_stmt));
         case TAST_BREAK:

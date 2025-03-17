@@ -125,6 +125,8 @@ static bool get_next_token(const Env* env, Pos* pos, Token* token, Str_view_col*
             token->type = TOKEN_CONTINUE;
         } else if (str_view_cstr_is_equal(text, "type")) {
             token->type = TOKEN_TYPE_DEF;
+        } else if (str_view_cstr_is_equal(text, "yield")) {
+            token->type = TOKEN_YIELD;
         } else {
             token->text = text;
             token->type = TOKEN_SYMBOL;

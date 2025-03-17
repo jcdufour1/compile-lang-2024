@@ -16,6 +16,7 @@ typedef enum {
     PARENT_OF_CASE,
     PARENT_OF_ASSIGN_RHS,
     PARENT_OF_RETURN,
+    PARENT_OF_YIELD,
 } PARENT_OF;
 
 typedef struct Env_ {
@@ -35,6 +36,7 @@ typedef struct Env_ {
     Tast_variable_def_vec sum_case_vars;
 
     Str_view name_parent_function; // length is zero if no parent function exists
+    Lang_type yield_type;
 
     Lang_type rm_tuple_parent_fn_lang_type;
 

@@ -242,21 +242,23 @@ static void msg_invalid_count_function_args_internal(
 #define msg_invalid_count_function_args(env, fun_call, fun_decl, min_args, max_args) \
     msg_invalid_count_function_args_internal(__FILE__, __LINE__, env, fun_call, fun_decl, min_args, max_args)
 
-static void msg_invalid_return_type_internal(const char* file, int line, Env* env, Pos pos, const Tast_expr* child, bool is_auto_inserted) {
+static void msg_invalid_return_or_yield_type_internal(const char* file, int line, Env* env, Pos pos, const Tast_expr* child, bool is_auto_inserted, bool is_return_type) {
+    const char* rtn_text = is_return_type ? "return" : "yield";
     const Uast_function_decl* fun_decl = get_parent_function_decl_const(env);
+
     if (is_auto_inserted) {
         msg_internal(
             file, line,
             LOG_ERROR, EXPECT_FAIL_MISSING_RETURN, env->file_text, pos,
-            "no return statement in function that returns `"LANG_TYPE_FMT"`\n",
-            ulang_type_print(LANG_TYPE_MODE_MSG, fun_decl->return_type)
+            "no %s statement in function that %ss  `"LANG_TYPE_FMT"`\n",
+            rtn_text, rtn_text, ulang_type_print(LANG_TYPE_MODE_MSG, fun_decl->return_type)
         );
     } else {
         msg_internal(
             file, line,
             LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, env->file_text, pos,
-            "returning `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
-            lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(child)), 
+            "%sing `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
+            rtn_text, lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(child)), 
             ulang_type_print(LANG_TYPE_MODE_MSG, fun_decl->return_type)
         );
     }
@@ -269,8 +271,8 @@ static void msg_invalid_return_type_internal(const char* file, int line, Env* en
     );
 }
 
-#define msg_invalid_return_type(env, pos, child, is_auto_inserted) \
-    msg_invalid_return_type_internal(__FILE__, __LINE__, env, pos, child, is_auto_inserted)
+#define msg_invalid_return_or_yield_type(env, pos, child, is_auto_inserted, is_return_type) \
+    msg_invalid_return_or_yield_type_internal(__FILE__, __LINE__, env, pos, child, is_auto_inserted, is_return_type)
 
 typedef enum {
     CHECK_ASSIGN_OK,
@@ -1624,6 +1626,8 @@ bool try_set_member_access_types_finish_sum_def(
         }
         case PARENT_OF_RETURN:
             todo();
+        case PARENT_OF_YIELD:
+            todo();
             // fallthrough
         case PARENT_OF_ASSIGN_RHS: {
             Uast_variable_def* member_def = NULL;
@@ -1996,7 +2000,7 @@ bool try_set_return_types(Env* env, Tast_return** new_tast, Uast_return* rtn) {
         case CHECK_ASSIGN_OK:
             break;
         case CHECK_ASSIGN_INVALID:
-            msg_invalid_return_type(env, rtn->pos, new_child, rtn->is_auto_inserted);
+            msg_invalid_return_or_yield_type(env, rtn->pos, new_child, rtn->is_auto_inserted, true);
             status = false;
             goto error;
         case CHECK_ASSIGN_ERROR:
@@ -2007,6 +2011,37 @@ bool try_set_return_types(Env* env, Tast_return** new_tast, Uast_return* rtn) {
     }
 
     *new_tast = tast_return_new(rtn->pos, new_child, rtn->is_auto_inserted);
+
+error:
+    env->parent_of = old_parent_of;
+    return status;
+}
+
+bool try_set_yield_types(Env* env, Tast_yield** new_tast, Uast_yield* rtn) {
+    *new_tast = NULL;
+
+    bool status = true;
+    PARENT_OF old_parent_of = env->parent_of;
+    env->parent_of = PARENT_OF_YIELD;
+
+    log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, env->yield_type));
+
+    Tast_expr* new_child = NULL;
+    switch (check_generic_assignment(env, &new_child, env->yield_type, rtn->child, rtn->pos)) {
+        case CHECK_ASSIGN_OK:
+            break;
+        case CHECK_ASSIGN_INVALID:
+            msg_invalid_return_or_yield_type(env, rtn->pos, new_child, rtn->is_auto_inserted, false);
+            status = false;
+            goto error;
+        case CHECK_ASSIGN_ERROR:
+            status = false;
+            goto error;
+        default:
+            unreachable("");
+    }
+
+    *new_tast = tast_yield_new(rtn->pos, new_child, rtn->is_auto_inserted);
 
 error:
     env->parent_of = old_parent_of;
@@ -2052,7 +2087,12 @@ bool try_set_if_types(Env* env, Tast_if** new_tast, Uast_if* uast) {
     }
 
     if (status) {
-        *new_tast = tast_if_new(uast->pos, new_cond, new_body);
+        Lang_type lang_type = lang_type_void_const_wrap(lang_type_void_new(0));
+        if (env->parent_of == PARENT_OF_YIELD) {
+            todo();
+        }
+        todo();
+        *new_tast = tast_if_new(uast->pos, new_cond, new_body, lang_type);
     }
     return status;
 }
@@ -2061,6 +2101,7 @@ bool try_set_if_else_chain(Env* env, Tast_if_else_chain** new_tast, Uast_if_else
     bool status = true;
 
     Tast_if_vec new_ifs = {0};
+
     for (size_t idx = 0; idx < if_else->uasts.info.count; idx++) {
         Uast_if* old_if = vec_at(&if_else->uasts, idx);
                 
@@ -2249,6 +2290,12 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
         return false;
     }
 
+    bool status = true;
+    PARENT_OF old_parent_of = env->parent_of;
+    if (env->parent_of == PARENT_OF_ASSIGN_RHS) {
+        env->yield_type = env->lhs_lang_type;
+    }
+
     Exhaustive_data exhaustive_data = check_for_exhaustiveness_start(
         env, tast_expr_get_lang_type(new_operand)
     );
@@ -2298,22 +2345,34 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
         env->parent_of_operand = lang_switch->operand;
         Tast_if* new_if = NULL;
         if (!try_set_if_types(env, &new_if, uast_if_new(old_case->pos, cond, if_true))) {
-            env->parent_of_operand = NULL;
-            env->parent_of = PARENT_OF_NONE;
-            return false;
+            status = false;
+            goto error_inner;
         }
+
+error_inner:
         env->parent_of_operand = NULL;
         env->parent_of = PARENT_OF_NONE;
+        if (!status) {
+            goto error;
+        }
 
         if (!check_for_exhaustiveness_inner(env, &exhaustive_data, new_if, old_case->is_default)) {
-            return false;
+            status = false;
+            goto error;
         }
 
         vec_append(&a_main, &new_ifs, new_if);
     }
 
     *new_tast = tast_if_else_chain_new(lang_switch->pos, new_ifs);
-    return check_for_exhaustiveness_finish(env, exhaustive_data, lang_switch->pos);
+    if (!check_for_exhaustiveness_finish(env, exhaustive_data, lang_switch->pos)) {
+        status = false;
+        goto error;
+    }
+
+error:
+    env->parent_of = old_parent_of;
+    return status;
 }
 
 bool try_set_label_types(Env* env, Tast_label** new_tast, const Uast_label* lang_label) {
@@ -2517,6 +2576,14 @@ STMT_STATUS try_set_stmt_types(Env* env, Tast_stmt** new_tast, Uast_stmt* stmt) 
                 return STMT_ERROR;
             }
             *new_tast = tast_return_wrap(new_rtn);
+            return STMT_OK;
+        }
+        case UAST_YIELD: {
+            Tast_yield* new_rtn = NULL;
+            if (!try_set_yield_types(env, &new_rtn, uast_yield_unwrap(stmt))) {
+                return STMT_ERROR;
+            }
+            *new_tast = tast_yield_wrap(new_rtn);
             return STMT_OK;
         }
         case UAST_BREAK:
