@@ -16,6 +16,23 @@ static bool ulang_type_generics_are_present(Ulang_type lang_type);
 #define msg_invalid_count_generic_args(env, pos, gen_args, min_args, max_args) \
     msg_invalid_count_generic_args_internal(__FILE__, __LINE__, env, pos, gen_args, min_args, max_args)
 
+// TODO: move this function and macro to better place
+static void msg_undefined_type_internal(
+    const char* file,
+    int line,
+    Env* env,
+    Pos pos,
+    Ulang_type lang_type
+) {
+    msg_internal(
+        file, line, LOG_ERROR, EXPECT_FAIL_UNDEFINED_TYPE, env->file_text, pos,
+        "type `"LANG_TYPE_FMT"` is not defined\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type)
+    );
+}
+
+#define msg_undefined_type(env, pos, lang_type) \
+    msg_undefined_type_internal(__FILE__, __LINE__, env, pos, lang_type)
+
 static void msg_invalid_count_generic_args_internal(
     const char* file,
     int line,
@@ -294,8 +311,8 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Env* env, U
 bool resolve_generics_ulang_type_reg_generic(Ulang_type* result, Env* env, Ulang_type_reg_generic lang_type) {
     Uast_def* before_res = NULL;
     if (!usymbol_lookup(&before_res, env, lang_type.atom.str)) {
-        // TODO: expected failure test
-        unreachable("undef symbol "TAST_FMT, str_view_print(lang_type.atom.str));
+        msg_undefined_type(env, lang_type.pos, ulang_type_reg_generic_const_wrap(lang_type));
+        return false;
     }
 
     return resolve_generics_ulang_type_internal(
@@ -306,23 +323,6 @@ bool resolve_generics_ulang_type_reg_generic(Ulang_type* result, Env* env, Ulang
         lang_type.generic_args
     );
 }
-
-// TODO: move this function and macro to better place
-static void msg_undefined_type_internal(
-    const char* file,
-    int line,
-    Env* env,
-    Pos pos,
-    Ulang_type lang_type
-) {
-    msg_internal(
-        file, line, LOG_ERROR, EXPECT_FAIL_UNDEFINED_TYPE, env->file_text, pos,
-        "type `"LANG_TYPE_FMT"` is not defined\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type)
-    );
-}
-
-#define msg_undefined_type(env, pos, lang_type) \
-    msg_undefined_type_internal(__FILE__, __LINE__, env, pos, lang_type)
 
 bool resolve_generics_ulang_type_regular(Ulang_type* result, Env* env, Ulang_type_regular lang_type) {
     Uast_def* before_res = NULL;
