@@ -1581,7 +1581,17 @@ static Str_view load_yield(
     Llvm_block* new_block,
     Tast_yield* old_yield
 ) {
-    return load_expr(env, new_block, old_yield->child);
+    load_assignment(env, new_block, tast_assignment_new(
+        old_yield->pos,
+        tast_symbol_wrap(tast_symbol_new(old_yield->pos, (Sym_typed_base) {
+            .lang_type = tast_expr_get_lang_type(old_yield->child),
+            .name = env->load_yield_symbol_name,
+            .llvm_id = 0
+        })),
+        old_yield->child
+    ));
+
+    return (Str_view) {0};
 }
 
 static Str_view load_assignment(
@@ -1712,13 +1722,27 @@ static Llvm_block* if_statement_to_branch(Env* env, Tast_if* if_statement, Str_v
     return new_block;
 }
 
-static Llvm_block* if_else_chain_to_branch(Env* env, Tast_if_else_chain* if_else) {
-    Llvm_block* new_block = llvm_block_new(
+static Str_view if_else_chain_to_branch(Llvm_block** new_block, Env* env, Tast_if_else_chain* if_else) {
+    *new_block = llvm_block_new(
         if_else->pos,
         (Llvm_vec) {0},
         (Symbol_collection) {0},
         (Pos) {0}
     );
+
+    // TODO: avoid this when yield_type is void
+    Tast_variable_def* yield_dest = NULL;
+    if (tast_if_else_chain_get_lang_type(if_else).type != LANG_TYPE_VOID) {
+        yield_dest = tast_variable_def_new(
+            (*new_block)->pos,
+            tast_if_else_chain_get_lang_type(if_else),
+            false,
+            util_literal_name_new()
+        );
+        unwrap(symbol_add(env, tast_variable_def_wrap(yield_dest)));
+        load_variable_def(env, *new_block, yield_dest);
+        env->load_yield_symbol_name = yield_dest->name;
+    }
 
     Str_view if_after = util_literal_name_new_prefix("if_after");
     
@@ -1734,11 +1758,11 @@ static Llvm_block* if_else_chain_to_branch(Env* env, Tast_if_else_chain* if_else
         }
 
         Llvm_block* if_block = if_statement_to_branch(env, vec_at(&if_else->tasts, idx), next_if, if_after);
-        vec_append(&a_main, &new_block->children, llvm_block_wrap(if_block));
+        vec_append(&a_main, &(*new_block)->children, llvm_block_wrap(if_block));
 
         if (idx + 1 < if_else->tasts.info.count) {
             assert(!alloca_lookup(&dummy, env, next_if));
-            add_label(env, new_block, next_if, vec_at(&if_else->tasts, idx)->pos, false);
+            add_label(env, (*new_block), next_if, vec_at(&if_else->tasts, idx)->pos, false);
             assert(alloca_lookup(&dummy, env, next_if));
         } else {
             assert(str_view_is_equal(next_if, if_after));
@@ -1746,10 +1770,15 @@ static Llvm_block* if_else_chain_to_branch(Env* env, Tast_if_else_chain* if_else
     }
 
     assert(!symbol_lookup(&dummy_def, env, next_if));
-    add_label(env, new_block, if_after, if_else->pos, false);
+    add_label(env, (*new_block), if_after, if_else->pos, false);
     assert(alloca_lookup(&dummy, env, next_if));
 
-    return new_block;
+    if (tast_if_else_chain_get_lang_type(if_else).type == LANG_TYPE_VOID) {
+        return (Str_view) {0};
+    } else {
+        return load_symbol(env, *new_block, tast_symbol_new_from_variable_def(yield_dest->pos, yield_dest));
+    }
+    unreachable("");
 }
 
 static Str_view load_if_else_chain(
@@ -1757,10 +1786,11 @@ static Str_view load_if_else_chain(
     Llvm_block* new_block,
     Tast_if_else_chain* old_if_else
 ) {
-    Llvm_block* new_if_else = if_else_chain_to_branch(env, old_if_else);
+    Llvm_block* new_if_else = NULL;
+    Str_view result = if_else_chain_to_branch(&new_if_else, env, old_if_else);
     vec_append(&a_main, &new_block->children, llvm_block_wrap(new_if_else));
 
-    return (Str_view) {0};
+    return result;
 }
 
 static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for) {

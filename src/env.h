@@ -50,6 +50,7 @@ typedef struct Env_ {
     PARENT_OF parent_of;
     Uast_expr* parent_of_operand;
 
+    Str_view load_yield_symbol_name;
     Str_view label_if_break;
     Str_view label_if_continue;
 } Env;

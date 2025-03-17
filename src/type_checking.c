@@ -2292,6 +2292,8 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
     PARENT_OF old_parent_of = env->parent_of;
     if (env->parent_of == PARENT_OF_ASSIGN_RHS) {
         env->yield_type = env->lhs_lang_type;
+    } else {
+        env->yield_type = lang_type_void_const_wrap(lang_type_void_new(0));
     }
 
     Exhaustive_data exhaustive_data = check_for_exhaustiveness_start(
@@ -2529,6 +2531,7 @@ bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, boo
 error:
     vec_rem_last(&env->ancesters);
     Lang_type yield_type = lang_type_void_const_wrap(lang_type_void_new(0));
+    assert(yield_type.type == LANG_TYPE_VOID);
     if (env->parent_of == PARENT_OF_CASE) {
         yield_type = env->yield_type;
     } else if (env->parent_of == PARENT_OF_IF) {

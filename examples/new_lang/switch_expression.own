@@ -1,0 +1,32 @@
+
+extern("c") fn printf(format_string u8*, args any...) i32
+
+type Bool enum {
+    false
+    true
+}
+
+fn is_true() Bool {
+    return .true
+}
+
+fn is_false() Bool {
+    return .false
+}
+
+fn main() i32 {
+    let num1 i32 = switch (is_true()) {
+        case .true: yield 2
+        case .false: yield 3
+    }
+
+    let num2 i32 = switch (is_false()) {
+        case .true: yield 2
+        case .false: yield 3
+    }
+
+    printf("num1: %d\n", num1)
+    printf("num2: %d\n", num2)
+
+    return 0
+}
