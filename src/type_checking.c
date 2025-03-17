@@ -21,6 +21,7 @@
 #include <resolve_generics.h>
 #include <ulang_type_get_atom.h>
 #include <symbol_log.h>
+#include <parent_of_print.h>
 
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
@@ -1671,6 +1672,8 @@ bool try_set_member_access_types_finish_sum_def(
             //*new_tast = tast_expr_wrap(tast_sum_callee_wrap(new_call));
             //return true;
         }
+        case PARENT_OF_IF:
+            unreachable("");
         case PARENT_OF_NONE:
             unreachable("");
     }
@@ -2087,12 +2090,7 @@ bool try_set_if_types(Env* env, Tast_if** new_tast, Uast_if* uast) {
     }
 
     if (status) {
-        Lang_type lang_type = lang_type_void_const_wrap(lang_type_void_new(0));
-        if (env->parent_of == PARENT_OF_YIELD) {
-            todo();
-        }
-        todo();
-        *new_tast = tast_if_new(uast->pos, new_cond, new_body, lang_type);
+        *new_tast = tast_if_new(uast->pos, new_cond, new_body, new_body->lang_type);
     }
     return status;
 }
@@ -2530,7 +2528,14 @@ bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, boo
 
 error:
     vec_rem_last(&env->ancesters);
-    *new_tast = tast_block_new(block->pos, new_tasts, new_sym_coll, block->pos_end);
+    Lang_type yield_type = lang_type_void_const_wrap(lang_type_void_new(0));
+    if (env->parent_of == PARENT_OF_CASE) {
+        yield_type = env->yield_type;
+    } else if (env->parent_of == PARENT_OF_IF) {
+        todo();
+    }
+    *new_tast = tast_block_new(block->pos, new_tasts, new_sym_coll, block->pos_end, yield_type);
+    log(LOG_DEBUG, TAST_FMT"\n", parent_of_print(env->parent_of));
     if (status) {
         assert(*new_tast);
     } else {

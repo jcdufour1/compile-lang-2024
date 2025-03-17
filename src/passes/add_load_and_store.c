@@ -908,7 +908,13 @@ static Str_view load_binary_short_circuit(
             u1_lang_type
         ))),
         // TODO: load inner expr in block, and update new symbol
-        tast_block_new(old_bin->pos, if_true_stmts, (Symbol_collection) {0}, old_bin->pos),
+        tast_block_new(
+            old_bin->pos,
+            if_true_stmts,
+            (Symbol_collection) {0},
+            old_bin->pos,
+            lang_type_void_const_wrap(lang_type_void_new(0))
+        ),
         lang_type_void_const_wrap(lang_type_void_new(0))
     );
 
@@ -926,7 +932,13 @@ static Str_view load_binary_short_circuit(
             u1_lang_type
         ))),
         // TODO: load inner expr in block, and update new symbol
-        tast_block_new(old_bin->pos, if_false_stmts, (Symbol_collection) {0}, old_bin->pos),
+        tast_block_new(
+            old_bin->pos,
+            if_false_stmts,
+            (Symbol_collection) {0},
+            old_bin->pos,
+            lang_type_void_const_wrap(lang_type_void_new(0))
+        ),
         lang_type_void_const_wrap(lang_type_void_new(0))
     );
 
@@ -1569,10 +1581,7 @@ static Str_view load_yield(
     Llvm_block* new_block,
     Tast_yield* old_yield
 ) {
-    (void) env;
-    (void) new_block;
-    log(LOG_DEBUG, TAST_FMT, tast_yield_print(old_yield));
-    todo();
+    return load_expr(env, new_block, old_yield->child);
 }
 
 static Str_view load_assignment(
