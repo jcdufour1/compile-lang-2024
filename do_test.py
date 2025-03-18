@@ -127,6 +127,8 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "undefined_type_in_function_param.own": ["undefined-type"],
     EXPECTED_FAIL_EXAMPLES_DIR + "undefined_generic_type_in_fun_param.own": ["undefined-type"],
     EXPECTED_FAIL_EXAMPLES_DIR + "member_access_on_primitive.own": ["invalid-member-access"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "missing_yield.own": 2*["missing-yield-statement"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "mismatched_yield_type.own": ["mismatched-yield-type"],
 }
 
 def to_str(a):

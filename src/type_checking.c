@@ -247,14 +247,14 @@ static void msg_invalid_yield_type_internal(const char* file, int line, Env* env
     if (is_auto_inserted) {
         msg_internal(
             file, line,
-            LOG_ERROR, EXPECT_FAIL_MISSING_RETURN, env->file_text, pos,
+            LOG_ERROR, EXPECT_FAIL_MISSING_YIELD_STATEMENT, env->file_text, pos,
             "no yield statement in case that yields `"LANG_TYPE_FMT"`\n",
             lang_type_print(LANG_TYPE_MODE_MSG, env->yield_type)
         );
     } else {
         msg_internal(
             file, line,
-            LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, env->file_text, pos,
+            LOG_ERROR, EXPECT_FAIL_MISMATCHED_YIELD_TYPE, env->file_text, pos,
             "yielding `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
             lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(child)),
             lang_type_print(LANG_TYPE_MODE_MSG, env->yield_type)
@@ -2061,7 +2061,6 @@ bool try_set_yield_types(Env* env, Tast_yield** new_tast, Uast_yield* rtn) {
             log(LOG_DEBUG, TAST_FMT, uast_expr_print(rtn->child));
             break;
         case CHECK_ASSIGN_INVALID:
-            todo();
             msg_invalid_yield_type(env, rtn->pos, new_child, rtn->is_auto_inserted);
             status = false;
             goto error;

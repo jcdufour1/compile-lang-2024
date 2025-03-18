@@ -1,0 +1,20 @@
+
+type Bool enum {
+    false
+    true
+}
+
+fn is_true() Bool {
+    return .true
+}
+
+fn do_nothing() {
+}
+
+fn main() i32 {
+    let num Bool = switch (is_true()) {
+        case .false: yield .true
+        case .true: yield 1
+    }
+    return 0
+}

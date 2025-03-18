@@ -26,6 +26,8 @@ static inline Str_view expect_fail_type_print_internal(EXPECT_FAIL_TYPE type) {
             return str_view_from_cstr("invalid_count_fun_args");
         case EXPECT_FAIL_MISSING_RETURN:
             return str_view_from_cstr("missing_return");
+        case EXPECT_FAIL_MISSING_YIELD_STATEMENT:
+            return str_view_from_cstr("missing_yield_statement");
         case EXPECT_FAIL_REDEFINITION_SYMBOL:
             return str_view_from_cstr("redefinition_symbol");
         case EXPECT_FAIL_INVALID_MEMBER_ACCESS:
@@ -80,6 +82,8 @@ static inline Str_view expect_fail_type_print_internal(EXPECT_FAIL_TYPE type) {
             return str_view_from_cstr("duplicate_case");
         case EXPECT_FAIL_INVALID_COUNT_GENERIC_ARGS:
             return str_view_from_cstr("invalid_count_generic_args");
+        case EXPECT_FAIL_MISMATCHED_YIELD_TYPE:
+            return str_view_from_cstr("MISMATCHED_YIELD_TYPE");
     }
     unreachable("");
 }

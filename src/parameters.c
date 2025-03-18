@@ -53,6 +53,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"invalid-count-fun-args", EXPECT_FAIL_INVALID_COUNT_FUN_ARGS},
     {"invalid-function-arguments", EXPECT_FAIL_INVALID_FUN_ARG},
     {"mismatched-return-type", EXPECT_FAIL_MISMATCHED_RETURN_TYPE},
+    {"mismatched-yield-type", EXPECT_FAIL_MISMATCHED_YIELD_TYPE},
     {"assignment-mismatched-types", EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES},
     {"unary-mismatched-types", EXPECT_FAIL_UNARY_MISMATCHED_TYPES},
     {"binary-mismatched-types", EXPECT_FAIL_BINARY_MISMATCHED_TYPES},
@@ -74,6 +75,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"duplicate-default", EXPECT_FAIL_DUPLICATE_DEFAULT},
     {"duplicate-case", EXPECT_FAIL_DUPLICATE_CASE},
     {"invalid-count-generic-args", EXPECT_FAIL_INVALID_COUNT_GENERIC_ARGS},
+    {"missing-yield-statement", EXPECT_FAIL_MISSING_YIELD_STATEMENT},
 };
 
 static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
