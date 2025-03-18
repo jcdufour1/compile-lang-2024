@@ -630,6 +630,9 @@ static Tast_type tast_gen_break(const char* prefix) {
     const char* base_name = "break";
     Tast_type lang_break = {.name = tast_name_new(prefix, base_name, false)};
 
+    append_member(&lang_break.members, "bool", "do_break_expr");
+    append_member(&lang_break.members, "Tast_expr*", "break_expr");
+
     return lang_break;
 }
 
@@ -661,16 +664,6 @@ static Tast_type tast_gen_return(const char* prefix) {
     return rtn;
 }
 
-static Tast_type tast_gen_yield(const char* prefix) {
-    const char* base_name = "yield";
-    Tast_type rtn = {.name = tast_name_new(prefix, base_name, false)};
-
-    append_member(&rtn.members, "Tast_expr*", "child");
-    append_member(&rtn.members, "bool", "is_auto_inserted"); // TODO: use : 1 size?
-
-    return rtn;
-}
-
 static Tast_type tast_gen_stmt(const char* prefix) {
     const char* base_name = "stmt";
     Tast_type stmt = {.name = tast_name_new(prefix, base_name, false)};
@@ -680,7 +673,6 @@ static Tast_type tast_gen_stmt(const char* prefix) {
     vec_append(&gen_a, &stmt.sub_types, tast_gen_expr(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_for_with_cond(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_return(base_name));
-    vec_append(&gen_a, &stmt.sub_types, tast_gen_yield(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_break(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_continue(base_name));
     vec_append(&gen_a, &stmt.sub_types, tast_gen_def(base_name));

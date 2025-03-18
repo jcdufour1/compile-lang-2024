@@ -16,7 +16,7 @@ typedef enum {
     PARENT_OF_CASE,
     PARENT_OF_ASSIGN_RHS,
     PARENT_OF_RETURN,
-    PARENT_OF_YIELD,
+    PARENT_OF_BREAK,
     PARENT_OF_IF,
 } PARENT_OF;
 
@@ -37,8 +37,8 @@ typedef struct Env_ {
     Tast_variable_def_vec sum_case_vars;
 
     Str_view name_parent_function; // length is zero if no parent function exists
-    Lang_type yield_type;
-    bool yield_in_case;
+    Lang_type break_type;
+    bool break_in_case;
 
     Lang_type rm_tuple_parent_fn_lang_type;
 
@@ -51,7 +51,7 @@ typedef struct Env_ {
     PARENT_OF parent_of;
     Uast_expr* parent_of_operand;
 
-    Str_view load_yield_symbol_name;
+    Str_view load_break_symbol_name;
     Str_view label_if_break;
     Str_view label_if_continue;
 } Env;

@@ -397,17 +397,6 @@ Str_view tast_return_print_internal(const Tast_return* lang_rtn, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view tast_yield_print_internal(const Tast_yield* lang_rtn, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "yield\n", indent);
-    indent += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, tast_expr_print_internal(lang_rtn->child, indent));
-    indent -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
 Str_view tast_label_print_internal(const Tast_label* label, int indent) {
     String buf = {0};
 
@@ -652,8 +641,6 @@ Str_view tast_stmt_print_internal(const Tast_stmt* stmt, int indent) {
             return tast_continue_print_internal(tast_continue_const_unwrap(stmt), indent);
         case TAST_RETURN:
             return tast_return_print_internal(tast_return_const_unwrap(stmt), indent);
-        case TAST_YIELD:
-            return tast_yield_print_internal(tast_yield_const_unwrap(stmt), indent);
         case TAST_LABEL:
             return tast_label_print_internal(tast_label_const_unwrap(stmt), indent);
     }

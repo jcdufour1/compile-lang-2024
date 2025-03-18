@@ -249,24 +249,24 @@ static void msg_invalid_yield_type_internal(const char* file, int line, Env* env
         msg_internal(
             file, line,
             LOG_ERROR, EXPECT_FAIL_MISSING_YIELD_STATEMENT, env->file_text, pos,
-            "no yield statement in case that yields `"LANG_TYPE_FMT"`\n",
-            lang_type_print(LANG_TYPE_MODE_MSG, env->yield_type)
+            "no break statement in case that breaks `"LANG_TYPE_FMT"`\n",
+            lang_type_print(LANG_TYPE_MODE_MSG, env->break_type)
         );
     } else {
         msg_internal(
             file, line,
             LOG_ERROR, EXPECT_FAIL_MISMATCHED_YIELD_TYPE, env->file_text, pos,
-            "yielding `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
+            "breaking `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
             lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(child)),
-            lang_type_print(LANG_TYPE_MODE_MSG, env->yield_type)
+            lang_type_print(LANG_TYPE_MODE_MSG, env->break_type)
         );
     }
 
     msg_internal(
         file, line,
         LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, (Pos) {0} /* TODO */,
-        "case yield type `"LANG_TYPE_FMT"` defined here\n",
-        lang_type_print(LANG_TYPE_MODE_MSG, env->yield_type) 
+        "case break type `"LANG_TYPE_FMT"` defined here\n",
+        lang_type_print(LANG_TYPE_MODE_MSG, env->break_type) 
     );
 }
 
@@ -1655,7 +1655,7 @@ bool try_set_member_access_types_finish_sum_def(
         }
         case PARENT_OF_RETURN:
             todo();
-        case PARENT_OF_YIELD:
+        case PARENT_OF_BREAK:
             todo();
             // fallthrough
         case PARENT_OF_ASSIGN_RHS: {
@@ -2048,33 +2048,35 @@ error:
     return status;
 }
 
-bool try_set_yield_types(Env* env, Tast_yield** new_tast, Uast_yield* rtn) {
+bool try_set_break_types(Env* env, Tast_break** new_tast, Uast_break* lang_break) {
     *new_tast = NULL;
 
     bool status = true;
     PARENT_OF old_parent_of = env->parent_of;
-    env->parent_of = PARENT_OF_YIELD;
+    env->parent_of = PARENT_OF_BREAK;
 
     Tast_expr* new_child = NULL;
-    switch (check_generic_assignment(env, &new_child, env->yield_type, rtn->child, rtn->pos)) {
-        case CHECK_ASSIGN_OK:
-            log(LOG_DEBUG, TAST_FMT, uast_expr_print(rtn->child));
-            break;
-        case CHECK_ASSIGN_INVALID:
-            msg_invalid_yield_type(env, rtn->pos, new_child, rtn->is_auto_inserted);
-            status = false;
-            goto error;
-        case CHECK_ASSIGN_ERROR:
-            todo();
-            status = false;
-            goto error;
-        default:
-            unreachable("");
+    if (lang_break->do_break_expr) {
+        switch (check_generic_assignment(env, &new_child, env->break_type, lang_break->break_expr, lang_break->pos)) {
+            case CHECK_ASSIGN_OK:
+                log(LOG_DEBUG, TAST_FMT, uast_expr_print(lang_break->break_expr));
+                break;
+            case CHECK_ASSIGN_INVALID:
+                msg_invalid_yield_type(env, lang_break->pos, new_child, false);
+                status = false;
+                goto error;
+            case CHECK_ASSIGN_ERROR:
+                todo();
+                status = false;
+                goto error;
+            default:
+                unreachable("");
+        }
     }
 
-    *new_tast = tast_yield_new(rtn->pos, new_child, rtn->is_auto_inserted);
+    *new_tast = tast_break_new(lang_break->pos, lang_break->do_break_expr, new_child);
 
-    env->yield_in_case = true;
+    env->break_in_case = true;
 error:
     env->parent_of = old_parent_of;
     return status;
@@ -2124,7 +2126,7 @@ bool try_set_if_types(Env* env, Tast_if** new_tast, Uast_if* uast) {
     if (status) {
         *new_tast = tast_if_new(uast->pos, new_cond, new_body, new_body->lang_type);
         if (env->parent_of == PARENT_OF_CASE) {
-            if (new_body->lang_type.type != LANG_TYPE_VOID && !env->yield_in_case) {
+            if (new_body->lang_type.type != LANG_TYPE_VOID && !env->break_in_case) {
                 // TODO: this will not work if there is nested switch or if-else
                 msg_invalid_yield_type(env, new_body->pos_end, NULL, true);
                 status = false;
@@ -2332,11 +2334,11 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
 
     bool status = true;
     PARENT_OF old_parent_of = env->parent_of;
-    env->yield_in_case = false;
+    env->break_in_case = false;
     if (env->parent_of == PARENT_OF_ASSIGN_RHS) {
-        env->yield_type = env->lhs_lang_type;
+        env->break_type = env->lhs_lang_type;
     } else {
-        env->yield_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
+        env->break_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
     }
 
     Exhaustive_data exhaustive_data = check_for_exhaustiveness_start(
@@ -2395,7 +2397,7 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
 error_inner:
         env->parent_of_operand = NULL;
         env->parent_of = PARENT_OF_NONE;
-        env->yield_in_case = false;
+        env->break_in_case = false;
         if (!status) {
             goto error;
         }
@@ -2416,7 +2418,7 @@ error_inner:
 
 error:
     env->parent_of = old_parent_of;
-    env->yield_in_case = false;
+    env->break_in_case = false;
     return status;
 }
 
@@ -2578,7 +2580,7 @@ error:
     Lang_type yield_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
     assert(yield_type.type == LANG_TYPE_VOID);
     if (env->parent_of == PARENT_OF_CASE) {
-        yield_type = env->yield_type;
+        yield_type = env->break_type;
     } else if (env->parent_of == PARENT_OF_IF) {
         todo();
     }
@@ -2631,17 +2633,14 @@ STMT_STATUS try_set_stmt_types(Env* env, Tast_stmt** new_tast, Uast_stmt* stmt) 
             *new_tast = tast_return_wrap(new_rtn);
             return STMT_OK;
         }
-        case UAST_YIELD: {
-            Tast_yield* new_rtn = NULL;
-            if (!try_set_yield_types(env, &new_rtn, uast_yield_unwrap(stmt))) {
+        case UAST_BREAK: {
+            Tast_break* new_break = NULL;
+            if (!try_set_break_types(env, &new_break, uast_break_unwrap(stmt))) {
                 return STMT_ERROR;
             }
-            *new_tast = tast_yield_wrap(new_rtn);
+            *new_tast = tast_break_wrap(new_break);
             return STMT_OK;
         }
-        case UAST_BREAK:
-            *new_tast = tast_break_wrap(tast_break_new(uast_break_unwrap(stmt)->pos));
-            return STMT_OK;
         case UAST_CONTINUE:
             *new_tast = tast_continue_wrap(tast_continue_new(uast_continue_unwrap(stmt)->pos));
             return STMT_OK;

@@ -15,8 +15,8 @@ static inline Str_view parent_of_print_internal(PARENT_OF parent_of) {
             return str_view_from_cstr("PARENT_OF_ASSIGN_RHS");
         case PARENT_OF_RETURN:
             return str_view_from_cstr("PARENT_OF_RETURN");
-        case PARENT_OF_YIELD:
-            return str_view_from_cstr("PARENT_OF_YIELD");
+        case PARENT_OF_BREAK:
+            return str_view_from_cstr("PARENT_OF_BREAK");
         case PARENT_OF_IF:
             return str_view_from_cstr("PARENT_OF_IF");
     }

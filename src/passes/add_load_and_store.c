@@ -1538,24 +1538,6 @@ static Str_view load_return(
     return (Str_view) {0};
 }
 
-static Str_view load_yield(
-    Env* env,
-    Llvm_block* new_block,
-    Tast_yield* old_yield
-) {
-    load_assignment(env, new_block, tast_assignment_new(
-        old_yield->pos,
-        tast_symbol_wrap(tast_symbol_new(old_yield->pos, (Sym_typed_base) {
-            .lang_type = tast_expr_get_lang_type(old_yield->child),
-            .name = env->load_yield_symbol_name,
-            .llvm_id = 0
-        })),
-        old_yield->child
-    ));
-
-    return (Str_view) {0};
-}
-
 static Str_view load_assignment(
     Env* env,
     Llvm_block* new_block,
@@ -1698,7 +1680,7 @@ static Str_view if_else_chain_to_branch(Llvm_block** new_block, Env* env, Tast_i
         );
         unwrap(symbol_add(env, tast_variable_def_wrap(yield_dest)));
         load_variable_def(env, *new_block, yield_dest);
-        env->load_yield_symbol_name = yield_dest->name;
+        env->load_break_symbol_name = yield_dest->name;
     }
 
     Str_view if_after = util_literal_name_new_prefix("if_after");
@@ -1860,6 +1842,18 @@ static void load_break(
             "break statement outside of a for loop\n"
         );
         return;
+    }
+
+    if (old_break->do_break_expr) {
+        load_assignment(env, new_block, tast_assignment_new(
+            old_break->pos,
+            tast_symbol_wrap(tast_symbol_new(old_break->pos, (Sym_typed_base) {
+                .lang_type = tast_expr_get_lang_type(old_break->break_expr),
+                .name = env->load_break_symbol_name,
+                .llvm_id = 0
+            })),
+            old_break->break_expr
+        ));
     }
 
     Llvm_goto* new_goto = llvm_goto_new(old_break->pos, env->label_if_break, 0);
@@ -2084,8 +2078,6 @@ static Str_view load_stmt(Env* env, Llvm_block* new_block, Tast_stmt* old_stmt) 
             return load_def(env, new_block, tast_def_unwrap(old_stmt));
         case TAST_RETURN:
             return load_return(env, new_block, tast_return_unwrap(old_stmt));
-        case TAST_YIELD:
-            return load_yield(env, new_block, tast_yield_unwrap(old_stmt));
         case TAST_FOR_WITH_COND:
             load_for_with_cond(env, new_block, tast_for_with_cond_unwrap(old_stmt));
             return (Str_view) {0};
