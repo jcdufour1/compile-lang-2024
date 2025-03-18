@@ -200,13 +200,6 @@ static bool starts_with_return(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_RETURN;
 }
 
-static bool starts_with_yield(Tk_view tokens) {
-    if (tokens.count < 1) {
-        return false;
-    }
-    return tk_view_front(tokens).type == TOKEN_YIELD;
-}
-
 static bool starts_with_if(Tk_view tokens) {
     if (tokens.count < 1) {
         return false;
@@ -492,8 +485,6 @@ static bool can_end_stmt(Token token) {
             return false;
         case TOKEN_CLOSE_GENERIC:
             return true;
-        case TOKEN_YIELD:
-            return false;
     }
     unreachable("");
 }
@@ -692,8 +683,6 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_CLOSE_GENERIC:
             return false;
-        case TOKEN_YIELD:
-            return false;
     }
     unreachable("");
 }
@@ -829,8 +818,6 @@ static bool is_binary(TOKEN_TYPE token_type) {
             return true;
         case TOKEN_CLOSE_GENERIC:
             return true;
-        case TOKEN_YIELD:
-            return false;
     }
     unreachable("");
 }
@@ -1531,10 +1518,26 @@ for_range_error:
     return PARSE_OK;
 }
 
-static Uast_break* parse_break(Tk_view* tokens) {
+static PARSE_STATUS parse_break(Env* env, Uast_break** new_break, Tk_view* tokens) {
     Token break_token = tk_view_consume(tokens);
-    Uast_break* bk_stmt = uast_break_new(break_token.pos);
-    return bk_stmt;
+
+    Uast_expr* break_expr = NULL;
+    bool do_break_expr = true;
+    switch (parse_expr(env, &break_expr, tokens, true, false)) {
+        case PARSE_EXPR_OK:
+            do_break_expr = true;
+            break;
+        case PARSE_EXPR_ERROR:
+            return PARSE_ERROR;
+        case PARSE_EXPR_NONE:
+            do_break_expr = false;
+            break;
+        default:
+            unreachable("");
+    }
+
+    *new_break = uast_break_new(break_token.pos, do_break_expr, break_expr);
+    return PARSE_OK;
 }
 
 static Uast_continue* parse_continue(Tk_view* tokens) {
@@ -1650,33 +1653,6 @@ static PARSE_STATUS parse_function_return(Env* env, Uast_return** rtn_stmt, Tk_v
             break;
         case PARSE_EXPR_NONE:
             *rtn_stmt = uast_return_new(
-                prev_token.pos,
-                uast_literal_wrap(util_uast_literal_new_from_strv(
-                    str_view_from_cstr(""),
-                    TOKEN_VOID,
-                    prev_token.pos
-                )),
-                false
-            );
-            break;
-        case PARSE_EXPR_ERROR:
-            return PARSE_ERROR;
-    }
-
-    try_consume(NULL, tokens, TOKEN_SEMICOLON);
-    return PARSE_OK;
-}
-
-static PARSE_STATUS parse_function_yield(Env* env, Uast_yield** rtn_stmt, Tk_view* tokens) {
-    unwrap(try_consume(NULL, tokens, TOKEN_YIELD));
-
-    Uast_expr* expr;
-    switch (parse_expr(env, &expr, tokens, false, true)) {
-        case PARSE_EXPR_OK:
-            *rtn_stmt = uast_yield_new(uast_expr_get_pos(expr), expr, false);
-            break;
-        case PARSE_EXPR_NONE:
-            *rtn_stmt = uast_yield_new(
                 prev_token.pos,
                 uast_literal_wrap(util_uast_literal_new_from_strv(
                     str_view_from_cstr(""),
@@ -1921,18 +1897,16 @@ static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_return_wrap(rtn_stmt);
-    } else if (starts_with_yield(*tokens)) {
-        Uast_yield* rtn_stmt = NULL;
-        if (PARSE_OK != parse_function_yield(env, &rtn_stmt, tokens)) {
-            return PARSE_EXPR_ERROR;
-        }
-        lhs = uast_yield_wrap(rtn_stmt);
     } else if (starts_with_for(*tokens)) {
         if (PARSE_OK != parse_for_loop(env, &lhs, tokens)) {
             return PARSE_EXPR_ERROR;
         }
     } else if (starts_with_break(*tokens)) {
-        lhs = uast_break_wrap(parse_break(tokens));
+        Uast_break* rtn_stmt = NULL;
+        if (PARSE_OK != parse_break(env, &rtn_stmt, tokens)) {
+            return PARSE_EXPR_ERROR;
+        }
+        lhs = uast_break_wrap(rtn_stmt);
     } else if (starts_with_continue(*tokens)) {
         lhs = uast_continue_wrap(parse_continue(tokens));
     } else if (starts_with_block(*tokens)) {

@@ -181,7 +181,7 @@ Uast_condition* uast_condition_clone(const Uast_condition* cond) {
 }
 
 Uast_break* uast_break_clone(const Uast_break* lang_break) {
-    return uast_break_new(lang_break->pos);
+    return uast_break_new(lang_break->pos, lang_break->do_break_expr, uast_expr_clone(lang_break->break_expr));
 }
 
 Uast_continue* uast_continue_clone(const Uast_continue* cont) {

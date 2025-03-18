@@ -81,7 +81,6 @@ typedef enum {
     TOKEN_DEFAULT,
     TOKEN_ELSE,
     TOKEN_RETURN,
-    TOKEN_YIELD,
     TOKEN_EXTERN,
     TOKEN_STRUCT,
     TOKEN_LET,
@@ -240,8 +239,6 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_CLOSE_GENERIC:
             return false;
-        case TOKEN_YIELD:
-            return false;
     }
     unreachable("");
 }
@@ -376,8 +373,6 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             return true;
         case TOKEN_CLOSE_GENERIC:
             return true;
-        case TOKEN_YIELD:
-            return false;
     }
     unreachable(TOKEN_FMT"\n", token_print(TOKEN_MODE_LOG, token));
 }
@@ -532,8 +527,6 @@ static inline bool token_is_closing(Token curr_token) {
             return false;
         case TOKEN_CLOSE_GENERIC:
             return true;
-        case TOKEN_YIELD:
-            return false;
     }
     unreachable("");
 }
@@ -667,8 +660,6 @@ static inline bool token_is_opening(Token curr_token) {
         case TOKEN_OPEN_GENERIC:
             return true;
         case TOKEN_CLOSE_GENERIC:
-            return false;
-        case TOKEN_YIELD:
             return false;
     }
     unreachable("");

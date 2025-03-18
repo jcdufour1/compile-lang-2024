@@ -500,6 +500,9 @@ static Uast_type uast_gen_for_with_cond(const char* prefix) {
 static Uast_type uast_gen_break(const char* prefix) {
     Uast_type lang_break = {.name = uast_name_new(prefix, "break", false)};
 
+    append_member(&lang_break.members, "bool", "do_break_expr");
+    append_member(&lang_break.members, "Uast_expr*", "break_expr");
+
     return lang_break;
 }
 
