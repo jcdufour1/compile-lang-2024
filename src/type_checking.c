@@ -894,20 +894,15 @@ bool try_set_tuple_assignment_types(
     Lang_type dest_lang_type,
     Uast_tuple* tuple
 ) {
-    if (dest_lang_type.type != LANG_TYPE_TUPLE || lang_type_tuple_const_unwrap(dest_lang_type).lang_types.info.count != tuple->members.info.count) {
-        // TODO: clean up these error messages
+    if (lang_type_tuple_const_unwrap(dest_lang_type).lang_types.info.count != tuple->members.info.count) {
         msg(
-            LOG_ERROR, EXPECT_FAIL_MISMATCHED_TUPLE_COUNT, env->file_text,
-            uast_tuple_get_pos(tuple),
-            "tuple `"UAST_FMT"` cannot be assigned to `"LANG_TYPE_FMT"; `\n",
-            uast_tuple_print(tuple), lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type)
-        );
-        msg(
-            LOG_NOTE, EXPECT_FAIL_NONE, env->file_text,
-            uast_tuple_get_pos(tuple),
-            "tuple `"UAST_FMT"` has %zu elements, but type `"LANG_TYPE_FMT" has %zu elements`\n",
+            LOG_ERROR, EXPECT_FAIL_MISMATCHED_TUPLE_COUNT, env->file_text, uast_tuple_get_pos(tuple),
+            "tuple `"UAST_FMT"` cannot be assigned to `"LANG_TYPE_FMT"`; "
+            "tuple `"UAST_FMT"` has %zu elements, but type `"LANG_TYPE_FMT"` has %zu elements\n",
+            uast_tuple_print(tuple), lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type),
             uast_tuple_print(tuple), tuple->members.info.count,
-            lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type), lang_type_tuple_const_unwrap(dest_lang_type).lang_types.info.count
+            lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type),
+            lang_type_tuple_const_unwrap(dest_lang_type).lang_types.info.count
         );
         return false;
     }
