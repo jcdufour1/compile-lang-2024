@@ -13,8 +13,8 @@ fn do_nothing() {
 
 fn main() i32 {
     let num Bool = switch (is_true()) {
-        case .false: yield .true
-        case .true: yield 1
+        case .false: break .true
+        case .true: break 1
     }
     return 0
 }

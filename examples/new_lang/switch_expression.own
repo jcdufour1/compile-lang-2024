@@ -16,13 +16,13 @@ fn is_false() Bool {
 
 fn main() i32 {
     let num1 i32 = switch (is_true()) {
-        case .true: yield 2
-        case .false: yield 3
+        case .true: break 2
+        case .false: break 3
     }
 
     let num2 i32 = switch (is_false()) {
-        case .true: yield 2
-        case .false: yield 3
+        case .true: break 2
+        case .false: break 3
     }
 
     printf("num1: %d\n", num1)

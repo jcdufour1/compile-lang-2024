@@ -1,0 +1,9 @@
+
+type Token sum {
+    number i32
+    string u8*
+}
+
+fn main() i32 {
+    let 
+}

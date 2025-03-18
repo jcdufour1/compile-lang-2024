@@ -14,11 +14,11 @@ fn do_nothing() {
 fn main() i32 {
     let num1 i32 = switch (is_true()) {
         case .true: do_nothing()
-        case .false: yield 1
+        case .false: break 1
     }
 
     let num2 i32 = switch (is_true()) {
-        case .false: yield 1
+        case .false: break 1
         case .true: do_nothing()
     }
     return 0

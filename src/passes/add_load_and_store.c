@@ -1853,7 +1853,7 @@ static void load_break(
     Llvm_block* new_block,
     Tast_break* old_break
 ) {
-    if (env->label_after_for.count < 1) {
+    if (env->label_if_break.count < 1) {
         msg(
             LOG_ERROR, EXPECT_FAIL_BREAK_INVALID_LOCATION, env->file_text, old_break->pos,
             "break statement outside of a for loop\n"
