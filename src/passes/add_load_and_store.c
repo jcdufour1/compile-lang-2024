@@ -30,12 +30,12 @@ static Str_view load_symbol(
     Tast_symbol* old_symbol
 );
 
-static Str_view load_struct_def(
+static void load_struct_def(
     Env* env,
     Tast_struct_def* old_struct_def
 );
 
-static Str_view load_raw_union_def(
+static void load_raw_union_def(
     Env* env,
     Tast_raw_union_def* old_def
 );
@@ -91,20 +91,6 @@ static Tast_raw_union_def* get_raw_union_def_from_sum_def(Env* env, Tast_sum_def
     return union_def;
 }
 
-//// note: will not clone everything
-//static Tast_enum_def* get_enum_def_from_sum_def(Env* env, Tast_sum_def* sum_def) {
-//    // TODO: find way to avoid making new Tast_enum_def every time
-//    Tast_enum_def* enum_def = tast_enum_def_new(sum_def->pos, sum_def->base);
-//    enum_def->base.name = serialize_tast_enum_def(env, enum_def);
-//    Tast_def* cached = NULL;
-//    if (symbol_lookup(&cached, env, enum_def->base.name)) {
-//        return tast_enum_def_unwrap(cached);
-//    }
-//    sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_enum_def_wrap(enum_def));
-//    load_enum_def(env, enum_def);
-//    return enum_def;
-//}
-
 static Lang_type rm_tuple_lang_type_sum(Env* env, Lang_type_sum lang_type, Pos lang_type_pos) {
     Tast_def* lang_type_def_ = NULL; 
     unwrap(symbol_lookup(&lang_type_def_, env, lang_type.atom.str));
@@ -122,35 +108,11 @@ static Lang_type rm_tuple_lang_type_sum(Env* env, Lang_type_sum lang_type, Pos l
     Tast_raw_union_def* item_type_def = get_raw_union_def_from_sum_def(env, tast_sum_def_unwrap(lang_type_def_));
 
     for (size_t idx = 0; idx < item_type_def->base.members.info.count; idx++) {
-        // TODO: do not do switch case; just call rm_tuple_lang_type
-        switch (vec_at(&item_type_def->base.members, idx)->lang_type.type) {
-            case LANG_TYPE_SUM:
-                vec_at(&item_type_def->base.members, idx)->lang_type = rm_tuple_lang_type(
-                    env, 
-                    vec_at(&item_type_def->base.members, idx)->lang_type,
-                    item_type_def->pos
-                );
-                break;
-            case LANG_TYPE_STRUCT:
-                break;
-            case LANG_TYPE_RAW_UNION:
-                break;
-            case LANG_TYPE_PRIMITIVE:
-                break;
-            case LANG_TYPE_ENUM:
-                break;
-            case LANG_TYPE_TUPLE:
-                vec_at(&item_type_def->base.members, idx)->lang_type = rm_tuple_lang_type(
-                    env, 
-                    vec_at(&item_type_def->base.members, idx)->lang_type,
-                    item_type_def->pos
-                );
-                break;
-            case LANG_TYPE_VOID:
-                break;
-            default:
-                unreachable("");
-        }
+        vec_at(&item_type_def->base.members, idx)->lang_type = rm_tuple_lang_type(
+            env, 
+            vec_at(&item_type_def->base.members, idx)->lang_type,
+            item_type_def->pos
+        );
     }
 
     Tast_variable_def* item = tast_variable_def_new(
@@ -1597,29 +1559,29 @@ static Str_view load_yield(
 static Str_view load_assignment(
     Env* env,
     Llvm_block* new_block,
-    Tast_assignment* old_assignment
+    Tast_assignment* old_assign
 ) {
-    assert(old_assignment->lhs);
-    assert(old_assignment->rhs);
+    assert(old_assign->lhs);
+    assert(old_assign->rhs);
 
-    Pos pos = old_assignment->pos;
+    Pos pos = old_assign->pos;
 
-    Str_view new_lhs = load_ptr_expr(env, new_block, old_assignment->lhs);
-    Str_view new_rhs = load_expr(env, new_block, old_assignment->rhs);
+    Str_view new_lhs = load_ptr_expr(env, new_block, old_assign->lhs);
+    Str_view new_rhs = load_expr(env, new_block, old_assign->rhs);
 
     Llvm_store_another_llvm* new_store = llvm_store_another_llvm_new(
         pos,
         new_rhs,
         new_lhs,
         0,
-        rm_tuple_lang_type(env, tast_expr_get_lang_type(old_assignment->lhs), old_assignment->pos),
+        rm_tuple_lang_type(env, tast_expr_get_lang_type(old_assign->lhs), old_assign->pos),
         util_literal_name_new()
     );
     unwrap(alloca_add(env, llvm_store_another_llvm_wrap(new_store)));
 
     assert(new_store->llvm_src.count > 0);
     assert(new_store->llvm_dest.count > 0);
-    assert(old_assignment->rhs);
+    assert(old_assign->rhs);
 
     vec_append(&a_main, &new_block->children, llvm_store_another_llvm_wrap(new_store));
 
@@ -1645,7 +1607,7 @@ static Str_view load_variable_def(
     return llvm_tast_get_name(alloca);
 }
 
-static Str_view load_struct_def(
+static void load_struct_def(
     Env* env,
     Tast_struct_def* old_def
 ) {
@@ -1662,11 +1624,9 @@ static Str_view load_struct_def(
         unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(new_def)));
         load_struct_def(env, new_def);
     }
-
-    return (Str_view) {0};
 }
 
-static Str_view load_enum_def(
+static void load_enum_def(
     Env* env,
     Tast_enum_def* old_def
 ) {
@@ -1675,8 +1635,6 @@ static Str_view load_enum_def(
     all_tbl_add(&vec_at(&env->ancesters, 0)->alloca_table, llvm_def_wrap(
         llvm_enum_def_wrap(load_enum_def_clone(old_def))
     ));
-
-    return (Str_view) {0};
 }
 
 static Llvm_block* if_statement_to_branch(Env* env, Tast_if* if_statement, Str_view next_if, Str_view after_chain) {
@@ -1730,7 +1688,6 @@ static Str_view if_else_chain_to_branch(Llvm_block** new_block, Env* env, Tast_i
         (Pos) {0}
     );
 
-    // TODO: avoid this when yield_type is void
     Tast_variable_def* yield_dest = NULL;
     if (tast_if_else_chain_get_lang_type(if_else).type != LANG_TYPE_VOID) {
         yield_dest = tast_variable_def_new(
@@ -1883,18 +1840,16 @@ static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for
     return new_branch_block;
 }
 
-static Str_view load_for_with_cond(
+static void load_for_with_cond(
     Env* env,
     Llvm_block* new_block,
     Tast_for_with_cond* old_for
 ) {
     Llvm_block* new_for = for_with_cond_to_branch(env, old_for);
     vec_append(&a_main, &new_block->children, llvm_block_wrap(new_for));
-
-    return (Str_view) {0};
 }
 
-static Str_view load_break(
+static void load_break(
     Env* env,
     Llvm_block* new_block,
     Tast_break* old_break
@@ -1904,16 +1859,14 @@ static Str_view load_break(
             LOG_ERROR, EXPECT_FAIL_BREAK_INVALID_LOCATION, env->file_text, old_break->pos,
             "break statement outside of a for loop\n"
         );
-        return (Str_view) {0};
+        return;
     }
 
     Llvm_goto* new_goto = llvm_goto_new(old_break->pos, env->label_if_break, 0);
     vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
-
-    return (Str_view) {0};
 }
 
-static Str_view load_label(
+static void load_label(
     Env* env,
     Llvm_block* new_block,
     Tast_label* old_label
@@ -1921,11 +1874,9 @@ static Str_view load_label(
     Llvm_label* new_label = llvm_label_new(old_label->pos, 0, old_label->name);
     vec_append(&a_main, &new_block->children, llvm_def_wrap(llvm_label_wrap(new_label)));
     alloca_add(env, llvm_def_wrap(llvm_label_wrap(new_label)));
-
-    return (Str_view) {0};
 }
 
-static Str_view load_continue(
+static void load_continue(
     Env* env,
     Llvm_block* new_block,
     Tast_continue* old_continue
@@ -1935,16 +1886,14 @@ static Str_view load_continue(
             LOG_ERROR, EXPECT_FAIL_CONTINUE_INVALID_LOCATION, env->file_text, old_continue->pos,
             "continue statement outside of a for loop\n"
         );
-        return (Str_view) {0};
+        return;
     }
 
     Llvm_goto* new_goto = llvm_goto_new(old_continue->pos, env->label_if_continue, 0);
     vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
-
-    return (Str_view) {0};
 }
 
-static Str_view load_raw_union_def(
+static void load_raw_union_def(
     Env* env,
     Tast_raw_union_def* old_def
 ) {
@@ -1952,7 +1901,7 @@ static Str_view load_raw_union_def(
     if (!all_tbl_add(&vec_at(&env->ancesters, 0)->alloca_table, llvm_def_wrap(
         llvm_raw_union_def_wrap(load_raw_union_def_clone(old_def))
     ))) {
-        return (Str_view) {0};
+        return;
     };
 
     Tast_def* dummy = NULL;
@@ -1964,8 +1913,6 @@ static Str_view load_raw_union_def(
         unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_raw_union_def_wrap(new_def)));
         load_raw_union_def(env, new_def);
     }
-
-    return (Str_view) {0};
 }
 
 static Str_view load_ptr_variable_def(
@@ -2047,7 +1994,7 @@ static Str_view load_ptr_expr(Env* env, Llvm_block* new_block, Tast_expr* old_ex
         case TAST_INDEX:
             return load_ptr_index(env, new_block, tast_index_unwrap(old_expr));
         case TAST_LITERAL:
-            // TODO: deref string literal
+            // TODO: deref string literal (detect in src/type_checking.c if possible)
             unreachable("");
         case TAST_FUNCTION_CALL:
             return load_ptr_function_call(env, new_block, tast_function_call_unwrap(old_expr));
@@ -2109,11 +2056,14 @@ static Str_view load_def(Env* env, Llvm_block* new_block, Tast_def* old_def) {
         case TAST_VARIABLE_DEF:
             return load_variable_def(env, new_block, tast_variable_def_unwrap(old_def));
         case TAST_STRUCT_DEF:
-            return load_struct_def(env, tast_struct_def_unwrap(old_def));
+            load_struct_def(env, tast_struct_def_unwrap(old_def));
+            return (Str_view) {0};
         case TAST_ENUM_DEF:
-            return load_enum_def(env, tast_enum_def_unwrap(old_def));
+            load_enum_def(env, tast_enum_def_unwrap(old_def));
+            return (Str_view) {0};
         case TAST_RAW_UNION_DEF:
-            return load_raw_union_def(env, tast_raw_union_def_unwrap(old_def));
+            load_raw_union_def(env, tast_raw_union_def_unwrap(old_def));
+            return (Str_view) {0};
         case TAST_SUM_DEF:
             unreachable("sum def should not make it here");
         case TAST_LITERAL_DEF:
@@ -2137,11 +2087,14 @@ static Str_view load_stmt(Env* env, Llvm_block* new_block, Tast_stmt* old_stmt) 
         case TAST_YIELD:
             return load_yield(env, new_block, tast_yield_unwrap(old_stmt));
         case TAST_FOR_WITH_COND:
-            return load_for_with_cond(env, new_block, tast_for_with_cond_unwrap(old_stmt));
+            load_for_with_cond(env, new_block, tast_for_with_cond_unwrap(old_stmt));
+            return (Str_view) {0};
         case TAST_BREAK:
-            return load_break(env, new_block, tast_break_unwrap(old_stmt));
+            load_break(env, new_block, tast_break_unwrap(old_stmt));
+            return (Str_view) {0};
         case TAST_CONTINUE:
-            return load_continue(env, new_block, tast_continue_unwrap(old_stmt));
+            load_continue(env, new_block, tast_continue_unwrap(old_stmt));
+            return (Str_view) {0};
         case TAST_BLOCK:
             vec_append(
                 &a_main,
@@ -2150,7 +2103,8 @@ static Str_view load_stmt(Env* env, Llvm_block* new_block, Tast_stmt* old_stmt) 
             );
             return (Str_view) {0};
         case TAST_LABEL:
-            return load_label(env, new_block, tast_label_unwrap(old_stmt));
+            load_label(env, new_block, tast_label_unwrap(old_stmt));
+            return (Str_view) {0};
     }
     unreachable("");
 }
@@ -2159,10 +2113,7 @@ static Str_view load_tast(Env* env, Llvm_block* new_block, Tast* old_tast) {
     (void) env;
     (void) new_block;
     (void) old_tast;
-    switch (old_tast->type) {
-        default:
-            unreachable(TAST_FMT"\n", tast_print(old_tast));
-    }
+    unreachable(TAST_FMT"\n", tast_print(old_tast));
 }
 
 static Str_view load_def_sometimes(Env* env, Llvm_block* new_block, Tast_def* old_def) {
@@ -2176,11 +2127,14 @@ static Str_view load_def_sometimes(Env* env, Llvm_block* new_block, Tast_def* ol
             //return load_variable_def(env, new_block, tast_variable_def_unwrap(old_def));
             return (Str_view) {0};
         case TAST_STRUCT_DEF:
-            return load_struct_def(env, tast_struct_def_unwrap(old_def));
+            load_struct_def(env, tast_struct_def_unwrap(old_def));
+            return (Str_view) {0};
         case TAST_ENUM_DEF:
-            return load_enum_def(env, tast_enum_def_unwrap(old_def));
+            load_enum_def(env, tast_enum_def_unwrap(old_def));
+            return (Str_view) {0};
         case TAST_RAW_UNION_DEF:
-            return load_raw_union_def(env, tast_raw_union_def_unwrap(old_def));
+            load_raw_union_def(env, tast_raw_union_def_unwrap(old_def));
+            return (Str_view) {0};
         case TAST_SUM_DEF:
             return (Str_view) {0};
         case TAST_LITERAL_DEF:
@@ -2193,7 +2147,6 @@ static Str_view load_def_sometimes(Env* env, Llvm_block* new_block, Tast_def* ol
     unreachable("");
 }
 
-// TODO: rethink how to do block, because this is simply not working
 static Llvm_block* load_block(Env* env, Tast_block* old_block) {
     size_t init_count_ancesters = env->ancesters.info.count;
 
