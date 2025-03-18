@@ -376,6 +376,7 @@ static Str_view load_if_else_chain(
 
 static void add_label(Env* env, Llvm_block* block, Str_view label_name, Pos pos, bool defer_add_sym) {
     Llvm_label* label = llvm_label_new(pos, 0, label_name);
+    unwrap(label_name.count > 0);
     label->name = label_name;
 
     if (defer_add_sym) {
@@ -907,7 +908,7 @@ static Str_view load_binary_short_circuit(
     Tast_if_vec ifs = {0};
     vec_append(&a_main, &ifs, if_true);
     vec_append(&a_main, &ifs, if_false);
-    Tast_if_else_chain* if_else = tast_if_else_chain_new(old_bin->pos, ifs);
+    Tast_if_else_chain* if_else = tast_if_else_chain_new(old_bin->pos, ifs, false);
     
     load_variable_def(env, new_block, new_var);
     load_if_else_chain(env, new_block, if_else);
@@ -1683,8 +1684,14 @@ static Str_view if_else_chain_to_branch(Llvm_block** new_block, Env* env, Tast_i
         env->load_break_symbol_name = yield_dest->name;
     }
 
+    Str_view if_after = util_literal_name_new_prefix("if_after");
+
     Str_view old_label_if_break = env->label_if_break;
-    env->label_if_break = util_literal_name_new_prefix("if_after");
+    if (if_else->is_switch) {
+        env->label_if_break = if_after;
+    } else {
+        env->label_if_break = env->label_after_for;
+    }
     
     Llvm* dummy = NULL;
     Tast_def* dummy_def = NULL;
@@ -1692,7 +1699,7 @@ static Str_view if_else_chain_to_branch(Llvm_block** new_block, Env* env, Tast_i
     Str_view next_if = {0};
     for (size_t idx = 0; idx < if_else->tasts.info.count; idx++) {
         if (idx + 1 == if_else->tasts.info.count) {
-            next_if = env->label_if_break;
+            next_if = if_after;
         } else {
             next_if = util_literal_name_new_prefix("next_if");
         }
@@ -1705,12 +1712,13 @@ static Str_view if_else_chain_to_branch(Llvm_block** new_block, Env* env, Tast_i
             add_label(env, (*new_block), next_if, vec_at(&if_else->tasts, idx)->pos, false);
             assert(alloca_lookup(&dummy, env, next_if));
         } else {
-            assert(str_view_is_equal(next_if, env->label_if_break));
+            log(LOG_DEBUG, TAST_FMT"\n", str_view_print(next_if));
+            //assert(str_view_is_equal(next_if, env->label_if_break));
         }
     }
 
     assert(!symbol_lookup(&dummy_def, env, next_if));
-    add_label(env, (*new_block), env->label_if_break, if_else->pos, false);
+    add_label(env, (*new_block), next_if, if_else->pos, false);
     assert(alloca_lookup(&dummy, env, next_if));
 
     env->label_if_break = old_label_if_break;
@@ -1736,7 +1744,7 @@ static Str_view load_if_else_chain(
 }
 
 static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for) {
-    Str_view old_if_break = env->label_if_break;
+    Str_view old_after_for = env->label_after_for;
     Str_view old_if_continue = env->label_if_continue;
 
     Pos pos = old_for->pos;
@@ -1757,7 +1765,7 @@ static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for
     Str_view after_check_label = util_literal_name_new_prefix("for_body");
     Str_view after_for_loop_label = util_literal_name_new_prefix("after_for_loop");
 
-    env->label_if_break = after_for_loop_label;
+    env->label_after_for = after_for_loop_label;
 
     if (old_for->do_cont_label) {
         env->label_if_continue = old_for->continue_label;
@@ -1811,7 +1819,7 @@ static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for
     Llvm* dummy = NULL;
 
     env->label_if_continue = old_if_continue;
-    env->label_if_break = old_if_break;
+    env->label_after_for = old_after_for;
     for (size_t idx = 0; idx < env->defered_allocas_to_add.info.count; idx++) {
         //log(LOG_DEBUG, TAST_FMT, llvm_print(vec_at(&env->defered_allocas_to_add, idx)));
     }
@@ -1839,7 +1847,7 @@ static void load_break(
     Llvm_block* new_block,
     Tast_break* old_break
 ) {
-    if (env->label_if_break.count < 1) {
+    if (env->label_after_for.count < 1) {
         msg(
             LOG_ERROR, EXPECT_FAIL_BREAK_INVALID_LOCATION, env->file_text, old_break->pos,
             "break statement outside of a for loop\n"
@@ -1870,6 +1878,7 @@ static void load_label(
 ) {
     Llvm_label* new_label = llvm_label_new(old_label->pos, 0, old_label->name);
     vec_append(&a_main, &new_block->children, llvm_def_wrap(llvm_label_wrap(new_label)));
+    assert(new_label->name.count > 0);
     alloca_add(env, llvm_def_wrap(llvm_label_wrap(new_label)));
 }
 

@@ -2154,7 +2154,7 @@ bool try_set_if_else_chain(Env* env, Tast_if_else_chain** new_tast, Uast_if_else
         vec_append(&a_main, &new_ifs, new_if);
     }
 
-    *new_tast = tast_if_else_chain_new(if_else->pos, new_ifs);
+    *new_tast = tast_if_else_chain_new(if_else->pos, new_ifs, false);
     return status;
 }
 
@@ -2410,7 +2410,7 @@ error_inner:
         vec_append(&a_main, &new_ifs, new_if);
     }
 
-    *new_tast = tast_if_else_chain_new(lang_switch->pos, new_ifs);
+    *new_tast = tast_if_else_chain_new(lang_switch->pos, new_ifs, true);
     if (!check_for_exhaustiveness_finish(env, exhaustive_data, lang_switch->pos)) {
         status = false;
         goto error;

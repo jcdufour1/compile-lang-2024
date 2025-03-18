@@ -53,6 +53,7 @@ typedef struct Env_ {
 
     Str_view load_break_symbol_name;
     Str_view label_if_break;
+    Str_view label_after_for;
     Str_view label_if_continue;
 } Env;
 

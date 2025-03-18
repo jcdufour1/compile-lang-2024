@@ -426,6 +426,7 @@ static Tast_type tast_gen_if_else_chain(const char* prefix) {
     Tast_type chain = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&chain.members, "Tast_if_vec", "tasts");
+    append_member(&chain.members, "bool", "is_switch");
 
     return chain;
 }
