@@ -991,6 +991,7 @@ static void emit_label(String* output, const Llvm_label* label) {
 
 static void emit_goto(Env* env, String* output, const Llvm_goto* lang_goto) {
     string_extend_cstr(&a_main, output, "    br label %");
+    log(LOG_DEBUG, TAST_FMT, llvm_goto_print(lang_goto));
     string_extend_size_t(&a_main, output, get_matching_label_id(env, lang_goto->name));
     vec_append(&a_main, output, '\n');
 }

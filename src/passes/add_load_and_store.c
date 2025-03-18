@@ -397,6 +397,8 @@ static void if_for_add_cond_goto(
 ) {
     Pos pos = tast_operator_get_pos(old_oper);
 
+    assert(label_name_if_true.count > 0);
+    assert(label_name_if_false.count > 0);
     Llvm_cond_goto* cond_goto = llvm_cond_goto_new(
         pos,
         load_operator(env, block, old_oper),
@@ -1652,6 +1654,7 @@ static Llvm_block* if_statement_to_branch(Env* env, Tast_if* if_statement, Str_v
     }
 
 
+    assert(after_chain.count > 0);
     Llvm_goto* jmp_to_after_chain = llvm_goto_new(
         old_block->pos,
         after_chain,
@@ -1704,7 +1707,7 @@ static Str_view if_else_chain_to_branch(Llvm_block** new_block, Env* env, Tast_i
             next_if = util_literal_name_new_prefix("next_if");
         }
 
-        Llvm_block* if_block = if_statement_to_branch(env, vec_at(&if_else->tasts, idx), next_if, env->label_if_break);
+        Llvm_block* if_block = if_statement_to_branch(env, vec_at(&if_else->tasts, idx), next_if, if_after);
         vec_append(&a_main, &(*new_block)->children, llvm_block_wrap(if_block));
 
         if (idx + 1 < if_else->tasts.info.count) {
@@ -1746,6 +1749,7 @@ static Str_view load_if_else_chain(
 static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for) {
     Str_view old_after_for = env->label_after_for;
     Str_view old_if_continue = env->label_if_continue;
+    Str_view old_if_break = env->label_if_break;
 
     Pos pos = old_for->pos;
 
@@ -1766,6 +1770,7 @@ static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for
     Str_view after_for_loop_label = util_literal_name_new_prefix("after_for_loop");
 
     env->label_after_for = after_for_loop_label;
+    env->label_if_break = after_for_loop_label;
 
     if (old_for->do_cont_label) {
         env->label_if_continue = old_for->continue_label;
@@ -1820,6 +1825,7 @@ static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for
 
     env->label_if_continue = old_if_continue;
     env->label_after_for = old_after_for;
+    env->label_if_break = old_if_break;
     for (size_t idx = 0; idx < env->defered_allocas_to_add.info.count; idx++) {
         //log(LOG_DEBUG, TAST_FMT, llvm_print(vec_at(&env->defered_allocas_to_add, idx)));
     }
@@ -1867,6 +1873,7 @@ static void load_break(
         ));
     }
 
+    assert(env->label_if_break.count > 0);
     Llvm_goto* new_goto = llvm_goto_new(old_break->pos, env->label_if_break, 0);
     vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
 }
