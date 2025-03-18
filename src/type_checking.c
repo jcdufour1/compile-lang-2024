@@ -243,37 +243,65 @@ static void msg_invalid_count_function_args_internal(
 #define msg_invalid_count_function_args(env, fun_call, fun_decl, min_args, max_args) \
     msg_invalid_count_function_args_internal(__FILE__, __LINE__, env, fun_call, fun_decl, min_args, max_args)
 
-static void msg_invalid_return_or_yield_type_internal(const char* file, int line, Env* env, Pos pos, const Tast_expr* child, bool is_auto_inserted, bool is_return_type) {
-    const char* rtn_text = is_return_type ? "return" : "yield";
-    const Uast_function_decl* fun_decl = get_parent_function_decl_const(env);
-
+static void msg_invalid_yield_type_internal(const char* file, int line, Env* env, Pos pos, const Tast_expr* child, bool is_auto_inserted) {
     if (is_auto_inserted) {
         msg_internal(
             file, line,
             LOG_ERROR, EXPECT_FAIL_MISSING_RETURN, env->file_text, pos,
-            "no %s statement in function that %ss  `"LANG_TYPE_FMT"`\n",
-            rtn_text, rtn_text, ulang_type_print(LANG_TYPE_MODE_MSG, fun_decl->return_type)
+            "no yield statement in case that yields `"LANG_TYPE_FMT"`\n",
+            lang_type_print(LANG_TYPE_MODE_MSG, env->yield_type)
         );
     } else {
         msg_internal(
             file, line,
             LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, env->file_text, pos,
-            "%sing `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
-            rtn_text, lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(child)), 
-            ulang_type_print(LANG_TYPE_MODE_MSG, fun_decl->return_type)
+            "yielding `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
+            lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(child)),
+            lang_type_print(LANG_TYPE_MODE_MSG, env->yield_type)
         );
     }
 
     msg_internal(
         file, line,
-        LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, ulang_type_get_pos(fun_decl->return_type),
-        "function return type `"LANG_TYPE_FMT"` defined here\n",
-        ulang_type_print(LANG_TYPE_MODE_MSG, fun_decl->return_type)
+        LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, (Pos) {0} /* TODO */,
+        "case yield type `"LANG_TYPE_FMT"` defined here\n",
+        lang_type_print(LANG_TYPE_MODE_MSG, env->yield_type) 
     );
 }
 
-#define msg_invalid_return_or_yield_type(env, pos, child, is_auto_inserted, is_return_type) \
-    msg_invalid_return_or_yield_type_internal(__FILE__, __LINE__, env, pos, child, is_auto_inserted, is_return_type)
+static void msg_invalid_return_type_internal(const char* file, int line, Env* env, Pos pos, const Tast_expr* child, bool is_auto_inserted) {
+    Ulang_type rtn_type = get_parent_function_decl_const(env)->return_type;
+
+    if (is_auto_inserted) {
+        msg_internal(
+            file, line,
+            LOG_ERROR, EXPECT_FAIL_MISSING_RETURN, env->file_text, pos,
+            "no return statement in function that returns `"LANG_TYPE_FMT"`\n",
+            ulang_type_print(LANG_TYPE_MODE_MSG, rtn_type)
+        );
+    } else {
+        msg_internal(
+            file, line,
+            LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, env->file_text, pos,
+            "returning `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
+            lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(child)), 
+            ulang_type_print(LANG_TYPE_MODE_MSG, rtn_type)
+        );
+    }
+
+    msg_internal(
+        file, line,
+        LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, ulang_type_get_pos(rtn_type),
+        "function return type `"LANG_TYPE_FMT"` defined here\n",
+        ulang_type_print(LANG_TYPE_MODE_MSG, rtn_type)
+    );
+}
+
+#define msg_invalid_yield_type(env, pos, child, is_auto_inserted) \
+    msg_invalid_yield_type_internal(__FILE__, __LINE__, env, pos, child, is_auto_inserted)
+
+#define msg_invalid_return_type(env, pos, child, is_auto_inserted) \
+    msg_invalid_return_type_internal(__FILE__, __LINE__, env, pos, child, is_auto_inserted)
 
 typedef enum {
     CHECK_ASSIGN_OK,
@@ -2003,7 +2031,7 @@ bool try_set_return_types(Env* env, Tast_return** new_tast, Uast_return* rtn) {
         case CHECK_ASSIGN_OK:
             break;
         case CHECK_ASSIGN_INVALID:
-            msg_invalid_return_or_yield_type(env, rtn->pos, new_child, rtn->is_auto_inserted, true);
+            msg_invalid_return_type(env, rtn->pos, new_child, rtn->is_auto_inserted);
             status = false;
             goto error;
         case CHECK_ASSIGN_ERROR:
@@ -2027,17 +2055,18 @@ bool try_set_yield_types(Env* env, Tast_yield** new_tast, Uast_yield* rtn) {
     PARENT_OF old_parent_of = env->parent_of;
     env->parent_of = PARENT_OF_YIELD;
 
-    log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, env->yield_type));
-
     Tast_expr* new_child = NULL;
     switch (check_generic_assignment(env, &new_child, env->yield_type, rtn->child, rtn->pos)) {
         case CHECK_ASSIGN_OK:
+            log(LOG_DEBUG, TAST_FMT, uast_expr_print(rtn->child));
             break;
         case CHECK_ASSIGN_INVALID:
-            msg_invalid_return_or_yield_type(env, rtn->pos, new_child, rtn->is_auto_inserted, false);
+            todo();
+            msg_invalid_yield_type(env, rtn->pos, new_child, rtn->is_auto_inserted);
             status = false;
             goto error;
         case CHECK_ASSIGN_ERROR:
+            todo();
             status = false;
             goto error;
         default:
@@ -2046,6 +2075,7 @@ bool try_set_yield_types(Env* env, Tast_yield** new_tast, Uast_yield* rtn) {
 
     *new_tast = tast_yield_new(rtn->pos, new_child, rtn->is_auto_inserted);
 
+    env->yield_in_case = true;
 error:
     env->parent_of = old_parent_of;
     return status;
@@ -2089,8 +2119,20 @@ bool try_set_if_types(Env* env, Tast_if** new_tast, Uast_if* uast) {
         status = false;
     }
 
+    //log(LOG_DEBUG, TAST_FMT, uast_if_print(uast));
+    //todo();
+
     if (status) {
         *new_tast = tast_if_new(uast->pos, new_cond, new_body, new_body->lang_type);
+        if (env->parent_of == PARENT_OF_CASE) {
+            if (new_body->lang_type.type != LANG_TYPE_VOID && !env->yield_in_case) {
+                // TODO: this will not work if there is nested switch or if-else
+                msg_invalid_yield_type(env, new_body->pos_end, NULL, true);
+                status = false;
+            }
+        } else if (env->parent_of == PARENT_OF_IF) {
+            todo();
+        }
     }
     return status;
 }
@@ -2277,6 +2319,7 @@ static bool check_for_exhaustiveness_finish(Env* env, Exhaustive_data exhaustive
                 STR_VIEW_FMT"\n", string_print(string)
             );
         }
+        // TODO: return status?
         return true;
 }
 
@@ -2290,6 +2333,7 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
 
     bool status = true;
     PARENT_OF old_parent_of = env->parent_of;
+    env->yield_in_case = false;
     if (env->parent_of == PARENT_OF_ASSIGN_RHS) {
         env->yield_type = env->lhs_lang_type;
     } else {
@@ -2352,6 +2396,7 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
 error_inner:
         env->parent_of_operand = NULL;
         env->parent_of = PARENT_OF_NONE;
+        env->yield_in_case = false;
         if (!status) {
             goto error;
         }
@@ -2372,6 +2417,7 @@ error_inner:
 
 error:
     env->parent_of = old_parent_of;
+    env->yield_in_case = false;
     return status;
 }
 

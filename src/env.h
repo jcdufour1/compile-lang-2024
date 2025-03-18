@@ -38,6 +38,7 @@ typedef struct Env_ {
 
     Str_view name_parent_function; // length is zero if no parent function exists
     Lang_type yield_type;
+    bool yield_in_case;
 
     Lang_type rm_tuple_parent_fn_lang_type;
 
