@@ -110,13 +110,13 @@ static inline Lang_type tast_literal_get_lang_type(const Tast_literal* lit) {
         case TAST_NUMBER:
             return tast_number_const_unwrap(lit)->lang_type;
         case TAST_STRING:
-            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type_atom_new_from_cstr("u8", 1))));
+            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(tast_literal_get_pos(lit), lang_type_atom_new_from_cstr("u8", 1))));
         case TAST_VOID:
-            return lang_type_void_const_wrap(lang_type_void_new(0));
+            return lang_type_void_const_wrap(lang_type_void_new(tast_literal_get_pos(lit)));
         case TAST_ENUM_LIT:
             return tast_enum_lit_const_unwrap(lit)->lang_type;
         case TAST_CHAR:
-            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type_atom_new_from_cstr("u8", 0))));
+            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(tast_literal_get_pos(lit), lang_type_atom_new_from_cstr("u8", 0))));
         case TAST_SUM_LIT:
             return tast_sum_lit_const_unwrap(lit)->sum_lang_type;
         case TAST_RAW_UNION_LIT:
@@ -155,7 +155,7 @@ static inline void tast_literal_set_lang_type(Tast_literal* lit, Lang_type lang_
 
 static inline Lang_type tast_if_else_chain_get_lang_type(const Tast_if_else_chain* if_else) {
     if (if_else->tasts.info.count < 1) {
-        return lang_type_void_const_wrap(lang_type_void_new(0));
+        return lang_type_void_const_wrap(lang_type_void_new(if_else->pos));
     }
     return vec_at(&if_else->tasts, 0)->yield_type;
 }
@@ -195,19 +195,19 @@ static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr) {
 }
 
 static inline Lang_type tast_raw_union_def_get_lang_type(const Tast_raw_union_def* def) {
-    return lang_type_raw_union_const_wrap(lang_type_raw_union_new(lang_type_atom_new(def->base.name, 0)));
+    return lang_type_raw_union_const_wrap(lang_type_raw_union_new(def->pos, lang_type_atom_new(def->base.name, 0)));
 }
 
 static inline Lang_type tast_struct_def_get_lang_type(const Tast_struct_def* def) {
-    return lang_type_struct_const_wrap(lang_type_struct_new(lang_type_atom_new(def->base.name, 0)));
+    return lang_type_struct_const_wrap(lang_type_struct_new(def->pos, lang_type_atom_new(def->base.name, 0)));
 }
 
 static inline Lang_type tast_sum_def_get_lang_type(const Tast_sum_def* def) {
-    return lang_type_sum_const_wrap(lang_type_sum_new(lang_type_atom_new(def->base.name, 0)));
+    return lang_type_sum_const_wrap(lang_type_sum_new(def->pos, lang_type_atom_new(def->base.name, 0)));
 }
 
 static inline Lang_type tast_enum_def_get_lang_type(const Tast_enum_def* def) {
-    return lang_type_enum_const_wrap(lang_type_enum_new(lang_type_atom_new(def->base.name, 0)));
+    return lang_type_enum_const_wrap(lang_type_enum_new(def->pos, lang_type_atom_new(def->base.name, 0)));
 }
 
 static inline Lang_type tast_def_get_lang_type(const Tast_def* def) {

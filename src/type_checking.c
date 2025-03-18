@@ -22,6 +22,7 @@
 #include <ulang_type_get_atom.h>
 #include <symbol_log.h>
 #include <parent_of_print.h>
+#include <lang_type_get_pos.h>
 
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
@@ -395,14 +396,14 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
                 return tast_number_wrap(tast_number_new(
                     old_number->pos,
                     old_number->data,
-                    lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(bit_width, 0))
+                    lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(old_number->pos, bit_width, 0))
                 )));
             } else {
                 int64_t bit_width = bit_width_needed_unsigned(old_number->data);
                 return tast_number_wrap(tast_number_new(
                     old_number->pos,
                     old_number->data,
-                    lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(bit_width, 0))
+                    lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(old_number->pos, bit_width, 0))
                 )));
             }
         }
@@ -644,7 +645,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
         *new_tast = tast_literal_wrap(literal);
     } else {
         Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
-            lang_type_unsigned_int_new(1, 0)
+            lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
         ));
 
         switch (oper_token_type) {
@@ -898,7 +899,7 @@ bool try_set_tuple_assignment_types(
         msg(
             LOG_ERROR, EXPECT_FAIL_MISMATCHED_TUPLE_COUNT, env->file_text,
             uast_tuple_get_pos(tuple),
-            "tuple `"UAST_FMT"` cannot be assigned to `"LANG_TYPE_FMT"`\n",
+            "tuple `"UAST_FMT"` cannot be assigned to `"LANG_TYPE_FMT"; `\n",
             uast_tuple_print(tuple), lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type)
         );
         msg(
@@ -947,7 +948,7 @@ bool try_set_tuple_assignment_types(
         vec_append(&a_main, &new_lang_type, tast_expr_get_lang_type(new_memb));
     }
 
-    *new_tast = tast_tuple_new(tuple->pos, new_members, lang_type_tuple_new(new_lang_type));
+    *new_tast = tast_tuple_new(tuple->pos, new_members, lang_type_tuple_new(lang_type_tuple_const_unwrap(dest_lang_type).pos, new_lang_type));
     return true;
 }
 
@@ -1373,7 +1374,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             }
 
             // TODO: set tag size based on target platform
-            sum_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0)));
+            sum_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0)));
 
             Tast_sum_lit* new_lit = tast_sum_lit_new(
                 sum_callee->pos,
@@ -1478,7 +1479,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
 
         Tast_expr* new_arg = NULL;
 
-        if (lang_type_is_equal(lang_type_from_ulang_type(env, param->base->lang_type), lang_type_primitive_const_wrap(lang_type_any_const_wrap(lang_type_any_new(lang_type_atom_new_from_cstr("any", 0)))))) {
+        if (lang_type_is_equal(lang_type_from_ulang_type(env, param->base->lang_type), lang_type_primitive_const_wrap(lang_type_any_const_wrap(lang_type_any_new(POS_BUILTIN, lang_type_atom_new_from_cstr("any", 0)))))) {
             if (param->is_variadic) {
                 // TODO: do type checking here if this function is not an extern "c" function
                 for (size_t arg_idx = param_idx; arg_idx < fun_call->args.info.count; arg_idx++) {
@@ -1547,7 +1548,11 @@ bool try_set_tuple_types(Env* env, Tast_tuple** new_tuple, Uast_tuple* tuple) {
         vec_append(&a_main, &new_lang_type, tast_expr_get_lang_type(new_memb));
     }
 
-    *new_tuple = tast_tuple_new(tuple->pos, new_members, lang_type_tuple_new(new_lang_type));
+    Pos pos = POS_BUILTIN;
+    if (tuple->members.info.count > 0) {
+        pos = lang_type_get_pos(vec_at(&new_lang_type, 0));
+    }
+    *new_tuple = tast_tuple_new(tuple->pos, new_members, lang_type_tuple_new(pos, new_lang_type));
     return true;
 }
 
@@ -1648,7 +1653,7 @@ bool try_set_member_access_types_finish_sum_def(
             *new_tast = tast_expr_wrap(tast_sum_case_wrap(tast_sum_case_new(
                 access->pos,
                 new_tag,
-                lang_type_sum_const_wrap(lang_type_sum_new(lang_type_atom_new(sum_def->base.name, 0)))
+                lang_type_sum_const_wrap(lang_type_sum_new(sum_def->pos, lang_type_atom_new(sum_def->base.name, 0)))
             )));
 
             return true;
@@ -1675,7 +1680,7 @@ bool try_set_member_access_types_finish_sum_def(
             Tast_sum_callee* new_callee = tast_sum_callee_new(
                 access->pos,
                 new_tag,
-                lang_type_sum_const_wrap(lang_type_sum_new(lang_type_atom_new(sum_def->base.name, 0)))
+                lang_type_sum_const_wrap(lang_type_sum_new(sum_def->pos, lang_type_atom_new(sum_def->base.name, 0)))
             );
 
             if (new_tag->lang_type.type != LANG_TYPE_VOID) {
@@ -1683,7 +1688,7 @@ bool try_set_member_access_types_finish_sum_def(
                 return true;
             }
 
-            new_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0)));
+            new_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0)));
 
             Tast_sum_lit* new_lit = tast_sum_lit_new(
                 new_callee->pos,
@@ -1828,7 +1833,7 @@ bool try_set_index_untyped_types(Env* env, Tast_stmt** new_tast, Uast_index* ind
             tast_expr_get_pos(new_inner_index),
             UNARY_UNSAFE_CAST,
             lang_type_primitive_const_wrap(
-                lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(64, 0))
+                lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(POS_BUILTIN, 64, 0))
             )
         ));
     } else {
@@ -2336,7 +2341,7 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
     if (env->parent_of == PARENT_OF_ASSIGN_RHS) {
         env->yield_type = env->lhs_lang_type;
     } else {
-        env->yield_type = lang_type_void_const_wrap(lang_type_void_new(0));
+        env->yield_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
     }
 
     Exhaustive_data exhaustive_data = check_for_exhaustiveness_start(
@@ -2575,7 +2580,7 @@ bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, boo
 
 error:
     vec_rem_last(&env->ancesters);
-    Lang_type yield_type = lang_type_void_const_wrap(lang_type_void_new(0));
+    Lang_type yield_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
     assert(yield_type.type == LANG_TYPE_VOID);
     if (env->parent_of == PARENT_OF_CASE) {
         yield_type = env->yield_type;

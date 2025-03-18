@@ -172,21 +172,22 @@ static inline Lang_type llvm_literal_get_lang_type(const Llvm_literal* lit) {
         case LLVM_NUMBER:
             return llvm_number_const_unwrap(lit)->lang_type;
         case LLVM_STRING:
-            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type_atom_new_from_cstr("u8", 1))));
+            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(llvm_literal_get_pos(lit), lang_type_atom_new_from_cstr("u8", 1))));
         case LLVM_VOID:
-            return lang_type_void_const_wrap(lang_type_void_new(0));
+            return lang_type_void_const_wrap(lang_type_void_new(llvm_literal_get_pos(lit)));
         case LLVM_ENUM_LIT:
             return llvm_enum_lit_const_unwrap(lit)->lang_type;
         case LLVM_CHAR:
             // TODO: remove lang_type_atom from lang_type_char and lang_type_string
-            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type_atom_new_from_cstr("u8", 0))));
+            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(llvm_literal_get_pos(lit), lang_type_atom_new_from_cstr("u8", 0))));
         case LLVM_FUNCTION_NAME:
             // TODO: remove lang_type_atom from lang_type_char and lang_type_string
-            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type_atom_new_from_cstr("ptr", 1))));
+            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(llvm_literal_get_pos(lit), lang_type_atom_new_from_cstr("ptr", 1))));
     }
     unreachable("");
 }
 
+// TODO: remove this function
 static inline Lang_type* llvm_literal_ref_get_lang_type(Llvm_literal* lit) {
     (void) lit;
     todo();
@@ -228,13 +229,13 @@ static inline Lang_type llvm_def_get_lang_type(const Llvm_def* def) {
         case LLVM_RAW_UNION_DEF:
             unreachable("");
         case LLVM_ENUM_DEF:
-            return lang_type_enum_const_wrap(lang_type_enum_new(lang_type_atom_new(llvm_enum_def_const_unwrap(def)->base.name, 0)));
+            return lang_type_enum_const_wrap(lang_type_enum_new(llvm_def_get_pos(def), lang_type_atom_new(llvm_enum_def_const_unwrap(def)->base.name, 0)));
         case LLVM_VARIABLE_DEF:
             return llvm_variable_def_const_unwrap(def)->lang_type;
         case LLVM_FUNCTION_DECL:
             unreachable("");
         case LLVM_STRUCT_DEF:
-            return lang_type_struct_const_wrap(lang_type_struct_new(lang_type_atom_new(llvm_struct_def_const_unwrap(def)->base.name, 0)));
+            return lang_type_struct_const_wrap(lang_type_struct_new(llvm_def_get_pos(def), lang_type_atom_new(llvm_struct_def_const_unwrap(def)->base.name, 0)));
         case LLVM_PRIMITIVE_DEF:
             unreachable("");
         case LLVM_LABEL:

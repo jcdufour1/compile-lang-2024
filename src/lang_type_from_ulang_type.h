@@ -6,6 +6,7 @@
 #include <uast_utils.h>
 #include <ulang_type_print.h>
 #include <resolve_generics.h>
+#include <ulang_type_get_pos.h>
 
 static inline Lang_type lang_type_from_ulang_type(Env* env, Ulang_type lang_type);
 
@@ -74,7 +75,7 @@ static inline bool try_lang_type_from_ulang_type_tuple(
         }
         vec_append(&a_main, &new_lang_types, new_child);
     }
-    *new_lang_type = lang_type_tuple_new(new_lang_types);
+    *new_lang_type = lang_type_tuple_new(pos, new_lang_types);
     return true;
 }
 
@@ -93,7 +94,7 @@ static inline bool try_lang_type_from_ulang_type_fn(
     if (!try_lang_type_from_ulang_type(new_rtn_type, env, *lang_type.return_type, pos)) {
         return false;
     }
-    *new_lang_type = lang_type_fn_new(new_params, new_rtn_type);
+    *new_lang_type = lang_type_fn_new(pos, new_params, new_rtn_type);
     return true;
 }
 
@@ -118,21 +119,21 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Env* e
     Lang_type_atom atom = lang_type_atom_new(lang_type.atom.str, lang_type.atom.pointer_depth);
 
     if (lang_type_atom_is_signed(atom)) {
-        Lang_type_signed_int new_int = lang_type_signed_int_new(str_view_to_int64_t(str_view_slice(atom.str, 1, atom.str.count - 1)), atom.pointer_depth);
+        Lang_type_signed_int new_int = lang_type_signed_int_new(lang_type.pos, str_view_to_int64_t(str_view_slice(atom.str, 1, atom.str.count - 1)), atom.pointer_depth);
         return lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(new_int));
     } else if (lang_type_atom_is_unsigned(atom)) {
-        Lang_type_unsigned_int new_int = lang_type_unsigned_int_new(str_view_to_int64_t(str_view_slice(atom.str, 1, atom.str.count - 1)), atom.pointer_depth);
+        Lang_type_unsigned_int new_int = lang_type_unsigned_int_new(lang_type.pos, str_view_to_int64_t(str_view_slice(atom.str, 1, atom.str.count - 1)), atom.pointer_depth);
         return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(new_int));
     } else if (str_view_cstr_is_equal(atom.str, "void")) {
         todo();
     } else if (lang_type_atom_is_equal(atom, lang_type_atom_new_from_cstr("u8", 0))) {
-        return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(atom)));
+        return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type.pos, atom)));
     } else if (str_view_cstr_is_equal(atom.str, "u8")) {
         // TODO: does this make sense for u8**, etc.?
-        return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(atom)));
+        return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type.pos, atom)));
     } else if (str_view_cstr_is_equal(atom.str, "any")) {
         // TODO: does this make sense?
-        return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(atom)));
+        return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type.pos, atom)));
     } else {
         log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, ulang_type_regular_const_wrap(lang_type)));
         todo();
@@ -141,9 +142,9 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Env* e
 }
 
 // TODO: add Pos as member to Ulang_type and Lang_type?
-static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_type, Env* env, Ulang_type_regular lang_type_, Pos pos) {
+static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_type, Env* env, Ulang_type_regular lang_type, Pos pos) {
     Ulang_type resolved = {0};
-    if (!resolve_generics_ulang_type_regular(&resolved, env, lang_type_)) {
+    if (!resolve_generics_ulang_type_regular(&resolved, env, lang_type)) {
         return false;
     }
     Uast_def* result = NULL;
@@ -159,23 +160,23 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     Lang_type_atom new_atom = lang_type_atom_new(ulang_type_regular_const_unwrap(resolved).atom.str, ulang_type_regular_const_unwrap(resolved).atom.pointer_depth);
     switch (result->type) {
         case UAST_STRUCT_DEF:
-            *new_lang_type = lang_type_struct_const_wrap(lang_type_struct_new(new_atom));
+            *new_lang_type = lang_type_struct_const_wrap(lang_type_struct_new(lang_type.pos, new_atom));
             return true;
         case UAST_RAW_UNION_DEF:
-            *new_lang_type = lang_type_raw_union_const_wrap(lang_type_raw_union_new(new_atom));
+            *new_lang_type = lang_type_raw_union_const_wrap(lang_type_raw_union_new(lang_type.pos, new_atom));
             return true;
         case UAST_ENUM_DEF:
-            *new_lang_type = lang_type_enum_const_wrap(lang_type_enum_new(new_atom));
+            *new_lang_type = lang_type_enum_const_wrap(lang_type_enum_new(lang_type.pos, new_atom));
             return true;
         case UAST_SUM_DEF:
-            *new_lang_type = lang_type_sum_const_wrap(lang_type_sum_new(new_atom));
+            *new_lang_type = lang_type_sum_const_wrap(lang_type_sum_new(lang_type.pos, new_atom));
             return true;
         case UAST_PRIMITIVE_DEF:
             *new_lang_type = lang_type_from_ulang_type_regular_primitive(env, ulang_type_regular_const_unwrap(resolved), uast_primitive_def_unwrap(result));
             return true;
         case UAST_LITERAL_DEF:
             unwrap(uast_literal_def_const_unwrap(result)->type == UAST_VOID_DEF);
-            *new_lang_type = lang_type_void_const_wrap(lang_type_void_new(0));
+            *new_lang_type = lang_type_void_const_wrap(lang_type_void_new(lang_type.pos));
             return true;
         default:
             unreachable(UAST_FMT, uast_def_print(result));

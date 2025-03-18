@@ -33,14 +33,20 @@ static void fail(void) {
 
 static void add_char(Env* env, const char* base_name, int16_t pointer_depth) {
     Uast_primitive_def* def = uast_primitive_def_new(
-        POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type_atom_new_from_cstr(base_name, pointer_depth))))
+        POS_BUILTIN,
+        lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(
+            (Pos) {0}, lang_type_atom_new_from_cstr(base_name, pointer_depth)
+        )))
     );
     unwrap(usym_tbl_add(&env->primitives, uast_primitive_def_wrap(def)));
 }
 
 static void add_any(Env* env, const char* base_name, int16_t pointer_depth) {
     Uast_primitive_def* def = uast_primitive_def_new(
-        POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_any_const_wrap(lang_type_any_new(lang_type_atom_new_from_cstr(base_name, pointer_depth))))
+        POS_BUILTIN,
+        lang_type_primitive_const_wrap(lang_type_any_const_wrap(lang_type_any_new(
+            POS_BUILTIN, lang_type_atom_new_from_cstr(base_name, pointer_depth)
+        )))
     );
     unwrap(usym_tbl_add(&env->primitives, uast_primitive_def_wrap(def)));
 }

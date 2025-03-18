@@ -225,8 +225,6 @@ static Lang_type_type lang_type_gen_void(const char* prefix) {
     const char* base_name = "void";
     Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
 
-    append_member(&sym.members, "int", "dummy");
-
     return sym;
 }
 
@@ -529,15 +527,10 @@ static void lang_type_gen_new_internal(Lang_type_type type, bool implementation)
     extend_lang_type_name_first_upper(&function, type.name);
     string_extend_cstr(&gen_a, &function, " ");
     extend_lang_type_name_lower(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "_new(");
+    string_extend_cstr(&gen_a, &function, "_new(Pos pos ");
 
-    if (type.sub_types.info.count > 0) {
-        string_extend_cstr(&gen_a, &function, "void");
-    }
     for (size_t idx = 0; idx < type.members.info.count; idx++) {
-        if (idx > 0 && idx < type.members.info.count) {
-            string_extend_cstr(&gen_a, &function, ", ");
-        }
+        string_extend_cstr(&gen_a, &function, ", ");
 
         Member curr = vec_at(&type.members, idx);
 
@@ -553,12 +546,10 @@ static void lang_type_gen_new_internal(Lang_type_type type, bool implementation)
 
         string_extend_cstr(&gen_a, &function, "    return (");
         extend_lang_type_name_first_upper(&function, type.name);
-        string_extend_cstr(&gen_a, &function, ") {");
+        string_extend_cstr(&gen_a, &function, ") {.pos = pos");
 
         for (size_t idx = 0; idx < type.members.info.count; idx++) {
-            if (idx > 0 && idx < type.members.info.count) {
-                string_extend_cstr(&gen_a, &function, ", ");
-            }
+            string_extend_cstr(&gen_a, &function, ", ");
 
             Member curr = vec_at(&type.members, idx);
 

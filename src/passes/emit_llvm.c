@@ -12,6 +12,7 @@
 #include <tast_serialize.h>
 #include <lang_type_serialize.h>
 #include <lang_type_print.h>
+#include <lang_type_get_pos.h>
 
 static void emit_block(Env* env, String* struct_defs, String* output, String* literals, const Llvm_block* fun_block);
 
@@ -130,11 +131,13 @@ static void extend_type_call_str(Env* env, String* output, Lang_type lang_type) 
             string_extend_strv(&a_main, output, serialize_lang_type(env, lang_type));
             return;
         case LANG_TYPE_ENUM:
-            lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0))),
+            lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(
+                lang_type_signed_int_new(lang_type_get_pos(lang_type), 64, 0)
+            )),
             extend_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_LLVM, lang_type);
             return;
         case LANG_TYPE_VOID:
-            lang_type = lang_type_void_const_wrap(lang_type_void_new(0));
+            lang_type = lang_type_void_const_wrap(lang_type_void_new(lang_type_get_pos(lang_type)));
             string_extend_strv(&a_main, output, serialize_lang_type(env, lang_type));
             return;
         case LANG_TYPE_PRIMITIVE:
@@ -143,7 +146,7 @@ static void extend_type_call_str(Env* env, String* output, Lang_type lang_type) 
                 log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
                 log(LOG_DEBUG, "%d\n", lang_type_primitive_const_unwrap(lang_type).type);
                 Lang_type_unsigned_int old_num = lang_type_unsigned_int_const_unwrap(lang_type_primitive_const_unwrap(lang_type));
-                lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(old_num.bit_width, old_num.pointer_depth)));
+                lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_get_pos(lang_type), old_num.bit_width, old_num.pointer_depth)));
             }
             log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
             //assert(lang_type_primitive_const_unwrap(lang_type).type == LANG_TYPE_SIGNED_INT);

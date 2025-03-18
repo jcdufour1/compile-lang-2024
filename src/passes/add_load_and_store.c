@@ -74,7 +74,7 @@ static Lang_type_struct rm_tuple_lang_type_tuple(Env* env, Lang_type_tuple lang_
     Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
     // TODO: consider collisions with generated structs and user defined structs
     sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(struct_def));
-    return lang_type_struct_new(lang_type_atom_new(base.name, 0));
+    return lang_type_struct_new(lang_type_pos, lang_type_atom_new(base.name, 0));
 }
 
 // note: will not clone everything
@@ -99,7 +99,7 @@ static Lang_type rm_tuple_lang_type_sum(Env* env, Lang_type_sum lang_type, Pos l
     Tast_variable_def* tag = tast_variable_def_new(
         lang_type_pos,
         // TODO: make helper functions, etc. for line below, because this is too much to do every time
-        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0))),
+        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_pos, 64, 0))),
         false,
         str_view_from_cstr("tag")
     );
@@ -117,7 +117,7 @@ static Lang_type rm_tuple_lang_type_sum(Env* env, Lang_type_sum lang_type, Pos l
 
     Tast_variable_def* item = tast_variable_def_new(
         lang_type_pos,
-        rm_tuple_lang_type(env, lang_type_raw_union_const_wrap(lang_type_raw_union_new(lang_type_atom_new(item_type_def->base.name, 0))), lang_type_pos),
+        rm_tuple_lang_type(env, lang_type_raw_union_const_wrap(lang_type_raw_union_new(item_type_def->pos, lang_type_atom_new(item_type_def->base.name, 0))), lang_type_pos),
         false,
         str_view_from_cstr("item")
     );
@@ -153,7 +153,7 @@ static Lang_type rm_tuple_lang_type(Env* env, Lang_type lang_type, Pos lang_type
             Tast_variable_def* tag = tast_variable_def_new(
                 lang_type_pos,
                 // TODO: make helper functions, etc. for line below, because this is too much to do every time
-                lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0))),
+                lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0))),
                 false,
                 str_view_from_cstr("tag")
             );
@@ -328,7 +328,7 @@ static Llvm_function_params* do_function_def_alloca(
         );
         Llvm_variable_def* param = load_variable_def_clone(env, new_def);
         do_function_def_alloca_param(env, new_params, new_block, param);
-        *new_rtn_type = lang_type_void_const_wrap(lang_type_void_new(0));
+        *new_rtn_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
         env->struct_rtn_name_parent_function = vec_at(&new_params->params, 0)->name_self;
     } else {
         *new_rtn_type = rtn_type;
@@ -443,7 +443,7 @@ static Str_view load_function_call(
         
         vec_append(&a_main, &new_args, def_name);
         load_variable_def(env, new_block, def);
-        fun_lang_type = lang_type_void_const_wrap(lang_type_void_new(0));
+        fun_lang_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
         //unreachable(TAST_FMT, tast_function_call_print(old_call));
     }
 
@@ -831,7 +831,7 @@ static Str_view load_binary_short_circuit(
     }
 
     Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
-        lang_type_unsigned_int_new(1, 0)
+        lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
     ));
 
     Tast_variable_def* new_var = tast_variable_def_new(
@@ -875,9 +875,9 @@ static Str_view load_binary_short_circuit(
             if_true_stmts,
             (Symbol_collection) {0},
             old_bin->pos,
-            lang_type_void_const_wrap(lang_type_void_new(0))
+            lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))
         ),
-        lang_type_void_const_wrap(lang_type_void_new(0))
+        lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))
     );
 
     Tast_if* if_false = tast_if_new(
@@ -899,9 +899,9 @@ static Str_view load_binary_short_circuit(
             if_false_stmts,
             (Symbol_collection) {0},
             old_bin->pos,
-            lang_type_void_const_wrap(lang_type_void_new(0))
+            lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))
         ),
-        lang_type_void_const_wrap(lang_type_void_new(0))
+        lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))
     );
 
     Tast_if_vec ifs = {0};
@@ -1060,7 +1060,7 @@ static Str_view load_ptr_member_access(
     Tast_number* new_index = tast_number_new(
         old_access->pos,
         struct_index,
-        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0)))
+        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0)))
     );
     
     Llvm_load_element_ptr* new_load = llvm_load_element_ptr_new(
@@ -1181,12 +1181,12 @@ static Str_view load_ptr_sum_get_tag(
     Tast_number* zero = tast_number_new(
         old_access->pos,
         0,
-        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0)))
+        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0)))
     );
 
     Llvm_load_element_ptr* new_enum = llvm_load_element_ptr_new(
         old_access->pos,
-        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0))),
+        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0))),
         0,
         load_literal(env, new_block, tast_number_wrap(zero)),
         new_sum,
@@ -1220,7 +1220,7 @@ static Str_view load_sum_get_tag(
         old_access->pos,
         load_ptr_sum_get_tag(env, new_block, old_access),
         0,
-        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0))),
+        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0))),
         util_literal_name_new()
     );
     unwrap(alloca_add(env, llvm_load_another_llvm_wrap(new_load)));
@@ -1243,12 +1243,12 @@ static Str_view load_ptr_sum_access(
     Tast_number* zero = tast_number_new(
         old_access->pos,
         0,
-        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0)))
+        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0)))
     );
     Tast_number* one = tast_number_new(
         old_access->pos,
         1,
-        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(64, 0)))
+        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0)))
     );
 
     Llvm_load_element_ptr* new_union = llvm_load_element_ptr_new(

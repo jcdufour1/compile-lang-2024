@@ -77,7 +77,7 @@ static bool try_set_struct_base_types(Env* env, Struct_def_base* new_base, Ustru
         if (is_enum) {
             Tast_variable_def* new_memb = tast_variable_def_new(
                 curr->pos,
-                lang_type_enum_const_wrap(lang_type_enum_new(lang_type_atom_new(base->name, 0))),
+                lang_type_enum_const_wrap(lang_type_enum_new(curr->pos, lang_type_atom_new(base->name, 0))),
                 false,
                 curr->name
             );

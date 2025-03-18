@@ -352,7 +352,7 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
         string_extend_cstr(&gen_a, &text, "    if (lang_type_atom_is_signed(lang_type_atom_new(key, 0))) {\n");
         string_extend_cstr(&gen_a, &text, "        int32_t bit_width = str_view_to_int64_t(str_view_slice(key, 1, key.count - 1));\n");
         string_extend_cstr(&gen_a, &text, "        Uast_primitive_def* def = uast_primitive_def_new(\n");
-        string_extend_cstr(&gen_a, &text, "            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(bit_width, 0)))\n");
+        string_extend_cstr(&gen_a, &text, "            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new((Pos) {0}, bit_width, 0)))\n");
         string_extend_cstr(&gen_a, &text, "        );\n");
         string_extend_cstr(&gen_a, &text, "        unwrap(usym_tbl_add(&env->primitives, uast_primitive_def_wrap(def)));\n");
         string_extend_cstr(&gen_a, &text, "        *result = uast_primitive_def_wrap(def);\n");
@@ -360,7 +360,7 @@ static void gen_symbol_table_c_file_internal(Symbol_tbl_type type) {
         string_extend_cstr(&gen_a, &text, "    } else if (lang_type_atom_is_unsigned(lang_type_atom_new(key, 0))) {\n");
         string_extend_cstr(&gen_a, &text, "        int32_t bit_width = str_view_to_int64_t(str_view_slice(key, 1, key.count - 1));\n");
         string_extend_cstr(&gen_a, &text, "        Uast_primitive_def* def = uast_primitive_def_new(\n");
-        string_extend_cstr(&gen_a, &text, "            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(bit_width, 0)))\n");
+        string_extend_cstr(&gen_a, &text, "            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new((Pos) {0}, bit_width, 0)))\n");
         string_extend_cstr(&gen_a, &text, "        );\n");
         string_extend_cstr(&gen_a, &text, "        unwrap(usym_tbl_add(&env->primitives, uast_primitive_def_wrap(def)));\n");
         string_extend_cstr(&gen_a, &text, "        *result = uast_primitive_def_wrap(def);\n");

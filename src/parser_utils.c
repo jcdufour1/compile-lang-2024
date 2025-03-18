@@ -12,6 +12,7 @@
 #include <token_type_to_operator_type.h>
 #include <sizeof.h>
 #include <symbol_log.h>
+#include <lang_type_get_pos.h>
 
 bool try_str_view_to_int64_t(int64_t* result, Str_view str_view) {
     *result = 0;
@@ -349,7 +350,7 @@ Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child) {
         ),
         if_cond_child,
         BINARY_NOT_EQUAL,
-        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(32, 0)))
+        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_get_pos(tast_expr_get_lang_type(if_cond_child)), 32, 0)))
     );
 
     return tast_binary_wrap(binary);
