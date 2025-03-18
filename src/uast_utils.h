@@ -69,8 +69,6 @@ static inline Ulang_type uast_get_ulang_type_stmt(const Uast_stmt* stmt) {
             return uast_get_ulang_type_def(uast_def_const_unwrap(stmt));
         case UAST_RETURN:
             unreachable("");
-        case UAST_YIELD:
-            unreachable("");
         case UAST_BREAK:
             unreachable("");
         case UAST_CONTINUE:
@@ -143,8 +141,6 @@ static inline Lang_type* uast_get_ulang_type_ref_stmt(Uast_stmt* stmt) {
             return uast_get_ulang_type_def_ref(uast_def_unwrap(stmt));
         case UAST_RETURN:
             unreachable("");
-        case UAST_YIELD:
-            unreachable("");
         case UAST_BREAK:
             unreachable("");
         case UAST_CONTINUE:
@@ -202,8 +198,6 @@ static inline bool uast_stmt_get_lang_type(Lang_type* result, Env* env, const Ua
         case UAST_DEF:
             return uast_def_get_lang_type(result, env, uast_def_const_unwrap(stmt), generics);
         case UAST_RETURN:
-            unreachable("");
-        case UAST_YIELD:
             unreachable("");
         case UAST_BREAK:
             unreachable("");
@@ -286,8 +280,6 @@ static inline Lang_type* uast_ref_stmt_get_lang_type(Uast_stmt* stmt) {
         case UAST_ASSIGNMENT:
             unreachable("");
         case UAST_LABEL:
-            unreachable("");
-        case UAST_YIELD:
             unreachable("");
     }
     unreachable("");
@@ -398,8 +390,6 @@ static inline Str_view uast_stmt_get_name(const Uast_stmt* stmt) {
         case UAST_RETURN:
             unreachable("");
         case UAST_LABEL:
-            unreachable("");
-        case UAST_YIELD:
             unreachable("");
     }
     unreachable("");

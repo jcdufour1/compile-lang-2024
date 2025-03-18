@@ -1683,7 +1683,8 @@ static Str_view if_else_chain_to_branch(Llvm_block** new_block, Env* env, Tast_i
         env->load_break_symbol_name = yield_dest->name;
     }
 
-    Str_view if_after = util_literal_name_new_prefix("if_after");
+    Str_view old_label_if_break = env->label_if_break;
+    env->label_if_break = util_literal_name_new_prefix("if_after");
     
     Llvm* dummy = NULL;
     Tast_def* dummy_def = NULL;
@@ -1691,12 +1692,12 @@ static Str_view if_else_chain_to_branch(Llvm_block** new_block, Env* env, Tast_i
     Str_view next_if = {0};
     for (size_t idx = 0; idx < if_else->tasts.info.count; idx++) {
         if (idx + 1 == if_else->tasts.info.count) {
-            next_if = if_after;
+            next_if = env->label_if_break;
         } else {
             next_if = util_literal_name_new_prefix("next_if");
         }
 
-        Llvm_block* if_block = if_statement_to_branch(env, vec_at(&if_else->tasts, idx), next_if, if_after);
+        Llvm_block* if_block = if_statement_to_branch(env, vec_at(&if_else->tasts, idx), next_if, env->label_if_break);
         vec_append(&a_main, &(*new_block)->children, llvm_block_wrap(if_block));
 
         if (idx + 1 < if_else->tasts.info.count) {
@@ -1704,13 +1705,15 @@ static Str_view if_else_chain_to_branch(Llvm_block** new_block, Env* env, Tast_i
             add_label(env, (*new_block), next_if, vec_at(&if_else->tasts, idx)->pos, false);
             assert(alloca_lookup(&dummy, env, next_if));
         } else {
-            assert(str_view_is_equal(next_if, if_after));
+            assert(str_view_is_equal(next_if, env->label_if_break));
         }
     }
 
     assert(!symbol_lookup(&dummy_def, env, next_if));
-    add_label(env, (*new_block), if_after, if_else->pos, false);
+    add_label(env, (*new_block), env->label_if_break, if_else->pos, false);
     assert(alloca_lookup(&dummy, env, next_if));
+
+    env->label_if_break = old_label_if_break;
 
     if (tast_if_else_chain_get_lang_type(if_else).type == LANG_TYPE_VOID) {
         return (Str_view) {0};

@@ -422,17 +422,6 @@ Str_view uast_return_print_internal(const Uast_return* lang_rtn, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_yield_print_internal(const Uast_yield* lang_rtn, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "yield\n", indent);
-    indent += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, uast_expr_print_internal(lang_rtn->child, indent));
-    indent -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
 Str_view uast_if_else_chain_print_internal(const Uast_if_else_chain* if_else, int indent) {
     String buf = {0};
 
@@ -689,8 +678,6 @@ Str_view uast_stmt_print_internal(const Uast_stmt* stmt, int indent) {
             return uast_for_with_cond_print_internal(uast_for_with_cond_const_unwrap(stmt), indent);
         case UAST_LABEL:
             return uast_label_print_internal(uast_label_const_unwrap(stmt), indent);
-        case UAST_YIELD:
-            return uast_yield_print_internal(uast_yield_const_unwrap(stmt), indent);
     }
     unreachable("");
 }

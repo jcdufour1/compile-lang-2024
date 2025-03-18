@@ -568,15 +568,6 @@ static Uast_type uast_gen_return(const char* prefix) {
     return rtn;
 }
 
-static Uast_type uast_gen_yield(const char* prefix) {
-    Uast_type rtn = {.name = uast_name_new(prefix, "yield", false)};
-
-    append_member(&rtn.members, "Uast_expr*", "child");
-    append_member(&rtn.members, "bool", "is_auto_inserted"); // TODO: use : 1 size?
-
-    return rtn;
-}
-
 static Uast_type uast_gen_stmt(const char* prefix) {
     const char* base_name = "stmt";
     Uast_type stmt = {.name = uast_name_new(prefix, base_name, false)};
@@ -590,7 +581,6 @@ static Uast_type uast_gen_stmt(const char* prefix) {
     vec_append(&gen_a, &stmt.sub_types, uast_gen_continue(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_assignment(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_return(base_name));
-    vec_append(&gen_a, &stmt.sub_types, uast_gen_yield(base_name));
 
     return stmt;
 }
