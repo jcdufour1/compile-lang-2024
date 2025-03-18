@@ -13,8 +13,8 @@
 
 static bool ulang_type_generics_are_present(Ulang_type lang_type);
 
-#define msg_invalid_count_generic_args(env, pos, gen_args, min_args, max_args) \
-    msg_invalid_count_generic_args_internal(__FILE__, __LINE__, env, pos, gen_args, min_args, max_args)
+#define msg_invalid_count_generic_args(env, pos_def, pos_gen_args, gen_args, min_args, max_args) \
+    msg_invalid_count_generic_args_internal(__FILE__, __LINE__, env, pos_def, pos_gen_args, gen_args, min_args, max_args)
 
 // TODO: move this function and macro to better place
 static void msg_undefined_type_internal(
@@ -37,7 +37,8 @@ static void msg_invalid_count_generic_args_internal(
     const char* file,
     int line,
     Env* env,
-    Pos pos,
+    Pos pos_def,
+    Pos pos_gen_args,
     Ulang_type_vec gen_args,
     size_t min_args,
     size_t max_args
@@ -52,12 +53,12 @@ static void msg_invalid_count_generic_args_internal(
     }
     string_extend_cstr(&print_arena, &message, " generic arguments expected\n");
     msg_internal(
-        file, line, LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_GENERIC_ARGS, env->file_text, pos,
+        file, line, LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_GENERIC_ARGS, env->file_text, pos_gen_args,
         STR_VIEW_FMT, str_view_print(string_to_strv(message))
     );
 
     msg_internal(
-        file, line, LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, pos,
+        file, line, LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, pos_def,
         "generic parameters defined here\n" 
     );
 }
@@ -181,7 +182,8 @@ static bool resolve_generics_serialize_struct_def_base(
     Ustruct_def_base* new_base,
     Ustruct_def_base old_base,
     Ulang_type_vec gen_args,
-    Pos pos
+    Pos pos_def,
+    Pos pos_gen_args
 ) {
     // TODO: figure out way to avoid making new Ustruct_def_base every time (do name thing here, and check if varient with name already exists)
     memset(new_base, 0, sizeof(*new_base));
@@ -189,7 +191,8 @@ static bool resolve_generics_serialize_struct_def_base(
     if (old_base.generics.info.count != gen_args.info.count) {
         msg_invalid_count_generic_args(
             env,
-            pos,
+            pos_def,
+            pos_gen_args,
             gen_args,
             old_base.generics.info.count,
             old_base.generics.info.count
@@ -230,7 +233,7 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Env* env, U
     switch (before_res->type) {
         case UAST_RAW_UNION_DEF: {
             Ustruct_def_base new_base = {0};
-            if (!resolve_generics_serialize_struct_def_base(env, &new_base, uast_raw_union_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res))) {
+            if (!resolve_generics_serialize_struct_def_base(env, &new_base, uast_raw_union_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res), ulang_type_get_pos(lang_type))) {
                 return false;
             }
             Uast_def* new_def_ = NULL;
@@ -246,7 +249,7 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Env* env, U
         }
         case UAST_ENUM_DEF: {
             Ustruct_def_base new_base = {0};
-            if (!resolve_generics_serialize_struct_def_base(env, &new_base, uast_enum_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res))) {
+            if (!resolve_generics_serialize_struct_def_base(env, &new_base, uast_enum_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res), ulang_type_get_pos(lang_type))) {
                 return false;
             }
             Uast_def* new_def_ = NULL;
@@ -262,7 +265,7 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Env* env, U
         }
         case UAST_SUM_DEF: {
             Ustruct_def_base new_base = {0};
-            if (!resolve_generics_serialize_struct_def_base(env, &new_base, uast_sum_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res))) {
+            if (!resolve_generics_serialize_struct_def_base(env, &new_base, uast_sum_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res), ulang_type_get_pos(lang_type))) {
                 return false;
             }
             Uast_def* new_def_ = NULL;
@@ -278,7 +281,7 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Env* env, U
         }
         case UAST_STRUCT_DEF: {
             Ustruct_def_base new_base = {0};
-            if (!resolve_generics_serialize_struct_def_base(env, &new_base, uast_struct_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res))) {
+            if (!resolve_generics_serialize_struct_def_base(env, &new_base, uast_struct_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res), ulang_type_get_pos(lang_type))) {
                 return false;
             }
             Uast_def* new_def_ = NULL;
@@ -358,7 +361,8 @@ static bool resolve_generics_serialize_function_decl(
     Uast_function_decl** new_decl,
     const Uast_function_decl* old_decl,
     Uast_block* new_block,
-    Ulang_type_vec gen_args
+    Ulang_type_vec gen_args,
+    Pos pos_gen_args
 ) {
     // TODO: figure out way to avoid making new Uast_function_decl every time
     memset(new_decl, 0, sizeof(*new_decl));
@@ -376,6 +380,7 @@ static bool resolve_generics_serialize_function_decl(
             msg_invalid_count_generic_args(
                 env,
                 old_decl->pos,
+                pos_gen_args,
                 gen_args,
                 old_decl->generics.info.count,
                 old_decl->generics.info.count
@@ -396,6 +401,7 @@ static bool resolve_generics_serialize_function_decl(
         msg_invalid_count_generic_args(
             env,
             old_decl->pos,
+            pos_gen_args,
             gen_args,
             old_decl->generics.info.count,
             old_decl->generics.info.count
@@ -427,7 +433,8 @@ bool resolve_generics_function_def(
     Uast_function_def** new_def,
     Env* env,
     Uast_function_def* def,
-    Ulang_type_vec gen_args
+    Ulang_type_vec gen_args,
+    Pos pos_gen_args
 ) {
     bool status = true;
 
@@ -441,7 +448,7 @@ bool resolve_generics_function_def(
     assert(new_block != def->body);
     assert(new_block->symbol_collection.usymbol_table.table_tasts != def->body->symbol_collection.usymbol_table.table_tasts);
 
-    if (!resolve_generics_serialize_function_decl(env, &new_decl, def->decl, new_block, gen_args)) {
+    if (!resolve_generics_serialize_function_decl(env, &new_decl, def->decl, new_block, gen_args, pos_gen_args)) {
         return false;
     }
     *new_def = uast_function_def_new(new_decl->pos, new_decl, new_block);

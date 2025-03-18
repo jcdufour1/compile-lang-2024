@@ -15,7 +15,8 @@ bool resolve_generics_function_def(
     Uast_function_def** new_def,
     Env* env,
     Uast_function_def* def,
-    Ulang_type_vec gen_args
+    Ulang_type_vec gen_args,
+    Pos pos_gen_args
 );
 
 bool function_decl_generics_are_present(const Uast_function_decl* decl);

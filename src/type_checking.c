@@ -450,7 +450,7 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
                 return false;
             }
             if (function_decl_generics_are_present(uast_function_def_unwrap(sym_def)->decl)) {
-                if (!resolve_generics_function_def(&new_def, env, uast_function_def_unwrap(sym_def), sym_untyped->generic_args)) {
+                if (!resolve_generics_function_def(&new_def, env, uast_function_def_unwrap(sym_def), sym_untyped->generic_args, sym_untyped->pos)) {
                     return false;
                 }
             } else {
