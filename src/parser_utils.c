@@ -43,6 +43,17 @@ bool try_str_view_to_int64_t(int64_t* result, Str_view str_view) {
     size_t idx = 0;
     for (idx = 0; idx < str_view.count; idx++) {
         char curr_char = str_view.str[idx];
+        if (curr_char == '_') {
+            continue;
+        }
+
+        if (isalpha(curr_char)) {
+            if (curr_char != 'x' || idx != 1) {
+                todo();
+            }
+            return try_str_view_hex_after_0x_to_int64_t(result, str_view_slice(str_view, 2, str_view.count - 2));
+        }
+
         if (!isdigit(curr_char)) {
             break;
         }

@@ -26,25 +26,12 @@ static bool local_isalnum_or_underscore(char prev, char curr) {
 
 static bool local_ishex(char prev, char curr) {
     (void) prev;
-    return ishex(curr);
+    return ishex(curr) || curr == '_' || curr == 'x';
 }
 
 static Str_view consume_num(Pos* pos, Str_view_col* file_text) {
     Str_view_col num = {0};
-    unwrap(str_view_col_try_consume_while(&num, pos, file_text, local_isdigit));
-    if (str_view_col_try_consume(pos, file_text, 'x')) {
-        assert(num.base.count > 0);
-        if (num.base.count > 1) {
-            // TODO
-            unreachable("invalid token: 2 or more digits followed by x without whitespace");
-        }
-        str_view_col_try_consume_while(&num, pos, file_text, local_ishex);
-        int64_t raw = 0;
-        try_str_view_hex_after_0x_to_int64_t(&raw, num.base);
-        log(LOG_DEBUG, "%lx\n", raw);
-        todo();
-
-    }
+    unwrap(str_view_col_try_consume_while(&num, pos, file_text, local_ishex));
     return num.base;
 }
 
