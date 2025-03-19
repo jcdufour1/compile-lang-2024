@@ -39,7 +39,7 @@ void write_file(const char* file_path, Str_view text_to_write) {
     }
 
     for (size_t idx = 0; idx < text_to_write.count; idx++) {
-        if (EOF == fputc(text_to_write.str[idx], file)) {
+        if (EOF == fputc(str_view_at(text_to_write, idx), file)) {
             todo();
         }
     }

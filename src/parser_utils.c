@@ -18,7 +18,7 @@ bool try_str_view_octal_after_0_to_int64_t(int64_t* result, const Env* env, Pos 
     *result = 0;
     size_t idx = 0;
     for (idx = 0; idx < str_view.count; idx++) {
-        char curr_char = str_view.str[idx];
+        char curr_char = str_view_at(str_view, idx);
         if (curr_char == '_') {
             continue;
         }
@@ -40,7 +40,7 @@ bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, const Env* env, Pos p
     *result = 0;
     size_t idx = 0;
     for (idx = 0; idx < str_view.count; idx++) {
-        char curr_char = str_view.str[idx];
+        char curr_char = str_view_at(str_view, idx);
         if (curr_char == '_') {
             continue;
         }
@@ -69,7 +69,7 @@ bool try_str_view_bin_after_0b_to_int64_t(int64_t* result, const Env* env, Pos p
     *result = 0;
     size_t idx = 0;
     for (idx = 0; idx < str_view.count; idx++) {
-        char curr_char = str_view.str[idx];
+        char curr_char = str_view_at(str_view, idx);
         if (curr_char == '_') {
             continue;
         }
@@ -91,7 +91,7 @@ bool try_str_view_to_int64_t(int64_t* result, const Env* env, Pos pos, Str_view 
     *result = 0;
     size_t idx = 0;
     for (idx = 0; idx < str_view.count; idx++) {
-        char curr_char = str_view.str[idx];
+        char curr_char = str_view_at(str_view, idx);
         if (curr_char == '_') {
             continue;
         }
@@ -141,7 +141,7 @@ bool try_str_view_to_size_t(size_t* result, Str_view str_view) {
     *result = 0;
     size_t idx = 0;
     for (idx = 0; idx < str_view.count; idx++) {
-        char curr_char = str_view.str[idx];
+        char curr_char = str_view_at(str_view, idx);
         if (!isdigit(curr_char)) {
             break;
         }
@@ -168,7 +168,7 @@ int64_t str_view_to_int64_t(const Env* env, Pos pos, Str_view str_view) {
 static bool lang_type_atom_is_number_finish(Lang_type_atom atom) {
     size_t idx;
     for (idx = 1; idx < atom.str.count; idx++) {
-        if (!isdigit(atom.str.str[idx])) {
+        if (!isdigit(str_view_at(atom.str, idx))) {
             return false;
         }
     }
@@ -181,7 +181,7 @@ bool lang_type_atom_is_signed(Lang_type_atom atom) {
     if (atom.str.count < 1) {
         return false;
     }
-    if (atom.str.str[0] != 'i') {
+    if (str_view_at(atom.str, 0) != 'i') {
         return false;
     }
     return lang_type_atom_is_number_finish(atom);
@@ -192,7 +192,7 @@ bool lang_type_atom_is_unsigned(Lang_type_atom atom) {
     if (atom.str.count < 1) {
         return false;
     }
-    if (atom.str.str[0] != 'u') {
+    if (str_view_at(atom.str, 0) != 'u') {
         return false;
     }
     return lang_type_atom_is_number_finish(atom);

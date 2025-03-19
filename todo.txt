@@ -17,14 +17,10 @@ for generics:
 - codegen
 
 ## miscellaneous 
-- remove lang_type_nodes
-- optional regular args mixed with generics?
 - lang_type suffix/prefix should be changed to ulang_type in some functions?
 - directory structure above
-- function call returning Optional(<ItemType>) directly switched on
 - symbol_at function, whatever
 - separate lang_type for Llvm stuff
-- fix this: sum.own:12:5:error:some cases are not covered: u8*.string
 - fix lang_type system for void, etc. (it is a mess)
 - tuple on lhs changed to individual accesses in type_checking pass?
 - fix this to report also the (<i32>) to reduce confusion:
@@ -39,6 +35,13 @@ for generics:
       48 | fn triangle(<ItemType>)(num ItemType) ItemType {
          |                         ^
       49 |     let result ItemType = 0
+- test cases for variable def after use
+- env: should always or never pass to function
+- pos in lang_type struct should actually be initalized to meaningful value
+- rename examples/new_lang/if_expression.own to examples/new_lang/if_statement.own
+- make actual if_expression test
+- make expected failure test for using variable to assign self in initialization
+    (eg. let num i32 = num*4)
 
 
 
@@ -57,11 +60,14 @@ for generics:
 - printing features
 - global constants
 - way to get tag of sum (be sure that checking if sums are equal is possible)
-- automatic zero initialization
+- mandatory initialization or similar
 - manual zero initialization
-- hex and binary literal
 - safe cast (use "i64(num)" to cast num to i64)?
 - prevent collisions with user defined names and compiler defined names
+- test for break in switch case 
+- use str_view_at instead of str_view.str[idx] for bounds checking
+- def
+- distinct
 
 ## needed tests
 - let token* Token = <...>; switch token {<...>}
@@ -71,6 +77,6 @@ for generics:
 - named scopes
 - designated args
 - iterators and foreach
-- int literal "1_000_000"
 - floats
+- use 0o for octal prefix?
 

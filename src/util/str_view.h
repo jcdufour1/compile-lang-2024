@@ -8,14 +8,6 @@
 #include "util.h"
 #include "str_view_struct.h"
 
-static inline char str_view_front(Str_view str_view) {
-    assert(str_view.count < 1e6);
-    if (str_view.count < 1) {
-        todo();
-    }
-    return str_view.str[0];
-}
-
 static inline Str_view str_view_slice(Str_view str_view, size_t start, size_t count) {
     assert(count <= str_view.count && start + count <= str_view.count && "out of bounds");
     Str_view new_str_view = {.str = str_view.str + start, .count = count};
@@ -27,11 +19,15 @@ static inline char str_view_at(Str_view str_view, size_t index) {
     return str_view.str[index];
 }
 
+static inline char str_view_front(Str_view str_view) {
+    return str_view_at(str_view, 0);
+}
+
 static inline Str_view str_view_consume_while(Str_view* str_view, bool (*should_continue)(char /* previous char */, char /* current char */)) {
     Str_view new_str_view;
     for (size_t idx = 0; str_view->count > idx; idx++) {
-        char prev_char = idx > 0 ? (str_view->str[idx]) : (0);
-        if (!should_continue(prev_char, str_view->str[idx])) {
+        char prev_char = idx > 0 ? (str_view_at(*str_view, idx)) : (0);
+        if (!should_continue(prev_char, str_view_at(*str_view, idx))) {
             new_str_view.str = str_view->str;
             new_str_view.count = idx;
             str_view->str += idx;
@@ -45,7 +41,7 @@ static inline Str_view str_view_consume_while(Str_view* str_view, bool (*should_
 static inline Str_view str_view_consume_until(Str_view* str_view, char delim) {
     Str_view new_str_view;
     for (size_t idx = 0; str_view->count > idx; idx++) {
-        if (str_view->str[idx] == delim) {
+        if (str_view_at(*str_view, idx) == delim) {
             new_str_view.str = str_view->str;
             new_str_view.count = idx;
             str_view->str += idx;

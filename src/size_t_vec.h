@@ -14,6 +14,7 @@ static inline void size_t_vec_append(Size_t_vec* vector, size_t num_to_append) {
 }
 
 static inline size_t size_t_vec_at(Size_t_vec* vector, size_t idx) {
+    unwrap(idx < vector->info.count);
     return vector->buf[idx];
 }
 

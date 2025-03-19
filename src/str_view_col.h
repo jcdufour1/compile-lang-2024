@@ -39,9 +39,9 @@ static inline bool str_view_col_try_consume_while(
 ) {
     Str_view* base = &str_view->base;
     for (size_t idx = 0; base->count > idx; idx++) {
-        char prev_char = idx > 0 ? (base->str[idx]) : (0);
+        char prev_char = idx > 0 ? (str_view_at(*base, idx)) : (0);
         log(LOG_DEBUG, "thing thign\n"); 
-        if (!should_continue(prev_char, base->str[idx])) {
+        if (!should_continue(prev_char, str_view_at(*base, idx))) {
             result->base.str = base->str;
             result->base.count = idx;
             base->str += idx;
@@ -49,7 +49,7 @@ static inline bool str_view_col_try_consume_while(
             log(LOG_DEBUG, "thing thign 3\n"); 
             return true;
         }
-        str_view_col_advance_pos(pos, base->str[idx]);
+        str_view_col_advance_pos(pos, str_view_at(*base, idx));
     }
     log(LOG_DEBUG, "thing thign 4\n"); 
     return false;
@@ -71,14 +71,14 @@ static inline Str_view_col str_view_col_consume_until(Pos* pos, Str_view_col* st
     Str_view_col new_str_view;
     Str_view* base = &str_view->base;
     for (size_t idx = 0; base->count > idx; idx++) {
-        if (base->str[idx] == delim) {
+        if (str_view_at(*base, idx) == delim) {
             new_str_view.base.str = base->str;
             new_str_view.base.count = idx;
             base->str += idx;
             base->count -= idx;
             return new_str_view;
         }
-        str_view_col_advance_pos(pos, base->str[idx]);
+        str_view_col_advance_pos(pos, str_view_at(*base, idx));
     }
     unreachable("delim not found");
 }

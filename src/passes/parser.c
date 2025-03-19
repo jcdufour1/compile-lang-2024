@@ -330,30 +330,6 @@ static void sync_past_next_bracket(Token token_to_match, Tk_view* tokens) {
     todo();
 }
 
-// try_consume tokens from { to } (inclusive) and discard outer {}
-static Tk_view parse_items_inside_brackets(Tk_view* tokens, TOKEN_TYPE closing_bracket_type) {
-    // the opening_bracket type should be the opening bracket type that corresponds to closing_brace_type
-    switch (closing_bracket_type) {
-        case TOKEN_CLOSE_CURLY_BRACE:
-            unwrap(try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE));
-            break;
-        case TOKEN_CLOSE_PAR:
-            unwrap(try_consume(NULL, tokens, TOKEN_OPEN_PAR));
-            break;
-        default:
-            unreachable("invalid or unimplemented bracket type");
-    }
-
-    size_t idx_closing_bracket;
-    if (!get_idx_matching_token(&idx_closing_bracket, *tokens, false, closing_bracket_type)) {
-        unreachable("closing bracket not found");
-    }
-    Tk_view inside_brackets = tk_view_consume_count(tokens, idx_closing_bracket);
-
-    unwrap(try_consume(NULL, tokens, closing_bracket_type));
-    return inside_brackets;
-}
-
 // TODO: consider case of being inside brackets
 static bool can_end_stmt(Token token) {
     switch (token.type) {
