@@ -53,8 +53,6 @@ static Llvm_expr* id_expr(Llvm_expr* expr) {
             return llvm_function_call_wrap(id_function_call(llvm_function_call_unwrap(expr)));
         case LLVM_OPERATOR:
             return llvm_operator_wrap(id_operator(llvm_operator_unwrap(expr)));
-        case LLVM_LLVM_PLACEHOLDER:
-            return expr;
     }
     unreachable("");
 }

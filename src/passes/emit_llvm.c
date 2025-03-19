@@ -368,12 +368,6 @@ static void emit_function_arg_expr(Env* env, String* output, String* literals, c
                 break;
             case LLVM_SYMBOL:
                 unreachable("typed symbols should not still be present");
-            case LLVM_LLVM_PLACEHOLDER: {
-                unreachable("");
-                //const Llvm_llvm_placeholder* placeholder = llvm_llvm_placeholder_const_unwrap(argument);
-                //emit_function_call_arg_load_another_llvm(env, output, llvm_load_another_llvm_const_unwrap(placeholder->));
-                break;
-            }
             case LLVM_FUNCTION_CALL:
                 extend_type_call_str(env, output, llvm_expr_get_lang_type(argument));
                 string_extend_cstr(&a_main, output, "%");
@@ -671,27 +665,6 @@ static void emit_operator_operand_llvm_placeholder_expr(
     }
 }
 
-static void emit_operator_operand_llvm_placeholder(
-    String* output,
-    const Llvm_llvm_placeholder* placeholder
-) {
-    const Llvm* llvm = placeholder->llvm_reg.llvm;
-
-    switch (llvm->type) {
-        case LLVM_EXPR:
-            emit_operator_operand_llvm_placeholder_expr(output, llvm_expr_const_unwrap(llvm));
-            break;
-        case LLVM_LOAD_ANOTHER_LLVM:
-            string_extend_cstr(&a_main, output, "%");
-            Llvm_id llvm_id = llvm_get_llvm_id(llvm);
-            assert(llvm_id > 0);
-            string_extend_size_t(&a_main, output, llvm_id);
-            break;
-        default:
-            unreachable(LLVM_FMT"\n", llvm_print(placeholder->llvm_reg.llvm));
-    }
-}
-
 static void emit_operator_operand_expr(String* output, const Llvm_expr* operand) {
     switch (operand->type) {
         case LLVM_LITERAL:
@@ -699,11 +672,6 @@ static void emit_operator_operand_expr(String* output, const Llvm_expr* operand)
             break;
         case LLVM_SYMBOL:
             unreachable("");
-        case LLVM_LLVM_PLACEHOLDER:
-            emit_operator_operand_llvm_placeholder(
-                output, llvm_llvm_placeholder_const_unwrap(operand)
-            );
-            break;
         case LLVM_FUNCTION_CALL:
             string_extend_cstr(&a_main, output, "%");
             string_extend_size_t(&a_main, output, llvm_function_call_const_unwrap(operand)->llvm_id);
@@ -916,26 +884,6 @@ static void emit_return_expr(Env* env, String* output, const Llvm_expr* child) {
         }
         case LLVM_SYMBOL:
             unreachable("");
-        case LLVM_LLVM_PLACEHOLDER: {
-            const Llvm_llvm_placeholder* memb_sym = llvm_llvm_placeholder_const_unwrap(child);
-            if (llvm_is_literal(memb_sym->llvm_reg.llvm)) {
-                const Llvm_expr* memb_expr = llvm_expr_const_unwrap(memb_sym->llvm_reg.llvm);
-                const Llvm_literal* literal = llvm_literal_const_unwrap(memb_expr);
-                string_extend_cstr(&a_main, output, "    ret ");
-                extend_type_call_str(env, output, llvm_literal_get_lang_type(literal));
-                string_extend_cstr(&a_main, output, " ");
-                extend_literal(output, literal);
-                string_extend_cstr(&a_main, output, "\n");
-                break;
-            } else {
-                string_extend_cstr(&a_main, output, "    ret ");
-                extend_type_call_str(env, output, memb_sym->lang_type);
-                string_extend_cstr(&a_main, output, " %");
-                string_extend_size_t(&a_main, output, llvm_get_llvm_id(memb_sym->llvm_reg.llvm));
-                string_extend_cstr(&a_main, output, "\n");
-            }
-            break;
-        }
         case LLVM_FUNCTION_CALL: {
             const Llvm_function_call* function_call = llvm_function_call_const_unwrap(child);
             string_extend_cstr(&a_main, output, "    ret ");

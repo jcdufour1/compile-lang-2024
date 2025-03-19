@@ -283,15 +283,6 @@ static Llvm_type llvm_gen_function_call(void) {
     return call;
 }
 
-static Llvm_type llvm_gen_llvm_placeholder(void) {
-    Llvm_type placeholder = {.name = llvm_name_new("expr", "llvm_placeholder", false)};
-
-    append_member(&placeholder.members, "Lang_type", "lang_type");
-    append_member(&placeholder.members, "Llvm_reg", "llvm_reg");
-
-    return placeholder;
-}
-
 static Llvm_type llvm_gen_expr(void) {
     Llvm_type expr = {.name = llvm_name_new("llvm", "expr", false)};
 
@@ -299,7 +290,6 @@ static Llvm_type llvm_gen_expr(void) {
     vec_append(&gen_a, &expr.sub_types, llvm_gen_symbol());
     vec_append(&gen_a, &expr.sub_types, llvm_gen_literal());
     vec_append(&gen_a, &expr.sub_types, llvm_gen_function_call());
-    vec_append(&gen_a, &expr.sub_types, llvm_gen_llvm_placeholder());
 
     return expr;
 }
@@ -918,30 +908,6 @@ static void gen_llvm_define_get_pos(Llvm_type llvm) {
     llvm_gen_internal_get_pos(llvm, true);
 }
 
-static void gen_llvm_register_syms(Llvm_type llvm) {
-    for (size_t idx = 0; idx < llvm.sub_types.info.count; idx++) {
-        gen_llvm_register_syms(vec_at(&llvm.sub_types, idx));
-    }
-
-    String function = {0};
-
-    string_extend_cstr(&gen_a, &function, "typedef struct {\n");
-    string_extend_cstr(&gen_a, &function, "    Lang_type lang_type;\n");
-    string_extend_cstr(&gen_a, &function, "    ");
-    extend_llvm_name_first_upper(&function, llvm.name);
-    string_extend_cstr(&gen_a, &function, "* llvm;\n");
-
-    if (llvm.name.is_topmost) {
-        string_extend_cstr(&gen_a, &function, "} Llvm_reg;\n");
-    } else {
-        string_extend_cstr(&gen_a, &function, "} Llvm_");
-        extend_strv_lower(&function, llvm.name.base);
-        string_extend_cstr(&gen_a, &function, "_reg;\n");
-    }
-
-    gen_gen(STRING_FMT"\n", string_print(function));
-}
-
 static void gen_llvm_vecs(Llvm_type llvm) {
     for (size_t idx = 0; idx < llvm.sub_types.info.count; idx++) {
         gen_llvm_vecs(vec_at(&llvm.sub_types, idx));
@@ -988,7 +954,6 @@ static void gen_all_llvms(const char* file_path, bool implementation) {
 
     if (!implementation) {
         llvm_gen_llvm_forward_decl(llvm);
-        gen_llvm_register_syms(llvm);
         gen_llvm_vecs(llvm);
     }
 

@@ -53,38 +53,6 @@ static inline bool ishex(int c) {
     return isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
 
-// TODO: remove Llvm_reg things
-static inline bool Llvm_reg_is_some(Llvm_reg llvm_reg) {
-    Llvm_reg reference = {0};
-    return 0 != memcmp(&reference, &llvm_reg, sizeof(llvm_reg));
-}
-
-static inline Llvm_reg llvm_register_sym_new(Llvm* llvm) {
-    if (llvm) {
-        Llvm_reg llvm_reg = {.lang_type = llvm_get_lang_type(llvm), .llvm = llvm};
-        return llvm_reg;
-    } else {
-        Llvm_reg llvm_reg = {0};
-        return llvm_reg;
-    }
-    unreachable("");
-}
-
-static inline Llvm_llvm_placeholder* llvm_llvm_placeholder_new_from_reg(
-    Llvm_reg llvm_reg, Lang_type lang_type
-) {
-    return llvm_llvm_placeholder_new(llvm_get_pos(llvm_reg.llvm), lang_type, llvm_reg);
-;
-}
-
-static inline Llvm_reg llvm_register_sym_new_from_expr(Llvm_expr* expr) {
-    return llvm_register_sym_new(llvm_expr_wrap(expr));
-}
-
-static inline Llvm_reg llvm_register_sym_new_from_operator(Llvm_operator* operator) {
-    return llvm_register_sym_new_from_expr(llvm_operator_wrap(operator));
-}
-
 Llvm_id get_matching_label_id(Env* env, Str_view name);
 
 // lhs and rhs should not be used for other tasks after this

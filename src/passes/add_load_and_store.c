@@ -1381,7 +1381,7 @@ static Str_view load_expr(Env* env, Llvm_block* new_block, Tast_expr* old_expr) 
     unreachable("");
 }
 
-static Llvm_reg load_function_parameters(
+static Llvm_function_params* load_function_parameters(
     Env* env,
     Llvm_block* new_fun_body,
     Lang_type* new_lang_type,
@@ -1417,10 +1417,7 @@ static Llvm_reg load_function_parameters(
         unwrap(alloca_lookup(&dummy, env, param->name_corr_param));
     }
 
-    return (Llvm_reg) {
-        .lang_type = {0},
-        .llvm = llvm_function_params_wrap(new_params)
-    };
+    return new_params;
 }
 
 static Str_view load_function_def(
@@ -1454,9 +1451,9 @@ static Str_view load_function_def(
 
     vec_append(&a_main, &env->ancesters, &new_fun_def->body->symbol_collection);
     Lang_type new_lang_type = {0};
-    new_fun_def->decl->params = llvm_function_params_unwrap(load_function_parameters(
-            env, new_fun_def->body, &new_lang_type, old_fun_def->decl->return_type, old_fun_def->decl->params
-    ).llvm);
+    new_fun_def->decl->params = load_function_parameters(
+        env, new_fun_def->body, &new_lang_type, old_fun_def->decl->return_type, old_fun_def->decl->params
+    );
     new_fun_def->decl->return_type = new_lang_type;
     for (size_t idx = 0; idx < old_fun_def->body->children.info.count; idx++) {
         load_stmt(env, new_fun_def->body, vec_at(&old_fun_def->body->children, idx));

@@ -88,8 +88,6 @@ static inline Llvm_id llvm_get_llvm_id_expr(const Llvm_expr* expr) {
             unreachable("");
         case LLVM_FUNCTION_CALL:
             return llvm_function_call_const_unwrap(expr)->llvm_id;
-        case LLVM_LLVM_PLACEHOLDER:
-            unreachable("");
     }
     unreachable("");
 }
@@ -216,8 +214,6 @@ static inline Lang_type llvm_expr_get_lang_type(const Llvm_expr* expr) {
             return llvm_operator_get_lang_type(llvm_operator_const_unwrap(expr));
         case LLVM_SYMBOL:
             return llvm_symbol_typed_get_base_const(llvm_symbol_const_unwrap(expr)).lang_type;
-        case LLVM_LLVM_PLACEHOLDER:
-            return llvm_llvm_placeholder_const_unwrap(expr)->lang_type;
     }
     unreachable("");
 }
@@ -256,8 +252,6 @@ static inline Lang_type* llvm_expr_ref_get_lang_type(Llvm_expr* expr) {
             return &llvm_symbol_typed_get_base_ref(llvm_symbol_unwrap(expr))->lang_type;
         case LLVM_OPERATOR:
             return llvm_get_operator_lang_type_ref(llvm_operator_unwrap(expr));
-        case LLVM_LLVM_PLACEHOLDER:
-            return &llvm_llvm_placeholder_unwrap(expr)->lang_type;
     }
     unreachable("");
 }
@@ -352,8 +346,6 @@ static inline Llvm* llvm_get_expr_src(Llvm_expr* expr) {
             unreachable("");
         case LLVM_OPERATOR:
             unreachable("");
-        case LLVM_LLVM_PLACEHOLDER:
-            unreachable("");
     }
     unreachable("");
 }
@@ -396,8 +388,6 @@ static inline Llvm* llvm_get_expr_dest(Llvm_expr* expr) {
         case LLVM_FUNCTION_CALL:
             unreachable("");
         case LLVM_OPERATOR:
-            unreachable("");
-        case LLVM_LLVM_PLACEHOLDER:
             unreachable("");
     }
     unreachable("");
@@ -470,8 +460,6 @@ static inline Str_view llvm_expr_get_name(const Llvm_expr* expr) {
             return llvm_function_call_const_unwrap(expr)->name_self;
         case LLVM_LITERAL:
             return llvm_literal_get_name(llvm_literal_const_unwrap(expr));
-        case LLVM_LLVM_PLACEHOLDER:
-            unreachable("");
     }
     unreachable("");
 }

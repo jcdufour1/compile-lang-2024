@@ -209,16 +209,6 @@ Str_view llvm_function_name_print_internal(const Llvm_function_name* name, int i
     return string_to_strv(buf);
 }
 
-Str_view llvm_llvm_placeholder_print_internal(const Llvm_llvm_placeholder* lit, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "llvm_placeholder", indent);
-    extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, lit->lang_type);
-    string_extend_cstr(&print_arena, &buf, "\n");
-
-    return string_to_strv(buf);
-}
-
 Str_view llvm_load_element_ptr_print_internal(const Llvm_load_element_ptr* load, int indent) {
     String buf = {0};
 
@@ -517,8 +507,6 @@ Str_view llvm_expr_print_internal(const Llvm_expr* expr, int indent) {
             return llvm_literal_print_internal(llvm_literal_const_unwrap(expr), indent);
         case LLVM_FUNCTION_CALL:
             return llvm_function_call_print_internal(llvm_function_call_const_unwrap(expr), indent);
-        case LLVM_LLVM_PLACEHOLDER:
-            return llvm_llvm_placeholder_print_internal(llvm_llvm_placeholder_const_unwrap(expr), indent);
     }
     unreachable("");
 }
