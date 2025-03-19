@@ -53,6 +53,7 @@ static inline bool ishex(int c) {
     return isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
 
+// TODO: remove Llvm_reg things
 static inline bool Llvm_reg_is_some(Llvm_reg llvm_reg) {
     Llvm_reg reference = {0};
     return 0 != memcmp(&reference, &llvm_reg, sizeof(llvm_reg));

@@ -13,5 +13,9 @@ fn main() i32 {
     let underscore_num i32 = 1_234_567
     printf("underscore_num: %d\n", underscore_num)
 
+    let octal_num i32 = 0236
+    // expected: 158
+    printf("octal_num: %d\n", octal_num)
+
     return 0
 }

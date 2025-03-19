@@ -17,7 +17,7 @@ static inline char str_view_front(Str_view str_view) {
 }
 
 static inline Str_view str_view_slice(Str_view str_view, size_t start, size_t count) {
-    assert(start + count <= str_view.count && "out of bounds");
+    assert(count <= str_view.count && start + count <= str_view.count && "out of bounds");
     Str_view new_str_view = {.str = str_view.str + start, .count = count};
     return new_str_view;
 }

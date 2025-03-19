@@ -14,6 +14,19 @@
 #include <symbol_log.h>
 #include <lang_type_get_pos.h>
 
+bool try_str_view_octal_after_0_to_int64_t(int64_t* result, Str_view str_view) {
+    *result = 0;
+    size_t idx = 0;
+    for (idx = 0; idx < str_view.count; idx++) {
+        char curr_char = str_view.str[idx];
+
+        *result *= 8;
+        *result += curr_char - '0';
+    }
+
+    return idx > 0;
+}
+
 bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, Str_view str_view) {
     *result = 0;
     size_t idx = 0;
@@ -43,8 +56,13 @@ bool try_str_view_to_int64_t(int64_t* result, Str_view str_view) {
     size_t idx = 0;
     for (idx = 0; idx < str_view.count; idx++) {
         char curr_char = str_view.str[idx];
+        log(LOG_DEBUG, "idx: %zu char: %c\n", idx, curr_char);
         if (curr_char == '_') {
             continue;
+        }
+
+        if (curr_char == '0' && idx == 0 && str_view.count > 1 && isdigit(str_view_at(str_view, 1))) {
+            return try_str_view_octal_after_0_to_int64_t(result, str_view_slice(str_view, 1, str_view.count - 1));
         }
 
         if (isalpha(curr_char)) {
