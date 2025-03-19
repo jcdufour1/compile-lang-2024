@@ -14,6 +14,30 @@
 #include <symbol_log.h>
 #include <lang_type_get_pos.h>
 
+bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, Str_view str_view) {
+    *result = 0;
+    size_t idx = 0;
+    for (idx = 0; idx < str_view.count; idx++) {
+        char curr_char = str_view.str[idx];
+        int increment = 0;
+        if (isdigit(curr_char)) {
+            increment = curr_char - '0';
+        } else if (curr_char >= 'a' && curr_char <= 'f') {
+            increment = (curr_char - 'a') + 10;
+        } else if (curr_char >= 'A' && curr_char <= 'F') {
+            increment = (curr_char - 'A') + 10;
+        } else {
+            assert(!ishex(curr_char));
+            break;
+        }
+
+        *result *= 16;
+        *result += increment;
+    }
+
+    return idx > 0;
+}
+
 bool try_str_view_to_int64_t(int64_t* result, Str_view str_view) {
     *result = 0;
     size_t idx = 0;
@@ -27,10 +51,7 @@ bool try_str_view_to_int64_t(int64_t* result, Str_view str_view) {
         *result += curr_char - '0';
     }
 
-    if (idx < 1) {
-        return false;
-    }
-    return true;
+    return idx > 0;
 }
 
 bool try_str_view_to_size_t(size_t* result, Str_view str_view) {

@@ -9,6 +9,7 @@
 #include "tast_utils.h"
 #include "uast_utils.h"
 #include "llvm_utils.h"
+#include "ctype.h"
 
 bool lang_type_atom_is_unsigned(Lang_type_atom atom);
 
@@ -45,6 +46,12 @@ Str_view util_literal_name_new_prefix(const char* debug_prefix);
 Llvm_id get_prev_load_id(const Tast* var_call);
 
 Str_view get_storage_location(Env* env, Str_view sym_name);
+
+bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, Str_view str_view);
+
+static inline bool ishex(int c) {
+    return isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+}
 
 static inline bool Llvm_reg_is_some(Llvm_reg llvm_reg) {
     Llvm_reg reference = {0};

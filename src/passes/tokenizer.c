@@ -8,6 +8,12 @@
 #include <env.h>
 #include "passes.h"
 #include <ctype.h>
+#include <parser_utils.h>
+
+static bool local_isdigit(char prev, char curr) {
+    (void) prev;
+    return isdigit(curr) || curr == '_';
+}
 
 static void msg_tokenizer_invalid_token(Str_view file_text, Str_view_col token_text, Pos pos) {
     msg(LOG_ERROR, EXPECT_FAIL_INVALID_TOKEN, file_text, pos, "invalid token `"STR_VIEW_COL_FMT"`\n", str_view_col_print(token_text));
@@ -18,9 +24,28 @@ static bool local_isalnum_or_underscore(char prev, char curr) {
     return isalnum(curr) || curr == '_';
 }
 
-static bool local_isdigit(char prev, char curr) {
+static bool local_ishex(char prev, char curr) {
     (void) prev;
-    return isdigit(curr);
+    return ishex(curr);
+}
+
+static Str_view consume_num(Pos* pos, Str_view_col* file_text) {
+    Str_view_col num = {0};
+    unwrap(str_view_col_try_consume_while(&num, pos, file_text, local_isdigit));
+    if (str_view_col_try_consume(pos, file_text, 'x')) {
+        assert(num.base.count > 0);
+        if (num.base.count > 1) {
+            // TODO
+            unreachable("invalid token: 2 or more digits followed by x without whitespace");
+        }
+        str_view_col_try_consume_while(&num, pos, file_text, local_ishex);
+        int64_t raw = 0;
+        try_str_view_hex_after_0x_to_int64_t(&raw, num.base);
+        log(LOG_DEBUG, "%lx\n", raw);
+        todo();
+
+    }
+    return num.base;
 }
 
 static bool is_not_quote(char prev, char curr) {
@@ -131,7 +156,7 @@ static bool get_next_token(const Env* env, Pos* pos, Token* token, Str_view_col*
         }
         return true;
     } else if (isdigit(str_view_col_front(*file_text))) {
-        token->text = str_view_col_consume_while(pos, file_text, local_isdigit).base;
+        token->text = consume_num(pos, file_text);
         token->type = TOKEN_INT_LITERAL;
         return true;
     } else if (str_view_col_try_consume(pos, file_text, '(')) {
