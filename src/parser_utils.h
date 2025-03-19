@@ -31,11 +31,11 @@ bool lang_type_atom_is_unsigned(Lang_type_atom atom);
 
 Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom atom);
 
-int64_t i_lang_type_atom_to_bit_width(Lang_type_atom atom);
+int64_t i_lang_type_atom_to_bit_width(const Env* env, Lang_type_atom atom);
 
-int64_t str_view_to_int64_t(Str_view str_view);
+int64_t str_view_to_int64_t(const Env* env, Pos pos, Str_view str_view);
 
-bool try_str_view_to_int64_t(int64_t* result, Str_view str_view);
+bool try_str_view_to_int64_t(int64_t* result, const Env* env, Pos pos, Str_view str_view);
 
 bool try_str_view_to_size_t(size_t* result, Str_view str_view);
 
@@ -47,7 +47,7 @@ Llvm_id get_prev_load_id(const Tast* var_call);
 
 Str_view get_storage_location(Env* env, Str_view sym_name);
 
-bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, Str_view str_view);
+bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, const Env* env, Pos pos, Str_view str_view);
 
 static inline bool ishex(int c) {
     return isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
@@ -58,9 +58,11 @@ Llvm_id get_matching_label_id(Env* env, Str_view name);
 // lhs and rhs should not be used for other tasks after this
 Tast_assignment* util_assignment_new(Env* env, Uast_expr* lhs, Uast_expr* rhs);
 
-Tast_literal* util_tast_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, Pos pos);
+Tast_literal* util_tast_literal_new_from_strv(const Env* env, Str_view value, TOKEN_TYPE token_type, Pos pos);
 
-Uast_literal* util_uast_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, Pos pos);
+bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Env* env, Str_view value, TOKEN_TYPE token_type, Pos pos);
+
+Uast_literal* util_uast_literal_new_from_strv(const Env* env, Str_view value, TOKEN_TYPE token_type, Pos pos);
 
 Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
 

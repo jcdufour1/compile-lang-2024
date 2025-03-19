@@ -38,6 +38,7 @@ typedef struct {
     EXPECT_FAIL_TYPE type;
 } Expect_fail_pair;
 
+// TODO: unite this and expected_fail_type_print
 static const Expect_fail_pair expect_fail_pair[] = {
     {"missing-close-double-quote", EXPECT_FAIL_MISSING_CLOSE_DOUBLE_QUOTE},
     {"no-new-line-after-statement", EXPECT_FAIL_NO_NEW_LINE_AFTER_STATEMENT},
@@ -76,6 +77,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"duplicate-case", EXPECT_FAIL_DUPLICATE_CASE},
     {"invalid-count-generic-args", EXPECT_FAIL_INVALID_COUNT_GENERIC_ARGS},
     {"missing-yield-statement", EXPECT_FAIL_MISSING_YIELD_STATEMENT},
+    {"invalid-hex", EXPECT_FAIL_INVALID_HEX},
 };
 
 static void parse_normal_option(Parameters* params, int* argc, char*** argv) {

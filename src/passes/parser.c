@@ -1585,12 +1585,14 @@ error:
     return status;
 }
 
-static Uast_literal* parse_literal(Env* env, Tk_view* tokens) {
-    (void) env;
+static PARSE_STATUS parse_literal(Env* env, Uast_literal** lit, Tk_view* tokens) {
     Token token = tk_view_consume(tokens);
     assert(token_is_literal(token));
 
-    return util_uast_literal_new_from_strv(token.text, token.type, token.pos);
+    if (util_try_uast_literal_new_from_strv(lit, env, token.text, token.type, token.pos)) {
+        return PARSE_OK;
+    }
+    return PARSE_ERROR;
 }
 
 static Uast_symbol* parse_symbol(Tk_view* tokens) {
@@ -1655,6 +1657,7 @@ static PARSE_STATUS parse_function_return(Env* env, Uast_return** rtn_stmt, Tk_v
             *rtn_stmt = uast_return_new(
                 prev_token.pos,
                 uast_literal_wrap(util_uast_literal_new_from_strv(
+                    env,
                     str_view_from_cstr(""),
                     TOKEN_VOID,
                     prev_token.pos
@@ -2156,7 +2159,11 @@ static PARSE_EXPR_STATUS parse_expr_piece(
         }
         *prev_oper_pres = get_operator_precedence(TOKEN_SINGLE_DOT);
     } else if (token_is_literal(tk_view_front(*tokens))) {
-        *result = uast_literal_wrap(parse_literal(env, tokens));
+        Uast_literal* lit = NULL;
+        if (PARSE_OK != parse_literal(env, &lit, tokens)) {
+            return PARSE_EXPR_ERROR;
+        }
+        *result = uast_literal_wrap(lit);
     } else if (tk_view_front(*tokens).type == TOKEN_SYMBOL) {
         *result = uast_symbol_wrap(parse_symbol(tokens));
     } else if (starts_with_switch(*tokens)) {

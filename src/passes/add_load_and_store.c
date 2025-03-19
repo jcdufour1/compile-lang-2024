@@ -319,7 +319,7 @@ static Llvm_function_params* do_function_def_alloca(
 
     Lang_type rtn_lang_type = rm_tuple_lang_type(env, rtn_type, (Pos) {0});
     if (is_struct_like(rtn_type.type)) {
-        lang_type_set_pointer_depth(&rtn_lang_type, lang_type_get_pointer_depth(rtn_lang_type) + 1);
+        lang_type_set_pointer_depth(env, &rtn_lang_type, lang_type_get_pointer_depth(rtn_lang_type) + 1);
         Tast_variable_def* new_def = tast_variable_def_new(
             (Pos) {0} /* TODO */,
             rtn_lang_type,
@@ -1962,7 +1962,7 @@ static Str_view load_ptr_deref(
         util_literal_name_new()
     );
     unwrap(alloca_add(env, llvm_load_another_llvm_wrap(new_load)));
-    lang_type_set_pointer_depth(&new_load->lang_type, lang_type_get_pointer_depth(new_load->lang_type) + 1);
+    lang_type_set_pointer_depth(env, &new_load->lang_type, lang_type_get_pointer_depth(new_load->lang_type) + 1);
 
     vec_append(&a_main, &new_block->children, llvm_load_another_llvm_wrap(new_load));
     return new_load->name;

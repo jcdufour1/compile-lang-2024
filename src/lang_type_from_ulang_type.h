@@ -119,10 +119,10 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Env* e
     Lang_type_atom atom = lang_type_atom_new(lang_type.atom.str, lang_type.atom.pointer_depth);
 
     if (lang_type_atom_is_signed(atom)) {
-        Lang_type_signed_int new_int = lang_type_signed_int_new(lang_type.pos, str_view_to_int64_t(str_view_slice(atom.str, 1, atom.str.count - 1)), atom.pointer_depth);
+        Lang_type_signed_int new_int = lang_type_signed_int_new(lang_type.pos, str_view_to_int64_t(env, POS_BUILTIN, str_view_slice(atom.str, 1, atom.str.count - 1)), atom.pointer_depth);
         return lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(new_int));
     } else if (lang_type_atom_is_unsigned(atom)) {
-        Lang_type_unsigned_int new_int = lang_type_unsigned_int_new(lang_type.pos, str_view_to_int64_t(str_view_slice(atom.str, 1, atom.str.count - 1)), atom.pointer_depth);
+        Lang_type_unsigned_int new_int = lang_type_unsigned_int_new(lang_type.pos, str_view_to_int64_t(env, POS_BUILTIN, str_view_slice(atom.str, 1, atom.str.count - 1)), atom.pointer_depth);
         return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(new_int));
     } else if (str_view_cstr_is_equal(atom.str, "void")) {
         todo();

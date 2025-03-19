@@ -27,7 +27,7 @@ bool try_str_view_octal_after_0_to_int64_t(int64_t* result, Str_view str_view) {
     return idx > 0;
 }
 
-bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, Str_view str_view) {
+bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, const Env* env, Pos pos, Str_view str_view) {
     *result = 0;
     size_t idx = 0;
     for (idx = 0; idx < str_view.count; idx++) {
@@ -48,15 +48,18 @@ bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, Str_view str_view) {
         *result += increment;
     }
 
-    return idx > 0;
+    if (idx < 1) {
+        msg(LOG_ERROR, EXPECT_FAIL_INVALID_HEX, env->file_text, pos, "invalid hex literal\n");
+        return false;
+    }
+    return true;
 }
 
-bool try_str_view_to_int64_t(int64_t* result, Str_view str_view) {
+bool try_str_view_to_int64_t(int64_t* result, const Env* env, Pos pos, Str_view str_view) {
     *result = 0;
     size_t idx = 0;
     for (idx = 0; idx < str_view.count; idx++) {
         char curr_char = str_view.str[idx];
-        log(LOG_DEBUG, "idx: %zu char: %c\n", idx, curr_char);
         if (curr_char == '_') {
             continue;
         }
@@ -69,7 +72,12 @@ bool try_str_view_to_int64_t(int64_t* result, Str_view str_view) {
             if (curr_char != 'x' || idx != 1) {
                 todo();
             }
-            return try_str_view_hex_after_0x_to_int64_t(result, str_view_slice(str_view, 2, str_view.count - 2));
+            return try_str_view_hex_after_0x_to_int64_t(
+                result,
+                env,
+                pos,
+                str_view_slice(str_view, 2, str_view.count - 2)
+            );
         }
 
         if (!isdigit(curr_char)) {
@@ -102,10 +110,10 @@ bool try_str_view_to_size_t(size_t* result, Str_view str_view) {
     return true;
 }
 
-int64_t str_view_to_int64_t(Str_view str_view) {
+int64_t str_view_to_int64_t(const Env* env, Pos pos, Str_view str_view) {
     int64_t result = INT64_MAX;
 
-    if (!try_str_view_to_int64_t(&result, str_view)) {
+    if (!try_str_view_to_int64_t(&result, env, pos, str_view)) {
         unreachable(STR_VIEW_FMT, str_view_print(str_view));
     }
     return result;
@@ -224,9 +232,9 @@ bool lang_type_is_unsigned(Lang_type lang_type) {
     unreachable("");
 }
 
-int64_t i_lang_type_atom_to_bit_width(Lang_type_atom atom) {
+int64_t i_lang_type_atom_to_bit_width(const Env* env, Lang_type_atom atom) {
     //assert(lang_type_atom_is_signed(lang_type));
-    return str_view_to_int64_t(str_view_slice(atom.str, 1, atom.str.count - 1));
+    return str_view_to_int64_t(env, POS_BUILTIN, str_view_slice(atom.str, 1, atom.str.count - 1));
 }
 
 // TODO: put strings in a hash table to avoid allocating duplicate types
@@ -304,46 +312,55 @@ Tast_assignment* util_assignment_new(Env* env, Uast_expr* lhs, Uast_expr* rhs) {
     return new_assign;
 }
 
-// TODO: try to deduplicate 2 below functions
-Tast_literal* util_tast_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, Pos pos) {
-    return try_set_literal_types(util_uast_literal_new_from_strv(value, token_type, pos));
+Tast_literal* util_tast_literal_new_from_strv(const Env* env, Str_view value, TOKEN_TYPE token_type, Pos pos) {
+    Uast_literal* lit = NULL;
+    unwrap(util_try_uast_literal_new_from_strv(&lit, env, value, token_type, pos));
+    return try_set_literal_types(lit);
 }
 
-// TODO: try to deduplicate 2 below functions
-Uast_literal* util_uast_literal_new_from_strv(Str_view value, TOKEN_TYPE token_type, Pos pos) {
-    Uast_literal* new_literal = NULL;
+// will print error on failure
+bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Env* env, Str_view value, TOKEN_TYPE token_type, Pos pos) {
     switch (token_type) {
         case TOKEN_INT_LITERAL: {
-            Uast_number* literal = uast_number_new(pos, str_view_to_int64_t(value));
-            new_literal = uast_number_wrap(literal);
+            int64_t raw = 0;
+            if (!try_str_view_to_int64_t(&raw, env, pos, value)) {
+                return false;
+            }
+            Uast_number* literal = uast_number_new(pos, raw);
+            *new_lit = uast_number_wrap(literal);
             break;
         }
         case TOKEN_STRING_LITERAL: {
             // TODO: figure out if literal name can be eliminated for uast_string
-            Uast_string* literal = uast_string_new(pos, value, util_literal_name_new());
-            new_literal = uast_string_wrap(literal);
+            Uast_string* string = uast_string_new(pos, value, util_literal_name_new());
+            *new_lit = uast_string_wrap(string);
             break;
         }
         case TOKEN_VOID: {
-            Uast_void* literal = uast_void_new(pos);
-            new_literal = uast_void_wrap(literal);
+            Uast_void* lang_void = uast_void_new(pos);
+            *new_lit = uast_void_wrap(lang_void);
             break;
         }
         case TOKEN_CHAR_LITERAL: {
-            Uast_char* literal = uast_char_new(pos, str_view_front(value));
+            Uast_char* lang_char = uast_char_new(pos, str_view_front(value));
             if (value.count > 1) {
                 todo();
             }
-            new_literal = uast_char_wrap(literal);
+            *new_lit = uast_char_wrap(lang_char);
             break;
         }
         default:
             unreachable("");
     }
 
-    assert(new_literal);
+    assert(*new_lit);
+    return true;
+}
 
-    return new_literal;
+Uast_literal* util_uast_literal_new_from_strv(const Env* env, Str_view value, TOKEN_TYPE token_type, Pos pos) {
+    Uast_literal* lit = NULL;
+    unwrap(util_try_uast_literal_new_from_strv(&lit, env, value, token_type, pos));
+    return lit;
 }
 
 Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {

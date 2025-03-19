@@ -471,7 +471,7 @@ static void emit_unary_type(Env* env, String* output, const Llvm_unary* unary) {
                 extend_type_call_str(env, output, lang_type_from_get_name(env, unary->child));
                 string_extend_cstr(&a_main, output, " ");
             } else if (lang_type_is_unsigned(unary->lang_type) && lang_type_is_number(lang_type_from_get_name(env, unary->child))) {
-                if (i_lang_type_atom_to_bit_width(lang_type_get_atom(unary->lang_type)) > i_lang_type_atom_to_bit_width(lang_type_get_atom(lang_type_from_get_name(env, unary->child)))) {
+                if (i_lang_type_atom_to_bit_width(env, lang_type_get_atom(unary->lang_type)) > i_lang_type_atom_to_bit_width(env, lang_type_get_atom(lang_type_from_get_name(env, unary->child)))) {
                     string_extend_cstr(&a_main, output, "zext ");
                 } else {
                     string_extend_cstr(&a_main, output, "trunc ");
@@ -479,7 +479,7 @@ static void emit_unary_type(Env* env, String* output, const Llvm_unary* unary) {
                 extend_type_call_str(env, output, lang_type_from_get_name(env, unary->child));
                 string_extend_cstr(&a_main, output, " ");
             } else if (lang_type_is_signed(unary->lang_type) && lang_type_is_number(lang_type_from_get_name(env, unary->child))) {
-                if (i_lang_type_atom_to_bit_width(lang_type_get_atom(unary->lang_type)) > i_lang_type_atom_to_bit_width(lang_type_get_atom(lang_type_from_get_name(env, unary->child)))) {
+                if (i_lang_type_atom_to_bit_width(env, lang_type_get_atom(unary->lang_type)) > i_lang_type_atom_to_bit_width(env, lang_type_get_atom(lang_type_from_get_name(env, unary->child)))) {
                     string_extend_cstr(&a_main, output, "sext ");
                 } else {
                     string_extend_cstr(&a_main, output, "trunc ");
@@ -994,7 +994,7 @@ static void emit_load_element_ptr(Env* env, String* output, const Llvm_load_elem
     string_extend_cstr(&a_main, output, " = getelementptr inbounds ");
 
     Lang_type lang_type = lang_type_from_get_name(env, load_elem_ptr->llvm_src);
-    lang_type_set_pointer_depth(&lang_type, 0);
+    lang_type_set_pointer_depth(env, &lang_type, 0);
     extend_type_call_str(env, output, lang_type);
     string_extend_cstr(&a_main, output, ", ptr %");
     string_extend_size_t(&a_main, output, llvm_id_from_get_name(env, load_elem_ptr->llvm_src));
