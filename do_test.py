@@ -129,6 +129,12 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "member_access_on_primitive.own": ["invalid-member-access"],
     EXPECTED_FAIL_EXAMPLES_DIR + "missing_yield.own": 2*["missing-yield-statement"],
     EXPECTED_FAIL_EXAMPLES_DIR + "mismatched_yield_type.own": ["mismatched-yield-type"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_hex.own": ["invalid-hex"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_hex_2.own": ["invalid-hex"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_octal.own": ["invalid-octal"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_octal_2.own": ["invalid-octal"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_bin.own": ["invalid-bin"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_bin_2.own": ["invalid-bin"],
 }
 
 def to_str(a):

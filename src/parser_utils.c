@@ -65,6 +65,28 @@ bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, const Env* env, Pos p
     return true;
 }
 
+bool try_str_view_bin_after_0b_to_int64_t(int64_t* result, const Env* env, Pos pos, Str_view str_view) {
+    *result = 0;
+    size_t idx = 0;
+    for (idx = 0; idx < str_view.count; idx++) {
+        char curr_char = str_view.str[idx];
+        if (curr_char == '_') {
+            continue;
+        }
+
+        if (curr_char != '0' && curr_char != '1') {
+            msg(LOG_ERROR, EXPECT_FAIL_INVALID_BIN, env->file_text, pos, "invalid bin literal\n");
+            return false;
+        }
+
+        *result *= 2;
+        *result += curr_char - '0';
+    }
+
+    assert(idx > 0);
+    return true;
+}
+
 bool try_str_view_to_int64_t(int64_t* result, const Env* env, Pos pos, Str_view str_view) {
     *result = 0;
     size_t idx = 0;
@@ -79,15 +101,29 @@ bool try_str_view_to_int64_t(int64_t* result, const Env* env, Pos pos, Str_view 
         }
 
         if (isalpha(curr_char)) {
-            if (curr_char != 'x' || idx != 1) {
+            if (idx != 1) {
                 todo();
             }
-            return try_str_view_hex_after_0x_to_int64_t(
-                result,
-                env,
-                pos,
-                str_view_slice(str_view, 2, str_view.count - 2)
-            );
+
+            if (curr_char == 'x') {
+                return try_str_view_hex_after_0x_to_int64_t(
+                    result,
+                    env,
+                    pos,
+                    str_view_slice(str_view, 2, str_view.count - 2)
+                );
+            }
+
+            if (curr_char == 'b') {
+                return try_str_view_bin_after_0b_to_int64_t(
+                    result,
+                    env,
+                    pos,
+                    str_view_slice(str_view, 2, str_view.count - 2)
+                );
+            }
+
+            todo();
         }
 
         if (!isdigit(curr_char)) {

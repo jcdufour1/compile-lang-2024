@@ -78,6 +78,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"invalid-count-generic-args", EXPECT_FAIL_INVALID_COUNT_GENERIC_ARGS},
     {"missing-yield-statement", EXPECT_FAIL_MISSING_YIELD_STATEMENT},
     {"invalid-hex", EXPECT_FAIL_INVALID_HEX},
+    {"invalid-bin", EXPECT_FAIL_INVALID_BIN},
     {"invalid-octal", EXPECT_FAIL_INVALID_OCTAL},
 };
 

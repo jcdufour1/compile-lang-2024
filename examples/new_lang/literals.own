@@ -20,5 +20,13 @@ fn main() i32 {
     let octal_num_2 i32 = 023_7
     // expected: 159
     printf("octal_num_2: %d\n", octal_num_2)
+
+    let bin_num_1 i32 = 0b0010
+    // expected: 2
+    printf("bin_num_1: %d\n", bin_num_1)
+
+    let bin_num_2 i32 = 0b0010_1111
+    // expected: 47
+    printf("bin_num_2: %d\n", bin_num_2)
     return 0
 }
