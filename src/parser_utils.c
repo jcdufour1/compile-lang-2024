@@ -14,17 +14,26 @@
 #include <symbol_log.h>
 #include <lang_type_get_pos.h>
 
-bool try_str_view_octal_after_0_to_int64_t(int64_t* result, Str_view str_view) {
+bool try_str_view_octal_after_0_to_int64_t(int64_t* result, const Env* env, Pos pos, Str_view str_view) {
     *result = 0;
     size_t idx = 0;
     for (idx = 0; idx < str_view.count; idx++) {
         char curr_char = str_view.str[idx];
+        if (curr_char == '_') {
+            continue;
+        }
+
+        if (curr_char < '0' || curr_char > '7') {
+            msg(LOG_ERROR, EXPECT_FAIL_INVALID_OCTAL, env->file_text, pos, "invalid octal literal\n");
+            return false;
+        }
 
         *result *= 8;
         *result += curr_char - '0';
     }
 
-    return idx > 0;
+    assert(idx > 0);
+    return true;
 }
 
 bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, const Env* env, Pos pos, Str_view str_view) {
@@ -32,6 +41,10 @@ bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, const Env* env, Pos p
     size_t idx = 0;
     for (idx = 0; idx < str_view.count; idx++) {
         char curr_char = str_view.str[idx];
+        if (curr_char == '_') {
+            continue;
+        }
+
         int increment = 0;
         if (isdigit(curr_char)) {
             increment = curr_char - '0';
@@ -40,18 +53,15 @@ bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, const Env* env, Pos p
         } else if (curr_char >= 'A' && curr_char <= 'F') {
             increment = (curr_char - 'A') + 10;
         } else {
-            assert(!ishex(curr_char));
-            break;
+            msg(LOG_ERROR, EXPECT_FAIL_INVALID_HEX, env->file_text, pos, "invalid hex literal\n");
+            return false;
         }
 
         *result *= 16;
         *result += increment;
     }
 
-    if (idx < 1) {
-        msg(LOG_ERROR, EXPECT_FAIL_INVALID_HEX, env->file_text, pos, "invalid hex literal\n");
-        return false;
-    }
+    assert(idx > 0);
     return true;
 }
 
@@ -65,7 +75,7 @@ bool try_str_view_to_int64_t(int64_t* result, const Env* env, Pos pos, Str_view 
         }
 
         if (curr_char == '0' && idx == 0 && str_view.count > 1 && isdigit(str_view_at(str_view, 1))) {
-            return try_str_view_octal_after_0_to_int64_t(result, str_view_slice(str_view, 1, str_view.count - 1));
+            return try_str_view_octal_after_0_to_int64_t(result, env, pos, str_view_slice(str_view, 1, str_view.count - 1));
         }
 
         if (isalpha(curr_char)) {

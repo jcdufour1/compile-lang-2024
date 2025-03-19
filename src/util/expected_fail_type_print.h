@@ -86,6 +86,8 @@ static inline Str_view expect_fail_type_print_internal(EXPECT_FAIL_TYPE type) {
             return str_view_from_cstr("MISMATCHED_YIELD_TYPE");
         case EXPECT_FAIL_INVALID_HEX:
             return str_view_from_cstr("invalid-hex");
+        case EXPECT_FAIL_INVALID_OCTAL:
+            return str_view_from_cstr("invalid-octal");
     }
     unreachable("");
 }

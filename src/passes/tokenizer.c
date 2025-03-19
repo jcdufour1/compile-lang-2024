@@ -31,7 +31,7 @@ static bool local_ishex(char prev, char curr) {
 
 static Str_view consume_num(Pos* pos, Str_view_col* file_text) {
     Str_view_col num = {0};
-    unwrap(str_view_col_try_consume_while(&num, pos, file_text, local_ishex));
+    unwrap(str_view_col_try_consume_while(&num, pos, file_text, local_isalnum_or_underscore));
     return num.base;
 }
 
