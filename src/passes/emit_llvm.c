@@ -13,6 +13,7 @@
 #include <lang_type_serialize.h>
 #include <lang_type_print.h>
 #include <lang_type_get_pos.h>
+#include <symbol_iter.h>
 
 static void emit_block(Env* env, String* struct_defs, String* output, String* literals, const Llvm_block* fun_block);
 
@@ -1110,12 +1111,10 @@ static void emit_block(Env* env, String* struct_defs, String* output, String* li
         }
     }
 
-    Alloca_table table = vec_top(&env->ancesters)->alloca_table;
-    for (size_t idx = 0; idx < table.capacity; idx++) {
-        if (table.table_tasts[idx].status != SYM_TBL_OCCUPIED) {
-            continue;
-        }
-        emit_sometimes(env, struct_defs, output, literals, table.table_tasts[idx].tast);
+    Alloca_iter iter = all_tbl_iter_new(vec_top(&env->ancesters)->alloca_table);
+    Llvm* curr = NULL;
+    while (all_tbl_iter_next(&curr, &iter)) {
+        emit_sometimes(env, struct_defs, output, literals, curr);
     }
 
     //get_block_return_id(fun_block) = get_block_return_id(fun_block->left_child);

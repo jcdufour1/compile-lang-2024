@@ -1,5 +1,6 @@
 #include <symbol_collection_clone.h>
 #include <uast_clone.h>
+#include <symbol_iter.h>
 
 Usymbol_table usymbol_table_clone(Usymbol_table tbl) {
     Usymbol_table new_tbl = {0};
@@ -7,13 +8,10 @@ Usymbol_table usymbol_table_clone(Usymbol_table tbl) {
         return new_tbl;
     }
 
-    for (size_t idx = 0; idx < tbl.capacity; idx++) {
-        if (tbl.table_tasts[idx].status != SYM_TBL_OCCUPIED) {
-            continue;
-        }
-
-        usym_tbl_add(&new_tbl, uast_def_clone(tbl.table_tasts[idx].tast));
-        assert(new_tbl.table_tasts[idx].tast != tbl.table_tasts[idx].tast);
+    Usymbol_iter iter = usym_tbl_iter_new(tbl);
+    Uast_def* curr = NULL;
+    while (usym_tbl_iter_next(&curr, &iter)) {
+        usym_tbl_add(&new_tbl, uast_def_clone(curr));
     }
 
     return new_tbl;

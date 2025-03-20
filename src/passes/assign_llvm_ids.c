@@ -6,6 +6,7 @@
 #include <parser_utils.h>
 #include <llvms.h>
 #include "passes.h"
+#include <symbol_iter.h>
 
 static Llvm_expr* id_expr(Llvm_expr* expr);
 static Llvm_block* id_block(Env* env, Llvm_block* block);
@@ -204,14 +205,10 @@ static Llvm_block* id_block(Env* env, Llvm_block* block) {
         *curr = id_llvm(env, *curr);
     }
 
-    Alloca_table table = vec_top(&env->ancesters)->alloca_table;
-    for (size_t idx = 0; idx < table.capacity; idx++) {
-        if (table.table_tasts[idx].status != SYM_TBL_OCCUPIED) {
-            continue;
-        }
-
-        // TODO: come up with a better way to only id correct things
-        Llvm* new_llvm = id_llvm_sometimes(env, table.table_tasts[idx].tast);
+    Alloca_iter iter = all_tbl_iter_new(vec_top(&env->ancesters)->alloca_table);
+    Llvm* curr = NULL;
+    while (all_tbl_iter_next(&curr, &iter)) {
+        Llvm* new_llvm = id_llvm_sometimes(env, curr);
         alloca_update(env, new_llvm);
     }
 

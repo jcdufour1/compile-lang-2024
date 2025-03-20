@@ -11,6 +11,7 @@
 #include <lang_type_from_ulang_type.h>
 #include <token_type_to_operator_type.h>
 #include <symbol_log.h>
+#include <symbol_iter.h>
 
 #include "passes.h"
 
@@ -561,6 +562,7 @@ static Str_view load_string(
         string->name,
         string->data
     );
+    log(LOG_DEBUG, TAST_FMT, tast_string_def_print(new_def));
     unwrap(sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_literal_def_wrap(tast_string_def_wrap(new_def))));
     unwrap(alloca_add(env, llvm_expr_wrap(llvm_literal_wrap(llvm_string_wrap(string)))));
     return string->name;
@@ -2167,15 +2169,11 @@ static Llvm_block* load_block(Env* env, Tast_block* old_block) {
 
     vec_append(&a_main, &env->ancesters, &new_block->symbol_collection);
 
-    Symbol_table table = vec_top(&env->ancesters)->symbol_table;
-    //symbol_level_log(LOG_DEBUG, table);
-    for (size_t idx = 0; idx < table.capacity; idx++) {
-        if (table.table_tasts[idx].status != SYM_TBL_OCCUPIED) {
-            continue;
-        }
-
-        //log(LOG_DEBUG, TAST_FMT, tast_def_print(table.table_tasts[idx].tast));
-        load_def_sometimes(env, new_block, table.table_tasts[idx].tast);
+    Symbol_iter iter = sym_tbl_iter_new(vec_top(&env->ancesters)->symbol_table);
+    Tast_def* curr = NULL;
+    while (sym_tbl_iter_next(&curr, &iter)) {
+        log(LOG_DEBUG, TAST_FMT, tast_def_print(curr));
+        load_def_sometimes(env, new_block, curr);
     }
 
     for (size_t idx = 0; idx < old_block->children.info.count; idx++) {
