@@ -1117,7 +1117,6 @@ static void emit_block(Env* env, String* struct_defs, String* output, String* li
         emit_sometimes(env, struct_defs, output, literals, curr);
     }
 
-    //get_block_return_id(fun_block) = get_block_return_id(fun_block->left_child);
     vec_rem_last(&env->ancesters);
 }
 

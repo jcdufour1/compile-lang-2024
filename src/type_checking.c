@@ -23,6 +23,7 @@
 #include <symbol_log.h>
 #include <parent_of_print.h>
 #include <lang_type_get_pos.h>
+#include <symbol_iter.h>
 
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
@@ -2506,20 +2507,16 @@ bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, boo
         goto error;
     }
 
-    // TODO: make "iterator" function to do less stuff manually every time. this is too much.
-    for (size_t idx = 0; idx < new_sym_coll.usymbol_table.capacity; idx++) {
-        Usymbol_table_tast node = new_sym_coll.usymbol_table.table_tasts[idx];
-        if (node.status != SYM_TBL_OCCUPIED) {
-            continue;
-        }
-
-        if (node.tast->type != UAST_VARIABLE_DEF) {
+    Usymbol_iter iter = usym_tbl_iter_new(new_sym_coll.usymbol_table);
+    Uast_def* curr = NULL;
+    while (usym_tbl_iter_next(&curr, &iter)) {
+        if (curr->type != UAST_VARIABLE_DEF) {
             // TODO: eventually, we should do also function defs, etc. in this for loop
             // (change parser to not put function defs, etc. in block)
             continue;
         }
 
-        switch (try_set_def_types(env, node.tast)) {
+        switch (try_set_def_types(env, curr)) {
             case STMT_NO_STMT:
                 break;
             case STMT_ERROR:

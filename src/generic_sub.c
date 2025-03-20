@@ -7,6 +7,7 @@
 #include <uast_clone.h>
 #include <uast_utils.h>
 #include <env.h>
+#include <symbol_iter.h>
 
 void generic_sub_return(Uast_return* rtn, Str_view gen_param, Ulang_type gen_arg) {
     (void) rtn;
@@ -219,13 +220,10 @@ void generic_sub_assignment(Env* env, Uast_assignment* assign, Str_view gen_para
 }
 
 void generic_sub_block(Env* env, Uast_block* block, Str_view gen_param, Ulang_type gen_arg) {
-    Usymbol_table tbl = block->symbol_collection.usymbol_table;
-    for (size_t idx = 0; idx < tbl.capacity; idx++) {
-        if (tbl.table_tasts[idx].status != SYM_TBL_OCCUPIED) {
-            continue;
-        }
-
-        generic_sub_def(env, tbl.table_tasts[idx].tast, gen_param, gen_arg);
+    Usymbol_iter iter = usym_tbl_iter_new(block->symbol_collection.usymbol_table);
+    Uast_def* curr = NULL;
+    while (usym_tbl_iter_next(&curr, &iter)) {
+        generic_sub_def(env, curr, gen_param, gen_arg);
     }
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
