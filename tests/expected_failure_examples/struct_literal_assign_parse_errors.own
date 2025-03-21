@@ -5,9 +5,6 @@ type Div struct {
 }
 
 fn main() i32 {
-    let div Div = {numerator = 91, .denominator = 1256}
-    let div2 Div = {.numerator = 92, denominator = 1257}
-
     // TODO: better error message for div3 error
     let div3 Div = {.numerator = 92, .denominator = }
     let div4 Div = {.numerator = 92, = 43}

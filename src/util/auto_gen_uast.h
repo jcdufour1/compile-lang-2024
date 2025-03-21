@@ -261,7 +261,7 @@ static Uast_type uast_gen_function_call(const char* prefix) {
 static Uast_type uast_gen_struct_literal(const char* prefix) {
     Uast_type lit = {.name = uast_name_new(prefix, "struct_literal", false)};
 
-    append_member(&lit.members, "Uast_stmt_vec", "members");
+    append_member(&lit.members, "Uast_expr_vec", "members");
     append_member(&lit.members, "Str_view", "name");
 
     return lit;

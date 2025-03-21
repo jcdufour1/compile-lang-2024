@@ -56,7 +56,7 @@ fn main() i32 {
     let token2 Token
     token2.num = 82
     token2.string_data = "bye"
-    let div19 Div = {.numerator = 56, .denominator = 84}
+    let div19 Div = {56, 84}
     token2.div5 = div19
 
     token = token2

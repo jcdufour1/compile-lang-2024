@@ -2044,11 +2044,12 @@ static PARSE_STATUS parse_struct_literal(Env* env, Uast_struct_literal** struct_
         msg_parser_expected(env->file_text, tk_view_front(*tokens), "at start of struct literal", TOKEN_OPEN_CURLY_BRACE);
         return PARSE_ERROR;
     }
-    Uast_stmt_vec members = {0};
+    Uast_expr_vec members = {0};
 
-    while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
-    while (try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
-        bool delim_is_present = false;
+
+    try_consume(NULL, tokens, TOKEN_NEW_LINE);
+    do {
+        try_consume(NULL, tokens, TOKEN_NEW_LINE);
         Uast_expr* memb = NULL;
         switch (parse_expr(env, &memb, tokens, false, false)) {
             case PARSE_EXPR_OK:
@@ -2061,22 +2062,16 @@ static PARSE_STATUS parse_struct_literal(Env* env, Uast_struct_literal** struct_
             default:
                 unreachable("");
         }
-        vec_append(&a_main, &members, uast_expr_wrap(memb));
-        delim_is_present = try_consume(NULL, tokens, TOKEN_COMMA);
-        while (try_consume(NULL, tokens, TOKEN_NEW_LINE)) {
-            delim_is_present = true;
-        }
-        if (!delim_is_present) {
-            break;
-        }
-    }
+        vec_append(&a_main, &members, memb);
+        try_consume(NULL, tokens, TOKEN_NEW_LINE);
+    } while (try_consume(NULL, tokens, TOKEN_COMMA));
 
     if (!try_consume(&start_token, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
         if (members.info.count > 0) {
             msg_parser_expected(
                 env->file_text,
                 tk_view_front(*tokens),
-                "at end of struct literal",
+                "after expression in struct literal",
                 TOKEN_COMMA,
                 TOKEN_NEW_LINE,
                 TOKEN_CLOSE_CURLY_BRACE

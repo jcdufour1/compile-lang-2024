@@ -40,18 +40,15 @@ static inline bool str_view_col_try_consume_while(
     Str_view* base = &str_view->base;
     for (size_t idx = 0; base->count > idx; idx++) {
         char prev_char = idx > 0 ? (str_view_at(*base, idx)) : (0);
-        log(LOG_DEBUG, "thing thign\n"); 
         if (!should_continue(prev_char, str_view_at(*base, idx))) {
             result->base.str = base->str;
             result->base.count = idx;
             base->str += idx;
             base->count -= idx;
-            log(LOG_DEBUG, "thing thign 3\n"); 
             return true;
         }
         str_view_col_advance_pos(pos, str_view_at(*base, idx));
     }
-    log(LOG_DEBUG, "thing thign 4\n"); 
     return false;
 }
 

@@ -127,7 +127,7 @@ Str_view uast_struct_literal_print_internal(const Uast_struct_literal* lit, int 
     string_extend_cstr(&print_arena, &buf, "\n");
 
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-        Str_view memb_text = uast_stmt_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);
+        Str_view memb_text = uast_expr_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);
         string_extend_strv(&print_arena, &buf, memb_text);
     }
 

@@ -55,11 +55,11 @@ bool try_set_tuple_assignment_types(
     Uast_tuple* tuple
 );
 
-bool try_set_struct_literal_assignment_types(
+bool try_set_struct_literal_types(
     Env* env,
     Tast_stmt** new_tast,
     Lang_type dest_lang_type,
-    Uast_struct_literal* struct_literal,
+    Uast_struct_literal* lit,
     Pos assign_pos
 );
 
@@ -106,5 +106,7 @@ bool try_set_literal_def_types(Env* env, Uast_literal_def* tast);
 bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_switch* lang_switch);
 
 bool try_set_if_else_chain(Env* env, Tast_if_else_chain** new_tast, Uast_if_else_chain* if_else);
+
+bool try_set_break_types(Env* env, Tast_break** new_tast, Uast_break* lang_break);
 
 #endif // TYPE_CHECKING_H

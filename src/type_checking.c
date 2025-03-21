@@ -348,7 +348,7 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
 ) {
     if (src->type == UAST_STRUCT_LITERAL) {
         Tast_stmt* new_src_ = NULL;
-        if (!try_set_struct_literal_assignment_types(
+        if (!try_set_struct_literal_types(
             env, &new_src_, dest_lang_type, uast_struct_literal_unwrap(src), pos
         )) {
             return CHECK_ASSIGN_ERROR;
@@ -951,11 +951,38 @@ bool try_set_tuple_assignment_types(
     return true;
 }
 
-bool try_set_struct_literal_assignment_types(
+static bool uast_expr_is_assignment(const Uast_expr* expr) {
+    if (expr->type != UAST_OPERATOR) {
+        return false;
+    }
+    const Uast_operator* oper = uast_operator_const_unwrap(expr);
+
+    if (oper->type != UAST_BINARY) {
+        return false;
+    }
+    const Uast_binary* bin = uast_binary_const_unwrap(oper);
+
+    return bin->token_type == BINARY_SINGLE_EQUAL;
+}
+
+static bool uast_expr_is_designator(const Uast_expr* expr) {
+    if (!uast_expr_is_assignment(expr)) {
+        return false;
+    }
+    const Uast_binary* assign = uast_binary_const_unwrap(uast_operator_const_unwrap(expr));
+    if (assign->lhs->type != UAST_MEMBER_ACCESS) {
+        return false;
+    }
+    const Uast_member_access* access = uast_member_access_const_unwrap(assign->lhs);
+
+    return access->callee->type == UAST_UNKNOWN;
+}
+
+bool try_set_struct_literal_types(
     Env* env,
     Tast_stmt** new_tast,
     Lang_type dest_lang_type,
-    Uast_struct_literal* struct_literal,
+    Uast_struct_literal* lit,
     Pos assign_pos
 ) {
     switch (dest_lang_type.type) {
@@ -987,25 +1014,43 @@ bool try_set_struct_literal_assignment_types(
     unwrap(usymbol_lookup(&struct_def_, env, lang_type_struct_const_unwrap(dest_lang_type).atom.str));
     Uast_struct_def* struct_def = uast_struct_def_unwrap(struct_def_);
     
-    Tast_expr_vec new_literal_members = {0};
+    Tast_expr_vec new_membs = {0};
     for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
-        Uast_variable_def* memb_sym_def = vec_at(&struct_def->base.members, idx);
-        Uast_binary* assign_memb_sym = uast_binary_unwrap(uast_operator_unwrap(uast_expr_unwrap(vec_at(&struct_literal->members, idx))));
-        Uast_symbol* memb_sym_piece_untyped = uast_symbol_unwrap(assign_memb_sym->lhs);
-        Tast_expr* new_rhs = NULL;
+        Uast_variable_def* memb_def = vec_at(&struct_def->base.members, idx);
+        Uast_expr* memb = vec_at(&lit->members, idx);
+        Uast_expr* rhs = NULL;
+        if (uast_expr_is_designator(memb)) {
+            // TODO: expected failure case for invalid thing on lhs of designated initializer
+            Uast_member_access* lhs = uast_member_access_unwrap(
+                uast_binary_unwrap(uast_operator_unwrap(memb))->lhs // parser should catch invalid assignment
+            );
+            rhs = uast_binary_unwrap(uast_operator_unwrap(memb))->rhs;
+            if (!str_view_is_equal(memb_def->name, lhs->member_name)) {
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL, env->file_text, lhs->pos,
+                    "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
+                    str_view_print(memb_def->name), str_view_print(lhs->member_name)
+                );
+                return false;
+            }
+        } else {
+            rhs = memb;
+        }
 
+        log(LOG_DEBUG, TAST_FMT, uast_expr_print(rhs));
+        Tast_expr* new_rhs = NULL;
         switch (check_generic_assignment(
-            env, &new_rhs, lang_type_from_ulang_type(env, memb_sym_def->lang_type), assign_memb_sym->rhs, assign_memb_sym->pos
+            env, &new_rhs, lang_type_from_ulang_type(env, memb_def->lang_type), rhs, uast_expr_get_pos(memb)
         )) {
             case CHECK_ASSIGN_OK:
                 break;
             case CHECK_ASSIGN_INVALID:
                 msg(
                     LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
-                    assign_memb_sym->pos,
+                    uast_expr_get_pos(memb),
                     "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
-                    ulang_type_print(LANG_TYPE_MODE_MSG, memb_sym_def->lang_type)
+                    ulang_type_print(LANG_TYPE_MODE_MSG, memb_def->lang_type)
                 );
                 return false;
             case CHECK_ASSIGN_ERROR:
@@ -1015,35 +1060,13 @@ bool try_set_struct_literal_assignment_types(
         }
 
 
-        //*tast_expr_set_lang_type(new_rhs) = memb_sym_def->lang_type;
-        if (!str_view_is_equal(memb_sym_def->name, memb_sym_piece_untyped->name)) {
-            msg(
-                LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL, env->file_text,
-                memb_sym_piece_untyped->pos,
-                "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
-                str_view_print(memb_sym_def->name), str_view_print(memb_sym_piece_untyped->name)
-            );
-            // TODO: consider how to handle this
-            //msg(
-            //    LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, lhs_var_def->pos,
-            //    "variable `"STR_VIEW_FMT"` is defined as struct `"LANG_TYPE_FMT"`\n",
-            //    str_view_print(lhs_var_def->name), lang_type_print(lhs_var_def->lang_type)
-            //);
-            //msg(
-            //    LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, memb_sym_def->pos,
-            //    "member symbol `"STR_VIEW_FMT"` of struct `"STR_VIEW_FMT"` defined here\n", 
-            //    str_view_print(memb_sym_def->name), lang_type_print(lhs_var_def->lang_type)
-            //);
-            return false;
-        }
-
-        vec_append(&a_main, &new_literal_members, new_rhs);
+        vec_append(&a_main, &new_membs, new_rhs);
     }
 
     Tast_struct_literal* new_lit = tast_struct_literal_new(
-        struct_literal->pos,
-        new_literal_members,
-        struct_literal->name,
+        lit->pos,
+        new_membs,
+        lit->name,
         dest_lang_type
     );
     *new_tast = tast_expr_wrap(tast_struct_literal_wrap(new_lit));
@@ -1585,20 +1608,23 @@ bool try_set_sum_get_tag_types(Env* env, Tast_sum_get_tag** new_access, Uast_sum
     return true;
 }
 
-static void msg_invalid_member(
+static void msg_invalid_member_internal(
+    const char* file,
+    int line,
     Env* env,
     Str_view base_name,
     const Uast_member_access* access
 ) {
-    msg(
-        LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_ACCESS, env->file_text,
+    msg_internal(
+        file, line, LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_ACCESS, env->file_text,
         access->pos,
         "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 
         str_view_print(access->member_name), str_view_print(base_name)
     );
-
-    // TODO: add notes for where struct def of callee is defined, etc.
 }
+
+#define msg_invalid_member(env, base_name, access) \
+    msg_invalid_member_internal(__FILE__, __LINE__, env, base_name, access)
 
 bool try_set_member_access_types_finish_generic_struct(
     Env* env,
