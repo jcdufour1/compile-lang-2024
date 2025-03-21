@@ -137,6 +137,8 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_octal_2.own": ["invalid-octal"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_bin.own": ["invalid-bin"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_bin_2.own": ["invalid-bin"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "multiline_comment_open_unmatched.own": ["missing-close-multiline"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "multiline_comment_close_unmatched.own": ["missing-close-multiline"],
 }
 
 def to_str(a):

@@ -80,6 +80,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"invalid-hex", EXPECT_FAIL_INVALID_HEX},
     {"invalid-bin", EXPECT_FAIL_INVALID_BIN},
     {"invalid-octal", EXPECT_FAIL_INVALID_OCTAL},
+    {"missing-close-multiline", EXPECT_FAIL_MISSING_CLOSE_MULTILINE},
 };
 
 static void parse_normal_option(Parameters* params, int* argc, char*** argv) {

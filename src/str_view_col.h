@@ -13,6 +13,10 @@ typedef struct {
     Str_view base;
 } Str_view_col;
 
+static inline Str_view_col str_view_col_slice(Str_view_col str_view, size_t start, size_t count) {
+    return (Str_view_col) {.base = str_view_slice(str_view.base, start, count)};
+}
+
 static inline void str_view_col_advance_pos(Pos* pos, char ch) {
     if (ch == '\n') {
         pos->line++;
@@ -29,6 +33,14 @@ static inline char str_view_col_front(Str_view_col str_view) {
 static inline char str_view_col_consume(Pos* pos, Str_view_col* str_view) {
     str_view_col_advance_pos(pos, str_view_col_front(*str_view));
     return str_view_consume(&str_view->base);
+}
+
+static inline Str_view_col str_view_col_consume_count(Pos* pos, Str_view_col* str_view, size_t count) {
+    for (size_t idx = 0; idx < count; idx++) {
+        str_view_col_consume(pos, str_view);
+    }
+    Str_view temp = str_view->base;
+    return (Str_view_col) {.base = str_view_consume_count(&temp, count)};
 }
 
 static inline bool str_view_col_try_consume_while(

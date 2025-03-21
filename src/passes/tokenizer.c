@@ -10,6 +10,14 @@
 #include <ctype.h>
 #include <parser_utils.h>
 
+static Arena tk_arena = {0};
+
+// TODO: move this to a better place?
+typedef struct {
+    Pos* buf;
+    Vec_base info;
+} Pos_vec;
+
 static bool local_isdigit(char prev, char curr) {
     (void) prev;
     return isdigit(curr) || curr == '_';
@@ -78,8 +86,15 @@ static void trim_non_newline_whitespace(Str_view_col* file_text, Pos* pos) {
     }
 }
 
-static bool get_next_token(const Env* env, Pos* pos, Token* token, Str_view_col* file_text, Parameters params) {
+static bool get_next_token(
+    const Env* env,
+    Pos* pos,
+    Token* token,
+    Str_view_col* file_text, // TODO: rename this parameter, because this should not be passed into msg or msg_internal
+    Parameters params
+) {
     memset(token, 0, sizeof(*token));
+    arena_reset(&tk_arena);
 
     trim_non_newline_whitespace(file_text, pos);
 
@@ -187,6 +202,13 @@ static bool get_next_token(const Env* env, Pos* pos, Token* token, Str_view_col*
         token->type = TOKEN_SINGLE_MINUS;
         return true;
     } else if (str_view_col_try_consume(pos, file_text, '*')) {
+        if (str_view_col_try_consume(pos, file_text, '/')) {
+            msg(
+                LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_MULTILINE, env->file_text,
+                *pos, "unmatched closing `/*`\n"
+            );
+            return false;
+        }
         token->type = TOKEN_ASTERISK;
         return true;
     } else if (str_view_col_try_consume(pos, file_text, '%')) {
@@ -198,7 +220,34 @@ static bool get_next_token(const Env* env, Pos* pos, Token* token, Str_view_col*
         token->type = TOKEN_COMMENT;
         return true;
     } else if (str_view_col_try_consume(pos, file_text, '/')) {
-        token->type = TOKEN_SLASH;
+        if (str_view_col_try_consume(pos, file_text, '*')) {
+            Pos_vec pos_stack = {0};
+            vec_append(&tk_arena, &pos_stack, *pos);
+            while (pos_stack.info.count > 0) {
+                Str_view temp_text = file_text->base;
+                if (file_text->base.count < 2) {
+                    msg(
+                        LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_MULTILINE, env->file_text,
+                        vec_top(&pos_stack), "unmatched opening `/*`\n"
+                    );
+                    return false;
+                }
+
+                if (str_view_try_consume(&temp_text, '/') && str_view_try_consume(&temp_text, '*')) {
+                    vec_append(&tk_arena, &pos_stack, *pos);
+                    str_view_col_consume_count(pos, file_text, 2);
+                } else if (str_view_try_consume(&temp_text, '*') && str_view_try_consume(&temp_text, '/')) {
+                    vec_rem_last(&pos_stack);
+                    str_view_col_consume_count(pos, file_text, 2);
+                } else {
+                    str_view_col_consume(pos, file_text);
+                }
+            }
+
+            token->type = TOKEN_COMMENT;
+        } else {
+            token->type = TOKEN_SLASH;
+        }
         return true;
     } else if (str_view_col_front(*file_text) == '&') {
         Str_view_col equals = str_view_col_consume_while(pos, file_text, is_and);
