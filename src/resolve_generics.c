@@ -24,7 +24,7 @@ Str_view serialize_generic(Env* env, Str_view old_name, Ulang_type_vec gen_args)
     return string_to_strv(name);
 }
 
-bool deserialize_generic(Str_view* deserialized, Ulang_type_vec* gen_args, Str_view serialized) {
+bool deserialize_generic(Ulang_type_generic* deserialized, Str_view serialized) {
     if (!str_view_try_consume_count(&serialized, '_', 4)) { // for now, ____ means generic
         // not a generic lang_type
         return false;
@@ -34,11 +34,15 @@ bool deserialize_generic(Str_view* deserialized, Ulang_type_vec* gen_args, Str_v
     unwrap(try_str_view_consume_size_t(&len, &serialized, false));
     Str_view base = str_view_consume_count(&serialized, len);
 
-    Ulang_type gen_arg = deserialize_ulang_type(serialized);
-    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, gen_arg));
-    (void) base;
-    (void) gen_arg;
-    todo();
+    Ulang_type_vec gen_args = {0};
+    while (serialized.count > 0) {
+        Ulang_type gen_arg = deserialize_consume_ulang_type(&serialized);
+        vec_append(&a_main, &gen_args, gen_arg);
+    }
+
+    *deserialized = ulang_type_generic_new(ulang_type_atom_new(base, 0), gen_args, POS_BUILTIN);
+
+    return true;
 }
 
 #define msg_invalid_count_generic_args(env, pos_def, pos_gen_args, gen_args, min_args, max_args) \

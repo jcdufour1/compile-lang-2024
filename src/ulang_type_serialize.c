@@ -49,23 +49,20 @@ Str_view serialize_ulang_type(Ulang_type ulang_type) {
     return str_view_slice(name, 0, name.count - 1);
 }
 
-Ulang_type deserialize_ulang_type(Str_view serialized) {
+Ulang_type deserialize_consume_ulang_type(Str_view* serialized) {
     size_t pointer_depth = 0;
-    unwrap(try_str_view_consume_size_t(&pointer_depth, &serialized, false));
-    unwrap(str_view_try_consume(&serialized, '_'));
+    unwrap(try_str_view_consume_size_t(&pointer_depth, serialized, false));
+    unwrap(str_view_try_consume(serialized, '_'));
 
     size_t len_base = 0;
-    unwrap(try_str_view_consume_size_t(&len_base, &serialized, false));
-    unwrap(str_view_try_consume(&serialized, '_'));
+    unwrap(try_str_view_consume_size_t(&len_base, serialized, false));
+    unwrap(str_view_try_consume(serialized, '_'));
 
-    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(serialized));
-    Str_view base = str_view_consume_count(&serialized, len_base);
-    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(serialized));
+    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
+    Str_view base = str_view_consume_count(serialized, len_base);
+    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
 
-    unwrap(str_view_try_consume_count(&serialized, '_', 2));
-    if (serialized.count > 0) {
-        todo();
-    }
+    unwrap(str_view_try_consume_count(serialized, '_', 2));
 
     return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(base, pointer_depth), POS_BUILTIN /* TODO */));
 }

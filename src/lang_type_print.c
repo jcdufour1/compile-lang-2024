@@ -2,6 +2,7 @@
 #include <lang_type_after.h>
 #include <ulang_type.h>
 #include <resolve_generics.h>
+#include <ulang_type_print.h>
 
 void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
     switch (type) {
@@ -75,11 +76,10 @@ Str_view lang_type_vec_print_internal(Lang_type_vec types) {
 //    }
 //}
 
-void extend_lang_type_atom(String* string, Lang_type_atom atom) {
-    Ulang_type_vec gen_args = {0};
-    Str_view base_name = {0};
-    if (deserialize_generic(&base_name, &gen_args, atom.str)) {
-        todo();
+void extend_lang_type_atom(String* string, LANG_TYPE_MODE mode, Lang_type_atom atom) {
+    Ulang_type_generic deserialized = {0};
+    if (deserialize_generic(&deserialized, atom.str)) {
+        extend_ulang_type_to_string(string, mode, ulang_type_generic_const_wrap(deserialized));
         return;
     }
 
@@ -113,10 +113,10 @@ Str_view lang_type_print_internal(LANG_TYPE_MODE mode, Lang_type lang_type) {
     return string_to_strv(buf);
 }
 
-Str_view lang_type_atom_print_internal(Lang_type_atom atom) {
+Str_view lang_type_atom_print_internal(Lang_type_atom atom, LANG_TYPE_MODE mode) {
     String buf = {0};
     // TODO: do not use `lang_type_primitive_new` here
-    extend_lang_type_atom(&buf, atom);
+    extend_lang_type_atom(&buf, mode, atom);
     return string_to_strv(buf);
 }
 
@@ -171,7 +171,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
         case LANG_TYPE_STRUCT:
             // fallthrough
         case LANG_TYPE_PRIMITIVE:
-            extend_lang_type_atom(string, lang_type_get_atom(lang_type));
+            extend_lang_type_atom(string, mode, lang_type_get_atom(lang_type));
             goto end;
     }
     unreachable("");
