@@ -18,11 +18,6 @@ typedef struct {
     Vec_base info;
 } Pos_vec;
 
-static bool local_isdigit(char prev, char curr) {
-    (void) prev;
-    return isdigit(curr) || curr == '_';
-}
-
 static void msg_tokenizer_invalid_token(Str_view file_text, Str_view_col token_text, Pos pos) {
     msg(LOG_ERROR, EXPECT_FAIL_INVALID_TOKEN, file_text, pos, "invalid token `"STR_VIEW_COL_FMT"`\n", str_view_col_print(token_text));
 }

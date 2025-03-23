@@ -39,6 +39,8 @@ bool try_str_view_to_int64_t(int64_t* result, const Env* env, Pos pos, Str_view 
 
 bool try_str_view_to_size_t(size_t* result, Str_view str_view);
 
+bool try_str_view_consume_size_t(size_t* result, Str_view* str_view);
+
 Str_view util_literal_name_new(void);
 
 Str_view util_literal_name_new_prefix(const char* debug_prefix);

@@ -1,5 +1,7 @@
 #include <lang_type_print.h>
 #include <lang_type_after.h>
+#include <ulang_type.h>
+#include <resolve_generics.h>
 
 void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
     switch (type) {
@@ -74,6 +76,13 @@ Str_view lang_type_vec_print_internal(Lang_type_vec types) {
 //}
 
 void extend_lang_type_atom(String* string, Lang_type_atom atom) {
+    Ulang_type_vec gen_args = {0};
+    Str_view base_name = {0};
+    if (deserialize_generic(&base_name, &gen_args, atom.str)) {
+        todo();
+        return;
+    }
+
     if (atom.str.count > 1) {
         string_extend_strv(&print_arena, string, atom.str);
     } else {

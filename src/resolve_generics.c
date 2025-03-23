@@ -13,13 +13,27 @@
 
 static bool ulang_type_generics_are_present(Ulang_type lang_type);
 
-static Str_view get_name(Str_view old_name, Ulang_type_vec gen_args) {
+Str_view serialize_generic(Str_view old_name, Ulang_type_vec gen_args) {
     String name = {0};
+    string_extend_cstr(&a_main, &name, "____");
+    string_extend_size_t(&a_main, &name, old_name.count);
     string_extend_strv(&a_main, &name, old_name);
     for (size_t idx = 0; idx < gen_args.info.count; idx++) {
         string_extend_strv(&a_main, &name, serialize_ulang_type(vec_at(&gen_args, idx)));
     }
     return string_to_strv(name);
+}
+
+bool deserialize_generic(Str_view* deserialized, Ulang_type_vec* gen_args, Str_view serialized) {
+    if (!str_view_try_consume_count(&serialized, '_', 4)) {
+        // not a generic lang_type
+        return false;
+    }
+
+    size_t len = 0;
+    unwrap(try_str_view_consume_size_t(&len, &serialized));
+    Str_view base = str_view_consume_count(&serialized, len);
+    todo();
 }
 
 #define msg_invalid_count_generic_args(env, pos_def, pos_gen_args, gen_args, min_args, max_args) \
@@ -248,7 +262,7 @@ static bool resolve_generics_ulang_type_internal_struct_like(
     Obj_unwrap obj_unwrap
 ) {
     Ustruct_def_base old_base = uast_def_get_struct_def_base(before_res);
-    Str_view new_name = get_name(old_base.name, gen_args);
+    Str_view new_name = serialize_generic(old_base.name, gen_args);
 
     if (old_base.generics.info.count != gen_args.info.count) {
         msg_invalid_count_generic_args(

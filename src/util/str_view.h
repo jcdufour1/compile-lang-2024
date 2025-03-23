@@ -7,6 +7,12 @@
 #include <assert.h>
 #include "util.h"
 #include "str_view_struct.h"
+#include <ctype.h>
+
+static bool isdigit_char(char prev, char curr) {
+    (void) prev;
+    return isdigit(curr) || curr == '_';
+}
 
 static inline Str_view str_view_slice(Str_view str_view, size_t start, size_t count) {
     assert(count <= str_view.count && start + count <= str_view.count && "out of bounds");
@@ -105,6 +111,15 @@ static inline bool str_view_try_consume(Str_view* str_view, char ch) {
         return true;
     }
     return false;
+}
+
+static inline bool str_view_try_consume_count(Str_view* str_view, char ch, size_t count) {
+    for (size_t idx = 0; idx < count; idx++) {
+        if (!str_view_try_consume(str_view, ch)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 #define STR_VIEW_FMT "%.*s"

@@ -156,6 +156,11 @@ bool try_str_view_to_size_t(size_t* result, Str_view str_view) {
     return true;
 }
 
+bool try_str_view_consume_size_t(size_t* result, Str_view* str_view) {
+    Str_view num = str_view_consume_while(str_view, isdigit_char);
+    return try_str_view_to_size_t(result, num);
+}
+
 int64_t str_view_to_int64_t(const Env* env, Pos pos, Str_view str_view) {
     int64_t result = INT64_MAX;
 
