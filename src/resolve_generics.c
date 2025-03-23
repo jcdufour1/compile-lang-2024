@@ -13,6 +13,15 @@
 
 static bool ulang_type_generics_are_present(Ulang_type lang_type);
 
+static Str_view get_name(Str_view old_name, Ulang_type_vec gen_args) {
+    String name = {0};
+    string_extend_strv(&a_main, &name, old_name);
+    for (size_t idx = 0; idx < gen_args.info.count; idx++) {
+        string_extend_strv(&a_main, &name, serialize_ulang_type(vec_at(&gen_args, idx)));
+    }
+    return string_to_strv(name);
+}
+
 #define msg_invalid_count_generic_args(env, pos_def, pos_gen_args, gen_args, min_args, max_args) \
     msg_invalid_count_generic_args_internal(__FILE__, __LINE__, env, pos_def, pos_gen_args, gen_args, min_args, max_args)
 
@@ -178,27 +187,13 @@ static bool try_set_sum_def_types(Env* env, Uast_sum_def* before_res, Uast_sum_d
 }
 
 static bool resolve_generics_serialize_struct_def_base(
-    Env* env,
     Ustruct_def_base* new_base,
     Ustruct_def_base old_base,
     Ulang_type_vec gen_args,
-    Pos pos_def,
-    Pos pos_gen_args
+    Str_view new_name
 ) {
     // TODO: figure out way to avoid making new Ustruct_def_base every time (do name thing here, and check if varient with name already exists)
     memset(new_base, 0, sizeof(*new_base));
-
-    if (old_base.generics.info.count != gen_args.info.count) {
-        msg_invalid_count_generic_args(
-            env,
-            pos_def,
-            pos_gen_args,
-            gen_args,
-            old_base.generics.info.count,
-            old_base.generics.info.count
-        );
-        return false;
-    }
 
     //if (gen_args.info.count != ) {
     if (gen_args.info.count < 1) {
@@ -218,82 +213,130 @@ static bool resolve_generics_serialize_struct_def_base(
 
     assert(old_base.members.info.count == new_base->members.info.count);
 
-    // TODO: refactor this name thing into a separate function
-    String name = {0};
-    string_extend_strv(&a_main, &name, old_base.name);
-    for (size_t idx = 0; idx < gen_args.info.count; idx++) {
-        string_extend_strv(&a_main, &name, serialize_ulang_type(vec_at(&gen_args, idx)));
-    }
-    new_base->name = string_to_strv(name);
+    new_base->name = new_name;
     return true;
+}
+
+typedef bool(*Set_obj_types)(Env*, void*, void*);
+typedef Uast_def*(*Obj_unwrap)(void*);
+
+static Uast_def* local_raw_union_new(Pos pos, Ustruct_def_base base) {
+    return uast_raw_union_def_wrap(uast_raw_union_def_new(pos, base));
+}
+
+static Uast_def* local_enum_new(Pos pos, Ustruct_def_base base) {
+    return uast_enum_def_wrap(uast_enum_def_new(pos, base));
+}
+
+static Uast_def* local_sum_new(Pos pos, Ustruct_def_base base) {
+    return uast_sum_def_wrap(uast_sum_def_new(pos, base));
+}
+
+static Uast_def* local_struct_new(Pos pos, Ustruct_def_base base) {
+    return uast_struct_def_wrap(uast_struct_def_new(pos, base));
+}
+
+static bool resolve_generics_ulang_type_internal_struct_like(
+    Uast_def** after_res,
+    Ulang_type* result,
+    Env* env,
+    Uast_def* before_res,
+    Ulang_type lang_type,
+    Ulang_type_vec gen_args,
+    Uast_def*(*obj_new)(Pos, Ustruct_def_base),
+    Set_obj_types set_obj_types,
+    Obj_unwrap obj_unwrap
+) {
+    Ustruct_def_base old_base = uast_def_get_struct_def_base(before_res);
+    Str_view new_name = get_name(old_base.name, gen_args);
+
+    if (old_base.generics.info.count != gen_args.info.count) {
+        msg_invalid_count_generic_args(
+            env,
+            uast_def_get_pos(before_res),
+            ulang_type_get_pos(lang_type),
+            gen_args,
+            old_base.generics.info.count,
+            old_base.generics.info.count
+        );
+        return false;
+    }
+
+    Uast_def* new_def_ = NULL;
+    if (usymbol_lookup(&new_def_, env, new_name)) {
+        *after_res = new_def_;
+    } else {
+        Ustruct_def_base new_base = {0};
+        if (!resolve_generics_serialize_struct_def_base(&new_base, old_base, gen_args, new_name)) {
+            return false;
+        }
+        *after_res = obj_new(uast_def_get_pos(before_res), new_base);
+    }
+
+    *result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
+        uast_def_get_struct_def_base(*after_res).name, ulang_type_get_atom(lang_type).pointer_depth
+    ), ulang_type_get_pos(lang_type)));
+
+    Tast_def* dummy = NULL;
+    if (symbol_lookup(&dummy, env, new_name)) {
+        return true;
+    }
+    return set_obj_types(env, obj_unwrap(before_res), obj_unwrap(*after_res));
 }
 
 static bool resolve_generics_ulang_type_internal(Ulang_type* result, Env* env, Uast_def* before_res, Ulang_type lang_type, Ulang_type_vec gen_args) {
     Uast_def* after_res = NULL;
     switch (before_res->type) {
-        case UAST_RAW_UNION_DEF: {
-            Ustruct_def_base new_base = {0};
-            if (!resolve_generics_serialize_struct_def_base(env, &new_base, uast_raw_union_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res), ulang_type_get_pos(lang_type))) {
-                return false;
-            }
-            Uast_def* new_def_ = NULL;
-            if (usymbol_lookup(&new_def_, env, new_base.name)) {
-                after_res = new_def_;
-            } else {
-                after_res = uast_raw_union_def_wrap(uast_raw_union_def_new(uast_def_get_pos(before_res), new_base));
-            }
-            if (!try_set_raw_union_def_types(env, uast_raw_union_def_unwrap(before_res), uast_raw_union_def_unwrap(after_res))) {
-                return false;
-            }
-            break;
-        }
+        case UAST_RAW_UNION_DEF:
+            return resolve_generics_ulang_type_internal_struct_like(
+                &after_res,
+                result,
+                env,
+                before_res,
+                lang_type,
+                gen_args,
+                local_raw_union_new,
+                (Set_obj_types)try_set_raw_union_def_types,
+                (Obj_unwrap)uast_raw_union_def_unwrap
+            );
         case UAST_ENUM_DEF: {
-            Ustruct_def_base new_base = {0};
-            if (!resolve_generics_serialize_struct_def_base(env, &new_base, uast_enum_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res), ulang_type_get_pos(lang_type))) {
-                return false;
-            }
-            Uast_def* new_def_ = NULL;
-            if (usymbol_lookup(&new_def_, env, new_base.name)) {
-                after_res = new_def_;
-            } else {
-                after_res = uast_enum_def_wrap(uast_enum_def_new(uast_def_get_pos(before_res), new_base));
-            }
-            if (!try_set_enum_def_types(env, uast_enum_def_unwrap(before_res), uast_enum_def_unwrap(after_res))) {
-                return false;
-            }
-            break;
+            return resolve_generics_ulang_type_internal_struct_like(
+                &after_res,
+                result,
+                env,
+                before_res,
+                lang_type,
+                gen_args,
+                local_enum_new,
+                (Set_obj_types)try_set_enum_def_types,
+                (Obj_unwrap)uast_enum_def_unwrap
+            );
         }
         case UAST_SUM_DEF: {
-            Ustruct_def_base new_base = {0};
-            if (!resolve_generics_serialize_struct_def_base(env, &new_base, uast_sum_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res), ulang_type_get_pos(lang_type))) {
-                return false;
-            }
-            Uast_def* new_def_ = NULL;
-            if (usymbol_lookup(&new_def_, env, new_base.name)) {
-                after_res = new_def_;
-            } else {
-                after_res = uast_sum_def_wrap(uast_sum_def_new(uast_def_get_pos(before_res), new_base));
-            }
-            if (!try_set_sum_def_types(env, uast_sum_def_unwrap(before_res), uast_sum_def_unwrap(after_res))) {
-                return false;
-            }
-            break;
+            return resolve_generics_ulang_type_internal_struct_like(
+                &after_res,
+                result,
+                env,
+                before_res,
+                lang_type,
+                gen_args,
+                local_sum_new,
+                (Set_obj_types)try_set_sum_def_types,
+                (Obj_unwrap)uast_sum_def_unwrap
+            );
         }
         case UAST_STRUCT_DEF: {
-            Ustruct_def_base new_base = {0};
-            if (!resolve_generics_serialize_struct_def_base(env, &new_base, uast_struct_def_unwrap(before_res)->base, gen_args, uast_def_get_pos(before_res), ulang_type_get_pos(lang_type))) {
-                return false;
-            }
-            Uast_def* new_def_ = NULL;
-            if (usymbol_lookup(&new_def_, env, new_base.name)) {
-                after_res = new_def_;
-            } else {
-                after_res = uast_struct_def_wrap(uast_struct_def_new(uast_def_get_pos(before_res), new_base));
-            }
-            if (!try_set_struct_def_types(env, uast_struct_def_unwrap(before_res), uast_struct_def_unwrap(after_res))) {
-                return false;
-            }
-            break;
+            return resolve_generics_ulang_type_internal_struct_like(
+                &after_res,
+                result,
+                env,
+                before_res,
+                lang_type,
+                gen_args,
+                local_struct_new,
+                (Set_obj_types)try_set_struct_def_types,
+                (Obj_unwrap)uast_struct_def_unwrap
+            );
         }
         case UAST_PRIMITIVE_DEF:
             *result = lang_type;
@@ -311,10 +354,10 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Env* env, U
     return true;
 }
 
-bool resolve_generics_ulang_type_reg_generic(Ulang_type* result, Env* env, Ulang_type_reg_generic lang_type) {
+bool resolve_generics_ulang_type_generic(Ulang_type* result, Env* env, Ulang_type_generic lang_type) {
     Uast_def* before_res = NULL;
     if (!usymbol_lookup(&before_res, env, lang_type.atom.str)) {
-        msg_undefined_type(env, lang_type.pos, ulang_type_reg_generic_const_wrap(lang_type));
+        msg_undefined_type(env, lang_type.pos, ulang_type_generic_const_wrap(lang_type));
         return false;
     }
 
@@ -322,7 +365,7 @@ bool resolve_generics_ulang_type_reg_generic(Ulang_type* result, Env* env, Ulang
         result,
         env,
         before_res,
-        ulang_type_reg_generic_const_wrap(lang_type),
+        ulang_type_generic_const_wrap(lang_type),
         lang_type.generic_args
     );
 }
@@ -347,7 +390,7 @@ bool resolve_generics_ulang_type(Ulang_type* result, Env* env, Ulang_type lang_t
         case ULANG_TYPE_REGULAR:
             return resolve_generics_ulang_type_regular(result, env, ulang_type_regular_const_unwrap(lang_type));
         case ULANG_TYPE_REG_GENERIC:
-            return resolve_generics_ulang_type_reg_generic(result, env, ulang_type_reg_generic_const_unwrap(lang_type));
+            return resolve_generics_ulang_type_generic(result, env, ulang_type_generic_const_unwrap(lang_type));
         case ULANG_TYPE_TUPLE:
             todo();
         case ULANG_TYPE_FN:

@@ -103,3 +103,13 @@ size_t arena_get_total_capacity(const Arena* arena) {
     return total;
 }
 
+size_t arena_get_total_usage(const Arena* arena) {
+    size_t total = 0;
+    Arena_buf* curr_buf = arena->next;
+    while (curr_buf) {
+        total += curr_buf->count - sizeof(*curr_buf);
+        curr_buf = curr_buf->next;
+    }
+    return total;
+}
+

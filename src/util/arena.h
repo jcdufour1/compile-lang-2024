@@ -6,8 +6,8 @@
 #include "util.h"
 
 typedef struct Arena_buf_ {
-    size_t count; // count of bytes used including the Arena tast itself
-    size_t capacity; // total count of bytes alloced in this tast including the Arena tast itself
+    size_t count; // count of bytes used including the Arena node itself
+    size_t capacity; // total count of bytes alloced in this node including the Arena tast itself
     struct Arena_buf_* next;
 } Arena_buf;
 
@@ -30,5 +30,7 @@ void arena_reset(Arena* arena);
 void arena_destroy(Arena* arena);
 
 size_t arena_get_total_capacity(const Arena* arena);
+
+size_t arena_get_total_usage(const Arena* arena);
 
 #endif // ARENA_H

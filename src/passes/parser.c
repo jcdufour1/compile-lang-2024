@@ -891,7 +891,7 @@ static bool parse_lang_type_struct(Env* env, Ulang_type* lang_type, Tk_view* tok
     if (PARSE_OK != parse_generics_args(env, &gen_args, tokens)) {
         return false;
     }
-    *lang_type = ulang_type_reg_generic_const_wrap(ulang_type_reg_generic_new(atom, gen_args, pos));
+    *lang_type = ulang_type_generic_const_wrap(ulang_type_generic_new(atom, gen_args, pos));
     return true;
 }
 

@@ -5,7 +5,7 @@
 #include <env.h>
 #include <uast.h>
 
-bool resolve_generics_ulang_type_reg_generic(Ulang_type* result, Env* env, Ulang_type_reg_generic lang_type);
+bool resolve_generics_ulang_type_generic(Ulang_type* result, Env* env, Ulang_type_generic lang_type);
 
 bool resolve_generics_ulang_type(Ulang_type* result, Env* env, Ulang_type lang_type);
 

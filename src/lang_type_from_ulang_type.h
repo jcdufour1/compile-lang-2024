@@ -32,10 +32,10 @@ static inline bool try_lang_type_from_ulang_type_fn(
     Pos pos
 );
 
-static inline bool try_lang_type_from_ulang_type_reg_generic(
+static inline bool try_lang_type_from_ulang_type_generic(
     Lang_type* new_lang_type,
     Env* env,
-    Ulang_type_reg_generic lang_type,
+    Ulang_type_generic lang_type,
     Pos pos
 );
 
@@ -54,9 +54,9 @@ static inline Lang_type lang_type_from_ulang_type_fn(Env* env, Ulang_type_fn lan
 }
 
 // TODO: figure out way to reduce duplicate vec allocations
-static inline Lang_type lang_type_from_ulang_type_reg_generic(Env* env, Ulang_type_reg_generic lang_type) {
+static inline Lang_type lang_type_from_ulang_type_generic(Env* env, Ulang_type_generic lang_type) {
     Lang_type new_gen = {0};
-    unwrap(try_lang_type_from_ulang_type_reg_generic(&new_gen, env, lang_type, (Pos) {0}));
+    unwrap(try_lang_type_from_ulang_type_generic(&new_gen, env, lang_type, (Pos) {0}));
     return new_gen;
 }
 
@@ -99,14 +99,14 @@ static inline bool try_lang_type_from_ulang_type_fn(
 }
 
 // TODO: figure out way to reduce duplicate vec allocations
-static inline bool try_lang_type_from_ulang_type_reg_generic(
+static inline bool try_lang_type_from_ulang_type_generic(
     Lang_type* new_lang_type,
     Env* env,
-    Ulang_type_reg_generic lang_type,
+    Ulang_type_generic lang_type,
     Pos pos
 ) {
     Ulang_type after_res = {0};
-    if (!resolve_generics_ulang_type_reg_generic(&after_res, env, lang_type)) {
+    if (!resolve_generics_ulang_type_generic(&after_res, env, lang_type)) {
         return false;
     }
     return try_lang_type_from_ulang_type(new_lang_type, env, after_res, pos);
@@ -216,8 +216,8 @@ static inline bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Env* 
         }
         case ULANG_TYPE_REG_GENERIC: {
             Ulang_type after_res = {0};
-            if (!resolve_generics_ulang_type_reg_generic(
-                &after_res, env, ulang_type_reg_generic_const_unwrap(lang_type)
+            if (!resolve_generics_ulang_type_generic(
+                &after_res, env, ulang_type_generic_const_unwrap(lang_type)
             )) {
                 return false;
             }
@@ -237,7 +237,7 @@ static inline Lang_type lang_type_from_ulang_type(Env* env, Ulang_type lang_type
         case ULANG_TYPE_FN:
             return lang_type_from_ulang_type_fn(env, ulang_type_fn_const_unwrap(lang_type));
         case ULANG_TYPE_REG_GENERIC:
-            return lang_type_from_ulang_type_reg_generic(env, ulang_type_reg_generic_const_unwrap(lang_type));
+            return lang_type_from_ulang_type_generic(env, ulang_type_generic_const_unwrap(lang_type));
     }
     unreachable("");
 }

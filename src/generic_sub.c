@@ -36,14 +36,14 @@ void generic_sub_lang_type_regular(
     return;
 }
 
-void generic_sub_lang_type_reg_generic(
+void generic_sub_lang_type_generic(
     Env* env,
     Ulang_type* new_lang_type,
-    Ulang_type_reg_generic lang_type,
+    Ulang_type_generic lang_type,
     Str_view gen_param,
     Ulang_type gen_arg
 ) {
-    Ulang_type_reg_generic new_reg = ulang_type_reg_generic_clone(lang_type);
+    Ulang_type_generic new_reg = ulang_type_generic_clone(lang_type);
 
     for (size_t idx = 0; idx < new_reg.generic_args.info.count; idx++) {
         generic_sub_lang_type(
@@ -55,7 +55,7 @@ void generic_sub_lang_type_reg_generic(
         );
     }
 
-    resolve_generics_ulang_type_reg_generic(new_lang_type, env, new_reg);
+    resolve_generics_ulang_type_generic(new_lang_type, env, new_reg);
 }
 
 void generic_sub_lang_type(
@@ -75,10 +75,10 @@ void generic_sub_lang_type(
             );
             return;
         case ULANG_TYPE_REG_GENERIC: {
-            generic_sub_lang_type_reg_generic(
+            generic_sub_lang_type_generic(
                 env,
                 new_lang_type,
-                ulang_type_reg_generic_const_unwrap(lang_type),
+                ulang_type_generic_const_unwrap(lang_type),
                 gen_param,
                 gen_arg
             );

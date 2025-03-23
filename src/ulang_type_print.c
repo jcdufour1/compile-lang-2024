@@ -56,7 +56,7 @@ void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type
             return;
         }
         case ULANG_TYPE_REG_GENERIC: {
-            Ulang_type_reg_generic reg_gen = ulang_type_reg_generic_const_unwrap(lang_type);
+            Ulang_type_generic reg_gen = ulang_type_generic_const_unwrap(lang_type);
             extend_ulang_type_atom_to_string(string, mode, reg_gen.atom);
             string_extend_cstr(&a_main, string, "(<");
             for (size_t idx = 0; idx < reg_gen.generic_args.info.count; idx++) {

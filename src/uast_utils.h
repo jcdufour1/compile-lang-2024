@@ -451,7 +451,7 @@ static inline bool ustruct_def_base_get_lang_type_(Ulang_type* result, Env* env,
         return resolve_generics_ulang_type_regular(result, env, ulang_type_regular_new(ulang_type_atom_new(base.name, 0), pos));
     }
     unwrap(generics.info.count > 0);
-    return resolve_generics_ulang_type_reg_generic(result, env, ulang_type_reg_generic_new(ulang_type_atom_new(base.name, 0), generics, pos));
+    return resolve_generics_ulang_type_generic(result, env, ulang_type_generic_new(ulang_type_atom_new(base.name, 0), generics, pos));
 }
 
 #endif // UAST_UTIL_H
