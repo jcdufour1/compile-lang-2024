@@ -369,6 +369,7 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
         if (!try_set_expr_types(env, new_src, src)) {
             return CHECK_ASSIGN_ERROR;
         }
+        log(LOG_DEBUG, TAST_FMT, tast_expr_print(*new_src));
         memset(&env->lhs_lang_type, 0, sizeof(env->lhs_lang_type));
         env->parent_of = old_parent_of;
     }

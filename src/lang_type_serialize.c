@@ -65,9 +65,10 @@ Str_view serialize_lang_type(Env* env, Lang_type lang_type) {
     //
     // TODO: factor in lang_type.type into serialization
     switch (lang_type.type) {
-        case LANG_TYPE_FN: {
+        case LANG_TYPE_RESOL:
+            todo();
+        case LANG_TYPE_FN:
             return serialize_lang_type_fn(env, lang_type_fn_const_unwrap(lang_type));
-        }
         case LANG_TYPE_TUPLE:
             return serialize_lang_type_tuple(env, lang_type_tuple_const_unwrap(lang_type));
         case LANG_TYPE_PRIMITIVE:

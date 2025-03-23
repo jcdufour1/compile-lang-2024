@@ -35,6 +35,8 @@ static inline Pos lang_type_get_pos(Lang_type lang_type) {
             return lang_type_void_const_unwrap(lang_type).pos;
         case LANG_TYPE_FN:
             return lang_type_fn_const_unwrap(lang_type).pos;
+        case LANG_TYPE_RESOL:
+            return lang_type_resol_const_unwrap(lang_type).pos;
     }
     unreachable("");
 }

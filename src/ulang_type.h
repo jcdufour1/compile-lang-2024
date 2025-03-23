@@ -139,5 +139,68 @@ static inline Ulang_type_generic ulang_type_generic_new(Ulang_type_atom atom, Ul
 static inline Ulang_type_resol ulang_type_resol_new(Ulang_type_generic original, Ulang_type_regular resolved, Pos pos){
     return (Ulang_type_resol) { .original = original, .resolved = resolved, .pos = pos};
 }
+
+static inline bool ulang_type_vec_is_equal(Ulang_type_vec a, Ulang_type_vec b);
+
+static inline bool ulang_type_is_equal(Ulang_type a, Ulang_type b);
+
+static inline bool ulang_type_atom_is_equal(Ulang_type_atom a, Ulang_type_atom b) {
+    return str_view_is_equal(a.str, b.str) && a.pointer_depth == b.pointer_depth;
+}
+
+static inline bool ulang_type_tuple_is_equal(Ulang_type_tuple a, Ulang_type_tuple b) {
+    return ulang_type_vec_is_equal(a.ulang_types, b.ulang_types);
+}
+
+static inline bool ulang_type_regular_is_equal(Ulang_type_regular a, Ulang_type_regular b) {
+    return ulang_type_atom_is_equal(a.atom, b.atom);
+}
+
+static inline bool ulang_type_generic_is_equal(Ulang_type_generic a, Ulang_type_generic b) {
+    return ulang_type_atom_is_equal(a.atom, b.atom) && ulang_type_vec_is_equal(a.generic_args, b.generic_args);
+}
+
+static inline bool ulang_type_fn_is_equal(Ulang_type_fn a, Ulang_type_fn b) {
+    return ulang_type_tuple_is_equal(a.params, b.params) && ulang_type_is_equal(*a.return_type, *b.return_type);
+}
+
+static inline bool ulang_type_resol_is_equal(Ulang_type_resol a, Ulang_type_resol b) {
+    return ulang_type_generic_is_equal(a.original, b.original) && ulang_type_regular_is_equal(a.resolved, b.resolved);
+}
+
+static inline bool ulang_type_is_equal(Ulang_type a, Ulang_type b) {
+    if (a.type != b.type) {
+        return false;
+    }
+
+    switch (a.type) {
+        case ULANG_TYPE_FN:
+            return ulang_type_fn_is_equal(ulang_type_fn_const_unwrap(a), ulang_type_fn_const_unwrap(b));
+        case ULANG_TYPE_REGULAR:
+            return ulang_type_regular_is_equal(ulang_type_regular_const_unwrap(a), ulang_type_regular_const_unwrap(b));
+        case ULANG_TYPE_REG_GENERIC:
+            return ulang_type_generic_is_equal(ulang_type_generic_const_unwrap(a), ulang_type_generic_const_unwrap(b));
+        case ULANG_TYPE_TUPLE:
+            return ulang_type_tuple_is_equal(ulang_type_tuple_const_unwrap(a), ulang_type_tuple_const_unwrap(b));
+        case ULANG_TYPE_RESOL:
+            return ulang_type_resol_is_equal(ulang_type_resol_const_unwrap(a), ulang_type_resol_const_unwrap(b));
+    }
+    unreachable("");
+}
+
+static inline bool ulang_type_vec_is_equal(Ulang_type_vec a, Ulang_type_vec b) {
+    if (a.info.count != b.info.count) {
+        return false;
+    }
+
+    for (size_t idx = 0; idx < a.info.count; idx++) {
+        if (!ulang_type_is_equal(vec_at(&a, idx), vec_at(&b, idx))) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 #endif // ULANG_TYPE_H
 

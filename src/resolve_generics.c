@@ -10,6 +10,7 @@
 #include <ulang_type_get_atom.h>
 #include <generic_sub.h>
 #include <symbol_log.h>
+#include <ulang_type_print.h>
 
 static bool ulang_type_generics_are_present(Ulang_type lang_type);
 
@@ -238,7 +239,7 @@ static Uast_def* local_struct_new(Pos pos, Ustruct_def_base base) {
 
 static bool resolve_generics_ulang_type_internal_struct_like(
     Uast_def** after_res,
-    Ulang_type* result,
+    Ulang_type_resol* result,
     Env* env,
     Uast_def* before_res,
     Ulang_type lang_type,
@@ -273,9 +274,14 @@ static bool resolve_generics_ulang_type_internal_struct_like(
         *after_res = obj_new(uast_def_get_pos(before_res), new_base);
     }
 
-    *result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
-        uast_def_get_struct_def_base(*after_res).name, ulang_type_get_atom(lang_type).pointer_depth
-    ), ulang_type_get_pos(lang_type)));
+    *result = ulang_type_resol_new(
+        lang_type,
+        ulang_type_atom_new(
+            uast_def_get_struct_def_base(*after_res).name,
+            ulang_type_get_atom(lang_type).pointer_depth
+        ),
+        ulang_type_get_pos(lang_type)
+    ));
 
     Tast_def* dummy = NULL;
     if (symbol_lookup(&dummy, env, new_name)) {
@@ -284,7 +290,7 @@ static bool resolve_generics_ulang_type_internal_struct_like(
     return set_obj_types(env, obj_unwrap(before_res), obj_unwrap(*after_res));
 }
 
-static bool resolve_generics_ulang_type_internal(Ulang_type* result, Env* env, Uast_def* before_res, Ulang_type lang_type, Ulang_type_vec gen_args) {
+static bool resolve_generics_ulang_type_internal(Ulang_type_resol* result, Env* env, Uast_def* before_res, Ulang_type lang_type, Ulang_type_vec gen_args) {
     Uast_def* after_res = NULL;
     switch (before_res->type) {
         case UAST_RAW_UNION_DEF:
@@ -372,7 +378,7 @@ bool resolve_generics_ulang_type_generic(Ulang_type* result, Env* env, Ulang_typ
 
 bool resolve_generics_ulang_type_resol(Ulang_type* result, Env* env, Ulang_type_resol lang_type) {
     (void) env;
-    *result = ulang_type_regular_const_wrap(lang_type.resolved);
+    *result = ulang_type_resol_const_wrap(lang_type);
     return true;
 }
 

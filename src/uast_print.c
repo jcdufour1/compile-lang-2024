@@ -5,6 +5,7 @@
 #include <util.h>
 #include <ulang_type.h>
 #include <lang_type_print.h>
+#include <ulang_type_print.h>
 
 #include <symbol_table.h>
 

@@ -27,6 +27,9 @@ void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
         case LANG_TYPE_FN:
             string_extend_cstr(&print_arena, buf, "fn");
             return;
+        case LANG_TYPE_RESOL:
+            string_extend_cstr(&print_arena, buf, "resol");
+            return;
     }
     unreachable("");
 }
@@ -130,6 +133,8 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
     }
 
     switch (lang_type.type) {
+        case LANG_TYPE_RESOL:
+            todo();
         case LANG_TYPE_TUPLE:
             if (mode == LANG_TYPE_MODE_MSG) {
                 string_extend_cstr(&a_main, string, "(");

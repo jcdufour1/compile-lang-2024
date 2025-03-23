@@ -748,6 +748,8 @@ static Str_view load_ptr_symbol(
 
     //Lang_type new_lang_type = rm_tuple_lang_type(env, old_sym->lang_type, old_sym->pos);
     switch (old_sym->base.lang_type.type) {
+        case LANG_TYPE_RESOL:
+            todo();
         case LANG_TYPE_SUM:
             // TODO: should this always be interpreted as loading the tag of the sum?
         case LANG_TYPE_STRUCT:

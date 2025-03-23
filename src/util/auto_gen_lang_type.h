@@ -176,6 +176,16 @@ static Lang_type_type lang_type_gen_fn(const char* prefix) {
     return sym;
 }
 
+static Lang_type_type lang_type_gen_resol(const char* prefix) {
+    const char* base_name = "resol";
+    Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
+
+    append_member(&sym.members, "Ulang_type_generic", "original");
+    append_member(&sym.members, "Lang_type*", "resolved");
+
+    return sym;
+}
+
 static Lang_type_type lang_type_gen_struct(const char* prefix) {
     const char* base_name = "struct";
     Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
@@ -240,6 +250,7 @@ static Lang_type_type lang_type_gen_lang_type(void) {
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_tuple(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_void(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_fn(base_name));
+    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_resol(base_name));
 
     return lang_type;
 }
@@ -608,6 +619,7 @@ static void gen_lang_type(const char* file_path, bool implementation) {
         gen_gen("#ifndef LANG_TYPE_H\n");
         gen_gen("#define LANG_TYPE_H\n");
 
+        gen_gen("#include <ulang_type.h>\n");
         gen_gen("#include <lang_type_hand_written.h>\n");
     } else {
         gen_gen("#ifndef LANG_TYPE_FORWARD_DECL_H\n");
