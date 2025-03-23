@@ -46,6 +46,13 @@ static inline bool try_lang_type_from_ulang_type_resol(
     Pos pos
 );
 
+static inline bool try_lang_type_from_ulang_type_regular(
+    Lang_type* new_lang_type,
+    Env* env,
+    Ulang_type_regular lang_type,
+    Pos pos
+);
+
 static inline bool ustruct_def_base_get_lang_type_(Ulang_type* result, Env* env, Ustruct_def_base base, Ulang_type_vec generics, Pos pos) {
     (void) result;
     (void) env;
@@ -140,13 +147,15 @@ static inline bool try_lang_type_from_ulang_type_resol(
     Lang_type* new_lang_type,
     Env* env,
     Ulang_type_resol lang_type,
-    Pos pos
+    Pos pos // TODO: remove pos parameter here
 ) {
-    Ulang_type after_res = {0};
-    if (!resolve_generics_ulang_type_resol(&after_res, env, lang_type)) {
+    (void) pos;
+    Lang_type* new_resol = arena_alloc(&a_main, sizeof(Lang_type));
+    if (!try_lang_type_from_ulang_type_regular(new_resol, env, lang_type.resolved, lang_type.pos)) {
         return false;
     }
-    return try_lang_type_from_ulang_type(new_lang_type, env, after_res, pos);
+    *new_lang_type = lang_type_resol_const_wrap(lang_type_resol_new(lang_type.pos, *lang_type.original, new_resol));
+    return true;
 }
 
 static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Env* env, Ulang_type_regular lang_type, const Uast_primitive_def* def) {
@@ -184,8 +193,10 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     if (!resolve_generics_ulang_type_regular(&resolved, env, lang_type)) {
         return false;
     }
+    Ulang_type_atom atom = ulang_type_resol_const_unwrap(resolved).resolved.atom;
     Uast_def* result = NULL;
-    if (!usymbol_lookup(&result, env, ulang_type_regular_const_unwrap(resolved).atom.str)) {
+    log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, resolved));
+    if (!usymbol_lookup(&result, env, atom.str)) {
         msg(
             LOG_ERROR, EXPECT_FAIL_UNDEFINED_TYPE, env->file_text, pos,
             "undefined type `"TAST_FMT"`\n", ulang_type_print(LANG_TYPE_MODE_MSG, resolved)
@@ -194,7 +205,7 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
         return false;
     }
 
-    Lang_type_atom new_atom = lang_type_atom_new(ulang_type_regular_const_unwrap(resolved).atom.str, ulang_type_regular_const_unwrap(resolved).atom.pointer_depth);
+    Lang_type_atom new_atom = lang_type_atom_new(atom.str, atom.pointer_depth);
     switch (result->type) {
         case UAST_STRUCT_DEF:
             *new_lang_type = lang_type_struct_const_wrap(lang_type_struct_new(lang_type.pos, new_atom));
@@ -209,7 +220,7 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
             *new_lang_type = lang_type_sum_const_wrap(lang_type_sum_new(lang_type.pos, new_atom));
             return true;
         case UAST_PRIMITIVE_DEF:
-            *new_lang_type = lang_type_from_ulang_type_regular_primitive(env, ulang_type_regular_const_unwrap(resolved), uast_primitive_def_unwrap(result));
+            *new_lang_type = lang_type_from_ulang_type_regular_primitive(env, ulang_type_resol_const_unwrap(resolved).resolved, uast_primitive_def_unwrap(result));
             return true;
         case UAST_LITERAL_DEF:
             unwrap(uast_literal_def_const_unwrap(result)->type == UAST_VOID_DEF);
@@ -260,8 +271,7 @@ static inline bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Env* 
             );
         }
         case ULANG_TYPE_RESOL: {
-            todo();
-            if (!try_lang_type_from_ulang_type_regular(new_lang_type, env, ulang_type_resol_const_unwrap(lang_type).resolved, pos)) {
+            if (!try_lang_type_from_ulang_type_resol(new_lang_type, env, ulang_type_resol_const_unwrap(lang_type), pos)) {
                 return false;
             }
             return true;

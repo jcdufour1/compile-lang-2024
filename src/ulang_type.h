@@ -42,7 +42,7 @@ typedef struct Ulang_type_generic_ {
 }Ulang_type_generic;
 
 typedef struct Ulang_type_resol_ {
-    Ulang_type_generic original;
+    Ulang_type* original;
     Ulang_type_regular resolved;
     Pos pos;
 }Ulang_type_resol;
@@ -136,8 +136,11 @@ static inline Ulang_type_regular ulang_type_regular_new(Ulang_type_atom atom, Po
 static inline Ulang_type_generic ulang_type_generic_new(Ulang_type_atom atom, Ulang_type_vec generic_args, Pos pos){
     return (Ulang_type_generic) { .atom = atom,  .generic_args = generic_args, .pos = pos};
 }
-static inline Ulang_type_resol ulang_type_resol_new(Ulang_type_generic original, Ulang_type_regular resolved, Pos pos){
-    return (Ulang_type_resol) { .original = original, .resolved = resolved, .pos = pos};
+static inline Ulang_type ulang_type_clone(Ulang_type lang_type);
+static inline Ulang_type_resol ulang_type_resol_new(Ulang_type original, Ulang_type_regular resolved, Pos pos){
+    Ulang_type* new_original = arena_alloc(&a_main, sizeof(original));
+    *new_original = ulang_type_clone(original);
+    return (Ulang_type_resol) {.original = new_original, .resolved = resolved, .pos = pos};
 }
 
 static inline bool ulang_type_vec_is_equal(Ulang_type_vec a, Ulang_type_vec b);
@@ -165,7 +168,7 @@ static inline bool ulang_type_fn_is_equal(Ulang_type_fn a, Ulang_type_fn b) {
 }
 
 static inline bool ulang_type_resol_is_equal(Ulang_type_resol a, Ulang_type_resol b) {
-    return ulang_type_generic_is_equal(a.original, b.original) && ulang_type_regular_is_equal(a.resolved, b.resolved);
+    return ulang_type_is_equal(*a.original, *b.original) && ulang_type_regular_is_equal(a.resolved, b.resolved);
 }
 
 static inline bool ulang_type_is_equal(Ulang_type a, Ulang_type b) {
@@ -201,6 +204,9 @@ static inline bool ulang_type_vec_is_equal(Ulang_type_vec a, Ulang_type_vec b) {
 
     return true;
 }
+
+// TODO: do this better
+#include <ulang_type_clone.h>
 
 #endif // ULANG_TYPE_H
 

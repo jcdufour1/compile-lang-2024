@@ -44,7 +44,7 @@ static inline bool lang_type_fn_is_equal(Lang_type_fn a, Lang_type_fn b) {
 }
 
 static inline bool lang_type_resol_is_equal(Lang_type_resol a, Lang_type_resol b) {
-    return ulang_type_generic_is_equal(a.original, b.original) && lang_type_is_equal(*a.resolved, *b.resolved);
+    return ulang_type_is_equal(a.original, b.original) && lang_type_is_equal(*a.resolved, *b.resolved);
 }
 
 static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {

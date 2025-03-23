@@ -141,6 +141,8 @@ static void extend_type_call_str(Env* env, String* output, Lang_type lang_type) 
             lang_type = lang_type_void_const_wrap(lang_type_void_new(lang_type_get_pos(lang_type)));
             string_extend_strv(&a_main, output, serialize_lang_type(env, lang_type));
             return;
+        case LANG_TYPE_RESOL:
+            todo();
         case LANG_TYPE_PRIMITIVE:
             log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
             if (lang_type_primitive_const_unwrap(lang_type).type == LANG_TYPE_UNSIGNED_INT) {
@@ -1273,28 +1275,6 @@ static void emit_struct_literal(Env* env, String* output, String* literals, cons
 
     string_extend_cstr(&a_main, output, "} , align 4\n");
 }
-
-//static void emit_symbols(Env* env, String* output) {
-//    for (size_t idx = 0; idx < env->global_literals.capacity; idx++) {
-//        const Symbol_table_tast curr_tast = env->global_literals.table_tasts[idx];
-//        if (curr_tast.status != SYM_TBL_OCCUPIED) {
-//            continue;
-//        }
-//
-//        const Tast_literal_def* def = tast_literal_def_const_unwrap(curr_tast.tast);
-//
-//        switch (def->type) {
-//            case TAST_STRUCT_LIT_DEF:
-//                tast_emit_struct_literal(env, output, tast_struct_lit_def_const_unwrap(def));
-//                break;
-//            case TAST_STRING_DEF:
-//                tast_emit_symbol(output, curr_tast.key, tast_string_def_const_unwrap(def));
-//                break;
-//            default:
-//                todo();
-//        }
-//    }
-//}
 
 void emit_llvm_from_tree(Env* env, const Llvm_block* root) {
     String struct_defs = {0};

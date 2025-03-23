@@ -67,8 +67,7 @@ void extend_ulang_type_resol_to_string(String* string, LANG_TYPE_MODE mode, Ulan
     string_extend_cstr(&a_main, string, "(");
     extend_ulang_type_regular_to_string(string, mode, lang_type.resolved);
     string_extend_cstr(&a_main, string, ")");
-    extend_ulang_type_generic_to_string(string, mode, lang_type.original);
-    todo();
+    extend_ulang_type_to_string(string, mode, *lang_type.original);
 }
 
 void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type lang_type) {

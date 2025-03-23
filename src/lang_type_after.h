@@ -48,7 +48,7 @@ static inline Lang_type_atom lang_type_get_atom(Lang_type lang_type) {
         case LANG_TYPE_FN:
             return lang_type_atom_new_from_cstr("", 1);
         case LANG_TYPE_RESOL:
-            return lang_type_atom_new_from_cstr("", 1);
+            return lang_type_get_atom(*lang_type_resol_const_unwrap(lang_type).resolved);
         case LANG_TYPE_VOID: {
             Lang_type_atom thing = (Lang_type_atom) {0};
             return thing;
@@ -106,7 +106,8 @@ static inline void lang_type_set_atom(Env* env, Lang_type* lang_type, Lang_type_
         case LANG_TYPE_TUPLE:
             unreachable("");
         case LANG_TYPE_RESOL:
-            unreachable("");
+            lang_type_set_atom(env, lang_type_resol_unwrap(lang_type)->resolved, atom);
+            return;
         case LANG_TYPE_FN:
             unreachable("");
         case LANG_TYPE_VOID:

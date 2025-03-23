@@ -180,7 +180,7 @@ static Lang_type_type lang_type_gen_resol(const char* prefix) {
     const char* base_name = "resol";
     Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
 
-    append_member(&sym.members, "Ulang_type_generic", "original");
+    append_member(&sym.members, "Ulang_type", "original");
     append_member(&sym.members, "Lang_type*", "resolved");
 
     return sym;

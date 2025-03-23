@@ -1,5 +1,6 @@
 #include <lang_type_print.h>
 #include <lang_type_after.h>
+#include <ulang_type_print.h>
 
 void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
     switch (type) {
@@ -134,7 +135,17 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
 
     switch (lang_type.type) {
         case LANG_TYPE_RESOL:
-            todo();
+            if (mode != LANG_TYPE_MODE_MSG) {
+                string_extend_cstr(&a_main, string, "(");
+            }
+            extend_ulang_type_to_string(string, mode, lang_type_resol_const_unwrap(lang_type).original);
+            if (mode != LANG_TYPE_MODE_MSG) {
+                string_extend_cstr(&a_main, string, ")");
+                string_extend_cstr(&a_main, string, "(");
+                extend_lang_type_to_string(string, mode, *lang_type_resol_const_unwrap(lang_type).resolved);
+                string_extend_cstr(&a_main, string, ")");
+            }
+            goto end;
         case LANG_TYPE_TUPLE:
             if (mode == LANG_TYPE_MODE_MSG) {
                 string_extend_cstr(&a_main, string, "(");

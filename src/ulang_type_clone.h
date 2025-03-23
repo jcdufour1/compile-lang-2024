@@ -19,7 +19,7 @@ static inline Ulang_type_regular ulang_type_regular_clone(Ulang_type_regular lan
 
 static inline Ulang_type_resol ulang_type_resol_clone(Ulang_type_resol lang_type) {
     return ulang_type_resol_new(
-        ulang_type_generic_clone(lang_type.original),
+        ulang_type_clone(*lang_type.original),
         ulang_type_regular_clone(lang_type.resolved),
         lang_type.pos
     );

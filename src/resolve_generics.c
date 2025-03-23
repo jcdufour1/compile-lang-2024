@@ -276,12 +276,15 @@ static bool resolve_generics_ulang_type_internal_struct_like(
 
     *result = ulang_type_resol_new(
         lang_type,
-        ulang_type_atom_new(
-            uast_def_get_struct_def_base(*after_res).name,
-            ulang_type_get_atom(lang_type).pointer_depth
+        ulang_type_regular_new(
+            ulang_type_atom_new(
+                uast_def_get_struct_def_base(*after_res).name,
+                ulang_type_get_atom(lang_type).pointer_depth
+            ),
+            ulang_type_get_pos(lang_type)
         ),
         ulang_type_get_pos(lang_type)
-    ));
+    );
 
     Tast_def* dummy = NULL;
     if (symbol_lookup(&dummy, env, new_name)) {
@@ -345,19 +348,16 @@ static bool resolve_generics_ulang_type_internal(Ulang_type_resol* result, Env* 
             );
         }
         case UAST_PRIMITIVE_DEF:
-            *result = lang_type;
+            *result = ulang_type_resol_new(lang_type, ulang_type_regular_const_unwrap(lang_type), ulang_type_get_pos(lang_type));
             return true;
         case UAST_LITERAL_DEF:
-            *result = lang_type;
+            *result = ulang_type_resol_new(lang_type, ulang_type_regular_const_unwrap(lang_type), ulang_type_get_pos(lang_type));
             return true;
         default:
+            // TODO: remove this default
             unreachable(TAST_FMT, uast_def_print(before_res));
     }
-
-    *result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
-        uast_def_get_struct_def_base(after_res).name, ulang_type_get_atom(lang_type).pointer_depth
-    ), ulang_type_get_pos(lang_type)));
-    return true;
+    unreachable("");
 }
 
 bool resolve_generics_ulang_type_generic(Ulang_type* result, Env* env, Ulang_type_generic lang_type) {
@@ -367,13 +367,18 @@ bool resolve_generics_ulang_type_generic(Ulang_type* result, Env* env, Ulang_typ
         return false;
     }
 
-    return resolve_generics_ulang_type_internal(
-        result,
+    Ulang_type_resol result_ = {0};
+    if (!resolve_generics_ulang_type_internal(
+        &result_,
         env,
         before_res,
         ulang_type_generic_const_wrap(lang_type),
         lang_type.generic_args
-    );
+    )) {
+        return false;
+    }
+    *result = ulang_type_resol_const_wrap(result_);
+    return true;
 }
 
 bool resolve_generics_ulang_type_resol(Ulang_type* result, Env* env, Ulang_type_resol lang_type) {
@@ -389,12 +394,18 @@ bool resolve_generics_ulang_type_regular(Ulang_type* result, Env* env, Ulang_typ
         return false;
     }
 
-    return resolve_generics_ulang_type_internal(
-        result,
+    Ulang_type_resol result_ = {0};
+    if (!resolve_generics_ulang_type_internal(
+        &result_,
         env,
         before_res,
-        ulang_type_regular_const_wrap(lang_type), (Ulang_type_vec) {0}
-    );
+        ulang_type_regular_const_wrap(lang_type),
+        (Ulang_type_vec) {0}
+    )) {
+        return false;
+    }
+    *result = ulang_type_resol_const_wrap(result_);
+    return true;
 }
 
 bool resolve_generics_ulang_type(Ulang_type* result, Env* env, Ulang_type lang_type) {

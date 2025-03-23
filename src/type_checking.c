@@ -176,6 +176,8 @@ static bool can_be_implicitly_converted(Env* env, Lang_type dest, Lang_type src,
             return can_be_implicitly_converted_lang_type_atom(env, lang_type_enum_const_unwrap(dest).atom, lang_type_enum_const_unwrap(src).atom, false, implicit_pointer_depth);
         case LANG_TYPE_VOID:
             return true;
+        case LANG_TYPE_RESOL:
+            todo();
     }
     unreachable("");
 }
