@@ -88,6 +88,8 @@ void generic_sub_lang_type(
             todo();
         case ULANG_TYPE_TUPLE:
             todo();
+        case ULANG_TYPE_RESOL:
+            todo();
     }
     unreachable("");
 

@@ -370,6 +370,12 @@ bool resolve_generics_ulang_type_generic(Ulang_type* result, Env* env, Ulang_typ
     );
 }
 
+bool resolve_generics_ulang_type_resol(Ulang_type* result, Env* env, Ulang_type_resol lang_type) {
+    (void) env;
+    *result = ulang_type_regular_const_wrap(lang_type.resolved);
+    return true;
+}
+
 bool resolve_generics_ulang_type_regular(Ulang_type* result, Env* env, Ulang_type_regular lang_type) {
     Uast_def* before_res = NULL;
     if (!usymbol_lookup(&before_res, env, lang_type.atom.str)) {
@@ -394,6 +400,8 @@ bool resolve_generics_ulang_type(Ulang_type* result, Env* env, Ulang_type lang_t
         case ULANG_TYPE_TUPLE:
             todo();
         case ULANG_TYPE_FN:
+            todo();
+        case ULANG_TYPE_RESOL:
             todo();
     }
     unreachable("");
@@ -553,6 +561,8 @@ static bool ulang_type_generics_are_present(Ulang_type lang_type) {
             return ulang_type_generics_are_present_tuple(ulang_type_tuple_const_unwrap(lang_type));
         case ULANG_TYPE_FN:
             return ulang_type_generics_are_present_fn(ulang_type_fn_const_unwrap(lang_type));
+        case ULANG_TYPE_RESOL:
+            todo();
     }
     unreachable("");
 }

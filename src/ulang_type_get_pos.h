@@ -11,6 +11,8 @@ static inline Pos ulang_type_get_pos(Ulang_type lang_type) {
             return ulang_type_tuple_const_unwrap(lang_type).pos;
         case ULANG_TYPE_FN:
             return ulang_type_fn_const_unwrap(lang_type).pos;
+        case ULANG_TYPE_RESOL:
+            return ulang_type_resol_const_unwrap(lang_type).pos;
     }
     unreachable("");
 }

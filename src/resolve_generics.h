@@ -7,6 +7,8 @@
 
 bool resolve_generics_ulang_type_generic(Ulang_type* result, Env* env, Ulang_type_generic lang_type);
 
+bool resolve_generics_ulang_type_resol(Ulang_type* result, Env* env, Ulang_type_resol lang_type);
+
 bool resolve_generics_ulang_type(Ulang_type* result, Env* env, Ulang_type lang_type);
 
 bool resolve_generics_ulang_type_regular(Ulang_type* result, Env* env, Ulang_type_regular lang_type);

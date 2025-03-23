@@ -28,46 +28,66 @@ void extend_ulang_type_atom_to_string(String* string, LANG_TYPE_MODE mode, Ulang
     if (mode == LANG_TYPE_MODE_LOG) {
         vec_append(&print_arena, string, '>');
     }
-    return;
+}
+
+void extend_ulang_type_regular_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type_regular lang_type) {
+    extend_ulang_type_atom_to_string(string, mode, lang_type.atom);
+}
+
+void extend_ulang_type_tuple_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type_tuple lang_type) {
+    vec_append(&print_arena, string, '(');
+    for (size_t idx = 0; idx < lang_type.ulang_types.info.count; idx++) {
+        if (mode == LANG_TYPE_MODE_MSG && idx > 0) {
+            string_extend_cstr(&print_arena, string, ", ");
+        }
+        extend_ulang_type_to_string(string, mode, vec_at(&lang_type.ulang_types, idx));
+    }
+    vec_append(&print_arena, string, ')');
+}
+
+void extend_ulang_type_fn_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type_fn lang_type) {
+    string_extend_cstr(&a_main, string, "fn");
+    extend_ulang_type_to_string(string, mode, ulang_type_tuple_const_wrap(lang_type.params));
+    extend_ulang_type_to_string(string, mode, *lang_type.return_type);
+}
+
+void extend_ulang_type_generic_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type_generic lang_type) {
+    extend_ulang_type_atom_to_string(string, mode, lang_type.atom);
+    string_extend_cstr(&a_main, string, "(<");
+    for (size_t idx = 0; idx < lang_type.generic_args.info.count; idx++) {
+        if (mode == LANG_TYPE_MODE_MSG && idx > 0) {
+            string_extend_cstr(&print_arena, string, ", ");
+        }
+        extend_ulang_type_to_string(string, mode, vec_at(&lang_type.generic_args, idx));
+    }
+    string_extend_cstr(&a_main, string, ">)");
+}
+
+void extend_ulang_type_resol_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type_resol lang_type) {
+    string_extend_cstr(&a_main, string, "(");
+    extend_ulang_type_regular_to_string(string, mode, lang_type.resolved);
+    string_extend_cstr(&a_main, string, ")");
+    extend_ulang_type_generic_to_string(string, mode, lang_type.original);
+    todo();
 }
 
 void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
-            extend_ulang_type_atom_to_string(string, mode, ulang_type_regular_const_unwrap(lang_type).atom);
+            extend_ulang_type_regular_to_string(string, mode, ulang_type_regular_const_unwrap(lang_type));
             return;
-        case ULANG_TYPE_TUPLE: {
-            vec_append(&print_arena, string, '(');
-            Ulang_type_tuple tuple = ulang_type_tuple_const_unwrap(lang_type);
-            for (size_t idx = 0; idx < tuple.ulang_types.info.count; idx++) {
-                if (mode == LANG_TYPE_MODE_MSG && idx > 0) {
-                    string_extend_cstr(&print_arena, string, ", ");
-                }
-                extend_ulang_type_to_string(string, mode, vec_at(&tuple.ulang_types, idx));
-            }
-            vec_append(&print_arena, string, ')');
+        case ULANG_TYPE_TUPLE:
+            extend_ulang_type_tuple_to_string(string, mode, ulang_type_tuple_const_unwrap(lang_type));
             return;
-        }
-        case ULANG_TYPE_FN: {
-            string_extend_cstr(&a_main, string, "fn");
-            Ulang_type_fn fn = ulang_type_fn_const_unwrap(lang_type);
-            extend_ulang_type_to_string(string, mode, ulang_type_tuple_const_wrap(fn.params));
-            extend_ulang_type_to_string(string, mode, *fn.return_type);
+        case ULANG_TYPE_FN:
+            extend_ulang_type_fn_to_string(string, mode, ulang_type_fn_const_unwrap(lang_type));
             return;
-        }
-        case ULANG_TYPE_REG_GENERIC: {
-            Ulang_type_generic reg_gen = ulang_type_generic_const_unwrap(lang_type);
-            extend_ulang_type_atom_to_string(string, mode, reg_gen.atom);
-            string_extend_cstr(&a_main, string, "(<");
-            for (size_t idx = 0; idx < reg_gen.generic_args.info.count; idx++) {
-                if (mode == LANG_TYPE_MODE_MSG && idx > 0) {
-                    string_extend_cstr(&print_arena, string, ", ");
-                }
-                extend_ulang_type_to_string(string, mode, vec_at(&reg_gen.generic_args, idx));
-            }
-            string_extend_cstr(&a_main, string, ">)");
+        case ULANG_TYPE_REG_GENERIC:
+            extend_ulang_type_generic_to_string(string, mode, ulang_type_generic_const_unwrap(lang_type));
             return;
-        }
+        case ULANG_TYPE_RESOL:
+            extend_ulang_type_resol_to_string(string, mode, ulang_type_resol_const_unwrap(lang_type));
+            return;
     }
     unreachable("");
 }

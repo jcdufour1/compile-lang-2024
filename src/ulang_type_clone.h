@@ -3,6 +3,8 @@
 
 static inline Ulang_type ulang_type_clone(Ulang_type lang_type);
 
+static inline Ulang_type_generic ulang_type_generic_clone(Ulang_type_generic lang_type);
+
 static inline Ulang_type_vec ulang_type_vec_clone(Ulang_type_vec vec) {
     Ulang_type_vec new_vec = {0};
     for (size_t idx = 0; idx < vec.info.count; idx++) {
@@ -13,6 +15,14 @@ static inline Ulang_type_vec ulang_type_vec_clone(Ulang_type_vec vec) {
 
 static inline Ulang_type_regular ulang_type_regular_clone(Ulang_type_regular lang_type) {
     return lang_type;
+}
+
+static inline Ulang_type_resol ulang_type_resol_clone(Ulang_type_resol lang_type) {
+    return ulang_type_resol_new(
+        ulang_type_generic_clone(lang_type.original),
+        ulang_type_regular_clone(lang_type.resolved),
+        lang_type.pos
+    );
 }
 
 static inline Ulang_type_generic ulang_type_generic_clone(Ulang_type_generic lang_type) {
@@ -40,6 +50,10 @@ static inline Ulang_type ulang_type_clone(Ulang_type lang_type) {
         case ULANG_TYPE_REGULAR:
             return ulang_type_regular_const_wrap(ulang_type_regular_clone(
                 ulang_type_regular_const_unwrap(lang_type)
+            ));
+        case ULANG_TYPE_RESOL:
+            return ulang_type_resol_const_wrap(ulang_type_resol_clone(
+                ulang_type_resol_const_unwrap(lang_type)
             ));
     }
 }

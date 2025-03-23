@@ -64,6 +64,8 @@ static inline Str_view serialize_ulang_type(Ulang_type ulang_type) {
             return serialize_ulang_type_fn(ulang_type_fn_const_unwrap(ulang_type));
         case ULANG_TYPE_TUPLE:
             todo();
+        case ULANG_TYPE_RESOL:
+            todo();
     }
     assert(name.count > 1);
     return str_view_slice(name, 0, name.count - 1);
