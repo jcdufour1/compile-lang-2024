@@ -14,6 +14,11 @@
 #include <symbol_log.h>
 #include <lang_type_get_pos.h>
 
+static bool isdigit_no_underscore(char prev, char curr) {
+    (void) prev;
+    return isdigit(curr);
+}
+
 bool try_str_view_octal_after_0_to_int64_t(int64_t* result, const Env* env, Pos pos, Str_view str_view) {
     *result = 0;
     size_t idx = 0;
@@ -156,8 +161,8 @@ bool try_str_view_to_size_t(size_t* result, Str_view str_view) {
     return true;
 }
 
-bool try_str_view_consume_size_t(size_t* result, Str_view* str_view) {
-    Str_view num = str_view_consume_while(str_view, isdigit_char);
+bool try_str_view_consume_size_t(size_t* result, Str_view* str_view, bool ignore_underscore) {
+    Str_view num = str_view_consume_while(str_view, isdigit_no_underscore);
     return try_str_view_to_size_t(result, num);
 }
 

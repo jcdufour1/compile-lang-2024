@@ -90,7 +90,7 @@ Ulang_type get_parent_function_return_type(Env* env) {
 
 static bool can_be_implicitly_converted(Env* env, Lang_type dest, Lang_type src, bool src_is_zero, bool implicit_pointer_depth);
 
-static bool can_be_implicitly_converted_lang_type_atom(const Env* env, Lang_type_atom dest, Lang_type_atom src, bool src_is_zero, bool implicit_pointer_depth) {
+static bool can_be_implicitly_converted_lang_type_atom(Env* env, Lang_type_atom dest, Lang_type_atom src, bool src_is_zero, bool implicit_pointer_depth) {
     if (!implicit_pointer_depth) {
         if (src.pointer_depth != dest.pointer_depth) {
             return false;

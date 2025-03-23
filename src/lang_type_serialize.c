@@ -14,7 +14,7 @@ Str_view serialize_struct_def_base(Env* env, Struct_def_base base) {
     return string_to_strv(name);
 }
 
-Str_view serialize_lang_type_struct_thing_get_prefix(Lang_type lang_type) {
+Str_view serialize_lang_type_get_prefix(Lang_type lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_RAW_UNION:
             return str_view_from_cstr("RAW_UNION");
@@ -24,15 +24,21 @@ Str_view serialize_lang_type_struct_thing_get_prefix(Lang_type lang_type) {
             return str_view_from_cstr("ENUM");
         case LANG_TYPE_SUM:
             return str_view_from_cstr("SUM");
-        default:
+        case LANG_TYPE_PRIMITIVE:
+            return str_view_from_cstr("PRI");
+        case LANG_TYPE_TUPLE:
             todo();
+        case LANG_TYPE_VOID:
+            return str_view_from_cstr("VOID");
+        case LANG_TYPE_FN:
+            return str_view_from_cstr("FN");
     }
     unreachable("");
 }
 
 Str_view serialize_lang_type_struct_thing(Env* env, Lang_type lang_type) {
     String name = {0};
-    string_extend_strv(&a_main, &name, serialize_lang_type_struct_thing_get_prefix(lang_type));
+    string_extend_strv(&a_main, &name, serialize_lang_type_get_prefix(lang_type));
 
     Tast_def* def = NULL;
     unwrap(symbol_lookup(&def, env, lang_type_get_str(lang_type)));
@@ -95,4 +101,9 @@ Str_view serialize_lang_type(Env* env, Lang_type lang_type) {
         }
     }
     unreachable("");
+}
+
+Lang_type deserialize_lang_type(Str_view* serialized) {
+    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
+    todo();
 }
