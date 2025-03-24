@@ -42,6 +42,7 @@ for generics:
 - make actual if_expression test
 - make expected failure test for using variable to assign self in initialization
     (eg. let num i32 = num*4)
+- rename ULANG_TYPE_REG_GENERIC to ULANG_TYPE_GENERIC
 
 
 
