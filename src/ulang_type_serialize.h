@@ -19,6 +19,8 @@ Str_view serialize_ulang_type_regular(Ulang_type_regular ulang_type);
 
 Str_view serialize_ulang_type(Ulang_type ulang_type);
 
-Ulang_type deserialize_consume_ulang_type(Str_view* serialized);
+Ulang_type_atom deserialize_ulang_type_atom(Str_view* serialized);
+
+Ulang_type deserialize_ulang_type(Str_view* serialized);
 
 #endif // ULANG_TYPE_SERIALIZE_H

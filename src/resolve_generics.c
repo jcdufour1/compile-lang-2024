@@ -16,32 +16,28 @@ static bool ulang_type_generics_are_present(Ulang_type lang_type);
 Str_view serialize_generic(Env* env, Str_view old_name, Ulang_type_vec gen_args) {
     String name = {0};
     string_extend_cstr(&a_main, &name, "____");
-    string_extend_size_t(&a_main, &name, old_name.count);
-    string_extend_strv(&a_main, &name, old_name);
+    string_extend_strv(&a_main, &name, serialize_ulang_type_atom(ulang_type_atom_new(old_name, 0)));
     for (size_t idx = 0; idx < gen_args.info.count; idx++) {
         string_extend_strv(&a_main, &name, serialize_ulang_type(vec_at(&gen_args, idx)));
     }
     return string_to_strv(name);
 }
 
-bool deserialize_generic(Ulang_type_generic* deserialized, Str_view serialized) {
-    if (!str_view_try_consume_count(&serialized, '_', 4)) { // for now, ____ means generic
+bool deserialize_generic(Ulang_type_generic* deserialized, Str_view* serialized) {
+    if (!str_view_try_consume_count(serialized, '_', 4)) { // for now, ____ means generic
         // not a generic lang_type
         return false;
     }
 
-    size_t len = 0;
-    unwrap(try_str_view_consume_size_t(&len, &serialized, false));
-    Str_view base = str_view_consume_count(&serialized, len);
+    Ulang_type_atom atom = deserialize_ulang_type_atom(serialized);
 
     Ulang_type_vec gen_args = {0};
-    while (serialized.count > 0) {
-        Ulang_type gen_arg = deserialize_consume_ulang_type(&serialized);
+    while (serialized->count > 0) {
+        Ulang_type gen_arg = deserialize_ulang_type(serialized);
         vec_append(&a_main, &gen_args, gen_arg);
     }
 
-    *deserialized = ulang_type_generic_new(ulang_type_atom_new(base, 0), gen_args, POS_BUILTIN);
-
+    *deserialized = ulang_type_generic_new(atom, gen_args, POS_BUILTIN);
     return true;
 }
 
@@ -210,6 +206,7 @@ static bool try_set_sum_def_types(Env* env, Uast_sum_def* before_res, Uast_sum_d
 }
 
 static bool resolve_generics_serialize_struct_def_base(
+    Env* env,
     Ustruct_def_base* new_base,
     Ustruct_def_base old_base,
     Ulang_type_vec gen_args,
@@ -231,7 +228,7 @@ static bool resolve_generics_serialize_struct_def_base(
 
     for (size_t idx_gen = 0; idx_gen < gen_args.info.count; idx_gen++) {
         Str_view gen_def = vec_at(&old_base.generics, idx_gen)->child->name;
-        generic_sub_struct_def_base(new_base, gen_def, vec_at(&gen_args, idx_gen));
+        generic_sub_struct_def_base(env, new_base, gen_def, vec_at(&gen_args, idx_gen));
     }
 
     assert(old_base.members.info.count == new_base->members.info.count);
@@ -290,7 +287,7 @@ static bool resolve_generics_ulang_type_internal_struct_like(
         *after_res = new_def_;
     } else {
         Ustruct_def_base new_base = {0};
-        if (!resolve_generics_serialize_struct_def_base(&new_base, old_base, gen_args, new_name)) {
+        if (!resolve_generics_serialize_struct_def_base(env, &new_base, old_base, gen_args, new_name)) {
             return false;
         }
         *after_res = obj_new(uast_def_get_pos(before_res), new_base);

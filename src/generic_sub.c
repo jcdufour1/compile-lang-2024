@@ -106,12 +106,9 @@ void generic_sub_variable_def(Env* env, Uast_variable_def* def, Str_view gen_par
     generic_sub_lang_type(env, &def->lang_type, def->lang_type, gen_param, gen_arg);
 }
 
-void generic_sub_struct_def_base(Ustruct_def_base* base, Str_view gen_param, Ulang_type gen_arg) {
+void generic_sub_struct_def_base(Env* env, Ustruct_def_base* base, Str_view gen_param, Ulang_type gen_arg) {
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        Str_view memb = ulang_type_regular_const_unwrap(vec_at(&base->members, idx)->lang_type).atom.str;
-        if (str_view_is_equal(gen_param, memb)) {
-            vec_at(&base->members, idx)->lang_type = ulang_type_clone(gen_arg);
-        }
+        generic_sub_lang_type(env, &vec_at(&base->members, idx)->lang_type, vec_at(&base->members, idx)->lang_type, gen_param, gen_arg);
     }
 }
 

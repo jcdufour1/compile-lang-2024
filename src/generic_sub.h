@@ -12,7 +12,7 @@ void generic_sub_stmt(Env* env, Uast_stmt* stmt, Str_view gen_param, Ulang_type 
 
 void generic_sub_block(Env* env, Uast_block* block, Str_view gen_param, Ulang_type gen_arg);
 
-void generic_sub_struct_def_base(Ustruct_def_base* base, Str_view gen_param, Ulang_type gen_arg);
+void generic_sub_struct_def_base(Env* env, Ustruct_def_base* base, Str_view gen_param, Ulang_type gen_arg);
 
 void generic_sub_lang_type(
     Env* env,

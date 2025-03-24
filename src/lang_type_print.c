@@ -78,7 +78,8 @@ Str_view lang_type_vec_print_internal(Lang_type_vec types) {
 
 void extend_lang_type_atom(String* string, LANG_TYPE_MODE mode, Lang_type_atom atom) {
     Ulang_type_generic deserialized = {0};
-    if (deserialize_generic(&deserialized, atom.str)) {
+    Str_view temp = atom.str;
+    if (deserialize_generic(&deserialized, &temp)) {
         extend_ulang_type_to_string(string, mode, ulang_type_generic_const_wrap(deserialized));
         return;
     }

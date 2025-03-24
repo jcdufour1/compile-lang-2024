@@ -33,13 +33,29 @@ Str_view serialize_ulang_type_regular(Ulang_type_regular ulang_type) {
     return serialize_ulang_type_atom(ulang_type.atom);
 }
 
+Str_view serialize_ulang_type_vec(Ulang_type_vec vec) {
+    String name = {0};
+    for (size_t idx = 0; idx < vec.info.count; idx++) {
+        string_extend_strv(&a_main, &name, serialize_ulang_type(vec_at(&vec, idx)));
+    }
+    return string_to_strv(name);
+}
+
+Str_view serialize_ulang_type_generic(Ulang_type_generic ulang_type) {
+    String name = {0};
+    string_extend_cstr(&a_main, &name, "____");
+    string_extend_strv(&a_main, &name, serialize_ulang_type_atom(ulang_type.atom));
+    string_extend_strv(&a_main, &name, serialize_ulang_type_vec(ulang_type.generic_args));
+    return string_to_strv(name);
+}
+
 Str_view serialize_ulang_type(Ulang_type ulang_type) {
     Str_view name = ulang_type_print_internal(LANG_TYPE_MODE_LOG, ulang_type);
     switch (ulang_type.type) {
         case ULANG_TYPE_REGULAR:
             return serialize_ulang_type_regular(ulang_type_regular_const_unwrap(ulang_type));
         case ULANG_TYPE_REG_GENERIC:
-            todo();
+            return serialize_ulang_type_generic(ulang_type_generic_const_unwrap(ulang_type));
         case ULANG_TYPE_FN:
             return serialize_ulang_type_fn(ulang_type_fn_const_unwrap(ulang_type));
         case ULANG_TYPE_TUPLE:
@@ -49,7 +65,7 @@ Str_view serialize_ulang_type(Ulang_type ulang_type) {
     return str_view_slice(name, 0, name.count - 1);
 }
 
-Ulang_type deserialize_consume_ulang_type(Str_view* serialized) {
+Ulang_type_atom deserialize_ulang_type_atom(Str_view* serialized) {
     size_t pointer_depth = 0;
     unwrap(try_str_view_consume_size_t(&pointer_depth, serialized, false));
     unwrap(str_view_try_consume(serialized, '_'));
@@ -64,6 +80,16 @@ Ulang_type deserialize_consume_ulang_type(Str_view* serialized) {
 
     unwrap(str_view_try_consume_count(serialized, '_', 2));
 
-    return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(base, pointer_depth), POS_BUILTIN /* TODO */));
+    return ulang_type_atom_new(base, pointer_depth);
+}
+
+Ulang_type deserialize_ulang_type(Str_view* serialized) {
+    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
+    Ulang_type_generic gen = {0};
+    if (deserialize_generic(&gen, serialized)) {
+        return ulang_type_generic_const_wrap(gen);
+    }
+
+    return ulang_type_regular_const_wrap(ulang_type_regular_new(deserialize_ulang_type_atom(serialized), POS_BUILTIN /* TODO */));
 }
 
