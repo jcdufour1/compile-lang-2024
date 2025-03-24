@@ -13,9 +13,11 @@
 
 static bool ulang_type_generics_are_present(Ulang_type lang_type);
 
-Str_view serialize_generic(Env* env, Str_view old_name, Ulang_type_vec gen_args) {
+Str_view serialize_generic(Str_view old_name, Ulang_type_vec gen_args) {
     String name = {0};
     string_extend_cstr(&a_main, &name, "____");
+    string_extend_size_t(&a_main, &name, gen_args.info.count);
+    string_extend_cstr(&a_main, &name, "_");
     string_extend_strv(&a_main, &name, serialize_ulang_type_atom(ulang_type_atom_new(old_name, 0)));
     for (size_t idx = 0; idx < gen_args.info.count; idx++) {
         string_extend_strv(&a_main, &name, serialize_ulang_type(vec_at(&gen_args, idx)));
@@ -24,15 +26,22 @@ Str_view serialize_generic(Env* env, Str_view old_name, Ulang_type_vec gen_args)
 }
 
 bool deserialize_generic(Ulang_type_generic* deserialized, Str_view* serialized) {
+    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
     if (!str_view_try_consume_count(serialized, '_', 4)) { // for now, ____ means generic
         // not a generic lang_type
         return false;
     }
+    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
+    size_t count_gen = 0;
+    unwrap(try_str_view_consume_size_t(&count_gen, serialized, false));
+    unwrap(str_view_try_consume(serialized, '_'));
 
+    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
     Ulang_type_atom atom = deserialize_ulang_type_atom(serialized);
+    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
 
     Ulang_type_vec gen_args = {0};
-    while (serialized->count > 0) {
+    for (size_t idx = 0; idx < count_gen; idx++) {
         Ulang_type gen_arg = deserialize_ulang_type(serialized);
         vec_append(&a_main, &gen_args, gen_arg);
     }
@@ -268,7 +277,7 @@ static bool resolve_generics_ulang_type_internal_struct_like(
     Obj_unwrap obj_unwrap
 ) {
     Ustruct_def_base old_base = uast_def_get_struct_def_base(before_res);
-    Str_view new_name = serialize_generic(env, old_base.name, gen_args);
+    Str_view new_name = serialize_generic(old_base.name, gen_args);
 
     if (old_base.generics.info.count != gen_args.info.count) {
         msg_invalid_count_generic_args(

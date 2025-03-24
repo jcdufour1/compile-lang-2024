@@ -42,11 +42,7 @@ Str_view serialize_ulang_type_vec(Ulang_type_vec vec) {
 }
 
 Str_view serialize_ulang_type_generic(Ulang_type_generic ulang_type) {
-    String name = {0};
-    string_extend_cstr(&a_main, &name, "____");
-    string_extend_strv(&a_main, &name, serialize_ulang_type_atom(ulang_type.atom));
-    string_extend_strv(&a_main, &name, serialize_ulang_type_vec(ulang_type.generic_args));
-    return string_to_strv(name);
+    return serialize_generic(ulang_type.atom.str, ulang_type.generic_args);
 }
 
 Str_view serialize_ulang_type(Ulang_type ulang_type) {
@@ -67,6 +63,7 @@ Str_view serialize_ulang_type(Ulang_type ulang_type) {
 
 Ulang_type_atom deserialize_ulang_type_atom(Str_view* serialized) {
     size_t pointer_depth = 0;
+    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
     unwrap(try_str_view_consume_size_t(&pointer_depth, serialized, false));
     unwrap(str_view_try_consume(serialized, '_'));
 

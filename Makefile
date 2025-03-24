@@ -46,6 +46,7 @@ OBJS=\
 	 ${BUILD_DIR}/parser_utils.o \
 	 ${BUILD_DIR}/error_msg.o \
 	 ${BUILD_DIR}/lang_type_serialize.o \
+	 ${BUILD_DIR}/ulang_type_serialize.o \
 	 ${BUILD_DIR}/uast_clone.o \
 	 ${BUILD_DIR}/tast_clone.o \
 	 ${BUILD_DIR}/symbol_collection_clone.o \
@@ -151,6 +152,9 @@ ${BUILD_DIR}/sizeof.o: ${DEP_COMMON} src/sizeof.c third_party/*
 
 ${BUILD_DIR}/lang_type_serialize.o: ${DEP_COMMON} src/lang_type_serialize.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type_serialize.o src/lang_type_serialize.c
+
+${BUILD_DIR}/ulang_type_serialize.o: ${DEP_COMMON} src/ulang_type_serialize.c third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ulang_type_serialize.o src/ulang_type_serialize.c
 
 ${BUILD_DIR}/symbol_collection_clone.o: ${DEP_COMMON} src/symbol_collection_clone.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/symbol_collection_clone.o src/symbol_collection_clone.c

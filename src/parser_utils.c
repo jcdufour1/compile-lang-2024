@@ -162,6 +162,7 @@ bool try_str_view_to_size_t(size_t* result, Str_view str_view) {
 }
 
 bool try_str_view_consume_size_t(size_t* result, Str_view* str_view, bool ignore_underscore) {
+    assert(!ignore_underscore && "not implemented");
     Str_view num = str_view_consume_while(str_view, isdigit_no_underscore);
     return try_str_view_to_size_t(result, num);
 }
