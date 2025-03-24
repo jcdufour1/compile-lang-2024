@@ -52,7 +52,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"invalid-member-access", EXPECT_FAIL_INVALID_MEMBER_ACCESS},
     {"missing-return-statement", EXPECT_FAIL_MISSING_RETURN},
     {"invalid-count-fun-args", EXPECT_FAIL_INVALID_COUNT_FUN_ARGS},
-    {"invalid-function-arguments", EXPECT_FAIL_INVALID_FUN_ARG},
+    {"invalid-function-arg", EXPECT_FAIL_INVALID_FUN_ARG},
     {"mismatched-return-type", EXPECT_FAIL_MISMATCHED_RETURN_TYPE},
     {"mismatched-yield-type", EXPECT_FAIL_MISMATCHED_YIELD_TYPE},
     {"assignment-mismatched-types", EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES},
