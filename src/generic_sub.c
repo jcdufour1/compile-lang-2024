@@ -29,11 +29,13 @@ void generic_sub_lang_type_regular(
     Ulang_type gen_arg
 ) {
     if (str_view_is_equal(gen_param, lang_type.atom.str)) {
+        int16_t base_point_depth = lang_type.atom.pointer_depth;
         *new_lang_type = ulang_type_clone(gen_arg);
+        Ulang_type_regular new_temp = ulang_type_regular_const_unwrap(*new_lang_type);
+        *new_lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(new_temp.atom.str, new_temp.atom.pointer_depth + base_point_depth), lang_type.pos));
     } else {
         *new_lang_type = ulang_type_clone(ulang_type_regular_const_wrap(lang_type));
     }
-    return;
 }
 
 void generic_sub_lang_type_generic(

@@ -1850,7 +1850,7 @@ bool try_set_index_untyped_types(Env* env, Tast_stmt** new_tast, Uast_index* ind
     if (!try_set_expr_types(env, &new_inner_index, index->index)) {
         return false;
     }
-    if (lang_type_get_bit_width(tast_expr_get_lang_type(new_inner_index)) < 64) {
+    if (lang_type_get_bit_width(tast_expr_get_lang_type(new_inner_index)) <= 64) {
         unwrap(try_set_unary_types_finish(
             env,
             &new_inner_index,
