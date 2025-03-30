@@ -29,10 +29,11 @@ void generic_sub_lang_type_regular(
     Ulang_type gen_arg
 ) {
     if (str_view_is_equal(gen_param, lang_type.atom.str)) {
-        int16_t base_point_depth = lang_type.atom.pointer_depth;
         *new_lang_type = ulang_type_clone(gen_arg);
-        Ulang_type_regular new_temp = ulang_type_regular_const_unwrap(*new_lang_type);
-        *new_lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(new_temp.atom.str, new_temp.atom.pointer_depth + base_point_depth), lang_type.pos));
+
+        int16_t base_depth = lang_type.atom.pointer_depth;
+        int16_t gen_prev_depth = ulang_type_get_pointer_depth(*new_lang_type);
+        ulang_type_set_pointer_depth(new_lang_type, gen_prev_depth + base_depth);
     } else {
         *new_lang_type = ulang_type_clone(ulang_type_regular_const_wrap(lang_type));
     }
@@ -264,6 +265,9 @@ void generic_sub_expr(Env* env, Uast_expr* expr, Str_view gen_param, Ulang_type 
             return;
         case UAST_IF_ELSE_CHAIN:
             generic_sub_if_else_chain(env, uast_if_else_chain_unwrap(expr), gen_param, gen_arg);
+            return;
+        case UAST_ARRAY_LITERAL:
+            todo();
             return;
     }
     unreachable("");

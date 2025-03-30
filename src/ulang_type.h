@@ -38,6 +38,7 @@ typedef struct Ulang_type_regular_ {
 typedef struct Ulang_type_generic_ {
     Ulang_type_atom atom;
     Ulang_type_vec generic_args;
+    int16_t pointer_depth;
     Pos pos;
 }Ulang_type_generic;
 
@@ -70,9 +71,17 @@ static inline Ulang_type_regular ulang_type_regular_const_unwrap(const Ulang_typ
     unwrap(ulang_type.type == ULANG_TYPE_REGULAR);
     return ulang_type.as.ulang_type_regular;
 }
+static inline Ulang_type_regular* ulang_type_regular_unwrap(Ulang_type* ulang_type) {
+    unwrap(ulang_type->type == ULANG_TYPE_REGULAR);
+    return &ulang_type->as.ulang_type_regular;
+}
 static inline Ulang_type_generic ulang_type_generic_const_unwrap(const Ulang_type ulang_type) {
     unwrap(ulang_type.type == ULANG_TYPE_REG_GENERIC);
     return ulang_type.as.ulang_type_generic;
+}
+static inline Ulang_type_generic* ulang_type_generic_unwrap(Ulang_type* ulang_type) {
+    unwrap(ulang_type->type == ULANG_TYPE_REG_GENERIC);
+    return &ulang_type->as.ulang_type_generic;
 }
 static inline Ulang_type ulang_type_tuple_const_wrap(Ulang_type_tuple ulang_type) {
     Ulang_type new_ulang_type = {0};
@@ -118,5 +127,36 @@ static inline Ulang_type_regular ulang_type_regular_new(Ulang_type_atom atom, Po
 static inline Ulang_type_generic ulang_type_generic_new(Ulang_type_atom atom, Ulang_type_vec generic_args, Pos pos){
     return (Ulang_type_generic) { .atom = atom,  .generic_args = generic_args, .pos = pos};
 }
+
+static inline int16_t ulang_type_get_pointer_depth(Ulang_type lang_type) {
+    switch (lang_type.type) {
+        case ULANG_TYPE_TUPLE:
+            todo();
+        case ULANG_TYPE_FN:
+            todo();
+        case ULANG_TYPE_REGULAR:
+            return ulang_type_regular_const_unwrap(lang_type).atom.pointer_depth;
+        case ULANG_TYPE_REG_GENERIC:
+            return ulang_type_generic_const_unwrap(lang_type).pointer_depth;
+    }
+    unreachable("");
+}
+
+static inline void ulang_type_set_pointer_depth(Ulang_type* lang_type, int16_t pointer_depth) {
+    switch (lang_type->type) {
+        case ULANG_TYPE_TUPLE:
+            todo();
+        case ULANG_TYPE_FN:
+            todo();
+        case ULANG_TYPE_REGULAR:
+            ulang_type_regular_unwrap(lang_type)->atom.pointer_depth = pointer_depth;
+            return;
+        case ULANG_TYPE_REG_GENERIC:
+            ulang_type_generic_unwrap(lang_type)->pointer_depth = pointer_depth;
+            return;
+    }
+    unreachable("");
+}
+
 #endif // ULANG_TYPE_H
 

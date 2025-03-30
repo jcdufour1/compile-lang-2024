@@ -132,6 +132,8 @@ Uast_expr* uast_expr_clone(const Uast_expr* expr) {
             return uast_switch_wrap(uast_switch_clone(uast_switch_const_unwrap(expr)));
         case UAST_IF_ELSE_CHAIN:
             return uast_if_else_chain_wrap(uast_if_else_chain_clone(uast_if_else_chain_const_unwrap(expr)));
+        case UAST_ARRAY_LITERAL:
+            todo();
     }
     unreachable("");
 }
