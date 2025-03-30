@@ -1,0 +1,25 @@
+
+extern("c") fn printf(format_string u8*, args any...) i32
+
+extern("c") fn abort()
+
+type Slice struct(<ItemType>) {
+    items ItemType*
+    count u64
+}
+
+fn slice_at(<ItemType>)(slice Slice(<ItemType>), index u64) ItemType {
+    if (index >= slice.count) {
+        abort()
+    }
+    return slice.items[index]
+}
+
+fn main() i32 {
+    let slice Slice(<i32>) = [87, 131]
+
+    printf("%d\n", slice_at(<i32>)(slice, 0))
+    printf("%d\n", slice_at(<i32>)(slice, 1))
+
+    return 0
+}

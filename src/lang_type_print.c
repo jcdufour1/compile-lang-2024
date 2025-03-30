@@ -172,7 +172,6 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
         case LANG_TYPE_STRUCT:
             // fallthrough
         case LANG_TYPE_PRIMITIVE:
-            log(LOG_DEBUG, "%d\n", lang_type_get_atom(lang_type).pointer_depth);
             extend_lang_type_atom(string, mode, lang_type_get_atom(lang_type));
             goto end;
     }
