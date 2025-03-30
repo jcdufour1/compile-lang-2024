@@ -221,8 +221,9 @@ static inline bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Env* 
             )) {
                 return false;
             }
-            *new_lang_type = lang_type_from_ulang_type(env, after_res);
-            return true;
+            log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
+            log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, after_res));
+            return try_lang_type_from_ulang_type(new_lang_type, env, after_res, pos);
         }
     }
     unreachable("");

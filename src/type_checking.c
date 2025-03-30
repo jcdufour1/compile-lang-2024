@@ -2057,7 +2057,7 @@ bool try_set_variable_def_types(
     Lang_type new_lang_type = {0};
     if (!try_lang_type_from_ulang_type(&new_lang_type, env, uast->lang_type, uast->pos)) {
         Tast_poison_def* new_poison = tast_poison_def_new(uast->pos, uast->name);
-        unwrap(symbol_add(env, tast_poison_def_wrap(new_poison)));
+        symbol_add(env, tast_poison_def_wrap(new_poison));
         return false;
     }
 
