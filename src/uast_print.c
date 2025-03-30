@@ -134,6 +134,21 @@ Str_view uast_struct_literal_print_internal(const Uast_struct_literal* lit, int 
     return string_to_strv(buf);
 }
 
+Str_view uast_array_literal_print_internal(const Uast_array_literal* lit, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&print_arena, &buf, "array_literal", indent);
+    string_extend_strv(&print_arena, &buf, lit->name);
+    string_extend_cstr(&print_arena, &buf, "\n");
+
+    for (size_t idx = 0; idx < lit->members.info.count; idx++) {
+        Str_view memb_text = uast_expr_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);
+        string_extend_strv(&print_arena, &buf, memb_text);
+    }
+
+    return string_to_strv(buf);
+}
+
 Str_view uast_tuple_print_internal(const Uast_tuple* lit, int indent) {
     String buf = {0};
 
@@ -642,6 +657,8 @@ Str_view uast_expr_print_internal(const Uast_expr* expr, int indent) {
             return uast_function_call_print_internal(uast_function_call_const_unwrap(expr), indent);
         case UAST_STRUCT_LITERAL:
             return uast_struct_literal_print_internal(uast_struct_literal_const_unwrap(expr), indent);
+        case UAST_ARRAY_LITERAL:
+            return uast_array_literal_print_internal(uast_array_literal_const_unwrap(expr), indent);
         case UAST_TUPLE:
             return uast_tuple_print_internal(uast_tuple_const_unwrap(expr), indent);
         case UAST_SUM_ACCESS:

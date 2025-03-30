@@ -275,6 +275,10 @@ static bool starts_with_struct_literal(Tk_view tokens) {
     return try_consume(NULL, &tokens, TOKEN_OPEN_CURLY_BRACE);
 }
 
+static bool starts_with_array_literal(Tk_view tokens) {
+    return try_consume(NULL, &tokens, TOKEN_OPEN_SQ_BRACKET);
+}
+
 static void sync(Tk_view* tokens) {
     int bracket_depth = 0;
     while (tokens->count > 0) {
@@ -2038,14 +2042,8 @@ end:
     return status;
 }
 
-static PARSE_STATUS parse_struct_literal(Env* env, Uast_struct_literal** struct_lit, Tk_view* tokens) {
-    Token start_token;
-    if (!try_consume(&start_token, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), "at start of struct literal", TOKEN_OPEN_CURLY_BRACE);
-        return PARSE_ERROR;
-    }
-    Uast_expr_vec members = {0};
-
+static PARSE_STATUS parse_struct_literal_members(Env* env, Uast_expr_vec* members, Tk_view* tokens) {
+    memset(members, 0, sizeof(*members));
 
     try_consume(NULL, tokens, TOKEN_NEW_LINE);
     do {
@@ -2062,11 +2060,28 @@ static PARSE_STATUS parse_struct_literal(Env* env, Uast_struct_literal** struct_
             default:
                 unreachable("");
         }
-        vec_append(&a_main, &members, memb);
+        vec_append(&a_main, members, memb);
         try_consume(NULL, tokens, TOKEN_NEW_LINE);
     } while (try_consume(NULL, tokens, TOKEN_COMMA));
 
-    if (!try_consume(&start_token, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
+    return PARSE_OK;
+}
+
+
+static PARSE_STATUS parse_struct_literal(Env* env, Uast_struct_literal** struct_lit, Tk_view* tokens) {
+    Token start_token;
+    if (!try_consume(&start_token, tokens, TOKEN_OPEN_CURLY_BRACE)) {
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), "at start of struct literal", TOKEN_OPEN_CURLY_BRACE);
+        return PARSE_ERROR;
+    }
+
+    Uast_expr_vec members = {0};
+    PARSE_STATUS status = parse_struct_literal_members(env, &members, tokens);
+    if (status != PARSE_OK) {
+        return status;
+    }
+
+    if (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
         if (members.info.count > 0) {
             msg_parser_expected(
                 env->file_text,
@@ -2089,6 +2104,45 @@ static PARSE_STATUS parse_struct_literal(Env* env, Uast_struct_literal** struct_
     }
 
     *struct_lit = uast_struct_literal_new(start_token.pos, members, util_literal_name_new());
+    return PARSE_OK;
+}
+
+static PARSE_STATUS parse_array_literal(Env* env, Uast_array_literal** arr_lit, Tk_view* tokens) {
+    Token start_token;
+    if (!try_consume(&start_token, tokens, TOKEN_OPEN_SQ_BRACKET)) {
+        msg_parser_expected(env->file_text, tk_view_front(*tokens), "at start of array literal", TOKEN_OPEN_CURLY_BRACE);
+        return PARSE_ERROR;
+    }
+    
+    Uast_expr_vec members = {0};
+    PARSE_STATUS status = parse_struct_literal_members(env, &members, tokens);
+    if (status != PARSE_OK) {
+        return status;
+    }
+
+    if (!try_consume(NULL, tokens, TOKEN_CLOSE_SQ_BRACKET)) {
+        if (members.info.count > 0) {
+            msg_parser_expected(
+                env->file_text,
+                tk_view_front(*tokens),
+                "after expression in array literal",
+                TOKEN_COMMA,
+                TOKEN_NEW_LINE,
+                TOKEN_CLOSE_SQ_BRACKET
+            );
+        } else {
+            msg_parser_expected(
+                env->file_text,
+                tk_view_front(*tokens),
+                "in array literal",
+                TOKEN_SINGLE_DOT,
+                TOKEN_CLOSE_SQ_BRACKET
+            );
+        }
+        return PARSE_ERROR;
+    }
+
+    *arr_lit = uast_array_literal_new(start_token.pos, members, util_literal_name_new());
     return PARSE_OK;
 }
 
@@ -2155,6 +2209,12 @@ static PARSE_EXPR_STATUS parse_expr_piece(
             return PARSE_EXPR_ERROR;
         }
         *result = uast_struct_literal_wrap(struct_lit);
+    } else if (starts_with_array_literal(*tokens)) {
+        Uast_array_literal* arr_lit;
+        if (PARSE_OK != parse_array_literal(env, &arr_lit, tokens)) {
+            return PARSE_EXPR_ERROR;
+        }
+        *result = uast_array_literal_wrap(arr_lit);
     } else if (tk_view_front(*tokens).type == TOKEN_NONTYPE) {
         return PARSE_EXPR_NONE;
     } else {

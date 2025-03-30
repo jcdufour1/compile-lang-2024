@@ -307,6 +307,8 @@ static inline Str_view uast_expr_get_name(const Uast_expr* expr) {
             unreachable("");
         case UAST_STRUCT_LITERAL:
             return uast_struct_literal_const_unwrap(expr)->name;
+        case UAST_ARRAY_LITERAL:
+            return uast_array_literal_const_unwrap(expr)->name;
         case UAST_MEMBER_ACCESS:
             return uast_member_access_const_unwrap(expr)->member_name;
         case UAST_INDEX:

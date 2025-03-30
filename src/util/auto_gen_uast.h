@@ -267,6 +267,15 @@ static Uast_type uast_gen_struct_literal(const char* prefix) {
     return lit;
 }
 
+static Uast_type uast_gen_array_literal(const char* prefix) {
+    Uast_type lit = {.name = uast_name_new(prefix, "array_literal", false)};
+
+    append_member(&lit.members, "Uast_expr_vec", "members");
+    append_member(&lit.members, "Str_view", "name");
+
+    return lit;
+}
+
 static Uast_type uast_gen_tuple(const char* prefix) {
     Uast_type lit = {.name = uast_name_new(prefix, "tuple", false)};
 
@@ -317,6 +326,7 @@ static Uast_type uast_gen_expr(const char* prefix) {
     vec_append(&gen_a, &expr.sub_types, uast_gen_literal(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_function_call(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_struct_literal(base_name));
+    vec_append(&gen_a, &expr.sub_types, uast_gen_array_literal(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_tuple(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_sum_access(base_name));
     vec_append(&gen_a, &expr.sub_types, uast_gen_sum_get_tag(base_name));
