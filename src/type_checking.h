@@ -63,6 +63,14 @@ bool try_set_struct_literal_types(
     Pos assign_pos
 );
 
+bool try_set_array_literal_types(
+    Env* env,
+    Tast_stmt** new_tast,
+    Lang_type dest_lang_type,
+    Uast_array_literal* lit,
+    Pos assign_pos
+);
+
 Tast_literal* try_set_literal_types(Uast_literal* literal);
 
 bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_call* fun_call);

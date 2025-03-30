@@ -354,6 +354,14 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
             return CHECK_ASSIGN_ERROR;
         }
         *new_src = tast_expr_unwrap(new_src_);
+    } else if (src->type == UAST_ARRAY_LITERAL) {
+        Tast_stmt* new_src_ = NULL;
+        if (!try_set_array_literal_types(
+            env, &new_src_, dest_lang_type, uast_array_literal_unwrap(src), pos
+        )) {
+            return CHECK_ASSIGN_ERROR;
+        }
+        *new_src = tast_expr_unwrap(new_src_);
     } else if (src->type == UAST_TUPLE) {
         Tast_tuple* new_src_ = NULL;
         if (!try_set_tuple_assignment_types(
@@ -978,46 +986,10 @@ static bool uast_expr_is_designator(const Uast_expr* expr) {
     return access->callee->type == UAST_UNKNOWN;
 }
 
-bool try_set_struct_literal_types(
-    Env* env,
-    Tast_stmt** new_tast,
-    Lang_type dest_lang_type,
-    Uast_struct_literal* lit,
-    Pos assign_pos
-) {
-    switch (dest_lang_type.type) {
-        case LANG_TYPE_STRUCT:
-            break;
-        case LANG_TYPE_RAW_UNION:
-            msg(
-                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION, env->file_text,
-                assign_pos, "struct literal cannot be assigned to raw_union\n"
-            );
-            return false;
-        case LANG_TYPE_SUM:
-            msg(
-                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_SUM, env->file_text,
-                assign_pos, "struct literal cannot be assigned to sum\n"
-            );
-            return false;
-        case LANG_TYPE_PRIMITIVE:
-            msg(
-                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_PRIMITIVE, env->file_text,
-                assign_pos, "struct literal cannot be assigned to primitive type `"LANG_TYPE_FMT"`\n",
-                lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type)
-            );
-            return false;
-        default:
-            unreachable(TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type));
-    }
-    Uast_def* struct_def_ = NULL;
-    unwrap(usymbol_lookup(&struct_def_, env, lang_type_struct_const_unwrap(dest_lang_type).atom.str));
-    Uast_struct_def* struct_def = uast_struct_def_unwrap(struct_def_);
-    
-    Tast_expr_vec new_membs = {0};
-    for (size_t idx = 0; idx < struct_def->base.members.info.count; idx++) {
-        Uast_variable_def* memb_def = vec_at(&struct_def->base.members, idx);
-        Uast_expr* memb = vec_at(&lit->members, idx);
+static bool try_set_struct_literal_member_types(Env* env, Tast_expr_vec* new_membs, Uast_expr_vec membs, Uast_variable_def_vec memb_defs) {
+    for (size_t idx = 0; idx < membs.info.count; idx++) {
+        Uast_variable_def* memb_def = vec_at(&memb_defs, idx);
+        Uast_expr* memb = vec_at(&membs, idx);
         Uast_expr* rhs = NULL;
         if (uast_expr_is_designator(memb)) {
             // TODO: expected failure case for invalid thing on lhs of designated initializer
@@ -1059,8 +1031,51 @@ bool try_set_struct_literal_types(
                 unreachable("");
         }
 
+        vec_append(&a_main, new_membs, new_rhs);
+    }
 
-        vec_append(&a_main, &new_membs, new_rhs);
+    return true;
+}
+
+bool try_set_struct_literal_types(
+    Env* env,
+    Tast_stmt** new_tast,
+    Lang_type dest_lang_type,
+    Uast_struct_literal* lit,
+    Pos assign_pos
+) {
+    switch (dest_lang_type.type) {
+        case LANG_TYPE_STRUCT:
+            break;
+        case LANG_TYPE_RAW_UNION:
+            msg(
+                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION, env->file_text,
+                assign_pos, "struct literal cannot be assigned to raw_union\n"
+            );
+            return false;
+        case LANG_TYPE_SUM:
+            msg(
+                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_SUM, env->file_text,
+                assign_pos, "struct literal cannot be assigned to sum\n"
+            );
+            return false;
+        case LANG_TYPE_PRIMITIVE:
+            msg(
+                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_PRIMITIVE, env->file_text,
+                assign_pos, "struct literal cannot be assigned to primitive type `"LANG_TYPE_FMT"`\n",
+                lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type)
+            );
+            return false;
+        default:
+            unreachable(TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type));
+    }
+    Uast_def* struct_def_ = NULL;
+    unwrap(usymbol_lookup(&struct_def_, env, lang_type_struct_const_unwrap(dest_lang_type).atom.str));
+    Uast_struct_def* struct_def = uast_struct_def_unwrap(struct_def_);
+    
+    Tast_expr_vec new_membs = {0};
+    if (!try_set_struct_literal_member_types(env, &new_membs, lit->members, struct_def->base.members)) {
+        return false;
     }
 
     Tast_struct_literal* new_lit = tast_struct_literal_new(
@@ -1070,6 +1085,66 @@ bool try_set_struct_literal_types(
         dest_lang_type
     );
     *new_tast = tast_expr_wrap(tast_struct_literal_wrap(new_lit));
+
+    Tast_struct_lit_def* new_def = tast_struct_lit_def_new(
+        new_lit->pos,
+        new_lit->members,
+        new_lit->name,
+        new_lit->lang_type
+    );
+
+    unwrap(symbol_add(env, tast_literal_def_wrap(tast_struct_lit_def_wrap(new_def))));
+    return true;
+}
+
+bool try_set_array_literal_types(
+    Env* env,
+    Tast_stmt** new_tast,
+    Lang_type dest_lang_type,
+    Uast_array_literal* lit,
+    Pos assign_pos
+) {
+    switch (dest_lang_type.type) {
+        case LANG_TYPE_STRUCT:
+            break;
+        case LANG_TYPE_RAW_UNION:
+            msg(
+                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION, env->file_text,
+                assign_pos, "struct literal cannot be assigned to raw_union\n"
+            );
+            return false;
+        case LANG_TYPE_SUM:
+            msg(
+                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_SUM, env->file_text,
+                assign_pos, "struct literal cannot be assigned to sum\n"
+            );
+            return false;
+        case LANG_TYPE_PRIMITIVE:
+            msg(
+                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_PRIMITIVE, env->file_text,
+                assign_pos, "struct literal cannot be assigned to primitive type `"LANG_TYPE_FMT"`\n",
+                lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type)
+            );
+            return false;
+        default:
+            unreachable(TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type));
+    }
+    Uast_def* struct_def_ = NULL;
+    unwrap(usymbol_lookup(&struct_def_, env, lang_type_struct_const_unwrap(dest_lang_type).atom.str));
+    Uast_struct_def* struct_def = uast_struct_def_unwrap(struct_def_);
+    
+    Tast_expr_vec new_membs = {0};
+    if (!try_set_struct_literal_member_types(env, &new_membs, lit->members, struct_def->base.members)) {
+        return false;
+    }
+
+    Tast_array_literal* new_lit = tast_array_literal_new(
+        lit->pos,
+        new_membs,
+        lit->name,
+        dest_lang_type
+    );
+    *new_tast = tast_expr_wrap(tast_array_literal_wrap(new_lit));
 
     Tast_struct_lit_def* new_def = tast_struct_lit_def_new(
         new_lit->pos,
@@ -1168,6 +1243,8 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
             *new_tast = tast_if_else_chain_wrap(new_for);
             return true;
         }
+        case UAST_ARRAY_LITERAL:
+            unreachable("");
     }
     unreachable("");
 }
