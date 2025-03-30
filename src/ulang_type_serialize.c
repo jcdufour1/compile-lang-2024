@@ -42,7 +42,7 @@ Str_view serialize_ulang_type_vec(Ulang_type_vec vec) {
 }
 
 Str_view serialize_ulang_type_generic(Ulang_type_generic ulang_type) {
-    return serialize_generic(ulang_type.atom.str, ulang_type.generic_args);
+    return serialize_generic(ulang_type.atom.str, ulang_type.pointer_depth, ulang_type.generic_args);
 }
 
 Str_view serialize_ulang_type(Ulang_type ulang_type) {

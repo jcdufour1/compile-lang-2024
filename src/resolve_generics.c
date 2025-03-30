@@ -13,12 +13,12 @@
 
 static bool ulang_type_generics_are_present(Ulang_type lang_type);
 
-Str_view serialize_generic(Str_view old_name, Ulang_type_vec gen_args) {
+Str_view serialize_generic(Str_view old_name, int16_t pointer_depth, Ulang_type_vec gen_args) {
     String name = {0};
     string_extend_cstr(&a_main, &name, "____");
     string_extend_size_t(&a_main, &name, gen_args.info.count);
     string_extend_cstr(&a_main, &name, "_");
-    string_extend_strv(&a_main, &name, serialize_ulang_type_atom(ulang_type_atom_new(old_name, 0)));
+    string_extend_strv(&a_main, &name, serialize_ulang_type_atom(ulang_type_atom_new(old_name, pointer_depth)));
     for (size_t idx = 0; idx < gen_args.info.count; idx++) {
         string_extend_strv(&a_main, &name, serialize_ulang_type(vec_at(&gen_args, idx)));
     }
@@ -31,7 +31,9 @@ bool deserialize_generic(Ulang_type_generic* deserialized, Str_view* serialized)
         // not a generic lang_type
         return false;
     }
+
     log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
+
     size_t count_gen = 0;
     unwrap(try_str_view_consume_size_t(&count_gen, serialized, false));
     unwrap(str_view_try_consume(serialized, '_'));
@@ -277,40 +279,41 @@ static bool resolve_generics_ulang_type_internal_struct_like(
     Obj_unwrap obj_unwrap
 ) {
     Ustruct_def_base old_base = uast_def_get_struct_def_base(before_res);
-    Str_view new_name = serialize_generic(old_base.name, gen_args);
+    Str_view new_name = serialize_generic(old_base.name, ulang_type_generic_const_unwrap(lang_type).atom.pointer_depth, gen_args);
+    todo();
 
-    if (old_base.generics.info.count != gen_args.info.count) {
-        msg_invalid_count_generic_args(
-            env,
-            uast_def_get_pos(before_res),
-            ulang_type_get_pos(lang_type),
-            gen_args,
-            old_base.generics.info.count,
-            old_base.generics.info.count
-        );
-        return false;
-    }
+    //if (old_base.generics.info.count != gen_args.info.count) {
+    //    msg_invalid_count_generic_args(
+    //        env,
+    //        uast_def_get_pos(before_res),
+    //        ulang_type_get_pos(lang_type),
+    //        gen_args,
+    //        old_base.generics.info.count,
+    //        old_base.generics.info.count
+    //    );
+    //    return false;
+    //}
 
-    Uast_def* new_def_ = NULL;
-    if (usymbol_lookup(&new_def_, env, new_name)) {
-        *after_res = new_def_;
-    } else {
-        Ustruct_def_base new_base = {0};
-        if (!resolve_generics_serialize_struct_def_base(env, &new_base, old_base, gen_args, new_name)) {
-            return false;
-        }
-        *after_res = obj_new(uast_def_get_pos(before_res), new_base);
-    }
+    //Uast_def* new_def_ = NULL;
+    //if (usymbol_lookup(&new_def_, env, new_name)) {
+    //    *after_res = new_def_;
+    //} else {
+    //    Ustruct_def_base new_base = {0};
+    //    if (!resolve_generics_serialize_struct_def_base(env, &new_base, old_base, gen_args, new_name)) {
+    //        return false;
+    //    }
+    //    *after_res = obj_new(uast_def_get_pos(before_res), new_base);
+    //}
 
-    *result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
-        uast_def_get_struct_def_base(*after_res).name, ulang_type_get_atom(lang_type).pointer_depth
-    ), ulang_type_get_pos(lang_type)));
+    //*result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
+    //    uast_def_get_struct_def_base(*after_res).name, ulang_type_get_atom(lang_type).pointer_depth
+    //), ulang_type_get_pos(lang_type)));
 
-    Tast_def* dummy = NULL;
-    if (symbol_lookup(&dummy, env, new_name)) {
-        return true;
-    }
-    return set_obj_types(env, obj_unwrap(before_res), obj_unwrap(*after_res));
+    //Tast_def* dummy = NULL;
+    //if (symbol_lookup(&dummy, env, new_name)) {
+    //    return true;
+    //}
+    //return set_obj_types(env, obj_unwrap(before_res), obj_unwrap(*after_res));
 }
 
 static bool resolve_generics_ulang_type_internal(Ulang_type* result, Env* env, Uast_def* before_res, Ulang_type lang_type, Ulang_type_vec gen_args) {

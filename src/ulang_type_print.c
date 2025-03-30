@@ -66,6 +66,9 @@ void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type
                 extend_ulang_type_to_string(string, mode, vec_at(&reg_gen.generic_args, idx));
             }
             string_extend_cstr(&a_main, string, ">)");
+            for (int16_t idx = 0; idx < reg_gen.pointer_depth; idx++) {
+                vec_append(&print_arena, string, '*');
+            }
             return;
         }
     }

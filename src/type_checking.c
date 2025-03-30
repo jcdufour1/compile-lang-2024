@@ -156,8 +156,10 @@ static bool can_be_implicitly_converted(Env* env, Lang_type dest, Lang_type src,
 
     switch (dest.type) {
         case LANG_TYPE_FN:
+        todo();
             return can_be_implicitly_converted_fn(env, lang_type_fn_const_unwrap(dest), lang_type_fn_const_unwrap(src), implicit_pointer_depth);
         case LANG_TYPE_TUPLE:
+        todo();
             return can_be_implicitly_converted_tuple(env, lang_type_tuple_const_unwrap(dest), lang_type_tuple_const_unwrap(src), implicit_pointer_depth);
         case LANG_TYPE_PRIMITIVE:
             return can_be_implicitly_converted_lang_type_atom(
@@ -168,14 +170,18 @@ static bool can_be_implicitly_converted(Env* env, Lang_type dest, Lang_type src,
                 implicit_pointer_depth
             );
         case LANG_TYPE_SUM:
+        todo();
             return can_be_implicitly_converted_lang_type_atom(env, lang_type_sum_const_unwrap(dest).atom, lang_type_sum_const_unwrap(src).atom, false, implicit_pointer_depth);
         case LANG_TYPE_STRUCT:
             return can_be_implicitly_converted_lang_type_atom(env, lang_type_struct_const_unwrap(dest).atom, lang_type_struct_const_unwrap(src).atom, false, implicit_pointer_depth);
         case LANG_TYPE_RAW_UNION:
+        todo();
             return can_be_implicitly_converted_lang_type_atom(env, lang_type_raw_union_const_unwrap(dest).atom, lang_type_raw_union_const_unwrap(src).atom, false, implicit_pointer_depth);
         case LANG_TYPE_ENUM:
+        todo();
             return can_be_implicitly_converted_lang_type_atom(env, lang_type_enum_const_unwrap(dest).atom, lang_type_enum_const_unwrap(src).atom, false, implicit_pointer_depth);
         case LANG_TYPE_VOID:
+        todo();
             return true;
     }
     unreachable("");
@@ -321,6 +327,7 @@ CHECK_ASSIGN_STATUS check_generic_assignment_finish(
     bool src_is_zero,
     Tast_expr* src
 ) {
+    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(src)));
     if (lang_type_is_equal(dest_lang_type, tast_expr_get_lang_type(src))) {
         *new_src = src;
         return CHECK_ASSIGN_OK;
@@ -771,6 +778,7 @@ bool try_set_binary_types(Env* env, Tast_expr** new_tast, Uast_binary* operator)
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_lhs))
                 );
+                todo();
                 return false;
             case CHECK_ASSIGN_ERROR:
                 return false;
@@ -1144,14 +1152,24 @@ bool try_set_array_literal_types(
         vec_append(&a_main, &new_membs, new_rhs);
     }
 
-
-    Tast_array_literal* new_lit = tast_array_literal_new(
+    Tast_struct_literal* new_lit = tast_struct_literal_new(
         lit->pos,
         new_membs,
         lit->name,
         dest_lang_type
     );
-    *new_tast = tast_expr_wrap(tast_array_literal_wrap(new_lit));
+    if (!lang_type_is_slice(env, &gen_arg, dest_lang_type)) {
+        todo();
+    }
+
+    Lang_type unary_lang_type = dest_lang_type;
+    lang_type_set_pointer_depth(env, &unary_lang_type, lang_type_get_pointer_depth(unary_lang_type) + 1);
+    *new_tast = tast_expr_wrap(tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+        new_lit->pos,
+        tast_struct_literal_wrap(new_lit),
+        UNARY_REFER,
+        unary_lang_type
+    ))));
 
     Tast_struct_lit_def* new_def = tast_struct_lit_def_new(
         new_lit->pos,
@@ -1159,8 +1177,8 @@ bool try_set_array_literal_types(
         new_lit->name,
         new_lit->lang_type
     );
-
     unwrap(symbol_add(env, tast_literal_def_wrap(tast_struct_lit_def_wrap(new_def))));
+
     return true;
 }
 
