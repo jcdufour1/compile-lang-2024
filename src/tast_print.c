@@ -143,22 +143,6 @@ Str_view tast_struct_literal_print_internal(const Tast_struct_literal* lit, int 
     return string_to_strv(buf);
 }
 
-Str_view tast_array_literal_print_internal(const Tast_array_literal* lit, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "array_literal", indent);
-    extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, lit->lang_type);
-    extend_name(&buf, lit->name);
-    string_extend_cstr(&print_arena, &buf, "\n");
-
-    for (size_t idx = 0; idx < lit->members.info.count; idx++) {
-        Str_view memb_text = tast_expr_print_internal(vec_at(&lit->members, idx), indent + INDENT_WIDTH);
-        string_extend_strv(&print_arena, &buf, memb_text);
-    }
-
-    return string_to_strv(buf);
-}
-
 Str_view tast_tuple_print_internal(const Tast_tuple* lit, int indent) {
     String buf = {0};
 
@@ -623,8 +607,6 @@ Str_view tast_expr_print_internal(const Tast_expr* expr, int indent) {
             return tast_function_call_print_internal(tast_function_call_const_unwrap(expr), indent);
         case TAST_STRUCT_LITERAL:
             return tast_struct_literal_print_internal(tast_struct_literal_const_unwrap(expr), indent);
-        case TAST_ARRAY_LITERAL:
-            return tast_array_literal_print_internal(tast_array_literal_const_unwrap(expr), indent);
         case TAST_TUPLE:
             return tast_tuple_print_internal(tast_tuple_const_unwrap(expr), indent);
         case TAST_SUM_CALLEE:

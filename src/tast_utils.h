@@ -164,8 +164,6 @@ static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr) {
     switch (expr->type) {
         case TAST_STRUCT_LITERAL:
             return tast_struct_literal_const_unwrap(expr)->lang_type;
-        case TAST_ARRAY_LITERAL:
-            return tast_array_literal_const_unwrap(expr)->lang_type;
         case TAST_FUNCTION_CALL:
             return tast_function_call_const_unwrap(expr)->lang_type;
         case TAST_MEMBER_ACCESS:
@@ -255,8 +253,6 @@ static inline void tast_expr_set_lang_type(Tast_expr* expr, Lang_type lang_type)
             tast_function_call_unwrap(expr)->lang_type = lang_type;
             return;
         case TAST_STRUCT_LITERAL:
-            todo();
-        case TAST_ARRAY_LITERAL:
             todo();
         case TAST_TUPLE:
             todo();
@@ -386,8 +382,6 @@ static inline Str_view tast_expr_get_name(const Tast_expr* expr) {
             unreachable("");
         case TAST_STRUCT_LITERAL:
             return tast_struct_literal_const_unwrap(expr)->name;
-        case TAST_ARRAY_LITERAL:
-            return tast_array_literal_const_unwrap(expr)->name;
         case TAST_MEMBER_ACCESS:
             return tast_member_access_const_unwrap(expr)->member_name;
         case TAST_INDEX:

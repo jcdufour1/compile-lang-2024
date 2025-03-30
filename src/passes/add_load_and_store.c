@@ -512,12 +512,16 @@ static Str_view load_ptr_function_call(
     return load_ptr_symbol(env, new_block, tast_symbol_new_from_variable_def(old_call->pos, new_var));
 }
 
-static Str_view load_struct_literal(Env* env, Llvm_block* new_block, Tast_struct_literal* old_lit) {
+static Tast_variable_def* load_struct_literal_internal(
+    Env* env,
+    Llvm_block* new_block,
+    Tast_struct_literal* old_lit
+) {
     Tast_variable_def* new_var = tast_variable_def_new(
         old_lit->pos,
         old_lit->lang_type,
         false,
-        util_literal_name_new()
+        util_literal_name_new_prefix("struct_lit_helper_var")
     );
     unwrap(symbol_add(env, tast_variable_def_wrap(new_var)));
     load_variable_def(env, new_block, new_var);
@@ -545,6 +549,20 @@ static Str_view load_struct_literal(Env* env, Llvm_block* new_block, Tast_struct
         load_assignment(env, new_block, assign);
     }
 
+    return new_var;
+}
+
+static Str_view load_ptr_struct_literal(
+    Env* env,
+    Llvm_block* new_block,
+    Tast_struct_literal* old_lit
+) {
+    Tast_variable_def* new_var = load_struct_literal_internal(env, new_block, old_lit);
+    return load_ptr_symbol(env, new_block, tast_symbol_new_from_variable_def(new_var->pos, new_var));
+}
+
+static Str_view load_struct_literal(Env* env, Llvm_block* new_block, Tast_struct_literal* old_lit) {
+    Tast_variable_def* new_var = load_struct_literal_internal(env, new_block, old_lit);
     return load_symbol(env, new_block, tast_symbol_new_from_variable_def(new_var->pos, new_var));
 }
 
@@ -2011,7 +2029,7 @@ static Str_view load_ptr_expr(Env* env, Llvm_block* new_block, Tast_expr* old_ex
         case TAST_FUNCTION_CALL:
             return load_ptr_function_call(env, new_block, tast_function_call_unwrap(old_expr));
         case TAST_STRUCT_LITERAL:
-            unreachable("");
+            return load_ptr_struct_literal(env, new_block, tast_struct_literal_unwrap(old_expr));
         case TAST_TUPLE:
             unreachable("");
         case TAST_SUM_CALLEE:

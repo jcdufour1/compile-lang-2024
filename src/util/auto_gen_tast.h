@@ -361,17 +361,6 @@ static Tast_type tast_gen_struct_literal(const char* prefix) {
     return lit;
 }
 
-static Tast_type tast_gen_array_literal(const char* prefix) {
-    const char* base_name = "array_literal";
-    Tast_type lit = {.name = tast_name_new(prefix, base_name, false)};
-
-    append_member(&lit.members, "Tast_expr_vec", "members");
-    append_member(&lit.members, "Str_view", "name");
-    append_member(&lit.members, "Lang_type", "lang_type");
-
-    return lit;
-}
-
 static Tast_type tast_gen_tuple(const char* prefix) {
     const char* base_name = "tuple";
     Tast_type lit = {.name = tast_name_new(prefix, base_name, false)};
@@ -455,7 +444,6 @@ static Tast_type tast_gen_expr(const char* prefix) {
     vec_append(&gen_a, &expr.sub_types, tast_gen_literal(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_function_call(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_struct_literal(base_name));
-    vec_append(&gen_a, &expr.sub_types, tast_gen_array_literal(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_tuple(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_sum_callee(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_sum_case(base_name));

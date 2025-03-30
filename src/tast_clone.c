@@ -30,8 +30,6 @@ Tast_expr* tast_expr_clone(const Tast_expr* expr) {
             todo();
         case TAST_IF_ELSE_CHAIN:
             todo();
-        case TAST_ARRAY_LITERAL:
-            todo();
     }
     unreachable("");
 }
