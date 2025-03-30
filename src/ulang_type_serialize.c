@@ -42,7 +42,7 @@ Str_view serialize_ulang_type_vec(Ulang_type_vec vec) {
 }
 
 Str_view serialize_ulang_type_generic(Ulang_type_generic ulang_type) {
-    return serialize_generic(ulang_type.atom.str, ulang_type.pointer_depth, ulang_type.generic_args);
+    return serialize_generic(ulang_type.atom.str, ulang_type.generic_args);
 }
 
 Str_view serialize_ulang_type(Ulang_type ulang_type) {
@@ -63,7 +63,7 @@ Str_view serialize_ulang_type(Ulang_type ulang_type) {
 
 Ulang_type_atom deserialize_ulang_type_atom(Str_view* serialized) {
     size_t pointer_depth = 0;
-    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
+    //log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
     unwrap(try_str_view_consume_size_t(&pointer_depth, serialized, false));
     unwrap(str_view_try_consume(serialized, '_'));
 
@@ -71,22 +71,21 @@ Ulang_type_atom deserialize_ulang_type_atom(Str_view* serialized) {
     unwrap(try_str_view_consume_size_t(&len_base, serialized, false));
     unwrap(str_view_try_consume(serialized, '_'));
 
-    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
+    //log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
     Str_view base = str_view_consume_count(serialized, len_base);
-    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
+    //log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
 
     unwrap(str_view_try_consume_count(serialized, '_', 2));
 
     return ulang_type_atom_new(base, pointer_depth);
 }
 
-Ulang_type deserialize_ulang_type(Str_view* serialized) {
-    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
+Ulang_type deserialize_ulang_type(Str_view* serialized, int16_t pointer_depth) {
+    //log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
     Ulang_type_generic gen = {0};
-    if (deserialize_generic(&gen, serialized)) {
+    if (deserialize_generic(&gen, pointer_depth, serialized)) {
         return ulang_type_generic_const_wrap(gen);
     }
-
     return ulang_type_regular_const_wrap(ulang_type_regular_new(deserialize_ulang_type_atom(serialized), POS_BUILTIN /* TODO */));
 }
 

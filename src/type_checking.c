@@ -1178,6 +1178,9 @@ bool try_set_array_literal_types(
         new_lit->lang_type
     );
     unwrap(symbol_add(env, tast_literal_def_wrap(tast_struct_lit_def_wrap(new_def))));
+    log(LOG_DEBUG, "----------------------------------------\n");
+    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, unary_lang_type));
+    log(LOG_DEBUG, "----------------------------------------\n");
 
     return true;
 }
