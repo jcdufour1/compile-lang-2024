@@ -23,6 +23,7 @@
 #include <symbol_log.h>
 #include <parent_of_print.h>
 #include <lang_type_get_pos.h>
+#include <lang_type_is.h>
 #include <symbol_iter.h>
 
 // result is rounded up
@@ -1104,39 +1105,45 @@ bool try_set_array_literal_types(
     Uast_array_literal* lit,
     Pos assign_pos
 ) {
-    switch (dest_lang_type.type) {
-        case LANG_TYPE_STRUCT:
-            break;
-        case LANG_TYPE_RAW_UNION:
-            msg(
-                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION, env->file_text,
-                assign_pos, "struct literal cannot be assigned to raw_union\n"
-            );
-            return false;
-        case LANG_TYPE_SUM:
-            msg(
-                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_SUM, env->file_text,
-                assign_pos, "struct literal cannot be assigned to sum\n"
-            );
-            return false;
-        case LANG_TYPE_PRIMITIVE:
-            msg(
-                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_PRIMITIVE, env->file_text,
-                assign_pos, "struct literal cannot be assigned to primitive type `"LANG_TYPE_FMT"`\n",
-                lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type)
-            );
-            return false;
-        default:
-            unreachable(TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type));
+    (void) assign_pos;
+    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type));
+    Lang_type gen_arg = {0};
+    if (lang_type_is_slice(env, &gen_arg, dest_lang_type)) {
+        log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, gen_arg));
+    } else {
+        todo();
     }
+
     Uast_def* struct_def_ = NULL;
     unwrap(usymbol_lookup(&struct_def_, env, lang_type_struct_const_unwrap(dest_lang_type).atom.str));
-    Uast_struct_def* struct_def = uast_struct_def_unwrap(struct_def_);
     
     Tast_expr_vec new_membs = {0};
-    if (!try_set_struct_literal_member_types(env, &new_membs, lit->members, struct_def->base.members)) {
-        return false;
+    for (size_t idx = 0; idx < lit->members.info.count; idx++) {
+        Uast_expr* rhs = vec_at(&lit->members, idx);
+        Tast_expr* new_rhs = NULL;
+        switch (check_generic_assignment(
+            env, &new_rhs, gen_arg, rhs, uast_expr_get_pos(rhs)
+        )) {
+            case CHECK_ASSIGN_OK:
+                break;
+            case CHECK_ASSIGN_INVALID:
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
+                    uast_expr_get_pos(rhs),
+                    "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
+                    lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
+                    lang_type_print(LANG_TYPE_MODE_MSG, gen_arg)
+                );
+                return false;
+            case CHECK_ASSIGN_ERROR:
+                return false;
+            default:
+                unreachable("");
+        }
+
+        vec_append(&a_main, &new_membs, new_rhs);
     }
+
 
     Tast_array_literal* new_lit = tast_array_literal_new(
         lit->pos,

@@ -2,8 +2,6 @@
 #ifndef LANG_TYPE_AFTER_H
 #define LANG_TYPE_AFTER_H
 
-#include <lang_type_print.h>
-
 // TODO: do these things properly
 int64_t str_view_to_int64_t(const Env* env, Pos pos, Str_view str_view);
 
