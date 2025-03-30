@@ -1152,7 +1152,7 @@ bool try_set_array_literal_types(
         vec_append(&a_main, &new_membs, new_rhs);
     }
 
-    Tast_struct_literal* new_lit = tast_struct_literal_new(
+    Tast_struct_literal* new_inner_lit = tast_struct_literal_new(
         lit->pos,
         new_membs,
         lit->name,
@@ -1162,26 +1162,37 @@ bool try_set_array_literal_types(
         todo();
     }
 
-    Lang_type unary_lang_type = dest_lang_type;
+    Lang_type unary_lang_type = gen_arg;
     lang_type_set_pointer_depth(env, &unary_lang_type, lang_type_get_pointer_depth(unary_lang_type) + 1);
-    *new_tast = tast_expr_wrap(tast_operator_wrap(tast_unary_wrap(tast_unary_new(
-        new_lit->pos,
-        tast_struct_literal_wrap(new_lit),
+    Tast_expr* ptr = tast_operator_wrap(tast_unary_wrap(tast_unary_new(
+        new_inner_lit->pos,
+        tast_struct_literal_wrap(new_inner_lit),
         UNARY_REFER,
         unary_lang_type
-    ))));
+    )));
 
     Tast_struct_lit_def* new_def = tast_struct_lit_def_new(
-        new_lit->pos,
-        new_lit->members,
-        new_lit->name,
-        new_lit->lang_type
+        new_inner_lit->pos,
+        new_inner_lit->members,
+        new_inner_lit->name,
+        new_inner_lit->lang_type
     );
     unwrap(symbol_add(env, tast_literal_def_wrap(tast_struct_lit_def_wrap(new_def))));
-    log(LOG_DEBUG, "----------------------------------------\n");
-    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, unary_lang_type));
-    log(LOG_DEBUG, "----------------------------------------\n");
 
+    Tast_expr_vec new_lit_membs = {0};
+    vec_append(&a_main, &new_lit_membs, ptr);
+    vec_append(&a_main, &new_lit_membs, tast_literal_wrap(tast_number_wrap(tast_number_new(
+        new_inner_lit->pos,
+        new_membs.info.count,
+        lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(new_inner_lit->pos, 8, 0)))
+    ))));
+    Tast_struct_literal* new_lit = tast_struct_literal_new(
+        new_inner_lit->pos,
+        new_lit_membs,
+        util_literal_name_new(),
+        dest_lang_type
+    );
+    *new_tast = tast_expr_wrap(tast_struct_literal_wrap(new_lit));
     return true;
 }
 
