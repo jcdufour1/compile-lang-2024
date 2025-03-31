@@ -54,8 +54,6 @@ bool usymbol_do_add_defered(Uast_def** redefined_sym, Env* env) {
     return true;
 }
 
-
-
 void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, int recursion_depth) {
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Usymbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
@@ -69,7 +67,7 @@ typedef Str_view(*Get_key_fn)(const void* tast);
 
 bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts, size_t capacity, void* tast_of_symbol, Get_key_fn get_key_fn) {
     assert(tast_of_symbol);
-    Str_view symbol_name = uast_def_get_name(tast_of_symbol);
+    Str_view symbol_name = get_key_fn(tast_of_symbol);
     assert(symbol_name.count > 0 && "invalid tast_of_symbol");
 
     assert(capacity > 0);
@@ -90,8 +88,18 @@ bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts,
 }
 
 // returns false if symbol is already added to the table
-bool usym_tbl_add_internal(Usymbol_table_tast* sym_tbl_tasts, size_t capacity, Uast_def* tast_of_symbol) {
-    return generic_symbol_table_add_internal((Generic_symbol_table_tast*)sym_tbl_tasts, capacity, tast_of_symbol, (Get_key_fn)uast_def_get_name);
+bool usym_tbl_add_internal(Usymbol_table_tast* usym_tbl_tasts, size_t capacity, Uast_def* tast_of_symbol) {
+    return generic_symbol_table_add_internal((Generic_symbol_table_tast*)usym_tbl_tasts, capacity, tast_of_symbol, (Get_key_fn)uast_def_get_name);
+}
+
+// returns false if symbol is already added to the table
+bool sym_tbl_add_internal(Symbol_table_tast* sym_tbl_tasts, size_t capacity, Tast_def* tast_of_symbol) {
+    return generic_symbol_table_add_internal((Generic_symbol_table_tast*)sym_tbl_tasts, capacity, tast_of_symbol, (Get_key_fn)tast_def_get_name);
+}
+
+// returns false if symbol is already added to the table
+bool all_tbl_add_internal(Alloca_table_tast* all_tbl_tasts, size_t capacity, Llvm* tast_of_symbol) {
+    return generic_symbol_table_add_internal((Generic_symbol_table_tast*)all_tbl_tasts, capacity, tast_of_symbol, (Get_key_fn)llvm_tast_get_name);
 }
 
 static void usym_tbl_cpy(
@@ -102,7 +110,7 @@ static void usym_tbl_cpy(
 ) {
     for (size_t bucket_src = 0; bucket_src < count_tasts_to_cpy; bucket_src++) {
         if (src[bucket_src].status == SYM_TBL_OCCUPIED) {
-usym_tbl_add_internal(dest, capacity, src[bucket_src].tast);
+            usym_tbl_add_internal(dest, capacity, src[bucket_src].tast);
         }
     }
 }
@@ -276,29 +284,6 @@ void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, int
     }
 }
 
-// returns false if symbol is already added to the table
-bool sym_tbl_add_internal(Symbol_table_tast* sym_tbl_tasts, size_t capacity, Tast_def* tast_of_symbol) {
-    assert(tast_of_symbol);
-    Str_view symbol_name = tast_def_get_name(tast_of_symbol);
-    assert(symbol_name.count > 0 && "invalid tast_of_symbol");
-
-    assert(capacity > 0);
-    size_t curr_table_idx = sym_tbl_calculate_idx(symbol_name, capacity);
-    size_t init_table_idx = curr_table_idx; 
-    while (sym_tbl_tasts[curr_table_idx].status == SYM_TBL_OCCUPIED) {
-        if (str_view_is_equal(tast_def_get_name(sym_tbl_tasts[curr_table_idx].tast), symbol_name)) {
-            return false;
-        }
-        curr_table_idx = (curr_table_idx + 1) % capacity;
-        assert(init_table_idx != curr_table_idx && "hash table is full here, and it should not be");
-        (void) init_table_idx;
-    }
-
-    Symbol_table_tast tast = {.tast = tast_of_symbol, .status = SYM_TBL_OCCUPIED};
-    sym_tbl_tasts[curr_table_idx] = tast;
-    return true;
-}
-
 static void sym_tbl_cpy(
     Symbol_table_tast* dest,
     const Symbol_table_tast* src,
@@ -307,7 +292,7 @@ static void sym_tbl_cpy(
 ) {
     for (size_t bucket_src = 0; bucket_src < count_tasts_to_cpy; bucket_src++) {
         if (src[bucket_src].status == SYM_TBL_OCCUPIED) {
-sym_tbl_add_internal(dest, capacity, src[bucket_src].tast);
+            sym_tbl_add_internal(dest, capacity, src[bucket_src].tast);
         }
     }
 }
@@ -460,29 +445,6 @@ void alloca_extend_table_internal(String* buf, const Alloca_table sym_table, int
     }
 }
 
-// returns false if symbol is already added to the table
-bool all_tbl_add_internal(Alloca_table_tast* sym_tbl_tasts, size_t capacity, Llvm* tast_of_symbol) {
-    assert(tast_of_symbol);
-    Str_view symbol_name = llvm_tast_get_name(tast_of_symbol);
-    assert(symbol_name.count > 0 && "invalid tast_of_symbol");
-
-    assert(capacity > 0);
-    size_t curr_table_idx = sym_tbl_calculate_idx(symbol_name, capacity);
-    size_t init_table_idx = curr_table_idx; 
-    while (sym_tbl_tasts[curr_table_idx].status == SYM_TBL_OCCUPIED) {
-        if (str_view_is_equal(llvm_tast_get_name(sym_tbl_tasts[curr_table_idx].tast), symbol_name)) {
-            return false;
-        }
-        curr_table_idx = (curr_table_idx + 1) % capacity;
-        assert(init_table_idx != curr_table_idx && "hash table is full here, and it should not be");
-        (void) init_table_idx;
-    }
-
-    Alloca_table_tast tast = {.tast = tast_of_symbol, .status = SYM_TBL_OCCUPIED};
-    sym_tbl_tasts[curr_table_idx] = tast;
-    return true;
-}
-
 static void all_tbl_cpy(
     Alloca_table_tast* dest,
     const Alloca_table_tast* src,
@@ -491,7 +453,7 @@ static void all_tbl_cpy(
 ) {
     for (size_t bucket_src = 0; bucket_src < count_tasts_to_cpy; bucket_src++) {
         if (src[bucket_src].status == SYM_TBL_OCCUPIED) {
-all_tbl_add_internal(dest, capacity, src[bucket_src].tast);
+            all_tbl_add_internal(dest, capacity, src[bucket_src].tast);
         }
     }
 }
