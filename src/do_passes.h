@@ -6,6 +6,6 @@
 #include "env.h"
 #include "parameters.h"
 
-void do_passes(Str_view file_text, const Parameters* params);
+void do_passes(const Parameters* params);
 
 #endif // DO_PASSES_H

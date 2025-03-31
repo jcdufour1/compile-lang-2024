@@ -13,6 +13,8 @@
 #include "passes.h"
 #include <uast_clone.h>
 #include <symbol_log.h>
+#include <file.h>
+#include <errno.h>
 
 static Token prev_token = {0};
 
@@ -157,6 +159,8 @@ static PARSE_STATUS msg_redefinition_of_symbol(Env* env, const Uast_def* new_sym
 }
 
 static bool get_block_from_path_token(Env* env, Uast_block** block, Str_view name, Token path_tk) {
+    (void) block;
+    (void) path_tk;
     Uast_def* prev_def = NULL;
     if (usymbol_lookup(&prev_def, env, name)) {
         todo();
@@ -2916,20 +2920,29 @@ static PARSE_EXPR_STATUS parse_expr(
 
 static void parser_do_tests(void);
 
-Uast_block* parse(Env* env, const Tokens tokens) {
+bool parse_file(Uast_block** block, Env* env, Str_view file_path) {
 #ifndef DNDEBUG
     // TODO: reenable
     //parser_do_tests();
 #endif // DNDEBUG
 
+    Str_view file_text = {0};
+    if (!read_file(&file_text, params.input_file_name)) {
+        msg(LOG_FATAL, EXPECT_FAIL_NONE, dummy_file_text, dummy_pos, "could not open file %s: errno %d (%s)\n", params.input_file_name, errno, strerror(errno));
+        return false;
+    }
+
+    Tokens tokens = {0};
+    if (!tokenize(&tokens, env, file_path)) {
+        return false;
+    }
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
-    Uast_block* root;
-    parse_block(env, &root, &token_view, true);
+    parse_block(env, block, &token_view, true);
     log(LOG_DEBUG, "%zu\n", env->ancesters.info.count);
     assert(env->ancesters.info.count == 0);
     log(LOG_DEBUG, "done with parsing:\n");
     symbol_log(LOG_TRACE, env);
-    return root;
+    return true;
 }
 
 // TODO: put this in src/tokens.h or whatever

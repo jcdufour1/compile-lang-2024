@@ -20,9 +20,9 @@ static inline void insert_into_tast_vec(
 
 void tokenize_do_test(void);
 
-Tokens tokenize(Env* env, const Parameters params);
+bool tokenize(Tokens* result, Env* env, const Parameters params);
 
-Uast_block* parse(Env* env, const Tokens tokens);
+bool parse_file(Uast_block** block, Env* env, Str_view file_path);
 
 Tast_block* analysis_1(Env* env, Uast_block* root);
 

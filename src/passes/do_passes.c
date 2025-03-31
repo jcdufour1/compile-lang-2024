@@ -61,23 +61,18 @@ static void add_primitives(Env* env) {
     add_any(env, "any", 0);
 }
 
-void do_passes(Str_view file_text, const Parameters* params) {
+void do_passes(const Parameters* params) {
     // TODO: do this in a more proper way. this is temporary way to test
     tokenize_do_test();
 
     Env env = {0};
     add_primitives(&env);
-    env.file_text = file_text;
-    Tokens tokens = tokenize(&env, *params);
-    if (error_count > 0) {
+
+    Uast_block* untyped = NULL;
+    if (!parse_file(&untyped, &env, str_view_from_cstr(params->input_file_name))) {
         fail();
     }
 
-    Uast_block* untyped = parse(&env, tokens);
-    if (error_count > 0) {
-        fail();
-    }
-    unwrap(untyped);
     arena_reset(&print_arena);
     log(LOG_DEBUG, "\n"TAST_FMT, uast_block_print(untyped));
     Ulang_type_vec gen_args = {0};
