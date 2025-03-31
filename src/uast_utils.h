@@ -57,6 +57,8 @@ static inline Ulang_type uast_get_ulang_type_def(const Uast_def* def) {
             unreachable("");
         case UAST_POISON_DEF:
             unreachable("");
+        case UAST_IMPORT:
+            unreachable("");
     }
     unreachable("");
 }
@@ -131,6 +133,8 @@ static inline Lang_type* uast_get_ulang_type_def_ref(Uast_def* def) {
             unreachable("");
         case UAST_POISON_DEF:
             unreachable("");
+        case UAST_IMPORT:
+            unreachable("");
     }
     unreachable("");
 }
@@ -190,6 +194,8 @@ static inline bool uast_def_get_lang_type(Lang_type* result, Env* env, const Uas
         case UAST_GENERIC_PARAM:
             unreachable("");
         case UAST_POISON_DEF:
+            unreachable("");
+        case UAST_IMPORT:
             unreachable("");
     }
     unreachable("");
@@ -264,6 +270,8 @@ static inline Lang_type* uast_def_ref_get_lang_type(Uast_def* def) {
         case UAST_GENERIC_PARAM:
             unreachable("");
         case UAST_POISON_DEF:
+            unreachable("");
+        case UAST_IMPORT:
             unreachable("");
     }
     unreachable("");
@@ -379,6 +387,8 @@ static inline Str_view uast_def_get_name(const Uast_def* def) {
             return uast_generic_param_const_unwrap(def)->child->name;
         case UAST_POISON_DEF:
             return uast_poison_def_const_unwrap(def)->name;
+        case UAST_IMPORT:
+            unreachable("");
     }
     unreachable("");
 }
@@ -452,6 +462,8 @@ static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def)
         case UAST_FUNCTION_DECL:
             unreachable("");
         case UAST_POISON_DEF:
+            unreachable("");
+        case UAST_IMPORT:
             unreachable("");
     }
     unreachable("");

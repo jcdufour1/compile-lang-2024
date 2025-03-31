@@ -115,6 +115,14 @@ static Uast_name uast_name_new(const char* parent, const char* base, bool is_top
     return (Uast_name) {.parent = str_view_from_cstr(parent), .base = str_view_from_cstr(base), .is_topmost = is_topmost};
 }
 
+static Uast_type uast_gen_import(const char* prefix) {
+    Uast_type import = {.name = uast_name_new(prefix, "import", false)};
+
+    append_member(&import.members, "Uast_block*", "block");
+
+    return import;
+}
+
 static Uast_type uast_gen_block(const char* prefix) {
     Uast_type block = {.name = uast_name_new(prefix, "block", false)};
 
@@ -460,6 +468,7 @@ static Uast_type uast_gen_def(const char* prefix) {
     Uast_type def = {.name = uast_name_new(prefix, base_name, false)};
 
     vec_append(&gen_a, &def.sub_types, uast_gen_poison_def(base_name));
+    vec_append(&gen_a, &def.sub_types, uast_gen_import(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_generic_param(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_function_def(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_variable_def(base_name));

@@ -156,6 +156,18 @@ static PARSE_STATUS msg_redefinition_of_symbol(Env* env, const Uast_def* new_sym
     return PARSE_ERROR;
 }
 
+static bool get_block_from_path_token(Env* env, Uast_block** block, Str_view name, Token path_tk) {
+    Uast_def* prev_def = NULL;
+    if (usymbol_lookup(&prev_def, env, name)) {
+        todo();
+    }
+    todo();
+}
+
+static bool starts_with_import(Tk_view tokens) {
+    return tk_view_front(tokens).type == TOKEN_IMPORT;
+}
+
 static bool starts_with_struct_def(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_STRUCT;
 }
@@ -465,6 +477,8 @@ static bool can_end_stmt(Token token) {
             return false;
         case TOKEN_CLOSE_GENERIC:
             return true;
+        case TOKEN_IMPORT:
+            return false;
     }
     unreachable("");
 }
@@ -663,6 +677,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_CLOSE_GENERIC:
             return false;
+        case TOKEN_IMPORT:
+            return false;
     }
     unreachable("");
 }
@@ -798,6 +814,8 @@ static bool is_binary(TOKEN_TYPE token_type) {
             return true;
         case TOKEN_CLOSE_GENERIC:
             return true;
+        case TOKEN_IMPORT:
+            return false;
     }
     unreachable("");
 }
@@ -1266,6 +1284,31 @@ static PARSE_STATUS parse_sum_def(Env* env, Uast_sum_def** sum_def, Tk_view* tok
     return PARSE_OK;
 }
 
+static PARSE_STATUS parse_import(Env* env, Uast_import** import, Tk_view* tokens, Token name) {
+    Token import_tk = {0};
+    unwrap(try_consume(&import_tk, tokens, TOKEN_IMPORT));
+
+    Token dummy = {0};
+    if (!try_consume(&dummy, tokens, TOKEN_SINGLE_EQUAL)) {
+        // TODO
+        todo();
+    }
+
+    Token path_tk = {0};
+    if (!try_consume(&path_tk, tokens, TOKEN_SYMBOL)) {
+        // TODO
+        todo();
+    }
+
+    // TODO: consider repeated import statements
+    Uast_block* block = NULL;
+    if (!get_block_from_path_token(env, &block, name.text, path_tk)) {
+        return false;
+    }
+    *import = uast_import_new(import_tk.pos, block);
+    return true;
+}
+
 static PARSE_STATUS parse_type_def(Env* env, Uast_def** def, Tk_view* tokens) {
     Token name = {0};
     if (!try_consume(&name, tokens, TOKEN_SYMBOL)) {
@@ -1297,6 +1340,12 @@ static PARSE_STATUS parse_type_def(Env* env, Uast_def** def, Tk_view* tokens) {
             return PARSE_ERROR;
         }
         *def = uast_sum_def_wrap(sum_def);
+    } else if (starts_with_import(*tokens)) {
+        Uast_import* import = NULL;
+        if (PARSE_OK != parse_import(env, &import, tokens, name)) {
+            return PARSE_ERROR;
+        }
+        *def = uast_import_wrap(import);
     } else {
         msg_parser_expected(
             env->file_text, tk_view_front(*tokens), "",
