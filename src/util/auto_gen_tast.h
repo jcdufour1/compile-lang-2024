@@ -561,20 +561,10 @@ static Tast_type tast_gen_literal_def(const char* prefix) {
     return def;
 }
 
-static Tast_type tast_gen_poison_def(const char* prefix) {
-    const char* base_name = "poison_def";
-    Tast_type def = {.name = tast_name_new(prefix, base_name, false)};
-
-    append_member(&def.members, "Str_view", "name");
-
-    return def;
-}
-
 static Tast_type tast_gen_def(const char* prefix) {
     const char* base_name = "def";
     Tast_type def = {.name = tast_name_new(prefix, base_name, false)};
 
-    vec_append(&gen_a, &def.sub_types, tast_gen_poison_def(base_name));
     vec_append(&gen_a, &def.sub_types, tast_gen_function_def(base_name));
     vec_append(&gen_a, &def.sub_types, tast_gen_variable_def(base_name));
     vec_append(&gen_a, &def.sub_types, tast_gen_struct_def(base_name));

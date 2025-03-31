@@ -446,10 +446,20 @@ static Uast_type uast_gen_generic_param(const char* prefix) {
     return param;
 }
 
+static Uast_type uast_gen_poison_def(const char* prefix) {
+    const char* base_name = "poison_def";
+    Uast_type def = {.name = uast_name_new(prefix, base_name, false)};
+
+    append_member(&def.members, "Str_view", "name");
+
+    return def;
+}
+
 static Uast_type uast_gen_def(const char* prefix) {
     const char* base_name = "def";
     Uast_type def = {.name = uast_name_new(prefix, base_name, false)};
 
+    vec_append(&gen_a, &def.sub_types, uast_gen_poison_def(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_generic_param(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_function_def(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_variable_def(base_name));

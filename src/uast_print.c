@@ -637,6 +637,8 @@ Str_view uast_def_print_internal(const Uast_def* def, int indent) {
             return uast_literal_def_print_internal(uast_literal_def_const_unwrap(def), indent);
         case UAST_GENERIC_PARAM:
             return uast_generic_param_print_internal(uast_generic_param_const_unwrap(def), indent);
+        case UAST_POISON_DEF:
+            unreachable("");
     }
     unreachable("");
 }

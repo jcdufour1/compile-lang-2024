@@ -2100,8 +2100,6 @@ static Str_view load_def(Env* env, Llvm_block* new_block, Tast_def* old_def) {
             unreachable("");
         case TAST_PRIMITIVE_DEF:
             unreachable("");
-        case TAST_POISON_DEF:
-            unreachable("compilation should have exited before now if a poison def was generated");
     }
     unreachable("");
 }
@@ -2168,8 +2166,6 @@ static Str_view load_def_sometimes(Env* env, Llvm_block* new_block, Tast_def* ol
         case TAST_LITERAL_DEF:
             return (Str_view) {0};
         case TAST_PRIMITIVE_DEF:
-            unreachable("");
-        case TAST_POISON_DEF:
             unreachable("");
     }
     unreachable("");

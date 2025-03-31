@@ -164,6 +164,8 @@ Uast_def* uast_def_clone(const Uast_def* def) {
             assert(def != uast_variable_def_wrap(new_def));
             return uast_variable_def_wrap(new_def);
         }
+        case UAST_POISON_DEF:
+            todo();
     }
     unreachable("");
 }

@@ -456,10 +456,6 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
         }
         case UAST_FUNCTION_DEF: {
             Uast_function_def* new_def = NULL;
-            Tast_def* dummy = NULL;
-            if (symbol_lookup(&dummy, env, uast_function_def_unwrap(sym_def)->decl->name) && dummy->type == TAST_POISON_DEF) {
-                return false;
-            }
             if (function_decl_generics_are_present(uast_function_def_unwrap(sym_def)->decl)) {
                 if (!resolve_generics_function_def(&new_def, env, uast_function_def_unwrap(sym_def), sym_untyped->generic_args, sym_untyped->pos)) {
                     return false;
@@ -487,12 +483,6 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
         case UAST_LITERAL_DEF:
             // fallthrough
         case UAST_VARIABLE_DEF: {
-            Tast_def* result = NULL;
-            if (symbol_lookup(&result, env, sym_untyped->name) && result->type == TAST_POISON_DEF) {
-                unwrap(error_count > 0);
-                return false;
-            }
-
             Lang_type lang_type = {0};
             if (!uast_def_get_lang_type(&lang_type, env, sym_def, sym_untyped->generic_args)) {
                 return false;
@@ -504,6 +494,8 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
         }
         case UAST_GENERIC_PARAM:
             unreachable("cannot set symbol of template parameter here");
+        case UAST_POISON_DEF:
+            return false;
     }
     unreachable("");
 }
@@ -1340,6 +1332,9 @@ STMT_STATUS try_set_def_types(Env* env, Uast_def* uast) {
         case UAST_GENERIC_PARAM: {
             todo();
         }
+        case UAST_POISON_DEF: {
+            todo();
+        }
     }
     unreachable("");
 }
@@ -1908,6 +1903,8 @@ bool try_set_member_access_types_finish(
             unreachable("");
         case UAST_VARIABLE_DEF:
             unreachable("");
+        case UAST_POISON_DEF:
+            unreachable("");
     }
     unreachable("");
 }
@@ -2048,16 +2045,16 @@ bool try_set_variable_def_types(
     bool add_to_sym_tbl,
     bool is_variadic
 ) {
-    Tast_def* result = NULL;
-    if (symbol_lookup(&result, env, uast->name) && result->type == TAST_POISON_DEF) {
+    Uast_def* result = NULL;
+    if (usymbol_lookup(&result, env, uast->name) && result->type == UAST_POISON_DEF) {
         unwrap(error_count > 0);
         return false;
     }
 
     Lang_type new_lang_type = {0};
     if (!try_lang_type_from_ulang_type(&new_lang_type, env, uast->lang_type, uast->pos)) {
-        Tast_poison_def* new_poison = tast_poison_def_new(uast->pos, uast->name);
-        symbol_add(env, tast_poison_def_wrap(new_poison));
+        Uast_poison_def* new_poison = uast_poison_def_new(uast->pos, uast->name);
+        usymbol_update(env, uast_poison_def_wrap(new_poison));
         return false;
     }
 
@@ -2076,8 +2073,8 @@ bool try_set_function_decl_types(
 ) {
     Tast_function_params* new_params = NULL;
     if (!try_set_function_params_types(env, &new_params, decl->params, add_to_sym_tbl)) {
-        Tast_poison_def* poison = tast_poison_def_new(decl->pos, decl->name);
-        unwrap(symbol_add(env, tast_poison_def_wrap(poison)));
+        Uast_poison_def* poison = uast_poison_def_new(decl->pos, decl->name);
+        usymbol_update(env, uast_poison_def_wrap(poison));
         return false;
     }
 
