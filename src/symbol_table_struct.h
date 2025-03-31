@@ -63,6 +63,10 @@ typedef struct {
     size_t capacity; // count buckets in symbol_table
 } Generic_symbol_table;
 
+typedef struct {
+    Vec_base info;
+    void** buf;
+} Generic_vec;
 
 typedef struct {
     Usymbol_table usymbol_table;

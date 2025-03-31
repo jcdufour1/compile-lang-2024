@@ -10,58 +10,26 @@
 #define SYM_TBL_DEFAULT_CAPACITY 1
 #define SYM_TBL_MAX_DENSITY (0.6f)
 
+static void usym_tbl_cpy(
+    Usymbol_table_tast* dest,
+    const Usymbol_table_tast* src,
+    size_t capacity,
+    size_t count_tasts_to_cpy
+);
+
+//
+// util
+//
 static size_t sym_tbl_calculate_idx(Str_view key, size_t capacity) {
     assert(capacity > 0);
     return stbds_hash_bytes(key.str, key.count, 0)%capacity;
 }
 
-bool alloca_do_add_defered(Llvm** redefined_sym, Env* env) {
-    for (size_t idx = 0; idx < env->defered_allocas_to_add.info.count; idx++) {
-        if (!alloca_add(env, vec_at(&env->defered_allocas_to_add, idx))) {
-            *redefined_sym = vec_at(&env->defered_allocas_to_add, idx);
-            vec_reset(&env->defered_allocas_to_add);
-            return false;
-        }
-    }
+//
+// generics
+//
 
-    vec_reset(&env->defered_allocas_to_add);
-    return true;
-}
-
-bool symbol_do_add_defered(Tast_def** redefined_sym, Env* env) {
-    for (size_t idx = 0; idx < env->defered_symbols_to_add.info.count; idx++) {
-        if (!symbol_add(env, vec_at(&env->defered_symbols_to_add, idx))) {
-            *redefined_sym = vec_at(&env->defered_symbols_to_add, idx);
-            vec_reset(&env->defered_symbols_to_add);
-            return false;
-        }
-    }
-
-    vec_reset(&env->defered_symbols_to_add);
-    return true;
-}
-
-bool usymbol_do_add_defered(Uast_def** redefined_sym, Env* env) {
-    for (size_t idx = 0; idx < env->udefered_symbols_to_add.info.count; idx++) {
-        if (!usymbol_add(env, vec_at(&env->udefered_symbols_to_add, idx))) {
-            *redefined_sym = vec_at(&env->udefered_symbols_to_add, idx);
-            vec_reset(&env->udefered_symbols_to_add);
-            return false;
-        }
-    }
-
-    vec_reset(&env->udefered_symbols_to_add);
-    return true;
-}
-
-void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, int recursion_depth) {
-    for (size_t idx = 0; idx < sym_table.capacity; idx++) {
-        Usymbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
-        if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_strv(&print_arena, buf, uast_def_print_internal(sym_tast->tast, recursion_depth));
-        }
-    }
-}
+typedef bool(*Add_fn)(Env* env, void* tast_to_add);
 
 typedef Str_view(*Get_key_fn)(const void* tast);
 
@@ -87,35 +55,20 @@ bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts,
     return true;
 }
 
-// returns false if symbol is already added to the table
-bool usym_tbl_add_internal(Usymbol_table_tast* usym_tbl_tasts, size_t capacity, Uast_def* tast_of_symbol) {
-    return generic_symbol_table_add_internal((Generic_symbol_table_tast*)usym_tbl_tasts, capacity, tast_of_symbol, (Get_key_fn)uast_def_get_name);
-}
-
-// returns false if symbol is already added to the table
-bool sym_tbl_add_internal(Symbol_table_tast* sym_tbl_tasts, size_t capacity, Tast_def* tast_of_symbol) {
-    return generic_symbol_table_add_internal((Generic_symbol_table_tast*)sym_tbl_tasts, capacity, tast_of_symbol, (Get_key_fn)tast_def_get_name);
-}
-
-// returns false if symbol is already added to the table
-bool all_tbl_add_internal(Alloca_table_tast* all_tbl_tasts, size_t capacity, Llvm* tast_of_symbol) {
-    return generic_symbol_table_add_internal((Generic_symbol_table_tast*)all_tbl_tasts, capacity, tast_of_symbol, (Get_key_fn)llvm_tast_get_name);
-}
-
-static void usym_tbl_cpy(
-    Usymbol_table_tast* dest,
-    const Usymbol_table_tast* src,
-    size_t capacity,
-    size_t count_tasts_to_cpy
-) {
-    for (size_t bucket_src = 0; bucket_src < count_tasts_to_cpy; bucket_src++) {
-        if (src[bucket_src].status == SYM_TBL_OCCUPIED) {
-            usym_tbl_add_internal(dest, capacity, src[bucket_src].tast);
+bool generic_do_add_defered(void** redefined_sym, Env* env, void* defered_tasts_to_add, Add_fn add_fn) {
+    for (size_t idx = 0; idx < ((Generic_vec*)defered_tasts_to_add)->info.count; idx++) {
+        if (!add_fn(env, vec_at((Generic_vec*)defered_tasts_to_add, idx))) {
+            *redefined_sym = vec_at((Generic_vec*)defered_tasts_to_add, idx);
+            vec_reset((Generic_vec*)defered_tasts_to_add);
+            return false;
         }
     }
+
+    vec_reset((Generic_vec*)defered_tasts_to_add);
+    return true;
 }
 
-static void usym_tbl_expand_if_nessessary(Usymbol_table* sym_table) {
+static void generic_tbl_expand_if_nessessary(Usymbol_table* sym_table) {
     size_t old_capacity_tast_count = sym_table->capacity;
     size_t minimum_count_to_reserve = 1;
     size_t new_count = sym_table->count + minimum_count_to_reserve;
@@ -137,6 +90,67 @@ static void usym_tbl_expand_if_nessessary(Usymbol_table* sym_table) {
         new_table_tasts = arena_alloc(&a_main, sym_table->capacity*tast_size);
         usym_tbl_cpy(new_table_tasts, sym_table->table_tasts, sym_table->capacity, old_capacity_tast_count);
         sym_table->table_tasts = new_table_tasts;
+    }
+}
+
+//
+// implementations
+//
+
+// returns false if symbol is already added to the table
+bool usym_tbl_add_internal(Usymbol_table_tast* usym_tbl_tasts, size_t capacity, Uast_def* tast_of_symbol) {
+    return generic_symbol_table_add_internal((Generic_symbol_table_tast*)usym_tbl_tasts, capacity, tast_of_symbol, (Get_key_fn)uast_def_get_name);
+}
+
+// returns false if symbol is already added to the table
+bool sym_tbl_add_internal(Symbol_table_tast* sym_tbl_tasts, size_t capacity, Tast_def* tast_of_symbol) {
+    return generic_symbol_table_add_internal((Generic_symbol_table_tast*)sym_tbl_tasts, capacity, tast_of_symbol, (Get_key_fn)tast_def_get_name);
+}
+
+// returns false if symbol is already added to the table
+bool all_tbl_add_internal(Alloca_table_tast* all_tbl_tasts, size_t capacity, Llvm* tast_of_symbol) {
+    return generic_symbol_table_add_internal((Generic_symbol_table_tast*)all_tbl_tasts, capacity, tast_of_symbol, (Get_key_fn)llvm_tast_get_name);
+}
+
+bool alloca_do_add_defered(Llvm** redefined_sym, Env* env) {
+    return generic_do_add_defered((void**)redefined_sym, env, &env->defered_allocas_to_add, (Add_fn)alloca_add);
+}
+
+bool symbol_do_add_defered(Tast_def** redefined_sym, Env* env) {
+    return generic_do_add_defered((void**)redefined_sym, env, &env->defered_symbols_to_add, (Add_fn)symbol_add);
+}
+
+bool usymbol_do_add_defered(Uast_def** redefined_sym, Env* env) {
+    return generic_do_add_defered((void**)redefined_sym, env, &env->udefered_symbols_to_add, (Add_fn)usymbol_add);
+}
+
+static void usym_tbl_expand_if_nessessary(Usymbol_table* sym_table) {
+    generic_tbl_expand_if_nessessary(sym_table);
+}
+
+//
+// not generic
+//
+
+void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, int recursion_depth) {
+    for (size_t idx = 0; idx < sym_table.capacity; idx++) {
+        Usymbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
+        if (sym_tast->status == SYM_TBL_OCCUPIED) {
+            string_extend_strv(&print_arena, buf, uast_def_print_internal(sym_tast->tast, recursion_depth));
+        }
+    }
+}
+
+static void usym_tbl_cpy(
+    Usymbol_table_tast* dest,
+    const Usymbol_table_tast* src,
+    size_t capacity,
+    size_t count_tasts_to_cpy
+) {
+    for (size_t bucket_src = 0; bucket_src < count_tasts_to_cpy; bucket_src++) {
+        if (src[bucket_src].status == SYM_TBL_OCCUPIED) {
+            usym_tbl_add_internal(dest, capacity, src[bucket_src].tast);
+        }
     }
 }
 
