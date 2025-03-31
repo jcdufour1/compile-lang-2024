@@ -10,9 +10,26 @@
 #define SYM_TBL_DEFAULT_CAPACITY 1
 #define SYM_TBL_MAX_DENSITY (0.6f)
 
+//
+// forward declarations
+//
 static void usym_tbl_cpy(
     Usymbol_table_tast* dest,
     const Usymbol_table_tast* src,
+    size_t capacity,
+    size_t count_tasts_to_cpy
+);
+
+static void sym_tbl_cpy(
+    Symbol_table_tast* dest,
+    const Symbol_table_tast* src,
+    size_t capacity,
+    size_t count_tasts_to_cpy
+);
+
+static void all_tbl_cpy(
+    Alloca_table_tast* dest,
+    const Alloca_table_tast* src,
     size_t capacity,
     size_t count_tasts_to_cpy
 );
@@ -32,6 +49,13 @@ static size_t sym_tbl_calculate_idx(Str_view key, size_t capacity) {
 typedef bool(*Add_fn)(Env* env, void* tast_to_add);
 
 typedef Str_view(*Get_key_fn)(const void* tast);
+
+typedef void(*Tbl_cpy_fn)(
+    Usymbol_table_tast* dest,
+    const Usymbol_table_tast* src,
+    size_t capacity,
+    size_t count_tasts_to_cpy
+);
 
 bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts, size_t capacity, void* tast_of_symbol, Get_key_fn get_key_fn) {
     assert(tast_of_symbol);
@@ -68,28 +92,28 @@ bool generic_do_add_defered(void** redefined_sym, Env* env, void* defered_tasts_
     return true;
 }
 
-static void generic_tbl_expand_if_nessessary(Usymbol_table* sym_table) {
-    size_t old_capacity_tast_count = sym_table->capacity;
+static void generic_tbl_expand_if_nessessary(void* sym_table, Tbl_cpy_fn tbl_cpy_fn) {
+    size_t old_capacity_tast_count = ((Generic_symbol_table*)sym_table)->capacity;
     size_t minimum_count_to_reserve = 1;
-    size_t new_count = sym_table->count + minimum_count_to_reserve;
-    size_t tast_size = sizeof(sym_table->table_tasts[0]);
+    size_t new_count = ((Generic_symbol_table*)sym_table)->count + minimum_count_to_reserve;
+    size_t tast_size = sizeof(Generic_symbol_table_tast);
 
     bool should_move_elements = false;
     Usymbol_table_tast* new_table_tasts;
 
-    if (sym_table->capacity < 1) {
-        sym_table->capacity = SYM_TBL_DEFAULT_CAPACITY;
+    if (((Generic_symbol_table*)sym_table)->capacity < 1) {
+        ((Generic_symbol_table*)sym_table)->capacity = SYM_TBL_DEFAULT_CAPACITY;
         should_move_elements = true;
     }
-    while (((float)new_count / sym_table->capacity) >= SYM_TBL_MAX_DENSITY) {
-        sym_table->capacity *= 2;
+    while (((float)new_count / ((Generic_symbol_table*)sym_table)->capacity) >= SYM_TBL_MAX_DENSITY) {
+        ((Generic_symbol_table*)sym_table)->capacity *= 2;
         should_move_elements = true;
     }
 
     if (should_move_elements) {
-        new_table_tasts = arena_alloc(&a_main, sym_table->capacity*tast_size);
-        usym_tbl_cpy(new_table_tasts, sym_table->table_tasts, sym_table->capacity, old_capacity_tast_count);
-        sym_table->table_tasts = new_table_tasts;
+        new_table_tasts = arena_alloc(&a_main, ((Generic_symbol_table*)sym_table)->capacity*tast_size);
+        tbl_cpy_fn(new_table_tasts, ((Generic_symbol_table*)sym_table)->table_tasts, ((Generic_symbol_table*)sym_table)->capacity, old_capacity_tast_count);
+        ((Generic_symbol_table*)sym_table)->table_tasts = new_table_tasts;
     }
 }
 
@@ -125,7 +149,15 @@ bool usymbol_do_add_defered(Uast_def** redefined_sym, Env* env) {
 }
 
 static void usym_tbl_expand_if_nessessary(Usymbol_table* sym_table) {
-    generic_tbl_expand_if_nessessary(sym_table);
+    generic_tbl_expand_if_nessessary(sym_table, (Tbl_cpy_fn)usym_tbl_cpy);
+}
+
+static void sym_tbl_expand_if_nessessary(Symbol_table* sym_table) {
+    generic_tbl_expand_if_nessessary(sym_table, (Tbl_cpy_fn)sym_tbl_cpy);
+}
+
+static void all_tbl_expand_if_nessessary(Alloca_table* sym_table) {
+    generic_tbl_expand_if_nessessary(sym_table, (Tbl_cpy_fn)all_tbl_cpy);
 }
 
 //
@@ -311,31 +343,6 @@ static void sym_tbl_cpy(
     }
 }
 
-static void sym_tbl_expand_if_nessessary(Symbol_table* sym_table) {
-    size_t old_capacity_tast_count = sym_table->capacity;
-    size_t minimum_count_to_reserve = 1;
-    size_t new_count = sym_table->count + minimum_count_to_reserve;
-    size_t tast_size = sizeof(sym_table->table_tasts[0]);
-
-    bool should_move_elements = false;
-    Symbol_table_tast* new_table_tasts;
-
-    if (sym_table->capacity < 1) {
-        sym_table->capacity = SYM_TBL_DEFAULT_CAPACITY;
-        should_move_elements = true;
-    }
-    while (((float)new_count / sym_table->capacity) >= SYM_TBL_MAX_DENSITY) {
-        sym_table->capacity *= 2;
-        should_move_elements = true;
-    }
-
-    if (should_move_elements) {
-        new_table_tasts = arena_alloc(&a_main, sym_table->capacity*tast_size);
-        sym_tbl_cpy(new_table_tasts, sym_table->table_tasts, sym_table->capacity, old_capacity_tast_count);
-        sym_table->table_tasts = new_table_tasts;
-    }
-}
-
 // return false if symbol is not found
 bool sym_tbl_lookup_internal(Symbol_table_tast** result, const Symbol_table* sym_table, Str_view key) {
     if (sym_table->capacity < 1) {
@@ -469,31 +476,6 @@ static void all_tbl_cpy(
         if (src[bucket_src].status == SYM_TBL_OCCUPIED) {
             all_tbl_add_internal(dest, capacity, src[bucket_src].tast);
         }
-    }
-}
-
-static void all_tbl_expand_if_nessessary(Alloca_table* sym_table) {
-    size_t old_capacity_tast_count = sym_table->capacity;
-    size_t minimum_count_to_reserve = 1;
-    size_t new_count = sym_table->count + minimum_count_to_reserve;
-    size_t tast_size = sizeof(sym_table->table_tasts[0]);
-
-    bool should_move_elements = false;
-    Alloca_table_tast* new_table_tasts;
-
-    if (sym_table->capacity < 1) {
-        sym_table->capacity = SYM_TBL_DEFAULT_CAPACITY;
-        should_move_elements = true;
-    }
-    while (((float)new_count / sym_table->capacity) >= SYM_TBL_MAX_DENSITY) {
-        sym_table->capacity *= 2;
-        should_move_elements = true;
-    }
-
-    if (should_move_elements) {
-        new_table_tasts = arena_alloc(&a_main, sym_table->capacity*tast_size);
-        all_tbl_cpy(new_table_tasts, sym_table->table_tasts, sym_table->capacity, old_capacity_tast_count);
-        sym_table->table_tasts = new_table_tasts;
     }
 }
 
