@@ -86,7 +86,7 @@ static bool get_next_token(
     Pos* pos,
     Token* token,
     Str_view_col* file_text_rem,
-    Str_view input_path
+    Str_view file_path
 ) {
     memset(token, 0, sizeof(*token));
     arena_reset(&tk_arena);
@@ -97,7 +97,7 @@ static bool get_next_token(
         return false;
     }
 
-    pos->file_path = input_path;
+    pos->file_path = file_path;
     token->pos.column = pos->column + 1;
     token->pos.line = pos->line;
     token->pos.file_path = pos->file_path;
@@ -381,7 +381,7 @@ static void test(const char* file_text, Tk_view expected) {
     Env env = {.file_text = str_view_from_cstr(file_text)};
 
     Tokens tokens = {0};
-    if (!tokenize(&tokens, &env, (Parameters){0})) {
+    if (!tokenize(&tokens, &env, (Str_view){0})) {
         unreachable("");
     }
     Tk_view tk_view = {.tokens = tokens.buf, .count = tokens.info.count};
@@ -594,7 +594,7 @@ void tokenize_do_test(void) {
     //test8();
 }
 
-bool tokenize(Tokens* result, Env* env, const Parameters params) {
+bool tokenize(Tokens* result, Env* env, Str_view file_path) {
     size_t prev_err_count = error_count;
     Tokens tokens = {0};
 
@@ -602,7 +602,7 @@ bool tokenize(Tokens* result, Env* env, const Parameters params) {
 
     Pos pos = {.line = 1, .column = 0};
     Token curr_token = {0};
-    while (get_next_token(env, &pos, &curr_token, &curr_file_text, params)) {
+    while (get_next_token(env, &pos, &curr_token, &curr_file_text, file_path)) {
         if (curr_token.type == TOKEN_COMMENT) {
             continue;
         }

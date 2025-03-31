@@ -72,6 +72,7 @@ void do_passes(const Parameters* params) {
     if (!parse_file(&untyped, &env, str_view_from_cstr(params->input_file_name))) {
         fail();
     }
+    assert(error_count < 1);
 
     arena_reset(&print_arena);
     log(LOG_DEBUG, "\n"TAST_FMT, uast_block_print(untyped));

@@ -20,7 +20,7 @@ static inline void insert_into_tast_vec(
 
 void tokenize_do_test(void);
 
-bool tokenize(Tokens* result, Env* env, const Parameters params);
+bool tokenize(Tokens* result, Env* env, Str_view file_path);
 
 bool parse_file(Uast_block** block, Env* env, Str_view file_path);
 

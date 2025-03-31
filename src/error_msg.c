@@ -81,7 +81,7 @@ void msg_internal(
             fprintf(stderr, "%s:", get_log_level_str(log_level));
             vfprintf(stderr, format, args);
         } else {
-            fprintf(stderr, "%s:%d:%d:%s:", pos.file_path, pos.line, pos.column, get_log_level_str(log_level));
+            fprintf(stderr, STR_VIEW_FMT":%d:%d:%s:", str_view_print(pos.file_path), pos.line, pos.column, get_log_level_str(log_level));
             vfprintf(stderr, format, args);
             show_location_error(file_text, pos);
         }

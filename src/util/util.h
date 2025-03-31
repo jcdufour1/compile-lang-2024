@@ -34,7 +34,7 @@ struct Env_;
 typedef struct Env_ Env;
 
 typedef struct {
-    const char* file_path;
+    Str_view file_path;
     uint32_t line;
     uint32_t column;
 } Pos;

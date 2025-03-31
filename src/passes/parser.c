@@ -2921,28 +2921,36 @@ static PARSE_EXPR_STATUS parse_expr(
 static void parser_do_tests(void);
 
 bool parse_file(Uast_block** block, Env* env, Str_view file_path) {
+    bool status = true;
 #ifndef DNDEBUG
     // TODO: reenable
     //parser_do_tests();
 #endif // DNDEBUG
 
-    Str_view file_text = {0};
-    if (!read_file(&file_text, params.input_file_name)) {
+    Str_view old_file_text = env->file_text;
+    if (!read_file(&env->file_text, params.input_file_name)) {
         msg(LOG_FATAL, EXPECT_FAIL_NONE, dummy_file_text, dummy_pos, "could not open file %s: errno %d (%s)\n", params.input_file_name, errno, strerror(errno));
-        return false;
+        status = false;
+        goto error;
     }
 
     Tokens tokens = {0};
     if (!tokenize(&tokens, env, file_path)) {
-        return false;
+        status = false;
+        goto error;
     }
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
-    parse_block(env, block, &token_view, true);
+    if (PARSE_OK != parse_block(env, block, &token_view, true)) {
+        return false;
+    }
     log(LOG_DEBUG, "%zu\n", env->ancesters.info.count);
     assert(env->ancesters.info.count == 0);
     log(LOG_DEBUG, "done with parsing:\n");
     symbol_log(LOG_TRACE, env);
-    return true;
+
+error:
+    env->file_text = old_file_text;
+    return status;
 }
 
 // TODO: put this in src/tokens.h or whatever
@@ -2957,7 +2965,8 @@ static void parser_test_parse_expr(const char* input, int test) {
     Str_view file_text = str_view_from_cstr(input);
     env.file_text = file_text;
 
-    Tokens tokens_ = tokenize(&env, (Parameters) {0});
+    Tokens tokens_ = {0};
+    unwrap(tokenize(&tokens_, &env, (Str_view) {0}));
     Tk_view tokens = tokens_to_tk_view(tokens_);
     log_tokens(LOG_DEBUG, tokens);
     Uast_expr* result = NULL;
@@ -2977,7 +2986,8 @@ static void parser_test_parse_stmt(const char* input, int test) {
     Str_view file_text = str_view_from_cstr(input);
     env.file_text = file_text;
 
-    Tokens tokens_ = tokenize(&env, (Parameters) {0});
+    Tokens tokens_ = {0};
+    unwrap(tokenize(&tokens_, &env, (Str_view) {0}));
     Tk_view tokens = tokens_to_tk_view(tokens_);
     log_tokens(LOG_DEBUG, tokens);
     Uast_stmt* result = NULL;
