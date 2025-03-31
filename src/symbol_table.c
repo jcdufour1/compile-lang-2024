@@ -57,6 +57,8 @@ typedef void(*Tbl_cpy_fn)(
     size_t count_tasts_to_cpy
 );
 
+typedef bool(*Add_internal_fn)(void* usym_tbl_tasts, size_t capacity, void* tast_of_symbol);
+
 bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts, size_t capacity, void* tast_of_symbol, Get_key_fn get_key_fn) {
     assert(tast_of_symbol);
     Str_view symbol_name = get_key_fn(tast_of_symbol);
@@ -117,6 +119,20 @@ static void generic_tbl_expand_if_nessessary(void* sym_table, Tbl_cpy_fn tbl_cpy
     }
 }
 
+static void generic_tbl_cpy(
+    void* dest,
+    const void* src,
+    size_t capacity,
+    size_t count_tasts_to_cpy,
+    Add_internal_fn add_internal_fn
+) {
+    for (size_t bucket_src = 0; bucket_src < count_tasts_to_cpy; bucket_src++) {
+        if (((Usymbol_table_tast*)src)[bucket_src].status == SYM_TBL_OCCUPIED) {
+            add_internal_fn(dest, capacity, ((Usymbol_table_tast*)src)[bucket_src].tast);
+        }
+    }
+}
+
 //
 // implementations
 //
@@ -160,6 +176,33 @@ static void all_tbl_expand_if_nessessary(Alloca_table* sym_table) {
     generic_tbl_expand_if_nessessary(sym_table, (Tbl_cpy_fn)all_tbl_cpy);
 }
 
+static void usym_tbl_cpy(
+    Usymbol_table_tast* dest,
+    const Usymbol_table_tast* src,
+    size_t capacity,
+    size_t count_tasts_to_cpy
+) {
+    generic_tbl_cpy(dest, src, capacity, count_tasts_to_cpy, (Add_internal_fn)usym_tbl_add_internal);
+}
+
+static void sym_tbl_cpy(
+    Symbol_table_tast* dest,
+    const Symbol_table_tast* src,
+    size_t capacity,
+    size_t count_tasts_to_cpy
+) {
+    generic_tbl_cpy(dest, src, capacity, count_tasts_to_cpy, (Add_internal_fn)sym_tbl_add_internal);
+}
+
+static void all_tbl_cpy(
+    Alloca_table_tast* dest,
+    const Alloca_table_tast* src,
+    size_t capacity,
+    size_t count_tasts_to_cpy
+) {
+    generic_tbl_cpy(dest, src, capacity, count_tasts_to_cpy, (Add_internal_fn)all_tbl_add_internal);
+}
+
 //
 // not generic
 //
@@ -169,19 +212,6 @@ void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, i
         Usymbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
             string_extend_strv(&print_arena, buf, uast_def_print_internal(sym_tast->tast, recursion_depth));
-        }
-    }
-}
-
-static void usym_tbl_cpy(
-    Usymbol_table_tast* dest,
-    const Usymbol_table_tast* src,
-    size_t capacity,
-    size_t count_tasts_to_cpy
-) {
-    for (size_t bucket_src = 0; bucket_src < count_tasts_to_cpy; bucket_src++) {
-        if (src[bucket_src].status == SYM_TBL_OCCUPIED) {
-            usym_tbl_add_internal(dest, capacity, src[bucket_src].tast);
         }
     }
 }
@@ -330,19 +360,6 @@ void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, int
     }
 }
 
-static void sym_tbl_cpy(
-    Symbol_table_tast* dest,
-    const Symbol_table_tast* src,
-    size_t capacity,
-    size_t count_tasts_to_cpy
-) {
-    for (size_t bucket_src = 0; bucket_src < count_tasts_to_cpy; bucket_src++) {
-        if (src[bucket_src].status == SYM_TBL_OCCUPIED) {
-            sym_tbl_add_internal(dest, capacity, src[bucket_src].tast);
-        }
-    }
-}
-
 // return false if symbol is not found
 bool sym_tbl_lookup_internal(Symbol_table_tast** result, const Symbol_table* sym_table, Str_view key) {
     if (sym_table->capacity < 1) {
@@ -462,19 +479,6 @@ void alloca_extend_table_internal(String* buf, const Alloca_table sym_table, int
         Alloca_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
             string_extend_strv(&print_arena, buf, llvm_print_internal(sym_tast->tast, recursion_depth));
-        }
-    }
-}
-
-static void all_tbl_cpy(
-    Alloca_table_tast* dest,
-    const Alloca_table_tast* src,
-    size_t capacity,
-    size_t count_tasts_to_cpy
-) {
-    for (size_t bucket_src = 0; bucket_src < count_tasts_to_cpy; bucket_src++) {
-        if (src[bucket_src].status == SYM_TBL_OCCUPIED) {
-            all_tbl_add_internal(dest, capacity, src[bucket_src].tast);
         }
     }
 }
