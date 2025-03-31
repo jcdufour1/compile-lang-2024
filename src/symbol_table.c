@@ -133,6 +133,37 @@ static void generic_tbl_cpy(
     }
 }
 
+// return false if symbol is not found
+bool generic_tbl_lookup_internal(Generic_symbol_table_tast** result, const void* sym_table, Str_view key, Get_key_fn get_key_fn) {
+    if (((Generic_symbol_table*)sym_table)->capacity < 1) {
+        return false;
+    }
+    size_t curr_table_idx = sym_tbl_calculate_idx(key, ((Generic_symbol_table*)sym_table)->capacity);
+    size_t init_table_idx = curr_table_idx; 
+
+    while (1) {
+        Generic_symbol_table_tast* curr_tast = &((Generic_symbol_table_tast*)(((Generic_symbol_table*)sym_table)->table_tasts))[curr_table_idx];
+
+        if (curr_tast->status == SYM_TBL_OCCUPIED) {
+            if (str_view_is_equal(get_key_fn(curr_tast->tast), key)) {
+                *result = curr_tast;
+                return true;
+            }
+        }
+
+        if (curr_tast->status == SYM_TBL_NEVER_OCCUPIED) {
+            return false;
+        }
+
+        curr_table_idx = (curr_table_idx + 1) % ((Generic_symbol_table*)sym_table)->capacity;
+        if (curr_table_idx == init_table_idx) {
+            return false;
+        }
+    }
+
+    unreachable("");
+}
+
 //
 // implementations
 //
@@ -176,6 +207,18 @@ static void all_tbl_expand_if_nessessary(Alloca_table* sym_table) {
     generic_tbl_expand_if_nessessary(sym_table, (Tbl_cpy_fn)all_tbl_cpy);
 }
 
+bool usym_tbl_lookup_internal(Usymbol_table_tast** result, const Usymbol_table* sym_table, Str_view key) {
+    return generic_tbl_lookup_internal((Generic_symbol_table_tast**)result, sym_table, key, (Get_key_fn)uast_def_get_name);
+}
+
+bool sym_tbl_lookup_internal(Symbol_table_tast** result, const Symbol_table* sym_table, Str_view key) {
+    return generic_tbl_lookup_internal((Generic_symbol_table_tast**)result, sym_table, key, (Get_key_fn)tast_def_get_name);
+}
+
+bool all_tbl_lookup_internal(Alloca_table_tast** result, const Alloca_table* sym_table, Str_view key) {
+    return generic_tbl_lookup_internal((Generic_symbol_table_tast**)result, sym_table, key, (Get_key_fn)llvm_tast_get_name);
+}
+
 static void usym_tbl_cpy(
     Usymbol_table_tast* dest,
     const Usymbol_table_tast* src,
@@ -214,37 +257,6 @@ void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, i
             string_extend_strv(&print_arena, buf, uast_def_print_internal(sym_tast->tast, recursion_depth));
         }
     }
-}
-
-// return false if symbol is not found
-bool usym_tbl_lookup_internal(Usymbol_table_tast** result, const Usymbol_table* sym_table, Str_view key) {
-    if (sym_table->capacity < 1) {
-        return false;
-    }
-    size_t curr_table_idx = sym_tbl_calculate_idx(key, sym_table->capacity);
-    size_t init_table_idx = curr_table_idx; 
-
-    while (1) {
-        Usymbol_table_tast* curr_tast = &sym_table->table_tasts[curr_table_idx];
-
-        if (curr_tast->status == SYM_TBL_OCCUPIED) {
-            if (str_view_is_equal(uast_def_get_name(curr_tast->tast), key)) {
-                *result = curr_tast;
-                return true;
-            }
-        }
-
-        if (curr_tast->status == SYM_TBL_NEVER_OCCUPIED) {
-            return false;
-        }
-
-        curr_table_idx = (curr_table_idx + 1) % sym_table->capacity;
-        if (curr_table_idx == init_table_idx) {
-            return false;
-        }
-    }
-
-    unreachable("");
 }
 
 // returns false if symbol has already been added to the table
@@ -360,37 +372,6 @@ void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, int
     }
 }
 
-// return false if symbol is not found
-bool sym_tbl_lookup_internal(Symbol_table_tast** result, const Symbol_table* sym_table, Str_view key) {
-    if (sym_table->capacity < 1) {
-        return false;
-    }
-    size_t curr_table_idx = sym_tbl_calculate_idx(key, sym_table->capacity);
-    size_t init_table_idx = curr_table_idx; 
-
-    while (1) {
-        Symbol_table_tast* curr_tast = &sym_table->table_tasts[curr_table_idx];
-
-        if (curr_tast->status == SYM_TBL_OCCUPIED) {
-            if (str_view_is_equal(tast_def_get_name(curr_tast->tast), key)) {
-                *result = curr_tast;
-                return true;
-            }
-        }
-
-        if (curr_tast->status == SYM_TBL_NEVER_OCCUPIED) {
-            return false;
-        }
-
-        curr_table_idx = (curr_table_idx + 1) % sym_table->capacity;
-        if (curr_table_idx == init_table_idx) {
-            return false;
-        }
-    }
-
-    unreachable("");
-}
-
 // returns false if symbol has already been added to the table
 bool sym_tbl_add(Symbol_table* sym_table, Tast_def* tast_of_symbol) {
     sym_tbl_expand_if_nessessary(sym_table);
@@ -481,37 +462,6 @@ void alloca_extend_table_internal(String* buf, const Alloca_table sym_table, int
             string_extend_strv(&print_arena, buf, llvm_print_internal(sym_tast->tast, recursion_depth));
         }
     }
-}
-
-// return false if symbol is not found
-bool all_tbl_lookup_internal(Alloca_table_tast** result, const Alloca_table* sym_table, Str_view key) {
-    if (sym_table->capacity < 1) {
-        return false;
-    }
-    size_t curr_table_idx = sym_tbl_calculate_idx(key, sym_table->capacity);
-    size_t init_table_idx = curr_table_idx; 
-
-    while (1) {
-        Alloca_table_tast* curr_tast = &sym_table->table_tasts[curr_table_idx];
-
-        if (curr_tast->status == SYM_TBL_OCCUPIED) {
-            if (str_view_is_equal(llvm_tast_get_name(curr_tast->tast), key)) {
-                *result = curr_tast;
-                return true;
-            }
-        }
-
-        if (curr_tast->status == SYM_TBL_NEVER_OCCUPIED) {
-            return false;
-        }
-
-        curr_table_idx = (curr_table_idx + 1) % sym_table->capacity;
-        if (curr_table_idx == init_table_idx) {
-            return false;
-        }
-    }
-
-    unreachable("");
 }
 
 // returns false if symbol has already been added to the table
