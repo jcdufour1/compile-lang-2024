@@ -16,77 +16,42 @@ static size_t sym_tbl_calculate_idx(Str_view key, size_t capacity) {
 }
 
 bool alloca_do_add_defered(Llvm** redefined_sym, Env* env) {
-
     for (size_t idx = 0; idx < env->defered_allocas_to_add.info.count; idx++) {
-
         if (!alloca_add(env, vec_at(&env->defered_allocas_to_add, idx))) {
-
             *redefined_sym = vec_at(&env->defered_allocas_to_add, idx);
-
             vec_reset(&env->defered_allocas_to_add);
-
             return false;
-
         }
-
     }
 
-
-
     vec_reset(&env->defered_allocas_to_add);
-
     return true;
-
 }
 
 bool symbol_do_add_defered(Tast_def** redefined_sym, Env* env) {
-
     for (size_t idx = 0; idx < env->defered_symbols_to_add.info.count; idx++) {
-
         if (!symbol_add(env, vec_at(&env->defered_symbols_to_add, idx))) {
-
             *redefined_sym = vec_at(&env->defered_symbols_to_add, idx);
-
             vec_reset(&env->defered_symbols_to_add);
-
             return false;
-
         }
-
     }
-
-
 
     vec_reset(&env->defered_symbols_to_add);
-
     return true;
-
 }
 
-
-
 bool usymbol_do_add_defered(Uast_def** redefined_sym, Env* env) {
-
     for (size_t idx = 0; idx < env->udefered_symbols_to_add.info.count; idx++) {
-
         if (!usymbol_add(env, vec_at(&env->udefered_symbols_to_add, idx))) {
-
             *redefined_sym = vec_at(&env->udefered_symbols_to_add, idx);
-
             vec_reset(&env->udefered_symbols_to_add);
-
             return false;
-
         }
-
     }
 
-
-
     vec_reset(&env->udefered_symbols_to_add);
-
     return true;
-
 }
 
 
@@ -100,8 +65,9 @@ void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, i
     }
 }
 
-// returns false if symbol is already added to the table
-bool usym_tbl_add_internal(Usymbol_table_tast* sym_tbl_tasts, size_t capacity, Uast_def* tast_of_symbol) {
+typedef Str_view(*Get_key_fn)(const void* tast);
+
+bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts, size_t capacity, void* tast_of_symbol, Get_key_fn get_key_fn) {
     assert(tast_of_symbol);
     Str_view symbol_name = uast_def_get_name(tast_of_symbol);
     assert(symbol_name.count > 0 && "invalid tast_of_symbol");
@@ -110,7 +76,7 @@ bool usym_tbl_add_internal(Usymbol_table_tast* sym_tbl_tasts, size_t capacity, U
     size_t curr_table_idx = sym_tbl_calculate_idx(symbol_name, capacity);
     size_t init_table_idx = curr_table_idx; 
     while (sym_tbl_tasts[curr_table_idx].status == SYM_TBL_OCCUPIED) {
-        if (str_view_is_equal(uast_def_get_name(sym_tbl_tasts[curr_table_idx].tast), symbol_name)) {
+        if (str_view_is_equal(get_key_fn(sym_tbl_tasts[curr_table_idx].tast), symbol_name)) {
             return false;
         }
         curr_table_idx = (curr_table_idx + 1) % capacity;
@@ -118,9 +84,14 @@ bool usym_tbl_add_internal(Usymbol_table_tast* sym_tbl_tasts, size_t capacity, U
         (void) init_table_idx;
     }
 
-    Usymbol_table_tast tast = {.tast = tast_of_symbol, .status = SYM_TBL_OCCUPIED};
+    Generic_symbol_table_tast tast = {.tast = tast_of_symbol, .status = SYM_TBL_OCCUPIED};
     sym_tbl_tasts[curr_table_idx] = tast;
     return true;
+}
+
+// returns false if symbol is already added to the table
+bool usym_tbl_add_internal(Usymbol_table_tast* sym_tbl_tasts, size_t capacity, Uast_def* tast_of_symbol) {
+    return generic_symbol_table_add_internal((Generic_symbol_table_tast*)sym_tbl_tasts, capacity, tast_of_symbol, (Get_key_fn)uast_def_get_name);
 }
 
 static void usym_tbl_cpy(

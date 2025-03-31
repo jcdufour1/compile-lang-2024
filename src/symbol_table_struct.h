@@ -52,6 +52,17 @@ typedef struct {
     size_t capacity; // count buckets in symbol_table
 } Alloca_table;
 
+typedef struct {
+    void* tast;
+    SYM_TBL_STATUS status;
+} Generic_symbol_table_tast;
+
+typedef struct {
+    void* table_tasts;
+    size_t count; // count elements in symbol_table
+    size_t capacity; // count buckets in symbol_table
+} Generic_symbol_table;
+
 
 typedef struct {
     Usymbol_table usymbol_table;
