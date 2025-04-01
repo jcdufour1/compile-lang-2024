@@ -22,7 +22,7 @@ static size_t sym_tbl_calculate_idx(Str_view key, size_t capacity) {
 // generics
 //
 
-typedef bool(*Tbl_add_fn)(Env* env, void* tast_to_add);
+typedef bool(*Symbol_add_fn)(Env* env, void* tast_to_add);
 
 typedef Str_view(*Get_key_fn)(const void* tast);
 
@@ -56,7 +56,7 @@ bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts,
     return true;
 }
 
-bool generic_do_add_defered(void** redefined_sym, Env* env, void* defered_tasts_to_add, Tbl_add_fn add_fn) {
+bool generic_do_add_defered(void** redefined_sym, Env* env, void* defered_tasts_to_add, Symbol_add_fn add_fn) {
     for (size_t idx = 0; idx < ((Generic_vec*)defered_tasts_to_add)->info.count; idx++) {
         if (!add_fn(env, vec_at((Generic_vec*)defered_tasts_to_add, idx))) {
             *redefined_sym = vec_at((Generic_vec*)defered_tasts_to_add, idx);
@@ -181,6 +181,27 @@ void generic_tbl_update(Generic_symbol_table* sym_table, void* tast_of_symbol, T
     unwrap(generic_tbl_add(sym_table, tast_of_symbol, add_internal_fn, tbl_lookup_fn, get_key_fn));
 }
 
+void generic_symbol_update(Env* env, void* tast_of_symbol, Get_key_fn get_key_fn, Symbol_add_fn symbol_add_fn, Get_tbl_from_collection_fn get_tbl_from_collection_fn) {
+    if (symbol_add_fn(env, tast_of_symbol)) {
+        return;
+    }
+    if (env->ancesters.info.count < 1) {
+        unreachable("no block ancester found");
+    }
+
+    for (size_t idx = env->ancesters.info.count - 1;; idx--) {
+        Symbol_collection* sym_coll = vec_at(&env->ancesters, idx);
+        Generic_symbol_table_tast* curr_tast = NULL;
+        if (generic_tbl_lookup_internal(&curr_tast, get_tbl_from_collection_fn(sym_coll), get_key_fn(tast_of_symbol), get_key_fn)) {
+            curr_tast->tast = tast_of_symbol;
+            return;
+        }
+
+        if (idx < 1) {
+            unreachable("no block ancester found");
+        }
+    }
+}
 //
 // implementations
 //
@@ -201,15 +222,15 @@ bool all_tbl_add_internal(Alloca_table_tast* all_tbl_tasts, size_t capacity, Llv
 }
 
 bool alloca_do_add_defered(Llvm** redefined_sym, Env* env) {
-    return generic_do_add_defered((void**)redefined_sym, env, &env->defered_allocas_to_add, (Tbl_add_fn)alloca_add);
+    return generic_do_add_defered((void**)redefined_sym, env, &env->defered_allocas_to_add, (Symbol_add_fn)alloca_add);
 }
 
 bool symbol_do_add_defered(Tast_def** redefined_sym, Env* env) {
-    return generic_do_add_defered((void**)redefined_sym, env, &env->defered_symbols_to_add, (Tbl_add_fn)symbol_add);
+    return generic_do_add_defered((void**)redefined_sym, env, &env->defered_symbols_to_add, (Symbol_add_fn)symbol_add);
 }
 
 bool usymbol_do_add_defered(Uast_def** redefined_sym, Env* env) {
-    return generic_do_add_defered((void**)redefined_sym, env, &env->udefered_symbols_to_add, (Tbl_add_fn)usymbol_add);
+    return generic_do_add_defered((void**)redefined_sym, env, &env->udefered_symbols_to_add, (Symbol_add_fn)usymbol_add);
 }
 
 static void usym_tbl_expand_if_nessessary(Usymbol_table* sym_table) {
@@ -311,6 +332,18 @@ void all_tbl_update(Alloca_table* sym_table, Llvm* tast_of_symbol) {
     generic_tbl_update((Generic_symbol_table*)sym_table, tast_of_symbol, (Tbl_add_internal_fn)all_tbl_add_internal, (Tbl_lookup_fn)all_tbl_lookup, (Get_key_fn)llvm_tast_get_name);
 }
 
+void usymbol_update(Env* env, Uast_def* tast_of_symbol) {
+    generic_symbol_update(env, tast_of_symbol, (Get_key_fn)uast_def_get_name, (Symbol_add_fn)usymbol_add, (Get_tbl_from_collection_fn)usym_get_tbl_from_collection);
+}
+
+void symbol_update(Env* env, Tast_def* tast_of_symbol) {
+    generic_symbol_update(env, tast_of_symbol, (Get_key_fn)tast_def_get_name, (Symbol_add_fn)symbol_add, (Get_tbl_from_collection_fn)sym_get_tbl_from_collection);
+}
+
+void alloca_update(Env* env, Llvm* tast_of_symbol) {
+    generic_symbol_update(env, tast_of_symbol, (Get_key_fn)llvm_tast_get_name, (Symbol_add_fn)alloca_add, (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
+}
+
 //
 // not generic
 //
@@ -362,28 +395,6 @@ bool usymbol_lookup(Uast_def** result, Env* env, Str_view key) {
     }
 }
 
-void usymbol_update(Env* env, Uast_def* tast_of_symbol) {
-    if (usymbol_add(env, tast_of_symbol)) {
-        return;
-    }
-    if (env->ancesters.info.count < 1) {
-        unreachable("no block ancester found");
-    }
-
-    for (size_t idx = env->ancesters.info.count - 1;; idx--) {
-        Symbol_collection* sym_coll = vec_at(&env->ancesters, idx);
-        Usymbol_table_tast* curr_tast = NULL;
-        if (usym_tbl_lookup_internal(&curr_tast, &sym_coll->usymbol_table, uast_def_get_name(tast_of_symbol))) {
-            curr_tast->tast = tast_of_symbol;
-            return;
-        }
-
-        if (idx < 1) {
-            unreachable("no block ancester found");
-        }
-    }
-}
-
 
 void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, int recursion_depth) {
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
@@ -411,29 +422,6 @@ bool symbol_lookup(Tast_def** result, Env* env, Str_view key) {
     }
 }
 
-void symbol_update(Env* env, Tast_def* tast_of_symbol) {
-    if (symbol_add(env, tast_of_symbol)) {
-        return;
-    }
-    if (env->ancesters.info.count < 1) {
-        unreachable("no block ancester found");
-    }
-
-    for (size_t idx = env->ancesters.info.count - 1;; idx--) {
-        Symbol_collection* sym_coll = vec_at(&env->ancesters, idx);
-        Symbol_table_tast* curr_tast = NULL;
-        if (sym_tbl_lookup_internal(&curr_tast, &sym_coll->symbol_table, tast_def_get_name(tast_of_symbol))) {
-            curr_tast->tast = tast_of_symbol;
-            return;
-        }
-
-        if (idx < 1) {
-            unreachable("no block ancester found");
-        }
-    }
-}
-
-
 void alloca_extend_table_internal(String* buf, const Alloca_table sym_table, int recursion_depth) {
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Alloca_table_tast* sym_tast = &sym_table.table_tasts[idx];
@@ -459,28 +447,5 @@ bool alloca_lookup(Llvm** result, Env* env, Str_view key) {
         }
     }
 }
-
-void alloca_update(Env* env, Llvm* tast_of_symbol) {
-    if (alloca_add(env, tast_of_symbol)) {
-        return;
-    }
-    if (env->ancesters.info.count < 1) {
-        unreachable("no block ancester found");
-    }
-
-    for (size_t idx = env->ancesters.info.count - 1;; idx--) {
-        Symbol_collection* sym_coll = vec_at(&env->ancesters, idx);
-        Alloca_table_tast* curr_tast = NULL;
-        if (all_tbl_lookup_internal(&curr_tast, &sym_coll->alloca_table, llvm_tast_get_name(tast_of_symbol))) {
-            curr_tast->tast = tast_of_symbol;
-            return;
-        }
-
-        if (idx < 1) {
-            unreachable("no block ancester found");
-        }
-    }
-}
-
 
 
