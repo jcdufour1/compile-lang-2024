@@ -24,14 +24,7 @@ bool usym_tbl_add_internal(Usymbol_table_tast* sym_tbl_tasts, size_t capacity, U
 
 bool usym_tbl_lookup_internal(Usymbol_table_tast** result, const Usymbol_table* sym_table, Str_view key);
 
-static inline bool usym_tbl_lookup(Uast_def** result, const Usymbol_table* sym_table, Str_view key) {
-    Usymbol_table_tast* sym_tast;
-    if (!usym_tbl_lookup_internal(&sym_tast, sym_table, key)) {
-        return false;
-    }
-    *result = sym_tast->tast;
-    return true;
-}
+bool usym_tbl_lookup(Uast_def** result, const Usymbol_table* sym_table, Str_view key);
 
 // returns false if symbol has already been added to the table
 bool usym_tbl_add(Usymbol_table* sym_table, Uast_def* tast_of_symbol);
@@ -57,14 +50,7 @@ bool sym_tbl_add_internal(Symbol_table_tast* sym_tbl_tasts, size_t capacity, Tas
 
 bool sym_tbl_lookup_internal(Symbol_table_tast** result, const Symbol_table* sym_table, Str_view key);
 
-static inline bool sym_tbl_lookup(Tast_def** result, const Symbol_table* sym_table, Str_view key) {
-    Symbol_table_tast* sym_tast;
-    if (!sym_tbl_lookup_internal(&sym_tast, sym_table, key)) {
-        return false;
-    }
-    *result = sym_tast->tast;
-    return true;
-}
+bool sym_tbl_lookup(Tast_def** result, const Symbol_table* sym_table, Str_view key);
 
 // returns false if symbol has already been added to the table
 bool sym_tbl_add(Symbol_table* sym_table, Tast_def* tast_of_symbol);
@@ -90,14 +76,7 @@ bool all_tbl_add_internal(Alloca_table_tast* sym_tbl_tasts, size_t capacity, Llv
 
 bool all_tbl_lookup_internal(Alloca_table_tast** result, const Alloca_table* sym_table, Str_view key);
 
-static inline bool all_tbl_lookup(Llvm** result, const Alloca_table* sym_table, Str_view key) {
-    Alloca_table_tast* sym_tast;
-    if (!all_tbl_lookup_internal(&sym_tast, sym_table, key)) {
-        return false;
-    }
-    *result = sym_tast->tast;
-    return true;
-}
+bool all_tbl_lookup(Llvm** result, const Alloca_table* sym_table, Str_view key);
 
 // returns false if symbol has already been added to the table
 bool all_tbl_add(Alloca_table* sym_table, Llvm* tast_of_symbol);

@@ -202,6 +202,16 @@ void generic_symbol_update(Env* env, void* tast_of_symbol, Get_key_fn get_key_fn
         }
     }
 }
+
+bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Str_view key, Get_key_fn get_key_fn) {
+    Generic_symbol_table_tast* sym_tast;
+    if (!generic_tbl_lookup_internal(&sym_tast, sym_table, key, get_key_fn)) {
+        return false;
+    }
+    *result = sym_tast->tast;
+    return true;
+}
+
 //
 // implementations
 //
@@ -342,6 +352,18 @@ void symbol_update(Env* env, Tast_def* tast_of_symbol) {
 
 void alloca_update(Env* env, Llvm* tast_of_symbol) {
     generic_symbol_update(env, tast_of_symbol, (Get_key_fn)llvm_tast_get_name, (Symbol_add_fn)alloca_add, (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
+}
+
+bool usym_tbl_lookup(Uast_def** result, const Usymbol_table* sym_table, Str_view key) {
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, key, (Get_key_fn)uast_def_get_name);
+}
+
+bool sym_tbl_lookup(Tast_def** result, const Symbol_table* sym_table, Str_view key) {
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, key, (Get_key_fn)tast_def_get_name);
+}
+
+bool all_tbl_lookup(Llvm** result, const Alloca_table* sym_table, Str_view key) {
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, key, (Get_key_fn)llvm_tast_get_name);
 }
 
 //
