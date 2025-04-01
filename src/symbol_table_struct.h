@@ -19,6 +19,7 @@ bool lang_type_atom_is_signed(Lang_type_atom atom);
 bool lang_type_atom_is_unsigned(Lang_type_atom atom);
 typedef struct {
     Uast_def* tast;
+    Str_view key;
     SYM_TBL_STATUS status;
 } Usymbol_table_tast;
 
@@ -31,6 +32,7 @@ typedef struct {
 
 typedef struct {
     Tast_def* tast;
+    Str_view key;
     SYM_TBL_STATUS status;
 } Symbol_table_tast;
 
@@ -43,6 +45,7 @@ typedef struct {
 
 typedef struct {
     Llvm* tast;
+    Str_view key;
     SYM_TBL_STATUS status;
 } Alloca_table_tast;
 
@@ -54,6 +57,7 @@ typedef struct {
 
 typedef struct {
     void* tast;
+    Str_view key;
     SYM_TBL_STATUS status;
 } Generic_symbol_table_tast;
 

@@ -24,25 +24,21 @@ static size_t sym_tbl_calculate_idx(Str_view key, size_t capacity) {
 
 typedef bool(*Symbol_add_fn)(Env* env, void* tast_to_add);
 
-typedef Str_view(*Get_key_fn)(const void* tast);
-
 typedef void*(*Get_tbl_from_collection_fn)(Symbol_collection* collection);
 
-bool generic_symbol_lookup(void** result, Env* env, Str_view key, Get_key_fn get_key_fn, Get_tbl_from_collection_fn get_tbl_from_collection_fn);
+bool generic_symbol_lookup(void** result, Env* env, Str_view key, Get_tbl_from_collection_fn get_tbl_from_collection_fn);
 
-bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Str_view key, Get_key_fn get_key_fn);
+bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Str_view key);
 
-
-bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts, size_t capacity, void* tast_of_symbol, Get_key_fn get_key_fn) {
-    assert(tast_of_symbol);
-    Str_view symbol_name = get_key_fn(tast_of_symbol);
-    assert(symbol_name.count > 0 && "invalid tast_of_symbol");
+bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts, size_t capacity, Str_view key, void* item) {
+    assert(item);
+    assert(key.count > 0 && "invalid item");
 
     assert(capacity > 0);
-    size_t curr_table_idx = sym_tbl_calculate_idx(symbol_name, capacity);
+    size_t curr_table_idx = sym_tbl_calculate_idx(key, capacity);
     size_t init_table_idx = curr_table_idx; 
     while (sym_tbl_tasts[curr_table_idx].status == SYM_TBL_OCCUPIED) {
-        if (str_view_is_equal(get_key_fn(sym_tbl_tasts[curr_table_idx].tast), symbol_name)) {
+        if (str_view_is_equal(sym_tbl_tasts[curr_table_idx].key, key)) {
             return false;
         }
         curr_table_idx = (curr_table_idx + 1) % capacity;
@@ -50,7 +46,7 @@ bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts,
         (void) init_table_idx;
     }
 
-    Generic_symbol_table_tast tast = {.tast = tast_of_symbol, .status = SYM_TBL_OCCUPIED};
+    Generic_symbol_table_tast tast = {.tast = item, .status = SYM_TBL_OCCUPIED, .key = key};
     sym_tbl_tasts[curr_table_idx] = tast;
     return true;
 }
@@ -72,17 +68,17 @@ static void generic_tbl_cpy(
     void* dest,
     const void* src,
     size_t capacity,
-    size_t count_tasts_to_cpy,
-    Get_key_fn get_key_fn
+    size_t count_tasts_to_cpy
 ) {
     for (size_t bucket_src = 0; bucket_src < count_tasts_to_cpy; bucket_src++) {
+        // TODO: do not use Usymbol_table_tast verbatim here
         if (((Usymbol_table_tast*)src)[bucket_src].status == SYM_TBL_OCCUPIED) {
-            generic_symbol_table_add_internal(dest, capacity, ((Usymbol_table_tast*)src)[bucket_src].tast, get_key_fn);
+            generic_symbol_table_add_internal(dest, capacity, ((Usymbol_table_tast*)src)[bucket_src].key, ((Usymbol_table_tast*)src)[bucket_src].tast);
         }
     }
 }
 
-static void generic_tbl_expand_if_nessessary(void* sym_table, Get_key_fn get_key_fn) {
+static void generic_tbl_expand_if_nessessary(void* sym_table) {
     size_t old_capacity_tast_count = ((Generic_symbol_table*)sym_table)->capacity;
     size_t minimum_count_to_reserve = 1;
     size_t new_count = ((Generic_symbol_table*)sym_table)->count + minimum_count_to_reserve;
@@ -102,13 +98,13 @@ static void generic_tbl_expand_if_nessessary(void* sym_table, Get_key_fn get_key
 
     if (should_move_elements) {
         new_table_tasts = arena_alloc(&a_main, ((Generic_symbol_table*)sym_table)->capacity*tast_size);
-        generic_tbl_cpy(new_table_tasts, ((Generic_symbol_table*)sym_table)->table_tasts, ((Generic_symbol_table*)sym_table)->capacity, old_capacity_tast_count, get_key_fn);
+        generic_tbl_cpy(new_table_tasts, ((Generic_symbol_table*)sym_table)->table_tasts, ((Generic_symbol_table*)sym_table)->capacity, old_capacity_tast_count);
         ((Generic_symbol_table*)sym_table)->table_tasts = new_table_tasts;
     }
 }
 
 // return false if symbol is not found
-bool generic_tbl_lookup_internal(Generic_symbol_table_tast** result, const void* sym_table, Str_view query, Get_key_fn get_key_fn) {
+bool generic_tbl_lookup_internal(Generic_symbol_table_tast** result, const void* sym_table, Str_view query) {
     if (((Generic_symbol_table*)sym_table)->capacity < 1) {
         return false;
     }
@@ -119,7 +115,7 @@ bool generic_tbl_lookup_internal(Generic_symbol_table_tast** result, const void*
         Generic_symbol_table_tast* curr_tast = &((Generic_symbol_table_tast*)(((Generic_symbol_table*)sym_table)->table_tasts))[curr_table_idx];
 
         if (curr_tast->status == SYM_TBL_OCCUPIED) {
-            if (str_view_is_equal(get_key_fn(curr_tast->tast), query)) {
+            if (str_view_is_equal(curr_tast->key, query)) {
                 *result = curr_tast;
                 return true;
             }
@@ -139,46 +135,46 @@ bool generic_tbl_lookup_internal(Generic_symbol_table_tast** result, const void*
 }
 
 // returns false if symbol has already been added to the table
-bool generic_tbl_add(Generic_symbol_table* sym_table, void* tast_of_symbol, Get_key_fn get_key_fn) {
-    generic_tbl_expand_if_nessessary(sym_table, get_key_fn);
+bool generic_tbl_add(Generic_symbol_table* sym_table, Str_view key, void* item) {
+    generic_tbl_expand_if_nessessary(sym_table);
     assert(((Generic_symbol_table*)sym_table)->capacity > 0);
-    if (!generic_symbol_table_add_internal(sym_table->table_tasts, sym_table->capacity, tast_of_symbol, get_key_fn)) {
+    if (!generic_symbol_table_add_internal(sym_table->table_tasts, sym_table->capacity, key, item)) {
         return false;
     }
     Llvm* dummy;
     (void) dummy;
-    assert(generic_tbl_lookup((void**)&dummy, sym_table, get_key_fn(tast_of_symbol), get_key_fn));
+    assert(generic_tbl_lookup((void**)&dummy, sym_table, key));
     sym_table->count++;
     return true;
 }
 
 bool generic_symbol_add(
     Env* env,
-    void* tast_of_symbol,
-    Get_key_fn get_key_fn,
+    Str_view key,
+    void* item,
     Get_tbl_from_collection_fn get_tbl_from_collection_fn
 ) {
     void* dummy;
-    if (generic_symbol_lookup((void**)&dummy, env, get_key_fn(tast_of_symbol), get_key_fn, get_tbl_from_collection_fn)) {
+    if (generic_symbol_lookup((void**)&dummy, env, key, get_tbl_from_collection_fn)) {
         return false;
     }
     unwrap(env->ancesters.info.count > 0 && "no block ancester found");
     Symbol_collection* curr_tast = vec_at(&env->ancesters, env->ancesters.info.count - 1);
-    unwrap(generic_tbl_add((Generic_symbol_table*)get_tbl_from_collection_fn(curr_tast), tast_of_symbol, get_key_fn));
+    unwrap(generic_tbl_add((Generic_symbol_table*)get_tbl_from_collection_fn(curr_tast), key, item));
     return true;
 }
 
-void generic_tbl_update(Generic_symbol_table* sym_table, void* tast_of_symbol, Get_key_fn get_key_fn) {
+void generic_tbl_update(Generic_symbol_table* sym_table, Str_view key, void* item) {
     Generic_symbol_table_tast* sym_tast;
-    if (generic_tbl_lookup_internal(&sym_tast, sym_table, get_key_fn(tast_of_symbol), get_key_fn)) {
-        sym_tast->tast = tast_of_symbol;
+    if (generic_tbl_lookup_internal(&sym_tast, sym_table, key)) {
+        sym_tast->tast = item;
         return;
     }
-    unwrap(generic_tbl_add(sym_table, tast_of_symbol, get_key_fn));
+    unwrap(generic_tbl_add(sym_table, key, item));
 }
 
-void generic_symbol_update(Env* env, void* tast_of_symbol, Get_key_fn get_key_fn, Get_tbl_from_collection_fn get_tbl_from_collection_fn) {
-    if (generic_symbol_add(env, tast_of_symbol, get_key_fn, get_tbl_from_collection_fn)) {
+void generic_symbol_update(Env* env, Str_view key, void* item, Get_tbl_from_collection_fn get_tbl_from_collection_fn) {
+    if (generic_symbol_add(env, key, item, get_tbl_from_collection_fn)) {
         return;
     }
     if (env->ancesters.info.count < 1) {
@@ -188,8 +184,8 @@ void generic_symbol_update(Env* env, void* tast_of_symbol, Get_key_fn get_key_fn
     for (size_t idx = env->ancesters.info.count - 1;; idx--) {
         Symbol_collection* sym_coll = vec_at(&env->ancesters, idx);
         Generic_symbol_table_tast* curr_tast = NULL;
-        if (generic_tbl_lookup_internal(&curr_tast, get_tbl_from_collection_fn(sym_coll), get_key_fn(tast_of_symbol), get_key_fn)) {
-            curr_tast->tast = tast_of_symbol;
+        if (generic_tbl_lookup_internal(&curr_tast, get_tbl_from_collection_fn(sym_coll), key)) {
+            curr_tast->tast = item;
             return;
         }
 
@@ -199,23 +195,23 @@ void generic_symbol_update(Env* env, void* tast_of_symbol, Get_key_fn get_key_fn
     }
 }
 
-bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Str_view key, Get_key_fn get_key_fn) {
+bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Str_view key) {
     Generic_symbol_table_tast* sym_tast;
-    if (!generic_tbl_lookup_internal(&sym_tast, sym_table, key, get_key_fn)) {
+    if (!generic_tbl_lookup_internal(&sym_tast, sym_table, key)) {
         return false;
     }
     *result = sym_tast->tast;
     return true;
 }
 
-bool generic_symbol_lookup(void** result, Env* env, Str_view key, Get_key_fn get_key_fn, Get_tbl_from_collection_fn get_tbl_from_collection_fn) {
+bool generic_symbol_lookup(void** result, Env* env, Str_view key, Get_tbl_from_collection_fn get_tbl_from_collection_fn) {
     if (env->ancesters.info.count < 1) {
         return false;
     }
 
     for (size_t idx = env->ancesters.info.count - 1;; idx--) {
         Symbol_collection* curr_tast = vec_at(&env->ancesters, idx);
-        if (generic_tbl_lookup(result, get_tbl_from_collection_fn(curr_tast), key, get_key_fn)) {
+        if (generic_tbl_lookup(result, get_tbl_from_collection_fn(curr_tast), key)) {
              return true;
          }
 
@@ -242,18 +238,18 @@ bool usymbol_do_add_defered(Uast_def** redefined_sym, Env* env) {
 }
 
 // returns false if symbol has already been added to the table
-bool all_tbl_add(Alloca_table* sym_table, Llvm* tast_of_symbol) {
-    return generic_tbl_add((Generic_symbol_table*)sym_table, tast_of_symbol, (Get_key_fn)llvm_tast_get_name);
+bool all_tbl_add(Alloca_table* sym_table, Llvm* item) {
+    return generic_tbl_add((Generic_symbol_table*)sym_table, llvm_tast_get_name(item), item);
 }
 
 // returns false if symbol has already been added to the table
-bool sym_tbl_add(Symbol_table* sym_table, Tast_def* tast_of_symbol) {
-    return generic_tbl_add((Generic_symbol_table*)sym_table, tast_of_symbol, (Get_key_fn)tast_def_get_name);
+bool sym_tbl_add(Symbol_table* sym_table, Tast_def* item) {
+    return generic_tbl_add((Generic_symbol_table*)sym_table, tast_def_get_name(item), item);
 }
 
 // returns false if symbol has already been added to the table
-bool usym_tbl_add(Usymbol_table* sym_table, Uast_def* tast_of_usymbol) {
-    return generic_tbl_add((Generic_symbol_table*)sym_table, tast_of_usymbol, (Get_key_fn)uast_def_get_name);
+bool usym_tbl_add(Usymbol_table* sym_table, Uast_def* item) {
+    return generic_tbl_add((Generic_symbol_table*)sym_table, uast_def_get_name(item), item);
 }
 
 void* usym_get_tbl_from_collection(Symbol_collection* collection) {
@@ -268,72 +264,72 @@ void* all_get_tbl_from_collection(Symbol_collection* collection) {
     return &collection->alloca_table;
 }
 
-bool usymbol_add(Env* env, Uast_def* tast_of_symbol) {
+bool usymbol_add(Env* env, Uast_def* item) {
     return generic_symbol_add(
         env,
-        tast_of_symbol,
-        (Get_key_fn)uast_def_get_name,
+        uast_def_get_name(item),
+        item,
         (Get_tbl_from_collection_fn)usym_get_tbl_from_collection
     );
 }
 
-bool symbol_add(Env* env, Tast_def* tast_of_symbol) {
+bool symbol_add(Env* env, Tast_def* item) {
     return generic_symbol_add(
         env,
-        tast_of_symbol,
-        (Get_key_fn)tast_def_get_name,
+        tast_def_get_name(item),
+        item,
         (Get_tbl_from_collection_fn)sym_get_tbl_from_collection
     );
 }
 
-bool alloca_add(Env* env, Llvm* tast_of_symbol) {
+bool alloca_add(Env* env, Llvm* item) {
     return generic_symbol_add(
         env,
-        tast_of_symbol,
-        (Get_key_fn)llvm_tast_get_name,
+        llvm_tast_get_name(item),
+        item,
         (Get_tbl_from_collection_fn)all_get_tbl_from_collection
     );
 }
 
-void usym_tbl_update(Usymbol_table* sym_table, Uast_def* tast_of_symbol) {
-    generic_tbl_update((Generic_symbol_table*)sym_table, tast_of_symbol, (Get_key_fn)uast_def_get_name);
+void usym_tbl_update(Usymbol_table* sym_table, Uast_def* item) {
+    generic_tbl_update((Generic_symbol_table*)sym_table, uast_def_get_name(item), item);
 }
 
-void sym_tbl_update(Symbol_table* sym_table, Tast_def* tast_of_symbol) {
-    generic_tbl_update((Generic_symbol_table*)sym_table, tast_of_symbol, (Get_key_fn)tast_def_get_name);
+void sym_tbl_update(Symbol_table* sym_table, Tast_def* item) {
+    generic_tbl_update((Generic_symbol_table*)sym_table, tast_def_get_name(item), item);
 }
 
-void all_tbl_update(Alloca_table* sym_table, Llvm* tast_of_symbol) {
-    generic_tbl_update((Generic_symbol_table*)sym_table, tast_of_symbol, (Get_key_fn)llvm_tast_get_name);
+void all_tbl_update(Alloca_table* sym_table, Llvm* item) {
+    generic_tbl_update((Generic_symbol_table*)sym_table, llvm_tast_get_name(item), item);
 }
 
-void usymbol_update(Env* env, Uast_def* tast_of_symbol) {
+void usymbol_update(Env* env, Uast_def* item) {
     // TODO: do extra stuff similar to usymbol_add?
-    generic_symbol_update(env, tast_of_symbol, (Get_key_fn)uast_def_get_name, (Get_tbl_from_collection_fn)usym_get_tbl_from_collection);
+    generic_symbol_update(env, uast_def_get_name(item), item, (Get_tbl_from_collection_fn)usym_get_tbl_from_collection);
 }
 
-void symbol_update(Env* env, Tast_def* tast_of_symbol) {
-    generic_symbol_update(env, tast_of_symbol, (Get_key_fn)tast_def_get_name, (Get_tbl_from_collection_fn)sym_get_tbl_from_collection);
+void symbol_update(Env* env, Tast_def* item) {
+    generic_symbol_update(env, tast_def_get_name(item), item, (Get_tbl_from_collection_fn)sym_get_tbl_from_collection);
 }
 
-void alloca_update(Env* env, Llvm* tast_of_symbol) {
-    generic_symbol_update(env, tast_of_symbol, (Get_key_fn)llvm_tast_get_name, (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
+void alloca_update(Env* env, Llvm* item) {
+    generic_symbol_update(env, llvm_tast_get_name(item), item, (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
 }
 
 bool usym_tbl_lookup(Uast_def** result, const Usymbol_table* sym_table, Str_view key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, key, (Get_key_fn)uast_def_get_name);
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, key);
 }
 
 bool sym_tbl_lookup(Tast_def** result, const Symbol_table* sym_table, Str_view key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, key, (Get_key_fn)tast_def_get_name);
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, key);
 }
 
 bool all_tbl_lookup(Llvm** result, const Alloca_table* sym_table, Str_view key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, key, (Get_key_fn)llvm_tast_get_name);
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, key);
 }
 
 bool symbol_lookup(Tast_def** result, Env* env, Str_view key) {
-    return generic_symbol_lookup((void**)result, env, key, (Get_key_fn)tast_def_get_name, (Get_tbl_from_collection_fn)sym_get_tbl_from_collection);
+    return generic_symbol_lookup((void**)result, env, key, (Get_tbl_from_collection_fn)sym_get_tbl_from_collection);
 }
 
 bool usymbol_lookup(Uast_def** result, Env* env, Str_view key) {
@@ -358,11 +354,11 @@ bool usymbol_lookup(Uast_def** result, Env* env, Str_view key) {
         return true;
     }
 
-    return generic_symbol_lookup((void**)result, env, key, (Get_key_fn)uast_def_get_name, (Get_tbl_from_collection_fn)usym_get_tbl_from_collection);
+    return generic_symbol_lookup((void**)result, env, key, (Get_tbl_from_collection_fn)usym_get_tbl_from_collection);
 }
 
 bool alloca_lookup(Llvm** result, Env* env, Str_view key) {
-    return generic_symbol_lookup((void**)result, env, key, (Get_key_fn)llvm_tast_get_name, (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
+    return generic_symbol_lookup((void**)result, env, key, (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
 }
 
 //
