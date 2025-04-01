@@ -59,6 +59,8 @@ typedef void(*Tbl_cpy_fn)(
 
 typedef bool(*Add_internal_fn)(void* usym_tbl_tasts, size_t capacity, void* tast_of_symbol);
 
+typedef bool(*Tbl_lookup_fn)(void** result, const void* sym_table, Str_view key);
+
 bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts, size_t capacity, void* tast_of_symbol, Get_key_fn get_key_fn) {
     assert(tast_of_symbol);
     Str_view symbol_name = get_key_fn(tast_of_symbol);
@@ -164,6 +166,20 @@ bool generic_tbl_lookup_internal(Generic_symbol_table_tast** result, const void*
     unreachable("");
 }
 
+// returns false if symbol has already been added to the table
+bool generic_tbl_add(Generic_symbol_table* sym_table, void* tast_of_symbol, Tbl_cpy_fn tbl_cpy_fn, Tbl_lookup_fn tbl_lookup_fn, Get_key_fn get_key_fn) {
+    generic_tbl_expand_if_nessessary(sym_table, (Tbl_cpy_fn)tbl_cpy_fn);
+    assert(((Generic_symbol_table*)sym_table)->capacity > 0);
+    if (!generic_symbol_table_add_internal(sym_table->table_tasts, sym_table->capacity, tast_of_symbol, get_key_fn)) {
+        return false;
+    }
+    Llvm* dummy;
+    (void) dummy;
+    assert(tbl_lookup_fn((void**)&dummy, sym_table, get_key_fn(tast_of_symbol)));
+    sym_table->count++;
+    return true;
+}
+
 //
 // implementations
 //
@@ -246,6 +262,21 @@ static void all_tbl_cpy(
     generic_tbl_cpy(dest, src, capacity, count_tasts_to_cpy, (Add_internal_fn)all_tbl_add_internal);
 }
 
+// returns false if symbol has already been added to the table
+bool all_tbl_add(Alloca_table* sym_table, Llvm* tast_of_symbol) {
+    return generic_tbl_add((Generic_symbol_table*)sym_table, tast_of_symbol, (Tbl_cpy_fn)all_tbl_cpy, (Tbl_lookup_fn)all_tbl_lookup, (Get_key_fn)llvm_tast_get_name);
+}
+
+// returns false if symbol has already been added to the table
+bool sym_tbl_add(Symbol_table* sym_table, Tast_def* tast_of_symbol) {
+    return generic_tbl_add((Generic_symbol_table*)sym_table, tast_of_symbol, (Tbl_cpy_fn)sym_tbl_cpy, (Tbl_lookup_fn)sym_tbl_lookup, (Get_key_fn)tast_def_get_name);
+}
+
+// returns false if symbol has already been added to the table
+bool usym_tbl_add(Usymbol_table* sym_table, Uast_def* tast_of_usymbol) {
+    return generic_tbl_add((Generic_symbol_table*)sym_table, tast_of_usymbol, (Tbl_cpy_fn)usym_tbl_cpy, (Tbl_lookup_fn)usym_tbl_lookup, (Get_key_fn)uast_def_get_name);
+}
+
 //
 // not generic
 //
@@ -257,20 +288,6 @@ void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, i
             string_extend_strv(&print_arena, buf, uast_def_print_internal(sym_tast->tast, recursion_depth));
         }
     }
-}
-
-// returns false if symbol has already been added to the table
-bool usym_tbl_add(Usymbol_table* sym_table, Uast_def* tast_of_symbol) {
-    usym_tbl_expand_if_nessessary(sym_table);
-    assert(sym_table->capacity > 0);
-    if (!usym_tbl_add_internal(sym_table->table_tasts, sym_table->capacity, tast_of_symbol)) {
-        return false;
-    }
-    Uast_def* dummy;
-    (void) dummy;
-    assert(usym_tbl_lookup(&dummy, sym_table, uast_def_get_name(tast_of_symbol)));
-    sym_table->count++;
-    return true;
 }
 
 void usym_tbl_update(Usymbol_table* sym_table, Uast_def* tast_of_symbol) {
@@ -372,20 +389,6 @@ void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, int
     }
 }
 
-// returns false if symbol has already been added to the table
-bool sym_tbl_add(Symbol_table* sym_table, Tast_def* tast_of_symbol) {
-    sym_tbl_expand_if_nessessary(sym_table);
-    assert(sym_table->capacity > 0);
-    if (!sym_tbl_add_internal(sym_table->table_tasts, sym_table->capacity, tast_of_symbol)) {
-        return false;
-    }
-    Tast_def* dummy;
-    (void) dummy;
-    assert(sym_tbl_lookup(&dummy, sym_table, tast_def_get_name(tast_of_symbol)));
-    sym_table->count++;
-    return true;
-}
-
 void sym_tbl_update(Symbol_table* sym_table, Tast_def* tast_of_symbol) {
     Symbol_table_tast* sym_tast;
     if (sym_tbl_lookup_internal(&sym_tast, sym_table, tast_def_get_name(tast_of_symbol))) {
@@ -462,20 +465,6 @@ void alloca_extend_table_internal(String* buf, const Alloca_table sym_table, int
             string_extend_strv(&print_arena, buf, llvm_print_internal(sym_tast->tast, recursion_depth));
         }
     }
-}
-
-// returns false if symbol has already been added to the table
-bool all_tbl_add(Alloca_table* sym_table, Llvm* tast_of_symbol) {
-    all_tbl_expand_if_nessessary(sym_table);
-    assert(sym_table->capacity > 0);
-    if (!all_tbl_add_internal(sym_table->table_tasts, sym_table->capacity, tast_of_symbol)) {
-        return false;
-    }
-    Llvm* dummy;
-    (void) dummy;
-    assert(all_tbl_lookup(&dummy, sym_table, llvm_tast_get_name(tast_of_symbol)));
-    sym_table->count++;
-    return true;
 }
 
 void all_tbl_update(Alloca_table* sym_table, Llvm* tast_of_symbol) {
