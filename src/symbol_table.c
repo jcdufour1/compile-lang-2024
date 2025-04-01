@@ -212,6 +212,23 @@ bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, St
     return true;
 }
 
+bool generic_symbol_lookup(void** result, Env* env, Str_view key, Get_key_fn get_key_fn, Get_tbl_from_collection_fn get_tbl_from_collection_fn) {
+    if (env->ancesters.info.count < 1) {
+        return false;
+    }
+
+    for (size_t idx = env->ancesters.info.count - 1;; idx--) {
+        Symbol_collection* curr_tast = vec_at(&env->ancesters, idx);
+        if (generic_tbl_lookup(result, get_tbl_from_collection_fn(curr_tast), key, get_key_fn)) {
+             return true;
+         }
+
+        if (idx < 1) {
+            return false;
+        }
+    }
+}
+
 //
 // implementations
 //
@@ -366,17 +383,8 @@ bool all_tbl_lookup(Llvm** result, const Alloca_table* sym_table, Str_view key) 
     return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, key, (Get_key_fn)llvm_tast_get_name);
 }
 
-//
-// not generic
-//
-
-void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, int recursion_depth) {
-    for (size_t idx = 0; idx < sym_table.capacity; idx++) {
-        Usymbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
-        if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_strv(&print_arena, buf, uast_def_print_internal(sym_tast->tast, recursion_depth));
-        }
-    }
+bool symbol_lookup(Tast_def** result, Env* env, Str_view key) {
+    return generic_symbol_lookup((void**)result, env, key, (Get_key_fn)tast_def_get_name, (Get_tbl_from_collection_fn)sym_get_tbl_from_collection);
 }
 
 bool usymbol_lookup(Uast_def** result, Env* env, Str_view key) {
@@ -401,45 +409,31 @@ bool usymbol_lookup(Uast_def** result, Env* env, Str_view key) {
         return true;
     }
 
-    if (env->ancesters.info.count < 1) {
-        return false;
-    }
+    return generic_symbol_lookup((void**)result, env, key, (Get_key_fn)uast_def_get_name, (Get_tbl_from_collection_fn)usym_get_tbl_from_collection);
+}
 
-    for (size_t idx = env->ancesters.info.count - 1;; idx--) {
-        const Symbol_collection* curr_tast = vec_at(&env->ancesters, idx);
-        if (usym_tbl_lookup(result, &curr_tast->usymbol_table, key)) {
-             return true;
-         }
+bool alloca_lookup(Llvm** result, Env* env, Str_view key) {
+    return generic_symbol_lookup((void**)result, env, key, (Get_key_fn)llvm_tast_get_name, (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
+}
 
-        if (idx < 1) {
-            return false;
+//
+// not generic
+//
+
+void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, int recursion_depth) {
+    for (size_t idx = 0; idx < sym_table.capacity; idx++) {
+        Usymbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
+        if (sym_tast->status == SYM_TBL_OCCUPIED) {
+            string_extend_strv(&print_arena, buf, uast_def_print_internal(sym_tast->tast, recursion_depth));
         }
     }
 }
-
 
 void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, int recursion_depth) {
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Symbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
             string_extend_strv(&print_arena, buf, tast_def_print_internal(sym_tast->tast, recursion_depth));
-        }
-    }
-}
-
-bool symbol_lookup(Tast_def** result, Env* env, Str_view key) {
-    if (env->ancesters.info.count < 1) {
-        return false;
-    }
-
-    for (size_t idx = env->ancesters.info.count - 1;; idx--) {
-        const Symbol_collection* curr_tast = vec_at(&env->ancesters, idx);
-        if (sym_tbl_lookup(result, &curr_tast->symbol_table, key)) {
-             return true;
-         }
-
-        if (idx < 1) {
-            return false;
         }
     }
 }
@@ -452,22 +446,3 @@ void alloca_extend_table_internal(String* buf, const Alloca_table sym_table, int
         }
     }
 }
-
-bool alloca_lookup(Llvm** result, Env* env, Str_view key) {
-    if (env->ancesters.info.count < 1) {
-        return false;
-    }
-
-    for (size_t idx = env->ancesters.info.count - 1;; idx--) {
-        const Symbol_collection* curr_tast = vec_at(&env->ancesters, idx);
-        if (all_tbl_lookup(result, &curr_tast->alloca_table, key)) {
-             return true;
-         }
-
-        if (idx < 1) {
-            return false;
-        }
-    }
-}
-
-
