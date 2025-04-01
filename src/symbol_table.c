@@ -11,30 +11,6 @@
 #define SYM_TBL_MAX_DENSITY (0.6f)
 
 //
-// forward declarations
-//
-static void usym_tbl_cpy(
-    Usymbol_table_tast* dest,
-    const Usymbol_table_tast* src,
-    size_t capacity,
-    size_t count_tasts_to_cpy
-);
-
-static void sym_tbl_cpy(
-    Symbol_table_tast* dest,
-    const Symbol_table_tast* src,
-    size_t capacity,
-    size_t count_tasts_to_cpy
-);
-
-static void all_tbl_cpy(
-    Alloca_table_tast* dest,
-    const Alloca_table_tast* src,
-    size_t capacity,
-    size_t count_tasts_to_cpy
-);
-
-//
 // util
 //
 static size_t sym_tbl_calculate_idx(Str_view key, size_t capacity) {
@@ -49,13 +25,6 @@ static size_t sym_tbl_calculate_idx(Str_view key, size_t capacity) {
 typedef bool(*Tbl_add_fn)(Env* env, void* tast_to_add);
 
 typedef Str_view(*Get_key_fn)(const void* tast);
-
-typedef void(*Tbl_cpy_fn)(
-    Usymbol_table_tast* dest,
-    const Usymbol_table_tast* src,
-    size_t capacity,
-    size_t count_tasts_to_cpy
-);
 
 typedef bool(*Add_internal_fn)(void* usym_tbl_tasts, size_t capacity, void* tast_of_symbol);
 
@@ -100,7 +69,21 @@ bool generic_do_add_defered(void** redefined_sym, Env* env, void* defered_tasts_
     return true;
 }
 
-static void generic_tbl_expand_if_nessessary(void* sym_table, Tbl_cpy_fn tbl_cpy_fn) {
+static void generic_tbl_cpy(
+    void* dest,
+    const void* src,
+    size_t capacity,
+    size_t count_tasts_to_cpy,
+    Add_internal_fn add_internal_fn
+) {
+    for (size_t bucket_src = 0; bucket_src < count_tasts_to_cpy; bucket_src++) {
+        if (((Usymbol_table_tast*)src)[bucket_src].status == SYM_TBL_OCCUPIED) {
+            add_internal_fn(dest, capacity, ((Usymbol_table_tast*)src)[bucket_src].tast);
+        }
+    }
+}
+
+static void generic_tbl_expand_if_nessessary(void* sym_table, Add_internal_fn add_internal_fn) {
     size_t old_capacity_tast_count = ((Generic_symbol_table*)sym_table)->capacity;
     size_t minimum_count_to_reserve = 1;
     size_t new_count = ((Generic_symbol_table*)sym_table)->count + minimum_count_to_reserve;
@@ -120,22 +103,8 @@ static void generic_tbl_expand_if_nessessary(void* sym_table, Tbl_cpy_fn tbl_cpy
 
     if (should_move_elements) {
         new_table_tasts = arena_alloc(&a_main, ((Generic_symbol_table*)sym_table)->capacity*tast_size);
-        tbl_cpy_fn(new_table_tasts, ((Generic_symbol_table*)sym_table)->table_tasts, ((Generic_symbol_table*)sym_table)->capacity, old_capacity_tast_count);
+        generic_tbl_cpy(new_table_tasts, ((Generic_symbol_table*)sym_table)->table_tasts, ((Generic_symbol_table*)sym_table)->capacity, old_capacity_tast_count, add_internal_fn);
         ((Generic_symbol_table*)sym_table)->table_tasts = new_table_tasts;
-    }
-}
-
-static void generic_tbl_cpy(
-    void* dest,
-    const void* src,
-    size_t capacity,
-    size_t count_tasts_to_cpy,
-    Add_internal_fn add_internal_fn
-) {
-    for (size_t bucket_src = 0; bucket_src < count_tasts_to_cpy; bucket_src++) {
-        if (((Usymbol_table_tast*)src)[bucket_src].status == SYM_TBL_OCCUPIED) {
-            add_internal_fn(dest, capacity, ((Usymbol_table_tast*)src)[bucket_src].tast);
-        }
     }
 }
 
@@ -171,8 +140,8 @@ bool generic_tbl_lookup_internal(Generic_symbol_table_tast** result, const void*
 }
 
 // returns false if symbol has already been added to the table
-bool generic_tbl_add(Generic_symbol_table* sym_table, void* tast_of_symbol, Tbl_cpy_fn tbl_cpy_fn, Tbl_lookup_fn tbl_lookup_fn, Get_key_fn get_key_fn) {
-    generic_tbl_expand_if_nessessary(sym_table, (Tbl_cpy_fn)tbl_cpy_fn);
+bool generic_tbl_add(Generic_symbol_table* sym_table, void* tast_of_symbol, Add_internal_fn add_internal_fn, Tbl_lookup_fn tbl_lookup_fn, Get_key_fn get_key_fn) {
+    generic_tbl_expand_if_nessessary(sym_table, add_internal_fn);
     assert(((Generic_symbol_table*)sym_table)->capacity > 0);
     if (!generic_symbol_table_add_internal(sym_table->table_tasts, sym_table->capacity, tast_of_symbol, get_key_fn)) {
         return false;
@@ -188,7 +157,7 @@ bool generic_symbol_add(
     Env* env,
     void* tast_of_symbol,
     Symbol_lookup_fn symbol_lookup_fn,
-    Tbl_cpy_fn tbl_cpy_fn,
+    Add_internal_fn add_internal_fn,
     Tbl_lookup_fn tbl_lookup_fn,
     Get_key_fn get_key_fn,
     Get_tbl_from_collection_fn get_tbl_from_collection_fn
@@ -204,7 +173,7 @@ bool generic_symbol_add(
     // TODO: simplify this
     for (size_t idx = env->ancesters.info.count - 1;; idx--) {
         Symbol_collection* curr_tast = vec_at(&env->ancesters, idx);
-        unwrap(generic_tbl_add((Generic_symbol_table*)get_tbl_from_collection_fn(curr_tast), tast_of_symbol, tbl_cpy_fn, tbl_lookup_fn, get_key_fn));
+        unwrap(generic_tbl_add((Generic_symbol_table*)get_tbl_from_collection_fn(curr_tast), tast_of_symbol, add_internal_fn, tbl_lookup_fn, get_key_fn));
             return true;
 
         if (idx < 1) {
@@ -245,15 +214,15 @@ bool usymbol_do_add_defered(Uast_def** redefined_sym, Env* env) {
 }
 
 static void usym_tbl_expand_if_nessessary(Usymbol_table* sym_table) {
-    generic_tbl_expand_if_nessessary(sym_table, (Tbl_cpy_fn)usym_tbl_cpy);
+    generic_tbl_expand_if_nessessary(sym_table, (Add_internal_fn)usym_tbl_add_internal);
 }
 
 static void sym_tbl_expand_if_nessessary(Symbol_table* sym_table) {
-    generic_tbl_expand_if_nessessary(sym_table, (Tbl_cpy_fn)sym_tbl_cpy);
+    generic_tbl_expand_if_nessessary(sym_table, (Add_internal_fn)sym_tbl_add_internal);
 }
 
 static void all_tbl_expand_if_nessessary(Alloca_table* sym_table) {
-    generic_tbl_expand_if_nessessary(sym_table, (Tbl_cpy_fn)all_tbl_cpy);
+    generic_tbl_expand_if_nessessary(sym_table, (Add_internal_fn)all_tbl_add_internal);
 }
 
 bool usym_tbl_lookup_internal(Usymbol_table_tast** result, const Usymbol_table* sym_table, Str_view key) {
@@ -268,46 +237,19 @@ bool all_tbl_lookup_internal(Alloca_table_tast** result, const Alloca_table* sym
     return generic_tbl_lookup_internal((Generic_symbol_table_tast**)result, sym_table, key, (Get_key_fn)llvm_tast_get_name);
 }
 
-static void usym_tbl_cpy(
-    Usymbol_table_tast* dest,
-    const Usymbol_table_tast* src,
-    size_t capacity,
-    size_t count_tasts_to_cpy
-) {
-    generic_tbl_cpy(dest, src, capacity, count_tasts_to_cpy, (Add_internal_fn)usym_tbl_add_internal);
-}
-
-static void sym_tbl_cpy(
-    Symbol_table_tast* dest,
-    const Symbol_table_tast* src,
-    size_t capacity,
-    size_t count_tasts_to_cpy
-) {
-    generic_tbl_cpy(dest, src, capacity, count_tasts_to_cpy, (Add_internal_fn)sym_tbl_add_internal);
-}
-
-static void all_tbl_cpy(
-    Alloca_table_tast* dest,
-    const Alloca_table_tast* src,
-    size_t capacity,
-    size_t count_tasts_to_cpy
-) {
-    generic_tbl_cpy(dest, src, capacity, count_tasts_to_cpy, (Add_internal_fn)all_tbl_add_internal);
-}
-
 // returns false if symbol has already been added to the table
 bool all_tbl_add(Alloca_table* sym_table, Llvm* tast_of_symbol) {
-    return generic_tbl_add((Generic_symbol_table*)sym_table, tast_of_symbol, (Tbl_cpy_fn)all_tbl_cpy, (Tbl_lookup_fn)all_tbl_lookup, (Get_key_fn)llvm_tast_get_name);
+    return generic_tbl_add((Generic_symbol_table*)sym_table, tast_of_symbol, (Add_internal_fn)all_tbl_add_internal, (Tbl_lookup_fn)all_tbl_lookup, (Get_key_fn)llvm_tast_get_name);
 }
 
 // returns false if symbol has already been added to the table
 bool sym_tbl_add(Symbol_table* sym_table, Tast_def* tast_of_symbol) {
-    return generic_tbl_add((Generic_symbol_table*)sym_table, tast_of_symbol, (Tbl_cpy_fn)sym_tbl_cpy, (Tbl_lookup_fn)sym_tbl_lookup, (Get_key_fn)tast_def_get_name);
+    return generic_tbl_add((Generic_symbol_table*)sym_table, tast_of_symbol, (Add_internal_fn)sym_tbl_add_internal, (Tbl_lookup_fn)sym_tbl_lookup, (Get_key_fn)tast_def_get_name);
 }
 
 // returns false if symbol has already been added to the table
 bool usym_tbl_add(Usymbol_table* sym_table, Uast_def* tast_of_usymbol) {
-    return generic_tbl_add((Generic_symbol_table*)sym_table, tast_of_usymbol, (Tbl_cpy_fn)usym_tbl_cpy, (Tbl_lookup_fn)usym_tbl_lookup, (Get_key_fn)uast_def_get_name);
+    return generic_tbl_add((Generic_symbol_table*)sym_table, tast_of_usymbol, (Add_internal_fn)usym_tbl_add_internal, (Tbl_lookup_fn)usym_tbl_lookup, (Get_key_fn)uast_def_get_name);
 }
 
 void* usym_get_tbl_from_collection(Symbol_collection* collection) {
@@ -327,7 +269,7 @@ bool usymbol_add(Env* env, Uast_def* tast_of_symbol) {
         env,
         tast_of_symbol,
         (Symbol_lookup_fn)usymbol_lookup,
-        (Tbl_cpy_fn)usym_tbl_cpy,
+        (Add_internal_fn)usym_tbl_add_internal,
         (Tbl_lookup_fn)usym_tbl_lookup,
         (Get_key_fn)uast_def_get_name,
         (Get_tbl_from_collection_fn)usym_get_tbl_from_collection
@@ -339,7 +281,7 @@ bool symbol_add(Env* env, Tast_def* tast_of_symbol) {
         env,
         tast_of_symbol,
         (Symbol_lookup_fn)symbol_lookup,
-        (Tbl_cpy_fn)sym_tbl_cpy,
+        (Add_internal_fn)sym_tbl_add_internal,
         (Tbl_lookup_fn)sym_tbl_lookup,
         (Get_key_fn)tast_def_get_name,
         (Get_tbl_from_collection_fn)sym_get_tbl_from_collection
@@ -351,7 +293,7 @@ bool alloca_add(Env* env, Llvm* tast_of_symbol) {
         env,
         tast_of_symbol,
         (Symbol_lookup_fn)alloca_lookup,
-        (Tbl_cpy_fn)all_tbl_cpy,
+        (Add_internal_fn)all_tbl_add_internal,
         (Tbl_lookup_fn)all_tbl_lookup,
         (Get_key_fn)llvm_tast_get_name,
         (Get_tbl_from_collection_fn)all_get_tbl_from_collection
