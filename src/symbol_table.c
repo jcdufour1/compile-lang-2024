@@ -166,20 +166,10 @@ bool generic_symbol_add(
     if (symbol_lookup_fn((void**)&dummy, env, get_key_fn(tast_of_symbol))) {
         return false;
     }
-    if (env->ancesters.info.count < 1) {
-        unreachable("no block ancester found");
-    }
-
-    // TODO: simplify this
-    for (size_t idx = env->ancesters.info.count - 1;; idx--) {
-        Symbol_collection* curr_tast = vec_at(&env->ancesters, idx);
-        unwrap(generic_tbl_add((Generic_symbol_table*)get_tbl_from_collection_fn(curr_tast), tast_of_symbol, add_internal_fn, tbl_lookup_fn, get_key_fn));
-            return true;
-
-        if (idx < 1) {
-            unreachable("no block ancester found");
-        }
-    }
+    unwrap(env->ancesters.info.count > 0 && "no block ancester found");
+    Symbol_collection* curr_tast = vec_at(&env->ancesters, env->ancesters.info.count - 1);
+    unwrap(generic_tbl_add((Generic_symbol_table*)get_tbl_from_collection_fn(curr_tast), tast_of_symbol, add_internal_fn, tbl_lookup_fn, get_key_fn));
+    return true;
 }
 
 //
