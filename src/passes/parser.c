@@ -1317,7 +1317,7 @@ static PARSE_STATUS parse_import(Env* env, Uast_import** import, Tk_view* tokens
         return PARSE_ERROR;
     }
 
-    *import = uast_import_new(import_tk.pos, block, name.text);
+    *import = uast_import_new(import_tk.pos, block, name.text, path_tk.text);
     if (!usymbol_add(env, uast_import_wrap(*import))) {
         todo();
     }

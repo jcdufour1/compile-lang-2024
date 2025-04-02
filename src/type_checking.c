@@ -493,7 +493,7 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
             return true;
         }
         case UAST_IMPORT: {
-            Tast_module_alias* sym_typed = tast_module_alias_new(sym_untyped->pos, uast_import_unwrap(sym_def)->alias);
+            Tast_module_alias* sym_typed = tast_module_alias_new(sym_untyped->pos, uast_import_unwrap(sym_def)->alias_name, uast_import_unwrap(sym_def)->path);
             *new_tast = tast_module_alias_wrap(sym_typed);
             return true;
         }
@@ -1964,11 +1964,14 @@ bool try_set_member_access_types(
 
         }
         case TAST_MODULE_ALIAS: {
-            Tast_expr* new_expr = NULL;
-            vec_append(&env->ancesters, 
-            if (!try_set_symbol_types(env, &new_expr, uast_symbol_new(access->pos, access->member_name, (Ulang_type_vec) {0} /* TODO */))) {
-                todo();
-            }
+            todo();
+            //Str_view name = serialize_module_symbol_name(tast_module_alias_unwrap()->path, access->member_name);
+            //Uast_symbol* sym = uast_symbol_new(access->pos, access->member_name, (Ulang_type_vec) {0} /* TODO */);
+            //Tast_expr* new_expr = NULL;
+            //vec_append(&env->ancesters, 
+            //if (!try_set_symbol_types(env, &new_expr, )) {
+            //    todo();
+            //}
             todo();
         }
         default:

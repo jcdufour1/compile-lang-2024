@@ -426,7 +426,8 @@ Str_view tast_module_alias_print_internal(const Tast_module_alias* alias, int in
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "module_alias", indent);
-    string_extend_strv_in_par(&print_arena, &buf, alias->name);
+    string_extend_strv_in_par(&print_arena, &buf, alias->alias_name);
+    string_extend_strv(&print_arena, &buf, alias->path);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);

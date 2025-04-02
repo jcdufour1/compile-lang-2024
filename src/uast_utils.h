@@ -388,7 +388,7 @@ static inline Str_view uast_def_get_name(const Uast_def* def) {
         case UAST_POISON_DEF:
             return uast_poison_def_const_unwrap(def)->name;
         case UAST_IMPORT:
-            return uast_import_const_unwrap(def)->alias;
+            return uast_import_const_unwrap(def)->alias_name;
     }
     unreachable("");
 }

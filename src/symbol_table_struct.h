@@ -17,6 +17,13 @@ static inline Str_view llvm_tast_get_name(const Llvm* llvm);
 static inline Str_view rm_tuple_struct_get_name(const Tast_struct_def* struct_def);
 bool lang_type_atom_is_signed(Lang_type_atom atom);
 bool lang_type_atom_is_unsigned(Lang_type_atom atom);
+
+// TODO: move this struct to better place?
+typedef struct {
+    Str_view path;
+    Str_view base;
+} Tast_name;
+
 typedef struct {
     Uast_def* tast;
     Str_view key;
@@ -61,7 +68,7 @@ typedef struct {
     SYM_TBL_STATUS status;
 } File_path_to_text_tast;
 
-typedef struct File_path_to_text_ {
+typedef struct {
     File_path_to_text_tast* table_tasts;
     size_t count; // count elements in symbol_table
     size_t capacity; // count buckets in symbol_table
