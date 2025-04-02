@@ -1963,8 +1963,14 @@ bool try_set_member_access_types(
             return try_set_member_access_types_finish(env, new_tast, lang_type_def, access, new_callee);
 
         }
-        case TAST_MODULE_ALIAS:
+        case TAST_MODULE_ALIAS: {
+            Tast_expr* new_expr = NULL;
+            vec_append(&env->ancesters, 
+            if (!try_set_symbol_types(env, &new_expr, uast_symbol_new(access->pos, access->member_name, (Ulang_type_vec) {0} /* TODO */))) {
+                todo();
+            }
             todo();
+        }
         default:
             unreachable(TAST_FMT, tast_expr_print(new_callee));
     }
