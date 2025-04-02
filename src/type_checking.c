@@ -496,6 +496,8 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
             unreachable("cannot set symbol of template parameter here");
         case UAST_POISON_DEF:
             return false;
+        case UAST_IMPORT:
+            todo();
     }
     unreachable("");
 }
@@ -1335,6 +1337,12 @@ STMT_STATUS try_set_def_types(Env* env, Uast_def* uast) {
         case UAST_POISON_DEF: {
             todo();
         }
+        case UAST_IMPORT: {
+            if (!try_set_import_types(env, uast_import_unwrap(uast))) {
+                return STMT_ERROR;
+            }
+            return STMT_NO_STMT;
+        }
     }
     unreachable("");
 }
@@ -1905,6 +1913,8 @@ bool try_set_member_access_types_finish(
             unreachable("");
         case UAST_POISON_DEF:
             unreachable("");
+        case UAST_IMPORT:
+            unreachable("");
     }
     unreachable("");
 }
@@ -2036,6 +2046,14 @@ bool try_set_literal_def_types(Env* env, Uast_literal_def* tast) {
     (void) env;
     (void) tast;
     unreachable("");
+}
+
+bool try_set_import_types(Env* env, Uast_import* tast) {
+    (void) env;
+    (void) tast;
+    // TODO
+    Tast_block* dummy = NULL;
+    return try_set_block_types(env, &dummy, tast->block, false);
 }
 
 bool try_set_variable_def_types(

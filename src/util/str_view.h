@@ -8,6 +8,7 @@
 #include "util.h"
 #include "str_view_struct.h"
 #include <ctype.h>
+#include <arena.h>
 
 static bool isdigit_char(char prev, char curr) {
     (void) prev;
@@ -120,6 +121,10 @@ static inline bool str_view_try_consume_count(Str_view* str_view, char ch, size_
         }
     }
     return true;
+}
+
+static inline const char* str_view_dup(Arena* arena, Str_view str_view) {
+    return arena_strndup(arena, str_view.str, str_view.count);
 }
 
 #define STR_VIEW_FMT "%.*s"

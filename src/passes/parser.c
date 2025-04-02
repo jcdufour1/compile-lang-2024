@@ -158,14 +158,21 @@ static PARSE_STATUS msg_redefinition_of_symbol(Env* env, const Uast_def* new_sym
     return PARSE_ERROR;
 }
 
-static bool get_block_from_path_token(Env* env, Uast_block** block, Str_view name, Token path_tk) {
-    (void) block;
-    (void) path_tk;
+static bool get_block_from_path_token(Env* env, Uast_block** block, Str_view alias, Token mod_name) {
     Uast_def* prev_def = NULL;
-    if (usymbol_lookup(&prev_def, env, name)) {
+    if (usymbol_lookup(&prev_def, env, alias)) {
         todo();
     }
-    todo();
+
+    String file_path = {0};
+    string_extend_strv(&a_main, &file_path, mod_name.text);
+    string_extend_cstr(&a_main, &file_path, ".own");
+    if (!parse_file(block, env, string_to_strv(file_path))) {
+        // TODO: expected failure test
+        todo();
+    }
+
+    return true;
 }
 
 static bool starts_with_import(Tk_view tokens) {
@@ -1307,10 +1314,14 @@ static PARSE_STATUS parse_import(Env* env, Uast_import** import, Tk_view* tokens
     // TODO: consider repeated import statements
     Uast_block* block = NULL;
     if (!get_block_from_path_token(env, &block, name.text, path_tk)) {
-        return false;
+        return PARSE_ERROR;
     }
-    *import = uast_import_new(import_tk.pos, block);
-    return true;
+
+    *import = uast_import_new(import_tk.pos, block, name.text);
+    if (!usymbol_add(env, uast_import_wrap(*import))) {
+        todo();
+    }
+    return PARSE_OK;
 }
 
 static PARSE_STATUS parse_type_def(Env* env, Uast_def** def, Tk_view* tokens) {
@@ -2926,10 +2937,15 @@ bool parse_file(Uast_block** block, Env* env, Str_view file_path) {
     // TODO: reenable
     //parser_do_tests();
 #endif // DNDEBUG
+    size_t old_ances_count = env->ancesters.info.count;
 
     Str_view* file_con = arena_alloc(&a_main, sizeof(*file_con));
-    if (!read_file(file_con, params.input_file_name)) {
-        msg(LOG_FATAL, EXPECT_FAIL_NONE, (File_path_to_text) {0}, dummy_pos, "could not open file %s: errno %d (%s)\n", params.input_file_name, errno, strerror(errno));
+    if (!read_file(file_con, file_path)) {
+        msg(
+            LOG_ERROR, EXPECT_FAIL_NONE, (File_path_to_text) {0}, dummy_pos,
+            "could not open file `"STR_VIEW_FMT"`: %s\n",
+            str_view_print(file_path), strerror(errno)
+        );
         status = false;
         goto error;
     }
@@ -2942,14 +2958,15 @@ bool parse_file(Uast_block** block, Env* env, Str_view file_path) {
     }
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
     if (PARSE_OK != parse_block(env, block, &token_view, true)) {
-        return false;
+        status = false;
+        goto error;
     }
     log(LOG_DEBUG, "%zu\n", env->ancesters.info.count);
-    assert(env->ancesters.info.count == 0);
     log(LOG_DEBUG, "done with parsing:\n");
     symbol_log(LOG_TRACE, env);
 
 error:
+    assert(env->ancesters.info.count == old_ances_count);
     return status;
 }
 

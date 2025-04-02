@@ -5,12 +5,11 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <msg.h>
+#include <file.h>
 
-bool read_file(Str_view* result, const char* input_file_name) {
-    assert(input_file_name);
-
+bool read_file(Str_view* result, Str_view file_path) {
     String file_text = {0};
-    FILE* file = fopen(input_file_name, "rb");
+    FILE* file = fopen(str_view_dup(&a_main, file_path), "rb");
     if (!file) {
         return false;
     }
