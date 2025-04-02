@@ -27,6 +27,10 @@ static inline Str_view serialize_uast_sum_def(Env* env, const Uast_sum_def* def)
 
 static inline Str_view serialize_uast_def(Env* env, const Uast_def* def) {
     switch (def->type) {
+        case UAST_POISON_DEF:
+            todo();
+        case UAST_IMPORT:
+            todo();
         case UAST_STRUCT_DEF:
             return serialize_uast_struct_def(env, uast_struct_def_const_unwrap(def));
         case UAST_FUNCTION_DEF:

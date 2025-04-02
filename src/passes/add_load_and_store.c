@@ -1872,7 +1872,7 @@ static void load_break(
 ) {
     if (env->label_if_break.count < 1) {
         msg(
-            LOG_ERROR, EXPECT_FAIL_BREAK_INVALID_LOCATION, env->file_text, old_break->pos,
+            LOG_ERROR, EXPECT_FAIL_BREAK_INVALID_LOCATION, env->file_path_to_text, old_break->pos,
             "break statement outside of a for loop\n"
         );
         return;
@@ -1913,7 +1913,7 @@ static void load_continue(
 ) {
     if (env->label_if_continue.count < 1) {
         msg(
-            LOG_ERROR, EXPECT_FAIL_CONTINUE_INVALID_LOCATION, env->file_text, old_continue->pos,
+            LOG_ERROR, EXPECT_FAIL_CONTINUE_INVALID_LOCATION, env->file_path_to_text, old_continue->pos,
             "continue statement outside of a for loop\n"
         );
         return;

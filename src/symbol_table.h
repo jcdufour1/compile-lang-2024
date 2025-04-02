@@ -133,5 +133,10 @@ void log_symbol_table_if_block(Env* env, const char* file_path, int line);
 
 const char* sym_tbl_status_print(SYM_TBL_STATUS status);
 
+bool file_path_to_text_tbl_lookup(Str_view** result, const File_path_to_text* sym_table, Str_view key);
+
+// returns false if file_path_to_text has already been added to the table
+bool file_path_to_text_tbl_add(File_path_to_text* sym_table, Str_view* file_text, Str_view key);
+
 #endif // SYMBOL_TABLE_H
 

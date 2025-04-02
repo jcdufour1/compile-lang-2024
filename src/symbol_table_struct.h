@@ -56,6 +56,18 @@ typedef struct {
 } Alloca_table;
 
 typedef struct {
+    Str_view* item;
+    Str_view key;
+    SYM_TBL_STATUS status;
+} File_path_to_text_tast;
+
+typedef struct File_path_to_text_ {
+    File_path_to_text_tast* table_tasts;
+    size_t count; // count elements in symbol_table
+    size_t capacity; // count buckets in symbol_table
+} File_path_to_text;
+
+typedef struct {
     void* tast;
     Str_view key;
     SYM_TBL_STATUS status;

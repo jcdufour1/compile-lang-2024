@@ -378,6 +378,19 @@ bool alloca_lookup(Llvm** result, Env* env, Str_view key) {
 }
 
 //
+// File_path_to_text implementation
+//
+
+bool file_path_to_text_tbl_lookup(Str_view** result, const File_path_to_text* sym_table, Str_view key) {
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, key);
+}
+
+// returns false if file_path_to_text has already been added to the table
+bool file_path_to_text_tbl_add(File_path_to_text* sym_table, Str_view* file_text, Str_view key) {
+    return generic_tbl_add((Generic_symbol_table*)sym_table, key, file_text);
+}
+
+//
 // not generic
 //
 

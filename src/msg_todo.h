@@ -10,14 +10,14 @@
 
 void msg_todo_internal(const char* file, int line, const Env* env, const char* feature, Pos pos) {
     msg_internal(
-        file, line, LOG_ERROR, EXPECT_FAIL_NOT_YET_IMPLEMENTED, env->file_text, pos, 
+        file, line, LOG_ERROR, EXPECT_FAIL_NOT_YET_IMPLEMENTED, env->file_path_to_text, pos, 
         "language feature `%s` not yet implemented (may or may not be implemented in the future)\n",
         feature
     );
 }
 
 // TODO: move this function and macro elsewhere
-static void msg_undefined_symbol_internal(const char* file, int line, Str_view file_text, const Uast_stmt* sym_call) {
+static void msg_undefined_symbol_internal(const char* file, int line, File_path_to_text file_text, const Uast_stmt* sym_call) {
     msg_internal(
         file, line,
         LOG_ERROR, EXPECT_FAIL_UNDEFINED_SYMBOL, file_text, uast_stmt_get_pos(sym_call),

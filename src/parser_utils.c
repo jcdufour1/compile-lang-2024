@@ -29,7 +29,7 @@ bool try_str_view_octal_after_0_to_int64_t(int64_t* result, const Env* env, Pos 
         }
 
         if (curr_char < '0' || curr_char > '7') {
-            msg(LOG_ERROR, EXPECT_FAIL_INVALID_OCTAL, env->file_text, pos, "invalid octal literal\n");
+            msg(LOG_ERROR, EXPECT_FAIL_INVALID_OCTAL, env->file_path_to_text, pos, "invalid octal literal\n");
             return false;
         }
 
@@ -58,7 +58,7 @@ bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, const Env* env, Pos p
         } else if (curr_char >= 'A' && curr_char <= 'F') {
             increment = (curr_char - 'A') + 10;
         } else {
-            msg(LOG_ERROR, EXPECT_FAIL_INVALID_HEX, env->file_text, pos, "invalid hex literal\n");
+            msg(LOG_ERROR, EXPECT_FAIL_INVALID_HEX, env->file_path_to_text, pos, "invalid hex literal\n");
             return false;
         }
 
@@ -80,7 +80,7 @@ bool try_str_view_bin_after_0b_to_int64_t(int64_t* result, const Env* env, Pos p
         }
 
         if (curr_char != '0' && curr_char != '1') {
-            msg(LOG_ERROR, EXPECT_FAIL_INVALID_BIN, env->file_text, pos, "invalid bin literal\n");
+            msg(LOG_ERROR, EXPECT_FAIL_INVALID_BIN, env->file_path_to_text, pos, "invalid bin literal\n");
             return false;
         }
 

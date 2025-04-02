@@ -93,7 +93,7 @@ static Pos get_curr_pos(Tk_view tokens) {
     return get_curr_token(tokens).pos;
 }
 
-static void msg_expected_expr_internal(Str_view file_text, const char* file, int line, Tk_view tokens, const char* msg_suffix) {
+static void msg_expected_expr_internal(File_path_to_text file_text, const char* file, int line, Tk_view tokens, const char* msg_suffix) {
     String message = {0};
     string_extend_cstr(&print_arena, &message, "expected expr ");
     string_extend_cstr(&print_arena, &message, msg_suffix);
@@ -104,7 +104,7 @@ static void msg_expected_expr_internal(Str_view file_text, const char* file, int
 #define msg_expected_expr(file_text, tokens, msg_suffix) \
     msg_expected_expr_internal(file_text, __FILE__, __LINE__, tokens, msg_suffix)
 
-static void msg_parser_expected_internal(Str_view file_text, const char* file, int line, Token got, const char* msg_suffix, int count_expected, ...) {
+static void msg_parser_expected_internal(File_path_to_text file_text, const char* file, int line, Token got, const char* msg_suffix, int count_expected, ...) {
     va_list args;
     va_start(args, count_expected);
 
@@ -144,14 +144,14 @@ static void msg_parser_expected_internal(Str_view file_text, const char* file, i
 
 static PARSE_STATUS msg_redefinition_of_symbol(Env* env, const Uast_def* new_sym_def) {
     msg(
-        LOG_ERROR, EXPECT_FAIL_REDEFINITION_SYMBOL, env->file_text, uast_def_get_pos(new_sym_def),
+        LOG_ERROR, EXPECT_FAIL_REDEFINITION_SYMBOL, env->file_path_to_text, uast_def_get_pos(new_sym_def),
         "redefinition of symbol "STR_VIEW_FMT"\n", str_view_print(uast_def_get_name(new_sym_def))
     );
 
     Uast_def* original_def;
     unwrap(usymbol_lookup(&original_def, env, uast_def_get_name(new_sym_def)));
     msg(
-        LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, uast_def_get_pos(original_def),
+        LOG_NOTE, EXPECT_FAIL_NONE, env->file_path_to_text, uast_def_get_pos(original_def),
         STR_VIEW_FMT " originally defined here\n", str_view_print(uast_def_get_name(original_def))
     );
 
@@ -927,7 +927,7 @@ static PARSE_STATUS parse_lang_type_struct_atom_require(Env* env, Ulang_type_ato
     if (parse_lang_type_struct_atom(&pos, lang_type, tokens)) {
         return PARSE_OK;
     } else {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), "", TOKEN_SYMBOL);
+        msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), "", TOKEN_SYMBOL);
         return PARSE_ERROR;
     }
 }
@@ -937,7 +937,7 @@ static PARSE_STATUS parse_lang_type_struct_require(Env* env, Ulang_type* lang_ty
     if (parse_lang_type_struct(env, lang_type, tokens)) {
         return PARSE_OK;
     } else {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), "", TOKEN_SYMBOL);
+        msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), "", TOKEN_SYMBOL);
         return PARSE_ERROR;
     }
 }
@@ -973,7 +973,7 @@ static PARSE_EXPR_STATUS parse_function_parameter(Env* env, Uast_param** child, 
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_NONE:
-                msg_expected_expr(env->file_text, *tokens, "after = for optional argument");
+                msg_expected_expr(env->file_path_to_text, *tokens, "after = for optional argument");
                 return PARSE_EXPR_ERROR;
             case PARSE_EXPR_ERROR:
                 return PARSE_EXPR_ERROR;
@@ -1041,7 +1041,7 @@ static PARSE_STATUS parse_function_decl_common(
     }
 
     if (!try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), " in function decl", TOKEN_OPEN_PAR);
+        msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), " in function decl", TOKEN_OPEN_PAR);
         return PARSE_ERROR;
     }
 
@@ -1095,7 +1095,7 @@ static PARSE_STATUS parse_generics_params(Env* env, Uast_generic_param_vec* para
     do {
         Token symbol = {0};
         if (!try_consume(&symbol, tokens, TOKEN_SYMBOL)) {
-            msg_parser_expected(env->file_text, tk_view_front(*tokens), "", TOKEN_SYMBOL);
+            msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), "", TOKEN_SYMBOL);
             return PARSE_ERROR;
         }
         Uast_generic_param* param = uast_generic_param_new(symbol.pos, uast_symbol_new(symbol.pos, symbol.text, (Ulang_type_vec) {0}));
@@ -1104,7 +1104,7 @@ static PARSE_STATUS parse_generics_params(Env* env, Uast_generic_param_vec* para
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_GENERIC)) {
         msg_parser_expected(
-            env->file_text, tk_view_front(*tokens), "", TOKEN_COMMA, TOKEN_CLOSE_GENERIC
+            env->file_path_to_text, tk_view_front(*tokens), "", TOKEN_COMMA, TOKEN_CLOSE_GENERIC
         );
         return PARSE_ERROR;
     }
@@ -1126,7 +1126,7 @@ static PARSE_STATUS parse_generics_args(Env* env, Ulang_type_vec* args, Tk_view*
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_GENERIC)) {
         msg_parser_expected(
-            env->file_text, tk_view_front(*tokens), "", TOKEN_COMMA, TOKEN_CLOSE_GENERIC
+            env->file_path_to_text, tk_view_front(*tokens), "", TOKEN_COMMA, TOKEN_CLOSE_GENERIC
         );
         return PARSE_ERROR;
     }
@@ -1149,7 +1149,7 @@ static PARSE_STATUS parse_struct_base_def(
     }
 
     if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), "in struct, raw_union, or enum definition", TOKEN_OPEN_CURLY_BRACE, TOKEN_OPEN_GENERIC);
+        msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), "in struct, raw_union, or enum definition", TOKEN_OPEN_CURLY_BRACE, TOKEN_OPEN_GENERIC);
         return PARSE_ERROR;
     }
 
@@ -1170,7 +1170,7 @@ static PARSE_STATUS parse_struct_base_def(
     }
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), "to end struct, raw_union, or enum definition", TOKEN_CLOSE_CURLY_BRACE);
+        msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), "to end struct, raw_union, or enum definition", TOKEN_CLOSE_CURLY_BRACE);
         return PARSE_ERROR;
     }
 
@@ -1188,7 +1188,7 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
     base->name = name;
 
     if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), "in struct, raw_union, or enum definition", TOKEN_OPEN_CURLY_BRACE);
+        msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), "in struct, raw_union, or enum definition", TOKEN_OPEN_CURLY_BRACE);
         return PARSE_ERROR;
     }
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
@@ -1197,12 +1197,12 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
     while (!done && tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_CLOSE_CURLY_BRACE) {
         Token name_token = {0};
         if (!try_consume(&name_token, tokens, TOKEN_SYMBOL)) {
-            msg_parser_expected(env->file_text, tk_view_front(*tokens), "in variable definition", TOKEN_SYMBOL);
+            msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), "in variable definition", TOKEN_SYMBOL);
             return PARSE_ERROR;
         }
         try_consume(NULL, tokens, TOKEN_SEMICOLON);
         if (!try_consume(NULL, tokens, TOKEN_NEW_LINE) && !try_consume(NULL, tokens, TOKEN_COMMA)) {
-            msg_parser_expected(env->file_text, tk_view_front(*tokens), "", TOKEN_NEW_LINE, TOKEN_COMMA);
+            msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), "", TOKEN_NEW_LINE, TOKEN_COMMA);
             return PARSE_ERROR;
         }
 
@@ -1216,7 +1216,7 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
     }
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), "to end struct, raw_union, or enum definition", TOKEN_CLOSE_CURLY_BRACE);
+        msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), "to end struct, raw_union, or enum definition", TOKEN_CLOSE_CURLY_BRACE);
         return PARSE_ERROR;
     }
 
@@ -1316,7 +1316,7 @@ static PARSE_STATUS parse_import(Env* env, Uast_import** import, Tk_view* tokens
 static PARSE_STATUS parse_type_def(Env* env, Uast_def** def, Tk_view* tokens) {
     Token name = {0};
     if (!try_consume(&name, tokens, TOKEN_SYMBOL)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), "", TOKEN_SYMBOL);
+        msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), "", TOKEN_SYMBOL);
         return PARSE_ERROR;
     }
 
@@ -1352,7 +1352,7 @@ static PARSE_STATUS parse_type_def(Env* env, Uast_def** def, Tk_view* tokens) {
         *def = uast_import_wrap(import);
     } else {
         msg_parser_expected(
-            env->file_text, tk_view_front(*tokens), "",
+            env->file_path_to_text, tk_view_front(*tokens), "",
             TOKEN_STRUCT, TOKEN_RAW_UNION, TOKEN_ENUM, TOKEN_SUM
         );
         return PARSE_ERROR;
@@ -1378,7 +1378,7 @@ static PARSE_STATUS parse_variable_decl(
     try_consume(NULL, tokens, TOKEN_NEW_LINE);
     Token name_token = {0};
     if (!try_consume(&name_token, tokens, TOKEN_SYMBOL)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), "in variable definition", TOKEN_SYMBOL);
+        msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), "in variable definition", TOKEN_SYMBOL);
         return PARSE_ERROR;
     }
     try_consume(NULL, tokens, TOKEN_COLON);
@@ -1424,12 +1424,12 @@ static PARSE_STATUS parse_for_range_internal(Env* env, Uast_block** result, Uast
 
     Uast_expr* lower_bound = NULL;
     if (PARSE_EXPR_OK != parse_expr(env, &lower_bound, tokens, true, false)) {
-        msg_expected_expr(env->file_text, *tokens, "after in");
+        msg_expected_expr(env->file_path_to_text, *tokens, "after in");
         return PARSE_ERROR;
     }
 
     if (!try_consume(NULL, tokens, TOKEN_DOUBLE_DOT)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), "after for loop lower bound", TOKEN_DOUBLE_DOT);
+        msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), "after for loop lower bound", TOKEN_DOUBLE_DOT);
         return PARSE_ERROR;
     }
 
@@ -1440,7 +1440,7 @@ static PARSE_STATUS parse_for_range_internal(Env* env, Uast_block** result, Uast
         case PARSE_EXPR_ERROR:
             return PARSE_ERROR;
         case PARSE_EXPR_NONE:
-            msg_expected_expr(env->file_text, *tokens, "after ..");
+            msg_expected_expr(env->file_path_to_text, *tokens, "after ..");
             return PARSE_ERROR;
         default:
             unreachable("");
@@ -1506,7 +1506,7 @@ static PARSE_STATUS parse_for_with_cond(Env* env, Uast_for_with_cond** for_new, 
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_NONE:
-            msg_expected_expr(env->file_text, *tokens, "");
+            msg_expected_expr(env->file_path_to_text, *tokens, "");
             return PARSE_ERROR;
         case PARSE_EXPR_ERROR:
             return PARSE_ERROR;
@@ -1584,27 +1584,27 @@ static PARSE_STATUS parse_function_decl(Env* env, Uast_function_decl** fun_decl,
 
     unwrap(try_consume(NULL, tokens, TOKEN_EXTERN));
     if (!try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), "in function decl", TOKEN_OPEN_PAR);
+        msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), "in function decl", TOKEN_OPEN_PAR);
         goto error;
     }
     Token extern_type_token;
     if (!try_consume(&extern_type_token, tokens, TOKEN_STRING_LITERAL)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), "in function decl", TOKEN_STRING_LITERAL);
+        msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), "in function decl", TOKEN_STRING_LITERAL);
         goto error;
     }
     if (!str_view_cstr_is_equal(extern_type_token.text, "c")) {
         msg(
-            LOG_ERROR, EXPECT_FAIL_INVALID_EXTERN_TYPE, env->file_text, extern_type_token.pos,
+            LOG_ERROR, EXPECT_FAIL_INVALID_EXTERN_TYPE, env->file_path_to_text, extern_type_token.pos,
             "invalid extern type `"STR_VIEW_FMT"`\n", str_view_print(extern_type_token.text)
         );
         goto error;
     }
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), "in function decl", TOKEN_CLOSE_PAR);
+        msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), "in function decl", TOKEN_CLOSE_PAR);
         goto error;
     }
     if (!try_consume(NULL, tokens, TOKEN_FN)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), "in function decl", TOKEN_FN);
+        msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), "in function decl", TOKEN_FN);
         goto error;
     }
     if (PARSE_OK != parse_function_decl_common(env, fun_decl, tokens)) {
@@ -1657,7 +1657,7 @@ static PARSE_STATUS parse_function_call(Env* env, Uast_function_call** child, Tk
                 break;
             case PARSE_EXPR_NONE:
                 if (prev_is_comma) {
-                    msg_expected_expr(env->file_text, *tokens, "");
+                    msg_expected_expr(env->file_path_to_text, *tokens, "");
                     return PARSE_ERROR;
                 }
                 break;
@@ -1670,7 +1670,7 @@ static PARSE_STATUS parse_function_call(Env* env, Uast_function_call** child, Tk
     }
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), "", TOKEN_CLOSE_PAR, TOKEN_COMMA);
+        msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), "", TOKEN_CLOSE_PAR, TOKEN_COMMA);
         return PARSE_ERROR;
     }
 
@@ -1772,7 +1772,7 @@ static PARSE_STATUS parse_if_else_chain(Env* env, Uast_if_else_chain** if_else_c
         case PARSE_EXPR_ERROR:
             return PARSE_ERROR;
         case PARSE_EXPR_NONE:
-            msg_expected_expr(env->file_text, *tokens, "");
+            msg_expected_expr(env->file_path_to_text, *tokens, "");
             return PARSE_ERROR;
         default:
             unreachable("");
@@ -1793,7 +1793,7 @@ static PARSE_STATUS parse_if_else_chain(Env* env, Uast_if_else_chain** if_else_c
                 case PARSE_EXPR_ERROR:
                     return PARSE_ERROR;
                 case PARSE_EXPR_NONE:
-                    msg_expected_expr(env->file_text, *tokens, "");
+                    msg_expected_expr(env->file_path_to_text, *tokens, "");
                     return PARSE_ERROR;
                 default:
                     unreachable("");
@@ -1829,7 +1829,7 @@ static PARSE_STATUS parse_switch(Env* env, Uast_switch** lang_switch, Tk_view* t
         case PARSE_EXPR_ERROR:
             return PARSE_ERROR;
         case PARSE_EXPR_NONE:
-            msg_expected_expr(env->file_text, *tokens, "");
+            msg_expected_expr(env->file_path_to_text, *tokens, "");
             return PARSE_ERROR;
         default:
             unreachable("");
@@ -1851,7 +1851,7 @@ static PARSE_STATUS parse_switch(Env* env, Uast_switch** lang_switch, Tk_view* t
                 case PARSE_EXPR_ERROR:
                     return PARSE_ERROR;
                 case PARSE_EXPR_NONE:
-                    msg_expected_expr(env->file_text, *tokens, "");
+                    msg_expected_expr(env->file_path_to_text, *tokens, "");
                     return PARSE_ERROR;
                 default:
                     unreachable("");
@@ -1870,7 +1870,7 @@ static PARSE_STATUS parse_switch(Env* env, Uast_switch** lang_switch, Tk_view* t
             case PARSE_EXPR_ERROR:
                 return PARSE_ERROR;
             case PARSE_EXPR_NONE:
-                msg_expected_expr(env->file_text, *tokens, "");
+                msg_expected_expr(env->file_path_to_text, *tokens, "");
                 return PARSE_ERROR;
             default:
                 unreachable("");
@@ -1985,7 +1985,7 @@ static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens
             case PARSE_EXPR_ERROR:
                 return PARSE_EXPR_ERROR;
             case PARSE_EXPR_NONE:
-                msg_expected_expr(env->file_text, *tokens, "");
+                msg_expected_expr(env->file_path_to_text, *tokens, "");
                 return PARSE_EXPR_ERROR;
             default:
                 unreachable("");
@@ -1997,7 +1997,7 @@ static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens
     try_consume(NULL, tokens, TOKEN_SEMICOLON);
     if (tokens->count < 1 || !try_consume(NULL, tokens, TOKEN_NEW_LINE)) {
         msg(
-            LOG_ERROR, EXPECT_FAIL_NO_NEW_LINE_AFTER_STATEMENT, env->file_text, tk_view_front(*tokens).pos,
+            LOG_ERROR, EXPECT_FAIL_NO_NEW_LINE_AFTER_STATEMENT, env->file_path_to_text, tk_view_front(*tokens).pos,
             "expected newline after stmt\n"
         );
         return PARSE_EXPR_ERROR;
@@ -2032,7 +2032,7 @@ static PARSE_STATUS parse_block(Env* env, Uast_block** block, Tk_view* tokens, b
 
     Token open_brace_token = {0};
     if (!is_top_level && !try_consume(&open_brace_token, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), "at start of block", TOKEN_OPEN_CURLY_BRACE);
+        msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), "at start of block", TOKEN_OPEN_CURLY_BRACE);
         status = PARSE_ERROR;
         goto end;
     }
@@ -2051,7 +2051,7 @@ static PARSE_STATUS parse_block(Env* env, Uast_block** block, Tk_view* tokens, b
             // this means that there is no matching `}` found
             if (!is_top_level) {
                 msg(
-                    LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_CURLY_BRACE, env->file_text, open_brace_token.pos, 
+                    LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_CURLY_BRACE, env->file_path_to_text, open_brace_token.pos, 
                     "opening `{` is unmatched\n"
                 );
                 status = PARSE_ERROR;
@@ -2108,7 +2108,7 @@ static PARSE_STATUS parse_struct_literal_members(Env* env, Uast_expr_vec* member
             case PARSE_EXPR_ERROR:
                 return PARSE_ERROR;
             case PARSE_EXPR_NONE:
-                msg_expected_expr(env->file_text, *tokens, "");
+                msg_expected_expr(env->file_path_to_text, *tokens, "");
                 return PARSE_ERROR;
             default:
                 unreachable("");
@@ -2124,7 +2124,7 @@ static PARSE_STATUS parse_struct_literal_members(Env* env, Uast_expr_vec* member
 static PARSE_STATUS parse_struct_literal(Env* env, Uast_struct_literal** struct_lit, Tk_view* tokens) {
     Token start_token;
     if (!try_consume(&start_token, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), "at start of struct literal", TOKEN_OPEN_CURLY_BRACE);
+        msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), "at start of struct literal", TOKEN_OPEN_CURLY_BRACE);
         return PARSE_ERROR;
     }
 
@@ -2137,7 +2137,7 @@ static PARSE_STATUS parse_struct_literal(Env* env, Uast_struct_literal** struct_
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
         if (members.info.count > 0) {
             msg_parser_expected(
-                env->file_text,
+                env->file_path_to_text,
                 tk_view_front(*tokens),
                 "after expression in struct literal",
                 TOKEN_COMMA,
@@ -2146,7 +2146,7 @@ static PARSE_STATUS parse_struct_literal(Env* env, Uast_struct_literal** struct_
             );
         } else {
             msg_parser_expected(
-                env->file_text,
+                env->file_path_to_text,
                 tk_view_front(*tokens),
                 "in struct literal",
                 TOKEN_SINGLE_DOT,
@@ -2163,7 +2163,7 @@ static PARSE_STATUS parse_struct_literal(Env* env, Uast_struct_literal** struct_
 static PARSE_STATUS parse_array_literal(Env* env, Uast_array_literal** arr_lit, Tk_view* tokens) {
     Token start_token;
     if (!try_consume(&start_token, tokens, TOKEN_OPEN_SQ_BRACKET)) {
-        msg_parser_expected(env->file_text, tk_view_front(*tokens), "at start of array literal", TOKEN_OPEN_CURLY_BRACE);
+        msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), "at start of array literal", TOKEN_OPEN_CURLY_BRACE);
         return PARSE_ERROR;
     }
     
@@ -2176,7 +2176,7 @@ static PARSE_STATUS parse_array_literal(Env* env, Uast_array_literal** arr_lit, 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_SQ_BRACKET)) {
         if (members.info.count > 0) {
             msg_parser_expected(
-                env->file_text,
+                env->file_path_to_text,
                 tk_view_front(*tokens),
                 "after expression in array literal",
                 TOKEN_COMMA,
@@ -2185,7 +2185,7 @@ static PARSE_STATUS parse_array_literal(Env* env, Uast_array_literal** arr_lit, 
             );
         } else {
             msg_parser_expected(
-                env->file_text,
+                env->file_path_to_text,
                 tk_view_front(*tokens),
                 "in array literal",
                 TOKEN_SINGLE_DOT,
@@ -2219,18 +2219,18 @@ static PARSE_EXPR_STATUS parse_expr_piece(
                 // TODO: remove this if if it causes too many issues
                 if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
                     msg(
-                        LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_PAR, env->file_text, open_par_token.pos, 
+                        LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_PAR, env->file_path_to_text, open_par_token.pos, 
                         "opening `(` is unmatched\n"
                     );
                 }
                 return PARSE_EXPR_ERROR;
             case PARSE_EXPR_NONE:
-                msg_expected_expr(env->file_text, *tokens, "");
+                msg_expected_expr(env->file_path_to_text, *tokens, "");
                 return PARSE_EXPR_ERROR;
         }
         if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
             msg(
-                LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_PAR, env->file_text, open_par_token.pos, 
+                LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_PAR, env->file_path_to_text, open_par_token.pos, 
                 "opening `(` is unmatched\n"
             );
             return PARSE_EXPR_ERROR;
@@ -2324,7 +2324,7 @@ static PARSE_EXPR_STATUS parse_unary(
             {
                 Token temp;
                 if (!try_consume(&temp, tokens, TOKEN_LESS_THAN)) {
-                    msg_parser_expected(env->file_text, temp, "", TOKEN_LESS_THAN);
+                    msg_parser_expected(env->file_path_to_text, temp, "", TOKEN_LESS_THAN);
                     return PARSE_EXPR_ERROR;
                 }
             }
@@ -2334,7 +2334,7 @@ static PARSE_EXPR_STATUS parse_unary(
             {
                 Token temp;
                 if (!try_consume(&temp, tokens, TOKEN_GREATER_THAN)) {
-                    msg_parser_expected(env->file_text, temp, "", TOKEN_GREATER_THAN);
+                    msg_parser_expected(env->file_path_to_text, temp, "", TOKEN_GREATER_THAN);
                     return PARSE_EXPR_ERROR;
                 }
             }
@@ -2430,7 +2430,7 @@ static PARSE_EXPR_STATUS parse_binary(
             case PARSE_EXPR_ERROR:
                 return PARSE_EXPR_ERROR;
             case PARSE_EXPR_NONE:
-                msg_expected_expr(env->file_text, *tokens, "");
+                msg_expected_expr(env->file_path_to_text, *tokens, "");
                 return PARSE_EXPR_ERROR;
             default:
                 unreachable("");
@@ -2657,7 +2657,7 @@ static PARSE_EXPR_STATUS parse_expr_index(
         msg(
             LOG_ERROR,
             EXPECT_FAIL_MISSING_CLOSE_SQ_BRACKET,
-            env->file_text,
+            env->file_path_to_text,
             tk_view_front(*tokens).pos,
             "expected closing `]` after expr\n"
         );
@@ -2910,7 +2910,7 @@ static PARSE_EXPR_STATUS parse_expr(
             *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(equal_tk.pos, lhs, rhs, BINARY_SINGLE_EQUAL)));
             return PARSE_EXPR_OK;
         case PARSE_EXPR_NONE:
-            msg_expected_expr(env->file_text, *tokens, "after `=`");
+            msg_expected_expr(env->file_path_to_text, *tokens, "after `=`");
             return PARSE_EXPR_ERROR;
         case PARSE_EXPR_ERROR:
             return PARSE_EXPR_ERROR;
@@ -2927,12 +2927,13 @@ bool parse_file(Uast_block** block, Env* env, Str_view file_path) {
     //parser_do_tests();
 #endif // DNDEBUG
 
-    Str_view old_file_text = env->file_text;
-    if (!read_file(&env->file_text, params.input_file_name)) {
-        msg(LOG_FATAL, EXPECT_FAIL_NONE, dummy_file_text, dummy_pos, "could not open file %s: errno %d (%s)\n", params.input_file_name, errno, strerror(errno));
+    Str_view* file_con = arena_alloc(&a_main, sizeof(*file_con));
+    if (!read_file(file_con, params.input_file_name)) {
+        msg(LOG_FATAL, EXPECT_FAIL_NONE, (File_path_to_text) {0}, dummy_pos, "could not open file %s: errno %d (%s)\n", params.input_file_name, errno, strerror(errno));
         status = false;
         goto error;
     }
+    unwrap(file_path_to_text_tbl_add(&env->file_path_to_text, file_con, file_path) && "parse_file should not be called with the same file path more than once");
 
     Tokens tokens = {0};
     if (!tokenize(&tokens, env, file_path)) {
@@ -2949,7 +2950,6 @@ bool parse_file(Uast_block** block, Env* env, Str_view file_path) {
     symbol_log(LOG_TRACE, env);
 
 error:
-    env->file_text = old_file_text;
     return status;
 }
 
@@ -2960,46 +2960,51 @@ static inline Tk_view tokens_to_tk_view(Tokens tokens) {
 }
 
 static void parser_test_parse_expr(const char* input, int test) {
-    log(LOG_DEBUG, "start parser_test_%d:\n", test);
-    Env env = {0};
-    Str_view file_text = str_view_from_cstr(input);
-    env.file_text = file_text;
+    (void) input;
+    (void) test;
+    todo();
+    //log(LOG_DEBUG, "start parser_test_%d:\n", test);
+    //Env env = {0};
+    //Str_view file_text = str_view_from_cstr(input);
+    //env.file_path_to_text = file_text;
 
-    Tokens tokens_ = {0};
-    unwrap(tokenize(&tokens_, &env, (Str_view) {0}));
-    Tk_view tokens = tokens_to_tk_view(tokens_);
-    log_tokens(LOG_DEBUG, tokens);
-    Uast_expr* result = NULL;
-    switch (parse_expr(&env, &result, &tokens, false, false)) {
-        case PARSE_EXPR_OK:
-            log(LOG_DEBUG, "\n"TAST_FMT, uast_expr_print(result));
-            break;
-        default:
-            unreachable("");
-    }
-    log(LOG_DEBUG, "end parser_test_%d:\n\n", test);
+    //Tokens tokens_ = {0};
+    //unwrap(tokenize(&tokens_, &env, (Str_view) {0}));
+    //Tk_view tokens = tokens_to_tk_view(tokens_);
+    //log_tokens(LOG_DEBUG, tokens);
+    //Uast_expr* result = NULL;
+    //switch (parse_expr(&env, &result, &tokens, false, false)) {
+    //    case PARSE_EXPR_OK:
+    //        log(LOG_DEBUG, "\n"TAST_FMT, uast_expr_print(result));
+    //        break;
+    //    default:
+    //        unreachable("");
+    //}
+    //log(LOG_DEBUG, "end parser_test_%d:\n\n", test);
 }
 
 static void parser_test_parse_stmt(const char* input, int test) {
+    (void) input;
+    (void) test;
     log(LOG_DEBUG, "start parser_test_%d:\n", test);
-    Env env = {0};
-    Str_view file_text = str_view_from_cstr(input);
-    env.file_text = file_text;
+    //Env env = {0};
+    //Str_view file_text = str_view_from_cstr(input);
+    //env.file_text = file_text;
 
-    Tokens tokens_ = {0};
-    unwrap(tokenize(&tokens_, &env, (Str_view) {0}));
-    Tk_view tokens = tokens_to_tk_view(tokens_);
-    log_tokens(LOG_DEBUG, tokens);
-    Uast_stmt* result = NULL;
-    switch (parse_stmt(&env, &result, &tokens, true)) {
-        case PARSE_EXPR_OK:
-            log(LOG_DEBUG, "\n"TAST_FMT, uast_stmt_print(result));
-            break;
-        default:
-            assert(error_count > 0);
-            unreachable("");
-    }
-    log(LOG_DEBUG, "end parser_test_%d:\n\n", test);
+    //Tokens tokens_ = {0};
+    //unwrap(tokenize(&tokens_, &env, (Str_view) {0}));
+    //Tk_view tokens = tokens_to_tk_view(tokens_);
+    //log_tokens(LOG_DEBUG, tokens);
+    //Uast_stmt* result = NULL;
+    //switch (parse_stmt(&env, &result, &tokens, true)) {
+    //    case PARSE_EXPR_OK:
+    //        log(LOG_DEBUG, "\n"TAST_FMT, uast_stmt_print(result));
+    //        break;
+    //    default:
+    //        assert(error_count > 0);
+    //        unreachable("");
+    //}
+    //log(LOG_DEBUG, "end parser_test_%d:\n\n", test);
 }
 
 static void parser_do_tests(void) {

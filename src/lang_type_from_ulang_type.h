@@ -7,6 +7,7 @@
 #include <ulang_type_print.h>
 #include <resolve_generics.h>
 #include <ulang_type_get_pos.h>
+#include <msg.h>
 
 static inline Lang_type lang_type_from_ulang_type(Env* env, Ulang_type lang_type);
 
@@ -150,7 +151,7 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     Uast_def* result = NULL;
     if (!usymbol_lookup(&result, env, ulang_type_regular_const_unwrap(resolved).atom.str)) {
         msg(
-            LOG_ERROR, EXPECT_FAIL_UNDEFINED_TYPE, env->file_text, pos,
+            LOG_ERROR, EXPECT_FAIL_UNDEFINED_TYPE, env->file_path_to_text, pos,
             "undefined type `"TAST_FMT"`\n", ulang_type_print(LANG_TYPE_MODE_MSG, resolved)
         );
         todo();

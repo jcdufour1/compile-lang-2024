@@ -196,7 +196,7 @@ static void msg_invalid_function_arg_internal(
 ) {
     msg_internal(
         file, line,
-        LOG_ERROR, EXPECT_FAIL_INVALID_FUN_ARG, env->file_text, tast_expr_get_pos(argument), 
+        LOG_ERROR, EXPECT_FAIL_INVALID_FUN_ARG, env->file_path_to_text, tast_expr_get_pos(argument), 
         "argument is of type `"LANG_TYPE_FMT"`, "
         "but the corresponding parameter `"STR_VIEW_FMT"` is of type `"LANG_TYPE_FMT"`\n",
         lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(argument)), 
@@ -205,7 +205,7 @@ static void msg_invalid_function_arg_internal(
     );
     msg_internal(
         file, line,
-        LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, corres_param->pos,
+        LOG_NOTE, EXPECT_FAIL_NONE, env->file_path_to_text, corres_param->pos,
         "corresponding parameter `"STR_VIEW_FMT"` defined here\n",
         str_view_print(corres_param->name)
     );
@@ -231,12 +231,12 @@ static void msg_invalid_count_function_args_internal(
     }
     string_extend_cstr(&print_arena, &message, " arguments expected\n");
     msg_internal(
-        file, line, LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, env->file_text, fun_call->pos,
+        file, line, LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, env->file_path_to_text, fun_call->pos,
         STR_VIEW_FMT, str_view_print(string_to_strv(message))
     );
 
     msg_internal(
-        file, line, LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, uast_function_decl_get_pos(fun_decl),
+        file, line, LOG_NOTE, EXPECT_FAIL_NONE, env->file_path_to_text, uast_function_decl_get_pos(fun_decl),
         "function `"STR_VIEW_FMT"` defined here\n", str_view_print(fun_decl->name)
     );
 }
@@ -251,14 +251,14 @@ static void msg_invalid_yield_type_internal(const char* file, int line, Env* env
     if (is_auto_inserted) {
         msg_internal(
             file, line,
-            LOG_ERROR, EXPECT_FAIL_MISSING_YIELD_STATEMENT, env->file_text, pos,
+            LOG_ERROR, EXPECT_FAIL_MISSING_YIELD_STATEMENT, env->file_path_to_text, pos,
             "no break statement in case that breaks `"LANG_TYPE_FMT"`\n",
             lang_type_print(LANG_TYPE_MODE_MSG, env->break_type)
         );
     } else {
         msg_internal(
             file, line,
-            LOG_ERROR, EXPECT_FAIL_MISMATCHED_YIELD_TYPE, env->file_text, pos,
+            LOG_ERROR, EXPECT_FAIL_MISMATCHED_YIELD_TYPE, env->file_path_to_text, pos,
             "breaking `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
             lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(child)),
             lang_type_print(LANG_TYPE_MODE_MSG, env->break_type)
@@ -267,7 +267,7 @@ static void msg_invalid_yield_type_internal(const char* file, int line, Env* env
 
     msg_internal(
         file, line,
-        LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, (Pos) {0} /* TODO */,
+        LOG_NOTE, EXPECT_FAIL_NONE, env->file_path_to_text, (Pos) {0} /* TODO */,
         "case break type `"LANG_TYPE_FMT"` defined here\n",
         lang_type_print(LANG_TYPE_MODE_MSG, env->break_type) 
     );
@@ -279,14 +279,14 @@ static void msg_invalid_return_type_internal(const char* file, int line, Env* en
     if (is_auto_inserted) {
         msg_internal(
             file, line,
-            LOG_ERROR, EXPECT_FAIL_MISSING_RETURN, env->file_text, pos,
+            LOG_ERROR, EXPECT_FAIL_MISSING_RETURN, env->file_path_to_text, pos,
             "no return statement in function that returns `"LANG_TYPE_FMT"`\n",
             ulang_type_print(LANG_TYPE_MODE_MSG, rtn_type)
         );
     } else {
         msg_internal(
             file, line,
-            LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, env->file_text, pos,
+            LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, env->file_path_to_text, pos,
             "returning `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
             lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(child)), 
             ulang_type_print(LANG_TYPE_MODE_MSG, rtn_type)
@@ -295,7 +295,7 @@ static void msg_invalid_return_type_internal(const char* file, int line, Env* en
 
     msg_internal(
         file, line,
-        LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, ulang_type_get_pos(rtn_type),
+        LOG_NOTE, EXPECT_FAIL_NONE, env->file_path_to_text, ulang_type_get_pos(rtn_type),
         "function return type `"LANG_TYPE_FMT"` defined here\n",
         ulang_type_print(LANG_TYPE_MODE_MSG, rtn_type)
     );
@@ -440,7 +440,7 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
 bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyped) {
     Uast_def* sym_def = NULL;
     if (!usymbol_lookup(&sym_def, env, sym_untyped->name)) {
-        msg_undefined_symbol(env->file_text, uast_expr_wrap(uast_symbol_wrap(sym_untyped)));
+        msg_undefined_symbol(env->file_path_to_text, uast_expr_wrap(uast_symbol_wrap(sym_untyped)));
         return false;
     }
 
@@ -604,7 +604,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
             }
         } else {
             msg(
-                LOG_ERROR, EXPECT_FAIL_BINARY_MISMATCHED_TYPES, env->file_text, oper_pos,
+                LOG_ERROR, EXPECT_FAIL_BINARY_MISMATCHED_TYPES, env->file_path_to_text, oper_pos,
                 "types `"LANG_TYPE_FMT"` and `"LANG_TYPE_FMT"` are not valid operands to binary expression\n",
                 lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_lhs)),
                 lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs))
@@ -757,7 +757,7 @@ bool try_set_binary_types(Env* env, Tast_expr** new_tast, Uast_binary* operator)
                 return true;
             case CHECK_ASSIGN_INVALID:
                 msg(
-                    LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
+                    LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_path_to_text,
                     operator->pos,
                     "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
@@ -802,7 +802,7 @@ bool try_set_unary_types_finish(
             new_lang_type = tast_expr_get_lang_type(new_child);
             if (lang_type_get_pointer_depth(new_lang_type) <= 0) {
                 msg(
-                    LOG_ERROR, EXPECT_FAIL_DEREF_NON_POINTER, env->file_text, unary_pos,
+                    LOG_ERROR, EXPECT_FAIL_DEREF_NON_POINTER, env->file_path_to_text, unary_pos,
                     "derefencing a type that is not a pointer\n"
                 );
                 return false;
@@ -850,7 +850,7 @@ bool try_set_unary_types_finish(
             new_lang_type = tast_expr_get_lang_type(new_child);
             if (!lang_type_is_number(new_lang_type)) {
                 msg(
-                    LOG_ERROR, EXPECT_FAIL_UNARY_MISMATCHED_TYPES, env->file_text, unary_pos,
+                    LOG_ERROR, EXPECT_FAIL_UNARY_MISMATCHED_TYPES, env->file_path_to_text, unary_pos,
                     "`"LANG_TYPE_FMT"` is not valid operand to logical not operation\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, new_lang_type)
                 );
@@ -901,7 +901,7 @@ bool try_set_tuple_assignment_types(
 ) {
     if (lang_type_tuple_const_unwrap(dest_lang_type).lang_types.info.count != tuple->members.info.count) {
         msg(
-            LOG_ERROR, EXPECT_FAIL_MISMATCHED_TUPLE_COUNT, env->file_text, uast_tuple_get_pos(tuple),
+            LOG_ERROR, EXPECT_FAIL_MISMATCHED_TUPLE_COUNT, env->file_path_to_text, uast_tuple_get_pos(tuple),
             "tuple `"UAST_FMT"` cannot be assigned to `"LANG_TYPE_FMT"`; "
             "tuple `"UAST_FMT"` has %zu elements, but type `"LANG_TYPE_FMT"` has %zu elements\n",
             uast_tuple_print(tuple), lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type),
@@ -931,7 +931,7 @@ bool try_set_tuple_assignment_types(
                 break;
             case CHECK_ASSIGN_INVALID:
                 msg(
-                    LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
+                    LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_path_to_text,
                     tast_expr_get_pos(new_memb),
                     "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_memb)),
@@ -992,7 +992,7 @@ static bool try_set_struct_literal_member_types(Env* env, Tast_expr_vec* new_mem
             rhs = uast_binary_unwrap(uast_operator_unwrap(memb))->rhs;
             if (!str_view_is_equal(memb_def->name, lhs->member_name)) {
                 msg(
-                    LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL, env->file_text, lhs->pos,
+                    LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL, env->file_path_to_text, lhs->pos,
                     "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
                     str_view_print(memb_def->name), str_view_print(lhs->member_name)
                 );
@@ -1011,7 +1011,7 @@ static bool try_set_struct_literal_member_types(Env* env, Tast_expr_vec* new_mem
                 break;
             case CHECK_ASSIGN_INVALID:
                 msg(
-                    LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
+                    LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_path_to_text,
                     uast_expr_get_pos(memb),
                     "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
@@ -1042,19 +1042,19 @@ bool try_set_struct_literal_types(
             break;
         case LANG_TYPE_RAW_UNION:
             msg(
-                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION, env->file_text,
+                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION, env->file_path_to_text,
                 assign_pos, "struct literal cannot be assigned to raw_union\n"
             );
             return false;
         case LANG_TYPE_SUM:
             msg(
-                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_SUM, env->file_text,
+                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_SUM, env->file_path_to_text,
                 assign_pos, "struct literal cannot be assigned to sum\n"
             );
             return false;
         case LANG_TYPE_PRIMITIVE:
             msg(
-                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_PRIMITIVE, env->file_text,
+                LOG_ERROR, EXPECT_FAIL_STRUCT_INIT_ON_PRIMITIVE, env->file_path_to_text,
                 assign_pos, "struct literal cannot be assigned to primitive type `"LANG_TYPE_FMT"`\n",
                 lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type)
             );
@@ -1120,7 +1120,7 @@ bool try_set_array_literal_types(
                 break;
             case CHECK_ASSIGN_INVALID:
                 msg(
-                    LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
+                    LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_path_to_text,
                     uast_expr_get_pos(rhs),
                     "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
@@ -1354,7 +1354,7 @@ bool try_set_assignment_types(Env* env, Tast_assignment** new_assign, Uast_assig
             break;
         case CHECK_ASSIGN_INVALID:
             msg(
-                LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_text,
+                LOG_ERROR, EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, env->file_path_to_text,
                 assignment->pos,
                 "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
                 lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
@@ -1376,7 +1376,7 @@ bool try_set_function_call_types_sum_case(Env* env, Tast_sum_case** new_case, Ua
         case LANG_TYPE_VOID: {
             if (args.info.count > 0) {
                 // TODO: expected failure case
-                msg(LOG_ERROR, EXPECT_FAIL_NONE, env->file_text, uast_expr_get_pos(vec_at(&args, 0)), "no arguments expected here\n");
+                msg(LOG_ERROR, EXPECT_FAIL_NONE, env->file_path_to_text, uast_expr_get_pos(vec_at(&args, 0)), "no arguments expected here\n");
                 todo();
             }
             *new_case = sum_case;
@@ -1455,7 +1455,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
         case TAST_SYMBOL: {
             if (!usymbol_lookup(&fun_def, env, tast_symbol_unwrap(new_callee)->base.name)) {
                 msg(
-                    LOG_ERROR, EXPECT_FAIL_UNDEFINED_FUNCTION, env->file_text, fun_call->pos,
+                    LOG_ERROR, EXPECT_FAIL_UNDEFINED_FUNCTION, env->file_path_to_text, fun_call->pos,
                     "function `"STR_VIEW_FMT"` is not defined\n", str_view_print(tast_symbol_unwrap(new_callee)->base.name)
                 );
                 status = false;
@@ -1493,7 +1493,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
                     break;
                 case CHECK_ASSIGN_INVALID:
                     msg(
-                        LOG_ERROR, EXPECT_FAIL_SUM_LIT_INVALID_ARG, env->file_text, tast_expr_get_pos(new_item),
+                        LOG_ERROR, EXPECT_FAIL_SUM_LIT_INVALID_ARG, env->file_path_to_text, tast_expr_get_pos(new_item),
                         "cannot assign "TAST_FMT" of type `"LANG_TYPE_FMT"` to '"LANG_TYPE_FMT"`\n", 
                         tast_expr_print(new_item),
                         lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_item)), 
@@ -1540,7 +1540,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
                     unwrap(usymbol_lookup(&sum_def_, env, lang_type_get_str(sum_lit->sum_lang_type)));
                     Uast_sum_def* sum_def = uast_sum_def_unwrap(sum_def_);
                     msg(
-                        LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, env->file_text, fun_call->pos,
+                        LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, env->file_path_to_text, fun_call->pos,
                         "cannot assign argument to varient `"LANG_TYPE_FMT"."LANG_TYPE_FMT"`, because inner type is void\n",
                         lang_type_print(LANG_TYPE_MODE_MSG, sum_lit->sum_lang_type), str_view_print(vec_at(&sum_def->base.members, (size_t)sum_lit->tag->data)->name)
                     );
@@ -1729,7 +1729,7 @@ static void msg_invalid_member_internal(
     const Uast_member_access* access
 ) {
     msg_internal(
-        file, line, LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_ACCESS, env->file_text,
+        file, line, LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_ACCESS, env->file_path_to_text,
         access->pos,
         "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 
         str_view_print(access->member_name), str_view_print(base_name)
@@ -2358,7 +2358,7 @@ static bool check_for_exhaustiveness_inner(
     if (is_default) {
         if (exhaustive_data->default_is_pre) {
             msg(
-                LOG_ERROR, EXPECT_FAIL_DUPLICATE_DEFAULT, env->file_text, curr_if->pos,
+                LOG_ERROR, EXPECT_FAIL_DUPLICATE_DEFAULT, env->file_path_to_text, curr_if->pos,
                 "duplicate default in switch statement\n"
             );
         }
@@ -2381,7 +2381,7 @@ static bool check_for_exhaustiveness_inner(
                 unwrap(usymbol_lookup(&enum_def_, env, lang_type_get_str(exhaustive_data->oper_lang_type)));
                 Uast_enum_def* enum_def = uast_enum_def_unwrap(enum_def_);
                 msg(
-                    LOG_ERROR, EXPECT_FAIL_DUPLICATE_CASE, env->file_text, curr_if->pos,
+                    LOG_ERROR, EXPECT_FAIL_DUPLICATE_CASE, env->file_path_to_text, curr_if->pos,
                     "duplicate case `"STR_VIEW_FMT"."STR_VIEW_FMT"` in switch statement\n",
                     str_view_print(enum_def->base.name), str_view_print(vec_at(&enum_def->base.members, (size_t)curr_lit->data)->name)
                 );
@@ -2404,7 +2404,7 @@ static bool check_for_exhaustiveness_inner(
                 unwrap(usymbol_lookup(&sum_def_, env, lang_type_get_str(exhaustive_data->oper_lang_type)));
                 Uast_sum_def* sum_def = uast_sum_def_unwrap(sum_def_);
                 msg(
-                    LOG_ERROR, EXPECT_FAIL_DUPLICATE_CASE, env->file_text, curr_if->pos,
+                    LOG_ERROR, EXPECT_FAIL_DUPLICATE_CASE, env->file_path_to_text, curr_if->pos,
                     "duplicate case `"STR_VIEW_FMT"."STR_VIEW_FMT"` in switch statement\n",
                     str_view_print(sum_def->base.name), str_view_print(vec_at(&sum_def->base.members, (size_t)curr_lit->data)->name)
                 );
@@ -2461,7 +2461,7 @@ static bool check_for_exhaustiveness_finish(Env* env, Exhaustive_data exhaustive
 
         if (!status) {
             msg(
-                LOG_ERROR, EXPECT_FAIL_NON_EXHAUSTIVE_SWITCH, env->file_text, pos_switch,
+                LOG_ERROR, EXPECT_FAIL_NON_EXHAUSTIVE_SWITCH, env->file_path_to_text, pos_switch,
                 STR_VIEW_FMT"\n", string_print(string)
             );
         }
@@ -2576,14 +2576,14 @@ bool try_set_label_types(Env* env, Tast_label** new_tast, const Uast_label* lang
 // TODO: merge this with msg_redefinition_of_symbol?
 static void try_set_msg_redefinition_of_symbol(Env* env, const Uast_def* new_sym_def) {
     msg(
-        LOG_ERROR, EXPECT_FAIL_REDEFINITION_SYMBOL, env->file_text, uast_def_get_pos(new_sym_def),
+        LOG_ERROR, EXPECT_FAIL_REDEFINITION_SYMBOL, env->file_path_to_text, uast_def_get_pos(new_sym_def),
         "redefinition of symbol "STR_VIEW_FMT"\n", str_view_print(uast_def_get_name(new_sym_def))
     );
 
     Uast_def* original_def;
     unwrap(usymbol_lookup(&original_def, env, uast_def_get_name(new_sym_def)));
     msg(
-        LOG_NOTE, EXPECT_FAIL_NONE, env->file_text, uast_def_get_pos(original_def),
+        LOG_NOTE, EXPECT_FAIL_NONE, env->file_path_to_text, uast_def_get_pos(original_def),
         STR_VIEW_FMT " originally defined here\n", str_view_print(uast_def_get_name(original_def))
     );
 }

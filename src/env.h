@@ -30,7 +30,7 @@ typedef struct Env_ {
     Llvm_vec defered_allocas_to_add;
     Usymbol_table primitives;
     int recursion_depth;
-    Str_view file_text;
+    File_path_to_text file_path_to_text;
 
     bool type_checking_is_in_struct_base_def;
 
