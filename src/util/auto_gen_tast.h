@@ -249,7 +249,7 @@ static Tast_type tast_gen_function_lit(const char* prefix) {
     const char* base_name = "function_lit";
     Tast_type lit = {.name = tast_name_new(prefix, base_name, false)};
 
-    append_member(&lit.members, "Str_view", "name");
+    append_member(&lit.members, "Name", "name");
     append_member(&lit.members, "Lang_type", "lang_type");
 
     return lit;
@@ -270,7 +270,7 @@ static Tast_type tast_gen_string(const char* prefix) {
     Tast_type string = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&string.members, "Str_view", "data");
-    append_member(&string.members, "Str_view", "name");
+    append_member(&string.members, "Name", "name");
 
     return string;
 }
@@ -355,7 +355,7 @@ static Tast_type tast_gen_struct_literal(const char* prefix) {
     Tast_type lit = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&lit.members, "Tast_expr_vec", "members");
-    append_member(&lit.members, "Str_view", "name");
+    append_member(&lit.members, "Name", "name");
     append_member(&lit.members, "Lang_type", "lang_type");
 
     return lit;
@@ -488,7 +488,7 @@ static Tast_type tast_gen_function_decl(const char* prefix) {
 
     append_member(&def.members, "Tast_function_params*", "params");
     append_member(&def.members, "Lang_type", "return_type");
-    append_member(&def.members, "Str_view", "name");
+    append_member(&def.members, "Name", "name");
 
     return def;
 }
@@ -509,7 +509,7 @@ static Tast_type tast_gen_variable_def(const char* prefix) {
 
     append_member(&def.members, "Lang_type", "lang_type");
     append_member(&def.members, "bool", "is_variadic");
-    append_member(&def.members, "Str_view", "name");
+    append_member(&def.members, "Name", "name");
 
     return def;
 }
@@ -545,7 +545,7 @@ static Tast_type tast_gen_string_def(const char* prefix) {
     const char* base_name = "string_def";
     Tast_type def = {.name = tast_name_new(prefix, base_name, false)};
 
-    append_member(&def.members, "Str_view", "name");
+    append_member(&def.members, "Name", "name");
     append_member(&def.members, "Str_view", "data");
 
     return def;
@@ -556,7 +556,7 @@ static Tast_type tast_gen_struct_lit_def(const char* prefix) {
     Tast_type def = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&def.members, "Tast_expr_vec", "members");
-    append_member(&def.members, "Str_view", "name");
+    append_member(&def.members, "Name", "name");
     append_member(&def.members, "Lang_type", "lang_type");
 
     return def;
@@ -623,7 +623,7 @@ static Tast_type tast_gen_label(const char* prefix) {
     const char* base_name = "label";
     Tast_type lang_label = {.name = tast_name_new(prefix, base_name, false)};
 
-    append_member(&lang_label.members, "Str_view", "name");
+    append_member(&lang_label.members, "Name", "name");
 
     return lang_label;
 }

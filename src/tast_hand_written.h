@@ -17,12 +17,12 @@ typedef size_t Llvm_id;
 
 typedef struct {
     Tast_variable_def_vec members;
-    Str_view name;
+    Name name;
 } Struct_def_base;
 
 typedef struct {
     Lang_type lang_type;
-    Str_view name;
+    Name name;
     Llvm_id llvm_id;
 } Sym_typed_base;
 

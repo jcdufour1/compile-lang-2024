@@ -17,7 +17,7 @@ static inline bool lang_type_atom_is_equal(Lang_type_atom a, Lang_type_atom b) {
     if (a.pointer_depth != b.pointer_depth) {
         return false;
     }
-    return str_view_is_equal(a.str, b.str);
+    return name_is_equal(a.str, b.str);
 }
 
 static inline bool lang_type_vec_is_equal(Lang_type_vec a, Lang_type_vec b) {
@@ -354,7 +354,7 @@ static inline void tast_stmt_set_lang_type(Tast_stmt* stmt, Lang_type lang_type)
     unreachable("");
 }
 
-static inline Str_view tast_literal_get_name(const Tast_literal* lit) {
+static inline Name tast_literal_get_name(const Tast_literal* lit) {
     switch (lit->type) {
         case TAST_NUMBER:
             unreachable("");
@@ -376,14 +376,15 @@ static inline Str_view tast_literal_get_name(const Tast_literal* lit) {
     unreachable("");
 }
 
-static inline Str_view tast_expr_get_name(const Tast_expr* expr) {
+static inline Name tast_expr_get_name(const Tast_expr* expr) {
     switch (expr->type) {
         case TAST_OPERATOR:
             unreachable("");
         case TAST_STRUCT_LITERAL:
             return tast_struct_literal_const_unwrap(expr)->name;
         case TAST_MEMBER_ACCESS:
-            return tast_member_access_const_unwrap(expr)->member_name;
+            todo();
+            //return tast_member_access_const_unwrap(expr)->member_name;
         case TAST_INDEX:
             unreachable("");
         case TAST_SYMBOL:
@@ -412,7 +413,7 @@ static inline Str_view tast_expr_get_name(const Tast_expr* expr) {
     unreachable("");
 }
 
-static inline Str_view tast_literal_def_get_name(const Tast_literal_def* lit_def) {
+static inline Name tast_literal_def_get_name(const Tast_literal_def* lit_def) {
     switch (lit_def->type) {
         case TAST_STRUCT_LIT_DEF:
             return tast_struct_lit_def_const_unwrap(lit_def)->name;
@@ -422,7 +423,7 @@ static inline Str_view tast_literal_def_get_name(const Tast_literal_def* lit_def
     unreachable("");
 }
 
-static inline Str_view tast_def_get_name(const Tast_def* def) {
+static inline Name tast_def_get_name(const Tast_def* def) {
     switch (def->type) {
         case TAST_PRIMITIVE_DEF:
             return lang_type_get_str(tast_primitive_def_const_unwrap(def)->lang_type);
@@ -446,7 +447,7 @@ static inline Str_view tast_def_get_name(const Tast_def* def) {
     unreachable("");
 }
 
-static inline Str_view tast_stmt_get_name(const Tast_stmt* stmt) {
+static inline Name tast_stmt_get_name(const Tast_stmt* stmt) {
     switch (stmt->type) {
         case TAST_DEF:
             return tast_def_get_name(tast_def_const_unwrap(stmt));
@@ -465,11 +466,6 @@ static inline Str_view tast_stmt_get_name(const Tast_stmt* stmt) {
         case TAST_LABEL:
             unreachable("");
     }
-    unreachable("");
-}
-
-static inline Str_view tast_get_name(const Tast* tast) {
-    (void) tast;
     unreachable("");
 }
 
