@@ -168,13 +168,15 @@ static bool get_block_from_path_token(Env* env, Uast_block** block, Str_view ali
     string_extend_strv(&a_main, &file_path, mod_name.text);
     string_extend_cstr(&a_main, &file_path, ".own");
     Sym_coll_vec old_ances = env->ancesters;
+    Str_view old_mod_path = env->curr_mod_path;
     env->ancesters.info.count = 1; // TODO: make macro to do this
+    env->curr_mod_path = mod_name.text;
     if (!parse_file(block, env, string_to_strv(file_path), false)) {
         // TODO: expected failure test
         todo();
     }
-    Uast_def* result = NULL;
     env->ancesters = old_ances;
+    env->curr_mod_path = old_mod_path;
 
     return true;
 }

@@ -32,6 +32,8 @@ typedef struct Env_ {
     int recursion_depth;
     File_path_to_text file_path_to_text;
 
+    Str_view curr_mod_path;
+
     bool type_checking_is_in_struct_base_def;
 
     Tast_variable_def_vec sum_case_vars;
