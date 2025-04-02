@@ -69,7 +69,7 @@ void do_passes(const Parameters* params) {
     add_primitives(&env);
 
     Uast_block* untyped = NULL;
-    if (!parse_file(&untyped, &env, str_view_from_cstr(params->input_file_name))) {
+    if (!parse_file(&untyped, &env, str_view_from_cstr(params->input_file_name), true)) {
         fail();
     }
     assert(error_count < 1);

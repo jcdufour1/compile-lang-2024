@@ -22,7 +22,7 @@ void tokenize_do_test(void);
 
 bool tokenize(Tokens* result, Env* env, Str_view file_path);
 
-bool parse_file(Uast_block** block, Env* env, Str_view file_path);
+bool parse_file(Uast_block** block, Env* env, Str_view file_path, bool do_new_sym_coll);
 
 Tast_block* analysis_1(Env* env, Uast_block* root);
 

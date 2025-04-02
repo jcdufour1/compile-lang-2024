@@ -33,7 +33,7 @@ typedef enum {
 } PARSE_EXPR_STATUS;
 
 static void set_right_child_expr(Uast_expr* expr, Uast_expr* new_rhs);
-static PARSE_STATUS parse_block(Env* env, Uast_block** block, Tk_view* tokens, bool is_top_level);
+static PARSE_STATUS parse_block(Env* env, Uast_block** block, Tk_view* tokens, bool is_top_level, bool do_new_sym_coll);
 static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens, bool defer_sym_add);
 static PARSE_EXPR_STATUS parse_expr(
     Env* env,
@@ -167,10 +167,14 @@ static bool get_block_from_path_token(Env* env, Uast_block** block, Str_view ali
     String file_path = {0};
     string_extend_strv(&a_main, &file_path, mod_name.text);
     string_extend_cstr(&a_main, &file_path, ".own");
-    if (!parse_file(block, env, string_to_strv(file_path))) {
+    Sym_coll_vec old_ances = env->ancesters;
+    env->ancesters.info.count = 1; // TODO: make macro to do this
+    if (!parse_file(block, env, string_to_strv(file_path), false)) {
         // TODO: expected failure test
         todo();
     }
+    Uast_def* result = NULL;
+    env->ancesters = old_ances;
 
     return true;
 }
@@ -1086,7 +1090,7 @@ static PARSE_STATUS parse_function_def(Env* env, Uast_function_def** fun_def, Tk
     }
 
     Uast_block* fun_body = NULL;
-    if (PARSE_OK != parse_block(env, &fun_body, tokens, false)) {
+    if (PARSE_OK != parse_block(env, &fun_body, tokens, false, true)) {
         return PARSE_ERROR;
     }
 
@@ -1458,7 +1462,7 @@ static PARSE_STATUS parse_for_range_internal(Env* env, Uast_block** result, Uast
     }
 
     Uast_block* inner = NULL;
-    if (PARSE_OK != parse_block(env, &inner, tokens, false)) {
+    if (PARSE_OK != parse_block(env, &inner, tokens, false, true)) {
         return PARSE_ERROR;
     }
 
@@ -1524,7 +1528,7 @@ static PARSE_STATUS parse_for_with_cond(Env* env, Uast_for_with_cond** for_new, 
         default:
             unreachable("");
     }
-    return parse_block(env, &(*for_new)->body, tokens, false);
+    return parse_block(env, &(*for_new)->body, tokens, false, true);
 }
 
 static PARSE_STATUS parse_for_loop(Env* env, Uast_stmt** result, Tk_view* tokens) {
@@ -1788,7 +1792,7 @@ static PARSE_STATUS parse_if_else_chain(Env* env, Uast_if_else_chain** if_else_c
         default:
             unreachable("");
     }
-    if (PARSE_OK != parse_block(env, &if_stmt->body, tokens, false)) {
+    if (PARSE_OK != parse_block(env, &if_stmt->body, tokens, false, true)) {
         return PARSE_ERROR;
     }
     vec_append(&a_main, &ifs, if_stmt);
@@ -1816,7 +1820,7 @@ static PARSE_STATUS parse_if_else_chain(Env* env, Uast_if_else_chain** if_else_c
             ));
         }
 
-        if (PARSE_OK != parse_block(env, &if_stmt->body, tokens, false)) {
+        if (PARSE_OK != parse_block(env, &if_stmt->body, tokens, false, true)) {
             return PARSE_ERROR;
         }
         vec_append(&a_main, &ifs, if_stmt);
@@ -1958,7 +1962,7 @@ static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens
         lhs = uast_continue_wrap(parse_continue(tokens));
     } else if (starts_with_block(*tokens)) {
         Uast_block* block_def = NULL;
-        if (PARSE_OK != parse_block(env, &block_def, tokens, false)) {
+        if (PARSE_OK != parse_block(env, &block_def, tokens, false, true)) {
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_block_wrap(block_def);
@@ -2018,7 +2022,7 @@ static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens
     return PARSE_EXPR_OK;
 }
 
-static PARSE_STATUS parse_block(Env* env, Uast_block** block, Tk_view* tokens, bool is_top_level) {
+static PARSE_STATUS parse_block(Env* env, Uast_block** block, Tk_view* tokens, bool is_top_level, bool do_new_sym_coll) {
     PARSE_STATUS status = PARSE_OK;
     bool did_consume_close_brace = false;
 
@@ -2028,7 +2032,9 @@ static PARSE_STATUS parse_block(Env* env, Uast_block** block, Tk_view* tokens, b
         (Symbol_collection) {0},
         (Pos) {0}
     );
-    vec_append(&a_main, &env->ancesters, &(*block)->symbol_collection);
+    if (do_new_sym_coll) {
+        vec_append(&a_main, &env->ancesters, &(*block)->symbol_collection);
+    }
 
     Uast_def* redefined_symbol;
     if (!usymbol_do_add_defered(&redefined_symbol, env)) {
@@ -2101,7 +2107,9 @@ end:
     } else if (!is_top_level && status == PARSE_OK) {
         unreachable("");
     }
-    vec_rem_last(&env->ancesters);
+    if (do_new_sym_coll) {
+        vec_rem_last(&env->ancesters);
+    }
     assert(*block);
     return status;
 }
@@ -2931,7 +2939,7 @@ static PARSE_EXPR_STATUS parse_expr(
 
 static void parser_do_tests(void);
 
-bool parse_file(Uast_block** block, Env* env, Str_view file_path) {
+bool parse_file(Uast_block** block, Env* env, Str_view file_path, bool do_new_sym_coll) {
     bool status = true;
 #ifndef DNDEBUG
     // TODO: reenable
@@ -2957,7 +2965,7 @@ bool parse_file(Uast_block** block, Env* env, Str_view file_path) {
         goto error;
     }
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
-    if (PARSE_OK != parse_block(env, block, &token_view, true)) {
+    if (PARSE_OK != parse_block(env, block, &token_view, true, do_new_sym_coll)) {
         status = false;
         goto error;
     }

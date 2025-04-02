@@ -1964,14 +1964,13 @@ bool try_set_member_access_types(
 
         }
         case TAST_MODULE_ALIAS: {
-            todo();
             //Str_view name = serialize_module_symbol_name(tast_module_alias_unwrap()->path, access->member_name);
-            //Uast_symbol* sym = uast_symbol_new(access->pos, access->member_name, (Ulang_type_vec) {0} /* TODO */);
-            //Tast_expr* new_expr = NULL;
+            Uast_symbol* sym = uast_symbol_new(access->pos, access->member_name, (Ulang_type_vec) {0} /* TODO */);
+            Tast_expr* new_expr = NULL;
             //vec_append(&env->ancesters, 
-            //if (!try_set_symbol_types(env, &new_expr, )) {
-            //    todo();
-            //}
+            if (!try_set_symbol_types(env, &new_expr, sym)) {
+                todo();
+            }
             todo();
         }
         default:
