@@ -190,6 +190,8 @@ static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr) {
             unreachable("");
         case TAST_IF_ELSE_CHAIN:
             return tast_if_else_chain_get_lang_type(tast_if_else_chain_const_unwrap(expr));
+        case TAST_MODULE_ALIAS:
+            unreachable("");
     }
     unreachable("");
 }
@@ -265,6 +267,8 @@ static inline void tast_expr_set_lang_type(Tast_expr* expr, Lang_type lang_type)
         case TAST_ASSIGNMENT:
             unreachable("");
         case TAST_IF_ELSE_CHAIN:
+            unreachable("");
+        case TAST_MODULE_ALIAS:
             unreachable("");
     }
     todo();
@@ -401,6 +405,8 @@ static inline Str_view tast_expr_get_name(const Tast_expr* expr) {
         case TAST_SUM_GET_TAG:
             unreachable("");
         case TAST_IF_ELSE_CHAIN:
+            unreachable("");
+        case TAST_MODULE_ALIAS:
             unreachable("");
     }
     unreachable("");

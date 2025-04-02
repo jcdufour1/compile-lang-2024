@@ -431,10 +431,20 @@ static Tast_type tast_gen_if_else_chain(const char* prefix) {
     return chain;
 }
 
+static Tast_type tast_gen_module_alias(const char* prefix) {
+    const char* base_name = "module_alias";
+    Tast_type chain = {.name = tast_name_new(prefix, base_name, false)};
+
+    append_member(&chain.members, "Str_view", "name");
+
+    return chain;
+}
+
 static Tast_type tast_gen_expr(const char* prefix) {
     const char* base_name = "expr";
     Tast_type expr = {.name = tast_name_new(prefix, base_name, false)};
 
+    vec_append(&gen_a, &expr.sub_types, tast_gen_module_alias(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_if_else_chain(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_assignment(base_name));
     vec_append(&gen_a, &expr.sub_types, tast_gen_operator(base_name));

@@ -422,6 +422,16 @@ Str_view tast_if_else_chain_print_internal(const Tast_if_else_chain* if_else, in
     return string_to_strv(buf);
 }
 
+Str_view tast_module_alias_print_internal(const Tast_module_alias* alias, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&print_arena, &buf, "module_alias", indent);
+    string_extend_strv_in_par(&print_arena, &buf, alias->name);
+    string_extend_cstr(&print_arena, &buf, "\n");
+
+    return string_to_strv(buf);
+}
+
 Str_view tast_function_decl_print_internal(const Tast_function_decl* fun_decl, int indent) {
     String buf = {0};
 
@@ -619,6 +629,8 @@ Str_view tast_expr_print_internal(const Tast_expr* expr, int indent) {
             return tast_assignment_print_internal(tast_assignment_const_unwrap(expr), indent);
         case TAST_IF_ELSE_CHAIN:
             return tast_if_else_chain_print_internal(tast_if_else_chain_const_unwrap(expr), indent);
+        case TAST_MODULE_ALIAS:
+            return tast_module_alias_print_internal(tast_module_alias_const_unwrap(expr), indent);
     }
     unreachable("");
 }

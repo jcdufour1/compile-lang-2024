@@ -492,12 +492,15 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
             *new_tast = tast_symbol_wrap(sym_typed);
             return true;
         }
+        case UAST_IMPORT: {
+            Tast_module_alias* sym_typed = tast_module_alias_new(sym_untyped->pos, uast_import_unwrap(sym_def)->alias);
+            *new_tast = tast_module_alias_wrap(sym_typed);
+            return true;
+        }
         case UAST_GENERIC_PARAM:
             unreachable("cannot set symbol of template parameter here");
         case UAST_POISON_DEF:
             return false;
-        case UAST_IMPORT:
-            todo();
     }
     unreachable("");
 }
@@ -1960,6 +1963,8 @@ bool try_set_member_access_types(
             return try_set_member_access_types_finish(env, new_tast, lang_type_def, access, new_callee);
 
         }
+        case TAST_MODULE_ALIAS:
+            todo();
         default:
             unreachable(TAST_FMT, tast_expr_print(new_callee));
     }
