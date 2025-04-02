@@ -16,7 +16,7 @@ typedef size_t Llvm_id;
 typedef struct {
     Uast_generic_param_vec generics;
     Uast_variable_def_vec members;
-    Str_view name;
+    Name name;
 } Ustruct_def_base;
 
 #endif // UAST_HAND_WRITTEN_H

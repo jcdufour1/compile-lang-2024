@@ -31,7 +31,7 @@ bool usym_tbl_add(Usymbol_table* sym_table, Uast_def* tast_of_symbol);
 
 void usym_tbl_update(Usymbol_table* sym_table, Uast_def* tast_of_symbol);
 
-bool usymbol_lookup(Uast_def** result, Env* env, Str_view key);
+bool usymbol_lookup(Uast_def** result, Env* env, Name key);
 
 bool usymbol_add(Env* env, Uast_def* tast_of_symbol);
 

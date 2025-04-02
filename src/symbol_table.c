@@ -305,26 +305,28 @@ bool usym_tbl_lookup(Uast_def** result, const Usymbol_table* sym_table, Str_view
     return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, key);
 }
 
-bool usymbol_lookup(Uast_def** result, Env* env, Str_view key) {
-    if (usym_tbl_lookup(result, &env->primitives, key)) {
-        return true;
-    }
-    if (lang_type_atom_is_signed(lang_type_atom_new(key, 0))) {
-        int32_t bit_width = str_view_to_int64_t(env, POS_BUILTIN, str_view_slice(key, 1, key.count - 1));
-        Uast_primitive_def* def = uast_primitive_def_new(
-            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new((Pos) {0}, bit_width, 0)))
-        );
-        unwrap(usym_tbl_add(&env->primitives, uast_primitive_def_wrap(def)));
-        *result = uast_primitive_def_wrap(def);
-        return true;
-    } else if (lang_type_atom_is_unsigned(lang_type_atom_new(key, 0))) {
-        int32_t bit_width = str_view_to_int64_t(env, POS_BUILTIN, str_view_slice(key, 1, key.count - 1));
-        Uast_primitive_def* def = uast_primitive_def_new(
-            POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new((Pos) {0}, bit_width, 0)))
-        );
-        unwrap(usym_tbl_add(&env->primitives, uast_primitive_def_wrap(def)));
-        *result = uast_primitive_def_wrap(def);
-        return true;
+bool usymbol_lookup(Uast_def** result, Env* env, Name key) {
+    if (key.mod_path.count < 1) {
+        if (usym_tbl_lookup(result, &env->primitives, key)) {
+            return true;
+        }
+        if (lang_type_atom_is_signed(lang_type_atom_new(key, 0))) {
+            int32_t bit_width = str_view_to_int64_t(env, POS_BUILTIN, str_view_slice(key, 1, key.count - 1));
+            Uast_primitive_def* def = uast_primitive_def_new(
+                POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new((Pos) {0}, bit_width, 0)))
+            );
+            unwrap(usym_tbl_add(&env->primitives, uast_primitive_def_wrap(def)));
+            *result = uast_primitive_def_wrap(def);
+            return true;
+        } else if (lang_type_atom_is_unsigned(lang_type_atom_new(key, 0))) {
+            int32_t bit_width = str_view_to_int64_t(env, POS_BUILTIN, str_view_slice(key, 1, key.count - 1));
+            Uast_primitive_def* def = uast_primitive_def_new(
+                POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new((Pos) {0}, bit_width, 0)))
+            );
+            unwrap(usym_tbl_add(&env->primitives, uast_primitive_def_wrap(def)));
+            *result = uast_primitive_def_wrap(def);
+            return true;
+        }
     }
 
     return generic_symbol_lookup((void**)result, env, key, (Get_tbl_from_collection_fn)usym_get_tbl_from_collection);

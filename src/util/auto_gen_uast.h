@@ -366,7 +366,7 @@ static Uast_type uast_gen_function_decl(const char* prefix) {
     append_member(&def.members, "Uast_generic_param_vec", "generics");
     append_member(&def.members, "Uast_function_params*", "params");
     append_member(&def.members, "Ulang_type", "return_type");
-    append_member(&def.members, "Str_view", "name");
+    append_member(&def.members, "Name", "name");
 
     return def;
 }
@@ -384,7 +384,7 @@ static Uast_type uast_gen_variable_def(const char* prefix) {
     Uast_type def = {.name = uast_name_new(prefix, "variable_def", false)};
 
     append_member(&def.members, "Ulang_type", "lang_type");
-    append_member(&def.members, "Str_view", "name");
+    append_member(&def.members, "Name", "name");
 
     return def;
 }
@@ -422,7 +422,7 @@ static Uast_type uast_gen_void_def(const char* prefix) {
 static Uast_type uast_gen_string_def(const char* prefix) {
     Uast_type def = {.name = uast_name_new(prefix, "string_def", false)};
 
-    append_member(&def.members, "Str_view", "name");
+    append_member(&def.members, "Name", "name");
     append_member(&def.members, "Str_view", "data");
 
     return def;
@@ -432,7 +432,7 @@ static Uast_type uast_gen_struct_lit_def(const char* prefix) {
     Uast_type def = {.name = uast_name_new(prefix, "struct_lit_def", false)};
 
     append_member(&def.members, "Uast_vec", "members");
-    append_member(&def.members, "Str_view", "name");
+    append_member(&def.members, "Name", "name");
 
     return def;
 }
@@ -451,6 +451,7 @@ static Uast_type uast_gen_literal_def(const char* prefix) {
 static Uast_type uast_gen_generic_param(const char* prefix) {
     Uast_type param = {.name = uast_name_new(prefix, "generic_param", false)};
 
+    // TODO: change this to just Name?
     append_member(&param.members, "Uast_symbol*", "child");
 
     return param;
@@ -460,7 +461,7 @@ static Uast_type uast_gen_poison_def(const char* prefix) {
     const char* base_name = "poison_def";
     Uast_type def = {.name = uast_name_new(prefix, base_name, false)};
 
-    append_member(&def.members, "Str_view", "name");
+    append_member(&def.members, "Name", "name");
 
     return def;
 }

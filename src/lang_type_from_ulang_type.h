@@ -146,6 +146,7 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Env* e
 
 // TODO: add Pos as member to Ulang_type and Lang_type?
 static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_type, Env* env, Ulang_type_regular lang_type, Pos pos) {
+    (void) new_lang_type;
     Ulang_type resolved = {0};
     if (!resolve_generics_ulang_type_regular(&resolved, env, lang_type)) {
         return false;
@@ -257,6 +258,7 @@ static inline Ulang_type_tuple lang_type_tuple_to_ulang_type_tuple(Lang_type_tup
 }
 
 static inline Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
+    (void) lang_type;
     todo();
     //switch (lang_type.type) {
     //    case LANG_TYPE_TUPLE:

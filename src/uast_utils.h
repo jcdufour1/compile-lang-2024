@@ -351,19 +351,19 @@ static inline Str_view uast_expr_get_name(const Uast_expr* expr) {
     unreachable("");
 }
 
-static inline Str_view uast_literal_def_get_name(const Uast_literal_def* lit_def) {
+static inline Name uast_literal_def_get_name(const Uast_literal_def* lit_def) {
     switch (lit_def->type) {
         case UAST_STRUCT_LIT_DEF:
             return uast_struct_lit_def_const_unwrap(lit_def)->name;
         case UAST_STRING_DEF:
             return uast_string_def_const_unwrap(lit_def)->name;
         case UAST_VOID_DEF:
-            return str_view_from_cstr("void");
+            return (Name) {.mod_path = (Str_view) {0}, .base = str_view_from_cstr("void")};
     }
     unreachable("");
 }
 
-static inline Str_view uast_def_get_name(const Uast_def* def) {
+static inline Name uast_def_get_name(const Uast_def* def) {
     switch (def->type) {
         case UAST_PRIMITIVE_DEF:
             return lang_type_get_str(uast_primitive_def_const_unwrap(def)->lang_type);
@@ -384,11 +384,13 @@ static inline Str_view uast_def_get_name(const Uast_def* def) {
         case UAST_SUM_DEF:
             return uast_sum_def_const_unwrap(def)->base.name;
         case UAST_GENERIC_PARAM:
-            return uast_generic_param_const_unwrap(def)->child->name;
+            todo();
+            //return uast_generic_param_const_unwrap(def)->child->name;
         case UAST_POISON_DEF:
             return uast_poison_def_const_unwrap(def)->name;
         case UAST_IMPORT:
-            return uast_import_const_unwrap(def)->alias_name;
+            todo();
+            //return uast_import_const_unwrap(def)->alias_name;
     }
     unreachable("");
 }
@@ -396,7 +398,8 @@ static inline Str_view uast_def_get_name(const Uast_def* def) {
 static inline Str_view uast_stmt_get_name(const Uast_stmt* stmt) {
     switch (stmt->type) {
         case UAST_DEF:
-            return uast_def_get_name(uast_def_const_unwrap(stmt));
+            todo();
+            //return uast_def_get_name(uast_def_const_unwrap(stmt));
         case UAST_BLOCK:
             unreachable("");
         case UAST_EXPR:
@@ -418,24 +421,26 @@ static inline Str_view uast_stmt_get_name(const Uast_stmt* stmt) {
 }
 
 static inline Str_view uast_get_name(const Uast* uast) {
-    switch (uast->type) {
-        case UAST_STMT:
-            return uast_stmt_get_name(uast_stmt_const_unwrap(uast));
-        case UAST_FUNCTION_PARAMS:
-            unreachable("");
-        case UAST_FOR_LOWER_BOUND:
-            unreachable("");
-        case UAST_FOR_UPPER_BOUND:
-            unreachable("");
-        case UAST_IF:
-            unreachable("");
-        case UAST_CONDITION:
-            unreachable("");
-        case UAST_CASE:
-            unreachable("");
-        case UAST_PARAM:
-            return uast_param_const_unwrap(uast)->base->name;
-    }
+    (void) uast;
+    todo();
+    //switch (uast->type) {
+    //    case UAST_STMT:
+    //        return uast_stmt_get_name(uast_stmt_const_unwrap(uast));
+    //    case UAST_FUNCTION_PARAMS:
+    //        unreachable("");
+    //    case UAST_FOR_LOWER_BOUND:
+    //        unreachable("");
+    //    case UAST_FOR_UPPER_BOUND:
+    //        unreachable("");
+    //    case UAST_IF:
+    //        unreachable("");
+    //    case UAST_CONDITION:
+    //        unreachable("");
+    //    case UAST_CASE:
+    //        unreachable("");
+    //    case UAST_PARAM:
+    //        return uast_param_const_unwrap(uast)->base->name;
+    //}
     unreachable("");
 }
 
