@@ -375,7 +375,7 @@ Tast_assignment* util_assignment_new(Env* env, Uast_expr* lhs, Uast_expr* rhs) {
 Tast_literal* util_tast_literal_new_from_strv(const Env* env, Str_view value, TOKEN_TYPE token_type, Pos pos) {
     Uast_literal* lit = NULL;
     unwrap(util_try_uast_literal_new_from_strv(&lit, env, value, token_type, pos));
-    return try_set_literal_types(lit);
+    return try_set_literal_types(env, lit);
 }
 
 // will print error on failure
@@ -423,7 +423,7 @@ Uast_literal* util_uast_literal_new_from_strv(const Env* env, Str_view value, TO
     return lit;
 }
 
-Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {
+Uast_literal* util_uast_literal_new_from_int64_t(Env* env, int64_t value, TOKEN_TYPE token_type, Pos pos) {
     Uast_literal* new_literal = NULL;
 
     switch (token_type) {
@@ -452,12 +452,12 @@ Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token
 
     assert(new_literal);
 
-    try_set_literal_types(new_literal);
+    try_set_literal_types(env, new_literal);
     return new_literal;
 }
 
-Tast_literal* util_tast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {
-    return try_set_literal_types(util_uast_literal_new_from_int64_t(value, token_type, pos));
+Tast_literal* util_tast_literal_new_from_int64_t(Env* env, int64_t value, TOKEN_TYPE token_type, Pos pos) {
+    return try_set_literal_types(env, util_uast_literal_new_from_int64_t(env, value, token_type, pos));
 }
 
 Tast_operator* util_binary_typed_new(Env* env, Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operator_type) {
@@ -469,11 +469,11 @@ Tast_operator* util_binary_typed_new(Env* env, Uast_expr* lhs, Uast_expr* rhs, T
     return tast_operator_unwrap(new_tast);
 }
 
-Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child) {
+Tast_operator* tast_condition_get_default_child(Env* env, Tast_expr* if_cond_child) {
     Tast_binary* binary = tast_binary_new(
         tast_expr_get_pos(if_cond_child),
         tast_literal_wrap(
-            util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, tast_expr_get_pos(if_cond_child))
+            util_tast_literal_new_from_int64_t(env, 0, TOKEN_INT_LITERAL, tast_expr_get_pos(if_cond_child))
         ),
         if_cond_child,
         BINARY_NOT_EQUAL,
@@ -483,11 +483,11 @@ Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child) {
     return tast_binary_wrap(binary);
 }
 
-Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child) {
+Uast_operator* uast_condition_get_default_child(Env* env, Uast_expr* if_cond_child) {
     Uast_binary* binary = uast_binary_new(
         uast_expr_get_pos(if_cond_child),
         uast_literal_wrap(
-            util_uast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, uast_expr_get_pos(if_cond_child))
+            util_uast_literal_new_from_int64_t(env, 0, TOKEN_INT_LITERAL, uast_expr_get_pos(if_cond_child))
         ),
         if_cond_child,
         BINARY_NOT_EQUAL

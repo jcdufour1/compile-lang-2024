@@ -15,9 +15,9 @@ static inline bool lang_type_is_slice(Env* env, Lang_type* gen_arg, Lang_type la
     if (deserialize_generic(&deserialized, lang_struct.atom.pointer_depth, &lang_struct.atom.str)) {
         assert(deserialized.generic_args.info.count == 1 && "TODO\n");
         *gen_arg = lang_type_from_ulang_type(env, vec_at(&deserialized.generic_args, 0));
-        return str_view_cstr_is_equal(deserialized.atom.str, "Slice");
+        return str_view_cstr_is_equal(deserialized.atom.str.base, "Slice");
     }
-    return str_view_cstr_is_equal(lang_struct.atom.str, "Slice");
+    return str_view_cstr_is_equal(lang_struct.atom.str.base, "Slice");
 }
 
 #endif // LANG_TYPE_IS

@@ -70,9 +70,9 @@ bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Env* env,
 
 Uast_literal* util_uast_literal_new_from_strv(const Env* env, Str_view value, TOKEN_TYPE token_type, Pos pos);
 
-Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
+Uast_literal* util_uast_literal_new_from_int64_t(Env* env, int64_t value, TOKEN_TYPE token_type, Pos pos);
 
-Tast_literal* util_tast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
+Tast_literal* util_tast_literal_new_from_int64_t(Env* env, int64_t value, TOKEN_TYPE token_type, Pos pos);
 
 Tast_operator* util_binary_typed_new(Env* env, Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operation_type);
 
@@ -148,9 +148,9 @@ bool try_get_struct_def(Env* env, Tast_struct_def** struct_def, Tast_stmt* stmt)
 
 bool llvm_try_get_struct_def(Env* env, Tast_struct_def** struct_def, Llvm* tast);
     
-Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child);
+Tast_operator* tast_condition_get_default_child(Env* env, Tast_expr* if_cond_child);
 
-Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child);
+Uast_operator* uast_condition_get_default_child(Env* env, Uast_expr* if_cond_child);
 
 static inline Tast_struct_def* llvm_get_struct_def(Env* env, Llvm* tast) {
     Tast_struct_def* struct_def;

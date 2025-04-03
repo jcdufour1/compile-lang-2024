@@ -38,7 +38,7 @@ typedef struct Env_ {
 
     Tast_variable_def_vec sum_case_vars;
 
-    Str_view name_parent_function; // length is zero if no parent function exists
+    Name name_parent_function; // length is zero if no parent function exists
     Lang_type break_type;
     bool break_in_case;
 

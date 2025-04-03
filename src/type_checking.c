@@ -26,6 +26,14 @@
 #include <lang_type_is.h>
 #include <symbol_iter.h>
 
+static void extend_name(String* buf, Name name) {
+    string_extend_cstr(&print_arena, buf, "(");
+    string_extend_strv(&print_arena, buf, name.mod_path);
+    string_extend_cstr(&print_arena, buf, "::");
+    string_extend_strv(&print_arena, buf, name.base);
+    string_extend_cstr(&print_arena, buf, ")");
+}
+
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
     if (num <= 0) {
@@ -72,7 +80,7 @@ static Tast_expr* auto_deref_to_0(Env* env, Tast_expr* expr) {
 
 const Uast_function_decl* get_parent_function_decl_const(Env* env) {
     Uast_def* def = NULL;
-    unwrap(env->name_parent_function.count > 0 && "no parent function here");
+    unwrap(env->name_parent_function.base.count > 0 && "no parent function here");
     unwrap(usymbol_lookup(&def, env, env->name_parent_function));
     switch (def->type) {
         case UAST_FUNCTION_DECL:
@@ -200,14 +208,14 @@ static void msg_invalid_function_arg_internal(
         "argument is of type `"LANG_TYPE_FMT"`, "
         "but the corresponding parameter `"STR_VIEW_FMT"` is of type `"LANG_TYPE_FMT"`\n",
         lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(argument)), 
-        str_view_print(corres_param->name),
+        name_print(corres_param->name),
         ulang_type_print(LANG_TYPE_MODE_MSG, corres_param->lang_type)
     );
     msg_internal(
         file, line,
         LOG_NOTE, EXPECT_FAIL_NONE, env->file_path_to_text, corres_param->pos,
         "corresponding parameter `"STR_VIEW_FMT"` defined here\n",
-        str_view_print(corres_param->name)
+        name_print(corres_param->name)
     );
 }
 
@@ -223,7 +231,7 @@ static void msg_invalid_count_function_args_internal(
     String message = {0};
     string_extend_size_t(&print_arena, &message, fun_call->args.info.count);
     string_extend_cstr(&print_arena, &message, " arguments are passed to function `");
-    string_extend_strv(&print_arena, &message, fun_decl->name);
+    extend_name(&message, fun_decl->name);
     string_extend_cstr(&print_arena, &message, "`, but ");
     string_extend_size_t(&print_arena, &message, min_args);
     if (max_args > min_args) {
@@ -237,7 +245,7 @@ static void msg_invalid_count_function_args_internal(
 
     msg_internal(
         file, line, LOG_NOTE, EXPECT_FAIL_NONE, env->file_path_to_text, uast_function_decl_get_pos(fun_decl),
-        "function `"STR_VIEW_FMT"` defined here\n", str_view_print(fun_decl->name)
+        "function `"STR_VIEW_FMT"` defined here\n", name_print(fun_decl->name)
     );
 }
 
@@ -390,14 +398,14 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
     return check_generic_assignment_finish(env, new_src, dest_lang_type, src_is_zero, *new_src);
 }
 
-Tast_literal* try_set_literal_types(Uast_literal* literal) {
+Tast_literal* try_set_literal_types(const Env* env, Uast_literal* literal) {
     switch (literal->type) {
         case UAST_STRING: {
             Uast_string* old_string = uast_string_unwrap(literal);
             return tast_string_wrap(tast_string_new(
                 old_string->pos,
                 old_string->data,
-                old_string->name
+                (Name) {.mod_path = env->curr_mod_path, .base = old_string->name}
             ));
         }
         case UAST_NUMBER: {
@@ -439,7 +447,7 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
 // set symbol lang_type, and report error if symbol is undefined
 bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyped) {
     Uast_def* sym_def = NULL;
-    if (!usymbol_lookup(&sym_def, env, sym_untyped->name)) {
+    if (!usymbol_lookup(&sym_def, env, (Name) {.mod_path = env->curr_mod_path, .base = sym_untyped->name})) {
         msg_undefined_symbol(env->file_path_to_text, uast_expr_wrap(uast_symbol_wrap(sym_untyped)));
         return false;
     }
@@ -487,7 +495,7 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
             if (!uast_def_get_lang_type(&lang_type, env, sym_def, sym_untyped->generic_args)) {
                 return false;
             }
-            Sym_typed_base new_base = {.lang_type = lang_type, .name = sym_untyped->name};
+            Sym_typed_base new_base = {.lang_type = lang_type, .name = (Name) {.mod_path = env->curr_mod_path, .base = sym_untyped->name}};
             Tast_symbol* sym_typed = tast_symbol_new(sym_untyped->pos, new_base);
             *new_tast = tast_symbol_wrap(sym_typed);
             return true;
@@ -550,23 +558,25 @@ static int64_t precalulate_number_internal(int64_t lhs_val, int64_t rhs_val, BIN
 }
 
 static Tast_literal* precalulate_number(
+    Env* env,
     const Tast_number* lhs,
     const Tast_number* rhs,
     BINARY_TYPE token_type,
     Pos pos
 ) {
     int64_t result_val = precalulate_number_internal(lhs->data, rhs->data, token_type);
-    return util_tast_literal_new_from_int64_t(result_val, TOKEN_INT_LITERAL, pos);
+    return util_tast_literal_new_from_int64_t(env, result_val, TOKEN_INT_LITERAL, pos);
 }
 
 static Tast_literal* precalulate_char(
+    Env* env,
     const Tast_char* lhs,
     const Tast_char* rhs,
     BINARY_TYPE token_type,
     Pos pos
 ) {
     int64_t result_val = precalulate_number_internal(lhs->data, rhs->data, token_type);
-    return util_tast_literal_new_from_int64_t(result_val, TOKEN_CHAR_LITERAL, pos);
+    return util_tast_literal_new_from_int64_t(env, result_val, TOKEN_CHAR_LITERAL, pos);
 }
 
 bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_lhs, Tast_expr* new_rhs, Pos oper_pos, BINARY_TYPE oper_token_type) {
@@ -618,7 +628,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
         }
     }
             
-    assert(lang_type_get_str(tast_expr_get_lang_type(new_lhs)).count > 0);
+    assert(lang_type_get_str(tast_expr_get_lang_type(new_lhs)).base.count > 0);
 
     // precalcuate binary in some situations
     if (new_lhs->type == TAST_LITERAL && new_rhs->type == TAST_LITERAL) {
@@ -634,6 +644,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
         switch (lhs_lit->type) {
             case TAST_NUMBER:
                 literal = precalulate_number(
+                    env,
                     tast_number_const_unwrap(lhs_lit),
                     tast_number_const_unwrap(rhs_lit),
                     oper_token_type,
@@ -642,6 +653,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
                 break;
             case TAST_CHAR:
                 literal = precalulate_char(
+                    env,
                     tast_char_const_unwrap(lhs_lit),
                     tast_char_const_unwrap(rhs_lit),
                     oper_token_type,
@@ -708,10 +720,10 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
             case BINARY_LOGICAL_OR:
                 // fallthrough
             case BINARY_LOGICAL_AND: {
-                Tast_literal* new_lit_lhs = util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, tast_expr_get_pos(new_lhs));
+                Tast_literal* new_lit_lhs = util_tast_literal_new_from_int64_t(env, 0, TOKEN_INT_LITERAL, tast_expr_get_pos(new_lhs));
                 tast_literal_set_lang_type(new_lit_lhs, tast_expr_get_lang_type(new_lhs));
 
-                Tast_literal* new_lit_rhs = util_tast_literal_new_from_int64_t(0, TOKEN_INT_LITERAL, tast_expr_get_pos(new_rhs));
+                Tast_literal* new_lit_rhs = util_tast_literal_new_from_int64_t(env, 0, TOKEN_INT_LITERAL, tast_expr_get_pos(new_rhs));
                 tast_literal_set_lang_type(new_lit_rhs, tast_expr_get_lang_type(new_rhs));
 
                 *new_tast = tast_operator_wrap(tast_binary_wrap(tast_binary_new(
@@ -741,7 +753,7 @@ bool try_set_binary_types_finish(Env* env, Tast_expr** new_tast, Tast_expr* new_
 
     }
 
-    assert(lang_type_get_str(tast_expr_get_lang_type(*new_tast)).count > 0);
+    assert(lang_type_get_str(tast_expr_get_lang_type(*new_tast)).base.count > 0);
     assert(*new_tast);
     return true;
 }
@@ -832,7 +844,7 @@ bool try_set_unary_types_finish(
             return true;
         case UNARY_UNSAFE_CAST:
             new_lang_type = cast_to;
-            assert(lang_type_get_str(cast_to).count > 0);
+            assert(lang_type_get_str(cast_to).base.count > 0);
             if (lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)) > 0 && lang_type_is_number(tast_expr_get_lang_type(new_child))) {
             } else if (lang_type_is_number_like(tast_expr_get_lang_type(new_child))) {
             } else if (lang_type_is_number(tast_expr_get_lang_type(new_child)) && lang_type_is_number(tast_expr_get_lang_type(new_child))) {
@@ -865,6 +877,7 @@ bool try_set_unary_types_finish(
                 unary_pos,
                 new_child,
                 tast_literal_wrap(util_tast_literal_new_from_int64_t(
+                    env,
                     0,
                     TOKEN_INT_LITERAL,
                     unary_pos
@@ -995,11 +1008,11 @@ static bool try_set_struct_literal_member_types(Env* env, Tast_expr_vec* new_mem
                 uast_binary_unwrap(uast_operator_unwrap(memb))->lhs // parser should catch invalid assignment
             );
             rhs = uast_binary_unwrap(uast_operator_unwrap(memb))->rhs;
-            if (!str_view_is_equal(memb_def->name, lhs->member_name)) {
+            if (!str_view_is_equal(memb_def->name.base, lhs->member_name)) {
                 msg(
                     LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL, env->file_path_to_text, lhs->pos,
                     "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
-                    str_view_print(memb_def->name), str_view_print(lhs->member_name)
+                    str_view_print(memb_def->name.base), str_view_print(lhs->member_name)
                 );
                 return false;
             }
@@ -1079,7 +1092,7 @@ bool try_set_struct_literal_types(
     Tast_struct_literal* new_lit = tast_struct_literal_new(
         lit->pos,
         new_membs,
-        lit->name,
+        (Name) {.mod_path = env->curr_mod_path, .base = lit->name},
         dest_lang_type
     );
     *new_tast = tast_expr_wrap(tast_struct_literal_wrap(new_lit));
@@ -1143,18 +1156,18 @@ bool try_set_array_literal_types(
 
     Tast_variable_def_vec inner_def_membs = {0};
     for (size_t idx = 0; idx < new_membs.info.count; idx++) {
-        vec_append(&a_main, &inner_def_membs, tast_variable_def_new(lit->pos, gen_arg, false, util_literal_name_new()));
+        vec_append(&a_main, &inner_def_membs, tast_variable_def_new(lit->pos, gen_arg, false, (Name) {.mod_path = env->curr_mod_path, .base = util_literal_name_new()}));
     }
     Tast_struct_def* inner_def = tast_struct_def_new(
         lit->pos,
-        (Struct_def_base) {.members = inner_def_membs, .name = util_literal_name_new()}
+        (Struct_def_base) {.members = inner_def_membs, .name = (Name) {.mod_path = env->curr_mod_path, .base = util_literal_name_new()}}
     );
     sym_tbl_add(&vec_at(&env->ancesters, 0)->symbol_table, tast_struct_def_wrap(inner_def));
 
     Tast_struct_literal* new_inner_lit = tast_struct_literal_new(
         lit->pos,
         new_membs,
-        lit->name,
+        (Name) {.mod_path = env->curr_mod_path, .base = lit->name},
         lang_type_struct_const_wrap(lang_type_struct_new(lit->pos, lang_type_atom_new(inner_def->base.name, 0)))
     );
     if (!lang_type_is_slice(env, &gen_arg, dest_lang_type)) {
@@ -1188,7 +1201,7 @@ bool try_set_array_literal_types(
     Tast_struct_literal* new_lit = tast_struct_literal_new(
         new_inner_lit->pos,
         new_lit_membs,
-        util_literal_name_new(),
+        (Name) {.mod_path = env->curr_mod_path, .base = util_literal_name_new()},
         dest_lang_type
     );
     *new_tast = tast_expr_wrap(tast_struct_literal_wrap(new_lit));
@@ -1198,7 +1211,7 @@ bool try_set_array_literal_types(
 bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
     switch (uast->type) {
         case UAST_LITERAL: {
-            *new_tast = tast_literal_wrap(try_set_literal_types(uast_literal_unwrap(uast)));
+            *new_tast = tast_literal_wrap(try_set_literal_types(env, uast_literal_unwrap(uast)));
             return true;
         }
         case UAST_SYMBOL:
@@ -1209,7 +1222,6 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
             }
             return true;
         case UAST_UNKNOWN:
-            assert(lang_type_get_str(env->lhs_lang_type).count > 0);
             return try_set_symbol_types(env, new_tast, uast_symbol_new(
                 uast_expr_get_pos(uast),
                 lang_type_get_str(env->lhs_lang_type),
