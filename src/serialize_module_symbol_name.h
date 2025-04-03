@@ -9,26 +9,27 @@
 bool try_str_view_consume_size_t(size_t* result, Str_view* str_view, bool ignore_underscore);
 
 static inline Str_view serialize_name(Name name) {
-    String name = {0};
+    String buf = {0};
 
-    string_extend_size_t(&a_main, &name, mod_name.count);
-    string_extend_cstr(&a_main, &name, "_");
-    string_extend_strv(&a_main, &name, mod_name);
-    string_extend_cstr(&a_main, &name, "_");
-    string_extend_strv(&a_main, &name, base_name);
+    string_extend_size_t(&a_main, &buf, name.mod_path.count);
+    string_extend_cstr(&a_main, &buf, "_");
+    string_extend_strv(&a_main, &buf, name.mod_path);
+    string_extend_cstr(&a_main, &buf, "_");
+    string_extend_strv(&a_main, &buf, name.base);
 
-    return string_to_strv(name);
+    return string_to_strv(buf);
 }
 
 static inline Name deserialize_name(Str_view serialized) {
     size_t mod_len = 0;
     unwrap(try_str_view_consume_size_t(&mod_len, &serialized, false));
     unwrap(str_view_try_consume(&serialized, '_'));
-    *mod_name = str_view_consume_count(&serialized, mod_len);
+    Str_view mod_path = str_view_consume_count(&serialized, mod_len);
 
-    size_t base_len = 0;
     unwrap(str_view_try_consume(&serialized, '_'));
-    *base_name = serialized;
+    Str_view base_name = serialized;
+
+    return (Name) {.mod_path = mod_path, .base = base_name};
 }
 
 #endif // SERIALIZE_MODULE_SYMBOL_NAME_H

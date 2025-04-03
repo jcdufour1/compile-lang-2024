@@ -13,7 +13,7 @@ typedef enum {
 static inline Str_view alloca_get_name(const Llvm_alloca* llvm);
 static inline Name tast_def_get_name(const Tast_def* def);
 static inline Name uast_def_get_name(const Uast_def* def);
-static inline Str_view llvm_tast_get_name(const Llvm* llvm);
+static inline Name llvm_tast_get_name(const Llvm* llvm);
 static inline Str_view rm_tuple_struct_get_name(const Tast_struct_def* struct_def);
 bool lang_type_atom_is_signed(Lang_type_atom atom);
 bool lang_type_atom_is_unsigned(Lang_type_atom atom);

@@ -80,20 +80,22 @@ const Tast* from_sym_definition_get_lang_type(const Tast* sym_def);
 
 size_t struct_def_base_get_idx_largest_member(Env* env, Struct_def_base base);
 
-static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, Str_view member_name) {
+// TODO: move to another file
+static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, Name member_name) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         const Uast_variable_def* curr_member = vec_at(&struct_def->members, idx);
-        if (str_view_is_equal(curr_member->name, member_name)) {
+        if (name_is_equal(curr_member->name, member_name)) {
             return idx;
         }
     }
     unreachable("member not found");
 }
 
-static inline size_t tast_get_member_index(const Struct_def_base* struct_def, Str_view member_name) {
+// TODO: move to another file
+static inline size_t tast_get_member_index(const Struct_def_base* struct_def, Name member_name) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         const Tast_variable_def* curr_member = vec_at(&struct_def->members, idx);
-        if (str_view_is_equal(curr_member->name, member_name)) {
+        if (name_is_equal(curr_member->name, member_name)) {
             return idx;
         }
     }
@@ -103,11 +105,11 @@ static inline size_t tast_get_member_index(const Struct_def_base* struct_def, St
 static inline bool uast_try_get_member_def(
     Uast_variable_def** member_def,
     const Ustruct_def_base* struct_def,
-    Str_view member_name
+    Name member_name
 ) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         Uast_variable_def* curr_member = vec_at(&struct_def->members, idx);
-        if (str_view_is_equal(curr_member->name, member_name)) {
+        if (name_is_equal(curr_member->name, member_name)) {
             *member_def = curr_member;
             return true;
         }
@@ -118,12 +120,11 @@ static inline bool uast_try_get_member_def(
 static inline bool tast_try_get_member_def(
     Tast_variable_def** member_def,
     const Struct_def_base* struct_def,
-    Str_view member_name
+    Name member_name
 ) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         Tast_variable_def* curr_member = vec_at(&struct_def->members, idx);
-        if (str_view_is_equal(curr_member->name, member_name)) {
-            assert(lang_type_get_str(curr_member->lang_type).count > 0);
+        if (name_is_equal(curr_member->name, member_name)) {
             *member_def = curr_member;
             return true;
         }

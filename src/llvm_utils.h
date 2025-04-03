@@ -56,7 +56,7 @@ static inline Sym_typed_base llvm_symbol_typed_get_base_const(const Llvm_symbol*
     return *llvm_symbol_typed_get_base_ref((Llvm_symbol*)sym);
 }
 
-static inline Str_view llvm_symbol_typed_get_name(const Llvm_symbol* sym) {
+static inline Name llvm_symbol_typed_get_name(const Llvm_symbol* sym) {
     switch (sym->type) {
         case LLVM_PRIMITIVE_SYM:
             return llvm_primitive_sym_const_unwrap(sym)->base.name;
@@ -421,8 +421,7 @@ static inline Llvm* get_llvm_dest(Llvm* llvm) {
     unreachable("");
 }
 
-// TODO: should I make *get_name_print_to_llvm?
-static inline Str_view llvm_literal_get_name(const Llvm_literal* lit) {
+static inline Name llvm_literal_get_name(const Llvm_literal* lit) {
     switch (lit->type) {
         case LLVM_NUMBER:
             return llvm_number_const_unwrap(lit)->name;
@@ -440,7 +439,7 @@ static inline Str_view llvm_literal_get_name(const Llvm_literal* lit) {
     unreachable("");
 }
 
-static inline Str_view llvm_operator_get_name(const Llvm_operator* operator) {
+static inline Name llvm_operator_get_name(const Llvm_operator* operator) {
     switch (operator->type) {
         case LLVM_BINARY:
             return llvm_binary_const_unwrap(operator)->name;
@@ -450,7 +449,7 @@ static inline Str_view llvm_operator_get_name(const Llvm_operator* operator) {
     unreachable("");
 }
 
-static inline Str_view llvm_expr_get_name(const Llvm_expr* expr) {
+static inline Name llvm_expr_get_name(const Llvm_expr* expr) {
     switch (expr->type) {
         case LLVM_OPERATOR:
             return llvm_operator_get_name(llvm_operator_const_unwrap(expr));
@@ -464,7 +463,7 @@ static inline Str_view llvm_expr_get_name(const Llvm_expr* expr) {
     unreachable("");
 }
 
-static inline Str_view llvm_literal_def_get_name(const Llvm_literal_def* lit_def) {
+static inline Name llvm_literal_def_get_name(const Llvm_literal_def* lit_def) {
     switch (lit_def->type) {
         case LLVM_STRUCT_LIT_DEF:
             return llvm_struct_lit_def_const_unwrap(lit_def)->name;
@@ -474,7 +473,7 @@ static inline Str_view llvm_literal_def_get_name(const Llvm_literal_def* lit_def
     unreachable("");
 }
 
-static inline Str_view llvm_def_get_name(const Llvm_def* def) {
+static inline Name llvm_def_get_name(const Llvm_def* def) {
     switch (def->type) {
         case LLVM_PRIMITIVE_DEF:
             return lang_type_get_str(llvm_primitive_def_const_unwrap(def)->lang_type);
@@ -498,7 +497,7 @@ static inline Str_view llvm_def_get_name(const Llvm_def* def) {
     unreachable("");
 }
 
-static inline Str_view llvm_llvm_expr_get_name(const Llvm_expr* expr) {
+static inline Name llvm_llvm_expr_get_name(const Llvm_expr* expr) {
     switch (expr->type) {
         case LLVM_SYMBOL:
             return llvm_symbol_typed_get_name(llvm_symbol_const_unwrap(expr));
@@ -510,7 +509,7 @@ static inline Str_view llvm_llvm_expr_get_name(const Llvm_expr* expr) {
     unreachable("");
 }
 
-static inline Str_view llvm_tast_get_name(const Llvm* llvm) {
+static inline Name llvm_tast_get_name(const Llvm* llvm) {
     switch (llvm->type) {
         case LLVM_DEF:
             return llvm_def_get_name(llvm_def_const_unwrap(llvm));

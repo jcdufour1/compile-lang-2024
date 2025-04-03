@@ -5,6 +5,7 @@
 #include <util.h>
 #include <llvm_utils.h>
 #include <lang_type_print.h>
+#include <serialize_module_symbol_name.h>
 
 static void extend_llvm_id(String* buf, const char* location, Llvm_id llvm_id) {
     string_extend_cstr(&print_arena, buf, " (& ");
@@ -14,16 +15,16 @@ static void extend_llvm_id(String* buf, const char* location, Llvm_id llvm_id) {
     string_extend_cstr(&print_arena, buf, " &) ");
 }
 
-static void extend_child_name(String* buf, const char* location, Str_view child_name) {
+static void extend_name(String* buf, Name name) {
+    string_extend_strv_in_par(&print_arena, buf, serialize_name(name));
+}
+
+static void extend_child_name(String* buf, const char* location, Name child_name) {
     string_extend_cstr(&print_arena, buf, " (* ");
     string_extend_cstr(&print_arena, buf, location);
     string_extend_cstr(&print_arena, buf, ":");
-    string_extend_strv(&print_arena, buf, child_name);
+    extend_name(buf, child_name);
     string_extend_cstr(&print_arena, buf, " *) ");
-}
-
-static void extend_name(String* buf, Str_view name) {
-    string_extend_strv_in_par(&print_arena, buf, name);
 }
 
 Str_view llvm_binary_print_internal(const Llvm_binary* binary, int indent) {
@@ -32,7 +33,7 @@ Str_view llvm_binary_print_internal(const Llvm_binary* binary, int indent) {
     string_extend_cstr_indent(&print_arena, &buf, "binary", indent);
     extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, binary->lang_type);
     string_extend_strv(&print_arena, &buf, binary_type_to_str_view(binary->token_type));
-    string_extend_strv_in_par(&print_arena, &buf, binary->name);
+    extend_name(&buf, binary->name);
     extend_child_name(&buf, "lhs", binary->lhs);
     extend_child_name(&buf, "rhs", binary->rhs);
     string_extend_cstr(&print_arena, &buf, "\n");
@@ -46,7 +47,7 @@ Str_view llvm_unary_print_internal(const Llvm_unary* unary, int indent) {
     string_extend_cstr_indent(&print_arena, &buf, "unary", indent);
     extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, unary->lang_type);
     string_extend_strv(&print_arena, &buf, unary_type_to_str_view(unary->token_type));
-    string_extend_strv_in_par(&print_arena, &buf, unary->name);
+    extend_name(&buf, unary->name);
     extend_child_name(&buf, "child", unary->child);
     string_extend_cstr(&print_arena, &buf, "\n");
 
@@ -55,7 +56,7 @@ Str_view llvm_unary_print_internal(const Llvm_unary* unary, int indent) {
 
 void llvm_extend_sym_typed_base(String* string, Sym_typed_base base) {
     extend_lang_type_to_string(string, LANG_TYPE_MODE_LOG, base.lang_type);
-    string_extend_strv(&print_arena, string, base.name);
+    extend_name(string, base.name);
     string_extend_cstr(&print_arena, string, "\n");
 }
 
@@ -273,7 +274,7 @@ Str_view llvm_goto_print_internal(const Llvm_goto* lang_goto, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "goto", indent);
-    string_extend_strv_in_par(&print_arena, &buf, lang_goto->name);
+    extend_name(&buf, lang_goto->name);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
@@ -283,8 +284,8 @@ Str_view llvm_cond_goto_print_internal(const Llvm_cond_goto* cond_goto, int inde
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "cond_goto", indent);
-    string_extend_strv_in_par(&print_arena, &buf, cond_goto->if_true);
-    string_extend_strv_in_par(&print_arena, &buf, cond_goto->if_false);
+    extend_name(&buf, cond_goto->if_true);
+    extend_name(&buf, cond_goto->if_false);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
@@ -331,7 +332,7 @@ Str_view llvm_function_decl_print_internal(const Llvm_function_decl* fun_decl, i
 
     string_extend_cstr_indent(&print_arena, &buf, "function_decl", indent);
     indent += INDENT_WIDTH;
-    string_extend_strv_in_par(&print_arena, &buf, fun_decl->name);
+    extend_name(&buf, fun_decl->name);
     extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, fun_decl->return_type);
     string_extend_cstr(&print_arena, &buf, "\n");
     string_extend_strv(&print_arena, &buf, llvm_function_params_print_internal(fun_decl->params, indent));
@@ -354,7 +355,7 @@ Str_view llvm_function_def_print_internal(const Llvm_function_def* fun_def, int 
 
 static void extend_struct_def_base(String* buf, const char* type_name, Struct_def_base base, int indent) {
     string_extend_cstr_indent(&print_arena, buf, type_name, indent);
-    string_extend_strv_in_par(&print_arena, buf, base.name);
+    extend_name(buf, base.name);
     string_extend_cstr(&print_arena, buf, "\n");
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
@@ -404,7 +405,7 @@ Str_view llvm_string_def_print_internal(const Llvm_string_def* def, int indent) 
 
     string_extend_cstr_indent(&print_arena, &buf, "string_def", indent);
     indent += INDENT_WIDTH;
-    string_extend_strv(&print_arena, &buf, def->name);
+    extend_name(&buf, def->name);
     string_extend_strv(&print_arena, &buf, def->data);
     string_extend_cstr(&print_arena, &buf, "\n");
     indent -= INDENT_WIDTH;
@@ -417,8 +418,9 @@ Str_view llvm_struct_lit_def_print_internal(const Llvm_struct_lit_def* def, int 
 
     indent += INDENT_WIDTH;
 
-    string_extend_cstr_indent(&print_arena, &buf, "struct_lit_def\n", indent);
-    string_extend_strv_indent(&print_arena, &buf, def->name, indent);
+    string_extend_cstr_indent(&print_arena, &buf, "struct_lit_def", indent);
+    extend_name(&buf, def->name);
+    string_extend_cstr(&print_arena, &buf, "\n");
     extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
     for (size_t idx = 0; idx < def->members.info.count; idx++) {
         Str_view memb_text = llvm_expr_print_internal(vec_at(&def->members, idx), indent);
@@ -434,7 +436,7 @@ Str_view llvm_label_print_internal(const Llvm_label* label, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "label", indent);
-    string_extend_strv_in_par(&print_arena, &buf, label->name);
+    extend_name(&buf, label->name);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);

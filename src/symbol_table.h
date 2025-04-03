@@ -57,7 +57,7 @@ bool sym_tbl_add(Symbol_table* sym_table, Tast_def* tast_of_symbol);
 
 void sym_tbl_update(Symbol_table* sym_table, Tast_def* tast_of_symbol);
 
-bool symbol_lookup(Tast_def** result, Env* env, Str_view key);
+bool symbol_lookup(Tast_def** result, Env* env, Name key);
 
 bool symbol_add(Env* env, Tast_def* tast_of_symbol);
 

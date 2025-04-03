@@ -255,7 +255,7 @@ void symbol_update(Env* env, Tast_def* item) {
     generic_symbol_update(env, tast_def_get_name(item), item, (Get_tbl_from_collection_fn)sym_get_tbl_from_collection);
 }
 
-bool symbol_lookup(Tast_def** result, Env* env, Str_view key) {
+bool symbol_lookup(Tast_def** result, Env* env, Name key) {
     return generic_symbol_lookup((void**)result, env, key, (Get_tbl_from_collection_fn)sym_get_tbl_from_collection);
 }
 
