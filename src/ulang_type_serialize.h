@@ -21,6 +21,6 @@ Str_view serialize_ulang_type(Ulang_type ulang_type);
 
 Ulang_type_atom deserialize_ulang_type_atom(Str_view* serialized);
 
-Ulang_type deserialize_ulang_type(Str_view* serialized, int16_t pointer_depth);
+Ulang_type deserialize_ulang_type(Name* serialized, int16_t pointer_depth);
 
 #endif // ULANG_TYPE_SERIALIZE_H

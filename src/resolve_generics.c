@@ -13,7 +13,7 @@
 
 static bool ulang_type_generics_are_present(Ulang_type lang_type);
 
-Str_view serialize_generic(Str_view old_name, Ulang_type_vec gen_args) {
+Str_view serialize_generic(Name old_name, Ulang_type_vec gen_args) {
     String name = {0};
     string_extend_cstr(&a_main, &name, "____");
     string_extend_size_t(&a_main, &name, gen_args.info.count);
@@ -26,7 +26,7 @@ Str_view serialize_generic(Str_view old_name, Ulang_type_vec gen_args) {
     return string_to_strv(name);
 }
 
-bool deserialize_generic(Ulang_type_generic* deserialized, int16_t pointer_depth, Str_view* serialized) {
+bool deserialize_generic(Ulang_type_generic* deserialized, int16_t pointer_depth, Name* serialized) {
     //log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
     if (!str_view_try_consume_count(serialized, '_', 4)) { // for now, ____ means generic
         // not a generic lang_type

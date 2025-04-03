@@ -1,14 +1,17 @@
 #include <ulang_type_serialize.h>
 #include <parser_utils.h>
 #include <ulang_type.h>
+#include <serialize_module_symbol_name.h>
 
 Str_view serialize_ulang_type_atom(Ulang_type_atom atom) {
+    Str_view serialized = serialize_name(atom.str);
+
     String name = {0};
     string_extend_size_t(&a_main, &name, atom.pointer_depth);
     string_extend_cstr(&a_main, &name, "_");
-    string_extend_size_t(&a_main, &name, atom.str.count);
+    string_extend_size_t(&a_main, &name, serialized.count);
     string_extend_cstr(&a_main, &name, "_");
-    string_extend_strv(&a_main, &name, atom.str);
+    string_extend_strv(&a_main, &name, serialized);
     string_extend_cstr(&a_main, &name, "__");
     return string_to_strv(name);
 }
@@ -77,10 +80,11 @@ Ulang_type_atom deserialize_ulang_type_atom(Str_view* serialized) {
 
     unwrap(str_view_try_consume_count(serialized, '_', 2));
 
-    return ulang_type_atom_new(base, pointer_depth);
+    todo();
+    //return ulang_type_atom_new(base, pointer_depth);
 }
 
-Ulang_type deserialize_ulang_type(Str_view* serialized, int16_t pointer_depth) {
+Ulang_type deserialize_ulang_type(Name* serialized, int16_t pointer_depth) {
     //log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
     Ulang_type_generic gen = {0};
     if (deserialize_generic(&gen, pointer_depth, serialized)) {

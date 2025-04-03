@@ -177,9 +177,10 @@ int64_t str_view_to_int64_t(const Env* env, Pos pos, Str_view str_view) {
 }
 
 static bool lang_type_atom_is_number_finish(Lang_type_atom atom) {
-    size_t idx;
-    for (idx = 1; idx < atom.str.count; idx++) {
-        if (!isdigit(str_view_at(atom.str, idx))) {
+    (void) atom;
+    size_t idx = 0;
+    for (idx = 1; idx < atom.str.base.count; idx++) {
+        if (!isdigit(str_view_at(atom.str.base, idx))) {
             return false;
         }
     }
@@ -189,10 +190,10 @@ static bool lang_type_atom_is_number_finish(Lang_type_atom atom) {
 
 // TODO: get rid of this function?
 bool lang_type_atom_is_signed(Lang_type_atom atom) {
-    if (atom.str.count < 1) {
+    if (atom.str.base.count < 1) {
         return false;
     }
-    if (str_view_at(atom.str, 0) != 'i') {
+    if (str_view_at(atom.str.base, 0) != 'i') {
         return false;
     }
     return lang_type_atom_is_number_finish(atom);
@@ -200,10 +201,10 @@ bool lang_type_atom_is_signed(Lang_type_atom atom) {
 
 // TODO: get rid of this function?
 bool lang_type_atom_is_unsigned(Lang_type_atom atom) {
-    if (atom.str.count < 1) {
+    if (atom.str.base.count < 1) {
         return false;
     }
-    if (str_view_at(atom.str, 0) != 'u') {
+    if (str_view_at(atom.str.base, 0) != 'u') {
         return false;
     }
     return lang_type_atom_is_number_finish(atom);
@@ -291,7 +292,7 @@ bool lang_type_is_unsigned(Lang_type lang_type) {
 
 int64_t i_lang_type_atom_to_bit_width(const Env* env, Lang_type_atom atom) {
     //assert(lang_type_atom_is_signed(lang_type));
-    return str_view_to_int64_t(env, POS_BUILTIN, str_view_slice(atom.str, 1, atom.str.count - 1));
+    return str_view_to_int64_t(env, POS_BUILTIN, str_view_slice(atom.str.base, 1, atom.str.base.count - 1));
 }
 
 // TODO: put strings in a hash table to avoid allocating duplicate types
@@ -304,8 +305,8 @@ Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom lang_type) {
 
     String string = {0};
     string_extend_cstr(&a_main, &string, "i");
-    string_extend_strv(&a_main, &string, str_view_slice(lang_type.str, 1, lang_type.str.count - 1));
-    return lang_type_atom_new(string_to_strv(string), 0);
+    string_extend_strv(&a_main, &string, str_view_slice(lang_type.str.base, 1, lang_type.str.base.count - 1));
+    return lang_type_atom_new((Name) {.mod_path = (Str_view) {0}, .base = string_to_strv(string)}, 0);
 }
 
 Str_view util_literal_name_new_prefix(const char* debug_prefix) {
@@ -329,11 +330,12 @@ Str_view util_literal_name_new(void) {
     return util_literal_name_new_prefix("");
 }
 
-Str_view get_storage_location(Env* env, Str_view sym_name) {
+// TODO: inline this function
+Name get_storage_location(Env* env, Name sym_name) {
     Tast_def* sym_def_;
     if (!symbol_lookup(&sym_def_, env, sym_name)) {
         symbol_log(LOG_DEBUG, env);
-        unreachable("symbol definition for symbol "STR_VIEW_FMT" not found\n", str_view_print(sym_name));
+        unreachable("symbol definition for symbol "STR_VIEW_FMT" not found\n", name_print(sym_name));
     }
 
     switch (sym_def_->type) {
@@ -341,7 +343,7 @@ Str_view get_storage_location(Env* env, Str_view sym_name) {
             Tast_variable_def* sym_def = tast_variable_def_unwrap(sym_def_);
             Llvm* result = NULL;
             if (!alloca_lookup(&result, env, sym_def->name)) {
-                unreachable(STR_VIEW_FMT"\n", str_view_print(sym_def->name));
+                unreachable("");
             }
             return llvm_tast_get_name(result);
         }
@@ -351,11 +353,12 @@ Str_view get_storage_location(Env* env, Str_view sym_name) {
     unreachable("");
 }
 
-Llvm_id get_matching_label_id(Env* env, Str_view name) {
+Llvm_id get_matching_label_id(Env* env, Name name) {
     Llvm* label_;
     if (!alloca_lookup(&label_, env, name)) {
         symbol_log(LOG_DEBUG, env);
-        unreachable(STR_VIEW_FMT"\n", str_view_print(name));
+        //unreachable(STR_VIEW_FMT"\n", str_view_print(name));
+        unreachable("");
     }
     Llvm_label* label = llvm_label_unwrap(llvm_def_unwrap(label_));
     return label->llvm_id;

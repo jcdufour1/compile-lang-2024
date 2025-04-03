@@ -1,4 +1,5 @@
 #include <lang_type_serialize.h>
+#include <serialize_module_symbol_name.h>
 
 Str_view serialize_struct_def_base(Env* env, Struct_def_base base) {
     String name = {0};
@@ -79,12 +80,13 @@ Str_view serialize_lang_type(Env* env, Lang_type lang_type) {
         case LANG_TYPE_PRIMITIVE:
             // fallthrough
         case LANG_TYPE_ENUM: {
+            Str_view serialized = serialize_name(lang_type_get_str(lang_type));
             String name = {0};
             string_extend_size_t(&a_main, &name, lang_type_get_pointer_depth(lang_type));
             string_extend_cstr(&a_main, &name, "_");
-            string_extend_size_t(&a_main, &name, lang_type_get_str(lang_type).count);
+            string_extend_size_t(&a_main, &name, serialized.count);
             string_extend_cstr(&a_main, &name, "_");
-            string_extend_strv(&a_main, &name, lang_type_get_str(lang_type));
+            string_extend_strv(&a_main, &name, serialized);
             string_extend_cstr(&a_main, &name, "__");
             return string_to_strv(name);
         }

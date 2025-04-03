@@ -10,6 +10,10 @@
 #include "uast_utils.h"
 #include "llvm_utils.h"
 #include "ctype.h"
+#include <serialize_module_symbol_name.h>
+
+// TODO: move this macro
+#define name_print(name) str_view_print(serialize_name(name))
 
 bool lang_type_atom_is_unsigned(Lang_type_atom atom);
 
@@ -47,7 +51,7 @@ Str_view util_literal_name_new_prefix(const char* debug_prefix);
 
 Llvm_id get_prev_load_id(const Tast* var_call);
 
-Str_view get_storage_location(Env* env, Str_view sym_name);
+Name get_storage_location(Env* env, Name sym_name);
 
 bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, const Env* env, Pos pos, Str_view str_view);
 
@@ -55,7 +59,7 @@ static inline bool ishex(int c) {
     return isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
 
-Llvm_id get_matching_label_id(Env* env, Str_view name);
+Llvm_id get_matching_label_id(Env* env, Name name);
 
 // lhs and rhs should not be used for other tasks after this
 Tast_assignment* util_assignment_new(Env* env, Uast_expr* lhs, Uast_expr* rhs);

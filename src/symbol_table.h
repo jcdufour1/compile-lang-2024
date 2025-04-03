@@ -83,7 +83,7 @@ bool all_tbl_add(Alloca_table* sym_table, Llvm* tast_of_symbol);
 
 void all_tbl_update(Alloca_table* sym_table, Llvm* tast_of_symbol);
 
-bool alloca_lookup(Llvm** result, Env* env, Str_view key);
+bool alloca_lookup(Llvm** result, Env* env, Name key);
 
 bool alloca_add(Env* env, Llvm* tast_of_symbol);
 

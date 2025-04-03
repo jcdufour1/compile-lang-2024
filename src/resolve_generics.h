@@ -23,8 +23,8 @@ bool function_decl_generics_are_present(const Uast_function_decl* decl);
 
 bool variable_def_generics_are_present(const Uast_variable_def* def);
 
-bool deserialize_generic(Ulang_type_generic* deserialized, int16_t pointer_depth, Str_view* serialized);
+bool deserialize_generic(Ulang_type_generic* deserialized, int16_t pointer_depth, Name* serialized);
 
-Str_view serialize_generic(Str_view old_atom, Ulang_type_vec gen_args);
+Str_view serialize_generic(Name old_atom, Ulang_type_vec gen_args);
 
 #endif // RESOLVE_GENERICS_H
