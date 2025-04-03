@@ -1222,11 +1222,12 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
             }
             return true;
         case UAST_UNKNOWN:
-            return try_set_symbol_types(env, new_tast, uast_symbol_new(
-                uast_expr_get_pos(uast),
-                lang_type_get_str(env->lhs_lang_type),
-                (Ulang_type_vec) {0}
-            ));
+            todo();
+            //return try_set_symbol_types(env, new_tast, uast_symbol_new(
+            //    uast_expr_get_pos(uast),
+            //    lang_type_get_str(env->lhs_lang_type),
+            //    (Ulang_type_vec) {0}
+            //));
         case UAST_MEMBER_ACCESS: {
             Tast_stmt* new_tast_ = NULL;
             if (!try_set_member_access_types(env, &new_tast_, uast_member_access_unwrap(uast))) {
@@ -1406,29 +1407,30 @@ bool try_set_function_call_types_sum_case(Env* env, Tast_sum_case** new_case, Ua
             return true;
         }
         default: {
-            // tast_sum_case->tag->lang_type is of selected varient of sum (maybe)
-            Uast_variable_def* new_def = uast_variable_def_new(
-                sum_case->pos,
-                lang_type_to_ulang_type(sum_case->tag->lang_type),
-                uast_expr_get_name(vec_at(&args, 0))
-            );
-            usymbol_add_defer(env, uast_variable_def_wrap(new_def));
+            todo();
+            //// tast_sum_case->tag->lang_type is of selected varient of sum (maybe)
+            //Uast_variable_def* new_def = uast_variable_def_new(
+            //    sum_case->pos,
+            //    lang_type_to_ulang_type(sum_case->tag->lang_type),
+            //    uast_expr_get_name(vec_at(&args, 0))
+            //);
+            //usymbol_add_defer(env, uast_variable_def_wrap(new_def));
 
-            Uast_assignment* new_assign = uast_assignment_new(
-                new_def->pos,
-                uast_symbol_wrap(uast_symbol_new(new_def->pos, new_def->name, (Ulang_type_vec) {0})),
-                uast_sum_access_wrap(uast_sum_access_new(
-                    new_def->pos,
-                    sum_case->tag,
-                    lang_type_from_ulang_type(env, new_def->lang_type),
-                    uast_expr_clone(env->parent_of_operand)
-                ))
-            );
+            //Uast_assignment* new_assign = uast_assignment_new(
+            //    new_def->pos,
+            //    uast_symbol_wrap(uast_symbol_new(new_def->pos, new_def->name, (Ulang_type_vec) {0})),
+            //    uast_sum_access_wrap(uast_sum_access_new(
+            //        new_def->pos,
+            //        sum_case->tag,
+            //        lang_type_from_ulang_type(env, new_def->lang_type),
+            //        uast_expr_clone(env->parent_of_operand)
+            //    ))
+            //);
 
-            vec_append(&a_main, &env->switch_case_defer_add_sum_case_part, uast_assignment_wrap(new_assign));
+            //vec_append(&a_main, &env->switch_case_defer_add_sum_case_part, uast_assignment_wrap(new_assign));
 
-            *new_case = sum_case;
-            return true;
+            //*new_case = sum_case;
+            //return true;
         }
     }
 }
@@ -1444,22 +1446,23 @@ static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Env* env, Ulang
     for (size_t idx = 0; idx < lang_type.params.ulang_types.info.count; idx++) {
         vec_append(&a_main, &params, uast_param_new(
             pos,
-            uast_variable_def_new(pos, vec_at(&lang_type.params.ulang_types, idx), util_literal_name_new()),
+            uast_variable_def_new(pos, vec_at(&lang_type.params.ulang_types, idx), (Name) {.mod_path = env->curr_mod_path, .base = util_literal_name_new()}),
             false, // TODO: test case for optional in function callback
             false, // TODO: test case for variadic in function callback
             NULL
         ));
     }
 
-    Uast_function_decl* fun_decl = uast_function_decl_new(
-        pos,
-        (Uast_generic_param_vec) {0},
-        uast_function_params_new(pos, params),
-        *lang_type.return_type,
-        name
-    );
-    usym_tbl_add(&vec_at(&env->ancesters, 0)->usymbol_table, uast_function_decl_wrap(fun_decl));
-    return fun_decl;
+    todo();
+    //Uast_function_decl* fun_decl = uast_function_decl_new(
+    //    pos,
+    //    (Uast_generic_param_vec) {0},
+    //    uast_function_params_new(pos, params),
+    //    *lang_type.return_type,
+    //    name
+    //);
+    //usym_tbl_add(&vec_at(&env->ancesters, 0)->usymbol_table, uast_function_decl_wrap(fun_decl));
+    //return fun_decl;
 
     todo();
 }
@@ -1479,7 +1482,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
             if (!usymbol_lookup(&fun_def, env, tast_symbol_unwrap(new_callee)->base.name)) {
                 msg(
                     LOG_ERROR, EXPECT_FAIL_UNDEFINED_FUNCTION, env->file_path_to_text, fun_call->pos,
-                    "function `"STR_VIEW_FMT"` is not defined\n", str_view_print(tast_symbol_unwrap(new_callee)->base.name)
+                    "function `"STR_VIEW_FMT"` is not defined\n", name_print(tast_symbol_unwrap(new_callee)->base.name)
                 );
                 status = false;
                 goto error;
@@ -1565,7 +1568,7 @@ bool try_set_function_call_types(Env* env, Tast_expr** new_call, Uast_function_c
                     msg(
                         LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, env->file_path_to_text, fun_call->pos,
                         "cannot assign argument to varient `"LANG_TYPE_FMT"."LANG_TYPE_FMT"`, because inner type is void\n",
-                        lang_type_print(LANG_TYPE_MODE_MSG, sum_lit->sum_lang_type), str_view_print(vec_at(&sum_def->base.members, (size_t)sum_lit->tag->data)->name)
+                        lang_type_print(LANG_TYPE_MODE_MSG, sum_lit->sum_lang_type), name_print(vec_at(&sum_def->base.members, (size_t)sum_lit->tag->data)->name)
                     );
                     return false;
                 }
@@ -1748,14 +1751,14 @@ static void msg_invalid_member_internal(
     const char* file,
     int line,
     Env* env,
-    Str_view base_name,
+    Name base_name,
     const Uast_member_access* access
 ) {
     msg_internal(
         file, line, LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_ACCESS, env->file_path_to_text,
         access->pos,
         "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 
-        str_view_print(access->member_name), str_view_print(base_name)
+        str_view_print(access->member_name), name_print(base_name)
     );
 }
 
@@ -1784,7 +1787,6 @@ bool try_set_member_access_types_finish_generic_struct(
 
     *new_tast = tast_expr_wrap(tast_member_access_wrap(new_access));
 
-    assert(lang_type_get_str(new_access->lang_type).count > 0);
     return true;
 }
 
@@ -2045,10 +2047,10 @@ static bool try_set_condition_types(Env* env, Tast_condition** new_cond, Uast_co
             new_child = tast_operator_unwrap(new_child_);
             break;
         case TAST_LITERAL:
-            new_child = tast_condition_get_default_child(new_child_);
+            new_child = tast_condition_get_default_child(env, new_child_);
             break;
         case TAST_FUNCTION_CALL:
-            new_child = tast_condition_get_default_child(new_child_);
+            new_child = tast_condition_get_default_child(env, new_child_);
             break;
         default:
             unreachable("");
@@ -2147,9 +2149,9 @@ bool try_set_function_def_types(
         return true;
     }
 
-    Str_view prev_par_fun = env->name_parent_function;
+    Name prev_par_fun = env->name_parent_function;
     env->name_parent_function = def->decl->name;
-    assert(env->name_parent_function.count > 0);
+    assert(env->name_parent_function.base.count > 0);
     bool status = true;
 
     Tast_function_decl* new_decl = NULL;
@@ -2426,7 +2428,7 @@ static bool check_for_exhaustiveness_inner(
                 msg(
                     LOG_ERROR, EXPECT_FAIL_DUPLICATE_CASE, env->file_path_to_text, curr_if->pos,
                     "duplicate case `"STR_VIEW_FMT"."STR_VIEW_FMT"` in switch statement\n",
-                    str_view_print(enum_def->base.name), str_view_print(vec_at(&enum_def->base.members, (size_t)curr_lit->data)->name)
+                    name_print(enum_def->base.name), name_print(vec_at(&enum_def->base.members, (size_t)curr_lit->data)->name)
                 );
                 // TODO: print where original case is
                 return false;
@@ -2449,7 +2451,7 @@ static bool check_for_exhaustiveness_inner(
                 msg(
                     LOG_ERROR, EXPECT_FAIL_DUPLICATE_CASE, env->file_path_to_text, curr_if->pos,
                     "duplicate case `"STR_VIEW_FMT"."STR_VIEW_FMT"` in switch statement\n",
-                    str_view_print(sum_def->base.name), str_view_print(vec_at(&sum_def->base.members, (size_t)curr_lit->data)->name)
+                    name_print(sum_def->base.name), name_print(vec_at(&sum_def->base.members, (size_t)curr_lit->data)->name)
                 );
                 // TODO: print where original case is
                 return false;
@@ -2496,9 +2498,9 @@ static bool check_for_exhaustiveness_finish(Env* env, Exhaustive_data exhaustive
                     string_extend_cstr(&a_main, &string, ", ");
                 }
 
-                string_extend_strv(&a_main, &string, enum_def.name);
+                extend_name(&string, enum_def.name);
                 string_extend_cstr(&a_main, &string, ".");
-                string_extend_strv(&a_main, &string, vec_at(&enum_def.members, idx)->name);
+                extend_name(&string, vec_at(&enum_def.members, idx)->name);
             }
         }
 
@@ -2556,8 +2558,8 @@ bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_sw
         if (old_case->is_default) {
             cond = uast_condition_new(
                 old_case->pos,
-                uast_condition_get_default_child(uast_literal_wrap(
-                    util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, old_case->pos)
+                uast_condition_get_default_child(env, uast_literal_wrap(
+                    util_uast_literal_new_from_int64_t(env, 1, TOKEN_INT_LITERAL, old_case->pos)
                 ))
             );
         } else {
@@ -2612,22 +2614,23 @@ error:
 
 bool try_set_label_types(Env* env, Tast_label** new_tast, const Uast_label* lang_label) {
     (void) env;
-    *new_tast = tast_label_new(lang_label->pos, lang_label->name);
-    return lang_label;
+    todo();
+    //*new_tast = tast_label_new(lang_label->pos, lang_label->name);
+    //return lang_label;
 }
 
 // TODO: merge this with msg_redefinition_of_symbol?
 static void try_set_msg_redefinition_of_symbol(Env* env, const Uast_def* new_sym_def) {
     msg(
         LOG_ERROR, EXPECT_FAIL_REDEFINITION_SYMBOL, env->file_path_to_text, uast_def_get_pos(new_sym_def),
-        "redefinition of symbol "STR_VIEW_FMT"\n", str_view_print(uast_def_get_name(new_sym_def))
+        "redefinition of symbol "STR_VIEW_FMT"\n", name_print(uast_def_get_name(new_sym_def))
     );
 
     Uast_def* original_def;
     unwrap(usymbol_lookup(&original_def, env, uast_def_get_name(new_sym_def)));
     msg(
         LOG_NOTE, EXPECT_FAIL_NONE, env->file_path_to_text, uast_def_get_pos(original_def),
-        STR_VIEW_FMT " originally defined here\n", str_view_print(uast_def_get_name(original_def))
+        STR_VIEW_FMT " originally defined here\n", name_print(uast_def_get_name(original_def))
     );
 }
 
