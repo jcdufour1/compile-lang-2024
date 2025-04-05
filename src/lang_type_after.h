@@ -26,7 +26,7 @@ static inline Lang_type_atom lang_type_primitive_get_atom(Lang_type_primitive la
             string_extend_int64_t(&a_main, &string, lang_type_unsigned_int_const_unwrap(lang_type).bit_width);
             return lang_type_atom_new(
                 (Name) {.mod_path = (Str_view) {0}, .base = string_to_strv(string)},
-                lang_type_signed_int_const_unwrap(lang_type).pointer_depth
+                lang_type_unsigned_int_const_unwrap(lang_type).pointer_depth
             );
         }
         case LANG_TYPE_ANY:

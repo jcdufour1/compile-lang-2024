@@ -846,7 +846,7 @@ static bool parse_lang_type_struct_atom(Env* env, Pos* pos, Ulang_type_atom* lan
     }
     *pos = lang_type_token.pos;
 
-    lang_type->str = (Name) {.mod_path = env->curr_mod_path, .base = lang_type_token.text};
+    lang_type->str = (Name) {.mod_path = (Str_view) {0}, .base = lang_type_token.text};
     while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
         lang_type->pointer_depth++;
     }

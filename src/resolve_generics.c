@@ -27,6 +27,9 @@ Str_view serialize_generic(Name old_name, Ulang_type_vec gen_args) {
 }
 
 bool deserialize_generic(Ulang_type_generic* deserialized, int16_t pointer_depth, Name* serialized) {
+    (void) deserialized;
+    (void) pointer_depth;
+    (void) serialized;
     todo();
     ////log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
     //if (!str_view_try_consume_count(serialized, '_', 4)) { // for now, ____ means generic
@@ -157,6 +160,9 @@ static bool try_set_struct_base_types(Env* env, Struct_def_base* new_base, Ustru
     } while (0)
 
 static bool try_set_struct_def_types(Env* env, Uast_struct_def* before_res, Uast_struct_def* after_res) {
+    (void) env;
+    (void) before_res;
+    (void) after_res;
     todo();
     //// TODO: consider nested thing:
     //// type struct Token {
@@ -174,6 +180,9 @@ static bool try_set_struct_def_types(Env* env, Uast_struct_def* before_res, Uast
 }
 
 static bool try_set_raw_union_def_types(Env* env, Uast_raw_union_def* before_res, Uast_raw_union_def* after_res) {
+    (void) env;
+    (void) before_res;
+    (void) after_res;
     todo();
     //// TODO: consider nested thing:
     //// type raw_union Token {
@@ -191,6 +200,9 @@ static bool try_set_raw_union_def_types(Env* env, Uast_raw_union_def* before_res
 }
 
 static bool try_set_enum_def_types(Env* env, Uast_enum_def* before_res, Uast_enum_def* after_res) {
+    (void) env;
+    (void) before_res;
+    (void) after_res;
     todo();
     //Struct_def_base new_base = {0};
     //bool success = try_set_struct_base_types(env, &new_base, &after_res->base, true);
@@ -205,6 +217,9 @@ static bool try_set_enum_def_types(Env* env, Uast_enum_def* before_res, Uast_enu
 
 // TODO: inline this function?
 static bool try_set_sum_def_types(Env* env, Uast_sum_def* before_res, Uast_sum_def* after_res) {
+    (void) env;
+    (void) before_res;
+    (void) after_res;
     todo();
     //// TODO: consider nested thing:
     //// type sum Token {
@@ -228,6 +243,11 @@ static bool resolve_generics_serialize_struct_def_base(
     Ulang_type_vec gen_args,
     Str_view new_name
 ) {
+    (void) env;
+    (void) new_base;
+    (void) old_base;
+    (void) gen_args;
+    (void) new_name;
     todo();
     //// TODO: figure out way to avoid making new Ustruct_def_base every time (do name thing here, and check if varient with name already exists)
     //memset(new_base, 0, sizeof(*new_base));
@@ -284,43 +304,42 @@ static bool resolve_generics_ulang_type_internal_struct_like(
     Set_obj_types set_obj_types,
     Obj_unwrap obj_unwrap
 ) {
-    todo();
-    //Ustruct_def_base old_base = uast_def_get_struct_def_base(before_res);
-    //Str_view new_name = serialize_generic(ulang_type_get_atom(lang_type).str, gen_args);
+    Ustruct_def_base old_base = uast_def_get_struct_def_base(before_res);
+    Str_view new_name = serialize_generic(ulang_type_get_atom(lang_type).str, gen_args);
 
-    //if (old_base.generics.info.count != gen_args.info.count) {
-    //    msg_invalid_count_generic_args(
-    //        env,
-    //        uast_def_get_pos(before_res),
-    //        ulang_type_get_pos(lang_type),
-    //        gen_args,
-    //        old_base.generics.info.count,
-    //        old_base.generics.info.count
-    //    );
-    //    return false;
-    //}
+    if (old_base.generics.info.count != gen_args.info.count) {
+        msg_invalid_count_generic_args(
+            env,
+            uast_def_get_pos(before_res),
+            ulang_type_get_pos(lang_type),
+            gen_args,
+            old_base.generics.info.count,
+            old_base.generics.info.count
+        );
+        return false;
+    }
 
-    //Uast_def* new_def_ = NULL;
-    //if (usymbol_lookup(&new_def_, env, new_name)) {
-    //    *after_res = new_def_;
-    //} else {
-    //    Ustruct_def_base new_base = {0};
-    //    if (!resolve_generics_serialize_struct_def_base(env, &new_base, old_base, gen_args, new_name)) {
-    //        todo();
-    //        return false;
-    //    }
-    //    *after_res = obj_new(uast_def_get_pos(before_res), new_base);
-    //}
+    Uast_def* new_def_ = NULL;
+    if (usymbol_lookup(&new_def_, env, new_name)) {
+        *after_res = new_def_;
+    } else {
+        Ustruct_def_base new_base = {0};
+        if (!resolve_generics_serialize_struct_def_base(env, &new_base, old_base, gen_args, new_name)) {
+            todo();
+            return false;
+        }
+        *after_res = obj_new(uast_def_get_pos(before_res), new_base);
+    }
 
-    //*result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
-    //    uast_def_get_struct_def_base(*after_res).name, ulang_type_get_atom(lang_type).pointer_depth
-    //), ulang_type_get_pos(lang_type)));
+    *result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
+        uast_def_get_struct_def_base(*after_res).name, ulang_type_get_atom(lang_type).pointer_depth
+    ), ulang_type_get_pos(lang_type)));
 
-    //Tast_def* dummy = NULL;
-    //if (symbol_lookup(&dummy, env, new_name)) {
-    //    return true;
-    //}
-    //return set_obj_types(env, obj_unwrap(before_res), obj_unwrap(*after_res));
+    Tast_def* dummy = NULL;
+    if (symbol_lookup(&dummy, env, new_name)) {
+        return true;
+    }
+    return set_obj_types(env, obj_unwrap(before_res), obj_unwrap(*after_res));
 }
 
 static bool resolve_generics_ulang_type_internal(Ulang_type* result, Env* env, Uast_def* before_res, Ulang_type lang_type, Ulang_type_vec gen_args) {
@@ -407,6 +426,7 @@ bool resolve_generics_ulang_type_generic(Ulang_type* result, Env* env, Ulang_typ
 
 bool resolve_generics_ulang_type_regular(Ulang_type* result, Env* env, Ulang_type_regular lang_type) {
     Uast_def* before_res = NULL;
+    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
     if (!usymbol_lookup(&before_res, env, lang_type.atom.str)) {
         msg_undefined_type(env, lang_type.pos, ulang_type_regular_const_wrap(lang_type));
         return false;
