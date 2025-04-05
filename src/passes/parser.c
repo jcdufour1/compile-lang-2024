@@ -1323,7 +1323,13 @@ static PARSE_STATUS parse_import(Env* env, Uast_import** import, Tk_view* tokens
         return PARSE_ERROR;
     }
 
-    *import = uast_import_new(import_tk.pos, block, name.text, path_tk.text);
+    *import = uast_import_new(
+        import_tk.pos,
+        block,
+        (Name) {.mod_path = env->curr_mod_path, .base = name.text},
+        path_tk.text
+    );
+    log(LOG_DEBUG, TAST_FMT, uast_import_print(*import));
     if (!usymbol_add(env, uast_import_wrap(*import))) {
         todo();
     }
@@ -1518,7 +1524,7 @@ static PARSE_STATUS parse_for_range_internal(Env* env, Uast_block** result, Uast
 }
 
 static PARSE_STATUS parse_for_with_cond(Env* env, Uast_for_with_cond** for_new, Pos pos, Tk_view* tokens) {
-    *for_new = uast_for_with_cond_new(pos, NULL, NULL, (Str_view) {0}, false);
+    *for_new = uast_for_with_cond_new(pos, NULL, NULL, (Name) {0}, false);
     
     switch (parse_condition(env, &(*for_new)->condition, tokens)) {
         case PARSE_EXPR_OK:

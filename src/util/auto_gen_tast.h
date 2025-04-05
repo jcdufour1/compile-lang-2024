@@ -435,7 +435,7 @@ static Tast_type tast_gen_module_alias(const char* prefix) {
     const char* base_name = "module_alias";
     Tast_type chain = {.name = tast_name_new(prefix, base_name, false)};
 
-    append_member(&chain.members, "Str_view", "alias_name");
+    append_member(&chain.members, "Name", "alias_name");
     append_member(&chain.members, "Str_view", "path");
 
     return chain;
@@ -613,7 +613,7 @@ static Tast_type tast_gen_for_with_cond(const char* prefix) {
 
     append_member(&for_cond.members, "Tast_condition*", "condition");
     append_member(&for_cond.members, "Tast_block*", "body");
-    append_member(&for_cond.members, "Str_view", "continue_label");
+    append_member(&for_cond.members, "Name", "continue_label");
     append_member(&for_cond.members, "bool", "do_cont_label");
 
     return for_cond;

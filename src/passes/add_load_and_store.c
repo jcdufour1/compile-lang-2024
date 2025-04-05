@@ -1685,7 +1685,7 @@ static Llvm_block* if_statement_to_branch(Env* env, Tast_if* if_statement, Name 
     return new_block;
 }
 
-static Str_view if_else_chain_to_branch(Llvm_block** new_block, Env* env, Tast_if_else_chain* if_else) {
+static Name if_else_chain_to_branch(Llvm_block** new_block, Env* env, Tast_if_else_chain* if_else) {
     *new_block = llvm_block_new(
         if_else->pos,
         (Llvm_vec) {0},
@@ -1706,9 +1706,9 @@ static Str_view if_else_chain_to_branch(Llvm_block** new_block, Env* env, Tast_i
         env->load_break_symbol_name = yield_dest->name;
     }
 
-    Str_view if_after = util_literal_name_new_prefix("if_after");
+    Name if_after = (Name) {.mod_path = env->curr_mod_path, .base = util_literal_name_new_prefix("if_after")};
 
-    Str_view old_label_if_break = env->label_if_break;
+    Name old_label_if_break = env->label_if_break;
     if (if_else->is_switch) {
         env->label_if_break = if_after;
     } else {
@@ -1718,12 +1718,12 @@ static Str_view if_else_chain_to_branch(Llvm_block** new_block, Env* env, Tast_i
     Llvm* dummy = NULL;
     Tast_def* dummy_def = NULL;
 
-    Str_view next_if = {0};
+    Name next_if = {0};
     for (size_t idx = 0; idx < if_else->tasts.info.count; idx++) {
         if (idx + 1 == if_else->tasts.info.count) {
             next_if = if_after;
         } else {
-            next_if = util_literal_name_new_prefix("next_if");
+            next_if = (Name) {.mod_path = env->curr_mod_path, .base = util_literal_name_new_prefix("next_if")};
         }
 
         Llvm_block* if_block = if_statement_to_branch(env, vec_at(&if_else->tasts, idx), next_if, if_after);
@@ -1734,7 +1734,6 @@ static Str_view if_else_chain_to_branch(Llvm_block** new_block, Env* env, Tast_i
             add_label(env, (*new_block), next_if, vec_at(&if_else->tasts, idx)->pos, false);
             assert(alloca_lookup(&dummy, env, next_if));
         } else {
-            log(LOG_DEBUG, TAST_FMT"\n", str_view_print(next_if));
             //assert(str_view_is_equal(next_if, env->label_if_break));
         }
     }
@@ -1746,7 +1745,7 @@ static Str_view if_else_chain_to_branch(Llvm_block** new_block, Env* env, Tast_i
     env->label_if_break = old_label_if_break;
 
     if (tast_if_else_chain_get_lang_type(if_else).type == LANG_TYPE_VOID) {
-        return (Str_view) {0};
+        return (Name) {0};
     } else {
         return load_symbol(env, *new_block, tast_symbol_new_from_variable_def(yield_dest->pos, yield_dest));
     }
@@ -1759,16 +1758,16 @@ static Name load_if_else_chain(
     Tast_if_else_chain* old_if_else
 ) {
     Llvm_block* new_if_else = NULL;
-    Str_view result = if_else_chain_to_branch(&new_if_else, env, old_if_else);
+    Name result = if_else_chain_to_branch(&new_if_else, env, old_if_else);
     vec_append(&a_main, &new_block->children, llvm_block_wrap(new_if_else));
 
     return result;
 }
 
 static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for) {
-    Str_view old_after_for = env->label_after_for;
-    Str_view old_if_continue = env->label_if_continue;
-    Str_view old_if_break = env->label_if_break;
+    Name old_after_for = env->label_after_for;
+    Name old_if_continue = env->label_if_continue;
+    Name old_if_break = env->label_if_break;
 
     Pos pos = old_for->pos;
 
@@ -1783,10 +1782,10 @@ static Llvm_block* for_with_cond_to_branch(Env* env, Tast_for_with_cond* old_for
 
 
     Tast_operator* operator = old_for->condition->child;
-    Str_view check_cond_label = util_literal_name_new_prefix("check_cond");
+    Name check_cond_label = (Name) {.mod_path = env->curr_mod_path, .base = util_literal_name_new_prefix("check_cond")};
     Llvm_goto* jmp_to_check_cond_label = llvm_goto_new(old_for->pos, check_cond_label, 0);
-    Str_view after_check_label = util_literal_name_new_prefix("for_body");
-    Str_view after_for_loop_label = util_literal_name_new_prefix("after_for_loop");
+    Name after_check_label = (Name) {.mod_path = env->curr_mod_path, .base = util_literal_name_new_prefix("for_body")};
+    Name after_for_loop_label = (Name) {.mod_path = env->curr_mod_path, .base = util_literal_name_new_prefix("after_for_loop")};
 
     env->label_after_for = after_for_loop_label;
     env->label_if_break = after_for_loop_label;
@@ -1872,7 +1871,7 @@ static void load_break(
     Llvm_block* new_block,
     Tast_break* old_break
 ) {
-    if (env->label_if_break.count < 1) {
+    if (env->label_if_break.base.count < 1) {
         msg(
             LOG_ERROR, EXPECT_FAIL_BREAK_INVALID_LOCATION, env->file_path_to_text, old_break->pos,
             "break statement outside of a for loop\n"
@@ -1892,7 +1891,7 @@ static void load_break(
         ));
     }
 
-    assert(env->label_if_break.count > 0);
+    assert(env->label_if_break.base.count > 0);
     Llvm_goto* new_goto = llvm_goto_new(old_break->pos, env->label_if_break, 0);
     vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
 }
@@ -1904,7 +1903,7 @@ static void load_label(
 ) {
     Llvm_label* new_label = llvm_label_new(old_label->pos, 0, old_label->name);
     vec_append(&a_main, &new_block->children, llvm_def_wrap(llvm_label_wrap(new_label)));
-    assert(new_label->name.count > 0);
+    assert(new_label->name.base.count > 0);
     alloca_add(env, llvm_def_wrap(llvm_label_wrap(new_label)));
 }
 
@@ -1913,7 +1912,7 @@ static void load_continue(
     Llvm_block* new_block,
     Tast_continue* old_continue
 ) {
-    if (env->label_if_continue.count < 1) {
+    if (env->label_if_continue.base.count < 1) {
         msg(
             LOG_ERROR, EXPECT_FAIL_CONTINUE_INVALID_LOCATION, env->file_path_to_text, old_continue->pos,
             "continue statement outside of a for loop\n"
@@ -1975,13 +1974,13 @@ static Name load_ptr_deref(
             todo();
     }
 
-    Str_view ptr = load_ptr_expr(env, new_block, old_unary->child);
+    Name ptr = load_ptr_expr(env, new_block, old_unary->child);
     Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
         old_unary->pos,
         ptr,
         0,
         old_unary->lang_type,
-        util_literal_name_new()
+        (Name) {.mod_path = env->curr_mod_path, .base = util_literal_name_new()}
     );
     unwrap(alloca_add(env, llvm_load_another_llvm_wrap(new_load)));
     lang_type_set_pointer_depth(env, &new_load->lang_type, lang_type_get_pointer_depth(new_load->lang_type) + 1);
@@ -2091,13 +2090,13 @@ static Name load_def(Env* env, Llvm_block* new_block, Tast_def* old_def) {
             return load_variable_def(env, new_block, tast_variable_def_unwrap(old_def));
         case TAST_STRUCT_DEF:
             load_struct_def(env, tast_struct_def_unwrap(old_def));
-            return (Str_view) {0};
+            return (Name) {0};
         case TAST_ENUM_DEF:
             load_enum_def(env, tast_enum_def_unwrap(old_def));
-            return (Str_view) {0};
+            return (Name) {0};
         case TAST_RAW_UNION_DEF:
             load_raw_union_def(env, tast_raw_union_def_unwrap(old_def));
-            return (Str_view) {0};
+            return (Name) {0};
         case TAST_SUM_DEF:
             unreachable("sum def should not make it here");
         case TAST_LITERAL_DEF:
@@ -2118,23 +2117,23 @@ static Name load_stmt(Env* env, Llvm_block* new_block, Tast_stmt* old_stmt) {
             return load_return(env, new_block, tast_return_unwrap(old_stmt));
         case TAST_FOR_WITH_COND:
             load_for_with_cond(env, new_block, tast_for_with_cond_unwrap(old_stmt));
-            return (Str_view) {0};
+            return (Name) {0};
         case TAST_BREAK:
             load_break(env, new_block, tast_break_unwrap(old_stmt));
-            return (Str_view) {0};
+            return (Name) {0};
         case TAST_CONTINUE:
             load_continue(env, new_block, tast_continue_unwrap(old_stmt));
-            return (Str_view) {0};
+            return (Name) {0};
         case TAST_BLOCK:
             vec_append(
                 &a_main,
                 &new_block->children,
                 llvm_block_wrap(load_block(env, tast_block_unwrap(old_stmt)))
             );
-            return (Str_view) {0};
+            return (Name) {0};
         case TAST_LABEL:
             load_label(env, new_block, tast_label_unwrap(old_stmt));
-            return (Str_view) {0};
+            return (Name) {0};
     }
     unreachable("");
 }
@@ -2155,20 +2154,20 @@ static Name load_def_sometimes(Env* env, Llvm_block* new_block, Tast_def* old_de
             return load_function_decl(env, tast_function_decl_unwrap(old_def));
         case TAST_VARIABLE_DEF:
             //return load_variable_def(env, new_block, tast_variable_def_unwrap(old_def));
-            return (Str_view) {0};
+            return (Name) {0};
         case TAST_STRUCT_DEF:
             load_struct_def(env, tast_struct_def_unwrap(old_def));
-            return (Str_view) {0};
+            return (Name) {0};
         case TAST_ENUM_DEF:
             load_enum_def(env, tast_enum_def_unwrap(old_def));
-            return (Str_view) {0};
+            return (Name) {0};
         case TAST_RAW_UNION_DEF:
             load_raw_union_def(env, tast_raw_union_def_unwrap(old_def));
-            return (Str_view) {0};
+            return (Name) {0};
         case TAST_SUM_DEF:
-            return (Str_view) {0};
+            return (Name) {0};
         case TAST_LITERAL_DEF:
-            return (Str_view) {0};
+            return (Name) {0};
         case TAST_PRIMITIVE_DEF:
             unreachable("");
     }

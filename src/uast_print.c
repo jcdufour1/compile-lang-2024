@@ -430,7 +430,7 @@ Str_view uast_import_print_internal(const Uast_import* import, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "import", indent);
-    string_extend_strv_in_par(&print_arena, &buf, import->alias_name);
+    extend_name(&buf, import->alias_name);
     string_extend_strv_in_par(&print_arena, &buf, import->path);
     string_extend_cstr(&print_arena, &buf, "\n");
     string_extend_strv(&print_arena, &buf, uast_block_print_internal(import->block, indent + INDENT_WIDTH));

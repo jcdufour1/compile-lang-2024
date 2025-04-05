@@ -119,7 +119,7 @@ static Uast_type uast_gen_import(const char* prefix) {
     Uast_type import = {.name = uast_name_new(prefix, "import", false)};
 
     append_member(&import.members, "Uast_block*", "block");
-    append_member(&import.members, "Str_view", "alias_name");
+    append_member(&import.members, "Name", "alias_name");
     append_member(&import.members, "Str_view", "path");
 
     return import;
@@ -523,7 +523,7 @@ static Uast_type uast_gen_for_with_cond(const char* prefix) {
 
     append_member(&for_cond.members, "Uast_condition*", "condition");
     append_member(&for_cond.members, "Uast_block*", "body");
-    append_member(&for_cond.members, "Str_view", "continue_label");
+    append_member(&for_cond.members, "Name", "continue_label");
     append_member(&for_cond.members, "bool", "do_cont_label");
 
     return for_cond;

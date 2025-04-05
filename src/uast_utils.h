@@ -389,8 +389,7 @@ static inline Name uast_def_get_name(const Uast_def* def) {
         case UAST_POISON_DEF:
             return uast_poison_def_const_unwrap(def)->name;
         case UAST_IMPORT:
-            todo();
-            //return uast_import_const_unwrap(def)->alias_name;
+            return uast_import_const_unwrap(def)->alias_name;
     }
     unreachable("");
 }
