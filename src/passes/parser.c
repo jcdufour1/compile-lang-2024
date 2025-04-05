@@ -145,14 +145,14 @@ static void msg_parser_expected_internal(File_path_to_text file_text, const char
 static PARSE_STATUS msg_redefinition_of_symbol(Env* env, const Uast_def* new_sym_def) {
     msg(
         LOG_ERROR, EXPECT_FAIL_REDEFINITION_SYMBOL, env->file_path_to_text, uast_def_get_pos(new_sym_def),
-        "redefinition of symbol "STR_VIEW_FMT"\n", str_view_print(uast_def_get_name(new_sym_def))
+        "redefinition of symbol "STR_VIEW_FMT"\n", name_print(uast_def_get_name(new_sym_def))
     );
 
     Uast_def* original_def;
     unwrap(usymbol_lookup(&original_def, env, uast_def_get_name(new_sym_def)));
     msg(
         LOG_NOTE, EXPECT_FAIL_NONE, env->file_path_to_text, uast_def_get_pos(original_def),
-        STR_VIEW_FMT " originally defined here\n", str_view_print(uast_def_get_name(original_def))
+        STR_VIEW_FMT " originally defined here\n", name_print(uast_def_get_name(original_def))
     );
 
     return PARSE_ERROR;
@@ -160,7 +160,7 @@ static PARSE_STATUS msg_redefinition_of_symbol(Env* env, const Uast_def* new_sym
 
 static bool get_block_from_path_token(Env* env, Uast_block** block, Str_view alias, Token mod_name) {
     Uast_def* prev_def = NULL;
-    if (usymbol_lookup(&prev_def, env, alias)) {
+    if (usymbol_lookup(&prev_def, env, (Name) {.mod_path = env->curr_mod_path, .base = alias})) {
         todo();
     }
 
@@ -837,7 +837,7 @@ static bool is_binary(TOKEN_TYPE token_type) {
     unreachable("");
 }
 
-static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk_view* tokens) {
+static bool parse_lang_type_struct_atom(Env* env, Pos* pos, Ulang_type_atom* lang_type, Tk_view* tokens) {
     memset(lang_type, 0, sizeof(*lang_type));
     Token lang_type_token = {0};
 
@@ -846,7 +846,7 @@ static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk
     }
     *pos = lang_type_token.pos;
 
-    lang_type->str = lang_type_token.text;
+    lang_type->str = (Name) {.mod_path = env->curr_mod_path, .base = lang_type_token.text};
     while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
         lang_type->pointer_depth++;
     }
@@ -855,7 +855,7 @@ static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk
 }
 
 // type will be parsed if possible
-static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* tokens) {
+static bool parse_lang_type_struct_tuple(Env* env, Ulang_type_tuple* lang_type, Tk_view* tokens) {
     Ulang_type_atom atom = {0};
     Ulang_type_vec types = {0};
     bool is_comma = true;
@@ -870,8 +870,8 @@ static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* t
     while (is_comma) {
         // a return type is only one token, at least for now
         Pos atom_pos = {0};
-        if (!parse_lang_type_struct_atom(&atom_pos, &atom, tokens)) {
-            atom.str = str_view_from_cstr("void");
+        if (!parse_lang_type_struct_atom(env, &atom_pos, &atom, tokens)) {
+            atom.str = (Name) {.mod_path = (Str_view) {0}, .base = str_view_from_cstr("void")};
             break;
         }
         Ulang_type new_child = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, atom_pos));
@@ -895,7 +895,7 @@ static bool parse_lang_type_struct(Env* env, Ulang_type* lang_type, Tk_view* tok
     Token lang_type_token = {0};
     if (try_consume(&lang_type_token, tokens, TOKEN_FN)) {
         Ulang_type_tuple params = {0};
-        if (!parse_lang_type_struct_tuple(&params, tokens)) {
+        if (!parse_lang_type_struct_tuple(env, &params, tokens)) {
             return false;
         }
         Ulang_type* rtn_type = arena_alloc(&a_main, sizeof(*rtn_type)); // TODO: make function, etc. to call arena_alloc automatically
@@ -909,7 +909,7 @@ static bool parse_lang_type_struct(Env* env, Ulang_type* lang_type, Tk_view* tok
     Ulang_type_atom atom = {0};
     if (tk_view_front(*tokens).type ==  TOKEN_OPEN_PAR) {
         Ulang_type_tuple new_tuple = {0};
-        if (!parse_lang_type_struct_tuple(&new_tuple, tokens)) {
+        if (!parse_lang_type_struct_tuple(env, &new_tuple, tokens)) {
             return false;
         }
         *lang_type = ulang_type_tuple_const_wrap(new_tuple);
@@ -917,7 +917,7 @@ static bool parse_lang_type_struct(Env* env, Ulang_type* lang_type, Tk_view* tok
     }
 
     Pos pos = {0};
-    if (!parse_lang_type_struct_atom(&pos, &atom, tokens)) {
+    if (!parse_lang_type_struct_atom(env, &pos, &atom, tokens)) {
         return false;
     }
 
@@ -937,7 +937,7 @@ static bool parse_lang_type_struct(Env* env, Ulang_type* lang_type, Tk_view* tok
 // require type to be parsed
 static PARSE_STATUS parse_lang_type_struct_atom_require(Env* env, Ulang_type_atom* lang_type, Tk_view* tokens) {
     Pos pos = {0};
-    if (parse_lang_type_struct_atom(&pos, lang_type, tokens)) {
+    if (parse_lang_type_struct_atom(env, &pos, lang_type, tokens)) {
         return PARSE_OK;
     } else {
         msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), "", TOKEN_SYMBOL);
@@ -1075,7 +1075,7 @@ static PARSE_STATUS parse_function_decl_common(
         rtn_type = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0), close_par_tk.pos));
     }
 
-    *fun_decl = uast_function_decl_new(name_token.pos, gen_params, params, rtn_type, name_token.text);
+    *fun_decl = uast_function_decl_new(name_token.pos, gen_params, params, rtn_type, (Name) {.mod_path = env->curr_mod_path, .base = name_token.text});
     if (!usymbol_add(env, uast_function_decl_wrap(*fun_decl))) {
         return msg_redefinition_of_symbol(env, uast_function_decl_wrap(*fun_decl));
     }
@@ -1149,7 +1149,7 @@ static PARSE_STATUS parse_generics_args(Env* env, Ulang_type_vec* args, Tk_view*
 static PARSE_STATUS parse_struct_base_def(
     Env* env,
     Ustruct_def_base* base,
-    Str_view name,
+    Name name,
     Tk_view* tokens,
     bool require_sub_types,
     Ulang_type default_lang_type
@@ -1193,7 +1193,7 @@ static PARSE_STATUS parse_struct_base_def(
 static PARSE_STATUS parse_struct_base_def_implicit_type(
     Env* env,
     Ustruct_def_base* base,
-    Str_view name,
+    Name name,
     Tk_view* tokens,
     Ulang_type_atom lang_type
 ) {
@@ -1222,7 +1222,7 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
         Uast_variable_def* member = uast_variable_def_new(
             name_token.pos,
             ulang_type_regular_const_wrap(ulang_type_regular_new(lang_type, name_token.pos)),
-            name_token.text
+            (Name) {.mod_path = env->curr_mod_path, .base = name_token.text}
         );
 
         vec_append(&a_main, &base->members, member);
@@ -1240,7 +1240,7 @@ static PARSE_STATUS parse_struct_def(Env* env, Uast_struct_def** struct_def, Tk_
     unwrap(try_consume(NULL, tokens, TOKEN_STRUCT));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def(env, &base, name.text, tokens, true, (Ulang_type) {0})) {
+    if (PARSE_OK != parse_struct_base_def(env, &base, (Name) {.mod_path = env->curr_mod_path, .base = name.text}, tokens, true, (Ulang_type) {0})) {
         return PARSE_ERROR;
     }
 
@@ -1256,7 +1256,7 @@ static PARSE_STATUS parse_raw_union_def(Env* env, Uast_raw_union_def** raw_union
     unwrap(try_consume(NULL, tokens, TOKEN_RAW_UNION));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def(env, &base, name.text, tokens, true, (Ulang_type) {0})) {
+    if (PARSE_OK != parse_struct_base_def(env, &base, (Name) {.mod_path = env->curr_mod_path, .base = name.text}, tokens, true, (Ulang_type) {0})) {
         return PARSE_ERROR;
     }
 
@@ -1272,7 +1272,7 @@ static PARSE_STATUS parse_enum_def(Env* env, Uast_enum_def** enum_def, Tk_view* 
     unwrap(try_consume(NULL, tokens, TOKEN_ENUM));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def_implicit_type(env, &base, name.text, tokens, ulang_type_atom_new(name.text, 0))) {
+    if (PARSE_OK != parse_struct_base_def_implicit_type(env, &base, (Name) {.mod_path = env->curr_mod_path, .base = name.text}, tokens, ulang_type_atom_new((Name) {.mod_path = env->curr_mod_path, .base = name.text}, 0))) {
         return PARSE_ERROR;
     }
 
@@ -1289,7 +1289,7 @@ static PARSE_STATUS parse_sum_def(Env* env, Uast_sum_def** sum_def, Tk_view* tok
     unwrap(try_consume(&sum_tk, tokens, TOKEN_SUM));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def(env, &base, name.text, tokens, false, ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0), sum_tk.pos)))) {
+    if (PARSE_OK != parse_struct_base_def(env, &base, (Name) {.mod_path = env->curr_mod_path, .base = name.text}, tokens, false, ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0), sum_tk.pos)))) {
         return PARSE_ERROR;
     }
 
@@ -1414,7 +1414,7 @@ static PARSE_STATUS parse_variable_decl(
     Uast_variable_def* variable_def = uast_variable_def_new(
         name_token.pos,
         lang_type,
-        name_token.text
+        (Name) {.mod_path = env->curr_mod_path, .base = name_token.text}
     );
 
     if (add_to_sym_table) {
@@ -1468,52 +1468,53 @@ static PARSE_STATUS parse_for_range_internal(Env* env, Uast_block** result, Uast
         return PARSE_ERROR;
     }
 
-    Uast_assignment* init_assign = uast_assignment_new(
-        uast_expr_get_pos(lower_bound),
-        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name, (Ulang_type_vec) {0})),
-        lower_bound
-    );
-    vec_append(&a_main, &outer->children, uast_assignment_wrap(init_assign));
+    todo();
+    //Uast_assignment* init_assign = uast_assignment_new(
+    //    uast_expr_get_pos(lower_bound),
+    //    uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name, (Ulang_type_vec) {0})),
+    //    lower_bound
+    //);
+    //vec_append(&a_main, &outer->children, uast_assignment_wrap(init_assign));
 
-    Str_view incre_name = util_literal_name_new();
+    //Str_view incre_name = util_literal_name_new();
 
-    Uast_for_with_cond* inner_for = uast_for_with_cond_new(
-        outer->pos,
-        uast_condition_new(
-            outer->pos,
-            uast_binary_wrap(uast_binary_new(
-                outer->pos,
-                uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name, (Ulang_type_vec) {0})),
-                upper_bound,
-                BINARY_LESS_THAN
-            ))
-        ),
-        inner,
-        incre_name,
-        true
-    );
-    vec_append(&a_main, &outer->children, uast_for_with_cond_wrap(inner_for));
+    //Uast_for_with_cond* inner_for = uast_for_with_cond_new(
+    //    outer->pos,
+    //    uast_condition_new(
+    //        outer->pos,
+    //        uast_binary_wrap(uast_binary_new(
+    //            outer->pos,
+    //            uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name, (Ulang_type_vec) {0})),
+    //            upper_bound,
+    //            BINARY_LESS_THAN
+    //        ))
+    //    ),
+    //    inner,
+    //    incre_name,
+    //    true
+    //);
+    //vec_append(&a_main, &outer->children, uast_for_with_cond_wrap(inner_for));
 
-    Uast_continue* cont = uast_continue_new(uast_expr_get_pos(upper_bound));
-    vec_append(&a_main, &inner->children, uast_continue_wrap(cont));
+    //Uast_continue* cont = uast_continue_new(uast_expr_get_pos(upper_bound));
+    //vec_append(&a_main, &inner->children, uast_continue_wrap(cont));
 
-    Uast_label* incre_label = uast_label_new(uast_expr_get_pos(upper_bound), incre_name);
-    vec_append(&a_main, &inner->children, uast_label_wrap(incre_label));
+    //Uast_label* incre_label = uast_label_new(uast_expr_get_pos(upper_bound), incre_name);
+    //vec_append(&a_main, &inner->children, uast_label_wrap(incre_label));
 
-    Uast_assignment* increment = uast_assignment_new(
-        uast_expr_get_pos(upper_bound),
-        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name, (Ulang_type_vec) {0})),
-        uast_operator_wrap(uast_binary_wrap(uast_binary_new(
-            var_def->pos,
-            uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name, (Ulang_type_vec) {0})),
-            uast_literal_wrap(util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, uast_expr_get_pos(upper_bound))),
-            BINARY_ADD
-        )))
-    );
-    vec_append(&a_main, &inner->children, uast_assignment_wrap(increment));
+    //Uast_assignment* increment = uast_assignment_new(
+    //    uast_expr_get_pos(upper_bound),
+    //    uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name, (Ulang_type_vec) {0})),
+    //    uast_operator_wrap(uast_binary_wrap(uast_binary_new(
+    //        var_def->pos,
+    //        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name, (Ulang_type_vec) {0})),
+    //        uast_literal_wrap(util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, uast_expr_get_pos(upper_bound))),
+    //        BINARY_ADD
+    //    )))
+    //);
+    //vec_append(&a_main, &inner->children, uast_assignment_wrap(increment));
 
-    *result = outer;
-    return PARSE_OK;
+    //*result = outer;
+    //return PARSE_OK;
 }
 
 static PARSE_STATUS parse_for_with_cond(Env* env, Uast_for_with_cond** for_new, Pos pos, Tk_view* tokens) {
@@ -1744,13 +1745,13 @@ static PARSE_EXPR_STATUS parse_condition(Env* env, Uast_condition** result, Tk_v
             cond_oper = uast_operator_unwrap(cond_child);
             break;
         case UAST_LITERAL:
-            cond_oper = uast_condition_get_default_child(cond_child);
+            cond_oper = uast_condition_get_default_child(env, cond_child);
             break;
         case UAST_FUNCTION_CALL:
-            cond_oper = uast_condition_get_default_child(cond_child);
+            cond_oper = uast_condition_get_default_child(env, cond_child);
             break;
         case UAST_SYMBOL:
-            cond_oper = uast_condition_get_default_child(cond_child);
+            cond_oper = uast_condition_get_default_child(env, cond_child);
             break;
         default:
             unreachable(UAST_FMT"\n", uast_expr_print(cond_child));
@@ -1817,8 +1818,8 @@ static PARSE_STATUS parse_if_else_chain(Env* env, Uast_if_else_chain** if_else_c
             }
         } else {
             if_stmt->condition = uast_condition_new(if_start_token.pos, NULL);
-            if_stmt->condition->child = uast_condition_get_default_child(uast_literal_wrap(
-                util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, if_start_token.pos)
+            if_stmt->condition->child = uast_condition_get_default_child( env, uast_literal_wrap(
+                util_uast_literal_new_from_int64_t(env, 1, TOKEN_INT_LITERAL, if_start_token.pos)
             ));
         }
 
@@ -1907,15 +1908,16 @@ static PARSE_STATUS parse_switch(Env* env, Uast_switch** lang_switch, Tk_view* t
 }
 
 static Uast_expr* get_expr_or_symbol(Uast_stmt* stmt) {
-    if (stmt->type == UAST_DEF) {
-        return uast_symbol_wrap(uast_symbol_new(
-            uast_stmt_get_pos(stmt),
-            uast_variable_def_unwrap(uast_def_unwrap(stmt))->name,
-            (Ulang_type_vec) {0}
-        ));
-    }
+    todo();
+    //if (stmt->type == UAST_DEF) {
+    //    return uast_symbol_wrap(uast_symbol_new(
+    //        uast_stmt_get_pos(stmt),
+    //        uast_variable_def_unwrap(uast_def_unwrap(stmt))->name,
+    //        (Ulang_type_vec) {0}
+    //    ));
+    //}
 
-    return uast_expr_unwrap(stmt);
+    //return uast_expr_unwrap(stmt);
 }
 
 static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens, bool defer_sym_add) {

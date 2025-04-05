@@ -96,10 +96,10 @@ static inline size_t uast_get_member_index(const Ustruct_def_base* struct_def, S
 }
 
 // TODO: move to another file
-static inline size_t tast_get_member_index(const Struct_def_base* struct_def, Name member_name) {
+static inline size_t tast_get_member_index(const Struct_def_base* struct_def, Str_view member_name) {
     for (size_t idx = 0; idx < struct_def->members.info.count; idx++) {
         const Tast_variable_def* curr_member = vec_at(&struct_def->members, idx);
-        if (name_is_equal(curr_member->name, member_name)) {
+        if (str_view_is_equal(curr_member->name.base, member_name)) {
             return idx;
         }
     }

@@ -50,7 +50,7 @@ bool sym_tbl_add_internal(Symbol_table_tast* sym_tbl_tasts, size_t capacity, Tas
 
 bool sym_tbl_lookup_internal(Symbol_table_tast** result, const Symbol_table* sym_table, Str_view key);
 
-bool sym_tbl_lookup(Tast_def** result, const Symbol_table* sym_table, Str_view key);
+bool sym_tbl_lookup(Tast_def** result, const Symbol_table* sym_table, Name key);
 
 // returns false if symbol has already been added to the table
 bool sym_tbl_add(Symbol_table* sym_table, Tast_def* tast_of_symbol);

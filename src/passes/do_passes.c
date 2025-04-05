@@ -85,7 +85,7 @@ void do_passes(const Parameters* params) {
             gen_args,
             POS_BUILTIN
         )),
-        str_view_from_cstr("token")
+        (Name) {.mod_path = (Str_view) {0}, .base = str_view_from_cstr("token")}
     );
     (void) test_def;
     //log(LOG_DEBUG, TAST_FMT, uast_variable_def_print(test_def));

@@ -16,7 +16,7 @@ static void extend_llvm_id(String* buf, const char* location, Llvm_id llvm_id) {
 }
 
 static void extend_name(String* buf, Name name) {
-    string_extend_strv_in_par(&print_arena, buf, serialize_name(name));
+    string_extend_strv_in_par(&a_main, buf, serialize_name(name));
 }
 
 static void extend_child_name(String* buf, const char* location, Name child_name) {
@@ -138,7 +138,8 @@ Str_view llvm_function_call_print_internal(const Llvm_function_call* fun_call, i
     string_extend_cstr(&print_arena, &buf, "\n");
 
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
-        string_extend_strv_indent(&print_arena, &buf, vec_at(&fun_call->args, idx), indent + INDENT_WIDTH);
+        string_extend_cstr_indent(&print_arena, &buf, " ", indent + INDENT_WIDTH);
+        extend_name(&buf, vec_at(&fun_call->args, idx));
         string_extend_cstr(&print_arena, &buf, "\n");
     }
 

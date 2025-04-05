@@ -47,16 +47,16 @@ typedef struct Env_ {
     Uast_stmt_vec switch_case_defer_add_if_true;
     Uast_stmt_vec switch_case_defer_add_sum_case_part;
 
-    Str_view struct_rtn_name_parent_function;
+    Name struct_rtn_name_parent_function;
 
     Lang_type lhs_lang_type;
     PARENT_OF parent_of;
     Uast_expr* parent_of_operand;
 
-    Str_view load_break_symbol_name;
-    Str_view label_if_break;
-    Str_view label_after_for;
-    Str_view label_if_continue;
+    Name load_break_symbol_name;
+    Name label_if_break;
+    Name label_after_for;
+    Name label_if_continue;
 } Env;
 
 #endif // ENV_H

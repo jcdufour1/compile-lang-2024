@@ -282,8 +282,8 @@ bool usymbol_add(Env* env, Uast_def* item) {
     );
 }
 
-bool sym_tbl_lookup(Tast_def** result, const Symbol_table* sym_table, Str_view key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, key);
+bool sym_tbl_lookup(Tast_def** result, const Symbol_table* sym_table, Name key) {
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, serialize_name(key));
 }
 
 //

@@ -309,6 +309,8 @@ Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom lang_type) {
     return lang_type_atom_new((Name) {.mod_path = (Str_view) {0}, .base = string_to_strv(string)}, 0);
 }
 
+// TODO: return name from this function
+// accept mod_path as parameter
 Str_view util_literal_name_new_prefix(const char* debug_prefix) {
     static String_vec literal_strings = {0};
     static size_t count = 0;

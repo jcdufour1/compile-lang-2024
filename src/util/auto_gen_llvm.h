@@ -274,9 +274,9 @@ static Llvm_type llvm_gen_literal(void) {
 static Llvm_type llvm_gen_function_call(void) {
     Llvm_type call = {.name = llvm_name_new("expr", "function_call", false)};
 
-    append_member(&call.members, "Strv_vec", "args");
+    append_member(&call.members, "Name_vec", "args");
     append_member(&call.members, "Name", "name_self");
-    append_member(&call.members, "Str_view", "callee");
+    append_member(&call.members, "Name", "callee");
     append_member(&call.members, "Llvm_id", "llvm_id");
     append_member(&call.members, "Lang_type", "lang_type");
 
