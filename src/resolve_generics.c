@@ -27,15 +27,10 @@ Name serialize_generic(Env* env, Name old_name, Ulang_type_vec gen_args) {
 }
 
 bool deserialize_generic(Ulang_type_generic* deserialized, int16_t pointer_depth, Name* serialized) {
-    (void) deserialized;
-    (void) pointer_depth;
-    (void) serialized;
-    todo();
-    ////log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
-    //if (!str_view_try_consume_count(serialized, '_', 4)) { // for now, ____ means generic
-    //    // not a generic lang_type
-    //    return false;
-    //}
+    if (!str_view_try_consume_count(&serialized->base, '_', 4)) { // for now, ____ means generic
+        // not a generic lang_type
+        return false;
+    }
 
     ////log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
 

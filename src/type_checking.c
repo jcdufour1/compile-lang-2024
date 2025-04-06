@@ -1436,6 +1436,9 @@ bool try_set_function_call_types_sum_case(Env* env, Tast_sum_case** new_case, Ua
 }
 
 static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Env* env, Ulang_type_fn lang_type, Pos pos) {
+    (void) env;
+    (void) lang_type;
+    (void) pos;
     todo();
     //Str_view name = serialize_ulang_type(ulang_type_fn_const_wrap(lang_type));
     //Uast_def* fun_decl_ = NULL;
@@ -2615,6 +2618,8 @@ error:
 
 bool try_set_label_types(Env* env, Tast_label** new_tast, const Uast_label* lang_label) {
     (void) env;
+    (void) new_tast;
+    (void) lang_label;
     todo();
     //*new_tast = tast_label_new(lang_label->pos, lang_label->name);
     //return lang_label;

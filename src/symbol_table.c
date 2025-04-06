@@ -302,13 +302,13 @@ void usym_tbl_update(Usymbol_table* sym_table, Uast_def* item) {
     generic_tbl_update((Generic_symbol_table*)sym_table, serialize_name(uast_def_get_name(item)), item);
 }
 
-bool usym_tbl_lookup(Uast_def** result, const Usymbol_table* sym_table, Str_view key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, key);
+bool usym_tbl_lookup(Uast_def** result, const Usymbol_table* sym_table, Name key) {
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, serialize_name(key));
 }
 
 bool usymbol_lookup(Uast_def** result, Env* env, Name key) {
     if (key.mod_path.count < 1) {
-        if (usym_tbl_lookup(result, &env->primitives, serialize_name(key))) {
+        if (usym_tbl_lookup(result, &env->primitives, key)) {
             return true;
         }
         if (lang_type_atom_is_signed(lang_type_atom_new(key, 0))) {

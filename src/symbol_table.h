@@ -24,7 +24,7 @@ bool usym_tbl_add_internal(Usymbol_table_tast* sym_tbl_tasts, size_t capacity, U
 
 bool usym_tbl_lookup_internal(Usymbol_table_tast** result, const Usymbol_table* sym_table, Str_view key);
 
-bool usym_tbl_lookup(Uast_def** result, const Usymbol_table* sym_table, Str_view key);
+bool usym_tbl_lookup(Uast_def** result, const Usymbol_table* sym_table, Name key);
 
 // returns false if symbol has already been added to the table
 bool usym_tbl_add(Usymbol_table* sym_table, Uast_def* tast_of_symbol);
