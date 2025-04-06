@@ -19,4 +19,6 @@ typedef struct {
     Name name;
 } Ustruct_def_base;
 
+#define ustruct_def_base_print(base) str_view_print(ustruct_def_base_print_internal(base, 0))
+
 #endif // UAST_HAND_WRITTEN_H

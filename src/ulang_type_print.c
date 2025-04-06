@@ -1,4 +1,5 @@
 #include <ulang_type_print.h>
+#include <extend_name.h>
 
 Str_view ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type) {
     String buf = {0};

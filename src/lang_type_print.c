@@ -3,6 +3,7 @@
 #include <ulang_type.h>
 #include <resolve_generics.h>
 #include <ulang_type_print.h>
+#include <extend_name.h>
 
 void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
     switch (type) {

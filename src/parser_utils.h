@@ -12,9 +12,6 @@
 #include "ctype.h"
 #include <serialize_module_symbol_name.h>
 
-// TODO: move this macro
-#define name_print(name) str_view_print(serialize_name(name))
-
 bool lang_type_atom_is_unsigned(Lang_type_atom atom);
 
 bool lang_type_atom_is_signed(Lang_type_atom atom);
