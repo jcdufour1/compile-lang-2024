@@ -12,17 +12,23 @@ bool try_str_view_consume_size_t(size_t* result, Str_view* str_view, bool ignore
 static inline Str_view serialize_name(Name name) {
     String buf = {0};
 
-    string_extend_size_t(&a_main, &buf, name.mod_path.count);
-    string_extend_cstr(&a_main, &buf, "_");
-    string_extend_strv(&a_main, &buf, name.mod_path);
-    string_extend_cstr(&a_main, &buf, "_");
+    if (name.mod_path.count > 0) {
+        string_extend_cstr(&a_main, &buf, "_");
+        string_extend_size_t(&a_main, &buf, name.mod_path.count);
+        string_extend_cstr(&a_main, &buf, "_");
+        string_extend_strv(&a_main, &buf, name.mod_path);
+        string_extend_cstr(&a_main, &buf, "_");
+    }
+
     string_extend_strv(&a_main, &buf, name.base);
 
-    string_extend_cstr(&a_main, &buf, "____");
-    string_extend_size_t(&a_main, &buf, name.gen_args.info.count);
-    string_extend_cstr(&a_main, &buf, "_");
-    for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
-        string_extend_strv(&a_main, &buf, serialize_name(serialize_ulang_type(name.mod_path, vec_at(&name.gen_args, idx))));
+    if (name.gen_args.info.count > 0) {
+        string_extend_cstr(&a_main, &buf, "____");
+        string_extend_size_t(&a_main, &buf, name.gen_args.info.count);
+        string_extend_cstr(&a_main, &buf, "_");
+        for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
+            string_extend_strv(&a_main, &buf, serialize_name(serialize_ulang_type(name.mod_path, vec_at(&name.gen_args, idx))));
+        }
     }
 
     log(LOG_DEBUG, TAST_FMT"\n", string_print(buf));
@@ -30,6 +36,8 @@ static inline Str_view serialize_name(Name name) {
 }
 
 static inline Name deserialize_name(Str_view serialized) {
+    todo();
+    unwrap(str_view_try_consume(&serialized, '_'));
     size_t mod_len = 0;
     unwrap(try_str_view_consume_size_t(&mod_len, &serialized, false));
     unwrap(str_view_try_consume(&serialized, '_'));

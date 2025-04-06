@@ -6,6 +6,8 @@
 #include <lang_type_after.h>
 
 static inline bool lang_type_is_slice(Env* env, Lang_type* gen_arg, Lang_type lang_type) {
+    (void) env;
+    (void) gen_arg;
     if (lang_type.type != LANG_TYPE_STRUCT) {
         return false;
     }
