@@ -40,6 +40,7 @@ OBJS=\
 	 ${BUILD_DIR}/ulang_type_print.o \
 	 ${BUILD_DIR}/globals.o \
 	 ${BUILD_DIR}/token.o \
+	 ${BUILD_DIR}/uast_utils.o \
 	 ${BUILD_DIR}/symbol_table.o \
 	 ${BUILD_DIR}/file.o \
 	 ${BUILD_DIR}/parameters.o \
@@ -47,6 +48,7 @@ OBJS=\
 	 ${BUILD_DIR}/error_msg.o \
 	 ${BUILD_DIR}/lang_type_serialize.o \
 	 ${BUILD_DIR}/ulang_type_serialize.o \
+	 ${BUILD_DIR}/lang_type_from_ulang_type.o \
 	 ${BUILD_DIR}/uast_clone.o \
 	 ${BUILD_DIR}/tast_clone.o \
 	 ${BUILD_DIR}/symbol_collection_clone.o \
@@ -153,6 +155,12 @@ ${BUILD_DIR}/lang_type_serialize.o: ${DEP_COMMON} src/lang_type_serialize.c thir
 
 ${BUILD_DIR}/ulang_type_serialize.o: ${DEP_COMMON} src/ulang_type_serialize.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ulang_type_serialize.o src/ulang_type_serialize.c
+
+${BUILD_DIR}/lang_type_from_ulang_type.o: ${DEP_COMMON} src/lang_type_from_ulang_type.c third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type_from_ulang_type.o src/lang_type_from_ulang_type.c
+
+${BUILD_DIR}/uast_utils.o: ${DEP_COMMON} src/uast_utils.c third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/uast_utils.o src/uast_utils.c
 
 ${BUILD_DIR}/symbol_collection_clone.o: ${DEP_COMMON} src/symbol_collection_clone.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/symbol_collection_clone.o src/symbol_collection_clone.c
