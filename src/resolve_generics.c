@@ -1,7 +1,6 @@
 #include <resolve_generics.h>
 #include <type_checking.h>
 #include <lang_type_serialize.h>
-#include <ulang_type_serialize.h>
 #include <uast_serialize.h>
 #include <ulang_type.h>
 #include <uast_clone.h>
@@ -13,42 +12,22 @@
 
 static bool ulang_type_generics_are_present(Ulang_type lang_type);
 
-Name serialize_generic(Env* env, Name old_name, Ulang_type_vec gen_args) {
-    String name = {0};
-    string_extend_cstr(&a_main, &name, "____");
-    string_extend_size_t(&a_main, &name, gen_args.info.count);
-    string_extend_cstr(&a_main, &name, "_");
-    // TODO: serialize str_view, here, not atom
-    string_extend_strv(&a_main, &name, serialize_ulang_type_atom(ulang_type_atom_new(old_name, 0)));
-    for (size_t idx = 0; idx < gen_args.info.count; idx++) {
-        string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(env, env->curr_mod_path, vec_at(&gen_args, idx))));
-    }
-    return (Name) {.mod_path = old_name.mod_path, .base = string_to_strv(name)};
-}
-
-bool deserialize_generic(Ulang_type_generic* deserialized, int16_t pointer_depth, Name* serialized) {
-    if (!str_view_try_consume_count(&serialized->base, '_', 4)) { // for now, ____ means generic
-        // not a generic lang_type
-        return false;
-    }
-    //log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
-
-    size_t count_gen = 0;
-    unwrap(try_str_view_consume_size_t(&count_gen, &serialized->base, false));
-    unwrap(str_view_try_consume(&serialized->base, '_'));
-
-    Ulang_type_atom atom = deserialize_ulang_type_atom(serialized);
-    atom.pointer_depth = pointer_depth;
-
-    Ulang_type_vec gen_args = {0};
-    for (size_t idx = 0; idx < count_gen; idx++) {
-        Ulang_type gen_arg = deserialize_ulang_type(serialized, pointer_depth);
-        vec_append(&a_main, &gen_args, gen_arg);
-    }
-
-    *deserialized = ulang_type_generic_new(atom, gen_args, POS_BUILTIN);
-    return true;
-}
+//Name serialize_generic(Env* env, Name old_name, Ulang_type_vec gen_args) {
+//    (void) env;
+//    (void) old_name;
+//    (void) gen_args;
+//    todo();
+//    //String name = {0};
+//    //string_extend_cstr(&a_main, &name, "____");
+//    //string_extend_size_t(&a_main, &name, gen_args.info.count);
+//    //string_extend_cstr(&a_main, &name, "_");
+//    //// TODO: serialize str_view, here, not atom
+//    //string_extend_strv(&a_main, &name, serialize_ulang_type_atom(ulang_type_atom_new(old_name, 0)));
+//    //for (size_t idx = 0; idx < gen_args.info.count; idx++) {
+//    //    string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(env, env->curr_mod_path, vec_at(&gen_args, idx))));
+//    //}
+//    //return (Name) {.mod_path = old_name.mod_path, .base = string_to_strv(name)};
+//}
 
 #define msg_invalid_count_generic_args(env, pos_def, pos_gen_args, gen_args, min_args, max_args) \
     msg_invalid_count_generic_args_internal(__FILE__, __LINE__, env, pos_def, pos_gen_args, gen_args, min_args, max_args)
@@ -281,7 +260,7 @@ static bool resolve_generics_ulang_type_internal_struct_like(
     Obj_unwrap obj_unwrap
 ) {
     Ustruct_def_base old_base = uast_def_get_struct_def_base(before_res);
-    Name new_name = serialize_generic(env, ulang_type_get_atom(lang_type).str, gen_args);
+    Name new_name = (Name) {.mod_path = old_base.name.mod_path, .base = old_base.name.base, .gen_args = gen_args};
 
     if (old_base.generics.info.count != gen_args.info.count) {
         msg_invalid_count_generic_args(
@@ -483,20 +462,12 @@ static bool resolve_generics_serialize_function_decl(
         return false;
     }
 
-    String name = {0};
-    string_extend_cstr(&a_main, &name, "_");
-    string_extend_size_t(&a_main, &name, old_decl->name.base.count);
-    string_extend_strv(&a_main, &name, serialize_name(old_decl->name));
-    for (size_t idx = 0; idx < gen_args.info.count; idx++) {
-        string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(env, env->curr_mod_path, vec_at(&gen_args, idx))));
-    }
-
     *new_decl = uast_function_decl_new(
         old_decl->pos,
         (Uast_generic_param_vec) {0},
         uast_function_params_new(old_decl->params->pos, params),
         new_rtn_type,
-        (Name) {.mod_path = env->curr_mod_path, .base = string_to_strv(name)}
+        (Name) {.mod_path = env->curr_mod_path, .base = old_decl->name.base, .gen_args = gen_args}
     );
 
     return true;

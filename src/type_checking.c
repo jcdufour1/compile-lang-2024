@@ -14,7 +14,6 @@
 #include <tast_clone.h>
 #include <uast_clone.h>
 #include <lang_type_hand_written.h>
-#include <ulang_type_serialize.h>
 #include <lang_type_print.h>
 #include <ulang_type_print.h>
 #include <ulang_type_from_uast_function_decl.h>
@@ -1430,24 +1429,24 @@ static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Env* env, Ulang
     (void) lang_type;
     (void) pos;
     todo();
-    Str_view name = serialize_ulang_type(ulang_type_fn_const_wrap(lang_type));
-    Uast_def* fun_decl_ = NULL;
-    if (usym_tbl_lookup(&fun_decl_, &vec_at(&env->ancesters, 0)->usymbol_table, name)) {
-        return uast_function_decl_unwrap(fun_decl_);
-    }
+    //Str_view name = serialize_ulang_type(ulang_type_fn_const_wrap(lang_type));
+    //Uast_def* fun_decl_ = NULL;
+    //if (usym_tbl_lookup(&fun_decl_, &vec_at(&env->ancesters, 0)->usymbol_table, name)) {
+    //    return uast_function_decl_unwrap(fun_decl_);
+    //}
 
-    Uast_param_vec params = {0};
-    for (size_t idx = 0; idx < lang_type.params.ulang_types.info.count; idx++) {
-        vec_append(&a_main, &params, uast_param_new(
-            pos,
-            uast_variable_def_new(pos, vec_at(&lang_type.params.ulang_types, idx), (Name) {.mod_path = env->curr_mod_path, .base = util_literal_name_new()}),
-            false, // TODO: test case for optional in function callback
-            false, // TODO: test case for variadic in function callback
-            NULL
-        ));
-    }
+    //Uast_param_vec params = {0};
+    //for (size_t idx = 0; idx < lang_type.params.ulang_types.info.count; idx++) {
+    //    vec_append(&a_main, &params, uast_param_new(
+    //        pos,
+    //        uast_variable_def_new(pos, vec_at(&lang_type.params.ulang_types, idx), (Name) {.mod_path = env->curr_mod_path, .base = util_literal_name_new()}),
+    //        false, // TODO: test case for optional in function callback
+    //        false, // TODO: test case for variadic in function callback
+    //        NULL
+    //    ));
+    //}
 
-    todo();
+    //todo();
     //Uast_function_decl* fun_decl = uast_function_decl_new(
     //    pos,
     //    (Uast_generic_param_vec) {0},

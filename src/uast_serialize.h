@@ -1,7 +1,6 @@
 #ifndef UAST_SERIALIZE_H
 #define UAST_SERIALIZE_H
 
-#include <ulang_type_serialize.h>
 #include <uast_utils.h>
 
 static inline Str_view serialize_uast_struct_def(Env* env, const Uast_struct_def* def) {

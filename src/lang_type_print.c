@@ -77,12 +77,7 @@ Str_view lang_type_vec_print_internal(Lang_type_vec types) {
 //}
 
 void extend_lang_type_atom(String* string, LANG_TYPE_MODE mode, Lang_type_atom atom) {
-    Ulang_type_generic deserialized = {0};
     Name temp = atom.str;
-    if (deserialize_generic(&deserialized, atom.pointer_depth, &temp)) {
-        extend_ulang_type_to_string(string, mode, ulang_type_generic_const_wrap(deserialized));
-        return;
-    }
 
     if (atom.str.base.count > 1) {
         extend_name(mode == LANG_TYPE_MODE_EMIT_LLVM, string, atom.str);
@@ -94,6 +89,22 @@ void extend_lang_type_atom(String* string, LANG_TYPE_MODE mode, Lang_type_atom a
     }
     for (int16_t idx = 0; idx < atom.pointer_depth; idx++) {
         vec_append(&print_arena, string, '*');
+    }
+
+    if (mode == LANG_TYPE_MODE_EMIT_LLVM) {
+        if (temp.gen_args.info.count > 0) {
+            todo();
+        }
+    } else {
+        if (temp.gen_args.info.count > 0) {
+            string_extend_cstr(&print_arena, string, "(<");
+        }
+        for (size_t idx = 0; idx < temp.gen_args.info.count; idx++) {
+            todo();
+        }
+        if (temp.gen_args.info.count > 0) {
+            string_extend_cstr(&print_arena, string, ">)");
+        }
     }
 }
 

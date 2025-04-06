@@ -131,9 +131,4 @@ static inline const char* str_view_dup(Arena* arena, Str_view str_view) {
 
 #define str_view_print(str_view) (int)((str_view).count), (str_view).str
 
-// TODO: move this function
-static inline bool name_is_equal(Name a, Name b) {
-    return str_view_is_equal(a.mod_path, b.mod_path) && str_view_is_equal(a.base, b.base);
-}
-
 #endif // STR_VIEW_H

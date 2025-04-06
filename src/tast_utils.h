@@ -4,6 +4,7 @@
 #include <tast.h>
 #include <lang_type_after.h>
 #include <ulang_type.h>
+#include <ulang_type_get_pos.h>
 
 #define LANG_TYPE_FMT STR_VIEW_FMT
 
