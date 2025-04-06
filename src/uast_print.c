@@ -6,6 +6,7 @@
 #include <ulang_type.h>
 #include <lang_type_print.h>
 #include <serialize_module_symbol_name.h>
+#include <extend_name.h>
 
 #include <symbol_table.h>
 
@@ -13,14 +14,6 @@ static void extend_pos(String* buf, Pos pos) {
     string_extend_cstr(&print_arena, buf, "(( line:");
     string_extend_int64_t(&print_arena, buf, pos.line);
     string_extend_cstr(&print_arena, buf, " ))");
-}
-
-static void extend_name(String* buf, Name name) {
-    string_extend_cstr(&print_arena, buf, "(");
-    string_extend_strv(&print_arena, buf, name.mod_path);
-    string_extend_cstr(&print_arena, buf, "::");
-    string_extend_strv(&print_arena, buf, name.base);
-    string_extend_cstr(&print_arena, buf, ")");
 }
 
 Str_view uast_binary_print_internal(const Uast_binary* binary, int indent) {
@@ -430,7 +423,7 @@ Str_view uast_import_print_internal(const Uast_import* import, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "import", indent);
-    extend_name(&buf, import->alias_name);
+    extend_name(false, &buf, import->alias_name);
     string_extend_strv_in_par(&print_arena, &buf, import->path);
     string_extend_cstr(&print_arena, &buf, "\n");
     string_extend_strv(&print_arena, &buf, uast_block_print_internal(import->block, indent + INDENT_WIDTH));
@@ -451,7 +444,7 @@ Str_view uast_poison_def_print_internal(const Uast_poison_def* poison, int inden
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "poison_def", indent);
-    extend_name(&buf, poison->name);
+    extend_name(false, &buf, poison->name);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
@@ -486,7 +479,7 @@ Str_view uast_function_decl_print_internal(const Uast_function_decl* fun_decl, i
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "function_decl", indent);
-    extend_name(&buf, fun_decl->name);
+    extend_name(false, &buf, fun_decl->name);
     extend_ulang_type_to_string(&buf, LANG_TYPE_MODE_LOG, fun_decl->return_type);
     string_extend_cstr(&print_arena, &buf, "\n");
     string_extend_strv(&print_arena, &buf, uast_function_params_print_internal(fun_decl->params, indent + INDENT_WIDTH));
@@ -509,7 +502,7 @@ Str_view uast_function_def_print_internal(const Uast_function_def* fun_def, int 
 static void extend_ustruct_def_base(String* buf, const char* type_name, Ustruct_def_base base, int indent, Pos pos) {
     string_extend_cstr_indent(&print_arena, buf, type_name, indent);
     extend_pos(buf, pos);
-    extend_name(buf, base.name);
+    extend_name(false, buf, base.name);
     string_extend_cstr(&print_arena, buf, "\n");
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
@@ -573,7 +566,7 @@ Str_view uast_string_def_print_internal(const Uast_string_def* def, int indent) 
 
     string_extend_cstr_indent(&print_arena, &buf, "string_def", indent);
     indent += INDENT_WIDTH;
-    extend_name(&buf, def->name);
+    extend_name(false, &buf, def->name);
     string_extend_strv(&print_arena, &buf, def->data);
     string_extend_cstr(&print_arena, &buf, "\n");
     indent -= INDENT_WIDTH;
@@ -587,7 +580,7 @@ Str_view uast_struct_lit_def_print_internal(const Uast_struct_lit_def* def, int 
     indent += INDENT_WIDTH;
 
     string_extend_cstr_indent(&print_arena, &buf, "struct_lit_def", indent);
-    extend_name(&buf, def->name);
+    extend_name(false, &buf, def->name);
     string_extend_cstr(&print_arena, &buf, "\n");
     for (size_t idx = 0; idx < def->members.info.count; idx++) {
         Str_view memb_text = uast_print_internal(vec_at(&def->members, idx), indent);
@@ -630,7 +623,7 @@ Str_view uast_variable_def_print_internal(const Uast_variable_def* def, int inde
 
     string_extend_cstr_indent(&print_arena, &buf, "variable_def", indent);
     extend_ulang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
-    extend_name(&buf, def->name);
+    extend_name(false, &buf, def->name);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);

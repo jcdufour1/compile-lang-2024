@@ -31,6 +31,7 @@ bool deserialize_generic(Ulang_type_generic* deserialized, int16_t pointer_depth
         // not a generic lang_type
         return false;
     }
+    todo();
 
     ////log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
 

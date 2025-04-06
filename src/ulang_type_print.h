@@ -6,6 +6,7 @@
 #include <newstring.h>
 #include <lang_type.h>
 #include <ulang_type.h>
+#include <extend_name.h>
 
 #define ulang_type_print(mode, lang_type) str_view_print(ulang_type_print_internal((mode), (lang_type)))
 

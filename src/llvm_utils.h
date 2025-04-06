@@ -4,6 +4,7 @@
 #include <llvm.h>
 #include <tast_utils.h>
 #include <lang_type.h>
+#include <extend_name.h>
 
 #define LANG_TYPE_FMT STR_VIEW_FMT
 

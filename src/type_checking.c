@@ -26,14 +26,6 @@
 #include <lang_type_is.h>
 #include <symbol_iter.h>
 
-static void extend_name(String* buf, Name name) {
-    string_extend_cstr(&print_arena, buf, "(");
-    string_extend_strv(&print_arena, buf, name.mod_path);
-    string_extend_cstr(&print_arena, buf, "::");
-    string_extend_strv(&print_arena, buf, name.base);
-    string_extend_cstr(&print_arena, buf, ")");
-}
-
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
     if (num <= 0) {
@@ -231,7 +223,7 @@ static void msg_invalid_count_function_args_internal(
     String message = {0};
     string_extend_size_t(&print_arena, &message, fun_call->args.info.count);
     string_extend_cstr(&print_arena, &message, " arguments are passed to function `");
-    extend_name(&message, fun_decl->name);
+    extend_name(false, &message, fun_decl->name);
     string_extend_cstr(&print_arena, &message, "`, but ");
     string_extend_size_t(&print_arena, &message, min_args);
     if (max_args > min_args) {
@@ -2502,9 +2494,9 @@ static bool check_for_exhaustiveness_finish(Env* env, Exhaustive_data exhaustive
                     string_extend_cstr(&a_main, &string, ", ");
                 }
 
-                extend_name(&string, enum_def.name);
+                extend_name(false, &string, enum_def.name);
                 string_extend_cstr(&a_main, &string, ".");
-                extend_name(&string, vec_at(&enum_def.members, idx)->name);
+                extend_name(false, &string, vec_at(&enum_def.members, idx)->name);
             }
         }
 

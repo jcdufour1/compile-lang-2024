@@ -4,15 +4,6 @@
 #include <resolve_generics.h>
 #include <ulang_type_print.h>
 
-// TODO: make project wide function for this
-static void extend_name(String* buf, Name name) {
-    string_extend_cstr(&print_arena, buf, "(");
-    string_extend_strv(&print_arena, buf, name.mod_path);
-    string_extend_cstr(&print_arena, buf, "::");
-    string_extend_strv(&print_arena, buf, name.base);
-    string_extend_cstr(&print_arena, buf, ")");
-}
-
 void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
     switch (type) {
         case LANG_TYPE_PRIMITIVE:
@@ -94,7 +85,7 @@ void extend_lang_type_atom(String* string, LANG_TYPE_MODE mode, Lang_type_atom a
     }
 
     if (atom.str.base.count > 1) {
-        extend_name(string, atom.str);
+        extend_name(mode == LANG_TYPE_MODE_EMIT_LLVM, string, atom.str);
     } else {
         string_extend_cstr(&print_arena, string, "void");
     }

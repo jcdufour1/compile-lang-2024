@@ -1,13 +1,5 @@
 #include <ulang_type_print.h>
 
-static void extend_name(String* buf, Name name) {
-    string_extend_cstr(&print_arena, buf, "(");
-    string_extend_strv(&print_arena, buf, name.mod_path);
-    string_extend_cstr(&print_arena, buf, "::");
-    string_extend_strv(&print_arena, buf, name.base);
-    string_extend_cstr(&print_arena, buf, ")");
-}
-
 Str_view ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type) {
     String buf = {0};
     extend_ulang_type_to_string(&buf, mode, lang_type);
@@ -29,7 +21,7 @@ void extend_ulang_type_atom_to_string(String* string, LANG_TYPE_MODE mode, Ulang
     }
 
     if (atom.str.base.count > 1) {
-        extend_name(string, atom.str);
+        extend_name(mode == LANG_TYPE_MODE_EMIT_LLVM, string, atom.str);
     } else {
         string_extend_cstr(&print_arena, string, "<null>");
     }
