@@ -16,6 +16,7 @@ static void extend_pos(String* buf, Pos pos) {
 }
 
 void extend_ulang_type_atom_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type_atom atom) {
+    // TODO: remove?
     if (mode == LANG_TYPE_MODE_LOG) {
         vec_append(&print_arena, string, '<');
     }
@@ -31,6 +32,8 @@ void extend_ulang_type_atom_to_string(String* string, LANG_TYPE_MODE mode, Ulang
     for (int16_t idx = 0; idx < atom.pointer_depth; idx++) {
         vec_append(&print_arena, string, '*');
     }
+
+    // TODO: remove?
     if (mode == LANG_TYPE_MODE_LOG) {
         vec_append(&print_arena, string, '>');
     }

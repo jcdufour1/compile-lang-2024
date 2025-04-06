@@ -6,17 +6,11 @@
 
 // TODO: move this function elsewhere
 static inline void extend_name(bool is_llvm, String* buf, Name name) {
-    if (!is_llvm) {
-        string_extend_cstr(&print_arena, buf, "(");
-    }
     string_extend_strv(&print_arena, buf, name.mod_path);
-    if (!is_llvm) {
+    if (!is_llvm && name.mod_path.count > 0) {
         string_extend_cstr(&print_arena, buf, "::");
     }
     string_extend_strv(&print_arena, buf, name.base);
-    if (!is_llvm) {
-        string_extend_cstr(&print_arena, buf, ")");
-    }
 }
 
 #endif // EXTEND_NAME_H

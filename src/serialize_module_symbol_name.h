@@ -17,6 +17,13 @@ static inline Str_view serialize_name(Name name) {
     string_extend_cstr(&a_main, &buf, "_");
     string_extend_strv(&a_main, &buf, name.base);
 
+    string_extend_cstr(&a_main, &buf, "____");
+    string_extend_size_t(&a_main, &buf, name.gen_args.info.count);
+    string_extend_cstr(&a_main, &buf, "_");
+    for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
+        string_extend_strv(&a_main, &buf, serialize_name(serialize_ulang_type(env, env->curr_mod_path, vec_at(&gen_args, idx))));
+    }
+
     return string_to_strv(buf);
 }
 

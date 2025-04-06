@@ -200,11 +200,6 @@ static bool resolve_generics_serialize_struct_def_base(
     Ulang_type_vec gen_args,
     Name new_name
 ) {
-    (void) env;
-    (void) new_base;
-    (void) old_base;
-    (void) gen_args;
-    (void) new_name;
     //// TODO: figure out way to avoid making new Ustruct_def_base every time (do name thing here, and check if varient with name already exists)
     //memset(new_base, 0, sizeof(*new_base));
 
@@ -278,6 +273,7 @@ static bool resolve_generics_ulang_type_internal_struct_like(
     if (usymbol_lookup(&new_def_, env, new_name)) {
         *after_res = new_def_;
     } else {
+        todo();
         Ustruct_def_base new_base = {0};
         if (!resolve_generics_serialize_struct_def_base(env, &new_base, old_base, gen_args, new_name)) {
             todo();
