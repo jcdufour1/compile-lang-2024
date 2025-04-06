@@ -67,22 +67,20 @@ static inline void lang_type_primitive_set_atom(Env* env, Lang_type_primitive* l
             lang_type_char_unwrap(lang_type)->atom = atom;
             return;
         case LANG_TYPE_SIGNED_INT:
-            todo();
-            //lang_type_signed_int_unwrap(lang_type)->bit_width = str_view_to_int64_t(
-            //    env,
-            //    POS_BUILTIN,
-            //    str_view_slice(atom.str, 1, atom.str.count - 1)
-            //);
-            //lang_type_signed_int_unwrap(lang_type)->pointer_depth = atom.pointer_depth;
+            lang_type_signed_int_unwrap(lang_type)->bit_width = str_view_to_int64_t(
+                env,
+                POS_BUILTIN,
+                str_view_slice(atom.str.base, 1, atom.str.base.count - 1)
+            );
+            lang_type_signed_int_unwrap(lang_type)->pointer_depth = atom.pointer_depth;
             return;
         case LANG_TYPE_UNSIGNED_INT:
-            todo();
-            //lang_type_unsigned_int_unwrap(lang_type)->bit_width = str_view_to_int64_t(
-            //    env,
-            //    POS_BUILTIN,
-            //    str_view_slice(atom.str, 1, atom.str.count - 1)
-            //);
-            //lang_type_unsigned_int_unwrap(lang_type)->pointer_depth = atom.pointer_depth;
+            lang_type_unsigned_int_unwrap(lang_type)->bit_width = str_view_to_int64_t(
+                env,
+                POS_BUILTIN,
+                str_view_slice(atom.str.base, 1, atom.str.base.count - 1)
+            );
+            lang_type_unsigned_int_unwrap(lang_type)->pointer_depth = atom.pointer_depth;
             return;
         case LANG_TYPE_ANY:
             lang_type_any_unwrap(lang_type)->atom = atom;

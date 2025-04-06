@@ -17,7 +17,7 @@ Name serialize_ulang_type_regular(Str_view mod_path, Ulang_type_regular ulang_ty
 
 Name serialize_ulang_type(Env* env, Str_view mod_path, Ulang_type ulang_type);
 
-Ulang_type_atom deserialize_ulang_type_atom(Str_view* serialized);
+Ulang_type_atom deserialize_ulang_type_atom(Name* serialized);
 
 Ulang_type deserialize_ulang_type(Name* serialized, int16_t pointer_depth);
 

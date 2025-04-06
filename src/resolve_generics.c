@@ -31,25 +31,23 @@ bool deserialize_generic(Ulang_type_generic* deserialized, int16_t pointer_depth
         // not a generic lang_type
         return false;
     }
-    todo();
+    //log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
 
-    ////log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
+    size_t count_gen = 0;
+    unwrap(try_str_view_consume_size_t(&count_gen, &serialized->base, false));
+    unwrap(str_view_try_consume(&serialized->base, '_'));
 
-    //size_t count_gen = 0;
-    //unwrap(try_str_view_consume_size_t(&count_gen, serialized, false));
-    //unwrap(str_view_try_consume(serialized, '_'));
+    Ulang_type_atom atom = deserialize_ulang_type_atom(serialized);
+    atom.pointer_depth = pointer_depth;
 
-    //Ulang_type_atom atom = deserialize_ulang_type_atom(serialized);
-    //atom.pointer_depth = pointer_depth;
+    Ulang_type_vec gen_args = {0};
+    for (size_t idx = 0; idx < count_gen; idx++) {
+        Ulang_type gen_arg = deserialize_ulang_type(serialized, pointer_depth);
+        vec_append(&a_main, &gen_args, gen_arg);
+    }
 
-    //Ulang_type_vec gen_args = {0};
-    //for (size_t idx = 0; idx < count_gen; idx++) {
-    //    Ulang_type gen_arg = deserialize_ulang_type(serialized, pointer_depth);
-    //    vec_append(&a_main, &gen_args, gen_arg);
-    //}
-
-    //*deserialized = ulang_type_generic_new(atom, gen_args, POS_BUILTIN);
-    //return true;
+    *deserialized = ulang_type_generic_new(atom, gen_args, POS_BUILTIN);
+    return true;
 }
 
 #define msg_invalid_count_generic_args(env, pos_def, pos_gen_args, gen_args, min_args, max_args) \
@@ -156,23 +154,19 @@ static bool try_set_struct_base_types(Env* env, Struct_def_base* new_base, Ustru
     } while (0)
 
 static bool try_set_struct_def_types(Env* env, Uast_struct_def* before_res, Uast_struct_def* after_res) {
-    (void) env;
-    (void) before_res;
-    (void) after_res;
-    todo();
-    //// TODO: consider nested thing:
-    //// type struct Token {
-    ////      token Token
-    //// }
-    //Struct_def_base new_base = {0};
-    //bool success = try_set_struct_base_types(env, &new_base, &after_res->base, false);
-    //try_set_def_types_internal(
-    //    env,
-    //    uast_struct_def_wrap(after_res),
-    //    before_res,
-    //    tast_struct_def_wrap(tast_struct_def_new(after_res->pos, new_base))
-    //);
-    //return success;
+    // TODO: consider nested thing:
+    // type struct Token {
+    //      token Token
+    // }
+    Struct_def_base new_base = {0};
+    bool success = try_set_struct_base_types(env, &new_base, &after_res->base, false);
+    try_set_def_types_internal(
+        env,
+        uast_struct_def_wrap(after_res),
+        before_res,
+        tast_struct_def_wrap(tast_struct_def_new(after_res->pos, new_base))
+    );
+    return success;
 }
 
 static bool try_set_raw_union_def_types(Env* env, Uast_raw_union_def* before_res, Uast_raw_union_def* after_res) {
@@ -192,40 +186,32 @@ static bool try_set_raw_union_def_types(Env* env, Uast_raw_union_def* before_res
 }
 
 static bool try_set_enum_def_types(Env* env, Uast_enum_def* before_res, Uast_enum_def* after_res) {
-    (void) env;
-    (void) before_res;
-    (void) after_res;
-    todo();
-    //Struct_def_base new_base = {0};
-    //bool success = try_set_struct_base_types(env, &new_base, &after_res->base, true);
-    //try_set_def_types_internal(
-    //    env,
-    //    uast_enum_def_wrap(after_res),
-    //    before_res,
-    //    tast_enum_def_wrap(tast_enum_def_new(after_res->pos, new_base))
-    //);
-    //return success;
+    Struct_def_base new_base = {0};
+    bool success = try_set_struct_base_types(env, &new_base, &after_res->base, true);
+    try_set_def_types_internal(
+        env,
+        uast_enum_def_wrap(after_res),
+        before_res,
+        tast_enum_def_wrap(tast_enum_def_new(after_res->pos, new_base))
+    );
+    return success;
 }
 
 // TODO: inline this function?
 static bool try_set_sum_def_types(Env* env, Uast_sum_def* before_res, Uast_sum_def* after_res) {
-    (void) env;
-    (void) before_res;
-    (void) after_res;
-    todo();
-    //// TODO: consider nested thing:
-    //// type sum Token {
-    ////      token Token
-    //// }
-    //Struct_def_base new_base = {0};
-    //bool success = try_set_struct_base_types(env, &new_base, &after_res->base, false);
-    //try_set_def_types_internal(
-    //    env,
-    //    uast_sum_def_wrap(after_res),
-    //    before_res,
-    //    tast_sum_def_wrap(tast_sum_def_new(after_res->pos, new_base))
-    //);
-    //return success;
+    // TODO: consider nested thing:
+    // type sum Token {
+    //      token Token
+    // }
+    Struct_def_base new_base = {0};
+    bool success = try_set_struct_base_types(env, &new_base, &after_res->base, false);
+    try_set_def_types_internal(
+        env,
+        uast_sum_def_wrap(after_res),
+        before_res,
+        tast_sum_def_wrap(tast_sum_def_new(after_res->pos, new_base))
+    );
+    return success;
 }
 
 static bool resolve_generics_serialize_struct_def_base(
@@ -247,22 +233,21 @@ static bool resolve_generics_serialize_struct_def_base(
         *new_base = old_base;
         return true;
     }
-    todo();
 
-    //for (size_t idx_memb = 0; idx_memb < old_base.members.info.count; idx_memb++) {
-    //    // TODO: gen thign
-    //    vec_append(&a_main, &new_base->members, uast_variable_def_clone(vec_at(&old_base.members, idx_memb)));
-    //}
+    for (size_t idx_memb = 0; idx_memb < old_base.members.info.count; idx_memb++) {
+        // TODO: gen thign
+        vec_append(&a_main, &new_base->members, uast_variable_def_clone(vec_at(&old_base.members, idx_memb)));
+    }
 
-    //for (size_t idx_gen = 0; idx_gen < gen_args.info.count; idx_gen++) {
-    //    Str_view gen_def = vec_at(&old_base.generics, idx_gen)->child->name;
-    //    generic_sub_struct_def_base(env, new_base, gen_def, vec_at(&gen_args, idx_gen));
-    //}
+    for (size_t idx_gen = 0; idx_gen < gen_args.info.count; idx_gen++) {
+        Name gen_def = (Name) {.mod_path = env->curr_mod_path, .base = vec_at(&old_base.generics, idx_gen)->child->name};
+        generic_sub_struct_def_base(env, new_base, gen_def, vec_at(&gen_args, idx_gen));
+    }
 
-    //assert(old_base.members.info.count == new_base->members.info.count);
+    assert(old_base.members.info.count == new_base->members.info.count);
 
-    //new_base->name = new_name;
-    //return true;
+    new_base->name = new_name;
+    return true;
 }
 
 typedef bool(*Set_obj_types)(Env*, void*, void*);
@@ -453,69 +438,68 @@ static bool resolve_generics_serialize_function_decl(
     Ulang_type_vec gen_args,
     Pos pos_gen_args
 ) {
-    todo();
-    //// TODO: figure out way to avoid making new Uast_function_decl every time
-    //memset(new_decl, 0, sizeof(*new_decl));
+    // TODO: figure out way to avoid making new Uast_function_decl every time
+    memset(new_decl, 0, sizeof(*new_decl));
 
-    //Uast_param_vec params = {0};
-    //for (size_t idx = 0; idx < old_decl->params->params.info.count; idx++) {
-    //    vec_append(&a_main, &params, uast_param_clone(vec_at(&old_decl->params->params, idx)));
-    //}
+    Uast_param_vec params = {0};
+    for (size_t idx = 0; idx < old_decl->params->params.info.count; idx++) {
+        vec_append(&a_main, &params, uast_param_clone(vec_at(&old_decl->params->params, idx)));
+    }
 
-    //Ulang_type new_rtn_type = old_decl->return_type;
+    Ulang_type new_rtn_type = old_decl->return_type;
 
-    //size_t idx_arg = 0;
-    //for (; idx_arg < gen_args.info.count; idx_arg++) {
-    //    if (idx_arg >= old_decl->generics.info.count) {
-    //        msg_invalid_count_generic_args(
-    //            env,
-    //            old_decl->pos,
-    //            pos_gen_args,
-    //            gen_args,
-    //            old_decl->generics.info.count,
-    //            old_decl->generics.info.count
-    //        );
-    //        return false;
-    //    }
+    size_t idx_arg = 0;
+    for (; idx_arg < gen_args.info.count; idx_arg++) {
+        if (idx_arg >= old_decl->generics.info.count) {
+            msg_invalid_count_generic_args(
+                env,
+                old_decl->pos,
+                pos_gen_args,
+                gen_args,
+                old_decl->generics.info.count,
+                old_decl->generics.info.count
+            );
+            return false;
+        }
 
-    //    for (size_t idx_fun_param = 0; idx_fun_param < params.info.count; idx_fun_param++) {
-    //        Str_view curr_arg = vec_at(&old_decl->generics, idx_arg)->child->name;
-    //        generic_sub_param(env, vec_at(&params, idx_fun_param), curr_arg, vec_at(&gen_args, idx_arg));
-    //    }
-    //    Str_view curr_gen = vec_at(&old_decl->generics, idx_arg)->child->name;
-    //    generic_sub_lang_type(env, &new_rtn_type, new_rtn_type, curr_gen, vec_at(&gen_args, idx_arg));
-    //    generic_sub_block(env, new_block, curr_gen, vec_at(&gen_args, idx_arg));
-    //}
+        for (size_t idx_fun_param = 0; idx_fun_param < params.info.count; idx_fun_param++) {
+            Name curr_arg = (Name) {.mod_path = env->curr_mod_path, .base = vec_at(&old_decl->generics, idx_arg)->child->name};
+            generic_sub_param(env, vec_at(&params, idx_fun_param), curr_arg, vec_at(&gen_args, idx_arg));
+        }
+        Name curr_gen = (Name) {.mod_path = env->curr_mod_path, .base = vec_at(&old_decl->generics, idx_arg)->child->name};
+        generic_sub_lang_type(env, &new_rtn_type, new_rtn_type, curr_gen, vec_at(&gen_args, idx_arg));
+        generic_sub_block(env, new_block, curr_gen, vec_at(&gen_args, idx_arg));
+    }
 
-    //if (idx_arg < old_decl->generics.info.count) {
-    //    msg_invalid_count_generic_args(
-    //        env,
-    //        old_decl->pos,
-    //        pos_gen_args,
-    //        gen_args,
-    //        old_decl->generics.info.count,
-    //        old_decl->generics.info.count
-    //    );
-    //    return false;
-    //}
+    if (idx_arg < old_decl->generics.info.count) {
+        msg_invalid_count_generic_args(
+            env,
+            old_decl->pos,
+            pos_gen_args,
+            gen_args,
+            old_decl->generics.info.count,
+            old_decl->generics.info.count
+        );
+        return false;
+    }
 
-    //String name = {0};
-    //string_extend_cstr(&a_main, &name, "_");
-    //string_extend_size_t(&a_main, &name, old_decl->name.count);
-    //string_extend_strv(&a_main, &name, old_decl->name);
-    //for (size_t idx = 0; idx < gen_args.info.count; idx++) {
-    //    string_extend_strv(&a_main, &name, serialize_ulang_type(vec_at(&gen_args, idx)));
-    //}
+    String name = {0};
+    string_extend_cstr(&a_main, &name, "_");
+    string_extend_size_t(&a_main, &name, old_decl->name.base.count);
+    string_extend_strv(&a_main, &name, serialize_name(old_decl->name));
+    for (size_t idx = 0; idx < gen_args.info.count; idx++) {
+        string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(env, env->curr_mod_path, vec_at(&gen_args, idx))));
+    }
 
-    //*new_decl = uast_function_decl_new(
-    //    old_decl->pos,
-    //    (Uast_generic_param_vec) {0},
-    //    uast_function_params_new(old_decl->params->pos, params),
-    //    new_rtn_type,
-    //    string_to_strv(name)
-    //);
+    *new_decl = uast_function_decl_new(
+        old_decl->pos,
+        (Uast_generic_param_vec) {0},
+        uast_function_params_new(old_decl->params->pos, params),
+        new_rtn_type,
+        (Name) {.mod_path = env->curr_mod_path, .base = string_to_strv(name)}
+    );
 
-    //return true;
+    return true;
 }
 
 // only generic function decls can be passed in here
@@ -526,53 +510,52 @@ bool resolve_generics_function_def(
     Ulang_type_vec gen_args,
     Pos pos_gen_args
 ) {
-    todo();
-    //bool status = true;
+    bool status = true;
 
-    //Uast_function_decl* new_decl = NULL;
-    //if (!function_decl_generics_are_present(def->decl)) {
-    //    unreachable("non generic function decls should not be passed here");
-    //}
+    Uast_function_decl* new_decl = NULL;
+    if (!function_decl_generics_are_present(def->decl)) {
+        unreachable("non generic function decls should not be passed here");
+    }
 
-    //// TODO: try to avoid cloning block if resolve_generics_serialize_function_decl fails
-    //Uast_block* new_block = uast_block_clone(def->body);
-    //assert(new_block != def->body);
-    //assert(new_block->symbol_collection.usymbol_table.table_tasts != def->body->symbol_collection.usymbol_table.table_tasts);
+    // TODO: try to avoid cloning block if resolve_generics_serialize_function_decl fails
+    Uast_block* new_block = uast_block_clone(def->body);
+    assert(new_block != def->body);
+    assert(new_block->symbol_collection.usymbol_table.table_tasts != def->body->symbol_collection.usymbol_table.table_tasts);
 
-    //if (!resolve_generics_serialize_function_decl(env, &new_decl, def->decl, new_block, gen_args, pos_gen_args)) {
-    //    return false;
-    //}
-    //*new_def = uast_function_def_new(new_decl->pos, new_decl, new_block);
-    ////vec_rem_last(&env->ancesters);
-    ////vec_append(&a_main, &env->ancesters, &new_block->symbol_collection);
+    if (!resolve_generics_serialize_function_decl(env, &new_decl, def->decl, new_block, gen_args, pos_gen_args)) {
+        return false;
+    }
+    *new_def = uast_function_def_new(new_decl->pos, new_decl, new_block);
+    //vec_rem_last(&env->ancesters);
+    //vec_append(&a_main, &env->ancesters, &new_block->symbol_collection);
 
-    //// TODO: think about scopes for symbol_table if non-top-level functions are implemented
+    // TODO: think about scopes for symbol_table if non-top-level functions are implemented
 
-    //{
-    //    size_t idx = 0;
-    //    for (; idx < env->ancesters.info.count; idx++) {
-    //        Uast_def* result = NULL;
-    //        if (usym_tbl_lookup(&result, &vec_at(&env->ancesters, idx)->usymbol_table, def->decl->name)) {
-    //            break;
-    //        }
-    //    }
-    //    usym_tbl_add(&vec_at(&env->ancesters, idx)->usymbol_table, uast_function_decl_wrap(new_decl));
-    //}
+    {
+        size_t idx = 0;
+        for (; idx < env->ancesters.info.count; idx++) {
+            Uast_def* result = NULL;
+            if (usym_tbl_lookup(&result, &vec_at(&env->ancesters, idx)->usymbol_table, def->decl->name)) {
+                break;
+            }
+        }
+        usym_tbl_add(&vec_at(&env->ancesters, idx)->usymbol_table, uast_function_decl_wrap(new_decl));
+    }
 
-    //Tast_def* dummy = NULL;
-    //if (!symbol_lookup(&dummy, env, (*new_def)->decl->name)) {
-    //    // TODO: see if there is less hacky way to do this
-    //    Sym_coll_vec tbls = env->ancesters;
-    //    memset(&env->ancesters, 0, sizeof(env->ancesters));
-    //    vec_append(&a_main, &env->ancesters, vec_at(&tbls, 0));
-    //    if (!try_set_function_def_types(env, *new_def, true)) {
-    //        status = false;
-    //    }
-    //    env->ancesters = tbls;
-    //}
+    Tast_def* dummy = NULL;
+    if (!symbol_lookup(&dummy, env, (*new_def)->decl->name)) {
+        // TODO: see if there is less hacky way to do this
+        Sym_coll_vec tbls = env->ancesters;
+        memset(&env->ancesters, 0, sizeof(env->ancesters));
+        vec_append(&a_main, &env->ancesters, vec_at(&tbls, 0));
+        if (!try_set_function_def_types(env, *new_def, true)) {
+            status = false;
+        }
+        env->ancesters = tbls;
+    }
 
-    //unwrap(symbol_lookup(&dummy, env, (*new_def)->decl->name));
-    //return status;
+    unwrap(symbol_lookup(&dummy, env, (*new_def)->decl->name));
+    return status;
 }
 
 static bool ulang_type_generics_are_present_tuple(Ulang_type_tuple lang_type) {

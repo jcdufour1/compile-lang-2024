@@ -838,6 +838,7 @@ static bool is_binary(TOKEN_TYPE token_type) {
 }
 
 static bool parse_lang_type_struct_atom(Env* env, Pos* pos, Ulang_type_atom* lang_type, Tk_view* tokens) {
+    (void) env;
     memset(lang_type, 0, sizeof(*lang_type));
     Token lang_type_token = {0};
 
@@ -1474,53 +1475,52 @@ static PARSE_STATUS parse_for_range_internal(Env* env, Uast_block** result, Uast
         return PARSE_ERROR;
     }
 
-    todo();
-    //Uast_assignment* init_assign = uast_assignment_new(
-    //    uast_expr_get_pos(lower_bound),
-    //    uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name, (Ulang_type_vec) {0})),
-    //    lower_bound
-    //);
-    //vec_append(&a_main, &outer->children, uast_assignment_wrap(init_assign));
+    Uast_assignment* init_assign = uast_assignment_new(
+        uast_expr_get_pos(lower_bound),
+        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name.base, (Ulang_type_vec) {0})),
+        lower_bound
+    );
+    vec_append(&a_main, &outer->children, uast_assignment_wrap(init_assign));
 
-    //Str_view incre_name = util_literal_name_new();
+    Name incre_name = (Name) {.mod_path = env->curr_mod_path, .base = util_literal_name_new()};
 
-    //Uast_for_with_cond* inner_for = uast_for_with_cond_new(
-    //    outer->pos,
-    //    uast_condition_new(
-    //        outer->pos,
-    //        uast_binary_wrap(uast_binary_new(
-    //            outer->pos,
-    //            uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name, (Ulang_type_vec) {0})),
-    //            upper_bound,
-    //            BINARY_LESS_THAN
-    //        ))
-    //    ),
-    //    inner,
-    //    incre_name,
-    //    true
-    //);
-    //vec_append(&a_main, &outer->children, uast_for_with_cond_wrap(inner_for));
+    Uast_for_with_cond* inner_for = uast_for_with_cond_new(
+        outer->pos,
+        uast_condition_new(
+            outer->pos,
+            uast_binary_wrap(uast_binary_new(
+                outer->pos,
+                uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name.base, (Ulang_type_vec) {0})),
+                upper_bound,
+                BINARY_LESS_THAN
+            ))
+        ),
+        inner,
+        incre_name,
+        true
+    );
+    vec_append(&a_main, &outer->children, uast_for_with_cond_wrap(inner_for));
 
-    //Uast_continue* cont = uast_continue_new(uast_expr_get_pos(upper_bound));
-    //vec_append(&a_main, &inner->children, uast_continue_wrap(cont));
+    Uast_continue* cont = uast_continue_new(uast_expr_get_pos(upper_bound));
+    vec_append(&a_main, &inner->children, uast_continue_wrap(cont));
 
-    //Uast_label* incre_label = uast_label_new(uast_expr_get_pos(upper_bound), incre_name);
-    //vec_append(&a_main, &inner->children, uast_label_wrap(incre_label));
+    Uast_label* incre_label = uast_label_new(uast_expr_get_pos(upper_bound), incre_name.base);
+    vec_append(&a_main, &inner->children, uast_label_wrap(incre_label));
 
-    //Uast_assignment* increment = uast_assignment_new(
-    //    uast_expr_get_pos(upper_bound),
-    //    uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name, (Ulang_type_vec) {0})),
-    //    uast_operator_wrap(uast_binary_wrap(uast_binary_new(
-    //        var_def->pos,
-    //        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name, (Ulang_type_vec) {0})),
-    //        uast_literal_wrap(util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, uast_expr_get_pos(upper_bound))),
-    //        BINARY_ADD
-    //    )))
-    //);
-    //vec_append(&a_main, &inner->children, uast_assignment_wrap(increment));
+    Uast_assignment* increment = uast_assignment_new(
+        uast_expr_get_pos(upper_bound),
+        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name.base, (Ulang_type_vec) {0})),
+        uast_operator_wrap(uast_binary_wrap(uast_binary_new(
+            var_def->pos,
+            uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name.base, (Ulang_type_vec) {0})),
+            uast_literal_wrap(util_uast_literal_new_from_int64_t(env, 1, TOKEN_INT_LITERAL, uast_expr_get_pos(upper_bound))),
+            BINARY_ADD
+        )))
+    );
+    vec_append(&a_main, &inner->children, uast_assignment_wrap(increment));
 
-    //*result = outer;
-    //return PARSE_OK;
+    *result = outer;
+    return PARSE_OK;
 }
 
 static PARSE_STATUS parse_for_with_cond(Env* env, Uast_for_with_cond** for_new, Pos pos, Tk_view* tokens) {
@@ -1914,16 +1914,15 @@ static PARSE_STATUS parse_switch(Env* env, Uast_switch** lang_switch, Tk_view* t
 }
 
 static Uast_expr* get_expr_or_symbol(Uast_stmt* stmt) {
-    todo();
-    //if (stmt->type == UAST_DEF) {
-    //    return uast_symbol_wrap(uast_symbol_new(
-    //        uast_stmt_get_pos(stmt),
-    //        uast_variable_def_unwrap(uast_def_unwrap(stmt))->name,
-    //        (Ulang_type_vec) {0}
-    //    ));
-    //}
+    if (stmt->type == UAST_DEF) {
+        return uast_symbol_wrap(uast_symbol_new(
+            uast_stmt_get_pos(stmt),
+            uast_variable_def_unwrap(uast_def_unwrap(stmt))->name.base,
+            (Ulang_type_vec) {0}
+        ));
+    }
 
-    //return uast_expr_unwrap(stmt);
+    return uast_expr_unwrap(stmt);
 }
 
 static PARSE_EXPR_STATUS parse_stmt(Env* env, Uast_stmt** child, Tk_view* tokens, bool defer_sym_add) {

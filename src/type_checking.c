@@ -1214,12 +1214,11 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
             }
             return true;
         case UAST_UNKNOWN:
-            todo();
-            //return try_set_symbol_types(env, new_tast, uast_symbol_new(
-            //    uast_expr_get_pos(uast),
-            //    lang_type_get_str(env->lhs_lang_type),
-            //    (Ulang_type_vec) {0}
-            //));
+            return try_set_symbol_types(env, new_tast, uast_symbol_new(
+                uast_expr_get_pos(uast),
+                lang_type_get_str(env->lhs_lang_type).base,
+                (Ulang_type_vec) {0}
+            ));
         case UAST_MEMBER_ACCESS: {
             Tast_stmt* new_tast_ = NULL;
             if (!try_set_member_access_types(env, &new_tast_, uast_member_access_unwrap(uast))) {
@@ -1399,30 +1398,29 @@ bool try_set_function_call_types_sum_case(Env* env, Tast_sum_case** new_case, Ua
             return true;
         }
         default: {
-            todo();
-            //// tast_sum_case->tag->lang_type is of selected varient of sum (maybe)
-            //Uast_variable_def* new_def = uast_variable_def_new(
-            //    sum_case->pos,
-            //    lang_type_to_ulang_type(sum_case->tag->lang_type),
-            //    uast_expr_get_name(vec_at(&args, 0))
-            //);
-            //usymbol_add_defer(env, uast_variable_def_wrap(new_def));
+            // tast_sum_case->tag->lang_type is of selected varient of sum (maybe)
+            Uast_variable_def* new_def = uast_variable_def_new(
+                sum_case->pos,
+                lang_type_to_ulang_type(sum_case->tag->lang_type),
+                (Name) {.mod_path = env->curr_mod_path, .base = uast_expr_get_name(vec_at(&args, 0))}
+            );
+            usymbol_add_defer(env, uast_variable_def_wrap(new_def));
 
-            //Uast_assignment* new_assign = uast_assignment_new(
-            //    new_def->pos,
-            //    uast_symbol_wrap(uast_symbol_new(new_def->pos, new_def->name, (Ulang_type_vec) {0})),
-            //    uast_sum_access_wrap(uast_sum_access_new(
-            //        new_def->pos,
-            //        sum_case->tag,
-            //        lang_type_from_ulang_type(env, new_def->lang_type),
-            //        uast_expr_clone(env->parent_of_operand)
-            //    ))
-            //);
+            Uast_assignment* new_assign = uast_assignment_new(
+                new_def->pos,
+                uast_symbol_wrap(uast_symbol_new(new_def->pos, new_def->name.base, (Ulang_type_vec) {0})),
+                uast_sum_access_wrap(uast_sum_access_new(
+                    new_def->pos,
+                    sum_case->tag,
+                    lang_type_from_ulang_type(env, new_def->lang_type),
+                    uast_expr_clone(env->parent_of_operand)
+                ))
+            );
 
-            //vec_append(&a_main, &env->switch_case_defer_add_sum_case_part, uast_assignment_wrap(new_assign));
+            vec_append(&a_main, &env->switch_case_defer_add_sum_case_part, uast_assignment_wrap(new_assign));
 
-            //*new_case = sum_case;
-            //return true;
+            *new_case = sum_case;
+            return true;
         }
     }
 }
@@ -1432,22 +1430,22 @@ static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Env* env, Ulang
     (void) lang_type;
     (void) pos;
     todo();
-    //Str_view name = serialize_ulang_type(ulang_type_fn_const_wrap(lang_type));
-    //Uast_def* fun_decl_ = NULL;
-    //if (usym_tbl_lookup(&fun_decl_, &vec_at(&env->ancesters, 0)->usymbol_table, name)) {
-    //    return uast_function_decl_unwrap(fun_decl_);
-    //}
+    Str_view name = serialize_ulang_type(ulang_type_fn_const_wrap(lang_type));
+    Uast_def* fun_decl_ = NULL;
+    if (usym_tbl_lookup(&fun_decl_, &vec_at(&env->ancesters, 0)->usymbol_table, name)) {
+        return uast_function_decl_unwrap(fun_decl_);
+    }
 
-    //Uast_param_vec params = {0};
-    //for (size_t idx = 0; idx < lang_type.params.ulang_types.info.count; idx++) {
-    //    vec_append(&a_main, &params, uast_param_new(
-    //        pos,
-    //        uast_variable_def_new(pos, vec_at(&lang_type.params.ulang_types, idx), (Name) {.mod_path = env->curr_mod_path, .base = util_literal_name_new()}),
-    //        false, // TODO: test case for optional in function callback
-    //        false, // TODO: test case for variadic in function callback
-    //        NULL
-    //    ));
-    //}
+    Uast_param_vec params = {0};
+    for (size_t idx = 0; idx < lang_type.params.ulang_types.info.count; idx++) {
+        vec_append(&a_main, &params, uast_param_new(
+            pos,
+            uast_variable_def_new(pos, vec_at(&lang_type.params.ulang_types, idx), (Name) {.mod_path = env->curr_mod_path, .base = util_literal_name_new()}),
+            false, // TODO: test case for optional in function callback
+            false, // TODO: test case for variadic in function callback
+            NULL
+        ));
+    }
 
     todo();
     //Uast_function_decl* fun_decl = uast_function_decl_new(
@@ -2609,12 +2607,8 @@ error:
 }
 
 bool try_set_label_types(Env* env, Tast_label** new_tast, const Uast_label* lang_label) {
-    (void) env;
-    (void) new_tast;
-    (void) lang_label;
-    todo();
-    //*new_tast = tast_label_new(lang_label->pos, lang_label->name);
-    //return lang_label;
+    *new_tast = tast_label_new(lang_label->pos, (Name) {.mod_path = env->curr_mod_path, .base = lang_label->name});
+    return lang_label;
 }
 
 // TODO: merge this with msg_redefinition_of_symbol?

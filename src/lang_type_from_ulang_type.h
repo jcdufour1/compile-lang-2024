@@ -265,28 +265,26 @@ static inline Ulang_type_tuple lang_type_tuple_to_ulang_type_tuple(Lang_type_tup
 }
 
 static inline Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
-    (void) lang_type;
-    todo();
-    //switch (lang_type.type) {
-    //    case LANG_TYPE_TUPLE:
-    //        return ulang_type_tuple_const_wrap(lang_type_tuple_to_ulang_type_tuple(lang_type_tuple_const_unwrap(lang_type)));
-    //    case LANG_TYPE_VOID:
-    //        todo();
-    //    case LANG_TYPE_PRIMITIVE:
-    //        // fallthrough
-    //    case LANG_TYPE_STRUCT:
-    //        // fallthrough
-    //    case LANG_TYPE_RAW_UNION:
-    //        // fallthrough
-    //    case LANG_TYPE_ENUM:
-    //        // fallthrough
-    //    case LANG_TYPE_SUM:
-    //        // fallthrough
-    //        // TODO: change (Pos) {0} below to lang_type_get_pos(lang_type)
-    //        return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(lang_type_get_str(lang_type), lang_type_get_pointer_depth(lang_type)), (Pos) {0}));
-    //    case LANG_TYPE_FN:
-    //        todo();
-    //}
+    switch (lang_type.type) {
+        case LANG_TYPE_TUPLE:
+            return ulang_type_tuple_const_wrap(lang_type_tuple_to_ulang_type_tuple(lang_type_tuple_const_unwrap(lang_type)));
+        case LANG_TYPE_VOID:
+            todo();
+        case LANG_TYPE_PRIMITIVE:
+            // fallthrough
+        case LANG_TYPE_STRUCT:
+            // fallthrough
+        case LANG_TYPE_RAW_UNION:
+            // fallthrough
+        case LANG_TYPE_ENUM:
+            // fallthrough
+        case LANG_TYPE_SUM:
+            // fallthrough
+            // TODO: change (Pos) {0} below to lang_type_get_pos(lang_type)
+            return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(lang_type_get_str(lang_type), lang_type_get_pointer_depth(lang_type)), (Pos) {0}));
+        case LANG_TYPE_FN:
+            todo();
+    }
     unreachable("");
 }
 
