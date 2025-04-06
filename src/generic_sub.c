@@ -22,6 +22,7 @@ void generic_sub_param(Env* env, Uast_param* def, Name gen_param, Ulang_type gen
 }
 
 void generic_sub_lang_type_regular(
+    Env* env,
     Ulang_type* new_lang_type,
     Ulang_type_regular lang_type,
     Name gen_param,
@@ -33,9 +34,18 @@ void generic_sub_lang_type_regular(
         int16_t base_depth = lang_type.atom.pointer_depth;
         int16_t gen_prev_depth = ulang_type_get_pointer_depth(*new_lang_type);
         ulang_type_set_pointer_depth(new_lang_type, gen_prev_depth + base_depth);
-    } else {
-        *new_lang_type = ulang_type_clone(ulang_type_regular_const_wrap(lang_type));
+        log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, *new_lang_type));
+        return;
     }
+
+    lang_type = ulang_type_regular_clone(lang_type);
+    Ulang_type_vec* gen_args = &lang_type.atom.str.gen_args;
+    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
+    for (size_t idx = 0; idx < gen_args->info.count; idx++) {
+        generic_sub_lang_type(env, vec_at_ref(gen_args, idx), vec_at(gen_args, idx), gen_param, gen_arg);
+    }
+    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
+    *new_lang_type = ulang_type_regular_const_wrap(lang_type);
 }
 
 //void generic_sub_lang_type_generic(
@@ -71,6 +81,7 @@ void generic_sub_lang_type(
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
             generic_sub_lang_type_regular(
+                env,
                 new_lang_type,
                 ulang_type_regular_const_unwrap(lang_type),
                 gen_param,

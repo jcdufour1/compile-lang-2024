@@ -1,6 +1,8 @@
 #ifndef ULANG_TYPE_GET_POS_H
 #define ULANG_TYPE_GET_POS_H
 
+static inline bool name_is_equal(Name a, Name b);
+
 static inline Pos ulang_type_get_pos(Ulang_type lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
@@ -13,10 +15,28 @@ static inline Pos ulang_type_get_pos(Ulang_type lang_type) {
     unreachable("");
 }
 
+
+static inline bool ulang_type_atom_is_equal(Ulang_type_atom a, Ulang_type_atom b) {
+    return name_is_equal(a.str, b.str) && a.pointer_depth == b.pointer_depth;
+}
+
+static inline bool ulang_type_regular_is_equal(Ulang_type_regular a, Ulang_type_regular b) {
+    return ulang_type_atom_is_equal(a.atom, b.atom);
+}
+
 // TODO: move this function?
 static inline bool ulang_type_is_equal(Ulang_type a, Ulang_type b) {
     if (a.type != b.type) {
         return false;
+    }
+
+    switch (a.type) {
+        case ULANG_TYPE_REGULAR:
+            return ulang_type_regular_is_equal(ulang_type_regular_const_unwrap(a), ulang_type_regular_const_unwrap(b));
+        case ULANG_TYPE_TUPLE:
+            todo();
+        case ULANG_TYPE_FN:
+            todo();
     }
     todo();
 }
