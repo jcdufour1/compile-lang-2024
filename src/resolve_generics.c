@@ -13,7 +13,7 @@
 
 static bool ulang_type_generics_are_present(Ulang_type lang_type);
 
-Str_view serialize_generic(Name old_name, Ulang_type_vec gen_args) {
+Name serialize_generic(Env* env, Name old_name, Ulang_type_vec gen_args) {
     String name = {0};
     string_extend_cstr(&a_main, &name, "____");
     string_extend_size_t(&a_main, &name, gen_args.info.count);
@@ -21,9 +21,9 @@ Str_view serialize_generic(Name old_name, Ulang_type_vec gen_args) {
     // TODO: serialize str_view, here, not atom
     string_extend_strv(&a_main, &name, serialize_ulang_type_atom(ulang_type_atom_new(old_name, 0)));
     for (size_t idx = 0; idx < gen_args.info.count; idx++) {
-        string_extend_strv(&a_main, &name, serialize_ulang_type(vec_at(&gen_args, idx)));
+        string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(env, env->curr_mod_path, vec_at(&gen_args, idx))));
     }
-    return string_to_strv(name);
+    return (Name) {.mod_path = old_name.mod_path, .base = string_to_strv(name)};
 }
 
 bool deserialize_generic(Ulang_type_generic* deserialized, int16_t pointer_depth, Name* serialized) {
@@ -180,23 +180,19 @@ static bool try_set_struct_def_types(Env* env, Uast_struct_def* before_res, Uast
 }
 
 static bool try_set_raw_union_def_types(Env* env, Uast_raw_union_def* before_res, Uast_raw_union_def* after_res) {
-    (void) env;
-    (void) before_res;
-    (void) after_res;
-    todo();
-    //// TODO: consider nested thing:
-    //// type raw_union Token {
-    ////      token Token
-    //// }
-    //Struct_def_base new_base = {0};
-    //bool success = try_set_struct_base_types(env, &new_base, &after_res->base, false);
-    //try_set_def_types_internal(
-    //    env,
-    //    uast_raw_union_def_wrap(after_res),
-    //    before_res,
-    //    tast_raw_union_def_wrap(tast_raw_union_def_new(after_res->pos, new_base))
-    //);
-    //return success;
+    // TODO: consider nested thing:
+    // type raw_union Token {
+    //      token Token
+    // }
+    Struct_def_base new_base = {0};
+    bool success = try_set_struct_base_types(env, &new_base, &after_res->base, false);
+    try_set_def_types_internal(
+        env,
+        uast_raw_union_def_wrap(after_res),
+        before_res,
+        tast_raw_union_def_wrap(tast_raw_union_def_new(after_res->pos, new_base))
+    );
+    return success;
 }
 
 static bool try_set_enum_def_types(Env* env, Uast_enum_def* before_res, Uast_enum_def* after_res) {
@@ -241,22 +237,21 @@ static bool resolve_generics_serialize_struct_def_base(
     Ustruct_def_base* new_base,
     Ustruct_def_base old_base,
     Ulang_type_vec gen_args,
-    Str_view new_name
+    Name new_name
 ) {
     (void) env;
     (void) new_base;
     (void) old_base;
     (void) gen_args;
     (void) new_name;
-    todo();
     //// TODO: figure out way to avoid making new Ustruct_def_base every time (do name thing here, and check if varient with name already exists)
     //memset(new_base, 0, sizeof(*new_base));
 
-    ////if (gen_args.info.count != ) {
-    //if (gen_args.info.count < 1) {
-    //    *new_base = old_base;
-    //    return true;
-    //}
+    if (gen_args.info.count < 1) {
+        *new_base = old_base;
+        return true;
+    }
+    todo();
 
     //for (size_t idx_memb = 0; idx_memb < old_base.members.info.count; idx_memb++) {
     //    // TODO: gen thign
@@ -305,7 +300,7 @@ static bool resolve_generics_ulang_type_internal_struct_like(
     Obj_unwrap obj_unwrap
 ) {
     Ustruct_def_base old_base = uast_def_get_struct_def_base(before_res);
-    Str_view new_name = serialize_generic(ulang_type_get_atom(lang_type).str, gen_args);
+    Name new_name = serialize_generic(env, ulang_type_get_atom(lang_type).str, gen_args);
 
     if (old_base.generics.info.count != gen_args.info.count) {
         msg_invalid_count_generic_args(

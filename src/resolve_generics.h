@@ -25,6 +25,6 @@ bool variable_def_generics_are_present(const Uast_variable_def* def);
 
 bool deserialize_generic(Ulang_type_generic* deserialized, int16_t pointer_depth, Name* serialized);
 
-Str_view serialize_generic(Name old_atom, Ulang_type_vec gen_args);
+Name serialize_generic(Env* env, Name old_atom, Ulang_type_vec gen_args);
 
 #endif // RESOLVE_GENERICS_H

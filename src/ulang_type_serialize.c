@@ -16,55 +16,57 @@ Str_view serialize_ulang_type_atom(Ulang_type_atom atom) {
     return string_to_strv(name);
 }
 
-Str_view serialize_ulang_type_fn(Ulang_type_fn ulang_type) {
+Name serialize_ulang_type_fn(Env* env, Str_view mod_path, Ulang_type_fn ulang_type) {
     String name = {0};
-    string_extend_strv(&a_main, &name, serialize_ulang_type_tuple(ulang_type.params));
-    string_extend_strv(&a_main, &name, serialize_ulang_type(*ulang_type.return_type));
-    return string_to_strv(name);
+    todo();
+    //string_extend_strv(&a_main, &name, serialize_ulang_type_tuple(ulang_type.params));
+    string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(env, mod_path, *ulang_type.return_type)));
+    return (Name) {.mod_path = mod_path, .base = string_to_strv(name)};
 }
 
-Str_view serialize_ulang_type_tuple(Ulang_type_tuple ulang_type) {
+Name serialize_ulang_type_tuple(Env* env, Str_view mod_path, Ulang_type_tuple ulang_type) {
     String name = {0};
     for (size_t idx = 0; idx < ulang_type.ulang_types.info.count; idx++) {
         Ulang_type curr = vec_at_const(ulang_type.ulang_types, idx);
-        string_extend_strv(&a_main, &name, serialize_ulang_type(curr));
+        string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(env, mod_path, curr)));
     }
-    return string_to_strv(name);
+    return (Name) {.mod_path = mod_path, .base = string_to_strv(name)};
 }
 
-Str_view serialize_ulang_type_regular(Ulang_type_regular ulang_type) {
-    return serialize_ulang_type_atom(ulang_type.atom);
+Name serialize_ulang_type_regular(Str_view mod_path, Ulang_type_regular ulang_type) {
+    return (Name) {.mod_path = mod_path, serialize_ulang_type_atom(ulang_type.atom)};
 }
 
-Str_view serialize_ulang_type_vec(Ulang_type_vec vec) {
+Str_view serialize_ulang_type_vec(Env* env, Str_view mod_path, Ulang_type_vec vec) {
     String name = {0};
     for (size_t idx = 0; idx < vec.info.count; idx++) {
-        string_extend_strv(&a_main, &name, serialize_ulang_type(vec_at(&vec, idx)));
+        string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(env, mod_path, vec_at(&vec, idx))));
     }
     return string_to_strv(name);
 }
 
-Str_view serialize_ulang_type_generic(Ulang_type_generic ulang_type) {
-    return serialize_generic(ulang_type.atom.str, ulang_type.generic_args);
+Name serialize_ulang_type_generic(Env* env, Ulang_type_generic ulang_type) {
+    return serialize_generic(env, ulang_type.atom.str, ulang_type.generic_args);
 }
 
-Str_view serialize_ulang_type(Ulang_type ulang_type) {
+Name serialize_ulang_type(Env* env, Str_view mod_path, Ulang_type ulang_type) {
     Str_view name = ulang_type_print_internal(LANG_TYPE_MODE_LOG, ulang_type);
     switch (ulang_type.type) {
         case ULANG_TYPE_REGULAR:
-            return serialize_ulang_type_regular(ulang_type_regular_const_unwrap(ulang_type));
+            return serialize_ulang_type_regular(mod_path, ulang_type_regular_const_unwrap(ulang_type));
         case ULANG_TYPE_REG_GENERIC:
-            return serialize_ulang_type_generic(ulang_type_generic_const_unwrap(ulang_type));
+            return serialize_ulang_type_generic(env, ulang_type_generic_const_unwrap(ulang_type));
         case ULANG_TYPE_FN:
-            return serialize_ulang_type_fn(ulang_type_fn_const_unwrap(ulang_type));
+            return serialize_ulang_type_fn(env, mod_path, ulang_type_fn_const_unwrap(ulang_type));
         case ULANG_TYPE_TUPLE:
             todo();
     }
     assert(name.count > 1);
-    return str_view_slice(name, 0, name.count - 1);
+    return (Name) {.mod_path = mod_path, .base = str_view_slice(name, 0, name.count - 1)};
 }
 
 Ulang_type_atom deserialize_ulang_type_atom(Str_view* serialized) {
+    (void) serialized;
     todo();
     //size_t pointer_depth = 0;
     ////log(LOG_DEBUG, TAST_FMT"\n", str_view_print(*serialized));
@@ -87,6 +89,8 @@ Ulang_type_atom deserialize_ulang_type_atom(Str_view* serialized) {
 }
 
 Ulang_type deserialize_ulang_type(Name* serialized, int16_t pointer_depth) {
+    (void) serialized;
+    (void) pointer_depth;
     todo();
     //Ulang_type_generic gen = {0};
     //if (deserialize_generic(&gen, pointer_depth, serialized)) {
