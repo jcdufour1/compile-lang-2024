@@ -76,18 +76,6 @@ void do_passes(const Parameters* params) {
 
     arena_reset(&print_arena);
     log(LOG_DEBUG, "\n"TAST_FMT, uast_block_print(untyped));
-    Ulang_type_vec gen_args = {0};
-    vec_append(&a_main, &gen_args, ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("i32", 0), POS_BUILTIN)));
-    Uast_variable_def* test_def = uast_variable_def_new(
-        POS_BUILTIN,
-        ulang_type_generic_const_wrap(ulang_type_generic_new(
-            ulang_type_atom_new_from_cstr("Token", 1),
-            gen_args,
-            POS_BUILTIN
-        )),
-        (Name) {.mod_path = (Str_view) {0}, .base = str_view_from_cstr("token")}
-    );
-    (void) test_def;
     //log(LOG_DEBUG, TAST_FMT, uast_variable_def_print(test_def));
     //vec_append(&a_main, &untyped->children, uast_def_wrap(uast_variable_def_wrap(test_def)));
 

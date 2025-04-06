@@ -26,20 +26,6 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Env* env, Ulang_typ
             *new_lang_type = lang_type_fn_const_wrap(new_fn);
             return true;
         }
-        case ULANG_TYPE_REG_GENERIC: {
-            Ulang_type after_res = {0};
-            if (!resolve_generics_ulang_type_generic(
-                &after_res, env, ulang_type_generic_const_unwrap(lang_type)
-            )) {
-                return false;
-            }
-            log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
-            log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, after_res));
-            log(LOG_DEBUG, TAST_FMT"\n", name_print(ulang_type_regular_const_unwrap(after_res).atom.str));
-            log(LOG_DEBUG, TAST_FMT"\n", str_view_print(ulang_type_regular_const_unwrap(after_res).atom.str.mod_path));
-            log(LOG_DEBUG, TAST_FMT"\n", str_view_print(ulang_type_regular_const_unwrap(after_res).atom.str.base));
-            return try_lang_type_from_ulang_type(new_lang_type, env, after_res, pos);
-        }
     }
     unreachable("");
 }

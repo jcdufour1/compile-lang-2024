@@ -38,27 +38,27 @@ void generic_sub_lang_type_regular(
     }
 }
 
-void generic_sub_lang_type_generic(
-    Env* env,
-    Ulang_type* new_lang_type,
-    Ulang_type_generic lang_type,
-    Name gen_param,
-    Ulang_type gen_arg
-) {
-    Ulang_type_generic new_reg = ulang_type_generic_clone(lang_type);
-
-    for (size_t idx = 0; idx < new_reg.generic_args.info.count; idx++) {
-        generic_sub_lang_type(
-            env,
-            vec_at_ref(&new_reg.generic_args, idx),
-            vec_at(&new_reg.generic_args, idx),
-            gen_param,
-            ulang_type_clone(gen_arg)
-        );
-    }
-
-    resolve_generics_ulang_type_generic(new_lang_type, env, new_reg);
-}
+//void generic_sub_lang_type_generic(
+//    Env* env,
+//    Ulang_type* new_lang_type,
+//    Ulang_type_generic lang_type,
+//    Name gen_param,
+//    Ulang_type gen_arg
+//) {
+//    Ulang_type_generic new_reg = ulang_type_generic_clone(lang_type);
+//
+//    for (size_t idx = 0; idx < new_reg.generic_args.info.count; idx++) {
+//        generic_sub_lang_type(
+//            env,
+//            vec_at_ref(&new_reg.generic_args, idx),
+//            vec_at(&new_reg.generic_args, idx),
+//            gen_param,
+//            ulang_type_clone(gen_arg)
+//        );
+//    }
+//
+//    resolve_generics_ulang_type_generic(new_lang_type, env, new_reg);
+//}
 
 void generic_sub_lang_type(
     Env* env,
@@ -67,6 +67,7 @@ void generic_sub_lang_type(
     Name gen_param,
     Ulang_type gen_arg
 ) {
+    (void) env;
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
             generic_sub_lang_type_regular(
@@ -76,16 +77,6 @@ void generic_sub_lang_type(
                 gen_arg
             );
             return;
-        case ULANG_TYPE_REG_GENERIC: {
-            generic_sub_lang_type_generic(
-                env,
-                new_lang_type,
-                ulang_type_generic_const_unwrap(lang_type),
-                gen_param,
-                gen_arg
-            );
-            return;
-        }
         case ULANG_TYPE_FN:
             todo();
         case ULANG_TYPE_TUPLE:

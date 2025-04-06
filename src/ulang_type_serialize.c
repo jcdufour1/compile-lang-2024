@@ -45,18 +45,11 @@ Str_view serialize_ulang_type_vec(Str_view mod_path, Ulang_type_vec vec) {
     return string_to_strv(name);
 }
 
-Name serialize_ulang_type_generic(Ulang_type_generic ulang_type) {
-    (void) ulang_type;
-    todo();
-}
-
 Name serialize_ulang_type(Str_view mod_path, Ulang_type ulang_type) {
     Str_view name = ulang_type_print_internal(LANG_TYPE_MODE_LOG, ulang_type);
     switch (ulang_type.type) {
         case ULANG_TYPE_REGULAR:
             return serialize_ulang_type_regular(mod_path, ulang_type_regular_const_unwrap(ulang_type));
-        case ULANG_TYPE_REG_GENERIC:
-            return serialize_ulang_type_generic(ulang_type_generic_const_unwrap(ulang_type));
         case ULANG_TYPE_FN:
             return serialize_ulang_type_fn(mod_path, ulang_type_fn_const_unwrap(ulang_type));
         case ULANG_TYPE_TUPLE:

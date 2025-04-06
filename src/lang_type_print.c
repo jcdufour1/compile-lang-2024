@@ -101,7 +101,10 @@ void extend_lang_type_atom(String* string, LANG_TYPE_MODE mode, Lang_type_atom a
             string_extend_cstr(&print_arena, string, "(<");
         }
         for (size_t idx = 0; idx < temp.gen_args.info.count; idx++) {
-            todo();
+            if (idx > 0) {
+                string_extend_cstr(&print_arena, string, ", ");
+            }
+            string_extend_strv(&print_arena, string, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(&temp.gen_args, idx)));
         }
         if (temp.gen_args.info.count > 0) {
             string_extend_cstr(&print_arena, string, ">)");

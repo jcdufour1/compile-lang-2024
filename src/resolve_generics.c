@@ -256,13 +256,8 @@ static bool resolve_generics_ulang_type_internal_struct_like(
 ) {
     log(LOG_DEBUG, "THING 765\n");
     Ustruct_def_base old_base = uast_def_get_struct_def_base(before_res);
-    Name new_name = {0};
-    if (lang_type.type == ULANG_TYPE_REGULAR) {
-        new_name = (Name) {.mod_path = old_base.name.mod_path, .base = old_base.name.base, .gen_args = ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args};
-    } else {
-        // TODO: remove lang_type_generic
-        new_name = (Name) {.mod_path = old_base.name.mod_path, .base = old_base.name.base, .gen_args = ulang_type_generic_const_unwrap(lang_type).generic_args};
-    }
+    Name new_name = (Name) {.mod_path = old_base.name.mod_path, .base = old_base.name.base, .gen_args = ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args};
+
     for (size_t idx = 0; idx < new_name.gen_args.info.count; idx++) {
         log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, vec_at(&new_name.gen_args, idx)));
     }
@@ -285,7 +280,6 @@ static bool resolve_generics_ulang_type_internal_struct_like(
 
     Uast_def* new_def_ = NULL;
     if (usymbol_lookup(&new_def_, env, new_name)) {
-        todo();
         log(LOG_DEBUG, TAST_FMT"\n", name_print(new_name));
         log(LOG_DEBUG, "%zu\n", new_name.gen_args.info.count);
         *after_res = new_def_;
@@ -376,25 +370,12 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Env* env, U
     unreachable("");
 }
 
-bool resolve_generics_ulang_type_generic(Ulang_type* result, Env* env, Ulang_type_generic lang_type) {
-    Uast_def* before_res = NULL;
-    if (!usymbol_lookup(&before_res, env, lang_type.atom.str)) {
-        msg_undefined_type(env, lang_type.pos, ulang_type_generic_const_wrap(lang_type));
-        return false;
-    }
-
-    return resolve_generics_ulang_type_internal(
-        result,
-        env,
-        before_res,
-        ulang_type_generic_const_wrap(lang_type)
-    );
-}
-
 bool resolve_generics_ulang_type_regular(Ulang_type* result, Env* env, Ulang_type_regular lang_type) {
     Uast_def* before_res = NULL;
     log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
-    if (!usymbol_lookup(&before_res, env, lang_type.atom.str)) {
+    Name name_base = lang_type.atom.str;
+    memset(&name_base.gen_args, 0, sizeof(name_base.gen_args));
+    if (!usymbol_lookup(&before_res, env, name_base)) {
         msg_undefined_type(env, lang_type.pos, ulang_type_regular_const_wrap(lang_type));
         return false;
     }
@@ -412,8 +393,6 @@ bool resolve_generics_ulang_type(Ulang_type* result, Env* env, Ulang_type lang_t
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
             return resolve_generics_ulang_type_regular(result, env, ulang_type_regular_const_unwrap(lang_type));
-        case ULANG_TYPE_REG_GENERIC:
-            return resolve_generics_ulang_type_generic(result, env, ulang_type_generic_const_unwrap(lang_type));
         case ULANG_TYPE_TUPLE:
             todo();
         case ULANG_TYPE_FN:
@@ -562,8 +541,6 @@ static bool ulang_type_generics_are_present(Ulang_type lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
             return false;
-        case ULANG_TYPE_REG_GENERIC:
-            return true;
         case ULANG_TYPE_TUPLE:
             return ulang_type_generics_are_present_tuple(ulang_type_tuple_const_unwrap(lang_type));
         case ULANG_TYPE_FN:

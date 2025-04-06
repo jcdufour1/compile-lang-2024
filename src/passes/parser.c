@@ -927,11 +927,10 @@ static bool parse_lang_type_struct(Env* env, Ulang_type* lang_type, Tk_view* tok
         return true;
     }
 
-    Ulang_type_vec gen_args = {0};
-    if (PARSE_OK != parse_generics_args(env, &gen_args, tokens)) {
+    if (PARSE_OK != parse_generics_args(env, &atom.str.gen_args, tokens)) {
         return false;
     }
-    *lang_type = ulang_type_generic_const_wrap(ulang_type_generic_new(atom, gen_args, pos));
+    *lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, pos));
     return true;
 }
 

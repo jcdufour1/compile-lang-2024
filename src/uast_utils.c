@@ -39,13 +39,8 @@ bool uast_def_get_lang_type(Lang_type* result, Env* env, const Uast_def* def, Ul
     unreachable("");
 }
 
-bool ustruct_def_base_get_lang_type_(Ulang_type* result, Env* env, Ustruct_def_base base, Ulang_type_vec generics, Pos pos) {
-    (void) result;
-    (void) env;
-    (void) base;
-    if (generics.info.count < 1) {
-        return resolve_generics_ulang_type_regular(result, env, ulang_type_regular_new(ulang_type_atom_new(base.name, 0), pos));
-    }
-    unwrap(generics.info.count > 0);
-    return resolve_generics_ulang_type_generic(result, env, ulang_type_generic_new(ulang_type_atom_new(base.name, 0), generics, pos));
+bool ustruct_def_base_get_lang_type_(Ulang_type* result, Env* env, Ustruct_def_base base, Ulang_type_vec gen_args, Pos pos) {
+    Name base_name = base.name;
+    base_name.gen_args = gen_args;
+    return resolve_generics_ulang_type_regular(result, env, ulang_type_regular_new(ulang_type_atom_new(base_name, 0), pos));
 }

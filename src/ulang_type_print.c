@@ -65,22 +65,6 @@ void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type
             extend_ulang_type_to_string(string, mode, *fn.return_type);
             return;
         }
-        case ULANG_TYPE_REG_GENERIC: {
-            Ulang_type_generic reg_gen = ulang_type_generic_const_unwrap(lang_type);
-            extend_ulang_type_atom_to_string(string, mode, reg_gen.atom);
-            string_extend_cstr(&a_main, string, "(<");
-            for (size_t idx = 0; idx < reg_gen.generic_args.info.count; idx++) {
-                if (mode == LANG_TYPE_MODE_MSG && idx > 0) {
-                    string_extend_cstr(&print_arena, string, ", ");
-                }
-                extend_ulang_type_to_string(string, mode, vec_at(&reg_gen.generic_args, idx));
-            }
-            string_extend_cstr(&a_main, string, ">)");
-            for (int16_t idx = 0; idx < reg_gen.pointer_depth; idx++) {
-                vec_append(&print_arena, string, '*');
-            }
-            return;
-        }
     }
     unreachable("");
 }
