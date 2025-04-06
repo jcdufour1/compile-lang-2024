@@ -1216,7 +1216,7 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
             return try_set_symbol_types(env, new_tast, uast_symbol_new(
                 uast_expr_get_pos(uast),
                 lang_type_get_str(env->lhs_lang_type).base,
-                (Ulang_type_vec) {0}
+                lang_type_get_str(env->lhs_lang_type).gen_args
             ));
         case UAST_MEMBER_ACCESS: {
             Tast_stmt* new_tast_ = NULL;

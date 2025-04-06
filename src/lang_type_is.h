@@ -11,6 +11,7 @@ static inline bool lang_type_is_slice(Env* env, Lang_type* gen_arg, Lang_type la
     }
     
     Lang_type_struct lang_struct = lang_type_struct_const_unwrap(lang_type);
+    (void) lang_struct;
     //Ulang_type_generic deserialized = {0};
     todo();
     //if (deserialize_generic(&deserialized, lang_struct.atom.pointer_depth, &lang_struct.atom.str)) {
