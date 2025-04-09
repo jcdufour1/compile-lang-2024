@@ -411,20 +411,17 @@ static void if_for_add_cond_goto(
     vec_append(&a_main, &block->children, llvm_cond_goto_wrap(cond_goto));
 }
 
-static Tast_assignment* for_loop_cond_var_assign_new(Env* env, Str_view sym_name, Pos pos) {
-    (void) env;
-    (void) sym_name;
-    (void) pos;
+static Tast_assignment* for_loop_cond_var_assign_new(Env* env, Name sym_name, Pos pos) {
     Uast_literal* literal = util_uast_literal_new_from_int64_t(env, 1, TOKEN_INT_LITERAL, pos);
     Uast_operator* operator = uast_binary_wrap(uast_binary_new(
         pos,
-        uast_symbol_wrap(uast_symbol_new(pos, sym_name, (Ulang_type_vec) {0})),
+        uast_symbol_wrap(uast_symbol_new(pos, sym_name)),
         uast_literal_wrap(literal),
         BINARY_ADD
     ));
     return util_assignment_new(
         env,
-        uast_symbol_wrap(uast_symbol_new(pos, sym_name, (Ulang_type_vec) {0})),
+        uast_symbol_wrap(uast_symbol_new(pos, sym_name)),
         uast_operator_wrap(operator)
     );
 }

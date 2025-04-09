@@ -290,8 +290,8 @@ void generic_sub_member_access(Env* env, Uast_member_access* access, Name gen_pa
 }
 
 void generic_sub_symbol(Env* env, Uast_symbol* sym, Name gen_param, Ulang_type gen_arg) {
-    for (size_t idx = 0; idx < sym->generic_args.info.count; idx++) {
-        generic_sub_lang_type(env, vec_at_ref(&sym->generic_args, idx), vec_at(&sym->generic_args, idx), gen_param, gen_arg);
+    for (size_t idx = 0; idx < sym->name.gen_args.info.count; idx++) {
+        generic_sub_lang_type(env, vec_at_ref(&sym->name.gen_args, idx), vec_at(&sym->name.gen_args, idx), gen_param, gen_arg);
     }
 }
 

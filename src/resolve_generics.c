@@ -214,7 +214,7 @@ static bool resolve_generics_serialize_struct_def_base(
     }
 
     for (size_t idx_gen = 0; idx_gen < gen_args.info.count; idx_gen++) {
-        Name gen_def = (Name) {.mod_path = env->curr_mod_path, .base = vec_at(&old_base.generics, idx_gen)->child->name};
+        Name gen_def = vec_at(&old_base.generics, idx_gen)->child->name;
         generic_sub_struct_def_base(env, new_base, gen_def, vec_at(&gen_args, idx_gen));
     }
 
@@ -434,10 +434,10 @@ static bool resolve_generics_serialize_function_decl(
         }
 
         for (size_t idx_fun_param = 0; idx_fun_param < params.info.count; idx_fun_param++) {
-            Name curr_arg = (Name) {.mod_path = env->curr_mod_path, .base = vec_at(&old_decl->generics, idx_arg)->child->name};
+            Name curr_arg = vec_at(&old_decl->generics, idx_arg)->child->name;
             generic_sub_param(env, vec_at(&params, idx_fun_param), curr_arg, vec_at(&gen_args, idx_arg));
         }
-        Name curr_gen = (Name) {.mod_path = env->curr_mod_path, .base = vec_at(&old_decl->generics, idx_arg)->child->name};
+        Name curr_gen = vec_at(&old_decl->generics, idx_arg)->child->name;
         generic_sub_lang_type(env, &new_rtn_type, new_rtn_type, curr_gen, vec_at(&gen_args, idx_arg));
         generic_sub_block(env, new_block, curr_gen, vec_at(&gen_args, idx_arg));
     }

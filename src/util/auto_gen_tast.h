@@ -436,7 +436,7 @@ static Tast_type tast_gen_module_alias(const char* prefix) {
     Tast_type chain = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&chain.members, "Name", "alias_name");
-    append_member(&chain.members, "Str_view", "path");
+    append_member(&chain.members, "Str_view", "mod_path");
 
     return chain;
 }

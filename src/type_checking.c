@@ -438,7 +438,7 @@ Tast_literal* try_set_literal_types(const Env* env, Uast_literal* literal) {
 // set symbol lang_type, and report error if symbol is undefined
 bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyped) {
     Uast_def* sym_def = NULL;
-    if (!usymbol_lookup(&sym_def, env, (Name) {.mod_path = env->curr_mod_path, .base = sym_untyped->name})) {
+    if (!usymbol_lookup(&sym_def, env, sym_untyped->name)) {
         msg_undefined_symbol(env->file_path_to_text, uast_expr_wrap(uast_symbol_wrap(sym_untyped)));
         return false;
     }
@@ -456,7 +456,7 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
         case UAST_FUNCTION_DEF: {
             Uast_function_def* new_def = NULL;
             if (function_decl_generics_are_present(uast_function_def_unwrap(sym_def)->decl)) {
-                if (!resolve_generics_function_def(&new_def, env, uast_function_def_unwrap(sym_def), sym_untyped->generic_args, sym_untyped->pos)) {
+                if (!resolve_generics_function_def(&new_def, env, uast_function_def_unwrap(sym_def), sym_untyped->name.gen_args, sym_untyped->pos)) {
                     return false;
                 }
             } else {
@@ -483,10 +483,10 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
             // fallthrough
         case UAST_VARIABLE_DEF: {
             Lang_type lang_type = {0};
-            if (!uast_def_get_lang_type(&lang_type, env, sym_def, sym_untyped->generic_args)) {
+            if (!uast_def_get_lang_type(&lang_type, env, sym_def, sym_untyped->name.gen_args)) {
                 return false;
             }
-            Sym_typed_base new_base = {.lang_type = lang_type, .name = (Name) {.mod_path = env->curr_mod_path, .base = sym_untyped->name}};
+            Sym_typed_base new_base = {.lang_type = lang_type, sym_untyped->name};
             Tast_symbol* sym_typed = tast_symbol_new(sym_untyped->pos, new_base);
             *new_tast = tast_symbol_wrap(sym_typed);
             return true;
@@ -1215,8 +1215,7 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
         case UAST_UNKNOWN:
             return try_set_symbol_types(env, new_tast, uast_symbol_new(
                 uast_expr_get_pos(uast),
-                lang_type_get_str(env->lhs_lang_type).base,
-                lang_type_get_str(env->lhs_lang_type).gen_args
+                lang_type_get_str(env->lhs_lang_type)
             ));
         case UAST_MEMBER_ACCESS: {
             Tast_stmt* new_tast_ = NULL;
@@ -1407,7 +1406,7 @@ bool try_set_function_call_types_sum_case(Env* env, Tast_sum_case** new_case, Ua
 
             Uast_assignment* new_assign = uast_assignment_new(
                 new_def->pos,
-                uast_symbol_wrap(uast_symbol_new(new_def->pos, new_def->name.base, (Ulang_type_vec) {0})),
+                uast_symbol_wrap(uast_symbol_new(new_def->pos, new_def->name)),
                 uast_sum_access_wrap(uast_sum_access_new(
                     new_def->pos,
                     sum_case->tag,
@@ -1964,14 +1963,13 @@ bool try_set_member_access_types(
 
         }
         case TAST_MODULE_ALIAS: {
-            //Str_view name = serialize_module_symbol_name(tast_module_alias_unwrap()->path, access->member_name);
-            Uast_symbol* sym = uast_symbol_new(access->pos, access->member_name, (Ulang_type_vec) {0} /* TODO */);
+            Uast_symbol* sym = uast_symbol_new(access->pos, (Name) {.mod_path = tast_module_alias_unwrap(new_callee)->mod_path, .base = access->member_name, (Ulang_type_vec) {0}});
             Tast_expr* new_expr = NULL;
-            //vec_append(&env->ancesters, 
             if (!try_set_symbol_types(env, &new_expr, sym)) {
-                todo();
+                return false;
             }
-            todo();
+            *new_tast = tast_expr_wrap(new_expr);
+            return true;
         }
         default:
             unreachable(TAST_FMT, tast_expr_print(new_callee));

@@ -294,7 +294,7 @@ static inline Str_view uast_expr_get_name(const Uast_expr* expr) {
         case UAST_INDEX:
             unreachable("");
         case UAST_SYMBOL:
-            return uast_symbol_const_unwrap(expr)->name;
+            todo();
         case UAST_FUNCTION_CALL:
             todo();
         case UAST_LITERAL:

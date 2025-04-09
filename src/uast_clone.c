@@ -2,6 +2,7 @@
 #include <parser_utils.h>
 #include <symbol_collection_clone.h>
 #include <ulang_type_clone.h>
+#include <name_clone.h>
 
 Uast_number* uast_number_clone(const Uast_number* lit) {
     return uast_number_new(lit->pos, lit->data);
@@ -52,7 +53,7 @@ Uast_case_vec uast_case_vec_clone(Uast_case_vec vec) {
 }
 
 Uast_symbol* uast_symbol_clone(const Uast_symbol* symbol) {
-    return uast_symbol_new(symbol->pos, symbol->name, ulang_type_vec_clone(symbol->generic_args));
+    return uast_symbol_new(symbol->pos, name_clone(symbol->name));
 }
 
 Uast_member_access* uast_member_access_clone(const Uast_member_access* access) {

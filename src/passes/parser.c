@@ -1111,7 +1111,13 @@ static PARSE_STATUS parse_generics_params(Env* env, Uast_generic_param_vec* para
             msg_parser_expected(env->file_path_to_text, tk_view_front(*tokens), "", TOKEN_SYMBOL);
             return PARSE_ERROR;
         }
-        Uast_generic_param* param = uast_generic_param_new(symbol.pos, uast_symbol_new(symbol.pos, symbol.text, (Ulang_type_vec) {0}));
+        Uast_generic_param* param = uast_generic_param_new(
+            symbol.pos,
+            uast_symbol_new(
+                symbol.pos,
+                (Name) {.mod_path = env->curr_mod_path, .base = symbol.text, .gen_args = (Ulang_type_vec) {0}}
+            )
+        );
         vec_append(&a_main, params, param);
     } while (try_consume(NULL, tokens, TOKEN_COMMA));
 
@@ -1476,7 +1482,7 @@ static PARSE_STATUS parse_for_range_internal(Env* env, Uast_block** result, Uast
 
     Uast_assignment* init_assign = uast_assignment_new(
         uast_expr_get_pos(lower_bound),
-        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name.base, (Ulang_type_vec) {0})),
+        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
         lower_bound
     );
     vec_append(&a_main, &outer->children, uast_assignment_wrap(init_assign));
@@ -1489,7 +1495,7 @@ static PARSE_STATUS parse_for_range_internal(Env* env, Uast_block** result, Uast
             outer->pos,
             uast_binary_wrap(uast_binary_new(
                 outer->pos,
-                uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name.base, (Ulang_type_vec) {0})),
+                uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
                 upper_bound,
                 BINARY_LESS_THAN
             ))
@@ -1508,10 +1514,10 @@ static PARSE_STATUS parse_for_range_internal(Env* env, Uast_block** result, Uast
 
     Uast_assignment* increment = uast_assignment_new(
         uast_expr_get_pos(upper_bound),
-        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name.base, (Ulang_type_vec) {0})),
+        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
         uast_operator_wrap(uast_binary_wrap(uast_binary_new(
             var_def->pos,
-            uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name.base, (Ulang_type_vec) {0})),
+            uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
             uast_literal_wrap(util_uast_literal_new_from_int64_t(env, 1, TOKEN_INT_LITERAL, uast_expr_get_pos(upper_bound))),
             BINARY_ADD
         )))
@@ -1651,11 +1657,11 @@ static PARSE_STATUS parse_literal(Env* env, Uast_literal** lit, Tk_view* tokens)
     return PARSE_ERROR;
 }
 
-static Uast_symbol* parse_symbol(Tk_view* tokens) {
+static Uast_symbol* parse_symbol(Env* env, Tk_view* tokens) {
     Token token = tk_view_consume(tokens);
     assert(token.type == TOKEN_SYMBOL);
 
-    return uast_symbol_new(token.pos, token.text, (Ulang_type_vec) {0});
+    return uast_symbol_new(token.pos, (Name) {.mod_path = env->curr_mod_path, .base = token.text, .gen_args = (Ulang_type_vec) {0}});
 }
 
 static PARSE_STATUS parse_function_call(Env* env, Uast_function_call** child, Tk_view* tokens, Uast_expr* callee) {
@@ -1916,8 +1922,7 @@ static Uast_expr* get_expr_or_symbol(Uast_stmt* stmt) {
     if (stmt->type == UAST_DEF) {
         return uast_symbol_wrap(uast_symbol_new(
             uast_stmt_get_pos(stmt),
-            uast_variable_def_unwrap(uast_def_unwrap(stmt))->name.base,
-            (Ulang_type_vec) {0}
+            uast_variable_def_unwrap(uast_def_unwrap(stmt))->name
         ));
     }
 
@@ -2270,7 +2275,7 @@ static PARSE_EXPR_STATUS parse_expr_piece(
         }
         *result = uast_literal_wrap(lit);
     } else if (tk_view_front(*tokens).type == TOKEN_SYMBOL) {
-        *result = uast_symbol_wrap(parse_symbol(tokens));
+        *result = uast_symbol_wrap(parse_symbol(env, tokens));
     } else if (starts_with_switch(*tokens)) {
         Uast_switch* lang_switch = NULL;
         if (PARSE_OK != parse_switch(env, &lang_switch, tokens)) {
@@ -2466,7 +2471,7 @@ static PARSE_EXPR_STATUS parse_binary(
 
     switch (oper.type) {
         case TOKEN_SINGLE_DOT:
-            *result = uast_member_access_wrap(uast_member_access_new(oper.pos, uast_symbol_unwrap(rhs)->name, lhs));
+            *result = uast_member_access_wrap(uast_member_access_new(oper.pos, uast_symbol_unwrap(rhs)->name.base, lhs));
             break;
         case TOKEN_SINGLE_PLUS:
             // fallthrough
@@ -2707,7 +2712,7 @@ static PARSE_EXPR_STATUS parse_expr_generic(
     (void) prev_oper_pres;
     (void) defer_sym_add;
     
-    if (PARSE_OK != parse_generics_args(env, &uast_symbol_unwrap(lhs)->generic_args, tokens)) {
+    if (PARSE_OK != parse_generics_args(env, &uast_symbol_unwrap(lhs)->name.gen_args, tokens)) {
         return PARSE_EXPR_ERROR;
     }
     return PARSE_EXPR_OK;
