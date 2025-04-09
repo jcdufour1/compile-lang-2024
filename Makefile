@@ -44,6 +44,7 @@ OBJS=\
 	 ${BUILD_DIR}/symbol_table.o \
 	 ${BUILD_DIR}/file.o \
 	 ${BUILD_DIR}/parameters.o \
+	 ${BUILD_DIR}/extend_name.o \
 	 ${BUILD_DIR}/parser_utils.o \
 	 ${BUILD_DIR}/error_msg.o \
 	 ${BUILD_DIR}/lang_type_serialize.o \
@@ -140,6 +141,9 @@ ${BUILD_DIR}/file.o: ${DEP_COMMON} src/file.c third_party/*
 
 ${BUILD_DIR}/parameters.o: ${DEP_COMMON} src/parameters.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/parameters.o src/parameters.c
+
+${BUILD_DIR}/extend_name.o: ${DEP_COMMON} src/extend_name.c third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/extend_name.o src/extend_name.c
 
 ${BUILD_DIR}/error_msg.o: ${DEP_COMMON} src/error_msg.c third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/error_msg.o src/error_msg.c

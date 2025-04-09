@@ -18,8 +18,7 @@ Str_view serialize_ulang_type_atom(Ulang_type_atom atom) {
 
 Name serialize_ulang_type_fn(Str_view mod_path, Ulang_type_fn ulang_type) {
     String name = {0};
-    todo();
-    //string_extend_strv(&a_main, &name, serialize_ulang_type_tuple(ulang_type.params));
+    extend_name(false, &name, serialize_ulang_type_tuple(mod_path, ulang_type.params));
     string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(mod_path, *ulang_type.return_type)));
     return (Name) {.mod_path = mod_path, .base = string_to_strv(name)};
 }
