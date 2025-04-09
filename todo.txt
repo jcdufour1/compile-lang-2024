@@ -43,12 +43,18 @@ for generics:
 - make expected failure test for using variable to assign self in initialization
     (eg. let num i32 = num*4)
 - rename ULANG_TYPE_REG_GENERIC to ULANG_TYPE_GENERIC
+- struct and sum with same elements, etc. to stress test some things
+- make expected failure test case for this:
+      import = std
+- expected failure case for importing file that does not exist
+- print function for vector of something
+- test case for this in generic function:
+    return Optional(<ItemType>).some(num + 1)
 
 
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
-- generics
 - nested generics
 - constraints in generics
 - defer
@@ -69,6 +75,8 @@ for generics:
 - use str_view_at instead of str_view.str[idx] for bounds checking
 - def
 - distinct
+- pointer generic
+- warn about unused variables
 
 ## needed tests
 - let token* Token = <...>; switch token {<...>}
@@ -80,4 +88,5 @@ for generics:
 - iterators and foreach
 - floats
 - use 0o for octal prefix?
+- graphviz (for program control flow, etc.)
 
