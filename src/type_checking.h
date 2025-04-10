@@ -111,7 +111,7 @@ bool try_set_primitive_def_types(Env* env, Uast_primitive_def* tast);
 
 bool try_set_literal_def_types(Env* env, Uast_literal_def* tast);
 
-bool try_set_import_types(Env* env, Uast_import* tast);
+bool try_set_import_types(Env* env, Tast_block** new_tast, Uast_import* tast);
 
 bool try_set_switch_types(Env* env, Tast_if_else_chain** new_tast, const Uast_switch* lang_switch);
 

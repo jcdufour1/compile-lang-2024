@@ -594,6 +594,8 @@ Str_view tast_def_print_internal(const Tast_def* def, int indent) {
             return tast_literal_def_print_internal(tast_literal_def_const_unwrap(def), indent);
         case TAST_SUM_DEF:
             return tast_sum_def_print_internal(tast_sum_def_const_unwrap(def), indent);
+        case TAST_IMPORT:
+            todo();
     }
     unreachable("");
 }

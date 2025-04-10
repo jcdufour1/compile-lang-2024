@@ -441,6 +441,16 @@ static Tast_type tast_gen_module_alias(const char* prefix) {
     return chain;
 }
 
+static Tast_type tast_gen_import(const char* prefix) {
+    Tast_type import = {.name = tast_name_new(prefix, "import", false)};
+
+    append_member(&import.members, "Tast_block*", "block");
+    append_member(&import.members, "Name", "alias_name");
+    append_member(&import.members, "Str_view", "path");
+
+    return import;
+}
+
 static Tast_type tast_gen_expr(const char* prefix) {
     const char* base_name = "expr";
     Tast_type expr = {.name = tast_name_new(prefix, base_name, false)};
@@ -576,6 +586,7 @@ static Tast_type tast_gen_def(const char* prefix) {
     const char* base_name = "def";
     Tast_type def = {.name = tast_name_new(prefix, base_name, false)};
 
+    vec_append(&gen_a, &def.sub_types, tast_gen_import(base_name));
     vec_append(&gen_a, &def.sub_types, tast_gen_function_def(base_name));
     vec_append(&gen_a, &def.sub_types, tast_gen_variable_def(base_name));
     vec_append(&gen_a, &def.sub_types, tast_gen_struct_def(base_name));

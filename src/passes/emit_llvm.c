@@ -928,7 +928,8 @@ static void emit_function_decl(Env* env, String* output, const Llvm_function_dec
     string_extend_cstr(&a_main, output, "declare i32");
     //extend_literal_decl(output, fun_decl); // TODO
     string_extend_cstr(&a_main, output, " @");
-    extend_name(true, output, fun_decl->name);
+    // emit base of name only for extern("c")
+    string_extend_strv(&a_main, output, fun_decl->name.base);
     vec_append(&a_main, output, '(');
     emit_function_params(env, output, fun_decl->params);
     vec_append(&a_main, output, ')');
@@ -1049,6 +1050,7 @@ static void emit_def(Env* env, String* struct_defs, String* output, String* lite
         case LLVM_VARIABLE_DEF:
             return;
         case LLVM_FUNCTION_DECL:
+            todo();
             emit_function_decl(env, output, llvm_function_decl_const_unwrap(def));
             return;
         case LLVM_LABEL:

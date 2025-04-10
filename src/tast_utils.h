@@ -233,6 +233,8 @@ static inline Lang_type tast_def_get_lang_type(const Tast_def* def) {
             unreachable("");
         case TAST_LITERAL_DEF:
             unreachable("");
+        case TAST_IMPORT:
+            unreachable("");
     }
     unreachable("");
 }
@@ -324,6 +326,8 @@ static inline Lang_type* tast_def_set_lang_type(Tast_def* def) {
         case TAST_LITERAL_DEF:
             unreachable("");
         case TAST_SUM_DEF:
+            unreachable("");
+        case TAST_IMPORT:
             unreachable("");
     }
     unreachable("");
@@ -444,6 +448,8 @@ static inline Name tast_def_get_name(const Tast_def* def) {
             return tast_literal_def_get_name(tast_literal_def_const_unwrap(def));
         case TAST_SUM_DEF:
             return tast_sum_def_const_unwrap(def)->base.name;
+        case TAST_IMPORT:
+            todo();
     }
     unreachable("");
 }
@@ -490,6 +496,8 @@ static inline Struct_def_base tast_def_get_struct_def_base(const Tast_def* def) 
             unreachable("");
         case TAST_LITERAL_DEF:
             unreachable("");
+        case TAST_IMPORT:
+            todo();
     }
     unreachable("");
 }

@@ -492,7 +492,7 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
             return true;
         }
         case UAST_IMPORT: {
-            Tast_module_alias* sym_typed = tast_module_alias_new(sym_untyped->pos, uast_import_unwrap(sym_def)->alias_name, uast_import_unwrap(sym_def)->path);
+            Tast_module_alias* sym_typed = tast_module_alias_new(sym_untyped->pos, uast_import_unwrap(sym_def)->alias_name, uast_import_unwrap(sym_def)->mod_path);
             *new_tast = tast_module_alias_wrap(sym_typed);
             return true;
         }
@@ -1289,7 +1289,7 @@ bool try_set_expr_types(Env* env, Tast_expr** new_tast, Uast_expr* uast) {
     unreachable("");
 }
 
-STMT_STATUS try_set_def_types(Env* env, Uast_def* uast) {
+STMT_STATUS try_set_def_types(Env* env, Tast_stmt** new_stmt, Uast_def* uast) {
     switch (uast->type) {
         case UAST_VARIABLE_DEF: {
             Tast_variable_def* new_def = NULL;
@@ -1343,10 +1343,12 @@ STMT_STATUS try_set_def_types(Env* env, Uast_def* uast) {
             todo();
         }
         case UAST_IMPORT: {
-            if (!try_set_import_types(env, uast_import_unwrap(uast))) {
+            Tast_block* new_block = NULL;
+            if (!try_set_import_types(env, &new_block, uast_import_unwrap(uast))) {
                 return STMT_ERROR;
             }
-            return STMT_NO_STMT;
+            *new_stmt = tast_block_wrap(new_block);
+            return STMT_OK;
         }
     }
     unreachable("");
@@ -2059,12 +2061,8 @@ bool try_set_literal_def_types(Env* env, Uast_literal_def* tast) {
     unreachable("");
 }
 
-bool try_set_import_types(Env* env, Uast_import* tast) {
-    (void) env;
-    (void) tast;
-    // TODO
-    Tast_block* dummy = NULL;
-    return try_set_block_types(env, &dummy, tast->block, false);
+bool try_set_import_types(Env* env, Tast_block** new_tast, Uast_import* tast) {
+    return try_set_block_types(env, new_tast, tast->block, false);
 }
 
 bool try_set_variable_def_types(
@@ -2676,6 +2674,8 @@ bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, boo
         goto error;
     }
 
+    Tast_stmt_vec aux_stmts = {0};
+
     Usymbol_iter iter = usym_tbl_iter_new(new_sym_coll.usymbol_table);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
@@ -2685,14 +2685,16 @@ bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, boo
             continue;
         }
 
-        switch (try_set_def_types(env, curr)) {
+        Tast_stmt* new_node = NULL;
+        switch (try_set_def_types(env, &new_node, curr)) {
             case STMT_NO_STMT:
                 break;
             case STMT_ERROR:
                 status = false;
                 break;
             case STMT_OK:
-                unreachable("");
+                vec_append(&a_main, &aux_stmts, new_node);
+                break;
             default:
                 unreachable("");
         }
@@ -2773,9 +2775,7 @@ STMT_STATUS try_set_stmt_types(Env* env, Tast_stmt** new_tast, Uast_stmt* stmt) 
             return STMT_OK;
         }
         case UAST_DEF: {
-            STMT_STATUS status = try_set_def_types(env, uast_def_unwrap(stmt));
-            unwrap(status != STMT_OK);
-            return status;
+            return try_set_def_types(env, new_tast, uast_def_unwrap(stmt));
         }
         case UAST_FOR_WITH_COND: {
             Tast_for_with_cond* new_tast_ = NULL;
