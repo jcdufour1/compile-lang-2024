@@ -43,7 +43,7 @@ static bool is_extern_c(const Llvm* llvm) {
     unreachable("");
 }
 
-static void llvm_extend_name(Env* env, String* buf, Name name) {
+static void llvm_extend_name(Env* env, String* output, Name name) {
     Llvm* result = NULL;
     log(LOG_DEBUG, TAST_FMT"\n", name_print(name));
     unwrap(alloca_lookup(&result, env, name));
@@ -51,8 +51,11 @@ static void llvm_extend_name(Env* env, String* buf, Name name) {
     if (is_extern_c(result)) {
         memset(&name.mod_path, 0, sizeof(name.mod_path));
         assert(name.gen_args.info.count < 1 && "extern c generic function should not be allowed");
+    } else if (name.mod_path.count < 1 && !str_view_cstr_is_equal(name.base, "main")) {
+        name.mod_path = str_view_from_cstr("PREFIX"); // TODO: make variable or similar for this
     }
-    extend_name(true, buf, name);
+
+    extend_name(true, output, name);
 }
 
 static void emit_block(Env* env, String* struct_defs, String* output, String* literals, const Llvm_block* fun_block);
@@ -165,11 +168,11 @@ static void extend_type_call_str(Env* env, String* output, Lang_type lang_type) 
             unreachable("");
         case LANG_TYPE_STRUCT:
             string_extend_cstr(&a_main, output, "%struct.");
-            string_extend_strv(&a_main, output, serialize_lang_type(env, lang_type));
+            llvm_extend_name(env, output, lang_type_struct_const_unwrap(lang_type).atom.str);
             return;
         case LANG_TYPE_RAW_UNION:
             string_extend_cstr(&a_main, output, "%union.");
-            string_extend_strv(&a_main, output, serialize_lang_type(env, lang_type));
+            llvm_extend_name(env, output, lang_type_raw_union_const_unwrap(lang_type).atom.str);
             return;
         case LANG_TYPE_ENUM:
             lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(
@@ -195,7 +198,7 @@ static void extend_type_call_str(Env* env, String* output, Lang_type lang_type) 
             return;
         case LANG_TYPE_SUM:
             string_extend_cstr(&a_main, output, "%struct.");
-            string_extend_strv(&a_main, output, serialize_lang_type(env, lang_type));
+            llvm_extend_name(env, output, lang_type_sum_const_unwrap(lang_type).atom.str);
             return;
     }
     unreachable("");
