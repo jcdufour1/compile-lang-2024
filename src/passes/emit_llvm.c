@@ -15,11 +15,47 @@
 #include <lang_type_get_pos.h>
 #include <symbol_iter.h>
 
+static bool is_extern_c(const Llvm_def* def) {
+    switch (def->type) {
+        case LLVM_FUNCTION_DEF:
+            return false;
+        case LLVM_FUNCTION_DECL:
+            return true;
+        case LLVM_VARIABLE_DEF:
+            return false;
+        case LLVM_STRUCT_DEF:
+            return false;
+        case LLVM_RAW_UNION_DEF:
+            return false;
+        case LLVM_ENUM_DEF:
+            return false;
+        case LLVM_PRIMITIVE_DEF:
+            return false;
+        case LLVM_LABEL:
+            return false;
+        case LLVM_LITERAL_DEF:
+            return false;
+    }
+    unreachable("");
+}
+
+static void llvm_extend_name(Env* env, String* buf, Name name) {
+    Llvm* result = NULL;
+    log(LOG_DEBUG, TAST_FMT"\n", name_print(name));
+    unwrap(alloca_lookup(&result, env, name));
+
+    if (is_extern_c(llvm_def_unwrap(result))) {
+        memset(&name.mod_path, 0, sizeof(name.mod_path));
+        assert(name.gen_args.info.count < 1 && "extern c generic function should not be allowed");
+    }
+    extend_name(true, buf, name);
+}
+
 static void emit_block(Env* env, String* struct_defs, String* output, String* literals, const Llvm_block* fun_block);
 
 static void emit_sometimes(Env* env, String* struct_defs, String* output, String* literals, const Llvm* llvm);
 
-static void emit_symbol_normal(String* literals, Name key, const Llvm_literal* lit);
+static void emit_symbol_normal(Env* env, String* literals, Name key, const Llvm_literal* lit);
 
 static bool llvm_is_literal(const Llvm* llvm) {
     if (llvm->type != LLVM_EXPR) {
@@ -28,7 +64,7 @@ static bool llvm_is_literal(const Llvm* llvm) {
     return llvm_expr_const_unwrap(llvm)->type == LLVM_LITERAL;
 }
 
-static void extend_literal(String* output, const Llvm_literal* literal) {
+static void extend_literal(Env* env, String* output, const Llvm_literal* literal) {
     switch (literal->type) {
         case LLVM_STRING:
             string_extend_strv(&a_main, output, llvm_string_const_unwrap(literal)->data);
@@ -45,7 +81,7 @@ static void extend_literal(String* output, const Llvm_literal* literal) {
             string_extend_int64_t(&a_main, output, (int64_t)llvm_char_const_unwrap(literal)->data);
             return;
         case LLVM_FUNCTION_NAME:
-            extend_name(true, output, llvm_function_name_const_unwrap(literal)->fun_name);
+            llvm_extend_name(env, output, llvm_function_name_const_unwrap(literal)->fun_name);
             return;
     }
     unreachable("");
@@ -225,10 +261,10 @@ static void llvm_extend_type_decl_str(Env* env, String* output, const Llvm* var_
     }
 }
 
-static void extend_literal_decl_prefix(String* output, String* literals, const Llvm_literal* literal) {
+static void extend_literal_decl_prefix(Env* env, String* output, String* literals, const Llvm_literal* literal) {
     if (literal->type == LLVM_FUNCTION_NAME) {
         string_extend_cstr(&a_main, output, " @");
-        extend_name(true, output, llvm_function_name_const_unwrap(literal)->fun_name);
+        llvm_extend_name(env, output, llvm_function_name_const_unwrap(literal)->fun_name);
     } else if (
         llvm_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE &&
         lang_type_primitive_const_unwrap(llvm_literal_get_lang_type(literal)).type == LANG_TYPE_CHAR &&
@@ -238,31 +274,31 @@ static void extend_literal_decl_prefix(String* output, String* literals, const L
             todo();
         }
         string_extend_cstr(&a_main, output, " @.");
-        extend_name(true, output, llvm_literal_get_name(literal));
+        llvm_extend_name(env, output, llvm_literal_get_name(literal));
     } else if (lang_type_atom_is_signed(lang_type_get_atom(llvm_literal_get_lang_type(literal)))) {
         assert(llvm_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE);
         if (lang_type_get_pointer_depth(llvm_literal_get_lang_type(literal)) != 0) {
             todo();
         }
         vec_append(&a_main, output, ' ');
-        extend_literal(output, literal);
+        extend_literal(env, output, literal);
     } else if (lang_type_atom_is_unsigned(lang_type_get_atom(llvm_literal_get_lang_type(literal)))) {
         assert(llvm_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE);
         if (lang_type_get_pointer_depth(llvm_literal_get_lang_type(literal)) != 0) {
             todo();
         }
         vec_append(&a_main, output, ' ');
-        extend_literal(output, literal);
+        extend_literal(env, output, literal);
     } else if (llvm_literal_get_lang_type(literal).type == LANG_TYPE_ENUM) {
         vec_append(&a_main, output, ' ');
-        extend_literal(output, literal);
+        extend_literal(env, output, literal);
     } else {
         log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, llvm_literal_get_lang_type(literal)));
         unreachable(LLVM_FMT"\n", llvm_print(llvm_expr_const_wrap(llvm_literal_const_wrap(literal))));
     }
 
     if (literal->type == LLVM_STRING) {
-        emit_symbol_normal(literals, llvm_literal_get_name(literal), literal);
+        emit_symbol_normal(env, literals, llvm_literal_get_name(literal), literal);
     }
 }
 
@@ -294,7 +330,7 @@ static void tast_extend_literal_decl_prefix(String* output, const Tast_literal* 
 
 static void extend_literal_decl(Env* env, String* output, String* literals, const Llvm_literal* literal, bool noundef) {
     llvm_extend_type_decl_str(env, output, llvm_expr_const_wrap(llvm_literal_const_wrap(literal)), noundef);
-    extend_literal_decl_prefix(output, literals, literal);
+    extend_literal_decl_prefix(env, output, literals, literal);
 }
 
 static void tast_extend_literal_decl(Env* env, String* output, const Tast_literal* literal, bool noundef) {
@@ -435,7 +471,7 @@ static void emit_function_call(Env* env, String* output, String* literals, const
     switch (callee->type) {
         case LLVM_EXPR:
             string_extend_cstr(&a_main, output, " @");
-            extend_name(true, output, llvm_function_name_unwrap(llvm_literal_unwrap(llvm_expr_unwrap(((callee)))))->fun_name);
+            llvm_extend_name(env, output, llvm_function_name_unwrap(llvm_literal_unwrap(llvm_expr_unwrap(((callee)))))->fun_name);
             break;
         case LLVM_LOAD_ANOTHER_LLVM:
             string_extend_cstr(&a_main, output, "%");
@@ -649,12 +685,13 @@ static void emit_unary_suffix(Env* env, String* output, const Llvm_unary* unary)
 }
 
 static void emit_operator_operand_llvm_placeholder_expr(
+    Env* env,
     String* output,
     const Llvm_expr* expr
 ) {
     switch (expr->type) {
         case LLVM_LITERAL:
-            extend_literal(output, llvm_literal_const_unwrap(expr));
+            extend_literal(env, output, llvm_literal_const_unwrap(expr));
             break;
         case LLVM_OPERATOR:
             // fallthrough
@@ -669,10 +706,10 @@ static void emit_operator_operand_llvm_placeholder_expr(
     }
 }
 
-static void emit_operator_operand_expr(String* output, const Llvm_expr* operand) {
+static void emit_operator_operand_expr(Env* env, String* output, const Llvm_expr* operand) {
     switch (operand->type) {
         case LLVM_LITERAL:
-            extend_literal(output, llvm_literal_const_unwrap(operand));
+            extend_literal(env, output, llvm_literal_const_unwrap(operand));
             break;
         case LLVM_SYMBOL:
             unreachable("");
@@ -695,7 +732,7 @@ static void emit_operator_operand(Env* env, String* output, const Name operand_n
 
     switch (operand->type) {
         case LLVM_EXPR:
-            emit_operator_operand_expr(output, llvm_expr_const_unwrap(operand));
+            emit_operator_operand_expr(env, output, llvm_expr_const_unwrap(operand));
             break;
         case LLVM_LOAD_ANOTHER_LLVM:
             string_extend_cstr(&a_main, output, "%");
@@ -757,6 +794,7 @@ static void emit_load_another_llvm(Env* env, String* output, const Llvm_load_ano
 }
 
 static void emit_store_another_llvm_src_literal(
+    Env* env,
     String* output,
     const Llvm_literal* literal
 ) {
@@ -765,7 +803,7 @@ static void emit_store_another_llvm_src_literal(
     switch (literal->type) {
         case LLVM_STRING:
             string_extend_cstr(&a_main, output, " @.");
-            extend_name(true, output, llvm_string_const_unwrap(literal)->name);
+            llvm_extend_name(env, output, llvm_string_const_unwrap(literal)->name);
             return;
         case LLVM_NUMBER:
             string_extend_int64_t(&a_main, output, llvm_number_const_unwrap(literal)->data);
@@ -791,9 +829,9 @@ static void emit_store_another_llvm_src_expr(Env* env, String* output, String* l
         case LLVM_LITERAL: {
             const Llvm_literal* lit = llvm_literal_const_unwrap(expr);
             if (lit->type == LLVM_STRING) {
-                emit_symbol_normal(literals, llvm_literal_get_name(lit), lit);
+                emit_symbol_normal(env, literals, llvm_literal_get_name(lit), lit);
             }
-            emit_store_another_llvm_src_literal(output, lit);
+            emit_store_another_llvm_src_literal(env, output, lit);
             return;
         }
         case LLVM_FUNCTION_CALL:
@@ -855,7 +893,7 @@ static void emit_function_def(Env* env, String* struct_defs, String* output, Str
     extend_type_call_str(env, output, fun_def->decl->return_type);
 
     string_extend_cstr(&a_main, output, " @");
-    extend_name(true, output, llvm_tast_get_name(llvm_def_const_wrap(llvm_function_def_const_wrap(fun_def))));
+    llvm_extend_name(env, output, llvm_tast_get_name(llvm_def_const_wrap(llvm_function_def_const_wrap(fun_def))));
 
     vec_append(&a_main, output, '(');
     emit_function_params(env, output, fun_def->decl->params);
@@ -873,7 +911,7 @@ static void emit_return_expr(Env* env, String* output, const Llvm_expr* child) {
             string_extend_cstr(&a_main, output, "    ret ");
             extend_type_call_str(env, output, llvm_literal_get_lang_type(literal));
             string_extend_cstr(&a_main, output, " ");
-            extend_literal(output, literal);
+            extend_literal(env, output, literal);
             string_extend_cstr(&a_main, output, "\n");
             break;
         }
@@ -960,7 +998,7 @@ static void emit_cond_goto(Env* env, String* output, const Llvm_cond_goto* cond_
 }
 
 static void emit_struct_def_base(Env* env, String* output, const Struct_def_base* base, bool largest_only) {
-    extend_name(true, output, base->name);
+    llvm_extend_name(env, output, base->name);
     string_extend_cstr(&a_main, output, " = type { ");
     bool is_first = true;
 
@@ -1191,7 +1229,7 @@ static void emit_sometimes(Env* env, String* struct_defs, String* output, String
     unreachable("");
 }
 
-static void emit_symbol_normal(String* literals, Name key, const Llvm_literal* lit) {
+static void emit_symbol_normal(Env* env, String* literals, Name key, const Llvm_literal* lit) {
     Str_view data = {0};
     switch (lit->type) {
         case LLVM_STRING:
@@ -1204,7 +1242,7 @@ static void emit_symbol_normal(String* literals, Name key, const Llvm_literal* l
     size_t literal_width = data.count + 1 - get_count_excape_seq(data);
 
     string_extend_cstr(&a_main, literals, "@.");
-    extend_name(true, literals, key);
+    llvm_extend_name(env, literals, key);
     string_extend_cstr(&a_main, literals, " = private unnamed_addr constant [ ");
     string_extend_size_t(&a_main, literals, literal_width);
     string_extend_cstr(&a_main, literals, " x i8] c\"");
@@ -1241,7 +1279,7 @@ static void tast_emit_symbol(String* output, Str_view key, const Tast_string_def
 
 static void tast_emit_struct_literal(Env* env, String* output, const Tast_struct_lit_def* lit_def) {
     string_extend_cstr(&a_main, output, "@__const.main.");
-    extend_name(true, output, lit_def->name);
+    llvm_extend_name(env, output, lit_def->name);
     string_extend_cstr(&a_main, output, " = private unnamed_addr constant %struct.");
     extend_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_LLVM, lit_def->lang_type);
     string_extend_cstr(&a_main, output, " {");
@@ -1261,7 +1299,7 @@ static void tast_emit_struct_literal(Env* env, String* output, const Tast_struct
 
 static void emit_struct_literal(Env* env, String* output, String* literals, const Llvm_struct_lit_def* lit_def) {
     string_extend_cstr(&a_main, output, "@__const.main.");
-    extend_name(true, output, lit_def->name);
+    llvm_extend_name(env, output, lit_def->name);
     string_extend_cstr(&a_main, output, " = private unnamed_addr constant %struct.");
     extend_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_LLVM, lit_def->lang_type);
     string_extend_cstr(&a_main, output, " {");
