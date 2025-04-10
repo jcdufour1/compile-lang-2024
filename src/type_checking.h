@@ -28,7 +28,7 @@ bool try_set_binary_types_finish(
 // returns false if unsuccessful
 bool try_set_binary_types(Env* env, Tast_expr** new_tast, Uast_binary* operator);
 
-bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* tast, bool is_directly_in_fun_def);
+bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* tast, bool is_directly_in_fun_def, bool new_sym_tbl);
 
 STMT_STATUS try_set_stmt_types(Env* env, Tast_stmt** new_stmt, Uast_stmt* stmt);
 

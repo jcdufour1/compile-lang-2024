@@ -15,8 +15,12 @@
 #include <lang_type_get_pos.h>
 #include <symbol_iter.h>
 
-static bool is_extern_c(const Llvm_def* def) {
-    switch (def->type) {
+static bool is_extern_c(const Llvm* llvm) {
+    if (llvm->type != LLVM_DEF) {
+        return false;
+    }
+
+    switch (llvm_def_const_unwrap(llvm)->type) {
         case LLVM_FUNCTION_DEF:
             return false;
         case LLVM_FUNCTION_DECL:
@@ -44,7 +48,7 @@ static void llvm_extend_name(Env* env, String* buf, Name name) {
     log(LOG_DEBUG, TAST_FMT"\n", name_print(name));
     unwrap(alloca_lookup(&result, env, name));
 
-    if (is_extern_c(llvm_def_unwrap(result))) {
+    if (is_extern_c(result)) {
         memset(&name.mod_path, 0, sizeof(name.mod_path));
         assert(name.gen_args.info.count < 1 && "extern c generic function should not be allowed");
     }

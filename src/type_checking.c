@@ -2062,7 +2062,7 @@ bool try_set_literal_def_types(Env* env, Uast_literal_def* tast) {
 }
 
 bool try_set_import_types(Env* env, Tast_block** new_tast, Uast_import* tast) {
-    return try_set_block_types(env, new_tast, tast->block, false);
+    return try_set_block_types(env, new_tast, tast->block, false, false);
 }
 
 bool try_set_variable_def_types(
@@ -2146,7 +2146,7 @@ bool try_set_function_def_types(
 
     size_t prev_ancesters_count = env->ancesters.info.count;
     Tast_block* new_body = NULL;
-    if (!try_set_block_types(env, &new_body, def->body, true)) {
+    if (!try_set_block_types(env, &new_body, def->body, true, true)) {
         status = false;
         goto error;
     }
@@ -2263,7 +2263,7 @@ bool try_set_for_with_cond_types(Env* env, Tast_for_with_cond** new_tast, Uast_f
     }
 
     Tast_block* new_body = NULL;
-    if (!try_set_block_types(env, &new_body, uast->body, false)) {
+    if (!try_set_block_types(env, &new_body, uast->body, false, true)) {
         status = false;
     }
 
@@ -2288,7 +2288,7 @@ bool try_set_if_types(Env* env, Tast_if** new_tast, Uast_if* uast) {
     vec_reset(&env->switch_case_defer_add_if_true);
 
     Tast_block* new_body = NULL;
-    if (!(status && try_set_block_types(env, &new_body, uast->body, false))) {
+    if (!(status && try_set_block_types(env, &new_body, uast->body, false, true))) {
         status = false;
     }
 
@@ -2656,14 +2656,16 @@ static void do_test_bit_width(void) {
     assert(4 == bit_width_needed_unsigned(8));
 }
 
-bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def) {
+bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def, bool new_sym_tbl) {
     do_test_bit_width();
 
     bool status = true;
 
     Symbol_collection new_sym_coll = block->symbol_collection;
 
-    vec_append(&a_main, &env->ancesters, &new_sym_coll);
+    if (new_sym_tbl) {
+        vec_append(&a_main, &env->ancesters, &new_sym_coll);
+    }
 
     Tast_stmt_vec new_tasts = {0};
 
@@ -2747,7 +2749,9 @@ bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, boo
     }
 
 error:
-    vec_rem_last(&env->ancesters);
+    if (new_sym_tbl) {
+        vec_rem_last(&env->ancesters);
+    }
     Lang_type yield_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
     assert(yield_type.type == LANG_TYPE_VOID);
     if (env->parent_of == PARENT_OF_CASE) {
@@ -2815,7 +2819,7 @@ STMT_STATUS try_set_stmt_types(Env* env, Tast_stmt** new_tast, Uast_stmt* stmt) 
         case UAST_BLOCK: {
             assert(uast_block_unwrap(stmt)->pos_end.line > 0);
             Tast_block* new_for = NULL;
-            if (!try_set_block_types(env, &new_for, uast_block_unwrap(stmt), false)) {
+            if (!try_set_block_types(env, &new_for, uast_block_unwrap(stmt), false, true)) {
                 return STMT_ERROR;
             }
             *new_tast = tast_block_wrap(new_for);
