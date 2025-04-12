@@ -1,0 +1,3 @@
+hello
+from module dummy one: bye
+from module dummy two: actually bye this time

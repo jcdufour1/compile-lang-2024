@@ -439,8 +439,12 @@ Tast_literal* try_set_literal_types(const Env* env, Uast_literal* literal) {
 bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyped) {
     Uast_def* sym_def = NULL;
     if (!usymbol_lookup(&sym_def, env, sym_untyped->name)) {
-        msg_undefined_symbol(env->file_path_to_text, sym_untyped);
-        return false;
+        Name base_name = sym_untyped->name;
+        memset(&base_name.gen_args, 0, sizeof(base_name.gen_args));
+        if (!usymbol_lookup(&sym_def, env, base_name)) {
+            msg_undefined_symbol(env->file_path_to_text, sym_untyped);
+            return false;
+        }
     }
 
     switch (sym_def->type) {
@@ -1111,8 +1115,13 @@ bool try_set_array_literal_types(
 ) {
     (void) assign_pos;
     log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type));
+    Ulang_type gen_arg_ = {0};
     Lang_type gen_arg = {0};
-    if (lang_type_is_slice(env, &gen_arg, dest_lang_type)) {
+    if (lang_type_is_slice(env, &gen_arg_, dest_lang_type)) {
+        if (!try_lang_type_from_ulang_type(&gen_arg, env, gen_arg_, lit->pos)) {
+            // TODO: expected failure test
+            todo();
+        }
         log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, gen_arg));
     } else {
         todo();
@@ -1164,7 +1173,8 @@ bool try_set_array_literal_types(
         (Name) {.mod_path = env->curr_mod_path, .base = lit->name},
         lang_type_struct_const_wrap(lang_type_struct_new(lit->pos, lang_type_atom_new(inner_def->base.name, 0)))
     );
-    if (!lang_type_is_slice(env, &gen_arg, dest_lang_type)) {
+    Ulang_type dummy = {0};
+    if (!lang_type_is_slice(env, &dummy, dest_lang_type)) {
         todo();
     }
 

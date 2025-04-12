@@ -540,7 +540,7 @@ static bool ulang_type_generics_are_present_fn(Ulang_type_fn lang_type) {
 static bool ulang_type_generics_are_present(Ulang_type lang_type) {
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
-            return false;
+            return ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args.info.count > 0;
         case ULANG_TYPE_TUPLE:
             return ulang_type_generics_are_present_tuple(ulang_type_tuple_const_unwrap(lang_type));
         case ULANG_TYPE_FN:

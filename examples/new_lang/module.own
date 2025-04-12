@@ -1,0 +1,11 @@
+
+type io import = std
+type io2 import = std_dummy
+type io3 import = std_dummy_2
+
+fn main() i32 {
+    io.printf("hello\n")
+    io2.printf("bye")
+    io3.printf("actually bye this time")
+    return 0
+}
