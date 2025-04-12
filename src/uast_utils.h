@@ -57,7 +57,9 @@ static inline Ulang_type uast_get_ulang_type_def(const Uast_def* def) {
             unreachable("");
         case UAST_POISON_DEF:
             unreachable("");
-        case UAST_IMPORT:
+        case UAST_IMPORT_PATH:
+            unreachable("");
+        case UAST_MOD_ALIAS:
             unreachable("");
     }
     unreachable("");
@@ -133,7 +135,9 @@ static inline Lang_type* uast_get_ulang_type_def_ref(Uast_def* def) {
             unreachable("");
         case UAST_POISON_DEF:
             unreachable("");
-        case UAST_IMPORT:
+        case UAST_IMPORT_PATH:
+            unreachable("");
+        case UAST_MOD_ALIAS:
             unreachable("");
     }
     unreachable("");
@@ -235,7 +239,9 @@ static inline Lang_type* uast_def_ref_get_lang_type(Uast_def* def) {
             unreachable("");
         case UAST_POISON_DEF:
             unreachable("");
-        case UAST_IMPORT:
+        case UAST_IMPORT_PATH:
+            unreachable("");
+        case UAST_MOD_ALIAS:
             unreachable("");
     }
     unreachable("");
@@ -281,40 +287,6 @@ static inline Str_view uast_literal_get_name(const Uast_literal* lit) {
     unreachable("");
 }
 
-static inline Str_view uast_expr_get_name(const Uast_expr* expr) {
-    switch (expr->type) {
-        case UAST_OPERATOR:
-            unreachable("");
-        case UAST_STRUCT_LITERAL:
-            return uast_struct_literal_const_unwrap(expr)->name;
-        case UAST_ARRAY_LITERAL:
-            return uast_array_literal_const_unwrap(expr)->name;
-        case UAST_MEMBER_ACCESS:
-            return uast_member_access_const_unwrap(expr)->member_name;
-        case UAST_INDEX:
-            unreachable("");
-        case UAST_SYMBOL:
-            todo();
-        case UAST_FUNCTION_CALL:
-            todo();
-        case UAST_LITERAL:
-            return uast_literal_get_name(uast_literal_const_unwrap(expr));
-        case UAST_TUPLE:
-            unreachable("");
-        case UAST_SUM_ACCESS:
-            unreachable("");
-        case UAST_UNKNOWN:
-            unreachable("");
-        case UAST_SUM_GET_TAG:
-            unreachable("");
-        case UAST_SWITCH:
-            unreachable("");
-        case UAST_IF_ELSE_CHAIN:
-            unreachable("");
-    }
-    unreachable("");
-}
-
 static inline Name uast_literal_def_get_name(const Uast_literal_def* lit_def) {
     switch (lit_def->type) {
         case UAST_STRUCT_LIT_DEF:
@@ -352,33 +324,10 @@ static inline Name uast_def_get_name(const Uast_def* def) {
             //return uast_generic_param_const_unwrap(def)->child->name;
         case UAST_POISON_DEF:
             return uast_poison_def_const_unwrap(def)->name;
-        case UAST_IMPORT:
-            return uast_import_const_unwrap(def)->alias_name;
-    }
-    unreachable("");
-}
-
-static inline Str_view uast_stmt_get_name(const Uast_stmt* stmt) {
-    switch (stmt->type) {
-        case UAST_DEF:
-            todo();
-            //return uast_def_get_name(uast_def_const_unwrap(stmt));
-        case UAST_BLOCK:
-            unreachable("");
-        case UAST_EXPR:
-            return uast_expr_get_name(uast_expr_const_unwrap(stmt));
-        case UAST_FOR_WITH_COND:
-            unreachable("");
-        case UAST_BREAK:
-            unreachable("");
-        case UAST_ASSIGNMENT:
-            unreachable("");
-        case UAST_CONTINUE:
-            unreachable("");
-        case UAST_RETURN:
-            unreachable("");
-        case UAST_LABEL:
-            unreachable("");
+        case UAST_IMPORT_PATH:
+            return uast_import_path_const_unwrap(def)->mod_path;
+        case UAST_MOD_ALIAS:
+            return uast_mod_alias_const_unwrap(def)->name;
     }
     unreachable("");
 }
@@ -431,7 +380,9 @@ static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def)
             unreachable("");
         case UAST_POISON_DEF:
             unreachable("");
-        case UAST_IMPORT:
+        case UAST_IMPORT_PATH:
+            unreachable("");
+        case UAST_MOD_ALIAS:
             unreachable("");
     }
     unreachable("");

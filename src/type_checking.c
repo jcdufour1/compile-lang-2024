@@ -439,7 +439,7 @@ Tast_literal* try_set_literal_types(const Env* env, Uast_literal* literal) {
 bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyped) {
     Uast_def* sym_def = NULL;
     if (!usymbol_lookup(&sym_def, env, sym_untyped->name)) {
-        msg_undefined_symbol(env->file_path_to_text, uast_expr_wrap(uast_symbol_wrap(sym_untyped)));
+        msg_undefined_symbol(env->file_path_to_text, sym_untyped);
         return false;
     }
 
@@ -491,8 +491,11 @@ bool try_set_symbol_types(Env* env, Tast_expr** new_tast, Uast_symbol* sym_untyp
             *new_tast = tast_symbol_wrap(sym_typed);
             return true;
         }
-        case UAST_IMPORT: {
-            Tast_module_alias* sym_typed = tast_module_alias_new(sym_untyped->pos, uast_import_unwrap(sym_def)->alias_name, uast_import_unwrap(sym_def)->mod_path);
+        case UAST_IMPORT_PATH:
+            unreachable("");
+        case UAST_MOD_ALIAS: {
+            assert(uast_mod_alias_unwrap(sym_def)->mod_path.gen_args.info.count < 1);
+            Tast_module_alias* sym_typed = tast_module_alias_new(sym_untyped->pos, uast_mod_alias_unwrap(sym_def)->name, uast_mod_alias_unwrap(sym_def)->mod_path.base);
             *new_tast = tast_module_alias_wrap(sym_typed);
             return true;
         }
@@ -1342,14 +1345,16 @@ STMT_STATUS try_set_def_types(Env* env, Tast_stmt** new_stmt, Uast_def* uast) {
         case UAST_POISON_DEF: {
             todo();
         }
-        case UAST_IMPORT: {
+        case UAST_IMPORT_PATH: {
             Tast_block* new_block = NULL;
-            if (!try_set_import_types(env, &new_block, uast_import_unwrap(uast))) {
+            if (!try_set_import_path_types(env, &new_block, uast_import_path_unwrap(uast))) {
                 return STMT_ERROR;
             }
             *new_stmt = tast_block_wrap(new_block);
             return STMT_OK;
         }
+        case UAST_MOD_ALIAS:
+            return STMT_NO_STMT;
     }
     unreachable("");
 }
@@ -1402,7 +1407,7 @@ bool try_set_function_call_types_sum_case(Env* env, Tast_sum_case** new_case, Ua
             Uast_variable_def* new_def = uast_variable_def_new(
                 sum_case->pos,
                 lang_type_to_ulang_type(sum_case->tag->lang_type),
-                (Name) {.mod_path = env->curr_mod_path, .base = uast_expr_get_name(vec_at(&args, 0))}
+                (Name) {.mod_path = env->curr_mod_path, .base = uast_symbol_unwrap(vec_at(&args, 0))->name.base}
             );
             usymbol_add_defer(env, uast_variable_def_wrap(new_def));
 
@@ -1917,7 +1922,9 @@ bool try_set_member_access_types_finish(
             unreachable("");
         case UAST_POISON_DEF:
             unreachable("");
-        case UAST_IMPORT:
+        case UAST_IMPORT_PATH:
+            unreachable("");
+        case UAST_MOD_ALIAS:
             unreachable("");
     }
     unreachable("");
@@ -2061,7 +2068,7 @@ bool try_set_literal_def_types(Env* env, Uast_literal_def* tast) {
     unreachable("");
 }
 
-bool try_set_import_types(Env* env, Tast_block** new_tast, Uast_import* tast) {
+bool try_set_import_path_types(Env* env, Tast_block** new_tast, Uast_import_path* tast) {
     return try_set_block_types(env, new_tast, tast->block, false, false);
 }
 
@@ -2681,7 +2688,7 @@ bool try_set_block_types(Env* env, Tast_block** new_tast, Uast_block* block, boo
     Usymbol_iter iter = usym_tbl_iter_new(new_sym_coll.usymbol_table);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
-        if (curr->type != UAST_VARIABLE_DEF) {
+        if (curr->type != UAST_VARIABLE_DEF && curr->type != UAST_IMPORT_PATH) {
             // TODO: eventually, we should do also function defs, etc. in this for loop
             // (change parser to not put function defs, etc. in block)
             continue;

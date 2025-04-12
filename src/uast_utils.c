@@ -33,7 +33,9 @@ bool uast_def_get_lang_type(Lang_type* result, Env* env, const Uast_def* def, Ul
             unreachable("");
         case UAST_POISON_DEF:
             unreachable("");
-        case UAST_IMPORT:
+        case UAST_IMPORT_PATH:
+            unreachable("");
+        case UAST_MOD_ALIAS:
             unreachable("");
     }
     unreachable("");

@@ -115,12 +115,21 @@ static Uast_name uast_name_new(const char* parent, const char* base, bool is_top
     return (Uast_name) {.parent = str_view_from_cstr(parent), .base = str_view_from_cstr(base), .is_topmost = is_topmost};
 }
 
-static Uast_type uast_gen_import(const char* prefix) {
-    Uast_type import = {.name = uast_name_new(prefix, "import", false)};
+static Uast_type uast_gen_import_path(const char* prefix) {
+    Uast_type import = {.name = uast_name_new(prefix, "import_path", false)};
 
     append_member(&import.members, "Uast_block*", "block");
-    append_member(&import.members, "Name", "alias_name");
-    append_member(&import.members, "Str_view", "mod_path");
+    append_member(&import.members, "Name", "mod_path");
+
+    return import;
+}
+
+// TODO: also use this node to make more generized alias, etc.
+static Uast_type uast_gen_mod_alias(const char* prefix) {
+    Uast_type import = {.name = uast_name_new(prefix, "mod_alias", false)};
+
+    append_member(&import.members, "Name", "name");
+    append_member(&import.members, "Name", "mod_path");
 
     return import;
 }
@@ -470,7 +479,8 @@ static Uast_type uast_gen_def(const char* prefix) {
     Uast_type def = {.name = uast_name_new(prefix, base_name, false)};
 
     vec_append(&gen_a, &def.sub_types, uast_gen_poison_def(base_name));
-    vec_append(&gen_a, &def.sub_types, uast_gen_import(base_name));
+    vec_append(&gen_a, &def.sub_types, uast_gen_import_path(base_name));
+    vec_append(&gen_a, &def.sub_types, uast_gen_mod_alias(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_generic_param(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_function_def(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_variable_def(base_name));

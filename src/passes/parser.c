@@ -158,30 +158,44 @@ static PARSE_STATUS msg_redefinition_of_symbol(Env* env, const Uast_def* new_sym
     return PARSE_ERROR;
 }
 
-static bool get_block_from_path_token(Env* env, Uast_block** block, Str_view alias, Token mod_name) {
+static bool get_mod_alias_from_path_token(Env* env, Uast_mod_alias** mod_alias, Token alias_tk, Token mod_path) {
     Uast_def* prev_def = NULL;
-    if (usymbol_lookup(&prev_def, env, (Name) {.mod_path = env->curr_mod_path, .base = alias})) {
-        todo();
+    if (usymbol_lookup(&prev_def, env, (Name) {.mod_path = (Str_view) {0}, .base = mod_path.text})) {
+        goto finish;
     }
 
     String file_path = {0};
-    string_extend_strv(&a_main, &file_path, mod_name.text);
+    string_extend_strv(&a_main, &file_path, mod_path.text);
     string_extend_cstr(&a_main, &file_path, ".own");
     Sym_coll_vec old_ances = env->ancesters;
     Str_view old_mod_path = env->curr_mod_path;
     env->ancesters.info.count = 1; // TODO: make macro to do this
-    env->curr_mod_path = mod_name.text;
-    if (!parse_file(block, env, string_to_strv(file_path), false)) {
+    env->curr_mod_path = mod_path.text;
+    Uast_block* block = NULL;
+    if (!parse_file(&block, env, string_to_strv(file_path), false)) {
         // TODO: expected failure test
         todo();
     }
     env->ancesters = old_ances;
     env->curr_mod_path = old_mod_path;
 
+    unwrap(usym_tbl_add(&vec_at(&env->ancesters, 0)->usymbol_table, uast_import_path_wrap(uast_import_path_new(
+        mod_path.pos,
+        block,
+        (Name) {.mod_path = (Str_view) {0}, .base = mod_path.text}
+    ))));
+
+finish:
+    *mod_alias = uast_mod_alias_new(
+        alias_tk.pos,
+        (Name) {.mod_path = env->curr_mod_path, .base = alias_tk.text, .gen_args = (Ulang_type_vec) {0}},
+        (Name) {.mod_path = env->curr_mod_path, .base = mod_path.text, .gen_args = (Ulang_type_vec) {0}}
+    );
+    unwrap(usymbol_add(env, uast_mod_alias_wrap(*mod_alias)));
     return true;
 }
 
-static bool starts_with_import(Tk_view tokens) {
+static bool starts_with_mod_alias(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_IMPORT;
 }
 
@@ -1307,7 +1321,7 @@ static PARSE_STATUS parse_sum_def(Env* env, Uast_sum_def** sum_def, Tk_view* tok
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_import(Env* env, Uast_import** import, Tk_view* tokens, Token name) {
+static PARSE_STATUS parse_import(Env* env, Uast_mod_alias** alias, Tk_view* tokens, Token name) {
     Token import_tk = {0};
     unwrap(try_consume(&import_tk, tokens, TOKEN_IMPORT));
 
@@ -1324,21 +1338,10 @@ static PARSE_STATUS parse_import(Env* env, Uast_import** import, Tk_view* tokens
     }
 
     // TODO: consider repeated import statements
-    Uast_block* block = NULL;
-    if (!get_block_from_path_token(env, &block, name.text, path_tk)) {
+    if (!get_mod_alias_from_path_token(env, alias, name, path_tk)) {
         return PARSE_ERROR;
     }
 
-    *import = uast_import_new(
-        import_tk.pos,
-        block,
-        (Name) {.mod_path = env->curr_mod_path, .base = name.text},
-        path_tk.text
-    );
-    log(LOG_DEBUG, TAST_FMT, uast_import_print(*import));
-    if (!usymbol_add(env, uast_import_wrap(*import))) {
-        todo();
-    }
     return PARSE_OK;
 }
 
@@ -1373,12 +1376,12 @@ static PARSE_STATUS parse_type_def(Env* env, Uast_def** def, Tk_view* tokens) {
             return PARSE_ERROR;
         }
         *def = uast_sum_def_wrap(sum_def);
-    } else if (starts_with_import(*tokens)) {
-        Uast_import* import = NULL;
+    } else if (starts_with_mod_alias(*tokens)) {
+        Uast_mod_alias* import = NULL;
         if (PARSE_OK != parse_import(env, &import, tokens, name)) {
             return PARSE_ERROR;
         }
-        *def = uast_import_wrap(import);
+        *def = uast_mod_alias_wrap(import);
     } else {
         msg_parser_expected(
             env->file_path_to_text, tk_view_front(*tokens), "",

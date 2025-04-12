@@ -118,7 +118,9 @@ void generic_sub_struct_def_base(Env* env, Ustruct_def_base* base, Name gen_para
 
 void generic_sub_def(Env* env, Uast_def* def, Name gen_param, Ulang_type gen_arg) {
     switch (def->type) {
-        case UAST_IMPORT:
+        case UAST_MOD_ALIAS:
+            todo();
+        case UAST_IMPORT_PATH:
             todo();
         case UAST_POISON_DEF:
             todo();

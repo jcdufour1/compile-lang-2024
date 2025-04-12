@@ -167,7 +167,9 @@ Uast_def* uast_def_clone(const Uast_def* def) {
         }
         case UAST_POISON_DEF:
             todo();
-        case UAST_IMPORT:
+        case UAST_MOD_ALIAS:
+            todo();
+        case UAST_IMPORT_PATH:
             todo();
     }
     unreachable("");
