@@ -16,4 +16,5 @@ size_t expected_fail_count = 0;
 
 Pos prev_pos = {0};
 
+Env env = {0};
 

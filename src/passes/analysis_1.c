@@ -5,9 +5,9 @@
 #include <parser_utils.h>
 #include <type_checking.h>
 
-Tast_block* analysis_1(Env* env, Uast_block* root) {
+Tast_block* analysis_1(Uast_block* root) {
     Tast_block* new_block = NULL;
-    if (!try_set_block_types(env, &new_block, root, false, true)) {
+    if (!try_set_block_types( &new_block, root, false, true)) {
         new_block = NULL;
     }
     return new_block;

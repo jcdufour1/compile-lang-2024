@@ -20,20 +20,20 @@ static inline void insert_into_tast_vec(
 
 void tokenize_do_test(void);
 
-bool tokenize(Tokens* result, Env* env, Str_view file_path);
+bool tokenize(Tokens* result, Str_view file_path);
 
-bool parse_file(Uast_block** block, Env* env, Str_view file_path, bool do_new_sym_coll);
+bool parse_file(Uast_block** block, Str_view file_path, bool do_new_sym_coll);
 
-Tast_block* analysis_1(Env* env, Uast_block* root);
+Tast_block* analysis_1(Uast_block* root);
 
-Tast_block* change_operators(Env* env, Tast_block* root);
+Tast_block* change_operators(Tast_block* root);
 
-Tast_block* remove_tuples(Env* env, Tast_block* root);
+Tast_block* remove_tuples(Tast_block* root);
 
-Llvm_block* add_load_and_store(Env* env, Tast_block* old_block);
+Llvm_block* add_load_and_store(Tast_block* old_block);
 
-Llvm_block* assign_llvm_ids(Env* env, Llvm_block* root);
+Llvm_block* assign_llvm_ids(Llvm_block* root);
 
-void emit_llvm_from_tree(Env* env, const Llvm_block* root);
+void emit_llvm_from_tree(const Llvm_block* root);
 
 #endif // PASSES_H

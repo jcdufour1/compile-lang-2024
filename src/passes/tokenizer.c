@@ -82,7 +82,6 @@ static void trim_non_newline_whitespace(Str_view_col* file_text, Pos* pos) {
 }
 
 static bool get_next_token(
-    const Env* env,
     Pos* pos,
     Token* token,
     Str_view_col* file_text_rem,
@@ -177,7 +176,7 @@ static bool get_next_token(
         token->type = TOKEN_STRING_LITERAL;
         Str_view_col quote_str = {0};
         if (!str_view_col_try_consume_while(&quote_str, pos, file_text_rem, is_not_quote)) {
-            msg(LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_DOUBLE_QUOTE, env->file_path_to_text, token->pos, "unmatched `\"`\n");
+            msg(LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_DOUBLE_QUOTE, env.file_path_to_text, token->pos, "unmatched `\"`\n");
             token->type = TOKEN_NONTYPE;
             return false;
         }
@@ -200,7 +199,7 @@ static bool get_next_token(
     } else if (str_view_col_try_consume(pos, file_text_rem, '*')) {
         if (str_view_col_try_consume(pos, file_text_rem, '/')) {
             msg(
-                LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_MULTILINE, env->file_path_to_text,
+                LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_MULTILINE, env.file_path_to_text,
                 *pos, "unmatched closing `/*`\n"
             );
             return false;
@@ -223,7 +222,7 @@ static bool get_next_token(
                 Str_view temp_text = file_text_rem->base;
                 if (file_text_rem->base.count < 2) {
                     msg(
-                        LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_MULTILINE, env->file_path_to_text,
+                        LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_MULTILINE, env.file_path_to_text,
                         vec_top(&pos_stack), "unmatched opening `/*`\n"
                     );
                     return false;
@@ -254,7 +253,7 @@ static bool get_next_token(
             token->type = TOKEN_LOGICAL_AND;
             return true;
         } else {
-            msg_tokenizer_invalid_token(env->file_path_to_text, equals, *pos);
+            msg_tokenizer_invalid_token(env.file_path_to_text, equals, *pos);
             token->type = TOKEN_NONTYPE;
             return true;
         }
@@ -264,11 +263,11 @@ static bool get_next_token(
             token->type = TOKEN_BITWISE_XOR;
             return true;
         } else if (equals.base.count == 2) {
-            msg_tokenizer_invalid_token(env->file_path_to_text, equals, *pos);
+            msg_tokenizer_invalid_token(env.file_path_to_text, equals, *pos);
             token->type = TOKEN_NONTYPE;
             return true;
         } else {
-            msg_tokenizer_invalid_token(env->file_path_to_text, equals, *pos);
+            msg_tokenizer_invalid_token(env.file_path_to_text, equals, *pos);
             token->type = TOKEN_NONTYPE;
             return true;
         }
@@ -281,7 +280,7 @@ static bool get_next_token(
             token->type = TOKEN_LOGICAL_OR;
             return true;
         } else {
-            msg_tokenizer_invalid_token(env->file_path_to_text, equals, *pos);
+            msg_tokenizer_invalid_token(env.file_path_to_text, equals, *pos);
             token->type = TOKEN_NONTYPE;
             return true;
         }
@@ -304,7 +303,7 @@ static bool get_next_token(
             token->type = TOKEN_DOUBLE_EQUAL;
             return true;
         } else {
-            msg_tokenizer_invalid_token(env->file_path_to_text, equals, *pos);
+            msg_tokenizer_invalid_token(env.file_path_to_text, equals, *pos);
             token->type = TOKEN_NONTYPE;
             return true;
         }
@@ -360,7 +359,7 @@ static bool get_next_token(
             token->type = TOKEN_TRIPLE_DOT;
             return true;
         } else {
-            msg_tokenizer_invalid_token(env->file_path_to_text, dots, *pos);
+            msg_tokenizer_invalid_token(env.file_path_to_text, dots, *pos);
             token->type = TOKEN_NONTYPE;
             return true;
         }
@@ -384,7 +383,7 @@ static void test(const char* file_text, Tk_view expected) {
     //Env env = {.file_text = str_view_from_cstr(file_text)};
 
     //Tokens tokens = {0};
-    //if (!tokenize(&tokens, &env, (Str_view){0})) {
+    //if (!tokenize(&tokens, & (Str_view){0})) {
     //    unreachable("");
     //}
     //Tk_view tk_view = {.tokens = tokens.buf, .count = tokens.info.count};
@@ -597,17 +596,17 @@ void tokenize_do_test(void) {
     //test8();
 }
 
-bool tokenize(Tokens* result, Env* env, Str_view file_path) {
+bool tokenize(Tokens* result, Str_view file_path) {
     size_t prev_err_count = error_count;
     Tokens tokens = {0};
 
     Str_view* file_con = NULL;
-    unwrap(file_path_to_text_tbl_lookup(&file_con, &env->file_path_to_text, file_path));
+    unwrap(file_path_to_text_tbl_lookup(&file_con, &env.file_path_to_text, file_path));
     Str_view_col curr_file_text = {.base = *file_con};
 
     Pos pos = {.line = 1, .column = 0};
     Token curr_token = {0};
-    while (get_next_token(env, &pos, &curr_token, &curr_file_text, file_path)) {
+    while (get_next_token( &pos, &curr_token, &curr_file_text, file_path)) {
         if (curr_token.type == TOKEN_COMMENT) {
             continue;
         }

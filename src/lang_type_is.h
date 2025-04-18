@@ -5,7 +5,7 @@
 #include <lang_type.h>
 #include <lang_type_after.h>
 
-static inline bool lang_type_is_slice(Env* env, Ulang_type* gen_arg, Lang_type lang_type) {
+static inline bool lang_type_is_slice(Ulang_type* gen_arg, Lang_type lang_type) {
     (void) env;
     if (lang_type.type != LANG_TYPE_STRUCT) {
         return false;

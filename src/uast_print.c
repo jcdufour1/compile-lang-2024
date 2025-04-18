@@ -46,9 +46,9 @@ Str_view uast_unary_print_internal(const Uast_unary* unary, int indent) {
 }
 
 // TODO: remove
-void uast_extend_sym_typed_base(Env* env, String* string, Sym_typed_base base) {
+void uast_extend_sym_typed_base(String* string, Sym_typed_base base) {
     extend_lang_type_to_string(string, LANG_TYPE_MODE_LOG, base.lang_type);
-    string_extend_strv(&print_arena, string, serialize_name(env, base.name));
+    string_extend_strv(&print_arena, string, serialize_name( base.name));
     string_extend_cstr(&print_arena, string, "\n");
 }
 

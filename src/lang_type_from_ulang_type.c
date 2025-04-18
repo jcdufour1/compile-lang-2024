@@ -3,16 +3,16 @@
 #include <extend_name.h>
 #include <serialize_module_symbol_name.h>
 
-bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Env* env, Ulang_type lang_type, Pos pos) {
+bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type, Pos pos) {
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
-            if (!try_lang_type_from_ulang_type_regular(new_lang_type, env, ulang_type_regular_const_unwrap(lang_type), pos)) {
+            if (!try_lang_type_from_ulang_type_regular(new_lang_type,  ulang_type_regular_const_unwrap(lang_type), pos)) {
                 return false;
             }
             return true;
         case ULANG_TYPE_TUPLE: {
             Lang_type_tuple new_tuple = {0};
-            if (!try_lang_type_from_ulang_type_tuple(&new_tuple, env, ulang_type_tuple_const_unwrap(lang_type), pos)) {
+            if (!try_lang_type_from_ulang_type_tuple(&new_tuple,  ulang_type_tuple_const_unwrap(lang_type), pos)) {
                 return false;
             }
             *new_lang_type = lang_type_tuple_const_wrap(new_tuple);
@@ -20,7 +20,7 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Env* env, Ulang_typ
         }
         case ULANG_TYPE_FN: {
             Lang_type_fn new_fn = {0};
-            if (!try_lang_type_from_ulang_type_fn(&new_fn, env, ulang_type_fn_const_unwrap(lang_type), pos)) {
+            if (!try_lang_type_from_ulang_type_fn(&new_fn,  ulang_type_fn_const_unwrap(lang_type), pos)) {
                 return false;
             }
             *new_lang_type = lang_type_fn_const_wrap(new_fn);
@@ -30,7 +30,7 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Env* env, Ulang_typ
     unreachable("");
 }
 
-bool name_from_uname(const Env* env, Name* new_name, Uname name) {
+bool name_from_uname(Name* new_name, Uname name) {
     (void) new_name;
     (void) name;
     todo();
@@ -41,10 +41,10 @@ Uname name_to_uname(Name name) {
     return (Uname) {.mod_alias = new_alias->name.base, .base = name.base, .gen_args = name.gen_args};
 }
 
-Ulang_type lang_type_to_ulang_type(Env* env, Lang_type lang_type) {
+Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_TUPLE:
-            return ulang_type_tuple_const_wrap(lang_type_tuple_to_ulang_type_tuple(env, lang_type_tuple_const_unwrap(lang_type)));
+            return ulang_type_tuple_const_wrap(lang_type_tuple_to_ulang_type_tuple( lang_type_tuple_const_unwrap(lang_type)));
         case LANG_TYPE_VOID:
             todo();
         case LANG_TYPE_PRIMITIVE:

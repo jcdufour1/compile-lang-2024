@@ -5,7 +5,7 @@
 #include <newstring.h>
 #include <ulang_type_print.h>
 
-void extend_name_llvm(Env* env, String* buf, Name name);
+void extend_name_llvm(String* buf, Name name);
 
 static inline void extend_name_msg(String* buf, Name name) {
     string_extend_strv(&print_arena, buf, name.mod_path);
@@ -48,9 +48,9 @@ static inline void extend_uname_msg(String* buf, Uname name) {
 }
 
 // TODO: move this function elsewhere
-static inline void extend_name(Env* env, bool is_llvm, String* buf, Name name) {
+static inline void extend_name(bool is_llvm, String* buf, Name name) {
     if (is_llvm) {
-        extend_name_llvm(env, buf, name);
+        extend_name_llvm( buf, name);
         return;
     }
     extend_name_msg(buf, name);

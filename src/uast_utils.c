@@ -1,14 +1,14 @@
 #include <uast_utils.h>
 #include <extend_name.h>
 
-bool uast_def_get_lang_type(Lang_type* result, Env* env, const Uast_def* def, Ulang_type_vec generics) {
+bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_vec generics) {
     switch (def->type) {
         case UAST_FUNCTION_DEF:
             unreachable("");
         case UAST_VARIABLE_DEF:
-            return try_lang_type_from_ulang_type(result, env, uast_variable_def_const_unwrap(def)->lang_type, ulang_type_get_pos(uast_variable_def_const_unwrap(def)->lang_type));
+            return try_lang_type_from_ulang_type(result,  uast_variable_def_const_unwrap(def)->lang_type, ulang_type_get_pos(uast_variable_def_const_unwrap(def)->lang_type));
         case UAST_FUNCTION_DECL:
-            *result = lang_type_from_ulang_type(env, uast_function_decl_const_unwrap(def)->return_type);
+            *result = lang_type_from_ulang_type( uast_function_decl_const_unwrap(def)->return_type);
             return true;
         case UAST_PRIMITIVE_DEF:
             *result = uast_primitive_def_const_unwrap(def)->lang_type;
@@ -23,10 +23,10 @@ bool uast_def_get_lang_type(Lang_type* result, Env* env, const Uast_def* def, Ul
             // fallthrough
         case UAST_SUM_DEF: {
             Ulang_type ulang_type = {0};
-            if (!ustruct_def_base_get_lang_type_(&ulang_type, env, uast_def_get_struct_def_base(def), generics, uast_def_get_pos(def))) {
+            if (!ustruct_def_base_get_lang_type_(&ulang_type,  uast_def_get_struct_def_base(def), generics, uast_def_get_pos(def))) {
                 return false;
             }
-            *result = lang_type_from_ulang_type(env, ulang_type);
+            *result = lang_type_from_ulang_type( ulang_type);
             return true;
         }
         case UAST_GENERIC_PARAM:
@@ -41,10 +41,10 @@ bool uast_def_get_lang_type(Lang_type* result, Env* env, const Uast_def* def, Ul
     unreachable("");
 }
 
-bool ustruct_def_base_get_lang_type_(Ulang_type* result, Env* env, Ustruct_def_base base, Ulang_type_vec gen_args, Pos pos) {
+bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_def_base base, Ulang_type_vec gen_args, Pos pos) {
     Uname base_name = name_to_uname(base.name);
     base_name.gen_args = gen_args;
-    return resolve_generics_ulang_type_regular(result, env, ulang_type_regular_new(ulang_type_atom_new(base_name, 0), pos));
+    return resolve_generics_ulang_type_regular(result,  ulang_type_regular_new(ulang_type_atom_new(base_name, 0), pos));
 }
 
 Ulang_type uast_get_ulang_type_def(const Uast_def* def) {

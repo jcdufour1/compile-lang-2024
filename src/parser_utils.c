@@ -19,7 +19,7 @@ static bool isdigit_no_underscore(char prev, char curr) {
     return isdigit(curr);
 }
 
-bool try_str_view_octal_after_0_to_int64_t(int64_t* result, const Env* env, Pos pos, Str_view str_view) {
+bool try_str_view_octal_after_0_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) {
     *result = 0;
     size_t idx = 0;
     for (idx = 0; idx < str_view.count; idx++) {
@@ -29,7 +29,7 @@ bool try_str_view_octal_after_0_to_int64_t(int64_t* result, const Env* env, Pos 
         }
 
         if (curr_char < '0' || curr_char > '7') {
-            msg(LOG_ERROR, EXPECT_FAIL_INVALID_OCTAL, env->file_path_to_text, pos, "invalid octal literal\n");
+            msg(LOG_ERROR, EXPECT_FAIL_INVALID_OCTAL, env.file_path_to_text, pos, "invalid octal literal\n");
             return false;
         }
 
@@ -41,7 +41,7 @@ bool try_str_view_octal_after_0_to_int64_t(int64_t* result, const Env* env, Pos 
     return true;
 }
 
-bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, const Env* env, Pos pos, Str_view str_view) {
+bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) {
     *result = 0;
     size_t idx = 0;
     for (idx = 0; idx < str_view.count; idx++) {
@@ -58,7 +58,7 @@ bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, const Env* env, Pos p
         } else if (curr_char >= 'A' && curr_char <= 'F') {
             increment = (curr_char - 'A') + 10;
         } else {
-            msg(LOG_ERROR, EXPECT_FAIL_INVALID_HEX, env->file_path_to_text, pos, "invalid hex literal\n");
+            msg(LOG_ERROR, EXPECT_FAIL_INVALID_HEX, env.file_path_to_text, pos, "invalid hex literal\n");
             return false;
         }
 
@@ -70,7 +70,7 @@ bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, const Env* env, Pos p
     return true;
 }
 
-bool try_str_view_bin_after_0b_to_int64_t(int64_t* result, const Env* env, Pos pos, Str_view str_view) {
+bool try_str_view_bin_after_0b_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) {
     *result = 0;
     size_t idx = 0;
     for (idx = 0; idx < str_view.count; idx++) {
@@ -80,7 +80,7 @@ bool try_str_view_bin_after_0b_to_int64_t(int64_t* result, const Env* env, Pos p
         }
 
         if (curr_char != '0' && curr_char != '1') {
-            msg(LOG_ERROR, EXPECT_FAIL_INVALID_BIN, env->file_path_to_text, pos, "invalid bin literal\n");
+            msg(LOG_ERROR, EXPECT_FAIL_INVALID_BIN, env.file_path_to_text, pos, "invalid bin literal\n");
             return false;
         }
 
@@ -92,7 +92,7 @@ bool try_str_view_bin_after_0b_to_int64_t(int64_t* result, const Env* env, Pos p
     return true;
 }
 
-bool try_str_view_to_int64_t(int64_t* result, const Env* env, Pos pos, Str_view str_view) {
+bool try_str_view_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) {
     *result = 0;
     size_t idx = 0;
     for (idx = 0; idx < str_view.count; idx++) {
@@ -102,7 +102,7 @@ bool try_str_view_to_int64_t(int64_t* result, const Env* env, Pos pos, Str_view 
         }
 
         if (curr_char == '0' && idx == 0 && str_view.count > 1 && isdigit(str_view_at(str_view, 1))) {
-            return try_str_view_octal_after_0_to_int64_t(result, env, pos, str_view_slice(str_view, 1, str_view.count - 1));
+            return try_str_view_octal_after_0_to_int64_t(result,  pos, str_view_slice(str_view, 1, str_view.count - 1));
         }
 
         if (isalpha(curr_char)) {
@@ -113,7 +113,7 @@ bool try_str_view_to_int64_t(int64_t* result, const Env* env, Pos pos, Str_view 
             if (curr_char == 'x') {
                 return try_str_view_hex_after_0x_to_int64_t(
                     result,
-                    env,
+                    
                     pos,
                     str_view_slice(str_view, 2, str_view.count - 2)
                 );
@@ -122,7 +122,7 @@ bool try_str_view_to_int64_t(int64_t* result, const Env* env, Pos pos, Str_view 
             if (curr_char == 'b') {
                 return try_str_view_bin_after_0b_to_int64_t(
                     result,
-                    env,
+                    
                     pos,
                     str_view_slice(str_view, 2, str_view.count - 2)
                 );
@@ -167,10 +167,10 @@ bool try_str_view_consume_size_t(size_t* result, Str_view* str_view, bool ignore
     return try_str_view_to_size_t(result, num);
 }
 
-int64_t str_view_to_int64_t(const Env* env, Pos pos, Str_view str_view) {
+int64_t str_view_to_int64_t(const Pos pos, Str_view str_view) {
     int64_t result = INT64_MAX;
 
-    if (!try_str_view_to_int64_t(&result, env, pos, str_view)) {
+    if (!try_str_view_to_int64_t(&result,  pos, str_view)) {
         unreachable(STR_VIEW_FMT, str_view_print(str_view));
     }
     return result;
@@ -290,9 +290,9 @@ bool lang_type_is_unsigned(Lang_type lang_type) {
     unreachable("");
 }
 
-int64_t i_lang_type_atom_to_bit_width(const Env* env, Lang_type_atom atom) {
+int64_t i_lang_type_atom_to_bit_width(const Lang_type_atom atom) {
     //assert(lang_type_atom_is_signed(lang_type));
-    return str_view_to_int64_t(env, POS_BUILTIN, str_view_slice(atom.str.base, 1, atom.str.base.count - 1));
+    return str_view_to_int64_t( POS_BUILTIN, str_view_slice(atom.str.base, 1, atom.str.base.count - 1));
 }
 
 // TODO: put strings in a hash table to avoid allocating duplicate types
@@ -333,9 +333,9 @@ Str_view util_literal_name_new(void) {
 }
 
 // TODO: inline this function
-Name get_storage_location(Env* env, Name sym_name) {
+Name get_storage_location(Name sym_name) {
     Tast_def* sym_def_;
-    if (!symbol_lookup(&sym_def_, env, sym_name)) {
+    if (!symbol_lookup(&sym_def_,  sym_name)) {
         symbol_log(LOG_DEBUG, env);
         unreachable("symbol definition for symbol "STR_VIEW_FMT" not found\n", name_print(sym_name));
     }
@@ -344,7 +344,7 @@ Name get_storage_location(Env* env, Name sym_name) {
         case TAST_VARIABLE_DEF: {
             Tast_variable_def* sym_def = tast_variable_def_unwrap(sym_def_);
             Llvm* result = NULL;
-            if (!alloca_lookup(&result, env, sym_def->name)) {
+            if (!alloca_lookup(&result,  sym_def->name)) {
                 unreachable("");
             }
             return llvm_tast_get_name(result);
@@ -355,9 +355,9 @@ Name get_storage_location(Env* env, Name sym_name) {
     unreachable("");
 }
 
-Llvm_id get_matching_label_id(Env* env, Name name) {
+Llvm_id get_matching_label_id(Name name) {
     Llvm* label_;
-    if (!alloca_lookup(&label_, env, name)) {
+    if (!alloca_lookup(&label_,  name)) {
         symbol_log(LOG_DEBUG, env);
         //unreachable(STR_VIEW_FMT"\n", str_view_print(name));
         unreachable("");
@@ -366,26 +366,26 @@ Llvm_id get_matching_label_id(Env* env, Name name) {
     return label->llvm_id;
 }
 
-Tast_assignment* util_assignment_new(Env* env, Uast_expr* lhs, Uast_expr* rhs) {
+Tast_assignment* util_assignment_new(Uast_expr* lhs, Uast_expr* rhs) {
     Uast_assignment* assignment = uast_assignment_new(uast_expr_get_pos(lhs), lhs, rhs);
 
     Tast_assignment* new_assign = NULL;
-    try_set_assignment_types(env, &new_assign, assignment);
+    try_set_assignment_types( &new_assign, assignment);
     return new_assign;
 }
 
-Tast_literal* util_tast_literal_new_from_strv(const Env* env, Str_view value, TOKEN_TYPE token_type, Pos pos) {
+Tast_literal* util_tast_literal_new_from_strv(const Str_view value, TOKEN_TYPE token_type, Pos pos) {
     Uast_literal* lit = NULL;
-    unwrap(util_try_uast_literal_new_from_strv(&lit, env, value, token_type, pos));
-    return try_set_literal_types(env, lit);
+    unwrap(util_try_uast_literal_new_from_strv(&lit,  value, token_type, pos));
+    return try_set_literal_types( lit);
 }
 
 // will print error on failure
-bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Env* env, Str_view value, TOKEN_TYPE token_type, Pos pos) {
+bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Str_view value, TOKEN_TYPE token_type, Pos pos) {
     switch (token_type) {
         case TOKEN_INT_LITERAL: {
             int64_t raw = 0;
-            if (!try_str_view_to_int64_t(&raw, env, pos, value)) {
+            if (!try_str_view_to_int64_t(&raw,  pos, value)) {
                 return false;
             }
             Uast_number* literal = uast_number_new(pos, raw);
@@ -419,13 +419,13 @@ bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Env* env,
     return true;
 }
 
-Uast_literal* util_uast_literal_new_from_strv(const Env* env, Str_view value, TOKEN_TYPE token_type, Pos pos) {
+Uast_literal* util_uast_literal_new_from_strv(const Str_view value, TOKEN_TYPE token_type, Pos pos) {
     Uast_literal* lit = NULL;
-    unwrap(util_try_uast_literal_new_from_strv(&lit, env, value, token_type, pos));
+    unwrap(util_try_uast_literal_new_from_strv(&lit,  value, token_type, pos));
     return lit;
 }
 
-Uast_literal* util_uast_literal_new_from_int64_t(Env* env, int64_t value, TOKEN_TYPE token_type, Pos pos) {
+Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {
     Uast_literal* new_literal = NULL;
 
     switch (token_type) {
@@ -454,28 +454,28 @@ Uast_literal* util_uast_literal_new_from_int64_t(Env* env, int64_t value, TOKEN_
 
     assert(new_literal);
 
-    try_set_literal_types(env, new_literal);
+    try_set_literal_types( new_literal);
     return new_literal;
 }
 
-Tast_literal* util_tast_literal_new_from_int64_t(Env* env, int64_t value, TOKEN_TYPE token_type, Pos pos) {
-    return try_set_literal_types(env, util_uast_literal_new_from_int64_t(env, value, token_type, pos));
+Tast_literal* util_tast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {
+    return try_set_literal_types( util_uast_literal_new_from_int64_t( value, token_type, pos));
 }
 
-Tast_operator* util_binary_typed_new(Env* env, Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operator_type) {
+Tast_operator* util_binary_typed_new(Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operator_type) {
     Uast_binary* binary = uast_binary_new(uast_expr_get_pos(lhs), lhs, rhs, token_type_to_binary_type(operator_type));
 
     Tast_expr* new_tast;
-    unwrap(try_set_binary_types(env, &new_tast, binary));
+    unwrap(try_set_binary_types( &new_tast, binary));
 
     return tast_operator_unwrap(new_tast);
 }
 
-Tast_operator* tast_condition_get_default_child(Env* env, Tast_expr* if_cond_child) {
+Tast_operator* tast_condition_get_default_child(Tast_expr* if_cond_child) {
     Tast_binary* binary = tast_binary_new(
         tast_expr_get_pos(if_cond_child),
         tast_literal_wrap(
-            util_tast_literal_new_from_int64_t(env, 0, TOKEN_INT_LITERAL, tast_expr_get_pos(if_cond_child))
+            util_tast_literal_new_from_int64_t( 0, TOKEN_INT_LITERAL, tast_expr_get_pos(if_cond_child))
         ),
         if_cond_child,
         BINARY_NOT_EQUAL,
@@ -485,11 +485,11 @@ Tast_operator* tast_condition_get_default_child(Env* env, Tast_expr* if_cond_chi
     return tast_binary_wrap(binary);
 }
 
-Uast_operator* uast_condition_get_default_child(Env* env, Uast_expr* if_cond_child) {
+Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child) {
     Uast_binary* binary = uast_binary_new(
         uast_expr_get_pos(if_cond_child),
         uast_literal_wrap(
-            util_uast_literal_new_from_int64_t(env, 0, TOKEN_INT_LITERAL, uast_expr_get_pos(if_cond_child))
+            util_uast_literal_new_from_int64_t( 0, TOKEN_INT_LITERAL, uast_expr_get_pos(if_cond_child))
         ),
         if_cond_child,
         BINARY_NOT_EQUAL
@@ -498,14 +498,14 @@ Uast_operator* uast_condition_get_default_child(Env* env, Uast_expr* if_cond_chi
     return uast_binary_wrap(binary);
 }
 
-size_t struct_def_base_get_idx_largest_member(Env* env, Struct_def_base base) {
+size_t struct_def_base_get_idx_largest_member(Struct_def_base base) {
     assert(base.members.info.count > 0);
 
     size_t result = 0;
     uint64_t size_result = 0;
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        uint64_t curr_size = sizeof_lang_type(env, vec_at(&base.members, idx)->lang_type);
+        uint64_t curr_size = sizeof_lang_type( vec_at(&base.members, idx)->lang_type);
         if (curr_size > size_result) {
             size_result = curr_size;
             result = idx;

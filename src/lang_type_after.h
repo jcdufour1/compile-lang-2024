@@ -3,7 +3,7 @@
 #define LANG_TYPE_AFTER_H
 
 // TODO: do these things properly
-int64_t str_view_to_int64_t(const Env* env, Pos pos, Str_view str_view);
+int64_t str_view_to_int64_t(const Pos pos, Str_view str_view);
 
 static inline Lang_type_atom lang_type_primitive_get_atom(Lang_type_primitive lang_type) {
     switch (lang_type.type) {
@@ -60,7 +60,7 @@ static inline Lang_type_atom lang_type_get_atom(Lang_type lang_type) {
 }
 
 // TODO: remove this function?
-static inline void lang_type_primitive_set_atom(Env* env, Lang_type_primitive* lang_type, Lang_type_atom atom) {
+static inline void lang_type_primitive_set_atom(Lang_type_primitive* lang_type, Lang_type_atom atom) {
     (void) env;
     switch (lang_type->type) {
         case LANG_TYPE_CHAR:
@@ -68,7 +68,6 @@ static inline void lang_type_primitive_set_atom(Env* env, Lang_type_primitive* l
             return;
         case LANG_TYPE_SIGNED_INT:
             lang_type_signed_int_unwrap(lang_type)->bit_width = str_view_to_int64_t(
-                env,
                 POS_BUILTIN,
                 str_view_slice(atom.str.base, 1, atom.str.base.count - 1)
             );
@@ -76,7 +75,7 @@ static inline void lang_type_primitive_set_atom(Env* env, Lang_type_primitive* l
             return;
         case LANG_TYPE_UNSIGNED_INT:
             lang_type_unsigned_int_unwrap(lang_type)->bit_width = str_view_to_int64_t(
-                env,
+                
                 POS_BUILTIN,
                 str_view_slice(atom.str.base, 1, atom.str.base.count - 1)
             );
@@ -89,10 +88,10 @@ static inline void lang_type_primitive_set_atom(Env* env, Lang_type_primitive* l
     unreachable("");
 }
 
-static inline void lang_type_set_atom(Env* env, Lang_type* lang_type, Lang_type_atom atom) {
+static inline void lang_type_set_atom(Lang_type* lang_type, Lang_type_atom atom) {
     switch (lang_type->type) {
         case LANG_TYPE_PRIMITIVE:
-            lang_type_primitive_set_atom(env, lang_type_primitive_unwrap(lang_type), atom);
+            lang_type_primitive_set_atom( lang_type_primitive_unwrap(lang_type), atom);
             return;
         case LANG_TYPE_SUM:
             lang_type_sum_unwrap(lang_type)->atom = atom;
@@ -146,10 +145,10 @@ static inline int32_t lang_type_get_bit_width(Lang_type lang_type) {
     return lang_type_primitive_get_bit_width(lang_type_primitive_const_unwrap(lang_type));
 }
 
-static inline void lang_type_set_pointer_depth(Env* env, Lang_type* lang_type, int16_t pointer_depth) {
+static inline void lang_type_set_pointer_depth(Lang_type* lang_type, int16_t pointer_depth) {
     Lang_type_atom atom = lang_type_get_atom(*lang_type);
     atom.pointer_depth = pointer_depth;
-    lang_type_set_atom(env, lang_type, atom);
+    lang_type_set_atom( lang_type, atom);
 }
 
 #endif // LANG_TYPE_AFTER_H

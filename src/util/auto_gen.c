@@ -10,7 +10,7 @@
 // TODO: make print functions check for null and print <null> or something instead of seg fault
 // TODO: figure out if I should de-duplilcate string literals, etc.
 
-// TODO: remove env->global_literals
+// TODO: remove env.global_literals
 
 // TODO: strings should actually be their own type (not just u8*)
 

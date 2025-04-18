@@ -24,18 +24,18 @@ bool usym_tbl_add_internal(Usymbol_table_tast* sym_tbl_tasts, size_t capacity, U
 
 bool usym_tbl_lookup_internal(Usymbol_table_tast** result, const Usymbol_table* sym_table, Str_view key);
 
-bool usym_tbl_lookup(Env* env, Uast_def** result, const Usymbol_table* sym_table, Name key);
+bool usym_tbl_lookup(Uast_def** result, const Usymbol_table* sym_table, Name key);
 
 // returns false if symbol has already been added to the table
-bool usym_tbl_add(Env* env, Usymbol_table* sym_table, Uast_def* tast_of_symbol);
+bool usym_tbl_add(Usymbol_table* sym_table, Uast_def* tast_of_symbol);
 
-void usym_tbl_update(Env* env, Usymbol_table* sym_table, Uast_def* tast_of_symbol);
+void usym_tbl_update(Usymbol_table* sym_table, Uast_def* tast_of_symbol);
 
-bool usymbol_lookup(Uast_def** result, Env* env, Name key);
+bool usymbol_lookup(Uast_def** result, Name key);
 
-bool usymbol_add(Env* env, Uast_def* tast_of_symbol);
+bool usymbol_add(Uast_def* tast_of_symbol);
 
-void usymbol_update(Env* env, Uast_def* tast_of_symbol);
+void usymbol_update(Uast_def* tast_of_symbol);
 
 void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, int recursion_depth);
 void symbol_log_table_internal(int log_level, const Symbol_table sym_table, int recursion_depth, const char* file_path, int line);
@@ -50,18 +50,18 @@ bool sym_tbl_add_internal(Symbol_table_tast* sym_tbl_tasts, size_t capacity, Tas
 
 bool sym_tbl_lookup_internal(Symbol_table_tast** result, const Symbol_table* sym_table, Str_view key);
 
-bool sym_tbl_lookup(Env* env, Tast_def** result, const Symbol_table* sym_table, Name key);
+bool sym_tbl_lookup(Tast_def** result, const Symbol_table* sym_table, Name key);
 
 // returns false if symbol has already been added to the table
-bool sym_tbl_add(Env* env, Symbol_table* sym_table, Tast_def* tast_of_symbol);
+bool sym_tbl_add(Symbol_table* sym_table, Tast_def* tast_of_symbol);
 
-void sym_tbl_update(Env* env, Symbol_table* sym_table, Tast_def* tast_of_symbol);
+void sym_tbl_update(Symbol_table* sym_table, Tast_def* tast_of_symbol);
 
-bool symbol_lookup(Tast_def** result, Env* env, Name key);
+bool symbol_lookup(Tast_def** result, Name key);
 
-bool symbol_add(Env* env, Tast_def* tast_of_symbol);
+bool symbol_add(Tast_def* tast_of_symbol);
 
-void symbol_update(Env* env, Tast_def* tast_of_symbol);
+void symbol_update(Tast_def* tast_of_symbol);
 
 void alloca_extend_table_internal(String* buf, const Alloca_table sym_table, int recursion_depth);
 void alloca_log_table_internal(int log_level, const Alloca_table sym_table, int recursion_depth, const char* file_path, int line);
@@ -79,55 +79,55 @@ bool all_tbl_lookup_internal(Alloca_table_tast** result, const Alloca_table* sym
 bool all_tbl_lookup(Llvm** result, const Alloca_table* sym_table, Str_view key);
 
 // returns false if symbol has already been added to the table
-bool all_tbl_add(Env* env, Alloca_table* sym_table, Llvm* tast_of_symbol);
+bool all_tbl_add(Alloca_table* sym_table, Llvm* tast_of_symbol);
 
-void all_tbl_update(Env* env, Alloca_table* sym_table, Llvm* tast_of_symbol);
+void all_tbl_update(Alloca_table* sym_table, Llvm* tast_of_symbol);
 
-bool alloca_lookup(Llvm** result, Env* env, Name key);
+bool alloca_lookup(Llvm** result, Name key);
 
-bool alloca_add(Env* env, Llvm* tast_of_symbol);
+bool alloca_add(Llvm* tast_of_symbol);
 
-void alloca_update(Env* env, Llvm* tast_of_symbol);
+void alloca_update(Llvm* tast_of_symbol);
 
 // these tasts will be actually added to a symbol table when `symbol_do_add_defered` is called
-static inline void alloca_add_defer(Env* env, Llvm* tast_of_alloca) {
+static inline void alloca_add_defer(Llvm* tast_of_alloca) {
     assert(tast_of_alloca);
-    vec_append(&a_main, &env->defered_allocas_to_add, tast_of_alloca);
+    vec_append(&a_main, &env.defered_allocas_to_add, tast_of_alloca);
 }
 
-bool alloca_do_add_defered(Llvm** redefined_sym, Env* env);
+bool alloca_do_add_defered(Llvm** redefined_sym);
 
-static inline void alloca_ignore_defered(Env* env) {
-    vec_reset(&env->defered_allocas_to_add);
+static inline void alloca_ignore_defered(void) {
+    vec_reset(&env.defered_allocas_to_add);
 }
 
 // these tasts will be actually added to a symbol table when `symbol_do_add_defered` is called
-static inline void symbol_add_defer(Env* env, Tast_def* tast_of_symbol) {
+static inline void symbol_add_defer(Tast_def* tast_of_symbol) {
     assert(tast_of_symbol);
-    vec_append(&a_main, &env->defered_symbols_to_add, tast_of_symbol);
+    vec_append(&a_main, &env.defered_symbols_to_add, tast_of_symbol);
 }
 
-bool symbol_do_add_defered(Tast_def** redefined_sym, Env* env);
+bool symbol_do_add_defered(Tast_def** redefined_sym);
 
-static inline void symbol_ignore_defered(Env* env) {
-    vec_reset(&env->defered_symbols_to_add);
+static inline void symbol_ignore_defered(void) {
+    vec_reset(&env.defered_symbols_to_add);
 }
 
 // these tasts will be actually added to a symbol table when `symbol_do_add_defered` is called
-static inline void usymbol_add_defer(Env* env, Uast_def* uast_of_symbol) {
+static inline void usymbol_add_defer(Uast_def* uast_of_symbol) {
     assert(uast_of_symbol);
-    vec_append(&a_main, &env->udefered_symbols_to_add, uast_of_symbol);
+    vec_append(&a_main, &env.udefered_symbols_to_add, uast_of_symbol);
 }
 
-bool usymbol_do_add_defered(Uast_def** redefined_sym, Env* env);
+bool usymbol_do_add_defered(Uast_def** redefined_sym);
 
-static inline void usymbol_ignore_defered(Env* env) {
-    vec_reset(&env->udefered_symbols_to_add);
+static inline void usymbol_ignore_defered(void) {
+    vec_reset(&env.udefered_symbols_to_add);
 }
 
-Symbol_table* symbol_get_block(Env* env);
+Symbol_table* symbol_get_block(void);
 
-void log_symbol_table_if_block(Env* env, const char* file_path, int line);
+void log_symbol_table_if_block(const char* file_path, int line);
 
 #define SYM_TBL_STATUS_FMT "%s"
 
