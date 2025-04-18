@@ -7,6 +7,8 @@
 
 void extend_name_llvm(String* buf, Name name);
 
+static inline void extend_name(bool is_llvm, String* buf, Name name);
+
 static inline void extend_name_msg(String* buf, Name name) {
     string_extend_strv(&print_arena, buf, name.mod_path);
     if (name.mod_path.count > 0) {
@@ -28,8 +30,8 @@ static inline void extend_name_msg(String* buf, Name name) {
 }
 
 static inline void extend_uname_msg(String* buf, Uname name) {
-    string_extend_strv(&print_arena, buf, name.mod_alias);
-    if (name.mod_alias.count > 0) {
+    extend_name(false, buf, name.mod_alias);
+    if (name.mod_alias.base.count > 0) {
         string_extend_cstr(&print_arena, buf, ".");
     }
     string_extend_strv(&print_arena, buf, name.base);

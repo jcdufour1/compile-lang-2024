@@ -2,6 +2,8 @@
 #include <lang_type_from_ulang_type.h>
 #include <extend_name.h>
 #include <serialize_module_symbol_name.h>
+#include <symbol_log.h>
+#include <symbol_iter.h>
 
 bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type, Pos pos) {
     switch (lang_type.type) {
@@ -31,14 +33,36 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
 }
 
 bool name_from_uname(Name* new_name, Uname name) {
-    if (name.mod_alias.count < 1) {
+    if (name.mod_alias.base.count < 1) {
         *new_name = (Name) {.mod_path = (Str_view) {0}, .base = name.base, .gen_args = name.gen_args};
+        log(LOG_DEBUG, TAST_FMT"\n", name_print(*new_name));
         return true;
     }
 
     Uast_def* result = NULL;
-    if (!usymbol_lookup(&result, (Name) {.mod_path = {0} /* TODO */, .base = name.mod_alias, .gen_args = name.gen_args})) {
-        log(LOG_DEBUG, TAST_FMT"\n", uname_print(name));
+    if (!usymbol_lookup(&result, (Name) {.mod_path = (Str_view) {0} /* TODO */, .base = name.mod_alias.base, .gen_args = (Ulang_type_vec) {0}})) {
+        //log(LOG_DEBUG, TAST_FMT"\n", uname_print(name));
+        //log(LOG_DEBUG, TAST_FMT"\n", name_print(name.mod_alias));
+        //log(LOG_DEBUG, TAST_FMT"\n", str_view_print(name.mod_alias.base));
+
+        //Usymbol_iter iter = usym_tbl_iter_new(vec_at(&env.ancesters, 0)->usymbol_table);
+        //Uast_def* result = NULL;
+        //while (usym_tbl_iter_next(&result, &iter)) {
+        //    if (result->type == UAST_MOD_ALIAS) {
+        //        Uast_mod_alias* alias = uast_mod_alias_unwrap(result);
+        //        log(LOG_DEBUG, TAST_FMT, uast_def_print(result));
+
+        //        log(LOG_DEBUG, TAST_FMT"\n", name_print(alias->name));
+        //        log(LOG_DEBUG, TAST_FMT"\n", str_view_print(alias->name.mod_path));
+        //        log(LOG_DEBUG, TAST_FMT"\n", str_view_print(alias->name.base));
+        //        assert(alias->name.gen_args.info.count < 1);
+        //        assert(name.gen_args.info.count < 1);
+
+        //        log(LOG_DEBUG, TAST_FMT"\n", name_print(alias->mod_path));
+        //    }
+        //}
+
+        //usymbol_log(LOG_DEBUG);
         todo();
     }
 
@@ -79,7 +103,7 @@ bool name_from_uname(Name* new_name, Uname name) {
 Uname name_to_uname(Name name) {
     Uast_mod_alias* new_alias = uast_mod_alias_new((Pos) {0} /* TODO */, (Name) {.base = util_literal_name_new()}, (Name) {.base = name.mod_path});
     unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
-    return (Uname) {.mod_alias = new_alias->name.base, .base = name.base, .gen_args = name.gen_args};
+    return (Uname) {.mod_alias = new_alias->name, .base = name.base, .gen_args = name.gen_args};
 }
 
 Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {

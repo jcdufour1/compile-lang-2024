@@ -871,7 +871,7 @@ static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk
 
     *pos = lang_type_token.pos;
 
-    lang_type->str = (Uname) {.mod_alias = mod_alias, .base = lang_type_token.text};
+    lang_type->str = (Uname) {.mod_alias = (Name) {.mod_path = env.curr_mod_path, .base = mod_alias, .gen_args = (Ulang_type_vec) {0}}, .base = lang_type_token.text};
     while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
         lang_type->pointer_depth++;
     }
@@ -896,7 +896,8 @@ static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* t
         // a return type is only one token, at least for now
         Pos atom_pos = {0};
         if (!parse_lang_type_struct_atom( &atom_pos, &atom, tokens)) {
-            atom.str = (Uname) {.mod_alias = (Str_view) {0}, .base = str_view_from_cstr("void")};
+            todo();
+            //atom.str = (Uname) {.mod_alias = (Str_view) {0}, .base = str_view_from_cstr("void")};
             break;
         }
         Ulang_type new_child = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, atom_pos));
@@ -1350,7 +1351,7 @@ static PARSE_STATUS parse_import(Uast_mod_alias** alias, Tk_view* tokens, Token 
     }
 
     // TODO: consider repeated import statements
-    if (!get_mod_alias_from_path_token( alias, name, path_tk)) {
+    if (!get_mod_alias_from_path_token(alias, name, path_tk)) {
         return PARSE_ERROR;
     }
 

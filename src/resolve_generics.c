@@ -373,12 +373,14 @@ bool resolve_generics_ulang_type_regular(Ulang_type* result, Ulang_type_regular 
     Uast_def* before_res = NULL;
     log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
     Name name_base = {0};
+    log(LOG_DEBUG, TAST_FMT"\n", uname_print(lang_type.atom.str));
+    log(LOG_DEBUG, TAST_FMT"\n", name_print(lang_type.atom.str.mod_alias));
     if (!name_from_uname(&name_base, lang_type.atom.str)) {
         return false;
     }
     memset(&name_base.gen_args, 0, sizeof(name_base.gen_args));
-    if (!usymbol_lookup(&before_res,  name_base)) {
-        msg_undefined_type( lang_type.pos, ulang_type_regular_const_wrap(lang_type));
+    if (!usymbol_lookup(&before_res, name_base)) {
+        msg_undefined_type(lang_type.pos, ulang_type_regular_const_wrap(lang_type));
         return false;
     }
     log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));

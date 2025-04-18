@@ -8,7 +8,7 @@
 // ---- usymbol ---
 // ----------------
 
-#define usymbol_log(log_level, env) usymbol_log_internal(log_level, __FILE__, __LINE__,  0);
+#define usymbol_log(log_level) usymbol_log_internal(log_level, __FILE__, __LINE__,  0);
 
 #define usymbol_level_log(log_level, level) usymbol_level_log_internal(log_level, __FILE__, __LINE__, level, 0);
 

@@ -28,7 +28,7 @@ typedef struct {
 } Name;
 
 typedef struct {
-    Str_view mod_alias;
+    Name mod_alias;
     Str_view base;
     Ulang_type_vec gen_args;
 } Uname;
