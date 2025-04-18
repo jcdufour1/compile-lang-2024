@@ -62,21 +62,18 @@ static inline bool name_is_equal(Name a, Name b) {
 }
 
 static inline bool uname_is_equal(Uname a, Uname b) {
-    (void) a;
-    (void) b;
-    todo();
-    //if (!name_is_equal(a.mod_alias->name, b.mod_alias->name) || !str_view_is_equal(a.base, b.base)) {
-    //    return false;
-    //}
+    if (!name_is_equal(a.mod_alias, b.mod_alias) || !str_view_is_equal(a.base, b.base)) {
+        return false;
+    }
 
-    //if (a.gen_args.info.count != b.gen_args.info.count) {
-    //    return false;
-    //}
-    //for (size_t idx = 0; idx < a.gen_args.info.count; idx++) {
-    //    if (!ulang_type_is_equal(vec_at(&a.gen_args, idx), vec_at(&b.gen_args, idx))) {
-    //        return false;
-    //    }
-    //}
+    if (a.gen_args.info.count != b.gen_args.info.count) {
+        return false;
+    }
+    for (size_t idx = 0; idx < a.gen_args.info.count; idx++) {
+        if (!ulang_type_is_equal(vec_at(&a.gen_args, idx), vec_at(&b.gen_args, idx))) {
+            return false;
+        }
+    }
 
     return true;
 }

@@ -34,8 +34,14 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
 
 bool name_from_uname(Name* new_name, Uname name) {
     if (name.mod_alias.base.count < 1) {
-        *new_name = (Name) {.mod_path = (Str_view) {0}, .base = name.base, .gen_args = name.gen_args};
+        Uast_def* result = NULL;
+        if (usymbol_lookup(&result, (Name) {.mod_path = (Str_view) {0} /* TODO */, .base = name.base, .gen_args = name.gen_args})) {
+            *new_name = (Name) {.mod_path = (Str_view) {0} /* TODO */, .base = name.base, .gen_args = name.gen_args};
+            return true;
+        }
+        *new_name = (Name) {.mod_path = name.mod_alias.mod_path, .base = name.base, .gen_args = name.gen_args};
         log(LOG_DEBUG, TAST_FMT"\n", name_print(*new_name));
+        log(LOG_DEBUG, "THING 76\n");
         return true;
     }
 
@@ -68,6 +74,7 @@ bool name_from_uname(Name* new_name, Uname name) {
 
     switch (result->type) {
         case UAST_MOD_ALIAS: {
+            log(LOG_DEBUG, "THING 78\n");
             Uast_mod_alias* alias = uast_mod_alias_unwrap(result);
             *new_name = (Name) {.mod_path = alias->mod_path.base, .base = name.base, .gen_args = name.gen_args};
             return true;

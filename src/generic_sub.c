@@ -7,6 +7,8 @@
 #include <uast_utils.h>
 #include <env.h>
 #include <symbol_iter.h>
+#include <extend_name.h>
+#include <serialize_module_symbol_name.h>
 
 void generic_sub_return(Uast_return* rtn, Name gen_param, Ulang_type gen_arg) {
     (void) rtn;
@@ -22,7 +24,6 @@ void generic_sub_param(Uast_param* def, Name gen_param, Ulang_type gen_arg) {
 }
 
 void generic_sub_lang_type_regular(
-     
     Ulang_type* new_lang_type,
     Ulang_type_regular lang_type,
     Name gen_param,
@@ -30,6 +31,12 @@ void generic_sub_lang_type_regular(
 ) {
     Name temp = {0};
     unwrap(name_from_uname(&temp, lang_type.atom.str));
+    log(LOG_DEBUG, TAST_FMT"\n", uname_print(lang_type.atom.str));
+    log(LOG_DEBUG, TAST_FMT"\n", name_print(lang_type.atom.str.mod_alias));
+    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(lang_type.atom.str.base));
+
+    log(LOG_DEBUG, TAST_FMT"\n", name_print(gen_param));
+    log(LOG_DEBUG, TAST_FMT"\n", name_print(temp));
     if (name_is_equal(gen_param, temp)) {
         *new_lang_type = ulang_type_clone(gen_arg);
 
@@ -44,7 +51,7 @@ void generic_sub_lang_type_regular(
     Ulang_type_vec* gen_args = &lang_type.atom.str.gen_args;
     log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
     for (size_t idx = 0; idx < gen_args->info.count; idx++) {
-        generic_sub_lang_type( vec_at_ref(gen_args, idx), vec_at(gen_args, idx), gen_param, gen_arg);
+        generic_sub_lang_type(vec_at_ref(gen_args, idx), vec_at(gen_args, idx), gen_param, gen_arg);
     }
     log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
     *new_lang_type = ulang_type_regular_const_wrap(lang_type);
@@ -73,7 +80,6 @@ void generic_sub_lang_type_regular(
 //}
 
 void generic_sub_lang_type(
-     
     Ulang_type* new_lang_type,
     Ulang_type lang_type,
     Name gen_param,
@@ -83,7 +89,6 @@ void generic_sub_lang_type(
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
             generic_sub_lang_type_regular(
-                
                 new_lang_type,
                 ulang_type_regular_const_unwrap(lang_type),
                 gen_param,

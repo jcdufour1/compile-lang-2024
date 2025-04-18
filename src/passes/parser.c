@@ -2717,7 +2717,6 @@ static PARSE_EXPR_STATUS parse_expr_index(
 }
 
 static PARSE_EXPR_STATUS parse_expr_generic(
-     
     Uast_expr** result,
     Uast_expr* lhs,
     Tk_view* tokens,
@@ -2728,10 +2727,24 @@ static PARSE_EXPR_STATUS parse_expr_generic(
     (void) prev_oper_pres;
     (void) defer_sym_add;
     
-    if (PARSE_OK != parse_generics_args( &uast_symbol_unwrap(lhs)->name.gen_args, tokens)) {
-        return PARSE_EXPR_ERROR;
+    switch (lhs->type) {
+        case UAST_SYMBOL:
+            if (PARSE_OK != parse_generics_args( &uast_symbol_unwrap(lhs)->name.gen_args, tokens)) {
+                return PARSE_EXPR_ERROR;
+            }
+            return PARSE_EXPR_OK;
+        case UAST_MEMBER_ACCESS:
+            Uast_expr* rhs = uast_member_access_unwrap(lhs)->
+            if (PARSE_EXPR_OK != parse_expr_generic(result, lhs, tokens, prev_oper_pres, defer_sym_add)) {
+                return PARSE_EXPR_ERROR;
+            }
+            if (PARSE_OK != parse_generics_args( &uast_member_access_unwrap(lhs)->name.gen_args, tokens)) {
+            }
+            return PARSE_EXPR_OK;
+        default:
+            todo();
     }
-    return PARSE_EXPR_OK;
+    unreachable("");
 }
 
 static PARSE_EXPR_STATUS parse_expr_opening_prev_less_pres(
