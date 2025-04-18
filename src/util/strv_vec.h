@@ -6,10 +6,4 @@ typedef struct {
     Str_view* buf;
 } Strv_vec;
 
-// TODO: move this struct
-typedef struct {
-    Vec_base info;
-    Name* buf;
-} Name_vec;
-
 #endif // STRV_VEC_H

@@ -11,6 +11,8 @@
 
 static inline Lang_type lang_type_from_ulang_type(Env* env, Ulang_type lang_type);
 
+Ulang_type lang_type_to_ulang_type(Env* env, Lang_type lang_type);
+
 // TODO: remove Pos parameter
 bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Env* env, Ulang_type lang_type, Pos pos);
 
@@ -18,9 +20,9 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Env* env, Ulang_typ
 bool lang_type_atom_is_signed(Lang_type_atom atom);
 bool lang_type_atom_is_unsigned(Lang_type_atom atom);
 
-bool name_from_uname(Name* new_name, Uname name);
+bool name_from_uname(const Env* env, Name* new_name, Uname name);
 
-static inline Ulang_type lang_type_to_ulang_type(Lang_type lang_type);
+Uname name_to_uname(Name name);
 
 static inline bool try_lang_type_from_ulang_type_tuple(
     Lang_type_tuple* new_lang_type,
@@ -94,7 +96,7 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Env* e
     (void) lang_type;
 
     Name name = {0};
-    unwrap(name_from_uname(&name, lang_type.atom.str));
+    unwrap(name_from_uname(env, &name, lang_type.atom.str));
     Lang_type_atom atom = lang_type_atom_new(name, lang_type.atom.pointer_depth);
 
     if (lang_type_atom_is_signed(atom)) {
@@ -142,7 +144,7 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     log(LOG_DEBUG, TAST_FMT"\n", str_view_print(lang_type.atom.str.base));
     Uast_def* result = NULL;
     Name temp_name = {0};
-    if (!name_from_uname(&temp_name, ulang_type_regular_const_unwrap(resolved).atom.str)) {
+    if (!name_from_uname(env, &temp_name, ulang_type_regular_const_unwrap(resolved).atom.str)) {
         return false;
     }
     if (!usymbol_lookup(&result, env, temp_name)) {
@@ -155,7 +157,7 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     }
 
     log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
-    unwrap(name_from_uname(&temp_name, ulang_type_regular_const_unwrap(resolved).atom.str));
+    unwrap(name_from_uname(env, &temp_name, ulang_type_regular_const_unwrap(resolved).atom.str));
     Lang_type_atom new_atom = lang_type_atom_new(temp_name, ulang_type_regular_const_unwrap(resolved).atom.pointer_depth);
     switch (result->type) {
         case UAST_STRUCT_DEF:
@@ -201,38 +203,13 @@ static inline Lang_type lang_type_from_ulang_type(Env* env, Ulang_type lang_type
     unreachable("");
 }
 
-static inline Ulang_type_tuple lang_type_tuple_to_ulang_type_tuple(Lang_type_tuple lang_type) {
+static inline Ulang_type_tuple lang_type_tuple_to_ulang_type_tuple(Env* env, Lang_type_tuple lang_type) {
     // TODO: reduce heap allocations (do sym_tbl_lookup for this?)
     Ulang_type_vec new_types = {0};
     for (size_t idx = 0; idx < lang_type.lang_types.info.count; idx++) {
-        vec_append(&a_main, &new_types, lang_type_to_ulang_type(vec_at(&lang_type.lang_types, idx)));
+        vec_append(&a_main, &new_types, lang_type_to_ulang_type(env, vec_at(&lang_type.lang_types, idx)));
     }
     return ulang_type_tuple_new(new_types, lang_type.pos);
-}
-
-static inline Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
-    switch (lang_type.type) {
-        case LANG_TYPE_TUPLE:
-            return ulang_type_tuple_const_wrap(lang_type_tuple_to_ulang_type_tuple(lang_type_tuple_const_unwrap(lang_type)));
-        case LANG_TYPE_VOID:
-            todo();
-        case LANG_TYPE_PRIMITIVE:
-            // fallthrough
-        case LANG_TYPE_STRUCT:
-            // fallthrough
-        case LANG_TYPE_RAW_UNION:
-            // fallthrough
-        case LANG_TYPE_ENUM:
-            // fallthrough
-        case LANG_TYPE_SUM:
-            // fallthrough
-            // TODO: change (Pos) {0} below to lang_type_get_pos(lang_type)
-            
-            return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(lang_type_get_str(lang_type), lang_type_get_pointer_depth(lang_type)), (Pos) {0}));
-        case LANG_TYPE_FN:
-            todo();
-    }
-    unreachable("");
 }
 
 #endif // LANG_TYPE_FROM_ULANG_TYPE

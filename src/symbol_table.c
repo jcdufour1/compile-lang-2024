@@ -231,8 +231,8 @@ bool symbol_do_add_defered(Tast_def** redefined_sym, Env* env) {
 }
 
 // returns false if symbol has already been added to the table
-bool sym_tbl_add(Symbol_table* sym_table, Tast_def* item) {
-    return generic_tbl_add((Generic_symbol_table*)sym_table, serialize_name(tast_def_get_name(item)), item);
+bool sym_tbl_add(Env* env, Symbol_table* sym_table, Tast_def* item) {
+    return generic_tbl_add((Generic_symbol_table*)sym_table, serialize_name(env, tast_def_get_name(item)), item);
 }
 
 void* sym_get_tbl_from_collection(Symbol_collection* collection) {
@@ -242,22 +242,22 @@ void* sym_get_tbl_from_collection(Symbol_collection* collection) {
 bool symbol_add(Env* env, Tast_def* item) {
     return generic_symbol_add(
         env,
-        serialize_name(tast_def_get_name(item)),
+        serialize_name(env, tast_def_get_name(item)),
         item,
         (Get_tbl_from_collection_fn)sym_get_tbl_from_collection
     );
 }
 
-void sym_tbl_update(Symbol_table* sym_table, Tast_def* item) {
-    generic_tbl_update((Generic_symbol_table*)sym_table, serialize_name(tast_def_get_name(item)), item);
+void sym_tbl_update(Env* env, Symbol_table* sym_table, Tast_def* item) {
+    generic_tbl_update((Generic_symbol_table*)sym_table, serialize_name(env, tast_def_get_name(item)), item);
 }
 
 void symbol_update(Env* env, Tast_def* item) {
-    generic_symbol_update(env, serialize_name(tast_def_get_name(item)), item, (Get_tbl_from_collection_fn)sym_get_tbl_from_collection);
+    generic_symbol_update(env, serialize_name(env, tast_def_get_name(item)), item, (Get_tbl_from_collection_fn)sym_get_tbl_from_collection);
 }
 
 bool symbol_lookup(Tast_def** result, Env* env, Name key) {
-    return generic_symbol_lookup((void**)result, env, serialize_name(key), (Get_tbl_from_collection_fn)sym_get_tbl_from_collection);
+    return generic_symbol_lookup((void**)result, env, serialize_name(env, key), (Get_tbl_from_collection_fn)sym_get_tbl_from_collection);
 }
 
 void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, int recursion_depth) {
@@ -276,14 +276,14 @@ void* usym_get_tbl_from_collection(Symbol_collection* collection) {
 bool usymbol_add(Env* env, Uast_def* item) {
     return generic_symbol_add(
         env,
-        serialize_name(uast_def_get_name(item)),
+        serialize_name(env, uast_def_get_name(item)),
         item,
         (Get_tbl_from_collection_fn)usym_get_tbl_from_collection
     );
 }
 
-bool sym_tbl_lookup(Tast_def** result, const Symbol_table* sym_table, Name key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, serialize_name(key));
+bool sym_tbl_lookup(Env* env, Tast_def** result, const Symbol_table* sym_table, Name key) {
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, serialize_name(env, key));
 }
 
 //
@@ -294,21 +294,21 @@ bool usymbol_do_add_defered(Uast_def** redefined_sym, Env* env) {
 }
 
 // returns false if symbol has already been added to the table
-bool usym_tbl_add(Usymbol_table* sym_table, Uast_def* item) {
-    return generic_tbl_add((Generic_symbol_table*)sym_table, serialize_name(uast_def_get_name(item)), item);
+bool usym_tbl_add(Env* env, Usymbol_table* sym_table, Uast_def* item) {
+    return generic_tbl_add((Generic_symbol_table*)sym_table, serialize_name(env, uast_def_get_name(item)), item);
 }
 
-void usym_tbl_update(Usymbol_table* sym_table, Uast_def* item) {
-    generic_tbl_update((Generic_symbol_table*)sym_table, serialize_name(uast_def_get_name(item)), item);
+void usym_tbl_update(Env* env, Usymbol_table* sym_table, Uast_def* item) {
+    generic_tbl_update((Generic_symbol_table*)sym_table, serialize_name(env, uast_def_get_name(item)), item);
 }
 
-bool usym_tbl_lookup(Uast_def** result, const Usymbol_table* sym_table, Name key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, serialize_name(key));
+bool usym_tbl_lookup(Env* env, Uast_def** result, const Usymbol_table* sym_table, Name key) {
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, serialize_name(env, key));
 }
 
 bool usymbol_lookup(Uast_def** result, Env* env, Name key) {
     if (key.mod_path.count < 1) {
-        if (usym_tbl_lookup(result, &env->primitives, key)) {
+        if (usym_tbl_lookup(env, result, &env->primitives, key)) {
             return true;
         }
         if (lang_type_atom_is_signed(lang_type_atom_new(key, 0))) {
@@ -316,7 +316,7 @@ bool usymbol_lookup(Uast_def** result, Env* env, Name key) {
             Uast_primitive_def* def = uast_primitive_def_new(
                 POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new((Pos) {0}, bit_width, 0)))
             );
-            unwrap(usym_tbl_add(&env->primitives, uast_primitive_def_wrap(def)));
+            unwrap(usym_tbl_add(env, &env->primitives, uast_primitive_def_wrap(def)));
             *result = uast_primitive_def_wrap(def);
             return true;
         } else if (lang_type_atom_is_unsigned(lang_type_atom_new(key, 0))) {
@@ -324,13 +324,13 @@ bool usymbol_lookup(Uast_def** result, Env* env, Name key) {
             Uast_primitive_def* def = uast_primitive_def_new(
                 POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new((Pos) {0}, bit_width, 0)))
             );
-            unwrap(usym_tbl_add(&env->primitives, uast_primitive_def_wrap(def)));
+            unwrap(usym_tbl_add(env, &env->primitives, uast_primitive_def_wrap(def)));
             *result = uast_primitive_def_wrap(def);
             return true;
         }
     }
 
-    return generic_symbol_lookup((void**)result, env, serialize_name(key), (Get_tbl_from_collection_fn)usym_get_tbl_from_collection);
+    return generic_symbol_lookup((void**)result, env, serialize_name(env, key), (Get_tbl_from_collection_fn)usym_get_tbl_from_collection);
 }
 
 //
@@ -342,8 +342,8 @@ bool alloca_do_add_defered(Llvm** redefined_sym, Env* env) {
 }
 
 // returns false if symbol has already been added to the table
-bool all_tbl_add(Alloca_table* sym_table, Llvm* item) {
-    return generic_tbl_add((Generic_symbol_table*)sym_table, serialize_name(llvm_tast_get_name(item)), item);
+bool all_tbl_add(Env* env, Alloca_table* sym_table, Llvm* item) {
+    return generic_tbl_add((Generic_symbol_table*)sym_table, serialize_name(env, llvm_tast_get_name(item)), item);
 }
 
 void* all_get_tbl_from_collection(Symbol_collection* collection) {
@@ -353,23 +353,23 @@ void* all_get_tbl_from_collection(Symbol_collection* collection) {
 bool alloca_add(Env* env, Llvm* item) {
     return generic_symbol_add(
         env,
-        serialize_name(llvm_tast_get_name(item)),
+        serialize_name(env, llvm_tast_get_name(item)),
         item,
         (Get_tbl_from_collection_fn)all_get_tbl_from_collection
     );
 }
 
-void all_tbl_update(Alloca_table* sym_table, Llvm* item) {
-    generic_tbl_update((Generic_symbol_table*)sym_table, serialize_name(llvm_tast_get_name(item)), item);
+void all_tbl_update(Env* env, Alloca_table* sym_table, Llvm* item) {
+    generic_tbl_update((Generic_symbol_table*)sym_table, serialize_name(env, llvm_tast_get_name(item)), item);
 }
 
 void usymbol_update(Env* env, Uast_def* item) {
     // TODO: do extra stuff similar to usymbol_add?
-    generic_symbol_update(env, serialize_name(uast_def_get_name(item)), item, (Get_tbl_from_collection_fn)usym_get_tbl_from_collection);
+    generic_symbol_update(env, serialize_name(env, uast_def_get_name(item)), item, (Get_tbl_from_collection_fn)usym_get_tbl_from_collection);
 }
 
 void alloca_update(Env* env, Llvm* item) {
-    generic_symbol_update(env, serialize_name(llvm_tast_get_name(item)), item, (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
+    generic_symbol_update(env, serialize_name(env, llvm_tast_get_name(item)), item, (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
 }
 
 bool all_tbl_lookup(Llvm** result, const Alloca_table* sym_table, Str_view key) {
@@ -377,7 +377,7 @@ bool all_tbl_lookup(Llvm** result, const Alloca_table* sym_table, Str_view key) 
 }
 
 bool alloca_lookup(Llvm** result, Env* env, Name key) {
-    return generic_symbol_lookup((void**)result, env, serialize_name(key), (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
+    return generic_symbol_lookup((void**)result, env, serialize_name(env, key), (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
 }
 
 //

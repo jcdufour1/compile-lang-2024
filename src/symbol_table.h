@@ -24,12 +24,12 @@ bool usym_tbl_add_internal(Usymbol_table_tast* sym_tbl_tasts, size_t capacity, U
 
 bool usym_tbl_lookup_internal(Usymbol_table_tast** result, const Usymbol_table* sym_table, Str_view key);
 
-bool usym_tbl_lookup(Uast_def** result, const Usymbol_table* sym_table, Name key);
+bool usym_tbl_lookup(Env* env, Uast_def** result, const Usymbol_table* sym_table, Name key);
 
 // returns false if symbol has already been added to the table
-bool usym_tbl_add(Usymbol_table* sym_table, Uast_def* tast_of_symbol);
+bool usym_tbl_add(Env* env, Usymbol_table* sym_table, Uast_def* tast_of_symbol);
 
-void usym_tbl_update(Usymbol_table* sym_table, Uast_def* tast_of_symbol);
+void usym_tbl_update(Env* env, Usymbol_table* sym_table, Uast_def* tast_of_symbol);
 
 bool usymbol_lookup(Uast_def** result, Env* env, Name key);
 
@@ -50,12 +50,12 @@ bool sym_tbl_add_internal(Symbol_table_tast* sym_tbl_tasts, size_t capacity, Tas
 
 bool sym_tbl_lookup_internal(Symbol_table_tast** result, const Symbol_table* sym_table, Str_view key);
 
-bool sym_tbl_lookup(Tast_def** result, const Symbol_table* sym_table, Name key);
+bool sym_tbl_lookup(Env* env, Tast_def** result, const Symbol_table* sym_table, Name key);
 
 // returns false if symbol has already been added to the table
-bool sym_tbl_add(Symbol_table* sym_table, Tast_def* tast_of_symbol);
+bool sym_tbl_add(Env* env, Symbol_table* sym_table, Tast_def* tast_of_symbol);
 
-void sym_tbl_update(Symbol_table* sym_table, Tast_def* tast_of_symbol);
+void sym_tbl_update(Env* env, Symbol_table* sym_table, Tast_def* tast_of_symbol);
 
 bool symbol_lookup(Tast_def** result, Env* env, Name key);
 
@@ -79,9 +79,9 @@ bool all_tbl_lookup_internal(Alloca_table_tast** result, const Alloca_table* sym
 bool all_tbl_lookup(Llvm** result, const Alloca_table* sym_table, Str_view key);
 
 // returns false if symbol has already been added to the table
-bool all_tbl_add(Alloca_table* sym_table, Llvm* tast_of_symbol);
+bool all_tbl_add(Env* env, Alloca_table* sym_table, Llvm* tast_of_symbol);
 
-void all_tbl_update(Alloca_table* sym_table, Llvm* tast_of_symbol);
+void all_tbl_update(Env* env, Alloca_table* sym_table, Llvm* tast_of_symbol);
 
 bool alloca_lookup(Llvm** result, Env* env, Name key);
 

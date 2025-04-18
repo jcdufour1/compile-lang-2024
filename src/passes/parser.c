@@ -855,14 +855,14 @@ static bool parse_lang_type_struct_atom(Env* env, Pos* pos, Ulang_type_atom* lan
     (void) env;
     memset(lang_type, 0, sizeof(*lang_type));
     Token lang_type_token = {0};
-    Str_view mod_path = {0};
+    Str_view mod_alias = {0};
 
     if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
         return false;
     }
 
     if (try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
-        mod_path = lang_type_token.text;
+        mod_alias = lang_type_token.text;
         if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
             todo();
             return false;
@@ -871,7 +871,7 @@ static bool parse_lang_type_struct_atom(Env* env, Pos* pos, Ulang_type_atom* lan
 
     *pos = lang_type_token.pos;
 
-    lang_type->str = (Name) {.mod_path = mod_path, .base = lang_type_token.text};
+    lang_type->str = (Uname) {.mod_alias = mod_alias, .base = lang_type_token.text};
     while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
         lang_type->pointer_depth++;
     }
@@ -896,7 +896,7 @@ static bool parse_lang_type_struct_tuple(Env* env, Ulang_type_tuple* lang_type, 
         // a return type is only one token, at least for now
         Pos atom_pos = {0};
         if (!parse_lang_type_struct_atom(env, &atom_pos, &atom, tokens)) {
-            atom.str = (Name) {.mod_path = (Str_view) {0}, .base = str_view_from_cstr("void")};
+            atom.str = (Uname) {.mod_alias = (Str_view) {0}, .base = str_view_from_cstr("void")};
             break;
         }
         Ulang_type new_child = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, atom_pos));
@@ -1303,9 +1303,10 @@ static PARSE_STATUS parse_enum_def(Env* env, Uast_enum_def** enum_def, Tk_view* 
     unwrap(try_consume(NULL, tokens, TOKEN_ENUM));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def_implicit_type(env, &base, (Name) {.mod_path = env->curr_mod_path, .base = name.text}, tokens, ulang_type_atom_new((Name) {.mod_path = env->curr_mod_path, .base = name.text}, 0))) {
-        return PARSE_ERROR;
-    }
+    todo();
+    //if (PARSE_OK != parse_struct_base_def_implicit_type(env, &base, (Name) {.mod_path = env->curr_mod_path, .base = name.text}, tokens, ulang_type_atom_new((Name) {.mod_path = env->curr_mod_path, .base = name.text}, 0))) {
+    //    return PARSE_ERROR;
+    //}
 
     *enum_def = uast_enum_def_new(name.pos, base);
     if (!usymbol_add(env, uast_enum_def_wrap(*enum_def))) {

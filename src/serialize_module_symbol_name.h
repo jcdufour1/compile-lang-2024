@@ -9,7 +9,7 @@
 // TODO: remove this
 bool try_str_view_consume_size_t(size_t* result, Str_view* str_view, bool ignore_underscore);
 
-static inline Str_view serialize_name(Name name) {
+static inline Str_view serialize_name(Env* env, Name name) {
     String buf = {0};
 
     if (name.mod_path.count > 0) {
@@ -27,7 +27,7 @@ static inline Str_view serialize_name(Name name) {
         string_extend_size_t(&a_main, &buf, name.gen_args.info.count);
         string_extend_cstr(&a_main, &buf, "_");
         for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
-            string_extend_strv(&a_main, &buf, serialize_name(serialize_ulang_type(name.mod_path, vec_at(&name.gen_args, idx))));
+            string_extend_strv(&a_main, &buf, serialize_name(env, serialize_ulang_type(env, name.mod_path, vec_at(&name.gen_args, idx))));
         }
     }
 
@@ -50,13 +50,13 @@ static inline Name deserialize_name(Str_view serialized) {
 }
 
 // TODO: move this macro
-static inline Str_view name_print_internal(bool serialize, Name name) {
+static inline Str_view name_print_internal(Env* env, bool serialize, Name name) {
     if (serialize) {
-        return serialize_name(name);
+        return serialize_name(env, name);
     }
         
     String buf = {0};
-    extend_name(false, &buf, name);
+    extend_name(env, false, &buf, name);
     return string_to_strv(buf);
 }
 

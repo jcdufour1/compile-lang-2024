@@ -28,7 +28,9 @@ void generic_sub_lang_type_regular(
     Name gen_param,
     Ulang_type gen_arg
 ) {
-    if (name_is_equal(gen_param, lang_type.atom.str)) {
+    Name temp = {0};
+    unwrap(name_from_uname(&temp, lang_type.atom.str));
+    if (name_is_equal(gen_param, temp)) {
         *new_lang_type = ulang_type_clone(gen_arg);
 
         int16_t base_depth = lang_type.atom.pointer_depth;

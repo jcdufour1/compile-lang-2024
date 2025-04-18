@@ -297,7 +297,7 @@ static bool resolve_generics_ulang_type_internal_struct_like(
     }
 
     *result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
-        uast_def_get_struct_def_base(*after_res).name, ulang_type_get_atom(lang_type).pointer_depth
+        name_to_uname(uast_def_get_struct_def_base(*after_res).name), ulang_type_get_atom(lang_type).pointer_depth
     ), ulang_type_get_pos(lang_type)));
     log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, *result));
 
@@ -373,7 +373,10 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Env* env, U
 bool resolve_generics_ulang_type_regular(Ulang_type* result, Env* env, Ulang_type_regular lang_type) {
     Uast_def* before_res = NULL;
     log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
-    Name name_base = lang_type.atom.str;
+    Name name_base = {0};
+    if (!name_from_uname(&name_base, lang_type.atom.str)) {
+        return false;
+    }
     memset(&name_base.gen_args, 0, sizeof(name_base.gen_args));
     if (!usymbol_lookup(&before_res, env, name_base)) {
         msg_undefined_type(env, lang_type.pos, ulang_type_regular_const_wrap(lang_type));

@@ -22,6 +22,8 @@ Str_view ustruct_def_base_print_internal(Ustruct_def_base base, int indent);
 
 Str_view uast_print_internal(const Uast* uast, int recursion_depth);
 
+Ulang_type uast_get_ulang_type_def(const Uast_def* def);
+
 static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def);
     
 static inline bool ustruct_def_base_get_lang_type_(Ulang_type* result, Env* env, Ustruct_def_base base, Ulang_type_vec generics, Pos pos);
@@ -32,38 +34,6 @@ static inline bool ustruct_def_base_get_lang_type_(Ulang_type* result, Env* env,
     do { \
         log(LOG_NOTE, UAST_FMT"\n", uast_print(uast)); \
     } while (0);
-
-static inline Ulang_type uast_get_ulang_type_def(const Uast_def* def) {
-    switch (def->type) {
-        case UAST_FUNCTION_DEF:
-            unreachable("");
-        case UAST_RAW_UNION_DEF:
-            unreachable("");
-        case UAST_ENUM_DEF:
-            return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(uast_enum_def_const_unwrap(def)->base.name, 0), uast_def_get_pos(def)));
-        case UAST_VARIABLE_DEF:
-            return uast_variable_def_const_unwrap(def)->lang_type;
-        case UAST_FUNCTION_DECL:
-            return uast_function_decl_const_unwrap(def)->return_type;
-        case UAST_STRUCT_DEF:
-            return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(uast_struct_def_const_unwrap(def)->base.name, 0), uast_def_get_pos(def)));
-        case UAST_PRIMITIVE_DEF:
-            unreachable("");
-        case UAST_LITERAL_DEF:
-            unreachable("");
-        case UAST_SUM_DEF:
-            return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(uast_sum_def_const_unwrap(def)->base.name, 0), uast_def_get_pos(def)));
-        case UAST_GENERIC_PARAM:
-            unreachable("");
-        case UAST_POISON_DEF:
-            unreachable("");
-        case UAST_IMPORT_PATH:
-            unreachable("");
-        case UAST_MOD_ALIAS:
-            unreachable("");
-    }
-    unreachable("");
-}
 
 static inline Ulang_type uast_get_ulang_type_stmt(const Uast_stmt* stmt) {
     switch (stmt->type) {

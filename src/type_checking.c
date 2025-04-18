@@ -1416,7 +1416,7 @@ bool try_set_function_call_types_sum_case(Env* env, Tast_sum_case** new_case, Ua
             // tast_sum_case->tag->lang_type is of selected varient of sum (maybe)
             Uast_variable_def* new_def = uast_variable_def_new(
                 sum_case->pos,
-                lang_type_to_ulang_type(sum_case->tag->lang_type),
+                lang_type_to_ulang_type(env, sum_case->tag->lang_type),
                 (Name) {.mod_path = env->curr_mod_path, .base = uast_symbol_unwrap(vec_at(&args, 0))->name.base}
             );
             usymbol_add_defer(env, uast_variable_def_wrap(new_def));
