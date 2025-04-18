@@ -295,7 +295,8 @@ void generic_sub_function_call(Uast_function_call* fun_call, Name gen_param, Ula
 }
 
 void generic_sub_member_access(Uast_member_access* access, Name gen_param, Ulang_type gen_arg) {
-    generic_sub_expr( access->callee, gen_param, gen_arg);
+    generic_sub_expr(access->callee, gen_param, gen_arg);
+    generic_sub_symbol(access->member_name, gen_param, gen_arg);
 }
 
 void generic_sub_symbol(Uast_symbol* sym, Name gen_param, Ulang_type gen_arg) {
