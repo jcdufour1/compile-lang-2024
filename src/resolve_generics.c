@@ -219,7 +219,6 @@ static bool resolve_generics_serialize_struct_def_base(
 
     assert(old_base.members.info.count == new_base->members.info.count);
 
-    log(LOG_DEBUG, TAST_FMT"\n", name_print(new_name));
     new_base->name = new_name;
     return true;
 }
@@ -253,17 +252,16 @@ static bool resolve_generics_ulang_type_internal_struct_like(
     Set_obj_types set_obj_types,
     Obj_unwrap obj_unwrap
 ) {
-    log(LOG_DEBUG, "THING 765\n");
     Ustruct_def_base old_base = uast_def_get_struct_def_base(before_res);
     Name new_name = (Name) {.mod_path = old_base.name.mod_path, .base = old_base.name.base, .gen_args = ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args};
 
-    for (size_t idx = 0; idx < new_name.gen_args.info.count; idx++) {
-        log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, vec_at(&new_name.gen_args, idx)));
-    }
-    for (size_t idx = 0; idx < new_name.gen_args.info.count; idx++) {
-        log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, vec_at(&new_name.gen_args, idx)));
-    }
-    log(LOG_DEBUG, TAST_FMT"\n", name_print(new_name));
+    //for (size_t idx = 0; idx < new_name.gen_args.info.count; idx++) {
+    //    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, vec_at(&new_name.gen_args, idx)));
+    //}
+    //for (size_t idx = 0; idx < new_name.gen_args.info.count; idx++) {
+    //    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, vec_at(&new_name.gen_args, idx)));
+    //}
+    //log(LOG_DEBUG, TAST_FMT"\n", name_print(new_name));
 
     if (old_base.generics.info.count != new_name.gen_args.info.count) {
         msg_invalid_count_generic_args(
@@ -279,26 +277,19 @@ static bool resolve_generics_ulang_type_internal_struct_like(
 
     Uast_def* new_def_ = NULL;
     if (usymbol_lookup(&new_def_,  new_name)) {
-        log(LOG_DEBUG, TAST_FMT"\n", name_print(new_name));
-        log(LOG_DEBUG, "%zu\n", new_name.gen_args.info.count);
         *after_res = new_def_;
     } else {
         Ustruct_def_base new_base = {0};
-        log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, *result));
-        log(LOG_DEBUG, TAST_FMT"\n", name_print(new_name));
         if (!resolve_generics_serialize_struct_def_base( &new_base, old_base, new_name.gen_args, new_name)) {
             todo();
             return false;
         }
-        log(LOG_DEBUG, TAST_FMT, ustruct_def_base_print(old_base));
-        log(LOG_DEBUG, TAST_FMT, ustruct_def_base_print(new_base));
         *after_res = obj_new(uast_def_get_pos(before_res), new_base);
     }
 
     *result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
         name_to_uname(uast_def_get_struct_def_base(*after_res).name), ulang_type_get_atom(lang_type).pointer_depth
     ), ulang_type_get_pos(lang_type)));
-    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, *result));
 
     Tast_def* dummy = NULL;
     if (symbol_lookup(&dummy,  new_name)) {
@@ -371,10 +362,7 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
 
 bool resolve_generics_ulang_type_regular(Ulang_type* result, Ulang_type_regular lang_type) {
     Uast_def* before_res = NULL;
-    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
     Name name_base = {0};
-    log(LOG_DEBUG, TAST_FMT"\n", uname_print(lang_type.atom.str));
-    log(LOG_DEBUG, TAST_FMT"\n", name_print(lang_type.atom.str.mod_alias));
     if (!name_from_uname(&name_base, lang_type.atom.str)) {
         return false;
     }
@@ -383,7 +371,6 @@ bool resolve_generics_ulang_type_regular(Ulang_type* result, Ulang_type_regular 
         msg_undefined_type(lang_type.pos, ulang_type_regular_const_wrap(lang_type));
         return false;
     }
-    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
 
     return resolve_generics_ulang_type_internal(
         result,

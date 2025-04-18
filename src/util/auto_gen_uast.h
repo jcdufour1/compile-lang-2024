@@ -200,7 +200,7 @@ static Uast_type uast_gen_switch(const char* prefix) {
 static Uast_type uast_gen_member_access(const char* prefix) {
     Uast_type access = {.name = uast_name_new(prefix, "member_access", false)};
 
-    append_member(&access.members, "Str_view", "member_name");
+    append_member(&access.members, "Uast_symbol*", "member_name");
     append_member(&access.members, "Uast_expr*", "callee");
 
     return access;

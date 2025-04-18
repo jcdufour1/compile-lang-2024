@@ -31,7 +31,6 @@ static inline Str_view serialize_name(Name name) {
         }
     }
 
-    log(LOG_DEBUG, TAST_FMT"\n", string_print(buf));
     return string_to_strv(buf);
 }
 

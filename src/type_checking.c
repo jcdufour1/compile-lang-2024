@@ -1006,12 +1006,13 @@ static bool try_set_struct_literal_member_types(Tast_expr_vec* new_membs, Uast_e
                 uast_binary_unwrap(uast_operator_unwrap(memb))->lhs // parser should catch invalid assignment
             );
             rhs = uast_binary_unwrap(uast_operator_unwrap(memb))->rhs;
-            if (!str_view_is_equal(memb_def->name.base, lhs->member_name)) {
-                msg(
-                    LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL, env.file_path_to_text, lhs->pos,
-                    "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
-                    str_view_print(memb_def->name.base), str_view_print(lhs->member_name)
-                );
+            if (!name_is_equal(memb_def->name, lhs->member_name->name)) {
+                ///msg(
+                ///    LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL, env.file_path_to_text, lhs->pos,
+                ///    "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
+                ///    str_view_print(memb_def->name.base), name_print(lhs->member_name)
+                ///);
+                todo();
                 return false;
             }
         } else {
@@ -1752,38 +1753,45 @@ bool try_set_sum_get_tag_types(Tast_sum_get_tag** new_access, Uast_sum_get_tag* 
 static void msg_invalid_member_internal(
     const char* file,
     int line,
-     
     Name base_name,
     const Uast_member_access* access
 ) {
-    msg_internal(
-        file, line, LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_ACCESS, env.file_path_to_text,
-        access->pos,
-        "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 
-        str_view_print(access->member_name), name_print(base_name)
-    );
+    (void) file;
+    (void) line;
+    (void) base_name;
+    (void) access;
+    todo();
+    //msg_internal(
+    //    file, line, LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_ACCESS, env.file_path_to_text,
+    //    access->pos,
+    //    "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 
+    //    str_view_print(access->member_name.base), name_print(base_name)
+    //);
 }
 
 #define msg_invalid_member( base_name, access) \
     msg_invalid_member_internal(__FILE__, __LINE__,  base_name, access)
 
 bool try_set_member_access_types_finish_generic_struct(
-     
     Tast_stmt** new_tast,
     Uast_member_access* access,
     Ustruct_def_base def_base,
     Tast_expr* new_callee
 ) {
     Uast_variable_def* member_def = NULL;
-    if (!uast_try_get_member_def(&member_def, &def_base, access->member_name)) {
+    if (!uast_try_get_member_def(&member_def, &def_base, access->member_name->name.base)) {
         msg_invalid_member( def_base.name, access);
         return false;
+    }
+
+    if (access->member_name->name.gen_args.info.count > 0) {
+        todo();
     }
 
     Tast_member_access* new_access = tast_member_access_new(
         access->pos,
         lang_type_from_ulang_type( member_def->lang_type),
-        access->member_name,
+        access->member_name->name.base,
         new_callee
     );
 
@@ -1804,14 +1812,14 @@ bool try_set_member_access_types_finish_sum_def(
     switch (env.parent_of) {
         case PARENT_OF_CASE: {
             Uast_variable_def* member_def = NULL;
-            if (!uast_try_get_member_def(&member_def, &sum_def->base, access->member_name)) {
+            if (!uast_try_get_member_def(&member_def, &sum_def->base, access->member_name->name.base)) {
                 msg_invalid_member( sum_def->base.name, access);
                 return false;
             }
 
             Tast_enum_lit* new_tag = tast_enum_lit_new(
                 access->pos,
-                uast_get_member_index(&sum_def->base, access->member_name),
+                uast_get_member_index(&sum_def->base, access->member_name->name.base),
                 lang_type_from_ulang_type( member_def->lang_type)
             );
 
@@ -1830,7 +1838,7 @@ bool try_set_member_access_types_finish_sum_def(
             // fallthrough
         case PARENT_OF_ASSIGN_RHS: {
             Uast_variable_def* member_def = NULL;
-            if (!uast_try_get_member_def(&member_def, &sum_def->base, access->member_name)) {
+            if (!uast_try_get_member_def(&member_def, &sum_def->base, access->member_name->name.base)) {
                 todo();
                 //msg_invalid_member( enum_def->base, access);
                 //return false;
@@ -1838,7 +1846,7 @@ bool try_set_member_access_types_finish_sum_def(
             
             Tast_enum_lit* new_tag = tast_enum_lit_new(
                 access->pos,
-                uast_get_member_index(&sum_def->base, access->member_name),
+                uast_get_member_index(&sum_def->base, access->member_name->name.base),
                 lang_type_from_ulang_type( member_def->lang_type)
             );
 
@@ -1901,14 +1909,14 @@ bool try_set_member_access_types_finish(
         case UAST_ENUM_DEF: {
             Uast_enum_def* enum_def = uast_enum_def_unwrap(lang_type_def);
             Uast_variable_def* member_def = NULL;
-            if (!uast_try_get_member_def(&member_def, &enum_def->base, access->member_name)) {
+            if (!uast_try_get_member_def(&member_def, &enum_def->base, access->member_name->name.base)) {
                 msg_invalid_member( enum_def->base.name, access);
                 return false;
             }
 
             Tast_enum_lit* new_lit = tast_enum_lit_new(
                 access->pos,
-                uast_get_member_index(&enum_def->base, access->member_name),
+                uast_get_member_index(&enum_def->base, access->member_name->name.base),
                 lang_type_from_ulang_type( member_def->lang_type)
             );
 
@@ -1982,7 +1990,11 @@ bool try_set_member_access_types(
 
         }
         case TAST_MODULE_ALIAS: {
-            Uast_symbol* sym = uast_symbol_new(access->pos, (Name) {.mod_path = tast_module_alias_unwrap(new_callee)->mod_path, .base = access->member_name, (Ulang_type_vec) {0}});
+            Uast_symbol* sym = uast_symbol_new(access->pos, (Name) {
+                .mod_path = tast_module_alias_unwrap(new_callee)->mod_path,
+                .base = access->member_name->name.base,
+                .gen_args = access->member_name->name.gen_args
+            });
             Tast_expr* new_expr = NULL;
             if (!try_set_symbol_types( &new_expr, sym)) {
                 return false;

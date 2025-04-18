@@ -40,8 +40,6 @@ bool name_from_uname(Name* new_name, Uname name) {
             return true;
         }
         *new_name = (Name) {.mod_path = name.mod_alias.mod_path, .base = name.base, .gen_args = name.gen_args};
-        log(LOG_DEBUG, TAST_FMT"\n", name_print(*new_name));
-        log(LOG_DEBUG, "THING 76\n");
         return true;
     }
 
@@ -74,7 +72,6 @@ bool name_from_uname(Name* new_name, Uname name) {
 
     switch (result->type) {
         case UAST_MOD_ALIAS: {
-            log(LOG_DEBUG, "THING 78\n");
             Uast_mod_alias* alias = uast_mod_alias_unwrap(result);
             *new_name = (Name) {.mod_path = alias->mod_path.base, .base = name.base, .gen_args = name.gen_args};
             return true;

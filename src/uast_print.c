@@ -70,7 +70,7 @@ Str_view uast_member_access_print_internal(const Uast_member_access* access, int
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "member_access_untyped", indent);
-    string_extend_strv_in_par(&print_arena, &buf, access->member_name);
+    string_extend_strv(&print_arena, &buf, uast_symbol_print_internal(access->member_name, indent + INDENT_WIDTH));
     extend_pos(&buf, access->pos);
     string_extend_cstr(&print_arena, &buf, "\n");
 

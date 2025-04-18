@@ -74,7 +74,6 @@ static inline bool try_lang_type_from_ulang_type_tuple(
 // TODO: figure out way to reduce duplicate vec allocations
 static inline bool try_lang_type_from_ulang_type_fn(
     Lang_type_fn* new_lang_type,
-     
     Ulang_type_fn lang_type,
     Pos pos
 ) {
@@ -141,7 +140,6 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     //log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, after_res));
     //log(LOG_DEBUG, TAST_FMT"\n", name_print(ulang_type_regular_const_unwrap(after_res).atom.str));
     //log(LOG_DEBUG, TAST_FMT"\n", str_view_print(ulang_type_regular_const_unwrap(after_res).atom.str.mod_path));
-    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(lang_type.atom.str.base));
     Uast_def* result = NULL;
     Name temp_name = {0};
     if (!name_from_uname( &temp_name, ulang_type_regular_const_unwrap(resolved).atom.str)) {
@@ -156,7 +154,6 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
         return false;
     }
 
-    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
     unwrap(name_from_uname( &temp_name, ulang_type_regular_const_unwrap(resolved).atom.str));
     Lang_type_atom new_atom = lang_type_atom_new(temp_name, ulang_type_regular_const_unwrap(resolved).atom.pointer_depth);
     switch (result->type) {
