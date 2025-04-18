@@ -1,5 +1,5 @@
 
-extern("c") fn printf(str_to_print u8*, args any...) i32
+type io import = std
 
 type Token sum {
     num i32
@@ -13,18 +13,18 @@ type Thing sum {
 
 fn token_print(token Token) {
     switch token {
-        case Token.num(num): printf("token is number: %d\n", num)
-        case Token.string(str): printf("token is string: %s\n", str)
+        case Token.num(num): io.printf("token is number: %d\n", num)
+        case Token.string(str): io.printf("token is string: %s\n", str)
     }
 }
 
 fn thing_print(thing Thing) {
     switch thing {
         case Thing.token(currToken): {
-            printf("thing is token: ")
+            io.printf("thing is token: ")
             token_print(currToken)
         }
-        case Thing.num(num): printf("thing is number: %d\n", num)
+        case Thing.num(num): io.printf("thing is number: %d\n", num)
     }
 }
 

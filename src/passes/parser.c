@@ -855,13 +855,23 @@ static bool parse_lang_type_struct_atom(Env* env, Pos* pos, Ulang_type_atom* lan
     (void) env;
     memset(lang_type, 0, sizeof(*lang_type));
     Token lang_type_token = {0};
+    Str_view mod_path = {0};
 
     if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
         return false;
     }
+
+    if (try_consume(NULL, tokens, TOKEN_SINGLE_DOT)) {
+        mod_path = lang_type_token.text;
+        if (!try_consume(&lang_type_token, tokens, TOKEN_SYMBOL)) {
+            todo();
+            return false;
+        }
+    }
+
     *pos = lang_type_token.pos;
 
-    lang_type->str = (Name) {.mod_path = (Str_view) {0}, .base = lang_type_token.text};
+    lang_type->str = (Name) {.mod_path = mod_path, .base = lang_type_token.text};
     while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
         lang_type->pointer_depth++;
     }
@@ -1176,6 +1186,7 @@ static PARSE_STATUS parse_struct_base_def(
 ) {
     memset(base, 0, sizeof(*base));
     base->name = name;
+    log(LOG_DEBUG, "THING: "TAST_FMT"\n", name_print(name));
 
     if (tk_view_front(*tokens).type == TOKEN_OPEN_GENERIC) {
         parse_generics_params(env, &base->generics, tokens);
