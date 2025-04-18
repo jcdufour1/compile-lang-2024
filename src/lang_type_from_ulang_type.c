@@ -31,13 +31,54 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
 }
 
 bool name_from_uname(Name* new_name, Uname name) {
-    (void) new_name;
-    (void) name;
-    todo();
+    if (name.mod_alias.count < 1) {
+        *new_name = (Name) {.mod_path = (Str_view) {0}, .base = name.base, .gen_args = name.gen_args};
+        return true;
+    }
+
+    Uast_def* result = NULL;
+    if (!usymbol_lookup(&result, (Name) {.mod_path = {0} /* TODO */, .base = name.mod_alias, .gen_args = name.gen_args})) {
+        log(LOG_DEBUG, TAST_FMT"\n", uname_print(name));
+        todo();
+    }
+
+    switch (result->type) {
+        case UAST_MOD_ALIAS: {
+            Uast_mod_alias* alias = uast_mod_alias_unwrap(result);
+            *new_name = (Name) {.mod_path = alias->mod_path.base, .base = name.base, .gen_args = name.gen_args};
+            return true;
+        }
+        case UAST_IMPORT_PATH:
+            todo();
+        case UAST_STRUCT_DEF:
+            todo();
+        case UAST_RAW_UNION_DEF:
+            todo();
+        case UAST_ENUM_DEF:
+            todo();
+        case UAST_SUM_DEF:
+            todo();
+        case UAST_PRIMITIVE_DEF:
+            todo();
+        case UAST_FUNCTION_DEF:
+            todo();
+        case UAST_FUNCTION_DECL:
+            todo();
+        case UAST_LITERAL_DEF:
+            todo();
+        case UAST_VARIABLE_DEF:
+            todo();
+        case UAST_GENERIC_PARAM:
+            todo();
+        case UAST_POISON_DEF:
+            return false;
+    }
+    unreachable("");
 }
 
 Uname name_to_uname(Name name) {
     Uast_mod_alias* new_alias = uast_mod_alias_new((Pos) {0} /* TODO */, (Name) {.base = util_literal_name_new()}, (Name) {.base = name.mod_path});
+    unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
     return (Uname) {.mod_alias = new_alias->name.base, .base = name.base, .gen_args = name.gen_args};
 }
 

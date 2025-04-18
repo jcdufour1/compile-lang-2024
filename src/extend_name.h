@@ -64,4 +64,6 @@ static inline void extend_uname(String* buf, Uname name) {
 
 #define name_print(name) str_view_print(name_print_internal(false, name))
 
+#define uname_print(name) str_view_print(uname_print_internal(name))
+
 #endif // EXTEND_NAME_H

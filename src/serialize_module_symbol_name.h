@@ -60,4 +60,10 @@ static inline Str_view name_print_internal(bool serialize, Name name) {
     return string_to_strv(buf);
 }
 
+static inline Str_view uname_print_internal(Uname name) {
+    String buf = {0};
+    extend_uname(&buf, name);
+    return string_to_strv(buf);
+}
+
 #endif // SERIALIZE_MODULE_SYMBOL_NAME_H
