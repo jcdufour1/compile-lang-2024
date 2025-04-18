@@ -18,6 +18,8 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Env* env, Ulang_typ
 bool lang_type_atom_is_signed(Lang_type_atom atom);
 bool lang_type_atom_is_unsigned(Lang_type_atom atom);
 
+bool name_from_uname(Name* new_name, Uname name);
+
 static inline Ulang_type lang_type_to_ulang_type(Lang_type lang_type);
 
 static inline bool try_lang_type_from_ulang_type_tuple(
@@ -91,7 +93,9 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Env* e
     (void) def;
     (void) lang_type;
 
-    Lang_type_atom atom = lang_type_atom_new(lang_type.atom.str, lang_type.atom.pointer_depth);
+    Name name = {0};
+    unwrap(name_from_uname(&name, lang_type.atom.str));
+    Lang_type_atom atom = lang_type_atom_new(name, lang_type.atom.pointer_depth);
 
     if (lang_type_atom_is_signed(atom)) {
         Lang_type_signed_int new_int = lang_type_signed_int_new(
@@ -137,7 +141,11 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     //log(LOG_DEBUG, TAST_FMT"\n", str_view_print(ulang_type_regular_const_unwrap(after_res).atom.str.mod_path));
     log(LOG_DEBUG, TAST_FMT"\n", str_view_print(lang_type.atom.str.base));
     Uast_def* result = NULL;
-    if (!usymbol_lookup(&result, env, ulang_type_regular_const_unwrap(resolved).atom.str)) {
+    Name temp_name = {0};
+    if (!name_from_uname(&temp_name, ulang_type_regular_const_unwrap(resolved).atom.str)) {
+        return false;
+    }
+    if (!usymbol_lookup(&result, env, temp_name)) {
         msg(
             LOG_ERROR, EXPECT_FAIL_UNDEFINED_TYPE, env->file_path_to_text, pos,
             "undefined type `"TAST_FMT"`\n", ulang_type_print(LANG_TYPE_MODE_MSG, resolved)
@@ -147,7 +155,8 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     }
 
     log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
-    Lang_type_atom new_atom = lang_type_atom_new(ulang_type_regular_const_unwrap(resolved).atom.str, ulang_type_regular_const_unwrap(resolved).atom.pointer_depth);
+    unwrap(name_from_uname(&temp_name, ulang_type_regular_const_unwrap(resolved).atom.str));
+    Lang_type_atom new_atom = lang_type_atom_new(temp_name, ulang_type_regular_const_unwrap(resolved).atom.pointer_depth);
     switch (result->type) {
         case UAST_STRUCT_DEF:
             *new_lang_type = lang_type_struct_const_wrap(lang_type_struct_new(lang_type.pos, new_atom));
@@ -218,6 +227,7 @@ static inline Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
         case LANG_TYPE_SUM:
             // fallthrough
             // TODO: change (Pos) {0} below to lang_type_get_pos(lang_type)
+            
             return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(lang_type_get_str(lang_type), lang_type_get_pointer_depth(lang_type)), (Pos) {0}));
         case LANG_TYPE_FN:
             todo();

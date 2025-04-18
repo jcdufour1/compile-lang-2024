@@ -29,3 +29,6 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Env* env, Ulang_typ
     }
     unreachable("");
 }
+
+bool name_from_uname(Name* new_name, Uname name) {
+}

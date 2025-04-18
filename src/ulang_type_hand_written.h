@@ -3,6 +3,7 @@
 
 #include <str_view.h>
 #include <vector.h>
+#include <uast_forward_decl.h>
 
 struct Ulang_type_;
 typedef struct Ulang_type_ Ulang_type;
@@ -27,8 +28,16 @@ typedef struct {
     Ulang_type_vec gen_args;
 } Name;
 
+typedef struct {
+    bool is_alias;
+    Uast_symbol* mod_alias;
+
+    Str_view base;
+    Ulang_type_vec gen_args;
+} Uname;
+
 typedef struct Ulang_type_atom_ {
-    Name str;
+    Uname str;
     int16_t pointer_depth; // for function parameter: 2 means that function argument must also have 2 for this field
                            // and that in function, variable is already referenced twice
                            //
@@ -37,13 +46,13 @@ typedef struct Ulang_type_atom_ {
 
 static inline bool ulang_type_is_equal(Ulang_type a, Ulang_type b);
 
-static inline Ulang_type_atom ulang_type_atom_new(Name str, int16_t pointer_depth) {
+static inline Ulang_type_atom ulang_type_atom_new(Uname str, int16_t pointer_depth) {
     return (Ulang_type_atom) {.str = str, .pointer_depth = pointer_depth};
 }
 
 static inline Ulang_type_atom ulang_type_atom_new_from_cstr(const char* cstr, int16_t pointer_depth) {
     return ulang_type_atom_new(
-        (Name) {.mod_path = (Str_view) {0}, str_view_from_cstr(cstr)},
+        (Uname) {.is_alias = false, .mod_alias = NULL, str_view_from_cstr(cstr)},
         pointer_depth
     );
 }
