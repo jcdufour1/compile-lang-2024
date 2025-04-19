@@ -1,0 +1,6 @@
+type io import = std
+
+fn printf(string u8*) {
+    io.printf("from module dummy two: ")
+    io.printf("%s\n", string)
+}
