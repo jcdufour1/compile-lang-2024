@@ -1,10 +1,10 @@
+type io import = std
 
-extern("c") fn printf(str_to_print u8*, args any...) i32
 
 fn main() i32 {
     let small_num i7
     small_num = 8*2
-    printf("%d\n", small_num);
+    io.printf("%d\n", small_num);
 
     return 0
 }

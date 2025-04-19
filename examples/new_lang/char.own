@@ -1,69 +1,69 @@
-extern("c") fn printf(str_to_print u8*, args any...) i32
+type io import = std
 
 fn string_comparison() {
     let string u8* = "hello"
 
     if string[0] == 'h' {
-        printf("yes1\n");
+        io.printf("yes1\n");
     } else {
-        printf("no1\n");
+        io.printf("no1\n");
     }
 
     if string[0] > 'a' {
-        printf("yes2\n");
+        io.printf("yes2\n");
     } else {
-        printf("no2\n");
+        io.printf("no2\n");
     }
 
     if string[0] > 'z' {
-        printf("no3\n");
+        io.printf("no3\n");
     } else {
-        printf("yes3\n");
+        io.printf("yes3\n");
     }
 
     if string[0] < 'a' {
-        printf("no4\n");
+        io.printf("no4\n");
     } else {
-        printf("yes4\n");
+        io.printf("yes4\n");
     }
 
     if string[0] < 'z' {
-        printf("yes5\n");
+        io.printf("yes5\n");
     } else {
-        printf("no5\n");
+        io.printf("no5\n");
     }
 }
 
 
 fn literal_comparison() {
     if 'h' == 'h' {
-        printf("yes6\n");
+        io.printf("yes6\n");
     } else {
-        printf("no6\n");
+        io.printf("no6\n");
     }
 
     if 'h' > 'a' {
-        printf("yes7\n");
+        io.printf("yes7\n");
     } else {
-        printf("no7\n");
+        io.printf("no7\n");
     }
 
     if 'h' > 'z' {
-        printf("no8\n");
+        io.printf("no8\n");
     } else {
-        printf("yes8\n");
+        io.printf("yes8\n");
     }
 
     if 'h' < 'a' {
-        printf("no9\n");
+        io.printf("no9\n");
     } else {
-        printf("yes9\n");
+        io.printf("yes9\n");
     }
 
     if 'h' < 'z' {
-        printf("yes10\n");
+        io.printf("yes10\n");
     } else {
-        printf("no10\n");
+        io.printf("no10\n");
     }
 }
 

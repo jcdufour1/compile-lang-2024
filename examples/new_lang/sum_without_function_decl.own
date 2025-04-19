@@ -1,3 +1,4 @@
+type io import = std
 
 
 type Opt_int sum {

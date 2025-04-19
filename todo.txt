@@ -54,6 +54,7 @@ for generics:
 - put import_path in different name space from other things
 - do_test.py shold fail if thing with invalid extension found in tests/* or examples/new_lang/
 - disallow literal int implicit conversion to i32 in generic?
+- Uast_mod_alias: use Str_view for mod_path?
 
 
 

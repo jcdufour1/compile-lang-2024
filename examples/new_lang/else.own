@@ -1,6 +1,5 @@
+type io import = std
 
-extern("c") fn puts(str_to_print_2 u8*) 
-extern("c") fn printf(str_to_print_2 u8*, args any...) i32
 
 fn get_num() i32 {
     return 87
@@ -16,222 +15,222 @@ fn is_true() i32 {
 
 fn literal_condition() {
     if 1 {
-        puts("yes3")
+        io.puts("yes3")
     } else if 1 {
-        puts("no3")
+        io.puts("no3")
     }
 
     if 1 {
-        puts("yes4")
+        io.puts("yes4")
     } else if 0 {
-        puts("no4")
+        io.puts("no4")
     }
 
     if 0 {
-        puts("no5")
+        io.puts("no5")
     } else if 0 {
-        puts("no5")
+        io.puts("no5")
     }
 
     if 0 {
-        puts("no6")
+        io.puts("no6")
     } else if 1 {
-        puts("yes6")
+        io.puts("yes6")
     }
 
     if 1 {
-        puts("yes7")
+        io.puts("yes7")
     } else if 1 {
-        puts("no7")
+        io.puts("no7")
     } else if 1 {
-        puts("no7")
+        io.puts("no7")
     }
 
     if 1 {
-        puts("yes8")
+        io.puts("yes8")
     } else if 0 {
-        puts("no8")
+        io.puts("no8")
     } else if 1 {
-        puts("no8.2")
+        io.puts("no8.2")
     }
 
     if 0 {
-        puts("no9")
+        io.puts("no9")
     } else if 0 {
-        puts("no9")
+        io.puts("no9")
     } else if 1 {
-        puts("yes9.2")
+        io.puts("yes9.2")
     }
 
     if 0 {
-        puts("no10")
+        io.puts("no10")
     } else if 1 {
-        puts("yes10")
+        io.puts("yes10")
     } else if 1 {
-        puts("no10.2")
+        io.puts("no10.2")
     }
 
     if 1 {
-        puts("yes11")
+        io.puts("yes11")
     } else if 1 {
-        puts("no11")
+        io.puts("no11")
     } else {
-        puts("no11")
+        io.puts("no11")
     }
 
     if 1 {
-        puts("yes12")
+        io.puts("yes12")
     } else if 0 {
-        puts("no12")
+        io.puts("no12")
     } else {
-        puts("no12.2")
+        io.puts("no12.2")
     }
 
     if 0 {
-        puts("no13")
+        io.puts("no13")
     } else if 0 {
-        puts("no13")
+        io.puts("no13")
     } else {
-        puts("yes13.2")
+        io.puts("yes13.2")
     }
 
     if 0 {
-        puts("no14")
+        io.puts("no14")
     } else if 1 {
-        puts("yes14")
+        io.puts("yes14")
     } else {
-        puts("no14.2")
+        io.puts("no14.2")
     }
 
 }
 
 fn function_condition() {
     if is_false() {
-        puts("no15");
+        io.puts("no15");
     } else if is_true() {
-        puts("yes15");
+        io.puts("yes15");
     } else {
-        puts("no15.2");
+        io.puts("no15.2");
     }
 
     if is_false() {
-        puts("no16");
+        io.puts("no16");
     } else if is_true() {
-        puts("yes16");
+        io.puts("yes16");
     } else {
-        puts("no16.2");
+        io.puts("no16.2");
     }
 
     if is_false() {
-        puts("no17");
+        io.puts("no17");
     } else if is_false() {
-        puts("no17.2");
+        io.puts("no17.2");
     } else {
-        puts("yes17");
+        io.puts("yes17");
     }
 
     if is_true() {
-        puts("yes18");
+        io.puts("yes18");
     } else if is_true() {
-        puts("no18.2");
+        io.puts("no18.2");
     } else {
-        puts("no18.3");
+        io.puts("no18.3");
     }
 }
 
 fn newlines() {
     if is_true() {
-        puts("yes19");
+        io.puts("yes19");
     } 
     else if is_true() {
-        puts("no19.2");
+        io.puts("no19.2");
     } 
     else {
-        puts("no19.3");
+        io.puts("no19.3");
     }
 
 
     if is_true() {
-        puts("yes20");
+        io.puts("yes20");
     } 
 
     else if is_true() {
-        puts("no20.2");
+        io.puts("no20.2");
     } 
 
     else {
-        puts("no20.3");
+        io.puts("no20.3");
     }
 
 
     if is_true() {
-        puts("yes21");
+        io.puts("yes21");
     } 
     else {
-        puts("no21.3");
+        io.puts("no21.3");
     }
 
 
     if is_true() {
-        puts("yes22");
+        io.puts("yes22");
     } else {
-        puts("no22.3");
+        io.puts("no22.3");
     }
 }
 
 fn comments() {
     if is_true() {
-        puts("yes23");
+        io.puts("yes23");
     } 
     else if is_true() {
-        puts("no23.2");
+        io.puts("no23.2");
     } 
     else {
-        puts("no23.3");
+        io.puts("no23.3");
     }
 
 
     if is_true() {
-        puts("yes24");
+        io.puts("yes24");
     } 
 
     else if is_true() {
-        puts("no24.2");
+        io.puts("no24.2");
     } 
 
     else {
-        puts("no24.3");
+        io.puts("no24.3");
     }
 
 
     if is_true() {
-        puts("yes25");
+        io.puts("yes25");
     } 
     // comment
     else {
         // comment
-        puts("no25.3");
+        io.puts("no25.3");
     }
 
 
     if is_true() {
-        puts("yes26");
+        io.puts("yes26");
 
         // comment
 
     } else {
-        puts("no26.3");
+        io.puts("no26.3");
     }
 
 
     if is_true() {
-        puts("yes27");
+        io.puts("yes27");
 
     } else {
 
         // comment
 
-        puts("no27.3");
+        io.puts("no27.3");
     }
 }
 

@@ -1,6 +1,5 @@
+type io import = std
 
-extern("c") fn puts(str_to_print_2 u8*) 
-extern("c") fn printf(str_to_print_2 u8*, args any...) i32
 
 type TokenType enum {
     number
@@ -19,26 +18,26 @@ type Token struct {
 
 fn print_token_if(token Token) {
     if token.kind == TokenType.number {
-        printf("%d\n", token.number_data)
+        io.printf("%d\n", token.number_data)
     } else if token.kind == TokenType.string {
-        printf("%s\n", token.string_data)
+        io.printf("%s\n", token.string_data)
     } else {
-        printf("invalid token type\n")
+        io.printf("invalid token type\n")
     }
 }
 
 fn print_token_switch(token Token) {
     switch token.kind {
-    case TokenType.number: printf("%d\n", token.number_data)
-    case TokenType.string: printf("%s\n", token.string_data)
-    default: printf("invalid token type\n")
+    case TokenType.number: io.printf("%d\n", token.number_data)
+    case TokenType.string: io.printf("%s\n", token.string_data)
+    default: io.printf("invalid token type\n")
     }
 }
 
 fn print_token_switch_non_exhaustive(token Token) {
     switch token.kind {
-    case TokenType.number: printf("%d\n", token.number_data)
-    default: printf("invalid token type\n")
+    case TokenType.number: io.printf("%d\n", token.number_data)
+    default: io.printf("invalid token type\n")
     }
 }
 
@@ -53,10 +52,10 @@ type LlvmType enum {
 
 fn main() i32 {
     let token_type TokenType = TokenType.number
-    printf("%d\n", token_type);
+    io.printf("%d\n", token_type);
 
     token_type = TokenType.string
-    printf("%d\n", token_type);
+    io.printf("%d\n", token_type);
 
     {
         let token Token

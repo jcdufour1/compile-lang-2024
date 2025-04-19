@@ -1,3 +1,4 @@
+type io import = std
 
 
 fn main() i32 {

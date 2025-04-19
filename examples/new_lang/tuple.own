@@ -1,5 +1,5 @@
+type io import = std
 
-extern("c") fn printf(format_string u8*, args any...)
 
 type TokenType enum {
     num
@@ -32,7 +32,7 @@ fn token_print(token Token) {
         //    let string u8*
         //    let num i32 
         //    string, num = both
-        //    printf("token is all: %s %d\n", both)
+        //    io.printf("token is all: %s %d\n", both)
         //}
     }
 }
@@ -44,13 +44,13 @@ fn main() i32 {
     let token Token
 
     string, num = get_data()
-    printf("%d %s\n", num, string);
+    io.printf("%d %s\n", num, string);
 
     num, string, token_type = get_data_3()
-    printf("%d %s %d\n", num, string, token_type);
+    io.printf("%d %s %d\n", num, string, token_type);
 
     num, string, token_type, token = get_data_4()
-    printf("%d %s %d\n", num, string, token_type);
+    io.printf("%d %s %d\n", num, string, token_type);
     token_print(token)
 
     return 0

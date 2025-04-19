@@ -1,9 +1,9 @@
+type io import = std
 
-extern("c") fn printf(str_to_print u8*, args any...) i32
 
 fn for_range() {
     for idx i32 in 0..100 {
-        printf("idx: %d\n", idx)
+        io.printf("idx: %d\n", idx)
 
         if idx < 2 {
             continue
@@ -13,13 +13,13 @@ fn for_range() {
     }
 
     for idx i32 in 0..2 {
-        printf("idx: %d\n", idx)
+        io.printf("idx: %d\n", idx)
         continue
-        printf("no\n")
+        io.printf("no\n")
     }
 
     for idx i32 in 0..2 {
-        printf("idx: %d\n", idx)
+        io.printf("idx: %d\n", idx)
         continue
     }
 
@@ -31,7 +31,7 @@ fn for_range() {
 fn for_cond() {
     let idx1 i32 = 0
     for idx1 < 100 {
-        printf("idx: %d\n", idx1)
+        io.printf("idx: %d\n", idx1)
 
         idx1 = idx1 + 1
 
@@ -44,15 +44,15 @@ fn for_cond() {
 
     let idx2 i32 = 0
     for idx2 < 2 {
-        printf("idx: %d\n", idx2)
+        io.printf("idx: %d\n", idx2)
         idx2 = idx2 + 1
         continue
-        printf("no\n")
+        io.printf("no\n")
     }
 
     let idx3 i32 = 0
     for idx3 < 2 {
-        printf("idx: %d\n", idx3)
+        io.printf("idx: %d\n", idx3)
         idx3 = idx3 + 1
         continue
     }

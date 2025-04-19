@@ -1,19 +1,18 @@
-extern("c") fn puts(str_to_print u8*) i32
-extern("c") fn printf(str_to_print_2 u8*, args any...) i32
+type io import = std
 
 fn main() i32 {
     for num1 i32 in 0..7 {
         for num2 i32 in 0..num1 {
-            printf("%d ", num2)
+            io.printf("%d ", num2)
         }
-        printf("\n")
+        io.printf("\n")
     }
 
     for num1 i32 in 2..9 {
         for num2 i32 in num1..9 {
-            printf("%d ", num2)
+            io.printf("%d ", num2)
         }
-        printf("\n")
+        io.printf("\n")
     }
 
     return 0

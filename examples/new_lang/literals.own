@@ -1,32 +1,32 @@
+type io import = std
 
-extern("c") fn printf(format_string u8*, args any...) i32
 
 fn main() i32 {
     let hex1 i32 = 0xBEEF
     let hex2 i32 = 0xbee_f
     let hex3 i32 = 0x37f
 
-    printf("hex1: %x\n", hex1)
-    printf("hex2: %x\n", hex2)
-    printf("hex3: %x\n", hex3)
+    io.printf("hex1: %x\n", hex1)
+    io.printf("hex2: %x\n", hex2)
+    io.printf("hex3: %x\n", hex3)
 
     let underscore_num i32 = 1_234_567
-    printf("underscore_num: %d\n", underscore_num)
+    io.printf("underscore_num: %d\n", underscore_num)
 
     let octal_num_1 i32 = 0236
     // expected: 158
-    printf("octal_num_1: %d\n", octal_num_1)
+    io.printf("octal_num_1: %d\n", octal_num_1)
 
     let octal_num_2 i32 = 023_7
     // expected: 159
-    printf("octal_num_2: %d\n", octal_num_2)
+    io.printf("octal_num_2: %d\n", octal_num_2)
 
     let bin_num_1 i32 = 0b0010
     // expected: 2
-    printf("bin_num_1: %d\n", bin_num_1)
+    io.printf("bin_num_1: %d\n", bin_num_1)
 
     let bin_num_2 i32 = 0b0010_1111
     // expected: 47
-    printf("bin_num_2: %d\n", bin_num_2)
+    io.printf("bin_num_2: %d\n", bin_num_2)
     return 0
 }

@@ -1,13 +1,12 @@
+type io import = std
 
 
-extern("c") fn printf(format_string u8*, args any...)
-extern("c") fn dummy_declaration(num i32, string u8*)
 
 fn add(a i32, b i32) i32 {
     return a + b
 }
 
 fn main() i32 {
-    printf("%d\n", add(8, 3));
+    io.printf("%d\n", add(8, 3));
     return 0
 }

@@ -1,5 +1,5 @@
+type io import = std
 
-extern("c") fn printf(format_string u8*, args any...) i32
 
 fn one() i32 {
     return 1
@@ -9,161 +9,161 @@ fn part_2() {
     {
         let num i32 = 7
         if 0 - 1 == num {
-            printf("no1\n")
+            io.printf("no1\n")
         } else {
-            printf("yes1\n")
+            io.printf("yes1\n")
         }
     }
 
     {
         let num i32 = 0 - 1
         if 0 - 1 == num {
-            printf("yes2\n")
+            io.printf("yes2\n")
         } else {
-            printf("no2\n")
+            io.printf("no2\n")
         }
     }
 
     {
         let num i32 = 7
         if -1 == num {
-            printf("no3\n")
+            io.printf("no3\n")
         } else {
-            printf("yes3\n")
+            io.printf("yes3\n")
         }
     }
 
     {
         let num i32 = -1
         if -1 == num {
-            printf("yes4\n")
+            io.printf("yes4\n")
         } else {
-            printf("no4\n")
+            io.printf("no4\n")
         }
     }
 
     {
         let num i32 = 7
         if -one() == num {
-            printf("no5\n")
+            io.printf("no5\n")
         } else {
-            printf("yes5\n")
+            io.printf("yes5\n")
         }
     }
 
     {
         let num i32 = -one()
         if -one() == num {
-            printf("yes6\n")
+            io.printf("yes6\n")
         } else {
-            printf("no6\n")
+            io.printf("no6\n")
         }
     }
 }
 
 fn bitwise_xor() {
-    printf("bitwise xor:\n")
+    io.printf("bitwise xor:\n")
     {
         let num i32 = 0
         num = num ^ 0
-        printf("%d\n", num)
+        io.printf("%d\n", num)
     }
 
     {
         let num i32 = 0
         num = num ^ 1
-        printf("%d\n", num)
+        io.printf("%d\n", num)
     }
 
     {
         let num i32 = 1
         num = num ^ 1
-        printf("%d\n", num)
+        io.printf("%d\n", num)
     }
 
     {
         let num i32 = 2
         num = num ^ 1
-        printf("%d\n", num)
+        io.printf("%d\n", num)
     }
 
     {
         let num i32 = 2
         num = num ^ 2
-        printf("%d\n", num)
+        io.printf("%d\n", num)
     }
 
-    printf("%d\n", 76 ^ 23)
+    io.printf("%d\n", 76 ^ 23)
 }
 
 fn bitwise_and() {
-    printf("bitwise and:\n")
+    io.printf("bitwise and:\n")
     {
         let num i32 = 0
         num = num & 0
-        printf("%d\n", num)
+        io.printf("%d\n", num)
     }
 
     {
         let num i32 = 0
         num = num & 1
-        printf("%d\n", num)
+        io.printf("%d\n", num)
     }
 
     {
         let num i32 = 1
         num = num & 1
-        printf("%d\n", num)
+        io.printf("%d\n", num)
     }
 
     {
         let num i32 = 2
         num = num & 1
-        printf("%d\n", num)
+        io.printf("%d\n", num)
     }
 
     {
         let num i32 = 2
         num = num & 2
-        printf("%d\n", num)
+        io.printf("%d\n", num)
     }
 
-    printf("%d\n", 76 & 23)
+    io.printf("%d\n", 76 & 23)
 }
 
 fn bitwise_or() {
-    printf("bitwise or:\n")
+    io.printf("bitwise or:\n")
     {
         let num i32 = 0
         num = num | 0
-        printf("%d\n", num)
+        io.printf("%d\n", num)
     }
 
     {
         let num i32 = 0
         num = num | 1
-        printf("%d\n", num)
+        io.printf("%d\n", num)
     }
 
     {
         let num i32 = 1
         num = num | 1
-        printf("%d\n", num)
+        io.printf("%d\n", num)
     }
 
     {
         let num i32 = 2
         num = num | 1
-        printf("%d\n", num)
+        io.printf("%d\n", num)
     }
 
     {
         let num i32 = 2
         num = num | 2
-        printf("%d\n", num)
+        io.printf("%d\n", num)
     }
 
-    printf("%d\n", 76 | 23)
+    io.printf("%d\n", 76 | 23)
 }
 
 fn bitwise() {
@@ -180,7 +180,7 @@ fn main() i32 {
     let num4 i32 = 9
 
     result_1 = num2*num3 + num4/num1
-    printf("%d\n", result_1)
+    io.printf("%d\n", result_1)
 
     let num5 i32 = 5
     let num6 i32 = 12
@@ -189,7 +189,7 @@ fn main() i32 {
     let num8 i32 = 16
 
     result_2 = num5*num6 + num7/num8
-    printf("%d\n", result_2)
+    io.printf("%d\n", result_2)
 
     let num9 i32 = 5
     let num10 i32 = 12
@@ -198,15 +198,15 @@ fn main() i32 {
     let num12 i32 = 16
 
     result_3 = (1 + 7)*10 + num11/num12
-    printf("%d\n", result_3)
+    io.printf("%d\n", result_3)
 
     let result_4 i32
     result_4 = ((1 + 7)*10) + (num11/num12)
-    printf("%d\n", result_4)
+    io.printf("%d\n", result_4)
 
     let result_5 i32
     result_5 = (((1 + 7)*10) + (num11/num12))
-    printf("%d\n", result_5)
+    io.printf("%d\n", result_5)
 
     part_2()
 
@@ -214,7 +214,7 @@ fn main() i32 {
 
     let num100 i32 = 87
     num100 += 2
-    printf("num100: %d\n", num100)
+    io.printf("num100: %d\n", num100)
 
     return 0
 }

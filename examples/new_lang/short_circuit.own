@@ -1,13 +1,13 @@
+type io import = std
 
-extern("c") fn printf(str_to_print u8*, args any...) i32
 
 fn one() i32 {
-    printf("one called\n")
+    io.printf("one called\n")
     return 4
 }
 
 fn zero() i32 {
-    printf("zero called\n")
+    io.printf("zero called\n")
     return 0
 }
 
@@ -15,96 +15,96 @@ fn main() i32 {
     {
         let thing u1 = 2 < 7
         if thing {
-            printf("yes1\n")
+            io.printf("yes1\n")
         } else {
-            printf("no1\n")
+            io.printf("no1\n")
         }
     }
 
     {
         let thing u1 = 7 < 2
         if thing {
-            printf("no2\n")
+            io.printf("no2\n")
         } else {
-            printf("yes2\n")
+            io.printf("yes2\n")
         }
     }
 
     if 1 && 1 {
-        printf("yes5\n")
+        io.printf("yes5\n")
     } else {
-        printf("no5\n")
+        io.printf("no5\n")
     }
 
     if one() && 1 {
-        printf("yes6\n")
+        io.printf("yes6\n")
     } else {
-        printf("no6\n")
+        io.printf("no6\n")
     }
 
     if one() && 0 {
-        printf("no7\n")
+        io.printf("no7\n")
     } else {
-        printf("yes7\n")
+        io.printf("yes7\n")
     }
 
     if zero() && 1 {
-        printf("no8\n")
+        io.printf("no8\n")
     } else {
-        printf("yes8\n")
+        io.printf("yes8\n")
     }
 
     if zero() && 0 {
-        printf("no9\n")
+        io.printf("no9\n")
     } else {
-        printf("yes9\n")
+        io.printf("yes9\n")
     }
 
     // "one called" should not be printed 
     if zero() && one() {
-        printf("no10\n")
+        io.printf("no10\n")
     } else {
-        printf("yes10\n")
+        io.printf("yes10\n")
     }
 
     // "one called" should not be printed, and "zero printed" should only be called once
     if zero() && zero() && one() {
-        printf("no11\n")
+        io.printf("no11\n")
     } else {
-        printf("yes11\n")
+        io.printf("yes11\n")
     }
 
     // "one called" and "zero called" should each be printed only once
     if one() && zero() && one() {
-        printf("no12\n")
+        io.printf("no12\n")
     } else {
-        printf("yes12\n")
+        io.printf("yes12\n")
     }
 
     if one() && one() && one() {
-        printf("yes13\n")
+        io.printf("yes13\n")
     } else {
-        printf("no13\n")
+        io.printf("no13\n")
     }
 
     // "one called" should only be printed once
     if one() || one() || one() {
-        printf("yes14\n")
+        io.printf("yes14\n")
     } else {
-        printf("no14\n")
+        io.printf("no14\n")
     }
 
     // "one called" should only be printed once
     if zero() || one() || one() {
-        printf("yes15\n")
+        io.printf("yes15\n")
     } else {
-        printf("no15\n")
+        io.printf("no15\n")
     }
 
     if zero() || zero() || zero() {
-        printf("no16\n")
+        io.printf("no16\n")
     } else {
-        printf("yes16\n")
+        io.printf("yes16\n")
     }
 
     return 0

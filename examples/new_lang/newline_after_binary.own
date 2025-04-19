@@ -1,9 +1,9 @@
+type io import = std
 
-extern("c") fn printf(str_to_print u8*, args any...) i32
 
 fn main() i32 {
     let result i32 = 82*4 + 
         2
-    printf("%d\n", result)
+    io.printf("%d\n", result)
     return 0
 }

@@ -1,28 +1,28 @@
-extern("c") fn puts(str_to_print u8*) i32
+type io import = std
 
 fn do_constants() {
     if 8 < 1 {
-        puts("1")
+        io.puts("1")
     }
 
     if 8 < 8 {
-        puts("2")
+        io.puts("2")
     }
 
     if 8 < 9 {
-        puts("3")
+        io.puts("3")
     }
 
     if 8 > 1 {
-        puts("4")
+        io.puts("4")
     }
 
     if 8 > 8 {
-        puts("5")
+        io.puts("5")
     }
 
     if 8 > 9 {
-        puts("6")
+        io.puts("6")
     }
 }
 
@@ -30,27 +30,27 @@ fn do_var_lhs() {
     let num1 i32 = 8
 
     if num1 < 1 {
-        puts("1")
+        io.puts("1")
     }
 
     if num1 < 8 {
-        puts("2")
+        io.puts("2")
     }
 
     if num1 < 9 {
-        puts("3")
+        io.puts("3")
     }
 
     if num1 > 1 {
-        puts("4")
+        io.puts("4")
     }
 
     if num1 > 8 {
-        puts("5")
+        io.puts("5")
     }
 
     if num1 > 9 {
-        puts("6")
+        io.puts("6")
     }
 }
 
@@ -58,27 +58,27 @@ fn do_var_rhs() {
     let num2 i32 = 8
 
     if 1 < num2  {
-        puts("1")
+        io.puts("1")
     }
 
     if 8 < num2  {
-        puts("2")
+        io.puts("2")
     }
 
     if 9 < num2  {
-        puts("3")
+        io.puts("3")
     }
 
     if 1 > num2  {
-        puts("4")
+        io.puts("4")
     }
 
     if 8 > num2  {
-        puts("5")
+        io.puts("5")
     }
 
     if 9 > num2  {
-        puts("6")
+        io.puts("6")
     }
 }
 
@@ -89,37 +89,37 @@ fn do_var_both() {
     lhs = 1
     rhs = 8
     if lhs < rhs  {
-        puts("1")
+        io.puts("1")
     }
 
     lhs = 8
     rhs = 8
     if lhs < rhs  {
-        puts("2")
+        io.puts("2")
     }
 
     lhs = 9
     rhs = 8
     if lhs < rhs  {
-        puts("3")
+        io.puts("3")
     }
 
     lhs = 1
     rhs = 8
     if lhs > rhs  {
-        puts("4")
+        io.puts("4")
     }
 
     lhs = 8
     rhs = 8
     if lhs > rhs  {
-        puts("5")
+        io.puts("5")
     }
 
     lhs = 9
     rhs = 8
     if lhs > rhs  {
-        puts("6")
+        io.puts("6")
     }
 
     let div Div

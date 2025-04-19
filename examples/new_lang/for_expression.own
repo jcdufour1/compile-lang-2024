@@ -1,4 +1,4 @@
-extern("c") fn printf(str_to_print u8*, args any...) i32
+type io import = std
 
 fn is_true() i32 {
     return 1
@@ -12,37 +12,37 @@ fn main() i32 {
     let should_loop i32 = 1
     for should_loop {
         let temp i32 = 79
-        printf("yes1\n")
-        printf("%d\n", temp)
+        io.printf("yes1\n")
+        io.printf("%d\n", temp)
         should_loop = 0
     }
     for should_loop {
-        printf("no1\n")
+        io.printf("no1\n")
         return 1
     }
 
     for 0 {
-        printf("no2\n")
+        io.printf("no2\n")
         return 1
     }
     for 1 {
         let temp i32 = 80
-        printf("yes2\n")
-        printf("%d\n", temp)
+        io.printf("yes2\n")
+        io.printf("%d\n", temp)
         break
     }
 
     for is_false() {
-        printf("no3\n")
+        io.printf("no3\n")
         return 1
     }
     for is_true() {
         let temp i32 = 81
-        printf("yes3\n")
-        printf("%d\n", temp)
+        io.printf("yes3\n")
+        io.printf("%d\n", temp)
         break
     }
 
-    printf("done\n")
+    io.printf("done\n")
     return 0
 }

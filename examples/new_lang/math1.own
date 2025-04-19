@@ -1,4 +1,4 @@
-extern("c") fn printf(str_to_print u8*, args any...) i32
+type io import = std
 
 fn main() i32 {
     for let num1 i32 in 0..10 {
@@ -9,13 +9,13 @@ fn main() i32 {
         let div_result i32 = num1/3
         let curr_num i32 = 9
         let result5 i32
-        printf("%d + 3 = %d\n", num1, add_result)
-        printf("%d - 3 = %d\n", num1, sub_result)
-        printf("%d*3 = %d\n", num1, mul_result)
-        printf("%d/3 = %d\n", num1, div_result)
+        io.printf("%d + 3 = %d\n", num1, add_result)
+        io.printf("%d - 3 = %d\n", num1, sub_result)
+        io.printf("%d*3 = %d\n", num1, mul_result)
+        io.printf("%d/3 = %d\n", num1, div_result)
 
         result5 = 2*curr_num + 1
-        printf("2*%d + 1 = %d\n", curr_num, result5)
+        io.printf("2*%d + 1 = %d\n", curr_num, result5)
     }
 
     return 0

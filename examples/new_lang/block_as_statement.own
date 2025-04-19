@@ -1,19 +1,19 @@
+type io import = std
 
-extern("c") fn printf(str_to_print u8*, args any...) i32
 
 fn main() i32 {
     let upper_num i32 = 75
     {
         let num i32 = 8
-        printf("%d\n", num)
-        printf("%d\n", upper_num)
+        io.printf("%d\n", num)
+        io.printf("%d\n", upper_num)
         upper_num = 21
     }
 
     {
         let num i32 = 9
-        printf("%d\n", num)
-        printf("%d\n", upper_num)
+        io.printf("%d\n", num)
+        io.printf("%d\n", upper_num)
     }
 
     return 0

@@ -1,4 +1,4 @@
-extern("c") fn printf(format_string u8*, args any...) i32
+type io import = std
 
 fn add_one(num i32*) {
     deref(num) = num + 1
@@ -39,7 +39,7 @@ fn set_div_denominator_explicit_deref(div Div*) {
 }
 
 fn print_div(div Div*) {
-    printf("%d/%d\n", div.numerator, div.denominator)
+    io.printf("%d/%d\n", div.numerator, div.denominator)
 }
 
 fn set_div_from_another(dest Div*, src Div*) {
@@ -54,15 +54,15 @@ fn cast_to_pointer() {
     let pointer u8* = unsafe_cast<u8*>0
 
     if pointer == unsafe_cast<u8*>0 {
-        printf("yes\n");
+        io.printf("yes\n");
     }
 
     if pointer == unsafe_cast<u8*>1 {
-        printf("no\n");
+        io.printf("no\n");
     }
 
     let zero i64 = unsafe_cast<i64>pointer
-    printf("pointer back to int: %d\n", zero);
+    io.printf("pointer back to int: %d\n", zero);
 }
 
 fn cast_pointer_to_pointer() {
@@ -71,45 +71,45 @@ fn cast_pointer_to_pointer() {
     let ptr_i32 i32* = unsafe_cast<i32*>ptr_u8
 
     if ptr_u8 == unsafe_cast<u8*>ptr_i32 {
-        printf("pointer_to_pointer: yes\n");
+        io.printf("pointer_to_pointer: yes\n");
     } else {
-        printf("pointer_to_pointer: no\n");
+        io.printf("pointer_to_pointer: no\n");
     }
 }
 
 fn main() i32 {
     let num i32 = 8
-    printf("%d\n", num)
+    io.printf("%d\n", num)
     add_one(refer(num))
-    printf("%d\n", num)
+    io.printf("%d\n", num)
     add_one_explicit(refer(num))
-    printf("%d\n", num)
+    io.printf("%d\n", num)
     sub_one_explicit(refer(num))
-    printf("%d\n", num)
+    io.printf("%d\n", num)
     operation_2(refer(num))
-    printf("%d\n", num)
+    io.printf("%d\n", num)
     operation_2_explicit(refer(num))
-    printf("%d\n", num)
+    io.printf("%d\n", num)
 
     let div Div = {.numerator = 87, .denominator = 123};
-    printf("part 67: %d/%d\n", div.numerator, div.denominator)
+    io.printf("part 67: %d/%d\n", div.numerator, div.denominator)
     set_div(refer(div));
-    printf("%d/%d\n", div.numerator, div.denominator)
+    io.printf("%d/%d\n", div.numerator, div.denominator)
     set_div_denominator_explicit_deref(refer(div));
-    printf("part 89: %d/%d\n", div.numerator, div.denominator)
+    io.printf("part 89: %d/%d\n", div.numerator, div.denominator)
     set_div_denominator(refer(div));
-    printf("%d/%d\n", div.numerator, div.denominator)
+    io.printf("%d/%d\n", div.numerator, div.denominator)
     print_div(refer(div));
     let div2 Div = {.numerator = 93, .denominator = 71};
     set_div_from_another(refer(div2), refer(div));
-    printf("%d/%d\n", div2.numerator, div2.denominator)
+    io.printf("%d/%d\n", div2.numerator, div2.denominator)
     // ensure original div was not modified by `set_div_from_another`
-    printf("%d/%d\n", div.numerator, div.denominator)
+    io.printf("%d/%d\n", div.numerator, div.denominator)
 
     let string u8* = "hello"
-    printf("%s\n", string)
+    io.printf("%s\n", string)
     set_string(refer(string))
-    printf("%s\n", string)
+    io.printf("%s\n", string)
 
     cast_to_pointer()
     cast_pointer_to_pointer()
