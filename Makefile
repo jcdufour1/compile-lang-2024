@@ -1,6 +1,4 @@
-.PHONY: all setup build gdb
-
-# TODO: auto_gen Makefile?
+.PHONY: all setup build gdb test_quick clean
 
 CC_COMPILER ?= clang
 
@@ -19,14 +17,17 @@ C_FLAGS_AUTO_GEN=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function \
 			     -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			     -fsanitize=address -fno-omit-frame-pointer 
 
+BUILD_DIR_DEBUG ?= ./build/debug/
+BUILD_DIR_RELEASE ?= ./build/release/
+
 DEBUG ?= 0
 ifeq ($(DEBUG), 1)
     C_FLAGS = ${C_FLAGS_DEBUG}
-	BUILD_DIR=./build/debug/
+	BUILD_DIR=${BUILD_DIR_DEBUG}
 	LOG_LEVEL ?= "LOG_TRACE"
 else
     C_FLAGS = ${C_FLAGS_RELEASE}
-	BUILD_DIR=./build/release/
+	BUILD_DIR=${BUILD_DIR_RELEASE}
 	LOG_LEVEL ?= "LOG_VERBOSE"
 endif
 
@@ -198,5 +199,6 @@ ${BUILD_DIR}/passes/parser.o: ${DEP_COMMON} src/passes/parser.c src/passes/*.h t
 ${BUILD_DIR}/passes/tokenizer.o: ${DEP_COMMON} src/passes/tokenizer.c src/passes/*.h third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/tokenizer.o src/passes/tokenizer.c
 
-clean:
-	rm -f ${OBJS} ${BUILD_DIR}/main
+#clean:
+#	rm -f ${OBJS} build/*/passes/*
+#	rm -f ${OBJS} build/*/*
