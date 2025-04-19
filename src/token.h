@@ -91,6 +91,7 @@ typedef enum {
     TOKEN_ENUM,
     TOKEN_TYPE_DEF,
     TOKEN_IMPORT,
+    TOKEN_DEF,
 
     // comment
     TOKEN_COMMENT,
@@ -242,6 +243,8 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_IMPORT:
             return false;
+        case TOKEN_DEF:
+            return false;
     }
     unreachable("");
 }
@@ -377,6 +380,8 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
         case TOKEN_CLOSE_GENERIC:
             return true;
         case TOKEN_IMPORT:
+            return false;
+        case TOKEN_DEF:
             return false;
     }
     unreachable(TOKEN_FMT"\n", token_print(TOKEN_MODE_LOG, token));
@@ -534,6 +539,8 @@ static inline bool token_is_closing(Token curr_token) {
             return true;
         case TOKEN_IMPORT:
             return false;
+        case TOKEN_DEF:
+            return false;
     }
     unreachable("");
 }
@@ -669,6 +676,8 @@ static inline bool token_is_opening(Token curr_token) {
         case TOKEN_CLOSE_GENERIC:
             return false;
         case TOKEN_IMPORT:
+            return false;
+        case TOKEN_DEF:
             return false;
     }
     unreachable("");

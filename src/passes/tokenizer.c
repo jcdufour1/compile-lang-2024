@@ -147,6 +147,8 @@ static bool get_next_token(
             token->type = TOKEN_TYPE_DEF;
         } else if (str_view_cstr_is_equal(text, "import")) {
             token->type = TOKEN_IMPORT;
+        } else if (str_view_cstr_is_equal(text, "def")) {
+            token->type = TOKEN_DEF;
         } else {
             token->text = text;
             token->type = TOKEN_SYMBOL;

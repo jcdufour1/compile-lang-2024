@@ -510,6 +510,8 @@ static bool can_end_stmt(Token token) {
             return true;
         case TOKEN_IMPORT:
             return false;
+        case TOKEN_DEF:
+            return false;
     }
     unreachable("");
 }
@@ -710,6 +712,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_IMPORT:
             return false;
+        case TOKEN_DEF:
+            return false;
     }
     unreachable("");
 }
@@ -846,6 +850,8 @@ static bool is_binary(TOKEN_TYPE token_type) {
         case TOKEN_CLOSE_GENERIC:
             return true;
         case TOKEN_IMPORT:
+            return false;
+        case TOKEN_DEF:
             return false;
     }
     unreachable("");
@@ -1405,10 +1411,16 @@ static PARSE_STATUS parse_type_def(Uast_def** def, Tk_view* tokens) {
             return PARSE_ERROR;
         }
         *def = uast_mod_alias_wrap(import);
+    } else if (starts_with_lang_def(*tokens)) {
+        Uast_mod_alias* import = NULL;
+        if (PARSE_OK != parse_import( &import, tokens, name)) {
+            return PARSE_ERROR;
+        }
+        *def = uast_mod_alias_wrap(import);
     } else {
         msg_parser_expected(
             env.file_path_to_text, tk_view_front(*tokens), "",
-            TOKEN_STRUCT, TOKEN_RAW_UNION, TOKEN_ENUM, TOKEN_SUM
+            TOKEN_STRUCT, TOKEN_RAW_UNION, TOKEN_ENUM, TOKEN_SUM, TOKEN_DEF, TOKEN_IMPORT
         );
         return PARSE_ERROR;
     }
