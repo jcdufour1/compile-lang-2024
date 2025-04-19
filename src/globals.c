@@ -2,6 +2,7 @@
 #include "symbol_table.h"
 #include "parameters.h"
 #include "arena.h"
+#include <util.h>
 
 Parameters params = {0};
 
@@ -18,3 +19,4 @@ Pos prev_pos = {0};
 
 Env env = {0};
 
+char PATH_SEPARATOR = '/';

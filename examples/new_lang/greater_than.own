@@ -1,4 +1,4 @@
-type io import = std
+type io import = std.io
 
 fn do_constants() {
     if 8 < 1 {

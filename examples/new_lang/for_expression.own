@@ -1,4 +1,4 @@
-type io import = std
+type io import = std.io
 
 fn is_true() i32 {
     return 1

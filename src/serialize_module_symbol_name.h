@@ -6,6 +6,14 @@
 #include <parser_utils.h>
 #include <ulang_type_serialize.h>
 
+static inline void serialize_str_view(String* buf, Str_view str_view) {
+    string_extend_cstr(&a_main, buf, "_");
+    string_extend_size_t(&a_main, buf, str_view.count);
+    string_extend_cstr(&a_main, buf, "_");
+    string_extend_strv(&a_main, buf, str_view);
+    string_extend_cstr(&a_main, buf, "_");
+}
+
 // TODO: remove this
 bool try_str_view_consume_size_t(size_t* result, Str_view* str_view, bool ignore_underscore);
 
@@ -13,11 +21,29 @@ static inline Str_view serialize_name(Name name) {
     String buf = {0};
 
     if (name.mod_path.count > 0) {
+        size_t path_count = 1;
+        {
+            Str_view mod_path = name.mod_path;
+            Str_view dummy = {0};
+            while (str_view_try_consume_until(&dummy, &mod_path, PATH_SEPARATOR)) {
+                unwrap(str_view_try_consume(&mod_path, PATH_SEPARATOR));
+                path_count++;
+            }
+        }
+
         string_extend_cstr(&a_main, &buf, "_");
-        string_extend_size_t(&a_main, &buf, name.mod_path.count);
+        string_extend_size_t(&a_main, &buf, path_count);
         string_extend_cstr(&a_main, &buf, "_");
-        string_extend_strv(&a_main, &buf, name.mod_path);
-        string_extend_cstr(&a_main, &buf, "_");
+
+        {
+            Str_view mod_path = name.mod_path;
+            Str_view dir_name = {0};
+            while (str_view_try_consume_until(&dir_name, &mod_path, PATH_SEPARATOR)) {
+                unwrap(str_view_try_consume(&mod_path, PATH_SEPARATOR));
+                serialize_str_view(&buf, dir_name);
+            }
+            serialize_str_view(&buf, mod_path);
+        }
     }
 
     string_extend_strv(&a_main, &buf, name.base);

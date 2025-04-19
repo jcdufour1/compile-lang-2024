@@ -1,4 +1,4 @@
-type io import = std
+type io import = std.io
 
 fn printf(string u8*) {
     io.printf("from module dummy one: ")

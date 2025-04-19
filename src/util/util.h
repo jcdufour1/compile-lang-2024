@@ -106,6 +106,7 @@ extern size_t error_count;
 extern size_t warning_count;
 extern size_t expected_fail_count;
 extern Env env;
+extern char PATH_SEPARATOR;
 
 #ifndef INDENT_WIDTH
 #define INDENT_WIDTH 2

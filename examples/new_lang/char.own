@@ -1,4 +1,4 @@
-type io import = std
+type io import = std.io
 
 fn string_comparison() {
     let string u8* = "hello"

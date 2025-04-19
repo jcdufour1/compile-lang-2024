@@ -1,6 +1,6 @@
-type io import = std
-type io2 import = std_dummy
-type io3 import = std_dummy_2
+type io import = std.io
+type io2 import = std.std_dummy
+type io3 import = std.std_dummy_2
 
 fn printf(string u8*) {
     io.printf("from local printf function: ")

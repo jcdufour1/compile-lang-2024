@@ -1,7 +1,7 @@
 // TODO: test case for this
 //let temp io.Optional(<i32>) = number.some
 
-type io import = std
+type io import = std.io
 
 type Optional_int sum {
     some i32

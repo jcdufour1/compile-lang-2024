@@ -45,18 +45,23 @@ static inline Str_view str_view_consume_while(Str_view* str_view, bool (*should_
     unreachable("cond is never met");
 }
 
-static inline Str_view str_view_consume_until(Str_view* str_view, char delim) {
-    Str_view new_str_view;
-    for (size_t idx = 0; str_view->count > idx; idx++) {
+static inline bool str_view_try_consume_until(Str_view* result, Str_view* str_view, char delim) {
+    for (size_t idx = 0; idx < str_view->count; idx++) {
         if (str_view_at(*str_view, idx) == delim) {
-            new_str_view.str = str_view->str;
-            new_str_view.count = idx;
+            result->str = str_view->str;
+            result->count = idx;
             str_view->str += idx;
             str_view->count -= idx;
-            return new_str_view;
+            return true;
         }
     }
-    unreachable("delim not found");
+    return false;
+}
+
+static inline Str_view str_view_consume_until(Str_view* str_view, char delim) {
+    Str_view result = {0};
+    unwrap(str_view_try_consume_until(&result, str_view, delim) && "delim not found");
+    return result;
 }
 
 static inline Str_view str_view_consume_count(Str_view* str_view, size_t count) {

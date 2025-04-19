@@ -158,19 +158,19 @@ static PARSE_STATUS msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
     return PARSE_ERROR;
 }
 
-static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alias_tk, Token mod_path) {
+static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alias_tk, Pos mod_path_pos, Str_view mod_path) {
     Uast_def* prev_def = NULL;
-    if (usymbol_lookup(&prev_def,  (Name) {.mod_path = (Str_view) {0}, .base = mod_path.text})) {
+    if (usymbol_lookup(&prev_def,  (Name) {.mod_path = (Str_view) {0}, .base = mod_path})) {
         goto finish;
     }
 
     String file_path = {0};
-    string_extend_strv(&a_main, &file_path, mod_path.text);
+    string_extend_strv(&a_main, &file_path, mod_path);
     string_extend_cstr(&a_main, &file_path, ".own");
     Sym_coll_vec old_ances = env.ancesters;
     Str_view old_mod_path = env.curr_mod_path;
     env.ancesters.info.count = 1; // TODO: make macro to do this
-    env.curr_mod_path = mod_path.text;
+    env.curr_mod_path = mod_path;
     Uast_block* block = NULL;
     if (!parse_file(&block,  string_to_strv(file_path), false)) {
         // TODO: expected failure test
@@ -180,16 +180,16 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     env.curr_mod_path = old_mod_path;
 
     unwrap(usym_tbl_add(&vec_at(&env.ancesters, 0)->usymbol_table, uast_import_path_wrap(uast_import_path_new(
-        mod_path.pos,
+        mod_path_pos,
         block,
-        (Name) {.mod_path = (Str_view) {0}, .base = mod_path.text}
+        (Name) {.mod_path = (Str_view) {0}, .base = mod_path}
     ))));
 
 finish:
     *mod_alias = uast_mod_alias_new(
         alias_tk.pos,
         (Name) {.mod_path = env.curr_mod_path, .base = alias_tk.text, .gen_args = (Ulang_type_vec) {0}},
-        (Name) {.mod_path = env.curr_mod_path, .base = mod_path.text, .gen_args = (Ulang_type_vec) {0}}
+        (Name) {.mod_path = env.curr_mod_path, .base = mod_path, .gen_args = (Ulang_type_vec) {0}}
     );
     unwrap(usymbol_add( uast_mod_alias_wrap(*mod_alias)));
     return true;
@@ -1343,14 +1343,25 @@ static PARSE_STATUS parse_import(Uast_mod_alias** alias, Tk_view* tokens, Token 
         todo();
     }
 
+    String mod_path = {0};
     Token path_tk = {0};
     if (!try_consume(&path_tk, tokens, TOKEN_SYMBOL)) {
         // TODO
         todo();
     }
+    string_extend_strv(&a_main, &mod_path, path_tk.text);
+    Pos mod_path_pos = path_tk.pos;
 
-    // TODO: consider repeated import statements
-    if (!get_mod_alias_from_path_token(alias, name, path_tk)) {
+    while (try_consume(&path_tk, tokens, TOKEN_SINGLE_DOT)) {
+        if (!try_consume(&path_tk, tokens, TOKEN_SYMBOL)) {
+            // TODO
+            todo();
+        }
+        vec_append(&a_main, &mod_path, PATH_SEPARATOR);
+        string_extend_strv(&a_main, &mod_path, path_tk.text);
+    }
+
+    if (!get_mod_alias_from_path_token(alias, name, mod_path_pos, string_to_strv(mod_path))) {
         return PARSE_ERROR;
     }
 
