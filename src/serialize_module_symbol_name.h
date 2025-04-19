@@ -60,20 +60,6 @@ static inline Str_view serialize_name(Name name) {
     return string_to_strv(buf);
 }
 
-static inline Name deserialize_name(Str_view serialized) {
-    todo();
-    unwrap(str_view_try_consume(&serialized, '_'));
-    size_t mod_len = 0;
-    unwrap(try_str_view_consume_size_t(&mod_len, &serialized, false));
-    unwrap(str_view_try_consume(&serialized, '_'));
-    Str_view mod_path = str_view_consume_count(&serialized, mod_len);
-
-    unwrap(str_view_try_consume(&serialized, '_'));
-    Str_view base_name = serialized;
-
-    return (Name) {.mod_path = mod_path, .base = base_name};
-}
-
 // TODO: move this macro
 static inline Str_view name_print_internal(bool serialize, Name name) {
     if (serialize) {
