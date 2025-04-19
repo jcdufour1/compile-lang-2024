@@ -1304,10 +1304,9 @@ static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, To
     unwrap(try_consume(NULL, tokens, TOKEN_ENUM));
 
     Ustruct_def_base base = {0};
-    todo();
-    //if (PARSE_OK != parse_struct_base_def_implicit_type( &base, (Name) {.mod_path = env.curr_mod_path, .base = name.text}, tokens, ulang_type_atom_new((Name) {.mod_path = env.curr_mod_path, .base = name.text}, 0))) {
-    //    return PARSE_ERROR;
-    //}
+    if (PARSE_OK != parse_struct_base_def_implicit_type( &base, (Name) {.mod_path = env.curr_mod_path, .base = name.text}, tokens, ulang_type_atom_new((Uname) {.mod_alias = (Name) {0}, .base = name.text}, 0))) {
+        return PARSE_ERROR;
+    }
 
     *enum_def = uast_enum_def_new(name.pos, base);
     if (!usymbol_add( uast_enum_def_wrap(*enum_def))) {

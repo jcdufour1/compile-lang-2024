@@ -3,6 +3,8 @@ type io import = std
 type io2 import = std_dummy
 type io3 import = std_dummy_2
 
+// TODO: put printf defintion directly in this file
+
 fn main() i32 {
     io.printf("hello\n")
     io2.printf("bye")

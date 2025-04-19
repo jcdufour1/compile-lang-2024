@@ -1007,12 +1007,11 @@ static bool try_set_struct_literal_member_types(Tast_expr_vec* new_membs, Uast_e
             );
             rhs = uast_binary_unwrap(uast_operator_unwrap(memb))->rhs;
             if (!name_is_equal(memb_def->name, lhs->member_name->name)) {
-                ///msg(
-                ///    LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL, env.file_path_to_text, lhs->pos,
-                ///    "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
-                ///    str_view_print(memb_def->name.base), name_print(lhs->member_name)
-                ///);
-                todo();
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL, env.file_path_to_text, lhs->pos,
+                    "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
+                    str_view_print(memb_def->name.base), name_print(lhs->member_name->name)
+                );
                 return false;
             }
         } else {
@@ -1756,20 +1755,15 @@ static void msg_invalid_member_internal(
     Name base_name,
     const Uast_member_access* access
 ) {
-    (void) file;
-    (void) line;
-    (void) base_name;
-    (void) access;
-    todo();
-    //msg_internal(
-    //    file, line, LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_ACCESS, env.file_path_to_text,
-    //    access->pos,
-    //    "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 
-    //    str_view_print(access->member_name.base), name_print(base_name)
-    //);
+    msg_internal(
+        file, line, LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_ACCESS, env.file_path_to_text,
+        access->pos,
+        "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 
+        str_view_print(access->member_name->name.base), name_print(base_name)
+    );
 }
 
-#define msg_invalid_member( base_name, access) \
+#define msg_invalid_member(base_name, access) \
     msg_invalid_member_internal(__FILE__, __LINE__,  base_name, access)
 
 bool try_set_member_access_types_finish_generic_struct(
