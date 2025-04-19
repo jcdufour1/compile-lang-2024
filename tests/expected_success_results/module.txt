@@ -1,3 +1,4 @@
 hello
 from module dummy one: bye
 from module dummy two: actually bye this time
+from local printf function: bye for the third time
