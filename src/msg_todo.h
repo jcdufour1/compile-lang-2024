@@ -3,7 +3,7 @@
 
 #include <expected_fail_type.h>
 
-#define msg_todo( feature, pos) \
+#define msg_todo(feature, pos) \
     msg_todo_internal(__FILE__, __LINE__,  feature, pos);
 
 

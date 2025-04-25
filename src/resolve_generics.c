@@ -245,7 +245,6 @@ static Uast_def* local_struct_new(Pos pos, Ustruct_def_base base) {
 static bool resolve_generics_ulang_type_internal_struct_like(
     Uast_def** after_res,
     Ulang_type* result,
-     
     Uast_def* before_res,
     Ulang_type lang_type,
     Uast_def*(*obj_new)(Pos, Ustruct_def_base),
@@ -295,7 +294,7 @@ static bool resolve_generics_ulang_type_internal_struct_like(
     if (symbol_lookup(&dummy,  new_name)) {
         return true;
     }
-    return set_obj_types( obj_unwrap(before_res), obj_unwrap(*after_res));
+    return set_obj_types(obj_unwrap(before_res), obj_unwrap(*after_res));
 }
 
 static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* before_res, Ulang_type lang_type) {
@@ -354,8 +353,30 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
         case UAST_LITERAL_DEF:
             *result = lang_type;
             return true;
-        default:
-            unreachable(TAST_FMT, uast_def_print(before_res));
+        case UAST_LANG_DEF: {
+            unreachable();
+            //if (new_lang_type.type != ULANG_TYPE_REGULAR) {
+            //    msg_todo("def alias in tuple, function callback type, etc.", lang_type.pos);
+            //    return false;
+            //}
+            //Ulang_type new_lang_type = ulang_type_regular_new(
+            //    ulang_type_atom_new(uast_lang_def_unwrap(before_res)->name)
+            //);
+        }
+        case UAST_POISON_DEF:
+            todo();
+        case UAST_IMPORT_PATH:
+            todo();
+        case UAST_MOD_ALIAS:
+            todo();
+        case UAST_GENERIC_PARAM:
+            todo();
+        case UAST_FUNCTION_DEF:
+            todo();
+        case UAST_FUNCTION_DECL:
+            todo();
+        case UAST_VARIABLE_DEF:
+            todo();
     }
     unreachable("");
 }
@@ -374,7 +395,6 @@ bool resolve_generics_ulang_type_regular(Ulang_type* result, Ulang_type_regular 
 
     return resolve_generics_ulang_type_internal(
         result,
-        
         before_res,
         ulang_type_regular_const_wrap(lang_type)
     );
