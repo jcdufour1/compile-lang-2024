@@ -1375,7 +1375,7 @@ STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
             if (!try_set_lang_def_types(uast_lang_def_unwrap(uast))) {
                 return STMT_ERROR;
             }
-            return STMT_OK;
+            return STMT_NO_STMT;
         }
     }
     unreachable("");
@@ -1949,6 +1949,8 @@ bool try_set_member_access_types_finish(
             unreachable("");
         case UAST_MOD_ALIAS:
             unreachable("");
+        case UAST_LANG_DEF:
+            unreachable("lang def should have been eliminated by now");
     }
     unreachable("");
 }
@@ -2101,6 +2103,7 @@ bool try_set_import_path_types(Tast_block** new_tast, Uast_import_path* tast) {
 
 bool try_set_lang_def_types(Uast_lang_def* tast) {
     (void) tast;
+    return true;
 }
 
 bool try_set_variable_def_types(
@@ -2711,7 +2714,6 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
     if (!usymbol_do_add_defered(&redef_sym)) {
         try_set_msg_redefinition_of_symbol( redef_sym);
         status = false;
-                todo();
         goto error;
     }
 
@@ -2731,7 +2733,6 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
             case STMT_NO_STMT:
                 break;
             case STMT_ERROR:
-                todo();
                 status = false;
                 break;
             case STMT_OK:
@@ -2754,11 +2755,9 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
                 break;
             case STMT_ERROR:
                 status = false;
-                log(LOG_DEBUG, TAST_FMT, uast_stmt_print(curr_tast));
-                todo();
                 break;
             default:
-                todo();
+                unreachable("");
         }
     }
 
@@ -2777,9 +2776,8 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
             unreachable("");
         }
         Tast_stmt* new_rtn_statement = NULL;
-        switch (try_set_stmt_types( &new_rtn_statement, uast_return_wrap(rtn_statement))) {
+        switch (try_set_stmt_types(&new_rtn_statement, uast_return_wrap(rtn_statement))) {
             case STMT_ERROR:
-                todo();
                 goto error;
             case STMT_OK:
                 break;
@@ -2821,9 +2819,8 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt) {
             *new_tast = tast_expr_wrap(new_tast_);
             return STMT_OK;
         }
-        case UAST_DEF: {
-            return try_set_def_types( new_tast, uast_def_unwrap(stmt));
-        }
+        case UAST_DEF:
+            return try_set_def_types(new_tast, uast_def_unwrap(stmt));
         case UAST_FOR_WITH_COND: {
             Tast_for_with_cond* new_tast_ = NULL;
             if (!try_set_for_with_cond_types( &new_tast_, uast_for_with_cond_unwrap(stmt))) {

@@ -1,0 +1,10 @@
+
+type io import = std.io
+
+//type Opt def = Optional
+type print def = io.printf
+
+fn main() i32 {
+    print("hello\n")
+    return 0
+}
