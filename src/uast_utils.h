@@ -109,6 +109,8 @@ static inline Lang_type* uast_get_ulang_type_def_ref(Uast_def* def) {
             unreachable("");
         case UAST_MOD_ALIAS:
             unreachable("");
+        case UAST_LANG_DEF:
+            unreachable("");
     }
     unreachable("");
 }
@@ -213,6 +215,8 @@ static inline Lang_type* uast_def_ref_get_lang_type(Uast_def* def) {
             unreachable("");
         case UAST_MOD_ALIAS:
             unreachable("");
+        case UAST_LANG_DEF:
+            unreachable("");
     }
     unreachable("");
 }
@@ -298,6 +302,8 @@ static inline Name uast_def_get_name(const Uast_def* def) {
             return uast_import_path_const_unwrap(def)->mod_path;
         case UAST_MOD_ALIAS:
             return uast_mod_alias_const_unwrap(def)->name;
+        case UAST_LANG_DEF:
+            return uast_lang_def_const_unwrap(def)->alias_name;
     }
     unreachable("");
 }
@@ -354,6 +360,8 @@ static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def)
             unreachable("");
         case UAST_MOD_ALIAS:
             unreachable("");
+        case UAST_LANG_DEF:
+            todo();
     }
     unreachable("");
 }

@@ -464,6 +464,17 @@ Str_view uast_poison_def_print_internal(const Uast_poison_def* poison, int inden
     return string_to_strv(buf);
 }
 
+Str_view uast_lang_def_print_internal(const Uast_lang_def* def, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&print_arena, &buf, "lang_def", indent);
+    extend_name(false, &buf, def->alias_name);
+    string_extend_strv(&print_arena, &buf, uast_expr_print_internal(def->expr, indent));
+    string_extend_cstr(&print_arena, &buf, "\n");
+
+    return string_to_strv(buf);
+}
+
 Str_view uast_return_print_internal(const Uast_return* lang_rtn, int indent) {
     String buf = {0};
 
@@ -681,6 +692,8 @@ Str_view uast_def_print_internal(const Uast_def* def, int indent) {
             return uast_generic_param_print_internal(uast_generic_param_const_unwrap(def), indent);
         case UAST_POISON_DEF:
             return uast_poison_def_print_internal(uast_poison_def_const_unwrap(def), indent);
+        case UAST_LANG_DEF:
+            return uast_lang_def_print_internal(uast_lang_def_const_unwrap(def), indent);
     }
     unreachable("");
 }

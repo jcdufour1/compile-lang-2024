@@ -100,6 +100,8 @@ bool name_from_uname(Name* new_name, Uname name) {
             todo();
         case UAST_POISON_DEF:
             return false;
+        case UAST_LANG_DEF:
+            todo();
     }
     unreachable("");
 }

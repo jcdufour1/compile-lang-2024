@@ -36,7 +36,6 @@ static void set_right_child_expr(Uast_expr* expr, Uast_expr* new_rhs);
 static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top_level, bool do_new_sym_coll);
 static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, bool defer_sym_add);
 static PARSE_EXPR_STATUS parse_expr(
-     
     Uast_expr** result,
     Tk_view* tokens,
     bool defer_sym_add,
@@ -213,6 +212,10 @@ static bool starts_with_enum_def(Tk_view tokens) {
 
 static bool starts_with_sum_def(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_SUM;
+}
+
+static bool starts_with_lang_def(Tk_view tokens) {
+    return tk_view_front(tokens).type == TOKEN_DEF;
 }
 
 static bool starts_with_type_def(Tk_view tokens) {
@@ -1339,6 +1342,28 @@ static PARSE_STATUS parse_sum_def(Uast_sum_def** sum_def, Tk_view* tokens, Token
     return PARSE_OK;
 }
 
+static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token name) {
+    Token lang_def_tk = {0};
+    unwrap(try_consume(&lang_def_tk, tokens, TOKEN_DEF));
+
+    Token dummy = {0};
+    if (!try_consume(&dummy, tokens, TOKEN_SINGLE_EQUAL)) {
+        // TODO
+        todo();
+    }
+    Uast_expr* expr = NULL;
+    if (PARSE_EXPR_OK != parse_expr(&expr, tokens, false, false)) {
+        todo();
+    }
+
+    *def = uast_lang_def_new(name.pos, (Name) {.mod_path = env.curr_mod_path, .base = name.text}, expr);
+    if (!usymbol_add(uast_lang_def_wrap(*def))) {
+        msg_redefinition_of_symbol(uast_lang_def_wrap(*def));
+        return PARSE_ERROR;
+    }
+    return PARSE_OK;
+}
+
 static PARSE_STATUS parse_import(Uast_mod_alias** alias, Tk_view* tokens, Token name) {
     Token import_tk = {0};
     unwrap(try_consume(&import_tk, tokens, TOKEN_IMPORT));
@@ -1412,11 +1437,11 @@ static PARSE_STATUS parse_type_def(Uast_def** def, Tk_view* tokens) {
         }
         *def = uast_mod_alias_wrap(import);
     } else if (starts_with_lang_def(*tokens)) {
-        Uast_mod_alias* import = NULL;
-        if (PARSE_OK != parse_import( &import, tokens, name)) {
+        Uast_lang_def* lang_def = NULL;
+        if (PARSE_OK != parse_lang_def(&lang_def, tokens, name)) {
             return PARSE_ERROR;
         }
-        *def = uast_mod_alias_wrap(import);
+        *def = uast_lang_def_wrap(lang_def);
     } else {
         msg_parser_expected(
             env.file_path_to_text, tk_view_front(*tokens), "",
@@ -1428,7 +1453,6 @@ static PARSE_STATUS parse_type_def(Uast_def** def, Tk_view* tokens) {
 }
 
 static PARSE_STATUS parse_variable_decl(
-     
     Uast_variable_def** result,
     Tk_view* tokens,
     bool require_let,

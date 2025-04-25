@@ -37,6 +37,8 @@ bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_v
             unreachable("");
         case UAST_MOD_ALIAS:
             unreachable("");
+        case UAST_LANG_DEF:
+            unreachable("");
     }
     unreachable("");
 }
@@ -74,6 +76,8 @@ Ulang_type uast_get_ulang_type_def(const Uast_def* def) {
         case UAST_IMPORT_PATH:
             unreachable("");
         case UAST_MOD_ALIAS:
+            unreachable("");
+        case UAST_LANG_DEF:
             unreachable("");
     }
     unreachable("");
