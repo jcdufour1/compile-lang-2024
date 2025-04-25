@@ -121,4 +121,6 @@ bool try_set_if_else_chain(Tast_if_else_chain** new_tast, Uast_if_else_chain* if
 
 bool try_set_break_types(Tast_break** new_tast, Uast_break* lang_break);
 
+bool try_set_lang_def_types(Uast_lang_def* tast);
+
 #endif // TYPE_CHECKING_H

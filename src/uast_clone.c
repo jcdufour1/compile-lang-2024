@@ -105,6 +105,11 @@ Uast_param* uast_param_clone(const Uast_param* param) {
     return uast_param_new(param->pos, uast_variable_def_clone(param->base), param->is_optional, param->is_variadic, param->optional_default);
 }
 
+Uast_lang_def* uast_lang_def_clone(const Uast_lang_def* def) {
+    (void) def;
+    todo();
+}
+
 Uast_expr* uast_expr_clone(const Uast_expr* expr) {
     switch (expr->type) {
         case UAST_OPERATOR:
@@ -160,6 +165,7 @@ Uast_def* uast_def_clone(const Uast_def* def) {
         case UAST_LITERAL_DEF:
             todo();
         case UAST_VARIABLE_DEF: {
+            // TODO: simplify
             Uast_variable_def* new_def = uast_variable_def_clone(uast_variable_def_const_unwrap(def));
             assert(uast_variable_def_const_unwrap(def) != new_def);
             assert(def != uast_variable_def_wrap(new_def));
@@ -171,6 +177,8 @@ Uast_def* uast_def_clone(const Uast_def* def) {
             todo();
         case UAST_IMPORT_PATH:
             todo();
+        case UAST_LANG_DEF:
+            return uast_lang_def_wrap(uast_lang_def_clone(uast_lang_def_const_unwrap(def)));
     }
     unreachable("");
 }

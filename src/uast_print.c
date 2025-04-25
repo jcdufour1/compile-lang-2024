@@ -70,11 +70,10 @@ Str_view uast_member_access_print_internal(const Uast_member_access* access, int
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "member_access_untyped", indent);
-    string_extend_strv(&print_arena, &buf, uast_symbol_print_internal(access->member_name, indent + INDENT_WIDTH));
     extend_pos(&buf, access->pos);
     string_extend_cstr(&print_arena, &buf, "\n");
-
     string_extend_strv(&print_arena, &buf, uast_expr_print_internal(access->callee, indent + INDENT_WIDTH));
+    string_extend_strv(&print_arena, &buf, uast_symbol_print_internal(access->member_name, indent + INDENT_WIDTH));
 
     return string_to_strv(buf);
 }
@@ -469,7 +468,8 @@ Str_view uast_lang_def_print_internal(const Uast_lang_def* def, int indent) {
 
     string_extend_cstr_indent(&print_arena, &buf, "lang_def", indent);
     extend_name(false, &buf, def->alias_name);
-    string_extend_strv(&print_arena, &buf, uast_expr_print_internal(def->expr, indent));
+    string_extend_cstr(&print_arena, &buf, "\n");
+    string_extend_strv(&print_arena, &buf, uast_expr_print_internal(def->expr, indent + INDENT_WIDTH));
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);

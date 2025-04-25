@@ -507,6 +507,12 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             unreachable("cannot set symbol of template parameter here");
         case UAST_POISON_DEF:
             return false;
+        case UAST_LANG_DEF:
+            if (!try_set_expr_types(new_tast, uast_expr_clone(uast_lang_def_unwrap(sym_def)->expr))) {
+                // TODO: print where things expanded from
+                return false;
+            }
+            return true;
     }
     unreachable("");
 }
@@ -1357,7 +1363,7 @@ STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
         }
         case UAST_IMPORT_PATH: {
             Tast_block* new_block = NULL;
-            if (!try_set_import_path_types( &new_block, uast_import_path_unwrap(uast))) {
+            if (!try_set_import_path_types(&new_block, uast_import_path_unwrap(uast))) {
                 return STMT_ERROR;
             }
             *new_stmt = tast_block_wrap(new_block);
@@ -1365,6 +1371,12 @@ STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
         }
         case UAST_MOD_ALIAS:
             return STMT_NO_STMT;
+        case UAST_LANG_DEF: {
+            if (!try_set_lang_def_types(uast_lang_def_unwrap(uast))) {
+                return STMT_ERROR;
+            }
+            return STMT_OK;
+        }
     }
     unreachable("");
 }
@@ -1881,7 +1893,6 @@ bool try_set_member_access_types_finish_sum_def(
 }
 
 bool try_set_member_access_types_finish(
-     
     Tast_stmt** new_tast,
     Uast_def* lang_type_def,
     Uast_member_access* access,
@@ -2086,6 +2097,10 @@ bool try_set_literal_def_types(Uast_literal_def* tast) {
 
 bool try_set_import_path_types(Tast_block** new_tast, Uast_import_path* tast) {
     return try_set_block_types( new_tast, tast->block, false, false);
+}
+
+bool try_set_lang_def_types(Uast_lang_def* tast) {
+    (void) tast;
 }
 
 bool try_set_variable_def_types(
@@ -2696,6 +2711,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
     if (!usymbol_do_add_defered(&redef_sym)) {
         try_set_msg_redefinition_of_symbol( redef_sym);
         status = false;
+                todo();
         goto error;
     }
 
@@ -2715,6 +2731,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
             case STMT_NO_STMT:
                 break;
             case STMT_ERROR:
+                todo();
                 status = false;
                 break;
             case STMT_OK:
@@ -2737,6 +2754,8 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
                 break;
             case STMT_ERROR:
                 status = false;
+                log(LOG_DEBUG, TAST_FMT, uast_stmt_print(curr_tast));
+                todo();
                 break;
             default:
                 todo();
@@ -2760,6 +2779,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         Tast_stmt* new_rtn_statement = NULL;
         switch (try_set_stmt_types( &new_rtn_statement, uast_return_wrap(rtn_statement))) {
             case STMT_ERROR:
+                todo();
                 goto error;
             case STMT_OK:
                 break;
