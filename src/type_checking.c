@@ -438,14 +438,20 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
 
 // set symbol lang_type, and report error if symbol is undefined
 bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
-    if (!expand_def_symbol(sym_untyped)) {
-        // TODO: expected failure case
-        todo();
-        return false;
+    Uast_expr* new_expr = NULL;
+    switch (expand_def_symbol(&new_expr, sym_untyped)) {
+        case EXPAND_NAME_ERROR:
+            todo();
+        case EXPAND_NAME_NORMAL:
+            break;
+        case EXPAND_NAME_NEW_EXPR:
+            return try_set_expr_types(new_tast, new_expr);
+        default:
+            unreachable("");
     }
 
     Uast_def* sym_def = NULL;
-    if (!usymbol_lookup(&sym_def,  sym_untyped->name)) {
+    if (!usymbol_lookup(&sym_def, sym_untyped->name)) {
         Name base_name = sym_untyped->name;
         memset(&base_name.gen_args, 0, sizeof(base_name.gen_args));
         if (!usymbol_lookup(&sym_def,  base_name)) {

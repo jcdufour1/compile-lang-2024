@@ -6,6 +6,7 @@
 #include <extend_name.h>
 #include <serialize_module_symbol_name.h>
 #include <expand_lang_def.h>
+#include <uast_clone.h>
 
 static bool expand_def_ulang_type_regular(Ulang_type_regular* new_lang_type, Ulang_type_regular lang_type) {
     bool status = false;
@@ -83,60 +84,61 @@ bool expand_def_uname(Uname* name) {
 }
 
 // TODO: expected failure case for having generic parameters in def definition
-static bool expand_def_name(Name* name) {
+static EXPAND_NAME_STATUS expand_def_name(Uast_expr** new_expr, Name* name) {
     Uast_def* def = NULL;
     Ulang_type_vec gen_args = name->gen_args;
     memset(&name->gen_args, 0, sizeof(name->gen_args));
     if (!usymbol_lookup(&def, *name)) {
-        return true;
+        return EXPAND_NAME_NORMAL;
     }
 
     switch (def->type) {
         case UAST_POISON_DEF:
-            return false;
+            return EXPAND_NAME_ERROR;
         case UAST_LANG_DEF:
             break;
         case UAST_IMPORT_PATH:
-            return true;
+            return EXPAND_NAME_NORMAL;
         case UAST_MOD_ALIAS:
             // TODO: expand mod_alias here?
-            return true;
+            return EXPAND_NAME_NORMAL;
         case UAST_GENERIC_PARAM:
-            return true;
+            return EXPAND_NAME_NORMAL;
         case UAST_FUNCTION_DEF:
-            return true;
+            return EXPAND_NAME_NORMAL;
         case UAST_VARIABLE_DEF:
-            return true;
+            return EXPAND_NAME_NORMAL;
         case UAST_STRUCT_DEF:
-            return true;
+            return EXPAND_NAME_NORMAL;
         case UAST_RAW_UNION_DEF:
-            return true;
+            return EXPAND_NAME_NORMAL;
         case UAST_ENUM_DEF:
-            return true;
+            return EXPAND_NAME_NORMAL;
         case UAST_SUM_DEF:
-            return true;
+            return EXPAND_NAME_NORMAL;
         case UAST_PRIMITIVE_DEF:
-            return true;
+            return EXPAND_NAME_NORMAL;
         case UAST_LITERAL_DEF:
-            return true;
+            return EXPAND_NAME_NORMAL;
         case UAST_FUNCTION_DECL:
-            return true;
+            return EXPAND_NAME_NORMAL;
     }
 
-    Uast_expr* expr = uast_lang_def_unwrap(def)->expr;
+    Uast_expr* expr = uast_expr_clone(uast_lang_def_unwrap(def)->expr);
     switch (expr->type) {
-        case UAST_MEMBER_ACCESS:
-            Uast_symbol* sym = uast_symbol_unwrap(expr);
-            *name = sym->name;
-            unwrap(name->gen_args.info.count == 0 && "not implemented");
+        case UAST_MEMBER_ACCESS: {
+            Uast_member_access* access = uast_member_access_unwrap(expr);
+            unwrap(access->member_name->name.gen_args.info.count == 0 && "not implemented");
             name->gen_args = gen_args;
-            return true;
+            *new_expr = uast_member_access_wrap(access);
+            return EXPAND_NAME_NEW_EXPR;
+        }
         case UAST_SYMBOL: {
             Uast_symbol* sym = uast_symbol_unwrap(expr);
             *name = sym->name;
             unwrap(name->gen_args.info.count == 0 && "not implemented");
             name->gen_args = gen_args;
-            return true;
+            return EXPAND_NAME_NORMAL;
         }
         case UAST_IF_ELSE_CHAIN:
             todo();
@@ -167,19 +169,41 @@ static bool expand_def_name(Name* name) {
 }
 
 static bool expand_def_variable_def(Uast_variable_def* def) {
-    return expand_def_ulang_type(&def->lang_type) && expand_def_name(&def->name);
+    if (!expand_def_ulang_type(&def->lang_type)) {
+        return false;
+    }
+    Uast_expr* new_expr = NULL;
+    switch (expand_def_name(&new_expr, &def->name)) {
+        case EXPAND_NAME_NORMAL:
+            todo();
+        case EXPAND_NAME_NEW_EXPR:
+            todo();
+        case EXPAND_NAME_ERROR:
+            todo();
+    }
+    unreachable("");
 }
 
 static bool expand_def_function_call(Uast_function_call* call) {
-    return expand_def_expr_vec(&call->args) && expand_def_expr(call->callee);
+    (void) call;
+    todo();
+    //return expand_def_expr_vec(&call->args) && expand_def_expr(call->callee);
 }
 
 static bool expand_def_struct_def_base(Ustruct_def_base* base) {
-    return 
-        expand_def_generic_param_vec(&base->generics) &&
-        expand_def_variable_def_vec(&base->members) &&
-        expand_def_name(&base->name);
-    todo();
+    if (!expand_def_generic_param_vec(&base->generics) || !expand_def_variable_def_vec(&base->members)) {
+        return false;
+    }
+    Uast_expr* new_expr = NULL;
+    switch (expand_def_name(&new_expr, &base->name)) {
+        case EXPAND_NAME_NORMAL:
+            todo();
+        case EXPAND_NAME_NEW_EXPR:
+            todo();
+        case EXPAND_NAME_ERROR:
+            todo();
+    }
+    unreachable("");
 }
 
 static bool expand_def_struct_def(Uast_struct_def* def) {
@@ -215,10 +239,8 @@ static bool expand_def_literal(Uast_literal* lit) {
     unreachable("");
 }
 
-bool expand_def_symbol(Uast_symbol* sym) {
-    bool status = true;
-    status = expand_def_name(&sym->name);
-    return status;
+EXPAND_NAME_STATUS expand_def_symbol(Uast_expr** new_expr, Uast_symbol* sym) {
+    return expand_def_name(new_expr, &sym->name);
 }
 
 bool expand_def_expr(Uast_expr* expr) {
@@ -232,7 +254,8 @@ bool expand_def_expr(Uast_expr* expr) {
         case UAST_OPERATOR:
             todo();
         case UAST_SYMBOL:
-            return expand_def_symbol(uast_symbol_unwrap(expr));
+            todo();
+            //return expand_def_symbol(uast_symbol_unwrap(expr));
         case UAST_MEMBER_ACCESS:
             todo();
         case UAST_INDEX:
@@ -290,7 +313,9 @@ static bool expand_def_lang_def(Uast_lang_def* def) {
 }
 
 static bool expand_def_generic_param(Uast_generic_param* param) {
-    return expand_def_symbol(param->child);
+    (void) param;
+    todo();
+    //return expand_def_symbol(param->child);
 }
 
 static bool expand_def_param(Uast_param* param) {
@@ -348,11 +373,24 @@ static bool expand_def_function_params(Uast_function_params* params) {
 }
 
 static bool expand_def_function_decl(Uast_function_decl* def) {
-    return 
-        expand_def_generic_param_vec(&def->generics) &&
-        expand_def_function_params(def->params) &&
-        expand_def_name(&def->name) &&
-        expand_def_ulang_type(&def->return_type);
+    if ( 
+        !expand_def_generic_param_vec(&def->generics) ||
+        !expand_def_function_params(def->params) ||
+        !expand_def_ulang_type(&def->return_type)
+    ) {
+        return false;
+    }
+
+    Uast_expr* new_expr = NULL;
+    switch (expand_def_name(&new_expr, &def->name)) {
+        case EXPAND_NAME_NORMAL:
+            todo();
+        case EXPAND_NAME_NEW_EXPR:
+            todo();
+        case EXPAND_NAME_ERROR:
+            todo();
+    }
+    unreachable("");
 }
 
 static bool expand_def_function_def(Uast_function_def* def) {
@@ -360,7 +398,9 @@ static bool expand_def_function_def(Uast_function_def* def) {
 }
 
 static bool expand_def_mod_alias(Uast_mod_alias* alias) {
-    return expand_def_name(&alias->name) && expand_def_name(&alias->mod_path);
+    (void) alias;
+    todo();
+    //return expand_def_name(&alias->name) && expand_def_name(&alias->mod_path);
 }
 
 static bool expand_def_import_path(Uast_import_path* path) {
