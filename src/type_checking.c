@@ -437,6 +437,7 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
 
 // set symbol lang_type, and report error if symbol is undefined
 bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
+
     Uast_def* sym_def = NULL;
     if (!usymbol_lookup(&sym_def,  sym_untyped->name)) {
         Name base_name = sym_untyped->name;
@@ -508,12 +509,16 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
         case UAST_POISON_DEF:
             return false;
         case UAST_LANG_DEF:
-            unreachable("lang def should have been eliminated by now");
-            //if (!try_set_expr_types(new_tast, uast_expr_clone(uast_lang_def_unwrap(sym_def)->expr))) {
-            //    // TODO: print where things expanded from
-            //    return false;
-            //}
-            //return true;
+            if (!try_set_expr_types(new_tast, uast_expr_clone(uast_lang_def_unwrap(sym_def)->expr))) {
+                log(LOG_DEBUG, TAST_FMT, uast_symbol_print(sym_untyped));
+                todo();
+
+                // TODO: print where things expanded from
+                return false;
+            }
+    log(LOG_DEBUG, TAST_FMT, uast_symbol_print(sym_untyped));
+    todo();
+            return true;
     }
     unreachable("");
 }
@@ -1373,7 +1378,7 @@ STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
         case UAST_MOD_ALIAS:
             return STMT_NO_STMT;
         case UAST_LANG_DEF:
-            unreachable("UAST_LANG_DEF should not have made it this far");
+            return STMT_NO_STMT;
     }
     unreachable("");
 }
@@ -1483,7 +1488,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     bool status = true;
 
     Tast_expr* new_callee = NULL;
-    if (!try_set_expr_types( &new_callee, fun_call->callee)) {
+    if (!try_set_expr_types(&new_callee, fun_call->callee)) {
         return false;
     }
 

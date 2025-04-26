@@ -74,10 +74,10 @@ void do_passes(const Parameters* params) {
     }
     assert(error_count < 1);
 
-    if (!expand_lang_def(untyped)) {
-        fail();
-    }
-    assert(error_count < 1);
+    //if (!expand_lang_def(untyped)) {
+    //    fail();
+    //}
+    //assert(error_count < 1);
 
     arena_reset(&print_arena);
     log(LOG_DEBUG, "\n"TAST_FMT, uast_block_print(untyped));
