@@ -94,13 +94,8 @@ static bool expand_def_name(Name* name) {
     switch (def->type) {
         case UAST_POISON_DEF:
             return false;
-        case UAST_LANG_DEF: {
-            Uast_symbol* sym = uast_symbol_unwrap(uast_lang_def_unwrap(def)->expr);
-            *name = sym->name;
-            unwrap(name->gen_args.info.count == 0 && "not implemented");
-            name->gen_args = gen_args;
-            return true;
-        }
+        case UAST_LANG_DEF:
+            break;
         case UAST_IMPORT_PATH:
             return true;
         case UAST_MOD_ALIAS:
@@ -126,6 +121,47 @@ static bool expand_def_name(Name* name) {
             return true;
         case UAST_FUNCTION_DECL:
             return true;
+    }
+
+    Uast_expr* expr = uast_lang_def_unwrap(def)->expr;
+    switch (expr->type) {
+        case UAST_MEMBER_ACCESS:
+            Uast_symbol* sym = uast_symbol_unwrap(expr);
+            *name = sym->name;
+            unwrap(name->gen_args.info.count == 0 && "not implemented");
+            name->gen_args = gen_args;
+            return true;
+        case UAST_SYMBOL: {
+            Uast_symbol* sym = uast_symbol_unwrap(expr);
+            *name = sym->name;
+            unwrap(name->gen_args.info.count == 0 && "not implemented");
+            name->gen_args = gen_args;
+            return true;
+        }
+        case UAST_IF_ELSE_CHAIN:
+            todo();
+        case UAST_SWITCH:
+            todo();
+        case UAST_UNKNOWN:
+            todo();
+        case UAST_OPERATOR:
+            todo();
+        case UAST_INDEX:
+            todo();
+        case UAST_LITERAL:
+            todo();
+        case UAST_FUNCTION_CALL:
+            todo();
+        case UAST_STRUCT_LITERAL:
+            todo();
+        case UAST_ARRAY_LITERAL:
+            todo();
+        case UAST_TUPLE:
+            todo();
+        case UAST_SUM_ACCESS:
+            todo();
+        case UAST_SUM_GET_TAG:
+            todo();
     }
     unreachable("");
 }
