@@ -15,7 +15,7 @@ fn main() i32 {
     print("hello\n")
     print("%d\n", add(<i32>)(54, 3))
 
-    //let opt Opt(<i32>) = .some(43)
+    let opt Opt(<i32>) = .some(43)
     //let token Token
     return 0
 }

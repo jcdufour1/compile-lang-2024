@@ -368,4 +368,18 @@ static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def)
 
 bool ustruct_def_base_get_lang_type_(Ulang_type* result, Ustruct_def_base base, Ulang_type_vec generics, Pos pos);
 
+static inline bool ulang_type_vec_is_equal(Ulang_type_vec a, Ulang_type_vec b) {
+    if (a.info.count != b.info.count) {
+        return false;
+    }
+
+    for (size_t idx = 0; idx < a.info.count; idx++) {
+        if (!ulang_type_is_equal(vec_at(&a, idx), vec_at(&b, idx))) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 #endif // UAST_UTIL_H

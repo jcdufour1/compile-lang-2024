@@ -4,8 +4,33 @@
 #include <serialize_module_symbol_name.h>
 #include <symbol_log.h>
 #include <symbol_iter.h>
+#include <expand_lang_def.h>
 
 bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type, Pos pos) {
+    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type));
+    Uast_expr* new_expr = NULL;
+    switch (expand_def_ulang_type(new_expr, &lang_type)) {
+        case EXPAND_NAME_ERROR:
+            todo();
+        case EXPAND_NAME_NORMAL:
+            todo();
+        case EXPAND_NAME_NEW_EXPR:
+            todo();
+        default:
+            todo();
+    }
+    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type));
+    //switch (expand_def_ulang_type(&new_expr, sym_untyped)) {
+    //    case EXPAND_NAME_ERROR:
+    //        todo();
+    //    case EXPAND_NAME_NORMAL:
+    //        todo();
+    //    case EXPAND_NAME_NEW_EXPR:
+    //        todo();
+    //    default:
+    //        unreachable("");
+    //}
+
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
             if (!try_lang_type_from_ulang_type_regular(new_lang_type,  ulang_type_regular_const_unwrap(lang_type), pos)) {
