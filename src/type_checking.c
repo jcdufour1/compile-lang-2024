@@ -24,6 +24,7 @@
 #include <lang_type_get_pos.h>
 #include <lang_type_is.h>
 #include <symbol_iter.h>
+#include <expand_lang_def.h>
 
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
@@ -437,6 +438,11 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
 
 // set symbol lang_type, and report error if symbol is undefined
 bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
+    if (!expand_def_symbol(sym_untyped)) {
+        // TODO: expected failure case
+        todo();
+        return false;
+    }
 
     Uast_def* sym_def = NULL;
     if (!usymbol_lookup(&sym_def,  sym_untyped->name)) {
@@ -509,16 +515,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
         case UAST_POISON_DEF:
             return false;
         case UAST_LANG_DEF:
-            if (!try_set_expr_types(new_tast, uast_expr_clone(uast_lang_def_unwrap(sym_def)->expr))) {
-                log(LOG_DEBUG, TAST_FMT, uast_symbol_print(sym_untyped));
-                todo();
-
-                // TODO: print where things expanded from
-                return false;
-            }
-    log(LOG_DEBUG, TAST_FMT, uast_symbol_print(sym_untyped));
-    todo();
-            return true;
+            unreachable("lang def alias should have been expanded already");
     }
     unreachable("");
 }

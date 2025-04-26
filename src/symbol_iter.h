@@ -1,6 +1,9 @@
 #ifndef SYMBOL_ITER_H
 #define SYMBOL_ITER_H
 
+#include <util.h>
+#include <symbol_table.h>
+
 typedef struct {
     size_t bucket_idx;
     Symbol_table tbl;

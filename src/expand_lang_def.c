@@ -1,4 +1,3 @@
-#include "passes.h"
 #include <symbol_iter.h>
 #include <uast.h>
 #include <ulang_type.h>
@@ -6,20 +5,7 @@
 #include <ulang_type_clone.h>
 #include <extend_name.h>
 #include <serialize_module_symbol_name.h>
-
-static bool expand_def_def(Uast_def* def);
-
-static bool expand_def_block(Uast_block* block);
-
-static bool expand_def_uname(Uname* name);
-
-static bool expand_def_expr_vec(Uast_expr_vec* exprs);
-
-static bool expand_def_expr(Uast_expr* expr);
-
-static bool expand_def_generic_param_vec(Uast_generic_param_vec* params);
-
-static bool expand_def_variable_def_vec(Uast_variable_def_vec* defs);
+#include <expand_lang_def.h>
 
 static bool expand_def_ulang_type_regular(Ulang_type_regular* new_lang_type, Ulang_type_regular lang_type) {
     bool status = false;
@@ -48,7 +34,7 @@ static bool expand_def_ulang_type(Ulang_type* lang_type) {
     unreachable("");
 }
 
-static bool expand_def_uname(Uname* name) {
+bool expand_def_uname(Uname* name) {
     Name actual = {0};
     if (!name_from_uname(&actual, *name)) {
         todo();
@@ -70,6 +56,7 @@ static bool expand_def_uname(Uname* name) {
         case UAST_IMPORT_PATH:
             return true;
         case UAST_MOD_ALIAS:
+            // TODO: expand mod_alias here?
             return true;
         case UAST_GENERIC_PARAM:
             return true;
@@ -95,13 +82,52 @@ static bool expand_def_uname(Uname* name) {
     unreachable("");
 }
 
+// TODO: expected failure case for having generic parameters in def definition
 static bool expand_def_name(Name* name) {
-    Uast_def* result = NULL;
-    if (!usymbol_lookup(&result, *name)) {
+    Uast_def* def = NULL;
+    Ulang_type_vec gen_args = name->gen_args;
+    memset(&name->gen_args, 0, sizeof(name->gen_args));
+    if (!usymbol_lookup(&def, *name)) {
         return true;
     }
 
-    todo();
+    switch (def->type) {
+        case UAST_POISON_DEF:
+            return false;
+        case UAST_LANG_DEF: {
+            Uast_symbol* sym = uast_symbol_unwrap(uast_lang_def_unwrap(def)->expr);
+            *name = sym->name;
+            unwrap(name->gen_args.info.count == 0 && "not implemented");
+            name->gen_args = gen_args;
+            return true;
+        }
+        case UAST_IMPORT_PATH:
+            return true;
+        case UAST_MOD_ALIAS:
+            // TODO: expand mod_alias here?
+            return true;
+        case UAST_GENERIC_PARAM:
+            return true;
+        case UAST_FUNCTION_DEF:
+            return true;
+        case UAST_VARIABLE_DEF:
+            return true;
+        case UAST_STRUCT_DEF:
+            return true;
+        case UAST_RAW_UNION_DEF:
+            return true;
+        case UAST_ENUM_DEF:
+            return true;
+        case UAST_SUM_DEF:
+            return true;
+        case UAST_PRIMITIVE_DEF:
+            return true;
+        case UAST_LITERAL_DEF:
+            return true;
+        case UAST_FUNCTION_DECL:
+            return true;
+    }
+    unreachable("");
 }
 
 static bool expand_def_variable_def(Uast_variable_def* def) {
@@ -153,13 +179,13 @@ static bool expand_def_literal(Uast_literal* lit) {
     unreachable("");
 }
 
-static bool expand_def_symbol(Uast_symbol* sym) {
+bool expand_def_symbol(Uast_symbol* sym) {
     bool status = true;
     status = expand_def_name(&sym->name);
     return status;
 }
 
-static bool expand_def_expr(Uast_expr* expr) {
+bool expand_def_expr(Uast_expr* expr) {
     switch (expr->type) {
         case UAST_IF_ELSE_CHAIN:
             todo();
@@ -244,7 +270,7 @@ static bool expand_def_param(Uast_param* param) {
     return status;
 }
 
-static bool expand_def_generic_param_vec(Uast_generic_param_vec* params) {
+bool expand_def_generic_param_vec(Uast_generic_param_vec* params) {
     bool status = true;
     for (size_t idx = 0; idx < params->info.count; idx++) {
         if (!expand_def_generic_param(vec_at(params, idx))) {
@@ -254,7 +280,7 @@ static bool expand_def_generic_param_vec(Uast_generic_param_vec* params) {
     return status;
 }
 
-static bool expand_def_variable_def_vec(Uast_variable_def_vec* defs) {
+bool expand_def_variable_def_vec(Uast_variable_def_vec* defs) {
     bool status = true;
     for (size_t idx = 0; idx < defs->info.count; idx++) {
         if (!expand_def_variable_def(vec_at(defs, idx))) {
@@ -264,7 +290,7 @@ static bool expand_def_variable_def_vec(Uast_variable_def_vec* defs) {
     return status;
 }
 
-static bool expand_def_expr_vec(Uast_expr_vec* exprs) {
+bool expand_def_expr_vec(Uast_expr_vec* exprs) {
     bool status = true;
     for (size_t idx = 0; idx < exprs->info.count; idx++) {
         if (!expand_def_expr(vec_at(exprs, idx))) {
@@ -305,7 +331,7 @@ static bool expand_def_import_path(Uast_import_path* path) {
     return expand_def_block(path->block);
 }
 
-static bool expand_def_def(Uast_def* def) {
+bool expand_def_def(Uast_def* def) {
     switch (def->type) {
         case UAST_MOD_ALIAS:
             return expand_def_mod_alias(uast_mod_alias_unwrap(def));
@@ -339,7 +365,7 @@ static bool expand_def_def(Uast_def* def) {
     unreachable("");
 }
 
-static bool expand_def_block(Uast_block* block) {
+bool expand_def_block(Uast_block* block) {
     bool status = true;
 
     Usymbol_iter iter = usym_tbl_iter_new(block->symbol_collection.usymbol_table);
@@ -362,6 +388,3 @@ static bool expand_def_block(Uast_block* block) {
     return status;
 }
 
-bool expand_lang_def(Uast_block* block) {
-    return expand_def_block(block);
-}
