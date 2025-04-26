@@ -24,6 +24,8 @@ bool tokenize(Tokens* result, Str_view file_path);
 
 bool parse_file(Uast_block** block, Str_view file_path, bool do_new_sym_coll);
 
+bool expand_lang_def(Uast_block* block);
+
 Tast_block* analysis_1(Uast_block* root);
 
 Tast_block* change_operators(Tast_block* root);

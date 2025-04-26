@@ -9,6 +9,7 @@
 #include <ulang_type_get_atom.h>
 #include <generic_sub.h>
 #include <symbol_log.h>
+#include <msg_todo.h>
 
 static bool ulang_type_generics_are_present(Ulang_type lang_type);
 
@@ -354,14 +355,25 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
             *result = lang_type;
             return true;
         case UAST_LANG_DEF: {
-            unreachable();
-            //if (new_lang_type.type != ULANG_TYPE_REGULAR) {
-            //    msg_todo("def alias in tuple, function callback type, etc.", lang_type.pos);
+            unreachable("def should have been eliminated by now");
+            //if (lang_type.type != ULANG_TYPE_REGULAR) {
+            //    msg_todo("def alias in tuple, function callback type, etc.", ulang_type_regular_const_unwrap(lang_type).pos);
             //    return false;
             //}
-            //Ulang_type new_lang_type = ulang_type_regular_new(
-            //    ulang_type_atom_new(uast_lang_def_unwrap(before_res)->name)
-            //);
+
+            //Uast_expr* new_expr = uast_lang_def_unwrap(before_res)->expr;
+            //if (new_expr->type != UAST_SYMBOL) {
+            //    msg_todo("def aliased to non-symbol used as type", ulang_type_regular_const_unwrap(lang_type).pos);
+            //    return false;
+            //}
+            //Ulang_type new_lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(
+            //    ulang_type_atom_new(
+            //        name_to_uname(uast_symbol_unwrap(new_expr)->name),
+            //        ulang_type_regular_const_unwrap(lang_type).atom.pointer_depth
+            //    ),
+            //    ulang_type_regular_const_unwrap(lang_type).pos
+            //));
+            //return resolve_generics_ulang_type(result, new_lang_type);
         }
         case UAST_POISON_DEF:
             todo();

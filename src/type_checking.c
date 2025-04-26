@@ -508,11 +508,12 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
         case UAST_POISON_DEF:
             return false;
         case UAST_LANG_DEF:
-            if (!try_set_expr_types(new_tast, uast_expr_clone(uast_lang_def_unwrap(sym_def)->expr))) {
-                // TODO: print where things expanded from
-                return false;
-            }
-            return true;
+            unreachable("lang def should have been eliminated by now");
+            //if (!try_set_expr_types(new_tast, uast_expr_clone(uast_lang_def_unwrap(sym_def)->expr))) {
+            //    // TODO: print where things expanded from
+            //    return false;
+            //}
+            //return true;
     }
     unreachable("");
 }
@@ -1371,12 +1372,8 @@ STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
         }
         case UAST_MOD_ALIAS:
             return STMT_NO_STMT;
-        case UAST_LANG_DEF: {
-            if (!try_set_lang_def_types(uast_lang_def_unwrap(uast))) {
-                return STMT_ERROR;
-            }
-            return STMT_NO_STMT;
-        }
+        case UAST_LANG_DEF:
+            unreachable("UAST_LANG_DEF should not have made it this far");
     }
     unreachable("");
 }
@@ -2101,13 +2098,7 @@ bool try_set_import_path_types(Tast_block** new_tast, Uast_import_path* tast) {
     return try_set_block_types( new_tast, tast->block, false, false);
 }
 
-bool try_set_lang_def_types(Uast_lang_def* tast) {
-    (void) tast;
-    return true;
-}
-
 bool try_set_variable_def_types(
-     
     Tast_variable_def** new_tast,
     Uast_variable_def* uast,
     bool add_to_sym_tbl,

@@ -61,6 +61,7 @@ OBJS=\
 	 ${BUILD_DIR}/passes/do_passes.o \
 	 ${BUILD_DIR}/passes/tokenizer.o \
 	 ${BUILD_DIR}/passes/parser.o \
+	 ${BUILD_DIR}/passes/expand_lang_def.o \
 	 ${BUILD_DIR}/passes/assign_llvm_ids.o \
 	 ${BUILD_DIR}/passes/add_load_and_store.o \
 	 ${BUILD_DIR}/passes/analysis_1.o \
@@ -198,6 +199,9 @@ ${BUILD_DIR}/passes/parser.o: ${DEP_COMMON} src/passes/parser.c src/passes/*.h t
 
 ${BUILD_DIR}/passes/tokenizer.o: ${DEP_COMMON} src/passes/tokenizer.c src/passes/*.h third_party/*
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/tokenizer.o src/passes/tokenizer.c
+
+${BUILD_DIR}/passes/expand_lang_def.o: ${DEP_COMMON} src/passes/expand_lang_def.c src/passes/*.h third_party/*
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/expand_lang_def.o src/passes/expand_lang_def.c
 
 #clean:
 #	rm -f ${OBJS} build/*/passes/*

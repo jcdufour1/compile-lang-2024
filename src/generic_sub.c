@@ -152,6 +152,8 @@ void generic_sub_def(Uast_def* def, Name gen_param, Ulang_type gen_arg) {
             todo();
         case UAST_LITERAL_DEF:
             todo();
+        case UAST_LANG_DEF:
+            todo();
     }
     unreachable("");
 }
@@ -210,13 +212,13 @@ void generic_sub_if_else_chain(Uast_if_else_chain* if_else, Name gen_param, Ulan
 void generic_sub_switch(Uast_switch* lang_switch, Name gen_param, Ulang_type gen_arg) {
     generic_sub_expr( lang_switch->operand, gen_param, gen_arg);
     for (size_t idx = 0; idx < lang_switch->cases.info.count; idx++) {
-        generic_sub_case( vec_at(&lang_switch->cases, idx), gen_param, gen_arg);
+        generic_sub_case(vec_at(&lang_switch->cases, idx), gen_param, gen_arg);
     }
 }
 
 void generic_sub_for_with_cond(Uast_for_with_cond* lang_for, Name gen_param, Ulang_type gen_arg) {
-    generic_sub_condition( lang_for->condition, gen_param, gen_arg);
-    generic_sub_block( lang_for->body, gen_param, gen_arg);
+    generic_sub_condition(lang_for->condition, gen_param, gen_arg);
+    generic_sub_block(lang_for->body, gen_param, gen_arg);
 }
 
 void generic_sub_condition(Uast_condition* cond, Name gen_param, Ulang_type gen_arg) {
