@@ -36,6 +36,8 @@ void extend_uname(String* buf, Uname name);
 
 void extend_name(bool is_llvm, String* buf, Name name);
 
+Name name_clone(Name name);
+
 #define name_print(name) str_view_print(name_print_internal(false, name))
 
 #define uname_print(name) str_view_print(uname_print_internal(name))

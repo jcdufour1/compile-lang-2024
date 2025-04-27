@@ -122,5 +122,11 @@ static inline void ulang_type_set_pointer_depth(Ulang_type* lang_type, int16_t p
     unreachable("");
 }
 
+#define ulang_type_print(mode, lang_type) str_view_print(ulang_type_print_internal((mode), (lang_type)))
+
+Str_view ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type);
+
+void extend_ulang_type_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type lang_type);
+
 #endif // ULANG_TYPE_H
 

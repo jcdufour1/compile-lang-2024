@@ -3,6 +3,7 @@
 #include <parser_utils.h>
 #include <ulang_type_serialize.h>
 #include <extend_name.h>
+#include <ulang_type_clone.h>
 
 void extend_name_llvm(String* buf, Name name) {
     string_extend_strv(&a_main, buf, serialize_name(name));
@@ -132,4 +133,8 @@ void extend_name(bool is_llvm, String* buf, Name name) {
     }
     extend_name_msg(buf, name);
     return;
+}
+
+Name name_clone(Name name) {
+    return (Name) {.mod_path = name.mod_path, .base = name.base, .gen_args = ulang_type_vec_clone(name.gen_args)};
 }

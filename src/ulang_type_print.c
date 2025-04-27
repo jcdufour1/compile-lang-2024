@@ -1,6 +1,7 @@
 #include <ulang_type_print.h>
 #include <extend_name.h>
 
+// TODO: move this to ulang_type.c, or make ulang_type_print.h header
 Str_view ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type) {
     String buf = {0};
     extend_ulang_type_to_string(&buf, mode, lang_type);

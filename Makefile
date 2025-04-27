@@ -32,6 +32,7 @@ else
 endif
 
 OBJS=\
+	 ${BUILD_DIR}/util/name.o \
 	 ${BUILD_DIR}/main.o \
 	 ${BUILD_DIR}/arena.o \
 	 ${BUILD_DIR}/uast_print.o \
@@ -45,14 +46,12 @@ OBJS=\
 	 ${BUILD_DIR}/symbol_table.o \
 	 ${BUILD_DIR}/file.o \
 	 ${BUILD_DIR}/parameters.o \
-	 ${BUILD_DIR}/extend_name.o \
 	 ${BUILD_DIR}/parser_utils.o \
 	 ${BUILD_DIR}/error_msg.o \
 	 ${BUILD_DIR}/lang_type_serialize.o \
 	 ${BUILD_DIR}/ulang_type_serialize.o \
 	 ${BUILD_DIR}/lang_type_from_ulang_type.o \
 	 ${BUILD_DIR}/uast_clone.o \
-	 ${BUILD_DIR}/tast_clone.o \
 	 ${BUILD_DIR}/symbol_collection_clone.o \
 	 ${BUILD_DIR}/type_checking.o \
 	 ${BUILD_DIR}/resolve_generics.o \
@@ -85,8 +84,8 @@ gdb: build
 	gdb --args ${BUILD_DIR}/main ${ARGS_PROGRAM}
 
 setup: 
-	mkdir -p ./build/release
-	mkdir -p ./build/debug
+	mkdir -p ${BUILD_DIR}/
+	mkdir -p ${BUILD_DIR}/util/
 
 build: setup ${BUILD_DIR}/main
 
@@ -149,9 +148,6 @@ ${BUILD_DIR}/file.o: ${DEP_COMMON} src/file.c
 ${BUILD_DIR}/parameters.o: ${DEP_COMMON} src/parameters.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/parameters.o src/parameters.c
 
-${BUILD_DIR}/extend_name.o: ${DEP_COMMON} src/extend_name.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/extend_name.o src/extend_name.c
-
 ${BUILD_DIR}/error_msg.o: ${DEP_COMMON} src/error_msg.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/error_msg.o src/error_msg.c
 
@@ -179,9 +175,6 @@ ${BUILD_DIR}/symbol_collection_clone.o: ${DEP_COMMON} src/symbol_collection_clon
 ${BUILD_DIR}/uast_clone.o: ${DEP_COMMON} src/uast_clone.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/uast_clone.o src/uast_clone.c
 
-${BUILD_DIR}/tast_clone.o: ${DEP_COMMON} src/tast_clone.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/tast_clone.o src/tast_clone.c
-
 ${BUILD_DIR}/llvm_utils.o: ${DEP_COMMON} src/llvm_utils.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/llvm_utils.o src/llvm_utils.c
 
@@ -208,6 +201,9 @@ ${BUILD_DIR}/parser.o: ${DEP_COMMON} src/parser.c
 
 ${BUILD_DIR}/tokenizer.o: ${DEP_COMMON} src/tokenizer.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/tokenizer.o src/tokenizer.c
+
+${BUILD_DIR}/util/name.o: ${DEP_COMMON} src/util/name.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/name.o src/util/name.c
 
 #clean:
 #	rm -f ${OBJS} build/*/passes/*
