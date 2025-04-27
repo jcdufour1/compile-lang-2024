@@ -5,6 +5,7 @@
 #include <util.h>
 #include <parser_utils.h>
 #include <ulang_type_serialize.h>
+#include <extend_name.h>
 
 static inline void serialize_str_view(String* buf, Str_view str_view) {
     string_extend_cstr(&a_main, buf, "_");

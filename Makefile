@@ -65,7 +65,8 @@ OBJS=\
 	 ${BUILD_DIR}/assign_llvm_ids.o \
 	 ${BUILD_DIR}/add_load_and_store.o \
 	 ${BUILD_DIR}/analysis_1.o \
-	 ${BUILD_DIR}/emit_llvm.o
+	 ${BUILD_DIR}/emit_llvm.o \
+	 ${BUILD_DIR}/llvm_utils.o
 
 DEP_UTIL = Makefile src/util/*.h src/util/auto_gen.c
 
@@ -180,6 +181,9 @@ ${BUILD_DIR}/uast_clone.o: ${DEP_COMMON} src/uast_clone.c
 
 ${BUILD_DIR}/tast_clone.o: ${DEP_COMMON} src/tast_clone.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/tast_clone.o src/tast_clone.c
+
+${BUILD_DIR}/llvm_utils.o: ${DEP_COMMON} src/llvm_utils.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/llvm_utils.o src/llvm_utils.c
 
 ${BUILD_DIR}/expand_lang_def.o: ${DEP_COMMON} src/expand_lang_def.c
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/expand_lang_def.o src/expand_lang_def.c

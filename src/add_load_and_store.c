@@ -18,29 +18,24 @@
 static Lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos);
 
 static Name load_assignment(
-     
     Llvm_block* new_block,
     Tast_assignment* old_assignment
 );
 
 static Name load_symbol(
-     
     Llvm_block* new_block,
     Tast_symbol* old_symbol
 );
 
 static void load_struct_def(
-     
     Tast_struct_def* old_struct_def
 );
 
 static void load_raw_union_def(
-     
     Tast_raw_union_def* old_def
 );
 
 static Name load_ptr_symbol(
-     
     Llvm_block* new_block,
     Tast_symbol* old_sym
 );

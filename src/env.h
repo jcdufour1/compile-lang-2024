@@ -1,7 +1,7 @@
 #ifndef ENV_H
 #define ENV_H
 
-#include "symbol_table_struct.h"
+#include <symbol_table_struct.h>
 #include <tast_forward_decl.h>
 #include <llvm_forward_decl.h>
 

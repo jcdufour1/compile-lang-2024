@@ -4,12 +4,12 @@
 
 #include "str_view.h"
 #include <newstring.h>
-#include "env.h"
 #include "symbol_table_struct.h"
 #include <do_passes.h>
 #include <uast_forward_decl.h>
 #include <tast_forward_decl.h>
 #include <llvm_forward_decl.h>
+#include <env.h>
 
 void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, int recursion_depth);
 void usymbol_log_table_internal(int log_level, const Usymbol_table sym_table, int recursion_depth, const char* file_path, int line);
