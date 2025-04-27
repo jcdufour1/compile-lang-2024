@@ -12,16 +12,6 @@ Lang_type llvm_operator_get_lang_type(const Llvm_operator* operator) {
     }
 }
 
-Lang_type* llvm_get_operator_lang_type_ref(Llvm_operator* operator) {
-    if (operator->type == LLVM_UNARY) {
-        return &llvm_unary_unwrap(operator)->lang_type;
-    } else if (operator->type == LLVM_BINARY) {
-        return &llvm_binary_unwrap(operator)->lang_type;
-    } else {
-        unreachable("");
-    }
-}
-
 Sym_typed_base* llvm_symbol_typed_get_base_ref(Llvm_symbol* sym) {
     switch (sym->type) {
         case LLVM_PRIMITIVE_SYM:
@@ -207,20 +197,6 @@ Lang_type llvm_def_get_lang_type(const Llvm_def* def) {
     unreachable("");
 }
 
-Lang_type* llvm_expr_ref_get_lang_type(Llvm_expr* expr) {
-    switch (expr->type) {
-        case LLVM_FUNCTION_CALL:
-            return &llvm_function_call_unwrap(expr)->lang_type;
-        case LLVM_LITERAL:
-            return llvm_literal_ref_get_lang_type(llvm_literal_unwrap(expr));
-        case LLVM_SYMBOL:
-            return &llvm_symbol_typed_get_base_ref(llvm_symbol_unwrap(expr))->lang_type;
-        case LLVM_OPERATOR:
-            return llvm_get_operator_lang_type_ref(llvm_operator_unwrap(expr));
-    }
-    unreachable("");
-}
-
 Lang_type llvm_get_lang_type(const Llvm* llvm) {
     switch (llvm->type) {
         case LLVM_DEF:
@@ -245,143 +221,6 @@ Lang_type llvm_get_lang_type(const Llvm* llvm) {
             return llvm_store_another_llvm_const_unwrap(llvm)->lang_type;
         case LLVM_LOAD_ELEMENT_PTR:
             return llvm_load_element_ptr_const_unwrap(llvm)->lang_type;
-    }
-    unreachable("");
-}
-
-Lang_type* llvm_def_ref_get_lang_type(Llvm_def* def) {
-    switch (def->type) {
-        case LLVM_FUNCTION_DEF:
-            unreachable("");
-        case LLVM_RAW_UNION_DEF:
-            unreachable("");
-        case LLVM_ENUM_DEF:
-            unreachable("");
-        case LLVM_VARIABLE_DEF:
-            unreachable("");
-        case LLVM_FUNCTION_DECL:
-            unreachable("");
-        case LLVM_STRUCT_DEF:
-            unreachable("");
-        case LLVM_PRIMITIVE_DEF:
-            unreachable("");
-        case LLVM_LABEL:
-            unreachable("");
-        case LLVM_LITERAL_DEF:
-            unreachable("");
-    }
-    unreachable("");
-}
-
-Lang_type* llvm_ref_get_lang_type(Llvm* llvm) {
-    switch (llvm->type) {
-        case LLVM_DEF:
-            return llvm_def_ref_get_lang_type(llvm_def_unwrap(llvm));
-        case LLVM_EXPR:
-            return llvm_expr_ref_get_lang_type(llvm_expr_unwrap(llvm));
-        case LLVM_BLOCK:
-            unreachable("");
-        case LLVM_FUNCTION_PARAMS:
-            unreachable("");
-        case LLVM_RETURN:
-            unreachable("");
-        case LLVM_GOTO:
-            unreachable("");
-        case LLVM_COND_GOTO:
-            unreachable("");
-        case LLVM_ALLOCA:
-            return &llvm_alloca_unwrap(llvm)->lang_type;
-        case LLVM_LOAD_ANOTHER_LLVM:
-            return &llvm_load_another_llvm_unwrap(llvm)->lang_type;
-        case LLVM_STORE_ANOTHER_LLVM:
-            return &llvm_store_another_llvm_unwrap(llvm)->lang_type;
-        case LLVM_LOAD_ELEMENT_PTR:
-            return &llvm_load_element_ptr_unwrap(llvm)->lang_type;
-    }
-    unreachable("");
-}
-
-Llvm* llvm_get_expr_src(Llvm_expr* expr) {
-    switch (expr->type) {
-        case LLVM_LITERAL:
-            unreachable("");
-        case LLVM_SYMBOL:
-            unreachable("");
-        case LLVM_FUNCTION_CALL:
-            unreachable("");
-        case LLVM_OPERATOR:
-            unreachable("");
-    }
-    unreachable("");
-}
-
-Llvm* get_llvm_src(Llvm* llvm) {
-    switch (llvm->type) {
-        case LLVM_DEF:
-            unreachable("");
-        case LLVM_EXPR:
-            return llvm_get_expr_src(llvm_expr_unwrap(llvm));
-        case LLVM_BLOCK:
-            unreachable("");
-        case LLVM_FUNCTION_PARAMS:
-            unreachable("");
-        case LLVM_RETURN:
-            unreachable("");
-        case LLVM_GOTO:
-            unreachable("");
-        case LLVM_COND_GOTO:
-            unreachable("");
-            //return llvm_expr_wrap(llvm_operator_wrap(llvm_cond_goto_unwrap(llvm)->llvm_src.llvm));
-        case LLVM_ALLOCA:
-            unreachable("");
-        case LLVM_LOAD_ANOTHER_LLVM:
-            unreachable("");
-        case LLVM_STORE_ANOTHER_LLVM:
-            unreachable("");
-        case LLVM_LOAD_ELEMENT_PTR:
-            unreachable("");
-    }
-    unreachable("");
-}
-
-Llvm* llvm_get_expr_dest(Llvm_expr* expr) {
-    switch (expr->type) {
-        case LLVM_LITERAL:
-            unreachable("");
-        case LLVM_SYMBOL:
-            unreachable("");
-        case LLVM_FUNCTION_CALL:
-            unreachable("");
-        case LLVM_OPERATOR:
-            unreachable("");
-    }
-    unreachable("");
-}
-
-Llvm* get_llvm_dest(Llvm* llvm) {
-    switch (llvm->type) {
-        case LLVM_DEF:
-            unreachable("");
-        case LLVM_EXPR:
-            return llvm_get_expr_dest(llvm_expr_unwrap(llvm));
-        case LLVM_BLOCK:
-            unreachable("");
-        case LLVM_FUNCTION_PARAMS:
-            unreachable("");
-        case LLVM_RETURN:
-            unreachable("");
-        case LLVM_GOTO:
-            unreachable("");
-        case LLVM_COND_GOTO:
-            unreachable("");
-        case LLVM_ALLOCA:
-            unreachable("");
-        case LLVM_LOAD_ANOTHER_LLVM:
-            unreachable("");
-        case LLVM_STORE_ANOTHER_LLVM:
-            unreachable("");
-        case LLVM_LOAD_ELEMENT_PTR:
-            unreachable("");
     }
     unreachable("");
 }
@@ -500,20 +339,6 @@ Name llvm_tast_get_name(const Llvm* llvm) {
             return llvm_load_element_ptr_const_unwrap(llvm)->name_self;
     }
     unreachable("");
-}
-
-const Llvm* get_llvm_src_const(const Llvm* llvm) {
-    return get_llvm_src((Llvm*)llvm);
-}
-
-const Llvm* get_llvm_dest_const(const Llvm* llvm) {
-    return get_llvm_dest((Llvm*)llvm);
-}
-
-Lang_type* llvm_literal_ref_get_lang_type(Llvm_literal* lit) {
-    (void) lit;
-    todo();
-    //return llvm_literal_ref_get_lang_type(llvm_literal_unwrap(expr));
 }
 
 // TODO: rename this function
