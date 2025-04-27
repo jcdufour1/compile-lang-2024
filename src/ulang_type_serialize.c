@@ -1,7 +1,7 @@
 #include <ulang_type_serialize.h>
 #include <parser_utils.h>
 #include <ulang_type.h>
-#include <serialize_module_symbol_name.h>
+#include <name.h>
 
 Str_view serialize_ulang_type_atom(Ulang_type_atom atom) {
     Name temp = {0};

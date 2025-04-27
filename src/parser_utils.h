@@ -10,7 +10,6 @@
 #include "uast_utils.h"
 #include "llvm_utils.h"
 #include "ctype.h"
-#include <serialize_module_symbol_name.h>
 
 bool lang_type_atom_is_unsigned(Lang_type_atom atom);
 

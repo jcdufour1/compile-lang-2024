@@ -3,35 +3,7 @@
 
 #include <str_view.h>
 #include <vector.h>
-
-struct Ulang_type_;
-typedef struct Ulang_type_ Ulang_type;
-
-struct Ulang_type_atom_;
-typedef struct Ulang_type_atom_ Ulang_type_atom;
-
-typedef struct {
-    Vec_base info;
-    Ulang_type* buf;
-} Ulang_type_vec;
-
-typedef struct {
-    Vec_base info;
-    Ulang_type_atom* buf;
-} Ulang_type_atom_vec;
-
-// TODO: move this struct
-typedef struct {
-    Str_view mod_path;
-    Str_view base;
-    Ulang_type_vec gen_args;
-} Name;
-
-typedef struct {
-    Name mod_alias;
-    Str_view base;
-    Ulang_type_vec gen_args;
-} Uname;
+#include <name.h>
 
 typedef struct Ulang_type_atom_ {
     Uname str;

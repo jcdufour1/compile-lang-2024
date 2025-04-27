@@ -13,6 +13,7 @@
 #include <sizeof.h>
 #include <symbol_log.h>
 #include <lang_type_get_pos.h>
+#include <name.h>
 
 static bool isdigit_no_underscore(char prev, char curr) {
     (void) prev;

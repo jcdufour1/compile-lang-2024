@@ -1,5 +1,4 @@
 #include <lang_type_serialize.h>
-#include <serialize_module_symbol_name.h>
 
 Str_view serialize_struct_def_base(Struct_def_base base) {
     String name = {0};

@@ -8,7 +8,6 @@
 #include <env.h>
 #include <symbol_iter.h>
 #include <extend_name.h>
-#include <serialize_module_symbol_name.h>
 
 void generic_sub_return(Uast_return* rtn, Name gen_param, Ulang_type gen_arg) {
     (void) rtn;

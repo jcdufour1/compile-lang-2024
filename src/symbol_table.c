@@ -6,7 +6,6 @@
 #include <llvm_utils.h>
 #include <tast_serialize.h>
 #include <lang_type_serialize.h>
-#include <serialize_module_symbol_name.h>
 
 #define SYM_TBL_DEFAULT_CAPACITY 1
 #define SYM_TBL_MAX_DENSITY (0.6f)

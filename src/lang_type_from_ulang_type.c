@@ -1,10 +1,10 @@
 
 #include <lang_type_from_ulang_type.h>
 #include <extend_name.h>
-#include <serialize_module_symbol_name.h>
 #include <symbol_log.h>
 #include <symbol_iter.h>
 #include <expand_lang_def.h>
+#include <parser_utils.h>
 
 bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type, Pos pos) {
     log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type));

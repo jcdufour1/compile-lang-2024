@@ -5,7 +5,6 @@
 #include <util.h>
 #include <llvm_utils.h>
 #include <lang_type_print.h>
-#include <serialize_module_symbol_name.h>
 #include <extend_name.h>
 
 static void extend_llvm_id(String* buf, const char* location, Llvm_id llvm_id) {

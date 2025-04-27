@@ -2093,6 +2093,8 @@ static Name load_def(Llvm_block* new_block, Tast_def* old_def) {
             unreachable("");
         case TAST_PRIMITIVE_DEF:
             unreachable("");
+        case TAST_IMPORT:
+            todo();
     }
     unreachable("");
 }
@@ -2160,6 +2162,8 @@ static Name load_def_sometimes(Llvm_block* new_block, Tast_def* old_def) {
             return (Name) {0};
         case TAST_PRIMITIVE_DEF:
             unreachable("");
+        case TAST_IMPORT:
+            todo();
     }
     unreachable("");
 }

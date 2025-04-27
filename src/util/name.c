@@ -1,13 +1,14 @@
-#ifndef SERIALIZE_MODULE_SYMBOL_NAME_H
-#define SERIALIZE_MODULE_SYMBOL_NAME_H
-// TODO: rename this header file
-
+#include <name.h>
 #include <util.h>
 #include <parser_utils.h>
 #include <ulang_type_serialize.h>
 #include <extend_name.h>
 
-static inline void serialize_str_view(String* buf, Str_view str_view) {
+void extend_name_llvm(String* buf, Name name) {
+    string_extend_strv(&a_main, buf, serialize_name(name));
+}
+
+void serialize_str_view(String* buf, Str_view str_view) {
     string_extend_cstr(&a_main, buf, "_");
     string_extend_size_t(&a_main, buf, str_view.count);
     string_extend_cstr(&a_main, buf, "_");
@@ -18,7 +19,7 @@ static inline void serialize_str_view(String* buf, Str_view str_view) {
 // TODO: remove this
 bool try_str_view_consume_size_t(size_t* result, Str_view* str_view, bool ignore_underscore);
 
-static inline Str_view serialize_name(Name name) {
+Str_view serialize_name(Name name) {
     String buf = {0};
 
     if (name.mod_path.count > 0) {
@@ -62,7 +63,7 @@ static inline Str_view serialize_name(Name name) {
 }
 
 // TODO: move this macro
-static inline Str_view name_print_internal(bool serialize, Name name) {
+Str_view name_print_internal(bool serialize, Name name) {
     if (serialize) {
         return serialize_name( name);
     }
@@ -72,10 +73,63 @@ static inline Str_view name_print_internal(bool serialize, Name name) {
     return string_to_strv(buf);
 }
 
-static inline Str_view uname_print_internal(Uname name) {
+Str_view uname_print_internal(Uname name) {
     String buf = {0};
     extend_uname(&buf, name);
     return string_to_strv(buf);
 }
 
-#endif // SERIALIZE_MODULE_SYMBOL_NAME_H
+void extend_name_msg(String* buf, Name name) {
+    string_extend_strv(&print_arena, buf, name.mod_path);
+    if (name.mod_path.count > 0) {
+        string_extend_cstr(&print_arena, buf, "::");
+    }
+    string_extend_strv(&print_arena, buf, name.base);
+    if (name.gen_args.info.count > 0) {
+        string_extend_cstr(&print_arena, buf, "(<");
+    }
+    for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
+        if (idx > 0) {
+            string_extend_cstr(&print_arena, buf, ", ");
+        }
+        string_extend_strv(&print_arena, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(&name.gen_args, idx)));
+    }
+    if (name.gen_args.info.count > 0) {
+        string_extend_cstr(&print_arena, buf, ">)");
+    }
+}
+
+void extend_uname_msg(String* buf, Uname name) {
+    extend_name(false, buf, name.mod_alias);
+    if (name.mod_alias.base.count > 0) {
+        string_extend_cstr(&print_arena, buf, ".");
+    }
+    string_extend_strv(&print_arena, buf, name.base);
+    if (name.gen_args.info.count > 0) {
+        string_extend_cstr(&print_arena, buf, "(<");
+    }
+    for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
+        if (idx > 0) {
+            string_extend_cstr(&print_arena, buf, ", ");
+        }
+        string_extend_strv(&print_arena, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(&name.gen_args, idx)));
+    }
+    if (name.gen_args.info.count > 0) {
+        string_extend_cstr(&print_arena, buf, ">)");
+    }
+}
+
+// TODO: move this function elsewhere
+// TODO: move this function elsewhere
+void extend_uname(String* buf, Uname name) {
+    extend_uname_msg(buf, name);
+}
+
+void extend_name(bool is_llvm, String* buf, Name name) {
+    if (is_llvm) {
+        extend_name_llvm( buf, name);
+        return;
+    }
+    extend_name_msg(buf, name);
+    return;
+}

@@ -11,7 +11,6 @@
 #include <ulang_type.h>
 #include <msg_todo.h>
 #include <token_type_to_operator_type.h>
-#include <tast_clone.h>
 #include <uast_clone.h>
 #include <lang_type_hand_written.h>
 #include <lang_type_print.h>
@@ -25,6 +24,7 @@
 #include <lang_type_is.h>
 #include <symbol_iter.h>
 #include <expand_lang_def.h>
+#include <ulang_type_serialize.h>
 
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
