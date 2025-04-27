@@ -7,10 +7,9 @@
 #include "util.h"
 #include "vector.h"
 
-// TODO: change to Token_vec for consistancy
 typedef struct {
     Vec_base info;
     Token* buf;
-} Tokens;
+} Token_vec;
 
 #endif // TOKENS_H

@@ -1,7 +1,6 @@
 #include <stdbool.h>
 #include <util.h>
 #include <token.h>
-#include <tokens.h>
 #include <token_view.h>
 #include <str_view_col.h>
 #include <parameters.h>
@@ -384,7 +383,7 @@ static void test(const char* file_text, Tk_view expected) {
     todo();
     //Env env = {.file_text = str_view_from_cstr(file_text)};
 
-    //Tokens tokens = {0};
+    //Token_vec tokens = {0};
     //if (!tokenize(&tokens, & (Str_view){0})) {
     //    unreachable("");
     //}
@@ -393,26 +392,26 @@ static void test(const char* file_text, Tk_view expected) {
     //unwrap(tk_view_is_equal_log(LOG_TRACE, tk_view, expected));
 }
 
-static inline Tk_view tokens_to_tk_view(Tokens tokens) {
+static inline Tk_view tokens_to_tk_view(Token_vec tokens) {
     Tk_view tk_view = {.tokens = tokens.buf, .count = tokens.info.count};
     return tk_view;
 }
 
 static void test1(void) {
-    Tokens expected = {0};
+    Token_vec expected = {0};
     vec_append(&a_main, &expected, token_new("hello", TOKEN_SYMBOL));
     vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
     test("hello\n", tokens_to_tk_view(expected));
 }
 
 static void test2(void) {
-    Tokens expected = {0};
+    Token_vec expected = {0};
     vec_append(&a_main, &expected, token_new("", TOKEN_NEW_LINE));
     test("// hello\n", tokens_to_tk_view(expected));
 }
 
 static void test3(void) {
-    Tokens expected = {0};
+    Token_vec expected = {0};
     vec_append(&a_main, &expected, token_new("", TOKEN_IF));
     vec_append(&a_main, &expected, token_new("1", TOKEN_INT_LITERAL));
     vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
@@ -433,8 +432,8 @@ static void test3(void) {
     test(text, tokens_to_tk_view(expected));
 }
 
-static Tokens get_expected(void) {
-    Tokens expected = {0};
+static Token_vec get_expected(void) {
+    Token_vec expected = {0};
     vec_append(&a_main, &expected, token_new("", TOKEN_IF));
     vec_append(&a_main, &expected, token_new("1", TOKEN_INT_LITERAL));
     vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
@@ -462,7 +461,7 @@ static Tokens get_expected(void) {
 }
 
 static void test4(void) {
-    Tokens expected = get_expected();
+    Token_vec expected = get_expected();
 
     test(
         "if 1 {\n    puts(\"hello\")\n}\n else {\n    puts(\"unreachable\")\n}\n",
@@ -481,7 +480,7 @@ static void test4(void) {
 }
 
 static void test5(void) {
-    Tokens expected = get_expected();
+    Token_vec expected = get_expected();
 
     const char* text = 
         "if 1 {\n"
@@ -496,7 +495,7 @@ static void test5(void) {
 }
 
 static void test6(void) {
-    Tokens expected = get_expected();
+    Token_vec expected = get_expected();
 
     const char* text = 
         "if 1 {\n"
@@ -511,7 +510,7 @@ static void test6(void) {
 }
 
 static void test7(void) {
-    Tokens expected = {0};
+    Token_vec expected = {0};
     vec_append(&a_main, &expected, token_new("", TOKEN_IF));
     vec_append(&a_main, &expected, token_new("1", TOKEN_INT_LITERAL));
     vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
@@ -549,7 +548,7 @@ static void test7(void) {
 }
 
 static void test8(void) {
-    Tokens expected = {0};
+    Token_vec expected = {0};
     vec_append(&a_main, &expected, token_new("", TOKEN_IF));
     vec_append(&a_main, &expected, token_new("1", TOKEN_INT_LITERAL));
     vec_append(&a_main, &expected, token_new("", TOKEN_OPEN_CURLY_BRACE));
@@ -598,9 +597,9 @@ void tokenize_do_test(void) {
     //test8();
 }
 
-bool tokenize(Tokens* result, Str_view file_path) {
+bool tokenize(Token_vec* result, Str_view file_path) {
     size_t prev_err_count = error_count;
-    Tokens tokens = {0};
+    Token_vec tokens = {0};
 
     Str_view* file_con = NULL;
     unwrap(file_path_to_text_tbl_lookup(&file_con, &env.file_path_to_text, file_path));

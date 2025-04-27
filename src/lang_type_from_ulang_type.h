@@ -4,7 +4,6 @@
 #include <ulang_type.h>
 #include <lang_type.h>
 #include <uast_utils.h>
-#include <ulang_type_print.h>
 #include <resolve_generics.h>
 #include <ulang_type_get_pos.h>
 #include <msg.h>

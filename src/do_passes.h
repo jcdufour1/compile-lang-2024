@@ -4,7 +4,7 @@
 #include <tast.h>
 #include <llvm.h>
 #include <do_passes.h>
-#include <tokens.h>
+#include <token_vec.h>
 #include <parameters.h>
 
 static inline void insert_into_tast_vec(
@@ -21,7 +21,7 @@ static inline void insert_into_tast_vec(
 
 void tokenize_do_test(void);
 
-bool tokenize(Tokens* result, Str_view file_path);
+bool tokenize(Token_vec* result, Str_view file_path);
 
 bool parse_file(Uast_block** block, Str_view file_path, bool do_new_sym_coll);
 

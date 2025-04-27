@@ -3,6 +3,7 @@
 
 // TODO: merge ulang_type_hand_written.h header into this one
 #include <ulang_type_hand_written.h>
+#include <lang_type_mode.h>
 
 struct Ulang_type_tuple_;
 typedef struct Ulang_type_tuple_ Ulang_type_tuple;

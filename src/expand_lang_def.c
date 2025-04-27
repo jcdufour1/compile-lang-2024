@@ -3,7 +3,6 @@
 #include <ulang_type.h>
 #include <lang_type.h>
 #include <ulang_type_clone.h>
-#include <extend_name.h>
 #include <expand_lang_def.h>
 #include <uast_clone.h>
 #include <type_checking.h>

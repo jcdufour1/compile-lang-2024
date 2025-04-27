@@ -2,7 +2,6 @@
 #include <parser_utils.h>
 #include <symbol_collection_clone.h>
 #include <ulang_type_clone.h>
-#include <name_clone.h>
 
 Uast_number* uast_number_clone(const Uast_number* lit) {
     return uast_number_new(lit->pos, lit->data);

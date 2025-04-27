@@ -4,6 +4,7 @@
 #include <env.h>
 #include <newstring.h>
 #include <str_view.h>
+#include <lang_type_mode.h>
 
 #define lang_type_print(mode, lang_type) str_view_print(lang_type_print_internal((mode), (lang_type)))
 

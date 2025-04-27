@@ -2,7 +2,6 @@
 #include <util.h>
 #include <parser_utils.h>
 #include <ulang_type_serialize.h>
-#include <extend_name.h>
 #include <ulang_type_clone.h>
 
 void extend_name_llvm(String* buf, Name name) {

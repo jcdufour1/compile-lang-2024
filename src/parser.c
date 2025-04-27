@@ -6,7 +6,6 @@
 #include <token_view.h>
 #include <symbol_table.h>
 #include <parser_utils.h>
-#include <tokens.h>
 #include <do_passes.h>
 #include <ulang_type.h>
 #include <token_type_to_operator_type.h>
@@ -3046,7 +3045,7 @@ bool parse_file(Uast_block** block, Str_view file_path, bool do_new_sym_coll) {
     }
     unwrap(file_path_to_text_tbl_add(&env.file_path_to_text, file_con, file_path) && "parse_file should not be called with the same file path more than once");
 
-    Tokens tokens = {0};
+    Token_vec tokens = {0};
     if (!tokenize(&tokens,  file_path)) {
         status = false;
         goto error;
@@ -3066,7 +3065,7 @@ error:
 }
 
 // TODO: put this in src/tokens.h or whatever
-static inline Tk_view tokens_to_tk_view(Tokens tokens) {
+static inline Tk_view tokens_to_tk_view(Token_vec tokens) {
     Tk_view tk_view = {.tokens = tokens.buf, .count = tokens.info.count};
     return tk_view;
 }
@@ -3080,7 +3079,7 @@ static void parser_test_parse_expr(const char* input, int test) {
     //Str_view file_text = str_view_from_cstr(input);
     //env.file_path_to_text = file_text;
 
-    //Tokens tokens_ = {0};
+    //Token_vec tokens_ = {0};
     //unwrap(tokenize(&tokens_, & (Str_view) {0}));
     //Tk_view tokens = tokens_to_tk_view(tokens_);
     //log_tokens(LOG_DEBUG, tokens);
@@ -3103,7 +3102,7 @@ static void parser_test_parse_stmt(const char* input, int test) {
     //Str_view file_text = str_view_from_cstr(input);
     //env.file_text = file_text;
 
-    //Tokens tokens_ = {0};
+    //Token_vec tokens_ = {0};
     //unwrap(tokenize(&tokens_, & (Str_view) {0}));
     //Tk_view tokens = tokens_to_tk_view(tokens_);
     //log_tokens(LOG_DEBUG, tokens);

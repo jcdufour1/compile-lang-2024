@@ -1,13 +1,11 @@
 #include <generic_sub.h>
 #include <ulang_type.h>
-#include <ulang_type_print.h>
 #include <ulang_type_clone.h>
 #include <resolve_generics.h>
 #include <uast_clone.h>
 #include <uast_utils.h>
 #include <env.h>
 #include <symbol_iter.h>
-#include <extend_name.h>
 
 void generic_sub_return(Uast_return* rtn, Name gen_param, Ulang_type gen_arg) {
     (void) rtn;

@@ -1,5 +1,4 @@
 #include <uast_utils.h>
-#include <extend_name.h>
 
 bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_vec generics) {
     switch (def->type) {

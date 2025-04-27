@@ -1,6 +1,5 @@
 
 #include <lang_type_from_ulang_type.h>
-#include <extend_name.h>
 #include <symbol_log.h>
 #include <symbol_iter.h>
 #include <expand_lang_def.h>

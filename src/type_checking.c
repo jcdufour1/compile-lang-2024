@@ -14,7 +14,6 @@
 #include <uast_clone.h>
 #include <lang_type_hand_written.h>
 #include <lang_type_print.h>
-#include <ulang_type_print.h>
 #include <ulang_type_from_uast_function_decl.h>
 #include <resolve_generics.h>
 #include <ulang_type_get_atom.h>
