@@ -3,10 +3,10 @@
 #define SYMBOL_TABLE_H
 
 #include "str_view.h"
-#include "string.h"
+#include <newstring.h>
 #include "env.h"
 #include "symbol_table_struct.h"
-#include "do_passes.h"
+#include <do_passes.h>
 #include <uast_forward_decl.h>
 #include <tast_forward_decl.h>
 #include <llvm_forward_decl.h>

@@ -2,5 +2,6 @@
 #define LLVM_HAND_WRITTEN_H
 
 #include <vector.h>
+#include <operator_type.h>
 
 #endif // LLVM_HAND_WRITTEN_H

@@ -2,7 +2,7 @@
 #include <llvm.h>
 #include <llvms.h>
 #include <newstring.h>
-#include "passes.h"
+#include <do_passes.h>
 #include <symbol_table.h>
 #include <parameters.h>
 #include <file.h>

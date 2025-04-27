@@ -5,7 +5,7 @@
 #include <symbol_table.h>
 #include <parser_utils.h>
 #include <llvms.h>
-#include "passes.h"
+#include <do_passes.h>
 #include <symbol_iter.h>
 
 static Llvm_expr* id_expr(Llvm_expr* expr);

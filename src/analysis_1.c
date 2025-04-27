@@ -1,4 +1,4 @@
-#include "passes.h"
+#include <do_passes.h>
 #include <tast.h>
 #include <tasts.h>
 #include <symbol_table.h>

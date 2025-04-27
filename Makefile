@@ -58,19 +58,19 @@ OBJS=\
 	 ${BUILD_DIR}/resolve_generics.o \
 	 ${BUILD_DIR}/generic_sub.o \
 	 ${BUILD_DIR}/sizeof.o \
-	 ${BUILD_DIR}/passes/do_passes.o \
-	 ${BUILD_DIR}/passes/tokenizer.o \
-	 ${BUILD_DIR}/passes/parser.o \
+	 ${BUILD_DIR}/do_passes.o \
+	 ${BUILD_DIR}/tokenizer.o \
+	 ${BUILD_DIR}/parser.o \
 	 ${BUILD_DIR}/expand_lang_def.o \
-	 ${BUILD_DIR}/passes/assign_llvm_ids.o \
-	 ${BUILD_DIR}/passes/add_load_and_store.o \
-	 ${BUILD_DIR}/passes/analysis_1.o \
-	 ${BUILD_DIR}/passes/emit_llvm.o
+	 ${BUILD_DIR}/assign_llvm_ids.o \
+	 ${BUILD_DIR}/add_load_and_store.o \
+	 ${BUILD_DIR}/analysis_1.o \
+	 ${BUILD_DIR}/emit_llvm.o
 
 DEP_UTIL = Makefile src/util/*.h src/util/auto_gen.c
 
 # TODO: this needs to be done better, because this is error prone
-DEP_COMMON = ${DEP_UTIL} src/*.h ${BUILD_DIR}/tast.h
+DEP_COMMON = ${DEP_UTIL} src/*.h ${BUILD_DIR}/tast.h third_party/*
 
 FILE_TO_TEST ?= examples/new_lang/structs.own
 ARGS_PROGRAM ?= compile ${FILE_TO_TEST} --emit-llvm
@@ -83,7 +83,11 @@ run: build
 gdb: build
 	gdb --args ${BUILD_DIR}/main ${ARGS_PROGRAM}
 
-build: ${BUILD_DIR}/main
+setup: 
+	mkdir -p ./build/release
+	mkdir -p ./build/debug
+
+build: setup ${BUILD_DIR}/main
 
 test_quick: run
 	${CC_COMPILER} test.ll -o a.out && ./a.out ; echo $$?
@@ -99,109 +103,107 @@ ${BUILD_DIR}/tast.h: ${BUILD_DIR}/auto_gen
 ${BUILD_DIR}/main: ${DEP_COMMON} ${OBJS}
 	${CC_COMPILER} ${C_FLAGS} -o ${BUILD_DIR}/main ${OBJS}
 
-${BUILD_DIR}/main.o: ${DEP_COMMON} src/main.c src/passes/*.h third_party/*
+${BUILD_DIR}/main.o: ${DEP_COMMON} src/main.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/main.o src/main.c
 
-${BUILD_DIR}/arena.o: ${DEP_COMMON} src/util/arena.c third_party/*
+${BUILD_DIR}/arena.o: ${DEP_COMMON} src/util/arena.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/arena.o src/util/arena.c
 
-${BUILD_DIR}/parser_utils.o: ${DEP_COMMON} src/parser_utils.c third_party/*
+${BUILD_DIR}/parser_utils.o: ${DEP_COMMON} src/parser_utils.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/parser_utils.o src/parser_utils.c
 
-${BUILD_DIR}/globals.o: ${DEP_COMMON} src/globals.c third_party/*
+${BUILD_DIR}/globals.o: ${DEP_COMMON} src/globals.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/globals.o src/globals.c
 
-${BUILD_DIR}/uast_print.o: ${DEP_COMMON} src/uast_print.c third_party/*
+${BUILD_DIR}/uast_print.o: ${DEP_COMMON} src/uast_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/uast_print.o src/uast_print.c
 
-${BUILD_DIR}/tast_print.o: ${DEP_COMMON} src/tast_print.c third_party/*
+${BUILD_DIR}/tast_print.o: ${DEP_COMMON} src/tast_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/tast_print.o src/tast_print.c
 
-${BUILD_DIR}/llvm_print.o: ${DEP_COMMON} src/llvm_print.c third_party/*
+${BUILD_DIR}/llvm_print.o: ${DEP_COMMON} src/llvm_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/llvm_print.o src/llvm_print.c
 
-${BUILD_DIR}/lang_type_print.o: ${DEP_COMMON} src/lang_type_print.c third_party/*
+${BUILD_DIR}/lang_type_print.o: ${DEP_COMMON} src/lang_type_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type_print.o src/lang_type_print.c
 
-${BUILD_DIR}/ulang_type_print.o: ${DEP_COMMON} src/ulang_type_print.c third_party/*
+${BUILD_DIR}/ulang_type_print.o: ${DEP_COMMON} src/ulang_type_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ulang_type_print.o src/ulang_type_print.c
 
-${BUILD_DIR}/token.o: ${DEP_COMMON} src/token.c third_party/*
+${BUILD_DIR}/token.o: ${DEP_COMMON} src/token.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/token.o src/token.c
 
-${BUILD_DIR}/type_checking.o: ${DEP_COMMON} src/type_checking.c third_party/*
+${BUILD_DIR}/type_checking.o: ${DEP_COMMON} src/type_checking.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/type_checking.o src/type_checking.c
 
-${BUILD_DIR}/resolve_generics.o: ${DEP_COMMON} src/resolve_generics.c third_party/*
+${BUILD_DIR}/resolve_generics.o: ${DEP_COMMON} src/resolve_generics.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/resolve_generics.o src/resolve_generics.c
 
-${BUILD_DIR}/generic_sub.o: ${DEP_COMMON} src/generic_sub.c third_party/*
+${BUILD_DIR}/generic_sub.o: ${DEP_COMMON} src/generic_sub.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/generic_sub.o src/generic_sub.c
 
-${BUILD_DIR}/file.o: ${DEP_COMMON} src/file.c third_party/*
+${BUILD_DIR}/file.o: ${DEP_COMMON} src/file.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/file.o src/file.c
 
-${BUILD_DIR}/parameters.o: ${DEP_COMMON} src/parameters.c third_party/*
+${BUILD_DIR}/parameters.o: ${DEP_COMMON} src/parameters.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/parameters.o src/parameters.c
 
-${BUILD_DIR}/extend_name.o: ${DEP_COMMON} src/extend_name.c third_party/*
+${BUILD_DIR}/extend_name.o: ${DEP_COMMON} src/extend_name.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/extend_name.o src/extend_name.c
 
-${BUILD_DIR}/error_msg.o: ${DEP_COMMON} src/error_msg.c third_party/*
+${BUILD_DIR}/error_msg.o: ${DEP_COMMON} src/error_msg.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/error_msg.o src/error_msg.c
 
-${BUILD_DIR}/sizeof.o: ${DEP_COMMON} src/sizeof.c third_party/*
+${BUILD_DIR}/sizeof.o: ${DEP_COMMON} src/sizeof.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/sizeof.o src/sizeof.c
 
-${BUILD_DIR}/symbol_table.o: ${DEP_COMMON} src/symbol_table.c third_party/*
+${BUILD_DIR}/symbol_table.o: ${DEP_COMMON} src/symbol_table.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/symbol_table.o src/symbol_table.c
 
-${BUILD_DIR}/lang_type_serialize.o: ${DEP_COMMON} src/lang_type_serialize.c third_party/*
+${BUILD_DIR}/lang_type_serialize.o: ${DEP_COMMON} src/lang_type_serialize.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type_serialize.o src/lang_type_serialize.c
 
-${BUILD_DIR}/ulang_type_serialize.o: ${DEP_COMMON} src/ulang_type_serialize.c third_party/*
+${BUILD_DIR}/ulang_type_serialize.o: ${DEP_COMMON} src/ulang_type_serialize.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ulang_type_serialize.o src/ulang_type_serialize.c
 
-${BUILD_DIR}/lang_type_from_ulang_type.o: ${DEP_COMMON} src/lang_type_from_ulang_type.c third_party/*
+${BUILD_DIR}/lang_type_from_ulang_type.o: ${DEP_COMMON} src/lang_type_from_ulang_type.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/lang_type_from_ulang_type.o src/lang_type_from_ulang_type.c
 
-${BUILD_DIR}/uast_utils.o: ${DEP_COMMON} src/uast_utils.c third_party/*
+${BUILD_DIR}/uast_utils.o: ${DEP_COMMON} src/uast_utils.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/uast_utils.o src/uast_utils.c
 
-${BUILD_DIR}/symbol_collection_clone.o: ${DEP_COMMON} src/symbol_collection_clone.c third_party/*
+${BUILD_DIR}/symbol_collection_clone.o: ${DEP_COMMON} src/symbol_collection_clone.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/symbol_collection_clone.o src/symbol_collection_clone.c
 
-${BUILD_DIR}/uast_clone.o: ${DEP_COMMON} src/uast_clone.c third_party/*
+${BUILD_DIR}/uast_clone.o: ${DEP_COMMON} src/uast_clone.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/uast_clone.o src/uast_clone.c
 
-${BUILD_DIR}/tast_clone.o: ${DEP_COMMON} src/tast_clone.c third_party/*
+${BUILD_DIR}/tast_clone.o: ${DEP_COMMON} src/tast_clone.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/tast_clone.o src/tast_clone.c
 
-${BUILD_DIR}/expand_lang_def.o: ${DEP_COMMON} src/expand_lang_def.c src/passes/*.h third_party/*
+${BUILD_DIR}/expand_lang_def.o: ${DEP_COMMON} src/expand_lang_def.c
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/expand_lang_def.o src/expand_lang_def.c
 
+${BUILD_DIR}/do_passes.o: ${DEP_COMMON} src/do_passes.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/do_passes.o src/do_passes.c
 
-# passes
-${BUILD_DIR}/passes/do_passes.o: ${DEP_COMMON} src/passes/do_passes.c src/passes/*.h third_party/*
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/do_passes.o src/passes/do_passes.c
+${BUILD_DIR}/assign_llvm_ids.o: ${DEP_COMMON} src/assign_llvm_ids.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/assign_llvm_ids.o src/assign_llvm_ids.c
 
-${BUILD_DIR}/passes/assign_llvm_ids.o: ${DEP_COMMON} src/passes/assign_llvm_ids.c src/passes/*.h third_party/*
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/assign_llvm_ids.o src/passes/assign_llvm_ids.c
+${BUILD_DIR}/add_load_and_store.o: ${DEP_COMMON} src/add_load_and_store.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/add_load_and_store.o src/add_load_and_store.c
 
-${BUILD_DIR}/passes/add_load_and_store.o: ${DEP_COMMON} src/passes/add_load_and_store.c src/passes/*.h third_party/*
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/add_load_and_store.o src/passes/add_load_and_store.c
+${BUILD_DIR}/analysis_1.o: ${DEP_COMMON} src/analysis_1.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/analysis_1.o src/analysis_1.c
 
-${BUILD_DIR}/passes/analysis_1.o: ${DEP_COMMON} src/passes/analysis_1.c src/passes/*.h third_party/*
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/analysis_1.o src/passes/analysis_1.c
+${BUILD_DIR}/emit_llvm.o: ${DEP_COMMON} src/emit_llvm.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/emit_llvm.o src/emit_llvm.c
 
-${BUILD_DIR}/passes/emit_llvm.o: ${DEP_COMMON} src/passes/emit_llvm.c src/passes/*.h third_party/*
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/emit_llvm.o src/passes/emit_llvm.c
+${BUILD_DIR}/parser.o: ${DEP_COMMON} src/parser.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/parser.o src/parser.c
 
-${BUILD_DIR}/passes/parser.o: ${DEP_COMMON} src/passes/parser.c src/passes/*.h third_party/*
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/parser.o src/passes/parser.c
-
-${BUILD_DIR}/passes/tokenizer.o: ${DEP_COMMON} src/passes/tokenizer.c src/passes/*.h third_party/*
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/passes/tokenizer.o src/passes/tokenizer.c
+${BUILD_DIR}/tokenizer.o: ${DEP_COMMON} src/tokenizer.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/tokenizer.o src/tokenizer.c
 
 #clean:
 #	rm -f ${OBJS} build/*/passes/*

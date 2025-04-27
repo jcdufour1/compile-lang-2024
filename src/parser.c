@@ -10,7 +10,7 @@
 #include <do_passes.h>
 #include <ulang_type.h>
 #include <token_type_to_operator_type.h>
-#include "passes.h"
+#include <do_passes.h>
 #include <uast_clone.h>
 #include <symbol_log.h>
 #include <file.h>

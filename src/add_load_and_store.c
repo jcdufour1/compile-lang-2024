@@ -13,8 +13,6 @@
 #include <symbol_log.h>
 #include <symbol_iter.h>
 
-#include "passes.h"
-
 // forward declarations
 
 static Lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos);

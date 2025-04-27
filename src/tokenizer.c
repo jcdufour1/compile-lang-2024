@@ -6,7 +6,7 @@
 #include <str_view_col.h>
 #include <parameters.h>
 #include <env.h>
-#include "passes.h"
+#include <do_passes.h>
 #include <ctype.h>
 #include <parser_utils.h>
 

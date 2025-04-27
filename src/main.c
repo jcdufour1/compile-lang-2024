@@ -7,7 +7,7 @@
 #include "tokens.h"
 #include "parameters.h"
 #include "file.h"
-#include "do_passes.h"
+#include <do_passes.h>
 
 int main(int argc, char** argv) {
     parse_args(argc, argv);

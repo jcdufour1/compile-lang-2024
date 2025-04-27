@@ -5,7 +5,6 @@
 #include <llvm.h>
 #include <tasts.h>
 #include <llvms.h>
-#include "passes.h"
 #include <do_passes.h>
 #include <symbol_table.h>
 #include <tokens.h>
