@@ -2120,6 +2120,8 @@ bool try_set_variable_def_types(
 
     Lang_type new_lang_type = {0};
     if (!try_lang_type_from_ulang_type(&new_lang_type,  uast->lang_type, uast->pos)) {
+        log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, new_lang_type));
+        todo();
         Uast_poison_def* new_poison = uast_poison_def_new(uast->pos, uast->name);
         usymbol_update( uast_poison_def_wrap(new_poison));
         return false;

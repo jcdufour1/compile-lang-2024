@@ -13,7 +13,7 @@ bool expand_def_def(Uast_def* def);
 
 bool expand_def_block(Uast_block* block);
 
-EXPAND_NAME_STATUS expand_def_uname(Uast_expr* new_expr, Uname* name);
+EXPAND_NAME_STATUS expand_def_uname(Uast_expr** new_expr, Uname* name);
 
 bool expand_def_expr_vec(Uast_expr_vec* exprs);
 
@@ -25,6 +25,6 @@ bool expand_def_variable_def_vec(Uast_variable_def_vec* defs);
 
 EXPAND_NAME_STATUS expand_def_symbol(Uast_expr** new_expr, Uast_symbol* sym);
 
-EXPAND_NAME_STATUS expand_def_ulang_type(Uast_expr* new_expr, Ulang_type* lang_type);
+bool expand_def_ulang_type(Ulang_type* lang_type);
 
 #endif // EXPAND_LANG_DEF

@@ -8,28 +8,11 @@
 
 bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type, Pos pos) {
     log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type));
-    Uast_expr* new_expr = NULL;
-    switch (expand_def_ulang_type(new_expr, &lang_type)) {
-        case EXPAND_NAME_ERROR:
-            todo();
-        case EXPAND_NAME_NORMAL:
-            todo();
-        case EXPAND_NAME_NEW_EXPR:
-            todo();
-        default:
-            todo();
+    if (!expand_def_ulang_type(&lang_type)) {
+        return false;
     }
+
     log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type));
-    //switch (expand_def_ulang_type(&new_expr, sym_untyped)) {
-    //    case EXPAND_NAME_ERROR:
-    //        todo();
-    //    case EXPAND_NAME_NORMAL:
-    //        todo();
-    //    case EXPAND_NAME_NEW_EXPR:
-    //        todo();
-    //    default:
-    //        unreachable("");
-    //}
 
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:

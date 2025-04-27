@@ -7,29 +7,56 @@
 #include <serialize_module_symbol_name.h>
 #include <expand_lang_def.h>
 #include <uast_clone.h>
+#include <type_checking.h>
+#include <msg_todo.h>
 
-static EXPAND_NAME_STATUS expand_def_ulang_type_regular(
-    Uast_expr* new_expr,
+// TODO: consider if def definition has pointer_depth > 0
+
+static bool expand_def_ulang_type_regular(
     Ulang_type_regular* new_lang_type,
     Ulang_type_regular lang_type
 ) {
-    switch (expand_def_uname(new_expr, &lang_type.atom.str)) {
+    (void) new_lang_type;
+    Uast_expr* new_expr = NULL;
+    switch (expand_def_uname(&new_expr, &lang_type.atom.str)) {
         case EXPAND_NAME_ERROR:
             todo();
         case EXPAND_NAME_NORMAL:
-            todo();
+            *new_lang_type = lang_type;
+            return true;
         case EXPAND_NAME_NEW_EXPR:
+            break;
+        default:
             todo();
     }
-    unreachable("");
+
+    log(LOG_DEBUG, TAST_FMT, uast_expr_print(new_expr));
+    switch (new_expr->type) {
+        case UAST_MEMBER_ACCESS: {
+            Uast_member_access* access = uast_member_access_unwrap(new_expr);
+            if (access->callee->type != UAST_SYMBOL) {
+                msg_todo("", uast_expr_get_pos(access->callee));
+                return false;
+            }
+            Uname new_uname = {.mod_alias = uast_symbol_unwrap(access->callee)->name, .base = access->member_name->name.base, .gen_args = lang_type.atom.str.gen_args};
+            *new_lang_type = ulang_type_regular_new(ulang_type_atom_new(new_uname, lang_type.atom.pointer_depth), lang_type.pos);
+            return true;
+        }
+        case UAST_SYMBOL:
+            todo();
+        default:
+            msg_todo("", uast_expr_get_pos(new_expr));
+            return false;
+    }
+
+    todo();
 }
 
-EXPAND_NAME_STATUS expand_def_ulang_type(Uast_expr* new_expr, Ulang_type* lang_type) {
+bool expand_def_ulang_type(Ulang_type* lang_type) {
     switch (lang_type->type) {
         case ULANG_TYPE_REGULAR: {
             Ulang_type_regular new_lang_type = {0};
-            if (!expand_def_ulang_type_regular(new_expr, &new_lang_type, ulang_type_regular_const_unwrap(*lang_type))) {
-                todo();
+            if (!expand_def_ulang_type_regular(&new_lang_type, ulang_type_regular_const_unwrap(*lang_type))) {
                 return false;
             }
             *lang_type = ulang_type_regular_const_wrap(new_lang_type);
@@ -50,6 +77,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
     if (!usymbol_lookup(&def, *new_name)) {
         return EXPAND_NAME_NORMAL;
     }
+    new_name->gen_args = name.gen_args;
 
     switch (def->type) {
         case UAST_POISON_DEF:
@@ -127,7 +155,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
     unreachable("");
 }
 
-EXPAND_NAME_STATUS expand_def_uname(Uast_expr* new_expr, Uname* name) {
+EXPAND_NAME_STATUS expand_def_uname(Uast_expr** new_expr, Uname* name) {
     Name actual = {0};
     if (!name_from_uname(&actual, *name)) {
         todo();
@@ -135,7 +163,7 @@ EXPAND_NAME_STATUS expand_def_uname(Uast_expr* new_expr, Uname* name) {
     }
 
     Name new_name = {0};
-    switch (expand_def_name_internal(&new_expr, &new_name, actual)) {
+    switch (expand_def_name_internal(new_expr, &new_name, actual)) {
         case EXPAND_NAME_NORMAL:
             unwrap(str_view_is_equal(actual.mod_path, new_name.mod_path) && "not implemented");
             unwrap(ulang_type_vec_is_equal(actual.gen_args, new_name.gen_args) && "not implemented");
@@ -168,6 +196,7 @@ static EXPAND_NAME_STATUS expand_def_name(Uast_expr** new_expr, Name* name) {
 }
 
 static bool expand_def_variable_def(Uast_variable_def* def) {
+    (void) def;
     todo();
     //if (!expand_def_ulang_type(&def->lang_type)) {
     //    return false;

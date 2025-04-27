@@ -1,7 +1,7 @@
 
 type io import = std.io
 
-//type Opt def = io.Optional
+type Opt def = io.Optional
 //type Token def = io.Token
 type print def = io.printf
 
@@ -16,6 +16,11 @@ fn main() i32 {
     print("%d\n", add(<i32>)(54, 3))
 
     let opt Opt(<i32>) = .some(43)
-    //let token Token
+
+    switch opt {
+        case .some(num): print("%d\n", num)
+        case .none: print("nothing\n")
+    }
+
     return 0
 }
