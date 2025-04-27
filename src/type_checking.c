@@ -441,7 +441,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
     Uast_expr* new_expr = NULL;
     switch (expand_def_symbol(&new_expr, sym_untyped)) {
         case EXPAND_NAME_ERROR:
-            todo();
+            return false;
         case EXPAND_NAME_NORMAL:
             break;
         case EXPAND_NAME_NEW_EXPR:
@@ -2121,7 +2121,6 @@ bool try_set_variable_def_types(
     Lang_type new_lang_type = {0};
     if (!try_lang_type_from_ulang_type(&new_lang_type,  uast->lang_type, uast->pos)) {
         log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, new_lang_type));
-        todo();
         Uast_poison_def* new_poison = uast_poison_def_new(uast->pos, uast->name);
         usymbol_update( uast_poison_def_wrap(new_poison));
         return false;
@@ -2135,7 +2134,6 @@ bool try_set_variable_def_types(
 }
 
 bool try_set_function_decl_types(
-     
     Tast_function_decl** new_tast,
     Uast_function_decl* decl,
     bool add_to_sym_tbl
@@ -2164,7 +2162,6 @@ bool try_set_function_decl_types(
 }
 
 bool try_set_function_def_types(
-     
     Uast_function_def* def,
     bool always_top_level // if true, new Tast_def will always be put in top_level
 ) {
@@ -2208,7 +2205,6 @@ error:
 }
 
 bool try_set_function_params_types(
-     
     Tast_function_params** new_tast,
     Uast_function_params* params,
     bool add_to_sym_tbl
@@ -2233,7 +2229,6 @@ bool try_set_function_params_types(
 
 bool try_set_return_types(Tast_return** new_tast, Uast_return* rtn) {
     *new_tast = NULL;
-
     bool status = true;
     PARENT_OF old_parent_of = env.parent_of;
     env.parent_of = PARENT_OF_RETURN;

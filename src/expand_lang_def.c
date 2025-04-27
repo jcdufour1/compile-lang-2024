@@ -52,6 +52,42 @@ static bool expand_def_ulang_type_regular(
     todo();
 }
 
+static bool expand_def_ulang_type_fn(
+    Ulang_type_fn* new_lang_type,
+    Ulang_type_fn lang_type
+) {
+    bool status = true;
+
+    for (size_t idx = 0; idx < lang_type.params.ulang_types.info.count; idx++) {
+        if (!expand_def_ulang_type(vec_at_ref(&lang_type.params.ulang_types, idx))) {
+            status = false;
+        }
+    }
+
+    if (!expand_def_ulang_type(lang_type.return_type)) {
+        status = false;
+    }
+
+    *new_lang_type = lang_type;
+    return status;
+}
+
+static bool expand_def_ulang_type_tuple(
+    Ulang_type_tuple* new_lang_type,
+    Ulang_type_tuple lang_type
+) {
+    bool status = true;
+
+    for (size_t idx = 0; idx < lang_type.ulang_types.info.count; idx++) {
+        if (!expand_def_ulang_type(vec_at_ref(&lang_type.ulang_types, idx))) {
+            status = false;
+        }
+    }
+
+    *new_lang_type = lang_type;
+    return status;
+}
+
 bool expand_def_ulang_type(Ulang_type* lang_type) {
     switch (lang_type->type) {
         case ULANG_TYPE_REGULAR: {
@@ -62,10 +98,22 @@ bool expand_def_ulang_type(Ulang_type* lang_type) {
             *lang_type = ulang_type_regular_const_wrap(new_lang_type);
             return true;
         }
-        case ULANG_TYPE_FN:
-            todo();
-        case ULANG_TYPE_TUPLE:
-            todo();
+        case ULANG_TYPE_FN: {
+            Ulang_type_fn new_lang_type = {0};
+            if (!expand_def_ulang_type_fn(&new_lang_type, ulang_type_fn_const_unwrap(*lang_type))) {
+                return false;
+            }
+            *lang_type = ulang_type_fn_const_wrap(new_lang_type);
+            return true;
+        }
+        case ULANG_TYPE_TUPLE: {
+            Ulang_type_tuple new_lang_type = {0};
+            if (!expand_def_ulang_type_tuple(&new_lang_type, ulang_type_tuple_const_unwrap(*lang_type))) {
+                return false;
+            }
+            *lang_type = ulang_type_tuple_const_wrap(new_lang_type);
+            return true;
+        }
     }
     unreachable("");
 }
@@ -75,6 +123,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
     *new_name = name;
     memset(&new_name->gen_args, 0, sizeof(new_name->gen_args));
     if (!usymbol_lookup(&def, *new_name)) {
+        new_name->gen_args = name.gen_args;
         return EXPAND_NAME_NORMAL;
     }
     new_name->gen_args = name.gen_args;

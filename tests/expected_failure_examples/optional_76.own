@@ -25,12 +25,8 @@ type Token sum {
 }
 
 fn concise() {
+    // Optional is undefined in this file
     let number Optional(<i32>) = .some(84)
-    //let number2 Optional(<i32>) = .some(87)
-    //let number3 Optional(<i64>) = .none
-    //let number4 Optional(<i64>) = .some(91)
-    //let result Result(<i32, ParseError>) = .error({.dummy = 8})
-    //let result2 Result(<Token, ParseError>) = .ok(.number(7))
     let result2 Result(<Token, ParseError>)
 
 }
