@@ -89,8 +89,6 @@ Str_view llvm_literal_print_internal(const Llvm_literal* lit, int indent) {
             return llvm_string_print_internal(llvm_string_const_unwrap(lit), indent);
         case LLVM_VOID:
             return llvm_void_print_internal(llvm_void_const_unwrap(lit), indent);
-        case LLVM_CHAR:
-            return llvm_char_print_internal(llvm_char_const_unwrap(lit), indent);
         case LLVM_FUNCTION_NAME:
             return llvm_function_name_print_internal(llvm_function_name_const_unwrap(lit), indent);
     }
@@ -143,17 +141,6 @@ Str_view llvm_void_print_internal(const Llvm_void* num, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "void\n", indent);
-
-    return string_to_strv(buf);
-}
-
-Str_view llvm_char_print_internal(const Llvm_char* num, int indent) {
-    (void) num;
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "char", indent);
-    vec_append(&print_arena, &buf, num->data);
-    string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
 }

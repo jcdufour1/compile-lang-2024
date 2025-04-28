@@ -204,15 +204,6 @@ static Llvm_type llvm_gen_string(void) {
     return string;
 }
 
-static Llvm_type llvm_gen_char(void) {
-    Llvm_type lang_char = {.name = llvm_name_new("literal", "char", false)};
-
-    append_member(&lang_char.members, "char", "data");
-    append_member(&lang_char.members, "Name", "name");
-
-    return lang_char;
-}
-
 static Llvm_type llvm_gen_function_name(void) {
     Llvm_type lang_char = {.name = llvm_name_new("literal", "function_name", false)};
 
@@ -236,7 +227,6 @@ static Llvm_type llvm_gen_literal(void) {
     vec_append(&gen_a, &lit.sub_types, llvm_gen_number());
     vec_append(&gen_a, &lit.sub_types, llvm_gen_string());
     vec_append(&gen_a, &lit.sub_types, llvm_gen_void());
-    vec_append(&gen_a, &lit.sub_types, llvm_gen_char());
     vec_append(&gen_a, &lit.sub_types, llvm_gen_function_name());
 
     return lit;

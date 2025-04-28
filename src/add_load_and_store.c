@@ -576,16 +576,14 @@ static Name load_string(
 }
 
 static Name load_void(
-     
     Pos pos
 ) {
     Llvm_void* new_void = llvm_void_new(pos, (Name) {.mod_path = (Str_view) {0}, .base = util_literal_name_new()});
-    unwrap(alloca_add( llvm_expr_wrap(llvm_literal_wrap(llvm_void_wrap(new_void)))));
+    unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_void_wrap(new_void)))));
     return new_void->name;
 }
 
 static Name load_enum_lit(
-     
     Tast_enum_lit* old_lit
 ) {
     Llvm_number* enum_lit = llvm_number_new(
@@ -594,12 +592,11 @@ static Name load_enum_lit(
         old_lit->lang_type,
         (Name) {.mod_path = env.curr_mod_path, .base = util_literal_name_new()}
     );
-    unwrap(alloca_add( llvm_expr_wrap(llvm_literal_wrap(llvm_number_wrap(enum_lit)))));
+    unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_number_wrap(enum_lit)))));
     return enum_lit->name;
 }
 
 static Name load_number(
-     
     Tast_number* old_lit
 ) {
     Llvm_number* number = llvm_number_new(
@@ -608,21 +605,20 @@ static Name load_number(
         old_lit->lang_type,
         (Name) {.mod_path = env.curr_mod_path, .base = util_literal_name_new()}
     );
-    unwrap(alloca_add( llvm_expr_wrap(llvm_literal_wrap(llvm_number_wrap(number)))));
+    unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_number_wrap(number)))));
     return number->name;
 }
 
 static Name load_char(
-     
     Tast_char* old_lit
 ) {
-    Llvm_char* lang_char = llvm_char_new(old_lit->pos, old_lit->data, (Name) {.mod_path = env.curr_mod_path, .base = util_literal_name_new()});
-    unwrap(alloca_add( llvm_expr_wrap(llvm_literal_wrap(llvm_char_wrap(lang_char)))));
+    Lang_type new_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(old_lit->pos, 8, 0)));
+    Llvm_number* lang_char = llvm_number_new(old_lit->pos, old_lit->data, new_lang_type, (Name) {.mod_path = env.curr_mod_path, .base = util_literal_name_new()});
+    unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_number_wrap(lang_char)))));
     return lang_char->name;
 }
 
 static Name load_function_lit(
-     
     Tast_function_lit* old_lit
 ) {
     Llvm_function_name* name = llvm_function_name_new(
@@ -635,7 +631,6 @@ static Name load_function_lit(
 }
 
 static Name load_sum_lit(
-     
     Llvm_block* new_block,
     Tast_sum_lit* old_lit
 ) {
@@ -643,13 +638,11 @@ static Name load_sum_lit(
     unwrap(symbol_lookup(&sum_def_,  lang_type_get_str(old_lit->sum_lang_type)));
     //Tast_sum_def* sum_def = tast_sum_def_unwrap(sum_def_);
     Lang_type new_lang_type = rm_tuple_lang_type_sum(
-        
         lang_type_sum_const_unwrap(old_lit->sum_lang_type),
         old_lit->pos
     );
 
     Tast_raw_union_def* item_def = get_raw_union_def_from_sum_def(
-        
         tast_sum_def_unwrap(sum_def_)
     );
 
@@ -2128,20 +2121,20 @@ static Name load_def_sometimes(Llvm_block* new_block, Tast_def* old_def) {
     (void) new_block;
     switch (old_def->type) {
         case TAST_FUNCTION_DEF:
-            return load_function_def( tast_function_def_unwrap(old_def));
+            return load_function_def(tast_function_def_unwrap(old_def));
         case TAST_FUNCTION_DECL:
-            return load_function_decl( tast_function_decl_unwrap(old_def));
+            return load_function_decl(tast_function_decl_unwrap(old_def));
         case TAST_VARIABLE_DEF:
             //return load_variable_def( new_block, tast_variable_def_unwrap(old_def));
             return (Name) {0};
         case TAST_STRUCT_DEF:
-            load_struct_def( tast_struct_def_unwrap(old_def));
+            load_struct_def(tast_struct_def_unwrap(old_def));
             return (Name) {0};
         case TAST_ENUM_DEF:
-            load_enum_def( tast_enum_def_unwrap(old_def));
+            load_enum_def(tast_enum_def_unwrap(old_def));
             return (Name) {0};
         case TAST_RAW_UNION_DEF:
-            load_raw_union_def( tast_raw_union_def_unwrap(old_def));
+            load_raw_union_def(tast_raw_union_def_unwrap(old_def));
             return (Name) {0};
         case TAST_SUM_DEF:
             return (Name) {0};
