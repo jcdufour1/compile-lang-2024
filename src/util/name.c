@@ -79,7 +79,7 @@ Str_view name_print_internal(bool serialize, Name name) {
     }
         
     String buf = {0};
-    extend_name(false, &buf, name);
+    extend_name( false, &buf, name);
     return string_to_strv(buf);
 }
 
@@ -90,10 +90,6 @@ Str_view uname_print_internal(Uname name) {
 }
 
 void extend_name_msg(String* buf, Name name) {
-    // TODO: remove these two function calls
-    string_extend_size_t(&print_arena, buf, name.scope_id);
-    string_extend_cstr(&print_arena, buf, "_");
-
     string_extend_strv(&print_arena, buf, name.mod_path);
     if (name.mod_path.count > 0) {
         string_extend_cstr(&print_arena, buf, "::");
