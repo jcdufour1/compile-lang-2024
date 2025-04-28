@@ -958,9 +958,8 @@ static void emit_expr(String* output, String* literals, const Llvm_expr* expr) {
         case LLVM_LITERAL:
             extend_literal_decl( output, literals, llvm_literal_const_unwrap(expr), true);
             break;
-        default:
-            unreachable("");
     }
+    unreachable("");
 }
 
 static void emit_def(String* struct_defs, String* output, String* literals, const Llvm_def* def) {
@@ -1122,39 +1121,6 @@ static void emit_symbol_normal(String* literals, Name key, const Llvm_literal* l
     string_extend_strv_eval_escapes(&a_main, literals, data);
     string_extend_cstr(&a_main, literals, "\\00\", align 1");
     string_extend_cstr(&a_main, literals, "\n");
-}
-
-static void emit_symbol(String* output, Str_view key, const Llvm_string_def* def) {
-    size_t literal_width = def->data.count + 1 - get_count_excape_seq(def->data);
-
-    string_extend_cstr(&a_main, output, "@.");
-    string_extend_strv(&a_main, output, key);
-    string_extend_cstr(&a_main, output, " = private unnamed_addr constant [ ");
-    string_extend_size_t(&a_main, output, literal_width);
-    string_extend_cstr(&a_main, output, " x i8] c\"");
-    string_extend_strv_eval_escapes(&a_main, output, def->data);
-    string_extend_cstr(&a_main, output, "\\00\", align 1");
-    string_extend_cstr(&a_main, output, "\n");
-}
-
-static void emit_struct_literal(String* output, String* literals, const Llvm_struct_lit_def* lit_def) {
-    string_extend_cstr(&a_main, output, "@__const.main.");
-    llvm_extend_name( output, lit_def->name);
-    string_extend_cstr(&a_main, output, " = private unnamed_addr constant %struct.");
-    extend_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_LLVM, lit_def->lang_type);
-    string_extend_cstr(&a_main, output, " {");
-
-    size_t is_first = true;
-    for (size_t idx = 0; idx < lit_def->members.info.count; idx++) {
-        const Llvm_expr* memb_literal = vec_at(&lit_def->members, idx);
-        if (!is_first) {
-            vec_append(&a_main, output, ',');
-        }
-        extend_literal_decl( output, literals, llvm_literal_const_unwrap(memb_literal), false);
-        is_first = false;
-    }
-
-    string_extend_cstr(&a_main, output, "} , align 4\n");
 }
 
 void emit_llvm_from_tree(const Llvm_block* root) {
