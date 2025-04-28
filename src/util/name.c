@@ -26,8 +26,11 @@ bool try_str_view_consume_size_t(size_t* result, Str_view* str_view, bool ignore
 Str_view serialize_name(Name name) {
     String buf = {0};
 
-    string_extend_size_t(&a_main, &buf, name.scope_id);
-    string_extend_cstr(&a_main, &buf, "_");
+    if (name.scope_id > 0) {
+        string_extend_cstr(&a_main, &buf, "s");
+        string_extend_size_t(&a_main, &buf, name.scope_id);
+        string_extend_cstr(&a_main, &buf, "_");
+    }
 
     if (name.mod_path.count > 0) {
         size_t path_count = 1;
@@ -142,5 +145,5 @@ void extend_name(bool is_llvm, String* buf, Name name) {
 }
 
 Name name_clone(Name name, Scope_id new_scope) {
-    return name_new(name.mod_path, name.base, ulang_type_vec_clone(name.gen_args, new_scope), name.scope_id /* TODO */);
+    return name_new(name.mod_path, name.base, ulang_type_vec_clone(name.gen_args, new_scope), new_scope);
 }

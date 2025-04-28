@@ -14,6 +14,8 @@
 #include <file.h>
 #include <errno.h>
 
+// TODO: use parent block for scope_ids instead of function calls everytime
+
 static Token prev_token = {0};
 
 // functions return bool if they do not report error to the user
@@ -1076,6 +1078,7 @@ static PARSE_STATUS parse_function_decl_common(
     Tk_view* tokens
 ) {
     Token name_token = tk_view_consume(tokens);
+    Scope_id new_scope = 0;
 
     Uast_generic_param_vec gen_params = {0};
     if (tk_view_front(*tokens).type ==  TOKEN_OPEN_GENERIC) {
@@ -1106,7 +1109,7 @@ static PARSE_STATUS parse_function_decl_common(
         rtn_type = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0), close_par_tk.pos));
     }
 
-    *fun_decl = uast_function_decl_new(name_token.pos, gen_params, params, rtn_type, name_new(env.curr_mod_path, name_token.text));
+    *fun_decl = uast_function_decl_new(name_token.pos, gen_params, params, rtn_type, name_new(env.curr_mod_path, name_token.text, (Ulang_type_vec) {0}, new_scope));
     if (!usymbol_add( uast_function_decl_wrap(*fun_decl))) {
         return msg_redefinition_of_symbol( uast_function_decl_wrap(*fun_decl));
     }
@@ -1146,7 +1149,7 @@ static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_vie
             symbol.pos,
             uast_symbol_new(
                 symbol.pos,
-                name_new(.mod_path = env.curr_mod_path, .base = symbol.text, .gen_args = (Ulang_type_vec) {0}}
+                name_new(env.curr_mod_path, symbol.text, (Ulang_type_vec) {0}, 0 /* TODO */)
             )
         );
         vec_append(&a_main, params, param);
@@ -1184,7 +1187,6 @@ static PARSE_STATUS parse_generics_args(Ulang_type_vec* args, Tk_view* tokens) {
 }
 
 static PARSE_STATUS parse_struct_base_def(
-     
     Ustruct_def_base* base,
     Name name,
     Tk_view* tokens,
@@ -1229,7 +1231,6 @@ static PARSE_STATUS parse_struct_base_def(
 }
 
 static PARSE_STATUS parse_struct_base_def_implicit_type(
-     
     Ustruct_def_base* base,
     Name name,
     Tk_view* tokens,
@@ -1260,7 +1261,7 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
         Uast_variable_def* member = uast_variable_def_new(
             name_token.pos,
             ulang_type_regular_const_wrap(ulang_type_regular_new(lang_type, name_token.pos)),
-            name_new(.mod_path = env.curr_mod_path, .base = name_token.text}
+            name_new(env.curr_mod_path, name_token.text, (Ulang_type_vec) {0}, 0)
         );
 
         vec_append(&a_main, &base->members, member);
@@ -1278,7 +1279,7 @@ static PARSE_STATUS parse_struct_def(Uast_struct_def** struct_def, Tk_view* toke
     unwrap(try_consume(NULL, tokens, TOKEN_STRUCT));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def( &base, name_new(.mod_path = env.curr_mod_path, .base = name.text}, tokens, true, (Ulang_type) {0})) {
+    if (PARSE_OK != parse_struct_base_def( &base, name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, 0), tokens, true, (Ulang_type) {0})) {
         return PARSE_ERROR;
     }
 
@@ -1294,7 +1295,7 @@ static PARSE_STATUS parse_raw_union_def(Uast_raw_union_def** raw_union_def, Tk_v
     unwrap(try_consume(NULL, tokens, TOKEN_RAW_UNION));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def( &base, name_new(.mod_path = env.curr_mod_path, .base = name.text}, tokens, true, (Ulang_type) {0})) {
+    if (PARSE_OK != parse_struct_base_def( &base, name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, 0), tokens, true, (Ulang_type) {0})) {
         return PARSE_ERROR;
     }
 
@@ -1310,7 +1311,12 @@ static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, To
     unwrap(try_consume(NULL, tokens, TOKEN_ENUM));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def_implicit_type( &base, name_new(.mod_path = env.curr_mod_path, .base = name.text}, tokens, ulang_type_atom_new((Uname) {.mod_alias = name_new(0}, .base = name.text}, 0))) {
+    if (PARSE_OK != parse_struct_base_def_implicit_type(
+        &base,
+        name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, 0),
+        tokens,
+        ulang_type_atom_new((Uname) {.mod_alias = name_new(name.text, (Str_view) {0}, (Ulang_type_vec) {0}, 0)}, 0)
+    )) {
         return PARSE_ERROR;
     }
 
@@ -1327,7 +1333,7 @@ static PARSE_STATUS parse_sum_def(Uast_sum_def** sum_def, Tk_view* tokens, Token
     unwrap(try_consume(&sum_tk, tokens, TOKEN_SUM));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def( &base, name_new(.mod_path = env.curr_mod_path, .base = name.text}, tokens, false, ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0), sum_tk.pos)))) {
+    if (PARSE_OK != parse_struct_base_def( &base, name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, 0), tokens, false, ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0), sum_tk.pos)))) {
         return PARSE_ERROR;
     }
 
@@ -1353,7 +1359,7 @@ static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token n
         todo();
     }
 
-    *def = uast_lang_def_new(name.pos, name_new(.mod_path = env.curr_mod_path, .base = name.text}, expr);
+    *def = uast_lang_def_new(name.pos, name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, 0), expr);
     if (!usymbol_add(uast_lang_def_wrap(*def))) {
         msg_redefinition_of_symbol(uast_lang_def_wrap(*def));
         return PARSE_ERROR;
@@ -1485,7 +1491,7 @@ static PARSE_STATUS parse_variable_decl(
     Uast_variable_def* variable_def = uast_variable_def_new(
         name_token.pos,
         lang_type,
-        name_new(.mod_path = env.curr_mod_path, .base = name_token.text}
+        name_new(env.curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id_new())
     );
 
     if (add_to_sym_table) {
@@ -1546,7 +1552,7 @@ static PARSE_STATUS parse_for_range_internal(Uast_block** result, Uast_variable_
     );
     vec_append(&a_main, &outer->children, uast_assignment_wrap(init_assign));
 
-    Name incre_name = name_new(.mod_path = env.curr_mod_path, .base = util_literal_name_new()};
+    Name incre_name = name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, scope_id_new());
 
     Uast_for_with_cond* inner_for = uast_for_with_cond_new(
         outer->pos,
@@ -1588,7 +1594,7 @@ static PARSE_STATUS parse_for_range_internal(Uast_block** result, Uast_variable_
 }
 
 static PARSE_STATUS parse_for_with_cond(Uast_for_with_cond** for_new, Pos pos, Tk_view* tokens) {
-    *for_new = uast_for_with_cond_new(pos, NULL, NULL, name_new(0}, false);
+    *for_new = uast_for_with_cond_new(pos, NULL, NULL, (Name) {0}, false);
     
     switch (parse_condition( &(*for_new)->condition, tokens)) {
         case PARSE_EXPR_OK:
@@ -1720,7 +1726,7 @@ static Uast_symbol* parse_symbol(Tk_view* tokens) {
     Token token = tk_view_consume(tokens);
     assert(token.type == TOKEN_SYMBOL);
 
-    return uast_symbol_new(token.pos, name_new(.mod_path = env.curr_mod_path, .base = token.text, .gen_args = (Ulang_type_vec) {0}});
+    return uast_symbol_new(token.pos, name_new(env.curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id_new()));
 }
 
 static PARSE_STATUS parse_function_call(Uast_function_call** child, Tk_view* tokens, Uast_expr* callee) {
@@ -2469,7 +2475,6 @@ static PARSE_EXPR_STATUS parse_unary(
 }
 
 static PARSE_EXPR_STATUS parse_binary(
-     
     Uast_expr** result,
     Uast_expr* lhs,
     Tk_view* tokens,
@@ -2592,7 +2597,7 @@ static PARSE_EXPR_STATUS parse_binary(
 
     if (is_equal_thing) {
         *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(
-            oper.pos, uast_expr_clone(lhs), *result, BINARY_SINGLE_EQUAL
+            oper.pos, uast_expr_clone(lhs, scope_id_new()), *result, BINARY_SINGLE_EQUAL
         )));
         return PARSE_EXPR_OK;
     } else {
