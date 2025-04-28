@@ -261,7 +261,7 @@ Uast_block* uast_block_clone(const Uast_block* block) {
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         vec_append(&a_main, &new_children, uast_stmt_clone(vec_at(&block->children, idx)));
     }
-    return uast_block_new(block->pos, new_children, symbol_collection_clone(block->symbol_collection), block->pos_end);
+    return uast_block_new(block->pos, new_children, symbol_collection_clone(block->symbol_collection), block->pos_end, scope_id_new());
 }
 
 Uast_if* uast_if_clone(const Uast_if* lang_if) {

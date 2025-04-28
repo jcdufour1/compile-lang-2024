@@ -42,6 +42,8 @@ Str_view util_literal_name_new(void);
 
 Str_view util_literal_name_new_prefix(const char* debug_prefix);
 
+Scope_id scope_id_new(void);
+
 Name get_storage_location(Name sym_name);
 
 bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, const Pos pos, Str_view str_view);

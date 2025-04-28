@@ -140,6 +140,7 @@ static Uast_type uast_gen_block(const char* prefix) {
     append_member(&block.members, "Uast_stmt_vec", "children");
     append_member(&block.members, "Symbol_collection", "symbol_collection");
     append_member(&block.members, "Pos", "pos_end");
+    append_member(&block.members, "Scope_id", "scope_id");
 
     return block;
 }

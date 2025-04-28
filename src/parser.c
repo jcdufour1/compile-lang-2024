@@ -1611,7 +1611,7 @@ static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens) {
     
     if (starts_with_variable_type_decl(*tokens, false)) {
         PARSE_STATUS status = PARSE_OK;
-        Uast_block* outer = uast_block_new(for_token.pos, (Uast_stmt_vec) {0}, (Symbol_collection) {0}, for_token.pos);
+        Uast_block* outer = uast_block_new(for_token.pos, (Uast_stmt_vec) {0}, (Symbol_collection) {0}, for_token.pos, scope_id_new());
         vec_append(&a_main, &env.ancesters, &outer->symbol_collection);
         Uast_variable_def* var_def = NULL;
         if (PARSE_OK != parse_variable_decl( &var_def, tokens, false, false, true, true, (Ulang_type) {0})) {
@@ -2103,7 +2103,8 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
         tk_view_front(*tokens).pos,
         (Uast_stmt_vec) {0},
         (Symbol_collection) {0},
-        (Pos) {0}
+        (Pos) {0},
+        scope_id_new()
     );
     if (do_new_sym_coll) {
         vec_append(&a_main, &env.ancesters, &(*block)->symbol_collection);

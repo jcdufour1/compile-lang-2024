@@ -108,8 +108,10 @@ extern size_t expected_fail_count;
 extern Env env;
 extern char PATH_SEPARATOR;
 
+// TODO: move this?
+typedef size_t Scope_id;
+
 #ifndef INDENT_WIDTH
 #define INDENT_WIDTH 2
 #endif // INDENT_WIDTH
-
 #endif // UTIL_H

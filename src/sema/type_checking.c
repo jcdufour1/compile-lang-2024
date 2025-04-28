@@ -2589,7 +2589,8 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
             old_case->pos,
             (Uast_stmt_vec) {0},
             (Symbol_collection) {0},
-            old_case->pos
+            old_case->pos,
+            scope_id_new()
         );
                 
         env.parent_of = PARENT_OF_CASE;
@@ -2795,7 +2796,7 @@ error:
     } else if (env.parent_of == PARENT_OF_IF) {
         todo();
     }
-    *new_tast = tast_block_new(block->pos, new_tasts, new_sym_coll, block->pos_end, yield_type);
+    *new_tast = tast_block_new(block->pos, new_tasts, new_sym_coll, block->pos_end, yield_type, block->scope_id);
     if (status) {
         assert(*new_tast);
     } else {

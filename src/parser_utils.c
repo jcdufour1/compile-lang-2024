@@ -332,6 +332,11 @@ Str_view util_literal_name_new(void) {
     return util_literal_name_new_prefix("");
 }
 
+Scope_id scope_id_new(void) {
+    static Scope_id curr_scope = 1;
+    return curr_scope++;
+}
+
 // TODO: inline this function
 Name get_storage_location(Name sym_name) {
     Tast_def* sym_def_;

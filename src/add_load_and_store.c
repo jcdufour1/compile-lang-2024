@@ -871,7 +871,8 @@ static Name load_binary_short_circuit(
             if_true_stmts,
             (Symbol_collection) {0},
             old_bin->pos,
-            lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))
+            lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)),
+            scope_id_new()
         ),
         lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))
     );
@@ -895,7 +896,8 @@ static Name load_binary_short_circuit(
             if_false_stmts,
             (Symbol_collection) {0},
             old_bin->pos,
-            lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))
+            lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)),
+            scope_id_new()
         ),
         lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))
     );
@@ -1424,7 +1426,8 @@ static Name load_function_def(
             pos,
             (Llvm_vec) {0},
             old_fun_def->body->symbol_collection,
-            old_fun_def->body->pos_end
+            old_fun_def->body->pos_end,
+            old_fun_def->body->scope_id
         )
     );
 
@@ -1600,7 +1603,8 @@ static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, N
         old_block->pos,
         (Llvm_vec) {0},
         inner_block->symbol_collection,
-        inner_block->pos_end
+        inner_block->pos_end,
+        if_statement->body->scope_id
     );
 
 
@@ -1641,7 +1645,8 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
         if_else->pos,
         (Llvm_vec) {0},
         (Symbol_collection) {0},
-        (Pos) {0}
+        (Pos) {0},
+        scope_id_new()
     );
 
     Tast_variable_def* yield_dest = NULL;
@@ -1726,7 +1731,8 @@ static Llvm_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
         pos,
         (Llvm_vec) {0},
         old_for->body->symbol_collection,
-        old_for->body->pos_end
+        old_for->body->pos_end,
+        old_for->body->scope_id
     );
 
     vec_append(&a_main, &env.ancesters, &new_branch_block->symbol_collection);
@@ -2130,7 +2136,8 @@ static Llvm_block* load_block(Tast_block* old_block) {
         old_block->pos,
         (Llvm_vec) {0},
         old_block->symbol_collection,
-        old_block->pos_end
+        old_block->pos_end,
+        old_block->scope_id
     );
 
     vec_append(&a_main, &env.ancesters, &new_block->symbol_collection);

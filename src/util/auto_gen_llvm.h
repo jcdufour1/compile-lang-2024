@@ -122,6 +122,7 @@ static Llvm_type llvm_gen_block(void) {
     append_member(&block.members, "Llvm_vec", "children");
     append_member(&block.members, "Symbol_collection", "symbol_collection");
     append_member(&block.members, "Pos", "pos_end");
+    append_member(&block.members, "Scope_id", "scope_id");
 
     return block;
 }
