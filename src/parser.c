@@ -1,7 +1,6 @@
 #include <assert.h>
 #include <util.h>
 #include <uast.h>
-#include <tasts.h>
 #include <uast_utils.h>
 #include <token_view.h>
 #include <symbol_table.h>

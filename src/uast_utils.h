@@ -382,4 +382,6 @@ static inline bool ulang_type_vec_is_equal(Ulang_type_vec a, Ulang_type_vec b) {
     return true;
 }
 
+Ulang_type ulang_type_from_uast_function_decl(const Uast_function_decl* decl);
+
 #endif // UAST_UTIL_H

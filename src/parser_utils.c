@@ -3,7 +3,6 @@
 #include <string_vec.h>
 #include <uast.h>
 #include <tast.h>
-#include <tasts.h>
 #include <symbol_table.h>
 #include <parser_utils.h>
 #include <type_checking.h>

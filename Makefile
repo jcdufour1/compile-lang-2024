@@ -3,11 +3,11 @@
 CC_COMPILER ?= clang
 
 C_FLAGS_DEBUG=-Wall -Wextra -Wenum-compare -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types \
-			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ \
+			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema \
 			  -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			  -fsanitize=address -fno-omit-frame-pointer 
 C_FLAGS_RELEASE=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types \
-			    -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ \
+			    -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema \
 			    -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			    -DNDEBUG \
 				-O2
@@ -41,11 +41,10 @@ OBJS=\
 	 ${BUILD_DIR}/lang_type_print.o \
 	 ${BUILD_DIR}/ulang_type_print.o \
 	 ${BUILD_DIR}/globals.o \
-	 ${BUILD_DIR}/token.o \
 	 ${BUILD_DIR}/uast_utils.o \
 	 ${BUILD_DIR}/symbol_table.o \
 	 ${BUILD_DIR}/file.o \
-	 ${BUILD_DIR}/parameters.o \
+	 ${BUILD_DIR}/util/parameters.o \
 	 ${BUILD_DIR}/parser_utils.o \
 	 ${BUILD_DIR}/error_msg.o \
 	 ${BUILD_DIR}/lang_type_serialize.o \
@@ -53,24 +52,26 @@ OBJS=\
 	 ${BUILD_DIR}/lang_type_from_ulang_type.o \
 	 ${BUILD_DIR}/uast_clone.o \
 	 ${BUILD_DIR}/symbol_collection_clone.o \
-	 ${BUILD_DIR}/type_checking.o \
-	 ${BUILD_DIR}/resolve_generics.o \
-	 ${BUILD_DIR}/generic_sub.o \
+	 ${BUILD_DIR}/sema/type_checking.o \
+	 ${BUILD_DIR}/sema/expand_lang_def.o \
+	 ${BUILD_DIR}/sema/resolve_generics.o \
+	 ${BUILD_DIR}/sema/generic_sub.o \
 	 ${BUILD_DIR}/sizeof.o \
 	 ${BUILD_DIR}/do_passes.o \
-	 ${BUILD_DIR}/tokenizer.o \
+	 ${BUILD_DIR}/token/token.o \
+	 ${BUILD_DIR}/token/tokenizer.o \
 	 ${BUILD_DIR}/parser.o \
-	 ${BUILD_DIR}/expand_lang_def.o \
 	 ${BUILD_DIR}/assign_llvm_ids.o \
 	 ${BUILD_DIR}/add_load_and_store.o \
-	 ${BUILD_DIR}/analysis_1.o \
 	 ${BUILD_DIR}/emit_llvm.o \
 	 ${BUILD_DIR}/llvm_utils.o
 
 DEP_UTIL = Makefile src/util/*.h src/util/auto_gen.c
 
 # TODO: this needs to be done better, because this is error prone
+# DEP_COMMON = ${DEP_UTIL} third_party/* src/util/auto_gen* ${BUILD_DIR}/tast.h
 DEP_COMMON = ${DEP_UTIL} src/*.h ${BUILD_DIR}/tast.h third_party/*
+DEP_COMMON += $(shell find src -type f -name "*.h")
 
 FILE_TO_TEST ?= examples/new_lang/structs.own
 ARGS_PROGRAM ?= compile ${FILE_TO_TEST} --emit-llvm
@@ -86,6 +87,8 @@ gdb: build
 setup: 
 	mkdir -p ${BUILD_DIR}/
 	mkdir -p ${BUILD_DIR}/util/
+	mkdir -p ${BUILD_DIR}/sema/
+	mkdir -p ${BUILD_DIR}/token/
 
 build: setup ${BUILD_DIR}/main
 
@@ -130,23 +133,23 @@ ${BUILD_DIR}/lang_type_print.o: ${DEP_COMMON} src/lang_type_print.c
 ${BUILD_DIR}/ulang_type_print.o: ${DEP_COMMON} src/ulang_type_print.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/ulang_type_print.o src/ulang_type_print.c
 
-${BUILD_DIR}/token.o: ${DEP_COMMON} src/token.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/token.o src/token.c
+${BUILD_DIR}/sema/type_checking.o: ${DEP_COMMON} src/sema/type_checking.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/sema/type_checking.o src/sema/type_checking.c
 
-${BUILD_DIR}/type_checking.o: ${DEP_COMMON} src/type_checking.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/type_checking.o src/type_checking.c
+${BUILD_DIR}/sema/resolve_generics.o: ${DEP_COMMON} src/sema/resolve_generics.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/sema/resolve_generics.o src/sema/resolve_generics.c
 
-${BUILD_DIR}/resolve_generics.o: ${DEP_COMMON} src/resolve_generics.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/resolve_generics.o src/resolve_generics.c
+${BUILD_DIR}/sema/generic_sub.o: ${DEP_COMMON} src/sema/generic_sub.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/sema/generic_sub.o src/sema/generic_sub.c
 
-${BUILD_DIR}/generic_sub.o: ${DEP_COMMON} src/generic_sub.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/generic_sub.o src/generic_sub.c
+${BUILD_DIR}/sema/expand_lang_def.o: ${DEP_COMMON} src/sema/expand_lang_def.c
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/sema/expand_lang_def.o src/sema/expand_lang_def.c
 
 ${BUILD_DIR}/file.o: ${DEP_COMMON} src/file.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/file.o src/file.c
 
-${BUILD_DIR}/parameters.o: ${DEP_COMMON} src/parameters.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/parameters.o src/parameters.c
+${BUILD_DIR}/util/parameters.o: ${DEP_COMMON} src/util/parameters.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/parameters.o src/util/parameters.c
 
 ${BUILD_DIR}/error_msg.o: ${DEP_COMMON} src/error_msg.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/error_msg.o src/error_msg.c
@@ -178,9 +181,6 @@ ${BUILD_DIR}/uast_clone.o: ${DEP_COMMON} src/uast_clone.c
 ${BUILD_DIR}/llvm_utils.o: ${DEP_COMMON} src/llvm_utils.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/llvm_utils.o src/llvm_utils.c
 
-${BUILD_DIR}/expand_lang_def.o: ${DEP_COMMON} src/expand_lang_def.c
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/expand_lang_def.o src/expand_lang_def.c
-
 ${BUILD_DIR}/do_passes.o: ${DEP_COMMON} src/do_passes.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/do_passes.o src/do_passes.c
 
@@ -190,17 +190,17 @@ ${BUILD_DIR}/assign_llvm_ids.o: ${DEP_COMMON} src/assign_llvm_ids.c
 ${BUILD_DIR}/add_load_and_store.o: ${DEP_COMMON} src/add_load_and_store.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/add_load_and_store.o src/add_load_and_store.c
 
-${BUILD_DIR}/analysis_1.o: ${DEP_COMMON} src/analysis_1.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/analysis_1.o src/analysis_1.c
-
 ${BUILD_DIR}/emit_llvm.o: ${DEP_COMMON} src/emit_llvm.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/emit_llvm.o src/emit_llvm.c
 
 ${BUILD_DIR}/parser.o: ${DEP_COMMON} src/parser.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/parser.o src/parser.c
 
-${BUILD_DIR}/tokenizer.o: ${DEP_COMMON} src/tokenizer.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/tokenizer.o src/tokenizer.c
+${BUILD_DIR}/token/tokenizer.o: ${DEP_COMMON} src/token/tokenizer.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/token/tokenizer.o src/token/tokenizer.c
+
+${BUILD_DIR}/token/token.o: ${DEP_COMMON} src/token/token.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/token/token.o src/token/token.c
 
 ${BUILD_DIR}/util/name.o: ${DEP_COMMON} src/util/name.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/name.o src/util/name.c

@@ -1,6 +1,5 @@
 
 #include <llvm.h>
-#include <llvms.h>
 #include <newstring.h>
 #include <do_passes.h>
 #include <symbol_table.h>
@@ -1323,28 +1322,6 @@ static void emit_struct_literal(String* output, String* literals, const Llvm_str
 
     string_extend_cstr(&a_main, output, "} , align 4\n");
 }
-
-//static void emit_symbols(String* output) {
-//    for (size_t idx = 0; idx < env.global_literals.capacity; idx++) {
-//        const Symbol_table_tast curr_tast = env.global_literals.table_tasts[idx];
-//        if (curr_tast.status != SYM_TBL_OCCUPIED) {
-//            continue;
-//        }
-//
-//        const Tast_literal_def* def = tast_literal_def_const_unwrap(curr_tast.tast);
-//
-//        switch (def->type) {
-//            case TAST_STRUCT_LIT_DEF:
-//                tast_emit_struct_literal( output, tast_struct_lit_def_const_unwrap(def));
-//                break;
-//            case TAST_STRING_DEF:
-//                tast_emit_symbol(output, curr_tast.key, tast_string_def_const_unwrap(def));
-//                break;
-//            default:
-//                todo();
-//        }
-//    }
-//}
 
 void emit_llvm_from_tree(const Llvm_block* root) {
     String struct_defs = {0};

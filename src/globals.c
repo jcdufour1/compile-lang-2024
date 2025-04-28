@@ -1,4 +1,3 @@
-#include "tasts.h"
 #include "symbol_table.h"
 #include "parameters.h"
 #include "arena.h"
