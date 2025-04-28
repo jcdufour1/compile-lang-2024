@@ -264,26 +264,23 @@ static Llvm_variable_def* load_variable_def_clone(Tast_variable_def* old_var_def
 }
 
 static Llvm_struct_def* load_struct_def_clone(const Tast_struct_def* old_def) {
+    Llvm_variable_def_vec new_membs = {0};
+    for (size_t idx = 0; idx < old_def->base.members.info.count; idx++) {
+        vec_append(&a_main, &new_membs, load_variable_def_clone(vec_at(&old_def->base.members, idx)));
+    }
     return llvm_struct_def_new(
         old_def->pos,
-        old_def->base
-    );
-}
-
-static Llvm_enum_def* load_enum_def_clone(const Tast_enum_def* old_def) {
-    return llvm_enum_def_new(
-        old_def->pos,
-        old_def->base
+        (Llvm_struct_def_base) {.members = new_membs, .name = old_def->base.name /* TODO: is name correct? */}
     );
 }
 
 static Llvm_struct_def* load_raw_union_def_clone(const Tast_raw_union_def* old_def) {
     size_t largest_idx = struct_def_base_get_idx_largest_member(old_def->base);
-    Tast_variable_def_vec new_membs = {0};
-    vec_append(&a_main, &new_membs, vec_at(&old_def->base.members, largest_idx));
+    Llvm_variable_def_vec new_membs = {0};
+    vec_append(&a_main, &new_membs, load_variable_def_clone(vec_at(&old_def->base.members, largest_idx)));
     return llvm_struct_def_new(
         old_def->pos,
-        (Struct_def_base) {.members = new_membs, .name = old_def->base.name /* TODO: is name correct? */}
+        (Llvm_struct_def_base) {.members = new_membs, .name = old_def->base.name /* TODO: is name correct? */}
     );
 }
 
@@ -1620,14 +1617,9 @@ static void load_struct_def(
 }
 
 static void load_enum_def(
-     
     Tast_enum_def* old_def
 ) {
-    (void) env;
-
-    all_tbl_add(&vec_at(&env.ancesters, 0)->alloca_table, llvm_def_wrap(
-        llvm_enum_def_wrap(load_enum_def_clone(old_def))
-    ));
+    (void) old_def;
 }
 
 static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, Name after_chain) {

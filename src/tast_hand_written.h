@@ -21,6 +21,11 @@ typedef struct {
 } Struct_def_base;
 
 typedef struct {
+    Llvm_variable_def_vec members;
+    Name name;
+} Llvm_struct_def_base;
+
+typedef struct {
     Lang_type lang_type;
     Name name;
     Llvm_id llvm_id;

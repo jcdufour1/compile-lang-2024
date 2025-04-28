@@ -288,7 +288,7 @@ static Llvm_type llvm_gen_expr(void) {
 static Llvm_type llvm_gen_struct_def(void) {
     Llvm_type def = {.name = llvm_name_new("def", "struct_def", false)};
 
-    append_member(&def.members, "Struct_def_base", "base");
+    append_member(&def.members, "Llvm_struct_def_base", "base");
 
     return def;
 }

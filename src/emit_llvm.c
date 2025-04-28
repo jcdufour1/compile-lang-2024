@@ -193,37 +193,6 @@ static bool llvm_is_variadic(const Llvm* llvm) {
     }
 }
 
-static bool tast_is_variadic(const Tast_stmt* tast) {
-    if (tast->type == TAST_EXPR) {
-        switch (tast_expr_const_unwrap(tast)->type) {
-            case TAST_LITERAL:
-                return false;
-            default:
-                unreachable(TAST_FMT, tast_stmt_print(tast));
-        }
-    } else {
-        const Tast_def* def = tast_def_const_unwrap(tast);
-        switch (def->type) {
-            case TAST_VARIABLE_DEF:
-                return tast_variable_def_const_unwrap(tast_def_const_unwrap(tast))->is_variadic;
-            default:
-                unreachable(TAST_FMT, tast_stmt_print(tast));
-        }
-    }
-}
-
-static void tast_extend_type_decl_str(String* output, const Tast_stmt* var_def_or_lit, bool noundef) {
-    if (tast_is_variadic(var_def_or_lit)) {
-        string_extend_cstr(&a_main, output, "...");
-        return;
-    }
-
-    extend_type_call_str( output, tast_stmt_get_lang_type(var_def_or_lit));
-    if (noundef) {
-        string_extend_cstr(&a_main, output, " noundef");
-    }
-}
-
 static void llvm_extend_type_decl_str(String* output, const Llvm* var_def_or_lit, bool noundef) {
     if (llvm_is_variadic(var_def_or_lit)) {
         string_extend_cstr(&a_main, output, "...");
@@ -308,11 +277,6 @@ static void tast_extend_literal_decl_prefix(String* output, const Tast_literal* 
 static void extend_literal_decl(String* output, String* literals, const Llvm_literal* literal, bool noundef) {
     llvm_extend_type_decl_str( output, llvm_expr_const_wrap(llvm_literal_const_wrap(literal)), noundef);
     extend_literal_decl_prefix( output, literals, literal);
-}
-
-static void tast_extend_literal_decl(String* output, const Tast_literal* literal, bool noundef) {
-    tast_extend_type_decl_str( output, tast_expr_const_wrap(tast_literal_const_wrap(literal)), noundef);
-    tast_extend_literal_decl_prefix(output, literal);
 }
 
 static void emit_function_params(String* output, const Llvm_function_params* fun_params) {
@@ -974,7 +938,7 @@ static void emit_cond_goto(String* output, const Llvm_cond_goto* cond_goto) {
     vec_append(&a_main, output, '\n');
 }
 
-static void emit_struct_def_base(String* output, const Struct_def_base* base) {
+static void emit_llvm_struct_def_base(String* output, const Llvm_struct_def_base* base) {
     llvm_extend_name(output, base->name);
     string_extend_cstr(&a_main, output, " = type { ");
     bool is_first = true;
@@ -983,7 +947,7 @@ static void emit_struct_def_base(String* output, const Struct_def_base* base) {
         if (!is_first) {
             string_extend_cstr(&a_main, output, ", ");
         }
-        tast_extend_type_decl_str( output, tast_def_wrap(tast_variable_def_wrap(vec_at(&base->members, idx))), false);
+        llvm_extend_type_decl_str(output, llvm_def_wrap(llvm_variable_def_wrap(vec_at(&base->members, idx))), false);
         is_first = false;
     }
 
@@ -993,7 +957,7 @@ static void emit_struct_def_base(String* output, const Struct_def_base* base) {
 static void emit_struct_def(String* output, const Llvm_struct_def* struct_def) {
     log(LOG_DEBUG, TAST_FMT, llvm_struct_def_print(struct_def));
     string_extend_cstr(&a_main, output, "%");
-    emit_struct_def_base(output, &struct_def->base);
+    emit_llvm_struct_def_base(output, &struct_def->base);
 }
 
 static void emit_load_element_ptr(String* output, const Llvm_load_element_ptr* load_elem_ptr) {
@@ -1222,39 +1186,6 @@ static void emit_symbol(String* output, Str_view key, const Llvm_string_def* def
     string_extend_strv_eval_escapes(&a_main, output, def->data);
     string_extend_cstr(&a_main, output, "\\00\", align 1");
     string_extend_cstr(&a_main, output, "\n");
-}
-
-static void tast_emit_symbol(String* output, Str_view key, const Tast_string_def* def) {
-    size_t literal_width = def->data.count + 1 - get_count_excape_seq(def->data);
-
-    string_extend_cstr(&a_main, output, "@.");
-    string_extend_strv(&a_main, output, key);
-    string_extend_cstr(&a_main, output, " = private unnamed_addr constant [ ");
-    string_extend_size_t(&a_main, output, literal_width);
-    string_extend_cstr(&a_main, output, " x i8] c\"");
-    string_extend_strv_eval_escapes(&a_main, output, def->data);
-    string_extend_cstr(&a_main, output, "\\00\", align 1");
-    string_extend_cstr(&a_main, output, "\n");
-}
-
-static void tast_emit_struct_literal(String* output, const Tast_struct_lit_def* lit_def) {
-    string_extend_cstr(&a_main, output, "@__const.main.");
-    llvm_extend_name( output, lit_def->name);
-    string_extend_cstr(&a_main, output, " = private unnamed_addr constant %struct.");
-    extend_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_LLVM, lit_def->lang_type);
-    string_extend_cstr(&a_main, output, " {");
-
-    size_t is_first = true;
-    for (size_t idx = 0; idx < lit_def->members.info.count; idx++) {
-        const Tast_expr* memb_literal = vec_at(&lit_def->members, idx);
-        if (!is_first) {
-            vec_append(&a_main, output, ',');
-        }
-        tast_extend_literal_decl( output, tast_literal_const_unwrap(memb_literal), false);
-        is_first = false;
-    }
-
-    string_extend_cstr(&a_main, output, "} , align 4\n");
 }
 
 static void emit_struct_literal(String* output, String* literals, const Llvm_struct_lit_def* lit_def) {
