@@ -77,7 +77,7 @@ static void extend_literal(String* output, const Llvm_literal* literal) {
         case LLVM_VOID:
             return;
         case LLVM_FUNCTION_NAME:
-            llvm_extend_name( output, llvm_function_name_const_unwrap(literal)->fun_name);
+            llvm_extend_name(output, llvm_function_name_const_unwrap(literal)->fun_name);
             return;
     }
     unreachable("");
@@ -313,10 +313,6 @@ static void emit_function_arg_expr(String* output, String* literals, const Llvm_
             log(LOG_DEBUG, TAST_FMT, llvm_expr_print(argument));
             extend_literal_decl( output, literals, llvm_literal_const_unwrap(argument), true);
             break;
-        case LLVM_SYMBOL:
-            unreachable("typed symbols should not still be present");
-        case LLVM_SYMBOL:
-            unreachable("typed symbols should not still be present");
         case LLVM_FUNCTION_CALL:
             extend_type_call_str( output, llvm_expr_get_lang_type(argument));
             string_extend_cstr(&a_main, output, "%");
@@ -620,8 +616,6 @@ static void emit_operator_operand_expr(String* output, const Llvm_expr* operand)
         case LLVM_LITERAL:
             extend_literal( output, llvm_literal_const_unwrap(operand));
             break;
-        case LLVM_SYMBOL:
-            unreachable("");
         case LLVM_FUNCTION_CALL:
             string_extend_cstr(&a_main, output, "%");
             string_extend_size_t(&a_main, output, llvm_function_call_const_unwrap(operand)->llvm_id);
@@ -827,8 +821,6 @@ static void emit_return_expr(String* output, const Llvm_expr* child) {
             string_extend_cstr(&a_main, output, "\n");
             break;
         }
-        case LLVM_SYMBOL:
-            unreachable("");
         case LLVM_FUNCTION_CALL: {
             const Llvm_function_call* function_call = llvm_function_call_const_unwrap(child);
             string_extend_cstr(&a_main, output, "    ret ");
@@ -917,7 +909,6 @@ static void emit_llvm_struct_def_base(String* output, const Llvm_struct_def_base
 }
 
 static void emit_struct_def(String* output, const Llvm_struct_def* struct_def) {
-    log(LOG_DEBUG, TAST_FMT, llvm_struct_def_print(struct_def));
     string_extend_cstr(&a_main, output, "%");
     emit_llvm_struct_def_base(output, &struct_def->base);
 }
@@ -1044,7 +1035,7 @@ static void emit_block(String* struct_defs, String* output, String* literals, co
     Alloca_iter iter = all_tbl_iter_new(vec_top(&env.ancesters)->alloca_table);
     Llvm* curr = NULL;
     while (all_tbl_iter_next(&curr, &iter)) {
-        emit_sometimes( struct_defs, output, literals, curr);
+        emit_sometimes(struct_defs, output, literals, curr);
     }
 
     vec_rem_last(&env.ancesters);

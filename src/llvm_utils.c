@@ -14,10 +14,6 @@ Lang_type llvm_operator_get_lang_type(const Llvm_operator* operator) {
 
 Llvm_id llvm_get_llvm_id_expr(const Llvm_expr* expr) {
     switch (expr->type) {
-        case LLVM_PRIMITIVE_SYM:
-            unreachable("");
-        case LLVM_STRUCT_SYM:
-            unreachable("");
         case LLVM_LITERAL:
             unreachable("");
         case LLVM_OPERATOR: {
@@ -114,10 +110,6 @@ Lang_type llvm_expr_get_lang_type(const Llvm_expr* expr) {
             return llvm_literal_get_lang_type(llvm_literal_const_unwrap(expr));
         case LLVM_OPERATOR:
             return llvm_operator_get_lang_type(llvm_operator_const_unwrap(expr));
-        case LLVM_STRUCT_SYM:
-            return llvm_struct_sym_const_unwrap(expr)->base.lang_type;
-        case LLVM_PRIMITIVE_SYM:
-            return llvm_primitive_sym_const_unwrap(expr)->base.lang_type;
     }
     unreachable("");
 }
@@ -198,10 +190,6 @@ Name llvm_expr_get_name(const Llvm_expr* expr) {
     switch (expr->type) {
         case LLVM_OPERATOR:
             return llvm_operator_get_name(llvm_operator_const_unwrap(expr));
-        case LLVM_STRUCT_SYM:
-            return llvm_struct_sym_const_unwrap(expr)->base.name;
-        case LLVM_PRIMITIVE_SYM:
-            return llvm_primitive_sym_const_unwrap(expr)->base.name;
         case LLVM_FUNCTION_CALL:
             return llvm_function_call_const_unwrap(expr)->name_self;
         case LLVM_LITERAL:

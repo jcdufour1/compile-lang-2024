@@ -151,22 +151,6 @@ static Llvm_type llvm_gen_binary(void) {
     return binary;
 }
 
-static Llvm_type llvm_gen_primitive_sym(void) {
-    Llvm_type primitive = {.name = llvm_name_new("expr", "primitive_sym", false)};
-
-    append_member(&primitive.members, "Sym_typed_base", "base");
-
-    return primitive;
-}
-
-static Llvm_type llvm_gen_struct_sym(void) {
-    Llvm_type lang_struct = {.name = llvm_name_new("expr", "struct_sym", false)};
-
-    append_member(&lang_struct.members, "Sym_typed_base", "base");
-
-    return lang_struct;
-}
-
 static Llvm_type llvm_gen_operator(void) {
     Llvm_type operator = {.name = llvm_name_new("expr", "operator", false)};
 
@@ -239,8 +223,6 @@ static Llvm_type llvm_gen_expr(void) {
     Llvm_type expr = {.name = llvm_name_new("llvm", "expr", false)};
 
     vec_append(&gen_a, &expr.sub_types, llvm_gen_operator());
-    vec_append(&gen_a, &expr.sub_types, llvm_gen_primitive_sym());
-    vec_append(&gen_a, &expr.sub_types, llvm_gen_struct_sym());
     vec_append(&gen_a, &expr.sub_types, llvm_gen_literal());
     vec_append(&gen_a, &expr.sub_types, llvm_gen_function_call());
 
