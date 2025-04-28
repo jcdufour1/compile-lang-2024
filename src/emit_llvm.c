@@ -28,8 +28,6 @@ static bool is_extern_c(const Llvm* llvm) {
             return false;
         case LLVM_STRUCT_DEF:
             return false;
-        case LLVM_RAW_UNION_DEF:
-            return false;
         case LLVM_ENUM_DEF:
             return false;
         case LLVM_PRIMITIVE_DEF:
@@ -93,33 +91,6 @@ static void extend_literal(String* output, const Llvm_literal* literal) {
     unreachable("");
 }
 
-// TODO: remove tast_extend* functions
-static void tast_extend_literal(String* output, const Tast_literal* literal) {
-    switch (literal->type) {
-        case TAST_STRING:
-            string_extend_strv(&a_main, output, tast_string_const_unwrap(literal)->data);
-            return;
-        case TAST_NUMBER:
-            string_extend_int64_t(&a_main, output, tast_number_const_unwrap(literal)->data);
-            return;
-        case TAST_ENUM_LIT:
-            string_extend_int64_t(&a_main, output, tast_enum_lit_const_unwrap(literal)->data);
-            return;
-        case TAST_VOID:
-            return;
-        case TAST_CHAR:
-            string_extend_int64_t(&a_main, output, (int64_t)tast_char_const_unwrap(literal)->data);
-            return;
-        case TAST_SUM_LIT:
-            unreachable("");
-        case TAST_RAW_UNION_LIT:
-            unreachable("");
-        case TAST_FUNCTION_LIT:
-            unreachable("");
-    }
-    unreachable("");
-}
-
 // \n excapes are actually stored as is in tokens and llvms, but should be printed as \0a
 static void string_extend_strv_eval_escapes(Arena* arena, String* string, Str_view str_view) {
     while (str_view.count > 0) {
@@ -166,11 +137,11 @@ static void extend_type_call_str(String* output, Lang_type lang_type) {
         case LANG_TYPE_TUPLE:
             unreachable("");
         case LANG_TYPE_STRUCT:
-            string_extend_cstr(&a_main, output, "%struct.");
+            string_extend_cstr(&a_main, output, "%");
             llvm_extend_name( output, lang_type_struct_const_unwrap(lang_type).atom.str);
             return;
         case LANG_TYPE_RAW_UNION:
-            string_extend_cstr(&a_main, output, "%union.");
+            string_extend_cstr(&a_main, output, "%");
             llvm_extend_name( output, lang_type_raw_union_const_unwrap(lang_type).atom.str);
             return;
         case LANG_TYPE_ENUM:
@@ -196,7 +167,7 @@ static void extend_type_call_str(String* output, Lang_type lang_type) {
             extend_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_LLVM, lang_type);
             return;
         case LANG_TYPE_SUM:
-            string_extend_cstr(&a_main, output, "%struct.");
+            string_extend_cstr(&a_main, output, "%");
             llvm_extend_name( output, lang_type_sum_const_unwrap(lang_type).atom.str);
             return;
     }
@@ -1003,22 +974,17 @@ static void emit_cond_goto(String* output, const Llvm_cond_goto* cond_goto) {
     vec_append(&a_main, output, '\n');
 }
 
-static void emit_struct_def_base(String* output, const Struct_def_base* base, bool largest_only) {
-    llvm_extend_name( output, base->name);
+static void emit_struct_def_base(String* output, const Struct_def_base* base) {
+    llvm_extend_name(output, base->name);
     string_extend_cstr(&a_main, output, " = type { ");
     bool is_first = true;
 
-    if (largest_only) {
-        size_t idx = struct_def_base_get_idx_largest_member( *base);
-        tast_extend_type_decl_str( output, tast_def_wrap(tast_variable_def_wrap(vec_at(&base->members, idx))), false);
-    } else {
-        for (size_t idx = 0; idx < base->members.info.count; idx++) {
-            if (!is_first) {
-                string_extend_cstr(&a_main, output, ", ");
-            }
-            tast_extend_type_decl_str( output, tast_def_wrap(tast_variable_def_wrap(vec_at(&base->members, idx))), false);
-            is_first = false;
+    for (size_t idx = 0; idx < base->members.info.count; idx++) {
+        if (!is_first) {
+            string_extend_cstr(&a_main, output, ", ");
         }
+        tast_extend_type_decl_str( output, tast_def_wrap(tast_variable_def_wrap(vec_at(&base->members, idx))), false);
+        is_first = false;
     }
 
     string_extend_cstr(&a_main, output, " }\n");
@@ -1026,14 +992,8 @@ static void emit_struct_def_base(String* output, const Struct_def_base* base, bo
 
 static void emit_struct_def(String* output, const Llvm_struct_def* struct_def) {
     log(LOG_DEBUG, TAST_FMT, llvm_struct_def_print(struct_def));
-    string_extend_cstr(&a_main, output, "%struct.");
-    emit_struct_def_base( output, &struct_def->base, false);
-}
-
-static void emit_raw_union_def(String* output, const Llvm_raw_union_def* raw_union_def) {
-    log(LOG_DEBUG, TAST_FMT, llvm_raw_union_def_print(raw_union_def));
-    string_extend_cstr(&a_main, output, "%union.");
-    emit_struct_def_base( output, &raw_union_def->base, true);
+    string_extend_cstr(&a_main, output, "%");
+    emit_struct_def_base(output, &struct_def->base);
 }
 
 static void emit_load_element_ptr(String* output, const Llvm_load_element_ptr* load_elem_ptr) {
@@ -1103,9 +1063,6 @@ static void emit_def(String* struct_defs, String* output, String* literals, cons
         case LLVM_STRUCT_DEF:
             emit_struct_def( struct_defs, llvm_struct_def_const_unwrap(def));
             return;
-        case LLVM_RAW_UNION_DEF:
-            emit_raw_union_def( struct_defs, llvm_raw_union_def_const_unwrap(def));
-            return;
         case LLVM_ENUM_DEF:
             return;
         case LLVM_PRIMITIVE_DEF:
@@ -1120,42 +1077,42 @@ static void emit_block(String* struct_defs, String* output, String* literals, co
     vec_append(&a_main, &env.ancesters, (Symbol_collection*)&block->symbol_collection);
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        const Llvm* statement = vec_at(&block->children, idx);
+        const Llvm* stmt = vec_at(&block->children, idx);
 
-        switch (statement->type) {
+        switch (stmt->type) {
             case LLVM_EXPR:
-                emit_expr( output, literals, llvm_expr_const_unwrap(statement));
+                emit_expr(output, literals, llvm_expr_const_unwrap(stmt));
                 break;
             case LLVM_DEF:
-                emit_def( struct_defs, output, literals, llvm_def_const_unwrap(statement));
+                emit_def(struct_defs, output, literals, llvm_def_const_unwrap(stmt));
                 break;
             case LLVM_RETURN:
-                emit_return( output, llvm_return_const_unwrap(statement));
+                emit_return(output, llvm_return_const_unwrap(stmt));
                 break;
             case LLVM_BLOCK:
-                emit_block( struct_defs, output, literals, llvm_block_const_unwrap(statement));
+                emit_block(struct_defs, output, literals, llvm_block_const_unwrap(stmt));
                 break;
             case LLVM_COND_GOTO:
-                emit_cond_goto( output, llvm_cond_goto_const_unwrap(statement));
+                emit_cond_goto(output, llvm_cond_goto_const_unwrap(stmt));
                 break;
             case LLVM_GOTO:
-                emit_goto( output, llvm_goto_const_unwrap(statement));
+                emit_goto(output, llvm_goto_const_unwrap(stmt));
                 break;
             case LLVM_ALLOCA:
-                emit_alloca( output, llvm_alloca_const_unwrap(statement));
+                emit_alloca(output, llvm_alloca_const_unwrap(stmt));
                 break;
             case LLVM_LOAD_ELEMENT_PTR:
-                emit_load_element_ptr( output, llvm_load_element_ptr_const_unwrap(statement));
+                emit_load_element_ptr(output, llvm_load_element_ptr_const_unwrap(stmt));
                 break;
             case LLVM_LOAD_ANOTHER_LLVM:
-                emit_load_another_llvm( output, llvm_load_another_llvm_const_unwrap(statement));
+                emit_load_another_llvm(output, llvm_load_another_llvm_const_unwrap(stmt));
                 break;
             case LLVM_STORE_ANOTHER_LLVM:
-                emit_store_another_llvm( output, literals, llvm_store_another_llvm_const_unwrap(statement));
+                emit_store_another_llvm(output, literals, llvm_store_another_llvm_const_unwrap(stmt));
                 break;
             default:
                 log(LOG_ERROR, STRING_FMT"\n", string_print(*output));
-                llvm_printf(statement);
+                llvm_printf(stmt);
                 todo();
         }
     }
@@ -1184,9 +1141,6 @@ static void emit_def_sometimes(String* struct_defs, String* output, String* lite
             return;
         case LLVM_STRUCT_DEF:
             emit_struct_def( struct_defs, llvm_struct_def_const_unwrap(def));
-            return;
-        case LLVM_RAW_UNION_DEF:
-            emit_raw_union_def( struct_defs, llvm_raw_union_def_const_unwrap(def));
             return;
         case LLVM_ENUM_DEF:
             return;
@@ -1327,7 +1281,7 @@ void emit_llvm_from_tree(const Llvm_block* root) {
     String struct_defs = {0};
     String output = {0};
     String literals = {0};
-    emit_block( &struct_defs, &output, &literals, root);
+    emit_block(&struct_defs, &output, &literals, root);
 
     FILE* file = fopen("test.ll", "w");
     if (!file) {

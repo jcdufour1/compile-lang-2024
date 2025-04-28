@@ -71,15 +71,6 @@ Str_view llvm_struct_sym_print_internal(const Llvm_struct_sym* sym, int indent) 
     return string_to_strv(buf);
 }
 
-Str_view llvm_raw_union_sym_print_internal(const Llvm_raw_union_sym* sym, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "raw_union_sym", indent);
-    llvm_extend_sym_typed_base(&buf, sym->base);
-
-    return string_to_strv(buf);
-}
-
 Str_view llvm_enum_sym_print_internal(const Llvm_enum_sym* sym, int indent) {
     String buf = {0};
 
@@ -95,8 +86,6 @@ Str_view llvm_symbol_typed_print_internal(const Llvm_symbol* sym, int indent) {
             return llvm_primitive_sym_print_internal(llvm_primitive_sym_const_unwrap(sym), indent);
         case LLVM_STRUCT_SYM:
             return llvm_struct_sym_print_internal(llvm_struct_sym_const_unwrap(sym), indent);
-        case LLVM_RAW_UNION_SYM:
-            return llvm_raw_union_sym_print_internal(llvm_raw_union_sym_const_unwrap(sym), indent);
         case LLVM_ENUM_SYM:
             return llvm_enum_sym_print_internal(llvm_enum_sym_const_unwrap(sym), indent);
     }
@@ -366,14 +355,6 @@ Str_view llvm_struct_def_print_internal(const Llvm_struct_def* def, int indent) 
     return string_to_strv(buf);
 }
 
-Str_view llvm_raw_union_def_print_internal(const Llvm_raw_union_def* def, int indent) {
-    String buf = {0};
-
-    extend_struct_def_base(&buf, "raw_union_def", def->base, indent);
-
-    return string_to_strv(buf);
-}
-
 Str_view llvm_enum_def_print_internal(const Llvm_enum_def* def, int indent) {
     String buf = {0};
 
@@ -479,8 +460,6 @@ Str_view llvm_def_print_internal(const Llvm_def* def, int indent) {
             return llvm_variable_def_print_internal(llvm_variable_def_const_unwrap(def), indent);
         case LLVM_STRUCT_DEF:
             return llvm_struct_def_print_internal(llvm_struct_def_const_unwrap(def), indent);
-        case LLVM_RAW_UNION_DEF:
-            return llvm_raw_union_def_print_internal(llvm_raw_union_def_const_unwrap(def), indent);
         case LLVM_ENUM_DEF:
             return llvm_enum_def_print_internal(llvm_enum_def_const_unwrap(def), indent);
         case LLVM_PRIMITIVE_DEF:

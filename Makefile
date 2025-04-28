@@ -57,7 +57,6 @@ OBJS=\
 	 ${BUILD_DIR}/sema/resolve_generics.o \
 	 ${BUILD_DIR}/sema/generic_sub.o \
 	 ${BUILD_DIR}/sizeof.o \
-	 ${BUILD_DIR}/do_passes.o \
 	 ${BUILD_DIR}/token/token.o \
 	 ${BUILD_DIR}/token/tokenizer.o \
 	 ${BUILD_DIR}/parser.o \
@@ -180,9 +179,6 @@ ${BUILD_DIR}/uast_clone.o: ${DEP_COMMON} src/uast_clone.c
 
 ${BUILD_DIR}/llvm_utils.o: ${DEP_COMMON} src/llvm_utils.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/llvm_utils.o src/llvm_utils.c
-
-${BUILD_DIR}/do_passes.o: ${DEP_COMMON} src/do_passes.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/do_passes.o src/do_passes.c
 
 ${BUILD_DIR}/assign_llvm_ids.o: ${DEP_COMMON} src/assign_llvm_ids.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/assign_llvm_ids.o src/assign_llvm_ids.c

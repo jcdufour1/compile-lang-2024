@@ -175,14 +175,6 @@ static Llvm_type llvm_gen_struct_sym(void) {
     return lang_struct;
 }
 
-static Llvm_type llvm_gen_raw_union_sym(void) {
-    Llvm_type raw_union = {.name = llvm_name_new("symbol", "raw_union_sym", false)};
-
-    append_member(&raw_union.members, "Sym_typed_base", "base");
-
-    return raw_union;
-}
-
 static Llvm_type llvm_gen_operator(void) {
     Llvm_type operator = {.name = llvm_name_new("expr", "operator", false)};
 
@@ -197,7 +189,6 @@ static Llvm_type llvm_gen_symbol(void) {
 
     vec_append(&gen_a, &sym.sub_types, llvm_gen_primitive_sym());
     vec_append(&gen_a, &sym.sub_types, llvm_gen_struct_sym());
-    vec_append(&gen_a, &sym.sub_types, llvm_gen_raw_union_sym());
     vec_append(&gen_a, &sym.sub_types, llvm_gen_enum_sym());
 
     return sym;
@@ -302,14 +293,6 @@ static Llvm_type llvm_gen_struct_def(void) {
     return def;
 }
 
-static Llvm_type llvm_gen_raw_union_def(void) {
-    Llvm_type def = {.name = llvm_name_new("def", "raw_union_def", false)};
-
-    append_member(&def.members, "Struct_def_base", "base");
-
-    return def;
-}
-
 static Llvm_type llvm_gen_function_decl(void) {
     Llvm_type def = {.name = llvm_name_new("def", "function_decl", false)};
 
@@ -402,7 +385,6 @@ static Llvm_type llvm_gen_def(void) {
     vec_append(&gen_a, &def.sub_types, llvm_gen_function_def());
     vec_append(&gen_a, &def.sub_types, llvm_gen_variable_def());
     vec_append(&gen_a, &def.sub_types, llvm_gen_struct_def());
-    vec_append(&gen_a, &def.sub_types, llvm_gen_raw_union_def());
     vec_append(&gen_a, &def.sub_types, llvm_gen_enum_def());
     vec_append(&gen_a, &def.sub_types, llvm_gen_primitive_def());
     vec_append(&gen_a, &def.sub_types, llvm_gen_function_decl());

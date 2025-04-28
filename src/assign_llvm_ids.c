@@ -90,8 +90,6 @@ static Llvm_def* id_def(Llvm_def* def) {
             return def;
         case LLVM_STRUCT_DEF:
             return def;
-        case LLVM_RAW_UNION_DEF:
-            return def;
         case LLVM_ENUM_DEF:
             return def;
         case LLVM_FUNCTION_DECL:
@@ -148,8 +146,6 @@ static Llvm_def* id_def_sometimes(Llvm_def* def) {
         case LLVM_LABEL:
             return def;
         case LLVM_STRUCT_DEF:
-            return def;
-        case LLVM_RAW_UNION_DEF:
             return def;
         case LLVM_ENUM_DEF:
             return def;
