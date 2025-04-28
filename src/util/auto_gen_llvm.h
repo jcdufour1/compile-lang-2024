@@ -152,7 +152,7 @@ static Llvm_type llvm_gen_binary(void) {
 }
 
 static Llvm_type llvm_gen_primitive_sym(void) {
-    Llvm_type primitive = {.name = llvm_name_new("symbol", "primitive_sym", false)};
+    Llvm_type primitive = {.name = llvm_name_new("expr", "primitive_sym", false)};
 
     append_member(&primitive.members, "Sym_typed_base", "base");
 
@@ -160,7 +160,7 @@ static Llvm_type llvm_gen_primitive_sym(void) {
 }
 
 static Llvm_type llvm_gen_struct_sym(void) {
-    Llvm_type lang_struct = {.name = llvm_name_new("symbol", "struct_sym", false)};
+    Llvm_type lang_struct = {.name = llvm_name_new("expr", "struct_sym", false)};
 
     append_member(&lang_struct.members, "Sym_typed_base", "base");
 
@@ -174,15 +174,6 @@ static Llvm_type llvm_gen_operator(void) {
     vec_append(&gen_a, &operator.sub_types, llvm_gen_binary());
 
     return operator;
-}
-
-static Llvm_type llvm_gen_symbol(void) {
-    Llvm_type sym = {.name = llvm_name_new("expr", "symbol", false)};
-
-    vec_append(&gen_a, &sym.sub_types, llvm_gen_primitive_sym());
-    vec_append(&gen_a, &sym.sub_types, llvm_gen_struct_sym());
-
-    return sym;
 }
 
 static Llvm_type llvm_gen_number(void) {
@@ -248,7 +239,8 @@ static Llvm_type llvm_gen_expr(void) {
     Llvm_type expr = {.name = llvm_name_new("llvm", "expr", false)};
 
     vec_append(&gen_a, &expr.sub_types, llvm_gen_operator());
-    vec_append(&gen_a, &expr.sub_types, llvm_gen_symbol());
+    vec_append(&gen_a, &expr.sub_types, llvm_gen_primitive_sym());
+    vec_append(&gen_a, &expr.sub_types, llvm_gen_struct_sym());
     vec_append(&gen_a, &expr.sub_types, llvm_gen_literal());
     vec_append(&gen_a, &expr.sub_types, llvm_gen_function_call());
 

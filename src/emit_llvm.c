@@ -308,26 +308,28 @@ static void emit_function_call_arg_load_another_llvm(
 }
 
 static void emit_function_arg_expr(String* output, String* literals, const Llvm_expr* argument) {
-        switch (argument->type) {
-            case LLVM_LITERAL:
-                log(LOG_DEBUG, TAST_FMT, llvm_expr_print(argument));
-                extend_literal_decl( output, literals, llvm_literal_const_unwrap(argument), true);
-                break;
-            case LLVM_SYMBOL:
-                unreachable("typed symbols should not still be present");
-            case LLVM_FUNCTION_CALL:
-                extend_type_call_str( output, llvm_expr_get_lang_type(argument));
-                string_extend_cstr(&a_main, output, "%");
-                string_extend_size_t(&a_main, output, llvm_get_llvm_id_expr(argument));
-                break;
-            case LLVM_OPERATOR:
-                extend_type_call_str( output, llvm_expr_get_lang_type(argument));
-                string_extend_cstr(&a_main, output, "%");
-                string_extend_size_t(&a_main, output, llvm_get_llvm_id_expr(argument));
-                break;
-            default:
-                unreachable("");
-        }
+    switch (argument->type) {
+        case LLVM_LITERAL:
+            log(LOG_DEBUG, TAST_FMT, llvm_expr_print(argument));
+            extend_literal_decl( output, literals, llvm_literal_const_unwrap(argument), true);
+            break;
+        case LLVM_SYMBOL:
+            unreachable("typed symbols should not still be present");
+        case LLVM_SYMBOL:
+            unreachable("typed symbols should not still be present");
+        case LLVM_FUNCTION_CALL:
+            extend_type_call_str( output, llvm_expr_get_lang_type(argument));
+            string_extend_cstr(&a_main, output, "%");
+            string_extend_size_t(&a_main, output, llvm_get_llvm_id_expr(argument));
+            break;
+        case LLVM_OPERATOR:
+            extend_type_call_str( output, llvm_expr_get_lang_type(argument));
+            string_extend_cstr(&a_main, output, "%");
+            string_extend_size_t(&a_main, output, llvm_get_llvm_id_expr(argument));
+            break;
+        default:
+            unreachable("");
+    }
 }
 
 static void emit_function_call_arguments(String* output, String* literals, const Llvm_function_call* fun_call) {

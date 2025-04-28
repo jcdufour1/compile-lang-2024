@@ -43,7 +43,9 @@ static Llvm_function_call* id_function_call(Llvm_function_call* fun_call) {
 
 static Llvm_expr* id_expr(Llvm_expr* expr) {
     switch (expr->type) {
-        case LLVM_SYMBOL:
+        case LLVM_STRUCT_SYM:
+            return expr;
+        case LLVM_PRIMITIVE_SYM:
             return expr;
         case LLVM_LITERAL:
             return expr;

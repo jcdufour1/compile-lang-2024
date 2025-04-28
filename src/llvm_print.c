@@ -71,16 +71,6 @@ Str_view llvm_struct_sym_print_internal(const Llvm_struct_sym* sym, int indent) 
     return string_to_strv(buf);
 }
 
-Str_view llvm_symbol_typed_print_internal(const Llvm_symbol* sym, int indent) {
-    switch (sym->type) {
-        case LLVM_PRIMITIVE_SYM:
-            return llvm_primitive_sym_print_internal(llvm_primitive_sym_const_unwrap(sym), indent);
-        case LLVM_STRUCT_SYM:
-            return llvm_struct_sym_print_internal(llvm_struct_sym_const_unwrap(sym), indent);
-    }
-    unreachable("");
-}
-
 Str_view llvm_literal_print_internal(const Llvm_literal* lit, int indent) {
     switch (lit->type) {
         case LLVM_NUMBER:
@@ -440,8 +430,10 @@ Str_view llvm_expr_print_internal(const Llvm_expr* expr, int indent) {
     switch (expr->type) {
         case LLVM_OPERATOR:
             return llvm_operator_print_internal(llvm_operator_const_unwrap(expr), indent);
-        case LLVM_SYMBOL:
-            return llvm_symbol_typed_print_internal(llvm_symbol_const_unwrap(expr), indent);
+        case LLVM_STRUCT_SYM:
+            return llvm_struct_sym_print_internal(llvm_struct_sym_const_unwrap(expr), indent);
+        case LLVM_PRIMITIVE_SYM:
+            return llvm_primitive_sym_print_internal(llvm_primitive_sym_const_unwrap(expr), indent);
         case LLVM_LITERAL:
             return llvm_literal_print_internal(llvm_literal_const_unwrap(expr), indent);
         case LLVM_FUNCTION_CALL:
