@@ -1871,7 +1871,6 @@ static void load_break(
 }
 
 static void load_label(
-     
     Llvm_block* new_block,
     Tast_label* old_label
 ) {
