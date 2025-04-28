@@ -4,6 +4,10 @@
 #include <ulang_type_serialize.h>
 #include <ulang_type_clone.h>
 
+Name name_new(Str_view mod_path, Str_view base, Ulang_type_vec gen_args, Scope_id scope_id) {
+    return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id};
+}
+
 void extend_name_llvm(String* buf, Name name) {
     string_extend_strv(&a_main, buf, serialize_name(name));
 }
@@ -21,6 +25,9 @@ bool try_str_view_consume_size_t(size_t* result, Str_view* str_view, bool ignore
 
 Str_view serialize_name(Name name) {
     String buf = {0};
+
+    string_extend_size_t(&a_main, &buf, name.scope_id);
+    string_extend_cstr(&a_main, &buf, "_");
 
     if (name.mod_path.count > 0) {
         size_t path_count = 1;
@@ -135,5 +142,5 @@ void extend_name(bool is_llvm, String* buf, Name name) {
 }
 
 Name name_clone(Name name) {
-    return (Name) {.mod_path = name.mod_path, .base = name.base, .gen_args = ulang_type_vec_clone(name.gen_args)};
+    return name_new(.mod_path = name.mod_path, .base = name.base, .gen_args = ulang_type_vec_clone(name.gen_args)};
 }

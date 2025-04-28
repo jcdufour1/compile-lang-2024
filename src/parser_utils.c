@@ -306,7 +306,7 @@ Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom lang_type) {
     String string = {0};
     string_extend_cstr(&a_main, &string, "i");
     string_extend_strv(&a_main, &string, str_view_slice(lang_type.str.base, 1, lang_type.str.base.count - 1));
-    return lang_type_atom_new((Name) {.mod_path = (Str_view) {0}, .base = string_to_strv(string)}, 0);
+    return lang_type_atom_new(name_new(.mod_path = (Str_view) {0}, .base = string_to_strv(string)}, 0);
 }
 
 // TODO: return name from this function

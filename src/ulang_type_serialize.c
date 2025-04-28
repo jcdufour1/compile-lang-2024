@@ -22,7 +22,7 @@ Name serialize_ulang_type_fn(Str_view mod_path, Ulang_type_fn ulang_type) {
     String name = {0};
     extend_name(false, &name, serialize_ulang_type_tuple(mod_path, ulang_type.params));
     string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(mod_path, *ulang_type.return_type)));
-    return (Name) {.mod_path = mod_path, .base = string_to_strv(name)};
+    return name_new(mod_path, string_to_strv(name), (Ulang_type_vec) {0}, 0);
 }
 
 Name serialize_ulang_type_tuple(Str_view mod_path, Ulang_type_tuple ulang_type) {
@@ -31,11 +31,11 @@ Name serialize_ulang_type_tuple(Str_view mod_path, Ulang_type_tuple ulang_type) 
         Ulang_type curr = vec_at_const(ulang_type.ulang_types, idx);
         string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(mod_path, curr)));
     }
-    return (Name) {.mod_path = mod_path, .base = string_to_strv(name)};
+    return name_new(mod_path, string_to_strv(name), (Ulang_type_vec) {0}, 0);
 }
 
 Name serialize_ulang_type_regular(Str_view mod_path, Ulang_type_regular ulang_type) {
-    return (Name) {.mod_path = mod_path, serialize_ulang_type_atom( ulang_type.atom)};
+    return name_new(mod_path, serialize_ulang_type_atom(ulang_type.atom), (Ulang_type_vec) {0}, 0 /* TODO */);
 }
 
 Str_view serialize_ulang_type_vec(Str_view mod_path, Ulang_type_vec vec) {
@@ -56,7 +56,6 @@ Name serialize_ulang_type(Str_view mod_path, Ulang_type ulang_type) {
         case ULANG_TYPE_TUPLE:
             todo();
     }
-    assert(name.count > 1);
-    return (Name) {.mod_path = mod_path, .base = str_view_slice(name, 0, name.count - 1)};
+    unreachable("");
 }
 

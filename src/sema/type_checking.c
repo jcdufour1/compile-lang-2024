@@ -395,7 +395,7 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
             return tast_string_wrap(tast_string_new(
                 old_string->pos,
                 old_string->data,
-                (Name) {.mod_path = env.curr_mod_path, .base = old_string->name}
+                name_new(.mod_path = env.curr_mod_path, .base = old_string->name}
             ));
         }
         case UAST_NUMBER: {
@@ -1103,7 +1103,7 @@ bool try_set_struct_literal_types(
     Tast_struct_literal* new_lit = tast_struct_literal_new(
         lit->pos,
         new_membs,
-        (Name) {.mod_path = env.curr_mod_path, .base = lit->name},
+        name_new(.mod_path = env.curr_mod_path, .base = lit->name},
         dest_lang_type
     );
     *new_tast = tast_expr_wrap(tast_struct_literal_wrap(new_lit));
@@ -1172,18 +1172,18 @@ bool try_set_array_literal_types(
 
     Tast_variable_def_vec inner_def_membs = {0};
     for (size_t idx = 0; idx < new_membs.info.count; idx++) {
-        vec_append(&a_main, &inner_def_membs, tast_variable_def_new(lit->pos, gen_arg, false, (Name) {.mod_path = env.curr_mod_path, .base = util_literal_name_new()}));
+        vec_append(&a_main, &inner_def_membs, tast_variable_def_new(lit->pos, gen_arg, false, name_new(.mod_path = env.curr_mod_path, .base = util_literal_name_new()}));
     }
     Tast_struct_def* inner_def = tast_struct_def_new(
         lit->pos,
-        (Struct_def_base) {.members = inner_def_membs, .name = (Name) {.mod_path = env.curr_mod_path, .base = util_literal_name_new()}}
+        (Struct_def_base) {.members = inner_def_membs, .name = name_new(.mod_path = env.curr_mod_path, .base = util_literal_name_new()}}
     );
     sym_tbl_add(&vec_at(&env.ancesters, 0)->symbol_table, tast_struct_def_wrap(inner_def));
 
     Tast_struct_literal* new_inner_lit = tast_struct_literal_new(
         lit->pos,
         new_membs,
-        (Name) {.mod_path = env.curr_mod_path, .base = lit->name},
+        name_new(.mod_path = env.curr_mod_path, .base = lit->name},
         lang_type_struct_const_wrap(lang_type_struct_new(lit->pos, lang_type_atom_new(inner_def->base.name, 0)))
     );
     Ulang_type dummy = {0};
@@ -1218,7 +1218,7 @@ bool try_set_array_literal_types(
     Tast_struct_literal* new_lit = tast_struct_literal_new(
         new_inner_lit->pos,
         new_lit_membs,
-        (Name) {.mod_path = env.curr_mod_path, .base = util_literal_name_new()},
+        name_new(.mod_path = env.curr_mod_path, .base = util_literal_name_new()},
         dest_lang_type
     );
     *new_tast = tast_expr_wrap(tast_struct_literal_wrap(new_lit));
@@ -1432,7 +1432,7 @@ bool try_set_function_call_types_sum_case(Tast_sum_case** new_case, Uast_expr_ve
             Uast_variable_def* new_def = uast_variable_def_new(
                 sum_case->pos,
                 lang_type_to_ulang_type( sum_case->tag->lang_type),
-                (Name) {.mod_path = env.curr_mod_path, .base = uast_symbol_unwrap(vec_at(&args, 0))->name.base}
+                name_new(.mod_path = env.curr_mod_path, .base = uast_symbol_unwrap(vec_at(&args, 0))->name.base}
             );
             usymbol_add_defer( uast_variable_def_wrap(new_def));
 
@@ -1466,7 +1466,7 @@ static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Ulang_type_fn l
     for (size_t idx = 0; idx < lang_type.params.ulang_types.info.count; idx++) {
         vec_append(&a_main, &params, uast_param_new(
             pos,
-            uast_variable_def_new(pos, vec_at(&lang_type.params.ulang_types, idx), (Name) {.mod_path = env.curr_mod_path, .base = util_literal_name_new()}),
+            uast_variable_def_new(pos, vec_at(&lang_type.params.ulang_types, idx), name_new(.mod_path = env.curr_mod_path, .base = util_literal_name_new()}),
             false, // TODO: test case for optional in function callback
             false, // TODO: test case for variadic in function callback
             NULL
@@ -2002,7 +2002,7 @@ bool try_set_member_access_types(
 
         }
         case TAST_MODULE_ALIAS: {
-            Uast_symbol* sym = uast_symbol_new(access->pos, (Name) {
+            Uast_symbol* sym = uast_symbol_new(access->pos, name_new(
                 .mod_path = tast_module_alias_unwrap(new_callee)->mod_path,
                 .base = access->member_name->name.base,
                 .gen_args = access->member_name->name.gen_args
@@ -2630,7 +2630,7 @@ error:
 }
 
 bool try_set_label_types(Tast_label** new_tast, const Uast_label* lang_label) {
-    *new_tast = tast_label_new(lang_label->pos, (Name) {.mod_path = env.curr_mod_path, .base = lang_label->name});
+    *new_tast = tast_label_new(lang_label->pos, name_new(.mod_path = env.curr_mod_path, .base = lang_label->name});
     return lang_label;
 }
 

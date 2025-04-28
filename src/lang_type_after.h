@@ -15,7 +15,7 @@ static inline Lang_type_atom lang_type_primitive_get_atom(Lang_type_primitive la
             string_extend_cstr(&a_main, &string, "i");
             string_extend_int64_t(&a_main, &string, lang_type_signed_int_const_unwrap(lang_type).bit_width);
             return lang_type_atom_new(
-                (Name) {.mod_path = (Str_view) {0}, .base = string_to_strv(string)},
+                name_new((Str_view) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
                 lang_type_signed_int_const_unwrap(lang_type).pointer_depth
             );
         }
@@ -25,7 +25,7 @@ static inline Lang_type_atom lang_type_primitive_get_atom(Lang_type_primitive la
             string_extend_cstr(&a_main, &string, "u");
             string_extend_int64_t(&a_main, &string, lang_type_unsigned_int_const_unwrap(lang_type).bit_width);
             return lang_type_atom_new(
-                (Name) {.mod_path = (Str_view) {0}, .base = string_to_strv(string)},
+                name_new((Str_view) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
                 lang_type_unsigned_int_const_unwrap(lang_type).pointer_depth
             );
         }
@@ -50,7 +50,7 @@ static inline Lang_type_atom lang_type_get_atom(Lang_type lang_type) {
         case LANG_TYPE_TUPLE:
             unreachable("");
         case LANG_TYPE_FN:
-            return lang_type_atom_new_from_cstr("", 1);
+            return lang_type_atom_new_from_cstr("", 1, 0);
         case LANG_TYPE_VOID: {
             Lang_type_atom thing = (Lang_type_atom) {0};
             return thing;

@@ -42,16 +42,16 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
 bool name_from_uname(Name* new_name, Uname name) {
     if (name.mod_alias.base.count < 1) {
         Uast_def* result = NULL;
-        if (usymbol_lookup(&result, (Name) {.mod_path = (Str_view) {0} /* TODO */, .base = name.base, .gen_args = name.gen_args})) {
-            *new_name = (Name) {.mod_path = (Str_view) {0} /* TODO */, .base = name.base, .gen_args = name.gen_args};
+        if (usymbol_lookup(&result, name_new((Str_view) {0} /* TODO */, name.base, name.gen_args, 0))) {
+            *new_name = name_new((Str_view) {0} /* TODO */, name.base, name.gen_args, 0);
             return true;
         }
-        *new_name = (Name) {.mod_path = name.mod_alias.mod_path, .base = name.base, .gen_args = name.gen_args};
+        *new_name = name_new(name.mod_alias.mod_path, name.base, name.gen_args, name.scope_id};
         return true;
     }
 
     Uast_def* result = NULL;
-    if (!usymbol_lookup(&result, (Name) {.mod_path = (Str_view) {0} /* TODO */, .base = name.mod_alias.base, .gen_args = (Ulang_type_vec) {0}})) {
+    if (!usymbol_lookup(&result, name_new(.mod_path = (Str_view) {0} /* TODO */, .base = name.mod_alias.base, .gen_args = (Ulang_type_vec) {0}})) {
         //log(LOG_DEBUG, TAST_FMT"\n", uname_print(name));
         //log(LOG_DEBUG, TAST_FMT"\n", name_print(name.mod_alias));
         //log(LOG_DEBUG, TAST_FMT"\n", str_view_print(name.mod_alias.base));
@@ -80,7 +80,7 @@ bool name_from_uname(Name* new_name, Uname name) {
     switch (result->type) {
         case UAST_MOD_ALIAS: {
             Uast_mod_alias* alias = uast_mod_alias_unwrap(result);
-            *new_name = (Name) {.mod_path = alias->mod_path.base, .base = name.base, .gen_args = name.gen_args};
+            *new_name = name_new(.mod_path = alias->mod_path.base, .base = name.base, .gen_args = name.gen_args};
             return true;
         }
         case UAST_IMPORT_PATH:
@@ -114,7 +114,7 @@ bool name_from_uname(Name* new_name, Uname name) {
 }
 
 Uname name_to_uname(Name name) {
-    Uast_mod_alias* new_alias = uast_mod_alias_new((Pos) {0} /* TODO */, (Name) {.base = util_literal_name_new()}, (Name) {.base = name.mod_path});
+    Uast_mod_alias* new_alias = uast_mod_alias_new((Pos) {0} /* TODO */, name_new(.base = util_literal_name_new()}, name_new(.base = name.mod_path});
     unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
     return (Uname) {.mod_alias = new_alias->name, .base = name.base, .gen_args = name.gen_args};
 }

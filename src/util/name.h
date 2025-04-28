@@ -8,6 +8,7 @@ typedef struct {
     Str_view mod_path;
     Str_view base;
     Ulang_type_vec gen_args;
+    Scope_id scope_id;
 } Name;
 
 typedef struct {
@@ -15,6 +16,8 @@ typedef struct {
     Str_view base;
     Ulang_type_vec gen_args;
 } Uname;
+
+Name name_new(Str_view mod_path, Str_view base, Ulang_type_vec gen_args, Scope_id scope_id);
 
 void extend_name(bool is_llvm, String* buf, Name name);
 

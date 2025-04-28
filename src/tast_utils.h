@@ -111,13 +111,13 @@ static inline Lang_type tast_literal_get_lang_type(const Tast_literal* lit) {
         case TAST_NUMBER:
             return tast_number_const_unwrap(lit)->lang_type;
         case TAST_STRING:
-            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(tast_literal_get_pos(lit), lang_type_atom_new_from_cstr("u8", 1))));
+            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(tast_literal_get_pos(lit), lang_type_atom_new_from_cstr("u8", 1, 0))));
         case TAST_VOID:
             return lang_type_void_const_wrap(lang_type_void_new(tast_literal_get_pos(lit)));
         case TAST_ENUM_LIT:
             return tast_enum_lit_const_unwrap(lit)->lang_type;
         case TAST_CHAR:
-            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(tast_literal_get_pos(lit), lang_type_atom_new_from_cstr("u8", 0))));
+            return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(tast_literal_get_pos(lit), lang_type_atom_new_from_cstr("u8", 0, 0))));
         case TAST_SUM_LIT:
             return tast_sum_lit_const_unwrap(lit)->sum_lang_type;
         case TAST_RAW_UNION_LIT:

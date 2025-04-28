@@ -113,7 +113,7 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_
         return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(new_int));
     } else if (str_view_cstr_is_equal(atom.str.base, "void")) {
         todo();
-    } else if (lang_type_atom_is_equal(atom, lang_type_atom_new_from_cstr("u8", 0))) {
+    } else if (lang_type_atom_is_equal(atom, lang_type_atom_new_from_cstr("u8", 0, 0))) {
         return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type.pos, atom)));
     } else if (str_view_cstr_is_equal(atom.str.base, "u8")) {
         // TODO: does this make sense for u8**, etc.?
