@@ -71,23 +71,12 @@ Str_view llvm_struct_sym_print_internal(const Llvm_struct_sym* sym, int indent) 
     return string_to_strv(buf);
 }
 
-Str_view llvm_enum_sym_print_internal(const Llvm_enum_sym* sym, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "enum_sym", indent);
-    llvm_extend_sym_typed_base(&buf, sym->base);
-
-    return string_to_strv(buf);
-}
-
 Str_view llvm_symbol_typed_print_internal(const Llvm_symbol* sym, int indent) {
     switch (sym->type) {
         case LLVM_PRIMITIVE_SYM:
             return llvm_primitive_sym_print_internal(llvm_primitive_sym_const_unwrap(sym), indent);
         case LLVM_STRUCT_SYM:
             return llvm_struct_sym_print_internal(llvm_struct_sym_const_unwrap(sym), indent);
-        case LLVM_ENUM_SYM:
-            return llvm_enum_sym_print_internal(llvm_enum_sym_const_unwrap(sym), indent);
     }
     unreachable("");
 }
@@ -100,8 +89,6 @@ Str_view llvm_literal_print_internal(const Llvm_literal* lit, int indent) {
             return llvm_string_print_internal(llvm_string_const_unwrap(lit), indent);
         case LLVM_VOID:
             return llvm_void_print_internal(llvm_void_const_unwrap(lit), indent);
-        case LLVM_ENUM_LIT:
-            return llvm_enum_lit_print_internal(llvm_enum_lit_const_unwrap(lit), indent);
         case LLVM_CHAR:
             return llvm_char_print_internal(llvm_char_const_unwrap(lit), indent);
         case LLVM_FUNCTION_NAME:
@@ -146,17 +133,6 @@ Str_view llvm_string_print_internal(const Llvm_string* lit, int indent) {
     string_extend_cstr_indent(&print_arena, &buf, "string", indent);
     extend_name(false, &buf, lit->name);
     string_extend_strv(&print_arena, &buf, lit->data);
-    string_extend_cstr(&print_arena, &buf, "\n");
-
-    return string_to_strv(buf);
-}
-
-Str_view llvm_enum_lit_print_internal(const Llvm_enum_lit* num, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "enum_lit", indent);
-    extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, num->lang_type);
-    string_extend_int64_t(&print_arena, &buf, num->data);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);

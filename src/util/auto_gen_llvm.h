@@ -159,14 +159,6 @@ static Llvm_type llvm_gen_primitive_sym(void) {
     return primitive;
 }
 
-static Llvm_type llvm_gen_enum_sym(void) {
-    Llvm_type lang_enum = {.name = llvm_name_new("symbol", "enum_sym", false)};
-
-    append_member(&lang_enum.members, "Sym_typed_base", "base");
-
-    return lang_enum;
-}
-
 static Llvm_type llvm_gen_struct_sym(void) {
     Llvm_type lang_struct = {.name = llvm_name_new("symbol", "struct_sym", false)};
 
@@ -189,7 +181,6 @@ static Llvm_type llvm_gen_symbol(void) {
 
     vec_append(&gen_a, &sym.sub_types, llvm_gen_primitive_sym());
     vec_append(&gen_a, &sym.sub_types, llvm_gen_struct_sym());
-    vec_append(&gen_a, &sym.sub_types, llvm_gen_enum_sym());
 
     return sym;
 }
@@ -239,23 +230,12 @@ static Llvm_type llvm_gen_void(void) {
     return lang_void;
 }
 
-static Llvm_type llvm_gen_enum_lit(void) {
-    Llvm_type enum_lit = {.name = llvm_name_new("literal", "enum_lit", false)};
-
-    append_member(&enum_lit.members, "int64_t", "data");
-    append_member(&enum_lit.members, "Lang_type", "lang_type");
-    append_member(&enum_lit.members, "Name", "name");
-
-    return enum_lit;
-}
-
 static Llvm_type llvm_gen_literal(void) {
     Llvm_type lit = {.name = llvm_name_new("expr", "literal", false)};
 
     vec_append(&gen_a, &lit.sub_types, llvm_gen_number());
     vec_append(&gen_a, &lit.sub_types, llvm_gen_string());
     vec_append(&gen_a, &lit.sub_types, llvm_gen_void());
-    vec_append(&gen_a, &lit.sub_types, llvm_gen_enum_lit());
     vec_append(&gen_a, &lit.sub_types, llvm_gen_char());
     vec_append(&gen_a, &lit.sub_types, llvm_gen_function_name());
 

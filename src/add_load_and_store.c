@@ -588,13 +588,13 @@ static Name load_enum_lit(
      
     Tast_enum_lit* old_lit
 ) {
-    Llvm_enum_lit* enum_lit = llvm_enum_lit_new(
+    Llvm_number* enum_lit = llvm_number_new(
         old_lit->pos,
         old_lit->data,
         old_lit->lang_type,
         (Name) {.mod_path = env.curr_mod_path, .base = util_literal_name_new()}
     );
-    unwrap(alloca_add( llvm_expr_wrap(llvm_literal_wrap(llvm_enum_lit_wrap(enum_lit)))));
+    unwrap(alloca_add( llvm_expr_wrap(llvm_literal_wrap(llvm_number_wrap(enum_lit)))));
     return enum_lit->name;
 }
 

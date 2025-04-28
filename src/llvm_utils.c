@@ -18,8 +18,6 @@ Sym_typed_base* llvm_symbol_typed_get_base_ref(Llvm_symbol* sym) {
             return &llvm_primitive_sym_unwrap(sym)->base;
         case LLVM_STRUCT_SYM:
             return &llvm_struct_sym_unwrap(sym)->base;
-        case LLVM_ENUM_SYM:
-            return &llvm_enum_sym_unwrap(sym)->base;
     }
     unreachable("");
 }
@@ -34,8 +32,6 @@ Name llvm_symbol_typed_get_name(const Llvm_symbol* sym) {
             return llvm_primitive_sym_const_unwrap(sym)->base.name;
         case LLVM_STRUCT_SYM:
             return llvm_struct_sym_const_unwrap(sym)->base.name;
-        case LLVM_ENUM_SYM:
-            return llvm_enum_sym_const_unwrap(sym)->base.name;
     }
     unreachable("");
 }
@@ -123,8 +119,6 @@ Lang_type llvm_symbol_typed_get_lang_type(const Llvm_symbol* sym) {
             return llvm_primitive_sym_const_unwrap(sym)->base.lang_type;
         case LLVM_STRUCT_SYM:
             return llvm_struct_sym_const_unwrap(sym)->base.lang_type;
-        case LLVM_ENUM_SYM:
-            return llvm_enum_sym_const_unwrap(sym)->base.lang_type;
     }
     unreachable("");
 }
@@ -137,8 +131,6 @@ Lang_type llvm_literal_get_lang_type(const Llvm_literal* lit) {
             return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(llvm_literal_get_pos(lit), lang_type_atom_new_from_cstr("u8", 1))));
         case LLVM_VOID:
             return lang_type_void_const_wrap(lang_type_void_new(llvm_literal_get_pos(lit)));
-        case LLVM_ENUM_LIT:
-            return llvm_enum_lit_const_unwrap(lit)->lang_type;
         case LLVM_CHAR:
             // TODO: remove lang_type_atom from lang_type_char and lang_type_string
             return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(llvm_literal_get_pos(lit), lang_type_atom_new_from_cstr("u8", 0))));
@@ -219,8 +211,6 @@ Name llvm_literal_get_name(const Llvm_literal* lit) {
             return llvm_string_const_unwrap(lit)->name;
         case LLVM_VOID:
             return llvm_void_const_unwrap(lit)->name;
-        case LLVM_ENUM_LIT:
-            return llvm_enum_lit_const_unwrap(lit)->name;
         case LLVM_CHAR:
             return llvm_char_const_unwrap(lit)->name;
         case LLVM_FUNCTION_NAME:
