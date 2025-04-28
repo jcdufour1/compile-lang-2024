@@ -9,6 +9,7 @@
 #include <symbol_table.h>
 #include <file.h>
 #include <symbol_log.h>
+#include <type_checking.h>
  
 // TODO: make separate Env struct for every pass (each Env will need Env_common for things that all envs require (eg. for symbol table lookups))
 
@@ -83,10 +84,15 @@ void do_passes(const Parameters* params) {
     //vec_append(&a_main, &untyped->children, uast_def_wrap(uast_variable_def_wrap(test_def)));
 
     //log_tree(LOG_DEBUG, tast_block_wrap(*root));
-    Tast_block* typed = analysis_1(untyped);
-    if (error_count > 0) {
+    Tast_block* typed = NULL;
+    if (!try_set_block_types(&typed, untyped, false, true)) {
+        log(LOG_DEBUG, "try_set_block_types failed\n");
+        assert(error_count > 0);
         fail();
     }
+    log(LOG_DEBUG, "try_set_block_types succedded\n");
+    assert(error_count < 1);
+    
     unwrap(typed);
     arena_reset(&print_arena);
     log(LOG_NOTE, "arena usage: %zu\n", arena_get_total_usage(&a_main));

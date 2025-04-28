@@ -1487,12 +1487,12 @@ static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Ulang_type_fn l
 
 
 bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_call) {
-    bool status = true;
-
     Tast_expr* new_callee = NULL;
     if (!try_set_expr_types(&new_callee, fun_call->callee)) {
         return false;
     }
+
+    bool status = true;
 
     Uast_def* fun_def = NULL;
     switch (new_callee->type) {
@@ -1527,7 +1527,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
             Tast_expr* new_item = NULL;
             switch (check_generic_assignment(
-                
                 &new_item,
                 lang_type_from_ulang_type( vec_at(&sum_def->base.members, (size_t)sum_callee->tag->data)->lang_type),
                 vec_at(&fun_call->args, 0),
@@ -1545,6 +1544,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                              vec_at(&sum_def->base.members, (size_t)sum_callee->tag->data)->lang_type
                         ))
                    );
+                   status = false;
                    break;
                 case CHECK_ASSIGN_ERROR:
                     todo();
@@ -1562,7 +1562,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 sum_callee->sum_lang_type
             );
             *new_call = tast_literal_wrap(tast_sum_lit_wrap(new_lit));
-            return true;
+            return status;
         }
         case TAST_SUM_CASE: {
             if (fun_call->args.info.count != 1) {
@@ -1574,7 +1574,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 return false;
             }
             *new_call = tast_sum_case_wrap(new_case);
-            return true;
+            return status;
         }
         case TAST_LITERAL: {
             if (tast_literal_unwrap(new_callee)->type == TAST_SUM_LIT) {
@@ -1591,7 +1591,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     return false;
                 }
                 *new_call = new_callee;
-                return true;
+                return status;
             } else {
                 unwrap(usymbol_lookup(&fun_def,  tast_function_lit_unwrap(tast_literal_unwrap(new_callee))->name));
                 break;
@@ -1652,7 +1652,8 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             corres_arg = uast_expr_clone(param->optional_default);
         } else {
             // TODO: print max count correctly for variadic fucntions
-            msg_invalid_count_function_args( fun_call, fun_decl, param_idx + 1, param_idx + 1);
+            msg_invalid_count_function_args(fun_call, fun_decl, param_idx + 1, param_idx + 1);
+            status = false;
             goto error;
         }
 
@@ -1700,6 +1701,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
     if (!is_variadic && fun_call->args.info.count > params->params.info.count) {
         msg_invalid_count_function_args( fun_call, fun_decl, params->params.info.count, params->params.info.count);
+        status = false;
         goto error;
     }
 
@@ -2227,7 +2229,6 @@ bool try_set_function_params_types(
 }
 
 bool try_set_return_types(Tast_return** new_tast, Uast_return* rtn) {
-    *new_tast = NULL;
     bool status = true;
     PARENT_OF old_parent_of = env.parent_of;
     env.parent_of = PARENT_OF_RETURN;
@@ -2239,7 +2240,7 @@ bool try_set_return_types(Tast_return** new_tast, Uast_return* rtn) {
         case CHECK_ASSIGN_OK:
             break;
         case CHECK_ASSIGN_INVALID:
-            msg_invalid_return_type( rtn->pos, new_child, rtn->is_auto_inserted);
+            msg_invalid_return_type(rtn->pos, new_child, rtn->is_auto_inserted);
             status = false;
             goto error;
         case CHECK_ASSIGN_ERROR:
@@ -2257,8 +2258,6 @@ error:
 }
 
 bool try_set_break_types(Tast_break** new_tast, Uast_break* lang_break) {
-    *new_tast = NULL;
-
     bool status = true;
     PARENT_OF old_parent_of = env.parent_of;
     env.parent_of = PARENT_OF_BREAK;
@@ -2424,6 +2423,7 @@ static bool check_for_exhaustiveness_inner(
                 LOG_ERROR, EXPECT_FAIL_DUPLICATE_DEFAULT, env.file_path_to_text, curr_if->pos,
                 "duplicate default in switch statement\n"
             );
+            return false;
         }
         exhaustive_data->default_is_pre = true;
         return true;
@@ -2528,8 +2528,7 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
                 STR_VIEW_FMT"\n", string_print(string)
             );
         }
-        // TODO: return status?
-        return true;
+        return status;
 }
 
 bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang_switch) {
@@ -2712,6 +2711,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         goto error;
     }
 
+    // TODO: remove this variable?
     Tast_stmt_vec aux_stmts = {0};
 
     Usymbol_iter iter = usym_tbl_iter_new(new_sym_coll.usymbol_table);
@@ -2773,6 +2773,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         Tast_stmt* new_rtn_statement = NULL;
         switch (try_set_stmt_types(&new_rtn_statement, uast_return_wrap(rtn_statement))) {
             case STMT_ERROR:
+                status = false;
                 goto error;
             case STMT_OK:
                 break;
@@ -2801,6 +2802,7 @@ error:
     } else {
         assert(error_count > 0);
     }
+    log(LOG_DEBUG, "%s\n", bool_print(status));
     return status;
 }
 

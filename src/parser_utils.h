@@ -2,9 +2,6 @@
 #define PARSER_UTIL_H
 
 #include "str_view.h"
-#include "tast.h"
-#include "llvm.h"
-#include "tasts.h"
 #include "symbol_table.h"
 #include "tast_utils.h"
 #include "uast_utils.h"
