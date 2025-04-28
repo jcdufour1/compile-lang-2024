@@ -256,6 +256,9 @@ void symbol_update(Tast_def* item) {
 }
 
 bool symbol_lookup(Tast_def** result, Name key) {
+    // TODO: remove?
+    key.scope_id = 0;
+
     return generic_symbol_lookup((void**)result,  serialize_name( key), (Get_tbl_from_collection_fn)sym_get_tbl_from_collection);
 }
 
@@ -306,6 +309,9 @@ bool usym_tbl_lookup(Uast_def** result, const Usymbol_table* sym_table, Name key
 }
 
 bool usymbol_lookup(Uast_def** result, Name key) {
+    // TODO: remove?
+    key.scope_id = 0;
+
     if (key.mod_path.count < 1) {
         if (usym_tbl_lookup( result, &env.primitives, key)) {
             return true;
@@ -351,8 +357,7 @@ void* all_get_tbl_from_collection(Symbol_collection* collection) {
 
 bool alloca_add(Llvm* item) {
     return generic_symbol_add(
-        
-        serialize_name( llvm_tast_get_name(item)),
+        serialize_name(llvm_tast_get_name(item)),
         item,
         (Get_tbl_from_collection_fn)all_get_tbl_from_collection
     );
@@ -376,7 +381,10 @@ bool all_tbl_lookup(Llvm** result, const Alloca_table* sym_table, Str_view key) 
 }
 
 bool alloca_lookup(Llvm** result, Name key) {
-    return generic_symbol_lookup((void**)result,  serialize_name( key), (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
+    // TODO: remove?
+    key.scope_id = 0;
+
+    return generic_symbol_lookup((void**)result,  serialize_name(key), (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
 }
 
 //

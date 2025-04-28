@@ -452,7 +452,8 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
     if (!usymbol_lookup(&sym_def, sym_untyped->name)) {
         Name base_name = sym_untyped->name;
         memset(&base_name.gen_args, 0, sizeof(base_name.gen_args));
-        if (!usymbol_lookup(&sym_def,  base_name)) {
+        if (!usymbol_lookup(&sym_def, base_name)) {
+            log(LOG_DEBUG, TAST_FMT"\n", name_print(sym_untyped->name));
             msg_undefined_symbol(env.file_path_to_text, sym_untyped);
             return false;
         }
