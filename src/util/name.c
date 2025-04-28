@@ -141,6 +141,6 @@ void extend_name(bool is_llvm, String* buf, Name name) {
     return;
 }
 
-Name name_clone(Name name) {
-    return name_new(name.mod_path, name.base, ulang_type_vec_clone(name.gen_args), name.scope_id /* TODO */);
+Name name_clone(Name name, Scope_id new_scope) {
+    return name_new(name.mod_path, name.base, ulang_type_vec_clone(name.gen_args, new_scope), name.scope_id /* TODO */);
 }

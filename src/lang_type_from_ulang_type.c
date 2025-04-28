@@ -114,7 +114,8 @@ bool name_from_uname(Name* new_name, Uname name) {
 }
 
 Uname name_to_uname(Name name) {
-    Uast_mod_alias* new_alias = uast_mod_alias_new((Pos) {0} /* TODO */, name_new(util_literal_name_new()), name_new(name.mod_path));
+    // TODO: may be incorrect
+    Uast_mod_alias* new_alias = uast_mod_alias_new((Pos) {0} /* TODO */, name_new(util_literal_name_new(), (Str_view) {0}, (Ulang_type_vec) {0}, 0), name_new((Str_view) {0}, name.mod_path, (Ulang_type_vec) {0}, 0));
     unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
     return (Uname) {.mod_alias = new_alias->name, .base = name.base, .gen_args = name.gen_args};
 }

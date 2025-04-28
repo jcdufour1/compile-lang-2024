@@ -158,7 +158,7 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             return EXPAND_NAME_NORMAL;
     }
 
-    Uast_expr* expr = uast_expr_clone(uast_lang_def_unwrap(def)->expr);
+    Uast_expr* expr = uast_expr_clone(uast_lang_def_unwrap(def)->expr, 0/* TODO */);
     switch (expr->type) {
         case UAST_MEMBER_ACCESS: {
             Uast_member_access* access = uast_member_access_unwrap(expr);

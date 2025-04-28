@@ -40,7 +40,7 @@ void extend_uname(String* buf, Uname name);
 
 void extend_name(bool is_llvm, String* buf, Name name);
 
-Name name_clone(Name name);
+Name name_clone(Name name, Scope_id scope_id);
 
 #define name_print(name) str_view_print(name_print_internal(false, name))
 

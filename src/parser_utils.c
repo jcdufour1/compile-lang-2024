@@ -310,7 +310,7 @@ Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom lang_type) {
     return lang_type_atom_new(name_new((Str_view) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0), 0);
 }
 
-// TODO: return name from this function
+// TODO: return Name instead of Str_view
 // accept mod_path as parameter
 Str_view util_literal_name_new_prefix(const char* debug_prefix) {
     static String_vec literal_strings = {0};
@@ -329,6 +329,7 @@ Str_view util_literal_name_new_prefix(const char* debug_prefix) {
     return str_view;
 }
 
+// TODO: return Name instead of Str_view
 Str_view util_literal_name_new(void) {
     return util_literal_name_new_prefix("");
 }

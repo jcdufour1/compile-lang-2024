@@ -193,7 +193,7 @@ static bool resolve_generics_serialize_struct_def_base(
 
     for (size_t idx_memb = 0; idx_memb < old_base.members.info.count; idx_memb++) {
         // TODO: gen thign
-        vec_append(&a_main, &new_base->members, uast_variable_def_clone(vec_at(&old_base.members, idx_memb)));
+        vec_append(&a_main, &new_base->members, uast_variable_def_clone(vec_at(&old_base.members, idx_memb), 0));
     }
 
     for (size_t idx_gen = 0; idx_gen < gen_args.info.count; idx_gen++) {
@@ -410,9 +410,11 @@ static bool resolve_generics_serialize_function_decl(
     // TODO: figure out way to avoid making new Uast_function_decl every time
     memset(new_decl, 0, sizeof(*new_decl));
 
+    Scope_id new_scope = scope_id_new();
+
     Uast_param_vec params = {0};
     for (size_t idx = 0; idx < old_decl->params->params.info.count; idx++) {
-        vec_append(&a_main, &params, uast_param_clone(vec_at(&old_decl->params->params, idx)));
+        vec_append(&a_main, &params, uast_param_clone(vec_at(&old_decl->params->params, idx), new_scope));
     }
 
     Ulang_type new_rtn_type = old_decl->return_type;
@@ -437,12 +439,11 @@ static bool resolve_generics_serialize_function_decl(
         }
         Name curr_gen = vec_at(&old_decl->generics, idx_arg)->child->name;
         generic_sub_lang_type(&new_rtn_type, new_rtn_type, curr_gen, vec_at(&gen_args, idx_arg));
-        generic_sub_block( new_block, curr_gen, vec_at(&gen_args, idx_arg));
+        generic_sub_block(new_block, curr_gen, vec_at(&gen_args, idx_arg));
     }
 
     if (idx_arg < old_decl->generics.info.count) {
         msg_invalid_count_generic_args(
-            
             old_decl->pos,
             pos_gen_args,
             gen_args,
@@ -457,7 +458,7 @@ static bool resolve_generics_serialize_function_decl(
         (Uast_generic_param_vec) {0},
         uast_function_params_new(old_decl->params->pos, params),
         new_rtn_type,
-        name_new(env.curr_mod_path, old_decl->name.base, gen_args, old_decl->name.scope_id)
+        name_new(env.curr_mod_path, old_decl->name.base, gen_args, new_scope)
     );
 
     return true;
@@ -472,6 +473,7 @@ bool resolve_generics_function_def(
     Pos pos_gen_args
 ) {
     bool status = true;
+    Scope_id new_scope = scope_id_new(); 
 
     Uast_function_decl* new_decl = NULL;
     if (!function_decl_generics_are_present(def->decl)) {
@@ -479,7 +481,7 @@ bool resolve_generics_function_def(
     }
 
     // TODO: try to avoid cloning block if resolve_generics_serialize_function_decl fails
-    Uast_block* new_block = uast_block_clone(def->body);
+    Uast_block* new_block = uast_block_clone(def->body, new_scope);
     assert(new_block != def->body);
     assert(new_block->symbol_collection.usymbol_table.table_tasts != def->body->symbol_collection.usymbol_table.table_tasts);
 

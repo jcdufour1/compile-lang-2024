@@ -61,7 +61,7 @@ static Lang_type_struct rm_tuple_lang_type_tuple(Lang_type_tuple lang_type, Pos 
 
     Struct_def_base base = {
         .members = members,
-        .name = name_new(env.curr_mod_path, serialize_lang_type_tuple(lang_type)}
+        .name = name_new(env.curr_mod_path, serialize_lang_type_tuple(lang_type), (Ulang_type_vec) {0}, 0 /* TODO */)
     };
     // todo: remove untyped things here
     Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
@@ -94,7 +94,7 @@ static Lang_type rm_tuple_lang_type_sum(Lang_type_sum lang_type, Pos lang_type_p
         // TODO: make helper functions, etc. for line below, because this is too much to do every time
         lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_pos, 64, 0))),
         false,
-        name_new(.mod_path = env.curr_mod_path, .base = str_view_from_cstr("tag")}
+        name_new(env.curr_mod_path, str_view_from_cstr("tag"), (Ulang_type_vec) {0}, 0)
     );
     vec_append(&a_main, &members, tag);
 
@@ -112,13 +112,13 @@ static Lang_type rm_tuple_lang_type_sum(Lang_type_sum lang_type, Pos lang_type_p
         lang_type_pos,
         rm_tuple_lang_type( lang_type_raw_union_const_wrap(lang_type_raw_union_new(item_type_def->pos, lang_type_atom_new(item_type_def->base.name, 0))), lang_type_pos),
         false,
-        name_new(.mod_path = env.curr_mod_path, .base = str_view_from_cstr("item")}
+        name_new(env.curr_mod_path, str_view_from_cstr("item"), (Ulang_type_vec) {0}, 0)
     );
     vec_append(&a_main, &members, item);
 
     Struct_def_base base = {
         .members = members,
-        .name = name_new(.mod_path = env.curr_mod_path, .base = util_literal_name_new_prefix("temp")}
+        .name = name_new(.mod_path = env.curr_mod_path, .base = util_literal_name_new_prefix("temp"))
     };
     
     Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
@@ -148,7 +148,7 @@ static Lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
                 // TODO: make helper functions, etc. for line below, because this is too much to do every time
                 lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0))),
                 false,
-                name_new(.mod_path = env.curr_mod_path, .base = str_view_from_cstr("tag")}
+                name_new(.mod_path = env.curr_mod_path, .base = str_view_from_cstr("tag"))
             );
             vec_append(&a_main, &members, tag);
 
@@ -257,7 +257,7 @@ static Llvm_variable_def* load_variable_def_clone(Tast_variable_def* old_var_def
         old_var_def->pos,
         rm_tuple_lang_type( old_var_def->lang_type, old_var_def->pos),
         old_var_def->is_variadic,
-        name_new(.mod_path = env.curr_mod_path, .base = util_literal_name_new()},
+        name_new(.mod_path = env.curr_mod_path, .base = util_literal_name_new()),
         old_var_def->name
     );
 }
@@ -315,7 +315,7 @@ static Llvm_function_params* do_function_def_alloca(
             (Pos) {0} /* TODO */,
             rtn_lang_type,
             false,
-            name_new(.mod_path = env.curr_mod_path, .base = util_literal_name_new_prefix("return_as_parameter")}
+            name_new(.mod_path = env.curr_mod_path, .base = util_literal_name_new_prefix("return_as_parameter"))
         );
         Llvm_variable_def* param = load_variable_def_clone( new_def);
         do_function_def_alloca_param( new_params, new_block, param);
@@ -427,7 +427,7 @@ static Name load_function_call(
     Name def_name = {0};
     Lang_type fun_lang_type = old_call->lang_type;
     if (rtn_is_struct) {
-        def_name = name_new(.mod_path = env.curr_mod_path, .base = util_literal_name_new_prefix("result_fun_call")};
+        def_name = name_new(.mod_path = env.curr_mod_path, .base = util_literal_name_new_prefix("result_fun_call"));
         Tast_variable_def* def = tast_variable_def_new(old_call->pos, old_call->lang_type, false, def_name);
         unwrap(sym_tbl_add(&vec_at(&env.ancesters, 0)->symbol_table, tast_variable_def_wrap(def)));
         
@@ -440,7 +440,7 @@ static Name load_function_call(
     Llvm_function_call* new_call = llvm_function_call_new(
         old_call->pos,
         new_args,
-        name_new(.mod_path = env.curr_mod_path, .base = util_literal_name_new()},
+        name_new(.mod_path = env.curr_mod_path, .base = util_literal_name_new());
         load_expr(new_block, old_call->callee),
         fun_lang_type
     );
@@ -481,7 +481,7 @@ static Name load_ptr_function_call(
         old_call->pos,
         old_call->lang_type,
         false,
-        name_new(.mod_path = env.curr_mod_path, .base = util_literal_name_new()}
+        name_new(.mod_path = env.curr_mod_path, .base = util_literal_name_new());
     );
     unwrap(symbol_add( tast_variable_def_wrap(new_var)));
     load_variable_def( new_block, new_var);

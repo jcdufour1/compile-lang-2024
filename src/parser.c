@@ -179,14 +179,14 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     unwrap(usym_tbl_add(&vec_at(&env.ancesters, 0)->usymbol_table, uast_import_path_wrap(uast_import_path_new(
         mod_path_pos,
         block,
-        name_new(.mod_path = (Str_view) {0}, .base = mod_path}
+        name_new((Str_view) {0}, mod_path, (Ulang_type_vec) {0}, 0)
     ))));
 
 finish:
     *mod_alias = uast_mod_alias_new(
         alias_tk.pos,
-        name_new(.mod_path = env.curr_mod_path, .base = alias_tk.text, .gen_args = (Ulang_type_vec) {0}},
-        name_new(.mod_path = env.curr_mod_path, .base = mod_path, .gen_args = (Ulang_type_vec) {0}}
+        name_new(env.curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, 0),
+        name_new(env.curr_mod_path, mod_path, (Ulang_type_vec) {0}, 0)
     );
     unwrap(usymbol_add( uast_mod_alias_wrap(*mod_alias)));
     return true;
@@ -878,7 +878,7 @@ static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk
 
     *pos = lang_type_token.pos;
 
-    lang_type->str = (Uname) {.mod_alias = name_new(.mod_path = env.curr_mod_path, .base = mod_alias, .gen_args = (Ulang_type_vec) {0}}, .base = lang_type_token.text};
+    lang_type->str = (Uname) {.mod_alias = name_new(env.curr_mod_path, mod_alias, (Ulang_type_vec) {0}, 0), lang_type_token.text};
     while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
         lang_type->pointer_depth++;
     }
@@ -1072,7 +1072,6 @@ static PARSE_STATUS parse_function_parameters(Uast_function_params** result, Tk_
 }
 
 static PARSE_STATUS parse_function_decl_common(
-     
     Uast_function_decl** fun_decl,
     Tk_view* tokens
 ) {
@@ -1107,7 +1106,7 @@ static PARSE_STATUS parse_function_decl_common(
         rtn_type = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0), close_par_tk.pos));
     }
 
-    *fun_decl = uast_function_decl_new(name_token.pos, gen_params, params, rtn_type, name_new(.mod_path = env.curr_mod_path, .base = name_token.text});
+    *fun_decl = uast_function_decl_new(name_token.pos, gen_params, params, rtn_type, name_new(env.curr_mod_path, name_token.text));
     if (!usymbol_add( uast_function_decl_wrap(*fun_decl))) {
         return msg_redefinition_of_symbol( uast_function_decl_wrap(*fun_decl));
     }

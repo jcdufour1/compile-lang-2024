@@ -6,6 +6,7 @@
 #include <uast_utils.h>
 #include <env.h>
 #include <symbol_iter.h>
+#include <parser_utils.h>
 
 void generic_sub_return(Uast_return* rtn, Name gen_param, Ulang_type gen_arg) {
     (void) rtn;
@@ -28,6 +29,8 @@ void generic_sub_lang_type_regular(
 ) {
     Name temp = {0};
     unwrap(name_from_uname(&temp, lang_type.atom.str));
+    Scope_id new_scope = scope_id_new(); 
+
     //log(LOG_DEBUG, TAST_FMT"\n", uname_print(lang_type.atom.str));
     //log(LOG_DEBUG, TAST_FMT"\n", name_print(lang_type.atom.str.mod_alias));
     //log(LOG_DEBUG, TAST_FMT"\n", str_view_print(lang_type.atom.str.base));
@@ -35,7 +38,7 @@ void generic_sub_lang_type_regular(
     //log(LOG_DEBUG, TAST_FMT"\n", name_print(gen_param));
     //log(LOG_DEBUG, TAST_FMT"\n", name_print(temp));
     if (name_is_equal(gen_param, temp)) {
-        *new_lang_type = ulang_type_clone(gen_arg);
+        *new_lang_type = ulang_type_clone(gen_arg, new_scope);
 
         int16_t base_depth = lang_type.atom.pointer_depth;
         int16_t gen_prev_depth = ulang_type_get_pointer_depth(*new_lang_type);
@@ -44,7 +47,7 @@ void generic_sub_lang_type_regular(
         return;
     }
 
-    lang_type = ulang_type_regular_clone(lang_type);
+    lang_type = ulang_type_regular_clone(lang_type, new_scope);
     Ulang_type_vec* gen_args = &lang_type.atom.str.gen_args;
     //log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
     for (size_t idx = 0; idx < gen_args->info.count; idx++) {
