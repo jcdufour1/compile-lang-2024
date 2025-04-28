@@ -855,6 +855,7 @@ static void emit_function_decl(String* output, const Llvm_function_decl* fun_dec
 
 static void emit_label(String* output, const Llvm_label* label) {
     string_extend_cstr(&a_main, output, "\n");
+    log(LOG_DEBUG, TAST_FMT"\n", name_print(label->name));
     llvm_extend_name(output, label->name);
     string_extend_cstr(&a_main, output, ":\n");
 }

@@ -40,7 +40,13 @@ bool try_str_view_consume_size_t(size_t* result, Str_view* str_view, bool ignore
 
 Str_view util_literal_name_new(void);
 
-Str_view util_literal_name_new_prefix(const char* debug_prefix);
+Str_view util_literal_name_new_prefix_internal(const char* file, int line, const char* debug_prefix);
+
+#define util_literal_name_new_prefix(debug_prefix) \
+    util_literal_name_new_prefix_internal(__FILE__, __LINE__, debug_prefix)
+
+#define util_literal_name_new() \
+    util_literal_name_new_prefix_internal(__FILE__, __LINE__, "")
 
 Scope_id scope_id_new(void);
 

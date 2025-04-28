@@ -23,14 +23,18 @@ void serialize_str_view(String* buf, Str_view str_view) {
 // TODO: remove this
 bool try_str_view_consume_size_t(size_t* result, Str_view* str_view, bool ignore_underscore);
 
-Str_view serialize_name(Name name) {
+Str_view serialize_name_symbol_table(Name name) {
     String buf = {0};
 
-    if (name.scope_id > 0) {
-        string_extend_cstr(&a_main, &buf, "s");
-        string_extend_size_t(&a_main, &buf, name.scope_id);
-        string_extend_cstr(&a_main, &buf, "_");
+    String new_mod_path = {0};
+    for (size_t idx = 0; idx < name.mod_path.count; idx++) {
+        if (str_view_at(name.mod_path, idx) == '.') {
+            vec_append(&a_main, &new_mod_path, '_');
+        } else {
+            vec_append(&a_main, &new_mod_path, str_view_at(name.mod_path, idx));
+        }
     }
+    name.mod_path = string_to_strv(new_mod_path);
 
     if (name.mod_path.count > 0) {
         size_t path_count = 1;
@@ -72,6 +76,20 @@ Str_view serialize_name(Name name) {
     return string_to_strv(buf);
 }
 
+Str_view serialize_name(Name name) {
+    String buf = {0};
+
+    if (name.scope_id > 0) {
+        string_extend_cstr(&a_main, &buf, "s");
+        string_extend_size_t(&a_main, &buf, name.scope_id);
+        string_extend_cstr(&a_main, &buf, "_");
+    }
+
+    string_extend_strv(&a_main, &buf, serialize_name_symbol_table(name));
+
+    return string_to_strv(buf);
+}
+
 // TODO: move this macro
 Str_view name_print_internal(bool serialize, Name name) {
     if (serialize) {
@@ -90,6 +108,12 @@ Str_view uname_print_internal(Uname name) {
 }
 
 void extend_name_msg(String* buf, Name name) {
+    if (name.scope_id > 0) {
+        string_extend_cstr(&a_main, buf, "s");
+        string_extend_size_t(&a_main, buf, name.scope_id);
+        string_extend_cstr(&a_main, buf, "_");
+    }
+
     string_extend_strv(&print_arena, buf, name.mod_path);
     if (name.mod_path.count > 0) {
         string_extend_cstr(&print_arena, buf, "::");

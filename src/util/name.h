@@ -26,6 +26,8 @@ void extend_name_llvm(String* buf, Name name);
 
 void serialize_str_view(String* buf, Str_view str_view);
 
+Str_view serialize_name_symbol_table(Name name);
+
 Str_view serialize_name(Name name);
 
 Str_view name_print_internal(bool serialize, Name name);

@@ -1315,7 +1315,7 @@ static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, To
         &base,
         name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, 0),
         tokens,
-        ulang_type_atom_new((Uname) {.mod_alias = name_new(name.text, (Str_view) {0}, (Ulang_type_vec) {0}, 0)}, 0)
+        ulang_type_atom_new((Uname) {.base = name.text}, 0)
     )) {
         return PARSE_ERROR;
     }
@@ -1552,7 +1552,7 @@ static PARSE_STATUS parse_for_range_internal(Uast_block** result, Uast_variable_
     );
     vec_append(&a_main, &outer->children, uast_assignment_wrap(init_assign));
 
-    Name incre_name = name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, scope_id_new());
+    Name incre_name = name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0);
 
     Uast_for_with_cond* inner_for = uast_for_with_cond_new(
         outer->pos,
@@ -1588,6 +1588,7 @@ static PARSE_STATUS parse_for_range_internal(Uast_block** result, Uast_variable_
         )))
     );
     vec_append(&a_main, &inner->children, uast_assignment_wrap(increment));
+    log(LOG_DEBUG, TAST_FMT, uast_block_print(outer));
 
     *result = outer;
     return PARSE_OK;

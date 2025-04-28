@@ -231,7 +231,7 @@ bool symbol_do_add_defered(Tast_def** redefined_sym) {
 
 // returns false if symbol has already been added to the table
 bool sym_tbl_add(Symbol_table* sym_table, Tast_def* item) {
-    return generic_tbl_add((Generic_symbol_table*)sym_table, serialize_name( tast_def_get_name(item)), item);
+    return generic_tbl_add((Generic_symbol_table*)sym_table, serialize_name_symbol_table( tast_def_get_name(item)), item);
 }
 
 void* sym_get_tbl_from_collection(Symbol_collection* collection) {
@@ -241,22 +241,22 @@ void* sym_get_tbl_from_collection(Symbol_collection* collection) {
 bool symbol_add(Tast_def* item) {
     return generic_symbol_add(
         
-        serialize_name( tast_def_get_name(item)),
+        serialize_name_symbol_table( tast_def_get_name(item)),
         item,
         (Get_tbl_from_collection_fn)sym_get_tbl_from_collection
     );
 }
 
 void sym_tbl_update(Symbol_table* sym_table, Tast_def* item) {
-    generic_tbl_update((Generic_symbol_table*)sym_table, serialize_name( tast_def_get_name(item)), item);
+    generic_tbl_update((Generic_symbol_table*)sym_table, serialize_name_symbol_table( tast_def_get_name(item)), item);
 }
 
 void symbol_update(Tast_def* item) {
-    generic_symbol_update( serialize_name( tast_def_get_name(item)), item, (Get_tbl_from_collection_fn)sym_get_tbl_from_collection);
+    generic_symbol_update( serialize_name_symbol_table( tast_def_get_name(item)), item, (Get_tbl_from_collection_fn)sym_get_tbl_from_collection);
 }
 
 bool symbol_lookup(Tast_def** result, Name key) {
-    return generic_symbol_lookup((void**)result,  serialize_name( key), (Get_tbl_from_collection_fn)sym_get_tbl_from_collection);
+    return generic_symbol_lookup((void**)result,  serialize_name_symbol_table( key), (Get_tbl_from_collection_fn)sym_get_tbl_from_collection);
 }
 
 void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, int recursion_depth) {
@@ -275,14 +275,14 @@ void* usym_get_tbl_from_collection(Symbol_collection* collection) {
 bool usymbol_add(Uast_def* item) {
     return generic_symbol_add(
         
-        serialize_name( uast_def_get_name(item)),
+        serialize_name_symbol_table( uast_def_get_name(item)),
         item,
         (Get_tbl_from_collection_fn)usym_get_tbl_from_collection
     );
 }
 
 bool sym_tbl_lookup(Tast_def** result, const Symbol_table* sym_table, Name key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, serialize_name( key));
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, serialize_name_symbol_table( key));
 }
 
 //
@@ -294,15 +294,15 @@ bool usymbol_do_add_defered(Uast_def** redefined_sym) {
 
 // returns false if symbol has already been added to the table
 bool usym_tbl_add(Usymbol_table* sym_table, Uast_def* item) {
-    return generic_tbl_add((Generic_symbol_table*)sym_table, serialize_name( uast_def_get_name(item)), item);
+    return generic_tbl_add((Generic_symbol_table*)sym_table, serialize_name_symbol_table( uast_def_get_name(item)), item);
 }
 
 void usym_tbl_update(Usymbol_table* sym_table, Uast_def* item) {
-    generic_tbl_update((Generic_symbol_table*)sym_table, serialize_name( uast_def_get_name(item)), item);
+    generic_tbl_update((Generic_symbol_table*)sym_table, serialize_name_symbol_table( uast_def_get_name(item)), item);
 }
 
 bool usym_tbl_lookup(Uast_def** result, const Usymbol_table* sym_table, Name key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, serialize_name( key));
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, serialize_name_symbol_table( key));
 }
 
 bool usymbol_lookup(Uast_def** result, Name key) {
@@ -329,7 +329,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
         }
     }
 
-    return generic_symbol_lookup((void**)result,  serialize_name(key), (Get_tbl_from_collection_fn)usym_get_tbl_from_collection);
+    return generic_symbol_lookup((void**)result,  serialize_name_symbol_table(key), (Get_tbl_from_collection_fn)usym_get_tbl_from_collection);
 }
 
 //
@@ -342,7 +342,7 @@ bool alloca_do_add_defered(Llvm** redefined_sym) {
 
 // returns false if symbol has already been added to the table
 bool all_tbl_add(Alloca_table* sym_table, Llvm* item) {
-    return generic_tbl_add((Generic_symbol_table*)sym_table, serialize_name( llvm_tast_get_name(item)), item);
+    return generic_tbl_add((Generic_symbol_table*)sym_table, serialize_name_symbol_table( llvm_tast_get_name(item)), item);
 }
 
 void* all_get_tbl_from_collection(Symbol_collection* collection) {
@@ -352,23 +352,23 @@ void* all_get_tbl_from_collection(Symbol_collection* collection) {
 bool alloca_add(Llvm* item) {
     return generic_symbol_add(
         
-        serialize_name( llvm_tast_get_name(item)),
+        serialize_name_symbol_table( llvm_tast_get_name(item)),
         item,
         (Get_tbl_from_collection_fn)all_get_tbl_from_collection
     );
 }
 
 void all_tbl_update(Alloca_table* sym_table, Llvm* item) {
-    generic_tbl_update((Generic_symbol_table*)sym_table, serialize_name( llvm_tast_get_name(item)), item);
+    generic_tbl_update((Generic_symbol_table*)sym_table, serialize_name_symbol_table( llvm_tast_get_name(item)), item);
 }
 
 void usymbol_update(Uast_def* item) {
     // TODO: do extra stuff similar to usymbol_add?
-    generic_symbol_update( serialize_name( uast_def_get_name(item)), item, (Get_tbl_from_collection_fn)usym_get_tbl_from_collection);
+    generic_symbol_update( serialize_name_symbol_table( uast_def_get_name(item)), item, (Get_tbl_from_collection_fn)usym_get_tbl_from_collection);
 }
 
 void alloca_update(Llvm* item) {
-    generic_symbol_update( serialize_name( llvm_tast_get_name(item)), item, (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
+    generic_symbol_update( serialize_name_symbol_table( llvm_tast_get_name(item)), item, (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
 }
 
 bool all_tbl_lookup(Llvm** result, const Alloca_table* sym_table, Str_view key) {
@@ -376,7 +376,7 @@ bool all_tbl_lookup(Llvm** result, const Alloca_table* sym_table, Str_view key) 
 }
 
 bool alloca_lookup(Llvm** result, Name key) {
-    return generic_symbol_lookup((void**)result,  serialize_name( key), (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
+    return generic_symbol_lookup((void**)result,  serialize_name_symbol_table( key), (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
 }
 
 //

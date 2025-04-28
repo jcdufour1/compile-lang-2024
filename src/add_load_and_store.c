@@ -380,7 +380,6 @@ static void add_label(Llvm_block* block, Name label_name, Pos pos, bool defer_ad
 }
 
 static void if_for_add_cond_goto(
-     
     Tast_operator* old_oper,
     Llvm_block* block,
     Name label_name_if_true,
@@ -392,7 +391,7 @@ static void if_for_add_cond_goto(
     assert(label_name_if_false.base.count > 0);
     Llvm_cond_goto* cond_goto = llvm_cond_goto_new(
         pos,
-        load_operator( block, old_oper),
+        load_operator(block, old_oper),
         label_name_if_true,
         label_name_if_false
     );
@@ -401,7 +400,7 @@ static void if_for_add_cond_goto(
 }
 
 static Tast_assignment* for_loop_cond_var_assign_new(Name sym_name, Pos pos) {
-    Uast_literal* literal = util_uast_literal_new_from_int64_t( 1, TOKEN_INT_LITERAL, pos);
+    Uast_literal* literal = util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, pos);
     Uast_operator* operator = uast_binary_wrap(uast_binary_new(
         pos,
         uast_symbol_wrap(uast_symbol_new(pos, sym_name)),
@@ -416,7 +415,6 @@ static Tast_assignment* for_loop_cond_var_assign_new(Name sym_name, Pos pos) {
 }
 
 static Name load_function_call(
-     
     Llvm_block* new_block,
     Tast_function_call* old_call
 ) {
@@ -473,7 +471,6 @@ static Name load_function_call(
 
 // this function is needed for situations such as switching directly on sum
 static Name load_ptr_function_call(
-     
     Llvm_block* new_block,
     Tast_function_call* old_call
 ) {
@@ -497,7 +494,6 @@ static Name load_ptr_function_call(
 }
 
 static Tast_variable_def* load_struct_literal_internal(
-     
     Llvm_block* new_block,
     Tast_struct_literal* old_lit
 ) {
@@ -537,7 +533,6 @@ static Tast_variable_def* load_struct_literal_internal(
 }
 
 static Name load_ptr_struct_literal(
-     
     Llvm_block* new_block,
     Tast_struct_literal* old_lit
 ) {
@@ -551,7 +546,6 @@ static Name load_struct_literal(Llvm_block* new_block, Tast_struct_literal* old_
 }
 
 static Name load_string(
-     
     Tast_string* old_lit
 ) {
     Llvm_string* string = llvm_string_new(
@@ -1615,7 +1609,7 @@ static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, N
 
     Name if_body = name_new(env.curr_mod_path, util_literal_name_new_prefix("start_if_body"), (Ulang_type_vec) {0}, 0);
 
-    if_for_add_cond_goto( old_oper, new_block, if_body, next_if);
+    if_for_add_cond_goto(old_oper, new_block, if_body, next_if);
 
     add_label( new_block, if_body, old_block->pos, false);
 
@@ -1736,7 +1730,6 @@ static Llvm_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
 
     vec_append(&a_main, &env.ancesters, &new_branch_block->symbol_collection);
 
-
     Tast_operator* operator = old_for->condition->child;
     Name check_cond_label = name_new(env.curr_mod_path, util_literal_name_new_prefix("check_cond"), (Ulang_type_vec) {0}, 0);
     Llvm_goto* jmp_to_check_cond_label = llvm_goto_new(old_for->pos, check_cond_label);
@@ -1754,21 +1747,20 @@ static Llvm_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
 
     vec_append(&a_main, &new_branch_block->children, llvm_goto_wrap(jmp_to_check_cond_label));
 
-    add_label( new_branch_block, check_cond_label, pos, true);
+    add_label(new_branch_block, check_cond_label, pos, true);
 
     //load_operator( new_branch_block, operator);
     //Tast* dummy = NULL;
     //unwrap(symbol_lookup(&dummy,  str_view_from_cstr("str18")));
 
     if_for_add_cond_goto(
-        
         operator,
         new_branch_block,
         after_check_label,
         after_for_loop_label
     );
 
-    add_label( new_branch_block, after_check_label, pos, true);
+    add_label(new_branch_block, after_check_label, pos, true);
 
     //for (size_t idx = 0; idx < new_branch_block->children.info.count; idx++) {
     //    log(LOG_DEBUG, TAST_FMT"\n", tast_print(vec_at(&new_branch_block->children, idx)));
@@ -1783,7 +1775,7 @@ static Llvm_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
         //for (size_t idx = 0; idx < new_branch_block->children.info.count; idx++) {
         //    log(LOG_DEBUG, TAST_FMT"\n", tast_print(vec_at(&new_branch_block->children, idx)));
         //}
-        load_stmt( new_branch_block, vec_at(&old_for->body->children, idx));
+        load_stmt(new_branch_block, vec_at(&old_for->body->children, idx));
     }
 
     for (size_t idx = 0; idx < new_branch_block->children.info.count; idx++) {
@@ -1793,7 +1785,7 @@ static Llvm_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
     vec_append(&a_main, &new_branch_block->children, llvm_goto_wrap(
         llvm_goto_new(old_for->pos, check_cond_label)
     ));
-    add_label( new_branch_block, after_for_loop_label, pos, true);
+    add_label(new_branch_block, after_for_loop_label, pos, true);
 
     Llvm* dummy = NULL;
 
@@ -1848,11 +1840,11 @@ static void load_break(
 
     assert(env.label_if_break.base.count > 0);
     Llvm_goto* new_goto = llvm_goto_new(old_break->pos, env.label_if_break);
+    log(LOG_DEBUG, TAST_FMT, name_print(env.label_if_break));
     vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
 }
 
 static void load_label(
-     
     Llvm_block* new_block,
     Tast_label* old_label
 ) {
@@ -1863,7 +1855,6 @@ static void load_label(
 }
 
 static void load_continue(
-     
     Llvm_block* new_block,
     Tast_continue* old_continue
 ) {

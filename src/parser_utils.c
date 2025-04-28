@@ -312,13 +312,21 @@ Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom lang_type) {
 
 // TODO: return Name instead of Str_view
 // accept mod_path as parameter
-Str_view util_literal_name_new_prefix(const char* debug_prefix) {
+Str_view util_literal_name_new_prefix_internal(const char* file, int line, const char* debug_prefix) {
     static String_vec literal_strings = {0};
     static size_t count = 0;
 
     String var_name = {0};
-    string_extend_cstr(&a_main, &var_name, debug_prefix);
     string_extend_cstr(&a_main, &var_name, "str");
+
+    // TODO: use better solution for debugging
+    string_extend_cstr(&a_main, &var_name, "file____");
+    string_extend_strv(&a_main, &var_name, serialize_name(name_new(str_view_from_cstr(file), (Str_view) {0}, (Ulang_type_vec) {0}, 0)));
+    string_extend_cstr(&a_main, &var_name, "_");
+    string_extend_size_t(&a_main, &var_name, line);
+    string_extend_cstr(&a_main, &var_name, "_");
+
+    string_extend_cstr(&a_main, &var_name, debug_prefix);
     string_extend_size_t(&a_main, &var_name, count);
     vec_append(&a_main, &literal_strings, var_name);
 
@@ -327,11 +335,6 @@ Str_view util_literal_name_new_prefix(const char* debug_prefix) {
     String symbol_in_vec = literal_strings.buf[literal_strings.info.count - 1];
     Str_view str_view = {.str = symbol_in_vec.buf, .count = symbol_in_vec.info.count};
     return str_view;
-}
-
-// TODO: return Name instead of Str_view
-Str_view util_literal_name_new(void) {
-    return util_literal_name_new_prefix("");
 }
 
 Scope_id scope_id_new(void) {
