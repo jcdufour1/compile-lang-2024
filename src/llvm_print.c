@@ -366,14 +366,6 @@ Str_view llvm_struct_def_print_internal(const Llvm_struct_def* def, int indent) 
     return string_to_strv(buf);
 }
 
-Str_view llvm_enum_def_print_internal(const Llvm_enum_def* def, int indent) {
-    String buf = {0};
-
-    extend_struct_def_base(&buf, "enum_def", def->base, indent);
-
-    return string_to_strv(buf);
-}
-
 Str_view llvm_primitive_def_print_internal(const Llvm_primitive_def* def, int indent) {
     String buf = {0};
 
@@ -471,8 +463,6 @@ Str_view llvm_def_print_internal(const Llvm_def* def, int indent) {
             return llvm_variable_def_print_internal(llvm_variable_def_const_unwrap(def), indent);
         case LLVM_STRUCT_DEF:
             return llvm_struct_def_print_internal(llvm_struct_def_const_unwrap(def), indent);
-        case LLVM_ENUM_DEF:
-            return llvm_enum_def_print_internal(llvm_enum_def_const_unwrap(def), indent);
         case LLVM_PRIMITIVE_DEF:
             return llvm_primitive_def_print_internal(llvm_primitive_def_const_unwrap(def), indent);
         case LLVM_LABEL:

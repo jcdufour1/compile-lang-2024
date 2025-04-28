@@ -28,8 +28,6 @@ static bool is_extern_c(const Llvm* llvm) {
             return false;
         case LLVM_STRUCT_DEF:
             return false;
-        case LLVM_ENUM_DEF:
-            return false;
         case LLVM_PRIMITIVE_DEF:
             return false;
         case LLVM_LABEL:
@@ -246,32 +244,6 @@ static void extend_literal_decl_prefix(String* output, String* literals, const L
     if (literal->type == LLVM_STRING) {
         emit_symbol_normal( literals, llvm_literal_get_name(literal), literal);
     }
-}
-
-static void tast_extend_literal_decl_prefix(String* output, const Tast_literal* literal) {
-    (void) output;
-    (void) literal;
-    todo();
-    //assert(lang_type_get_str(tast_literal_get_lang_type(literal)).base.count > 0);
-    //if (str_view_cstr_is_equal(lang_type_get_str(tast_literal_get_lang_type(literal)), "u8")) {
-    //    if (lang_type_get_pointer_depth(tast_literal_get_lang_type(literal)) != 1) {
-    //        todo();
-    //    }
-    //    string_extend_cstr(&a_main, output, " @.");
-    //    string_extend_strv(&a_main, output, tast_literal_get_name(literal));
-    //} else if (lang_type_atom_is_signed(lang_type_get_atom(tast_literal_get_lang_type(literal)))) {
-    //    assert(tast_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE);
-    //    if (lang_type_get_pointer_depth(tast_literal_get_lang_type(literal)) != 0) {
-    //        todo();
-    //    }
-    //    vec_append(&a_main, output, ' ');
-    //    tast_extend_literal(output, literal);
-    //} else if (tast_literal_get_lang_type(literal).type == LANG_TYPE_ENUM) {
-    //    vec_append(&a_main, output, ' ');
-    //    tast_extend_literal(output, literal);
-    //} else {
-    //    unreachable(LLVM_FMT"\n", tast_stmt_print(tast_expr_const_wrap(tast_literal_const_wrap(literal))));
-    //}
 }
 
 static void extend_literal_decl(String* output, String* literals, const Llvm_literal* literal, bool noundef) {
@@ -1027,8 +999,6 @@ static void emit_def(String* struct_defs, String* output, String* literals, cons
         case LLVM_STRUCT_DEF:
             emit_struct_def( struct_defs, llvm_struct_def_const_unwrap(def));
             return;
-        case LLVM_ENUM_DEF:
-            return;
         case LLVM_PRIMITIVE_DEF:
             todo();
         case LLVM_LITERAL_DEF:
@@ -1105,8 +1075,6 @@ static void emit_def_sometimes(String* struct_defs, String* output, String* lite
             return;
         case LLVM_STRUCT_DEF:
             emit_struct_def( struct_defs, llvm_struct_def_const_unwrap(def));
-            return;
-        case LLVM_ENUM_DEF:
             return;
         case LLVM_PRIMITIVE_DEF:
             todo();

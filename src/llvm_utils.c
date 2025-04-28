@@ -70,8 +70,6 @@ Llvm_id llvm_get_llvm_id_def(const Llvm_def* def) {
             return llvm_variable_def_const_unwrap(def)->llvm_id;
         case LLVM_STRUCT_DEF:
             unreachable("");
-        case LLVM_ENUM_DEF:
-            unreachable("");
         case LLVM_PRIMITIVE_DEF:
             unreachable("");
         case LLVM_FUNCTION_DECL:
@@ -169,8 +167,6 @@ Lang_type llvm_def_get_lang_type(const Llvm_def* def) {
     switch (def->type) {
         case LLVM_FUNCTION_DEF:
             unreachable("");
-        case LLVM_ENUM_DEF:
-            return lang_type_enum_const_wrap(lang_type_enum_new(llvm_def_get_pos(def), lang_type_atom_new(llvm_enum_def_const_unwrap(def)->base.name, 0)));
         case LLVM_VARIABLE_DEF:
             return llvm_variable_def_const_unwrap(def)->lang_type;
         case LLVM_FUNCTION_DECL:
@@ -275,8 +271,6 @@ Name llvm_def_get_name(const Llvm_def* def) {
             return llvm_variable_def_const_unwrap(def)->name_self;
         case LLVM_STRUCT_DEF:
             return llvm_struct_def_const_unwrap(def)->base.name;
-        case LLVM_ENUM_DEF:
-            return llvm_enum_def_const_unwrap(def)->base.name;
         case LLVM_FUNCTION_DECL:
             return llvm_function_decl_const_unwrap(def)->name;
         case LLVM_FUNCTION_DEF:
