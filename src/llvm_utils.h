@@ -20,14 +20,6 @@ Lang_type llvm_operator_get_lang_type(const Llvm_operator* operator);
 
 Lang_type* llvm_get_operator_lang_type_ref(Llvm_operator* operator);
 
-Llvm_id llvm_get_llvm_id_expr(const Llvm_expr* expr);
-
-Llvm_id llvm_get_llvm_id_def(const Llvm_def* def);
-
-Llvm_id llvm_get_llvm_id(const Llvm* llvm);
-
-Llvm_id llvm_id_from_get_name(Name llvm);
-
 Lang_type llvm_literal_get_lang_type(const Llvm_literal* lit);
 
 Lang_type llvm_expr_get_lang_type(const Llvm_expr* expr);

@@ -6,8 +6,6 @@
 #include <tast_forward_decl.h>
 #include <lang_type.h>
 
-typedef size_t Llvm_id;
-
 #define UAST_FMT STR_VIEW_FMT
 
 #define llvm_register_sym_print(reg_sym) \

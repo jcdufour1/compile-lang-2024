@@ -355,17 +355,6 @@ Name get_storage_location(Name sym_name) {
     unreachable("");
 }
 
-Llvm_id get_matching_label_id(Name name) {
-    Llvm* label_;
-    if (!alloca_lookup(&label_,  name)) {
-        symbol_log(LOG_DEBUG, env);
-        //unreachable(STR_VIEW_FMT"\n", str_view_print(name));
-        unreachable("");
-    }
-    Llvm_label* label = llvm_label_unwrap(llvm_def_unwrap(label_));
-    return label->llvm_id;
-}
-
 Tast_assignment* util_assignment_new(Uast_expr* lhs, Uast_expr* rhs) {
     Uast_assignment* assignment = uast_assignment_new(uast_expr_get_pos(lhs), lhs, rhs);
 

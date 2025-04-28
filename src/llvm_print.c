@@ -4,14 +4,6 @@
 #include <llvm_utils.h>
 #include <lang_type_print.h>
 
-static void extend_llvm_id(String* buf, const char* location, Llvm_id llvm_id) {
-    string_extend_cstr(&print_arena, buf, " (& ");
-    string_extend_cstr(&print_arena, buf, location);
-    string_extend_cstr(&print_arena, buf, ":");
-    string_extend_size_t(&print_arena, buf, llvm_id);
-    string_extend_cstr(&print_arena, buf, " &) ");
-}
-
 static void extend_child_name(String* buf, const char* location, Name child_name) {
     string_extend_cstr(&print_arena, buf, " (* ");
     string_extend_cstr(&print_arena, buf, location);
@@ -133,7 +125,6 @@ Str_view llvm_load_element_ptr_print_internal(const Llvm_load_element_ptr* load,
 
     string_extend_cstr_indent(&print_arena, &buf, "load_element_ptr", indent);
     extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, load->lang_type);
-    extend_llvm_id(&buf, "self", load->llvm_id);
     extend_name(false, &buf, load->name_self);
     extend_child_name(&buf, "member_name", load->name_self);
     extend_child_name(&buf, "src", load->llvm_src);
@@ -372,7 +363,6 @@ Str_view llvm_variable_def_print_internal(const Llvm_variable_def* def, int inde
     extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
     extend_name(false, &buf, def->name_self);
     extend_child_name(&buf, "corrs_param", def->name_corr_param);
-    extend_llvm_id(&buf, "self", def->llvm_id);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);

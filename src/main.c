@@ -94,10 +94,6 @@ void do_passes(const Parameters* params) {
     }
     assert(llvm_root);
 
-    llvm_root = assign_llvm_ids(llvm_root);
-    log(LOG_DEBUG, "\n"TAST_FMT, llvm_block_print(llvm_root));
-    arena_reset(&print_arena);
-
     if (error_count > 0) {
         unreachable("should have exited before now\n");
     }

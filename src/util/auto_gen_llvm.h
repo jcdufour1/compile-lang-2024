@@ -132,7 +132,6 @@ static Llvm_type llvm_gen_unary(void) {
     append_member(&unary.members, "Name", "child");
     append_member(&unary.members, "UNARY_TYPE", "token_type");
     append_member(&unary.members, "Lang_type", "lang_type");
-    append_member(&unary.members, "Llvm_id", "llvm_id");
     append_member(&unary.members, "Name", "name");
 
     return unary;
@@ -145,7 +144,6 @@ static Llvm_type llvm_gen_binary(void) {
     append_member(&binary.members, "Name", "rhs");
     append_member(&binary.members, "BINARY_TYPE", "token_type");
     append_member(&binary.members, "Lang_type", "lang_type");
-    append_member(&binary.members, "Llvm_id", "llvm_id");
     append_member(&binary.members, "Name", "name");
 
     return binary;
@@ -213,7 +211,6 @@ static Llvm_type llvm_gen_function_call(void) {
     append_member(&call.members, "Name_vec", "args");
     append_member(&call.members, "Name", "name_self");
     append_member(&call.members, "Name", "callee");
-    append_member(&call.members, "Llvm_id", "llvm_id");
     append_member(&call.members, "Lang_type", "lang_type");
 
     return call;
@@ -252,7 +249,6 @@ static Llvm_type llvm_gen_function_def(void) {
 
     append_member(&def.members, "Llvm_function_decl*", "decl");
     append_member(&def.members, "Llvm_block*", "body");
-    append_member(&def.members, "Llvm_id", "llvm_id");
 
     return def;
 }
@@ -262,7 +258,6 @@ static Llvm_type llvm_gen_variable_def(void) {
 
     append_member(&def.members, "Lang_type", "lang_type");
     append_member(&def.members, "bool", "is_variadic");
-    append_member(&def.members, "Llvm_id", "llvm_id");
     append_member(&def.members, "Name", "name_self"); // for loading from variable_def param
     append_member(&def.members, "Name", "name_corr_param"); // for loading from alloca
 
@@ -280,7 +275,6 @@ static Llvm_type llvm_gen_primitive_def(void) {
 static Llvm_type llvm_gen_label(void) {
     Llvm_type def = {.name = llvm_name_new("def", "label", false)};
 
-    append_member(&def.members, "Llvm_id", "llvm_id");
     append_member(&def.members, "Name", "name");
 
     return def;
@@ -301,7 +295,6 @@ static Llvm_type llvm_gen_struct_lit_def(void) {
     append_member(&def.members, "Llvm_expr_vec", "members");
     append_member(&def.members, "Name", "name");
     append_member(&def.members, "Lang_type", "lang_type");
-    append_member(&def.members, "Llvm_id", "llvm_id");
 
     return def;
 }
@@ -333,7 +326,6 @@ static Llvm_type llvm_gen_load_element_ptr(void) {
     Llvm_type load = {.name = llvm_name_new("llvm", "load_element_ptr", false)};
 
     append_member(&load.members, "Lang_type", "lang_type");
-    append_member(&load.members, "Llvm_id", "llvm_id");
     append_member(&load.members, "Name", "struct_index");
     append_member(&load.members, "Name", "llvm_src");
     append_member(&load.members, "Name", "name_self");
@@ -346,7 +338,6 @@ static Llvm_type llvm_gen_function_params(void) {
     Llvm_type params = {.name = llvm_name_new("llvm", "function_params", false)};
 
     append_member(&params.members, "Llvm_variable_def_vec", "params");
-    append_member(&params.members, "Llvm_id", "llvm_id");
 
     return params;
 }
@@ -364,7 +355,6 @@ static Llvm_type llvm_gen_goto(void) {
     Llvm_type lang_goto = {.name = llvm_name_new("llvm", "goto", false)};
 
     append_member(&lang_goto.members, "Name", "name");
-    append_member(&lang_goto.members, "Llvm_id", "llvm_id");
 
     return lang_goto;
 }
@@ -375,7 +365,6 @@ static Llvm_type llvm_gen_cond_goto(void) {
     append_member(&cond_goto.members, "Name", "condition");
     append_member(&cond_goto.members, "Name", "if_true");
     append_member(&cond_goto.members, "Name", "if_false");
-    append_member(&cond_goto.members, "Llvm_id", "llvm_id");
 
     return cond_goto;
 }
@@ -383,7 +372,6 @@ static Llvm_type llvm_gen_cond_goto(void) {
 static Llvm_type llvm_gen_alloca(void) {
     Llvm_type lang_alloca = {.name = llvm_name_new("llvm", "alloca", false)};
 
-    append_member(&lang_alloca.members, "Llvm_id", "llvm_id");
     append_member(&lang_alloca.members, "Lang_type", "lang_type");
     append_member(&lang_alloca.members, "Name", "name");
 
@@ -394,7 +382,6 @@ static Llvm_type llvm_gen_load_another_llvm(void) {
     Llvm_type load = {.name = llvm_name_new("llvm", "load_another_llvm", false)};
 
     append_member(&load.members, "Name", "llvm_src");
-    append_member(&load.members, "Llvm_id", "llvm_id");
     append_member(&load.members, "Lang_type", "lang_type");
     append_member(&load.members, "Name", "name");
 
@@ -406,7 +393,6 @@ static Llvm_type llvm_gen_store_another_llvm(void) {
 
     append_member(&store.members, "Name", "llvm_src");
     append_member(&store.members, "Name", "llvm_dest");
-    append_member(&store.members, "Llvm_id", "llvm_id");
     append_member(&store.members, "Lang_type", "lang_type");
     append_member(&store.members, "Name", "name");
 

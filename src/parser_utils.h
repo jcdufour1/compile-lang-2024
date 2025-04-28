@@ -42,8 +42,6 @@ Str_view util_literal_name_new(void);
 
 Str_view util_literal_name_new_prefix(const char* debug_prefix);
 
-Llvm_id get_prev_load_id(const Tast* var_call);
-
 Name get_storage_location(Name sym_name);
 
 bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, const Pos pos, Str_view str_view);
@@ -51,8 +49,6 @@ bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, const Pos pos, Str_vi
 static inline bool ishex(int c) {
     return isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
-
-Llvm_id get_matching_label_id(Name name);
 
 // lhs and rhs should not be used for other tasks after this
 Tast_assignment* util_assignment_new(Uast_expr* lhs, Uast_expr* rhs);
@@ -70,8 +66,6 @@ Tast_literal* util_tast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token
 Tast_operator* util_binary_typed_new(Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operation_type);
 
 //Tast_expr* util_unary_new(Tast_expr* child, TOKEN_TYPE operation_type, Lang_type init_lang_type);
-
-Llvm_id get_matching_fun_param_load_id(const Tast* src);
 
 const Tast* from_sym_definition_get_lang_type(const Tast* sym_def);
 

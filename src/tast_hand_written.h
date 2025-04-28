@@ -6,8 +6,6 @@
 #include <tast_forward_decl.h>
 #include <lang_type.h>
 
-typedef size_t Llvm_id;
-
 #define LLVM_REGISTER_SYM_FMT LANG_TYPE_FMT"    "TAST_FMT
 
 #define TAST_FMT STR_VIEW_FMT
@@ -28,7 +26,6 @@ typedef struct {
 typedef struct {
     Lang_type lang_type;
     Name name;
-    Llvm_id llvm_id;
 } Sym_typed_base;
 
 struct Tast_expr_;
