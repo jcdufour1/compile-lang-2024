@@ -395,7 +395,7 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
             return tast_string_wrap(tast_string_new(
                 old_string->pos,
                 old_string->data,
-                name_new(.mod_path = env.curr_mod_path, .base = old_string->name}
+                name_new(env.curr_mod_path, old_string->name, (Ulang_type_vec) {0}, 0)
             ));
         }
         case UAST_NUMBER: {

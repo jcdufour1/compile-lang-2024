@@ -297,6 +297,7 @@ int64_t i_lang_type_atom_to_bit_width(const Lang_type_atom atom) {
 
 // TODO: put strings in a hash table to avoid allocating duplicate types
 Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom lang_type) {
+    // TODO: remove or change this function
     assert(lang_type_atom_is_unsigned(lang_type));
 
     if (lang_type.pointer_depth != 0) {
@@ -306,7 +307,7 @@ Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom lang_type) {
     String string = {0};
     string_extend_cstr(&a_main, &string, "i");
     string_extend_strv(&a_main, &string, str_view_slice(lang_type.str.base, 1, lang_type.str.base.count - 1));
-    return lang_type_atom_new(name_new(.mod_path = (Str_view) {0}, .base = string_to_strv(string)}, 0);
+    return lang_type_atom_new(name_new((Str_view) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0), 0);
 }
 
 // TODO: return name from this function

@@ -236,7 +236,7 @@ static bool resolve_generics_ulang_type_internal_struct_like(
     Obj_unwrap obj_unwrap
 ) {
     Ustruct_def_base old_base = uast_def_get_struct_def_base(before_res);
-    Name new_name = name_new(.mod_path = old_base.name.mod_path, .base = old_base.name.base, .gen_args = ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args);
+    Name new_name = name_new(old_base.name.mod_path, old_base.name.base, ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args, ulang_type_regular_const_unwrap(lang_type).atom.str.scope_id);
 
     if (old_base.generics.info.count != new_name.gen_args.info.count) {
         msg_invalid_count_generic_args(
@@ -433,10 +433,10 @@ static bool resolve_generics_serialize_function_decl(
 
         for (size_t idx_fun_param = 0; idx_fun_param < params.info.count; idx_fun_param++) {
             Name curr_arg = vec_at(&old_decl->generics, idx_arg)->child->name;
-            generic_sub_param( vec_at(&params, idx_fun_param), curr_arg, vec_at(&gen_args, idx_arg));
+            generic_sub_param(vec_at(&params, idx_fun_param), curr_arg, vec_at(&gen_args, idx_arg));
         }
         Name curr_gen = vec_at(&old_decl->generics, idx_arg)->child->name;
-        generic_sub_lang_type( &new_rtn_type, new_rtn_type, curr_gen, vec_at(&gen_args, idx_arg));
+        generic_sub_lang_type(&new_rtn_type, new_rtn_type, curr_gen, vec_at(&gen_args, idx_arg));
         generic_sub_block( new_block, curr_gen, vec_at(&gen_args, idx_arg));
     }
 
@@ -457,7 +457,7 @@ static bool resolve_generics_serialize_function_decl(
         (Uast_generic_param_vec) {0},
         uast_function_params_new(old_decl->params->pos, params),
         new_rtn_type,
-        name_new(.mod_path = env.curr_mod_path, .base = old_decl->name.base, .gen_args = gen_args}
+        name_new(env.curr_mod_path, old_decl->name.base, gen_args, old_decl->name.scope_id)
     );
 
     return true;

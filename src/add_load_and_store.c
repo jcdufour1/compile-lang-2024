@@ -54,14 +54,14 @@ static Lang_type_struct rm_tuple_lang_type_tuple(Lang_type_tuple lang_type, Pos 
             lang_type_pos,
             rm_tuple_lang_type( vec_at_const(lang_type.lang_types, idx), lang_type_pos),
             false,
-            name_new(.mod_path = env.curr_mod_path, .base = util_literal_name_new_prefix("tuple_struct_member")}
+            name_new(env.curr_mod_path, util_literal_name_new_prefix("tuple_struct_member"), (Ulang_type_vec) {0}, 0)
         );
         vec_append(&a_main, &members, memb);
     }
 
     Struct_def_base base = {
         .members = members,
-        .name = name_new(.mod_path = env.curr_mod_path, .base = serialize_lang_type_tuple( lang_type)}
+        .name = name_new(env.curr_mod_path, serialize_lang_type_tuple(lang_type)}
     };
     // todo: remove untyped things here
     Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);

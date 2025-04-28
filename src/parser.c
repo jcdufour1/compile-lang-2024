@@ -157,7 +157,7 @@ static PARSE_STATUS msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
 
 static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alias_tk, Pos mod_path_pos, Str_view mod_path) {
     Uast_def* prev_def = NULL;
-    if (usymbol_lookup(&prev_def,  name_new(.mod_path = (Str_view) {0}, .base = mod_path})) {
+    if (usymbol_lookup(&prev_def,  name_new((Str_view) {0}, mod_path, (Ulang_type_vec) {0}, 0 /* TODO */))) {
         goto finish;
     }
 
