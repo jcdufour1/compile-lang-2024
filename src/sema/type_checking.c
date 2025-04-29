@@ -24,6 +24,9 @@
 #include <expand_lang_def.h>
 #include <ulang_type_serialize.h>
 
+
+// TODO: expected failure test for too few elems in struct init (non designated args)
+
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
     if (num <= 0) {
@@ -470,12 +473,8 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
         }
         case UAST_FUNCTION_DEF: {
             Uast_function_def* new_def = NULL;
-            if (function_decl_generics_are_present(uast_function_def_unwrap(sym_def)->decl)) {
-                if (!resolve_generics_function_def(&new_def,  uast_function_def_unwrap(sym_def), sym_untyped->name.gen_args, sym_untyped->pos)) {
-                    return false;
-                }
-            } else {
-                new_def = uast_function_def_unwrap(sym_def);
+            if (!resolve_generics_function_def(&new_def,  uast_function_def_unwrap(sym_def), sym_untyped->name.gen_args, sym_untyped->pos)) {
+                return false;
             }
             *new_tast = tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
                 sym_untyped->pos,
@@ -2801,7 +2800,6 @@ error:
     } else {
         assert(error_count > 0);
     }
-    log(LOG_DEBUG, "%s\n", bool_print(status));
     return status;
 }
 

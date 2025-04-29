@@ -22,7 +22,7 @@ Symbol_table symbol_table_clone(Symbol_table tbl, Scope_id new_scope) {
     if (tbl.count < 1) {
         return (Symbol_table) {0};
     }
-    todo();
+    unreachable("block should probably not be cloned after typechecking it");
 }
 
 Alloca_table alloca_table_clone(Alloca_table tbl, Scope_id new_scope) {
