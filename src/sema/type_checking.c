@@ -1316,23 +1316,20 @@ STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
     switch (uast->type) {
         case UAST_VARIABLE_DEF: {
             Tast_variable_def* new_def = NULL;
-            if (!try_set_variable_def_types( &new_def, uast_variable_def_unwrap(uast), true, false)) {
+            if (!try_set_variable_def_types(&new_def, uast_variable_def_unwrap(uast), true, false)) {
                 return STMT_ERROR;
             }
             return STMT_NO_STMT;
         }
         case UAST_FUNCTION_DECL: {
             Tast_function_decl* dummy = NULL;
-            if (!try_set_function_decl_types( &dummy, uast_function_decl_unwrap(uast), false)) {
+            if (!try_set_function_decl_types(&dummy, uast_function_decl_unwrap(uast), false)) {
                 assert(error_count > 0);
                 return STMT_ERROR;
             }
             return STMT_NO_STMT;
         }
         case UAST_FUNCTION_DEF: {
-            if (!try_set_function_def_types( uast_function_def_unwrap(uast), false)) {
-                return STMT_ERROR;
-            }
             return STMT_NO_STMT;
         }
         case UAST_STRUCT_DEF: {
@@ -1351,7 +1348,7 @@ STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
             return STMT_NO_STMT;
         }
         case UAST_LITERAL_DEF: {
-            if (!try_set_literal_def_types( uast_literal_def_unwrap(uast))) {
+            if (!try_set_literal_def_types(uast_literal_def_unwrap(uast))) {
                 return STMT_ERROR;
             }
             return STMT_NO_STMT;
@@ -2101,7 +2098,7 @@ bool try_set_literal_def_types(Uast_literal_def* tast) {
 }
 
 bool try_set_import_path_types(Tast_block** new_tast, Uast_import_path* tast) {
-    return try_set_block_types( new_tast, tast->block, false, false);
+    return try_set_block_types(new_tast, tast->block, false, false);
 }
 
 bool try_set_variable_def_types(
@@ -2157,49 +2154,6 @@ bool try_set_function_decl_types(
     }
 
     return true;
-}
-
-bool try_set_function_def_types(
-    Uast_function_def* def,
-    bool always_top_level // if true, new Tast_def will always be put in top_level
-) {
-    if (function_decl_generics_are_present(def->decl)) {
-        // if function defintion has generics, varients will be lazily instanciated elsewhere
-        return true;
-    }
-
-    Name prev_par_fun = env.name_parent_function;
-    env.name_parent_function = def->decl->name;
-    assert(env.name_parent_function.base.count > 0);
-    bool status = true;
-
-    Tast_function_decl* new_decl = NULL;
-    vec_append(&a_main, &env.ancesters, &def->body->symbol_collection);
-    if (!try_set_function_decl_types( &new_decl, def->decl, true)) {
-        status = false;
-        goto error;
-    }
-    vec_rem_last(&env.ancesters);
-
-    size_t prev_ancesters_count = env.ancesters.info.count;
-    Tast_block* new_body = NULL;
-    if (!try_set_block_types( &new_body, def->body, true, true)) {
-        status = false;
-        goto error;
-    }
-    assert(prev_ancesters_count == env.ancesters.info.count);
-
-    Tast_def* result = NULL;
-    unwrap(symbol_lookup(&result,  new_decl->name));
-    if (always_top_level) {
-        sym_tbl_update(&vec_at(&env.ancesters, 0)->symbol_table, tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
-    } else {
-        symbol_update( tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
-    }
-
-error:
-    env.name_parent_function = prev_par_fun;
-    return status;
 }
 
 bool try_set_function_params_types(
@@ -2783,6 +2737,20 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         vec_append(&a_main, &new_tasts, new_rtn_statement);
     }
 
+    log(LOG_DEBUG, "env.ancesters.info.count: %zu\n", env.ancesters.info.count);
+    if (env.ancesters.info.count == 1) {
+        Uast_def* main_fn_ = NULL;
+        if (!usymbol_lookup(&main_fn_, name_new((Str_view) {0}, str_view_from_cstr("main"), (Ulang_type_vec) {0}, 0))) {
+            log(LOG_WARNING, "no main function\n");
+            return true;
+        }
+        if (main_fn_->type != UAST_FUNCTION_DEF) {
+            todo();
+        }
+        Uast_function_def* new_def = NULL;
+        status = resolve_generics_function_def(&new_def, uast_function_def_unwrap(main_fn_), (Ulang_type_vec) {0}, (Pos) {0});
+    }
+
 error:
     if (new_sym_tbl) {
         vec_rem_last(&env.ancesters);
@@ -2871,3 +2839,6 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt) {
     unreachable("");
 }
 
+bool try_set_types(Tast_block** new_tast, Uast_block* block) {
+    return try_set_block_types(new_tast, block, false, true);
+}

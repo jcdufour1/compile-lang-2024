@@ -74,7 +74,7 @@ void do_passes(const Parameters* params) {
 
     arena_reset(&print_arena);
     Tast_block* typed = NULL;
-    if (!try_set_block_types(&typed, untyped, false, true)) {
+    if (!try_set_types(&typed, untyped)) {
         log(LOG_DEBUG, "try_set_block_types failed\n");
         assert(error_count > 0);
         fail();

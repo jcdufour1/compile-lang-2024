@@ -16,10 +16,4 @@ bool resolve_generics_function_def(
     Pos pos_gen_args
 );
 
-bool function_decl_generics_are_present(const Uast_function_decl* decl);
-
-bool variable_def_generics_are_present(const Uast_variable_def* def);
-
-//Name serialize_generic(Name old_atom, Ulang_type_vec gen_args);
-
 #endif // RESOLVE_GENERICS_H
