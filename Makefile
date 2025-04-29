@@ -60,7 +60,6 @@ OBJS=\
 	 ${BUILD_DIR}/token/token.o \
 	 ${BUILD_DIR}/token/tokenizer.o \
 	 ${BUILD_DIR}/parser.o \
-	 ${BUILD_DIR}/assign_llvm_ids.o \
 	 ${BUILD_DIR}/add_load_and_store.o \
 	 ${BUILD_DIR}/emit_llvm.o \
 	 ${BUILD_DIR}/llvm_utils.o
@@ -179,9 +178,6 @@ ${BUILD_DIR}/uast_clone.o: ${DEP_COMMON} src/uast_clone.c
 
 ${BUILD_DIR}/llvm_utils.o: ${DEP_COMMON} src/llvm_utils.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/llvm_utils.o src/llvm_utils.c
-
-${BUILD_DIR}/assign_llvm_ids.o: ${DEP_COMMON} src/assign_llvm_ids.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/assign_llvm_ids.o src/assign_llvm_ids.c
 
 ${BUILD_DIR}/add_load_and_store.o: ${DEP_COMMON} src/add_load_and_store.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/add_load_and_store.o src/add_load_and_store.c

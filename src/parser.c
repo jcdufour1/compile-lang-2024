@@ -880,7 +880,7 @@ static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk
 
     *pos = lang_type_token.pos;
 
-    lang_type->str = (Uname) {.mod_alias = name_new(env.curr_mod_path, mod_alias, (Ulang_type_vec) {0}, 0), lang_type_token.text};
+    lang_type->str = (Uname) {.mod_alias = name_new(env.curr_mod_path, mod_alias, (Ulang_type_vec) {0}, 0), .base = lang_type_token.text};
     while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
         lang_type->pointer_depth++;
     }
@@ -952,7 +952,7 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens) {
     }
 
     Pos pos = {0};
-    if (!parse_lang_type_struct_atom( &pos, &atom, tokens)) {
+    if (!parse_lang_type_struct_atom(&pos, &atom, tokens)) {
         return false;
     }
 
@@ -961,7 +961,7 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens) {
         return true;
     }
 
-    if (PARSE_OK != parse_generics_args( &atom.str.gen_args, tokens)) {
+    if (PARSE_OK != parse_generics_args(&atom.str.gen_args, tokens)) {
         return false;
     }
     *lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, pos));

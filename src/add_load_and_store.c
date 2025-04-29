@@ -1702,7 +1702,6 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
 }
 
 static Name load_if_else_chain(
-     
     Llvm_block* new_block,
     Tast_if_else_chain* old_if_else
 ) {
@@ -1806,7 +1805,6 @@ static Llvm_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
 }
 
 static void load_for_with_cond(
-     
     Llvm_block* new_block,
     Tast_for_with_cond* old_for
 ) {
@@ -1815,7 +1813,6 @@ static void load_for_with_cond(
 }
 
 static void load_break(
-     
     Llvm_block* new_block,
     Tast_break* old_break
 ) {
