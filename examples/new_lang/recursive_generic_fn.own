@@ -1,0 +1,19 @@
+
+type io import = std.io
+
+fn add(<NumType>)(lhs NumType, rhs NumType) {
+    if rhs < 0 {
+        return add(<NumType>)(lhs, rhs + 1) - 1
+    }
+    if rhs == 0 {
+        return lhs
+    }
+    return add(<NumType>)(lhs, rhs - 1) + 1
+}
+
+fn main() i32 {
+    let num i32 = 78
+    io.printf("%d\n", add(<i32>)(num, 33))
+
+    return 0
+}
