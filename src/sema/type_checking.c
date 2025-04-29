@@ -1229,7 +1229,7 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
             return true;
         }
         case UAST_SYMBOL:
-            if (!try_set_symbol_types( new_tast, uast_symbol_unwrap(uast))) {
+            if (!try_set_symbol_types(new_tast, uast_symbol_unwrap(uast))) {
                 return false;
             } else {
                 assert(*new_tast);
@@ -1693,7 +1693,8 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     }
 
     if (!is_variadic && fun_call->args.info.count > params->params.info.count) {
-        msg_invalid_count_function_args( fun_call, fun_decl, params->params.info.count, params->params.info.count);
+        todo();
+        msg_invalid_count_function_args(fun_call, fun_decl, params->params.info.count, params->params.info.count);
         status = false;
         goto error;
     }
@@ -2220,7 +2221,7 @@ bool try_set_break_types(Tast_break** new_tast, Uast_break* lang_break) {
                 log(LOG_DEBUG, TAST_FMT, uast_expr_print(lang_break->break_expr));
                 break;
             case CHECK_ASSIGN_INVALID:
-                msg_invalid_yield_type( lang_break->pos, new_child, false);
+                msg_invalid_yield_type(lang_break->pos, new_child, false);
                 status = false;
                 goto error;
             case CHECK_ASSIGN_ERROR:
@@ -2676,7 +2677,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         }
 
         Tast_stmt* new_node = NULL;
-        switch (try_set_def_types( &new_node, curr)) {
+        switch (try_set_def_types(&new_node, curr)) {
             case STMT_NO_STMT:
                 break;
             case STMT_ERROR:
@@ -2693,7 +2694,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         Uast_stmt* curr_tast = vec_at(&block->children, idx);
         Tast_stmt* new_tast = NULL;
-        switch (try_set_stmt_types( &new_tast, curr_tast)) {
+        switch (try_set_stmt_types(&new_tast, curr_tast)) {
             case STMT_OK:
                 assert(curr_tast);
                 vec_append(&a_main, &new_tasts, new_tast);
@@ -2742,13 +2743,16 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         Uast_def* main_fn_ = NULL;
         if (!usymbol_lookup(&main_fn_, name_new((Str_view) {0}, str_view_from_cstr("main"), (Ulang_type_vec) {0}, 0))) {
             log(LOG_WARNING, "no main function\n");
-            return true;
+            status = false;
+            goto error;
         }
         if (main_fn_->type != UAST_FUNCTION_DEF) {
             todo();
         }
         Uast_function_def* new_def = NULL;
-        status = resolve_generics_function_def(&new_def, uast_function_def_unwrap(main_fn_), (Ulang_type_vec) {0}, (Pos) {0});
+        if (!resolve_generics_function_def(&new_def, uast_function_def_unwrap(main_fn_), (Ulang_type_vec) {0}, (Pos) {0})) {
+            status = false;
+        }
     }
 
 error:
@@ -2775,7 +2779,7 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt) {
     switch (stmt->type) {
         case UAST_EXPR: {
             Tast_expr* new_tast_ = NULL;
-            if (!try_set_expr_types( &new_tast_, uast_expr_unwrap(stmt))) {
+            if (!try_set_expr_types(&new_tast_, uast_expr_unwrap(stmt))) {
                 return STMT_ERROR;
             }
             *new_tast = tast_expr_wrap(new_tast_);
