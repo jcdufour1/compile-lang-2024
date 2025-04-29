@@ -342,7 +342,6 @@ CHECK_ASSIGN_STATUS check_generic_assignment_finish(
 }
 
 CHECK_ASSIGN_STATUS check_generic_assignment(
-     
     Tast_expr** new_src,
     Lang_type dest_lang_type,
     Uast_expr* src,
@@ -373,13 +372,18 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
         }
         *new_src = tast_tuple_wrap(new_src_);
     } else {
+        log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type));
+        log(LOG_DEBUG, TAST_FMT, uast_expr_print(src));
+        Lang_type old_lhs_lang_type = env.lhs_lang_type;
         PARENT_OF old_parent_of = env.parent_of;
         env.parent_of = PARENT_OF_ASSIGN_RHS;
         env.lhs_lang_type = dest_lang_type;
-        if (!try_set_expr_types( new_src, src)) {
+        if (!try_set_expr_types(new_src, src)) {
+            env.lhs_lang_type = old_lhs_lang_type;
+            env.parent_of = old_parent_of;
             return CHECK_ASSIGN_ERROR;
         }
-        memset(&env.lhs_lang_type, 0, sizeof(env.lhs_lang_type));
+        env.lhs_lang_type = old_lhs_lang_type;
         env.parent_of = old_parent_of;
     }
 
@@ -800,13 +804,15 @@ bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
 
     env.lhs_lang_type = tast_expr_get_lang_type(new_lhs);
     if (!try_set_expr_types( &new_rhs, operator->rhs)) {
+        // TODO: replace or remove this memset
         memset(&env.lhs_lang_type, 0, sizeof(env.lhs_lang_type));
+        todo();
         return false;
     }
+    // TODO: replace or remove this memset
     memset(&env.lhs_lang_type, 0, sizeof(env.lhs_lang_type));
 
     return try_set_binary_types_finish(
-        
         new_tast,
         new_lhs,
         new_rhs,
@@ -2216,7 +2222,7 @@ bool try_set_break_types(Tast_break** new_tast, Uast_break* lang_break) {
 
     Tast_expr* new_child = NULL;
     if (lang_break->do_break_expr) {
-        switch (check_generic_assignment( &new_child, env.break_type, lang_break->break_expr, lang_break->pos)) {
+        switch (check_generic_assignment(&new_child, env.break_type, lang_break->break_expr, lang_break->pos)) {
             case CHECK_ASSIGN_OK:
                 log(LOG_DEBUG, TAST_FMT, uast_expr_print(lang_break->break_expr));
                 break;
@@ -2487,7 +2493,7 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
     Tast_if_vec new_ifs = {0};
 
     Tast_expr* new_operand = NULL;
-    if (!try_set_expr_types( &new_operand, lang_switch->operand)) {
+    if (!try_set_expr_types(&new_operand, lang_switch->operand)) {
         return false;
     }
 
