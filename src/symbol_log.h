@@ -19,13 +19,18 @@ static inline void usymbol_level_log_internal(LOG_LEVEL log_level, const char* f
 }
 
 static inline void usymbol_log_internal(LOG_LEVEL log_level, const char* file, int line, const int recursion_depth) {
-    log_internal(log_level, file, line, 0, "----start usymbol table----\n");
-    for (size_t idx = 0; idx < env.ancesters.info.count; idx++) {
-        Usymbol_table curr = vec_at(&env.ancesters, idx)->usymbol_table;
-        log_internal(log_level, file, line, 0, "level: %zu\n", idx);
-        usymbol_level_log_internal(log_level, file, line, curr, recursion_depth);
-    }
-    log_internal(log_level, file, line, 0, "----end usymbol table------\n");
+    (void) log_level;
+    (void) file;
+    (void) line;
+    (void) recursion_depth;
+    todo();
+    //log_internal(log_level, file, line, 0, "----start usymbol table----\n");
+    //for (size_t idx = 0; idx < env.ancesters.info.count; idx++) {
+    //    Usymbol_table curr = vec_at(&env.ancesters, idx)->usymbol_table;
+    //    log_internal(log_level, file, line, 0, "level: %zu\n", idx);
+    //    usymbol_level_log_internal(log_level, file, line, curr, recursion_depth);
+    //}
+    //log_internal(log_level, file, line, 0, "----end usymbol table------\n");
 }
 
 // ----------------
@@ -43,13 +48,18 @@ static inline void symbol_level_log_internal(LOG_LEVEL log_level, const char* fi
 }
 
 static inline void symbol_log_internal(LOG_LEVEL log_level, const char* file, int line, const int recursion_depth) {
-    log_internal(log_level, file, line, 0, "----start symbol table----\n");
-    for (size_t idx = 0; idx < env.ancesters.info.count; idx++) {
-        Symbol_table curr = vec_at(&env.ancesters, idx)->symbol_table;
-        log_internal(log_level, file, line, 0, "level: %zu\n", idx);
-        symbol_level_log_internal(log_level, file, line, curr, recursion_depth);
-    }
-    log_internal(log_level, file, line, 0, "----end symbol table------\n");
+    (void) log_level;
+    (void) file;
+    (void) line;
+    (void) recursion_depth;
+    todo();
+    //log_internal(log_level, file, line, 0, "----start symbol table----\n");
+    //for (size_t idx = 0; idx < env.ancesters.info.count; idx++) {
+    //    Symbol_table curr = vec_at(&env.ancesters, idx)->symbol_table;
+    //    log_internal(log_level, file, line, 0, "level: %zu\n", idx);
+    //    symbol_level_log_internal(log_level, file, line, curr, recursion_depth);
+    //}
+    //log_internal(log_level, file, line, 0, "----end symbol table------\n");
 }
 
 #endif // SYMBOL_LOG_H

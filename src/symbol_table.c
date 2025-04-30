@@ -27,7 +27,7 @@ typedef bool(*Symbol_add_fn)(void* tast_to_add);
 
 typedef void*(*Get_tbl_from_collection_fn)(Symbol_collection* collection);
 
-bool generic_symbol_lookup(void** result, Str_view key, Get_tbl_from_collection_fn get_tbl_from_collection_fn);
+bool generic_symbol_lookup(void** result, Str_view key, Get_tbl_from_collection_fn get_tbl_from_collection_fn, Scope_id scope_id);
 
 bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Str_view key);
 
@@ -152,14 +152,14 @@ bool generic_tbl_add(Generic_symbol_table* sym_table, Str_view key, void* item) 
 bool generic_symbol_add(
     Str_view key,
     void* item,
-    Get_tbl_from_collection_fn get_tbl_from_collection_fn
+    Get_tbl_from_collection_fn get_tbl_from_collection_fn,
+    Scope_id scope_id
 ) {
     void* dummy;
-    if (generic_symbol_lookup((void**)&dummy,  key, get_tbl_from_collection_fn)) {
+    if (generic_symbol_lookup((void**)&dummy,  key, get_tbl_from_collection_fn, scope_id)) {
         return false;
     }
-    unwrap(env.ancesters.info.count > 0 && "no block ancester found");
-    Symbol_collection* curr_tast = vec_at(&env.ancesters, env.ancesters.info.count - 1);
+    Symbol_collection* curr_tast = vec_at(&env.symbol_tables, scope_id);
     unwrap(generic_tbl_add((Generic_symbol_table*)get_tbl_from_collection_fn(curr_tast), key, item));
     return true;
 }
@@ -173,26 +173,31 @@ void generic_tbl_update(Generic_symbol_table* sym_table, Str_view key, void* ite
     unwrap(generic_tbl_add(sym_table, key, item));
 }
 
-void generic_symbol_update(Str_view key, void* item, Get_tbl_from_collection_fn get_tbl_from_collection_fn) {
-    if (generic_symbol_add(key, item, get_tbl_from_collection_fn)) {
-        return;
-    }
-    if (env.ancesters.info.count < 1) {
-        unreachable("no block ancester found");
-    }
+void generic_symbol_update(Str_view key, void* item, Get_tbl_from_collection_fn get_tbl_from_collection_fn, Scope_id scope_id) {
+    (void) key;
+    (void) item;
+    (void) get_tbl_from_collection_fn;
+    (void) scope_id;
+    todo();
+    //if (generic_symbol_add(key, item, get_tbl_from_collection_fn, scope_id)) {
+    //    return;
+    //}
+    //if (env.ancesters.info.count < 1) {
+    //    unreachable("no block ancester found");
+    //}
 
-    for (size_t idx = env.ancesters.info.count - 1;; idx--) {
-        Symbol_collection* sym_coll = vec_at(&env.ancesters, idx);
-        Generic_symbol_table_tast* curr_tast = NULL;
-        if (generic_tbl_lookup_internal(&curr_tast, get_tbl_from_collection_fn(sym_coll), key)) {
-            curr_tast->tast = item;
-            return;
-        }
+    //for (size_t idx = env.ancesters.info.count - 1;; idx--) {
+    //    Symbol_collection* sym_coll = vec_at(&env.ancesters, idx);
+    //    Generic_symbol_table_tast* curr_tast = NULL;
+    //    if (generic_tbl_lookup_internal(&curr_tast, get_tbl_from_collection_fn(sym_coll), key)) {
+    //        curr_tast->tast = item;
+    //        return;
+    //    }
 
-        if (idx < 1) {
-            unreachable("no block ancester found");
-        }
-    }
+    //    if (idx < 1) {
+    //        unreachable("no block ancester found");
+    //    }
+    //}
 }
 
 bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Str_view key) {
@@ -204,21 +209,21 @@ bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, St
     return true;
 }
 
-bool generic_symbol_lookup(void** result, Str_view key, Get_tbl_from_collection_fn get_tbl_from_collection_fn) {
-    if (env.ancesters.info.count < 1) {
-        return false;
-    }
-
-    for (size_t idx = env.ancesters.info.count - 1;; idx--) {
-        Symbol_collection* curr_tast = vec_at(&env.ancesters, idx);
-        if (generic_tbl_lookup(result, get_tbl_from_collection_fn(curr_tast), key)) {
+bool generic_symbol_lookup(
+    void** result,
+    Str_view key,
+    Get_tbl_from_collection_fn get_tbl_from_collection_fn,
+    Scope_id scope_id
+) {
+    Scope_id curr_scope = scope_id;
+    while (true) {
+        void* tbl = get_tbl_from_collection_fn(vec_at(&env.symbol_tables, curr_scope));
+        if (generic_tbl_lookup(result, tbl, key)) {
              return true;
-         }
-
-        if (idx < 1) {
-            return false;
         }
+        unwrap(scope_tbl_lookup(&curr_scope, curr_scope));
     }
+    unreachable("");
 }
 
 //
@@ -239,10 +244,12 @@ void* sym_get_tbl_from_collection(Symbol_collection* collection) {
 }
 
 bool symbol_add(Tast_def* item) {
+    Name name = tast_def_get_name(item);
     return generic_symbol_add(
-        serialize_name_symbol_table(tast_def_get_name(item)),
+        serialize_name_symbol_table(name),
         item,
-        (Get_tbl_from_collection_fn)sym_get_tbl_from_collection
+        (Get_tbl_from_collection_fn)sym_get_tbl_from_collection,
+        name.scope_id
     );
 }
 
@@ -251,11 +258,13 @@ void sym_tbl_update(Symbol_table* sym_table, Tast_def* item) {
 }
 
 void symbol_update(Tast_def* item) {
-    generic_symbol_update(serialize_name_symbol_table(tast_def_get_name(item)), item, (Get_tbl_from_collection_fn)sym_get_tbl_from_collection);
+    (void) item;
+    todo();
+    //generic_symbol_update(serialize_name_symbol_table(tast_def_get_name(item)), item, (Get_tbl_from_collection_fn)sym_get_tbl_from_collection);
 }
 
 bool symbol_lookup(Tast_def** result, Name key) {
-    return generic_symbol_lookup((void**)result, serialize_name_symbol_table(key), (Get_tbl_from_collection_fn)sym_get_tbl_from_collection);
+    return generic_symbol_lookup((void**)result, serialize_name_symbol_table(key), (Get_tbl_from_collection_fn)sym_get_tbl_from_collection, key.scope_id);
 }
 
 void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, int recursion_depth) {
@@ -272,10 +281,12 @@ void* usym_get_tbl_from_collection(Symbol_collection* collection) {
 }
 
 bool usymbol_add(Uast_def* item) {
+    Name name = uast_def_get_name(item);
     return generic_symbol_add(
-        serialize_name_symbol_table(uast_def_get_name(item)),
+        serialize_name_symbol_table(name),
         item,
-        (Get_tbl_from_collection_fn)usym_get_tbl_from_collection
+        (Get_tbl_from_collection_fn)usym_get_tbl_from_collection,
+        name.scope_id
     );
 }
 
@@ -327,7 +338,12 @@ bool usymbol_lookup(Uast_def** result, Name key) {
         }
     }
 
-    return generic_symbol_lookup((void**)result,  serialize_name_symbol_table(key), (Get_tbl_from_collection_fn)usym_get_tbl_from_collection);
+    return generic_symbol_lookup(
+        (void**)result,
+        serialize_name_symbol_table(key),
+        (Get_tbl_from_collection_fn)usym_get_tbl_from_collection,
+        key.scope_id
+    );
 }
 
 //
@@ -348,11 +364,12 @@ void* all_get_tbl_from_collection(Symbol_collection* collection) {
 }
 
 bool alloca_add(Llvm* item) {
+    Name name = llvm_tast_get_name(item);
     return generic_symbol_add(
-        
-        serialize_name_symbol_table(llvm_tast_get_name(item)),
+        serialize_name_symbol_table(name),
         item,
-        (Get_tbl_from_collection_fn)all_get_tbl_from_collection
+        (Get_tbl_from_collection_fn)all_get_tbl_from_collection,
+        name.scope_id
     );
 }
 
@@ -361,12 +378,15 @@ void all_tbl_update(Alloca_table* sym_table, Llvm* item) {
 }
 
 void usymbol_update(Uast_def* item) {
+    (void) item;
+    todo();
     // TODO: do extra stuff similar to usymbol_add?
-    generic_symbol_update(serialize_name_symbol_table(uast_def_get_name(item)), item, (Get_tbl_from_collection_fn)usym_get_tbl_from_collection);
+    //generic_symbol_update(serialize_name_symbol_table(uast_def_get_name(item)), item, (Get_tbl_from_collection_fn)usym_get_tbl_from_collection);
 }
 
 void alloca_update(Llvm* item) {
-    generic_symbol_update(serialize_name_symbol_table(llvm_tast_get_name(item)), item, (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
+    (void) item;
+    //generic_symbol_update(serialize_name_symbol_table(llvm_tast_get_name(item)), item, (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
 }
 
 bool all_tbl_lookup(Llvm** result, const Alloca_table* sym_table, Str_view key) {
@@ -374,7 +394,12 @@ bool all_tbl_lookup(Llvm** result, const Alloca_table* sym_table, Str_view key) 
 }
 
 bool alloca_lookup(Llvm** result, Name key) {
-    return generic_symbol_lookup((void**)result, serialize_name_symbol_table(key), (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
+    return generic_symbol_lookup(
+        (void**)result,
+        serialize_name_symbol_table(key),
+        (Get_tbl_from_collection_fn)all_get_tbl_from_collection,
+        key.scope_id
+    );
 }
 
 //
@@ -399,9 +424,8 @@ bool scope_tbl_lookup(Scope_id* result, Scope_id key) {
     sprintf(buf, "%zu", key);
     Scope_id temp_stack = 0;
     Scope_id* temp = &temp_stack;
-    bool status = generic_tbl_lookup((void**)&temp, (Generic_symbol_table*)&env.scope_id_to_next, str_view_from_cstr(buf));
+    bool status = generic_tbl_lookup((void**)&temp, (Generic_symbol_table*)&env.scope_id_to_parent, str_view_from_cstr(buf));
     *result = *temp;
-    arena_reset(&env.a_temp);
     return status;
 }
 
@@ -412,7 +436,7 @@ bool scope_tbl_add(Scope_id key, Scope_id next) {
     string_extend_cstr(&a_main, &serialized, buf);
     Scope_id* next_alloced = arena_alloc(&a_main, sizeof(*next_alloced));
     *next_alloced = next;
-    return generic_tbl_add((Generic_symbol_table*)&env.scope_id_to_next, string_to_strv(serialized), next_alloced);
+    return generic_tbl_add((Generic_symbol_table*)&env.scope_id_to_parent, string_to_strv(serialized), next_alloced);
 }
 
 //

@@ -1172,13 +1172,18 @@ bool try_set_array_literal_types(
 
     Tast_variable_def_vec inner_def_membs = {0};
     for (size_t idx = 0; idx < new_membs.info.count; idx++) {
-        vec_append(&a_main, &inner_def_membs, tast_variable_def_new(lit->pos, gen_arg, false, name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0)));
+        vec_append(&a_main, &inner_def_membs, tast_variable_def_new(
+            lit->pos,
+            gen_arg,
+            false,
+            name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0)
+        ));
     }
     Tast_struct_def* inner_def = tast_struct_def_new(
         lit->pos,
         (Struct_def_base) {.members = inner_def_membs, .name = name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0)}
     );
-    sym_tbl_add(&vec_at(&env.ancesters, 0)->symbol_table, tast_struct_def_wrap(inner_def));
+    sym_tbl_add(&vec_at(&env.symbol_tables, 0)->symbol_table, tast_struct_def_wrap(inner_def));
 
     Tast_struct_literal* new_inner_lit = tast_struct_literal_new(
         lit->pos,

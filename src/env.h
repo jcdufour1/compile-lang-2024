@@ -21,14 +21,9 @@ typedef enum {
 } PARENT_OF;
 
 typedef struct Env_ {
-    Arena a_temp; // reset after a task
-                  
-    Scope_id_to_next_table scope_id_to_next;
+    Scope_id_to_parent scope_id_to_parent;
+    Sym_coll_vec symbol_tables;
 
-    Sym_coll_vec ancesters; // index 0 is the root of the tree
-                            // index len - 1 is the current tast
-    Llvm_vec llvm_ancesters; // index 0 is the root of the tree
-                                 // index len - 1 is the current tast
     Uast_def_vec udefered_symbols_to_add;
     Tast_def_vec defered_symbols_to_add;
     Llvm_vec defered_allocas_to_add;

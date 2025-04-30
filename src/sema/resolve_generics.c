@@ -102,23 +102,25 @@ static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_bas
 
 // we need to get the index of the original definition so that we can put resolved versions in the correct spot
 #define try_set_def_types_internal(after_res, before_res, new_def) \
-    do { \
-        size_t idx = 0; \
-        for (; idx < env.ancesters.info.count; idx++) { \
-            Uast_def* result = NULL; \
-            if (usym_tbl_lookup(&result, &vec_at(&env.ancesters, idx)->usymbol_table, (before_res)->base.name)) { \
-                break; \
-            } \
-        } \
-        usym_tbl_add(&vec_at(&env.ancesters, idx)->usymbol_table, (after_res)); \
-        sym_tbl_add(&vec_at(&env.ancesters, idx)->symbol_table, (new_def)); \
-    } while (0)
+    todo();
+    //do { \
+    //    size_t idx = 0; \
+    //    for (; idx < env.ancesters.info.count; idx++) { \
+    //        Uast_def* result = NULL; \
+    //        if (usym_tbl_lookup(&result, &vec_at(&env.ancesters, idx)->usymbol_table, (before_res)->base.name)) { \
+    //            break; \
+    //        } \
+    //    } \
+    //    usym_tbl_add(&vec_at(&env.ancesters, idx)->usymbol_table, (after_res)); \
+    //    sym_tbl_add(&vec_at(&env.ancesters, idx)->symbol_table, (new_def)); \
+    //} while (0)
 
 static bool try_set_struct_def_types(Uast_struct_def* before_res, Uast_struct_def* after_res) {
     // TODO: consider nested thing:
     // type struct Token {
     //      token Token
     // }
+    (void) before_res;
     Struct_def_base new_base = {0};
     bool success = try_set_struct_base_types( &new_base, &after_res->base, false);
     try_set_def_types_internal(
@@ -134,10 +136,10 @@ static bool try_set_raw_union_def_types(Uast_raw_union_def* before_res, Uast_raw
     // type raw_union Token {
     //      token Token
     // }
+    (void) before_res;
     Struct_def_base new_base = {0};
     bool success = try_set_struct_base_types( &new_base, &after_res->base, false);
     try_set_def_types_internal(
-        
         uast_raw_union_def_wrap(after_res),
         before_res,
         tast_raw_union_def_wrap(tast_raw_union_def_new(after_res->pos, new_base))
@@ -146,10 +148,10 @@ static bool try_set_raw_union_def_types(Uast_raw_union_def* before_res, Uast_raw
 }
 
 static bool try_set_enum_def_types(Uast_enum_def* before_res, Uast_enum_def* after_res) {
+    (void) before_res;
     Struct_def_base new_base = {0};
     bool success = try_set_struct_base_types( &new_base, &after_res->base, true);
     try_set_def_types_internal(
-        
         uast_enum_def_wrap(after_res),
         before_res,
         tast_enum_def_wrap(tast_enum_def_new(after_res->pos, new_base))
@@ -159,6 +161,7 @@ static bool try_set_enum_def_types(Uast_enum_def* before_res, Uast_enum_def* aft
 
 // TODO: inline this function?
 static bool try_set_sum_def_types(Uast_sum_def* before_res, Uast_sum_def* after_res) {
+    (void) before_res;
     // TODO: consider nested thing:
     // type sum Token {
     //      token Token
@@ -166,7 +169,6 @@ static bool try_set_sum_def_types(Uast_sum_def* before_res, Uast_sum_def* after_
     Struct_def_base new_base = {0};
     bool success = try_set_struct_base_types( &new_base, &after_res->base, false);
     try_set_def_types_internal(
-        
         uast_sum_def_wrap(after_res),
         before_res,
         tast_sum_def_wrap(tast_sum_def_new(after_res->pos, new_base))
