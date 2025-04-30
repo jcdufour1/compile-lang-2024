@@ -17,3 +17,9 @@ fn token_print(token Token) {
         case Thing.token(token): printf("token is Thing.token")
     }
 }
+
+fn main() i32 {
+    token_print({.num = 76, .string = "hello"})
+    return 0
+}
+
