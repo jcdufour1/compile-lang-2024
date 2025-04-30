@@ -29,12 +29,6 @@ void generic_sub_lang_type_regular(
     unwrap(name_from_uname(&temp, lang_type.atom.str));
     Scope_id new_scope = scope_id_new(); 
 
-    //log(LOG_DEBUG, TAST_FMT"\n", uname_print(lang_type.atom.str));
-    //log(LOG_DEBUG, TAST_FMT"\n", name_print(lang_type.atom.str.mod_alias));
-    //log(LOG_DEBUG, TAST_FMT"\n", str_view_print(lang_type.atom.str.base));
-
-    //log(LOG_DEBUG, TAST_FMT"\n", name_print(gen_param));
-    //log(LOG_DEBUG, TAST_FMT"\n", name_print(temp));
     if (name_is_equal(gen_param, temp)) {
         *new_lang_type = ulang_type_clone(gen_arg, new_scope);
 
@@ -54,28 +48,6 @@ void generic_sub_lang_type_regular(
     log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
     *new_lang_type = ulang_type_regular_const_wrap(lang_type);
 }
-
-//void generic_sub_lang_type_generic(
-//     
-//    Ulang_type* new_lang_type,
-//    Ulang_type_generic lang_type,
-//    Name gen_param,
-//    Ulang_type gen_arg
-//) {
-//    Ulang_type_generic new_reg = ulang_type_generic_clone(lang_type);
-//
-//    for (size_t idx = 0; idx < new_reg.generic_args.info.count; idx++) {
-//        generic_sub_lang_type(
-//            
-//            vec_at_ref(&new_reg.generic_args, idx),
-//            vec_at(&new_reg.generic_args, idx),
-//            gen_param,
-//            ulang_type_clone(gen_arg)
-//        );
-//    }
-//
-//    resolve_generics_ulang_type_generic(new_lang_type,  new_reg);
-//}
 
 void generic_sub_lang_type(
     Ulang_type* new_lang_type,
@@ -99,16 +71,6 @@ void generic_sub_lang_type(
             todo();
     }
     unreachable("");
-
-    //log(
-    //    LOG_DEBUG, "gen_str: "STR_VIEW_FMT"    rtn_str: "STR_VIEW_FMT"\n",
-    //    str_view_print(gen_param), str_view_print(lang_type_str)
-    //);
-
-    //log(
-    //    LOG_DEBUG, "new_lang_type: "STR_VIEW_FMT"\n",
-    //    ulang_type_print(*new_lang_type)
-    //);
 }
 
 void generic_sub_variable_def(Uast_variable_def* def, Name gen_param, Ulang_type gen_arg) {
