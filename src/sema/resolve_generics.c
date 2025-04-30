@@ -441,11 +441,10 @@ static bool resolve_generics_serialize_function_decl(
     // TODO: figure out way to avoid making new Uast_function_decl every time
     memset(new_decl, 0, sizeof(*new_decl));
 
-    Scope_id new_scope = scope_id_new();
-
     Uast_param_vec params = {0};
     for (size_t idx = 0; idx < old_decl->params->params.info.count; idx++) {
-        vec_append(&a_main, &params, uast_param_clone(vec_at(&old_decl->params->params, idx), new_scope));
+        todo();
+        //vec_append(&a_main, &params, uast_param_clone(vec_at(&old_decl->params->params, idx), new_scope));
     }
 
     Ulang_type new_rtn_type = old_decl->return_type;
@@ -483,13 +482,14 @@ static bool resolve_generics_serialize_function_decl(
         return false;
     }
 
-    *new_decl = uast_function_decl_new(
-        old_decl->pos,
-        (Uast_generic_param_vec) {0},
-        uast_function_params_new(old_decl->params->pos, params),
-        new_rtn_type,
-        name_new(env.curr_mod_path, old_decl->name.base, gen_args, new_scope)
-    );
+    todo();
+    //*new_decl = uast_function_decl_new(
+    //    old_decl->pos,
+    //    (Uast_generic_param_vec) {0},
+    //    uast_function_params_new(old_decl->params->pos, params),
+    //    new_rtn_type,
+    //    name_new(env.curr_mod_path, old_decl->name.base, gen_args, new_scope)
+    //);
 
     return true;
 }
@@ -532,44 +532,47 @@ bool resolve_generics_function_def(
 
     log(LOG_DEBUG, TAST_FMT"\n", name_print(def->decl->name));
 
-    Scope_id new_scope = scope_id_new(); 
+    todo();
+    //Scope_id new_scope = scope_id_new(); 
 
-    Uast_function_decl* new_decl = NULL;
+    todo();
+    //Uast_function_decl* new_decl = NULL;
 
     // TODO: try to avoid cloning block if resolve_generics_serialize_function_decl fails
-    Uast_block* new_block = uast_block_clone(def->body, new_scope);
-    assert(new_block != def->body);
-    assert(new_block->symbol_collection.usymbol_table.table_tasts != def->body->symbol_collection.usymbol_table.table_tasts);
+    todo();
+    //Uast_block* new_block = uast_block_clone(def->body, new_scope);
+    //assert(new_block != def->body);
+    //assert(new_block->symbol_collection.usymbol_table.table_tasts != def->body->symbol_collection.usymbol_table.table_tasts);
 
-    if (!resolve_generics_serialize_function_decl(&new_decl, def->decl, new_block, gen_args, pos_gen_args)) {
-        return false;
-    }
-    *new_def = uast_function_def_new(new_decl->pos, new_decl, new_block);
-    //vec_rem_last(&env.ancesters);
-    //vec_append(&a_main, &env.ancesters, &new_block->symbol_collection);
+    //if (!resolve_generics_serialize_function_decl(&new_decl, def->decl, new_block, gen_args, pos_gen_args)) {
+    //    return false;
+    //}
+    //*new_def = uast_function_def_new(new_decl->pos, new_decl, new_block);
+    ////vec_rem_last(&env.ancesters);
+    ////vec_append(&a_main, &env.ancesters, &new_block->symbol_collection);
 
-    // TODO: think about scopes for symbol_table if non-top-level functions are implemented
+    //// TODO: think about scopes for symbol_table if non-top-level functions are implemented
 
-    unreachable("I need to figure out why this code is here");
-    //{
-    //    size_t idx = 0;
-    //    for (; idx < env.ancesters.info.count; idx++) {
-    //        Uast_def* result = NULL;
-    //        if (usym_tbl_lookup(&result, &vec_at(&env.ancesters, idx)->usymbol_table, def->decl->name)) {
-    //            break;
-    //        }
+    //unreachable("I need to figure out why this code is here");
+    ////{
+    ////    size_t idx = 0;
+    ////    for (; idx < env.ancesters.info.count; idx++) {
+    ////        Uast_def* result = NULL;
+    ////        if (usym_tbl_lookup(&result, &vec_at(&env.ancesters, idx)->usymbol_table, def->decl->name)) {
+    ////            break;
+    ////        }
+    ////    }
+    ////    usym_tbl_add(&vec_at(&env.ancesters, idx)->usymbol_table, uast_function_decl_wrap(new_decl));
+    ////}
+
+    //if (!symbol_lookup(&dummy_2,  (*new_def)->decl->name)) {
+    //    // TODO: see if there is less hacky way to do this
+    //    if (!resolve_generics_set_function_def_types(*new_def)) {
+    //        status = false;
     //    }
-    //    usym_tbl_add(&vec_at(&env.ancesters, idx)->usymbol_table, uast_function_decl_wrap(new_decl));
     //}
 
-    if (!symbol_lookup(&dummy_2,  (*new_def)->decl->name)) {
-        // TODO: see if there is less hacky way to do this
-        if (!resolve_generics_set_function_def_types(*new_def)) {
-            status = false;
-        }
-    }
-
-    unwrap(symbol_lookup(&dummy_2,  (*new_def)->decl->name));
-    return status;
+    //unwrap(symbol_lookup(&dummy_2,  (*new_def)->decl->name));
+    //return status;
 }
 

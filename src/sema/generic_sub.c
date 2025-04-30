@@ -25,28 +25,29 @@ void generic_sub_lang_type_regular(
     Name gen_param,
     Ulang_type gen_arg
 ) {
-    Name temp = {0};
-    unwrap(name_from_uname(&temp, lang_type.atom.str));
-    Scope_id new_scope = scope_id_new(); 
+    todo();
+    //Name temp = {0};
+    //unwrap(name_from_uname(&temp, lang_type.atom.str));
+    //Scope_id new_scope = scope_id_new(); 
 
-    if (name_is_equal(gen_param, temp)) {
-        *new_lang_type = ulang_type_clone(gen_arg, new_scope);
+    //if (name_is_equal(gen_param, temp)) {
+    //    *new_lang_type = ulang_type_clone(gen_arg, new_scope);
 
-        int16_t base_depth = lang_type.atom.pointer_depth;
-        int16_t gen_prev_depth = ulang_type_get_pointer_depth(*new_lang_type);
-        ulang_type_set_pointer_depth(new_lang_type, gen_prev_depth + base_depth);
-        //log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, *new_lang_type));
-        return;
-    }
+    //    int16_t base_depth = lang_type.atom.pointer_depth;
+    //    int16_t gen_prev_depth = ulang_type_get_pointer_depth(*new_lang_type);
+    //    ulang_type_set_pointer_depth(new_lang_type, gen_prev_depth + base_depth);
+    //    //log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, *new_lang_type));
+    //    return;
+    //}
 
-    lang_type = ulang_type_regular_clone(lang_type, new_scope);
-    Ulang_type_vec* gen_args = &lang_type.atom.str.gen_args;
-    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
-    for (size_t idx = 0; idx < gen_args->info.count; idx++) {
-        generic_sub_lang_type(vec_at_ref(gen_args, idx), vec_at(gen_args, idx), gen_param, gen_arg);
-    }
-    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
-    *new_lang_type = ulang_type_regular_const_wrap(lang_type);
+    //lang_type = ulang_type_regular_clone(lang_type, new_scope);
+    //Ulang_type_vec* gen_args = &lang_type.atom.str.gen_args;
+    //log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
+    //for (size_t idx = 0; idx < gen_args->info.count; idx++) {
+    //    generic_sub_lang_type(vec_at_ref(gen_args, idx), vec_at(gen_args, idx), gen_param, gen_arg);
+    //}
+    //log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
+    //*new_lang_type = ulang_type_regular_const_wrap(lang_type);
 }
 
 void generic_sub_lang_type(
@@ -196,15 +197,16 @@ void generic_sub_assignment(Uast_assignment* assign, Name gen_param, Ulang_type 
 }
 
 void generic_sub_block(Uast_block* block, Name gen_param, Ulang_type gen_arg) {
-    Usymbol_iter iter = usym_tbl_iter_new(block->symbol_collection.usymbol_table);
-    Uast_def* curr = NULL;
-    while (usym_tbl_iter_next(&curr, &iter)) {
-        generic_sub_def(curr, gen_param, gen_arg);
-    }
+    todo();
+    //Usymbol_iter iter = usym_tbl_iter_new(block->symbol_collection.usymbol_table);
+    //Uast_def* curr = NULL;
+    //while (usym_tbl_iter_next(&curr, &iter)) {
+    //    generic_sub_def(curr, gen_param, gen_arg);
+    //}
 
-    for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        generic_sub_stmt(vec_at(&block->children, idx), gen_param, gen_arg);
-    }
+    //for (size_t idx = 0; idx < block->children.info.count; idx++) {
+    //    generic_sub_stmt(vec_at(&block->children, idx), gen_param, gen_arg);
+    //}
 }
 
 void generic_sub_expr(Uast_expr* expr, Name gen_param, Ulang_type gen_arg) {

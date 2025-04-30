@@ -2537,22 +2537,23 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
             )));
         }
 
-        vec_append(&a_main, &env.switch_case_defer_add_if_true, old_case->if_true);
-        Uast_block* if_true = uast_block_new(
-            old_case->pos,
-            (Uast_stmt_vec) {0},
-            (Symbol_collection) {0},
-            old_case->pos,
-            scope_id_new()
-        );
+        todo();
+        //vec_append(&a_main, &env.switch_case_defer_add_if_true, old_case->if_true);
+        //Uast_block* if_true = uast_block_new(
+        //    old_case->pos,
+        //    (Uast_stmt_vec) {0},
+        //    old_case->pos,
+        //    scope_id_new()
+        //);
                 
-        env.parent_of = PARENT_OF_CASE;
-        env.parent_of_operand = lang_switch->operand;
-        Tast_if* new_if = NULL;
-        if (!try_set_if_types(&new_if, uast_if_new(old_case->pos, cond, if_true))) {
-            status = false;
-            goto error_inner;
-        }
+        todo();
+        //env.parent_of = PARENT_OF_CASE;
+        //env.parent_of_operand = lang_switch->operand;
+        //Tast_if* new_if = NULL;
+        //if (!try_set_if_types(&new_if, uast_if_new(old_case->pos, cond, if_true))) {
+        //    status = false;
+        //    goto error_inner;
+        //}
 
 error_inner:
         env.parent_of_operand = NULL;
@@ -2562,12 +2563,14 @@ error_inner:
             goto error;
         }
 
-        if (!check_for_exhaustiveness_inner(&exhaustive_data, new_if, old_case->is_default)) {
-            status = false;
-            goto error;
-        }
+        todo();
+        //if (!check_for_exhaustiveness_inner(&exhaustive_data, new_if, old_case->is_default)) {
+        //    status = false;
+        //    goto error;
+        //}
 
-        vec_append(&a_main, &new_ifs, new_if);
+        todo();
+        //vec_append(&a_main, &new_ifs, new_if);
     }
 
     *new_tast = tast_if_else_chain_new(lang_switch->pos, new_ifs, true);
@@ -2649,7 +2652,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
 
     bool status = true;
 
-    Symbol_collection new_sym_coll = block->symbol_collection;
+    //Symbol_collection new_sym_coll = block->symbol_collection;
     unreachable("create new symbol table here");
 
     Tast_stmt_vec new_tasts = {0};
@@ -2662,31 +2665,32 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
     }
 
     // TODO: remove this variable?
-    Tast_stmt_vec aux_stmts = {0};
+    //Tast_stmt_vec aux_stmts = {0};
 
-    Usymbol_iter iter = usym_tbl_iter_new(new_sym_coll.usymbol_table);
-    Uast_def* curr = NULL;
-    while (usym_tbl_iter_next(&curr, &iter)) {
-        if (curr->type != UAST_VARIABLE_DEF && curr->type != UAST_IMPORT_PATH) {
-            // TODO: eventually, we should do also function defs, etc. in this for loop
-            // (change parser to not put function defs, etc. in block)
-            continue;
-        }
+    todo();
+    //Usymbol_iter iter = usym_tbl_iter_new(new_sym_coll.usymbol_table);
+    //Uast_def* curr = NULL;
+    //while (usym_tbl_iter_next(&curr, &iter)) {
+    //    if (curr->type != UAST_VARIABLE_DEF && curr->type != UAST_IMPORT_PATH) {
+    //        // TODO: eventually, we should do also function defs, etc. in this for loop
+    //        // (change parser to not put function defs, etc. in block)
+    //        continue;
+    //    }
 
-        Tast_stmt* new_node = NULL;
-        switch (try_set_def_types(&new_node, curr)) {
-            case STMT_NO_STMT:
-                break;
-            case STMT_ERROR:
-                status = false;
-                break;
-            case STMT_OK:
-                vec_append(&a_main, &aux_stmts, new_node);
-                break;
-            default:
-                unreachable("");
-        }
-    }
+    //    Tast_stmt* new_node = NULL;
+    //    switch (try_set_def_types(&new_node, curr)) {
+    //        case STMT_NO_STMT:
+    //            break;
+    //        case STMT_ERROR:
+    //            status = false;
+    //            break;
+    //        case STMT_OK:
+    //            vec_append(&a_main, &aux_stmts, new_node);
+    //            break;
+    //        default:
+    //            unreachable("");
+    //    }
+    //}
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         Uast_stmt* curr_tast = vec_at(&block->children, idx);
@@ -2762,7 +2766,8 @@ error:
     } else if (env.parent_of == PARENT_OF_IF) {
         todo();
     }
-    *new_tast = tast_block_new(block->pos, new_tasts, new_sym_coll, block->pos_end, yield_type, block->scope_id);
+    todo();
+    //*new_tast = tast_block_new(block->pos, new_tasts, new_sym_coll, block->pos_end, yield_type, block->scope_id);
     if (status) {
         assert(*new_tast);
     } else {

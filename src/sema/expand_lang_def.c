@@ -519,7 +519,7 @@ bool expand_def_def(Uast_def* def) {
 bool expand_def_block(Uast_block* block) {
     bool status = true;
 
-    Usymbol_iter iter = usym_tbl_iter_new(block->symbol_collection.usymbol_table);
+    Usymbol_iter iter = usym_tbl_iter_new(block->scope_id);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
         if (!expand_def_def(curr)) {

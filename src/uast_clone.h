@@ -15,7 +15,7 @@ Uast_variable_def* uast_variable_def_clone(const Uast_variable_def* def, Scope_i
 
 Uast_param* uast_param_clone(const Uast_param* param, Scope_id new_scope);
 
-Uast_block* uast_block_clone(const Uast_block* block, Scope_id new_scope);
+Uast_block* uast_block_clone(const Uast_block* block);
 
 Uast_def* uast_def_clone(const Uast_def* def, Scope_id new_scope);
 

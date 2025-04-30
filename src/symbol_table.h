@@ -142,5 +142,7 @@ bool scope_tbl_lookup(Scope_id* result, Scope_id key);
 
 bool scope_tbl_add(Scope_id key, Scope_id next);
 
+Scope_id symbol_collection_new(void);
+
 #endif // SYMBOL_TABLE_H
 

@@ -259,6 +259,10 @@ void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, int
     }
 }
 
+//
+// usymbol implementation
+//
+
 void* usym_get_tbl_from_collection(Symbol_collection* collection) {
     return &collection->usymbol_table;
 }
@@ -435,5 +439,14 @@ void alloca_extend_table_internal(String* buf, const Alloca_table sym_table, int
             string_extend_strv(&print_arena, buf, llvm_print_internal(sym_tast->tast, recursion_depth));
         }
     }
+}
+
+Scope_id symbol_collection_new(void) {
+    log(LOG_DEBUG, "symbol_collection_new start: %zu\n", env.symbol_tables.info.count);
+    Symbol_collection* new_tbl = arena_alloc(&a_main, sizeof(*new_tbl));
+    Scope_id new_scope = env.symbol_tables.info.count;
+    vec_append(&a_main, &env.symbol_tables, new_tbl);
+    log(LOG_DEBUG, "symbol_collection_new end: %zu\n", env.symbol_tables.info.count);
+    return new_scope;
 }
 

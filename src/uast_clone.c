@@ -190,7 +190,7 @@ Uast_for_with_cond* uast_for_with_cond_clone(const Uast_for_with_cond* lang_for,
     return uast_for_with_cond_new(
         lang_for->pos,
         uast_condition_clone(lang_for->condition, new_scope),
-        uast_block_clone(lang_for->body, new_scope),
+        uast_block_clone(lang_for->body),
         lang_for->continue_label,
         lang_for->do_cont_label
     );
@@ -236,7 +236,7 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt, Scope_id new_scope) {
         case UAST_EXPR:
             return uast_expr_wrap(uast_expr_clone(uast_expr_const_unwrap(stmt), new_scope));
         case UAST_BLOCK:
-            return uast_block_wrap(uast_block_clone(uast_block_const_unwrap(stmt), new_scope));
+            return uast_block_wrap(uast_block_clone(uast_block_const_unwrap(stmt)));
         case UAST_DEF:
             return uast_def_wrap(uast_def_clone(uast_def_const_unwrap(stmt), new_scope));
         case UAST_FOR_WITH_COND:
@@ -263,14 +263,15 @@ Uast_variable_def* uast_variable_def_clone(const Uast_variable_def* def, Scope_i
     return uast_variable_def_new(def->pos, ulang_type_clone(def->lang_type, new_scope), def->name);
 }
 
-Uast_block* uast_block_clone(const Uast_block* block, Scope_id new_scope) {
+Uast_block* uast_block_clone(const Uast_block* block) {
     Uast_stmt_vec new_children = {0};
+    Scope_id new_scope = scope_id_clone(block->scope_id);
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         vec_append(&a_main, &new_children, uast_stmt_clone(vec_at(&block->children, idx), new_scope));
     }
-    return uast_block_new(block->pos, new_children, symbol_collection_clone(block->symbol_collection, new_scope), block->pos_end, scope_id_new());
+    return uast_block_new(block->pos, new_children, block->pos_end, new_scope);
 }
 
 Uast_if* uast_if_clone(const Uast_if* lang_if, Scope_id new_scope) {
-    return uast_if_new(lang_if->pos, uast_condition_clone(lang_if->condition, new_scope), uast_block_clone(lang_if->body, new_scope));
+    return uast_if_new(lang_if->pos, uast_condition_clone(lang_if->condition, new_scope), uast_block_clone(lang_if->body));
 }

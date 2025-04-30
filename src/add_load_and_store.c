@@ -716,9 +716,6 @@ static Name load_ptr_symbol(Llvm_block* new_block, Tast_symbol* old_sym) {
     (void) new_block;
 
     Tast_def* var_def_ = NULL;
-    log(LOG_DEBUG, TAST_FMT, tast_symbol_print(old_sym));
-    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(old_sym->base.name.base));
-    symbol_log(LOG_DEBUG, env);
     unwrap(symbol_lookup(&var_def_, old_sym->base.name));
     unwrap(symbol_lookup(&var_def_, old_sym->base.name));
     Llvm_variable_def* var_def = load_variable_def_clone(tast_variable_def_unwrap(var_def_));
@@ -795,10 +792,7 @@ static Name load_symbol(
     return new_load->name;
 }
 
-static Name load_binary_short_circuit(
-    Llvm_block* new_block,
-    Tast_binary* old_bin
-) {
+static Name load_binary_short_circuit(Llvm_block* new_block, Tast_binary* old_bin) {
     BINARY_TYPE if_true_type = {0};
     int if_false_val = 0;
 
@@ -861,7 +855,7 @@ static Name load_binary_short_circuit(
             (Symbol_collection) {0},
             old_bin->pos,
             lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)),
-            scope_id_new()
+            symbol_collection_new()
         ),
         lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))
     );
@@ -886,7 +880,7 @@ static Name load_binary_short_circuit(
             (Symbol_collection) {0},
             old_bin->pos,
             lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)),
-            scope_id_new()
+            symbol_collection_new()
         ),
         lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))
     );
@@ -1587,70 +1581,71 @@ static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, N
 }
 
 static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* if_else) {
-    *new_block = llvm_block_new(
-        if_else->pos,
-        (Llvm_vec) {0},
-        (Symbol_collection) {0},
-        (Pos) {0},
-        scope_id_new()
-    );
+    todo();
+    //*new_block = llvm_block_new(
+    //    if_else->pos,
+    //    (Llvm_vec) {0},
+    //    (Symbol_collection) {0},
+    //    (Pos) {0},
+    //    scope_id_new()
+    //);
 
-    Tast_variable_def* yield_dest = NULL;
-    if (tast_if_else_chain_get_lang_type(if_else).type != LANG_TYPE_VOID) {
-        yield_dest = tast_variable_def_new(
-            (*new_block)->pos,
-            tast_if_else_chain_get_lang_type(if_else),
-            false,
-            name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0)
-        );
-        unwrap(symbol_add(tast_variable_def_wrap(yield_dest)));
-        load_variable_def(*new_block, yield_dest);
-        env.load_break_symbol_name = yield_dest->name;
-    }
+    //Tast_variable_def* yield_dest = NULL;
+    //if (tast_if_else_chain_get_lang_type(if_else).type != LANG_TYPE_VOID) {
+    //    yield_dest = tast_variable_def_new(
+    //        (*new_block)->pos,
+    //        tast_if_else_chain_get_lang_type(if_else),
+    //        false,
+    //        name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0)
+    //    );
+    //    unwrap(symbol_add(tast_variable_def_wrap(yield_dest)));
+    //    load_variable_def(*new_block, yield_dest);
+    //    env.load_break_symbol_name = yield_dest->name;
+    //}
 
-    Name if_after = name_new(env.curr_mod_path, util_literal_name_new_prefix("if_after"), (Ulang_type_vec) {0}, 0);
+    //Name if_after = name_new(env.curr_mod_path, util_literal_name_new_prefix("if_after"), (Ulang_type_vec) {0}, 0);
 
-    Name old_label_if_break = env.label_if_break;
-    if (if_else->is_switch) {
-        env.label_if_break = if_after;
-    } else {
-        env.label_if_break = env.label_after_for;
-    }
-    
-    Llvm* dummy = NULL;
-    Tast_def* dummy_def = NULL;
+    //Name old_label_if_break = env.label_if_break;
+    //if (if_else->is_switch) {
+    //    env.label_if_break = if_after;
+    //} else {
+    //    env.label_if_break = env.label_after_for;
+    //}
+    //
+    //Llvm* dummy = NULL;
+    //Tast_def* dummy_def = NULL;
 
-    Name next_if = {0};
-    for (size_t idx = 0; idx < if_else->tasts.info.count; idx++) {
-        if (idx + 1 == if_else->tasts.info.count) {
-            next_if = if_after;
-        } else {
-            next_if = name_new(env.curr_mod_path, util_literal_name_new_prefix("next_if"), (Ulang_type_vec) {0}, 0);
-        }
+    //Name next_if = {0};
+    //for (size_t idx = 0; idx < if_else->tasts.info.count; idx++) {
+    //    if (idx + 1 == if_else->tasts.info.count) {
+    //        next_if = if_after;
+    //    } else {
+    //        next_if = name_new(env.curr_mod_path, util_literal_name_new_prefix("next_if"), (Ulang_type_vec) {0}, 0);
+    //    }
 
-        Llvm_block* if_block = if_statement_to_branch(vec_at(&if_else->tasts, idx), next_if, if_after);
-        vec_append(&a_main, &(*new_block)->children, llvm_block_wrap(if_block));
+    //    Llvm_block* if_block = if_statement_to_branch(vec_at(&if_else->tasts, idx), next_if, if_after);
+    //    vec_append(&a_main, &(*new_block)->children, llvm_block_wrap(if_block));
 
-        if (idx + 1 < if_else->tasts.info.count) {
-            assert(!alloca_lookup(&dummy,  next_if));
-            add_label((*new_block), next_if, vec_at(&if_else->tasts, idx)->pos, false);
-            assert(alloca_lookup(&dummy,  next_if));
-        } else {
-            //assert(str_view_is_equal(next_if, env.label_if_break));
-        }
-    }
+    //    if (idx + 1 < if_else->tasts.info.count) {
+    //        assert(!alloca_lookup(&dummy,  next_if));
+    //        add_label((*new_block), next_if, vec_at(&if_else->tasts, idx)->pos, false);
+    //        assert(alloca_lookup(&dummy,  next_if));
+    //    } else {
+    //        //assert(str_view_is_equal(next_if, env.label_if_break));
+    //    }
+    //}
 
-    assert(!symbol_lookup(&dummy_def,  next_if));
-    add_label((*new_block), next_if, if_else->pos, false);
-    assert(alloca_lookup(&dummy,  next_if));
+    //assert(!symbol_lookup(&dummy_def,  next_if));
+    //add_label((*new_block), next_if, if_else->pos, false);
+    //assert(alloca_lookup(&dummy,  next_if));
 
-    env.label_if_break = old_label_if_break;
+    //env.label_if_break = old_label_if_break;
 
-    if (tast_if_else_chain_get_lang_type(if_else).type == LANG_TYPE_VOID) {
-        return (Name) {0};
-    } else {
-        return load_symbol(*new_block, tast_symbol_new_from_variable_def(yield_dest->pos, yield_dest));
-    }
+    //if (tast_if_else_chain_get_lang_type(if_else).type == LANG_TYPE_VOID) {
+    //    return (Name) {0};
+    //} else {
+    //    return load_symbol(*new_block, tast_symbol_new_from_variable_def(yield_dest->pos, yield_dest));
+    //}
     unreachable("");
 }
 

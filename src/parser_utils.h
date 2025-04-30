@@ -48,8 +48,6 @@ Str_view util_literal_name_new_prefix_internal(const char* file, int line, const
 #define util_literal_name_new() \
     util_literal_name_new_prefix_internal(__FILE__, __LINE__, "")
 
-Scope_id scope_id_new(void);
-
 Name get_storage_location(Name sym_name);
 
 bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, const Pos pos, Str_view str_view);
