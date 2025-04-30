@@ -31,6 +31,7 @@ bool generic_symbol_lookup(void** result, Str_view key, Get_tbl_from_collection_
 
 bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Str_view key);
 
+// TODO: symbol_add should call symbol_update to reduce duplication
 bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts, size_t capacity, Str_view key, void* item) {
     assert(item);
     assert(key.count > 0 && "invalid item");
@@ -143,7 +144,7 @@ bool generic_symbol_add(
     Scope_id scope_id
 ) {
     void* dummy;
-    if (generic_symbol_lookup((void**)&dummy,  key, get_tbl_from_collection_fn, scope_id)) {
+    if (generic_symbol_lookup((void**)&dummy, key, get_tbl_from_collection_fn, scope_id)) {
         return false;
     }
     Symbol_collection* curr_tast = vec_at(&env.symbol_tables, scope_id);
@@ -161,30 +162,24 @@ void generic_tbl_update(Generic_symbol_table* sym_table, Str_view key, void* ite
 }
 
 void generic_symbol_update(Str_view key, void* item, Get_tbl_from_collection_fn get_tbl_from_collection_fn, Scope_id scope_id) {
-    (void) key;
-    (void) item;
-    (void) get_tbl_from_collection_fn;
-    (void) scope_id;
-    todo();
-    //if (generic_symbol_add(key, item, get_tbl_from_collection_fn, scope_id)) {
-    //    return;
-    //}
-    //if (env.ancesters.info.count < 1) {
-    //    unreachable("no block ancester found");
-    //}
+    if (generic_symbol_add(key, item, get_tbl_from_collection_fn, scope_id)) {
+        return;
+    }
 
-    //for (size_t idx = env.ancesters.info.count - 1;; idx--) {
-    //    Symbol_collection* sym_coll = vec_at(&env.ancesters, idx);
-    //    Generic_symbol_table_tast* curr_tast = NULL;
-    //    if (generic_tbl_lookup_internal(&curr_tast, get_tbl_from_collection_fn(sym_coll), key)) {
-    //        curr_tast->tast = item;
-    //        return;
-    //    }
-
-    //    if (idx < 1) {
-    //        unreachable("no block ancester found");
-    //    }
-    //}
+    Scope_id curr_scope = scope_id;
+    while (true) {
+        void* tbl = get_tbl_from_collection_fn(vec_at(&env.symbol_tables, curr_scope));
+        Generic_symbol_table_tast* curr_tast = NULL;
+        if (generic_tbl_lookup_internal(&curr_tast, tbl, key)) {
+             curr_tast->tast = item;
+             return;
+        }
+        if (curr_scope == 0) {
+            break;
+        }
+        unwrap(scope_tbl_lookup(&curr_scope, curr_scope));
+    }
+    unreachable("if there was no matching symbol found, generic_symbol_add should have worked");
 }
 
 bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, Str_view key) {
@@ -362,10 +357,13 @@ void all_tbl_update(Alloca_table* sym_table, Llvm* item) {
 }
 
 void usymbol_update(Uast_def* item) {
-    (void) item;
-    todo();
-    // TODO: do extra stuff similar to usymbol_add?
-    //generic_symbol_update(serialize_name_symbol_table(uast_def_get_name(item)), item, (Get_tbl_from_collection_fn)usym_get_tbl_from_collection);
+    Name name = uast_def_get_name(item);
+    generic_symbol_update(
+        serialize_name_symbol_table(name),
+        item,
+        (Get_tbl_from_collection_fn)usym_get_tbl_from_collection,
+        name.scope_id
+    );
 }
 
 void alloca_update(Llvm* item) {

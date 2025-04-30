@@ -77,8 +77,6 @@ void do_passes(const Parameters* params) {
         fail();
     }
     assert(error_count < 1);
-    log(LOG_DEBUG, "\n"TAST_FMT, uast_block_print(untyped));
-    todo();
 
     arena_reset(&print_arena);
     Tast_block* typed = NULL;

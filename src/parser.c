@@ -1116,25 +1116,24 @@ static PARSE_STATUS parse_function_decl_common(
 }
 
 static PARSE_STATUS parse_function_def(Uast_function_def** fun_def, Tk_view* tokens) {
-    todo();
-    //unwrap(try_consume(NULL, tokens, TOKEN_FN));
+    unwrap(try_consume(NULL, tokens, TOKEN_FN));
 
-    //Scope_id fn_scope = 0;
-    //Scope_id block_scope = symbol_collection_new();
+    Scope_id fn_scope = 0;
+    Scope_id block_scope = symbol_collection_new(0);
 
-    //Uast_function_decl* fun_decl = NULL;
-    //if (PARSE_OK != parse_function_decl_common(&fun_decl, tokens, fn_scope, block_scope)) {
-    //    return PARSE_ERROR;
-    //}
+    Uast_function_decl* fun_decl = NULL;
+    if (PARSE_OK != parse_function_decl_common(&fun_decl, tokens, fn_scope, block_scope)) {
+        return PARSE_ERROR;
+    }
 
-    //Uast_block* fun_body = NULL;
-    //if (PARSE_OK != parse_block(&fun_body, tokens, false, block_scope)) {
-    //    return PARSE_ERROR;
-    //}
+    Uast_block* fun_body = NULL;
+    if (PARSE_OK != parse_block(&fun_body, tokens, false, block_scope)) {
+        return PARSE_ERROR;
+    }
 
-    //*fun_def = uast_function_def_new(fun_decl->pos, fun_decl, fun_body);
-    //usymbol_update(uast_function_def_wrap(*fun_def));
-    //return PARSE_OK;
+    *fun_def = uast_function_def_new(fun_decl->pos, fun_decl, fun_body);
+    usymbol_update(uast_function_def_wrap(*fun_def));
+    return PARSE_OK;
 }
 
 static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_view* tokens) {
