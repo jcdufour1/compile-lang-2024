@@ -1,6 +1,7 @@
 #define STB_DS_IMPLEMENTATION
 #include <stb_ds.h>
 #include "symbol_table.h"
+#include "symbol_table_struct.h"
 #include <uast_utils.h>
 #include <tast_utils.h>
 #include <llvm_utils.h>
@@ -390,6 +391,31 @@ bool file_path_to_text_tbl_add(File_path_to_text* sym_table, Str_view* file_text
 }
 
 //
+// Scope_id_to_next_table implementation
+//
+
+bool scope_tbl_lookup(Scope_id* result, Scope_id key) {
+    char buf[32] = {0};
+    sprintf(buf, "%zu", key);
+    Scope_id temp_stack = 0;
+    Scope_id* temp = &temp_stack;
+    bool status = generic_tbl_lookup((void**)&temp, (Generic_symbol_table*)&env.scope_id_to_next, str_view_from_cstr(buf));
+    *result = *temp;
+    arena_reset(&env.a_temp);
+    return status;
+}
+
+bool scope_tbl_add(Scope_id key, Scope_id next) {
+    char buf[32] = {0};
+    sprintf(buf, "%zu", key);
+    String serialized = {0};
+    string_extend_cstr(&a_main, &serialized, buf);
+    Scope_id* next_alloced = arena_alloc(&a_main, sizeof(*next_alloced));
+    *next_alloced = next;
+    return generic_tbl_add((Generic_symbol_table*)&env.scope_id_to_next, string_to_strv(serialized), next_alloced);
+}
+
+//
 // not generic
 //
 
@@ -410,3 +436,4 @@ void alloca_extend_table_internal(String* buf, const Alloca_table sym_table, int
         }
     }
 }
+

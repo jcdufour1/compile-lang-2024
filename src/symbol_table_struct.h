@@ -49,6 +49,23 @@ typedef struct {
     size_t capacity; // count buckets in symbol_table
 } Alloca_table;
 
+
+// TODO: rename Scope_id_to_next_table_tast to Scope_id_to_next_table_node, etc.
+
+
+typedef struct {
+    Scope_id* tast;
+    Str_view key;
+    SYM_TBL_STATUS status;
+} Scope_id_to_next_table_tast;
+
+typedef struct {
+    Scope_id_to_next_table_tast* table_tasts;
+    size_t count; // count elements in symbol_table
+    size_t capacity; // count buckets in symbol_table
+} Scope_id_to_next_table;
+
+
 typedef struct {
     Str_view* item;
     Str_view key;

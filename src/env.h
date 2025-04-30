@@ -21,6 +21,10 @@ typedef enum {
 } PARENT_OF;
 
 typedef struct Env_ {
+    Arena a_temp; // reset after a task
+                  
+    Scope_id_to_next_table scope_id_to_next;
+
     Sym_coll_vec ancesters; // index 0 is the root of the tree
                             // index len - 1 is the current tast
     Llvm_vec llvm_ancesters; // index 0 is the root of the tree

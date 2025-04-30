@@ -346,6 +346,8 @@ static bool get_next_token(
         str_view_col_advance_pos(pos, str_view_col_front(*file_text_rem));
         str_view_consume(&file_text_rem->base);
 
+        // TODO: expected failure case for char literal being too large
+        // TODO: expected success case for char literal having '\n'
         unwrap(str_view_col_try_consume(pos, file_text_rem, '\''));
         return true;
     } else if (str_view_col_front(*file_text_rem) == '.') {
