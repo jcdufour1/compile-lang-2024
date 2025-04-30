@@ -525,9 +525,14 @@ bool resolve_generics_function_def(
             return status;
         }
 
+        // TODO: remove these env hacks with refactoring to use Scope_id to choose hash tables instead
+        Sym_coll_vec tbls = env.ancesters;
+        memset(&env.ancesters, 0, sizeof(env.ancesters));
+        vec_append(&a_main, &env.ancesters, vec_at(&tbls, 0));
         if (!resolve_generics_set_function_def_types(*new_def)) {
-            return false;
+            status = false;
         }
+        env.ancesters = tbls;
 
         return status;
     }

@@ -2749,8 +2749,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         Uast_def* main_fn_ = NULL;
         if (!usymbol_lookup(&main_fn_, name_new((Str_view) {0}, str_view_from_cstr("main"), (Ulang_type_vec) {0}, 0))) {
             log(LOG_WARNING, "no main function\n");
-            status = false;
-            goto error;
+            goto after_main;
         }
         if (main_fn_->type != UAST_FUNCTION_DEF) {
             todo();
@@ -2760,6 +2759,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
             status = false;
         }
     }
+after_main:
 
 error:
     if (new_sym_tbl) {
