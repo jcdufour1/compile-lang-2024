@@ -22,8 +22,8 @@ void alloca_table_clone(Scope_id old_scope, Scope_id new_scope) {
 }
 
 
-Scope_id scope_id_clone(Scope_id old_scope) {
-    Scope_id new_scope = symbol_collection_new();
+Scope_id scope_id_clone(Scope_id old_scope, Scope_id new_parent) {
+    Scope_id new_scope = symbol_collection_new(new_parent);
     usymbol_table_clone(old_scope, new_scope);
     symbol_table_clone(old_scope, new_scope);
     alloca_table_clone(old_scope, new_scope);

@@ -208,9 +208,13 @@ bool generic_symbol_lookup(
         if (generic_tbl_lookup(result, tbl, key)) {
              return true;
         }
+        if (curr_scope == 0) {
+            break;
+        }
         unwrap(scope_tbl_lookup(&curr_scope, curr_scope));
     }
-    unreachable("");
+
+    return false;
 }
 
 //
@@ -409,13 +413,13 @@ bool scope_tbl_lookup(Scope_id* result, Scope_id key) {
     return status;
 }
 
-bool scope_tbl_add(Scope_id key, Scope_id next) {
+bool scope_tbl_add(Scope_id key, Scope_id parent) {
     char buf[32] = {0};
     sprintf(buf, "%zu", key);
     String serialized = {0};
     string_extend_cstr(&a_main, &serialized, buf);
     Scope_id* next_alloced = arena_alloc(&a_main, sizeof(*next_alloced));
-    *next_alloced = next;
+    *next_alloced = parent;
     return generic_tbl_add((Generic_symbol_table*)&env.scope_id_to_parent, string_to_strv(serialized), next_alloced);
 }
 
@@ -441,12 +445,12 @@ void alloca_extend_table_internal(String* buf, const Alloca_table sym_table, int
     }
 }
 
-Scope_id symbol_collection_new(void) {
-    log(LOG_DEBUG, "symbol_collection_new start: %zu\n", env.symbol_tables.info.count);
+Scope_id symbol_collection_new(Scope_id parent) {
     Symbol_collection* new_tbl = arena_alloc(&a_main, sizeof(*new_tbl));
     Scope_id new_scope = env.symbol_tables.info.count;
     vec_append(&a_main, &env.symbol_tables, new_tbl);
-    log(LOG_DEBUG, "symbol_collection_new end: %zu\n", env.symbol_tables.info.count);
+
+    unwrap(scope_tbl_add(new_scope, parent));
     return new_scope;
 }
 

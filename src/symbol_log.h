@@ -61,10 +61,10 @@ static inline void symbol_log_internal(LOG_LEVEL log_level, const char* file, in
         Symbol_table curr = vec_at(&env.symbol_tables, curr_scope)->symbol_table;
         log_internal(log_level, file, line, 0, "level: %zu\n", idx);
         symbol_level_log_internal(log_level, file, line, curr, recursion_depth);
-        unwrap(scope_tbl_lookup(&curr_scope, curr_scope));
-        if (scope_id == 0) {
+        if (curr_scope == 0) {
             break;
         }
+        unwrap(scope_tbl_lookup(&curr_scope, curr_scope));
     }
     log_internal(log_level, file, line, 0, "----end symbol table------\n");
 }

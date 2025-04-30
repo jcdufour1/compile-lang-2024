@@ -855,7 +855,7 @@ static Name load_binary_short_circuit(Llvm_block* new_block, Tast_binary* old_bi
             (Symbol_collection) {0},
             old_bin->pos,
             lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)),
-            symbol_collection_new()
+            symbol_collection_new(new_block->scope_id)
         ),
         lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))
     );
@@ -880,7 +880,7 @@ static Name load_binary_short_circuit(Llvm_block* new_block, Tast_binary* old_bi
             (Symbol_collection) {0},
             old_bin->pos,
             lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)),
-            symbol_collection_new()
+            symbol_collection_new(new_block->scope_id)
         ),
         lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))
     );

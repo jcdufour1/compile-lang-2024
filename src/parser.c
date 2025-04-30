@@ -149,7 +149,7 @@ static PARSE_STATUS msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
     );
 
     Uast_def* original_def;
-    unwrap(usymbol_lookup(&original_def,  uast_def_get_name(new_sym_def)));
+    unwrap(usymbol_lookup(&original_def, uast_def_get_name(new_sym_def)));
     msg(
         LOG_NOTE, EXPECT_FAIL_NONE, env.file_path_to_text, uast_def_get_pos(original_def),
         STR_VIEW_FMT " originally defined here\n", name_print(uast_def_get_name(original_def))
@@ -160,7 +160,7 @@ static PARSE_STATUS msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
 
 static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alias_tk, Pos mod_path_pos, Str_view mod_path) {
     Uast_def* prev_def = NULL;
-    if (usymbol_lookup(&prev_def,  name_new((Str_view) {0}, mod_path, (Ulang_type_vec) {0}, 0 /* TODO */))) {
+    if (usymbol_lookup(&prev_def, name_new((Str_view) {0}, mod_path, (Ulang_type_vec) {0}, 0 /* TODO */))) {
         goto finish;
     }
 
@@ -174,7 +174,7 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     //env.ancesters.info.count = 1; // TODO: make macro to do this
     //env.curr_mod_path = mod_path;
     //Uast_block* block = NULL;
-    //if (!parse_file(&block,  string_to_strv(file_path), false)) {
+    //if (!parse_file(&block, string_to_strv(file_path), false)) {
     //    // TODO: expected failure test
     //    todo();
     //}
@@ -1116,24 +1116,25 @@ static PARSE_STATUS parse_function_decl_common(
 }
 
 static PARSE_STATUS parse_function_def(Uast_function_def** fun_def, Tk_view* tokens) {
-    unwrap(try_consume(NULL, tokens, TOKEN_FN));
+    todo();
+    //unwrap(try_consume(NULL, tokens, TOKEN_FN));
 
-    Scope_id fn_scope = 0;
-    Scope_id block_scope = symbol_collection_new();
+    //Scope_id fn_scope = 0;
+    //Scope_id block_scope = symbol_collection_new();
 
-    Uast_function_decl* fun_decl = NULL;
-    if (PARSE_OK != parse_function_decl_common(&fun_decl, tokens, fn_scope, block_scope)) {
-        return PARSE_ERROR;
-    }
+    //Uast_function_decl* fun_decl = NULL;
+    //if (PARSE_OK != parse_function_decl_common(&fun_decl, tokens, fn_scope, block_scope)) {
+    //    return PARSE_ERROR;
+    //}
 
-    Uast_block* fun_body = NULL;
-    if (PARSE_OK != parse_block(&fun_body, tokens, false, block_scope)) {
-        return PARSE_ERROR;
-    }
+    //Uast_block* fun_body = NULL;
+    //if (PARSE_OK != parse_block(&fun_body, tokens, false, block_scope)) {
+    //    return PARSE_ERROR;
+    //}
 
-    *fun_def = uast_function_def_new(fun_decl->pos, fun_decl, fun_body);
-    usymbol_update(uast_function_def_wrap(*fun_def));
-    return PARSE_OK;
+    //*fun_def = uast_function_def_new(fun_decl->pos, fun_decl, fun_body);
+    //usymbol_update(uast_function_def_wrap(*fun_def));
+    //return PARSE_OK;
 }
 
 static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_view* tokens) {
@@ -1510,7 +1511,7 @@ static PARSE_STATUS parse_variable_decl(
             usymbol_add_defer(uast_variable_def_wrap(variable_def));
         } else {
             log(LOG_DEBUG, TAST_FMT, uast_variable_def_print(variable_def));
-            if (usymbol_lookup(&dummy,  variable_def->name)) {
+            if (usymbol_lookup(&dummy, variable_def->name)) {
                 msg_redefinition_of_symbol(uast_variable_def_wrap(variable_def));
                 return PARSE_ERROR;
             }
@@ -1629,40 +1630,43 @@ static PARSE_STATUS parse_for_with_cond(Uast_for_with_cond** for_new, Pos pos, T
 }
 
 static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens) {
-    Token for_token;
-    unwrap(try_consume(&for_token, tokens, TOKEN_FOR));
+    todo();
+    //Token for_token;
+    //unwrap(try_consume(&for_token, tokens, TOKEN_FOR));
 
-    Scope_id block_scope = symbol_collection_new();
-    
+    //Scope_id block_scope = symbol_collection_new();
+    //
     if (starts_with_variable_type_decl(*tokens, false)) {
-        todo();
-        //PARSE_STATUS status = PARSE_OK;
-        //Uast_block* outer = uast_block_new(for_token.pos, (Uast_stmt_vec) {0}, (Symbol_collection) {0}, for_token.pos, scope_id_new());
-        //Uast_variable_def* var_def = NULL;
-        //if (PARSE_OK != parse_variable_decl(&var_def, tokens, false, false, true, true, (Ulang_type) {0}, block_scope)) {
-        //    status = PARSE_ERROR;
-        //    goto for_range_error;
-        //}
+    //    todo();
+    //    //PARSE_STATUS status = PARSE_OK;
+    //    //Uast_block* outer = uast_block_new(for_token.pos, (Uast_stmt_vec) {0}, (Symbol_collection) {0}, for_token.pos, scope_id_new());
+    //    //Uast_variable_def* var_def = NULL;
+    //    //if (PARSE_OK != parse_variable_decl(&var_def, tokens, false, false, true, true, (Ulang_type) {0}, block_scope)) {
+    //    //    status = PARSE_ERROR;
+    //    //    goto for_range_error;
+    //    //}
 
-        //Uast_block* new_for = NULL;
-        //if (PARSE_OK != parse_for_range_internal(&new_for, var_def, outer, tokens, block_scope)) {
-        //    status = PARSE_ERROR;
-        //    goto for_range_error;
-        //}
-        //*result = uast_block_wrap(new_for);
+    //    //Uast_block* new_for = NULL;
+    //    //if (PARSE_OK != parse_for_range_internal(&new_for, var_def, outer, tokens, block_scope)) {
+    //    //    status = PARSE_ERROR;
+    //    //    goto for_range_error;
+    //    //}
+    //    //*result = uast_block_wrap(new_for);
 
 for_range_error:
         todo();
         //return status;
     } else {
-        Uast_for_with_cond* new_for = NULL;
-        if (PARSE_OK != parse_for_with_cond(&new_for, for_token.pos, tokens, block_scope)) {
-            return PARSE_ERROR;
-        }
-        *result = uast_for_with_cond_wrap(new_for);
+        todo();
+        //Uast_for_with_cond* new_for = NULL;
+        //if (PARSE_OK != parse_for_with_cond(&new_for, for_token.pos, tokens, block_scope)) {
+        //    return PARSE_ERROR;
+        //}
+        //*result = uast_for_with_cond_wrap(new_for);
     }
 
-    return PARSE_OK;
+    todo();
+    //return PARSE_OK;
 }
 
 static PARSE_STATUS parse_break(Uast_break** new_break, Tk_view* tokens, Scope_id scope_id) {
@@ -1736,7 +1740,7 @@ static PARSE_STATUS parse_literal(Uast_literal** lit, Tk_view* tokens) {
     Token token = tk_view_consume(tokens);
     assert(token_is_literal(token));
 
-    if (util_try_uast_literal_new_from_strv(lit,  token.text, token.type, token.pos)) {
+    if (util_try_uast_literal_new_from_strv(lit, token.text, token.type, token.pos)) {
         return PARSE_OK;
     }
     return PARSE_ERROR;
@@ -2061,7 +2065,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, bool def
         lhs = uast_continue_wrap(parse_continue(tokens));
     } else if (starts_with_block(*tokens)) {
         Uast_block* block_def = NULL;
-        if (PARSE_OK != parse_block(&block_def, tokens, false, symbol_collection_new())) {
+        if (PARSE_OK != parse_block(&block_def, tokens, false, symbol_collection_new(scope_id))) {
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_block_wrap(block_def);
@@ -3059,12 +3063,12 @@ bool parse_file(Uast_block** block, Str_view file_path, bool do_new_sym_coll) {
     unwrap(file_path_to_text_tbl_add(&env.file_path_to_text, file_con, file_path) && "parse_file should not be called with the same file path more than once");
 
     Token_vec tokens = {0};
-    if (!tokenize(&tokens,  file_path)) {
+    if (!tokenize(&tokens, file_path)) {
         status = false;
         goto error;
     }
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
-    if (PARSE_OK != parse_block(block, &token_view, true, symbol_collection_new())) {
+    if (PARSE_OK != parse_block(block, &token_view, true, symbol_collection_new(0))) {
         status = false;
         goto error;
     }

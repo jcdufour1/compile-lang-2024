@@ -7,7 +7,7 @@
 
 typedef struct {
     Vec_base info;
-    Symbol_collection** buf;
+    Symbol_collection** buf; // TODO: change this to Symbol_collection* if possible
 } Sym_coll_vec;
 
 // only used in type_checking.c

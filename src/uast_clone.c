@@ -264,12 +264,13 @@ Uast_variable_def* uast_variable_def_clone(const Uast_variable_def* def, Scope_i
 }
 
 Uast_block* uast_block_clone(const Uast_block* block) {
-    Uast_stmt_vec new_children = {0};
-    Scope_id new_scope = scope_id_clone(block->scope_id);
-    for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        vec_append(&a_main, &new_children, uast_stmt_clone(vec_at(&block->children, idx), new_scope));
-    }
-    return uast_block_new(block->pos, new_children, block->pos_end, new_scope);
+    todo();
+    //Uast_stmt_vec new_children = {0};
+    //Scope_id new_scope = scope_id_clone(block->scope_id);
+    //for (size_t idx = 0; idx < block->children.info.count; idx++) {
+    //    vec_append(&a_main, &new_children, uast_stmt_clone(vec_at(&block->children, idx), new_scope));
+    //}
+    //return uast_block_new(block->pos, new_children, block->pos_end, new_scope);
 }
 
 Uast_if* uast_if_clone(const Uast_if* lang_if, Scope_id new_scope) {

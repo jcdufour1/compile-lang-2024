@@ -68,7 +68,7 @@ void do_passes(const Parameters* params) {
     memset(&env, 0, sizeof(env));
 
     // allocate scope 0
-    symbol_collection_new();
+    symbol_collection_new(0);
 
     add_primitives();
 
