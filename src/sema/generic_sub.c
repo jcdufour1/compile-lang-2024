@@ -9,15 +9,13 @@
 #include <parser_utils.h>
 
 void generic_sub_return(Uast_return* rtn, Name gen_param, Ulang_type gen_arg) {
-    (void) rtn;
-    (void) gen_param;
-    (void) gen_arg;
+    generic_sub_expr(rtn->child, gen_param, gen_arg);
 }
 
 void generic_sub_param(Uast_param* def, Name gen_param, Ulang_type gen_arg) {
-    generic_sub_variable_def( def->base, gen_param, gen_arg);
+    generic_sub_variable_def(def->base, gen_param, gen_arg);
     if (def->is_optional) {
-        generic_sub_expr( def->optional_default, gen_param, gen_arg);
+        generic_sub_expr(def->optional_default, gen_param, gen_arg);
     }
 }
 
@@ -49,11 +47,11 @@ void generic_sub_lang_type_regular(
 
     lang_type = ulang_type_regular_clone(lang_type, new_scope);
     Ulang_type_vec* gen_args = &lang_type.atom.str.gen_args;
-    //log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
+    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
     for (size_t idx = 0; idx < gen_args->info.count; idx++) {
         generic_sub_lang_type(vec_at_ref(gen_args, idx), vec_at(gen_args, idx), gen_param, gen_arg);
     }
-    //log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
+    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
     *new_lang_type = ulang_type_regular_const_wrap(lang_type);
 }
 
@@ -114,12 +112,12 @@ void generic_sub_lang_type(
 }
 
 void generic_sub_variable_def(Uast_variable_def* def, Name gen_param, Ulang_type gen_arg) {
-    generic_sub_lang_type( &def->lang_type, def->lang_type, gen_param, gen_arg);
+    generic_sub_lang_type(&def->lang_type, def->lang_type, gen_param, gen_arg);
 }
 
 void generic_sub_struct_def_base(Ustruct_def_base* base, Name gen_param, Ulang_type gen_arg) {
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
-        generic_sub_lang_type( &vec_at(&base->members, idx)->lang_type, vec_at(&base->members, idx)->lang_type, gen_param, gen_arg);
+        generic_sub_lang_type(&vec_at(&base->members, idx)->lang_type, vec_at(&base->members, idx)->lang_type, gen_param, gen_arg);
     }
 }
 
@@ -136,7 +134,7 @@ void generic_sub_def(Uast_def* def, Name gen_param, Ulang_type gen_arg) {
         case UAST_FUNCTION_DEF:
             todo();
         case UAST_VARIABLE_DEF:
-            generic_sub_variable_def( uast_variable_def_unwrap(def), gen_param, gen_arg);
+            generic_sub_variable_def(uast_variable_def_unwrap(def), gen_param, gen_arg);
             return;
         case UAST_STRUCT_DEF:
             todo();
@@ -169,16 +167,16 @@ void generic_sub_label(Uast_label* label) {
 void generic_sub_stmt(Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg) {
     switch (stmt->type) {
         case UAST_BLOCK:
-            generic_sub_block( uast_block_unwrap(stmt), gen_param, gen_arg);
+            generic_sub_block(uast_block_unwrap(stmt), gen_param, gen_arg);
             return;
         case UAST_EXPR:
-            generic_sub_expr( uast_expr_unwrap(stmt), gen_param, gen_arg);
+            generic_sub_expr(uast_expr_unwrap(stmt), gen_param, gen_arg);
             return;
         case UAST_DEF:
-            generic_sub_def( uast_def_unwrap(stmt), gen_param, gen_arg);
+            generic_sub_def(uast_def_unwrap(stmt), gen_param, gen_arg);
             return;
         case UAST_FOR_WITH_COND:
-            generic_sub_for_with_cond( uast_for_with_cond_unwrap(stmt), gen_param, gen_arg);
+            generic_sub_for_with_cond(uast_for_with_cond_unwrap(stmt), gen_param, gen_arg);
             return;
         case UAST_BREAK:
             todo();
@@ -186,7 +184,7 @@ void generic_sub_stmt(Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg) {
             generic_sub_continue(uast_continue_unwrap(stmt));
             return;
         case UAST_ASSIGNMENT:
-            generic_sub_assignment( uast_assignment_unwrap(stmt), gen_param, gen_arg);
+            generic_sub_assignment(uast_assignment_unwrap(stmt), gen_param, gen_arg);
             return;
         case UAST_RETURN:
             generic_sub_return(uast_return_unwrap(stmt), gen_param, gen_arg);
@@ -199,18 +197,18 @@ void generic_sub_stmt(Uast_stmt* stmt, Name gen_param, Ulang_type gen_arg) {
 }
 
 void generic_sub_if(Uast_if* lang_if, Name gen_param, Ulang_type gen_arg) {
-    generic_sub_condition( lang_if->condition, gen_param, gen_arg);
-    generic_sub_block( lang_if->body, gen_param, gen_arg);
+    generic_sub_condition(lang_if->condition, gen_param, gen_arg);
+    generic_sub_block(lang_if->body, gen_param, gen_arg);
 }
 
 void generic_sub_if_else_chain(Uast_if_else_chain* if_else, Name gen_param, Ulang_type gen_arg) {
     for (size_t idx = 0; idx < if_else->uasts.info.count; idx++) {
-        generic_sub_if( vec_at(&if_else->uasts, idx), gen_param, gen_arg);
+        generic_sub_if(vec_at(&if_else->uasts, idx), gen_param, gen_arg);
     }
 }
 
 void generic_sub_switch(Uast_switch* lang_switch, Name gen_param, Ulang_type gen_arg) {
-    generic_sub_expr( lang_switch->operand, gen_param, gen_arg);
+    generic_sub_expr(lang_switch->operand, gen_param, gen_arg);
     for (size_t idx = 0; idx < lang_switch->cases.info.count; idx++) {
         generic_sub_case(vec_at(&lang_switch->cases, idx), gen_param, gen_arg);
     }
@@ -222,28 +220,28 @@ void generic_sub_for_with_cond(Uast_for_with_cond* lang_for, Name gen_param, Ula
 }
 
 void generic_sub_condition(Uast_condition* cond, Name gen_param, Ulang_type gen_arg) {
-    generic_sub_operator( cond->child, gen_param, gen_arg);
+    generic_sub_operator(cond->child, gen_param, gen_arg);
 }
 
 void generic_sub_case(Uast_case* lang_case, Name gen_param, Ulang_type gen_arg) {
-    generic_sub_expr( lang_case->expr, gen_param, gen_arg);
-    generic_sub_stmt( lang_case->if_true, gen_param, gen_arg);
+    generic_sub_expr(lang_case->expr, gen_param, gen_arg);
+    generic_sub_stmt(lang_case->if_true, gen_param, gen_arg);
 }
 
 void generic_sub_assignment(Uast_assignment* assign, Name gen_param, Ulang_type gen_arg) {
-    generic_sub_expr( assign->lhs, gen_param, gen_arg);
-    generic_sub_expr( assign->rhs, gen_param, gen_arg);
+    generic_sub_expr(assign->lhs, gen_param, gen_arg);
+    generic_sub_expr(assign->rhs, gen_param, gen_arg);
 }
 
 void generic_sub_block(Uast_block* block, Name gen_param, Ulang_type gen_arg) {
     Usymbol_iter iter = usym_tbl_iter_new(block->symbol_collection.usymbol_table);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
-        generic_sub_def( curr, gen_param, gen_arg);
+        generic_sub_def(curr, gen_param, gen_arg);
     }
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        generic_sub_stmt( vec_at(&block->children, idx), gen_param, gen_arg);
+        generic_sub_stmt(vec_at(&block->children, idx), gen_param, gen_arg);
     }
 }
 
@@ -255,15 +253,16 @@ void generic_sub_expr(Uast_expr* expr, Name gen_param, Ulang_type gen_arg) {
         case UAST_UNKNOWN:
             return;
         case UAST_SYMBOL:
-            generic_sub_symbol( uast_symbol_unwrap(expr), gen_param, gen_arg);
+            generic_sub_symbol(uast_symbol_unwrap(expr), gen_param, gen_arg);
             return;
         case UAST_MEMBER_ACCESS:
-            generic_sub_member_access( uast_member_access_unwrap(expr), gen_param, gen_arg);
+            generic_sub_member_access(uast_member_access_unwrap(expr), gen_param, gen_arg);
             return;
         case UAST_INDEX:
-            todo();
+            generic_sub_index(uast_index_unwrap(expr), gen_param, gen_arg);
+            return;
         case UAST_FUNCTION_CALL:
-            generic_sub_function_call( uast_function_call_unwrap(expr), gen_param, gen_arg);
+            generic_sub_function_call(uast_function_call_unwrap(expr), gen_param, gen_arg);
             return;
         case UAST_STRUCT_LITERAL:
             todo();
@@ -274,13 +273,13 @@ void generic_sub_expr(Uast_expr* expr, Name gen_param, Ulang_type gen_arg) {
         case UAST_SUM_GET_TAG:
             todo();
         case UAST_OPERATOR:
-            generic_sub_operator( uast_operator_unwrap(expr), gen_param, gen_arg);
+            generic_sub_operator(uast_operator_unwrap(expr), gen_param, gen_arg);
             return;
         case UAST_SWITCH:
-            generic_sub_switch( uast_switch_unwrap(expr), gen_param, gen_arg);
+            generic_sub_switch(uast_switch_unwrap(expr), gen_param, gen_arg);
             return;
         case UAST_IF_ELSE_CHAIN:
-            generic_sub_if_else_chain( uast_if_else_chain_unwrap(expr), gen_param, gen_arg);
+            generic_sub_if_else_chain(uast_if_else_chain_unwrap(expr), gen_param, gen_arg);
             return;
         case UAST_ARRAY_LITERAL:
             todo();
@@ -291,9 +290,9 @@ void generic_sub_expr(Uast_expr* expr, Name gen_param, Ulang_type gen_arg) {
 
 void generic_sub_function_call(Uast_function_call* fun_call, Name gen_param, Ulang_type gen_arg) {
     for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
-        generic_sub_expr( vec_at(&fun_call->args, idx), gen_param, gen_arg);
+        generic_sub_expr(vec_at(&fun_call->args, idx), gen_param, gen_arg);
     }
-    generic_sub_expr( fun_call->callee, gen_param, gen_arg);
+    generic_sub_expr(fun_call->callee, gen_param, gen_arg);
 }
 
 void generic_sub_member_access(Uast_member_access* access, Name gen_param, Ulang_type gen_arg) {
@@ -301,9 +300,17 @@ void generic_sub_member_access(Uast_member_access* access, Name gen_param, Ulang
     generic_sub_symbol(access->member_name, gen_param, gen_arg);
 }
 
+void generic_sub_index(Uast_index* index, Name gen_param, Ulang_type gen_arg) {
+    generic_sub_expr(index->index, gen_param, gen_arg);
+    generic_sub_expr(index->callee, gen_param, gen_arg);
+}
+
 void generic_sub_symbol(Uast_symbol* sym, Name gen_param, Ulang_type gen_arg) {
+    // TODO: call gen_sub_name instead of this for loop
+    log(LOG_DEBUG, TAST_FMT"\n", uast_symbol_print(sym));
     for (size_t idx = 0; idx < sym->name.gen_args.info.count; idx++) {
-        generic_sub_lang_type( vec_at_ref(&sym->name.gen_args, idx), vec_at(&sym->name.gen_args, idx), gen_param, gen_arg);
+        log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, vec_at(&sym->name.gen_args, idx)));
+        generic_sub_lang_type(vec_at_ref(&sym->name.gen_args, idx), vec_at(&sym->name.gen_args, idx), gen_param, gen_arg);
     }
 }
 
@@ -317,18 +324,18 @@ void generic_sub_literal(Uast_literal* lit, Name gen_param, Ulang_type gen_arg) 
 void generic_sub_operator(Uast_operator* oper, Name gen_param, Ulang_type gen_arg) {
     switch (oper->type) {
         case UAST_UNARY:
-            generic_sub_unary( uast_unary_unwrap(oper), gen_param, gen_arg);
+            generic_sub_unary(uast_unary_unwrap(oper), gen_param, gen_arg);
             return;
         case UAST_BINARY:
-            generic_sub_binary( uast_binary_unwrap(oper), gen_param, gen_arg);
+            generic_sub_binary(uast_binary_unwrap(oper), gen_param, gen_arg);
             return;
     }
     unreachable("");
 }
 
 void generic_sub_binary(Uast_binary* bin, Name gen_param, Ulang_type gen_arg) {
-    generic_sub_expr( bin->lhs, gen_param, gen_arg);
-    generic_sub_expr( bin->rhs, gen_param, gen_arg);
+    generic_sub_expr(bin->lhs, gen_param, gen_arg);
+    generic_sub_expr(bin->rhs, gen_param, gen_arg);
     return;
 }
 

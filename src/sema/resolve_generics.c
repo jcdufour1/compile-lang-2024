@@ -443,12 +443,6 @@ static bool resolve_generics_serialize_function_decl(
     // TODO: figure out way to avoid making new Uast_function_decl every time
     memset(new_decl, 0, sizeof(*new_decl));
 
-    //Uast_def* cached_decl = NULL;
-    //log(LOG_DEBUG, TAST_FMT"\n", name_print(old_decl->name));
-    //if (usymbol_lookup(&cached_decl, old_decl->name)) {
-    //    todo();
-    //}
-
     Scope_id new_scope = scope_id_new();
 
     Uast_param_vec params = {0};
@@ -462,7 +456,6 @@ static bool resolve_generics_serialize_function_decl(
     for (; idx_arg < gen_args.info.count; idx_arg++) {
         if (idx_arg >= old_decl->generics.info.count) {
             msg_invalid_count_generic_args(
-                
                 old_decl->pos,
                 pos_gen_args,
                 gen_args,
@@ -503,13 +496,14 @@ static bool resolve_generics_serialize_function_decl(
     return true;
 }
 
-// only generic function decls can be passed in here
 bool resolve_generics_function_def(
     Uast_function_def** new_def,
     Uast_function_def* def,
     Ulang_type_vec gen_args, // TODO: remove or refactor name?
     Pos pos_gen_args
 ) {
+    log(LOG_DEBUG, TAST_FMT"\n", name_print(name_new(env.curr_mod_path, def->decl->name.base, gen_args, 0 /* placeholder */)));
+
     bool status = true;
 
     Uast_def* dummy = NULL;
@@ -535,6 +529,12 @@ bool resolve_generics_function_def(
         env.ancesters = tbls;
 
         return status;
+    }
+
+    if (symbol_lookup(&dummy_2, name_new(env.curr_mod_path, def->decl->name.base, gen_args, 0 /* placeholder */))) {
+        // varient already instanciated
+        log(LOG_DEBUG, TAST_FMT"\n", name_print(name_new(env.curr_mod_path, def->decl->name.base, gen_args, 0 /* placeholder */)));
+        todo();
     }
 
     log(LOG_DEBUG, TAST_FMT"\n", name_print(def->decl->name));

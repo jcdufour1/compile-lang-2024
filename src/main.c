@@ -11,6 +11,8 @@
 #include <type_checking.h>
  
 // TODO: make separate Env struct for every pass (each Env will need Env_common for things that all envs require (eg. for symbol table lookups))
+//
+// TODO: test case for handling assigning/returning void item
 
 static void fail(void) {
     if (!params.test_expected_fail) {

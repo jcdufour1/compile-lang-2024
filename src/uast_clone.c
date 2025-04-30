@@ -22,7 +22,7 @@ Uast_literal* uast_literal_clone(const Uast_literal* lit) {
         case UAST_CHAR:
             todo();
         case UAST_VOID:
-            todo();
+            return uast_void_wrap(uast_void_new(uast_void_const_unwrap(lit)->pos));
     }
     unreachable("");
 }
