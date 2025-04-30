@@ -33,7 +33,7 @@ typedef enum {
 } PARSE_EXPR_STATUS;
 
 static void set_right_child_expr(Uast_expr* expr, Uast_expr* new_rhs);
-static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top_level, bool do_new_sym_coll, Scope_id scope_id);
+static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top_level, Scope_id scope_id);
 static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, bool defer_sym_add, Scope_id scope_id);
 static PARSE_EXPR_STATUS parse_expr(
     Uast_expr** result,
@@ -1127,7 +1127,7 @@ static PARSE_STATUS parse_function_def(Uast_function_def** fun_def, Tk_view* tok
     }
 
     Uast_block* fun_body = NULL;
-    if (PARSE_OK != parse_block(&fun_body, tokens, false, true, block_scope)) {
+    if (PARSE_OK != parse_block(&fun_body, tokens, false, block_scope)) {
         return PARSE_ERROR;
     }
 
@@ -1558,7 +1558,7 @@ static PARSE_STATUS parse_for_range_internal(
     }
 
     Uast_block* inner = NULL;
-    if (PARSE_OK != parse_block(&inner, tokens, false, true, block_scope)) {
+    if (PARSE_OK != parse_block(&inner, tokens, false, block_scope)) {
         return PARSE_ERROR;
     }
 
@@ -1625,7 +1625,7 @@ static PARSE_STATUS parse_for_with_cond(Uast_for_with_cond** for_new, Pos pos, T
         default:
             unreachable("");
     }
-    return parse_block(&(*for_new)->body, tokens, false, true, block_scope);
+    return parse_block(&(*for_new)->body, tokens, false, block_scope);
 }
 
 static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens) {
@@ -1637,7 +1637,6 @@ static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens) {
     if (starts_with_variable_type_decl(*tokens, false)) {
         PARSE_STATUS status = PARSE_OK;
         Uast_block* outer = uast_block_new(for_token.pos, (Uast_stmt_vec) {0}, (Symbol_collection) {0}, for_token.pos, scope_id_new());
-        vec_append(&a_main, &env.ancesters, &outer->symbol_collection);
         Uast_variable_def* var_def = NULL;
         if (PARSE_OK != parse_variable_decl(&var_def, tokens, false, false, true, true, (Ulang_type) {0}, block_scope)) {
             status = PARSE_ERROR;
@@ -1652,7 +1651,6 @@ static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens) {
         *result = uast_block_wrap(new_for);
 
 for_range_error:
-        vec_rem_last(&env.ancesters);
         return status;
     } else {
         Uast_for_with_cond* new_for = NULL;
@@ -1891,7 +1889,7 @@ static PARSE_STATUS parse_if_else_chain(Uast_if_else_chain** if_else_chain, Tk_v
         default:
             unreachable("");
     }
-    if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, true, scope_id_new())) {
+    if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, scope_id_new())) {
         return PARSE_ERROR;
     }
     vec_append(&a_main, &ifs, if_stmt);
@@ -1919,7 +1917,7 @@ static PARSE_STATUS parse_if_else_chain(Uast_if_else_chain** if_else_chain, Tk_v
             ));
         }
 
-        if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, true, scope_id_new())) {
+        if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, scope_id_new())) {
             return PARSE_ERROR;
         }
         vec_append(&a_main, &ifs, if_stmt);
@@ -2060,7 +2058,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, bool def
         lhs = uast_continue_wrap(parse_continue(tokens));
     } else if (starts_with_block(*tokens)) {
         Uast_block* block_def = NULL;
-        if (PARSE_OK != parse_block(&block_def, tokens, false, true, scope_id_new())) {
+        if (PARSE_OK != parse_block(&block_def, tokens, false, scope_id_new())) {
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_block_wrap(block_def);
@@ -2120,7 +2118,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, bool def
     return PARSE_EXPR_OK;
 }
 
-static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top_level, bool do_new_sym_coll, Scope_id new_scope) {
+static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top_level, Scope_id new_scope) {
     PARSE_STATUS status = PARSE_OK;
     bool did_consume_close_brace = false;
 
@@ -2131,15 +2129,6 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
         (Pos) {0},
         scope_id_new()
     );
-    if (do_new_sym_coll) {
-        vec_append(&a_main, &env.ancesters, &(*block)->symbol_collection);
-    }
-
-    Uast_def* redefined_symbol;
-    if (!usymbol_do_add_defered(&redefined_symbol)) {
-        msg_redefinition_of_symbol(redefined_symbol);
-        status = PARSE_ERROR;
-    }
 
     if (tokens->count < 1) {
         // TODO: expected test case
@@ -2206,9 +2195,7 @@ end:
     } else if (!is_top_level && status == PARSE_OK) {
         unreachable("");
     }
-    if (do_new_sym_coll) {
-        vec_rem_last(&env.ancesters);
-    }
+
     assert(*block);
     return status;
 }
@@ -3055,7 +3042,6 @@ bool parse_file(Uast_block** block, Str_view file_path, bool do_new_sym_coll) {
     // TODO: reenable
     //parser_do_tests();
 #endif // DNDEBUG
-    size_t old_ances_count = env.ancesters.info.count;
 
     Str_view* file_con = arena_alloc(&a_main, sizeof(*file_con));
     if (!read_file(file_con, file_path)) {
@@ -3075,16 +3061,14 @@ bool parse_file(Uast_block** block, Str_view file_path, bool do_new_sym_coll) {
         goto error;
     }
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
-    if (PARSE_OK != parse_block(block, &token_view, true, do_new_sym_coll, scope_id_new())) {
+    if (PARSE_OK != parse_block(block, &token_view, true, scope_id_new())) {
         status = false;
         goto error;
     }
-    log(LOG_DEBUG, "%zu\n", env.ancesters.info.count);
     log(LOG_DEBUG, "done with parsing:\n");
     symbol_log(LOG_TRACE, env);
 
 error:
-    assert(env.ancesters.info.count == old_ances_count);
     return status;
 }
 

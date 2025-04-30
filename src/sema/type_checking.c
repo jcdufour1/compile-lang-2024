@@ -1460,7 +1460,7 @@ bool try_set_function_call_types_sum_case(Tast_sum_case** new_case, Uast_expr_ve
 static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Ulang_type_fn lang_type, Pos pos) {
     Name name = serialize_ulang_type(env.curr_mod_path, ulang_type_fn_const_wrap(lang_type));
     Uast_def* fun_decl_ = NULL;
-    if (usym_tbl_lookup(&fun_decl_, &vec_at(&env.ancesters, 0)->usymbol_table, name)) {
+    if (usym_tbl_lookup(&fun_decl_, &vec_at(&env.symbol_tables, 0)->usymbol_table, name)) {
         return uast_function_decl_unwrap(fun_decl_);
     }
 
@@ -1482,7 +1482,7 @@ static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Ulang_type_fn l
         *lang_type.return_type,
         name
     );
-    usym_tbl_add(&vec_at(&env.ancesters, 0)->usymbol_table, uast_function_decl_wrap(fun_decl));
+    usym_tbl_add(&vec_at(&env.symbol_tables, 0)->usymbol_table, uast_function_decl_wrap(fun_decl));
     return fun_decl;
 }
 
@@ -2151,14 +2151,8 @@ bool try_set_function_decl_types(
 
     *new_tast = tast_function_decl_new(decl->pos, new_params, fun_rtn_type, decl->name);
 
-    Symbol_collection* top = vec_top(&env.ancesters);
-    if (add_to_sym_tbl) {
-        vec_rem_last(&env.ancesters);
-    }
-    unwrap(symbol_add(tast_function_decl_wrap(*new_tast)));
-    if (add_to_sym_tbl) {
-        vec_append(&a_main, &env.ancesters, top);
-    }
+    todo();
+    //unwrap(sym_tbl_add(tast_function_decl_wrap(*new_tast)));
 
     return true;
 }
@@ -2656,10 +2650,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
     bool status = true;
 
     Symbol_collection new_sym_coll = block->symbol_collection;
-
-    if (new_sym_tbl) {
-        vec_append(&a_main, &env.ancesters, &new_sym_coll);
-    }
+    unreachable("create new symbol table here");
 
     Tast_stmt_vec new_tasts = {0};
 
@@ -2744,27 +2735,26 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         vec_append(&a_main, &new_tasts, new_rtn_statement);
     }
 
-    log(LOG_DEBUG, "env.ancesters.info.count: %zu\n", env.ancesters.info.count);
-    if (env.ancesters.info.count == 1) {
-        Uast_def* main_fn_ = NULL;
-        if (!usymbol_lookup(&main_fn_, name_new((Str_view) {0}, str_view_from_cstr("main"), (Ulang_type_vec) {0}, 0))) {
-            log(LOG_WARNING, "no main function\n");
-            goto after_main;
-        }
-        if (main_fn_->type != UAST_FUNCTION_DEF) {
-            todo();
-        }
-        Uast_function_def* new_def = NULL;
-        if (!resolve_generics_function_def(&new_def, uast_function_def_unwrap(main_fn_), (Ulang_type_vec) {0}, (Pos) {0})) {
-            status = false;
-        }
-    }
+    todo();
+    //if (env.ancesters.info.count == 1) {
+    //    Uast_def* main_fn_ = NULL;
+    //    if (!usymbol_lookup(&main_fn_, name_new((Str_view) {0}, str_view_from_cstr("main"), (Ulang_type_vec) {0}, 0))) {
+    //        log(LOG_WARNING, "no main function\n");
+    //        goto after_main;
+    //    }
+    //    if (main_fn_->type != UAST_FUNCTION_DEF) {
+    //        todo();
+    //    }
+    //    Uast_function_def* new_def = NULL;
+    //    if (!resolve_generics_function_def(&new_def, uast_function_def_unwrap(main_fn_), (Ulang_type_vec) {0}, (Pos) {0})) {
+    //        status = false;
+    //    }
+    //}
 after_main:
+    assert(true /* TODO: remove */);
 
 error:
-    if (new_sym_tbl) {
-        vec_rem_last(&env.ancesters);
-    }
+    assert(true /* TODO: remove */);
     Lang_type yield_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
     assert(yield_type.type == LANG_TYPE_VOID);
     if (env.parent_of == PARENT_OF_CASE) {

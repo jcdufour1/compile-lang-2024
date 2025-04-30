@@ -3,6 +3,9 @@
 #include <tast.h>
 
 static inline void log_env_internal(const char* file, int line, LOG_LEVEL log_level) {
+    (void) file;
+    (void) line;
+    (void) log_level;
     String buf = {0};
 
     string_extend_cstr(&print_arena, &buf, "\n");

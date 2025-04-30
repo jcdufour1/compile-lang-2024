@@ -973,8 +973,6 @@ static void emit_def(String* struct_defs, String* output, String* literals, cons
 }
 
 static void emit_block(String* struct_defs, String* output, String* literals, const Llvm_block* block) {
-    vec_append(&a_main, &env.ancesters, (Symbol_collection*)&block->symbol_collection);
-
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         const Llvm* stmt = vec_at(&block->children, idx);
 
@@ -1016,13 +1014,12 @@ static void emit_block(String* struct_defs, String* output, String* literals, co
         }
     }
 
-    Alloca_iter iter = all_tbl_iter_new(vec_top(&env.ancesters)->alloca_table);
-    Llvm* curr = NULL;
-    while (all_tbl_iter_next(&curr, &iter)) {
-        emit_sometimes(struct_defs, output, literals, curr);
-    }
-
-    vec_rem_last(&env.ancesters);
+    todo();
+    //Alloca_iter iter = all_tbl_iter_new(vec_top(&env.ancesters)->alloca_table);
+    //Llvm* curr = NULL;
+    //while (all_tbl_iter_next(&curr, &iter)) {
+    //    emit_sometimes(struct_defs, output, literals, curr);
+    //}
 }
 
 // this is only intended for alloca_table, etc.

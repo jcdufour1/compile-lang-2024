@@ -52,19 +52,6 @@ bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts,
     return true;
 }
 
-bool generic_do_add_defered(void** redefined_sym, void* defered_tasts_to_add, Symbol_add_fn add_fn) {
-    for (size_t idx = 0; idx < ((Generic_vec*)defered_tasts_to_add)->info.count; idx++) {
-        if (!add_fn(vec_at((Generic_vec*)defered_tasts_to_add, idx))) {
-            *redefined_sym = vec_at((Generic_vec*)defered_tasts_to_add, idx);
-            vec_reset((Generic_vec*)defered_tasts_to_add);
-            return false;
-        }
-    }
-
-    vec_reset((Generic_vec*)defered_tasts_to_add);
-    return true;
-}
-
 static void generic_tbl_cpy(
     void* dest,
     const void* src,
@@ -230,10 +217,6 @@ bool generic_symbol_lookup(
 // Uast_def implementation
 //
 
-bool symbol_do_add_defered(Tast_def** redefined_sym) {
-    return generic_do_add_defered((void**)redefined_sym,  &env.defered_symbols_to_add, (Symbol_add_fn)symbol_add);
-}
-
 // returns false if symbol has already been added to the table
 bool sym_tbl_add(Symbol_table* sym_table, Tast_def* item) {
     return generic_tbl_add((Generic_symbol_table*)sym_table, serialize_name_symbol_table(tast_def_get_name(item)), item);
@@ -297,9 +280,6 @@ bool sym_tbl_lookup(Tast_def** result, const Symbol_table* sym_table, Name key) 
 //
 // Uast_def implementation
 //
-bool usymbol_do_add_defered(Uast_def** redefined_sym) {
-    return generic_do_add_defered((void**)redefined_sym,  &env.udefered_symbols_to_add, (Symbol_add_fn)usymbol_add);
-}
 
 // returns false if symbol has already been added to the table
 bool usym_tbl_add(Usymbol_table* sym_table, Uast_def* item) {
@@ -349,10 +329,6 @@ bool usymbol_lookup(Uast_def** result, Name key) {
 //
 // Llvm implementation
 //
-
-bool alloca_do_add_defered(Llvm** redefined_sym) {
-    return generic_do_add_defered((void**)redefined_sym,  &env.defered_allocas_to_add, (Symbol_add_fn)alloca_add);
-}
 
 // returns false if symbol has already been added to the table
 bool all_tbl_add(Alloca_table* sym_table, Llvm* item) {
