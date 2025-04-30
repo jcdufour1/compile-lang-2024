@@ -29,3 +29,8 @@ fn read_num(string u8*) Opt_int {
     return Opt_int.number(9)
 }
 
+fn main() i32 {
+    read_num("hello")
+    return 0
+}
+

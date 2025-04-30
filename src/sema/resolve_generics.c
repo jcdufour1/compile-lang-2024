@@ -11,8 +11,6 @@
 #include <symbol_log.h>
 #include <msg_todo.h>
 
-static bool ulang_type_generics_are_present(Ulang_type lang_type);
-
 #define msg_invalid_count_generic_args( pos_def, pos_gen_args, gen_args, min_args, max_args) \
     msg_invalid_count_generic_args_internal(__FILE__, __LINE__,  pos_def, pos_gen_args, gen_args, min_args, max_args)
 
@@ -177,7 +175,6 @@ static bool try_set_sum_def_types(Uast_sum_def* before_res, Uast_sum_def* after_
 }
 
 static bool resolve_generics_serialize_struct_def_base(
-     
     Ustruct_def_base* new_base,
     Ustruct_def_base old_base,
     Ulang_type_vec gen_args,
@@ -198,7 +195,7 @@ static bool resolve_generics_serialize_struct_def_base(
 
     for (size_t idx_gen = 0; idx_gen < gen_args.info.count; idx_gen++) {
         Name gen_def = vec_at(&old_base.generics, idx_gen)->child->name;
-        generic_sub_struct_def_base( new_base, gen_def, vec_at(&gen_args, idx_gen));
+        generic_sub_struct_def_base(new_base, gen_def, vec_at(&gen_args, idx_gen));
     }
 
     assert(old_base.members.info.count == new_base->members.info.count);
@@ -399,16 +396,58 @@ bool resolve_generics_ulang_type(Ulang_type* result, Ulang_type lang_type) {
     unreachable("");
 }
 
+static bool resolve_generics_set_function_def_types(
+    Uast_function_def* def
+) {
+    Name prev_par_fun = env.name_parent_function;
+    env.name_parent_function = def->decl->name;
+    assert(env.name_parent_function.base.count > 0);
+    bool status = true;
+
+    Tast_function_decl* new_decl = NULL;
+    vec_append(&a_main, &env.ancesters, &def->body->symbol_collection);
+    if (!try_set_function_decl_types( &new_decl, def->decl, true)) {
+        status = false;
+        goto error;
+    }
+    vec_rem_last(&env.ancesters);
+
+    size_t prev_ancesters_count = env.ancesters.info.count;
+    Tast_block* new_body = NULL;
+    if (!try_set_block_types( &new_body, def->body, true, true)) {
+        status = false;
+        goto error;
+    }
+    assert(prev_ancesters_count == env.ancesters.info.count);
+
+    Tast_def* result = NULL;
+    unwrap(symbol_lookup(&result,  new_decl->name));
+    if (true /* TODO */) {
+        sym_tbl_update(&vec_at(&env.ancesters, 0)->symbol_table, tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
+    } else {
+        symbol_update( tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
+    }
+
+error:
+    env.name_parent_function = prev_par_fun;
+    return status;
+}
+
 static bool resolve_generics_serialize_function_decl(
-     
     Uast_function_decl** new_decl,
     const Uast_function_decl* old_decl,
     Uast_block* new_block,
-    Ulang_type_vec gen_args,
+    Ulang_type_vec gen_args, // TODO: remove this arg
     Pos pos_gen_args
 ) {
     // TODO: figure out way to avoid making new Uast_function_decl every time
     memset(new_decl, 0, sizeof(*new_decl));
+
+    //Uast_def* cached_decl = NULL;
+    //log(LOG_DEBUG, TAST_FMT"\n", name_print(old_decl->name));
+    //if (usymbol_lookup(&cached_decl, old_decl->name)) {
+    //    todo();
+    //}
 
     Scope_id new_scope = scope_id_new();
 
@@ -467,25 +506,49 @@ static bool resolve_generics_serialize_function_decl(
 // only generic function decls can be passed in here
 bool resolve_generics_function_def(
     Uast_function_def** new_def,
-     
     Uast_function_def* def,
-    Ulang_type_vec gen_args,
+    Ulang_type_vec gen_args, // TODO: remove or refactor name?
     Pos pos_gen_args
 ) {
     bool status = true;
+
+    Uast_def* dummy = NULL;
+    Tast_def* dummy_2 = NULL;
+    if (def->decl->generics.info.count < 1) {
+        if (!usymbol_lookup(&dummy, name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id))) {
+            todo();
+        }
+
+        *new_def = def;
+
+        if (symbol_lookup(&dummy_2, name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id))) {
+            return status;
+        }
+
+        // TODO: remove these env hacks with refactoring to use Scope_id to choose hash tables instead
+        Sym_coll_vec tbls = env.ancesters;
+        memset(&env.ancesters, 0, sizeof(env.ancesters));
+        vec_append(&a_main, &env.ancesters, vec_at(&tbls, 0));
+        if (!resolve_generics_set_function_def_types(*new_def)) {
+            status = false;
+        }
+        env.ancesters = tbls;
+
+        return status;
+    }
+
+    log(LOG_DEBUG, TAST_FMT"\n", name_print(def->decl->name));
+
     Scope_id new_scope = scope_id_new(); 
 
     Uast_function_decl* new_decl = NULL;
-    if (!function_decl_generics_are_present(def->decl)) {
-        unreachable("non generic function decls should not be passed here");
-    }
 
     // TODO: try to avoid cloning block if resolve_generics_serialize_function_decl fails
     Uast_block* new_block = uast_block_clone(def->body, new_scope);
     assert(new_block != def->body);
     assert(new_block->symbol_collection.usymbol_table.table_tasts != def->body->symbol_collection.usymbol_table.table_tasts);
 
-    if (!resolve_generics_serialize_function_decl( &new_decl, def->decl, new_block, gen_args, pos_gen_args)) {
+    if (!resolve_generics_serialize_function_decl(&new_decl, def->decl, new_block, gen_args, pos_gen_args)) {
         return false;
     }
     *new_def = uast_function_def_new(new_decl->pos, new_decl, new_block);
@@ -505,54 +568,18 @@ bool resolve_generics_function_def(
         usym_tbl_add(&vec_at(&env.ancesters, idx)->usymbol_table, uast_function_decl_wrap(new_decl));
     }
 
-    Tast_def* dummy = NULL;
-    if (!symbol_lookup(&dummy,  (*new_def)->decl->name)) {
+    if (!symbol_lookup(&dummy_2,  (*new_def)->decl->name)) {
         // TODO: see if there is less hacky way to do this
         Sym_coll_vec tbls = env.ancesters;
         memset(&env.ancesters, 0, sizeof(env.ancesters));
         vec_append(&a_main, &env.ancesters, vec_at(&tbls, 0));
-        if (!try_set_function_def_types( *new_def, true)) {
+        if (!resolve_generics_set_function_def_types(*new_def)) {
             status = false;
         }
         env.ancesters = tbls;
     }
 
-    unwrap(symbol_lookup(&dummy,  (*new_def)->decl->name));
+    unwrap(symbol_lookup(&dummy_2,  (*new_def)->decl->name));
     return status;
 }
 
-static bool ulang_type_generics_are_present_tuple(Ulang_type_tuple lang_type) {
-    for (size_t idx = 0; idx < lang_type.ulang_types.info.count; idx++) {
-        if (ulang_type_generics_are_present(vec_at(&lang_type.ulang_types, idx))) {
-            return true;
-        }
-    }
-    return false;
-}
-
-static bool ulang_type_generics_are_present_fn(Ulang_type_fn lang_type) {
-    if (ulang_type_generics_are_present_tuple(lang_type.params)) {
-        return true;
-    }
-    return ulang_type_generics_are_present(*lang_type.return_type);
-}
-
-static bool ulang_type_generics_are_present(Ulang_type lang_type) {
-    switch (lang_type.type) {
-        case ULANG_TYPE_REGULAR:
-            return ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args.info.count > 0;
-        case ULANG_TYPE_TUPLE:
-            return ulang_type_generics_are_present_tuple(ulang_type_tuple_const_unwrap(lang_type));
-        case ULANG_TYPE_FN:
-            return ulang_type_generics_are_present_fn(ulang_type_fn_const_unwrap(lang_type));
-    }
-    unreachable("");
-}
-
-bool function_decl_generics_are_present(const Uast_function_decl* decl) {
-    return decl->generics.info.count > 0;
-}
-
-bool variable_def_generics_are_present(const Uast_variable_def* def) {
-    return ulang_type_generics_are_present(def->lang_type);
-}

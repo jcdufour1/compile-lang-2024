@@ -24,10 +24,10 @@ type Token sum {
     string u8*
 }
 
-fn concise() {
+fn main() i32 {
     // Optional is undefined in this file
     let number Optional(<i32>) = .some(84)
     let result2 Result(<Token, ParseError>)
-
+    return 0
 }
 

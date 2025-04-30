@@ -33,16 +33,16 @@ typedef enum {
 } PARSE_EXPR_STATUS;
 
 static void set_right_child_expr(Uast_expr* expr, Uast_expr* new_rhs);
-static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top_level, bool do_new_sym_coll);
-static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, bool defer_sym_add);
+static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top_level, bool do_new_sym_coll, Scope_id scope_id);
+static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, bool defer_sym_add, Scope_id scope_id);
 static PARSE_EXPR_STATUS parse_expr(
     Uast_expr** result,
     Tk_view* tokens,
-    bool defer_sym_add,
-    bool can_be_tuple
+    bool defer_sym_add, /* TODO: remove defer variables and functions, and just put items in hash table immediately */
+    bool can_be_tuple,
+    Scope_id scope_id
 );
 static PARSE_STATUS parse_variable_decl(
-    
     Uast_variable_def** result,
     Tk_view* tokens,
     bool require_let,
@@ -50,9 +50,10 @@ static PARSE_STATUS parse_variable_decl(
                        // until the next parse_block call
     bool add_to_sym_table,
     bool require_type,
-    Ulang_type lang_type_if_not_required
+    Ulang_type lang_type_if_not_required,
+    Scope_id scope_id
 );
-static PARSE_EXPR_STATUS parse_condition(Uast_condition**, Tk_view* tokens);
+static PARSE_EXPR_STATUS parse_condition(Uast_condition**, Tk_view* tokens, Scope_id scope_id);
 static PARSE_STATUS parse_generics_args(Ulang_type_vec* args, Tk_view* tokens);
 static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_view* tokens);
 
@@ -190,7 +191,7 @@ finish:
         name_new(env.curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, 0),
         name_new(env.curr_mod_path, mod_path, (Ulang_type_vec) {0}, 0)
     );
-    unwrap(usymbol_add( uast_mod_alias_wrap(*mod_alias)));
+    unwrap(usymbol_add(uast_mod_alias_wrap(*mod_alias)));
     return true;
 }
 
@@ -904,7 +905,7 @@ static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* t
     while (is_comma) {
         // a return type is only one token, at least for now
         Pos atom_pos = {0};
-        if (!parse_lang_type_struct_atom( &atom_pos, &atom, tokens)) {
+        if (!parse_lang_type_struct_atom(&atom_pos, &atom, tokens)) {
             todo();
             //atom.str = (Uname) {.mod_alias = (Str_view) {0}, .base = str_view_from_cstr("void")};
             break;
@@ -930,11 +931,11 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens) {
     Token lang_type_token = {0};
     if (try_consume(&lang_type_token, tokens, TOKEN_FN)) {
         Ulang_type_tuple params = {0};
-        if (!parse_lang_type_struct_tuple( &params, tokens)) {
+        if (!parse_lang_type_struct_tuple(&params, tokens)) {
             return false;
         }
         Ulang_type* rtn_type = arena_alloc(&a_main, sizeof(*rtn_type)); // TODO: make function, etc. to call arena_alloc automatically
-        if (!parse_lang_type_struct( rtn_type, tokens)) {
+        if (!parse_lang_type_struct(rtn_type, tokens)) {
             return false;
         }
         *lang_type = ulang_type_fn_const_wrap(ulang_type_fn_new(params, rtn_type, lang_type_token.pos));
@@ -944,7 +945,7 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens) {
     Ulang_type_atom atom = {0};
     if (tk_view_front(*tokens).type ==  TOKEN_OPEN_PAR) {
         Ulang_type_tuple new_tuple = {0};
-        if (!parse_lang_type_struct_tuple( &new_tuple, tokens)) {
+        if (!parse_lang_type_struct_tuple(&new_tuple, tokens)) {
             return false;
         }
         *lang_type = ulang_type_tuple_const_wrap(new_tuple);
@@ -971,7 +972,7 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens) {
 // require type to be parsed
 static PARSE_STATUS parse_lang_type_struct_atom_require(Ulang_type_atom* lang_type, Tk_view* tokens) {
     Pos pos = {0};
-    if (parse_lang_type_struct_atom( &pos, lang_type, tokens)) {
+    if (parse_lang_type_struct_atom(&pos, lang_type, tokens)) {
         return PARSE_OK;
     } else {
         msg_parser_expected(env.file_path_to_text, tk_view_front(*tokens), "", TOKEN_SYMBOL);
@@ -981,7 +982,7 @@ static PARSE_STATUS parse_lang_type_struct_atom_require(Ulang_type_atom* lang_ty
 
 // require type to be parsed
 static PARSE_STATUS parse_lang_type_struct_require(Ulang_type* lang_type, Tk_view* tokens) {
-    if (parse_lang_type_struct( lang_type, tokens)) {
+    if (parse_lang_type_struct(lang_type, tokens)) {
         return PARSE_OK;
     } else {
         msg_parser_expected(env.file_path_to_text, tk_view_front(*tokens), "", TOKEN_SYMBOL);
@@ -989,7 +990,7 @@ static PARSE_STATUS parse_lang_type_struct_require(Ulang_type* lang_type, Tk_vie
     }
 }
 
-static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* tokens, bool add_to_sym_table) {
+static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* tokens, bool add_to_sym_table, Scope_id scope_id) {
     if (tokens->count < 1 || tk_view_front(*tokens).type == TOKEN_CLOSE_PAR) {
         return PARSE_EXPR_NONE;
     }
@@ -998,7 +999,7 @@ static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* t
     bool is_optional = false;
     bool is_variadic = false;
     Uast_expr* opt_default = NULL;
-    if (PARSE_OK != parse_variable_decl( &base, tokens, false, true, add_to_sym_table, true, (Ulang_type) {0})) {
+    if (PARSE_OK != parse_variable_decl(&base, tokens, false, true, add_to_sym_table, true, (Ulang_type) {0}, scope_id)) {
         return PARSE_EXPR_ERROR;
     }
     if (try_consume(NULL, tokens, TOKEN_TRIPLE_DOT)) {
@@ -1010,13 +1011,7 @@ static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* t
             todo();
         }
         is_optional = true;
-        switch (parse_expr(
-            
-            &opt_default,
-            tokens,
-            false,
-            false
-        )) {
+        switch (parse_expr(&opt_default, tokens, false, false, scope_id)) {
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_NONE:
@@ -1034,13 +1029,13 @@ static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* t
     return PARSE_EXPR_OK;
 }
 
-static PARSE_EXPR_STATUS parse_optional_lang_type_parameter(Uast_variable_def** child, Tk_view* tokens, Ulang_type default_lang_type) {
+static PARSE_EXPR_STATUS parse_optional_lang_type_parameter(Uast_variable_def** child, Tk_view* tokens, Ulang_type default_lang_type, Scope_id scope_id) {
     if (tokens->count < 1 || tk_view_front(*tokens).type == TOKEN_CLOSE_PAR) {
         return PARSE_EXPR_NONE;
     }
 
     Uast_variable_def* param;
-    if (PARSE_OK != parse_variable_decl( &param, tokens, false, true, false, false, default_lang_type)) {
+    if (PARSE_OK != parse_variable_decl(&param, tokens, false, true, false, false, default_lang_type, scope_id)) {
         return PARSE_EXPR_ERROR;
     }
     try_consume(NULL, tokens, TOKEN_COMMA);
@@ -1049,13 +1044,13 @@ static PARSE_EXPR_STATUS parse_optional_lang_type_parameter(Uast_variable_def** 
     return PARSE_EXPR_OK;
 }
 
-static PARSE_STATUS parse_function_parameters(Uast_function_params** result, Tk_view* tokens) {
+static PARSE_STATUS parse_function_parameters(Uast_function_params** result, Tk_view* tokens, Scope_id scope_id) {
     Uast_param_vec params = {0};
 
     Uast_param* param = NULL;
     bool done = false;
     while (!done) {
-        switch (parse_function_parameter( &param, tokens, true)) {
+        switch (parse_function_parameter(&param, tokens, true, scope_id)) {
             case PARSE_EXPR_OK:
                 vec_append(&a_main, &params, param);
                 break;
@@ -1075,14 +1070,15 @@ static PARSE_STATUS parse_function_parameters(Uast_function_params** result, Tk_
 
 static PARSE_STATUS parse_function_decl_common(
     Uast_function_decl** fun_decl,
-    Tk_view* tokens
+    Tk_view* tokens,
+    Scope_id fn_scope,
+    Scope_id block_scope
 ) {
     Token name_token = tk_view_consume(tokens);
-    Scope_id new_scope = 0;
 
     Uast_generic_param_vec gen_params = {0};
     if (tk_view_front(*tokens).type ==  TOKEN_OPEN_GENERIC) {
-        if (PARSE_OK != parse_generics_params( &gen_params, tokens)) {
+        if (PARSE_OK != parse_generics_params(&gen_params, tokens)) {
             return PARSE_ERROR;
         }
     }
@@ -1093,7 +1089,7 @@ static PARSE_STATUS parse_function_decl_common(
     }
 
     Uast_function_params* params = NULL;
-    if (PARSE_OK != parse_function_parameters( &params, tokens)) {
+    if (PARSE_OK != parse_function_parameters(&params, tokens, block_scope)) {
         return PARSE_ERROR;
     }
 
@@ -1105,13 +1101,13 @@ static PARSE_STATUS parse_function_decl_common(
     }
 
     Ulang_type rtn_type = {0};
-    if (!parse_lang_type_struct( &rtn_type, tokens)) {
+    if (!parse_lang_type_struct(&rtn_type, tokens)) {
         rtn_type = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0), close_par_tk.pos));
     }
 
-    *fun_decl = uast_function_decl_new(name_token.pos, gen_params, params, rtn_type, name_new(env.curr_mod_path, name_token.text, (Ulang_type_vec) {0}, new_scope));
-    if (!usymbol_add( uast_function_decl_wrap(*fun_decl))) {
-        return msg_redefinition_of_symbol( uast_function_decl_wrap(*fun_decl));
+    *fun_decl = uast_function_decl_new(name_token.pos, gen_params, params, rtn_type, name_new(env.curr_mod_path, name_token.text, (Ulang_type_vec) {0}, fn_scope));
+    if (!usymbol_add(uast_function_decl_wrap(*fun_decl))) {
+        return msg_redefinition_of_symbol(uast_function_decl_wrap(*fun_decl));
     }
 
     return PARSE_OK;
@@ -1120,18 +1116,21 @@ static PARSE_STATUS parse_function_decl_common(
 static PARSE_STATUS parse_function_def(Uast_function_def** fun_def, Tk_view* tokens) {
     unwrap(try_consume(NULL, tokens, TOKEN_FN));
 
+    Scope_id fn_scope = 0;
+    Scope_id block_scope = scope_id_new();
+
     Uast_function_decl* fun_decl = NULL;
-    if (PARSE_OK != parse_function_decl_common( &fun_decl, tokens)) {
+    if (PARSE_OK != parse_function_decl_common(&fun_decl, tokens, fn_scope, block_scope)) {
         return PARSE_ERROR;
     }
 
     Uast_block* fun_body = NULL;
-    if (PARSE_OK != parse_block( &fun_body, tokens, false, true)) {
+    if (PARSE_OK != parse_block(&fun_body, tokens, false, true, block_scope)) {
         return PARSE_ERROR;
     }
 
     *fun_def = uast_function_def_new(fun_decl->pos, fun_decl, fun_body);
-    usymbol_update( uast_function_def_wrap(*fun_def));
+    usymbol_update(uast_function_def_wrap(*fun_def));
     return PARSE_OK;
 }
 
@@ -1171,7 +1170,7 @@ static PARSE_STATUS parse_generics_args(Ulang_type_vec* args, Tk_view* tokens) {
 
     do {
         Ulang_type arg = {0};
-        if (PARSE_ERROR == parse_lang_type_struct_require( &arg, tokens)) {
+        if (PARSE_ERROR == parse_lang_type_struct_require(&arg, tokens)) {
             return PARSE_ERROR;
         }
         vec_append(&a_main, args, arg);
@@ -1191,14 +1190,15 @@ static PARSE_STATUS parse_struct_base_def(
     Name name,
     Tk_view* tokens,
     bool require_sub_types,
-    Ulang_type default_lang_type
+    Ulang_type default_lang_type,
+    Scope_id scope_id
 ) {
     memset(base, 0, sizeof(*base));
     base->name = name;
     log(LOG_DEBUG, "THING: "TAST_FMT"\n", name_print(name));
 
     if (tk_view_front(*tokens).type == TOKEN_OPEN_GENERIC) {
-        parse_generics_params( &base->generics, tokens);
+        parse_generics_params(&base->generics, tokens);
     }
 
     if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
@@ -1209,7 +1209,7 @@ static PARSE_STATUS parse_struct_base_def(
     bool done = false;
     while (!done && tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_CLOSE_CURLY_BRACE) {
         Uast_variable_def* member;
-        switch (parse_variable_decl( &member, tokens, false, false, false, require_sub_types, default_lang_type)) {
+        switch (parse_variable_decl(&member, tokens, false, false, false, require_sub_types, default_lang_type, scope_id)) {
             case PARSE_ERROR:
                 return PARSE_ERROR;
             case PARSE_OK:
@@ -1279,13 +1279,13 @@ static PARSE_STATUS parse_struct_def(Uast_struct_def** struct_def, Tk_view* toke
     unwrap(try_consume(NULL, tokens, TOKEN_STRUCT));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def( &base, name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, 0), tokens, true, (Ulang_type) {0})) {
+    if (PARSE_OK != parse_struct_base_def(&base, name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, 0), tokens, true, (Ulang_type) {0}, 0 /* TODO */)) {
         return PARSE_ERROR;
     }
 
     *struct_def = uast_struct_def_new(name.pos, base);
-    if (!usymbol_add( uast_struct_def_wrap(*struct_def))) {
-        msg_redefinition_of_symbol( uast_struct_def_wrap(*struct_def));
+    if (!usymbol_add(uast_struct_def_wrap(*struct_def))) {
+        msg_redefinition_of_symbol(uast_struct_def_wrap(*struct_def));
         return PARSE_ERROR;
     }
     return PARSE_OK;
@@ -1295,13 +1295,13 @@ static PARSE_STATUS parse_raw_union_def(Uast_raw_union_def** raw_union_def, Tk_v
     unwrap(try_consume(NULL, tokens, TOKEN_RAW_UNION));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def( &base, name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, 0), tokens, true, (Ulang_type) {0})) {
+    if (PARSE_OK != parse_struct_base_def(&base, name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, 0), tokens, true, (Ulang_type) {0}, 0)) {
         return PARSE_ERROR;
     }
 
     *raw_union_def = uast_raw_union_def_new(name.pos, base);
-    if (!usymbol_add( uast_raw_union_def_wrap(*raw_union_def))) {
-        msg_redefinition_of_symbol( uast_raw_union_def_wrap(*raw_union_def));
+    if (!usymbol_add(uast_raw_union_def_wrap(*raw_union_def))) {
+        msg_redefinition_of_symbol(uast_raw_union_def_wrap(*raw_union_def));
         return PARSE_ERROR;
     }
     return PARSE_OK;
@@ -1321,8 +1321,8 @@ static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, To
     }
 
     *enum_def = uast_enum_def_new(name.pos, base);
-    if (!usymbol_add( uast_enum_def_wrap(*enum_def))) {
-        msg_redefinition_of_symbol( uast_enum_def_wrap(*enum_def));
+    if (!usymbol_add(uast_enum_def_wrap(*enum_def))) {
+        msg_redefinition_of_symbol(uast_enum_def_wrap(*enum_def));
         return PARSE_ERROR;
     }
     return PARSE_OK;
@@ -1333,19 +1333,26 @@ static PARSE_STATUS parse_sum_def(Uast_sum_def** sum_def, Tk_view* tokens, Token
     unwrap(try_consume(&sum_tk, tokens, TOKEN_SUM));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def( &base, name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, 0), tokens, false, ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0), sum_tk.pos)))) {
+    if (PARSE_OK != parse_struct_base_def(
+        &base,
+        name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, 0),
+        tokens,
+        false,
+        ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0), sum_tk.pos)),
+        0
+    )) {
         return PARSE_ERROR;
     }
 
     *sum_def = uast_sum_def_new(name.pos, base);
-    if (!usymbol_add( uast_sum_def_wrap(*sum_def))) {
-        msg_redefinition_of_symbol( uast_sum_def_wrap(*sum_def));
+    if (!usymbol_add(uast_sum_def_wrap(*sum_def))) {
+        msg_redefinition_of_symbol(uast_sum_def_wrap(*sum_def));
         return PARSE_ERROR;
     }
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token name) {
+static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token name, Scope_id scope_id) {
     Token lang_def_tk = {0};
     unwrap(try_consume(&lang_def_tk, tokens, TOKEN_DEF));
 
@@ -1355,7 +1362,7 @@ static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token n
         todo();
     }
     Uast_expr* expr = NULL;
-    if (PARSE_EXPR_OK != parse_expr(&expr, tokens, false, false)) {
+    if (PARSE_EXPR_OK != parse_expr(&expr, tokens, false, false, scope_id)) {
         todo();
     }
 
@@ -1402,7 +1409,7 @@ static PARSE_STATUS parse_import(Uast_mod_alias** alias, Tk_view* tokens, Token 
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_type_def(Uast_def** def, Tk_view* tokens) {
+static PARSE_STATUS parse_type_def(Uast_def** def, Tk_view* tokens, Scope_id scope_id) {
     Token name = {0};
     if (!try_consume(&name, tokens, TOKEN_SYMBOL)) {
         msg_parser_expected(env.file_path_to_text, tk_view_front(*tokens), "", TOKEN_SYMBOL);
@@ -1411,37 +1418,37 @@ static PARSE_STATUS parse_type_def(Uast_def** def, Tk_view* tokens) {
 
     if (starts_with_struct_def(*tokens)) {
         Uast_struct_def* struct_def;
-        if (PARSE_OK != parse_struct_def( &struct_def, tokens, name)) {
+        if (PARSE_OK != parse_struct_def(&struct_def, tokens, name)) {
             return PARSE_ERROR;
         }
         *def = uast_struct_def_wrap(struct_def);
     } else if (starts_with_raw_union_def(*tokens)) {
         Uast_raw_union_def* raw_union_def;
-        if (PARSE_OK != parse_raw_union_def( &raw_union_def, tokens, name)) {
+        if (PARSE_OK != parse_raw_union_def(&raw_union_def, tokens, name)) {
             return PARSE_ERROR;
         }
         *def = uast_raw_union_def_wrap(raw_union_def);
     } else if (starts_with_enum_def(*tokens)) {
         Uast_enum_def* enum_def;
-        if (PARSE_OK != parse_enum_def( &enum_def, tokens, name)) {
+        if (PARSE_OK != parse_enum_def(&enum_def, tokens, name)) {
             return PARSE_ERROR;
         }
         *def = uast_enum_def_wrap(enum_def);
     } else if (starts_with_sum_def(*tokens)) {
         Uast_sum_def* sum_def;
-        if (PARSE_OK != parse_sum_def( &sum_def, tokens, name)) {
+        if (PARSE_OK != parse_sum_def(&sum_def, tokens, name)) {
             return PARSE_ERROR;
         }
         *def = uast_sum_def_wrap(sum_def);
     } else if (starts_with_mod_alias(*tokens)) {
         Uast_mod_alias* import = NULL;
-        if (PARSE_OK != parse_import( &import, tokens, name)) {
+        if (PARSE_OK != parse_import(&import, tokens, name)) {
             return PARSE_ERROR;
         }
         *def = uast_mod_alias_wrap(import);
     } else if (starts_with_lang_def(*tokens)) {
         Uast_lang_def* lang_def = NULL;
-        if (PARSE_OK != parse_lang_def(&lang_def, tokens, name)) {
+        if (PARSE_OK != parse_lang_def(&lang_def, tokens, name, scope_id)) {
             return PARSE_ERROR;
         }
         *def = uast_lang_def_wrap(lang_def);
@@ -1462,7 +1469,8 @@ static PARSE_STATUS parse_variable_decl(
     bool defer_sym_add,
     bool add_to_sym_table,
     bool require_type,
-    Ulang_type default_lang_type
+    Ulang_type default_lang_type,
+    Scope_id scope_id
 ) {
     (void) require_let;
     if (!try_consume(NULL, tokens, TOKEN_LET)) {
@@ -1479,11 +1487,11 @@ static PARSE_STATUS parse_variable_decl(
 
     Ulang_type lang_type = {0};
     if (require_type) {
-        if (PARSE_OK != parse_lang_type_struct_require( &lang_type, tokens)) {
+        if (PARSE_OK != parse_lang_type_struct_require(&lang_type, tokens)) {
             return PARSE_ERROR;
         }
     } else {
-        if (!parse_lang_type_struct( &lang_type, tokens)) {
+        if (!parse_lang_type_struct(&lang_type, tokens)) {
             lang_type = default_lang_type;
         }
     }
@@ -1491,19 +1499,20 @@ static PARSE_STATUS parse_variable_decl(
     Uast_variable_def* variable_def = uast_variable_def_new(
         name_token.pos,
         lang_type,
-        name_new(env.curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id_new())
+        name_new(env.curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id)
     );
 
     if (add_to_sym_table) {
         Uast_def* dummy;
         if (defer_sym_add) {
-            usymbol_add_defer( uast_variable_def_wrap(variable_def));
+            usymbol_add_defer(uast_variable_def_wrap(variable_def));
         } else {
+            log(LOG_DEBUG, TAST_FMT, uast_variable_def_print(variable_def));
             if (usymbol_lookup(&dummy,  variable_def->name)) {
-                msg_redefinition_of_symbol( uast_variable_def_wrap(variable_def));
+                msg_redefinition_of_symbol(uast_variable_def_wrap(variable_def));
                 return PARSE_ERROR;
             }
-            usymbol_add( uast_variable_def_wrap(variable_def));
+            usymbol_add(uast_variable_def_wrap(variable_def));
         }
     }
 
@@ -1513,11 +1522,17 @@ static PARSE_STATUS parse_variable_decl(
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_for_range_internal(Uast_block** result, Uast_variable_def* var_def, Uast_block* outer, Tk_view* tokens) {
+static PARSE_STATUS parse_for_range_internal(
+    Uast_block** result,
+    Uast_variable_def* var_def,
+    Uast_block* outer,
+    Tk_view* tokens,
+    Scope_id block_scope
+) {
     unwrap(try_consume(NULL, tokens, TOKEN_IN));
 
     Uast_expr* lower_bound = NULL;
-    if (PARSE_EXPR_OK != parse_expr( &lower_bound, tokens, true, false)) {
+    if (PARSE_EXPR_OK != parse_expr(&lower_bound, tokens, true, false, block_scope)) {
         msg_expected_expr(env.file_path_to_text, *tokens, "after in");
         return PARSE_ERROR;
     }
@@ -1528,7 +1543,7 @@ static PARSE_STATUS parse_for_range_internal(Uast_block** result, Uast_variable_
     }
 
     Uast_expr* upper_bound = NULL;
-    switch (parse_expr( &upper_bound, tokens, true, false)) {
+    switch (parse_expr(&upper_bound, tokens, true, false, block_scope)) {
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_ERROR:
@@ -1541,7 +1556,7 @@ static PARSE_STATUS parse_for_range_internal(Uast_block** result, Uast_variable_
     }
 
     Uast_block* inner = NULL;
-    if (PARSE_OK != parse_block( &inner, tokens, false, true)) {
+    if (PARSE_OK != parse_block(&inner, tokens, false, true, block_scope)) {
         return PARSE_ERROR;
     }
 
@@ -1583,7 +1598,7 @@ static PARSE_STATUS parse_for_range_internal(Uast_block** result, Uast_variable_
         uast_operator_wrap(uast_binary_wrap(uast_binary_new(
             var_def->pos,
             uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
-            uast_literal_wrap(util_uast_literal_new_from_int64_t( 1, TOKEN_INT_LITERAL, uast_expr_get_pos(upper_bound))),
+            uast_literal_wrap(util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, uast_expr_get_pos(upper_bound))),
             BINARY_ADD
         )))
     );
@@ -1594,10 +1609,10 @@ static PARSE_STATUS parse_for_range_internal(Uast_block** result, Uast_variable_
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_for_with_cond(Uast_for_with_cond** for_new, Pos pos, Tk_view* tokens) {
+static PARSE_STATUS parse_for_with_cond(Uast_for_with_cond** for_new, Pos pos, Tk_view* tokens, Scope_id block_scope) {
     *for_new = uast_for_with_cond_new(pos, NULL, NULL, (Name) {0}, false);
     
-    switch (parse_condition( &(*for_new)->condition, tokens)) {
+    switch (parse_condition(&(*for_new)->condition, tokens, block_scope)) {
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_NONE:
@@ -1608,25 +1623,27 @@ static PARSE_STATUS parse_for_with_cond(Uast_for_with_cond** for_new, Pos pos, T
         default:
             unreachable("");
     }
-    return parse_block( &(*for_new)->body, tokens, false, true);
+    return parse_block(&(*for_new)->body, tokens, false, true, block_scope);
 }
 
 static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens) {
     Token for_token;
     unwrap(try_consume(&for_token, tokens, TOKEN_FOR));
+
+    Scope_id block_scope = scope_id_new();
     
     if (starts_with_variable_type_decl(*tokens, false)) {
         PARSE_STATUS status = PARSE_OK;
         Uast_block* outer = uast_block_new(for_token.pos, (Uast_stmt_vec) {0}, (Symbol_collection) {0}, for_token.pos, scope_id_new());
         vec_append(&a_main, &env.ancesters, &outer->symbol_collection);
         Uast_variable_def* var_def = NULL;
-        if (PARSE_OK != parse_variable_decl( &var_def, tokens, false, false, true, true, (Ulang_type) {0})) {
+        if (PARSE_OK != parse_variable_decl(&var_def, tokens, false, false, true, true, (Ulang_type) {0}, block_scope)) {
             status = PARSE_ERROR;
             goto for_range_error;
         }
 
         Uast_block* new_for = NULL;
-        if (PARSE_OK != parse_for_range_internal( &new_for, var_def, outer, tokens)) {
+        if (PARSE_OK != parse_for_range_internal(&new_for, var_def, outer, tokens, block_scope)) {
             status = PARSE_ERROR;
             goto for_range_error;
         }
@@ -1637,7 +1654,7 @@ for_range_error:
         return status;
     } else {
         Uast_for_with_cond* new_for = NULL;
-        if (PARSE_OK != parse_for_with_cond( &new_for, for_token.pos, tokens)) {
+        if (PARSE_OK != parse_for_with_cond(&new_for, for_token.pos, tokens, block_scope)) {
             return PARSE_ERROR;
         }
         *result = uast_for_with_cond_wrap(new_for);
@@ -1646,12 +1663,12 @@ for_range_error:
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_break(Uast_break** new_break, Tk_view* tokens) {
+static PARSE_STATUS parse_break(Uast_break** new_break, Tk_view* tokens, Scope_id scope_id) {
     Token break_token = tk_view_consume(tokens);
 
     Uast_expr* break_expr = NULL;
     bool do_break_expr = true;
-    switch (parse_expr( &break_expr, tokens, true, false)) {
+    switch (parse_expr(&break_expr, tokens, true, false, scope_id)) {
         case PARSE_EXPR_OK:
             do_break_expr = true;
             break;
@@ -1702,7 +1719,7 @@ static PARSE_STATUS parse_function_decl(Uast_function_decl** fun_decl, Tk_view* 
         msg_parser_expected(env.file_path_to_text, tk_view_front(*tokens), "in function decl", TOKEN_FN);
         goto error;
     }
-    if (PARSE_OK != parse_function_decl_common( fun_decl, tokens)) {
+    if (PARSE_OK != parse_function_decl_common(fun_decl, tokens, 0, SIZE_MAX /* TODO */)) {
         goto error;
     }
     try_consume(NULL, tokens, TOKEN_SEMICOLON);
@@ -1730,7 +1747,7 @@ static Uast_symbol* parse_symbol(Tk_view* tokens) {
     return uast_symbol_new(token.pos, name_new(env.curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id_new()));
 }
 
-static PARSE_STATUS parse_function_call(Uast_function_call** child, Tk_view* tokens, Uast_expr* callee) {
+static PARSE_STATUS parse_function_call(Uast_function_call** child, Tk_view* tokens, Uast_expr* callee, Scope_id scope_id) {
     //Token fun_name_token;
     //if (!try_consume(&fun_name_token, tokens, TOKEN_SYMBOL)) {
     //    unreachable("this is not a function call");
@@ -1744,7 +1761,7 @@ static PARSE_STATUS parse_function_call(Uast_function_call** child, Tk_view* tok
     Uast_expr_vec args = {0};
     while (is_first_time || prev_is_comma) {
         Uast_expr* arg;
-        switch (parse_expr( &arg, tokens, true, false)) {
+        switch (parse_expr(&arg, tokens, true, false, scope_id)) {
             case PARSE_EXPR_OK:
                 assert(arg);
                 vec_append(&a_main, &args, arg);
@@ -1773,11 +1790,11 @@ static PARSE_STATUS parse_function_call(Uast_function_call** child, Tk_view* tok
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_function_return(Uast_return** rtn_stmt, Tk_view* tokens) {
+static PARSE_STATUS parse_function_return(Uast_return** rtn_stmt, Tk_view* tokens, Scope_id scope_id) {
     unwrap(try_consume(NULL, tokens, TOKEN_RETURN));
 
     Uast_expr* expr;
-    switch (parse_expr( &expr, tokens, false, true)) {
+    switch (parse_expr(&expr, tokens, false, true, scope_id)) {
         case PARSE_EXPR_OK:
             *rtn_stmt = uast_return_new(uast_expr_get_pos(expr), expr, false);
             break;
@@ -1801,9 +1818,9 @@ static PARSE_STATUS parse_function_return(Uast_return** rtn_stmt, Tk_view* token
     return PARSE_OK;
 }
 
-static PARSE_EXPR_STATUS parse_condition(Uast_condition** result, Tk_view* tokens) {
+static PARSE_EXPR_STATUS parse_condition(Uast_condition** result, Tk_view* tokens, Scope_id scope_id) {
     Uast_expr* cond_child;
-    switch (parse_expr( &cond_child, tokens, false, false)) {
+    switch (parse_expr(&cond_child, tokens, false, false, scope_id)) {
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_ERROR:
@@ -1822,13 +1839,13 @@ static PARSE_EXPR_STATUS parse_condition(Uast_condition** result, Tk_view* token
             cond_oper = uast_operator_unwrap(cond_child);
             break;
         case UAST_LITERAL:
-            cond_oper = uast_condition_get_default_child( cond_child);
+            cond_oper = uast_condition_get_default_child(cond_child);
             break;
         case UAST_FUNCTION_CALL:
-            cond_oper = uast_condition_get_default_child( cond_child);
+            cond_oper = uast_condition_get_default_child(cond_child);
             break;
         case UAST_SYMBOL:
-            cond_oper = uast_condition_get_default_child( cond_child);
+            cond_oper = uast_condition_get_default_child(cond_child);
             break;
         default:
             unreachable(UAST_FMT"\n", uast_expr_print(cond_child));
@@ -1852,7 +1869,7 @@ static void if_else_chain_consume_newline(Tk_view* tokens) {
     }
 }
 
-static PARSE_STATUS parse_if_else_chain(Uast_if_else_chain** if_else_chain, Tk_view* tokens) {
+static PARSE_STATUS parse_if_else_chain(Uast_if_else_chain** if_else_chain, Tk_view* tokens, Scope_id scope_id) {
     Token if_start_token;
     unwrap(try_consume(&if_start_token, tokens, TOKEN_IF));
 
@@ -1861,7 +1878,7 @@ static PARSE_STATUS parse_if_else_chain(Uast_if_else_chain** if_else_chain, Tk_v
     Uast_if* if_stmt = uast_if_new(if_start_token.pos, NULL, NULL);
     if_stmt = uast_if_new(if_start_token.pos, NULL, NULL);
     
-    switch (parse_condition( &if_stmt->condition, tokens)) {
+    switch (parse_condition(&if_stmt->condition, tokens, scope_id)) {
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_ERROR:
@@ -1872,7 +1889,7 @@ static PARSE_STATUS parse_if_else_chain(Uast_if_else_chain** if_else_chain, Tk_v
         default:
             unreachable("");
     }
-    if (PARSE_OK != parse_block( &if_stmt->body, tokens, false, true)) {
+    if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, true, scope_id_new())) {
         return PARSE_ERROR;
     }
     vec_append(&a_main, &ifs, if_stmt);
@@ -1882,7 +1899,7 @@ static PARSE_STATUS parse_if_else_chain(Uast_if_else_chain** if_else_chain, Tk_v
         if_stmt = uast_if_new(if_start_token.pos, NULL, NULL);
 
         if (try_consume(&if_start_token, tokens, TOKEN_IF)) {
-            switch (parse_condition( &if_stmt->condition, tokens)) {
+            switch (parse_condition(&if_stmt->condition, tokens, scope_id)) {
                 case PARSE_EXPR_OK:
                     break;
                 case PARSE_EXPR_ERROR:
@@ -1895,12 +1912,12 @@ static PARSE_STATUS parse_if_else_chain(Uast_if_else_chain** if_else_chain, Tk_v
             }
         } else {
             if_stmt->condition = uast_condition_new(if_start_token.pos, NULL);
-            if_stmt->condition->child = uast_condition_get_default_child(  uast_literal_wrap(
-                util_uast_literal_new_from_int64_t( 1, TOKEN_INT_LITERAL, if_start_token.pos)
+            if_stmt->condition->child = uast_condition_get_default_child( uast_literal_wrap(
+                util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, if_start_token.pos)
             ));
         }
 
-        if (PARSE_OK != parse_block( &if_stmt->body, tokens, false, true)) {
+        if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, true, scope_id_new())) {
             return PARSE_ERROR;
         }
         vec_append(&a_main, &ifs, if_stmt);
@@ -1913,12 +1930,12 @@ static PARSE_STATUS parse_if_else_chain(Uast_if_else_chain** if_else_chain, Tk_v
 }
 
 
-static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens) {
+static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Scope_id scope_id) {
     Token start_token = {0};
     unwrap(try_consume(&start_token, tokens, TOKEN_SWITCH));
 
     Uast_expr* operand = NULL;
-    switch (parse_expr( &operand, tokens, false, false)) {
+    switch (parse_expr(&operand, tokens, false, false, scope_id)) {
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_ERROR:
@@ -1940,7 +1957,7 @@ static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens) {
         Uast_expr* case_operand = NULL;
         bool case_is_default = false;
         if (try_consume(NULL, tokens, TOKEN_CASE)) {
-            switch (parse_expr( &case_operand, tokens, false, false)) {
+            switch (parse_expr(&case_operand, tokens, false, false, scope_id)) {
                 case PARSE_EXPR_OK:
                     break;
                 case PARSE_EXPR_ERROR:
@@ -1959,7 +1976,7 @@ static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens) {
 
         Token case_start_token = {0};
         unwrap(try_consume(&case_start_token, tokens, TOKEN_COLON));
-        switch (parse_stmt( &case_if_true, tokens, false)) {
+        switch (parse_stmt(&case_if_true, tokens, false, scope_id)) {
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_ERROR:
@@ -1995,7 +2012,7 @@ static Uast_expr* get_expr_or_symbol(Uast_stmt* stmt) {
     return uast_expr_unwrap(stmt);
 }
 
-static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, bool defer_sym_add) {
+static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, bool defer_sym_add, Scope_id scope_id) {
     log(LOG_DEBUG, BOOL_FMT"\n", bool_print(defer_sym_add));
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
     assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
@@ -2005,35 +2022,35 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, bool def
         assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
         unwrap(try_consume(NULL, tokens, TOKEN_TYPE_DEF));
         Uast_def* fun_decl;
-        if (PARSE_OK != parse_type_def( &fun_decl, tokens)) {
+        if (PARSE_OK != parse_type_def(&fun_decl, tokens, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_def_wrap(fun_decl);
     } else if (starts_with_function_decl(*tokens)) {
         Uast_function_decl* fun_decl;
-        if (PARSE_OK != parse_function_decl( &fun_decl, tokens)) {
+        if (PARSE_OK != parse_function_decl(&fun_decl, tokens)) {
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_def_wrap(uast_function_decl_wrap(fun_decl));
     } else if (starts_with_function_def(*tokens)) {
         Uast_function_def* fun_def;
-        if (PARSE_OK != parse_function_def( &fun_def, tokens)) {
+        if (PARSE_OK != parse_function_def(&fun_def, tokens)) {
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_def_wrap(uast_function_def_wrap(fun_def));
     } else if (starts_with_return(*tokens)) {
         Uast_return* rtn_stmt = NULL;
-        if (PARSE_OK != parse_function_return( &rtn_stmt, tokens)) {
+        if (PARSE_OK != parse_function_return(&rtn_stmt, tokens, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_return_wrap(rtn_stmt);
     } else if (starts_with_for(*tokens)) {
-        if (PARSE_OK != parse_for_loop( &lhs, tokens)) {
+        if (PARSE_OK != parse_for_loop(&lhs, tokens)) {
             return PARSE_EXPR_ERROR;
         }
     } else if (starts_with_break(*tokens)) {
         Uast_break* rtn_stmt = NULL;
-        if (PARSE_OK != parse_break( &rtn_stmt, tokens)) {
+        if (PARSE_OK != parse_break(&rtn_stmt, tokens, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_break_wrap(rtn_stmt);
@@ -2041,19 +2058,19 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, bool def
         lhs = uast_continue_wrap(parse_continue(tokens));
     } else if (starts_with_block(*tokens)) {
         Uast_block* block_def = NULL;
-        if (PARSE_OK != parse_block( &block_def, tokens, false, true)) {
+        if (PARSE_OK != parse_block(&block_def, tokens, false, true, scope_id_new())) {
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_block_wrap(block_def);
     } else if (starts_with_variable_decl(*tokens)) {
         Uast_variable_def* var_def = NULL;
-        if (PARSE_OK != parse_variable_decl( &var_def, tokens, true, defer_sym_add, true, true, (Ulang_type) {0})) {
+        if (PARSE_OK != parse_variable_decl(&var_def, tokens, true, defer_sym_add, true, true, (Ulang_type) {0}, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_def_wrap(uast_variable_def_wrap(var_def));
     } else {
         Uast_expr* lhs_ = NULL;
-        switch (parse_expr( &lhs_, tokens, false, true)) {
+        switch (parse_expr(&lhs_, tokens, false, true, scope_id)) {
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_ERROR:
@@ -2070,7 +2087,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, bool def
     Token equal_tk = {0};
     if (try_consume(&equal_tk, tokens, TOKEN_SINGLE_EQUAL)) {
         Uast_expr* rhs = NULL;
-        switch (parse_expr( &rhs, tokens, false, false)) {
+        switch (parse_expr(&rhs, tokens, false, false, scope_id)) {
             case PARSE_EXPR_OK:
                 *child = uast_expr_wrap(uast_operator_wrap(uast_binary_wrap(uast_binary_new(
                     equal_tk.pos, get_expr_or_symbol(lhs), rhs, BINARY_SINGLE_EQUAL
@@ -2101,7 +2118,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, bool def
     return PARSE_EXPR_OK;
 }
 
-static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top_level, bool do_new_sym_coll) {
+static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top_level, bool do_new_sym_coll, Scope_id new_scope) {
     PARSE_STATUS status = PARSE_OK;
     bool did_consume_close_brace = false;
 
@@ -2118,7 +2135,7 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
 
     Uast_def* redefined_symbol;
     if (!usymbol_do_add_defered(&redefined_symbol)) {
-        msg_redefinition_of_symbol( redefined_symbol);
+        msg_redefinition_of_symbol(redefined_symbol);
         status = PARSE_ERROR;
     }
 
@@ -2157,7 +2174,7 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
         }
         Uast_stmt* child;
         bool should_stop = false;
-        switch (parse_stmt( &child, tokens, false)) {
+        switch (parse_stmt(&child, tokens, false, new_scope)) {
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_ERROR:
@@ -2194,14 +2211,14 @@ end:
     return status;
 }
 
-static PARSE_STATUS parse_struct_literal_members(Uast_expr_vec* members, Tk_view* tokens) {
+static PARSE_STATUS parse_struct_literal_members(Uast_expr_vec* members, Tk_view* tokens, Scope_id scope_id) {
     memset(members, 0, sizeof(*members));
 
     try_consume(NULL, tokens, TOKEN_NEW_LINE);
     do {
         try_consume(NULL, tokens, TOKEN_NEW_LINE);
         Uast_expr* memb = NULL;
-        switch (parse_expr( &memb, tokens, false, false)) {
+        switch (parse_expr(&memb, tokens, false, false, scope_id)) {
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_ERROR:
@@ -2220,7 +2237,7 @@ static PARSE_STATUS parse_struct_literal_members(Uast_expr_vec* members, Tk_view
 }
 
 
-static PARSE_STATUS parse_struct_literal(Uast_struct_literal** struct_lit, Tk_view* tokens) {
+static PARSE_STATUS parse_struct_literal(Uast_struct_literal** struct_lit, Tk_view* tokens, Scope_id scope_id) {
     Token start_token;
     if (!try_consume(&start_token, tokens, TOKEN_OPEN_CURLY_BRACE)) {
         msg_parser_expected(env.file_path_to_text, tk_view_front(*tokens), "at start of struct literal", TOKEN_OPEN_CURLY_BRACE);
@@ -2228,7 +2245,7 @@ static PARSE_STATUS parse_struct_literal(Uast_struct_literal** struct_lit, Tk_vi
     }
 
     Uast_expr_vec members = {0};
-    PARSE_STATUS status = parse_struct_literal_members( &members, tokens);
+    PARSE_STATUS status = parse_struct_literal_members(&members, tokens, scope_id);
     if (status != PARSE_OK) {
         return status;
     }
@@ -2259,7 +2276,7 @@ static PARSE_STATUS parse_struct_literal(Uast_struct_literal** struct_lit, Tk_vi
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_array_literal(Uast_array_literal** arr_lit, Tk_view* tokens) {
+static PARSE_STATUS parse_array_literal(Uast_array_literal** arr_lit, Tk_view* tokens, Scope_id scope_id) {
     Token start_token;
     if (!try_consume(&start_token, tokens, TOKEN_OPEN_SQ_BRACKET)) {
         msg_parser_expected(env.file_path_to_text, tk_view_front(*tokens), "at start of array literal", TOKEN_OPEN_CURLY_BRACE);
@@ -2267,7 +2284,7 @@ static PARSE_STATUS parse_array_literal(Uast_array_literal** arr_lit, Tk_view* t
     }
     
     Uast_expr_vec members = {0};
-    PARSE_STATUS status = parse_struct_literal_members( &members, tokens);
+    PARSE_STATUS status = parse_struct_literal_members(&members, tokens, scope_id);
     if (status != PARSE_OK) {
         return status;
     }
@@ -2303,7 +2320,7 @@ static Uast_binary* parser_binary_new(Uast_expr* lhs, Token operator_token, Uast
 }
 
 static PARSE_EXPR_STATUS parse_expr_piece(
-    Uast_expr** result, Tk_view* tokens, int32_t* prev_oper_pres, bool defer_sym_add
+    Uast_expr** result, Tk_view* tokens, int32_t* prev_oper_pres, bool defer_sym_add, Scope_id scope_id
 ) {
     if (tokens->count < 1) {
         return PARSE_EXPR_NONE;
@@ -2311,7 +2328,7 @@ static PARSE_EXPR_STATUS parse_expr_piece(
 
     Token open_par_token = {0};
     if (try_consume(&open_par_token, tokens, TOKEN_OPEN_PAR)) {
-        switch (parse_expr( result, tokens, defer_sym_add, false)) {
+        switch (parse_expr(result, tokens, defer_sym_add, false ,scope_id)) {
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_ERROR:
@@ -2337,33 +2354,33 @@ static PARSE_EXPR_STATUS parse_expr_piece(
         *prev_oper_pres = get_operator_precedence(TOKEN_SINGLE_DOT);
     } else if (token_is_literal(tk_view_front(*tokens))) {
         Uast_literal* lit = NULL;
-        if (PARSE_OK != parse_literal( &lit, tokens)) {
+        if (PARSE_OK != parse_literal(&lit, tokens)) {
             return PARSE_EXPR_ERROR;
         }
         *result = uast_literal_wrap(lit);
     } else if (tk_view_front(*tokens).type == TOKEN_SYMBOL) {
-        *result = uast_symbol_wrap(parse_symbol( tokens));
+        *result = uast_symbol_wrap(parse_symbol(tokens));
     } else if (starts_with_switch(*tokens)) {
         Uast_switch* lang_switch = NULL;
-        if (PARSE_OK != parse_switch( &lang_switch, tokens)) {
+        if (PARSE_OK != parse_switch(&lang_switch, tokens, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
         *result = uast_switch_wrap(lang_switch);
     } else if (starts_with_if(*tokens)) {
         Uast_if_else_chain* if_else = NULL;
-        if (PARSE_OK != parse_if_else_chain( &if_else, tokens)) {
+        if (PARSE_OK != parse_if_else_chain(&if_else, tokens ,scope_id)) {
             return PARSE_EXPR_ERROR;
         }
         *result = uast_if_else_chain_wrap(if_else);
     } else if (starts_with_struct_literal(*tokens)) {
         Uast_struct_literal* struct_lit;
-        if (PARSE_OK != parse_struct_literal( &struct_lit, tokens)) {
+        if (PARSE_OK != parse_struct_literal(&struct_lit, tokens ,scope_id)) {
             return PARSE_EXPR_ERROR;
         }
         *result = uast_struct_literal_wrap(struct_lit);
     } else if (starts_with_array_literal(*tokens)) {
         Uast_array_literal* arr_lit;
-        if (PARSE_OK != parse_array_literal( &arr_lit, tokens)) {
+        if (PARSE_OK != parse_array_literal(&arr_lit, tokens ,scope_id)) {
             return PARSE_EXPR_ERROR;
         }
         *result = uast_array_literal_wrap(arr_lit);
@@ -2393,12 +2410,12 @@ static bool expr_is_binary(const Uast_expr* expr) {
 }
 
 static PARSE_EXPR_STATUS parse_unary(
-     
     Uast_operator** result,
     Tk_view* tokens,
     int32_t* prev_oper_pres,
     bool defer_sym_add,
-    bool can_be_tuple
+    bool can_be_tuple,
+    Scope_id scope_id
 ) {
     (void) can_be_tuple;
 
@@ -2427,7 +2444,7 @@ static PARSE_EXPR_STATUS parse_unary(
                     return PARSE_EXPR_ERROR;
                 }
             }
-            if (PARSE_OK != parse_lang_type_struct_atom_require( &unary_lang_type, tokens)) {
+            if (PARSE_OK != parse_lang_type_struct_atom_require(&unary_lang_type, tokens)) {
                 return PARSE_EXPR_ERROR;
             }
             {
@@ -2443,7 +2460,7 @@ static PARSE_EXPR_STATUS parse_unary(
             unreachable(TOKEN_FMT, token_print(TOKEN_MODE_LOG, oper));
     }
 
-    switch (parse_expr_piece( &child, tokens, prev_oper_pres, defer_sym_add)) {
+    switch (parse_expr_piece(&child, tokens, prev_oper_pres, defer_sym_add, scope_id)) {
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_NONE:
@@ -2481,7 +2498,8 @@ static PARSE_EXPR_STATUS parse_binary(
     Tk_view* tokens,
     int32_t* prev_oper_pres,
     bool defer_sym_add,
-    bool can_be_tuple
+    bool can_be_tuple,
+    Scope_id scope_id
 ) {
     Token oper = consume_operator(tokens);
 
@@ -2498,7 +2516,7 @@ static PARSE_EXPR_STATUS parse_binary(
         int32_t unary_pres = get_operator_precedence(tk_view_front(*tokens).type);
         log_tokens(LOG_DEBUG, *tokens);
         Uast_operator* unary = NULL;
-        switch (parse_unary( &unary, tokens, prev_oper_pres, defer_sym_add, can_be_tuple)) {
+        switch (parse_unary(&unary, tokens, prev_oper_pres, defer_sym_add, can_be_tuple, scope_id)) {
             case PARSE_EXPR_OK:
                 rhs = uast_operator_wrap(unary);
                 break;
@@ -2522,7 +2540,7 @@ static PARSE_EXPR_STATUS parse_binary(
         //    todo();
         //}
     } else {
-        switch (parse_expr_piece( &rhs, tokens, prev_oper_pres, defer_sym_add)) {
+        switch (parse_expr_piece(&rhs, tokens, prev_oper_pres, defer_sym_add, scope_id)) {
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_ERROR:
@@ -2677,15 +2695,15 @@ static void set_right_child_expr(Uast_expr* expr, Uast_expr* new_expr) {
 }
 
 static PARSE_EXPR_STATUS parse_expr_function_call(
-     
     Uast_expr** result,
     Uast_expr* lhs,
-    Tk_view* tokens
+    Tk_view* tokens,
+    Scope_id scope_id
 ) {
     Uast_function_call* fun_call = NULL;
     switch (lhs->type) {
         case UAST_SYMBOL:
-            switch (parse_function_call( &fun_call, tokens, lhs)) {
+            switch (parse_function_call(&fun_call, tokens, lhs ,scope_id)) {
                 case PARSE_OK:
                     *result = uast_function_call_wrap(fun_call);
                     lhs = *result;
@@ -2699,7 +2717,7 @@ static PARSE_EXPR_STATUS parse_expr_function_call(
         case UAST_OPERATOR:
             // fallthrough
         case UAST_MEMBER_ACCESS:
-            switch (parse_function_call( &fun_call, tokens, lhs)) {
+            switch (parse_function_call(&fun_call, tokens, lhs, scope_id)) {
                 case PARSE_OK:
                     lhs = uast_function_call_wrap(fun_call);
                     *result = lhs;
@@ -2714,7 +2732,7 @@ static PARSE_EXPR_STATUS parse_expr_function_call(
             Uast_tuple* tuple = uast_tuple_unwrap(lhs);
             unwrap(tuple->members.info.count > 0);
             Uast_expr* new_last = NULL;
-            PARSE_EXPR_STATUS status = parse_expr_function_call( &new_last, vec_top(&tuple->members), tokens);
+            PARSE_EXPR_STATUS status = parse_expr_function_call(&new_last, vec_top(&tuple->members), tokens, scope_id);
             if (status != PARSE_EXPR_OK) {
                 return status;
             }
@@ -2731,18 +2749,18 @@ static PARSE_EXPR_STATUS parse_expr_function_call(
 }
 
 static PARSE_EXPR_STATUS parse_expr_index(
-     
     Uast_expr** result,
     Uast_expr* lhs,
     Tk_view* tokens,
     int32_t* prev_oper_pres,
-    bool defer_sym_add
+    bool defer_sym_add,
+    Scope_id scope_id
 ) {
     Token oper = consume_operator(tokens);
     unwrap(oper.type == TOKEN_OPEN_SQ_BRACKET);
 
     Uast_expr* index_index = NULL;
-    switch (parse_expr( &index_index, tokens, prev_oper_pres, defer_sym_add)) {
+    switch (parse_expr(&index_index, tokens, prev_oper_pres, defer_sym_add, scope_id)) {
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_NONE:
@@ -2797,17 +2815,17 @@ static PARSE_EXPR_STATUS parse_expr_generic(
 }
 
 static PARSE_EXPR_STATUS parse_expr_opening_prev_less_pres(
-     
     Uast_expr** result,
     Uast_expr** lhs,
     Tk_view* tokens,
     int32_t* prev_oper_pres,
-    bool defer_sym_add
+    bool defer_sym_add,
+    Scope_id scope_id
 ) {
     switch (tk_view_front(*tokens).type) {
         case TOKEN_OPEN_PAR: {
             Uast_expr* new_right = NULL;
-            PARSE_EXPR_STATUS status = parse_expr_function_call( &new_right, get_right_child_expr(*lhs), tokens);
+            PARSE_EXPR_STATUS status = parse_expr_function_call(&new_right, get_right_child_expr(*lhs), tokens, scope_id);
             if (status != PARSE_EXPR_OK) {
                 return status;
             }
@@ -2817,7 +2835,7 @@ static PARSE_EXPR_STATUS parse_expr_opening_prev_less_pres(
         }
         case TOKEN_OPEN_SQ_BRACKET: {
             Uast_expr* new_right = NULL;
-            PARSE_EXPR_STATUS status = parse_expr_index( &new_right, get_right_child_expr(*lhs), tokens, prev_oper_pres, defer_sym_add);
+            PARSE_EXPR_STATUS status = parse_expr_index(&new_right, get_right_child_expr(*lhs), tokens, prev_oper_pres, defer_sym_add, scope_id);
             if (status != PARSE_EXPR_OK) {
                 return status;
             }
@@ -2832,22 +2850,22 @@ static PARSE_EXPR_STATUS parse_expr_opening_prev_less_pres(
 }
 
 static PARSE_EXPR_STATUS parse_expr_opening_prev_equal_pres(
-     
     Uast_expr** result,
     Uast_expr** lhs,
     Tk_view* tokens,
     int32_t* prev_oper_pres,
-    bool defer_sym_add
+    bool defer_sym_add,
+    Scope_id scope_id
 ) {
     switch (tk_view_front(*tokens).type) {
         case TOKEN_OPEN_PAR: {
-            return parse_expr_function_call( result, *lhs, tokens);
+            return parse_expr_function_call(result, *lhs, tokens, scope_id);
         }
         case TOKEN_OPEN_SQ_BRACKET: {
-            return parse_expr_index( result, *lhs, tokens, prev_oper_pres, defer_sym_add);
+            return parse_expr_index(result, *lhs, tokens, prev_oper_pres, defer_sym_add, scope_id);
         }
         case TOKEN_OPEN_GENERIC: {
-            return parse_expr_generic( result, *lhs, tokens, prev_oper_pres, defer_sym_add);
+            return parse_expr_generic(result, *lhs, tokens, prev_oper_pres, defer_sym_add);
         }
         default:
             unreachable(TOKEN_FMT, token_print(TOKEN_MODE_LOG, tk_view_front(*tokens)));
@@ -2856,27 +2874,27 @@ static PARSE_EXPR_STATUS parse_expr_opening_prev_equal_pres(
 }
 
 static PARSE_EXPR_STATUS parse_expr_opening(
-     
     Uast_expr** result,
     Uast_expr** lhs,
     Tk_view* tokens,
     int32_t* prev_oper_pres,
-    bool defer_sym_add
+    bool defer_sym_add,
+    Scope_id scope_id
 ) {
     if (*prev_oper_pres < get_operator_precedence(tk_view_front(*tokens).type)) {
-        return parse_expr_opening_prev_less_pres( result, lhs, tokens, prev_oper_pres, defer_sym_add);
+        return parse_expr_opening_prev_less_pres(result, lhs, tokens, prev_oper_pres, defer_sym_add, scope_id);
     } else {
-        return parse_expr_opening_prev_equal_pres( result, lhs, tokens, prev_oper_pres, defer_sym_add);
+        return parse_expr_opening_prev_equal_pres(result, lhs, tokens, prev_oper_pres, defer_sym_add, scope_id);
     }
 }
 
 // parse expression, ignoring single equal
 static PARSE_EXPR_STATUS parse_expr_side(
-     
     Uast_expr** result,
     Tk_view* tokens,
     bool defer_sym_add,
-    bool can_be_tuple
+    bool can_be_tuple,
+    Scope_id scope_id
 ) {
     Uast_expr* lhs = NULL;
 
@@ -2891,7 +2909,7 @@ static PARSE_EXPR_STATUS parse_expr_side(
     } else if (is_unary(tk_view_front(*tokens).type)) {
         prev_oper_pres = get_operator_precedence(tk_view_front(*tokens).type);
         Uast_operator* unary = NULL;
-        switch (parse_unary( &unary, tokens, &prev_oper_pres, defer_sym_add, can_be_tuple)) {
+        switch (parse_unary(&unary, tokens, &prev_oper_pres, defer_sym_add, can_be_tuple, scope_id)) {
             case PARSE_EXPR_OK:
                 lhs = uast_operator_wrap(unary);
                 *result = lhs;
@@ -2908,7 +2926,7 @@ static PARSE_EXPR_STATUS parse_expr_side(
                 unreachable("");
         }
     } else {
-        switch (parse_expr_piece( &lhs, tokens, &prev_oper_pres, defer_sym_add)) {
+        switch (parse_expr_piece(&lhs, tokens, &prev_oper_pres, defer_sym_add, scope_id)) {
             case PARSE_EXPR_OK:
                 *result = lhs;
                 break;
@@ -2934,7 +2952,7 @@ static PARSE_EXPR_STATUS parse_expr_side(
         if (!is_binary(tk_view_front(*tokens).type)) {
             todo();
         } else if (token_is_opening(tk_view_front(*tokens))) {
-            switch (parse_expr_opening( result, &lhs, tokens, &prev_oper_pres, defer_sym_add)) {
+            switch (parse_expr_opening(result, &lhs, tokens, &prev_oper_pres, defer_sym_add, scope_id)) {
                 case PARSE_EXPR_OK:
                     lhs = *result;
                     break;
@@ -2952,9 +2970,8 @@ static PARSE_EXPR_STATUS parse_expr_side(
                 prev_oper_pres = get_operator_precedence(tk_view_front(*tokens).type);
                 Uast_expr* binary = NULL;
                 switch (parse_binary(
-                    
                     &binary,
-                    get_right_child_expr(lhs), tokens, &prev_oper_pres, defer_sym_add, can_be_tuple)
+                    get_right_child_expr(lhs), tokens, &prev_oper_pres, defer_sym_add, can_be_tuple, scope_id)
                 ) {
                     case PARSE_EXPR_OK:
                         set_right_child_expr(lhs, binary);
@@ -2971,7 +2988,7 @@ static PARSE_EXPR_STATUS parse_expr_side(
             } else {
                 prev_oper_pres = get_operator_precedence(tk_view_front(*tokens).type);
                 Uast_expr* binary = NULL;
-                switch (parse_binary( &binary, lhs, tokens, &prev_oper_pres, defer_sym_add, can_be_tuple)) {
+                switch (parse_binary(&binary, lhs, tokens, &prev_oper_pres, defer_sym_add, can_be_tuple, scope_id)) {
                     case PARSE_EXPR_OK:
                         *result = binary;
                         lhs = *result;
@@ -2993,14 +3010,14 @@ static PARSE_EXPR_STATUS parse_expr_side(
 }
 
 static PARSE_EXPR_STATUS parse_expr(
-     
     Uast_expr** result,
     Tk_view* tokens,
     bool defer_sym_add,
-    bool can_be_tuple
+    bool can_be_tuple,
+    Scope_id scope_id
 ) {
     Uast_expr* lhs = NULL;
-    PARSE_EXPR_STATUS status = parse_expr_side( &lhs, tokens, defer_sym_add, can_be_tuple);
+    PARSE_EXPR_STATUS status = parse_expr_side(&lhs, tokens, defer_sym_add, can_be_tuple, scope_id);
     if (status != PARSE_EXPR_OK) {
         return status;
     }
@@ -3013,7 +3030,7 @@ static PARSE_EXPR_STATUS parse_expr(
     
     // TODO: remove BINARY_SINGLE_EQUAL?
     Uast_expr* rhs = NULL;
-    switch (parse_expr_side( &rhs, tokens, defer_sym_add, can_be_tuple)) {
+    switch (parse_expr_side(&rhs, tokens, defer_sym_add, can_be_tuple ,scope_id)) {
         case PARSE_EXPR_OK:
             // TODO: do uast_assignment?
             //*result = uast_assignment_wrap(uast_assignment_new(equal_tk.pos, uast_expr_wrap(lhs), rhs));
@@ -3056,7 +3073,7 @@ bool parse_file(Uast_block** block, Str_view file_path, bool do_new_sym_coll) {
         goto error;
     }
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
-    if (PARSE_OK != parse_block( block, &token_view, true, do_new_sym_coll)) {
+    if (PARSE_OK != parse_block(block, &token_view, true, do_new_sym_coll, scope_id_new())) {
         status = false;
         goto error;
     }

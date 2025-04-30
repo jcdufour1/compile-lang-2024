@@ -6,12 +6,9 @@
 #include <parser_utils.h>
 
 bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type, Pos pos) {
-    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type));
     if (!expand_def_ulang_type(&lang_type)) {
         return false;
     }
-
-    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type));
 
     switch (lang_type.type) {
         case ULANG_TYPE_REGULAR:
@@ -125,7 +122,6 @@ Uname name_to_uname(Name name) {
         ),
         name_new((Str_view) {0}, name.mod_path, (Ulang_type_vec) {0}, 0)
     );
-    log(LOG_DEBUG, TAST_FMT, uast_mod_alias_print(new_alias));
     unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
     return (Uname) {.mod_alias = new_alias->name, .base = name.base, .gen_args = name.gen_args};
 }

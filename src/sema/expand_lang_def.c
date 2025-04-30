@@ -215,7 +215,6 @@ EXPAND_NAME_STATUS expand_def_uname(Uast_expr** new_expr, Uname* name) {
             unwrap(str_view_is_equal(actual.mod_path, new_name.mod_path) && "not implemented");
             unwrap(ulang_type_vec_is_equal(actual.gen_args, new_name.gen_args) && "not implemented");
             name->base = new_name.base;
-            log(LOG_DEBUG, TAST_FMT"\n", uname_print(*name));
             return EXPAND_NAME_NORMAL;
         case EXPAND_NAME_NEW_EXPR:
             unwrap(str_view_is_equal(actual.mod_path, new_name.mod_path) && "not implemented");

@@ -78,9 +78,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* access);
 
 bool try_set_function_def_types(
-     
-    Uast_function_def* decl,
-    bool always_top_level // if true, new Tast_def will always be put in top_level
+    Uast_function_def* decl
 );
 
 bool try_set_function_decl_types(
@@ -122,5 +120,7 @@ bool try_set_if_else_chain(Tast_if_else_chain** new_tast, Uast_if_else_chain* if
 bool try_set_break_types(Tast_break** new_tast, Uast_break* lang_break);
 
 bool try_set_lang_def_types(Uast_lang_def* tast);
+
+bool try_set_types(Tast_block** new_tast, Uast_block* block);
 
 #endif // TYPE_CHECKING_H

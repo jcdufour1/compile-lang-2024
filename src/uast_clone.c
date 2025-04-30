@@ -109,6 +109,10 @@ Uast_lang_def* uast_lang_def_clone(const Uast_lang_def* def) {
     todo();
 }
 
+Uast_mod_alias* uast_mod_alias_clone(const Uast_mod_alias* alias, Scope_id new_scope) {
+    return uast_mod_alias_new(alias->pos, name_clone(alias->name, new_scope), name_clone(alias->mod_path, new_scope));
+}
+
 Uast_expr* uast_expr_clone(const Uast_expr* expr, Scope_id new_scope) {
     switch (expr->type) {
         case UAST_OPERATOR:
@@ -173,7 +177,7 @@ Uast_def* uast_def_clone(const Uast_def* def, Scope_id new_scope) {
         case UAST_POISON_DEF:
             todo();
         case UAST_MOD_ALIAS:
-            todo();
+            return uast_mod_alias_wrap(uast_mod_alias_clone(uast_mod_alias_const_unwrap(def), new_scope));
         case UAST_IMPORT_PATH:
             todo();
         case UAST_LANG_DEF:
