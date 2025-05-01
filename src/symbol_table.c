@@ -177,7 +177,7 @@ void generic_symbol_update(Str_view key, void* item, Get_tbl_from_collection_fn 
         if (curr_scope == 0) {
             break;
         }
-        unwrap(scope_tbl_lookup(&curr_scope, curr_scope));
+        curr_scope = scope_tbl_lookup(curr_scope);
     }
     unreachable("if there was no matching symbol found, generic_symbol_add should have worked");
 }
@@ -210,7 +210,7 @@ bool generic_symbol_lookup(
         if (curr_scope == 0) {
             break;
         }
-        unwrap(scope_tbl_lookup(&curr_scope, curr_scope));
+        curr_scope = scope_tbl_lookup(curr_scope);
     }
 
     return false;
@@ -410,14 +410,16 @@ bool file_path_to_text_tbl_add(File_path_to_text* sym_table, Str_view* file_text
 // Scope_id_to_next_table implementation
 //
 
-bool scope_tbl_lookup(Scope_id* result, Scope_id key) {
+// returns parent of key
+Scope_id scope_tbl_lookup(Scope_id key) {
     char buf[32] = {0};
     sprintf(buf, "%zu", key);
-    Scope_id temp_stack = 0;
-    Scope_id* temp = &temp_stack;
-    bool status = generic_tbl_lookup((void**)&temp, (Generic_symbol_table*)&env.scope_id_to_parent, str_view_from_cstr(buf));
-    *result = *temp;
-    return status;
+    Scope_id parent = 0;
+    Scope_id* temp = &parent;
+    generic_tbl_lookup((void**)&temp, (Generic_symbol_table*)&env.scope_id_to_parent, str_view_from_cstr(buf));
+    parent = *temp;
+    log(LOG_DEBUG, "scope_tbl_lookup: %zu %zu\n", key, parent);
+    return parent;
 }
 
 bool scope_tbl_add(Scope_id key, Scope_id parent) {

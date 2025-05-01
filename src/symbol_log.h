@@ -57,14 +57,14 @@ static inline void symbol_log_internal(LOG_LEVEL log_level, const char* file, in
     Scope_id curr_scope = scope_id;
     size_t idx = 0;
     while (true) {
-        log(LOG_DEBUG, "thing: %zu %zu\n", curr_scope, env.symbol_tables.info.count);
+        log(LOG_DEBUG, "symbol_log_internal: %zu %zu\n", curr_scope, env.symbol_tables.info.count);
         Symbol_table curr = vec_at(&env.symbol_tables, curr_scope)->symbol_table;
         log_internal(log_level, file, line, 0, "level: %zu\n", idx);
         symbol_level_log_internal(log_level, file, line, curr, recursion_depth);
         if (curr_scope == 0) {
             break;
         }
-        unwrap(scope_tbl_lookup(&curr_scope, curr_scope));
+        curr_scope = scope_tbl_lookup(curr_scope);
     }
     log_internal(log_level, file, line, 0, "----end symbol table------\n");
 }

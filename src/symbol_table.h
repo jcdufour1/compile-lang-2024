@@ -89,42 +89,6 @@ bool alloca_add(Llvm* tast_of_symbol);
 
 void alloca_update(Llvm* tast_of_symbol);
 
-// these tasts will be actually added to a symbol table when `symbol_do_add_defered` is called
-static inline void alloca_add_defer(Llvm* tast_of_alloca) {
-    assert(tast_of_alloca);
-    vec_append(&a_main, &env.defered_allocas_to_add, tast_of_alloca);
-}
-
-bool alloca_do_add_defered(Llvm** redefined_sym);
-
-static inline void alloca_ignore_defered(void) {
-    vec_reset(&env.defered_allocas_to_add);
-}
-
-// these tasts will be actually added to a symbol table when `symbol_do_add_defered` is called
-static inline void symbol_add_defer(Tast_def* tast_of_symbol) {
-    assert(tast_of_symbol);
-    vec_append(&a_main, &env.defered_symbols_to_add, tast_of_symbol);
-}
-
-bool symbol_do_add_defered(Tast_def** redefined_sym);
-
-static inline void symbol_ignore_defered(void) {
-    vec_reset(&env.defered_symbols_to_add);
-}
-
-// these tasts will be actually added to a symbol table when `symbol_do_add_defered` is called
-static inline void usymbol_add_defer(Uast_def* uast_of_symbol) {
-    assert(uast_of_symbol);
-    vec_append(&a_main, &env.udefered_symbols_to_add, uast_of_symbol);
-}
-
-bool usymbol_do_add_defered(Uast_def** redefined_sym);
-
-static inline void usymbol_ignore_defered(void) {
-    vec_reset(&env.udefered_symbols_to_add);
-}
-
 Symbol_table* symbol_get_block(void);
 
 void log_symbol_table_if_block(const char* file_path, int line);
@@ -138,7 +102,8 @@ bool file_path_to_text_tbl_lookup(Str_view** result, const File_path_to_text* sy
 // returns false if file_path_to_text has already been added to the table
 bool file_path_to_text_tbl_add(File_path_to_text* sym_table, Str_view* file_text, Str_view key);
 
-bool scope_tbl_lookup(Scope_id* result, Scope_id key);
+// returns parent of key
+Scope_id scope_tbl_lookup(Scope_id key);
 
 bool scope_tbl_add(Scope_id key, Scope_id next);
 

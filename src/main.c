@@ -115,16 +115,6 @@ void do_passes(const Parameters* params) {
 }
 
 int main(int argc, char** argv) {
-    Scope_id scope_1 = 7;
-    Scope_id scope_next = 9;
-    scope_tbl_add(scope_1, scope_next);
-    Scope_id result = 1;
-    assert(!scope_tbl_lookup(&result, 9));
-    assert(!scope_tbl_lookup(&result, 8));
-    assert(scope_tbl_lookup(&result, 7));
-    log(LOG_DEBUG, "%zu\n", result);
-    assert(result == 9);
-
     parse_args(argc, argv);
     do_passes(&params);
     return 0;

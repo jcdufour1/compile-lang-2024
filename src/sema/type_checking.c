@@ -75,6 +75,7 @@ static Tast_expr* auto_deref_to_0(Tast_expr* expr) {
 const Uast_function_decl* get_parent_function_decl_const(void) {
     Uast_def* def = NULL;
     unwrap(env.name_parent_function.base.count > 0 && "no parent function here");
+    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(env.name_parent_function.base));
     unwrap(usymbol_lookup(&def, env.name_parent_function));
     switch (def->type) {
         case UAST_FUNCTION_DECL:
@@ -1437,7 +1438,8 @@ bool try_set_function_call_types_sum_case(Tast_sum_case** new_case, Uast_expr_ve
                 lang_type_to_ulang_type(sum_case->tag->lang_type),
                 name_new(env.curr_mod_path, uast_symbol_unwrap(vec_at(&args, 0))->name.base, (Ulang_type_vec) {0}, uast_symbol_unwrap(vec_at(&args, 0))->name.scope_id)
             );
-            usymbol_add_defer(uast_variable_def_wrap(new_def));
+            todo();
+            //usymbol_add(uast_variable_def_wrap(new_def));
 
             Uast_assignment* new_assign = uast_assignment_new(
                 new_def->pos,

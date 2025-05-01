@@ -352,17 +352,11 @@ static Name load_variable_def(Llvm_block* new_block, Tast_variable_def* old_var_
 
 static Name load_if_else_chain(Llvm_block* new_block, Tast_if_else_chain* old_if_else);
 
-static void add_label(Llvm_block* block, Name label_name, Pos pos, bool defer_add_sym) {
+static void add_label(Llvm_block* block, Name label_name, Pos pos) {
     Llvm_label* label = llvm_label_new(pos, label_name);
     unwrap(label_name.base.count > 0);
     label->name = label_name;
-
-    if (defer_add_sym) {
-        alloca_add_defer(llvm_def_wrap(llvm_label_wrap(label)));
-    } else {
-        unwrap(alloca_add(llvm_def_wrap(llvm_label_wrap(label))));
-    }
-
+    unwrap(alloca_add(llvm_def_wrap(llvm_label_wrap(label))));
     vec_append(&a_main, &block->children, llvm_def_wrap(llvm_label_wrap(label)));
 }
 
@@ -1532,18 +1526,19 @@ static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, N
 
     if_for_add_cond_goto(old_oper, new_block, if_body, next_if);
 
-    add_label(new_block, if_body, old_block->pos, false);
+    todo();
+    //add_label(new_block, if_body, old_block->pos, false);
 
-    vec_extend(&a_main, &new_block->children, &inner_block->children);
+    //vec_extend(&a_main, &new_block->children, &inner_block->children);
 
-    assert(after_chain.base.count > 0);
-    Llvm_goto* jmp_to_after_chain = llvm_goto_new(
-        old_block->pos,
-        after_chain
-    );
-    vec_append(&a_main, &new_block->children, llvm_goto_wrap(jmp_to_after_chain));
+    //assert(after_chain.base.count > 0);
+    //Llvm_goto* jmp_to_after_chain = llvm_goto_new(
+    //    old_block->pos,
+    //    after_chain
+    //);
+    //vec_append(&a_main, &new_block->children, llvm_goto_wrap(jmp_to_after_chain));
 
-    return new_block;
+    //return new_block;
 }
 
 static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* if_else) {
@@ -1657,7 +1652,8 @@ static Llvm_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
 
     vec_append(&a_main, &new_branch_block->children, llvm_goto_wrap(jmp_to_check_cond_label));
 
-    add_label(new_branch_block, check_cond_label, pos, true);
+    todo();
+    //add_label(new_branch_block, check_cond_label, pos, true);
 
     //load_operator(new_branch_block, operator);
     //Tast* dummy = NULL;
@@ -1670,7 +1666,8 @@ static Llvm_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
         after_for_loop_label
     );
 
-    add_label(new_branch_block, after_check_label, pos, true);
+    todo();
+    //add_label(new_branch_block, after_check_label, pos, true);
 
     //for (size_t idx = 0; idx < new_branch_block->children.info.count; idx++) {
     //    log(LOG_DEBUG, TAST_FMT"\n", tast_print(vec_at(&new_branch_block->children, idx)));
@@ -1692,10 +1689,11 @@ static Llvm_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
         //log(LOG_DEBUG, TAST_FMT"", llvm_print(vec_at(&new_branch_block->children, idx)));
     }
 
-    vec_append(&a_main, &new_branch_block->children, llvm_goto_wrap(
-        llvm_goto_new(old_for->pos, check_cond_label)
-    ));
-    add_label(new_branch_block, after_for_loop_label, pos, true);
+    todo();
+    //vec_append(&a_main, &new_branch_block->children, llvm_goto_wrap(
+    //    llvm_goto_new(old_for->pos, check_cond_label)
+    //));
+    //add_label(new_branch_block, after_for_loop_label, pos, true);
 
     env.label_if_continue = old_if_continue;
     env.label_after_for = old_after_for;
