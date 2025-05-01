@@ -35,6 +35,4 @@ Llvm_block* assign_llvm_ids(Llvm_block* root);
 
 void emit_llvm_from_tree(const Llvm_block* root);
 
-void do_passes(const Parameters* params);
-
 #endif // PASSES_H

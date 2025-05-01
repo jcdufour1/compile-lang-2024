@@ -1575,6 +1575,13 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 *new_call = new_callee;
                 return status;
             } else {
+                usymbol_log_level(LOG_DEBUG, 1);
+                log(LOG_DEBUG, "before problem\n");
+                log(LOG_DEBUG, "%zu\n", tast_function_lit_unwrap(tast_literal_unwrap(new_callee))->name.scope_id);
+                log(LOG_DEBUG, "right before problem\n");
+                log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(serialize_name_symbol_table(tast_function_lit_unwrap(tast_literal_unwrap(new_callee))->name)));
+                log(LOG_DEBUG, "%zu\n", serialize_name_symbol_table(tast_function_lit_unwrap(tast_literal_unwrap(new_callee))->name).count);
+                unwrap(usym_tbl_lookup(&fun_def, tast_function_lit_unwrap(tast_literal_unwrap(new_callee))->name));
                 unwrap(usymbol_lookup(&fun_def, tast_function_lit_unwrap(tast_literal_unwrap(new_callee))->name));
                 break;
             }

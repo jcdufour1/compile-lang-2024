@@ -545,28 +545,22 @@ bool resolve_generics_function_def(
     }
     *new_def = uast_function_def_new(new_decl->pos, new_decl, new_block);
 
-    // TODO: think about scopes for symbol_table if non-top-level functions are implemented
+    usym_tbl_add(uast_function_def_wrap(*new_def));
 
-    // "I need to figure out why this code is here");
-    //{
-    //    size_t idx = 0;
-    //    for (; idx < env.ancesters.info.count; idx++) {
-    //        Uast_def* result = NULL;
-    //        if (usym_tbl_lookup(&result, &vec_at(&env.ancesters, idx)->usymbol_table, def->decl->name)) {
-    //            break;
-    //        }
-    //    }
-    //    usym_tbl_add(&vec_at(&env.ancesters, idx)->usymbol_table, uast_function_decl_wrap(new_decl));
-    //}
-
-    if (!symbol_lookup(&dummy_2,  (*new_def)->decl->name)) {
+    if (!symbol_lookup(&dummy_2, (*new_def)->decl->name)) {
         // TODO: see if there is less hacky way to do this
         if (!resolve_generics_set_function_def_types(*new_def)) {
             status = false;
         }
     }
 
-    unwrap(symbol_lookup(&dummy_2,  (*new_def)->decl->name));
+    log(LOG_DEBUG, TAST_FMT"\n", name_print((*new_def)->decl->name));
+    log(LOG_DEBUG, TAST_FMT"\n", uast_function_def_print(*new_def));
+    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(serialize_name_symbol_table((*new_def)->decl->name)));
+    log(LOG_DEBUG, "%zu\n", serialize_name_symbol_table((*new_def)->decl->name).count);
+    unwrap(usymbol_lookup(&dummy, (*new_def)->decl->name));
+    unwrap(symbol_lookup(&dummy_2, (*new_def)->decl->name));
+    usymbol_log_level(LOG_DEBUG, 1);
     return status;
 }
 
