@@ -1,13 +1,14 @@
 #include <symbol_collection_clone.h>
 #include <uast_clone.h>
 #include <symbol_iter.h>
+#include <symbol_log.h>
 
 void usymbol_table_clone(Scope_id old_scope, Scope_id new_scope) {
-    Usymbol_table* new_tbl = arena_alloc(&a_main, sizeof(*new_tbl));
     Usymbol_iter iter = usym_tbl_iter_new(old_scope);
     Uast_def* curr = NULL;
+    
     while (usym_tbl_iter_next(&curr, &iter)) {
-        usym_tbl_add(new_tbl, uast_def_clone(curr, new_scope));
+        unwrap(usym_tbl_add(uast_def_clone(curr, new_scope)));
     }
 }
 

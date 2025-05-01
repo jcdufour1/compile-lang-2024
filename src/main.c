@@ -13,6 +13,10 @@
 // TODO: make separate Env struct for every pass (each Env will need Env_common for things that all envs require (eg. for symbol table lookups))
 //
 // TODO: test case for handling assigning/returning void item
+//
+// TODO: think about stack overflow if deeply nested generic functions are present?
+// 
+// TODO: expected success test for /r, /t, etc. in source file
 
 static void fail(void) {
     if (!params.test_expected_fail) {
@@ -38,7 +42,7 @@ static void add_char(const char* base_name, int16_t pointer_depth) {
             (Pos) {0}, lang_type_atom_new_from_cstr(base_name, pointer_depth, 0)
         )))
     );
-    unwrap(usym_tbl_add(&env.primitives, uast_primitive_def_wrap(def)));
+    unwrap(usym_tbl_add(uast_primitive_def_wrap(def)));
 }
 
 static void add_any(const char* base_name, int16_t pointer_depth) {
@@ -48,12 +52,12 @@ static void add_any(const char* base_name, int16_t pointer_depth) {
             POS_BUILTIN, lang_type_atom_new_from_cstr(base_name, pointer_depth, 0)
         )))
     );
-    unwrap(usym_tbl_add(&env.primitives, uast_primitive_def_wrap(def)));
+    unwrap(usym_tbl_add(uast_primitive_def_wrap(def)));
 }
 
 static void add_void(void) {
     Uast_void_def* def = uast_void_def_new(POS_BUILTIN);
-    unwrap(usym_tbl_add(&env.primitives, uast_literal_def_wrap(uast_void_def_wrap(def))));
+    unwrap(usym_tbl_add(uast_literal_def_wrap(uast_void_def_wrap(def))));
 }
 
 static void add_primitives(void) {

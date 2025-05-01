@@ -375,7 +375,9 @@ bool resolve_generics_ulang_type_regular(Ulang_type* result, Ulang_type_regular 
     }
     memset(&name_base.gen_args, 0, sizeof(name_base.gen_args));
     if (!usymbol_lookup(&before_res, name_base)) {
+        log(LOG_DEBUG, TAST_FMT"\n", uname_print(lang_type.atom.str));
         msg_undefined_type(lang_type.pos, ulang_type_regular_const_wrap(lang_type));
+        todo();
         return false;
     }
 
@@ -399,9 +401,8 @@ bool resolve_generics_ulang_type(Ulang_type* result, Ulang_type lang_type) {
 }
 
 static bool resolve_generics_set_function_def_types(Uast_function_def* def) {
-    Name prev_par_fun = env.name_parent_function;
-    env.name_parent_function = def->decl->name;
-    assert(env.name_parent_function.base.count > 0);
+    Ulang_type prev_fn_rtn_type = env.parent_fn_rtn_type;
+    env.parent_fn_rtn_type = def->decl->return_type;
     bool status = true;
 
     Tast_function_decl* new_decl = NULL;
@@ -426,7 +427,7 @@ static bool resolve_generics_set_function_def_types(Uast_function_def* def) {
     }
 
 error:
-    env.name_parent_function = prev_par_fun;
+    env.parent_fn_rtn_type = prev_fn_rtn_type;
     return status;
 }
 
@@ -462,7 +463,10 @@ static bool resolve_generics_serialize_function_decl(
 
         for (size_t idx_fun_param = 0; idx_fun_param < params.info.count; idx_fun_param++) {
             Name curr_arg = vec_at(&old_decl->generics, idx_arg)->child->name;
+            log(LOG_DEBUG, TAST_FMT, uast_param_print(vec_at(&params, idx_fun_param)));
+            log(LOG_DEBUG, "%p\n", (void*)vec_at(&params, idx_fun_param));
             generic_sub_param(vec_at(&params, idx_fun_param), curr_arg, vec_at(&gen_args, idx_arg));
+            log(LOG_DEBUG, TAST_FMT, uast_param_print(vec_at(&params, idx_fun_param)));
         }
         Name curr_gen = vec_at(&old_decl->generics, idx_arg)->child->name;
         generic_sub_lang_type(&new_rtn_type, new_rtn_type, curr_gen, vec_at(&gen_args, idx_arg));

@@ -4,6 +4,7 @@
 #include <symbol_table_struct.h>
 #include <tast_forward_decl.h>
 #include <llvm_forward_decl.h>
+#include <ulang_type.h>
 
 typedef struct {
     Vec_base info;
@@ -27,7 +28,6 @@ typedef struct Env_ {
     Uast_def_vec udefered_symbols_to_add;
     Tast_def_vec defered_symbols_to_add;
     Llvm_vec defered_allocas_to_add;
-    Usymbol_table primitives;
     int recursion_depth;
     File_path_to_text file_path_to_text;
 
@@ -37,7 +37,7 @@ typedef struct Env_ {
 
     Tast_variable_def_vec sum_case_vars;
 
-    Name name_parent_function; // length is zero if no parent function exists
+    Ulang_type parent_fn_rtn_type;
     Lang_type break_type;
     bool break_in_case;
 
@@ -48,6 +48,7 @@ typedef struct Env_ {
 
     Name struct_rtn_name_parent_function;
 
+    Name name_parent_fn;
     Lang_type lhs_lang_type;
     PARENT_OF parent_of;
     Uast_expr* parent_of_operand;

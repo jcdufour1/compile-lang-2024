@@ -127,7 +127,7 @@ static Lang_type rm_tuple_lang_type_sum(Lang_type_sum lang_type, Pos lang_type_p
     // TODO: consider collisions with generated structs and user defined structs
     sym_tbl_add(tast_struct_def_wrap(struct_def));
     Tast_def* dummy = NULL;
-    unwrap(sym_tbl_lookup(&dummy, &vec_at(&env.symbol_tables, 0)->symbol_table, struct_def->base.name));
+    unwrap(sym_tbl_lookup(&dummy, struct_def->base.name));
 
     load_struct_def(struct_def);
     return tast_struct_def_get_lang_type(struct_def);
@@ -1089,10 +1089,7 @@ static Name load_ptr_sum_access_1(
     todo();
 }
 
-static Name load_ptr_sum_get_tag(
-    Llvm_block* new_block,
-    Tast_sum_get_tag* old_access
-) {
+static Name load_ptr_sum_get_tag(Llvm_block* new_block, Tast_sum_get_tag* old_access) {
     Tast_def* sum_def_ = NULL;
     unwrap(symbol_lookup(&sum_def_,  lang_type_get_str(tast_expr_get_lang_type(old_access->callee))));
     //Tast_sum_def* sum_def = tast_sum_def_unwrap(sum_def_);
@@ -1116,25 +1113,10 @@ static Name load_ptr_sum_get_tag(
     unwrap(alloca_add(llvm_load_element_ptr_wrap(new_enum)));
     vec_append(&a_main, &new_block->children, llvm_load_element_ptr_wrap(new_enum));
 
-    //Llvm_load_element_ptr* new_item = llvm_load_element_ptr_new(
-    //    old_sym->pos,
-    //    rm_tuple_lang_type(old_sym->base.lang_type, old_sym->pos),
-    //    0,
-    //    load_literal(new_block, tast_number_wrap(zero)),
-    //    new_enum->name_self,
-    //    util_literal_name_new(),
-    //    false
-    //);
-    //unwrap(alloca_add(llvm_load_element_ptr_wrap(new_item)));
-    //vec_append(&a_main, &new_block->children, llvm_load_element_ptr_wrap(new_item));
-
     return new_enum->name_self;
 }
 
-static Name load_sum_get_tag(
-    Llvm_block* new_block,
-    Tast_sum_get_tag* old_access
-) {
+static Name load_sum_get_tag(Llvm_block* new_block, Tast_sum_get_tag* old_access) {
     Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
         old_access->pos,
         load_ptr_sum_get_tag(new_block, old_access),
@@ -1147,10 +1129,7 @@ static Name load_sum_get_tag(
     return new_load->name;
 }
 
-static Name load_ptr_sum_access(
-    Llvm_block* new_block,
-    Tast_sum_access* old_access
-) {
+static Name load_ptr_sum_access(Llvm_block* new_block, Tast_sum_access* old_access) {
     Tast_def* sum_def_ = NULL;
     unwrap(symbol_lookup(&sum_def_,  lang_type_get_str(tast_expr_get_lang_type(old_access->callee))));
     Tast_sum_def* sum_def = tast_sum_def_unwrap(sum_def_);
@@ -1193,10 +1172,7 @@ static Name load_ptr_sum_access(
     return new_item->name_self;
 }
 
-static Name load_sum_access(
-    Llvm_block* new_block,
-    Tast_sum_access* old_access
-) {
+static Name load_sum_access(Llvm_block* new_block, Tast_sum_access* old_access) {
     Name ptr = load_ptr_sum_access(new_block, old_access);
 
     Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
@@ -1210,16 +1186,11 @@ static Name load_sum_access(
     return new_load->name;
 }
 
-static Name load_sum_case(
-    Tast_sum_case* old_case
-) {
+static Name load_sum_case(Tast_sum_case* old_case) {
     return load_enum_lit(old_case->tag);
 }
 
-static Name load_tuple(
-    Llvm_block* new_block,
-    Tast_tuple* old_tuple
-) {
+static Name load_tuple(Llvm_block* new_block, Tast_tuple* old_tuple) {
     Lang_type new_lang_type = lang_type_struct_const_wrap(rm_tuple_lang_type_tuple(
          old_tuple->lang_type, old_tuple->pos
     ));
@@ -1233,10 +1204,7 @@ static Name load_tuple(
 }
 
 // TODO: make separate tuple types for lhs and rhs
-static Name load_tuple_ptr(
-    Llvm_block* new_block,
-    Tast_tuple* old_tuple
-) {
+static Name load_tuple_ptr(Llvm_block* new_block, Tast_tuple* old_tuple) {
     (void) new_block;
     Lang_type new_lang_type = lang_type_struct_const_wrap(rm_tuple_lang_type_tuple(
          old_tuple->lang_type, old_tuple->pos
@@ -1327,8 +1295,8 @@ static Llvm_function_params* load_function_parameters(
 }
 
 static Name load_function_def(Tast_function_def* old_fun_def) {
-    Name old_fun_name = env.name_parent_function;
-    env.name_parent_function = old_fun_def->decl->name;
+    Name old_fun_name = env.name_parent_fn;
+    env.name_parent_fn = old_fun_def->decl->name;
     Pos pos = old_fun_def->pos;
 
     Llvm_function_decl* new_decl = llvm_function_decl_new(
@@ -1361,26 +1329,21 @@ static Name load_function_def(Tast_function_def* old_fun_def) {
     }
 
     unwrap(alloca_add(llvm_def_wrap(llvm_function_def_wrap(new_fun_def))));
-    env.name_parent_function = old_fun_name;
+    env.name_parent_fn = old_fun_name;
     return (Name) {0};
 }
 
-static Name load_function_decl(
-    Tast_function_decl* old_fun_decl
-) {
+static Name load_function_decl(Tast_function_decl* old_fun_decl) {
     unwrap(alloca_add(llvm_def_wrap(llvm_function_decl_wrap(load_function_decl_clone(old_fun_decl)))));
 
     return (Name) {0};
 }
 
-static Name load_return(
-    Llvm_block* new_block,
-    Tast_return* old_return
-) {
+static Name load_return(Llvm_block* new_block, Tast_return* old_return) {
     Pos pos = old_return->pos;
 
     Tast_def* fun_def_ = NULL;
-    unwrap(symbol_lookup(&fun_def_,  env.name_parent_function));
+    unwrap(symbol_lookup(&fun_def_,  env.name_parent_fn));
 
     Tast_function_decl* fun_decl = NULL;
     switch (fun_def_->type) {
@@ -1486,9 +1449,7 @@ static Name load_variable_def(
 static void load_struct_def(
     Tast_struct_def* old_def
 ) {
-    all_tbl_add(&vec_at(&env.symbol_tables, 0)->alloca_table, llvm_def_wrap(
-        llvm_struct_def_wrap(load_struct_def_clone(old_def))
-    ));
+    all_tbl_add(llvm_def_wrap(llvm_struct_def_wrap(load_struct_def_clone(old_def))));
 
     Tast_def* dummy = NULL;
     if (!symbol_lookup(&dummy,  serialize_tast_struct_def(old_def))) {
@@ -1762,9 +1723,7 @@ static void load_continue(Llvm_block* new_block, Tast_continue* old_continue) {
 
 static void load_raw_union_def(Tast_raw_union_def* old_def) {
     // TODO: crash if alloca_add fails (we need to prevent duplicates to crash on alloca_add fail)?
-    if (!all_tbl_add(&vec_at(&env.symbol_tables, 0)->alloca_table, llvm_def_wrap(
-        llvm_struct_def_wrap(load_raw_union_def_clone(old_def))
-    ))) {
+    if (!all_tbl_add(llvm_def_wrap(llvm_struct_def_wrap(load_raw_union_def_clone(old_def))))) {
         return;
     };
 

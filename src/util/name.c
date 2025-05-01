@@ -69,7 +69,7 @@ Str_view serialize_name_symbol_table(Name name) {
         string_extend_size_t(&a_main, &buf, name.gen_args.info.count);
         string_extend_cstr(&a_main, &buf, "_");
         for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
-            string_extend_strv(&a_main, &buf, serialize_name(serialize_ulang_type( name.mod_path, vec_at(&name.gen_args, idx))));
+            string_extend_strv(&a_main, &buf, serialize_name(serialize_ulang_type(name.mod_path, vec_at(&name.gen_args, idx))));
         }
     }
 
@@ -93,11 +93,11 @@ Str_view serialize_name(Name name) {
 // TODO: move this macro
 Str_view name_print_internal(bool serialize, Name name) {
     if (serialize) {
-        return serialize_name( name);
+        return serialize_name(name);
     }
         
     String buf = {0};
-    extend_name( false, &buf, name);
+    extend_name(false, &buf, name);
     return string_to_strv(buf);
 }
 
@@ -161,7 +161,7 @@ void extend_uname(String* buf, Uname name) {
 
 void extend_name(bool is_llvm, String* buf, Name name) {
     if (is_llvm) {
-        extend_name_llvm( buf, name);
+        extend_name_llvm(buf, name);
         return;
     }
     extend_name_msg(buf, name);

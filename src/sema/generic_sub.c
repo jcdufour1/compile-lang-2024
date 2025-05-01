@@ -28,13 +28,18 @@ void generic_sub_lang_type_regular(
     Name temp = {0};
 
     unwrap(name_from_uname(&temp, lang_type.atom.str));
+    log(LOG_DEBUG, TAST_FMT"\n", name_print(gen_param));
+    log(LOG_DEBUG, TAST_FMT"\n", name_print(temp));
     if (name_is_equal(gen_param, temp)) {
+        log(LOG_DEBUG, TAST_FMT"\n", name_print(gen_param));
+        log(LOG_DEBUG, TAST_FMT"\n", name_print(temp));
         *new_lang_type = ulang_type_clone(gen_arg, lang_type.atom.str.scope_id);
 
         int16_t base_depth = lang_type.atom.pointer_depth;
         int16_t gen_prev_depth = ulang_type_get_pointer_depth(*new_lang_type);
         ulang_type_set_pointer_depth(new_lang_type, gen_prev_depth + base_depth);
-        //log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, *new_lang_type));
+        log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
+        log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, *new_lang_type));
         return;
     }
 
@@ -46,6 +51,7 @@ void generic_sub_lang_type_regular(
     }
     log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
     *new_lang_type = ulang_type_regular_const_wrap(lang_type);
+    //log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(*new_lang_type)));
 }
 
 void generic_sub_lang_type(
@@ -106,6 +112,7 @@ void generic_sub_def(Uast_def* def, Name gen_param, Ulang_type gen_arg) {
         case UAST_SUM_DEF:
             todo();
         case UAST_PRIMITIVE_DEF:
+            log(LOG_DEBUG, TAST_FMT, uast_def_print(def));
             todo();
         case UAST_FUNCTION_DECL:
             todo();
@@ -195,6 +202,7 @@ void generic_sub_assignment(Uast_assignment* assign, Name gen_param, Ulang_type 
 }
 
 void generic_sub_block(Uast_block* block, Name gen_param, Ulang_type gen_arg) {
+    assert(gen_param.scope_id > 0);
     Usymbol_iter iter = usym_tbl_iter_new(gen_param.scope_id);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {

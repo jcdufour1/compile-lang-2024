@@ -72,26 +72,6 @@ static Tast_expr* auto_deref_to_0(Tast_expr* expr) {
     return expr;
 }
 
-const Uast_function_decl* get_parent_function_decl_const(void) {
-    Uast_def* def = NULL;
-    unwrap(env.name_parent_function.base.count > 0 && "no parent function here");
-    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(env.name_parent_function.base));
-    unwrap(usymbol_lookup(&def, env.name_parent_function));
-    switch (def->type) {
-        case UAST_FUNCTION_DECL:
-            return uast_function_decl_unwrap(def);
-        case UAST_FUNCTION_DEF:
-            return uast_function_def_unwrap(def)->decl;
-        default:
-            unreachable(TAST_FMT, uast_def_print(def));
-    }
-    unreachable("");
-}
-
-Ulang_type get_parent_function_return_type(void) {
-    return get_parent_function_decl_const()->return_type;
-}
-
 static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_is_zero, bool implicit_pointer_depth);
 
 static bool can_be_implicitly_converted_lang_type_atom(Lang_type_atom dest, Lang_type_atom src, bool src_is_zero, bool implicit_pointer_depth) {
@@ -277,14 +257,12 @@ static void msg_invalid_yield_type_internal(const char* file, int line, Pos pos,
 }
 
 static void msg_invalid_return_type_internal(const char* file, int line, Pos pos, const Tast_expr* child, bool is_auto_inserted) {
-    Ulang_type rtn_type = get_parent_function_decl_const()->return_type;
-
     if (is_auto_inserted) {
         msg_internal(
             file, line,
             LOG_ERROR, EXPECT_FAIL_MISSING_RETURN, env.file_path_to_text, pos,
             "no return statement in function that returns `"LANG_TYPE_FMT"`\n",
-            ulang_type_print(LANG_TYPE_MODE_MSG, rtn_type)
+            ulang_type_print(LANG_TYPE_MODE_MSG, env.parent_fn_rtn_type)
         );
     } else {
         msg_internal(
@@ -292,15 +270,15 @@ static void msg_invalid_return_type_internal(const char* file, int line, Pos pos
             LOG_ERROR, EXPECT_FAIL_MISMATCHED_RETURN_TYPE, env.file_path_to_text, pos,
             "returning `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
             lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(child)), 
-            ulang_type_print(LANG_TYPE_MODE_MSG, rtn_type)
+            ulang_type_print(LANG_TYPE_MODE_MSG, env.parent_fn_rtn_type)
         );
     }
 
     msg_internal(
         file, line,
-        LOG_NOTE, EXPECT_FAIL_NONE, env.file_path_to_text, ulang_type_get_pos(rtn_type),
+        LOG_NOTE, EXPECT_FAIL_NONE, env.file_path_to_text, ulang_type_get_pos(env.parent_fn_rtn_type),
         "function return type `"LANG_TYPE_FMT"` defined here\n",
-        ulang_type_print(LANG_TYPE_MODE_MSG, rtn_type)
+        ulang_type_print(LANG_TYPE_MODE_MSG, env.parent_fn_rtn_type)
     );
 }
 
@@ -1463,7 +1441,7 @@ bool try_set_function_call_types_sum_case(Tast_sum_case** new_case, Uast_expr_ve
 static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Ulang_type_fn lang_type, Pos pos) {
     Name name = serialize_ulang_type(env.curr_mod_path, ulang_type_fn_const_wrap(lang_type));
     Uast_def* fun_decl_ = NULL;
-    if (usym_tbl_lookup(&fun_decl_, &vec_at(&env.symbol_tables, 0)->usymbol_table, name)) {
+    if (usym_tbl_lookup(&fun_decl_, name)) {
         return uast_function_decl_unwrap(fun_decl_);
     }
 
@@ -1485,7 +1463,7 @@ static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Ulang_type_fn l
         *lang_type.return_type,
         name
     );
-    usym_tbl_add(&vec_at(&env.symbol_tables, 0)->usymbol_table, uast_function_decl_wrap(fun_decl));
+    usym_tbl_add(uast_function_decl_wrap(fun_decl));
     return fun_decl;
 }
 
@@ -2124,6 +2102,8 @@ bool try_set_variable_def_types(
         return false;
     }
 
+    log(LOG_DEBUG, TAST_FMT"\n", name_print(uast->name));
+    log(LOG_DEBUG, "%p\n", (void*)uast);
     Lang_type new_lang_type = {0};
     if (!try_lang_type_from_ulang_type(&new_lang_type, uast->lang_type, uast->pos)) {
         log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, new_lang_type));
@@ -2186,10 +2166,8 @@ bool try_set_return_types(Tast_return** new_tast, Uast_return* rtn) {
     PARENT_OF old_parent_of = env.parent_of;
     env.parent_of = PARENT_OF_RETURN;
 
-    Ulang_type fun_rtn_type = get_parent_function_return_type();
-
     Tast_expr* new_child = NULL;
-    switch (check_generic_assignment(&new_child, lang_type_from_ulang_type(fun_rtn_type), rtn->child, rtn->pos)) {
+    switch (check_generic_assignment(&new_child, lang_type_from_ulang_type(env.parent_fn_rtn_type), rtn->child, rtn->pos)) {
         case CHECK_ASSIGN_OK:
             break;
         case CHECK_ASSIGN_INVALID:
@@ -2731,7 +2709,6 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
     if (block->scope_id == SCOPE_TOP_LEVEL) {
         Uast_def* main_fn_ = NULL;
         if (!usymbol_lookup(&main_fn_, name_new((Str_view) {0}, str_view_from_cstr("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
-            todo();
             log(LOG_WARNING, "no main function\n");
             goto after_main;
         }

@@ -45,19 +45,27 @@ static inline bool ulang_type_is_equal(Ulang_type a, Ulang_type b) {
 
 // TODO: move this function
 static inline bool name_is_equal(Name a, Name b) {
+    log(LOG_DEBUG, TAST_FMT"" TAST_FMT"\n", name_print(a), name_print(b));
     if (!str_view_is_equal(a.mod_path, b.mod_path) || !str_view_is_equal(a.base, b.base)) {
+        log(LOG_DEBUG, "%s\n", bool_print(str_view_is_equal(a.mod_path, b.mod_path)));
+        log(LOG_DEBUG, TAST_FMT" "TAST_FMT"\n", name_print(a), name_print(b));
+        log(LOG_DEBUG, TAST_FMT" "TAST_FMT"\n", str_view_print(a.base), str_view_print(b.base));
+        log(LOG_DEBUG, "name_is_equal return 1\n");
         return false;
     }
 
     if (a.gen_args.info.count != b.gen_args.info.count) {
+        log(LOG_DEBUG, "name_is_equal return 2\n");
         return false;
     }
     for (size_t idx = 0; idx < a.gen_args.info.count; idx++) {
         if (!ulang_type_is_equal(vec_at(&a.gen_args, idx), vec_at(&b.gen_args, idx))) {
+            log(LOG_DEBUG, "name_is_equal return 3\n");
             return false;
         }
     }
 
+    log(LOG_DEBUG, "name_is_equal return 4\n");
     return true;
 }
 

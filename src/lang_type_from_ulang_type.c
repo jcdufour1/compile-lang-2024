@@ -40,7 +40,7 @@ bool name_from_uname(Name* new_name, Uname name) {
     if (name.mod_alias.base.count < 1) {
         Uast_def* result = NULL;
         if (usymbol_lookup(&result, name_new((Str_view) {0} /* TODO */, name.base, name.gen_args, 0))) {
-            *new_name = name_new((Str_view) {0} /* TODO */, name.base, name.gen_args, 0);
+            *new_name = name_new((Str_view) {0} /* TODO */, name.base, name.gen_args, name.scope_id);
             return true;
         }
         *new_name = name_new(name.mod_alias.mod_path, name.base, name.gen_args, name.scope_id);

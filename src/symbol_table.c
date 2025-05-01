@@ -7,6 +7,7 @@
 #include <llvm_utils.h>
 #include <tast_serialize.h>
 #include <lang_type_serialize.h>
+#include <symbol_log.h>
 
 #define SYM_TBL_DEFAULT_CAPACITY 1
 #define SYM_TBL_MAX_DENSITY (0.6f)
@@ -25,7 +26,7 @@ static size_t sym_tbl_calculate_idx(Str_view key, size_t capacity) {
 
 typedef bool(*Symbol_add_fn)(void* tast_to_add);
 
-typedef void*(*Get_tbl_from_collection_fn)(Symbol_collection* collection);
+typedef Generic_symbol_table*(*Get_tbl_from_collection_fn)(Symbol_collection* collection);
 
 bool generic_symbol_lookup(void** result, Str_view key, Get_tbl_from_collection_fn get_tbl_from_collection_fn, Scope_id scope_id);
 
@@ -53,12 +54,7 @@ bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts,
     return true;
 }
 
-static void generic_tbl_cpy(
-    void* dest,
-    const void* src,
-    size_t capacity,
-    size_t count_tasts_to_cpy
-) {
+static void generic_tbl_cpy(void* dest, const void* src, size_t capacity, size_t count_tasts_to_cpy) {
     for (size_t bucket_src = 0; bucket_src < count_tasts_to_cpy; bucket_src++) {
         // TODO: do not use Usymbol_table_tast verbatim here
         if (((Usymbol_table_tast*)src)[bucket_src].status == SYM_TBL_OCCUPIED) {
@@ -285,8 +281,12 @@ bool usymbol_add(Uast_def* item) {
     );
 }
 
-bool sym_tbl_lookup(Tast_def** result, const Symbol_table* sym_table, Name key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, serialize_name_symbol_table(key));
+bool sym_tbl_lookup(Tast_def** result, Name key) {
+    return generic_tbl_lookup(
+        (void**)result,
+        (Generic_symbol_table*)&vec_at(&env.symbol_tables, key.scope_id)->symbol_table,
+        serialize_name_symbol_table(key)
+    );
 }
 
 //
@@ -294,37 +294,46 @@ bool sym_tbl_lookup(Tast_def** result, const Symbol_table* sym_table, Name key) 
 //
 
 // returns false if symbol has already been added to the table
-bool usym_tbl_add(Usymbol_table* sym_table, Uast_def* item) {
-    return generic_tbl_add((Generic_symbol_table*)sym_table, serialize_name_symbol_table(uast_def_get_name(item)), item);
+bool usym_tbl_add(Uast_def* item) {
+    Name name = uast_def_get_name(item);
+    return generic_tbl_add(
+        (Generic_symbol_table*)&vec_at(&env.symbol_tables, name.scope_id)->usymbol_table,
+        serialize_name_symbol_table(name),
+        item
+    );
 }
 
-void usym_tbl_update(Usymbol_table* sym_table, Uast_def* item) {
-    generic_tbl_update((Generic_symbol_table*)sym_table, serialize_name_symbol_table(uast_def_get_name(item)), item);
+void usym_tbl_update(Uast_def* item) {
+    (void) item;
+    todo();
+    //generic_tbl_update((Generic_symbol_table*)sym_table, serialize_name_symbol_table(uast_def_get_name(item)), item);
 }
 
-bool usym_tbl_lookup(Uast_def** result, const Usymbol_table* sym_table, Name key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, serialize_name_symbol_table(key));
+bool usym_tbl_lookup(Uast_def** result, Name key) {
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&vec_at(&env.symbol_tables, key.scope_id)->usymbol_table, serialize_name_symbol_table(key));
 }
 
 bool usymbol_lookup(Uast_def** result, Name key) {
     if (key.mod_path.count < 1) {
-        if (usym_tbl_lookup(result, &env.primitives, key)) {
+        Name prim_key = key;
+        prim_key.scope_id = 0;
+        if (usym_tbl_lookup(result, prim_key)) {
             return true;
         }
-        if (lang_type_atom_is_signed(lang_type_atom_new(key, 0))) {
-            int32_t bit_width = str_view_to_int64_t(POS_BUILTIN, str_view_slice(key.base, 1, key.base.count - 1));
+        if (lang_type_atom_is_signed(lang_type_atom_new(prim_key, 0))) {
+            int32_t bit_width = str_view_to_int64_t(POS_BUILTIN, str_view_slice(prim_key.base, 1, prim_key.base.count - 1));
             Uast_primitive_def* def = uast_primitive_def_new(
                 POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new((Pos) {0}, bit_width, 0)))
             );
-            unwrap(usym_tbl_add(&env.primitives, uast_primitive_def_wrap(def)));
+            unwrap(usym_tbl_add(uast_primitive_def_wrap(def)));
             *result = uast_primitive_def_wrap(def);
             return true;
-        } else if (lang_type_atom_is_unsigned(lang_type_atom_new(key, 0))) {
-            int32_t bit_width = str_view_to_int64_t(POS_BUILTIN, str_view_slice(key.base, 1, key.base.count - 1));
+        } else if (lang_type_atom_is_unsigned(lang_type_atom_new(prim_key, 0))) {
+            int32_t bit_width = str_view_to_int64_t(POS_BUILTIN, str_view_slice(prim_key.base, 1, prim_key.base.count - 1));
             Uast_primitive_def* def = uast_primitive_def_new(
                 POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new((Pos) {0}, bit_width, 0)))
             );
-            unwrap(usym_tbl_add(&env.primitives, uast_primitive_def_wrap(def)));
+            unwrap(usym_tbl_add(uast_primitive_def_wrap(def)));
             *result = uast_primitive_def_wrap(def);
             return true;
         }
@@ -343,8 +352,9 @@ bool usymbol_lookup(Uast_def** result, Name key) {
 //
 
 // returns false if symbol has already been added to the table
-bool all_tbl_add(Alloca_table* sym_table, Llvm* item) {
-    return generic_tbl_add((Generic_symbol_table*)sym_table, serialize_name_symbol_table(llvm_tast_get_name(item)), item);
+bool all_tbl_add(Llvm* item) {
+    Name name = llvm_tast_get_name(item);
+    return generic_tbl_add((Generic_symbol_table*)&vec_at(&env.symbol_tables, name.scope_id)->alloca_table, serialize_name_symbol_table(name), item);
 }
 
 void* all_get_tbl_from_collection(Symbol_collection* collection) {
@@ -361,8 +371,9 @@ bool alloca_add(Llvm* item) {
     );
 }
 
-void all_tbl_update(Alloca_table* sym_table, Llvm* item) {
-    generic_tbl_update((Generic_symbol_table*)sym_table, serialize_name_symbol_table(llvm_tast_get_name(item)), item);
+void all_tbl_update(Llvm* item) {
+    Name name = llvm_tast_get_name(item);
+    generic_tbl_update((Generic_symbol_table*)&vec_at(&env.symbol_tables, name.scope_id)->usymbol_table, serialize_name_symbol_table(name), item);
 }
 
 void usymbol_update(Uast_def* item) {
@@ -377,11 +388,12 @@ void usymbol_update(Uast_def* item) {
 
 void alloca_update(Llvm* item) {
     (void) item;
+    todo();
     //generic_symbol_update(serialize_name_symbol_table(llvm_tast_get_name(item)), item, (Get_tbl_from_collection_fn)all_get_tbl_from_collection);
 }
 
-bool all_tbl_lookup(Llvm** result, const Alloca_table* sym_table, Str_view key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, key);
+bool all_tbl_lookup(Llvm** result, Name key) {
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&vec_at(&env.symbol_tables, key.scope_id)->usymbol_table, serialize_name_symbol_table(key));
 }
 
 bool alloca_lookup(Llvm** result, Name key) {
@@ -418,7 +430,6 @@ Scope_id scope_tbl_lookup(Scope_id key) {
     Scope_id* temp = &parent;
     generic_tbl_lookup((void**)&temp, (Generic_symbol_table*)&env.scope_id_to_parent, str_view_from_cstr(buf));
     parent = *temp;
-    log(LOG_DEBUG, "scope_tbl_lookup: %zu %zu\n", key, parent);
     return parent;
 }
 

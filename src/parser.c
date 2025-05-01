@@ -54,7 +54,7 @@ static PARSE_STATUS parse_variable_decl(
 );
 static PARSE_EXPR_STATUS parse_condition(Uast_condition**, Tk_view* tokens, Scope_id scope_id);
 static PARSE_STATUS parse_generics_args(Ulang_type_vec* args, Tk_view* tokens);
-static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_view* tokens);
+static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_view* tokens, Scope_id block_scope);
 
 static bool try_consume(Token* result, Tk_view* tokens, TOKEN_TYPE type) {
     Token temp;
@@ -1080,7 +1080,7 @@ static PARSE_STATUS parse_function_decl_common(
 
     Uast_generic_param_vec gen_params = {0};
     if (tk_view_front(*tokens).type ==  TOKEN_OPEN_GENERIC) {
-        if (PARSE_OK != parse_generics_params(&gen_params, tokens)) {
+        if (PARSE_OK != parse_generics_params(&gen_params, tokens, block_scope)) {
             return PARSE_ERROR;
         }
     }
@@ -1136,7 +1136,7 @@ static PARSE_STATUS parse_function_def(Uast_function_def** fun_def, Tk_view* tok
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_view* tokens) {
+static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_view* tokens, Scope_id block_scope) {
     memset(params, 0, sizeof(*params));
     unwrap(try_consume(NULL, tokens, TOKEN_OPEN_GENERIC));
 
@@ -1150,7 +1150,7 @@ static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_vie
             symbol.pos,
             uast_symbol_new(
                 symbol.pos,
-                name_new(env.curr_mod_path, symbol.text, (Ulang_type_vec) {0}, 0 /* TODO */)
+                name_new(env.curr_mod_path, symbol.text, (Ulang_type_vec) {0}, block_scope)
             )
         );
         vec_append(&a_main, params, param);
@@ -1200,7 +1200,8 @@ static PARSE_STATUS parse_struct_base_def(
     log(LOG_DEBUG, "THING: "TAST_FMT"\n", name_print(name));
 
     if (tk_view_front(*tokens).type == TOKEN_OPEN_GENERIC) {
-        parse_generics_params(&base->generics, tokens);
+        todo();
+        //parse_generics_params(&base->generics, tokens, );
     }
 
     if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
