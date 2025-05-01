@@ -42,8 +42,11 @@ static void llvm_extend_name(String* output, Name name) {
     Llvm* result = NULL;
     if (alloca_lookup(&result, name) && is_extern_c(result)) {
         memset(&name.mod_path, 0, sizeof(name.mod_path));
+        name.scope_id = SCOPE_BUILTIN;
         assert(name.gen_args.info.count < 1 && "extern c generic function should not be allowed");
-    } else if (name.mod_path.count < 1 && !str_view_cstr_is_equal(name.base, "main")) {
+    } else if (str_view_cstr_is_equal(name.base, "main")) {
+        name.scope_id = SCOPE_BUILTIN;
+    } else if (name.mod_path.count < 1) {
         name.mod_path = str_view_from_cstr("PREFIX"); // TODO: make variable or similar for this
     }
 
@@ -975,7 +978,6 @@ static void emit_def(String* struct_defs, String* output, String* literals, cons
 static void emit_block(String* struct_defs, String* output, String* literals, const Llvm_block* block) {
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         const Llvm* stmt = vec_at(&block->children, idx);
-
         switch (stmt->type) {
             case LLVM_EXPR:
                 emit_expr(output, literals, llvm_expr_const_unwrap(stmt));
@@ -1014,12 +1016,11 @@ static void emit_block(String* struct_defs, String* output, String* literals, co
         }
     }
 
-    todo();
-    //Alloca_iter iter = all_tbl_iter_new(vec_top(&env.ancesters)->alloca_table);
-    //Llvm* curr = NULL;
-    //while (all_tbl_iter_next(&curr, &iter)) {
-    //    emit_sometimes(struct_defs, output, literals, curr);
-    //}
+    Alloca_iter iter = all_tbl_iter_new(block->scope_id);
+    Llvm* curr = NULL;
+    while (all_tbl_iter_next(&curr, &iter)) {
+        emit_sometimes(struct_defs, output, literals, curr);
+    }
 }
 
 // this is only intended for alloca_table, etc.

@@ -197,6 +197,10 @@ bool generic_symbol_lookup(
     Get_tbl_from_collection_fn get_tbl_from_collection_fn,
     Scope_id scope_id
 ) {
+    if (scope_id == SIZE_MAX /* TODO: use different name for this constant? */) {
+        return false;
+    }
+
     Scope_id curr_scope = scope_id;
     while (true) {
         void* tbl = get_tbl_from_collection_fn(vec_at(&env.symbol_tables, curr_scope));
@@ -217,8 +221,13 @@ bool generic_symbol_lookup(
 //
 
 // returns false if symbol has already been added to the table
-bool sym_tbl_add(Symbol_table* sym_table, Tast_def* item) {
-    return generic_tbl_add((Generic_symbol_table*)sym_table, serialize_name_symbol_table(tast_def_get_name(item)), item);
+bool sym_tbl_add(Tast_def* item) {
+    Scope_id scope_id = tast_def_get_name(item).scope_id;
+    return generic_tbl_add(
+        (Generic_symbol_table*)&vec_at(&env.symbol_tables, scope_id)->symbol_table,
+        serialize_name_symbol_table(tast_def_get_name(item)),
+        item
+    );
 }
 
 void* sym_get_tbl_from_collection(Symbol_collection* collection) {
@@ -235,8 +244,8 @@ bool symbol_add(Tast_def* item) {
     );
 }
 
-void sym_tbl_update(Symbol_table* sym_table, Tast_def* item) {
-    generic_tbl_update((Generic_symbol_table*)sym_table, serialize_name_symbol_table(tast_def_get_name(item)), item);
+void sym_tbl_update(Scope_id scope_id, Tast_def* item) {
+    generic_tbl_update((Generic_symbol_table*)&vec_at(&env.symbol_tables, scope_id)->symbol_table, serialize_name_symbol_table(tast_def_get_name(item)), item);
 }
 
 void symbol_update(Tast_def* item) {

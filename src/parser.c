@@ -190,8 +190,8 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
 finish:
     *mod_alias = uast_mod_alias_new(
         alias_tk.pos,
-        name_new(env.curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, 0),
-        name_new(env.curr_mod_path, mod_path, (Ulang_type_vec) {0}, 0)
+        name_new(env.curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
+        name_new(env.curr_mod_path, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
     );
     unwrap(usymbol_add(uast_mod_alias_wrap(*mod_alias)));
     return true;
@@ -1118,8 +1118,8 @@ static PARSE_STATUS parse_function_decl_common(
 static PARSE_STATUS parse_function_def(Uast_function_def** fun_def, Tk_view* tokens) {
     unwrap(try_consume(NULL, tokens, TOKEN_FN));
 
-    Scope_id fn_scope = 0;
-    Scope_id block_scope = symbol_collection_new(0);
+    Scope_id fn_scope = SCOPE_TOP_LEVEL;
+    Scope_id block_scope = symbol_collection_new(fn_scope);
 
     Uast_function_decl* fun_decl = NULL;
     if (PARSE_OK != parse_function_decl_common(&fun_decl, tokens, fn_scope, block_scope)) {
@@ -1636,7 +1636,7 @@ static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens) {
     //Scope_id block_scope = symbol_collection_new();
     //
     if (starts_with_variable_type_decl(*tokens, false)) {
-    //    todo();
+        todo();
     //    //PARSE_STATUS status = PARSE_OK;
     //    //Uast_block* outer = uast_block_new(for_token.pos, (Uast_stmt_vec) {0}, (Symbol_collection) {0}, for_token.pos, scope_id_new());
     //    //Uast_variable_def* var_def = NULL;
@@ -1724,7 +1724,7 @@ static PARSE_STATUS parse_function_decl(Uast_function_decl** fun_decl, Tk_view* 
         msg_parser_expected(env.file_path_to_text, tk_view_front(*tokens), "in function decl", TOKEN_FN);
         goto error;
     }
-    if (PARSE_OK != parse_function_decl_common(fun_decl, tokens, 0, SIZE_MAX /* TODO */)) {
+    if (PARSE_OK != parse_function_decl_common(fun_decl, tokens, SCOPE_TOP_LEVEL, SIZE_MAX /* TODO */)) {
         goto error;
     }
     try_consume(NULL, tokens, TOKEN_SEMICOLON);
@@ -3067,7 +3067,7 @@ bool parse_file(Uast_block** block, Str_view file_path, bool do_new_sym_coll) {
         goto error;
     }
     Tk_view token_view = {.tokens = tokens.buf, .count = tokens.info.count};
-    if (PARSE_OK != parse_block(block, &token_view, true, symbol_collection_new(0))) {
+    if (PARSE_OK != parse_block(block, &token_view, true, symbol_collection_new(SCOPE_BUILTIN))) {
         status = false;
         goto error;
     }

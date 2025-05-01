@@ -53,9 +53,9 @@ bool sym_tbl_lookup_internal(Symbol_table_tast** result, const Symbol_table* sym
 bool sym_tbl_lookup(Tast_def** result, const Symbol_table* sym_table, Name key);
 
 // returns false if symbol has already been added to the table
-bool sym_tbl_add(Symbol_table* sym_table, Tast_def* tast_of_symbol);
+bool sym_tbl_add(Tast_def* tast_of_symbol);
 
-void sym_tbl_update(Symbol_table* sym_table, Tast_def* tast_of_symbol);
+void sym_tbl_update(Scope_id scope_id, Tast_def* tast_of_symbol);
 
 bool symbol_lookup(Tast_def** result, Name key);
 
@@ -143,6 +143,10 @@ bool scope_tbl_lookup(Scope_id* result, Scope_id key);
 bool scope_tbl_add(Scope_id key, Scope_id next);
 
 Scope_id symbol_collection_new(Scope_id parent);
+
+#define SCOPE_BUILTIN 0
+#define SCOPE_TOP_LEVEL 1
+#define SCOPE_NOT SIZE_MAX
 
 #endif // SYMBOL_TABLE_H
 

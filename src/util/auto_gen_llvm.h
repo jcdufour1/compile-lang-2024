@@ -120,7 +120,6 @@ static Llvm_type llvm_gen_block(void) {
     Llvm_type block = {.name = llvm_name_new("llvm", "block", false)};
 
     append_member(&block.members, "Llvm_vec", "children");
-    append_member(&block.members, "Symbol_collection", "symbol_collection");
     append_member(&block.members, "Pos", "pos_end");
     append_member(&block.members, "Scope_id", "scope_id");
 

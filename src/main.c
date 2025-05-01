@@ -68,7 +68,7 @@ void do_passes(const Parameters* params) {
     memset(&env, 0, sizeof(env));
 
     // allocate scope 0
-    symbol_collection_new(0);
+    symbol_collection_new(SCOPE_BUILTIN);
 
     add_primitives();
 
@@ -77,6 +77,7 @@ void do_passes(const Parameters* params) {
         fail();
     }
     assert(error_count < 1);
+    log(LOG_DEBUG, "\nafter parsing checking:"TAST_FMT, uast_block_print(untyped));
 
     arena_reset(&print_arena);
     Tast_block* typed = NULL;
@@ -91,10 +92,10 @@ void do_passes(const Parameters* params) {
     unwrap(typed);
     arena_reset(&print_arena);
     log(LOG_NOTE, "arena usage: %zu\n", arena_get_total_usage(&a_main));
-    log(LOG_DEBUG, "\n"TAST_FMT, tast_block_print(typed));
+    log(LOG_DEBUG, "\nafter type checking:"TAST_FMT, tast_block_print(typed));
 
     Llvm_block* llvm_root = add_load_and_store(typed);
-    log(LOG_DEBUG, "\n"TAST_FMT, llvm_block_print(llvm_root));
+    log(LOG_DEBUG, "\nafter add_load_and_store: "TAST_FMT, llvm_block_print(llvm_root));
     if (error_count > 0) {
         fail();
     }

@@ -66,7 +66,7 @@ static Lang_type_struct rm_tuple_lang_type_tuple(Lang_type_tuple lang_type, Pos 
     // todo: remove untyped things here
     Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
     // TODO: consider collisions with generated structs and user defined structs
-    sym_tbl_add(&vec_at(&env.symbol_tables, 0)->symbol_table, tast_struct_def_wrap(struct_def));
+    sym_tbl_add(tast_struct_def_wrap(struct_def));
     return lang_type_struct_new(lang_type_pos, lang_type_atom_new(base.name, 0));
 }
 
@@ -79,7 +79,7 @@ static Tast_raw_union_def* get_raw_union_def_from_sum_def(Tast_sum_def* sum_def)
     if (symbol_lookup(&cached_def,  union_def->base.name)) {
         return tast_raw_union_def_unwrap(cached_def);
     }
-    sym_tbl_add(&vec_at(&env.symbol_tables, 0)->symbol_table, tast_raw_union_def_wrap(union_def));
+    sym_tbl_add(tast_raw_union_def_wrap(union_def));
     load_raw_union_def(union_def);
     return union_def;
 }
@@ -122,10 +122,10 @@ static Lang_type rm_tuple_lang_type_sum(Lang_type_sum lang_type, Pos lang_type_p
     };
     
     Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
-    unwrap(sym_tbl_add(&vec_at(&env.symbol_tables, 0)->symbol_table, tast_struct_def_wrap(struct_def)));
+    unwrap(sym_tbl_add(tast_struct_def_wrap(struct_def)));
     struct_def->base.name = serialize_tast_struct_def(struct_def);
     // TODO: consider collisions with generated structs and user defined structs
-    sym_tbl_add(&vec_at(&env.symbol_tables, 0)->symbol_table, tast_struct_def_wrap(struct_def));
+    sym_tbl_add(tast_struct_def_wrap(struct_def));
     Tast_def* dummy = NULL;
     unwrap(sym_tbl_lookup(&dummy, &vec_at(&env.symbol_tables, 0)->symbol_table, struct_def->base.name));
 
@@ -157,7 +157,7 @@ static Lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
                 tast_raw_union_def_unwrap(lang_type_def_)->base
             );
             item_type_def->base.name = serialize_tast_raw_union_def(item_type_def);
-            sym_tbl_add(&vec_at(&env.symbol_tables, 0)->symbol_table, tast_raw_union_def_wrap(item_type_def));
+            sym_tbl_add(tast_raw_union_def_wrap(item_type_def));
 
             load_raw_union_def(item_type_def);
             return tast_raw_union_def_get_lang_type(item_type_def);
@@ -297,7 +297,6 @@ static void do_function_def_alloca_param(Llvm_function_params* new_params, Llvm_
 }
 
 static Llvm_function_params* do_function_def_alloca(
-     
     Lang_type* new_rtn_type,
     Lang_type rtn_type,
     Llvm_block* new_block,
@@ -347,23 +346,11 @@ static Name load_ptr_stmt(Llvm_block* new_block, Tast_stmt* old_stmt);
 
 static Name load_tast(Llvm_block* new_block, Tast* old_tast);
 
-static Name load_operator(
-     
-    Llvm_block* new_block,
-    Tast_operator* old_oper
-);
+static Name load_operator(Llvm_block* new_block, Tast_operator* old_oper);
 
-static Name load_variable_def(
-     
-    Llvm_block* new_block,
-    Tast_variable_def* old_var_def
-);
+static Name load_variable_def(Llvm_block* new_block, Tast_variable_def* old_var_def);
 
-static Name load_if_else_chain(
-     
-    Llvm_block* new_block,
-    Tast_if_else_chain* old_if_else
-);
+static Name load_if_else_chain(Llvm_block* new_block, Tast_if_else_chain* old_if_else);
 
 static void add_label(Llvm_block* block, Name label_name, Pos pos, bool defer_add_sym) {
     Llvm_label* label = llvm_label_new(pos, label_name);
@@ -414,10 +401,7 @@ static Tast_assignment* for_loop_cond_var_assign_new(Name sym_name, Pos pos) {
     );
 }
 
-static Name load_function_call(
-    Llvm_block* new_block,
-    Tast_function_call* old_call
-) {
+static Name load_function_call(Llvm_block* new_block, Tast_function_call* old_call) {
     bool rtn_is_struct = is_struct_like(old_call->lang_type.type);
 
     Name_vec new_args = {0};
@@ -427,7 +411,7 @@ static Name load_function_call(
     if (rtn_is_struct) {
         def_name = name_new(env.curr_mod_path, util_literal_name_new_prefix("result_fun_call"), (Ulang_type_vec) {0}, 0);
         Tast_variable_def* def = tast_variable_def_new(old_call->pos, old_call->lang_type, false, def_name);
-        unwrap(sym_tbl_add(&vec_at(&env.symbol_tables, 0)->symbol_table, tast_variable_def_wrap(def)));
+        unwrap(sym_tbl_add(tast_variable_def_wrap(def)));
         
         vec_append(&a_main, &new_args, def_name);
         load_variable_def(new_block, def);
@@ -470,10 +454,7 @@ static Name load_function_call(
 }
 
 // this function is needed for situations such as switching directly on sum
-static Name load_ptr_function_call(
-    Llvm_block* new_block,
-    Tast_function_call* old_call
-) {
+static Name load_ptr_function_call(Llvm_block* new_block, Tast_function_call* old_call) {
     Tast_variable_def* new_var = tast_variable_def_new(
         old_call->pos,
         old_call->lang_type,
@@ -532,10 +513,7 @@ static Tast_variable_def* load_struct_literal_internal(
     return new_var;
 }
 
-static Name load_ptr_struct_literal(
-    Llvm_block* new_block,
-    Tast_struct_literal* old_lit
-) {
+static Name load_ptr_struct_literal(Llvm_block* new_block, Tast_struct_literal* old_lit) {
     Tast_variable_def* new_var = load_struct_literal_internal(new_block, old_lit);
     return load_ptr_symbol(new_block, tast_symbol_new_from_variable_def(new_var->pos, new_var));
 }
@@ -545,9 +523,7 @@ static Name load_struct_literal(Llvm_block* new_block, Tast_struct_literal* old_
     return load_symbol(new_block, tast_symbol_new_from_variable_def(new_var->pos, new_var));
 }
 
-static Name load_string(
-    Tast_string* old_lit
-) {
+static Name load_string(Tast_string* old_lit) {
     Llvm_string* string = llvm_string_new(
         old_lit->pos,
         old_lit->data,
@@ -559,22 +535,18 @@ static Name load_string(
         string->data
     );
     log(LOG_DEBUG, TAST_FMT, tast_string_def_print(new_def));
-    unwrap(sym_tbl_add(&vec_at(&env.symbol_tables, 0)->symbol_table, tast_literal_def_wrap(tast_string_def_wrap(new_def))));
+    unwrap(sym_tbl_add(tast_literal_def_wrap(tast_string_def_wrap(new_def))));
     unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_string_wrap(string)))));
     return string->name;
 }
 
-static Name load_void(
-    Pos pos
-) {
+static Name load_void(Pos pos) {
     Llvm_void* new_void = llvm_void_new(pos, name_new((Str_view) {0}, util_literal_name_new(), (Ulang_type_vec) {0}, 0));
     unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_void_wrap(new_void)))));
     return new_void->name;
 }
 
-static Name load_enum_lit(
-    Tast_enum_lit* old_lit
-) {
+static Name load_enum_lit(Tast_enum_lit* old_lit) {
     Llvm_number* enum_lit = llvm_number_new(
         old_lit->pos,
         old_lit->data,
@@ -585,9 +557,7 @@ static Name load_enum_lit(
     return enum_lit->name;
 }
 
-static Name load_number(
-    Tast_number* old_lit
-) {
+static Name load_number(Tast_number* old_lit) {
     Llvm_number* number = llvm_number_new(
         old_lit->pos,
         old_lit->data,
@@ -819,7 +789,7 @@ static Name load_binary_short_circuit(Llvm_block* new_block, Tast_binary* old_bi
         false,
         name_new(env.curr_mod_path, util_literal_name_new_prefix("short_cir"), (Ulang_type_vec) {0}, 0)
     );
-    unwrap(sym_tbl_add(&vec_at(&env.symbol_tables, 0)->symbol_table, tast_variable_def_wrap(new_var)));
+    unwrap(sym_tbl_add(tast_variable_def_wrap(new_var)));
 
     Tast_stmt_vec if_true_stmts = {0};
     vec_append(&a_main, &if_true_stmts, tast_expr_wrap(tast_assignment_wrap(tast_assignment_new(
@@ -852,7 +822,6 @@ static Name load_binary_short_circuit(Llvm_block* new_block, Tast_binary* old_bi
         tast_block_new(
             old_bin->pos,
             if_true_stmts,
-            (Symbol_collection) {0},
             old_bin->pos,
             lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)),
             symbol_collection_new(new_block->scope_id)
@@ -877,7 +846,6 @@ static Name load_binary_short_circuit(Llvm_block* new_block, Tast_binary* old_bi
         tast_block_new(
             old_bin->pos,
             if_false_stmts,
-            (Symbol_collection) {0},
             old_bin->pos,
             lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)),
             symbol_collection_new(new_block->scope_id)
@@ -1382,7 +1350,6 @@ static Name load_function_def(Tast_function_def* old_fun_def) {
         llvm_block_new(
             pos,
             (Llvm_vec) {0},
-            old_fun_def->body->symbol_collection,
             old_fun_def->body->pos_end,
             old_fun_def->body->scope_id
         )
@@ -1535,7 +1502,7 @@ static void load_struct_def(
             .members = old_def->base.members, 
             .name = serialize_tast_struct_def(old_def)
         });
-        unwrap(sym_tbl_add(&vec_at(&env.symbol_tables, 0)->symbol_table, tast_struct_def_wrap(new_def)));
+        unwrap(sym_tbl_add(tast_struct_def_wrap(new_def)));
         load_struct_def(new_def);
     }
 }
@@ -1552,7 +1519,6 @@ static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, N
     Llvm_block* new_block = llvm_block_new(
         old_block->pos,
         (Llvm_vec) {0},
-        inner_block->symbol_collection,
         inner_block->pos_end,
         if_statement->body->scope_id
     );
@@ -1670,7 +1636,6 @@ static Llvm_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
     Llvm_block* new_branch_block = llvm_block_new(
         pos,
         (Llvm_vec) {0},
-        old_for->body->symbol_collection,
         old_for->body->pos_end,
         old_for->body->scope_id
     );
@@ -1811,7 +1776,7 @@ static void load_raw_union_def(Tast_raw_union_def* old_def) {
             .members = old_def->base.members, 
             .name = serialize_tast_raw_union_def(old_def)
         });
-        unwrap(sym_tbl_add(&vec_at(&env.symbol_tables, 0)->symbol_table, tast_raw_union_def_wrap(new_def)));
+        unwrap(sym_tbl_add(tast_raw_union_def_wrap(new_def)));
         load_raw_union_def(new_def);
     }
 }
@@ -2039,18 +2004,16 @@ static Llvm_block* load_block(Tast_block* old_block) {
     Llvm_block* new_block = llvm_block_new(
         old_block->pos,
         (Llvm_vec) {0},
-        old_block->symbol_collection,
         old_block->pos_end,
         old_block->scope_id
     );
 
-    todo();
-    //Symbol_iter iter = sym_tbl_iter_new(vec_top(&env.ancesters)->symbol_table);
-    //Tast_def* curr = NULL;
-    //while (sym_tbl_iter_next(&curr, &iter)) {
-    //    log(LOG_DEBUG, TAST_FMT, tast_def_print(curr));
-    //    load_def_sometimes(new_block, curr);
-    //}
+    Symbol_iter iter = sym_tbl_iter_new(old_block->scope_id);
+    Tast_def* curr = NULL;
+    while (sym_tbl_iter_next(&curr, &iter)) {
+        log(LOG_DEBUG, TAST_FMT, tast_def_print(curr));
+        load_def_sometimes(new_block, curr);
+    }
 
     for (size_t idx = 0; idx < old_block->children.info.count; idx++) {
         load_stmt(new_block, vec_at(&old_block->children, idx));

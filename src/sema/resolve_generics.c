@@ -398,9 +398,7 @@ bool resolve_generics_ulang_type(Ulang_type* result, Ulang_type lang_type) {
     unreachable("");
 }
 
-static bool resolve_generics_set_function_def_types(
-    Uast_function_def* def
-) {
+static bool resolve_generics_set_function_def_types(Uast_function_def* def) {
     Name prev_par_fun = env.name_parent_function;
     env.name_parent_function = def->decl->name;
     assert(env.name_parent_function.base.count > 0);
@@ -419,9 +417,10 @@ static bool resolve_generics_set_function_def_types(
     }
 
     Tast_def* result = NULL;
-    unwrap(symbol_lookup(&result,  new_decl->name));
+    unwrap(symbol_lookup(&result, new_decl->name));
     if (true /* TODO */) {
-        sym_tbl_update(&vec_at(&env.symbol_tables, 0)->symbol_table, tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
+        sym_tbl_update(SCOPE_TOP_LEVEL, tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
+        unwrap(symbol_lookup(&result, new_decl->name));
     } else {
         symbol_update(tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
     }
@@ -500,7 +499,7 @@ bool resolve_generics_function_def(
     Ulang_type_vec gen_args, // TODO: remove or refactor name?
     Pos pos_gen_args
 ) {
-    log(LOG_DEBUG, TAST_FMT"\n", name_print(name_new(env.curr_mod_path, def->decl->name.base, gen_args, 0 /* placeholder */)));
+    log(LOG_DEBUG, TAST_FMT"\n", name_print(name_new(env.curr_mod_path, def->decl->name.base, gen_args, SCOPE_TOP_LEVEL)));
 
     bool status = true;
 
@@ -514,6 +513,7 @@ bool resolve_generics_function_def(
         *new_def = def;
 
         if (symbol_lookup(&dummy_2, name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id))) {
+            todo();
             return status;
         }
 
@@ -521,12 +521,14 @@ bool resolve_generics_function_def(
             status = false;
         }
 
+        unwrap(symbol_lookup(&dummy_2, name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id)));
         return status;
     }
 
-    if (symbol_lookup(&dummy_2, name_new(env.curr_mod_path, def->decl->name.base, gen_args, 0 /* placeholder */))) {
+        todo();
+    if (symbol_lookup(&dummy_2, name_new(env.curr_mod_path, def->decl->name.base, gen_args, SCOPE_TOP_LEVEL /* placeholder */))) {
         // varient already instanciated
-        log(LOG_DEBUG, TAST_FMT"\n", name_print(name_new(env.curr_mod_path, def->decl->name.base, gen_args, 0 /* placeholder */)));
+        log(LOG_DEBUG, TAST_FMT"\n", name_print(name_new(env.curr_mod_path, def->decl->name.base, gen_args, SCOPE_TOP_LEVEL /* placeholder */)));
         todo();
     }
 

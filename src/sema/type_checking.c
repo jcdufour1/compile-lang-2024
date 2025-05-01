@@ -23,6 +23,7 @@
 #include <symbol_iter.h>
 #include <expand_lang_def.h>
 #include <ulang_type_serialize.h>
+#include <symbol_table.h>
 
 
 // TODO: expected failure test for too few elems in struct init (non designated args)
@@ -74,7 +75,7 @@ static Tast_expr* auto_deref_to_0(Tast_expr* expr) {
 const Uast_function_decl* get_parent_function_decl_const(void) {
     Uast_def* def = NULL;
     unwrap(env.name_parent_function.base.count > 0 && "no parent function here");
-    unwrap(usymbol_lookup(&def,  env.name_parent_function));
+    unwrap(usymbol_lookup(&def, env.name_parent_function));
     switch (def->type) {
         case UAST_FUNCTION_DECL:
             return uast_function_decl_unwrap(def);
@@ -243,10 +244,10 @@ static void msg_invalid_count_function_args_internal(
 }
 
 #define msg_invalid_function_arg(argument, corres_param) \
-    msg_invalid_function_arg_internal(__FILE__, __LINE__,  argument, corres_param)
+    msg_invalid_function_arg_internal(__FILE__, __LINE__, argument, corres_param)
 
 #define msg_invalid_count_function_args(fun_call, fun_decl, min_args, max_args) \
-    msg_invalid_count_function_args_internal(__FILE__, __LINE__,  fun_call, fun_decl, min_args, max_args)
+    msg_invalid_count_function_args_internal(__FILE__, __LINE__, fun_call, fun_decl, min_args, max_args)
 
 static void msg_invalid_yield_type_internal(const char* file, int line, Pos pos, const Tast_expr* child, bool is_auto_inserted) {
     if (is_auto_inserted) {
@@ -303,10 +304,10 @@ static void msg_invalid_return_type_internal(const char* file, int line, Pos pos
 }
 
 #define msg_invalid_yield_type(pos, child, is_auto_inserted) \
-    msg_invalid_yield_type_internal(__FILE__, __LINE__,  pos, child, is_auto_inserted)
+    msg_invalid_yield_type_internal(__FILE__, __LINE__, pos, child, is_auto_inserted)
 
 #define msg_invalid_return_type(pos, child, is_auto_inserted) \
-    msg_invalid_return_type_internal(__FILE__, __LINE__,  pos, child, is_auto_inserted)
+    msg_invalid_return_type_internal(__FILE__, __LINE__, pos, child, is_auto_inserted)
 
 typedef enum {
     CHECK_ASSIGN_OK,
@@ -459,7 +460,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
     if (!usymbol_lookup(&sym_def, sym_untyped->name)) {
         Name base_name = sym_untyped->name;
         memset(&base_name.gen_args, 0, sizeof(base_name.gen_args));
-        if (!usymbol_lookup(&sym_def,  base_name)) {
+        if (!usymbol_lookup(&sym_def, base_name)) {
             msg_undefined_symbol(env.file_path_to_text, sym_untyped);
             return false;
         }
@@ -477,7 +478,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
         }
         case UAST_FUNCTION_DEF: {
             Uast_function_def* new_def = NULL;
-            if (!resolve_generics_function_def(&new_def,  uast_function_def_unwrap(sym_def), sym_untyped->name.gen_args, sym_untyped->pos)) {
+            if (!resolve_generics_function_def(&new_def, uast_function_def_unwrap(sym_def), sym_untyped->name.gen_args, sym_untyped->pos)) {
                 return false;
             }
             *new_tast = tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
@@ -501,7 +502,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             // fallthrough
         case UAST_VARIABLE_DEF: {
             Lang_type lang_type = {0};
-            if (!uast_def_get_lang_type(&lang_type,  sym_def, sym_untyped->name.gen_args)) {
+            if (!uast_def_get_lang_type(&lang_type, sym_def, sym_untyped->name.gen_args)) {
                 return false;
             }
             Sym_typed_base new_base = {.lang_type = lang_type, sym_untyped->name};
@@ -1093,7 +1094,7 @@ bool try_set_struct_literal_types(
             unreachable(TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, dest_lang_type));
     }
     Uast_def* struct_def_ = NULL;
-    unwrap(usymbol_lookup(&struct_def_,  lang_type_struct_const_unwrap(dest_lang_type).atom.str));
+    unwrap(usymbol_lookup(&struct_def_, lang_type_struct_const_unwrap(dest_lang_type).atom.str));
     Uast_struct_def* struct_def = uast_struct_def_unwrap(struct_def_);
     
     Tast_expr_vec new_membs = {0};
@@ -1131,7 +1132,7 @@ bool try_set_array_literal_types(
     Ulang_type gen_arg_ = {0};
     Lang_type gen_arg = {0};
     if (lang_type_is_slice(&gen_arg_, dest_lang_type)) {
-        if (!try_lang_type_from_ulang_type(&gen_arg,  gen_arg_, lit->pos)) {
+        if (!try_lang_type_from_ulang_type(&gen_arg, gen_arg_, lit->pos)) {
             // TODO: expected failure test
             todo();
         }
@@ -1141,7 +1142,7 @@ bool try_set_array_literal_types(
     }
 
     Uast_def* struct_def_ = NULL;
-    unwrap(usymbol_lookup(&struct_def_,  lang_type_struct_const_unwrap(dest_lang_type).atom.str));
+    unwrap(usymbol_lookup(&struct_def_, lang_type_struct_const_unwrap(dest_lang_type).atom.str));
     
     Tast_expr_vec new_membs = {0};
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
@@ -1183,7 +1184,7 @@ bool try_set_array_literal_types(
         lit->pos,
         (Struct_def_base) {.members = inner_def_membs, .name = name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0)}
     );
-    sym_tbl_add(&vec_at(&env.symbol_tables, 0)->symbol_table, tast_struct_def_wrap(inner_def));
+    sym_tbl_add(tast_struct_def_wrap(inner_def));
 
     Tast_struct_literal* new_inner_lit = tast_struct_literal_new(
         lit->pos,
@@ -1498,7 +1499,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     Uast_def* fun_def = NULL;
     switch (new_callee->type) {
         case TAST_SYMBOL: {
-            if (!usymbol_lookup(&fun_def,  tast_symbol_unwrap(new_callee)->base.name)) {
+            if (!usymbol_lookup(&fun_def, tast_symbol_unwrap(new_callee)->base.name)) {
                 msg(
                     LOG_ERROR, EXPECT_FAIL_UNDEFINED_FUNCTION, env.file_path_to_text, fun_call->pos,
                     "function `"STR_VIEW_FMT"` is not defined\n", name_print(tast_symbol_unwrap(new_callee)->base.name)
@@ -1523,7 +1524,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             Tast_sum_callee* sum_callee = tast_sum_callee_unwrap(new_callee);
 
             Uast_def* sum_def_ = NULL;
-            unwrap(usymbol_lookup(&sum_def_,  lang_type_get_str(sum_callee->sum_lang_type)));
+            unwrap(usymbol_lookup(&sum_def_, lang_type_get_str(sum_callee->sum_lang_type)));
             Uast_sum_def* sum_def = uast_sum_def_unwrap(sum_def_);
 
             Tast_expr* new_item = NULL;
@@ -1582,7 +1583,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 Tast_sum_lit* sum_lit = tast_sum_lit_unwrap(tast_literal_unwrap(new_callee));
                 if (fun_call->args.info.count != 0) {
                     Uast_def* sum_def_ = NULL;
-                    unwrap(usymbol_lookup(&sum_def_,  lang_type_get_str(sum_lit->sum_lang_type)));
+                    unwrap(usymbol_lookup(&sum_def_, lang_type_get_str(sum_lit->sum_lang_type)));
                     Uast_sum_def* sum_def = uast_sum_def_unwrap(sum_def_);
                     msg(
                         LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, env.file_path_to_text, fun_call->pos,
@@ -1594,7 +1595,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 *new_call = new_callee;
                 return status;
             } else {
-                unwrap(usymbol_lookup(&fun_def,  tast_function_lit_unwrap(tast_literal_unwrap(new_callee))->name));
+                unwrap(usymbol_lookup(&fun_def, tast_function_lit_unwrap(tast_literal_unwrap(new_callee))->name));
                 break;
             }
         }
@@ -1783,7 +1784,7 @@ static void msg_invalid_member_internal(
 }
 
 #define msg_invalid_member(base_name, access) \
-    msg_invalid_member_internal(__FILE__, __LINE__,  base_name, access)
+    msg_invalid_member_internal(__FILE__, __LINE__, base_name, access)
 
 bool try_set_member_access_types_finish_generic_struct(
     Tast_stmt** new_tast,
@@ -1975,7 +1976,7 @@ bool try_set_member_access_types(
         case TAST_SYMBOL: {
             Tast_symbol* sym = tast_symbol_unwrap(new_callee);
             Uast_def* lang_type_def = NULL;
-            if (!usymbol_lookup(&lang_type_def,  lang_type_get_str(sym->base.lang_type))) {
+            if (!usymbol_lookup(&lang_type_def, lang_type_get_str(sym->base.lang_type))) {
                 todo();
             }
 
@@ -1986,7 +1987,7 @@ bool try_set_member_access_types(
             Tast_member_access* sym = tast_member_access_unwrap(new_callee);
 
             Uast_def* lang_type_def = NULL;
-            if (!usymbol_lookup(&lang_type_def,  lang_type_get_str(sym->lang_type))) {
+            if (!usymbol_lookup(&lang_type_def, lang_type_get_str(sym->lang_type))) {
                 todo();
             }
 
@@ -1995,7 +1996,7 @@ bool try_set_member_access_types(
         case TAST_OPERATOR: {
             Tast_operator* sym = tast_operator_unwrap(new_callee);
             Uast_def* lang_type_def = NULL;
-            if (!usymbol_lookup(&lang_type_def,  lang_type_get_str(tast_operator_get_lang_type(sym)))) {
+            if (!usymbol_lookup(&lang_type_def, lang_type_get_str(tast_operator_get_lang_type(sym)))) {
                 todo();
             }
 
@@ -2115,13 +2116,14 @@ bool try_set_variable_def_types(
     bool is_variadic
 ) {
     Uast_def* result = NULL;
-    if (usymbol_lookup(&result,  uast->name) && result->type == UAST_POISON_DEF) {
+    log(LOG_DEBUG, TAST_FMT, uast_variable_def_print(uast));
+    if (usymbol_lookup(&result, uast->name) && result->type == UAST_POISON_DEF) {
         unwrap(error_count > 0);
         return false;
     }
 
     Lang_type new_lang_type = {0};
-    if (!try_lang_type_from_ulang_type(&new_lang_type,  uast->lang_type, uast->pos)) {
+    if (!try_lang_type_from_ulang_type(&new_lang_type, uast->lang_type, uast->pos)) {
         log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, new_lang_type));
         Uast_poison_def* new_poison = uast_poison_def_new(uast->pos, uast->name);
         usymbol_update(uast_poison_def_wrap(new_poison));
@@ -2148,11 +2150,8 @@ bool try_set_function_decl_types(
     }
 
     Lang_type fun_rtn_type = lang_type_from_ulang_type(decl->return_type);
-
     *new_tast = tast_function_decl_new(decl->pos, new_params, fun_rtn_type, decl->name);
-
-    todo();
-    //unwrap(sym_tbl_add(tast_function_decl_wrap(*new_tast)));
+    unwrap(sym_tbl_add(tast_function_decl_wrap(*new_tast)));
 
     return true;
 }
@@ -2337,7 +2336,7 @@ static Exhaustive_data check_for_exhaustiveness_start(Lang_type oper_lang_type) 
     exhaustive_data.oper_lang_type = oper_lang_type;
 
     Uast_def* enum_def_ = NULL;
-    if (!usymbol_lookup(&enum_def_,  lang_type_get_str(exhaustive_data.oper_lang_type))) {
+    if (!usymbol_lookup(&enum_def_, lang_type_get_str(exhaustive_data.oper_lang_type))) {
         todo();
     }
     Ustruct_def_base enum_def = {0};
@@ -2364,7 +2363,6 @@ static Exhaustive_data check_for_exhaustiveness_start(Lang_type oper_lang_type) 
 }
 
 static bool check_for_exhaustiveness_inner(
-     
     Exhaustive_data* exhaustive_data,
     const Tast_if* curr_if,
     bool is_default
@@ -2393,7 +2391,7 @@ static bool check_for_exhaustiveness_inner(
             }
             if (vec_at(&exhaustive_data->covered, (size_t)curr_lit->data)) {
                 Uast_def* enum_def_ = NULL;
-                unwrap(usymbol_lookup(&enum_def_,  lang_type_get_str(exhaustive_data->oper_lang_type)));
+                unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(exhaustive_data->oper_lang_type)));
                 Uast_enum_def* enum_def = uast_enum_def_unwrap(enum_def_);
                 msg(
                     LOG_ERROR, EXPECT_FAIL_DUPLICATE_CASE, env.file_path_to_text, curr_if->pos,
@@ -2416,7 +2414,7 @@ static bool check_for_exhaustiveness_inner(
             }
             if (vec_at(&exhaustive_data->covered, (size_t)curr_lit->data)) {
                 Uast_def* sum_def_ = NULL;
-                unwrap(usymbol_lookup(&sum_def_,  lang_type_get_str(exhaustive_data->oper_lang_type)));
+                unwrap(usymbol_lookup(&sum_def_, lang_type_get_str(exhaustive_data->oper_lang_type)));
                 Uast_sum_def* sum_def = uast_sum_def_unwrap(sum_def_);
                 msg(
                     LOG_ERROR, EXPECT_FAIL_DUPLICATE_CASE, env.file_path_to_text, curr_if->pos,
@@ -2448,7 +2446,7 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
         for (size_t idx = 0; idx < exhaustive_data.covered.info.count; idx++) {
             if (!vec_at(&exhaustive_data.covered, idx)) {
                 Uast_def* enum_def_ = NULL;
-                unwrap(usymbol_lookup(&enum_def_,  lang_type_get_str(exhaustive_data.oper_lang_type)));
+                unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(exhaustive_data.oper_lang_type)));
                 Ustruct_def_base enum_def = {0};
                 switch (enum_def_->type) {
                     case UAST_ENUM_DEF:
@@ -2598,7 +2596,7 @@ static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
     );
 
     Uast_def* original_def;
-    unwrap(usymbol_lookup(&original_def,  uast_def_get_name(new_sym_def)));
+    unwrap(usymbol_lookup(&original_def, uast_def_get_name(new_sym_def)));
     msg(
         LOG_NOTE, EXPECT_FAIL_NONE, env.file_path_to_text, uast_def_get_pos(original_def),
         STR_VIEW_FMT " originally defined here\n", name_print(uast_def_get_name(original_def))
@@ -2652,45 +2650,34 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
 
     bool status = true;
 
-    //Symbol_collection new_sym_coll = block->symbol_collection;
-    unreachable("create new symbol table here");
-
     Tast_stmt_vec new_tasts = {0};
 
-    Uast_def* redef_sym = NULL;
-    if (!usymbol_do_add_defered(&redef_sym)) {
-        try_set_msg_redefinition_of_symbol(redef_sym);
-        status = false;
-        goto error;
-    }
-
     // TODO: remove this variable?
-    //Tast_stmt_vec aux_stmts = {0};
+    Tast_stmt_vec aux_stmts = {0};
 
-    todo();
-    //Usymbol_iter iter = usym_tbl_iter_new(new_sym_coll.usymbol_table);
-    //Uast_def* curr = NULL;
-    //while (usym_tbl_iter_next(&curr, &iter)) {
-    //    if (curr->type != UAST_VARIABLE_DEF && curr->type != UAST_IMPORT_PATH) {
-    //        // TODO: eventually, we should do also function defs, etc. in this for loop
-    //        // (change parser to not put function defs, etc. in block)
-    //        continue;
-    //    }
+    Usymbol_iter iter = usym_tbl_iter_new(block->scope_id);
+    Uast_def* curr = NULL;
+    while (usym_tbl_iter_next(&curr, &iter)) {
+        if (curr->type != UAST_VARIABLE_DEF && curr->type != UAST_IMPORT_PATH) {
+            // TODO: eventually, we should do also function defs, etc. in this for loop
+            // (change parser to not put function defs, etc. in block)
+            continue;
+        }
 
-    //    Tast_stmt* new_node = NULL;
-    //    switch (try_set_def_types(&new_node, curr)) {
-    //        case STMT_NO_STMT:
-    //            break;
-    //        case STMT_ERROR:
-    //            status = false;
-    //            break;
-    //        case STMT_OK:
-    //            vec_append(&a_main, &aux_stmts, new_node);
-    //            break;
-    //        default:
-    //            unreachable("");
-    //    }
-    //}
+        Tast_stmt* new_node = NULL;
+        switch (try_set_def_types(&new_node, curr)) {
+            case STMT_NO_STMT:
+                break;
+            case STMT_ERROR:
+                status = false;
+                break;
+            case STMT_OK:
+                vec_append(&a_main, &aux_stmts, new_node);
+                break;
+            default:
+                unreachable("");
+        }
+    }
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         Uast_stmt* curr_tast = vec_at(&block->children, idx);
@@ -2739,21 +2726,22 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         vec_append(&a_main, &new_tasts, new_rtn_statement);
     }
 
-    todo();
-    //if (env.ancesters.info.count == 1) {
-    //    Uast_def* main_fn_ = NULL;
-    //    if (!usymbol_lookup(&main_fn_, name_new((Str_view) {0}, str_view_from_cstr("main"), (Ulang_type_vec) {0}, 0))) {
-    //        log(LOG_WARNING, "no main function\n");
-    //        goto after_main;
-    //    }
-    //    if (main_fn_->type != UAST_FUNCTION_DEF) {
-    //        todo();
-    //    }
-    //    Uast_function_def* new_def = NULL;
-    //    if (!resolve_generics_function_def(&new_def, uast_function_def_unwrap(main_fn_), (Ulang_type_vec) {0}, (Pos) {0})) {
-    //        status = false;
-    //    }
-    //}
+    if (block->scope_id == SCOPE_TOP_LEVEL) {
+        Uast_def* main_fn_ = NULL;
+        if (!usymbol_lookup(&main_fn_, name_new((Str_view) {0}, str_view_from_cstr("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
+            todo();
+            log(LOG_WARNING, "no main function\n");
+            goto after_main;
+        }
+        if (main_fn_->type != UAST_FUNCTION_DEF) {
+            todo();
+        }
+        log(LOG_DEBUG, "def->decl->name.scope_id: %zu\n", uast_function_def_unwrap(main_fn_)->decl->name.scope_id);
+        Uast_function_def* new_def = NULL;
+        if (!resolve_generics_function_def(&new_def, uast_function_def_unwrap(main_fn_), (Ulang_type_vec) {0}, (Pos) {0})) {
+            status = false;
+        }
+    }
 after_main:
     assert(true /* TODO: remove */);
 
@@ -2766,8 +2754,7 @@ error:
     } else if (env.parent_of == PARENT_OF_IF) {
         todo();
     }
-    todo();
-    //*new_tast = tast_block_new(block->pos, new_tasts, new_sym_coll, block->pos_end, yield_type, block->scope_id);
+    *new_tast = tast_block_new(block->pos, new_tasts, block->pos_end, yield_type, block->scope_id);
     if (status) {
         assert(*new_tast);
     } else {
