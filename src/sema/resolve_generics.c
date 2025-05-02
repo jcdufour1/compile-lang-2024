@@ -102,18 +102,10 @@ static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_bas
 
 // we need to get the index of the original definition so that we can put resolved versions in the correct spot
 #define try_set_def_types_internal(after_res, before_res, new_def) \
-    todo();
-    //do { \
-    //    size_t idx = 0; \
-    //    for (; idx < env.ancesters.info.count; idx++) { \
-    //        Uast_def* result = NULL; \
-    //        if (usym_tbl_lookup(&result, &vec_at(&env.ancesters, idx)->usymbol_table, (before_res)->base.name)) { \
-    //            break; \
-    //        } \
-    //    } \
-    //    usym_tbl_add(&vec_at(&env.ancesters, idx)->usymbol_table, (after_res)); \
-    //    sym_tbl_add(&vec_at(&env.ancesters, idx)->symbol_table, (new_def)); \
-    //} while (0)
+    do { \
+        usym_tbl_add(after_res); \
+        sym_tbl_add(new_def); \
+    } while (0)
 
 static bool try_set_struct_def_types(Uast_struct_def* before_res, Uast_struct_def* after_res) {
     // TODO: consider nested thing:
@@ -375,9 +367,7 @@ bool resolve_generics_ulang_type_regular(Ulang_type* result, Ulang_type_regular 
     }
     memset(&name_base.gen_args, 0, sizeof(name_base.gen_args));
     if (!usymbol_lookup(&before_res, name_base)) {
-        log(LOG_DEBUG, TAST_FMT"\n", uname_print(lang_type.atom.str));
         msg_undefined_type(lang_type.pos, ulang_type_regular_const_wrap(lang_type));
-        todo();
         return false;
     }
 

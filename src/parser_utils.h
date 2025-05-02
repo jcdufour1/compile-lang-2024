@@ -45,6 +45,7 @@ Str_view util_literal_name_new_prefix_internal(const char* file, int line, const
 #define util_literal_name_new_prefix(debug_prefix) \
     util_literal_name_new_prefix_internal(__FILE__, __LINE__, debug_prefix)
 
+// TODO: make util_literal_name_new function/macro return Name and Uname, etc.
 #define util_literal_name_new() \
     util_literal_name_new_prefix_internal(__FILE__, __LINE__, "")
 

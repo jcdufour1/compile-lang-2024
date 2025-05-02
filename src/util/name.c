@@ -135,7 +135,7 @@ void extend_name_msg(String* buf, Name name) {
 
 void extend_uname_msg(String* buf, Uname name) {
     extend_name(false, buf, name.mod_alias);
-    if (name.mod_alias.base.count > 0) {
+    if (name.mod_alias.base.count > 0 || name.mod_alias.scope_id > 0) {
         string_extend_cstr(&print_arena, buf, ".");
     }
     string_extend_strv(&print_arena, buf, name.base);

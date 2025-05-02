@@ -2811,5 +2811,39 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt) {
 }
 
 bool try_set_types(Tast_block** new_tast, Uast_block* block) {
-    return try_set_block_types(new_tast, block, false, true);
+    bool status = true;
+
+    // TODO: remove this variable?
+    Tast_stmt_vec aux_stmts = {0};
+
+    // TODO: consider if this def iteration should be abstracted to a separate function (try_set_block_types has similar)
+    Usymbol_iter iter = usym_tbl_iter_new(0);
+    Uast_def* curr = NULL;
+    while (usym_tbl_iter_next(&curr, &iter)) {
+        if (curr->type != UAST_VARIABLE_DEF && curr->type != UAST_IMPORT_PATH) {
+            // TODO: eventually, we should do also function defs, etc. in this for loop
+            // (change parser to not put function defs, etc. in block)
+            continue;
+        }
+
+        Tast_stmt* new_node = NULL;
+        switch (try_set_def_types(&new_node, curr)) {
+            case STMT_NO_STMT:
+                break;
+            case STMT_ERROR:
+                status = false;
+                break;
+            case STMT_OK:
+                vec_append(&a_main, &aux_stmts, new_node);
+                break;
+            default:
+                unreachable("");
+        }
+    }
+
+    if (!try_set_block_types(new_tast, block, false, true)) {
+        status = false;
+    }
+
+    return status;
 }

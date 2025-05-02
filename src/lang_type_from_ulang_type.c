@@ -37,7 +37,9 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
 }
 
 bool name_from_uname(Name* new_name, Uname name) {
+    log(LOG_DEBUG, TAST_FMT"\n", uname_print(name));
     if (name.mod_alias.base.count < 1) {
+        log(LOG_DEBUG, "name_from_uname path 1\n");
         Uast_def* result = NULL;
         if (usymbol_lookup(&result, name_new((Str_view) {0} /* TODO */, name.base, name.gen_args, 0))) {
             *new_name = name_new((Str_view) {0} /* TODO */, name.base, name.gen_args, name.scope_id);
@@ -48,7 +50,9 @@ bool name_from_uname(Name* new_name, Uname name) {
     }
 
     Uast_def* result = NULL;
-    if (!usymbol_lookup(&result, name_new((Str_view) {0} /* TODO */, name.mod_alias.base, (Ulang_type_vec) {0}, 0))) {
+    if (!usymbol_lookup(&result, name_new((Str_view) {0} /* TODO */, name.mod_alias.base, (Ulang_type_vec) {0}, name.scope_id))) {
+        log(LOG_DEBUG, "name_from_uname path 2\n");
+        log(LOG_DEBUG, "name_from_uname name->scope_id: %zu\n", name.scope_id);
         //log(LOG_DEBUG, TAST_FMT"\n", uname_print(name));
         //log(LOG_DEBUG, TAST_FMT"\n", name_print(name.mod_alias));
         //log(LOG_DEBUG, TAST_FMT"\n", str_view_print(name.mod_alias.base));
@@ -73,11 +77,15 @@ bool name_from_uname(Name* new_name, Uname name) {
         //usymbol_log(LOG_DEBUG);
         todo();
     }
+    log(LOG_DEBUG, "name_from_uname path 3\n");
 
     switch (result->type) {
         case UAST_MOD_ALIAS: {
+            log(LOG_DEBUG, "name_from_uname path 3.1\n");
             Uast_mod_alias* alias = uast_mod_alias_unwrap(result);
-            *new_name = name_new(alias->mod_path.base, name.base, name.gen_args, name.scope_id);
+            *new_name = name_new(alias->mod_path.base, name.base, name.gen_args, alias->name.scope_id);
+            log(LOG_DEBUG, "name_from_uname new_name->scope_id: %zu\n", new_name->scope_id);
+            log(LOG_DEBUG, TAST_FMT"\n", name_print(*new_name));
             return true;
         }
         case UAST_IMPORT_PATH:
@@ -103,6 +111,7 @@ bool name_from_uname(Name* new_name, Uname name) {
         case UAST_GENERIC_PARAM:
             todo();
         case UAST_POISON_DEF:
+            log(LOG_DEBUG, "name_from_uname path 3.100\n");
             return false;
         case UAST_LANG_DEF:
             todo();
@@ -118,12 +127,12 @@ Uname name_to_uname(Name name) {
             (Str_view) {0},
             util_literal_name_new(),
             (Ulang_type_vec) {0},
-            0
+            name.scope_id
         ),
-        name_new((Str_view) {0}, name.mod_path, (Ulang_type_vec) {0}, 0)
+        name_new((Str_view) {0}, name.mod_path, (Ulang_type_vec) {0}, 0 /* TODO */)
     );
     unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
-    return (Uname) {.mod_alias = new_alias->name, .base = name.base, .gen_args = name.gen_args};
+    return (Uname) {.mod_alias = new_alias->name, .base = name.base, .gen_args = name.gen_args, .scope_id = name.scope_id};
 }
 
 Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {

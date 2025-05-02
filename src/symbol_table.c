@@ -424,6 +424,7 @@ bool file_path_to_text_tbl_add(File_path_to_text* sym_table, Str_view* file_text
 
 // returns parent of key
 Scope_id scope_tbl_lookup(Scope_id key) {
+    // TODO: use lookup table instead of hash table
     char buf[32] = {0};
     sprintf(buf, "%zu", key);
     Scope_id parent = 0;

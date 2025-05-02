@@ -53,7 +53,7 @@ static PARSE_STATUS parse_variable_decl(
     Scope_id scope_id
 );
 static PARSE_EXPR_STATUS parse_condition(Uast_condition**, Tk_view* tokens, Scope_id scope_id);
-static PARSE_STATUS parse_generics_args(Ulang_type_vec* args, Tk_view* tokens);
+static PARSE_STATUS parse_generics_args(Ulang_type_vec* args, Tk_view* tokens, Scope_id scope_id);
 static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_view* tokens, Scope_id block_scope);
 
 static bool try_consume(Token* result, Tk_view* tokens, TOKEN_TYPE type) {
@@ -862,7 +862,7 @@ static bool is_binary(TOKEN_TYPE token_type) {
     unreachable("");
 }
 
-static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk_view* tokens) {
+static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk_view* tokens, Scope_id scope_id) {
     (void) env;
     memset(lang_type, 0, sizeof(*lang_type));
     Token lang_type_token = {0};
@@ -882,7 +882,8 @@ static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk
 
     *pos = lang_type_token.pos;
 
-    lang_type->str = (Uname) {.mod_alias = name_new(env.curr_mod_path, mod_alias, (Ulang_type_vec) {0}, 0), .base = lang_type_token.text};
+    // TODO: use uname_new instead of (Uname) {
+    lang_type->str = (Uname) {.mod_alias = name_new(env.curr_mod_path, mod_alias, (Ulang_type_vec) {0}, scope_id), .base = lang_type_token.text, .scope_id = scope_id};
     while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
         lang_type->pointer_depth++;
     }
@@ -891,7 +892,7 @@ static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk
 }
 
 // type will be parsed if possible
-static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* tokens) {
+static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* tokens, Scope_id scope_id) {
     Ulang_type_atom atom = {0};
     Ulang_type_vec types = {0};
     bool is_comma = true;
@@ -906,7 +907,7 @@ static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* t
     while (is_comma) {
         // a return type is only one token, at least for now
         Pos atom_pos = {0};
-        if (!parse_lang_type_struct_atom(&atom_pos, &atom, tokens)) {
+        if (!parse_lang_type_struct_atom(&atom_pos, &atom, tokens, scope_id)) {
             todo();
             //atom.str = (Uname) {.mod_alias = (Str_view) {0}, .base = str_view_from_cstr("void")};
             break;
@@ -926,17 +927,17 @@ static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* t
 }
 
 // type will be parsed if possible
-static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens) {
+static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens, Scope_id scope_id) {
     memset(lang_type, 0, sizeof(*lang_type));
 
     Token lang_type_token = {0};
     if (try_consume(&lang_type_token, tokens, TOKEN_FN)) {
         Ulang_type_tuple params = {0};
-        if (!parse_lang_type_struct_tuple(&params, tokens)) {
+        if (!parse_lang_type_struct_tuple(&params, tokens, scope_id)) {
             return false;
         }
         Ulang_type* rtn_type = arena_alloc(&a_main, sizeof(*rtn_type)); // TODO: make function, etc. to call arena_alloc automatically
-        if (!parse_lang_type_struct(rtn_type, tokens)) {
+        if (!parse_lang_type_struct(rtn_type, tokens, scope_id)) {
             return false;
         }
         *lang_type = ulang_type_fn_const_wrap(ulang_type_fn_new(params, rtn_type, lang_type_token.pos));
@@ -946,7 +947,7 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens) {
     Ulang_type_atom atom = {0};
     if (tk_view_front(*tokens).type ==  TOKEN_OPEN_PAR) {
         Ulang_type_tuple new_tuple = {0};
-        if (!parse_lang_type_struct_tuple(&new_tuple, tokens)) {
+        if (!parse_lang_type_struct_tuple(&new_tuple, tokens, scope_id)) {
             return false;
         }
         *lang_type = ulang_type_tuple_const_wrap(new_tuple);
@@ -954,7 +955,7 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens) {
     }
 
     Pos pos = {0};
-    if (!parse_lang_type_struct_atom(&pos, &atom, tokens)) {
+    if (!parse_lang_type_struct_atom(&pos, &atom, tokens, scope_id)) {
         return false;
     }
 
@@ -963,7 +964,7 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens) {
         return true;
     }
 
-    if (PARSE_OK != parse_generics_args(&atom.str.gen_args, tokens)) {
+    if (PARSE_OK != parse_generics_args(&atom.str.gen_args, tokens, scope_id)) {
         return false;
     }
     *lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, pos));
@@ -971,9 +972,9 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens) {
 }
 
 // require type to be parsed
-static PARSE_STATUS parse_lang_type_struct_atom_require(Ulang_type_atom* lang_type, Tk_view* tokens) {
+static PARSE_STATUS parse_lang_type_struct_atom_require(Ulang_type_atom* lang_type, Tk_view* tokens, Scope_id scope_id) {
     Pos pos = {0};
-    if (parse_lang_type_struct_atom(&pos, lang_type, tokens)) {
+    if (parse_lang_type_struct_atom(&pos, lang_type, tokens, scope_id)) {
         return PARSE_OK;
     } else {
         msg_parser_expected(env.file_path_to_text, tk_view_front(*tokens), "", TOKEN_SYMBOL);
@@ -982,8 +983,8 @@ static PARSE_STATUS parse_lang_type_struct_atom_require(Ulang_type_atom* lang_ty
 }
 
 // require type to be parsed
-static PARSE_STATUS parse_lang_type_struct_require(Ulang_type* lang_type, Tk_view* tokens) {
-    if (parse_lang_type_struct(lang_type, tokens)) {
+static PARSE_STATUS parse_lang_type_struct_require(Ulang_type* lang_type, Tk_view* tokens, Scope_id scope_id) {
+    if (parse_lang_type_struct(lang_type, tokens, scope_id)) {
         return PARSE_OK;
     } else {
         msg_parser_expected(env.file_path_to_text, tk_view_front(*tokens), "", TOKEN_SYMBOL);
@@ -1103,7 +1104,7 @@ static PARSE_STATUS parse_function_decl_common(
     }
 
     Ulang_type rtn_type = {0};
-    if (!parse_lang_type_struct(&rtn_type, tokens)) {
+    if (!parse_lang_type_struct(&rtn_type, tokens, fn_scope)) {
         rtn_type = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0), close_par_tk.pos));
     }
 
@@ -1166,13 +1167,13 @@ static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_vie
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_generics_args(Ulang_type_vec* args, Tk_view* tokens) {
+static PARSE_STATUS parse_generics_args(Ulang_type_vec* args, Tk_view* tokens, Scope_id scope_id) {
     memset(args, 0, sizeof(*args));
     unwrap(try_consume(NULL, tokens, TOKEN_OPEN_GENERIC));
 
     do {
         Ulang_type arg = {0};
-        if (PARSE_ERROR == parse_lang_type_struct_require(&arg, tokens)) {
+        if (PARSE_ERROR == parse_lang_type_struct_require(&arg, tokens, scope_id)) {
             return PARSE_ERROR;
         }
         vec_append(&a_main, args, arg);
@@ -1193,7 +1194,7 @@ static PARSE_STATUS parse_struct_base_def(
     Tk_view* tokens,
     bool require_sub_types,
     Ulang_type default_lang_type,
-    Scope_id scope_id
+    Scope_id scope_id // TODO: remove this parameter
 ) {
     memset(base, 0, sizeof(*base));
     base->name = name;
@@ -1282,7 +1283,7 @@ static PARSE_STATUS parse_struct_def(Uast_struct_def** struct_def, Tk_view* toke
     unwrap(try_consume(NULL, tokens, TOKEN_STRUCT));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def(&base, name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, 0), tokens, true, (Ulang_type) {0}, 0 /* TODO */)) {
+    if (PARSE_OK != parse_struct_base_def(&base, name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL), tokens, true, (Ulang_type) {0}, SCOPE_TOP_LEVEL /* TODO */)) {
         return PARSE_ERROR;
     }
 
@@ -1298,7 +1299,7 @@ static PARSE_STATUS parse_raw_union_def(Uast_raw_union_def** raw_union_def, Tk_v
     unwrap(try_consume(NULL, tokens, TOKEN_RAW_UNION));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def(&base, name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, 0), tokens, true, (Ulang_type) {0}, 0)) {
+    if (PARSE_OK != parse_struct_base_def(&base, name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL), tokens, true, (Ulang_type) {0}, SCOPE_TOP_LEVEL)) {
         return PARSE_ERROR;
     }
 
@@ -1316,7 +1317,7 @@ static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, To
     Ustruct_def_base base = {0};
     if (PARSE_OK != parse_struct_base_def_implicit_type(
         &base,
-        name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, 0),
+        name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
         tokens,
         ulang_type_atom_new((Uname) {.base = name.text}, 0)
     )) {
@@ -1338,7 +1339,7 @@ static PARSE_STATUS parse_sum_def(Uast_sum_def** sum_def, Tk_view* tokens, Token
     Ustruct_def_base base = {0};
     if (PARSE_OK != parse_struct_base_def(
         &base,
-        name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, 0),
+        name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
         tokens,
         false,
         ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0), sum_tk.pos)),
@@ -1369,7 +1370,7 @@ static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token n
         todo();
     }
 
-    *def = uast_lang_def_new(name.pos, name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, 0), expr);
+    *def = uast_lang_def_new(name.pos, name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL), expr);
     if (!usymbol_add(uast_lang_def_wrap(*def))) {
         msg_redefinition_of_symbol(uast_lang_def_wrap(*def));
         return PARSE_ERROR;
@@ -1489,11 +1490,11 @@ static PARSE_STATUS parse_variable_decl(
 
     Ulang_type lang_type = {0};
     if (require_type) {
-        if (PARSE_OK != parse_lang_type_struct_require(&lang_type, tokens)) {
+        if (PARSE_OK != parse_lang_type_struct_require(&lang_type, tokens, scope_id)) {
             return PARSE_ERROR;
         }
     } else {
-        if (!parse_lang_type_struct(&lang_type, tokens)) {
+        if (!parse_lang_type_struct(&lang_type, tokens, scope_id)) {
             lang_type = default_lang_type;
         }
     }
@@ -2425,7 +2426,7 @@ static PARSE_EXPR_STATUS parse_unary(
                     return PARSE_EXPR_ERROR;
                 }
             }
-            if (PARSE_OK != parse_lang_type_struct_atom_require(&unary_lang_type, tokens)) {
+            if (PARSE_OK != parse_lang_type_struct_atom_require(&unary_lang_type, tokens, scope_id)) {
                 return PARSE_EXPR_ERROR;
             }
             {
@@ -2770,7 +2771,8 @@ static PARSE_EXPR_STATUS parse_expr_generic(
     Uast_expr* lhs,
     Tk_view* tokens,
     int32_t* prev_oper_pres,
-    bool defer_sym_add
+    bool defer_sym_add,
+    Scope_id scope_id
 ) {
     (void) result;
     (void) prev_oper_pres;
@@ -2789,7 +2791,7 @@ static PARSE_EXPR_STATUS parse_expr_generic(
             todo();
     }
 
-    if (PARSE_OK != parse_generics_args(&sym->name.gen_args, tokens)) {
+    if (PARSE_OK != parse_generics_args(&sym->name.gen_args, tokens, scope_id)) {
         return PARSE_EXPR_ERROR;
     }
     return PARSE_EXPR_OK;
@@ -2846,7 +2848,7 @@ static PARSE_EXPR_STATUS parse_expr_opening_prev_equal_pres(
             return parse_expr_index(result, *lhs, tokens, prev_oper_pres, defer_sym_add, scope_id);
         }
         case TOKEN_OPEN_GENERIC: {
-            return parse_expr_generic(result, *lhs, tokens, prev_oper_pres, defer_sym_add);
+            return parse_expr_generic(result, *lhs, tokens, prev_oper_pres, defer_sym_add, scope_id);
         }
         default:
             unreachable(TOKEN_FMT, token_print(TOKEN_MODE_LOG, tk_view_front(*tokens)));
