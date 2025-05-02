@@ -384,4 +384,6 @@ static inline bool ulang_type_vec_is_equal(Ulang_type_vec a, Ulang_type_vec b) {
 
 Ulang_type ulang_type_from_uast_function_decl(const Uast_function_decl* decl);
 
+Scope_id uast_stmt_get_scope_id(Uast_stmt* stmt);
+
 #endif // UAST_UTIL_H

@@ -30,7 +30,7 @@ static inline void usymbol_log_internal(LOG_LEVEL log_level, const char* file, i
         if (curr_scope == 0) {
             break;
         }
-        curr_scope = scope_tbl_lookup(curr_scope);
+        curr_scope = scope_get_parent_tbl_lookup(curr_scope);
     }
     log_internal(log_level, file, line, 0, "----end usymbol table------\n");
 }
@@ -61,7 +61,7 @@ static inline void symbol_log_internal(LOG_LEVEL log_level, const char* file, in
         if (curr_scope == 0) {
             break;
         }
-        curr_scope = scope_tbl_lookup(curr_scope);
+        curr_scope = scope_get_parent_tbl_lookup(curr_scope);
     }
     log_internal(log_level, file, line, 0, "----end symbol table------\n");
 }
@@ -92,7 +92,7 @@ static inline void llvm_log_internal(LOG_LEVEL log_level, const char* file, int 
         if (curr_scope == 0) {
             break;
         }
-        curr_scope = scope_tbl_lookup(curr_scope);
+        curr_scope = scope_get_parent_tbl_lookup(curr_scope);
     }
     log_internal(log_level, file, line, 0, "----end llvm table------\n");
 }

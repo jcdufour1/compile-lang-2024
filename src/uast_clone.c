@@ -217,7 +217,7 @@ Uast_assignment* uast_assignment_clone(const Uast_assignment* assign, Scope_id n
 }
 
 Uast_return* uast_return_clone(const Uast_return* rtn, Scope_id new_scope) {
-    return uast_return_new(rtn->pos, uast_expr_clone(rtn->child, new_scope), rtn->is_auto_inserted);
+    return uast_return_new(rtn->pos, uast_expr_clone(rtn->child, new_scope), rtn->is_auto_inserted, new_scope);
 }
 
 Uast_if_else_chain* uast_if_else_chain_clone(const Uast_if_else_chain* if_else, Scope_id new_scope) {

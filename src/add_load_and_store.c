@@ -1505,7 +1505,7 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
         if_else->pos,
         (Llvm_vec) {0},
         (Pos) {0},
-        symbol_collection_new(scope_tbl_lookup(vec_at(&if_else->tasts, 0 /* TODO: consider empty if_else_chain */)->body->scope_id))
+        symbol_collection_new(scope_get_parent_tbl_lookup(vec_at(&if_else->tasts, 0 /* TODO: consider empty if_else_chain */)->body->scope_id))
     );
 
     Tast_variable_def* yield_dest = NULL;
@@ -1542,7 +1542,7 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
         }
 
         Llvm_block* if_block = if_statement_to_branch(vec_at(&if_else->tasts, idx), next_if, if_after);
-        scope_tbl_update(vec_at(&if_else->tasts, idx)->body->scope_id, (*new_block)->scope_id);
+        scope_get_parent_tbl_update(vec_at(&if_else->tasts, idx)->body->scope_id, (*new_block)->scope_id);
         vec_append(&a_main, &(*new_block)->children, llvm_block_wrap(if_block));
 
         if (idx + 1 < if_else->tasts.info.count) {

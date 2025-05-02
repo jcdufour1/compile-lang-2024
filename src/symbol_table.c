@@ -173,7 +173,7 @@ void generic_symbol_update(Str_view key, void* item, Get_tbl_from_collection_fn 
         if (curr_scope == 0) {
             break;
         }
-        curr_scope = scope_tbl_lookup(curr_scope);
+        curr_scope = scope_get_parent_tbl_lookup(curr_scope);
     }
     unreachable("if there was no matching symbol found, generic_symbol_add should have worked");
 }
@@ -206,7 +206,7 @@ bool generic_symbol_lookup(
         if (curr_scope == 0) {
             break;
         }
-        curr_scope = scope_tbl_lookup(curr_scope);
+        curr_scope = scope_get_parent_tbl_lookup(curr_scope);
     }
 
     return false;
@@ -423,7 +423,7 @@ bool file_path_to_text_tbl_add(File_path_to_text* sym_table, Str_view* file_text
 //
 
 // returns parent of key
-Scope_id scope_tbl_lookup(Scope_id key) {
+Scope_id scope_get_parent_tbl_lookup(Scope_id key) {
     // TODO: use lookup table instead of hash table
     char buf[32] = {0};
     sprintf(buf, "%zu", key);
@@ -434,7 +434,7 @@ Scope_id scope_tbl_lookup(Scope_id key) {
     return parent;
 }
 
-bool scope_tbl_add(Scope_id key, Scope_id parent) {
+bool scope_get_parent_tbl_add(Scope_id key, Scope_id parent) {
     char buf[32] = {0};
     sprintf(buf, "%zu", key);
     String serialized = {0};
@@ -444,7 +444,7 @@ bool scope_tbl_add(Scope_id key, Scope_id parent) {
     return generic_tbl_add((Generic_symbol_table*)&env.scope_id_to_parent, string_to_strv(serialized), next_alloced);
 }
 
-void scope_tbl_update(Scope_id key, Scope_id parent) {
+void scope_get_parent_tbl_update(Scope_id key, Scope_id parent) {
     char buf[32] = {0};
     sprintf(buf, "%zu", key);
     String serialized = {0};
@@ -481,7 +481,7 @@ Scope_id symbol_collection_new(Scope_id parent) {
     Scope_id new_scope = env.symbol_tables.info.count;
     vec_append(&a_main, &env.symbol_tables, new_tbl);
 
-    unwrap(scope_tbl_add(new_scope, parent));
+    unwrap(scope_get_parent_tbl_add(new_scope, parent));
     return new_scope;
 }
 

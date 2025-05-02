@@ -615,6 +615,7 @@ static Uast_type uast_gen_return(const char* prefix) {
 
     append_member(&rtn.members, "Uast_expr*", "child");
     append_member(&rtn.members, "bool", "is_auto_inserted"); // TODO: use : 1 size?
+    append_member(&rtn.members, "Scope_id", "scope_id");
 
     return rtn;
 }

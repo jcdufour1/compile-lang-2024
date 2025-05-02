@@ -1416,8 +1416,7 @@ bool try_set_function_call_types_sum_case(Tast_sum_case** new_case, Uast_expr_ve
                 lang_type_to_ulang_type(sum_case->tag->lang_type),
                 name_new(env.curr_mod_path, uast_symbol_unwrap(vec_at(&args, 0))->name.base, (Ulang_type_vec) {0}, uast_symbol_unwrap(vec_at(&args, 0))->name.scope_id)
             );
-            todo();
-            //usymbol_add(uast_variable_def_wrap(new_def));
+            usymbol_add(uast_variable_def_wrap(new_def));
 
             Uast_assignment* new_assign = uast_assignment_new(
                 new_def->pos,
@@ -2515,23 +2514,21 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
             )));
         }
 
-        todo();
-        //vec_append(&a_main, &env.switch_case_defer_add_if_true, old_case->if_true);
-        //Uast_block* if_true = uast_block_new(
-        //    old_case->pos,
-        //    (Uast_stmt_vec) {0},
-        //    old_case->pos,
-        //    scope_id_new()
-        //);
+        vec_append(&a_main, &env.switch_case_defer_add_if_true, old_case->if_true);
+        Uast_block* if_true = uast_block_new(
+            old_case->pos,
+            (Uast_stmt_vec) {0},
+            old_case->pos,
+            uast_stmt_get_scope_id(old_case->if_true)
+        );
                 
-        todo();
-        //env.parent_of = PARENT_OF_CASE;
-        //env.parent_of_operand = lang_switch->operand;
-        //Tast_if* new_if = NULL;
-        //if (!try_set_if_types(&new_if, uast_if_new(old_case->pos, cond, if_true))) {
-        //    status = false;
-        //    goto error_inner;
-        //}
+        env.parent_of = PARENT_OF_CASE;
+        env.parent_of_operand = lang_switch->operand;
+        Tast_if* new_if = NULL;
+        if (!try_set_if_types(&new_if, uast_if_new(old_case->pos, cond, if_true))) {
+            status = false;
+            goto error_inner;
+        }
 
 error_inner:
         env.parent_of_operand = NULL;
@@ -2541,14 +2538,12 @@ error_inner:
             goto error;
         }
 
-        todo();
-        //if (!check_for_exhaustiveness_inner(&exhaustive_data, new_if, old_case->is_default)) {
-        //    status = false;
-        //    goto error;
-        //}
+        if (!check_for_exhaustiveness_inner(&exhaustive_data, new_if, old_case->is_default)) {
+            status = false;
+            goto error;
+        }
 
-        todo();
-        //vec_append(&a_main, &new_ifs, new_if);
+        vec_append(&a_main, &new_ifs, new_if);
     }
 
     *new_tast = tast_if_else_chain_new(lang_switch->pos, new_ifs, true);
@@ -2686,7 +2681,8 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
             uast_literal_wrap(util_uast_literal_new_from_strv(
                  str_view_from_cstr(""), TOKEN_VOID, block->pos_end
             )),
-            true
+            true,
+            block->scope_id
         );
         if (rtn_statement->pos.line == 0) {
             unreachable("");

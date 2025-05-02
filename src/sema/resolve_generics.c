@@ -475,7 +475,7 @@ static bool resolve_generics_serialize_function_decl(
         (Uast_generic_param_vec) {0},
         uast_function_params_new(old_decl->params->pos, params),
         new_rtn_type,
-        name_new(env.curr_mod_path, old_decl->name.base, gen_args, scope_tbl_lookup(new_block->scope_id))
+        name_new(env.curr_mod_path, old_decl->name.base, gen_args, scope_get_parent_tbl_lookup(new_block->scope_id))
     );
 
     return true;

@@ -1782,18 +1782,18 @@ static PARSE_STATUS parse_function_return(Uast_return** rtn_stmt, Tk_view* token
     Uast_expr* expr;
     switch (parse_expr(&expr, tokens, false, true, scope_id)) {
         case PARSE_EXPR_OK:
-            *rtn_stmt = uast_return_new(uast_expr_get_pos(expr), expr, false);
+            *rtn_stmt = uast_return_new(uast_expr_get_pos(expr), expr, false, scope_id);
             break;
         case PARSE_EXPR_NONE:
             *rtn_stmt = uast_return_new(
                 prev_token.pos,
                 uast_literal_wrap(util_uast_literal_new_from_strv(
-                    
                     str_view_from_cstr(""),
                     TOKEN_VOID,
                     prev_token.pos
                 )),
-                false
+                false,
+                scope_id
             );
             break;
         case PARSE_EXPR_ERROR:

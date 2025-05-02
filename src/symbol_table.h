@@ -103,11 +103,11 @@ bool file_path_to_text_tbl_lookup(Str_view** result, const File_path_to_text* sy
 bool file_path_to_text_tbl_add(File_path_to_text* sym_table, Str_view* file_text, Str_view key);
 
 // returns parent of key
-Scope_id scope_tbl_lookup(Scope_id key);
+Scope_id scope_get_parent_tbl_lookup(Scope_id key);
 
-bool scope_tbl_add(Scope_id key, Scope_id next);
+bool scope_get_parent_tbl_add(Scope_id key, Scope_id next);
 
-void scope_tbl_update(Scope_id key, Scope_id parent);
+void scope_get_parent_tbl_update(Scope_id key, Scope_id parent);
 
 Scope_id symbol_collection_new(Scope_id parent);
 
