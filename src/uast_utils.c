@@ -93,28 +93,3 @@ Ulang_type ulang_type_from_uast_function_decl(const Uast_function_decl* decl) {
     Ulang_type_fn fn = ulang_type_fn_new(ulang_type_tuple_new(params, decl->pos), return_type, decl->pos);
     return ulang_type_fn_const_wrap(fn);
 }
-
-// TODO: the switch case itself should possibly have the scope_id and this function be removed
-Scope_id uast_stmt_get_scope_id(Uast_stmt* stmt) {
-    switch (stmt->type) {    
-        case UAST_LABEL:
-            todo();
-        case UAST_BLOCK:
-            todo();
-        case UAST_EXPR:
-            todo();
-        case UAST_DEF:
-            todo();
-        case UAST_FOR_WITH_COND:
-            todo();
-        case UAST_BREAK:
-            todo();
-        case UAST_CONTINUE:
-            todo();
-        case UAST_ASSIGNMENT:
-            todo();
-        case UAST_RETURN:
-            return uast_return_unwrap(stmt)->scope_id;
-    }
-    unreachable("");
-}

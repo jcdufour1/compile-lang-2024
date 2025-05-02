@@ -590,13 +590,14 @@ static Uast_type uast_gen_label(const char* prefix) {
 }
 
 static Uast_type uast_gen_case(const char* prefix) {
-    Uast_type lang_if = {.name = uast_name_new(prefix, "case", false)};
+    Uast_type lang_case = {.name = uast_name_new(prefix, "case", false)};
 
-    append_member(&lang_if.members, "bool", "is_default");
-    append_member(&lang_if.members, "Uast_expr*", "expr");
-    append_member(&lang_if.members, "Uast_stmt*", "if_true");
+    append_member(&lang_case.members, "bool", "is_default");
+    append_member(&lang_case.members, "Uast_expr*", "expr");
+    append_member(&lang_case.members, "Uast_stmt*", "if_true");
+    append_member(&lang_case.members, "Scope_id", "scope_id");
 
-    return lang_if;
+    return lang_case;
 }
 
 static Uast_type uast_gen_param(const char* prefix) {
@@ -615,7 +616,6 @@ static Uast_type uast_gen_return(const char* prefix) {
 
     append_member(&rtn.members, "Uast_expr*", "child");
     append_member(&rtn.members, "bool", "is_auto_inserted"); // TODO: use : 1 size?
-    append_member(&rtn.members, "Scope_id", "scope_id");
 
     return rtn;
 }

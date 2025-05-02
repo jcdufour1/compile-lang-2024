@@ -352,8 +352,6 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
         }
         *new_src = tast_tuple_wrap(new_src_);
     } else {
-        log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type));
-        log(LOG_DEBUG, TAST_FMT, uast_expr_print(src));
         Lang_type old_lhs_lang_type = env.lhs_lang_type;
         PARENT_OF old_parent_of = env.parent_of;
         env.parent_of = PARENT_OF_ASSIGN_RHS;
@@ -1107,7 +1105,6 @@ bool try_set_array_literal_types(
     Pos assign_pos
 ) {
     (void) assign_pos;
-    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type));
     Ulang_type gen_arg_ = {0};
     Lang_type gen_arg = {0};
     if (lang_type_is_slice(&gen_arg_, dest_lang_type)) {
@@ -1115,7 +1112,6 @@ bool try_set_array_literal_types(
             // TODO: expected failure test
             todo();
         }
-        log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, gen_arg));
     } else {
         todo();
     }
@@ -2095,17 +2091,13 @@ bool try_set_variable_def_types(
     bool is_variadic
 ) {
     Uast_def* result = NULL;
-    log(LOG_DEBUG, TAST_FMT, uast_variable_def_print(uast));
     if (usymbol_lookup(&result, uast->name) && result->type == UAST_POISON_DEF) {
         unwrap(error_count > 0);
         return false;
     }
 
-    log(LOG_DEBUG, TAST_FMT"\n", name_print(uast->name));
-    log(LOG_DEBUG, "%p\n", (void*)uast);
     Lang_type new_lang_type = {0};
     if (!try_lang_type_from_ulang_type(&new_lang_type, uast->lang_type, uast->pos)) {
-        log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, new_lang_type));
         Uast_poison_def* new_poison = uast_poison_def_new(uast->pos, uast->name);
         usymbol_update(uast_poison_def_wrap(new_poison));
         return false;
@@ -2196,7 +2188,6 @@ bool try_set_break_types(Tast_break** new_tast, Uast_break* lang_break) {
     if (lang_break->do_break_expr) {
         switch (check_generic_assignment(&new_child, env.break_type, lang_break->break_expr, lang_break->pos)) {
             case CHECK_ASSIGN_OK:
-                log(LOG_DEBUG, TAST_FMT, uast_expr_print(lang_break->break_expr));
                 break;
             case CHECK_ASSIGN_INVALID:
                 msg_invalid_yield_type(lang_break->pos, new_child, false);
@@ -2256,9 +2247,6 @@ bool try_set_if_types(Tast_if** new_tast, Uast_if* uast) {
     if (!(status && try_set_block_types(&new_body, uast->body, false, true))) {
         status = false;
     }
-
-    //log(LOG_DEBUG, TAST_FMT, uast_if_print(uast));
-    //todo();
 
     if (status) {
         *new_tast = tast_if_new(uast->pos, new_cond, new_body, new_body->lang_type);
@@ -2519,7 +2507,7 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
             old_case->pos,
             (Uast_stmt_vec) {0},
             old_case->pos,
-            uast_stmt_get_scope_id(old_case->if_true)
+            old_case->scope_id
         );
                 
         env.parent_of = PARENT_OF_CASE;
@@ -2681,8 +2669,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
             uast_literal_wrap(util_uast_literal_new_from_strv(
                  str_view_from_cstr(""), TOKEN_VOID, block->pos_end
             )),
-            true,
-            block->scope_id
+            true
         );
         if (rtn_statement->pos.line == 0) {
             unreachable("");
@@ -2711,7 +2698,6 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         if (main_fn_->type != UAST_FUNCTION_DEF) {
             todo();
         }
-        log(LOG_DEBUG, "def->decl->name.scope_id: %zu\n", uast_function_def_unwrap(main_fn_)->decl->name.scope_id);
         Uast_function_def* new_def = NULL;
         if (!resolve_generics_function_def(&new_def, uast_function_def_unwrap(main_fn_), (Ulang_type_vec) {0}, (Pos) {0})) {
             status = false;

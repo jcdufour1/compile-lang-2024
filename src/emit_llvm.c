@@ -147,15 +147,10 @@ static void extend_type_call_str(String* output, Lang_type lang_type) {
             string_extend_strv(&a_main, output, serialize_lang_type( lang_type));
             return;
         case LANG_TYPE_PRIMITIVE:
-            log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
             if (lang_type_primitive_const_unwrap(lang_type).type == LANG_TYPE_UNSIGNED_INT) {
-                log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
-                log(LOG_DEBUG, "%d\n", lang_type_primitive_const_unwrap(lang_type).type);
                 Lang_type_unsigned_int old_num = lang_type_unsigned_int_const_unwrap(lang_type_primitive_const_unwrap(lang_type));
                 lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_get_pos(lang_type), old_num.bit_width, old_num.pointer_depth)));
             }
-            log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, lang_type));
-            //assert(lang_type_primitive_const_unwrap(lang_type).type == LANG_TYPE_SIGNED_INT);
             extend_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_LLVM, lang_type);
             return;
         case LANG_TYPE_SUM:
@@ -191,8 +186,6 @@ static void llvm_extend_type_decl_str(String* output, const Llvm* var_def_or_lit
         return;
     }
 
-    log(LOG_DEBUG, TAST_FMT, llvm_print(var_def_or_lit));
-    log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, llvm_get_lang_type(var_def_or_lit)));
     extend_type_call_str( output, llvm_get_lang_type(var_def_or_lit));
     if (noundef) {
         string_extend_cstr(&a_main, output, " noundef");
@@ -304,7 +297,6 @@ static void emit_function_call_arg_load_another_llvm(
 static void emit_function_arg_expr(String* output, String* literals, const Llvm_expr* argument) {
     switch (argument->type) {
         case LLVM_LITERAL:
-            log(LOG_DEBUG, TAST_FMT, llvm_expr_print(argument));
             extend_literal_decl( output, literals, llvm_literal_const_unwrap(argument), true);
             break;
         case LLVM_FUNCTION_CALL:
@@ -365,7 +357,6 @@ static void emit_function_call(String* output, String* literals, const Llvm_func
     extend_type_call_str( output, fun_call->lang_type);
     Llvm* callee = NULL;
     unwrap(alloca_lookup(&callee,  fun_call->callee));
-    log(LOG_DEBUG, TAST_FMT, llvm_print(callee));
 
     switch (callee->type) {
         case LLVM_EXPR:
@@ -858,14 +849,12 @@ static void emit_function_decl(String* output, const Llvm_function_decl* fun_dec
 
 static void emit_label(String* output, const Llvm_label* label) {
     string_extend_cstr(&a_main, output, "\n");
-    log(LOG_DEBUG, TAST_FMT"\n", name_print(label->name));
     llvm_extend_name(output, label->name);
     string_extend_cstr(&a_main, output, ":\n");
 }
 
 static void emit_goto(String* output, const Llvm_goto* lang_goto) {
     string_extend_cstr(&a_main, output, "    br label %");
-    log(LOG_DEBUG, TAST_FMT, llvm_goto_print(lang_goto));
     llvm_extend_name(output, lang_goto->name);
     vec_append(&a_main, output, '\n');
 }

@@ -159,7 +159,7 @@ static PARSE_STATUS msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
 
 static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alias_tk, Pos mod_path_pos, Str_view mod_path) {
     Uast_def* prev_def = NULL;
-    if (usymbol_lookup(&prev_def, name_new((Str_view) {0}, mod_path, (Ulang_type_vec) {0}, 0 /* TODO */))) {
+    if (usymbol_lookup(&prev_def, name_new((Str_view) {0}, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL /* TODO */))) {
         goto finish;
     }
 
@@ -1192,7 +1192,6 @@ static PARSE_STATUS parse_struct_base_def(
 ) {
     memset(base, 0, sizeof(*base));
     base->name = name;
-    log(LOG_DEBUG, "THING: "TAST_FMT"\n", name_print(name));
 
     if (tk_view_front(*tokens).type == TOKEN_OPEN_GENERIC) {
         parse_generics_params(&base->generics, tokens, name.scope_id);
@@ -1782,7 +1781,7 @@ static PARSE_STATUS parse_function_return(Uast_return** rtn_stmt, Tk_view* token
     Uast_expr* expr;
     switch (parse_expr(&expr, tokens, false, true, scope_id)) {
         case PARSE_EXPR_OK:
-            *rtn_stmt = uast_return_new(uast_expr_get_pos(expr), expr, false, scope_id);
+            *rtn_stmt = uast_return_new(uast_expr_get_pos(expr), expr, false);
             break;
         case PARSE_EXPR_NONE:
             *rtn_stmt = uast_return_new(
@@ -1792,8 +1791,7 @@ static PARSE_STATUS parse_function_return(Uast_return** rtn_stmt, Tk_view* token
                     TOKEN_VOID,
                     prev_token.pos
                 )),
-                false,
-                scope_id
+                false
             );
             break;
         case PARSE_EXPR_ERROR:
@@ -1939,11 +1937,26 @@ static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Sco
     Uast_case_vec cases = {0};
 
     while (1) {
+        // TODO: expected success case for 
+        //
+        //type Num sum {
+        //    num32 i32
+        //    num64 i64
+        //}
+        //
+        //fn main() i32 {
+        //    let number Num = .num32(8)
+        //    switch number {
+        //        case .num32(num): return num
+        //        case .num64(num): return num
+        //    }
+        //    return 0
+        //}
         Uast_stmt* case_if_true = NULL;
         Uast_expr* case_operand = NULL;
         bool case_is_default = false;
         if (try_consume(NULL, tokens, TOKEN_CASE)) {
-            switch (parse_expr(&case_operand, tokens, false, false, scope_id)) {
+            switch (parse_expr(&case_operand, tokens, false, false, scope_id /* TODO: new scope may need to be created here */)) {
                 case PARSE_EXPR_OK:
                     break;
                 case PARSE_EXPR_ERROR:
@@ -1977,7 +1990,8 @@ static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Sco
             case_start_token.pos,
             case_is_default,
             case_operand,
-            case_if_true
+            case_if_true,
+            scope_id
         );
         vec_append(&a_main, &cases, curr_case);
     }
@@ -1999,7 +2013,6 @@ static Uast_expr* get_expr_or_symbol(Uast_stmt* stmt) {
 }
 
 static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, bool defer_sym_add, Scope_id scope_id) {
-    log(LOG_DEBUG, BOOL_FMT"\n", bool_print(defer_sym_add));
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
     assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
@@ -2488,7 +2501,6 @@ static PARSE_EXPR_STATUS parse_binary(
 
     if (is_unary(tk_view_front(*tokens).type)) {
         int32_t unary_pres = get_operator_precedence(tk_view_front(*tokens).type);
-        log_tokens(LOG_DEBUG, *tokens);
         Uast_operator* unary = NULL;
         switch (parse_unary(&unary, tokens, prev_oper_pres, defer_sym_add, can_be_tuple, scope_id)) {
             case PARSE_EXPR_OK:
@@ -2508,11 +2520,6 @@ static PARSE_EXPR_STATUS parse_binary(
         );
 
         rhs = uast_operator_wrap(unary);
-        log_tokens(LOG_DEBUG, *tokens);
-        log(LOG_DEBUG, TAST_FMT, uast_expr_print(rhs));
-        //if (is_unary(tk_view_front(*tokens).type)) {
-        //    todo();
-        //}
     } else {
         switch (parse_expr_piece(&rhs, tokens, prev_oper_pres, defer_sym_add, scope_id)) {
             case PARSE_EXPR_OK:
@@ -2939,8 +2946,6 @@ static PARSE_EXPR_STATUS parse_expr_side(
                     unreachable("");
             }
         } else {
-            log(LOG_DEBUG, "prev_oper_pres: %"PRIi32"\n", prev_oper_pres);
-            log(LOG_DEBUG, "curr_oper_pres: %"PRIi32"\n", get_operator_precedence(tk_view_front(*tokens).type));
             if (prev_oper_pres < get_operator_precedence(tk_view_front(*tokens).type)) {
                 prev_oper_pres = get_operator_precedence(tk_view_front(*tokens).type);
                 Uast_expr* binary = NULL;
@@ -3051,7 +3056,6 @@ bool parse_file(Uast_block** block, Str_view file_path, bool do_new_sym_coll) {
         status = false;
         goto error;
     }
-    log(LOG_DEBUG, "done with parsing:\n");
     symbol_log(LOG_TRACE, (*block)->scope_id);
 
 error:
@@ -3068,7 +3072,6 @@ static void parser_test_parse_expr(const char* input, int test) {
     (void) input;
     (void) test;
     todo();
-    //log(LOG_DEBUG, "start parser_test_%d:\n", test);
     //Env env = {0};
     //Str_view file_text = str_view_from_cstr(input);
     //env.file_path_to_text = file_text;

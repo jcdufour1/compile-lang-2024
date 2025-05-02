@@ -528,7 +528,6 @@ static Name load_string(Tast_string* old_lit) {
         string->name,
         string->data
     );
-    log(LOG_DEBUG, TAST_FMT, tast_string_def_print(new_def));
     unwrap(sym_tbl_add(tast_literal_def_wrap(tast_string_def_wrap(new_def))));
     unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_string_wrap(string)))));
     return string->name;
@@ -1635,9 +1634,6 @@ static Llvm_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
     env.label_if_continue = old_if_continue;
     env.label_after_for = old_after_for;
     env.label_if_break = old_if_break;
-    for (size_t idx = 0; idx < env.defered_allocas_to_add.info.count; idx++) {
-        //log(LOG_DEBUG, TAST_FMT, llvm_print(vec_at(&env.defered_allocas_to_add, idx)));
-    }
 
     return new_branch_block;
 }
@@ -1669,7 +1665,6 @@ static void load_break(Llvm_block* new_block, Tast_break* old_break) {
 
     assert(env.label_if_break.base.count > 0);
     Llvm_goto* new_goto = llvm_goto_new(old_break->pos, env.label_if_break);
-    log(LOG_DEBUG, TAST_FMT, name_print(env.label_if_break));
     vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
 }
 
@@ -1939,7 +1934,6 @@ static Llvm_block* load_block(Tast_block* old_block) {
     Symbol_iter iter = sym_tbl_iter_new(old_block->scope_id);
     Tast_def* curr = NULL;
     while (sym_tbl_iter_next(&curr, &iter)) {
-        log(LOG_DEBUG, TAST_FMT, tast_def_print(curr));
         load_def_sometimes(curr);
     }
 

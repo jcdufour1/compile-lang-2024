@@ -360,7 +360,6 @@ bool resolve_generics_ulang_type_regular(Ulang_type* result, Ulang_type_regular 
         return false;
     }
     memset(&name_base.gen_args, 0, sizeof(name_base.gen_args));
-    log(LOG_DEBUG, TAST_FMT"\n", name_print(name_base));
     if (!usymbol_lookup(&before_res, name_base)) {
         msg_undefined_type(lang_type.pos, ulang_type_regular_const_wrap(lang_type));
         return false;
@@ -448,11 +447,8 @@ static bool resolve_generics_serialize_function_decl(
 
         for (size_t idx_fun_param = 0; idx_fun_param < params.info.count; idx_fun_param++) {
             Name curr_arg = vec_at(&old_decl->generics, idx_arg)->child->name;
-            log(LOG_DEBUG, TAST_FMT, uast_param_print(vec_at(&params, idx_fun_param)));
-            log(LOG_DEBUG, "%p\n", (void*)vec_at(&params, idx_fun_param));
             // TODO: same params are being replaced both here and in generic_sub_block?
             generic_sub_param(vec_at(&params, idx_fun_param), curr_arg, vec_at(&gen_args, idx_arg));
-            log(LOG_DEBUG, TAST_FMT, uast_param_print(vec_at(&params, idx_fun_param)));
         }
         Name curr_gen = vec_at(&old_decl->generics, idx_arg)->child->name;
         generic_sub_lang_type(&new_rtn_type, new_rtn_type, curr_gen, vec_at(&gen_args, idx_arg));
@@ -487,8 +483,6 @@ bool resolve_generics_function_def(
     Ulang_type_vec gen_args, // TODO: remove or refactor name?
     Pos pos_gen_args
 ) {
-    log(LOG_DEBUG, TAST_FMT"\n", name_print(name_new(env.curr_mod_path, def->decl->name.base, gen_args, SCOPE_TOP_LEVEL)));
-
     bool status = true;
 
     Uast_def* dummy = NULL;
@@ -501,7 +495,6 @@ bool resolve_generics_function_def(
         *new_def = def;
 
         if (symbol_lookup(&dummy_2, name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id))) {
-            todo();
             return status;
         }
 
@@ -518,8 +511,6 @@ bool resolve_generics_function_def(
         log(LOG_DEBUG, TAST_FMT"\n", name_print(name_new(env.curr_mod_path, def->decl->name.base, gen_args, SCOPE_TOP_LEVEL /* placeholder */)));
         todo();
     }
-
-    log(LOG_DEBUG, TAST_FMT"\n", name_print(def->decl->name));
 
     // TODO: try to avoid cloning block if resolve_generics_serialize_function_decl fails
     Uast_block* new_block = uast_block_clone(def->body, def->decl->name.scope_id);
@@ -540,13 +531,8 @@ bool resolve_generics_function_def(
         }
     }
 
-    log(LOG_DEBUG, TAST_FMT"\n", name_print((*new_def)->decl->name));
-    log(LOG_DEBUG, TAST_FMT"\n", uast_function_def_print(*new_def));
-    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(serialize_name_symbol_table((*new_def)->decl->name)));
-    log(LOG_DEBUG, "%zu\n", serialize_name_symbol_table((*new_def)->decl->name).count);
     unwrap(usymbol_lookup(&dummy, (*new_def)->decl->name));
     unwrap(symbol_lookup(&dummy_2, (*new_def)->decl->name));
-    usymbol_log_level(LOG_DEBUG, 1);
     return status;
 }
 

@@ -28,30 +28,21 @@ void generic_sub_lang_type_regular(
     Name temp = {0};
 
     unwrap(name_from_uname(&temp, lang_type.atom.str));
-    log(LOG_DEBUG, TAST_FMT"\n", name_print(gen_param));
-    log(LOG_DEBUG, TAST_FMT"\n", name_print(temp));
     if (name_is_equal(gen_param, temp)) {
-        log(LOG_DEBUG, TAST_FMT"\n", name_print(gen_param));
-        log(LOG_DEBUG, TAST_FMT"\n", name_print(temp));
         *new_lang_type = ulang_type_clone(gen_arg, lang_type.atom.str.scope_id);
 
         int16_t base_depth = lang_type.atom.pointer_depth;
         int16_t gen_prev_depth = ulang_type_get_pointer_depth(*new_lang_type);
         ulang_type_set_pointer_depth(new_lang_type, gen_prev_depth + base_depth);
-        log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
-        log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, *new_lang_type));
         return;
     }
 
     lang_type = ulang_type_regular_clone(lang_type, lang_type.atom.str.scope_id);
     Ulang_type_vec* gen_args = &lang_type.atom.str.gen_args;
-    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
     for (size_t idx = 0; idx < gen_args->info.count; idx++) {
         generic_sub_lang_type(vec_at_ref(gen_args, idx), vec_at(gen_args, idx), gen_param, gen_arg);
     }
-    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(lang_type)));
     *new_lang_type = ulang_type_regular_const_wrap(lang_type);
-    //log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, ulang_type_regular_const_wrap(*new_lang_type)));
 }
 
 void generic_sub_lang_type(
@@ -276,9 +267,7 @@ void generic_sub_index(Uast_index* index, Name gen_param, Ulang_type gen_arg) {
 
 void generic_sub_symbol(Uast_symbol* sym, Name gen_param, Ulang_type gen_arg) {
     // TODO: call gen_sub_name instead of this for loop
-    log(LOG_DEBUG, TAST_FMT"\n", uast_symbol_print(sym));
     for (size_t idx = 0; idx < sym->name.gen_args.info.count; idx++) {
-        log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, vec_at(&sym->name.gen_args, idx)));
         generic_sub_lang_type(vec_at_ref(&sym->name.gen_args, idx), vec_at(&sym->name.gen_args, idx), gen_param, gen_arg);
     }
 }

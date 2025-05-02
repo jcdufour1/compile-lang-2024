@@ -144,7 +144,6 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     if (!name_from_uname(&temp_name, ulang_type_regular_const_unwrap(resolved).atom.str)) {
         return false;
     }
-    log(LOG_DEBUG, TAST_FMT"\n", name_print(temp_name));
     if (!usymbol_lookup(&result, temp_name)) {
         msg(
             LOG_ERROR, EXPECT_FAIL_UNDEFINED_TYPE, env.file_path_to_text, pos,

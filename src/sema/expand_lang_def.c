@@ -28,7 +28,6 @@ static bool expand_def_ulang_type_regular(
             todo();
     }
 
-    log(LOG_DEBUG, TAST_FMT, uast_expr_print(new_expr));
     switch (new_expr->type) {
         case UAST_MEMBER_ACCESS: {
             Uast_member_access* access = uast_member_access_unwrap(new_expr);

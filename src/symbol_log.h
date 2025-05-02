@@ -23,7 +23,6 @@ static inline void usymbol_log_internal(LOG_LEVEL log_level, const char* file, i
     Scope_id curr_scope = scope_id;
     size_t idx = 0;
     while (true) {
-        log(LOG_DEBUG, "usymbol_log_internal: %zu %zu\n", curr_scope, env.symbol_tables.info.count);
         Usymbol_table curr = vec_at(&env.symbol_tables, curr_scope)->usymbol_table;
         log_internal(log_level, file, line, 0, "level: %zu\n", idx);
         usymbol_level_log_internal(log_level, file, line, curr, recursion_depth + INDENT_WIDTH);
@@ -54,7 +53,6 @@ static inline void symbol_log_internal(LOG_LEVEL log_level, const char* file, in
     Scope_id curr_scope = scope_id;
     size_t idx = 0;
     while (true) {
-        log(LOG_DEBUG, "symbol_log_internal: %zu %zu\n", curr_scope, env.symbol_tables.info.count);
         Symbol_table curr = vec_at(&env.symbol_tables, curr_scope)->symbol_table;
         log_internal(log_level, file, line, 0, "level: %zu\n", idx);
         symbol_level_log_internal(log_level, file, line, curr, recursion_depth);
@@ -85,7 +83,6 @@ static inline void llvm_log_internal(LOG_LEVEL log_level, const char* file, int 
     Scope_id curr_scope = scope_id;
     size_t idx = 0;
     while (true) {
-        log(LOG_DEBUG, "llvm_log_internal: %zu %zu\n", curr_scope, env.symbol_tables.info.count);
         Alloca_table curr = vec_at(&env.symbol_tables, curr_scope)->alloca_table;
         log_internal(log_level, file, line, 0, "level: %zu\n", idx);
         llvm_level_log_internal(log_level, file, line, curr, recursion_depth);

@@ -4,6 +4,7 @@
 #include <ulang_type_clone.h>
 #include <symbol_log.h>
 
+// TODO: cloning symbol may not always work correctly with nested scopes?
 Uast_number* uast_number_clone(const Uast_number* lit) {
     return uast_number_new(lit->pos, lit->data);
 }
@@ -170,12 +171,9 @@ Uast_def* uast_def_clone(const Uast_def* def, Scope_id new_scope) {
             todo();
         case UAST_VARIABLE_DEF: {
             // TODO: simplify
-            log(LOG_DEBUG, "%zu\n", new_scope);
             Uast_variable_def* new_def = uast_variable_def_clone(uast_variable_def_const_unwrap(def), new_scope);
-            log(LOG_DEBUG, "%zu\n", new_def->name.scope_id);
             assert(uast_variable_def_const_unwrap(def) != new_def);
             assert(def != uast_variable_def_wrap(new_def));
-            log(LOG_DEBUG, "%zu\n", new_def->name.scope_id);
             return uast_variable_def_wrap(new_def);
         }
         case UAST_POISON_DEF:
@@ -217,7 +215,7 @@ Uast_assignment* uast_assignment_clone(const Uast_assignment* assign, Scope_id n
 }
 
 Uast_return* uast_return_clone(const Uast_return* rtn, Scope_id new_scope) {
-    return uast_return_new(rtn->pos, uast_expr_clone(rtn->child, new_scope), rtn->is_auto_inserted, new_scope);
+    return uast_return_new(rtn->pos, uast_expr_clone(rtn->child, new_scope), rtn->is_auto_inserted);
 }
 
 Uast_if_else_chain* uast_if_else_chain_clone(const Uast_if_else_chain* if_else, Scope_id new_scope) {
@@ -260,7 +258,7 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt, Scope_id new_scope) {
 }
 
 Uast_case* uast_case_clone(const Uast_case* lang_case, Scope_id new_scope) {
-    return uast_case_new(lang_case->pos, lang_case->is_default, uast_expr_clone(lang_case->expr, new_scope), uast_stmt_clone(lang_case->if_true, new_scope));
+    return uast_case_new(lang_case->pos, lang_case->is_default, uast_expr_clone(lang_case->expr, new_scope), uast_stmt_clone(lang_case->if_true, new_scope), new_scope);
 }
 
 Uast_variable_def* uast_variable_def_clone(const Uast_variable_def* def, Scope_id new_scope) {
@@ -270,8 +268,6 @@ Uast_variable_def* uast_variable_def_clone(const Uast_variable_def* def, Scope_i
 Uast_block* uast_block_clone(const Uast_block* block, Scope_id parent) {
     Uast_stmt_vec new_children = {0};
     Scope_id new_scope = scope_id_clone(block->scope_id, parent);
-    log(LOG_DEBUG, "uast_block_clone old_scope: %zu\n", block->scope_id);
-    log(LOG_DEBUG, "uast_block_clone new_scope: %zu\n", new_scope);
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         vec_append(&a_main, &new_children, uast_stmt_clone(vec_at(&block->children, idx), new_scope));
     }
