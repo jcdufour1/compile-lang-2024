@@ -443,6 +443,16 @@ bool scope_tbl_add(Scope_id key, Scope_id parent) {
     return generic_tbl_add((Generic_symbol_table*)&env.scope_id_to_parent, string_to_strv(serialized), next_alloced);
 }
 
+void scope_tbl_update(Scope_id key, Scope_id parent) {
+    char buf[32] = {0};
+    sprintf(buf, "%zu", key);
+    String serialized = {0};
+    string_extend_cstr(&a_main, &serialized, buf);
+    Scope_id* next_alloced = arena_alloc(&a_main, sizeof(*next_alloced));
+    *next_alloced = parent;
+    generic_tbl_update((Generic_symbol_table*)&env.scope_id_to_parent, string_to_strv(serialized), next_alloced);
+}
+
 //
 // not generic
 //

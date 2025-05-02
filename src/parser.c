@@ -1622,44 +1622,39 @@ static PARSE_STATUS parse_for_with_cond(Uast_for_with_cond** for_new, Pos pos, T
     return parse_block(&(*for_new)->body, tokens, false, block_scope);
 }
 
-static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens) {
-    todo();
-    //Token for_token;
-    //unwrap(try_consume(&for_token, tokens, TOKEN_FOR));
+static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens, Scope_id scope_id) {
+    Token for_token = {0};
+    unwrap(try_consume(&for_token, tokens, TOKEN_FOR));
 
-    //Scope_id block_scope = symbol_collection_new();
-    //
+    Scope_id block_scope = symbol_collection_new(scope_id);
+    
     if (starts_with_variable_type_decl(*tokens, false)) {
-        todo();
-    //    //PARSE_STATUS status = PARSE_OK;
-    //    //Uast_block* outer = uast_block_new(for_token.pos, (Uast_stmt_vec) {0}, (Symbol_collection) {0}, for_token.pos, scope_id_new());
-    //    //Uast_variable_def* var_def = NULL;
-    //    //if (PARSE_OK != parse_variable_decl(&var_def, tokens, false, false, true, true, (Ulang_type) {0}, block_scope)) {
-    //    //    status = PARSE_ERROR;
-    //    //    goto for_range_error;
-    //    //}
+        PARSE_STATUS status = PARSE_OK;
+        Uast_block* outer = uast_block_new(for_token.pos, (Uast_stmt_vec) {0}, for_token.pos, block_scope);
+        Uast_variable_def* var_def = NULL;
+        if (PARSE_OK != parse_variable_decl(&var_def, tokens, false, true, true, (Ulang_type) {0}, block_scope)) {
+            status = PARSE_ERROR;
+            goto for_range_error;
+        }
 
-    //    //Uast_block* new_for = NULL;
-    //    //if (PARSE_OK != parse_for_range_internal(&new_for, var_def, outer, tokens, block_scope)) {
-    //    //    status = PARSE_ERROR;
-    //    //    goto for_range_error;
-    //    //}
-    //    //*result = uast_block_wrap(new_for);
+        Uast_block* new_for = NULL;
+        if (PARSE_OK != parse_for_range_internal(&new_for, var_def, outer, tokens, block_scope)) {
+            status = PARSE_ERROR;
+            goto for_range_error;
+        }
+        *result = uast_block_wrap(new_for);
 
 for_range_error:
-        todo();
-        //return status;
+        return status;
     } else {
-        todo();
-        //Uast_for_with_cond* new_for = NULL;
-        //if (PARSE_OK != parse_for_with_cond(&new_for, for_token.pos, tokens, block_scope)) {
-        //    return PARSE_ERROR;
-        //}
-        //*result = uast_for_with_cond_wrap(new_for);
+        Uast_for_with_cond* new_for = NULL;
+        if (PARSE_OK != parse_for_with_cond(&new_for, for_token.pos, tokens, block_scope)) {
+            return PARSE_ERROR;
+        }
+        *result = uast_for_with_cond_wrap(new_for);
     }
 
-    todo();
-    //return PARSE_OK;
+    return PARSE_OK;
 }
 
 static PARSE_STATUS parse_break(Uast_break** new_break, Tk_view* tokens, Scope_id scope_id) {
@@ -1868,64 +1863,63 @@ static void if_else_chain_consume_newline(Tk_view* tokens) {
 }
 
 static PARSE_STATUS parse_if_else_chain(Uast_if_else_chain** if_else_chain, Tk_view* tokens, Scope_id scope_id) {
-    todo();
-    //Token if_start_token;
-    //unwrap(try_consume(&if_start_token, tokens, TOKEN_IF));
+    Token if_start_token;
+    unwrap(try_consume(&if_start_token, tokens, TOKEN_IF));
 
-    //Uast_if_vec ifs = {0};
+    Uast_if_vec ifs = {0};
 
-    //Uast_if* if_stmt = uast_if_new(if_start_token.pos, NULL, NULL);
-    //if_stmt = uast_if_new(if_start_token.pos, NULL, NULL);
-    //
-    //switch (parse_condition(&if_stmt->condition, tokens, scope_id)) {
-    //    case PARSE_EXPR_OK:
-    //        break;
-    //    case PARSE_EXPR_ERROR:
-    //        return PARSE_ERROR;
-    //    case PARSE_EXPR_NONE:
-    //        msg_expected_expr(env.file_path_to_text, *tokens, "");
-    //        return PARSE_ERROR;
-    //    default:
-    //        unreachable("");
-    //}
-    //if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, scope_id_new())) {
-    //    return PARSE_ERROR;
-    //}
-    //vec_append(&a_main, &ifs, if_stmt);
+    Uast_if* if_stmt = uast_if_new(if_start_token.pos, NULL, NULL);
+    if_stmt = uast_if_new(if_start_token.pos, NULL, NULL);
+    
+    switch (parse_condition(&if_stmt->condition, tokens, scope_id)) {
+        case PARSE_EXPR_OK:
+            break;
+        case PARSE_EXPR_ERROR:
+            return PARSE_ERROR;
+        case PARSE_EXPR_NONE:
+            msg_expected_expr(env.file_path_to_text, *tokens, "");
+            return PARSE_ERROR;
+        default:
+            unreachable("");
+    }
+    if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, symbol_collection_new(scope_id))) {
+        return PARSE_ERROR;
+    }
+    vec_append(&a_main, &ifs, if_stmt);
 
-    //if_else_chain_consume_newline(tokens);
-    //while (try_consume(NULL, tokens, TOKEN_ELSE)) {
-    //    if_stmt = uast_if_new(if_start_token.pos, NULL, NULL);
+    if_else_chain_consume_newline(tokens);
+    while (try_consume(NULL, tokens, TOKEN_ELSE)) {
+        if_stmt = uast_if_new(if_start_token.pos, NULL, NULL);
 
-    //    if (try_consume(&if_start_token, tokens, TOKEN_IF)) {
-    //        switch (parse_condition(&if_stmt->condition, tokens, scope_id)) {
-    //            case PARSE_EXPR_OK:
-    //                break;
-    //            case PARSE_EXPR_ERROR:
-    //                return PARSE_ERROR;
-    //            case PARSE_EXPR_NONE:
-    //                msg_expected_expr(env.file_path_to_text, *tokens, "");
-    //                return PARSE_ERROR;
-    //            default:
-    //                unreachable("");
-    //        }
-    //    } else {
-    //        if_stmt->condition = uast_condition_new(if_start_token.pos, NULL);
-    //        if_stmt->condition->child = uast_condition_get_default_child( uast_literal_wrap(
-    //            util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, if_start_token.pos)
-    //        ));
-    //    }
+        if (try_consume(&if_start_token, tokens, TOKEN_IF)) {
+            switch (parse_condition(&if_stmt->condition, tokens, scope_id)) {
+                case PARSE_EXPR_OK:
+                    break;
+                case PARSE_EXPR_ERROR:
+                    return PARSE_ERROR;
+                case PARSE_EXPR_NONE:
+                    msg_expected_expr(env.file_path_to_text, *tokens, "");
+                    return PARSE_ERROR;
+                default:
+                    unreachable("");
+            }
+        } else {
+            if_stmt->condition = uast_condition_new(if_start_token.pos, NULL);
+            if_stmt->condition->child = uast_condition_get_default_child( uast_literal_wrap(
+                util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, if_start_token.pos)
+            ));
+        }
 
-    //    if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, scope_id_new())) {
-    //        return PARSE_ERROR;
-    //    }
-    //    vec_append(&a_main, &ifs, if_stmt);
+        if (PARSE_OK != parse_block(&if_stmt->body, tokens, false, symbol_collection_new(scope_id))) {
+            return PARSE_ERROR;
+        }
+        vec_append(&a_main, &ifs, if_stmt);
 
-    //    if_else_chain_consume_newline(tokens);
-    //}
+        if_else_chain_consume_newline(tokens);
+    }
 
-    //*if_else_chain = uast_if_else_chain_new(if_start_token.pos, ifs);
-    //return PARSE_OK;
+    *if_else_chain = uast_if_else_chain_new(if_start_token.pos, ifs);
+    return PARSE_OK;
 }
 
 
@@ -2044,7 +2038,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, bool def
         }
         lhs = uast_return_wrap(rtn_stmt);
     } else if (starts_with_for(*tokens)) {
-        if (PARSE_OK != parse_for_loop(&lhs, tokens)) {
+        if (PARSE_OK != parse_for_loop(&lhs, tokens, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
     } else if (starts_with_break(*tokens)) {
