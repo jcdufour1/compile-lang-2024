@@ -264,13 +264,14 @@ Uast_case* uast_case_clone(const Uast_case* lang_case, Scope_id new_scope) {
 }
 
 Uast_variable_def* uast_variable_def_clone(const Uast_variable_def* def, Scope_id new_scope) {
-    log(LOG_DEBUG, "%zu\n", new_scope);
     return uast_variable_def_new(def->pos, ulang_type_clone(def->lang_type, new_scope), name_clone(def->name, new_scope));
 }
 
 Uast_block* uast_block_clone(const Uast_block* block, Scope_id parent) {
     Uast_stmt_vec new_children = {0};
     Scope_id new_scope = scope_id_clone(block->scope_id, parent);
+    log(LOG_DEBUG, "uast_block_clone old_scope: %zu\n", block->scope_id);
+    log(LOG_DEBUG, "uast_block_clone new_scope: %zu\n", new_scope);
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         vec_append(&a_main, &new_children, uast_stmt_clone(vec_at(&block->children, idx), new_scope));
     }

@@ -201,15 +201,12 @@ void generic_sub_assignment(Uast_assignment* assign, Name gen_param, Ulang_type 
     generic_sub_expr(assign->rhs, gen_param, gen_arg);
 }
 
-void generic_sub_block(Uast_block* block, Name gen_param, Ulang_type gen_arg) {
+void generic_sub_block(Uast_block* block, Name gen_param /* TODO: avoid using name for gen_param, because it has junk scope_id member*/, Ulang_type gen_arg) {
     assert(gen_param.scope_id > 0);
-    Usymbol_iter iter = usym_tbl_iter_new(gen_param.scope_id);
+    Usymbol_iter iter = usym_tbl_iter_new(block->scope_id);
     Uast_def* curr = NULL;
     while (usym_tbl_iter_next(&curr, &iter)) {
-        log(LOG_DEBUG, TAST_FMT, uast_def_print(curr));
         generic_sub_def(curr, gen_param, gen_arg);
-        log(LOG_DEBUG, TAST_FMT, uast_def_print(curr));
-        log(LOG_DEBUG, "%zu\n", block->scope_id);
     }
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {

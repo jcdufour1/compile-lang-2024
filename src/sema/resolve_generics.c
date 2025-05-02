@@ -465,6 +465,7 @@ static bool resolve_generics_serialize_function_decl(
             Name curr_arg = vec_at(&old_decl->generics, idx_arg)->child->name;
             log(LOG_DEBUG, TAST_FMT, uast_param_print(vec_at(&params, idx_fun_param)));
             log(LOG_DEBUG, "%p\n", (void*)vec_at(&params, idx_fun_param));
+            // TODO: same params are being replaced both here and in generic_sub_block?
             generic_sub_param(vec_at(&params, idx_fun_param), curr_arg, vec_at(&gen_args, idx_arg));
             log(LOG_DEBUG, TAST_FMT, uast_param_print(vec_at(&params, idx_fun_param)));
         }
@@ -472,8 +473,6 @@ static bool resolve_generics_serialize_function_decl(
         generic_sub_lang_type(&new_rtn_type, new_rtn_type, curr_gen, vec_at(&gen_args, idx_arg));
         generic_sub_block(new_block, curr_gen, vec_at(&gen_args, idx_arg));
     }
-    log(LOG_DEBUG, "%zu\n", new_block->scope_id);
-        todo();
 
     if (idx_arg < old_decl->generics.info.count) {
         msg_invalid_count_generic_args(
