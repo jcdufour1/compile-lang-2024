@@ -1312,7 +1312,7 @@ static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, To
         &base,
         name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
         tokens,
-        ulang_type_atom_new((Uname) {.base = name.text}, 0)
+        ulang_type_atom_new((Uname) {.base = name.text, .scope_id = SCOPE_TOP_LEVEL /* TODO */}, 0)
     )) {
         return PARSE_ERROR;
     }
