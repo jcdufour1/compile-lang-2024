@@ -472,6 +472,8 @@ static bool resolve_generics_serialize_function_decl(
         generic_sub_lang_type(&new_rtn_type, new_rtn_type, curr_gen, vec_at(&gen_args, idx_arg));
         generic_sub_block(new_block, curr_gen, vec_at(&gen_args, idx_arg));
     }
+    log(LOG_DEBUG, "%zu\n", new_block->scope_id);
+        todo();
 
     if (idx_arg < old_decl->generics.info.count) {
         msg_invalid_count_generic_args(
