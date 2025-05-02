@@ -1193,16 +1193,14 @@ static PARSE_STATUS parse_struct_base_def(
     Name name,
     Tk_view* tokens,
     bool require_sub_types,
-    Ulang_type default_lang_type,
-    Scope_id scope_id // TODO: remove this parameter
+    Ulang_type default_lang_type
 ) {
     memset(base, 0, sizeof(*base));
     base->name = name;
     log(LOG_DEBUG, "THING: "TAST_FMT"\n", name_print(name));
 
     if (tk_view_front(*tokens).type == TOKEN_OPEN_GENERIC) {
-        todo();
-        //parse_generics_params(&base->generics, tokens, );
+        parse_generics_params(&base->generics, tokens, name.scope_id);
     }
 
     if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
@@ -1213,7 +1211,7 @@ static PARSE_STATUS parse_struct_base_def(
     bool done = false;
     while (!done && tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_CLOSE_CURLY_BRACE) {
         Uast_variable_def* member;
-        switch (parse_variable_decl(&member, tokens, false, false, require_sub_types, default_lang_type, scope_id)) {
+        switch (parse_variable_decl(&member, tokens, false, false, require_sub_types, default_lang_type, name.scope_id)) {
             case PARSE_ERROR:
                 return PARSE_ERROR;
             case PARSE_OK:
@@ -1283,7 +1281,7 @@ static PARSE_STATUS parse_struct_def(Uast_struct_def** struct_def, Tk_view* toke
     unwrap(try_consume(NULL, tokens, TOKEN_STRUCT));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def(&base, name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL), tokens, true, (Ulang_type) {0}, SCOPE_TOP_LEVEL /* TODO */)) {
+    if (PARSE_OK != parse_struct_base_def(&base, name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL), tokens, true, (Ulang_type) {0})) {
         return PARSE_ERROR;
     }
 
@@ -1299,7 +1297,7 @@ static PARSE_STATUS parse_raw_union_def(Uast_raw_union_def** raw_union_def, Tk_v
     unwrap(try_consume(NULL, tokens, TOKEN_RAW_UNION));
 
     Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def(&base, name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL), tokens, true, (Ulang_type) {0}, SCOPE_TOP_LEVEL)) {
+    if (PARSE_OK != parse_struct_base_def(&base, name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL), tokens, true, (Ulang_type) {0})) {
         return PARSE_ERROR;
     }
 
@@ -1342,8 +1340,7 @@ static PARSE_STATUS parse_sum_def(Uast_sum_def** sum_def, Tk_view* tokens, Token
         name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
         tokens,
         false,
-        ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0), sum_tk.pos)),
-        0
+        ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("void", 0), sum_tk.pos))
     )) {
         return PARSE_ERROR;
     }

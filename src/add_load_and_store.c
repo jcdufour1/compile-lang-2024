@@ -1899,7 +1899,6 @@ static Name load_tast(Llvm_block* new_block, Tast* old_tast) {
 }
 
 static Name load_def_sometimes(Llvm_block* new_block, Tast_def* old_def) {
-    (void) new_block;
     switch (old_def->type) {
         case TAST_FUNCTION_DEF:
             return load_function_def(tast_function_def_unwrap(old_def));
@@ -1952,6 +1951,12 @@ static Llvm_block* load_block(Tast_block* old_block) {
 }
 
 Llvm_block* add_load_and_store(Tast_block* old_root) {
+    Symbol_iter iter = sym_tbl_iter_new(0);
+    Tast_def* curr = NULL;
+    while (sym_tbl_iter_next(&curr, &iter)) {
+        load_def_sometimes(new_block, curr);
+    }
+
     Llvm_block* block = load_block(old_root);
     return block;
 }
