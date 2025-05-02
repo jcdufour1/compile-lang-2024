@@ -435,6 +435,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
 
     Uast_def* sym_def = NULL;
     if (!usymbol_lookup(&sym_def, sym_untyped->name)) {
+        log(LOG_DEBUG, "%zu\n", sym_untyped->name.scope_id);
         Name base_name = sym_untyped->name;
         memset(&base_name.gen_args, 0, sizeof(base_name.gen_args));
         if (!usymbol_lookup(&sym_def, base_name)) {
@@ -550,7 +551,6 @@ static int64_t precalulate_number_internal(int64_t lhs_val, int64_t rhs_val, BIN
 }
 
 static Tast_literal* precalulate_number(
-     
     const Tast_number* lhs,
     const Tast_number* rhs,
     BINARY_TYPE token_type,
@@ -561,7 +561,6 @@ static Tast_literal* precalulate_number(
 }
 
 static Tast_literal* precalulate_char(
-     
     const Tast_char* lhs,
     const Tast_char* rhs,
     BINARY_TYPE token_type,
@@ -574,7 +573,6 @@ static Tast_literal* precalulate_char(
 bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_expr* new_rhs, Pos oper_pos, BINARY_TYPE oper_token_type) {
     if (!lang_type_is_equal(tast_expr_get_lang_type(new_lhs), tast_expr_get_lang_type(new_rhs))) {
         if (can_be_implicitly_converted(
-            
             tast_expr_get_lang_type(new_lhs),
             tast_expr_get_lang_type(new_rhs),
             (
@@ -592,7 +590,6 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                 unwrap(try_set_unary_types_finish(&new_rhs, new_rhs, tast_expr_get_pos(new_rhs), UNARY_UNSAFE_CAST, tast_expr_get_lang_type(new_lhs)));
             }
         } else if (can_be_implicitly_converted(
-            
             tast_expr_get_lang_type(new_rhs),
             tast_expr_get_lang_type(new_lhs),
             (
@@ -636,7 +633,6 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
         switch (lhs_lit->type) {
             case TAST_NUMBER:
                 literal = precalulate_number(
-                    
                     tast_number_const_unwrap(lhs_lit),
                     tast_number_const_unwrap(rhs_lit),
                     oper_token_type,
@@ -645,7 +641,6 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                 break;
             case TAST_CHAR:
                 literal = precalulate_char(
-                    
                     tast_char_const_unwrap(lhs_lit),
                     tast_char_const_unwrap(rhs_lit),
                     oper_token_type,
@@ -799,7 +794,6 @@ bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
 }
 
 bool try_set_unary_types_finish(
-     
     Tast_expr** new_tast,
     Tast_expr* new_child,
     Pos unary_pos,
@@ -881,7 +875,6 @@ bool try_set_unary_types_finish(
             return true;
     }
     unreachable("");
-
 }
 
 bool try_set_unary_types(Tast_expr** new_tast, Uast_unary* unary) {
@@ -1597,7 +1590,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 todo();
             }
             fun_decl = uast_function_decl_from_ulang_type_fn(
-                
                 ulang_type_fn_const_unwrap(uast_variable_def_unwrap(fun_def)->lang_type),
                 uast_variable_def_unwrap(fun_def)->pos
             );
@@ -1626,7 +1618,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         } else if (param->is_optional) {
             unwrap(!is_variadic && "cannot mix variadic args and optional args right now");
             // TODO: expected failure case for invalid optional_default
-            corres_arg = uast_expr_clone(param->optional_default, 0 /* TODO */);
+            corres_arg = uast_expr_clone(param->optional_default,  uast_function_def_unwrap(fun_def)->body->scope_id/* TODO */);
         } else {
             // TODO: print max count correctly for variadic fucntions
             msg_invalid_count_function_args(fun_call, fun_decl, param_idx + 1, param_idx + 1);
@@ -1653,7 +1645,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             }
         } else {
             switch (check_generic_assignment(
-                
                 &new_arg,
                 lang_type_from_ulang_type(param->base->lang_type),
                 corres_arg,

@@ -39,16 +39,17 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
 bool name_from_uname(Name* new_name, Uname name) {
     if (name.mod_alias.base.count < 1) {
         Uast_def* result = NULL;
-        if (usymbol_lookup(&result, name_new((Str_view) {0} /* TODO */, name.base, name.gen_args, 0))) {
+        if (usymbol_lookup(&result, name_new((Str_view) {0} /* TODO */, name.base, name.gen_args, name.scope_id))) {
             *new_name = name_new((Str_view) {0} /* TODO */, name.base, name.gen_args, name.scope_id);
             return true;
         }
-        *new_name = name_new(name.mod_alias.mod_path, name.base, name.gen_args, name.scope_id);
+        *new_name = name_new(name.mod_alias.mod_path, name.base, name.gen_args, name.mod_alias.scope_id /* TODO: either remove Uname.scope_id, or fix bugs with Uname->scope_id */);
         return true;
     }
 
     Uast_def* result = NULL;
     if (!usymbol_lookup(&result, name_new((Str_view) {0} /* TODO */, name.mod_alias.base, (Ulang_type_vec) {0}, name.scope_id))) {
+        log(LOG_DEBUG, "name_from_uname path 2\n");
         //log(LOG_DEBUG, TAST_FMT"\n", uname_print(name));
         //log(LOG_DEBUG, TAST_FMT"\n", name_print(name.mod_alias));
         //log(LOG_DEBUG, TAST_FMT"\n", str_view_print(name.mod_alias.base));

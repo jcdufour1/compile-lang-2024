@@ -360,6 +360,7 @@ bool resolve_generics_ulang_type_regular(Ulang_type* result, Ulang_type_regular 
         return false;
     }
     memset(&name_base.gen_args, 0, sizeof(name_base.gen_args));
+    log(LOG_DEBUG, TAST_FMT"\n", name_print(name_base));
     if (!usymbol_lookup(&before_res, name_base)) {
         msg_undefined_type(lang_type.pos, ulang_type_regular_const_wrap(lang_type));
         return false;

@@ -879,6 +879,8 @@ static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk
 
     // TODO: use uname_new instead of (Uname) {
     lang_type->str = (Uname) {.mod_alias = name_new(env.curr_mod_path, mod_alias, (Ulang_type_vec) {0}, scope_id), .base = lang_type_token.text, .scope_id = scope_id};
+    log(LOG_DEBUG, TAST_FMT"\n", uname_print(lang_type->str));
+    log(LOG_DEBUG, "%zu\n", lang_type->str.scope_id);
     while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
         lang_type->pointer_depth++;
     }
