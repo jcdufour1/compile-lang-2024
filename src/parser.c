@@ -166,25 +166,20 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     String file_path = {0};
     string_extend_strv(&a_main, &file_path, mod_path);
     string_extend_cstr(&a_main, &file_path, ".own");
-    (void) mod_path_pos;
-    todo();
-    //Sym_coll_vec old_ances = env.ancesters;
-    //Str_view old_mod_path = env.curr_mod_path;
-    //env.ancesters.info.count = 1; // TODO: make macro to do this
-    //env.curr_mod_path = mod_path;
-    //Uast_block* block = NULL;
-    //if (!parse_file(&block, string_to_strv(file_path), false)) {
-    //    // TODO: expected failure test
-    //    todo();
-    //}
-    //env.ancesters = old_ances;
-    //env.curr_mod_path = old_mod_path;
+    Str_view old_mod_path = env.curr_mod_path;
+    env.curr_mod_path = mod_path;
+    Uast_block* block = NULL;
+    if (!parse_file(&block, string_to_strv(file_path), false)) {
+        // TODO: expected failure test
+        todo();
+    }
+    env.curr_mod_path = old_mod_path;
 
-    //unwrap(usym_tbl_add(&vec_at(&env.ancesters, 0)->usymbol_table, uast_import_path_wrap(uast_import_path_new(
-    //    mod_path_pos,
-    //    block,
-    //    name_new((Str_view) {0}, mod_path, (Ulang_type_vec) {0}, 0)
-    //))));
+    unwrap(usym_tbl_add(uast_import_path_wrap(uast_import_path_new(
+        mod_path_pos,
+        block,
+        name_new((Str_view) {0}, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
+    ))));
 
 finish:
     *mod_alias = uast_mod_alias_new(

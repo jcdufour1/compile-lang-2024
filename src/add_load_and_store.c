@@ -1898,7 +1898,7 @@ static Name load_tast(Llvm_block* new_block, Tast* old_tast) {
     unreachable(TAST_FMT"\n", tast_print(old_tast));
 }
 
-static Name load_def_sometimes(Llvm_block* new_block, Tast_def* old_def) {
+static Name load_def_sometimes(Tast_def* old_def) {
     switch (old_def->type) {
         case TAST_FUNCTION_DEF:
             return load_function_def(tast_function_def_unwrap(old_def));
@@ -1940,7 +1940,7 @@ static Llvm_block* load_block(Tast_block* old_block) {
     Tast_def* curr = NULL;
     while (sym_tbl_iter_next(&curr, &iter)) {
         log(LOG_DEBUG, TAST_FMT, tast_def_print(curr));
-        load_def_sometimes(new_block, curr);
+        load_def_sometimes(curr);
     }
 
     for (size_t idx = 0; idx < old_block->children.info.count; idx++) {
@@ -1954,7 +1954,7 @@ Llvm_block* add_load_and_store(Tast_block* old_root) {
     Symbol_iter iter = sym_tbl_iter_new(0);
     Tast_def* curr = NULL;
     while (sym_tbl_iter_next(&curr, &iter)) {
-        load_def_sometimes(new_block, curr);
+        load_def_sometimes(curr);
     }
 
     Llvm_block* block = load_block(old_root);

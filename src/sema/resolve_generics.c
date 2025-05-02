@@ -100,7 +100,6 @@ static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_bas
     return success;
 }
 
-// we need to get the index of the original definition so that we can put resolved versions in the correct spot
 #define try_set_def_types_internal(after_res, before_res, new_def) \
     do { \
         usym_tbl_add(after_res); \
@@ -227,11 +226,10 @@ static bool resolve_generics_ulang_type_internal_struct_like(
     Obj_unwrap obj_unwrap
 ) {
     Ustruct_def_base old_base = uast_def_get_struct_def_base(before_res);
-    Name new_name = name_new(old_base.name.mod_path, old_base.name.base, ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args, ulang_type_regular_const_unwrap(lang_type).atom.str.scope_id);
+    Name new_name = name_new(old_base.name.mod_path, old_base.name.base, ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args, SCOPE_TOP_LEVEL /* TODO */);
 
     if (old_base.generics.info.count != new_name.gen_args.info.count) {
         msg_invalid_count_generic_args(
-            
             uast_def_get_pos(before_res),
             ulang_type_get_pos(lang_type),
             new_name.gen_args,
@@ -271,7 +269,6 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
             return resolve_generics_ulang_type_internal_struct_like(
                 &after_res,
                 result,
-                
                 before_res,
                 lang_type,
                 local_raw_union_new,
@@ -282,7 +279,6 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
             return resolve_generics_ulang_type_internal_struct_like(
                 &after_res,
                 result,
-                
                 before_res,
                 lang_type,
                 local_enum_new,
@@ -294,7 +290,6 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
             return resolve_generics_ulang_type_internal_struct_like(
                 &after_res,
                 result,
-                
                 before_res,
                 lang_type,
                 local_sum_new,
@@ -306,7 +301,6 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
             return resolve_generics_ulang_type_internal_struct_like(
                 &after_res,
                 result,
-                
                 before_res,
                 lang_type,
                 local_struct_new,
