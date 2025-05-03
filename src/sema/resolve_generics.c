@@ -500,7 +500,7 @@ bool resolve_generics_function_def(
         }
 
         if (!resolve_generics_set_function_def_types(*new_def)) {
-            status = false;
+            return status;
         }
 
         unwrap(symbol_lookup(&dummy_2, name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id)));
