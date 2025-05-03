@@ -1076,11 +1076,12 @@ bool try_set_struct_literal_types(
     Tast_struct_literal* new_lit = tast_struct_literal_new(
         lit->pos,
         new_membs,
-        name_new(env.curr_mod_path, lit->name, (Ulang_type_vec) {0}, 0),
+        name_new(env.curr_mod_path, lit->name, (Ulang_type_vec) {0}, SCOPE_BUILTIN),
         dest_lang_type
     );
     *new_tast = tast_expr_wrap(tast_struct_literal_wrap(new_lit));
 
+    // TODO: remove Tast_struct_lit_def?
     Tast_struct_lit_def* new_def = tast_struct_lit_def_new(
         new_lit->pos,
         new_lit->members,
