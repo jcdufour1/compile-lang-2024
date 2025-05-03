@@ -456,14 +456,15 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             return true;
         }
         case UAST_FUNCTION_DEF: {
-            Uast_function_def* new_def = NULL;
-            if (!resolve_generics_function_def_call(&new_def, uast_function_def_unwrap(sym_def), sym_untyped->name.gen_args, sym_untyped->pos)) {
+            Lang_type new_lang_type = {0};
+            Name new_name = {0};
+            if (!resolve_generics_function_def_call(&new_lang_type, &new_name, uast_function_def_unwrap(sym_def), sym_untyped->name.gen_args, sym_untyped->pos)) {
                 return false;
             }
             *new_tast = tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
                 sym_untyped->pos,
-                new_def->decl->name,
-                lang_type_from_ulang_type(ulang_type_from_uast_function_decl(new_def->decl))
+                new_name,
+                new_lang_type
             )));
             return true;
         }
@@ -2605,7 +2606,8 @@ static void do_test_bit_width(void) {
     assert(4 == bit_width_needed_unsigned(8));
 }
 
-bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def, bool new_sym_tbl) {
+bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def, bool new_sym_tbl /* TODO: remove this variable */) {
+    (void) new_sym_tbl;
     do_test_bit_width();
 
     bool status = true;
@@ -2695,8 +2697,9 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         if (main_fn_->type != UAST_FUNCTION_DEF) {
             todo();
         }
-        Uast_function_def* new_def = NULL;
-        if (!resolve_generics_function_def_call(&new_def, uast_function_def_unwrap(main_fn_), (Ulang_type_vec) {0}, (Pos) {0})) {
+        Lang_type new_lang_type = {0};
+        Name new_name = {0};
+        if (!resolve_generics_function_def_call(&new_lang_type, &new_name, uast_function_def_unwrap(main_fn_), (Ulang_type_vec) {0}, (Pos) {0})) {
             status = false;
         }
     }
@@ -2822,6 +2825,14 @@ bool try_set_types(Tast_block** new_tast, Uast_block* block) {
 
     if (!try_set_block_types(new_tast, block, false, true)) {
         status = false;
+    }
+
+    while (env.fun_implementations_waiting_to_resolve.info.count > 0) {
+        Name curr_name = {0};
+        vec_pop(curr_name, &env.fun_implementations_waiting_to_resolve);
+        if (!resolve_generics_function_def_implementation(curr_name)) {
+            status = false;
+        }
     }
 
     return status;

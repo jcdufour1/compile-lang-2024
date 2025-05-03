@@ -2002,7 +2002,7 @@ static Uast_expr* get_expr_or_symbol(Uast_stmt* stmt) {
     return uast_expr_unwrap(stmt);
 }
 
-static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, bool defer_sym_add, Scope_id scope_id) {
+static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, bool defer_sym_add /* TODO: remove this */, Scope_id scope_id) {
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
     assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
 

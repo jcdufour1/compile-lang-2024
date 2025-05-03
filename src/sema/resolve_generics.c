@@ -479,19 +479,33 @@ static bool resolve_generics_serialize_function_decl(
 }
 
 bool resolve_generics_function_def_call(
-    Uast_function_def** new_def,
+    Lang_type* rtn_type,
+    Name* new_name,
     Uast_function_def* def,
     Ulang_type_vec gen_args, // TODO: remove or refactor name?
     Pos pos_gen_args
 ) {
-    (void) new_def;
     (void) pos_gen_args;
     Name name = name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id);
+    Name name_plain = name_new(def->decl->name.mod_path, def->decl->name.base, (Ulang_type_vec) {0}, def->decl->name.scope_id);
+
     // TODO: put pos_gen_args as value in resolved_already_tbl_add?
     if (resolved_done_or_waiting_tbl_add(name)) {
         vec_append(&a_main, &env.fun_implementations_waiting_to_resolve, name);
     }
-    todo();
+
+    Uast_def* result = NULL;
+    if (!usymbol_lookup(&result, name_plain)) {
+        todo();
+    }
+    Uast_function_def* fun_def = uast_function_def_unwrap(result);
+    if (def->decl->generics.info.count > 1) {
+        todo();
+        //generic_sub_lang_type(&new_rtn_type, new_rtn_type, curr_gen, vec_at(&gen_args, idx_arg));
+    }
+    *rtn_type = lang_type_from_ulang_type(fun_def->decl->return_type);
+    *new_name = name_plain; // TODO: this will not work for generic functions
+    return true;
 }
 
 bool resolve_generics_function_def_implementation(Name name) {
@@ -503,13 +517,12 @@ bool resolve_generics_function_def_implementation(Name name) {
         "same function has been passed to resolve_generics_function_def_implementation "
         "more than once, and it should not be"
     );
-    log(LOG_DEBUG, TAST_FMT, name_print(name));
-    todo();
+    log(LOG_DEBUG, TAST_FMT"\n", name_print(name));
 
     Uast_def* result = NULL;
     if (usymbol_lookup(&result, name)) {
         // we only need to type check this function
-        todo();
+        return resolve_generics_set_function_def_types(uast_function_def_unwrap(result));
     } else {
         // we need to make new uast function implementation and then type check it
         todo();
@@ -557,7 +570,6 @@ bool resolve_generics_function_def_implementation(Name name) {
     //usym_tbl_add(uast_function_def_wrap(*new_def));
 
     //if (!symbol_lookup(&dummy_2, (*new_def)->decl->name)) {
-    //    // TODO: see if there is less hacky way to do this
     //    if (!resolve_generics_set_function_def_types(*new_def)) {
     //        status = false;
     //    }

@@ -10,7 +10,8 @@ bool resolve_generics_ulang_type(Ulang_type* result, Ulang_type lang_type);
 bool resolve_generics_ulang_type_regular(Ulang_type* result, Ulang_type_regular lang_type);
 
 bool resolve_generics_function_def_call(
-    Uast_function_def** new_def,
+    Lang_type* rtn_type,
+    Name* new_name,
     Uast_function_def* def,
     Ulang_type_vec gen_args,
     Pos pos_gen_args
