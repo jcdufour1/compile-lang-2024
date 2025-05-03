@@ -51,6 +51,7 @@ Name serialize_ulang_type(Str_view mod_path, Ulang_type ulang_type) {
         case ULANG_TYPE_REGULAR:
             return serialize_ulang_type_regular(mod_path, ulang_type_regular_const_unwrap(ulang_type));
         case ULANG_TYPE_FN:
+            todo();
             return serialize_ulang_type_fn( mod_path, ulang_type_fn_const_unwrap(ulang_type));
         case ULANG_TYPE_TUPLE:
             todo();

@@ -69,7 +69,8 @@ Str_view serialize_name_symbol_table(Name name) {
         string_extend_size_t(&a_main, &buf, name.gen_args.info.count);
         string_extend_cstr(&a_main, &buf, "_");
         for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
-            string_extend_strv(&a_main, &buf, serialize_name(serialize_ulang_type(name.mod_path, vec_at(&name.gen_args, idx))));
+            //Name name_thing = vec_at(&name.gen_args, idx);
+            string_extend_strv(&a_main, &buf, serialize_name_symbol_table(serialize_ulang_type(name.mod_path, vec_at(&name.gen_args, idx))));
         }
     }
 
