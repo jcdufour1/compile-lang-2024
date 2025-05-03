@@ -3,6 +3,7 @@
 
 #include <ulang_type.h>
 #include <lang_type.h>
+#include <lang_type_print.h>
 #include <uast_utils.h>
 #include <resolve_generics.h>
 #include <ulang_type_get_pos.h>
@@ -157,21 +158,27 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     Lang_type_atom new_atom = lang_type_atom_new(temp_name, ulang_type_regular_const_unwrap(resolved).atom.pointer_depth);
     switch (result->type) {
         case UAST_STRUCT_DEF:
+            todo();
             *new_lang_type = lang_type_struct_const_wrap(lang_type_struct_new(lang_type.pos, new_atom));
             return true;
         case UAST_RAW_UNION_DEF:
+            todo();
             *new_lang_type = lang_type_raw_union_const_wrap(lang_type_raw_union_new(lang_type.pos, new_atom));
             return true;
         case UAST_ENUM_DEF:
+            todo();
             *new_lang_type = lang_type_enum_const_wrap(lang_type_enum_new(lang_type.pos, new_atom));
             return true;
         case UAST_SUM_DEF:
+            todo();
             *new_lang_type = lang_type_sum_const_wrap(lang_type_sum_new(lang_type.pos, new_atom));
             return true;
         case UAST_PRIMITIVE_DEF:
             *new_lang_type = lang_type_from_ulang_type_regular_primitive( ulang_type_regular_const_unwrap(resolved), uast_primitive_def_unwrap(result));
+            log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, *new_lang_type));
             return true;
         case UAST_LITERAL_DEF:
+            todo();
             unwrap(uast_literal_def_const_unwrap(result)->type == UAST_VOID_DEF);
             *new_lang_type = lang_type_void_const_wrap(lang_type_void_new(lang_type.pos));
             return true;

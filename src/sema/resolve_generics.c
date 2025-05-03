@@ -494,16 +494,23 @@ bool resolve_generics_function_def_call(
         vec_append(&a_main, &env.fun_implementations_waiting_to_resolve, name);
     }
 
-    Uast_def* result = NULL;
-    if (!usymbol_lookup(&result, name_plain)) {
-        todo();
+    //Uast_def* result = NULL;
+    //if (!usymbol_lookup(&result, name_plain)) {
+    //    todo();
+    //}
+    //Uast_function_def* fun_def = uast_function_def_unwrap(result);
+    log(LOG_DEBUG, TAST_FMT, uast_function_def_print(def));
+    Uast_function_decl* decl = uast_function_decl_clone(def->decl, def->decl->name.scope_id);
+    if (def->decl->generics.info.count > 0) {
+        for (size_t idx = 0; idx < gen_args.info.count; idx++) {
+            generic_sub_lang_type(&decl->return_type, decl->return_type, vec_at(&decl->generics, idx)->child->name, vec_at(&gen_args, idx));
+            log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, vec_at(&gen_args, idx)));
+            log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, decl->return_type));
+        }
     }
-    Uast_function_def* fun_def = uast_function_def_unwrap(result);
-    if (def->decl->generics.info.count > 1) {
-        todo();
-        //generic_sub_lang_type(&new_rtn_type, new_rtn_type, curr_gen, vec_at(&gen_args, idx_arg));
-    }
-    *rtn_type = lang_type_from_ulang_type(fun_def->decl->return_type);
+    *rtn_type = lang_type_from_ulang_type(decl->return_type);
+    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, decl->return_type));
+    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, *rtn_type));
     *new_name = name_plain; // TODO: this will not work for generic functions
     return true;
 }

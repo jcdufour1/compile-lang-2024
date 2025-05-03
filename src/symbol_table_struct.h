@@ -80,6 +80,19 @@ typedef struct {
 
 
 typedef struct {
+    Uast_function_decl* tast;
+    Str_view key;
+    SYM_TBL_STATUS status;
+} Function_decl_tbl_tast;
+
+typedef struct {
+    Function_decl_tbl_tast* table_tasts;
+    size_t count; // count elements in symbol_table
+    size_t capacity; // count buckets in symbol_table
+} Function_decl_tbl;
+
+
+typedef struct {
     Str_view* item;
     Str_view key;
     SYM_TBL_STATUS status;
@@ -90,6 +103,7 @@ typedef struct {
     size_t count; // count elements in symbol_table
     size_t capacity; // count buckets in symbol_table
 } File_path_to_text;
+
 
 typedef struct {
     void* tast;

@@ -13,7 +13,7 @@ Uast_stmt* uast_stmt_clone(const Uast_stmt* stmt, Scope_id new_scope);
 
 Uast_variable_def* uast_variable_def_clone(const Uast_variable_def* def, Scope_id new_scope);
 
-Uast_param* uast_param_clone(const Uast_param* param, Scope_id new_scope);
+Uast_param* uast_param_clone(const Uast_param* param, Scope_id scope_id);
 
 Uast_block* uast_block_clone(const Uast_block* block, Scope_id parent);
 
@@ -28,5 +28,11 @@ Uast_if* uast_if_clone(const Uast_if* lang_if, Scope_id new_scope);
 Uast_switch* uast_switch_clone(const Uast_switch* lang_switch, Scope_id new_scope);
 
 Uast_if_else_chain* uast_if_else_chain_clone(const Uast_if_else_chain* if_else, Scope_id new_scope);
+
+Uast_function_decl* uast_function_decl_clone(const Uast_function_decl* decl, Scope_id new_scope);
+
+Uast_generic_param* uast_generic_param_clone(const Uast_generic_param* param);
+
+Uast_function_params* uast_function_params_clone(const Uast_function_params* params, Scope_id scope_id);
 
 #endif // UAST_CLONE_H

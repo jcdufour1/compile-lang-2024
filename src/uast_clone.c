@@ -29,6 +29,22 @@ Uast_literal* uast_literal_clone(const Uast_literal* lit) {
     unreachable("");
 }
 
+Uast_generic_param_vec uast_generic_param_vec_clone(Uast_generic_param_vec vec) {
+    Uast_generic_param_vec new_vec = {0};
+    for (size_t idx = 0; idx < vec.info.count; idx++) {
+        vec_append(&a_main, &new_vec, uast_generic_param_clone(vec_at(&vec, idx)));
+    }
+    return new_vec;
+}
+
+Uast_param_vec uast_param_vec_clone(Uast_param_vec vec, Scope_id scope_id) {
+    Uast_param_vec new_vec = {0};
+    for (size_t idx = 0; idx < vec.info.count; idx++) {
+        vec_append(&a_main, &new_vec, uast_param_clone(vec_at(&vec, idx), scope_id));
+    }
+    return new_vec;
+}
+
 Uast_if_vec uast_if_vec_clone(Uast_if_vec vec, Scope_id new_scope) {
     Uast_if_vec new_vec = {0};
     for (size_t idx = 0; idx < vec.info.count; idx++) {
@@ -102,8 +118,8 @@ Uast_unknown* uast_unknown_clone(const Uast_unknown* unknown) {
     return uast_unknown_new(unknown->pos);
 }
 
-Uast_param* uast_param_clone(const Uast_param* param, Scope_id new_scope) {
-    return uast_param_new(param->pos, uast_variable_def_clone(param->base, new_scope), param->is_optional, param->is_variadic, param->optional_default);
+Uast_param* uast_param_clone(const Uast_param* param, Scope_id scope_id) {
+    return uast_param_new(param->pos, uast_variable_def_clone(param->base, scope_id), param->is_optional, param->is_variadic, param->optional_default);
 }
 
 Uast_lang_def* uast_lang_def_clone(const Uast_lang_def* def) {
@@ -263,6 +279,28 @@ Uast_case* uast_case_clone(const Uast_case* lang_case, Scope_id new_scope) {
 
 Uast_variable_def* uast_variable_def_clone(const Uast_variable_def* def, Scope_id new_scope) {
     return uast_variable_def_new(def->pos, ulang_type_clone(def->lang_type, new_scope), name_clone(def->name, new_scope));
+}
+
+Uast_function_decl* uast_function_decl_clone(const Uast_function_decl* decl, Scope_id new_scope) {
+    return uast_function_decl_new(
+        decl->pos,
+        uast_generic_param_vec_clone(decl->generics),
+        uast_function_params_clone(decl->params, new_scope),
+        ulang_type_clone(decl->return_type, new_scope),
+        name_clone(decl->name, new_scope)
+    );
+}
+
+Uast_function_params* uast_function_params_clone(const Uast_function_params* params, Scope_id scope_id) {
+    return uast_function_params_new(
+        params->pos,
+        uast_param_vec_clone(params->params, scope_id)
+    );
+}
+
+Uast_generic_param* uast_generic_param_clone(const Uast_generic_param* param) {
+    // WARNING: the variable defs here are given a junk scope_id (for now)
+    return uast_generic_param_new(param->pos, uast_symbol_clone(param->child, SCOPE_NOT));
 }
 
 Uast_block* uast_block_clone(const Uast_block* block, Scope_id parent) {
