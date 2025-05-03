@@ -488,19 +488,11 @@ bool resolve_generics_function_def_call(
     log(LOG_DEBUG, "THING THING HTING HTING\n");
     (void) pos_gen_args;
     Name name = name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id);
-    Ulang_type_vec gen_args_test = {0};
-    vec_append(&a_main, &gen_args_test, ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new_from_cstr("i32", 0), (Pos) {0})));
-    Name name_test = name_new((Str_view) {0}, str_view_from_cstr("add"), gen_args_test, def->decl->name.scope_id);
-    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(serialize_name_symbol_table(name)));
-    log(LOG_DEBUG, TAST_FMT"\n", str_view_print(serialize_name_symbol_table(name_test)));
-    unwrap(str_view_is_equal(serialize_name_symbol_table(name), serialize_name_symbol_table(name_test)));
     Name name_plain = name_new(def->decl->name.mod_path, def->decl->name.base, (Ulang_type_vec) {0}, def->decl->name.scope_id);
 
     // TODO: put pos_gen_args as value in resolved_already_tbl_add?
     Uast_function_decl* cached = NULL;
-    log(LOG_DEBUG, TAST_FMT"\n", name_print(name));
     if (function_decl_tbl_lookup(&cached, name)) {
-        todo();
         *rtn_type = lang_type_from_ulang_type(cached->return_type);
         *new_name = name;
         return true;

@@ -1435,7 +1435,7 @@ bool try_set_function_call_types_sum_case(Tast_sum_case** new_case, Uast_expr_ve
 }
 
 static Uast_function_decl* uast_function_decl_from_ulang_type_fn(Ulang_type_fn lang_type, Pos pos) {
-    Name name = serialize_ulang_type(env.curr_mod_path, ulang_type_fn_const_wrap(lang_type));
+    Name name = serialize_ulang_type(env.curr_mod_path, ulang_type_fn_const_wrap(lang_type), true /* TODO */);
     Uast_def* fun_decl_ = NULL;
     if (usym_tbl_lookup(&fun_decl_, name)) {
         return uast_function_decl_unwrap(fun_decl_);
@@ -1473,13 +1473,8 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     bool status = true;
 
     Name fun_name = {0};
+    Uast_function_decl* fun_decl = NULL;
     switch (new_callee->type) {
-        case TAST_SYMBOL: {
-            fun_name = tast_symbol_unwrap(new_callee)->base.name;
-            break;
-        }
-        case TAST_MEMBER_ACCESS:
-            todo();
         case TAST_SUM_CALLEE: {
             if (fun_call->args.info.count != 1) {
                 // TODO: expected failure case
@@ -1559,30 +1554,37 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 *new_call = new_callee;
                 return status;
             } else {
-                //unwrap(usymbol_lookup(&fun_def, tast_function_lit_unwrap(tast_literal_unwrap(new_callee))->name));
                 fun_name = tast_function_lit_unwrap(tast_literal_unwrap(new_callee))->name;
+                unwrap(function_decl_tbl_lookup(&fun_decl, fun_name));
                 break;
             }
         }
+        case TAST_SYMBOL: {
+            fun_name = tast_symbol_unwrap(new_callee)->base.name;
+            fun_decl = uast_function_decl_from_ulang_type_fn(
+                ulang_type_fn_const_unwrap(lang_type_to_ulang_type(tast_symbol_unwrap(new_callee)->base.lang_type)),
+                tast_symbol_unwrap(new_callee)->pos
+            );
+            break;
+        }
+        case TAST_MEMBER_ACCESS:
+            unwrap(function_decl_tbl_lookup(&fun_decl, fun_name));
+            todo();
         default:
             unreachable(TAST_FMT, tast_expr_print(new_callee));
     }
 
-    Uast_function_decl* fun_decl = NULL;
     log(LOG_DEBUG, TAST_FMT"\n", name_print(fun_name));
-    unwrap(function_decl_tbl_lookup(&fun_decl, fun_name));
-    //switch (fun_def->type) {
+    // TODO: remove below symbol lookup and switch statement if possible
+    //Uast_def* callee_def = NULL;
+    //unwrap(usymbol_lookup(&callee_def, new_callee->name));
+    //switch (callee->type) {
     //    case UAST_FUNCTION_DEF:
-    //        log(LOG_DEBUG, TAST_FMT"\n", name_print(fun_call->callee->decl->name));
     //        break;
     //    case UAST_FUNCTION_DECL:
-    //        fun_decl = uast_function_decl_unwrap(fun_def);
     //        break;
     //    case UAST_SUM_DEF: {
-    //        Uast_sum_def* sum_def = uast_sum_def_unwrap(fun_def);
-    //        (void) sum_def;
-    //        //*new_call = 
-    //        todo();
+    //        unreachable("");
     //    }
     //    case UAST_VARIABLE_DEF: {
     //        if (uast_variable_def_unwrap(fun_def)->lang_type.type != ULANG_TYPE_FN) {
@@ -1653,6 +1655,8 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 case CHECK_ASSIGN_OK:
                     break;
                 case CHECK_ASSIGN_INVALID:
+                    log(LOG_DEBUG, TAST_FMT, uast_param_print(param));
+                    log(LOG_DEBUG, TAST_FMT, uast_param_print(param));
                     msg_invalid_function_arg(new_arg, param->base);
                     status = false;
                     goto error;

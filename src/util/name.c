@@ -23,6 +23,7 @@ void serialize_str_view(String* buf, Str_view str_view) {
 // TODO: remove this
 bool try_str_view_consume_size_t(size_t* result, Str_view* str_view, bool ignore_underscore);
 
+// TODO: merge serialize_name_symbol_table and serialize_name to be consistant with ulang_type?
 Str_view serialize_name_symbol_table(Name name) {
     String buf = {0};
 
@@ -69,8 +70,7 @@ Str_view serialize_name_symbol_table(Name name) {
         string_extend_size_t(&a_main, &buf, name.gen_args.info.count);
         string_extend_cstr(&a_main, &buf, "_");
         for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
-            //Name name_thing = vec_at(&name.gen_args, idx);
-            string_extend_strv(&a_main, &buf, serialize_name_symbol_table(serialize_ulang_type(name.mod_path, vec_at(&name.gen_args, idx))));
+            string_extend_strv(&a_main, &buf, serialize_name_symbol_table(serialize_ulang_type(name.mod_path, vec_at(&name.gen_args, idx), false)));
         }
     }
 
