@@ -37,7 +37,6 @@ void generic_sub_lang_type_regular(
         ulang_type_set_pointer_depth(new_lang_type, gen_prev_depth + base_depth);
         return;
     }
-        todo();
 
     lang_type = ulang_type_regular_clone(lang_type, lang_type.atom.str.scope_id);
     Ulang_type_vec* gen_args = &lang_type.atom.str.gen_args;

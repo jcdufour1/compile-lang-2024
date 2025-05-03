@@ -418,14 +418,6 @@ bool file_path_to_text_tbl_add(File_path_to_text* sym_table, Str_view* file_text
 }
 
 //
-// Resolved_done_or_waiting implementation
-//
-
-bool resolved_done_or_waiting_tbl_add(Name key) {
-    return generic_tbl_add((Generic_symbol_table*)&env.resolved_done_or_waiting, serialize_name_symbol_table(key), NULL);
-}
-
-//
 // Function_decl_tbl implementation
 //
 

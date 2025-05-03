@@ -58,7 +58,7 @@ typedef struct Env_ {
     Name label_after_for;
     Name label_if_continue;
 
-    Resolved_done_or_waiting resolved_done_or_waiting; // TODO: remove this table because Function_decl_tbl can serve its purpose?
+    // TODO: think about functions in different scopes, but with the same name (for both of below objects)
     Name_vec fun_implementations_waiting_to_resolve;
     Function_decl_tbl function_decl_tbl;
 } Env;

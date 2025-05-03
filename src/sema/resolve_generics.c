@@ -491,9 +491,14 @@ bool resolve_generics_function_def_call(
     Name name_plain = name_new(def->decl->name.mod_path, def->decl->name.base, (Ulang_type_vec) {0}, def->decl->name.scope_id);
 
     // TODO: put pos_gen_args as value in resolved_already_tbl_add?
-    if (resolved_done_or_waiting_tbl_add(name)) {
-        vec_append(&a_main, &env.fun_implementations_waiting_to_resolve, name);
+    Uast_function_decl* cached = NULL;
+    if (function_decl_tbl_lookup(&cached, name)) {
+        *rtn_type = lang_type_from_ulang_type(cached->return_type);
+        *new_name = name;
+        return true;
     }
+
+    vec_append(&a_main, &env.fun_implementations_waiting_to_resolve, name);
 
     //Uast_def* result = NULL;
     //if (!usymbol_lookup(&result, name_plain)) {
@@ -501,33 +506,43 @@ bool resolve_generics_function_def_call(
     //}
     //Uast_function_def* fun_def = uast_function_def_unwrap(result);
     log(LOG_DEBUG, TAST_FMT, uast_function_def_print(def));
+    // TODO: avoid cloning everytime; use function_decl_tbl instead where possible
     Uast_function_decl* decl = uast_function_decl_clone(def->decl, def->decl->name.scope_id);
+    decl->name = name_plain;
     if (def->decl->generics.info.count > 0) {
-        for (size_t idx = 0; idx < gen_args.info.count; idx++) {
-            generic_sub_lang_type(&decl->return_type, decl->return_type, vec_at(&decl->generics, idx)->child->name, vec_at(&gen_args, idx));
-            log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, vec_at(&gen_args, idx)));
-            log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, decl->return_type));
+        for (size_t idx_gen_param = 0; idx_gen_param < gen_args.info.count; idx_gen_param++) {
+            Name gen_param = vec_at(&decl->generics, idx_gen_param)->child->name;
+            Ulang_type gen_arg = vec_at(&gen_args, idx_gen_param);
+            generic_sub_lang_type(&decl->return_type, decl->return_type, gen_param, gen_arg);
+            for (size_t idx_param = 0; idx_param < decl->params->params.info.count; idx_param++) {
+                Uast_param* param = vec_at(&decl->params->params, idx_param);
+                generic_sub_param(param, gen_param, gen_arg);
+            }
         }
+        decl->name = name;
     }
     Uast_function_decl* dummy = NULL;
+    log(LOG_DEBUG, TAST_FMT"\n", uast_function_decl_print(decl));
     unwrap(function_decl_tbl_add(decl));
     unwrap(function_decl_tbl_lookup(&dummy, decl->name));
     log(LOG_DEBUG, TAST_FMT"\n", name_print(decl->name));
     *rtn_type = lang_type_from_ulang_type(decl->return_type);
     log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, decl->return_type));
     log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, *rtn_type));
-    *new_name = name_plain; // TODO: this will not work for generic functions
+    log(LOG_DEBUG, TAST_FMT"\n", uast_function_decl_print(decl));
+    *new_name = name;
     return true;
 }
 
 bool resolve_generics_function_def_implementation(Name name) {
+    Name name_plain = name_new(name.mod_path, name.base, (Ulang_type_vec) {0}, name.scope_id);
     Uast_def* dummy = NULL;
     (void) dummy;
     Tast_def* dummy_2 = NULL;
     assert(
         !symbol_lookup(&dummy_2, name) &&
         "same function has been passed to resolve_generics_function_def_implementation "
-        "more than once, and it should not be"
+        "more than once, and it should not have been"
     );
     log(LOG_DEBUG, TAST_FMT"\n", name_print(name));
 
@@ -537,7 +552,19 @@ bool resolve_generics_function_def_implementation(Name name) {
         return resolve_generics_set_function_def_types(uast_function_def_unwrap(result));
     } else {
         // we need to make new uast function implementation and then type check it
-        todo();
+        unwrap(usymbol_lookup(&result, name_plain));
+        Uast_function_def* def = uast_function_def_unwrap(result);
+        Uast_block* new_block = uast_block_clone(def->body, def->decl->name.scope_id);
+        assert(new_block != def->body);
+
+        Uast_function_decl* new_decl = NULL;
+        if (!resolve_generics_serialize_function_decl(&new_decl, def->decl, new_block, name.gen_args, (Pos) {0} /* TODO */)) {
+            return false;
+        }
+        Uast_function_def* new_def = uast_function_def_new(new_decl->pos, new_decl, new_block);
+        usym_tbl_add(uast_function_def_wrap(new_def));
+        log(LOG_DEBUG, TAST_FMT, uast_function_def_print(new_def));
+        return resolve_generics_set_function_def_types(new_def);
     }
     unreachable("");
 
