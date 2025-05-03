@@ -26,14 +26,12 @@ Uname name_to_uname(Name name);
 
 static inline bool try_lang_type_from_ulang_type_tuple(
     Lang_type_tuple* new_lang_type,
-     
     Ulang_type_tuple lang_type,
     Pos pos
 );
 
 static inline bool try_lang_type_from_ulang_type_fn(
     Lang_type_fn* new_lang_type,
-     
     Ulang_type_fn lang_type,
     Pos pos
 );
@@ -55,7 +53,6 @@ static inline Lang_type lang_type_from_ulang_type_fn(Ulang_type_fn lang_type) {
 // TODO: figure out way to reduce duplicate vec allocations
 static inline bool try_lang_type_from_ulang_type_tuple(
     Lang_type_tuple* new_lang_type,
-     
     Ulang_type_tuple lang_type,
     Pos pos
 ) {

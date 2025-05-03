@@ -82,6 +82,7 @@ for generics:
 - distinct
 - pointer generic
 - warn about unused variables
+- invalid literal as function callee
 
 ## needed tests
 - let token* Token = <...>; switch token {<...>}

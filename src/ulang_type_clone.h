@@ -30,7 +30,9 @@ static inline Ulang_type_fn ulang_type_fn_clone(Ulang_type_fn lang_type, Scope_i
 static inline Ulang_type ulang_type_clone(Ulang_type lang_type, Scope_id new_scope) {
     switch (lang_type.type) {
         case ULANG_TYPE_TUPLE:
-            todo();
+            return ulang_type_tuple_const_wrap(ulang_type_tuple_clone(
+                ulang_type_tuple_const_unwrap(lang_type), new_scope
+            ));
         case ULANG_TYPE_FN:
             return ulang_type_fn_const_wrap(ulang_type_fn_clone(
                 ulang_type_fn_const_unwrap(lang_type), new_scope

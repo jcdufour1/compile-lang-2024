@@ -479,7 +479,7 @@ static bool resolve_generics_serialize_function_decl(
 }
 
 bool resolve_generics_function_def_call(
-    Lang_type* rtn_type,
+    Lang_type* rtn_type, // TODO: rename this parameter
     Name* new_name,
     Uast_function_def* def,
     Ulang_type_vec gen_args, // TODO: remove or refactor name?
@@ -498,14 +498,17 @@ bool resolve_generics_function_def_call(
         return true;
     }
 
-    vec_append(&a_main, &env.fun_implementations_waiting_to_resolve, name);
+    // TODO: expected failure case for recursive generic function with mismatched args
+    if (def->decl->generics.info.count != gen_args.info.count) {
+        msg_invalid_count_generic_args(def->pos, pos_gen_args, gen_args, def->decl->generics.info.count, def->decl->generics.info.count);
+        return false;
+    }
 
     //Uast_def* result = NULL;
     //if (!usymbol_lookup(&result, name_plain)) {
     //    todo();
     //}
     //Uast_function_def* fun_def = uast_function_def_unwrap(result);
-    log(LOG_DEBUG, TAST_FMT, uast_function_def_print(def));
     // TODO: avoid cloning everytime; use function_decl_tbl instead where possible
     Uast_function_decl* decl = uast_function_decl_clone(def->decl, def->decl->name.scope_id);
     decl->name = name_plain;
@@ -527,11 +530,30 @@ bool resolve_generics_function_def_call(
     unwrap(function_decl_tbl_add(decl));
     unwrap(function_decl_tbl_lookup(&dummy, decl->name));
     log(LOG_DEBUG, TAST_FMT"\n", name_print(decl->name));
-    *rtn_type = lang_type_from_ulang_type(decl->return_type);
+
+    Ulang_type_vec ulang_types = {0};
+    for (size_t idx = 0; idx < decl->params->params.info.count; idx++) {
+        vec_append(&a_main, &ulang_types, vec_at(&decl->params->params, idx)->base->lang_type);
+    }
+    Ulang_type* ulang_type_rtn_type = arena_alloc(&a_main, sizeof(*ulang_type_rtn_type));
+    *ulang_type_rtn_type = decl->return_type;
+    Ulang_type_fn new_fn = ulang_type_fn_new(
+        ulang_type_tuple_new(ulang_types, (Pos) {0} /* TODO */),
+        ulang_type_rtn_type,
+        (Pos) {0} /* TODO */
+    );
+    Lang_type_fn rtn_type_ = {0};
+    if (!try_lang_type_from_ulang_type_fn(&rtn_type_, new_fn, (Pos) {0})) {
+        return false;
+    }
+    *rtn_type = lang_type_fn_const_wrap(rtn_type_);
     log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, decl->return_type));
     log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, *rtn_type));
     log(LOG_DEBUG, TAST_FMT"\n", uast_function_decl_print(decl));
     *new_name = name;
+
+    vec_append(&a_main, &env.fun_implementations_waiting_to_resolve, name);
+
     return true;
 }
 
