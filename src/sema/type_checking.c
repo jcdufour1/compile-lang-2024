@@ -25,6 +25,7 @@
 #include <ulang_type_serialize.h>
 #include <symbol_table.h>
 
+static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def);
 
 // TODO: expected failure test for too few elems in struct init (non designated args)
 
@@ -1405,7 +1406,11 @@ bool try_set_function_call_types_sum_case(Tast_sum_case** new_case, Uast_expr_ve
                 lang_type_to_ulang_type(sum_case->tag->lang_type),
                 name_new(env.curr_mod_path, uast_symbol_unwrap(vec_at(&args, 0))->name.base, (Ulang_type_vec) {0}, uast_symbol_unwrap(vec_at(&args, 0))->name.scope_id)
             );
-            usymbol_add(uast_variable_def_wrap(new_def));
+            if (!usymbol_add(uast_variable_def_wrap(new_def))) {
+                // TODO: in error message, specify that the new variable definition is in the sum case () (and print accurate position)
+                try_set_msg_redefinition_of_symbol(uast_variable_def_wrap(new_def));
+                return false;
+            }
 
             Uast_assignment* new_assign = uast_assignment_new(
                 new_def->pos,
@@ -1644,6 +1649,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 todo();
             }
         } else {
+            log(LOG_DEBUG, TAST_FMT, uast_param_print(param));
             switch (check_generic_assignment(
                 &new_arg,
                 lang_type_from_ulang_type(param->base->lang_type),

@@ -14,12 +14,12 @@ type Thing sum {
 fn token_print(token Token) {
     switch token {
         case Token.num(num): printf("token is number: %d\n", num)
-        case Thing.token(token): printf("token is Thing.token")
+        case Thing.token(token_type): printf("token is Thing.token")
     }
 }
 
 fn main() i32 {
-    token_print({.num = 76, .string = "hello"})
+    token_print(.num(78))
     return 0
 }
 

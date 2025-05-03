@@ -500,6 +500,7 @@ bool resolve_generics_function_def(
         }
 
         if (!resolve_generics_set_function_def_types(*new_def)) {
+            status = false;
             return status;
         }
 
