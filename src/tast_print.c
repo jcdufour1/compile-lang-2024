@@ -252,11 +252,12 @@ Str_view tast_raw_union_lit_print_internal(const Tast_raw_union_lit* sum, int in
     return string_to_strv(buf);
 }
 
-Str_view tast_function_lit_print_internal(const Tast_function_lit* name, int indent) {
+Str_view tast_function_lit_print_internal(const Tast_function_lit* lit, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "function_lit", indent);
-    extend_name(false, &buf, name->name);
+    extend_name(false, &buf, lit->name);
+    extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, lit->lang_type);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);

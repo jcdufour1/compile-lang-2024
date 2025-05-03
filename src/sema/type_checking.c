@@ -297,7 +297,6 @@ typedef enum {
 } CHECK_ASSIGN_STATUS;
 
 CHECK_ASSIGN_STATUS check_generic_assignment_finish(
-     
     Tast_expr** new_src,
     Lang_type dest_lang_type,
     bool src_is_zero,
@@ -362,6 +361,8 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
             env.parent_of = old_parent_of;
             return CHECK_ASSIGN_ERROR;
         }
+        log(LOG_DEBUG, TAST_FMT, uast_expr_print(src));
+        log(LOG_DEBUG, TAST_FMT, tast_expr_print(*new_src));
         env.lhs_lang_type = old_lhs_lang_type;
         env.parent_of = old_parent_of;
     }
@@ -371,6 +372,8 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
         src_is_zero = true;
     }
 
+    log(LOG_DEBUG, TAST_FMT, uast_expr_print(src));
+    log(LOG_DEBUG, TAST_FMT, tast_expr_print(*new_src));
     return check_generic_assignment_finish(new_src, dest_lang_type, src_is_zero, *new_src);
 }
 
@@ -468,6 +471,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
                 new_name,
                 new_lang_type
             )));
+            log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, new_lang_type));
             return true;
         }
         case UAST_STRUCT_DEF:
@@ -1212,9 +1216,10 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
         case UAST_SYMBOL:
             if (!try_set_symbol_types(new_tast, uast_symbol_unwrap(uast))) {
                 return false;
-            } else {
-                assert(*new_tast);
             }
+            log(LOG_DEBUG, TAST_FMT, uast_expr_print(uast));
+            log(LOG_DEBUG, TAST_FMT, tast_expr_print(*new_tast));
+            assert(*new_tast);
             return true;
         case UAST_UNKNOWN:
             return try_set_symbol_types(new_tast, uast_symbol_new(
