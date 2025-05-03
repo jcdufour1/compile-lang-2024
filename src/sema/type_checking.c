@@ -422,6 +422,7 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
 
 // set symbol lang_type, and report error if symbol is undefined
 bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
+    log(LOG_DEBUG, TAST_FMT, uast_symbol_print(sym_untyped));
     Uast_expr* new_expr = NULL;
     switch (expand_def_symbol(&new_expr, sym_untyped)) {
         case EXPAND_NAME_ERROR:
@@ -447,6 +448,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
 
     switch (sym_def->type) {
         case UAST_FUNCTION_DECL: {
+            function_decl_tbl_add(uast_function_decl_unwrap(sym_def));
             Uast_function_decl* new_decl = uast_function_decl_unwrap(sym_def);
             *new_tast = tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
                 sym_untyped->pos,
@@ -1470,26 +1472,14 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
     bool status = true;
 
-    Uast_def* fun_def = NULL;
+    Name fun_name = {0};
     switch (new_callee->type) {
         case TAST_SYMBOL: {
-            if (!usymbol_lookup(&fun_def, tast_symbol_unwrap(new_callee)->base.name)) {
-                msg(
-                    LOG_ERROR, EXPECT_FAIL_UNDEFINED_FUNCTION, env.file_path_to_text, fun_call->pos,
-                    "function `"STR_VIEW_FMT"` is not defined\n", name_print(tast_symbol_unwrap(new_callee)->base.name)
-                );
-                status = false;
-                goto error;
-            }
+            fun_name = tast_symbol_unwrap(new_callee)->base.name;
             break;
         }
         case TAST_MEMBER_ACCESS:
             todo();
-            //if (tast_member_access_is_sum(tast_member_access_unwrap(new_callee))) {
-            //    todo();
-            //} else {
-            //    unreachable("");
-            //}
         case TAST_SUM_CALLEE: {
             if (fun_call->args.info.count != 1) {
                 // TODO: expected failure case
@@ -1569,7 +1559,8 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 *new_call = new_callee;
                 return status;
             } else {
-                unwrap(usymbol_lookup(&fun_def, tast_function_lit_unwrap(tast_literal_unwrap(new_callee))->name));
+                //unwrap(usymbol_lookup(&fun_def, tast_function_lit_unwrap(tast_literal_unwrap(new_callee))->name));
+                fun_name = tast_function_lit_unwrap(tast_literal_unwrap(new_callee))->name;
                 break;
             }
         }
@@ -1577,33 +1568,35 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             unreachable(TAST_FMT, tast_expr_print(new_callee));
     }
 
-    Uast_function_decl* fun_decl;
-    switch (fun_def->type) {
-        case UAST_FUNCTION_DEF:
-            fun_decl = uast_function_def_unwrap(fun_def)->decl;
-            break;
-        case UAST_FUNCTION_DECL:
-            fun_decl = uast_function_decl_unwrap(fun_def);
-            break;
-        case UAST_SUM_DEF: {
-            Uast_sum_def* sum_def = uast_sum_def_unwrap(fun_def);
-            (void) sum_def;
-            //*new_call = 
-            todo();
-        }
-        case UAST_VARIABLE_DEF: {
-            if (uast_variable_def_unwrap(fun_def)->lang_type.type != ULANG_TYPE_FN) {
-                todo();
-            }
-            fun_decl = uast_function_decl_from_ulang_type_fn(
-                ulang_type_fn_const_unwrap(uast_variable_def_unwrap(fun_def)->lang_type),
-                uast_variable_def_unwrap(fun_def)->pos
-            );
-            break;
-        }
-        default:
-            unreachable(TAST_FMT, uast_def_print(fun_def));
-    }
+    Uast_function_decl* fun_decl = NULL;
+    log(LOG_DEBUG, TAST_FMT"\n", name_print(fun_name));
+    unwrap(function_decl_tbl_lookup(&fun_decl, fun_name));
+    //switch (fun_def->type) {
+    //    case UAST_FUNCTION_DEF:
+    //        log(LOG_DEBUG, TAST_FMT"\n", name_print(fun_call->callee->decl->name));
+    //        break;
+    //    case UAST_FUNCTION_DECL:
+    //        fun_decl = uast_function_decl_unwrap(fun_def);
+    //        break;
+    //    case UAST_SUM_DEF: {
+    //        Uast_sum_def* sum_def = uast_sum_def_unwrap(fun_def);
+    //        (void) sum_def;
+    //        //*new_call = 
+    //        todo();
+    //    }
+    //    case UAST_VARIABLE_DEF: {
+    //        if (uast_variable_def_unwrap(fun_def)->lang_type.type != ULANG_TYPE_FN) {
+    //            todo();
+    //        }
+    //        fun_decl = uast_function_decl_from_ulang_type_fn(
+    //            ulang_type_fn_const_unwrap(uast_variable_def_unwrap(fun_def)->lang_type),
+    //            uast_variable_def_unwrap(fun_def)->pos
+    //        );
+    //        break;
+    //    }
+    //    default:
+    //        unreachable(TAST_FMT, uast_def_print(fun_def));
+    //}
 
     Lang_type fun_rtn_type = lang_type_from_ulang_type(fun_decl->return_type);
     Uast_function_params* params = fun_decl->params;
@@ -1624,7 +1617,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         } else if (param->is_optional) {
             unwrap(!is_variadic && "cannot mix variadic args and optional args right now");
             // TODO: expected failure case for invalid optional_default
-            corres_arg = uast_expr_clone(param->optional_default,  uast_function_def_unwrap(fun_def)->body->scope_id/* TODO */);
+            corres_arg = uast_expr_clone(param->optional_default, fun_name.scope_id/* TODO */);
         } else {
             // TODO: print max count correctly for variadic fucntions
             msg_invalid_count_function_args(fun_call, fun_decl, param_idx + 1, param_idx + 1);

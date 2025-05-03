@@ -430,7 +430,7 @@ bool resolved_done_or_waiting_tbl_add(Name key) {
 //
 
 bool function_decl_tbl_add(Uast_function_decl* decl) {
-    return generic_tbl_add((Generic_symbol_table*)&env.resolved_done_or_waiting, serialize_name_symbol_table(decl->name), decl);
+    return generic_tbl_add((Generic_symbol_table*)&env.function_decl_tbl, serialize_name_symbol_table(decl->name), decl);
 }
 
 bool function_decl_tbl_lookup(Uast_function_decl** decl, Name key) {

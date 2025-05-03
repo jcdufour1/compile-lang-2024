@@ -485,6 +485,7 @@ bool resolve_generics_function_def_call(
     Ulang_type_vec gen_args, // TODO: remove or refactor name?
     Pos pos_gen_args
 ) {
+    log(LOG_DEBUG, "THING THING HTING HTING\n");
     (void) pos_gen_args;
     Name name = name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id);
     Name name_plain = name_new(def->decl->name.mod_path, def->decl->name.base, (Ulang_type_vec) {0}, def->decl->name.scope_id);
@@ -508,6 +509,10 @@ bool resolve_generics_function_def_call(
             log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, decl->return_type));
         }
     }
+    Uast_function_decl* dummy = NULL;
+    unwrap(function_decl_tbl_add(decl));
+    unwrap(function_decl_tbl_lookup(&dummy, decl->name));
+    log(LOG_DEBUG, TAST_FMT"\n", name_print(decl->name));
     *rtn_type = lang_type_from_ulang_type(decl->return_type);
     log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, decl->return_type));
     log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, *rtn_type));
