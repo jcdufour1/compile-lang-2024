@@ -1933,32 +1933,20 @@ static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Sco
             unreachable("");
     }
 
+    // TODO: expected failure cases for these things
     unwrap(try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE));
     unwrap(try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
     Uast_case_vec cases = {0};
 
     while (1) {
-        // TODO: expected success case for 
-        //
-        //type Num sum {
-        //    num32 i32
-        //    num64 i64
-        //}
-        //
-        //fn main() i32 {
-        //    let number Num = .num32(8)
-        //    switch number {
-        //        case .num32(num): return num
-        //        case .num64(num): return num
-        //    }
-        //    return 0
-        //}
+        Scope_id case_scope = symbol_collection_new(scope_id);
+
         Uast_stmt* case_if_true = NULL;
         Uast_expr* case_operand = NULL;
         bool case_is_default = false;
         if (try_consume(NULL, tokens, TOKEN_CASE)) {
-            switch (parse_expr(&case_operand, tokens, false, false, scope_id /* TODO: new scope may need to be created here */)) {
+            switch (parse_expr(&case_operand, tokens, false, false, case_scope)) {
                 case PARSE_EXPR_OK:
                     break;
                 case PARSE_EXPR_ERROR:
@@ -1974,10 +1962,10 @@ static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Sco
         } else {
             break;
         }
-
+        
         Token case_start_token = {0};
         unwrap(try_consume(&case_start_token, tokens, TOKEN_COLON));
-        switch (parse_stmt(&case_if_true, tokens, false, scope_id)) {
+        switch (parse_stmt(&case_if_true, tokens, false, case_scope)) {
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_ERROR:
@@ -1993,7 +1981,7 @@ static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Sco
             case_is_default,
             case_operand,
             case_if_true,
-            scope_id
+            case_scope
         );
         vec_append(&a_main, &cases, curr_case);
     }

@@ -50,7 +50,7 @@ bool name_from_uname(Name* new_name, Uname name) {
     Uast_def* result = NULL;
     if (!usymbol_lookup(&result, name_new((Str_view) {0} /* TODO */, name.mod_alias.base, (Ulang_type_vec) {0}, name.scope_id))) {
         log(LOG_DEBUG, "name_from_uname path 2\n");
-        //log(LOG_DEBUG, TAST_FMT"\n", uname_print(name));
+        log(LOG_DEBUG, TAST_FMT"\n", uname_print(name));
         //log(LOG_DEBUG, TAST_FMT"\n", name_print(name.mod_alias));
         //log(LOG_DEBUG, TAST_FMT"\n", str_view_print(name.mod_alias.base));
 
