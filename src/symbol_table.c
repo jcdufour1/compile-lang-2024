@@ -34,7 +34,6 @@ bool generic_tbl_lookup(void** result, const Generic_symbol_table* sym_table, St
 
 // TODO: symbol_add should call symbol_update to reduce duplication
 bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts, size_t capacity, Str_view key, void* item) {
-    assert(item);
     assert(key.count > 0 && "invalid item");
 
     assert(capacity > 0);
@@ -416,6 +415,14 @@ bool file_path_to_text_tbl_lookup(Str_view** result, const File_path_to_text* sy
 // returns false if file_path_to_text has already been added to the table
 bool file_path_to_text_tbl_add(File_path_to_text* sym_table, Str_view* file_text, Str_view key) {
     return generic_tbl_add((Generic_symbol_table*)sym_table, key, file_text);
+}
+
+//
+// Resolved_done_or_waiting implementation
+//
+
+bool resolved_done_or_waiting_tbl_add(Name key) {
+    return generic_tbl_add((Generic_symbol_table*)&env.resolved_done_or_waiting, serialize_name_symbol_table(key), NULL);
 }
 
 //

@@ -109,6 +109,8 @@ bool scope_get_parent_tbl_add(Scope_id key, Scope_id next);
 
 void scope_get_parent_tbl_update(Scope_id key, Scope_id parent);
 
+bool resolved_done_or_waiting_tbl_add(Name key);
+
 Scope_id symbol_collection_new(Scope_id parent);
 
 #define SCOPE_BUILTIN 0

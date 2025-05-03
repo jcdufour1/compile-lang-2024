@@ -478,63 +478,92 @@ static bool resolve_generics_serialize_function_decl(
     return true;
 }
 
-bool resolve_generics_function_def(
+bool resolve_generics_function_def_call(
     Uast_function_def** new_def,
     Uast_function_def* def,
     Ulang_type_vec gen_args, // TODO: remove or refactor name?
     Pos pos_gen_args
 ) {
-    bool status = true;
-
-    Uast_def* dummy = NULL;
-    Tast_def* dummy_2 = NULL;
-    if (def->decl->generics.info.count < 1) {
-        if (!usymbol_lookup(&dummy, name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id))) {
-            todo();
-        }
-
-        *new_def = def;
-
-        if (symbol_lookup(&dummy_2, name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id))) {
-            return status;
-        }
-
-        if (!resolve_generics_set_function_def_types(*new_def)) {
-            status = false;
-            return status;
-        }
-
-        unwrap(symbol_lookup(&dummy_2, name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id)));
-        return status;
+    (void) new_def;
+    (void) pos_gen_args;
+    Name name = name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id);
+    // TODO: put pos_gen_args as value in resolved_already_tbl_add?
+    if (resolved_done_or_waiting_tbl_add(name)) {
+        vec_append(&a_main, &env.fun_implementations_waiting_to_resolve, name);
     }
-
-    if (symbol_lookup(&dummy_2, name_new(env.curr_mod_path, def->decl->name.base, gen_args, SCOPE_TOP_LEVEL /* placeholder */))) {
-        // varient already instanciated
-        log(LOG_DEBUG, TAST_FMT"\n", name_print(name_new(env.curr_mod_path, def->decl->name.base, gen_args, SCOPE_TOP_LEVEL /* placeholder */)));
-        todo();
-    }
-
-    // TODO: try to avoid cloning block if resolve_generics_serialize_function_decl fails
-    Uast_block* new_block = uast_block_clone(def->body, def->decl->name.scope_id);
-    assert(new_block != def->body);
-
-    Uast_function_decl* new_decl = NULL;
-    if (!resolve_generics_serialize_function_decl(&new_decl, def->decl, new_block, gen_args, pos_gen_args)) {
-        return false;
-    }
-    *new_def = uast_function_def_new(new_decl->pos, new_decl, new_block);
-
-    usym_tbl_add(uast_function_def_wrap(*new_def));
-
-    if (!symbol_lookup(&dummy_2, (*new_def)->decl->name)) {
-        // TODO: see if there is less hacky way to do this
-        if (!resolve_generics_set_function_def_types(*new_def)) {
-            status = false;
-        }
-    }
-
-    unwrap(usymbol_lookup(&dummy, (*new_def)->decl->name));
-    unwrap(symbol_lookup(&dummy_2, (*new_def)->decl->name));
-    return status;
+    todo();
 }
 
+bool resolve_generics_function_def_implementation(Name name) {
+    Uast_def* dummy = NULL;
+    (void) dummy;
+    Tast_def* dummy_2 = NULL;
+    assert(
+        !symbol_lookup(&dummy_2, name) &&
+        "same function has been passed to resolve_generics_function_def_implementation "
+        "more than once, and it should not be"
+    );
+    log(LOG_DEBUG, TAST_FMT, name_print(name));
+    todo();
+
+    Uast_def* result = NULL;
+    if (usymbol_lookup(&result, name)) {
+        // we only need to type check this function
+        todo();
+    } else {
+        // we need to make new uast function implementation and then type check it
+        todo();
+    }
+    unreachable("");
+
+    //bool status = true;
+
+    //if (def->decl->generics.info.count < 1) {
+    //    if (!usymbol_lookup(&dummy, name)) {
+    //        todo();
+    //    }
+
+    //    *new_def = def;
+
+    //    if (symbol_lookup(&dummy_2, name)) {
+    //        return status;
+    //    }
+
+    //    if (!resolve_generics_set_function_def_types(*new_def)) {
+    //        status = false;
+    //        return status;
+    //    }
+
+    //    unwrap(symbol_lookup(&dummy_2, name));
+    //    return status;
+    //}
+
+    //if (symbol_lookup(&dummy_2, name_new(env.curr_mod_path, def->decl->name.base, gen_args, SCOPE_TOP_LEVEL /* placeholder */))) {
+    //    // varient already instanciated
+    //    log(LOG_DEBUG, TAST_FMT"\n", name_print(name_new(env.curr_mod_path, def->decl->name.base, gen_args, SCOPE_TOP_LEVEL /* placeholder */)));
+    //    todo();
+    //}
+
+    //// TODO: try to avoid cloning block if resolve_generics_serialize_function_decl fails
+    //Uast_block* new_block = uast_block_clone(def->body, def->decl->name.scope_id);
+    //assert(new_block != def->body);
+
+    //Uast_function_decl* new_decl = NULL;
+    //if (!resolve_generics_serialize_function_decl(&new_decl, def->decl, new_block, gen_args, pos_gen_args)) {
+    //    return false;
+    //}
+    //*new_def = uast_function_def_new(new_decl->pos, new_decl, new_block);
+
+    //usym_tbl_add(uast_function_def_wrap(*new_def));
+
+    //if (!symbol_lookup(&dummy_2, (*new_def)->decl->name)) {
+    //    // TODO: see if there is less hacky way to do this
+    //    if (!resolve_generics_set_function_def_types(*new_def)) {
+    //        status = false;
+    //    }
+    //}
+
+    //unwrap(usymbol_lookup(&dummy, (*new_def)->decl->name));
+    //unwrap(symbol_lookup(&dummy_2, (*new_def)->decl->name));
+    //return status;
+}

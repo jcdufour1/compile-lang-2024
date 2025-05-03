@@ -67,6 +67,19 @@ typedef struct {
 
 
 typedef struct {
+    void* tast;
+    Str_view key;
+    SYM_TBL_STATUS status;
+} Resolved_done_or_waiting_tast;
+
+typedef struct {
+    Resolved_done_or_waiting_tast* table_tasts;
+    size_t count; // count elements in symbol_table
+    size_t capacity; // count buckets in symbol_table
+} Resolved_done_or_waiting;
+
+
+typedef struct {
     Str_view* item;
     Str_view key;
     SYM_TBL_STATUS status;

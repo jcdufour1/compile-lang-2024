@@ -57,6 +57,9 @@ typedef struct Env_ {
     Name label_if_break;
     Name label_after_for;
     Name label_if_continue;
+
+    Resolved_done_or_waiting resolved_done_or_waiting;
+    Name_vec fun_implementations_waiting_to_resolve;
 } Env;
 
 #endif // ENV_H
