@@ -105,7 +105,7 @@ bool file_path_to_text_tbl_add(File_path_to_text* sym_table, Str_view* file_text
 // returns parent of key
 Scope_id scope_get_parent_tbl_lookup(Scope_id key);
 
-bool scope_get_parent_tbl_add(Scope_id key, Scope_id next);
+void scope_get_parent_tbl_add(Scope_id key, Scope_id next);
 
 void scope_get_parent_tbl_update(Scope_id key, Scope_id parent);
 

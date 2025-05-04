@@ -11,6 +11,11 @@ typedef struct {
     Symbol_collection** buf; // TODO: change this to Symbol_collection* if possible
 } Sym_coll_vec;
 
+typedef struct {
+    Vec_base info;
+    Scope_id* buf;
+} Scope_id_vec;
+
 // only used in type_checking.c
 typedef enum {
     PARENT_OF_NONE = 0,
@@ -22,7 +27,7 @@ typedef enum {
 } PARENT_OF;
 
 typedef struct Env_ {
-    Scope_id_to_parent scope_id_to_parent;
+    Scope_id_vec scope_id_to_parent;
     Sym_coll_vec symbol_tables;
 
     Uast_def_vec udefered_symbols_to_add;

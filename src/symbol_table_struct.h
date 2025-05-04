@@ -54,19 +54,6 @@ typedef struct {
 
 
 typedef struct {
-    Scope_id* tast;
-    Str_view key;
-    SYM_TBL_STATUS status;
-} Scope_id_to_parent_tast;
-
-typedef struct {
-    Scope_id_to_parent_tast* table_tasts;
-    size_t count; // count elements in symbol_table
-    size_t capacity; // count buckets in symbol_table
-} Scope_id_to_parent;
-
-
-typedef struct {
     Uast_function_decl* tast;
     Str_view key;
     SYM_TBL_STATUS status;

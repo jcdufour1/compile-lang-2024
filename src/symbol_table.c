@@ -55,9 +55,8 @@ bool generic_symbol_table_add_internal(Generic_symbol_table_tast* sym_tbl_tasts,
 
 static void generic_tbl_cpy(void* dest, const void* src, size_t capacity, size_t count_tasts_to_cpy) {
     for (size_t bucket_src = 0; bucket_src < count_tasts_to_cpy; bucket_src++) {
-        // TODO: do not use Usymbol_table_tast verbatim here
-        if (((Usymbol_table_tast*)src)[bucket_src].status == SYM_TBL_OCCUPIED) {
-            generic_symbol_table_add_internal(dest, capacity, ((Usymbol_table_tast*)src)[bucket_src].key, ((Usymbol_table_tast*)src)[bucket_src].tast);
+        if (((Generic_symbol_table_tast*)src)[bucket_src].status == SYM_TBL_OCCUPIED) {
+            generic_symbol_table_add_internal(dest, capacity, ((Generic_symbol_table_tast*)src)[bucket_src].key, ((Generic_symbol_table_tast*)src)[bucket_src].tast);
         }
     }
 }
@@ -192,7 +191,7 @@ bool generic_symbol_lookup(
     Get_tbl_from_collection_fn get_tbl_from_collection_fn,
     Scope_id scope_id
 ) {
-    if (scope_id == SIZE_MAX /* TODO: use different name for this constant? */) {
+    if (scope_id == SCOPE_NOT) {
         return false;
     }
 
@@ -435,34 +434,18 @@ bool function_decl_tbl_lookup(Uast_function_decl** decl, Name key) {
 
 // returns parent of key
 Scope_id scope_get_parent_tbl_lookup(Scope_id key) {
-    // TODO: use lookup table instead of hash table
-    char buf[32] = {0};
-    sprintf(buf, "%zu", key);
-    Scope_id parent = 0;
-    Scope_id* temp = &parent;
-    generic_tbl_lookup((void**)&temp, (Generic_symbol_table*)&env.scope_id_to_parent, str_view_from_cstr(buf));
-    parent = *temp;
-    return parent;
+    return vec_at(&env.scope_id_to_parent, key);
 }
 
-bool scope_get_parent_tbl_add(Scope_id key, Scope_id parent) {
-    char buf[32] = {0};
-    sprintf(buf, "%zu", key);
-    String serialized = {0};
-    string_extend_cstr(&a_main, &serialized, buf);
-    Scope_id* next_alloced = arena_alloc(&a_main, sizeof(*next_alloced));
-    *next_alloced = parent;
-    return generic_tbl_add((Generic_symbol_table*)&env.scope_id_to_parent, string_to_strv(serialized), next_alloced);
+void scope_get_parent_tbl_add(Scope_id key, Scope_id parent) {
+    while (env.scope_id_to_parent.info.count <= key) {
+        vec_append(&a_main, &env.scope_id_to_parent, 0);
+    }
+    *vec_at_ref(&env.scope_id_to_parent, key) = parent;
 }
 
 void scope_get_parent_tbl_update(Scope_id key, Scope_id parent) {
-    char buf[32] = {0};
-    sprintf(buf, "%zu", key);
-    String serialized = {0};
-    string_extend_cstr(&a_main, &serialized, buf);
-    Scope_id* next_alloced = arena_alloc(&a_main, sizeof(*next_alloced));
-    *next_alloced = parent;
-    generic_tbl_update((Generic_symbol_table*)&env.scope_id_to_parent, string_to_strv(serialized), next_alloced);
+    *vec_at_ref(&env.scope_id_to_parent, key) = parent;
 }
 
 //
@@ -492,7 +475,7 @@ Scope_id symbol_collection_new(Scope_id parent) {
     Scope_id new_scope = env.symbol_tables.info.count;
     vec_append(&a_main, &env.symbol_tables, new_tbl);
 
-    unwrap(scope_get_parent_tbl_add(new_scope, parent));
+    scope_get_parent_tbl_add(new_scope, parent);
     return new_scope;
 }
 
