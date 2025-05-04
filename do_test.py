@@ -203,6 +203,7 @@ def do_test(file: FileItem, do_debug: bool, expected_output: str) -> bool:
         compile_cmd.extend(file.expected_fail_str)
         compile_cmd.append(file.path)
     print_info("testing: " + file.path + " (" + debug_release_text + ")")
+    print(compile_cmd)
     process = subprocess.run(compile_cmd)
     if not file.expected_success:
         if process.returncode != 2:
@@ -222,7 +223,9 @@ def do_test(file: FileItem, do_debug: bool, expected_output: str) -> bool:
         print_error("testing: compilation of " + file.path + " (" + debug_release_text + ") fail")
         sys.exit(1)
 
-    clang_cmd = ["clang", TEST_OUTPUT, "-o", "test"]
+    # TODO: call Makefile, etc. here instead of clang directly?
+    clang_cmd = ["clang", TEST_OUTPUT, "extern_c.c", "-o", "test"]
+    print(clang_cmd)
     process = subprocess.run(clang_cmd)
     if process.returncode != 0:
         print_error("testing: clang " + file.path + " (" + debug_release_text + ") fail")

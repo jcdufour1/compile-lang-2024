@@ -91,7 +91,7 @@ setup:
 build: setup ${BUILD_DIR}/main
 
 test_quick: run
-	${CC_COMPILER} test.ll -o a.out && ./a.out ; echo $$?
+	${CC_COMPILER} test.ll extern_c.c -o a.out && ./a.out ; echo $$?
 
 # auto_gen and util
 ${BUILD_DIR}/auto_gen: src/util/auto_gen.c ${DEP_UTIL}
