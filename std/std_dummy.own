@@ -1,5 +1,18 @@
 type io import = std.io
 
+fn print_color(color Color) {
+    io.printf("r: %u; g: %u; b: %u\n", color.r, color.g, color.b)
+}
+
+// test that user defined struct will work for extern("c") functions
+extern("c") fn print_color_extern(color Color)
+
+type Color struct {
+    r u32;
+    g u32;
+    b u32;
+}
+
 fn printf(string u8*) {
     io.printf("from module dummy one: ")
     io.printf("%s\n", string)
