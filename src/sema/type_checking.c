@@ -361,8 +361,6 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
             env.parent_of = old_parent_of;
             return CHECK_ASSIGN_ERROR;
         }
-        log(LOG_DEBUG, TAST_FMT, uast_expr_print(src));
-        log(LOG_DEBUG, TAST_FMT, tast_expr_print(*new_src));
         env.lhs_lang_type = old_lhs_lang_type;
         env.parent_of = old_parent_of;
     }
@@ -372,8 +370,6 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
         src_is_zero = true;
     }
 
-    log(LOG_DEBUG, TAST_FMT, uast_expr_print(src));
-    log(LOG_DEBUG, TAST_FMT, tast_expr_print(*new_src));
     return check_generic_assignment_finish(new_src, dest_lang_type, src_is_zero, *new_src);
 }
 
@@ -425,7 +421,6 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
 
 // set symbol lang_type, and report error if symbol is undefined
 bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
-    log(LOG_DEBUG, TAST_FMT, uast_symbol_print(sym_untyped));
     Uast_expr* new_expr = NULL;
     switch (expand_def_symbol(&new_expr, sym_untyped)) {
         case EXPAND_NAME_ERROR:
@@ -440,7 +435,6 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
 
     Uast_def* sym_def = NULL;
     if (!usymbol_lookup(&sym_def, sym_untyped->name)) {
-        log(LOG_DEBUG, "%zu\n", sym_untyped->name.scope_id);
         Name base_name = sym_untyped->name;
         memset(&base_name.gen_args, 0, sizeof(base_name.gen_args));
         if (!usymbol_lookup(&sym_def, base_name)) {
@@ -471,7 +465,6 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
                 new_name,
                 new_lang_type
             )));
-            log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, new_lang_type));
             return true;
         }
         case UAST_STRUCT_DEF:
@@ -1011,7 +1004,6 @@ static bool try_set_struct_literal_member_types(Tast_expr_vec* new_membs, Uast_e
             rhs = memb;
         }
 
-        log(LOG_DEBUG, TAST_FMT, uast_expr_print(rhs));
         Tast_expr* new_rhs = NULL;
         switch (check_generic_assignment(
              &new_rhs, lang_type_from_ulang_type(memb_def->lang_type), rhs, uast_expr_get_pos(memb)
@@ -1217,8 +1209,6 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
             if (!try_set_symbol_types(new_tast, uast_symbol_unwrap(uast))) {
                 return false;
             }
-            log(LOG_DEBUG, TAST_FMT, uast_expr_print(uast));
-            log(LOG_DEBUG, TAST_FMT, tast_expr_print(*new_tast));
             assert(*new_tast);
             return true;
         case UAST_UNKNOWN:
@@ -1579,7 +1569,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             unreachable(TAST_FMT, tast_expr_print(new_callee));
     }
 
-    log(LOG_DEBUG, TAST_FMT"\n", name_print(fun_name));
     // TODO: remove below symbol lookup and switch statement if possible
     //Uast_def* callee_def = NULL;
     //unwrap(usymbol_lookup(&callee_def, new_callee->name));
@@ -1650,7 +1639,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 todo();
             }
         } else {
-            log(LOG_DEBUG, TAST_FMT, uast_param_print(param));
             switch (check_generic_assignment(
                 &new_arg,
                 lang_type_from_ulang_type(param->base->lang_type),
@@ -1660,8 +1648,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 case CHECK_ASSIGN_OK:
                     break;
                 case CHECK_ASSIGN_INVALID:
-                    log(LOG_DEBUG, TAST_FMT, uast_param_print(param));
-                    log(LOG_DEBUG, TAST_FMT, uast_param_print(param));
                     msg_invalid_function_arg(new_arg, param->base);
                     status = false;
                     goto error;

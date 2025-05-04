@@ -168,7 +168,6 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
             return true;
         case UAST_PRIMITIVE_DEF:
             *new_lang_type = lang_type_from_ulang_type_regular_primitive( ulang_type_regular_const_unwrap(resolved), uast_primitive_def_unwrap(result));
-            log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, *new_lang_type));
             return true;
         case UAST_LITERAL_DEF:
             unwrap(uast_literal_def_const_unwrap(result)->type == UAST_VOID_DEF);

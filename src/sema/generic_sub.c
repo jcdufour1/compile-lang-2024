@@ -30,7 +30,6 @@ void generic_sub_lang_type_regular(
     unwrap(name_from_uname(&temp, lang_type.atom.str));
     if (name_is_equal(gen_param, temp)) {
         *new_lang_type = ulang_type_clone(gen_arg, lang_type.atom.str.scope_id);
-        log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, *new_lang_type));
 
         int16_t base_depth = lang_type.atom.pointer_depth;
         int16_t gen_prev_depth = ulang_type_get_pointer_depth(*new_lang_type);

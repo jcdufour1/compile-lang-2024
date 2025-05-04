@@ -52,27 +52,6 @@ bool name_from_uname(Name* new_name, Uname name) {
         log(LOG_DEBUG, "name_from_uname path 2\n");
         log(LOG_DEBUG, TAST_FMT"\n", uname_print(name));
         log(LOG_DEBUG, TAST_FMT"\n", name_print(name_new(name.mod_alias.mod_path /* TODO */, name.mod_alias.base, (Ulang_type_vec) {0}, name.mod_alias.scope_id)));
-        //log(LOG_DEBUG, TAST_FMT"\n", name_print(name.mod_alias));
-        //log(LOG_DEBUG, TAST_FMT"\n", str_view_print(name.mod_alias.base));
-
-        //Usymbol_iter iter = usym_tbl_iter_new(vec_at(&env.ancesters, 0)->usymbol_table);
-        //Uast_def* result = NULL;
-        //while (usym_tbl_iter_next(&result, &iter)) {
-        //    if (result->type == UAST_MOD_ALIAS) {
-        //        Uast_mod_alias* alias = uast_mod_alias_unwrap(result);
-        //        log(LOG_DEBUG, TAST_FMT, uast_def_print(result));
-
-        //        log(LOG_DEBUG, TAST_FMT"\n", name_print(alias->name));
-        //        log(LOG_DEBUG, TAST_FMT"\n", str_view_print(alias->name.mod_path));
-        //        log(LOG_DEBUG, TAST_FMT"\n", str_view_print(alias->name.base));
-        //        assert(alias->name.gen_args.info.count < 1);
-        //        assert(name.gen_args.info.count < 1);
-
-        //        log(LOG_DEBUG, TAST_FMT"\n", name_print(alias->mod_path));
-        //    }
-        //}
-
-        //usymbol_log(LOG_DEBUG);
         todo();
     }
 
@@ -105,7 +84,6 @@ bool name_from_uname(Name* new_name, Uname name) {
         case UAST_GENERIC_PARAM:
             todo();
         case UAST_POISON_DEF:
-            log(LOG_DEBUG, "name_from_uname path 3.100\n");
             return false;
         case UAST_LANG_DEF:
             todo();

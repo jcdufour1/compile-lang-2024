@@ -360,7 +360,6 @@ bool resolve_generics_ulang_type_regular(Ulang_type* result, Ulang_type_regular 
         return false;
     }
     memset(&name_base.gen_args, 0, sizeof(name_base.gen_args));
-    log(LOG_DEBUG, TAST_FMT"\n", name_print(name_base));
     if (!usymbol_lookup(&before_res, name_base)) {
         msg_undefined_type(lang_type.pos, ulang_type_regular_const_wrap(lang_type));
         return false;
@@ -485,7 +484,6 @@ bool resolve_generics_function_def_call(
     Ulang_type_vec gen_args, // TODO: remove or refactor name?
     Pos pos_gen_args
 ) {
-    log(LOG_DEBUG, "THING THING HTING HTING\n");
     (void) pos_gen_args;
     Name name = name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id);
     Name name_plain = name_new(def->decl->name.mod_path, def->decl->name.base, (Ulang_type_vec) {0}, def->decl->name.scope_id);
@@ -524,12 +522,9 @@ bool resolve_generics_function_def_call(
         }
     }
     decl->name = name;
-    log(LOG_DEBUG, TAST_FMT"\n", name_print(decl->name));
     Uast_function_decl* dummy = NULL;
-    log(LOG_DEBUG, TAST_FMT"\n", uast_function_decl_print(decl));
     unwrap(function_decl_tbl_add(decl));
     unwrap(function_decl_tbl_lookup(&dummy, decl->name));
-    log(LOG_DEBUG, TAST_FMT"\n", name_print(decl->name));
 
     Ulang_type_vec ulang_types = {0};
     for (size_t idx = 0; idx < decl->params->params.info.count; idx++) {
@@ -547,9 +542,6 @@ bool resolve_generics_function_def_call(
         return false;
     }
     *rtn_type = lang_type_fn_const_wrap(rtn_type_);
-    log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_MSG, decl->return_type));
-    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, *rtn_type));
-    log(LOG_DEBUG, TAST_FMT"\n", uast_function_decl_print(decl));
     *new_name = name;
 
     vec_append(&a_main, &env.fun_implementations_waiting_to_resolve, name);
@@ -558,10 +550,6 @@ bool resolve_generics_function_def_call(
 }
 
 bool resolve_generics_function_def_implementation(Name name) {
-    static uint64_t count = 0;
-    count++;
-    log(LOG_DEBUG, "resolve_generics_function_def_implementation count: %zu\n", count);
-
     Name name_plain = name_new(name.mod_path, name.base, (Ulang_type_vec) {0}, name.scope_id);
     Uast_def* dummy = NULL;
     (void) dummy;
@@ -572,7 +560,6 @@ bool resolve_generics_function_def_implementation(Name name) {
         "same function has been passed to resolve_generics_function_def_implementation "
         "more than once, and it should not have been"
     );
-    log(LOG_DEBUG, TAST_FMT"\n", name_print(name));
 
     Uast_def* result = NULL;
     if (usymbol_lookup(&result, name)) {
@@ -592,58 +579,7 @@ bool resolve_generics_function_def_implementation(Name name) {
         }
         Uast_function_def* new_def = uast_function_def_new(new_decl->pos, new_decl, new_block);
         usym_tbl_add(uast_function_def_wrap(new_def));
-        log(LOG_DEBUG, TAST_FMT, uast_function_def_print(new_def));
         return resolve_generics_set_function_def_types(new_def);
     }
     unreachable("");
-
-    //bool status = true;
-
-    //if (def->decl->generics.info.count < 1) {
-    //    if (!usymbol_lookup(&dummy, name)) {
-    //        todo();
-    //    }
-
-    //    *new_def = def;
-
-    //    if (symbol_lookup(&dummy_2, name)) {
-    //        return status;
-    //    }
-
-    //    if (!resolve_generics_set_function_def_types(*new_def)) {
-    //        status = false;
-    //        return status;
-    //    }
-
-    //    unwrap(symbol_lookup(&dummy_2, name));
-    //    return status;
-    //}
-
-    //if (symbol_lookup(&dummy_2, name_new(env.curr_mod_path, def->decl->name.base, gen_args, SCOPE_TOP_LEVEL /* placeholder */))) {
-    //    // varient already instanciated
-    //    log(LOG_DEBUG, TAST_FMT"\n", name_print(name_new(env.curr_mod_path, def->decl->name.base, gen_args, SCOPE_TOP_LEVEL /* placeholder */)));
-    //    todo();
-    //}
-
-    //// TODO: try to avoid cloning block if resolve_generics_serialize_function_decl fails
-    //Uast_block* new_block = uast_block_clone(def->body, def->decl->name.scope_id);
-    //assert(new_block != def->body);
-
-    //Uast_function_decl* new_decl = NULL;
-    //if (!resolve_generics_serialize_function_decl(&new_decl, def->decl, new_block, gen_args, pos_gen_args)) {
-    //    return false;
-    //}
-    //*new_def = uast_function_def_new(new_decl->pos, new_decl, new_block);
-
-    //usym_tbl_add(uast_function_def_wrap(*new_def));
-
-    //if (!symbol_lookup(&dummy_2, (*new_def)->decl->name)) {
-    //    if (!resolve_generics_set_function_def_types(*new_def)) {
-    //        status = false;
-    //    }
-    //}
-
-    //unwrap(usymbol_lookup(&dummy, (*new_def)->decl->name));
-    //unwrap(symbol_lookup(&dummy_2, (*new_def)->decl->name));
-    //return status;
 }
