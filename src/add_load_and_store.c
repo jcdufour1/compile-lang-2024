@@ -982,17 +982,11 @@ static Name load_ptr_member_access(Llvm_block* new_block, Tast_member_access* ol
         default:
             unreachable("");
     }
-
-    Tast_number* new_index = tast_number_new(
-        old_access->pos,
-        struct_index,
-        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0)))
-    );
     
     Llvm_load_struct_element_ptr* new_load = llvm_load_struct_element_ptr_new(
         old_access->pos,
         old_access->lang_type,
-        load_literal(new_block, tast_number_wrap(new_index)),
+        struct_index,
         new_callee,
         name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0)
     );
@@ -1087,16 +1081,10 @@ static Name load_ptr_sum_get_tag(Llvm_block* new_block, Tast_sum_get_tag* old_ac
     Name new_sum = load_ptr_expr(new_block, old_access->callee);
     //Tast_enum_def* union_def = get_enum_def_from_sum_def(sum_def);
     
-    Tast_number* zero = tast_number_new(
-        old_access->pos,
-        0,
-        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0)))
-    );
-
     Llvm_load_struct_element_ptr* new_enum = llvm_load_struct_element_ptr_new(
         old_access->pos,
         lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0))),
-        load_literal(new_block, tast_number_wrap(zero)),
+        0,
         new_sum,
         name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0)
     );
@@ -1126,21 +1114,10 @@ static Name load_ptr_sum_access(Llvm_block* new_block, Tast_sum_access* old_acce
     Name new_callee = load_ptr_expr(new_block, old_access->callee);
     Tast_raw_union_def* union_def = get_raw_union_def_from_sum_def(sum_def);
     
-    Tast_number* zero = tast_number_new(
-        old_access->pos,
-        0,
-        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0)))
-    );
-    Tast_number* one = tast_number_new(
-        old_access->pos,
-        1,
-        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0)))
-    );
-
     Llvm_load_struct_element_ptr* new_union = llvm_load_struct_element_ptr_new(
         old_access->pos,
         tast_raw_union_def_get_lang_type(union_def),
-        load_literal(new_block, tast_number_wrap(one)),
+        1,
         new_callee,
         name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0)
     );
@@ -1150,7 +1127,7 @@ static Name load_ptr_sum_access(Llvm_block* new_block, Tast_sum_access* old_acce
     Llvm_load_struct_element_ptr* new_item = llvm_load_struct_element_ptr_new(
         old_access->pos,
         rm_tuple_lang_type(old_access->lang_type, old_access->pos),
-        load_literal(new_block, tast_number_wrap(zero)),
+        0,
         new_union->name_self,
         name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0)
     );

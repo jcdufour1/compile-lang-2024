@@ -322,11 +322,12 @@ static Llvm_type llvm_gen_def(void) {
     return def;
 }
 
+// TODO: rename load_struct_element_ptr to load_element_ptr
 static Llvm_type llvm_gen_load_struct_element_ptr(void) {
     Llvm_type load = {.name = llvm_name_new("llvm", "load_struct_element_ptr", false)};
 
     append_member(&load.members, "Lang_type", "lang_type");
-    append_member(&load.members, "Name", "struct_index"); // TODO: make this an integer or name only
+    append_member(&load.members, "size_t", "memb_idx");
     append_member(&load.members, "Name", "llvm_src");
     append_member(&load.members, "Name", "name_self");
 

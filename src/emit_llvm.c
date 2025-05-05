@@ -902,16 +902,7 @@ static void emit_load_element_ptr(String* output, const Llvm_load_struct_element
     string_extend_cstr(&a_main, output, ", ptr %");
     llvm_extend_name(output, load->llvm_src);
     string_extend_cstr(&a_main, output, ", i32 0, i32 ");
-
-    Llvm* struct_index = NULL;
-    unwrap(alloca_lookup(&struct_index,  load->struct_index));
-    if (struct_index->type == LLVM_LOAD_ANOTHER_LLVM) {
-        string_extend_cstr(&a_main, output, "%");
-        llvm_extend_name(output, llvm_tast_get_name(struct_index));
-    } else {
-        emit_operator_operand( output, load->struct_index);
-    }
-
+    string_extend_size_t(&a_main, output, load->memb_idx);
     vec_append(&a_main, output, '\n');
 }
 

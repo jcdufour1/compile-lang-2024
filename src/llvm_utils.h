@@ -64,4 +64,6 @@ Lang_type* llvm_literal_ref_get_lang_type(Llvm_literal* lit);
 
 Lang_type lang_type_from_get_name(Name name);
 
+size_t struct_def_get_idx_matching_member(Llvm_struct_def* base, Name memb_name);
+
 #endif // LLVM_UTIL_H

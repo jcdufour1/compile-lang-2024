@@ -1,6 +1,8 @@
 #include <llvm_utils.h>
 #include <lang_type.h>
 #include <lang_type_after.h>
+#include <name.h>
+#include <ulang_type_get_pos.h>
 
 Lang_type llvm_operator_get_lang_type(const Llvm_operator* operator) {
     if (operator->type == LLVM_UNARY) {
@@ -191,3 +193,14 @@ Lang_type lang_type_from_get_name(Name name) {
     unwrap(alloca_lookup(&result,  name));
     return llvm_get_lang_type(result);
 }
+
+size_t struct_def_get_idx_matching_member(Llvm_struct_def* def, Name memb_name) {
+    for (size_t idx = 0; idx < def->base.members.info.count; idx++) {
+        if (name_is_equal(vec_at(&def->base.members, idx)->name_self, memb_name)) {
+            return idx;
+        }
+    }
+    log(LOG_DEBUG, TAST_FMT"\n", llvm_struct_def_print(def));
+    unreachable(TAST_FMT, name_print(memb_name));
+}
+
