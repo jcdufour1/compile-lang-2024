@@ -92,6 +92,23 @@ static void emit_c_function_def(Emit_c_strs* strs, const Llvm_function_def* fun_
     string_extend_cstr(&a_main, &strs->output, "}\n");
 }
 
+static void emit_c_struct_def(Emit_c_strs* strs, const Llvm_struct_def* def) {
+    string_extend_cstr(&a_main, &strs->struct_defs, "typedef struct {\n");
+
+    for (size_t idx = 0; idx < def->base.members.info.count; idx++) {
+        Llvm_variable_def* curr = vec_at(&def->base.members, idx);
+        string_extend_cstr(&a_main, &strs->struct_defs, "    ");
+        c_extend_type_call_str(&strs->struct_defs, curr->lang_type);
+        string_extend_cstr(&a_main, &strs->struct_defs, " ");
+        llvm_extend_name(&strs->struct_defs, curr->name_self);
+        string_extend_cstr(&a_main, &strs->struct_defs, ";\n");
+    }
+
+    string_extend_cstr(&a_main, &strs->struct_defs, "} ");
+    llvm_extend_name(&strs->struct_defs, def->base.name);
+    string_extend_cstr(&a_main, &strs->struct_defs, ";\n");
+}
+
 // this is only intended for alloca_table, etc.
 static void emit_c_def_sometimes(Emit_c_strs* strs, const Llvm_def* def) {
     switch (def->type) {
@@ -107,8 +124,7 @@ static void emit_c_def_sometimes(Emit_c_strs* strs, const Llvm_def* def) {
         case LLVM_LABEL:
             return;
         case LLVM_STRUCT_DEF:
-            todo();
-            //emit_struct_def(struct_defs, llvm_struct_def_const_unwrap(def));
+            emit_c_struct_def(strs, llvm_struct_def_const_unwrap(def));
             return;
         case LLVM_PRIMITIVE_DEF:
             todo();
@@ -532,6 +548,28 @@ static void emit_c_load_another_llvm(Emit_c_strs* strs, const Llvm_load_another_
     string_extend_cstr(&a_main, &strs->output, ");\n");
 }
 
+static void emit_c_load_element_ptr(Emit_c_strs* strs, const Llvm_load_element_ptr* load) {
+    log(LOG_DEBUG, TAST_FMT"\n", string_print(strs->output));
+
+    string_extend_cstr(&a_main, &strs->output, "    void* ");
+    llvm_extend_name(&strs->output, load->name_self);
+    string_extend_cstr(&a_main, &strs->output, " = ");
+
+    string_extend_cstr(&a_main, &strs->output, "*((");
+    c_extend_type_call_str(&strs->output, load->lang_type);
+    string_extend_cstr(&a_main, &strs->output, "*)");
+    string_extend_cstr(&a_main, &strs->output, "(");
+    llvm_extend_name(&strs->output, load->llvm_src);
+    string_extend_cstr(&a_main, &strs->output, "->");
+    emit_c_expr_piece(strs, load->struct_index);
+    string_extend_cstr(&a_main, &strs->output, ")");
+
+    string_extend_cstr(&a_main, &strs->output, ");\n");
+
+    log(LOG_DEBUG, TAST_FMT"\n", string_print(strs->output));
+    todo();
+}
+
 static void emit_c_block(Emit_c_strs* strs, const Llvm_block* block) {
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         const Llvm* stmt = vec_at(&block->children, idx);
@@ -561,8 +599,7 @@ static void emit_c_block(Emit_c_strs* strs, const Llvm_block* block) {
                 emit_c_alloca(&strs->output, llvm_alloca_const_unwrap(stmt));
                 break;
             case LLVM_LOAD_ELEMENT_PTR:
-                todo();
-                //emit_load_element_ptr(output, llvm_load_element_ptr_const_unwrap(stmt));
+                emit_c_load_element_ptr(strs, llvm_load_element_ptr_const_unwrap(stmt));
                 break;
             case LLVM_LOAD_ANOTHER_LLVM:
                 emit_c_load_another_llvm(strs, llvm_load_another_llvm_const_unwrap(stmt));
@@ -625,6 +662,12 @@ void emit_c_from_tree(const Llvm_block* root) {
         exit(EXIT_CODE_FAIL);
     }
 
+    for (size_t idx = 0; idx < strs.struct_defs.info.count; idx++) {
+        if (EOF == fputc(vec_at(&strs.struct_defs, idx), file)) {
+            todo();
+        }
+    }
+
     for (size_t idx = 0; idx < header.info.count; idx++) {
         if (EOF == fputc(vec_at(&header, idx), file)) {
             todo();
@@ -633,12 +676,6 @@ void emit_c_from_tree(const Llvm_block* root) {
 
     for (size_t idx = 0; idx < strs.forward_decls.info.count; idx++) {
         if (EOF == fputc(vec_at(&strs.forward_decls, idx), file)) {
-            todo();
-        }
-    }
-
-    for (size_t idx = 0; idx < strs.struct_defs.info.count; idx++) {
-        if (EOF == fputc(vec_at(&strs.struct_defs, idx), file)) {
             todo();
         }
     }

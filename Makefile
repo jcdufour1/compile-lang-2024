@@ -91,6 +91,7 @@ setup:
 	mkdir -p ${BUILD_DIR}/token/
 	mkdir -p ${BUILD_DIR}/codegen/
 
+# TODO: always run setup before ${BUILD_DIR}/main
 build: setup ${BUILD_DIR}/main
 
 # TODO: figure out better way to switch between c and llvm

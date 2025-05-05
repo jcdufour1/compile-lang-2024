@@ -60,6 +60,14 @@ for generics:
     for !rl.WindowShouldClose() {
     }
 - expected success case for circular import
+- should I use syntax:
+  type Token struct {
+  }
+  type get_token fn
+  instead of:
+  type Token struct {
+  }
+  fn get_token
 
 
 
