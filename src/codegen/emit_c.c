@@ -162,6 +162,8 @@ static void emit_c_sometimes(Emit_c_strs* strs, const Llvm* llvm) {
             return;
         case LLVM_LOAD_ANOTHER_LLVM:
             return;
+        case LLVM_ARRAY_ACCESS:
+            return;
     }
     unreachable("");
 }
@@ -365,6 +367,8 @@ static void emit_c_expr_piece(Emit_c_strs* strs, Name child) {
         case LLVM_EXPR:
             emit_c_expr_piece_expr(strs, llvm_expr_unwrap(result));
             return;
+        case LLVM_ARRAY_ACCESS:
+            todo();
         case LLVM_LOAD_ELEMENT_PTR:
             todo();
         case LLVM_STORE_ANOTHER_LLVM:
@@ -507,9 +511,7 @@ static void emit_c_store_another_llvm(Emit_c_strs* strs, const Llvm_store_anothe
             emit_c_store_another_llvm_src_expr(strs, llvm_expr_const_unwrap(src));
             break;
         case LLVM_LOAD_ANOTHER_LLVM:
-            todo();
-            //string_extend_cstr(&a_main, output, "%");
-            //llvm_extend_name(output, llvm_tast_get_name(src));
+            llvm_extend_name(&strs->output, llvm_tast_get_name(src));
             break;
         case LLVM_ALLOCA:
             todo();
@@ -550,25 +552,20 @@ static void emit_c_load_another_llvm(Emit_c_strs* strs, const Llvm_load_another_
 
 static void emit_c_load_element_ptr(Emit_c_strs* strs, const Llvm_load_element_ptr* load) {
     log(LOG_DEBUG, TAST_FMT"\n", string_print(strs->output));
+    Llvm* struct_def_ = NULL;
+    unwrap(alloca_lookup(&struct_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_from_get_name(load->llvm_src))));
 
     string_extend_cstr(&a_main, &strs->output, "    void* ");
     llvm_extend_name(&strs->output, load->name_self);
     string_extend_cstr(&a_main, &strs->output, " = ");
 
-    string_extend_cstr(&a_main, &strs->output, "*((");
-    c_extend_type_call_str(&strs->output, load->lang_type);
+    string_extend_cstr(&a_main, &strs->output, "&(((");
+    c_extend_type_call_str(&strs->output, lang_type_from_get_name(load->llvm_src));
     string_extend_cstr(&a_main, &strs->output, "*)");
-    string_extend_cstr(&a_main, &strs->output, "(");
     llvm_extend_name(&strs->output, load->llvm_src);
-    string_extend_cstr(&a_main, &strs->output, "->");
-    todo();
-    //emit_c_expr_piece(strs, load->struct_index);
-    string_extend_cstr(&a_main, &strs->output, ")");
-
+    string_extend_cstr(&a_main, &strs->output, ")->");
+    llvm_extend_name(&strs->output, vec_at(&llvm_struct_def_unwrap(llvm_def_unwrap(struct_def_))->base.members, load->memb_idx)->name_self);
     string_extend_cstr(&a_main, &strs->output, ");\n");
-
-    log(LOG_DEBUG, TAST_FMT"\n", string_print(strs->output));
-    todo();
 }
 
 static void emit_c_block(Emit_c_strs* strs, const Llvm_block* block) {
@@ -663,14 +660,14 @@ void emit_c_from_tree(const Llvm_block* root) {
         exit(EXIT_CODE_FAIL);
     }
 
-    for (size_t idx = 0; idx < strs.struct_defs.info.count; idx++) {
-        if (EOF == fputc(vec_at(&strs.struct_defs, idx), file)) {
+    for (size_t idx = 0; idx < header.info.count; idx++) {
+        if (EOF == fputc(vec_at(&header, idx), file)) {
             todo();
         }
     }
 
-    for (size_t idx = 0; idx < header.info.count; idx++) {
-        if (EOF == fputc(vec_at(&header, idx), file)) {
+    for (size_t idx = 0; idx < strs.struct_defs.info.count; idx++) {
+        if (EOF == fputc(vec_at(&strs.struct_defs, idx), file)) {
             todo();
         }
     }
