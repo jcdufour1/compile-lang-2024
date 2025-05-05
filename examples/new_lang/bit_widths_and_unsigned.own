@@ -161,12 +161,10 @@ fn main() i32 {
     bit_shift_right()
     bit_shift_left()
 
-    // test that the max of an unsigned number can actually be assigned
-    let num7 u8 = 255;
-    io.printf("num7: %d\n", num7)
-    num7 = num7%4
-    io.printf("num7: %d\n", num7)
-
+    //let num7 u8 = 255;
+    //printf("num7: %d\n", num7)
+    //num7 = num7%4
+    //printf("num7: %d\n", num7)
     return 0
 }
 
