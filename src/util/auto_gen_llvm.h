@@ -322,9 +322,8 @@ static Llvm_type llvm_gen_def(void) {
     return def;
 }
 
-// TODO: rename load_struct_element_ptr to load_element_ptr
-static Llvm_type llvm_gen_load_struct_element_ptr(void) {
-    Llvm_type load = {.name = llvm_name_new("llvm", "load_struct_element_ptr", false)};
+static Llvm_type llvm_gen_load_element_ptr(void) {
+    Llvm_type load = {.name = llvm_name_new("llvm", "load_element_ptr", false)};
 
     append_member(&load.members, "Lang_type", "lang_type");
     append_member(&load.members, "size_t", "memb_idx");
@@ -415,7 +414,7 @@ static Llvm_type llvm_gen_llvm(void) {
 
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_block());
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_expr());
-    vec_append(&gen_a, &llvm.sub_types, llvm_gen_load_struct_element_ptr());
+    vec_append(&gen_a, &llvm.sub_types, llvm_gen_load_element_ptr());
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_array_access());
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_function_params());
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_def());

@@ -890,7 +890,7 @@ static void emit_struct_def(String* output, const Llvm_struct_def* struct_def) {
     emit_llvm_struct_def_base(output, &struct_def->base);
 }
 
-static void emit_load_element_ptr(String* output, const Llvm_load_struct_element_ptr* load) {
+static void emit_load_element_ptr(String* output, const Llvm_load_element_ptr* load) {
     string_extend_cstr(&a_main, output, "    %"); 
     llvm_extend_name(output, load->name_self);
 
@@ -998,8 +998,8 @@ static void emit_block(String* struct_defs, String* output, String* literals, co
             case LLVM_ALLOCA:
                 emit_alloca(output, llvm_alloca_const_unwrap(stmt));
                 break;
-            case LLVM_LOAD_STRUCT_ELEMENT_PTR:
-                emit_load_element_ptr(output, llvm_load_struct_element_ptr_const_unwrap(stmt));
+            case LLVM_LOAD_ELEMENT_PTR:
+                emit_load_element_ptr(output, llvm_load_element_ptr_const_unwrap(stmt));
                 break;
             case LLVM_ARRAY_ACCESS:
                 emit_array_access(output, llvm_array_access_const_unwrap(stmt));
@@ -1060,7 +1060,7 @@ static void emit_sometimes(String* struct_defs, String* output, String* literals
             return;
         case LLVM_EXPR:
             return;
-        case LLVM_LOAD_STRUCT_ELEMENT_PTR:
+        case LLVM_LOAD_ELEMENT_PTR:
             return;
         case LLVM_ARRAY_ACCESS:
             return;

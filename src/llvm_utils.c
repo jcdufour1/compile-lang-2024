@@ -83,8 +83,8 @@ Lang_type llvm_get_lang_type(const Llvm* llvm) {
             return llvm_load_another_llvm_const_unwrap(llvm)->lang_type;
         case LLVM_STORE_ANOTHER_LLVM:
             return llvm_store_another_llvm_const_unwrap(llvm)->lang_type;
-        case LLVM_LOAD_STRUCT_ELEMENT_PTR:
-            return llvm_load_struct_element_ptr_const_unwrap(llvm)->lang_type;
+        case LLVM_LOAD_ELEMENT_PTR:
+            return llvm_load_element_ptr_const_unwrap(llvm)->lang_type;
         case LLVM_ARRAY_ACCESS:
             return llvm_array_access_const_unwrap(llvm)->lang_type;
     }
@@ -179,8 +179,8 @@ Name llvm_tast_get_name(const Llvm* llvm) {
             return llvm_load_another_llvm_const_unwrap(llvm)->name;
         case LLVM_STORE_ANOTHER_LLVM:
             return llvm_store_another_llvm_const_unwrap(llvm)->name;
-        case LLVM_LOAD_STRUCT_ELEMENT_PTR:
-            return llvm_load_struct_element_ptr_const_unwrap(llvm)->name_self;
+        case LLVM_LOAD_ELEMENT_PTR:
+            return llvm_load_element_ptr_const_unwrap(llvm)->name_self;
         case LLVM_ARRAY_ACCESS:
             return llvm_array_access_const_unwrap(llvm)->name_self;
     }

@@ -120,7 +120,7 @@ Str_view llvm_function_name_print_internal(const Llvm_function_name* name, int i
     return string_to_strv(buf);
 }
 
-Str_view llvm_load_element_ptr_print_internal(const Llvm_load_struct_element_ptr* load, int indent) {
+Str_view llvm_load_element_ptr_print_internal(const Llvm_load_element_ptr* load, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "load_element_ptr", indent);
@@ -431,8 +431,8 @@ Str_view llvm_print_internal(const Llvm* llvm, int indent) {
             return llvm_expr_print_internal(llvm_expr_const_unwrap(llvm), indent);
         case LLVM_DEF:
             return llvm_def_print_internal(llvm_def_const_unwrap(llvm), indent);
-        case LLVM_LOAD_STRUCT_ELEMENT_PTR:
-            return llvm_load_element_ptr_print_internal(llvm_load_struct_element_ptr_const_unwrap(llvm), indent);
+        case LLVM_LOAD_ELEMENT_PTR:
+            return llvm_load_element_ptr_print_internal(llvm_load_element_ptr_const_unwrap(llvm), indent);
         case LLVM_ARRAY_ACCESS:
             return llvm_array_access_print_internal(llvm_array_access_const_unwrap(llvm), indent);
         case LLVM_FUNCTION_PARAMS:
