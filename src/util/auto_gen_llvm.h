@@ -322,12 +322,24 @@ static Llvm_type llvm_gen_def(void) {
     return def;
 }
 
-static Llvm_type llvm_gen_load_element_ptr(void) {
-    Llvm_type load = {.name = llvm_name_new("llvm", "load_element_ptr", false)};
+static Llvm_type llvm_gen_load_struct_element_ptr(void) {
+    Llvm_type load = {.name = llvm_name_new("llvm", "load_struct_element_ptr", false)};
 
     append_member(&load.members, "Lang_type", "lang_type");
-    append_member(&load.members, "Name", "struct_index");
+    append_member(&load.members, "Name", "struct_index"); // TODO: make this an integer or name only
     append_member(&load.members, "Name", "llvm_src");
+    append_member(&load.members, "Name", "name_self");
+    append_member(&load.members, "bool", "is_from_struct"); // TODO: remove this member
+
+    return load;
+}
+
+static Llvm_type llvm_gen_array_access(void) {
+    Llvm_type load = {.name = llvm_name_new("llvm", "array_access", false)};
+
+    append_member(&load.members, "Lang_type", "lang_type");
+    append_member(&load.members, "Name", "index");
+    append_member(&load.members, "Name", "callee");
     append_member(&load.members, "Name", "name_self");
     append_member(&load.members, "bool", "is_from_struct");
 
@@ -404,7 +416,8 @@ static Llvm_type llvm_gen_llvm(void) {
 
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_block());
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_expr());
-    vec_append(&gen_a, &llvm.sub_types, llvm_gen_load_element_ptr());
+    vec_append(&gen_a, &llvm.sub_types, llvm_gen_load_struct_element_ptr());
+    vec_append(&gen_a, &llvm.sub_types, llvm_gen_array_access());
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_function_params());
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_def());
     vec_append(&gen_a, &llvm.sub_types, llvm_gen_return());

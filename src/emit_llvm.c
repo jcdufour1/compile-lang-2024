@@ -890,35 +890,69 @@ static void emit_struct_def(String* output, const Llvm_struct_def* struct_def) {
     emit_llvm_struct_def_base(output, &struct_def->base);
 }
 
-static void emit_load_element_ptr(String* output, const Llvm_load_element_ptr* load_elem_ptr) {
+static void emit_load_element_ptr(String* output, const Llvm_load_struct_element_ptr* load) {
     string_extend_cstr(&a_main, output, "    %"); 
-    llvm_extend_name(output, load_elem_ptr->name_self);
+    llvm_extend_name(output, load->name_self);
 
     string_extend_cstr(&a_main, output, " = getelementptr inbounds ");
 
-    Lang_type lang_type = lang_type_from_get_name( load_elem_ptr->llvm_src);
+    Lang_type lang_type = lang_type_from_get_name( load->llvm_src);
     lang_type_set_pointer_depth( &lang_type, 0);
     extend_type_call_str( output, lang_type);
     string_extend_cstr(&a_main, output, ", ptr %");
-    llvm_extend_name(output, load_elem_ptr->llvm_src);
-    if (load_elem_ptr->is_from_struct) {
+    llvm_extend_name(output, load->llvm_src);
+    if (load->is_from_struct) {
         string_extend_cstr(&a_main, output, ", i32 0");
     }
     string_extend_cstr(&a_main, output, ", ");
-    if (load_elem_ptr->is_from_struct) {
+    if (load->is_from_struct) {
         string_extend_cstr(&a_main, output, "i32");
     } else {
-        extend_type_call_str( output, lang_type_from_get_name( load_elem_ptr->struct_index));
+        extend_type_call_str( output, lang_type_from_get_name( load->struct_index));
     }
     string_extend_cstr(&a_main, output, " ");
 
     Llvm* struct_index = NULL;
-    unwrap(alloca_lookup(&struct_index,  load_elem_ptr->struct_index));
+    unwrap(alloca_lookup(&struct_index,  load->struct_index));
     if (struct_index->type == LLVM_LOAD_ANOTHER_LLVM) {
         string_extend_cstr(&a_main, output, "%");
         llvm_extend_name(output, llvm_tast_get_name(struct_index));
     } else {
-        emit_operator_operand( output, load_elem_ptr->struct_index);
+        emit_operator_operand( output, load->struct_index);
+    }
+
+    vec_append(&a_main, output, '\n');
+}
+
+static void emit_array_access(String* output, const Llvm_array_access* load) {
+    string_extend_cstr(&a_main, output, "    %"); 
+    llvm_extend_name(output, load->name_self);
+
+    string_extend_cstr(&a_main, output, " = getelementptr inbounds ");
+
+    Lang_type lang_type = lang_type_from_get_name( load->callee);
+    lang_type_set_pointer_depth( &lang_type, 0);
+    extend_type_call_str( output, lang_type);
+    string_extend_cstr(&a_main, output, ", ptr %");
+    llvm_extend_name(output, load->callee);
+    if (load->is_from_struct) {
+        string_extend_cstr(&a_main, output, ", i32 0");
+    }
+    string_extend_cstr(&a_main, output, ", ");
+    if (load->is_from_struct) {
+        string_extend_cstr(&a_main, output, "i32");
+    } else {
+        extend_type_call_str( output, lang_type_from_get_name( load->index));
+    }
+    string_extend_cstr(&a_main, output, " ");
+
+    Llvm* struct_index = NULL;
+    unwrap(alloca_lookup(&struct_index,  load->index));
+    if (struct_index->type == LLVM_LOAD_ANOTHER_LLVM) {
+        string_extend_cstr(&a_main, output, "%");
+        llvm_extend_name(output, llvm_tast_get_name(struct_index));
+    } else {
+        emit_operator_operand( output, load->index);
     }
 
     vec_append(&a_main, output, '\n');
@@ -989,8 +1023,11 @@ static void emit_block(String* struct_defs, String* output, String* literals, co
             case LLVM_ALLOCA:
                 emit_alloca(output, llvm_alloca_const_unwrap(stmt));
                 break;
-            case LLVM_LOAD_ELEMENT_PTR:
-                emit_load_element_ptr(output, llvm_load_element_ptr_const_unwrap(stmt));
+            case LLVM_LOAD_STRUCT_ELEMENT_PTR:
+                emit_load_element_ptr(output, llvm_load_struct_element_ptr_const_unwrap(stmt));
+                break;
+            case LLVM_ARRAY_ACCESS:
+                emit_array_access(output, llvm_array_access_const_unwrap(stmt));
                 break;
             case LLVM_LOAD_ANOTHER_LLVM:
                 emit_load_another_llvm(output, llvm_load_another_llvm_const_unwrap(stmt));
@@ -1048,7 +1085,9 @@ static void emit_sometimes(String* struct_defs, String* output, String* literals
             return;
         case LLVM_EXPR:
             return;
-        case LLVM_LOAD_ELEMENT_PTR:
+        case LLVM_LOAD_STRUCT_ELEMENT_PTR:
+            return;
+        case LLVM_ARRAY_ACCESS:
             return;
         case LLVM_FUNCTION_PARAMS:
             todo();

@@ -320,11 +320,11 @@ Str_view util_literal_name_new_prefix_internal(const char* file, int line, const
     string_extend_cstr(&a_main, &var_name, "str");
 
     // TODO: use better solution for debugging
-    string_extend_cstr(&a_main, &var_name, "file____");
-    string_extend_strv(&a_main, &var_name, serialize_name(name_new(str_view_from_cstr(file), (Str_view) {0}, (Ulang_type_vec) {0}, 0)));
-    string_extend_cstr(&a_main, &var_name, "_");
-    string_extend_size_t(&a_main, &var_name, line);
-    string_extend_cstr(&a_main, &var_name, "_");
+    //string_extend_cstr(&a_main, &var_name, "file____");
+    //string_extend_strv(&a_main, &var_name, serialize_name(name_new(str_view_from_cstr(file), (Str_view) {0}, (Ulang_type_vec) {0}, 0)));
+    //string_extend_cstr(&a_main, &var_name, "_");
+    //string_extend_size_t(&a_main, &var_name, line);
+    //string_extend_cstr(&a_main, &var_name, "_");
 
     string_extend_cstr(&a_main, &var_name, debug_prefix);
     string_extend_size_t(&a_main, &var_name, count);
