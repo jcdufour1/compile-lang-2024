@@ -10,6 +10,7 @@
 #include <lang_type_get_pos.h>
 #include <lang_type_print.h>
 #include <lang_type_serialize.h>
+#include <parser_utils.h>
 
 typedef struct {
     String struct_defs;
@@ -19,6 +20,8 @@ typedef struct {
 } Emit_c_strs;
 
 static void emit_c_block(Emit_c_strs* strs,  const Llvm_block* block);
+
+static void emit_c_symbol_normal(String* literals, Name key, const Llvm_literal* lit);
 
 // TODO: see if this can be merged with extend_type_call_str in emit_llvm.c in some way
 static void c_extend_type_call_str(String* output, Lang_type lang_type) {
@@ -258,6 +261,157 @@ static void emit_c_return(Emit_c_strs* strs, const Llvm_return* fun_return) {
     }
 }
 
+static void emit_c_alloca(String* output, const Llvm_alloca* alloca) {
+    Name storage_loc = name_new((Str_view) {0}, util_literal_name_new(), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+
+    string_extend_cstr(&a_main, output, "    ");
+    c_extend_type_call_str(output, alloca->lang_type);
+    string_extend_cstr(&a_main, output, " ");
+    llvm_extend_name(output, storage_loc);
+    string_extend_cstr(&a_main, output, ";\n");
+
+    string_extend_cstr(&a_main, output, "    ");
+    string_extend_cstr(&a_main, output, "void* ");
+    llvm_extend_name(output, alloca->name);
+    string_extend_cstr(&a_main, output, " = (void*)&");
+    llvm_extend_name(output, storage_loc);
+    string_extend_cstr(&a_main, output, ";\n");
+}
+
+static void emit_c_def(Emit_c_strs* strs, const Llvm_def* def) {
+    (void) strs;
+    switch (def->type) {
+        case LLVM_FUNCTION_DEF:
+            todo();
+            //emit_function_def(struct_defs, output, literals, llvm_function_def_const_unwrap(def));
+            return;
+        case LLVM_VARIABLE_DEF:
+            return;
+        case LLVM_FUNCTION_DECL:
+            todo();
+            //emit_function_decl(output, llvm_function_decl_const_unwrap(def));
+            return;
+        case LLVM_LABEL:
+            todo();
+            //emit_label(output, llvm_label_const_unwrap(def));
+            return;
+        case LLVM_STRUCT_DEF:
+            todo();
+            //emit_struct_def(struct_defs, llvm_struct_def_const_unwrap(def));
+            return;
+        case LLVM_PRIMITIVE_DEF:
+            todo();
+        case LLVM_LITERAL_DEF:
+            todo();
+    }
+    unreachable("");
+}
+
+static void emit_c_store_another_llvm_src_literal(String* output, const Llvm_literal* literal) {
+    string_extend_cstr(&a_main, output, " ");
+
+    switch (literal->type) {
+        case LLVM_STRING:
+            llvm_extend_name(output, llvm_string_const_unwrap(literal)->name);
+            return;
+        case LLVM_NUMBER:
+            string_extend_int64_t(&a_main, output, llvm_number_const_unwrap(literal)->data);
+            return;
+        case LLVM_VOID:
+            return;
+        case LLVM_FUNCTION_NAME:
+            unreachable("");
+    }
+    unreachable("");
+}
+
+static void emit_c_store_another_llvm_src_expr(Emit_c_strs* strs, const Llvm_expr* expr) {
+    (void) env;
+
+    switch (expr->type) {
+        case LLVM_LITERAL: {
+            const Llvm_literal* lit = llvm_literal_const_unwrap(expr);
+            if (lit->type == LLVM_STRING) {
+                emit_c_symbol_normal(&strs->literals, llvm_literal_get_name(lit), lit);
+            }
+            emit_c_store_another_llvm_src_literal(&strs->output, lit);
+            return;
+        }
+        case LLVM_FUNCTION_CALL:
+            // fallthrough
+        case LLVM_OPERATOR:
+            llvm_extend_name(&strs->output, llvm_expr_get_name(expr));
+            break;
+        default:
+            unreachable(LLVM_FMT"\n", llvm_print(llvm_expr_const_wrap(expr)));
+    }
+}
+
+static void emit_c_store_another_llvm(Emit_c_strs* strs, const Llvm_store_another_llvm* store) {
+    Llvm* src = NULL;
+    unwrap(alloca_lookup(&src, store->llvm_src));
+
+    string_extend_cstr(&a_main, &strs->output, "    *((");
+    c_extend_type_call_str(&strs->output, store->lang_type);
+    string_extend_cstr(&a_main, &strs->output, "*)");
+    llvm_extend_name(&strs->output, store->llvm_dest);
+    string_extend_cstr(&a_main, &strs->output, ") = ");
+
+    switch (src->type) {
+        case LLVM_DEF: {
+            todo();
+            //const Llvm_def* src_def = llvm_def_const_unwrap(src);
+            //const Llvm_variable_def* src_var_def = llvm_variable_def_const_unwrap(src_def);
+            //(void) src_var_def;
+            //string_extend_cstr(&a_main, output, " %");
+            //llvm_extend_name(output, llvm_tast_get_name(src));
+            break;
+        }
+        case LLVM_EXPR:
+            emit_c_store_another_llvm_src_expr(strs, llvm_expr_const_unwrap(src));
+            break;
+        case LLVM_LOAD_ANOTHER_LLVM:
+            todo();
+            //string_extend_cstr(&a_main, output, "%");
+            //llvm_extend_name(output, llvm_tast_get_name(src));
+            break;
+        case LLVM_ALLOCA:
+            todo();
+            //string_extend_cstr(&a_main, output, " %");
+            //llvm_extend_name(output, llvm_tast_get_name(src));
+            break;
+        default:
+            unreachable(LLVM_FMT"\n", llvm_print(src));
+    }
+    string_extend_cstr(&a_main, &strs->output, ";\n");
+    return;
+    //string_extend_cstr(&a_main, output, " %");
+    //llvm_extend_name(output, llvm_tast_get_name(store->llvm_src.llvm));
+
+    todo();
+    //string_extend_cstr(&a_main, output, ", ptr %");
+    //llvm_extend_name(output, store->llvm_dest);
+    //string_extend_cstr(&a_main, output, ", align 8");
+    //string_extend_cstr(&a_main, output, "\n");
+}
+
+static void emit_c_load_another_llvm(Emit_c_strs* strs, const Llvm_load_another_llvm* load) {
+    log(LOG_DEBUG, TAST_FMT"\n", string_print(strs->output));
+
+    string_extend_cstr(&a_main, &strs->output, "    ");
+    c_extend_type_call_str(&strs->output, load->lang_type);
+    string_extend_cstr(&a_main, &strs->output, " ");
+    llvm_extend_name(&strs->output, load->name);
+    string_extend_cstr(&a_main, &strs->output, " = ");
+
+    string_extend_cstr(&a_main, &strs->output, "*((");
+    c_extend_type_call_str(&strs->output, load->lang_type);
+    string_extend_cstr(&a_main, &strs->output, "*)");
+    llvm_extend_name(&strs->output, load->llvm_src);
+
+    string_extend_cstr(&a_main, &strs->output, ");\n");
+}
+
 static void emit_c_block(Emit_c_strs* strs, const Llvm_block* block) {
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         const Llvm* stmt = vec_at(&block->children, idx);
@@ -266,8 +420,7 @@ static void emit_c_block(Emit_c_strs* strs, const Llvm_block* block) {
                 emit_c_expr(strs, llvm_expr_const_unwrap(stmt));
                 break;
             case LLVM_DEF:
-                todo();
-                //emit_def(struct_defs, output, literals, llvm_def_const_unwrap(stmt));
+                emit_c_def(strs, llvm_def_const_unwrap(stmt));
                 break;
             case LLVM_RETURN:
                 emit_c_return(strs, llvm_return_const_unwrap(stmt));
@@ -285,20 +438,17 @@ static void emit_c_block(Emit_c_strs* strs, const Llvm_block* block) {
                 //emit_goto(output, llvm_goto_const_unwrap(stmt));
                 break;
             case LLVM_ALLOCA:
-                todo();
-                //emit_alloca(output, llvm_alloca_const_unwrap(stmt));
+                emit_c_alloca(&strs->output, llvm_alloca_const_unwrap(stmt));
                 break;
             case LLVM_LOAD_ELEMENT_PTR:
                 todo();
                 //emit_load_element_ptr(output, llvm_load_element_ptr_const_unwrap(stmt));
                 break;
             case LLVM_LOAD_ANOTHER_LLVM:
-                todo();
-                //emit_load_another_llvm(output, llvm_load_another_llvm_const_unwrap(stmt));
+                emit_c_load_another_llvm(strs, llvm_load_another_llvm_const_unwrap(stmt));
                 break;
             case LLVM_STORE_ANOTHER_LLVM:
-                todo();
-                //emit_store_another_llvm(output, literals, llvm_store_another_llvm_const_unwrap(stmt));
+                emit_c_store_another_llvm(strs, llvm_store_another_llvm_const_unwrap(stmt));
                 break;
             default:
                 log(LOG_ERROR, STRING_FMT"\n", string_print(strs->output));
@@ -312,6 +462,23 @@ static void emit_c_block(Emit_c_strs* strs, const Llvm_block* block) {
     while (all_tbl_iter_next(&curr, &iter)) {
         emit_c_sometimes(strs, curr);
     }
+}
+
+static void emit_c_symbol_normal(String* literals, Name key, const Llvm_literal* lit) {
+    Str_view data = {0};
+    switch (lit->type) {
+        case LLVM_STRING:
+            data = llvm_string_const_unwrap(lit)->data;
+            break;
+        default:
+            todo();
+    }
+
+    string_extend_cstr(&a_main, literals, "static const ");
+    llvm_extend_name(literals, key);
+    string_extend_cstr(&a_main, literals, " = \"");
+    string_extend_strv(&a_main, literals, data);
+    string_extend_cstr(&a_main, literals, "\"\n");
 }
 
 void emit_c_from_tree(const Llvm_block* root) {
