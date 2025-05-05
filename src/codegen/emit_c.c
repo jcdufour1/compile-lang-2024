@@ -561,7 +561,8 @@ static void emit_c_load_element_ptr(Emit_c_strs* strs, const Llvm_load_element_p
     string_extend_cstr(&a_main, &strs->output, "(");
     llvm_extend_name(&strs->output, load->llvm_src);
     string_extend_cstr(&a_main, &strs->output, "->");
-    emit_c_expr_piece(strs, load->struct_index);
+    todo();
+    //emit_c_expr_piece(strs, load->struct_index);
     string_extend_cstr(&a_main, &strs->output, ")");
 
     string_extend_cstr(&a_main, &strs->output, ");\n");

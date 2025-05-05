@@ -133,6 +133,19 @@ Str_view llvm_load_element_ptr_print_internal(const Llvm_load_element_ptr* load,
     return string_to_strv(buf);
 }
 
+Str_view llvm_array_access_print_internal(const Llvm_array_access* load, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&print_arena, &buf, "load_element_ptr", indent);
+    extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, load->lang_type);
+    extend_name(false, false, &buf, load->name_self);
+    extend_child_name(&buf, "member_name", load->name_self);
+    extend_child_name(&buf, "src", load->callee);
+    string_extend_cstr(&print_arena, &buf, "\n");
+
+    return string_to_strv(buf);
+}
+
 Str_view llvm_block_print_internal(const Llvm_block* block, int indent) {
     String buf = {0};
 
@@ -420,6 +433,8 @@ Str_view llvm_print_internal(const Llvm* llvm, int indent) {
             return llvm_def_print_internal(llvm_def_const_unwrap(llvm), indent);
         case LLVM_LOAD_ELEMENT_PTR:
             return llvm_load_element_ptr_print_internal(llvm_load_element_ptr_const_unwrap(llvm), indent);
+        case LLVM_ARRAY_ACCESS:
+            return llvm_array_access_print_internal(llvm_array_access_const_unwrap(llvm), indent);
         case LLVM_FUNCTION_PARAMS:
             return llvm_function_params_print_internal(llvm_function_params_const_unwrap(llvm), indent);
         case LLVM_RETURN:

@@ -493,8 +493,6 @@ Uast_operator* uast_condition_get_default_child(Uast_expr* if_cond_child) {
 }
 
 size_t struct_def_base_get_idx_largest_member(Struct_def_base base) {
-    assert(base.members.info.count > 0);
-
     size_t result = 0;
     uint64_t size_result = 0;
 
