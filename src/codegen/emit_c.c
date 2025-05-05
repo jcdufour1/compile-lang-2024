@@ -67,7 +67,25 @@ static void c_extend_type_call_str(String* output, Lang_type lang_type) {
     unreachable("");
 }
 
-static void emit_c_function_def_decl(String* output, const Llvm_function_decl* decl) {
+static void emit_c_function_params(String* output, const Llvm_function_params* params) {
+    for (size_t idx = 0; idx < params->params.info.count; idx++) {
+        if (idx > 0) {
+            string_extend_cstr(&a_main, output, ", ");
+        }
+
+        if (vec_at(&params->params, idx)->is_variadic) {
+            string_extend_cstr(&a_main, output, "... ");
+            assert(idx + 1 == params->params.info.count && "only last parameter may be variadic at this point");
+            return;
+        }
+
+        c_extend_type_call_str(output, vec_at(&params->params, idx)->lang_type);
+        string_extend_cstr(&a_main, output, " ");
+        llvm_extend_name(output, vec_at(&params->params, idx)->name_self);
+    }
+}
+
+static void emit_c_function_decl_internal(String* output, const Llvm_function_decl* decl) {
     c_extend_type_call_str(output, decl->return_type);
     string_extend_cstr(&a_main, output, " ");
     llvm_extend_name(output, decl->name);
@@ -76,20 +94,24 @@ static void emit_c_function_def_decl(String* output, const Llvm_function_decl* d
     if (decl->params->params.info.count < 1) {
         string_extend_cstr(&a_main, output, "void");
     } else {
-        todo();
-        //emit_c_function_params(&strs->output, fun_def->decl->params);
+        emit_c_function_params(output, decl->params);
     }
-    vec_append(&a_main, output, ')');
+    string_extend_cstr(&a_main, output, ")");
 }
 
 static void emit_c_function_def(Emit_c_strs* strs, const Llvm_function_def* fun_def) {
-    emit_c_function_def_decl(&strs->forward_decls, fun_def->decl);
+    emit_c_function_decl_internal(&strs->forward_decls, fun_def->decl);
     string_extend_cstr(&a_main, &strs->forward_decls, ";\n");
 
-    emit_c_function_def_decl(&strs->output, fun_def->decl);
+    emit_c_function_decl_internal(&strs->output, fun_def->decl);
     string_extend_cstr(&a_main, &strs->output, " {\n");
     emit_c_block(strs, fun_def->body);
     string_extend_cstr(&a_main, &strs->output, "}\n");
+}
+
+static void emit_c_function_decl(Emit_c_strs* strs, const Llvm_function_decl* decl) {
+    emit_c_function_decl_internal(&strs->forward_decls, decl);
+    string_extend_cstr(&a_main, &strs->forward_decls, ";\n");
 }
 
 static void emit_c_struct_def(Emit_c_strs* strs, const Llvm_struct_def* def) {
@@ -118,8 +140,7 @@ static void emit_c_def_sometimes(Emit_c_strs* strs, const Llvm_def* def) {
         case LLVM_VARIABLE_DEF:
             return;
         case LLVM_FUNCTION_DECL:
-            todo();
-            //emit_function_decl(output, llvm_function_decl_const_unwrap(def));
+            emit_c_function_decl(strs, llvm_function_decl_const_unwrap(def));
             return;
         case LLVM_LABEL:
             return;
@@ -200,7 +221,9 @@ static void emit_c_function_call(Emit_c_strs* strs, const Llvm_function_call* fu
     // arguments
     string_extend_cstr(&a_main, &strs->output, "(");
     if (fun_call->args.info.count > 0) {
-        todo();
+        for (size_t idx = 0; idx < fun_call->args.info.count; idx++) {
+            emit_c_expr_piece(strs, vec_at(&fun_call->args, idx));
+        }
     }
     //emit_function_call_arguments(&strs->output, literals, fun_call);
     string_extend_cstr(&a_main, &strs->output, ");\n");
@@ -499,12 +522,7 @@ static void emit_c_store_another_llvm(Emit_c_strs* strs, const Llvm_store_anothe
 
     switch (src->type) {
         case LLVM_DEF: {
-            todo();
-            //const Llvm_def* src_def = llvm_def_const_unwrap(src);
-            //const Llvm_variable_def* src_var_def = llvm_variable_def_const_unwrap(src_def);
-            //(void) src_var_def;
-            //string_extend_cstr(&a_main, output, " %");
-            //llvm_extend_name(output, llvm_tast_get_name(src));
+            llvm_extend_name(&strs->output, llvm_tast_get_name(src));
             break;
         }
         case LLVM_EXPR:
@@ -582,8 +600,7 @@ static void emit_c_block(Emit_c_strs* strs, const Llvm_block* block) {
                 emit_c_return(strs, llvm_return_const_unwrap(stmt));
                 break;
             case LLVM_BLOCK:
-                todo();
-                //emit_block(struct_defs, output, literals, llvm_block_const_unwrap(stmt));
+                emit_c_block(strs, llvm_block_const_unwrap(stmt));
                 break;
             case LLVM_COND_GOTO:
                 todo();
