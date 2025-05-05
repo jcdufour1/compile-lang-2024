@@ -3,11 +3,11 @@
 CC_COMPILER ?= clang
 
 C_FLAGS_DEBUG=-Wall -Wextra -Wenum-compare -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types \
-			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema \
+			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen \
 			  -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			  -fsanitize=address -fno-omit-frame-pointer 
 C_FLAGS_RELEASE=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types \
-			    -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema \
+			    -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen \
 			    -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			    -DNDEBUG \
 				-O2
@@ -61,6 +61,7 @@ OBJS=\
 	 ${BUILD_DIR}/token/tokenizer.o \
 	 ${BUILD_DIR}/parser.o \
 	 ${BUILD_DIR}/add_load_and_store.o \
+	 ${BUILD_DIR}/codegen/common.o \
 	 ${BUILD_DIR}/codegen/emit_llvm.o \
 	 ${BUILD_DIR}/codegen/emit_c.o \
 	 ${BUILD_DIR}/llvm_utils.o
@@ -92,8 +93,11 @@ setup:
 
 build: setup ${BUILD_DIR}/main
 
+# TODO: figure out better way to switch between c and llvm
+COMPILER_OUTPUT=test.c
+
 test_quick: run
-	${CC_COMPILER} test.ll -o a.out && ./a.out ; echo $$?
+	${CC_COMPILER} ${COMPILER_OUTPUT} -o a.out && ./a.out ; echo $$?
 
 # auto_gen and util
 ${BUILD_DIR}/auto_gen: src/util/auto_gen.c ${DEP_UTIL}
@@ -183,6 +187,9 @@ ${BUILD_DIR}/llvm_utils.o: ${DEP_COMMON} src/llvm_utils.c
 
 ${BUILD_DIR}/add_load_and_store.o: ${DEP_COMMON} src/add_load_and_store.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/add_load_and_store.o src/add_load_and_store.c
+
+${BUILD_DIR}/codegen/common.o: ${DEP_COMMON} src/codegen/common.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/codegen/common.o src/codegen/common.c
 
 ${BUILD_DIR}/codegen/emit_llvm.o: ${DEP_COMMON} src/codegen/emit_llvm.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/codegen/emit_llvm.o src/codegen/emit_llvm.c
