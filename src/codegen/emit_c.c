@@ -23,6 +23,8 @@ static void emit_c_block(Emit_c_strs* strs,  const Llvm_block* block);
 
 static void emit_c_symbol_normal(String* literals, Name key, const Llvm_literal* lit);
 
+static void emit_c_expr_piece(Emit_c_strs* strs, Name child);
+
 // TODO: see if this can be merged with extend_type_call_str in emit_llvm.c in some way
 static void c_extend_type_call_str(String* output, Lang_type lang_type) {
     if (lang_type_get_pointer_depth(lang_type) != 0) {
@@ -186,11 +188,115 @@ static void emit_c_function_call(Emit_c_strs* strs, const Llvm_function_call* fu
     string_extend_cstr(&a_main, &strs->output, ");\n");
 }
 
+static void emit_c_unary_operator(Emit_c_strs* strs, UNARY_TYPE unary_type) {
+    (void) strs;
+    switch (unary_type) {
+        case UNARY_DEREF:
+            todo();
+        case UNARY_REFER:
+            todo();
+        case UNARY_UNSAFE_CAST:
+            todo();
+        case UNARY_NOT:
+            todo();
+    }
+    unreachable("");
+}
+
+static void emit_c_binary_operator(Emit_c_strs* strs, BINARY_TYPE bin_type) {
+    (void) strs;
+    switch (bin_type) {
+        case BINARY_SINGLE_EQUAL:
+            unreachable("");
+        case BINARY_SUB:
+            string_extend_cstr(&a_main, &strs->output, " - ");
+            return;
+        case BINARY_ADD:
+            string_extend_cstr(&a_main, &strs->output, " + ");
+            return;
+        case BINARY_MULTIPLY:
+            string_extend_cstr(&a_main, &strs->output, " * ");
+            return;
+        case BINARY_DIVIDE:
+            string_extend_cstr(&a_main, &strs->output, " / ");
+            return;
+        case BINARY_MODULO:
+            todo();
+        case BINARY_LESS_THAN:
+            string_extend_cstr(&a_main, &strs->output, " < ");
+            return;
+        case BINARY_LESS_OR_EQUAL:
+            string_extend_cstr(&a_main, &strs->output, " <= ");
+            return;
+        case BINARY_GREATER_OR_EQUAL:
+            string_extend_cstr(&a_main, &strs->output, " >= ");
+            return;
+        case BINARY_GREATER_THAN:
+            string_extend_cstr(&a_main, &strs->output, " > ");
+            return;
+        case BINARY_DOUBLE_EQUAL:
+            string_extend_cstr(&a_main, &strs->output, " == ");
+            return;
+        case BINARY_NOT_EQUAL:
+            string_extend_cstr(&a_main, &strs->output, " != ");
+            return;
+        case BINARY_BITWISE_XOR:
+            string_extend_cstr(&a_main, &strs->output, " ^ ");
+            return;
+        case BINARY_BITWISE_AND:
+            string_extend_cstr(&a_main, &strs->output, " & ");
+            return;
+        case BINARY_BITWISE_OR:
+            string_extend_cstr(&a_main, &strs->output, " | ");
+            return;
+        case BINARY_LOGICAL_AND:
+            string_extend_cstr(&a_main, &strs->output, " && ");
+            return;
+        case BINARY_LOGICAL_OR:
+            string_extend_cstr(&a_main, &strs->output, " || ");
+            return;
+        case BINARY_SHIFT_LEFT:
+            string_extend_cstr(&a_main, &strs->output, " << ");
+            return;
+        case BINARY_SHIFT_RIGHT:
+            string_extend_cstr(&a_main, &strs->output, " >> ");
+            return;
+    }
+    unreachable("");
+}
+
+static void emit_c_operator(Emit_c_strs* strs, const Llvm_operator* oper) {
+    string_extend_cstr(&a_main, &strs->output, "    ");
+    c_extend_type_call_str(&strs->output, llvm_operator_get_lang_type(oper));
+    string_extend_cstr(&a_main, &strs->output, " ");
+    llvm_extend_name(&strs->output, llvm_operator_get_name(oper));
+    string_extend_cstr(&a_main, &strs->output, " = ");
+
+    switch (oper->type) {
+        case LLVM_UNARY: {
+            const Llvm_unary* unary = llvm_unary_const_unwrap(oper);
+            emit_c_unary_operator(strs, unary->token_type);
+            emit_c_expr_piece(strs, unary->child);
+            break;
+        }
+        case LLVM_BINARY: {
+            const Llvm_binary* bin = llvm_binary_const_unwrap(oper);
+            emit_c_expr_piece(strs, bin->lhs);
+            emit_c_binary_operator(strs, bin->token_type);
+            emit_c_expr_piece(strs, bin->rhs);
+            break;
+        }
+        default:
+            unreachable("");
+    }
+
+    string_extend_cstr(&a_main, &strs->output, ";\n");
+}
+
 static void emit_c_expr(Emit_c_strs* strs, const Llvm_expr* expr) {
     switch (expr->type) {
         case LLVM_OPERATOR:
-            todo();
-            //emit_c_operator(&strs->output, llvm_operator_const_unwrap(expr));
+            emit_c_operator(strs, llvm_operator_const_unwrap(expr));
             return;
         case LLVM_FUNCTION_CALL:
             emit_c_function_call(strs, llvm_function_call_const_unwrap(expr));
@@ -220,45 +326,59 @@ static void extend_c_literal(Emit_c_strs* strs, const Llvm_literal* literal) {
     unreachable("");
 }
 
-static void emit_c_return_expr(Emit_c_strs* strs, const Llvm_expr* child) {
-    switch (child->type) {
+static void emit_c_expr_piece_expr(Emit_c_strs* strs, const Llvm_expr* expr) {
+    switch (expr->type) {
         case LLVM_LITERAL: {
-            const Llvm_literal* literal = llvm_literal_const_unwrap(child);
-            string_extend_cstr(&a_main, &strs->output, "    return ");
-            extend_c_literal(strs, literal);
-            string_extend_cstr(&a_main, &strs->output, ";\n");
-            break;
+            extend_c_literal(strs, llvm_literal_const_unwrap(expr));
+            return;
         }
         case LLVM_OPERATOR:
             // fallthrough
         case LLVM_FUNCTION_CALL:
-            string_extend_cstr(&a_main, &strs->output, "    return ");
-            llvm_extend_name(&strs->output, llvm_expr_get_name(child));
-            string_extend_cstr(&a_main, &strs->output, ";\n");
-            break;
-        default:
-            unreachable(TAST_FMT"\n", llvm_expr_print(child));
+            llvm_extend_name(&strs->output, llvm_expr_get_name(expr));
+            return;
     }
+    unreachable("");
 }
 
-static void emit_c_return(Emit_c_strs* strs, const Llvm_return* fun_return) {
-    Llvm* sym_to_return = NULL;
-    unwrap(alloca_lookup(&sym_to_return, fun_return->child));
+static void emit_c_expr_piece(Emit_c_strs* strs, Name child) {
+    Llvm* result = NULL;
+    unwrap(alloca_lookup(&result, child));
 
-    switch (sym_to_return->type) {
+    switch (result->type) {
         case LLVM_EXPR:
-            emit_c_return_expr(strs, llvm_expr_const_unwrap(sym_to_return));
+            emit_c_expr_piece_expr(strs, llvm_expr_unwrap(result));
             return;
-        case LLVM_LOAD_ANOTHER_LLVM: {
-            const Llvm_load_another_llvm* load = llvm_load_another_llvm_const_unwrap(sym_to_return);
-            string_extend_cstr(&a_main, &strs->output, "    return ");
-            llvm_extend_name(&strs->output, load->name);
-            string_extend_cstr(&a_main, &strs->output, ";\n");
+        case LLVM_LOAD_ELEMENT_PTR:
+            todo();
+        case LLVM_STORE_ANOTHER_LLVM:
+            llvm_extend_name(&strs->output, llvm_tast_get_name(result));
             return;
-        }
-        default:
-            unreachable(TAST_FMT"\n", llvm_print(sym_to_return));
+        case LLVM_LOAD_ANOTHER_LLVM:
+            llvm_extend_name(&strs->output, llvm_tast_get_name(result));
+            return;
+        case LLVM_FUNCTION_PARAMS:
+            unreachable("");
+        case LLVM_DEF:
+            unreachable("");
+        case LLVM_RETURN:
+            unreachable("");
+        case LLVM_GOTO:
+            unreachable("");
+        case LLVM_ALLOCA:
+            unreachable("");
+        case LLVM_COND_GOTO:
+            unreachable("");
+        case LLVM_BLOCK:
+            unreachable("");
     }
+    unreachable("");
+}
+
+static void emit_c_return(Emit_c_strs* strs, const Llvm_return* rtn) {
+    string_extend_cstr(&a_main, &strs->output, "    return ");
+    emit_c_expr_piece(strs, rtn->child);
+    string_extend_cstr(&a_main, &strs->output, ";\n");
 }
 
 static void emit_c_alloca(String* output, const Llvm_alloca* alloca) {

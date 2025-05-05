@@ -153,6 +153,7 @@ Name llvm_def_get_name(const Llvm_def* def) {
     unreachable("");
 }
 
+// TODO: rename this function to llvm_get_name
 Name llvm_tast_get_name(const Llvm* llvm) {
     switch (llvm->type) {
         case LLVM_DEF:
