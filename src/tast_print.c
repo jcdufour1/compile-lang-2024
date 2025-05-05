@@ -45,7 +45,7 @@ Str_view tast_unary_print_internal(const Tast_unary* unary, int indent) {
 
 void tast_extend_sym_typed_base(String* string, Sym_typed_base base) {
     extend_lang_type_to_string(string, LANG_TYPE_MODE_LOG, base.lang_type);
-    extend_name(false, string, base.name);
+    extend_name(false, false, string, base.name);
     string_extend_cstr(&print_arena, string, "\n");
 }
 
@@ -127,7 +127,7 @@ Str_view tast_struct_literal_print_internal(const Tast_struct_literal* lit, int 
 
     string_extend_cstr_indent(&print_arena, &buf, "struct_literal", indent);
     extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, lit->lang_type);
-    extend_name(false, &buf, lit->name);
+    extend_name(false, false, &buf, lit->name);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     for (size_t idx = 0; idx < lit->members.info.count; idx++) {
@@ -256,7 +256,7 @@ Str_view tast_function_lit_print_internal(const Tast_function_lit* lit, int inde
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "function_lit", indent);
-    extend_name(false, &buf, lit->name);
+    extend_name(false, false, &buf, lit->name);
     extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, lit->lang_type);
     string_extend_cstr(&print_arena, &buf, "\n");
 
@@ -397,7 +397,7 @@ Str_view tast_label_print_internal(const Tast_label* label, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "label", indent);
-    extend_name(false, &buf, label->name);
+    extend_name(false, false, &buf, label->name);
     extend_pos(&buf, label->pos);
     string_extend_cstr(&a_main, &buf, "\n");
 
@@ -422,7 +422,7 @@ Str_view tast_module_alias_print_internal(const Tast_module_alias* alias, int in
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "module_alias", indent);
-    extend_name(false, &buf, alias->alias_name);
+    extend_name(false, false, &buf, alias->alias_name);
     string_extend_strv(&print_arena, &buf, alias->mod_path);
     string_extend_cstr(&print_arena, &buf, "\n");
 
@@ -434,7 +434,7 @@ Str_view tast_function_decl_print_internal(const Tast_function_decl* fun_decl, i
 
     string_extend_cstr_indent(&print_arena, &buf, "function_decl", indent);
     indent += INDENT_WIDTH;
-    extend_name(false, &buf, fun_decl->name);
+    extend_name(false, false, &buf, fun_decl->name);
     extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, fun_decl->return_type);
     string_extend_cstr(&print_arena, &buf, "\n");
     string_extend_strv(&print_arena, &buf, tast_function_params_print_internal(fun_decl->params, indent));
@@ -459,7 +459,7 @@ Str_view tast_function_def_print_internal(const Tast_function_def* fun_def, int 
 
 static void extend_struct_def_base(String* buf, const char* type_name, Struct_def_base base, int indent) {
     string_extend_cstr_indent(&print_arena, buf, type_name, indent);
-    extend_name(false, buf, base.name);
+    extend_name(false, false, buf, base.name);
     string_extend_cstr(&print_arena, buf, "\n");
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
@@ -509,7 +509,7 @@ Str_view tast_string_def_print_internal(const Tast_string_def* def, int indent) 
 
     string_extend_cstr_indent(&print_arena, &buf, "string_def", indent);
     indent += INDENT_WIDTH;
-    extend_name(false, &buf, def->name);
+    extend_name(false, false, &buf, def->name);
     string_extend_strv(&print_arena, &buf, def->data);
     string_extend_cstr(&print_arena, &buf, "\n");
     indent -= INDENT_WIDTH;
@@ -522,7 +522,7 @@ Str_view tast_struct_lit_def_print_internal(const Tast_struct_lit_def* def, int 
 
     string_extend_cstr_indent(&print_arena, &buf, "struct_lit_def", indent);
     extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
-    extend_name(false, &buf, def->name);
+    extend_name(false, false, &buf, def->name);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     for (size_t idx = 0; idx < def->members.info.count; idx++) {
@@ -556,7 +556,7 @@ Str_view tast_variable_def_print_internal(const Tast_variable_def* def, int inde
 
     string_extend_cstr_indent(&print_arena, &buf, "variable_def", indent);
     extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
-    extend_name(false, &buf, def->name);
+    extend_name(false, false, &buf, def->name);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);

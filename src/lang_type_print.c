@@ -79,7 +79,7 @@ void extend_lang_type_atom(String* string, LANG_TYPE_MODE mode, Lang_type_atom a
     Name temp = atom.str;
 
     if (atom.str.base.count > 1) {
-        extend_name(mode == LANG_TYPE_MODE_EMIT_LLVM, string, atom.str);
+        extend_name(mode == LANG_TYPE_MODE_EMIT_LLVM, mode == LANG_TYPE_MODE_EMIT_C, string, atom.str);
     } else {
         string_extend_cstr(&print_arena, string, "void");
     }
@@ -135,6 +135,8 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             break;
         case LANG_TYPE_MODE_EMIT_LLVM:
             break;
+        case LANG_TYPE_MODE_EMIT_C:
+            break;
         default:
             unreachable("");
     }
@@ -172,7 +174,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
         case LANG_TYPE_STRUCT:
             // fallthrough
         case LANG_TYPE_PRIMITIVE:
-            extend_lang_type_atom(string, mode, lang_type_get_atom(lang_type));
+            extend_lang_type_atom(string, mode, lang_type_get_atom(mode, lang_type));
             goto end;
     }
     unreachable("");

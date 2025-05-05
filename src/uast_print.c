@@ -55,7 +55,7 @@ Str_view uast_symbol_print_internal(const Uast_symbol* sym, int indent) {
 
     string_extend_cstr_indent(&print_arena, &buf, "symbol_untyped", indent);
     extend_pos(&buf, sym->pos);
-    extend_name(false, &buf, sym->name);
+    extend_name(false, false, &buf, sym->name);
     for (size_t idx = 0; idx < sym->name.gen_args.info.count; idx++) {
         extend_ulang_type_to_string(&buf, LANG_TYPE_MODE_LOG, vec_at(&sym->name.gen_args, idx));
     }
@@ -420,7 +420,7 @@ Str_view uast_import_path_print_internal(const Uast_import_path* import, int ind
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "import_path", indent);
-    extend_name(false, &buf, import->mod_path);
+    extend_name(false, false, &buf, import->mod_path);
     string_extend_cstr(&print_arena, &buf, "\n");
     string_extend_strv(&print_arena, &buf, uast_block_print_internal(import->block, indent + INDENT_WIDTH));
 
@@ -432,10 +432,10 @@ Str_view uast_mod_alias_print_internal(const Uast_mod_alias* alias, int indent) 
 
     string_extend_cstr_indent(&print_arena, &buf, "mod_alias", indent);
     string_extend_cstr(&print_arena, &buf, "(");
-    extend_name(false, &buf, alias->name);
+    extend_name(false, false, &buf, alias->name);
     string_extend_cstr(&print_arena, &buf, ")");
     string_extend_cstr(&print_arena, &buf, "(");
-    extend_name(false, &buf, alias->mod_path);
+    extend_name(false, false, &buf, alias->mod_path);
     string_extend_cstr(&print_arena, &buf, ")");
     string_extend_cstr(&print_arena, &buf, "\n");
 
@@ -455,7 +455,7 @@ Str_view uast_poison_def_print_internal(const Uast_poison_def* poison, int inden
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "poison_def", indent);
-    extend_name(false, &buf, poison->name);
+    extend_name(false, false, &buf, poison->name);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);
@@ -465,7 +465,7 @@ Str_view uast_lang_def_print_internal(const Uast_lang_def* def, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "lang_def", indent);
-    extend_name(false, &buf, def->alias_name);
+    extend_name(false, false, &buf, def->alias_name);
     string_extend_cstr(&print_arena, &buf, "\n");
     string_extend_strv(&print_arena, &buf, uast_expr_print_internal(def->expr, indent + INDENT_WIDTH));
     string_extend_cstr(&print_arena, &buf, "\n");
@@ -502,7 +502,7 @@ Str_view uast_function_decl_print_internal(const Uast_function_decl* fun_decl, i
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "function_decl", indent);
-    extend_name(false, &buf, fun_decl->name);
+    extend_name(false, false, &buf, fun_decl->name);
     extend_ulang_type_to_string(&buf, LANG_TYPE_MODE_LOG, fun_decl->return_type);
     string_extend_cstr(&print_arena, &buf, "\n");
     string_extend_strv(&print_arena, &buf, uast_function_params_print_internal(fun_decl->params, indent + INDENT_WIDTH));
@@ -525,7 +525,7 @@ Str_view uast_function_def_print_internal(const Uast_function_def* fun_def, int 
 static void extend_ustruct_def_base(String* buf, const char* type_name, Ustruct_def_base base, int indent, Pos pos) {
     string_extend_cstr_indent(&print_arena, buf, type_name, indent);
     extend_pos(buf, pos);
-    extend_name(false, buf, base.name);
+    extend_name(false, false, buf, base.name);
     string_extend_cstr(&print_arena, buf, "\n");
 
     for (size_t idx = 0; idx < base.members.info.count; idx++) {
@@ -589,7 +589,7 @@ Str_view uast_string_def_print_internal(const Uast_string_def* def, int indent) 
 
     string_extend_cstr_indent(&print_arena, &buf, "string_def", indent);
     indent += INDENT_WIDTH;
-    extend_name(false, &buf, def->name);
+    extend_name(false, false, &buf, def->name);
     string_extend_strv(&print_arena, &buf, def->data);
     string_extend_cstr(&print_arena, &buf, "\n");
     indent -= INDENT_WIDTH;
@@ -603,7 +603,7 @@ Str_view uast_struct_lit_def_print_internal(const Uast_struct_lit_def* def, int 
     indent += INDENT_WIDTH;
 
     string_extend_cstr_indent(&print_arena, &buf, "struct_lit_def", indent);
-    extend_name(false, &buf, def->name);
+    extend_name(false, false, &buf, def->name);
     string_extend_cstr(&print_arena, &buf, "\n");
     for (size_t idx = 0; idx < def->members.info.count; idx++) {
         Str_view memb_text = uast_print_internal(vec_at(&def->members, idx), indent);
@@ -646,7 +646,7 @@ Str_view uast_variable_def_print_internal(const Uast_variable_def* def, int inde
 
     string_extend_cstr_indent(&print_arena, &buf, "variable_def", indent);
     extend_ulang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
-    extend_name(false, &buf, def->name);
+    extend_name(false, false, &buf, def->name);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);

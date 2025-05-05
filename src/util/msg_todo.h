@@ -13,8 +13,6 @@ void msg_internal(
 #define msg_todo(feature, pos) \
     msg_todo_internal(__FILE__, __LINE__,  feature, pos);
 
-
-
 static inline void msg_todo_internal(const char* file, int line, const char* feature, Pos pos) {
     msg_internal(
         file, line, LOG_ERROR, EXPECT_FAIL_NOT_YET_IMPLEMENTED, env.file_path_to_text, pos, 

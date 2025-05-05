@@ -25,7 +25,7 @@ Str_view serialize_ulang_type_atom(Ulang_type_atom atom, bool include_scope) {
 
 Name serialize_ulang_type_fn(Str_view mod_path, Ulang_type_fn ulang_type, bool include_scope) {
     String name = {0};
-    extend_name(false, &name, serialize_ulang_type_tuple(mod_path, ulang_type.params, include_scope));
+    extend_name(false, false, &name, serialize_ulang_type_tuple(mod_path, ulang_type.params, include_scope));
     string_extend_strv(&a_main, &name, serialize_name(serialize_ulang_type(mod_path, *ulang_type.return_type, include_scope)));
     return name_new(mod_path, string_to_strv(name), (Ulang_type_vec) {0}, 0 /* TODO */);
 }

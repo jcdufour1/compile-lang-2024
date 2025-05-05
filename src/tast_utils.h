@@ -60,7 +60,7 @@ static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
         case LANG_TYPE_SUM:
             // fallthrough
         case LANG_TYPE_VOID:
-            return lang_type_atom_is_equal(lang_type_get_atom(a), lang_type_get_atom(b));
+            return lang_type_atom_is_equal(lang_type_get_atom(LANG_TYPE_MODE_LOG, a), lang_type_get_atom(LANG_TYPE_MODE_LOG, b));
         case LANG_TYPE_TUPLE:
             return lang_type_tuple_is_equal(lang_type_tuple_const_unwrap(a), lang_type_tuple_const_unwrap(b));
         case LANG_TYPE_FN:
@@ -431,7 +431,7 @@ static inline Name tast_literal_def_get_name(const Tast_literal_def* lit_def) {
 static inline Name tast_def_get_name(const Tast_def* def) {
     switch (def->type) {
         case TAST_PRIMITIVE_DEF:
-            return lang_type_get_str(tast_primitive_def_const_unwrap(def)->lang_type);
+            return lang_type_get_str(LANG_TYPE_MODE_LOG, tast_primitive_def_const_unwrap(def)->lang_type);
         case TAST_VARIABLE_DEF:
             return tast_variable_def_const_unwrap(def)->name;
         case TAST_STRUCT_DEF:

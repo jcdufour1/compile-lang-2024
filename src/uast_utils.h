@@ -276,7 +276,7 @@ static inline Name uast_literal_def_get_name(const Uast_literal_def* lit_def) {
 static inline Name uast_def_get_name(const Uast_def* def) {
     switch (def->type) {
         case UAST_PRIMITIVE_DEF:
-            return lang_type_get_str(uast_primitive_def_const_unwrap(def)->lang_type);
+            return lang_type_get_str(LANG_TYPE_MODE_LOG, uast_primitive_def_const_unwrap(def)->lang_type);
         case UAST_VARIABLE_DEF:
             return uast_variable_def_const_unwrap(def)->name;
         case UAST_STRUCT_DEF:

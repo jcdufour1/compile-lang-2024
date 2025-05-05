@@ -12,6 +12,10 @@ void extend_name_llvm(String* buf, Name name) {
     string_extend_strv(&a_main, buf, serialize_name(name));
 }
 
+void extend_name_c(String* buf, Name name) {
+    string_extend_strv(&a_main, buf, serialize_name(name));
+}
+
 void serialize_str_view(String* buf, Str_view str_view) {
     string_extend_cstr(&a_main, buf, "_");
     string_extend_size_t(&a_main, buf, str_view.count);
@@ -98,7 +102,7 @@ Str_view name_print_internal(bool serialize, Name name) {
     }
         
     String buf = {0};
-    extend_name(false, &buf, name);
+    extend_name(false, false, &buf, name);
     return string_to_strv(buf);
 }
 
@@ -135,7 +139,7 @@ void extend_name_msg(String* buf, Name name) {
 }
 
 void extend_uname_msg(String* buf, Uname name) {
-    extend_name(false, buf, name.mod_alias);
+    extend_name(false, false, buf, name.mod_alias);
     if (name.mod_alias.base.count > 0 || name.mod_alias.scope_id > 0) {
         string_extend_cstr(&print_arena, buf, ".");
     }
@@ -160,13 +164,14 @@ void extend_uname(String* buf, Uname name) {
     extend_uname_msg(buf, name);
 }
 
-void extend_name(bool is_llvm, String* buf, Name name) {
+void extend_name(bool is_llvm, bool is_c, String* buf, Name name) {
     if (is_llvm) {
         extend_name_llvm(buf, name);
-        return;
+    } else if (is_c) {
+        extend_name_llvm(buf, name);
+    } else {
+        extend_name_msg(buf, name);
     }
-    extend_name_msg(buf, name);
-    return;
 }
 
 Name name_clone(Name name, Scope_id new_scope) {

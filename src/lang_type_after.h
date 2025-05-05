@@ -42,35 +42,46 @@ static inline Lang_type_atom lang_type_primitive_get_atom_c(Lang_type_primitive 
         case LANG_TYPE_CHAR:
             return lang_type_char_const_unwrap(lang_type).atom;
         case LANG_TYPE_SIGNED_INT: {
-            // TODO: use hashtable, etc. to reduce allocations
+            String string = {0};
+            string_extend_cstr(&a_main, &string, "int");
             uint32_t bit_width = lang_type_signed_int_const_unwrap(lang_type).bit_width;
             if (bit_width == 8) {
-                todo();
+                string_extend_int64_t(&a_main, &string, bit_width);
             } else if (bit_width == 16) {
-                todo();
+                string_extend_int64_t(&a_main, &string, bit_width);
             } else if (bit_width == 32) {
-                todo();
+                string_extend_int64_t(&a_main, &string, bit_width);
             } else if (bit_width == 64) {
-                todo();
+                string_extend_int64_t(&a_main, &string, bit_width);
             } else {
-                msg_todo("bit widths other than 8, 16, 32, or 64", lang_type_primitive_get_pos(lang_type));
+                msg_todo("bit widths other than 8, 16, 32, or 64 with the c backend", lang_type_primitive_get_pos(lang_type));
             }
-            String string = {0};
-            string_extend_cstr(&a_main, &string, "i");
-            string_extend_int64_t(&a_main, &string, bit_width);
+            string_extend_cstr(&a_main, &string, "_t");
             return lang_type_atom_new(
                 name_new((Str_view) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
                 lang_type_signed_int_const_unwrap(lang_type).pointer_depth
             );
         }
         case LANG_TYPE_UNSIGNED_INT: {
-            // TODO: use hashtable, etc. to reduce allocations
+            // TODO: deduplicate this and above case?
             String string = {0};
-            string_extend_cstr(&a_main, &string, "u");
-            string_extend_int64_t(&a_main, &string, lang_type_unsigned_int_const_unwrap(lang_type).bit_width);
+            string_extend_cstr(&a_main, &string, "uint");
+            uint32_t bit_width = lang_type_signed_int_const_unwrap(lang_type).bit_width;
+            if (bit_width == 8) {
+                string_extend_int64_t(&a_main, &string, bit_width);
+            } else if (bit_width == 16) {
+                string_extend_int64_t(&a_main, &string, bit_width);
+            } else if (bit_width == 32) {
+                string_extend_int64_t(&a_main, &string, bit_width);
+            } else if (bit_width == 64) {
+                string_extend_int64_t(&a_main, &string, bit_width);
+            } else {
+                msg_todo("bit widths other than 8, 16, 32, or 64 with the c backend", lang_type_primitive_get_pos(lang_type));
+            }
+            string_extend_cstr(&a_main, &string, "_t");
             return lang_type_atom_new(
                 name_new((Str_view) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
-                lang_type_unsigned_int_const_unwrap(lang_type).pointer_depth
+                lang_type_signed_int_const_unwrap(lang_type).pointer_depth
             );
         }
         case LANG_TYPE_ANY:
@@ -173,16 +184,16 @@ static inline void lang_type_set_atom(Lang_type* lang_type, Lang_type_atom atom)
     unreachable("");
 }
 
-static inline Name lang_type_get_str(Lang_type lang_type) {
-    return lang_type_get_atom(lang_type).str;
+static inline Name lang_type_get_str(LANG_TYPE_MODE mode, Lang_type lang_type) {
+    return lang_type_get_atom(mode, lang_type).str;
 }
 
 static inline int16_t lang_type_get_pointer_depth(Lang_type lang_type) {
-    return lang_type_get_atom(lang_type).pointer_depth;
+    return lang_type_get_atom(LANG_TYPE_MODE_LOG, lang_type).pointer_depth;
 }
 
-static inline int16_t lang_type_primitive_get_pointer_depth(Lang_type_primitive lang_type) {
-    return lang_type_primitive_get_atom(lang_type).pointer_depth;
+static inline int16_t lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE mode, Lang_type_primitive lang_type) {
+    return lang_type_primitive_get_atom(mode, lang_type).pointer_depth;
 }
 
 static inline int32_t lang_type_primitive_get_bit_width(Lang_type_primitive lang_type) {
@@ -204,7 +215,7 @@ static inline int32_t lang_type_get_bit_width(Lang_type lang_type) {
 }
 
 static inline void lang_type_set_pointer_depth(Lang_type* lang_type, int16_t pointer_depth) {
-    Lang_type_atom atom = lang_type_get_atom(*lang_type);
+    Lang_type_atom atom = lang_type_get_atom(LANG_TYPE_MODE_LOG, *lang_type);
     atom.pointer_depth = pointer_depth;
     lang_type_set_atom( lang_type, atom);
 }

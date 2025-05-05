@@ -38,6 +38,6 @@ void llvm_extend_name(String* output, Name name) {
         name.mod_path = str_view_from_cstr("PREFIX"); // TODO: make variable or similar for this
     }
 
-    extend_name(true, output, name);
+    extend_name(true, false, output, name);
 }
 

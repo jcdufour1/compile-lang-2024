@@ -9,7 +9,7 @@
 
 uint64_t sizeof_primitive(Lang_type_primitive primitive) {
     // TODO: platform specific pointer size, etc.
-    if (lang_type_primitive_get_pointer_depth(primitive) > 0) {
+    if (lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, primitive) > 0) {
         return 8;
     }
 
@@ -34,18 +34,18 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
             return sizeof_primitive(lang_type_primitive_const_unwrap(lang_type));
         case LANG_TYPE_STRUCT: {
             Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def,  lang_type_get_str(lang_type)));
+            unwrap(symbol_lookup(&def,  lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
             return sizeof_def( def);
         }
         case LANG_TYPE_SUM: {
             Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def,  lang_type_get_str(lang_type)));
+            unwrap(symbol_lookup(&def,  lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
             return sizeof_def( def);
         }
         case LANG_TYPE_RAW_UNION: {
             Tast_def* def = NULL;
-            unwrap(symbol_lookup(&def,  lang_type_get_str(lang_type)));
-            return sizeof_def( def);
+            unwrap(symbol_lookup(&def,  lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            return sizeof_def(def);
         }
         case LANG_TYPE_VOID:
             return 0;
@@ -97,7 +97,7 @@ uint64_t sizeof_stmt(const Tast_stmt* stmt) {
 
 uint64_t sizeof_struct_literal(const Tast_struct_literal* struct_literal) {
     Tast_def* def_ = NULL;
-    unwrap(symbol_lookup(&def_,  lang_type_get_str(struct_literal->lang_type)));
+    unwrap(symbol_lookup(&def_,  lang_type_get_str(LANG_TYPE_MODE_LOG, struct_literal->lang_type)));
     return sizeof_struct_def_base( &tast_struct_def_unwrap(def_)->base);
 }
 

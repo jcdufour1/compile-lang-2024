@@ -41,7 +41,7 @@ Str_view serialize_lang_type_struct_thing(Lang_type lang_type) {
     string_extend_strv(&a_main, &name, serialize_lang_type_get_prefix(lang_type));
 
     Tast_def* def = NULL;
-    unwrap(symbol_lookup(&def,  lang_type_get_str(lang_type)));
+    unwrap(symbol_lookup(&def,  lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
     string_extend_strv(&a_main, &name, serialize_struct_def_base( tast_def_get_struct_def_base(def)));
 
     return string_to_strv(name);
@@ -79,7 +79,7 @@ Str_view serialize_lang_type(Lang_type lang_type) {
         case LANG_TYPE_PRIMITIVE:
             // fallthrough
         case LANG_TYPE_ENUM: {
-            Str_view serialized = serialize_name(lang_type_get_str(lang_type));
+            Str_view serialized = serialize_name(lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type));
             String name = {0};
             string_extend_size_t(&a_main, &name, lang_type_get_pointer_depth(lang_type));
             string_extend_cstr(&a_main, &name, "_");

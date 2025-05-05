@@ -20,8 +20,6 @@ typedef struct {
 
 Name name_new(Str_view mod_path, Str_view base, Ulang_type_vec gen_args, Scope_id scope_id);
 
-void extend_name(bool is_llvm, String* buf, Name name);
-
 void extend_name_llvm(String* buf, Name name);
 
 void serialize_str_view(String* buf, Str_view str_view);
@@ -40,7 +38,7 @@ void extend_uname_msg(String* buf, Uname name);
 
 void extend_uname(String* buf, Uname name);
 
-void extend_name(bool is_llvm, String* buf, Name name);
+void extend_name(bool is_llvm, bool is_c, String* buf, Name name);
 
 Name name_clone(Name name, Scope_id scope_id);
 

@@ -14,7 +14,7 @@
 static void emit_c_block(String* struct_defs, String* output, String* literals, const Llvm_block* block);
 
 // TODO: see if this can be merged with extend_type_call_str in emit_llvm.c in some way
-static void extend_type_call_str(String* output, Lang_type lang_type) {
+static void c_extend_type_call_str(String* output, Lang_type lang_type) {
     if (lang_type_get_pointer_depth(lang_type) != 0) {
         string_extend_cstr(&a_main, output, "ptr");
         return;
@@ -46,7 +46,7 @@ static void extend_type_call_str(String* output, Lang_type lang_type) {
                 Lang_type_unsigned_int old_num = lang_type_unsigned_int_const_unwrap(lang_type_primitive_const_unwrap(lang_type));
                 lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_get_pos(lang_type), old_num.bit_width, old_num.pointer_depth)));
             }
-            extend_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_LLVM, lang_type);
+            extend_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_C, lang_type);
             return;
         case LANG_TYPE_SUM:
             llvm_extend_name(output, lang_type_sum_const_unwrap(lang_type).atom.str);
@@ -56,7 +56,7 @@ static void extend_type_call_str(String* output, Lang_type lang_type) {
 }
 
 static void emit_c_function_def(String* struct_defs, String* output, String* literals, const Llvm_function_def* fun_def) {
-    extend_type_call_str(output, fun_def->decl->return_type);
+    c_extend_type_call_str(output, fun_def->decl->return_type);
     string_extend_cstr(&a_main, output, " ");
     llvm_extend_name(output, llvm_tast_get_name(llvm_def_const_wrap(llvm_function_def_const_wrap(fun_def))));
 
@@ -138,12 +138,12 @@ static void emit_c_function_call(String* output, String* literals, const Llvm_fu
     // start of actual function call
     string_extend_cstr(&a_main, output, "    ");
     if (fun_call->lang_type.type != LANG_TYPE_VOID) {
-        extend_type_call_str(output, fun_call->lang_type);
+        c_extend_type_call_str(output, fun_call->lang_type);
         string_extend_cstr(&a_main, output, "%");
         llvm_extend_name(output, fun_call->name_self);
         string_extend_cstr(&a_main, output, " = ");
     } else {
-        assert(!str_view_cstr_is_equal(lang_type_get_str(fun_call->lang_type).base, "void"));
+        assert(!str_view_cstr_is_equal(lang_type_get_str(LANG_TYPE_MODE_EMIT_C, fun_call->lang_type).base, "void"));
     }
     //extend_type_call_str(output, fun_call->lang_type);
     Llvm* callee = NULL;
@@ -302,9 +302,13 @@ static void emit_c_block(String* struct_defs, String* output, String* literals, 
 }
 
 void emit_c_from_tree(const Llvm_block* root) {
+    String header = {0};
     String struct_defs = {0};
     String output = {0};
     String literals = {0};
+
+    string_extend_cstr(&a_main, &header, "#include <stddef.h>\n");
+    string_extend_cstr(&a_main, &header, "#include <stdint.h>\n");
 
     Alloca_iter iter = all_tbl_iter_new(0);
     Llvm* curr = NULL;
@@ -321,6 +325,12 @@ void emit_c_from_tree(const Llvm_block* root) {
             params.input_file_name, errno, strerror(errno)
         );
         exit(EXIT_CODE_FAIL);
+    }
+
+    for (size_t idx = 0; idx < header.info.count; idx++) {
+        if (EOF == fputc(vec_at(&header, idx), file)) {
+            todo();
+        }
     }
 
     for (size_t idx = 0; idx < struct_defs.info.count; idx++) {

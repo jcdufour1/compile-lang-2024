@@ -24,6 +24,7 @@
 #include <expand_lang_def.h>
 #include <ulang_type_serialize.h>
 #include <symbol_table.h>
+#include <msg_undefined_symbol.h>
 
 static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def);
 
@@ -145,9 +146,8 @@ static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_
             return can_be_implicitly_converted_tuple(lang_type_tuple_const_unwrap(dest), lang_type_tuple_const_unwrap(src), implicit_pointer_depth);
         case LANG_TYPE_PRIMITIVE:
             return can_be_implicitly_converted_lang_type_atom(
-                
-                lang_type_primitive_get_atom(lang_type_primitive_const_unwrap(dest)),
-                lang_type_primitive_get_atom(lang_type_primitive_const_unwrap(src)),
+                lang_type_primitive_get_atom(LANG_TYPE_MODE_LOG, lang_type_primitive_const_unwrap(dest)),
+                lang_type_primitive_get_atom(LANG_TYPE_MODE_LOG, lang_type_primitive_const_unwrap(src)),
                 src_is_zero,
                 implicit_pointer_depth
             );
@@ -207,7 +207,7 @@ static void msg_invalid_count_function_args_internal(
     String message = {0};
     string_extend_size_t(&print_arena, &message, fun_call->args.info.count);
     string_extend_cstr(&print_arena, &message, " arguments are passed to function `");
-    extend_name(false, &message, fun_decl->name);
+    extend_name(false, false, &message, fun_decl->name);
     string_extend_cstr(&print_arena, &message, "`, but ");
     string_extend_size_t(&print_arena, &message, min_args);
     if (max_args > min_args) {
@@ -618,7 +618,7 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
         }
     }
             
-    assert(lang_type_get_str(tast_expr_get_lang_type(new_lhs)).base.count > 0);
+    assert(lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(new_lhs)).base.count > 0);
 
     // precalcuate binary in some situations
     if (new_lhs->type == TAST_LITERAL && new_rhs->type == TAST_LITERAL) {
@@ -741,7 +741,7 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
 
     }
 
-    assert(lang_type_get_str(tast_expr_get_lang_type(*new_tast)).base.count > 0);
+    assert(lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(*new_tast)).base.count > 0);
     assert(*new_tast);
     return true;
 }
@@ -832,7 +832,7 @@ bool try_set_unary_types_finish(
             return true;
         case UNARY_UNSAFE_CAST:
             new_lang_type = cast_to;
-            assert(lang_type_get_str(cast_to).base.count > 0);
+            assert(lang_type_get_str(LANG_TYPE_MODE_LOG, cast_to).base.count > 0);
             if (lang_type_get_pointer_depth(tast_expr_get_lang_type(new_child)) > 0 && lang_type_is_number(tast_expr_get_lang_type(new_child))) {
             } else if (lang_type_is_number_like(tast_expr_get_lang_type(new_child))) {
             } else if (lang_type_is_number(tast_expr_get_lang_type(new_child)) && lang_type_is_number(tast_expr_get_lang_type(new_child))) {
@@ -1214,7 +1214,7 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
         case UAST_UNKNOWN:
             return try_set_symbol_types(new_tast, uast_symbol_new(
                 uast_expr_get_pos(uast),
-                lang_type_get_str(env.lhs_lang_type)
+                lang_type_get_str(LANG_TYPE_MODE_LOG, env.lhs_lang_type)
             ));
         case UAST_MEMBER_ACCESS: {
             Tast_stmt* new_tast_ = NULL;
@@ -1478,7 +1478,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             Tast_sum_callee* sum_callee = tast_sum_callee_unwrap(new_callee);
 
             Uast_def* sum_def_ = NULL;
-            unwrap(usymbol_lookup(&sum_def_, lang_type_get_str(sum_callee->sum_lang_type)));
+            unwrap(usymbol_lookup(&sum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, sum_callee->sum_lang_type)));
             Uast_sum_def* sum_def = uast_sum_def_unwrap(sum_def_);
 
             Tast_expr* new_item = NULL;
@@ -1537,7 +1537,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 Tast_sum_lit* sum_lit = tast_sum_lit_unwrap(tast_literal_unwrap(new_callee));
                 if (fun_call->args.info.count != 0) {
                     Uast_def* sum_def_ = NULL;
-                    unwrap(usymbol_lookup(&sum_def_, lang_type_get_str(sum_lit->sum_lang_type)));
+                    unwrap(usymbol_lookup(&sum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, sum_lit->sum_lang_type)));
                     Uast_sum_def* sum_def = uast_sum_def_unwrap(sum_def_);
                     msg(
                         LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, env.file_path_to_text, fun_call->pos,
@@ -1900,7 +1900,7 @@ bool try_set_member_access_types_finish(
         case UAST_SUM_DEF:
             return try_set_member_access_types_finish_sum_def(new_tast, uast_sum_def_unwrap(lang_type_def), access, new_callee);
         case UAST_PRIMITIVE_DEF:
-            msg_invalid_member(lang_type_get_str(uast_primitive_def_unwrap(lang_type_def)->lang_type), access);
+            msg_invalid_member(lang_type_get_str(LANG_TYPE_MODE_LOG, uast_primitive_def_unwrap(lang_type_def)->lang_type), access);
             return false;
         case UAST_LITERAL_DEF:
             unreachable("");
@@ -1937,7 +1937,7 @@ bool try_set_member_access_types(
         case TAST_SYMBOL: {
             Tast_symbol* sym = tast_symbol_unwrap(new_callee);
             Uast_def* lang_type_def = NULL;
-            if (!usymbol_lookup(&lang_type_def, lang_type_get_str(sym->base.lang_type))) {
+            if (!usymbol_lookup(&lang_type_def, lang_type_get_str(LANG_TYPE_MODE_LOG, sym->base.lang_type))) {
                 todo();
             }
 
@@ -1948,7 +1948,7 @@ bool try_set_member_access_types(
             Tast_member_access* sym = tast_member_access_unwrap(new_callee);
 
             Uast_def* lang_type_def = NULL;
-            if (!usymbol_lookup(&lang_type_def, lang_type_get_str(sym->lang_type))) {
+            if (!usymbol_lookup(&lang_type_def, lang_type_get_str(LANG_TYPE_MODE_LOG, sym->lang_type))) {
                 todo();
             }
 
@@ -1957,7 +1957,7 @@ bool try_set_member_access_types(
         case TAST_OPERATOR: {
             Tast_operator* sym = tast_operator_unwrap(new_callee);
             Uast_def* lang_type_def = NULL;
-            if (!usymbol_lookup(&lang_type_def, lang_type_get_str(tast_operator_get_lang_type(sym)))) {
+            if (!usymbol_lookup(&lang_type_def, lang_type_get_str(LANG_TYPE_MODE_LOG, tast_operator_get_lang_type(sym)))) {
                 todo();
             }
 
@@ -2289,7 +2289,7 @@ static Exhaustive_data check_for_exhaustiveness_start(Lang_type oper_lang_type) 
     exhaustive_data.oper_lang_type = oper_lang_type;
 
     Uast_def* enum_def_ = NULL;
-    if (!usymbol_lookup(&enum_def_, lang_type_get_str(exhaustive_data.oper_lang_type))) {
+    if (!usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data.oper_lang_type))) {
         todo();
     }
     Ustruct_def_base enum_def = {0};
@@ -2344,7 +2344,7 @@ static bool check_for_exhaustiveness_inner(
             }
             if (vec_at(&exhaustive_data->covered, (size_t)curr_lit->data)) {
                 Uast_def* enum_def_ = NULL;
-                unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(exhaustive_data->oper_lang_type)));
+                unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data->oper_lang_type)));
                 Uast_enum_def* enum_def = uast_enum_def_unwrap(enum_def_);
                 msg(
                     LOG_ERROR, EXPECT_FAIL_DUPLICATE_CASE, env.file_path_to_text, curr_if->pos,
@@ -2367,7 +2367,7 @@ static bool check_for_exhaustiveness_inner(
             }
             if (vec_at(&exhaustive_data->covered, (size_t)curr_lit->data)) {
                 Uast_def* sum_def_ = NULL;
-                unwrap(usymbol_lookup(&sum_def_, lang_type_get_str(exhaustive_data->oper_lang_type)));
+                unwrap(usymbol_lookup(&sum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data->oper_lang_type)));
                 Uast_sum_def* sum_def = uast_sum_def_unwrap(sum_def_);
                 msg(
                     LOG_ERROR, EXPECT_FAIL_DUPLICATE_CASE, env.file_path_to_text, curr_if->pos,
@@ -2399,7 +2399,7 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
         for (size_t idx = 0; idx < exhaustive_data.covered.info.count; idx++) {
             if (!vec_at(&exhaustive_data.covered, idx)) {
                 Uast_def* enum_def_ = NULL;
-                unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(exhaustive_data.oper_lang_type)));
+                unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data.oper_lang_type)));
                 Ustruct_def_base enum_def = {0};
                 switch (enum_def_->type) {
                     case UAST_ENUM_DEF:
@@ -2419,9 +2419,9 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
                     string_extend_cstr(&a_main, &string, ", ");
                 }
 
-                extend_name(false, &string, enum_def.name);
+                extend_name(false, false, &string, enum_def.name);
                 string_extend_cstr(&a_main, &string, ".");
-                extend_name(false, &string, vec_at(&enum_def.members, idx)->name);
+                extend_name(false, false, &string, vec_at(&enum_def.members, idx)->name);
             }
         }
 

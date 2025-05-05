@@ -136,7 +136,7 @@ Name llvm_literal_def_get_name(const Llvm_literal_def* lit_def) {
 Name llvm_def_get_name(const Llvm_def* def) {
     switch (def->type) {
         case LLVM_PRIMITIVE_DEF:
-            return lang_type_get_str(llvm_primitive_def_const_unwrap(def)->lang_type);
+            return lang_type_get_str(LANG_TYPE_MODE_LOG, llvm_primitive_def_const_unwrap(def)->lang_type);
         case LLVM_VARIABLE_DEF:
             return llvm_variable_def_const_unwrap(def)->name_self;
         case LLVM_STRUCT_DEF:

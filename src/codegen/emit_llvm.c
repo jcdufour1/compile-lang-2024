@@ -168,14 +168,14 @@ static void extend_literal_decl_prefix(String* output, String* literals, const L
         }
         string_extend_cstr(&a_main, output, " @.");
         llvm_extend_name(output, llvm_literal_get_name(literal));
-    } else if (lang_type_atom_is_signed(lang_type_get_atom(llvm_literal_get_lang_type(literal)))) {
+    } else if (lang_type_atom_is_signed(lang_type_get_atom(LANG_TYPE_MODE_LOG, llvm_literal_get_lang_type(literal)))) {
         assert(llvm_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE);
         if (lang_type_get_pointer_depth(llvm_literal_get_lang_type(literal)) != 0) {
             todo();
         }
         vec_append(&a_main, output, ' ');
         extend_literal(output, literal);
-    } else if (lang_type_atom_is_unsigned(lang_type_get_atom(llvm_literal_get_lang_type(literal)))) {
+    } else if (lang_type_atom_is_unsigned(lang_type_get_atom(LANG_TYPE_MODE_LOG, llvm_literal_get_lang_type(literal)))) {
         assert(llvm_literal_get_lang_type(literal).type == LANG_TYPE_PRIMITIVE);
         if (lang_type_get_pointer_depth(llvm_literal_get_lang_type(literal)) != 0) {
             todo();
@@ -313,7 +313,7 @@ static void emit_function_call(String* output, String* literals, const Llvm_func
         llvm_extend_name(output, fun_call->name_self);
         string_extend_cstr(&a_main, output, " = ");
     } else {
-        assert(!str_view_cstr_is_equal(lang_type_get_str(fun_call->lang_type).base, "void"));
+        assert(!str_view_cstr_is_equal(lang_type_get_str(LANG_TYPE_MODE_EMIT_LLVM, fun_call->lang_type).base, "void"));
     }
     string_extend_cstr(&a_main, output, "call ");
     extend_type_call_str(output, fun_call->lang_type);
@@ -363,7 +363,7 @@ static void emit_unary_type(String* output, const Llvm_unary* unary) {
                 extend_type_call_str(output, lang_type_from_get_name(unary->child));
                 string_extend_cstr(&a_main, output, " ");
             } else if (lang_type_is_unsigned(unary->lang_type) && lang_type_is_number(lang_type_from_get_name(unary->child))) {
-                if (i_lang_type_atom_to_bit_width(lang_type_get_atom(unary->lang_type)) > i_lang_type_atom_to_bit_width(lang_type_get_atom(lang_type_from_get_name(unary->child)))) {
+                if (i_lang_type_atom_to_bit_width(lang_type_get_atom(LANG_TYPE_MODE_LOG, unary->lang_type)) > i_lang_type_atom_to_bit_width(lang_type_get_atom(LANG_TYPE_MODE_LOG, lang_type_from_get_name(unary->child)))) {
                     string_extend_cstr(&a_main, output, "zext ");
                 } else {
                     string_extend_cstr(&a_main, output, "trunc ");
@@ -371,7 +371,7 @@ static void emit_unary_type(String* output, const Llvm_unary* unary) {
                 extend_type_call_str(output, lang_type_from_get_name(unary->child));
                 string_extend_cstr(&a_main, output, " ");
             } else if (lang_type_is_signed(unary->lang_type) && lang_type_is_number(lang_type_from_get_name(unary->child))) {
-                if (i_lang_type_atom_to_bit_width(lang_type_get_atom(unary->lang_type)) > i_lang_type_atom_to_bit_width(lang_type_get_atom(lang_type_from_get_name(unary->child)))) {
+                if (i_lang_type_atom_to_bit_width(lang_type_get_atom(LANG_TYPE_MODE_LOG, unary->lang_type)) > i_lang_type_atom_to_bit_width(lang_type_get_atom(LANG_TYPE_MODE_LOG, lang_type_from_get_name(unary->child)))) {
                     string_extend_cstr(&a_main, output, "sext ");
                 } else {
                     string_extend_cstr(&a_main, output, "trunc ");
