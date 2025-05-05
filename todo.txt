@@ -59,6 +59,7 @@ for generics:
 - expected success test case for:
     for !rl.WindowShouldClose() {
     }
+- expected success case for circular import
 
 
 

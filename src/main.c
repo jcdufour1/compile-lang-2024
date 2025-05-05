@@ -120,7 +120,8 @@ void do_passes(const Parameters* params) {
     }
 
     if (params->emit_llvm) {
-        emit_llvm_from_tree(llvm_root);
+        // TODO: make command line argument to choose llvm, c, etc.
+        emit_c_from_tree(llvm_root);
     } else if (params->test_expected_fail) {
         fail();
     } else {

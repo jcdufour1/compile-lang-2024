@@ -61,7 +61,8 @@ OBJS=\
 	 ${BUILD_DIR}/token/tokenizer.o \
 	 ${BUILD_DIR}/parser.o \
 	 ${BUILD_DIR}/add_load_and_store.o \
-	 ${BUILD_DIR}/emit_llvm.o \
+	 ${BUILD_DIR}/codegen/emit_llvm.o \
+	 ${BUILD_DIR}/codegen/emit_c.o \
 	 ${BUILD_DIR}/llvm_utils.o
 
 DEP_UTIL = Makefile src/util/*.h src/util/auto_gen.c
@@ -87,6 +88,7 @@ setup:
 	mkdir -p ${BUILD_DIR}/util/
 	mkdir -p ${BUILD_DIR}/sema/
 	mkdir -p ${BUILD_DIR}/token/
+	mkdir -p ${BUILD_DIR}/codegen/
 
 build: setup ${BUILD_DIR}/main
 
@@ -182,8 +184,11 @@ ${BUILD_DIR}/llvm_utils.o: ${DEP_COMMON} src/llvm_utils.c
 ${BUILD_DIR}/add_load_and_store.o: ${DEP_COMMON} src/add_load_and_store.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/add_load_and_store.o src/add_load_and_store.c
 
-${BUILD_DIR}/emit_llvm.o: ${DEP_COMMON} src/emit_llvm.c 
-	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/emit_llvm.o src/emit_llvm.c
+${BUILD_DIR}/codegen/emit_llvm.o: ${DEP_COMMON} src/codegen/emit_llvm.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/codegen/emit_llvm.o src/codegen/emit_llvm.c
+
+${BUILD_DIR}/codegen/emit_c.o: ${DEP_COMMON} src/codegen/emit_c.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/codegen/emit_c.o src/codegen/emit_c.c
 
 ${BUILD_DIR}/parser.o: ${DEP_COMMON} src/parser.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/parser.o src/parser.c

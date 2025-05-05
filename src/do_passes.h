@@ -7,18 +7,6 @@
 #include <token_vec.h>
 #include <parameters.h>
 
-static inline void insert_into_tast_vec(
-    Tast_vec* block_children,
-    size_t* idx_to_insert_before,
-    size_t idx_to_insert_item,
-    Tast* tast_to_insert
-) {
-    vec_insert(&a_main, block_children, idx_to_insert_item, tast_to_insert);
-    if (idx_to_insert_item <= *idx_to_insert_before) {
-        (*idx_to_insert_before)++;
-    }
-}
-
 void tokenize_do_test(void);
 
 bool tokenize(Token_vec* result, Str_view file_path);
@@ -34,5 +22,7 @@ Llvm_block* add_load_and_store(Tast_block* old_block);
 Llvm_block* assign_llvm_ids(Llvm_block* root);
 
 void emit_llvm_from_tree(const Llvm_block* root);
+
+void emit_c_from_tree(const Llvm_block* root);
 
 #endif // PASSES_H
