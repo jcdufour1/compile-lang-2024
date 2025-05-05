@@ -994,8 +994,7 @@ static Name load_ptr_member_access(Llvm_block* new_block, Tast_member_access* ol
         old_access->lang_type,
         load_literal(new_block, tast_number_wrap(new_index)),
         new_callee,
-        name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0),
-        true
+        name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0)
     );
     unwrap(alloca_add(llvm_load_struct_element_ptr_wrap(new_load)));
 
@@ -1009,8 +1008,7 @@ static Name load_ptr_index(Llvm_block* new_block, Tast_index* old_index) {
         old_index->lang_type,
         load_expr(new_block, old_index->index),
         load_expr(new_block, old_index->callee),
-        name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0),
-        false
+        name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0)
     );
     unwrap(alloca_add(llvm_array_access_wrap(new_load)));
 
@@ -1100,8 +1098,7 @@ static Name load_ptr_sum_get_tag(Llvm_block* new_block, Tast_sum_get_tag* old_ac
         lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0))),
         load_literal(new_block, tast_number_wrap(zero)),
         new_sum,
-        name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0),
-        true
+        name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0)
     );
     unwrap(alloca_add(llvm_load_struct_element_ptr_wrap(new_enum)));
     vec_append(&a_main, &new_block->children, llvm_load_struct_element_ptr_wrap(new_enum));
@@ -1145,8 +1142,7 @@ static Name load_ptr_sum_access(Llvm_block* new_block, Tast_sum_access* old_acce
         tast_raw_union_def_get_lang_type(union_def),
         load_literal(new_block, tast_number_wrap(one)),
         new_callee,
-        name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0),
-        true
+        name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0)
     );
     unwrap(alloca_add(llvm_load_struct_element_ptr_wrap(new_union)));
     vec_append(&a_main, &new_block->children, llvm_load_struct_element_ptr_wrap(new_union));
@@ -1156,8 +1152,7 @@ static Name load_ptr_sum_access(Llvm_block* new_block, Tast_sum_access* old_acce
         rm_tuple_lang_type(old_access->lang_type, old_access->pos),
         load_literal(new_block, tast_number_wrap(zero)),
         new_union->name_self,
-        name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0),
-        false
+        name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0)
     );
     unwrap(alloca_add(llvm_load_struct_element_ptr_wrap(new_item)));
     vec_append(&a_main, &new_block->children, llvm_load_struct_element_ptr_wrap(new_item));

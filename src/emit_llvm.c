@@ -901,16 +901,7 @@ static void emit_load_element_ptr(String* output, const Llvm_load_struct_element
     extend_type_call_str( output, lang_type);
     string_extend_cstr(&a_main, output, ", ptr %");
     llvm_extend_name(output, load->llvm_src);
-    if (load->is_from_struct) {
-        string_extend_cstr(&a_main, output, ", i32 0");
-    }
-    string_extend_cstr(&a_main, output, ", ");
-    if (load->is_from_struct) {
-        string_extend_cstr(&a_main, output, "i32");
-    } else {
-        extend_type_call_str( output, lang_type_from_get_name( load->struct_index));
-    }
-    string_extend_cstr(&a_main, output, " ");
+    string_extend_cstr(&a_main, output, ", i32 0, i32 ");
 
     Llvm* struct_index = NULL;
     unwrap(alloca_lookup(&struct_index,  load->struct_index));
@@ -935,15 +926,8 @@ static void emit_array_access(String* output, const Llvm_array_access* load) {
     extend_type_call_str( output, lang_type);
     string_extend_cstr(&a_main, output, ", ptr %");
     llvm_extend_name(output, load->callee);
-    if (load->is_from_struct) {
-        string_extend_cstr(&a_main, output, ", i32 0");
-    }
     string_extend_cstr(&a_main, output, ", ");
-    if (load->is_from_struct) {
-        string_extend_cstr(&a_main, output, "i32");
-    } else {
-        extend_type_call_str( output, lang_type_from_get_name( load->index));
-    }
+    extend_type_call_str( output, lang_type_from_get_name( load->index));
     string_extend_cstr(&a_main, output, " ");
 
     Llvm* struct_index = NULL;

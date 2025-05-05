@@ -329,7 +329,6 @@ static Llvm_type llvm_gen_load_struct_element_ptr(void) {
     append_member(&load.members, "Name", "struct_index"); // TODO: make this an integer or name only
     append_member(&load.members, "Name", "llvm_src");
     append_member(&load.members, "Name", "name_self");
-    append_member(&load.members, "bool", "is_from_struct"); // TODO: remove this member
 
     return load;
 }
@@ -341,7 +340,6 @@ static Llvm_type llvm_gen_array_access(void) {
     append_member(&load.members, "Name", "index");
     append_member(&load.members, "Name", "callee");
     append_member(&load.members, "Name", "name_self");
-    append_member(&load.members, "bool", "is_from_struct");
 
     return load;
 }
