@@ -1,11 +1,13 @@
-
 #ifndef LANG_TYPE_AFTER_H
 #define LANG_TYPE_AFTER_H
+
+#include <msg_todo.h>
+#include <lang_type_get_pos.h>
 
 // TODO: do these things properly
 int64_t str_view_to_int64_t(const Pos pos, Str_view str_view);
 
-static inline Lang_type_atom lang_type_primitive_get_atom(Lang_type_primitive lang_type) {
+static inline Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primitive lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_CHAR:
             return lang_type_char_const_unwrap(lang_type).atom;
@@ -35,10 +37,66 @@ static inline Lang_type_atom lang_type_primitive_get_atom(Lang_type_primitive la
     unreachable("");
 }
 
-static inline Lang_type_atom lang_type_get_atom(Lang_type lang_type) {
+static inline Lang_type_atom lang_type_primitive_get_atom_c(Lang_type_primitive lang_type) {
+    switch (lang_type.type) {
+        case LANG_TYPE_CHAR:
+            return lang_type_char_const_unwrap(lang_type).atom;
+        case LANG_TYPE_SIGNED_INT: {
+            // TODO: use hashtable, etc. to reduce allocations
+            uint32_t bit_width = lang_type_signed_int_const_unwrap(lang_type).bit_width;
+            if (bit_width == 8) {
+                todo();
+            } else if (bit_width == 16) {
+                todo();
+            } else if (bit_width == 32) {
+                todo();
+            } else if (bit_width == 64) {
+                todo();
+            } else {
+                msg_todo("bit widths other than 8, 16, 32, or 64", lang_type_primitive_get_pos(lang_type));
+            }
+            String string = {0};
+            string_extend_cstr(&a_main, &string, "i");
+            string_extend_int64_t(&a_main, &string, bit_width);
+            return lang_type_atom_new(
+                name_new((Str_view) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                lang_type_signed_int_const_unwrap(lang_type).pointer_depth
+            );
+        }
+        case LANG_TYPE_UNSIGNED_INT: {
+            // TODO: use hashtable, etc. to reduce allocations
+            String string = {0};
+            string_extend_cstr(&a_main, &string, "u");
+            string_extend_int64_t(&a_main, &string, lang_type_unsigned_int_const_unwrap(lang_type).bit_width);
+            return lang_type_atom_new(
+                name_new((Str_view) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
+                lang_type_unsigned_int_const_unwrap(lang_type).pointer_depth
+            );
+        }
+        case LANG_TYPE_ANY:
+            return lang_type_any_const_unwrap(lang_type).atom;
+    }
+    unreachable("");
+}
+
+static inline Lang_type_atom lang_type_primitive_get_atom(LANG_TYPE_MODE mode, Lang_type_primitive lang_type) {
+    switch (mode) {
+        case LANG_TYPE_MODE_LOG:
+            return lang_type_primitive_get_atom_normal(lang_type);
+        case LANG_TYPE_MODE_MSG:
+            return lang_type_primitive_get_atom_normal(lang_type);
+        case LANG_TYPE_MODE_EMIT_LLVM:
+            return lang_type_primitive_get_atom_normal(lang_type);
+        case LANG_TYPE_MODE_EMIT_C:
+            return lang_type_primitive_get_atom_c(lang_type);
+    }
+    unreachable("");
+}
+
+static inline Lang_type_atom lang_type_get_atom(LANG_TYPE_MODE mode, Lang_type lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_PRIMITIVE:
-            return lang_type_primitive_get_atom(lang_type_primitive_const_unwrap(lang_type));
+            return lang_type_primitive_get_atom(mode, lang_type_primitive_const_unwrap(lang_type));
         case LANG_TYPE_SUM:
             return lang_type_sum_const_unwrap(lang_type).atom;
         case LANG_TYPE_STRUCT:
