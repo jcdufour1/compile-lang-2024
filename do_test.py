@@ -191,6 +191,14 @@ def do_test(file: FileItem, do_debug: bool, expected_output: str, output_name: s
     else:
         compile_cmd = [os.path.join(BUILD_RELEASE_DIR, EXE_BASE_NAME)]
         debug_release_text = "release"
+
+    if output_name == "test.c":
+        compile_cmd.append("--backend=c")
+    elif output_name == "test.ll":
+        compile_cmd.append("--backend=llvm")
+    else:
+        assert(False and "not implemented")
+
     if file.expected_success:
         compile_cmd.append("compile")
         compile_cmd.append(file.path)
@@ -201,6 +209,7 @@ def do_test(file: FileItem, do_debug: bool, expected_output: str, output_name: s
         compile_cmd.append(str(len(file.expected_fail_str)))
         compile_cmd.extend(file.expected_fail_str)
         compile_cmd.append(file.path)
+
     print_info("testing: " + file.path + " (" + debug_release_text + ")")
     process = subprocess.run(compile_cmd)
     if not file.expected_success:

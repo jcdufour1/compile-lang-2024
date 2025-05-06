@@ -67,7 +67,7 @@ static void c_extend_type_call_str(String* output, Lang_type lang_type) {
     unreachable("");
 }
 
-static void emit_c_function_params(String* output, String* aux_assigns, const Llvm_function_params* params) {
+static void emit_c_function_params(String* output, String* aux_assigns /* TODO: remove */, const Llvm_function_params* params) {
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
         if (idx > 0) {
             string_extend_cstr(&a_main, output, ", ");
@@ -261,7 +261,7 @@ static void emit_c_function_call(Emit_c_strs* strs, const Llvm_function_call* fu
     string_extend_cstr(&a_main, &strs->output, ");\n");
 }
 
-static void emit_c_unary_operator(Emit_c_strs* strs, UNARY_TYPE unary_type) {
+static void emit_c_unary_operator(Emit_c_strs* strs, UNARY_TYPE unary_type, Lang_type cast_to) {
     (void) strs;
     switch (unary_type) {
         case UNARY_DEREF:
@@ -269,7 +269,10 @@ static void emit_c_unary_operator(Emit_c_strs* strs, UNARY_TYPE unary_type) {
         case UNARY_REFER:
             todo();
         case UNARY_UNSAFE_CAST:
-            todo();
+            string_extend_cstr(&a_main, &strs->output, "(");
+            c_extend_type_call_str(&strs->output, cast_to);
+            string_extend_cstr(&a_main, &strs->output, ")");
+            return;
         case UNARY_NOT:
             todo();
     }
@@ -348,7 +351,7 @@ static void emit_c_operator(Emit_c_strs* strs, const Llvm_operator* oper) {
     switch (oper->type) {
         case LLVM_UNARY: {
             const Llvm_unary* unary = llvm_unary_const_unwrap(oper);
-            emit_c_unary_operator(strs, unary->token_type);
+            emit_c_unary_operator(strs, unary->token_type, unary->lang_type);
             emit_c_expr_piece(strs, unary->child);
             break;
         }
@@ -610,6 +613,20 @@ static void emit_c_load_element_ptr(Emit_c_strs* strs, const Llvm_load_element_p
     string_extend_cstr(&a_main, &strs->output, ");\n");
 }
 
+static void emit_c_array_access(Emit_c_strs* strs, const Llvm_array_access* access) {
+    string_extend_cstr(&a_main, &strs->output, "    void* ");
+    llvm_extend_name(&strs->output, access->name_self);
+    string_extend_cstr(&a_main, &strs->output, " = ");
+
+    string_extend_cstr(&a_main, &strs->output, "&(((");
+    c_extend_type_call_str(&strs->output, lang_type_from_get_name(access->callee));
+    string_extend_cstr(&a_main, &strs->output, "*)");
+    llvm_extend_name(&strs->output, access->callee);
+    string_extend_cstr(&a_main, &strs->output, ")[");
+    llvm_extend_name(&strs->output, access->index);
+    string_extend_cstr(&a_main, &strs->output, "]);\n");
+}
+
 static void emit_c_goto_internal(Emit_c_strs* strs, Name name) {
     string_extend_cstr(&a_main, &strs->output, "    goto ");
     llvm_extend_name(&strs->output, name);
@@ -657,6 +674,9 @@ static void emit_c_block(Emit_c_strs* strs, const Llvm_block* block) {
                 break;
             case LLVM_LOAD_ELEMENT_PTR:
                 emit_c_load_element_ptr(strs, llvm_load_element_ptr_const_unwrap(stmt));
+                break;
+            case LLVM_ARRAY_ACCESS:
+                emit_c_array_access(strs, llvm_array_access_const_unwrap(stmt));
                 break;
             case LLVM_LOAD_ANOTHER_LLVM:
                 emit_c_load_another_llvm(strs, llvm_load_another_llvm_const_unwrap(stmt));
