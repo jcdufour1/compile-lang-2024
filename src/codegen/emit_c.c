@@ -47,7 +47,7 @@ static void c_extend_type_call_str(String* output, Lang_type lang_type) {
             lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(
                 lang_type_signed_int_new(lang_type_get_pos(lang_type), 64, 0)
             )),
-            extend_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_LLVM, lang_type);
+            extend_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_C, lang_type);
             return;
         case LANG_TYPE_VOID:
             lang_type = lang_type_void_const_wrap(lang_type_void_new(lang_type_get_pos(lang_type)));
@@ -448,13 +448,15 @@ static void emit_c_expr_piece(Emit_c_strs* strs, Name child) {
         case LLVM_FUNCTION_PARAMS:
             unreachable("");
         case LLVM_DEF:
-            unreachable("");
+            llvm_extend_name(&strs->output, llvm_tast_get_name(result));
+            return;
         case LLVM_RETURN:
             unreachable("");
         case LLVM_GOTO:
             unreachable("");
         case LLVM_ALLOCA:
-            unreachable("");
+            llvm_extend_name(&strs->output, llvm_tast_get_name(result));
+            return;
         case LLVM_COND_GOTO:
             unreachable("");
         case LLVM_BLOCK:

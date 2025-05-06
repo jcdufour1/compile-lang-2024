@@ -2398,7 +2398,7 @@ static PARSE_EXPR_STATUS parse_unary(
     *prev_oper_pres = get_operator_precedence(oper.type);
 
     Uast_expr* child = NULL;
-    Ulang_type_atom unary_lang_type = ulang_type_atom_new_from_cstr("i32", 0);
+    Ulang_type_atom unary_lang_type = ulang_type_atom_new_from_cstr("i32" /* TODO */, 0);
 
     switch (oper.type) {
         case TOKEN_NOT:

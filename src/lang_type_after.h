@@ -81,6 +81,7 @@ static inline Lang_type_atom lang_type_primitive_get_atom_c(Lang_type_primitive 
             } else if (bit_width == 32) {
                 string_extend_int64_t(&a_main, &string, bit_width);
             } else if (bit_width == 64) {
+                todo();
                 string_extend_int64_t(&a_main, &string, bit_width);
             } else {
                 msg_todo("bit widths other than 8, 16, 32, or 64 with the c backend", lang_type_primitive_get_pos(lang_type));
