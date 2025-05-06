@@ -612,7 +612,7 @@ static void emit_c_array_access(Emit_c_strs* strs, const Llvm_array_access* acce
 
     string_extend_cstr(&a_main, &strs->output, "&(((");
     c_extend_type_call_str(&strs->output, lang_type_from_get_name(access->callee), false);
-    string_extend_cstr(&a_main, &strs->output, "*)");
+    string_extend_cstr(&a_main, &strs->output, ")");
     llvm_extend_name(&strs->output, access->callee);
     string_extend_cstr(&a_main, &strs->output, ")[");
     llvm_extend_name(&strs->output, access->index);
