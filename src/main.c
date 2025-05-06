@@ -121,11 +121,27 @@ void do_passes(const Parameters* params) {
 
     if (params->emit_llvm) {
         // TODO: make command line argument to choose llvm, c, etc.
-        emit_c_from_tree(llvm_root);
+        switch (params->backend_info.backend) {
+            case BACKEND_NONE:
+                msg(LOG_ERROR, EXPECT_FAIL_NONE, env.file_path_to_text, POS_BUILTIN, "backend must be specified on the command line\n");
+                fail();
+            case BACKEND_LLVM:
+                emit_llvm_from_tree(llvm_root);
+                break;
+            case BACKEND_C:
+                emit_c_from_tree(llvm_root);
+                break;
+            default:
+                unreachable("");
+        }
     } else if (params->test_expected_fail) {
         fail();
     } else {
         unreachable("");
+    }
+
+    if (error_count > 0) {
+        fail();
     }
 }
 

@@ -10,6 +10,17 @@ typedef struct {
     EXPECT_FAIL_TYPE* buf;
 } Expect_fail_type_vec;
 
+typedef enum {
+    BACKEND_NONE = 0,
+    BACKEND_C,
+    BACKEND_LLVM,
+} BACKEND;
+
+typedef struct {
+    BACKEND backend;
+    bool struct_rtn_through_param;
+} Backend_info;
+
 typedef struct {
     const char* input_file_name;
     Expect_fail_type_vec expected_fail_types;
@@ -17,6 +28,7 @@ typedef struct {
     bool emit_llvm : 1;
     bool test_expected_fail : 1;
     bool all_errors_fatal: 1;
+    Backend_info backend_info;
 } Parameters;
 
 void parse_args(int argc, char** argv);

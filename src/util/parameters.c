@@ -135,6 +135,27 @@ static void parse_long_option(Parameters* params, int* argc, char*** argv) {
 
     if (0 == strcmp(curr_opt, "emit-llvm")) {
         params->emit_llvm = true;
+    } else if (0 == strncmp(curr_opt, "backend", strlen("backend"))) {
+        Str_view backend = str_view_from_cstr(&curr_opt[strlen("backend")]);
+        if (!str_view_consume(&backend)) {
+            log(LOG_FATAL, "expected =<backend> after `backend`");
+            exit(EXIT_CODE_FAIL);
+        }
+        if (backend.count < 1) {
+            log(LOG_FATAL, "expected <backend> after `backend=`");
+            exit(EXIT_CODE_FAIL);
+        }
+
+        if (str_view_is_equal(backend, str_view_from_cstr("c"))) {
+            params->backend_info.backend = BACKEND_C;
+            params->backend_info.struct_rtn_through_param = false;
+        } else if (str_view_is_equal(backend, str_view_from_cstr("llvm"))) {
+            params->backend_info.backend = BACKEND_LLVM;
+            params->backend_info.struct_rtn_through_param = true;
+        } else {
+            log(LOG_FATAL, "backend `"STR_VIEW_FMT"` is not a supported backend\n", str_view_print(backend));
+            exit(EXIT_CODE_FAIL);
+        }
     } else if (0 == strcmp(curr_opt, "all-errors-fatal")) {
         params->all_errors_fatal = true;
     } else {
