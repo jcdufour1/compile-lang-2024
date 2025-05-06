@@ -12,6 +12,7 @@
 #include <lang_type_serialize.h>
 #include <parser_utils.h>
 
+// TODO: avoid casting from void* to function pointer if possible (for standards compliance)
 typedef struct {
     String struct_defs;
     String output;
@@ -33,8 +34,20 @@ static void c_extend_type_call_str(String* output, Lang_type lang_type, bool opa
     }
 
     switch (lang_type.type) {
-        case LANG_TYPE_FN:
-            unreachable("");
+        case LANG_TYPE_FN: {
+            Lang_type_fn fn = lang_type_fn_const_unwrap(lang_type);
+            string_extend_cstr(&a_main, output, "(");
+            c_extend_type_call_str(output, *fn.return_type, opaque_ptr);
+            string_extend_cstr(&a_main, output, "(*)(");
+            for (size_t idx = 0; idx < fn.params.lang_types.info.count; idx++) {
+                if (idx > 0) {
+                    string_extend_cstr(&a_main, output, ", ");
+                }
+                c_extend_type_call_str(output, vec_at(&fn.params.lang_types, idx), opaque_ptr);
+            }
+            string_extend_cstr(&a_main, output, "))");
+            return;
+        }
         case LANG_TYPE_TUPLE:
             unreachable("");
         case LANG_TYPE_STRUCT:
@@ -68,6 +81,7 @@ static void c_extend_type_call_str(String* output, Lang_type lang_type, bool opa
 }
 
 static void emit_c_function_params(String* output, String* aux_assigns /* TODO: remove */, const Llvm_function_params* params) {
+    (void) aux_assigns;
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
         if (idx > 0) {
             string_extend_cstr(&a_main, output, ", ");
@@ -230,22 +244,17 @@ static void emit_c_function_call(Emit_c_strs* strs, const Llvm_function_call* fu
     } else {
         assert(!str_view_cstr_is_equal(lang_type_get_str(LANG_TYPE_MODE_EMIT_C, fun_call->lang_type).base, "void"));
     }
-    //extend_type_call_str(&strs->output, fun_call->lang_type);
+
     Llvm* callee = NULL;
     unwrap(alloca_lookup(&callee, fun_call->callee));
-
-    // TODO: use emit_c_expr_piece here?
-    switch (callee->type) {
-        case LLVM_EXPR:
-            llvm_extend_name(&strs->output, llvm_function_name_unwrap(llvm_literal_unwrap(llvm_expr_unwrap(((callee)))))->fun_name);
-            break;
-        case LLVM_LOAD_ANOTHER_LLVM:
-            llvm_extend_name(&strs->output, llvm_load_another_llvm_const_unwrap(callee)->name);
-            break;
-        default:
-            unreachable("");
+    string_extend_cstr(&a_main, &strs->output, "(");
+    if (callee->type != LLVM_EXPR) {
+        c_extend_type_call_str(&strs->output, lang_type_from_get_name(fun_call->callee), false);
     }
-    //string_extend_strv(&a_main, &strs->output, fun_call->name_fun_to_call);
+    string_extend_cstr(&a_main, &strs->output, "(");
+    emit_c_expr_piece(strs, fun_call->callee);
+    string_extend_cstr(&a_main, &strs->output, ")");
+    string_extend_cstr(&a_main, &strs->output, ")");
 
     // arguments
     string_extend_cstr(&a_main, &strs->output, "(");

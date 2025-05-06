@@ -103,6 +103,8 @@ Str_view lang_type_print_internal(LANG_TYPE_MODE mode, Lang_type lang_type) {
     switch (mode) {
         case LANG_TYPE_MODE_EMIT_LLVM:
             break;
+        case LANG_TYPE_MODE_EMIT_C:
+            todo();
         case LANG_TYPE_MODE_MSG:
             break;
         case LANG_TYPE_MODE_LOG:
