@@ -8,6 +8,11 @@ Name name_new(Str_view mod_path, Str_view base, Ulang_type_vec gen_args, Scope_i
     return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id};
 }
 
+// TODO: actually use this function
+Uname uname_new(Name mod_alias, Str_view base, Ulang_type_vec gen_args, Scope_id scope_id) {
+    return (Uname) {.mod_alias = mod_alias, .base = base, .gen_args = gen_args, .scope_id = scope_id};
+}
+
 void extend_name_llvm(String* buf, Name name) {
     string_extend_strv(&a_main, buf, serialize_name(name));
 }
@@ -176,4 +181,8 @@ void extend_name(bool is_llvm, bool is_c, String* buf, Name name) {
 
 Name name_clone(Name name, Scope_id new_scope) {
     return name_new(name.mod_path, name.base, ulang_type_vec_clone(name.gen_args, new_scope), new_scope);
+}
+
+Uname uname_clone(Uname name, Scope_id new_scope) {
+    return uname_new(name.mod_alias, name.base, ulang_type_vec_clone(name.gen_args, new_scope), new_scope);
 }

@@ -40,7 +40,7 @@ fn token_print(token Token) {
 
 fn triangle(<ItemType>)(num ItemType) ItemType {
     let result ItemType = 0
-    for curr i32 in 0..num {
+    for curr ItemType in 0..num {
         result += curr
     }
 
@@ -160,9 +160,11 @@ fn concise() {
 
     let num3 i32 = 4
     let num2 i33 = 5
+    let num1 i16 = 6
     io.printf("test 40: got number: %d\n", triangle(<i32>)(num3))
     io.printf("test 41: got number: %d\n", triangle(<i32>)(num3 + 2))
     io.printf("test 42: got number: %d\n", triangle(<i33>)(num2))
+    io.printf("test 43: got number: %d\n", unsafe_cast<i32>(triangle(<i16>)(6)))
 
     let result10 io.Optional(<i32>) = try_add_one(<i32>)(12)
     switch result10 {

@@ -16,9 +16,10 @@ static inline Ulang_type_tuple ulang_type_tuple_clone(Ulang_type_tuple lang_type
 }
 
 static inline Ulang_type_regular ulang_type_regular_clone(Ulang_type_regular lang_type, Scope_id new_scope) {
-    // TODO: this is not actually cloning
-    lang_type.atom.str.scope_id = new_scope;
-    return lang_type;
+    return ulang_type_regular_new(
+        ulang_type_atom_new(uname_clone(lang_type.atom.str, new_scope), lang_type.atom.pointer_depth),
+        lang_type.pos
+    );
 }
 
 static inline Ulang_type_fn ulang_type_fn_clone(Ulang_type_fn lang_type, Scope_id new_scope) {

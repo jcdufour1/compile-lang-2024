@@ -42,6 +42,8 @@ void extend_name(bool is_llvm, bool is_c, String* buf, Name name);
 
 Name name_clone(Name name, Scope_id scope_id);
 
+Uname uname_clone(Uname name, Scope_id scope_id);
+
 #define name_print(name) str_view_print(name_print_internal(false, name))
 
 #define uname_print(name) str_view_print(uname_print_internal(name))

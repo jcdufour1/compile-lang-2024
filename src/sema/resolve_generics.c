@@ -34,7 +34,6 @@ static void msg_undefined_type_internal(
 static void msg_invalid_count_generic_args_internal(
     const char* file,
     int line,
-     
     Pos pos_def,
     Pos pos_gen_args,
     Ulang_type_vec gen_args,
