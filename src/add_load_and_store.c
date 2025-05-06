@@ -402,7 +402,7 @@ static Name load_function_call(Llvm_block* new_block, Tast_function_call* old_ca
 
     Name def_name = {0};
     Lang_type fun_lang_type = old_call->lang_type;
-    if (rtn_is_struct) {
+    if (params.backend_info.struct_rtn_through_param && rtn_is_struct) {
         def_name = name_new(env.curr_mod_path, util_literal_name_new_prefix("result_fun_call"), (Ulang_type_vec) {0}, 0);
         Tast_variable_def* def = tast_variable_def_new(old_call->pos, old_call->lang_type, false, def_name);
         unwrap(sym_tbl_add(tast_variable_def_wrap(def)));
@@ -432,7 +432,7 @@ static Name load_function_call(Llvm_block* new_block, Tast_function_call* old_ca
 
     vec_append(&a_main, &new_block->children, llvm_expr_wrap(llvm_function_call_wrap(new_call)));
 
-    if (rtn_is_struct) {
+    if (params.backend_info.struct_rtn_through_param && rtn_is_struct) {
         assert(def_name.base.count > 0);
 
         Tast_symbol* new_sym = tast_symbol_new(old_call->pos, (Sym_typed_base) {

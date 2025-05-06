@@ -81,18 +81,7 @@ static void emit_c_function_params(String* output, String* aux_assigns, const Ll
 
         c_extend_type_call_str(output, vec_at(&params->params, idx)->lang_type);
         string_extend_cstr(&a_main, output, " ");
-        if (is_struct_like(vec_at(&params->params, idx)->lang_type.type)) {
-            Name param_name = name_new((Str_view) {0}, util_literal_name_new(), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
-            llvm_extend_name(output, param_name);
-            // TODO: avoid this when function forward decl is being created
-            string_extend_cstr(&a_main, aux_assigns, "void* ");
-            llvm_extend_name(aux_assigns, vec_at(&params->params, idx)->name_self);
-            string_extend_cstr(&a_main, aux_assigns, " = &");
-            llvm_extend_name(aux_assigns, param_name);
-            string_extend_cstr(&a_main, aux_assigns, ";\n");
-        } else {
-            llvm_extend_name(output, vec_at(&params->params, idx)->name_self);
-        }
+        llvm_extend_name(output, vec_at(&params->params, idx)->name_self);
     }
 }
 
