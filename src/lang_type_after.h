@@ -71,25 +71,29 @@ static inline Lang_type_atom lang_type_primitive_get_atom_c(Lang_type_primitive 
         }
         case LANG_TYPE_UNSIGNED_INT: {
             // TODO: deduplicate this and above case?
+            // TODO: bit width of 1 here?
             String string = {0};
-            string_extend_cstr(&a_main, &string, "uint");
-            uint32_t bit_width = lang_type_signed_int_const_unwrap(lang_type).bit_width;
-            if (bit_width == 8) {
-                string_extend_int64_t(&a_main, &string, bit_width);
-            } else if (bit_width == 16) {
-                string_extend_int64_t(&a_main, &string, bit_width);
-            } else if (bit_width == 32) {
-                string_extend_int64_t(&a_main, &string, bit_width);
-            } else if (bit_width == 64) {
-                todo();
-                string_extend_int64_t(&a_main, &string, bit_width);
+            uint32_t bit_width = lang_type_unsigned_int_const_unwrap(lang_type).bit_width;
+            if (bit_width == 1) {
+                string_extend_cstr(&a_main, &string, "bool");
             } else {
-                msg_todo("bit widths other than 8, 16, 32, or 64 with the c backend", lang_type_primitive_get_pos(lang_type));
+                string_extend_cstr(&a_main, &string, "uint");
+                if (bit_width == 8) {
+                    string_extend_int64_t(&a_main, &string, bit_width);
+                } else if (bit_width == 16) {
+                    string_extend_int64_t(&a_main, &string, bit_width);
+                } else if (bit_width == 32) {
+                    string_extend_int64_t(&a_main, &string, bit_width);
+                } else if (bit_width == 64) {
+                    string_extend_int64_t(&a_main, &string, bit_width);
+                } else {
+                    msg_todo("bit widths other than 1, 8, 16, 32, or 64 with the c backend", lang_type_primitive_get_pos(lang_type));
+                }
+                string_extend_cstr(&a_main, &string, "_t");
             }
-            string_extend_cstr(&a_main, &string, "_t");
             return lang_type_atom_new(
                 name_new((Str_view) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
-                lang_type_signed_int_const_unwrap(lang_type).pointer_depth
+                lang_type_unsigned_int_const_unwrap(lang_type).pointer_depth
             );
         }
         case LANG_TYPE_ANY:

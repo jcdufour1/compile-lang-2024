@@ -67,10 +67,6 @@ static void c_extend_type_call_str(String* output, Lang_type lang_type, bool opa
             string_extend_strv(&a_main, output, serialize_lang_type(lang_type));
             return;
         case LANG_TYPE_PRIMITIVE:
-            if (lang_type_primitive_const_unwrap(lang_type).type == LANG_TYPE_UNSIGNED_INT) {
-                Lang_type_unsigned_int old_num = lang_type_unsigned_int_const_unwrap(lang_type_primitive_const_unwrap(lang_type));
-                lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_get_pos(lang_type), old_num.bit_width, old_num.pointer_depth)));
-            }
             extend_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_C, lang_type);
             return;
         case LANG_TYPE_SUM:
