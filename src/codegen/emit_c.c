@@ -28,7 +28,7 @@ static void emit_c_expr_piece(Emit_c_strs* strs, Name child);
 // TODO: see if this can be merged with extend_type_call_str in emit_llvm.c in some way
 static void c_extend_type_call_str(String* output, Lang_type lang_type) {
     if (lang_type_get_pointer_depth(lang_type) != 0) {
-        string_extend_cstr(&a_main, output, "ptr");
+        string_extend_cstr(&a_main, output, "void*");
         return;
     }
 
@@ -465,6 +465,13 @@ static void emit_c_alloca(String* output, const Llvm_alloca* alloca) {
     string_extend_cstr(&a_main, output, ";\n");
 }
 
+static void emit_c_label(Emit_c_strs* strs, const Llvm_label* def) {
+    llvm_extend_name(&strs->output, def->name);
+    string_extend_cstr(&a_main, &strs->output, ":\n");
+    // supress c compiler warnings and allow non-c23 compilers
+    string_extend_cstr(&a_main, &strs->output, "dummy = 0;\n");
+}
+
 static void emit_c_def(Emit_c_strs* strs, const Llvm_def* def) {
     (void) strs;
     switch (def->type) {
@@ -479,8 +486,7 @@ static void emit_c_def(Emit_c_strs* strs, const Llvm_def* def) {
             //emit_function_decl(output, llvm_function_decl_const_unwrap(def));
             return;
         case LLVM_LABEL:
-            todo();
-            //emit_label(output, llvm_label_const_unwrap(def));
+            emit_c_label(strs, llvm_label_const_unwrap(def));
             return;
         case LLVM_STRUCT_DEF:
             todo();
@@ -556,9 +562,7 @@ static void emit_c_store_another_llvm(Emit_c_strs* strs, const Llvm_store_anothe
             llvm_extend_name(&strs->output, llvm_tast_get_name(src));
             break;
         case LLVM_ALLOCA:
-            todo();
-            //string_extend_cstr(&a_main, output, " %");
-            //llvm_extend_name(output, llvm_tast_get_name(src));
+            llvm_extend_name(&strs->output, llvm_tast_get_name(src));
             break;
         default:
             unreachable(LLVM_FMT"\n", llvm_print(src));
@@ -610,6 +614,26 @@ static void emit_c_load_element_ptr(Emit_c_strs* strs, const Llvm_load_element_p
     string_extend_cstr(&a_main, &strs->output, ");\n");
 }
 
+static void emit_c_goto_internal(Emit_c_strs* strs, Name name) {
+    string_extend_cstr(&a_main, &strs->output, "    goto ");
+    llvm_extend_name(&strs->output, name);
+    string_extend_cstr(&a_main, &strs->output, ";\n");
+}
+
+static void emit_c_cond_goto(Emit_c_strs* strs, const Llvm_cond_goto* cond_goto) {
+    string_extend_cstr(&a_main, &strs->output, "    if (");
+    llvm_extend_name(&strs->output, cond_goto->condition);
+    string_extend_cstr(&a_main, &strs->output, ") {\n");
+    emit_c_goto_internal(strs, cond_goto->if_true);
+    string_extend_cstr(&a_main, &strs->output, "    } else {\n");
+    emit_c_goto_internal(strs, cond_goto->if_false);
+    string_extend_cstr(&a_main, &strs->output, "}\n");
+}
+
+static void emit_c_goto(Emit_c_strs* strs, const Llvm_goto* lang_goto) {
+    emit_c_goto_internal(strs, lang_goto->name);
+}
+
 static void emit_c_block(Emit_c_strs* strs, const Llvm_block* block) {
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         const Llvm* stmt = vec_at(&block->children, idx);
@@ -627,12 +651,10 @@ static void emit_c_block(Emit_c_strs* strs, const Llvm_block* block) {
                 emit_c_block(strs, llvm_block_const_unwrap(stmt));
                 break;
             case LLVM_COND_GOTO:
-                todo();
-                //emit_cond_goto(output, llvm_cond_goto_const_unwrap(stmt));
+                emit_c_cond_goto(strs, llvm_cond_goto_const_unwrap(stmt));
                 break;
             case LLVM_GOTO:
-                todo();
-                //emit_goto(output, llvm_goto_const_unwrap(stmt));
+                emit_c_goto(strs, llvm_goto_const_unwrap(stmt));
                 break;
             case LLVM_ALLOCA:
                 emit_c_alloca(&strs->output, llvm_alloca_const_unwrap(stmt));
@@ -670,19 +692,21 @@ static void emit_c_symbol_normal(String* literals, Name key, const Llvm_literal*
             todo();
     }
 
-    string_extend_cstr(&a_main, literals, "static const ");
+    string_extend_cstr(&a_main, literals, "static const void* ");
     llvm_extend_name(literals, key);
     string_extend_cstr(&a_main, literals, " = \"");
     string_extend_strv(&a_main, literals, data);
-    string_extend_cstr(&a_main, literals, "\"\n");
+    string_extend_cstr(&a_main, literals, "\";\n");
 }
 
 void emit_c_from_tree(const Llvm_block* root) {
     String header = {0};
     Emit_c_strs strs = {0};
 
+    string_extend_cstr(&a_main, &header, "static int dummy = 0;\n");
     string_extend_cstr(&a_main, &header, "#include <stddef.h>\n");
     string_extend_cstr(&a_main, &header, "#include <stdint.h>\n");
+    string_extend_cstr(&a_main, &header, "#include <stdbool.h>\n");
 
     Alloca_iter iter = all_tbl_iter_new(0);
     Llvm* curr = NULL;
@@ -719,14 +743,14 @@ void emit_c_from_tree(const Llvm_block* root) {
         }
     }
 
-    for (size_t idx = 0; idx < strs.output.info.count; idx++) {
-        if (EOF == fputc(vec_at(&strs.output, idx), file)) {
+    for (size_t idx = 0; idx < strs.literals.info.count; idx++) {
+        if (EOF == fputc(vec_at(&strs.literals, idx), file)) {
             todo();
         }
     }
 
-    for (size_t idx = 0; idx < strs.literals.info.count; idx++) {
-        if (EOF == fputc(vec_at(&strs.literals, idx), file)) {
+    for (size_t idx = 0; idx < strs.output.info.count; idx++) {
+        if (EOF == fputc(vec_at(&strs.output, idx), file)) {
             todo();
         }
     }
