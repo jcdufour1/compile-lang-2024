@@ -123,11 +123,20 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Llvm_struct_def* def) {
         Llvm_variable_def* curr = vec_at(&def->base.members, idx);
         string_extend_cstr(&a_temp, &buf, "    ");
         if (is_struct_like(vec_at(&def->base.members, idx)->lang_type.type)) {
+            Name ori_name = lang_type_get_str(LANG_TYPE_MODE_LOG, vec_at(&def->base.members, idx)->lang_type);
             Name* struct_to_use = NULL;
-            if (!c_forward_struct_tbl_lookup(&struct_to_use, lang_type_get_str(LANG_TYPE_MODE_LOG, vec_at(&def->base.members, idx)->lang_type))) {
+            if (!c_forward_struct_tbl_lookup(&struct_to_use, ori_name)) {
+                Llvm* child_def_  = NULL;
+                unwrap(alloca_lookup(&child_def_, ori_name));
+                Llvm_struct_def* child_def = llvm_struct_def_unwrap(llvm_def_unwrap(child_def_));
                 struct_to_use = arena_alloc(&a_main, sizeof(*struct_to_use));
                 *struct_to_use = name_new((Str_view) {0}, util_literal_name_new(), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
-                todo();
+                Llvm_struct_def* new_def = llvm_struct_def_new(def->pos, (Llvm_struct_def_base) {
+                    .members = child_def->base.members,
+                    .name = *struct_to_use
+                });
+                unwrap(c_forward_struct_tbl_add(struct_to_use, ori_name));
+                emit_c_struct_def(strs, new_def);
             }
             llvm_extend_name(&buf, *struct_to_use);
         } else {

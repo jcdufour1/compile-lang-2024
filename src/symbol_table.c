@@ -423,13 +423,11 @@ bool file_path_to_text_tbl_add(File_path_to_text* sym_table, Str_view* file_text
 //
 
 bool c_forward_struct_tbl_lookup(Name** result, Name key) {
-    todo();
     return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&env.c_forward_struct_tbl, serialize_name_symbol_table(key));
 }
 
 // returns false if value has already been added to the table
 bool c_forward_struct_tbl_add(Name* value, Name key) {
-    todo();
     return generic_tbl_add((Generic_symbol_table*)&env.c_forward_struct_tbl, serialize_name_symbol_table(key), value);
 }
 
