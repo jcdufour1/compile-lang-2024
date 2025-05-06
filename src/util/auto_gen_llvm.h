@@ -256,6 +256,7 @@ static Llvm_type llvm_gen_function_def(void) {
 static Llvm_type llvm_gen_variable_def(void) {
     Llvm_type def = {.name = llvm_name_new("def", "variable_def", false)};
 
+    // TODO: refactor so that only one Name is needed here
     append_member(&def.members, "Lang_type", "lang_type");
     append_member(&def.members, "bool", "is_variadic");
     append_member(&def.members, "Name", "name_self"); // for loading from variable_def param

@@ -638,11 +638,7 @@ static void emit_load_another_llvm(String* output, const Llvm_load_another_llvm*
     string_extend_cstr(&a_main, output, "\n");
 }
 
-static void emit_store_another_llvm_src_literal(
-     
-    String* output,
-    const Llvm_literal* literal
-) {
+static void emit_store_another_llvm_src_literal(String* output, const Llvm_literal* literal) {
     string_extend_cstr(&a_main, output, " ");
 
     switch (literal->type) {
