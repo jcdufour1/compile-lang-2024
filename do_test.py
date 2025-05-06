@@ -26,7 +26,6 @@ EXPECTED_FAIL_EXAMPLES_DIR = "./tests/expected_failure_examples/"
 BUILD_DEBUG_DIR = "./build/debug/"
 BUILD_RELEASE_DIR = "./build/release/"
 EXE_BASE_NAME = "main"
-TEST_OUTPUT = "test.ll"
 EXPECTED_SUCCESS_RESULTS_DIR = "./tests/expected_success_results/"
 
 EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
@@ -183,7 +182,7 @@ def get_expected_output(file: FileItem) -> str:
         return input_file.read()
 
 # return true if test was successful
-def do_test(file: FileItem, do_debug: bool, expected_output: str) -> bool:
+def do_test(file: FileItem, do_debug: bool, expected_output: str, output_name: str) -> bool:
     debug_release_text: str
     compile_cmd: list[str]
     if do_debug:
@@ -222,7 +221,7 @@ def do_test(file: FileItem, do_debug: bool, expected_output: str) -> bool:
         print_error("testing: compilation of " + file.path + " (" + debug_release_text + ") fail")
         sys.exit(1)
 
-    clang_cmd = ["clang", TEST_OUTPUT, "-o", "test"]
+    clang_cmd = ["clang", output_name, "-o", "test"]
     process = subprocess.run(clang_cmd)
     if process.returncode != 0:
         print_error("testing: clang " + file.path + " (" + debug_release_text + ") fail")
@@ -272,7 +271,7 @@ def do_test(file: FileItem, do_debug: bool, expected_output: str) -> bool:
     print_success("testing: " + file.path + " (" + debug_release_text + ") success")
     print()
 
-def do_debug(files_to_test: list[str], count_threads: int) -> None:
+def do_debug(files_to_test: list[str], count_threads: int, output_name: str) -> None:
     cmd = ["make", "-j", str(count_threads), "build"]
     print_info("compiling debug:")
     process = subprocess.run(cmd, env=dict(os.environ | {"DEBUG": "1"}))
@@ -287,11 +286,11 @@ def do_debug(files_to_test: list[str], count_threads: int) -> None:
             expected_output = get_expected_output(file)
         else:
             expected_output = ""
-        do_test(file, do_debug=True, expected_output=expected_output)
+        do_test(file, do_debug=True, expected_output=expected_output, output_name=output_name)
     print_success("testing debug: done")
     print()
 
-def do_release(files_to_test: list[str], count_threads: int) -> None:
+def do_release(files_to_test: list[str], count_threads: int, output_name: str) -> None:
     cmd = ["make", "-j", str(count_threads), "build"]
     print_info("compiling release:")
     process = subprocess.run(cmd, env=dict(os.environ | {"DEBUG": "0"}))
@@ -307,7 +306,7 @@ def do_release(files_to_test: list[str], count_threads: int) -> None:
             expected_output = get_expected_output(file)
         else:
             expected_output = ""
-        do_test(file, do_debug=False, expected_output=expected_output)
+        do_test(file, do_debug=False, expected_output=expected_output, output_name=output_name)
     print_success("testing release: done")
     print()
 
@@ -324,11 +323,14 @@ def append_all_files(list_or_map, callback):
 def add_to_map(map, path):
     map[path] = 0
 
-def parse_args() -> list[str]:
+def parse_args() -> (list[str], str):
+    test_output = "" # TODO: be more consistant with test_output variable names
     to_include: dict[str, int] = {}
     has_found_flag = False
-    for arg in sys.argv:
-        if arg.startswith("--exclude="):
+    for arg in sys.argv[1:]:
+        if arg.startswith("--output-file="):
+            test_output = arg.split("--output-file=")[1]
+        elif arg.startswith("--exclude="):
             to_exclude_raw = arg[len("--exclude="):]
             for idx, path in enumerate(to_exclude_raw.split(",")):
                 if not has_found_flag:
@@ -342,6 +344,9 @@ def parse_args() -> list[str]:
             for idx, path in enumerate(to_include_raw.split(",")):
                 if not os.path.realpath(path) in to_include:
                     to_include[os.path.realpath(path)] = 0
+        else:
+            print_error("invalid option ", arg)
+            sys.exit(1)
 
     if not has_found_flag:
         append_all_files(to_include, add_to_map)
@@ -349,10 +354,12 @@ def parse_args() -> list[str]:
     to_include_list: list[str] = []
     for path in to_include:
         to_include_list.append(path)
-    return to_include_list
+    return to_include_list, test_output
 
 def main() -> None:
-    files_to_test: list[str] = parse_args()
+    files_to_test: list[str]
+    output_file: str
+    files_to_test, test_output = parse_args()
 
     count_threads: int
     try:
@@ -362,8 +369,8 @@ def main() -> None:
         print_warning(e, file=sys.stderr)
         count_threads = 2
 
-    do_debug(files_to_test, count_threads)
-    do_release(files_to_test, count_threads)
+    do_debug(files_to_test, count_threads, test_output)
+    do_release(files_to_test, count_threads, test_output)
     print_success("all tests passed")
 
 if __name__ == '__main__':

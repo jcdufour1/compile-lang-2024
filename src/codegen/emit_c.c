@@ -143,7 +143,7 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Llvm_struct_def* def) {
     string_extend_cstr(&a_temp, &buf, ";\n");
 
     string_extend_strv(&a_main, &strs->struct_defs, string_to_strv(buf));
-    arena_reset(&a_temp); // TODO: call arena_free here
+    arena_free(&a_temp);
 }
 
 // this is only intended for alloca_table, etc.

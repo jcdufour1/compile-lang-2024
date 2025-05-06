@@ -78,9 +78,20 @@ void* arena_realloc(Arena* arena, void* old_buf, size_t old_capacity, size_t new
     return new_buf;
 }
 
-void arena_destroy(Arena* arena) {
-    (void) arena;
-    abort();
+INLINE void arena_free_buf(Arena_buf* buf) {
+    Arena_buf* curr = buf;
+    while (curr) {
+        Arena_buf* next = curr->next;
+        safe_free(curr);
+        curr = next;
+    }
+}
+
+void arena_free_internal(Arena* arena) {
+    if (!arena) {
+        return;
+    }
+    arena_free_buf(arena->next);
 }
 
 // reset, but do not free, allocated area

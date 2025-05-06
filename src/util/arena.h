@@ -27,7 +27,13 @@ void* arena_realloc(Arena* arena, void* old_buf, size_t old_capacity, size_t new
 // reset, but do not free, allocated area
 void arena_reset(Arena* arena);
 
-void arena_destroy(Arena* arena);
+void arena_free_internal(Arena* arena);
+
+#define arena_free(arena) \
+    do { \
+        arena_free_internal(arena); \
+        (arena)->next = NULL; \
+    } while (0);
 
 size_t arena_get_total_capacity(const Arena* arena);
 
