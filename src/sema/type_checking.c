@@ -768,6 +768,7 @@ bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_lhs))
                 );
+                todo();
                 return false;
             case CHECK_ASSIGN_ERROR:
                 return false;

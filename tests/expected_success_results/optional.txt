@@ -15,6 +15,7 @@ result is more than 4
 test 41: got number: 15
 result is more than 4
 test 42: got number: 10
+test 43: got number: 15
 test 44: got number: 13
 test 45: got number: 14
 result is more than 4
