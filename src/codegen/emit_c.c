@@ -115,20 +115,35 @@ static void emit_c_function_decl(Emit_c_strs* strs, const Llvm_function_decl* de
 }
 
 static void emit_c_struct_def(Emit_c_strs* strs, const Llvm_struct_def* def) {
-    string_extend_cstr(&a_main, &strs->struct_defs, "typedef struct {\n");
+    String buf = {0};
+    Arena a_temp = {0};
+    string_extend_cstr(&a_temp, &buf, "typedef struct {\n");
 
     for (size_t idx = 0; idx < def->base.members.info.count; idx++) {
         Llvm_variable_def* curr = vec_at(&def->base.members, idx);
-        string_extend_cstr(&a_main, &strs->struct_defs, "    ");
-        c_extend_type_call_str(&strs->struct_defs, curr->lang_type);
-        string_extend_cstr(&a_main, &strs->struct_defs, " ");
-        llvm_extend_name(&strs->struct_defs, curr->name_self);
-        string_extend_cstr(&a_main, &strs->struct_defs, ";\n");
+        string_extend_cstr(&a_temp, &buf, "    ");
+        if (is_struct_like(vec_at(&def->base.members, idx)->lang_type.type)) {
+            Name* struct_to_use = NULL;
+            if (!c_forward_struct_tbl_lookup(&struct_to_use, lang_type_get_str(LANG_TYPE_MODE_LOG, vec_at(&def->base.members, idx)->lang_type))) {
+                struct_to_use = arena_alloc(&a_main, sizeof(*struct_to_use));
+                *struct_to_use = name_new((Str_view) {0}, util_literal_name_new(), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+                todo();
+            }
+            llvm_extend_name(&buf, *struct_to_use);
+        } else {
+            c_extend_type_call_str(&buf, curr->lang_type);
+        }
+        string_extend_cstr(&a_temp, &buf, " ");
+        llvm_extend_name(&buf, curr->name_self);
+        string_extend_cstr(&a_temp, &buf, ";\n");
     }
 
-    string_extend_cstr(&a_main, &strs->struct_defs, "} ");
-    llvm_extend_name(&strs->struct_defs, def->base.name);
-    string_extend_cstr(&a_main, &strs->struct_defs, ";\n");
+    string_extend_cstr(&a_temp, &buf, "} ");
+    llvm_extend_name(&buf, def->base.name);
+    string_extend_cstr(&a_temp, &buf, ";\n");
+
+    string_extend_strv(&a_main, &strs->struct_defs, string_to_strv(buf));
+    arena_reset(&a_temp); // TODO: call arena_free here
 }
 
 // this is only intended for alloca_table, etc.

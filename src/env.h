@@ -66,6 +66,8 @@ typedef struct Env_ {
     // TODO: think about functions in different scopes, but with the same name (for both of below objects)
     Name_vec fun_implementations_waiting_to_resolve;
     Function_decl_tbl function_decl_tbl;
+
+    C_forward_struct_tbl c_forward_struct_tbl;
 } Env;
 
 #endif // ENV_H

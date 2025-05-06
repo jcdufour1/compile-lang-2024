@@ -67,6 +67,19 @@ typedef struct {
 
 
 typedef struct {
+    Name* tast;
+    Str_view key;
+    SYM_TBL_STATUS status;
+} C_forward_struct_tbl_tast;
+
+typedef struct {
+    C_forward_struct_tbl_tast* table_tasts;
+    size_t count; // count elements in symbol_table
+    size_t capacity; // count buckets in symbol_table
+} C_forward_struct_tbl;
+
+
+typedef struct {
     Str_view* item;
     Str_view key;
     SYM_TBL_STATUS status;

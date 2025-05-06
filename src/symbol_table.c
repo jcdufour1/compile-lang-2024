@@ -407,13 +407,30 @@ bool alloca_lookup(Llvm** result, Name key) {
 // File_path_to_text implementation
 //
 
+// TODO: remove const File_path_to_text* parameter
 bool file_path_to_text_tbl_lookup(Str_view** result, const File_path_to_text* sym_table, Str_view key) {
     return generic_tbl_lookup((void**)result, (Generic_symbol_table*)sym_table, key);
 }
 
+// TODO: remove File_path_to_text* parameter
 // returns false if file_path_to_text has already been added to the table
 bool file_path_to_text_tbl_add(File_path_to_text* sym_table, Str_view* file_text, Str_view key) {
     return generic_tbl_add((Generic_symbol_table*)sym_table, key, file_text);
+}
+
+//
+// C_forward_struct_tbl implementation
+//
+
+bool c_forward_struct_tbl_lookup(Name** result, Name key) {
+    todo();
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&env.c_forward_struct_tbl, serialize_name_symbol_table(key));
+}
+
+// returns false if value has already been added to the table
+bool c_forward_struct_tbl_add(Name* value, Name key) {
+    todo();
+    return generic_tbl_add((Generic_symbol_table*)&env.c_forward_struct_tbl, serialize_name_symbol_table(key), value);
 }
 
 //
