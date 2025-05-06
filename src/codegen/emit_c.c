@@ -26,8 +26,8 @@ static void emit_c_symbol_normal(String* literals, Name key, const Llvm_literal*
 static void emit_c_expr_piece(Emit_c_strs* strs, Name child);
 
 // TODO: see if this can be merged with extend_type_call_str in emit_llvm.c in some way
-static void c_extend_type_call_str(String* output, Lang_type lang_type) {
-    if (lang_type_get_pointer_depth(lang_type) != 0) {
+static void c_extend_type_call_str(String* output, Lang_type lang_type, bool opaque_ptr) {
+    if (opaque_ptr && lang_type_get_pointer_depth(lang_type) != 0) {
         string_extend_cstr(&a_main, output, "void*");
         return;
     }
@@ -79,14 +79,14 @@ static void emit_c_function_params(String* output, String* aux_assigns /* TODO: 
             return;
         }
 
-        c_extend_type_call_str(output, vec_at(&params->params, idx)->lang_type);
+        c_extend_type_call_str(output, vec_at(&params->params, idx)->lang_type, true);
         string_extend_cstr(&a_main, output, " ");
         llvm_extend_name(output, vec_at(&params->params, idx)->name_self);
     }
 }
 
 static void emit_c_function_decl_internal(String* output, String* aux_assigns, const Llvm_function_decl* decl) {
-    c_extend_type_call_str(output, decl->return_type);
+    c_extend_type_call_str(output, decl->return_type, true);
     string_extend_cstr(&a_main, output, " ");
     llvm_extend_name(output, decl->name);
 
@@ -144,7 +144,7 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Llvm_struct_def* def) {
             }
             llvm_extend_name(&buf, *struct_to_use);
         } else {
-            c_extend_type_call_str(&buf, curr->lang_type);
+            c_extend_type_call_str(&buf, curr->lang_type, true);
         }
         string_extend_cstr(&a_temp, &buf, " ");
         llvm_extend_name(&buf, curr->name_self);
@@ -223,7 +223,7 @@ static void emit_c_function_call(Emit_c_strs* strs, const Llvm_function_call* fu
     // start of actual function call
     string_extend_cstr(&a_main, &strs->output, "    ");
     if (fun_call->lang_type.type != LANG_TYPE_VOID) {
-        c_extend_type_call_str(&strs->output, fun_call->lang_type);
+        c_extend_type_call_str(&strs->output, fun_call->lang_type, true);
         string_extend_cstr(&a_main, &strs->output, " ");
         llvm_extend_name(&strs->output, fun_call->name_self);
         string_extend_cstr(&a_main, &strs->output, " = ");
@@ -270,7 +270,7 @@ static void emit_c_unary_operator(Emit_c_strs* strs, UNARY_TYPE unary_type, Lang
             todo();
         case UNARY_UNSAFE_CAST:
             string_extend_cstr(&a_main, &strs->output, "(");
-            c_extend_type_call_str(&strs->output, cast_to);
+            c_extend_type_call_str(&strs->output, cast_to, true);
             string_extend_cstr(&a_main, &strs->output, ")");
             return;
         case UNARY_NOT:
@@ -343,7 +343,7 @@ static void emit_c_binary_operator(Emit_c_strs* strs, BINARY_TYPE bin_type) {
 
 static void emit_c_operator(Emit_c_strs* strs, const Llvm_operator* oper) {
     string_extend_cstr(&a_main, &strs->output, "    ");
-    c_extend_type_call_str(&strs->output, llvm_operator_get_lang_type(oper));
+    c_extend_type_call_str(&strs->output, llvm_operator_get_lang_type(oper), true);
     string_extend_cstr(&a_main, &strs->output, " ");
     llvm_extend_name(&strs->output, llvm_operator_get_name(oper));
     string_extend_cstr(&a_main, &strs->output, " = ");
@@ -467,7 +467,7 @@ static void emit_c_alloca(String* output, const Llvm_alloca* alloca) {
     Name storage_loc = name_new((Str_view) {0}, util_literal_name_new(), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
 
     string_extend_cstr(&a_main, output, "    ");
-    c_extend_type_call_str(output, alloca->lang_type);
+    c_extend_type_call_str(output, alloca->lang_type, true);
     string_extend_cstr(&a_main, output, " ");
     llvm_extend_name(output, storage_loc);
     string_extend_cstr(&a_main, output, ";\n");
@@ -560,35 +560,26 @@ static void emit_c_store_another_llvm(Emit_c_strs* strs, const Llvm_store_anothe
     unwrap(alloca_lookup(&src, store->llvm_src));
 
     string_extend_cstr(&a_main, &strs->output, "    *((");
-    c_extend_type_call_str(&strs->output, store->lang_type);
+    c_extend_type_call_str(&strs->output, store->lang_type, true);
     string_extend_cstr(&a_main, &strs->output, "*)");
     llvm_extend_name(&strs->output, store->llvm_dest);
     string_extend_cstr(&a_main, &strs->output, ") = ");
 
     emit_c_expr_piece(strs, store->llvm_src);
     string_extend_cstr(&a_main, &strs->output, ";\n");
-    return;
-    //string_extend_cstr(&a_main, output, " %");
-    //llvm_extend_name(output, llvm_tast_get_name(store->llvm_src.llvm));
-
-    todo();
-    //string_extend_cstr(&a_main, output, ", ptr %");
-    //llvm_extend_name(output, store->llvm_dest);
-    //string_extend_cstr(&a_main, output, ", align 8");
-    //string_extend_cstr(&a_main, output, "\n");
 }
 
 static void emit_c_load_another_llvm(Emit_c_strs* strs, const Llvm_load_another_llvm* load) {
     log(LOG_DEBUG, TAST_FMT"\n", string_print(strs->output));
 
     string_extend_cstr(&a_main, &strs->output, "    ");
-    c_extend_type_call_str(&strs->output, load->lang_type);
+    c_extend_type_call_str(&strs->output, load->lang_type, true);
     string_extend_cstr(&a_main, &strs->output, " ");
     llvm_extend_name(&strs->output, load->name);
     string_extend_cstr(&a_main, &strs->output, " = ");
 
     string_extend_cstr(&a_main, &strs->output, "*((");
-    c_extend_type_call_str(&strs->output, load->lang_type);
+    c_extend_type_call_str(&strs->output, load->lang_type, true);
     string_extend_cstr(&a_main, &strs->output, "*)");
     llvm_extend_name(&strs->output, load->llvm_src);
 
@@ -605,7 +596,7 @@ static void emit_c_load_element_ptr(Emit_c_strs* strs, const Llvm_load_element_p
     string_extend_cstr(&a_main, &strs->output, " = ");
 
     string_extend_cstr(&a_main, &strs->output, "&(((");
-    c_extend_type_call_str(&strs->output, lang_type_from_get_name(load->llvm_src));
+    c_extend_type_call_str(&strs->output, lang_type_from_get_name(load->llvm_src), false);
     string_extend_cstr(&a_main, &strs->output, "*)");
     llvm_extend_name(&strs->output, load->llvm_src);
     string_extend_cstr(&a_main, &strs->output, ")->");
@@ -619,7 +610,7 @@ static void emit_c_array_access(Emit_c_strs* strs, const Llvm_array_access* acce
     string_extend_cstr(&a_main, &strs->output, " = ");
 
     string_extend_cstr(&a_main, &strs->output, "&(((");
-    c_extend_type_call_str(&strs->output, lang_type_from_get_name(access->callee));
+    c_extend_type_call_str(&strs->output, lang_type_from_get_name(access->callee), false);
     string_extend_cstr(&a_main, &strs->output, "*)");
     llvm_extend_name(&strs->output, access->callee);
     string_extend_cstr(&a_main, &strs->output, ")[");

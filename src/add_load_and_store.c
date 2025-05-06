@@ -1363,10 +1363,7 @@ static Name load_return(Llvm_block* new_block, Tast_return* old_return) {
     return (Name) {0};
 }
 
-static Name load_assignment(
-    Llvm_block* new_block,
-    Tast_assignment* old_assign
-) {
+static Name load_assignment(Llvm_block* new_block, Tast_assignment* old_assign) {
     assert(old_assign->lhs);
     assert(old_assign->rhs);
 
@@ -1393,10 +1390,7 @@ static Name load_assignment(
     return new_store->name;
 }
 
-static Name load_variable_def(
-    Llvm_block* new_block,
-    Tast_variable_def* old_var_def
-) {
+static Name load_variable_def(Llvm_block* new_block, Tast_variable_def* old_var_def) {
     Llvm_variable_def* new_var_def = load_variable_def_clone(old_var_def);
 
     Llvm* alloca = NULL;
@@ -1411,9 +1405,7 @@ static Name load_variable_def(
     return llvm_tast_get_name(alloca);
 }
 
-static void load_struct_def(
-    Tast_struct_def* old_def
-) {
+static void load_struct_def(Tast_struct_def* old_def) {
     all_tbl_add(llvm_def_wrap(llvm_struct_def_wrap(load_struct_def_clone(old_def))));
 
     Tast_def* dummy = NULL;
@@ -1427,9 +1419,7 @@ static void load_struct_def(
     }
 }
 
-static void load_enum_def(
-    Tast_enum_def* old_def
-) {
+static void load_enum_def(Tast_enum_def* old_def) {
     (void) old_def;
 }
 
@@ -1680,10 +1670,19 @@ static Name load_ptr_deref(Llvm_block* new_block, Tast_unary* old_unary) {
 
     switch (old_unary->lang_type.type) {
         case LANG_TYPE_STRUCT:
+            // TODO: this may not do the right thing for the llvm backend. Fix underlying issues instead of relying on this hack for llvm?
+            // TODO: (if this is nessessary) make params.backend_info.load_ptr_deref_break arg instead of just doing BACKEND_C check this way
+            if (params.backend_info.backend == BACKEND_C) {
+                break;
+            }
             return load_ptr_expr(new_block, old_unary->child);
         case LANG_TYPE_PRIMITIVE:
             break;
         case LANG_TYPE_RAW_UNION:
+            if (params.backend_info.backend == BACKEND_C) {
+                todo();
+                break;
+            }
             return load_ptr_expr(new_block, old_unary->child);
         case LANG_TYPE_ENUM:
             break;
