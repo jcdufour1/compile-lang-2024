@@ -67,7 +67,7 @@ static void c_extend_type_call_str(String* output, Lang_type lang_type) {
     unreachable("");
 }
 
-static void emit_c_function_params(String* output, const Llvm_function_params* params) {
+static void emit_c_function_params(String* output, String* aux_assigns, const Llvm_function_params* params) {
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
         if (idx > 0) {
             string_extend_cstr(&a_main, output, ", ");
@@ -81,11 +81,22 @@ static void emit_c_function_params(String* output, const Llvm_function_params* p
 
         c_extend_type_call_str(output, vec_at(&params->params, idx)->lang_type);
         string_extend_cstr(&a_main, output, " ");
-        llvm_extend_name(output, vec_at(&params->params, idx)->name_self);
+        if (is_struct_like(vec_at(&params->params, idx)->lang_type.type)) {
+            Name param_name = name_new((Str_view) {0}, util_literal_name_new(), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+            llvm_extend_name(output, param_name);
+            // TODO: avoid this when function forward decl is being created
+            string_extend_cstr(&a_main, aux_assigns, "void* ");
+            llvm_extend_name(aux_assigns, vec_at(&params->params, idx)->name_self);
+            string_extend_cstr(&a_main, aux_assigns, " = &");
+            llvm_extend_name(aux_assigns, param_name);
+            string_extend_cstr(&a_main, aux_assigns, ";\n");
+        } else {
+            llvm_extend_name(output, vec_at(&params->params, idx)->name_self);
+        }
     }
 }
 
-static void emit_c_function_decl_internal(String* output, const Llvm_function_decl* decl) {
+static void emit_c_function_decl_internal(String* output, String* aux_assigns, const Llvm_function_decl* decl) {
     c_extend_type_call_str(output, decl->return_type);
     string_extend_cstr(&a_main, output, " ");
     llvm_extend_name(output, decl->name);
@@ -94,23 +105,27 @@ static void emit_c_function_decl_internal(String* output, const Llvm_function_de
     if (decl->params->params.info.count < 1) {
         string_extend_cstr(&a_main, output, "void");
     } else {
-        emit_c_function_params(output, decl->params);
+        emit_c_function_params(output, aux_assigns, decl->params);
     }
     string_extend_cstr(&a_main, output, ")");
 }
 
 static void emit_c_function_def(Emit_c_strs* strs, const Llvm_function_def* fun_def) {
-    emit_c_function_decl_internal(&strs->forward_decls, fun_def->decl);
+    String dummy = {0};
+    emit_c_function_decl_internal(&strs->forward_decls, &dummy, fun_def->decl);
     string_extend_cstr(&a_main, &strs->forward_decls, ";\n");
 
-    emit_c_function_decl_internal(&strs->output, fun_def->decl);
+    String aux_assigns = {0};
+    emit_c_function_decl_internal(&strs->output, &aux_assigns, fun_def->decl);
     string_extend_cstr(&a_main, &strs->output, " {\n");
+    string_extend_strv(&a_main, &strs->output, string_to_strv(aux_assigns));
     emit_c_block(strs, fun_def->body);
     string_extend_cstr(&a_main, &strs->output, "}\n");
 }
 
 static void emit_c_function_decl(Emit_c_strs* strs, const Llvm_function_decl* decl) {
-    emit_c_function_decl_internal(&strs->forward_decls, decl);
+    String dummy = {0};
+    emit_c_function_decl_internal(&strs->forward_decls, &dummy, decl);
     string_extend_cstr(&a_main, &strs->forward_decls, ";\n");
 }
 
