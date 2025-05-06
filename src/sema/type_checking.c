@@ -605,6 +605,7 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                 new_rhs = auto_deref_to_0(new_rhs);
                 tast_literal_set_lang_type(tast_literal_unwrap(new_lhs), tast_expr_get_lang_type(new_rhs));
             } else {
+                todo();
                 unwrap(try_set_unary_types_finish(&new_lhs, new_lhs, tast_expr_get_pos(new_lhs), UNARY_UNSAFE_CAST, tast_expr_get_lang_type(new_rhs)));
             }
         } else {
@@ -1924,14 +1925,12 @@ bool try_set_member_access_types_finish(
     unreachable("");
 }
 
-bool try_set_member_access_types(
-    Tast_stmt** new_tast,
-    Uast_member_access* access
-) {
+bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* access) {
     Tast_expr* new_callee = NULL;
     if (!try_set_expr_types(&new_callee, access->callee)) {
         return false;
     }
+    new_callee = auto_deref_to_0(new_callee);
 
     switch (new_callee->type) {
         case TAST_SYMBOL: {

@@ -68,6 +68,7 @@ for generics:
   type Token struct {
   }
   fn get_token
+- make LLVM_LANG_TYPE, etc. that does not have LANG_TYPE_ENUM, etc.
 
 
 
@@ -109,4 +110,10 @@ for generics:
 - floats
 - use 0o for octal prefix?
 - graphviz (for program control flow, etc.)
+- foreach idea:
+- fn foreach_tokens(tokens Token[]) {
+    for idx i64 in tokens {
+        yield tokens[idx]
+    }
+  }
 

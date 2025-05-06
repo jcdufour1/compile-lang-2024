@@ -297,7 +297,8 @@ static void emit_c_binary_operator(Emit_c_strs* strs, BINARY_TYPE bin_type) {
             string_extend_cstr(&a_main, &strs->output, " / ");
             return;
         case BINARY_MODULO:
-            todo();
+            string_extend_cstr(&a_main, &strs->output, " % ");
+            return;
         case BINARY_LESS_THAN:
             string_extend_cstr(&a_main, &strs->output, " < ");
             return;

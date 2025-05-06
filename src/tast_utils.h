@@ -192,7 +192,7 @@ static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr) {
         case TAST_IF_ELSE_CHAIN:
             return tast_if_else_chain_get_lang_type(tast_if_else_chain_const_unwrap(expr));
         case TAST_MODULE_ALIAS:
-            unreachable("");
+            return (Lang_type) {0} /* TODO */;
     }
     unreachable("");
 }
