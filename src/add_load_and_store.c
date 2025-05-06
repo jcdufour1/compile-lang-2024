@@ -284,7 +284,7 @@ static Llvm_struct_def* load_raw_union_def_clone(const Tast_raw_union_def* old_d
 }
 
 static void do_function_def_alloca_param(Llvm_function_params* new_params, Llvm_block* new_block, Llvm_variable_def* param) {
-    if (is_struct_like(param->lang_type.type)) {
+    if (params.backend_info.struct_rtn_through_param && is_struct_like(param->lang_type.type)) {
         param->name_self = param->name_corr_param;
         alloca_add(llvm_def_wrap(llvm_variable_def_wrap(param)));
     } else {
@@ -308,7 +308,7 @@ static Llvm_function_params* do_function_def_alloca(
     );
 
     Lang_type rtn_lang_type = rm_tuple_lang_type(rtn_type, (Pos) {0});
-    if (is_struct_like(rtn_type.type)) {
+    if (params.backend_info.struct_rtn_through_param && is_struct_like(rtn_type.type)) {
         lang_type_set_pointer_depth(&rtn_lang_type, lang_type_get_pointer_depth(rtn_lang_type) + 1);
         Tast_variable_def* new_def = tast_variable_def_new(
             (Pos) {0} /* TODO */,
@@ -1238,7 +1238,7 @@ static Llvm_function_params* load_function_parameters(
 
         bool is_struct = is_struct_like(param->lang_type.type);
 
-        if (!is_struct) {
+        if (!params.backend_info.struct_rtn_through_param || !is_struct) {
             unwrap(alloca_add(llvm_def_wrap(llvm_variable_def_wrap(param))));
 
             Llvm_store_another_llvm* new_store = llvm_store_another_llvm_new(
@@ -1327,7 +1327,7 @@ static Name load_return(Llvm_block* new_block, Tast_return* old_return) {
 
     bool rtn_is_struct = is_struct_like(rtn_type.type);
 
-    if (rtn_is_struct) {
+    if (params.backend_info.struct_rtn_through_param && rtn_is_struct) {
         Llvm* dest_ = NULL;
         unwrap(alloca_lookup(&dest_, env.struct_rtn_name_parent_function));
         Name dest = env.struct_rtn_name_parent_function;
