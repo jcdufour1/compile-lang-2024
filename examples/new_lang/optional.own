@@ -164,7 +164,7 @@ fn concise() {
     io.printf("test 40: got number: %d\n", triangle(<i32>)(num3))
     io.printf("test 41: got number: %d\n", triangle(<i32>)(num3 + 2))
     io.printf("test 42: got number: %d\n", triangle(<i33>)(num2))
-    io.printf("test 43: got number: %d\n", triangle(<i16>)(6))
+    io.printf("test 43: got number: %d\n", unsafe_cast<i32>(triangle(<i16>)(6)))
 
     let result10 io.Optional(<i32>) = try_add_one(<i32>)(12)
     switch result10 {

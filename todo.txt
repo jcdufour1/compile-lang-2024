@@ -87,6 +87,7 @@ for generics:
 - pointer generic
 - warn about unused variables
 - invalid literal as function callee
+- when using variadic args for extern("c") function: give error when passing i16 without a cast, etc.
 
 
 ## needed tests
