@@ -117,4 +117,5 @@ for generics:
         yield tokens[idx]
     }
   }
+- bit widths other than 1, 8, 16, 32, or 64 with the c backend
 

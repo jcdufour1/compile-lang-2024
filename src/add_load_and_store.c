@@ -401,7 +401,7 @@ static Name load_function_call(Llvm_block* new_block, Tast_function_call* old_ca
     Name_vec new_args = {0};
 
     Name def_name = {0};
-    Lang_type fun_lang_type = old_call->lang_type;
+    Lang_type fun_lang_type = rm_tuple_lang_type(old_call->lang_type, old_call->pos);
     if (params.backend_info.struct_rtn_through_param && rtn_is_struct) {
         def_name = name_new(env.curr_mod_path, util_literal_name_new_prefix("result_fun_call"), (Ulang_type_vec) {0}, 0);
         Tast_variable_def* def = tast_variable_def_new(old_call->pos, old_call->lang_type, false, def_name);
@@ -1267,7 +1267,7 @@ static Name load_function_def(Tast_function_def* old_fun_def) {
     Llvm_function_decl* new_decl = llvm_function_decl_new(
         pos,
         NULL,
-        old_fun_def->decl->return_type,
+        rm_tuple_lang_type(old_fun_def->decl->return_type, old_fun_def->pos),
         old_fun_def->decl->name
     );
 
@@ -1286,7 +1286,7 @@ static Name load_function_def(Tast_function_def* old_fun_def) {
 
     Lang_type new_lang_type = {0};
     new_fun_def->decl->params = load_function_parameters(
-         new_fun_def->body, &new_lang_type, old_fun_def->decl->return_type, old_fun_def->decl->params
+         new_fun_def->body, &new_lang_type, rm_tuple_lang_type(old_fun_def->decl->return_type, old_fun_def->pos), old_fun_def->decl->params
     );
     new_fun_def->decl->return_type = new_lang_type;
     for (size_t idx = 0; idx < old_fun_def->body->children.info.count; idx++) {
