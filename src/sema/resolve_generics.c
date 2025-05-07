@@ -304,18 +304,6 @@ static bool resolve_generics_ulang_type_internal_enum_def(
     }
     *after_res = uast_enum_def_unwrap(after_res_);
 
-    Uast_def* new_def_ = NULL;
-    if (usymbol_lookup(&new_def_,  new_name)) {
-        *after_res = uast_enum_def_unwrap(new_def_);
-    } else {
-        Ustruct_def_base new_base = {0};
-        if (!resolve_generics_serialize_struct_def_base(&new_base, old_base, new_name.gen_args, new_name)) {
-            todo();
-            return false;
-        }
-        *after_res = uast_enum_def_new(before_res->pos, new_base);
-    }
-
     *result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
         name_to_uname((*after_res)->base.name), ulang_type_get_atom(lang_type).pointer_depth
     ), ulang_type_get_pos(lang_type)));
@@ -341,18 +329,6 @@ static bool resolve_generics_ulang_type_internal_sum_def(
     }
     *after_res = uast_sum_def_unwrap(after_res_);
 
-    Uast_def* new_def_ = NULL;
-    if (usymbol_lookup(&new_def_,  new_name)) {
-        *after_res = uast_sum_def_unwrap(new_def_);
-    } else {
-        Ustruct_def_base new_base = {0};
-        if (!resolve_generics_serialize_struct_def_base(&new_base, old_base, new_name.gen_args, new_name)) {
-            todo();
-            return false;
-        }
-        *after_res = uast_sum_def_new(before_res->pos, new_base);
-    }
-
     *result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
         name_to_uname((*after_res)->base.name), ulang_type_get_atom(lang_type).pointer_depth
     ), ulang_type_get_pos(lang_type)));
@@ -377,18 +353,6 @@ static bool resolve_generics_ulang_type_internal_struct_def(
         return false;
     }
     *after_res = uast_struct_def_unwrap(after_res_);
-
-    Uast_def* new_def_ = NULL;
-    if (usymbol_lookup(&new_def_,  new_name)) {
-        *after_res = uast_struct_def_unwrap(new_def_);
-    } else {
-        Ustruct_def_base new_base = {0};
-        if (!resolve_generics_serialize_struct_def_base(&new_base, old_base, new_name.gen_args, new_name)) {
-            todo();
-            return false;
-        }
-        *after_res = uast_struct_def_new(before_res->pos, new_base);
-    }
 
     *result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
         name_to_uname((*after_res)->base.name), ulang_type_get_atom(lang_type).pointer_depth
