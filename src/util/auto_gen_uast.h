@@ -227,7 +227,6 @@ static Uast_type uast_gen_string(const char* prefix) {
     Uast_type string = {.name = uast_name_new(prefix, "string", false)};
 
     append_member(&string.members, "Str_view", "data");
-    append_member(&string.members, "Str_view", "name");
 
     return string;
 }
@@ -434,21 +433,11 @@ static Uast_type uast_gen_void_def(const char* prefix) {
     return def;
 }
 
-static Uast_type uast_gen_struct_lit_def(const char* prefix) {
-    Uast_type def = {.name = uast_name_new(prefix, "struct_lit_def", false)};
-
-    append_member(&def.members, "Uast_vec", "members");
-    append_member(&def.members, "Name", "name");
-
-    return def;
-}
-
 static Uast_type uast_gen_literal_def(const char* prefix) {
     const char* base_name = "literal_def";
     Uast_type def = {.name = uast_name_new(prefix, base_name, false)};
 
     vec_append(&gen_a, &def.sub_types, uast_gen_void_def(base_name));
-    vec_append(&gen_a, &def.sub_types, uast_gen_struct_lit_def(base_name));
 
     return def;
 }

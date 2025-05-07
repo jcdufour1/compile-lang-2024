@@ -245,26 +245,8 @@ static inline Lang_type* uast_ref_stmt_get_lang_type(Uast_stmt* stmt) {
     unreachable("");
 }
 
-static inline Str_view uast_literal_get_name(const Uast_literal* lit) {
-    switch (lit->type) {
-        case UAST_NUMBER:
-            unreachable("");
-        case UAST_STRING:
-            return uast_string_const_unwrap(lit)->name;
-        case UAST_VOID:
-            unreachable("");
-        case UAST_ENUM_LIT:
-            unreachable("");
-        case UAST_CHAR:
-            unreachable("");
-    }
-    unreachable("");
-}
-
 static inline Name uast_literal_def_get_name(const Uast_literal_def* lit_def) {
     switch (lit_def->type) {
-        case UAST_STRUCT_LIT_DEF:
-            return uast_struct_lit_def_const_unwrap(lit_def)->name;
         case UAST_VOID_DEF:
             return name_new((Str_view) {0}, str_view_from_cstr("void"), (Ulang_type_vec) {0}, 0);
     }

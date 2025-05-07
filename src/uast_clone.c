@@ -10,7 +10,7 @@ Uast_number* uast_number_clone(const Uast_number* lit) {
 }
 
 Uast_string* uast_string_clone(const Uast_string* lit) {
-    return uast_string_new(lit->pos, lit->data, util_literal_str_view_new());
+    return uast_string_new(lit->pos, lit->data);
 }
 
 Uast_literal* uast_literal_clone(const Uast_literal* lit) {

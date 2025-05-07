@@ -398,7 +398,7 @@ bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Str_view 
         }
         case TOKEN_STRING_LITERAL: {
             // TODO: figure out if literal name can be eliminated for uast_string
-            Uast_string* string = uast_string_new(pos, value, util_literal_str_view_new());
+            Uast_string* string = uast_string_new(pos, value);
             *new_lit = uast_string_wrap(string);
             break;
         }
