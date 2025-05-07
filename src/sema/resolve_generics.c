@@ -214,9 +214,22 @@ static Uast_def* local_struct_new(Pos pos, Ustruct_def_base base) {
 static bool resolve_generics_ulang_type_internal_struct_like_2(
     Name* new_name,
     Ustruct_def_base old_base,
-    Ulang_type lang_type
+    Ulang_type lang_type,
+    Pos pos_def
 ) {
     *new_name = name_new(old_base.name.mod_path, old_base.name.base, ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args, SCOPE_TOP_LEVEL /* TODO */);
+
+    if (old_base.generics.info.count != new_name->gen_args.info.count) {
+        msg_invalid_count_generic_args(
+            pos_def,
+            ulang_type_get_pos(lang_type),
+            new_name->gen_args,
+            old_base.generics.info.count,
+            old_base.generics.info.count
+        );
+        return false;
+    }
+
     return true;
 }
 
@@ -228,18 +241,7 @@ static bool resolve_generics_ulang_type_internal_raw_union_def(
 ) {
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
-    if (!resolve_generics_ulang_type_internal_struct_like_2(&new_name, old_base, lang_type)) {
-        todo();
-    }
-
-    if (old_base.generics.info.count != new_name.gen_args.info.count) {
-        msg_invalid_count_generic_args(
-            before_res->pos,
-            ulang_type_get_pos(lang_type),
-            new_name.gen_args,
-            old_base.generics.info.count,
-            old_base.generics.info.count
-        );
+    if (!resolve_generics_ulang_type_internal_struct_like_2(&new_name, old_base, lang_type, before_res->pos)) {
         return false;
     }
 
@@ -274,18 +276,7 @@ static bool resolve_generics_ulang_type_internal_enum_def(
 ) {
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
-    if (!resolve_generics_ulang_type_internal_struct_like_2(&new_name, old_base, lang_type)) {
-        todo();
-    }
-
-    if (old_base.generics.info.count != new_name.gen_args.info.count) {
-        msg_invalid_count_generic_args(
-            before_res->pos,
-            ulang_type_get_pos(lang_type),
-            new_name.gen_args,
-            old_base.generics.info.count,
-            old_base.generics.info.count
-        );
+    if (!resolve_generics_ulang_type_internal_struct_like_2(&new_name, old_base, lang_type, before_res->pos)) {
         return false;
     }
 
@@ -320,18 +311,7 @@ static bool resolve_generics_ulang_type_internal_sum_def(
 ) {
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
-    if (!resolve_generics_ulang_type_internal_struct_like_2(&new_name, old_base, lang_type)) {
-        todo();
-    }
-
-    if (old_base.generics.info.count != new_name.gen_args.info.count) {
-        msg_invalid_count_generic_args(
-            before_res->pos,
-            ulang_type_get_pos(lang_type),
-            new_name.gen_args,
-            old_base.generics.info.count,
-            old_base.generics.info.count
-        );
+    if (!resolve_generics_ulang_type_internal_struct_like_2(&new_name, old_base, lang_type, before_res->pos)) {
         return false;
     }
 
@@ -366,18 +346,7 @@ static bool resolve_generics_ulang_type_internal_struct_def(
 ) {
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
-    if (!resolve_generics_ulang_type_internal_struct_like_2(&new_name, old_base, lang_type)) {
-        todo();
-    }
-
-    if (old_base.generics.info.count != new_name.gen_args.info.count) {
-        msg_invalid_count_generic_args(
-            before_res->pos,
-            ulang_type_get_pos(lang_type),
-            new_name.gen_args,
-            old_base.generics.info.count,
-            old_base.generics.info.count
-        );
+    if (!resolve_generics_ulang_type_internal_struct_like_2(&new_name, old_base, lang_type, before_res->pos)) {
         return false;
     }
 
