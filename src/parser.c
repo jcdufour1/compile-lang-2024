@@ -34,7 +34,7 @@ typedef enum {
 
 static void set_right_child_expr(Uast_expr* expr, Uast_expr* new_rhs);
 static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top_level, Scope_id scope_id);
-static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, bool defer_sym_add, Scope_id scope_id);
+static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id scope_id);
 static PARSE_EXPR_STATUS parse_expr(
     Uast_expr** result,
     Tk_view* tokens,
@@ -169,7 +169,7 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     Str_view old_mod_path = env.curr_mod_path;
     env.curr_mod_path = mod_path;
     Uast_block* block = NULL;
-    if (!parse_file(&block, string_to_strv(file_path), false)) {
+    if (!parse_file(&block, string_to_strv(file_path))) {
         // TODO: expected failure test
         todo();
     }
@@ -1961,7 +1961,7 @@ static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Sco
         
         Token case_start_token = {0};
         unwrap(try_consume(&case_start_token, tokens, TOKEN_COLON));
-        switch (parse_stmt(&case_if_true, tokens, false, case_scope)) {
+        switch (parse_stmt(&case_if_true, tokens, case_scope)) {
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_ERROR:
@@ -1998,7 +1998,7 @@ static Uast_expr* get_expr_or_symbol(Uast_stmt* stmt) {
     return uast_expr_unwrap(stmt);
 }
 
-static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, bool defer_sym_add /* TODO: remove this */, Scope_id scope_id) {
+static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id scope_id) {
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
     assert(!try_consume(NULL, tokens, TOKEN_NEW_LINE));
 
@@ -2149,7 +2149,7 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
         }
         Uast_stmt* child;
         bool should_stop = false;
-        switch (parse_stmt(&child, tokens, false, new_scope)) {
+        switch (parse_stmt(&child, tokens, new_scope)) {
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_ERROR:
@@ -3029,7 +3029,7 @@ static PARSE_EXPR_STATUS parse_expr(
 
 static void parser_do_tests(void);
 
-bool parse_file(Uast_block** block, Str_view file_path, bool do_new_sym_coll) {
+bool parse_file(Uast_block** block, Str_view file_path) {
     bool status = true;
 #ifndef DNDEBUG
     // TODO: reenable

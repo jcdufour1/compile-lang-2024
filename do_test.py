@@ -151,6 +151,8 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "stray_expr_top_level.own": ["stray-expr-top-level"],
     EXPECTED_FAIL_EXAMPLES_DIR + "stray_expr_top_level.own": ["invalid-stmt-top-level"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_stmt_top_level.own": 5*["invalid-stmt-top-level"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "sum_par_with_enum.own": ["invalid-function-callee"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "string_literal_as_fun_callee.own": ["invalid-function-callee"],
 }
 
 
