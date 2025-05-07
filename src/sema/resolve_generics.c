@@ -211,11 +211,15 @@ static Uast_def* local_struct_new(Pos pos, Ustruct_def_base base) {
     return uast_struct_def_wrap(uast_struct_def_new(pos, base));
 }
 
+typedef void*(*Obj_new)(Pos, Ustruct_def_base);
+
 static bool resolve_generics_ulang_type_internal_struct_like_2(
+    Uast_def** after_res,
     Name* new_name,
     Ustruct_def_base old_base,
     Ulang_type lang_type,
-    Pos pos_def
+    Pos pos_def,
+    Obj_new obj_new
 ) {
     *new_name = name_new(old_base.name.mod_path, old_base.name.base, ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args, SCOPE_TOP_LEVEL /* TODO */);
 
@@ -230,7 +234,35 @@ static bool resolve_generics_ulang_type_internal_struct_like_2(
         return false;
     }
 
+    Uast_def* new_def_ = NULL;
+    if (usymbol_lookup(&new_def_, *new_name)) {
+        *after_res = new_def_;
+    } else {
+        Ustruct_def_base new_base = {0};
+        if (!resolve_generics_serialize_struct_def_base(&new_base, old_base, new_name->gen_args, *new_name)) {
+            todo();
+            return false;
+        }
+        *after_res = (void*)obj_new(pos_def, new_base);
+    }
+
     return true;
+}
+
+static void* local_uast_raw_union_def_new(Pos pos, Ustruct_def_base base) {
+    return uast_raw_union_def_new(pos, base);
+}
+
+static void* local_uast_enum_def_new(Pos pos, Ustruct_def_base base) {
+    return uast_enum_def_new(pos, base);
+}
+
+static void* local_uast_sum_def_new(Pos pos, Ustruct_def_base base) {
+    return uast_sum_def_new(pos, base);
+}
+
+static void* local_uast_struct_def_new(Pos pos, Ustruct_def_base base) {
+    return uast_struct_def_new(pos, base);
 }
 
 static bool resolve_generics_ulang_type_internal_raw_union_def(
@@ -241,21 +273,11 @@ static bool resolve_generics_ulang_type_internal_raw_union_def(
 ) {
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
-    if (!resolve_generics_ulang_type_internal_struct_like_2(&new_name, old_base, lang_type, before_res->pos)) {
+    Uast_def* after_res_ = NULL;
+    if (!resolve_generics_ulang_type_internal_struct_like_2(&after_res_, &new_name, old_base, lang_type, before_res->pos, local_uast_raw_union_def_new)) {
         return false;
     }
-
-    Uast_def* new_def_ = NULL;
-    if (usymbol_lookup(&new_def_,  new_name)) {
-        *after_res = uast_raw_union_def_unwrap(new_def_);
-    } else {
-        Ustruct_def_base new_base = {0};
-        if (!resolve_generics_serialize_struct_def_base(&new_base, old_base, new_name.gen_args, new_name)) {
-            todo();
-            return false;
-        }
-        *after_res = uast_raw_union_def_new(before_res->pos, new_base);
-    }
+    *after_res = uast_raw_union_def_unwrap(after_res_);
 
     *result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
         name_to_uname((*after_res)->base.name), ulang_type_get_atom(lang_type).pointer_depth
@@ -276,9 +298,11 @@ static bool resolve_generics_ulang_type_internal_enum_def(
 ) {
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
-    if (!resolve_generics_ulang_type_internal_struct_like_2(&new_name, old_base, lang_type, before_res->pos)) {
+    Uast_def* after_res_ = NULL;
+    if (!resolve_generics_ulang_type_internal_struct_like_2(&after_res_, &new_name, old_base, lang_type, before_res->pos, local_uast_enum_def_new)) {
         return false;
     }
+    *after_res = uast_enum_def_unwrap(after_res_);
 
     Uast_def* new_def_ = NULL;
     if (usymbol_lookup(&new_def_,  new_name)) {
@@ -311,9 +335,11 @@ static bool resolve_generics_ulang_type_internal_sum_def(
 ) {
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
-    if (!resolve_generics_ulang_type_internal_struct_like_2(&new_name, old_base, lang_type, before_res->pos)) {
+    Uast_def* after_res_ = NULL;
+    if (!resolve_generics_ulang_type_internal_struct_like_2(&after_res_, &new_name, old_base, lang_type, before_res->pos, local_uast_sum_def_new)) {
         return false;
     }
+    *after_res = uast_sum_def_unwrap(after_res_);
 
     Uast_def* new_def_ = NULL;
     if (usymbol_lookup(&new_def_,  new_name)) {
@@ -346,9 +372,11 @@ static bool resolve_generics_ulang_type_internal_struct_def(
 ) {
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
-    if (!resolve_generics_ulang_type_internal_struct_like_2(&new_name, old_base, lang_type, before_res->pos)) {
+    Uast_def* after_res_ = NULL;
+    if (!resolve_generics_ulang_type_internal_struct_like_2(&after_res_, &new_name, old_base, lang_type, before_res->pos, local_uast_struct_def_new)) {
         return false;
     }
+    *after_res = uast_struct_def_unwrap(after_res_);
 
     Uast_def* new_def_ = NULL;
     if (usymbol_lookup(&new_def_,  new_name)) {
