@@ -462,7 +462,7 @@ static bool resolve_generics_serialize_function_decl(
         (Uast_generic_param_vec) {0},
         uast_function_params_new(old_decl->params->pos, params),
         new_rtn_type,
-        name_new(env.curr_mod_path, old_decl->name.base, gen_args, scope_get_parent_tbl_lookup(new_block->scope_id))
+        name_new(old_decl->name.mod_path, old_decl->name.base, gen_args, scope_get_parent_tbl_lookup(new_block->scope_id))
     );
 
     return true;
@@ -475,7 +475,6 @@ bool resolve_generics_function_def_call(
     Ulang_type_vec gen_args, // TODO: remove or refactor name?
     Pos pos_gen_args
 ) {
-    (void) pos_gen_args;
     Name name = name_new(def->decl->name.mod_path, def->decl->name.base, gen_args, def->decl->name.scope_id);
     Name name_plain = name_new(def->decl->name.mod_path, def->decl->name.base, (Ulang_type_vec) {0}, def->decl->name.scope_id);
 
@@ -524,12 +523,12 @@ bool resolve_generics_function_def_call(
     Ulang_type* ulang_type_rtn_type = arena_alloc(&a_main, sizeof(*ulang_type_rtn_type));
     *ulang_type_rtn_type = decl->return_type;
     Ulang_type_fn new_fn = ulang_type_fn_new(
-        ulang_type_tuple_new(ulang_types, (Pos) {0} /* TODO */),
+        ulang_type_tuple_new(ulang_types, def->decl->pos),
         ulang_type_rtn_type,
-        (Pos) {0} /* TODO */
+        def->decl->pos
     );
     Lang_type_fn rtn_type_ = {0};
-    if (!try_lang_type_from_ulang_type_fn(&rtn_type_, new_fn, (Pos) {0})) {
+    if (!try_lang_type_from_ulang_type_fn(&rtn_type_, new_fn, def->decl->pos)) {
         return false;
     }
     *rtn_type = lang_type_fn_const_wrap(rtn_type_);
@@ -565,7 +564,7 @@ bool resolve_generics_function_def_implementation(Name name) {
         assert(new_block != def->body);
 
         Uast_function_decl* new_decl = NULL;
-        if (!resolve_generics_serialize_function_decl(&new_decl, def->decl, new_block, name.gen_args, (Pos) {0} /* TODO */)) {
+        if (!resolve_generics_serialize_function_decl(&new_decl, def->decl, new_block, name.gen_args, def->decl->pos)) {
             return false;
         }
         Uast_function_def* new_def = uast_function_def_new(new_decl->pos, new_decl, new_block);
