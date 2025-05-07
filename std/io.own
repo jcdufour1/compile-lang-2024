@@ -1,19 +1,19 @@
 
-extern("c") fn puts(format_string u8*) i32
-extern("c") fn printf(format_string u8*, args any...) i32
-extern("c") fn isdigit(character i32) i32
-extern("c") fn abort()
-extern("c") fn fopen(file_path u8*, flags u8*) any*
-
-type Token struct {
-    num i32
-}
-
-type Optional sum(<ItemType>) {
-    some ItemType
-    none
-}
-
+//extern("c") fn puts(format_string u8*) i32
+//extern("c") fn printf(format_string u8*, args any...) i32
+//extern("c") fn isdigit(character i32) i32
+//extern("c") fn abort()
+//extern("c") fn fopen(file_path u8*, flags u8*) any*
+//
+//type Token struct {
+//    num i32
+//}
+//
+//type Optional sum(<ItemType>) {
+//    some ItemType
+//    none
+//}
+//
 type Slice struct(<ItemType>) {
     items ItemType*
     count u64
@@ -21,7 +21,7 @@ type Slice struct(<ItemType>) {
 
 fn slice_at(<ItemType>)(slice Slice(<ItemType>), index u64) ItemType {
     if (index >= slice.count) {
-        abort()
+        //abort()
     }
     return slice.items[index]
 }
