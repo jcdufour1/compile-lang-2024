@@ -1564,10 +1564,16 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 }
                 *new_call = new_callee;
                 return status;
-            } else {
+            } else if (tast_literal_unwrap(new_callee)->type == TAST_FUNCTION_LIT) {
                 fun_name = tast_function_lit_unwrap(tast_literal_unwrap(new_callee))->name;
                 unwrap(function_decl_tbl_lookup(&fun_decl, fun_name));
                 break;
+            } else {
+                msg(
+                    LOG_ERROR, EXPECTED_FAIL_INVALID_FUNCTION_CALLEE, tast_expr_get_pos(new_callee),
+                    "callee is not callable\n"
+                );
+                return false;
             }
         }
         case TAST_SYMBOL: {

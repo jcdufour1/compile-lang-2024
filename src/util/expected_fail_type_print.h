@@ -102,6 +102,8 @@ static inline Str_view expect_fail_type_print_internal(EXPECT_FAIL_TYPE type) {
             return str_view_from_cstr("void-sum-case-has-arg");
         case EXPECT_FAIL_INVALID_STMT_TOP_LEVEL:
             return str_view_from_cstr("invalid-stmt-top-level");
+        case EXPECTED_FAIL_INVALID_FUNCTION_CALLEE:
+            return str_view_from_cstr("invalid-function-callee");
     }
     unreachable("");
 }

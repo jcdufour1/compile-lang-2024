@@ -2704,9 +2704,30 @@ static PARSE_EXPR_STATUS parse_expr_function_call(
             *result = uast_tuple_wrap(tuple);
             return PARSE_EXPR_OK;
         }
-            unreachable(UAST_FMT, uast_expr_print(lhs));
-        default:
-            unreachable(UAST_FMT, uast_expr_print(lhs));
+        case UAST_IF_ELSE_CHAIN:
+            // fallthrough
+        case UAST_SWITCH:
+            // fallthrough
+        case UAST_UNKNOWN:
+            // fallthrough
+        case UAST_INDEX:
+            // fallthrough
+        case UAST_LITERAL:
+            // fallthrough
+        case UAST_FUNCTION_CALL:
+            // fallthrough
+        case UAST_STRUCT_LITERAL:
+            // fallthrough
+        case UAST_SUM_ACCESS:
+            // fallthrough
+        case UAST_ARRAY_LITERAL:
+            // fallthrough
+        case UAST_SUM_GET_TAG:
+            msg(
+                LOG_ERROR, EXPECTED_FAIL_INVALID_FUNCTION_CALLEE,
+                uast_expr_get_pos(lhs), "callee is not callable\n"
+            );
+            return PARSE_EXPR_ERROR;
     }
     unreachable("");
 }
