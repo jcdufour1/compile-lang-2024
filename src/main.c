@@ -128,7 +128,7 @@ void do_passes(const Parameters* params) {
         // TODO: make command line argument to choose llvm, c, etc.
         switch (params->backend_info.backend) {
             case BACKEND_NONE:
-                msg(LOG_ERROR, EXPECT_FAIL_NONE, env.file_path_to_text, POS_BUILTIN, "backend must be specified on the command line\n");
+                msg(LOG_ERROR, EXPECT_FAIL_NONE, POS_BUILTIN, "backend must be specified on the command line\n");
                 fail();
             case BACKEND_LLVM:
                 emit_llvm_from_tree(llvm_root);

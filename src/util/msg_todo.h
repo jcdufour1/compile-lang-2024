@@ -4,10 +4,10 @@
 #include <expected_fail_type.h>
 
 // TODO: remove this forward declaration
-__attribute__((format (printf, 7, 8)))
+__attribute__((format (printf, 6, 7)))
 void msg_internal(
     const char* file, int line, LOG_LEVEL log_level, EXPECT_FAIL_TYPE msg_expect_fail_type,
-    File_path_to_text file_text, Pos pos, const char* format, ...
+    Pos pos, const char* format, ...
 );
 
 #define msg_todo(feature, pos) \
@@ -15,7 +15,7 @@ void msg_internal(
 
 static inline void msg_todo_internal(const char* file, int line, const char* feature, Pos pos) {
     msg_internal(
-        file, line, LOG_ERROR, EXPECT_FAIL_NOT_YET_IMPLEMENTED, env.file_path_to_text, pos, 
+        file, line, LOG_ERROR, EXPECT_FAIL_NOT_YET_IMPLEMENTED, pos, 
         "language feature `%s` not yet implemented (may or may not be implemented in the future)\n",
         feature
     );

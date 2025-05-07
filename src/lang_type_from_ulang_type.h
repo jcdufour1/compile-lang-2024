@@ -144,7 +144,7 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
     }
     if (!usymbol_lookup(&result, temp_name)) {
         msg(
-            LOG_ERROR, EXPECT_FAIL_UNDEFINED_TYPE, env.file_path_to_text, pos,
+            LOG_ERROR, EXPECT_FAIL_UNDEFINED_TYPE, pos,
             "undefined type `"TAST_FMT"`\n", ulang_type_print(LANG_TYPE_MODE_MSG, resolved)
         );
         todo();

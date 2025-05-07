@@ -17,8 +17,8 @@ typedef struct {
     Vec_base info;
 } Pos_vec;
 
-static void msg_tokenizer_invalid_token(File_path_to_text file_text, Str_view_col token_text, Pos pos) {
-    msg(LOG_ERROR, EXPECT_FAIL_INVALID_TOKEN, file_text, pos, "invalid token `"STR_VIEW_COL_FMT"`\n", str_view_col_print(token_text));
+static void msg_tokenizer_invalid_token(Str_view_col token_text, Pos pos) {
+    msg(LOG_ERROR, EXPECT_FAIL_INVALID_TOKEN, pos, "invalid token `"STR_VIEW_COL_FMT"`\n", str_view_col_print(token_text));
 }
 
 static bool local_isalnum_or_underscore(char prev, char curr) {
@@ -177,7 +177,7 @@ static bool get_next_token(
         token->type = TOKEN_STRING_LITERAL;
         Str_view_col quote_str = {0};
         if (!str_view_col_try_consume_while(&quote_str, pos, file_text_rem, is_not_quote)) {
-            msg(LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_DOUBLE_QUOTE, env.file_path_to_text, token->pos, "unmatched `\"`\n");
+            msg(LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_DOUBLE_QUOTE, token->pos, "unmatched `\"`\n");
             token->type = TOKEN_NONTYPE;
             return false;
         }
@@ -200,7 +200,7 @@ static bool get_next_token(
     } else if (str_view_col_try_consume(pos, file_text_rem, '*')) {
         if (str_view_col_try_consume(pos, file_text_rem, '/')) {
             msg(
-                LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_MULTILINE, env.file_path_to_text,
+                LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_MULTILINE, 
                 *pos, "unmatched closing `/*`\n"
             );
             return false;
@@ -223,7 +223,7 @@ static bool get_next_token(
                 Str_view temp_text = file_text_rem->base;
                 if (file_text_rem->base.count < 2) {
                     msg(
-                        LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_MULTILINE, env.file_path_to_text,
+                        LOG_ERROR, EXPECT_FAIL_MISSING_CLOSE_MULTILINE, 
                         vec_top(&pos_stack), "unmatched opening `/*`\n"
                     );
                     return false;
@@ -254,7 +254,7 @@ static bool get_next_token(
             token->type = TOKEN_LOGICAL_AND;
             return true;
         } else {
-            msg_tokenizer_invalid_token(env.file_path_to_text, equals, *pos);
+            msg_tokenizer_invalid_token(equals, *pos);
             token->type = TOKEN_NONTYPE;
             return true;
         }
@@ -264,11 +264,11 @@ static bool get_next_token(
             token->type = TOKEN_BITWISE_XOR;
             return true;
         } else if (equals.base.count == 2) {
-            msg_tokenizer_invalid_token(env.file_path_to_text, equals, *pos);
+            msg_tokenizer_invalid_token(equals, *pos);
             token->type = TOKEN_NONTYPE;
             return true;
         } else {
-            msg_tokenizer_invalid_token(env.file_path_to_text, equals, *pos);
+            msg_tokenizer_invalid_token(equals, *pos);
             token->type = TOKEN_NONTYPE;
             return true;
         }
@@ -281,7 +281,7 @@ static bool get_next_token(
             token->type = TOKEN_LOGICAL_OR;
             return true;
         } else {
-            msg_tokenizer_invalid_token(env.file_path_to_text, equals, *pos);
+            msg_tokenizer_invalid_token(equals, *pos);
             token->type = TOKEN_NONTYPE;
             return true;
         }
@@ -304,7 +304,7 @@ static bool get_next_token(
             token->type = TOKEN_DOUBLE_EQUAL;
             return true;
         } else {
-            msg_tokenizer_invalid_token(env.file_path_to_text, equals, *pos);
+            msg_tokenizer_invalid_token(equals, *pos);
             token->type = TOKEN_NONTYPE;
             return true;
         }
@@ -362,7 +362,7 @@ static bool get_next_token(
             token->type = TOKEN_TRIPLE_DOT;
             return true;
         } else {
-            msg_tokenizer_invalid_token(env.file_path_to_text, dots, *pos);
+            msg_tokenizer_invalid_token(dots, *pos);
             token->type = TOKEN_NONTYPE;
             return true;
         }
@@ -604,7 +604,7 @@ bool tokenize(Token_vec* result, Str_view file_path) {
     Token_vec tokens = {0};
 
     Str_view* file_con = NULL;
-    unwrap(file_path_to_text_tbl_lookup(&file_con, &env.file_path_to_text, file_path));
+    unwrap(file_path_to_text_tbl_lookup(&file_con, file_path));
     Str_view_col curr_file_text = {.base = *file_con};
 
     Pos pos = {.line = 1, .column = 0};

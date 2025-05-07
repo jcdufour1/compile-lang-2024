@@ -1081,7 +1081,7 @@ void emit_llvm_from_tree(const Llvm_block* root) {
     FILE* file = fopen("test.ll", "w");
     if (!file) {
         msg(
-            LOG_FATAL, EXPECT_FAIL_NONE, (File_path_to_text) {0}, dummy_pos, "could not open file %s: errno %d (%s)\n",
+            LOG_FATAL, EXPECT_FAIL_NONE, dummy_pos, "could not open file %s: errno %d (%s)\n",
             params.input_file_name, errno, strerror(errno)
         );
         exit(EXIT_CODE_FAIL);
@@ -1106,7 +1106,7 @@ void emit_llvm_from_tree(const Llvm_block* root) {
     }
 
     msg(
-        LOG_NOTE, EXPECT_FAIL_NONE, (File_path_to_text) {0}, dummy_pos, "file %s built\n",
+        LOG_NOTE, EXPECT_FAIL_NONE, dummy_pos, "file %s built\n",
         params.input_file_name
     );
 

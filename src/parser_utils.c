@@ -29,7 +29,7 @@ bool try_str_view_octal_after_0_to_int64_t(int64_t* result, const Pos pos, Str_v
         }
 
         if (curr_char < '0' || curr_char > '7') {
-            msg(LOG_ERROR, EXPECT_FAIL_INVALID_OCTAL, env.file_path_to_text, pos, "invalid octal literal\n");
+            msg(LOG_ERROR, EXPECT_FAIL_INVALID_OCTAL, pos, "invalid octal literal\n");
             return false;
         }
 
@@ -58,7 +58,7 @@ bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, const Pos pos, Str_vi
         } else if (curr_char >= 'A' && curr_char <= 'F') {
             increment = (curr_char - 'A') + 10;
         } else {
-            msg(LOG_ERROR, EXPECT_FAIL_INVALID_HEX, env.file_path_to_text, pos, "invalid hex literal\n");
+            msg(LOG_ERROR, EXPECT_FAIL_INVALID_HEX, pos, "invalid hex literal\n");
             return false;
         }
 
@@ -80,7 +80,7 @@ bool try_str_view_bin_after_0b_to_int64_t(int64_t* result, const Pos pos, Str_vi
         }
 
         if (curr_char != '0' && curr_char != '1') {
-            msg(LOG_ERROR, EXPECT_FAIL_INVALID_BIN, env.file_path_to_text, pos, "invalid bin literal\n");
+            msg(LOG_ERROR, EXPECT_FAIL_INVALID_BIN, pos, "invalid bin literal\n");
             return false;
         }
 
@@ -337,8 +337,6 @@ Str_view util_literal_str_view_new_internal(const char* file, int line, const ch
     return str_view;
 }
 
-// TODO: return Name instead of Str_view
-// accept mod_path as parameter
 Str_view util_literal_name_new_prefix_internal(const char* file, int line, const char* debug_prefix) {
     return util_literal_str_view_new_internal(file, line, debug_prefix);
 }
@@ -397,7 +395,6 @@ bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Str_view 
             break;
         }
         case TOKEN_STRING_LITERAL: {
-            // TODO: figure out if literal name can be eliminated for uast_string
             Uast_string* string = uast_string_new(pos, value);
             *new_lit = uast_string_wrap(string);
             break;

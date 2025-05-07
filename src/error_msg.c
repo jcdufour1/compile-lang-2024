@@ -5,9 +5,9 @@
 #include <stdarg.h>
 #include <expected_fail_type_print.h>
 
-static void show_location_error(File_path_to_text file_text, Pos pos) {
+static void show_location_error(Pos pos) {
     Str_view* file_con_ = NULL;
-    unwrap(file_path_to_text_tbl_lookup(&file_con_, &file_text, pos.file_path));
+    unwrap(file_path_to_text_tbl_lookup(&file_con_, pos.file_path));
     Str_view file_con = *file_con_;
     assert(pos.line > 0);
 
@@ -63,10 +63,10 @@ static void show_location_error(File_path_to_text file_text, Pos pos) {
     }
 }
 
-__attribute__((format (printf, 7, 8)))
+__attribute__((format (printf, 6, 7)))
 void msg_internal(
     const char* file, int line, LOG_LEVEL log_level, EXPECT_FAIL_TYPE msg_expect_fail_type,
-    File_path_to_text file_text, Pos pos, const char* format, ...
+    Pos pos, const char* format, ...
 ) {
     va_list args;
     va_start(args, format);
@@ -86,7 +86,7 @@ void msg_internal(
         } else {
             fprintf(stderr, STR_VIEW_FMT":%d:%d:%s:", str_view_print(pos.file_path), pos.line, pos.column, get_log_level_str(log_level));
             vfprintf(stderr, format, args);
-            show_location_error(file_text, pos);
+            show_location_error(pos);
         }
         log_internal(LOG_DEBUG, file, line, 0, "location of error\n");
     }

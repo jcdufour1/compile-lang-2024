@@ -102,10 +102,10 @@ bool c_forward_struct_tbl_lookup(Name** result, Name key);
 // returns false if value has already been added to the table
 bool c_forward_struct_tbl_add(Name* value, Name key);
 
-bool file_path_to_text_tbl_lookup(Str_view** result, const File_path_to_text* sym_table, Str_view key);
+bool file_path_to_text_tbl_lookup(Str_view** result, Str_view key);
 
 // returns false if file_path_to_text has already been added to the table
-bool file_path_to_text_tbl_add(File_path_to_text* sym_table, Str_view* file_text, Str_view key);
+bool file_path_to_text_tbl_add(Str_view* file_text, Str_view key);
 
 // returns parent of key
 Scope_id scope_get_parent_tbl_lookup(Scope_id key);

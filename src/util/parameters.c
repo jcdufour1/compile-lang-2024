@@ -16,7 +16,7 @@ static bool is_short_option(char** argv) {
 // this function will exclude - or -- part of arg if present
 static const char* consume_arg(int* argc, char*** argv, const char* msg_if_missing) {
     if (*argc < 1) {
-        msg(LOG_FATAL, EXPECT_FAIL_NONE, (File_path_to_text) {0}, dummy_pos, "%s\n", msg_if_missing);
+        msg(LOG_FATAL, EXPECT_FAIL_NONE, dummy_pos, "%s\n", msg_if_missing);
         exit(EXIT_CODE_FAIL);
     }
     const char* curr_arg = argv[0][0];
