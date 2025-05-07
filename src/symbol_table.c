@@ -407,12 +407,10 @@ bool alloca_lookup(Llvm** result, Name key) {
 // File_path_to_text implementation
 //
 
-// TODO: remove const File_path_to_text* parameter
 bool file_path_to_text_tbl_lookup(Str_view** result, Str_view key) {
     return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&env.file_path_to_text, key);
 }
 
-// TODO: remove File_path_to_text* parameter
 // returns false if file_path_to_text has already been added to the table
 bool file_path_to_text_tbl_add(Str_view* file_text, Str_view key) {
     return generic_tbl_add((Generic_symbol_table*)&env.file_path_to_text, key, file_text);

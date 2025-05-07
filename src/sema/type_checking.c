@@ -1106,15 +1106,6 @@ bool try_set_struct_literal_types(
     );
     *new_tast = tast_expr_wrap(tast_struct_literal_wrap(new_lit));
 
-    // TODO: remove Tast_struct_lit_def?
-    Tast_struct_lit_def* new_def = tast_struct_lit_def_new(
-        new_lit->pos,
-        new_lit->members,
-        new_lit->name,
-        new_lit->lang_type
-    );
-
-    unwrap(symbol_add(tast_literal_def_wrap(tast_struct_lit_def_wrap(new_def))));
     return true;
 }
 
@@ -1200,14 +1191,6 @@ bool try_set_array_literal_types(
         UNARY_REFER,
         unary_lang_type
     )));
-
-    Tast_struct_lit_def* new_def = tast_struct_lit_def_new(
-        new_inner_lit->pos,
-        new_inner_lit->members,
-        new_inner_lit->name,
-        new_inner_lit->lang_type
-    );
-    unwrap(symbol_add(tast_literal_def_wrap(tast_struct_lit_def_wrap(new_def))));
 
     Tast_expr_vec new_lit_membs = {0};
     vec_append(&a_main, &new_lit_membs, ptr);

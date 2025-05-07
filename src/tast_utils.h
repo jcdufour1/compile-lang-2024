@@ -231,8 +231,6 @@ static inline Lang_type tast_def_get_lang_type(const Tast_def* def) {
             return tast_sum_def_get_lang_type(tast_sum_def_const_unwrap(def));
         case TAST_PRIMITIVE_DEF:
             unreachable("");
-        case TAST_LITERAL_DEF:
-            unreachable("");
         case TAST_IMPORT:
             unreachable("");
     }
@@ -322,8 +320,6 @@ static inline Lang_type* tast_def_set_lang_type(Tast_def* def) {
         case TAST_STRUCT_DEF:
             unreachable("");
         case TAST_PRIMITIVE_DEF:
-            unreachable("");
-        case TAST_LITERAL_DEF:
             unreachable("");
         case TAST_SUM_DEF:
             unreachable("");
@@ -418,16 +414,6 @@ static inline Name tast_expr_get_name(const Tast_expr* expr) {
     unreachable("");
 }
 
-static inline Name tast_literal_def_get_name(const Tast_literal_def* lit_def) {
-    switch (lit_def->type) {
-        case TAST_STRUCT_LIT_DEF:
-            return tast_struct_lit_def_const_unwrap(lit_def)->name;
-        case TAST_STRING_DEF:
-            return tast_string_def_const_unwrap(lit_def)->name;
-    }
-    unreachable("");
-}
-
 static inline Name tast_def_get_name(const Tast_def* def) {
     switch (def->type) {
         case TAST_PRIMITIVE_DEF:
@@ -444,8 +430,6 @@ static inline Name tast_def_get_name(const Tast_def* def) {
             return tast_function_decl_const_unwrap(def)->name;
         case TAST_FUNCTION_DEF:
             return tast_function_def_const_unwrap(def)->decl->name;
-        case TAST_LITERAL_DEF:
-            return tast_literal_def_get_name(tast_literal_def_const_unwrap(def));
         case TAST_SUM_DEF:
             return tast_sum_def_const_unwrap(def)->base.name;
         case TAST_IMPORT:
@@ -493,8 +477,6 @@ static inline Struct_def_base tast_def_get_struct_def_base(const Tast_def* def) 
         case TAST_SUM_DEF:
             return tast_sum_def_const_unwrap(def)->base;
         case TAST_PRIMITIVE_DEF:
-            unreachable("");
-        case TAST_LITERAL_DEF:
             unreachable("");
         case TAST_IMPORT:
             todo();

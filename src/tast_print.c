@@ -504,45 +504,6 @@ Str_view tast_primitive_def_print_internal(const Tast_primitive_def* def, int in
     return string_to_strv(buf);
 }
 
-Str_view tast_string_def_print_internal(const Tast_string_def* def, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "string_def", indent);
-    indent += INDENT_WIDTH;
-    extend_name(false, false, &buf, def->name);
-    string_extend_strv(&print_arena, &buf, def->data);
-    string_extend_cstr(&print_arena, &buf, "\n");
-    indent -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
-Str_view tast_struct_lit_def_print_internal(const Tast_struct_lit_def* def, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "struct_lit_def", indent);
-    extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, def->lang_type);
-    extend_name(false, false, &buf, def->name);
-    string_extend_cstr(&print_arena, &buf, "\n");
-
-    for (size_t idx = 0; idx < def->members.info.count; idx++) {
-        Str_view memb_text = tast_expr_print_internal(vec_at(&def->members, idx), indent + INDENT_WIDTH);
-        string_extend_strv(&print_arena, &buf, memb_text);
-    }
-
-    return string_to_strv(buf);
-}
-
-Str_view tast_literal_def_print_internal(const Tast_literal_def* def, int indent) {
-    switch (def->type) {
-        case TAST_STRING_DEF:
-            return tast_string_def_print_internal(tast_string_def_const_unwrap(def), indent);
-        case TAST_STRUCT_LIT_DEF:
-            return tast_struct_lit_def_print_internal(tast_struct_lit_def_const_unwrap(def), indent);
-    }
-    unreachable("");
-}
-
 Str_view tast_sum_def_print_internal(const Tast_sum_def* def, int indent) {
     String buf = {0};
 
@@ -588,8 +549,6 @@ Str_view tast_def_print_internal(const Tast_def* def, int indent) {
             return tast_enum_def_print_internal(tast_enum_def_const_unwrap(def), indent);
         case TAST_PRIMITIVE_DEF:
             return tast_primitive_def_print_internal(tast_primitive_def_const_unwrap(def), indent);
-        case TAST_LITERAL_DEF:
-            return tast_literal_def_print_internal(tast_literal_def_const_unwrap(def), indent);
         case TAST_SUM_DEF:
             return tast_sum_def_print_internal(tast_sum_def_const_unwrap(def), indent);
         case TAST_IMPORT:

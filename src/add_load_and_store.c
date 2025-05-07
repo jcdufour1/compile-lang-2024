@@ -523,12 +523,6 @@ static Name load_string(Tast_string* old_lit) {
         old_lit->data,
         old_lit->name
     );
-    Tast_string_def* new_def = tast_string_def_new(
-        old_lit->pos,
-        string->name,
-        string->data
-    );
-    unwrap(sym_tbl_add(tast_literal_def_wrap(tast_string_def_wrap(new_def))));
     unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_string_wrap(string)))));
     return string->name;
 }
@@ -1810,8 +1804,6 @@ static Name load_def(Llvm_block* new_block, Tast_def* old_def) {
             return (Name) {0};
         case TAST_SUM_DEF:
             unreachable("sum def should not make it here");
-        case TAST_LITERAL_DEF:
-            unreachable("");
         case TAST_PRIMITIVE_DEF:
             unreachable("");
         case TAST_IMPORT:
@@ -1877,8 +1869,6 @@ static Name load_def_sometimes(Tast_def* old_def) {
             load_raw_union_def(tast_raw_union_def_unwrap(old_def));
             return (Name) {0};
         case TAST_SUM_DEF:
-            return (Name) {0};
-        case TAST_LITERAL_DEF:
             return (Name) {0};
         case TAST_PRIMITIVE_DEF:
             unreachable("");
