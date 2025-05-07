@@ -437,7 +437,8 @@ static void emit_c_expr_piece(Emit_c_strs* strs, Name child) {
         case LLVM_ARRAY_ACCESS:
             todo();
         case LLVM_LOAD_ELEMENT_PTR:
-            todo();
+            llvm_extend_name(&strs->output, llvm_tast_get_name(result));
+            return;
         case LLVM_STORE_ANOTHER_LLVM:
             llvm_extend_name(&strs->output, llvm_tast_get_name(result));
             return;
@@ -566,10 +567,23 @@ static void emit_c_store_another_llvm(Emit_c_strs* strs, const Llvm_store_anothe
     Llvm* src = NULL;
     unwrap(alloca_lookup(&src, store->llvm_src));
 
+    if (true /*src->type == LLVM_EXPR && llvm_expr_const_unwrap(src)->type == LLVM_LITERAL*/) {
+        string_extend_cstr(&a_main, &strs->output, "    *((");
+        c_extend_type_call_str(&strs->output, store->lang_type, true);
+        string_extend_cstr(&a_main, &strs->output, "*)");
+        llvm_extend_name(&strs->output, store->llvm_dest);
+        string_extend_cstr(&a_main, &strs->output, ") = ");
+
+        emit_c_expr_piece(strs, store->llvm_src);
+        string_extend_cstr(&a_main, &strs->output, ";\n");
+        return;
+    }
+
     string_extend_cstr(&a_main, &strs->output, "    memcpy(");
-    llvm_extend_name(&strs->output, store->llvm_dest);
+    emit_c_expr_piece(strs, store->llvm_dest);
     string_extend_cstr(&a_main, &strs->output, ", &");
-    llvm_extend_name(&strs->output, store->llvm_src);
+
+    emit_c_expr_piece(strs, store->llvm_src);
     string_extend_cstr(&a_main, &strs->output, ", ");
     string_extend_size_t(&a_main, &strs->output, sizeof_lang_type(store->lang_type));
     string_extend_cstr(&a_main, &strs->output, ");\n");
