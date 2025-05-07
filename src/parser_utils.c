@@ -376,12 +376,6 @@ Tast_assignment* util_assignment_new(Uast_expr* lhs, Uast_expr* rhs) {
     return new_assign;
 }
 
-Tast_literal* util_tast_literal_new_from_strv(const Str_view value, TOKEN_TYPE token_type, Pos pos) {
-    Uast_literal* lit = NULL;
-    unwrap(util_try_uast_literal_new_from_strv(&lit,  value, token_type, pos));
-    return try_set_literal_types( lit);
-}
-
 // will print error on failure
 bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Str_view value, TOKEN_TYPE token_type, Pos pos) {
     switch (token_type) {
@@ -455,7 +449,7 @@ Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token
 
     assert(new_literal);
 
-    try_set_literal_types( new_literal);
+    try_set_literal_types(new_literal);
     return new_literal;
 }
 

@@ -85,6 +85,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"missing-sum-arg", EXPECT_FAIL_MISSING_SUM_ARG},
     {"sum-case-too-many-args", EXPECT_FAIL_SUM_CASE_TOO_MANY_ARGS},
     {"void-sum-case-has-arg", EXPECT_FAIL_VOID_SUM_CASE_HAS_ARG},
+    {"invalid-stmt-top-level", EXPECT_FAIL_INVALID_STMT_TOP_LEVEL},
 };
 
 static void parse_normal_option(Parameters* params, int* argc, char*** argv) {

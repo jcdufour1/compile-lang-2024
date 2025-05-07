@@ -2612,7 +2612,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         Uast_stmt* curr_tast = vec_at(&block->children, idx);
         Tast_stmt* new_tast = NULL;
-        switch (try_set_stmt_types(&new_tast, curr_tast)) {
+        switch (try_set_stmt_types(&new_tast, curr_tast, block->scope_id == SCOPE_TOP_LEVEL)) {
             case STMT_OK:
                 assert(curr_tast);
                 vec_append(&a_main, &new_tasts, new_tast);
@@ -2642,7 +2642,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
             unreachable("");
         }
         Tast_stmt* new_rtn_statement = NULL;
-        switch (try_set_stmt_types(&new_rtn_statement, uast_return_wrap(rtn_statement))) {
+        switch (try_set_stmt_types(&new_rtn_statement, uast_return_wrap(rtn_statement), block->scope_id == SCOPE_TOP_LEVEL)) {
             case STMT_ERROR:
                 status = false;
                 goto error;
@@ -2692,7 +2692,40 @@ error:
     return status;
 }
 
-STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt) {
+static bool stmt_type_allowed_in_top_level(UAST_STMT_TYPE type) {
+    switch (type) {
+        case UAST_LABEL:
+            return false;
+        case UAST_BLOCK:
+            return false;
+        case UAST_EXPR:
+            return false;
+        case UAST_DEF:
+            return true;
+        case UAST_FOR_WITH_COND:
+            return false;
+        case UAST_BREAK:
+            return false;
+        case UAST_CONTINUE:
+            return false;
+        case UAST_ASSIGNMENT:
+            return false;
+        case UAST_RETURN:
+            return false;
+    }
+    unreachable("");
+}
+
+STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_top_level) {
+    if (is_top_level && !stmt_type_allowed_in_top_level(stmt->type)) {
+        // TODO: actually print the types of statements that are allowed?
+        msg(
+            LOG_ERROR, EXPECT_FAIL_INVALID_STMT_TOP_LEVEL, uast_stmt_get_pos(stmt),
+            "this statement is not permitted in the top level\n"
+        );
+        return STMT_ERROR;
+    }
+
     switch (stmt->type) {
         case UAST_EXPR: {
             Tast_expr* new_tast_ = NULL;
