@@ -11,6 +11,7 @@
 #include <lang_type_print.h>
 #include <lang_type_serialize.h>
 #include <parser_utils.h>
+#include <sizeof.h>
 
 // TODO: avoid casting from void* to function pointer if possible (for standards compliance)
 typedef struct {
@@ -565,14 +566,13 @@ static void emit_c_store_another_llvm(Emit_c_strs* strs, const Llvm_store_anothe
     Llvm* src = NULL;
     unwrap(alloca_lookup(&src, store->llvm_src));
 
-    string_extend_cstr(&a_main, &strs->output, "    *((");
-    c_extend_type_call_str(&strs->output, store->lang_type, true);
-    string_extend_cstr(&a_main, &strs->output, "*)");
+    string_extend_cstr(&a_main, &strs->output, "    memcpy(");
     llvm_extend_name(&strs->output, store->llvm_dest);
-    string_extend_cstr(&a_main, &strs->output, ") = ");
-
-    emit_c_expr_piece(strs, store->llvm_src);
-    string_extend_cstr(&a_main, &strs->output, ";\n");
+    string_extend_cstr(&a_main, &strs->output, ", &");
+    llvm_extend_name(&strs->output, store->llvm_src);
+    string_extend_cstr(&a_main, &strs->output, ", ");
+    string_extend_size_t(&a_main, &strs->output, sizeof_lang_type(store->lang_type));
+    string_extend_cstr(&a_main, &strs->output, ");\n");
 }
 
 static void emit_c_load_another_llvm(Emit_c_strs* strs, const Llvm_load_another_llvm* load) {
@@ -721,6 +721,7 @@ void emit_c_from_tree(const Llvm_block* root) {
     string_extend_cstr(&a_main, &header, "#include <stddef.h>\n");
     string_extend_cstr(&a_main, &header, "#include <stdint.h>\n");
     string_extend_cstr(&a_main, &header, "#include <stdbool.h>\n");
+    string_extend_cstr(&a_main, &header, "#include <string.h>\n");
 
     Alloca_iter iter = all_tbl_iter_new(0);
     Llvm* curr = NULL;
