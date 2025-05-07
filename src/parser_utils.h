@@ -42,12 +42,25 @@ Str_view util_literal_name_new(void);
 
 Str_view util_literal_name_new_prefix_internal(const char* file, int line, const char* debug_prefix);
 
+Name util_literal_name_new_prefix_internal_2(const char* file, int line, const char* debug_prefix, Str_view mod_path);
+
 #define util_literal_name_new_prefix(debug_prefix) \
     util_literal_name_new_prefix_internal(__FILE__, __LINE__, debug_prefix)
+
+#define util_literal_name_new_prefix2(debug_prefix) \
+    util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, debug_prefix, (Str_view) {0})
 
 // TODO: make util_literal_name_new function/macro return Name and Uname, etc.
 #define util_literal_name_new() \
     util_literal_name_new_prefix_internal(__FILE__, __LINE__, "")
+
+// TODO: make util_literal_name_new function/macro return Name and Uname, etc.
+#define util_literal_name_new2(mod_path) \
+    util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, "", (Str_view) {0})
+
+// TODO: make util_literal_name_new function/macro return Name and Uname, etc.
+#define util_literal_name_new_mod_path2(mod_path) \
+    util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, "", mod_path)
 
 Name get_storage_location(Name sym_name);
 
