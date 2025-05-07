@@ -88,7 +88,7 @@ for generics:
 - way to get tag of sum (be sure that checking if sums are equal is possible)
 - mandatory initialization or similar
 - manual zero initialization
-- safe cast (use "i64(num)" to cast num to i64)?
+- safe cast (use "cast(<i64>)" to cast num to i64)?
 - prevent collisions with user defined names and compiler defined names
 - test for break in switch case 
 - use str_view_at instead of str_view.str[idx] for bounds checking
@@ -98,18 +98,19 @@ for generics:
 - warn about unused variables
 - invalid literal as function callee
 - when using variadic args for extern("c") function: give error when passing i16 without a cast, etc.
+- consistent naming for arenas
 
 
 ## needed tests
 - let token* Token = <...>; switch token {<...>}
 
 # optional things:
+- use 0o for octal prefix?
 - const, etc.
 - named scopes
 - designated args
 - iterators and foreach
 - floats
-- use 0o for octal prefix?
 - graphviz (for program control flow, etc.)
 - foreach idea:
 - fn foreach_tokens(tokens Token[]) {
@@ -119,3 +120,5 @@ for generics:
   }
 - bit widths other than 1, 8, 16, 32, or 64 with the c backend
 
+# in the far future
+- try catch blocks with the question operator or similar

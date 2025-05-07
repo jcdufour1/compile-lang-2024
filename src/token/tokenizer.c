@@ -8,14 +8,9 @@
 #include <do_passes.h>
 #include <ctype.h>
 #include <parser_utils.h>
+#include <pos_vec.h>
 
 static Arena tk_arena = {0};
-
-// TODO: move this to a better place?
-typedef struct {
-    Pos* buf;
-    Vec_base info;
-} Pos_vec;
 
 static void msg_tokenizer_invalid_token(Str_view_col token_text, Pos pos) {
     msg(LOG_ERROR, EXPECT_FAIL_INVALID_TOKEN, pos, "invalid token `"STR_VIEW_COL_FMT"`\n", str_view_col_print(token_text));

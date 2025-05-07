@@ -25,6 +25,7 @@
 #include <ulang_type_serialize.h>
 #include <symbol_table.h>
 #include <msg_undefined_symbol.h>
+#include <pos_vec.h>
 
 static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def);
 
@@ -2260,6 +2261,7 @@ typedef struct {
     Lang_type oper_lang_type;
     bool default_is_pre;
     Bool_vec covered;
+    Pos_vec covered_pos;
     size_t max_data;
 } Exhaustive_data;
 
@@ -2287,6 +2289,7 @@ static Exhaustive_data check_for_exhaustiveness_start(Lang_type oper_lang_type) 
     exhaustive_data.max_data = enum_def.members.info.count - 1;
 
     vec_reserve(&print_arena, &exhaustive_data.covered, exhaustive_data.max_data + 1);
+    vec_reserve(&print_arena, &exhaustive_data.covered_pos, exhaustive_data.max_data + 1);
     for (size_t idx = 0; idx < exhaustive_data.max_data + 1; idx++) {
         vec_append(&print_arena, &exhaustive_data.covered, false);
     }
@@ -2314,6 +2317,7 @@ static bool check_for_exhaustiveness_inner(
 
     switch (exhaustive_data->oper_lang_type.type) {
         case LANG_TYPE_ENUM: {
+            // TODO: deduplicate enum and sum
             const Tast_enum_lit* curr_lit = tast_enum_lit_unwrap(
                 tast_literal_unwrap(
                     tast_binary_unwrap(curr_if->condition->child)->rhs
@@ -2331,15 +2335,14 @@ static bool check_for_exhaustiveness_inner(
                     "duplicate case `"STR_VIEW_FMT"."STR_VIEW_FMT"` in switch statement\n",
                     name_print(enum_def->base.name), name_print(vec_at(&enum_def->base.members, (size_t)curr_lit->data)->name)
                 );
-
-                for (size_t idx = 0;; idx++) {
-                    unwrap(idx < curr_lit->data && "bug");
-                    if (vec_at(&enum_def->base.members, idx))
-                }
-                // TODO: print where original case is
+                msg(
+                    LOG_NOTE, EXPECT_FAIL_NONE, vec_at(&exhaustive_data->covered_pos,
+                    (size_t)curr_lit->data), "case originally covered here\n"
+                );
                 return false;
             }
             *vec_at_ref(&exhaustive_data->covered, (size_t)curr_lit->data) = true;
+            vec_append(&print_arena, &exhaustive_data->covered_pos, curr_lit->pos);
             return true;
         }
         case LANG_TYPE_SUM: {
@@ -2359,10 +2362,14 @@ static bool check_for_exhaustiveness_inner(
                     "duplicate case `"STR_VIEW_FMT"."STR_VIEW_FMT"` in switch statement\n",
                     name_print(sum_def->base.name), name_print(vec_at(&sum_def->base.members, (size_t)curr_lit->data)->name)
                 );
-                // TODO: print where original case is
+                msg(
+                    LOG_NOTE, EXPECT_FAIL_NONE, vec_at(&exhaustive_data->covered_pos,
+                    (size_t)curr_lit->data), "case originally covered here\n"
+                );
                 return false;
             }
             *vec_at_ref(&exhaustive_data->covered, (size_t)curr_lit->data) = true;
+            vec_append(&print_arena, &exhaustive_data->covered_pos, curr_lit->pos);
             return true;
         }
         default:
