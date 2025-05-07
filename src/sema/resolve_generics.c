@@ -18,7 +18,6 @@
 static void msg_undefined_type_internal(
     const char* file,
     int line,
-     
     Pos pos,
     Ulang_type lang_type
 ) {
@@ -399,12 +398,8 @@ static bool resolve_generics_set_function_def_types(Uast_function_def* def) {
 
     Tast_def* result = NULL;
     unwrap(symbol_lookup(&result, new_decl->name));
-    if (true /* TODO */) {
-        sym_tbl_update(SCOPE_TOP_LEVEL, tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
-        unwrap(symbol_lookup(&result, new_decl->name));
-    } else {
-        symbol_update(tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
-    }
+    sym_tbl_update(SCOPE_TOP_LEVEL, tast_function_def_wrap(tast_function_def_new(def->pos, new_decl, new_body)));
+    unwrap(symbol_lookup(&result, new_decl->name));
 
 error:
     env.parent_fn_rtn_type = prev_fn_rtn_type;
