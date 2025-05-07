@@ -82,6 +82,9 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"invalid-octal", EXPECT_FAIL_INVALID_OCTAL},
     {"missing-close-multiline", EXPECT_FAIL_MISSING_CLOSE_MULTILINE},
     {"invalid-count-struct-lit-args", EXPECT_FAIL_INVALID_COUNT_STRUCT_LIT_ARGS},
+    {"missing-sum-arg", EXPECT_FAIL_MISSING_SUM_ARG},
+    {"sum-case-too-many-args", EXPECT_FAIL_SUM_CASE_TOO_MANY_ARGS},
+    {"void-sum-case-has-arg", EXPECT_FAIL_VOID_SUM_CASE_HAS_ARG},
 };
 
 static void parse_normal_option(Parameters* params, int* argc, char*** argv) {

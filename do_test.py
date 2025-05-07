@@ -146,6 +146,8 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "optional_76.own": ["undefined-type"],
     EXPECTED_FAIL_EXAMPLES_DIR + "struct_non_designated_init_too_few_elems.own": ["invalid-count-struct-lit-args"],
     EXPECTED_FAIL_EXAMPLES_DIR + "struct_non_designated_init_too_many_elems.own": ["invalid-count-struct-lit-args"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "sum_case_too_many_args.own": ["sum-case-too-many-args"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "void_sum_case_has_arg.own": ["void-sum-case-has-arg"],
 }
 
 

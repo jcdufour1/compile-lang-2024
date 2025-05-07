@@ -1358,7 +1358,6 @@ STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
     unreachable("");
 }
 
-// TODO: remove this function and Uast_assignment
 bool try_set_assignment_types(Tast_assignment** new_assign, Uast_assignment* assignment) {
     Tast_expr* new_lhs = NULL;
     if (!try_set_expr_types(&new_lhs, assignment->lhs)) {
@@ -1392,15 +1391,8 @@ bool try_set_assignment_types(Tast_assignment** new_assign, Uast_assignment* ass
 
 bool try_set_function_call_types_sum_case(Tast_sum_case** new_case, Uast_expr_vec args, Tast_sum_case* sum_case) {
     switch (sum_case->tag->lang_type.type) {
-        case LANG_TYPE_VOID: {
-            if (args.info.count > 0) {
-                // TODO: expected failure case
-                msg(LOG_ERROR, EXPECT_FAIL_NONE, uast_expr_get_pos(vec_at(&args, 0)), "no arguments expected here\n");
-                todo();
-            }
-            *new_case = sum_case;
-            return true;
-        }
+        case LANG_TYPE_VOID:
+            unreachable("this error should have already been caught");
         default: {
             // tast_sum_case->tag->lang_type is of selected varient of sum (maybe)
             Uast_variable_def* new_def = uast_variable_def_new(
@@ -1525,9 +1517,27 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             return status;
         }
         case TAST_SUM_CASE: {
-            if (fun_call->args.info.count != 1) {
-                // TODO: expected failure case
-                todo();
+            if (fun_call->args.info.count < 1) {
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_MISSING_SUM_ARG, tast_sum_case_unwrap(new_callee)->pos,
+                    "() in sum case has no argument; add argument in () or remove ()\n"
+                );
+                return false;
+            }
+            if (fun_call->args.info.count > 1) {
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_SUM_CASE_TOO_MANY_ARGS, tast_sum_case_unwrap(new_callee)->pos,
+                    "() in sum case must contain exactly one argument, but %zu arguments found\n",
+                    fun_call->args.info.count
+                );
+                return false;
+            }
+            if (tast_sum_case_unwrap(new_callee)->tag->lang_type.type == LANG_TYPE_VOID) {
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_VOID_SUM_CASE_HAS_ARG, tast_sum_case_unwrap(new_callee)->pos,
+                    "sum case associated type is void; remove ()\n" // TODO: actually print file text where () is if possible
+                );
+                return false;
             }
             Tast_sum_case* new_case = NULL;
             if (!try_set_function_call_types_sum_case(&new_case, fun_call->args, tast_sum_case_unwrap(new_callee))) {

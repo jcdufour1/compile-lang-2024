@@ -1,0 +1,14 @@
+
+type Token sum {
+    num i32
+    string u8*
+}
+
+fn main() i32 {
+    let token Token = .num(8)
+    switch token {
+        case .num(num, string): break
+        case .string(string): break
+    }
+    return 0
+}

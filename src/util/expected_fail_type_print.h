@@ -94,6 +94,12 @@ static inline Str_view expect_fail_type_print_internal(EXPECT_FAIL_TYPE type) {
             return str_view_from_cstr("missing-close-multiline");
         case EXPECT_FAIL_INVALID_COUNT_STRUCT_LIT_ARGS:
             return str_view_from_cstr("expect-fail-invalid-count-struct-lit-args");
+        case EXPECT_FAIL_MISSING_SUM_ARG:
+            return str_view_from_cstr("missing-sum-arg");
+        case EXPECT_FAIL_SUM_CASE_TOO_MANY_ARGS:
+            return str_view_from_cstr("sum-case-too-many-args");
+        case EXPECT_FAIL_VOID_SUM_CASE_HAS_ARG:
+            return str_view_from_cstr("void-sum-case-has-arg");
     }
     unreachable("");
 }
