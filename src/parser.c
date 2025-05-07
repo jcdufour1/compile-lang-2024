@@ -2245,7 +2245,7 @@ static PARSE_STATUS parse_struct_literal(Uast_struct_literal** struct_lit, Tk_vi
         return PARSE_ERROR;
     }
 
-    *struct_lit = uast_struct_literal_new(start_token.pos, members, util_literal_name_new());
+    *struct_lit = uast_struct_literal_new(start_token.pos, members);
     return PARSE_OK;
 }
 
@@ -2284,7 +2284,7 @@ static PARSE_STATUS parse_array_literal(Uast_array_literal** arr_lit, Tk_view* t
         return PARSE_ERROR;
     }
 
-    *arr_lit = uast_array_literal_new(start_token.pos, members, util_literal_name_new());
+    *arr_lit = uast_array_literal_new(start_token.pos, members);
     return PARSE_OK;
 }
 

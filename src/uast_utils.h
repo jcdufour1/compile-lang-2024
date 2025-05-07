@@ -265,8 +265,6 @@ static inline Name uast_literal_def_get_name(const Uast_literal_def* lit_def) {
     switch (lit_def->type) {
         case UAST_STRUCT_LIT_DEF:
             return uast_struct_lit_def_const_unwrap(lit_def)->name;
-        case UAST_STRING_DEF:
-            return uast_string_def_const_unwrap(lit_def)->name;
         case UAST_VOID_DEF:
             return name_new((Str_view) {0}, str_view_from_cstr("void"), (Ulang_type_vec) {0}, 0);
     }

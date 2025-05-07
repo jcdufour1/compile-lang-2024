@@ -1074,7 +1074,7 @@ bool try_set_struct_literal_types(
     Tast_struct_literal* new_lit = tast_struct_literal_new(
         lit->pos,
         new_membs,
-        name_new(env.curr_mod_path, lit->name, (Ulang_type_vec) {0}, SCOPE_BUILTIN),
+        name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, SCOPE_BUILTIN),
         dest_lang_type
     );
     *new_tast = tast_expr_wrap(tast_struct_literal_wrap(new_lit));
@@ -1157,7 +1157,7 @@ bool try_set_array_literal_types(
     Tast_struct_literal* new_inner_lit = tast_struct_literal_new(
         lit->pos,
         new_membs,
-        name_new(env.curr_mod_path, lit->name, (Ulang_type_vec) {0}, 0),
+        name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0),
         lang_type_struct_const_wrap(lang_type_struct_new(lit->pos, lang_type_atom_new(inner_def->base.name, 0)))
     );
     Ulang_type dummy = {0};

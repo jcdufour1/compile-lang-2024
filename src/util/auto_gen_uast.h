@@ -280,7 +280,6 @@ static Uast_type uast_gen_struct_literal(const char* prefix) {
     Uast_type lit = {.name = uast_name_new(prefix, "struct_literal", false)};
 
     append_member(&lit.members, "Uast_expr_vec", "members");
-    append_member(&lit.members, "Str_view", "name");
 
     return lit;
 }
@@ -289,7 +288,6 @@ static Uast_type uast_gen_array_literal(const char* prefix) {
     Uast_type lit = {.name = uast_name_new(prefix, "array_literal", false)};
 
     append_member(&lit.members, "Uast_expr_vec", "members");
-    append_member(&lit.members, "Str_view", "name");
 
     return lit;
 }
@@ -436,15 +434,6 @@ static Uast_type uast_gen_void_def(const char* prefix) {
     return def;
 }
 
-static Uast_type uast_gen_string_def(const char* prefix) {
-    Uast_type def = {.name = uast_name_new(prefix, "string_def", false)};
-
-    append_member(&def.members, "Name", "name");
-    append_member(&def.members, "Str_view", "data");
-
-    return def;
-}
-
 static Uast_type uast_gen_struct_lit_def(const char* prefix) {
     Uast_type def = {.name = uast_name_new(prefix, "struct_lit_def", false)};
 
@@ -458,7 +447,6 @@ static Uast_type uast_gen_literal_def(const char* prefix) {
     const char* base_name = "literal_def";
     Uast_type def = {.name = uast_name_new(prefix, base_name, false)};
 
-    vec_append(&gen_a, &def.sub_types, uast_gen_string_def(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_void_def(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_struct_lit_def(base_name));
 
