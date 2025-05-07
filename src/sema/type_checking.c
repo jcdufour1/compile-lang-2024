@@ -198,7 +198,6 @@ static void msg_invalid_function_arg_internal(
 static void msg_invalid_count_function_args_internal(
     const char* file,
     int line,
-     
     const Uast_function_call* fun_call,
     const Uast_function_decl* fun_decl,
     size_t min_args,
@@ -230,6 +229,31 @@ static void msg_invalid_count_function_args_internal(
 
 #define msg_invalid_count_function_args(fun_call, fun_decl, min_args, max_args) \
     msg_invalid_count_function_args_internal(__FILE__, __LINE__, fun_call, fun_decl, min_args, max_args)
+
+static void msg_invalid_count_struct_literal_args_internal(
+    const char* file,
+    int line,
+    Uast_expr_vec membs,
+    size_t min_args,
+    size_t max_args,
+    Pos pos
+) {
+    String message = {0};
+    string_extend_size_t(&print_arena, &message, membs.info.count);
+    string_extend_cstr(&print_arena, &message, " arguments are passed to struct literal, but ");
+    string_extend_size_t(&print_arena, &message, min_args);
+    if (max_args > min_args) {
+        string_extend_cstr(&print_arena, &message, " or more");
+    }
+    string_extend_cstr(&print_arena, &message, " arguments expected\n");
+    msg_internal(
+        file, line, LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_STRUCT_LIT_ARGS, pos,
+        STR_VIEW_FMT, str_view_print(string_to_strv(message))
+    );
+}
+
+#define msg_invalid_count_struct_literal_args(membs, min_args, max_args, pos) \
+    msg_invalid_count_struct_literal_args_internal(__FILE__, __LINE__, membs, min_args, max_args, pos)
 
 static void msg_invalid_yield_type_internal(const char* file, int line, Pos pos, const Tast_expr* child, bool is_auto_inserted) {
     if (is_auto_inserted) {
@@ -979,13 +1003,18 @@ static bool uast_expr_is_designator(const Uast_expr* expr) {
     return access->callee->type == UAST_UNKNOWN;
 }
 
-static bool try_set_struct_literal_member_types(Tast_expr_vec* new_membs, Uast_expr_vec membs, Uast_variable_def_vec memb_defs) {
+static bool try_set_struct_literal_member_types(Tast_expr_vec* new_membs, Uast_expr_vec membs, Uast_variable_def_vec memb_defs, Pos pos) {
+    if (membs.info.count != memb_defs.info.count) {
+        msg_invalid_count_struct_literal_args(membs, memb_defs.info.count, memb_defs.info.count, pos);
+        return false;
+    }
+
     for (size_t idx = 0; idx < membs.info.count; idx++) {
         Uast_variable_def* memb_def = vec_at(&memb_defs, idx);
         Uast_expr* memb = vec_at(&membs, idx);
         Uast_expr* rhs = NULL;
         if (uast_expr_is_designator(memb)) {
-            // TODO: expected failure case for invalid thing on lhs of designated initializer
+            // TODO: expected failure case for invalid thing (not identifier) on lhs of designated initializer
             Uast_member_access* lhs = uast_member_access_unwrap(
                 uast_binary_unwrap(uast_operator_unwrap(memb))->lhs // parser should catch invalid assignment
             );
@@ -1065,7 +1094,7 @@ bool try_set_struct_literal_types(
     Uast_struct_def* struct_def = uast_struct_def_unwrap(struct_def_);
     
     Tast_expr_vec new_membs = {0};
-    if (!try_set_struct_literal_member_types(&new_membs, lit->members, struct_def->base.members)) {
+    if (!try_set_struct_literal_member_types(&new_membs, lit->members, struct_def->base.members, lit->pos)) {
         return false;
     }
 

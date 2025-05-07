@@ -1,0 +1,10 @@
+
+type Div struct {
+    numerator i32
+    denominator i32
+}
+
+fn main() i32 {
+    let div Div = {9}
+    return 0
+}

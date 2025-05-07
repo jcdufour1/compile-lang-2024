@@ -144,6 +144,8 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "multiline_comment_close_unmatched.own": ["missing-close-multiline"],
     EXPECTED_FAIL_EXAMPLES_DIR + "nested_generic_mismatch_fun_arg.own": ["invalid-function-arg"],
     EXPECTED_FAIL_EXAMPLES_DIR + "optional_76.own": ["undefined-type"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "struct_non_designated_init_too_few_elems.own": ["invalid-count-struct-lit-args"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "struct_non_designated_init_too_many_elems.own": ["invalid-count-struct-lit-args"],
 }
 
 
