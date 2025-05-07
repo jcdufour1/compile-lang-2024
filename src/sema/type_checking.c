@@ -1124,7 +1124,8 @@ bool try_set_array_literal_types(
             todo();
         }
     } else {
-        todo();
+        msg_todo("array literal assigned to non-slice type", assign_pos);
+        return false;
     }
 
     Uast_def* struct_def_ = NULL;
@@ -1582,31 +1583,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         default:
             unreachable(TAST_FMT, tast_expr_print(new_callee));
     }
-
-    // TODO: remove below symbol lookup and switch statement if possible
-    //Uast_def* callee_def = NULL;
-    //unwrap(usymbol_lookup(&callee_def, new_callee->name));
-    //switch (callee->type) {
-    //    case UAST_FUNCTION_DEF:
-    //        break;
-    //    case UAST_FUNCTION_DECL:
-    //        break;
-    //    case UAST_SUM_DEF: {
-    //        unreachable("");
-    //    }
-    //    case UAST_VARIABLE_DEF: {
-    //        if (uast_variable_def_unwrap(fun_def)->lang_type.type != ULANG_TYPE_FN) {
-    //            todo();
-    //        }
-    //        fun_decl = uast_function_decl_from_ulang_type_fn(
-    //            ulang_type_fn_const_unwrap(uast_variable_def_unwrap(fun_def)->lang_type),
-    //            uast_variable_def_unwrap(fun_def)->pos
-    //        );
-    //        break;
-    //    }
-    //    default:
-    //        unreachable(TAST_FMT, uast_def_print(fun_def));
-    //}
 
     Lang_type fun_rtn_type = lang_type_from_ulang_type(fun_decl->return_type);
     Uast_function_params* params = fun_decl->params;

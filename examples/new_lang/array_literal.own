@@ -1,24 +1,10 @@
 type io import = std.io
 
-
-
-type Slice struct(<ItemType>) {
-    items ItemType*
-    count u64
-}
-
-fn slice_at(<ItemType>)(slice Slice(<ItemType>), index u64) ItemType {
-    if (index >= slice.count) {
-        io.abort()
-    }
-    return slice.items[index]
-}
-
 fn main() i32 {
-    let slice Slice(<i32>) = [87, 131]
+    let slice io.Slice(<i32>) = [87, 131]
 
-    io.printf("%d\n", slice_at(<i32>)(slice, 0))
-    io.printf("%d\n", slice_at(<i32>)(slice, 1))
+    io.printf("%d\n", io.slice_at(<i32>)(slice, 0))
+    io.printf("%d\n", io.slice_at(<i32>)(slice, 1))
 
     return 0
 }

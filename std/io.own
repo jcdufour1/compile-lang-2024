@@ -14,3 +14,15 @@ type Optional sum(<ItemType>) {
     none
 }
 
+type Slice struct(<ItemType>) {
+    items ItemType*
+    count u64
+}
+
+fn slice_at(<ItemType>)(slice Slice(<ItemType>), index u64) ItemType {
+    if (index >= slice.count) {
+        abort()
+    }
+    return slice.items[index]
+}
+
