@@ -2047,7 +2047,7 @@ bool try_set_primitive_def_types(Uast_primitive_def* tast) {
 }
 
 bool try_set_import_path_types(Tast_block** new_tast, Uast_import_path* tast) {
-    return try_set_block_types(new_tast, tast->block, false, false);
+    return try_set_block_types(new_tast, tast->block, false);
 }
 
 bool try_set_variable_def_types(
@@ -2185,7 +2185,7 @@ bool try_set_for_with_cond_types(Tast_for_with_cond** new_tast, Uast_for_with_co
     }
 
     Tast_block* new_body = NULL;
-    if (!try_set_block_types(&new_body, uast->body, false, true)) {
+    if (!try_set_block_types(&new_body, uast->body, false)) {
         status = false;
     }
 
@@ -2210,7 +2210,7 @@ bool try_set_if_types(Tast_if** new_tast, Uast_if* uast) {
     vec_reset(&env.switch_case_defer_add_if_true);
 
     Tast_block* new_body = NULL;
-    if (!(status && try_set_block_types(&new_body, uast->body, false, true))) {
+    if (!(status && try_set_block_types(&new_body, uast->body, false))) {
         status = false;
     }
 
@@ -2331,6 +2331,11 @@ static bool check_for_exhaustiveness_inner(
                     "duplicate case `"STR_VIEW_FMT"."STR_VIEW_FMT"` in switch statement\n",
                     name_print(enum_def->base.name), name_print(vec_at(&enum_def->base.members, (size_t)curr_lit->data)->name)
                 );
+
+                for (size_t idx = 0;; idx++) {
+                    unwrap(idx < curr_lit->data && "bug");
+                    if (vec_at(&enum_def->base.members, idx))
+                }
                 // TODO: print where original case is
                 return false;
             }
@@ -2574,16 +2579,12 @@ static void do_test_bit_width(void) {
     assert(4 == bit_width_needed_unsigned(8));
 }
 
-bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def, bool new_sym_tbl /* TODO: remove this variable */) {
-    (void) new_sym_tbl;
+bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_directly_in_fun_def) {
     do_test_bit_width();
 
     bool status = true;
 
     Tast_stmt_vec new_tasts = {0};
-
-    // TODO: remove this variable?
-    Tast_stmt_vec aux_stmts = {0};
 
     Usymbol_iter iter = usym_tbl_iter_new(block->scope_id);
     Uast_def* curr = NULL;
@@ -2602,7 +2603,6 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
                 status = false;
                 break;
             case STMT_OK:
-                vec_append(&a_main, &aux_stmts, new_node);
                 break;
             default:
                 unreachable("");
@@ -2775,7 +2775,7 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
         case UAST_BLOCK: {
             assert(uast_block_unwrap(stmt)->pos_end.line > 0);
             Tast_block* new_for = NULL;
-            if (!try_set_block_types(&new_for, uast_block_unwrap(stmt), false, true)) {
+            if (!try_set_block_types(&new_for, uast_block_unwrap(stmt), false)) {
                 return STMT_ERROR;
             }
             *new_tast = tast_block_wrap(new_for);
@@ -2796,9 +2796,6 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
 bool try_set_types(Tast_block** new_tast, Uast_block* block) {
     bool status = true;
 
-    // TODO: remove this variable?
-    Tast_stmt_vec aux_stmts = {0};
-
     // TODO: consider if this def iteration should be abstracted to a separate function (try_set_block_types has similar)
     Usymbol_iter iter = usym_tbl_iter_new(0);
     Uast_def* curr = NULL;
@@ -2817,14 +2814,13 @@ bool try_set_types(Tast_block** new_tast, Uast_block* block) {
                 status = false;
                 break;
             case STMT_OK:
-                vec_append(&a_main, &aux_stmts, new_node);
                 break;
             default:
                 unreachable("");
         }
     }
 
-    if (!try_set_block_types(new_tast, block, false, true)) {
+    if (!try_set_block_types(new_tast, block, false)) {
         status = false;
     }
 

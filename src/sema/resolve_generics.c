@@ -391,7 +391,7 @@ static bool resolve_generics_set_function_def_types(Uast_function_def* def) {
     }
 
     Tast_block* new_body = NULL;
-    if (!try_set_block_types(&new_body, def->body, true, true)) {
+    if (!try_set_block_types(&new_body, def->body, true)) {
         status = false;
         goto error;
     }
