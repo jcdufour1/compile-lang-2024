@@ -38,7 +38,10 @@ bool try_str_view_to_size_t(size_t* result, Str_view str_view);
 
 bool try_str_view_consume_size_t(size_t* result, Str_view* str_view, bool ignore_underscore);
 
-Str_view util_literal_name_new(void);
+Str_view util_literal_str_view_new_internal(const char* file, int line, const char* debug_prefix);
+
+#define util_literal_str_view_new() \
+    util_literal_str_view_new_internal(__FILE__, __LINE__, "")
 
 Str_view util_literal_name_new_prefix_internal(const char* file, int line, const char* debug_prefix);
 
@@ -49,10 +52,6 @@ Name util_literal_name_new_prefix_internal_2(const char* file, int line, const c
 
 #define util_literal_name_new_prefix2(debug_prefix) \
     util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, debug_prefix, (Str_view) {0})
-
-// TODO: make util_literal_name_new function/macro return Name and Uname, etc.
-#define util_literal_name_new() \
-    util_literal_name_new_prefix_internal(__FILE__, __LINE__, "")
 
 // TODO: make util_literal_name_new function/macro return Name and Uname, etc.
 #define util_literal_name_new2(mod_path) \

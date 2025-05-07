@@ -144,7 +144,7 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Llvm_struct_def* def) {
                 unwrap(alloca_lookup(&child_def_, ori_name));
                 Llvm_struct_def* child_def = llvm_struct_def_unwrap(llvm_def_unwrap(child_def_));
                 struct_to_use = arena_alloc(&a_main, sizeof(*struct_to_use));
-                *struct_to_use = name_new((Str_view) {0}, util_literal_name_new(), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+                *struct_to_use = util_literal_name_new2();
                 Llvm_struct_def* new_def = llvm_struct_def_new(def->pos, (Llvm_struct_def_base) {
                     .members = child_def->base.members,
                     .name = *struct_to_use
@@ -470,7 +470,7 @@ static void emit_c_return(Emit_c_strs* strs, const Llvm_return* rtn) {
 }
 
 static void emit_c_alloca(String* output, const Llvm_alloca* alloca) {
-    Name storage_loc = name_new((Str_view) {0}, util_literal_name_new(), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+    Name storage_loc = util_literal_name_new2();
 
     string_extend_cstr(&a_main, output, "    ");
     c_extend_type_call_str(output, alloca->lang_type, true);

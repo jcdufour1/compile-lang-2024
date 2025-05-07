@@ -97,9 +97,9 @@ Uname name_to_uname(Name name) {
         (Pos) {0} /* TODO */,
         name_new(
             (Str_view) {0},
-            util_literal_name_new(),
+            util_literal_str_view_new(),
             (Ulang_type_vec) {0},
-            name.scope_id
+            name.scope_id /* TODO */
         ),
         name_new((Str_view) {0}, name.mod_path, (Ulang_type_vec) {0}, 0 /* TODO */)
     );

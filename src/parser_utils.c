@@ -310,7 +310,7 @@ Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom lang_type) {
     return lang_type_atom_new(name_new((Str_view) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0), 0);
 }
 
-static Str_view util_literal_str_view_new(const char* file, int line, const char* debug_prefix) {
+Str_view util_literal_str_view_new_internal(const char* file, int line, const char* debug_prefix) {
     (void) file;
     (void) line;
     static String_vec literal_strings = {0};
@@ -340,11 +340,11 @@ static Str_view util_literal_str_view_new(const char* file, int line, const char
 // TODO: return Name instead of Str_view
 // accept mod_path as parameter
 Str_view util_literal_name_new_prefix_internal(const char* file, int line, const char* debug_prefix) {
-    return util_literal_str_view_new(file, line, debug_prefix);
+    return util_literal_str_view_new_internal(file, line, debug_prefix);
 }
 
 Name util_literal_name_new_prefix_internal_2(const char* file, int line, const char* debug_prefix, Str_view mod_path) {
-    return name_new(mod_path, util_literal_str_view_new(file, line, debug_prefix), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
+    return name_new(mod_path, util_literal_str_view_new_internal(file, line, debug_prefix), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
 }
 
 // TODO: inline this function
@@ -398,7 +398,7 @@ bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Str_view 
         }
         case TOKEN_STRING_LITERAL: {
             // TODO: figure out if literal name can be eliminated for uast_string
-            Uast_string* string = uast_string_new(pos, value, util_literal_name_new());
+            Uast_string* string = uast_string_new(pos, value, util_literal_str_view_new());
             *new_lit = uast_string_wrap(string);
             break;
         }
