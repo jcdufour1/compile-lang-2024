@@ -1554,7 +1554,7 @@ static PARSE_STATUS parse_for_range_internal(
     );
     vec_append(&a_main, &outer->children, uast_assignment_wrap(init_assign));
 
-    Name incre_name = name_new(env.curr_mod_path, util_literal_name_new(), (Ulang_type_vec) {0}, 0);
+    Name incre_name = util_literal_name_new_mod_path2(env.curr_mod_path);
 
     Uast_for_with_cond* inner_for = uast_for_with_cond_new(
         outer->pos,
