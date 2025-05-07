@@ -183,8 +183,6 @@ Uast_def* uast_def_clone(const Uast_def* def, Scope_id new_scope) {
             todo();
         case UAST_PRIMITIVE_DEF:
             todo();
-        case UAST_LITERAL_DEF:
-            todo();
         case UAST_VARIABLE_DEF: {
             // TODO: simplify
             Uast_variable_def* new_def = uast_variable_def_clone(uast_variable_def_const_unwrap(def), new_scope);

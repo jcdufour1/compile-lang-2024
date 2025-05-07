@@ -110,7 +110,7 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_
         );
         return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(new_int));
     } else if (str_view_cstr_is_equal(atom.str.base, "void")) {
-        todo();
+        return lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
     } else if (lang_type_atom_is_equal(atom, lang_type_atom_new_from_cstr("u8", 0, 0))) {
         return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(lang_type.pos, atom)));
     } else if (str_view_cstr_is_equal(atom.str.base, "u8")) {
@@ -168,10 +168,6 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
             return true;
         case UAST_PRIMITIVE_DEF:
             *new_lang_type = lang_type_from_ulang_type_regular_primitive( ulang_type_regular_const_unwrap(resolved), uast_primitive_def_unwrap(result));
-            return true;
-        case UAST_LITERAL_DEF:
-            unwrap(uast_literal_def_const_unwrap(result)->type == UAST_VOID_DEF);
-            *new_lang_type = lang_type_void_const_wrap(lang_type_void_new(lang_type.pos));
             return true;
         default:
             unreachable(UAST_FMT, uast_def_print(result));

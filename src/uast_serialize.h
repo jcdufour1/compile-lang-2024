@@ -48,8 +48,6 @@ static inline Str_view serialize_uast_def(const Uast_def* def) {
             return serialize_uast_sum_def( uast_sum_def_const_unwrap(def));
         case UAST_PRIMITIVE_DEF:
             unreachable("");
-        case UAST_LITERAL_DEF:
-            unreachable("");
         case UAST_GENERIC_PARAM:
             unreachable("");
         case UAST_LANG_DEF:

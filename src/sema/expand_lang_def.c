@@ -151,8 +151,6 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             return EXPAND_NAME_NORMAL;
         case UAST_PRIMITIVE_DEF:
             return EXPAND_NAME_NORMAL;
-        case UAST_LITERAL_DEF:
-            return EXPAND_NAME_NORMAL;
         case UAST_FUNCTION_DECL:
             return EXPAND_NAME_NORMAL;
     }
@@ -507,8 +505,6 @@ bool expand_def_def(Uast_def* def) {
             todo();
         case UAST_FUNCTION_DECL:
             return expand_def_function_decl(uast_function_decl_unwrap(def));
-        case UAST_LITERAL_DEF:
-            todo();
         case UAST_LANG_DEF:
             return expand_def_lang_def(uast_lang_def_unwrap(def));
     }

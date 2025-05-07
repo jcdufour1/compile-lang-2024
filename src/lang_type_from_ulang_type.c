@@ -77,8 +77,6 @@ bool name_from_uname(Name* new_name, Uname name) {
             todo();
         case UAST_FUNCTION_DECL:
             todo();
-        case UAST_LITERAL_DEF:
-            todo();
         case UAST_VARIABLE_DEF:
             todo();
         case UAST_GENERIC_PARAM:

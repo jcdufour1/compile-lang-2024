@@ -310,9 +310,6 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
         case UAST_PRIMITIVE_DEF:
             *result = lang_type;
             return true;
-        case UAST_LITERAL_DEF:
-            *result = lang_type;
-            return true;
         case UAST_LANG_DEF: {
             unreachable("def should have been eliminated by now");
             //if (lang_type.type != ULANG_TYPE_REGULAR) {

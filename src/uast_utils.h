@@ -97,8 +97,6 @@ static inline Lang_type* uast_get_ulang_type_def_ref(Uast_def* def) {
             unreachable("");
         case UAST_PRIMITIVE_DEF:
             unreachable("");
-        case UAST_LITERAL_DEF:
-            unreachable("");
         case UAST_SUM_DEF:
             unreachable("");
         case UAST_GENERIC_PARAM:
@@ -203,8 +201,6 @@ static inline Lang_type* uast_def_ref_get_lang_type(Uast_def* def) {
             unreachable("");
         case UAST_PRIMITIVE_DEF:
             unreachable("");
-        case UAST_LITERAL_DEF:
-            unreachable("");
         case UAST_SUM_DEF:
             unreachable("");
         case UAST_GENERIC_PARAM:
@@ -245,14 +241,6 @@ static inline Lang_type* uast_ref_stmt_get_lang_type(Uast_stmt* stmt) {
     unreachable("");
 }
 
-static inline Name uast_literal_def_get_name(const Uast_literal_def* lit_def) {
-    switch (lit_def->type) {
-        case UAST_VOID_DEF:
-            return name_new((Str_view) {0}, str_view_from_cstr("void"), (Ulang_type_vec) {0}, 0);
-    }
-    unreachable("");
-}
-
 static inline Name uast_def_get_name(const Uast_def* def) {
     switch (def->type) {
         case UAST_PRIMITIVE_DEF:
@@ -269,8 +257,6 @@ static inline Name uast_def_get_name(const Uast_def* def) {
             return uast_function_decl_const_unwrap(def)->name;
         case UAST_FUNCTION_DEF:
             return uast_function_def_const_unwrap(def)->decl->name;
-        case UAST_LITERAL_DEF:
-            return uast_literal_def_get_name(uast_literal_def_const_unwrap(def));
         case UAST_SUM_DEF:
             return uast_sum_def_const_unwrap(def)->base.name;
         case UAST_GENERIC_PARAM:
@@ -329,8 +315,6 @@ static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def)
         case UAST_GENERIC_PARAM:
             unreachable("");
         case UAST_PRIMITIVE_DEF:
-            unreachable("");
-        case UAST_LITERAL_DEF:
             unreachable("");
         case UAST_FUNCTION_DECL:
             unreachable("");

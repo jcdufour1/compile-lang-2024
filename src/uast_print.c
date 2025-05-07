@@ -582,28 +582,6 @@ Str_view uast_primitive_def_print_internal(const Uast_primitive_def* def, int in
     return string_to_strv(buf);
 }
 
-Str_view uast_void_def_print_internal(const Uast_void_def* def, int indent) {
-    (void) def;
-    String buf = {0};
-
-    indent += INDENT_WIDTH;
-
-    string_extend_cstr_indent(&print_arena, &buf, "void_def", indent);
-    string_extend_cstr(&print_arena, &buf, "\n");
-
-    indent -= INDENT_WIDTH;
-
-    return string_to_strv(buf);
-}
-
-Str_view uast_literal_def_print_internal(const Uast_literal_def* def, int indent) {
-    switch (def->type) {
-        case UAST_VOID_DEF:
-            return uast_void_def_print_internal(uast_void_def_const_unwrap(def), indent);
-    }
-    unreachable("");
-}
-
 Str_view uast_variable_def_print_internal(const Uast_variable_def* def, int indent) {
     String buf = {0};
 
@@ -643,8 +621,6 @@ Str_view uast_def_print_internal(const Uast_def* def, int indent) {
             return uast_sum_def_print_internal(uast_sum_def_const_unwrap(def), indent);
         case UAST_PRIMITIVE_DEF:
             return uast_primitive_def_print_internal(uast_primitive_def_const_unwrap(def), indent);
-        case UAST_LITERAL_DEF:
-            return uast_literal_def_print_internal(uast_literal_def_const_unwrap(def), indent);
         case UAST_IMPORT_PATH:
             return uast_import_path_print_internal(uast_import_path_const_unwrap(def), indent);
         case UAST_MOD_ALIAS:
