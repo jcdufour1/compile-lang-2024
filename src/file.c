@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <msg.h>
 #include <file.h>
+#include <newstring.h>
 
 bool read_file(Str_view* result, Str_view file_path) {
     String file_text = {0};
@@ -24,6 +25,9 @@ bool read_file(Str_view* result, Str_view file_path) {
     } while (amount_read > 0);
 
     fclose(file);
+    if (vec_at(&file_text, file_text.info.count - 1) != '\n') {
+        vec_append(&a_main, &file_text, '\n'); // tokenizer currently requires newline at the end of the file text
+    }
     *result = string_to_strv(file_text);
     return true;
 }

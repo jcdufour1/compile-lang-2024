@@ -621,6 +621,8 @@ bool tokenize(Token_vec* result, Str_view file_path) {
         vec_append(&a_main, &tokens, curr_token);
     }
 
+    vec_append(&a_main, &tokens, ((Token) {.text = str_view_from_cstr(""), TOKEN_EOF, pos}));
+
     *result = tokens;
     return error_count == prev_err_count;
 }

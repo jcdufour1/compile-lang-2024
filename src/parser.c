@@ -69,17 +69,21 @@ static bool try_consume(Token* result, Tk_view* tokens, TOKEN_TYPE type) {
     return true;
 }
 
-static Token consume(Tk_view* tokens) {
-    Token temp = tk_view_front(*tokens);
-    tk_view_consume(tokens);
-    prev_token = temp;
-    return temp;
+static bool try_consume_if_not(Token* result, Tk_view* tokens, TOKEN_TYPE type) {
+    if (tokens->count < 1 || tk_view_front(*tokens).type == type) {
+        return false;
+    }
+    *result = tk_view_consume(tokens);
+    return true;
 }
 
 static Token consume_operator(Tk_view* tokens) {
-    Token temp = consume(tokens);
+    // TODO: rewrite this function to return false instead of crashing
+    // try to make expected failure case for it
+    Token result = {0};
+    unwrap(try_consume_if_not(&result, tokens, TOKEN_EOF));
     try_consume(NULL, tokens, TOKEN_NEW_LINE);
-    return temp;
+    return result;
 }
 
 static Token get_curr_token(Tk_view tokens) {
@@ -334,7 +338,10 @@ static void sync(Tk_view* tokens) {
             }
             bracket_depth--;
         } else {
-            consume(tokens);
+            Token dummy = {0};
+            if (!try_consume_if_not(&dummy, tokens, TOKEN_EOF)) {
+                return;
+            }
         }
         assert(bracket_depth >= 0);
 
@@ -369,7 +376,10 @@ static void sync_past_next_bracket(Token token_to_match, Tk_view* tokens) {
                 return;
             }
         } else {
-            consume(tokens);
+            Token dummy = {0};
+            if (!try_consume_if_not(&dummy, tokens, TOKEN_EOF)) {
+                return;
+            }
         }
         assert(bracket_count > 0);
     }
@@ -513,6 +523,8 @@ static bool can_end_stmt(Token token) {
             return false;
         case TOKEN_DEF:
             return false;
+        case TOKEN_EOF:
+            return true;
     }
     unreachable("");
 }
@@ -715,6 +727,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_DEF:
             return false;
+        case TOKEN_EOF:
+            return false;
     }
     unreachable("");
 }
@@ -853,6 +867,8 @@ static bool is_binary(TOKEN_TYPE token_type) {
         case TOKEN_IMPORT:
             return false;
         case TOKEN_DEF:
+            return false;
+        case TOKEN_EOF:
             return false;
     }
     unreachable("");
@@ -1492,6 +1508,7 @@ static PARSE_STATUS parse_variable_def(
     Token name_token = {0};
     if (!try_consume(&name_token, tokens, TOKEN_SYMBOL)) {
         msg_parser_expected(tk_view_front(*tokens), "in variable definition", TOKEN_SYMBOL);
+        assert(tokens->count > 0);
         return PARSE_ERROR;
     }
     try_consume(NULL, tokens, TOKEN_COLON);
@@ -2153,7 +2170,7 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
             assert((*block)->pos_end.line > 0);
             break;
         }
-        if (tokens->count < 1) {
+        if (tk_view_front(*tokens).type == TOKEN_EOF) {
             // this means that there is no matching `}` found
             if (!is_top_level) {
                 msg(
@@ -2193,6 +2210,7 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
     }
 
 end:
+    // TODO: figure out how to either remove this code (prefered) or document it
     if (did_consume_close_brace) {
         unwrap((*block)->pos_end.line > 0);
     } else if (!is_top_level && status == PARSE_OK) {
