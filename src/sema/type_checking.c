@@ -29,8 +29,6 @@
 
 static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def);
 
-// TODO: expected failure test for too few elems in struct init (non designated args)
-
 // result is rounded up
 static int64_t log2_int64_t(int64_t num) {
     if (num <= 0) {
@@ -276,7 +274,7 @@ static void msg_invalid_yield_type_internal(const char* file, int line, Pos pos,
 
     msg_internal(
         file, line,
-        LOG_NOTE, EXPECT_FAIL_NONE, (Pos) {0} /* TODO */,
+        LOG_NOTE, EXPECT_FAIL_NONE, lang_type_get_pos(env.break_type),
         "case break type `"LANG_TYPE_FMT"` defined here\n",
         lang_type_print(LANG_TYPE_MODE_MSG, env.break_type) 
     );
@@ -2024,7 +2022,6 @@ bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index) {
     }
     if (lang_type_get_bit_width(tast_expr_get_lang_type(new_inner_index)) <= 64) {
         unwrap(try_set_unary_types_finish(
-            
             &new_inner_index,
             new_inner_index,
             tast_expr_get_pos(new_inner_index),
@@ -2482,7 +2479,7 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
     if (env.parent_of == PARENT_OF_ASSIGN_RHS) {
         env.break_type = env.lhs_lang_type;
     } else {
-        env.break_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
+        env.break_type = lang_type_void_const_wrap(lang_type_void_new(lang_switch->pos));
     }
 
     Exhaustive_data exhaustive_data = check_for_exhaustiveness_start(
@@ -2709,7 +2706,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         Uast_def* main_fn_ = NULL;
         if (!usymbol_lookup(&main_fn_, name_new((Str_view) {0}, str_view_from_cstr("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
             log(LOG_WARNING, "no main function\n");
-            goto after_main;
+            goto error;
         }
         if (main_fn_->type != UAST_FUNCTION_DEF) {
             todo();
@@ -2720,11 +2717,9 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
             status = false;
         }
     }
-after_main:
-    assert(true /* TODO: remove */);
 
 error:
-    assert(true /* TODO: remove */);
+    // TODO: fix this pre-c23 warning
     Lang_type yield_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
     assert(yield_type.type == LANG_TYPE_VOID);
     if (env.parent_of == PARENT_OF_CASE) {
