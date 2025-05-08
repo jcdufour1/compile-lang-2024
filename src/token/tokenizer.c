@@ -61,6 +61,11 @@ static bool is_dot(char prev, char curr) {
     return curr == '.';
 }
 
+static bool not_single_quote(char prev, char curr) {
+    (void) prev;
+    return curr != '\'';
+}
+
 static void trim_non_newline_whitespace(Str_view_col* file_text, Pos* pos) {
     if (file_text->base.count < 1) {
         return;
@@ -337,16 +342,27 @@ static bool get_next_token(
     } else if (str_view_col_try_consume(pos, file_text_rem, '\'')) {
         token->type = TOKEN_CHAR_LITERAL;
 
-        token->text = (Str_view){.str = file_text_rem->base.str, .count = 1};
-        str_view_col_advance_pos(pos, str_view_col_front(*file_text_rem));
-        str_view_consume(&file_text_rem->base);
+        Str_view_col result = {0};
+        log(LOG_DEBUG, TAST_FMT"\n", str_view_print(file_text_rem->base));
+        if (!str_view_col_try_consume_while(&result, pos, file_text_rem, not_single_quote)) {
+            // TODO: expected failure case
+            todo();
+        }
+        unwrap(str_view_col_consume(pos, file_text_rem));
 
-        // TODO: expected failure case for char literal being too large
-        // TODO: expected success case for char literal having '\n'
-        if (!str_view_col_try_consume(pos, file_text_rem, '\'')) {
+        String value = {0};
+        string_extend_strv_eval_escapes(&a_main, &value, result.base, string_append_character);
+        if (value.info.count < 1) {
+            // TODO: expected failure case
+            todo();
+        }
+        if (value.info.count > 1) {
+            log(LOG_DEBUG, TAST_FMT"\n", string_print(value));
             msg(LOG_ERROR, EXPECT_FAIL_INVALID_CHAR_LIT, *pos, "too many characters in char literal\n");
             return false;
         }
+        token->text = result.base;
+
         return true;
     } else if (str_view_col_front(*file_text_rem) == '.') {
         Str_view_col dots = str_view_col_consume_while(pos, file_text_rem, is_dot);

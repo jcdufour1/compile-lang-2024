@@ -8,6 +8,11 @@
 #include "llvm_utils.h"
 #include "ctype.h"
 
+size_t get_count_excape_seq(Str_view str_view);
+
+// \n excapes are actually stored as is in tokens and llvms, but should be printed as \0a (depending on the backend)
+void string_extend_strv_eval_escapes(Arena* arena, String* string, Str_view str_view);
+
 bool lang_type_atom_is_unsigned(Lang_type_atom atom);
 
 bool lang_type_atom_is_signed(Lang_type_atom atom);

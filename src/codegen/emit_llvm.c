@@ -45,40 +45,6 @@ static void extend_literal(String* output, const Llvm_literal* literal) {
     unreachable("");
 }
 
-// \n excapes are actually stored as is in tokens and llvms, but should be printed as \0a
-static void string_extend_strv_eval_escapes(Arena* arena, String* string, Str_view str_view) {
-    while (str_view.count > 0) {
-        char front_char = str_view_consume(&str_view);
-        if (front_char == '\\') {
-            vec_append(arena, string, '\\');
-            switch (str_view_consume(&str_view)) {
-                case 'n':
-                    string_extend_hex_2_digits(arena, string, 0x0a);
-                    break;
-                default:
-                    unreachable("");
-            }
-        } else {
-            vec_append(arena, string, front_char);
-        }
-    }
-}
-
-static size_t get_count_excape_seq(Str_view str_view) {
-    size_t count_excapes = 0;
-    while (str_view.count > 0) {
-        if (str_view_consume(&str_view) == '\\') {
-            if (str_view.count < 1) {
-                unreachable("invalid excape sequence");
-            }
-
-            str_view_consume(&str_view); // important in case of // excape sequence
-            count_excapes++;
-        }
-    }
-    return count_excapes;
-}
-
 static void extend_type_call_str(String* output, Lang_type lang_type) {
     if (lang_type_get_pointer_depth(lang_type) != 0) {
         string_extend_cstr(&a_main, output, "ptr");
@@ -1060,7 +1026,7 @@ static void emit_symbol_normal(String* literals, Name key, const Llvm_literal* l
     string_extend_cstr(&a_main, literals, " = private unnamed_addr constant [ ");
     string_extend_size_t(&a_main, literals, literal_width);
     string_extend_cstr(&a_main, literals, " x i8] c\"");
-    string_extend_strv_eval_escapes(&a_main, literals, data);
+    string_extend_strv_eval_escapes(&a_main, literals, data, string_extend_hex_2_digits);
     string_extend_cstr(&a_main, literals, "\\00\", align 1");
     string_extend_cstr(&a_main, literals, "\n");
 }

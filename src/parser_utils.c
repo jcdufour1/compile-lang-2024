@@ -14,6 +14,40 @@
 #include <lang_type_get_pos.h>
 #include <name.h>
 
+size_t get_count_excape_seq(Str_view str_view) {
+    size_t count_excapes = 0;
+    while (str_view.count > 0) {
+        if (str_view_consume(&str_view) == '\\') {
+            if (str_view.count < 1) {
+                unreachable("invalid excape sequence");
+            }
+
+            str_view_consume(&str_view); // important in case of // excape sequence
+            count_excapes++;
+        }
+    }
+    return count_excapes;
+}
+
+// \n excapes are actually stored as is in tokens and llvms, but should be printed as \0a
+void string_extend_strv_eval_escapes(Arena* arena, String* string, Str_view str_view) {
+    while (str_view.count > 0) {
+        char front_char = str_view_consume(&str_view);
+        if (front_char == '\\') {
+            vec_append(arena, string, '\\');
+            switch (str_view_consume(&str_view)) {
+                case 'n':
+                    string_extend_hex_2_digits(arena, string, 0x0a);
+                    break;
+                default:
+                    unreachable("");
+            }
+        } else {
+            vec_append(arena, string, front_char);
+        }
+    }
+}
+
 static bool isdigit_no_underscore(char prev, char curr) {
     (void) prev;
     return isdigit(curr);

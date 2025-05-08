@@ -50,6 +50,10 @@ static inline void string_extend_int64_t(Arena* arena, String* str, int64_t num)
     string_extend_cstr(arena, str, num_str);
 }
 
+static inline void string_append_character(Arena* arena, String* str, uint8_t num) {
+    vec_append(arena, str, num);
+}
+
 static inline String string_new_from_cstr(Arena* arena, const char* cstr) {
     String string = {0};
     for (size_t idx = 0; cstr[idx]; idx++) {
