@@ -162,6 +162,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "import_invalid_syntax.own": 5*["parser-expected"],
     EXPECTED_FAIL_EXAMPLES_DIR + "def_invalid_syntax.own": ["parser-expected"] + ["expected-expression"],
     EXPECTED_FAIL_EXAMPLES_DIR + "expected_expr_at_end_of_file.own": ["expected-expression"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "empty_file.own": [],
 }
 
 def to_str(a):
