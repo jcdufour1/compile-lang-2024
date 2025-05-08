@@ -15,9 +15,20 @@ void generic_sub_block(Uast_block* block, Name gen_param, Ulang_type gen_arg);
 void generic_sub_struct_def_base(Ustruct_def_base* base, Name gen_param, Ulang_type gen_arg);
 
 void generic_sub_lang_type(
-     
     Ulang_type* new_lang_type,
     Ulang_type lang_type,
+    Name gen_param,
+    Ulang_type gen_arg
+);
+
+void generic_sub_lang_type_tuple(
+    Ulang_type_tuple* lang_type,
+    Name gen_param,
+    Ulang_type gen_arg
+);
+
+void generic_sub_lang_type_fn(
+    Ulang_type_fn* lang_type,
     Name gen_param,
     Ulang_type gen_arg
 );
