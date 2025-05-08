@@ -1,0 +1,8 @@
+type io import = std.io
+
+fn main() i32 {
+    let ch u8 = '8j'
+    io.printf("%c\n", ch)
+
+    return 0
+}

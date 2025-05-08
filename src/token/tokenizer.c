@@ -343,7 +343,10 @@ static bool get_next_token(
 
         // TODO: expected failure case for char literal being too large
         // TODO: expected success case for char literal having '\n'
-        unwrap(str_view_col_try_consume(pos, file_text_rem, '\''));
+        if (!str_view_col_try_consume(pos, file_text_rem, '\'')) {
+            msg(LOG_ERROR, EXPECT_FAIL_INVALID_CHAR_LIT, *pos, "too many characters in char literal\n");
+            return false;
+        }
         return true;
     } else if (str_view_col_front(*file_text_rem) == '.') {
         Str_view_col dots = str_view_col_consume_while(pos, file_text_rem, is_dot);

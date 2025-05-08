@@ -80,6 +80,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"invalid-hex", EXPECT_FAIL_INVALID_HEX},
     {"invalid-bin", EXPECT_FAIL_INVALID_BIN},
     {"invalid-octal", EXPECT_FAIL_INVALID_OCTAL},
+    {"invalid-char-lit", EXPECT_FAIL_INVALID_CHAR_LIT},
     {"missing-close-multiline", EXPECT_FAIL_MISSING_CLOSE_MULTILINE},
     {"invalid-count-struct-lit-args", EXPECT_FAIL_INVALID_COUNT_STRUCT_LIT_ARGS},
     {"missing-sum-arg", EXPECT_FAIL_MISSING_SUM_ARG},
