@@ -13,16 +13,18 @@ Uast_string* uast_string_clone(const Uast_string* lit) {
     return uast_string_new(lit->pos, lit->data);
 }
 
+Uast_char* uast_char_clone(const Uast_char* lit) {
+    return uast_char_new(lit->pos, lit->data);
+}
+
 Uast_literal* uast_literal_clone(const Uast_literal* lit) {
     switch (lit->type) {
         case UAST_NUMBER:
             return uast_number_wrap(uast_number_clone(uast_number_const_unwrap(lit)));
         case UAST_STRING:
             return uast_string_wrap(uast_string_clone(uast_string_const_unwrap(lit)));
-        case UAST_ENUM_LIT:
-            todo();
         case UAST_CHAR:
-            todo();
+            return uast_char_wrap(uast_char_clone(uast_char_const_unwrap(lit)));
         case UAST_VOID:
             return uast_void_wrap(uast_void_new(uast_void_const_unwrap(lit)->pos));
     }

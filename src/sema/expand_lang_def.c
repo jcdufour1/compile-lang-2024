@@ -303,8 +303,6 @@ static bool expand_def_literal(Uast_literal* lit) {
         case UAST_VOID:
             return true;
         // TODO: remove UAST_ENUM_LIT
-        case UAST_ENUM_LIT:
-            todo();
         case UAST_CHAR:
             return true;
     }

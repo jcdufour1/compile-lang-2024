@@ -245,14 +245,6 @@ static Uast_type uast_gen_void(const char* prefix) {
     return lang_void;
 }
 
-static Uast_type uast_gen_enum_lit(const char* prefix) {
-    Uast_type enum_lit = {.name = uast_name_new(prefix, "enum_lit", false)};
-
-    append_member(&enum_lit.members, "int64_t", "data");
-
-    return enum_lit;
-}
-
 static Uast_type uast_gen_literal(const char* prefix) {
     const char* base_name = "literal";
     Uast_type lit = {.name = uast_name_new(prefix, base_name, false)};
@@ -260,7 +252,6 @@ static Uast_type uast_gen_literal(const char* prefix) {
     vec_append(&gen_a, &lit.sub_types, uast_gen_number(base_name));
     vec_append(&gen_a, &lit.sub_types, uast_gen_string(base_name));
     vec_append(&gen_a, &lit.sub_types, uast_gen_void(base_name));
-    vec_append(&gen_a, &lit.sub_types, uast_gen_enum_lit(base_name));
     vec_append(&gen_a, &lit.sub_types, uast_gen_char(base_name));
 
     return lit;

@@ -96,8 +96,6 @@ Str_view uast_literal_print_internal(const Uast_literal* lit, int indent) {
             return uast_string_print_internal(uast_string_const_unwrap(lit), indent);
         case UAST_VOID:
             return uast_void_print_internal(uast_void_const_unwrap(lit), indent);
-        case UAST_ENUM_LIT:
-            return uast_enum_lit_print_internal(uast_enum_lit_const_unwrap(lit), indent);
         case UAST_CHAR:
             return uast_char_print_internal(uast_char_const_unwrap(lit), indent);
     }
@@ -205,16 +203,6 @@ Str_view uast_string_print_internal(const Uast_string* lit, int indent) {
 
     string_extend_cstr_indent(&print_arena, &buf, "string", indent);
     string_extend_strv_in_par(&print_arena, &buf, lit->data);
-    string_extend_cstr(&print_arena, &buf, "\n");
-
-    return string_to_strv(buf);
-}
-
-Str_view uast_enum_lit_print_internal(const Uast_enum_lit* num, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "enum_lit", indent);
-    string_extend_int64_t(&print_arena, &buf, num->data);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);

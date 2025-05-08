@@ -3,7 +3,7 @@
 
 #include <uast.h>
 
-Uast_number* uast_number_clone(const Uast_number* lit);
+Uast_char* uast_char_clone(const Uast_char* lit);
 
 Uast_literal* uast_literal_clone(const Uast_literal* lit);
 
