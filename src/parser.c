@@ -73,7 +73,10 @@ static bool try_consume_if_not(Token* result, Tk_view* tokens, TOKEN_TYPE type) 
     if (tokens->count < 1 || tk_view_front(*tokens).type == type) {
         return false;
     }
-    *result = tk_view_consume(tokens);
+    if (result) {
+        *result = tk_view_consume(tokens);
+    }
+    prev_token = *result;
     return true;
 }
 
@@ -330,19 +333,20 @@ static bool starts_with_array_literal(Tk_view tokens) {
 static void sync(Tk_view* tokens) {
     int bracket_depth = 0;
     while (tokens->count > 0) {
-        if (try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
+        Token prev = {0};
+        if (try_consume(&prev, tokens, TOKEN_OPEN_CURLY_BRACE)) {
             bracket_depth++;
-        } else if (try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
+        } else if (try_consume(&prev, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
             if (bracket_depth == 0) {
                 return;
             }
             bracket_depth--;
         } else {
-            Token dummy = {0};
-            if (!try_consume_if_not(&dummy, tokens, TOKEN_EOF)) {
+            if (!try_consume_if_not(&prev, tokens, TOKEN_EOF)) {
                 return;
             }
         }
+        assert(token_is_equal(prev, prev_token) && "prev_token is not being updated properly");
         assert(bracket_depth >= 0);
 
         if (prev_token.type != TOKEN_NEW_LINE || bracket_depth != 0) {

@@ -11,7 +11,7 @@ typedef struct {
 } Tk_view;
 
 static inline Token tk_view_at(Tk_view tk_view, size_t idx) {
-    assert(tk_view.count > idx);
+    unwrap(tk_view.count > idx);
     return tk_view.tokens[idx];
 }
 
