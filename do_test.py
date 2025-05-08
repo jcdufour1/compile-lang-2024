@@ -122,7 +122,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "assign_struct_literal_to_int.own": 2*["struct-init-on-primitive"],
     EXPECTED_FAIL_EXAMPLES_DIR + "duplicate_default.own": ["duplicate-default"],
     EXPECTED_FAIL_EXAMPLES_DIR + "duplicate_case.own": ["duplicate-case", "duplicate-case"],
-    EXPECTED_FAIL_EXAMPLES_DIR + "sum_arg_with_void_varient.own": ["invalid-count-fun-args"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "sum_arg_with_void_varient.own": ["missing-sum-arg"] + ["invalid-count-fun-args"],
     EXPECTED_FAIL_EXAMPLES_DIR + "sum_case_invalid_cond_defered_symbols.own": ["binary-mismatched-types"],
     EXPECTED_FAIL_EXAMPLES_DIR + "undef_symbol_in_generic.own": ["undefined-symbol"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_count_generic_args.own": 4*["invalid-count-generic-args"],
@@ -148,13 +148,16 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "struct_non_designated_init_too_many_elems.own": ["invalid-count-struct-lit-args"],
     EXPECTED_FAIL_EXAMPLES_DIR + "sum_case_too_many_args.own": ["sum-case-too-many-args"],
     EXPECTED_FAIL_EXAMPLES_DIR + "void_sum_case_has_arg.own": ["void-sum-case-has-arg"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "sum_callee_too_many_args.own": ["missing-sum-arg"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "void_sum_callee_has_arg.own": ["invalid-count-fun-args"],
     EXPECTED_FAIL_EXAMPLES_DIR + "stray_expr_top_level.own": ["stray-expr-top-level"],
     EXPECTED_FAIL_EXAMPLES_DIR + "stray_expr_top_level.own": ["invalid-stmt-top-level"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_stmt_top_level.own": 5*["invalid-stmt-top-level"],
     EXPECTED_FAIL_EXAMPLES_DIR + "sum_par_with_enum.own": ["invalid-function-callee"],
     EXPECTED_FAIL_EXAMPLES_DIR + "string_literal_as_fun_callee.own": ["invalid-function-callee"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "sum_case_empty_par_on_void_case.own": ["missing-sum-arg"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "sum_callee_empty_par_on_void_case.own": ["missing-sum-arg"],
 }
-
 
 def to_str(a):
     return str(a)

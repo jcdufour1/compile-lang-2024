@@ -1469,10 +1469,32 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     Uast_function_decl* fun_decl = NULL;
     switch (new_callee->type) {
         case TAST_SUM_CALLEE: {
-            if (fun_call->args.info.count != 1) {
-                // TODO: expected failure case
-                todo();
+            // TODO: figure out if both TAST_SUM_CALLEE and TAST_SUM_LIT actually need to exist. if yes, then document difference
+            if (fun_call->args.info.count < 1) {
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_MISSING_SUM_ARG, tast_sum_callee_unwrap(new_callee)->pos,
+                    "() in sum case has no argument; add argument in () or remove ()\n"
+                );
+                return false;
             }
+            if (fun_call->args.info.count > 1) {
+                todo();
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_SUM_CASE_TOO_MANY_ARGS, tast_sum_callee_unwrap(new_callee)->pos,
+                    "() in sum case must contain exactly one argument, but %zu arguments found\n",
+                    fun_call->args.info.count
+                );
+                return false;
+            }
+            if (tast_sum_callee_unwrap(new_callee)->tag->lang_type.type == LANG_TYPE_VOID) {
+                msg(
+                    LOG_ERROR, EXPECT_FAIL_VOID_SUM_CASE_HAS_ARG, tast_sum_callee_unwrap(new_callee)->pos,
+                    "sum callee associated type is void; remove ()\n" // TODO: actually print file text where () is if possible
+                );
+                todo();
+                return false;
+            }
+
             Tast_sum_callee* sum_callee = tast_sum_callee_unwrap(new_callee);
 
             Uast_def* sum_def_ = NULL;
@@ -1519,6 +1541,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             return status;
         }
         case TAST_SUM_CASE: {
+            // TODO: can these checks be shared with TAST_SUM_CALLEE?
             if (fun_call->args.info.count < 1) {
                 msg(
                     LOG_ERROR, EXPECT_FAIL_MISSING_SUM_ARG, tast_sum_case_unwrap(new_callee)->pos,
@@ -1535,11 +1558,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 return false;
             }
             if (tast_sum_case_unwrap(new_callee)->tag->lang_type.type == LANG_TYPE_VOID) {
-                msg(
-                    LOG_ERROR, EXPECT_FAIL_VOID_SUM_CASE_HAS_ARG, tast_sum_case_unwrap(new_callee)->pos,
-                    "sum case associated type is void; remove ()\n" // TODO: actually print file text where () is if possible
-                );
-                return false;
+                unreachable("this should have been caught be prior checks");
             }
             Tast_sum_case* new_case = NULL;
             if (!try_set_function_call_types_sum_case(&new_case, fun_call->args, tast_sum_case_unwrap(new_callee))) {
@@ -1551,10 +1570,27 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         case TAST_LITERAL: {
             if (tast_literal_unwrap(new_callee)->type == TAST_SUM_LIT) {
                 Tast_sum_lit* sum_lit = tast_sum_lit_unwrap(tast_literal_unwrap(new_callee));
-                if (fun_call->args.info.count != 0) {
-                    Uast_def* sum_def_ = NULL;
-                    unwrap(usymbol_lookup(&sum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, sum_lit->sum_lang_type)));
-                    Uast_sum_def* sum_def = uast_sum_def_unwrap(sum_def_);
+                Uast_def* sum_def_ = NULL;
+                unwrap(usymbol_lookup(&sum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, sum_lit->sum_lang_type)));
+                Uast_sum_def* sum_def = uast_sum_def_unwrap(sum_def_);
+
+                if (fun_call->args.info.count < 1) {
+                    msg(
+                        LOG_ERROR, EXPECT_FAIL_MISSING_SUM_ARG, sum_lit->pos,
+                        "() in sum case has no argument; add argument in () or remove ()\n"
+                    );
+                    return false;
+                }
+                if (fun_call->args.info.count > 1) {
+                    todo();
+                    msg(
+                        LOG_ERROR, EXPECT_FAIL_SUM_CASE_TOO_MANY_ARGS, sum_lit->pos,
+                        "() in sum case must contain exactly one argument, but %zu arguments found\n",
+                        fun_call->args.info.count
+                    );
+                    return false;
+                }
+                if (lang_type_from_ulang_type(vec_at(&sum_def->base.members, (size_t)sum_lit->tag->data)->lang_type).type == LANG_TYPE_VOID) {
                     msg(
                         LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, fun_call->pos,
                         "cannot assign argument to varient `"LANG_TYPE_FMT"."LANG_TYPE_FMT"`, because inner type is void\n",
