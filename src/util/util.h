@@ -114,4 +114,10 @@ typedef size_t Scope_id;
 #ifndef INDENT_WIDTH
 #define INDENT_WIDTH 2
 #endif // INDENT_WIDTH
+
+// TODO: consider if this is the ideal place
+#define SCOPE_BUILTIN 0
+#define SCOPE_TOP_LEVEL 1
+#define SCOPE_NOT SIZE_MAX
+
 #endif // UTIL_H

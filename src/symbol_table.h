@@ -122,9 +122,5 @@ bool function_decl_tbl_add(Uast_function_decl* decl);
 
 Scope_id symbol_collection_new(Scope_id parent);
 
-#define SCOPE_BUILTIN 0
-#define SCOPE_TOP_LEVEL 1
-#define SCOPE_NOT SIZE_MAX
-
 #endif // SYMBOL_TABLE_H
 

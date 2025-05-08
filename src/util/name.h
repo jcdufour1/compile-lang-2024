@@ -12,13 +12,15 @@ typedef struct {
 } Name;
 
 typedef struct {
-    Name mod_alias;
+    Name mod_alias; // TODO: do not use Name for mod_alias; come up with a better system
     Str_view base;
     Ulang_type_vec gen_args;
     Scope_id scope_id;
 } Uname;
 
 Name name_new(Str_view mod_path, Str_view base, Ulang_type_vec gen_args, Scope_id scope_id);
+
+Uname uname_new(Name mod_alias, Str_view base, Ulang_type_vec gen_args, Scope_id scope_id);
 
 void extend_name_llvm(String* buf, Name name);
 

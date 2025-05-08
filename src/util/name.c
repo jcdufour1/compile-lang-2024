@@ -8,7 +8,6 @@ Name name_new(Str_view mod_path, Str_view base, Ulang_type_vec gen_args, Scope_i
     return (Name) {.mod_path = mod_path, .base = base, .gen_args = gen_args, .scope_id = scope_id};
 }
 
-// TODO: actually use this function
 Uname uname_new(Name mod_alias, Str_view base, Ulang_type_vec gen_args, Scope_id scope_id) {
     return (Uname) {.mod_alias = mod_alias, .base = base, .gen_args = gen_args, .scope_id = scope_id};
 }

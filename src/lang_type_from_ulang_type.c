@@ -102,7 +102,7 @@ Uname name_to_uname(Name name) {
         name_new((Str_view) {0}, name.mod_path, (Ulang_type_vec) {0}, 0 /* TODO */)
     );
     unwrap(usymbol_add(uast_mod_alias_wrap(new_alias)));
-    return (Uname) {.mod_alias = new_alias->name, .base = name.base, .gen_args = name.gen_args, .scope_id = name.scope_id};
+    return uname_new(new_alias->name, name.base, name.gen_args, name.scope_id);
 }
 
 Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {

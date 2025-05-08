@@ -13,6 +13,7 @@
 #include <symbol_log.h>
 #include <file.h>
 #include <errno.h>
+#include <name.h>
 
 // TODO: use parent block for scope_ids instead of function calls everytime
 
@@ -294,8 +295,7 @@ static bool starts_with_function_call(Tk_view tokens) {
     return true;
 }
 
-// TODO: rename variable_decl to variable_def for consistancy
-static bool starts_with_variable_decl(Tk_view tokens) {
+static bool starts_with_variable_def(Tk_view tokens) {
     if (tokens.count < 1) {
         return false;
     }
@@ -349,7 +349,7 @@ static void sync(Tk_view* tokens) {
             starts_with_for(*tokens) ||
             starts_with_break(*tokens) ||
             starts_with_function_call(*tokens) ||
-            starts_with_variable_decl(*tokens)
+            starts_with_variable_def(*tokens)
         ) {
             return;
         }
@@ -876,8 +876,12 @@ static bool parse_lang_type_struct_atom(Pos* pos, Ulang_type_atom* lang_type, Tk
 
     *pos = lang_type_token.pos;
 
-    // TODO: use uname_new instead of (Uname) {
-    lang_type->str = (Uname) {.mod_alias = name_new(env.curr_mod_path, mod_alias, (Ulang_type_vec) {0}, scope_id), .base = lang_type_token.text, .scope_id = scope_id};
+    lang_type->str = uname_new(
+        name_new(env.curr_mod_path, mod_alias, (Ulang_type_vec) {0}, scope_id),
+        lang_type_token.text,
+        (Ulang_type_vec) {0},
+        scope_id
+    );
     while (try_consume(NULL, tokens, TOKEN_ASTERISK)) {
         lang_type->pointer_depth++;
     }
@@ -903,7 +907,6 @@ static bool parse_lang_type_struct_tuple(Ulang_type_tuple* lang_type, Tk_view* t
         Pos atom_pos = {0};
         if (!parse_lang_type_struct_atom(&atom_pos, &atom, tokens, scope_id)) {
             todo();
-            //atom.str = (Uname) {.mod_alias = (Str_view) {0}, .base = str_view_from_cstr("void")};
             break;
         }
         Ulang_type new_child = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, atom_pos));
@@ -1309,12 +1312,21 @@ static PARSE_STATUS parse_raw_union_def(Uast_raw_union_def** raw_union_def, Tk_v
 static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, Token name) {
     unwrap(try_consume(NULL, tokens, TOKEN_ENUM));
 
+    // TODO: make test case for same-named enum, etc. in module and in main file
     Ustruct_def_base base = {0};
     if (PARSE_OK != parse_struct_base_def_implicit_type(
         &base,
         name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
         tokens,
-        ulang_type_atom_new((Uname) {.base = name.text, .scope_id = SCOPE_TOP_LEVEL /* TODO */}, 0)
+        ulang_type_atom_new(
+            uname_new(
+                name_new((Str_view) {0}, (Str_view) {0}, (Ulang_type_vec) {0}, SCOPE_BUILTIN /* TODO */),
+                name.text, 
+                (Ulang_type_vec) {0}, 
+                SCOPE_TOP_LEVEL
+            ),
+            0
+        )
     )) {
         return PARSE_ERROR;
     }
@@ -2050,7 +2062,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_block_wrap(block_def);
-    } else if (starts_with_variable_decl(*tokens)) {
+    } else if (starts_with_variable_def(*tokens)) {
         Uast_variable_def* var_def = NULL;
         if (PARSE_OK != parse_variable_def(&var_def, tokens, true, true, true, (Ulang_type) {0}, scope_id)) {
             return PARSE_EXPR_ERROR;
