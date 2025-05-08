@@ -33,7 +33,6 @@ void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
     unreachable("");
 }
 
-// TODO: make separate .c file for these lang_type functions
 Str_view lang_type_vec_print_internal(Lang_type_vec types) {
     String buf = {0};
 
@@ -48,32 +47,6 @@ Str_view lang_type_vec_print_internal(Lang_type_vec types) {
 
     return string_to_strv(buf);
 }
-
-// TODO: remove this function entirely
-//void extend_serialize_lang_type_to_string(String* string, Lang_type lang_type, bool do_tag) {
-//    if (do_tag) {
-//        extend_lang_type_tag_to_string(string, lang_type.type);
-//    }
-//
-//    if (lang_type.type == LANG_TYPE_TUPLE) {
-//        Lang_type_vec lang_types = lang_type_tuple_const_unwrap(lang_type).lang_types;
-//        for (size_t idx = 0; idx < lang_types.info.count; idx++) {
-//            extend_serialize_lang_type_to_string( string, vec_at(&lang_types, idx), do_tag);
-//        }
-//    } else {
-//        if (lang_type_get_str(lang_type).count > 1) {
-//            string_extend_strv(&print_arena, string, serialize_lang_type( lang_type));
-//        } else {
-//            string_extend_cstr(&print_arena, string, "<null>");
-//        }
-//        if (lang_type_get_pointer_depth(lang_type) < 0) {
-//            todo();
-//        }
-//        for (int16_t idx = 0; idx < lang_type_get_pointer_depth(lang_type); idx++) {
-//            vec_append(&print_arena, string, '*');
-//        }
-//    }
-//}
 
 void extend_lang_type_atom(String* string, LANG_TYPE_MODE mode, Lang_type_atom atom) {
     Name temp = atom.str;
@@ -118,7 +91,6 @@ Str_view lang_type_print_internal(LANG_TYPE_MODE mode, Lang_type lang_type) {
 
 Str_view lang_type_atom_print_internal(Lang_type_atom atom, LANG_TYPE_MODE mode) {
     String buf = {0};
-    // TODO: do not use `lang_type_primitive_new` here
     extend_lang_type_atom(&buf, mode, atom);
     return string_to_strv(buf);
 }
