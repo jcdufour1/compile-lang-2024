@@ -1641,8 +1641,9 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         if (fun_call->args.info.count > param_idx) {
             corres_arg = vec_at(&fun_call->args, param_idx);
         } else if (is_variadic) {
+            unwrap(!param->is_optional && "this should have been caught in the parser");
         } else if (param->is_optional) {
-            unwrap(!is_variadic && "cannot mix variadic args and optional args right now");
+            unwrap(!is_variadic);
             // TODO: expected failure case for invalid optional_default
             corres_arg = uast_expr_clone(param->optional_default, fun_name.scope_id/* TODO */);
         } else {

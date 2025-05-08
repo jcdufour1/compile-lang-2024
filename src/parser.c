@@ -930,7 +930,7 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens, Scope
         if (!parse_lang_type_struct_tuple(&params, tokens, scope_id)) {
             return false;
         }
-        Ulang_type* rtn_type = arena_alloc(&a_main, sizeof(*rtn_type)); // TODO: make function, etc. to call arena_alloc automatically
+        Ulang_type* rtn_type = arena_alloc(&a_main, sizeof(*rtn_type));
         if (!parse_lang_type_struct(rtn_type, tokens, scope_id)) {
             return false;
         }
@@ -1001,10 +1001,14 @@ static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* t
     if (try_consume(NULL, tokens, TOKEN_TRIPLE_DOT)) {
         is_variadic = true;
     }
-    if (try_consume(NULL, tokens, TOKEN_SINGLE_EQUAL)) {
+    Token tk_equal = {0};
+    if (try_consume(&tk_equal, tokens, TOKEN_SINGLE_EQUAL)) {
         if (is_variadic) {
-            // TODO: expected failure case
-            todo();
+            msg(
+                LOG_ERROR, EXPECTED_FAIL_OPTIONAL_ARGS_FOR_VARIADIC_ARGS, tk_equal.pos,
+                "optional arguments cannot be used with variadic parameters\n"
+            );
+            return PARSE_EXPR_ERROR;
         }
         is_optional = true;
         switch (parse_expr(&opt_default, tokens, false, scope_id)) {
@@ -2854,7 +2858,6 @@ static PARSE_EXPR_STATUS parse_expr_opening(
     Uast_expr** lhs,
     Tk_view* tokens,
     int32_t* prev_oper_pres,
-    bool defer_sym_add,
     Scope_id scope_id
 ) {
     if (*prev_oper_pres < get_operator_precedence(tk_view_front(*tokens).type)) {
@@ -2868,7 +2871,6 @@ static PARSE_EXPR_STATUS parse_expr_opening(
 static PARSE_EXPR_STATUS parse_expr_side(
     Uast_expr** result,
     Tk_view* tokens,
-    bool defer_sym_add,
     bool can_be_tuple,
     Scope_id scope_id
 ) {
@@ -2928,7 +2930,7 @@ static PARSE_EXPR_STATUS parse_expr_side(
         if (!is_binary(tk_view_front(*tokens).type)) {
             todo();
         } else if (token_is_opening(tk_view_front(*tokens))) {
-            switch (parse_expr_opening(result, &lhs, tokens, &prev_oper_pres, defer_sym_add, scope_id)) {
+            switch (parse_expr_opening(result, &lhs, tokens, &prev_oper_pres, scope_id)) {
                 case PARSE_EXPR_OK:
                     lhs = *result;
                     break;
@@ -2990,7 +2992,7 @@ static PARSE_EXPR_STATUS parse_expr(
     Scope_id scope_id
 ) {
     Uast_expr* lhs = NULL;
-    PARSE_EXPR_STATUS status = parse_expr_side(&lhs, tokens, false, can_be_tuple, scope_id);
+    PARSE_EXPR_STATUS status = parse_expr_side(&lhs, tokens, can_be_tuple, scope_id);
     if (status != PARSE_EXPR_OK) {
         return status;
     }
@@ -3003,7 +3005,7 @@ static PARSE_EXPR_STATUS parse_expr(
     
     // TODO: remove BINARY_SINGLE_EQUAL?
     Uast_expr* rhs = NULL;
-    switch (parse_expr_side(&rhs, tokens, false, can_be_tuple ,scope_id)) {
+    switch (parse_expr_side(&rhs, tokens, can_be_tuple ,scope_id)) {
         case PARSE_EXPR_OK:
             // TODO: do uast_assignment?
             //*result = uast_assignment_wrap(uast_assignment_new(equal_tk.pos, uast_expr_wrap(lhs), rhs));

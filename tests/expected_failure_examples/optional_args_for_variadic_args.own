@@ -1,0 +1,7 @@
+
+extern("c") fn print_nums(nums any... = 7)
+
+fn main() i32 {
+    print_nums(87, 34)
+    return 0
+}

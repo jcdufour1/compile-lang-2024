@@ -157,6 +157,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "string_literal_as_fun_callee.own": ["invalid-function-callee"],
     EXPECTED_FAIL_EXAMPLES_DIR + "sum_case_empty_par_on_void_case.own": ["missing-sum-arg"],
     EXPECTED_FAIL_EXAMPLES_DIR + "sum_callee_empty_par_on_void_case.own": ["missing-sum-arg"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "optional_args_for_variadic_args.own": ["optional-args-for-variadic-args"],
 }
 
 def to_str(a):
