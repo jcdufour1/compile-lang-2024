@@ -1,0 +1,8 @@
+idea:
+
+fn main() i32 {
+    // this could expand to:
+    //  print(78)
+    //  print(76)
+    print(78 :: 76)
+}

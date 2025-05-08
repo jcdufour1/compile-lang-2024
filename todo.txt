@@ -69,7 +69,8 @@ for generics:
   }
   fn get_token
 - make LLVM_LANG_TYPE, etc. that does not have LANG_TYPE_ENUM, etc.
-- make an assertion that tests/expected_failure_examples/expected_expr_at_end_of_file.own has no newlines or similar characters after io.
+- make an assertion that tests/expected_failure_examples/expected_expr_at_end_of_file.own has no newlines or similar characters after `io.`
+- make an assertion that tests/expected_failure_examples/empty_file.own actually is empty
 
 
 
