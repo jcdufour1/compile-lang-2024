@@ -28,6 +28,7 @@ typedef struct Ulang_type_fn_ {
     Pos pos;
 }Ulang_type_fn;
 
+// TODO: refactor so that Ulang_type_atom struct in inlined into Ulang_type_regular?
 typedef struct Ulang_type_regular_ {
     Ulang_type_atom atom;
     Pos pos;

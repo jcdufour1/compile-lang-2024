@@ -297,11 +297,7 @@ void generic_sub_index(Uast_index* index, Name gen_param, Ulang_type gen_arg) {
 }
 
 void generic_sub_symbol(Uast_symbol* sym, Name gen_param, Ulang_type gen_arg) {
-    // TODO: call gen_sub_name instead of this for loop
     generic_sub_name(&sym->name, gen_param, gen_arg);
-    for (size_t idx = 0; idx < sym->name.gen_args.info.count; idx++) {
-        generic_sub_lang_type(vec_at_ref(&sym->name.gen_args, idx), vec_at(&sym->name.gen_args, idx), gen_param, gen_arg);
-    }
 }
 
 void generic_sub_literal(Uast_literal* lit, Name gen_param, Ulang_type gen_arg) {
@@ -333,8 +329,8 @@ void generic_sub_unary(Uast_unary* unary, Name gen_param, Ulang_type gen_arg) {
 }
 
 void generic_sub_name(Name* name, Name gen_param, Ulang_type gen_arg) {
-    (void) name;
-    (void) gen_param;
-    (void) gen_arg;
+    for (size_t idx = 0; idx < name->gen_args.info.count; idx++) {
+        generic_sub_lang_type(vec_at_ref(&name->gen_args, idx), vec_at(&name->gen_args, idx), gen_param, gen_arg);
+    }
     // TODO
 }
