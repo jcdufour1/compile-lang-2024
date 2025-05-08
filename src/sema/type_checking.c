@@ -27,6 +27,8 @@
 #include <msg_undefined_symbol.h>
 #include <pos_vec.h>
 
+static int dummy_int = 0;
+
 static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def);
 
 // result is rounded up
@@ -2718,7 +2720,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
     }
 
 error:
-    // TODO: fix this pre-c23 warning
+    dummy_int = 0; // allow pre-c23 compilers
     Lang_type yield_type = lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
     assert(yield_type.type == LANG_TYPE_VOID);
     if (env.parent_of == PARENT_OF_CASE) {

@@ -1967,7 +1967,6 @@ static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Sco
             unreachable("");
     }
 
-    // TODO: expected failure cases for these things
     if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
         msg_parser_expected(tk_view_front(*tokens), "after switch operand", TOKEN_OPEN_CURLY_BRACE);
         return PARSE_ERROR;
@@ -2155,11 +2154,6 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
         new_scope
     );
 
-    if (tokens->count < 1) {
-        // TODO: expected test case
-        unreachable("empty file not implemented\n");
-    }
-
     Token open_brace_token = {0};
     if (!is_top_level && !try_consume(&open_brace_token, tokens, TOKEN_OPEN_CURLY_BRACE)) {
         msg_parser_expected(tk_view_front(*tokens), "at start of block", TOKEN_OPEN_CURLY_BRACE);
@@ -2333,7 +2327,10 @@ static Uast_binary* parser_binary_new(Uast_expr* lhs, Token operator_token, Uast
 }
 
 static PARSE_EXPR_STATUS parse_expr_piece(
-    Uast_expr** result, Tk_view* tokens, int32_t* prev_oper_pres, Scope_id scope_id
+    Uast_expr** result,
+    Tk_view* tokens,
+    int32_t* prev_oper_pres,
+    Scope_id scope_id
 ) {
     if (tokens->count < 1) {
         return PARSE_EXPR_NONE;
@@ -2437,7 +2434,7 @@ static PARSE_EXPR_STATUS parse_unary(
     *prev_oper_pres = get_operator_precedence(oper.type);
 
     Uast_expr* child = NULL;
-    Ulang_type_atom unary_lang_type = ulang_type_atom_new_from_cstr("i32" /* TODO */, 0);
+    Ulang_type_atom unary_lang_type = ulang_type_atom_new_from_cstr("i32", 0); // this is a placeholder type
 
     switch (oper.type) {
         case TOKEN_NOT:
@@ -3096,12 +3093,6 @@ bool parse_file(Uast_block** block, Str_view file_path) {
 
 error:
     return status;
-}
-
-// TODO: put this in src/tokens.h or whatever
-static inline Tk_view tokens_to_tk_view(Token_vec tokens) {
-    Tk_view tk_view = {.tokens = tokens.buf, .count = tokens.info.count};
-    return tk_view;
 }
 
 static void parser_test_parse_expr(const char* input, int test) {
