@@ -52,4 +52,6 @@ void generic_sub_member_access(Uast_member_access* access, Name gen_param, Ulang
 
 void generic_sub_index(Uast_index* index, Name gen_param, Ulang_type gen_arg);
 
+void generic_sub_name(Name* name, Name gen_param, Ulang_type gen_arg);
+
 #endif // GENERIC_SUB_H
