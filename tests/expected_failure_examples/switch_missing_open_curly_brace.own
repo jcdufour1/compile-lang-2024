@@ -1,0 +1,8 @@
+
+
+fn main() i32 {
+    switch token
+        case .num(num): break
+        case .open_par: break
+    }
+}

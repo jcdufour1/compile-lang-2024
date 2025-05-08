@@ -1968,8 +1968,11 @@ static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Sco
     }
 
     // TODO: expected failure cases for these things
-    unwrap(try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE));
-    unwrap(try_consume(NULL, tokens, TOKEN_NEW_LINE));
+    if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
+        msg_parser_expected(tk_view_front(*tokens), "after switch operand", TOKEN_OPEN_CURLY_BRACE);
+        return PARSE_ERROR;
+    }
+    try_consume(NULL, tokens, TOKEN_NEW_LINE);
 
     Uast_case_vec cases = {0};
 
