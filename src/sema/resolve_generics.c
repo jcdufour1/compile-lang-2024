@@ -216,6 +216,7 @@ typedef void*(*Obj_new)(Pos, Ustruct_def_base);
 static bool resolve_generics_ulang_type_internal_struct_like_2(
     Uast_def** after_res,
     Name* new_name,
+    Ulang_type* result,
     Ustruct_def_base old_base,
     Ulang_type lang_type,
     Pos pos_def,
@@ -246,6 +247,10 @@ static bool resolve_generics_ulang_type_internal_struct_like_2(
         *after_res = (void*)obj_new(pos_def, new_base);
     }
 
+    *result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
+        name_to_uname(uast_def_get_struct_def_base(*after_res).name), ulang_type_get_atom(lang_type).pointer_depth
+    ), ulang_type_get_pos(lang_type)));
+
     return true;
 }
 
@@ -274,14 +279,10 @@ static bool resolve_generics_ulang_type_internal_raw_union_def(
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
     Uast_def* after_res_ = NULL;
-    if (!resolve_generics_ulang_type_internal_struct_like_2(&after_res_, &new_name, old_base, lang_type, before_res->pos, local_uast_raw_union_def_new)) {
+    if (!resolve_generics_ulang_type_internal_struct_like_2(&after_res_, &new_name, result, old_base, lang_type, before_res->pos, local_uast_raw_union_def_new)) {
         return false;
     }
     *after_res = uast_raw_union_def_unwrap(after_res_);
-
-    *result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
-        name_to_uname((*after_res)->base.name), ulang_type_get_atom(lang_type).pointer_depth
-    ), ulang_type_get_pos(lang_type)));
 
     Tast_def* dummy = NULL;
     if (symbol_lookup(&dummy,  new_name)) {
@@ -299,14 +300,10 @@ static bool resolve_generics_ulang_type_internal_enum_def(
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
     Uast_def* after_res_ = NULL;
-    if (!resolve_generics_ulang_type_internal_struct_like_2(&after_res_, &new_name, old_base, lang_type, before_res->pos, local_uast_enum_def_new)) {
+    if (!resolve_generics_ulang_type_internal_struct_like_2(&after_res_, &new_name, result, old_base, lang_type, before_res->pos, local_uast_enum_def_new)) {
         return false;
     }
     *after_res = uast_enum_def_unwrap(after_res_);
-
-    *result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
-        name_to_uname((*after_res)->base.name), ulang_type_get_atom(lang_type).pointer_depth
-    ), ulang_type_get_pos(lang_type)));
 
     Tast_def* dummy = NULL;
     if (symbol_lookup(&dummy,  new_name)) {
@@ -324,14 +321,10 @@ static bool resolve_generics_ulang_type_internal_sum_def(
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
     Uast_def* after_res_ = NULL;
-    if (!resolve_generics_ulang_type_internal_struct_like_2(&after_res_, &new_name, old_base, lang_type, before_res->pos, local_uast_sum_def_new)) {
+    if (!resolve_generics_ulang_type_internal_struct_like_2(&after_res_, &new_name, result, old_base, lang_type, before_res->pos, local_uast_sum_def_new)) {
         return false;
     }
     *after_res = uast_sum_def_unwrap(after_res_);
-
-    *result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
-        name_to_uname((*after_res)->base.name), ulang_type_get_atom(lang_type).pointer_depth
-    ), ulang_type_get_pos(lang_type)));
 
     Tast_def* dummy = NULL;
     if (symbol_lookup(&dummy,  new_name)) {
@@ -349,14 +342,10 @@ static bool resolve_generics_ulang_type_internal_struct_def(
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
     Uast_def* after_res_ = NULL;
-    if (!resolve_generics_ulang_type_internal_struct_like_2(&after_res_, &new_name, old_base, lang_type, before_res->pos, local_uast_struct_def_new)) {
+    if (!resolve_generics_ulang_type_internal_struct_like_2(&after_res_, &new_name, result, old_base, lang_type, before_res->pos, local_uast_struct_def_new)) {
         return false;
     }
     *after_res = uast_struct_def_unwrap(after_res_);
-
-    *result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
-        name_to_uname((*after_res)->base.name), ulang_type_get_atom(lang_type).pointer_depth
-    ), ulang_type_get_pos(lang_type)));
 
     Tast_def* dummy = NULL;
     if (symbol_lookup(&dummy,  new_name)) {

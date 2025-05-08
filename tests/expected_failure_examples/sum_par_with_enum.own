@@ -1,0 +1,14 @@
+type io import = std.io
+
+type Token enum {
+    num
+}
+
+fn main() i32 {
+    let token Token = .num
+    switch token {
+        case .num(num): break
+    }
+    return 0;
+}
+
