@@ -1378,23 +1378,23 @@ static PARSE_STATUS parse_import(Uast_mod_alias** alias, Tk_view* tokens, Token 
 
     Token dummy = {0};
     if (!try_consume(&dummy, tokens, TOKEN_SINGLE_EQUAL)) {
-        // TODO
-        todo();
+        msg_parser_expected(tk_view_front(*tokens), "after `import`", TOKEN_SINGLE_EQUAL);
+        return PARSE_ERROR;
     }
 
     String mod_path = {0};
     Token path_tk = {0};
     if (!try_consume(&path_tk, tokens, TOKEN_SYMBOL)) {
-        // TODO
-        todo();
+        msg_parser_expected(tk_view_front(*tokens), "after =", TOKEN_SYMBOL);
+        return PARSE_ERROR;
     }
     string_extend_strv(&a_main, &mod_path, path_tk.text);
     Pos mod_path_pos = path_tk.pos;
 
     while (try_consume(&path_tk, tokens, TOKEN_SINGLE_DOT)) {
         if (!try_consume(&path_tk, tokens, TOKEN_SYMBOL)) {
-            // TODO
-            todo();
+            msg_parser_expected(tk_view_front(*tokens), "after . in module path", TOKEN_SYMBOL);
+            return PARSE_ERROR;
         }
         vec_append(&a_main, &mod_path, PATH_SEPARATOR);
         string_extend_strv(&a_main, &mod_path, path_tk.text);
