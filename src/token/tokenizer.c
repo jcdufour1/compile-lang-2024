@@ -343,24 +343,12 @@ static bool get_next_token(
         token->type = TOKEN_CHAR_LITERAL;
 
         Str_view_col result = {0};
-        log(LOG_DEBUG, TAST_FMT"\n", str_view_print(file_text_rem->base));
         if (!str_view_col_try_consume_while(&result, pos, file_text_rem, not_single_quote)) {
             // TODO: expected failure case
             todo();
         }
         unwrap(str_view_col_consume(pos, file_text_rem));
 
-        String value = {0};
-        string_extend_strv_eval_escapes(&a_main, &value, result.base, string_append_character);
-        if (value.info.count < 1) {
-            // TODO: expected failure case
-            todo();
-        }
-        if (value.info.count > 1) {
-            log(LOG_DEBUG, TAST_FMT"\n", string_print(value));
-            msg(LOG_ERROR, EXPECT_FAIL_INVALID_CHAR_LIT, *pos, "too many characters in char literal\n");
-            return false;
-        }
         token->text = result.base;
 
         return true;

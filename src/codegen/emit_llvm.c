@@ -1026,7 +1026,7 @@ static void emit_symbol_normal(String* literals, Name key, const Llvm_literal* l
     string_extend_cstr(&a_main, literals, " = private unnamed_addr constant [ ");
     string_extend_size_t(&a_main, literals, literal_width);
     string_extend_cstr(&a_main, literals, " x i8] c\"");
-    string_extend_strv_eval_escapes(&a_main, literals, data, string_extend_hex_2_digits);
+    string_extend_strv_eval_escapes(&a_main, literals, data);
     string_extend_cstr(&a_main, literals, "\\00\", align 1");
     string_extend_cstr(&a_main, literals, "\n");
 }

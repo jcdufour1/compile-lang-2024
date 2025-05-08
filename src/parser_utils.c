@@ -147,7 +147,6 @@ bool try_str_view_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) 
             if (curr_char == 'x') {
                 return try_str_view_hex_after_0x_to_int64_t(
                     result,
-                    
                     pos,
                     str_view_slice(str_view, 2, str_view.count - 2)
                 );
@@ -156,7 +155,6 @@ bool try_str_view_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) 
             if (curr_char == 'b') {
                 return try_str_view_bin_after_0b_to_int64_t(
                     result,
-                    
                     pos,
                     str_view_slice(str_view, 2, str_view.count - 2)
                 );
@@ -174,6 +172,58 @@ bool try_str_view_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) 
     }
 
     return idx > 0;
+}
+
+bool try_str_view_to_char(char* result, const Pos pos, Str_view str_view) {
+    if (str_view.count < 1) {
+        // TODO: expected failure case
+        todo();
+        // string literal ''
+        todo();
+    }
+
+    if (str_view_try_consume(&str_view, '\\')) {
+        if (str_view.count < 1) {
+            // TODO: expected failure case
+            todo();
+            msg(LOG_ERROR, EXPECT_FAIL_INVALID_CHAR_LIT, pos, "invalid excape sequence in char literal\n");
+            return false;
+        }
+        char esc_char = str_view_consume(&str_view);
+        switch (esc_char) {
+            case 'n':
+                *result = '\n';
+                log(LOG_DEBUG, "%d\n", *result);
+                // TODO: expected failure case
+                return true;
+            default: {
+                String buf = {0};
+                string_extend_cstr(&a_main, &buf, "excape sequence `\\");
+                vec_append(&a_main, &buf, esc_char);
+                string_extend_cstr(&a_main, &buf, "`");
+                msg_todo_strv(string_to_strv(buf), pos);
+                // TODO: expected failure case
+                todo();
+                return false;
+            }
+        }
+    } else {
+        *result = str_view_front(str_view);
+        return true;
+    }
+
+    todo();
+    //String value = {0};
+    //get_char_eval_escapes(&a_main, &value, result.base, string_append_character);
+    //if (value.info.count < 1) {
+    //    // TODO: expected failure case
+    //    todo();
+    //}
+    //if (value.info.count > 1) {
+    //    log(LOG_DEBUG, TAST_FMT"\n", string_print(value));
+    //    msg(LOG_ERROR, EXPECT_FAIL_INVALID_CHAR_LIT, *pos, "too many characters in char literal\n");
+    //    return false;
+    //}
 }
 
 bool try_str_view_to_size_t(size_t* result, Str_view str_view) {
@@ -433,10 +483,11 @@ bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Str_view 
             break;
         }
         case TOKEN_CHAR_LITERAL: {
-            Uast_char* lang_char = uast_char_new(pos, str_view_front(value));
-            if (value.count > 1) {
-                todo();
+            char raw = '\0';
+            if (!try_str_view_to_char(&raw, pos, value)) {
+                return false;
             }
+            Uast_char* lang_char = uast_char_new(pos, str_view_front(value));
             *new_lit = uast_char_wrap(lang_char);
             break;
         }
