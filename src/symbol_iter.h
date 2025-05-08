@@ -10,7 +10,7 @@ typedef struct {
 } Symbol_iter;
 
 static inline Symbol_iter sym_tbl_iter_new(Scope_id scope_id) {
-    return (Symbol_iter) {.bucket_idx = 0, .tbl = vec_at(&env.symbol_tables, scope_id)->symbol_table};
+    return (Symbol_iter) {.bucket_idx = 0, .tbl = vec_at_ref(&env.symbol_tables, scope_id)->symbol_table};
 }
 
 static inline bool sym_tbl_iter_next(Tast_def** result, Symbol_iter* iter) {
@@ -32,7 +32,7 @@ typedef struct {
 } Usymbol_iter;
 
 static inline Usymbol_iter usym_tbl_iter_new(Scope_id scope_id) {
-    return (Usymbol_iter) {.bucket_idx = 0, .tbl = vec_at(&env.symbol_tables, scope_id)->usymbol_table};
+    return (Usymbol_iter) {.bucket_idx = 0, .tbl = vec_at_ref(&env.symbol_tables, scope_id)->usymbol_table};
 }
 
 static inline bool usym_tbl_iter_next(Uast_def** result, Usymbol_iter* iter) {
@@ -54,7 +54,7 @@ typedef struct {
 } Alloca_iter;
 
 static inline Alloca_iter all_tbl_iter_new(Scope_id scope_id) {
-    return (Alloca_iter) {.bucket_idx = 0, .tbl = vec_at(&env.symbol_tables, scope_id)->alloca_table};
+    return (Alloca_iter) {.bucket_idx = 0, .tbl = vec_at_ref(&env.symbol_tables, scope_id)->alloca_table};
 }
 
 static inline bool all_tbl_iter_next(Llvm** result, Alloca_iter* iter) {

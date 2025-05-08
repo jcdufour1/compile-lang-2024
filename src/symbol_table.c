@@ -141,7 +141,7 @@ bool generic_symbol_add(
     if (generic_symbol_lookup((void**)&dummy, key, get_tbl_from_collection_fn, scope_id)) {
         return false;
     }
-    Symbol_collection* curr_tast = vec_at(&env.symbol_tables, scope_id);
+    Symbol_collection* curr_tast = vec_at_ref(&env.symbol_tables, scope_id);
     unwrap(generic_tbl_add((Generic_symbol_table*)get_tbl_from_collection_fn(curr_tast), key, item));
     return true;
 }
@@ -162,7 +162,7 @@ void generic_symbol_update(Str_view key, void* item, Get_tbl_from_collection_fn 
 
     Scope_id curr_scope = scope_id;
     while (true) {
-        void* tbl = get_tbl_from_collection_fn(vec_at(&env.symbol_tables, curr_scope));
+        void* tbl = get_tbl_from_collection_fn(vec_at_ref(&env.symbol_tables, curr_scope));
         Generic_symbol_table_tast* curr_tast = NULL;
         if (generic_tbl_lookup_internal(&curr_tast, tbl, key)) {
              curr_tast->tast = item;
@@ -197,7 +197,7 @@ bool generic_symbol_lookup(
 
     Scope_id curr_scope = scope_id;
     while (true) {
-        void* tbl = get_tbl_from_collection_fn(vec_at(&env.symbol_tables, curr_scope));
+        void* tbl = get_tbl_from_collection_fn(vec_at_ref(&env.symbol_tables, curr_scope));
         if (generic_tbl_lookup(result, tbl, key)) {
              return true;
         }
@@ -218,7 +218,7 @@ bool generic_symbol_lookup(
 bool sym_tbl_add(Tast_def* item) {
     Scope_id scope_id = tast_def_get_name(item).scope_id;
     return generic_tbl_add(
-        (Generic_symbol_table*)&vec_at(&env.symbol_tables, scope_id)->symbol_table,
+        (Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, scope_id)->symbol_table,
         serialize_name_symbol_table(tast_def_get_name(item)),
         item
     );
@@ -239,7 +239,7 @@ bool symbol_add(Tast_def* item) {
 }
 
 void sym_tbl_update(Scope_id scope_id, Tast_def* item) {
-    generic_tbl_update((Generic_symbol_table*)&vec_at(&env.symbol_tables, scope_id)->symbol_table, serialize_name_symbol_table(tast_def_get_name(item)), item);
+    generic_tbl_update((Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, scope_id)->symbol_table, serialize_name_symbol_table(tast_def_get_name(item)), item);
 }
 
 void symbol_update(Tast_def* item) {
@@ -282,7 +282,7 @@ bool usymbol_add(Uast_def* item) {
 bool sym_tbl_lookup(Tast_def** result, Name key) {
     return generic_tbl_lookup(
         (void**)result,
-        (Generic_symbol_table*)&vec_at(&env.symbol_tables, key.scope_id)->symbol_table,
+        (Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, key.scope_id)->symbol_table,
         serialize_name_symbol_table(key)
     );
 }
@@ -295,7 +295,7 @@ bool sym_tbl_lookup(Tast_def** result, Name key) {
 bool usym_tbl_add(Uast_def* item) {
     Name name = uast_def_get_name(item);
     return generic_tbl_add(
-        (Generic_symbol_table*)&vec_at(&env.symbol_tables, name.scope_id)->usymbol_table,
+        (Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, name.scope_id)->usymbol_table,
         serialize_name_symbol_table(name),
         item
     );
@@ -308,7 +308,7 @@ void usym_tbl_update(Uast_def* item) {
 }
 
 bool usym_tbl_lookup(Uast_def** result, Name key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&vec_at(&env.symbol_tables, key.scope_id)->usymbol_table, serialize_name_symbol_table(key));
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, key.scope_id)->usymbol_table, serialize_name_symbol_table(key));
 }
 
 bool usymbol_lookup(Uast_def** result, Name key) {
@@ -352,7 +352,7 @@ bool usymbol_lookup(Uast_def** result, Name key) {
 // returns false if symbol has already been added to the table
 bool all_tbl_add(Llvm* item) {
     Name name = llvm_tast_get_name(item);
-    return generic_tbl_add((Generic_symbol_table*)&vec_at(&env.symbol_tables, name.scope_id)->alloca_table, serialize_name_symbol_table(name), item);
+    return generic_tbl_add((Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, name.scope_id)->alloca_table, serialize_name_symbol_table(name), item);
 }
 
 void* all_get_tbl_from_collection(Symbol_collection* collection) {
@@ -371,7 +371,7 @@ bool alloca_add(Llvm* item) {
 
 void all_tbl_update(Llvm* item) {
     Name name = llvm_tast_get_name(item);
-    generic_tbl_update((Generic_symbol_table*)&vec_at(&env.symbol_tables, name.scope_id)->usymbol_table, serialize_name_symbol_table(name), item);
+    generic_tbl_update((Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, name.scope_id)->usymbol_table, serialize_name_symbol_table(name), item);
 }
 
 void usymbol_update(Uast_def* item) {
@@ -391,7 +391,7 @@ void alloca_update(Llvm* item) {
 }
 
 bool all_tbl_lookup(Llvm** result, Name key) {
-    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&vec_at(&env.symbol_tables, key.scope_id)->usymbol_table, serialize_name_symbol_table(key));
+    return generic_tbl_lookup((void**)result, (Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, key.scope_id)->usymbol_table, serialize_name_symbol_table(key));
 }
 
 bool alloca_lookup(Llvm** result, Name key) {
@@ -484,9 +484,8 @@ void alloca_extend_table_internal(String* buf, const Alloca_table sym_table, int
 }
 
 Scope_id symbol_collection_new(Scope_id parent) {
-    Symbol_collection* new_tbl = arena_alloc(&a_main, sizeof(*new_tbl));
     Scope_id new_scope = env.symbol_tables.info.count;
-    vec_append(&a_main, &env.symbol_tables, new_tbl);
+    vec_append(&a_main, &env.symbol_tables, (Symbol_collection) {0});
 
     scope_get_parent_tbl_add(new_scope, parent);
     return new_scope;

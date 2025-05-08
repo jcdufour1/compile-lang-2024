@@ -8,7 +8,7 @@
 
 typedef struct {
     Vec_base info;
-    Symbol_collection** buf; // TODO: change this to Symbol_collection* if possible
+    Symbol_collection* buf;
 } Sym_coll_vec;
 
 typedef struct {
