@@ -15,6 +15,8 @@
 #include <errno.h>
 #include <name.h>
 
+// TODO: make consume_expect function to print error automatically
+
 // TODO: use parent block for scope_ids instead of function calls everytime
 
 static Token prev_token = {0};
@@ -1368,12 +1370,12 @@ static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token n
 
     Token dummy = {0};
     if (!try_consume(&dummy, tokens, TOKEN_SINGLE_EQUAL)) {
-        // TODO
-        todo();
+        msg_parser_expected(tk_view_front(*tokens), "after `def`", TOKEN_SINGLE_EQUAL);
+        return PARSE_ERROR;
     }
     Uast_expr* expr = NULL;
     if (PARSE_EXPR_OK != parse_expr(&expr, tokens, false, scope_id)) {
-        todo();
+        return PARSE_ERROR;
     }
 
     *def = uast_lang_def_new(name.pos, name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL), expr);

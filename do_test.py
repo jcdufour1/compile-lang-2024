@@ -160,6 +160,8 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "optional_args_for_variadic_args.own": ["optional-args-for-variadic-args"],
     EXPECTED_FAIL_EXAMPLES_DIR + "included_module_has_parse_error.own": ["parser-expected"],
     EXPECTED_FAIL_EXAMPLES_DIR + "import_invalid_syntax.own": 5*["parser-expected"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "def_invalid_syntax.own": ["parser-expected"] + ["expected-expression"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "expected_expr_at_end_of_file.own": ["expected-expression"],
 }
 
 def to_str(a):
