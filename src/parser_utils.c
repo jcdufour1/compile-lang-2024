@@ -175,44 +175,44 @@ bool try_str_view_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) 
 }
 
 bool try_str_view_to_char(char* result, const Pos pos, Str_view str_view) {
-    if (str_view.count < 1) {
-        // TODO: expected failure case
-        todo();
-        // string literal ''
-        todo();
-    }
-
-    if (str_view_try_consume(&str_view, '\\')) {
-        if (str_view.count < 1) {
-            // TODO: expected failure case
-            todo();
-            msg(LOG_ERROR, EXPECT_FAIL_INVALID_CHAR_LIT, pos, "invalid excape sequence in char literal\n");
+    if (!str_view_try_consume(&str_view, '\\')) {
+        if (str_view.count != 1) {
+            msg(
+                LOG_ERROR, EXPECT_FAIL_INVALID_CHAR_LIT, pos,
+                "expected exactly one character in char literal without excapes, but got %zu\n",
+                str_view.count
+            );
             return false;
         }
-        char esc_char = str_view_consume(&str_view);
-        switch (esc_char) {
-            case 'n':
-                *result = '\n';
-                log(LOG_DEBUG, "%d\n", *result);
-                // TODO: expected failure case
-                return true;
-            default: {
-                String buf = {0};
-                string_extend_cstr(&a_main, &buf, "excape sequence `\\");
-                vec_append(&a_main, &buf, esc_char);
-                string_extend_cstr(&a_main, &buf, "`");
-                msg_todo_strv(string_to_strv(buf), pos);
-                // TODO: expected failure case
-                todo();
-                return false;
-            }
-        }
-    } else {
         *result = str_view_front(str_view);
         return true;
     }
 
-    todo();
+    if (str_view.count != 1) {
+        msg(
+            LOG_ERROR, EXPECT_FAIL_INVALID_CHAR_LIT, pos,
+            "expected exactly one character in char literal after `\\`, but got %zu\n",
+            str_view.count
+        );
+        return false;
+    }
+    char esc_char = str_view_consume(&str_view);
+    switch (esc_char) {
+        case 'n':
+            *result = '\n';
+            return true;
+        default: {
+            String buf = {0};
+            string_extend_cstr(&a_main, &buf, "excape sequence `\\");
+            vec_append(&a_main, &buf, esc_char);
+            string_extend_cstr(&a_main, &buf, "`");
+            msg_todo_strv(string_to_strv(buf), pos);
+            // TODO: expected failure case
+            todo();
+            return false;
+        }
+    }
+    unreachable("");
     //String value = {0};
     //get_char_eval_escapes(&a_main, &value, result.base, string_append_character);
     //if (value.info.count < 1) {
@@ -487,7 +487,7 @@ bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Str_view 
             if (!try_str_view_to_char(&raw, pos, value)) {
                 return false;
             }
-            Uast_char* lang_char = uast_char_new(pos, str_view_front(value));
+            Uast_char* lang_char = uast_char_new(pos, raw);
             *new_lit = uast_char_wrap(lang_char);
             break;
         }

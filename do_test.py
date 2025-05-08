@@ -165,6 +165,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "empty_file.own": [],
     EXPECTED_FAIL_EXAMPLES_DIR + "switch_missing_open_curly_brace.own": ["parser-expected"],
     EXPECTED_FAIL_EXAMPLES_DIR + "char_lit_too_large.own": ["invalid-char-lit"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_char_lit_2.own": 4*["invalid-char-lit"],
 }
 
 def to_str(a):
