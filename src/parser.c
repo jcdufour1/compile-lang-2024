@@ -2381,7 +2381,6 @@ static PARSE_EXPR_STATUS parse_unary(
     Uast_operator** result,
     Tk_view* tokens,
     int32_t* prev_oper_pres,
-    bool defer_sym_add,
     bool can_be_tuple,
     Scope_id scope_id
 ) {
@@ -2465,7 +2464,6 @@ static PARSE_EXPR_STATUS parse_binary(
     Uast_expr* lhs,
     Tk_view* tokens,
     int32_t* prev_oper_pres,
-    bool defer_sym_add,
     bool can_be_tuple,
     Scope_id scope_id
 ) {
@@ -2483,7 +2481,7 @@ static PARSE_EXPR_STATUS parse_binary(
     if (is_unary(tk_view_front(*tokens).type)) {
         int32_t unary_pres = get_operator_precedence(tk_view_front(*tokens).type);
         Uast_operator* unary = NULL;
-        switch (parse_unary(&unary, tokens, prev_oper_pres, defer_sym_add, can_be_tuple, scope_id)) {
+        switch (parse_unary(&unary, tokens, prev_oper_pres, can_be_tuple, scope_id)) {
             case PARSE_EXPR_OK:
                 rhs = uast_operator_wrap(unary);
                 break;
@@ -2799,7 +2797,6 @@ static PARSE_EXPR_STATUS parse_expr_opening_prev_less_pres(
     Uast_expr** lhs,
     Tk_view* tokens,
     int32_t* prev_oper_pres,
-    bool defer_sym_add,
     Scope_id scope_id
 ) {
     switch (tk_view_front(*tokens).type) {
@@ -2834,7 +2831,6 @@ static PARSE_EXPR_STATUS parse_expr_opening_prev_equal_pres(
     Uast_expr** lhs,
     Tk_view* tokens,
     int32_t* prev_oper_pres,
-    bool defer_sym_add,
     Scope_id scope_id
 ) {
     switch (tk_view_front(*tokens).type) {
@@ -2862,9 +2858,9 @@ static PARSE_EXPR_STATUS parse_expr_opening(
     Scope_id scope_id
 ) {
     if (*prev_oper_pres < get_operator_precedence(tk_view_front(*tokens).type)) {
-        return parse_expr_opening_prev_less_pres(result, lhs, tokens, prev_oper_pres, defer_sym_add, scope_id);
+        return parse_expr_opening_prev_less_pres(result, lhs, tokens, prev_oper_pres, scope_id);
     } else {
-        return parse_expr_opening_prev_equal_pres(result, lhs, tokens, prev_oper_pres, defer_sym_add, scope_id);
+        return parse_expr_opening_prev_equal_pres(result, lhs, tokens, prev_oper_pres, scope_id);
     }
 }
 
@@ -2889,7 +2885,7 @@ static PARSE_EXPR_STATUS parse_expr_side(
     } else if (is_unary(tk_view_front(*tokens).type)) {
         prev_oper_pres = get_operator_precedence(tk_view_front(*tokens).type);
         Uast_operator* unary = NULL;
-        switch (parse_unary(&unary, tokens, &prev_oper_pres, defer_sym_add, can_be_tuple, scope_id)) {
+        switch (parse_unary(&unary, tokens, &prev_oper_pres, can_be_tuple, scope_id)) {
             case PARSE_EXPR_OK:
                 lhs = uast_operator_wrap(unary);
                 *result = lhs;
@@ -2949,7 +2945,7 @@ static PARSE_EXPR_STATUS parse_expr_side(
                 Uast_expr* binary = NULL;
                 switch (parse_binary(
                     &binary,
-                    get_right_child_expr(lhs), tokens, &prev_oper_pres, defer_sym_add, can_be_tuple, scope_id)
+                    get_right_child_expr(lhs), tokens, &prev_oper_pres, can_be_tuple, scope_id)
                 ) {
                     case PARSE_EXPR_OK:
                         set_right_child_expr(lhs, binary);
@@ -2966,7 +2962,7 @@ static PARSE_EXPR_STATUS parse_expr_side(
             } else {
                 prev_oper_pres = get_operator_precedence(tk_view_front(*tokens).type);
                 Uast_expr* binary = NULL;
-                switch (parse_binary(&binary, lhs, tokens, &prev_oper_pres, defer_sym_add, can_be_tuple, scope_id)) {
+                switch (parse_binary(&binary, lhs, tokens, &prev_oper_pres, can_be_tuple, scope_id)) {
                     case PARSE_EXPR_OK:
                         *result = binary;
                         lhs = *result;
