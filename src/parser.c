@@ -41,8 +41,7 @@ static PARSE_EXPR_STATUS parse_expr(
     bool can_be_tuple,
     Scope_id scope_id
 );
-// TODO: rename to parse_variable_def
-static PARSE_STATUS parse_variable_decl(
+static PARSE_STATUS parse_variable_def(
     Uast_variable_def** result,
     Tk_view* tokens,
     bool require_let,
@@ -157,22 +156,22 @@ static PARSE_STATUS msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
 }
 
 static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alias_tk, Pos mod_path_pos, Str_view mod_path) {
+    bool status = true;
     Uast_def* prev_def = NULL;
+    String file_path = {0};
+    Str_view old_mod_path = env.curr_mod_path;
+    env.curr_mod_path = mod_path;
     if (usymbol_lookup(&prev_def, name_new((Str_view) {0}, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL /* TODO */))) {
         goto finish;
     }
 
-    String file_path = {0};
     string_extend_strv(&a_main, &file_path, mod_path);
     string_extend_cstr(&a_main, &file_path, ".own");
-    Str_view old_mod_path = env.curr_mod_path;
-    env.curr_mod_path = mod_path;
     Uast_block* block = NULL;
     if (!parse_file(&block, string_to_strv(file_path))) {
-        // TODO: expected failure test
-        todo();
+        status = false;
+        goto finish;
     }
-    env.curr_mod_path = old_mod_path;
 
     unwrap(usym_tbl_add(uast_import_path_wrap(uast_import_path_new(
         mod_path_pos,
@@ -181,13 +180,14 @@ static bool get_mod_alias_from_path_token(Uast_mod_alias** mod_alias, Token alia
     ))));
 
 finish:
+    env.curr_mod_path = old_mod_path;
     *mod_alias = uast_mod_alias_new(
         alias_tk.pos,
         name_new(env.curr_mod_path, alias_tk.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
         name_new(env.curr_mod_path, mod_path, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL)
     );
     unwrap(usymbol_add(uast_mod_alias_wrap(*mod_alias)));
-    return true;
+    return status;
 }
 
 static bool starts_with_mod_alias(Tk_view tokens) {
@@ -995,7 +995,7 @@ static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* t
     bool is_optional = false;
     bool is_variadic = false;
     Uast_expr* opt_default = NULL;
-    if (PARSE_OK != parse_variable_decl(&base, tokens, false, add_to_sym_table, true, (Ulang_type) {0}, scope_id)) {
+    if (PARSE_OK != parse_variable_def(&base, tokens, false, add_to_sym_table, true, (Ulang_type) {0}, scope_id)) {
         return PARSE_EXPR_ERROR;
     }
     if (try_consume(NULL, tokens, TOKEN_TRIPLE_DOT)) {
@@ -1035,7 +1035,7 @@ static PARSE_EXPR_STATUS parse_optional_lang_type_parameter(Uast_variable_def** 
     }
 
     Uast_variable_def* param;
-    if (PARSE_OK != parse_variable_decl(&param, tokens, false, false, false, default_lang_type, scope_id)) {
+    if (PARSE_OK != parse_variable_def(&param, tokens, false, false, false, default_lang_type, scope_id)) {
         return PARSE_EXPR_ERROR;
     }
     try_consume(NULL, tokens, TOKEN_COMMA);
@@ -1208,7 +1208,7 @@ static PARSE_STATUS parse_struct_base_def(
     bool done = false;
     while (!done && tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_CLOSE_CURLY_BRACE) {
         Uast_variable_def* member;
-        switch (parse_variable_decl(&member, tokens, false, false, require_sub_types, default_lang_type, name.scope_id)) {
+        switch (parse_variable_def(&member, tokens, false, false, require_sub_types, default_lang_type, name.scope_id)) {
             case PARSE_ERROR:
                 return PARSE_ERROR;
             case PARSE_OK:
@@ -1460,7 +1460,7 @@ static PARSE_STATUS parse_type_def(Uast_def** def, Tk_view* tokens, Scope_id sco
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_variable_decl(
+static PARSE_STATUS parse_variable_def(
     Uast_variable_def** result,
     Tk_view* tokens,
     bool require_let,
@@ -1625,7 +1625,7 @@ static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens, Scope_id
         PARSE_STATUS status = PARSE_OK;
         Uast_block* outer = uast_block_new(for_token.pos, (Uast_stmt_vec) {0}, for_token.pos, block_scope);
         Uast_variable_def* var_def = NULL;
-        if (PARSE_OK != parse_variable_decl(&var_def, tokens, false, true, true, (Ulang_type) {0}, block_scope)) {
+        if (PARSE_OK != parse_variable_def(&var_def, tokens, false, true, true, (Ulang_type) {0}, block_scope)) {
             status = PARSE_ERROR;
             goto for_range_error;
         }
@@ -2052,7 +2052,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
         lhs = uast_block_wrap(block_def);
     } else if (starts_with_variable_decl(*tokens)) {
         Uast_variable_def* var_def = NULL;
-        if (PARSE_OK != parse_variable_decl(&var_def, tokens, true, true, true, (Ulang_type) {0}, scope_id)) {
+        if (PARSE_OK != parse_variable_def(&var_def, tokens, true, true, true, (Ulang_type) {0}, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_def_wrap(uast_variable_def_wrap(var_def));
@@ -2097,7 +2097,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
     if (tokens->count < 1 || !try_consume(NULL, tokens, TOKEN_NEW_LINE)) {
         msg(
             LOG_ERROR, EXPECT_FAIL_NO_NEW_LINE_AFTER_STATEMENT, tk_view_front(*tokens).pos,
-            "expected newline after stmt\n"
+            "expected newline after statement\n"
         );
         return PARSE_EXPR_ERROR;
     }
@@ -2154,6 +2154,8 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
         bool should_stop = false;
         switch (parse_stmt(&child, tokens, new_scope)) {
             case PARSE_EXPR_OK:
+                log_tokens(LOG_DEBUG, *tokens);
+                assert(child);
                 break;
             case PARSE_EXPR_ERROR:
                 assert(error_count > 0 && "error_count not incremented\n");

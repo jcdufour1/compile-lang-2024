@@ -1808,7 +1808,6 @@ bool try_set_member_access_types_finish_generic_struct(
 }
 
 bool try_set_member_access_types_finish_sum_def(
-     
     Tast_stmt** new_tast,
     Uast_sum_def* sum_def,
     Uast_member_access* access,
@@ -2082,7 +2081,6 @@ static bool try_set_condition_types(Tast_condition** new_cond, Uast_condition* c
 }
 
 bool try_set_primitive_def_types(Uast_primitive_def* tast) {
-    (void) env;
     unwrap(symbol_add(tast_primitive_def_wrap(tast_primitive_def_new(tast->pos, tast->lang_type))));
     return true;
 }

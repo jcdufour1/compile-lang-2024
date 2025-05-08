@@ -358,6 +358,7 @@ Str_view token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         case TOKEN_SHIFT_RIGHT: // fallthrough
         case TOKEN_OPEN_GENERIC: // fallthrough
         case TOKEN_CLOSE_GENERIC: // fallthrough
+        case TOKEN_IMPORT: // fallthrough
         case TOKEN_DEF: // fallthrough
         case TOKEN_TYPE_DEF:
             break;

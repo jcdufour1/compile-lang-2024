@@ -1,0 +1,6 @@
+type io import = std_parse_error
+
+fn main() i32 {
+    let num i32 = io.zero()
+    return 0
+}
