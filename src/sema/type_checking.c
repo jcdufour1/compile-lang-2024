@@ -2566,9 +2566,9 @@ error:
     return status;
 }
 
-bool try_set_label_types(Tast_label** new_tast, const Uast_label* lang_label) {
-    *new_tast = tast_label_new(lang_label->pos, name_new(env.curr_mod_path, lang_label->name, (Ulang_type_vec) {0}, 0 /* TODO */));
-    return lang_label;
+bool try_set_label_types(Tast_label** new_tast, const Uast_label* label) {
+    *new_tast = tast_label_new(label->pos, name_new(env.curr_mod_path, label->name, (Ulang_type_vec) {0}, 0 /* TODO */));
+    return label;
 }
 
 // TODO: merge this with msg_redefinition_of_symbol?

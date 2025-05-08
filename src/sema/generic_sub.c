@@ -282,7 +282,6 @@ void generic_sub_literal(Uast_literal* lit, Name gen_param, Ulang_type gen_arg) 
     (void) lit;
     (void) gen_param;
     (void) gen_arg;
-    return;
 }
 
 void generic_sub_operator(Uast_operator* oper, Name gen_param, Ulang_type gen_arg) {
