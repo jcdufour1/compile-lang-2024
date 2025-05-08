@@ -2288,7 +2288,7 @@ static Uast_binary* parser_binary_new(Uast_expr* lhs, Token operator_token, Uast
 }
 
 static PARSE_EXPR_STATUS parse_expr_piece(
-    Uast_expr** result, Tk_view* tokens, int32_t* prev_oper_pres, bool defer_sym_add, Scope_id scope_id
+    Uast_expr** result, Tk_view* tokens, int32_t* prev_oper_pres, Scope_id scope_id
 ) {
     if (tokens->count < 1) {
         return PARSE_EXPR_NONE;
@@ -2428,7 +2428,7 @@ static PARSE_EXPR_STATUS parse_unary(
             unreachable(TOKEN_FMT, token_print(TOKEN_MODE_LOG, oper));
     }
 
-    switch (parse_expr_piece(&child, tokens, prev_oper_pres, defer_sym_add, scope_id)) {
+    switch (parse_expr_piece(&child, tokens, prev_oper_pres, scope_id)) {
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_NONE:
@@ -2502,7 +2502,7 @@ static PARSE_EXPR_STATUS parse_binary(
 
         rhs = uast_operator_wrap(unary);
     } else {
-        switch (parse_expr_piece(&rhs, tokens, prev_oper_pres, defer_sym_add, scope_id)) {
+        switch (parse_expr_piece(&rhs, tokens, prev_oper_pres, scope_id)) {
             case PARSE_EXPR_OK:
                 break;
             case PARSE_EXPR_ERROR:
@@ -2906,7 +2906,7 @@ static PARSE_EXPR_STATUS parse_expr_side(
                 unreachable("");
         }
     } else {
-        switch (parse_expr_piece(&lhs, tokens, &prev_oper_pres, defer_sym_add, scope_id)) {
+        switch (parse_expr_piece(&lhs, tokens, &prev_oper_pres, scope_id)) {
             case PARSE_EXPR_OK:
                 *result = lhs;
                 break;
