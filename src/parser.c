@@ -2906,117 +2906,38 @@ static PARSE_EXPR_STATUS parse_expr_opening(
 }
 
 // parse expression, ignoring single equal
-static PARSE_EXPR_STATUS parse_expr_side(
+static PARSE_EXPR_STATUS parse_logical_and(
     Uast_expr** result,
     Tk_view* tokens,
-    bool can_be_tuple,
+    Scope_id scope_id
+) {
+    todo();
+}
+
+// parse expression, ignoring single equal
+static PARSE_EXPR_STATUS parse_logical_or(
+    Uast_expr** result,
+    Tk_view* tokens,
     Scope_id scope_id
 ) {
     Uast_expr* lhs = NULL;
-
-    int32_t prev_oper_pres = INT32_MAX;
-
-    if (tokens->count < 1) {
-        return PARSE_EXPR_NONE;
-    }
-    
-    if (tk_view_front(*tokens).type == TOKEN_SINGLE_DOT) {
-        lhs = uast_unknown_wrap(uast_unknown_new(tk_view_front(*tokens).pos));
-    } else if (is_unary(tk_view_front(*tokens).type)) {
-        prev_oper_pres = get_operator_precedence(tk_view_front(*tokens).type);
-        Uast_operator* unary = NULL;
-        switch (parse_unary(&unary, tokens, &prev_oper_pres, can_be_tuple, scope_id)) {
-            case PARSE_EXPR_OK:
-                lhs = uast_operator_wrap(unary);
-                *result = lhs;
-                break;
-            case PARSE_EXPR_ERROR:
-                return PARSE_EXPR_ERROR;
-            case PARSE_EXPR_NONE:
-                msg_expected_expr(*tokens, "for unary operator");
-                return PARSE_EXPR_ERROR;
-            default:
-                unreachable("");
-        }
-    } else {
-        switch (parse_expr_piece(&lhs, tokens, &prev_oper_pres, scope_id)) {
-            case PARSE_EXPR_OK:
-                *result = lhs;
-                break;
-            case PARSE_EXPR_NONE:
-                return PARSE_EXPR_NONE;
-            case PARSE_EXPR_ERROR:
-                return PARSE_EXPR_ERROR;
-            default:
-                todo();
-        }
+    PARSE_EXPR_STATUS status = parse_logical_and(&lhs, tokens, scope_id);
+    if (status != PARSE_EXPR_OK) {
+        return status;
     }
 
-    if (!token_is_operator(tk_view_front(*tokens), can_be_tuple)) {
-        if (lhs) {
-            *result = lhs;
-            return PARSE_EXPR_OK;
-        } else {
-            todo();
-        }
+    Token oper = {0};
+    if (!try_consume(&oper, tokens, TOKEN_LOGICAL_OR)) {
+        *result = lhs;
+        return status;
     }
 
-    while (token_is_operator(tk_view_front(*tokens), can_be_tuple)) {
-        if (!is_binary(tk_view_front(*tokens).type)) {
-            todo();
-        } else if (token_is_opening(tk_view_front(*tokens))) {
-            switch (parse_expr_opening(result, &lhs, tokens, &prev_oper_pres, scope_id)) {
-                case PARSE_EXPR_OK:
-                    lhs = *result;
-                    break;
-                case PARSE_EXPR_NONE:
-                    todo();
-                case PARSE_EXPR_ERROR:
-                    return PARSE_EXPR_ERROR;
-                default:
-                    unreachable("");
-            }
-        } else {
-            if (prev_oper_pres < get_operator_precedence(tk_view_front(*tokens).type)) {
-                prev_oper_pres = get_operator_precedence(tk_view_front(*tokens).type);
-                Uast_expr* binary = NULL;
-                switch (parse_binary(
-                    &binary,
-                    get_right_child_expr(lhs), tokens, &prev_oper_pres, can_be_tuple, scope_id)
-                ) {
-                    case PARSE_EXPR_OK:
-                        set_right_child_expr(lhs, binary);
-                        *result = lhs;
-                        assert(*result);
-                        break;
-                    case PARSE_EXPR_NONE:
-                        todo();
-                    case PARSE_EXPR_ERROR:
-                        return PARSE_EXPR_ERROR;
-                    default:
-                        todo();
-                }
-            } else {
-                prev_oper_pres = get_operator_precedence(tk_view_front(*tokens).type);
-                Uast_expr* binary = NULL;
-                switch (parse_binary(&binary, lhs, tokens, &prev_oper_pres, can_be_tuple, scope_id)) {
-                    case PARSE_EXPR_OK:
-                        *result = binary;
-                        lhs = *result;
-                        assert(*result);
-                        break;
-                    case PARSE_EXPR_NONE:
-                        return PARSE_EXPR_NONE;
-                    case PARSE_EXPR_ERROR:
-                        return PARSE_EXPR_ERROR;
-                    default:
-                        todo();
-                }
-            }
-        }
+    Uast_expr* rhs = NULL;
+    PARSE_EXPR_STATUS status = parse_logical_and(&rhs, tokens, scope_id);
+    if (status != PARSE_EXPR_OK) {
+        return status;
     }
-
-    assert(*result);
+    *result = uast_binary_new(oper.pos, lhs, rhs, TOKEN_LOGICAL_OR);
     return PARSE_EXPR_OK;
 }
 
@@ -3027,7 +2948,7 @@ static PARSE_EXPR_STATUS parse_expr(
     Scope_id scope_id
 ) {
     Uast_expr* lhs = NULL;
-    PARSE_EXPR_STATUS status = parse_expr_side(&lhs, tokens, can_be_tuple, scope_id);
+    PARSE_EXPR_STATUS status = parse_logical_or(&lhs, tokens, can_be_tuple, scope_id);
     if (status != PARSE_EXPR_OK) {
         return status;
     }
@@ -3040,7 +2961,7 @@ static PARSE_EXPR_STATUS parse_expr(
     
     // TODO: remove BINARY_SINGLE_EQUAL?
     Uast_expr* rhs = NULL;
-    switch (parse_expr_side(&rhs, tokens, can_be_tuple ,scope_id)) {
+    switch (parse_logical_or(&rhs, tokens, can_be_tuple ,scope_id)) {
         case PARSE_EXPR_OK:
             // TODO: do uast_assignment?
             //*result = uast_assignment_wrap(uast_assignment_new(equal_tk.pos, uast_expr_wrap(lhs), rhs));
