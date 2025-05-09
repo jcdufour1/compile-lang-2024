@@ -94,6 +94,8 @@ static inline Str_view expect_fail_type_print_internal(EXPECT_FAIL_TYPE type) {
             return str_view_from_cstr("invalid-octal");
         case EXPECT_FAIL_INVALID_CHAR_LIT:
             return str_view_from_cstr("invalid-char-lit");
+        case EXPECT_FAIL_INVALID_DECIMAL_LIT:
+            return str_view_from_cstr("invalid-decimal-lit");
         case EXPECT_FAIL_MISSING_CLOSE_MULTILINE:
             return str_view_from_cstr("missing-close-multiline");
         case EXPECT_FAIL_INVALID_COUNT_STRUCT_LIT_ARGS:

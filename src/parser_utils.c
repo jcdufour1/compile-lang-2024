@@ -129,10 +129,15 @@ bool try_str_view_bin_after_0b_to_int64_t(int64_t* result, const Pos pos, Str_vi
 bool try_str_view_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) {
     *result = 0;
     size_t idx = 0;
+    bool first_is_zero = false;
     for (idx = 0; idx < str_view.count; idx++) {
         char curr_char = str_view_at(str_view, idx);
         if (curr_char == '_') {
             continue;
+        }
+
+        if (idx == 0) {
+            first_is_zero = curr_char == '0';
         }
 
         if (curr_char == '0' && idx == 0 && str_view.count > 1 && isdigit(str_view_at(str_view, 1))) {
@@ -140,8 +145,10 @@ bool try_str_view_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) 
         }
 
         if (isalpha(curr_char)) {
-            if (idx != 1) {
-                todo();
+            // we are looking at x in 0x56, b in 0b10, etc.
+            if (!first_is_zero || idx != 1) {
+                msg(LOG_ERROR, EXPECT_FAIL_INVALID_DECIMAL_LIT, pos, "invalid decimal literal\n");
+                return false;
             }
 
             if (curr_char == 'x') {
@@ -160,7 +167,8 @@ bool try_str_view_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) 
                 );
             }
 
-            todo();
+            msg(LOG_ERROR, EXPECT_FAIL_INVALID_DECIMAL_LIT/* TODO */, pos, "invalid literal prefix 0x%c\n", curr_char);
+            return false;
         }
 
         if (!isdigit(curr_char)) {
@@ -213,17 +221,6 @@ bool try_str_view_to_char(char* result, const Pos pos, Str_view str_view) {
         }
     }
     unreachable("");
-    //String value = {0};
-    //get_char_eval_escapes(&a_main, &value, result.base, string_append_character);
-    //if (value.info.count < 1) {
-    //    // TODO: expected failure case
-    //    todo();
-    //}
-    //if (value.info.count > 1) {
-    //    log(LOG_DEBUG, TAST_FMT"\n", string_print(value));
-    //    msg(LOG_ERROR, EXPECT_FAIL_INVALID_CHAR_LIT, *pos, "too many characters in char literal\n");
-    //    return false;
-    //}
 }
 
 bool try_str_view_to_size_t(size_t* result, Str_view str_view) {
