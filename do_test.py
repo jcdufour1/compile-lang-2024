@@ -135,7 +135,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "missing_yield.own": 2*["missing-yield-statement"],
     EXPECTED_FAIL_EXAMPLES_DIR + "mismatched_yield_type.own": ["mismatched-yield-type"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_hex.own": ["invalid-hex"],
-    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_hex_2.own": ["invalid-hex"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_hex_2.own": ["invalid-hex"] + ["invalid-decimal-lit"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_octal.own": ["invalid-octal"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_octal_2.own": ["invalid-octal"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_bin.own": ["invalid-bin"],
@@ -166,6 +166,7 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "switch_missing_open_curly_brace.own": ["parser-expected"],
     EXPECTED_FAIL_EXAMPLES_DIR + "char_lit_too_large.own": ["invalid-char-lit"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_char_lit_2.own": 4*["invalid-char-lit"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "invalid_decimal_lit.own": 3*["invalid-decimal-lit"],
 }
 
 def to_str(a):
