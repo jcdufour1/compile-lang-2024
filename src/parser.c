@@ -2211,7 +2211,7 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
     }
 
 end:
-    // TODO: figure out how to either remove this code (prefered) or document it
+    // purpose of this code is to assert that did_consume_close_brace is always equal to false if status == PARSE_OK
     if (did_consume_close_brace) {
         unwrap((*block)->pos_end.line > 0);
     } else if (!is_top_level && status == PARSE_OK) {
@@ -2474,8 +2474,8 @@ static PARSE_EXPR_STATUS parse_unary(
             break;
         case PARSE_EXPR_NONE:
             return PARSE_EXPR_NONE;
-        default:
-            todo();
+        case PARSE_EXPR_ERROR:
+            return PARSE_EXPR_ERROR;
     }
 
     switch (oper.type) {
@@ -2931,13 +2931,10 @@ static PARSE_EXPR_STATUS parse_expr_side(
                 *result = lhs;
                 break;
             case PARSE_EXPR_ERROR:
-                // TODO
-                todo();
                 return PARSE_EXPR_ERROR;
             case PARSE_EXPR_NONE:
-                // TODO
-                todo();
-                return PARSE_EXPR_NONE;
+                msg_expected_expr(*tokens, "for unary operator");
+                return PARSE_EXPR_ERROR;
             default:
                 unreachable("");
         }

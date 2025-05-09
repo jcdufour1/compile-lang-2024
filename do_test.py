@@ -167,6 +167,9 @@ EXPECT_FAIL_FILE_PATH_TO_TYPE: dict[str, list[str]] = {
     EXPECTED_FAIL_EXAMPLES_DIR + "char_lit_too_large.own": ["invalid-char-lit"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_char_lit_2.own": 4*["invalid-char-lit"],
     EXPECTED_FAIL_EXAMPLES_DIR + "invalid_decimal_lit.own": 3*["invalid-decimal-lit"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "unary_child_expr_none.own": ["expected-expression"],
+    EXPECTED_FAIL_EXAMPLES_DIR + "unary_child_expr_error.own": ["expected-expression"],
+
 }
 
 def to_str(a):

@@ -1,0 +1,7 @@
+type io import = std.io
+
+fn main() i32 {
+    refer
+    return 0
+}
+
