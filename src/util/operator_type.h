@@ -2,6 +2,7 @@
 #define OPERATOR_TYPE_H
 
 #include <str_view.h>
+#include <token.h>
 
 typedef enum {
     BINARY_SINGLE_EQUAL,
@@ -91,6 +92,8 @@ static inline Str_view unary_type_to_str_view(UNARY_TYPE unary_type) {
     }
     unreachable("");
 }
+
+BINARY_TYPE binary_type_from_token_type(TOKEN_TYPE type);
 
 #define unary_type_print(unary_type) str_view_print(unary_type_to_str_view(unary_type))
 

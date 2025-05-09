@@ -138,6 +138,8 @@ Str_view token_type_to_str_view_msg(TOKEN_TYPE token_type) {
             return str_view_from_cstr("def");
         case TOKEN_EOF:
             return str_view_from_cstr("end-of-file");
+        case TOKEN_COUNT:
+            unreachable("");
     }
     unreachable("%d\n", token_type);
 }
@@ -278,6 +280,8 @@ Str_view token_type_to_str_view_log(TOKEN_TYPE token_type) {
             return str_view_from_cstr("def");
         case TOKEN_EOF:
             return str_view_from_cstr("eof");
+        case TOKEN_COUNT:
+            unreachable("");
     }
     unreachable("%d\n", token_type);
 }

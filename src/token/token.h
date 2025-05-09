@@ -96,6 +96,9 @@ typedef enum {
 
     // comment
     TOKEN_COMMENT,
+
+    // count
+    TOKEN_COUNT
 } TOKEN_TYPE;
 
 typedef struct {
@@ -248,6 +251,8 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_EOF:
             return false;
+        case TOKEN_COUNT:
+            unreachable("");
     }
     unreachable("");
 }
@@ -388,6 +393,8 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             return false;
         case TOKEN_EOF:
             return false;
+        case TOKEN_COUNT:
+            unreachable("");
     }
     unreachable(TOKEN_FMT"\n", token_print(TOKEN_MODE_LOG, token));
 }
@@ -548,6 +555,8 @@ static inline bool token_is_closing(Token curr_token) {
             return false;
         case TOKEN_EOF:
             return false;
+        case TOKEN_COUNT:
+            unreachable("");
     }
     unreachable("");
 }
@@ -688,6 +697,8 @@ static inline bool token_is_opening(Token curr_token) {
             return false;
         case TOKEN_EOF:
             return false;
+        case TOKEN_COUNT:
+            unreachable("");
     }
     unreachable("");
 }

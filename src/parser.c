@@ -529,6 +529,8 @@ static bool can_end_stmt(Token token) {
             return false;
         case TOKEN_EOF:
             return true;
+        case TOKEN_COUNT:
+            unreachable("");
     }
     unreachable("");
 }
@@ -733,6 +735,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_EOF:
             return false;
+        case TOKEN_COUNT:
+            unreachable("");
     }
     unreachable("");
 }
@@ -874,6 +878,8 @@ static bool is_binary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_EOF:
             return false;
+        case TOKEN_COUNT:
+            unreachable("");
     }
     unreachable("");
 }
@@ -2905,39 +2911,72 @@ static PARSE_EXPR_STATUS parse_expr_opening(
     }
 }
 
-// parse expression, ignoring single equal
-static PARSE_EXPR_STATUS parse_logical_and(
-    Uast_expr** result,
-    Tk_view* tokens,
-    Scope_id scope_id
-) {
-    todo();
-}
+//static_assert(TOKEN_COUNT == 67, "exhausive handling of token types; note that only binary operators need to be explicitly handled here");
+//static PARSE_EXPR_STATUS(*binary_fns[])(Uast_expr**, Tk_view*, Scope_id) = {
+//    // lowest precedence binary operator should be put closed to the top
+//    parse_logical_or
+//    parse_logical_and
+//    parse_bitwise_or
+//    parse_bitwise_and
+//};
 
-// parse expression, ignoring single equal
-static PARSE_EXPR_STATUS parse_logical_or(
+static_assert(TOKEN_COUNT == 67, "exhausive handling of token types; note that only binary operators need to be explicitly handled here");
+static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][2] = {
+    // {bin_type_1, bin_type_2},
+    {TOKEN_LOGICAL_OR, TOKEN_LOGICAL_OR},
+    {TOKEN_LOGICAL_AND, TOKEN_LOGICAL_AND},
+    {TOKEN_BITWISE_OR, TOKEN_BITWISE_OR},
+    {TOKEN_BITWISE_XOR, TOKEN_BITWISE_XOR},
+    {TOKEN_BITWISE_AND, TOKEN_BITWISE_AND},
+    {TOKEN_NOT_EQUAL, TOKEN_DOUBLE_EQUAL},
+};
+
+static PARSE_EXPR_STATUS parse_generic_binary(
     Uast_expr** result,
     Tk_view* tokens,
-    Scope_id scope_id
+    Scope_id scope_id,
+    size_t bin_idx // idx of BIN_IDX_TO_TOKEN_TYPES that will be used in this function invocation
 ) {
+    if (bin_idx >= sizeof(BIN_IDX_TO_TOKEN_TYPES)/sizeof(BIN_IDX_TO_TOKEN_TYPES[0])) {
+        // we have exhausted all binary operators; parse unary operators now
+        // TODO: parse unary operators and return
+        *result = uast_literal_wrap(uast_number_wrap(uast_number_new(POS_BUILTIN, 89)));
+        unwrap(try_consume(NULL, tokens, TOKEN_INT_LITERAL));
+        return PARSE_EXPR_OK;
+    }
+
+    TOKEN_TYPE bin_type_1 = BIN_IDX_TO_TOKEN_TYPES[bin_idx][0];
+    TOKEN_TYPE bin_type_2 = BIN_IDX_TO_TOKEN_TYPES[bin_idx][1];
+                         
     Uast_expr* lhs = NULL;
-    PARSE_EXPR_STATUS status = parse_logical_and(&lhs, tokens, scope_id);
+    PARSE_EXPR_STATUS status = parse_generic_binary(&lhs, tokens, scope_id, bin_idx + 1);
     if (status != PARSE_EXPR_OK) {
         return status;
     }
 
     Token oper = {0};
-    if (!try_consume(&oper, tokens, TOKEN_LOGICAL_OR)) {
-        *result = lhs;
-        return status;
+    if (try_consume(&oper, tokens, bin_type_1)) {
+        Uast_expr* rhs = NULL;
+        PARSE_EXPR_STATUS status = parse_generic_binary(&rhs, tokens, scope_id, bin_idx + 1);
+        if (status != PARSE_EXPR_OK) {
+            return status;
+        }
+        *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, lhs, rhs, binary_type_from_token_type(bin_type_1))));
+        return PARSE_EXPR_OK;
     }
 
-    Uast_expr* rhs = NULL;
-    PARSE_EXPR_STATUS status = parse_logical_and(&rhs, tokens, scope_id);
-    if (status != PARSE_EXPR_OK) {
-        return status;
+    if (try_consume(&oper, tokens, bin_type_2)) {
+        Uast_expr* rhs = NULL;
+        PARSE_EXPR_STATUS status = parse_generic_binary(&rhs, tokens, scope_id, bin_idx + 1);
+        if (status != PARSE_EXPR_OK) {
+            return status;
+        }
+        *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, lhs, rhs, binary_type_from_token_type(bin_type_2))));
+        return PARSE_EXPR_OK;
     }
-    *result = uast_binary_new(oper.pos, lhs, rhs, TOKEN_LOGICAL_OR);
+
+    // did not parse either operator type; just return lhs
+    *result = lhs;
     return PARSE_EXPR_OK;
 }
 
@@ -2948,7 +2987,7 @@ static PARSE_EXPR_STATUS parse_expr(
     Scope_id scope_id
 ) {
     Uast_expr* lhs = NULL;
-    PARSE_EXPR_STATUS status = parse_logical_or(&lhs, tokens, can_be_tuple, scope_id);
+    PARSE_EXPR_STATUS status = parse_generic_binary(&lhs, tokens, scope_id, 0);
     if (status != PARSE_EXPR_OK) {
         return status;
     }
@@ -2961,11 +3000,12 @@ static PARSE_EXPR_STATUS parse_expr(
     
     // TODO: remove BINARY_SINGLE_EQUAL?
     Uast_expr* rhs = NULL;
-    switch (parse_logical_or(&rhs, tokens, can_be_tuple ,scope_id)) {
+    switch (parse_generic_binary(&rhs, tokens, can_be_tuple ,scope_id)) {
         case PARSE_EXPR_OK:
             // TODO: do uast_assignment?
             //*result = uast_assignment_wrap(uast_assignment_new(equal_tk.pos, uast_expr_wrap(lhs), rhs));
             *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(equal_tk.pos, lhs, rhs, BINARY_SINGLE_EQUAL)));
+            assert(*result);
             return PARSE_EXPR_OK;
         case PARSE_EXPR_NONE:
             msg_expected_expr(*tokens, "after `=`");
