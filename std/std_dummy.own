@@ -17,3 +17,13 @@ fn printf(string u8*) {
     io.printf("from module dummy one: ")
     io.printf("%s\n", string)
 }
+
+
+fn true() i32 {
+    return 1
+}
+
+fn false() i32 {
+    return 0
+}
+
