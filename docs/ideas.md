@@ -93,6 +93,48 @@ fn Token<Type> get_token_value(Token& token) {
 }
 '''
 
+# generics idea 2
+# generics idea struct 2.1
+type Darr struct('ItemType, 'IndexType = usize) {
+    items ItemType*
+    count IndexType
+    capacity IndexType
+}
+# generics idea struct 2.2
+type Darr struct('ItemType, 'IndexType = usize) {
+    items ItemType*
+    count IndexType
+    capacity IndexType
+}
+
+type Arr struct('ItemType, 'count usize) {
+    items ItemType*
+    count usize
+}
+
+# generics idea function 2.1
+fn append(darr Darr*, item darr.ItemType) {
+    reserve(darr, 1)
+    darr.items[darr.count] = item
+    darr.count += 1
+}
+
+
+# generics idea function 2.2
+fn append(darr Darr(T, _)*, item T, T' = auto) {
+    reserve(darr, 1)
+    darr.items[darr.count] = item
+    darr.count += 1
+}
+
+# generics idea function 2.3
+// use `'T` to define T, and use `T` otherwise
+fn append(darr Darr('T, _)*, item T) {
+    reserve(darr, 1)
+    darr.items[darr.count] = item
+    darr.count += 1
+}
+
 allocate thing (error)
 '''c
 fn void main() {
@@ -405,4 +447,18 @@ fn token_print(using token Token) {
 '''c
 type Token struct {
 }
+'''
+
+# foreach
+'''c
+type struct Things {
+    items Thing[]
+}
+
+fn foreach Things(things Things) {
+    for (usize idx = 0; idx < things.items.count; idx++) {
+        yield things.items[idx]
+    }
+}
+
 '''
