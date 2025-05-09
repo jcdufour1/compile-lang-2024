@@ -4,6 +4,18 @@
 #include <ulang_type_forward_decl.h>
 #include <newstring.h>
 
+typedef enum {
+    UNAME_MSG,
+    UNAME_LOG,
+} UNAME_MODE;
+
+typedef enum {
+    NAME_MSG,
+    NAME_LOG,
+    NAME_EMIT_C,
+    NAME_EMIT_LLVM,
+} NAME_MODE;
+
 typedef struct {
     Str_view mod_path;
     Str_view base;
@@ -36,11 +48,9 @@ Str_view uname_print_internal(Uname name);
 
 void extend_name_msg(String* buf, Name name);
 
-void extend_uname_msg(String* buf, Uname name);
+void extend_uname(UNAME_MODE mode, String* buf, Uname name);
 
-void extend_uname(String* buf, Uname name);
-
-void extend_name(bool is_llvm, bool is_c, String* buf, Name name);
+void extend_name(NAME_MODE mode, String* buf, Name name);
 
 Name name_clone(Name name, Scope_id scope_id);
 

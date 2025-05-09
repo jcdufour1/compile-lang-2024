@@ -52,7 +52,22 @@ void extend_lang_type_atom(String* string, LANG_TYPE_MODE mode, Lang_type_atom a
     Name temp = atom.str;
 
     if (atom.str.base.count > 1) {
-        extend_name(mode == LANG_TYPE_MODE_EMIT_LLVM, mode == LANG_TYPE_MODE_EMIT_C, string, atom.str);
+        switch (mode) {
+            case LANG_TYPE_MODE_LOG:
+                extend_name(NAME_LOG, string, atom.str);
+                break;
+            case LANG_TYPE_MODE_MSG:
+                extend_name(NAME_MSG, string, atom.str);
+                break;
+            case LANG_TYPE_MODE_EMIT_C:
+                extend_name(NAME_EMIT_C, string, atom.str);
+                break;
+            case LANG_TYPE_MODE_EMIT_LLVM:
+                extend_name(NAME_EMIT_LLVM, string, atom.str);
+                break;
+            default:
+                unreachable("");
+        }
     } else {
         string_extend_cstr(&print_arena, string, "void");
     }

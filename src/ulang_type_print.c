@@ -23,7 +23,7 @@ void extend_ulang_type_atom_to_string(String* string, LANG_TYPE_MODE mode, Ulang
     }
 
     if (atom.str.base.count > 1) {
-        extend_uname(string, atom.str);
+        extend_uname(mode == LANG_TYPE_MODE_MSG ? UNAME_MSG : UNAME_LOG, string, atom.str);
     } else {
         string_extend_cstr(&print_arena, string, "<null>");
     }

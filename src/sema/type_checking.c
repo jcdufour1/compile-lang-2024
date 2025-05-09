@@ -207,7 +207,7 @@ static void msg_invalid_count_function_args_internal(
     String message = {0};
     string_extend_size_t(&print_arena, &message, fun_call->args.info.count);
     string_extend_cstr(&print_arena, &message, " arguments are passed to function `");
-    extend_name(false, false, &message, fun_decl->name);
+    extend_name(NAME_LOG, &message, fun_decl->name);
     string_extend_cstr(&print_arena, &message, "`, but ");
     string_extend_size_t(&print_arena, &message, min_args);
     if (max_args > min_args) {
@@ -2451,9 +2451,9 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
                     string_extend_cstr(&a_main, &string, ", ");
                 }
 
-                extend_name(false, false, &string, enum_def.name);
+                extend_name(NAME_LOG, &string, enum_def.name);
                 string_extend_cstr(&a_main, &string, ".");
-                extend_name(false, false, &string, vec_at(&enum_def.members, idx)->name);
+                extend_name(NAME_LOG, &string, vec_at(&enum_def.members, idx)->name);
             }
         }
 

@@ -102,22 +102,23 @@ Str_view serialize_name(Name name) {
 // TODO: move this macro
 Str_view name_print_internal(bool serialize, Name name) {
     if (serialize) {
+        todo();
         return serialize_name(name);
     }
         
     String buf = {0};
-    extend_name(false, false, &buf, name);
+    extend_name(NAME_LOG/* TODO*/, &buf, name);
     return string_to_strv(buf);
 }
 
 Str_view uname_print_internal(Uname name) {
     String buf = {0};
-    extend_uname(&buf, name);
+    extend_uname(UNAME_LOG/* TODO */, &buf, name);
     return string_to_strv(buf);
 }
 
-void extend_name_msg(String* buf, Name name) {
-    if (name.scope_id > 0) {
+static void extend_name_log_internal(bool is_msg, String* buf, Name name) {
+    if (!is_msg) {
         string_extend_cstr(&a_main, buf, "s");
         string_extend_size_t(&a_main, buf, name.scope_id);
         string_extend_cstr(&a_main, buf, "_");
@@ -142,9 +143,15 @@ void extend_name_msg(String* buf, Name name) {
     }
 }
 
-void extend_uname_msg(String* buf, Uname name) {
-    extend_name(false, false, buf, name.mod_alias);
-    if (name.mod_alias.base.count > 0 || name.mod_alias.scope_id > 0) {
+void extend_name_msg(String* buf, Name name) {
+    extend_name_log_internal(true, buf, name);
+}
+
+// TODO: move this function elsewhere
+// TODO: move this function elsewhere
+void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
+    extend_name(mode == UNAME_MSG ? NAME_MSG : NAME_LOG, buf, name.mod_alias);
+    if (name.mod_alias.base.count > 0 || (mode != UNAME_MSG && name.mod_alias.scope_id > 0)) {
         string_extend_cstr(&print_arena, buf, ".");
     }
     string_extend_strv(&print_arena, buf, name.base);
@@ -162,20 +169,22 @@ void extend_uname_msg(String* buf, Uname name) {
     }
 }
 
-// TODO: move this function elsewhere
-// TODO: move this function elsewhere
-void extend_uname(String* buf, Uname name) {
-    extend_uname_msg(buf, name);
-}
-
-void extend_name(bool is_llvm, bool is_c, String* buf, Name name) {
-    if (is_llvm) {
-        extend_name_llvm(buf, name);
-    } else if (is_c) {
-        extend_name_llvm(buf, name);
-    } else {
-        extend_name_msg(buf, name);
+void extend_name(NAME_MODE mode, String* buf, Name name) {
+    switch (mode) {
+        case NAME_MSG:
+            extend_name_log_internal(true, buf, name);
+            return;
+        case NAME_LOG:
+            extend_name_log_internal(false, buf, name);
+            return;
+        case NAME_EMIT_C:
+            extend_name_llvm(buf, name);
+            return;
+        case NAME_EMIT_LLVM:
+            extend_name_llvm(buf, name);
+            return;
     }
+    unreachable("");
 }
 
 Name name_clone(Name name, Scope_id new_scope) {
