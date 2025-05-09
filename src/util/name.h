@@ -42,9 +42,9 @@ Str_view serialize_name_symbol_table(Name name);
 
 Str_view serialize_name(Name name);
 
-Str_view name_print_internal(bool serialize, Name name);
+Str_view name_print_internal(NAME_MODE mode, bool serialize, Name name);
 
-Str_view uname_print_internal(Uname name);
+Str_view uname_print_internal(UNAME_MODE mode, Uname name);
 
 void extend_name_msg(String* buf, Name name);
 
@@ -56,8 +56,8 @@ Name name_clone(Name name, Scope_id scope_id);
 
 Uname uname_clone(Uname name, Scope_id scope_id);
 
-#define name_print(name) str_view_print(name_print_internal(false, name))
+#define name_print(mode, name) str_view_print(name_print_internal(mode, false, name))
 
-#define uname_print(name) str_view_print(uname_print_internal(name))
+#define uname_print(mode, name) str_view_print(uname_print_internal(mode, name))
 
 #endif // NAME_H

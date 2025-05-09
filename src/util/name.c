@@ -100,20 +100,19 @@ Str_view serialize_name(Name name) {
 }
 
 // TODO: move this macro
-Str_view name_print_internal(bool serialize, Name name) {
+Str_view name_print_internal(NAME_MODE mode, bool serialize, Name name) {
     if (serialize) {
-        todo();
         return serialize_name(name);
     }
         
     String buf = {0};
-    extend_name(NAME_LOG/* TODO*/, &buf, name);
+    extend_name(mode, &buf, name);
     return string_to_strv(buf);
 }
 
-Str_view uname_print_internal(Uname name) {
+Str_view uname_print_internal(UNAME_MODE mode, Uname name) {
     String buf = {0};
-    extend_uname(UNAME_LOG/* TODO */, &buf, name);
+    extend_uname(mode, &buf, name);
     return string_to_strv(buf);
 }
 

@@ -152,14 +152,14 @@ static void msg_parser_expected_internal(const char* file, int line, Token got, 
 static PARSE_STATUS msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
     msg(
         LOG_ERROR, EXPECT_FAIL_REDEFINITION_SYMBOL, uast_def_get_pos(new_sym_def),
-        "redefinition of symbol "STR_VIEW_FMT"\n", name_print(uast_def_get_name(new_sym_def))
+        "redefinition of symbol `"STR_VIEW_FMT"`\n", name_print(NAME_MSG, uast_def_get_name(new_sym_def))
     );
 
     Uast_def* original_def;
     unwrap(usymbol_lookup(&original_def, uast_def_get_name(new_sym_def)));
     msg(
         LOG_NOTE, EXPECT_FAIL_NONE, uast_def_get_pos(original_def),
-        STR_VIEW_FMT " originally defined here\n", name_print(uast_def_get_name(original_def))
+        "`"STR_VIEW_FMT"` originally defined here\n", name_print(NAME_MSG, uast_def_get_name(original_def))
     );
 
     return PARSE_ERROR;

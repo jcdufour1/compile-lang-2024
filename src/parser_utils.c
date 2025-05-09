@@ -431,7 +431,7 @@ Name get_storage_location(Name sym_name) {
     Tast_def* sym_def_;
     if (!symbol_lookup(&sym_def_, sym_name)) {
         symbol_log(LOG_DEBUG, sym_name.scope_id);
-        unreachable("symbol definition for symbol "STR_VIEW_FMT" not found\n", name_print(sym_name));
+        unreachable("symbol definition for symbol "STR_VIEW_FMT" not found\n", name_print(NAME_LOG, sym_name));
     }
 
     switch (sym_def_->type) {

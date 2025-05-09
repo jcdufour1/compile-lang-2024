@@ -202,6 +202,6 @@ size_t struct_def_get_idx_matching_member(Llvm_struct_def* def, Name memb_name) 
         }
     }
     log(LOG_DEBUG, TAST_FMT"\n", llvm_struct_def_print(def));
-    unreachable(TAST_FMT, name_print(memb_name));
+    unreachable(TAST_FMT, name_print(NAME_MSG, memb_name));
 }
 

@@ -185,14 +185,14 @@ static void msg_invalid_function_arg_internal(
         "argument is of type `"LANG_TYPE_FMT"`, "
         "but the corresponding parameter `"STR_VIEW_FMT"` is of type `"LANG_TYPE_FMT"`\n",
         lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(argument)), 
-        name_print(corres_param->name),
+        name_print(NAME_MSG, corres_param->name),
         ulang_type_print(LANG_TYPE_MODE_MSG, corres_param->lang_type)
     );
     msg_internal(
         file, line,
         LOG_NOTE, EXPECT_FAIL_NONE, corres_param->pos,
         "corresponding parameter `"STR_VIEW_FMT"` defined here\n",
-        name_print(corres_param->name)
+        name_print(NAME_MSG, corres_param->name)
     );
 }
 
@@ -221,7 +221,7 @@ static void msg_invalid_count_function_args_internal(
 
     msg_internal(
         file, line, LOG_NOTE, EXPECT_FAIL_NONE, uast_function_decl_get_pos(fun_decl),
-        "function `"STR_VIEW_FMT"` defined here\n", name_print(fun_decl->name)
+        "function `"STR_VIEW_FMT"` defined here\n", name_print(NAME_MSG, fun_decl->name)
     );
 }
 
@@ -1024,7 +1024,7 @@ static bool try_set_struct_literal_member_types(Tast_expr_vec* new_membs, Uast_e
                 msg(
                     LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL, lhs->pos,
                     "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
-                    str_view_print(memb_def->name.base), name_print(lhs->member_name->name)
+                    str_view_print(memb_def->name.base), name_print(NAME_MSG, lhs->member_name->name)
                 );
                 return false;
             }
@@ -1594,7 +1594,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     msg(
                         LOG_ERROR, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, fun_call->pos,
                         "cannot assign argument to varient `"LANG_TYPE_FMT"."LANG_TYPE_FMT"`, because inner type is void\n",
-                        lang_type_print(LANG_TYPE_MODE_MSG, sum_lit->sum_lang_type), name_print(vec_at(&sum_def->base.members, (size_t)sum_lit->tag->data)->name)
+                        lang_type_print(LANG_TYPE_MODE_MSG, sum_lit->sum_lang_type), name_print(NAME_MSG, vec_at(&sum_def->base.members, (size_t)sum_lit->tag->data)->name)
                     );
                     return false;
                 }
@@ -1774,7 +1774,7 @@ static void msg_invalid_member_internal(
         file, line, LOG_ERROR, EXPECT_FAIL_INVALID_MEMBER_ACCESS,
         access->pos,
         "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 
-        str_view_print(access->member_name->name.base), name_print(base_name)
+        str_view_print(access->member_name->name.base), name_print(NAME_MSG, base_name)
     );
 }
 
@@ -2373,7 +2373,7 @@ static bool check_for_exhaustiveness_inner(
                 msg(
                     LOG_ERROR, EXPECT_FAIL_DUPLICATE_CASE, curr_if->pos,
                     "duplicate case `"STR_VIEW_FMT"."STR_VIEW_FMT"` in switch statement\n",
-                    name_print(enum_def->base.name), name_print(vec_at(&enum_def->base.members, (size_t)curr_lit->data)->name)
+                    name_print(NAME_MSG, enum_def->base.name), name_print(NAME_MSG, vec_at(&enum_def->base.members, (size_t)curr_lit->data)->name)
                 );
                 msg(
                     LOG_NOTE, EXPECT_FAIL_NONE, vec_at(&exhaustive_data->covered_pos,
@@ -2400,7 +2400,7 @@ static bool check_for_exhaustiveness_inner(
                 msg(
                     LOG_ERROR, EXPECT_FAIL_DUPLICATE_CASE, curr_if->pos,
                     "duplicate case `"STR_VIEW_FMT"."STR_VIEW_FMT"` in switch statement\n",
-                    name_print(sum_def->base.name), name_print(vec_at(&sum_def->base.members, (size_t)curr_lit->data)->name)
+                    name_print(NAME_MSG, sum_def->base.name), name_print(NAME_MSG, vec_at(&sum_def->base.members, (size_t)curr_lit->data)->name)
                 );
                 msg(
                     LOG_NOTE, EXPECT_FAIL_NONE, vec_at(&exhaustive_data->covered_pos,
@@ -2573,14 +2573,14 @@ bool try_set_label_types(Tast_label** new_tast, const Uast_label* label) {
 static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
     msg(
         LOG_ERROR, EXPECT_FAIL_REDEFINITION_SYMBOL, uast_def_get_pos(new_sym_def),
-        "redefinition of symbol "STR_VIEW_FMT"\n", name_print(uast_def_get_name(new_sym_def))
+        "redefinition of symbol "STR_VIEW_FMT"\n", name_print(NAME_MSG, uast_def_get_name(new_sym_def))
     );
 
     Uast_def* original_def;
     unwrap(usymbol_lookup(&original_def, uast_def_get_name(new_sym_def)));
     msg(
         LOG_NOTE, EXPECT_FAIL_NONE, uast_def_get_pos(original_def),
-        STR_VIEW_FMT " originally defined here\n", name_print(uast_def_get_name(original_def))
+        STR_VIEW_FMT " originally defined here\n", name_print(NAME_MSG, uast_def_get_name(original_def))
     );
 }
 

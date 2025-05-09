@@ -50,8 +50,8 @@ bool name_from_uname(Name* new_name, Uname name) {
     Uast_def* result = NULL;
     if (!usymbol_lookup(&result, name_new(name.mod_alias.mod_path /* TODO */, name.mod_alias.base, (Ulang_type_vec) {0}, name.mod_alias.scope_id))) {
         log(LOG_DEBUG, "name_from_uname path 2\n");
-        log(LOG_DEBUG, TAST_FMT"\n", uname_print(name));
-        log(LOG_DEBUG, TAST_FMT"\n", name_print(name_new(name.mod_alias.mod_path /* TODO */, name.mod_alias.base, (Ulang_type_vec) {0}, name.mod_alias.scope_id)));
+        log(LOG_DEBUG, TAST_FMT"\n", uname_print(UNAME_MSG, name));
+        log(LOG_DEBUG, TAST_FMT"\n", name_print(NAME_LOG, name_new(name.mod_alias.mod_path /* TODO */, name.mod_alias.base, (Ulang_type_vec) {0}, name.mod_alias.scope_id)));
         todo();
     }
 
