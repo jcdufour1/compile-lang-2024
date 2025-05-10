@@ -78,6 +78,17 @@ static bool try_consume_1_of_2(Token* result, Tk_view* tokens, TOKEN_TYPE a, TOK
     return false;
 }
 
+static bool try_peek_1_of_2(Token* result, Tk_view* tokens, TOKEN_TYPE a, TOKEN_TYPE b) {
+    if (tk_view_front(*tokens).type == a) {
+        *result = tk_view_front(*tokens);
+        return true;
+    }
+    if (tk_view_front(*tokens).type == b) {
+        return true;
+    }
+    return false;
+}
+
 static bool try_consume_if_not(Token* result, Tk_view* tokens, TOKEN_TYPE type) {
     if (tokens->count < 1 || tk_view_front(*tokens).type == type) {
         return false;
@@ -2961,6 +2972,7 @@ static PARSE_EXPR_STATUS parse_generic_binary(
     TOKEN_TYPE bin_type_2 = BIN_IDX_TO_TOKEN_TYPES[bin_idx][1];
                          
     Uast_expr* new_lhs = NULL;
+    Uast_expr* new_rhs = NULL;
     if (is_lhs) {
         new_lhs = lhs;
     } else {
@@ -2970,89 +2982,41 @@ static PARSE_EXPR_STATUS parse_generic_binary(
         }
     }
 
-    log(LOG_DEBUG, "test 20: %d "TAST_FMT, depth, uast_expr_print(new_lhs));
-    log_tokens(LOG_DEBUG, *tokens);
-
     Token oper = {0};
     if (!try_consume_1_of_2(&oper, tokens, bin_type_1, bin_type_2)) {
-        // did not parse either operator type; just return lhs
+        todo();
         *result = new_lhs;
         return PARSE_EXPR_OK;
     }
-
-    log(LOG_DEBUG, "test 21: %d "TAST_FMT, depth, uast_expr_print(new_lhs));
     log_tokens(LOG_DEBUG, *tokens);
 
-    Uast_expr* rhs = NULL;
-    PARSE_EXPR_STATUS status = parse_generic_binary(&rhs, NULL, false, tokens, scope_id, bin_idx, depth + 1);
+    PARSE_EXPR_STATUS status = parse_generic_binary(&new_rhs, new_lhs, true, tokens, scope_id, bin_idx + 1, depth + 1);
     if (status != PARSE_EXPR_OK) {
+        todo();
         return status;
     }
-    if (!expr_is_binary(rhs)) {
-        *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(POS_BUILTIN/*TODO*/, new_lhs, rhs, binary_type_from_token_type(oper.type))));
-        return PARSE_EXPR_OK;
-    }
-    Uast_binary* rhs_bin = uast_binary_unwrap(uast_operator_unwrap(rhs));
-    if (rhs_bin->token_type != binary_type_from_token_type(bin_type_1) && rhs_bin->token_type != binary_type_from_token_type(bin_type_2)) {
-        todo();
-    }
-    Uast_expr* lhs_of_rhs = rhs_bin->lhs;
-    log(LOG_DEBUG, "test 23: %d "TAST_FMT, depth, uast_expr_print(new_lhs));
-    log(LOG_DEBUG, "test 24: %d "TAST_FMT, depth, uast_expr_print(rhs));
-    log(LOG_DEBUG, "test 25: %d "TAST_FMT, depth, uast_expr_print(lhs_of_rhs));
-    *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(POS_BUILTIN/*TODO*/, new_lhs, lhs_of_rhs, binary_type_from_token_type(oper.type))));
-    log(LOG_DEBUG, "test 26: %d "TAST_FMT, depth, uast_expr_print(*result));
-    rhs_bin->lhs = *result;
-    *result = uast_operator_wrap(uast_binary_wrap(rhs_bin));
-    log(LOG_DEBUG, "test 27: %d "TAST_FMT, depth, uast_expr_print(*result));
-    return PARSE_EXPR_OK;
-    log(LOG_DEBUG, "test 26: %d "TAST_FMT, depth, uast_binary_print(rhs_bin));
-    todo();
-    log(LOG_DEBUG, "test 24: %d "TAST_FMT, depth, uast_expr_print(rhs));
     log_tokens(LOG_DEBUG, *tokens);
 
+    log(LOG_DEBUG, "%d lhs with higher pres then child calls: "TAST_FMT, depth, uast_expr_print(new_lhs));
+    *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(POS_BUILTIN/*TODO*/, new_lhs, new_rhs, binary_type_from_token_type(oper.type))));
+    log(LOG_DEBUG, "%d result with higher pres then child calls: "TAST_FMT, depth, uast_expr_print(*result));
 
-    Uast_expr* new_oper = uast_operator_wrap(uast_binary_wrap(uast_binary_new(POS_BUILTIN/*TODO*/, new_lhs, rhs, binary_type_from_token_type(oper.type))));
-    if (!try_consume_1_of_2(&oper, tokens, bin_type_1, bin_type_2)) {
-        // did not parse either operator type; just return lhs
-        *result = new_oper;
+    if (!try_peek_1_of_2(&oper, tokens, bin_type_1, bin_type_2)) {
         return PARSE_EXPR_OK;
     }
+    log(LOG_DEBUG, "%d ", depth);
+    log_tokens(LOG_DEBUG, *tokens);
 
-    // there is another operator of the same precedence; we need to handle left-to-right associtivity
-
-    switch (parse_generic_binary(&rhs, new_oper, true, tokens, scope_id, bin_idx, depth + 1)) {
-        case PARSE_EXPR_NONE:
-            *result = new_lhs;
-            log(LOG_DEBUG, "thing 42 depth: %d "TAST_FMT, depth, uast_expr_print(*result));
-            todo();
-        case PARSE_EXPR_OK:
-            *result = rhs;
-            log(LOG_DEBUG, "thing 43 depth: %d "TAST_FMT, depth, uast_expr_print(*result));
-            todo();
-        case PARSE_EXPR_ERROR:
-            todo();
-        default:
-            unreachable("");
+    status = parse_generic_binary(result, *result, true, tokens, scope_id, bin_idx, depth + 1);
+    if (status != PARSE_EXPR_OK) {
+        todo();
+        return status;
     }
-    unreachable("");
-    
-    //log(LOG_DEBUG, "thing 38 depth: %d "TAST_FMT, depth, uast_expr_print(new_lhs));
-    //log(LOG_DEBUG, "thing 39 depth: %d "TAST_FMT, depth, uast_expr_print(rhs));
-    //new_lhs = uast_operator_wrap(uast_binary_wrap(uast_binary_new(POS_BUILTIN/*TODO*/, new_lhs, rhs, binary_type_from_token_type(oper.type))));
-    //log(LOG_DEBUG, "thing 40 depth: %d "TAST_FMT, depth, uast_expr_print(new_lhs));
+    log_tokens(LOG_DEBUG, *tokens);
 
-    //new_lhs = temp_lhs;
-    //did_consume_oper = true;
-    //if (status != PARSE_EXPR_OK) {
-    //    return status;
-    //}
-    //unreachable("");
-    //log(LOG_DEBUG, "thing 45 depth: %d "TAST_FMT, depth, uast_expr_print(new_lhs));
-    //log(LOG_DEBUG, "thing 48 depth: %d "TAST_FMT, depth, uast_expr_print(rhs));
-    //*result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, new_lhs, rhs, binary_type_from_token_type(oper.type))));
-    //temp_lhs = rhs;
-    //todo();
+    log(LOG_DEBUG, "%d result final "TAST_FMT, depth, uast_expr_print(*result));
+    todo();
+
 }
 
 static PARSE_EXPR_STATUS parse_expr(
