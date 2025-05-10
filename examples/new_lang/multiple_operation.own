@@ -216,5 +216,10 @@ fn main() i32 {
     num100 += 2
     io.printf("num100: %d\n", num100)
 
+    // TODO: case for 
+    // let small i8 = 10
+    // let num i32* = unsafe_cast<i32*>refer small
+    // return deref num
+
     return 0
 }

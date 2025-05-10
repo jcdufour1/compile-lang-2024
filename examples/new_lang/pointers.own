@@ -35,7 +35,7 @@ fn set_div_denominator(div Div*) {
 }
 
 fn set_div_denominator_explicit_deref(div Div*) {
-    deref(div).denominator = 1234;
+    (deref div).denominator = 1234;
 }
 
 fn print_div(div Div*) {

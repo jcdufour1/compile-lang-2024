@@ -84,22 +84,34 @@ static bool try_consume(Token* result, Tk_view* tokens, TOKEN_TYPE type) {
     return true;
 }
 
-static bool try_consume_1_of_2(Token* result, Tk_view* tokens, TOKEN_TYPE a, TOKEN_TYPE b) {
+static bool try_consume_1_of_4(Token* result, Tk_view* tokens, TOKEN_TYPE a, TOKEN_TYPE b, TOKEN_TYPE c, TOKEN_TYPE d) {
     if (try_consume(result, tokens, a)) {
         return true;
     }
     if (try_consume(result, tokens, b)) {
         return true;
     }
+    if (try_consume(result, tokens, c)) {
+        return true;
+    }
+    if (try_consume(result, tokens, d)) {
+        return true;
+    }
     return false;
 }
 
-static bool try_peek_1_of_2(Token* result, Tk_view* tokens, TOKEN_TYPE a, TOKEN_TYPE b) {
+static bool try_peek_1_of_4(Token* result, Tk_view* tokens, TOKEN_TYPE a, TOKEN_TYPE b, TOKEN_TYPE c, TOKEN_TYPE d) {
     if (tk_view_front(*tokens).type == a) {
         *result = tk_view_front(*tokens);
         return true;
     }
     if (tk_view_front(*tokens).type == b) {
+        return true;
+    }
+    if (tk_view_front(*tokens).type == c) {
+        return true;
+    }
+    if (tk_view_front(*tokens).type == d) {
         return true;
     }
     return false;
@@ -2502,7 +2514,6 @@ static PARSE_EXPR_STATUS parse_high_presidence_internal(
         if (PARSE_OK != parse_expr_index(&lhs, lhs, tokens, &dummy, scope_id, oper.pos)) {
             return PARSE_EXPR_ERROR;
         }
-        assert(*result);
         return parse_high_presidence_internal(result, lhs, tokens, scope_id);
         // TODO: also consume TOKEN_CLOSE_SQ_BRACKET here
     }
@@ -2518,10 +2529,28 @@ static PARSE_EXPR_STATUS parse_high_presidence(
     Scope_id scope_id
 ) {
     Uast_expr* lhs = NULL;
-    int32_t dummy = 0;
-    PARSE_EXPR_STATUS status = parse_expr_piece(&lhs, tokens, &dummy, scope_id);
-    if (status != PARSE_EXPR_OK) {
-        return status;
+    Token oper = {0};
+    if (try_consume(&oper, tokens, TOKEN_SINGLE_DOT)) {
+        // eg. `.some` in `let opt Optional(<i32>) = .some`
+        Token memb_name = {0};
+        if (!try_consume(&memb_name, tokens, TOKEN_SYMBOL)) {
+            todo();
+        }
+
+        lhs = uast_member_access_wrap(uast_member_access_new(
+            oper.pos,
+            uast_symbol_new(
+                memb_name.pos,
+                name_new(env.curr_mod_path, memb_name.text, (Ulang_type_vec) {0}, scope_id)
+            ),
+            uast_unknown_wrap(uast_unknown_new(oper.pos))
+        ));
+    } else {
+        int32_t dummy = 0;
+        PARSE_EXPR_STATUS status = parse_expr_piece(&lhs, tokens, &dummy, scope_id);
+        if (status != PARSE_EXPR_OK) {
+            return status;
+        }
     }
 
     return parse_high_presidence_internal(result, lhs, tokens, scope_id);
@@ -2827,14 +2856,18 @@ static PARSE_STATUS parse_expr_generic(
 //};
 
 static_assert(TOKEN_COUNT == 67, "exhausive handling of token types; note that only binary operators need to be explicitly handled here");
-static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][2] = {
-    // {bin_type_1, bin_type_2},
-    {TOKEN_LOGICAL_OR, TOKEN_LOGICAL_OR},
-    {TOKEN_LOGICAL_AND, TOKEN_LOGICAL_AND},
-    {TOKEN_BITWISE_OR, TOKEN_BITWISE_OR},
-    {TOKEN_BITWISE_XOR, TOKEN_BITWISE_XOR},
-    {TOKEN_BITWISE_AND, TOKEN_BITWISE_AND},
-    {TOKEN_NOT_EQUAL, TOKEN_DOUBLE_EQUAL},
+static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
+    // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},
+    {TOKEN_LOGICAL_OR, TOKEN_LOGICAL_OR, TOKEN_LOGICAL_OR, TOKEN_LOGICAL_OR},
+    {TOKEN_LOGICAL_AND, TOKEN_LOGICAL_AND, TOKEN_LOGICAL_AND, TOKEN_LOGICAL_AND},
+    {TOKEN_BITWISE_OR, TOKEN_BITWISE_OR, TOKEN_BITWISE_OR, TOKEN_BITWISE_OR},
+    {TOKEN_BITWISE_XOR, TOKEN_BITWISE_XOR, TOKEN_BITWISE_XOR, TOKEN_BITWISE_XOR},
+    {TOKEN_BITWISE_AND, TOKEN_BITWISE_AND, TOKEN_BITWISE_AND, TOKEN_BITWISE_AND},
+    {TOKEN_NOT_EQUAL, TOKEN_DOUBLE_EQUAL, TOKEN_DOUBLE_EQUAL, TOKEN_DOUBLE_EQUAL},
+    {TOKEN_LESS_THAN, TOKEN_LESS_OR_EQUAL, TOKEN_GREATER_THAN, TOKEN_GREATER_OR_EQUAL},
+    {TOKEN_SHIFT_LEFT, TOKEN_SHIFT_RIGHT, TOKEN_SHIFT_RIGHT, TOKEN_SHIFT_RIGHT},
+    {TOKEN_SINGLE_PLUS, TOKEN_SINGLE_MINUS, TOKEN_SINGLE_MINUS, TOKEN_SINGLE_MINUS},
+    {TOKEN_SLASH, TOKEN_ASTERISK, TOKEN_MODULO, TOKEN_MODULO},
 };
 
 static PARSE_EXPR_STATUS parse_generic_binary(
@@ -2856,6 +2889,8 @@ static PARSE_EXPR_STATUS parse_generic_binary(
 
     TOKEN_TYPE bin_type_1 = BIN_IDX_TO_TOKEN_TYPES[bin_idx][0];
     TOKEN_TYPE bin_type_2 = BIN_IDX_TO_TOKEN_TYPES[bin_idx][1];
+    TOKEN_TYPE bin_type_3 = BIN_IDX_TO_TOKEN_TYPES[bin_idx][2];
+    TOKEN_TYPE bin_type_4 = BIN_IDX_TO_TOKEN_TYPES[bin_idx][3];
                          
     Uast_expr* new_lhs = NULL;
     Uast_expr* new_rhs = NULL;
@@ -2871,7 +2906,7 @@ static PARSE_EXPR_STATUS parse_generic_binary(
     // new_lhs has 1 when parsing &&
     // tokens left are || 2
     Token oper = {0};
-    if (!try_consume_1_of_2(&oper, tokens, bin_type_1, bin_type_2)) {
+    if (!try_consume_1_of_4(&oper, tokens, bin_type_1, bin_type_2, bin_type_3, bin_type_4)) {
         *result = new_lhs;
         assert(*result);
         return PARSE_EXPR_OK;
@@ -2885,7 +2920,7 @@ static PARSE_EXPR_STATUS parse_generic_binary(
 
     *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(POS_BUILTIN/*TODO*/, new_lhs, new_rhs, binary_type_from_token_type(oper.type))));
 
-    if (!try_peek_1_of_2(&oper, tokens, bin_type_1, bin_type_2)) {
+    if (!try_peek_1_of_4(&oper, tokens, bin_type_1, bin_type_2, bin_type_3, bin_type_4)) {
         assert(*result);
         return PARSE_EXPR_OK;
     }
