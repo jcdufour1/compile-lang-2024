@@ -624,6 +624,9 @@ Str_view uast_def_print_internal(const Uast_def* def, int indent) {
 }
 
 Str_view uast_expr_print_internal(const Uast_expr* expr, int indent) {
+    if (!expr) {
+        return str_view_from_cstr("<nothing>\n");
+    }
     switch (expr->type) {
         case UAST_OPERATOR:
             return uast_operator_print_internal(uast_operator_const_unwrap(expr), indent);
