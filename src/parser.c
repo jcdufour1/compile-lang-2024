@@ -2980,11 +2980,37 @@ static PARSE_EXPR_STATUS parse_generic_binary(
         return PARSE_EXPR_OK;
     }
 
+    log(LOG_DEBUG, "test 21: %d "TAST_FMT, depth, uast_expr_print(new_lhs));
+    log_tokens(LOG_DEBUG, *tokens);
+
     Uast_expr* rhs = NULL;
-    PARSE_EXPR_STATUS status = parse_generic_binary(&rhs, NULL, false, tokens, scope_id, bin_idx + 1, depth + 1);
+    PARSE_EXPR_STATUS status = parse_generic_binary(&rhs, NULL, false, tokens, scope_id, bin_idx, depth + 1);
     if (status != PARSE_EXPR_OK) {
         return status;
     }
+    if (!expr_is_binary(rhs)) {
+        *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(POS_BUILTIN/*TODO*/, new_lhs, rhs, binary_type_from_token_type(oper.type))));
+        return PARSE_EXPR_OK;
+    }
+    Uast_binary* rhs_bin = uast_binary_unwrap(uast_operator_unwrap(rhs));
+    if (rhs_bin->token_type != binary_type_from_token_type(bin_type_1) && rhs_bin->token_type != binary_type_from_token_type(bin_type_2)) {
+        todo();
+    }
+    Uast_expr* lhs_of_rhs = rhs_bin->lhs;
+    log(LOG_DEBUG, "test 23: %d "TAST_FMT, depth, uast_expr_print(new_lhs));
+    log(LOG_DEBUG, "test 24: %d "TAST_FMT, depth, uast_expr_print(rhs));
+    log(LOG_DEBUG, "test 25: %d "TAST_FMT, depth, uast_expr_print(lhs_of_rhs));
+    *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(POS_BUILTIN/*TODO*/, new_lhs, lhs_of_rhs, binary_type_from_token_type(oper.type))));
+    log(LOG_DEBUG, "test 26: %d "TAST_FMT, depth, uast_expr_print(*result));
+    rhs_bin->lhs = *result;
+    *result = uast_operator_wrap(uast_binary_wrap(rhs_bin));
+    log(LOG_DEBUG, "test 27: %d "TAST_FMT, depth, uast_expr_print(*result));
+    return PARSE_EXPR_OK;
+    log(LOG_DEBUG, "test 26: %d "TAST_FMT, depth, uast_binary_print(rhs_bin));
+    todo();
+    log(LOG_DEBUG, "test 24: %d "TAST_FMT, depth, uast_expr_print(rhs));
+    log_tokens(LOG_DEBUG, *tokens);
+
 
     Uast_expr* new_oper = uast_operator_wrap(uast_binary_wrap(uast_binary_new(POS_BUILTIN/*TODO*/, new_lhs, rhs, binary_type_from_token_type(oper.type))));
     if (!try_consume_1_of_2(&oper, tokens, bin_type_1, bin_type_2)) {
