@@ -81,6 +81,7 @@ static PARSE_EXPR_STATUS parse_generic_binary(
     size_t bin_idx, // idx of BIN_IDX_TO_TOKEN_TYPES that will be used in this function invocation
     int depth
 );
+static bool is_unary(TOKEN_TYPE token_type);
 
 // TODO: inline this function?
 static bool try_consume_internal(Token* result, Tk_view* tokens, bool allow_any_type, TOKEN_TYPE type) {
@@ -172,12 +173,11 @@ static bool try_consume_if_not(Token* result, Tk_view* tokens, TOKEN_TYPE type) 
     return true;
 }
 
-static Token consume_operator(Tk_view* tokens) {
-    // TODO: rewrite this function to return false instead of crashing
-    // try to make expected failure case for it
+static Token consume_unary(Tk_view* tokens) {
     Token result = {0};
     unwrap(try_consume_if_not(&result, tokens, TOKEN_EOF));
     try_consume(NULL, tokens, TOKEN_NEW_LINE);
+    assert(is_unary(result.type) && "there is a bug somewhere in the parser");
     return result;
 }
 
@@ -2464,7 +2464,7 @@ static PARSE_EXPR_STATUS parse_unary(
     if (!is_unary(tk_view_front(*tokens).type)) {
         return parse_high_presidence(result, tokens, scope_id);
     }
-    Token oper = consume_operator(tokens);
+    Token oper = consume_unary(tokens);
 
     *prev_oper_pres = get_operator_precedence(oper.type);
 
@@ -2845,20 +2845,29 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
     }
 
     Token equal_tk = {0};
+    bool is_assign_bin = false;
+    Token oper = {0};
     if (try_consume(&equal_tk, tokens, TOKEN_ASSIGN_BY_BIN)) {
-        todo();
+        is_assign_bin = true;
+        oper = consume(tokens);
+        assert(token_is_binary(oper.type) && "this is likely a bug in the tokenizer");
     } else if (!try_consume(&equal_tk, tokens, TOKEN_SINGLE_EQUAL)) {
         *result = lhs;
         assert(*result);
         return PARSE_EXPR_OK;
     }
+    log_tokens(LOG_DEBUG, *tokens);
     
     Uast_expr* rhs = NULL;
+    Uast_expr* final_rhs = NULL;
     switch (parse_generic_binary(&rhs, tokens, scope_id, 0, 0)) {
         case PARSE_EXPR_OK:
-            // TODO: do uast_assignment?
-            //*result = uast_assignment_wrap(uast_assignment_new(equal_tk.pos, uast_expr_wrap(lhs), rhs));
-            *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(equal_tk.pos, lhs, rhs, BINARY_SINGLE_EQUAL)));
+            if (is_assign_bin) {
+                final_rhs = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, uast_expr_clone(lhs, scope_id), rhs, binary_type_from_token_type(oper.type))));
+            } else {
+                final_rhs = rhs;
+            }
+            *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(equal_tk.pos, lhs, final_rhs, BINARY_SINGLE_EQUAL)));
             assert(*result);
             return PARSE_EXPR_OK;
         case PARSE_EXPR_NONE:
