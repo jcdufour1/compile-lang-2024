@@ -69,6 +69,16 @@ static bool try_consume(Token* result, Tk_view* tokens, TOKEN_TYPE type) {
     return true;
 }
 
+static bool try_consume_1_of_2(Token* result, Tk_view* tokens, TOKEN_TYPE a, TOKEN_TYPE b) {
+    if (try_consume(result, tokens, a)) {
+        return true;
+    }
+    if (try_consume(result, tokens, b)) {
+        return true;
+    }
+    return false;
+}
+
 static bool try_consume_if_not(Token* result, Tk_view* tokens, TOKEN_TYPE type) {
     if (tokens->count < 1 || tk_view_front(*tokens).type == type) {
         return false;
@@ -2954,29 +2964,28 @@ static PARSE_EXPR_STATUS parse_generic_binary(
         return status;
     }
 
+    bool did_consume_oper = false;
+
     Token oper = {0};
-    if (try_consume(&oper, tokens, bin_type_1)) {
+    while (try_consume_1_of_2(&oper, tokens, bin_type_1, bin_type_2)) {
+        did_consume_oper = true;
         Uast_expr* rhs = NULL;
         PARSE_EXPR_STATUS status = parse_generic_binary(&rhs, tokens, scope_id, bin_idx + 1);
         if (status != PARSE_EXPR_OK) {
             return status;
         }
-        *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, lhs, rhs, binary_type_from_token_type(bin_type_1))));
+        *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, lhs, rhs, binary_type_from_token_type(oper.type))));
+    }
+
+    if (!did_consume_oper) {
+        // did not parse either operator type; just return lhs
+        *result = lhs;
         return PARSE_EXPR_OK;
     }
 
-    if (try_consume(&oper, tokens, bin_type_2)) {
-        Uast_expr* rhs = NULL;
-        PARSE_EXPR_STATUS status = parse_generic_binary(&rhs, tokens, scope_id, bin_idx + 1);
-        if (status != PARSE_EXPR_OK) {
-            return status;
-        }
-        *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, lhs, rhs, binary_type_from_token_type(bin_type_2))));
-        return PARSE_EXPR_OK;
-    }
-
-    // did not parse either operator type; just return lhs
-    *result = lhs;
+    assert(*result);
+    log(LOG_DEBUG, TAST_FMT, uast_expr_print(*result));
+    todo();
     return PARSE_EXPR_OK;
 }
 

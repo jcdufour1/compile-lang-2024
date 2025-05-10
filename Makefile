@@ -45,6 +45,7 @@ OBJS=\
 	 ${BUILD_DIR}/symbol_table.o \
 	 ${BUILD_DIR}/file.o \
 	 ${BUILD_DIR}/util/parameters.o \
+	 ${BUILD_DIR}/util/operator_type.o \
 	 ${BUILD_DIR}/parser_utils.o \
 	 ${BUILD_DIR}/error_msg.o \
 	 ${BUILD_DIR}/lang_type_serialize.o \
@@ -206,6 +207,9 @@ ${BUILD_DIR}/token/tokenizer.o: ${DEP_COMMON} src/token/tokenizer.c
 
 ${BUILD_DIR}/token/token.o: ${DEP_COMMON} src/token/token.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/token/token.o src/token/token.c
+
+${BUILD_DIR}/util/operator_type.o: ${DEP_COMMON} src/util/operator_type.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/operator_type.o src/util/operator_type.c
 
 ${BUILD_DIR}/util/name.o: ${DEP_COMMON} src/util/name.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/name.o src/util/name.c
