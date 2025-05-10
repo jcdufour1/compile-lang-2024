@@ -74,6 +74,13 @@ static PARSE_STATUS parse_expr_index(
     Scope_id scope_id,
     Pos oper_pos
 );
+static PARSE_EXPR_STATUS parse_generic_binary(
+    Uast_expr** result,
+    Tk_view* tokens,
+    Scope_id scope_id,
+    size_t bin_idx, // idx of BIN_IDX_TO_TOKEN_TYPES that will be used in this function invocation
+    int depth
+);
 
 // TODO: inline this function?
 static bool try_consume_internal(Token* result, Tk_view* tokens, bool allow_any_type, TOKEN_TYPE type) {
@@ -2215,6 +2222,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
 
     // TODO: remvoe these standalone TOKEN_SEMICOLON and TOKEN_NEW_LINE removals (use try_consume_newlines instead)
     try_consume(NULL, tokens, TOKEN_SEMICOLON);
+
     if (!try_consume_newlines(tokens)) {
         msg(
             LOG_ERROR, EXPECT_FAIL_NO_NEW_LINE_AFTER_STATEMENT, tk_view_front(*tokens).pos,
@@ -2897,21 +2905,16 @@ static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     {TOKEN_SLASH, TOKEN_ASTERISK, TOKEN_MODULO, TOKEN_MODULO},
 };
 
-static PARSE_EXPR_STATUS parse_generic_binary(
+static PARSE_EXPR_STATUS parse_generic_binary_internal(
     Uast_expr** result,
     Uast_expr* lhs, // this is only used if bin_idx thing matches /* TODO: better description here */
-    bool is_lhs,
     Tk_view* tokens,
     Scope_id scope_id,
     size_t bin_idx, // idx of BIN_IDX_TO_TOKEN_TYPES that will be used in this function invocation
     int depth
 ) {
-    // TODO: refactor this to call parse_generic_binary_internal (similar to parse_high_presidence)
-    //  to make this function easier to maintain
-
     if (bin_idx >= sizeof(BIN_IDX_TO_TOKEN_TYPES)/sizeof(BIN_IDX_TO_TOKEN_TYPES[0])) {
-        int32_t dummy = 0;
-        return parse_unary(result, tokens, &dummy, false, scope_id);
+        unreachable("");
     }
 
     TOKEN_TYPE bin_type_1 = BIN_IDX_TO_TOKEN_TYPES[bin_idx][0];
@@ -2919,40 +2922,30 @@ static PARSE_EXPR_STATUS parse_generic_binary(
     TOKEN_TYPE bin_type_3 = BIN_IDX_TO_TOKEN_TYPES[bin_idx][2];
     TOKEN_TYPE bin_type_4 = BIN_IDX_TO_TOKEN_TYPES[bin_idx][3];
                          
-    Uast_expr* new_lhs = NULL;
-    Uast_expr* new_rhs = NULL;
-    if (is_lhs) {
-        new_lhs = lhs;
-    } else {
-        PARSE_EXPR_STATUS status = parse_generic_binary(&new_lhs, NULL, false, tokens, scope_id, bin_idx + 1, depth + 1);
-        if (status != PARSE_EXPR_OK) {
-            return status;
-        }
-    }
-
     // new_lhs has 1 when parsing &&
     // tokens left are || 2
     Token oper = {0};
     if (!try_consume_1_of_4(&oper, tokens, bin_type_1, bin_type_2, bin_type_3, bin_type_4)) {
-        *result = new_lhs;
+        *result = lhs;
         assert(*result);
         return PARSE_EXPR_OK;
     }
     try_consume_newlines(tokens);
 
-    PARSE_EXPR_STATUS status = parse_generic_binary(&new_rhs, NULL, false/*change to false?*/, tokens, scope_id, bin_idx + 1, depth + 1);
+    Uast_expr* rhs = NULL;
+    PARSE_EXPR_STATUS status = parse_generic_binary(&rhs, tokens, scope_id, bin_idx + 1, depth + 1);
     if (status != PARSE_EXPR_OK) {
         return status;
     }
 
-    *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(POS_BUILTIN/*TODO*/, new_lhs, new_rhs, binary_type_from_token_type(oper.type))));
+    *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(POS_BUILTIN/*TODO*/, lhs, rhs, binary_type_from_token_type(oper.type))));
 
     if (!try_peek_1_of_4(&oper, tokens, bin_type_1, bin_type_2, bin_type_3, bin_type_4)) {
         assert(*result);
         return PARSE_EXPR_OK;
     }
 
-    status = parse_generic_binary(result, *result, true, tokens, scope_id, bin_idx, depth + 1);
+    status = parse_generic_binary_internal(result, *result, tokens, scope_id, bin_idx, depth + 1);
     if (status != PARSE_EXPR_OK) {
         todo();
         return status;
@@ -2962,9 +2955,30 @@ static PARSE_EXPR_STATUS parse_generic_binary(
 
 }
 
+static PARSE_EXPR_STATUS parse_generic_binary(
+    Uast_expr** result,
+    Tk_view* tokens,
+    Scope_id scope_id,
+    size_t bin_idx, // idx of BIN_IDX_TO_TOKEN_TYPES that will be used in this function invocation
+    int depth
+) {
+    if (bin_idx >= sizeof(BIN_IDX_TO_TOKEN_TYPES)/sizeof(BIN_IDX_TO_TOKEN_TYPES[0])) {
+        int32_t dummy = 0;
+        return parse_unary(result, tokens, &dummy, false, scope_id);
+    }
+
+    Uast_expr* new_lhs = NULL;
+    PARSE_EXPR_STATUS status = parse_generic_binary(&new_lhs, tokens, scope_id, bin_idx + 1, depth + 1);
+    if (status != PARSE_EXPR_OK) {
+        return status;
+    }
+
+    return parse_generic_binary_internal(result, new_lhs, tokens, scope_id, bin_idx, depth);
+}
+
 static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_id scope_id) {
     Uast_expr* lhs = NULL;
-    PARSE_EXPR_STATUS status = parse_generic_binary(&lhs, NULL, false, tokens, scope_id, 0, 0);
+    PARSE_EXPR_STATUS status = parse_generic_binary(&lhs, tokens, scope_id, 0, 0);
     if (status != PARSE_EXPR_OK) {
         return status;
     }
@@ -2977,7 +2991,7 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
     }
     
     Uast_expr* rhs = NULL;
-    switch (parse_generic_binary(&rhs, NULL, false, tokens, scope_id, 0, 0)) {
+    switch (parse_generic_binary(&rhs, tokens, scope_id, 0, 0)) {
         case PARSE_EXPR_OK:
             // TODO: do uast_assignment?
             //*result = uast_assignment_wrap(uast_assignment_new(equal_tk.pos, uast_expr_wrap(lhs), rhs));
