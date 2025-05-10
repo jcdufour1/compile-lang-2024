@@ -21,7 +21,6 @@ for generics:
 - directory structure above
 - symbol_at function, whatever
 - separate lang_type for Llvm stuff
-- fix lang_type system for void, etc. (it is a mess)
 - tuple on lhs changed to individual accesses in type_checking pass?
 - fix this to report also the (<i32>) to reduce confusion:
   optional_for_loop.own:150:57:error:argument is of type `u8*`, but the corresponding parameter `num` is of type `i32`
@@ -36,13 +35,10 @@ for generics:
          |                         ^
       49 |     let result ItemType = 0
 - test cases for variable def after use
-- env: should always or never pass to function
-- pos in lang_type struct should actually be initalized to meaningful value
 - rename examples/new_lang/if_expression.own to examples/new_lang/if_statement.own
 - make actual if_expression test
 - make expected failure test for using variable to assign self in initialization
     (eg. let num i32 = num*4)
-- rename ULANG_TYPE_REG_GENERIC to ULANG_TYPE_GENERIC
 - struct and sum with same elements, etc. to stress test some things
 - make expected failure test case for this:
       import = std
@@ -55,10 +51,6 @@ for generics:
 - do_test.py shold fail if thing with invalid extension found in tests/* or examples/new_lang/
 - disallow literal int implicit conversion to i32 in generic?
 - Uast_mod_alias: use Str_view for mod_path?
-- test for empty file
-- expected success test case for:
-    for !rl.WindowShouldClose() {
-    }
 - expected success case for circular import
 - should I use syntax:
   type Token struct {
@@ -71,15 +63,14 @@ for generics:
 - make LLVM_LANG_TYPE, etc. that does not have LANG_TYPE_ENUM, etc.
 - make an assertion that tests/expected_failure_examples/expected_expr_at_end_of_file.own has no newlines or similar characters after `io.`
 - make an assertion that tests/expected_failure_examples/empty_file.own actually is empty
+- expected failure test for passing `fn (i32, i32) i32` to function parameter of `fn (i64, i64) i64`
 
 
 
 # roadmap to try to get bootstrap compiler done:
 ## needed features
-- nested generics
 - constraints in generics
 - defer
-- modules
 - slices
 - orelse, !!, ??, etc.
 - #pos to get position
@@ -93,12 +84,9 @@ for generics:
 - safe cast (use "cast(<i64>)" to cast num to i64)?
 - prevent collisions with user defined names and compiler defined names
 - test for break in switch case 
-- use str_view_at instead of str_view.str[idx] for bounds checking
-- def
 - distinct
 - pointer generic
 - warn about unused variables
-- invalid literal as function callee
 - when using variadic args for extern("c") function: give error when passing i16 without a cast, etc.
 - consistent naming for arenas
 
@@ -111,16 +99,16 @@ for generics:
 - const, etc.
 - named scopes
 - designated args
-- iterators and foreach
 - floats
 - graphviz (for program control flow, etc.)
 - foreach idea:
-- fn foreach_tokens(tokens Token[]) {
+  fn foreach_tokens(tokens Token[]) {
     for idx i64 in tokens {
         yield tokens[idx]
     }
   }
 - bit widths other than 1, 8, 16, 32, or 64 with the c backend
+- when generics are mature, use them to associate custom allocators with things
 
 # in the far future
 - try catch blocks with the question operator or similar

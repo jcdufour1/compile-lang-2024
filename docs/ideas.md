@@ -101,6 +101,8 @@ type Darr struct('ItemType, 'IndexType = usize) {
     capacity IndexType
 }
 # generics idea struct 2.2
+// constraints
+'IndexType: $int
 type Darr struct('ItemType, 'IndexType = usize) {
     items ItemType*
     count IndexType
@@ -109,10 +111,23 @@ type Darr struct('ItemType, 'IndexType = usize) {
 
 type Arr struct('ItemType, 'count usize) {
     items ItemType*
-    count usize
+}
+
+# generics idea struct 2.3
+// likely not, because needlessly verbose
+type Darr struct(''ItemType, ''IndexType = usize) {
+    items 'ItemType*
+    count 'IndexType
+    capacity 'IndexType
+}
+
+type Arr struct(''ItemType, ''count usize) {
+    items ItemType*
+    'count usize
 }
 
 # generics idea function 2.1
+// probably not the way
 fn append(darr Darr*, item darr.ItemType) {
     reserve(darr, 1)
     darr.items[darr.count] = item
@@ -121,6 +136,7 @@ fn append(darr Darr*, item darr.ItemType) {
 
 
 # generics idea function 2.2
+// probably not the way
 fn append(darr Darr(T, _)*, item T, T' = auto) {
     reserve(darr, 1)
     darr.items[darr.count] = item
@@ -133,6 +149,11 @@ fn append(darr Darr('T, _)*, item T) {
     reserve(darr, 1)
     darr.items[darr.count] = item
     darr.count += 1
+}
+
+fn at(darr Darr('T, 'S)*, index S) S {
+    assert(index < darr.count && "out of bounds")
+    return darr.items[darr.count]
 }
 
 allocate thing (error)
@@ -462,3 +483,11 @@ fn foreach Things(things Things) {
 }
 
 '''
+
+# inout
+// allow count and mut items to be passed to same function
+'''c
+fn Darr_at(darr Darr(inout 'T, 'I), index I) inout T {
+}
+'''
+
