@@ -66,22 +66,28 @@ static bool not_single_quote(char prev, char curr) {
     return curr != '\'';
 }
 
-static void trim_non_newline_whitespace(Str_view_col* file_text, Pos* pos) {
+// returns count of characters trimmed
+static size_t trim_non_newline_whitespace(Str_view_col* file_text, Pos* pos) {
+    size_t count = 0;
     if (file_text->base.count < 1) {
-        return;
+        return count;
     }
     char curr = str_view_col_front(*file_text);
     while (file_text->base.count > 0 && (isspace(curr) || iscntrl(curr)) && (curr != '\n')) {
         if (file_text->base.count < 1) {
-            return;
+            unreachable("");// TODO: remove this if statement (unless there is a reason for it)
+            return count;
         }
+        count++;
         str_view_col_consume(pos, file_text);
         curr = str_view_col_front(*file_text);
     }
+    return count;
 }
 
 static bool get_next_token(
     Pos* pos,
+    bool* is_preced_space,
     Token* token,
     Str_view_col* file_text_rem,
     Str_view file_path
@@ -89,7 +95,7 @@ static bool get_next_token(
     memset(token, 0, sizeof(*token));
     arena_reset(&tk_arena);
 
-    trim_non_newline_whitespace(file_text_rem, pos);
+    *is_preced_space = trim_non_newline_whitespace(file_text_rem, pos) > 0;
 
     if (file_text_rem->base.count < 1) {
         return false;
@@ -611,7 +617,8 @@ bool tokenize(Token_vec* result, Str_view file_path) {
 
     Pos pos = {.line = 1, .column = 0};
     Token curr_token = {0};
-    while (get_next_token( &pos, &curr_token, &curr_file_text, file_path)) {
+    bool is_preced_space = false;
+    while (get_next_token(&pos, &is_preced_space, &curr_token, &curr_file_text, file_path)) {
         if (curr_token.type == TOKEN_COMMENT) {
             continue;
         }
@@ -629,8 +636,8 @@ bool tokenize(Token_vec* result, Str_view file_path) {
             Token next_token = {0};
             Pos temp_pos = pos;
             Str_view_col temp_file_text = curr_file_text;
-            if (get_next_token(&pos, &next_token, &curr_file_text, file_path)) {
-                if (next_token.type == TOKEN_SINGLE_EQUAL) {
+            if (get_next_token(&pos, &is_preced_space, &next_token, &curr_file_text, file_path)) {
+                if (!is_preced_space && next_token.type == TOKEN_SINGLE_EQUAL) {
                     // +=, *=, etc.
                     // append TOKEN_ASSIGN_BY_BIN, which will be followed by the binary operator
                     vec_append(&a_main, &tokens, ((Token) {.text = str_view_from_cstr(""), .type = TOKEN_ASSIGN_BY_BIN, .pos = pos}));
