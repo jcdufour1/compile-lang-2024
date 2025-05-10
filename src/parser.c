@@ -2973,55 +2973,60 @@ static PARSE_EXPR_STATUS parse_generic_binary(
     log(LOG_DEBUG, "test 20: %d "TAST_FMT, depth, uast_expr_print(new_lhs));
     log_tokens(LOG_DEBUG, *tokens);
 
-
-    bool did_consume_oper = false;
-
     Token oper = {0};
-    Uast_expr* temp_lhs = new_lhs;
-    while (try_consume_1_of_2(&oper, tokens, bin_type_1, bin_type_2)) {
-        Uast_expr* rhs = NULL;
-        PARSE_EXPR_STATUS status = parse_generic_binary(&rhs, NULL, false, tokens, scope_id, bin_idx + 1, depth + 1);
-        if (status != PARSE_EXPR_OK) {
-            return status;
-        }
-        log(LOG_DEBUG, "thing 38 depth: %d "TAST_FMT, depth, uast_expr_print(new_lhs));
-        log(LOG_DEBUG, "thing 39 depth: %d "TAST_FMT, depth, uast_expr_print(rhs));
-        new_lhs = uast_operator_wrap(uast_binary_wrap(uast_binary_new(POS_BUILTIN/*TODO*/, new_lhs, rhs, binary_type_from_token_type(oper.type))));
-        log(LOG_DEBUG, "thing 40 depth: %d "TAST_FMT, depth, uast_expr_print(new_lhs));
-
-        new_lhs = temp_lhs;
-        did_consume_oper = true;
-        switch (parse_generic_binary(&rhs, new_lhs, true, tokens, scope_id, bin_idx, depth + 1)) {
-            case PARSE_EXPR_NONE:
-                *result = new_lhs;
-                log(LOG_DEBUG, "thing 42 depth: %d "TAST_FMT, depth, uast_expr_print(*result));
-                todo();
-            case PARSE_EXPR_OK:
-                *result = rhs;
-                log(LOG_DEBUG, "thing 43 depth: %d "TAST_FMT, depth, uast_expr_print(*result));
-                todo();
-            case PARSE_EXPR_ERROR:
-                todo();
-            default:
-                unreachable("");
-        }
-        if (status != PARSE_EXPR_OK) {
-            return status;
-        }
-        unreachable("");
-        log(LOG_DEBUG, "thing 45 depth: %d "TAST_FMT, depth, uast_expr_print(new_lhs));
-        log(LOG_DEBUG, "thing 48 depth: %d "TAST_FMT, depth, uast_expr_print(rhs));
-        *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, new_lhs, rhs, binary_type_from_token_type(oper.type))));
-        temp_lhs = rhs;
-    }
-
-    if (!did_consume_oper) {
+    if (!try_consume_1_of_2(&oper, tokens, bin_type_1, bin_type_2)) {
         // did not parse either operator type; just return lhs
-        *result = lhs;
+        *result = new_lhs;
         return PARSE_EXPR_OK;
     }
 
-    return PARSE_EXPR_OK;
+    Uast_expr* rhs = NULL;
+    PARSE_EXPR_STATUS status = parse_generic_binary(&rhs, NULL, false, tokens, scope_id, bin_idx + 1, depth + 1);
+    if (status != PARSE_EXPR_OK) {
+        return status;
+    }
+
+    Uast_expr* new_oper = uast_operator_wrap(uast_binary_wrap(uast_binary_new(POS_BUILTIN/*TODO*/, new_lhs, rhs, binary_type_from_token_type(oper.type))));
+    if (!try_consume_1_of_2(&oper, tokens, bin_type_1, bin_type_2)) {
+        // did not parse either operator type; just return lhs
+        *result = new_oper;
+        return PARSE_EXPR_OK;
+    }
+
+    // there is another operator of the same precedence; we need to handle left-to-right associtivity
+
+    switch (parse_generic_binary(&rhs, new_oper, true, tokens, scope_id, bin_idx, depth + 1)) {
+        case PARSE_EXPR_NONE:
+            *result = new_lhs;
+            log(LOG_DEBUG, "thing 42 depth: %d "TAST_FMT, depth, uast_expr_print(*result));
+            todo();
+        case PARSE_EXPR_OK:
+            *result = rhs;
+            log(LOG_DEBUG, "thing 43 depth: %d "TAST_FMT, depth, uast_expr_print(*result));
+            todo();
+        case PARSE_EXPR_ERROR:
+            todo();
+        default:
+            unreachable("");
+    }
+    unreachable("");
+    
+    //log(LOG_DEBUG, "thing 38 depth: %d "TAST_FMT, depth, uast_expr_print(new_lhs));
+    //log(LOG_DEBUG, "thing 39 depth: %d "TAST_FMT, depth, uast_expr_print(rhs));
+    //new_lhs = uast_operator_wrap(uast_binary_wrap(uast_binary_new(POS_BUILTIN/*TODO*/, new_lhs, rhs, binary_type_from_token_type(oper.type))));
+    //log(LOG_DEBUG, "thing 40 depth: %d "TAST_FMT, depth, uast_expr_print(new_lhs));
+
+    //new_lhs = temp_lhs;
+    //did_consume_oper = true;
+    //if (status != PARSE_EXPR_OK) {
+    //    return status;
+    //}
+    //unreachable("");
+    //log(LOG_DEBUG, "thing 45 depth: %d "TAST_FMT, depth, uast_expr_print(new_lhs));
+    //log(LOG_DEBUG, "thing 48 depth: %d "TAST_FMT, depth, uast_expr_print(rhs));
+    //*result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, new_lhs, rhs, binary_type_from_token_type(oper.type))));
+    //temp_lhs = rhs;
+    //todo();
 }
 
 static PARSE_EXPR_STATUS parse_expr(
