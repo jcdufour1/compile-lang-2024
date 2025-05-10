@@ -72,6 +72,7 @@ typedef enum {
     TOKEN_DOUBLE_DOT,
     TOKEN_TRIPLE_DOT,
     TOKEN_EOF,
+    TOKEN_ASSIGN_BY_BIN,
 
     // keywords
     TOKEN_FN,
@@ -97,7 +98,7 @@ typedef enum {
     // comment
     TOKEN_COMMENT,
 
-    // count
+    // count of tokens (for static asserts)
     TOKEN_COUNT
 } TOKEN_TYPE;
 
@@ -251,6 +252,8 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_EOF:
             return false;
+        case TOKEN_ASSIGN_BY_BIN:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -393,6 +396,8 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             return false;
         case TOKEN_EOF:
             return false;
+        case TOKEN_ASSIGN_BY_BIN:
+            return true;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -419,290 +424,6 @@ static inline Str_view token_type_to_str_view(TOKEN_MODE mode, TOKEN_TYPE token_
 
 #define token_type_print(mode, token_type) str_view_print(token_type_to_str_view(mode, token_type))
 
-static inline bool token_is_closing(Token curr_token) {
-    switch (curr_token.type) {
-        case TOKEN_CLOSE_PAR:
-            return true;
-        case TOKEN_CLOSE_CURLY_BRACE:
-            return true;
-        case TOKEN_NONTYPE:
-            return false;
-        case TOKEN_SINGLE_PLUS:
-            return false;
-        case TOKEN_SINGLE_MINUS:
-            return false;
-        case TOKEN_ASTERISK:
-            return false;
-        case TOKEN_SLASH:
-            return false;
-        case TOKEN_LESS_THAN:
-            return false;
-        case TOKEN_GREATER_THAN:
-            return false;
-        case TOKEN_DOUBLE_EQUAL:
-            return false;
-        case TOKEN_NOT_EQUAL:
-            return false;
-        case TOKEN_BITWISE_XOR:
-            return false;
-        case TOKEN_NOT:
-            return false;
-        case TOKEN_DEREF:
-            return false;
-        case TOKEN_REFER:
-            return false;
-        case TOKEN_UNSAFE_CAST:
-            return false;
-        case TOKEN_STRING_LITERAL:
-            return false;
-        case TOKEN_INT_LITERAL:
-            return false;
-        case TOKEN_VOID:
-            return false;
-        case TOKEN_NEW_LINE:
-            return false;
-        case TOKEN_SYMBOL:
-            return false;
-        case TOKEN_OPEN_PAR:
-            return false;
-        case TOKEN_OPEN_CURLY_BRACE:
-            return false;
-        case TOKEN_DOUBLE_QUOTE:
-            return false;
-        case TOKEN_SEMICOLON:
-            return false;
-        case TOKEN_COMMA:
-            return false;
-        case TOKEN_COLON:
-            return false;
-        case TOKEN_SINGLE_EQUAL:
-            return false;
-        case TOKEN_SINGLE_DOT:
-            return false;
-        case TOKEN_DOUBLE_DOT:
-            return false;
-        case TOKEN_TRIPLE_DOT:
-            return false;
-        case TOKEN_FN:
-            return false;
-        case TOKEN_FOR:
-            return false;
-        case TOKEN_IF:
-            return false;
-        case TOKEN_RETURN:
-            return false;
-        case TOKEN_EXTERN:
-            return false;
-        case TOKEN_STRUCT:
-            return false;
-        case TOKEN_LET:
-            return false;
-        case TOKEN_IN:
-            return false;
-        case TOKEN_BREAK:
-            return false;
-        case TOKEN_RAW_UNION:
-            return false;
-        case TOKEN_COMMENT:
-            return false;
-        case TOKEN_ELSE:
-            return false;
-        case TOKEN_ENUM:
-            return false;
-        case TOKEN_OPEN_SQ_BRACKET:
-            return false;
-        case TOKEN_CLOSE_SQ_BRACKET:
-            return true;
-        case TOKEN_CHAR_LITERAL:
-            return false;
-        case TOKEN_CONTINUE:
-            return false;
-        case TOKEN_LESS_OR_EQUAL:
-            return false;
-        case TOKEN_GREATER_OR_EQUAL:
-            return false;
-        case TOKEN_TYPE_DEF:
-            return false;
-        case TOKEN_SWITCH:
-            return false;
-        case TOKEN_CASE:
-            return false;
-        case TOKEN_DEFAULT:
-            return false;
-        case TOKEN_SUM:
-            return false;
-        case TOKEN_MODULO:
-            return false;
-        case TOKEN_BITWISE_AND:
-            return false;
-        case TOKEN_BITWISE_OR:
-            return false;
-        case TOKEN_LOGICAL_AND:
-            return false;
-        case TOKEN_LOGICAL_OR:
-            return false;
-        case TOKEN_SHIFT_LEFT:
-            return false;
-        case TOKEN_SHIFT_RIGHT:
-            return false;
-        case TOKEN_OPEN_GENERIC:
-            return false;
-        case TOKEN_CLOSE_GENERIC:
-            return true;
-        case TOKEN_IMPORT:
-            return false;
-        case TOKEN_DEF:
-            return false;
-        case TOKEN_EOF:
-            return false;
-        case TOKEN_COUNT:
-            unreachable("");
-    }
-    unreachable("");
-}
-
-static inline bool token_is_opening(Token curr_token) {
-    switch (curr_token.type) {
-        case TOKEN_OPEN_PAR:
-            return true;
-        case TOKEN_OPEN_CURLY_BRACE:
-            return true;
-        case TOKEN_NONTYPE:
-            return false;
-        case TOKEN_SINGLE_PLUS:
-            return false;
-        case TOKEN_SINGLE_MINUS:
-            return false;
-        case TOKEN_ASTERISK:
-            return false;
-        case TOKEN_SLASH:
-            return false;
-        case TOKEN_LESS_THAN:
-            return false;
-        case TOKEN_GREATER_THAN:
-            return false;
-        case TOKEN_DOUBLE_EQUAL:
-            return false;
-        case TOKEN_NOT_EQUAL:
-            return false;
-        case TOKEN_BITWISE_XOR:
-            return false;
-        case TOKEN_NOT:
-            return false;
-        case TOKEN_DEREF:
-            return false;
-        case TOKEN_REFER:
-            return false;
-        case TOKEN_UNSAFE_CAST:
-            return false;
-        case TOKEN_STRING_LITERAL:
-            return false;
-        case TOKEN_INT_LITERAL:
-            return false;
-        case TOKEN_VOID:
-            return false;
-        case TOKEN_NEW_LINE:
-            return false;
-        case TOKEN_SYMBOL:
-            return false;
-        case TOKEN_CLOSE_PAR:
-            return false;
-        case TOKEN_CLOSE_CURLY_BRACE:
-            return false;
-        case TOKEN_DOUBLE_QUOTE:
-            return false;
-        case TOKEN_SEMICOLON:
-            return false;
-        case TOKEN_COMMA:
-            return false;
-        case TOKEN_COLON:
-            return false;
-        case TOKEN_SINGLE_EQUAL:
-            return false;
-        case TOKEN_SINGLE_DOT:
-            return false;
-        case TOKEN_DOUBLE_DOT:
-            return false;
-        case TOKEN_TRIPLE_DOT:
-            return false;
-        case TOKEN_FN:
-            return false;
-        case TOKEN_FOR:
-            return false;
-        case TOKEN_IF:
-            return false;
-        case TOKEN_RETURN:
-            return false;
-        case TOKEN_EXTERN:
-            return false;
-        case TOKEN_STRUCT:
-            return false;
-        case TOKEN_LET:
-            return false;
-        case TOKEN_IN:
-            return false;
-        case TOKEN_BREAK:
-            return false;
-        case TOKEN_RAW_UNION:
-            return false;
-        case TOKEN_COMMENT:
-            return false;
-        case TOKEN_ELSE:
-            return false;
-        case TOKEN_ENUM:
-            return false;
-        case TOKEN_OPEN_SQ_BRACKET:
-            return true;
-        case TOKEN_CLOSE_SQ_BRACKET:
-            return false;
-        case TOKEN_CHAR_LITERAL:
-            return false;
-        case TOKEN_CONTINUE:
-            return false;
-        case TOKEN_LESS_OR_EQUAL:
-            return false;
-        case TOKEN_GREATER_OR_EQUAL:
-            return false;
-        case TOKEN_TYPE_DEF:
-            return false;
-        case TOKEN_SWITCH:
-            return false;
-        case TOKEN_CASE:
-            return false;
-        case TOKEN_DEFAULT:
-            return false;
-        case TOKEN_SUM:
-            return false;
-        case TOKEN_MODULO:
-            return false;
-        case TOKEN_BITWISE_AND:
-            return false;
-        case TOKEN_BITWISE_OR:
-            return false;
-        case TOKEN_LOGICAL_AND:
-            return false;
-        case TOKEN_LOGICAL_OR:
-            return false;
-        case TOKEN_SHIFT_LEFT:
-            return false;
-        case TOKEN_SHIFT_RIGHT:
-            return false;
-        case TOKEN_OPEN_GENERIC:
-            return true;
-        case TOKEN_CLOSE_GENERIC:
-            return false;
-        case TOKEN_IMPORT:
-            return false;
-        case TOKEN_DEF:
-            return false;
-        case TOKEN_EOF:
-            return false;
-        case TOKEN_COUNT:
-            unreachable("");
-    }
-    unreachable("");
-}
-
 static inline bool token_is_equal(const Token a, const Token b) {
     if (a.type != b.type) {
         return false;
@@ -714,6 +435,150 @@ static inline bool token_is_equal(const Token a, const Token b) {
 static inline bool token_is_equal_2(const Token a, const char* cstr, TOKEN_TYPE token_type) {
     Token b = {.text = str_view_from_cstr(cstr), .type = token_type};
     return token_is_equal(a, b);
+}
+
+static inline bool token_is_binary(TOKEN_TYPE token_type) {
+    switch (token_type) {
+        case TOKEN_NONTYPE:
+            return false;
+        case TOKEN_SINGLE_PLUS:
+            return true;
+        case TOKEN_SINGLE_MINUS:
+            return true;
+        case TOKEN_ASTERISK:
+            return true;
+        case TOKEN_SLASH:
+            return true;
+        case TOKEN_LESS_THAN:
+            return true;
+        case TOKEN_GREATER_THAN:
+            return true;
+        case TOKEN_DOUBLE_EQUAL:
+            return true;
+        case TOKEN_NOT_EQUAL:
+            return true;
+        case TOKEN_NOT:
+            return false;
+        case TOKEN_STRING_LITERAL:
+            return false;
+        case TOKEN_INT_LITERAL:
+            return false;
+        case TOKEN_SYMBOL:
+            return false;
+        case TOKEN_OPEN_PAR:
+            return false;
+        case TOKEN_CLOSE_PAR:
+            return false;
+        case TOKEN_OPEN_CURLY_BRACE:
+            return false;
+        case TOKEN_CLOSE_CURLY_BRACE:
+            return false;
+        case TOKEN_DOUBLE_QUOTE:
+            return false;
+        case TOKEN_SEMICOLON:
+            return false;
+        case TOKEN_COMMA:
+            return true;
+        case TOKEN_COLON:
+            return false;
+        case TOKEN_SINGLE_EQUAL:
+            return false;
+        case TOKEN_SINGLE_DOT:
+            return false;
+        case TOKEN_DOUBLE_DOT:
+            return false;
+        case TOKEN_TRIPLE_DOT:
+            return false;
+        case TOKEN_COMMENT:
+            return false;
+        case TOKEN_BITWISE_XOR:
+            return true;
+        case TOKEN_DEREF:
+            return false;
+        case TOKEN_REFER:
+            return false;
+        case TOKEN_VOID:
+            return false;
+        case TOKEN_UNSAFE_CAST:
+            return false;
+        case TOKEN_FN:
+            return false;
+        case TOKEN_FOR:
+            return false;
+        case TOKEN_IF:
+            return false;
+        case TOKEN_RETURN:
+            return false;
+        case TOKEN_EXTERN:
+            return false;
+        case TOKEN_STRUCT:
+            return false;
+        case TOKEN_LET:
+            return false;
+        case TOKEN_IN:
+            return false;
+        case TOKEN_BREAK:
+            return false;
+        case TOKEN_NEW_LINE:
+            return false;
+        case TOKEN_RAW_UNION:
+            return false;
+        case TOKEN_ELSE:
+            return false;
+        case TOKEN_ENUM:
+            return false;
+        case TOKEN_OPEN_SQ_BRACKET:
+            return false;
+        case TOKEN_CLOSE_SQ_BRACKET:
+            return false;
+        case TOKEN_CHAR_LITERAL:
+            return false;
+        case TOKEN_CONTINUE:
+            return false;
+        case TOKEN_LESS_OR_EQUAL:
+            return true;
+        case TOKEN_GREATER_OR_EQUAL:
+            return true;
+        case TOKEN_TYPE_DEF:
+            return false;
+        case TOKEN_SWITCH:
+            return false;
+        case TOKEN_CASE:
+            return false;
+        case TOKEN_DEFAULT:
+            return false;
+        case TOKEN_SUM:
+            return false;
+        case TOKEN_MODULO:
+            return true;
+        case TOKEN_BITWISE_AND:
+            return true;
+        case TOKEN_BITWISE_OR:
+            return true;
+        case TOKEN_LOGICAL_AND:
+            return true;
+        case TOKEN_LOGICAL_OR:
+            return true;
+        case TOKEN_SHIFT_LEFT:
+            return true;
+        case TOKEN_SHIFT_RIGHT:
+            return true;
+        case TOKEN_OPEN_GENERIC:
+            return true;
+        case TOKEN_CLOSE_GENERIC:
+            return true;
+        case TOKEN_IMPORT:
+            return false;
+        case TOKEN_DEF:
+            return false;
+        case TOKEN_EOF:
+            return false;
+        case TOKEN_ASSIGN_BY_BIN:
+            return false;
+        case TOKEN_COUNT:
+            unreachable("");
+    }
+    unreachable("");
 }
 
 #endif // TOKEN_H

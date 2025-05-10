@@ -625,6 +625,23 @@ bool tokenize(Token_vec* result, Str_view file_path) {
             continue;
         }
 
+        if (token_is_binary(curr_token.type)) {
+            Token next_token = {0};
+            Pos temp_pos = pos;
+            Str_view_col temp_file_text = curr_file_text;
+            if (get_next_token(&pos, &next_token, &curr_file_text, file_path)) {
+                if (next_token.type == TOKEN_SINGLE_EQUAL) {
+                    // +=, *=, etc.
+                    // append TOKEN_ASSIGN_BY_BIN, which will be followed by the binary operator
+                    vec_append(&a_main, &tokens, ((Token) {.text = str_view_from_cstr(""), .type = TOKEN_ASSIGN_BY_BIN, .pos = pos}));
+                } else {
+                    // put back the next token
+                    pos = temp_pos;
+                    curr_file_text = temp_file_text;
+                }
+            }
+        }
+
         vec_append(&a_main, &tokens, curr_token);
     }
 

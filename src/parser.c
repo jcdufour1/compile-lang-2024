@@ -621,6 +621,8 @@ static bool can_end_stmt(Token token) {
             return false;
         case TOKEN_EOF:
             return true;
+        case TOKEN_ASSIGN_BY_BIN:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -827,148 +829,7 @@ static bool is_unary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_EOF:
             return false;
-        case TOKEN_COUNT:
-            unreachable("");
-    }
-    unreachable("");
-}
-
-// TOKEN_SINGLE_PLUS is treated differently from other binary operators for now
-static bool is_binary(TOKEN_TYPE token_type) {
-    switch (token_type) {
-        case TOKEN_NONTYPE:
-            return false;
-        case TOKEN_SINGLE_PLUS:
-            return true;
-        case TOKEN_SINGLE_MINUS:
-            return true;
-        case TOKEN_ASTERISK:
-            return true;
-        case TOKEN_SLASH:
-            return true;
-        case TOKEN_LESS_THAN:
-            return true;
-        case TOKEN_GREATER_THAN:
-            return true;
-        case TOKEN_DOUBLE_EQUAL:
-            return true;
-        case TOKEN_NOT_EQUAL:
-            return true;
-        case TOKEN_NOT:
-            return false;
-        case TOKEN_STRING_LITERAL:
-            return false;
-        case TOKEN_INT_LITERAL:
-            return false;
-        case TOKEN_SYMBOL:
-            return false;
-        case TOKEN_OPEN_PAR:
-            return true;
-        case TOKEN_CLOSE_PAR:
-            return true;
-        case TOKEN_OPEN_CURLY_BRACE:
-            return true;
-        case TOKEN_CLOSE_CURLY_BRACE:
-            return true;
-        case TOKEN_DOUBLE_QUOTE:
-            return false;
-        case TOKEN_SEMICOLON:
-            return false;
-        case TOKEN_COMMA:
-            return true;
-        case TOKEN_COLON:
-            return false;
-        case TOKEN_SINGLE_EQUAL:
-            return false;
-        case TOKEN_SINGLE_DOT:
-            return true;
-        case TOKEN_DOUBLE_DOT:
-            return false;
-        case TOKEN_TRIPLE_DOT:
-            return false;
-        case TOKEN_COMMENT:
-            return false;
-        case TOKEN_BITWISE_XOR:
-            return true;
-        case TOKEN_DEREF:
-            return true;
-        case TOKEN_REFER:
-            return true;
-        case TOKEN_VOID:
-            return false;
-        case TOKEN_UNSAFE_CAST:
-            return true;
-        case TOKEN_FN:
-            return false;
-        case TOKEN_FOR:
-            return false;
-        case TOKEN_IF:
-            return false;
-        case TOKEN_RETURN:
-            return false;
-        case TOKEN_EXTERN:
-            return false;
-        case TOKEN_STRUCT:
-            return false;
-        case TOKEN_LET:
-            return false;
-        case TOKEN_IN:
-            return false;
-        case TOKEN_BREAK:
-            return false;
-        case TOKEN_NEW_LINE:
-            return false;
-        case TOKEN_RAW_UNION:
-            return false;
-        case TOKEN_ELSE:
-            return false;
-        case TOKEN_ENUM:
-            return false;
-        case TOKEN_OPEN_SQ_BRACKET:
-            return true;
-        case TOKEN_CLOSE_SQ_BRACKET:
-            return true;
-        case TOKEN_CHAR_LITERAL:
-            return false;
-        case TOKEN_CONTINUE:
-            return false;
-        case TOKEN_LESS_OR_EQUAL:
-            return true;
-        case TOKEN_GREATER_OR_EQUAL:
-            return true;
-        case TOKEN_TYPE_DEF:
-            return false;
-        case TOKEN_SWITCH:
-            return false;
-        case TOKEN_CASE:
-            return false;
-        case TOKEN_DEFAULT:
-            return false;
-        case TOKEN_SUM:
-            return false;
-        case TOKEN_MODULO:
-            return true;
-        case TOKEN_BITWISE_AND:
-            return true;
-        case TOKEN_BITWISE_OR:
-            return true;
-        case TOKEN_LOGICAL_AND:
-            return true;
-        case TOKEN_LOGICAL_OR:
-            return true;
-        case TOKEN_SHIFT_LEFT:
-            return true;
-        case TOKEN_SHIFT_RIGHT:
-            return true;
-        case TOKEN_OPEN_GENERIC:
-            return true;
-        case TOKEN_CLOSE_GENERIC:
-            return true;
-        case TOKEN_IMPORT:
-            return false;
-        case TOKEN_DEF:
-            return false;
-        case TOKEN_EOF:
+        case TOKEN_ASSIGN_BY_BIN:
             return false;
         case TOKEN_COUNT:
             unreachable("");
@@ -2890,7 +2751,7 @@ static PARSE_STATUS parse_expr_generic(
 //    parse_bitwise_and
 //};
 
-static_assert(TOKEN_COUNT == 67, "exhausive handling of token types; note that only binary operators need to be explicitly handled here");
+static_assert(TOKEN_COUNT == 68, "exhausive handling of token types; note that only binary operators need to be explicitly handled here");
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},
     {TOKEN_LOGICAL_OR, TOKEN_LOGICAL_OR, TOKEN_LOGICAL_OR, TOKEN_LOGICAL_OR},
@@ -2984,7 +2845,9 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
     }
 
     Token equal_tk = {0};
-    if (!try_consume(&equal_tk, tokens, TOKEN_SINGLE_EQUAL)) {
+    if (try_consume(&equal_tk, tokens, TOKEN_ASSIGN_BY_BIN)) {
+        todo();
+    } else if (!try_consume(&equal_tk, tokens, TOKEN_SINGLE_EQUAL)) {
         *result = lhs;
         assert(*result);
         return PARSE_EXPR_OK;
