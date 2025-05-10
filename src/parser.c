@@ -2355,7 +2355,7 @@ static Uast_binary* parser_binary_new(Uast_expr* lhs, Token operator_token, Uast
 static PARSE_EXPR_STATUS parse_expr_piece(
     Uast_expr** result,
     Tk_view* tokens,
-    int32_t* prev_oper_pres,
+    int32_t* prev_oper_pres, // TODO: remove prev_oper_pres in this file
     Scope_id scope_id
 ) {
     if (tokens->count < 1) {
@@ -2445,6 +2445,67 @@ static bool expr_is_binary(const Uast_expr* expr) {
     return operator->type == UAST_BINARY;
 }
 
+static PARSE_EXPR_STATUS parse_opening(
+    Uast_expr** result,
+    Uast_expr* lhs,
+    Tk_view* tokens,
+    Scope_id scope_id
+) {
+    todo();
+}
+
+static PARSE_EXPR_STATUS parse_high_presidence_internal(
+    Uast_expr** result,
+    Uast_expr* lhs,
+    Tk_view* tokens,
+    Scope_id scope_id
+) {
+    if (token_is_opening(tk_view_front(*tokens))) {
+        PARSE_EXPR_STATUS status = parse_opening(&lhs, lhs, tokens, scope_id);
+        if (status != PARSE_EXPR_OK) {
+            return status;
+        }
+        return parse_high_presidence_internal(result, lhs, tokens, scope_id);
+    }
+
+    Token oper = {0};
+    if (try_consume(&oper, tokens, TOKEN_SINGLE_DOT)) {
+        Token memb_name = {0};
+        if (!try_consume(&memb_name, tokens, TOKEN_SYMBOL)) {
+            todo();
+        }
+
+        lhs = uast_member_access_wrap(uast_member_access_new(
+            oper.pos,
+            uast_symbol_new(
+                memb_name.pos,
+                name_new(env.curr_mod_path, memb_name.text, (Ulang_type_vec) {0}, scope_id)
+            ),
+            lhs
+        ));
+
+        return parse_high_presidence_internal(result, lhs, tokens, scope_id);
+    }
+
+    *result = lhs;
+    return PARSE_EXPR_OK;
+}
+
+static PARSE_EXPR_STATUS parse_high_presidence(
+    Uast_expr** result,
+    Tk_view* tokens,
+    Scope_id scope_id
+) {
+    Uast_expr* lhs = NULL;
+    int32_t dummy = 0;
+    PARSE_EXPR_STATUS status = parse_expr_piece(&lhs, tokens, &dummy, scope_id);
+    if (status != PARSE_EXPR_OK) {
+        return status;
+    }
+
+    return parse_high_presidence_internal(result, lhs, tokens, scope_id);
+}
+
 static PARSE_EXPR_STATUS parse_unary(
     Uast_expr** result,
     Tk_view* tokens,
@@ -2455,7 +2516,7 @@ static PARSE_EXPR_STATUS parse_unary(
     (void) can_be_tuple;
 
     if (!is_unary(tk_view_front(*tokens).type)) {
-        return parse_expr_piece(result, tokens, prev_oper_pres, scope_id);
+        return parse_high_presidence(result, tokens, scope_id);
     }
     Token oper = consume_operator(tokens);
 
@@ -2497,13 +2558,9 @@ static PARSE_EXPR_STATUS parse_unary(
             unreachable(TOKEN_FMT, token_print(TOKEN_MODE_LOG, oper));
     }
 
-    switch (parse_unary(&child, tokens, prev_oper_pres, false, scope_id)) {
-        case PARSE_EXPR_OK:
-            break;
-        case PARSE_EXPR_NONE:
-            return PARSE_EXPR_NONE;
-        case PARSE_EXPR_ERROR:
-            return PARSE_EXPR_ERROR;
+    PARSE_EXPR_STATUS status = parse_unary(&child, tokens, prev_oper_pres, false, scope_id);
+    if (status != PARSE_EXPR_OK) {
+        return PARSE_EXPR_ERROR;
     }
 
     switch (oper.type) {
@@ -2820,10 +2877,10 @@ static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][2] = {
     // {bin_type_1, bin_type_2},
     {TOKEN_LOGICAL_OR, TOKEN_LOGICAL_OR},
     {TOKEN_LOGICAL_AND, TOKEN_LOGICAL_AND},
-    //{TOKEN_BITWISE_OR, TOKEN_BITWISE_OR},
-    //{TOKEN_BITWISE_XOR, TOKEN_BITWISE_XOR},
-    //{TOKEN_BITWISE_AND, TOKEN_BITWISE_AND},
-    //{TOKEN_NOT_EQUAL, TOKEN_DOUBLE_EQUAL},
+    {TOKEN_BITWISE_OR, TOKEN_BITWISE_OR},
+    {TOKEN_BITWISE_XOR, TOKEN_BITWISE_XOR},
+    {TOKEN_BITWISE_AND, TOKEN_BITWISE_AND},
+    {TOKEN_NOT_EQUAL, TOKEN_DOUBLE_EQUAL},
 };
 
 static PARSE_EXPR_STATUS parse_generic_binary(
@@ -2835,6 +2892,9 @@ static PARSE_EXPR_STATUS parse_generic_binary(
     size_t bin_idx, // idx of BIN_IDX_TO_TOKEN_TYPES that will be used in this function invocation
     int depth
 ) {
+    // TODO: refactor this to call parse_generic_binary_internal (similar to parse_high_presidence)
+    //  to make this function easier to maintain
+
     if (bin_idx >= sizeof(BIN_IDX_TO_TOKEN_TYPES)/sizeof(BIN_IDX_TO_TOKEN_TYPES[0])) {
         int32_t dummy = 0;
         return parse_unary(result, tokens, &dummy, false, scope_id);
@@ -2884,11 +2944,7 @@ static PARSE_EXPR_STATUS parse_generic_binary(
 
 }
 
-static PARSE_EXPR_STATUS parse_expr(
-    Uast_expr** result,
-    Tk_view* tokens,
-    Scope_id scope_id
-) {
+static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_id scope_id) {
     Uast_expr* lhs = NULL;
     PARSE_EXPR_STATUS status = parse_generic_binary(&lhs, NULL, false, tokens, scope_id, 0, 0);
     if (status != PARSE_EXPR_OK) {
@@ -2901,23 +2957,21 @@ static PARSE_EXPR_STATUS parse_expr(
         return PARSE_EXPR_OK;
     }
     
-    // TODO: remove BINARY_SINGLE_EQUAL?
-    todo();
-    //Uast_expr* rhs = NULL;
-    //switch (parse_generic_binary(&rhs, tokens, can_be_tuple ,scope_id)) {
-    //    case PARSE_EXPR_OK:
-    //        // TODO: do uast_assignment?
-    //        //*result = uast_assignment_wrap(uast_assignment_new(equal_tk.pos, uast_expr_wrap(lhs), rhs));
-    //        *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(equal_tk.pos, lhs, rhs, BINARY_SINGLE_EQUAL)));
-    //        assert(*result);
-    //        return PARSE_EXPR_OK;
-    //    case PARSE_EXPR_NONE:
-    //        msg_expected_expr(*tokens, "after `=`");
-    //        return PARSE_EXPR_ERROR;
-    //    case PARSE_EXPR_ERROR:
-    //        return PARSE_EXPR_ERROR;
-    //}
-    //unreachable("");
+    Uast_expr* rhs = NULL;
+    switch (parse_generic_binary(&rhs, NULL, false, tokens, scope_id, 0, 0)) {
+        case PARSE_EXPR_OK:
+            // TODO: do uast_assignment?
+            //*result = uast_assignment_wrap(uast_assignment_new(equal_tk.pos, uast_expr_wrap(lhs), rhs));
+            *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(equal_tk.pos, lhs, rhs, BINARY_SINGLE_EQUAL)));
+            assert(*result);
+            return PARSE_EXPR_OK;
+        case PARSE_EXPR_NONE:
+            msg_expected_expr(*tokens, "after `=`");
+            return PARSE_EXPR_ERROR;
+        case PARSE_EXPR_ERROR:
+            return PARSE_EXPR_ERROR;
+    }
+    unreachable("");
 }
 
 static void parser_do_tests(void);
