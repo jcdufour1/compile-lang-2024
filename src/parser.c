@@ -2446,7 +2446,7 @@ static bool expr_is_binary(const Uast_expr* expr) {
 }
 
 static PARSE_EXPR_STATUS parse_unary(
-    Uast_operator** result,
+    Uast_expr** result,
     Tk_view* tokens,
     int32_t* prev_oper_pres,
     bool can_be_tuple,
@@ -2454,8 +2454,10 @@ static PARSE_EXPR_STATUS parse_unary(
 ) {
     (void) can_be_tuple;
 
+    if (!is_unary(tk_view_front(*tokens).type)) {
+        return parse_expr_piece(result, tokens, prev_oper_pres, scope_id);
+    }
     Token oper = consume_operator(tokens);
-    unwrap(is_unary(oper.type));
 
     *prev_oper_pres = get_operator_precedence(oper.type);
 
@@ -2495,7 +2497,7 @@ static PARSE_EXPR_STATUS parse_unary(
             unreachable(TOKEN_FMT, token_print(TOKEN_MODE_LOG, oper));
     }
 
-    switch (parse_expr_piece(&child, tokens, prev_oper_pres, scope_id)) {
+    switch (parse_unary(&child, tokens, prev_oper_pres, false, scope_id)) {
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_NONE:
@@ -2512,11 +2514,11 @@ static PARSE_EXPR_STATUS parse_unary(
         case TOKEN_REFER:
             // fallthrough
         case TOKEN_UNSAFE_CAST:
-            *result = uast_unary_wrap(uast_unary_new(oper.pos, child, token_type_to_unary_type(oper.type), ulang_type_regular_const_wrap(ulang_type_regular_new(unary_lang_type, oper.pos))));
+            *result = uast_operator_wrap(uast_unary_wrap(uast_unary_new(oper.pos, child, token_type_to_unary_type(oper.type), ulang_type_regular_const_wrap(ulang_type_regular_new(unary_lang_type, oper.pos)))));
             assert(*result);
             break;
         case TOKEN_SINGLE_MINUS: {
-            *result = uast_binary_wrap(uast_binary_new(oper.pos, uast_literal_wrap(uast_number_wrap(uast_number_new(oper.pos, 0))), child, token_type_to_binary_type(oper.type)));
+            *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, uast_literal_wrap(uast_number_wrap(uast_number_new(oper.pos, 0))), child, token_type_to_binary_type(oper.type))));
             assert(*result);
             break;
         }
@@ -2525,134 +2527,6 @@ static PARSE_EXPR_STATUS parse_unary(
     }
 
     return PARSE_EXPR_OK;
-}
-
-static PARSE_EXPR_STATUS parse_binary(
-    Uast_expr** result,
-    Uast_expr* lhs,
-    Tk_view* tokens,
-    int32_t* prev_oper_pres,
-    bool can_be_tuple,
-    Scope_id scope_id
-) {
-    Token oper = consume_operator(tokens);
-
-    bool is_equal_thing = false;
-    if (try_consume(NULL, tokens, TOKEN_SINGLE_EQUAL)) {
-        is_equal_thing = true;
-    }
-
-    unwrap(is_binary(oper.type));
-
-    Uast_expr* rhs = NULL;
-
-    if (is_unary(tk_view_front(*tokens).type)) {
-        int32_t unary_pres = get_operator_precedence(tk_view_front(*tokens).type);
-        Uast_operator* unary = NULL;
-        switch (parse_unary(&unary, tokens, prev_oper_pres, can_be_tuple, scope_id)) {
-            case PARSE_EXPR_OK:
-                rhs = uast_operator_wrap(unary);
-                break;
-            case PARSE_EXPR_ERROR:
-                todo();
-            case PARSE_EXPR_NONE:
-                todo();
-            default:
-                todo();
-        }
-
-        unwrap(
-            (unary_pres > get_operator_precedence(oper.type)) &&
-            "case of unary operator having lower or equal precedence than adjacent binary not implemented"
-        );
-
-        rhs = uast_operator_wrap(unary);
-    } else {
-        switch (parse_expr_piece(&rhs, tokens, prev_oper_pres, scope_id)) {
-            case PARSE_EXPR_OK:
-                break;
-            case PARSE_EXPR_ERROR:
-                return PARSE_EXPR_ERROR;
-            case PARSE_EXPR_NONE:
-                msg_expected_expr(*tokens, "");
-                return PARSE_EXPR_ERROR;
-            default:
-                unreachable("");
-        }
-    }
-
-    switch (oper.type) {
-        case TOKEN_SINGLE_DOT:
-            *result = uast_member_access_wrap(uast_member_access_new(oper.pos, uast_symbol_unwrap(rhs), lhs));
-            break;
-        case TOKEN_SINGLE_PLUS:
-            // fallthrough
-        case TOKEN_SINGLE_MINUS:
-            // fallthrough
-        case TOKEN_ASTERISK:
-            // fallthrough
-        case TOKEN_SLASH:
-            // fallthrough
-        case TOKEN_MODULO:
-            // fallthrough
-        case TOKEN_GREATER_OR_EQUAL:
-            // fallthrough
-        case TOKEN_LESS_OR_EQUAL:
-            // fallthrough
-        case TOKEN_LESS_THAN:
-            // fallthrough
-        case TOKEN_GREATER_THAN:
-            // fallthrough
-        case TOKEN_NOT_EQUAL:
-            // fallthrough
-        case TOKEN_BITWISE_AND:
-            // fallthrough
-        case TOKEN_BITWISE_OR:
-            // fallthrough
-        case TOKEN_BITWISE_XOR:
-            // fallthrough
-        case TOKEN_LOGICAL_AND:
-            // fallthrough
-        case TOKEN_LOGICAL_OR:
-            // fallthrough
-        case TOKEN_SHIFT_LEFT:
-            // fallthrough
-        case TOKEN_SHIFT_RIGHT:
-            // fallthrough
-        case TOKEN_SINGLE_EQUAL:
-            // fallthrough
-        case TOKEN_DOUBLE_EQUAL:
-            *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, lhs, rhs, token_type_to_binary_type(oper.type))));
-            break;
-        case TOKEN_COMMA:
-            if (lhs->type == UAST_TUPLE) {
-                vec_append(&a_main, &uast_tuple_unwrap(lhs)->members, rhs);
-                *result = lhs;
-            } else {
-                Uast_expr_vec members = {0};
-                vec_append(&a_main, &members, lhs);
-                vec_append(&a_main, &members, rhs);
-                *result = uast_tuple_wrap(uast_tuple_new(
-                    oper.pos,
-                    members
-                ));
-            }
-            break;
-        default:
-            unreachable(TOKEN_FMT, token_print(TOKEN_MODE_LOG, oper));
-    }
-
-    if (is_equal_thing) {
-        *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(
-            oper.pos, uast_expr_clone(lhs, scope_id), *result, BINARY_SINGLE_EQUAL
-        )));
-        return PARSE_EXPR_OK;
-    } else {
-        assert(*result);
-        *prev_oper_pres = get_operator_precedence(oper.type);
-        return PARSE_EXPR_OK;
-    }
-    unreachable("");
 }
 
 static Uast_expr* get_right_child_operator(Uast_operator* oper) {
@@ -2961,22 +2835,16 @@ static PARSE_EXPR_STATUS parse_generic_binary(
     size_t bin_idx, // idx of BIN_IDX_TO_TOKEN_TYPES that will be used in this function invocation
     int depth
 ) {
-    log(LOG_DEBUG, "entering depth: %d "TAST_FMT, depth, uast_expr_print(lhs));
-    log_tokens(LOG_DEBUG, *tokens);
-
     if (bin_idx >= sizeof(BIN_IDX_TO_TOKEN_TYPES)/sizeof(BIN_IDX_TO_TOKEN_TYPES[0])) {
-        return parse_expr_piece(result, tokens, 0, scope_id);
+        int32_t dummy = 0;
+        return parse_unary(result, tokens, &dummy, false, scope_id);
     }
 
     TOKEN_TYPE bin_type_1 = BIN_IDX_TO_TOKEN_TYPES[bin_idx][0];
     TOKEN_TYPE bin_type_2 = BIN_IDX_TO_TOKEN_TYPES[bin_idx][1];
-    log(LOG_DEBUG, TAST_FMT"\n", token_type_print(TOKEN_MODE_LOG, bin_type_1));
-    log(LOG_DEBUG, TAST_FMT"\n", token_type_print(TOKEN_MODE_LOG, bin_type_2));
                          
     Uast_expr* new_lhs = NULL;
     Uast_expr* new_rhs = NULL;
-    log(LOG_DEBUG, "thing 30 depth: %d "TAST_FMT, depth, uast_expr_print(lhs));
-    log_tokens(LOG_DEBUG, *tokens);
     if (is_lhs) {
         new_lhs = lhs;
     } else {
@@ -2985,48 +2853,33 @@ static PARSE_EXPR_STATUS parse_generic_binary(
             return status;
         }
     }
-    log(LOG_DEBUG, "thing 30 depth: %d "TAST_FMT, depth, uast_expr_print(new_lhs));
-    log_tokens(LOG_DEBUG, *tokens);
 
     // new_lhs has 1 when parsing &&
     // tokens left are || 2
     Token oper = {0};
     if (!try_consume_1_of_2(&oper, tokens, bin_type_1, bin_type_2)) {
-        log(LOG_DEBUG, "thing thing thing\n");
-        log_tokens(LOG_DEBUG, *tokens);
         *result = new_lhs;
         return PARSE_EXPR_OK;
     }
-    log_tokens(LOG_DEBUG, *tokens);
 
     PARSE_EXPR_STATUS status = parse_generic_binary(&new_rhs, NULL, false/*change to false?*/, tokens, scope_id, bin_idx + 1, depth + 1);
     if (status != PARSE_EXPR_OK) {
         todo();
         return status;
     }
-    log(LOG_DEBUG, "thing 30 depth: %d "TAST_FMT, depth, uast_expr_print(new_lhs));
-    log(LOG_DEBUG, "thing 30 depth: %d "TAST_FMT, depth, uast_expr_print(new_rhs));
-    log_tokens(LOG_DEBUG, *tokens);
 
-    log(LOG_DEBUG, "%d lhs with higher pres then child calls: "TAST_FMT, depth, uast_expr_print(new_lhs));
     *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(POS_BUILTIN/*TODO*/, new_lhs, new_rhs, binary_type_from_token_type(oper.type))));
-    log(LOG_DEBUG, "%d result with higher pres then child calls: "TAST_FMT, depth, uast_expr_print(*result));
 
     if (!try_peek_1_of_2(&oper, tokens, bin_type_1, bin_type_2)) {
-        log(LOG_DEBUG, "depth %d returning thing 76", depth);
         return PARSE_EXPR_OK;
     }
-    log(LOG_DEBUG, "%d ", depth);
-    log_tokens(LOG_DEBUG, *tokens);
 
     status = parse_generic_binary(result, *result, true, tokens, scope_id, bin_idx, depth + 1);
     if (status != PARSE_EXPR_OK) {
         todo();
         return status;
     }
-    log_tokens(LOG_DEBUG, *tokens);
 
-    log(LOG_DEBUG, "%d result final "TAST_FMT, depth, uast_expr_print(*result));
     return PARSE_EXPR_OK;
 
 }
