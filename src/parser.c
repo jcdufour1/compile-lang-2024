@@ -14,6 +14,9 @@
 #include <file.h>
 #include <errno.h>
 #include <name.h>
+
+static bool can_end_stmt(Token token);
+
 // TODO: remove unused functions
 
 // TODO: make consume_expect function to print error automatically
@@ -72,14 +75,44 @@ static PARSE_STATUS parse_expr_index(
     Pos oper_pos
 );
 
-static bool try_consume(Token* result, Tk_view* tokens, TOKEN_TYPE type) {
-    Token temp;
-    if (!tk_view_try_consume(&temp, tokens, type)) {
-        return false;
+static bool try_consume_internal(Token* result, Tk_view* tokens, bool allow_any_type, TOKEN_TYPE type) {
+    //log(LOG_DEBUG, "    start try_consume_internal\n");
+    //log_tokens(LOG_DEBUG, *tokens);
+    Token temp = {0};
+    if (allow_any_type) {
+        temp = tk_view_consume(tokens);
+    } else {
+        if (!tk_view_try_consume(&temp, tokens, type)) {
+            return false;
+        }
     }
     prev_token = temp;
     if (result) {
         *result = temp;
+    }
+    return true;
+}
+
+static Token consume(Tk_view* tokens) {
+    Token result = {0};
+    Token dummy = {0};
+    unwrap(try_consume_internal(&result, tokens, true, TOKEN_NONTYPE));
+    if (can_end_stmt(tk_view_front(*tokens))) {
+        while (/* TODO: do semicolon this way as well */try_consume_internal(&dummy, tokens, false, TOKEN_NEW_LINE));
+    }
+    return result;
+}
+
+// also will automatically remove semicolon and newline if present
+static bool try_consume(Token* result, Tk_view* tokens, TOKEN_TYPE type) {
+    //log(LOG_DEBUG, "start try_consume\n");
+    //log_tokens(LOG_DEBUG, *tokens);
+    Token dummy = {0};
+    if (!try_consume_internal(result, tokens, false, type)) {
+        return false;
+    }
+    if (can_end_stmt(tk_view_front(*tokens))) {
+        while (/* TODO: do semicolon this way as well */try_consume_internal(&dummy, tokens, false, TOKEN_NEW_LINE));
     }
     return true;
 }
@@ -118,11 +151,12 @@ static bool try_peek_1_of_4(Token* result, Tk_view* tokens, TOKEN_TYPE a, TOKEN_
 }
 
 static bool try_consume_if_not(Token* result, Tk_view* tokens, TOKEN_TYPE type) {
+    todo();
     if (tokens->count < 1 || tk_view_front(*tokens).type == type) {
         return false;
     }
     if (result) {
-        *result = tk_view_consume(tokens);
+        *result = consume(tokens);
     }
     prev_token = *result;
     return true;
@@ -478,7 +512,7 @@ static bool can_end_stmt(Token token) {
         case TOKEN_VOID:
             return true;
         case TOKEN_NEW_LINE:
-            todo();
+            return true;
         case TOKEN_SYMBOL:
             return true;
         case TOKEN_OPEN_PAR:
@@ -1154,7 +1188,7 @@ static PARSE_STATUS parse_function_decl_common(
     Scope_id fn_scope,
     Scope_id block_scope
 ) {
-    Token name_token = tk_view_consume(tokens);
+    Token name_token = consume(tokens);
 
     Uast_generic_param_vec gen_params = {0};
     if (tk_view_front(*tokens).type ==  TOKEN_OPEN_GENERIC) {
@@ -1739,7 +1773,7 @@ for_range_error:
 }
 
 static PARSE_STATUS parse_break(Uast_break** new_break, Tk_view* tokens, Scope_id scope_id) {
-    Token break_token = tk_view_consume(tokens);
+    Token break_token = consume(tokens);
 
     Uast_expr* break_expr = NULL;
     bool do_break_expr = true;
@@ -1761,7 +1795,7 @@ static PARSE_STATUS parse_break(Uast_break** new_break, Tk_view* tokens, Scope_i
 }
 
 static Uast_continue* parse_continue(Tk_view* tokens) {
-    Token continue_token = tk_view_consume(tokens);
+    Token continue_token = consume(tokens);
     Uast_continue* cont_stmt = uast_continue_new(continue_token.pos);
     return cont_stmt;
 }
@@ -1805,7 +1839,7 @@ error:
 }
 
 static PARSE_STATUS parse_literal(Uast_literal** lit, Tk_view* tokens) {
-    Token token = tk_view_consume(tokens);
+    Token token = consume(tokens);
     assert(token_is_literal(token));
 
     if (util_try_uast_literal_new_from_strv(lit, token.text, token.type, token.pos)) {
@@ -1815,7 +1849,7 @@ static PARSE_STATUS parse_literal(Uast_literal** lit, Tk_view* tokens) {
 }
 
 static Uast_symbol* parse_symbol(Tk_view* tokens, Scope_id scope_id) {
-    Token token = tk_view_consume(tokens);
+    Token token = consume(tokens);
     assert(token.type == TOKEN_SYMBOL);
 
     return uast_symbol_new(token.pos, name_new(env.curr_mod_path, token.text, (Ulang_type_vec) {0}, scope_id));
@@ -2177,7 +2211,8 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
     }
 
     try_consume(NULL, tokens, TOKEN_SEMICOLON);
-    if (tokens->count < 1 || !try_consume(NULL, tokens, TOKEN_NEW_LINE)) {
+    if (prev_token.type != TOKEN_NEW_LINE) {
+        log(LOG_DEBUG, TAST_FMT"\n", token_print(TOKEN_MODE_LOG, prev_token));
         msg(
             LOG_ERROR, EXPECT_FAIL_NO_NEW_LINE_AFTER_STATEMENT, tk_view_front(*tokens).pos,
             "expected newline after statement\n"

@@ -19,14 +19,16 @@ static inline Token tk_view_front(Tk_view tk_view) {
     return tk_view_at(tk_view, 0);
 }
 
+static inline void log_tokens_internal(const char* file, int line, LOG_LEVEL log_level, Tk_view tk_view) {
+    log_internal(log_level, file, line, 0, "tokens:\n");
+    for (size_t idx = 0; idx < tk_view.count; idx++) {
+        log_internal(log_level, file, line, 0, TOKEN_FMT"\n", token_print(TOKEN_MODE_LOG, tk_view_at(tk_view, idx)));
+    }
+    log_internal(log_level, file, line, 0, "\n");
+}
+
 #define log_tokens(log_level, tk_view) \
-    do { \
-        log((log_level), "tokens:\n"); \
-        for (size_t idx = 0; idx < (tk_view).count; idx++) { \
-            log((log_level), TOKEN_FMT"\n", token_print(TOKEN_MODE_LOG, tk_view_at(tk_view, idx))); \
-        } \
-        log(log_level, "\n"); \
-    } while(0);
+    log_tokens_internal(__FILE__, __LINE__, log_level, tk_view)
 
 static inline Tk_view tk_view_consume_count(Tk_view* tk_view, size_t count) {
     if (tk_view->count < count) {
