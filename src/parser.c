@@ -14,6 +14,7 @@
 #include <file.h>
 #include <errno.h>
 #include <name.h>
+// TODO: remove unused functions
 
 // TODO: make consume_expect function to print error automatically
 
@@ -55,6 +56,21 @@ static PARSE_STATUS parse_variable_def(
 static PARSE_EXPR_STATUS parse_condition(Uast_condition**, Tk_view* tokens, Scope_id scope_id);
 static PARSE_STATUS parse_generics_args(Ulang_type_vec* args, Tk_view* tokens, Scope_id scope_id);
 static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_view* tokens, Scope_id block_scope);
+static PARSE_STATUS parse_expr_generic(
+    Uast_expr** result,
+    Uast_expr* lhs,
+    Tk_view* tokens,
+    int32_t* prev_oper_pres,
+    Scope_id scope_id
+);
+static PARSE_STATUS parse_expr_index(
+    Uast_expr** result,
+    Uast_expr* lhs,
+    Tk_view* tokens,
+    int32_t* prev_oper_pres,
+    Scope_id scope_id,
+    Pos oper_pos
+);
 
 static bool try_consume(Token* result, Tk_view* tokens, TOKEN_TYPE type) {
     Token temp;
@@ -1004,7 +1020,7 @@ static bool parse_lang_type_struct(Ulang_type* lang_type, Tk_view* tokens, Scope
         return false;
     }
 
-    if (tk_view_front(*tokens).type != TOKEN_OPEN_GENERIC) {
+    if (!try_consume(NULL, tokens, TOKEN_OPEN_GENERIC)) {
         *lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(atom, pos));
         return true;
     }
@@ -1218,7 +1234,6 @@ static PARSE_STATUS parse_generics_params(Uast_generic_param_vec* params, Tk_vie
 
 static PARSE_STATUS parse_generics_args(Ulang_type_vec* args, Tk_view* tokens, Scope_id scope_id) {
     memset(args, 0, sizeof(*args));
-    unwrap(try_consume(NULL, tokens, TOKEN_OPEN_GENERIC));
 
     do {
         Ulang_type arg = {0};
@@ -1795,14 +1810,6 @@ static Uast_symbol* parse_symbol(Tk_view* tokens, Scope_id scope_id) {
 }
 
 static PARSE_STATUS parse_function_call(Uast_function_call** child, Tk_view* tokens, Uast_expr* callee, Scope_id scope_id) {
-    //Token fun_name_token;
-    //if (!try_consume(&fun_name_token, tokens, TOKEN_SYMBOL)) {
-    //    unreachable("this is not a function call");
-    //}
-    if (!try_consume(NULL, tokens, TOKEN_OPEN_PAR)) {
-        unreachable("this is not a function call");
-    }
-
     bool is_first_time = true;
     bool prev_is_comma = false;
     Uast_expr_vec args = {0};
@@ -1840,9 +1847,10 @@ static PARSE_STATUS parse_function_call(Uast_function_call** child, Tk_view* tok
 static PARSE_STATUS parse_function_return(Uast_return** rtn_stmt, Tk_view* tokens, Scope_id scope_id) {
     unwrap(try_consume(NULL, tokens, TOKEN_RETURN));
 
-    Uast_expr* expr;
+    Uast_expr* expr = NULL;
     switch (parse_expr(&expr, tokens, scope_id)) {
         case PARSE_EXPR_OK:
+            assert(expr);
             *rtn_stmt = uast_return_new(uast_expr_get_pos(expr), expr, false);
             break;
         case PARSE_EXPR_NONE:
@@ -2212,7 +2220,6 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
         bool should_stop = false;
         switch (parse_stmt(&child, tokens, new_scope)) {
             case PARSE_EXPR_OK:
-                log_tokens(LOG_DEBUG, *tokens);
                 assert(child);
                 break;
             case PARSE_EXPR_ERROR:
@@ -2445,29 +2452,12 @@ static bool expr_is_binary(const Uast_expr* expr) {
     return operator->type == UAST_BINARY;
 }
 
-static PARSE_EXPR_STATUS parse_opening(
-    Uast_expr** result,
-    Uast_expr* lhs,
-    Tk_view* tokens,
-    Scope_id scope_id
-) {
-    todo();
-}
-
 static PARSE_EXPR_STATUS parse_high_presidence_internal(
     Uast_expr** result,
     Uast_expr* lhs,
     Tk_view* tokens,
     Scope_id scope_id
 ) {
-    if (token_is_opening(tk_view_front(*tokens))) {
-        PARSE_EXPR_STATUS status = parse_opening(&lhs, lhs, tokens, scope_id);
-        if (status != PARSE_EXPR_OK) {
-            return status;
-        }
-        return parse_high_presidence_internal(result, lhs, tokens, scope_id);
-    }
-
     Token oper = {0};
     if (try_consume(&oper, tokens, TOKEN_SINGLE_DOT)) {
         Token memb_name = {0};
@@ -2487,7 +2477,38 @@ static PARSE_EXPR_STATUS parse_high_presidence_internal(
         return parse_high_presidence_internal(result, lhs, tokens, scope_id);
     }
 
+    if (try_consume(&oper, tokens, TOKEN_OPEN_PAR)) {
+        Uast_function_call* new_call = NULL;
+        if (PARSE_OK != parse_function_call(&new_call, tokens, lhs, scope_id)) {
+            return PARSE_EXPR_ERROR;
+        }
+        *result = uast_function_call_wrap(new_call);
+        assert(*result);
+        return PARSE_EXPR_OK;
+        // TODO: also consume TOKEN_CLOSE_PAR here
+    }
+
+    if (try_consume(&oper, tokens, TOKEN_OPEN_GENERIC)) {
+        int32_t dummy = 0;
+        if (PARSE_OK != parse_expr_generic(&lhs, lhs, tokens, &dummy, scope_id)) {
+            return PARSE_EXPR_ERROR;
+        }
+        // TODO: also consume TOKEN_CLOSE_GENERIC here
+        return parse_high_presidence_internal(result, lhs, tokens, scope_id);
+    }
+
+    if (try_consume(&oper, tokens, TOKEN_OPEN_SQ_BRACKET)) {
+        int32_t dummy = 0;
+        if (PARSE_OK != parse_expr_index(&lhs, lhs, tokens, &dummy, scope_id, oper.pos)) {
+            return PARSE_EXPR_ERROR;
+        }
+        assert(*result);
+        return parse_high_presidence_internal(result, lhs, tokens, scope_id);
+        // TODO: also consume TOKEN_CLOSE_SQ_BRACKET here
+    }
+    
     *result = lhs;
+    assert(*result);
     return PARSE_EXPR_OK;
 }
 
@@ -2542,6 +2563,8 @@ static PARSE_EXPR_STATUS parse_unary(
                     return PARSE_EXPR_ERROR;
                 }
             }
+            // TODO: parse just Lang_type instead of Lang_type_atom
+            // make expected success case for function pointer casting, etc.
             if (PARSE_OK != parse_lang_type_struct_atom_require(&unary_lang_type, tokens, scope_id)) {
                 return PARSE_EXPR_ERROR;
             }
@@ -2728,23 +2751,23 @@ static PARSE_EXPR_STATUS parse_expr_function_call(
     unreachable("");
 }
 
-static PARSE_EXPR_STATUS parse_expr_index(
+static PARSE_STATUS parse_expr_index(
     Uast_expr** result,
     Uast_expr* lhs,
     Tk_view* tokens,
     int32_t* prev_oper_pres,
-    Scope_id scope_id
+    Scope_id scope_id,
+    Pos oper_pos
 ) {
     (void) prev_oper_pres; // TODO: remove this parameter
-    Token oper = consume_operator(tokens);
-    unwrap(oper.type == TOKEN_OPEN_SQ_BRACKET);
 
     Uast_expr* index_index = NULL;
     switch (parse_expr(&index_index, tokens, scope_id)) {
         case PARSE_EXPR_OK:
             break;
         case PARSE_EXPR_NONE:
-            return PARSE_EXPR_NONE;
+            // TODO: expected expr
+            todo();
         default:
             todo();
     }
@@ -2756,14 +2779,14 @@ static PARSE_EXPR_STATUS parse_expr_index(
             tk_view_front(*tokens).pos,
             "expected closing `]` after expr\n"
         );
-        return PARSE_EXPR_ERROR;
+        return PARSE_ERROR;
     }
 
-    *result = uast_index_wrap(uast_index_new(oper.pos, index_index, lhs));
-    return PARSE_EXPR_OK;
+    *result = uast_index_wrap(uast_index_new(oper_pos, index_index, lhs));
+    return PARSE_OK;
 }
 
-static PARSE_EXPR_STATUS parse_expr_generic(
+static PARSE_STATUS parse_expr_generic(
     Uast_expr** result,
     Uast_expr* lhs,
     Tk_view* tokens,
@@ -2783,84 +2806,15 @@ static PARSE_EXPR_STATUS parse_expr_generic(
             sym = uast_member_access_unwrap(lhs)->member_name;
             break;
         default:
+            // TODO
             todo();
     }
 
     if (PARSE_OK != parse_generics_args(&sym->name.gen_args, tokens, scope_id)) {
-        return PARSE_EXPR_ERROR;
+        return PARSE_ERROR;
     }
-    return PARSE_EXPR_OK;
-}
-
-static PARSE_EXPR_STATUS parse_expr_opening_prev_less_pres(
-    Uast_expr** result,
-    Uast_expr** lhs,
-    Tk_view* tokens,
-    int32_t* prev_oper_pres,
-    Scope_id scope_id
-) {
-    switch (tk_view_front(*tokens).type) {
-        case TOKEN_OPEN_PAR: {
-            Uast_expr* new_right = NULL;
-            PARSE_EXPR_STATUS status = parse_expr_function_call(&new_right, get_right_child_expr(*lhs), tokens, scope_id);
-            if (status != PARSE_EXPR_OK) {
-                return status;
-            }
-            assert(new_right);
-            set_right_child_expr(*result, new_right);
-            return PARSE_EXPR_OK;
-        }
-        case TOKEN_OPEN_SQ_BRACKET: {
-            Uast_expr* new_right = NULL;
-            PARSE_EXPR_STATUS status = parse_expr_index(&new_right, get_right_child_expr(*lhs), tokens, prev_oper_pres, scope_id);
-            if (status != PARSE_EXPR_OK) {
-                return status;
-            }
-            assert(new_right);
-            set_right_child_expr(*result, new_right);
-            return PARSE_EXPR_OK;
-        }
-        default:
-            unreachable(TOKEN_FMT, token_print(TOKEN_MODE_LOG, tk_view_front(*tokens)));
-    }
-    unreachable("");
-}
-
-static PARSE_EXPR_STATUS parse_expr_opening_prev_equal_pres(
-    Uast_expr** result,
-    Uast_expr** lhs,
-    Tk_view* tokens,
-    int32_t* prev_oper_pres,
-    Scope_id scope_id
-) {
-    switch (tk_view_front(*tokens).type) {
-        case TOKEN_OPEN_PAR: {
-            return parse_expr_function_call(result, *lhs, tokens, scope_id);
-        }
-        case TOKEN_OPEN_SQ_BRACKET: {
-            return parse_expr_index(result, *lhs, tokens, prev_oper_pres, scope_id);
-        }
-        case TOKEN_OPEN_GENERIC: {
-            return parse_expr_generic(result, *lhs, tokens, prev_oper_pres, scope_id);
-        }
-        default:
-            unreachable(TOKEN_FMT, token_print(TOKEN_MODE_LOG, tk_view_front(*tokens)));
-    }
-    unreachable("");
-}
-
-static PARSE_EXPR_STATUS parse_expr_opening(
-    Uast_expr** result,
-    Uast_expr** lhs,
-    Tk_view* tokens,
-    int32_t* prev_oper_pres,
-    Scope_id scope_id
-) {
-    if (*prev_oper_pres < get_operator_precedence(tk_view_front(*tokens).type)) {
-        return parse_expr_opening_prev_less_pres(result, lhs, tokens, prev_oper_pres, scope_id);
-    } else {
-        return parse_expr_opening_prev_equal_pres(result, lhs, tokens, prev_oper_pres, scope_id);
-    }
+    *result = lhs;
+    return PARSE_OK;
 }
 
 //static_assert(TOKEN_COUNT == 67, "exhausive handling of token types; note that only binary operators need to be explicitly handled here");
@@ -2919,6 +2873,7 @@ static PARSE_EXPR_STATUS parse_generic_binary(
     Token oper = {0};
     if (!try_consume_1_of_2(&oper, tokens, bin_type_1, bin_type_2)) {
         *result = new_lhs;
+        assert(*result);
         return PARSE_EXPR_OK;
     }
 
@@ -2931,6 +2886,7 @@ static PARSE_EXPR_STATUS parse_generic_binary(
     *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(POS_BUILTIN/*TODO*/, new_lhs, new_rhs, binary_type_from_token_type(oper.type))));
 
     if (!try_peek_1_of_2(&oper, tokens, bin_type_1, bin_type_2)) {
+        assert(*result);
         return PARSE_EXPR_OK;
     }
 
@@ -2954,6 +2910,7 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
     Token equal_tk = {0};
     if (!try_consume(&equal_tk, tokens, TOKEN_SINGLE_EQUAL)) {
         *result = lhs;
+        assert(*result);
         return PARSE_EXPR_OK;
     }
     
