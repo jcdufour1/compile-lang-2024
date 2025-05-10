@@ -2944,12 +2944,12 @@ static PARSE_EXPR_STATUS parse_expr_opening(
 static_assert(TOKEN_COUNT == 67, "exhausive handling of token types; note that only binary operators need to be explicitly handled here");
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][2] = {
     // {bin_type_1, bin_type_2},
-    //{TOKEN_LOGICAL_OR, TOKEN_LOGICAL_OR},
-    //{TOKEN_LOGICAL_AND, TOKEN_LOGICAL_AND},
+    {TOKEN_LOGICAL_OR, TOKEN_LOGICAL_OR},
+    {TOKEN_LOGICAL_AND, TOKEN_LOGICAL_AND},
     //{TOKEN_BITWISE_OR, TOKEN_BITWISE_OR},
     //{TOKEN_BITWISE_XOR, TOKEN_BITWISE_XOR},
     //{TOKEN_BITWISE_AND, TOKEN_BITWISE_AND},
-    {TOKEN_NOT_EQUAL, TOKEN_DOUBLE_EQUAL},
+    //{TOKEN_NOT_EQUAL, TOKEN_DOUBLE_EQUAL},
 };
 
 static PARSE_EXPR_STATUS parse_generic_binary(
@@ -2970,9 +2970,13 @@ static PARSE_EXPR_STATUS parse_generic_binary(
 
     TOKEN_TYPE bin_type_1 = BIN_IDX_TO_TOKEN_TYPES[bin_idx][0];
     TOKEN_TYPE bin_type_2 = BIN_IDX_TO_TOKEN_TYPES[bin_idx][1];
+    log(LOG_DEBUG, TAST_FMT"\n", token_type_print(TOKEN_MODE_LOG, bin_type_1));
+    log(LOG_DEBUG, TAST_FMT"\n", token_type_print(TOKEN_MODE_LOG, bin_type_2));
                          
     Uast_expr* new_lhs = NULL;
     Uast_expr* new_rhs = NULL;
+    log(LOG_DEBUG, "thing 30 depth: %d "TAST_FMT, depth, uast_expr_print(lhs));
+    log_tokens(LOG_DEBUG, *tokens);
     if (is_lhs) {
         new_lhs = lhs;
     } else {
@@ -2981,20 +2985,27 @@ static PARSE_EXPR_STATUS parse_generic_binary(
             return status;
         }
     }
+    log(LOG_DEBUG, "thing 30 depth: %d "TAST_FMT, depth, uast_expr_print(new_lhs));
+    log_tokens(LOG_DEBUG, *tokens);
 
+    // new_lhs has 1 when parsing &&
+    // tokens left are || 2
     Token oper = {0};
     if (!try_consume_1_of_2(&oper, tokens, bin_type_1, bin_type_2)) {
-        todo();
+        log(LOG_DEBUG, "thing thing thing\n");
+        log_tokens(LOG_DEBUG, *tokens);
         *result = new_lhs;
         return PARSE_EXPR_OK;
     }
     log_tokens(LOG_DEBUG, *tokens);
 
-    PARSE_EXPR_STATUS status = parse_generic_binary(&new_rhs, new_lhs, true, tokens, scope_id, bin_idx + 1, depth + 1);
+    PARSE_EXPR_STATUS status = parse_generic_binary(&new_rhs, NULL, false/*change to false?*/, tokens, scope_id, bin_idx + 1, depth + 1);
     if (status != PARSE_EXPR_OK) {
         todo();
         return status;
     }
+    log(LOG_DEBUG, "thing 30 depth: %d "TAST_FMT, depth, uast_expr_print(new_lhs));
+    log(LOG_DEBUG, "thing 30 depth: %d "TAST_FMT, depth, uast_expr_print(new_rhs));
     log_tokens(LOG_DEBUG, *tokens);
 
     log(LOG_DEBUG, "%d lhs with higher pres then child calls: "TAST_FMT, depth, uast_expr_print(new_lhs));
@@ -3002,6 +3013,7 @@ static PARSE_EXPR_STATUS parse_generic_binary(
     log(LOG_DEBUG, "%d result with higher pres then child calls: "TAST_FMT, depth, uast_expr_print(*result));
 
     if (!try_peek_1_of_2(&oper, tokens, bin_type_1, bin_type_2)) {
+        log(LOG_DEBUG, "depth %d returning thing 76", depth);
         return PARSE_EXPR_OK;
     }
     log(LOG_DEBUG, "%d ", depth);
@@ -3015,7 +3027,7 @@ static PARSE_EXPR_STATUS parse_generic_binary(
     log_tokens(LOG_DEBUG, *tokens);
 
     log(LOG_DEBUG, "%d result final "TAST_FMT, depth, uast_expr_print(*result));
-    todo();
+    return PARSE_EXPR_OK;
 
 }
 
