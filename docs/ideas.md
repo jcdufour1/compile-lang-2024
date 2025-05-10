@@ -449,6 +449,36 @@ fn [] String, i32 (lhs, rhs) {
 }
 '''
 
+# operator overloading (idea 4)
+'''c
+// constraints
+T: (+) | (-) | (*) | (/)
+
+fn binary i32, Vec2 (oper T, lhs, rhs) {
+    switch oper {
+        case (+): return vec2_add(lhs, rhs)
+        case (-): return vec2_sub(lhs, rhs)
+        case (*): return vec2_mul(lhs, rhs)
+        case (/): return vec2_div(lhs, rhs)
+    }
+}
+'''
+
+# operator overloading (idea 4.1)
+'''c
+// constraints
+T: "+" | "-" | "*" | "/"
+
+fn binary i32, Vec2 ('T, lhs, rhs) {
+    switch oper {
+        case "+": return vec2_add(lhs, rhs)
+        case "-": return vec2_sub(lhs, rhs)
+        case "*": return vec2_mul(lhs, rhs)
+        case "/": return vec2_div(lhs, rhs)
+    }
+}
+'''
+
 # using (put struct members directly in namespace)
 '''c
 type Token struct {
@@ -487,7 +517,7 @@ fn foreach Things(things Things) {
 # inout
 // allow count and mut items to be passed to same function
 '''c
-fn Darr_at(darr Darr(inout 'T, 'I), index I) inout T {
+fn darr_at(darr Darr(inout 'T, 'I), index I) inout T {
 }
 '''
 
