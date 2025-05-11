@@ -504,26 +504,6 @@ static void emit_unary_suffix(String* output, const Llvm_unary* unary) {
     unreachable("");
 }
 
-static void emit_operator_operand_llvm_placeholder_expr(
-     
-    String* output,
-    const Llvm_expr* expr
-) {
-    switch (expr->type) {
-        case LLVM_LITERAL:
-            extend_literal(output, llvm_literal_const_unwrap(expr));
-            break;
-        case LLVM_OPERATOR:
-            // fallthrough
-        case LLVM_FUNCTION_CALL:
-            string_extend_cstr(&a_main, output, "%");
-            llvm_extend_name(output, llvm_expr_get_name(expr));
-            break;
-        default:
-            unreachable(LLVM_FMT"\n", llvm_print(llvm_expr_const_wrap(expr)));
-    }
-}
-
 static void emit_operator_operand_expr(String* output, const Llvm_expr* operand) {
     switch (operand->type) {
         case LLVM_LITERAL:

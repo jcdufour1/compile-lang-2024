@@ -23,8 +23,6 @@ typedef struct {
 
 static void emit_c_block(Emit_c_strs* strs,  const Llvm_block* block);
 
-static void emit_c_symbol_normal(String* literals, Name key, const Llvm_literal* lit);
-
 static void emit_c_expr_piece(Emit_c_strs* strs, Name child);
 
 // TODO: see if this can be merged with extend_type_call_str in emit_llvm.c in some way
@@ -523,46 +521,6 @@ static void emit_c_def(Emit_c_strs* strs, const Llvm_def* def) {
     unreachable("");
 }
 
-static void emit_c_store_another_llvm_src_literal(String* output, const Llvm_literal* literal) {
-    string_extend_cstr(&a_main, output, " ");
-
-    switch (literal->type) {
-        case LLVM_STRING:
-            llvm_extend_name(output, llvm_string_const_unwrap(literal)->name);
-            return;
-        case LLVM_NUMBER:
-            string_extend_int64_t(&a_main, output, llvm_number_const_unwrap(literal)->data);
-            return;
-        case LLVM_VOID:
-            return;
-        case LLVM_FUNCTION_NAME:
-            unreachable("");
-    }
-    unreachable("");
-}
-
-static void emit_c_store_another_llvm_src_expr(Emit_c_strs* strs, const Llvm_expr* expr) {
-    (void) env;
-
-    switch (expr->type) {
-        case LLVM_LITERAL: {
-            const Llvm_literal* lit = llvm_literal_const_unwrap(expr);
-            if (lit->type == LLVM_STRING) {
-                emit_c_symbol_normal(&strs->literals, llvm_literal_get_name(lit), lit);
-            }
-            emit_c_store_another_llvm_src_literal(&strs->output, lit);
-            return;
-        }
-        case LLVM_FUNCTION_CALL:
-            // fallthrough
-        case LLVM_OPERATOR:
-            llvm_extend_name(&strs->output, llvm_expr_get_name(expr));
-            break;
-        default:
-            unreachable(LLVM_FMT"\n", llvm_print(llvm_expr_const_wrap(expr)));
-    }
-}
-
 static void emit_c_store_another_llvm(Emit_c_strs* strs, const Llvm_store_another_llvm* store) {
     Llvm* src = NULL;
     unwrap(alloca_lookup(&src, store->llvm_src));
@@ -707,24 +665,6 @@ static void emit_c_block(Emit_c_strs* strs, const Llvm_block* block) {
     while (all_tbl_iter_next(&curr, &iter)) {
         emit_c_sometimes(strs, curr);
     }
-}
-
-static void emit_c_symbol_normal(String* literals, Name key, const Llvm_literal* lit) {
-    todo();
-    Str_view data = {0};
-    switch (lit->type) {
-        case LLVM_STRING:
-            data = llvm_string_const_unwrap(lit)->data;
-            break;
-        default:
-            todo();
-    }
-
-    string_extend_cstr(&a_main, literals, "static const void* ");
-    llvm_extend_name(literals, key);
-    string_extend_cstr(&a_main, literals, " = \"");
-    string_extend_strv(&a_main, literals, data);
-    string_extend_cstr(&a_main, literals, "\";\n");
 }
 
 void emit_c_from_tree(const Llvm_block* root) {

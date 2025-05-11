@@ -275,17 +275,6 @@ Str_view llvm_function_def_print_internal(const Llvm_function_def* fun_def, int 
     return string_to_strv(buf);
 }
 
-static void extend_struct_def_base(String* buf, const char* type_name, Struct_def_base base, int indent) {
-    string_extend_cstr_indent(&print_arena, buf, type_name, indent);
-    extend_name(NAME_LOG, buf, base.name);
-    string_extend_cstr(&print_arena, buf, "\n");
-
-    for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        Str_view memb_text = tast_variable_def_print_internal(vec_at(&base.members, idx), indent + INDENT_WIDTH);
-        string_extend_strv(&print_arena, buf, memb_text);
-    }
-}
-
 static void extend_llvm_struct_def_base(String* buf, const char* type_name, Llvm_struct_def_base base, int indent) {
     string_extend_cstr_indent(&print_arena, buf, type_name, indent);
     extend_name(NAME_LOG, buf, base.name);

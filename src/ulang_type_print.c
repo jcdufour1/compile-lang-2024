@@ -10,12 +10,6 @@ Str_view ulang_type_print_internal(LANG_TYPE_MODE mode, Ulang_type lang_type) {
     return string_to_strv(buf);
 }
 
-static void extend_pos(String* buf, Pos pos) {
-    string_extend_cstr(&print_arena, buf, "(( line:");
-    string_extend_int64_t(&print_arena, buf, pos.line);
-    string_extend_cstr(&print_arena, buf, " ))");
-}
-
 void extend_ulang_type_atom_to_string(String* string, LANG_TYPE_MODE mode, Ulang_type_atom atom) {
     // TODO: remove?
     if (mode == LANG_TYPE_MODE_LOG) {

@@ -21,11 +21,6 @@ static bool local_isalnum_or_underscore(char prev, char curr) {
     return isalnum(curr) || curr == '_';
 }
 
-static bool local_ishex(char prev, char curr) {
-    (void) prev;
-    return ishex(curr) || curr == '_' || curr == 'x';
-}
-
 static Str_view consume_num(Pos* pos, Str_view_col* file_text) {
     Str_view_col num = {0};
     unwrap(str_view_col_try_consume_while(&num, pos, file_text, local_isalnum_or_underscore));
@@ -596,15 +591,15 @@ static void test8(void) {
 }
 
 void tokenize_do_test(void) {
-    // TODO: consider reenabling these?
-    //test1();
-    //test2();
-    //test3();
-    //test4();
-    //test5();
-    //test6();
-    //test7();
-    //test8();
+    // note: this function is not currently being called
+    test1();
+    test2();
+    test3();
+    test4();
+    test5();
+    test6();
+    test7();
+    test8();
 }
 
 bool tokenize(Token_vec* result, Str_view file_path) {

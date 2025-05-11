@@ -195,22 +195,6 @@ static bool resolve_generics_serialize_struct_def_base(
     return true;
 }
 
-static Uast_def* local_raw_union_new(Pos pos, Ustruct_def_base base) {
-    return uast_raw_union_def_wrap(uast_raw_union_def_new(pos, base));
-}
-
-static Uast_def* local_enum_new(Pos pos, Ustruct_def_base base) {
-    return uast_enum_def_wrap(uast_enum_def_new(pos, base));
-}
-
-static Uast_def* local_sum_new(Pos pos, Ustruct_def_base base) {
-    return uast_sum_def_wrap(uast_sum_def_new(pos, base));
-}
-
-static Uast_def* local_struct_new(Pos pos, Ustruct_def_base base) {
-    return uast_struct_def_wrap(uast_struct_def_new(pos, base));
-}
-
 typedef void*(*Obj_new)(Pos, Ustruct_def_base);
 
 static bool resolve_generics_ulang_type_internal_struct_like_2(

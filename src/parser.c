@@ -39,7 +39,6 @@ typedef enum {
     PARSE_EXPR_ERROR, // tokens need to be synced by callers
 } PARSE_EXPR_STATUS;
 
-static void set_right_child_expr(Uast_expr* expr, Uast_expr* new_rhs);
 static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top_level, Scope_id scope_id);
 static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id scope_id);
 static PARSE_EXPR_STATUS parse_expr(
@@ -459,29 +458,6 @@ static void sync(Tk_view* tokens) {
             return;
         }
     }
-}
-
-static void sync_past_next_bracket(Token token_to_match, Tk_view* tokens) {
-    int bracket_count = 1;
-    while (tokens->count > 0) {
-        if (try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-            bracket_count++;
-        } else if (try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
-            bracket_count--;
-            if (bracket_count == 0) {
-                return;
-            }
-        } else {
-            Token dummy = {0};
-            if (!try_consume_if_not(&dummy, tokens, TOKEN_EOF)) {
-                return;
-            }
-        }
-        assert(bracket_count > 0);
-    }
-
-    (void) token_to_match;
-    todo();
 }
 
 // TODO: consider case of being inside brackets
@@ -1010,21 +986,6 @@ static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* t
     try_consume(NULL, tokens, TOKEN_COMMA);
 
     *child = uast_param_new(base->pos, base, is_optional, is_variadic, opt_default);
-    return PARSE_EXPR_OK;
-}
-
-static PARSE_EXPR_STATUS parse_optional_lang_type_parameter(Uast_variable_def** child, Tk_view* tokens, Ulang_type default_lang_type, Scope_id scope_id) {
-    if (tokens->count < 1 || tk_view_front(*tokens).type == TOKEN_CLOSE_PAR) {
-        return PARSE_EXPR_NONE;
-    }
-
-    Uast_variable_def* param;
-    if (PARSE_OK != parse_variable_def(&param, tokens, false, false, false, default_lang_type, scope_id)) {
-        return PARSE_EXPR_ERROR;
-    }
-    try_consume(NULL, tokens, TOKEN_COMMA);
-
-    *child = param;
     return PARSE_EXPR_OK;
 }
 
@@ -2266,10 +2227,6 @@ static PARSE_STATUS parse_array_literal(Uast_array_literal** arr_lit, Tk_view* t
     return PARSE_OK;
 }
 
-static Uast_binary* parser_binary_new(Uast_expr* lhs, Token operator_token, Uast_expr* rhs) {
-    return uast_binary_new(operator_token.pos, lhs, rhs, token_type_to_binary_type(operator_token.type));
-}
-
 static PARSE_EXPR_STATUS parse_expr_piece(
     Uast_expr** result,
     Tk_view* tokens,
@@ -2345,22 +2302,6 @@ static PARSE_EXPR_STATUS parse_expr_piece(
     }
 
     return PARSE_EXPR_OK;
-}
-
-static bool expr_is_unary(const Uast_expr* expr) {
-    if (expr->type != UAST_OPERATOR) {
-        return false;
-    }
-    const Uast_operator* operator = uast_operator_const_unwrap(expr);
-    return operator->type == UAST_UNARY;
-}
-
-static bool expr_is_binary(const Uast_expr* expr) {
-    if (expr->type != UAST_OPERATOR) {
-        return false;
-    }
-    const Uast_operator* operator = uast_operator_const_unwrap(expr);
-    return operator->type == UAST_BINARY;
 }
 
 static PARSE_EXPR_STATUS parse_high_presidence_internal(
@@ -2545,148 +2486,6 @@ static PARSE_EXPR_STATUS parse_unary(
     }
 
     return PARSE_EXPR_OK;
-}
-
-static Uast_expr* get_right_child_operator(Uast_operator* oper) {
-    switch (oper->type) {
-        case UAST_UNARY:
-            return uast_unary_unwrap(oper)->child;
-        case UAST_BINARY:
-            return uast_binary_unwrap(oper)->rhs;
-        default:
-            unreachable("");
-    }
-    unreachable("");
-}
-
-static Uast_expr* get_right_child_expr(Uast_expr* expr) {
-    switch (expr->type) {
-        case UAST_OPERATOR:
-            return get_right_child_operator(uast_operator_unwrap(expr));
-        case UAST_TUPLE: {
-            Uast_tuple* tuple = uast_tuple_unwrap(expr);
-            unwrap(tuple->members.info.count > 0);
-            return vec_at(&tuple->members, tuple->members.info.count - 1);
-        }
-        case UAST_MEMBER_ACCESS: {
-            Uast_member_access* access = uast_member_access_unwrap(expr);
-            return access->callee;
-        }
-        default:
-            unreachable("");
-    }
-    unreachable("");
-}
-
-
-static void set_right_child_operator(Uast_operator* oper, Uast_expr* new_expr) {
-    switch (oper->type) {
-        case UAST_UNARY:
-            uast_unary_unwrap(oper)->child = new_expr;
-            return;
-        case UAST_BINARY:
-            uast_binary_unwrap(oper)->rhs = new_expr;
-            return;
-        default:
-            unreachable("");
-    }
-    unreachable("");
-}
-
-static void set_right_child_expr(Uast_expr* expr, Uast_expr* new_expr) {
-    switch (expr->type) {
-        case UAST_OPERATOR:
-            set_right_child_operator(uast_operator_unwrap(expr), new_expr);
-            return;
-        case UAST_TUPLE: {
-            Uast_tuple* tuple = uast_tuple_unwrap(expr);
-            unwrap(tuple->members.info.count > 0);
-            *vec_at_ref(&tuple->members, tuple->members.info.count - 1) = new_expr;
-            return;
-        }
-        case UAST_MEMBER_ACCESS: {
-            uast_member_access_unwrap(expr)->callee = new_expr;
-            return;
-        }
-        default:
-            unreachable("");
-    }
-    unreachable("");
-}
-
-static PARSE_EXPR_STATUS parse_expr_function_call(
-    Uast_expr** result,
-    Uast_expr* lhs,
-    Tk_view* tokens,
-    Scope_id scope_id
-) {
-    Uast_function_call* fun_call = NULL;
-    switch (lhs->type) {
-        case UAST_SYMBOL:
-            switch (parse_function_call(&fun_call, tokens, lhs ,scope_id)) {
-                case PARSE_OK:
-                    *result = uast_function_call_wrap(fun_call);
-                    lhs = *result;
-                    return PARSE_EXPR_OK;
-                case PARSE_ERROR:
-                    return PARSE_EXPR_ERROR;
-                default:
-                    unreachable("");
-            }
-            unreachable("");
-        case UAST_OPERATOR:
-            // fallthrough
-        case UAST_MEMBER_ACCESS:
-            switch (parse_function_call(&fun_call, tokens, lhs, scope_id)) {
-                case PARSE_OK:
-                    lhs = uast_function_call_wrap(fun_call);
-                    *result = lhs;
-                    return PARSE_EXPR_OK;
-                case PARSE_ERROR:
-                    return PARSE_EXPR_ERROR;
-                default:
-                    unreachable("");
-            }
-            unreachable("");
-        case UAST_TUPLE: {
-            Uast_tuple* tuple = uast_tuple_unwrap(lhs);
-            unwrap(tuple->members.info.count > 0);
-            Uast_expr* new_last = NULL;
-            PARSE_EXPR_STATUS status = parse_expr_function_call(&new_last, vec_top(&tuple->members), tokens, scope_id);
-            if (status != PARSE_EXPR_OK) {
-                return status;
-            }
-            vec_rem_last(&tuple->members);
-            vec_append(&a_main, &tuple->members, new_last);
-            *result = uast_tuple_wrap(tuple);
-            return PARSE_EXPR_OK;
-        }
-        case UAST_IF_ELSE_CHAIN:
-            // fallthrough
-        case UAST_SWITCH:
-            // fallthrough
-        case UAST_UNKNOWN:
-            // fallthrough
-        case UAST_INDEX:
-            // fallthrough
-        case UAST_LITERAL:
-            // fallthrough
-        case UAST_FUNCTION_CALL:
-            // fallthrough
-        case UAST_STRUCT_LITERAL:
-            // fallthrough
-        case UAST_SUM_ACCESS:
-            // fallthrough
-        case UAST_ARRAY_LITERAL:
-            // fallthrough
-        case UAST_SUM_GET_TAG:
-            msg(
-                LOG_ERROR, EXPECTED_FAIL_INVALID_FUNCTION_CALLEE,
-                uast_expr_get_pos(lhs), "callee is not callable\n"
-            );
-            return PARSE_EXPR_ERROR;
-    }
-    unreachable("");
 }
 
 static PARSE_STATUS parse_expr_index(
