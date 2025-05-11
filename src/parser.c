@@ -62,14 +62,12 @@ static PARSE_STATUS parse_expr_generic(
     Uast_expr** result,
     Uast_expr* lhs,
     Tk_view* tokens,
-    int32_t* prev_oper_pres,
     Scope_id scope_id
 );
 static PARSE_STATUS parse_expr_index(
     Uast_expr** result,
     Uast_expr* lhs,
     Tk_view* tokens,
-    int32_t* prev_oper_pres,
     Scope_id scope_id,
     Pos oper_pos
 );
@@ -603,70 +601,6 @@ static bool can_end_stmt(Token token) {
             unreachable("");
     }
     unreachable("");
-}
-
-// higher number returned from this function means that operator has higher precedence
-static int32_t get_operator_precedence(TOKEN_TYPE type) {
-    switch (type) {
-        case TOKEN_COMMA:
-            return 1;
-        case TOKEN_SINGLE_EQUAL:
-            unreachable("not a regular operator");
-        case TOKEN_LOGICAL_OR:
-            return 8;
-        case TOKEN_LOGICAL_AND:
-            return 9;
-        case TOKEN_BITWISE_OR:
-            return 10;
-        case TOKEN_BITWISE_XOR:
-            return 11;
-        case TOKEN_BITWISE_AND:
-            return 12;
-        case TOKEN_NOT_EQUAL:
-            return 13;
-        case TOKEN_DOUBLE_EQUAL:
-            return 13;
-        case TOKEN_LESS_THAN:
-            return 15;
-        case TOKEN_GREATER_THAN:
-            return 15;
-        case TOKEN_LESS_OR_EQUAL:
-            return 15;
-        case TOKEN_GREATER_OR_EQUAL:
-            return 15;
-        case TOKEN_SHIFT_LEFT:
-            return 16;
-        case TOKEN_SHIFT_RIGHT:
-            return 16;
-        case TOKEN_SINGLE_PLUS:
-            return 17;
-        case TOKEN_SINGLE_MINUS:
-            return 17;
-        case TOKEN_ASTERISK:
-            return 18;
-        case TOKEN_SLASH:
-            return 18;
-        case TOKEN_MODULO:
-            return 18;
-        case TOKEN_NOT:
-            return 28;
-        case TOKEN_DEREF:
-            return 28;
-        case TOKEN_REFER:
-            return 28;
-        case TOKEN_UNSAFE_CAST:
-            return 28;
-        case TOKEN_SINGLE_DOT:
-            return 33;
-        case TOKEN_OPEN_SQ_BRACKET:
-            return 33;
-        case TOKEN_OPEN_PAR:
-            return 33;
-        case TOKEN_OPEN_GENERIC:
-            return 33;
-        default:
-            unreachable(TOKEN_TYPE_FMT, token_type_print(TOKEN_MODE_LOG, type));
-    }
 }
 
 static bool is_unary(TOKEN_TYPE token_type) {
@@ -2230,7 +2164,6 @@ static PARSE_STATUS parse_array_literal(Uast_array_literal** arr_lit, Tk_view* t
 static PARSE_EXPR_STATUS parse_expr_piece(
     Uast_expr** result,
     Tk_view* tokens,
-    int32_t* prev_oper_pres, // TODO: remove prev_oper_pres in this file
     Scope_id scope_id
 ) {
     if (tokens->count < 1) {
@@ -2262,7 +2195,6 @@ static PARSE_EXPR_STATUS parse_expr_piece(
             );
             return PARSE_EXPR_ERROR;
         }
-        *prev_oper_pres = get_operator_precedence(TOKEN_SINGLE_DOT);
     } else if (token_is_literal(tk_view_front(*tokens))) {
         Uast_literal* lit = NULL;
         if (PARSE_OK != parse_literal(&lit, tokens)) {
@@ -2343,8 +2275,7 @@ static PARSE_EXPR_STATUS parse_high_presidence_internal(
     }
 
     if (try_consume(&oper, tokens, TOKEN_OPEN_GENERIC)) {
-        int32_t dummy = 0;
-        if (PARSE_OK != parse_expr_generic(&lhs, lhs, tokens, &dummy, scope_id)) {
+        if (PARSE_OK != parse_expr_generic(&lhs, lhs, tokens, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
         // TODO: also consume TOKEN_CLOSE_GENERIC here
@@ -2352,8 +2283,7 @@ static PARSE_EXPR_STATUS parse_high_presidence_internal(
     }
 
     if (try_consume(&oper, tokens, TOKEN_OPEN_SQ_BRACKET)) {
-        int32_t dummy = 0;
-        if (PARSE_OK != parse_expr_index(&lhs, lhs, tokens, &dummy, scope_id, oper.pos)) {
+        if (PARSE_OK != parse_expr_index(&lhs, lhs, tokens, scope_id, oper.pos)) {
             return PARSE_EXPR_ERROR;
         }
         return parse_high_presidence_internal(result, lhs, tokens, scope_id);
@@ -2388,8 +2318,7 @@ static PARSE_EXPR_STATUS parse_high_presidence(
             uast_unknown_wrap(uast_unknown_new(oper.pos))
         ));
     } else {
-        int32_t dummy = 0;
-        PARSE_EXPR_STATUS status = parse_expr_piece(&lhs, tokens, &dummy, scope_id);
+        PARSE_EXPR_STATUS status = parse_expr_piece(&lhs, tokens, scope_id);
         if (status != PARSE_EXPR_OK) {
             return status;
         }
@@ -2401,7 +2330,6 @@ static PARSE_EXPR_STATUS parse_high_presidence(
 static PARSE_EXPR_STATUS parse_unary(
     Uast_expr** result,
     Tk_view* tokens,
-    int32_t* prev_oper_pres,
     bool can_be_tuple,
     Scope_id scope_id
 ) {
@@ -2411,8 +2339,6 @@ static PARSE_EXPR_STATUS parse_unary(
         return parse_high_presidence(result, tokens, scope_id);
     }
     Token oper = consume_unary(tokens);
-
-    *prev_oper_pres = get_operator_precedence(oper.type);
 
     Uast_expr* child = NULL;
     Ulang_type_atom unary_lang_type = ulang_type_atom_new_from_cstr("i32", 0); // this is a placeholder type
@@ -2452,7 +2378,7 @@ static PARSE_EXPR_STATUS parse_unary(
             unreachable(TOKEN_FMT, token_print(TOKEN_MODE_LOG, oper));
     }
 
-    PARSE_EXPR_STATUS status = parse_unary(&child, tokens, prev_oper_pres, false, scope_id);
+    PARSE_EXPR_STATUS status = parse_unary(&child, tokens, false, scope_id);
     switch (status) {
         case PARSE_EXPR_OK:
             break;
@@ -2492,12 +2418,9 @@ static PARSE_STATUS parse_expr_index(
     Uast_expr** result,
     Uast_expr* lhs,
     Tk_view* tokens,
-    int32_t* prev_oper_pres,
     Scope_id scope_id,
     Pos oper_pos
 ) {
-    (void) prev_oper_pres; // TODO: remove this parameter
-
     Uast_expr* index_index = NULL;
     switch (parse_expr(&index_index, tokens, scope_id)) {
         case PARSE_EXPR_OK:
@@ -2527,12 +2450,8 @@ static PARSE_STATUS parse_expr_generic(
     Uast_expr** result,
     Uast_expr* lhs,
     Tk_view* tokens,
-    int32_t* prev_oper_pres,
     Scope_id scope_id
 ) {
-    (void) result;
-    (void) prev_oper_pres;
-
     Uast_symbol* sym = NULL;
 
     switch (lhs->type) {
@@ -2635,8 +2554,7 @@ static PARSE_EXPR_STATUS parse_generic_binary(
     int depth
 ) {
     if (bin_idx >= sizeof(BIN_IDX_TO_TOKEN_TYPES)/sizeof(BIN_IDX_TO_TOKEN_TYPES[0])) {
-        int32_t dummy = 0;
-        return parse_unary(result, tokens, &dummy, false, scope_id);
+        return parse_unary(result, tokens, false, scope_id);
     }
 
     Uast_expr* new_lhs = NULL;
