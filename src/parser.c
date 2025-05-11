@@ -1378,7 +1378,6 @@ static PARSE_STATUS parse_import(Uast_mod_alias** alias, Tk_view* tokens, Token 
 
     Token dummy = {0};
     if (!try_consume(&dummy, tokens, TOKEN_SINGLE_EQUAL)) {
-        todo();
         msg_parser_expected(tk_view_front(*tokens), "after `import`", TOKEN_SINGLE_EQUAL);
         return PARSE_ERROR;
     }
@@ -2157,7 +2156,7 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
         vec_append(&a_main, &(*block)->children, child);
     }
     Token block_end = {0};
-    if (!is_top_level && !try_consume(&block_end, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
+    if (!is_top_level && status == PARSE_OK && !try_consume(&block_end, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
         msg_parser_expected(tk_view_front(*tokens), "at the end of the block", TOKEN_CLOSE_CURLY_BRACE);
         return PARSE_ERROR;
     }
@@ -2813,7 +2812,7 @@ static PARSE_EXPR_STATUS parse_generic_binary_internal(
         return status;
     }
 
-    *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(POS_BUILTIN/*TODO*/, lhs, rhs, binary_type_from_token_type(oper.type))));
+    *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, lhs, rhs, binary_type_from_token_type(oper.type))));
 
     if (!try_peek_1_of_4(&oper, tokens, bin_type_1, bin_type_2, bin_type_3, bin_type_4)) {
         assert(*result);

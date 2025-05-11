@@ -6,5 +6,6 @@ type Token enum {
 
 fn main() i32 {
     "hello"()
+    return 0
 }
 

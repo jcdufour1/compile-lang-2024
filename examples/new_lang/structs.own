@@ -65,5 +65,10 @@ fn main() i32 {
     io.printf("%d %s %d/%d\n", token2.num, token2.string_data, token2.div5.numerator, token2.div5.denominator)
     // confirm that token2 is actually a copy of token
     io.printf("%d %s %d/%d\n", token.num, token.string_data, token.div5.numerator, token.div5.denominator)
+
+    // TODO: move this to separate file that tests these newline things
+    io.printf("%d\n", token.
+                        num)
+
     return 0
 }

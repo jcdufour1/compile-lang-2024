@@ -1,4 +1,5 @@
 
+# these features may or may not be implemented
 
 
 hello world 
@@ -424,6 +425,18 @@ fn string_append Darray<(u8)>(string Darray<(u8)>, overload item) {
 
 @overload
 fn string_append [u8](string Darray<(u8)>, overload item) {
+}
+'''
+
+# function overloading (idea 6)
+'''c
+fn string_append u8(string Darray<(u8)>, oload(0) item) {
+}
+
+fn string_append Darray<(u8)>(string Darray<(u8)>, oload(0) item) {
+}
+
+fn string_append [u8](string Darray<(u8)>, oload(0) item) {
 }
 '''
 
