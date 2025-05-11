@@ -194,7 +194,7 @@ static Pos get_curr_pos(Tk_view tokens) {
 
 static void msg_expected_expr_internal(const char* file, int line, Tk_view tokens, const char* msg_suffix) {
     String message = {0};
-    string_extend_cstr(&print_arena, &message, "expected expr ");
+    string_extend_cstr(&print_arena, &message, "expected expression ");
     string_extend_cstr(&print_arena, &message, msg_suffix);
 
     msg_internal(file, line, LOG_ERROR, EXPECT_FAIL_EXPECTED_EXPRESSION, get_curr_pos(tokens), STRING_FMT"\n", string_print(message)); \
@@ -1352,8 +1352,16 @@ static PARSE_STATUS parse_lang_def(Uast_lang_def** def, Tk_view* tokens, Token n
         return PARSE_ERROR;
     }
     Uast_expr* expr = NULL;
-    if (PARSE_EXPR_OK != parse_expr(&expr, tokens, scope_id)) {
-        return PARSE_ERROR;
+    switch (parse_expr(&expr, tokens, scope_id)) {
+        case PARSE_EXPR_ERROR:
+            return PARSE_ERROR;
+        case PARSE_EXPR_NONE:
+            msg_expected_expr(*tokens, "after `=` in def definition");
+            return PARSE_ERROR;
+        case PARSE_EXPR_OK:
+            break;
+        default:
+            unreachable("");
     }
 
     *def = uast_lang_def_new(name.pos, name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL), expr);
@@ -1370,6 +1378,7 @@ static PARSE_STATUS parse_import(Uast_mod_alias** alias, Tk_view* tokens, Token 
 
     Token dummy = {0};
     if (!try_consume(&dummy, tokens, TOKEN_SINGLE_EQUAL)) {
+        todo();
         msg_parser_expected(tk_view_front(*tokens), "after `import`", TOKEN_SINGLE_EQUAL);
         return PARSE_ERROR;
     }
@@ -2099,12 +2108,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
 static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top_level, Scope_id new_scope) {
     PARSE_STATUS status = PARSE_OK;
 
-    *block = uast_block_new(
-        tk_view_front(*tokens).pos,
-        (Uast_stmt_vec) {0},
-        (Pos) {0},
-        new_scope
-    );
+    *block = uast_block_new(tk_view_front(*tokens).pos, (Uast_stmt_vec) {0}, (Pos) {0}, new_scope);
 
     Token open_brace_token = {0};
     if (!is_top_level && !try_consume(&open_brace_token, tokens, TOKEN_OPEN_CURLY_BRACE)) {
@@ -2154,8 +2158,8 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
     }
     Token block_end = {0};
     if (!is_top_level && !try_consume(&block_end, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
-        log_tokens(LOG_DEBUG, *tokens);
-        todo();
+        msg_parser_expected(tk_view_front(*tokens), "at the end of the block", TOKEN_CLOSE_CURLY_BRACE);
+        return PARSE_ERROR;
     }
     (*block)->pos_end = block_end.pos;
 
@@ -2368,9 +2372,11 @@ static PARSE_EXPR_STATUS parse_high_presidence_internal(
 ) {
     Token oper = {0};
     if (try_consume(&oper, tokens, TOKEN_SINGLE_DOT)) {
+        try_consume_newlines(tokens);
         Token memb_name = {0};
         if (!try_consume(&memb_name, tokens, TOKEN_SYMBOL)) {
-            todo();
+            msg_parser_expected(tk_view_front(*tokens), "after `.` in member access", TOKEN_SYMBOL);
+            return PARSE_EXPR_ERROR;
         }
 
         lhs = uast_member_access_wrap(uast_member_access_new(
@@ -2507,8 +2513,16 @@ static PARSE_EXPR_STATUS parse_unary(
     }
 
     PARSE_EXPR_STATUS status = parse_unary(&child, tokens, prev_oper_pres, false, scope_id);
-    if (status != PARSE_EXPR_OK) {
-        return PARSE_EXPR_ERROR;
+    switch (status) {
+        case PARSE_EXPR_OK:
+            break;
+        case PARSE_EXPR_ERROR:
+            return PARSE_EXPR_ERROR;
+        case PARSE_EXPR_NONE:
+            msg_expected_expr(*tokens, "after unary operator");
+            return PARSE_EXPR_ERROR;
+        default:
+            unreachable("");
     }
 
     switch (oper.type) {
@@ -2808,7 +2822,6 @@ static PARSE_EXPR_STATUS parse_generic_binary_internal(
 
     status = parse_generic_binary_internal(result, *result, tokens, scope_id, bin_idx, depth + 1);
     if (status != PARSE_EXPR_OK) {
-        todo();
         return status;
     }
 
