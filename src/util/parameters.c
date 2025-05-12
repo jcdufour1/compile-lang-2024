@@ -88,8 +88,9 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"sum-case-too-many-args", EXPECT_FAIL_SUM_CASE_TOO_MANY_ARGS},
     {"void-sum-case-has-arg", EXPECT_FAIL_VOID_SUM_CASE_HAS_ARG},
     {"invalid-stmt-top-level", EXPECT_FAIL_INVALID_STMT_TOP_LEVEL},
-    {"invalid-function-callee", EXPECTED_FAIL_INVALID_FUNCTION_CALLEE},
-    {"optional-args-for-variadic-args", EXPECTED_FAIL_OPTIONAL_ARGS_FOR_VARIADIC_ARGS},
+    {"invalid-function-callee", EXPECT_FAIL_INVALID_FUNCTION_CALLEE},
+    {"optional-args-for-variadic-args", EXPECT_FAIL_OPTIONAL_ARGS_FOR_VARIADIC_ARGS},
+    {"no-main", EXPECT_FAIL_NO_MAIN},
 };
 
 static void parse_normal_option(Parameters* params, int* argc, char*** argv) {

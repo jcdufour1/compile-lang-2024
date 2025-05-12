@@ -501,7 +501,6 @@ static bool resolve_generics_serialize_function_decl(
     Ulang_type_vec gen_args,
     Pos pos_gen_args
 ) {
-    // TODO: figure out way to avoid making new Uast_function_decl every time
     memset(new_decl, 0, sizeof(*new_decl));
 
     Uast_param_vec params = {0};
@@ -623,8 +622,6 @@ bool resolve_generics_function_def_call(
 
 bool resolve_generics_function_def_implementation(Name name) {
     Name name_plain = name_new(name.mod_path, name.base, (Ulang_type_vec) {0}, name.scope_id);
-    Uast_def* dummy = NULL;
-    (void) dummy;
     Tast_def* dummy_2 = NULL;
     Uast_function_decl* dummy_3 = NULL;
     assert(

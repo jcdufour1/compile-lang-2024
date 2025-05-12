@@ -899,7 +899,7 @@ static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* t
     if (try_consume(&tk_equal, tokens, TOKEN_SINGLE_EQUAL)) {
         if (is_variadic) {
             msg(
-                LOG_ERROR, EXPECTED_FAIL_OPTIONAL_ARGS_FOR_VARIADIC_ARGS, tk_equal.pos,
+                LOG_ERROR, EXPECT_FAIL_OPTIONAL_ARGS_FOR_VARIADIC_ARGS, tk_equal.pos,
                 "optional arguments cannot be used with variadic parameters\n"
             );
             return PARSE_EXPR_ERROR;

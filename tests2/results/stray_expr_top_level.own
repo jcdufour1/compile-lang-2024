@@ -5,7 +5,7 @@ compile::stderr 5
      2 | 
      3 | 7*3
        |  ^
-src/sema/type_checking.c:2709:[1;33mwarning[0;39m:no main function
+[1;33mwarning[0;39m:no main function
 
 compile::return_code 1
 

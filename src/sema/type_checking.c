@@ -801,12 +801,8 @@ bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
 
     env.lhs_lang_type = tast_expr_get_lang_type(new_lhs);
     if (!try_set_expr_types(&new_rhs, operator->rhs)) {
-        // TODO: replace or remove this memset
-        memset(&env.lhs_lang_type, 0, sizeof(env.lhs_lang_type));
         return false;
     }
-    // TODO: replace or remove this memset
-    memset(&env.lhs_lang_type, 0, sizeof(env.lhs_lang_type));
 
     return try_set_binary_types_finish(
         new_tast,
@@ -1606,7 +1602,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 break;
             } else {
                 msg(
-                    LOG_ERROR, EXPECTED_FAIL_INVALID_FUNCTION_CALLEE, tast_expr_get_pos(new_callee),
+                    LOG_ERROR, EXPECT_FAIL_INVALID_FUNCTION_CALLEE, tast_expr_get_pos(new_callee),
                     "callee is not callable\n"
                 );
                 return false;
@@ -2706,7 +2702,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
     if (block->scope_id == SCOPE_TOP_LEVEL) {
         Uast_def* main_fn_ = NULL;
         if (!usymbol_lookup(&main_fn_, name_new((Str_view) {0}, str_view_from_cstr("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
-            log(LOG_WARNING, "no main function\n");
+            msg(LOG_WARNING, EXPECT_FAIL_NO_MAIN, POS_BUILTIN, "no main function\n");
             goto error;
         }
         if (main_fn_->type != UAST_FUNCTION_DEF) {

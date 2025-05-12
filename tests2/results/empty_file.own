@@ -1,7 +1,7 @@
 compile::stdout 0
 
 compile::stderr 1
-src/sema/type_checking.c:2709:[1;33mwarning[0;39m:no main function
+[1;33mwarning[0;39m:no main function
 
 compile::return_code 0
 
