@@ -4,11 +4,11 @@ CC_COMPILER ?= clang
 
 C_FLAGS_DEBUG=-Wall -Wextra -Wenum-compare -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types \
 			  -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen \
-			  -D _POSIX_C_SOURCE=200809L -D CURR_LOG_LEVEL=${LOG_LEVEL} \
+			  -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			  -fsanitize=address -fno-omit-frame-pointer 
 C_FLAGS_RELEASE=-Wall -Wextra -Wno-format-zero-length -Wno-unused-function -Werror=incompatible-pointer-types \
 			    -std=c11 -pedantic -g -I ./third_party/ -I ${BUILD_DIR} -I src/ -I src/util/ -I src/token -I src/sema -I src/codegen \
-			    -D _POSIX_C_SOURCE=200809L -D CURR_LOG_LEVEL=${LOG_LEVEL} \
+			    -D CURR_LOG_LEVEL=${LOG_LEVEL} \
 			    -DNDEBUG \
 				-O2
 
