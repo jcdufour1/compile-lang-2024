@@ -1,6 +1,8 @@
-:: stdout 2
-hello
-bye
-:: stderr 1
-note: this is a note
-:: return_code 1
+type io import = std.io
+
+fn main() i32 {
+    io.printf("hello\n")
+    io.printf("bye\n")
+    return 0
+}
+

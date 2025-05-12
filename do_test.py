@@ -45,21 +45,19 @@ def print_info(*base, **kargs) -> None:
 
 def get_files_to_test(files_to_test: list[str]) -> list[FileItem]:
     files: list[FileItem] = []
-    possible_file_path: str
-    for possible_file_base in map(to_str, os.listdir(INPUTS_DIR)):
-        possible_file_path = os.path.realpath(os.path.join(INPUTS_DIR, possible_file_base))
-        if os.path.isfile(possible_file_path) and possible_file_path in files_to_test:
-            files.append(FileItem(possible_file_path, True, None))
+    possible_path: str
+    for possible_base in map(to_str, os.listdir(INPUTS_DIR)):
+        possible_path = os.path.realpath(os.path.join(INPUTS_DIR, possible_base))
+        if os.path.isfile(possible_path) and possible_path in files_to_test:
+            files.append(FileItem(possible_path, True, None))
     return files
 
 def get_expected_output(file: FileItem) -> str:
-    file_expected_base, _ = os.path.splitext(os.path.basename(file.path))
-    print(file_expected_base)
-    assert(False and "not implemented")
-    file_expected = os.path.join(RESULTS_DIR, file_expected_base)
-    file_expected += ".txt"
-    with open(file_expected, "r") as input_file:
-        return input_file.read()
+    expect_base, _ = os.path.splitext(os.path.basename(file.path))
+    expected = os.path.join(RESULTS_DIR, expect_base)
+    expected += ".txt"
+    with open(expected, "r") as input:
+        return input.read()
 
 # return true if test was successful
 def do_test(file: FileItem, do_debug: bool, expected_output: str, output_name: str) -> bool:
@@ -203,13 +201,13 @@ def do_release(files_to_test: list[str], count_threads: int, output_name: str) -
     print()
 
 def append_all_files(list_or_map: list | dict, callback: Callable):
-    possible_file_path: str
-    for possible_file_base in map(to_str, os.listdir(INPUTS_DIR)):
-        possible_file_path = os.path.realpath(os.path.join(INPUTS_DIR, possible_file_base))
-        if os.path.isfile(possible_file_path):
-            callback(list_or_map, possible_file_path)
+    possible_path: str
+    for possible_base in map(to_str, os.listdir(INPUTS_DIR)):
+        possible_path = os.path.realpath(os.path.join(INPUTS_DIR, possible_base))
+        if os.path.isfile(possible_path):
+            callback(list_or_map, possible_path)
 
-def add_to_map(map, path):
+def add_to_map(map: dict, path: str):
     map[path] = 0
 
 def parse_args() -> Tuple[list[str], str]:
