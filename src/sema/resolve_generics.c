@@ -197,7 +197,7 @@ static bool resolve_generics_serialize_struct_def_base(
 
 typedef void*(*Obj_new)(Pos, Ustruct_def_base);
 
-static bool resolve_generics_ulang_type_internal_struct_like_2(
+static bool resolve_generics_ulang_type_internal_struct_like(
     Uast_def** after_res,
     Name* new_name,
     Ulang_type* result,
@@ -263,7 +263,7 @@ static bool resolve_generics_ulang_type_internal_raw_union_def(
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
     Uast_def* after_res_ = NULL;
-    if (!resolve_generics_ulang_type_internal_struct_like_2(&after_res_, &new_name, result, old_base, lang_type, before_res->pos, local_uast_raw_union_def_new)) {
+    if (!resolve_generics_ulang_type_internal_struct_like(&after_res_, &new_name, result, old_base, lang_type, before_res->pos, local_uast_raw_union_def_new)) {
         return false;
     }
     *after_res = uast_raw_union_def_unwrap(after_res_);
@@ -284,7 +284,7 @@ static bool resolve_generics_ulang_type_internal_enum_def(
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
     Uast_def* after_res_ = NULL;
-    if (!resolve_generics_ulang_type_internal_struct_like_2(&after_res_, &new_name, result, old_base, lang_type, before_res->pos, local_uast_enum_def_new)) {
+    if (!resolve_generics_ulang_type_internal_struct_like(&after_res_, &new_name, result, old_base, lang_type, before_res->pos, local_uast_enum_def_new)) {
         return false;
     }
     *after_res = uast_enum_def_unwrap(after_res_);
@@ -305,7 +305,7 @@ static bool resolve_generics_ulang_type_internal_sum_def(
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
     Uast_def* after_res_ = NULL;
-    if (!resolve_generics_ulang_type_internal_struct_like_2(&after_res_, &new_name, result, old_base, lang_type, before_res->pos, local_uast_sum_def_new)) {
+    if (!resolve_generics_ulang_type_internal_struct_like(&after_res_, &new_name, result, old_base, lang_type, before_res->pos, local_uast_sum_def_new)) {
         return false;
     }
     *after_res = uast_sum_def_unwrap(after_res_);
@@ -326,7 +326,7 @@ static bool resolve_generics_ulang_type_internal_struct_def(
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
     Uast_def* after_res_ = NULL;
-    if (!resolve_generics_ulang_type_internal_struct_like_2(&after_res_, &new_name, result, old_base, lang_type, before_res->pos, local_uast_struct_def_new)) {
+    if (!resolve_generics_ulang_type_internal_struct_like(&after_res_, &new_name, result, old_base, lang_type, before_res->pos, local_uast_struct_def_new)) {
         return false;
     }
     *after_res = uast_struct_def_unwrap(after_res_);
@@ -498,7 +498,7 @@ static bool resolve_generics_serialize_function_decl(
     Uast_function_decl** new_decl,
     const Uast_function_decl* old_decl,
     Uast_block* new_block,
-    Ulang_type_vec gen_args, // TODO: remove this arg
+    Ulang_type_vec gen_args,
     Pos pos_gen_args
 ) {
     // TODO: figure out way to avoid making new Uast_function_decl every time
@@ -580,12 +580,6 @@ bool resolve_generics_function_def_call(
         return false;
     }
 
-    //Uast_def* result = NULL;
-    //if (!usymbol_lookup(&result, name_plain)) {
-    //    todo();
-    //}
-    //Uast_function_def* fun_def = uast_function_def_unwrap(result);
-    // TODO: avoid cloning everytime; use function_decl_tbl instead where possible
     Uast_function_decl* decl = uast_function_decl_clone(def->decl, def->decl->name.scope_id);
     decl->name = name_plain;
     if (def->decl->generics.info.count > 0) {
