@@ -66,8 +66,7 @@ for generics:
 - expected failure test for passing `fn (i32, i32) i32` to function parameter of `fn (i64, i64) i64`
 - expected failure test for empty []
 - consider if tokenizer should convert semicolon to newline to simplify things
-
-
+- make actual way to designate some test inputs as unfinished (after doing this, make some files unfinished)
 
 
 # roadmap to try to get bootstrap compiler done:

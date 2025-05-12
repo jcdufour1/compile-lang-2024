@@ -1,0 +1,25 @@
+compile::stdout 0
+
+compile::stderr 19
+./tests2/inputs/missing_return.own:8:1:[1;31merror[0;39m:no return statement in function that returns `i32`
+     7 |     println()
+     8 | }
+       | ^
+./tests2/inputs/missing_return.own:5:11:[1;34mnote[0;39m:function return type `i32` defined here
+     4 | 
+     5 | fn main() i32 {
+       |           ^
+     6 |     let string: u8* = "hello"
+./tests2/inputs/missing_return.own:3:1:[1;31merror[0;39m:no return statement in function that returns `i32`
+     2 | fn println() i32 {
+     3 | }
+       | ^
+     4 | 
+./tests2/inputs/missing_return.own:2:14:[1;34mnote[0;39m:function return type `i32` defined here
+     1 | 
+     2 | fn println() i32 {
+       |              ^
+     3 | }
+
+compile::return_code 1
+

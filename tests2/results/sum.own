@@ -1,0 +1,26 @@
+compile::stdout 0
+
+compile::stderr 0
+
+compile::return_code 0
+
+clang::stdout 0
+
+clang::stderr 0
+
+clang::return_code 0
+
+run::stdout 8
+token is number: 23
+token is string: hello world
+token is number: 57
+token is number: 32
+thing is token: token is number: 23
+thing is token: token is string: hello world
+thing is number: 87
+thing is number: 25
+
+run::stderr 0
+
+run::return_code 0
+

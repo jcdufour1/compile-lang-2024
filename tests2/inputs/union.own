@@ -1,0 +1,18 @@
+type io import = std.io
+
+type Union raw_union {
+    num i32
+    cstr u8*
+}
+
+fn main() i32 {
+    let union Union
+
+    union.num = 45
+    io.printf("%d\n", union.num)
+
+    union.cstr = "hello\n"
+    io.printf("%s", union.cstr)
+
+    return 0
+}

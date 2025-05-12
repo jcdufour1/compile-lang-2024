@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+./tests2/inputs/assign_no_rhs.own:4:21:[1;31merror[0;39m:expected expression 
+     3 | fn main() i32 {
+     4 |     let num1: i32 = 
+       |                     ^
+     5 |     let num2: i32 = 89
+
+compile::return_code 1
+

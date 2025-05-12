@@ -1,0 +1,111 @@
+type io import = std.io
+
+
+fn one() i32 {
+    io.printf("one called\n")
+    return 4
+}
+
+fn zero() i32 {
+    io.printf("zero called\n")
+    return 0
+}
+
+fn main() i32 {
+    {
+        let thing u1 = 2 < 7
+        if thing {
+            io.printf("yes1\n")
+        } else {
+            io.printf("no1\n")
+        }
+    }
+
+    {
+        let thing u1 = 7 < 2
+        if thing {
+            io.printf("no2\n")
+        } else {
+            io.printf("yes2\n")
+        }
+    }
+
+    if 1 && 1 {
+        io.printf("yes5\n")
+    } else {
+        io.printf("no5\n")
+    }
+
+    if one() && 1 {
+        io.printf("yes6\n")
+    } else {
+        io.printf("no6\n")
+    }
+
+    if one() && 0 {
+        io.printf("no7\n")
+    } else {
+        io.printf("yes7\n")
+    }
+
+    if zero() && 1 {
+        io.printf("no8\n")
+    } else {
+        io.printf("yes8\n")
+    }
+
+    if zero() && 0 {
+        io.printf("no9\n")
+    } else {
+        io.printf("yes9\n")
+    }
+
+    // "one called" should not be printed 
+    if zero() && one() {
+        io.printf("no10\n")
+    } else {
+        io.printf("yes10\n")
+    }
+
+    // "one called" should not be printed, and "zero printed" should only be called once
+    if zero() && zero() && one() {
+        io.printf("no11\n")
+    } else {
+        io.printf("yes11\n")
+    }
+
+    // "one called" and "zero called" should each be printed only once
+    if one() && zero() && one() {
+        io.printf("no12\n")
+    } else {
+        io.printf("yes12\n")
+    }
+
+    if one() && one() && one() {
+        io.printf("yes13\n")
+    } else {
+        io.printf("no13\n")
+    }
+
+    // "one called" should only be printed once
+    if one() || one() || one() {
+        io.printf("yes14\n")
+    } else {
+        io.printf("no14\n")
+    }
+
+    // "one called" should only be printed once
+    if zero() || one() || one() {
+        io.printf("yes15\n")
+    } else {
+        io.printf("no15\n")
+    }
+
+    if zero() || zero() || zero() {
+        io.printf("no16\n")
+    } else {
+        io.printf("yes16\n")
+    }
+
+    return 0
+}

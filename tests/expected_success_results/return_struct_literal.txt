@@ -1,2 +1,0 @@
-file.txt 21 hello world
-65

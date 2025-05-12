@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+./tests2/inputs/undefined_generic_type_in_fun_param.own:2:21:[1;31merror[0;39m:type `Optional(<i32>)` is not defined
+     1 | 
+     2 | fn add(lhs i32, rhs Optional(<i32>)) {
+       |                     ^
+     3 | }
+
+compile::return_code 1
+

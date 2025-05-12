@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+./tests2/inputs/sum_callee_empty_par_on_void_case.own:9:23:[1;31merror[0;39m:() in sum case has no argument; add argument in () or remove ()
+     8 | fn main() i32 {
+     9 |     let token Token = .open_par()
+       |                       ^
+    10 |     switch token {
+
+compile::return_code 1
+

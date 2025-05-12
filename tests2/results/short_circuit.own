@@ -1,0 +1,49 @@
+compile::stdout 0
+
+compile::stderr 0
+
+compile::return_code 0
+
+clang::stdout 0
+
+clang::stderr 0
+
+clang::return_code 0
+
+run::stdout 31
+yes1
+yes2
+yes5
+one called
+yes6
+one called
+yes7
+zero called
+yes8
+zero called
+yes9
+zero called
+yes10
+zero called
+yes11
+one called
+zero called
+yes12
+one called
+one called
+one called
+yes13
+one called
+yes14
+zero called
+one called
+yes15
+zero called
+zero called
+zero called
+yes16
+
+run::stderr 0
+
+run::return_code 0
+

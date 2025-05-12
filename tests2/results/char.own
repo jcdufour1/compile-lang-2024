@@ -1,0 +1,29 @@
+compile::stdout 0
+
+compile::stderr 0
+
+compile::return_code 0
+
+clang::stdout 0
+
+clang::stderr 0
+
+clang::return_code 0
+
+run::stdout 11
+yes1
+yes2
+yes3
+yes4
+yes5
+yes6
+yes7
+yes8
+yes9
+yes10
+yes11
+
+run::stderr 0
+
+run::return_code 0
+

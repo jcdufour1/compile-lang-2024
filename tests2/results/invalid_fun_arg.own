@@ -1,0 +1,15 @@
+compile::stdout 0
+
+compile::stderr 9
+./tests2/inputs/invalid_fun_arg.own:4:12:[1;31merror[0;39m:argument is of type `u6`, but the corresponding parameter `str_to_print_2` is of type `u8*`
+     3 | fn main() i32 {
+     4 |     printf(45, "hello")
+       |            ^
+     5 |     return 0
+./tests2/inputs/invalid_fun_arg.own:1:23:[1;34mnote[0;39m:corresponding parameter `str_to_print_2` defined here
+     1 | extern("c") fn printf(str_to_print_2: u8*, args: any...) i32
+       |                       ^
+     2 | 
+
+compile::return_code 1
+

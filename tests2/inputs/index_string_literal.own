@@ -1,0 +1,24 @@
+type io import = std.io
+
+
+fn get_zero() i32 {
+    return 0
+}
+
+fn get_four() i32 {
+    return 4
+}
+
+fn main() i32 {
+    let string u8* = "hello"
+
+    io.printf("%c\n", string[get_zero()])
+    io.printf("%c\n", string[get_four()])
+
+    io.printf("%c\n", string[0])
+    io.printf("%c\n", string[4])
+
+    io.printf("%c\n", string[2*2])
+
+    return 0
+}

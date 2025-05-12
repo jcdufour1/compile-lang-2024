@@ -63,8 +63,19 @@ def get_files_to_test(files_to_test: list[str]) -> list[FileItem]:
 def get_expected_output(file: FileItem) -> str:
     expect_base: str = file.path_base
     expected: str = os.path.join(RESULTS_DIR, expect_base)
-    with open(expected, "r") as input:
-        return input.read()
+    try:
+        with open(expected, "r") as input:
+            return input.read()
+    except FileNotFoundError as e:
+        print_warning(
+            "result file not found for " +
+            os.path.join(INPUTS_DIR, expect_base) +
+            "; if this test input generates correct results, use --test --include=" +
+            os.path.join(INPUTS_DIR, expect_base)
+        )
+        print(e)
+        return ""
+
 
 def get_result_from_process_internal(process: subprocess.CompletedProcess[str], type_str: str) -> str:
     result: str = ""

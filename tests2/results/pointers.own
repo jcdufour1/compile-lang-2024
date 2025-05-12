@@ -1,0 +1,36 @@
+compile::stdout 0
+
+compile::stderr 0
+
+compile::return_code 0
+
+clang::stdout 0
+
+clang::stderr 0
+
+clang::return_code 0
+
+run::stdout 18
+8
+9
+10
+9
+19
+39
+part 67: 87/123
+134/45
+part 89: 134/1234
+134/1298
+134/1298
+93/1298
+134/1298
+hello
+bye
+yes
+pointer back to int: 0
+pointer_to_pointer: yes
+
+run::stderr 0
+
+run::return_code 0
+

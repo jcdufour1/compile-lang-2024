@@ -1,0 +1,26 @@
+compile::stdout 0
+
+compile::stderr 20
+./tests2/inputs/duplicate_case.own:19:27:[1;31merror[0;39m:duplicate case `TokenType.num` in switch statement
+    18 |         case TokenType.num: printf("this is a number")
+    19 |         case TokenType.num: printf("this is a number")
+       |                           ^
+    20 |         case TokenType.string: printf("this is a string")
+./tests2/inputs/duplicate_case.own:18:23:[1;34mnote[0;39m:case originally covered here
+    17 |     switch token_type {
+    18 |         case TokenType.num: printf("this is a number")
+       |                       ^
+    19 |         case TokenType.num: printf("this is a number")
+./tests2/inputs/duplicate_case.own:26:28:[1;31merror[0;39m:duplicate case `Token.num` in switch statement
+    25 |         case Token.num(num): printf("token is number: %d\n", num)
+    26 |         case Token.num(num): printf("token is number: %d\n", num)
+       |                            ^
+    27 |         case Token.string(str): printf("token is string: %s\n", str)
+./tests2/inputs/duplicate_case.own:25:19:[1;34mnote[0;39m:case originally covered here
+    24 |     switch token {
+    25 |         case Token.num(num): printf("token is number: %d\n", num)
+       |                   ^
+    26 |         case Token.num(num): printf("token is number: %d\n", num)
+
+compile::return_code 1
+

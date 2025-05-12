@@ -1,0 +1,141 @@
+type io import = std.io
+
+fn do_constants() {
+    if 8 < 1 {
+        io.puts("1")
+    }
+
+    if 8 < 8 {
+        io.puts("2")
+    }
+
+    if 8 < 9 {
+        io.puts("3")
+    }
+
+    if 8 > 1 {
+        io.puts("4")
+    }
+
+    if 8 > 8 {
+        io.puts("5")
+    }
+
+    if 8 > 9 {
+        io.puts("6")
+    }
+}
+
+fn do_var_lhs() {
+    let num1 i32 = 8
+
+    if num1 < 1 {
+        io.puts("1")
+    }
+
+    if num1 < 8 {
+        io.puts("2")
+    }
+
+    if num1 < 9 {
+        io.puts("3")
+    }
+
+    if num1 > 1 {
+        io.puts("4")
+    }
+
+    if num1 > 8 {
+        io.puts("5")
+    }
+
+    if num1 > 9 {
+        io.puts("6")
+    }
+}
+
+fn do_var_rhs() {
+    let num2 i32 = 8
+
+    if 1 < num2  {
+        io.puts("1")
+    }
+
+    if 8 < num2  {
+        io.puts("2")
+    }
+
+    if 9 < num2  {
+        io.puts("3")
+    }
+
+    if 1 > num2  {
+        io.puts("4")
+    }
+
+    if 8 > num2  {
+        io.puts("5")
+    }
+
+    if 9 > num2  {
+        io.puts("6")
+    }
+}
+
+fn do_var_both() {
+    let lhs i32 = 8
+    let rhs i32
+
+    lhs = 1
+    rhs = 8
+    if lhs < rhs  {
+        io.puts("1")
+    }
+
+    lhs = 8
+    rhs = 8
+    if lhs < rhs  {
+        io.puts("2")
+    }
+
+    lhs = 9
+    rhs = 8
+    if lhs < rhs  {
+        io.puts("3")
+    }
+
+    lhs = 1
+    rhs = 8
+    if lhs > rhs  {
+        io.puts("4")
+    }
+
+    lhs = 8
+    rhs = 8
+    if lhs > rhs  {
+        io.puts("5")
+    }
+
+    lhs = 9
+    rhs = 8
+    if lhs > rhs  {
+        io.puts("6")
+    }
+
+    let div Div
+}
+
+type Div struct {
+    a i32
+    b i32
+}
+
+fn main() i32 {
+    do_constants()
+    do_var_lhs()
+    do_var_rhs()
+    do_var_both()
+
+    return 0
+}
+

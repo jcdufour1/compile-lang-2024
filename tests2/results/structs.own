@@ -1,0 +1,34 @@
+compile::stdout 0
+
+compile::stderr 0
+
+compile::return_code 0
+
+clang::stdout 0
+
+clang::stderr 0
+
+clang::return_code 0
+
+run::stdout 16
+9/2
+8/7
+11/10
+8/10
+14/34
+14/34
+11/10
+8/10
+token: 923 hello
+14/34
+831/700
+11/10
+82 bye 56/84
+71 bye 56/84
+82 bye 56/84
+82
+
+run::stderr 0
+
+run::return_code 0
+

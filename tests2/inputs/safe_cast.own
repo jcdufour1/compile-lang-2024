@@ -1,0 +1,9 @@
+type io import = std.io
+
+
+fn main() i32 {
+    let num i32 = 8
+    let small i16 = cast(<i16>)(num)
+    io.printf("small: %d\n", small)
+    return 0
+}

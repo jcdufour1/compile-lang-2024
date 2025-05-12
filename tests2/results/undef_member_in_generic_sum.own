@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+./tests2/inputs/undef_member_in_generic_sum.own:4:12:[1;31merror[0;39m:type `Type` is not defined
+     3 |     string u8*
+     4 |     number Type
+       |            ^
+     5 | }
+
+compile::return_code 1
+

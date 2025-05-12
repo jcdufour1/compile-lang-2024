@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+./tests2/inputs/struct_literal_no_delim.own:11:35:[1;31merror[0;39m:got token `=`, but expected `,` , `newline`  or `}` after expression in struct literal
+    10 |     let pos: Pos = {
+    11 |         .file = "hello.own" .line = 87
+       |                                   ^
+    12 |     }
+
+compile::return_code 1
+

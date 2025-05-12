@@ -1,0 +1,22 @@
+compile::stdout 0
+
+compile::stderr 0
+
+compile::return_code 0
+
+clang::stdout 0
+
+clang::stderr 0
+
+clang::return_code 0
+
+run::stdout 4
+8
+75
+9
+21
+
+run::stderr 0
+
+run::return_code 0
+
