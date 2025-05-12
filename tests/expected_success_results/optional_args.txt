@@ -1,3 +1,0 @@
-43 hello
-74 hello
-76 thing

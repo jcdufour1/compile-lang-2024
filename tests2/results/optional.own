@@ -1,0 +1,52 @@
+compile::stdout 0
+
+compile::stderr 0
+
+compile::return_code 0
+
+clang::stdout 0
+
+clang::stderr 0
+
+clang::return_code 0
+
+run::stdout 34
+test 2: got number: 84
+test 4: got number: 87
+test 6: got nothing
+test 8: got number: 91
+test 10: got error: 8
+test 21: got number: 84
+test 23: got number: 87
+test 25: got nothing
+test 27: got number: 91
+test 29: got error: 8
+token is number: 7
+result is no more than 4
+test 40: got number: 6
+result is more than 4
+test 41: got number: 15
+result is more than 4
+test 42: got number: 10
+result is more than 4
+test 43: got number: 15
+test 44: got number: 13
+test 45: got number: 14
+result is more than 4
+test 46: got number: 10
+test 47: got number 8
+test 48: got number 13
+test 49: got number 85
+test 50: got number 71
+test 51: got number 72
+test 52: got number 16
+test 53: got number 832
+test 54: got number 78
+test 55: got number 79
+test 56: got number 30
+test 57: got number 846
+
+run::stderr 0
+
+run::return_code 0
+

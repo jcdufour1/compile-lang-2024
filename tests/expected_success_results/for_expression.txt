@@ -1,7 +1,0 @@
-yes1
-79
-yes2
-80
-yes3
-81
-done

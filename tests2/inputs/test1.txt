@@ -1,0 +1,9 @@
+type io import = std.io
+
+fn main() i32 {
+    io.printf("hello\n")
+    io.printf("things are happening\n")
+    io.printf("bye\n")
+    return 0
+}
+

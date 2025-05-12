@@ -1,0 +1,15 @@
+compile::stdout 0
+
+compile::stderr 9
+./tests2/inputs/def_invalid_syntax.own:1:16:[1;31merror[0;39m:got token `symbol(io)`, but expected `=` after `def`
+     1 | type print def io.printf
+       |                ^
+     2 | 
+./tests2/inputs/def_invalid_syntax.own:5:1:[1;31merror[0;39m:got token `fn`, but expected `symbol` after `.` in member access
+     4 | 
+     5 | fn main() i32 {
+       | ^
+     6 |     return 0
+
+compile::return_code 1
+

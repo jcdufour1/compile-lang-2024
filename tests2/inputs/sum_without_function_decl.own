@@ -1,0 +1,16 @@
+type io import = std.io
+
+
+type Opt_int sum {
+    none
+    some i32
+    string u8*
+}
+
+fn main() i32 {
+    let num Opt_int = Opt_int.some(76)
+
+    num = Opt_int.none
+
+    return 0
+}

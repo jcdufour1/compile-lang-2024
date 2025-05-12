@@ -1,0 +1,18 @@
+type io import = std.io
+
+
+type Div struct {
+    numerator i32
+    denominator i32
+}
+
+fn main() i32 {
+    let div Div = {
+        .numerator = 87,
+        .denominator = 13
+    }
+
+    io.printf("%d/%d\n", div.numerator, div.denominator)
+
+    return 0
+}

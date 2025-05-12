@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+./tests2/inputs/mismatched_literal_types_to_binary.own:5:20:[1;31merror[0;39m:language feature `non literal implicit conversion` not yet implemented (may or may not be implemented in the future)
+     4 | fn main() i32 {
+     5 |     let num i32 = 7*"hello"
+       |                    ^
+     6 |     return 0
+
+compile::return_code 1
+

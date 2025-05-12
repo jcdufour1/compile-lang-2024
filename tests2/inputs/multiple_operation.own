@@ -1,0 +1,225 @@
+type io import = std.io
+
+
+fn one() i32 {
+    return 1
+}
+
+fn part_2() {
+    {
+        let num i32 = 7
+        if 0 - 1 == num {
+            io.printf("no1\n")
+        } else {
+            io.printf("yes1\n")
+        }
+    }
+
+    {
+        let num i32 = 0 - 1
+        if 0 - 1 == num {
+            io.printf("yes2\n")
+        } else {
+            io.printf("no2\n")
+        }
+    }
+
+    {
+        let num i32 = 7
+        if -1 == num {
+            io.printf("no3\n")
+        } else {
+            io.printf("yes3\n")
+        }
+    }
+
+    {
+        let num i32 = -1
+        if -1 == num {
+            io.printf("yes4\n")
+        } else {
+            io.printf("no4\n")
+        }
+    }
+
+    {
+        let num i32 = 7
+        if -one() == num {
+            io.printf("no5\n")
+        } else {
+            io.printf("yes5\n")
+        }
+    }
+
+    {
+        let num i32 = -one()
+        if -one() == num {
+            io.printf("yes6\n")
+        } else {
+            io.printf("no6\n")
+        }
+    }
+}
+
+fn bitwise_xor() {
+    io.printf("bitwise xor:\n")
+    {
+        let num i32 = 0
+        num = num ^ 0
+        io.printf("%d\n", num)
+    }
+
+    {
+        let num i32 = 0
+        num = num ^ 1
+        io.printf("%d\n", num)
+    }
+
+    {
+        let num i32 = 1
+        num = num ^ 1
+        io.printf("%d\n", num)
+    }
+
+    {
+        let num i32 = 2
+        num = num ^ 1
+        io.printf("%d\n", num)
+    }
+
+    {
+        let num i32 = 2
+        num = num ^ 2
+        io.printf("%d\n", num)
+    }
+
+    io.printf("%d\n", 76 ^ 23)
+}
+
+fn bitwise_and() {
+    io.printf("bitwise and:\n")
+    {
+        let num i32 = 0
+        num = num & 0
+        io.printf("%d\n", num)
+    }
+
+    {
+        let num i32 = 0
+        num = num & 1
+        io.printf("%d\n", num)
+    }
+
+    {
+        let num i32 = 1
+        num = num & 1
+        io.printf("%d\n", num)
+    }
+
+    {
+        let num i32 = 2
+        num = num & 1
+        io.printf("%d\n", num)
+    }
+
+    {
+        let num i32 = 2
+        num = num & 2
+        io.printf("%d\n", num)
+    }
+
+    io.printf("%d\n", 76 & 23)
+}
+
+fn bitwise_or() {
+    io.printf("bitwise or:\n")
+    {
+        let num i32 = 0
+        num = num | 0
+        io.printf("%d\n", num)
+    }
+
+    {
+        let num i32 = 0
+        num = num | 1
+        io.printf("%d\n", num)
+    }
+
+    {
+        let num i32 = 1
+        num = num | 1
+        io.printf("%d\n", num)
+    }
+
+    {
+        let num i32 = 2
+        num = num | 1
+        io.printf("%d\n", num)
+    }
+
+    {
+        let num i32 = 2
+        num = num | 2
+        io.printf("%d\n", num)
+    }
+
+    io.printf("%d\n", 76 | 23)
+}
+
+fn bitwise() {
+    bitwise_xor()
+    bitwise_and()
+    bitwise_or()
+}
+
+fn main() i32 {
+    let num1 i32 = 2
+    let num2 i32 = 93
+    let result_1 i32
+    let num3 i32 = 3
+    let num4 i32 = 9
+
+    result_1 = num2*num3 + num4/num1
+    io.printf("%d\n", result_1)
+
+    let num5 i32 = 5
+    let num6 i32 = 12
+    let result_2 i32
+    let num7 i32 = 92
+    let num8 i32 = 16
+
+    result_2 = num5*num6 + num7/num8
+    io.printf("%d\n", result_2)
+
+    let num9 i32 = 5
+    let num10 i32 = 12
+    let result_3 i32
+    let num11 i32 = 92
+    let num12 i32 = 16
+
+    result_3 = (1 + 7)*10 + num11/num12
+    io.printf("%d\n", result_3)
+
+    let result_4 i32
+    result_4 = ((1 + 7)*10) + (num11/num12)
+    io.printf("%d\n", result_4)
+
+    let result_5 i32
+    result_5 = (((1 + 7)*10) + (num11/num12))
+    io.printf("%d\n", result_5)
+
+    part_2()
+
+    bitwise()
+
+    let num100 i32 = 87
+    num100 += 2
+    io.printf("num100: %d\n", num100)
+
+    // TODO: case for 
+    // let small i8 = 10
+    // let num i32* = unsafe_cast<i32*>refer small
+    // return deref num
+
+    return 0
+}

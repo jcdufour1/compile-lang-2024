@@ -1,0 +1,16 @@
+compile::stdout 0
+
+compile::stderr 10
+./tests2/inputs/sum_arg_with_void_varient.own:11:29:[1;31merror[0;39m:() in sum case has no argument; add argument in () or remove ()
+    10 |     let token1 Token = Token.open_par
+    11 |     let token2 Token = Token.open_par()
+       |                             ^
+    12 |     let token3 Token = Token.open_par(76)
+./tests2/inputs/sum_arg_with_void_varient.own:12:29:[1;31merror[0;39m:cannot assign argument to varient `Token.open_par`, because inner type is void
+    11 |     let token2 Token = Token.open_par()
+    12 |     let token3 Token = Token.open_par(76)
+       |                             ^
+    13 |     return 0
+
+compile::return_code 1
+

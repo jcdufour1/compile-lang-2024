@@ -1,0 +1,26 @@
+compile::stdout 0
+
+compile::stderr 20
+./tests2/inputs/missing_yield.own:16:19:[1;31merror[0;39m:no break statement in case that breaks `i32`
+    15 |     let num1 i32 = switch (is_true()) {
+    16 |         case .true: do_nothing()
+       |                   ^
+    17 |         case .false: break 1
+./tests2/inputs/missing_yield.own:15:14:[1;34mnote[0;39m:case break type `i32` defined here
+    14 | fn main() i32 {
+    15 |     let num1 i32 = switch (is_true()) {
+       |              ^
+    16 |         case .true: do_nothing()
+./tests2/inputs/missing_yield.own:22:19:[1;31merror[0;39m:no break statement in case that breaks `i32`
+    21 |         case .false: break 1
+    22 |         case .true: do_nothing()
+       |                   ^
+    23 |     }
+./tests2/inputs/missing_yield.own:20:14:[1;34mnote[0;39m:case break type `i32` defined here
+    19 | 
+    20 |     let num2 i32 = switch (is_true()) {
+       |              ^
+    21 |         case .false: break 1
+
+compile::return_code 1
+

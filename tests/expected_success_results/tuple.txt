@@ -1,4 +1,0 @@
-76 hello
-89 bye 1
-91 getting a new token 0
-token is number: 12

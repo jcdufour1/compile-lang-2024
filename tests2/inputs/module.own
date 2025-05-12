@@ -1,0 +1,16 @@
+type io import = std.io
+type io2 import = std.std_dummy
+type io3 import = std.std_dummy_2
+
+fn printf(string u8*) {
+    io.printf("from local printf function: ")
+    io.printf("%s\n", string)
+}
+
+fn main() i32 {
+    io.printf("hello\n")
+    io2.printf("bye")
+    io3.printf("actually bye this time")
+    printf("bye for the third time")
+    return 0
+}

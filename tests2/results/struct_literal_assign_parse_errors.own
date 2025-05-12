@@ -1,0 +1,21 @@
+compile::stdout 0
+
+compile::stderr 15
+./tests2/inputs/struct_literal_assign_parse_errors.own:9:53:[1;31merror[0;39m:expected expression after `=`
+     8 |     // TODO: better error message for div3 error
+     9 |     let div3 Div = {.numerator = 92, .denominator = }
+       |                                                     ^
+    10 |     let div4 Div = {.numerator = 92, = 43}
+./tests2/inputs/struct_literal_assign_parse_errors.own:10:38:[1;31merror[0;39m:expected expression 
+     9 |     let div3 Div = {.numerator = 92, .denominator = }
+    10 |     let div4 Div = {.numerator = 92, = 43}
+       |                                      ^
+    11 |     let div5 Div = {.numerator = 92, .denominator 43}
+./tests2/inputs/struct_literal_assign_parse_errors.own:11:51:[1;31merror[0;39m:got token `int literal(43)`, but expected `,` , `newline`  or `}` after expression in struct literal
+    10 |     let div4 Div = {.numerator = 92, = 43}
+    11 |     let div5 Div = {.numerator = 92, .denominator 43}
+       |                                                   ^
+    12 |     return 0
+
+compile::return_code 1
+

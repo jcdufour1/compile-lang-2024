@@ -1,0 +1,160 @@
+type io import = std.io
+
+
+fn yes() i32 {
+    return 1
+}
+
+fn yes2() i32 {
+    return 2
+}
+
+fn no() i32 {
+    return 0
+}
+
+fn test_return_msg() i32 {
+    // test that there is no diagnostic "no return statement", etc.
+    if 8*3 == 0 {
+        return 0
+    } else if 8*1 == 1 {
+    } else {
+        return 2
+    }
+    return 4
+}
+
+fn greater_or_equal() {
+    let twenty_four i32 = 24
+
+    if 8*3 >= 24 {
+        io.puts("yes2.30");
+    }
+    if 8*3 + 1 >= 24 {
+        io.puts("yes2.30.2");
+    }
+    if 8*3 >= 25 {
+        io.puts("no2.30.3");
+    }
+
+    if 8*3 >= twenty_four {
+        io.puts("yes2.31");
+    }
+    if 8*3 + 1 >= twenty_four {
+        io.puts("yes2.31.2");
+    }
+    if 8*3 >= (twenty_four + 1) {
+        io.puts("no2.31.3");
+    }
+}
+
+fn less_or_equal() {
+    let twenty_four i32 = 24
+
+    if 8*3 <= 24 {
+        io.puts("yes2.2");
+    }
+    if 8*3 + 1 <= 24 {
+        io.puts("no2.2.2");
+    }
+    if 8*3 <= 23 {
+        io.puts("no2.2.3");
+    }
+
+    if 8*3 <= twenty_four {
+        io.puts("yes2.20");
+    }
+    if 8*3 < twenty_four {
+        io.puts("no2.20.1");
+    }
+    if 8*3 + 1 <= twenty_four {
+        io.puts("no2.20.2");
+    }
+    if 8*3 <= (twenty_four - 1) {
+        io.puts("no2.20.3");
+    }
+}
+
+fn main() i32 {
+    if 8*3 < 5 {
+        io.puts("no");
+    }
+    if 8*3 < 50 {
+        io.puts("yes");
+    }
+
+    if 8*3 - 1 < 24 {
+        io.puts("yes2");
+    }
+    if 8*3 + 1 < 25 {
+        io.puts("no2");
+    }
+
+    if 8*3 < 24 {
+        io.puts("no2.2.1");
+    }
+
+    less_or_equal()
+    greater_or_equal()
+
+    if yes() {
+        io.puts("yes3");
+    }
+    if yes2() {
+        // 2 also is considered to be true
+        io.puts("yes3.2");
+    }
+    if no() {
+        io.puts("no3");
+    }
+
+    if 2 {
+        io.puts("yes4.2");
+    }
+    if 1 {
+        io.puts("yes4");
+    }
+    if 0 {
+        io.puts("no4");
+    }
+    if yes() != 0 {
+        io.puts("yes5");
+    }
+    if yes() != 1 {
+        io.puts("no5");
+    }
+
+    let num_yes2 i32 = 2;
+    let num_yes i32 = 1;
+    let num_no i32 = 0;
+    if num_yes2 {
+        io.puts("yes6.2");
+    }
+    if num_yes {
+        io.puts("yes6");
+    }
+    if num_no {
+        io.puts("no6");
+    }
+
+    if !num_no {
+        io.puts("yes7");
+    }
+    if !num_yes {
+        io.puts("no7");
+    }
+    if !num_yes2 {
+        io.puts("no7.2");
+    }
+
+    if !no() {
+        io.puts("yes8");
+    }
+    if !yes() {
+        io.puts("no8");
+    }
+
+    test_return_msg()
+
+    return 0
+}

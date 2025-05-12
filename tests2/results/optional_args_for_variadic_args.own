@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+./tests2/inputs/optional_args_for_variadic_args.own:2:39:[1;31merror[0;39m:optional arguments cannot be used with variadic parameters
+     1 | 
+     2 | extern("c") fn print_nums(nums any... = 7)
+       |                                       ^
+     3 | 
+
+compile::return_code 1
+

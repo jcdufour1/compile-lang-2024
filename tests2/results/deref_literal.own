@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+./tests2/inputs/deref_literal.own:4:5:[1;31merror[0;39m:derefencing a type that is not a pointer
+     3 | fn main() i32 {
+     4 |     deref(45) = 21
+       |     ^
+     5 |     return 0
+
+compile::return_code 1
+

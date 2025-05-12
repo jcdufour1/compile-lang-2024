@@ -1,0 +1,11 @@
+compile::stdout 0
+
+compile::stderr 5
+./tests2/inputs/missing_comma_fun_arg.own:7:19:[1;31merror[0;39m:got token `int literal(7)`, but expected `)`  or `,` 
+     6 |     small_num = 8*2
+     7 |     printf("%d\n" 7);
+       |                   ^
+     8 | 
+
+compile::return_code 1
+

@@ -1,0 +1,32 @@
+type io import = std.io
+
+fn add_fn_i32(a i32, b i32) i32 {
+    return a + b;
+}
+
+fn add_fn_i64(a i64, b i64) i64 {
+    return a + b;
+}
+
+fn add_fn_i16(a i16, b i16) i16 {
+    return a + b;
+}
+
+fn add_fn(<ItemType>)(a ItemType, b ItemType) ItemType {
+    return a + b;
+}
+
+fn print_result(<ItemType>)(a ItemType, b ItemType, callback fn(ItemType, ItemType) ItemType) {
+    io.printf("%d\n", callback(a, b))
+}
+
+fn main() i32 {
+    print_result(<i32>)(7, 3, add_fn_i32)
+    print_result(<i64>)(7, 4, add_fn_i64)
+    print_result(<i16>)(10, 2, add_fn_i16)
+
+    print_result(<i16>)(9, 32, add_fn(<i16>))
+    print_result(<i64>)(19, 65, add_fn(<i64>))
+    print_result(<i32>)(75, 89, add_fn(<i32>))
+    return 0
+}
