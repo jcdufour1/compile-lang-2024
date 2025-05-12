@@ -10,8 +10,9 @@ clang::stderr 0
 
 clang::return_code 0
 
-run::stdout 2
+run::stdout 3
 hello
+things are happening
 bye
 
 run::stderr 0
