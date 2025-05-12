@@ -132,15 +132,40 @@ def compile_test(do_debug: bool, output_name: str, file: FileItem) -> TestResult
     return TestResult(compile_out, clang_out, run_out)
 
 
-# return true if test was successful
-def do_test(file: FileItem, do_debug: bool, expected_output: str, output_name: str, action: Action) -> bool:
-    result: TestResult = compile_test(do_debug, output_name, file)
+def do_tests(files_to_test: list[str], do_debug: bool, output_name: str, action: Action, count_threads: int, keep_going: bool):
+    success = True
 
+    debug_env: str
     debug_release_text: str
     if do_debug:
         debug_release_text = "debug"
+        debug_env = "1"
     else:
         debug_release_text = "release"
+        debug_env = "0"
+
+    cmd = ["make", "-j", str(count_threads), "build"]
+    print_info("compiling " + debug_release_text + " :")
+    process = subprocess.run(cmd, env=dict(os.environ | {"DEBUG": debug_env}))
+    if process.returncode != 0:
+        print_error("compilation of " + debug_release_text + " failed")
+        sys.exit(1)
+    print_success("compiling " + debug_release_text + " : done")
+    print()
+
+    for file in get_files_to_test(files_to_test):
+        if not test_file(file, True, get_expected_output(file), output_name, action, debug_release_text):
+            if not keep_going:
+                sys.exit(1)
+            success = False
+    if not success:
+        sys.exit(1)
+
+
+
+# return true if test was successful
+def test_file(file: FileItem, do_debug: bool, expected_output: str, output_name: str, action: Action, debug_release_text: str) -> bool:
+    result: TestResult = compile_test(do_debug, output_name, file)
 
     process_result: str = get_result_from_test_result(result)
     if action == Action.UPDATE:
@@ -183,40 +208,11 @@ def do_test(file: FileItem, do_debug: bool, expected_output: str, output_name: s
         print(expected_color)
         print_info("actual output:")
         print(stdout_color)
-        sys.exit(1)
+        return False
 
     print_success("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ") success")
     print()
     return True
-
-def do_debug(files_to_test: list[str], count_threads: int, output_name: str, action: Action) -> None:
-    cmd = ["make", "-j", str(count_threads), "build"]
-    print_info("compiling debug:")
-    process = subprocess.run(cmd, env=dict(os.environ | {"DEBUG": "1"}))
-    if process.returncode != 0:
-        print_error("compilation of debug failed")
-        sys.exit(1)
-    print_success("compiling debug: done")
-
-    for file in get_files_to_test(files_to_test):
-        do_test(file, do_debug=True, expected_output=get_expected_output(file), output_name=output_name, action=action)
-    print_success("testing debug: done")
-    print()
-
-def do_release(files_to_test: list[str], count_threads: int, output_name: str, action: Action) -> None:
-    cmd = ["make", "-j", str(count_threads), "build"]
-    print_info("compiling release:")
-    process = subprocess.run(cmd, env=dict(os.environ | {"DEBUG": "0"}))
-    if process.returncode != 0:
-        print_error("compilation of release failed")
-        sys.exit(1)
-    print_success("compiling release: done")
-    print()
-
-    for file in get_files_to_test(files_to_test):
-        do_test(file, do_debug=False, expected_output=get_expected_output(file), output_name=output_name, action=action)
-    print_success("testing release: done")
-    print()
 
 def append_all_files(list_or_map: list | dict, callback: Callable):
     possible_path: str
@@ -228,13 +224,18 @@ def append_all_files(list_or_map: list | dict, callback: Callable):
 def add_to_map(map: dict, path: str):
     map[path] = 0
 
-def parse_args() -> Tuple[list[str], str, Action]:
+def parse_args() -> Tuple[list[str], str, Action, bool]:
     action: Action = Action.TEST
     test_output = "" # TODO: be more consistant with test_output variable names
     to_include: dict[str, int] = {}
+    keep_going: bool = True
     has_found_flag = False
     for arg in sys.argv[1:]:
-        if arg.startswith("--update"):
+        if arg.startswith("--keep-going"):
+            keep_going = True
+        elif arg.startswith("--stop-on-error"):
+            keep_going = False
+        elif arg.startswith("--update"):
             action = Action.UPDATE
         elif arg.startswith("--test"):
             action = Action.TEST
@@ -264,13 +265,14 @@ def parse_args() -> Tuple[list[str], str, Action]:
     to_include_list: list[str] = []
     for path in to_include:
         to_include_list.append(path)
-    return to_include_list, test_output, action
+    return to_include_list, test_output, action, keep_going
 
 def main() -> None:
     files_to_test: list[str]
     test_output: str
     action: Action
-    files_to_test, test_output, action = parse_args()
+    keep_going: bool
+    files_to_test, test_output, action, keep_going = parse_args()
 
     count_threads: int
     try:
@@ -280,8 +282,8 @@ def main() -> None:
         print_warning(e, file=sys.stderr)
         count_threads = 2
 
-    do_debug(files_to_test, count_threads, test_output, action)
-    do_release(files_to_test, count_threads, test_output, action)
+    do_tests(files_to_test, True, test_output, action, count_threads, keep_going)
+    do_tests(files_to_test, False, test_output, action, count_threads, keep_going)
     print_success("all tests passed")
 
 if __name__ == '__main__':
