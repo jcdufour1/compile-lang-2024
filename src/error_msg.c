@@ -79,7 +79,8 @@ void msg_internal(
         warning_count++;
     }
 
-    if (log_level >= CURR_LOG_LEVEL) {
+    // TODO: should log_internal be called here to reduce duplication
+    if (log_level >= MIN_LOG_LEVEL && log_level >= params_log_level) {
         if (pos.line < 1) {
             fprintf(stderr, "%s:", get_log_level_str(log_level));
             vfprintf(stderr, format, args);

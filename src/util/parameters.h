@@ -28,7 +28,6 @@ typedef struct {
     bool emit_llvm : 1;
     bool test_expected_fail : 1;
     bool all_errors_fatal: 1;
-    LOG_LEVEL log_level: 4;
     Backend_info backend_info;
 } Parameters;
 

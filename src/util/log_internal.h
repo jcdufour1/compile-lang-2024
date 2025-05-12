@@ -1,6 +1,8 @@
 #ifndef LOG_INTERNAL_H
 #define LOG_INTERNAL_H
 
+extern LOG_LEVEL params_log_level;
+
 #define LOG_BLUE "\033[1;34m"
 #define LOG_YELLOW "\033[1;33m"
 #define LOG_RED "\033[1;31m"
@@ -31,7 +33,7 @@ static inline void log_internal(LOG_LEVEL log_level, const char* file, int line,
     va_list args;
     va_start(args, format);
 
-    if (log_level >= CURR_LOG_LEVEL) {
+    if (log_level >= CURR_LOG_LEVEL && log_level >= params_log_level) {
         for (int idx = 0; idx < indent; idx++) {
             fprintf(stderr, " ");
         }

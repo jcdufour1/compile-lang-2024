@@ -46,6 +46,7 @@ OBJS=\
 	 ${BUILD_DIR}/file.o \
 	 ${BUILD_DIR}/util/parameters.o \
 	 ${BUILD_DIR}/util/operator_type.o \
+	 ${BUILD_DIR}/util/params_log_level.o \
 	 ${BUILD_DIR}/parser_utils.o \
 	 ${BUILD_DIR}/error_msg.o \
 	 ${BUILD_DIR}/lang_type_serialize.o \
@@ -103,7 +104,7 @@ test_quick: run
 
 # auto_gen and util
 ${BUILD_DIR}/auto_gen: src/util/auto_gen.c ${DEP_UTIL}
-	${CC_COMPILER} ${C_FLAGS_AUTO_GEN} -o ${BUILD_DIR}/auto_gen src/util/arena.c src/util/auto_gen.c
+	${CC_COMPILER} ${C_FLAGS_AUTO_GEN} -o ${BUILD_DIR}/auto_gen src/util/params_log_level.c src/util/arena.c src/util/auto_gen.c
 
 ${BUILD_DIR}/tast.h: ${BUILD_DIR}/auto_gen
 	./${BUILD_DIR}/auto_gen ${BUILD_DIR}
@@ -213,6 +214,9 @@ ${BUILD_DIR}/util/operator_type.o: ${DEP_COMMON} src/util/operator_type.c
 
 ${BUILD_DIR}/util/name.o: ${DEP_COMMON} src/util/name.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/name.o src/util/name.c
+
+${BUILD_DIR}/util/params_log_level.o: ${DEP_COMMON} src/util/params_log_level.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/util/params_log_level.o src/util/params_log_level.c
 
 #clean:
 #	rm -f ${OBJS} build/*/passes/*

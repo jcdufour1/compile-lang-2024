@@ -20,8 +20,8 @@ typedef enum {
     LOG_FATAL   = 6,
 } LOG_LEVEL;
 
-#ifndef CURR_LOG_LEVEL
-#define CURR_LOG_LEVEL LOG_TRACE
+#ifndef MIN_LOG_LEVEL
+#define MIN_LOG_LEVEL LOG_TRACE
 #endif // CURR_LOG_LEVEL
 
 typedef enum {
