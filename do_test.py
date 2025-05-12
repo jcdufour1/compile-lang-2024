@@ -1,4 +1,5 @@
 import os, subprocess, sys, pathlib, difflib, multiprocessing
+from typing import Callable, Tuple
 
 class Changes:
     REMOVED = "\033[37;41m" #]
@@ -189,12 +190,13 @@ def print_info(*base, **kargs) -> None:
 
 def get_files_to_test(files_to_test: list[str]) -> list[FileItem]:
     files: list[FileItem] = []
+    possible_file_path: str
     for possible_file_base in map(to_str, os.listdir(EXAMPLES_DIR)):
-        possible_file_path: str = os.path.realpath(os.path.join(EXAMPLES_DIR, possible_file_base))
+        possible_file_path = os.path.realpath(os.path.join(EXAMPLES_DIR, possible_file_base))
         if os.path.isfile(possible_file_path) and possible_file_path in files_to_test:
             files.append(FileItem(possible_file_path, True, None))
     for possible_file_base in map(to_str, os.listdir(EXPECTED_FAIL_EXAMPLES_DIR)):
-        possible_file_path: str = os.path.realpath(os.path.join(EXPECTED_FAIL_EXAMPLES_DIR, possible_file_base))
+        possible_file_path = os.path.realpath(os.path.join(EXPECTED_FAIL_EXAMPLES_DIR, possible_file_base))
         if os.path.isfile(possible_file_path) and possible_file_path in files_to_test:
             files.append(FileItem(possible_file_path, False, EXPECT_FAIL_FILE_PATH_TO_TYPE[os.path.join(EXPECTED_FAIL_EXAMPLES_DIR, possible_file_base)]))
     return files
@@ -229,14 +231,16 @@ def do_test(file: FileItem, do_debug: bool, expected_output: str, output_name: s
         compile_cmd.append(file.path)
         compile_cmd.append("--emit-llvm")
     else:
-        assert(file.expected_fail_str != None)
         compile_cmd.append("test-expected-fail")
+        if file.expected_fail_str is None:
+            raise AssertionError()
         compile_cmd.append(str(len(file.expected_fail_str)))
         compile_cmd.extend(file.expected_fail_str)
         compile_cmd.append(file.path)
 
     print_info("testing: " + file.path + " (" + debug_release_text + ")")
-    process = subprocess.run(compile_cmd)
+    process: subprocess.CompletedProcess[str]
+    process = subprocess.run(compile_cmd, text=True)
     if not file.expected_success:
         if process.returncode != 2:
             print_error("testing: compilation of " + file.path + " (" + debug_release_text + ") returned " + str(process.returncode) + " exit code, but expected failure (exit code 2) was expected")
@@ -245,7 +249,7 @@ def do_test(file: FileItem, do_debug: bool, expected_output: str, output_name: s
         else:
             print_success("testing: " + file.path + " (" + debug_release_text + ") expected fail success")
             print()
-            return
+            return True
 
     if process.returncode != 0:
         print_error("testing: compilation of " + file.path + " (" + debug_release_text + ") fail")
@@ -256,7 +260,7 @@ def do_test(file: FileItem, do_debug: bool, expected_output: str, output_name: s
         sys.exit(1)
 
     clang_cmd = ["clang", output_name, "-o", "test"]
-    process = subprocess.run(clang_cmd)
+    process = subprocess.run(clang_cmd, text=True)
     if process.returncode != 0:
         print_error("testing: clang " + file.path + " (" + debug_release_text + ") fail")
         sys.exit(1)
@@ -304,6 +308,7 @@ def do_test(file: FileItem, do_debug: bool, expected_output: str, output_name: s
 
     print_success("testing: " + file.path + " (" + debug_release_text + ") success")
     print()
+    return True
 
 def do_debug(files_to_test: list[str], count_threads: int, output_name: str) -> None:
     cmd = ["make", "-j", str(count_threads), "build"]
@@ -344,20 +349,21 @@ def do_release(files_to_test: list[str], count_threads: int, output_name: str) -
     print_success("testing release: done")
     print()
 
-def append_all_files(list_or_map, callback):
+def append_all_files(list_or_map, callback: Callable):
+    possible_file_path: str
     for possible_file_base in map(to_str, os.listdir(EXAMPLES_DIR)):
-        possible_file_path: str = os.path.realpath(os.path.join(EXAMPLES_DIR, possible_file_base))
+        possible_file_path = os.path.realpath(os.path.join(EXAMPLES_DIR, possible_file_base))
         if os.path.isfile(possible_file_path):
             callback(list_or_map, possible_file_path)
     for possible_file_base in map(to_str, os.listdir(EXPECTED_FAIL_EXAMPLES_DIR)):
-        possible_file_path: str = os.path.realpath(os.path.join(EXPECTED_FAIL_EXAMPLES_DIR, possible_file_base))
+        possible_file_path = os.path.realpath(os.path.join(EXPECTED_FAIL_EXAMPLES_DIR, possible_file_base))
         if os.path.isfile(possible_file_path):
             callback(list_or_map, possible_file_path)
 
 def add_to_map(map, path):
     map[path] = 0
 
-def parse_args() -> (list[str], str):
+def parse_args() -> Tuple[list[str], str]:
     test_output = "" # TODO: be more consistant with test_output variable names
     to_include: dict[str, int] = {}
     has_found_flag = False
