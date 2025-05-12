@@ -122,7 +122,7 @@ def compile_test(do_debug: bool, output_name: str, file: FileItem) -> TestResult
     if compile_out.returncode != 0:
         return TestResult(compile_out, None, None)
 
-    clang_cmd = ["clang", output_name, "-Wno-incompatible-library-redeclaration", "-Wno-builtin-requires-header", "-o", "test"]
+    clang_cmd = ["clang", output_name, "-Wno-override-module", "-Wno-incompatible-library-redeclaration", "-Wno-builtin-requires-header", "-o", "test"]
     clang_out: subprocess.CompletedProcess[str]  = subprocess.run(clang_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     if clang_out.returncode != 0:
         return TestResult(compile_out, clang_out, None)
@@ -226,7 +226,7 @@ def add_to_map(map: dict, path: str):
 
 def parse_args() -> Tuple[list[str], str, Action, bool]:
     action: Action = Action.TEST
-    test_output = "test.c" # TODO: be more consistant with test_output variable names
+    test_output = "test.ll" # TODO: be more consistant with test_output variable names
     to_include: dict[str, int] = {}
     keep_going: bool = True
     has_found_flag = False
