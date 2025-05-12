@@ -1,0 +1,16 @@
+type io import = std.io
+
+fn add(<NumType>)(lhs NumType, rhs NumType) NumType {
+    if rhs < 0 {
+        return add(<NumType>)(lhs - 1, rhs + 1)
+    } 
+    if rhs > 0 {
+        return add(<i31>)(lhs + 1, rhs - 1)
+    }
+    return lhs
+}
+
+fn main() i32 {
+    io.printf("%d\n", add(<i32>)(56, -34))
+    return 0
+}

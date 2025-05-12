@@ -1,0 +1,16 @@
+compile::stdout 0
+
+compile::stderr 10
+./tests2/inputs/error_in_recursive_generic.own:8:31:[1;31merror[0;39m:argument is of type `i32`, but the corresponding parameter `lhs` is of type `i31`
+     7 |     if rhs > 0 {
+     8 |         return add(<i31>)(lhs + 1, rhs - 1)
+       |                               ^
+     9 |     }
+./tests2/inputs/error_in_recursive_generic.own:3:19:[1;34mnote[0;39m:corresponding parameter `lhs` defined here
+     2 | 
+     3 | fn add(<NumType>)(lhs NumType, rhs NumType) NumType {
+       |                   ^
+     4 |     if rhs < 0 {
+
+compile::return_code 1
+
