@@ -10,7 +10,29 @@ fn add(<NumType>)(lhs NumType, rhs NumType) NumType {
     return lhs
 }
 
+fn add2(<NumType>)(lhs NumType, rhs NumType) NumType {
+    if rhs < 0 {
+        return add2(lhs - 1, rhs + 1)
+    } 
+    if rhs > 0 {
+        return add2(<NumType>)(lhs + 1, rhs - 1)
+    }
+    return lhs
+}
+
+fn add3(<NumType>)(lhs NumType, rhs NumType) NumType {
+    if rhs < 0 {
+        return add2(lhs - 1, rhs + 1)
+    } 
+    if rhs > 0 {
+        return add2(<NumType>)(lhs + 1, rhs - 1)
+    }
+    return lhs
+}
+
 fn main() i32 {
     io.printf("%d\n", add(<i32>)(56, -34))
+    io.printf("%d\n", add2(<i32>)(57, -3))
+    io.printf("%d\n", add3(58, -2))
     return 0
 }

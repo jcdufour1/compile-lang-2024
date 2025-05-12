@@ -573,7 +573,6 @@ bool resolve_generics_function_def_call(
         return true;
     }
 
-    // TODO: expected failure case for recursive generic function with mismatched args
     if (def->decl->generics.info.count != gen_args.info.count) {
         msg_invalid_count_generic_args(def->pos, pos_gen_args, gen_args, def->decl->generics.info.count, def->decl->generics.info.count);
         return false;
