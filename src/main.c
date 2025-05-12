@@ -94,7 +94,7 @@ void do_passes(const Parameters* params) {
     
     unwrap(typed);
     arena_reset(&print_arena);
-    log(LOG_NOTE, "arena usage: %zu\n", arena_get_total_usage(&a_main));
+    log(LOG_VERBOSE, "arena usage: %zu\n", arena_get_total_usage(&a_main));
     log(LOG_DEBUG,  "\nafter type checking start--------------------\n");
     symbol_log_level(LOG_DEBUG, 0);
     log(LOG_DEBUG,TAST_FMT, tast_block_print(typed));

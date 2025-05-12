@@ -725,7 +725,7 @@ void emit_c_from_tree(const Llvm_block* root) {
     }
 
     msg(
-        LOG_NOTE, EXPECT_FAIL_NONE, dummy_pos, "file %s built\n",
+        LOG_VERBOSE, EXPECT_FAIL_NONE, dummy_pos, "file %s built\n",
         params.input_file_name
     );
 

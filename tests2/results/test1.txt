@@ -1,6 +1,20 @@
-:: stdout 2
+compile::stdout 0
+
+compile::stderr 0
+
+compile::return_code 0
+
+clang::stdout 0
+
+clang::stderr 0
+
+clang::return_code 0
+
+run::stdout 2
 hello
 bye
-:: stderr 1
-note: this is a note
-:: return_code 1
+
+run::stderr 0
+
+run::return_code 0
+

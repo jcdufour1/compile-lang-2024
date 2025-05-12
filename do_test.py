@@ -1,5 +1,6 @@
 import os, subprocess, sys, pathlib, difflib, multiprocessing
-from typing import Callable, Tuple
+from typing import Callable, Tuple, Optional
+from dataclasses import dataclass
 
 class Changes:
     REMOVED = "\033[37;41m" #]
@@ -13,13 +14,18 @@ class StatusColors:
     TO_NORMAL = "\033[0m" #]
 
 class FileItem:
-    def __init__(self, path: str, expected_success: bool, expected_fail_str: list[str] | None):
+    def __init__(self, path: str, expected_success: bool):
         self.path = path
         self.expected_success = expected_success
-        self.expected_fail_str = expected_fail_str
     path: str
     expected_success: bool
-    expected_fail_str: list[str] | None
+    expected_fail_str: list[str] | None # TODO: use Optional for consistency
+
+@dataclass
+class TestResult:
+    compile: subprocess.CompletedProcess[str]
+    clang: Optional[subprocess.CompletedProcess[str]]
+    run: Optional[subprocess.CompletedProcess[str]]
 
 INPUTS_DIR = "./tests2/inputs/"
 RESULTS_DIR = "./tests2/results/"
@@ -49,7 +55,7 @@ def get_files_to_test(files_to_test: list[str]) -> list[FileItem]:
     for possible_base in map(to_str, os.listdir(INPUTS_DIR)):
         possible_path = os.path.realpath(os.path.join(INPUTS_DIR, possible_base))
         if os.path.isfile(possible_path) and possible_path in files_to_test:
-            files.append(FileItem(possible_path, True, None))
+            files.append(FileItem(possible_path, True))
     return files
 
 def get_expected_output(file: FileItem) -> str:
@@ -59,8 +65,25 @@ def get_expected_output(file: FileItem) -> str:
     with open(expected, "r") as input:
         return input.read()
 
-# return true if test was successful
-def do_test(file: FileItem, do_debug: bool, expected_output: str, output_name: str) -> bool:
+def get_result_from_process_internal(process: subprocess.CompletedProcess[str], type_str: str) -> str:
+    result: str = ""
+    result += type_str + "::" + "stdout " + str(str(process.stdout).count("\n")) + "\n"
+    result += str(process.stdout) + "\n"
+    result += type_str + "::" + "stderr " + str(str(process.stderr).count("\n")) + "\n"
+    result += str(process.stderr) + "\n"
+    result += type_str + "::" + "return_code " + str(process.returncode) + "\n\n"
+    return result
+
+def get_result_from_test_result(process: TestResult) -> str:
+    result: str = get_result_from_process_internal(process.compile, "compile")
+    if process.clang is not None:
+        result += get_result_from_process_internal(process.clang, "clang")
+    if process.run is not None:
+        result += get_result_from_process_internal(process.run, "run")
+    return result
+
+# TODO: try to avoid using do_debug for both function name and parameter name
+def compile_test(do_debug: bool, output_name: str, file: FileItem) -> TestResult:
     debug_release_text: str
     compile_cmd: list[str]
     if do_debug:
@@ -77,83 +100,66 @@ def do_test(file: FileItem, do_debug: bool, expected_output: str, output_name: s
     else:
         assert(False and "not implemented")
 
-    if file.expected_success:
-        compile_cmd.append("compile")
-        compile_cmd.append(file.path)
-        compile_cmd.append("--emit-llvm")
-    else:
-        compile_cmd.append("test-expected-fail")
-        if file.expected_fail_str is None:
-            raise AssertionError()
-        compile_cmd.append(str(len(file.expected_fail_str)))
-        compile_cmd.extend(file.expected_fail_str)
-        compile_cmd.append(file.path)
+    compile_cmd.append("compile")
+    compile_cmd.append(file.path)
+    compile_cmd.append("--emit-llvm")
 
     print_info("testing: " + file.path + " (" + debug_release_text + ")")
-    process: subprocess.CompletedProcess[str]
-    process = subprocess.run(compile_cmd, text=True)
-    if not file.expected_success:
-        if process.returncode != 2:
-            print_error("testing: compilation of " + file.path + " (" + debug_release_text + ") returned " + str(process.returncode) + " exit code, but expected failure (exit code 2) was expected")
-            sys.exit(1)
-            return
-        else:
-            print_success("testing: " + file.path + " (" + debug_release_text + ") expected fail success")
-            print()
-            return True
+    compile_out: subprocess.CompletedProcess[str] = subprocess.run(compile_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    if compile_out.returncode != 0:
+        return TestResult(compile_out, None, None)
 
-    if process.returncode != 0:
-        print_error("testing: compilation of " + file.path + " (" + debug_release_text + ") fail")
-        sys.exit(1)
-        return
-    if process.returncode != 0:
-        print_error("testing: compilation of " + file.path + " (" + debug_release_text + ") fail")
-        sys.exit(1)
-
-    clang_cmd = ["clang", output_name, "-o", "test"]
-    process = subprocess.run(clang_cmd, text=True)
-    if process.returncode != 0:
-        print_error("testing: clang " + file.path + " (" + debug_release_text + ") fail")
-        sys.exit(1)
+    clang_cmd = ["clang", output_name, "-Wno-incompatible-library-redeclaration", "-Wno-builtin-requires-header", "-o", "test"]
+    clang_out: subprocess.CompletedProcess[str]  = subprocess.run(clang_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    if clang_out.returncode != 0:
+        return TestResult(compile_out, clang_out, None)
 
     test_cmd = ["./test"]
-    process = subprocess.run(test_cmd, stdout=subprocess.PIPE, text=True)
-    if process.returncode != 0:
-        print_error(
-            "testing: test " + file.path + " (" + debug_release_text +
-             ") fail (returned exit code " + str(process.returncode) + ")"
-        )
-        sys.exit(1)
-    if str(process.stdout) != expected_output:
+    run_out: subprocess.CompletedProcess[str] = subprocess.run(test_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    return TestResult(compile_out, clang_out, run_out)
+
+
+# return true if test was successful
+def do_test(file: FileItem, do_debug: bool, expected_output: str, output_name: str) -> bool:
+    result: TestResult = compile_test(do_debug, output_name, file)
+
+    debug_release_text: str
+    if do_debug:
+        debug_release_text = "debug"
+    else:
+        debug_release_text = "release"
+
+    process_result: str = get_result_from_test_result(result)
+    if process_result != expected_output:
         stdout_color: str = ""
         expected_color: str = ""
         print_error("test fail:" + file.path + " (" + debug_release_text + ")")
-        diff = difflib.SequenceMatcher(None, expected_output, str(process.stdout))
+        diff = difflib.SequenceMatcher(None, expected_output, process_result)
         for tag, expected_start, expected_end, stdout_start, stdout_end, in diff.get_opcodes():
             if tag == 'insert':
                 stdout_color += Changes.ADDED + \
-                                str(process.stdout)[stdout_start:stdout_end] + \
+                                process_result[stdout_start:stdout_end] + \
                                 Changes.TO_NORMAL
             elif tag == 'equal':
-                expected_color += str(process.stdout)[stdout_start:stdout_end]
-                stdout_color += str(process.stdout)[stdout_start:stdout_end]
+                expected_color += process_result[stdout_start:stdout_end]
+                stdout_color += process_result[stdout_start:stdout_end]
             elif tag == 'replace':
                 expected_color += Changes.REMOVED + \
                                   expected_output[expected_start:expected_end] + \
                                   Changes.TO_NORMAL
                 stdout_color += Changes.ADDED + \
-                                str(process.stdout)[stdout_start:stdout_end] + \
+                                process_result[stdout_start:stdout_end] + \
                                 Changes.TO_NORMAL
             elif tag == 'delete':
                 expected_color += Changes.REMOVED + \
-                                  str(expected_output)[expected_start:expected_end] + \
+                                  expected_output[expected_start:expected_end] + \
                                   Changes.TO_NORMAL
             else:
                 print_error("tag unregonized:" + tag)
                 assert False
         print_info("expected output:")
         print(expected_color)
-        print_info("actual process output:")
+        print_info("actual output:")
         print(stdout_color)
         sys.exit(1)
 
