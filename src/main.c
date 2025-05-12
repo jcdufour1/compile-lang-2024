@@ -10,6 +10,7 @@
 #include <uast.h>
 #include <type_checking.h>
 #include <symbol_log.h>
+#include <subprocess.h>
  
 // TODO: make separate Env struct for every pass (each Env will need Env_common for things that all envs require (eg. for symbol table lookups))
 //
@@ -141,6 +142,13 @@ void do_passes(const Parameters* params) {
 }
 
 int main(int argc, char** argv) {
+    struct subprocess_s process = {0};
+    int status = subprocess_create((const char*[]){"echo hello", NULL}, 0, &process);
+    FILE* file_stdout = subprocess_stdout(&process);
+
+    log(LOG_DEBUG, "%d\n", status);
+    todo();
+    log(LOG_DEBUG, "%s\n", getenv("TERM"));
     parse_args(argc, argv);
     do_passes(&params);
     return 0;
