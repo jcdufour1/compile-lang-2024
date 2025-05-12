@@ -146,7 +146,7 @@ static void parse_long_option(Parameters* params, int* argc, char*** argv) {
         params->emit_llvm = true;
     } else if (0 == strncmp(curr_opt, "backend", strlen("backend"))) {
         Str_view backend = str_view_from_cstr(&curr_opt[strlen("backend")]);
-        if (!str_view_consume(&backend)) {
+        if (!str_view_try_consume(&backend, '=')) {
             log(LOG_FATAL, "expected =<backend> after `backend`");
             exit(EXIT_CODE_FAIL);
         }
@@ -167,6 +167,33 @@ static void parse_long_option(Parameters* params, int* argc, char*** argv) {
         }
     } else if (0 == strcmp(curr_opt, "all-errors-fatal")) {
         params->all_errors_fatal = true;
+    } else if (0 == strcmp(curr_opt, "log-level")) {
+        Str_view log_level = str_view_from_cstr(&curr_opt[strlen("log-level")]);
+        if (!str_view_try_consume(&log_level, '=')) {
+            log(LOG_FATAL, "expected =<log level> after `log-level`");
+            exit(EXIT_CODE_FAIL);
+        }
+        if (str_view_is_equal(log_level, str_view_from_cstr("FETAL"))) {
+            params->log_level = LOG_FATAL;
+        } else if (str_view_is_equal(log_level, str_view_from_cstr("ERROR"))) {
+            params->log_level = LOG_ERROR;
+        } else if (str_view_is_equal(log_level, str_view_from_cstr("WARNING"))) {
+            params->log_level = LOG_WARNING;
+        } else if (str_view_is_equal(log_level, str_view_from_cstr("NOTE"))) {
+            params->log_level = LOG_NOTE;
+        } else if (str_view_is_equal(log_level, str_view_from_cstr("NOTE"))) {
+            params->log_level = LOG_NOTE;
+        } else if (str_view_is_equal(log_level, str_view_from_cstr("VERBOSE"))) {
+            params->log_level = LOG_VERBOSE;
+        } else if (str_view_is_equal(log_level, str_view_from_cstr("DEBUG"))) {
+            params->log_level = LOG_DEBUG;
+        } else if (str_view_is_equal(log_level, str_view_from_cstr("TRACE"))) {
+            params->log_level = LOG_TRACE;
+        } else {
+            log(LOG_FATAL, "log level `"STR_VIEW_FMT"` is not a supported log level\n", str_view_print(log_level));
+            exit(EXIT_CODE_FAIL);
+        }
+        params->log_level = true;
     } else {
         log(LOG_FATAL, "invalid option: %s\n", curr_opt);
         exit(EXIT_CODE_FAIL);
