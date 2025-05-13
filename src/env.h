@@ -70,6 +70,9 @@ typedef struct Env_ {
     Name_vec struct_like_waiting_to_resolve;
     Symbol_table struct_like_tbl;
 
+    Raw_union_of_sum raw_union_of_sum;
+
+    // TODO: remove
     Name_vec struct_like_objs_to_check;
 
     // this is used to define additional structs to get around the requirement of in order definitions in c

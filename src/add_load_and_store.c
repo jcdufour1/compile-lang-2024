@@ -74,7 +74,7 @@ static Lang_type_struct rm_tuple_lang_type_tuple(Lang_type_tuple lang_type, Pos 
 static Tast_raw_union_def* get_raw_union_def_from_sum_def(Tast_sum_def* sum_def) {
     // TODO: find way to avoid making new Tast_raw_union_def every time
     Tast_raw_union_def* union_def = tast_raw_union_def_new(sum_def->pos, sum_def->base);
-    union_def->base.name = serialize_tast_raw_union_def(union_def);
+    union_def->base.name = util_literal_name_new2();
     Tast_def* cached_def = NULL;
     if (symbol_lookup(&cached_def, union_def->base.name)) {
         return tast_raw_union_def_unwrap(cached_def);
@@ -123,7 +123,7 @@ static Lang_type rm_tuple_lang_type_sum(Lang_type_sum lang_type, Pos lang_type_p
     
     Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
     unwrap(sym_tbl_add(tast_struct_def_wrap(struct_def)));
-    struct_def->base.name = serialize_tast_struct_def(struct_def);
+    struct_def->base.name = struct_def->base.name;
     // TODO: consider collisions with generated structs and user defined structs
     sym_tbl_add(tast_struct_def_wrap(struct_def));
     Tast_def* dummy = NULL;
@@ -156,7 +156,7 @@ static Lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
                 lang_type_pos,
                 tast_raw_union_def_unwrap(lang_type_def_)->base
             );
-            item_type_def->base.name = serialize_tast_raw_union_def(item_type_def);
+            item_type_def->base.name = item_type_def->base.name;
             sym_tbl_add(tast_raw_union_def_wrap(item_type_def));
 
             load_raw_union_def(item_type_def);
@@ -1354,10 +1354,10 @@ static void load_struct_def(Tast_struct_def* old_def) {
     all_tbl_add(llvm_def_wrap(llvm_struct_def_wrap(load_struct_def_clone(old_def))));
 
     Tast_def* dummy = NULL;
-    if (!symbol_lookup(&dummy, serialize_tast_struct_def(old_def))) {
+    if (!symbol_lookup(&dummy, old_def->base.name)) {
         Tast_struct_def* new_def = tast_struct_def_new(old_def->pos, (Struct_def_base) {
             .members = old_def->base.members, 
-            .name = serialize_tast_struct_def(old_def)
+            .name = old_def->base.name
         });
         unwrap(sym_tbl_add(tast_struct_def_wrap(new_def)));
         load_struct_def(new_def);
@@ -1596,10 +1596,10 @@ static void load_raw_union_def(Tast_raw_union_def* old_def) {
     };
 
     Tast_def* dummy = NULL;
-    if (!symbol_lookup(&dummy, serialize_tast_raw_union_def(old_def))) {
+    if (!symbol_lookup(&dummy, old_def->base.name)) {
         Tast_raw_union_def* new_def = tast_raw_union_def_new(old_def->pos, (Struct_def_base) {
             .members = old_def->base.members, 
-            .name = serialize_tast_raw_union_def(old_def)
+            .name = old_def->base.name
         });
         unwrap(sym_tbl_add(tast_raw_union_def_wrap(new_def)));
         load_raw_union_def(new_def);

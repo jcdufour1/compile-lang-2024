@@ -67,6 +67,19 @@ typedef struct {
 
 
 typedef struct {
+    Tast_raw_union* tast;
+    Str_view key;
+    SYM_TBL_STATUS status;
+} Raw_union_to_sum_tbl_tast;
+
+typedef struct {
+    Raw_union_to_sum_tbl_tast* table_tasts;
+    size_t count; // count elements in symbol_table
+    size_t capacity; // count buckets in symbol_table
+} Raw_union_to_sum_tbl;
+
+
+typedef struct {
     Name* tast;
     Str_view key;
     SYM_TBL_STATUS status;
