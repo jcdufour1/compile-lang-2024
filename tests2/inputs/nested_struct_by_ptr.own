@@ -1,0 +1,15 @@
+
+type io import = std.io
+
+type Token struct {
+    id i32
+    inner Token*
+}
+
+fn main() i32 {
+    let token1 Token = {.id = 7, .inner = unsafe_cast<Token*>0}
+    let token2 Token = {.id = 8, .inner = refer token1}
+    io.printf("token1: .id = %d, .inner = %p\n", token1.id, token1.inner)
+    io.printf("token2: .id = %d, .inner.id = %d\n", token2.id, token2.inner.id)
+    return 0
+}

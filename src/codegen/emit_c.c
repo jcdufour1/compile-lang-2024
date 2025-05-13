@@ -135,6 +135,7 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Llvm_struct_def* def) {
     for (size_t idx = 0; idx < def->base.members.info.count; idx++) {
         Llvm_variable_def* curr = vec_at(&def->base.members, idx);
         string_extend_cstr(&a_temp, &buf, "    ");
+        Lang_type lang_type = {0};
         if (is_struct_like(vec_at(&def->base.members, idx)->lang_type.type)) {
             Name ori_name = lang_type_get_str(LANG_TYPE_MODE_LOG, vec_at(&def->base.members, idx)->lang_type);
             Name* struct_to_use = NULL;
@@ -151,10 +152,14 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Llvm_struct_def* def) {
                 unwrap(c_forward_struct_tbl_add(struct_to_use, ori_name));
                 emit_c_struct_def(strs, new_def);
             }
-            llvm_extend_name(&buf, *struct_to_use);
+            lang_type = lang_type_struct_const_wrap(lang_type_struct_new(
+                curr->pos,
+                lang_type_atom_new(*struct_to_use, lang_type_get_pointer_depth(curr->lang_type))
+            ));
         } else {
-            c_extend_type_call_str(&buf, curr->lang_type, true);
+            lang_type = curr->lang_type;
         }
+        c_extend_type_call_str(&buf, lang_type, true);
         string_extend_cstr(&a_temp, &buf, " ");
         llvm_extend_name(&buf, curr->name_self);
         string_extend_cstr(&a_temp, &buf, ";\n");
