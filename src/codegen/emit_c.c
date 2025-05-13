@@ -548,8 +548,6 @@ static void emit_c_store_another_llvm(Emit_c_strs* strs, const Llvm_store_anothe
 }
 
 static void emit_c_load_another_llvm(Emit_c_strs* strs, const Llvm_load_another_llvm* load) {
-    log(LOG_DEBUG, TAST_FMT"\n", string_print(strs->output));
-
     string_extend_cstr(&a_main, &strs->output, "    ");
     c_extend_type_call_str(&strs->output, load->lang_type, true);
     string_extend_cstr(&a_main, &strs->output, " ");
@@ -565,7 +563,6 @@ static void emit_c_load_another_llvm(Emit_c_strs* strs, const Llvm_load_another_
 }
 
 static void emit_c_load_element_ptr(Emit_c_strs* strs, const Llvm_load_element_ptr* load) {
-    log(LOG_DEBUG, TAST_FMT"\n", string_print(strs->output));
     Llvm* struct_def_ = NULL;
     unwrap(alloca_lookup(&struct_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_from_get_name(load->llvm_src))));
 

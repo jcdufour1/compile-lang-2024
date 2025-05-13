@@ -12,6 +12,8 @@
 #include <symbol_log.h>
 #include <symbol_iter.h>
 
+// TODO: remove serialize functions in this file
+
 // forward declarations
 
 static Lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos);
@@ -72,17 +74,14 @@ static Lang_type_struct rm_tuple_lang_type_tuple(Lang_type_tuple lang_type, Pos 
 
 // note: will not clone everything
 static Tast_raw_union_def* get_raw_union_def_from_sum_def(Tast_sum_def* sum_def) {
-    // TODO: find way to avoid making new Tast_raw_union_def every time
-    Tast_raw_union_def* union_def = tast_raw_union_def_new(sum_def->pos, sum_def->base);
-    union_def->base.name = util_literal_name_new_prefix2(union_def->base.name.base);
     Tast_raw_union_def* cached_def = NULL;
-    static uint64_t count = 0;
-    count++;
-    log(LOG_DEBUG, "thing %ld\n", count);
-    if (raw_union_of_sum_lookup(&cached_def, union_def->base.name)) {
+    if (raw_union_of_sum_lookup(&cached_def, sum_def->base.name)) {
         return cached_def;
     }
-    unwrap(raw_union_of_sum_add(union_def));
+
+    Tast_raw_union_def* union_def = tast_raw_union_def_new(sum_def->pos, sum_def->base);
+    union_def->base.name = util_literal_name_new_prefix2(union_def->base.name.base);
+    unwrap(raw_union_of_sum_add(union_def, sum_def->base.name));
     load_raw_union_def(union_def);
     return union_def;
 }
@@ -105,7 +104,6 @@ static Lang_type rm_tuple_lang_type_sum(Lang_type_sum lang_type, Pos lang_type_p
 
     for (size_t idx = 0; idx < item_type_def->base.members.info.count; idx++) {
         vec_at(&item_type_def->base.members, idx)->lang_type = rm_tuple_lang_type(
-             
             vec_at(&item_type_def->base.members, idx)->lang_type,
             item_type_def->pos
         );
@@ -126,7 +124,7 @@ static Lang_type rm_tuple_lang_type_sum(Lang_type_sum lang_type, Pos lang_type_p
     
     Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
     unwrap(sym_tbl_add(tast_struct_def_wrap(struct_def)));
-    struct_def->base.name = struct_def->base.name;
+    struct_def->base.name = serialize_tast_struct_def(struct_def);
     // TODO: consider collisions with generated structs and user defined structs
     sym_tbl_add(tast_struct_def_wrap(struct_def));
     Tast_def* dummy = NULL;

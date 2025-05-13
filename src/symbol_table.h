@@ -122,9 +122,9 @@ bool function_decl_tbl_add(Uast_function_decl* decl);
 
 bool struct_like_tbl_add(Uast_def* def);
 
-bool raw_union_of_sum_add(Tast_raw_union_def* def);
+bool raw_union_of_sum_add(Tast_raw_union_def* def, Name sum_name);
 
-bool raw_union_of_sum_lookup(Tast_raw_union_def** def, Name key);
+bool raw_union_of_sum_lookup(Tast_raw_union_def** def, Name sum_name);
 
 bool struct_like_tbl_lookup(Uast_def** def, Name key);
 
