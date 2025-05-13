@@ -1,0 +1,26 @@
+type Token4 struct {
+    id i32
+    inner Token2
+}
+
+type Token3 struct {
+    id i32
+    inner Token4
+}
+
+type Token2 struct {
+    id i32
+    inner Token3
+}
+
+
+type Token struct {
+    id i32
+    inner Token
+}
+
+fn main() i32 {
+    let token Token
+    let token2 Token2
+    return 0
+}
