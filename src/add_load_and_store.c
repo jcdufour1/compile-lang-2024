@@ -74,12 +74,15 @@ static Lang_type_struct rm_tuple_lang_type_tuple(Lang_type_tuple lang_type, Pos 
 static Tast_raw_union_def* get_raw_union_def_from_sum_def(Tast_sum_def* sum_def) {
     // TODO: find way to avoid making new Tast_raw_union_def every time
     Tast_raw_union_def* union_def = tast_raw_union_def_new(sum_def->pos, sum_def->base);
-    union_def->base.name = util_literal_name_new2();
-    Tast_def* cached_def = NULL;
-    if (symbol_lookup(&cached_def, union_def->base.name)) {
-        return tast_raw_union_def_unwrap(cached_def);
+    union_def->base.name = util_literal_name_new_prefix2(union_def->base.name.base);
+    Tast_raw_union_def* cached_def = NULL;
+    static uint64_t count = 0;
+    count++;
+    log(LOG_DEBUG, "thing %ld\n", count);
+    if (raw_union_of_sum_lookup(&cached_def, union_def->base.name)) {
+        return cached_def;
     }
-    sym_tbl_add(tast_raw_union_def_wrap(union_def));
+    unwrap(raw_union_of_sum_add(union_def));
     load_raw_union_def(union_def);
     return union_def;
 }

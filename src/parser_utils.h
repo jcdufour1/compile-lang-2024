@@ -43,14 +43,14 @@ bool try_str_view_to_size_t(size_t* result, Str_view str_view);
 
 bool try_str_view_consume_size_t(size_t* result, Str_view* str_view, bool ignore_underscore);
 
-Str_view util_literal_str_view_new_internal(const char* file, int line, const char* debug_prefix);
+Str_view util_literal_str_view_new_internal(const char* file, int line, Str_view debug_prefix);
 
 #define util_literal_str_view_new() \
-    util_literal_str_view_new_internal(__FILE__, __LINE__, "")
+    util_literal_str_view_new_internal(__FILE__, __LINE__, str_view_from_cstr(""))
 
-Str_view util_literal_name_new_prefix_internal(const char* file, int line, const char* debug_prefix);
+Str_view util_literal_name_new_prefix_internal(const char* file, int line, Str_view debug_prefix);
 
-Name util_literal_name_new_prefix_internal_2(const char* file, int line, const char* debug_prefix, Str_view mod_path);
+Name util_literal_name_new_prefix_internal_2(const char* file, int line, Str_view debug_prefix, Str_view mod_path);
 
 // TODO: remove this macro?
 #define util_literal_name_new_prefix(debug_prefix) \
@@ -61,10 +61,10 @@ Name util_literal_name_new_prefix_internal_2(const char* file, int line, const c
 
 // TODO: remove 2 suffix
 #define util_literal_name_new2(mod_path) \
-    util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, "", (Str_view) {0})
+    util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, str_view_from_cstr(""), (Str_view) {0})
 
 #define util_literal_name_new_mod_path2(mod_path) \
-    util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, "", mod_path)
+    util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, str_view_from_cstr(""), mod_path)
 
 Name get_storage_location(Name sym_name);
 

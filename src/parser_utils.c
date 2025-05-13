@@ -391,7 +391,7 @@ Lang_type_atom lang_type_atom_unsigned_to_signed(Lang_type_atom lang_type) {
     return lang_type_atom_new(name_new((Str_view) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0), 0);
 }
 
-Str_view util_literal_str_view_new_internal(const char* file, int line, const char* debug_prefix) {
+Str_view util_literal_str_view_new_internal(const char* file, int line, Str_view debug_prefix) {
     (void) file;
     (void) line;
     static String_vec literal_strings = {0};
@@ -407,7 +407,7 @@ Str_view util_literal_str_view_new_internal(const char* file, int line, const ch
     //string_extend_size_t(&a_main, &var_name, line);
     //string_extend_cstr(&a_main, &var_name, "_");
 
-    string_extend_cstr(&a_main, &var_name, debug_prefix);
+    string_extend_strv(&a_main, &var_name, debug_prefix);
     string_extend_size_t(&a_main, &var_name, count);
     vec_append(&a_main, &literal_strings, var_name);
 
@@ -418,11 +418,11 @@ Str_view util_literal_str_view_new_internal(const char* file, int line, const ch
     return str_view;
 }
 
-Str_view util_literal_name_new_prefix_internal(const char* file, int line, const char* debug_prefix) {
+Str_view util_literal_name_new_prefix_internal(const char* file, int line, Str_view debug_prefix) {
     return util_literal_str_view_new_internal(file, line, debug_prefix);
 }
 
-Name util_literal_name_new_prefix_internal_2(const char* file, int line, const char* debug_prefix, Str_view mod_path) {
+Name util_literal_name_new_prefix_internal_2(const char* file, int line, Str_view debug_prefix, Str_view mod_path) {
     return name_new(mod_path, util_literal_str_view_new_internal(file, line, debug_prefix), (Ulang_type_vec) {0}, SCOPE_BUILTIN);
 }
 

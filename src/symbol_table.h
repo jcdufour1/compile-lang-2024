@@ -122,6 +122,10 @@ bool function_decl_tbl_add(Uast_function_decl* decl);
 
 bool struct_like_tbl_add(Uast_def* def);
 
+bool raw_union_of_sum_add(Tast_raw_union_def* def);
+
+bool raw_union_of_sum_lookup(Tast_raw_union_def** def, Name key);
+
 bool struct_like_tbl_lookup(Uast_def** def, Name key);
 
 Scope_id symbol_collection_new(Scope_id parent);

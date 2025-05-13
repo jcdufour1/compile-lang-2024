@@ -457,11 +457,11 @@ bool struct_like_tbl_lookup(Uast_def** def, Name key) {
 // Raw_union_of_sum implementation
 //
 
-bool raw_union_of_sum_add(Uast_raw_union_def* def) {
-    return generic_tbl_add((Generic_symbol_table*)&env.raw_union_of_sum, serialize_name_symbol_table(uast_def_get_name(def)), def);
+bool raw_union_of_sum_add(Tast_raw_union_def* def) {
+    return generic_tbl_add((Generic_symbol_table*)&env.raw_union_of_sum, serialize_name_symbol_table(def->base.name), def);
 }
 
-bool raw_union_of_sum_lookup(Uast_raw_union_def** def, Name key) {
+bool raw_union_of_sum_lookup(Tast_raw_union_def** def, Name key) {
     return generic_tbl_lookup((void**)def, (Generic_symbol_table*)&env.raw_union_of_sum, serialize_name_symbol_table(key));
 }
 
