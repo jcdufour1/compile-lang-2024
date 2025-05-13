@@ -258,8 +258,7 @@ static bool resolve_generics_ulang_type_internal_raw_union_def(
     Uast_raw_union_def** after_res,
     Ulang_type* result,
     Uast_raw_union_def* before_res,
-    Ulang_type lang_type,
-    bool do_imple
+    Ulang_type lang_type
 ) {
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
@@ -273,21 +272,17 @@ static bool resolve_generics_ulang_type_internal_raw_union_def(
     if (symbol_lookup(&dummy,  new_name)) {
         return true;
     }
-
-    if (do_imple) {
-        return try_set_raw_union_def_types(before_res, *after_res);
-    } else {
-        struct_like_tbl_update(after_res_);
-        return true;
+    if (struct_like_tbl_add(after_res_)) {
+        vec_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
     }
+    return true;
 }
 
 static bool resolve_generics_ulang_type_internal_enum_def(
     Uast_enum_def** after_res,
     Ulang_type* result,
     Uast_enum_def* before_res,
-    Ulang_type lang_type,
-    bool do_imple
+    Ulang_type lang_type
 ) {
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
@@ -301,21 +296,17 @@ static bool resolve_generics_ulang_type_internal_enum_def(
     if (symbol_lookup(&dummy,  new_name)) {
         return true;
     }
-
-    if (do_imple) {
-        return try_set_enum_def_types(before_res, *after_res);
-    } else {
-        struct_like_tbl_update(after_res_);
-        return true;
+    if (struct_like_tbl_add(after_res_)) {
+        vec_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
     }
+    return true;
 }
 
 static bool resolve_generics_ulang_type_internal_sum_def(
     Uast_sum_def** after_res,
     Ulang_type* result,
     Uast_sum_def* before_res,
-    Ulang_type lang_type,
-    bool do_imple
+    Ulang_type lang_type
 ) {
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
@@ -329,21 +320,17 @@ static bool resolve_generics_ulang_type_internal_sum_def(
     if (symbol_lookup(&dummy,  new_name)) {
         return true;
     }
-
-    if (do_imple) {
-        return try_set_sum_def_types(before_res, *after_res);
-    } else {
-        struct_like_tbl_update(after_res_);
-        return true;
+    if (struct_like_tbl_add(after_res_)) {
+        vec_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
     }
+    return true;
 }
 
 static bool resolve_generics_ulang_type_internal_struct_def(
     Uast_struct_def** after_res,
     Ulang_type* result,
     Uast_struct_def* before_res,
-    Ulang_type lang_type,
-    bool do_imple
+    Ulang_type lang_type
 ) {
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
@@ -357,16 +344,13 @@ static bool resolve_generics_ulang_type_internal_struct_def(
     if (symbol_lookup(&dummy, new_name)) {
         return true;
     }
-
-    if (do_imple) {
-        return try_set_struct_def_types(before_res, *after_res);
-    } else {
-        struct_like_tbl_update(after_res_);
-        return true;
+    if (struct_like_tbl_add(after_res_)) {
+        vec_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
     }
+    return true;
 }
 
-static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* before_res, Ulang_type lang_type, bool do_imple) {
+static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* before_res, Ulang_type lang_type) {
     switch (before_res->type) {
         case UAST_RAW_UNION_DEF: {
             Uast_raw_union_def* new_def = NULL;
@@ -374,8 +358,7 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
                 &new_def,
                 result,
                 uast_raw_union_def_unwrap(before_res),
-                lang_type,
-                do_imple
+                lang_type
             )) {
                 return false;
             }
@@ -388,8 +371,7 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
                 &new_def,
                 result,
                 uast_enum_def_unwrap(before_res),
-                lang_type,
-                do_imple
+                lang_type
             )) {
                 return false;
             }
@@ -403,8 +385,7 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
                 &new_def,
                 result,
                 uast_sum_def_unwrap(before_res),
-                lang_type,
-                do_imple
+                lang_type
             )) {
                 return false;
             }
@@ -418,8 +399,7 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
                 &new_def,
                 result,
                 uast_struct_def_unwrap(before_res),
-                lang_type,
-                do_imple
+                lang_type
             )) {
                 return false;
             }
@@ -450,7 +430,7 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
     unreachable("");
 }
 
-bool resolve_generics_ulang_type_regular(Ulang_type* result, Ulang_type_regular lang_type, bool do_imple) {
+bool resolve_generics_ulang_type_regular(Ulang_type* result, Ulang_type_regular lang_type) {
     Uast_def* before_res = NULL;
     Name name_base = {0};
     if (!name_from_uname(&name_base, lang_type.atom.str)) {
@@ -465,9 +445,62 @@ bool resolve_generics_ulang_type_regular(Ulang_type* result, Ulang_type_regular 
     return resolve_generics_ulang_type_internal(
         result,
         before_res,
-        ulang_type_regular_const_wrap(lang_type),
-        do_imple
+        ulang_type_regular_const_wrap(lang_type)
     );
+}
+
+bool resolve_generics_struct_like_def_implementation(Name name) {
+    Uast_def* before_res = NULL;
+    unwrap(usymbol_lookup(&def, name));
+    Uast_def* after_res = NULL;
+    Ulang_type dummy = {0};
+    if (!resolve_generics_ulang_type_internal(&dummy, Uast_def* before_res, Ulang_type lang_type)) {
+        return false;
+    }
+    Ulang_type lang_type = ulang_type_regular_new(ulang_type_atom_new())
+
+    switch (def->type) {
+        case UAST_STRUCT_DEF: {
+            Uast_struct_def* after_res = NULL;
+            if (!resolve_generics_ulang_type_internal_struct_def(
+                &after_res,
+                &dummy,
+                before_res,
+                Ulang_type lang_type
+            )) {
+                return false;
+            }
+        }
+        case UAST_RAW_UNION_DEF: {
+            Uast_raw_union_def* dummy = NULL;
+            try_set_raw_union_def_types(uast_raw_union_def_unwrap(def))
+        }
+        case UAST_ENUM_DEF: {
+            todo();
+        }
+        case UAST_SUM_DEF: {
+            todo();
+        }
+        case UAST_POISON_DEF:
+            unreachable("");
+        case UAST_IMPORT_PATH:
+            unreachable("");
+        case UAST_MOD_ALIAS:
+            unreachable("");
+        case UAST_GENERIC_PARAM:
+            unreachable("");
+        case UAST_FUNCTION_DEF:
+            unreachable("");
+        case UAST_VARIABLE_DEF:
+            unreachable("");
+        case UAST_LANG_DEF:
+            unreachable("");
+        case UAST_PRIMITIVE_DEF:
+            unreachable("");
+        case UAST_FUNCTION_DECL:
+            unreachable("");
+    }
+    unreachable("");
 }
 
 static bool resolve_generics_set_function_def_types(Uast_function_def* def) {

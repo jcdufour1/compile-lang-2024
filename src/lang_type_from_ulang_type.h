@@ -130,7 +130,7 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_
 static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_type, Ulang_type_regular lang_type, Pos pos) {
     (void) new_lang_type;
     Ulang_type resolved = {0};
-    if (!resolve_generics_ulang_type_regular(&resolved, lang_type, false)) {
+    if (!resolve_generics_ulang_type_regular(&resolved, lang_type)) {
         return false;
     }
     //log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
