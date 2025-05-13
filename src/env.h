@@ -68,7 +68,7 @@ typedef struct Env_ {
     Function_decl_tbl function_decl_tbl;
     
     Name_vec struct_like_waiting_to_resolve;
-    Symbol_table struct_like_tbl;
+    Usymbol_table struct_like_tbl;
 
     Raw_union_of_sum raw_union_of_sum;
     Struct_to_struct struct_to_struct;

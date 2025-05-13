@@ -19,4 +19,6 @@ bool resolve_generics_function_def_call(
 
 bool resolve_generics_function_def_implementation(Name name);
 
+bool check_struct_like_for_recursion(const Uast_def* def);
+
 #endif // RESOLVE_GENERICS_H

@@ -10,6 +10,7 @@
 #include <generic_sub.h>
 #include <symbol_log.h>
 #include <msg_todo.h>
+#include <symbol_iter.h>
 
 #define msg_invalid_count_generic_args(pos_def, pos_gen_args, gen_args, min_args, max_args) \
     msg_invalid_count_generic_args_internal(__FILE__, __LINE__,  pos_def, pos_gen_args, gen_args, min_args, max_args)
@@ -297,6 +298,7 @@ static bool resolve_generics_ulang_type_internal_enum_def(
     if (symbol_lookup(&dummy,  new_name)) {
         return true;
     }
+    todo();
     if (struct_like_tbl_add(after_res_)) {
         usym_tbl_add(after_res_);
         vec_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
@@ -322,6 +324,7 @@ static bool resolve_generics_ulang_type_internal_sum_def(
     if (symbol_lookup(&dummy,  new_name)) {
         return true;
     }
+    todo();
     if (struct_like_tbl_add(after_res_)) {
         usym_tbl_add(after_res_);
         vec_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
@@ -722,4 +725,13 @@ bool resolve_generics_function_def_implementation(Name name) {
         return resolve_generics_set_function_def_types(new_def);
     }
     unreachable("");
+}
+
+static bool check_struct_like_for_recursion_internal(Ustruct_def_base base) {
+    todo();
+}
+
+// TODO: decide which file this should go
+bool check_struct_like_for_recursion(const Uast_def* def) {
+    return check_struct_like_for_recursion_internal(uast_def_get_struct_def_base(def));
 }

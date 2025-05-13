@@ -446,6 +446,10 @@ bool function_decl_tbl_lookup(Uast_function_decl** decl, Name key) {
 //
 
 bool struct_like_tbl_add(Uast_def* def) {
+    log(LOG_DEBUG, TAST_FMT, uast_def_print(def));
+    if (def->type == UAST_IMPORT_PATH) {
+        todo();
+    }
     return generic_tbl_add((Generic_symbol_table*)&env.struct_like_tbl, serialize_name_symbol_table(uast_def_get_name(def)), def);
 }
 

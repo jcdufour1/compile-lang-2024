@@ -9,8 +9,12 @@ typedef struct {
     Symbol_table tbl;
 } Symbol_iter;
 
+static inline Symbol_iter sym_tbl_iter_new_table(Symbol_table tbl) {
+    return (Symbol_iter) {.bucket_idx = 0, .tbl = tbl};
+}
+
 static inline Symbol_iter sym_tbl_iter_new(Scope_id scope_id) {
-    return (Symbol_iter) {.bucket_idx = 0, .tbl = vec_at_ref(&env.symbol_tables, scope_id)->symbol_table};
+    return sym_tbl_iter_new_table(vec_at_ref(&env.symbol_tables, scope_id)->symbol_table);
 }
 
 static inline bool sym_tbl_iter_next(Tast_def** result, Symbol_iter* iter) {
@@ -31,9 +35,14 @@ typedef struct {
     Usymbol_table tbl;
 } Usymbol_iter;
 
-static inline Usymbol_iter usym_tbl_iter_new(Scope_id scope_id) {
-    return (Usymbol_iter) {.bucket_idx = 0, .tbl = vec_at_ref(&env.symbol_tables, scope_id)->usymbol_table};
+static inline Usymbol_iter usym_tbl_iter_new_table(Usymbol_table tbl) {
+    return (Usymbol_iter) {.bucket_idx = 0, .tbl = tbl};
 }
+
+static inline Usymbol_iter usym_tbl_iter_new(Scope_id scope_id) {
+    return usym_tbl_iter_new_table(vec_at_ref(&env.symbol_tables, scope_id)->usymbol_table);
+}
+
 
 static inline bool usym_tbl_iter_next(Uast_def** result, Usymbol_iter* iter) {
     bool was_found = false;

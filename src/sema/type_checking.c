@@ -2874,14 +2874,17 @@ bool try_set_types(Tast_block** new_tast, Uast_block* block) {
         }
     }
 
-    while (env.struct_like_waiting_to_resolve.info.count > 0) {
-        Name curr_name = {0};
-        vec_pop(curr_name, &env.struct_like_waiting_to_resolve);
-        if (!resolve_generics_struct_like_def_implementation(curr_name)) {
-            status = false;
+    {
+        Usymbol_iter rec_iter = usym_tbl_iter_new_table(env.struct_like_tbl);
+        Uast_def* curr_def = NULL;
+        while (usym_tbl_iter_next(&curr_def, &rec_iter)) {
+            log(LOG_DEBUG, "%d\n", curr_def->type);
+            log(LOG_DEBUG, TAST_FMT, uast_def_print(curr_def));
+            if (!check_struct_like_for_recursion(curr_def)) {
+                status = false;
+            }
         }
     }
-
 
     return status;
 }
