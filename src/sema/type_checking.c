@@ -1963,6 +1963,7 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             Tast_symbol* sym = tast_symbol_unwrap(new_callee);
             Uast_def* lang_type_def = NULL;
             if (!usymbol_lookup(&lang_type_def, lang_type_get_str(LANG_TYPE_MODE_LOG, sym->base.lang_type))) {
+                log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, sym->base.lang_type));
                 todo();
             }
 

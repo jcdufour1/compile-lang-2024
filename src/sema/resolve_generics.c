@@ -273,6 +273,7 @@ static bool resolve_generics_ulang_type_internal_raw_union_def(
         return true;
     }
     if (struct_like_tbl_add(after_res_)) {
+        usym_tbl_add(after_res_);
         vec_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
     }
     return true;
@@ -297,6 +298,7 @@ static bool resolve_generics_ulang_type_internal_enum_def(
         return true;
     }
     if (struct_like_tbl_add(after_res_)) {
+        usym_tbl_add(after_res_);
         vec_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
     }
     return true;
@@ -321,6 +323,7 @@ static bool resolve_generics_ulang_type_internal_sum_def(
         return true;
     }
     if (struct_like_tbl_add(after_res_)) {
+        usym_tbl_add(after_res_);
         vec_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
     }
     return true;
@@ -345,12 +348,13 @@ static bool resolve_generics_ulang_type_internal_struct_def(
         return true;
     }
     if (struct_like_tbl_add(after_res_)) {
+        usym_tbl_add(after_res_);
         vec_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
     }
     return true;
 }
 
-static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* before_res, Ulang_type lang_type) {
+static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_type* result, Uast_def* before_res, Ulang_type lang_type) {
     switch (before_res->type) {
         case UAST_RAW_UNION_DEF: {
             Uast_raw_union_def* new_def = NULL;
@@ -363,6 +367,7 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
                 return false;
             }
             before_res = uast_raw_union_def_wrap(new_def);
+            *type = LANG_TYPE_RAW_UNION;
             return true;
         }
         case UAST_ENUM_DEF: {
@@ -376,6 +381,7 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
                 return false;
             }
             before_res = uast_enum_def_wrap(new_def);
+            *type = LANG_TYPE_ENUM;
             return true;
 
         }
@@ -390,6 +396,7 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
                 return false;
             }
             before_res = uast_sum_def_wrap(new_def);
+            *type = LANG_TYPE_SUM;
             return true;
 
         }
@@ -404,14 +411,15 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
                 return false;
             }
             before_res = uast_struct_def_wrap(new_def);
+            *type = LANG_TYPE_STRUCT;
             return true;
         }
         case UAST_PRIMITIVE_DEF:
             *result = lang_type;
+            *type = LANG_TYPE_PRIMITIVE;
             return true;
-        case UAST_LANG_DEF: {
+        case UAST_LANG_DEF:
             unreachable("def should have been eliminated by now");
-        }
         case UAST_POISON_DEF:
             todo();
         case UAST_IMPORT_PATH:
@@ -430,7 +438,7 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
     unreachable("");
 }
 
-bool resolve_generics_ulang_type_regular(Ulang_type* result, Ulang_type_regular lang_type) {
+bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* result, Ulang_type_regular lang_type) {
     Uast_def* before_res = NULL;
     Name name_base = {0};
     if (!name_from_uname(&name_base, lang_type.atom.str)) {
@@ -443,6 +451,7 @@ bool resolve_generics_ulang_type_regular(Ulang_type* result, Ulang_type_regular 
     }
 
     return resolve_generics_ulang_type_internal(
+        type,
         result,
         before_res,
         ulang_type_regular_const_wrap(lang_type)
@@ -451,9 +460,13 @@ bool resolve_generics_ulang_type_regular(Ulang_type* result, Ulang_type_regular 
 
 bool resolve_generics_struct_like_def_implementation(Name name) {
     Uast_def* before_res = NULL;
-    unwrap(usymbol_lookup(&before_res, name));
+    Name name_before = name_clone(name, name.scope_id);
+    memset(&name_before.gen_args, 0, sizeof(name_before.gen_args));
+    unwrap(usym_tbl_lookup(&before_res, name_before));
     Ulang_type dummy = {0};
+    log(LOG_DEBUG, TAST_FMT, uast_def_print(before_res));
     Ulang_type lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(name_to_uname(name), 0), uast_def_get_pos(before_res)));
+    log(LOG_DEBUG, TAST_FMT, ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
 
     switch (before_res->type) {
         case UAST_STRUCT_DEF: {

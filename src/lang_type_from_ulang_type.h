@@ -86,11 +86,7 @@ static inline bool try_lang_type_from_ulang_type_fn(
     return true;
 }
 
-static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_type_regular lang_type, const Uast_primitive_def* def) {
-    (void) env;
-    (void) def;
-    (void) lang_type;
-
+static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_type_regular lang_type) {
     Name name = {0};
     unwrap(name_from_uname( &name, lang_type.atom.str));
     Lang_type_atom atom = lang_type_atom_new(name, lang_type.atom.pointer_depth);
@@ -129,48 +125,41 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_
 // TODO: add Pos as member to Ulang_type and Lang_type?
 static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_type, Ulang_type_regular lang_type, Pos pos) {
     (void) new_lang_type;
+    (void) pos;
     Ulang_type resolved = {0};
-    if (!resolve_generics_ulang_type_regular(&resolved, lang_type)) {
+    LANG_TYPE_TYPE type = {0};
+    if (!resolve_generics_ulang_type_regular(&type, &resolved, lang_type)) {
         return false;
     }
     //log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, lang_type));
     //log(LOG_DEBUG, TAST_FMT"\n", ulang_type_print(LANG_TYPE_MODE_LOG, after_res));
     //log(LOG_DEBUG, TAST_FMT"\n", name_print(ulang_type_regular_const_unwrap(after_res).atom.str));
     //log(LOG_DEBUG, TAST_FMT"\n", str_view_print(ulang_type_regular_const_unwrap(after_res).atom.str.mod_path));
-    Uast_def* result = NULL;
     Name temp_name = {0};
     if (!name_from_uname(&temp_name, ulang_type_regular_const_unwrap(resolved).atom.str)) {
         return false;
     }
-    if (!usymbol_lookup(&result, temp_name)) {
-        msg(
-            LOG_ERROR, EXPECT_FAIL_UNDEFINED_TYPE, pos,
-            "undefined type `"TAST_FMT"`\n", ulang_type_print(LANG_TYPE_MODE_MSG, resolved)
-        );
-        todo();
-        return false;
-    }
 
-    unwrap(name_from_uname( &temp_name, ulang_type_regular_const_unwrap(resolved).atom.str));
+    unwrap(name_from_uname(&temp_name, ulang_type_regular_const_unwrap(resolved).atom.str));
     Lang_type_atom new_atom = lang_type_atom_new(temp_name, ulang_type_regular_const_unwrap(resolved).atom.pointer_depth);
-    switch (result->type) {
-        case UAST_STRUCT_DEF:
+    switch (type) {
+        case LANG_TYPE_STRUCT:
             *new_lang_type = lang_type_struct_const_wrap(lang_type_struct_new(lang_type.pos, new_atom));
             return true;
-        case UAST_RAW_UNION_DEF:
+        case LANG_TYPE_RAW_UNION:
             *new_lang_type = lang_type_raw_union_const_wrap(lang_type_raw_union_new(lang_type.pos, new_atom));
             return true;
-        case UAST_ENUM_DEF:
+        case LANG_TYPE_ENUM:
             *new_lang_type = lang_type_enum_const_wrap(lang_type_enum_new(lang_type.pos, new_atom));
             return true;
-        case UAST_SUM_DEF:
+        case LANG_TYPE_SUM:
             *new_lang_type = lang_type_sum_const_wrap(lang_type_sum_new(lang_type.pos, new_atom));
             return true;
-        case UAST_PRIMITIVE_DEF:
-            *new_lang_type = lang_type_from_ulang_type_regular_primitive( ulang_type_regular_const_unwrap(resolved), uast_primitive_def_unwrap(result));
+        case LANG_TYPE_PRIMITIVE:
+            *new_lang_type = lang_type_from_ulang_type_regular_primitive(ulang_type_regular_const_unwrap(resolved));
             return true;
         default:
-            unreachable(UAST_FMT, uast_def_print(result));
+            unreachable("");
     }
     unreachable("");
 }

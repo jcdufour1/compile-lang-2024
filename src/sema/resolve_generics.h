@@ -5,7 +5,7 @@
 #include <env.h>
 #include <uast.h>
 
-bool resolve_generics_ulang_type_regular(Ulang_type* result, Ulang_type_regular lang_type);
+bool resolve_generics_ulang_type_regular(LANG_TYPE_TYPE* type, Ulang_type* result, Ulang_type_regular lang_type);
 
 bool resolve_generics_struct_like_def_implementation(Name name);
 
