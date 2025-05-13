@@ -80,6 +80,19 @@ typedef struct {
 
 
 typedef struct {
+    Tast_struct_def* tast;
+    Str_view key;
+    SYM_TBL_STATUS status;
+} Struct_to_struct_tast;
+
+typedef struct {
+    Struct_to_struct_tast* table_tasts;
+    size_t count; // count elements in symbol_table
+    size_t capacity; // count buckets in symbol_table
+} Struct_to_struct;
+
+
+typedef struct {
     Name* tast;
     Str_view key;
     SYM_TBL_STATUS status;

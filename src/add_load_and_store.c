@@ -86,6 +86,22 @@ static Tast_raw_union_def* get_raw_union_def_from_sum_def(Tast_sum_def* sum_def)
     return union_def;
 }
 
+static Tast_struct_def* sum_get_struct_def(Name sum_name, Tast_variable_def_vec membs, Pos pos) {
+    Tast_struct_def* cached_def = NULL;
+    // TODO: rename this hash table
+    if (struct_to_struct_lookup(&cached_def, sum_name)) {
+        return cached_def;
+    }
+
+    Tast_struct_def* new_def = tast_struct_def_new(pos, (Struct_def_base) {
+        .members = membs,
+        .name = util_literal_name_new_prefix2(sum_name.base)
+    });
+    unwrap(struct_to_struct_add(new_def, sum_name));
+    load_struct_def(new_def);
+    return new_def;
+}
+
 static Lang_type rm_tuple_lang_type_sum(Lang_type_sum lang_type, Pos lang_type_pos) {
     Tast_def* lang_type_def_ = NULL; 
     unwrap(symbol_lookup(&lang_type_def_, lang_type.atom.str));
@@ -116,17 +132,9 @@ static Lang_type rm_tuple_lang_type_sum(Lang_type_sum lang_type, Pos lang_type_p
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
     vec_append(&a_main, &members, item);
-
-    Struct_def_base base = {
-        .members = members,
-        .name = util_literal_name_new_mod_path2(env.curr_mod_path)
-    };
     
-    Tast_struct_def* struct_def = tast_struct_def_new(lang_type_pos, base);
-    unwrap(sym_tbl_add(tast_struct_def_wrap(struct_def)));
-    struct_def->base.name = serialize_tast_struct_def(struct_def);
+    Tast_struct_def* struct_def = sum_get_struct_def(tast_sum_def_unwrap(lang_type_def_)->base.name, members, item->pos);
     // TODO: consider collisions with generated structs and user defined structs
-    sym_tbl_add(tast_struct_def_wrap(struct_def));
     Tast_def* dummy = NULL;
     unwrap(sym_tbl_lookup(&dummy, struct_def->base.name));
 
@@ -582,6 +590,9 @@ static Name load_sum_lit(
             old_lit->item
         )
     )));
+    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, new_lang_type));
+    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, tast_raw_union_def_get_lang_type(item_def)));
+    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, old_lit->sum_lang_type));
 
     return load_struct_literal(new_block, tast_struct_literal_new(
         old_lit->pos,

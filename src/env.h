@@ -71,6 +71,7 @@ typedef struct Env_ {
     Symbol_table struct_like_tbl;
 
     Raw_union_of_sum raw_union_of_sum;
+    Struct_to_struct struct_to_struct;
 
     // TODO: remove
     Name_vec struct_like_objs_to_check;
