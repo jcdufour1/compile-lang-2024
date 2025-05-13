@@ -63,9 +63,14 @@ typedef struct Env_ {
     Name label_after_for;
     Name label_if_continue;
 
-    // TODO: think about functions in different scopes, but with the same name (for both of below objects)
+    // TODO: think about functions and structs in different scopes, but with the same name (for both of below objects)
     Name_vec fun_implementations_waiting_to_resolve;
     Function_decl_tbl function_decl_tbl;
+    
+    Name_vec struct_like_waiting_to_resolve;
+    Symbol_table struct_like_tbl;
+
+    Name_vec struct_like_objs_to_check;
 
     // this is used to define additional structs to get around the requirement of in order definitions in c
     C_forward_struct_tbl c_forward_struct_tbl;

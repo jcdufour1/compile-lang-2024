@@ -258,7 +258,8 @@ static bool resolve_generics_ulang_type_internal_raw_union_def(
     Uast_raw_union_def** after_res,
     Ulang_type* result,
     Uast_raw_union_def* before_res,
-    Ulang_type lang_type
+    Ulang_type lang_type,
+    bool do_imple
 ) {
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
@@ -272,14 +273,21 @@ static bool resolve_generics_ulang_type_internal_raw_union_def(
     if (symbol_lookup(&dummy,  new_name)) {
         return true;
     }
-    return try_set_raw_union_def_types(before_res, *after_res);
+
+    if (do_imple) {
+        return try_set_raw_union_def_types(before_res, *after_res);
+    } else {
+        struct_like_tbl_update(after_res_);
+        return true;
+    }
 }
 
 static bool resolve_generics_ulang_type_internal_enum_def(
     Uast_enum_def** after_res,
     Ulang_type* result,
     Uast_enum_def* before_res,
-    Ulang_type lang_type
+    Ulang_type lang_type,
+    bool do_imple
 ) {
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
@@ -293,14 +301,21 @@ static bool resolve_generics_ulang_type_internal_enum_def(
     if (symbol_lookup(&dummy,  new_name)) {
         return true;
     }
-    return try_set_enum_def_types(before_res, *after_res);
+
+    if (do_imple) {
+        return try_set_enum_def_types(before_res, *after_res);
+    } else {
+        struct_like_tbl_update(after_res_);
+        return true;
+    }
 }
 
 static bool resolve_generics_ulang_type_internal_sum_def(
     Uast_sum_def** after_res,
     Ulang_type* result,
     Uast_sum_def* before_res,
-    Ulang_type lang_type
+    Ulang_type lang_type,
+    bool do_imple
 ) {
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
@@ -314,14 +329,21 @@ static bool resolve_generics_ulang_type_internal_sum_def(
     if (symbol_lookup(&dummy,  new_name)) {
         return true;
     }
-    return try_set_sum_def_types(before_res, *after_res);
+
+    if (do_imple) {
+        return try_set_sum_def_types(before_res, *after_res);
+    } else {
+        struct_like_tbl_update(after_res_);
+        return true;
+    }
 }
 
 static bool resolve_generics_ulang_type_internal_struct_def(
     Uast_struct_def** after_res,
     Ulang_type* result,
     Uast_struct_def* before_res,
-    Ulang_type lang_type
+    Ulang_type lang_type,
+    bool do_imple
 ) {
     Ustruct_def_base old_base = before_res->base;
     Name new_name = {0};
@@ -332,13 +354,19 @@ static bool resolve_generics_ulang_type_internal_struct_def(
     *after_res = uast_struct_def_unwrap(after_res_);
 
     Tast_def* dummy = NULL;
-    if (symbol_lookup(&dummy,  new_name)) {
+    if (symbol_lookup(&dummy, new_name)) {
         return true;
     }
-    return try_set_struct_def_types(before_res, *after_res);
+
+    if (do_imple) {
+        return try_set_struct_def_types(before_res, *after_res);
+    } else {
+        struct_like_tbl_update(after_res_);
+        return true;
+    }
 }
 
-static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* before_res, Ulang_type lang_type) {
+static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* before_res, Ulang_type lang_type, bool do_imple) {
     switch (before_res->type) {
         case UAST_RAW_UNION_DEF: {
             Uast_raw_union_def* new_def = NULL;
@@ -346,7 +374,8 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
                 &new_def,
                 result,
                 uast_raw_union_def_unwrap(before_res),
-                lang_type
+                lang_type,
+                do_imple
             )) {
                 return false;
             }
@@ -359,7 +388,8 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
                 &new_def,
                 result,
                 uast_enum_def_unwrap(before_res),
-                lang_type
+                lang_type,
+                do_imple
             )) {
                 return false;
             }
@@ -373,7 +403,8 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
                 &new_def,
                 result,
                 uast_sum_def_unwrap(before_res),
-                lang_type
+                lang_type,
+                do_imple
             )) {
                 return false;
             }
@@ -387,7 +418,8 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
                 &new_def,
                 result,
                 uast_struct_def_unwrap(before_res),
-                lang_type
+                lang_type,
+                do_imple
             )) {
                 return false;
             }
@@ -399,24 +431,6 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
             return true;
         case UAST_LANG_DEF: {
             unreachable("def should have been eliminated by now");
-            //if (lang_type.type != ULANG_TYPE_REGULAR) {
-            //    msg_todo("def alias in tuple, function callback type, etc.", ulang_type_regular_const_unwrap(lang_type).pos);
-            //    return false;
-            //}
-
-            //Uast_expr* new_expr = uast_lang_def_unwrap(before_res)->expr;
-            //if (new_expr->type != UAST_SYMBOL) {
-            //    msg_todo("def aliased to non-symbol used as type", ulang_type_regular_const_unwrap(lang_type).pos);
-            //    return false;
-            //}
-            //Ulang_type new_lang_type = ulang_type_regular_const_wrap(ulang_type_regular_new(
-            //    ulang_type_atom_new(
-            //        name_to_uname(uast_symbol_unwrap(new_expr)->name),
-            //        ulang_type_regular_const_unwrap(lang_type).atom.pointer_depth
-            //    ),
-            //    ulang_type_regular_const_unwrap(lang_type).pos
-            //));
-            //return resolve_generics_ulang_type(result, new_lang_type);
         }
         case UAST_POISON_DEF:
             todo();
@@ -436,7 +450,7 @@ static bool resolve_generics_ulang_type_internal(Ulang_type* result, Uast_def* b
     unreachable("");
 }
 
-bool resolve_generics_ulang_type_regular(Ulang_type* result, Ulang_type_regular lang_type) {
+bool resolve_generics_ulang_type_regular(Ulang_type* result, Ulang_type_regular lang_type, bool do_imple) {
     Uast_def* before_res = NULL;
     Name name_base = {0};
     if (!name_from_uname(&name_base, lang_type.atom.str)) {
@@ -451,20 +465,9 @@ bool resolve_generics_ulang_type_regular(Ulang_type* result, Ulang_type_regular 
     return resolve_generics_ulang_type_internal(
         result,
         before_res,
-        ulang_type_regular_const_wrap(lang_type)
+        ulang_type_regular_const_wrap(lang_type),
+        do_imple
     );
-}
-
-bool resolve_generics_ulang_type(Ulang_type* result, Ulang_type lang_type) {
-    switch (lang_type.type) {
-        case ULANG_TYPE_REGULAR:
-            return resolve_generics_ulang_type_regular(result,  ulang_type_regular_const_unwrap(lang_type));
-        case ULANG_TYPE_TUPLE:
-            todo();
-        case ULANG_TYPE_FN:
-            todo();
-    }
-    unreachable("");
 }
 
 static bool resolve_generics_set_function_def_types(Uast_function_def* def) {

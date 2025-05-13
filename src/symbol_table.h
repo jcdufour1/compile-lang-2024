@@ -120,6 +120,12 @@ bool function_decl_tbl_lookup(Uast_function_decl** decl, Name key);
 
 bool function_decl_tbl_add(Uast_function_decl* decl);
 
+void struct_like_tbl_update(Uast_def* def);
+
+bool struct_like_tbl_add(Uast_def* def);
+
+bool struct_like_tbl_lookup(Uast_def** def, Name key);
+
 Scope_id symbol_collection_new(Scope_id parent);
 
 #endif // SYMBOL_TABLE_H

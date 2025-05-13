@@ -2873,5 +2873,14 @@ bool try_set_types(Tast_block** new_tast, Uast_block* block) {
         }
     }
 
+    while (env.struct_like_waiting_to_resolve.info.count > 0) {
+        Name curr_name = {0};
+        vec_pop(curr_name, &env.struct_like_waiting_to_resolve);
+        if (!resolve_generics_ulang_type(curr_name, ulang_type_new())) {
+            status = false;
+        }
+    }
+
+
     return status;
 }
