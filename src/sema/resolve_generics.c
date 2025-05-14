@@ -155,9 +155,6 @@ static bool resolve_generics_serialize_struct_def_base(
     Ulang_type_vec gen_args,
     Name new_name
 ) {
-    //// TODO: figure out way to avoid making new Ustruct_def_base every time (do name thing here, and check if varient with name already exists)
-    //memset(new_base, 0, sizeof(*new_base));
-
     if (gen_args.info.count < 1) {
         *new_base = old_base;
         return true;
@@ -191,28 +188,30 @@ static bool resolve_generics_ulang_type_internal_struct_like(
     Obj_new obj_new
 ) {
     *new_name = name_new(old_base.name.mod_path, old_base.name.base, ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args, SCOPE_TOP_LEVEL /* TODO */);
-
-    if (old_base.generics.info.count != new_name->gen_args.info.count) {
-        msg_invalid_count_generic_args(
-            pos_def,
-            ulang_type_get_pos(lang_type),
-            new_name->gen_args,
-            old_base.generics.info.count,
-            old_base.generics.info.count
-        );
-        return false;
-    }
-
-    Uast_def* new_def_ = NULL;
-    if (usymbol_lookup(&new_def_, *new_name)) {
-        *after_res = new_def_;
-    } else {
-        Ustruct_def_base new_base = {0};
-        if (!resolve_generics_serialize_struct_def_base(&new_base, old_base, new_name->gen_args, *new_name)) {
-            todo();
+    if (!struct_like_tbl_lookup(after_res, *new_name)) {
+        if (old_base.generics.info.count != new_name->gen_args.info.count) {
+            msg_invalid_count_generic_args(
+                pos_def,
+                ulang_type_get_pos(lang_type),
+                new_name->gen_args,
+                old_base.generics.info.count,
+                old_base.generics.info.count
+            );
             return false;
         }
-        *after_res = (void*)obj_new(pos_def, new_base);
+
+        Uast_def* new_def_ = NULL;
+        if (usymbol_lookup(&new_def_, *new_name)) {
+            *after_res = new_def_;
+        } else {
+            Ustruct_def_base new_base = {0};
+            if (!resolve_generics_serialize_struct_def_base(&new_base, old_base, new_name->gen_args, *new_name)) {
+                todo();
+                return false;
+            }
+            *after_res = (void*)obj_new(pos_def, new_base);
+        }
+
     }
 
     *result = ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(
