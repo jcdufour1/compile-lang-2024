@@ -74,6 +74,14 @@ static Lang_type_struct rm_tuple_lang_type_tuple(Lang_type_tuple lang_type, Pos 
 
 // note: will not clone everything
 static Tast_raw_union_def* get_raw_union_def_from_sum_def(Tast_sum_def* sum_def) {
+#   ifndef DNDEBUG
+        size_t largest_idx = struct_def_base_get_idx_largest_member(sum_def->base);
+        assert(
+            vec_at(&sum_def->base.members, largest_idx)->lang_type.type != LANG_TYPE_VOID &&
+            "sum_def with inner types of only void should never be passed here"
+        );
+#   endif // DNDEBUG
+       
     Tast_raw_union_def* cached_def = NULL;
     if (raw_union_of_sum_lookup(&cached_def, sum_def->base.name)) {
         return cached_def;
@@ -107,10 +115,16 @@ static Lang_type rm_tuple_lang_type_sum(Lang_type_sum lang_type, Pos lang_type_p
     unwrap(symbol_lookup(&lang_type_def_, lang_type.atom.str));
     Tast_variable_def_vec members = {0};
 
+    Lang_type tag_lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_pos, 64, 0)));
+    size_t largest_idx = struct_def_base_get_idx_largest_member(tast_sum_def_unwrap(lang_type_def_)->base);
+    if (vec_at(&tast_sum_def_unwrap(lang_type_def_)->base.members, largest_idx)->lang_type.type == LANG_TYPE_VOID) {
+        return tag_lang_type;
+    }
+
     Tast_variable_def* tag = tast_variable_def_new(
         lang_type_pos,
         // TODO: make helper functions, etc. for line below, because this is too much to do every time
-        lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_pos, 64, 0))),
+        tag_lang_type,
         false,
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
@@ -564,21 +578,24 @@ static Name load_function_lit(
     return name->name_self;
 }
 
-static Name load_sum_lit(
-    Llvm_block* new_block,
-    Tast_sum_lit* old_lit
-) {
+static Name load_sum_lit(Llvm_block* new_block, Tast_sum_lit* old_lit) {
     Tast_def* sum_def_ = NULL;
     unwrap(symbol_lookup(&sum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, old_lit->sum_lang_type)));
-    //Tast_sum_def* sum_def = tast_sum_def_unwrap(sum_def_);
+    Tast_sum_def* sum_def = tast_sum_def_unwrap(sum_def_);
+    
+    size_t largest_idx = struct_def_base_get_idx_largest_member(sum_def->base);
+    if (vec_at(&sum_def->base.members, largest_idx)->lang_type.type == LANG_TYPE_VOID) {
+        // inner lang_type is always void for this enum, so we will just use number instead of tagged enum
+        return load_enum_lit(old_lit->tag);
+    }
+
     Lang_type new_lang_type = rm_tuple_lang_type_sum(
         lang_type_sum_const_unwrap(old_lit->sum_lang_type),
         old_lit->pos
     );
 
-    Tast_raw_union_def* item_def = get_raw_union_def_from_sum_def(
-        tast_sum_def_unwrap(sum_def_)
-    );
+    Tast_raw_union_def* item_def = get_raw_union_def_from_sum_def(sum_def);
+    log(LOG_DEBUG, TAST_FMT, tast_raw_union_def_print(item_def));
 
     Tast_expr_vec members = {0};
     vec_append(&a_main, &members, tast_literal_wrap(tast_enum_lit_wrap(old_lit->tag)));
@@ -594,6 +611,7 @@ static Name load_sum_lit(
     log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, tast_raw_union_def_get_lang_type(item_def)));
     log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, old_lit->sum_lang_type));
 
+    // this is an actual tagged enum
     return load_struct_literal(new_block, tast_struct_literal_new(
         old_lit->pos,
         members,
@@ -1034,10 +1052,15 @@ static Name load_index(
 static Name load_ptr_sum_get_tag(Llvm_block* new_block, Tast_sum_get_tag* old_access) {
     Tast_def* sum_def_ = NULL;
     unwrap(symbol_lookup(&sum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(old_access->callee))));
-    //Tast_sum_def* sum_def = tast_sum_def_unwrap(sum_def_);
+    Tast_sum_def* sum_def = tast_sum_def_unwrap(sum_def_);
     Name new_sum = load_ptr_expr(new_block, old_access->callee);
-    //Tast_enum_def* union_def = get_enum_def_from_sum_def(sum_def);
     
+    size_t largest_idx = struct_def_base_get_idx_largest_member(sum_def->base);
+    if (vec_at(&sum_def->base.members, largest_idx)->lang_type.type == LANG_TYPE_VOID) {
+        // all sum inner types are void; new_sum will actually just be a number
+        return new_sum;
+    }
+
     Llvm_load_element_ptr* new_enum = llvm_load_element_ptr_new(
         old_access->pos,
         lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0))),
@@ -1602,7 +1625,6 @@ static void load_continue(Llvm_block* new_block, Tast_continue* old_continue) {
 }
 
 static void load_raw_union_def(Tast_raw_union_def* old_def) {
-    // TODO: crash if alloca_add fails (we need to prevent duplicates to crash on alloca_add fail)?
     if (!all_tbl_add(llvm_def_wrap(llvm_struct_def_wrap(load_raw_union_def_clone(old_def))))) {
         return;
     };
