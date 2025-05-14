@@ -218,6 +218,14 @@ static bool resolve_generics_ulang_type_internal_struct_like(
         name_to_uname(uast_def_get_struct_def_base(*after_res).name), ulang_type_get_atom(lang_type).pointer_depth
     ), ulang_type_get_pos(lang_type)));
 
+    Tast_def* dummy = NULL;
+    if (symbol_lookup(&dummy, *new_name)) {
+        return true;
+    }
+    if (struct_like_tbl_add(*after_res)) {
+        usym_tbl_add(*after_res);
+        vec_append(&a_main, &env.struct_like_waiting_to_resolve, *new_name);
+    }
     return true;
 }
 
@@ -250,15 +258,6 @@ static bool resolve_generics_ulang_type_internal_raw_union_def(
         return false;
     }
     *after_res = uast_raw_union_def_unwrap(after_res_);
-
-    Tast_def* dummy = NULL;
-    if (symbol_lookup(&dummy,  new_name)) {
-        return true;
-    }
-    if (struct_like_tbl_add(after_res_)) {
-        usym_tbl_add(after_res_);
-        vec_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
-    }
     return true;
 }
 
@@ -275,15 +274,6 @@ static bool resolve_generics_ulang_type_internal_enum_def(
         return false;
     }
     *after_res = uast_enum_def_unwrap(after_res_);
-
-    Tast_def* dummy = NULL;
-    if (symbol_lookup(&dummy,  new_name)) {
-        return true;
-    }
-    if (struct_like_tbl_add(after_res_)) {
-        usym_tbl_add(after_res_);
-        vec_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
-    }
     return true;
 }
 
@@ -300,15 +290,6 @@ static bool resolve_generics_ulang_type_internal_sum_def(
         return false;
     }
     *after_res = uast_sum_def_unwrap(after_res_);
-
-    Tast_def* dummy = NULL;
-    if (symbol_lookup(&dummy,  new_name)) {
-        return true;
-    }
-    if (struct_like_tbl_add(after_res_)) {
-        usym_tbl_add(after_res_);
-        vec_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
-    }
     return true;
 }
 
@@ -325,15 +306,6 @@ static bool resolve_generics_ulang_type_internal_struct_def(
         return false;
     }
     *after_res = uast_struct_def_unwrap(after_res_);
-
-    Tast_def* dummy = NULL;
-    if (symbol_lookup(&dummy, new_name)) {
-        return true;
-    }
-    if (struct_like_tbl_add(after_res_)) {
-        usym_tbl_add(after_res_);
-        vec_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
-    }
     return true;
 }
 
