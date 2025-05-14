@@ -70,13 +70,13 @@ typedef struct {
     Tast_raw_union_def* tast;
     Str_view key;
     SYM_TBL_STATUS status;
-} Raw_union_of_sum_tast;
+} Raw_union_of_enum_tast;
 
 typedef struct {
-    Raw_union_of_sum_tast* table_tasts;
+    Raw_union_of_enum_tast* table_tasts;
     size_t count; // count elements in symbol_table
     size_t capacity; // count buckets in symbol_table
-} Raw_union_of_sum;
+} Raw_union_of_enum;
 
 
 typedef struct {

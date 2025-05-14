@@ -2,12 +2,12 @@
 
 extern("c") fn printf(str_to_print u8*, args any...) i32
 
-type TokenType sum {
+type TokenType enum {
     num
     string
 }
 
-type Token sum {
+type Token enum {
     num i32
     string u8*
 }

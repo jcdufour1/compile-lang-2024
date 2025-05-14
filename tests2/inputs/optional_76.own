@@ -5,7 +5,7 @@
 extern("c") fn printf(str_to_print u8*, args any...) i32
 extern("c") fn isdigit(character i32) i32
 
-type Optional_int sum {
+type Optional_int enum {
     some i34
     none
 }
@@ -14,12 +14,12 @@ type ParseError struct {
     dummy i33
 }
 
-type Result sum(<SuccessType, ErrorType>) {
+type Result enum(<SuccessType, ErrorType>) {
     ok SuccessType
     error ErrorType
 }
 
-type Token sum {
+type Token enum {
     number i32
     string u8*
 }

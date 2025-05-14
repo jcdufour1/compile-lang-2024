@@ -1,6 +1,6 @@
 
 
-type Token sum {
+type Token enum {
     open_par
     num i32
     string u8*

@@ -153,8 +153,8 @@ static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_
                 src_is_zero,
                 implicit_pointer_depth
             );
-        case LANG_TYPE_SUM:
-            return can_be_implicitly_converted_lang_type_atom(lang_type_sum_const_unwrap(dest).atom, lang_type_sum_const_unwrap(src).atom, false, implicit_pointer_depth);
+        case LANG_TYPE_ENUM:
+            return can_be_implicitly_converted_lang_type_atom(lang_type_enum_const_unwrap(dest).atom, lang_type_enum_const_unwrap(src).atom, false, implicit_pointer_depth);
         case LANG_TYPE_STRUCT:
             return can_be_implicitly_converted_lang_type_atom(lang_type_struct_const_unwrap(dest).atom, lang_type_struct_const_unwrap(src).atom, false, implicit_pointer_depth);
         case LANG_TYPE_RAW_UNION:
@@ -493,7 +493,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
         }
         case UAST_STRUCT_DEF:
             // fallthrough
-        case UAST_SUM_DEF:
+        case UAST_ENUM_DEF:
             // fallthrough
         case UAST_RAW_UNION_DEF:
             // fallthrough
@@ -591,9 +591,9 @@ static Tast_literal* precalulate_char(
     return util_tast_literal_new_from_int64_t(result_val, TOKEN_CHAR_LITERAL, pos);
 }
 
-static Tast_literal* precalulate_sum_lit(
-    const Tast_sum_lit* lhs,
-    const Tast_sum_lit* rhs,
+static Tast_literal* precalulate_enum_lit(
+    const Tast_enum_lit* lhs,
+    const Tast_enum_lit* rhs,
     BINARY_TYPE token_type,
     Pos pos
 ) {
@@ -678,28 +678,28 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                     oper_pos
                 );
                 break;
-            case TAST_SUM_LIT: {
-                Tast_sum_lit* lhs = tast_sum_lit_unwrap(lhs_lit);
-                Tast_sum_lit* rhs = tast_sum_lit_unwrap(rhs_lit);
-                if (!lang_type_is_equal(lhs->sum_lang_type, rhs->sum_lang_type)) {
-                    // binary operators with mismatched sum types
+            case TAST_ENUM_LIT: {
+                Tast_enum_lit* lhs = tast_enum_lit_unwrap(lhs_lit);
+                Tast_enum_lit* rhs = tast_enum_lit_unwrap(rhs_lit);
+                if (!lang_type_is_equal(lhs->enum_lang_type, rhs->enum_lang_type)) {
+                    // binary operators with mismatched enum types
                     todo();
                 }
 
-                Uast_def* sum_def_ = NULL;
-                unwrap(usymbol_lookup(&sum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, lhs->sum_lang_type)));
+                Uast_def* enum_def_ = NULL;
+                unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, lhs->enum_lang_type)));
                 if (!ulang_type_is_equal(
-                    vec_at(&uast_sum_def_unwrap(sum_def_)->base.members, (size_t)lhs->tag->data)->lang_type,
+                    vec_at(&uast_enum_def_unwrap(enum_def_)->base.members, (size_t)lhs->tag->data)->lang_type,
                     lang_type_to_ulang_type(lang_type_void_const_wrap(lang_type_void_new(lhs->pos)))
                 )) {
                     log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, lhs->tag->lang_type));
-                    // overloaded binary operators not defined for non-void inner types of sum
-                    msg_todo("overloaded binary operators for non-void inner types of sum", lhs->pos);
+                    // overloaded binary operators not defined for non-void inner types of enum
+                    msg_todo("overloaded binary operators for non-void inner types of enum", lhs->pos);
                     todo();
                 }
-                literal = precalulate_sum_lit(
-                    tast_sum_lit_const_unwrap(lhs_lit),
-                    tast_sum_lit_const_unwrap(rhs_lit),
+                literal = precalulate_enum_lit(
+                    tast_enum_lit_const_unwrap(lhs_lit),
+                    tast_enum_lit_const_unwrap(rhs_lit),
                     oper_token_type,
                     oper_pos
                 );
@@ -1104,10 +1104,10 @@ bool try_set_struct_literal_types(
                 assign_pos, "struct literal cannot be assigned to raw_union\n"
             );
             return false;
-        case LANG_TYPE_SUM:
+        case LANG_TYPE_ENUM:
             msg(
-                DIAG_STRUCT_INIT_ON_SUM,
-                assign_pos, "struct literal cannot be assigned to sum\n"
+                DIAG_STRUCT_INIT_ON_ENUM,
+                assign_pos, "struct literal cannot be assigned to enum\n"
             );
             return false;
         case LANG_TYPE_PRIMITIVE:
@@ -1291,20 +1291,20 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
         }
         case UAST_STRUCT_LITERAL:
             unreachable("");
-        case UAST_SUM_ACCESS: {
-            Tast_sum_access* new_access = NULL;
-            if (!try_set_sum_access_types(&new_access, uast_sum_access_unwrap(uast))) {
+        case UAST_ENUM_ACCESS: {
+            Tast_enum_access* new_access = NULL;
+            if (!try_set_enum_access_types(&new_access, uast_enum_access_unwrap(uast))) {
                 return false;
             }
-            *new_tast = tast_sum_access_wrap(new_access);
+            *new_tast = tast_enum_access_wrap(new_access);
             return true;
         }
-        case UAST_SUM_GET_TAG: {
-            Tast_sum_get_tag* new_access = NULL;
-            if (!try_set_sum_get_tag_types(&new_access, uast_sum_get_tag_unwrap(uast))) {
+        case UAST_ENUM_GET_TAG: {
+            Tast_enum_get_tag* new_access = NULL;
+            if (!try_set_enum_get_tag_types(&new_access, uast_enum_get_tag_unwrap(uast))) {
                 return false;
             }
-            *new_tast = tast_sum_get_tag_wrap(new_access);
+            *new_tast = tast_enum_get_tag_wrap(new_access);
             return true;
         }
         case UAST_SWITCH: {
@@ -1361,7 +1361,7 @@ STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
             }
             return STMT_NO_STMT;
         }
-        case UAST_SUM_DEF: {
+        case UAST_ENUM_DEF: {
             return STMT_NO_STMT;
         }
         case UAST_GENERIC_PARAM: {
@@ -1417,19 +1417,19 @@ bool try_set_assignment_types(Tast_assignment** new_assign, Uast_assignment* ass
     return true;
 }
 
-bool try_set_function_call_types_sum_case(Tast_sum_case** new_case, Uast_expr_vec args, Tast_sum_case* sum_case) {
-    switch (sum_case->tag->lang_type.type) {
+bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_vec args, Tast_enum_case* enum_case) {
+    switch (enum_case->tag->lang_type.type) {
         case LANG_TYPE_VOID:
             unreachable("this error should have already been caught");
         default: {
-            // tast_sum_case->tag->lang_type is of selected varient of sum (maybe)
+            // tast_enum_case->tag->lang_type is of selected varient of enum (maybe)
             Uast_variable_def* new_def = uast_variable_def_new(
-                sum_case->pos,
-                lang_type_to_ulang_type(sum_case->tag->lang_type),
+                enum_case->pos,
+                lang_type_to_ulang_type(enum_case->tag->lang_type),
                 name_new(env.curr_mod_path, uast_symbol_unwrap(vec_at(&args, 0))->name.base, (Ulang_type_vec) {0}, uast_symbol_unwrap(vec_at(&args, 0))->name.scope_id)
             );
             if (!usymbol_add(uast_variable_def_wrap(new_def))) {
-                // TODO: in error message, specify that the new variable definition is in the sum case () (and print accurate position)
+                // TODO: in error message, specify that the new variable definition is in the enum case () (and print accurate position)
                 try_set_msg_redefinition_of_symbol(uast_variable_def_wrap(new_def));
                 return false;
             }
@@ -1437,17 +1437,17 @@ bool try_set_function_call_types_sum_case(Tast_sum_case** new_case, Uast_expr_ve
             Uast_assignment* new_assign = uast_assignment_new(
                 new_def->pos,
                 uast_symbol_wrap(uast_symbol_new(new_def->pos, new_def->name)),
-                uast_sum_access_wrap(uast_sum_access_new(
+                uast_enum_access_wrap(uast_enum_access_new(
                     new_def->pos,
-                    sum_case->tag,
+                    enum_case->tag,
                     lang_type_from_ulang_type(new_def->lang_type),
                     uast_expr_clone(env.parent_of_operand, uast_symbol_unwrap(vec_at(&args, 0))->name.scope_id)
                 ))
             );
 
-            vec_append(&a_main, &env.switch_case_defer_add_sum_case_part, uast_assignment_wrap(new_assign));
+            vec_append(&a_main, &env.switch_case_defer_add_enum_case_part, uast_assignment_wrap(new_assign));
 
-            *new_case = sum_case;
+            *new_case = enum_case;
             return true;
         }
     }
@@ -1494,38 +1494,38 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     Name fun_name = {0};
     Uast_function_decl* fun_decl = NULL;
     switch (new_callee->type) {
-        case TAST_SUM_CALLEE: {
-            // TAST_SUM_CALLEE is for right hand side of assignments that have non-void inner type
-            // TODO: figure out if both TAST_SUM_CALLEE and TAST_SUM_LIT actually need to exist. if yes, then document difference
+        case TAST_ENUM_CALLEE: {
+            // TAST_ENUM_CALLEE is for right hand side of assignments that have non-void inner type
+            // TODO: figure out if both TAST_ENUM_CALLEE and TAST_ENUM_LIT actually need to exist. if yes, then document difference
             if (fun_call->args.info.count < 1) {
                 msg(
-                    DIAG_MISSING_SUM_ARG, tast_sum_callee_unwrap(new_callee)->pos,
-                    "() in sum case has no argument; add argument in () or remove ()\n"
+                    DIAG_MISSING_ENUM_ARG, tast_enum_callee_unwrap(new_callee)->pos,
+                    "() in enum case has no argument; add argument in () or remove ()\n"
                 );
                 return false;
             }
             if (fun_call->args.info.count > 1) {
                 msg(
-                    DIAG_SUM_CASE_TOO_MANY_ARGS, tast_sum_callee_unwrap(new_callee)->pos,
-                    "() in sum case must contain exactly one argument, but %zu arguments found\n",
+                    DIAG_ENUM_CASE_TOO_MANY_ARGS, tast_enum_callee_unwrap(new_callee)->pos,
+                    "() in enum case must contain exactly one argument, but %zu arguments found\n",
                     fun_call->args.info.count
                 );
                 return false;
             }
-            if (tast_sum_callee_unwrap(new_callee)->tag->lang_type.type == LANG_TYPE_VOID) {
-                unreachable("sum symbol with void callee should have been converted to TAST_SUM_LIT instead of TAST_SUM_CALLEE in try_set_symbol_types");
+            if (tast_enum_callee_unwrap(new_callee)->tag->lang_type.type == LANG_TYPE_VOID) {
+                unreachable("enum symbol with void callee should have been converted to TAST_ENUM_LIT instead of TAST_ENUM_CALLEE in try_set_symbol_types");
             }
 
-            Tast_sum_callee* sum_callee = tast_sum_callee_unwrap(new_callee);
+            Tast_enum_callee* enum_callee = tast_enum_callee_unwrap(new_callee);
 
-            Uast_def* sum_def_ = NULL;
-            unwrap(usymbol_lookup(&sum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, sum_callee->sum_lang_type)));
-            Uast_sum_def* sum_def = uast_sum_def_unwrap(sum_def_);
+            Uast_def* enum_def_ = NULL;
+            unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, enum_callee->enum_lang_type)));
+            Uast_enum_def* enum_def = uast_enum_def_unwrap(enum_def_);
 
             Tast_expr* new_item = NULL;
             switch (check_generic_assignment(
                 &new_item,
-                lang_type_from_ulang_type(vec_at(&sum_def->base.members, (size_t)sum_callee->tag->data)->lang_type),
+                lang_type_from_ulang_type(vec_at(&enum_def->base.members, (size_t)enum_callee->tag->data)->lang_type),
                 vec_at(&fun_call->args, 0),
                 uast_expr_get_pos(vec_at(&fun_call->args, 0))
             )) {
@@ -1533,12 +1533,12 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     break;
                 case CHECK_ASSIGN_INVALID:
                     msg(
-                        DIAG_SUM_LIT_INVALID_ARG, tast_expr_get_pos(new_item),
+                        DIAG_ENUM_LIT_INVALID_ARG, tast_expr_get_pos(new_item),
                         "cannot assign "TAST_FMT" of type `"LANG_TYPE_FMT"` to '"LANG_TYPE_FMT"`\n", 
                         tast_expr_print(new_item),
                         lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_item)), 
                         lang_type_print(LANG_TYPE_MODE_MSG, lang_type_from_ulang_type(
-                             vec_at(&sum_def->base.members, (size_t)sum_callee->tag->data)->lang_type
+                             vec_at(&enum_def->base.members, (size_t)enum_callee->tag->data)->lang_type
                         ))
                    );
                    status = false;
@@ -1550,49 +1550,49 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             }
 
             // TODO: set tag size based on target platform
-            sum_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0)));
+            enum_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0)));
 
-            Tast_sum_lit* new_lit = tast_sum_lit_new(
-                sum_callee->pos,
-                sum_callee->tag,
+            Tast_enum_lit* new_lit = tast_enum_lit_new(
+                enum_callee->pos,
+                enum_callee->tag,
                 new_item,
-                sum_callee->sum_lang_type
+                enum_callee->enum_lang_type
             );
-            *new_call = tast_literal_wrap(tast_sum_lit_wrap(new_lit));
+            *new_call = tast_literal_wrap(tast_enum_lit_wrap(new_lit));
             return status;
         }
-        case TAST_SUM_CASE: {
-            // TAST_SUM_CASE is for switch cases
-            // TODO: can these checks be shared with TAST_SUM_CALLEE?
-            if (tast_sum_case_unwrap(new_callee)->tag->lang_type.type == LANG_TYPE_VOID) {
+        case TAST_ENUM_CASE: {
+            // TAST_ENUM_CASE is for switch cases
+            // TODO: can these checks be shared with TAST_ENUM_CALLEE?
+            if (tast_enum_case_unwrap(new_callee)->tag->lang_type.type == LANG_TYPE_VOID) {
                 msg(DIAG_INVALID_COUNT_FUN_ARGS, fun_call->pos, "inner type is void; remove ()\n");
                 return false;
             }
             if (fun_call->args.info.count < 1) {
                 msg(
-                    DIAG_MISSING_SUM_ARG, tast_sum_case_unwrap(new_callee)->pos,
-                    "() in sum case has no argument; add argument in () or remove ()\n"
+                    DIAG_MISSING_ENUM_ARG, tast_enum_case_unwrap(new_callee)->pos,
+                    "() in enum case has no argument; add argument in () or remove ()\n"
                 );
                 return false;
             }
             if (fun_call->args.info.count > 1) {
                 msg(
-                    DIAG_SUM_CASE_TOO_MANY_ARGS, tast_sum_case_unwrap(new_callee)->pos,
-                    "() in sum case must contain exactly one argument, but %zu arguments found\n",
+                    DIAG_ENUM_CASE_TOO_MANY_ARGS, tast_enum_case_unwrap(new_callee)->pos,
+                    "() in enum case must contain exactly one argument, but %zu arguments found\n",
                     fun_call->args.info.count
                 );
                 return false;
             }
-            Tast_sum_case* new_case = NULL;
-            if (!try_set_function_call_types_sum_case(&new_case, fun_call->args, tast_sum_case_unwrap(new_callee))) {
+            Tast_enum_case* new_case = NULL;
+            if (!try_set_function_call_types_enum_case(&new_case, fun_call->args, tast_enum_case_unwrap(new_callee))) {
                 return false;
             }
-            *new_call = tast_sum_case_wrap(new_case);
+            *new_call = tast_enum_case_wrap(new_case);
             return status;
         }
         case TAST_LITERAL: {
-            if (tast_literal_unwrap(new_callee)->type == TAST_SUM_LIT) {
-                // TAST_SUM_LIT in function callee means that the user used () with void sum varient in right hand side of assignment
+            if (tast_literal_unwrap(new_callee)->type == TAST_ENUM_LIT) {
+                // TAST_ENUM_LIT in function callee means that the user used () with void enum varient in right hand side of assignment
                 msg(DIAG_INVALID_COUNT_FUN_ARGS, fun_call->pos, "inner type is void; remove ()\n");
                 return false;
             } else if (tast_literal_unwrap(new_callee)->type == TAST_FUNCTION_LIT) {
@@ -1729,13 +1729,13 @@ bool try_set_tuple_types(Tast_tuple** new_tuple, Uast_tuple* tuple) {
     return true;
 }
 
-bool try_set_sum_access_types(Tast_sum_access** new_access, Uast_sum_access* access) {
+bool try_set_enum_access_types(Tast_enum_access** new_access, Uast_enum_access* access) {
     Tast_expr* new_callee = NULL;
     if (!try_set_expr_types(&new_callee, access->callee)) {
         return false;
     }
 
-    *new_access = tast_sum_access_new(
+    *new_access = tast_enum_access_new(
         access->pos,
         access->tag, 
         access->lang_type,
@@ -1745,13 +1745,13 @@ bool try_set_sum_access_types(Tast_sum_access** new_access, Uast_sum_access* acc
     return true;
 }
 
-bool try_set_sum_get_tag_types(Tast_sum_get_tag** new_access, Uast_sum_get_tag* access) {
+bool try_set_enum_get_tag_types(Tast_enum_get_tag** new_access, Uast_enum_get_tag* access) {
     Tast_expr* new_callee = NULL;
     if (!try_set_expr_types(&new_callee, access->callee)) {
         return false;
     }
 
-    *new_access = tast_sum_get_tag_new(
+    *new_access = tast_enum_get_tag_new(
         access->pos,
         new_callee
     );
@@ -1804,9 +1804,9 @@ bool try_set_member_access_types_finish_generic_struct(
     return true;
 }
 
-bool try_set_member_access_types_finish_sum_def(
+bool try_set_member_access_types_finish_enum_def(
     Tast_stmt** new_tast,
-    Uast_sum_def* sum_def,
+    Uast_enum_def* enum_def,
     Uast_member_access* access,
     Tast_expr* new_callee
 ) {
@@ -1815,21 +1815,21 @@ bool try_set_member_access_types_finish_sum_def(
     switch (env.parent_of) {
         case PARENT_OF_CASE: {
             Uast_variable_def* member_def = NULL;
-            if (!uast_try_get_member_def(&member_def, &sum_def->base, access->member_name->name.base)) {
-                msg_invalid_member(sum_def->base.name, access);
+            if (!uast_try_get_member_def(&member_def, &enum_def->base, access->member_name->name.base)) {
+                msg_invalid_member(enum_def->base.name, access);
                 return false;
             }
 
-            Tast_sum_tag_lit* new_tag = tast_sum_tag_lit_new(
+            Tast_enum_tag_lit* new_tag = tast_enum_tag_lit_new(
                 access->pos,
-                uast_get_member_index(&sum_def->base, access->member_name->name.base),
+                uast_get_member_index(&enum_def->base, access->member_name->name.base),
                 lang_type_from_ulang_type(member_def->lang_type)
             );
 
-            *new_tast = tast_expr_wrap(tast_sum_case_wrap(tast_sum_case_new(
+            *new_tast = tast_expr_wrap(tast_enum_case_wrap(tast_enum_case_new(
                 access->pos,
                 new_tag,
-                lang_type_sum_const_wrap(lang_type_sum_new(sum_def->pos, lang_type_atom_new(sum_def->base.name, 0)))
+                lang_type_enum_const_wrap(lang_type_enum_new(enum_def->pos, lang_type_atom_new(enum_def->base.name, 0)))
             )));
 
             return true;
@@ -1843,43 +1843,43 @@ bool try_set_member_access_types_finish_sum_def(
             // fallthrough
         case PARENT_OF_ASSIGN_RHS: {
             Uast_variable_def* member_def = NULL;
-            if (!uast_try_get_member_def(&member_def, &sum_def->base, access->member_name->name.base)) {
-                msg_invalid_member(sum_def->base.name, access);
+            if (!uast_try_get_member_def(&member_def, &enum_def->base, access->member_name->name.base)) {
+                msg_invalid_member(enum_def->base.name, access);
                 return false;
             }
             
-            Tast_sum_tag_lit* new_tag = tast_sum_tag_lit_new(
+            Tast_enum_tag_lit* new_tag = tast_enum_tag_lit_new(
                 access->pos,
-                uast_get_member_index(&sum_def->base, access->member_name->name.base),
+                uast_get_member_index(&enum_def->base, access->member_name->name.base),
                 lang_type_from_ulang_type(member_def->lang_type)
             );
 
-            Tast_sum_callee* new_callee = tast_sum_callee_new(
+            Tast_enum_callee* new_callee = tast_enum_callee_new(
                 access->pos,
                 new_tag,
-                lang_type_sum_const_wrap(lang_type_sum_new(sum_def->pos, lang_type_atom_new(sum_def->base.name, 0)))
+                lang_type_enum_const_wrap(lang_type_enum_new(enum_def->pos, lang_type_atom_new(enum_def->base.name, 0)))
             );
 
             if (new_tag->lang_type.type != LANG_TYPE_VOID) {
-                *new_tast = tast_expr_wrap(tast_sum_callee_wrap(new_callee));
+                *new_tast = tast_expr_wrap(tast_enum_callee_wrap(new_callee));
                 return true;
             }
 
             new_callee->tag->lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0)));
 
-            Tast_sum_lit* new_lit = tast_sum_lit_new(
+            Tast_enum_lit* new_lit = tast_enum_lit_new(
                 new_callee->pos,
                 new_callee->tag,
                 tast_literal_wrap(tast_void_wrap(tast_void_new(new_callee->pos))),
-                new_callee->sum_lang_type
+                new_callee->enum_lang_type
             );
-            *new_tast = tast_expr_wrap(tast_literal_wrap(tast_sum_lit_wrap(new_lit)));
+            *new_tast = tast_expr_wrap(tast_literal_wrap(tast_enum_lit_wrap(new_lit)));
             return true;
 
             todo();
 
-            //Tast_sum_case* new_call = NULL;
-            //*new_tast = tast_expr_wrap(tast_sum_callee_wrap(new_call));
+            //Tast_enum_case* new_call = NULL;
+            //*new_tast = tast_expr_wrap(tast_enum_callee_wrap(new_call));
             //return true;
         }
         case PARENT_OF_IF:
@@ -1907,8 +1907,8 @@ bool try_set_member_access_types_finish(
                  new_tast, access, raw_union_def->base, new_callee
             );
         }
-        case UAST_SUM_DEF:
-            return try_set_member_access_types_finish_sum_def(new_tast, uast_sum_def_unwrap(lang_type_def), access, new_callee);
+        case UAST_ENUM_DEF:
+            return try_set_member_access_types_finish_enum_def(new_tast, uast_enum_def_unwrap(lang_type_def), access, new_callee);
         case UAST_PRIMITIVE_DEF:
             msg_invalid_member(lang_type_get_str(LANG_TYPE_MODE_LOG, uast_primitive_def_unwrap(lang_type_def)->lang_type), access);
             return false;
@@ -2221,11 +2221,11 @@ bool try_set_if_types(Tast_if** new_tast, Uast_if* uast) {
     }
 
     Uast_stmt_vec new_if_children = {0};
-    vec_extend(&a_main, &new_if_children, &env.switch_case_defer_add_sum_case_part);
+    vec_extend(&a_main, &new_if_children, &env.switch_case_defer_add_enum_case_part);
     vec_extend(&a_main, &new_if_children, &env.switch_case_defer_add_if_true);
     vec_extend(&a_main, &new_if_children, &uast->body->children);
     uast->body->children = new_if_children;
-    vec_reset(&env.switch_case_defer_add_sum_case_part);
+    vec_reset(&env.switch_case_defer_add_enum_case_part);
     vec_reset(&env.switch_case_defer_add_if_true);
 
     Tast_block* new_body = NULL;
@@ -2288,20 +2288,20 @@ static Exhaustive_data check_for_exhaustiveness_start(Lang_type oper_lang_type) 
 
     exhaustive_data.oper_lang_type = oper_lang_type;
 
-    Uast_def* sum_def_ = NULL;
-    if (!usymbol_lookup(&sum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data.oper_lang_type))) {
+    Uast_def* enum_def_ = NULL;
+    if (!usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data.oper_lang_type))) {
         todo();
     }
-    Ustruct_def_base sum_def = {0};
-    switch (sum_def_->type) {
-        case UAST_SUM_DEF:
-            sum_def = uast_sum_def_unwrap(sum_def_)->base;
+    Ustruct_def_base enum_def = {0};
+    switch (enum_def_->type) {
+        case UAST_ENUM_DEF:
+            enum_def = uast_enum_def_unwrap(enum_def_)->base;
             break;
         default:
             todo();
     }
-    unwrap(sum_def.members.info.count > 0);
-    exhaustive_data.max_data = sum_def.members.info.count - 1;
+    unwrap(enum_def.members.info.count > 0);
+    exhaustive_data.max_data = enum_def.members.info.count - 1;
 
     vec_reserve(&print_arena, &exhaustive_data.covered, exhaustive_data.max_data + 1);
     vec_reserve(&print_arena, &exhaustive_data.covered_pos, exhaustive_data.max_data + 1);
@@ -2331,22 +2331,22 @@ static bool check_for_exhaustiveness_inner(
     }
 
     switch (exhaustive_data->oper_lang_type.type) {
-        case LANG_TYPE_SUM: {
-            const Tast_sum_tag_lit* curr_lit = tast_sum_case_unwrap(
+        case LANG_TYPE_ENUM: {
+            const Tast_enum_tag_lit* curr_lit = tast_enum_case_unwrap(
                 tast_binary_unwrap(curr_if->condition->child)->rhs
             )->tag;
 
             if (curr_lit->data > (int64_t)exhaustive_data->max_data) {
-                unreachable("invalid sum value\n");
+                unreachable("invalid enum value\n");
             }
             if (vec_at(&exhaustive_data->covered, (size_t)curr_lit->data)) {
-                Uast_def* sum_def_ = NULL;
-                unwrap(usymbol_lookup(&sum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data->oper_lang_type)));
-                Uast_sum_def* sum_def = uast_sum_def_unwrap(sum_def_);
+                Uast_def* enum_def_ = NULL;
+                unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data->oper_lang_type)));
+                Uast_enum_def* enum_def = uast_enum_def_unwrap(enum_def_);
                 msg(
                     DIAG_DUPLICATE_CASE, curr_if->pos,
                     "duplicate case `"STR_VIEW_FMT"."STR_VIEW_FMT"` in switch statement\n",
-                    name_print(NAME_MSG, sum_def->base.name), name_print(NAME_MSG, vec_at(&sum_def->base.members, (size_t)curr_lit->data)->name)
+                    name_print(NAME_MSG, enum_def->base.name), name_print(NAME_MSG, vec_at(&enum_def->base.members, (size_t)curr_lit->data)->name)
                 );
                 msg(
                     DIAG_NOTE, vec_at(&exhaustive_data->covered_pos,
@@ -2376,12 +2376,12 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
 
         for (size_t idx = 0; idx < exhaustive_data.covered.info.count; idx++) {
             if (!vec_at(&exhaustive_data.covered, idx)) {
-                Uast_def* sum_def_ = NULL;
-                unwrap(usymbol_lookup(&sum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data.oper_lang_type)));
-                Ustruct_def_base sum_def = {0};
-                switch (sum_def_->type) {
-                    case UAST_SUM_DEF:
-                        sum_def = uast_sum_def_unwrap(sum_def_)->base;
+                Uast_def* enum_def_ = NULL;
+                unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data.oper_lang_type)));
+                Ustruct_def_base enum_def = {0};
+                switch (enum_def_->type) {
+                    case UAST_ENUM_DEF:
+                        enum_def = uast_enum_def_unwrap(enum_def_)->base;
                         break;
                     default:
                         todo();
@@ -2394,9 +2394,9 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
                     string_extend_cstr(&a_main, &string, ", ");
                 }
 
-                extend_name(NAME_MSG, &string, sum_def.name);
+                extend_name(NAME_MSG, &string, enum_def.name);
                 string_extend_cstr(&a_main, &string, ".");
-                extend_name(NAME_MSG, &string, vec_at(&sum_def.members, idx)->name);
+                extend_name(NAME_MSG, &string, vec_at(&enum_def.members, idx)->name);
             }
         }
 
@@ -2427,10 +2427,10 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
     }
 
     switch (tast_expr_get_lang_type(new_operand).type) {
-        case LANG_TYPE_SUM:
+        case LANG_TYPE_ENUM:
             break;
         default:
-            msg_todo("switch on type that is not sum", tast_expr_get_pos(new_operand));
+            msg_todo("switch on type that is not enum", tast_expr_get_pos(new_operand));
             status = false;
             goto error;
     }
@@ -2446,8 +2446,8 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
         Uast_expr* operand = NULL;
 
         switch (tast_expr_get_lang_type(new_operand).type) {
-            case LANG_TYPE_SUM:
-                operand = uast_sum_get_tag_wrap(uast_sum_get_tag_new(
+            case LANG_TYPE_ENUM:
+                operand = uast_enum_get_tag_wrap(uast_enum_get_tag_new(
                     uast_expr_get_pos(lang_switch->operand), lang_switch->operand
                 ));
                 break;

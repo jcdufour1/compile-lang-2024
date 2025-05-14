@@ -21,9 +21,9 @@ static bool local_isalnum_or_underscore(char prev, char curr) {
     return isalnum(curr) || curr == '_';
 }
 
-static Str_view consume_num(Pos* pos, Str_view_col* file_text) {
+static Str_view conenume_num(Pos* pos, Str_view_col* file_text) {
     Str_view_col num = {0};
-    unwrap(str_view_col_try_consume_while(&num, pos, file_text, local_isalnum_or_underscore));
+    unwrap(str_view_col_try_conenume_while(&num, pos, file_text, local_isalnum_or_underscore));
     return num.base;
 }
 
@@ -74,7 +74,7 @@ static size_t trim_non_newline_whitespace(Str_view_col* file_text, Pos* pos) {
             return count;
         }
         count++;
-        str_view_col_consume(pos, file_text);
+        str_view_col_conenume(pos, file_text);
         curr = str_view_col_front(*file_text);
     }
     return count;
@@ -102,7 +102,7 @@ static bool get_next_token(
     token->pos.file_path = pos->file_path;
 
     if (isalpha(str_view_col_front(*file_text_rem))) {
-        Str_view text = str_view_col_consume_while(pos, file_text_rem, local_isalnum_or_underscore).base;
+        Str_view text = str_view_col_conenume_while(pos, file_text_rem, local_isalnum_or_underscore).base;
         if (str_view_cstr_is_equal(text, "deref")) {
             token->type = TOKEN_DEREF;
         } else if (str_view_cstr_is_equal(text, "refer")) {
@@ -137,8 +137,8 @@ static bool get_next_token(
             token->type = TOKEN_BREAK;
         } else if (str_view_cstr_is_equal(text, "raw_union")) {
             token->type = TOKEN_RAW_UNION;
-        } else if (str_view_cstr_is_equal(text, "sum")) {
-            token->type = TOKEN_SUM;
+        } else if (str_view_cstr_is_equal(text, "enum")) {
+            token->type = TOKEN_ENUM;
         } else if (str_view_cstr_is_equal(text, "continue")) {
             token->type = TOKEN_CONTINUE;
         } else if (str_view_cstr_is_equal(text, "type")) {
@@ -153,51 +153,51 @@ static bool get_next_token(
         }
         return true;
     } else if (isdigit(str_view_col_front(*file_text_rem))) {
-        token->text = consume_num(pos, file_text_rem);
+        token->text = conenume_num(pos, file_text_rem);
         token->type = TOKEN_INT_LITERAL;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '(')) {
-        if (str_view_col_try_consume(pos, file_text_rem, '<')) {
+    } else if (str_view_col_try_conenume(pos, file_text_rem, '(')) {
+        if (str_view_col_try_conenume(pos, file_text_rem, '<')) {
             token->type = TOKEN_OPEN_GENERIC;
         } else {
             token->type = TOKEN_OPEN_PAR;
         }
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, ')')) {
+    } else if (str_view_col_try_conenume(pos, file_text_rem, ')')) {
         token->type = TOKEN_CLOSE_PAR;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '{')) {
+    } else if (str_view_col_try_conenume(pos, file_text_rem, '{')) {
         token->type = TOKEN_OPEN_CURLY_BRACE;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '}')) {
+    } else if (str_view_col_try_conenume(pos, file_text_rem, '}')) {
         token->type = TOKEN_CLOSE_CURLY_BRACE;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '"')) {
+    } else if (str_view_col_try_conenume(pos, file_text_rem, '"')) {
         token->type = TOKEN_STRING_LITERAL;
         Str_view_col quote_str = {0};
-        if (!str_view_col_try_consume_while(&quote_str, pos, file_text_rem, is_not_quote)) {
+        if (!str_view_col_try_conenume_while(&quote_str, pos, file_text_rem, is_not_quote)) {
             msg(DIAG_MISSING_CLOSE_DOUBLE_QUOTE, token->pos, "unmatched `\"`\n");
             token->type = TOKEN_NONTYPE;
             return false;
         }
-        unwrap(str_view_col_try_consume(pos, file_text_rem, '"'));
+        unwrap(str_view_col_try_conenume(pos, file_text_rem, '"'));
         token->text = quote_str.base;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, ';')) {
+    } else if (str_view_col_try_conenume(pos, file_text_rem, ';')) {
         token->type = TOKEN_SEMICOLON;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, ',')) {
+    } else if (str_view_col_try_conenume(pos, file_text_rem, ',')) {
         token->type = TOKEN_COMMA;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '+')) {
+    } else if (str_view_col_try_conenume(pos, file_text_rem, '+')) {
         unwrap((file_text_rem->base.count < 1 || str_view_col_front(*file_text_rem) != '+') && "double + not implemented");
         token->type = TOKEN_SINGLE_PLUS;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '-')) {
+    } else if (str_view_col_try_conenume(pos, file_text_rem, '-')) {
         token->type = TOKEN_SINGLE_MINUS;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '*')) {
-        if (str_view_col_try_consume(pos, file_text_rem, '/')) {
+    } else if (str_view_col_try_conenume(pos, file_text_rem, '*')) {
+        if (str_view_col_try_conenume(pos, file_text_rem, '/')) {
             msg(
                 DIAG_MISSING_CLOSE_MULTILINE, 
                 *pos, "unmatched closing `/*`\n"
@@ -206,16 +206,16 @@ static bool get_next_token(
         }
         token->type = TOKEN_ASTERISK;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '%')) {
+    } else if (str_view_col_try_conenume(pos, file_text_rem, '%')) {
         token->type = TOKEN_MODULO;
         return true;
     } else if (file_text_rem->base.count > 1 && str_view_cstr_is_equal(str_view_slice(file_text_rem->base, 0, 2), "//")) {
-        str_view_col_consume_until(pos, file_text_rem, '\n');
+        str_view_col_conenume_until(pos, file_text_rem, '\n');
         trim_non_newline_whitespace(file_text_rem, pos);
         token->type = TOKEN_COMMENT;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '/')) {
-        if (str_view_col_try_consume(pos, file_text_rem, '*')) {
+    } else if (str_view_col_try_conenume(pos, file_text_rem, '/')) {
+        if (str_view_col_try_conenume(pos, file_text_rem, '*')) {
             Pos_vec pos_stack = {0};
             vec_append(&tk_arena, &pos_stack, *pos);
             while (pos_stack.info.count > 0) {
@@ -228,14 +228,14 @@ static bool get_next_token(
                     return false;
                 }
 
-                if (str_view_try_consume(&temp_text, '/') && str_view_try_consume(&temp_text, '*')) {
+                if (str_view_try_conenume(&temp_text, '/') && str_view_try_conenume(&temp_text, '*')) {
                     vec_append(&tk_arena, &pos_stack, *pos);
-                    str_view_col_consume_count(pos, file_text_rem, 2);
-                } else if (str_view_try_consume(&temp_text, '*') && str_view_try_consume(&temp_text, '/')) {
+                    str_view_col_conenume_count(pos, file_text_rem, 2);
+                } else if (str_view_try_conenume(&temp_text, '*') && str_view_try_conenume(&temp_text, '/')) {
                     vec_rem_last(&pos_stack);
-                    str_view_col_consume_count(pos, file_text_rem, 2);
+                    str_view_col_conenume_count(pos, file_text_rem, 2);
                 } else {
-                    str_view_col_consume(pos, file_text_rem);
+                    str_view_col_conenume(pos, file_text_rem);
                 }
             }
 
@@ -245,7 +245,7 @@ static bool get_next_token(
         }
         return true;
     } else if (str_view_col_front(*file_text_rem) == '&') {
-        Str_view_col equals = str_view_col_consume_while(pos, file_text_rem, is_and);
+        Str_view_col equals = str_view_col_conenume_while(pos, file_text_rem, is_and);
         if (equals.base.count == 1) {
             token->type = TOKEN_BITWISE_AND;
             return true;
@@ -258,7 +258,7 @@ static bool get_next_token(
             return true;
         }
     } else if (str_view_col_front(*file_text_rem) == '^') {
-        Str_view_col equals = str_view_col_consume_while(pos, file_text_rem, is_xor);
+        Str_view_col equals = str_view_col_conenume_while(pos, file_text_rem, is_xor);
         if (equals.base.count == 1) {
             token->type = TOKEN_BITWISE_XOR;
             return true;
@@ -272,7 +272,7 @@ static bool get_next_token(
             return true;
         }
     } else if (str_view_col_front(*file_text_rem) == '|') {
-        Str_view_col equals = str_view_col_consume_while(pos, file_text_rem, is_or);
+        Str_view_col equals = str_view_col_conenume_while(pos, file_text_rem, is_or);
         if (equals.base.count == 1) {
             token->type = TOKEN_BITWISE_OR;
             return true;
@@ -284,18 +284,18 @@ static bool get_next_token(
             token->type = TOKEN_NONTYPE;
             return true;
         }
-    } else if (str_view_col_try_consume(pos, file_text_rem, ':')) {
+    } else if (str_view_col_try_conenume(pos, file_text_rem, ':')) {
         token->type = TOKEN_COLON;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '!')) {
-        if (str_view_col_try_consume(pos, file_text_rem, '=')) {
+    } else if (str_view_col_try_conenume(pos, file_text_rem, '!')) {
+        if (str_view_col_try_conenume(pos, file_text_rem, '=')) {
             token->type = TOKEN_NOT_EQUAL;
             return true;
         }
         token->type = TOKEN_NOT;
         return true;
     } else if (str_view_col_front(*file_text_rem) == '=') {
-        Str_view_col equals = str_view_col_consume_while(pos, file_text_rem, is_equal);
+        Str_view_col equals = str_view_col_conenume_while(pos, file_text_rem, is_equal);
         if (equals.base.count == 1) {
             token->type = TOKEN_SINGLE_EQUAL;
             return true;
@@ -307,52 +307,52 @@ static bool get_next_token(
             token->type = TOKEN_NONTYPE;
             return true;
         }
-    } else if (str_view_col_try_consume(pos, file_text_rem, '>')) {
-        if (str_view_col_try_consume(pos, file_text_rem, '=')) {
+    } else if (str_view_col_try_conenume(pos, file_text_rem, '>')) {
+        if (str_view_col_try_conenume(pos, file_text_rem, '=')) {
             token->type = TOKEN_GREATER_OR_EQUAL;
             return true;
-        } else if (str_view_col_try_consume(pos, file_text_rem, '>')) {
+        } else if (str_view_col_try_conenume(pos, file_text_rem, '>')) {
             token->type = TOKEN_SHIFT_RIGHT;
             return true;
-        } else if (str_view_col_try_consume(pos, file_text_rem, ')')) {
+        } else if (str_view_col_try_conenume(pos, file_text_rem, ')')) {
             token->type = TOKEN_CLOSE_GENERIC;
             return true;
         } else {
             token->type = TOKEN_GREATER_THAN;
             return true;
         }
-    } else if (str_view_col_try_consume(pos, file_text_rem, '<')) {
-        if (str_view_col_try_consume(pos, file_text_rem, '=')) {
+    } else if (str_view_col_try_conenume(pos, file_text_rem, '<')) {
+        if (str_view_col_try_conenume(pos, file_text_rem, '=')) {
             token->type = TOKEN_LESS_OR_EQUAL;
             return true;
-        } else if (str_view_col_try_consume(pos, file_text_rem, '<')) {
+        } else if (str_view_col_try_conenume(pos, file_text_rem, '<')) {
             token->type = TOKEN_SHIFT_LEFT;
             return true;
         } else {
             token->type = TOKEN_LESS_THAN;
             return true;
         }
-    } else if (str_view_col_try_consume(pos, file_text_rem, '[')) {
+    } else if (str_view_col_try_conenume(pos, file_text_rem, '[')) {
         token->type = TOKEN_OPEN_SQ_BRACKET;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, ']')) {
+    } else if (str_view_col_try_conenume(pos, file_text_rem, ']')) {
         token->type = TOKEN_CLOSE_SQ_BRACKET;
         return true;
-    } else if (str_view_col_try_consume(pos, file_text_rem, '\'')) {
+    } else if (str_view_col_try_conenume(pos, file_text_rem, '\'')) {
         token->type = TOKEN_CHAR_LITERAL;
 
         Str_view_col result = {0};
-        if (!str_view_col_try_consume_while(&result, pos, file_text_rem, not_single_quote)) {
+        if (!str_view_col_try_conenume_while(&result, pos, file_text_rem, not_single_quote)) {
             // TODO: expected failure case
             todo();
         }
-        unwrap(str_view_col_consume(pos, file_text_rem));
+        unwrap(str_view_col_conenume(pos, file_text_rem));
 
         token->text = result.base;
 
         return true;
     } else if (str_view_col_front(*file_text_rem) == '.') {
-        Str_view_col dots = str_view_col_consume_while(pos, file_text_rem, is_dot);
+        Str_view_col dots = str_view_col_conenume_while(pos, file_text_rem, is_dot);
         if (dots.base.count == 1) {
             token->type = TOKEN_SINGLE_DOT;
             return true;
@@ -367,7 +367,7 @@ static bool get_next_token(
             token->type = TOKEN_NONTYPE;
             return true;
         }
-    } else if (str_view_col_try_consume(pos, file_text_rem, '\n')) {
+    } else if (str_view_col_try_conenume(pos, file_text_rem, '\n')) {
         token->type = TOKEN_NEW_LINE;
         return true;
     } else {

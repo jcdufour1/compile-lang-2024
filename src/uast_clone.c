@@ -151,11 +151,11 @@ Uast_expr* uast_expr_clone(const Uast_expr* expr, Scope_id new_scope) {
             todo();
         case UAST_TUPLE:
             return uast_tuple_wrap(uast_tuple_clone(uast_tuple_const_unwrap(expr), new_scope));
-        case UAST_SUM_ACCESS: // TODO: remove uast_sum_access if not used
+        case UAST_ENUM_ACCESS: // TODO: remove uast_enum_access if not used
             todo();
-        case UAST_UNKNOWN: // TODO: remove uast_sum_access if not used
+        case UAST_UNKNOWN: // TODO: remove uast_enum_access if not used
             return uast_unknown_wrap(uast_unknown_clone(uast_unknown_const_unwrap(expr)));
-        case UAST_SUM_GET_TAG: // TODO: remove uast_sum_access if not used
+        case UAST_ENUM_GET_TAG: // TODO: remove uast_enum_access if not used
             todo();
         case UAST_SWITCH:
             return uast_switch_wrap(uast_switch_clone(uast_switch_const_unwrap(expr), new_scope));
@@ -179,7 +179,7 @@ Uast_def* uast_def_clone(const Uast_def* def, Scope_id new_scope) {
             todo();
         case UAST_RAW_UNION_DEF:
             todo();
-        case UAST_SUM_DEF:
+        case UAST_ENUM_DEF:
             todo();
         case UAST_PRIMITIVE_DEF:
             todo();

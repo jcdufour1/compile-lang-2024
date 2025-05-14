@@ -95,7 +95,7 @@ static inline Lang_type* uast_get_ulang_type_def_ref(Uast_def* def) {
             unreachable("");
         case UAST_PRIMITIVE_DEF:
             unreachable("");
-        case UAST_SUM_DEF:
+        case UAST_ENUM_DEF:
             unreachable("");
         case UAST_GENERIC_PARAM:
             unreachable("");
@@ -197,7 +197,7 @@ static inline Lang_type* uast_def_ref_get_lang_type(Uast_def* def) {
             unreachable("");
         case UAST_PRIMITIVE_DEF:
             unreachable("");
-        case UAST_SUM_DEF:
+        case UAST_ENUM_DEF:
             unreachable("");
         case UAST_GENERIC_PARAM:
             unreachable("");
@@ -251,8 +251,8 @@ static inline Name uast_def_get_name(const Uast_def* def) {
             return uast_function_decl_const_unwrap(def)->name;
         case UAST_FUNCTION_DEF:
             return uast_function_def_const_unwrap(def)->decl->name;
-        case UAST_SUM_DEF:
-            return uast_sum_def_const_unwrap(def)->base.name;
+        case UAST_ENUM_DEF:
+            return uast_enum_def_const_unwrap(def)->base.name;
         case UAST_GENERIC_PARAM:
             todo();
             //return uast_generic_param_const_unwrap(def)->child->name;
@@ -294,8 +294,8 @@ static inline Str_view uast_get_name(const Uast* uast) {
 
 static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def) {
     switch (def->type) {
-        case UAST_SUM_DEF:
-            return uast_sum_def_const_unwrap(def)->base;
+        case UAST_ENUM_DEF:
+            return uast_enum_def_const_unwrap(def)->base;
         case UAST_STRUCT_DEF:
             return uast_struct_def_const_unwrap(def)->base;
         case UAST_RAW_UNION_DEF:

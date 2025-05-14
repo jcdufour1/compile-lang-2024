@@ -9,7 +9,7 @@ type Token struct {
     num i32
 }
 
-type Optional sum(<ItemType>) {
+type Optional enum(<ItemType>) {
     some ItemType
     none
 }

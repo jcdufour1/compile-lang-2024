@@ -35,7 +35,7 @@ uint64_t sizeof_lang_type(Lang_type lang_type) {
             unwrap(symbol_lookup(&def,  lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
             return sizeof_def( def);
         }
-        case LANG_TYPE_SUM: {
+        case LANG_TYPE_ENUM: {
             Tast_def* def = NULL;
             unwrap(symbol_lookup(&def,  lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
             return sizeof_def( def);
@@ -72,8 +72,8 @@ uint64_t sizeof_def(const Tast_def* def) {
             return sizeof_lang_type( tast_variable_def_const_unwrap(def)->lang_type);
         case TAST_STRUCT_DEF:
             return sizeof_struct_def_base( &tast_struct_def_const_unwrap(def)->base);
-        case TAST_SUM_DEF:
-            return sizeof_struct_def_base( &tast_sum_def_const_unwrap(def)->base);
+        case TAST_ENUM_DEF:
+            return sizeof_struct_def_base( &tast_enum_def_const_unwrap(def)->base);
         case TAST_RAW_UNION_DEF:
             return sizeof_struct_def_base( &tast_raw_union_def_const_unwrap(def)->base);
         default:

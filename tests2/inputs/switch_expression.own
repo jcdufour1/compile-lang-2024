@@ -1,7 +1,7 @@
 type io import = std.io
 
 
-type Bool sum {
+type Bool enum {
     false
     true
 }

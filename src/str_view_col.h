@@ -30,20 +30,20 @@ static inline char str_view_col_front(Str_view_col str_view) {
     return str_view_front(str_view.base);
 }
 
-static inline char str_view_col_consume(Pos* pos, Str_view_col* str_view) {
+static inline char str_view_col_conenume(Pos* pos, Str_view_col* str_view) {
     str_view_col_advance_pos(pos, str_view_col_front(*str_view));
-    return str_view_consume(&str_view->base);
+    return str_view_conenume(&str_view->base);
 }
 
-static inline Str_view_col str_view_col_consume_count(Pos* pos, Str_view_col* str_view, size_t count) {
+static inline Str_view_col str_view_col_conenume_count(Pos* pos, Str_view_col* str_view, size_t count) {
     for (size_t idx = 0; idx < count; idx++) {
-        str_view_col_consume(pos, str_view);
+        str_view_col_conenume(pos, str_view);
     }
     Str_view temp = str_view->base;
-    return (Str_view_col) {.base = str_view_consume_count(&temp, count)};
+    return (Str_view_col) {.base = str_view_conenume_count(&temp, count)};
 }
 
-static inline bool str_view_col_try_consume_while(
+static inline bool str_view_col_try_conenume_while(
     Str_view_col* result,
     Pos* pos,
     Str_view_col* str_view,
@@ -64,19 +64,19 @@ static inline bool str_view_col_try_consume_while(
     return false;
 }
 
-static inline Str_view_col str_view_col_consume_while(
+static inline Str_view_col str_view_col_conenume_while(
     Pos* pos,
     Str_view_col* str_view,
     bool (*should_continue)(char /* previous char */, char /* current char */)
 ) {
     Str_view_col result = {0};
-    if (str_view_col_try_consume_while(&result, pos, str_view, should_continue)) {
+    if (str_view_col_try_conenume_while(&result, pos, str_view, should_continue)) {
         return result;
     }
     unreachable("condition is never met");
 }
 
-static inline Str_view_col str_view_col_consume_until(Pos* pos, Str_view_col* str_view, char delim) {
+static inline Str_view_col str_view_col_conenume_until(Pos* pos, Str_view_col* str_view, char delim) {
     Str_view_col new_str_view;
     Str_view* base = &str_view->base;
     for (size_t idx = 0; base->count > idx; idx++) {
@@ -105,8 +105,8 @@ static inline bool str_view_col_is_equal(Str_view_col a, Str_view_col b) {
     return str_view_is_equal(a.base, b.base);
 }
 
-static inline bool str_view_col_try_consume(Pos* pos, Str_view_col* str_view, char ch) {
-    if (str_view_try_consume(&str_view->base, ch)) {
+static inline bool str_view_col_try_conenume(Pos* pos, Str_view_col* str_view, char ch) {
+    if (str_view_try_conenume(&str_view->base, ch)) {
         str_view_col_advance_pos(pos, ch);
         return true;
     }

@@ -1,7 +1,7 @@
 type io import = std.io
 
 
-type Opt_int sum {
+type Opt_int enum {
     none
     some i32
     string u8*

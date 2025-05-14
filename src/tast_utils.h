@@ -55,7 +55,7 @@ static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
             // fallthrough
         case LANG_TYPE_RAW_UNION:
             // fallthrough
-        case LANG_TYPE_SUM:
+        case LANG_TYPE_ENUM:
             // fallthrough
         case LANG_TYPE_VOID:
             return lang_type_atom_is_equal(lang_type_get_atom(LANG_TYPE_MODE_LOG, a), lang_type_get_atom(LANG_TYPE_MODE_LOG, b));
@@ -112,14 +112,14 @@ static inline Lang_type tast_literal_get_lang_type(const Tast_literal* lit) {
             return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(tast_literal_get_pos(lit), lang_type_atom_new_from_cstr("u8", 1, 0))));
         case TAST_VOID:
             return lang_type_void_const_wrap(lang_type_void_new(tast_literal_get_pos(lit)));
-        case TAST_SUM_TAG_LIT:
-            return tast_sum_tag_lit_const_unwrap(lit)->lang_type;
+        case TAST_ENUM_TAG_LIT:
+            return tast_enum_tag_lit_const_unwrap(lit)->lang_type;
         case TAST_CHAR:
             return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(tast_literal_get_pos(lit), lang_type_atom_new_from_cstr("u8", 0, 0))));
-        case TAST_SUM_LIT:
-            return tast_sum_lit_const_unwrap(lit)->sum_lang_type;
+        case TAST_ENUM_LIT:
+            return tast_enum_lit_const_unwrap(lit)->enum_lang_type;
         case TAST_RAW_UNION_LIT:
-            return tast_expr_get_lang_type(tast_sum_lit_const_unwrap(lit)->item);
+            return tast_expr_get_lang_type(tast_enum_lit_const_unwrap(lit)->item);
         case TAST_FUNCTION_LIT:
             return tast_function_lit_const_unwrap(lit)->lang_type;
     }
@@ -135,13 +135,13 @@ static inline void tast_literal_set_lang_type(Tast_literal* lit, Lang_type lang_
             todo();
         case TAST_VOID:
             unreachable("");
-        case TAST_SUM_TAG_LIT:
-            tast_sum_tag_lit_unwrap(lit)->lang_type = lang_type;
+        case TAST_ENUM_TAG_LIT:
+            tast_enum_tag_lit_unwrap(lit)->lang_type = lang_type;
             return;
         case TAST_CHAR:
             unreachable("");
-        case TAST_SUM_LIT:
-            tast_sum_lit_unwrap(lit)->sum_lang_type = lang_type;
+        case TAST_ENUM_LIT:
+            tast_enum_lit_unwrap(lit)->enum_lang_type = lang_type;
             return;
         case TAST_RAW_UNION_LIT:
             tast_expr_set_lang_type(tast_raw_union_lit_unwrap(lit)->item, lang_type);
@@ -177,14 +177,14 @@ static inline Lang_type tast_expr_get_lang_type(const Tast_expr* expr) {
             return tast_symbol_const_unwrap(expr)->base.lang_type;
         case TAST_TUPLE:
             return lang_type_tuple_const_wrap(tast_tuple_const_unwrap(expr)->lang_type);
-        case TAST_SUM_CALLEE:
-            return tast_sum_callee_const_unwrap(expr)->sum_lang_type;
-        case TAST_SUM_CASE:
-            return tast_sum_case_const_unwrap(expr)->sum_lang_type;
-        case TAST_SUM_ACCESS:
-            return tast_sum_access_const_unwrap(expr)->lang_type;
-        case TAST_SUM_GET_TAG:
-            return tast_expr_get_lang_type(tast_sum_get_tag_const_unwrap(expr)->callee);
+        case TAST_ENUM_CALLEE:
+            return tast_enum_callee_const_unwrap(expr)->enum_lang_type;
+        case TAST_ENUM_CASE:
+            return tast_enum_case_const_unwrap(expr)->enum_lang_type;
+        case TAST_ENUM_ACCESS:
+            return tast_enum_access_const_unwrap(expr)->lang_type;
+        case TAST_ENUM_GET_TAG:
+            return tast_expr_get_lang_type(tast_enum_get_tag_const_unwrap(expr)->callee);
         case TAST_ASSIGNMENT:
             unreachable("");
         case TAST_IF_ELSE_CHAIN:
@@ -203,8 +203,8 @@ static inline Lang_type tast_struct_def_get_lang_type(const Tast_struct_def* def
     return lang_type_struct_const_wrap(lang_type_struct_new(def->pos, lang_type_atom_new(def->base.name, 0)));
 }
 
-static inline Lang_type tast_sum_def_get_lang_type(const Tast_sum_def* def) {
-    return lang_type_sum_const_wrap(lang_type_sum_new(def->pos, lang_type_atom_new(def->base.name, 0)));
+static inline Lang_type tast_enum_def_get_lang_type(const Tast_enum_def* def) {
+    return lang_type_enum_const_wrap(lang_type_enum_new(def->pos, lang_type_atom_new(def->base.name, 0)));
 }
 
 static inline Lang_type tast_def_get_lang_type(const Tast_def* def) {
@@ -219,8 +219,8 @@ static inline Lang_type tast_def_get_lang_type(const Tast_def* def) {
             unreachable("");
         case TAST_STRUCT_DEF:
             return tast_struct_def_get_lang_type(tast_struct_def_const_unwrap(def));
-        case TAST_SUM_DEF:
-            return tast_sum_def_get_lang_type(tast_sum_def_const_unwrap(def));
+        case TAST_ENUM_DEF:
+            return tast_enum_def_get_lang_type(tast_enum_def_const_unwrap(def));
         case TAST_PRIMITIVE_DEF:
             unreachable("");
         case TAST_IMPORT:
@@ -249,13 +249,13 @@ static inline void tast_expr_set_lang_type(Tast_expr* expr, Lang_type lang_type)
             todo();
         case TAST_TUPLE:
             todo();
-        case TAST_SUM_CALLEE:
+        case TAST_ENUM_CALLEE:
             todo();
-        case TAST_SUM_CASE:
+        case TAST_ENUM_CASE:
             unreachable("");
-        case TAST_SUM_GET_TAG:
+        case TAST_ENUM_GET_TAG:
             unreachable("");
-        case TAST_SUM_ACCESS:
+        case TAST_ENUM_ACCESS:
             unreachable("");
         case TAST_ASSIGNMENT:
             unreachable("");
@@ -311,7 +311,7 @@ static inline Lang_type* tast_def_set_lang_type(Tast_def* def) {
             unreachable("");
         case TAST_PRIMITIVE_DEF:
             unreachable("");
-        case TAST_SUM_DEF:
+        case TAST_ENUM_DEF:
             unreachable("");
         case TAST_IMPORT:
             unreachable("");
@@ -353,11 +353,11 @@ static inline Name tast_literal_get_name(const Tast_literal* lit) {
             return tast_string_const_unwrap(lit)->name;
         case TAST_VOID:
             unreachable("");
-        case TAST_SUM_TAG_LIT:
+        case TAST_ENUM_TAG_LIT:
             unreachable("");
         case TAST_CHAR:
             unreachable("");
-        case TAST_SUM_LIT:
+        case TAST_ENUM_LIT:
             unreachable("");
         case TAST_RAW_UNION_LIT:
             unreachable("");
@@ -386,15 +386,15 @@ static inline Name tast_expr_get_name(const Tast_expr* expr) {
             return tast_literal_get_name(tast_literal_const_unwrap(expr));
         case TAST_TUPLE:
             unreachable("");
-        case TAST_SUM_CALLEE:
+        case TAST_ENUM_CALLEE:
             unreachable("");
-        case TAST_SUM_CASE:
+        case TAST_ENUM_CASE:
             unreachable("");
-        case TAST_SUM_ACCESS:
+        case TAST_ENUM_ACCESS:
             unreachable("");
         case TAST_ASSIGNMENT:
             unreachable("");
-        case TAST_SUM_GET_TAG:
+        case TAST_ENUM_GET_TAG:
             unreachable("");
         case TAST_IF_ELSE_CHAIN:
             unreachable("");
@@ -418,8 +418,8 @@ static inline Name tast_def_get_name(const Tast_def* def) {
             return tast_function_decl_const_unwrap(def)->name;
         case TAST_FUNCTION_DEF:
             return tast_function_def_const_unwrap(def)->decl->name;
-        case TAST_SUM_DEF:
-            return tast_sum_def_const_unwrap(def)->base.name;
+        case TAST_ENUM_DEF:
+            return tast_enum_def_const_unwrap(def)->base.name;
         case TAST_IMPORT:
             todo();
     }
@@ -460,8 +460,8 @@ static inline Struct_def_base tast_def_get_struct_def_base(const Tast_def* def) 
             unreachable("");
         case TAST_STRUCT_DEF:
             return tast_struct_def_const_unwrap(def)->base;
-        case TAST_SUM_DEF:
-            return tast_sum_def_const_unwrap(def)->base;
+        case TAST_ENUM_DEF:
+            return tast_enum_def_const_unwrap(def)->base;
         case TAST_PRIMITIVE_DEF:
             unreachable("");
         case TAST_IMPORT:

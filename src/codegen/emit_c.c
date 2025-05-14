@@ -62,8 +62,8 @@ static void c_extend_type_call_str(String* output, Lang_type lang_type, bool opa
         case LANG_TYPE_PRIMITIVE:
             extend_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_C, lang_type);
             return;
-        case LANG_TYPE_SUM:
-            llvm_extend_name(output, lang_type_sum_const_unwrap(lang_type).atom.str);
+        case LANG_TYPE_ENUM:
+            llvm_extend_name(output, lang_type_enum_const_unwrap(lang_type).atom.str);
             return;
     }
     unreachable("");

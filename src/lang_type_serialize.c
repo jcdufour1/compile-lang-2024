@@ -20,8 +20,8 @@ Str_view serialize_lang_type_get_prefix(Lang_type lang_type) {
             return str_view_from_cstr("RAW_UNION");
         case LANG_TYPE_STRUCT:
             return str_view_from_cstr("STRUCT");
-        case LANG_TYPE_SUM:
-            return str_view_from_cstr("SUM");
+        case LANG_TYPE_ENUM:
+            return str_view_from_cstr("ENUM");
         case LANG_TYPE_PRIMITIVE:
             return str_view_from_cstr("PRI");
         case LANG_TYPE_TUPLE:
@@ -78,7 +78,7 @@ Str_view serialize_lang_type(Lang_type lang_type) {
             // fallthrough
         case LANG_TYPE_STRUCT:
             // fallthrough
-        case LANG_TYPE_SUM:
+        case LANG_TYPE_ENUM:
             // fallthrough
         case LANG_TYPE_RAW_UNION:
             return serialize_lang_type_struct_thing( lang_type);

@@ -120,7 +120,7 @@ void generic_sub_def(Uast_def* def, Name gen_param, Ulang_type gen_arg) {
             todo();
         case UAST_RAW_UNION_DEF:
             todo();
-        case UAST_SUM_DEF:
+        case UAST_ENUM_DEF:
             todo();
         case UAST_PRIMITIVE_DEF:
             log(LOG_DEBUG, TAST_FMT, uast_def_print(def));
@@ -249,9 +249,9 @@ void generic_sub_expr(Uast_expr* expr, Name gen_param, Ulang_type gen_arg) {
             todo();
         case UAST_TUPLE:
             todo();
-        case UAST_SUM_ACCESS:
+        case UAST_ENUM_ACCESS:
             todo();
-        case UAST_SUM_GET_TAG:
+        case UAST_ENUM_GET_TAG:
             todo();
         case UAST_OPERATOR:
             generic_sub_operator(uast_operator_unwrap(expr), gen_param, gen_arg);

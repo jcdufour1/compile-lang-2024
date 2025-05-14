@@ -1,5 +1,5 @@
 
-type Opt_int sum {
+type Opt_int enum {
     some i32
     none i1
 }

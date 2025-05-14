@@ -61,7 +61,7 @@ typedef enum {
     TOKEN_CLOSE_GENERIC,
 
     // miscellaneous
-    TOKEN_SUM,
+    TOKEN_ENUM,
     TOKEN_SYMBOL,
     TOKEN_DOUBLE_QUOTE,
     TOKEN_SEMICOLON,
@@ -221,7 +221,7 @@ static inline bool token_is_literal(Token token) {
             return false;
         case TOKEN_DEFAULT:
             return false;
-        case TOKEN_SUM:
+        case TOKEN_ENUM:
             return false;
         case TOKEN_MODULO:
             return false;
@@ -363,7 +363,7 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             return true;
         case TOKEN_OPEN_SQ_BRACKET:
             return true;
-        case TOKEN_SUM:
+        case TOKEN_ENUM:
             return false;
         case TOKEN_MODULO:
             return true;
@@ -540,7 +540,7 @@ static inline bool token_is_binary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_DEFAULT:
             return false;
-        case TOKEN_SUM:
+        case TOKEN_ENUM:
             return false;
         case TOKEN_MODULO:
             return true;

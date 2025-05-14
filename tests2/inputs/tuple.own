@@ -1,12 +1,12 @@
 type io import = std.io
 
 
-type TokenType sum {
+type TokenType enum {
     num
     string
 }
 
-type Token sum {
+type Token enum {
     num i32
     string u8*
     //both (u8*, i32) // TODO: uncomment this

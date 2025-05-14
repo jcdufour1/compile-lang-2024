@@ -24,7 +24,7 @@
 //
 //
 // TODO: expected failure test for 
-// type Token sum {
+// type Token enum {
 //     string u8*
 //     number i32
 // }

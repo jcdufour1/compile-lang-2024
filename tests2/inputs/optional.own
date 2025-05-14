@@ -3,7 +3,7 @@
 
 type io import = std.io
 
-type Optional_int sum {
+type Optional_int enum {
     some i32
     none
 }
@@ -12,12 +12,12 @@ type ParseError struct {
     dummy i32
 }
 
-type Result sum(<SuccessType, ErrorType>) {
+type Result enum(<SuccessType, ErrorType>) {
     ok SuccessType
     error ErrorType
 }
 
-type Token sum {
+type Token enum {
     number i32
     string u8*
 }

@@ -75,9 +75,9 @@ static void extend_type_call_str(String* output, Lang_type lang_type) {
             }
             extend_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_LLVM, lang_type);
             return;
-        case LANG_TYPE_SUM:
+        case LANG_TYPE_ENUM:
             string_extend_cstr(&a_main, output, "%");
-            llvm_extend_name(output, lang_type_sum_const_unwrap(lang_type).atom.str);
+            llvm_extend_name(output, lang_type_enum_const_unwrap(lang_type).atom.str);
             return;
     }
     unreachable("");

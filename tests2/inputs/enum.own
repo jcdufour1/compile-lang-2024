@@ -1,12 +1,12 @@
 type io import = std.io
 
 
-type TokenType sum {
+type TokenType enum {
     number
     string
 }
 
-type TokenType2 sum {
+type TokenType2 enum {
     number, string
 }
 
@@ -41,12 +41,12 @@ fn print_token_switch_non_exhaustive(token Token) {
     }
 }
 
-// check that scope rules are followed for type subtypes sum
-type NodeType sum {
+// check that scope rules are followed for type subtypes enum
+type NodeType enum {
     NONE
 }
 
-type LlvmType sum {
+type LlvmType enum {
     NONE
 }
 

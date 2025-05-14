@@ -1,7 +1,7 @@
 
 extern("c") fn isdigit(character i32)
 
-type Opt_int sum {
+type Opt_int enum {
     number i32
     none i1
 }

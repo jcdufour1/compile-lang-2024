@@ -1,5 +1,5 @@
 
-type Token sum {
+type Token enum {
     num i32
     string u8*
 }

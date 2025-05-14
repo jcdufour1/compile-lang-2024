@@ -1,7 +1,7 @@
 compile::stdout 0
 
 compile::stderr 5
-./tests2/inputs/sum_callee_too_many_args.own:8:23:[1;31merror[0;39m:() in sum case has no argument; add argument in () or remove ()
+./tests2/inputs/sum_callee_too_many_args.own:8:23:[1;31merror[0;39m:() in enum case has no argument; add argument in () or remove ()
      7 | fn main() i32 {
      8 |     let token Token = .num()
        |                       ^

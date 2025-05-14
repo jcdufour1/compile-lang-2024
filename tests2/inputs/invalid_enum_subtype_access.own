@@ -1,6 +1,6 @@
 
 
-type Token_type sum {
+type Token_type enum {
     NUM
     STRING
 }

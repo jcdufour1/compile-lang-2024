@@ -14,21 +14,21 @@ static void show_location_error(Pos pos) {
     if (pos.line > 1) {
         uint32_t line = 1;
         for (; file_con.count > 0 && line + 1 < pos.line; line++) {
-            while (file_con.count > 0 && str_view_consume(&file_con) != '\n');
+            while (file_con.count > 0 && str_view_conenume(&file_con) != '\n');
         }
         size_t count_prev = 0;
         {
             Str_view temp_file_text = file_con;
             while (file_con.count > 0 && str_view_front(temp_file_text) != '\n') {
                 count_prev++;
-                str_view_consume(&temp_file_text);
+                str_view_conenume(&temp_file_text);
             }
         }
 
         Str_view prev_line = str_view_slice(file_con, 0, count_prev);
         fprintf(stderr, " %5"PRIu32" | "STR_VIEW_FMT"\n", pos.line - 1, str_view_print(prev_line));
 
-        while (file_con.count > 0 && str_view_consume(&file_con) != '\n');
+        while (file_con.count > 0 && str_view_conenume(&file_con) != '\n');
     }
 
     size_t count_curr = 0;
@@ -36,12 +36,12 @@ static void show_location_error(Pos pos) {
         Str_view temp_file_text = file_con;
         while (file_con.count > 0 && str_view_front(temp_file_text) != '\n') {
             count_curr++;
-            str_view_consume(&temp_file_text);
+            str_view_conenume(&temp_file_text);
         }
     }
     Str_view curr_line = str_view_slice(file_con, 0, count_curr);
     fprintf(stderr, " %5"PRIu32" | "STR_VIEW_FMT"\n", pos.line, str_view_print(curr_line));
-    while (file_con.count > 0 && str_view_consume(&file_con) != '\n');
+    while (file_con.count > 0 && str_view_conenume(&file_con) != '\n');
 
     fprintf(stderr, "       | ");
     for (uint32_t idx = 1; idx < pos.column; idx++) {
@@ -55,7 +55,7 @@ static void show_location_error(Pos pos) {
             Str_view temp_file_text = file_con;
             while (file_con.count > 0 && str_view_front(temp_file_text) != '\n') {
                 count_next++;
-                str_view_consume(&temp_file_text);
+                str_view_conenume(&temp_file_text);
             }
         }
         Str_view next_line = str_view_slice(file_con, 0, count_next);

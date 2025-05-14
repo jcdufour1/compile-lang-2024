@@ -457,27 +457,27 @@ bool struct_like_tbl_lookup(Uast_def** def, Name key) {
 }
 
 //
-// Raw_union_of_sum implementation
+// Raw_union_of_enum implementation
 //
 
-bool raw_union_of_sum_add(Tast_raw_union_def* def, Name sum_name) {
-    return generic_tbl_add((Generic_symbol_table*)&env.raw_union_of_sum, serialize_name_symbol_table(sum_name), def);
+bool raw_union_of_enum_add(Tast_raw_union_def* def, Name enum_name) {
+    return generic_tbl_add((Generic_symbol_table*)&env.raw_union_of_enum, serialize_name_symbol_table(enum_name), def);
 }
 
-bool raw_union_of_sum_lookup(Tast_raw_union_def** def, Name sum_name) {
-    return generic_tbl_lookup((void**)def, (Generic_symbol_table*)&env.raw_union_of_sum, serialize_name_symbol_table(sum_name));
+bool raw_union_of_enum_lookup(Tast_raw_union_def** def, Name enum_name) {
+    return generic_tbl_lookup((void**)def, (Generic_symbol_table*)&env.raw_union_of_enum, serialize_name_symbol_table(enum_name));
 }
 
 //
 // Struct_to_struct implementation
 //
 
-bool struct_to_struct_add(Tast_struct_def* def, Name sum_name) {
-    return generic_tbl_add((Generic_symbol_table*)&env.struct_to_struct, serialize_name_symbol_table(sum_name), def);
+bool struct_to_struct_add(Tast_struct_def* def, Name enum_name) {
+    return generic_tbl_add((Generic_symbol_table*)&env.struct_to_struct, serialize_name_symbol_table(enum_name), def);
 }
 
-bool struct_to_struct_lookup(Tast_struct_def** def, Name sum_name) {
-    return generic_tbl_lookup((void**)def, (Generic_symbol_table*)&env.struct_to_struct, serialize_name_symbol_table(sum_name));
+bool struct_to_struct_lookup(Tast_struct_def** def, Name enum_name) {
+    return generic_tbl_lookup((void**)def, (Generic_symbol_table*)&env.struct_to_struct, serialize_name_symbol_table(enum_name));
 }
 //
 // Scope_id_to_next_table implementation

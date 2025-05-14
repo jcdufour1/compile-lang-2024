@@ -1,7 +1,7 @@
 {
 }
 
-type Token sum {
+type Token enum {
     num i32
     none
 }

@@ -8,7 +8,7 @@ compile::stderr 67
     14 | }
 ./tests2/inputs/nested_struct_by_value.own:6:6:[1;34mnote[0;39m:`Token3` contains `Token4`
      5 | 
-     6 | type Token3 sum {
+     6 | type Token3 enum {
        |      ^
      7 |     id i32
 ./tests2/inputs/nested_struct_by_value.own:1:6:[1;34mnote[0;39m:`Token4` contains `Token2`
@@ -32,7 +32,7 @@ compile::stderr 67
     12 |     id i32
 ./tests2/inputs/nested_struct_by_value.own:6:6:[1;34mnote[0;39m:`Token3` contains `Token4`
      5 | 
-     6 | type Token3 sum {
+     6 | type Token3 enum {
        |      ^
      7 |     id i32
 ./tests2/inputs/nested_struct_by_value.own:1:6:[1;34mnote[0;39m:`Token4` contains `Token2`
@@ -55,7 +55,7 @@ compile::stderr 67
     12 |     id i32
 ./tests2/inputs/nested_struct_by_value.own:6:6:[1;34mnote[0;39m:`Token3` contains `Token4`
      5 | 
-     6 | type Token3 sum {
+     6 | type Token3 enum {
        |      ^
      7 |     id i32
 ./tests2/inputs/nested_struct_by_value.own:19:11:[1;31merror[0;39m:`Token` recursively includes itself without indirection; consider storing `Token` by pointer here instead of by value

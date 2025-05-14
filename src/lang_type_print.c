@@ -14,8 +14,8 @@ void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
         case LANG_TYPE_RAW_UNION:
             string_extend_cstr(&print_arena, buf, "raw_union");
             return;
-        case LANG_TYPE_SUM:
-            string_extend_cstr(&print_arena, buf, "sum");
+        case LANG_TYPE_ENUM:
+            string_extend_cstr(&print_arena, buf, "enum");
             return;
         case LANG_TYPE_TUPLE:
             string_extend_cstr(&print_arena, buf, "tuple");
@@ -151,7 +151,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
         }
         case LANG_TYPE_VOID:
             // fallthrough
-        case LANG_TYPE_SUM:
+        case LANG_TYPE_ENUM:
             // fallthrough
         case LANG_TYPE_RAW_UNION:
             // fallthrough

@@ -1,11 +1,11 @@
 type io import = std.io
 
-type Token sum {
+type Token enum {
     num i32
     string u8*
 }
 
-type Thing sum {
+type Thing enum {
     token Token
     num i32
 }

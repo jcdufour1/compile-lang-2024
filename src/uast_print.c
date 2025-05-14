@@ -158,21 +158,21 @@ Str_view uast_tuple_print_internal(const Uast_tuple* lit, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_sum_access_print_internal(const Uast_sum_access* access, int indent) {
+Str_view uast_enum_access_print_internal(const Uast_enum_access* access, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "sum_access", indent);
+    string_extend_cstr_indent(&print_arena, &buf, "enum_access", indent);
     
-    string_extend_strv(&print_arena, &buf, tast_sum_tag_lit_print_internal(access->tag, indent + INDENT_WIDTH));
+    string_extend_strv(&print_arena, &buf, tast_enum_tag_lit_print_internal(access->tag, indent + INDENT_WIDTH));
     string_extend_strv(&print_arena, &buf, uast_expr_print_internal(access->callee, indent + INDENT_WIDTH));
 
     return string_to_strv(buf);
 }
 
-Str_view uast_sum_get_tag_print_internal(const Uast_sum_get_tag* access, int indent) {
+Str_view uast_enum_get_tag_print_internal(const Uast_enum_get_tag* access, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "sum_get_tag", indent);
+    string_extend_cstr_indent(&print_arena, &buf, "enum_get_tag", indent);
     
     string_extend_strv(&print_arena, &buf, uast_expr_print_internal(access->callee, indent + INDENT_WIDTH));
 
@@ -542,10 +542,10 @@ Str_view uast_raw_union_def_print_internal(const Uast_raw_union_def* def, int in
     return string_to_strv(buf);
 }
 
-Str_view uast_sum_def_print_internal(const Uast_sum_def* def, int indent) {
+Str_view uast_enum_def_print_internal(const Uast_enum_def* def, int indent) {
     String buf = {0};
 
-    extend_ustruct_def_base(&buf, "sum_def", def->base, indent, def->pos);
+    extend_ustruct_def_base(&buf, "enum_def", def->base, indent, def->pos);
 
     return string_to_strv(buf);
 }
@@ -595,8 +595,8 @@ Str_view uast_def_print_internal(const Uast_def* def, int indent) {
             return uast_struct_def_print_internal(uast_struct_def_const_unwrap(def), indent);
         case UAST_RAW_UNION_DEF:
             return uast_raw_union_def_print_internal(uast_raw_union_def_const_unwrap(def), indent);
-        case UAST_SUM_DEF:
-            return uast_sum_def_print_internal(uast_sum_def_const_unwrap(def), indent);
+        case UAST_ENUM_DEF:
+            return uast_enum_def_print_internal(uast_enum_def_const_unwrap(def), indent);
         case UAST_PRIMITIVE_DEF:
             return uast_primitive_def_print_internal(uast_primitive_def_const_unwrap(def), indent);
         case UAST_IMPORT_PATH:
@@ -636,12 +636,12 @@ Str_view uast_expr_print_internal(const Uast_expr* expr, int indent) {
             return uast_array_literal_print_internal(uast_array_literal_const_unwrap(expr), indent);
         case UAST_TUPLE:
             return uast_tuple_print_internal(uast_tuple_const_unwrap(expr), indent);
-        case UAST_SUM_ACCESS:
-            return uast_sum_access_print_internal(uast_sum_access_const_unwrap(expr), indent);
+        case UAST_ENUM_ACCESS:
+            return uast_enum_access_print_internal(uast_enum_access_const_unwrap(expr), indent);
         case UAST_UNKNOWN:
             return uast_unknown_print_internal(uast_unknown_const_unwrap(expr), indent);
-        case UAST_SUM_GET_TAG:
-            return uast_sum_get_tag_print_internal(uast_sum_get_tag_const_unwrap(expr), indent);
+        case UAST_ENUM_GET_TAG:
+            return uast_enum_get_tag_print_internal(uast_enum_get_tag_const_unwrap(expr), indent);
         case UAST_SWITCH:
             return uast_switch_print_internal(uast_switch_const_unwrap(expr), indent);
         case UAST_IF_ELSE_CHAIN:

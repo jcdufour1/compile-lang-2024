@@ -73,51 +73,51 @@ static Lang_type_struct rm_tuple_lang_type_tuple(Lang_type_tuple lang_type, Pos 
 }
 
 // note: will not clone everything
-static Tast_raw_union_def* get_raw_union_def_from_sum_def(Tast_sum_def* sum_def) {
+static Tast_raw_union_def* get_raw_union_def_from_enum_def(Tast_enum_def* enum_def) {
 #   ifndef DNDEBUG
-        size_t largest_idx = struct_def_base_get_idx_largest_member(sum_def->base);
+        size_t largest_idx = struct_def_base_get_idx_largest_member(enum_def->base);
         assert(
-            vec_at(&sum_def->base.members, largest_idx)->lang_type.type != LANG_TYPE_VOID &&
-            "sum_def with inner types of only void should never be passed here"
+            vec_at(&enum_def->base.members, largest_idx)->lang_type.type != LANG_TYPE_VOID &&
+            "enum_def with inner types of only void should never be passed here"
         );
 #   endif // DNDEBUG
        
     Tast_raw_union_def* cached_def = NULL;
-    if (raw_union_of_sum_lookup(&cached_def, sum_def->base.name)) {
+    if (raw_union_of_enum_lookup(&cached_def, enum_def->base.name)) {
         return cached_def;
     }
 
-    Tast_raw_union_def* union_def = tast_raw_union_def_new(sum_def->pos, sum_def->base);
+    Tast_raw_union_def* union_def = tast_raw_union_def_new(enum_def->pos, enum_def->base);
     union_def->base.name = util_literal_name_new_prefix2(union_def->base.name.base);
-    unwrap(raw_union_of_sum_add(union_def, sum_def->base.name));
+    unwrap(raw_union_of_enum_add(union_def, enum_def->base.name));
     load_raw_union_def(union_def);
     return union_def;
 }
 
-static Tast_struct_def* sum_get_struct_def(Name sum_name, Tast_variable_def_vec membs, Pos pos) {
+static Tast_struct_def* enum_get_struct_def(Name enum_name, Tast_variable_def_vec membs, Pos pos) {
     Tast_struct_def* cached_def = NULL;
     // TODO: rename this hash table
-    if (struct_to_struct_lookup(&cached_def, sum_name)) {
+    if (struct_to_struct_lookup(&cached_def, enum_name)) {
         return cached_def;
     }
 
     Tast_struct_def* new_def = tast_struct_def_new(pos, (Struct_def_base) {
         .members = membs,
-        .name = util_literal_name_new_prefix2(sum_name.base)
+        .name = util_literal_name_new_prefix2(enum_name.base)
     });
-    unwrap(struct_to_struct_add(new_def, sum_name));
+    unwrap(struct_to_struct_add(new_def, enum_name));
     load_struct_def(new_def);
     return new_def;
 }
 
-static Lang_type rm_tuple_lang_type_sum(Lang_type_sum lang_type, Pos lang_type_pos) {
+static Lang_type rm_tuple_lang_type_enum(Lang_type_enum lang_type, Pos lang_type_pos) {
     Tast_def* lang_type_def_ = NULL; 
     unwrap(symbol_lookup(&lang_type_def_, lang_type.atom.str));
     Tast_variable_def_vec members = {0};
 
     Lang_type tag_lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(lang_type_pos, 64, 0)));
-    size_t largest_idx = struct_def_base_get_idx_largest_member(tast_sum_def_unwrap(lang_type_def_)->base);
-    if (vec_at(&tast_sum_def_unwrap(lang_type_def_)->base.members, largest_idx)->lang_type.type == LANG_TYPE_VOID) {
+    size_t largest_idx = struct_def_base_get_idx_largest_member(tast_enum_def_unwrap(lang_type_def_)->base);
+    if (vec_at(&tast_enum_def_unwrap(lang_type_def_)->base.members, largest_idx)->lang_type.type == LANG_TYPE_VOID) {
         return tag_lang_type;
     }
 
@@ -130,7 +130,7 @@ static Lang_type rm_tuple_lang_type_sum(Lang_type_sum lang_type, Pos lang_type_p
     );
     vec_append(&a_main, &members, tag);
 
-    Tast_raw_union_def* item_type_def = get_raw_union_def_from_sum_def(tast_sum_def_unwrap(lang_type_def_));
+    Tast_raw_union_def* item_type_def = get_raw_union_def_from_enum_def(tast_enum_def_unwrap(lang_type_def_));
 
     for (size_t idx = 0; idx < item_type_def->base.members.info.count; idx++) {
         vec_at(&item_type_def->base.members, idx)->lang_type = rm_tuple_lang_type(
@@ -147,7 +147,7 @@ static Lang_type rm_tuple_lang_type_sum(Lang_type_sum lang_type, Pos lang_type_p
     );
     vec_append(&a_main, &members, item);
     
-    Tast_struct_def* struct_def = sum_get_struct_def(tast_sum_def_unwrap(lang_type_def_)->base.name, members, item->pos);
+    Tast_struct_def* struct_def = enum_get_struct_def(tast_enum_def_unwrap(lang_type_def_)->base.name, members, item->pos);
     // TODO: consider collisions with generated structs and user defined structs
     Tast_def* dummy = NULL;
     unwrap(sym_tbl_lookup(&dummy, struct_def->base.name));
@@ -158,8 +158,8 @@ static Lang_type rm_tuple_lang_type_sum(Lang_type_sum lang_type, Pos lang_type_p
 
 static Lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
     switch (lang_type.type) {
-        case LANG_TYPE_SUM: {
-            return rm_tuple_lang_type_sum(lang_type_sum_const_unwrap(lang_type), lang_type_pos);
+        case LANG_TYPE_ENUM: {
+            return rm_tuple_lang_type_enum(lang_type_enum_const_unwrap(lang_type), lang_type_pos);
         }
         case LANG_TYPE_RAW_UNION: {
             Tast_def* lang_type_def_ = NULL; 
@@ -447,7 +447,7 @@ static Name load_function_call(Llvm_block* new_block, Tast_function_call* old_ca
     }
 }
 
-// this function is needed for situations such as switching directly on sum
+// this function is needed for situations such as switching directly on enum
 static Name load_ptr_function_call(Llvm_block* new_block, Tast_function_call* old_call) {
     Tast_variable_def* new_var = tast_variable_def_new(
         old_call->pos,
@@ -533,15 +533,15 @@ static Name load_void(Pos pos) {
     return new_void->name;
 }
 
-static Name load_sum_tag_lit(Tast_sum_tag_lit* old_lit) {
-    Llvm_number* sum_tag_lit = llvm_number_new(
+static Name load_enum_tag_lit(Tast_enum_tag_lit* old_lit) {
+    Llvm_number* enum_tag_lit = llvm_number_new(
         old_lit->pos,
         old_lit->data,
         old_lit->lang_type,
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
-    unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_number_wrap(sum_tag_lit)))));
-    return sum_tag_lit->name;
+    unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_number_wrap(enum_tag_lit)))));
+    return enum_tag_lit->name;
 }
 
 static Name load_number(Tast_number* old_lit) {
@@ -576,27 +576,27 @@ static Name load_function_lit(
     return name->name_self;
 }
 
-static Name load_sum_lit(Llvm_block* new_block, Tast_sum_lit* old_lit) {
-    Tast_def* sum_def_ = NULL;
-    unwrap(symbol_lookup(&sum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, old_lit->sum_lang_type)));
-    Tast_sum_def* sum_def = tast_sum_def_unwrap(sum_def_);
+static Name load_enum_lit(Llvm_block* new_block, Tast_enum_lit* old_lit) {
+    Tast_def* enum_def_ = NULL;
+    unwrap(symbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, old_lit->enum_lang_type)));
+    Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
     
-    size_t largest_idx = struct_def_base_get_idx_largest_member(sum_def->base);
-    if (vec_at(&sum_def->base.members, largest_idx)->lang_type.type == LANG_TYPE_VOID) {
-        // inner lang_type is always void for this sum, so we will just use number instead of tagged sum
-        return load_sum_tag_lit(old_lit->tag);
+    size_t largest_idx = struct_def_base_get_idx_largest_member(enum_def->base);
+    if (vec_at(&enum_def->base.members, largest_idx)->lang_type.type == LANG_TYPE_VOID) {
+        // inner lang_type is always void for this enum, so we will just use number instead of tagged enum
+        return load_enum_tag_lit(old_lit->tag);
     }
 
-    Lang_type new_lang_type = rm_tuple_lang_type_sum(
-        lang_type_sum_const_unwrap(old_lit->sum_lang_type),
+    Lang_type new_lang_type = rm_tuple_lang_type_enum(
+        lang_type_enum_const_unwrap(old_lit->enum_lang_type),
         old_lit->pos
     );
 
-    Tast_raw_union_def* item_def = get_raw_union_def_from_sum_def(sum_def);
+    Tast_raw_union_def* item_def = get_raw_union_def_from_enum_def(enum_def);
     log(LOG_DEBUG, TAST_FMT, tast_raw_union_def_print(item_def));
 
     Tast_expr_vec members = {0};
-    vec_append(&a_main, &members, tast_literal_wrap(tast_sum_tag_lit_wrap(old_lit->tag)));
+    vec_append(&a_main, &members, tast_literal_wrap(tast_enum_tag_lit_wrap(old_lit->tag)));
     vec_append(&a_main, &members, tast_literal_wrap(tast_raw_union_lit_wrap(
         tast_raw_union_lit_new(
             old_lit->pos,
@@ -607,9 +607,9 @@ static Name load_sum_lit(Llvm_block* new_block, Tast_sum_lit* old_lit) {
     )));
     log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, new_lang_type));
     log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, tast_raw_union_def_get_lang_type(item_def)));
-    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, old_lit->sum_lang_type));
+    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, old_lit->enum_lang_type));
 
-    // this is an actual tagged sum
+    // this is an actual tagged enum
     return load_struct_literal(new_block, tast_struct_literal_new(
         old_lit->pos,
         members,
@@ -660,16 +660,16 @@ static Name load_literal(Llvm_block* new_block, Tast_literal* old_lit) {
             return load_string(tast_string_unwrap(old_lit));
         case TAST_VOID:
             return load_void(tast_void_unwrap(old_lit)->pos);
-        case TAST_SUM_TAG_LIT:
-            return load_sum_tag_lit(tast_sum_tag_lit_unwrap(old_lit));
+        case TAST_ENUM_TAG_LIT:
+            return load_enum_tag_lit(tast_enum_tag_lit_unwrap(old_lit));
         case TAST_CHAR:
             return load_char(tast_char_unwrap(old_lit));
         case TAST_NUMBER:
             return load_number(tast_number_unwrap(old_lit));
         case TAST_FUNCTION_LIT:
             return load_function_lit(tast_function_lit_unwrap(old_lit));
-        case TAST_SUM_LIT:
-            return load_sum_lit(new_block, tast_sum_lit_unwrap(old_lit));
+        case TAST_ENUM_LIT:
+            return load_enum_lit(new_block, tast_enum_lit_unwrap(old_lit));
         case TAST_RAW_UNION_LIT:
             return load_raw_union_lit(new_block, tast_raw_union_lit_unwrap(old_lit));
     }
@@ -693,8 +693,8 @@ static Name load_ptr_symbol(Llvm_block* new_block, Tast_symbol* old_sym) {
 
     //Lang_type new_lang_type = rm_tuple_lang_type(old_sym->lang_type, old_sym->pos);
     switch (old_sym->base.lang_type.type) {
-        case LANG_TYPE_SUM:
-            // TODO: should this always be interpreted as loading the tag of the sum?
+        case LANG_TYPE_ENUM:
+            // TODO: should this always be interpreted as loading the tag of the enum?
         case LANG_TYPE_STRUCT:
             // fallthrough
         case LANG_TYPE_RAW_UNION:
@@ -714,9 +714,9 @@ static Name load_ptr_symbol(Llvm_block* new_block, Tast_symbol* old_sym) {
 
 }
 
-static Name load_ptr_sum_callee(
+static Name load_ptr_enum_callee(
     Llvm_block* new_block,
-    Tast_sum_callee* old_callee
+    Tast_enum_callee* old_callee
 ) {
     (void) new_block;
     (void) env;
@@ -908,7 +908,7 @@ static Name load_unary(Llvm_block* new_block, Tast_unary* old_unary) {
             return load_ptr_expr(new_block, old_unary->child);
         case UNARY_UNSAFE_CAST:
             switch (old_unary->lang_type.type) {
-                case LANG_TYPE_SUM:
+                case LANG_TYPE_ENUM:
                     return load_expr(new_block, old_unary->child);
                 case LANG_TYPE_STRUCT:
                     return load_expr(new_block, old_unary->child);
@@ -1045,23 +1045,23 @@ static Name load_index(
     return new_load->name;
 }
 
-static Name load_ptr_sum_get_tag(Llvm_block* new_block, Tast_sum_get_tag* old_access) {
-    Tast_def* sum_def_ = NULL;
-    unwrap(symbol_lookup(&sum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(old_access->callee))));
-    Tast_sum_def* sum_def = tast_sum_def_unwrap(sum_def_);
-    Name new_sum = load_ptr_expr(new_block, old_access->callee);
+static Name load_ptr_enum_get_tag(Llvm_block* new_block, Tast_enum_get_tag* old_access) {
+    Tast_def* enum_def_ = NULL;
+    unwrap(symbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(old_access->callee))));
+    Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
+    Name new_enum = load_ptr_expr(new_block, old_access->callee);
     
-    size_t largest_idx = struct_def_base_get_idx_largest_member(sum_def->base);
-    if (vec_at(&sum_def->base.members, largest_idx)->lang_type.type == LANG_TYPE_VOID) {
-        // all sum inner types are void; new_sum will actually just be a number
-        return new_sum;
+    size_t largest_idx = struct_def_base_get_idx_largest_member(enum_def->base);
+    if (vec_at(&enum_def->base.members, largest_idx)->lang_type.type == LANG_TYPE_VOID) {
+        // all enum inner types are void; new_enum will actually just be a number
+        return new_enum;
     }
 
     Llvm_load_element_ptr* new_tag = llvm_load_element_ptr_new(
         old_access->pos,
         lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0))),
         0,
-        new_sum,
+        new_enum,
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
     unwrap(alloca_add(llvm_load_element_ptr_wrap(new_tag)));
@@ -1070,10 +1070,10 @@ static Name load_ptr_sum_get_tag(Llvm_block* new_block, Tast_sum_get_tag* old_ac
     return new_tag->name_self;
 }
 
-static Name load_sum_get_tag(Llvm_block* new_block, Tast_sum_get_tag* old_access) {
+static Name load_enum_get_tag(Llvm_block* new_block, Tast_enum_get_tag* old_access) {
     Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
         old_access->pos,
-        load_ptr_sum_get_tag(new_block, old_access),
+        load_ptr_enum_get_tag(new_block, old_access),
         lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0))),
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
@@ -1083,12 +1083,12 @@ static Name load_sum_get_tag(Llvm_block* new_block, Tast_sum_get_tag* old_access
     return new_load->name;
 }
 
-static Name load_ptr_sum_access(Llvm_block* new_block, Tast_sum_access* old_access) {
-    Tast_def* sum_def_ = NULL;
-    unwrap(symbol_lookup(&sum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(old_access->callee))));
-    Tast_sum_def* sum_def = tast_sum_def_unwrap(sum_def_);
+static Name load_ptr_enum_access(Llvm_block* new_block, Tast_enum_access* old_access) {
+    Tast_def* enum_def_ = NULL;
+    unwrap(symbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, tast_expr_get_lang_type(old_access->callee))));
+    Tast_enum_def* enum_def = tast_enum_def_unwrap(enum_def_);
     Name new_callee = load_ptr_expr(new_block, old_access->callee);
-    Tast_raw_union_def* union_def = get_raw_union_def_from_sum_def(sum_def);
+    Tast_raw_union_def* union_def = get_raw_union_def_from_enum_def(enum_def);
     
     Llvm_load_element_ptr* new_union = llvm_load_element_ptr_new(
         old_access->pos,
@@ -1113,8 +1113,8 @@ static Name load_ptr_sum_access(Llvm_block* new_block, Tast_sum_access* old_acce
     return new_item->name_self;
 }
 
-static Name load_sum_access(Llvm_block* new_block, Tast_sum_access* old_access) {
-    Name ptr = load_ptr_sum_access(new_block, old_access);
+static Name load_enum_access(Llvm_block* new_block, Tast_enum_access* old_access) {
+    Name ptr = load_ptr_enum_access(new_block, old_access);
 
     Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
         old_access->pos,
@@ -1127,8 +1127,8 @@ static Name load_sum_access(Llvm_block* new_block, Tast_sum_access* old_access) 
     return new_load->name;
 }
 
-static Name load_sum_case(Tast_sum_case* old_case) {
-    return load_sum_tag_lit(old_case->tag);
+static Name load_enum_case(Tast_enum_case* old_case) {
+    return load_enum_tag_lit(old_case->tag);
 }
 
 static Name load_tuple(Llvm_block* new_block, Tast_tuple* old_tuple) {
@@ -1179,18 +1179,18 @@ static Name load_expr(Llvm_block* new_block, Tast_expr* old_expr) {
             return load_member_access(new_block, tast_member_access_unwrap(old_expr));
         case TAST_INDEX:
             return load_index(new_block, tast_index_unwrap(old_expr));
-        case TAST_SUM_ACCESS:
-            return load_sum_access(new_block, tast_sum_access_unwrap(old_expr));
-        case TAST_SUM_CASE:
-            return load_sum_case(tast_sum_case_unwrap(old_expr));
+        case TAST_ENUM_ACCESS:
+            return load_enum_access(new_block, tast_enum_access_unwrap(old_expr));
+        case TAST_ENUM_CASE:
+            return load_enum_case(tast_enum_case_unwrap(old_expr));
         case TAST_STRUCT_LITERAL:
             return load_struct_literal(new_block, tast_struct_literal_unwrap(old_expr));
         case TAST_TUPLE:
             return load_tuple(new_block, tast_tuple_unwrap(old_expr));
-        case TAST_SUM_CALLEE:
+        case TAST_ENUM_CALLEE:
             todo();
-        case TAST_SUM_GET_TAG:
-            return load_sum_get_tag(new_block, tast_sum_get_tag_unwrap(old_expr));
+        case TAST_ENUM_GET_TAG:
+            return load_enum_get_tag(new_block, tast_enum_get_tag_unwrap(old_expr));
         case TAST_IF_ELSE_CHAIN:
             return load_if_else_chain(new_block, tast_if_else_chain_unwrap(old_expr));
         case TAST_MODULE_ALIAS:
@@ -1709,16 +1709,16 @@ static Name load_ptr_expr(Llvm_block* new_block, Tast_expr* old_expr) {
             return load_ptr_struct_literal(new_block, tast_struct_literal_unwrap(old_expr));
         case TAST_TUPLE:
             unreachable("");
-        case TAST_SUM_CALLEE:
-            return load_ptr_sum_callee(new_block, tast_sum_callee_unwrap(old_expr));
-        case TAST_SUM_CASE:
+        case TAST_ENUM_CALLEE:
+            return load_ptr_enum_callee(new_block, tast_enum_callee_unwrap(old_expr));
+        case TAST_ENUM_CASE:
             unreachable("");
-        case TAST_SUM_ACCESS:
+        case TAST_ENUM_ACCESS:
             unreachable("");
         case TAST_ASSIGNMENT:
             unreachable("");
-        case TAST_SUM_GET_TAG:
-            return load_ptr_sum_get_tag(new_block, tast_sum_get_tag_unwrap(old_expr));
+        case TAST_ENUM_GET_TAG:
+            return load_ptr_enum_get_tag(new_block, tast_enum_get_tag_unwrap(old_expr));
         case TAST_IF_ELSE_CHAIN:
             todo();
         case TAST_MODULE_ALIAS:
@@ -1741,8 +1741,8 @@ static Name load_def(Llvm_block* new_block, Tast_def* old_def) {
         case TAST_RAW_UNION_DEF:
             load_raw_union_def(tast_raw_union_def_unwrap(old_def));
             return (Name) {0};
-        case TAST_SUM_DEF:
-            unreachable("sum def should not make it here");
+        case TAST_ENUM_DEF:
+            unreachable("enum def should not make it here");
         case TAST_PRIMITIVE_DEF:
             unreachable("");
         case TAST_IMPORT:
@@ -1797,7 +1797,7 @@ static Name load_def_sometimes(Tast_def* old_def) {
         case TAST_RAW_UNION_DEF:
             load_raw_union_def(tast_raw_union_def_unwrap(old_def));
             return (Name) {0};
-        case TAST_SUM_DEF:
+        case TAST_ENUM_DEF:
             return (Name) {0};
         case TAST_PRIMITIVE_DEF:
             unreachable("");

@@ -1,5 +1,5 @@
 
-type Token sum(<NumType>) {
+type Token enum(<NumType>) {
     string u8*
     number NumType
 }

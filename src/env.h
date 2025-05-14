@@ -40,7 +40,7 @@ typedef struct Env_ {
 
     bool type_checking_is_in_struct_base_def;
 
-    Tast_variable_def_vec sum_case_vars;
+    Tast_variable_def_vec enum_case_vars;
 
     Ulang_type parent_fn_rtn_type;
     Lang_type break_type;
@@ -49,7 +49,7 @@ typedef struct Env_ {
     Lang_type rm_tuple_parent_fn_lang_type;
 
     Uast_stmt_vec switch_case_defer_add_if_true;
-    Uast_stmt_vec switch_case_defer_add_sum_case_part;
+    Uast_stmt_vec switch_case_defer_add_enum_case_part;
 
     Name struct_rtn_name_parent_function;
 
@@ -70,7 +70,7 @@ typedef struct Env_ {
     Name_vec struct_like_waiting_to_resolve;
     Usymbol_table struct_like_tbl;
 
-    Raw_union_of_sum raw_union_of_sum;
+    Raw_union_of_enum raw_union_of_enum;
     Struct_to_struct struct_to_struct;
 
     // TODO: remove

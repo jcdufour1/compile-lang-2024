@@ -3,7 +3,7 @@ type Token4 struct {
     inner Token2
 }
 
-type Token3 sum {
+type Token3 enum {
     id i32
     inner Token4
 }

@@ -90,9 +90,9 @@ bool try_set_function_decl_types(
 
 bool try_set_tuple_types(Tast_tuple** new_tuple, Uast_tuple* tuple);
 
-bool try_set_sum_access_types(Tast_sum_access** new_sum_access, Uast_sum_access* sum_access);
+bool try_set_enum_access_types(Tast_enum_access** new_enum_access, Uast_enum_access* enum_access);
 
-bool try_set_sum_get_tag_types(Tast_sum_get_tag** new_access, Uast_sum_get_tag* access);
+bool try_set_enum_get_tag_types(Tast_enum_get_tag** new_access, Uast_enum_get_tag* access);
 
 bool try_set_index_untyped_types(Tast_stmt** new_tast, Uast_index* index);
 
