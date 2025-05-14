@@ -180,20 +180,19 @@ typedef void*(*Obj_new)(Pos, Ustruct_def_base);
 
 static bool resolve_generics_ulang_type_internal_struct_like(
     Uast_def** after_res,
-    Name* new_name,
     Ulang_type* result,
     Ustruct_def_base old_base,
     Ulang_type lang_type,
     Pos pos_def,
     Obj_new obj_new
 ) {
-    *new_name = name_new(old_base.name.mod_path, old_base.name.base, ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args, SCOPE_TOP_LEVEL /* TODO */);
-    if (!struct_like_tbl_lookup(after_res, *new_name)) {
-        if (old_base.generics.info.count != new_name->gen_args.info.count) {
+    Name new_name = name_new(old_base.name.mod_path, old_base.name.base, ulang_type_regular_const_unwrap(lang_type).atom.str.gen_args, SCOPE_TOP_LEVEL /* TODO */);
+    if (!struct_like_tbl_lookup(after_res, new_name)) {
+        if (old_base.generics.info.count != new_name.gen_args.info.count) {
             msg_invalid_count_generic_args(
                 pos_def,
                 ulang_type_get_pos(lang_type),
-                new_name->gen_args,
+                new_name.gen_args,
                 old_base.generics.info.count,
                 old_base.generics.info.count
             );
@@ -201,11 +200,11 @@ static bool resolve_generics_ulang_type_internal_struct_like(
         }
 
         Uast_def* new_def_ = NULL;
-        if (usymbol_lookup(&new_def_, *new_name)) {
+        if (usymbol_lookup(&new_def_, new_name)) {
             *after_res = new_def_;
         } else {
             Ustruct_def_base new_base = {0};
-            if (!resolve_generics_serialize_struct_def_base(&new_base, old_base, new_name->gen_args, *new_name)) {
+            if (!resolve_generics_serialize_struct_def_base(&new_base, old_base, new_name.gen_args, new_name)) {
                 todo();
                 return false;
             }
@@ -219,12 +218,12 @@ static bool resolve_generics_ulang_type_internal_struct_like(
     ), ulang_type_get_pos(lang_type)));
 
     Tast_def* dummy = NULL;
-    if (symbol_lookup(&dummy, *new_name)) {
+    if (symbol_lookup(&dummy, new_name)) {
         return true;
     }
     if (struct_like_tbl_add(*after_res)) {
         usym_tbl_add(*after_res);
-        vec_append(&a_main, &env.struct_like_waiting_to_resolve, *new_name);
+        vec_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
     }
     return true;
 }
@@ -251,10 +250,8 @@ static bool resolve_generics_ulang_type_internal_raw_union_def(
     Uast_raw_union_def* before_res,
     Ulang_type lang_type
 ) {
-    Ustruct_def_base old_base = before_res->base;
-    Name new_name = {0};
     Uast_def* after_res_ = NULL;
-    if (!resolve_generics_ulang_type_internal_struct_like(&after_res_, &new_name, result, old_base, lang_type, before_res->pos, local_uast_raw_union_def_new)) {
+    if (!resolve_generics_ulang_type_internal_struct_like(&after_res_, result, before_res->base, lang_type, before_res->pos, local_uast_raw_union_def_new)) {
         return false;
     }
     *after_res = uast_raw_union_def_unwrap(after_res_);
@@ -267,10 +264,8 @@ static bool resolve_generics_ulang_type_internal_enum_def(
     Uast_enum_def* before_res,
     Ulang_type lang_type
 ) {
-    Ustruct_def_base old_base = before_res->base;
-    Name new_name = {0};
     Uast_def* after_res_ = NULL;
-    if (!resolve_generics_ulang_type_internal_struct_like(&after_res_, &new_name, result, old_base, lang_type, before_res->pos, local_uast_enum_def_new)) {
+    if (!resolve_generics_ulang_type_internal_struct_like(&after_res_, result, before_res->base, lang_type, before_res->pos, local_uast_enum_def_new)) {
         return false;
     }
     *after_res = uast_enum_def_unwrap(after_res_);
@@ -283,10 +278,8 @@ static bool resolve_generics_ulang_type_internal_sum_def(
     Uast_sum_def* before_res,
     Ulang_type lang_type
 ) {
-    Ustruct_def_base old_base = before_res->base;
-    Name new_name = {0};
     Uast_def* after_res_ = NULL;
-    if (!resolve_generics_ulang_type_internal_struct_like(&after_res_, &new_name, result, old_base, lang_type, before_res->pos, local_uast_sum_def_new)) {
+    if (!resolve_generics_ulang_type_internal_struct_like(&after_res_, result, before_res->base, lang_type, before_res->pos, local_uast_sum_def_new)) {
         return false;
     }
     *after_res = uast_sum_def_unwrap(after_res_);
@@ -299,12 +292,12 @@ static bool resolve_generics_ulang_type_internal_struct_def(
     Uast_struct_def* before_res,
     Ulang_type lang_type
 ) {
-    Ustruct_def_base old_base = before_res->base;
-    Name new_name = {0};
     Uast_def* after_res_ = NULL;
-    if (!resolve_generics_ulang_type_internal_struct_like(&after_res_, &new_name, result, old_base, lang_type, before_res->pos, local_uast_struct_def_new)) {
+    log(LOG_DEBUG, TAST_FMT, uast_struct_def_print(before_res));
+    if (!resolve_generics_ulang_type_internal_struct_like(&after_res_, result, before_res->base, lang_type, before_res->pos, local_uast_struct_def_new)) {
         return false;
     }
+    log(LOG_DEBUG, TAST_FMT, uast_def_print(after_res_));
     *after_res = uast_struct_def_unwrap(after_res_);
     return true;
 }
@@ -312,60 +305,34 @@ static bool resolve_generics_ulang_type_internal_struct_def(
 static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_type* result, Uast_def* before_res, Ulang_type lang_type) {
     switch (before_res->type) {
         case UAST_RAW_UNION_DEF: {
-            Uast_raw_union_def* new_def = NULL;
-            if (!resolve_generics_ulang_type_internal_raw_union_def(
-                &new_def,
-                result,
-                uast_raw_union_def_unwrap(before_res),
-                lang_type
-            )) {
+            Uast_def* after_res_ = NULL;
+            if (!resolve_generics_ulang_type_internal_struct_like(&after_res_, result, uast_def_get_struct_def_base(before_res), lang_type, uast_def_get_pos(before_res), local_uast_raw_union_def_new)) {
                 return false;
             }
-            before_res = uast_raw_union_def_wrap(new_def);
             *type = LANG_TYPE_RAW_UNION;
             return true;
         }
         case UAST_ENUM_DEF: {
-            Uast_enum_def* new_def = NULL;
-            if (!resolve_generics_ulang_type_internal_enum_def(
-                &new_def,
-                result,
-                uast_enum_def_unwrap(before_res),
-                lang_type
-            )) {
+            Uast_def* after_res_ = NULL;
+            if (!resolve_generics_ulang_type_internal_struct_like(&after_res_, result, uast_def_get_struct_def_base(before_res), lang_type, uast_def_get_pos(before_res), local_uast_enum_def_new)) {
                 return false;
             }
-            before_res = uast_enum_def_wrap(new_def);
             *type = LANG_TYPE_ENUM;
             return true;
-
         }
         case UAST_SUM_DEF: {
-            Uast_sum_def* new_def = NULL;
-            if (!resolve_generics_ulang_type_internal_sum_def(
-                &new_def,
-                result,
-                uast_sum_def_unwrap(before_res),
-                lang_type
-            )) {
+            Uast_def* after_res_ = NULL;
+            if (!resolve_generics_ulang_type_internal_struct_like(&after_res_, result, uast_def_get_struct_def_base(before_res), lang_type, uast_def_get_pos(before_res), local_uast_sum_def_new)) {
                 return false;
             }
-            before_res = uast_sum_def_wrap(new_def);
             *type = LANG_TYPE_SUM;
             return true;
-
         }
         case UAST_STRUCT_DEF: {
-            Uast_struct_def* new_def = NULL;
-            if (!resolve_generics_ulang_type_internal_struct_def(
-                &new_def,
-                result,
-                uast_struct_def_unwrap(before_res),
-                lang_type
-            )) {
+            Uast_def* after_res_ = NULL;
+            if (!resolve_generics_ulang_type_internal_struct_like(&after_res_, result, uast_def_get_struct_def_base(before_res), lang_type, uast_def_get_pos(before_res), local_uast_struct_def_new)) {
                 return false;
             }
-            before_res = uast_struct_def_wrap(new_def);
             *type = LANG_TYPE_STRUCT;
             return true;
         }
