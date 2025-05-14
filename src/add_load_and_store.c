@@ -988,7 +988,7 @@ static Name load_ptr_member_access(Llvm_block* new_block, Tast_member_access* ol
     
     Llvm_load_element_ptr* new_load = llvm_load_element_ptr_new(
         old_access->pos,
-        old_access->lang_type,
+        rm_tuple_lang_type(old_access->lang_type, old_access->pos),
         struct_index,
         new_callee,
         util_literal_name_new_mod_path2(env.curr_mod_path)

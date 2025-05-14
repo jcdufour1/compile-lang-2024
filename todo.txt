@@ -92,6 +92,7 @@ for generics:
 - warn about unused variables
 - when using variadic args for extern("c") function: give error when passing i16 without a cast, etc.
 - consistent naming for arenas
+- implement == for sum with void inner types, or give error for using ==
 
 
 ## needed tests

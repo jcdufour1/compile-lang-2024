@@ -208,7 +208,7 @@ static void msg_invalid_count_function_args_internal(
     String message = {0};
     string_extend_size_t(&print_arena, &message, fun_call->args.info.count);
     string_extend_cstr(&print_arena, &message, " arguments are passed to function `");
-    extend_name(NAME_LOG, &message, fun_decl->name);
+    extend_name(NAME_MSG, &message, fun_decl->name);
     string_extend_cstr(&print_arena, &message, "`, but ");
     string_extend_size_t(&print_arena, &message, min_args);
     if (max_args > min_args) {
@@ -595,6 +595,16 @@ static Tast_literal* precalulate_char(
     return util_tast_literal_new_from_int64_t(result_val, TOKEN_CHAR_LITERAL, pos);
 }
 
+static Tast_literal* precalulate_sum_lit(
+    const Tast_sum_lit* lhs,
+    const Tast_sum_lit* rhs,
+    BINARY_TYPE token_type,
+    Pos pos
+) {
+    int64_t result_val = precalulate_number_internal(lhs->tag->data, rhs->tag->data, token_type);
+    return util_tast_literal_new_from_int64_t(result_val, TOKEN_CHAR_LITERAL, pos);
+}
+
 bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_expr* new_rhs, Pos oper_pos, BINARY_TYPE oper_token_type) {
     if (!lang_type_is_equal(tast_expr_get_lang_type(new_lhs), tast_expr_get_lang_type(new_rhs))) {
         if (can_be_implicitly_converted(
@@ -672,6 +682,33 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                     oper_pos
                 );
                 break;
+            case TAST_SUM_LIT: {
+                Tast_sum_lit* lhs = tast_sum_lit_unwrap(lhs_lit);
+                Tast_sum_lit* rhs = tast_sum_lit_unwrap(rhs_lit);
+                if (!lang_type_is_equal(lhs->sum_lang_type, rhs->sum_lang_type)) {
+                    // binary operators with mismatched sum types
+                    todo();
+                }
+
+                Uast_def* sum_def_ = NULL;
+                unwrap(usymbol_lookup(&sum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, lhs->sum_lang_type)));
+                if (!ulang_type_is_equal(
+                    vec_at(&uast_sum_def_unwrap(sum_def_)->base.members, (size_t)lhs->tag->data)->lang_type,
+                    lang_type_to_ulang_type(lang_type_void_const_wrap(lang_type_void_new(lhs->pos)))
+                )) {
+                    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, lhs->tag->lang_type));
+                    // overloaded binary operators not defined for non-void inner types of sum
+                    msg_todo("overloaded binary operators for non-void inner types of sum", lhs->pos);
+                    todo();
+                }
+                literal = precalulate_sum_lit(
+                    tast_sum_lit_const_unwrap(lhs_lit),
+                    tast_sum_lit_const_unwrap(rhs_lit),
+                    oper_token_type,
+                    oper_pos
+                );
+                break;
+            }
             default:
                 unreachable("");
         }
@@ -2416,9 +2453,9 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
                     string_extend_cstr(&a_main, &string, ", ");
                 }
 
-                extend_name(NAME_LOG, &string, enum_def.name);
+                extend_name(NAME_MSG, &string, enum_def.name);
                 string_extend_cstr(&a_main, &string, ".");
-                extend_name(NAME_LOG, &string, vec_at(&enum_def.members, idx)->name);
+                extend_name(NAME_MSG, &string, vec_at(&enum_def.members, idx)->name);
             }
         }
 
