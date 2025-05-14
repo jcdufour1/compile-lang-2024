@@ -46,7 +46,7 @@ typedef struct {
 } Expect_fail_str_to_curr_log_level;
 
 // TODO: uncomment static_assert
-//static_assert(EXPECT_FAIL_COUNT == 57, "exhaustive handling of expected fail types");
+static_assert(EXPECT_FAIL_COUNT == 58, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {"note", EXPECT_FAIL_NOTE, LOG_NOTE, false},
     {"file-built", EXPECT_FAIL_FILE_BUILT, LOG_VERBOSE, false},
@@ -78,6 +78,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"struct-init-on-primitive", EXPECT_FAIL_STRUCT_INIT_ON_PRIMITIVE, LOG_ERROR, true},
     {"undefined-type", EXPECT_FAIL_UNDEFINED_TYPE, LOG_ERROR, true},
     {"missing-close-sq-bracket", EXPECT_FAIL_MISSING_CLOSE_SQ_BRACKET, LOG_ERROR, true},
+    {"missing-close-generic", EXPECT_FAIL_MISSING_CLOSE_GENERIC, LOG_ERROR, true},
     {"deref_non_pointer", EXPECT_FAIL_DEREF_NON_POINTER, LOG_ERROR, true},
     {"break-invalid-location", EXPECT_FAIL_BREAK_INVALID_LOCATION, LOG_ERROR, true},
     {"continue-invalid-location", EXPECT_FAIL_CONTINUE_INVALID_LOCATION, LOG_ERROR, true},
@@ -108,6 +109,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
 };
 
 // error types are in the same order in expect_fail_str_to_curr_log_level_pair and expect_fail_pair
+// TODO: make these names less verbose?
 static Expect_fail_str_to_curr_log_level 
 expect_fail_str_to_curr_log_level_pair[sizeof(expect_fail_pair)/sizeof(expect_fail_pair[0])] = {0};
 
