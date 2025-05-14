@@ -194,7 +194,7 @@ static void msg_expected_expr_internal(const char* file, int line, Tk_view token
     string_extend_cstr(&print_arena, &message, "expected expression ");
     string_extend_cstr(&print_arena, &message, msg_suffix);
 
-    msg_internal(file, line, EXPECT_FAIL_EXPECTED_EXPRESSION, get_curr_pos(tokens), STRING_FMT"\n", string_print(message)); \
+    msg_internal(file, line, DIAG_EXPECTED_EXPRESSION, get_curr_pos(tokens), STRING_FMT"\n", string_print(message)); \
 }
 
 #define msg_expected_expr(tokens, msg_suffix) \
@@ -224,9 +224,9 @@ static void msg_parser_expected_internal(const char* file, int line, Token got, 
 
     string_extend_cstr(&print_arena, &message, msg_suffix);
 
-    EXPECT_FAIL_TYPE expect_fail_type = EXPECT_FAIL_PARSER_EXPECTED;
+    DIAG_TYPE expect_fail_type = DIAG_PARSER_EXPECTED;
     if (got.type == TOKEN_NONTYPE) {
-        expect_fail_type = EXPECT_FAIL_INVALID_TOKEN;
+        expect_fail_type = DIAG_INVALID_TOKEN;
     }
     msg_internal(file, line, expect_fail_type, got.pos, STR_VIEW_FMT"\n", str_view_print(string_to_strv(message)));
 
@@ -240,14 +240,14 @@ static void msg_parser_expected_internal(const char* file, int line, Token got, 
 
 static PARSE_STATUS msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
     msg(
-        EXPECT_FAIL_REDEFINITION_SYMBOL, uast_def_get_pos(new_sym_def),
+        DIAG_REDEFINITION_SYMBOL, uast_def_get_pos(new_sym_def),
         "redefinition of symbol `"STR_VIEW_FMT"`\n", name_print(NAME_MSG, uast_def_get_name(new_sym_def))
     );
 
     Uast_def* original_def;
     unwrap(usymbol_lookup(&original_def, uast_def_get_name(new_sym_def)));
     msg(
-        EXPECT_FAIL_NOTE, uast_def_get_pos(original_def),
+        DIAG_NOTE, uast_def_get_pos(original_def),
         "`"STR_VIEW_FMT"` originally defined here\n", name_print(NAME_MSG, uast_def_get_name(original_def))
     );
 
@@ -899,7 +899,7 @@ static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* t
     if (try_consume(&tk_equal, tokens, TOKEN_SINGLE_EQUAL)) {
         if (is_variadic) {
             msg(
-                EXPECT_FAIL_OPTIONAL_ARGS_FOR_VARIADIC_ARGS, tk_equal.pos,
+                DIAG_OPTIONAL_ARGS_FOR_VARIADIC_ARGS, tk_equal.pos,
                 "optional arguments cannot be used with variadic parameters\n"
             );
             return PARSE_EXPR_ERROR;
@@ -1589,7 +1589,7 @@ static PARSE_STATUS parse_function_decl(Uast_function_decl** fun_decl, Tk_view* 
     }
     if (!str_view_cstr_is_equal(extern_type_token.text, "c")) {
         msg(
-            EXPECT_FAIL_INVALID_EXTERN_TYPE, extern_type_token.pos,
+            DIAG_INVALID_EXTERN_TYPE, extern_type_token.pos,
             "invalid extern type `"STR_VIEW_FMT"`\n", str_view_print(extern_type_token.text)
         );
         goto error;
@@ -1989,7 +1989,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
 
     if (!try_consume_newlines(tokens)) {
         msg(
-            EXPECT_FAIL_NO_NEW_LINE_AFTER_STATEMENT, tk_view_front(*tokens).pos,
+            DIAG_NO_NEW_LINE_AFTER_STATEMENT, tk_view_front(*tokens).pos,
             "expected newline after statement\n"
         );
         return PARSE_EXPR_ERROR;
@@ -2017,7 +2017,7 @@ static PARSE_STATUS parse_block(Uast_block** block, Tk_view* tokens, bool is_top
             // this means that there is no matching `}` found
             if (!is_top_level) {
                 msg(
-                    EXPECT_FAIL_MISSING_CLOSE_CURLY_BRACE, open_brace_token.pos, 
+                    DIAG_MISSING_CLOSE_CURLY_BRACE, open_brace_token.pos, 
                     "opening `{` is unmatched\n"
                 );
                 status = PARSE_ERROR;
@@ -2179,7 +2179,7 @@ static PARSE_EXPR_STATUS parse_expr_piece(
                 // TODO: remove this if if it causes too many issues
                 if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
                     msg(
-                        EXPECT_FAIL_MISSING_CLOSE_PAR, open_par_token.pos, 
+                        DIAG_MISSING_CLOSE_PAR, open_par_token.pos, 
                         "opening `(` is unmatched\n"
                     );
                 }
@@ -2190,7 +2190,7 @@ static PARSE_EXPR_STATUS parse_expr_piece(
         }
         if (!try_consume(NULL, tokens, TOKEN_CLOSE_PAR)) {
             msg(
-                EXPECT_FAIL_MISSING_CLOSE_PAR, open_par_token.pos, 
+                DIAG_MISSING_CLOSE_PAR, open_par_token.pos, 
                 "opening `(` is unmatched\n"
             );
             return PARSE_EXPR_ERROR;
@@ -2434,7 +2434,7 @@ static PARSE_STATUS parse_expr_index(
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_SQ_BRACKET)) {
         msg(
-            EXPECT_FAIL_MISSING_CLOSE_SQ_BRACKET,
+            DIAG_MISSING_CLOSE_SQ_BRACKET,
             tk_view_front(*tokens).pos,
             "expected closing `]` after expr\n"
         );
@@ -2482,6 +2482,7 @@ static PARSE_STATUS parse_expr_generic(
 //};
 
 static_assert(TOKEN_COUNT == 68, "exhausive handling of token types; note that only binary operators need to be explicitly handled here");
+// lower precedence operators are in earlier rows in the table
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},
     {TOKEN_LOGICAL_OR, TOKEN_LOGICAL_OR, TOKEN_LOGICAL_OR, TOKEN_LOGICAL_OR},
@@ -2619,7 +2620,7 @@ bool parse_file(Uast_block** block, Str_view file_path) {
     Str_view* file_con = arena_alloc(&a_main, sizeof(*file_con));
     if (!read_file(file_con, file_path)) {
         msg(
-            EXPECT_FAIL_FILE_COULD_NOT_OPEN, dummy_pos,
+            DIAG_FILE_COULD_NOT_OPEN, dummy_pos,
             "could not open file `"STR_VIEW_FMT"`: %s\n",
             str_view_print(file_path), strerror(errno)
         );

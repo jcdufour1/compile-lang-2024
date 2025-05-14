@@ -13,7 +13,7 @@
 static Arena tk_arena = {0};
 
 static void msg_tokenizer_invalid_token(Str_view_col token_text, Pos pos) {
-    msg(EXPECT_FAIL_INVALID_TOKEN, pos, "invalid token `"STR_VIEW_COL_FMT"`\n", str_view_col_print(token_text));
+    msg(DIAG_INVALID_TOKEN, pos, "invalid token `"STR_VIEW_COL_FMT"`\n", str_view_col_print(token_text));
 }
 
 static bool local_isalnum_or_underscore(char prev, char curr) {
@@ -178,7 +178,7 @@ static bool get_next_token(
         token->type = TOKEN_STRING_LITERAL;
         Str_view_col quote_str = {0};
         if (!str_view_col_try_consume_while(&quote_str, pos, file_text_rem, is_not_quote)) {
-            msg(EXPECT_FAIL_MISSING_CLOSE_DOUBLE_QUOTE, token->pos, "unmatched `\"`\n");
+            msg(DIAG_MISSING_CLOSE_DOUBLE_QUOTE, token->pos, "unmatched `\"`\n");
             token->type = TOKEN_NONTYPE;
             return false;
         }
@@ -201,7 +201,7 @@ static bool get_next_token(
     } else if (str_view_col_try_consume(pos, file_text_rem, '*')) {
         if (str_view_col_try_consume(pos, file_text_rem, '/')) {
             msg(
-                EXPECT_FAIL_MISSING_CLOSE_MULTILINE, 
+                DIAG_MISSING_CLOSE_MULTILINE, 
                 *pos, "unmatched closing `/*`\n"
             );
             return false;
@@ -224,7 +224,7 @@ static bool get_next_token(
                 Str_view temp_text = file_text_rem->base;
                 if (file_text_rem->base.count < 2) {
                     msg(
-                        EXPECT_FAIL_MISSING_CLOSE_MULTILINE, 
+                        DIAG_MISSING_CLOSE_MULTILINE, 
                         vec_top(&pos_stack), "unmatched opening `/*`\n"
                     );
                     return false;

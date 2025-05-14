@@ -65,7 +65,7 @@ static void show_location_error(Pos pos) {
 
 __attribute__((format (printf, 5, 6)))
 void msg_internal(
-    const char* file, int line, EXPECT_FAIL_TYPE msg_expect_fail_type,
+    const char* file, int line, DIAG_TYPE msg_expect_fail_type,
     Pos pos, const char* format, ...
 ) {
     va_list args;
@@ -94,12 +94,12 @@ void msg_internal(
     }
 
     if (log_level >= LOG_ERROR && params.test_expected_fail) {
-        if (params.expected_fail_types.info.count <= expected_fail_count) {
+        if (params.diag_types.info.count <= expected_fail_count) {
             log(LOG_FATAL, "too many fails occured\n");
             exit(EXIT_CODE_FAIL);
         }
-        unwrap(expected_fail_count < params.expected_fail_types.info.count && "out of bounds");
-        EXPECT_FAIL_TYPE expected_expect_fail = vec_at(&params.expected_fail_types, expected_fail_count);
+        unwrap(expected_fail_count < params.diag_types.info.count && "out of bounds");
+        DIAG_TYPE expected_expect_fail = vec_at(&params.diag_types, expected_fail_count);
 
         if (msg_expect_fail_type != expected_expect_fail) {
             log(

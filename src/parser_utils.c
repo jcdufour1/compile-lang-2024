@@ -63,7 +63,7 @@ bool try_str_view_octal_after_0_to_int64_t(int64_t* result, const Pos pos, Str_v
         }
 
         if (curr_char < '0' || curr_char > '7') {
-            msg(EXPECT_FAIL_INVALID_OCTAL, pos, "invalid octal literal\n");
+            msg(DIAG_INVALID_OCTAL, pos, "invalid octal literal\n");
             return false;
         }
 
@@ -92,7 +92,7 @@ bool try_str_view_hex_after_0x_to_int64_t(int64_t* result, const Pos pos, Str_vi
         } else if (curr_char >= 'A' && curr_char <= 'F') {
             increment = (curr_char - 'A') + 10;
         } else {
-            msg(EXPECT_FAIL_INVALID_HEX, pos, "invalid hex literal\n");
+            msg(DIAG_INVALID_HEX, pos, "invalid hex literal\n");
             return false;
         }
 
@@ -114,7 +114,7 @@ bool try_str_view_bin_after_0b_to_int64_t(int64_t* result, const Pos pos, Str_vi
         }
 
         if (curr_char != '0' && curr_char != '1') {
-            msg(EXPECT_FAIL_INVALID_BIN, pos, "invalid bin literal\n");
+            msg(DIAG_INVALID_BIN, pos, "invalid bin literal\n");
             return false;
         }
 
@@ -147,7 +147,7 @@ bool try_str_view_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) 
         if (isalpha(curr_char)) {
             // we are looking at x in 0x56, b in 0b10, etc.
             if (!first_is_zero || idx != 1) {
-                msg(EXPECT_FAIL_INVALID_DECIMAL_LIT, pos, "invalid decimal literal\n");
+                msg(DIAG_INVALID_DECIMAL_LIT, pos, "invalid decimal literal\n");
                 return false;
             }
 
@@ -167,7 +167,7 @@ bool try_str_view_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) 
                 );
             }
 
-            msg(EXPECT_FAIL_INVALID_DECIMAL_LIT/* TODO */, pos, "invalid literal prefix 0x%c\n", curr_char);
+            msg(DIAG_INVALID_DECIMAL_LIT/* TODO */, pos, "invalid literal prefix 0x%c\n", curr_char);
             return false;
         }
 
@@ -186,7 +186,7 @@ bool try_str_view_to_char(char* result, const Pos pos, Str_view str_view) {
     if (!str_view_try_consume(&str_view, '\\')) {
         if (str_view.count != 1) {
             msg(
-                EXPECT_FAIL_INVALID_CHAR_LIT, pos,
+                DIAG_INVALID_CHAR_LIT, pos,
                 "expected exactly one character in char literal without excapes, but got %zu\n",
                 str_view.count
             );
@@ -198,7 +198,7 @@ bool try_str_view_to_char(char* result, const Pos pos, Str_view str_view) {
 
     if (str_view.count != 1) {
         msg(
-            EXPECT_FAIL_INVALID_CHAR_LIT, pos,
+            DIAG_INVALID_CHAR_LIT, pos,
             "expected exactly one character in char literal after `\\`, but got %zu\n",
             str_view.count
         );

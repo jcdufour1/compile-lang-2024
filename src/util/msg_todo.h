@@ -1,12 +1,12 @@
 #ifndef MSG_TODO_H
 #define MSG_TODO_H
 
-#include <expected_fail_type.h>
+#include <diag_type.h>
 
 // TODO: remove this forward declaration
 __attribute__((format (printf, 5, 6)))
 void msg_internal(
-    const char* file, int line, EXPECT_FAIL_TYPE msg_expect_fail_type,
+    const char* file, int line, DIAG_TYPE msg_expect_fail_type,
     Pos pos, const char* format, ...
 );
 
@@ -18,7 +18,7 @@ void msg_internal(
 
 static inline void msg_todo_internal(const char* file, int line, Str_view feature, Pos pos) {
     msg_internal(
-        file, line, EXPECT_FAIL_NOT_YET_IMPLEMENTED, pos, 
+        file, line, DIAG_NOT_YET_IMPLEMENTED, pos, 
         "language feature `"STR_VIEW_FMT"` not yet implemented (may or may not be implemented in the future)\n",
         str_view_print(feature)
     );

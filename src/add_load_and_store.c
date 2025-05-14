@@ -1559,7 +1559,7 @@ static void load_for_with_cond(Llvm_block* new_block, Tast_for_with_cond* old_fo
 static void load_break(Llvm_block* new_block, Tast_break* old_break) {
     if (env.label_if_break.base.count < 1) {
         msg(
-            EXPECT_FAIL_BREAK_INVALID_LOCATION, old_break->pos,
+            DIAG_BREAK_INVALID_LOCATION, old_break->pos,
             "break statement outside of a for loop\n"
         );
         return;
@@ -1591,7 +1591,7 @@ static void load_label(Llvm_block* new_block, Tast_label* old_label) {
 static void load_continue(Llvm_block* new_block, Tast_continue* old_continue) {
     if (env.label_if_continue.base.count < 1) {
         msg(
-            EXPECT_FAIL_CONTINUE_INVALID_LOCATION, old_continue->pos,
+            DIAG_CONTINUE_INVALID_LOCATION, old_continue->pos,
             "continue statement outside of a for loop\n"
         );
         return;

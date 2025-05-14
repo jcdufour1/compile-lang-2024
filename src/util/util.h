@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <str_view_struct.h>
-#include <expected_fail_type.h>
+#include <diag_type.h>
 
 typedef enum {
     LOG_NEVER   = 0,
@@ -40,6 +40,7 @@ typedef struct {
     uint32_t column;
 } Pos;
 
+// TODO: make these constants upper case
 #define dummy_env (&(Env){0})
 
 static const Pos dummy_pos = {0};

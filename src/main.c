@@ -24,13 +24,13 @@ static void fail(void) {
         exit(EXIT_CODE_FAIL);
     }
 
-    log(LOG_DEBUG, "%zu %zu\n", expected_fail_count, params.expected_fail_types.info.count); 
-    if (expected_fail_count == params.expected_fail_types.info.count) {
+    log(LOG_DEBUG, "%zu %zu\n", expected_fail_count, params.diag_types.info.count); 
+    if (expected_fail_count == params.diag_types.info.count) {
         exit(EXIT_CODE_EXPECTED_FAIL);
     } else {
         log(
             LOG_FATAL, "%zu expected fails occured, but %zu expected fails were expected\n",
-            expected_fail_count, params.expected_fail_types.info.count
+            expected_fail_count, params.diag_types.info.count
         );
         exit(EXIT_CODE_FAIL);
     }

@@ -23,7 +23,7 @@ static void msg_undefined_type_internal(
     Ulang_type lang_type
 ) {
     msg_internal(
-        file, line, EXPECT_FAIL_UNDEFINED_TYPE, pos,
+        file, line, DIAG_UNDEFINED_TYPE, pos,
         "type `"LANG_TYPE_FMT"` is not defined\n", ulang_type_print(LANG_TYPE_MODE_MSG, lang_type)
     );
 }
@@ -50,12 +50,12 @@ static void msg_invalid_count_generic_args_internal(
     }
     string_extend_cstr(&print_arena, &message, " generic arguments expected\n");
     msg_internal(
-        file, line, EXPECT_FAIL_INVALID_COUNT_GENERIC_ARGS, pos_gen_args,
+        file, line, DIAG_INVALID_COUNT_GENERIC_ARGS, pos_gen_args,
         STR_VIEW_FMT, str_view_print(string_to_strv(message))
     );
 
     msg_internal(
-        file, line, EXPECT_FAIL_NOTE, pos_def,
+        file, line, DIAG_NOTE, pos_def,
         "generic parameters defined here\n" 
     );
 }

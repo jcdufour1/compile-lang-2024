@@ -182,7 +182,7 @@ static void msg_invalid_function_arg_internal(
 ) {
     msg_internal(
         file, line,
-        EXPECT_FAIL_INVALID_FUN_ARG, tast_expr_get_pos(argument), 
+        DIAG_INVALID_FUN_ARG, tast_expr_get_pos(argument), 
         "argument is of type `"LANG_TYPE_FMT"`, "
         "but the corresponding parameter `"STR_VIEW_FMT"` is of type `"LANG_TYPE_FMT"`\n",
         lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(argument)), 
@@ -191,7 +191,7 @@ static void msg_invalid_function_arg_internal(
     );
     msg_internal(
         file, line,
-        EXPECT_FAIL_NOTE, corres_param->pos,
+        DIAG_NOTE, corres_param->pos,
         "corresponding parameter `"STR_VIEW_FMT"` defined here\n",
         name_print(NAME_MSG, corres_param->name)
     );
@@ -216,12 +216,12 @@ static void msg_invalid_count_function_args_internal(
     }
     string_extend_cstr(&print_arena, &message, " arguments expected\n");
     msg_internal(
-        file, line, EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, fun_call->pos,
+        file, line, DIAG_INVALID_COUNT_FUN_ARGS, fun_call->pos,
         STR_VIEW_FMT, str_view_print(string_to_strv(message))
     );
 
     msg_internal(
-        file, line, EXPECT_FAIL_NOTE, uast_function_decl_get_pos(fun_decl),
+        file, line, DIAG_NOTE, uast_function_decl_get_pos(fun_decl),
         "function `"STR_VIEW_FMT"` defined here\n", name_print(NAME_MSG, fun_decl->name)
     );
 }
@@ -249,7 +249,7 @@ static void msg_invalid_count_struct_literal_args_internal(
     }
     string_extend_cstr(&print_arena, &message, " arguments expected\n");
     msg_internal(
-        file, line, EXPECT_FAIL_INVALID_COUNT_STRUCT_LIT_ARGS, pos,
+        file, line, DIAG_INVALID_COUNT_STRUCT_LIT_ARGS, pos,
         STR_VIEW_FMT, str_view_print(string_to_strv(message))
     );
 }
@@ -261,14 +261,14 @@ static void msg_invalid_yield_type_internal(const char* file, int line, Pos pos,
     if (is_auto_inserted) {
         msg_internal(
             file, line,
-            EXPECT_FAIL_MISSING_YIELD_STATEMENT, pos,
+            DIAG_MISSING_YIELD_STATEMENT, pos,
             "no break statement in case that breaks `"LANG_TYPE_FMT"`\n",
             lang_type_print(LANG_TYPE_MODE_MSG, env.break_type)
         );
     } else {
         msg_internal(
             file, line,
-            EXPECT_FAIL_MISMATCHED_YIELD_TYPE, pos,
+            DIAG_MISMATCHED_YIELD_TYPE, pos,
             "breaking `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
             lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(child)),
             lang_type_print(LANG_TYPE_MODE_MSG, env.break_type)
@@ -277,7 +277,7 @@ static void msg_invalid_yield_type_internal(const char* file, int line, Pos pos,
 
     msg_internal(
         file, line,
-        EXPECT_FAIL_NOTE, lang_type_get_pos(env.break_type),
+        DIAG_NOTE, lang_type_get_pos(env.break_type),
         "case break type `"LANG_TYPE_FMT"` defined here\n",
         lang_type_print(LANG_TYPE_MODE_MSG, env.break_type) 
     );
@@ -287,14 +287,14 @@ static void msg_invalid_return_type_internal(const char* file, int line, Pos pos
     if (is_auto_inserted) {
         msg_internal(
             file, line,
-            EXPECT_FAIL_MISSING_RETURN, pos,
+            DIAG_MISSING_RETURN, pos,
             "no return statement in function that returns `"LANG_TYPE_FMT"`\n",
             ulang_type_print(LANG_TYPE_MODE_MSG, env.parent_fn_rtn_type)
         );
     } else {
         msg_internal(
             file, line,
-            EXPECT_FAIL_MISMATCHED_RETURN_TYPE, pos,
+            DIAG_MISMATCHED_RETURN_TYPE, pos,
             "returning `"LANG_TYPE_FMT"`, but type `"LANG_TYPE_FMT"` expected\n",
             lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(child)), 
             ulang_type_print(LANG_TYPE_MODE_MSG, env.parent_fn_rtn_type)
@@ -303,7 +303,7 @@ static void msg_invalid_return_type_internal(const char* file, int line, Pos pos
 
     msg_internal(
         file, line,
-        EXPECT_FAIL_NOTE, ulang_type_get_pos(env.parent_fn_rtn_type),
+        DIAG_NOTE, ulang_type_get_pos(env.parent_fn_rtn_type),
         "function return type `"LANG_TYPE_FMT"` defined here\n",
         ulang_type_print(LANG_TYPE_MODE_MSG, env.parent_fn_rtn_type)
     );
@@ -633,7 +633,7 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
             }
         } else {
             msg(
-                EXPECT_FAIL_BINARY_MISMATCHED_TYPES, oper_pos,
+                DIAG_BINARY_MISMATCHED_TYPES, oper_pos,
                 "types `"LANG_TYPE_FMT"` and `"LANG_TYPE_FMT"` are not valid operands to binary expression\n",
                 lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_lhs)),
                 lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs))
@@ -786,7 +786,7 @@ bool try_set_binary_types(Tast_expr** new_tast, Uast_binary* operator) {
                 return true;
             case CHECK_ASSIGN_INVALID:
                 msg(
-                    EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, 
+                    DIAG_ASSIGNMENT_MISMATCHED_TYPES, 
                     operator->pos,
                     "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
@@ -827,7 +827,7 @@ bool try_set_unary_types_finish(
             new_lang_type = tast_expr_get_lang_type(new_child);
             if (lang_type_get_pointer_depth(new_lang_type) <= 0) {
                 msg(
-                    EXPECT_FAIL_DEREF_NON_POINTER, unary_pos,
+                    DIAG_DEREF_NON_POINTER, unary_pos,
                     "derefencing a type that is not a pointer\n"
                 );
                 return false;
@@ -875,7 +875,7 @@ bool try_set_unary_types_finish(
             new_lang_type = tast_expr_get_lang_type(new_child);
             if (!lang_type_is_number(new_lang_type)) {
                 msg(
-                    EXPECT_FAIL_UNARY_MISMATCHED_TYPES, unary_pos,
+                    DIAG_UNARY_MISMATCHED_TYPES, unary_pos,
                     "`"LANG_TYPE_FMT"` is not valid operand to logical not operation\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, new_lang_type)
                 );
@@ -924,7 +924,7 @@ bool try_set_tuple_assignment_types(
 ) {
     if (lang_type_tuple_const_unwrap(dest_lang_type).lang_types.info.count != tuple->members.info.count) {
         msg(
-            EXPECT_FAIL_MISMATCHED_TUPLE_COUNT, uast_tuple_get_pos(tuple),
+            DIAG_MISMATCHED_TUPLE_COUNT, uast_tuple_get_pos(tuple),
             "tuple `"UAST_FMT"` cannot be assigned to `"LANG_TYPE_FMT"`; "
             "tuple `"UAST_FMT"` has %zu elements, but type `"LANG_TYPE_FMT"` has %zu elements\n",
             uast_tuple_print(tuple), lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type),
@@ -953,7 +953,7 @@ bool try_set_tuple_assignment_types(
                 break;
             case CHECK_ASSIGN_INVALID:
                 msg(
-                    EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, 
+                    DIAG_ASSIGNMENT_MISMATCHED_TYPES, 
                     tast_expr_get_pos(new_memb),
                     "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_memb)),
@@ -1019,7 +1019,7 @@ static bool try_set_struct_literal_member_types(Tast_expr_vec* new_membs, Uast_e
             rhs = uast_binary_unwrap(uast_operator_unwrap(memb))->rhs;
             if (!name_is_equal(memb_def->name, lhs->member_name->name)) {
                 msg(
-                    EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL, lhs->pos,
+                    DIAG_INVALID_MEMBER_IN_LITERAL, lhs->pos,
                     "expected `."STR_VIEW_FMT" =`, got `."STR_VIEW_FMT" =`\n", 
                     str_view_print(memb_def->name.base), name_print(NAME_MSG, lhs->member_name->name)
                 );
@@ -1037,7 +1037,7 @@ static bool try_set_struct_literal_member_types(Tast_expr_vec* new_membs, Uast_e
                 break;
             case CHECK_ASSIGN_INVALID:
                 msg(
-                    EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES,
+                    DIAG_ASSIGNMENT_MISMATCHED_TYPES,
                     uast_expr_get_pos(memb),
                     "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
@@ -1067,19 +1067,19 @@ bool try_set_struct_literal_types(
             break;
         case LANG_TYPE_RAW_UNION:
             msg(
-                EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION,
+                DIAG_STRUCT_INIT_ON_RAW_UNION,
                 assign_pos, "struct literal cannot be assigned to raw_union\n"
             );
             return false;
         case LANG_TYPE_SUM:
             msg(
-                EXPECT_FAIL_STRUCT_INIT_ON_SUM,
+                DIAG_STRUCT_INIT_ON_SUM,
                 assign_pos, "struct literal cannot be assigned to sum\n"
             );
             return false;
         case LANG_TYPE_PRIMITIVE:
             msg(
-                EXPECT_FAIL_STRUCT_INIT_ON_PRIMITIVE,
+                DIAG_STRUCT_INIT_ON_PRIMITIVE,
                 assign_pos, "struct literal cannot be assigned to primitive type `"LANG_TYPE_FMT"`\n",
                 lang_type_print(LANG_TYPE_MODE_MSG, dest_lang_type)
             );
@@ -1140,7 +1140,7 @@ bool try_set_array_literal_types(
                 break;
             case CHECK_ASSIGN_INVALID:
                 msg(
-                    EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES,
+                    DIAG_ASSIGNMENT_MISMATCHED_TYPES,
                     uast_expr_get_pos(rhs),
                     "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
                     lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
@@ -1371,7 +1371,7 @@ bool try_set_assignment_types(Tast_assignment** new_assign, Uast_assignment* ass
             break;
         case CHECK_ASSIGN_INVALID:
             msg(
-                EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES,
+                DIAG_ASSIGNMENT_MISMATCHED_TYPES,
                 assignment->pos,
                 "type `"LANG_TYPE_FMT"` cannot be implicitly converted to `"LANG_TYPE_FMT"`\n",
                 lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_rhs)),
@@ -1469,7 +1469,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             // TODO: figure out if both TAST_SUM_CALLEE and TAST_SUM_LIT actually need to exist. if yes, then document difference
             if (fun_call->args.info.count < 1) {
                 msg(
-                    EXPECT_FAIL_MISSING_SUM_ARG, tast_sum_callee_unwrap(new_callee)->pos,
+                    DIAG_MISSING_SUM_ARG, tast_sum_callee_unwrap(new_callee)->pos,
                     "() in sum case has no argument; add argument in () or remove ()\n"
                 );
                 return false;
@@ -1477,7 +1477,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             if (fun_call->args.info.count > 1) {
                 todo();
                 msg(
-                    EXPECT_FAIL_SUM_CASE_TOO_MANY_ARGS, tast_sum_callee_unwrap(new_callee)->pos,
+                    DIAG_SUM_CASE_TOO_MANY_ARGS, tast_sum_callee_unwrap(new_callee)->pos,
                     "() in sum case must contain exactly one argument, but %zu arguments found\n",
                     fun_call->args.info.count
                 );
@@ -1485,7 +1485,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             }
             if (tast_sum_callee_unwrap(new_callee)->tag->lang_type.type == LANG_TYPE_VOID) {
                 msg(
-                    EXPECT_FAIL_VOID_SUM_CASE_HAS_ARG, tast_sum_callee_unwrap(new_callee)->pos,
+                    DIAG_VOID_SUM_CASE_HAS_ARG, tast_sum_callee_unwrap(new_callee)->pos,
                     "sum callee associated type is void; remove ()\n" // TODO: actually print file text where () is if possible
                 );
                 todo();
@@ -1509,7 +1509,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     break;
                 case CHECK_ASSIGN_INVALID:
                     msg(
-                        EXPECT_FAIL_SUM_LIT_INVALID_ARG, tast_expr_get_pos(new_item),
+                        DIAG_SUM_LIT_INVALID_ARG, tast_expr_get_pos(new_item),
                         "cannot assign "TAST_FMT" of type `"LANG_TYPE_FMT"` to '"LANG_TYPE_FMT"`\n", 
                         tast_expr_print(new_item),
                         lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(new_item)), 
@@ -1541,14 +1541,14 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
             // TODO: can these checks be shared with TAST_SUM_CALLEE?
             if (fun_call->args.info.count < 1) {
                 msg(
-                    EXPECT_FAIL_MISSING_SUM_ARG, tast_sum_case_unwrap(new_callee)->pos,
+                    DIAG_MISSING_SUM_ARG, tast_sum_case_unwrap(new_callee)->pos,
                     "() in sum case has no argument; add argument in () or remove ()\n"
                 );
                 return false;
             }
             if (fun_call->args.info.count > 1) {
                 msg(
-                    EXPECT_FAIL_SUM_CASE_TOO_MANY_ARGS, tast_sum_case_unwrap(new_callee)->pos,
+                    DIAG_SUM_CASE_TOO_MANY_ARGS, tast_sum_case_unwrap(new_callee)->pos,
                     "() in sum case must contain exactly one argument, but %zu arguments found\n",
                     fun_call->args.info.count
                 );
@@ -1573,7 +1573,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
                 if (fun_call->args.info.count < 1) {
                     msg(
-                        EXPECT_FAIL_MISSING_SUM_ARG, sum_lit->pos,
+                        DIAG_MISSING_SUM_ARG, sum_lit->pos,
                         "() in sum case has no argument; add argument in () or remove ()\n"
                     );
                     return false;
@@ -1581,7 +1581,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 if (fun_call->args.info.count > 1) {
                     todo();
                     msg(
-                        EXPECT_FAIL_SUM_CASE_TOO_MANY_ARGS, sum_lit->pos,
+                        DIAG_SUM_CASE_TOO_MANY_ARGS, sum_lit->pos,
                         "() in sum case must contain exactly one argument, but %zu arguments found\n",
                         fun_call->args.info.count
                     );
@@ -1589,7 +1589,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 }
                 if (lang_type_from_ulang_type(vec_at(&sum_def->base.members, (size_t)sum_lit->tag->data)->lang_type).type == LANG_TYPE_VOID) {
                     msg(
-                        EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, fun_call->pos,
+                        DIAG_INVALID_COUNT_FUN_ARGS, fun_call->pos,
                         "cannot assign argument to varient `"LANG_TYPE_FMT"."LANG_TYPE_FMT"`, because inner type is void\n",
                         lang_type_print(LANG_TYPE_MODE_MSG, sum_lit->sum_lang_type), name_print(NAME_MSG, vec_at(&sum_def->base.members, (size_t)sum_lit->tag->data)->name)
                     );
@@ -1603,7 +1603,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 break;
             } else {
                 msg(
-                    EXPECT_FAIL_INVALID_FUNCTION_CALLEE, tast_expr_get_pos(new_callee),
+                    DIAG_INVALID_FUNCTION_CALLEE, tast_expr_get_pos(new_callee),
                     "callee is not callable\n"
                 );
                 return false;
@@ -1768,7 +1768,7 @@ static void msg_invalid_member_internal(
     const Uast_member_access* access
 ) {
     msg_internal(
-        file, line, EXPECT_FAIL_INVALID_MEMBER_ACCESS,
+        file, line, DIAG_INVALID_MEMBER_ACCESS,
         access->pos,
         "`"STR_VIEW_FMT"` is not a member of `"STR_VIEW_FMT"`\n", 
         str_view_print(access->member_name->name.base), name_print(NAME_MSG, base_name)
@@ -2344,7 +2344,7 @@ static bool check_for_exhaustiveness_inner(
     if (is_default) {
         if (exhaustive_data->default_is_pre) {
             msg(
-                EXPECT_FAIL_DUPLICATE_DEFAULT, curr_if->pos,
+                DIAG_DUPLICATE_DEFAULT, curr_if->pos,
                 "duplicate default in switch statement\n"
             );
             return false;
@@ -2369,12 +2369,12 @@ static bool check_for_exhaustiveness_inner(
                 unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data->oper_lang_type)));
                 Uast_enum_def* enum_def = uast_enum_def_unwrap(enum_def_);
                 msg(
-                    EXPECT_FAIL_DUPLICATE_CASE, curr_if->pos,
+                    DIAG_DUPLICATE_CASE, curr_if->pos,
                     "duplicate case `"STR_VIEW_FMT"."STR_VIEW_FMT"` in switch statement\n",
                     name_print(NAME_MSG, enum_def->base.name), name_print(NAME_MSG, vec_at(&enum_def->base.members, (size_t)curr_lit->data)->name)
                 );
                 msg(
-                    EXPECT_FAIL_NOTE, vec_at(&exhaustive_data->covered_pos,
+                    DIAG_NOTE, vec_at(&exhaustive_data->covered_pos,
                     (size_t)curr_lit->data), "case originally covered here\n"
                 );
                 return false;
@@ -2396,12 +2396,12 @@ static bool check_for_exhaustiveness_inner(
                 unwrap(usymbol_lookup(&sum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data->oper_lang_type)));
                 Uast_sum_def* sum_def = uast_sum_def_unwrap(sum_def_);
                 msg(
-                    EXPECT_FAIL_DUPLICATE_CASE, curr_if->pos,
+                    DIAG_DUPLICATE_CASE, curr_if->pos,
                     "duplicate case `"STR_VIEW_FMT"."STR_VIEW_FMT"` in switch statement\n",
                     name_print(NAME_MSG, sum_def->base.name), name_print(NAME_MSG, vec_at(&sum_def->base.members, (size_t)curr_lit->data)->name)
                 );
                 msg(
-                    EXPECT_FAIL_NOTE, vec_at(&exhaustive_data->covered_pos,
+                    DIAG_NOTE, vec_at(&exhaustive_data->covered_pos,
                     (size_t)curr_lit->data), "case originally covered here\n"
                 );
                 return false;
@@ -2457,7 +2457,7 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
 
         if (!status) {
             msg(
-                EXPECT_FAIL_NON_EXHAUSTIVE_SWITCH, pos_switch,
+                DIAG_NON_EXHAUSTIVE_SWITCH, pos_switch,
                 STR_VIEW_FMT"\n", string_print(string)
             );
         }
@@ -2570,14 +2570,14 @@ bool try_set_label_types(Tast_label** new_tast, const Uast_label* label) {
 // TODO: merge this with msg_redefinition_of_symbol?
 static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
     msg(
-        EXPECT_FAIL_REDEFINITION_SYMBOL, uast_def_get_pos(new_sym_def),
+        DIAG_REDEFINITION_SYMBOL, uast_def_get_pos(new_sym_def),
         "redefinition of symbol "STR_VIEW_FMT"\n", name_print(NAME_MSG, uast_def_get_name(new_sym_def))
     );
 
     Uast_def* original_def;
     unwrap(usymbol_lookup(&original_def, uast_def_get_name(new_sym_def)));
     msg(
-        EXPECT_FAIL_NOTE, uast_def_get_pos(original_def),
+        DIAG_NOTE, uast_def_get_pos(original_def),
         STR_VIEW_FMT " originally defined here\n", name_print(NAME_MSG, uast_def_get_name(original_def))
     );
 }
@@ -2704,7 +2704,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
     if (block->scope_id == SCOPE_TOP_LEVEL) {
         Uast_def* main_fn_ = NULL;
         if (!usymbol_lookup(&main_fn_, name_new((Str_view) {0}, str_view_from_cstr("main"), (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL))) {
-            msg(EXPECT_FAIL_NO_MAIN, POS_BUILTIN, "no main function\n");
+            msg(DIAG_NO_MAIN, POS_BUILTIN, "no main function\n");
             goto error;
         }
         if (main_fn_->type != UAST_FUNCTION_DEF) {
@@ -2763,7 +2763,7 @@ STMT_STATUS try_set_stmt_types(Tast_stmt** new_tast, Uast_stmt* stmt, bool is_to
     if (is_top_level && !stmt_type_allowed_in_top_level(stmt->type)) {
         // TODO: actually print the types of statements that are allowed?
         msg(
-            EXPECT_FAIL_INVALID_STMT_TOP_LEVEL, uast_stmt_get_pos(stmt),
+            DIAG_INVALID_STMT_TOP_LEVEL, uast_stmt_get_pos(stmt),
             "this statement is not permitted in the top level\n"
         );
         return STMT_ERROR;

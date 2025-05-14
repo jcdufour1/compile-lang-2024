@@ -690,7 +690,7 @@ void emit_c_from_tree(const Llvm_block* root) {
     FILE* file = fopen("test.c", "w");
     if (!file) {
         msg(
-            EXPECT_FAIL_FILE_COULD_NOT_OPEN, dummy_pos, "could not open file %s: errno %d (%s)\n",
+            DIAG_FILE_COULD_NOT_OPEN, dummy_pos, "could not open file %s: errno %d (%s)\n",
             params.input_file_name, errno, strerror(errno)
         );
         exit(EXIT_CODE_FAIL);
@@ -727,7 +727,7 @@ void emit_c_from_tree(const Llvm_block* root) {
     }
 
     msg(
-        EXPECT_FAIL_FILE_BUILT, dummy_pos, "file %s built\n",
+        DIAG_FILE_BUILT, dummy_pos, "file %s built\n",
         params.input_file_name
     );
 

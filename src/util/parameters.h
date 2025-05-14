@@ -3,11 +3,11 @@
 
 #include "util.h"
 #include "newstring.h"
-#include "expected_fail_type.h"
+#include "diag_type.h"
 
 typedef struct {
     Vec_base info;
-    EXPECT_FAIL_TYPE* buf;
+    DIAG_TYPE* buf;
 } Expect_fail_type_vec;
 
 typedef enum {
@@ -23,7 +23,7 @@ typedef struct {
 
 typedef struct {
     const char* input_file_name;
-    Expect_fail_type_vec expected_fail_types;
+    Expect_fail_type_vec diag_types;
     bool compile : 1;
     bool emit_llvm : 1;
     bool test_expected_fail : 1;
@@ -34,11 +34,11 @@ typedef struct {
 
 void parse_args(int argc, char** argv);
 
-bool expect_fail_type_from_strv(size_t* idx, EXPECT_FAIL_TYPE* type, Str_view strv);
+bool expect_fail_type_from_strv(size_t* idx, DIAG_TYPE* type, Str_view strv);
 
-LOG_LEVEL expect_fail_type_to_curr_log_level(EXPECT_FAIL_TYPE type);
+LOG_LEVEL expect_fail_type_to_curr_log_level(DIAG_TYPE type);
 
-Str_view expect_fail_type_print_internal(EXPECT_FAIL_TYPE type);
+Str_view expect_fail_type_print_internal(DIAG_TYPE type);
 
 #define expect_fail_type_print(type) str_view_print(expect_fail_type_print_internal(type))
 
