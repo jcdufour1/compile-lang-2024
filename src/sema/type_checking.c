@@ -1820,7 +1820,7 @@ bool try_set_member_access_types_finish_sum_def(
                 return false;
             }
 
-            Tast_enum_lit* new_tag = tast_enum_lit_new(
+            Tast_sum_tag_lit* new_tag = tast_sum_tag_lit_new(
                 access->pos,
                 uast_get_member_index(&sum_def->base, access->member_name->name.base),
                 lang_type_from_ulang_type(member_def->lang_type)
@@ -1848,7 +1848,7 @@ bool try_set_member_access_types_finish_sum_def(
                 return false;
             }
             
-            Tast_enum_lit* new_tag = tast_enum_lit_new(
+            Tast_sum_tag_lit* new_tag = tast_sum_tag_lit_new(
                 access->pos,
                 uast_get_member_index(&sum_def->base, access->member_name->name.base),
                 lang_type_from_ulang_type(member_def->lang_type)
@@ -2288,20 +2288,20 @@ static Exhaustive_data check_for_exhaustiveness_start(Lang_type oper_lang_type) 
 
     exhaustive_data.oper_lang_type = oper_lang_type;
 
-    Uast_def* enum_def_ = NULL;
-    if (!usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data.oper_lang_type))) {
+    Uast_def* sum_def_ = NULL;
+    if (!usymbol_lookup(&sum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data.oper_lang_type))) {
         todo();
     }
-    Ustruct_def_base enum_def = {0};
-    switch (enum_def_->type) {
+    Ustruct_def_base sum_def = {0};
+    switch (sum_def_->type) {
         case UAST_SUM_DEF:
-            enum_def = uast_sum_def_unwrap(enum_def_)->base;
+            sum_def = uast_sum_def_unwrap(sum_def_)->base;
             break;
         default:
             todo();
     }
-    unwrap(enum_def.members.info.count > 0);
-    exhaustive_data.max_data = enum_def.members.info.count - 1;
+    unwrap(sum_def.members.info.count > 0);
+    exhaustive_data.max_data = sum_def.members.info.count - 1;
 
     vec_reserve(&print_arena, &exhaustive_data.covered, exhaustive_data.max_data + 1);
     vec_reserve(&print_arena, &exhaustive_data.covered_pos, exhaustive_data.max_data + 1);
@@ -2332,12 +2332,12 @@ static bool check_for_exhaustiveness_inner(
 
     switch (exhaustive_data->oper_lang_type.type) {
         case LANG_TYPE_SUM: {
-            const Tast_enum_lit* curr_lit = tast_sum_case_unwrap(
+            const Tast_sum_tag_lit* curr_lit = tast_sum_case_unwrap(
                 tast_binary_unwrap(curr_if->condition->child)->rhs
             )->tag;
 
             if (curr_lit->data > (int64_t)exhaustive_data->max_data) {
-                unreachable("invalid enum value\n");
+                unreachable("invalid sum value\n");
             }
             if (vec_at(&exhaustive_data->covered, (size_t)curr_lit->data)) {
                 Uast_def* sum_def_ = NULL;
@@ -2376,12 +2376,12 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
 
         for (size_t idx = 0; idx < exhaustive_data.covered.info.count; idx++) {
             if (!vec_at(&exhaustive_data.covered, idx)) {
-                Uast_def* enum_def_ = NULL;
-                unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data.oper_lang_type)));
-                Ustruct_def_base enum_def = {0};
-                switch (enum_def_->type) {
+                Uast_def* sum_def_ = NULL;
+                unwrap(usymbol_lookup(&sum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data.oper_lang_type)));
+                Ustruct_def_base sum_def = {0};
+                switch (sum_def_->type) {
                     case UAST_SUM_DEF:
-                        enum_def = uast_sum_def_unwrap(enum_def_)->base;
+                        sum_def = uast_sum_def_unwrap(sum_def_)->base;
                         break;
                     default:
                         todo();
@@ -2394,9 +2394,9 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
                     string_extend_cstr(&a_main, &string, ", ");
                 }
 
-                extend_name(NAME_MSG, &string, enum_def.name);
+                extend_name(NAME_MSG, &string, sum_def.name);
                 string_extend_cstr(&a_main, &string, ".");
-                extend_name(NAME_MSG, &string, vec_at(&enum_def.members, idx)->name);
+                extend_name(NAME_MSG, &string, vec_at(&sum_def.members, idx)->name);
             }
         }
 

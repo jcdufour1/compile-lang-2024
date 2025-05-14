@@ -472,7 +472,7 @@ static void llvm_gen_llvm_struct_as(String* output, Llvm_type llvm) {
 
 }
 
-static void llvm_gen_llvm_struct_enum(String* output, Llvm_type llvm) {
+static void llvm_gen_llvm_struct_sum(String* output, Llvm_type llvm) {
     string_extend_cstr(&gen_a, output, "typedef enum ");
     extend_llvm_name_upper(output, llvm.name);
     string_extend_cstr(&gen_a, output, "_TYPE");
@@ -502,7 +502,7 @@ static void llvm_gen_llvm_struct(Llvm_type llvm) {
 
     if (llvm.sub_types.info.count > 0) {
         llvm_gen_llvm_struct_as(&output, llvm);
-        llvm_gen_llvm_struct_enum(&output, llvm);
+        llvm_gen_llvm_struct_sum(&output, llvm);
     }
 
     string_extend_cstr(&gen_a, &output, "typedef struct ");
@@ -520,14 +520,14 @@ static void llvm_gen_llvm_struct(Llvm_type llvm) {
 
         extend_struct_member(&output, (Member) {.type = string_to_strv(as_member_type), .name = string_to_strv(as_member_name)});
 
-        String enum_member_type = {0};
-        extend_llvm_name_upper(&enum_member_type, llvm.name);
-        string_extend_cstr(&gen_a, &enum_member_type, "_TYPE");
+        String sum_member_type = {0};
+        extend_llvm_name_upper(&sum_member_type, llvm.name);
+        string_extend_cstr(&gen_a, &sum_member_type, "_TYPE");
 
-        String enum_member_name = {0};
-        string_extend_cstr(&gen_a, &enum_member_name, "type");
+        String sum_member_name = {0};
+        string_extend_cstr(&gen_a, &sum_member_name, "type");
 
-        extend_struct_member(&output, (Member) {.type = string_to_strv(enum_member_type), .name = string_to_strv(enum_member_name)});
+        extend_struct_member(&output, (Member) {.type = string_to_strv(sum_member_type), .name = string_to_strv(sum_member_name)});
     }
 
     for (size_t idx = 0; idx < llvm.members.info.count; idx++) {

@@ -163,7 +163,7 @@ Str_view uast_sum_access_print_internal(const Uast_sum_access* access, int inden
 
     string_extend_cstr_indent(&print_arena, &buf, "sum_access", indent);
     
-    string_extend_strv(&print_arena, &buf, tast_enum_lit_print_internal(access->tag, indent + INDENT_WIDTH));
+    string_extend_strv(&print_arena, &buf, tast_sum_tag_lit_print_internal(access->tag, indent + INDENT_WIDTH));
     string_extend_strv(&print_arena, &buf, uast_expr_print_internal(access->callee, indent + INDENT_WIDTH));
 
     return string_to_strv(buf);

@@ -1071,7 +1071,7 @@ static PARSE_STATUS parse_struct_base_def(
     }
 
     if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-        msg_parser_expected(tk_view_front(*tokens), "in struct, raw_union, or enum definition", TOKEN_OPEN_CURLY_BRACE, TOKEN_OPEN_GENERIC);
+        msg_parser_expected(tk_view_front(*tokens), "in struct, raw_union, or sum definition", TOKEN_OPEN_CURLY_BRACE, TOKEN_OPEN_GENERIC);
         return PARSE_ERROR;
     }
 
@@ -1095,7 +1095,7 @@ static PARSE_STATUS parse_struct_base_def(
     }
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
-        msg_parser_expected(tk_view_front(*tokens), "to end struct, raw_union, or enum definition", TOKEN_CLOSE_CURLY_BRACE);
+        msg_parser_expected(tk_view_front(*tokens), "to end struct, raw_union, or sum definition", TOKEN_CLOSE_CURLY_BRACE);
         return PARSE_ERROR;
     }
 
@@ -1112,7 +1112,7 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
     base->name = name;
 
     if (!try_consume(NULL, tokens, TOKEN_OPEN_CURLY_BRACE)) {
-        msg_parser_expected(tk_view_front(*tokens), "in struct, raw_union, or enum definition", TOKEN_OPEN_CURLY_BRACE);
+        msg_parser_expected(tk_view_front(*tokens), "in struct, raw_union, or sum definition", TOKEN_OPEN_CURLY_BRACE);
         return PARSE_ERROR;
     }
     while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
@@ -1140,7 +1140,7 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
     }
 
     if (!try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
-        msg_parser_expected(tk_view_front(*tokens), "to end struct, raw_union, or enum definition", TOKEN_CLOSE_CURLY_BRACE);
+        msg_parser_expected(tk_view_front(*tokens), "to end struct, raw_union, or sum definition", TOKEN_CLOSE_CURLY_BRACE);
         return PARSE_ERROR;
     }
 

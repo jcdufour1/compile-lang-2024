@@ -533,15 +533,15 @@ static Name load_void(Pos pos) {
     return new_void->name;
 }
 
-static Name load_enum_lit(Tast_enum_lit* old_lit) {
-    Llvm_number* enum_lit = llvm_number_new(
+static Name load_sum_tag_lit(Tast_sum_tag_lit* old_lit) {
+    Llvm_number* sum_tag_lit = llvm_number_new(
         old_lit->pos,
         old_lit->data,
         old_lit->lang_type,
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
-    unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_number_wrap(enum_lit)))));
-    return enum_lit->name;
+    unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_number_wrap(sum_tag_lit)))));
+    return sum_tag_lit->name;
 }
 
 static Name load_number(Tast_number* old_lit) {
@@ -583,8 +583,8 @@ static Name load_sum_lit(Llvm_block* new_block, Tast_sum_lit* old_lit) {
     
     size_t largest_idx = struct_def_base_get_idx_largest_member(sum_def->base);
     if (vec_at(&sum_def->base.members, largest_idx)->lang_type.type == LANG_TYPE_VOID) {
-        // inner lang_type is always void for this enum, so we will just use number instead of tagged enum
-        return load_enum_lit(old_lit->tag);
+        // inner lang_type is always void for this sum, so we will just use number instead of tagged sum
+        return load_sum_tag_lit(old_lit->tag);
     }
 
     Lang_type new_lang_type = rm_tuple_lang_type_sum(
@@ -596,7 +596,7 @@ static Name load_sum_lit(Llvm_block* new_block, Tast_sum_lit* old_lit) {
     log(LOG_DEBUG, TAST_FMT, tast_raw_union_def_print(item_def));
 
     Tast_expr_vec members = {0};
-    vec_append(&a_main, &members, tast_literal_wrap(tast_enum_lit_wrap(old_lit->tag)));
+    vec_append(&a_main, &members, tast_literal_wrap(tast_sum_tag_lit_wrap(old_lit->tag)));
     vec_append(&a_main, &members, tast_literal_wrap(tast_raw_union_lit_wrap(
         tast_raw_union_lit_new(
             old_lit->pos,
@@ -609,7 +609,7 @@ static Name load_sum_lit(Llvm_block* new_block, Tast_sum_lit* old_lit) {
     log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, tast_raw_union_def_get_lang_type(item_def)));
     log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, old_lit->sum_lang_type));
 
-    // this is an actual tagged enum
+    // this is an actual tagged sum
     return load_struct_literal(new_block, tast_struct_literal_new(
         old_lit->pos,
         members,
@@ -660,8 +660,8 @@ static Name load_literal(Llvm_block* new_block, Tast_literal* old_lit) {
             return load_string(tast_string_unwrap(old_lit));
         case TAST_VOID:
             return load_void(tast_void_unwrap(old_lit)->pos);
-        case TAST_ENUM_LIT:
-            return load_enum_lit(tast_enum_lit_unwrap(old_lit));
+        case TAST_SUM_TAG_LIT:
+            return load_sum_tag_lit(tast_sum_tag_lit_unwrap(old_lit));
         case TAST_CHAR:
             return load_char(tast_char_unwrap(old_lit));
         case TAST_NUMBER:
@@ -1057,17 +1057,17 @@ static Name load_ptr_sum_get_tag(Llvm_block* new_block, Tast_sum_get_tag* old_ac
         return new_sum;
     }
 
-    Llvm_load_element_ptr* new_enum = llvm_load_element_ptr_new(
+    Llvm_load_element_ptr* new_tag = llvm_load_element_ptr_new(
         old_access->pos,
         lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(POS_BUILTIN, 64, 0))),
         0,
         new_sum,
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
-    unwrap(alloca_add(llvm_load_element_ptr_wrap(new_enum)));
-    vec_append(&a_main, &new_block->children, llvm_load_element_ptr_wrap(new_enum));
+    unwrap(alloca_add(llvm_load_element_ptr_wrap(new_tag)));
+    vec_append(&a_main, &new_block->children, llvm_load_element_ptr_wrap(new_tag));
 
-    return new_enum->name_self;
+    return new_tag->name_self;
 }
 
 static Name load_sum_get_tag(Llvm_block* new_block, Tast_sum_get_tag* old_access) {
@@ -1128,7 +1128,7 @@ static Name load_sum_access(Llvm_block* new_block, Tast_sum_access* old_access) 
 }
 
 static Name load_sum_case(Tast_sum_case* old_case) {
-    return load_enum_lit(old_case->tag);
+    return load_sum_tag_lit(old_case->tag);
 }
 
 static Name load_tuple(Llvm_block* new_block, Tast_tuple* old_tuple) {

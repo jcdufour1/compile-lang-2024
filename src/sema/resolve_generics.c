@@ -60,7 +60,7 @@ static void msg_invalid_count_generic_args_internal(
     );
 }
 
-static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_base* base, bool is_enum) {
+static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_base* base, bool is_sum) {
     env.type_checking_is_in_struct_base_def = true;
     bool success = true;
     Tast_variable_def_vec new_members = {0};
@@ -72,7 +72,7 @@ static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_bas
     for (size_t idx = 0; idx < base->members.info.count; idx++) {
         Uast_variable_def* curr = vec_at(&base->members, idx);
 
-        if (is_enum) {
+        if (is_sum) {
             unreachable("");
         } else {
             Tast_variable_def* new_memb = NULL;

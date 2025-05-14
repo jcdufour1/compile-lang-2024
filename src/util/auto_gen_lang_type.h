@@ -277,7 +277,7 @@ static void lang_type_gen_lang_type_struct_as(String* output, Lang_type_type lan
 
 }
 
-static void lang_type_gen_lang_type_struct_enum(String* output, Lang_type_type lang_type) {
+static void lang_type_gen_lang_type_struct_sum(String* output, Lang_type_type lang_type) {
     string_extend_cstr(&gen_a, output, "typedef enum ");
     extend_lang_type_name_upper(output, lang_type.name);
     string_extend_cstr(&gen_a, output, "_TYPE");
@@ -307,7 +307,7 @@ static void lang_type_gen_lang_type_struct(Lang_type_type lang_type) {
 
     if (lang_type.sub_types.info.count > 0) {
         lang_type_gen_lang_type_struct_as(&output, lang_type);
-        lang_type_gen_lang_type_struct_enum(&output, lang_type);
+        lang_type_gen_lang_type_struct_sum(&output, lang_type);
     }
 
     string_extend_cstr(&gen_a, &output, "typedef struct ");
@@ -325,14 +325,14 @@ static void lang_type_gen_lang_type_struct(Lang_type_type lang_type) {
 
         extend_struct_member(&output, (Member) {.type = string_to_strv(as_member_type), .name = string_to_strv(as_member_name)});
 
-        String enum_member_type = {0};
-        extend_lang_type_name_upper(&enum_member_type, lang_type.name);
-        string_extend_cstr(&gen_a, &enum_member_type, "_TYPE");
+        String sum_member_type = {0};
+        extend_lang_type_name_upper(&sum_member_type, lang_type.name);
+        string_extend_cstr(&gen_a, &sum_member_type, "_TYPE");
 
-        String enum_member_name = {0};
-        string_extend_cstr(&gen_a, &enum_member_name, "type");
+        String sum_member_name = {0};
+        string_extend_cstr(&gen_a, &sum_member_name, "type");
 
-        extend_struct_member(&output, (Member) {.type = string_to_strv(enum_member_type), .name = string_to_strv(enum_member_name)});
+        extend_struct_member(&output, (Member) {.type = string_to_strv(sum_member_type), .name = string_to_strv(sum_member_name)});
     }
 
     for (size_t idx = 0; idx < lang_type.members.info.count; idx++) {

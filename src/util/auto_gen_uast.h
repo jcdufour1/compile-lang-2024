@@ -294,7 +294,7 @@ static Uast_type uast_gen_sum_access(const char* prefix) {
     const char* base_name = "sum_access";
     Uast_type lit = {.name = uast_name_new(prefix, base_name, false)};
 
-    append_member(&lit.members, "Tast_enum_lit*", "tag");
+    append_member(&lit.members, "Tast_sum_tag_lit*", "tag");
     append_member(&lit.members, "Lang_type", "lang_type");
     append_member(&lit.members, "Uast_expr*", "callee");
 
@@ -639,7 +639,7 @@ static void uast_gen_uast_struct_as(String* output, Uast_type uast) {
 
 }
 
-static void uast_gen_uast_struct_enum(String* output, Uast_type uast) {
+static void uast_gen_uast_struct_sum(String* output, Uast_type uast) {
     string_extend_cstr(&gen_a, output, "typedef enum ");
     extend_uast_name_upper(output, uast.name);
     string_extend_cstr(&gen_a, output, "_TYPE");
@@ -669,7 +669,7 @@ static void uast_gen_uast_struct(Uast_type uast) {
 
     if (uast.sub_types.info.count > 0) {
         uast_gen_uast_struct_as(&output, uast);
-        uast_gen_uast_struct_enum(&output, uast);
+        uast_gen_uast_struct_sum(&output, uast);
     }
 
     string_extend_cstr(&gen_a, &output, "typedef struct ");
@@ -687,14 +687,14 @@ static void uast_gen_uast_struct(Uast_type uast) {
 
         extend_struct_member(&output, (Member) {.type = string_to_strv(as_member_type), .name = string_to_strv(as_member_name)});
 
-        String enum_member_type = {0};
-        extend_uast_name_upper(&enum_member_type, uast.name);
-        string_extend_cstr(&gen_a, &enum_member_type, "_TYPE");
+        String sum_member_type = {0};
+        extend_uast_name_upper(&sum_member_type, uast.name);
+        string_extend_cstr(&gen_a, &sum_member_type, "_TYPE");
 
-        String enum_member_name = {0};
-        string_extend_cstr(&gen_a, &enum_member_name, "type");
+        String sum_member_name = {0};
+        string_extend_cstr(&gen_a, &sum_member_name, "type");
 
-        extend_struct_member(&output, (Member) {.type = string_to_strv(enum_member_type), .name = string_to_strv(enum_member_name)});
+        extend_struct_member(&output, (Member) {.type = string_to_strv(sum_member_type), .name = string_to_strv(sum_member_name)});
     }
 
     for (size_t idx = 0; idx < uast.members.info.count; idx++) {
