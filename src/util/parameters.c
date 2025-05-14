@@ -16,7 +16,7 @@ static bool is_short_option(char** argv) {
 // this function will exclude - or -- part of arg if present
 static const char* consume_arg(int* argc, char*** argv, const char* msg_if_missing) {
     if (*argc < 1) {
-        msg(LOG_FATAL, EXPECT_FAIL_MISSING_COMMAND_LINE_ARG, dummy_pos, "%s\n", msg_if_missing);
+        msg(EXPECT_FAIL_MISSING_COMMAND_LINE_ARG, dummy_pos, "%s\n", msg_if_missing);
         exit(EXIT_CODE_FAIL);
     }
     const char* curr_arg = argv[0][0];
@@ -229,7 +229,7 @@ static void parse_long_option(Parameters* params, int* argc, char*** argv) {
         size_t idx = 0;
         if (!expect_fail_type_from_strv(&idx, &type, error)) {
             msg(
-                LOG_ERROR, EXPECT_FAIL_INVALID_FAIL_TYPE, POS_BUILTIN,
+                EXPECT_FAIL_INVALID_FAIL_TYPE, POS_BUILTIN,
                 "invalid fail type `"STR_VIEW_FMT"`\n", str_view_print(error)
             );
             exit(EXIT_CODE_FAIL);

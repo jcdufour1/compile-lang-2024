@@ -5,7 +5,7 @@
 static inline void msg_undefined_symbol_internal(const char* file, int line, const Uast_symbol* sym_call) {
     msg_internal(
         file, line,
-        LOG_ERROR, EXPECT_FAIL_UNDEFINED_SYMBOL, sym_call->pos,
+        EXPECT_FAIL_UNDEFINED_SYMBOL, sym_call->pos,
         "symbol `"STR_VIEW_FMT"` is not defined\n", name_print(NAME_MSG, sym_call->name)
     );
 }
