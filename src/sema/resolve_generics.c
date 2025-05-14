@@ -392,52 +392,32 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
 
     switch (before_res->type) {
         case UAST_STRUCT_DEF: {
-            Uast_struct_def* after_res = NULL;
-            if (!resolve_generics_ulang_type_internal_struct_def(
-                &after_res,
-                &dummy,
-                uast_struct_def_unwrap(before_res),
-                lang_type
-            )) {
+            Uast_def* after_res = NULL;
+            if (!resolve_generics_ulang_type_internal_struct_like(&after_res, &dummy, uast_def_get_struct_def_base(before_res), lang_type, uast_def_get_pos(before_res), local_uast_struct_def_new)) {
                 return false;
             }
-            return try_set_struct_def_types(after_res);
+            return try_set_struct_def_types(uast_struct_def_unwrap(after_res));
         }
         case UAST_RAW_UNION_DEF: {
-            Uast_raw_union_def* after_res = NULL;
-            if (!resolve_generics_ulang_type_internal_raw_union_def(
-                &after_res,
-                &dummy,
-                uast_raw_union_def_unwrap(before_res),
-                lang_type
-            )) {
+            Uast_def* after_res = NULL;
+            if (!resolve_generics_ulang_type_internal_struct_like(&after_res, &dummy, uast_def_get_struct_def_base(before_res), lang_type, uast_def_get_pos(before_res), local_uast_raw_union_def_new)) {
                 return false;
             }
-            return try_set_raw_union_def_types(after_res);
+            return try_set_raw_union_def_types(uast_raw_union_def_unwrap(after_res));
         }
         case UAST_ENUM_DEF: {
-            Uast_enum_def* after_res = NULL;
-            if (!resolve_generics_ulang_type_internal_enum_def(
-                &after_res,
-                &dummy,
-                uast_enum_def_unwrap(before_res),
-                lang_type
-            )) {
+            Uast_def* after_res = NULL;
+            if (!resolve_generics_ulang_type_internal_struct_like(&after_res, &dummy, uast_def_get_struct_def_base(before_res), lang_type, uast_def_get_pos(before_res), local_uast_enum_def_new)) {
                 return false;
             }
-            return try_set_enum_def_types(after_res);
+            return try_set_enum_def_types(uast_enum_def_unwrap(after_res));
         }
         case UAST_SUM_DEF: {
-            Uast_sum_def* after_res = NULL;
-            if (!resolve_generics_ulang_type_internal_sum_def(
-                &after_res,
-                &dummy,
-                uast_sum_def_unwrap(before_res),
-                lang_type
-            )) {
+            Uast_def* after_res = NULL;
+            if (!resolve_generics_ulang_type_internal_struct_like(&after_res, &dummy, uast_def_get_struct_def_base(before_res), lang_type, uast_def_get_pos(before_res), local_uast_sum_def_new)) {
                 return false;
             }
-            return try_set_sum_def_types(after_res);
+            return try_set_sum_def_types(uast_sum_def_unwrap(after_res));
         }
         case UAST_POISON_DEF:
             unreachable("");
