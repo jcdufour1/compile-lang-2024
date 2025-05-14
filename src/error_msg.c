@@ -3,7 +3,7 @@
 #include "symbol_table.h"
 #include "parser_utils.h"
 #include <stdarg.h>
-#include <expected_fail_type_print.h>
+#include <parameters.h>
 
 static void show_location_error(Pos pos) {
     Str_view* file_con_ = NULL;

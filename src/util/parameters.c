@@ -93,6 +93,25 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"no-main", EXPECT_FAIL_NO_MAIN},
 };
 
+bool expect_fail_type_from_strv(EXPECT_FAIL_TYPE* type, Str_view strv) {
+    for (size_t idx = 0; idx < sizeof(expect_fail_pair)/sizeof(expect_fail_pair[0]); idx++) {
+        if (str_view_is_equal(str_view_from_cstr(expect_fail_pair[idx].str), strv)) {
+            *type = expect_fail_pair[idx].type;
+            return true;
+        }
+    }
+    return false;
+}
+
+Str_view expect_fail_type_print_internal(EXPECT_FAIL_TYPE type) {
+    for (size_t idx = 0; idx < sizeof(expect_fail_pair)/sizeof(expect_fail_pair[0]); idx++) {
+        if (expect_fail_pair[idx].type == type) {
+            return str_view_from_cstr(expect_fail_pair[idx].str);
+        }
+    }
+    unreachable("");
+}
+
 static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
     const char* curr_opt = consume_arg(argc, argv, "arg expected");
 

@@ -58,6 +58,7 @@ OBJS=\
 	 ${BUILD_DIR}/sema/expand_lang_def.o \
 	 ${BUILD_DIR}/sema/resolve_generics.o \
 	 ${BUILD_DIR}/sema/generic_sub.o \
+	 ${BUILD_DIR}/sema/check_struct_recursion.o \
 	 ${BUILD_DIR}/sizeof.o \
 	 ${BUILD_DIR}/token/token.o \
 	 ${BUILD_DIR}/token/tokenizer.o \
@@ -148,6 +149,9 @@ ${BUILD_DIR}/sema/resolve_generics.o: ${DEP_COMMON} src/sema/resolve_generics.c
 
 ${BUILD_DIR}/sema/generic_sub.o: ${DEP_COMMON} src/sema/generic_sub.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/sema/generic_sub.o src/sema/generic_sub.c
+
+${BUILD_DIR}/sema/check_struct_recursion.o: ${DEP_COMMON} src/sema/check_struct_recursion.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/sema/check_struct_recursion.o src/sema/check_struct_recursion.c
 
 ${BUILD_DIR}/sema/expand_lang_def.o: ${DEP_COMMON} src/sema/expand_lang_def.c
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/sema/expand_lang_def.o src/sema/expand_lang_def.c

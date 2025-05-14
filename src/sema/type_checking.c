@@ -26,6 +26,7 @@
 #include <symbol_table.h>
 #include <msg_undefined_symbol.h>
 #include <pos_vec.h>
+#include <check_struct_recursion.h>
 
 static int dummy_int = 0;
 
@@ -2887,7 +2888,7 @@ bool try_set_types(Tast_block** new_tast, Uast_block* block) {
     while (usym_tbl_iter_next(&curr_def, &rec_iter)) {
         log(LOG_DEBUG, "%d\n", curr_def->type);
         log(LOG_DEBUG, TAST_FMT, uast_def_print(curr_def));
-        if (!check_struct_like_for_recursion(curr_def)) {
+        if (!check_struct_for_rec(curr_def)) {
             status = false;
         }
     }

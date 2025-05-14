@@ -1,3 +1,12 @@
+#include <util.h>
+#include <arena.h>
+#include <ulang_type.h>
+#include <uast.h>
+#include <name.h>
+#include <ulang_type_get_pos.h>
+#include <msg.h>
+#include <uast_utils.h>
+#include <check_struct_recursion.h>
 
 // TODO: consider using iterative approach to avoid stack overflow risk
 static Arena struct_like_rec_a = {0};
