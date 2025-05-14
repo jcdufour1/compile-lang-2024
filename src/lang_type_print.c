@@ -145,6 +145,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
             goto end;
         case LANG_TYPE_FN: {
             Lang_type_fn fn = lang_type_fn_const_unwrap(lang_type);
+            string_extend_cstr(&a_main, string, "fn");
             extend_lang_type_to_string(string, mode, lang_type_tuple_const_wrap(fn.params));
             extend_lang_type_to_string(string, mode, *fn.return_type);
             goto end;

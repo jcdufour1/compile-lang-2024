@@ -174,7 +174,6 @@ typedef enum {
 static void msg_invalid_function_arg_internal(
     const char* file,
     int line,
-     
     const Tast_expr* argument,
     const Uast_variable_def* corres_param
 ) {
