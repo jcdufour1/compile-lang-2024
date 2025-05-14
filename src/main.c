@@ -73,10 +73,14 @@ void do_passes(const Parameters* params) {
     add_primitives();
 
     Uast_block* untyped = NULL;
-    if (!parse_file(&untyped, str_view_from_cstr(params->input_file_name))) {
+    bool status = parse_file(&untyped, str_view_from_cstr(params->input_file_name));
+    if (error_count > 0) {
+        log(LOG_DEBUG, "parse_file failed\n");
+        assert((!status || params->error_opts_changed) && "parse_file is not returning false when it should\n");
         fail();
     }
-    assert(error_count < 1);
+    assert(status && "error_count should be zero if parse_file returns true");
+
     log(LOG_DEBUG, "\nafter parsing start--------------------\n");
     usymbol_log_level(LOG_DEBUG, 0);
     log(LOG_DEBUG, TAST_FMT, uast_block_print(untyped));
@@ -84,13 +88,14 @@ void do_passes(const Parameters* params) {
 
     arena_reset(&print_arena);
     Tast_block* typed = NULL;
-    if (!try_set_types(&typed, untyped)) {
+    status = try_set_types(&typed, untyped);
+    if (error_count > 0) {
         log(LOG_DEBUG, "try_set_block_types failed\n");
-        assert(error_count > 0);
+        assert((!status || params->error_opts_changed) && "try_set_types is not returning false when it should\n");
         fail();
     }
     log(LOG_DEBUG, "try_set_block_types succedded\n");
-    assert(error_count < 1);
+    assert(status && "error_count should be zero if try_set_types returns true");
     
     unwrap(typed);
     arena_reset(&print_arena);

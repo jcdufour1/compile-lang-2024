@@ -115,13 +115,17 @@ bool expect_fail_type_from_strv(size_t* idx_result, EXPECT_FAIL_TYPE* type, Str_
     return false;
 }
 
-Str_view expect_fail_type_print_internal(EXPECT_FAIL_TYPE type) {
+static size_t expect_fail_type_get_idx(EXPECT_FAIL_TYPE type) {
     for (size_t idx = 0; idx < sizeof(expect_fail_pair)/sizeof(expect_fail_pair[0]); idx++) {
         if (expect_fail_pair[idx].type == type) {
-            return str_view_from_cstr(expect_fail_pair[idx].str);
+            return idx;
         }
     }
-    unreachable("");
+    unreachable("expect_fail_pair does not cover this EXPECT_FAIL_TYPE");
+}
+
+Str_view expect_fail_type_print_internal(EXPECT_FAIL_TYPE type) {
+    return str_view_from_cstr(expect_fail_pair[expect_fail_type_get_idx(type)].str);
 }
 
 static void expect_fail_str_to_curr_log_level_init(void) {
@@ -129,6 +133,10 @@ static void expect_fail_str_to_curr_log_level_init(void) {
         expect_fail_str_to_curr_log_level_pair[idx].str = expect_fail_pair[idx].str;
         expect_fail_str_to_curr_log_level_pair[idx].curr_level = expect_fail_pair[idx].default_level;
     }
+}
+
+LOG_LEVEL expect_fail_type_to_curr_log_level(EXPECT_FAIL_TYPE type) {
+    return expect_fail_str_to_curr_log_level_pair[expect_fail_type_get_idx(type)].curr_level;
 }
 
 static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
@@ -218,6 +226,7 @@ static void parse_long_option(Parameters* params, int* argc, char*** argv) {
             exit(EXIT_CODE_FAIL);
         }
         expect_fail_str_to_curr_log_level_pair[idx].curr_level = LOG_ERROR;
+        params->error_opts_changed = true;
     } else if (0 == strncmp(curr_opt, "log-level", strlen("log-level"))) {
         Str_view log_level = str_view_from_cstr(&curr_opt[strlen("log-level")]);
         if (!str_view_try_consume(&log_level, '=')) {

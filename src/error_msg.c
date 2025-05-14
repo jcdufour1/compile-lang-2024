@@ -65,12 +65,13 @@ static void show_location_error(Pos pos) {
 
 __attribute__((format (printf, 6, 7)))
 void msg_internal(
-    const char* file, int line, LOG_LEVEL log_level, EXPECT_FAIL_TYPE msg_expect_fail_type,
+    const char* file, int line, LOG_LEVEL log_level/*TODO: remove this parameter*/, EXPECT_FAIL_TYPE msg_expect_fail_type,
     Pos pos, const char* format, ...
 ) {
     va_list args;
     va_start(args, format);
     bool fail_immediately = false;
+    log_level = expect_fail_type_to_curr_log_level(msg_expect_fail_type);
 
     if (log_level >= LOG_ERROR) {
         fail_immediately = params.all_errors_fatal;

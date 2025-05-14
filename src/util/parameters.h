@@ -28,12 +28,15 @@ typedef struct {
     bool emit_llvm : 1;
     bool test_expected_fail : 1;
     bool all_errors_fatal: 1;
+    bool error_opts_changed : 1;
     Backend_info backend_info;
 } Parameters;
 
 void parse_args(int argc, char** argv);
 
 bool expect_fail_type_from_strv(size_t* idx, EXPECT_FAIL_TYPE* type, Str_view strv);
+
+LOG_LEVEL expect_fail_type_to_curr_log_level(EXPECT_FAIL_TYPE type);
 
 Str_view expect_fail_type_print_internal(EXPECT_FAIL_TYPE type);
 
