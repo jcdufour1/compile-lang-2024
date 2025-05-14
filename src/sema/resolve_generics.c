@@ -298,7 +298,6 @@ static bool resolve_generics_ulang_type_internal_enum_def(
     if (symbol_lookup(&dummy,  new_name)) {
         return true;
     }
-    todo();
     if (struct_like_tbl_add(after_res_)) {
         usym_tbl_add(after_res_);
         vec_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
@@ -324,7 +323,6 @@ static bool resolve_generics_ulang_type_internal_sum_def(
     if (symbol_lookup(&dummy,  new_name)) {
         return true;
     }
-    todo();
     if (struct_like_tbl_add(after_res_)) {
         usym_tbl_add(after_res_);
         vec_append(&a_main, &env.struct_like_waiting_to_resolve, new_name);
@@ -733,16 +731,7 @@ static Arena struct_like_rec_a = {0};
 
 static bool check_struct_like_for_recursion_internal(Ustruct_def_base base, Name_vec rec_stack);
 
-static bool check_struct_like_for_recursion_internal_lang_type_reg(Ulang_type_regular lang_type, Name_vec rec_stack /* TODO: consider using hash table for O(1) time */) {
-    (void) rec_stack;
-    if (lang_type.atom.pointer_depth > 0) {
-        return true;
-    }
-    Uast_def* def = {0};
-    Name name = {0};
-    unwrap(name_from_uname(&name, lang_type.atom.str));
-    unwrap(usymbol_lookup(&def, name));
-
+static bool check_struct_like_for_recursion_internal_def(Uast_def* def, Ulang_type_regular lang_type, Name name, Name_vec rec_stack) {
     for (size_t idx = 0; idx < rec_stack.info.count; idx++) {
         if (name_is_equal(vec_at(&rec_stack, idx), name)) {
             msg(
@@ -775,6 +764,21 @@ static bool check_struct_like_for_recursion_internal_lang_type_reg(Ulang_type_re
         }
     }
 
+    return true;
+}
+
+static bool check_struct_like_for_recursion_internal_lang_type_reg(Ulang_type_regular lang_type, Name_vec rec_stack /* TODO: consider using hash table for O(1) time */) {
+    if (lang_type.atom.pointer_depth > 0) {
+        return true;
+    }
+    Uast_def* def = {0};
+    Name name = {0};
+    unwrap(name_from_uname(&name, lang_type.atom.str));
+    if (!usymbol_lookup(&def, name)) {
+        assert(error_count > 0 && "there is a bug somewhere");
+        return false;
+    }
+
     switch (def->type) {
         case UAST_POISON_DEF:
             todo();
@@ -792,10 +796,13 @@ static bool check_struct_like_for_recursion_internal_lang_type_reg(Ulang_type_re
             // fallthrough
         case UAST_RAW_UNION_DEF:
             // fallthrough
-        case UAST_ENUM_DEF:
-            // fallthrough
         case UAST_SUM_DEF:
+            if (!check_struct_like_for_recursion_internal_def(def, lang_type, name, rec_stack)) {
+                return false;
+            }
             return check_struct_like_for_recursion_internal(uast_def_get_struct_def_base(def), rec_stack);
+        case UAST_ENUM_DEF:
+            return true;
         case UAST_LANG_DEF:
             todo();
         case UAST_PRIMITIVE_DEF:
