@@ -2426,6 +2426,15 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
         env.break_type = lang_type_void_const_wrap(lang_type_void_new(lang_switch->pos));
     }
 
+    switch (tast_expr_get_lang_type(new_operand).type) {
+        case LANG_TYPE_SUM:
+            break;
+        default:
+            msg_todo("switch on type that is not sum", tast_expr_get_pos(new_operand));
+            status = false;
+            goto error;
+    }
+
     Exhaustive_data exhaustive_data = check_for_exhaustiveness_start(
          tast_expr_get_lang_type(new_operand)
     );
@@ -2443,8 +2452,7 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
                 ));
                 break;
             default:
-                unreachable(TAST_FMT, uast_expr_print(lang_switch->operand));
-                todo();
+                unreachable("this should have been caught earlier");
         }
 
         if (old_case->is_default) {
