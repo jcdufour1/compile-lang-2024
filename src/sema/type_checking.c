@@ -1534,6 +1534,10 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         case TAST_SUM_CASE: {
             // TAST_SUM_CASE is for switch cases
             // TODO: can these checks be shared with TAST_SUM_CALLEE?
+            if (tast_sum_case_unwrap(new_callee)->tag->lang_type.type == LANG_TYPE_VOID) {
+                msg(DIAG_INVALID_COUNT_FUN_ARGS, fun_call->pos, "inner type is void; remove ()\n");
+                return false;
+            }
             if (fun_call->args.info.count < 1) {
                 msg(
                     DIAG_MISSING_SUM_ARG, tast_sum_case_unwrap(new_callee)->pos,
@@ -1548,9 +1552,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                     fun_call->args.info.count
                 );
                 return false;
-            }
-            if (tast_sum_case_unwrap(new_callee)->tag->lang_type.type == LANG_TYPE_VOID) {
-                unreachable("this should have been caught be prior checks");
             }
             Tast_sum_case* new_case = NULL;
             if (!try_set_function_call_types_sum_case(&new_case, fun_call->args, tast_sum_case_unwrap(new_callee))) {

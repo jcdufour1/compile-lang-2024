@@ -10,5 +10,19 @@ fn main() i32 {
     let token1 Token = Token.open_par
     let token2 Token = Token.open_par()
     let token3 Token = Token.open_par(76)
+
+    switch token1 {
+        case .num(num): break
+        case .open_par(): break
+    }
+    switch token1 {
+        case .num(num): break
+        case .open_par(num): break
+    }
+    switch token1 {
+        case .num(num): break
+        case .open_par(num, string): break
+    }
+
     return 0
 }
