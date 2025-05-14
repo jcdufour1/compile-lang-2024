@@ -17,7 +17,7 @@ static bool check_struct_rec_internal_def(Uast_def* def, Ulang_type_regular lang
     for (size_t idx = 0; idx < rec_stack.info.count; idx++) {
         if (name_is_equal(vec_at(&rec_stack, idx), name)) {
             msg(
-                LOG_ERROR, EXPECT_FAIL_NONE/* TODO */, lang_type.pos,
+                LOG_ERROR, EXPECT_FAIL_STRUCT_LIKE_RECURSION/* TODO */, lang_type.pos,
                 "`"TAST_FMT"` recursively includes itself without indirection; consider "
                 "storing `"TAST_FMT"` by pointer here instead of by value\n",
                 name_print(NAME_MSG, uast_def_get_name(def)),
@@ -37,7 +37,7 @@ static bool check_struct_rec_internal_def(Uast_def* def, Ulang_type_regular lang
                 prev = curr;
             }
             msg(
-                LOG_NOTE, EXPECT_FAIL_NONE, uast_def_get_pos(prev),
+                LOG_NOTE, EXPECT_FAIL_STRUCT_LIKE_RECURSION, uast_def_get_pos(prev),
                 "`"TAST_FMT"` contains `"TAST_FMT"`\n",
                 name_print(NAME_MSG, uast_def_get_name(prev)),
                 name_print(NAME_MSG, uast_def_get_name(def))

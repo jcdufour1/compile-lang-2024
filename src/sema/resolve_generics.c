@@ -105,7 +105,7 @@ static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_bas
         sym_tbl_add(new_def); \
     } while (0)
 
-static bool try_set_struct_def_types(Uast_struct_def* before_res, Uast_struct_def* after_res) {
+static bool try_set_struct_def_types(Uast_struct_def* after_res) {
     Struct_def_base new_base = {0};
     bool success = try_set_struct_base_types(&new_base, &after_res->base, false);
     try_set_def_types_internal(
@@ -116,7 +116,7 @@ static bool try_set_struct_def_types(Uast_struct_def* before_res, Uast_struct_de
     return success;
 }
 
-static bool try_set_raw_union_def_types(Uast_raw_union_def* before_res, Uast_raw_union_def* after_res) {
+static bool try_set_raw_union_def_types(Uast_raw_union_def* after_res) {
     Struct_def_base new_base = {0};
     bool success = try_set_struct_base_types(&new_base, &after_res->base, false);
     try_set_def_types_internal(
@@ -127,7 +127,7 @@ static bool try_set_raw_union_def_types(Uast_raw_union_def* before_res, Uast_raw
     return success;
 }
 
-static bool try_set_enum_def_types(Uast_enum_def* before_res, Uast_enum_def* after_res) {
+static bool try_set_enum_def_types(Uast_enum_def* after_res) {
     Struct_def_base new_base = {0};
     bool success = try_set_struct_base_types(&new_base, &after_res->base, true);
     try_set_def_types_internal(
@@ -138,7 +138,7 @@ static bool try_set_enum_def_types(Uast_enum_def* before_res, Uast_enum_def* aft
     return success;
 }
 
-static bool try_set_sum_def_types(Uast_sum_def* before_res, Uast_sum_def* after_res) {
+static bool try_set_sum_def_types(Uast_sum_def* after_res) {
     Struct_def_base new_base = {0};
     bool success = try_set_struct_base_types(&new_base, &after_res->base, false);
     try_set_def_types_internal(
@@ -463,7 +463,7 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
             )) {
                 return false;
             }
-            return try_set_struct_def_types(uast_struct_def_unwrap(before_res), after_res);
+            return try_set_struct_def_types(after_res);
         }
         case UAST_RAW_UNION_DEF: {
             Uast_raw_union_def* after_res = NULL;
@@ -475,7 +475,7 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
             )) {
                 return false;
             }
-            return try_set_raw_union_def_types(uast_raw_union_def_unwrap(before_res), after_res);
+            return try_set_raw_union_def_types(after_res);
         }
         case UAST_ENUM_DEF: {
             Uast_enum_def* after_res = NULL;
@@ -487,7 +487,7 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
             )) {
                 return false;
             }
-            return try_set_enum_def_types(uast_enum_def_unwrap(before_res), after_res);
+            return try_set_enum_def_types(after_res);
         }
         case UAST_SUM_DEF: {
             Uast_sum_def* after_res = NULL;
@@ -499,7 +499,7 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
             )) {
                 return false;
             }
-            return try_set_sum_def_types(uast_sum_def_unwrap(before_res), after_res);
+            return try_set_sum_def_types(after_res);
         }
         case UAST_POISON_DEF:
             unreachable("");
