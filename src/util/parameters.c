@@ -16,7 +16,7 @@ static bool is_short_option(char** argv) {
 // this function will exclude - or -- part of arg if present
 static const char* consume_arg(int* argc, char*** argv, const char* msg_if_missing) {
     if (*argc < 1) {
-        msg(LOG_FATAL, EXPECT_FAIL_NONE, dummy_pos, "%s\n", msg_if_missing);
+        msg(LOG_FATAL, EXPECT_FAIL_MISSING_COMMAND_LINE_ARG, dummy_pos, "%s\n", msg_if_missing);
         exit(EXIT_CODE_FAIL);
     }
     const char* curr_arg = argv[0][0];
@@ -45,7 +45,13 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
+// TODO: uncomment static_assert
+//static_assert(EXPECT_FAIL_COUNT == 57, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
+    {"note", EXPECT_FAIL_NOTE, LOG_NOTE, false},
+    {"file-built", EXPECT_FAIL_FILE_BUILT, LOG_VERBOSE, false},
+    {"missing-command-line-arg", EXPECT_FAIL_MISSING_COMMAND_LINE_ARG, LOG_ERROR, true},
+    {"file-could-not-open", EXPECT_FAIL_FILE_COULD_NOT_OPEN, LOG_ERROR, true},
     {"missing-close-double-quote", EXPECT_FAIL_MISSING_CLOSE_DOUBLE_QUOTE, LOG_ERROR, true},
     {"no-new-line-after-statement", EXPECT_FAIL_NO_NEW_LINE_AFTER_STATEMENT, LOG_ERROR, true},
     {"missing-close-par", EXPECT_FAIL_MISSING_CLOSE_PAR, LOG_ERROR, true},
@@ -98,6 +104,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"optional-args-for-variadic-args", EXPECT_FAIL_OPTIONAL_ARGS_FOR_VARIADIC_ARGS, LOG_ERROR, true},
     {"fail-invalid-fail-type", EXPECT_FAIL_INVALID_FAIL_TYPE, LOG_ERROR, false},
     {"no-main-function", EXPECT_FAIL_NO_MAIN/*TODO: rename this to match string*/, LOG_WARNING, false},
+    {"struct-like-recursion", EXPECT_FAIL_STRUCT_LIKE_RECURSION, LOG_ERROR, true},
 };
 
 // error types are in the same order in expect_fail_str_to_curr_log_level_pair and expect_fail_pair

@@ -55,7 +55,7 @@ static void msg_invalid_count_generic_args_internal(
     );
 
     msg_internal(
-        file, line, LOG_NOTE, EXPECT_FAIL_NONE, pos_def,
+        file, line, LOG_NOTE, EXPECT_FAIL_NOTE, pos_def,
         "generic parameters defined here\n" 
     );
 }

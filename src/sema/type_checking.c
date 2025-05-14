@@ -191,7 +191,7 @@ static void msg_invalid_function_arg_internal(
     );
     msg_internal(
         file, line,
-        LOG_NOTE, EXPECT_FAIL_NONE, corres_param->pos,
+        LOG_NOTE, EXPECT_FAIL_NOTE, corres_param->pos,
         "corresponding parameter `"STR_VIEW_FMT"` defined here\n",
         name_print(NAME_MSG, corres_param->name)
     );
@@ -221,7 +221,7 @@ static void msg_invalid_count_function_args_internal(
     );
 
     msg_internal(
-        file, line, LOG_NOTE, EXPECT_FAIL_NONE, uast_function_decl_get_pos(fun_decl),
+        file, line, LOG_NOTE, EXPECT_FAIL_NOTE, uast_function_decl_get_pos(fun_decl),
         "function `"STR_VIEW_FMT"` defined here\n", name_print(NAME_MSG, fun_decl->name)
     );
 }
@@ -277,7 +277,7 @@ static void msg_invalid_yield_type_internal(const char* file, int line, Pos pos,
 
     msg_internal(
         file, line,
-        LOG_NOTE, EXPECT_FAIL_NONE, lang_type_get_pos(env.break_type),
+        LOG_NOTE, EXPECT_FAIL_NOTE, lang_type_get_pos(env.break_type),
         "case break type `"LANG_TYPE_FMT"` defined here\n",
         lang_type_print(LANG_TYPE_MODE_MSG, env.break_type) 
     );
@@ -303,7 +303,7 @@ static void msg_invalid_return_type_internal(const char* file, int line, Pos pos
 
     msg_internal(
         file, line,
-        LOG_NOTE, EXPECT_FAIL_NONE, ulang_type_get_pos(env.parent_fn_rtn_type),
+        LOG_NOTE, EXPECT_FAIL_NOTE, ulang_type_get_pos(env.parent_fn_rtn_type),
         "function return type `"LANG_TYPE_FMT"` defined here\n",
         ulang_type_print(LANG_TYPE_MODE_MSG, env.parent_fn_rtn_type)
     );
@@ -2374,7 +2374,7 @@ static bool check_for_exhaustiveness_inner(
                     name_print(NAME_MSG, enum_def->base.name), name_print(NAME_MSG, vec_at(&enum_def->base.members, (size_t)curr_lit->data)->name)
                 );
                 msg(
-                    LOG_NOTE, EXPECT_FAIL_NONE, vec_at(&exhaustive_data->covered_pos,
+                    LOG_NOTE, EXPECT_FAIL_NOTE, vec_at(&exhaustive_data->covered_pos,
                     (size_t)curr_lit->data), "case originally covered here\n"
                 );
                 return false;
@@ -2401,7 +2401,7 @@ static bool check_for_exhaustiveness_inner(
                     name_print(NAME_MSG, sum_def->base.name), name_print(NAME_MSG, vec_at(&sum_def->base.members, (size_t)curr_lit->data)->name)
                 );
                 msg(
-                    LOG_NOTE, EXPECT_FAIL_NONE, vec_at(&exhaustive_data->covered_pos,
+                    LOG_NOTE, EXPECT_FAIL_NOTE, vec_at(&exhaustive_data->covered_pos,
                     (size_t)curr_lit->data), "case originally covered here\n"
                 );
                 return false;
@@ -2577,7 +2577,7 @@ static void try_set_msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
     Uast_def* original_def;
     unwrap(usymbol_lookup(&original_def, uast_def_get_name(new_sym_def)));
     msg(
-        LOG_NOTE, EXPECT_FAIL_NONE, uast_def_get_pos(original_def),
+        LOG_NOTE, EXPECT_FAIL_NOTE, uast_def_get_pos(original_def),
         STR_VIEW_FMT " originally defined here\n", name_print(NAME_MSG, uast_def_get_name(original_def))
     );
 }

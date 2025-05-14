@@ -28,7 +28,7 @@ static bool check_struct_rec_internal_def(Uast_def* def, Ulang_type_regular lang
                 Uast_def* curr = NULL;
                 unwrap(usymbol_lookup(&curr, vec_at(&rec_stack, idx_stk)));
                 msg(
-                    LOG_NOTE, EXPECT_FAIL_NONE, uast_def_get_pos(prev),
+                    LOG_NOTE, EXPECT_FAIL_NOTE, uast_def_get_pos(prev),
                     "`"TAST_FMT"` contains `"TAST_FMT"`\n",
                     name_print(NAME_MSG, uast_def_get_name(prev)),
                     name_print(NAME_MSG, uast_def_get_name(curr))
@@ -37,7 +37,7 @@ static bool check_struct_rec_internal_def(Uast_def* def, Ulang_type_regular lang
                 prev = curr;
             }
             msg(
-                LOG_NOTE, EXPECT_FAIL_STRUCT_LIKE_RECURSION, uast_def_get_pos(prev),
+                LOG_NOTE, EXPECT_FAIL_NOTE, uast_def_get_pos(prev),
                 "`"TAST_FMT"` contains `"TAST_FMT"`\n",
                 name_print(NAME_MSG, uast_def_get_name(prev)),
                 name_print(NAME_MSG, uast_def_get_name(def))

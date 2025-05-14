@@ -247,7 +247,7 @@ static PARSE_STATUS msg_redefinition_of_symbol(const Uast_def* new_sym_def) {
     Uast_def* original_def;
     unwrap(usymbol_lookup(&original_def, uast_def_get_name(new_sym_def)));
     msg(
-        LOG_NOTE, EXPECT_FAIL_NONE, uast_def_get_pos(original_def),
+        LOG_NOTE, EXPECT_FAIL_NOTE, uast_def_get_pos(original_def),
         "`"STR_VIEW_FMT"` originally defined here\n", name_print(NAME_MSG, uast_def_get_name(original_def))
     );
 
@@ -2620,7 +2620,7 @@ bool parse_file(Uast_block** block, Str_view file_path) {
     Str_view* file_con = arena_alloc(&a_main, sizeof(*file_con));
     if (!read_file(file_con, file_path)) {
         msg(
-            LOG_ERROR, EXPECT_FAIL_NONE, dummy_pos,
+            LOG_ERROR, EXPECT_FAIL_FILE_COULD_NOT_OPEN, dummy_pos,
             "could not open file `"STR_VIEW_FMT"`: %s\n",
             str_view_print(file_path), strerror(errno)
         );
