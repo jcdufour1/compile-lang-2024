@@ -33,7 +33,7 @@ typedef struct {
 
 void parse_args(int argc, char** argv);
 
-bool expect_fail_type_from_strv(EXPECT_FAIL_TYPE* type, Str_view strv);
+bool expect_fail_type_from_strv(size_t* idx, EXPECT_FAIL_TYPE* type, Str_view strv);
 
 Str_view expect_fail_type_print_internal(EXPECT_FAIL_TYPE type);
 

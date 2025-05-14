@@ -36,67 +36,79 @@ static const char* consume_arg(int* argc, char*** argv, const char* msg_if_missi
 typedef struct {
     const char* str;
     EXPECT_FAIL_TYPE type;
+    LOG_LEVEL default_level;
+    bool must_be_error;
 } Expect_fail_pair;
 
-// TODO: unite this and expected_fail_type_print
+typedef struct {
+    const char* str;
+    LOG_LEVEL curr_level;
+} Expect_fail_str_to_curr_log_level;
+
 static const Expect_fail_pair expect_fail_pair[] = {
-    {"missing-close-double-quote", EXPECT_FAIL_MISSING_CLOSE_DOUBLE_QUOTE},
-    {"no-new-line-after-statement", EXPECT_FAIL_NO_NEW_LINE_AFTER_STATEMENT},
-    {"missing-close-par", EXPECT_FAIL_MISSING_CLOSE_PAR},
-    {"missing-close-curly-brace", EXPECT_FAIL_MISSING_CLOSE_CURLY_BRACE},
-    {"invalid-extern-type", EXPECT_FAIL_INVALID_EXTERN_TYPE},
-    {"invalid-token", EXPECT_FAIL_INVALID_TOKEN},
-    {"parser-expected", EXPECT_FAIL_PARSER_EXPECTED},
-    {"redefinition-of-symbol", EXPECT_FAIL_REDEFINITION_SYMBOL},
-    {"invalid-struct-member-in-literal", EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL},
-    {"invalid-member-access", EXPECT_FAIL_INVALID_MEMBER_ACCESS},
-    {"missing-return-statement", EXPECT_FAIL_MISSING_RETURN},
-    {"invalid-count-fun-args", EXPECT_FAIL_INVALID_COUNT_FUN_ARGS},
-    {"invalid-function-arg", EXPECT_FAIL_INVALID_FUN_ARG},
-    {"mismatched-return-type", EXPECT_FAIL_MISMATCHED_RETURN_TYPE},
-    {"mismatched-yield-type", EXPECT_FAIL_MISMATCHED_YIELD_TYPE},
-    {"assignment-mismatched-types", EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES},
-    {"unary-mismatched-types", EXPECT_FAIL_UNARY_MISMATCHED_TYPES},
-    {"binary-mismatched-types", EXPECT_FAIL_BINARY_MISMATCHED_TYPES},
-    {"expected-expression", EXPECT_FAIL_EXPECTED_EXPRESSION},
-    {"undefined-symbol", EXPECT_FAIL_UNDEFINED_SYMBOL},
-    {"undefined-function", EXPECT_FAIL_UNDEFINED_FUNCTION},
-    {"struct-init-on-raw-union", EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION},
-    {"struct-init-on-sum", EXPECT_FAIL_STRUCT_INIT_ON_SUM},
-    {"struct-init-on-primitive", EXPECT_FAIL_STRUCT_INIT_ON_PRIMITIVE},
-    {"undefined-type", EXPECT_FAIL_UNDEFINED_TYPE},
-    {"missing-close-sq-bracket", EXPECT_FAIL_MISSING_CLOSE_SQ_BRACKET},
-    {"deref_non_pointer", EXPECT_FAIL_DEREF_NON_POINTER},
-    {"break-invalid-location", EXPECT_FAIL_BREAK_INVALID_LOCATION},
-    {"continue-invalid-location", EXPECT_FAIL_CONTINUE_INVALID_LOCATION},
-    {"mismatched-tuple-count", EXPECT_FAIL_MISMATCHED_TUPLE_COUNT},
-    {"non-exhaustive-switch", EXPECT_FAIL_NON_EXHAUSTIVE_SWITCH},
-    {"sum-lit-invalid-arg", EXPECT_FAIL_SUM_LIT_INVALID_ARG},
-    {"not-yet-implemented", EXPECT_FAIL_NOT_YET_IMPLEMENTED},
-    {"duplicate-default", EXPECT_FAIL_DUPLICATE_DEFAULT},
-    {"duplicate-case", EXPECT_FAIL_DUPLICATE_CASE},
-    {"invalid-count-generic-args", EXPECT_FAIL_INVALID_COUNT_GENERIC_ARGS},
-    {"missing-yield-statement", EXPECT_FAIL_MISSING_YIELD_STATEMENT},
-    {"invalid-hex", EXPECT_FAIL_INVALID_HEX},
-    {"invalid-bin", EXPECT_FAIL_INVALID_BIN},
-    {"invalid-octal", EXPECT_FAIL_INVALID_OCTAL},
-    {"invalid-char-lit", EXPECT_FAIL_INVALID_CHAR_LIT},
-    {"invalid-decimal-lit", EXPECT_FAIL_INVALID_DECIMAL_LIT},
-    {"missing-close-multiline", EXPECT_FAIL_MISSING_CLOSE_MULTILINE},
-    {"invalid-count-struct-lit-args", EXPECT_FAIL_INVALID_COUNT_STRUCT_LIT_ARGS},
-    {"missing-sum-arg", EXPECT_FAIL_MISSING_SUM_ARG},
-    {"sum-case-too-many-args", EXPECT_FAIL_SUM_CASE_TOO_MANY_ARGS},
-    {"void-sum-case-has-arg", EXPECT_FAIL_VOID_SUM_CASE_HAS_ARG},
-    {"invalid-stmt-top-level", EXPECT_FAIL_INVALID_STMT_TOP_LEVEL},
-    {"invalid-function-callee", EXPECT_FAIL_INVALID_FUNCTION_CALLEE},
-    {"optional-args-for-variadic-args", EXPECT_FAIL_OPTIONAL_ARGS_FOR_VARIADIC_ARGS},
-    {"no-main", EXPECT_FAIL_NO_MAIN},
+    {"missing-close-double-quote", EXPECT_FAIL_MISSING_CLOSE_DOUBLE_QUOTE, LOG_ERROR, true},
+    {"no-new-line-after-statement", EXPECT_FAIL_NO_NEW_LINE_AFTER_STATEMENT, LOG_ERROR, true},
+    {"missing-close-par", EXPECT_FAIL_MISSING_CLOSE_PAR, LOG_ERROR, true},
+    {"missing-close-curly-brace", EXPECT_FAIL_MISSING_CLOSE_CURLY_BRACE, LOG_ERROR, true},
+    {"invalid-extern-type", EXPECT_FAIL_INVALID_EXTERN_TYPE, LOG_ERROR, true},
+    {"invalid-token", EXPECT_FAIL_INVALID_TOKEN, LOG_ERROR, true},
+    {"parser-expected", EXPECT_FAIL_PARSER_EXPECTED, LOG_ERROR, true},
+    {"redefinition-of-symbol", EXPECT_FAIL_REDEFINITION_SYMBOL, LOG_ERROR, true},
+    {"invalid-struct-member-in-literal", EXPECT_FAIL_INVALID_MEMBER_IN_LITERAL, LOG_ERROR, true},
+    {"invalid-member-access", EXPECT_FAIL_INVALID_MEMBER_ACCESS, LOG_ERROR, true},
+    {"missing-return-statement", EXPECT_FAIL_MISSING_RETURN, LOG_ERROR, true},
+    {"invalid-count-fun-args", EXPECT_FAIL_INVALID_COUNT_FUN_ARGS, LOG_ERROR, true},
+    {"invalid-function-arg", EXPECT_FAIL_INVALID_FUN_ARG, LOG_ERROR, true},
+    {"mismatched-return-type", EXPECT_FAIL_MISMATCHED_RETURN_TYPE, LOG_ERROR, true},
+    {"mismatched-yield-type", EXPECT_FAIL_MISMATCHED_YIELD_TYPE, LOG_ERROR, true},
+    {"assignment-mismatched-types", EXPECT_FAIL_ASSIGNMENT_MISMATCHED_TYPES, LOG_ERROR, true},
+    {"unary-mismatched-types", EXPECT_FAIL_UNARY_MISMATCHED_TYPES, LOG_ERROR, true},
+    {"binary-mismatched-types", EXPECT_FAIL_BINARY_MISMATCHED_TYPES, LOG_ERROR, true},
+    {"expected-expression", EXPECT_FAIL_EXPECTED_EXPRESSION, LOG_ERROR, true},
+    {"undefined-symbol", EXPECT_FAIL_UNDEFINED_SYMBOL, LOG_ERROR, true},
+    {"undefined-function", EXPECT_FAIL_UNDEFINED_FUNCTION, LOG_ERROR, true},
+    {"struct-init-on-raw-union", EXPECT_FAIL_STRUCT_INIT_ON_RAW_UNION, LOG_ERROR, true},
+    {"struct-init-on-sum", EXPECT_FAIL_STRUCT_INIT_ON_SUM, LOG_ERROR, true},
+    {"struct-init-on-primitive", EXPECT_FAIL_STRUCT_INIT_ON_PRIMITIVE, LOG_ERROR, true},
+    {"undefined-type", EXPECT_FAIL_UNDEFINED_TYPE, LOG_ERROR, true},
+    {"missing-close-sq-bracket", EXPECT_FAIL_MISSING_CLOSE_SQ_BRACKET, LOG_ERROR, true},
+    {"deref_non_pointer", EXPECT_FAIL_DEREF_NON_POINTER, LOG_ERROR, true},
+    {"break-invalid-location", EXPECT_FAIL_BREAK_INVALID_LOCATION, LOG_ERROR, true},
+    {"continue-invalid-location", EXPECT_FAIL_CONTINUE_INVALID_LOCATION, LOG_ERROR, true},
+    {"mismatched-tuple-count", EXPECT_FAIL_MISMATCHED_TUPLE_COUNT, LOG_ERROR, true},
+    {"non-exhaustive-switch", EXPECT_FAIL_NON_EXHAUSTIVE_SWITCH, LOG_ERROR, true},
+    {"sum-lit-invalid-arg", EXPECT_FAIL_SUM_LIT_INVALID_ARG, LOG_ERROR, true},
+    {"not-yet-implemented", EXPECT_FAIL_NOT_YET_IMPLEMENTED, LOG_ERROR, true},
+    {"duplicate-default", EXPECT_FAIL_DUPLICATE_DEFAULT, LOG_ERROR, true},
+    {"duplicate-case", EXPECT_FAIL_DUPLICATE_CASE, LOG_ERROR, true},
+    {"invalid-count-generic-args", EXPECT_FAIL_INVALID_COUNT_GENERIC_ARGS, LOG_ERROR, true},
+    {"missing-yield-statement", EXPECT_FAIL_MISSING_YIELD_STATEMENT, LOG_ERROR, true},
+    {"invalid-hex", EXPECT_FAIL_INVALID_HEX, LOG_ERROR, true},
+    {"invalid-bin", EXPECT_FAIL_INVALID_BIN, LOG_ERROR, true},
+    {"invalid-octal", EXPECT_FAIL_INVALID_OCTAL, LOG_ERROR, true},
+    {"invalid-char-lit", EXPECT_FAIL_INVALID_CHAR_LIT, LOG_ERROR, true},
+    {"invalid-decimal-lit", EXPECT_FAIL_INVALID_DECIMAL_LIT, LOG_ERROR, true},
+    {"missing-close-multiline", EXPECT_FAIL_MISSING_CLOSE_MULTILINE, LOG_ERROR, true},
+    {"invalid-count-struct-lit-args", EXPECT_FAIL_INVALID_COUNT_STRUCT_LIT_ARGS, LOG_ERROR, true},
+    {"missing-sum-arg", EXPECT_FAIL_MISSING_SUM_ARG, LOG_ERROR, true},
+    {"sum-case-too-many-args", EXPECT_FAIL_SUM_CASE_TOO_MANY_ARGS, LOG_ERROR, true},
+    {"void-sum-case-has-arg", EXPECT_FAIL_VOID_SUM_CASE_HAS_ARG, LOG_ERROR, true},
+    {"invalid-stmt-top-level", EXPECT_FAIL_INVALID_STMT_TOP_LEVEL, LOG_ERROR, true},
+    {"invalid-function-callee", EXPECT_FAIL_INVALID_FUNCTION_CALLEE, LOG_ERROR, true},
+    {"optional-args-for-variadic-args", EXPECT_FAIL_OPTIONAL_ARGS_FOR_VARIADIC_ARGS, LOG_ERROR, true},
+    {"fail-invalid-fail-type", EXPECT_FAIL_INVALID_FAIL_TYPE, LOG_ERROR, false},
+    {"no-main-function", EXPECT_FAIL_NO_MAIN/*TODO: rename this to match string*/, LOG_WARNING, false},
 };
 
-bool expect_fail_type_from_strv(EXPECT_FAIL_TYPE* type, Str_view strv) {
+// error types are in the same order in expect_fail_str_to_curr_log_level_pair and expect_fail_pair
+static Expect_fail_str_to_curr_log_level 
+expect_fail_str_to_curr_log_level_pair[sizeof(expect_fail_pair)/sizeof(expect_fail_pair[0])] = {0};
+
+bool expect_fail_type_from_strv(size_t* idx_result, EXPECT_FAIL_TYPE* type, Str_view strv) {
     for (size_t idx = 0; idx < sizeof(expect_fail_pair)/sizeof(expect_fail_pair[0]); idx++) {
         if (str_view_is_equal(str_view_from_cstr(expect_fail_pair[idx].str), strv)) {
             *type = expect_fail_pair[idx].type;
+            *idx_result = idx;
             return true;
         }
     }
@@ -110,6 +122,13 @@ Str_view expect_fail_type_print_internal(EXPECT_FAIL_TYPE type) {
         }
     }
     unreachable("");
+}
+
+static void expect_fail_str_to_curr_log_level_init(void) {
+    for (size_t idx = 0; idx < sizeof(expect_fail_pair)/sizeof(expect_fail_pair[0]); idx++) {
+        expect_fail_str_to_curr_log_level_pair[idx].str = expect_fail_pair[idx].str;
+        expect_fail_str_to_curr_log_level_pair[idx].curr_level = expect_fail_pair[idx].default_level;
+    }
 }
 
 static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
@@ -166,12 +185,8 @@ static void parse_long_option(Parameters* params, int* argc, char*** argv) {
         params->emit_llvm = true;
     } else if (0 == strncmp(curr_opt, "backend", strlen("backend"))) {
         Str_view backend = str_view_from_cstr(&curr_opt[strlen("backend")]);
-        if (!str_view_try_consume(&backend, '=')) {
+        if (!str_view_try_consume(&backend, '=') || backend.count < 1) {
             log(LOG_FATAL, "expected =<backend> after `backend`");
-            exit(EXIT_CODE_FAIL);
-        }
-        if (backend.count < 1) {
-            log(LOG_FATAL, "expected <backend> after `backend=`");
             exit(EXIT_CODE_FAIL);
         }
 
@@ -187,6 +202,22 @@ static void parse_long_option(Parameters* params, int* argc, char*** argv) {
         }
     } else if (0 == strcmp(curr_opt, "all-errors-fatal")) {
         params->all_errors_fatal = true;
+    } else if (0 == strncmp(curr_opt, "error", strlen("error"))) {
+        Str_view error = str_view_from_cstr(&curr_opt[strlen("error")]);
+        if (!str_view_try_consume(&error, '=') || error.count < 1) {
+            log(LOG_FATAL, "expected <=error1[,error2,...]> after `error`");
+            exit(EXIT_CODE_FAIL);
+        }
+        EXPECT_FAIL_TYPE type = {0};
+        size_t idx = 0;
+        if (!expect_fail_type_from_strv(&idx, &type, error)) {
+            msg(
+                LOG_ERROR, EXPECT_FAIL_INVALID_FAIL_TYPE, POS_BUILTIN,
+                "invalid fail type `"STR_VIEW_FMT"`\n", str_view_print(error)
+            );
+            exit(EXIT_CODE_FAIL);
+        }
+        expect_fail_str_to_curr_log_level_pair[idx].curr_level = LOG_ERROR;
     } else if (0 == strncmp(curr_opt, "log-level", strlen("log-level"))) {
         Str_view log_level = str_view_from_cstr(&curr_opt[strlen("log-level")]);
         if (!str_view_try_consume(&log_level, '=')) {
@@ -230,13 +261,14 @@ static Parameters get_params_with_defaults(void) {
 
 void parse_args(int argc, char** argv) {
     params = get_params_with_defaults();
+    expect_fail_str_to_curr_log_level_init();
 
     // consume compiler executable name
     consume_arg(&argc, &argv, "internal error");
 
     while (argc > 0) {
         if (is_short_option(argv)) {
-            todo();
+            parse_long_option(&params, &argc, &argv);
         } else if (is_long_option(argv)) {
             parse_long_option(&params, &argc, &argv);
         } else {

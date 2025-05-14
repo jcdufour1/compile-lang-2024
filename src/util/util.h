@@ -11,13 +11,14 @@
 #include <expected_fail_type.h>
 
 typedef enum {
-    LOG_TRACE   = 0,
-    LOG_DEBUG   = 1,
-    LOG_VERBOSE = 2,
-    LOG_NOTE    = 3,
-    LOG_WARNING = 4,
-    LOG_ERROR   = 5,
-    LOG_FATAL   = 6,
+    LOG_NEVER   = 0,
+    LOG_TRACE   = 1,
+    LOG_DEBUG   = 2,
+    LOG_VERBOSE = 3,
+    LOG_NOTE    = 4,
+    LOG_WARNING = 5,
+    LOG_ERROR   = 6,
+    LOG_FATAL   = 7,
 } LOG_LEVEL;
 
 #ifndef MIN_LOG_LEVEL
