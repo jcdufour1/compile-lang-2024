@@ -226,7 +226,7 @@ def add_to_map(map: dict, path: str):
 
 def parse_args() -> Tuple[list[str], str, Action, bool]:
     action: Action = Action.TEST
-    test_output = "test.ll" # TODO: be more consistant with test_output variable names
+    test_output = "test.c" # TODO: be more consistant with test_output variable names
     to_include: dict[str, int] = {}
     keep_going: bool = True
     has_found_flag = False
