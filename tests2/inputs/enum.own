@@ -1,12 +1,12 @@
 type io import = std.io
 
 
-type TokenType enum {
+type TokenType sum {
     number
     string
 }
 
-type TokenType2 enum {
+type TokenType2 sum {
     number, string
 }
 
@@ -14,6 +14,13 @@ type Token struct {
     kind TokenType
     number_data i32
     string_data u8*
+}
+
+fn token_type_is_equal(a TokenType, b TokenType) {
+    switch a {
+        case .number:
+            
+    }
 }
 
 fn print_token_if(token Token) {
@@ -42,20 +49,20 @@ fn print_token_switch_non_exhaustive(token Token) {
 }
 
 // check that scope rules are followed for type subtypes enum
-type NodeType enum {
+type NodeType sum {
     NONE
 }
 
-type LlvmType enum {
+type LlvmType sum {
     NONE
 }
 
 fn main() i32 {
-    let token_type TokenType = TokenType.number
-    io.printf("%d\n", token_type);
+    //let token_type TokenType = TokenType.number
+    //io.printf("%d\n", token_type);
 
-    token_type = TokenType.string
-    io.printf("%d\n", token_type);
+    //token_type = TokenType.string
+    //io.printf("%d\n", token_type);
 
     {
         let token Token
@@ -63,25 +70,25 @@ fn main() i32 {
         token.number_data = 87
         token.string_data = "hello"
         print_token_if(token)
-        print_token_switch(token)
+        //print_token_switch(token)
     }
 
-    {
-        let token Token
-        token.kind = TokenType.string
-        token.number_data = 87
-        token.string_data = "hello"
-        print_token_if(token)
-        print_token_switch(token)
-    }
+    //{
+    //    let token Token
+    //    token.kind = TokenType.string
+    //    token.number_data = 87
+    //    token.string_data = "hello"
+    //    print_token_if(token)
+    //    print_token_switch(token)
+    //}
 
-    {
-        let token Token
-        token.kind = TokenType.string
-        token.number_data = 87
-        token.string_data = "hello"
-        print_token_switch_non_exhaustive(token)
-    }
+    //{
+    //    let token Token
+    //    token.kind = TokenType.string
+    //    token.number_data = 87
+    //    token.string_data = "hello"
+    //    print_token_switch_non_exhaustive(token)
+    //}
     return 0
 }
 

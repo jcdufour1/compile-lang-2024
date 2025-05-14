@@ -1094,8 +1094,11 @@ static PARSE_STATUS parse_struct_base_def(
             default:
                 unreachable("");
         }
-        try_consume(NULL, tokens, TOKEN_SEMICOLON);
-        while (try_consume(NULL, tokens, TOKEN_NEW_LINE));
+        if (require_sub_types) {
+            while (try_consume_newlines(tokens));
+        } else {
+            while (try_consume(NULL, tokens, TOKEN_COMMA) || try_consume_newlines(tokens));
+        }
         vec_append(&a_main, &base->members, member);
     }
 

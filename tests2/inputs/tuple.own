@@ -1,7 +1,7 @@
 type io import = std.io
 
 
-type TokenType enum {
+type TokenType sum {
     num
     string
 }

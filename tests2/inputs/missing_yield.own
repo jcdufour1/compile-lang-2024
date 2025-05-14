@@ -1,5 +1,5 @@
 
-type Bool enum {
+type Bool sum {
     false
     true
 }

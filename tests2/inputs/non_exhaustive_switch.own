@@ -2,7 +2,7 @@
 extern("c") fn puts(str_to_print_2 u8*) 
 extern("c") fn printf(str_to_print_2 u8*, args any...) i32
 
-type TokenType enum {
+type TokenType sum {
     number
     string
 }

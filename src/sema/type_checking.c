@@ -1809,12 +1809,13 @@ bool try_set_member_access_types_finish_sum_def(
         case PARENT_OF_BREAK:
             todo();
             // fallthrough
+        case PARENT_OF_NONE:
+            // fallthrough
         case PARENT_OF_ASSIGN_RHS: {
             Uast_variable_def* member_def = NULL;
             if (!uast_try_get_member_def(&member_def, &sum_def->base, access->member_name->name.base)) {
-                todo();
-                //msg_invalid_member(enum_def->base, access);
-                //return false;
+                msg_invalid_member(sum_def->base.name, access);
+                return false;
             }
             
             Tast_enum_lit* new_tag = tast_enum_lit_new(
@@ -1852,8 +1853,6 @@ bool try_set_member_access_types_finish_sum_def(
             //return true;
         }
         case PARENT_OF_IF:
-            unreachable("");
-        case PARENT_OF_NONE:
             unreachable("");
     }
     unreachable("");
