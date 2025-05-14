@@ -67,6 +67,7 @@ for generics:
 - expected failure test for empty []
 - consider if tokenizer should convert semicolon to newline to simplify things
 - make actual way to designate some test inputs as unfinished (after doing this, make some files unfinished)
+- remove enum, then eventually rename sum to enum (this can simplify maintenance, etc.)
 
 
 # roadmap to try to get bootstrap compiler done:

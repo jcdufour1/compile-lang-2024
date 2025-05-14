@@ -1475,7 +1475,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 return false;
             }
             if (fun_call->args.info.count > 1) {
-                todo();
                 msg(
                     DIAG_SUM_CASE_TOO_MANY_ARGS, tast_sum_callee_unwrap(new_callee)->pos,
                     "() in sum case must contain exactly one argument, but %zu arguments found\n",
@@ -1484,12 +1483,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 return false;
             }
             if (tast_sum_callee_unwrap(new_callee)->tag->lang_type.type == LANG_TYPE_VOID) {
-                msg(
-                    DIAG_VOID_SUM_CASE_HAS_ARG, tast_sum_callee_unwrap(new_callee)->pos,
-                    "sum callee associated type is void; remove ()\n" // TODO: actually print file text where () is if possible
-                );
-                todo();
-                return false;
+                unreachable("sum symbol with void callee should have been converted to TAST_SUM_LIT instead of TAST_SUM_CALLEE in try_set_symbol_types");
             }
 
             Tast_sum_callee* sum_callee = tast_sum_callee_unwrap(new_callee);
