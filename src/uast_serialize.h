@@ -42,8 +42,6 @@ static inline Str_view serialize_uast_def(const Uast_def* def) {
             unreachable("");
         case UAST_RAW_UNION_DEF:
             return serialize_uast_raw_union_def( uast_raw_union_def_const_unwrap(def));
-        case UAST_ENUM_DEF:
-            unreachable("");
         case UAST_SUM_DEF:
             return serialize_uast_sum_def( uast_sum_def_const_unwrap(def));
         case UAST_PRIMITIVE_DEF:

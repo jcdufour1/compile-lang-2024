@@ -301,10 +301,6 @@ static bool starts_with_raw_union_def(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_RAW_UNION;
 }
 
-static bool starts_with_enum_def(Tk_view tokens) {
-    return tk_view_front(tokens).type == TOKEN_ENUM;
-}
-
 static bool starts_with_sum_def(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_SUM;
 }
@@ -547,8 +543,6 @@ static bool can_end_stmt(Token token) {
             return false;
         case TOKEN_ELSE:
             return false;
-        case TOKEN_ENUM:
-            return false;
         case TOKEN_OPEN_SQ_BRACKET:
             return false;
         case TOKEN_CLOSE_SQ_BRACKET:
@@ -690,8 +684,6 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_RAW_UNION:
             return false;
         case TOKEN_ELSE:
-            return false;
-        case TOKEN_ENUM:
             return false;
         case TOKEN_OPEN_SQ_BRACKET:
             return false;
@@ -1187,36 +1179,6 @@ static PARSE_STATUS parse_raw_union_def(Uast_raw_union_def** raw_union_def, Tk_v
     return PARSE_OK;
 }
 
-static PARSE_STATUS parse_enum_def(Uast_enum_def** enum_def, Tk_view* tokens, Token name) {
-    unwrap(try_consume(NULL, tokens, TOKEN_ENUM));
-
-    // TODO: make test case for same-named enum, etc. in module and in main file
-    Ustruct_def_base base = {0};
-    if (PARSE_OK != parse_struct_base_def_implicit_type(
-        &base,
-        name_new(env.curr_mod_path, name.text, (Ulang_type_vec) {0}, SCOPE_TOP_LEVEL),
-        tokens,
-        ulang_type_atom_new(
-            uname_new(
-                name_new((Str_view) {0}, (Str_view) {0}, (Ulang_type_vec) {0}, SCOPE_BUILTIN /* TODO */),
-                name.text, 
-                (Ulang_type_vec) {0}, 
-                SCOPE_TOP_LEVEL
-            ),
-            0
-        )
-    )) {
-        return PARSE_ERROR;
-    }
-
-    *enum_def = uast_enum_def_new(name.pos, base);
-    if (!usymbol_add(uast_enum_def_wrap(*enum_def))) {
-        msg_redefinition_of_symbol(uast_enum_def_wrap(*enum_def));
-        return PARSE_ERROR;
-    }
-    return PARSE_OK;
-}
-
 static PARSE_STATUS parse_sum_def(Uast_sum_def** sum_def, Tk_view* tokens, Token name) {
     Token sum_tk = {0};
     unwrap(try_consume(&sum_tk, tokens, TOKEN_SUM));
@@ -1324,12 +1286,6 @@ static PARSE_STATUS parse_type_def(Uast_def** def, Tk_view* tokens, Scope_id sco
             return PARSE_ERROR;
         }
         *def = uast_raw_union_def_wrap(raw_union_def);
-    } else if (starts_with_enum_def(*tokens)) {
-        Uast_enum_def* enum_def;
-        if (PARSE_OK != parse_enum_def(&enum_def, tokens, name)) {
-            return PARSE_ERROR;
-        }
-        *def = uast_enum_def_wrap(enum_def);
     } else if (starts_with_sum_def(*tokens)) {
         Uast_sum_def* sum_def;
         if (PARSE_OK != parse_sum_def(&sum_def, tokens, name)) {
@@ -1351,7 +1307,7 @@ static PARSE_STATUS parse_type_def(Uast_def** def, Tk_view* tokens, Scope_id sco
     } else {
         msg_parser_expected(
             tk_view_front(*tokens), "",
-            TOKEN_STRUCT, TOKEN_RAW_UNION, TOKEN_ENUM, TOKEN_SUM, TOKEN_DEF, TOKEN_IMPORT
+            TOKEN_STRUCT, TOKEN_RAW_UNION, TOKEN_SUM, TOKEN_DEF, TOKEN_IMPORT
         );
         return PARSE_ERROR;
     }
@@ -2484,7 +2440,7 @@ static PARSE_STATUS parse_expr_generic(
 //    parse_bitwise_and
 //};
 
-static_assert(TOKEN_COUNT == 68, "exhausive handling of token types; note that only binary operators need to be explicitly handled here");
+static_assert(TOKEN_COUNT == 67, "exhausive handling of token types; note that only binary operators need to be explicitly handled here");
 // lower precedence operators are in earlier rows in the table
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},

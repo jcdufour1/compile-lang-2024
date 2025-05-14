@@ -137,8 +137,6 @@ static bool get_next_token(
             token->type = TOKEN_BREAK;
         } else if (str_view_cstr_is_equal(text, "raw_union")) {
             token->type = TOKEN_RAW_UNION;
-        } else if (str_view_cstr_is_equal(text, "enum")) {
-            token->type = TOKEN_ENUM;
         } else if (str_view_cstr_is_equal(text, "sum")) {
             token->type = TOKEN_SUM;
         } else if (str_view_cstr_is_equal(text, "continue")) {

@@ -92,8 +92,6 @@ Str_view token_type_to_str_view_msg(TOKEN_TYPE token_type) {
             return str_view_from_cstr("unsafe_union");
         case TOKEN_ELSE:
             return str_view_from_cstr("else");
-        case TOKEN_ENUM:
-            return str_view_from_cstr("enum");
         case TOKEN_OPEN_SQ_BRACKET:
             return str_view_from_cstr("[");
         case TOKEN_CLOSE_SQ_BRACKET:
@@ -236,8 +234,6 @@ Str_view token_type_to_str_view_log(TOKEN_TYPE token_type) {
             return str_view_from_cstr("unsafe_union");
         case TOKEN_ELSE:
             return str_view_from_cstr("else");
-        case TOKEN_ENUM:
-            return str_view_from_cstr("enum");
         case TOKEN_OPEN_SQ_BRACKET:
             return str_view_from_cstr("[");
         case TOKEN_CLOSE_SQ_BRACKET:
@@ -306,7 +302,7 @@ Str_view token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
     }
 
     // add token text
-    static_assert(TOKEN_COUNT == 68, "exhausive handling of token types");
+    static_assert(TOKEN_COUNT == 67, "exhausive handling of token types");
     switch (token.type) {
         case TOKEN_SYMBOL:
             vec_append(arena, &buf, '(');
@@ -352,7 +348,6 @@ Str_view token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         case TOKEN_EXTERN: // fallthrough
         case TOKEN_STRUCT: // fallthrough
         case TOKEN_RAW_UNION: // fallthrough
-        case TOKEN_ENUM: // fallthrough
         case TOKEN_LET: // fallthrough
         case TOKEN_IN: // fallthrough
         case TOKEN_NEW_LINE: // fallthrough

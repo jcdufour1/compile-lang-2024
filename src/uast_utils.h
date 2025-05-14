@@ -87,8 +87,6 @@ static inline Lang_type* uast_get_ulang_type_def_ref(Uast_def* def) {
             unreachable("");
         case UAST_RAW_UNION_DEF:
             unreachable("");
-        case UAST_ENUM_DEF:
-            unreachable("");
         case UAST_VARIABLE_DEF:
             unreachable("");
         case UAST_FUNCTION_DECL:
@@ -191,8 +189,6 @@ static inline Lang_type* uast_def_ref_get_lang_type(Uast_def* def) {
             unreachable("");
         case UAST_RAW_UNION_DEF:
             unreachable("");
-        case UAST_ENUM_DEF:
-            unreachable("");
         case UAST_VARIABLE_DEF:
             unreachable("");
         case UAST_FUNCTION_DECL:
@@ -251,8 +247,6 @@ static inline Name uast_def_get_name(const Uast_def* def) {
             return uast_struct_def_const_unwrap(def)->base.name;
         case UAST_RAW_UNION_DEF:
             return uast_raw_union_def_const_unwrap(def)->base.name;
-        case UAST_ENUM_DEF:
-            return uast_enum_def_const_unwrap(def)->base.name;
         case UAST_FUNCTION_DECL:
             return uast_function_decl_const_unwrap(def)->name;
         case UAST_FUNCTION_DEF:
@@ -302,8 +296,6 @@ static inline Ustruct_def_base uast_def_get_struct_def_base(const Uast_def* def)
     switch (def->type) {
         case UAST_SUM_DEF:
             return uast_sum_def_const_unwrap(def)->base;
-        case UAST_ENUM_DEF:
-            return uast_enum_def_const_unwrap(def)->base;
         case UAST_STRUCT_DEF:
             return uast_struct_def_const_unwrap(def)->base;
         case UAST_RAW_UNION_DEF:

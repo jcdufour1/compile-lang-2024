@@ -149,9 +149,6 @@ static inline bool try_lang_type_from_ulang_type_regular(Lang_type* new_lang_typ
         case LANG_TYPE_RAW_UNION:
             *new_lang_type = lang_type_raw_union_const_wrap(lang_type_raw_union_new(lang_type.pos, new_atom));
             return true;
-        case LANG_TYPE_ENUM:
-            *new_lang_type = lang_type_enum_const_wrap(lang_type_enum_new(lang_type.pos, new_atom));
-            return true;
         case LANG_TYPE_SUM:
             *new_lang_type = lang_type_sum_const_wrap(lang_type_sum_new(lang_type.pos, new_atom));
             return true;

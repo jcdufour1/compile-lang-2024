@@ -385,14 +385,6 @@ static Uast_type uast_gen_variable_def(const char* prefix) {
     return def;
 }
 
-static Uast_type uast_gen_enum_def(const char* prefix) {
-    Uast_type def = {.name = uast_name_new(prefix, "enum_def", false)};
-
-    append_member(&def.members, "Ustruct_def_base", "base");
-
-    return def;
-}
-
 static Uast_type uast_gen_sum_def(const char* prefix) {
     Uast_type def = {.name = uast_name_new(prefix, "sum_def", false)};
 
@@ -448,7 +440,6 @@ static Uast_type uast_gen_def(const char* prefix) {
     vec_append(&gen_a, &def.sub_types, uast_gen_variable_def(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_struct_def(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_raw_union_def(base_name));
-    vec_append(&gen_a, &def.sub_types, uast_gen_enum_def(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_sum_def(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_lang_def(base_name));
     vec_append(&gen_a, &def.sub_types, uast_gen_primitive_def(base_name));

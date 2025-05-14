@@ -80,8 +80,6 @@ static bool check_struct_rec_internal_lang_type_reg(Ulang_type_regular lang_type
             // fallthrough
         case UAST_SUM_DEF:
             return check_struct_rec_internal_def(def, lang_type, name, rec_stack);
-        case UAST_ENUM_DEF:
-            return true;
         case UAST_LANG_DEF:
             todo();
         case UAST_PRIMITIVE_DEF:

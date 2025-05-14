@@ -159,8 +159,6 @@ static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_
             return can_be_implicitly_converted_lang_type_atom(lang_type_struct_const_unwrap(dest).atom, lang_type_struct_const_unwrap(src).atom, false, implicit_pointer_depth);
         case LANG_TYPE_RAW_UNION:
             return can_be_implicitly_converted_lang_type_atom(lang_type_raw_union_const_unwrap(dest).atom, lang_type_raw_union_const_unwrap(src).atom, false, implicit_pointer_depth);
-        case LANG_TYPE_ENUM:
-            return can_be_implicitly_converted_lang_type_atom(lang_type_enum_const_unwrap(dest).atom, lang_type_enum_const_unwrap(src).atom, false, implicit_pointer_depth);
         case LANG_TYPE_VOID:
             return true;
     }
@@ -496,8 +494,6 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
         case UAST_STRUCT_DEF:
             // fallthrough
         case UAST_SUM_DEF:
-            // fallthrough
-        case UAST_ENUM_DEF:
             // fallthrough
         case UAST_RAW_UNION_DEF:
             // fallthrough
@@ -1359,9 +1355,6 @@ STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
         case UAST_RAW_UNION_DEF: {
             return STMT_NO_STMT;
         }
-        case UAST_ENUM_DEF: {
-            return STMT_NO_STMT;
-        }
         case UAST_PRIMITIVE_DEF: {
             if (!try_set_primitive_def_types(uast_primitive_def_unwrap(uast))) {
                 return STMT_ERROR;
@@ -1914,23 +1907,6 @@ bool try_set_member_access_types_finish(
                  new_tast, access, raw_union_def->base, new_callee
             );
         }
-        case UAST_ENUM_DEF: {
-            Uast_enum_def* enum_def = uast_enum_def_unwrap(lang_type_def);
-            Uast_variable_def* member_def = NULL;
-            if (!uast_try_get_member_def(&member_def, &enum_def->base, access->member_name->name.base)) {
-                msg_invalid_member(enum_def->base.name, access);
-                return false;
-            }
-
-            Tast_enum_lit* new_lit = tast_enum_lit_new(
-                access->pos,
-                uast_get_member_index(&enum_def->base, access->member_name->name.base),
-                lang_type_from_ulang_type(member_def->lang_type)
-            );
-
-            *new_tast = tast_expr_wrap(tast_literal_wrap(tast_enum_lit_wrap(new_lit)));
-            return true;
-        }
         case UAST_SUM_DEF:
             return try_set_member_access_types_finish_sum_def(new_tast, uast_sum_def_unwrap(lang_type_def), access, new_callee);
         case UAST_PRIMITIVE_DEF:
@@ -2318,9 +2294,6 @@ static Exhaustive_data check_for_exhaustiveness_start(Lang_type oper_lang_type) 
     }
     Ustruct_def_base enum_def = {0};
     switch (enum_def_->type) {
-        case UAST_ENUM_DEF:
-            enum_def = uast_enum_def_unwrap(enum_def_)->base;
-            break;
         case UAST_SUM_DEF:
             enum_def = uast_sum_def_unwrap(enum_def_)->base;
             break;
@@ -2358,35 +2331,6 @@ static bool check_for_exhaustiveness_inner(
     }
 
     switch (exhaustive_data->oper_lang_type.type) {
-        case LANG_TYPE_ENUM: {
-            // TODO: deduplicate enum and sum
-            const Tast_enum_lit* curr_lit = tast_enum_lit_unwrap(
-                tast_literal_unwrap(
-                    tast_binary_unwrap(curr_if->condition->child)->rhs
-                )
-            );
-            if (curr_lit->data > (int64_t)exhaustive_data->max_data) {
-                unreachable("invalid enum value\n");
-            }
-            if (vec_at(&exhaustive_data->covered, (size_t)curr_lit->data)) {
-                Uast_def* enum_def_ = NULL;
-                unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data->oper_lang_type)));
-                Uast_enum_def* enum_def = uast_enum_def_unwrap(enum_def_);
-                msg(
-                    DIAG_DUPLICATE_CASE, curr_if->pos,
-                    "duplicate case `"STR_VIEW_FMT"."STR_VIEW_FMT"` in switch statement\n",
-                    name_print(NAME_MSG, enum_def->base.name), name_print(NAME_MSG, vec_at(&enum_def->base.members, (size_t)curr_lit->data)->name)
-                );
-                msg(
-                    DIAG_NOTE, vec_at(&exhaustive_data->covered_pos,
-                    (size_t)curr_lit->data), "case originally covered here\n"
-                );
-                return false;
-            }
-            *vec_at_ref(&exhaustive_data->covered, (size_t)curr_lit->data) = true;
-            vec_append(&print_arena, &exhaustive_data->covered_pos, curr_lit->pos);
-            return true;
-        }
         case LANG_TYPE_SUM: {
             const Tast_enum_lit* curr_lit = tast_sum_case_unwrap(
                 tast_binary_unwrap(curr_if->condition->child)->rhs
@@ -2436,9 +2380,6 @@ static bool check_for_exhaustiveness_finish(Exhaustive_data exhaustive_data, Pos
                 unwrap(usymbol_lookup(&enum_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, exhaustive_data.oper_lang_type)));
                 Ustruct_def_base enum_def = {0};
                 switch (enum_def_->type) {
-                    case UAST_ENUM_DEF:
-                        enum_def = uast_enum_def_unwrap(enum_def_)->base;
-                        break;
                     case UAST_SUM_DEF:
                         enum_def = uast_sum_def_unwrap(enum_def_)->base;
                         break;
@@ -2500,9 +2441,6 @@ bool try_set_switch_types(Tast_if_else_chain** new_tast, const Uast_switch* lang
                 operand = uast_sum_get_tag_wrap(uast_sum_get_tag_new(
                     uast_expr_get_pos(lang_switch->operand), lang_switch->operand
                 ));
-                break;
-            case LANG_TYPE_ENUM:
-                operand = lang_switch->operand;
                 break;
             default:
                 unreachable(TAST_FMT, uast_expr_print(lang_switch->operand));

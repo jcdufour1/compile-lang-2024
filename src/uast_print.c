@@ -542,14 +542,6 @@ Str_view uast_raw_union_def_print_internal(const Uast_raw_union_def* def, int in
     return string_to_strv(buf);
 }
 
-Str_view uast_enum_def_print_internal(const Uast_enum_def* def, int indent) {
-    String buf = {0};
-
-    extend_ustruct_def_base(&buf, "enum_def", def->base, indent, def->pos);
-
-    return string_to_strv(buf);
-}
-
 Str_view uast_sum_def_print_internal(const Uast_sum_def* def, int indent) {
     String buf = {0};
 
@@ -603,8 +595,6 @@ Str_view uast_def_print_internal(const Uast_def* def, int indent) {
             return uast_struct_def_print_internal(uast_struct_def_const_unwrap(def), indent);
         case UAST_RAW_UNION_DEF:
             return uast_raw_union_def_print_internal(uast_raw_union_def_const_unwrap(def), indent);
-        case UAST_ENUM_DEF:
-            return uast_enum_def_print_internal(uast_enum_def_const_unwrap(def), indent);
         case UAST_SUM_DEF:
             return uast_sum_def_print_internal(uast_sum_def_const_unwrap(def), indent);
         case UAST_PRIMITIVE_DEF:

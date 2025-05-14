@@ -64,12 +64,6 @@ static void extend_type_call_str(String* output, Lang_type lang_type) {
             string_extend_cstr(&a_main, output, "%");
             llvm_extend_name(output, lang_type_raw_union_const_unwrap(lang_type).atom.str);
             return;
-        case LANG_TYPE_ENUM:
-            lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(
-                lang_type_signed_int_new(lang_type_get_pos(lang_type), 64, 0)
-            )),
-            extend_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_LLVM, lang_type);
-            return;
         case LANG_TYPE_VOID:
             lang_type = lang_type_void_const_wrap(lang_type_void_new(lang_type_get_pos(lang_type)));
             string_extend_strv(&a_main, output, serialize_lang_type(lang_type));
@@ -146,9 +140,6 @@ static void extend_literal_decl_prefix(String* output, String* literals, const L
         if (lang_type_get_pointer_depth(llvm_literal_get_lang_type(literal)) != 0) {
             todo();
         }
-        vec_append(&a_main, output, ' ');
-        extend_literal(output, literal);
-    } else if (llvm_literal_get_lang_type(literal).type == LANG_TYPE_ENUM) {
         vec_append(&a_main, output, ' ');
         extend_literal(output, literal);
     } else {

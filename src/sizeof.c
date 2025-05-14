@@ -28,8 +28,6 @@ uint64_t sizeof_primitive(Lang_type_primitive primitive) {
 
 uint64_t sizeof_lang_type(Lang_type lang_type) {
     switch (lang_type.type) {
-        case LANG_TYPE_ENUM:
-            unreachable("");
         case LANG_TYPE_PRIMITIVE:
             return sizeof_primitive(lang_type_primitive_const_unwrap(lang_type));
         case LANG_TYPE_STRUCT: {

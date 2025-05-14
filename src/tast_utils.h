@@ -55,8 +55,6 @@ static inline bool lang_type_is_equal(Lang_type a, Lang_type b) {
             // fallthrough
         case LANG_TYPE_RAW_UNION:
             // fallthrough
-        case LANG_TYPE_ENUM:
-            // fallthrough
         case LANG_TYPE_SUM:
             // fallthrough
         case LANG_TYPE_VOID:
@@ -209,18 +207,12 @@ static inline Lang_type tast_sum_def_get_lang_type(const Tast_sum_def* def) {
     return lang_type_sum_const_wrap(lang_type_sum_new(def->pos, lang_type_atom_new(def->base.name, 0)));
 }
 
-static inline Lang_type tast_enum_def_get_lang_type(const Tast_enum_def* def) {
-    return lang_type_enum_const_wrap(lang_type_enum_new(def->pos, lang_type_atom_new(def->base.name, 0)));
-}
-
 static inline Lang_type tast_def_get_lang_type(const Tast_def* def) {
     switch (def->type) {
         case TAST_FUNCTION_DEF:
             unreachable("");
         case TAST_RAW_UNION_DEF:
             return tast_raw_union_def_get_lang_type(tast_raw_union_def_const_unwrap(def));
-        case TAST_ENUM_DEF:
-            return tast_enum_def_get_lang_type(tast_enum_def_const_unwrap(def));
         case TAST_VARIABLE_DEF:
             return tast_variable_def_const_unwrap(def)->lang_type;
         case TAST_FUNCTION_DECL:
@@ -310,8 +302,6 @@ static inline Lang_type* tast_def_set_lang_type(Tast_def* def) {
         case TAST_FUNCTION_DEF:
             unreachable("");
         case TAST_RAW_UNION_DEF:
-            unreachable("");
-        case TAST_ENUM_DEF:
             unreachable("");
         case TAST_VARIABLE_DEF:
             unreachable("");
@@ -424,8 +414,6 @@ static inline Name tast_def_get_name(const Tast_def* def) {
             return tast_struct_def_const_unwrap(def)->base.name;
         case TAST_RAW_UNION_DEF:
             return tast_raw_union_def_const_unwrap(def)->base.name;
-        case TAST_ENUM_DEF:
-            return tast_enum_def_const_unwrap(def)->base.name;
         case TAST_FUNCTION_DECL:
             return tast_function_decl_const_unwrap(def)->name;
         case TAST_FUNCTION_DEF:
@@ -466,8 +454,6 @@ static inline Struct_def_base tast_def_get_struct_def_base(const Tast_def* def) 
             unreachable("");
         case TAST_RAW_UNION_DEF:
             return tast_raw_union_def_const_unwrap(def)->base;
-        case TAST_ENUM_DEF:
-            return tast_enum_def_const_unwrap(def)->base;
         case TAST_VARIABLE_DEF:
             unreachable("");
         case TAST_FUNCTION_DECL:

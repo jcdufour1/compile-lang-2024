@@ -55,12 +55,6 @@ static void c_extend_type_call_str(String* output, Lang_type lang_type, bool opa
         case LANG_TYPE_RAW_UNION:
             llvm_extend_name(output, lang_type_raw_union_const_unwrap(lang_type).atom.str);
             return;
-        case LANG_TYPE_ENUM:
-            lang_type = lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(
-                lang_type_signed_int_new(lang_type_get_pos(lang_type), 64, 0)
-            )),
-            extend_lang_type_to_string(output, LANG_TYPE_MODE_EMIT_C, lang_type);
-            return;
         case LANG_TYPE_VOID:
             lang_type = lang_type_void_const_wrap(lang_type_void_new(lang_type_get_pos(lang_type)));
             string_extend_strv(&a_main, output, serialize_lang_type(lang_type));

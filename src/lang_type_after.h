@@ -126,8 +126,6 @@ static inline Lang_type_atom lang_type_get_atom(LANG_TYPE_MODE mode, Lang_type l
             return lang_type_struct_const_unwrap(lang_type).atom;
         case LANG_TYPE_RAW_UNION:
             return lang_type_raw_union_const_unwrap(lang_type).atom;
-        case LANG_TYPE_ENUM:
-            return lang_type_enum_const_unwrap(lang_type).atom;
         case LANG_TYPE_TUPLE:
             unreachable("");
         case LANG_TYPE_FN:
@@ -182,9 +180,6 @@ static inline void lang_type_set_atom(Lang_type* lang_type, Lang_type_atom atom)
             return;
         case LANG_TYPE_RAW_UNION:
             lang_type_raw_union_unwrap(lang_type)->atom = atom;
-            return;
-        case LANG_TYPE_ENUM:
-            lang_type_enum_unwrap(lang_type)->atom = atom;
             return;
         case LANG_TYPE_TUPLE:
             unreachable("");

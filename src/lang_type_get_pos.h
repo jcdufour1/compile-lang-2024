@@ -25,8 +25,6 @@ static inline Pos lang_type_get_pos(Lang_type lang_type) {
             return lang_type_struct_const_unwrap(lang_type).pos;
         case LANG_TYPE_RAW_UNION:
             return lang_type_raw_union_const_unwrap(lang_type).pos;
-        case LANG_TYPE_ENUM:
-            return lang_type_enum_const_unwrap(lang_type).pos;
         case LANG_TYPE_SUM:
             return lang_type_sum_const_unwrap(lang_type).pos;
         case LANG_TYPE_TUPLE:

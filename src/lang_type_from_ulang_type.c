@@ -67,8 +67,6 @@ bool name_from_uname(Name* new_name, Uname name) {
             todo();
         case UAST_RAW_UNION_DEF:
             todo();
-        case UAST_ENUM_DEF:
-            todo();
         case UAST_SUM_DEF:
             todo();
         case UAST_PRIMITIVE_DEF:
@@ -119,8 +117,6 @@ Ulang_type lang_type_to_ulang_type(Lang_type lang_type) {
         case LANG_TYPE_STRUCT:
             // fallthrough
         case LANG_TYPE_RAW_UNION:
-            // fallthrough
-        case LANG_TYPE_ENUM:
             // fallthrough
         case LANG_TYPE_SUM:
             // fallthrough

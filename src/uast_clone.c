@@ -181,8 +181,6 @@ Uast_def* uast_def_clone(const Uast_def* def, Scope_id new_scope) {
             todo();
         case UAST_SUM_DEF:
             todo();
-        case UAST_ENUM_DEF:
-            todo();
         case UAST_PRIMITIVE_DEF:
             todo();
         case UAST_VARIABLE_DEF: {

@@ -120,8 +120,6 @@ void generic_sub_def(Uast_def* def, Name gen_param, Ulang_type gen_arg) {
             todo();
         case UAST_RAW_UNION_DEF:
             todo();
-        case UAST_ENUM_DEF:
-            todo();
         case UAST_SUM_DEF:
             todo();
         case UAST_PRIMITIVE_DEF:

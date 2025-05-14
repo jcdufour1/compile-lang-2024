@@ -484,14 +484,6 @@ Str_view tast_raw_union_def_print_internal(const Tast_raw_union_def* def, int in
     return string_to_strv(buf);
 }
 
-Str_view tast_enum_def_print_internal(const Tast_enum_def* def, int indent) {
-    String buf = {0};
-
-    extend_struct_def_base(&buf, "enum_def", def->base, indent);
-
-    return string_to_strv(buf);
-}
-
 Str_view tast_primitive_def_print_internal(const Tast_primitive_def* def, int indent) {
     String buf = {0};
 
@@ -545,8 +537,6 @@ Str_view tast_def_print_internal(const Tast_def* def, int indent) {
             return tast_struct_def_print_internal(tast_struct_def_const_unwrap(def), indent);
         case TAST_RAW_UNION_DEF:
             return tast_raw_union_def_print_internal(tast_raw_union_def_const_unwrap(def), indent);
-        case TAST_ENUM_DEF:
-            return tast_enum_def_print_internal(tast_enum_def_const_unwrap(def), indent);
         case TAST_PRIMITIVE_DEF:
             return tast_primitive_def_print_internal(tast_primitive_def_const_unwrap(def), indent);
         case TAST_SUM_DEF:

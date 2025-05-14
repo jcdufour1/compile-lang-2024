@@ -194,15 +194,6 @@ static Lang_type_type lang_type_gen_raw_union(const char* prefix) {
     return sym;
 }
 
-static Lang_type_type lang_type_gen_enum(const char* prefix) {
-    const char* base_name = "enum";
-    Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
-
-    append_member(&sym.members, "Lang_type_atom", "atom");
-
-    return sym;
-}
-
 static Lang_type_type lang_type_gen_sum(const char* prefix) {
     const char* base_name = "sum";
     Lang_type_type sym = {.name = lang_type_name_new(prefix, base_name, false)};
@@ -235,7 +226,6 @@ static Lang_type_type lang_type_gen_lang_type(void) {
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_primitive(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_struct(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_raw_union(base_name));
-    vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_enum(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_sum(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_tuple(base_name));
     vec_append(&gen_a, &lang_type.sub_types, lang_type_gen_void(base_name));

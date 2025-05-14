@@ -16,8 +16,6 @@ bool uast_def_get_lang_type(Lang_type* result, const Uast_def* def, Ulang_type_v
             // fallthrough
         case UAST_RAW_UNION_DEF:
             // fallthrough
-        case UAST_ENUM_DEF:
-            // fallthrough
         case UAST_SUM_DEF: {
             Ulang_type ulang_type = {0};
             if (!ustruct_def_base_get_lang_type_(&ulang_type,  uast_def_get_struct_def_base(def), generics, uast_def_get_pos(def))) {
@@ -54,8 +52,6 @@ Ulang_type uast_get_ulang_type_def(const Uast_def* def) {
             unreachable("");
         case UAST_RAW_UNION_DEF:
             unreachable("");
-        case UAST_ENUM_DEF:
-            return ulang_type_regular_const_wrap(ulang_type_regular_new(ulang_type_atom_new(name_to_uname(uast_enum_def_const_unwrap(def)->base.name), 0), uast_def_get_pos(def)));
         case UAST_VARIABLE_DEF:
             return uast_variable_def_const_unwrap(def)->lang_type;
         case UAST_FUNCTION_DECL:

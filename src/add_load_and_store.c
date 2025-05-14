@@ -193,8 +193,6 @@ static Lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos) {
             return lang_type;
         case LANG_TYPE_VOID:
             return lang_type;
-        case LANG_TYPE_ENUM:
-            return lang_type;
         case LANG_TYPE_FN:
             return lang_type;
         default:
@@ -698,8 +696,6 @@ static Name load_ptr_symbol(Llvm_block* new_block, Tast_symbol* old_sym) {
         case LANG_TYPE_SUM:
             // TODO: should this always be interpreted as loading the tag of the sum?
         case LANG_TYPE_STRUCT:
-            // fallthrough
-        case LANG_TYPE_ENUM:
             // fallthrough
         case LANG_TYPE_RAW_UNION:
             // fallthrough
@@ -1399,10 +1395,6 @@ static void load_struct_def(Tast_struct_def* old_def) {
     }
 }
 
-static void load_enum_def(Tast_enum_def* old_def) {
-    (void) old_def;
-}
-
 static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, Name after_chain) {
     Tast_block* old_block = if_statement->body;
     Llvm_block* inner_block = load_block(old_block);
@@ -1659,8 +1651,6 @@ static Name load_ptr_deref(Llvm_block* new_block, Tast_unary* old_unary) {
                 break;
             }
             return load_ptr_expr(new_block, old_unary->child);
-        case LANG_TYPE_ENUM:
-            break;
         default:
             todo();
     }
@@ -1748,9 +1738,6 @@ static Name load_def(Llvm_block* new_block, Tast_def* old_def) {
         case TAST_STRUCT_DEF:
             load_struct_def(tast_struct_def_unwrap(old_def));
             return (Name) {0};
-        case TAST_ENUM_DEF:
-            load_enum_def(tast_enum_def_unwrap(old_def));
-            return (Name) {0};
         case TAST_RAW_UNION_DEF:
             load_raw_union_def(tast_raw_union_def_unwrap(old_def));
             return (Name) {0};
@@ -1806,9 +1793,6 @@ static Name load_def_sometimes(Tast_def* old_def) {
             return (Name) {0};
         case TAST_STRUCT_DEF:
             load_struct_def(tast_struct_def_unwrap(old_def));
-            return (Name) {0};
-        case TAST_ENUM_DEF:
-            load_enum_def(tast_enum_def_unwrap(old_def));
             return (Name) {0};
         case TAST_RAW_UNION_DEF:
             load_raw_union_def(tast_raw_union_def_unwrap(old_def));

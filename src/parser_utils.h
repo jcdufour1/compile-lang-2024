@@ -177,8 +177,6 @@ static inline bool is_struct_like(LANG_TYPE_TYPE type) {
     switch (type) {
         case LANG_TYPE_STRUCT:
             return true;
-        case LANG_TYPE_ENUM:
-            return false;
         case LANG_TYPE_PRIMITIVE:
             return false;
         case LANG_TYPE_RAW_UNION:

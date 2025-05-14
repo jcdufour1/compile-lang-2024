@@ -145,8 +145,6 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             return EXPAND_NAME_NORMAL;
         case UAST_RAW_UNION_DEF:
             return EXPAND_NAME_NORMAL;
-        case UAST_ENUM_DEF:
-            return EXPAND_NAME_NORMAL;
         case UAST_SUM_DEF:
             return EXPAND_NAME_NORMAL;
         case UAST_PRIMITIVE_DEF:
@@ -287,10 +285,6 @@ static bool expand_def_raw_union_def(Uast_raw_union_def* def) {
 }
 
 static bool expand_def_sum_def(Uast_sum_def* def) {
-    return expand_def_struct_def_base(&def->base);
-}
-
-static bool expand_def_enum_def(Uast_enum_def* def) {
     return expand_def_struct_def_base(&def->base);
 }
 
@@ -494,8 +488,6 @@ bool expand_def_def(Uast_def* def) {
             return expand_def_struct_def(uast_struct_def_unwrap(def));
         case UAST_RAW_UNION_DEF:
             return expand_def_raw_union_def(uast_raw_union_def_unwrap(def));
-        case UAST_ENUM_DEF:
-            return expand_def_enum_def(uast_enum_def_unwrap(def));
         case UAST_SUM_DEF:
             return expand_def_sum_def(uast_sum_def_unwrap(def));
         case UAST_PRIMITIVE_DEF:
