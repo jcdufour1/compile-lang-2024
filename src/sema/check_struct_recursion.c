@@ -46,7 +46,7 @@ static bool check_struct_rec_internal_def(Uast_def* def, Ulang_type_regular lang
         }
     }
 
-    return true;
+    return check_struct_rec_internal(uast_def_get_struct_def_base(def), rec_stack);
 }
 
 static bool check_struct_rec_internal_lang_type_reg(Ulang_type_regular lang_type, Name_vec rec_stack /* TODO: consider using hash table for O(1) time */) {
@@ -79,11 +79,7 @@ static bool check_struct_rec_internal_lang_type_reg(Ulang_type_regular lang_type
         case UAST_RAW_UNION_DEF:
             // fallthrough
         case UAST_SUM_DEF:
-            if (!check_struct_rec_internal_def(def, lang_type, name, rec_stack)) {
-                return false;
-            }
-            // TODO: move below statement to check_struct_rec_internal_def?
-            return check_struct_rec_internal(uast_def_get_struct_def_base(def), rec_stack);
+            return check_struct_rec_internal_def(def, lang_type, name, rec_stack);
         case UAST_ENUM_DEF:
             return true;
         case UAST_LANG_DEF:

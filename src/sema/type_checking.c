@@ -1118,8 +1118,7 @@ bool try_set_array_literal_types(
     Lang_type gen_arg = {0};
     if (lang_type_is_slice(&gen_arg_, dest_lang_type)) {
         if (!try_lang_type_from_ulang_type(&gen_arg, gen_arg_, lit->pos)) {
-            // TODO: expected failure test
-            todo();
+            return false;
         }
     } else {
         msg_todo("array literal assigned to non-slice type", assign_pos);

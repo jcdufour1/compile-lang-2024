@@ -1,0 +1,16 @@
+compile::stdout 0
+
+compile::stderr 10
+./tests2/inputs/slice_invalid_inner_lang_type.own:7:25:[1;31merror[0;39m:type `Thing` is not defined
+     6 |     // can give one or two errors (for now)
+     7 |     let slice io.Slice(<Thing>) = [98, 43]
+       |                         ^
+     8 |     return 0
+./tests2/inputs/slice_invalid_inner_lang_type.own:7:25:[1;31merror[0;39m:type `Thing*` is not defined
+     6 |     // can give one or two errors (for now)
+     7 |     let slice io.Slice(<Thing>) = [98, 43]
+       |                         ^
+     8 |     return 0
+
+compile::return_code 1
+

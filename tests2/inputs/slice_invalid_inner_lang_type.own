@@ -1,0 +1,9 @@
+
+type io import = std.io
+
+
+fn main() i32 {
+    // can give one or two errors (for now)
+    let slice io.Slice(<Thing>) = [98, 43]
+    return 0
+}
