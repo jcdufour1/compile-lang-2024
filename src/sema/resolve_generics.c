@@ -106,11 +106,6 @@ static bool try_set_struct_base_types(Struct_def_base* new_base, Ustruct_def_bas
     } while (0)
 
 static bool try_set_struct_def_types(Uast_struct_def* before_res, Uast_struct_def* after_res) {
-    // TODO: consider nested thing:
-    // type struct Token {
-    //      token Token
-    // }
-    (void) before_res;
     Struct_def_base new_base = {0};
     bool success = try_set_struct_base_types(&new_base, &after_res->base, false);
     try_set_def_types_internal(
@@ -122,11 +117,6 @@ static bool try_set_struct_def_types(Uast_struct_def* before_res, Uast_struct_de
 }
 
 static bool try_set_raw_union_def_types(Uast_raw_union_def* before_res, Uast_raw_union_def* after_res) {
-    // TODO: consider nested thing:
-    // type raw_union Token {
-    //      token Token
-    // }
-    (void) before_res;
     Struct_def_base new_base = {0};
     bool success = try_set_struct_base_types(&new_base, &after_res->base, false);
     try_set_def_types_internal(
@@ -138,7 +128,6 @@ static bool try_set_raw_union_def_types(Uast_raw_union_def* before_res, Uast_raw
 }
 
 static bool try_set_enum_def_types(Uast_enum_def* before_res, Uast_enum_def* after_res) {
-    (void) before_res;
     Struct_def_base new_base = {0};
     bool success = try_set_struct_base_types(&new_base, &after_res->base, true);
     try_set_def_types_internal(
@@ -149,13 +138,7 @@ static bool try_set_enum_def_types(Uast_enum_def* before_res, Uast_enum_def* aft
     return success;
 }
 
-// TODO: inline this function?
 static bool try_set_sum_def_types(Uast_sum_def* before_res, Uast_sum_def* after_res) {
-    (void) before_res;
-    // TODO: consider nested thing:
-    // type sum Token {
-    //      token Token
-    // }
     Struct_def_base new_base = {0};
     bool success = try_set_struct_base_types(&new_base, &after_res->base, false);
     try_set_def_types_internal(
@@ -725,121 +708,3 @@ bool resolve_generics_function_def_implementation(Name name) {
     unreachable("");
 }
 
-// TODO: move these things to separate file
-// TODO: consider using iterative approach to avoid stack overflow risk
-static Arena struct_like_rec_a = {0};
-
-static bool check_struct_like_for_recursion_internal(Ustruct_def_base base, Name_vec rec_stack);
-
-static bool check_struct_like_for_recursion_internal_def(Uast_def* def, Ulang_type_regular lang_type, Name name, Name_vec rec_stack) {
-    for (size_t idx = 0; idx < rec_stack.info.count; idx++) {
-        if (name_is_equal(vec_at(&rec_stack, idx), name)) {
-            msg(
-                LOG_ERROR, EXPECT_FAIL_NONE/* TODO */, lang_type.pos,
-                "`"TAST_FMT"` recursively includes itself without indirection; consider "
-                "storing `"TAST_FMT"` by pointer here instead of by value\n",
-                name_print(NAME_MSG, uast_def_get_name(def)),
-                name_print(NAME_MSG, uast_def_get_name(def))
-            );
-            Uast_def* prev = def;
-            for (size_t idx_stk = idx + 1; idx_stk < rec_stack.info.count; idx_stk++) {
-                Uast_def* curr = NULL;
-                unwrap(usymbol_lookup(&curr, vec_at(&rec_stack, idx_stk)));
-                msg(
-                    LOG_NOTE, EXPECT_FAIL_NONE, uast_def_get_pos(prev),
-                    "`"TAST_FMT"` contains `"TAST_FMT"`\n",
-                    name_print(NAME_MSG, uast_def_get_name(prev)),
-                    name_print(NAME_MSG, uast_def_get_name(curr))
-                );
-
-                prev = curr;
-            }
-            msg(
-                LOG_NOTE, EXPECT_FAIL_NONE, uast_def_get_pos(prev),
-                "`"TAST_FMT"` contains `"TAST_FMT"`\n",
-                name_print(NAME_MSG, uast_def_get_name(prev)),
-                name_print(NAME_MSG, uast_def_get_name(def))
-            );
-            return false;
-        }
-    }
-
-    return true;
-}
-
-static bool check_struct_like_for_recursion_internal_lang_type_reg(Ulang_type_regular lang_type, Name_vec rec_stack /* TODO: consider using hash table for O(1) time */) {
-    if (lang_type.atom.pointer_depth > 0) {
-        return true;
-    }
-    Uast_def* def = {0};
-    Name name = {0};
-    unwrap(name_from_uname(&name, lang_type.atom.str));
-    if (!usymbol_lookup(&def, name)) {
-        assert(error_count > 0 && "there is a bug somewhere");
-        return false;
-    }
-
-    switch (def->type) {
-        case UAST_POISON_DEF:
-            todo();
-        case UAST_IMPORT_PATH:
-            return true;
-        case UAST_MOD_ALIAS:
-            todo();
-        case UAST_GENERIC_PARAM:
-            todo();
-        case UAST_FUNCTION_DEF:
-            todo();
-        case UAST_VARIABLE_DEF:
-            todo();
-        case UAST_STRUCT_DEF:
-            // fallthrough
-        case UAST_RAW_UNION_DEF:
-            // fallthrough
-        case UAST_SUM_DEF:
-            if (!check_struct_like_for_recursion_internal_def(def, lang_type, name, rec_stack)) {
-                return false;
-            }
-            return check_struct_like_for_recursion_internal(uast_def_get_struct_def_base(def), rec_stack);
-        case UAST_ENUM_DEF:
-            return true;
-        case UAST_LANG_DEF:
-            todo();
-        case UAST_PRIMITIVE_DEF:
-            return true;
-        case UAST_FUNCTION_DECL:
-            todo();
-    }
-    unreachable("");
-}
-
-static bool check_struct_like_for_recursion_internal(Ustruct_def_base base, Name_vec rec_stack) {
-    vec_append(&struct_like_rec_a, &rec_stack, base.name);
-
-    for (size_t idx = 0; idx < base.members.info.count; idx++) {
-        Uast_variable_def* curr = vec_at(&base.members, idx);
-        switch (curr->lang_type.type) {
-            case ULANG_TYPE_REGULAR: {
-                Ulang_type_regular reg = ulang_type_regular_const_unwrap(curr->lang_type);
-                if (!check_struct_like_for_recursion_internal_lang_type_reg(reg, rec_stack)) {
-                    return false;
-                }
-                break;
-            }
-            case ULANG_TYPE_FN:
-                // ULANG_TYPE_FN is always a pointer
-                break;
-            case ULANG_TYPE_TUPLE:
-                todo();
-            default:
-                unreachable("");
-        }
-    }
-
-    return true;
-}
-
-bool check_struct_like_for_recursion(const Uast_def* def) {
-    arena_reset(&struct_like_rec_a);
-    return check_struct_like_for_recursion_internal(uast_def_get_struct_def_base(def), (Name_vec) {0});
-}
