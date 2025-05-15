@@ -1,10 +1,12 @@
+type io import = std.io
 
 
 fn main() i32 {
-    let num f32 = 7.0
-    //io.printf("num = %f\n", num)
-    //let num_int = unsafe_cast<i32>num
-    //io.printf("num_int = %d\n", num)
-    //let num_reinterpret = deref unsafe_cast<i32*> refer num
+    let num f32 = 7.1
+    io.printf("num = %f\n", num)
+    let num_int i32 = unsafe_cast<i32>num
+    io.printf("num_int = %d\n", num_int)
+    let num_reinterpret i32 = deref unsafe_cast<i32*> refer num
+    io.printf("num_reinterpret = %x\n", num_reinterpret)
     return 0
 }

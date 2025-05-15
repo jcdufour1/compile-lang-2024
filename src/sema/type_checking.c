@@ -66,6 +66,12 @@ static int64_t bit_width_needed_signed(int64_t num) {
     return log2_int64_t(num + 1) + 1;
 }
 
+// TODO: actually implement this, or require user to specify double in literal suffix, etc.
+static int64_t bit_width_needed_float(double num) {
+    (void) num;
+    return 32;
+}
+
 static Tast_expr* auto_deref_to_0(Tast_expr* expr) {
     int16_t prev_pointer_depth = lang_type_get_pointer_depth(tast_expr_get_lang_type(expr));
     while (lang_type_get_pointer_depth(tast_expr_get_lang_type(expr)) > 0) {
@@ -435,7 +441,7 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
         }
         case UAST_FLOAT: {
             Uast_float* old_number = uast_float_unwrap(literal);
-            int64_t bit_width = bit_width_needed_signed(old_number->data);
+            int64_t bit_width = bit_width_needed_float(old_number->data);
             return tast_float_wrap(tast_float_new(
                 old_number->pos,
                 old_number->data,

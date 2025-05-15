@@ -53,7 +53,7 @@ static inline Lang_type_atom lang_type_primitive_get_atom_c(Lang_type_primitive 
             return lang_type_char_const_unwrap(lang_type).atom;
         case LANG_TYPE_FLOAT: {
             String string = {0};
-            uint32_t bit_width = lang_type_signed_int_const_unwrap(lang_type).bit_width;
+            uint32_t bit_width = lang_type_float_const_unwrap(lang_type).bit_width;
             if (bit_width == 32) {
                 string_extend_cstr(&a_main, &string, "float");
             } else if (bit_width == 64) {

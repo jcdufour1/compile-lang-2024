@@ -555,6 +555,17 @@ static Name load_number(Tast_number* old_lit) {
     return number->name;
 }
 
+static Name load_float(Tast_float* old_lit) {
+    Llvm_float* number = llvm_float_new(
+        old_lit->pos,
+        old_lit->data,
+        old_lit->lang_type,
+        util_literal_name_new_mod_path2(env.curr_mod_path)
+    );
+    unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_float_wrap(number)))));
+    return number->name;
+}
+
 static Name load_char(
     Tast_char* old_lit
 ) {
@@ -666,6 +677,8 @@ static Name load_literal(Llvm_block* new_block, Tast_literal* old_lit) {
             return load_char(tast_char_unwrap(old_lit));
         case TAST_NUMBER:
             return load_number(tast_number_unwrap(old_lit));
+        case TAST_FLOAT:
+            return load_float(tast_float_unwrap(old_lit));
         case TAST_FUNCTION_LIT:
             return load_function_lit(tast_function_lit_unwrap(old_lit));
         case TAST_ENUM_LIT:

@@ -50,6 +50,22 @@ static inline void string_extend_int64_t(Arena* arena, String* str, int64_t num)
     string_extend_cstr(arena, str, num_str);
 }
 
+static inline void string_extend_double(Arena* arena, String* str, double num) {
+    const size_t BUF_SIZE = 32;
+    char num_str[BUF_SIZE];
+    int actual = snprintf(NULL, 0, "%lf", num);
+    if (actual < 1) {
+        // error occured
+        todo();
+    }
+    if ((size_t)actual >= BUF_SIZE) {
+        unreachable("buffer will overflow when writing float");
+    }
+
+    unwrap(actual == snprintf(num_str, BUF_SIZE, "%lf", num));
+    string_extend_cstr(arena, str, num_str);
+}
+
 static inline void string_append_character(Arena* arena, String* str, uint8_t num) {
     vec_append(arena, str, num);
 }

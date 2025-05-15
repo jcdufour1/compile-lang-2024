@@ -204,7 +204,7 @@ Str_view uast_float_print_internal(const Uast_float* num, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "float", indent);
-    string_extend_int64_t(&print_arena, &buf, num->data);
+    string_extend_double(&print_arena, &buf, num->data);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);

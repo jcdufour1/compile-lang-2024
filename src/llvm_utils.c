@@ -18,6 +18,8 @@ Lang_type llvm_literal_get_lang_type(const Llvm_literal* lit) {
     switch (lit->type) {
         case LLVM_NUMBER:
             return llvm_number_const_unwrap(lit)->lang_type;
+        case LLVM_FLOAT:
+            return llvm_float_const_unwrap(lit)->lang_type;
         case LLVM_STRING:
             return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(llvm_literal_get_pos(lit), lang_type_atom_new_from_cstr("u8", 1, 0))));
         case LLVM_VOID:
@@ -95,6 +97,8 @@ Name llvm_literal_get_name(const Llvm_literal* lit) {
     switch (lit->type) {
         case LLVM_NUMBER:
             return llvm_number_const_unwrap(lit)->name;
+        case LLVM_FLOAT:
+            return llvm_float_const_unwrap(lit)->name;
         case LLVM_STRING:
             return llvm_string_const_unwrap(lit)->name;
         case LLVM_VOID:

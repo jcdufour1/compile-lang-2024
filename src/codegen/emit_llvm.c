@@ -36,6 +36,9 @@ static void extend_literal(String* output, const Llvm_literal* literal) {
         case LLVM_NUMBER:
             string_extend_int64_t(&a_main, output, llvm_number_const_unwrap(literal)->data);
             return;
+        case LLVM_FLOAT:
+            string_extend_double(&a_main, output, llvm_number_const_unwrap(literal)->data);
+            return;
         case LLVM_VOID:
             return;
         case LLVM_FUNCTION_NAME:
@@ -587,6 +590,9 @@ static void emit_store_another_llvm_src_literal(String* output, const Llvm_liter
             return;
         case LLVM_NUMBER:
             string_extend_int64_t(&a_main, output, llvm_number_const_unwrap(literal)->data);
+            return;
+        case LLVM_FLOAT:
+            string_extend_double(&a_main, output, llvm_number_const_unwrap(literal)->data);
             return;
         case LLVM_VOID:
             return;

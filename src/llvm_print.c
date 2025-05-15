@@ -49,6 +49,8 @@ Str_view llvm_literal_print_internal(const Llvm_literal* lit, int indent) {
     switch (lit->type) {
         case LLVM_NUMBER:
             return llvm_number_print_internal(llvm_number_const_unwrap(lit), indent);
+        case LLVM_FLOAT:
+            return llvm_float_print_internal(llvm_float_const_unwrap(lit), indent);
         case LLVM_STRING:
             return llvm_string_print_internal(llvm_string_const_unwrap(lit), indent);
         case LLVM_VOID:
@@ -84,6 +86,18 @@ Str_view llvm_number_print_internal(const Llvm_number* num, int indent) {
     extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, num->lang_type);
     extend_name(NAME_LOG, &buf, num->name);
     string_extend_int64_t(&print_arena, &buf, num->data);
+    string_extend_cstr(&print_arena, &buf, "\n");
+
+    return string_to_strv(buf);
+}
+
+Str_view llvm_float_print_internal(const Llvm_float* num, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&print_arena, &buf, "float", indent);
+    extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, num->lang_type);
+    extend_name(NAME_LOG, &buf, num->name);
+    string_extend_double(&print_arena, &buf, num->data);
     string_extend_cstr(&print_arena, &buf, "\n");
 
     return string_to_strv(buf);

@@ -292,6 +292,8 @@ static bool expand_def_literal(Uast_literal* lit) {
     switch (lit->type) {
         case UAST_NUMBER:
             return true;
+        case UAST_FLOAT:
+            return true;
         case UAST_STRING:
             return true;
         case UAST_VOID:

@@ -399,6 +399,9 @@ static void extend_c_literal(Emit_c_strs* strs, const Llvm_literal* lit) {
         case LLVM_NUMBER:
             string_extend_int64_t(&a_main, &strs->output, llvm_number_const_unwrap(lit)->data);
             return;
+        case LLVM_FLOAT:
+            string_extend_double(&a_main, &strs->output, llvm_float_const_unwrap(lit)->data);
+            return;
         case LLVM_VOID:
             return;
         case LLVM_FUNCTION_NAME:
