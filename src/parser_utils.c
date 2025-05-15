@@ -13,6 +13,7 @@
 #include <symbol_log.h>
 #include <lang_type_get_pos.h>
 #include <name.h>
+#include <errno.h>
 
 size_t get_count_excape_seq(Str_view str_view) {
     size_t count_excapes = 0;
@@ -183,9 +184,33 @@ bool try_str_view_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) 
 }
 
 bool try_str_view_to_double(double* result, const Pos pos, Str_view str_view) {
-    char buf[32] = {0};
-    unwrap(sprintf(NULL, "%
-    *result = strtod(const char *restrict nptr, char **restrict endptr);
+    static Arena a_temp = {0};
+    bool status = true;
+
+    String buf = {0};
+    string_extend_strv(&a_temp, &buf, str_view);
+    string_extend_cstr(&a_temp, &buf, "\0");
+
+    char* buf_after = NULL;
+    errno = 0;
+    *result = strtod(buf.buf, &buf_after);
+    if (errno != 0) {
+        msg(DIAG_INVALID_FLOAT_LIT, pos, "%s\n", strerror(errno));
+        status = false;
+        goto error;
+    }
+    if ((buf_after - buf.buf) != (ptrdiff_t)str_view.count) {
+        // conversion unsuccessful
+        msg_todo("actual error message for this problem", pos);
+        status = false;
+        goto error;
+    }
+
+    // conversion successful
+
+error:
+    arena_reset(&a_temp);
+    return status;
 }
 
 bool try_str_view_to_char(char* result, const Pos pos, Str_view str_view) {
@@ -478,8 +503,8 @@ bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Str_view 
             if (!try_str_view_to_double(&raw,  pos, value)) {
                 return false;
             }
-            Uast_number* literal = uast_number_new(pos, raw);
-            *new_lit = uast_number_wrap(literal);
+            Uast_float* literal = uast_float_new(pos, raw);
+            *new_lit = uast_float_wrap(literal);
             break;
         }
         case TOKEN_STRING_LITERAL: {

@@ -89,6 +89,8 @@ Str_view tast_literal_print_internal(const Tast_literal* lit, int indent) {
     switch (lit->type) {
         case TAST_NUMBER:
             return tast_number_print_internal(tast_number_const_unwrap(lit), indent);
+        case TAST_FLOAT:
+            return tast_float_print_internal(tast_float_const_unwrap(lit), indent);
         case TAST_STRING:
             return tast_string_print_internal(tast_string_const_unwrap(lit), indent);
         case TAST_VOID:
@@ -201,6 +203,17 @@ Str_view tast_number_print_internal(const Tast_number* num, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "number", indent);
+    extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, num->lang_type);
+    string_extend_int64_t(&print_arena, &buf, num->data);
+    string_extend_cstr(&print_arena, &buf, "\n");
+
+    return string_to_strv(buf);
+}
+
+Str_view tast_float_print_internal(const Tast_float* num, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&print_arena, &buf, "float", indent);
     extend_lang_type_to_string(&buf, LANG_TYPE_MODE_LOG, num->lang_type);
     string_extend_int64_t(&print_arena, &buf, num->data);
     string_extend_cstr(&print_arena, &buf, "\n");

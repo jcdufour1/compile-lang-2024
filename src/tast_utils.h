@@ -108,6 +108,8 @@ static inline Lang_type tast_literal_get_lang_type(const Tast_literal* lit) {
     switch (lit->type) {
         case TAST_NUMBER:
             return tast_number_const_unwrap(lit)->lang_type;
+        case TAST_FLOAT:
+            return tast_float_const_unwrap(lit)->lang_type;
         case TAST_STRING:
             return lang_type_primitive_const_wrap(lang_type_char_const_wrap(lang_type_char_new(tast_literal_get_pos(lit), lang_type_atom_new_from_cstr("u8", 1, 0))));
         case TAST_VOID:
@@ -130,6 +132,9 @@ static inline void tast_literal_set_lang_type(Tast_literal* lit, Lang_type lang_
     switch (lit->type) {
         case TAST_NUMBER:
             tast_number_unwrap(lit)->lang_type = lang_type;
+            return;
+        case TAST_FLOAT:
+            tast_float_unwrap(lit)->lang_type = lang_type;
             return;
         case TAST_STRING:
             todo();
@@ -348,6 +353,8 @@ static inline void tast_stmt_set_lang_type(Tast_stmt* stmt, Lang_type lang_type)
 static inline Name tast_literal_get_name(const Tast_literal* lit) {
     switch (lit->type) {
         case TAST_NUMBER:
+            unreachable("");
+        case TAST_FLOAT:
             unreachable("");
         case TAST_STRING:
             return tast_string_const_unwrap(lit)->name;

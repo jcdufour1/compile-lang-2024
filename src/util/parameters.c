@@ -45,8 +45,7 @@ typedef struct {
     LOG_LEVEL curr_level;
 } Expect_fail_str_to_curr_log_level;
 
-// TODO: uncomment static_assert
-static_assert(DIAG_COUNT == 58, "exhaustive handling of expected fail types");
+static_assert(DIAG_COUNT == 59, "exhaustive handling of expected fail types");
 static const Expect_fail_pair expect_fail_pair[] = {
     {"note", DIAG_NOTE, LOG_NOTE, false},
     {"file-built", DIAG_FILE_BUILT, LOG_VERBOSE, false},
@@ -95,6 +94,7 @@ static const Expect_fail_pair expect_fail_pair[] = {
     {"invalid-octal", DIAG_INVALID_OCTAL, LOG_ERROR, true},
     {"invalid-char-lit", DIAG_INVALID_CHAR_LIT, LOG_ERROR, true},
     {"invalid-decimal-lit", DIAG_INVALID_DECIMAL_LIT, LOG_ERROR, true},
+    {"invalid-float-lit", DIAG_INVALID_FLOAT_LIT, LOG_ERROR, true},
     {"missing-close-multiline", DIAG_MISSING_CLOSE_MULTILINE, LOG_ERROR, true},
     {"invalid-count-struct-lit-args", DIAG_INVALID_COUNT_STRUCT_LIT_ARGS, LOG_ERROR, true},
     {"missing-enum-arg", DIAG_MISSING_ENUM_ARG, LOG_ERROR, true},

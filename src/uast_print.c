@@ -92,6 +92,8 @@ Str_view uast_literal_print_internal(const Uast_literal* lit, int indent) {
     switch (lit->type) {
         case UAST_NUMBER:
             return uast_number_print_internal(uast_number_const_unwrap(lit), indent);
+        case UAST_FLOAT:
+            return uast_float_print_internal(uast_float_const_unwrap(lit), indent);
         case UAST_STRING:
             return uast_string_print_internal(uast_string_const_unwrap(lit), indent);
         case UAST_VOID:
@@ -192,6 +194,16 @@ Str_view uast_number_print_internal(const Uast_number* num, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "number", indent);
+    string_extend_int64_t(&print_arena, &buf, num->data);
+    string_extend_cstr(&print_arena, &buf, "\n");
+
+    return string_to_strv(buf);
+}
+
+Str_view uast_float_print_internal(const Uast_float* num, int indent) {
+    String buf = {0};
+
+    string_extend_cstr_indent(&print_arena, &buf, "float", indent);
     string_extend_int64_t(&print_arena, &buf, num->data);
     string_extend_cstr(&print_arena, &buf, "\n");
 

@@ -256,6 +256,16 @@ static Tast_type tast_gen_number(const char* prefix) {
     return number;
 }
 
+static Tast_type tast_gen_float(const char* prefix) {
+    const char* base_name = "float";
+    Tast_type number = {.name = tast_name_new(prefix, base_name, false)};
+
+    append_member(&number.members, "double", "data");
+    append_member(&number.members, "Lang_type", "lang_type");
+
+    return number;
+}
+
 static Tast_type tast_gen_string(const char* prefix) {
     const char* base_name = "string";
     Tast_type string = {.name = tast_name_new(prefix, base_name, false)};
@@ -320,6 +330,7 @@ static Tast_type tast_gen_literal(const char* prefix) {
 
     vec_append(&gen_a, &lit.sub_types, tast_gen_function_lit(base_name));
     vec_append(&gen_a, &lit.sub_types, tast_gen_number(base_name));
+    vec_append(&gen_a, &lit.sub_types, tast_gen_float(base_name));
     vec_append(&gen_a, &lit.sub_types, tast_gen_string(base_name));
     vec_append(&gen_a, &lit.sub_types, tast_gen_void(base_name));
     vec_append(&gen_a, &lit.sub_types, tast_gen_enum_tag_lit(base_name));

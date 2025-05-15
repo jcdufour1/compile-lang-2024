@@ -78,6 +78,7 @@ static Tast_expr* auto_deref_to_0(Tast_expr* expr) {
 
 static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_is_zero, bool implicit_pointer_depth);
 
+// TODO: use newer mechanisms for getting bit_width of dest and src
 static bool can_be_implicitly_converted_lang_type_atom(Lang_type_atom dest, Lang_type_atom src, bool src_is_zero, bool implicit_pointer_depth) {
     if (!implicit_pointer_depth) {
         if (src.pointer_depth != dest.pointer_depth) {
@@ -85,7 +86,9 @@ static bool can_be_implicitly_converted_lang_type_atom(Lang_type_atom dest, Lang
         }
     }
 
-    if (!lang_type_atom_is_number(dest) || !lang_type_atom_is_number(src)) {
+    if (lang_type_atom_is_number(dest) && lang_type_atom_is_number(src)) {
+    } else if (lang_type_atom_is_float(dest) && lang_type_atom_is_float(src)) {
+    } else {
         return lang_type_atom_is_equal(dest, src);
     }
 
@@ -413,16 +416,25 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
                 return tast_number_wrap(tast_number_new(
                     old_number->pos,
                     old_number->data,
-                    lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(old_number->pos, bit_width, 0))
-                )));
+                    lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(old_number->pos, bit_width, 0)))
+                ));
             } else {
                 int64_t bit_width = bit_width_needed_unsigned(old_number->data);
                 return tast_number_wrap(tast_number_new(
                     old_number->pos,
                     old_number->data,
-                    lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(old_number->pos, bit_width, 0))
-                )));
+                    lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(old_number->pos, bit_width, 0)))
+                ));
             }
+        }
+        case UAST_FLOAT: {
+            Uast_float* old_number = uast_float_unwrap(literal);
+            int64_t bit_width = bit_width_needed_signed(old_number->data);
+            return tast_float_wrap(tast_float_new(
+                old_number->pos,
+                old_number->data,
+                lang_type_primitive_const_wrap(lang_type_float_const_wrap(lang_type_float_new(old_number->pos, bit_width, 0)))
+            ));
         }
         case UAST_VOID: {
             Uast_void* old_void = uast_void_unwrap(literal);
@@ -437,9 +449,8 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
                 old_char->data
             ));
         }
-        default:
-            unreachable("");
     }
+    unreachable("");
 }
 
 // set symbol lang_type, and report error if symbol is undefined
