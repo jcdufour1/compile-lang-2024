@@ -79,20 +79,29 @@ static Tast_expr* auto_deref_to_0(Tast_expr* expr) {
 static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_is_zero, bool implicit_pointer_depth);
 
 // TODO: use newer mechanisms for getting bit_width of dest and src
-static bool can_be_implicitly_converted_lang_type_atom(Lang_type_atom dest, Lang_type_atom src, bool src_is_zero, bool implicit_pointer_depth) {
+static bool can_be_implicitly_converted_lang_type_primitive(Lang_type_primitive dest, Lang_type_primitive src, bool src_is_zero, bool implicit_pointer_depth) {
     if (!implicit_pointer_depth) {
-        if (src.pointer_depth != dest.pointer_depth) {
+        if (lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, src) != lang_type_primitive_get_pointer_depth(LANG_TYPE_MODE_LOG, dest)) {
             return false;
         }
     }
 
-    if (lang_type_atom_is_number(dest) && lang_type_atom_is_number(src)) {
-    } else if (lang_type_atom_is_float(dest) && lang_type_atom_is_float(src)) {
-    } else {
-        return lang_type_atom_is_equal(dest, src);
+    if (!lang_type_primitive_is_number(dest) || !lang_type_primitive_is_number(src)) {
+        return false;
     }
 
-    if (lang_type_atom_is_unsigned(dest) && lang_type_atom_is_signed(src)) {
+    int32_t dest_bit_width = lang_type_primitive_get_bit_width(dest);
+    int32_t src_bit_width = lang_type_primitive_get_bit_width(src);
+
+    // both or none of types must be float
+    if (dest.type == LANG_TYPE_FLOAT && src.type != LANG_TYPE_FLOAT) {
+        return false;
+    }
+    if (dest.type != LANG_TYPE_FLOAT && src.type == LANG_TYPE_FLOAT) {
+        return false;
+    }
+
+    if (dest.type == LANG_TYPE_UNSIGNED_INT && src.type != LANG_TYPE_UNSIGNED_INT) {
         return false;
     }
 
@@ -100,14 +109,11 @@ static bool can_be_implicitly_converted_lang_type_atom(Lang_type_atom dest, Lang
         return true;
     }
 
-    int32_t dest_bit_width = i_lang_type_atom_to_bit_width(dest);
-    int32_t src_bit_width = i_lang_type_atom_to_bit_width(src);
-
-    if (lang_type_atom_is_signed(dest)) {
+    if (dest.type == LANG_TYPE_SIGNED_INT) {
         unwrap(dest_bit_width > 0);
         dest_bit_width--;
     }
-    if (lang_type_atom_is_signed(src)) {
+    if (src.type == LANG_TYPE_SIGNED_INT) {
         unwrap(src_bit_width > 0);
         src_bit_width--;
     }
@@ -150,18 +156,18 @@ static bool can_be_implicitly_converted(Lang_type dest, Lang_type src, bool src_
         case LANG_TYPE_TUPLE:
             return can_be_implicitly_converted_tuple(lang_type_tuple_const_unwrap(dest), lang_type_tuple_const_unwrap(src), implicit_pointer_depth);
         case LANG_TYPE_PRIMITIVE:
-            return can_be_implicitly_converted_lang_type_atom(
-                lang_type_primitive_get_atom(LANG_TYPE_MODE_LOG, lang_type_primitive_const_unwrap(dest)),
-                lang_type_primitive_get_atom(LANG_TYPE_MODE_LOG, lang_type_primitive_const_unwrap(src)),
+            return can_be_implicitly_converted_lang_type_primitive(
+                lang_type_primitive_const_unwrap(dest),
+                lang_type_primitive_const_unwrap(src),
                 src_is_zero,
                 implicit_pointer_depth
             );
         case LANG_TYPE_ENUM:
-            return can_be_implicitly_converted_lang_type_atom(lang_type_enum_const_unwrap(dest).atom, lang_type_enum_const_unwrap(src).atom, false, implicit_pointer_depth);
+            return false; // TODO
         case LANG_TYPE_STRUCT:
-            return can_be_implicitly_converted_lang_type_atom(lang_type_struct_const_unwrap(dest).atom, lang_type_struct_const_unwrap(src).atom, false, implicit_pointer_depth);
+            return false; // TODO
         case LANG_TYPE_RAW_UNION:
-            return can_be_implicitly_converted_lang_type_atom(lang_type_raw_union_const_unwrap(dest).atom, lang_type_raw_union_const_unwrap(src).atom, false, implicit_pointer_depth);
+            return false; // TODO
         case LANG_TYPE_VOID:
             return true;
     }
@@ -612,15 +618,16 @@ static Tast_literal* precalulate_enum_lit(
 }
 
 bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_expr* new_rhs, Pos oper_pos, BINARY_TYPE oper_token_type) {
+    bool src_is_zero = 
+        new_rhs->type == TAST_LITERAL &&
+        tast_literal_unwrap(new_rhs)->type == TAST_NUMBER &&
+        tast_number_unwrap(tast_literal_unwrap(new_rhs))->data == 0;
+
     if (!lang_type_is_equal(tast_expr_get_lang_type(new_lhs), tast_expr_get_lang_type(new_rhs))) {
         if (can_be_implicitly_converted(
             tast_expr_get_lang_type(new_lhs),
             tast_expr_get_lang_type(new_rhs),
-            (
-                new_rhs->type == TAST_LITERAL &&
-                tast_literal_unwrap(new_rhs)->type == TAST_NUMBER &&
-                tast_number_unwrap(tast_literal_unwrap(new_rhs))->data == 0
-            ),
+            src_is_zero,
             true
         )) {
             if (new_rhs->type == TAST_LITERAL) {
@@ -633,11 +640,7 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
         } else if (can_be_implicitly_converted(
             tast_expr_get_lang_type(new_rhs),
             tast_expr_get_lang_type(new_lhs),
-            (
-                new_rhs->type == TAST_LITERAL &&
-                tast_literal_unwrap(new_rhs)->type == TAST_NUMBER &&
-                tast_number_unwrap(tast_literal_unwrap(new_rhs))->data == 0
-            ),
+            src_is_zero,
             true
         )) {
             if (new_lhs->type == TAST_LITERAL) {

@@ -93,6 +93,10 @@ for generics:
 - when using variadic args for extern("c") function: give error when passing i16 without a cast, etc.
 - consistent naming for arenas
 - implement == for sum with void inner types, or give error for using ==
+- test case for: let num f32 = 7
+- fix consume names
+- 7_000.001
+- rename uast_number, tast_number, and llvm_number to uast_int, etc.
 
 
 ## needed tests

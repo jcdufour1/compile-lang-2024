@@ -21,8 +21,13 @@ bool lang_type_atom_is_float(Lang_type_atom atom);
 
 bool lang_type_atom_is_number(Lang_type_atom atom);
 
+// only for unsafe_cast, etc.
 bool lang_type_is_number_like(Lang_type lang_type);
 
+// for general use
+bool lang_type_primitive_is_number(Lang_type_primitive lang_type);
+
+// for general use
 bool lang_type_is_number(Lang_type lang_type);
 
 bool lang_type_is_unsigned(Lang_type lang_type);

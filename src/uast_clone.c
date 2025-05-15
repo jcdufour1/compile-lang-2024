@@ -9,6 +9,10 @@ Uast_number* uast_number_clone(const Uast_number* lit) {
     return uast_number_new(lit->pos, lit->data);
 }
 
+Uast_float* uast_float_clone(const Uast_float* lit) {
+    return uast_float_new(lit->pos, lit->data);
+}
+
 Uast_string* uast_string_clone(const Uast_string* lit) {
     return uast_string_new(lit->pos, lit->data);
 }
@@ -21,6 +25,8 @@ Uast_literal* uast_literal_clone(const Uast_literal* lit) {
     switch (lit->type) {
         case UAST_NUMBER:
             return uast_number_wrap(uast_number_clone(uast_number_const_unwrap(lit)));
+        case UAST_FLOAT:
+            return uast_float_wrap(uast_float_clone(uast_float_const_unwrap(lit)));
         case UAST_STRING:
             return uast_string_wrap(uast_string_clone(uast_string_const_unwrap(lit)));
         case UAST_CHAR:

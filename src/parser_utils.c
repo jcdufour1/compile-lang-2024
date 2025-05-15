@@ -366,12 +366,8 @@ bool lang_type_is_number_like(Lang_type lang_type) {
 }
 
 // for general use
-bool lang_type_is_number(Lang_type lang_type) {
-    if (lang_type.type != LANG_TYPE_PRIMITIVE) {
-        return false;
-    }
-
-    switch (lang_type_primitive_const_unwrap(lang_type).type) {
+bool lang_type_primitive_is_number(Lang_type_primitive lang_type) {
+    switch (lang_type.type) {
         case LANG_TYPE_CHAR:
             return false;
         case LANG_TYPE_SIGNED_INT:
@@ -384,6 +380,14 @@ bool lang_type_is_number(Lang_type lang_type) {
             return false;
     }
     unreachable("");
+}
+
+// for general use
+bool lang_type_is_number(Lang_type lang_type) {
+    if (lang_type.type != LANG_TYPE_PRIMITIVE) {
+        return false;
+    }
+    return lang_type_primitive_is_number(lang_type_primitive_const_unwrap(lang_type));
 }
 
 bool lang_type_is_signed(Lang_type lang_type) {

@@ -156,7 +156,8 @@ static bool get_next_token(
         Pos temp_pos = {0};
         Str_view_col temp_text = *file_text_rem;
         Str_view before_dec = conenume_int(&temp_pos, &temp_text);
-        if (!str_view_col_try_conenume(&temp_pos, &temp_text, '.')) {
+        // right hand side of || is to account for .. in for loop, variadic args, etc.
+        if (!str_view_col_try_conenume(&temp_pos, &temp_text, '.') || str_view_col_try_conenume(&temp_pos, &temp_text, '.')) {
             token->text = str_view_col_conenume_count(pos, file_text_rem, before_dec.count).base;
             token->type = TOKEN_INT_LITERAL;
             return true;
