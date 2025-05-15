@@ -21,7 +21,7 @@ static bool local_isalnum_or_underscore(char prev, char curr) {
     return isalnum(curr) || curr == '_';
 }
 
-static Str_view conenume_num(Pos* pos, Str_view_col* file_text) {
+static Str_view conenume_int(Pos* pos, Str_view_col* file_text) {
     Str_view_col num = {0};
     unwrap(str_view_col_try_conenume_while(&num, pos, file_text, local_isalnum_or_underscore));
     return num.base;
@@ -153,8 +153,18 @@ static bool get_next_token(
         }
         return true;
     } else if (isdigit(str_view_col_front(*file_text_rem))) {
-        token->text = conenume_num(pos, file_text_rem);
-        token->type = TOKEN_INT_LITERAL;
+        Pos temp_pos = {0};
+        Str_view_col temp_text = *file_text_rem;
+        Str_view before_dec = conenume_int(&temp_pos, &temp_text);
+        if (!str_view_col_try_conenume(&temp_pos, &temp_text, '.')) {
+            token->text = str_view_col_conenume_count(pos, file_text_rem, before_dec.count).base;
+            token->type = TOKEN_INT_LITERAL;
+            return true;
+        }
+        Str_view_col after_dec = {0};
+        unwrap(str_view_col_try_conenume_while(&after_dec, &temp_pos, &temp_text, local_isalnum_or_underscore));
+        token->text = str_view_col_conenume_count(pos, file_text_rem, before_dec.count + 1 + after_dec.base.count).base;
+        token->type = TOKEN_FLOAT_LITERAL;
         return true;
     } else if (str_view_col_try_conenume(pos, file_text_rem, '(')) {
         if (str_view_col_try_conenume(pos, file_text_rem, '<')) {

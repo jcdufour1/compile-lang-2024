@@ -44,8 +44,8 @@ typedef enum {
     // literals
     TOKEN_STRING_LITERAL,
     TOKEN_INT_LITERAL,
+    TOKEN_FLOAT_LITERAL,
     TOKEN_VOID,
-    TOKEN_NEW_LINE,
     TOKEN_CHAR_LITERAL,
 
     // opening
@@ -65,6 +65,7 @@ typedef enum {
     TOKEN_SYMBOL,
     TOKEN_DOUBLE_QUOTE,
     TOKEN_SEMICOLON,
+    TOKEN_NEW_LINE,
     TOKEN_COMMA,
     TOKEN_COLON,
     TOKEN_SINGLE_EQUAL,
@@ -148,6 +149,8 @@ static inline bool token_is_literal(Token token) {
         case TOKEN_STRING_LITERAL:
             return true;
         case TOKEN_INT_LITERAL:
+            return true;
+        case TOKEN_FLOAT_LITERAL:
             return true;
         case TOKEN_VOID:
             return true;
@@ -393,6 +396,8 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
             return false;
         case TOKEN_ASSIGN_BY_BIN:
             return true;
+        case TOKEN_FLOAT_LITERAL:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -567,6 +572,8 @@ static inline bool token_is_binary(TOKEN_TYPE token_type) {
         case TOKEN_EOF:
             return false;
         case TOKEN_ASSIGN_BY_BIN:
+            return false;
+        case TOKEN_FLOAT_LITERAL:
             return false;
         case TOKEN_COUNT:
             unreachable("");

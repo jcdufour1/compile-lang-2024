@@ -32,6 +32,8 @@ Str_view token_type_to_str_view_msg(TOKEN_TYPE token_type) {
             return str_view_from_cstr("string");
         case TOKEN_INT_LITERAL:
             return str_view_from_cstr("int literal");
+        case TOKEN_FLOAT_LITERAL:
+            return str_view_from_cstr("float literal");
         case TOKEN_COLON:
             return str_view_from_cstr(":");
         case TOKEN_SINGLE_EQUAL:
@@ -173,7 +175,9 @@ Str_view token_type_to_str_view_log(TOKEN_TYPE token_type) {
         case TOKEN_STRING_LITERAL:
             return str_view_from_cstr("str");
         case TOKEN_INT_LITERAL:
-            return str_view_from_cstr("num");
+            return str_view_from_cstr("int");
+        case TOKEN_FLOAT_LITERAL:
+            return str_view_from_cstr("float");
         case TOKEN_COLON:
             return str_view_from_cstr(":");
         case TOKEN_SINGLE_EQUAL:
@@ -302,7 +306,7 @@ Str_view token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
     }
 
     // add token text
-    static_assert(TOKEN_COUNT == 67, "exhausive handling of token types");
+    static_assert(TOKEN_COUNT == 68, "exhausive handling of token types");
     switch (token.type) {
         case TOKEN_SYMBOL:
             vec_append(arena, &buf, '(');
@@ -379,6 +383,11 @@ Str_view token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         case TOKEN_CHAR_LITERAL: 
             // fallthrough
         case TOKEN_INT_LITERAL:
+            vec_append(arena, &buf, '(');
+            string_extend_strv(arena, &buf, token.text);
+            vec_append(arena, &buf, ')');
+            break;
+        case TOKEN_FLOAT_LITERAL:
             vec_append(arena, &buf, '(');
             string_extend_strv(arena, &buf, token.text);
             vec_append(arena, &buf, ')');

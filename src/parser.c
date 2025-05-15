@@ -489,6 +489,8 @@ static bool can_end_stmt(Token token) {
             return true;
         case TOKEN_INT_LITERAL:
             return true;
+        case TOKEN_FLOAT_LITERAL:
+            return true;
         case TOKEN_VOID:
             return true;
         case TOKEN_NEW_LINE:
@@ -622,6 +624,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_STRING_LITERAL:
             return false;
         case TOKEN_INT_LITERAL:
+            return false;
+        case TOKEN_FLOAT_LITERAL:
             return false;
         case TOKEN_SYMBOL:
             return false;
@@ -2440,7 +2444,7 @@ static PARSE_STATUS parse_expr_generic(
 //    parse_bitwise_and
 //};
 
-static_assert(TOKEN_COUNT == 67, "exhausive handling of token types; note that only binary operators need to be explicitly handled here");
+static_assert(TOKEN_COUNT == 68, "exhausive handling of token types; note that only binary operators need to be explicitly handled here");
 // lower precedence operators are in earlier rows in the table
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},

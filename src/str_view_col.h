@@ -36,10 +36,10 @@ static inline char str_view_col_conenume(Pos* pos, Str_view_col* str_view) {
 }
 
 static inline Str_view_col str_view_col_conenume_count(Pos* pos, Str_view_col* str_view, size_t count) {
+    Str_view temp = str_view->base;
     for (size_t idx = 0; idx < count; idx++) {
         str_view_col_conenume(pos, str_view);
     }
-    Str_view temp = str_view->base;
     return (Str_view_col) {.base = str_view_conenume_count(&temp, count)};
 }
 

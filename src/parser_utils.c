@@ -182,6 +182,12 @@ bool try_str_view_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) 
     return idx > 0;
 }
 
+bool try_str_view_to_double(double* result, const Pos pos, Str_view str_view) {
+    char buf[32] = {0};
+    unwrap(sprintf(NULL, "%
+    *result = strtod(const char *restrict nptr, char **restrict endptr);
+}
+
 bool try_str_view_to_char(char* result, const Pos pos, Str_view str_view) {
     if (!str_view_try_conenume(&str_view, '\\')) {
         if (str_view.count != 1) {
@@ -461,6 +467,15 @@ bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Str_view 
         case TOKEN_INT_LITERAL: {
             int64_t raw = 0;
             if (!try_str_view_to_int64_t(&raw,  pos, value)) {
+                return false;
+            }
+            Uast_number* literal = uast_number_new(pos, raw);
+            *new_lit = uast_number_wrap(literal);
+            break;
+        }
+        case TOKEN_FLOAT_LITERAL: {
+            double raw = 0;
+            if (!try_str_view_to_double(&raw,  pos, value)) {
                 return false;
             }
             Uast_number* literal = uast_number_new(pos, raw);
