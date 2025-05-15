@@ -572,20 +572,27 @@ Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token
     }
 
     assert(new_literal);
-
-    try_set_literal_types(new_literal);
     return new_literal;
 }
 
+Uast_literal* util_uast_literal_new_from_double(double value, Pos pos) {
+    Uast_literal* lit = uast_float_wrap(uast_float_new(pos, value));
+    return lit;
+}
+
+Tast_literal* util_tast_literal_new_from_double(double value, TOKEN_TYPE token_type, Pos pos) {
+    return try_set_literal_types(util_uast_literal_new_from_double(value, pos));
+}
+
 Tast_literal* util_tast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos) {
-    return try_set_literal_types( util_uast_literal_new_from_int64_t( value, token_type, pos));
+    return try_set_literal_types(util_uast_literal_new_from_int64_t(value, token_type, pos));
 }
 
 Tast_operator* util_binary_typed_new(Uast_expr* lhs, Uast_expr* rhs, TOKEN_TYPE operator_type) {
     Uast_binary* binary = uast_binary_new(uast_expr_get_pos(lhs), lhs, rhs, token_type_to_binary_type(operator_type));
 
     Tast_expr* new_tast;
-    unwrap(try_set_binary_types( &new_tast, binary));
+    unwrap(try_set_binary_types(&new_tast, binary));
 
     return tast_operator_unwrap(new_tast);
 }

@@ -593,6 +593,60 @@ static int64_t precalulate_number_internal(int64_t lhs_val, int64_t rhs_val, BIN
     unreachable("");
 }
 
+static bool precalulate_float_internal(double* result, double lhs_val, double rhs_val, BINARY_TYPE token_type, Pos pos) {
+    switch (token_type) {
+        case BINARY_SINGLE_EQUAL:
+            unreachable("");
+        case BINARY_ADD:
+            *result = lhs_val + rhs_val;
+            return true;
+        case BINARY_SUB:
+            *result = lhs_val - rhs_val;
+            return true;
+        case BINARY_MULTIPLY:
+            *result = lhs_val*rhs_val;
+            return true;
+        case BINARY_DIVIDE:
+            *result = lhs_val/rhs_val;
+            return true;
+        case BINARY_LESS_THAN:
+            *result = lhs_val < rhs_val ? 1 : 0;
+            return true;
+        case BINARY_GREATER_THAN:
+            *result = lhs_val > rhs_val ? 1 : 0;
+            return true;
+        case BINARY_LESS_OR_EQUAL:
+            *result = lhs_val <= rhs_val ? 1 : 0;
+            return true;
+        case BINARY_GREATER_OR_EQUAL:
+            *result = lhs_val >= rhs_val ? 1 : 0;
+            return true;
+        case BINARY_MODULO:
+            // fallthrough
+        case BINARY_NOT_EQUAL:
+            // fallthrough
+        case BINARY_DOUBLE_EQUAL:
+            // fallthrough
+        case BINARY_BITWISE_XOR:
+            // fallthrough
+        case BINARY_BITWISE_AND:
+            // fallthrough
+        case BINARY_BITWISE_OR:
+            // fallthrough
+        case BINARY_LOGICAL_AND:
+            // fallthrough
+        case BINARY_LOGICAL_OR:
+            // fallthrough
+        case BINARY_SHIFT_LEFT:
+            // fallthrough
+        case BINARY_SHIFT_RIGHT:
+            // TODO: expected failure tests for some of these
+            msg(DIAG_BINARY_MISMATCHED_TYPES, pos, "floating point operand for operation "TAST_FMT" not allowed\n", binary_type_print(token_type));
+            return false;
+    }
+    unreachable("");
+}
+
 static Tast_literal* precalulate_number(
     const Tast_number* lhs,
     const Tast_number* rhs,
@@ -603,6 +657,18 @@ static Tast_literal* precalulate_number(
     return util_tast_literal_new_from_int64_t(result_val, TOKEN_INT_LITERAL, pos);
 }
 
+static Tast_literal* precalulate_float(
+    const Tast_float* lhs,
+    const Tast_float* rhs,
+    BINARY_TYPE token_type,
+    Pos pos
+) {
+    double result_val = 0;
+    if (!precalulate_float_internal(&result_val, lhs->data, rhs->data, token_type, pos)) {
+        todo();
+    }
+    return util_tast_literal_new_from_double(result_val, TOKEN_FLOAT_LITERAL, pos);
+}
 static Tast_literal* precalulate_char(
     const Tast_char* lhs,
     const Tast_char* rhs,
@@ -685,6 +751,14 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
                 literal = precalulate_number(
                     tast_number_const_unwrap(lhs_lit),
                     tast_number_const_unwrap(rhs_lit),
+                    oper_token_type,
+                    oper_pos
+                );
+                break;
+            case TAST_FLOAT:
+                literal = precalulate_float(
+                    tast_float_const_unwrap(lhs_lit),
+                    tast_float_const_unwrap(rhs_lit),
                     oper_token_type,
                     oper_pos
                 );

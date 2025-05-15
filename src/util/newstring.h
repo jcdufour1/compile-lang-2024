@@ -53,7 +53,7 @@ static inline void string_extend_int64_t(Arena* arena, String* str, int64_t num)
 static inline void string_extend_double(Arena* arena, String* str, double num) {
     const size_t BUF_SIZE = 32;
     char num_str[BUF_SIZE];
-    int actual = snprintf(NULL, 0, "%lf", num);
+    int actual = snprintf(NULL, 0, "%.17f", num);
     if (actual < 1) {
         // error occured
         todo();
@@ -62,7 +62,7 @@ static inline void string_extend_double(Arena* arena, String* str, double num) {
         unreachable("buffer will overflow when writing float");
     }
 
-    unwrap(actual == snprintf(num_str, BUF_SIZE, "%lf", num));
+    unwrap(actual == snprintf(num_str, BUF_SIZE, "%.17f", num));
     string_extend_cstr(arena, str, num_str);
 }
 

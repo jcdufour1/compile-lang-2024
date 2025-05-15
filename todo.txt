@@ -96,8 +96,8 @@ for generics:
 - test case for: let num f32 = 7
 - fix consume names
 - 7_000.001
+- binary operators with f64 literals on both sides (precomputation)
 - rename uast_number, tast_number, and llvm_number to uast_int, etc.
-
 
 ## needed tests
 - let token* Token = <...>; switch token {<...>}

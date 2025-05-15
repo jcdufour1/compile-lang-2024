@@ -1,0 +1,16 @@
+compile::stdout 0
+
+compile::stderr 10
+./tests2/inputs/float_errors.own:5:18:[1;31merror[0;39m:type `f64` cannot be implicitly converted to `f32`
+     4 |     let num2 f64 = 9.8
+     5 |     let num3 f32 = num2
+       |                  ^
+     6 | 
+./tests2/inputs/float_errors.own:7:20:[1;31merror[0;39m:symbol `num` is not defined
+     6 | 
+     7 |     let num4 f64 = num
+       |                    ^
+     8 | 
+
+compile::return_code 1
+

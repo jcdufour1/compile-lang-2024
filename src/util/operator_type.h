@@ -53,6 +53,7 @@ static inline Str_view binary_type_to_str_view(BINARY_TYPE bin_type) {
         case BINARY_NOT_EQUAL:
             return str_view_from_cstr("!=");
         case BINARY_BITWISE_XOR:
+            // TODO: change to "^"
             return str_view_from_cstr("xor");
         case BINARY_BITWISE_AND:
             return str_view_from_cstr("&");

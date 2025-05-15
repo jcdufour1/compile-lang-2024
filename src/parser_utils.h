@@ -86,6 +86,10 @@ Tast_assignment* util_assignment_new(Uast_expr* lhs, Uast_expr* rhs);
 
 bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Str_view value, TOKEN_TYPE token_type, Pos pos);
 
+Uast_literal* util_uast_literal_new_from_double(double value, Pos pos);
+
+Tast_literal* util_tast_literal_new_from_double(double value, TOKEN_TYPE token_type, Pos pos);
+    
 Uast_literal* util_uast_literal_new_from_strv(const Str_view value, TOKEN_TYPE token_type, Pos pos);
 
 Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token_type, Pos pos);
