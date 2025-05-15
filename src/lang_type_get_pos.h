@@ -11,6 +11,8 @@ static inline Pos lang_type_primitive_get_pos(Lang_type_primitive lang_type) {
             return lang_type_signed_int_const_unwrap(lang_type).pos;
         case LANG_TYPE_UNSIGNED_INT:
             return lang_type_unsigned_int_const_unwrap(lang_type).pos;
+        case LANG_TYPE_FLOAT:
+            return lang_type_float_const_unwrap(lang_type).pos;
         case LANG_TYPE_ANY:
             return lang_type_any_const_unwrap(lang_type).pos;
     }

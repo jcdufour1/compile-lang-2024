@@ -19,6 +19,7 @@ bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_typ
 // TODO: remove these tow forward decls and replace with better system
 bool lang_type_atom_is_signed(Lang_type_atom atom);
 bool lang_type_atom_is_unsigned(Lang_type_atom atom);
+bool lang_type_atom_is_float(Lang_type_atom atom);
 
 bool name_from_uname(Name* new_name, Uname name);
 
@@ -105,6 +106,13 @@ static inline Lang_type lang_type_from_ulang_type_regular_primitive(const Ulang_
             atom.pointer_depth
         );
         return lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(new_int));
+    } else if (lang_type_atom_is_float(atom)) {
+        Lang_type_float new_float = lang_type_float_new(
+            lang_type.pos,
+            str_view_to_int64_t( POS_BUILTIN, str_view_slice(atom.str.base, 1, atom.str.base.count - 1)),
+            atom.pointer_depth
+        );
+        return lang_type_primitive_const_wrap(lang_type_float_const_wrap(new_float));
     } else if (str_view_cstr_is_equal(atom.str.base, "void")) {
         return lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN));
     } else if (lang_type_atom_is_equal(atom, lang_type_atom_new_from_cstr("u8", 0, 0))) {

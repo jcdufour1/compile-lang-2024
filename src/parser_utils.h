@@ -17,6 +17,8 @@ bool lang_type_atom_is_unsigned(Lang_type_atom atom);
 
 bool lang_type_atom_is_signed(Lang_type_atom atom);
 
+bool lang_type_atom_is_float(Lang_type_atom atom);
+
 bool lang_type_atom_is_number(Lang_type_atom atom);
 
 bool lang_type_is_number_like(Lang_type lang_type);

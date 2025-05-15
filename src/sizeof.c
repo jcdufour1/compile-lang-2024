@@ -18,6 +18,8 @@ uint64_t sizeof_primitive(Lang_type_primitive primitive) {
             return lang_type_signed_int_const_unwrap(primitive).bit_width/8;
         case LANG_TYPE_UNSIGNED_INT:
             return lang_type_unsigned_int_const_unwrap(primitive).bit_width/8;
+        case LANG_TYPE_FLOAT:
+            return lang_type_float_const_unwrap(primitive).bit_width/8;
         case LANG_TYPE_CHAR:
             return 1;
         case LANG_TYPE_ANY:

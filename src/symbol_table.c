@@ -334,6 +334,14 @@ bool usymbol_lookup(Uast_def** result, Name key) {
             unwrap(usym_tbl_add(uast_primitive_def_wrap(def)));
             *result = uast_primitive_def_wrap(def);
             return true;
+        } else if (lang_type_atom_is_float(lang_type_atom_new(prim_key, 0))) {
+            int32_t bit_width = str_view_to_int64_t(POS_BUILTIN, str_view_slice(prim_key.base, 1, prim_key.base.count - 1));
+            Uast_primitive_def* def = uast_primitive_def_new(
+                POS_BUILTIN, lang_type_primitive_const_wrap(lang_type_float_const_wrap(lang_type_float_new((Pos) {0}, bit_width, 0)))
+            );
+            unwrap(usym_tbl_add(uast_primitive_def_wrap(def)));
+            *result = uast_primitive_def_wrap(def);
+            return true;
         }
     }
 

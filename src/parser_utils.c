@@ -257,11 +257,17 @@ int64_t str_view_to_int64_t(const Pos pos, Str_view str_view) {
     return result;
 }
 
-static bool lang_type_atom_is_number_finish(Lang_type_atom atom) {
+static bool lang_type_atom_is_number_finish(Lang_type_atom atom, bool allow_decimal) {
     (void) atom;
     size_t idx = 0;
+    bool decimal_enc = false;
     for (idx = 1; idx < atom.str.base.count; idx++) {
-        if (!isdigit(str_view_at(atom.str.base, idx))) {
+        if (str_view_at(atom.str.base, idx) == '.') {
+            if (!allow_decimal || decimal_enc) {
+                return false;
+            }
+            decimal_enc = true;
+        } else if (!isdigit(str_view_at(atom.str.base, idx))) {
             return false;
         }
     }
@@ -277,7 +283,7 @@ bool lang_type_atom_is_signed(Lang_type_atom atom) {
     if (str_view_at(atom.str.base, 0) != 'i') {
         return false;
     }
-    return lang_type_atom_is_number_finish(atom);
+    return lang_type_atom_is_number_finish(atom, false);
 }
 
 // TODO: get rid of this function?
@@ -288,7 +294,17 @@ bool lang_type_atom_is_unsigned(Lang_type_atom atom) {
     if (str_view_at(atom.str.base, 0) != 'u') {
         return false;
     }
-    return lang_type_atom_is_number_finish(atom);
+    return lang_type_atom_is_number_finish(atom, false);
+}
+
+bool lang_type_atom_is_float(Lang_type_atom atom) {
+    if (atom.str.base.count < 1) {
+        return false;
+    }
+    if (str_view_at(atom.str.base, 0) != 'f') {
+        return false;
+    }
+    return lang_type_atom_is_number_finish(atom, true);
 }
 
 bool lang_type_atom_is_number(Lang_type_atom atom) {
@@ -310,6 +326,8 @@ bool lang_type_is_number_like(Lang_type lang_type) {
             return true;
         case LANG_TYPE_UNSIGNED_INT:
             return true;
+        case LANG_TYPE_FLOAT:
+            return true;
         case LANG_TYPE_ANY:
             return false;
     }
@@ -329,6 +347,8 @@ bool lang_type_is_number(Lang_type lang_type) {
             return true;
         case LANG_TYPE_UNSIGNED_INT:
             return true;
+        case LANG_TYPE_FLOAT:
+            return true;
         case LANG_TYPE_ANY:
             return false;
     }
@@ -339,36 +359,14 @@ bool lang_type_is_signed(Lang_type lang_type) {
     if (lang_type.type != LANG_TYPE_PRIMITIVE) {
         return false;
     }
-
-    switch (lang_type_primitive_const_unwrap(lang_type).type) {
-        case LANG_TYPE_CHAR:
-            return false;
-        case LANG_TYPE_SIGNED_INT:
-            return true;
-        case LANG_TYPE_UNSIGNED_INT:
-            return false;
-        case LANG_TYPE_ANY:
-            return false;
-    }
-    unreachable("");
+    return lang_type_primitive_const_unwrap(lang_type).type == LANG_TYPE_SIGNED_INT;
 }
 
 bool lang_type_is_unsigned(Lang_type lang_type) {
     if (lang_type.type != LANG_TYPE_PRIMITIVE) {
         return false;
     }
-
-    switch (lang_type_primitive_const_unwrap(lang_type).type) {
-        case LANG_TYPE_CHAR:
-            return false;
-        case LANG_TYPE_SIGNED_INT:
-            return false;
-        case LANG_TYPE_UNSIGNED_INT:
-            return true;
-        case LANG_TYPE_ANY:
-            return false;
-    }
-    unreachable("");
+    return lang_type_primitive_const_unwrap(lang_type).type == LANG_TYPE_UNSIGNED_INT;
 }
 
 int64_t i_lang_type_atom_to_bit_width(const Lang_type_atom atom) {
