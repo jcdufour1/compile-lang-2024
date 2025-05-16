@@ -48,7 +48,7 @@ bool try_str_view_to_int64_t(int64_t* result, const Pos pos, Str_view str_view);
 
 bool try_str_view_to_size_t(size_t* result, Str_view str_view);
 
-bool try_str_view_conenume_size_t(size_t* result, Str_view* str_view, bool ignore_underscore);
+bool try_str_view_consume_size_t(size_t* result, Str_view* str_view, bool ignore_underscore);
 
 Str_view util_literal_str_view_new_internal(const char* file, int line, Str_view debug_prefix);
 

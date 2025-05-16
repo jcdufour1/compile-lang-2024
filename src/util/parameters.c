@@ -14,7 +14,7 @@ static bool is_short_option(char** argv) {
 }
 
 // this function will exclude - or -- part of arg if present
-static const char* conenume_arg(int* argc, char*** argv, const char* msg_if_missing) {
+static const char* consume_arg(int* argc, char*** argv, const char* msg_if_missing) {
     if (*argc < 1) {
         msg(DIAG_MISSING_COMMAND_LINE_ARG, dummy_pos, "%s\n", msg_if_missing);
         exit(EXIT_CODE_FAIL);
@@ -30,7 +30,7 @@ static const char* conenume_arg(int* argc, char*** argv, const char* msg_if_miss
         return curr_arg;
     }
 
-    return conenume_arg(argc, argv, "stray - or -- is not permitted");
+    return consume_arg(argc, argv, "stray - or -- is not permitted");
 }
 
 typedef struct {
@@ -149,16 +149,16 @@ LOG_LEVEL expect_fail_type_to_curr_log_level(DIAG_TYPE type) {
 }
 
 static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
-    const char* curr_opt = conenume_arg(argc, argv, "arg expected");
+    const char* curr_opt = consume_arg(argc, argv, "arg expected");
 
     if (0 == strcmp(curr_opt, "compile")) {
         params->compile = true;
-        params->input_file_name = conenume_arg(argc, argv, "input file path was expected after `compile`");
+        params->input_file_name = consume_arg(argc, argv, "input file path was expected after `compile`");
     } else if (0 == strcmp(curr_opt, "test-expected-fail")) {
         params->compile = false;
         params->test_expected_fail = true;
 
-        const char* count_args_cstr = conenume_arg(argc, argv, "count expected");
+        const char* count_args_cstr = consume_arg(argc, argv, "count expected");
         size_t count_args = SIZE_MAX;
         if (!try_str_view_to_size_t(&count_args, str_view_from_cstr(count_args_cstr))) {
             todo();
@@ -167,7 +167,7 @@ static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
 
         bool found = false;
         for (size_t idx = 0; idx < count_args; idx++) {
-            const char* diag_type_str = conenume_arg(
+            const char* diag_type_str = consume_arg(
                 argc, argv, "expected fail type expected after `test_expected_fail`"
             );
 
@@ -186,7 +186,7 @@ static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
             assert(params->diag_types.info.count > 0);
         }
 
-        params->input_file_name = conenume_arg(
+        params->input_file_name = consume_arg(
             argc, argv, "input file path was expected after `test_expected_fail <fail type>`"
         );
     } else {
@@ -196,13 +196,13 @@ static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
 }
 
 static void parse_long_option(Parameters* params, int* argc, char*** argv) {
-    const char* curr_opt = conenume_arg(argc, argv, "arg expected");
+    const char* curr_opt = consume_arg(argc, argv, "arg expected");
 
     if (0 == strcmp(curr_opt, "emit-llvm")) {
         params->emit_llvm = true;
     } else if (0 == strncmp(curr_opt, "backend", strlen("backend"))) {
         Str_view backend = str_view_from_cstr(&curr_opt[strlen("backend")]);
-        if (!str_view_try_conenume(&backend, '=') || backend.count < 1) {
+        if (!str_view_try_consume(&backend, '=') || backend.count < 1) {
             log(LOG_FATAL, "expected =<backend> after `backend`");
             exit(EXIT_CODE_FAIL);
         }
@@ -221,7 +221,7 @@ static void parse_long_option(Parameters* params, int* argc, char*** argv) {
         params->all_errors_fatal = true;
     } else if (0 == strncmp(curr_opt, "error", strlen("error"))) {
         Str_view error = str_view_from_cstr(&curr_opt[strlen("error")]);
-        if (!str_view_try_conenume(&error, '=') || error.count < 1) {
+        if (!str_view_try_consume(&error, '=') || error.count < 1) {
             log(LOG_FATAL, "expected <=error1[,error2,...]> after `error`");
             exit(EXIT_CODE_FAIL);
         }
@@ -238,7 +238,7 @@ static void parse_long_option(Parameters* params, int* argc, char*** argv) {
         params->error_opts_changed = true;
     } else if (0 == strncmp(curr_opt, "log-level", strlen("log-level"))) {
         Str_view log_level = str_view_from_cstr(&curr_opt[strlen("log-level")]);
-        if (!str_view_try_conenume(&log_level, '=')) {
+        if (!str_view_try_consume(&log_level, '=')) {
             log(LOG_FATAL, "expected =<log level> after `log-level`");
             exit(EXIT_CODE_FAIL);
         }
@@ -281,8 +281,8 @@ void parse_args(int argc, char** argv) {
     params = get_params_with_defaults();
     expect_fail_str_to_curr_log_level_init();
 
-    // conenume compiler executable name
-    conenume_arg(&argc, &argv, "internal error");
+    // consume compiler executable name
+    consume_arg(&argc, &argv, "internal error");
 
     while (argc > 0) {
         if (is_short_option(argv)) {

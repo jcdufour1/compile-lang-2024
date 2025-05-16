@@ -25,7 +25,7 @@ static inline char str_view_front(Str_view str_view) {
     return str_view_at(str_view, 0);
 }
 
-static inline Str_view str_view_conenume_while(Str_view* str_view, bool (*should_continue)(char /* previous char */, char /* current char */)) {
+static inline Str_view str_view_consume_while(Str_view* str_view, bool (*should_continue)(char /* previous char */, char /* current char */)) {
     Str_view new_str_view;
     for (size_t idx = 0; str_view->count > idx; idx++) {
         char prev_char = idx > 0 ? (str_view_at(*str_view, idx)) : (0);
@@ -40,7 +40,7 @@ static inline Str_view str_view_conenume_while(Str_view* str_view, bool (*should
     unreachable("cond is never met");
 }
 
-static inline bool str_view_try_conenume_until(Str_view* result, Str_view* str_view, char delim) {
+static inline bool str_view_try_consume_until(Str_view* result, Str_view* str_view, char delim) {
     for (size_t idx = 0; idx < str_view->count; idx++) {
         if (str_view_at(*str_view, idx) == delim) {
             result->str = str_view->str;
@@ -53,13 +53,13 @@ static inline bool str_view_try_conenume_until(Str_view* result, Str_view* str_v
     return false;
 }
 
-static inline Str_view str_view_conenume_until(Str_view* str_view, char delim) {
+static inline Str_view str_view_consume_until(Str_view* str_view, char delim) {
     Str_view result = {0};
-    unwrap(str_view_try_conenume_until(&result, str_view, delim) && "delim not found");
+    unwrap(str_view_try_consume_until(&result, str_view, delim) && "delim not found");
     return result;
 }
 
-static inline Str_view str_view_conenume_count(Str_view* str_view, size_t count) {
+static inline Str_view str_view_consume_count(Str_view* str_view, size_t count) {
     if (str_view->count < count) {
         todo();
     }
@@ -71,8 +71,8 @@ static inline Str_view str_view_conenume_count(Str_view* str_view, size_t count)
     return new_str_view;
 }
 
-static inline char str_view_conenume(Str_view* str_view) {
-    return str_view_front(str_view_conenume_count(str_view, 1));
+static inline char str_view_consume(Str_view* str_view) {
+    return str_view_front(str_view_consume_count(str_view, 1));
 }
 
 // return true when match
@@ -103,20 +103,20 @@ static inline Str_view str_view_from_cstr(const char* cstr) {
     return str_view;
 }
 
-static inline bool str_view_try_conenume(Str_view* str_view, char ch) {
+static inline bool str_view_try_consume(Str_view* str_view, char ch) {
     if (str_view->count < 1) {
         return false;
     }
     if (str_view_front(*str_view) == ch) {
-        str_view_conenume(str_view);
+        str_view_consume(str_view);
         return true;
     }
     return false;
 }
 
-static inline bool str_view_try_conenume_count(Str_view* str_view, char ch, size_t count) {
+static inline bool str_view_try_consume_count(Str_view* str_view, char ch, size_t count) {
     for (size_t idx = 0; idx < count; idx++) {
-        if (!str_view_try_conenume(str_view, ch)) {
+        if (!str_view_try_consume(str_view, ch)) {
             return false;
         }
     }

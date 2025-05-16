@@ -18,12 +18,12 @@
 size_t get_count_excape_seq(Str_view str_view) {
     size_t count_excapes = 0;
     while (str_view.count > 0) {
-        if (str_view_conenume(&str_view) == '\\') {
+        if (str_view_consume(&str_view) == '\\') {
             if (str_view.count < 1) {
                 unreachable("invalid excape sequence");
             }
 
-            str_view_conenume(&str_view); // important in case of // excape sequence
+            str_view_consume(&str_view); // important in case of // excape sequence
             count_excapes++;
         }
     }
@@ -33,10 +33,10 @@ size_t get_count_excape_seq(Str_view str_view) {
 // \n excapes are actually stored as is in tokens and llvms, but should be printed as \0a
 void string_extend_strv_eval_escapes(Arena* arena, String* string, Str_view str_view) {
     while (str_view.count > 0) {
-        char front_char = str_view_conenume(&str_view);
+        char front_char = str_view_consume(&str_view);
         if (front_char == '\\') {
             vec_append(arena, string, '\\');
-            switch (str_view_conenume(&str_view)) {
+            switch (str_view_consume(&str_view)) {
                 case 'n':
                     string_extend_hex_2_digits(arena, string, 0x0a);
                     break;
@@ -214,7 +214,7 @@ error:
 }
 
 bool try_str_view_to_char(char* result, const Pos pos, Str_view str_view) {
-    if (!str_view_try_conenume(&str_view, '\\')) {
+    if (!str_view_try_consume(&str_view, '\\')) {
         if (str_view.count != 1) {
             msg(
                 DIAG_INVALID_CHAR_LIT, pos,
@@ -235,7 +235,7 @@ bool try_str_view_to_char(char* result, const Pos pos, Str_view str_view) {
         );
         return false;
     }
-    char esc_char = str_view_conenume(&str_view);
+    char esc_char = str_view_consume(&str_view);
     switch (esc_char) {
         case 'n':
             *result = '\n';
@@ -273,9 +273,9 @@ bool try_str_view_to_size_t(size_t* result, Str_view str_view) {
     return true;
 }
 
-bool try_str_view_conenume_size_t(size_t* result, Str_view* str_view, bool ignore_underscore) {
+bool try_str_view_consume_size_t(size_t* result, Str_view* str_view, bool ignore_underscore) {
     assert(!ignore_underscore && "not implemented");
-    Str_view num = str_view_conenume_while(str_view, isdigit_no_underscore);
+    Str_view num = str_view_consume_while(str_view, isdigit_no_underscore);
     return try_str_view_to_size_t(result, num);
 }
 

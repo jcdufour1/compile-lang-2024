@@ -29,7 +29,7 @@ void serialize_str_view(String* buf, Str_view str_view) {
 }
 
 // TODO: remove this
-bool try_str_view_conenume_size_t(size_t* result, Str_view* str_view, bool ignore_underscore);
+bool try_str_view_consume_size_t(size_t* result, Str_view* str_view, bool ignore_underscore);
 
 // TODO: merge serialize_name_symbol_table and serialize_name to be consistant with ulang_type?
 Str_view serialize_name_symbol_table(Name name) {
@@ -50,8 +50,8 @@ Str_view serialize_name_symbol_table(Name name) {
         {
             Str_view mod_path = name.mod_path;
             Str_view dummy = {0};
-            while (str_view_try_conenume_until(&dummy, &mod_path, PATH_SEPARATOR)) {
-                unwrap(str_view_try_conenume(&mod_path, PATH_SEPARATOR));
+            while (str_view_try_consume_until(&dummy, &mod_path, PATH_SEPARATOR)) {
+                unwrap(str_view_try_consume(&mod_path, PATH_SEPARATOR));
                 path_count++;
             }
         }
@@ -63,8 +63,8 @@ Str_view serialize_name_symbol_table(Name name) {
         {
             Str_view mod_path = name.mod_path;
             Str_view dir_name = {0};
-            while (str_view_try_conenume_until(&dir_name, &mod_path, PATH_SEPARATOR)) {
-                unwrap(str_view_try_conenume(&mod_path, PATH_SEPARATOR));
+            while (str_view_try_consume_until(&dir_name, &mod_path, PATH_SEPARATOR)) {
+                unwrap(str_view_try_consume(&mod_path, PATH_SEPARATOR));
                 serialize_str_view(&buf, dir_name);
             }
             serialize_str_view(&buf, mod_path);

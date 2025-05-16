@@ -30,7 +30,7 @@ static inline void log_tokens_internal(const char* file, int line, LOG_LEVEL log
 #define log_tokens(log_level, tk_view) \
     log_tokens_internal(__FILE__, __LINE__, log_level, tk_view)
 
-static inline Tk_view tk_view_conenume_count(Tk_view* tk_view, size_t count) {
+static inline Tk_view tk_view_consume_count(Tk_view* tk_view, size_t count) {
     if (tk_view->count < count) {
         unreachable("out of bounds");
     }
@@ -40,16 +40,16 @@ static inline Tk_view tk_view_conenume_count(Tk_view* tk_view, size_t count) {
     return result;
 }
 
-static inline Token tk_view_conenume(Tk_view* tk_view) {
-    return tk_view_front(tk_view_conenume_count(tk_view, 1));
+static inline Token tk_view_consume(Tk_view* tk_view) {
+    return tk_view_front(tk_view_consume_count(tk_view, 1));
 }
 
-static inline bool tk_view_try_conenume(Token* result, Tk_view* tokens, TOKEN_TYPE expected) {
+static inline bool tk_view_try_consume(Token* result, Tk_view* tokens, TOKEN_TYPE expected) {
     if (tokens->count < 1 || tk_view_front(*tokens).type != expected) {
         return false;
     }
     
-    Token token = tk_view_conenume(tokens);
+    Token token = tk_view_consume(tokens);
     if (result) {
         *result = token;
     }
@@ -57,11 +57,11 @@ static inline bool tk_view_try_conenume(Token* result, Tk_view* tokens, TOKEN_TY
     return true;
 }
 
-static inline bool tk_view_try_conenume_symbol(Token* result, Tk_view* tokens, const char* cstr) {
+static inline bool tk_view_try_consume_symbol(Token* result, Tk_view* tokens, const char* cstr) {
     if (!str_view_cstr_is_equal(tk_view_front(*tokens).text, cstr)) {
         return false;
     }
-    return tk_view_try_conenume(result, tokens, TOKEN_SYMBOL);
+    return tk_view_try_consume(result, tokens, TOKEN_SYMBOL);
 }
 
 static inline Str_view tk_view_print_internal(Arena* arena, Tk_view tk_view) {
