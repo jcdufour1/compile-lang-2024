@@ -482,16 +482,6 @@ Str_view uast_return_print_internal(const Uast_return* lang_rtn, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_macro_print_internal(const Uast_macro* macro, int indent) {
-    String buf = {0};
-
-    string_extend_cstr_indent(&print_arena, &buf, "macro", indent);
-    string_extend_strv(&print_arena, &buf, macro->name);
-    string_extend_cstr(&print_arena, &buf, "\n");
-
-    return string_to_strv(buf);
-}
-
 Str_view uast_if_else_chain_print_internal(const Uast_if_else_chain* if_else, int indent) {
     String buf = {0};
 
@@ -668,8 +658,6 @@ Str_view uast_expr_print_internal(const Uast_expr* expr, int indent) {
             return uast_switch_print_internal(uast_switch_const_unwrap(expr), indent);
         case UAST_IF_ELSE_CHAIN:
             return uast_if_else_chain_print_internal(uast_if_else_chain_const_unwrap(expr), indent);
-        case UAST_MACRO:
-            return uast_macro_print_internal(uast_macro_const_unwrap(expr), indent);
     }
     unreachable("");
 }

@@ -106,12 +106,10 @@ Uast_function_call* uast_function_call_clone(const Uast_function_call* fun_call,
 }
 
 Uast_tuple* uast_tuple_clone(const Uast_tuple* tuple, Scope_id new_scope) {
-    return uast_tuple_new(tuple->pos, uast_expr_vec_clone(tuple->members, new_scope));
-}
-
-Uast_macro* uast_macro_clone(const Uast_macro* macro, Scope_id new_scope) {
-    (void) new_scope;
-    return uast_macro_new(macro->pos, macro->name);
+    return uast_tuple_new(
+        tuple->pos,
+        uast_expr_vec_clone(tuple->members, new_scope)
+    );
 }
 
 Uast_operator* uast_operator_clone(const Uast_operator* oper, Scope_id new_scope) {
@@ -143,8 +141,6 @@ Uast_mod_alias* uast_mod_alias_clone(const Uast_mod_alias* alias, Scope_id new_s
 
 Uast_expr* uast_expr_clone(const Uast_expr* expr, Scope_id new_scope) {
     switch (expr->type) {
-        case UAST_MACRO:
-            return uast_macro_wrap(uast_macro_clone(uast_macro_const_unwrap(expr), new_scope));
         case UAST_OPERATOR:
             return uast_operator_wrap(uast_operator_clone(uast_operator_const_unwrap(expr), new_scope));
         case UAST_SYMBOL:

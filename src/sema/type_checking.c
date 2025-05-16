@@ -1376,6 +1376,8 @@ bool try_set_expr_types(Tast_expr** new_tast, Uast_expr* uast) {
             return true;
         case UAST_FUNCTION_CALL:
             return try_set_function_call_types(new_tast, uast_function_call_unwrap(uast));
+        case UAST_MACRO:
+            return try_set_macro_types(new_tast, uast_macro_unwrap(uast));
         case UAST_TUPLE: {
             Tast_tuple* new_call = NULL;
             if (!try_set_tuple_types(&new_call, uast_tuple_unwrap(uast))) {
@@ -1800,6 +1802,24 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
 
 error:
     return status;
+}
+
+// TODO: remove name member from Tast_string
+bool try_set_macro_types(Tast_expr** new_call, Uast_macro* macro) {
+    if (str_view_cstr_is_equal(macro->name, "file")) {
+        *new_call = tast_literal_wrap(tast_string_wrap(tast_string_new(macro->pos, macro->pos.file_path, util_literal_name_new2())));
+        return true;
+    } else if (str_view_cstr_is_equal(macro->name, "line")) {
+        *new_call = tast_literal_wrap(util_tast_literal_new_from_int64_t(macro->pos.line, TOKEN_INT_LITERAL, macro->pos));
+        return true;
+    } else if (str_view_cstr_is_equal(macro->name, "column")) {
+        *new_call = tast_literal_wrap(util_tast_literal_new_from_int64_t(macro->pos.column, TOKEN_INT_LITERAL, macro->pos));
+        return true;
+    } else {
+        msg_todo("language feature macro (other than `#file`)", macro->pos);
+        return false;
+    }
+    unreachable("");
 }
 
 bool try_set_tuple_types(Tast_tuple** new_tuple, Uast_tuple* tuple) {

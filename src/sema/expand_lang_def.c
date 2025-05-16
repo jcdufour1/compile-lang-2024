@@ -189,6 +189,8 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             todo();
         case UAST_TUPLE:
             todo();
+        case UAST_MACRO:
+            todo();
         case UAST_ENUM_ACCESS:
             todo();
         case UAST_ENUM_GET_TAG:
@@ -334,6 +336,8 @@ bool expand_def_expr(Uast_expr* expr) {
         case UAST_ARRAY_LITERAL:
             todo();
         case UAST_TUPLE:
+            todo();
+        case UAST_MACRO:
             todo();
         case UAST_ENUM_ACCESS:
             todo();

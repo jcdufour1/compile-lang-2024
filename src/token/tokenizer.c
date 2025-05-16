@@ -183,6 +183,10 @@ static bool get_next_token(
     } else if (str_view_col_try_conenume(pos, file_text_rem, '}')) {
         token->type = TOKEN_CLOSE_CURLY_BRACE;
         return true;
+    } else if (str_view_col_try_conenume(pos, file_text_rem, '#')) {
+        token->type = TOKEN_MACRO;
+        token->text = str_view_col_conenume_while(pos, file_text_rem, local_isalnum_or_underscore).base;
+        return true;
     } else if (str_view_col_try_conenume(pos, file_text_rem, '"')) {
         token->type = TOKEN_STRING_LITERAL;
         Str_view_col quote_str = {0};

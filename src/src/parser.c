@@ -593,8 +593,6 @@ static bool can_end_stmt(Token token) {
             return true;
         case TOKEN_ASSIGN_BY_BIN:
             return false;
-        case TOKEN_MACRO:
-            return true;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -738,8 +736,6 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_EOF:
             return false;
         case TOKEN_ASSIGN_BY_BIN:
-            return false;
-        case TOKEN_MACRO:
             return false;
         case TOKEN_COUNT:
             unreachable("");
@@ -2168,9 +2164,6 @@ static PARSE_EXPR_STATUS parse_expr_piece(
             return PARSE_EXPR_ERROR;
         }
         *result = uast_literal_wrap(lit);
-    } else if (tk_view_front(*tokens).type == TOKEN_MACRO) {
-        *result = uast_macro_wrap(uast_macro_new(tk_view_front(*tokens).pos, tk_view_front(*tokens).text));
-        conenume(tokens);
     } else if (tk_view_front(*tokens).type == TOKEN_SYMBOL) {
         *result = uast_symbol_wrap(parse_symbol(tokens, scope_id));
     } else if (starts_with_switch(*tokens)) {
@@ -2451,7 +2444,7 @@ static PARSE_STATUS parse_expr_generic(
 //    parse_bitwise_and
 //};
 
-static_assert(TOKEN_COUNT == 69, "exhausive handling of token types; note that only binary operators need to be explicitly handled here");
+static_assert(TOKEN_COUNT == 68, "exhausive handling of token types; note that only binary operators need to be explicitly handled here");
 // lower precedence operators are in earlier rows in the table
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},
