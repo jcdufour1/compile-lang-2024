@@ -6,7 +6,7 @@
 #include <parser_utils.h>
 
 bool try_lang_type_from_ulang_type(Lang_type* new_lang_type, Ulang_type lang_type, Pos pos) {
-    if (!expand_def_ulang_type(&lang_type)) {
+    if (!expand_def_ulang_type(&lang_type, pos)) {
         return false;
     }
 
