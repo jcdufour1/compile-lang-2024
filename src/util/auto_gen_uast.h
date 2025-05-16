@@ -303,6 +303,7 @@ static Uast_type uast_gen_macro(const char* prefix) {
     Uast_type lit = {.name = uast_name_new(prefix, "macro", false)};
 
     append_member(&lit.members, "Str_view", "name");
+    append_member(&lit.members, "Pos", "value");
 
     return lit;
 }

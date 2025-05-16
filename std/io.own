@@ -26,3 +26,12 @@ fn slice_at(<ItemType>)(slice Slice(<ItemType>), index u64) ItemType {
     return slice.items[index]
 }
 
+fn assert(condition u1, message u8* = "", keep_going u1 = 0, file u8* = #file, line i32 = #line, column i32 = #column) {
+    if (!condition) {
+        printf("%s:%d:%d:assertion failure: %s\n", file, line, column, message)
+        if (!keep_going) {
+            abort()
+        }
+    }
+}
+

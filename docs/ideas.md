@@ -534,3 +534,13 @@ fn darr_at(darr Darr(inout 'T, 'I), index I) inout T {
 }
 '''
 
+# ownership
+pointer could use generic with associated arena (this could reduce frustrations)
+type Expr struct('alloc) {
+    ptr(Expr, alloc)
+}
+## syntax sugar:
+type Expr struct('alloc) {
+    Expr&alloc
+}
+

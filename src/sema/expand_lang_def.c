@@ -153,49 +153,50 @@ static EXPAND_NAME_STATUS expand_def_name_internal(Uast_expr** new_expr, Name* n
             return EXPAND_NAME_NORMAL;
     }
 
-    Uast_expr* expr = uast_expr_clone(uast_lang_def_unwrap(def)->expr, name.scope_id);
-    switch (expr->type) {
-        case UAST_MEMBER_ACCESS: {
-            Uast_member_access* access = uast_member_access_unwrap(expr);
-            unwrap(access->member_name->name.gen_args.info.count == 0 && "not implemented");
-            new_name->gen_args = name.gen_args;
-            *new_expr = uast_member_access_wrap(access);
-            return EXPAND_NAME_NEW_EXPR;
-        }
-        case UAST_SYMBOL: {
-            Uast_symbol* sym = uast_symbol_unwrap(expr);
-            *new_name = sym->name;
-            unwrap(new_name->gen_args.info.count == 0 && "not implemented");
-            new_name->gen_args = name.gen_args;
-            return EXPAND_NAME_NORMAL;
-        }
-        case UAST_IF_ELSE_CHAIN:
-            todo();
-        case UAST_SWITCH:
-            todo();
-        case UAST_UNKNOWN:
-            todo();
-        case UAST_OPERATOR:
-            todo();
-        case UAST_INDEX:
-            todo();
-        case UAST_LITERAL:
-            todo();
-        case UAST_FUNCTION_CALL:
-            todo();
-        case UAST_STRUCT_LITERAL:
-            todo();
-        case UAST_ARRAY_LITERAL:
-            todo();
-        case UAST_TUPLE:
-            todo();
-        case UAST_MACRO:
-            todo();
-        case UAST_ENUM_ACCESS:
-            todo();
-        case UAST_ENUM_GET_TAG:
-            todo();
-    }
+    todo();
+    //Uast_expr* expr = uast_expr_clone(uast_lang_def_unwrap(def)->expr, name.scope_id, dest_pos);
+    //switch (expr->type) {
+    //    case UAST_MEMBER_ACCESS: {
+    //        Uast_member_access* access = uast_member_access_unwrap(expr);
+    //        unwrap(access->member_name->name.gen_args.info.count == 0 && "not implemented");
+    //        new_name->gen_args = name.gen_args;
+    //        *new_expr = uast_member_access_wrap(access);
+    //        return EXPAND_NAME_NEW_EXPR;
+    //    }
+    //    case UAST_SYMBOL: {
+    //        Uast_symbol* sym = uast_symbol_unwrap(expr);
+    //        *new_name = sym->name;
+    //        unwrap(new_name->gen_args.info.count == 0 && "not implemented");
+    //        new_name->gen_args = name.gen_args;
+    //        return EXPAND_NAME_NORMAL;
+    //    }
+    //    case UAST_IF_ELSE_CHAIN:
+    //        todo();
+    //    case UAST_SWITCH:
+    //        todo();
+    //    case UAST_UNKNOWN:
+    //        todo();
+    //    case UAST_OPERATOR:
+    //        todo();
+    //    case UAST_INDEX:
+    //        todo();
+    //    case UAST_LITERAL:
+    //        todo();
+    //    case UAST_FUNCTION_CALL:
+    //        todo();
+    //    case UAST_STRUCT_LITERAL:
+    //        todo();
+    //    case UAST_ARRAY_LITERAL:
+    //        todo();
+    //    case UAST_TUPLE:
+    //        todo();
+    //    case UAST_MACRO:
+    //        todo();
+    //    case UAST_ENUM_ACCESS:
+    //        todo();
+    //    case UAST_ENUM_GET_TAG:
+    //        todo();
+    //}
     unreachable("");
 }
 

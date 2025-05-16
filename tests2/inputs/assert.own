@@ -1,21 +1,9 @@
 
-fn assert(condition u1, message u8* = "", file u8* = #file, line i32 = #line) {
-    if (!condition) {
-        io.printf("%s:%d:assertion failure: %s\n", file, line, message)
-        io.abort()
-    }
-}
-
-
-fn thing(hello u8 = "thing") {
-}
-
 type io import = std.io
 
 fn main() i32 {
     io.printf("%s:%d:%d\n", #file, #line, #column);
-    assert(0, "fjdsf")
-    thing()
+    io.assert(0, "hello", 1)
     return 0
 
 }

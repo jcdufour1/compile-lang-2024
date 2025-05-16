@@ -1538,7 +1538,7 @@ bool try_set_function_call_types_enum_case(Tast_enum_case** new_case, Uast_expr_
                     new_def->pos,
                     enum_case->tag,
                     lang_type_from_ulang_type(new_def->lang_type),
-                    uast_expr_clone(env.parent_of_operand, uast_symbol_unwrap(vec_at(&args, 0))->name.scope_id)
+                    uast_expr_clone(env.parent_of_operand, uast_symbol_unwrap(vec_at(&args, 0))->name.scope_id, enum_case->pos)
                 ))
             );
 
@@ -1738,7 +1738,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
         } else if (param->is_optional) {
             unwrap(!is_variadic);
             // TODO: expected failure case for invalid optional_default
-            corres_arg = uast_expr_clone(param->optional_default, fun_name.scope_id/* TODO */);
+            corres_arg = uast_expr_clone(param->optional_default, fun_name.scope_id/* TODO */, fun_call->pos);
         } else {
             // TODO: print max count correctly for variadic fucntions
             msg_invalid_count_function_args(fun_call, fun_decl, param_idx + 1, param_idx + 1);
@@ -1807,13 +1807,13 @@ error:
 // TODO: remove name member from Tast_string
 bool try_set_macro_types(Tast_expr** new_call, Uast_macro* macro) {
     if (str_view_cstr_is_equal(macro->name, "file")) {
-        *new_call = tast_literal_wrap(tast_string_wrap(tast_string_new(macro->pos, macro->pos.file_path, util_literal_name_new2())));
+        *new_call = tast_literal_wrap(tast_string_wrap(tast_string_new(macro->pos, macro->value.file_path, util_literal_name_new2())));
         return true;
     } else if (str_view_cstr_is_equal(macro->name, "line")) {
-        *new_call = tast_literal_wrap(util_tast_literal_new_from_int64_t(macro->pos.line, TOKEN_INT_LITERAL, macro->pos));
+        *new_call = tast_literal_wrap(util_tast_literal_new_from_int64_t(macro->value.line, TOKEN_INT_LITERAL, macro->pos));
         return true;
     } else if (str_view_cstr_is_equal(macro->name, "column")) {
-        *new_call = tast_literal_wrap(util_tast_literal_new_from_int64_t(macro->pos.column, TOKEN_INT_LITERAL, macro->pos));
+        *new_call = tast_literal_wrap(util_tast_literal_new_from_int64_t(macro->value.column, TOKEN_INT_LITERAL, macro->pos));
         return true;
     } else {
         msg_todo("language feature macro (other than `#file`)", macro->pos);

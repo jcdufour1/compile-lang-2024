@@ -2169,7 +2169,8 @@ static PARSE_EXPR_STATUS parse_expr_piece(
         }
         *result = uast_literal_wrap(lit);
     } else if (tk_view_front(*tokens).type == TOKEN_MACRO) {
-        *result = uast_macro_wrap(uast_macro_new(tk_view_front(*tokens).pos, tk_view_front(*tokens).text));
+        Pos pos = tk_view_front(*tokens).pos;
+        *result = uast_macro_wrap(uast_macro_new(pos, tk_view_front(*tokens).text, pos));
         conenume(tokens);
     } else if (tk_view_front(*tokens).type == TOKEN_SYMBOL) {
         *result = uast_symbol_wrap(parse_symbol(tokens, scope_id));
@@ -2562,7 +2563,7 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
     switch (parse_generic_binary(&rhs, tokens, scope_id, 0, 0)) {
         case PARSE_EXPR_OK:
             if (is_assign_bin) {
-                final_rhs = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, uast_expr_clone(lhs, scope_id), rhs, binary_type_from_token_type(oper.type))));
+                final_rhs = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, uast_expr_clone(lhs, scope_id, oper.pos), rhs, binary_type_from_token_type(oper.type))));
             } else {
                 final_rhs = rhs;
             }
