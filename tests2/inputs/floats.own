@@ -8,7 +8,7 @@ fn main() i32 {
     io.printf("num_int = %d\n", num_int)
 
     let num2 f32 = 4.0
-    let num2_reinterpret i32 = *unsafe_cast<i32*> refer num2
+    let num2_reinterpret i32 = *unsafe_cast<i32*>&num2
     io.printf("num2_reinterpret = %x\n", num2_reinterpret)
 
     let num3 f32 = 7.1*1.2

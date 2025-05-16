@@ -60,6 +60,8 @@ static inline UNARY_TYPE token_type_to_unary_type(TOKEN_TYPE token_type) {
             return UNARY_DEREF;
         case TOKEN_REFER:
             return UNARY_REFER;
+        case TOKEN_BITWISE_AND:
+            return UNARY_REFER;
         case TOKEN_NOT:
             return UNARY_NOT;
         default:

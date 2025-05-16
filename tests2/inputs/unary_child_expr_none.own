@@ -1,7 +1,7 @@
 type io import = std.io
 
 fn main() i32 {
-    refer
+    &
     let num i32
     return 0
 }

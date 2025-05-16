@@ -218,7 +218,7 @@ fn main() i32 {
 
     // TODO: case for 
     // let small i8 = 10
-    // let num i32* = unsafe_cast<i32*>refer small
+    // let num i32* = unsafe_cast<i32*>&small
     // return *num
 
     return 0

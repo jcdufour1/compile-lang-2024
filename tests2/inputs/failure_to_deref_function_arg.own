@@ -14,7 +14,7 @@ fn main() i32 {
     add_one(num)
 
     // should be error
-    add_one_not_ptr(refer(num))
+    add_one_not_ptr(&num)
 
     return 0
 }

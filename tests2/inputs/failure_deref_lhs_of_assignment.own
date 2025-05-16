@@ -4,7 +4,7 @@ extern("c") fn printf(format_string u8*, args any...) i32
 fn main() i32 {
     let num i32 = 4
 
-    let ptr i32* = refer(num)
+    let ptr i32* = &num
 
     ptr = 7
 

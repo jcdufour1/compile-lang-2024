@@ -1,10 +1,10 @@
 compile::stdout 0
 
 compile::stderr 5
-./tests2/inputs/unary_child_expr_error.own:4:13:[1;31merror[0;39m:expected expression 
+./tests2/inputs/unary_child_expr_error.own:4:9:[1;31merror[0;39m:expected expression 
      3 | fn main() i32 {
-     4 |     refer(8*)
-       |             ^
+     4 |     &(8*)
+       |         ^
      5 |     return 0
 
 compile::return_code 1

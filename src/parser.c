@@ -716,7 +716,7 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_MODULO:
             return false;
         case TOKEN_BITWISE_AND:
-            return false;
+            return true;
         case TOKEN_BITWISE_OR:
             return false;
         case TOKEN_LOGICAL_AND:
@@ -2323,6 +2323,8 @@ static PARSE_EXPR_STATUS parse_unary(
             break;
         case TOKEN_REFER:
             break;
+        case TOKEN_BITWISE_AND:
+            break;
         case TOKEN_SINGLE_MINUS:
             break;
         case TOKEN_UNSAFE_CAST: {
@@ -2372,6 +2374,8 @@ static PARSE_EXPR_STATUS parse_unary(
         case TOKEN_DEREF:
             // fallthrough
         case TOKEN_REFER:
+            // fallthrough
+        case TOKEN_BITWISE_AND:
             // fallthrough
         case TOKEN_UNSAFE_CAST:
             *result = uast_operator_wrap(uast_unary_wrap(uast_unary_new(oper.pos, child, token_type_to_unary_type(oper.type), ulang_type_regular_const_wrap(ulang_type_regular_new(unary_lang_type, oper.pos)))));
