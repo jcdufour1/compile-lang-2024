@@ -5,6 +5,9 @@ jobs:
   Explore-GitHub-Actions:
     runs-on: ubuntu-latest
     steps:
+      - name: checkout repo
+        uses: actions/checkout@v4
+
       - run: sudo apt update 
       - run: sudo apt install clang python3
       - run: python3 do_test.py --test
