@@ -1,0 +1,8 @@
+
+fn thing(text u8 = "hello") {
+}
+
+fn main() i32 {
+    thing()
+    return 0
+}
