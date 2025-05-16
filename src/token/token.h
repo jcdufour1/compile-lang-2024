@@ -37,8 +37,6 @@ typedef enum {
 
     // unary operators
     TOKEN_NOT,
-    TOKEN_DEREF,
-    TOKEN_REFER,
     TOKEN_UNSAFE_CAST,
 
     // literals
@@ -142,10 +140,6 @@ static inline bool token_is_literal(Token token) {
         case TOKEN_NOT_EQUAL:
             return false;
         case TOKEN_NOT:
-            return false;
-        case TOKEN_DEREF:
-            return false;
-        case TOKEN_REFER:
             return false;
         case TOKEN_STRING_LITERAL:
             return true;
@@ -283,10 +277,6 @@ static inline bool token_is_operator(Token token, bool can_be_tuple) {
         case TOKEN_NOT_EQUAL:
             return true;
         case TOKEN_NOT:
-            return true;
-        case TOKEN_DEREF:
-            return true;
-        case TOKEN_REFER:
             return true;
         case TOKEN_UNSAFE_CAST:
             return true;
@@ -499,10 +489,6 @@ static inline bool token_is_binary(TOKEN_TYPE token_type) {
             return false;
         case TOKEN_BITWISE_XOR:
             return true;
-        case TOKEN_DEREF:
-            return false;
-        case TOKEN_REFER:
-            return false;
         case TOKEN_VOID:
             return false;
         case TOKEN_UNSAFE_CAST:

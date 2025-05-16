@@ -103,11 +103,7 @@ static bool get_next_token(
 
     if (isalpha(str_view_col_front(*file_text_rem))) {
         Str_view text = str_view_col_conenume_while(pos, file_text_rem, local_isalnum_or_underscore).base;
-        if (str_view_cstr_is_equal(text, "deref")) {
-            token->type = TOKEN_DEREF;
-        } else if (str_view_cstr_is_equal(text, "refer")) {
-            token->type = TOKEN_REFER;
-        } else if (str_view_cstr_is_equal(text, "unsafe_cast")) {
+        if (str_view_cstr_is_equal(text, "unsafe_cast")) {
             token->type = TOKEN_UNSAFE_CAST;
         } else if (str_view_cstr_is_equal(text, "fn")) {
             token->type = TOKEN_FN;
