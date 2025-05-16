@@ -65,9 +65,7 @@ for generics:
 - make an assertion that tests/expected_failure_examples/empty_file.own actually is empty
 - expected failure test for passing `fn (i32, i32) i32` to function parameter of `fn (i64, i64) i64`
 - expected failure test for empty []
-- consider if tokenizer should convert semicolon to newline to simplify things
 - make actual way to designate some test inputs as unfinished (after doing this, make some files unfinished)
-- remove enum, then eventually rename sum to enum (this can simplify maintenance, etc.)
 
 
 # roadmap to try to get bootstrap compiler done:
@@ -97,7 +95,6 @@ for generics:
 - fix consume names
 - 7_000.001
 - binary operators with f64 literals on both sides (precomputation)
-- rename uast_number, tast_number, and llvm_number to uast_int, etc.
 - fix this to say f32 instead of std/raylib::f32:
     main.own:15:39:error:type `u1` cannot be implicitly converted to `std/raylib::f32`
         14 |         rl.ClearBackground(rl.BLACK());
@@ -115,7 +112,6 @@ for generics:
 - const, etc.
 - named scopes
 - designated args
-- floats
 - graphviz (for program control flow, etc.)
 - foreach idea:
   fn foreach_tokens(tokens Token[]) {

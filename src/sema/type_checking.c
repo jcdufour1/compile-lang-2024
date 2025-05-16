@@ -199,7 +199,7 @@ static void msg_invalid_function_arg_internal(
         "but the corresponding parameter `"STR_VIEW_FMT"` is of type `"LANG_TYPE_FMT"`\n",
         lang_type_print(LANG_TYPE_MODE_MSG, tast_expr_get_lang_type(argument)), 
         name_print(NAME_MSG, corres_param->name),
-        ulang_type_print(LANG_TYPE_MODE_MSG, corres_param->lang_type)
+        lang_type_print(LANG_TYPE_MODE_MSG, lang_type_from_ulang_type(corres_param->lang_type))
     );
     msg_internal(
         file, line,
@@ -1773,6 +1773,7 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
                 case CHECK_ASSIGN_OK:
                     break;
                 case CHECK_ASSIGN_INVALID:
+                    log(LOG_DEBUG, TAST_FMT, uast_param_print(param));
                     msg_invalid_function_arg(new_arg, param->base);
                     status = false;
                     goto error;
