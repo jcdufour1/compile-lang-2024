@@ -56,6 +56,8 @@ static inline UNARY_TYPE token_type_to_unary_type(TOKEN_TYPE token_type) {
             return UNARY_UNSAFE_CAST;
         case TOKEN_DEREF:
             return UNARY_DEREF;
+        case TOKEN_ASTERISK:
+            return UNARY_DEREF;
         case TOKEN_REFER:
             return UNARY_REFER;
         case TOKEN_NOT:

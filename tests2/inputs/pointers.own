@@ -1,23 +1,23 @@
 type io import = std.io
 
 fn add_one(num i32*) {
-    deref(num) = num + 1
+    *num = num + 1
 }
 
 fn sub_one_explicit(num i32*) {
-    deref(num) = deref(num) - 1
+    *num = *num - 1
 }
 
 fn add_one_explicit(num i32*) {
-    deref(num) = deref(num) + 1
+    *num = *num + 1
 }
 
 fn operation_2(num i32*) {
-    deref(num) = 2*num + 1
+    *num = 2*num + 1
 }
 
 fn operation_2_explicit(num i32*) {
-    deref(num) = 2*num + 1
+    *num = 2*num + 1
 }
 
 type Div struct {
@@ -27,7 +27,7 @@ type Div struct {
 
 fn set_div(div Div*) {
     let new_div Div = {.numerator = 134, .denominator = 45};
-    deref(div) = new_div;
+    *div = new_div;
 }
 
 fn set_div_denominator(div Div*) {
@@ -35,7 +35,7 @@ fn set_div_denominator(div Div*) {
 }
 
 fn set_div_denominator_explicit_deref(div Div*) {
-    (deref div).denominator = 1234;
+    (*div).denominator = 1234;
 }
 
 fn print_div(div Div*) {
@@ -47,7 +47,7 @@ fn set_div_from_another(dest Div*, src Div*) {
 }
 
 fn set_string(string u8**) {
-    deref(string) = "bye"
+    *string = "bye"
 }
 
 fn cast_to_pointer() {

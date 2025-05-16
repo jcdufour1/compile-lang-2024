@@ -610,7 +610,7 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_SINGLE_MINUS:
             return true;
         case TOKEN_ASTERISK:
-            return false;
+            return true;
         case TOKEN_SLASH:
             return false;
         case TOKEN_LESS_THAN:
@@ -2319,6 +2319,8 @@ static PARSE_EXPR_STATUS parse_unary(
             break;
         case TOKEN_DEREF:
             break;
+        case TOKEN_ASTERISK:
+            break;
         case TOKEN_REFER:
             break;
         case TOKEN_SINGLE_MINUS:
@@ -2364,6 +2366,8 @@ static PARSE_EXPR_STATUS parse_unary(
 
     switch (oper.type) {
         case TOKEN_NOT:
+            // fallthrough
+        case TOKEN_ASTERISK:
             // fallthrough
         case TOKEN_DEREF:
             // fallthrough
@@ -2556,7 +2560,6 @@ static PARSE_EXPR_STATUS parse_expr(Uast_expr** result, Tk_view* tokens, Scope_i
         assert(*result);
         return PARSE_EXPR_OK;
     }
-    log_tokens(LOG_DEBUG, *tokens);
     
     Uast_expr* rhs = NULL;
     Uast_expr* final_rhs = NULL;

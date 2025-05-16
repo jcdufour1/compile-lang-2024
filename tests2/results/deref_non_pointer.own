@@ -3,7 +3,7 @@ compile::stdout 0
 compile::stderr 5
 ./tests2/inputs/deref_non_pointer.own:4:5:[1;31merror[0;39m:derefencing a type that is not a pointer
      3 |     let num i32 = 0
-     4 |     deref(num) = 43
+     4 |     *num = 43
        |     ^
      5 | 
 
