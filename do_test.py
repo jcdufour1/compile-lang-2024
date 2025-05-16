@@ -3,6 +3,8 @@ from typing import Callable, Tuple, Optional
 from dataclasses import dataclass
 from enum import Enum
 
+use_color: bool = False
+
 class Changes:
     REMOVED = "\033[37;41m" #]
     ADDED = "\033[30;42m" #]
@@ -40,16 +42,29 @@ def to_str(a):
     return str(a)
 
 def print_error(*base, **kargs) -> None:
-    print(StatusColors.RED, *base, StatusColors.TO_NORMAL, file=sys.stderr, sep = "", **kargs)
+    global use_color
+    if use_color:
+        print(StatusColors.RED, *base, StatusColors.TO_NORMAL, file=sys.stderr, sep = "", **kargs)
+    else:
+        print(*base, file=sys.stderr, sep = "", **kargs)
 
 def print_warning(*base, **kargs) -> None:
-    print(StatusColors.RED, *base, StatusColors.TO_NORMAL, file=sys.stderr, sep = "", **kargs)
+    if use_color:
+        print(StatusColors.RED, *base, StatusColors.TO_NORMAL, file=sys.stderr, sep = "", **kargs)
+    else:
+        print(*base, file=sys.stderr, sep = "", **kargs)
 
 def print_success(*base, **kargs) -> None:
-    print(StatusColors.GREEN, *base, StatusColors.TO_NORMAL, file=sys.stderr, sep = "", **kargs)
+    if use_color:
+        print(StatusColors.GREEN, *base, StatusColors.TO_NORMAL, file=sys.stderr, sep = "", **kargs)
+    else:
+        print(*base, file=sys.stderr, sep = "", **kargs)
 
 def print_info(*base, **kargs) -> None:
-    print(StatusColors.BLUE, *base, StatusColors.TO_NORMAL, file=sys.stderr, sep = "", **kargs)
+    if use_color:
+        print(StatusColors.BLUE, *base, StatusColors.TO_NORMAL, file=sys.stderr, sep = "", **kargs)
+    else:
+        print(*base, file=sys.stderr, sep = "", **kargs)
 
 def get_files_to_test(files_to_test: list[str]) -> list[FileItem]:
     files: list[FileItem] = []
@@ -165,6 +180,7 @@ def do_tests(files_to_test: list[str], do_debug: bool, output_name: str, action:
 
 # return true if test was successful
 def test_file(file: FileItem, do_debug: bool, expected_output: str, output_name: str, action: Action, debug_release_text: str) -> bool:
+    global use_color
     result: TestResult = compile_test(do_debug, output_name, file)
 
     process_result: str = get_result_from_test_result(result)
@@ -184,23 +200,33 @@ def test_file(file: FileItem, do_debug: bool, expected_output: str, output_name:
         diff = difflib.SequenceMatcher(None, expected_output, process_result)
         for tag, expected_start, expected_end, stdout_start, stdout_end, in diff.get_opcodes():
             if tag == 'insert':
-                stdout_color += Changes.ADDED + \
-                                process_result[stdout_start:stdout_end] + \
-                                Changes.TO_NORMAL
+                if use_color:
+                    stdout_color += Changes.ADDED + \
+                                    process_result[stdout_start:stdout_end] + \
+                                    Changes.TO_NORMAL
+                else:
+                    stdout_color += process_result[stdout_start:stdout_end]
             elif tag == 'equal':
                 expected_color += process_result[stdout_start:stdout_end]
                 stdout_color += process_result[stdout_start:stdout_end]
             elif tag == 'replace':
-                expected_color += Changes.REMOVED + \
-                                  expected_output[expected_start:expected_end] + \
-                                  Changes.TO_NORMAL
-                stdout_color += Changes.ADDED + \
-                                process_result[stdout_start:stdout_end] + \
-                                Changes.TO_NORMAL
+                if use_color:
+                    expected_color += Changes.REMOVED + \
+                                      expected_output[expected_start:expected_end] + \
+                                      Changes.TO_NORMAL
+                    stdout_color += Changes.ADDED + \
+                                    process_result[stdout_start:stdout_end] + \
+                                    Changes.TO_NORMAL
+                else:
+                    expected_color += expected_output[expected_start:expected_end]
+                    stdout_color += process_result[stdout_start:stdout_end]
             elif tag == 'delete':
-                expected_color += Changes.REMOVED + \
-                                  expected_output[expected_start:expected_end] + \
-                                  Changes.TO_NORMAL
+                if use_color:
+                    expected_color += Changes.REMOVED + \
+                                      expected_output[expected_start:expected_end] + \
+                                      Changes.TO_NORMAL
+                else:
+                    expected_color += expected_output[expected_start:expected_end]
             else:
                 print_error("tag unregonized:" + tag)
                 assert False
@@ -225,13 +251,18 @@ def add_to_map(map: dict, path: str):
     map[path] = 0
 
 def parse_args() -> Tuple[list[str], str, Action, bool]:
+    global use_color
     action: Action = Action.TEST
     test_output = "test.c" # TODO: be more consistant with test_output variable names
     to_include: dict[str, int] = {}
     keep_going: bool = True
     has_found_flag = False
     for arg in sys.argv[1:]:
-        if arg.startswith("--keep-going"):
+        if arg.startswith("--enable-color"):
+            use_color = True
+        elif arg.startswith("--disable-color"):
+            use_color = False
+        elif arg.startswith("--keep-going"):
             keep_going = True
         elif arg.startswith("--stop-on-error"):
             keep_going = False
