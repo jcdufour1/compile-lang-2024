@@ -98,6 +98,14 @@ for generics:
 - 7_000.001
 - binary operators with f64 literals on both sides (precomputation)
 - rename uast_number, tast_number, and llvm_number to uast_int, etc.
+- fix this to say f32 instead of std/raylib::f32:
+    main.own:15:39:error:type `u1` cannot be implicitly converted to `std/raylib::f32`
+        14 |         rl.ClearBackground(rl.BLACK());
+        15 |         rl.DrawRectangleLinesEx({0.0, 0, 100, 100}, 0x40400000, rl.RED())
+           |                                       ^
+        16 |
+    
+
 
 ## needed tests
 - let token* Token = <...>; switch token {<...>}
