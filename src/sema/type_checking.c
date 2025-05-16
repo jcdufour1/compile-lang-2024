@@ -670,6 +670,7 @@ static Tast_literal* precalulate_float(
     }
     return util_tast_literal_new_from_double(result_val, pos);
 }
+
 static Tast_literal* precalulate_char(
     const Tast_char* lhs,
     const Tast_char* rhs,

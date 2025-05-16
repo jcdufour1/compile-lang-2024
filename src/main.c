@@ -122,9 +122,7 @@ void do_passes(const Parameters* params) {
     if (params->emit_llvm) {
         switch (params->backend_info.backend) {
             case BACKEND_NONE:
-                // TODO: choose default backend in src/util/parameters.c for consistancy
-                emit_c_from_tree(llvm_root);
-                break;
+                unreachable("this should have been caught eariler");
             case BACKEND_LLVM:
                 emit_llvm_from_tree(llvm_root);
                 break;
