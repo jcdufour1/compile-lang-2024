@@ -273,7 +273,6 @@ static Parameters get_params_with_defaults(void) {
 
     params.emit_llvm = false;
     params.compile = false;
-    params.backend_info.backend = BACKEND_C;
 
     return params;
 }
