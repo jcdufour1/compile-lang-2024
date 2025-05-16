@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/invalid_literal_assign_to_struct.own:10:9:[1;31merror[0;39m:type `u3` cannot be implicitly converted to `Div`
-     9 |     let div: Div
-    10 |     div = 7
-       |         ^
-    11 |     return 0
-
+b''
+compile::stderr 0
+b'./tests2/inputs/invalid_literal_assign_to_struct.own:10:9:\x1b[1;31merror\x1b[0;39m:type `u3` cannot be implicitly converted to `Div`\n     9 |     let div: Div\n    10 |     div = 7\n       |         ^\n    11 |     return 0\n'
 compile::return_code 1
 

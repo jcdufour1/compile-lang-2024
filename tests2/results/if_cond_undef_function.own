@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/if_cond_undef_function.own:5:8:[1;31merror[0;39m:symbol `is_true` is not defined
-     4 | fn main() i32 {
-     5 |     if is_true() {
-       |        ^
-     6 |         puts("hello")
-
+b''
+compile::stderr 0
+b'./tests2/inputs/if_cond_undef_function.own:5:8:\x1b[1;31merror\x1b[0;39m:symbol `is_true` is not defined\n     4 | fn main() i32 {\n     5 |     if is_true() {\n       |        ^\n     6 |         puts("hello")\n'
 compile::return_code 1
 

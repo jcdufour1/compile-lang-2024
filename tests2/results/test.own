@@ -1,39 +1,18 @@
 compile::stdout 0
-
+b''
 compile::stderr 0
-
+b''
 compile::return_code 0
 
 clang::stdout 0
-
+b''
 clang::stderr 0
-
+b''
 clang::return_code 0
 
-run::stdout 21
-thing with colon
-thing with colon
-thing without colon
-thing without colon
-thing with colon no let
-thing with colon no let
-thing without colon no let
-thing without colon no let
-new programming language
-hello: 89
-67
-bye
-new programming language
-455
-idx_2: 0
-idx_2: 1
-idx_2: 2
-idx_2: 3
-idx_2: 4
-idx_2: 5
-idx_2: 6
-
+run::stdout 0
+b'thing with colon\nthing with colon\nthing without colon\nthing without colon\nthing with colon no let\nthing with colon no let\nthing without colon no let\nthing without colon no let\nnew programming language\nhello: 89\n67\nbye\nnew programming language\n455\nidx_2: 0\nidx_2: 1\nidx_2: 2\nidx_2: 3\nidx_2: 4\nidx_2: 5\nidx_2: 6\n'
 run::stderr 0
-
+b''
 run::return_code 0
 

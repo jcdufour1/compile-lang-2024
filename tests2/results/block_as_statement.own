@@ -1,22 +1,18 @@
 compile::stdout 0
-
+b''
 compile::stderr 0
-
+b''
 compile::return_code 0
 
 clang::stdout 0
-
+b''
 clang::stderr 0
-
+b''
 clang::return_code 0
 
-run::stdout 4
-8
-75
-9
-21
-
+run::stdout 0
+b'8\n75\n9\n21\n'
 run::stderr 0
-
+b''
 run::return_code 0
 

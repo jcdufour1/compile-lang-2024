@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/structs_missing_memb_type.own:3:10:[1;31merror[0;39m:got token `newline`, but expected `symbol` 
-     2 | type Number struct {
-     3 |     num: 
-       |          ^
-     4 |     file: u8*
-
+b''
+compile::stderr 0
+b'./tests2/inputs/structs_missing_memb_type.own:3:10:\x1b[1;31merror\x1b[0;39m:got token `newline`, but expected `symbol` \n     2 | type Number struct {\n     3 |     num: \n       |          ^\n     4 |     file: u8*\n'
 compile::return_code 1
 

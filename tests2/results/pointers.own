@@ -1,36 +1,18 @@
 compile::stdout 0
-
+b''
 compile::stderr 0
-
+b''
 compile::return_code 0
 
 clang::stdout 0
-
+b''
 clang::stderr 0
-
+b''
 clang::return_code 0
 
-run::stdout 18
-8
-9
-10
-9
-19
-39
-part 67: 87/123
-134/45
-part 89: 134/1234
-134/1298
-134/1298
-93/1298
-134/1298
-hello
-bye
-yes
-pointer back to int: 0
-pointer_to_pointer: yes
-
+run::stdout 0
+b'8\n9\n10\n9\n19\n39\npart 67: 87/123\n134/45\npart 89: 134/1234\n134/1298\n134/1298\n93/1298\n134/1298\nhello\nbye\nyes\npointer back to int: 0\npointer_to_pointer: yes\n'
 run::stderr 0
-
+b''
 run::return_code 0
 

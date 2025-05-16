@@ -1,25 +1,6 @@
 compile::stdout 0
-
-compile::stderr 19
-./tests2/inputs/missing_return.own:8:1:[1;31merror[0;39m:no return statement in function that returns `i32`
-     7 |     println()
-     8 | }
-       | ^
-./tests2/inputs/missing_return.own:5:11:[1;34mnote[0;39m:function return type `i32` defined here
-     4 | 
-     5 | fn main() i32 {
-       |           ^
-     6 |     let string: u8* = "hello"
-./tests2/inputs/missing_return.own:3:1:[1;31merror[0;39m:no return statement in function that returns `i32`
-     2 | fn println() i32 {
-     3 | }
-       | ^
-     4 | 
-./tests2/inputs/missing_return.own:2:14:[1;34mnote[0;39m:function return type `i32` defined here
-     1 | 
-     2 | fn println() i32 {
-       |              ^
-     3 | }
-
+b''
+compile::stderr 0
+b'./tests2/inputs/missing_return.own:8:1:\x1b[1;31merror\x1b[0;39m:no return statement in function that returns `i32`\n     7 |     println()\n     8 | }\n       | ^\n./tests2/inputs/missing_return.own:5:11:\x1b[1;34mnote\x1b[0;39m:function return type `i32` defined here\n     4 | \n     5 | fn main() i32 {\n       |           ^\n     6 |     let string: u8* = "hello"\n./tests2/inputs/missing_return.own:3:1:\x1b[1;31merror\x1b[0;39m:no return statement in function that returns `i32`\n     2 | fn println() i32 {\n     3 | }\n       | ^\n     4 | \n./tests2/inputs/missing_return.own:2:14:\x1b[1;34mnote\x1b[0;39m:function return type `i32` defined here\n     1 | \n     2 | fn println() i32 {\n       |              ^\n     3 | }\n'
 compile::return_code 1
 

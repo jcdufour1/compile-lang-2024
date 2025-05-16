@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/unclosed_string_literal.own:5:12:[1;31merror[0;39m:unmatched `"`
-     4 | fn main() i32 {
-     5 |     printf("hello)
-       |            ^
-     6 |     return 0
-
+b''
+compile::stderr 0
+b'./tests2/inputs/unclosed_string_literal.own:5:12:\x1b[1;31merror\x1b[0;39m:unmatched `"`\n     4 | fn main() i32 {\n     5 |     printf("hello)\n       |            ^\n     6 |     return 0\n'
 compile::return_code 1
 

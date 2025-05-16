@@ -1,42 +1,18 @@
 compile::stdout 0
-
+b''
 compile::stderr 0
-
+b''
 compile::return_code 0
 
 clang::stdout 0
-
+b''
 clang::stderr 0
-
+b''
 clang::return_code 0
 
-run::stdout 24
-yes3
-yes4
-yes6
-yes7
-yes8
-yes9.2
-yes10
-yes11
-yes12
-yes13.2
-yes14
-yes15
-yes16
-yes17
-yes18
-yes19
-yes20
-yes21
-yes22
-yes23
-yes24
-yes25
-yes26
-yes27
-
+run::stdout 0
+b'yes3\nyes4\nyes6\nyes7\nyes8\nyes9.2\nyes10\nyes11\nyes12\nyes13.2\nyes14\nyes15\nyes16\nyes17\nyes18\nyes19\nyes20\nyes21\nyes22\nyes23\nyes24\nyes25\nyes26\nyes27\n'
 run::stderr 0
-
+b''
 run::return_code 0
 

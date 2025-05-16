@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/string_literal_as_fun_callee.own:8:5:[1;31merror[0;39m:callee is not callable
-     7 | fn main() i32 {
-     8 |     "hello"()
-       |     ^
-     9 |     return 0
-
+b''
+compile::stderr 0
+b'./tests2/inputs/string_literal_as_fun_callee.own:8:5:\x1b[1;31merror\x1b[0;39m:callee is not callable\n     7 | fn main() i32 {\n     8 |     "hello"()\n       |     ^\n     9 |     return 0\n'
 compile::return_code 1
 

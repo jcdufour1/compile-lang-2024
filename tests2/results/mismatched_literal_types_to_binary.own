@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/mismatched_literal_types_to_binary.own:5:20:[1;31merror[0;39m:types `u3` and `u8*` are not valid operands to binary expression
-     4 | fn main() i32 {
-     5 |     let num i32 = 7*"hello"
-       |                    ^
-     6 |     return 0
-
+b''
+compile::stderr 0
+b'./tests2/inputs/mismatched_literal_types_to_binary.own:5:20:\x1b[1;31merror\x1b[0;39m:types `u3` and `u8*` are not valid operands to binary expression\n     4 | fn main() i32 {\n     5 |     let num i32 = 7*"hello"\n       |                    ^\n     6 |     return 0\n'
 compile::return_code 1
 

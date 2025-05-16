@@ -1,25 +1,18 @@
 compile::stdout 0
-
+b''
 compile::stderr 0
-
+b''
 compile::return_code 0
 
 clang::stdout 0
-
+b''
 clang::stderr 0
-
+b''
 clang::return_code 0
 
-run::stdout 7
-yes1
-79
-yes2
-80
-yes3
-81
-done
-
+run::stdout 0
+b'yes1\n79\nyes2\n80\nyes3\n81\ndone\n'
 run::stderr 0
-
+b''
 run::return_code 0
 

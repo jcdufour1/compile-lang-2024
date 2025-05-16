@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/structs_missing_close_brace.own:7:1:[1;31merror[0;39m:got token `fn`, but expected `symbol` in variable definition
-     6 | 
-     7 | fn main() i32 {
-       | ^
-     8 |     return 0
-
+b''
+compile::stderr 0
+b'./tests2/inputs/structs_missing_close_brace.own:7:1:\x1b[1;31merror\x1b[0;39m:got token `fn`, but expected `symbol` in variable definition\n     6 | \n     7 | fn main() i32 {\n       | ^\n     8 |     return 0\n'
 compile::return_code 1
 

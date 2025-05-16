@@ -1,31 +1,6 @@
 compile::stdout 0
-
-compile::stderr 25
-./tests2/inputs/invalid_stmt_top_level.own:1:1:[1;31merror[0;39m:this statement is not permitted in the top level
-     1 | {
-       | ^
-     2 | }
-./tests2/inputs/invalid_stmt_top_level.own:9:17:[1;31merror[0;39m:this statement is not permitted in the top level
-     8 | 
-     9 | let token Token = .none
-       |                 ^
-    10 | switch token {
-./tests2/inputs/invalid_stmt_top_level.own:10:1:[1;31merror[0;39m:this statement is not permitted in the top level
-     9 | let token Token = .none
-    10 | switch token {
-       | ^
-    11 |     case .num(num): break
-./tests2/inputs/invalid_stmt_top_level.own:15:1:[1;31merror[0;39m:this statement is not permitted in the top level
-    14 | 
-    15 | for i i32 in 0..2 {
-       | ^
-    16 | }
-./tests2/inputs/invalid_stmt_top_level.own:18:1:[1;31merror[0;39m:this statement is not permitted in the top level
-    17 | 
-    18 | if 1 {
-       | ^
-    19 | }
-[1;33mwarning[0;39m:no main function
-
+b''
+compile::stderr 0
+b'./tests2/inputs/invalid_stmt_top_level.own:1:1:\x1b[1;31merror\x1b[0;39m:this statement is not permitted in the top level\n     1 | {\n       | ^\n     2 | }\n./tests2/inputs/invalid_stmt_top_level.own:9:17:\x1b[1;31merror\x1b[0;39m:this statement is not permitted in the top level\n     8 | \n     9 | let token Token = .none\n       |                 ^\n    10 | switch token {\n./tests2/inputs/invalid_stmt_top_level.own:10:1:\x1b[1;31merror\x1b[0;39m:this statement is not permitted in the top level\n     9 | let token Token = .none\n    10 | switch token {\n       | ^\n    11 |     case .num(num): break\n./tests2/inputs/invalid_stmt_top_level.own:15:1:\x1b[1;31merror\x1b[0;39m:this statement is not permitted in the top level\n    14 | \n    15 | for i i32 in 0..2 {\n       | ^\n    16 | }\n./tests2/inputs/invalid_stmt_top_level.own:18:1:\x1b[1;31merror\x1b[0;39m:this statement is not permitted in the top level\n    17 | \n    18 | if 1 {\n       | ^\n    19 | }\n\x1b[1;33mwarning\x1b[0;39m:no main function\n'
 compile::return_code 1
 

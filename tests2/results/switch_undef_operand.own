@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/switch_undef_operand.own:4:12:[1;31merror[0;39m:symbol `num` is not defined
-     3 | fn main() i32 {
-     4 |     switch num {
-       |            ^
-     5 |     }
-
+b''
+compile::stderr 0
+b'./tests2/inputs/switch_undef_operand.own:4:12:\x1b[1;31merror\x1b[0;39m:symbol `num` is not defined\n     3 | fn main() i32 {\n     4 |     switch num {\n       |            ^\n     5 |     }\n'
 compile::return_code 1
 

@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/non_exhaustive_switch.own:17:5:[1;31merror[0;39m:some cases are not covered: TokenType.string
-    16 | fn print_token_switch(token Token) {
-    17 |     switch token.kind {
-       |     ^
-    18 |     case TokenType.number: printf("%d\n", token.number_data)
-
+b''
+compile::stderr 0
+b'./tests2/inputs/non_exhaustive_switch.own:17:5:\x1b[1;31merror\x1b[0;39m:some cases are not covered: TokenType.string\n    16 | fn print_token_switch(token Token) {\n    17 |     switch token.kind {\n       |     ^\n    18 |     case TokenType.number: printf("%d\\n", token.number_data)\n'
 compile::return_code 1
 

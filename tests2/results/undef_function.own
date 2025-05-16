@@ -1,19 +1,6 @@
 compile::stdout 0
-
-compile::stderr 13
-./tests2/inputs/undef_function.own:2:5:[1;31merror[0;39m:symbol `printf` is not defined
-     1 | fn main() i32 {
-     2 |     printf("hello", num1)
-       |     ^
-     3 | }
-./tests2/inputs/undef_function.own:3:1:[1;31merror[0;39m:no return statement in function that returns `i32`
-     2 |     printf("hello", num1)
-     3 | }
-       | ^
-./tests2/inputs/undef_function.own:1:11:[1;34mnote[0;39m:function return type `i32` defined here
-     1 | fn main() i32 {
-       |           ^
-     2 |     printf("hello", num1)
-
+b''
+compile::stderr 0
+b'./tests2/inputs/undef_function.own:2:5:\x1b[1;31merror\x1b[0;39m:symbol `printf` is not defined\n     1 | fn main() i32 {\n     2 |     printf("hello", num1)\n       |     ^\n     3 | }\n./tests2/inputs/undef_function.own:3:1:\x1b[1;31merror\x1b[0;39m:no return statement in function that returns `i32`\n     2 |     printf("hello", num1)\n     3 | }\n       | ^\n./tests2/inputs/undef_function.own:1:11:\x1b[1;34mnote\x1b[0;39m:function return type `i32` defined here\n     1 | fn main() i32 {\n       |           ^\n     2 |     printf("hello", num1)\n'
 compile::return_code 1
 

@@ -1,16 +1,6 @@
 compile::stdout 0
-
-compile::stderr 10
-./tests2/inputs/signed_assigned_to_unsigned.own:18:18:[1;31merror[0;39m:type `i32` cannot be implicitly converted to `u32`
-    17 | fn main() i32 {
-    18 |     let num1 u32 = get_signed()
-       |                  ^
-    19 |     let num2 u8 = get_signed()
-./tests2/inputs/signed_assigned_to_unsigned.own:19:17:[1;31merror[0;39m:type `i32` cannot be implicitly converted to `u8`
-    18 |     let num1 u32 = get_signed()
-    19 |     let num2 u8 = get_signed()
-       |                 ^
-    20 |     return 0
-
+b''
+compile::stderr 0
+b'./tests2/inputs/signed_assigned_to_unsigned.own:18:18:\x1b[1;31merror\x1b[0;39m:type `i32` cannot be implicitly converted to `u32`\n    17 | fn main() i32 {\n    18 |     let num1 u32 = get_signed()\n       |                  ^\n    19 |     let num2 u8 = get_signed()\n./tests2/inputs/signed_assigned_to_unsigned.own:19:17:\x1b[1;31merror\x1b[0;39m:type `i32` cannot be implicitly converted to `u8`\n    18 |     let num1 u32 = get_signed()\n    19 |     let num2 u8 = get_signed()\n       |                 ^\n    20 |     return 0\n'
 compile::return_code 1
 

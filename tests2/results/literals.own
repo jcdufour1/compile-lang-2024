@@ -1,26 +1,18 @@
 compile::stdout 0
-
+b''
 compile::stderr 0
-
+b''
 compile::return_code 0
 
 clang::stdout 0
-
+b''
 clang::stderr 0
-
+b''
 clang::return_code 0
 
-run::stdout 8
-hex1: beef
-hex2: beef
-hex3: 37f
-underscore_num: 1234567
-octal_num_1: 158
-octal_num_2: 159
-bin_num_1: 2
-bin_num_2: 47
-
+run::stdout 0
+b'hex1: beef\nhex2: beef\nhex3: 37f\nunderscore_num: 1234567\noctal_num_1: 158\noctal_num_2: 159\nbin_num_1: 2\nbin_num_2: 47\n'
 run::stderr 0
-
+b''
 run::return_code 0
 

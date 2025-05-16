@@ -1,16 +1,6 @@
 compile::stdout 0
-
-compile::stderr 10
-./tests2/inputs/sum_case_var_is_redef.own:9:21:[1;31merror[0;39m:redefinition of symbol num
-     8 |     switch num {
-     9 |         case Opt_int.some(num): printf("got number: %d\n", num)
-       |                     ^
-    10 |         case Opt_int.none(dummy): printf("got nothing\n")
-./tests2/inputs/sum_case_var_is_redef.own:7:18:[1;34mnote[0;39m:num originally defined here
-     6 | 
-     7 | fn opt_int_print(num Opt_int) {
-       |                  ^
-     8 |     switch num {
-
+b''
+compile::stderr 0
+b'./tests2/inputs/sum_case_var_is_redef.own:9:21:\x1b[1;31merror\x1b[0;39m:redefinition of symbol num\n     8 |     switch num {\n     9 |         case Opt_int.some(num): printf("got number: %d\\n", num)\n       |                     ^\n    10 |         case Opt_int.none(dummy): printf("got nothing\\n")\n./tests2/inputs/sum_case_var_is_redef.own:7:18:\x1b[1;34mnote\x1b[0;39m:num originally defined here\n     6 | \n     7 | fn opt_int_print(num Opt_int) {\n       |                  ^\n     8 |     switch num {\n'
 compile::return_code 1
 

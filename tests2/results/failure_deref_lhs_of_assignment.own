@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/failure_deref_lhs_of_assignment.own:9:9:[1;31merror[0;39m:type `u3` cannot be implicitly converted to `i32*`
-     8 | 
-     9 |     ptr = 7
-       |         ^
-    10 | 
-
+b''
+compile::stderr 0
+b'./tests2/inputs/failure_deref_lhs_of_assignment.own:9:9:\x1b[1;31merror\x1b[0;39m:type `u3` cannot be implicitly converted to `i32*`\n     8 | \n     9 |     ptr = 7\n       |         ^\n    10 | \n'
 compile::return_code 1
 

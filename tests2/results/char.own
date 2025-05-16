@@ -1,29 +1,18 @@
 compile::stdout 0
-
+b''
 compile::stderr 0
-
+b''
 compile::return_code 0
 
 clang::stdout 0
-
+b''
 clang::stderr 0
-
+b''
 clang::return_code 0
 
-run::stdout 11
-yes1
-yes2
-yes3
-yes4
-yes5
-yes6
-yes7
-yes8
-yes9
-yes10
-yes11
-
+run::stdout 0
+b'yes1\nyes2\nyes3\nyes4\nyes5\nyes6\nyes7\nyes8\nyes9\nyes10\nyes11\n'
 run::stderr 0
-
+b''
 run::return_code 0
 

@@ -1,32 +1,18 @@
 compile::stdout 0
-
+b''
 compile::stderr 0
-
+b''
 compile::return_code 0
 
 clang::stdout 0
-
+b''
 clang::stderr 0
-
+b''
 clang::return_code 0
 
-run::stdout 14
-idx: 0
-idx: 1
-idx: 2
-idx: 0
-idx: 1
-idx: 0
-idx: 1
-idx: 0
-idx: 1
-idx: 2
-idx: 0
-idx: 1
-idx: 0
-idx: 1
-
+run::stdout 0
+b'idx: 0\nidx: 1\nidx: 2\nidx: 0\nidx: 1\nidx: 0\nidx: 1\nidx: 0\nidx: 1\nidx: 2\nidx: 0\nidx: 1\nidx: 0\nidx: 1\n'
 run::stderr 0
-
+b''
 run::return_code 0
 

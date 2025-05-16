@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/switch_missing_open_curly_brace.own:4:17:[1;31merror[0;39m:got token `newline`, but expected `{` after switch operand
-     3 | fn main() i32 {
-     4 |     switch token
-       |                 ^
-     5 |         case .num(num): break
-
+b''
+compile::stderr 0
+b'./tests2/inputs/switch_missing_open_curly_brace.own:4:17:\x1b[1;31merror\x1b[0;39m:got token `newline`, but expected `{` after switch operand\n     3 | fn main() i32 {\n     4 |     switch token\n       |                 ^\n     5 |         case .num(num): break\n'
 compile::return_code 1
 

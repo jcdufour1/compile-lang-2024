@@ -1,16 +1,6 @@
 compile::stdout 0
-
-compile::stderr 10
-./tests2/inputs/struct_literal_invalid_types.own:28:86:[1;31merror[0;39m:type `u8*` cannot be implicitly converted to `Str_view`
-    27 | 
-    28 |     let line i32 = get_line({.file = "second_file.txt", .line = get_num(), .str_data = "bye"})
-       |                                                                                      ^
-    29 | 
-./tests2/inputs/struct_literal_invalid_types.own:14:55:[1;31merror[0;39m:type `u8*` cannot be implicitly converted to `Str_view`
-    13 | fn get_token() Token {
-    14 |     return {.file = "file.txt", .line = 21, .str_data = "hello world"}
-       |                                                       ^
-    15 | }
-
+b''
+compile::stderr 0
+b'./tests2/inputs/struct_literal_invalid_types.own:28:86:\x1b[1;31merror\x1b[0;39m:type `u8*` cannot be implicitly converted to `Str_view`\n    27 | \n    28 |     let line i32 = get_line({.file = "second_file.txt", .line = get_num(), .str_data = "bye"})\n       |                                                                                      ^\n    29 | \n./tests2/inputs/struct_literal_invalid_types.own:14:55:\x1b[1;31merror\x1b[0;39m:type `u8*` cannot be implicitly converted to `Str_view`\n    13 | fn get_token() Token {\n    14 |     return {.file = "file.txt", .line = 21, .str_data = "hello world"}\n       |                                                       ^\n    15 | }\n'
 compile::return_code 1
 

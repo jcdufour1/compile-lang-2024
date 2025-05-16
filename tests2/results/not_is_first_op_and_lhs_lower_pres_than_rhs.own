@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/not_is_first_op_and_lhs_lower_pres_than_rhs.own:6:5:[1;31merror[0;39m:expected expression 
-     5 |     let num1: i32 = 87 + 12*
-     6 |     return 0
-       |     ^
-     7 | }
-
+b''
+compile::stderr 0
+b'./tests2/inputs/not_is_first_op_and_lhs_lower_pres_than_rhs.own:6:5:\x1b[1;31merror\x1b[0;39m:expected expression \n     5 |     let num1: i32 = 87 + 12*\n     6 |     return 0\n       |     ^\n     7 | }\n'
 compile::return_code 1
 

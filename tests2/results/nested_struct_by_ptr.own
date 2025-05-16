@@ -1,20 +1,18 @@
 compile::stdout 0
-
+b''
 compile::stderr 0
-
+b''
 compile::return_code 0
 
 clang::stdout 0
-
+b''
 clang::stderr 0
-
+b''
 clang::return_code 0
 
-run::stdout 2
-token1: .id = 7, .inner = (nil)
-token2: .id = 8, .inner.id = 7
-
+run::stdout 0
+b'token1: .id = 7, .inner = (nil)\ntoken2: .id = 8, .inner.id = 7\n'
 run::stderr 0
-
+b''
 run::return_code 0
 

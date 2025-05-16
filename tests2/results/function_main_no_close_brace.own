@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/function_main_no_close_brace.own:4:15:[1;31merror[0;39m:opening `{` is unmatched
-     3 | 
-     4 | fn main() i32 {
-       |               ^
-     5 |     printf("%d %d\n")
-
+b''
+compile::stderr 0
+b'./tests2/inputs/function_main_no_close_brace.own:4:15:\x1b[1;31merror\x1b[0;39m:opening `{` is unmatched\n     3 | \n     4 | fn main() i32 {\n       |               ^\n     5 |     printf("%d %d\\n")\n'
 compile::return_code 1
 

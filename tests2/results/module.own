@@ -1,22 +1,18 @@
 compile::stdout 0
-
+b''
 compile::stderr 0
-
+b''
 compile::return_code 0
 
 clang::stdout 0
-
+b''
 clang::stderr 0
-
+b''
 clang::return_code 0
 
-run::stdout 4
-hello
-from module dummy one: bye
-from module dummy two: actually bye this time
-from local printf function: bye for the third time
-
+run::stdout 0
+b'hello\nfrom module dummy one: bye\nfrom module dummy two: actually bye this time\nfrom local printf function: bye for the third time\n'
 run::stderr 0
-
+b''
 run::return_code 0
 

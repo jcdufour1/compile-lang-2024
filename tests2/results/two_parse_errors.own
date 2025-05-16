@@ -1,16 +1,6 @@
 compile::stdout 0
-
-compile::stderr 10
-./tests2/inputs/two_parse_errors.own:3:21:[1;31merror[0;39m:expected expression 
-     2 | fn main() {
-     3 |     let num1: i32 = 
-       |                     ^
-     4 |     let num2: i32 = 92
-./tests2/inputs/two_parse_errors.own:5:9:[1;31merror[0;39m:expected newline after statement
-     4 |     let num2: i32 = 92
-     5 |     num3: i32 = 12
-       |         ^
-     6 |     return 0
-
+b''
+compile::stderr 0
+b'./tests2/inputs/two_parse_errors.own:3:21:\x1b[1;31merror\x1b[0;39m:expected expression \n     2 | fn main() {\n     3 |     let num1: i32 = \n       |                     ^\n     4 |     let num2: i32 = 92\n./tests2/inputs/two_parse_errors.own:5:9:\x1b[1;31merror\x1b[0;39m:expected newline after statement\n     4 |     let num2: i32 = 92\n     5 |     num3: i32 = 12\n       |         ^\n     6 |     return 0\n'
 compile::return_code 1
 

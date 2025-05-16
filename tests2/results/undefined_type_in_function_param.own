@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/undefined_type_in_function_param.own:2:21:[1;31merror[0;39m:type `Token` is not defined
-     1 | 
-     2 | fn add(lhs i32, rhs Token) {
-       |                     ^
-     3 | }
-
+b''
+compile::stderr 0
+b'./tests2/inputs/undefined_type_in_function_param.own:2:21:\x1b[1;31merror\x1b[0;39m:type `Token` is not defined\n     1 | \n     2 | fn add(lhs i32, rhs Token) {\n       |                     ^\n     3 | }\n'
 compile::return_code 1
 

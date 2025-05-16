@@ -1,16 +1,6 @@
 compile::stdout 0
-
-compile::stderr 10
-./tests2/inputs/var_redef.own:6:13:[1;31merror[0;39m:redefinition of symbol `num1`
-     5 |     for num1: i32 in 0..7 {
-     6 |         for num1: i32 in 0..num1 {
-       |             ^
-     7 |             let num_temp: i32
-./tests2/inputs/var_redef.own:5:9:[1;34mnote[0;39m:`num1` originally defined here
-     4 | fn main() i32 {
-     5 |     for num1: i32 in 0..7 {
-       |         ^
-     6 |         for num1: i32 in 0..num1 {
-
+b''
+compile::stderr 0
+b'./tests2/inputs/var_redef.own:6:13:\x1b[1;31merror\x1b[0;39m:redefinition of symbol `num1`\n     5 |     for num1: i32 in 0..7 {\n     6 |         for num1: i32 in 0..num1 {\n       |             ^\n     7 |             let num_temp: i32\n./tests2/inputs/var_redef.own:5:9:\x1b[1;34mnote\x1b[0;39m:`num1` originally defined here\n     4 | fn main() i32 {\n     5 |     for num1: i32 in 0..7 {\n       |         ^\n     6 |         for num1: i32 in 0..num1 {\n'
 compile::return_code 1
 

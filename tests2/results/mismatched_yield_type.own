@@ -1,16 +1,6 @@
 compile::stdout 0
-
-compile::stderr 10
-./tests2/inputs/mismatched_yield_type.own:17:21:[1;31merror[0;39m:breaking `u1`, but type `Bool` expected
-    16 |         case .false: break .true
-    17 |         case .true: break 1
-       |                     ^
-    18 |     }
-./tests2/inputs/mismatched_yield_type.own:15:13:[1;34mnote[0;39m:case break type `Bool` defined here
-    14 | fn main() i32 {
-    15 |     let num Bool = switch (is_true()) {
-       |             ^
-    16 |         case .false: break .true
-
+b''
+compile::stderr 0
+b'./tests2/inputs/mismatched_yield_type.own:17:21:\x1b[1;31merror\x1b[0;39m:breaking `u1`, but type `Bool` expected\n    16 |         case .false: break .true\n    17 |         case .true: break 1\n       |                     ^\n    18 |     }\n./tests2/inputs/mismatched_yield_type.own:15:13:\x1b[1;34mnote\x1b[0;39m:case break type `Bool` defined here\n    14 | fn main() i32 {\n    15 |     let num Bool = switch (is_true()) {\n       |             ^\n    16 |         case .false: break .true\n'
 compile::return_code 1
 

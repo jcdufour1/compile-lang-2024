@@ -1,26 +1,18 @@
 compile::stdout 0
-
+b''
 compile::stderr 0
-
+b''
 compile::return_code 0
 
 clang::stdout 0
-
+b''
 clang::stderr 0
-
+b''
 clang::return_code 0
 
-run::stdout 8
-3
-4
-3
-4
-1
-6
-1
-6
-
+run::stdout 0
+b'3\n4\n3\n4\n1\n6\n1\n6\n'
 run::stderr 0
-
+b''
 run::return_code 0
 

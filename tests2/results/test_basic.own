@@ -1,23 +1,18 @@
 compile::stdout 0
-
+b''
 compile::stderr 0
-
+b''
 compile::return_code 0
 
 clang::stdout 0
-
+b''
 clang::stderr 0
-
+b''
 clang::return_code 0
 
-run::stdout 5
-outer for
-
-outer for
-0 1 2 3 4 5 6 7 
-end: 9
-
+run::stdout 0
+b'outer for\n\nouter for\n0 1 2 3 4 5 6 7 \nend: 9\n'
 run::stderr 0
-
+b''
 run::return_code 0
 

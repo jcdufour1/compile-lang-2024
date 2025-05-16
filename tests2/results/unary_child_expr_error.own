@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/unary_child_expr_error.own:4:13:[1;31merror[0;39m:expected expression 
-     3 | fn main() i32 {
-     4 |     refer(8*)
-       |             ^
-     5 |     return 0
-
+b''
+compile::stderr 0
+b'./tests2/inputs/unary_child_expr_error.own:4:13:\x1b[1;31merror\x1b[0;39m:expected expression \n     3 | fn main() i32 {\n     4 |     refer(8*)\n       |             ^\n     5 |     return 0\n'
 compile::return_code 1
 

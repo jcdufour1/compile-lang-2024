@@ -1,16 +1,6 @@
 compile::stdout 0
-
-compile::stderr 10
-./tests2/inputs/logical_not_on_void_type.own:19:9:[1;31merror[0;39m:`Token` is not valid operand to logical not operation
-    18 | fn read_num(string u8*) Opt_int {
-    19 |     if (!get_token()) {
-       |         ^
-    20 |         return Opt_int.none(0);
-./tests2/inputs/logical_not_on_void_type.own:22:9:[1;31merror[0;39m:`void` is not valid operand to logical not operation
-    21 |     }
-    22 |     if (!isdigit(unsafe_cast<i32>string[0])) {
-       |         ^
-    23 |         return Opt_int.none(0);
-
+b''
+compile::stderr 0
+b'./tests2/inputs/logical_not_on_void_type.own:19:9:\x1b[1;31merror\x1b[0;39m:`Token` is not valid operand to logical not operation\n    18 | fn read_num(string u8*) Opt_int {\n    19 |     if (!get_token()) {\n       |         ^\n    20 |         return Opt_int.none(0);\n./tests2/inputs/logical_not_on_void_type.own:22:9:\x1b[1;31merror\x1b[0;39m:`void` is not valid operand to logical not operation\n    21 |     }\n    22 |     if (!isdigit(unsafe_cast<i32>string[0])) {\n       |         ^\n    23 |         return Opt_int.none(0);\n'
 compile::return_code 1
 

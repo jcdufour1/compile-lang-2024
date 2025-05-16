@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/extern_c_no_fn.own:2:13:[1;31merror[0;39m:got token `symbol(puts)`, but expected `fn` in function decl
-     1 | 
-     2 | extern("c") puts(str_to_print: u8*) i32
-       |             ^
-     3 | 
-
+b''
+compile::stderr 0
+b'./tests2/inputs/extern_c_no_fn.own:2:13:\x1b[1;31merror\x1b[0;39m:got token `symbol(puts)`, but expected `fn` in function decl\n     1 | \n     2 | extern("c") puts(str_to_print: u8*) i32\n       |             ^\n     3 | \n'
 compile::return_code 1
 

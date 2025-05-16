@@ -1,26 +1,6 @@
 compile::stdout 0
-
-compile::stderr 20
-./tests2/inputs/tuple_invalid_subtype.own:4:14:[1;31merror[0;39m:expected newline after statement
-     3 | fn get_data() (i32, u8*) {
-     4 |     return 87, "hello"
-       |              ^
-     5 | }
-./tests2/inputs/tuple_invalid_subtype.own:8:17:[1;31merror[0;39m:expected newline after statement
-     7 | fn get_data_2() (u8*, i32) {
-     8 |     return "bye", 124
-       |                 ^
-     9 | }
-./tests2/inputs/tuple_invalid_subtype.own:16:9:[1;31merror[0;39m:expected newline after statement
-    15 | 
-    16 |     num1, num2 = get_data()
-       |         ^
-    17 |     num1, num2 = get_data_2()
-./tests2/inputs/tuple_invalid_subtype.own:3:26:[1;31merror[0;39m:opening `{` is unmatched
-     2 | 
-     3 | fn get_data() (i32, u8*) {
-       |                          ^
-     4 |     return 87, "hello"
-
+b''
+compile::stderr 0
+b'./tests2/inputs/tuple_invalid_subtype.own:4:14:\x1b[1;31merror\x1b[0;39m:expected newline after statement\n     3 | fn get_data() (i32, u8*) {\n     4 |     return 87, "hello"\n       |              ^\n     5 | }\n./tests2/inputs/tuple_invalid_subtype.own:8:17:\x1b[1;31merror\x1b[0;39m:expected newline after statement\n     7 | fn get_data_2() (u8*, i32) {\n     8 |     return "bye", 124\n       |                 ^\n     9 | }\n./tests2/inputs/tuple_invalid_subtype.own:16:9:\x1b[1;31merror\x1b[0;39m:expected newline after statement\n    15 | \n    16 |     num1, num2 = get_data()\n       |         ^\n    17 |     num1, num2 = get_data_2()\n./tests2/inputs/tuple_invalid_subtype.own:3:26:\x1b[1;31merror\x1b[0;39m:opening `{` is unmatched\n     2 | \n     3 | fn get_data() (i32, u8*) {\n       |                          ^\n     4 |     return 87, "hello"\n'
 compile::return_code 1
 

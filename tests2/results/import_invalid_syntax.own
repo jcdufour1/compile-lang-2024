@@ -1,29 +1,6 @@
 compile::stdout 0
-
-compile::stderr 23
-./tests2/inputs/import_invalid_syntax.own:1:22:[1;31merror[0;39m:got token `newline`, but expected `symbol` after . in module path
-     1 | type io import = std.
-       |                      ^
-     2 | type io import = .io 
-./tests2/inputs/import_invalid_syntax.own:2:18:[1;31merror[0;39m:got token `.`, but expected `symbol` after =
-     1 | type io import = std.
-     2 | type io import = .io 
-       |                  ^
-     3 | type io import = 
-./tests2/inputs/import_invalid_syntax.own:3:18:[1;31merror[0;39m:got token `newline`, but expected `symbol` after =
-     2 | type io import = .io 
-     3 | type io import = 
-       |                  ^
-     4 | type io import std.io 
-./tests2/inputs/import_invalid_syntax.own:4:16:[1;31merror[0;39m:got token `symbol(std)`, but expected `=` after `import`
-     3 | type io import = 
-     4 | type io import std.io 
-       |                ^
-     5 | type io import std
-./tests2/inputs/import_invalid_syntax.own:5:16:[1;31merror[0;39m:got token `symbol(std)`, but expected `=` after `import`
-     4 | type io import std.io 
-     5 | type io import std
-       |                ^
-
+b''
+compile::stderr 0
+b'./tests2/inputs/import_invalid_syntax.own:1:22:\x1b[1;31merror\x1b[0;39m:got token `newline`, but expected `symbol` after . in module path\n     1 | type io import = std.\n       |                      ^\n     2 | type io import = .io \n./tests2/inputs/import_invalid_syntax.own:2:18:\x1b[1;31merror\x1b[0;39m:got token `.`, but expected `symbol` after =\n     1 | type io import = std.\n     2 | type io import = .io \n       |                  ^\n     3 | type io import = \n./tests2/inputs/import_invalid_syntax.own:3:18:\x1b[1;31merror\x1b[0;39m:got token `newline`, but expected `symbol` after =\n     2 | type io import = .io \n     3 | type io import = \n       |                  ^\n     4 | type io import std.io \n./tests2/inputs/import_invalid_syntax.own:4:16:\x1b[1;31merror\x1b[0;39m:got token `symbol(std)`, but expected `=` after `import`\n     3 | type io import = \n     4 | type io import std.io \n       |                ^\n     5 | type io import std\n./tests2/inputs/import_invalid_syntax.own:5:16:\x1b[1;31merror\x1b[0;39m:got token `symbol(std)`, but expected `=` after `import`\n     4 | type io import std.io \n     5 | type io import std\n       |                ^\n'
 compile::return_code 1
 

@@ -1,16 +1,6 @@
 compile::stdout 0
-
-compile::stderr 10
-./tests2/inputs/undef_type_in_raw_union_def_member.own:3:12:[1;31merror[0;39m:type `NewString` is not defined
-     2 | type Token raw_union {
-     3 |     string NewString
-       |            ^
-     4 |     num BigInt
-./tests2/inputs/undef_type_in_raw_union_def_member.own:4:9:[1;31merror[0;39m:type `BigInt` is not defined
-     3 |     string NewString
-     4 |     num BigInt
-       |         ^
-     5 | }
-
+b''
+compile::stderr 0
+b'./tests2/inputs/undef_type_in_raw_union_def_member.own:3:12:\x1b[1;31merror\x1b[0;39m:type `NewString` is not defined\n     2 | type Token raw_union {\n     3 |     string NewString\n       |            ^\n     4 |     num BigInt\n./tests2/inputs/undef_type_in_raw_union_def_member.own:4:9:\x1b[1;31merror\x1b[0;39m:type `BigInt` is not defined\n     3 |     string NewString\n     4 |     num BigInt\n       |         ^\n     5 | }\n'
 compile::return_code 1
 

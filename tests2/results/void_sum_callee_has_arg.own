@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/void_sum_callee_has_arg.own:9:23:[1;31merror[0;39m:inner type is void; remove ()
-     8 | fn main() i32 {
-     9 |     let token Token = .open_par(8)
-       |                       ^
-    10 |     switch token {
-
+b''
+compile::stderr 0
+b'./tests2/inputs/void_sum_callee_has_arg.own:9:23:\x1b[1;31merror\x1b[0;39m:inner type is void; remove ()\n     8 | fn main() i32 {\n     9 |     let token Token = .open_par(8)\n       |                       ^\n    10 |     switch token {\n'
 compile::return_code 1
 

@@ -1,36 +1,6 @@
 compile::stdout 0
-
-compile::stderr 30
-./tests2/inputs/tuple.own:16:19:[1;31merror[0;39m:expected newline after statement
-    15 | fn get_data() (u8*, i32) {
-    16 |     return "hello", 76
-       |                   ^
-    17 | }
-./tests2/inputs/tuple.own:20:14:[1;31merror[0;39m:expected newline after statement
-    19 | fn get_data_3() (i32, u8*, TokenType) {
-    20 |     return 89, "bye", TokenType.string
-       |              ^
-    21 | }
-./tests2/inputs/tuple.own:24:14:[1;31merror[0;39m:expected newline after statement
-    23 | fn get_data_4() (i32, u8*, TokenType, Token) {
-    24 |     return 91, "getting a new token", TokenType.num, Token.num(12)
-       |              ^
-    25 | }
-./tests2/inputs/tuple.own:46:11:[1;31merror[0;39m:expected newline after statement
-    45 | 
-    46 |     string, num = get_data()
-       |           ^
-    47 |     io.printf("%d %s\n", num, string);
-./tests2/inputs/tuple.own:19:39:[1;31merror[0;39m:opening `{` is unmatched
-    18 | 
-    19 | fn get_data_3() (i32, u8*, TokenType) {
-       |                                       ^
-    20 |     return 89, "bye", TokenType.string
-./tests2/inputs/tuple.own:15:26:[1;31merror[0;39m:opening `{` is unmatched
-    14 | 
-    15 | fn get_data() (u8*, i32) {
-       |                          ^
-    16 |     return "hello", 76
-
+b''
+compile::stderr 0
+b'./tests2/inputs/tuple.own:16:19:\x1b[1;31merror\x1b[0;39m:expected newline after statement\n    15 | fn get_data() (u8*, i32) {\n    16 |     return "hello", 76\n       |                   ^\n    17 | }\n./tests2/inputs/tuple.own:20:14:\x1b[1;31merror\x1b[0;39m:expected newline after statement\n    19 | fn get_data_3() (i32, u8*, TokenType) {\n    20 |     return 89, "bye", TokenType.string\n       |              ^\n    21 | }\n./tests2/inputs/tuple.own:24:14:\x1b[1;31merror\x1b[0;39m:expected newline after statement\n    23 | fn get_data_4() (i32, u8*, TokenType, Token) {\n    24 |     return 91, "getting a new token", TokenType.num, Token.num(12)\n       |              ^\n    25 | }\n./tests2/inputs/tuple.own:46:11:\x1b[1;31merror\x1b[0;39m:expected newline after statement\n    45 | \n    46 |     string, num = get_data()\n       |           ^\n    47 |     io.printf("%d %s\\n", num, string);\n./tests2/inputs/tuple.own:19:39:\x1b[1;31merror\x1b[0;39m:opening `{` is unmatched\n    18 | \n    19 | fn get_data_3() (i32, u8*, TokenType) {\n       |                                       ^\n    20 |     return 89, "bye", TokenType.string\n./tests2/inputs/tuple.own:15:26:\x1b[1;31merror\x1b[0;39m:opening `{` is unmatched\n    14 | \n    15 | fn get_data() (u8*, i32) {\n       |                          ^\n    16 |     return "hello", 76\n'
 compile::return_code 1
 

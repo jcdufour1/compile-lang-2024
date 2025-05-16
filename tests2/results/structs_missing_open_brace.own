@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/structs_missing_open_brace.own:2:19:[1;31merror[0;39m:got token `newline`, but expected `{`  or `(<` in struct, raw_union, or enum definition
-     1 | 
-     2 | type Number struct
-       |                   ^
-     3 |     num: i32
-
+b''
+compile::stderr 0
+b'./tests2/inputs/structs_missing_open_brace.own:2:19:\x1b[1;31merror\x1b[0;39m:got token `newline`, but expected `{`  or `(<` in struct, raw_union, or enum definition\n     1 | \n     2 | type Number struct\n       |                   ^\n     3 |     num: i32\n'
 compile::return_code 1
 

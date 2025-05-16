@@ -25,9 +25,9 @@ class FileItem:
 
 @dataclass
 class TestResult:
-    compile: subprocess.CompletedProcess[str]
-    clang: Optional[subprocess.CompletedProcess[str]]
-    run: Optional[subprocess.CompletedProcess[str]]
+    compile: subprocess.CompletedProcess[bytes]
+    clang: Optional[subprocess.CompletedProcess[bytes]]
+    run: Optional[subprocess.CompletedProcess[bytes]]
 
 INPUTS_DIR = "./tests2/inputs/"
 RESULTS_DIR = "./tests2/results/"
@@ -77,7 +77,7 @@ def get_expected_output(file: FileItem) -> str:
         return ""
 
 
-def get_result_from_process_internal(process: subprocess.CompletedProcess[str], type_str: str) -> str:
+def get_result_from_process_internal(process: subprocess.CompletedProcess[bytes], type_str: str) -> str:
     result: str = ""
     result += type_str + "::" + "stdout " + str(str(process.stdout).count("\n")) + "\n"
     result += str(process.stdout) + "\n"
@@ -118,17 +118,17 @@ def compile_test(do_debug: bool, output_name: str, file: FileItem) -> TestResult
     compile_cmd.append("--log-level=NOTE")
 
     print_info("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")
-    compile_out: subprocess.CompletedProcess[str] = subprocess.run(compile_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    compile_out: subprocess.CompletedProcess[bytes] = subprocess.run(compile_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if compile_out.returncode != 0:
         return TestResult(compile_out, None, None)
 
     clang_cmd = ["clang", output_name, "-Wno-override-module", "-Wno-incompatible-library-redeclaration", "-Wno-builtin-requires-header", "-o", "test"]
-    clang_out: subprocess.CompletedProcess[str]  = subprocess.run(clang_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    clang_out: subprocess.CompletedProcess[bytes]  = subprocess.run(clang_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if clang_out.returncode != 0:
         return TestResult(compile_out, clang_out, None)
 
     test_cmd = ["./test"]
-    run_out: subprocess.CompletedProcess[str] = subprocess.run(test_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    run_out: subprocess.CompletedProcess[bytes] = subprocess.run(test_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return TestResult(compile_out, clang_out, run_out)
 
 

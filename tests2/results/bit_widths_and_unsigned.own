@@ -1,46 +1,18 @@
 compile::stdout 0
-
+b''
 compile::stderr 0
-
+b''
 compile::return_code 0
 
 clang::stdout 0
-
+b''
 clang::stderr 0
-
+b''
 clang::return_code 0
 
-run::stdout 28
-11
-12
-228
-num6_i32: -1
-num6_u32: -1
-num7: -127
-num7: -3
-num8: 255
-num8: 3
-num10: 255
-num10: 63
-num11: -127
-num11: -31
-no num12
-yes num13
-no num14
-yes num15
-yes num16
-no num17
-yes num18
-no num19
-num20: 0
-num21: 2
-num22: 4
-num23: 0
-num24: 0
-num25: 0
-num26: 32
-
+run::stdout 0
+b'11\n12\n228\nnum6_i32: -1\nnum6_u32: -1\nnum7: -127\nnum7: -3\nnum8: 255\nnum8: 3\nnum10: 255\nnum10: 63\nnum11: -127\nnum11: -31\nno num12\nyes num13\nno num14\nyes num15\nyes num16\nno num17\nyes num18\nno num19\nnum20: 0\nnum21: 2\nnum22: 4\nnum23: 0\nnum24: 0\nnum25: 0\nnum26: 32\n'
 run::stderr 0
-
+b''
 run::return_code 0
 

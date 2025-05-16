@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/optional_76.own:29:16:[1;31merror[0;39m:type `Optional(<i32>)` is not defined
-    28 |     // Optional is undefined in this file
-    29 |     let number Optional(<i32>) = .some(84)
-       |                ^
-    30 |     let result2 Result(<Token, ParseError>)
-
+b''
+compile::stderr 0
+b'./tests2/inputs/optional_76.own:29:16:\x1b[1;31merror\x1b[0;39m:type `Optional(<i32>)` is not defined\n    28 |     // Optional is undefined in this file\n    29 |     let number Optional(<i32>) = .some(84)\n       |                ^\n    30 |     let result2 Result(<Token, ParseError>)\n'
 compile::return_code 1
 

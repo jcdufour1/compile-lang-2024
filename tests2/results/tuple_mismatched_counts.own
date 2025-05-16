@@ -1,26 +1,6 @@
 compile::stdout 0
-
-compile::stderr 20
-./tests2/inputs/tuple_mismatched_counts.own:3:14:[1;31merror[0;39m:expected newline after statement
-     2 | fn get_data() (i32, i32) {
-     3 |     return 87, 21, 3
-       |              ^
-     4 | }
-./tests2/inputs/tuple_mismatched_counts.own:7:14:[1;31merror[0;39m:expected newline after statement
-     6 | fn get_data_2() (i32, i32, i32) {
-     7 |     return 87, 31
-       |              ^
-     8 | }
-./tests2/inputs/tuple_mismatched_counts.own:15:9:[1;31merror[0;39m:expected newline after statement
-    14 | 
-    15 |     num1, num2 = get_data()
-       |         ^
-    16 |     num1, num2, num3 = get_data()
-./tests2/inputs/tuple_mismatched_counts.own:2:26:[1;31merror[0;39m:opening `{` is unmatched
-     1 | 
-     2 | fn get_data() (i32, i32) {
-       |                          ^
-     3 |     return 87, 21, 3
-
+b''
+compile::stderr 0
+b'./tests2/inputs/tuple_mismatched_counts.own:3:14:\x1b[1;31merror\x1b[0;39m:expected newline after statement\n     2 | fn get_data() (i32, i32) {\n     3 |     return 87, 21, 3\n       |              ^\n     4 | }\n./tests2/inputs/tuple_mismatched_counts.own:7:14:\x1b[1;31merror\x1b[0;39m:expected newline after statement\n     6 | fn get_data_2() (i32, i32, i32) {\n     7 |     return 87, 31\n       |              ^\n     8 | }\n./tests2/inputs/tuple_mismatched_counts.own:15:9:\x1b[1;31merror\x1b[0;39m:expected newline after statement\n    14 | \n    15 |     num1, num2 = get_data()\n       |         ^\n    16 |     num1, num2, num3 = get_data()\n./tests2/inputs/tuple_mismatched_counts.own:2:26:\x1b[1;31merror\x1b[0;39m:opening `{` is unmatched\n     1 | \n     2 | fn get_data() (i32, i32) {\n       |                          ^\n     3 |     return 87, 21, 3\n'
 compile::return_code 1
 

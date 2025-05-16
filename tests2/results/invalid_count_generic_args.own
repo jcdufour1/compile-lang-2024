@@ -1,46 +1,6 @@
 compile::stdout 0
-
-compile::stderr 40
-./tests2/inputs/invalid_count_generic_args.own:20:16:[1;31merror[0;39m:0 generic arguments are passed, but 2 generic arguments expected
-    19 |     let num2 i32 = add(<i32>)(7, 8, 9)
-    20 |     let token1 Token = {.item = 87, .pos = 32}
-       |                ^
-    21 |     let token2 Token(<i32, i32, i32>) = {.item = 88, .pos = 33}
-./tests2/inputs/invalid_count_generic_args.own:12:6:[1;34mnote[0;39m:generic parameters defined here
-    11 | 
-    12 | type Token struct(<ItemType, PosType>) {
-       |      ^
-    13 |     item ItemType
-./tests2/inputs/invalid_count_generic_args.own:21:16:[1;31merror[0;39m:3 generic arguments are passed, but 2 generic arguments expected
-    20 |     let token1 Token = {.item = 87, .pos = 32}
-    21 |     let token2 Token(<i32, i32, i32>) = {.item = 88, .pos = 33}
-       |                ^
-    22 |     return 0
-./tests2/inputs/invalid_count_generic_args.own:12:6:[1;34mnote[0;39m:generic parameters defined here
-    11 | 
-    12 | type Token struct(<ItemType, PosType>) {
-       |      ^
-    13 |     item ItemType
-./tests2/inputs/invalid_count_generic_args.own:18:20:[1;31merror[0;39m:2 generic arguments are passed, but 1 generic arguments expected
-    17 | fn main() i32 {
-    18 |     let num1 i32 = sub(<i32, i64>)(7, 8)
-       |                    ^
-    19 |     let num2 i32 = add(<i32>)(7, 8, 9)
-./tests2/inputs/invalid_count_generic_args.own:2:4:[1;34mnote[0;39m:generic parameters defined here
-     1 | 
-     2 | fn sub(<NumType>)(lhs NumType, rhs NumType) {
-       |    ^
-     3 |     let result NumType = lhs - rhs
-./tests2/inputs/invalid_count_generic_args.own:19:20:[1;31merror[0;39m:1 generic arguments are passed, but 2 generic arguments expected
-    18 |     let num1 i32 = sub(<i32, i64>)(7, 8)
-    19 |     let num2 i32 = add(<i32>)(7, 8, 9)
-       |                    ^
-    20 |     let token1 Token = {.item = 87, .pos = 32}
-./tests2/inputs/invalid_count_generic_args.own:7:4:[1;34mnote[0;39m:generic parameters defined here
-     6 | 
-     7 | fn add(<NumType, DummyType>)(lhs NumType, rhs NumType, dummy DummyType) {
-       |    ^
-     8 |     let result NumType = lhs + rhs
-
+b''
+compile::stderr 0
+b'./tests2/inputs/invalid_count_generic_args.own:20:16:\x1b[1;31merror\x1b[0;39m:0 generic arguments are passed, but 2 generic arguments expected\n    19 |     let num2 i32 = add(<i32>)(7, 8, 9)\n    20 |     let token1 Token = {.item = 87, .pos = 32}\n       |                ^\n    21 |     let token2 Token(<i32, i32, i32>) = {.item = 88, .pos = 33}\n./tests2/inputs/invalid_count_generic_args.own:12:6:\x1b[1;34mnote\x1b[0;39m:generic parameters defined here\n    11 | \n    12 | type Token struct(<ItemType, PosType>) {\n       |      ^\n    13 |     item ItemType\n./tests2/inputs/invalid_count_generic_args.own:21:16:\x1b[1;31merror\x1b[0;39m:3 generic arguments are passed, but 2 generic arguments expected\n    20 |     let token1 Token = {.item = 87, .pos = 32}\n    21 |     let token2 Token(<i32, i32, i32>) = {.item = 88, .pos = 33}\n       |                ^\n    22 |     return 0\n./tests2/inputs/invalid_count_generic_args.own:12:6:\x1b[1;34mnote\x1b[0;39m:generic parameters defined here\n    11 | \n    12 | type Token struct(<ItemType, PosType>) {\n       |      ^\n    13 |     item ItemType\n./tests2/inputs/invalid_count_generic_args.own:18:20:\x1b[1;31merror\x1b[0;39m:2 generic arguments are passed, but 1 generic arguments expected\n    17 | fn main() i32 {\n    18 |     let num1 i32 = sub(<i32, i64>)(7, 8)\n       |                    ^\n    19 |     let num2 i32 = add(<i32>)(7, 8, 9)\n./tests2/inputs/invalid_count_generic_args.own:2:4:\x1b[1;34mnote\x1b[0;39m:generic parameters defined here\n     1 | \n     2 | fn sub(<NumType>)(lhs NumType, rhs NumType) {\n       |    ^\n     3 |     let result NumType = lhs - rhs\n./tests2/inputs/invalid_count_generic_args.own:19:20:\x1b[1;31merror\x1b[0;39m:1 generic arguments are passed, but 2 generic arguments expected\n    18 |     let num1 i32 = sub(<i32, i64>)(7, 8)\n    19 |     let num2 i32 = add(<i32>)(7, 8, 9)\n       |                    ^\n    20 |     let token1 Token = {.item = 87, .pos = 32}\n./tests2/inputs/invalid_count_generic_args.own:7:4:\x1b[1;34mnote\x1b[0;39m:generic parameters defined here\n     6 | \n     7 | fn add(<NumType, DummyType>)(lhs NumType, rhs NumType, dummy DummyType) {\n       |    ^\n     8 |     let result NumType = lhs + rhs\n'
 compile::return_code 1
 

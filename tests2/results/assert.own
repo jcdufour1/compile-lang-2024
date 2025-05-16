@@ -1,20 +1,18 @@
 compile::stdout 0
-
+b''
 compile::stderr 0
-
+b''
 compile::return_code 0
 
 clang::stdout 0
-
+b''
 clang::stderr 0
-
+b''
 clang::return_code 0
 
-run::stdout 2
-./tests2/inputs/assert.own:5:43
-./tests2/inputs/assert.own:6:7:assertion failure: hello
-
+run::stdout 0
+b'./tests2/inputs/assert.own:5:43\n./tests2/inputs/assert.own:6:7:assertion failure: hello\n'
 run::stderr 0
-
+b''
 run::return_code 0
 

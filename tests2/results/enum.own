@@ -1,25 +1,18 @@
 compile::stdout 0
-
+b''
 compile::stderr 0
-
+b''
 compile::return_code 0
 
 clang::stdout 0
-
+b''
 clang::stderr 0
-
+b''
 clang::return_code 0
 
-run::stdout 7
-0
-1
-87
-87
-hello
-hello
-invalid token type
-
+run::stdout 0
+b'0\n1\n87\n87\nhello\nhello\ninvalid token type\n'
 run::stderr 0
-
+b''
 run::return_code 0
 

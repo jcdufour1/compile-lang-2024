@@ -1,26 +1,18 @@
 compile::stdout 0
-
+b''
 compile::stderr 0
-
+b''
 compile::return_code 0
 
 clang::stdout 0
-
+b''
 clang::stderr 0
-
+b''
 clang::return_code 0
 
-run::stdout 8
-token is number: 23
-token is string: hello world
-token is number: 57
-token is number: 32
-thing is token: token is number: 23
-thing is token: token is string: hello world
-thing is number: 87
-thing is number: 25
-
+run::stdout 0
+b'token is number: 23\ntoken is string: hello world\ntoken is number: 57\ntoken is number: 32\nthing is token: token is number: 23\nthing is token: token is string: hello world\nthing is number: 87\nthing is number: 25\n'
 run::stderr 0
-
+b''
 run::return_code 0
 

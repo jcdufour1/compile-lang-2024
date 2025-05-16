@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/undef_symbol.own:5:21:[1;31merror[0;39m:symbol `num1` is not defined
-     4 | fn main() i32 {
-     5 |     printf("hello", num1)
-       |                     ^
-     6 |     return 0
-
+b''
+compile::stderr 0
+b'./tests2/inputs/undef_symbol.own:5:21:\x1b[1;31merror\x1b[0;39m:symbol `num1` is not defined\n     4 | fn main() i32 {\n     5 |     printf("hello", num1)\n       |                     ^\n     6 |     return 0\n'
 compile::return_code 1
 

@@ -1,49 +1,18 @@
 compile::stdout 0
-
+b''
 compile::stderr 0
-
+b''
 compile::return_code 0
 
 clang::stdout 0
-
+b''
 clang::stderr 0
-
+b''
 clang::return_code 0
 
-run::stdout 31
-yes1
-yes2
-yes5
-one called
-yes6
-one called
-yes7
-zero called
-yes8
-zero called
-yes9
-zero called
-yes10
-zero called
-yes11
-one called
-zero called
-yes12
-one called
-one called
-one called
-yes13
-one called
-yes14
-zero called
-one called
-yes15
-zero called
-zero called
-zero called
-yes16
-
+run::stdout 0
+b'yes1\nyes2\nyes5\none called\nyes6\none called\nyes7\nzero called\nyes8\nzero called\nyes9\nzero called\nyes10\nzero called\nyes11\none called\nzero called\nyes12\none called\none called\none called\nyes13\none called\nyes14\nzero called\none called\nyes15\nzero called\nzero called\nzero called\nyes16\n'
 run::stderr 0
-
+b''
 run::return_code 0
 

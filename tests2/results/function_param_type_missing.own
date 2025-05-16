@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/function_param_type_missing.own:4:20:[1;31merror[0;39m:got token `)`, but expected `symbol` 
-     3 | 
-     4 | fn println(string: ) {
-       |                    ^
-     5 |     printf("%s\n", string)
-
+b''
+compile::stderr 0
+b'./tests2/inputs/function_param_type_missing.own:4:20:\x1b[1;31merror\x1b[0;39m:got token `)`, but expected `symbol` \n     3 | \n     4 | fn println(string: ) {\n       |                    ^\n     5 |     printf("%s\\n", string)\n'
 compile::return_code 1
 

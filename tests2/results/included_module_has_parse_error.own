@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-std_parse_error.own:3:14:[1;31merror[0;39m:got token `{`, but expected `symbol` 
-     2 | 
-     3 | fn zero( i32 {
-       |              ^
-     4 |     return 0
-
+b''
+compile::stderr 0
+b'std_parse_error.own:3:14:\x1b[1;31merror\x1b[0;39m:got token `{`, but expected `symbol` \n     2 | \n     3 | fn zero( i32 {\n       |              ^\n     4 |     return 0\n'
 compile::return_code 1
 

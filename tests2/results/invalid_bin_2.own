@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/invalid_bin_2.own:3:19:[1;31merror[0;39m:invalid bin literal
-     2 | fn main() i32 {
-     3 |     let num i32 = 0b0021
-       |                   ^
-     4 |     return 0
-
+b''
+compile::stderr 0
+b'./tests2/inputs/invalid_bin_2.own:3:19:\x1b[1;31merror\x1b[0;39m:invalid bin literal\n     2 | fn main() i32 {\n     3 |     let num i32 = 0b0021\n       |                   ^\n     4 |     return 0\n'
 compile::return_code 1
 

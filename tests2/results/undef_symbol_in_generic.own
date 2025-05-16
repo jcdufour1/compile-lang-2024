@@ -1,11 +1,6 @@
 compile::stdout 0
-
-compile::stderr 5
-./tests2/inputs/undef_symbol_in_generic.own:5:12:[1;31merror[0;39m:symbol `ressff` is not defined
-     4 |     let result NumType = lhs - rhs
-     5 |     return ressff
-       |            ^
-     6 | }
-
+b''
+compile::stderr 0
+b'./tests2/inputs/undef_symbol_in_generic.own:5:12:\x1b[1;31merror\x1b[0;39m:symbol `ressff` is not defined\n     4 |     let result NumType = lhs - rhs\n     5 |     return ressff\n       |            ^\n     6 | }\n'
 compile::return_code 1
 

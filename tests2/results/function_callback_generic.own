@@ -1,24 +1,18 @@
 compile::stdout 0
-
+b''
 compile::stderr 0
-
+b''
 compile::return_code 0
 
 clang::stdout 0
-
+b''
 clang::stderr 0
-
+b''
 clang::return_code 0
 
-run::stdout 6
-10
-11
-12
-41
-84
-164
-
+run::stdout 0
+b'10\n11\n12\n41\n84\n164\n'
 run::stderr 0
-
+b''
 run::return_code 0
 
