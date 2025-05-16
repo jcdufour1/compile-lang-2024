@@ -396,8 +396,8 @@ static void extend_c_literal(Emit_c_strs* strs, const Llvm_literal* lit) {
             string_extend_strv(&a_main, &strs->output, llvm_string_const_unwrap(lit)->data);
             string_extend_cstr(&a_main, &strs->output, "\"");
             return;
-        case LLVM_NUMBER:
-            string_extend_int64_t(&a_main, &strs->output, llvm_number_const_unwrap(lit)->data);
+        case LLVM_INT:
+            string_extend_int64_t(&a_main, &strs->output, llvm_int_const_unwrap(lit)->data);
             return;
         case LLVM_FLOAT:
             string_extend_double(&a_main, &strs->output, llvm_float_const_unwrap(lit)->data);

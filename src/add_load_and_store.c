@@ -534,24 +534,24 @@ static Name load_void(Pos pos) {
 }
 
 static Name load_enum_tag_lit(Tast_enum_tag_lit* old_lit) {
-    Llvm_number* enum_tag_lit = llvm_number_new(
+    Llvm_int* enum_tag_lit = llvm_int_new(
         old_lit->pos,
         old_lit->data,
         old_lit->lang_type,
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
-    unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_number_wrap(enum_tag_lit)))));
+    unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_int_wrap(enum_tag_lit)))));
     return enum_tag_lit->name;
 }
 
-static Name load_number(Tast_number* old_lit) {
-    Llvm_number* number = llvm_number_new(
+static Name load_number(Tast_int* old_lit) {
+    Llvm_int* number = llvm_int_new(
         old_lit->pos,
         old_lit->data,
         old_lit->lang_type,
         util_literal_name_new_mod_path2(env.curr_mod_path)
     );
-    unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_number_wrap(number)))));
+    unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_int_wrap(number)))));
     return number->name;
 }
 
@@ -570,8 +570,8 @@ static Name load_char(
     Tast_char* old_lit
 ) {
     Lang_type new_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(old_lit->pos, 8, 0)));
-    Llvm_number* lang_char = llvm_number_new(old_lit->pos, old_lit->data, new_lang_type, util_literal_name_new_mod_path2(env.curr_mod_path));
-    unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_number_wrap(lang_char)))));
+    Llvm_int* lang_char = llvm_int_new(old_lit->pos, old_lit->data, new_lang_type, util_literal_name_new_mod_path2(env.curr_mod_path));
+    unwrap(alloca_add(llvm_expr_wrap(llvm_literal_wrap(llvm_int_wrap(lang_char)))));
     return lang_char->name;
 }
 
@@ -675,8 +675,8 @@ static Name load_literal(Llvm_block* new_block, Tast_literal* old_lit) {
             return load_enum_tag_lit(tast_enum_tag_lit_unwrap(old_lit));
         case TAST_CHAR:
             return load_char(tast_char_unwrap(old_lit));
-        case TAST_NUMBER:
-            return load_number(tast_number_unwrap(old_lit));
+        case TAST_INT:
+            return load_number(tast_int_unwrap(old_lit));
         case TAST_FLOAT:
             return load_float(tast_float_unwrap(old_lit));
         case TAST_FUNCTION_LIT:

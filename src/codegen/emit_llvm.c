@@ -33,11 +33,11 @@ static void extend_literal(String* output, const Llvm_literal* literal) {
         case LLVM_STRING:
             string_extend_strv(&a_main, output, llvm_string_const_unwrap(literal)->data);
             return;
-        case LLVM_NUMBER:
-            string_extend_int64_t(&a_main, output, llvm_number_const_unwrap(literal)->data);
+        case LLVM_INT:
+            string_extend_int64_t(&a_main, output, llvm_int_const_unwrap(literal)->data);
             return;
         case LLVM_FLOAT:
-            string_extend_double(&a_main, output, llvm_number_const_unwrap(literal)->data);
+            string_extend_double(&a_main, output, llvm_int_const_unwrap(literal)->data);
             return;
         case LLVM_VOID:
             return;
@@ -588,11 +588,11 @@ static void emit_store_another_llvm_src_literal(String* output, const Llvm_liter
             string_extend_cstr(&a_main, output, " @.");
             llvm_extend_name(output, llvm_string_const_unwrap(literal)->name);
             return;
-        case LLVM_NUMBER:
-            string_extend_int64_t(&a_main, output, llvm_number_const_unwrap(literal)->data);
+        case LLVM_INT:
+            string_extend_int64_t(&a_main, output, llvm_int_const_unwrap(literal)->data);
             return;
         case LLVM_FLOAT:
-            string_extend_double(&a_main, output, llvm_number_const_unwrap(literal)->data);
+            string_extend_double(&a_main, output, llvm_int_const_unwrap(literal)->data);
             return;
         case LLVM_VOID:
             return;

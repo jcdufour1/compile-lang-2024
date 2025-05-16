@@ -87,8 +87,8 @@ Str_view tast_index_print_internal(const Tast_index* index, int indent) {
 
 Str_view tast_literal_print_internal(const Tast_literal* lit, int indent) {
     switch (lit->type) {
-        case TAST_NUMBER:
-            return tast_number_print_internal(tast_number_const_unwrap(lit), indent);
+        case TAST_INT:
+            return tast_int_print_internal(tast_int_const_unwrap(lit), indent);
         case TAST_FLOAT:
             return tast_float_print_internal(tast_float_const_unwrap(lit), indent);
         case TAST_STRING:
@@ -199,7 +199,7 @@ Str_view tast_enum_get_tag_print_internal(const Tast_enum_get_tag* lit, int inde
     return string_to_strv(buf);
 }
 
-Str_view tast_number_print_internal(const Tast_number* num, int indent) {
+Str_view tast_int_print_internal(const Tast_int* num, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "number", indent);

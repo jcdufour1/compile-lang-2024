@@ -158,8 +158,8 @@ static Llvm_type llvm_gen_operator(void) {
     return operator;
 }
 
-static Llvm_type llvm_gen_number(void) {
-    Llvm_type number = {.name = llvm_name_new("literal", "number", false)};
+static Llvm_type llvm_gen_int(void) {
+    Llvm_type number = {.name = llvm_name_new("literal", "int", false)};
 
     append_member(&number.members, "int64_t", "data");
     append_member(&number.members, "Lang_type", "lang_type");
@@ -207,7 +207,7 @@ static Llvm_type llvm_gen_void(void) {
 static Llvm_type llvm_gen_literal(void) {
     Llvm_type lit = {.name = llvm_name_new("expr", "literal", false)};
 
-    vec_append(&gen_a, &lit.sub_types, llvm_gen_number());
+    vec_append(&gen_a, &lit.sub_types, llvm_gen_int());
     vec_append(&gen_a, &lit.sub_types, llvm_gen_float());
     vec_append(&gen_a, &lit.sub_types, llvm_gen_string());
     vec_append(&gen_a, &lit.sub_types, llvm_gen_void());

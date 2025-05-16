@@ -404,7 +404,7 @@ CHECK_ASSIGN_STATUS check_generic_assignment(
     }
 
     bool src_is_zero = false;
-    if (src->type == UAST_LITERAL && uast_literal_unwrap(src)->type == UAST_NUMBER && uast_number_unwrap(uast_literal_unwrap(src))->data == 0) {
+    if (src->type == UAST_LITERAL && uast_literal_unwrap(src)->type == UAST_INT && uast_int_unwrap(uast_literal_unwrap(src))->data == 0) {
         src_is_zero = true;
     }
 
@@ -421,18 +421,18 @@ Tast_literal* try_set_literal_types(Uast_literal* literal) {
                 name_new(env.curr_mod_path, util_literal_str_view_new(), (Ulang_type_vec) {0}, 0)
             ));
         }
-        case UAST_NUMBER: {
-            Uast_number* old_number = uast_number_unwrap(literal);
+        case UAST_INT: {
+            Uast_int* old_number = uast_int_unwrap(literal);
             if (old_number->data < 0) {
                 int64_t bit_width = bit_width_needed_signed(old_number->data);
-                return tast_number_wrap(tast_number_new(
+                return tast_int_wrap(tast_int_new(
                     old_number->pos,
                     old_number->data,
                     lang_type_primitive_const_wrap(lang_type_signed_int_const_wrap(lang_type_signed_int_new(old_number->pos, bit_width, 0)))
                 ));
             } else {
                 int64_t bit_width = bit_width_needed_unsigned(old_number->data);
-                return tast_number_wrap(tast_number_new(
+                return tast_int_wrap(tast_int_new(
                     old_number->pos,
                     old_number->data,
                     lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(old_number->pos, bit_width, 0)))
@@ -648,8 +648,8 @@ static bool precalulate_float_internal(double* result, double lhs_val, double rh
 }
 
 static Tast_literal* precalulate_number(
-    const Tast_number* lhs,
-    const Tast_number* rhs,
+    const Tast_int* lhs,
+    const Tast_int* rhs,
     BINARY_TYPE token_type,
     Pos pos
 ) {
@@ -665,9 +665,10 @@ static Tast_literal* precalulate_float(
 ) {
     double result_val = 0;
     if (!precalulate_float_internal(&result_val, lhs->data, rhs->data, token_type, pos)) {
+        // TODO
         todo();
     }
-    return util_tast_literal_new_from_double(result_val, TOKEN_FLOAT_LITERAL, pos);
+    return util_tast_literal_new_from_double(result_val, pos);
 }
 static Tast_literal* precalulate_char(
     const Tast_char* lhs,
@@ -692,8 +693,8 @@ static Tast_literal* precalulate_enum_lit(
 bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_expr* new_rhs, Pos oper_pos, BINARY_TYPE oper_token_type) {
     bool src_is_zero = 
         new_rhs->type == TAST_LITERAL &&
-        tast_literal_unwrap(new_rhs)->type == TAST_NUMBER &&
-        tast_number_unwrap(tast_literal_unwrap(new_rhs))->data == 0;
+        tast_literal_unwrap(new_rhs)->type == TAST_INT &&
+        tast_int_unwrap(tast_literal_unwrap(new_rhs))->data == 0;
 
     if (!lang_type_is_equal(tast_expr_get_lang_type(new_lhs), tast_expr_get_lang_type(new_rhs))) {
         if (can_be_implicitly_converted(
@@ -747,10 +748,10 @@ bool try_set_binary_types_finish(Tast_expr** new_tast, Tast_expr* new_lhs, Tast_
         Tast_literal* literal = NULL;
 
         switch (lhs_lit->type) {
-            case TAST_NUMBER:
+            case TAST_INT:
                 literal = precalulate_number(
-                    tast_number_const_unwrap(lhs_lit),
-                    tast_number_const_unwrap(rhs_lit),
+                    tast_int_const_unwrap(lhs_lit),
+                    tast_int_const_unwrap(rhs_lit),
                     oper_token_type,
                     oper_pos
                 );
@@ -1318,7 +1319,7 @@ bool try_set_array_literal_types(
 
     Tast_expr_vec new_lit_membs = {0};
     vec_append(&a_main, &new_lit_membs, ptr);
-    vec_append(&a_main, &new_lit_membs, tast_literal_wrap(tast_number_wrap(tast_number_new(
+    vec_append(&a_main, &new_lit_membs, tast_literal_wrap(tast_int_wrap(tast_int_new(
         new_inner_lit->pos,
         new_membs.info.count,
         lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(new_inner_lit->pos, 8, 0)))
@@ -1589,7 +1590,6 @@ bool try_set_function_call_types(Tast_expr** new_call, Uast_function_call* fun_c
     switch (new_callee->type) {
         case TAST_ENUM_CALLEE: {
             // TAST_ENUM_CALLEE is for right hand side of assignments that have non-void inner type
-            // TODO: figure out if both TAST_ENUM_CALLEE and TAST_ENUM_LIT actually need to exist. if yes, then document difference
             if (fun_call->args.info.count < 1) {
                 msg(
                     DIAG_MISSING_ENUM_ARG, tast_enum_callee_unwrap(new_callee)->pos,
@@ -1828,13 +1828,7 @@ bool try_set_enum_access_types(Tast_enum_access** new_access, Uast_enum_access* 
         return false;
     }
 
-    *new_access = tast_enum_access_new(
-        access->pos,
-        access->tag, 
-        access->lang_type,
-        new_callee
-    );
-
+    *new_access = tast_enum_access_new(access->pos, access->tag, access->lang_type, new_callee);
     return true;
 }
 
@@ -1844,11 +1838,7 @@ bool try_set_enum_get_tag_types(Tast_enum_get_tag** new_access, Uast_enum_get_ta
         return false;
     }
 
-    *new_access = tast_enum_get_tag_new(
-        access->pos,
-        new_callee
-    );
-
+    *new_access = tast_enum_get_tag_new(access->pos, new_callee);
     return true;
 }
 
@@ -1882,6 +1872,7 @@ bool try_set_member_access_types_finish_generic_struct(
     }
 
     if (access->member_name->name.gen_args.info.count > 0) {
+        // TODO
         todo();
     }
 
@@ -1968,12 +1959,6 @@ bool try_set_member_access_types_finish_enum_def(
             );
             *new_tast = tast_expr_wrap(tast_literal_wrap(tast_enum_lit_wrap(new_lit)));
             return true;
-
-            todo();
-
-            //Tast_enum_case* new_call = NULL;
-            //*new_tast = tast_expr_wrap(tast_enum_callee_wrap(new_call));
-            //return true;
         }
         case PARENT_OF_IF:
             unreachable("");

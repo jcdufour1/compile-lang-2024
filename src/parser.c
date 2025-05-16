@@ -2366,7 +2366,7 @@ static PARSE_EXPR_STATUS parse_unary(
             assert(*result);
             break;
         case TOKEN_SINGLE_MINUS: {
-            *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, uast_literal_wrap(uast_number_wrap(uast_number_new(oper.pos, 0))), child, token_type_to_binary_type(oper.type))));
+            *result = uast_operator_wrap(uast_binary_wrap(uast_binary_new(oper.pos, uast_literal_wrap(uast_int_wrap(uast_int_new(oper.pos, 0))), child, token_type_to_binary_type(oper.type))));
             assert(*result);
             break;
         }

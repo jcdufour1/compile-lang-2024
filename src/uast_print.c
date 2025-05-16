@@ -90,8 +90,8 @@ Str_view uast_index_print_internal(const Uast_index* index, int indent) {
 
 Str_view uast_literal_print_internal(const Uast_literal* lit, int indent) {
     switch (lit->type) {
-        case UAST_NUMBER:
-            return uast_number_print_internal(uast_number_const_unwrap(lit), indent);
+        case UAST_INT:
+            return uast_int_print_internal(uast_int_const_unwrap(lit), indent);
         case UAST_FLOAT:
             return uast_float_print_internal(uast_float_const_unwrap(lit), indent);
         case UAST_STRING:
@@ -190,7 +190,7 @@ Str_view uast_unknown_print_internal(const Uast_unknown* unknown, int indent) {
     return string_to_strv(buf);
 }
 
-Str_view uast_number_print_internal(const Uast_number* num, int indent) {
+Str_view uast_int_print_internal(const Uast_int* num, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "number", indent);

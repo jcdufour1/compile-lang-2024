@@ -47,8 +47,8 @@ void llvm_extend_sym_typed_base(String* string, Sym_typed_base base) {
 
 Str_view llvm_literal_print_internal(const Llvm_literal* lit, int indent) {
     switch (lit->type) {
-        case LLVM_NUMBER:
-            return llvm_number_print_internal(llvm_number_const_unwrap(lit), indent);
+        case LLVM_INT:
+            return llvm_int_print_internal(llvm_int_const_unwrap(lit), indent);
         case LLVM_FLOAT:
             return llvm_float_print_internal(llvm_float_const_unwrap(lit), indent);
         case LLVM_STRING:
@@ -79,7 +79,7 @@ Str_view llvm_function_call_print_internal(const Llvm_function_call* fun_call, i
     return string_to_strv(buf);
 }
 
-Str_view llvm_number_print_internal(const Llvm_number* num, int indent) {
+Str_view llvm_int_print_internal(const Llvm_int* num, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&print_arena, &buf, "number", indent);

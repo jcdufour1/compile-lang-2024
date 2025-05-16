@@ -498,8 +498,8 @@ bool util_try_uast_literal_new_from_strv(Uast_literal** new_lit, const Str_view 
             if (!try_str_view_to_int64_t(&raw,  pos, value)) {
                 return false;
             }
-            Uast_number* literal = uast_number_new(pos, raw);
-            *new_lit = uast_number_wrap(literal);
+            Uast_int* literal = uast_int_new(pos, raw);
+            *new_lit = uast_int_wrap(literal);
             break;
         }
         case TOKEN_FLOAT_LITERAL: {
@@ -549,9 +549,9 @@ Uast_literal* util_uast_literal_new_from_int64_t(int64_t value, TOKEN_TYPE token
 
     switch (token_type) {
         case TOKEN_INT_LITERAL: {
-            Uast_number* literal = uast_number_new(pos, value);
+            Uast_int* literal = uast_int_new(pos, value);
             literal->data = value;
-            new_literal = uast_number_wrap(literal);
+            new_literal = uast_int_wrap(literal);
             break;
         }
         case TOKEN_STRING_LITERAL:
@@ -580,7 +580,7 @@ Uast_literal* util_uast_literal_new_from_double(double value, Pos pos) {
     return lit;
 }
 
-Tast_literal* util_tast_literal_new_from_double(double value, TOKEN_TYPE token_type, Pos pos) {
+Tast_literal* util_tast_literal_new_from_double(double value, Pos pos) {
     return try_set_literal_types(util_uast_literal_new_from_double(value, pos));
 }
 

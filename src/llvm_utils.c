@@ -16,8 +16,8 @@ Lang_type llvm_operator_get_lang_type(const Llvm_operator* operator) {
 
 Lang_type llvm_literal_get_lang_type(const Llvm_literal* lit) {
     switch (lit->type) {
-        case LLVM_NUMBER:
-            return llvm_number_const_unwrap(lit)->lang_type;
+        case LLVM_INT:
+            return llvm_int_const_unwrap(lit)->lang_type;
         case LLVM_FLOAT:
             return llvm_float_const_unwrap(lit)->lang_type;
         case LLVM_STRING:
@@ -95,8 +95,8 @@ Lang_type llvm_get_lang_type(const Llvm* llvm) {
 
 Name llvm_literal_get_name(const Llvm_literal* lit) {
     switch (lit->type) {
-        case LLVM_NUMBER:
-            return llvm_number_const_unwrap(lit)->name;
+        case LLVM_INT:
+            return llvm_int_const_unwrap(lit)->name;
         case LLVM_FLOAT:
             return llvm_float_const_unwrap(lit)->name;
         case LLVM_STRING:

@@ -5,8 +5,8 @@
 #include <symbol_log.h>
 
 // TODO: cloning symbol may not always work correctly with nested scopes?
-Uast_number* uast_number_clone(const Uast_number* lit) {
-    return uast_number_new(lit->pos, lit->data);
+Uast_int* uast_int_clone(const Uast_int* lit) {
+    return uast_int_new(lit->pos, lit->data);
 }
 
 Uast_float* uast_float_clone(const Uast_float* lit) {
@@ -23,8 +23,8 @@ Uast_char* uast_char_clone(const Uast_char* lit) {
 
 Uast_literal* uast_literal_clone(const Uast_literal* lit) {
     switch (lit->type) {
-        case UAST_NUMBER:
-            return uast_number_wrap(uast_number_clone(uast_number_const_unwrap(lit)));
+        case UAST_INT:
+            return uast_int_wrap(uast_int_clone(uast_int_const_unwrap(lit)));
         case UAST_FLOAT:
             return uast_float_wrap(uast_float_clone(uast_float_const_unwrap(lit)));
         case UAST_STRING:
