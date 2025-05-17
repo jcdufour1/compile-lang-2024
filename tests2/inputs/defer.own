@@ -1,4 +1,4 @@
-
+type io import = std.io
 
 fn main() i32 {
     defer io.printf("thing 3\n")
