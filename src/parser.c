@@ -86,7 +86,7 @@ static bool prev_is_newline(void) {
 }
 
 // TODO: inline this function?
-static bool try_consume_internal(Token* result, Tk_view* tokens, bool allow_any_type, TOKEN_TYPE type) {
+static bool try_consume_internal(Token* result, Tk_view* tokens, bool allow_any_type, TOKEN_TYPE type, bool rm_newlines) {
     //log(LOG_DEBUG, "    start try_consume_internal\n");
     //log_tokens(LOG_DEBUG, *tokens);
     Token temp = {0};
@@ -101,31 +101,32 @@ static bool try_consume_internal(Token* result, Tk_view* tokens, bool allow_any_
     if (result) {
         *result = temp;
     }
-    if (can_end_stmt(prev_token)) {
-        while (try_consume_internal(NULL, tokens, false, TOKEN_SEMICOLON) || try_consume_internal(NULL, tokens, false, TOKEN_NEW_LINE));
+    if (rm_newlines && !can_end_stmt(prev_token)) {
+        while (try_consume_internal(NULL, tokens, false, TOKEN_SEMICOLON, false) || try_consume_internal(NULL, tokens, false, TOKEN_NEW_LINE, false));
     }
     return true;
 }
 
 static Token consume(Tk_view* tokens) {
     Token result = {0};
-    unwrap(try_consume_internal(&result, tokens, true, TOKEN_NONTYPE));
+    unwrap(try_consume_internal(&result, tokens, true, TOKEN_NONTYPE, true));
     return result;
 }
 
 // also will automatically remove semicolon and newline if present
 static bool try_consume(Token* result, Tk_view* tokens, TOKEN_TYPE type) {
-    //log(LOG_DEBUG, "start try_consume\n");
-    //log_tokens(LOG_DEBUG, *tokens);
-    bool did_consume = try_consume_internal(result, tokens, false, type);
-    return did_consume;
+    return try_consume_internal(result, tokens, false, type, true);
+}
+
+static bool try_consume_no_rm_newlines(Token* result, Tk_view* tokens, TOKEN_TYPE type) {
+    return try_consume_internal(result, tokens, false, type, false);
 }
 
 static bool try_consume_newlines(Tk_view* tokens) {
     Token dummy = {0};
     bool is_newline = false;
     if (can_end_stmt(tk_view_front(*tokens))) {
-        while (/* TODO: do semicolon this way as well */try_consume_internal(&dummy, tokens, false, TOKEN_NEW_LINE) || try_consume_internal(&dummy, tokens, false, TOKEN_SEMICOLON)) {
+        while (/* TODO: do semicolon this way as well */try_consume_internal(&dummy, tokens, false, TOKEN_NEW_LINE, false) || try_consume_internal(&dummy, tokens, false, TOKEN_SEMICOLON, false)) {
             is_newline = true;
         }
     }
@@ -423,23 +424,22 @@ static bool starts_with_array_literal(Tk_view tokens) {
 
 static void sync(Tk_view* tokens) {
     int bracket_depth = 0;
+    bool is_repeat = false;
     while (tokens->count > 0) {
         Token prev = {0};
         if (try_consume(&prev, tokens, TOKEN_OPEN_CURLY_BRACE)) {
             bracket_depth++;
-        } else if (tk_view_front(*tokens).type == TOKEN_CLOSE_CURLY_BRACE) {
+        } else if (try_consume(&prev, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
             if (bracket_depth == 0) {
                 return;
             }
-            consume(tokens);
             bracket_depth--;
-        } else {
-            if (!try_consume_if_not(&prev, tokens, TOKEN_EOF)) {
-                return;
-            }
+        } else if (is_repeat && !try_consume_if_not(&prev, tokens, TOKEN_EOF)) {
+            return;
         }
-        assert(token_is_equal(prev, prev_token) && "prev_token is not being updated properly");
+        //assert(token_is_equal(prev, prev_token) && "prev_token is not being updated properly");
         assert(bracket_depth >= 0);
+        is_repeat = true;
 
         if (!prev_is_newline() || bracket_depth != 0) {
             continue;
@@ -974,7 +974,7 @@ static PARSE_STATUS parse_function_decl_common(
 
     Token close_par_tk = {0};
     if (tokens->count > 0) {
-        if (!try_consume(&close_par_tk, tokens, TOKEN_CLOSE_PAR)) {
+        if (!try_consume_no_rm_newlines(&close_par_tk, tokens, TOKEN_CLOSE_PAR)) {
             unreachable("message not implemented\n");
         }
     }
@@ -1087,7 +1087,7 @@ static PARSE_STATUS parse_struct_base_def(
 
     bool done = false;
     while (!done && tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_CLOSE_CURLY_BRACE) {
-        Uast_variable_def* member;
+        Uast_variable_def* member = NULL;
         switch (parse_variable_def(&member, tokens, false, false, require_sub_types, default_lang_type, name.scope_id)) {
             case PARSE_ERROR:
                 return PARSE_ERROR;
@@ -1340,12 +1340,12 @@ static PARSE_STATUS parse_variable_def(
 
     try_consume_newlines(tokens);
     Token name_token = {0};
-    if (!try_consume(&name_token, tokens, TOKEN_SYMBOL)) {
+    if (!try_consume_no_rm_newlines(&name_token, tokens, TOKEN_SYMBOL)) {
         msg_parser_expected(tk_view_front(*tokens), "in variable definition", TOKEN_SYMBOL);
         assert(tokens->count > 0);
         return PARSE_ERROR;
     }
-    try_consume(NULL, tokens, TOKEN_COLON);
+    try_consume_no_rm_newlines(NULL, tokens, TOKEN_COLON);
 
     Ulang_type lang_type = {0};
     if (require_type) {
@@ -1956,6 +1956,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
         *child = lhs;
     }
 
+    try_consume_newlines(tokens);
     if (!prev_is_newline()) {
         msg(
             DIAG_NO_NEW_LINE_AFTER_STATEMENT, tk_view_front(*tokens).pos,
