@@ -80,6 +80,11 @@ static PARSE_EXPR_STATUS parse_generic_binary(
 );
 static bool is_unary(TOKEN_TYPE token_type);
 
+static bool prev_is_newline(void) {
+    log(LOG_DEBUG, "prev_is_newline: "TAST_FMT"\n", token_type_print(TOKEN_MODE_LOG, prev_token.type));
+    return prev_token.type == TOKEN_NEW_LINE || prev_token.type == TOKEN_SEMICOLON;
+}
+
 // TODO: inline this function?
 static bool try_consume_internal(Token* result, Tk_view* tokens, bool allow_any_type, TOKEN_TYPE type) {
     //log(LOG_DEBUG, "    start try_consume_internal\n");
@@ -96,6 +101,9 @@ static bool try_consume_internal(Token* result, Tk_view* tokens, bool allow_any_
     if (result) {
         *result = temp;
     }
+    if (can_end_stmt(prev_token)) {
+        while (try_consume_internal(NULL, tokens, false, TOKEN_SEMICOLON) || try_consume_internal(NULL, tokens, false, TOKEN_NEW_LINE));
+    }
     return true;
 }
 
@@ -109,10 +117,8 @@ static Token consume(Tk_view* tokens) {
 static bool try_consume(Token* result, Tk_view* tokens, TOKEN_TYPE type) {
     //log(LOG_DEBUG, "start try_consume\n");
     //log_tokens(LOG_DEBUG, *tokens);
-    if (!try_consume_internal(result, tokens, false, type)) {
-        return false;
-    }
-    return true;
+    bool did_consume = try_consume_internal(result, tokens, false, type);
+    return did_consume;
 }
 
 static bool try_consume_newlines(Tk_view* tokens) {
@@ -421,10 +427,11 @@ static void sync(Tk_view* tokens) {
         Token prev = {0};
         if (try_consume(&prev, tokens, TOKEN_OPEN_CURLY_BRACE)) {
             bracket_depth++;
-        } else if (try_consume(&prev, tokens, TOKEN_CLOSE_CURLY_BRACE)) {
+        } else if (tk_view_front(*tokens).type == TOKEN_CLOSE_CURLY_BRACE) {
             if (bracket_depth == 0) {
                 return;
             }
+            consume(tokens);
             bracket_depth--;
         } else {
             if (!try_consume_if_not(&prev, tokens, TOKEN_EOF)) {
@@ -434,7 +441,7 @@ static void sync(Tk_view* tokens) {
         assert(token_is_equal(prev, prev_token) && "prev_token is not being updated properly");
         assert(bracket_depth >= 0);
 
-        if (prev_token.type != TOKEN_NEW_LINE || bracket_depth != 0) {
+        if (!prev_is_newline() || bracket_depth != 0) {
             continue;
         }
 
@@ -981,6 +988,9 @@ static PARSE_STATUS parse_function_decl_common(
     if (!usymbol_add(uast_function_decl_wrap(*fun_decl))) {
         return msg_redefinition_of_symbol(uast_function_decl_wrap(*fun_decl));
     }
+
+    // nessessary because if return type in decl is any*, * is not considered to end stmt
+    try_consume_newlines(tokens);
 
     return PARSE_OK;
 }
@@ -1813,6 +1823,7 @@ static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Sco
         }
         
         Token case_start_token = {0};
+        // TODO: expected failure case no colon
         unwrap(try_consume(&case_start_token, tokens, TOKEN_COLON));
         switch (parse_stmt(&case_if_true, tokens, case_scope)) {
             case PARSE_EXPR_OK:
@@ -1836,6 +1847,8 @@ static PARSE_STATUS parse_switch(Uast_switch** lang_switch, Tk_view* tokens, Sco
     }
 
     *lang_switch = uast_switch_new(start_token.pos, operand, cases);
+    // TODO: expeced failure case no close brace
+    log_tokens(LOG_DEBUG, *tokens);
     unwrap(try_consume(NULL, tokens, TOKEN_CLOSE_CURLY_BRACE));
     return PARSE_OK;
 }
@@ -1943,10 +1956,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
         *child = lhs;
     }
 
-    // TODO: remvoe these standalone TOKEN_SEMICOLON and TOKEN_NEW_LINE removals (use try_consume_newlines instead)
-    try_consume(NULL, tokens, TOKEN_SEMICOLON);
-
-    if (!try_consume_newlines(tokens)) {
+    if (!prev_is_newline()) {
         msg(
             DIAG_NO_NEW_LINE_AFTER_STATEMENT, tk_view_front(*tokens).pos,
             "expected newline after statement\n"
