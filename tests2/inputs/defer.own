@@ -1,0 +1,9 @@
+
+
+fn main() i32 {
+    defer io.printf("thing 3\n")
+    defer io.printf("thing 2\n")
+    io.printf("thing 1\n")
+
+    return 0
+}

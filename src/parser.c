@@ -309,11 +309,19 @@ static bool starts_with_lang_def(Tk_view tokens) {
     return tk_view_front(tokens).type == TOKEN_DEF;
 }
 
+// TODO: remove if statement in below starts_with_* functions
 static bool starts_with_type_def(Tk_view tokens) {
     if (tokens.count < 1) {
         return false;
     }
     return tk_view_front(tokens).type == TOKEN_TYPE_DEF;
+}
+
+static bool starts_with_defer(Tk_view tokens) {
+    if (tokens.count < 1) {
+        return false;
+    }
+    return tk_view_front(tokens).type == TOKEN_DEFER;
 }
 
 static bool starts_with_function_decl(Tk_view tokens) {
@@ -591,6 +599,8 @@ static bool can_end_stmt(Token token) {
             return false;
         case TOKEN_MACRO:
             return true;
+        case TOKEN_DEFER:
+            return false;
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -732,6 +742,8 @@ static bool is_unary(TOKEN_TYPE token_type) {
         case TOKEN_ASSIGN_BY_BIN:
             return false;
         case TOKEN_MACRO:
+            return false;
+        case TOKEN_DEFER:
             return false;
         case TOKEN_COUNT:
             unreachable("");
@@ -1533,6 +1545,26 @@ static Uast_continue* parse_continue(Tk_view* tokens) {
     return cont_stmt;
 }
 
+static PARSE_STATUS parse_defer(Uast_defer** defer, Tk_view* tokens, Scope_id scope_id) {
+    // TODO: expected failure case for return in defer block
+    Token defer_tk = {0};
+    unwrap(try_consume(&defer_tk, tokens, TOKEN_DEFER));
+    Uast_stmt* child = NULL;
+    switch (parse_stmt(&child, tokens, scope_id)) {
+        case PARSE_EXPR_OK:
+            break;
+        case PARSE_EXPR_NONE:
+            msg_expected_expr(*tokens, "after `defer`");
+            return PARSE_ERROR;
+        case PARSE_EXPR_ERROR:
+            return PARSE_ERROR;
+        default:
+            unreachable("");
+    }
+    *defer = uast_defer_new(defer_tk.pos, child);
+    return PARSE_OK;
+}
+
 static PARSE_STATUS parse_function_decl(Uast_function_decl** fun_decl, Tk_view* tokens) {
     PARSE_STATUS status = PARSE_ERROR;
 
@@ -1864,6 +1896,12 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_def_wrap(fun_decl);
+    } else if (starts_with_defer(*tokens)) {
+        Uast_defer* fun_decl;
+        if (PARSE_OK != parse_defer(&fun_decl, tokens, scope_id)) {
+            return PARSE_EXPR_ERROR;
+        }
+        lhs = uast_defer_wrap(fun_decl);
     } else if (starts_with_function_decl(*tokens)) {
         Uast_function_decl* fun_decl;
         if (PARSE_OK != parse_function_decl(&fun_decl, tokens)) {
@@ -2444,7 +2482,7 @@ static PARSE_STATUS parse_expr_generic(
 //    parse_bitwise_and
 //};
 
-static_assert(TOKEN_COUNT == 67, "exhausive handling of token types; note that only binary operators need to be explicitly handled here");
+static_assert(TOKEN_COUNT == 68, "exhausive handling of token types; note that only binary operators need to be explicitly handled here");
 // lower precedence operators are in earlier rows in the table
 static const TOKEN_TYPE BIN_IDX_TO_TOKEN_TYPES[][4] = {
     // {bin_type_1, bin_type_2, bin_type_3, bin_type_4},

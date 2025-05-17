@@ -308,6 +308,14 @@ static Uast_type uast_gen_macro(const char* prefix) {
     return lit;
 }
 
+static Uast_type uast_gen_defer(const char* prefix) {
+    Uast_type lit = {.name = uast_name_new(prefix, "defer", false)};
+
+    append_member(&lit.members, "Uast_stmt*", "child");
+
+    return lit;
+}
+
 static Uast_type uast_gen_enum_access(const char* prefix) {
     const char* base_name = "enum_access";
     Uast_type lit = {.name = uast_name_new(prefix, base_name, false)};
@@ -586,6 +594,7 @@ static Uast_type uast_gen_stmt(const char* prefix) {
     const char* base_name = "stmt";
     Uast_type stmt = {.name = uast_name_new(prefix, base_name, false)};
 
+    vec_append(&gen_a, &stmt.sub_types, uast_gen_defer(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_label(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_block(base_name));
     vec_append(&gen_a, &stmt.sub_types, uast_gen_expr(base_name));

@@ -138,6 +138,8 @@ Str_view token_type_to_str_view_msg(TOKEN_TYPE token_type) {
             return str_view_from_cstr("assign-by-binary");
         case TOKEN_MACRO:
             return str_view_from_cstr("#");
+        case TOKEN_DEFER:
+            return str_view_from_cstr("defer");
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -280,6 +282,8 @@ Str_view token_type_to_str_view_log(TOKEN_TYPE token_type) {
             return str_view_from_cstr("assign-by-binary");
         case TOKEN_MACRO:
             return str_view_from_cstr("#");
+        case TOKEN_DEFER:
+            return str_view_from_cstr("defer");
         case TOKEN_COUNT:
             unreachable("");
     }
@@ -302,7 +306,7 @@ Str_view token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
     }
 
     // add token text
-    static_assert(TOKEN_COUNT == 67, "exhausive handling of token types");
+    static_assert(TOKEN_COUNT == 68, "exhausive handling of token types");
     switch (token.type) {
         case TOKEN_SYMBOL:
             vec_append(arena, &buf, '(');
@@ -368,6 +372,7 @@ Str_view token_print_internal(Arena* arena, TOKEN_MODE mode, Token token) {
         case TOKEN_DEF: // fallthrough
         case TOKEN_EOF: // fallthrough
         case TOKEN_TYPE_DEF: // fallthrough
+        case TOKEN_DEFER: // fallthrough
         case TOKEN_ASSIGN_BY_BIN:
             break;
         case TOKEN_MACRO: 

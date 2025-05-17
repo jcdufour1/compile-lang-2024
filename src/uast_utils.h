@@ -55,6 +55,8 @@ static inline Ulang_type uast_get_ulang_type_stmt(const Uast_stmt* stmt) {
             unreachable("");
         case UAST_LABEL:
             unreachable("");
+        case UAST_DEFER:
+            unreachable("");
     }
     unreachable("");
 }
@@ -131,6 +133,8 @@ static inline Lang_type* uast_get_ulang_type_ref_stmt(Uast_stmt* stmt) {
             unreachable("");
         case UAST_LABEL:
             unreachable("");
+        case UAST_DEFER:
+            unreachable("");
     }
     unreachable("");
 }
@@ -156,6 +160,8 @@ static inline bool uast_stmt_get_lang_type(Lang_type* result, const Uast_stmt* s
         case UAST_ASSIGNMENT:
             unreachable("");
         case UAST_LABEL:
+            unreachable("");
+        case UAST_DEFER:
             unreachable("");
     }
     unreachable("");
@@ -232,6 +238,8 @@ static inline Lang_type* uast_ref_stmt_get_lang_type(Uast_stmt* stmt) {
         case UAST_ASSIGNMENT:
             unreachable("");
         case UAST_LABEL:
+            unreachable("");
+        case UAST_DEFER:
             unreachable("");
     }
     unreachable("");
