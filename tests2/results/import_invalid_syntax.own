@@ -1,20 +1,21 @@
 compile::stdout 0
 
-compile::stderr 23
-./tests2/inputs/import_invalid_syntax.own:1:22:[1;31merror[0;39m:got token `newline`, but expected `symbol` after . in module path
+compile::stderr 24
+./tests2/inputs/import_invalid_syntax.own:2:1:[1;31merror[0;39m:got token `type`, but expected `symbol` after . in module path
      1 | type io import = std.
-       |                      ^
      2 | type io import = .io 
+       | ^
+     3 | type io import = 
 ./tests2/inputs/import_invalid_syntax.own:2:18:[1;31merror[0;39m:got token `.`, but expected `symbol` after =
      1 | type io import = std.
      2 | type io import = .io 
        |                  ^
      3 | type io import = 
-./tests2/inputs/import_invalid_syntax.own:3:18:[1;31merror[0;39m:got token `newline`, but expected `symbol` after =
-     2 | type io import = .io 
+./tests2/inputs/import_invalid_syntax.own:4:1:[1;31merror[0;39m:got token `type`, but expected `symbol` after =
      3 | type io import = 
-       |                  ^
      4 | type io import std.io 
+       | ^
+     5 | type io import std
 ./tests2/inputs/import_invalid_syntax.own:4:16:[1;31merror[0;39m:got token `symbol(std)`, but expected `=` after `import`
      3 | type io import = 
      4 | type io import std.io 
