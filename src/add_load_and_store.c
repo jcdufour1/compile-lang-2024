@@ -142,7 +142,6 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
     }
 
     for (size_t idx = 0; idx < children.info.count; idx++) {
-        log(LOG_DEBUG, TAST_FMT, tast_stmt_print(vec_at(&children, idx)));
         load_stmt(new_block, vec_at(&children, idx), false);
     }
     Defer_pair_vec* pairs = &vec_top_ref(&env.defered_collections)->pairs;
@@ -159,6 +158,7 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
             todo();
         }
     }
+    todo();
 
     if (parent_of == DEFER_PARENT_OF_FUN) {
         env.rtn_def = old_rtn_def;
