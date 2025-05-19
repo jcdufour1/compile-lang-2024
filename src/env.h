@@ -51,7 +51,6 @@ typedef struct {
     Defer_pair_vec pairs;
     DEFER_PARENT_OF parent_of;
     Tast_expr* rtn_val;
-    Scope_id scope_id;
 } Defer_collection;
 
 // stack of scope defered statements
@@ -117,7 +116,6 @@ typedef struct Env_ {
     // in load_block_stmts
     Tast_variable_def* rtn_def;
     Defer_collection_vec defered_collections;
-    Tast_variable_def* scope_that_broke;
 } Env;
 
 #endif // ENV_H
