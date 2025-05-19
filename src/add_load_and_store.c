@@ -91,11 +91,15 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
             // so that we can know when to stop jumping to defered statements
             // when return, etc. is called, env.scope_that_broke is set to the outermost scope that we need to break out of
             old_scope_that_broke = env.scope_that_broke;
+            String scope_that_broke_name = {0};
+            string_extend_cstr(&a_main, &scope_that_broke_name, "scope_that_broke_s");
+            string_extend_size_t(&a_main, &scope_that_broke_name, scope_id);
+            string_extend_cstr(&a_main, &scope_that_broke_name, "____");
             env.scope_that_broke = tast_variable_def_new(
                 pos,
                 lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(pos, 64/* TODO*/, 0))),
                 false,
-                util_literal_name_new_prefix2(str_view_from_cstr("scope_that_broke"))
+                util_literal_name_new_prefix2(string_to_strv(scope_that_broke_name))
             );
             unwrap(symbol_add(tast_variable_def_wrap(env.scope_that_broke)));
             load_variable_def(new_block, env.scope_that_broke);
@@ -103,7 +107,7 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
             old_rtn_def = env.rtn_def;
             env.rtn_def = local_rtn_def;
 
-            Tast_return* actual_rtn = tast_return_new(pos /* TODO*/, rtn_val, true);
+            Tast_return* actual_rtn = tast_return_new(pos /* TODO*/, rtn_val, true, true);
             defer = tast_defer_new(pos, tast_return_wrap(actual_rtn));
             break;
         }
@@ -1451,9 +1455,10 @@ static Name load_return(Llvm_block* new_block, Tast_return* old_return, bool def
             lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
         ));
 
-        if (defer_is_pres) {
+        if (true) {
+            todo();
             Tast_stmt_vec stmts = {0};
-            vec_append(&a_main, &stmts, tast_return_wrap(tast_return_new(pos, tast_symbol_wrap(tast_symbol_new_from_variable_def(pos, env.rtn_def)), false)));
+            vec_append(&a_main, &stmts, tast_return_wrap(tast_return_new(pos, tast_symbol_wrap(tast_symbol_new_from_variable_def(pos, env.rtn_def)), false, true)));
             Tast_block* body = tast_block_new(pos, stmts, pos, u1_lang_type/* TODO */, symbol_collection_new(scope_id));
 
             Tast_if_vec ifs = {0};
@@ -1915,12 +1920,12 @@ static void load_stmt(Llvm_block* new_block, bool* defer_is_pres, Tast_stmt* old
             load_def(new_block, tast_def_unwrap(old_stmt));
             return;
         case TAST_RETURN: {
-            if (is_defered) {
+            if (tast_return_unwrap(old_stmt)->generated_by_defer || is_defered) {
                 load_return(new_block, tast_return_unwrap(old_stmt), *defer_is_pres);
                 return;
             }
 
-            Defer_collection coll = vec_top(&env.defered_collections);
+            //Defer_collection coll = vec_top(&env.defered_collections);
 
             log(LOG_DEBUG, TAST_FMT, tast_variable_def_print(env.rtn_def));
             Tast_return* rtn = tast_return_unwrap(old_stmt);
@@ -1936,11 +1941,6 @@ static void load_stmt(Llvm_block* new_block, bool* defer_is_pres, Tast_stmt* old
                 load_assignment(new_block, new_assign);
             }
 
-            Defer_pair_vec* pairs = &vec_top_ref(&env.defered_collections)->pairs;
-            if (pairs->info.count > 0) {
-                Llvm_goto* new_goto = llvm_goto_new(rtn->pos, vec_top(pairs).label->name);
-                vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
-            }
             // TODO: make usize a global thing
             Lang_type usize = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(tast_stmt_get_pos(old_stmt), 64/* TODO*/, 0)));
             Tast_assignment* scope_assign = tast_assignment_new(
@@ -1953,8 +1953,15 @@ static void load_stmt(Llvm_block* new_block, bool* defer_is_pres, Tast_stmt* old
             );
             load_assignment(new_block, scope_assign);
 
+            Defer_pair_vec* pairs = &vec_top_ref(&env.defered_collections)->pairs;
+            if (pairs->info.count > 0) {
+                Llvm_goto* new_goto = llvm_goto_new(rtn->pos, vec_top(pairs).label->name);
+                vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
+            }
+
+            Tast_return* new_rtn = tast_return_new(rtn->pos, rtn->child, rtn->is_auto_inserted, true);
             vec_append(&a_main, pairs, ((Defer_pair) {
-                tast_defer_new(rtn->pos, tast_return_wrap(rtn)),
+                tast_defer_new(rtn->pos, tast_return_wrap(new_rtn)),
                 tast_label_new(rtn->pos, util_literal_name_new2())
             }));
             return;
@@ -2026,9 +2033,13 @@ static void load_stmt(Llvm_block* new_block, bool* defer_is_pres, Tast_stmt* old
             *defer_is_pres = true;
             Defer_pair_vec* pairs = &vec_top_ref(&env.defered_collections)->pairs;
             Tast_defer* defer = tast_defer_unwrap(old_stmt);
+            String scope_that_broke_name = {0};
+            string_extend_cstr(&a_main, &scope_that_broke_name, "defer_label_for_s");
+            string_extend_size_t(&a_main, &scope_that_broke_name, new_block->scope_id);
+            string_extend_cstr(&a_main, &scope_that_broke_name, "____");
             vec_append(&a_main, pairs, ((Defer_pair) {
                 defer,
-                tast_label_new(defer->pos, util_literal_name_new2())
+                tast_label_new(defer->pos, util_literal_name_new_prefix2(string_to_strv(scope_that_broke_name)))
             }));
             return;
         }
