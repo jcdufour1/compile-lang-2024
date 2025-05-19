@@ -149,6 +149,7 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
         Defer_pair_vec dummy_stmts = {0};
         Defer_pair pair = vec_top(pairs);
         load_label(new_block, pair.label);
+        log(LOG_DEBUG, TAST_FMT, tast_stmt_print(pair.defer->child));
         load_stmt(new_block, pair.defer->child, true);
         vec_rem_last(pairs);
         if (dummy_stmts.info.count > 0) {
@@ -157,6 +158,7 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
             todo();
         }
     }
+    todo();
 
     if (parent_of == DEFER_PARENT_OF_FUN) {
         env.rtn_def = old_rtn_def;
@@ -1441,6 +1443,7 @@ static Name load_return(Llvm_block* new_block, Tast_return* old_return) {
         vec_append(&a_main, &new_block->children, llvm_return_wrap(new_return));
     } else {
         Name result = load_expr(new_block, old_return->child);
+
         Llvm_return* new_return = llvm_return_new(
             pos,
             result,
@@ -1887,12 +1890,13 @@ static void load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt, bool is_defere
 
             Defer_collection coll = vec_top(&env.defered_collections);
 
+            log(LOG_DEBUG, TAST_FMT, tast_variable_def_print(env.rtn_def));
             Tast_return* rtn = tast_return_unwrap(old_stmt);
-            if (tast_expr_get_lang_type(coll.rtn_val).type != LANG_TYPE_VOID) {
+            if (env.rtn_def->lang_type.type != LANG_TYPE_VOID) {
                 Tast_assignment* new_assign = tast_assignment_new(
                     tast_stmt_get_pos(old_stmt),
                     tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
-                        .lang_type = tast_expr_get_lang_type(coll.rtn_val), .name = tast_expr_get_name(coll.rtn_val)
+                        .lang_type = env.rtn_def->lang_type, .name = env.rtn_def->name
                     })),
                     rtn->child
                 );
@@ -1916,6 +1920,11 @@ static void load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt, bool is_defere
                 tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), vec_top_ref(&env.defered_collections)->scope_id, usize)))
             );
             load_assignment(new_block, scope_assign);
+
+            vec_append(&a_main, pairs, ((Defer_pair) {
+                tast_defer_new(rtn->pos, tast_return_wrap(rtn)),
+                tast_label_new(rtn->pos, util_literal_name_new2())
+            }));
             return;
         }
         case TAST_FOR_WITH_COND:

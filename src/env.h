@@ -115,7 +115,7 @@ typedef struct Env_ {
     C_forward_struct_tbl c_forward_struct_tbl;
 
     // in load_block_stmts
-    Tast_variable_def* rtn_def;
+    Tast_variable_def* rtn_def; // is rtn_def for return value only?
     Defer_collection_vec defered_collections;
     Tast_variable_def* scope_that_broke;
 } Env;
