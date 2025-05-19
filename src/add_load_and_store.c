@@ -14,24 +14,6 @@
 
 // TODO: remove serialize functions in this file
 
-typedef struct {
-    Tast_defer* defer;
-    Tast_label* label;
-} Defer_coll;
-
-typedef struct {
-    Vec_base info;
-    Defer_coll* buf;
-} Defer_coll_vec;
-
-typedef enum {
-    DEFER_PARENT_OF_FUN,
-    DEFER_PARENT_OF_FOR,
-    DEFER_PARENT_OF_IF,
-    DEFER_PARENT_OF_BLOCK,
-    DEFER_PARENT_OF_TOP_LEVEL,
-} DEFER_PARENT_OF;
-
 // forward declarations
 
 static Lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos);
@@ -65,7 +47,7 @@ static Name load_expr(Llvm_block* new_block, Tast_expr* old_expr);
 
 static Name load_ptr_expr(Llvm_block* new_block, Tast_expr* old_expr);
 
-static void load_stmt(Llvm_block* new_block, Defer_coll_vec* defered_stmts, Tast_stmt* old_stmt, Name rtn_val, bool is_defered);
+static void load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt, Name rtn_val, bool is_defered);
 
 static Name load_operator(Llvm_block* new_block, Tast_operator* old_oper);
 
@@ -88,19 +70,23 @@ static Tast_symbol* tast_symbol_new_from_variable_def(Pos pos, const Tast_variab
 
 static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFER_PARENT_OF parent_of, Pos pos, Lang_type lang_type) {
     // TODO: avoid making this def on LANG_TYPE_VOID?
-    Tast_variable_def* rtn_def = tast_variable_def_new(pos, lang_type, false, util_literal_name_new_prefix2(str_view_from_cstr("rtn_val")));
+    Tast_variable_def* local_rtn_def = tast_variable_def_new(pos, lang_type, false, util_literal_name_new_prefix2(str_view_from_cstr("rtn_val")));
     Tast_expr* rtn_val = {0};
+
     if (lang_type.type == LANG_TYPE_VOID) {
         log(LOG_DEBUG, "yield is void\n");
         rtn_val = tast_literal_wrap(tast_void_wrap(tast_void_new(pos)));
     } else {
         log(LOG_DEBUG, "yield is non void\n");
-        rtn_val = tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {.lang_type = lang_type, .name = rtn_def->name}));
+        rtn_val = tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {.lang_type = lang_type, .name = local_rtn_def->name}));
     }
     Tast_defer* defer = NULL;
-    Defer_coll_vec defered_stmts = {0};
+    Tast_variable_def* old_rtn_def = NULL;
     switch (parent_of) {
         case DEFER_PARENT_OF_FUN: {
+            old_rtn_def = env.rtn_def;
+            env.rtn_def = local_rtn_def;
+
             Tast_return* actual_rtn = tast_return_new(pos /* TODO*/, rtn_val, true);
             defer = tast_defer_new(pos, tast_return_wrap(actual_rtn));
             break;
@@ -115,42 +101,48 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
         case DEFER_PARENT_OF_BLOCK:
             todo();
         case DEFER_PARENT_OF_TOP_LEVEL: {
-            Defer_coll_vec defered_stmts = {0};
             for (size_t idx = 0; idx < children.info.count; idx++) {
-                load_stmt(new_block, &defered_stmts, vec_at(&children, idx), (Name) {0}, false);
+                load_stmt(new_block, vec_at(&children, idx), (Name) {0}, false);
             }
-            assert(defered_stmts.info.count < 1 && "this should have been caught earlier");
+            //assert(vec_top(&env.defered_collections).pairs.info.count < 1 && "this should have been caught in the type checking pass");
             return;
         }
         default:
             todo();
     }
+    vec_append(&a_main, &env.defered_collections, ((Defer_collection) {.pairs = (Defer_pair_vec) {0}, .parent_of = parent_of}));
 
-    vec_append(&a_main, &defered_stmts, ((Defer_coll) {
+    vec_append(&a_main, &vec_top_ref(&env.defered_collections)->pairs, ((Defer_pair) {
         defer,
         tast_label_new(defer->pos, util_literal_name_new2())
     }));
 
     if (lang_type.type != LANG_TYPE_VOID) {
-        unwrap(symbol_add(tast_variable_def_wrap(rtn_def)));
-        load_variable_def(new_block, rtn_def);
+        unwrap(symbol_add(tast_variable_def_wrap(local_rtn_def)));
+        load_variable_def(new_block, local_rtn_def);
     }
 
     for (size_t idx = 0; idx < children.info.count; idx++) {
-        load_stmt(new_block, &defered_stmts, vec_at(&children, idx), rtn_def->name, false);
+        load_stmt(new_block, vec_at(&children, idx), local_rtn_def->name, false);
     }
-    while (defered_stmts.info.count > 0) {
-        Defer_coll_vec dummy_stmts = {0};
-        //log(LOG_DEBUG, TAST_FMT, tast_stmt_print(vec_at(&defered_stmts, defered_stmts.info.count - 1)));
-        load_label(new_block, vec_at(&defered_stmts, defered_stmts.info.count - 1).label);
-        load_stmt(new_block, &dummy_stmts, vec_at(&defered_stmts, defered_stmts.info.count - 1).defer->child, (Name) {0}, true);
-        vec_rem_last(&defered_stmts);
+    Defer_pair_vec* pairs = &vec_top_ref(&env.defered_collections)->pairs;
+    while (pairs->info.count > 0) {
+        Defer_pair_vec dummy_stmts = {0};
+        Defer_pair pair = vec_top(pairs);
+        load_label(new_block, pair.label);
+        load_stmt(new_block, pair.defer->child, (Name) {0}, true);
+        vec_rem_last(pairs);
         if (dummy_stmts.info.count > 0) {
             // `defer defer` used
             // TODO: expected failure test
             todo();
         }
     }
+
+    if (parent_of == DEFER_PARENT_OF_FUN) {
+        env.rtn_def = old_rtn_def;
+    }
+    vec_rem_last(&env.defered_collections);
 }
 
 static Lang_type_struct rm_tuple_lang_type_tuple(Lang_type_tuple lang_type, Pos lang_type_pos) {
@@ -1859,7 +1851,7 @@ static Name load_def(Llvm_block* new_block, Tast_def* old_def) {
     unreachable("");
 }
 
-static void load_stmt(Llvm_block* new_block, Defer_coll_vec* defered_stmts, Tast_stmt* old_stmt, Name rtn_val, bool is_defered) {
+static void load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt, Name rtn_val, bool is_defered) {
     switch (old_stmt->type) {
         case TAST_EXPR:
             load_expr(new_block, tast_expr_unwrap(old_stmt));
@@ -1879,15 +1871,17 @@ static void load_stmt(Llvm_block* new_block, Defer_coll_vec* defered_stmts, Tast
                 Tast_assignment* new_assign = tast_assignment_new(
                     rtn->pos,
                     tast_symbol_wrap(tast_symbol_new(rtn->pos, (Sym_typed_base) {
-                        .lang_type = tast_expr_get_lang_type(rtn->child), .name = rtn_val
+                        .lang_type = tast_expr_get_lang_type(rtn->child), .name = env.rtn_def->name
                     })),
                     rtn->child
                 );
                 log(LOG_DEBUG, TAST_FMT, tast_assignment_print(new_assign));
                 load_assignment(new_block, new_assign);
             }
-            if (defered_stmts->info.count > 0) {
-                Llvm_goto* new_goto = llvm_goto_new(rtn->pos, vec_top(defered_stmts).label->name);
+
+            Defer_pair_vec* pairs = &vec_top_ref(&env.defered_collections)->pairs;
+            if (pairs->info.count > 0) {
+                Llvm_goto* new_goto = llvm_goto_new(rtn->pos, vec_top(pairs).label->name);
                 vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
             }
             return;
@@ -1915,8 +1909,9 @@ static void load_stmt(Llvm_block* new_block, Defer_coll_vec* defered_stmts, Tast
                 log(LOG_DEBUG, TAST_FMT, tast_assignment_print(new_assign));
                 load_assignment(new_block, new_assign);
             }
-            if (defered_stmts->info.count > 0) {
-                Llvm_goto* new_goto = llvm_goto_new(brk->pos, vec_top(defered_stmts).label->name);
+            Defer_pair_vec* pairs = &vec_top_ref(&env.defered_collections)->pairs;
+            if (pairs->info.count > 0) {
+                Llvm_goto* new_goto = llvm_goto_new(brk->pos, vec_top(pairs).label->name);
                 vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
             }
             return;
@@ -1934,8 +1929,9 @@ static void load_stmt(Llvm_block* new_block, Defer_coll_vec* defered_stmts, Tast
             load_label(new_block, tast_label_unwrap(old_stmt));
             return;
         case TAST_DEFER: {
+            Defer_pair_vec* pairs = &vec_top_ref(&env.defered_collections)->pairs;
             Tast_defer* defer = tast_defer_unwrap(old_stmt);
-            vec_append(&a_main, defered_stmts, ((Defer_coll) {
+            vec_append(&a_main, pairs, ((Defer_pair) {
                 defer,
                 tast_label_new(defer->pos, util_literal_name_new2())
             }));

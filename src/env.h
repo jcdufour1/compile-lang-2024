@@ -26,6 +26,38 @@ typedef enum {
     PARENT_OF_IF,
 } PARENT_OF;
 
+typedef enum {
+    DEFER_PARENT_OF_FUN,
+    DEFER_PARENT_OF_FOR,
+    DEFER_PARENT_OF_IF,
+    DEFER_PARENT_OF_BLOCK,
+    DEFER_PARENT_OF_TOP_LEVEL,
+} DEFER_PARENT_OF;
+
+// a defered statement
+typedef struct {
+    Tast_defer* defer;
+    Tast_label* label;
+} Defer_pair;
+
+// all defered statements in one scope
+typedef struct {
+    Vec_base info;
+    Defer_pair* buf;
+} Defer_pair_vec;
+
+// all defered statements and parent_of
+typedef struct {
+    Defer_pair_vec pairs;
+    DEFER_PARENT_OF parent_of;
+} Defer_collection;
+
+// stack of scope defered statements
+typedef struct {
+    Vec_base info;
+    Defer_collection* buf;
+} Defer_collection_vec;
+
 // TODO: separate Env for different passes
 typedef struct Env_ {
     Scope_id_vec scope_id_to_parent;
@@ -79,6 +111,10 @@ typedef struct Env_ {
 
     // this is used to define additional structs to get around the requirement of in order definitions in c
     C_forward_struct_tbl c_forward_struct_tbl;
+
+    // in load_block_stmts
+    Tast_variable_def* rtn_def;
+    Defer_collection_vec defered_collections;
 } Env;
 
 #endif // ENV_H
