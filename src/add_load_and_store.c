@@ -41,11 +41,43 @@ static Name load_ptr_symbol(
     Tast_symbol* old_sym
 );
 
+static Llvm_block* load_block(Tast_block* old_block);
+
+static Name load_expr(Llvm_block* new_block, Tast_expr* old_expr);
+
+static Name load_ptr_expr(Llvm_block* new_block, Tast_expr* old_expr);
+
+static Name load_stmt(Llvm_block* new_block, Tast_stmt_vec* defered_stmts, Tast_stmt* old_stmt);
+
+static Name load_operator(Llvm_block* new_block, Tast_operator* old_oper);
+
+static Name load_variable_def(Llvm_block* new_block, Tast_variable_def* old_var_def);
+
+static Name load_if_else_chain(Llvm_block* new_block, Tast_if_else_chain* old_if_else);
+
 static Tast_symbol* tast_symbol_new_from_variable_def(Pos pos, const Tast_variable_def* def) {
     return tast_symbol_new(
         pos,
         (Sym_typed_base) {.lang_type = def->lang_type, .name = def->name}
     );
+}
+
+static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children) {
+    Tast_stmt_vec defered_stmts = {0};
+    for (size_t idx = 0; idx < children.info.count; idx++) {
+        load_stmt(new_block, &defered_stmts, vec_at(&children, idx));
+    }
+    while (defered_stmts.info.count > 0) {
+        Tast_stmt_vec dummy_stmts = {0};
+        log(LOG_DEBUG, TAST_FMT, tast_stmt_print(vec_at(&defered_stmts, defered_stmts.info.count - 1)));
+        load_stmt(new_block, &dummy_stmts, vec_at(&defered_stmts, defered_stmts.info.count - 1));
+        vec_rem_last(&defered_stmts);
+        if (dummy_stmts.info.count > 0) {
+            // `defer defer` used
+            // TODO: expected failure test
+            todo();
+        }
+    }
 }
 
 static Lang_type_struct rm_tuple_lang_type_tuple(Lang_type_tuple lang_type, Pos lang_type_pos) {
@@ -352,20 +384,6 @@ static Llvm_function_params* do_function_def_alloca(
 
     return new_params;
 }
-
-static Llvm_block* load_block(Tast_block* old_block);
-
-static Name load_expr(Llvm_block* new_block, Tast_expr* old_expr);
-
-static Name load_ptr_expr(Llvm_block* new_block, Tast_expr* old_expr);
-
-static Name load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt);
-
-static Name load_operator(Llvm_block* new_block, Tast_operator* old_oper);
-
-static Name load_variable_def(Llvm_block* new_block, Tast_variable_def* old_var_def);
-
-static Name load_if_else_chain(Llvm_block* new_block, Tast_if_else_chain* old_if_else);
 
 static void add_label(Llvm_block* block, Name label_name, Pos pos) {
     Llvm_label* label = llvm_label_new(pos, label_name);
@@ -1278,9 +1296,7 @@ static Name load_function_def(Tast_function_def* old_fun_def) {
          new_fun_def->body, &new_lang_type, rm_tuple_lang_type(old_fun_def->decl->return_type, old_fun_def->pos), old_fun_def->decl->params
     );
     new_fun_def->decl->return_type = new_lang_type;
-    for (size_t idx = 0; idx < old_fun_def->body->children.info.count; idx++) {
-        load_stmt(new_fun_def->body, vec_at(&old_fun_def->body->children, idx));
-    }
+    load_block_stmts(new_fun_def->body, old_fun_def->body->children);
 
     unwrap(alloca_add(llvm_def_wrap(llvm_function_def_wrap(new_fun_def))));
     env.name_parent_fn = old_fun_name;
@@ -1563,10 +1579,7 @@ static Llvm_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
 
     add_label(new_branch_block, after_check_label, pos);
 
-    for (size_t idx = 0; idx < old_for->body->children.info.count; idx++) {
-        load_stmt(new_branch_block, vec_at(&old_for->body->children, idx));
-    }
-
+    load_block_stmts(new_branch_block, old_for->body->children);
     vec_append(&a_main, &new_branch_block->children, llvm_goto_wrap(
         llvm_goto_new(old_for->pos, check_cond_label)
     ));
@@ -1764,7 +1777,7 @@ static Name load_def(Llvm_block* new_block, Tast_def* old_def) {
     unreachable("");
 }
 
-static Name load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt) {
+static Name load_stmt(Llvm_block* new_block, Tast_stmt_vec* defered_stmts, Tast_stmt* old_stmt) {
     switch (old_stmt->type) {
         case TAST_EXPR:
             return load_expr(new_block, tast_expr_unwrap(old_stmt));
@@ -1790,6 +1803,9 @@ static Name load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt) {
             return (Name) {0};
         case TAST_LABEL:
             load_label(new_block, tast_label_unwrap(old_stmt));
+            return (Name) {0};
+        case TAST_DEFER:
+            vec_append(&a_main, defered_stmts, tast_defer_unwrap(old_stmt)->child);
             return (Name) {0};
     }
     unreachable("");
@@ -1834,9 +1850,7 @@ static Llvm_block* load_block(Tast_block* old_block) {
         load_def_sometimes(curr);
     }
 
-    for (size_t idx = 0; idx < old_block->children.info.count; idx++) {
-        load_stmt(new_block, vec_at(&old_block->children, idx));
-    }
+    load_block_stmts(new_block, old_block->children);
 
     return new_block;
 }

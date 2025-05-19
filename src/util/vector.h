@@ -95,6 +95,7 @@ typedef struct {
 #define vec_top(vector) \
     (vec_at((vector), (vector)->info.count - 1))
 
+// TODO: try to "return" popped_item as "return value"
 #define vec_pop(popped_item, vector) \
     do { \
         (popped_item) = vec_top(vector); \
