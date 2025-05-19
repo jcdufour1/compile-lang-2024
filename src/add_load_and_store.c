@@ -91,8 +91,10 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
     Tast_variable_def* rtn_def = tast_variable_def_new(pos, lang_type, false, util_literal_name_new_prefix2(str_view_from_cstr("rtn_val")));
     Tast_expr* rtn_val = {0};
     if (lang_type.type == LANG_TYPE_VOID) {
+        log(LOG_DEBUG, "yield is void\n");
         rtn_val = tast_literal_wrap(tast_void_wrap(tast_void_new(pos)));
     } else {
+        log(LOG_DEBUG, "yield is non void\n");
         rtn_val = tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {.lang_type = lang_type, .name = rtn_def->name}));
     }
     Tast_defer* defer = NULL;
@@ -105,12 +107,11 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
         }
         case DEFER_PARENT_OF_FOR:
             todo();
-        case DEFER_PARENT_OF_IF:
-            todo();
-            if (env.label_if_break.base.count > 0) {
-                Tast_break* actual_brk = tast_break_new(pos /* TODO*/, true, rtn_val);
-                load_break(new_block, actual_brk);
-            }
+        case DEFER_PARENT_OF_IF: {
+            Tast_break* actual_brk = tast_break_new(pos /* TODO*/, true, rtn_val);
+            defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
+            break;
+        }
         case DEFER_PARENT_OF_BLOCK:
             todo();
         case DEFER_PARENT_OF_TOP_LEVEL: {
@@ -783,6 +784,7 @@ static Name load_ptr_symbol(Llvm_block* new_block, Tast_symbol* old_sym) {
     (void) new_block;
 
     Tast_def* var_def_ = NULL;
+    log(LOG_DEBUG, TAST_FMT, tast_symbol_print(old_sym));
     unwrap(symbol_lookup(&var_def_, old_sym->base.name));
     Llvm_variable_def* var_def = load_variable_def_clone(tast_variable_def_unwrap(var_def_));
     Llvm* alloca = NULL;
@@ -1671,14 +1673,22 @@ static void load_for_with_cond(Llvm_block* new_block, Tast_for_with_cond* old_fo
 
 static void load_break(Llvm_block* new_block, Tast_break* old_break) {
     if (env.label_if_break.base.count < 1) {
-        msg(
-            DIAG_BREAK_INVALID_LOCATION, old_break->pos,
-            "break statement outside of a for loop\n"
-        );
+        //msg(
+        //    DIAG_BREAK_INVALID_LOCATION, old_break->pos,
+        //    "break statement outside of a for loop\n"
+        //);
         return;
     }
 
     if (old_break->do_break_expr) {
+        log(LOG_DEBUG, TAST_FMT, tast_assignment_print(tast_assignment_new(old_break->pos,
+            tast_symbol_wrap(tast_symbol_new(old_break->pos, (Sym_typed_base) {
+                .lang_type = tast_expr_get_lang_type(old_break->break_expr),
+                .name = env.load_break_symbol_name
+            })),
+            old_break->break_expr
+        )));
+        todo();
         load_assignment(new_block, tast_assignment_new(
             old_break->pos,
             tast_symbol_wrap(tast_symbol_new(old_break->pos, (Sym_typed_base) {
@@ -1873,6 +1883,7 @@ static void load_stmt(Llvm_block* new_block, Defer_coll_vec* defered_stmts, Tast
                     })),
                     rtn->child
                 );
+                log(LOG_DEBUG, TAST_FMT, tast_assignment_print(new_assign));
                 load_assignment(new_block, new_assign);
             }
             if (defered_stmts->info.count > 0) {
@@ -1885,7 +1896,29 @@ static void load_stmt(Llvm_block* new_block, Defer_coll_vec* defered_stmts, Tast
             load_for_with_cond(new_block, tast_for_with_cond_unwrap(old_stmt));
             return;
         case TAST_BREAK:
-            load_break(new_block, tast_break_unwrap(old_stmt));
+            if (is_defered) {
+                load_break(new_block, tast_break_unwrap(old_stmt));
+                return;
+            }
+
+            assert(rtn_val.base.count > 0 && "this is probably a bug in load_block_stmts");
+            Tast_break* brk = tast_break_unwrap(old_stmt);
+            if (brk->do_break_expr) {
+                assert(tast_expr_get_lang_type(brk->break_expr).type != LANG_TYPE_VOID);
+                Tast_assignment* new_assign = tast_assignment_new(
+                    brk->pos,
+                    tast_symbol_wrap(tast_symbol_new(brk->pos, (Sym_typed_base) {
+                        .lang_type = tast_expr_get_lang_type(brk->break_expr), .name = rtn_val
+                    })),
+                    brk->break_expr
+                );
+                log(LOG_DEBUG, TAST_FMT, tast_assignment_print(new_assign));
+                load_assignment(new_block, new_assign);
+            }
+            if (defered_stmts->info.count > 0) {
+                Llvm_goto* new_goto = llvm_goto_new(brk->pos, vec_top(defered_stmts).label->name);
+                vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
+            }
             return;
         case TAST_CONTINUE:
             load_continue(new_block, tast_continue_unwrap(old_stmt));

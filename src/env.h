@@ -26,6 +26,7 @@ typedef enum {
     PARENT_OF_IF,
 } PARENT_OF;
 
+// TODO: separate Env for different passes
 typedef struct Env_ {
     Scope_id_vec scope_id_to_parent;
     Sym_coll_vec symbol_tables;
