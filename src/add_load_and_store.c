@@ -47,7 +47,7 @@ static Name load_expr(Llvm_block* new_block, Tast_expr* old_expr);
 
 static Name load_ptr_expr(Llvm_block* new_block, Tast_expr* old_expr);
 
-static void load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt, Name rtn_val, bool is_defered);
+static void load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt, bool is_defered);
 
 static Name load_operator(Llvm_block* new_block, Tast_operator* old_oper);
 
@@ -102,7 +102,7 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
             todo();
         case DEFER_PARENT_OF_TOP_LEVEL: {
             for (size_t idx = 0; idx < children.info.count; idx++) {
-                load_stmt(new_block, vec_at(&children, idx), (Name) {0}, false);
+                load_stmt(new_block, vec_at(&children, idx), false);
             }
             //assert(vec_top(&env.defered_collections).pairs.info.count < 1 && "this should have been caught in the type checking pass");
             return;
@@ -110,7 +110,7 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
         default:
             todo();
     }
-    vec_append(&a_main, &env.defered_collections, ((Defer_collection) {.pairs = (Defer_pair_vec) {0}, .parent_of = parent_of}));
+    vec_append(&a_main, &env.defered_collections, ((Defer_collection) {.pairs = (Defer_pair_vec) {0}, .parent_of = parent_of, .rtn_val = rtn_val}));
 
     vec_append(&a_main, &vec_top_ref(&env.defered_collections)->pairs, ((Defer_pair) {
         defer,
@@ -123,14 +123,14 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
     }
 
     for (size_t idx = 0; idx < children.info.count; idx++) {
-        load_stmt(new_block, vec_at(&children, idx), local_rtn_def->name, false);
+        load_stmt(new_block, vec_at(&children, idx), false);
     }
     Defer_pair_vec* pairs = &vec_top_ref(&env.defered_collections)->pairs;
     while (pairs->info.count > 0) {
         Defer_pair_vec dummy_stmts = {0};
         Defer_pair pair = vec_top(pairs);
         load_label(new_block, pair.label);
-        load_stmt(new_block, pair.defer->child, (Name) {0}, true);
+        load_stmt(new_block, pair.defer->child, true);
         vec_rem_last(pairs);
         if (dummy_stmts.info.count > 0) {
             // `defer defer` used
@@ -1851,7 +1851,7 @@ static Name load_def(Llvm_block* new_block, Tast_def* old_def) {
     unreachable("");
 }
 
-static void load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt, Name rtn_val, bool is_defered) {
+static void load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt, bool is_defered) {
     switch (old_stmt->type) {
         case TAST_EXPR:
             load_expr(new_block, tast_expr_unwrap(old_stmt));
@@ -1865,13 +1865,14 @@ static void load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt, Name rtn_val, 
                 return;
             }
 
-            assert(rtn_val.base.count > 0 && "this is probably a bug in load_block_stmts");
+            Defer_collection coll = vec_top(&env.defered_collections);
+
             Tast_return* rtn = tast_return_unwrap(old_stmt);
-            if (tast_expr_get_lang_type(rtn->child).type != LANG_TYPE_VOID) {
+            if (tast_expr_get_lang_type(coll.rtn_val).type != LANG_TYPE_VOID) {
                 Tast_assignment* new_assign = tast_assignment_new(
-                    rtn->pos,
-                    tast_symbol_wrap(tast_symbol_new(rtn->pos, (Sym_typed_base) {
-                        .lang_type = tast_expr_get_lang_type(rtn->child), .name = env.rtn_def->name
+                    tast_stmt_get_pos(old_stmt),
+                    tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+                        .lang_type = tast_expr_get_lang_type(coll.rtn_val), .name = tast_expr_get_name(coll.rtn_val)
                     })),
                     rtn->child
                 );
@@ -1895,26 +1896,47 @@ static void load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt, Name rtn_val, 
                 return;
             }
 
-            assert(rtn_val.base.count > 0 && "this is probably a bug in load_block_stmts");
+            Defer_collection coll = vec_top(&env.defered_collections);
+
             Tast_break* brk = tast_break_unwrap(old_stmt);
             if (brk->do_break_expr) {
-                assert(tast_expr_get_lang_type(brk->break_expr).type != LANG_TYPE_VOID);
                 Tast_assignment* new_assign = tast_assignment_new(
-                    brk->pos,
-                    tast_symbol_wrap(tast_symbol_new(brk->pos, (Sym_typed_base) {
-                        .lang_type = tast_expr_get_lang_type(brk->break_expr), .name = rtn_val
+                    tast_stmt_get_pos(old_stmt),
+                    tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+                        .lang_type = tast_expr_get_lang_type(coll.rtn_val), .name = tast_expr_get_name(coll.rtn_val)
                     })),
                     brk->break_expr
                 );
                 log(LOG_DEBUG, TAST_FMT, tast_assignment_print(new_assign));
                 load_assignment(new_block, new_assign);
             }
+
             Defer_pair_vec* pairs = &vec_top_ref(&env.defered_collections)->pairs;
             if (pairs->info.count > 0) {
                 Llvm_goto* new_goto = llvm_goto_new(brk->pos, vec_top(pairs).label->name);
                 vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
             }
             return;
+            //assert(rtn_val.base.count > 0 && "this is probably a bug in load_block_stmts");
+            //Tast_break* brk = tast_break_unwrap(old_stmt);
+            //if (brk->do_break_expr) {
+            //    assert(tast_expr_get_lang_type(brk->break_expr).type != LANG_TYPE_VOID);
+            //    Tast_assignment* new_assign = tast_assignment_new(
+            //        brk->pos,
+            //        tast_symbol_wrap(tast_symbol_new(brk->pos, (Sym_typed_base) {
+            //            .lang_type = tast_expr_get_lang_type(brk->break_expr), .name = rtn_val
+            //        })),
+            //        brk->break_expr
+            //    );
+            //    log(LOG_DEBUG, TAST_FMT, tast_assignment_print(new_assign));
+            //    load_assignment(new_block, new_assign);
+            //}
+            //Defer_pair_vec* pairs = &vec_top_ref(&env.defered_collections)->pairs;
+            //if (pairs->info.count > 0) {
+            //    Llvm_goto* new_goto = llvm_goto_new(brk->pos, vec_top(pairs).label->name);
+            //    vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
+            //}
+            //return;
         case TAST_CONTINUE:
             load_continue(new_block, tast_continue_unwrap(old_stmt));
             return;

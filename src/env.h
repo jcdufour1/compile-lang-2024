@@ -50,6 +50,7 @@ typedef struct {
 typedef struct {
     Defer_pair_vec pairs;
     DEFER_PARENT_OF parent_of;
+    Tast_expr* rtn_val;
 } Defer_collection;
 
 // stack of scope defered statements
