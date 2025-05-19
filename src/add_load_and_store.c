@@ -68,7 +68,7 @@ static Tast_symbol* tast_symbol_new_from_variable_def(Pos pos, const Tast_variab
     );
 }
 
-static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFER_PARENT_OF parent_of, Pos pos, Lang_type lang_type) {
+static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFER_PARENT_OF parent_of, Pos pos, Lang_type lang_type, Scope_id scope_id) {
     // TODO: avoid making this def on LANG_TYPE_VOID?
     Tast_variable_def* local_rtn_def = tast_variable_def_new(pos, lang_type, false, util_literal_name_new_prefix2(str_view_from_cstr("rtn_val")));
     Tast_expr* rtn_val = {0};
@@ -82,8 +82,22 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
     }
     Tast_defer* defer = NULL;
     Tast_variable_def* old_rtn_def = NULL;
+    Tast_variable_def* old_scope_that_broke = NULL;
     switch (parent_of) {
         case DEFER_PARENT_OF_FUN: {
+            // env.scope_that_broke is a runtime variable to keep track of which scope the return, break, etc. occured,
+            // so that we can know when to stop jumping to defered statements
+            // when return, etc. is called, env.scope_that_broke is set to the outermost scope that we need to break out of
+            old_scope_that_broke = env.scope_that_broke;
+            env.scope_that_broke = tast_variable_def_new(
+                pos,
+                lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(pos, 64/* TODO*/, 0))),
+                false,
+                util_literal_name_new_prefix2(str_view_from_cstr("scope_that_broke"))
+            );
+            unwrap(symbol_add(tast_variable_def_wrap(env.scope_that_broke)));
+            load_variable_def(new_block, env.scope_that_broke);
+
             old_rtn_def = env.rtn_def;
             env.rtn_def = local_rtn_def;
 
@@ -110,7 +124,12 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
         default:
             todo();
     }
-    vec_append(&a_main, &env.defered_collections, ((Defer_collection) {.pairs = (Defer_pair_vec) {0}, .parent_of = parent_of, .rtn_val = rtn_val}));
+    vec_append(&a_main, &env.defered_collections, ((Defer_collection) {
+        .pairs = (Defer_pair_vec) {0},
+        .parent_of = parent_of,
+        .rtn_val = rtn_val,
+        .scope_id = scope_id
+    }));
 
     vec_append(&a_main, &vec_top_ref(&env.defered_collections)->pairs, ((Defer_pair) {
         defer,
@@ -141,6 +160,7 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
 
     if (parent_of == DEFER_PARENT_OF_FUN) {
         env.rtn_def = old_rtn_def;
+        env.scope_that_broke = old_scope_that_broke;
     }
     vec_rem_last(&env.defered_collections);
 }
@@ -1361,7 +1381,7 @@ static Name load_function_def(Tast_function_def* old_fun_def) {
          new_fun_def->body, &new_lang_type, rm_tuple_lang_type(old_fun_def->decl->return_type, old_fun_def->pos), old_fun_def->decl->params
     );
     new_fun_def->decl->return_type = new_lang_type;
-    load_block_stmts(new_fun_def->body, old_fun_def->body->children, DEFER_PARENT_OF_FUN, old_fun_def->pos, old_fun_def->decl->return_type);
+    load_block_stmts(new_fun_def->body, old_fun_def->body->children, DEFER_PARENT_OF_FUN, old_fun_def->pos, old_fun_def->decl->return_type, old_fun_def->body->scope_id);
 
     unwrap(alloca_add(llvm_def_wrap(llvm_function_def_wrap(new_fun_def))));
     env.name_parent_fn = old_fun_name;
@@ -1885,6 +1905,17 @@ static void load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt, bool is_defere
                 Llvm_goto* new_goto = llvm_goto_new(rtn->pos, vec_top(pairs).label->name);
                 vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
             }
+            // TODO: make usize a global thing
+            Lang_type usize = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(tast_stmt_get_pos(old_stmt), 64/* TODO*/, 0)));
+            Tast_assignment* scope_assign = tast_assignment_new(
+                tast_stmt_get_pos(old_stmt),
+                tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+                    .lang_type = usize,
+                    .name = env.scope_that_broke->name
+                })),
+                tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), vec_top_ref(&env.defered_collections)->scope_id, usize)))
+            );
+            load_assignment(new_block, scope_assign);
             return;
         }
         case TAST_FOR_WITH_COND:
@@ -2002,7 +2033,7 @@ static Llvm_block* load_block(Tast_block* old_block, DEFER_PARENT_OF parent_of, 
         load_def_sometimes(curr);
     }
 
-    load_block_stmts(new_block, old_block->children, parent_of, old_block->pos, lang_type);
+    load_block_stmts(new_block, old_block->children, parent_of, old_block->pos, lang_type, old_block->scope_id);
 
     return new_block;
 }
