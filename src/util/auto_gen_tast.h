@@ -642,7 +642,6 @@ static Tast_type tast_gen_return(const char* prefix) {
 
     append_member(&rtn.members, "Tast_expr*", "child");
     append_member(&rtn.members, "bool", "is_auto_inserted"); // TODO: use : 1 size?
-    append_member(&rtn.members, "bool", "generated_by_defer");
 
     return rtn;
 }

@@ -2257,7 +2257,7 @@ bool try_set_return_types(Tast_return** new_tast, Uast_return* rtn) {
             unreachable("");
     }
 
-    *new_tast = tast_return_new(rtn->pos, new_child, rtn->is_auto_inserted, false);
+    *new_tast = tast_return_new(rtn->pos, new_child, rtn->is_auto_inserted);
 
 error:
     env.parent_of = old_parent_of;
