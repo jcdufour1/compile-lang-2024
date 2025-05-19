@@ -47,7 +47,7 @@ static Name load_expr(Llvm_block* new_block, Tast_expr* old_expr);
 
 static Name load_ptr_expr(Llvm_block* new_block, Tast_expr* old_expr);
 
-static void load_stmt(Llvm_block* new_block, bool* defer_is_pres, Tast_stmt* old_stmt, bool is_defered);
+static void load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt, bool is_defered);
 
 static Name load_operator(Llvm_block* new_block, Tast_operator* old_oper);
 
@@ -57,7 +57,7 @@ static Name load_if_else_chain(Llvm_block* new_block, Tast_if_else_chain* old_if
 
 static void load_label(Llvm_block* new_block, Tast_label* old_label);
 
-static Name load_return(Llvm_block* new_block, Tast_return* old_return, bool defer_is_pres);
+static Name load_return(Llvm_block* new_block, Tast_return* old_return);
 
 static void load_break(Llvm_block* new_block, Tast_break* old_break);
 
@@ -69,8 +69,6 @@ static Tast_symbol* tast_symbol_new_from_variable_def(Pos pos, const Tast_variab
 }
 
 static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFER_PARENT_OF parent_of, Pos pos, Lang_type lang_type, Scope_id scope_id) {
-    bool defer_is_pres = false;
-
     // TODO: avoid making this def on LANG_TYPE_VOID?
     Tast_variable_def* local_rtn_def = tast_variable_def_new(pos, lang_type, false, util_literal_name_new_prefix2(str_view_from_cstr("rtn_val")));
     Tast_expr* rtn_val = {0};
@@ -118,7 +116,7 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
             todo();
         case DEFER_PARENT_OF_TOP_LEVEL: {
             for (size_t idx = 0; idx < children.info.count; idx++) {
-                load_stmt(new_block, &defer_is_pres, vec_at(&children, idx), false);
+                load_stmt(new_block, vec_at(&children, idx), false);
             }
             //assert(vec_top(&env.defered_collections).pairs.info.count < 1 && "this should have been caught in the type checking pass");
             return;
@@ -145,7 +143,7 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
 
     for (size_t idx = 0; idx < children.info.count; idx++) {
         log(LOG_DEBUG, TAST_FMT, tast_stmt_print(vec_at(&children, idx)));
-        load_stmt(new_block, &defer_is_pres, vec_at(&children, idx), false);
+        load_stmt(new_block, vec_at(&children, idx), false);
     }
     Defer_pair_vec* pairs = &vec_top_ref(&env.defered_collections)->pairs;
     while (pairs->info.count > 0) {
@@ -153,7 +151,7 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
         Defer_pair pair = vec_top(pairs);
         load_label(new_block, pair.label);
         log(LOG_DEBUG, TAST_FMT, tast_stmt_print(pair.defer->child));
-        load_stmt(new_block, &defer_is_pres, pair.defer->child, true);
+        load_stmt(new_block, pair.defer->child, true);
         vec_rem_last(pairs);
         if (dummy_stmts.info.count > 0) {
             // `defer defer` used
@@ -1398,7 +1396,7 @@ static Name load_function_decl(Tast_function_decl* old_fun_decl) {
     return (Name) {0};
 }
 
-static Name load_return(Llvm_block* new_block, Tast_return* old_return, bool defer_is_pres) {
+static Name load_return(Llvm_block* new_block, Tast_return* old_return) {
     Pos pos = old_return->pos;
 
     Tast_def* fun_def_ = NULL;
@@ -1445,36 +1443,6 @@ static Name load_return(Llvm_block* new_block, Tast_return* old_return, bool def
         vec_append(&a_main, &new_block->children, llvm_return_wrap(new_return));
     } else {
         Name result = load_expr(new_block, old_return->child);
-        Scope_id scope_id = vec_top(&env.defered_collections).scope_id;
-        Lang_type usize = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(lang_type_unsigned_int_new(pos, 64/* TODO*/, 0)));
-        Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
-            lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
-        ));
-
-        if (defer_is_pres) {
-            Tast_stmt_vec stmts = {0};
-            vec_append(&a_main, &stmts, tast_return_wrap(tast_return_new(pos, tast_symbol_wrap(tast_symbol_new_from_variable_def(pos, env.rtn_def)), false)));
-            Tast_block* body = tast_block_new(pos, stmts, pos, u1_lang_type/* TODO */, symbol_collection_new(scope_id));
-
-            Tast_if_vec ifs = {0};
-            vec_append(&a_main, &ifs, tast_if_new(
-                pos, 
-                tast_condition_new(
-                    pos,
-                    tast_binary_wrap(tast_binary_new(
-                        pos,
-                        tast_symbol_wrap(tast_symbol_new_from_variable_def(pos, env.scope_that_broke)),
-                        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, scope_id, usize))), 
-                        BINARY_DOUBLE_EQUAL,
-                        u1_lang_type
-                    ))
-                ),
-                body,
-                lang_type_void_const_wrap(lang_type_void_new(pos))
-            ));
-            Tast_if_else_chain* if_else = tast_if_else_chain_new(pos, ifs, false);
-            load_if_else_chain(new_block, if_else);
-        }
 
         Llvm_return* new_return = llvm_return_new(
             pos,
@@ -1906,7 +1874,7 @@ static Name load_def(Llvm_block* new_block, Tast_def* old_def) {
     unreachable("");
 }
 
-static void load_stmt(Llvm_block* new_block, bool* defer_is_pres, Tast_stmt* old_stmt, bool is_defered) {
+static void load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt, bool is_defered) {
     switch (old_stmt->type) {
         case TAST_EXPR:
             load_expr(new_block, tast_expr_unwrap(old_stmt));
@@ -1916,7 +1884,7 @@ static void load_stmt(Llvm_block* new_block, bool* defer_is_pres, Tast_stmt* old
             return;
         case TAST_RETURN: {
             if (is_defered) {
-                load_return(new_block, tast_return_unwrap(old_stmt), *defer_is_pres);
+                load_return(new_block, tast_return_unwrap(old_stmt));
                 return;
             }
 
@@ -2023,7 +1991,6 @@ static void load_stmt(Llvm_block* new_block, bool* defer_is_pres, Tast_stmt* old
             load_label(new_block, tast_label_unwrap(old_stmt));
             return;
         case TAST_DEFER: {
-            *defer_is_pres = true;
             Defer_pair_vec* pairs = &vec_top_ref(&env.defered_collections)->pairs;
             Tast_defer* defer = tast_defer_unwrap(old_stmt);
             vec_append(&a_main, pairs, ((Defer_pair) {
