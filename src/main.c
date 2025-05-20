@@ -132,10 +132,18 @@ void do_passes(const Parameters* params) {
             default:
                 unreachable("");
         }
-    } else if (params->test_expected_fail) {
-        fail();
     } else {
-        unreachable("");
+        switch (params->backend_info.backend) {
+            case BACKEND_NONE:
+                unreachable("this should have been caught eariler");
+            case BACKEND_LLVM:
+                todo();
+            case BACKEND_C:
+                emit_c_from_tree(llvm_root);
+                break;
+            default:
+                unreachable("");
+        }
     }
 
     if (error_count > 0) {
