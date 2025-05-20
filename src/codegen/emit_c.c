@@ -51,9 +51,15 @@ static void c_extend_type_call_str(String* output, Lang_type lang_type, bool opa
             unreachable("");
         case LANG_TYPE_STRUCT:
             llvm_extend_name(output, lang_type_struct_const_unwrap(lang_type).atom.str);
+            for (size_t idx = 0; idx < lang_type_struct_const_unwrap(lang_type).atom.pointer_depth; idx++) {
+                string_extend_cstr(&a_main, output, "*");
+            }
             return;
         case LANG_TYPE_RAW_UNION:
             llvm_extend_name(output, lang_type_raw_union_const_unwrap(lang_type).atom.str);
+            for (size_t idx = 0; idx < lang_type_raw_union_const_unwrap(lang_type).atom.pointer_depth; idx++) {
+                string_extend_cstr(&a_main, output, "*");
+            }
             return;
         case LANG_TYPE_VOID:
             lang_type = lang_type_void_const_wrap(lang_type_void_new(lang_type_get_pos(lang_type)));
