@@ -155,6 +155,10 @@ static void parse_normal_option(Parameters* params, int* argc, char*** argv) {
     if (0 == strcmp(curr_opt, "compile")) {
         params->compile = true;
         params->input_file_name = consume_arg(argc, argv, "input file path was expected after `compile`");
+    } else if (0 == strcmp(curr_opt, "compile-run")) {
+        params->compile = true;
+        params->run = true;
+        params->input_file_name = consume_arg(argc, argv, "input file path was expected after `compile`");
     } else if (0 == strcmp(curr_opt, "test-expected-fail")) {
         params->compile = false;
         params->test_expected_fail = true;

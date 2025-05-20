@@ -30,6 +30,10 @@ int subprocess_call(Str_view path, Str_view_vec args) {
             const char* curr = str_view_to_cstr(&a_temp, vec_at(&args, idx));
             vec_append(&a_temp, &cstrs, curr);
         }
+        for (size_t idx = 0; idx < cstrs.info.count; idx++) {
+            //log(LOG_DEBUG, "%s\n", vec_at(&cstrs, idx));
+        }
+        char** char_char = cstr_vec_to_c_cstr_vec(&a_temp, cstrs);
         vec_append(&a_temp, &cstrs, NULL);
         execvpe(str_view_to_cstr(&a_temp, path), cstr_vec_to_c_cstr_vec(&a_temp, cstrs), environ);
 

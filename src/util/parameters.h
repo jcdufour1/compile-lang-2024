@@ -25,6 +25,7 @@ typedef struct {
     const char* input_file_name;
     Expect_fail_type_vec diag_types;
     bool compile : 1;
+    bool run : 1;
     bool emit_llvm : 1;
     bool test_expected_fail : 1;
     bool all_errors_fatal: 1;

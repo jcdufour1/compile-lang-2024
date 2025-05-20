@@ -80,7 +80,7 @@ DEP_COMMON = ${DEP_UTIL} src/*.h ${BUILD_DIR}/tast.h third_party/*
 DEP_COMMON += $(shell find src -type f -name "*.h")
 
 FILE_TO_TEST ?= examples/new_lang/structs.own
-ARGS_PROGRAM ?= compile ${FILE_TO_TEST} --emit-llvm --backend=c
+ARGS_PROGRAM ?= compile-run ${FILE_TO_TEST} --emit-llvm --backend=c
 
 all: build
 

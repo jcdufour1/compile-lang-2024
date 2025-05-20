@@ -737,28 +737,50 @@ void emit_c_from_tree(const Llvm_block* root) {
 
     fclose(file);
 
-    Str_view_vec cmd = {0};
-    vec_append(&a_main, &cmd, str_view_from_cstr("clang"));
-    vec_append(&a_main, &cmd, str_view_from_cstr("-std=c99"));
-    vec_append(&a_main, &cmd, str_view_from_cstr("-Wno-override-module"));
-    vec_append(&a_main, &cmd, str_view_from_cstr("-Wno-incompatible-library-redeclaration"));
-    vec_append(&a_main, &cmd, str_view_from_cstr("-Wno-builtin-requires-header"));
-    vec_append(&a_main, &cmd, str_view_from_cstr("-O2"));
-    vec_append(&a_main, &cmd, str_view_from_cstr("-o"));
-    vec_append(&a_main, &cmd, str_view_from_cstr("test"));
-    vec_append(&a_main, &cmd, str_view_from_cstr(TEST_OUTPUT));
-    int status = subprocess_call(str_view_from_cstr("clang"), cmd);
-    if (status != 0) {
-        msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process returned exit code %d\n", status);
-        String cmd_str = {0};
-        for (size_t idx = 0; idx < cmd.info.count; idx++) {
-            if (idx > 0) {
-                string_extend_cstr(&a_main, &cmd_str, " ");
+    {
+        Str_view_vec cmd = {0};
+        vec_append(&a_main, &cmd, str_view_from_cstr("clang"));
+        vec_append(&a_main, &cmd, str_view_from_cstr("-std=c99"));
+        vec_append(&a_main, &cmd, str_view_from_cstr("-Wno-override-module"));
+        vec_append(&a_main, &cmd, str_view_from_cstr("-Wno-incompatible-library-redeclaration"));
+        vec_append(&a_main, &cmd, str_view_from_cstr("-Wno-builtin-requires-header"));
+        vec_append(&a_main, &cmd, str_view_from_cstr("-O2"));
+        vec_append(&a_main, &cmd, str_view_from_cstr("-o"));
+        vec_append(&a_main, &cmd, str_view_from_cstr("test"));
+        vec_append(&a_main, &cmd, str_view_from_cstr(TEST_OUTPUT));
+        int status = subprocess_call(str_view_from_cstr("clang"), cmd);
+        if (status != 0) {
+            msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the c backend returned exit code %d\n", status);
+            String cmd_str = {0};
+            for (size_t idx = 0; idx < cmd.info.count; idx++) {
+                if (idx > 0) {
+                    string_extend_cstr(&a_main, &cmd_str, " ");
+                }
+                // TODO: consider arguments that contain spaces, etc.
+                string_extend_strv(&a_main, &cmd_str, vec_at(&cmd, idx));
             }
-            // TODO: consider arguments that contain spaces, etc.
-            string_extend_strv(&a_main, &cmd_str, vec_at(&cmd, idx));
+            msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", string_print(cmd_str));
+            exit(EXIT_CODE_FAIL);
         }
-        msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", string_print(cmd_str));
-        exit(EXIT_CODE_FAIL);
+    }
+
+    if (params.run) {
+        Str_view_vec cmd = {0};
+        vec_append(&a_main, &cmd, str_view_from_cstr("./test"));
+        int status = subprocess_call(str_view_from_cstr("./test"), cmd);
+        if (status != 0) {
+            msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the compiled program returned exit code %d\n", status);
+            String cmd_str = {0};
+            for (size_t idx = 0; idx < cmd.info.count; idx++) {
+                if (idx > 0) {
+                    string_extend_cstr(&a_main, &cmd_str, " ");
+                }
+                // TODO: consider arguments that contain spaces, etc.
+                string_extend_strv(&a_main, &cmd_str, vec_at(&cmd, idx));
+            }
+            msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", string_print(cmd_str));
+            // TODO: consider if we should exit with child process status code instead of EXIT_CODE_FAIL
+            exit(EXIT_CODE_FAIL);
+        }
     }
 }
