@@ -1,0 +1,14 @@
+type io import = std.io
+
+type Token struct {
+    num i32
+}
+
+fn token_new() Token {
+    return {89}
+}
+
+fn main() i32 {
+    io.printf("%d\n", token_new().num)
+    return 0
+}

@@ -2071,6 +2071,14 @@ bool try_set_member_access_types(Tast_stmt** new_tast, Uast_member_access* acces
             return try_set_member_access_types_finish(new_tast, lang_type_def, access, new_callee);
 
         }
+        case TAST_FUNCTION_CALL: {
+            Tast_function_call* call = tast_function_call_unwrap(new_callee);
+            Lang_type lang_type = *lang_type_fn_const_unwrap(tast_expr_get_lang_type(call->callee)).return_type;
+            Uast_def* lang_type_def = NULL;
+            unwrap(usymbol_lookup(&lang_type_def, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type)));
+            return try_set_member_access_types_finish(new_tast, lang_type_def, access, new_callee);
+
+        }
         case TAST_MODULE_ALIAS: {
             Uast_symbol* sym = uast_symbol_new(access->pos, name_new(
                 tast_module_alias_unwrap(new_callee)->mod_path,

@@ -2242,10 +2242,7 @@ static PARSE_EXPR_STATUS parse_high_presidence_internal(
         if (PARSE_OK != parse_function_call(&new_call, tokens, lhs, scope_id)) {
             return PARSE_EXPR_ERROR;
         }
-        *result = uast_function_call_wrap(new_call);
-        assert(*result);
-        return PARSE_EXPR_OK;
-        // TODO: also consume TOKEN_CLOSE_PAR here
+        return parse_high_presidence_internal(result, uast_function_call_wrap(new_call), tokens, scope_id);
     }
 
     if (try_consume(&oper, tokens, TOKEN_OPEN_GENERIC)) {
