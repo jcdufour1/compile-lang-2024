@@ -12,6 +12,10 @@
 #include <lang_type_serialize.h>
 #include <parser_utils.h>
 #include <sizeof.h>
+#include <str_view_vec.h>
+#include <subprocess.h>
+
+static const char* TEST_OUTPUT = "test.c";
 
 // TODO: avoid casting from void* to function pointer if possible (for standards compliance)
 typedef struct {
@@ -689,7 +693,7 @@ void emit_c_from_tree(const Llvm_block* root) {
 
     emit_c_block(&strs, root);
 
-    FILE* file = fopen("test.c", "w");
+    FILE* file = fopen(TEST_OUTPUT, "w");
     if (!file) {
         msg(
             DIAG_FILE_COULD_NOT_OPEN, dummy_pos, "could not open file %s: errno %d (%s)\n",
@@ -697,7 +701,8 @@ void emit_c_from_tree(const Llvm_block* root) {
         );
         exit(EXIT_CODE_FAIL);
     }
-
+    
+    // TODO: make function for for loop to compress code
     for (size_t idx = 0; idx < header.info.count; idx++) {
         if (EOF == fputc(vec_at(&header, idx), file)) {
             todo();
@@ -734,4 +739,16 @@ void emit_c_from_tree(const Llvm_block* root) {
     );
 
     fclose(file);
+
+    Str_view_vec cmd = {0};
+    vec_append(&a_main, &cmd, str_view_from_cstr("/usr/local/LLVM-19.1.0-Linux-X64/bin/clang"));
+    vec_append(&a_main, &cmd, str_view_from_cstr("-O2"));
+    vec_append(&a_main, &cmd, str_view_from_cstr("-o"));
+    vec_append(&a_main, &cmd, str_view_from_cstr("a.out"));
+    vec_append(&a_main, &cmd, str_view_from_cstr(TEST_OUTPUT));
+    int status = subprocess_call(str_view_from_cstr("/usr/local/LLVM-19.1.0-Linux-X64/bin/clang"), cmd);
+    if (status != 0) {
+        // TODO: expected failure test for cmd failing
+        todo();
+    }
 }
