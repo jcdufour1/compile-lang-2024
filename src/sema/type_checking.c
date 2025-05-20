@@ -501,7 +501,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             return true;
         }
         case UAST_FUNCTION_DEF: {
-            Lang_type new_lang_type = {0};
+            Lang_type_fn new_lang_type = {0};
             Name new_name = {0};
             if (!resolve_generics_function_def_call(&new_lang_type, &new_name, uast_function_def_unwrap(sym_def), sym_untyped->name.gen_args, sym_untyped->pos)) {
                 return false;
@@ -509,7 +509,7 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             *new_tast = tast_literal_wrap(tast_function_lit_wrap(tast_function_lit_new(
                 sym_untyped->pos,
                 new_name,
-                new_lang_type
+                lang_type_fn_const_wrap(new_lang_type)
             )));
             return true;
         }
@@ -2768,7 +2768,7 @@ bool try_set_block_types(Tast_block** new_tast, Uast_block* block, bool is_direc
         if (main_fn_->type != UAST_FUNCTION_DEF) {
             todo();
         }
-        Lang_type new_lang_type = {0};
+        Lang_type_fn new_lang_type = {0};
         Name new_name = {0};
         if (!resolve_generics_function_def_call(&new_lang_type, &new_name, uast_function_def_unwrap(main_fn_), (Ulang_type_vec) {0}, (Pos) {0})) {
             status = false;

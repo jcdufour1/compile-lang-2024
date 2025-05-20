@@ -426,7 +426,7 @@ static bool resolve_generics_serialize_function_decl(
 }
 
 bool resolve_generics_function_def_call(
-    Lang_type* rtn_type, // TODO: rename this parameter
+    Lang_type_fn* rtn_type, // TODO: rename this parameter
     Name* new_name,
     Uast_function_def* def,
     Ulang_type_vec gen_args, // TODO: remove or refactor name?
@@ -438,7 +438,22 @@ bool resolve_generics_function_def_call(
     // TODO: put pos_gen_args as value in resolved_already_tbl_add?
     Uast_function_decl* cached = NULL;
     if (function_decl_tbl_lookup(&cached, name)) {
-        *rtn_type = lang_type_from_ulang_type(cached->return_type);
+        // TODO: consider caching ulang_types
+        Ulang_type_vec ulang_types = {0};
+        for (size_t idx = 0; idx < cached->params->params.info.count; idx++) {
+            vec_append(&a_main, &ulang_types, vec_at(&cached->params->params, idx)->base->lang_type);
+        }
+
+        Ulang_type* ulang_type_rtn_type = arena_alloc(&a_main, sizeof(*ulang_type_rtn_type));
+        *ulang_type_rtn_type = cached->return_type;
+        Ulang_type_fn new_fn = ulang_type_fn_new(
+            ulang_type_tuple_new(ulang_types, def->decl->pos),
+            ulang_type_rtn_type,
+            def->decl->pos
+        );
+        if (!try_lang_type_from_ulang_type_fn(rtn_type, new_fn, def->decl->pos)) {
+            return false;
+        }
         *new_name = name;
         return true;
     }
@@ -466,10 +481,12 @@ bool resolve_generics_function_def_call(
     unwrap(function_decl_tbl_add(decl));
     unwrap(function_decl_tbl_lookup(&dummy, decl->name));
 
+    // TODO: consider caching ulang_types
     Ulang_type_vec ulang_types = {0};
     for (size_t idx = 0; idx < decl->params->params.info.count; idx++) {
         vec_append(&a_main, &ulang_types, vec_at(&decl->params->params, idx)->base->lang_type);
     }
+
     Ulang_type* ulang_type_rtn_type = arena_alloc(&a_main, sizeof(*ulang_type_rtn_type));
     *ulang_type_rtn_type = decl->return_type;
     Ulang_type_fn new_fn = ulang_type_fn_new(
@@ -481,7 +498,7 @@ bool resolve_generics_function_def_call(
     if (!try_lang_type_from_ulang_type_fn(&rtn_type_, new_fn, def->decl->pos)) {
         return false;
     }
-    *rtn_type = lang_type_fn_const_wrap(rtn_type_);
+    *rtn_type = rtn_type_;
     *new_name = name;
 
     vec_append(&a_main, &env.fun_implementations_waiting_to_resolve, name);
