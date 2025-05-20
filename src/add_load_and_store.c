@@ -891,26 +891,17 @@ static Name load_binary(Llvm_block* new_block, Tast_binary* old_bin) {
 static Name load_deref(Llvm_block* new_block, Tast_unary* old_unary) {
     assert(old_unary->token_type == UNARY_DEREF);
 
-    switch (old_unary->lang_type.type) {
-        case LANG_TYPE_STRUCT:
-            todo();
-        case LANG_TYPE_PRIMITIVE: {
-            Name ptr = load_expr(new_block, old_unary->child);
-            Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
-                old_unary->pos,
-                ptr,
-                old_unary->lang_type,
-                util_literal_name_new_mod_path2(env.curr_mod_path)
-            );
-            unwrap(alloca_add(llvm_load_another_llvm_wrap(new_load)));
+    Name ptr = load_expr(new_block, old_unary->child);
+    Llvm_load_another_llvm* new_load = llvm_load_another_llvm_new(
+        old_unary->pos,
+        ptr,
+        old_unary->lang_type,
+        util_literal_name_new_mod_path2(env.curr_mod_path)
+    );
+    unwrap(alloca_add(llvm_load_another_llvm_wrap(new_load)));
 
-            vec_append(&a_main, &new_block->children, llvm_load_another_llvm_wrap(new_load));
-            return new_load->name;
-        }
-        default:
-            todo();
-    }
-    unreachable("");
+    vec_append(&a_main, &new_block->children, llvm_load_another_llvm_wrap(new_load));
+    return new_load->name;
 }
 
 static Name load_unary(Llvm_block* new_block, Tast_unary* old_unary) {
