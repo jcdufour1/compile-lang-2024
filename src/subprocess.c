@@ -13,7 +13,7 @@
 extern char **environ;
 
 // returns return code
-int subprocess_call(Str_view path, Str_view_vec args) {
+int subprocess_call(Str_view_vec args) {
     Arena a_temp = {0};
 
     int pid = fork();
@@ -33,9 +33,8 @@ int subprocess_call(Str_view path, Str_view_vec args) {
         for (size_t idx = 0; idx < cstrs.info.count; idx++) {
             //log(LOG_DEBUG, "%s\n", vec_at(&cstrs, idx));
         }
-        char** char_char = cstr_vec_to_c_cstr_vec(&a_temp, cstrs);
         vec_append(&a_temp, &cstrs, NULL);
-        execvpe(str_view_to_cstr(&a_temp, path), cstr_vec_to_c_cstr_vec(&a_temp, cstrs), environ);
+        execvpe(str_view_to_cstr(&a_temp, vec_at(&args, 0)), cstr_vec_to_c_cstr_vec(&a_temp, cstrs), environ);
 
         // execve failed
         todo();

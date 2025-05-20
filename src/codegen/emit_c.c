@@ -748,7 +748,7 @@ void emit_c_from_tree(const Llvm_block* root) {
         vec_append(&a_main, &cmd, str_view_from_cstr("-o"));
         vec_append(&a_main, &cmd, str_view_from_cstr("test"));
         vec_append(&a_main, &cmd, str_view_from_cstr(TEST_OUTPUT));
-        int status = subprocess_call(str_view_from_cstr("clang"), cmd);
+        int status = subprocess_call(cmd);
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the c backend returned exit code %d\n", status);
             String cmd_str = {0};
@@ -767,7 +767,7 @@ void emit_c_from_tree(const Llvm_block* root) {
     if (params.run) {
         Str_view_vec cmd = {0};
         vec_append(&a_main, &cmd, str_view_from_cstr("./test"));
-        int status = subprocess_call(str_view_from_cstr("./test"), cmd);
+        int status = subprocess_call(cmd);
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the compiled program returned exit code %d\n", status);
             String cmd_str = {0};

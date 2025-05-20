@@ -4,6 +4,6 @@
 #include <str_view_vec.h>
 
 // returns return code
-int subprocess_call(Str_view path, Str_view_vec cmd);
+int subprocess_call(Str_view_vec cmd);
 
 #endif // SUBPROCESS_H
