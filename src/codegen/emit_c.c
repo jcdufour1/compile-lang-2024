@@ -51,13 +51,13 @@ static void c_extend_type_call_str(String* output, Lang_type lang_type, bool opa
             unreachable("");
         case LANG_TYPE_STRUCT:
             llvm_extend_name(output, lang_type_struct_const_unwrap(lang_type).atom.str);
-            for (size_t idx = 0; idx < lang_type_struct_const_unwrap(lang_type).atom.pointer_depth; idx++) {
+            for (size_t idx = 0; idx < (size_t)lang_type_struct_const_unwrap(lang_type).atom.pointer_depth; idx++) {
                 string_extend_cstr(&a_main, output, "*");
             }
             return;
         case LANG_TYPE_RAW_UNION:
             llvm_extend_name(output, lang_type_raw_union_const_unwrap(lang_type).atom.str);
-            for (size_t idx = 0; idx < lang_type_raw_union_const_unwrap(lang_type).atom.pointer_depth; idx++) {
+            for (size_t idx = 0; idx < (size_t)lang_type_raw_union_const_unwrap(lang_type).atom.pointer_depth; idx++) {
                 string_extend_cstr(&a_main, output, "*");
             }
             return;
@@ -580,7 +580,11 @@ static void emit_c_load_element_ptr(Emit_c_strs* strs, const Llvm_load_element_p
 
     string_extend_cstr(&a_main, &strs->output, "&(((");
     c_extend_type_call_str(&strs->output, lang_type_from_get_name(load->llvm_src), false);
-    string_extend_cstr(&a_main, &strs->output, "*)");
+    // TODO: remove this if statement, and fix the actual issue (this if statement is a temporary hack)
+    if (lang_type_get_pointer_depth(lang_type_from_get_name(load->llvm_src)) < 1) {
+        string_extend_cstr(&a_main, &strs->output, "*");
+    }
+    string_extend_cstr(&a_main, &strs->output, ")");
     llvm_extend_name(&strs->output, load->llvm_src);
     string_extend_cstr(&a_main, &strs->output, ")->");
     llvm_extend_name(&strs->output, vec_at(&llvm_struct_def_unwrap(llvm_def_unwrap(struct_def_))->base.members, load->memb_idx)->name_self);
