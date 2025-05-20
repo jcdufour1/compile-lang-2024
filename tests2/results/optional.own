@@ -4,12 +4,6 @@ compile::stderr 0
 
 compile::return_code 0
 
-clang::stdout 0
-
-clang::stderr 0
-
-clang::return_code 0
-
 run::stdout 34
 test 2: got number: 84
 test 4: got number: 87

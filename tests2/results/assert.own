@@ -4,12 +4,6 @@ compile::stderr 0
 
 compile::return_code 0
 
-clang::stdout 0
-
-clang::stderr 0
-
-clang::return_code 0
-
 run::stdout 2
 ./tests2/inputs/assert.own:5:43
 ./tests2/inputs/assert.own:6:7:assertion failure: hello

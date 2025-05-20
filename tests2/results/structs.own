@@ -4,12 +4,6 @@ compile::stderr 0
 
 compile::return_code 0
 
-clang::stdout 0
-
-clang::stderr 0
-
-clang::return_code 0
-
 run::stdout 16
 9/2
 8/7

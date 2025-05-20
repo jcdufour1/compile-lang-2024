@@ -61,6 +61,7 @@ typedef enum {
     DIAG_INVALID_FAIL_TYPE,
     DIAG_NO_MAIN,
     DIAG_STRUCT_LIKE_RECURSION,
+    DIAG_CHILD_PROCESS_FAILURE,
 
     // count of cases for static asserts
     DIAG_COUNT,
