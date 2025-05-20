@@ -1,10 +1,4 @@
-compile::stdout 0
-
-compile::stderr 0
-
-compile::return_code 0
-
-run::stdout 33
+compile::stdout 33
 283
 65
 85
@@ -39,7 +33,7 @@ bitwise or:
 95
 num100: 89
 
-run::stderr 0
+compile::stderr 0
 
-run::return_code 0
+compile::return_code 0
 

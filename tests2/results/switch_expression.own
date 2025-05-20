@@ -1,14 +1,8 @@
-compile::stdout 0
+compile::stdout 2
+num1: 2
+num2: 3
 
 compile::stderr 0
 
 compile::return_code 0
-
-run::stdout 2
-num1: 2
-num2: 3
-
-run::stderr 0
-
-run::return_code 0
 

@@ -1,12 +1,8 @@
 compile::stdout 0
 
-compile::stderr 0
+compile::stderr 2
+[1;31mfatal error[0;39m:child process for the compiled program returned exit code 1
+[1;34mnote[0;39m:child process run with command `./test`
 
-compile::return_code 0
-
-run::stdout 0
-
-run::stderr 0
-
-run::return_code 1
+compile::return_code 1
 

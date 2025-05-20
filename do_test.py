@@ -26,7 +26,6 @@ class FileItem:
 @dataclass
 class TestResult:
     compile: subprocess.CompletedProcess[str]
-    run: Optional[subprocess.CompletedProcess[str]]
 
 INPUTS_DIR = "./tests2/inputs/"
 RESULTS_DIR = "./tests2/results/"
@@ -86,10 +85,7 @@ def get_result_from_process_internal(process: subprocess.CompletedProcess[str], 
     return result
 
 def get_result_from_test_result(process: TestResult) -> str:
-    result: str = get_result_from_process_internal(process.compile, "compile")
-    if process.run is not None:
-        result += get_result_from_process_internal(process.run, "run")
-    return result
+    return get_result_from_process_internal(process.compile, "compile")
 
 # TODO: try to avoid using do_debug for both function name and parameter name
 def compile_test(do_debug: bool, output_name: str, file: FileItem) -> TestResult:
@@ -109,20 +105,13 @@ def compile_test(do_debug: bool, output_name: str, file: FileItem) -> TestResult
     else:
         assert(False and "not implemented")
 
-    compile_cmd.append("compile")
+    compile_cmd.append("compile-run")
     compile_cmd.append(os.path.join(INPUTS_DIR, file.path_base))
     compile_cmd.append("--emit-llvm")
     compile_cmd.append("--log-level=NOTE")
 
     print_info("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")
-    compile_out: subprocess.CompletedProcess[str] = subprocess.run(compile_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    if compile_out.returncode != 0:
-        return TestResult(compile_out, None)
-
-    test_cmd = ["./test"]
-    run_out: subprocess.CompletedProcess[str] = subprocess.run(test_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    return TestResult(compile_out, run_out)
-
+    return TestResult(subprocess.run(compile_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True))
 
 def do_tests(files_to_test: list[str], do_debug: bool, output_name: str, action: Action, count_threads: int, keep_going: bool):
     success = True

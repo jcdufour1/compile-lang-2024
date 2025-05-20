@@ -1,10 +1,4 @@
-compile::stdout 0
-
-compile::stderr 0
-
-compile::return_code 0
-
-run::stdout 7
+compile::stdout 7
 0
 1
 87
@@ -13,7 +7,7 @@ hello
 hello
 invalid token type
 
-run::stderr 0
+compile::stderr 0
 
-run::return_code 0
+compile::return_code 0
 

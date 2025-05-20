@@ -1,10 +1,4 @@
-compile::stdout 0
-
-compile::stderr 0
-
-compile::return_code 0
-
-run::stdout 14
+compile::stdout 14
 
 0 
 0 1 
@@ -20,7 +14,7 @@ run::stdout 14
 
 
 
-run::stderr 0
+compile::stderr 0
 
-run::return_code 0
+compile::return_code 0
 

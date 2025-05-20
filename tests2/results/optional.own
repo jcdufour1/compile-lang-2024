@@ -1,10 +1,4 @@
-compile::stdout 0
-
-compile::stderr 0
-
-compile::return_code 0
-
-run::stdout 34
+compile::stdout 34
 test 2: got number: 84
 test 4: got number: 87
 test 6: got nothing
@@ -40,7 +34,7 @@ test 55: got number 79
 test 56: got number 30
 test 57: got number 846
 
-run::stderr 0
+compile::stderr 0
 
-run::return_code 0
+compile::return_code 0
 

@@ -1,10 +1,4 @@
-compile::stdout 0
-
-compile::stderr 0
-
-compile::return_code 0
-
-run::stdout 7
+compile::stdout 7
 yes1
 79
 yes2
@@ -13,7 +7,7 @@ yes3
 81
 done
 
-run::stderr 0
+compile::stderr 0
 
-run::return_code 0
+compile::return_code 0
 

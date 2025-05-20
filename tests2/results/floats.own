@@ -1,17 +1,11 @@
-compile::stdout 0
-
-compile::stderr 0
-
-compile::return_code 0
-
-run::stdout 5
+compile::stdout 5
 num = 7.10
 num_int = 7
 num2_reinterpret = 40800000
 num3 = 8.520000
 num5 = 0.123456789
 
-run::stderr 0
+compile::stderr 0
 
-run::return_code 0
+compile::return_code 0
 

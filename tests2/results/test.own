@@ -1,10 +1,4 @@
-compile::stdout 0
-
-compile::stderr 0
-
-compile::return_code 0
-
-run::stdout 21
+compile::stdout 21
 thing with colon
 thing with colon
 thing without colon
@@ -27,7 +21,7 @@ idx_2: 4
 idx_2: 5
 idx_2: 6
 
-run::stderr 0
+compile::stderr 0
 
-run::return_code 0
+compile::return_code 0
 

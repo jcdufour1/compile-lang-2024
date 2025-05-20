@@ -1,14 +1,8 @@
-compile::stdout 0
+compile::stdout 2
+token1: .id = 7, .inner = (nil)
+token2: .id = 8, .inner.id = 7
 
 compile::stderr 0
 
 compile::return_code 0
-
-run::stdout 2
-token1: .id = 7, .inner = (nil)
-token2: .id = 8, .inner.id = 7
-
-run::stderr 0
-
-run::return_code 0
 

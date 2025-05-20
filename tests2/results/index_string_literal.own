@@ -1,17 +1,11 @@
-compile::stdout 0
+compile::stdout 5
+h
+o
+h
+o
+o
 
 compile::stderr 0
 
 compile::return_code 0
-
-run::stdout 5
-h
-o
-h
-o
-o
-
-run::stderr 0
-
-run::return_code 0
 

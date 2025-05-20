@@ -1,13 +1,7 @@
-compile::stdout 0
+compile::stdout 1
+hello
 
 compile::stderr 0
 
 compile::return_code 0
-
-run::stdout 1
-hello
-
-run::stderr 0
-
-run::return_code 0
 
