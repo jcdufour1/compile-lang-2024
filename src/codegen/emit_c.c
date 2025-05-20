@@ -739,8 +739,7 @@ void emit_c_from_tree(const Llvm_block* root) {
 
     Str_view_vec cmd = {0};
     vec_append(&a_main, &cmd, str_view_from_cstr("clang"));
-    // TODO: uncomment
-    //vec_append(&a_main, &cmd, str_view_from_cstr("-std=c99"));
+    vec_append(&a_main, &cmd, str_view_from_cstr("-std=c99"));
     vec_append(&a_main, &cmd, str_view_from_cstr("-Wno-override-module"));
     vec_append(&a_main, &cmd, str_view_from_cstr("-Wno-incompatible-library-redeclaration"));
     vec_append(&a_main, &cmd, str_view_from_cstr("-Wno-builtin-requires-header"));

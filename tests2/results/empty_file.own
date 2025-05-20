@@ -6,7 +6,7 @@ compile::stderr 6
 (.text+0x17): undefined reference to `main'
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 [1;31mfatal error[0;39m:child process returned exit code 1
-[1;34mnote[0;39m:child process run with command `clang -Wno-override-module -Wno-incompatible-library-redeclaration -Wno-builtin-requires-header -O2 -o test test.c`
+[1;34mnote[0;39m:child process run with command `clang -std=c99 -Wno-override-module -Wno-incompatible-library-redeclaration -Wno-builtin-requires-header -O2 -o test test.c`
 
 compile::return_code 1
 
