@@ -5,7 +5,7 @@ compile::stderr 6
 /usr/bin/ld: /lib/x86_64-linux-gnu/Scrt1.o: in function `_start':
 (.text+0x17): undefined reference to `main'
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
-[1;31mfatal error[0;39m:child process returned exit code 1
+[1;31mfatal error[0;39m:child process for the c backend returned exit code 1
 [1;34mnote[0;39m:child process run with command `clang -std=c99 -Wno-override-module -Wno-incompatible-library-redeclaration -Wno-builtin-requires-header -O2 -o test test.c`
 
 compile::return_code 1
