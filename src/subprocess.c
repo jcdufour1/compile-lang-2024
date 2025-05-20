@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include <str_view.h>
 #include <cstr_vec.h>
 #include <subprocess.h>
@@ -29,7 +31,7 @@ int subprocess_call(Str_view path, Str_view_vec args) {
             vec_append(&a_temp, &cstrs, curr);
         }
         vec_append(&a_temp, &cstrs, NULL);
-        execve(str_view_to_cstr(&a_temp, path), cstr_vec_to_c_cstr_vec(&a_temp, cstrs), environ);
+        execvpe(str_view_to_cstr(&a_temp, path), cstr_vec_to_c_cstr_vec(&a_temp, cstrs), environ);
 
         // execve failed
         todo();

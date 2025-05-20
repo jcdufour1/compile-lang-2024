@@ -741,12 +741,15 @@ void emit_c_from_tree(const Llvm_block* root) {
     fclose(file);
 
     Str_view_vec cmd = {0};
-    vec_append(&a_main, &cmd, str_view_from_cstr("/usr/local/LLVM-19.1.0-Linux-X64/bin/clang"));
+    vec_append(&a_main, &cmd, str_view_from_cstr("clang"));
+    vec_append(&a_main, &cmd, str_view_from_cstr("-Wno-override-module"));
+    vec_append(&a_main, &cmd, str_view_from_cstr("-Wno-incompatible-library-redeclaration"));
+    vec_append(&a_main, &cmd, str_view_from_cstr("-Wno-builtin-requires-header"));
     vec_append(&a_main, &cmd, str_view_from_cstr("-O2"));
     vec_append(&a_main, &cmd, str_view_from_cstr("-o"));
-    vec_append(&a_main, &cmd, str_view_from_cstr("a.out"));
+    vec_append(&a_main, &cmd, str_view_from_cstr("test"));
     vec_append(&a_main, &cmd, str_view_from_cstr(TEST_OUTPUT));
-    int status = subprocess_call(str_view_from_cstr("/usr/local/LLVM-19.1.0-Linux-X64/bin/clang"), cmd);
+    int status = subprocess_call(str_view_from_cstr("clang"), cmd);
     if (status != 0) {
         // TODO: expected failure test for cmd failing
         todo();
