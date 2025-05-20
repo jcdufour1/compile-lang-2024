@@ -10,8 +10,9 @@ clang::stderr 0
 
 clang::return_code 0
 
-run::stdout 1
+run::stdout 2
 89
+89 89
 
 run::stderr 0
 

@@ -10,5 +10,6 @@ fn token_new() Token {
 
 fn main() i32 {
     io.printf("%d\n", token_new().num)
+    io.printf("%d %d\n", token_new().num, token_new().num)
     return 0
 }
