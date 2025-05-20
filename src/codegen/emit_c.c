@@ -75,8 +75,7 @@ static void c_extend_type_call_str(String* output, Lang_type lang_type, bool opa
     unreachable("");
 }
 
-static void emit_c_function_params(String* output, String* aux_assigns /* TODO: remove */, const Llvm_function_params* params) {
-    (void) aux_assigns;
+static void emit_c_function_params(String* output, const Llvm_function_params* params) {
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
         if (idx > 0) {
             string_extend_cstr(&a_main, output, ", ");
@@ -94,7 +93,7 @@ static void emit_c_function_params(String* output, String* aux_assigns /* TODO: 
     }
 }
 
-static void emit_c_function_decl_internal(String* output, String* aux_assigns, const Llvm_function_decl* decl) {
+static void emit_c_function_decl_internal(String* output, const Llvm_function_decl* decl) {
     c_extend_type_call_str(output, decl->return_type, true);
     string_extend_cstr(&a_main, output, " ");
     llvm_extend_name(output, decl->name);
@@ -103,27 +102,23 @@ static void emit_c_function_decl_internal(String* output, String* aux_assigns, c
     if (decl->params->params.info.count < 1) {
         string_extend_cstr(&a_main, output, "void");
     } else {
-        emit_c_function_params(output, aux_assigns, decl->params);
+        emit_c_function_params(output, decl->params);
     }
     string_extend_cstr(&a_main, output, ")");
 }
 
 static void emit_c_function_def(Emit_c_strs* strs, const Llvm_function_def* fun_def) {
-    String dummy = {0};
-    emit_c_function_decl_internal(&strs->forward_decls, &dummy, fun_def->decl);
+    emit_c_function_decl_internal(&strs->forward_decls, fun_def->decl);
     string_extend_cstr(&a_main, &strs->forward_decls, ";\n");
 
-    String aux_assigns = {0};
-    emit_c_function_decl_internal(&strs->output, &aux_assigns, fun_def->decl);
+    emit_c_function_decl_internal(&strs->output, fun_def->decl);
     string_extend_cstr(&a_main, &strs->output, " {\n");
-    string_extend_strv(&a_main, &strs->output, string_to_strv(aux_assigns));
     emit_c_block(strs, fun_def->body);
     string_extend_cstr(&a_main, &strs->output, "}\n");
 }
 
 static void emit_c_function_decl(Emit_c_strs* strs, const Llvm_function_decl* decl) {
-    String dummy = {0};
-    emit_c_function_decl_internal(&strs->forward_decls, &dummy, decl);
+    emit_c_function_decl_internal(&strs->forward_decls, decl);
     string_extend_cstr(&a_main, &strs->forward_decls, ";\n");
 }
 
