@@ -1865,7 +1865,7 @@ static void load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt, bool is_defere
                 return;
             }
 
-            Defer_collection coll = vec_top(&env.defered_collections);
+            Defer_collection coll = vec_at(&env.defered_collections, 0);
 
             Tast_return* rtn = tast_return_unwrap(old_stmt);
             if (tast_expr_get_lang_type(coll.rtn_val).type != LANG_TYPE_VOID) {
