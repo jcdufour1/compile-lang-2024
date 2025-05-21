@@ -105,8 +105,11 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
             defer = tast_defer_new(pos, tast_return_wrap(actual_rtn));
             break;
         }
-        case DEFER_PARENT_OF_FOR:
-            todo();
+        case DEFER_PARENT_OF_FOR: {
+            Tast_break* actual_brk = tast_break_new(pos /* TODO*/, true, rtn_val);
+            defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
+            break;
+        }
         case DEFER_PARENT_OF_IF: {
             Tast_break* actual_brk = tast_break_new(pos /* TODO*/, true, rtn_val);
             defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
@@ -1692,8 +1695,7 @@ static Llvm_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
 
     add_label(new_branch_block, after_check_label, pos);
 
-    todo();
-    //load_block_stmts(new_branch_block, old_for->body->children, DEFER_PARENT_OF_FOR, old_for->pos, );
+    load_block_stmts(new_branch_block, old_for->body->children, DEFER_PARENT_OF_FOR, old_for->pos, lang_type_void_const_wrap(lang_type_void_new(pos)) /* TODO */);
     vec_append(&a_main, &new_branch_block->children, llvm_goto_wrap(
         llvm_goto_new(old_for->pos, check_cond_label)
     ));
@@ -1720,7 +1722,7 @@ static void load_break(Llvm_block* new_block, Tast_break* old_break) {
         return;
     }
 
-    if (old_break->do_break_expr) {
+    if (false /*TODO*/ && old_break->do_break_expr) {
         log(LOG_DEBUG, TAST_FMT, tast_assignment_print(tast_assignment_new(old_break->pos,
             tast_symbol_wrap(tast_symbol_new(old_break->pos, (Sym_typed_base) {
                 .lang_type = tast_expr_get_lang_type(old_break->break_expr),
@@ -1728,7 +1730,10 @@ static void load_break(Llvm_block* new_block, Tast_break* old_break) {
             })),
             old_break->break_expr
         )));
-        todo();
+        log(LOG_DEBUG, TAST_FMT"\n", name_print(NAME_LOG, env.label_if_break));
+        log(LOG_DEBUG, TAST_FMT"\n", name_print(NAME_LOG, env.load_break_symbol_name));
+        //todo();
+
         load_assignment(new_block, tast_assignment_new(
             old_break->pos,
             tast_symbol_wrap(tast_symbol_new(old_break->pos, (Sym_typed_base) {
