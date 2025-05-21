@@ -10,39 +10,57 @@ int64_t str_view_to_int64_t(const Pos pos, Str_view str_view);
 static inline Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primitive lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_CHAR:
-            return lang_type_char_const_unwrap(lang_type).atom;
+            log(LOG_DEBUG, "thing 4 char\n");
+            log(LOG_DEBUG, "%.*s\n", name_print(NAME_LOG, lang_type_char_const_unwrap(lang_type).atom.str));
+            Lang_type_atom atom = lang_type_char_const_unwrap(lang_type).atom;
+            assert(!str_view_cstr_is_equal(atom.str.base, "void"));
+            return atom;
         case LANG_TYPE_SIGNED_INT: {
+            log(LOG_DEBUG, "thing 4 signed\n");
             // TODO: use hashtable, etc. to reduce allocations
             String string = {0};
             string_extend_cstr(&a_main, &string, "i");
             string_extend_int64_t(&a_main, &string, lang_type_signed_int_const_unwrap(lang_type).bit_width);
-            return lang_type_atom_new(
+            Lang_type_atom atom = lang_type_atom_new(
                 name_new((Str_view) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
                 lang_type_signed_int_const_unwrap(lang_type).pointer_depth
             );
+            assert(!str_view_cstr_is_equal(atom.str.base, "void"));
+            return atom;
         }
         case LANG_TYPE_FLOAT: {
+            log(LOG_DEBUG, "thing 4 float\n");
             // TODO: use hashtable, etc. to reduce allocations
             String string = {0};
             string_extend_cstr(&a_main, &string, "f");
             string_extend_int64_t(&a_main, &string, lang_type_float_const_unwrap(lang_type).bit_width);
-            return lang_type_atom_new(
+            Lang_type_atom atom = lang_type_atom_new(
                 name_new((Str_view) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
                 lang_type_float_const_unwrap(lang_type).pointer_depth
             );
+            assert(!str_view_cstr_is_equal(atom.str.base, "void"));
+            return atom;
         }
         case LANG_TYPE_UNSIGNED_INT: {
+            log(LOG_DEBUG, "thing 4 unsigned\n");
             // TODO: use hashtable, etc. to reduce allocations
             String string = {0};
             string_extend_cstr(&a_main, &string, "u");
             string_extend_int64_t(&a_main, &string, lang_type_unsigned_int_const_unwrap(lang_type).bit_width);
-            return lang_type_atom_new(
+            Lang_type_atom atom = lang_type_atom_new(
                 name_new((Str_view) {0}, string_to_strv(string), (Ulang_type_vec) {0}, 0),
                 lang_type_unsigned_int_const_unwrap(lang_type).pointer_depth
             );
+            assert(!str_view_cstr_is_equal(atom.str.base, "void"));
+            return atom;
         }
-        case LANG_TYPE_ANY:
-            return lang_type_any_const_unwrap(lang_type).atom;
+        case LANG_TYPE_ANY: {
+            log(LOG_DEBUG, "thing 4 any\n");
+            // TODO: remove atom from LANG_TYPE_ANY
+            Lang_type_atom atom = lang_type_any_const_unwrap(lang_type).atom;
+            assert(!str_view_cstr_is_equal(atom.str.base, "void"));
+            return atom;
+        }
     }
     unreachable("");
 }
@@ -144,19 +162,26 @@ static inline Lang_type_atom lang_type_primitive_get_atom(LANG_TYPE_MODE mode, L
 static inline Lang_type_atom lang_type_get_atom(LANG_TYPE_MODE mode, Lang_type lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_PRIMITIVE:
+            log(LOG_DEBUG, "thing thing thing primitive\n");
             return lang_type_primitive_get_atom(mode, lang_type_primitive_const_unwrap(lang_type));
         case LANG_TYPE_ENUM:
+            log(LOG_DEBUG, "thing thing thing enum\n");
             return lang_type_enum_const_unwrap(lang_type).atom;
         case LANG_TYPE_STRUCT:
+            log(LOG_DEBUG, "thing thing thing struct\n");
             return lang_type_struct_const_unwrap(lang_type).atom;
         case LANG_TYPE_RAW_UNION:
+            log(LOG_DEBUG, "thing thing thing raw_union\n");
             return lang_type_raw_union_const_unwrap(lang_type).atom;
         case LANG_TYPE_TUPLE:
+            log(LOG_DEBUG, "thing thing thing tuple\n");
             unreachable("");
         case LANG_TYPE_FN:
+            log(LOG_DEBUG, "thing thing thing fn\n");
             return lang_type_atom_new_from_cstr("", 1, 0);
         case LANG_TYPE_VOID: {
-            Lang_type_atom thing = (Lang_type_atom) {0};
+            log(LOG_DEBUG, "thing thing thing void\n");
+            Lang_type_atom thing = lang_type_atom_new_from_cstr("void", 0, SCOPE_BUILTIN);
             return thing;
         }
     }
