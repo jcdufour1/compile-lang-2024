@@ -483,4 +483,10 @@ static inline Struct_def_base tast_def_get_struct_def_base(const Tast_def* def) 
     unreachable("");
 }
 
+static inline Lang_type tast_lang_type_from_name(Name name) {
+    Tast_def* def = NULL;
+    unwrap(symbol_lookup(&def, name));
+    return tast_def_get_lang_type(def);
+}
+
 #endif // TAST_UTIL_H

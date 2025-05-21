@@ -59,6 +59,11 @@ typedef struct {
     Defer_collection* buf;
 } Defer_collection_vec;
 
+typedef struct {
+    Defer_collection_vec coll_stack;
+    Name is_rtning;
+} Defer_colls;
+
 // TODO: separate Env for different passes
 typedef struct Env_ {
     Scope_id_vec scope_id_to_parent;
@@ -115,7 +120,7 @@ typedef struct Env_ {
 
     // in load_block_stmts
     Tast_variable_def* rtn_def;
-    Defer_collection_vec defered_collections;
+    Defer_colls defered_collections;
 } Env;
 
 #endif // ENV_H
