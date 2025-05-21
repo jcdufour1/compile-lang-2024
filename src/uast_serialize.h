@@ -50,6 +50,8 @@ static inline Str_view serialize_uast_def(const Uast_def* def) {
             unreachable("");
         case UAST_LANG_DEF:
             todo();
+        case UAST_VOID_DEF:
+            todo();
     }
     unreachable("");
 }

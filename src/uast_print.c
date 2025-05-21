@@ -480,6 +480,15 @@ Str_view uast_lang_def_print_internal(const Uast_lang_def* def, int indent) {
     return string_to_strv(buf);
 }
 
+Str_view uast_void_def_print_internal(const Uast_void_def* def, int indent) {
+    (void) def;
+    String buf = {0};
+
+    string_extend_cstr_indent(&print_arena, &buf, "void_def\n", indent);
+
+    return string_to_strv(buf);
+}
+
 Str_view uast_return_print_internal(const Uast_return* lang_rtn, int indent) {
     String buf = {0};
 
@@ -640,6 +649,8 @@ Str_view uast_def_print_internal(const Uast_def* def, int indent) {
             return uast_poison_def_print_internal(uast_poison_def_const_unwrap(def), indent);
         case UAST_LANG_DEF:
             return uast_lang_def_print_internal(uast_lang_def_const_unwrap(def), indent);
+        case UAST_VOID_DEF:
+            return uast_void_def_print_internal(uast_void_def_const_unwrap(def), indent);
     }
     unreachable("");
 }

@@ -269,6 +269,8 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
             todo();
         case UAST_VARIABLE_DEF:
             todo();
+        case UAST_VOID_DEF:
+            todo();
     }
     unreachable("");
 }

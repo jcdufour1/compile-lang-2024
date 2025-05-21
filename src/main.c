@@ -47,11 +47,7 @@ static void add_any(const char* base_name, int16_t pointer_depth) {
 }
 
 static void add_void(void) {
-    Uast_void_def* def = uast_primitive_def_new(
-        POS_BUILTIN,
-        lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN))
-    );
-    unwrap(usym_tbl_add(uast_primitive_def_wrap(def)));
+    unwrap(usym_tbl_add(uast_void_def_wrap(uast_void_def_new(POS_BUILTIN))));
 }
 
 static void add_primitives(void) {
