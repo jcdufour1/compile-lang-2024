@@ -12,7 +12,6 @@ Tast* root_of_tree = NULL;
 
 size_t error_count = 0;
 size_t warning_count = 0;
-size_t expected_fail_count = 0;
 
 Pos prev_pos = {0};
 

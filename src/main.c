@@ -17,26 +17,7 @@
 //
 // TODO: test case for handling assigning/returning void item
 //
-// TODO: think about stack overflow if deeply nested generic functions are present?
-// 
-// TODO: expected success test for /r, /t, etc. in source file
-
-static void fail(void) {
-    if (!params.test_expected_fail) {
-        exit(EXIT_CODE_FAIL);
-    }
-
-    log(LOG_DEBUG, "%zu %zu\n", expected_fail_count, params.diag_types.info.count); 
-    if (expected_fail_count == params.diag_types.info.count) {
-        exit(EXIT_CODE_EXPECTED_FAIL);
-    } else {
-        log(
-            LOG_FATAL, "%zu expected fails occured, but %zu expected fails were expected\n",
-            expected_fail_count, params.diag_types.info.count
-        );
-        exit(EXIT_CODE_FAIL);
-    }
-}
+// TODO: expected success test for \r, \t, etc. in source file
 
 static void add_any(const char* base_name, int16_t pointer_depth) {
     Uast_primitive_def* def = uast_primitive_def_new(
@@ -69,7 +50,6 @@ void do_passes(void) {
     //tokenize_do_test();
     memset(&env, 0, sizeof(env));
 
-    // allocate scope 0
     symbol_collection_new(SCOPE_BUILTIN);
 
     add_primitives();
@@ -79,7 +59,7 @@ void do_passes(void) {
     if (error_count > 0) {
         log(LOG_DEBUG, "parse_file failed\n");
         assert((!status || params.error_opts_changed) && "parse_file is not returning false when it should\n");
-        fail();
+        exit(EXIT_CODE_FAIL);
     }
     assert(status && "error_count should be zero if parse_file returns true");
 
@@ -94,7 +74,7 @@ void do_passes(void) {
     if (error_count > 0) {
         log(LOG_DEBUG, "try_set_block_types failed\n");
         assert((!status || params.error_opts_changed) && "try_set_types is not returning false when it should\n");
-        fail();
+        exit(EXIT_CODE_FAIL);
     }
     log(LOG_DEBUG, "try_set_block_types succedded\n");
     assert(status && "error_count should be zero if try_set_types returns true");
@@ -113,7 +93,7 @@ void do_passes(void) {
     log(LOG_DEBUG, TAST_FMT, llvm_block_print(llvm_root));
     log(LOG_DEBUG, "\nafter add_load_and_store end-------------------- \n");
     if (error_count > 0) {
-        fail();
+        exit(EXIT_CODE_FAIL);
     }
     assert(llvm_root);
 
@@ -161,7 +141,7 @@ void do_passes(void) {
     }
 
     if (error_count > 0) {
-        fail();
+        exit(EXIT_CODE_FAIL);
     }
 }
 
