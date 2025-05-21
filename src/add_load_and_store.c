@@ -138,11 +138,10 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
     if (lang_type.type != LANG_TYPE_VOID) {
         unwrap(symbol_add(tast_variable_def_wrap(local_rtn_def)));
         load_variable_def(new_block, local_rtn_def);
-
-        unwrap(symbol_add(tast_variable_def_wrap(is_rtning)));
-        load_variable_def(new_block, is_rtning);
-        load_assignment(new_block, is_rtn_assign);
     }
+    unwrap(symbol_add(tast_variable_def_wrap(is_rtning)));
+    load_variable_def(new_block, is_rtning);
+    load_assignment(new_block, is_rtn_assign);
 
     for (size_t idx = 0; idx < children.info.count; idx++) {
         load_stmt(new_block, vec_at(&children, idx), false);
@@ -482,7 +481,7 @@ static void add_label(Llvm_block* block, Name label_name, Pos pos) {
 
 static void if_for_add_cond_goto(
     Tast_operator* old_oper,
-    Llvm_block* block,
+    Llvm_block* new_block,
     Name label_name_if_true,
     Name label_name_if_false
 ) {
@@ -492,12 +491,12 @@ static void if_for_add_cond_goto(
     assert(label_name_if_false.base.count > 0);
     Llvm_cond_goto* cond_goto = llvm_cond_goto_new(
         pos,
-        load_operator(block, old_oper),
+        load_operator(new_block, old_oper),
         label_name_if_true,
         label_name_if_false
     );
 
-    vec_append(&a_main, &block->children, llvm_cond_goto_wrap(cond_goto));
+    vec_append(&a_main, &new_block->children, llvm_cond_goto_wrap(cond_goto));
 }
 
 static Name load_function_call(Llvm_block* new_block, Tast_function_call* old_call) {
@@ -1544,6 +1543,10 @@ static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, N
 }
 
 static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* if_else) {
+    Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
+        lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
+    ));
+
     *new_block = llvm_block_new(
         if_else->pos,
         (Llvm_vec) {0},
@@ -1599,6 +1602,29 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
 
     assert(!symbol_lookup(&dummy_def, next_if));
     add_label((*new_block), next_if, if_else->pos);
+
+    Name after_is_rtn = util_literal_name_new_prefix2(str_view_from_cstr("after_is_rtn_check"));
+
+    // is_rtn_check
+    Defer_pair_vec* pairs = &vec_top_ref(&env.defered_collections.coll_stack)->pairs;
+    unwrap(pairs->info.count > 0 && "not implemented");
+    if_for_add_cond_goto(
+        // if this condition evaluates to true, we are not returning right now
+        tast_binary_wrap(tast_binary_new(
+            if_else->pos,
+            tast_symbol_wrap(tast_symbol_new(if_else->pos, (Sym_typed_base) {
+                .lang_type = tast_lang_type_from_name(env.defered_collections.is_rtning),
+                .name = env.defered_collections.is_rtning
+            })),
+            tast_literal_wrap(tast_int_wrap(tast_int_new(if_else->pos, 0, u1_lang_type))),
+            BINARY_DOUBLE_EQUAL,
+            u1_lang_type
+        )),
+        *new_block,
+        after_is_rtn,
+        vec_top(pairs).label->name
+    );
+    add_label((*new_block), after_is_rtn, if_else->pos);
     assert(alloca_lookup(&dummy, next_if));
 
     env.label_if_break = old_label_if_break;

@@ -485,6 +485,7 @@ static inline Struct_def_base tast_def_get_struct_def_base(const Tast_def* def) 
 
 static inline Lang_type tast_lang_type_from_name(Name name) {
     Tast_def* def = NULL;
+    log(LOG_DEBUG, TAST_FMT"\n", name_print(NAME_LOG, name));
     unwrap(symbol_lookup(&def, name));
     return tast_def_get_lang_type(def);
 }
