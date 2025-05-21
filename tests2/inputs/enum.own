@@ -51,37 +51,37 @@ type LlvmType enum {
 }
 
 fn main() i32 {
-    let token_type TokenType = TokenType.number
-    io.printf("%d\n", token_type);
+    //let token_type TokenType = TokenType.number
+    //io.printf("%d\n", token_type);
 
-    token_type = TokenType.string
-    io.printf("%d\n", token_type);
-
-    {
-        let token Token
-        token.kind = TokenType.number
-        token.number_data = 87
-        token.string_data = "hello"
-        print_token_if(token)
-        print_token_switch(token)
-    }
+    //token_type = TokenType.string
+    //io.printf("%d\n", token_type);
 
     {
-        let token Token
-        token.kind = TokenType.string
-        token.number_data = 87
-        token.string_data = "hello"
-        print_token_if(token)
-        print_token_switch(token)
+        //let token Token
+        //token.kind = TokenType.number
+        //token.number_data = 87
+        //token.string_data = "hello"
+        //print_token_if(token)
+        //print_token_switch(token)
     }
 
-    {
-        let token Token
-        token.kind = TokenType.string
-        token.number_data = 87
-        token.string_data = "hello"
-        print_token_switch_non_exhaustive(token)
-    }
+    //{
+    //    let token Token
+    //    token.kind = TokenType.string
+    //    token.number_data = 87
+    //    token.string_data = "hello"
+    //    print_token_if(token)
+    //    print_token_switch(token)
+    //}
+
+    //{
+    //    let token Token
+    //    token.kind = TokenType.string
+    //    token.number_data = 87
+    //    token.string_data = "hello"
+    //    print_token_switch_non_exhaustive(token)
+    //}
     return 0
 }
 
