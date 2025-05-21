@@ -16,7 +16,7 @@ static bool is_short_option(char** argv) {
 // this function will exclude - or -- part of arg if present
 static const char* consume_arg(int* argc, char*** argv, const char* msg_if_missing) {
     if (*argc < 1) {
-        msg(DIAG_MISSING_COMMAND_LINE_ARG, dummy_pos, "%s\n", msg_if_missing);
+        msg(DIAG_MISSING_COMMAND_LINE_ARG, POS_BUILTIN, "%s\n", msg_if_missing);
         exit(EXIT_CODE_FAIL);
     }
     const char* curr_arg = argv[0][0];
@@ -154,46 +154,14 @@ static void parse_normal_option(int* argc, char*** argv) {
 
     if (0 == strcmp(curr_opt, "compile")) {
         params.compile = true;
-        params.input_file_name = consume_arg(argc, argv, "input file path was expected after `compile`");
+        params.input_file_path = str_view_from_cstr(consume_arg(argc, argv, "input file path was expected after `compile`"));
     } else if (0 == strcmp(curr_opt, "compile-run")) {
         params.compile = true;
         params.run = true;
-        params.input_file_name = consume_arg(argc, argv, "input file path was expected after `compile`");
+        params.input_file_path = str_view_from_cstr(consume_arg(argc, argv, "input file path was expected after `compile-run`"));
     } else if (0 == strcmp(curr_opt, "test-expected-fail")) {
-        params.compile = false;
-        params.test_expected_fail = true;
-
-        const char* count_args_cstr = consume_arg(argc, argv, "count expected");
-        size_t count_args = SIZE_MAX;
-        if (!try_str_view_to_size_t(&count_args, str_view_from_cstr(count_args_cstr))) {
-            todo();
-        }
-        assert(count_args < SIZE_MAX && "count_args unset");
-
-        bool found = false;
-        for (size_t idx = 0; idx < count_args; idx++) {
-            const char* diag_type_str = consume_arg(
-                argc, argv, "expected fail type expected after `test_expected_fail`"
-            );
-
-            for (size_t idx = 0; idx < sizeof(expect_fail_pair)/sizeof(expect_fail_pair[0]); idx++) {
-                if (0 == strcmp(diag_type_str, expect_fail_pair[idx].str)) {
-                    found = true;
-                    vec_append(&a_main, &params.diag_types, expect_fail_pair[idx].type);
-                    break;
-                }
-            }
-
-            if (!found) {
-                log(LOG_FATAL, "invalid expected fail type `%s`\n", diag_type_str);
-                exit(EXIT_CODE_FAIL);
-            }
-            assert(params.diag_types.info.count > 0);
-        }
-
-        params.input_file_name = consume_arg(
-            argc, argv, "input file path was expected after `test_expected_fail <fail type>`"
-        );
+        // TODO: remove test-expected-fail parameter
+        todo();
     } else {
         log(LOG_FATAL, "invalid option: %s\n", curr_opt);
         exit(EXIT_CODE_FAIL);
@@ -238,6 +206,8 @@ static void parse_long_option(int* argc, char*** argv) {
         }
     } else if (0 == strcmp(curr_opt, "all-errors-fatal")) {
         params.all_errors_fatal = true;
+    } else if (0 == strcmp(curr_opt, "o")) {
+        params.output_file_path = str_view_from_cstr(consume_arg(argc, argv, "output file path was expected after `-o`"));
     } else if (0 == strncmp(curr_opt, "error", strlen("error"))) {
         Str_view error = str_view_from_cstr(&curr_opt[strlen("error")]);
         if (!str_view_try_consume(&error, '=') || error.count < 1) {
@@ -290,6 +260,7 @@ static void parse_long_option(int* argc, char*** argv) {
 static void set_params_to_defaults(void) {
     params.emit_llvm = false;
     params.compile = false;
+    params.output_file_path = str_view_from_cstr("a.out");
 
     set_backend(BACKEND_C);
 }

@@ -43,7 +43,6 @@ typedef struct {
 // TODO: make these constants upper case
 #define dummy_env (&(Env){0})
 
-static const Pos dummy_pos = {0};
 #define POS_BUILTIN ((Pos) {.file_path = {.count = SIZE_MAX}})
 
 // log* functions and macros print messages that are intended for debugging

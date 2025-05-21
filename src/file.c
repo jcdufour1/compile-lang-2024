@@ -36,8 +36,8 @@ void write_file(const char* file_path, Str_view text_to_write) {
     FILE* file = fopen(file_path, "w");
     if (!file) {
         msg(
-            DIAG_FILE_COULD_NOT_OPEN, dummy_pos, "could not open file %s: errno %d (%s)\n",
-            params.input_file_name, errno, strerror(errno)
+            DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN, "could not open file "STR_VIEW_FMT": %s\n",
+            str_view_print(params.input_file_path), strerror(errno)
         );
         exit(EXIT_CODE_FAIL);
     }

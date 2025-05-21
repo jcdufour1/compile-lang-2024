@@ -1024,8 +1024,8 @@ void emit_llvm_from_tree(const Llvm_block* root) {
     FILE* file = fopen("test.ll", "w");
     if (!file) {
         msg(
-            DIAG_FILE_COULD_NOT_OPEN, dummy_pos, "could not open file %s: errno %d (%s)\n",
-            params.input_file_name, errno, strerror(errno)
+            DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN, "could not open file "STR_VIEW_FMT": %s\n",
+            str_view_print(params.input_file_path), strerror(errno)
         );
         exit(EXIT_CODE_FAIL);
     }
@@ -1049,8 +1049,8 @@ void emit_llvm_from_tree(const Llvm_block* root) {
     }
 
     msg(
-        DIAG_FILE_BUILT, dummy_pos, "file %s built\n",
-        params.input_file_name
+        DIAG_FILE_BUILT, POS_BUILTIN, "file "STR_VIEW_FMT" built\n",
+        str_view_print(params.input_file_path)
     );
 
     fclose(file);

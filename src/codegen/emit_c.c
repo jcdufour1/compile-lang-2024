@@ -696,8 +696,8 @@ void emit_c_from_tree(const Llvm_block* root) {
     FILE* file = fopen(TEST_OUTPUT, "w");
     if (!file) {
         msg(
-            DIAG_FILE_COULD_NOT_OPEN, dummy_pos, "could not open file %s: errno %d (%s)\n",
-            params.input_file_name, errno, strerror(errno)
+            DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN, "could not open file "STR_VIEW_FMT" %s\n",
+            str_view_print(params.input_file_path), strerror(errno)
         );
         exit(EXIT_CODE_FAIL);
     }
@@ -733,7 +733,7 @@ void emit_c_from_tree(const Llvm_block* root) {
         }
     }
 
-    msg(DIAG_FILE_BUILT, dummy_pos, "file %s built\n", params.input_file_name);
+    msg(DIAG_FILE_BUILT, POS_BUILTIN, "file "STR_VIEW_FMT" built\n", str_view_print(params.input_file_path));
 
     fclose(file);
 
@@ -746,7 +746,7 @@ void emit_c_from_tree(const Llvm_block* root) {
         vec_append(&a_main, &cmd, str_view_from_cstr("-Wno-builtin-requires-header"));
         vec_append(&a_main, &cmd, str_view_from_cstr("-O2"));
         vec_append(&a_main, &cmd, str_view_from_cstr("-o"));
-        vec_append(&a_main, &cmd, str_view_from_cstr("test"));
+        vec_append(&a_main, &cmd, params.output_file_path);
         vec_append(&a_main, &cmd, str_view_from_cstr(TEST_OUTPUT));
         int status = subprocess_call(cmd);
         if (status != 0) {

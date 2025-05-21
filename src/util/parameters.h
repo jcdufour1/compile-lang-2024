@@ -22,7 +22,8 @@ typedef struct {
 } Backend_info;
 
 typedef struct {
-    const char* input_file_name;
+    Str_view input_file_path;
+    Str_view output_file_path;
     Expect_fail_type_vec diag_types;
     bool compile : 1;
     bool run : 1;

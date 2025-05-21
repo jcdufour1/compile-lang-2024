@@ -75,7 +75,7 @@ void do_passes(void) {
     add_primitives();
 
     Uast_block* untyped = NULL;
-    bool status = parse_file(&untyped, str_view_from_cstr(params.input_file_name));
+    bool status = parse_file(&untyped, params.input_file_path);
     if (error_count > 0) {
         log(LOG_DEBUG, "parse_file failed\n");
         assert((!status || params.error_opts_changed) && "parse_file is not returning false when it should\n");

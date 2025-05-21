@@ -2590,7 +2590,7 @@ bool parse_file(Uast_block** block, Str_view file_path) {
     Str_view* file_con = arena_alloc(&a_main, sizeof(*file_con));
     if (!read_file(file_con, file_path)) {
         msg(
-            DIAG_FILE_COULD_NOT_OPEN, dummy_pos,
+            DIAG_FILE_COULD_NOT_OPEN, POS_BUILTIN,
             "could not open file `"STR_VIEW_FMT"`: %s\n",
             str_view_print(file_path), strerror(errno)
         );
