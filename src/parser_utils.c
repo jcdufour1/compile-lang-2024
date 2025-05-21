@@ -440,7 +440,12 @@ Str_view util_literal_str_view_new_internal(const char* file, int line, Str_view
     //string_extend_size_t(&a_main, &var_name, line);
     //string_extend_cstr(&a_main, &var_name, "_");
 
+#ifndef DNDEBUG
+    string_extend_cstr(&a_main, &var_name, "__");
     string_extend_strv(&a_main, &var_name, debug_prefix);
+    string_extend_cstr(&a_main, &var_name, "__");
+#endif // DNDEBUG
+
     string_extend_size_t(&a_main, &var_name, count);
     vec_append(&a_main, &literal_strings, var_name);
 

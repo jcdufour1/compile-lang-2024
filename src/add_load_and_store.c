@@ -114,7 +114,7 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
 
     vec_append(&a_main, &vec_top_ref(&env.defered_collections)->pairs, ((Defer_pair) {
         defer,
-        tast_label_new(defer->pos, util_literal_name_new2())
+        tast_label_new(defer->pos, util_literal_name_new_prefix2(str_view_from_cstr("actual_return")))
     }));
 
     if (lang_type.type != LANG_TYPE_VOID) {
@@ -1504,7 +1504,7 @@ static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, N
 
     Tast_operator* old_oper = if_cond->child;
 
-    Name if_body = util_literal_name_new_mod_path2(env.curr_mod_path);
+    Name if_body = util_literal_name_new_prefix2(str_view_from_cstr("if_body"));
 
     if_for_add_cond_goto(old_oper, new_block, if_body, next_if);
 
@@ -1542,7 +1542,7 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
         env.load_break_symbol_name = yield_dest->name;
     }
 
-    Name if_after = util_literal_name_new_mod_path2(env.curr_mod_path);
+    Name if_after = util_literal_name_new_prefix2(str_view_from_cstr("if_after"));
 
     Name old_label_if_break = env.label_if_break;
     if (if_else->is_switch) {
@@ -1559,7 +1559,7 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
         if (idx + 1 == if_else->tasts.info.count) {
             next_if = if_after;
         } else {
-            next_if = util_literal_name_new_mod_path2(env.curr_mod_path);
+            next_if = util_literal_name_new_prefix2(str_view_from_cstr("next_if"));
         }
 
         Llvm_block* if_block = if_statement_to_branch(vec_at(&if_else->tasts, idx), next_if, if_after);
@@ -1955,7 +1955,7 @@ static void load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt, bool is_defere
             Tast_defer* defer = tast_defer_unwrap(old_stmt);
             vec_append(&a_main, pairs, ((Defer_pair) {
                 defer,
-                tast_label_new(defer->pos, util_literal_name_new2())
+                tast_label_new(defer->pos, util_literal_name_new_prefix2(str_view_from_cstr("defered_thing")))
             }));
             return;
         }
