@@ -15,6 +15,18 @@
 
 extern char **environ;
 
+Str_view cmd_to_strv(Arena* arena, Str_view_vec cmd) {
+    String cmd_str = {0};
+    for (size_t idx = 0; idx < cmd.info.count; idx++) {
+        if (idx > 0) {
+            string_extend_cstr(arena, &cmd_str, " ");
+        }
+        // TODO: consider arguments that contain spaces, etc.
+        string_extend_strv(arena, &cmd_str, vec_at(&cmd, idx));
+    }
+    return string_to_strv(cmd_str);
+}
+
 // returns return code
 int subprocess_call(Str_view_vec cmd) {
     Arena a_temp = {0};
@@ -22,15 +34,7 @@ int subprocess_call(Str_view_vec cmd) {
     int pid = fork();
     if (pid == -1) {
         msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "fork failed: %s\n", strerror(errno));
-        String cmd_str = {0};
-        for (size_t idx = 0; idx < cmd.info.count; idx++) {
-            if (idx > 0) {
-                string_extend_cstr(&a_main, &cmd_str, " ");
-            }
-            // TODO: consider arguments that contain spaces, etc.
-            string_extend_strv(&a_main, &cmd_str, vec_at(&cmd, idx));
-        }
-        msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", string_print(cmd_str));
+        msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", str_view_print(cmd_to_strv(&a_temp, cmd)));
         exit(EXIT_CODE_FAIL);
     }
 
@@ -45,16 +49,7 @@ int subprocess_call(Str_view_vec cmd) {
         execvpe(str_view_to_cstr(&a_temp, vec_at(&cmd, 0)), cstr_vec_to_c_cstr_vec(&a_temp, cstrs), environ);
 
         msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "execvpe failed: %s\n", strerror(errno));
-        // TODO: make a separate function to generate cmd_str
-        String cmd_str = {0};
-        for (size_t idx = 0; idx < cmd.info.count; idx++) {
-            if (idx > 0) {
-                string_extend_cstr(&a_main, &cmd_str, " ");
-            }
-            // TODO: consider arguments that contain spaces, etc.
-            string_extend_strv(&a_main, &cmd_str, vec_at(&cmd, idx));
-        }
-        msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", string_print(cmd_str));
+        msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", str_view_print(cmd_to_strv(&a_temp, cmd)));
         exit(EXIT_CODE_FAIL);
     }
 
@@ -67,42 +62,16 @@ int subprocess_call(Str_view_vec cmd) {
         return WEXITSTATUS(wstatus);
     } else if (WIFSIGNALED(wstatus)) {
         msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process was killed by signal %d\n", WTERMSIG(wstatus));
-        // TODO: make a separate function to generate cmd_str
-        String cmd_str = {0};
-        for (size_t idx = 0; idx < cmd.info.count; idx++) {
-            if (idx > 0) {
-                string_extend_cstr(&a_main, &cmd_str, " ");
-            }
-            // TODO: consider arguments that contain spaces, etc.
-            string_extend_strv(&a_main, &cmd_str, vec_at(&cmd, idx));
-        }
-        msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", string_print(cmd_str));
+        msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", str_view_print(cmd_to_strv(&a_temp, cmd)));
         exit(EXIT_CODE_FAIL);
     } else if (WIFSTOPPED(wstatus)) {
         msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process was stopped by signal %d\n", WSTOPSIG(wstatus));
-        // TODO: make a separate function to generate cmd_str
-        String cmd_str = {0};
-        for (size_t idx = 0; idx < cmd.info.count; idx++) {
-            if (idx > 0) {
-                string_extend_cstr(&a_main, &cmd_str, " ");
-            }
-            // TODO: consider arguments that contain spaces, etc.
-            string_extend_strv(&a_main, &cmd_str, vec_at(&cmd, idx));
-        }
-        msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", string_print(cmd_str));
+        msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", str_view_print(cmd_to_strv(&a_temp, cmd)));
         msg_todo("handling process stopped by signal", POS_BUILTIN);
         exit(EXIT_CODE_FAIL);
     } else if (WIFCONTINUED(wstatus)) {
         msg_todo("handling process continued", POS_BUILTIN);
-        String cmd_str = {0};
-        for (size_t idx = 0; idx < cmd.info.count; idx++) {
-            if (idx > 0) {
-                string_extend_cstr(&a_main, &cmd_str, " ");
-            }
-            // TODO: consider arguments that contain spaces, etc.
-            string_extend_strv(&a_main, &cmd_str, vec_at(&cmd, idx));
-        }
-        msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", string_print(cmd_str));
+        msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", str_view_print(cmd_to_strv(&a_temp, cmd)));
         exit(EXIT_CODE_FAIL);
     }
     unreachable("");

@@ -751,15 +751,7 @@ void emit_c_from_tree(const Llvm_block* root) {
         int status = subprocess_call(cmd);
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the c backend returned exit code %d\n", status);
-            String cmd_str = {0};
-            for (size_t idx = 0; idx < cmd.info.count; idx++) {
-                if (idx > 0) {
-                    string_extend_cstr(&a_main, &cmd_str, " ");
-                }
-                // TODO: consider arguments that contain spaces, etc.
-                string_extend_strv(&a_main, &cmd_str, vec_at(&cmd, idx));
-            }
-            msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", string_print(cmd_str));
+            msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", str_view_print(cmd_to_strv(&a_main, cmd)));
             exit(EXIT_CODE_FAIL);
         }
     }
@@ -770,15 +762,7 @@ void emit_c_from_tree(const Llvm_block* root) {
         int status = subprocess_call(cmd);
         if (status != 0) {
             msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the compiled program returned exit code %d\n", status);
-            String cmd_str = {0};
-            for (size_t idx = 0; idx < cmd.info.count; idx++) {
-                if (idx > 0) {
-                    string_extend_cstr(&a_main, &cmd_str, " ");
-                }
-                // TODO: consider arguments that contain spaces, etc.
-                string_extend_strv(&a_main, &cmd_str, vec_at(&cmd, idx));
-            }
-            msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", string_print(cmd_str));
+            msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", str_view_print(cmd_to_strv(&a_main, cmd)));
             // TODO: consider if we should exit with child process status code instead of EXIT_CODE_FAIL
             exit(EXIT_CODE_FAIL);
         }
