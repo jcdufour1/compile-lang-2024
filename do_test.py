@@ -109,6 +109,8 @@ def compile_test(do_debug: bool, output_name: str, file: FileItem) -> TestResult
     compile_cmd.append(os.path.join(INPUTS_DIR, file.path_base))
     compile_cmd.append("--emit-llvm")
     compile_cmd.append("--log-level=NOTE")
+    compile_cmd.append("-o")
+    compile_cmd.append("test")
 
     print_info("testing: " + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")
     return TestResult(subprocess.run(compile_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True))
