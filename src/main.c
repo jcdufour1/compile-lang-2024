@@ -10,6 +10,8 @@
 #include <uast.h>
 #include <type_checking.h>
 #include <symbol_log.h>
+#include <str_view_vec.h>
+#include <subprocess.h>
  
 // TODO: make separate Env struct for every pass (each Env will need Env_common for things that all envs require (eg. for symbol table lookups))
 //
@@ -61,7 +63,7 @@ static void add_primitives(void) {
     add_void("void", 0);
 }
 
-void do_passes(const Parameters* params) {
+void do_passes(void) {
     memset(&env, 0, sizeof(env));
     // TODO: do this in a more proper way. this is temporary way to test
     //tokenize_do_test();
@@ -73,10 +75,10 @@ void do_passes(const Parameters* params) {
     add_primitives();
 
     Uast_block* untyped = NULL;
-    bool status = parse_file(&untyped, str_view_from_cstr(params->input_file_name));
+    bool status = parse_file(&untyped, str_view_from_cstr(params.input_file_name));
     if (error_count > 0) {
         log(LOG_DEBUG, "parse_file failed\n");
-        assert((!status || params->error_opts_changed) && "parse_file is not returning false when it should\n");
+        assert((!status || params.error_opts_changed) && "parse_file is not returning false when it should\n");
         fail();
     }
     assert(status && "error_count should be zero if parse_file returns true");
@@ -91,7 +93,7 @@ void do_passes(const Parameters* params) {
     status = try_set_types(&typed, untyped);
     if (error_count > 0) {
         log(LOG_DEBUG, "try_set_block_types failed\n");
-        assert((!status || params->error_opts_changed) && "try_set_types is not returning false when it should\n");
+        assert((!status || params.error_opts_changed) && "try_set_types is not returning false when it should\n");
         fail();
     }
     log(LOG_DEBUG, "try_set_block_types succedded\n");
@@ -119,8 +121,8 @@ void do_passes(const Parameters* params) {
         unreachable("should have exited before now\n");
     }
 
-    if (params->emit_llvm) {
-        switch (params->backend_info.backend) {
+    if (params.emit_llvm) {
+        switch (params.backend_info.backend) {
             case BACKEND_NONE:
                 unreachable("this should have been caught eariler");
             case BACKEND_LLVM:
@@ -133,7 +135,7 @@ void do_passes(const Parameters* params) {
                 unreachable("");
         }
     } else {
-        switch (params->backend_info.backend) {
+        switch (params.backend_info.backend) {
             case BACKEND_NONE:
                 unreachable("this should have been caught eariler");
             case BACKEND_LLVM:
@@ -146,6 +148,18 @@ void do_passes(const Parameters* params) {
         }
     }
 
+    if (params.run) {
+        Str_view_vec cmd = {0};
+        vec_append(&a_main, &cmd, str_view_from_cstr("./test"));
+        int status = subprocess_call(cmd);
+        if (status != 0) {
+            msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the compiled program returned exit code %d\n", status);
+            msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", str_view_print(cmd_to_strv(&a_main, cmd)));
+            // exit with the child process return status
+            exit(status);
+        }
+    }
+
     if (error_count > 0) {
         fail();
     }
@@ -153,6 +167,6 @@ void do_passes(const Parameters* params) {
 
 int main(int argc, char** argv) {
     parse_args(argc, argv);
-    do_passes(&params);
+    do_passes();
     return 0;
 }

@@ -755,16 +755,4 @@ void emit_c_from_tree(const Llvm_block* root) {
             exit(EXIT_CODE_FAIL);
         }
     }
-
-    if (params.run) {
-        Str_view_vec cmd = {0};
-        vec_append(&a_main, &cmd, str_view_from_cstr("./test"));
-        int status = subprocess_call(cmd);
-        if (status != 0) {
-            msg(DIAG_CHILD_PROCESS_FAILURE, POS_BUILTIN, "child process for the compiled program returned exit code %d\n", status);
-            msg(DIAG_NOTE, POS_BUILTIN, "child process run with command `"STR_VIEW_FMT"`\n", str_view_print(cmd_to_strv(&a_main, cmd)));
-            // exit with the child process return status
-            exit(status);
-        }
-    }
 }
