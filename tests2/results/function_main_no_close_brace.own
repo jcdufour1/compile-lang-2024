@@ -1,7 +1,7 @@
 compile::stdout 0
 
 compile::stderr 5
-./tests2/inputs/function_main_no_close_brace.own:4:15:[1;31merror[0;39m:opening `{` is unmatched
+tests2/inputs/function_main_no_close_brace.own:4:15:[1;31merror[0;39m:opening `{` is unmatched
      3 | 
      4 | fn main() i32 {
        |               ^

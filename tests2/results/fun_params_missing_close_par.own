@@ -1,7 +1,7 @@
 compile::stdout 0
 
 compile::stderr 5
-./tests2/inputs/fun_params_missing_close_par.own:2:10:[1;31merror[0;39m:got token `{`, but expected `symbol` in variable definition
+tests2/inputs/fun_params_missing_close_par.own:2:10:[1;31merror[0;39m:got token `{`, but expected `symbol` in variable definition
      1 | 
      2 | fn main( {
        |          ^

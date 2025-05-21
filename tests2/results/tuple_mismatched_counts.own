@@ -1,22 +1,22 @@
 compile::stdout 0
 
 compile::stderr 20
-./tests2/inputs/tuple_mismatched_counts.own:3:14:[1;31merror[0;39m:expected newline after statement
+tests2/inputs/tuple_mismatched_counts.own:3:14:[1;31merror[0;39m:expected newline after statement
      2 | fn get_data() (i32, i32) {
      3 |     return 87, 21, 3
        |              ^
      4 | }
-./tests2/inputs/tuple_mismatched_counts.own:7:14:[1;31merror[0;39m:expected newline after statement
+tests2/inputs/tuple_mismatched_counts.own:7:14:[1;31merror[0;39m:expected newline after statement
      6 | fn get_data_2() (i32, i32, i32) {
      7 |     return 87, 31
        |              ^
      8 | }
-./tests2/inputs/tuple_mismatched_counts.own:15:9:[1;31merror[0;39m:expected newline after statement
+tests2/inputs/tuple_mismatched_counts.own:15:9:[1;31merror[0;39m:expected newline after statement
     14 | 
     15 |     num1, num2 = get_data()
        |         ^
     16 |     num1, num2, num3 = get_data()
-./tests2/inputs/tuple_mismatched_counts.own:2:26:[1;31merror[0;39m:opening `{` is unmatched
+tests2/inputs/tuple_mismatched_counts.own:2:26:[1;31merror[0;39m:opening `{` is unmatched
      1 | 
      2 | fn get_data() (i32, i32) {
        |                          ^

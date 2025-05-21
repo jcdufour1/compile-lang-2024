@@ -1,12 +1,12 @@
 compile::stdout 0
 
 compile::stderr 10
-./tests2/inputs/type_token_struct_wrong_order.own:3:6:[1;31merror[0;39m:got token `struct`, but expected `symbol` 
+tests2/inputs/type_token_struct_wrong_order.own:3:6:[1;31merror[0;39m:got token `struct`, but expected `symbol` 
      2 | 
      3 | type struct Token {
        |      ^
      4 | }
-./tests2/inputs/type_token_struct_wrong_order.own:6:6:[1;31merror[0;39m:got token `struct`, but expected `symbol` 
+tests2/inputs/type_token_struct_wrong_order.own:6:6:[1;31merror[0;39m:got token `struct`, but expected `symbol` 
      5 | 
      6 | type struct {
        |      ^

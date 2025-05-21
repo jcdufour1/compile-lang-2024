@@ -1,7 +1,7 @@
 compile::stdout 0
 
 compile::stderr 5
-./tests2/inputs/multiline_comment_open_unmatched.own:4:6:[1;31merror[0;39m:unmatched opening `/*`
+tests2/inputs/multiline_comment_open_unmatched.own:4:6:[1;31merror[0;39m:unmatched opening `/*`
      3 | fn main() i32 {
      4 |     /*
        |      ^

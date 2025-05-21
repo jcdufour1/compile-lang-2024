@@ -1,13 +1,13 @@
 compile::stdout 0
 
 compile::stderr 12
-./tests2/inputs/sum_lit_invalid_arg.own:14:37:[1;31merror[0;39m:cannot assign string(hello)
+tests2/inputs/sum_lit_invalid_arg.own:14:37:[1;31merror[0;39m:cannot assign string(hello)
  of type `u8*` to 'i32`
     13 |     let thing Thing = {.number = 23, .string = "bye"}
     14 |     let token1 Token = Token.number("hello")
        |                                     ^
     15 |     let token2 Token = Token.number(thing)
-./tests2/inputs/sum_lit_invalid_arg.own:15:37:[1;31merror[0;39m:cannot assign symbol(( line:15 ))<struct s1_Thing>s2_thing
+tests2/inputs/sum_lit_invalid_arg.own:15:37:[1;31merror[0;39m:cannot assign symbol(( line:15 ))<struct s1_Thing>s2_thing
  of type `Thing` to 'i32`
     14 |     let token1 Token = Token.number("hello")
     15 |     let token2 Token = Token.number(thing)

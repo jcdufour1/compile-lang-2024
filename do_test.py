@@ -27,11 +27,12 @@ class FileItem:
 class TestResult:
     compile: subprocess.CompletedProcess[str]
 
-INPUTS_DIR = "./tests2/inputs/"
-RESULTS_DIR = "./tests2/results/"
+INPUTS_DIR = os.path.join("tests2", "inputs")
+RESULTS_DIR = os.path.join("tests2", "results")
 
-BUILD_DEBUG_DIR = "./build/debug/"
-BUILD_RELEASE_DIR = "./build/release/"
+BUILD_DEBUG_DIR = os.path.join("build", "debug")
+BUILD_RELEASE_DIR = os.path.join("build", "release")
+
 EXE_BASE_NAME = "main"
 
 def to_str(a):
@@ -146,6 +147,8 @@ def do_tests(files_to_test: list[str], do_debug: bool, output_name: str, action:
         sys.exit(1)
 
 
+def normalize(string: str) -> str:
+    return string.replace("\r", "")
 
 # return true if test was successful
 def test_file(file: FileItem, do_debug: bool, expected_output: str, output_name: str, action: Action, debug_release_text: str) -> bool:
@@ -161,7 +164,7 @@ def test_file(file: FileItem, do_debug: bool, expected_output: str, output_name:
     else:
         raise AssertionError("uncovered case")
 
-    if process_result != expected_output:
+    if normalize(process_result) != normalize(expected_output):
         stdout_color: str = ""
         expected_color: str = ""
         print_error("test fail:" + os.path.join(INPUTS_DIR, file.path_base) + " (" + debug_release_text + ")")

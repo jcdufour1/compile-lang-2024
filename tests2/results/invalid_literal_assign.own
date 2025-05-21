@@ -1,7 +1,7 @@
 compile::stdout 0
 
 compile::stderr 5
-./tests2/inputs/invalid_literal_assign.own:4:12:[1;31merror[0;39m:type `u7` cannot be implicitly converted to `u8*`
+tests2/inputs/invalid_literal_assign.own:4:12:[1;31merror[0;39m:type `u7` cannot be implicitly converted to `u8*`
      3 |     let string: u8* = "hello"
      4 |     string = 87
        |            ^

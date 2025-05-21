@@ -1,22 +1,22 @@
 compile::stdout 0
 
 compile::stderr 20
-./tests2/inputs/invalid_char_lit_2.own:4:20:[1;31merror[0;39m:expected exactly one character in char literal without excapes, but got 0
+tests2/inputs/invalid_char_lit_2.own:4:20:[1;31merror[0;39m:expected exactly one character in char literal without excapes, but got 0
      3 | fn main() i32 {
      4 |     let char1 u8 = ''
        |                    ^
      5 |     let char2 u8 = '\'
-./tests2/inputs/invalid_char_lit_2.own:5:20:[1;31merror[0;39m:expected exactly one character in char literal after `\`, but got 0
+tests2/inputs/invalid_char_lit_2.own:5:20:[1;31merror[0;39m:expected exactly one character in char literal after `\`, but got 0
      4 |     let char1 u8 = ''
      5 |     let char2 u8 = '\'
        |                    ^
      6 |     let char3 u8 = 'ab'
-./tests2/inputs/invalid_char_lit_2.own:6:20:[1;31merror[0;39m:expected exactly one character in char literal without excapes, but got 2
+tests2/inputs/invalid_char_lit_2.own:6:20:[1;31merror[0;39m:expected exactly one character in char literal without excapes, but got 2
      5 |     let char2 u8 = '\'
      6 |     let char3 u8 = 'ab'
        |                    ^
      7 |     let char4 u8 = '\cd'
-./tests2/inputs/invalid_char_lit_2.own:7:20:[1;31merror[0;39m:expected exactly one character in char literal after `\`, but got 2
+tests2/inputs/invalid_char_lit_2.own:7:20:[1;31merror[0;39m:expected exactly one character in char literal after `\`, but got 2
      6 |     let char3 u8 = 'ab'
      7 |     let char4 u8 = '\cd'
        |                    ^

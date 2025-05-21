@@ -1,7 +1,7 @@
 compile::stdout 0
 
 compile::stderr 5
-./tests2/inputs/extern_c_no_close_par_after_c.own:2:12:[1;31merror[0;39m:got token `fn`, but expected `)` in function decl
+tests2/inputs/extern_c_no_close_par_after_c.own:2:12:[1;31merror[0;39m:got token `fn`, but expected `)` in function decl
      1 | 
      2 | extern("c" fn puts(str_to_print: u8*) i32
        |            ^
