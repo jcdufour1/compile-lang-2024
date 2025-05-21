@@ -1,0 +1,14 @@
+name: Github Actions Test
+run-name: Run Name
+on: [push]
+jobs:
+  Explore-GitHub-Actions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v4
+
+      - run: sudo apt update 
+      - run: sudo apt install clang python3 mypy
+      - run: mypy do_test.py
+      - run: python3 do_test.py --test

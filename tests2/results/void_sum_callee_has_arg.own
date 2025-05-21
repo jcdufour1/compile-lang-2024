@@ -1,7 +1,7 @@
 compile::stdout 0
 
 compile::stderr 5
-./tests2/inputs/void_sum_callee_has_arg.own:9:23:[1;31merror[0;39m:inner type is void; remove ()
+tests2/inputs/void_sum_callee_has_arg.own:9:23:[1;31merror[0;39m:inner type is void; remove ()
      8 | fn main() i32 {
      9 |     let token Token = .open_par(8)
        |                       ^

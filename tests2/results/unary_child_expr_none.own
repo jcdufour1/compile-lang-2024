@@ -1,7 +1,7 @@
 compile::stdout 0
 
 compile::stderr 5
-./tests2/inputs/unary_child_expr_none.own:5:5:[1;31merror[0;39m:expected expression after unary operator
+tests2/inputs/unary_child_expr_none.own:5:5:[1;31merror[0;39m:expected expression after unary operator
      4 |     &
      5 |     let num i32
        |     ^

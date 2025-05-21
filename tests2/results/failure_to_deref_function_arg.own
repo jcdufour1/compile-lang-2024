@@ -1,22 +1,22 @@
 compile::stdout 0
 
 compile::stderr 20
-./tests2/inputs/failure_to_deref_function_arg.own:14:13:[1;31merror[0;39m:argument is of type `i32`, but the corresponding parameter `num` is of type `i32*`
+tests2/inputs/failure_to_deref_function_arg.own:14:13:[1;31merror[0;39m:argument is of type `i32`, but the corresponding parameter `num` is of type `i32*`
     13 |     // should be error
     14 |     add_one(num)
        |             ^
     15 | 
-./tests2/inputs/failure_to_deref_function_arg.own:4:12:[1;34mnote[0;39m:corresponding parameter `num` defined here
+tests2/inputs/failure_to_deref_function_arg.own:4:12:[1;34mnote[0;39m:corresponding parameter `num` defined here
      3 | 
      4 | fn add_one(num i32*) {
        |            ^
      5 | }
-./tests2/inputs/failure_to_deref_function_arg.own:17:21:[1;31merror[0;39m:argument is of type `i32*`, but the corresponding parameter `num` is of type `i32`
+tests2/inputs/failure_to_deref_function_arg.own:17:21:[1;31merror[0;39m:argument is of type `i32*`, but the corresponding parameter `num` is of type `i32`
     16 |     // should be error
     17 |     add_one_not_ptr(&num)
        |                     ^
     18 | 
-./tests2/inputs/failure_to_deref_function_arg.own:7:20:[1;34mnote[0;39m:corresponding parameter `num` defined here
+tests2/inputs/failure_to_deref_function_arg.own:7:20:[1;34mnote[0;39m:corresponding parameter `num` defined here
      6 | 
      7 | fn add_one_not_ptr(num i32) {
        |                    ^

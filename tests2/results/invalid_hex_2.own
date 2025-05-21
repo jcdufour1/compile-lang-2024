@@ -1,12 +1,12 @@
 compile::stdout 0
 
 compile::stderr 10
-./tests2/inputs/invalid_hex_2.own:4:20:[1;31merror[0;39m:invalid hex literal
+tests2/inputs/invalid_hex_2.own:4:20:[1;31merror[0;39m:invalid hex literal
      3 | fn main() i32 {
      4 |     let num1 i32 = 0x8fg2
        |                    ^
      5 |     let num2 i32 = 4x8f82
-./tests2/inputs/invalid_hex_2.own:5:20:[1;31merror[0;39m:invalid decimal literal
+tests2/inputs/invalid_hex_2.own:5:20:[1;31merror[0;39m:invalid decimal literal
      4 |     let num1 i32 = 0x8fg2
      5 |     let num2 i32 = 4x8f82
        |                    ^
