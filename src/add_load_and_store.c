@@ -124,7 +124,33 @@ static void load_block_stmts(
         tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, u1_lang_type)))
     );
 
-    Tast_variable_def* is_brking = tast_variable_def_new(pos, u1_lang_type, false, util_literal_name_new_prefix2(str_view_from_cstr("is_brking")));
+    Name is_brking_name = {0};
+    switch (parent_of) {
+        case DEFER_PARENT_OF_FUN: {
+            is_brking_name = util_literal_name_new_prefix2(str_view_from_cstr("is_brking_fun"));
+            break;
+        }
+        case DEFER_PARENT_OF_FOR: {
+            is_brking_name = util_literal_name_new_prefix2(str_view_from_cstr("is_brking_for"));
+            break;
+        }
+        case DEFER_PARENT_OF_IF: {
+            is_brking_name = util_literal_name_new_prefix2(str_view_from_cstr("is_brking_if"));
+            break;
+        }
+        case DEFER_PARENT_OF_BLOCK: {
+            is_brking_name = util_literal_name_new_prefix2(str_view_from_cstr("is_brking_block"));
+            break;
+        }
+        case DEFER_PARENT_OF_TOP_LEVEL: {
+            is_brking_name = util_literal_name_new_prefix2(str_view_from_cstr("is_brking_top_level"));
+            break;
+        }
+        default:
+            todo();
+    }
+
+    Tast_variable_def* is_brking = tast_variable_def_new(pos, u1_lang_type, false, is_brking_name);
     Tast_assignment* is_brk_assign = tast_assignment_new(
         pos,
         tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
@@ -2184,6 +2210,35 @@ static void load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt, bool is_defere
             );
             log(LOG_DEBUG, TAST_FMT, tast_assignment_print(is_brk_assign));
             load_assignment(new_block, is_brk_assign);
+
+            bool is_for = false;
+            size_t for_pos = 0;
+            // these two for loops exclude the top of defered_collections.coll_stack
+            assert(env.defered_collections.coll_stack.info.count > 0 && "will underflow");
+            for (size_t idx_ = env.defered_collections.coll_stack.info.count - 1; idx_ > 0; idx_--) {
+                size_t idx = idx_ - 1;
+                if (vec_at(&env.defered_collections.coll_stack, idx).parent_of == DEFER_PARENT_OF_FOR) {
+                    is_for = true;
+                    for_pos = idx;
+                }
+            }
+            if (is_for) {
+                for (size_t idx_ = env.defered_collections.coll_stack.info.count - 1; idx_ > 0; idx_--) {
+                    size_t idx = idx_ - 1;
+                    if (vec_at(&env.defered_collections.coll_stack, idx).parent_of == DEFER_PARENT_OF_FOR) {
+                        Tast_assignment* is_brk_assign_aux = tast_assignment_new(
+                            tast_stmt_get_pos(old_stmt),
+                            tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+                                .lang_type = tast_lang_type_from_name(vec_at(&env.defered_collections.coll_stack, for_pos).is_brking),
+                                .name = vec_at(&env.defered_collections.coll_stack, for_pos).is_brking
+                            })),
+                            tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, u1_lang_type)))
+                        );
+                        log(LOG_VERBOSE, TAST_FMT, tast_assignment_print(is_brk_assign_aux));
+                        load_assignment(new_block, is_brk_assign_aux);
+                    }
+                }
+            }
 
             Defer_pair_vec* pairs = &coll.pairs;
             if (pairs->info.count > 0) {
