@@ -368,34 +368,6 @@ void* all_get_tbl_from_collection(Symbol_collection* collection) {
 }
 
 bool alloca_add(Llvm* item) {
-    switch (item->type) {
-        case LLVM_FUNCTION_DEF:
-            unreachable("");
-        case LLVM_VARIABLE_DEF:
-            //assert(!str_view_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, llvm_get_lang_type(item)).str.base, "void"));
-            //assert(!str_view_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_LOG, llvm_get_lang_type(item)).str.base, "void"));
-            //assert(!str_view_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_MSG, llvm_get_lang_type(item)).str.base, "void"));
-            //assert(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, llvm_get_lang_type(item)).str.base.count > 0);
-            //assert(lang_type_get_atom(LANG_TYPE_MODE_LOG, llvm_get_lang_type(item)).str.base.count > 0);
-            //assert(lang_type_get_atom(LANG_TYPE_MODE_MSG, llvm_get_lang_type(item)).str.base.count > 0);
-            break;
-        case LLVM_FUNCTION_DECL:
-            unreachable("");
-        case LLVM_STRUCT_DEF:
-            break;
-        case LLVM_PRIMITIVE_DEF:
-            assert(!str_view_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, llvm_get_lang_type(item)).str.base, "void"));
-            assert(!str_view_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_LOG, llvm_get_lang_type(item)).str.base, "void"));
-            assert(!str_view_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_MSG, llvm_get_lang_type(item)).str.base, "void"));
-            assert(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, llvm_get_lang_type(item)).str.base.count > 0);
-            assert(lang_type_get_atom(LANG_TYPE_MODE_LOG, llvm_get_lang_type(item)).str.base.count > 0);
-            assert(lang_type_get_atom(LANG_TYPE_MODE_MSG, llvm_get_lang_type(item)).str.base.count > 0);
-            break;
-        case LLVM_LABEL:
-            break;
-        case LLVM_LITERAL_DEF:
-            break;
-    }
     Name name = llvm_tast_get_name(item);
     return generic_symbol_add(
         serialize_name_symbol_table(name),
