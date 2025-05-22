@@ -10,7 +10,7 @@ clang::stderr 0
 
 clang::return_code 0
 
-run::stdout 11
+run::stdout 12
 thing 1.1
 thing 1.2
 thing 1.3
@@ -20,8 +20,9 @@ yes 4.1
 at very end yes 4.2
 at very end yes 5.2
 at very end yes 5.1
-yes 6.1
-at very end yes 6
+at very end yes 6.2
+at very end yes 6.1
+3
 
 run::stderr 0
 
