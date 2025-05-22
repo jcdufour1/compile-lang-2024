@@ -48,25 +48,31 @@ static Name load_ptr_symbol(
     Tast_symbol* old_sym
 );
 
-static Llvm_block* load_block(Tast_block* old_block, DEFER_PARENT_OF parent_of, Lang_type lang_type);
+static Llvm_block* load_block(Tast_block* old_block, DEFER_PARENT_OF parent_of, Lang_type lang_type, Name label_normal_brk, Name label_defer_brk);
 
 static Name load_expr(Llvm_block* new_block, Tast_expr* old_expr);
 
 static Name load_ptr_expr(Llvm_block* new_block, Tast_expr* old_expr);
 
-static void load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt, bool is_defered);
+static void load_stmt(
+    Llvm_block* new_block,
+    Tast_stmt* old_stmt,
+    bool is_defered,
+    Name label_normal_brk/* break out of for only basically */,
+    Name label_defer_brk /* break out of innermost if/for, even if inner is if and outer is for*/
+);
 
 static Name load_operator(Llvm_block* new_block, Tast_operator* old_oper);
 
 static Name load_variable_def(Llvm_block* new_block, Tast_variable_def* old_var_def);
 
-static Name load_if_else_chain(Llvm_block* new_block, Tast_if_else_chain* old_if_else);
+static Name load_if_else_chain(Llvm_block* new_block, Tast_if_else_chain* old_if_else, Name label_normal_brk);
 
 static void load_label(Llvm_block* new_block, Tast_label* old_label);
 
 static Name load_return(Llvm_block* new_block, Tast_return* old_return);
 
-static void load_break(Llvm_block* new_block, Tast_break* old_break);
+static void load_break(Llvm_block* new_block, Tast_break* old_break, Name label_normal_brk, Name label_defer_brk);
 
 static Tast_symbol* tast_symbol_new_from_variable_def(Pos pos, const Tast_variable_def* def) {
     return tast_symbol_new(
@@ -75,7 +81,16 @@ static Tast_symbol* tast_symbol_new_from_variable_def(Pos pos, const Tast_variab
     );
 }
 
-static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFER_PARENT_OF parent_of, Pos pos, Lang_type lang_type, Name for_check_cond, Name after_for) {
+static void load_block_stmts(
+    Llvm_block* new_block,
+    Tast_stmt_vec children,
+    DEFER_PARENT_OF parent_of,
+    Pos pos,
+    Lang_type lang_type,
+    Name for_check_cond,
+    Name label_normal_brk,
+    Name label_defer_brk
+) {
     // TODO: avoid making this def on LANG_TYPE_VOID?
     Tast_variable_def* local_rtn_def = NULL;
     if (lang_type.type != LANG_TYPE_VOID) {
@@ -157,7 +172,7 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
         }
         case DEFER_PARENT_OF_TOP_LEVEL: {
             for (size_t idx = 0; idx < children.info.count; idx++) {
-                load_stmt(new_block, vec_at(&children, idx), false);
+                load_stmt(new_block, vec_at(&children, idx), false, label_normal_brk, label_defer_brk);
             }
             //assert(vec_top(&env.defered_collections).pairs.info.count < 1 && "this should have been caught in the type checking pass");
             return;
@@ -173,10 +188,45 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
     //env.defered_collections.is_rtning = is_rtning->name;
     vec_append(&a_main, &env.defered_collections.coll_stack, ((Defer_collection) {.pairs = (Defer_pair_vec) {0}, .parent_of = parent_of, .rtn_val = rtn_val, .is_brking = is_brking->name}));
 
-    vec_append(&a_main, &vec_top_ref(&env.defered_collections.coll_stack)->pairs, ((Defer_pair) {
-        defer,
-        tast_label_new(defer->pos, util_literal_name_new_prefix2(str_view_from_cstr("actual_return")))
-    }));
+    switch (parent_of) {
+        case DEFER_PARENT_OF_FUN: {
+            vec_append(&a_main, &vec_top_ref(&env.defered_collections.coll_stack)->pairs, ((Defer_pair) {
+                defer,
+                tast_label_new(defer->pos, util_literal_name_new_prefix2(str_view_from_cstr("actual_return_parent_of_fun")))
+            }));
+            break;
+        }
+        case DEFER_PARENT_OF_FOR: {
+            vec_append(&a_main, &vec_top_ref(&env.defered_collections.coll_stack)->pairs, ((Defer_pair) {
+                defer,
+                tast_label_new(defer->pos, util_literal_name_new_prefix2(str_view_from_cstr("actual_return_parent_of_for")))
+            }));
+            break;
+        }
+        case DEFER_PARENT_OF_IF: {
+            vec_append(&a_main, &vec_top_ref(&env.defered_collections.coll_stack)->pairs, ((Defer_pair) {
+                defer,
+                tast_label_new(defer->pos, util_literal_name_new_prefix2(str_view_from_cstr("actual_return_parent_of_if")))
+            }));
+            break;
+        }
+        case DEFER_PARENT_OF_BLOCK: {
+            vec_append(&a_main, &vec_top_ref(&env.defered_collections.coll_stack)->pairs, ((Defer_pair) {
+                defer,
+                tast_label_new(defer->pos, util_literal_name_new_prefix2(str_view_from_cstr("actual_return_parent_of_block")))
+            }));
+            break;
+        }
+        case DEFER_PARENT_OF_TOP_LEVEL: {
+            unreachable("");
+        }
+        default:
+            todo();
+    }
+    //vec_append(&a_main, &vec_top_ref(&env.defered_collections.coll_stack)->pairs, ((Defer_pair) {
+    //    defer,
+    //    tast_label_new(defer->pos, util_literal_name_new_prefix2(str_view_from_cstr("actual_return")))
+    //}));
 
     if (lang_type.type != LANG_TYPE_VOID) {
         unwrap(symbol_add(tast_variable_def_wrap(local_rtn_def)));
@@ -189,7 +239,7 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
     load_assignment(new_block, is_brk_assign);
 
     for (size_t idx = 0; idx < children.info.count; idx++) {
-        load_stmt(new_block, vec_at(&children, idx), false);
+        load_stmt(new_block, vec_at(&children, idx), false, label_normal_brk, label_defer_brk);
     }
 
     Defer_pair_vec* pairs = &vec_top_ref(&env.defered_collections.coll_stack)->pairs;
@@ -212,16 +262,18 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
                 )),
                 new_block,
                 for_check_cond,
-                after_for
+                label_normal_brk
             );
             // TODO: remove below vec_append
             //vec_append(&a_main, &new_block->children, llvm_cond_goto_wrap(llvm_cond_goto_new(
             //    pos,
             //    for_check_cond
             //)));
+        } else if (pairs->info.count == 1) {
+            log(LOG_VERBOSE, TAST_FMT, tast_defer_print(pair.defer));
         }
         load_label(new_block, pair.label);
-        load_stmt(new_block, pair.defer->child, true);
+        load_stmt(new_block, pair.defer->child, true, label_normal_brk, label_defer_brk);
         vec_rem_last(pairs);
         if (dummy_stmts.info.count > 0) {
             // `defer defer` used
@@ -1044,7 +1096,7 @@ static Name load_binary_short_circuit(Llvm_block* new_block, Tast_binary* old_bi
     Tast_if_else_chain* if_else = tast_if_else_chain_new(old_bin->pos, ifs, false);
     
     load_variable_def(new_block, new_var);
-    load_if_else_chain(new_block, if_else);
+    load_if_else_chain(new_block, if_else, (Name) {0} /* TODO */);
     return load_symbol(new_block, tast_symbol_new_from_variable_def(old_bin->pos, new_var));
 }
 
@@ -1386,7 +1438,7 @@ static Name load_expr(Llvm_block* new_block, Tast_expr* old_expr) {
         case TAST_ENUM_GET_TAG:
             return load_enum_get_tag(new_block, tast_enum_get_tag_unwrap(old_expr));
         case TAST_IF_ELSE_CHAIN:
-            return load_if_else_chain(new_block, tast_if_else_chain_unwrap(old_expr));
+            return load_if_else_chain(new_block, tast_if_else_chain_unwrap(old_expr), env.label_if_break);
         case TAST_MODULE_ALIAS:
             unreachable("");
     }
@@ -1460,7 +1512,16 @@ static Name load_function_def(Tast_function_def* old_fun_def) {
     );
     new_fun_def->decl->return_type = new_lang_type;
     log(LOG_DEBUG, TAST_FMT, lang_type_print(LANG_TYPE_MODE_LOG, old_fun_def->decl->return_type));
-    load_block_stmts(new_fun_def->body, old_fun_def->body->children, DEFER_PARENT_OF_FUN, old_fun_def->pos, old_fun_def->decl->return_type, (Name) {0}, (Name) {0});
+    load_block_stmts(
+        new_fun_def->body,
+        old_fun_def->body->children,
+        DEFER_PARENT_OF_FUN,
+        old_fun_def->pos,
+        old_fun_def->decl->return_type,
+        (Name) {0},
+        env.label_if_break /* TODO */,
+        (Name) {0}
+    );
 
     unwrap(alloca_add(llvm_def_wrap(llvm_function_def_wrap(new_fun_def))));
     env.name_parent_fn = old_fun_name;
@@ -1589,9 +1650,9 @@ static void load_struct_def(Tast_struct_def* old_def) {
     }
 }
 
-static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, Name after_chain) {
+static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, Name label_normal_brk, Name label_defer_brk) {
     Tast_block* old_block = if_statement->body;
-    Llvm_block* inner_block = load_block(old_block, DEFER_PARENT_OF_IF, if_statement->yield_type);
+    Llvm_block* inner_block = load_block(old_block, DEFER_PARENT_OF_IF, if_statement->yield_type, label_normal_brk, label_defer_brk);
     Llvm_block* new_block = llvm_block_new(
         old_block->pos,
         (Llvm_vec) {0},
@@ -1614,14 +1675,16 @@ static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, N
 
     Llvm_goto* jmp_to_after_chain = llvm_goto_new(
         old_block->pos,
-        after_chain
+        label_defer_brk
     );
     vec_append(&a_main, &new_block->children, llvm_goto_wrap(jmp_to_after_chain));
 
     return new_block;
 }
 
-static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* if_else) {
+static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* if_else, Name label_normal_brk) {
+    Name old_label_if_after = env.label_if_after;
+
     Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
         lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
     ));
@@ -1654,6 +1717,7 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
     } else {
         env.label_if_break = env.label_after_for;
     }
+    env.label_if_after = if_after;
     
     Llvm* dummy = NULL;
     Tast_def* dummy_def = NULL;
@@ -1666,7 +1730,7 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
             next_if = util_literal_name_new_prefix2(str_view_from_cstr("next_if"));
         }
 
-        Llvm_block* if_block = if_statement_to_branch(vec_at(&if_else->tasts, idx), next_if, if_after);
+        Llvm_block* if_block = if_statement_to_branch(vec_at(&if_else->tasts, idx), next_if, label_normal_brk, if_after);
         scope_get_parent_tbl_update(vec_at(&if_else->tasts, idx)->body->scope_id, (*new_block)->scope_id);
         vec_append(&a_main, &(*new_block)->children, llvm_block_wrap(if_block));
 
@@ -1683,7 +1747,7 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
 
 
     // is_rtn_check
-    Name after_is_rtn = util_literal_name_new_prefix2(str_view_from_cstr("after_is_rtn_check"));
+    Name after_is_rtn = util_literal_name_new_prefix2(str_view_from_cstr("after_is_rtn_check_if_else_chain_to_branch"));
     Defer_pair_vec* pairs = &vec_top_ref(&env.defered_collections.coll_stack)->pairs;
     unwrap(pairs->info.count > 0 && "not implemented");
     if_for_add_cond_goto(
@@ -1707,6 +1771,7 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
     assert(alloca_lookup(&dummy, next_if));
 
     env.label_if_break = old_label_if_break;
+    env.label_if_after = old_label_if_after;
 
     if (tast_if_else_chain_get_lang_type(if_else).type == LANG_TYPE_VOID) {
         return (Name) {0};
@@ -1718,10 +1783,11 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
 
 static Name load_if_else_chain(
     Llvm_block* new_block,
-    Tast_if_else_chain* old_if_else
+    Tast_if_else_chain* old_if_else,
+    Name label_normal_brk
 ) {
     Llvm_block* new_if_else = NULL;
-    Name result = if_else_chain_to_branch(&new_if_else, old_if_else);
+    Name result = if_else_chain_to_branch(&new_if_else, old_if_else, label_normal_brk);
     vec_append(&a_main, &new_block->children, llvm_block_wrap(new_if_else));
 
     return result;
@@ -1779,11 +1845,23 @@ static Llvm_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
         log(LOG_DEBUG, TAST_FMT, llvm_print(vec_at(&new_branch_block->children, idx)));
     }
     Name after_is_rtn = util_literal_name_new_prefix2(str_view_from_cstr("after_is_rtn_check"));
+    Name after_inner_block = util_literal_name_new_prefix2(str_view_from_cstr("after_inner_block"));
 
     for (size_t idx = 0; idx < new_branch_block->children.info.count; idx++) {
         log(LOG_VERBOSE, TAST_FMT, llvm_print(vec_at(&new_branch_block->children, idx)));
     }
-    load_block_stmts(new_branch_block, old_for->body->children, DEFER_PARENT_OF_FOR, old_for->pos, lang_type_void_const_wrap(lang_type_void_new(pos)) /* TODO */, check_cond_label, after_is_rtn);
+    load_block_stmts(
+        new_branch_block,
+        old_for->body->children,
+        DEFER_PARENT_OF_FOR,
+        old_for->pos,
+        lang_type_void_const_wrap(lang_type_void_new(pos)) /* TODO */,
+        check_cond_label,
+        after_inner_block /* TODO: remove `after_inner_block` and replace with `after_for_loop_label`?"*/,
+        env.label_if_break /* TODO */
+    );
+    add_label(new_branch_block, after_inner_block, pos);
+
     for (size_t idx = 0; idx < new_branch_block->children.info.count; idx++) {
         log(LOG_VERBOSE, TAST_FMT, llvm_print(vec_at(&new_branch_block->children, idx)));
     }
@@ -1828,7 +1906,7 @@ static void load_for_with_cond(Llvm_block* new_block, Tast_for_with_cond* old_fo
     vec_append(&a_main, &new_block->children, llvm_block_wrap(new_for));
 }
 
-static void load_break(Llvm_block* new_block, Tast_break* old_break) {
+static void load_break(Llvm_block* new_block, Tast_break* old_break, Name label_normal_brk, Name label_defer_brk) {
     if (env.label_if_break.base.count < 1) {
         //msg(
         //    DIAG_BREAK_INVALID_LOCATION, old_break->pos,
@@ -1860,7 +1938,7 @@ static void load_break(Llvm_block* new_block, Tast_break* old_break) {
     }
 
     assert(env.label_if_break.base.count > 0);
-    Llvm_goto* new_goto = llvm_goto_new(old_break->pos, env.label_if_break);
+    Llvm_goto* new_goto = llvm_goto_new(old_break->pos, label_defer_brk);
     vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
 }
 
@@ -2019,7 +2097,7 @@ static Name load_def(Llvm_block* new_block, Tast_def* old_def) {
     unreachable("");
 }
 
-static void load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt, bool is_defered) {
+static void load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt, bool is_defered, Name label_normal_brk, Name label_defer_brk) {
     Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
         lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
     ));
@@ -2075,7 +2153,7 @@ static void load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt, bool is_defere
             return;
         case TAST_BREAK:
             if (is_defered) {
-                load_break(new_block, tast_break_unwrap(old_stmt));
+                load_break(new_block, tast_break_unwrap(old_stmt), label_normal_brk, label_defer_brk);
                 return;
             }
 
@@ -2144,7 +2222,7 @@ static void load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt, bool is_defere
             vec_append(
                 &a_main,
                 &new_block->children,
-                llvm_block_wrap(load_block(tast_block_unwrap(old_stmt), DEFER_PARENT_OF_BLOCK, (Lang_type) {0}))
+                llvm_block_wrap(load_block(tast_block_unwrap(old_stmt), DEFER_PARENT_OF_BLOCK, (Lang_type) {0}, label_normal_brk, label_defer_brk))
             );
             return;
         case TAST_LABEL:
@@ -2188,7 +2266,7 @@ static Name load_def_sometimes(Tast_def* old_def) {
     unreachable("");
 }
 
-static Llvm_block* load_block(Tast_block* old_block, DEFER_PARENT_OF parent_of, Lang_type lang_type) {
+static Llvm_block* load_block(Tast_block* old_block, DEFER_PARENT_OF parent_of, Lang_type lang_type, Name label_normal_brk, Name label_defer_brk) {
     Llvm_block* new_block = llvm_block_new(
         old_block->pos,
         (Llvm_vec) {0},
@@ -2202,7 +2280,7 @@ static Llvm_block* load_block(Tast_block* old_block, DEFER_PARENT_OF parent_of, 
         load_def_sometimes(curr);
     }
 
-    load_block_stmts(new_block, old_block->children, parent_of, old_block->pos, lang_type, (Name) {0}, (Name) {0});
+    load_block_stmts(new_block, old_block->children, parent_of, old_block->pos, lang_type, (Name) {0}, label_normal_brk, label_defer_brk);
 
     return new_block;
 }
@@ -2214,7 +2292,7 @@ Llvm_block* add_load_and_store(Tast_block* old_root) {
         load_def_sometimes(curr);
     }
 
-    Llvm_block* block = load_block(old_root, DEFER_PARENT_OF_TOP_LEVEL, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)));
+    Llvm_block* block = load_block(old_root, DEFER_PARENT_OF_TOP_LEVEL, lang_type_void_const_wrap(lang_type_void_new(POS_BUILTIN)), (Name) {0}, (Name) {0});
     return block;
 }
 

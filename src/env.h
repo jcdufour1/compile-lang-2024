@@ -100,6 +100,7 @@ typedef struct Env_ {
 
     Name load_break_symbol_name;
     Name label_if_break;
+    Name label_if_after;
     Name label_after_for;
     Name label_if_continue;
 
