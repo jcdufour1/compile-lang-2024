@@ -170,7 +170,7 @@ static void load_block_stmts(Llvm_block* new_block, Tast_stmt_vec children, DEFE
         env.defered_collections.is_rtning = is_rtning->name;
     }
     // TODO: remove below line?
-    env.defered_collections.is_rtning = is_rtning->name;
+    //env.defered_collections.is_rtning = is_rtning->name;
     vec_append(&a_main, &env.defered_collections.coll_stack, ((Defer_collection) {.pairs = (Defer_pair_vec) {0}, .parent_of = parent_of, .rtn_val = rtn_val, .is_brking = is_brking->name}));
 
     vec_append(&a_main, &vec_top_ref(&env.defered_collections.coll_stack)->pairs, ((Defer_pair) {
@@ -1680,7 +1680,6 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
     }
 
     assert(!symbol_lookup(&dummy_def, next_if));
-    add_label((*new_block), next_if, if_else->pos);
 
 
     // is_rtn_check
@@ -1704,6 +1703,7 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
         vec_top(pairs).label->name
     );
     add_label((*new_block), after_is_rtn, if_else->pos);
+    add_label((*new_block), next_if, if_else->pos);
     assert(alloca_lookup(&dummy, next_if));
 
     env.label_if_break = old_label_if_break;
