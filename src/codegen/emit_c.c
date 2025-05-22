@@ -236,7 +236,7 @@ static void emit_c_function_call(Emit_c_strs* strs, const Llvm_function_call* fu
         llvm_extend_name(&strs->output, fun_call->name_self);
         string_extend_cstr(&a_main, &strs->output, " = ");
     } else {
-        assert(!str_view_cstr_is_equal(lang_type_get_str(LANG_TYPE_MODE_EMIT_C, fun_call->lang_type).base, "void"));
+        //assert(!str_view_cstr_is_equal(lang_type_get_str(LANG_TYPE_MODE_EMIT_C, fun_call->lang_type).base, "void"));
     }
 
     Llvm* callee = NULL;
@@ -475,7 +475,22 @@ static void emit_c_alloca(String* output, const Llvm_alloca* alloca) {
     Name storage_loc = util_literal_name_new2();
 
     string_extend_cstr(&a_main, output, "    ");
-    c_extend_type_call_str(output, alloca->lang_type, true);
+    log(LOG_DEBUG, "%d\n", alloca->lang_type.type);
+    log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base));
+    // TODO: remove these two if statements, and fix the actual underlying issues
+    // we may need to make system to identify location of node generation, etc.
+    if (str_view_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base, "void")) {
+        todo();
+    }
+    if (str_view_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base, "")) {
+        string_extend_cstr(&a_main, output, " int ");
+    } else {
+        c_extend_type_call_str(output, alloca->lang_type, true);
+        // this line below should be kept though
+    }
+    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_LOG, alloca->lang_type));
+    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_EMIT_C, alloca->lang_type));
+    log(LOG_DEBUG, TAST_FMT"\n", lang_type_print(LANG_TYPE_MODE_MSG, alloca->lang_type));
     string_extend_cstr(&a_main, output, " ");
     llvm_extend_name(output, storage_loc);
     string_extend_cstr(&a_main, output, ";\n");

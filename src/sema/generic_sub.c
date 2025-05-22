@@ -129,6 +129,8 @@ void generic_sub_def(Uast_def* def, Name gen_param, Ulang_type gen_arg) {
             todo();
         case UAST_LANG_DEF:
             todo();
+        case UAST_VOID_DEF:
+            todo();
     }
     unreachable("");
 }

@@ -5,9 +5,6 @@
 #include <ulang_type_hand_written.h>
 #include <lang_type_mode.h>
 
-struct Ulang_type_void_;
-typedef struct Ulang_type_void_ Ulang_type_void;
-
 struct Ulang_type_tuple_;
 typedef struct Ulang_type_tuple_ Ulang_type_tuple;
 
@@ -19,10 +16,6 @@ typedef struct Ulang_type_regular_ Ulang_type_regular;
 
 struct Ulang_type_;
 typedef struct Ulang_type_ Ulang_type;
-
-typedef struct Ulang_type_void_ {
-    Pos pos;
-}Ulang_type_void;
 
 typedef struct Ulang_type_tuple_ {
     Ulang_type_vec ulang_types;
@@ -47,7 +40,6 @@ typedef union Ulang_type_as_ {
     Ulang_type_regular ulang_type_regular;
 }Ulang_type_as;
 typedef enum ULANG_TYPE_TYPE_ {
-    ULANG_TYPE_VOID,
     ULANG_TYPE_TUPLE,
     ULANG_TYPE_FN,
     ULANG_TYPE_REGULAR,
@@ -77,12 +69,6 @@ static inline Ulang_type ulang_type_tuple_const_wrap(Ulang_type_tuple ulang_type
     Ulang_type new_ulang_type = {0};
     new_ulang_type.type = ULANG_TYPE_TUPLE;
     new_ulang_type.as.ulang_type_tuple = ulang_type;
-    return new_ulang_type;
-}
-static inline Ulang_type ulang_type_void_const_wrap(Ulang_type_void ulang_type) {
-    Ulang_type new_ulang_type = {0};
-    new_ulang_type.type = ULANG_TYPE_VOID;
-    new_ulang_type.as.ulang_type_void = ulang_type;
     return new_ulang_type;
 }
 static inline Ulang_type ulang_type_fn_const_wrap(Ulang_type_fn ulang_type) {

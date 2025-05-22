@@ -137,6 +137,11 @@ Uast_lang_def* uast_lang_def_clone(const Uast_lang_def* def) {
     todo();
 }
 
+Uast_void_def* uast_void_def_clone(const Uast_void_def* def) {
+    (void) def;
+    return uast_void_def_new(POS_BUILTIN);
+}
+
 Uast_mod_alias* uast_mod_alias_clone(const Uast_mod_alias* alias, Scope_id new_scope) {
     return uast_mod_alias_new(alias->pos, name_clone(alias->name, new_scope), name_clone(alias->mod_path, new_scope));
 }
@@ -208,6 +213,8 @@ Uast_def* uast_def_clone(const Uast_def* def, Scope_id new_scope) {
             todo();
         case UAST_LANG_DEF:
             return uast_lang_def_wrap(uast_lang_def_clone(uast_lang_def_const_unwrap(def)));
+        case UAST_VOID_DEF:
+            return uast_void_def_wrap(uast_void_def_clone(uast_void_def_const_unwrap(def)));
     }
     unreachable("");
 }

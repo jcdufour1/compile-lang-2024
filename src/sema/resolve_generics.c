@@ -253,6 +253,10 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
             *result = lang_type;
             *type = LANG_TYPE_PRIMITIVE;
             return true;
+        case UAST_VOID_DEF:
+            *result = lang_type;
+            *type = LANG_TYPE_VOID;
+            return true;
         case UAST_LANG_DEF:
             unreachable("def should have been eliminated by now");
         case UAST_POISON_DEF:
@@ -268,8 +272,6 @@ static bool resolve_generics_ulang_type_internal(LANG_TYPE_TYPE* type, Ulang_typ
         case UAST_FUNCTION_DECL:
             todo();
         case UAST_VARIABLE_DEF:
-            todo();
-        case UAST_VOID_DEF:
             todo();
     }
     unreachable("");
@@ -334,6 +336,8 @@ bool resolve_generics_struct_like_def_implementation(Name name) {
         case UAST_PRIMITIVE_DEF:
             unreachable("");
         case UAST_FUNCTION_DECL:
+            unreachable("");
+        case UAST_VOID_DEF:
             unreachable("");
     }
     unreachable("");

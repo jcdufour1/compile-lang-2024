@@ -521,6 +521,8 @@ bool try_set_symbol_types(Tast_expr** new_tast, Uast_symbol* sym_untyped) {
             // fallthrough
         case UAST_PRIMITIVE_DEF:
             // fallthrough
+        case UAST_VOID_DEF:
+            // fallthrough
         case UAST_VARIABLE_DEF: {
             Lang_type lang_type = {0};
             if (!uast_def_get_lang_type(&lang_type, sym_def, sym_untyped->name.gen_args)) {
@@ -1458,6 +1460,11 @@ STMT_STATUS try_set_def_types(Tast_stmt** new_stmt, Uast_def* uast) {
             }
             return STMT_NO_STMT;
         }
+        case UAST_VOID_DEF:
+            if (!try_set_void_def_types(uast_void_def_unwrap(uast))) {
+                return STMT_ERROR;
+            }
+            return STMT_NO_STMT;
         case UAST_ENUM_DEF: {
             return STMT_NO_STMT;
         }
@@ -2026,6 +2033,8 @@ bool try_set_member_access_types_finish(
             unreachable("");
         case UAST_MOD_ALIAS:
             unreachable("");
+        case UAST_VOID_DEF:
+            unreachable("");
         case UAST_LANG_DEF:
             unreachable("lang def should have been eliminated by now");
     }
@@ -2162,6 +2171,12 @@ static bool try_set_condition_types(Tast_condition** new_cond, Uast_condition* c
 
 bool try_set_primitive_def_types(Uast_primitive_def* tast) {
     unwrap(symbol_add(tast_primitive_def_wrap(tast_primitive_def_new(tast->pos, tast->lang_type))));
+    return true;
+}
+
+bool try_set_void_def_types(Uast_void_def* tast) {
+    (void) tast;
+    //symbol_add(tast_void_def_wrap(tast_void_def_new(POS_BUILTIN)));
     return true;
 }
 
