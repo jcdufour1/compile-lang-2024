@@ -1857,7 +1857,7 @@ static Llvm_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
         old_for->pos,
         lang_type_void_const_wrap(lang_type_void_new(pos)) /* TODO */,
         check_cond_label,
-        after_inner_block /* TODO: remove `after_inner_block` and replace with `after_for_loop_label`?"*/,
+        after_for_loop_label /* TODO: remove `after_inner_block` and replace with `after_for_loop_label`?"*/,
         env.label_if_break /* TODO */
     );
     add_label(new_branch_block, after_inner_block, pos);
@@ -2153,6 +2153,7 @@ static void load_stmt(Llvm_block* new_block, Tast_stmt* old_stmt, bool is_defere
             return;
         case TAST_BREAK:
             if (is_defered) {
+                log(LOG_VERBOSE, TAST_FMT"\n", name_print(NAME_LOG, label_defer_brk));
                 load_break(new_block, tast_break_unwrap(old_stmt), label_normal_brk, label_defer_brk);
                 return;
             }
