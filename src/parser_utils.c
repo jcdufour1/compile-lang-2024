@@ -54,7 +54,7 @@ static bool isdigit_no_underscore(char prev, char curr) {
     return isdigit(curr);
 }
 
-bool try_str_view_octal_after_0_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) {
+bool try_str_view_octal_after_0o_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) {
     *result = 0;
     size_t idx = 0;
     for (idx = 0; idx < str_view.count; idx++) {
@@ -141,8 +141,9 @@ bool try_str_view_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) 
             first_is_zero = curr_char == '0';
         }
 
-        if (curr_char == '0' && idx == 0 && str_view.count > 1 && isdigit(str_view_at(str_view, 1))) {
-            return try_str_view_octal_after_0_to_int64_t(result,  pos, str_view_slice(str_view, 1, str_view.count - 1));
+        if (first_is_zero && idx == 1 && isdigit(str_view_at(str_view, 1))) {
+            msg(DIAG_INVALID_OCTAL, pos, "invalid octal literal; octal numbers must use `0o` prefix\n");
+            return false;
         }
 
         if (isalpha(curr_char)) {
@@ -162,6 +163,14 @@ bool try_str_view_to_int64_t(int64_t* result, const Pos pos, Str_view str_view) 
 
             if (curr_char == 'b') {
                 return try_str_view_bin_after_0b_to_int64_t(
+                    result,
+                    pos,
+                    str_view_slice(str_view, 2, str_view.count - 2)
+                );
+            }
+
+            if (curr_char == 'o') {
+                return try_str_view_octal_after_0o_to_int64_t(
                     result,
                     pos,
                     str_view_slice(str_view, 2, str_view.count - 2)

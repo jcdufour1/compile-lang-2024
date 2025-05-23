@@ -13,11 +13,11 @@ fn main() i32 {
     let underscore_num i32 = 1_234_567
     io.printf("underscore_num: %d\n", underscore_num)
 
-    let octal_num_1 i32 = 0236
+    let octal_num_1 i32 = 0o236
     // expected: 158
     io.printf("octal_num_1: %d\n", octal_num_1)
 
-    let octal_num_2 i32 = 023_7
+    let octal_num_2 i32 = 0o23_7
     // expected: 159
     io.printf("octal_num_2: %d\n", octal_num_2)
 
