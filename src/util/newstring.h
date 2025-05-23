@@ -130,4 +130,10 @@ static inline Str_view string_to_strv(const String string) {
     return str_view;
 }
 
+static inline String string_clone(Arena* new_arena, String string) {
+    String new_str = {0};
+    string_extend_strv(new_arena, &new_str, string_to_strv(string));
+    return new_str;
+}
+
 #endif // NEWSTRING_H

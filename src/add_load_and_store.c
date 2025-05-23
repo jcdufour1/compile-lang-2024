@@ -1879,11 +1879,32 @@ static Llvm_block* for_with_cond_to_branch(bool* rtn_in_block, Tast_for_with_con
         old_for->body->scope_id
     );
 
+    size_t for_count = 0;
+    for (size_t idx_ = env.defered_collections.coll_stack.info.count; idx_ > 0; idx_--) {
+        size_t idx = idx_ - 1;
+        if (vec_at(&env.defered_collections.coll_stack, idx).parent_of == DEFER_PARENT_OF_FOR) {
+            for_count++;
+        }
+    }
+    String for_template = {0};
+    string_extend_cstr(&a_main, &for_template, "for_");
+    string_extend_size_t(&a_main, &for_template, for_count);
+    string_extend_cstr(&a_main, &for_template, "_");
+
+    String check_cond_ = string_clone(&a_main, for_template);
+    string_extend_cstr(&a_main, &check_cond_, "check_cond");
+
+    String after_chk_ = string_clone(&a_main, for_template);
+    string_extend_cstr(&a_main, &after_chk_, "after_chk");
+
+    String after_loop_ = string_clone(&a_main, for_template);
+    string_extend_cstr(&a_main, &after_loop_, "after_loop");
+
     Tast_operator* operator = old_for->condition->child;
-    Name check_cond_label = util_literal_name_new_prefix2(str_view_from_cstr("for_check_cond"));
+    Name check_cond_label = util_literal_name_new_prefix2(string_to_strv(check_cond_));
     Llvm_goto* jmp_to_check_cond_label = llvm_goto_new(old_for->pos, check_cond_label);
-    Name after_check_label = util_literal_name_new_prefix2(str_view_from_cstr("for_after_check"));
-    Name after_for_loop_label = util_literal_name_new_prefix2(str_view_from_cstr("for_after_loop"));
+    Name after_check_label = util_literal_name_new_prefix2(string_to_strv(after_chk_));
+    Name after_for_loop_label = util_literal_name_new_prefix2(string_to_strv(after_loop_));
 
     env.label_after_for = after_for_loop_label;
     env.label_if_break = after_for_loop_label;

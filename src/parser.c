@@ -1434,7 +1434,7 @@ static PARSE_STATUS parse_for_range_internal(
     );
     vec_append(&a_main, &outer->children, uast_assignment_wrap(init_assign));
 
-    Name incre_name = util_literal_name_new_mod_path2(env.curr_mod_path);
+    Name incre_name = util_literal_name_new_prefix2(str_view_from_cstr("for_increment"));
 
     Uast_for_with_cond* inner_for = uast_for_with_cond_new(
         outer->pos,
