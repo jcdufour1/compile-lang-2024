@@ -219,10 +219,11 @@ Str_view llvm_goto_print_internal(const Llvm_goto* lang_goto, int indent) {
 Str_view llvm_cond_goto_print_internal(const Llvm_cond_goto* cond_goto, int indent) {
     String buf = {0};
 
-    string_extend_cstr_indent(&print_arena, &buf, "cond_goto", indent);
+    string_extend_cstr_indent(&print_arena, &buf, "cond_goto ", indent);
     extend_name(NAME_LOG, &buf, cond_goto->if_true);
+    string_extend_cstr(&print_arena, &buf, " ");
     extend_name(NAME_LOG, &buf, cond_goto->if_false);
-    string_extend_cstr(&print_arena, &buf, "\n");
+    string_extend_cstr(&print_arena, &buf, " \n");
 
     return string_to_strv(buf);
 }

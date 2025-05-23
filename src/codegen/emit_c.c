@@ -700,6 +700,7 @@ void emit_c_from_tree(const Llvm_block* root) {
     string_extend_cstr(&a_main, &header, "#include <stdint.h>\n");
     string_extend_cstr(&a_main, &header, "#include <stdbool.h>\n");
     string_extend_cstr(&a_main, &header, "#include <string.h>\n");
+    string_extend_cstr(&a_main, &header, "#include <assert.h>\n"); // TODO: do not always include assert.h
 
     Alloca_iter iter = all_tbl_iter_new(0);
     Llvm* curr = NULL;

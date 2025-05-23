@@ -1713,6 +1713,10 @@ static void load_struct_def(Tast_struct_def* old_def) {
 }
 
 static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, Name label_normal_brk, Name label_defer_brk) {
+    Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
+        lang_type_unsigned_int_new(POS_BUILTIN, 1, 0)
+    ));
+
     Tast_block* old_block = if_statement->body;
     bool rtn_in_block = false;
     Llvm_block* inner_block = load_block(
@@ -1743,14 +1747,41 @@ static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, N
 
     vec_extend(&a_main, &new_block->children, &inner_block->children);
 
-    // TODO: rtn_in_block seems like a hack. try to do things better
-    if (!rtn_in_block) {
-        Llvm_goto* jmp_to_after_chain = llvm_goto_new(
-            old_block->pos,
-            label_defer_brk
-        );
-        vec_append(&a_main, &new_block->children, llvm_goto_wrap(jmp_to_after_chain));
+    for (size_t idx = 0; idx < new_block->children.info.count; idx++) {
+        log(LOG_VERBOSE, TAST_FMT, llvm_print(vec_at(&new_block->children, idx)));
     }
+
+    // is_rtn_check
+    // TODO: this should be in load_block_stmts?
+    Name after_is_rtn = util_literal_name_new_prefix2(str_view_from_cstr("after_is_rtn_check_if_to_branch"));
+    Defer_pair_vec* pairs = &vec_top_ref(&env.defered_collections.coll_stack)->pairs;
+    unwrap(pairs->info.count > 0 && "not implemented");
+    if_for_add_cond_goto(
+        // if this condition evaluates to true, we are not returning right now
+        tast_binary_wrap(tast_binary_new(
+            if_statement->pos,
+            tast_symbol_wrap(tast_symbol_new(if_statement->pos, (Sym_typed_base) {
+                .lang_type = tast_lang_type_from_name(env.defered_collections.is_rtning),
+                .name = env.defered_collections.is_rtning
+            })),
+            tast_literal_wrap(tast_int_wrap(tast_int_new(if_statement->pos, 0, u1_lang_type))),
+            BINARY_DOUBLE_EQUAL,
+            u1_lang_type
+        )),
+        new_block,
+        after_is_rtn,
+        vec_top(pairs).label->name
+    );
+    add_label(new_block, after_is_rtn, if_statement->pos);
+        for (size_t idx = 0; idx < new_block->children.info.count; idx++) {
+            log(LOG_VERBOSE, TAST_FMT, llvm_print(vec_at(&new_block->children, idx)));
+        }
+
+    Llvm_goto* jmp_to_after_chain = llvm_goto_new(
+        old_block->pos,
+        label_defer_brk
+    );
+    vec_append(&a_main, &new_block->children, llvm_goto_wrap(jmp_to_after_chain));
 
     return new_block;
 }
@@ -2002,6 +2033,7 @@ static void load_for_with_cond(bool* rtn_in_block, Llvm_block* new_block, Tast_f
 }
 
 static void load_break(Llvm_block* new_block, Tast_break* old_break, Name label_normal_brk, Name label_defer_brk) {
+    (void) label_defer_brk;
     (void) label_normal_brk;
     if (env.label_if_break.base.count < 1) {
         //msg(
@@ -2410,6 +2442,7 @@ static Llvm_block* load_block(bool* rtn_in_block, Tast_block* old_block, DEFER_P
     }
 
     load_block_stmts(rtn_in_block, new_block, old_block->children, parent_of, old_block->pos, lang_type, (Name) {0}, label_normal_brk, label_defer_brk);
+    log(LOG_VERBOSE, TAST_FMT, llvm_block_print(new_block));
 
     return new_block;
 }
