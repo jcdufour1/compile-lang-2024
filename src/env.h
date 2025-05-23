@@ -40,6 +40,17 @@ typedef struct {
     Tast_label* label;
 } Defer_pair;
 
+// TODO: move this macro?
+#define defer_pair_print(pair) str_view_print(defer_pair_print_internal(pair))
+
+// TODO: move this function?
+static inline Str_view defer_pair_print_internal(Defer_pair pair) {
+    String buf = {0};
+    string_extend_strv(&print_arena, &buf, tast_defer_print_internal(pair.defer, 0));
+    string_extend_strv(&print_arena, &buf, tast_label_print_internal(pair.label, 0));
+    return string_to_strv(buf);
+}
+
 // all defered statements in one scope
 typedef struct {
     Vec_base info;

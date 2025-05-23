@@ -208,18 +208,18 @@ static void load_block_stmts(
             break;
         }
         case DEFER_PARENT_OF_FOR: {
-            Tast_break* actual_brk = tast_break_new(pos /* TODO*/, true, rtn_val);
+            Tast_break* actual_brk = tast_break_new(pos /* TODO*/, true, true, rtn_val);
             defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
             break;
         }
         case DEFER_PARENT_OF_IF: {
-            Tast_break* actual_brk = tast_break_new(pos /* TODO*/, true, rtn_val);
+            Tast_break* actual_brk = tast_break_new(pos /* TODO*/, true, true, rtn_val);
             defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
             break;
         }
         case DEFER_PARENT_OF_BLOCK: {
             if (lang_type.type != LANG_TYPE_VOID) {
-                Tast_break* actual_brk = tast_break_new(pos /* TODO*/, true, rtn_val);
+                Tast_break* actual_brk = tast_break_new(pos /* TODO*/, true, true, rtn_val);
                 defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
             }
             break;
@@ -300,6 +300,7 @@ static void load_block_stmts(
     while (pairs->info.count > 0) {
         Defer_pair_vec dummy_stmts = {0};
         Defer_pair pair = vec_top(pairs);
+        log(LOG_VERBOSE, TAST_FMT"\n", defer_pair_print(pair));
         if (pairs->info.count == 1 && parent_of == DEFER_PARENT_OF_FOR) {
             //Name goto_cond = llvm_
             if_for_add_cond_goto(
@@ -326,6 +327,7 @@ static void load_block_stmts(
         } else if (pairs->info.count == 1) {
             log(LOG_VERBOSE, TAST_FMT, tast_defer_print(pair.defer));
         }
+        log(LOG_VERBOSE, TAST_FMT, tast_defer_print(pair.defer));
         load_label(new_block, pair.label);
         load_stmt(rtn_in_block, new_block, pair.defer->child, true, label_normal_brk, label_defer_brk);
         vec_rem_last(pairs);
@@ -2027,9 +2029,10 @@ static void load_break(Llvm_block* new_block, Tast_break* old_break, Name label_
     }
 
     assert(env.label_if_break.base.count > 0);
-    todo();
-    Llvm_goto* new_goto = llvm_goto_new(old_break->pos, label_defer_brk);
-    vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
+    if (true || !old_break->is_actual_break) {
+        Llvm_goto* new_goto = llvm_goto_new(old_break->pos, label_normal_brk);
+        vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
+    }
 }
 
 static void load_label(Llvm_block* new_block, Tast_label* old_label) {
