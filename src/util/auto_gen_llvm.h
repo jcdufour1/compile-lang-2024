@@ -549,6 +549,9 @@ static void llvm_gen_llvm_struct(Llvm_type llvm) {
         extend_struct_member(&output, (Member) {
             .type = str_view_from_cstr("Pos"), .name = str_view_from_cstr("pos")
         });
+        extend_struct_member(&output, (Member) {
+            .type = str_view_from_cstr("Loc"), .name = str_view_from_cstr("loc")
+        });
     }
 
     string_extend_cstr(&gen_a, &output, "}");
@@ -694,16 +697,56 @@ static void llvm_gen_new_internal(Llvm_type type, bool implementation) {
 
     String function = {0};
 
+    if (!implementation) {
+        string_extend_cstr(&gen_a, &function, "#define ");
+        extend_llvm_name_lower(&function, type.name);
+        string_extend_cstr(&gen_a, &function, "_new(");
+        if (type.sub_types.info.count > 0) {
+            string_extend_cstr(&gen_a, &function, "void");
+        } else {
+            string_extend_cstr(&gen_a, &function, "pos");
+        }
+        for (size_t idx = 0; idx < type.members.info.count; idx++) {
+            if (idx < type.members.info.count) {
+                string_extend_cstr(&gen_a, &function, ", ");
+            }
+
+            Member curr = vec_at(&type.members, idx);
+
+            string_extend_cstr(&gen_a, &function, " ");
+            string_extend_strv(&gen_a, &function, curr.name);
+        }
+        string_extend_cstr(&gen_a, &function, ") ");
+        extend_llvm_name_lower(&function, type.name);
+        string_extend_cstr(&gen_a, &function, "_new_internal(");
+        if (type.sub_types.info.count > 0) {
+            string_extend_cstr(&gen_a, &function, "void");
+        } else {
+            string_extend_cstr(&gen_a, &function, "pos, loc_new()");
+        }
+        for (size_t idx = 0; idx < type.members.info.count; idx++) {
+            if (idx < type.members.info.count) {
+                string_extend_cstr(&gen_a, &function, ", ");
+            }
+
+            Member curr = vec_at(&type.members, idx);
+
+            string_extend_cstr(&gen_a, &function, " ");
+            string_extend_strv(&gen_a, &function, curr.name);
+        }
+        string_extend_cstr(&gen_a, &function, ")\n");
+    }
+
     string_extend_cstr(&gen_a, &function, "static inline ");
     extend_llvm_name_first_upper(&function, type.name);
     string_extend_cstr(&gen_a, &function, "* ");
     extend_llvm_name_lower(&function, type.name);
-    string_extend_cstr(&gen_a, &function, "_new(");
+    string_extend_cstr(&gen_a, &function, "_new_internal(");
 
     if (type.sub_types.info.count > 0) {
         string_extend_cstr(&gen_a, &function, "void");
     } else {
-        string_extend_cstr(&gen_a, &function, "Pos pos");
+        string_extend_cstr(&gen_a, &function, "Pos pos, Loc loc");
     }
     for (size_t idx = 0; idx < type.members.info.count; idx++) {
         if (idx < type.members.info.count) {
@@ -736,6 +779,10 @@ static void llvm_gen_new_internal(Llvm_type type, bool implementation) {
             string_extend_cstr(&gen_a, &function, "    llvm_");
             extend_strv_lower(&function, type.name.base);
             string_extend_cstr(&gen_a, &function, "_unwrap(base_llvm)->pos = pos;\n");
+
+            string_extend_cstr(&gen_a, &function, "    llvm_");
+            extend_strv_lower(&function, type.name.base);
+            string_extend_cstr(&gen_a, &function, "_unwrap(base_llvm)->loc = loc;\n");
         }
 
         for (size_t idx = 0; idx < type.members.info.count; idx++) {
