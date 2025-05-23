@@ -16,14 +16,18 @@
 
 // forward declarations
 
-static Lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos);
+#define if_for_add_cond_goto(old_oper, new_block, label_name_if_true, label_name_if_false) \
+    if_for_add_cond_goto_internal(loc_new(), old_oper, new_block, label_name_if_true, label_name_if_false)
 
-static void if_for_add_cond_goto(
+static void if_for_add_cond_goto_internal(
+    Loc loc,
     Tast_operator* old_oper,
     Llvm_block* new_block,
     Name label_name_if_true,
     Name label_name_if_false
 );
+
+static Lang_type rm_tuple_lang_type(Lang_type lang_type, Pos lang_type_pos);
 
 static Name load_assignment(
     Llvm_block* new_block,
@@ -208,18 +212,18 @@ static void load_block_stmts(
             break;
         }
         case DEFER_PARENT_OF_FOR: {
-            Tast_break* actual_brk = tast_break_new(pos /* TODO*/, true, true, rtn_val);
+            Tast_break* actual_brk = tast_break_new(pos /* TODO*/, true, false, rtn_val);
             defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
             break;
         }
         case DEFER_PARENT_OF_IF: {
-            Tast_break* actual_brk = tast_break_new(pos /* TODO*/, true, true, rtn_val);
+            Tast_break* actual_brk = tast_break_new(pos /* TODO*/, true, false, rtn_val);
             defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
             break;
         }
         case DEFER_PARENT_OF_BLOCK: {
             if (lang_type.type != LANG_TYPE_VOID) {
-                Tast_break* actual_brk = tast_break_new(pos /* TODO*/, true, true, rtn_val);
+                Tast_break* actual_brk = tast_break_new(pos /* TODO*/, true, false, rtn_val);
                 defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
             }
             break;
@@ -319,6 +323,8 @@ static void load_block_stmts(
                 for_check_cond,
                 label_normal_brk
             );
+            log(LOG_DEBUG, TAST_FMT"\n", name_print(NAME_LOG, for_check_cond));
+            log(LOG_DEBUG, TAST_FMT"\n", name_print(NAME_LOG, label_normal_brk));
             // TODO: remove below vec_append
             //vec_append(&a_main, &new_block->children, llvm_cond_goto_wrap(llvm_cond_goto_new(
             //    pos,
@@ -392,7 +398,6 @@ static Tast_raw_union_def* get_raw_union_def_from_enum_def(Tast_enum_def* enum_d
 }
 
 static Tast_struct_def* enum_get_struct_def(Name enum_name, Tast_variable_def_vec membs, Pos pos) {
-    todo();
     Tast_struct_def* cached_def = NULL;
     // TODO: rename this hash table
     if (struct_to_struct_lookup(&cached_def, enum_name)) {
@@ -594,7 +599,6 @@ static Llvm_struct_def* load_struct_def_clone(const Tast_struct_def* old_def) {
 }
 
 static Llvm_struct_def* load_raw_union_def_clone(const Tast_raw_union_def* old_def) {
-    todo();
     size_t largest_idx = struct_def_base_get_idx_largest_member(old_def->base);
     Llvm_variable_def_vec new_membs = {0};
     vec_append(&a_main, &new_membs, load_variable_def_clone(vec_at(&old_def->base.members, largest_idx)));
@@ -661,7 +665,8 @@ static void add_label(Llvm_block* block, Name label_name, Pos pos) {
     vec_append(&a_main, &block->children, llvm_def_wrap(llvm_label_wrap(label)));
 }
 
-static void if_for_add_cond_goto(
+static void if_for_add_cond_goto_internal(
+    Loc loc,
     Tast_operator* old_oper,
     Llvm_block* new_block,
     Name label_name_if_true,
@@ -671,8 +676,9 @@ static void if_for_add_cond_goto(
 
     assert(label_name_if_true.base.count > 0);
     assert(label_name_if_false.base.count > 0);
-    Llvm_cond_goto* cond_goto = llvm_cond_goto_new(
+    Llvm_cond_goto* cond_goto = llvm_cond_goto_new_internal(
         pos,
+        loc,
         load_operator(new_block, old_oper),
         label_name_if_true,
         label_name_if_false
@@ -735,7 +741,6 @@ static Name load_function_call(Llvm_block* new_block, Tast_function_call* old_ca
 
 // this function is needed for situations such as switching directly on enum
 static Name load_ptr_function_call(Llvm_block* new_block, Tast_function_call* old_call) {
-    todo();
     Tast_variable_def* new_var = tast_variable_def_new(
         old_call->pos,
         old_call->lang_type,
@@ -2029,7 +2034,7 @@ static void load_break(Llvm_block* new_block, Tast_break* old_break, Name label_
     }
 
     assert(env.label_if_break.base.count > 0);
-    if (true || !old_break->is_actual_break) {
+    if (false) {
         Llvm_goto* new_goto = llvm_goto_new(old_break->pos, label_normal_brk);
         vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
     }
@@ -2310,13 +2315,13 @@ static void load_stmt(bool* rtn_in_block, Llvm_block* new_block, Tast_stmt* old_
 
             Defer_pair_vec* pairs = &coll.pairs;
             if (pairs->info.count > 0) {
-                Llvm_goto* new_goto = llvm_goto_new(brk->pos, vec_top(pairs).label->name);
-                vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
+                //Llvm_goto* new_goto = llvm_goto_new(brk->pos, vec_top(pairs).label->name);
+                //vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
             }
 
             if (pairs->info.count > 0) {
-                Llvm_goto* new_goto = llvm_goto_new(brk->pos, vec_top(pairs).label->name);
-                vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
+                //Llvm_goto* new_goto = llvm_goto_new(brk->pos, vec_top(pairs).label->name);
+                //vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
             }
             return;
             //assert(rtn_val.base.count > 0 && "this is probably a bug in load_block_stmts");

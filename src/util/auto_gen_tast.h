@@ -613,7 +613,7 @@ static Tast_type tast_gen_break(const char* prefix) {
     Tast_type lang_break = {.name = tast_name_new(prefix, base_name, false)};
 
     append_member(&lang_break.members, "bool", "do_break_expr");
-    append_member(&lang_break.members, "bool", "is_actual_break");
+    append_member(&lang_break.members, "bool", "is_user_defined");
     append_member(&lang_break.members, "Tast_expr*", "break_expr");
 
     return lang_break;
