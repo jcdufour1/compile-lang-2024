@@ -25,6 +25,14 @@ static void emit_c_block(Emit_c_strs* strs,  const Llvm_block* block);
 
 static void emit_c_expr_piece(Emit_c_strs* strs, Name child);
 
+static void emit_c_loc(String* output, Loc loc) {
+    string_extend_cstr(&a_main, output, "/* ");
+    string_extend_cstr(&a_main, output, loc.file);
+    string_extend_cstr(&a_main, output, ":");
+    string_extend_int64_t(&a_main, output, loc.line);
+    string_extend_cstr(&a_main, output, "*/\n");
+}
+
 // TODO: see if this can be merged with extend_type_call_str in emit_llvm.c in some way
 static void c_extend_type_call_str(String* output, Lang_type lang_type, bool opaque_ptr) {
     if (opaque_ptr && lang_type_get_pointer_depth(lang_type) != 0) {
@@ -139,10 +147,10 @@ static void emit_c_struct_def(Emit_c_strs* strs, const Llvm_struct_def* def) {
                 Llvm_struct_def* child_def = llvm_struct_def_unwrap(llvm_def_unwrap(child_def_));
                 struct_to_use = arena_alloc(&a_main, sizeof(*struct_to_use));
                 *struct_to_use = util_literal_name_new2();
-                Llvm_struct_def* new_def = llvm_struct_def_new(def->pos, (Llvm_struct_def_base) {
+                Llvm_struct_def* new_def = llvm_struct_def_new(def->pos, ((Llvm_struct_def_base) {
                     .members = child_def->base.members,
                     .name = *struct_to_use
-                });
+                }));
                 unwrap(c_forward_struct_tbl_add(struct_to_use, ori_name));
                 emit_c_struct_def(strs, new_def);
             }
@@ -617,6 +625,7 @@ static void emit_c_goto_internal(Emit_c_strs* strs, Name name) {
 }
 
 static void emit_c_cond_goto(Emit_c_strs* strs, const Llvm_cond_goto* cond_goto) {
+    emit_c_loc(&strs->output, cond_goto->loc);
     string_extend_cstr(&a_main, &strs->output, "    if (");
     llvm_extend_name(&strs->output, cond_goto->condition);
     string_extend_cstr(&a_main, &strs->output, ") {\n");
@@ -627,6 +636,7 @@ static void emit_c_cond_goto(Emit_c_strs* strs, const Llvm_cond_goto* cond_goto)
 }
 
 static void emit_c_goto(Emit_c_strs* strs, const Llvm_goto* lang_goto) {
+    emit_c_loc(&strs->output, lang_goto->loc);
     emit_c_goto_internal(strs, lang_goto->name);
 }
 

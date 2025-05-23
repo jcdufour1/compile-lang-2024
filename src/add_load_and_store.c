@@ -369,7 +369,6 @@ static Lang_type_struct rm_tuple_lang_type_tuple(Lang_type_tuple lang_type, Pos 
 
 // note: will not clone everything
 static Tast_raw_union_def* get_raw_union_def_from_enum_def(Tast_enum_def* enum_def) {
-    todo();
 #   ifndef DNDEBUG
         size_t largest_idx = struct_def_base_get_idx_largest_member(enum_def->base);
         assert(
@@ -588,7 +587,7 @@ static Llvm_struct_def* load_struct_def_clone(const Tast_struct_def* old_def) {
     }
     return llvm_struct_def_new(
         old_def->pos,
-        (Llvm_struct_def_base) {.members = new_membs, .name = old_def->base.name /* TODO: is name correct? */}
+        ((Llvm_struct_def_base) {.members = new_membs, .name = old_def->base.name /* TODO: is name correct? */})
     );
 }
 
@@ -599,7 +598,7 @@ static Llvm_struct_def* load_raw_union_def_clone(const Tast_raw_union_def* old_d
     vec_append(&a_main, &new_membs, load_variable_def_clone(vec_at(&old_def->base.members, largest_idx)));
     return llvm_struct_def_new(
         old_def->pos,
-        (Llvm_struct_def_base) {.members = new_membs, .name = old_def->base.name /* TODO: is name correct? */}
+        ((Llvm_struct_def_base) {.members = new_membs, .name = old_def->base.name /* TODO: is name correct? */})
     );
 }
 
@@ -2028,6 +2027,7 @@ static void load_break(Llvm_block* new_block, Tast_break* old_break, Name label_
     }
 
     assert(env.label_if_break.base.count > 0);
+    todo();
     Llvm_goto* new_goto = llvm_goto_new(old_break->pos, label_defer_brk);
     vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
 }
@@ -2254,7 +2254,6 @@ static void load_stmt(bool* rtn_in_block, Llvm_block* new_block, Tast_stmt* old_
 
             Tast_break* brk = tast_break_unwrap(old_stmt);
             if (brk->do_break_expr) {
-                todo();
                 Tast_assignment* new_assign = tast_assignment_new(
                     tast_stmt_get_pos(old_stmt),
                     tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
