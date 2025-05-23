@@ -487,11 +487,12 @@ static void emit_c_alloca(String* output, const Llvm_alloca* alloca) {
     log(LOG_DEBUG, STR_VIEW_FMT"\n", str_view_print(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base));
     // TODO: remove these two if statements, and fix the actual underlying issues
     // we may need to make system to identify location of node generation, etc.
+    // NOTE: this seems to be related to function callbacks for some reason
     if (str_view_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base, "void")) {
         todo();
     }
     if (str_view_cstr_is_equal(lang_type_get_atom(LANG_TYPE_MODE_EMIT_C, alloca->lang_type).str.base, "")) {
-        string_extend_cstr(&a_main, output, " int ");
+        string_extend_cstr(&a_main, output, " uint64_t ");
     } else {
         c_extend_type_call_str(output, alloca->lang_type, true);
         // this line below should be kept though
