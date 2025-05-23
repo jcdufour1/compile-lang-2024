@@ -58,7 +58,7 @@ fn fun5() i32 {
         defer num = 5
         num = 2
         break
-        defer io.printf("no 5.4")
+        defer io.printf("no 5.4\n")
         defer num = 4
     }
     defer io.printf("at very end yes 5.2\n")
