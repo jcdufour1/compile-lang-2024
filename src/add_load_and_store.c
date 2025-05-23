@@ -305,6 +305,7 @@ static void load_block_stmts(
         Defer_pair_vec dummy_stmts = {0};
         Defer_pair pair = vec_top(pairs);
         log(LOG_VERBOSE, TAST_FMT"\n", defer_pair_print(pair));
+        load_label(new_block, pair.label);
         if (pairs->info.count == 1 && parent_of == DEFER_PARENT_OF_FOR) {
             //Name goto_cond = llvm_
             if_for_add_cond_goto(
@@ -334,7 +335,6 @@ static void load_block_stmts(
             log(LOG_VERBOSE, TAST_FMT, tast_defer_print(pair.defer));
         }
         log(LOG_VERBOSE, TAST_FMT, tast_defer_print(pair.defer));
-        load_label(new_block, pair.label);
         load_stmt(rtn_in_block, new_block, pair.defer->child, true, label_normal_brk, label_defer_brk);
         vec_rem_last(pairs);
         if (dummy_stmts.info.count > 0) {
@@ -2315,8 +2315,8 @@ static void load_stmt(bool* rtn_in_block, Llvm_block* new_block, Tast_stmt* old_
 
             Defer_pair_vec* pairs = &coll.pairs;
             if (pairs->info.count > 0) {
-                //Llvm_goto* new_goto = llvm_goto_new(brk->pos, vec_top(pairs).label->name);
-                //vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
+                Llvm_goto* new_goto = llvm_goto_new(brk->pos, vec_top(pairs).label->name);
+                vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
             }
 
             if (pairs->info.count > 0) {
