@@ -1830,7 +1830,7 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
     Name next_if = {0};
     for (size_t idx = 0; idx < if_else->tasts.info.count; idx++) {
         if (idx + 1 == if_else->tasts.info.count) {
-            next_if = if_after;
+            next_if = util_literal_name_new_prefix2(str_view_from_cstr("dummy_next_if"));
         } else {
             next_if = util_literal_name_new_prefix2(str_view_from_cstr("next_if"));
         }
@@ -1851,9 +1851,9 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
 
     assert(!symbol_lookup(&dummy_def, next_if));
 
+    Name before_brk_chk = util_literal_name_new_prefix2(str_view_from_cstr("after_is_before_brk_chk_if_else_chain_to_branch"));
 
     // is_rtn_check
-    Name after_is_rtn = util_literal_name_new_prefix2(str_view_from_cstr("after_is_rtn_check_if_else_chain_to_branch"));
     Defer_pair_vec* pairs = &vec_top_ref(&env.defered_collections.coll_stack)->pairs;
     unwrap(pairs->info.count > 0 && "not implemented");
     if_for_add_cond_goto(
@@ -1869,12 +1869,36 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
             u1_lang_type
         )),
         *new_block,
-        after_is_rtn,
+        before_brk_chk,
         vec_top(pairs).label->name
     );
-    add_label((*new_block), after_is_rtn, if_else->pos);
+    // TODO: merge before_brk_chk and if_after
+    add_label((*new_block), before_brk_chk, if_else->pos);
+    add_label((*new_block), if_after, if_else->pos);
+
+    // is_brk_check
+    Name after_is_brk = util_literal_name_new_prefix2(str_view_from_cstr("after_is_brk_check_if_else_chain_to_branch"));
+    unwrap(pairs->info.count > 0 && "not implemented");
+    if_for_add_cond_goto(
+        // if this condition evaluates to true, we are not breaking right now
+        tast_binary_wrap(tast_binary_new(
+            if_else->pos,
+            tast_symbol_wrap(tast_symbol_new(if_else->pos, (Sym_typed_base) {
+                .lang_type = tast_lang_type_from_name(vec_top(&env.defered_collections.coll_stack).is_brking),
+                .name = vec_top(&env.defered_collections.coll_stack).is_brking
+            })),
+            tast_literal_wrap(tast_int_wrap(tast_int_new(if_else->pos, 0, u1_lang_type))),
+            BINARY_DOUBLE_EQUAL,
+            u1_lang_type
+        )),
+        *new_block,
+        after_is_brk,
+        vec_top(pairs).label->name
+    );
+    add_label((*new_block), after_is_brk, if_else->pos);
     add_label((*new_block), next_if, if_else->pos);
     assert(alloca_lookup(&dummy, next_if));
+
 
     env.label_if_break = old_label_if_break;
     env.label_if_after = old_label_if_after;
