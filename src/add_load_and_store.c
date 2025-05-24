@@ -128,10 +128,12 @@ static void load_block_stmts(
             break;
         }
         case DEFER_PARENT_OF_FOR: {
+            assert(label_normal_brk.base.count > 0);
             is_rtning_name = util_literal_name_new_prefix2(str_view_from_cstr("is_rtning_for"));
             break;
         }
         case DEFER_PARENT_OF_IF: {
+            assert(label_normal_brk.base.count > 0);
             is_rtning_name = util_literal_name_new_prefix2(str_view_from_cstr("is_rtning_if"));
             break;
         }
@@ -1818,8 +1820,10 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
     Name old_label_if_break = env.label_if_break;
     if (if_else->is_switch) {
         env.label_if_break = if_after;
-    } else {
+    } else if (env.label_after_for.base.count > 0) {
         env.label_if_break = env.label_after_for;
+    } else {
+        env.label_if_break = if_after;
     }
     env.label_if_after = if_after;
     
@@ -1834,7 +1838,8 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
             next_if = util_literal_name_new_prefix2(str_view_from_cstr("next_if"));
         }
 
-        Llvm_block* if_block = if_statement_to_branch(vec_at(&if_else->tasts, idx), next_if, label_normal_brk, if_after);
+        assert(env.label_if_break.base.count > 0);
+        Llvm_block* if_block = if_statement_to_branch(vec_at(&if_else->tasts, idx), next_if, env.label_if_break, if_after);
         scope_get_parent_tbl_update(vec_at(&if_else->tasts, idx)->body->scope_id, (*new_block)->scope_id);
         vec_append(&a_main, &(*new_block)->children, llvm_block_wrap(if_block));
 
@@ -2035,11 +2040,7 @@ static void load_for_with_cond(bool* rtn_in_block, Llvm_block* new_block, Tast_f
 static void load_break(Llvm_block* new_block, Tast_break* old_break, Name label_normal_brk, Name label_defer_brk) {
     (void) label_defer_brk;
     (void) label_normal_brk;
-    if (env.label_if_break.base.count < 1) {
-        //msg(
-        //    DIAG_BREAK_INVALID_LOCATION, old_break->pos,
-        //    "break statement outside of a for loop\n"
-        //);
+    if (label_normal_brk.base.count < 1) {
         return;
     }
 
@@ -2066,10 +2067,6 @@ static void load_break(Llvm_block* new_block, Tast_break* old_break, Name label_
     }
 
     assert(env.label_if_break.base.count > 0);
-    if (false) {
-        Llvm_goto* new_goto = llvm_goto_new(old_break->pos, label_normal_brk);
-        vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
-    }
 }
 
 static void load_label(Llvm_block* new_block, Tast_label* old_label) {
@@ -2287,6 +2284,14 @@ static void load_stmt(bool* rtn_in_block, Llvm_block* new_block, Tast_stmt* old_
             if (is_defered) {
                 log(LOG_VERBOSE, TAST_FMT"\n", name_print(NAME_LOG, label_defer_brk));
                 load_break(new_block, tast_break_unwrap(old_stmt), label_normal_brk, label_defer_brk);
+                return;
+            }
+
+            if (label_normal_brk.base.count < 1) {
+                msg(
+                    DIAG_BREAK_INVALID_LOCATION, tast_break_unwrap(old_stmt)->pos,
+                    "break statement outside of a for loop\n"
+                );
                 return;
             }
 
