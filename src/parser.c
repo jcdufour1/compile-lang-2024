@@ -14,6 +14,7 @@
 #include <file.h>
 #include <errno.h>
 #include <name.h>
+#include <ulang_type_clone.h>
 
 static bool can_end_stmt(Token token);
 
@@ -1391,11 +1392,18 @@ static PARSE_STATUS parse_variable_def(
 
 static PARSE_STATUS parse_for_range_internal(
     Uast_block** result,
-    Uast_variable_def* var_def,
+    Uast_variable_def* var_def_user,
     Uast_block* outer,
     Tk_view* tokens,
     Scope_id block_scope
 ) {
+    Uast_variable_def* var_def_builtin = uast_variable_def_new(
+        var_def_user->pos,
+        ulang_type_clone(var_def_user->lang_type, var_def_user->name.scope_id),
+        util_literal_name_new_prefix2(str_view_from_cstr("for_loop_var_builtin"))
+    );
+    unwrap(usymbol_add(uast_variable_def_wrap(var_def_builtin)));
+
     unwrap(try_consume(NULL, tokens, TOKEN_IN));
 
     Uast_expr* lower_bound = NULL;
@@ -1429,12 +1437,45 @@ static PARSE_STATUS parse_for_range_internal(
 
     Uast_assignment* init_assign = uast_assignment_new(
         uast_expr_get_pos(lower_bound),
-        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
+        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name)),
         lower_bound
     );
     vec_append(&a_main, &outer->children, uast_assignment_wrap(init_assign));
 
-    Name incre_name = util_literal_name_new_prefix2(str_view_from_cstr("for_increment"));
+    Uast_assignment* increment = uast_assignment_new(
+        uast_expr_get_pos(upper_bound),
+        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name)),
+        uast_operator_wrap(uast_binary_wrap(uast_binary_new(
+            var_def_builtin->pos,
+            uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name)),
+            uast_literal_wrap(util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, uast_expr_get_pos(upper_bound))),
+            BINARY_ADD
+        )))
+    );
+    // TODO: make new vector instead to avoid O(n) insert time
+    vec_insert(&a_main, &inner->children, 0, uast_assignment_wrap(increment));
+
+    Uast_assignment* user_assign = uast_assignment_new(
+        uast_expr_get_pos(lower_bound),
+        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_user->name)),
+        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name))
+    );
+    vec_insert(&a_main, &inner->children, 0, uast_assignment_wrap(user_assign));
+
+    // this is a way to compensate for increment occuring on the first iteration
+    // TODO: this will not work properly for unsigned if the initial value is 0
+    //Uast_assignment* init_decre = uast_assignment_new(
+    //    uast_expr_get_pos(upper_bound),
+    //    uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
+    //    uast_operator_wrap(uast_binary_wrap(uast_binary_new(
+    //        var_def->pos,
+    //        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
+    //        uast_literal_wrap(util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, uast_expr_get_pos(upper_bound))),
+    //        BINARY_SUB
+    //    )))
+    //);
+    //vec_append(&a_main, &outer->children, uast_assignment_wrap(init_decre));
+
 
     Uast_for_with_cond* inner_for = uast_for_with_cond_new(
         outer->pos,
@@ -1442,34 +1483,18 @@ static PARSE_STATUS parse_for_range_internal(
             outer->pos,
             uast_binary_wrap(uast_binary_new(
                 outer->pos,
-                uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
+                uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name)),
                 upper_bound,
                 BINARY_LESS_THAN
             ))
         ),
         inner,
-        incre_name,
+        util_literal_name_new_prefix2(str_view_from_cstr("todo_remove_in_src_parser")),
         true
     );
     vec_append(&a_main, &outer->children, uast_for_with_cond_wrap(inner_for));
 
-    Uast_continue* cont = uast_continue_new(uast_expr_get_pos(upper_bound));
-    vec_append(&a_main, &inner->children, uast_continue_wrap(cont));
-
-    Uast_label* incre_label = uast_label_new(uast_expr_get_pos(upper_bound), incre_name.base);
-    vec_append(&a_main, &inner->children, uast_label_wrap(incre_label));
-
-    Uast_assignment* increment = uast_assignment_new(
-        uast_expr_get_pos(upper_bound),
-        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
-        uast_operator_wrap(uast_binary_wrap(uast_binary_new(
-            var_def->pos,
-            uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
-            uast_literal_wrap(util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, uast_expr_get_pos(upper_bound))),
-            BINARY_ADD
-        )))
-    );
-    vec_append(&a_main, &inner->children, uast_assignment_wrap(increment));
+    log(LOG_VERBOSE, TAST_FMT, uast_block_print(outer));
 
     *result = outer;
     return PARSE_OK;
