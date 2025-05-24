@@ -71,7 +71,10 @@ fn fun6() i32 {
     defer io.printf("at very end yes 6.1\n")
     let num i32 = 0
     for 1 {
-        if 1 {
+        if 0 {
+            defer io.printf("no 6.8")
+            io.printf("no 6.7")
+        } else {
             defer num = 6
             num = 2
             break
