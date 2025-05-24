@@ -513,6 +513,7 @@ static void emit_c_alloca(String* output, const Llvm_alloca* alloca) {
 }
 
 static void emit_c_label(Emit_c_strs* strs, const Llvm_label* def) {
+    emit_c_loc(&strs->output, def->loc);
     llvm_extend_name(&strs->output, def->name);
     string_extend_cstr(&a_main, &strs->output, ":\n");
     // supress c compiler warnings and allow non-c23 compilers
