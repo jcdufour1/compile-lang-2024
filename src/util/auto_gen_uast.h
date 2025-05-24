@@ -408,6 +408,7 @@ static Uast_type uast_gen_variable_def(const char* prefix) {
 
     append_member(&def.members, "Ulang_type", "lang_type");
     append_member(&def.members, "Name", "name");
+    append_member(&def.members, "bool", "is_for_var"); // if true, assignments to this are not allowed (this may change in the future)
 
     return def;
 }

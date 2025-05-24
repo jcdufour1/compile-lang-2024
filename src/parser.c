@@ -14,6 +14,7 @@
 #include <file.h>
 #include <errno.h>
 #include <name.h>
+#include <ulang_type_clone.h>
 
 static bool can_end_stmt(Token token);
 
@@ -53,7 +54,8 @@ static PARSE_STATUS parse_variable_def(
     bool add_to_sym_table,
     bool require_type,
     Ulang_type lang_type_if_not_required,
-    Scope_id scope_id
+    Scope_id scope_id,
+    bool is_for_var // true if variable is index variable in for loop
 );
 static PARSE_EXPR_STATUS parse_condition(Uast_condition**, Tk_view* tokens, Scope_id scope_id);
 static PARSE_STATUS parse_generics_args(Ulang_type_vec* args, Tk_view* tokens, Scope_id scope_id);
@@ -900,7 +902,7 @@ static PARSE_EXPR_STATUS parse_function_parameter(Uast_param** child, Tk_view* t
     bool is_optional = false;
     bool is_variadic = false;
     Uast_expr* opt_default = NULL;
-    if (PARSE_OK != parse_variable_def(&base, tokens, false, add_to_sym_table, true, (Ulang_type) {0}, scope_id)) {
+    if (PARSE_OK != parse_variable_def(&base, tokens, false, add_to_sym_table, true, (Ulang_type) {0}, scope_id, false)) {
         return PARSE_EXPR_ERROR;
     }
     if (try_consume(NULL, tokens, TOKEN_TRIPLE_DOT)) {
@@ -1100,7 +1102,7 @@ static PARSE_STATUS parse_struct_base_def(
     bool done = false;
     while (!done && tokens->count > 0 && tk_view_front(*tokens).type != TOKEN_CLOSE_CURLY_BRACE) {
         Uast_variable_def* member = NULL;
-        switch (parse_variable_def(&member, tokens, false, false, require_sub_types, default_lang_type, name.scope_id)) {
+        switch (parse_variable_def(&member, tokens, false, false, require_sub_types, default_lang_type, name.scope_id, false)) {
             case PARSE_ERROR:
                 return PARSE_ERROR;
             case PARSE_OK:
@@ -1155,7 +1157,8 @@ static PARSE_STATUS parse_struct_base_def_implicit_type(
         Uast_variable_def* member = uast_variable_def_new(
             name_token.pos,
             ulang_type_regular_const_wrap(ulang_type_regular_new(lang_type, name_token.pos)),
-            name_new(env.curr_mod_path, name_token.text, (Ulang_type_vec) {0}, 0)
+            name_new(env.curr_mod_path, name_token.text, (Ulang_type_vec) {0}, 0),
+            false
         );
 
         vec_append(&a_main, &base->members, member);
@@ -1343,7 +1346,8 @@ static PARSE_STATUS parse_variable_def(
     bool add_to_sym_table,
     bool require_type,
     Ulang_type default_lang_type,
-    Scope_id scope_id
+    Scope_id scope_id,
+    bool is_for_var // true if variable is index variable in for loop
 ) {
     (void) require_let;
     if (!try_consume(NULL, tokens, TOKEN_LET)) {
@@ -1373,7 +1377,8 @@ static PARSE_STATUS parse_variable_def(
     Uast_variable_def* var_def = uast_variable_def_new(
         name_token.pos,
         lang_type,
-        name_new(env.curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id)
+        name_new(env.curr_mod_path, name_token.text, (Ulang_type_vec) {0}, scope_id),
+        is_for_var
     );
 
     if (add_to_sym_table) {
@@ -1391,11 +1396,19 @@ static PARSE_STATUS parse_variable_def(
 
 static PARSE_STATUS parse_for_range_internal(
     Uast_block** result,
-    Uast_variable_def* var_def,
+    Uast_variable_def* var_def_user,
     Uast_block* outer,
     Tk_view* tokens,
     Scope_id block_scope
 ) {
+    Uast_variable_def* var_def_builtin = uast_variable_def_new(
+        var_def_user->pos,
+        ulang_type_clone(var_def_user->lang_type, var_def_user->name.scope_id),
+        util_literal_name_new_prefix2(str_view_from_cstr("for_loop_var_builtin")),
+        false
+    );
+    unwrap(usymbol_add(uast_variable_def_wrap(var_def_builtin)));
+
     unwrap(try_consume(NULL, tokens, TOKEN_IN));
 
     Uast_expr* lower_bound = NULL;
@@ -1429,12 +1442,45 @@ static PARSE_STATUS parse_for_range_internal(
 
     Uast_assignment* init_assign = uast_assignment_new(
         uast_expr_get_pos(lower_bound),
-        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
+        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name)),
         lower_bound
     );
     vec_append(&a_main, &outer->children, uast_assignment_wrap(init_assign));
 
-    Name incre_name = util_literal_name_new_prefix2(str_view_from_cstr("for_increment"));
+    Uast_assignment* increment = uast_assignment_new(
+        uast_expr_get_pos(upper_bound),
+        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name)),
+        uast_operator_wrap(uast_binary_wrap(uast_binary_new(
+            var_def_builtin->pos,
+            uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name)),
+            uast_literal_wrap(util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, uast_expr_get_pos(upper_bound))),
+            BINARY_ADD
+        )))
+    );
+    // TODO: make new vector instead to avoid O(n) insert time
+    vec_insert(&a_main, &inner->children, 0, uast_assignment_wrap(increment));
+
+    Uast_assignment* user_assign = uast_assignment_new(
+        uast_expr_get_pos(lower_bound),
+        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_user->name)),
+        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name))
+    );
+    vec_insert(&a_main, &inner->children, 0, uast_assignment_wrap(user_assign));
+
+    // this is a way to compensate for increment occuring on the first iteration
+    // TODO: this will not work properly for unsigned if the initial value is 0
+    //Uast_assignment* init_decre = uast_assignment_new(
+    //    uast_expr_get_pos(upper_bound),
+    //    uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
+    //    uast_operator_wrap(uast_binary_wrap(uast_binary_new(
+    //        var_def->pos,
+    //        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
+    //        uast_literal_wrap(util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, uast_expr_get_pos(upper_bound))),
+    //        BINARY_SUB
+    //    )))
+    //);
+    //vec_append(&a_main, &outer->children, uast_assignment_wrap(init_decre));
+
 
     Uast_for_with_cond* inner_for = uast_for_with_cond_new(
         outer->pos,
@@ -1442,34 +1488,18 @@ static PARSE_STATUS parse_for_range_internal(
             outer->pos,
             uast_binary_wrap(uast_binary_new(
                 outer->pos,
-                uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
+                uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def_builtin->name)),
                 upper_bound,
                 BINARY_LESS_THAN
             ))
         ),
         inner,
-        incre_name,
+        util_literal_name_new_prefix2(str_view_from_cstr("todo_remove_in_src_parser")),
         true
     );
     vec_append(&a_main, &outer->children, uast_for_with_cond_wrap(inner_for));
 
-    Uast_continue* cont = uast_continue_new(uast_expr_get_pos(upper_bound));
-    vec_append(&a_main, &inner->children, uast_continue_wrap(cont));
-
-    Uast_label* incre_label = uast_label_new(uast_expr_get_pos(upper_bound), incre_name.base);
-    vec_append(&a_main, &inner->children, uast_label_wrap(incre_label));
-
-    Uast_assignment* increment = uast_assignment_new(
-        uast_expr_get_pos(upper_bound),
-        uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
-        uast_operator_wrap(uast_binary_wrap(uast_binary_new(
-            var_def->pos,
-            uast_symbol_wrap(uast_symbol_new(uast_expr_get_pos(lower_bound), var_def->name)),
-            uast_literal_wrap(util_uast_literal_new_from_int64_t(1, TOKEN_INT_LITERAL, uast_expr_get_pos(upper_bound))),
-            BINARY_ADD
-        )))
-    );
-    vec_append(&a_main, &inner->children, uast_assignment_wrap(increment));
+    log(LOG_VERBOSE, TAST_FMT, uast_block_print(outer));
 
     *result = outer;
     return PARSE_OK;
@@ -1502,7 +1532,7 @@ static PARSE_STATUS parse_for_loop(Uast_stmt** result, Tk_view* tokens, Scope_id
         PARSE_STATUS status = PARSE_OK;
         Uast_block* outer = uast_block_new(for_token.pos, (Uast_stmt_vec) {0}, for_token.pos, block_scope);
         Uast_variable_def* var_def = NULL;
-        if (PARSE_OK != parse_variable_def(&var_def, tokens, false, true, true, (Ulang_type) {0}, block_scope)) {
+        if (PARSE_OK != parse_variable_def(&var_def, tokens, false, true, true, (Ulang_type) {0}, block_scope, true)) {
             status = PARSE_ERROR;
             goto for_range_error;
         }
@@ -1953,7 +1983,7 @@ static PARSE_EXPR_STATUS parse_stmt(Uast_stmt** child, Tk_view* tokens, Scope_id
         lhs = uast_block_wrap(block_def);
     } else if (starts_with_variable_def(*tokens)) {
         Uast_variable_def* var_def = NULL;
-        if (PARSE_OK != parse_variable_def(&var_def, tokens, true, true, true, (Ulang_type) {0}, scope_id)) {
+        if (PARSE_OK != parse_variable_def(&var_def, tokens, true, true, true, (Ulang_type) {0}, scope_id, false)) {
             return PARSE_EXPR_ERROR;
         }
         lhs = uast_def_wrap(uast_variable_def_wrap(var_def));

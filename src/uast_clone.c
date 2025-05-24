@@ -293,7 +293,7 @@ Uast_case* uast_case_clone(const Uast_case* lang_case, Scope_id new_scope, Pos d
 }
 
 Uast_variable_def* uast_variable_def_clone(const Uast_variable_def* def, Scope_id new_scope) {
-    return uast_variable_def_new(def->pos, ulang_type_clone(def->lang_type, new_scope), name_clone(def->name, new_scope));
+    return uast_variable_def_new(def->pos, ulang_type_clone(def->lang_type, new_scope), name_clone(def->name, new_scope), def->is_for_var);
 }
 
 Uast_function_decl* uast_function_decl_clone(const Uast_function_decl* decl, Scope_id new_scope) {
