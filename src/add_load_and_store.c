@@ -214,18 +214,18 @@ static void load_block_stmts(
             break;
         }
         case DEFER_PARENT_OF_FOR: {
-            Tast_break* actual_brk = tast_break_new(pos /* TODO*/, true, false, rtn_val);
+            Tast_break* actual_brk = tast_break_new(pos /* TODO*/, false, false, rtn_val);
             defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
             break;
         }
         case DEFER_PARENT_OF_IF: {
-            Tast_break* actual_brk = tast_break_new(pos /* TODO*/, true, false, rtn_val);
+            Tast_break* actual_brk = tast_break_new(pos /* TODO*/, false, false, rtn_val);
             defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
             break;
         }
         case DEFER_PARENT_OF_BLOCK: {
             if (lang_type.type != LANG_TYPE_VOID) {
-                Tast_break* actual_brk = tast_break_new(pos /* TODO*/, true, false, rtn_val);
+                Tast_break* actual_brk = tast_break_new(pos /* TODO*/, false, false, rtn_val);
                 defer = tast_defer_new(pos, tast_break_wrap(actual_brk));
             }
             break;
@@ -1789,6 +1789,7 @@ static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, N
 }
 
 static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* if_else, Name label_normal_brk) {
+    (void) label_normal_brk;
     Name old_label_if_after = env.label_if_after;
 
     Lang_type u1_lang_type = lang_type_primitive_const_wrap(lang_type_unsigned_int_const_wrap(
@@ -2044,7 +2045,7 @@ static void load_break(Llvm_block* new_block, Tast_break* old_break, Name label_
         return;
     }
 
-    if (false /*TODO*/ && old_break->do_break_expr) {
+    if (old_break->do_break_expr) {
         log(LOG_DEBUG, TAST_FMT, tast_assignment_print(tast_assignment_new(old_break->pos,
             tast_symbol_wrap(tast_symbol_new(old_break->pos, (Sym_typed_base) {
                 .lang_type = tast_expr_get_lang_type(old_break->break_expr),
@@ -2052,8 +2053,8 @@ static void load_break(Llvm_block* new_block, Tast_break* old_break, Name label_
             })),
             old_break->break_expr
         )));
-        log(LOG_DEBUG, TAST_FMT"\n", name_print(NAME_LOG, env.label_if_break));
-        log(LOG_DEBUG, TAST_FMT"\n", name_print(NAME_LOG, env.load_break_symbol_name));
+        log(LOG_VERBOSE, TAST_FMT"\n", name_print(NAME_LOG, env.label_if_break));
+        log(LOG_VERBOSE, TAST_FMT"\n", name_print(NAME_LOG, env.load_break_symbol_name));
         //todo();
 
         load_assignment(new_block, tast_assignment_new(
@@ -2302,11 +2303,12 @@ static void load_stmt(bool* rtn_in_block, Llvm_block* new_block, Tast_stmt* old_
                 Tast_assignment* new_assign = tast_assignment_new(
                     tast_stmt_get_pos(old_stmt),
                     tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
-                        .lang_type = tast_expr_get_lang_type(coll.rtn_val), .name = tast_expr_get_name(coll.rtn_val)
+                        .lang_type = tast_lang_type_from_name(env.load_break_symbol_name /*TODO: consider using coll.rtn_val instead, etc. */),
+                        .name = env.load_break_symbol_name
                     })),
                     brk->break_expr
                 );
-                log(LOG_DEBUG, TAST_FMT, tast_assignment_print(new_assign));
+                log(LOG_VERBOSE, TAST_FMT, tast_assignment_print(new_assign));
                 load_assignment(new_block, new_assign);
             }
 
