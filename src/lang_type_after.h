@@ -9,15 +9,14 @@ int64_t str_view_to_int64_t(const Pos pos, Str_view str_view);
 
 static inline Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primitive lang_type) {
     switch (lang_type.type) {
-        case LANG_TYPE_CHAR:
-            log(LOG_DEBUG, "thing 4 char\n");
+        case LANG_TYPE_CHAR: {
             // TODO: remove lang_type_atom from lang_type_char?
             Lang_type_atom atom = lang_type_char_const_unwrap(lang_type).atom;
             assert(!str_view_cstr_is_equal(atom.str.base, "void"));
             // TODO: remove this if statement
             return atom;
+        }
         case LANG_TYPE_SIGNED_INT: {
-            log(LOG_DEBUG, "thing 4 signed\n");
             // TODO: use hashtable, etc. to reduce allocations
             String string = {0};
             string_extend_cstr(&a_main, &string, "i");
@@ -31,7 +30,6 @@ static inline Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primi
             return atom;
         }
         case LANG_TYPE_FLOAT: {
-            log(LOG_DEBUG, "thing 4 float\n");
             // TODO: use hashtable, etc. to reduce allocations
             String string = {0};
             string_extend_cstr(&a_main, &string, "f");
@@ -45,7 +43,6 @@ static inline Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primi
             return atom;
         }
         case LANG_TYPE_UNSIGNED_INT: {
-            log(LOG_DEBUG, "thing 4 unsigned\n");
             // TODO: use hashtable, etc. to reduce allocations
             String string = {0};
             string_extend_cstr(&a_main, &string, "u");
@@ -59,7 +56,6 @@ static inline Lang_type_atom lang_type_primitive_get_atom_normal(Lang_type_primi
             return atom;
         }
         case LANG_TYPE_ANY: {
-            log(LOG_DEBUG, "thing 4 any\n");
             // TODO: remove atom from LANG_TYPE_ANY
             Lang_type_atom atom = lang_type_any_const_unwrap(lang_type).atom;
             assert(!str_view_cstr_is_equal(atom.str.base, "void"));
@@ -168,44 +164,37 @@ static inline Lang_type_atom lang_type_primitive_get_atom(LANG_TYPE_MODE mode, L
 static inline Lang_type_atom lang_type_get_atom(LANG_TYPE_MODE mode, Lang_type lang_type) {
     switch (lang_type.type) {
         case LANG_TYPE_PRIMITIVE: {
-            log(LOG_DEBUG, "thing thing thing primitive\n");
             Lang_type_atom atom = lang_type_primitive_get_atom(mode, lang_type_primitive_const_unwrap(lang_type));
             assert(!str_view_cstr_is_equal(atom.str.base, "void"));
             return atom;
         }
         case LANG_TYPE_ENUM: {
-            log(LOG_DEBUG, "thing thing thing enum\n");
             Lang_type_atom atom = lang_type_enum_const_unwrap(lang_type).atom;
             assert(!str_view_cstr_is_equal(atom.str.base, "void"));
             assert(atom.str.base.count > 0);
             return atom;
         }
         case LANG_TYPE_STRUCT: {
-            log(LOG_DEBUG, "thing thing thing struct\n");
             Lang_type_atom atom = lang_type_struct_const_unwrap(lang_type).atom;
             assert(!str_view_cstr_is_equal(atom.str.base, "void"));
             assert(atom.str.base.count > 0);
             return atom;
         }
         case LANG_TYPE_RAW_UNION: {
-            log(LOG_DEBUG, "thing thing thing raw_union\n");
             Lang_type_atom atom = lang_type_raw_union_const_unwrap(lang_type).atom;
             assert(!str_view_cstr_is_equal(atom.str.base, "void"));
             assert(atom.str.base.count > 0);
             return atom;
         }
         case LANG_TYPE_TUPLE: {
-            log(LOG_DEBUG, "thing thing thing tuple\n");
             unreachable("");
         }
         case LANG_TYPE_FN: {
-            log(LOG_DEBUG, "thing thing thing fn\n");
             Lang_type_atom atom = lang_type_atom_new_from_cstr("", 1, 0);
             assert(!str_view_cstr_is_equal(atom.str.base, "void"));
             return atom;
         }
         case LANG_TYPE_VOID: {
-            log(LOG_DEBUG, "thing thing thing void\n");
             Lang_type_atom atom = lang_type_atom_new_from_cstr("void", 0, SCOPE_BUILTIN);
             return atom;
         }
