@@ -185,6 +185,33 @@ static void load_block_stmts(
             todo();
     }
 
+    Name is_conting_name = {0};
+    switch (parent_of) {
+        case DEFER_PARENT_OF_FUN: {
+            is_conting_name = util_literal_name_new_prefix2(str_view_from_cstr("is_conting_fun"));
+            break;
+        }
+        case DEFER_PARENT_OF_FOR: {
+            assert(for_check_cond.base.count > 0);
+            is_conting_name = util_literal_name_new_prefix2(str_view_from_cstr("is_conting_for"));
+            break;
+        }
+        case DEFER_PARENT_OF_IF: {
+            is_conting_name = util_literal_name_new_prefix2(str_view_from_cstr("is_conting_if"));
+            break;
+        }
+        case DEFER_PARENT_OF_BLOCK: {
+            is_conting_name = util_literal_name_new_prefix2(str_view_from_cstr("is_conting_block"));
+            break;
+        }
+        case DEFER_PARENT_OF_TOP_LEVEL: {
+            is_conting_name = util_literal_name_new_prefix2(str_view_from_cstr("is_conting_top_level"));
+            break;
+        }
+        default:
+            todo();
+    }
+
     Tast_variable_def* is_brking = tast_variable_def_new(pos, u1_lang_type, false, is_brking_name);
     Tast_assignment* is_brk_assign = tast_assignment_new(
         pos,
@@ -193,6 +220,16 @@ static void load_block_stmts(
         })),
         tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, u1_lang_type)))
     );
+
+    Tast_variable_def* is_conting = tast_variable_def_new(pos, u1_lang_type, false, is_conting_name);
+    Tast_assignment* is_cont_assign = tast_assignment_new(
+        pos,
+        tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
+            .lang_type = is_conting->lang_type, .name = is_conting->name
+        })),
+        tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, u1_lang_type)))
+    );
+
 
     Tast_expr* rtn_val = {0};
 
@@ -247,7 +284,13 @@ static void load_block_stmts(
     }
     // TODO: remove below line?
     //env.defered_collections.is_rtning = is_rtning->name;
-    vec_append(&a_main, &env.defered_collections.coll_stack, ((Defer_collection) {.pairs = (Defer_pair_vec) {0}, .parent_of = parent_of, .rtn_val = rtn_val, .is_brking = is_brking->name}));
+    vec_append(&a_main, &env.defered_collections.coll_stack, ((Defer_collection) {
+        .pairs = (Defer_pair_vec) {0},
+        .parent_of = parent_of,
+        .rtn_val = rtn_val,
+        .is_brking = is_brking->name,
+        .is_conting = is_conting->name
+    }));
 
     switch (parent_of) {
         case DEFER_PARENT_OF_FUN: {
@@ -295,9 +338,12 @@ static void load_block_stmts(
     }
     unwrap(symbol_add(tast_variable_def_wrap(is_rtning)));
     unwrap(symbol_add(tast_variable_def_wrap(is_brking)));
+    unwrap(symbol_add(tast_variable_def_wrap(is_conting)));
     load_variable_def(new_block, is_rtning);
+    load_variable_def(new_block, is_conting);
     load_assignment(new_block, is_rtn_assign);
     load_assignment(new_block, is_brk_assign);
+    load_assignment(new_block, is_cont_assign);
 
     for (size_t idx = 0; idx < children.info.count; idx++) {
         load_stmt(rtn_in_block, new_block, vec_at(&children, idx), false, label_normal_brk, label_defer_brk);
@@ -318,6 +364,26 @@ static void load_block_stmts(
                     tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
                         .lang_type = tast_lang_type_from_name(vec_top(&env.defered_collections.coll_stack).is_brking),
                         .name = vec_top(&env.defered_collections.coll_stack).is_brking
+                    })),
+                    tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, u1_lang_type))),
+                    BINARY_DOUBLE_EQUAL,
+                    u1_lang_type
+                )),
+                new_block,
+                for_check_cond,
+                label_normal_brk
+            );
+            log(LOG_DEBUG, TAST_FMT"\n", name_print(NAME_LOG, for_check_cond));
+            log(LOG_DEBUG, TAST_FMT"\n", name_print(NAME_LOG, label_normal_brk));
+
+            //Name goto_cond = llvm_
+            if_for_add_cond_goto(
+                // if this condition evaluates to true, we are not breaking right now
+                tast_binary_wrap(tast_binary_new(
+                    pos,
+                    tast_symbol_wrap(tast_symbol_new(pos, (Sym_typed_base) {
+                        .lang_type = tast_lang_type_from_name(vec_top(&env.defered_collections.coll_stack).is_conting),
+                        .name = vec_top(&env.defered_collections.coll_stack).is_conting
                     })),
                     tast_literal_wrap(tast_int_wrap(tast_int_new(pos, 0, u1_lang_type))),
                     BINARY_DOUBLE_EQUAL,
@@ -1896,6 +1962,27 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
         vec_top(pairs).label->name
     );
     add_label((*new_block), after_is_brk, if_else->pos);
+
+    // is_cont_check
+    Name after_is_cont = util_literal_name_new_prefix2(str_view_from_cstr("after_is_cont_check_if_else_chain_to_branch"));
+    unwrap(pairs->info.count > 0 && "not implemented");
+    if_for_add_cond_goto(
+        // if this condition evaluates to true, we are not breaking right now
+        tast_binary_wrap(tast_binary_new(
+            if_else->pos,
+            tast_symbol_wrap(tast_symbol_new(if_else->pos, (Sym_typed_base) {
+                .lang_type = tast_lang_type_from_name(vec_top(&env.defered_collections.coll_stack).is_conting),
+                .name = vec_top(&env.defered_collections.coll_stack).is_conting
+            })),
+            tast_literal_wrap(tast_int_wrap(tast_int_new(if_else->pos, 0, u1_lang_type))),
+            BINARY_DOUBLE_EQUAL,
+            u1_lang_type
+        )),
+        *new_block,
+        after_is_cont,
+        vec_top(pairs).label->name
+    );
+    add_label((*new_block), after_is_cont, if_else->pos);
     add_label((*new_block), next_if, if_else->pos);
     assert(alloca_lookup(&dummy, next_if));
 
@@ -2383,6 +2470,48 @@ static void load_stmt(bool* rtn_in_block, Llvm_block* new_block, Tast_stmt* old_
 
             Defer_collection coll = vec_top(&env.defered_collections.coll_stack);
             Defer_pair_vec* pairs = &coll.pairs;
+
+            // TODO: extract this into separate function?
+            Tast_assignment* is_cont_assign = tast_assignment_new(
+                tast_stmt_get_pos(old_stmt),
+                tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+                    .lang_type = tast_lang_type_from_name(coll.is_conting),
+                    .name = coll.is_conting
+                })),
+                tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, u1_lang_type)))
+            );
+            log(LOG_DEBUG, TAST_FMT, tast_assignment_print(is_cont_assign));
+            load_assignment(new_block, is_cont_assign);
+
+            bool is_for = false;
+            size_t for_pos = 0;
+            // these two for loops exclude the top of defered_collections.coll_stack
+            assert(env.defered_collections.coll_stack.info.count > 0 && "will underflow");
+            for (size_t idx_ = env.defered_collections.coll_stack.info.count - 1; idx_ > 0; idx_--) {
+                size_t idx = idx_ - 1;
+                if (vec_at(&env.defered_collections.coll_stack, idx).parent_of == DEFER_PARENT_OF_FOR) {
+                    is_for = true;
+                    for_pos = idx;
+                }
+            }
+            if (is_for) {
+                for (size_t idx_ = env.defered_collections.coll_stack.info.count - 1; idx_ > 0; idx_--) {
+                    size_t idx = idx_ - 1;
+                    if (vec_at(&env.defered_collections.coll_stack, idx).parent_of == DEFER_PARENT_OF_FOR) {
+                        Tast_assignment* is_cont_assign_aux = tast_assignment_new(
+                            tast_stmt_get_pos(old_stmt),
+                            tast_symbol_wrap(tast_symbol_new(tast_stmt_get_pos(old_stmt), (Sym_typed_base) {
+                                .lang_type = tast_lang_type_from_name(vec_at(&env.defered_collections.coll_stack, for_pos).is_conting),
+                                .name = vec_at(&env.defered_collections.coll_stack, for_pos).is_conting
+                            })),
+                            tast_literal_wrap(tast_int_wrap(tast_int_new(tast_stmt_get_pos(old_stmt), 1, u1_lang_type)))
+                        );
+                        log(LOG_VERBOSE, TAST_FMT, tast_assignment_print(is_cont_assign_aux));
+                        load_assignment(new_block, is_cont_assign_aux);
+                    }
+                }
+            }
+
             if (pairs->info.count > 0) {
                 // jump to the top of the defer stack
                 Llvm_goto* new_goto = llvm_goto_new(tast_continue_unwrap(old_stmt)->pos, vec_top(pairs).label->name);

@@ -81,28 +81,42 @@ fn fun6() i32 {
             defer io.printf("no 6.4")
             defer num = 4
         }
+        defer io.printf("at very end no 6.9\n")
+        io.printf("at very end no 6.10\n")
     }
     defer io.printf("at very end yes 6.2\n")
+    io.printf("at very end yes 6.8\n")
     return num
     defer io.printf("at very end no 6.1\n")
+    io.printf("at very end no 6.11\n")
     return num
 }
 
 fn fun7() i32 {
-    let num i32 = switch is_true() {
-        case .true: break 4
-        case .false: break 1000
+    defer io.printf("at very end yes 6.1\n")
+    let num i32 = 0
+    for 1 {
+        if 0 {
+            defer io.printf("no 6.8")
+            io.printf("no 6.7")
+        } else {
+            defer num = 7
+            num = 2
+            continue
+            defer io.printf("no 6.4")
+            defer num = 4
+        }
+        defer io.printf("at very end no 6.9\n")
+        io.printf("at very end no 6.10\n")
     }
+    defer io.printf("at very end yes 6.2\n")
+    io.printf("at very end yes 6.8\n")
+    return num
+    defer io.printf("at very end no 6.1\n")
+    io.printf("at very end no 6.11\n")
     return num
 }
 
-fn fun8() {
-    defer io.printf("thing 4.4\n")
-    io.printf("thing 4.1\n")
-    defer io.printf("thing 4.3\n")
-    io.printf("thing 4.2\n")
-    return
-}
 
 fn main() i32 {
     io.assert(fun1() == 1)
@@ -111,6 +125,7 @@ fn main() i32 {
     io.assert(fun4() == 4)
     io.assert(fun5() == 5)
     io.assert(fun6() == 6)
+    //io.assert(fun7() == 7)
 
     //io.printf("thing thing\n");
     //defer io.printf("thing thing 8\n");

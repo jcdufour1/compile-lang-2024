@@ -63,6 +63,7 @@ typedef struct {
     DEFER_PARENT_OF parent_of;
     Tast_expr* rtn_val;
     Name is_brking; // only should be used when parent_of == DEFER_PARENT_OF_FOR // TODO: these two comments seem not exactly right
+    Name is_conting; // only should be used when parent_of == DEFER_PARENT_OF_FOR // TODO: these two comments seem not exactly right
 } Defer_collection;
 
 // stack of scope defered statements
