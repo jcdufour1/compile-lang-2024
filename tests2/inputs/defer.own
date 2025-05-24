@@ -93,28 +93,62 @@ fn fun6() i32 {
 }
 
 fn fun7() i32 {
-    defer io.printf("at very end yes 6.1\n")
+    defer io.printf("at very end yes 7.1\n")
+    io.printf("yes 7.2\n")
     let num i32 = 0
     for 1 {
-        if 0 {
-            defer io.printf("no 6.8")
-            io.printf("no 6.7")
-        } else {
-            defer num = 7
-            num = 2
-            continue
-            defer io.printf("no 6.4")
-            defer num = 4
+        if num == 2 {
+            break
         }
-        defer io.printf("at very end no 6.9\n")
-        io.printf("at very end no 6.10\n")
+
+        if 0 {
+            defer io.printf("no 7.8\n")
+            io.printf("no 7.7\n")
+        } else {
+            defer num += 1
+            num += 1
+            defer io.printf("yes 7.100\n")
+            io.printf("yes 7.101\n")
+            continue
+            defer io.printf("no 7.4\n")
+            io.printf("no 7.5\n")
+        }
+        defer io.printf("at very end no 7.9\n")
+        io.printf("at very end no 7.10\n")
+    }
+    defer io.printf("at very end yes 7.2\n")
+    io.printf("at very end yes 7.8\n")
+    return num + 5
+    defer io.printf("at very end no 7.1\n")
+    io.printf("at very end no 7.11\n")
+    return 79
+}
+
+fn fun8() i32 {
+    defer io.printf("at very end yes 6.1\n")
+    let num i32 = 0
+    for idx i32 in 0..8 {
+        for idx_2 i32 in 0..8 {
+            if 0 {
+                defer io.printf("no 6.8")
+                io.printf("no 6.1")
+            } else {
+                defer io.printf("yes 6.3")
+                io.printf("yes 6.2")
+                continue
+                defer io.printf("no 6.2")
+                io.printf("no 6.3")
+            }
+            defer io.printf("at very end no 6.9\n")
+            io.printf("at very end no 6.10\n")
+        }
     }
     defer io.printf("at very end yes 6.2\n")
     io.printf("at very end yes 6.8\n")
     return num
     defer io.printf("at very end no 6.1\n")
     io.printf("at very end no 6.11\n")
-    return num
+    return 8
 }
 
 
@@ -125,7 +159,7 @@ fn main() i32 {
     io.assert(fun4() == 4)
     io.assert(fun5() == 5)
     io.assert(fun6() == 6)
-    //io.assert(fun7() == 7)
+    io.assert(fun7() == 7)
 
     //io.printf("thing thing\n");
     //defer io.printf("thing thing 8\n");
