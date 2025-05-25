@@ -19,6 +19,8 @@
 #define if_for_add_cond_goto(old_oper, new_block, label_name_if_true, label_name_if_false) \
     if_for_add_cond_goto_internal(loc_new(), old_oper, new_block, label_name_if_true, label_name_if_false)
 
+#define add_label(block, label_name, pos) add_label_internal(loc_new(), block, label_name, pos)
+
 static void if_for_add_cond_goto_internal(
     Loc loc,
     Tast_operator* old_oper,
@@ -721,8 +723,8 @@ static Llvm_function_params* do_function_def_alloca(
     return new_params;
 }
 
-static void add_label(Llvm_block* block, Name label_name, Pos pos) {
-    Llvm_label* label = llvm_label_new(pos, label_name);
+static void add_label_internal(Loc loc, Llvm_block* block, Name label_name, Pos pos) {
+    Llvm_label* label = llvm_label_new_internal(pos, loc, label_name);
     unwrap(label_name.base.count > 0);
     label->name = label_name;
     unwrap(alloca_add(llvm_def_wrap(llvm_label_wrap(label))));
@@ -1982,6 +1984,7 @@ static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* 
         after_is_cont,
         vec_top(pairs).label->name
     );
+    log(LOG_DEBUG, TAST_FMT"\n", name_print(NAME_LOG, vec_top(pairs).label->name));
     add_label((*new_block), after_is_cont, if_else->pos);
     add_label((*new_block), next_if, if_else->pos);
     assert(alloca_lookup(&dummy, next_if));
