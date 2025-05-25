@@ -41,14 +41,14 @@ static void msg_invalid_count_generic_args_internal(
     size_t max_args
 ) {
     String message = {0};
-    string_extend_size_t(&print_arena, &message, gen_args.info.count);
-    string_extend_cstr(&print_arena, &message, " generic arguments are passed");
-    string_extend_cstr(&print_arena, &message, ", but ");
-    string_extend_size_t(&print_arena, &message, min_args);
+    string_extend_size_t(&a_print, &message, gen_args.info.count);
+    string_extend_cstr(&a_print, &message, " generic arguments are passed");
+    string_extend_cstr(&a_print, &message, ", but ");
+    string_extend_size_t(&a_print, &message, min_args);
     if (max_args > min_args) {
-        string_extend_cstr(&print_arena, &message, " or more");
+        string_extend_cstr(&a_print, &message, " or more");
     }
-    string_extend_cstr(&print_arena, &message, " generic arguments expected\n");
+    string_extend_cstr(&a_print, &message, " generic arguments expected\n");
     msg_internal(
         file, line, DIAG_INVALID_COUNT_GENERIC_ARGS, pos_gen_args,
         STR_VIEW_FMT, str_view_print(string_to_strv(message))

@@ -68,7 +68,7 @@ void do_passes(void) {
     log(LOG_DEBUG, TAST_FMT, uast_block_print(untyped));
     log(LOG_DEBUG, "\nafter parsing end--------------------\n");
 
-    arena_reset(&print_arena);
+    arena_reset(&a_print);
     Tast_block* typed = NULL;
     status = try_set_types(&typed, untyped);
     if (error_count > 0) {
@@ -80,7 +80,7 @@ void do_passes(void) {
     assert(status && "error_count should be zero if try_set_types returns true");
     
     unwrap(typed);
-    arena_reset(&print_arena);
+    arena_reset(&a_print);
     log(LOG_VERBOSE, "arena usage: %zu\n", arena_get_total_usage(&a_main));
     log(LOG_DEBUG,  "\nafter type checking start--------------------\n");
     symbol_log_level(LOG_DEBUG, 0);

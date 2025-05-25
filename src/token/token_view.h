@@ -69,8 +69,8 @@ static inline Str_view tk_view_print_internal(Arena* arena, Tk_view tk_view) {
     vec_reset(&buf);
 
     for (size_t idx = 0; idx < tk_view.count; idx++) {
-        string_extend_strv(&print_arena, &buf, token_print_internal(arena, TOKEN_MODE_LOG, tk_view_at(tk_view, idx)));
-        string_extend_cstr(&print_arena, &buf, ";    ");
+        string_extend_strv(&a_print, &buf, token_print_internal(arena, TOKEN_MODE_LOG, tk_view_at(tk_view, idx)));
+        string_extend_cstr(&a_print, &buf, ";    ");
     }
 
     Str_view str_view = {.str = buf.buf, .count = buf.info.count};

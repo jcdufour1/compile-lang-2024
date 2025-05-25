@@ -256,7 +256,7 @@ void symbol_extend_table_internal(String* buf, const Symbol_table sym_table, int
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Symbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_strv(&print_arena, buf, tast_def_print_internal(sym_tast->tast, recursion_depth));
+            string_extend_strv(&a_print, buf, tast_def_print_internal(sym_tast->tast, recursion_depth));
         }
     }
 }
@@ -515,7 +515,7 @@ void usymbol_extend_table_internal(String* buf, const Usymbol_table sym_table, i
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Usymbol_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_strv(&print_arena, buf, uast_def_print_internal(sym_tast->tast, recursion_depth));
+            string_extend_strv(&a_print, buf, uast_def_print_internal(sym_tast->tast, recursion_depth));
         }
     }
 }
@@ -524,7 +524,7 @@ void alloca_extend_table_internal(String* buf, const Alloca_table sym_table, int
     for (size_t idx = 0; idx < sym_table.capacity; idx++) {
         Alloca_table_tast* sym_tast = &sym_table.table_tasts[idx];
         if (sym_tast->status == SYM_TBL_OCCUPIED) {
-            string_extend_strv(&print_arena, buf, llvm_print_internal(sym_tast->tast, recursion_depth));
+            string_extend_strv(&a_print, buf, llvm_print_internal(sym_tast->tast, recursion_depth));
         }
     }
 }
