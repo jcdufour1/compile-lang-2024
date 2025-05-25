@@ -27,6 +27,7 @@ typedef struct {
     Expect_fail_type_vec diag_types;
     bool compile : 1;
     bool run : 1;
+    bool dump_dot : 1;
     bool emit_llvm : 1;
     bool all_errors_fatal: 1;
     bool error_opts_changed : 1;

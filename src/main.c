@@ -12,6 +12,7 @@
 #include <symbol_log.h>
 #include <str_view_vec.h>
 #include <subprocess.h>
+#include <llvm_print_graphvis.h>
  
 // TODO: make separate Env struct for every pass (each Env will need Env_common for things that all envs require (eg. for symbol table lookups))
 //
@@ -97,34 +98,42 @@ void do_passes(void) {
     }
     assert(llvm_root);
 
+    if (params.dump_dot) {
+        String graphvis = {0};
+        string_extend_strv(&a_print, &graphvis, llvm_graphvis(llvm_root));
+        write_file("dump.dot", string_to_strv(graphvis));
+    }
+
     if (error_count > 0) {
         unreachable("should have exited before now\n");
     }
 
-    if (params.emit_llvm) {
-        switch (params.backend_info.backend) {
-            case BACKEND_NONE:
-                unreachable("this should have been caught eariler");
-            case BACKEND_LLVM:
-                emit_llvm_from_tree(llvm_root);
-                break;
-            case BACKEND_C:
-                emit_c_from_tree(llvm_root);
-                break;
-            default:
-                unreachable("");
-        }
-    } else {
-        switch (params.backend_info.backend) {
-            case BACKEND_NONE:
-                unreachable("this should have been caught eariler");
-            case BACKEND_LLVM:
-                todo();
-            case BACKEND_C:
-                emit_c_from_tree(llvm_root);
-                break;
-            default:
-                unreachable("");
+    if (params.compile) {
+        if (params.emit_llvm) {
+            switch (params.backend_info.backend) {
+                case BACKEND_NONE:
+                    unreachable("this should have been caught eariler");
+                case BACKEND_LLVM:
+                    emit_llvm_from_tree(llvm_root);
+                    break;
+                case BACKEND_C:
+                    emit_c_from_tree(llvm_root);
+                    break;
+                default:
+                    unreachable("");
+            }
+        } else {
+            switch (params.backend_info.backend) {
+                case BACKEND_NONE:
+                    unreachable("this should have been caught eariler");
+                case BACKEND_LLVM:
+                    todo();
+                case BACKEND_C:
+                    emit_c_from_tree(llvm_root);
+                    break;
+                default:
+                    unreachable("");
+            }
         }
     }
 

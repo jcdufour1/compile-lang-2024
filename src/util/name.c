@@ -116,11 +116,11 @@ Str_view uname_print_internal(UNAME_MODE mode, Uname name) {
     return string_to_strv(buf);
 }
 
-static void extend_name_log_internal(bool is_msg, String* buf, Name name) {
+void extend_name_log_internal(bool is_msg, String* buf, Name name) {
     if (!is_msg) {
-        string_extend_cstr(&a_main, buf, "s");
-        string_extend_size_t(&a_main, buf, name.scope_id);
-        string_extend_cstr(&a_main, buf, "_");
+        string_extend_cstr(&a_print, buf, "s");
+        string_extend_size_t(&a_print, buf, name.scope_id);
+        string_extend_cstr(&a_print, buf, "_");
     }
 
     string_extend_strv(&a_print, buf, name.mod_path);
