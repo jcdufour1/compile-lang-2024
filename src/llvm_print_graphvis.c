@@ -146,6 +146,7 @@ static Str_view llvm_function_def_graphvis_internal(Name def_name, const Llvm_fu
 
     label(&buf, def_name, str_view_from_cstr("function_def"));
 
+    // TODO: make macro, etc. to compress these three lines into one
     Name decl_name = util_literal_name_new2();
     arrow_names(&buf, def_name, decl_name);
     string_extend_strv(&a_print, &buf, llvm_function_decl_graphvis_internal(decl_name, def->decl));
@@ -153,8 +154,53 @@ static Str_view llvm_function_def_graphvis_internal(Name def_name, const Llvm_fu
     Name block_name = util_literal_name_new2();
     arrow_names(&buf, def_name, block_name);
     string_extend_strv(&a_print, &buf, llvm_block_graphvis_internal(block_name, def->body));
+    //arrow_to_child(def_name, def->body);
 
     return string_to_strv(buf);
+}
+
+static Str_view llvm_int_graphvis_internal(Name lit_name, const Llvm_int* lit) {
+    String num_buf = {0};
+    String buf = {0};
+
+    string_extend_int64_t(&a_print, &num_buf, lit->data);
+    string_extend_cstr(&a_print, &num_buf, " ");
+    string_extend_strv(&a_print, &num_buf, lang_type_print_internal(LANG_TYPE_MODE_MSG, lit->lang_type));
+    label(&buf, lit_name, string_to_strv(num_buf));
+
+    return string_to_strv(buf);
+}
+
+static Str_view llvm_literal_graphvis_internal(Name lit_name, const Llvm_literal* lit) {
+    switch (lit->type) {
+        case LLVM_INT:
+            return llvm_int_graphvis_internal(lit_name, llvm_int_const_unwrap(lit));
+        case LLVM_FLOAT:
+            //return llvm_float_graphvis_floaternal(lit_name, llvm_float_const_unwrap(lit));
+            todo();
+        case LLVM_STRING:
+            //return llvm_string_graphvis_stringernal(lit_name, llvm_string_const_unwrap(lit));
+            todo();
+        case LLVM_VOID:
+            //return llvm_void_graphvis_voidernal(lit_name, llvm_void_const_unwrap(lit));
+            todo();
+        case LLVM_FUNCTION_NAME:
+            //return llvm_function_name_graphvis_internal(lit_name, llvm_function_name_const_unwrap(lit));
+            todo();
+    }
+    unreachable("");
+}
+
+static Str_view llvm_expr_graphvis_internal(Name expr_name, const Llvm_expr* expr) {
+    switch (expr->type) {
+        case LLVM_OPERATOR:
+            todo();
+        case LLVM_LITERAL:
+            return llvm_literal_graphvis_internal(expr_name, llvm_literal_const_unwrap(expr));
+        case LLVM_FUNCTION_CALL:
+            todo();
+    }
+    unreachable("");
 }
 
 static Str_view llvm_def_graphvis_internal(Name def_name, const Llvm_def* def) {
@@ -182,12 +228,10 @@ static Str_view llvm_return_graphvis_internal(Name rtn_name, const Llvm_return* 
     extend_source_loc(&buf);
 
     label(&buf, rtn_name, str_view_from_cstr("return"));
-    extend_name_graphvis(&buf, rtn_name);
-    string_extend_cstr(&a_print, &buf, " [label = return];\n");
 
-    extend_name_graphvis(&buf, rtn_name);
-    string_extend_cstr(&a_print, &buf, " -> ");
-    extend_name_graphvis(&buf, rtn->child);
+    Name child_name = util_literal_name_new2();
+    arrow_names(&buf, rtn_name, child_name);
+    string_extend_strv(&a_print, &buf, llvm_graphvis_internal(child_name, llvm_from_get_name(rtn->child)));
 
     return string_to_strv(buf);
 }
@@ -197,7 +241,7 @@ static Str_view llvm_graphvis_internal(Name llvm_name, const Llvm* llvm) {
         case LLVM_BLOCK:
             return llvm_block_graphvis_internal(llvm_name, llvm_block_const_unwrap(llvm));
         case LLVM_EXPR:
-            todo();
+            return llvm_expr_graphvis_internal(llvm_name, llvm_expr_const_unwrap(llvm));
         case LLVM_DEF:
             return llvm_def_graphvis_internal(llvm_name, llvm_def_const_unwrap(llvm));
         case LLVM_LOAD_ELEMENT_PTR:

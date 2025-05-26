@@ -194,9 +194,15 @@ Name llvm_tast_get_name(const Llvm* llvm) {
 
 // TODO: rename this function
 Lang_type lang_type_from_get_name(Name name) {
+    return llvm_get_lang_type(llvm_from_get_name(name));
+}
+
+// TODO: rename this function
+// TODO: use this instead of the verbose `alloca_lookup` in more places
+Llvm* llvm_from_get_name(Name name) {
     Llvm* result = NULL;
     unwrap(alloca_lookup(&result,  name));
-    return llvm_get_lang_type(result);
+    return result;
 }
 
 size_t struct_def_get_idx_matching_member(Llvm_struct_def* def, Name memb_name) {
