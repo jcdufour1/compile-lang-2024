@@ -20,27 +20,73 @@ static void extend_source_loc_internal(const char* file, int line, String* buf) 
     string_extend_cstr(&a_print, buf, "\n");
 }
 
-static Str_view llvm_graphvis_internal(const Llvm* llvm);
+static Str_view llvm_graphvis_internal(Name llvm_name, const Llvm* llvm);
 
 static void extend_name_graphvis(String* buf, Name name) {
-    string_extend_cstr(&a_print, buf, "\"");
     extend_name_log_internal(false, buf, name);
-    string_extend_cstr(&a_print, buf, "\"");
 }
 
-static Str_view llvm_block_graphvis_internal(const Llvm_block* block) {
+static void arrow_names(String* buf, Name lhs, Name rhs) {
+    extend_name_graphvis(buf, lhs);
+    string_extend_cstr(&a_print, buf, " -> ");
+    extend_name_graphvis(buf, rhs);
+    string_extend_cstr(&a_print, buf, ";\n");
+}
+
+static void arrow_names_label(String* buf, Name lhs, Name rhs, Str_view label) {
+    extend_name_graphvis(buf, lhs);
+    string_extend_cstr(&a_print, buf, " -> ");
+    extend_name_graphvis(buf, rhs);
+    string_extend_cstr(&a_print, buf, " [label = \"");
+    string_extend_strv(&a_print, buf, label);
+    string_extend_cstr(&a_print, buf, "\"];\n");
+}
+
+static void label(String* buf, Name name, Str_view label) {
+    extend_name_graphvis(buf, name);
+    string_extend_cstr(&a_print, buf, " [label = \"");
+    string_extend_strv(&a_print, buf, label);
+    string_extend_cstr(&a_print, buf, "\"];\n");
+}
+
+static void label_ex(String* buf, Name name, Str_view label, Name actual_name) {
+    extend_name_graphvis(buf, name);
+    string_extend_cstr(&a_print, buf, " [label = \"");
+    string_extend_strv(&a_print, buf, label);
+    string_extend_cstr(&a_print, buf, " ");
+    extend_name_graphvis(buf, actual_name);
+    string_extend_cstr(&a_print, buf, "\"];\n");
+}
+
+//static void arrow(Name lhs, Name rhs) {
+//    todo();
+//}
+//
+//static void arrow_name_lang_type(Name lhs, Lang_type rhs) {
+//    todo();
+//}
+
+static Str_view llvm_block_graphvis_internal(Name block_name, const Llvm_block* block) {
     String buf = {0};
     extend_source_loc(&buf);
+
+    Name children_name = util_literal_name_new2();
+    label(&buf, block_name, str_view_from_cstr("block"));
+    arrow_names(&buf, block_name, children_name);
+    label(&buf, children_name, str_view_from_cstr("block children"));
 
     Alloca_iter iter = all_tbl_iter_new(block->scope_id);
     Llvm* curr = NULL;
     while (all_tbl_iter_next(&curr, &iter)) {
-        string_extend_strv(&a_print, &buf, llvm_graphvis_internal(curr));
+        Name child_name = util_literal_name_new2();
+        arrow_names(&buf, children_name, child_name);
+        string_extend_strv(&a_print, &buf, llvm_graphvis_internal(child_name, curr));
     }
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        Str_view arg_text = llvm_graphvis_internal(vec_at(&block->children, idx));
-        string_extend_strv(&a_print, &buf, arg_text);
+        Name child_name = util_literal_name_new2();
+        arrow_names(&buf, children_name, child_name);
+        string_extend_strv(&a_print, &buf, llvm_graphvis_internal(child_name, vec_at(&block->children, idx)));
     }
     string_extend_cstr(&a_print, &buf, "\n");
 
@@ -65,31 +111,20 @@ static Str_view llvm_function_params_graphvis_internal(Name params_name, const L
 
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
         Llvm_variable_def* curr = vec_at(&params->params, idx);
-        extend_name_graphvis(&buf, params_name);
-        string_extend_cstr(&a_print, &buf, " -> ");
-
-        extend_name_graphvis(&buf, curr->name_self);
-        string_extend_cstr(&a_print, &buf, ";\n");
+        arrow_names(&buf, params_name, curr->name_self);
         string_extend_strv(&a_print, &buf, llvm_variable_def_graphvis_internal(curr));
     }
 
     return string_to_strv(buf);
 }
 
-static Str_view llvm_function_decl_graphvis_internal_common(const Llvm_function_decl* decl, bool is_def) {
+static Str_view llvm_function_decl_graphvis_internal(Name decl_name, const Llvm_function_decl* decl) {
     String buf = {0};
     extend_source_loc(&buf);
 
-    extend_name_graphvis(&buf, decl->name);
-    string_extend_cstr(&a_print, &buf, " -> ");
-    extend_name_graphvis(&buf, decl->name);
-    if (is_def) {
-        string_extend_cstr(&a_print, &buf, " [label = \"function_def\"];\n");
-    } else {
-        string_extend_cstr(&a_print, &buf, " [label = \"function_decl\"];\n");
-    }
+    label_ex(&buf, decl_name, str_view_from_cstr("function_decl"), decl->name);
 
-    extend_name_graphvis(&buf, decl->name);
+    extend_name_graphvis(&buf, decl_name);
     string_extend_cstr(&a_print, &buf, " -> \"");
     string_extend_strv(&a_print, &buf, lang_type_print_internal(LANG_TYPE_MODE_MSG, decl->return_type));
     string_extend_cstr(&a_print, &buf, "\"");
@@ -99,33 +134,33 @@ static Str_view llvm_function_decl_graphvis_internal_common(const Llvm_function_
     extend_name_graphvis(&buf, params_name);
     string_extend_cstr(&a_print, &buf, " [label = params];\n");
 
-    extend_name_graphvis(&buf, decl->name);
-    string_extend_cstr(&a_print, &buf, " -> ");
-    extend_name_graphvis(&buf, params_name);
-    string_extend_cstr(&a_print, &buf, ";\n");
+    arrow_names(&buf, decl->name, params_name);
     string_extend_strv(&a_print, &buf, llvm_function_params_graphvis_internal(params_name, decl->params));
 
     return string_to_strv(buf);
 }
 
-static Str_view llvm_function_decl_graphvis_internal(const Llvm_function_decl* decl) {
-    return llvm_function_decl_graphvis_internal_common(decl, false);
-}
-
-static Str_view llvm_function_def_graphvis_internal(const Llvm_function_def* def) {
+static Str_view llvm_function_def_graphvis_internal(Name def_name, const Llvm_function_def* def) {
     String buf = {0};
     extend_source_loc(&buf);
 
-    string_extend_strv(&a_print, &buf, llvm_function_decl_graphvis_internal_common(def->decl, true));
-    string_extend_strv(&a_print, &buf, llvm_block_graphvis_internal(def->body));
+    label(&buf, def_name, str_view_from_cstr("function_def"));
+
+    Name decl_name = util_literal_name_new2();
+    arrow_names(&buf, def_name, decl_name);
+    string_extend_strv(&a_print, &buf, llvm_function_decl_graphvis_internal(decl_name, def->decl));
+
+    Name block_name = util_literal_name_new2();
+    arrow_names(&buf, def_name, block_name);
+    string_extend_strv(&a_print, &buf, llvm_block_graphvis_internal(block_name, def->body));
 
     return string_to_strv(buf);
 }
 
-static Str_view llvm_def_graphvis_internal(const Llvm_def* def) {
+static Str_view llvm_def_graphvis_internal(Name def_name, const Llvm_def* def) {
     switch (def->type) {
         case LLVM_FUNCTION_DEF:
-            return llvm_function_def_graphvis_internal(llvm_function_def_const_unwrap(def));
+            return llvm_function_def_graphvis_internal(def_name, llvm_function_def_const_unwrap(def));
         case LLVM_VARIABLE_DEF:
             todo();
         case LLVM_STRUCT_DEF:
@@ -142,30 +177,29 @@ static Str_view llvm_def_graphvis_internal(const Llvm_def* def) {
     unreachable("");
 }
 
-static Str_view llvm_return_graphvis_internal(const Llvm_return* rtn) {
-    (void) rtn;
+static Str_view llvm_return_graphvis_internal(Name rtn_name, const Llvm_return* rtn) {
     String buf = {0};
     extend_source_loc(&buf);
 
-    //Name rtn_name = util_literal_name_new2();
-    //extend_name_graphvis(&buf, rtn_name);
-    //string_extend_cstr(&a_print, &buf, " [label = return];\n");
+    label(&buf, rtn_name, str_view_from_cstr("return"));
+    extend_name_graphvis(&buf, rtn_name);
+    string_extend_cstr(&a_print, &buf, " [label = return];\n");
 
-    //extend_name_graphvis(&buf, rtn_name);
-    //string_extend_cstr(&a_print, &buf, " -> ");
-    //extend_name_graphvis(&buf, rtn->child);
+    extend_name_graphvis(&buf, rtn_name);
+    string_extend_cstr(&a_print, &buf, " -> ");
+    extend_name_graphvis(&buf, rtn->child);
 
     return string_to_strv(buf);
 }
 
-static Str_view llvm_graphvis_internal(const Llvm* llvm) {
+static Str_view llvm_graphvis_internal(Name llvm_name, const Llvm* llvm) {
     switch (llvm->type) {
         case LLVM_BLOCK:
-            return llvm_block_graphvis_internal(llvm_block_const_unwrap(llvm));
+            return llvm_block_graphvis_internal(llvm_name, llvm_block_const_unwrap(llvm));
         case LLVM_EXPR:
             todo();
         case LLVM_DEF:
-            return llvm_def_graphvis_internal(llvm_def_const_unwrap(llvm));
+            return llvm_def_graphvis_internal(llvm_name, llvm_def_const_unwrap(llvm));
         case LLVM_LOAD_ELEMENT_PTR:
             todo();
         case LLVM_ARRAY_ACCESS:
@@ -173,7 +207,7 @@ static Str_view llvm_graphvis_internal(const Llvm* llvm) {
         case LLVM_FUNCTION_PARAMS:
             todo();
         case LLVM_RETURN:
-            return llvm_return_graphvis_internal(llvm_return_const_unwrap(llvm));
+            return llvm_return_graphvis_internal(llvm_name, llvm_return_const_unwrap(llvm));
         case LLVM_GOTO:
             todo();
         case LLVM_COND_GOTO:
@@ -193,7 +227,12 @@ Str_view llvm_graphvis(const Llvm_block* block) {
     extend_source_loc(&buf);
 
     string_extend_cstr(&a_print, &buf, "digraph G {\n");
-    string_extend_strv(&a_print, &buf, llvm_block_graphvis_internal(block));
+
+    Name block_name = util_literal_name_new2();
+    extend_name_graphvis(&buf, block_name);
+    string_extend_cstr(&a_print, &buf, " [label = block];\n");
+    string_extend_strv(&a_print, &buf, llvm_block_graphvis_internal(block_name, block));
+
     string_extend_cstr(&a_print, &buf, "}\n");
 
     return string_to_strv(buf);
