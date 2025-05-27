@@ -92,14 +92,14 @@ static void llvm_block_graphvis_internal(String* buf, const Llvm_block* block) {
 
     Name prev = block->name;
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
+        String idx_buf = {0};
+        string_extend_size_t(&a_print, &idx_buf, idx);
         if (all_tbl_add_ex(&already_visited, vec_at(&block->children, idx))) {
             // TODO: make size_t_print_macro?
-            String idx_buf = {0};
-            string_extend_size_t(&a_print, &idx_buf, idx);
             llvm_graphvis_internal(buf, vec_at(&block->children, idx));
-            arrow_names_label(buf, prev, llvm_tast_get_name(vec_at(&block->children, idx)), string_to_strv(idx_buf));
-            prev = llvm_tast_get_name(vec_at(&block->children, idx));
         }
+        arrow_names_label(buf, prev, llvm_tast_get_name(vec_at(&block->children, idx)), string_to_strv(idx_buf));
+        prev = llvm_tast_get_name(vec_at(&block->children, idx));
     }
 
     Alloca_iter iter = all_tbl_iter_new(block->scope_id);
@@ -166,6 +166,15 @@ static void llvm_def_graphvis_internal(String* buf, const Llvm_def* def) {
             todo();
     }
     unreachable("");
+}
+
+static void llvm_load_element_ptr_graphvis_internal(String* buf, const Llvm_load_element_ptr* load) {
+    String idx_buf = {0};
+    string_extend_strv(&a_print, &idx_buf, str_view_from_cstr("load element ptr "));
+    string_extend_size_t(&a_print, &idx_buf, load->memb_idx);
+    label(buf, load->name_self, string_to_strv(idx_buf));
+
+    arrow_names_label(buf, load->name_self, load->llvm_src, str_view_from_cstr("src"));
 }
 
 static void llvm_int_graphvis_internal(String* buf, const Llvm_int* lit) {
@@ -250,6 +259,7 @@ static void llvm_alloca_graphvis_internal(String* buf, const Llvm_alloca* alloca
 }
 
 static void llvm_store_another_llvm_graphvis_internal(String* buf, const Llvm_store_another_llvm* store) {
+    // TODO: name_self and name inconsistent
     label(buf, store->name, str_view_from_cstr("store"));
 
     arrow_names_label(buf, store->name, store->llvm_src, str_view_from_cstr("src"));
@@ -275,7 +285,8 @@ static void llvm_graphvis_internal(String* buf, const Llvm* llvm) {
             llvm_def_graphvis_internal(buf, llvm_def_const_unwrap(llvm));
             return;
         case LLVM_LOAD_ELEMENT_PTR:
-            todo();
+            llvm_load_element_ptr_graphvis_internal(buf, llvm_load_element_ptr_const_unwrap(llvm));
+            return;
         case LLVM_ARRAY_ACCESS:
             todo();
         case LLVM_FUNCTION_PARAMS:
@@ -319,8 +330,6 @@ Str_view llvm_graphvis(const Llvm_block* block) {
             llvm_graphvis_internal(&buf, curr);
         }
     }
-
-    //llvm_block_graphvis_internal(&buf, block);
 
     string_extend_cstr(&a_print, &buf, "}\n");
 
