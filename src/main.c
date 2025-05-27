@@ -91,6 +91,7 @@ void do_passes(void) {
     Llvm_block* llvm_root = add_load_and_store(typed);
     log(LOG_DEBUG, "\nafter add_load_and_store start-------------------- \n");
     llvm_log_level(LOG_DEBUG, 0);
+    // TODO: for this to actually do anything, we need to iterate on scope_id SCOPE_BUILTIN
     log(LOG_DEBUG, TAST_FMT, llvm_block_print(llvm_root));
     log(LOG_DEBUG, "\nafter add_load_and_store end-------------------- \n");
     if (error_count > 0) {

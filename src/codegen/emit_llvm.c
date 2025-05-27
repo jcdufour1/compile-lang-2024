@@ -1013,7 +1013,7 @@ void emit_llvm_from_tree(const Llvm_block* root) {
     String output = {0};
     String literals = {0};
 
-    Alloca_iter iter = all_tbl_iter_new(0);
+    Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
     Llvm* curr = NULL;
     while (all_tbl_iter_next(&curr, &iter)) {
         emit_sometimes(&struct_defs, &output, &literals, curr);

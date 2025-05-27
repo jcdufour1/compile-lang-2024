@@ -685,7 +685,7 @@ void emit_c_from_tree(const Llvm_block* root) {
     string_extend_cstr(&a_main, &header, "#include <stdbool.h>\n");
     string_extend_cstr(&a_main, &header, "#include <string.h>\n");
 
-    Alloca_iter iter = all_tbl_iter_new(0);
+    Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
     Llvm* curr = NULL;
     while (all_tbl_iter_next(&curr, &iter)) {
         emit_c_sometimes(&strs, curr);
