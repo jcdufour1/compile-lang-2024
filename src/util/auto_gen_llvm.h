@@ -119,6 +119,7 @@ static Llvm_name llvm_name_new(const char* parent, const char* base, bool is_top
 static Llvm_type llvm_gen_block(void) {
     Llvm_type block = {.name = llvm_name_new("llvm", "block", false)};
 
+    append_member(&block.members, "Name", "name");
     append_member(&block.members, "Llvm_vec", "children");
     append_member(&block.members, "Pos", "pos_end");
     append_member(&block.members, "Scope_id", "scope_id");
@@ -359,6 +360,7 @@ static Llvm_type llvm_gen_array_access(void) {
 static Llvm_type llvm_gen_function_params(void) {
     Llvm_type params = {.name = llvm_name_new("llvm", "function_params", false)};
 
+    append_member(&params.members, "Name", "name");
     append_member(&params.members, "Llvm_variable_def_vec", "params");
 
     return params;
@@ -367,6 +369,7 @@ static Llvm_type llvm_gen_function_params(void) {
 static Llvm_type llvm_gen_return(void) {
     Llvm_type rtn = {.name = llvm_name_new("llvm", "return", false)};
 
+    append_member(&rtn.members, "Name", "name_self");
     append_member(&rtn.members, "Name", "child");
     append_member(&rtn.members, "bool", "is_auto_inserted");
 
@@ -384,6 +387,7 @@ static Llvm_type llvm_gen_goto(void) {
 static Llvm_type llvm_gen_cond_goto(void) {
     Llvm_type cond_goto = {.name = llvm_name_new("llvm", "cond_goto", false)};
 
+    append_member(&cond_goto.members, "Name", "name_self");
     append_member(&cond_goto.members, "Name", "condition");
     append_member(&cond_goto.members, "Name", "if_true");
     append_member(&cond_goto.members, "Name", "if_false");

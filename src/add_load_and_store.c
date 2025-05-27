@@ -255,7 +255,7 @@ static Llvm_alloca* add_load_and_store_alloca_new(Llvm_variable_def* var_def) {
 }
 
 static Llvm_function_params* load_function_params_clone(Tast_function_params* old_params) {
-    Llvm_function_params* new_params = llvm_function_params_new(old_params->pos, (Llvm_variable_def_vec){0});
+    Llvm_function_params* new_params = llvm_function_params_new(old_params->pos, util_literal_name_new2(), (Llvm_variable_def_vec){0});
 
     for (size_t idx = 0; idx < old_params->params.info.count; idx++) {
         vec_append(&a_main, &new_params->params, load_variable_def_clone(vec_at(&old_params->params, idx)));
@@ -325,6 +325,7 @@ static Llvm_function_params* do_function_def_alloca(
 ) {
     Llvm_function_params* new_params = llvm_function_params_new(
         old_params->pos,
+        util_literal_name_new2(),
         (Llvm_variable_def_vec) {0}
     );
 
@@ -387,6 +388,7 @@ static void if_for_add_cond_goto(
     assert(label_name_if_false.base.count > 0);
     Llvm_cond_goto* cond_goto = llvm_cond_goto_new(
         pos,
+        util_literal_name_new2(),
         load_operator(block, old_oper),
         label_name_if_true,
         label_name_if_false
@@ -1256,6 +1258,7 @@ static Name load_function_def(Tast_function_def* old_fun_def) {
         new_decl,
         llvm_block_new(
             pos,
+            util_literal_name_new2(),
             (Llvm_vec) {0},
             old_fun_def->body->pos_end,
             old_fun_def->body->scope_id
@@ -1325,6 +1328,7 @@ static Name load_return(Llvm_block* new_block, Tast_return* old_return) {
         Tast_void* new_void = tast_void_new(old_return->pos);
         Llvm_return* new_return = llvm_return_new(
             pos,
+            util_literal_name_new2(),
             load_literal(new_block, tast_void_wrap(new_void)),
             old_return->is_auto_inserted
         );
@@ -1333,6 +1337,7 @@ static Name load_return(Llvm_block* new_block, Tast_return* old_return) {
         Name result = load_expr(new_block, old_return->child);
         Llvm_return* new_return = llvm_return_new(
             pos,
+            util_literal_name_new2(),
             result,
             old_return->is_auto_inserted
         );
@@ -1404,6 +1409,7 @@ static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, N
     Llvm_block* inner_block = load_block(old_block);
     Llvm_block* new_block = llvm_block_new(
         old_block->pos,
+        util_literal_name_new2(),
         (Llvm_vec) {0},
         inner_block->pos_end,
         if_statement->body->scope_id
@@ -1434,6 +1440,7 @@ static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, N
 static Name if_else_chain_to_branch(Llvm_block** new_block, Tast_if_else_chain* if_else) {
     *new_block = llvm_block_new(
         if_else->pos,
+        util_literal_name_new2(),
         (Llvm_vec) {0},
         (Pos) {0},
         symbol_collection_new(scope_get_parent_tbl_lookup(vec_at(&if_else->tasts, 0 /* TODO: consider empty if_else_chain */)->body->scope_id))
@@ -1519,6 +1526,7 @@ static Llvm_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
 
     Llvm_block* new_branch_block = llvm_block_new(
         pos,
+        util_literal_name_new2(),
         (Llvm_vec) {0},
         old_for->body->pos_end,
         old_for->body->scope_id
@@ -1814,6 +1822,7 @@ static Name load_def_sometimes(Tast_def* old_def) {
 static Llvm_block* load_block(Tast_block* old_block) {
     Llvm_block* new_block = llvm_block_new(
         old_block->pos,
+        util_literal_name_new2(),
         (Llvm_vec) {0},
         old_block->pos_end,
         old_block->scope_id

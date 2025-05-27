@@ -169,15 +169,15 @@ Name llvm_tast_get_name(const Llvm* llvm) {
         case LLVM_EXPR:
             return llvm_expr_get_name(llvm_expr_const_unwrap(llvm));
         case LLVM_BLOCK:
-            unreachable("");
+            return llvm_block_const_unwrap(llvm)->name;
         case LLVM_FUNCTION_PARAMS:
-            unreachable("");
+            return llvm_function_params_const_unwrap(llvm)->name;
         case LLVM_RETURN:
-            unreachable("");
+            return llvm_return_const_unwrap(llvm)->name_self;
         case LLVM_GOTO:
             return llvm_goto_const_unwrap(llvm)->name;
         case LLVM_COND_GOTO:
-            unreachable("");
+            return llvm_cond_goto_const_unwrap(llvm)->name_self;
         case LLVM_ALLOCA:
             return llvm_alloca_const_unwrap(llvm)->name;
         case LLVM_LOAD_ANOTHER_LLVM:
