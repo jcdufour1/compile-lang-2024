@@ -93,6 +93,7 @@ static void llvm_block_graphvis_internal(String* buf, const Llvm_block* block) {
     Name prev = block->name;
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         if (all_tbl_add_ex(&already_visited, vec_at(&block->children, idx))) {
+            // TODO: make size_t_print_macro?
             String idx_buf = {0};
             string_extend_size_t(&a_print, &idx_buf, idx);
             llvm_graphvis_internal(buf, vec_at(&block->children, idx));
@@ -117,7 +118,9 @@ static void llvm_function_params_graphvis_internal(String* buf, const Llvm_funct
     label(buf, params->name, str_view_from_cstr("params"));
 
     for (size_t idx = 0; idx < params->params.info.count; idx++) {
-        llvm_variable_def_graphvis_internal(buf, vec_at(&params->params, idx));
+        String idx_buf = {0};
+        string_extend_size_t(&a_print, &idx_buf, idx);
+        arrow_names_label(buf, params->name, vec_at(&params->params, idx)->name_self, string_to_strv(idx_buf));
     }
 }
 
@@ -206,7 +209,17 @@ static void llvm_literal_graphvis_internal(String* buf, const Llvm_literal* lit)
 static void llvm_function_call_graphvis_internal(String* buf, const Llvm_function_call* call) {
     label(buf, call->name_self, str_view_from_cstr("function_call"));
     arrow_names_label(buf, call->name_self, call->callee, str_view_from_cstr("callee"));
-    // TODO
+
+    Name args_name = util_literal_name_new2();
+    label(buf, args_name, str_view_from_cstr("args"));
+    arrow_names_label(buf, call->name_self, args_name, str_view_from_cstr("args"));
+    for (size_t idx = 0; idx < call->args.info.count; idx++) {
+        String idx_buf = {0};
+        string_extend_size_t(&a_print, &idx_buf, idx);
+        arrow_names_label(buf, args_name, vec_at(&call->args, idx), string_to_strv(idx_buf));
+    }
+
+    // TODO: lang_type
 }
 
 static void llvm_expr_graphvis_internal(String* buf, const Llvm_expr* expr) {
@@ -300,7 +313,7 @@ Str_view llvm_graphvis(const Llvm_block* block) {
     Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
     Llvm* curr = NULL;
     while (all_tbl_iter_next(&curr, &iter)) {
-        // TODO: all_tbl_add_ex variant that considers scope as part of the key
+        // TODO: do scopes correctly (make alloca_add_ex)
         if (all_tbl_add_ex(&already_visited, curr)) {
             log(LOG_DEBUG, TAST_FMT"\n", llvm_print(curr));
             llvm_graphvis_internal(&buf, curr);
