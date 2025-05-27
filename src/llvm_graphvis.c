@@ -128,6 +128,10 @@ static void llvm_variable_def_graphvis_internal(String* buf, const Llvm_variable
     label_ex(buf, def->name_self, str_view_from_cstr("variable_def"), def->name_corr_param);
 }
 
+static void llvm_label_graphvis_internal(String* buf, const Llvm_label* label) {
+    label_ex(buf, label->name, str_view_from_cstr("label"), label->name);
+}
+
 static void llvm_function_decl_graphvis_internal(String* buf, const Llvm_function_decl* decl) {
     label_ex(buf, decl->name, str_view_from_cstr("function decl"), decl->name);
     arrow_names(buf, decl->name, decl->params->name);
@@ -161,7 +165,8 @@ static void llvm_def_graphvis_internal(String* buf, const Llvm_def* def) {
         case LLVM_FUNCTION_DECL:
             todo();
         case LLVM_LABEL:
-            todo();
+            llvm_label_graphvis_internal(buf, llvm_label_const_unwrap(def));
+            return;
         case LLVM_LITERAL_DEF:
             todo();
     }
@@ -231,10 +236,40 @@ static void llvm_function_call_graphvis_internal(String* buf, const Llvm_functio
     // TODO: lang_type
 }
 
+static void llvm_binary_graphvis_internal(String* buf, const Llvm_binary* bin) {
+    label(buf, bin->name, str_view_from_cstr("binary"));
+    arrow_names_label(buf, bin->name, bin->lhs, str_view_from_cstr("lhs"));
+    arrow_names_label(buf, bin->name, bin->rhs, str_view_from_cstr("rhs"));
+
+    // TODO: token_type
+    // TODO: lang_type
+}
+
+static void llvm_unary_graphvis_internal(String* buf, const Llvm_unary* unary) {
+    label(buf, unary->name, str_view_from_cstr("unary"));
+    arrow_names_label(buf, unary->name, unary->child, str_view_from_cstr("child"));
+
+    // TODO: token_type
+    // TODO: lang_type
+}
+
+static void llvm_operator_graphvis_internal(String* buf, const Llvm_operator* oper) {
+    switch (oper->type) {
+        case LLVM_BINARY:
+            llvm_binary_graphvis_internal(buf, llvm_binary_const_unwrap(oper));
+            return;
+        case LLVM_UNARY:
+            llvm_unary_graphvis_internal(buf, llvm_unary_const_unwrap(oper));
+            return;
+    }
+    unreachable("");
+}
+
 static void llvm_expr_graphvis_internal(String* buf, const Llvm_expr* expr) {
     switch (expr->type) {
         case LLVM_OPERATOR:
-            todo();
+            llvm_operator_graphvis_internal(buf, llvm_operator_const_unwrap(expr));
+            return;
         case LLVM_LITERAL:
             llvm_literal_graphvis_internal(buf, llvm_literal_const_unwrap(expr));
             return;
@@ -277,7 +312,8 @@ static void llvm_load_another_llvm_graphvis_internal(String* buf, const Llvm_loa
 static void llvm_graphvis_internal(String* buf, const Llvm* llvm) {
     switch (llvm->type) {
         case LLVM_BLOCK:
-            todo();
+            llvm_block_graphvis_internal(buf, llvm_block_const_unwrap(llvm));
+            return;
         case LLVM_EXPR:
             llvm_expr_graphvis_internal(buf, llvm_expr_const_unwrap(llvm));
             return;
