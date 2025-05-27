@@ -43,8 +43,13 @@ static void label(String* buf, Name name, Str_view label) {
     string_extend_cstr(&a_print, buf, "\"];\n");
 }
 
-static void llvm_block_graphvis_internal(String* buf, const Llvm_block* block) {
+static void llvm_block_graphvis_internal(String* buf, Name parent, const Llvm_block* block) {
     Name block_name = util_literal_name_new2();
+    if (parent.base.count > 0) {
+        arrow_names(buf, parent, block_name);
+        label(buf, block_name, str_view_from_cstr("block"));
+    }
+
     label(buf, block_name, str_view_from_cstr("block"));
 
     Alloca_iter iter = all_tbl_iter_new(block->scope_id);
@@ -58,12 +63,19 @@ static void llvm_block_graphvis_internal(String* buf, const Llvm_block* block) {
     }
 }
 
+static void llvm_function_decl_graphvis_internal(String* buf, Name parent, const Llvm_function_decl* decl) {
+    // TODO: possible abstraction 2
+    arrow_names(buf, parent, decl->name);
+    label(buf, decl->name, str_view_from_cstr("function decl"));
+}
+
 static void llvm_function_def_graphvis_internal(String* buf, Name parent, const Llvm_function_def* def) {
     Name def_name = util_literal_name_new2();
     arrow_names(buf, parent, def_name);
     label(buf, def_name, str_view_from_cstr("function def"));
-    // TODO: decl
-    // TODO: block
+
+    llvm_function_decl_graphvis_internal(buf, def_name, def->decl);
+    llvm_block_graphvis_internal(buf, def_name, def->body);
 }
 
 static void llvm_def_graphvis_internal(String* buf, Name parent, const Llvm_def* def) {
@@ -87,12 +99,72 @@ static void llvm_def_graphvis_internal(String* buf, Name parent, const Llvm_def*
     unreachable("");
 }
 
+static void llvm_int_graphvis_internal(String* buf, Name parent, const Llvm_int* lit) {
+    String num_buf = {0};
+    extend_source_loc(buf);
+
+    string_extend_int64_t(&a_print, &num_buf, lit->data);
+    string_extend_cstr(&a_print, &num_buf, " ");
+    string_extend_strv(&a_print, buf, lang_type_print_internal(LANG_TYPE_MODE_MSG, lit->lang_type));
+    label(buf, lit->name, string_to_strv(num_buf));
+    todo();
+}
+
+static void llvm_void_graphvis_internal(String* buf, Name parent, const Llvm_void* lit) {
+    Name void_name = util_literal_name_new2();
+    arrow_names(buf, parent, void_name);
+    label(buf, void_name, str_view_from_cstr("void"));
+}
+
+static void llvm_literal_graphvis_internal(String* buf, Name parent, const Llvm_literal* lit) {
+    switch (lit->type) {
+        case LLVM_INT:
+            llvm_int_graphvis_internal(buf, parent, llvm_int_const_unwrap(lit));
+            return;
+        case LLVM_FLOAT:
+            //return llvm_float_graphvis_floaternal(lit_name, llvm_float_const_unwrap(lit));
+            todo();
+        case LLVM_STRING:
+            //return llvm_string_graphvis_stringernal(lit_name, llvm_string_const_unwrap(lit));
+            todo();
+        case LLVM_VOID:
+            llvm_void_graphvis_internal(buf, parent, llvm_void_const_unwrap(lit));
+            return;
+        case LLVM_FUNCTION_NAME:
+            todo();
+    }
+    unreachable("");
+}
+
+static void llvm_expr_graphvis_internal(String* buf, Name parent, const Llvm_expr* expr) {
+    switch (expr->type) {
+        case LLVM_OPERATOR:
+            todo();
+        case LLVM_LITERAL:
+            llvm_literal_graphvis_internal(buf, parent, llvm_literal_const_unwrap(expr));
+            return;
+        case LLVM_FUNCTION_CALL:
+            todo();
+    }
+    unreachable("");
+}
+
+static void llvm_return_graphvis_internal(String* buf, Name parent, const Llvm_return* rtn) {
+    // TODO: possible abstraction 1
+    Name rtn_name = util_literal_name_new2();
+    arrow_names(buf, parent, rtn_name);
+    label(buf, rtn_name, str_view_from_cstr("return"));
+
+    llvm_graphvis_internal(buf, rtn_name, llvm_from_get_name(rtn->child));
+}
+
 static void llvm_graphvis_internal(String* buf, Name parent, const Llvm* llvm) {
     switch (llvm->type) {
         case LLVM_BLOCK:
             todo();
         case LLVM_EXPR:
-            todo();
+            llvm_expr_graphvis_internal(buf, parent, llvm_expr_const_unwrap(llvm));
+            return;
         case LLVM_DEF:
             llvm_def_graphvis_internal(buf, parent, llvm_def_const_unwrap(llvm));
             return;
@@ -103,7 +175,8 @@ static void llvm_graphvis_internal(String* buf, Name parent, const Llvm* llvm) {
         case LLVM_FUNCTION_PARAMS:
             todo();
         case LLVM_RETURN:
-            todo();
+            llvm_return_graphvis_internal(buf, parent, llvm_return_const_unwrap(llvm));
+            return;
         case LLVM_GOTO:
             todo();
         case LLVM_COND_GOTO:
@@ -127,7 +200,7 @@ Str_view llvm_graphvis(const Llvm_block* block) {
     string_extend_cstr(&a_print, &buf, "node [style=filled, fillcolor=\"black\", fontcolor=\"white\", color=\"white\"];\n");
     string_extend_cstr(&a_print, &buf, "edge [color=\"white\", fontcolor=\"white\"];");
 
-    llvm_block_graphvis_internal(&buf, block);
+    llvm_block_graphvis_internal(&buf, (Name) {0}, block);
 
     string_extend_cstr(&a_print, &buf, "}\n");
 
