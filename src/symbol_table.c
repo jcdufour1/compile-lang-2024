@@ -358,9 +358,15 @@ bool usymbol_lookup(Uast_def** result, Name key) {
 //
 
 // returns false if symbol has already been added to the table
+bool all_tbl_add_ex(Alloca_table* tbl, Llvm* item) {
+    Name name = llvm_tast_get_name(item);
+    return generic_tbl_add((Generic_symbol_table*)tbl, serialize_name_symbol_table(name), item);
+}
+
+// returns false if symbol has already been added to the table
 bool all_tbl_add(Llvm* item) {
     Name name = llvm_tast_get_name(item);
-    return generic_tbl_add((Generic_symbol_table*)&vec_at_ref(&env.symbol_tables, name.scope_id)->alloca_table, serialize_name_symbol_table(name), item);
+    return all_tbl_add_ex(&vec_at_ref(&env.symbol_tables, name.scope_id)->alloca_table, item);
 }
 
 void* all_get_tbl_from_collection(Symbol_collection* collection) {

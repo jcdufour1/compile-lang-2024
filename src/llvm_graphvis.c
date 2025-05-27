@@ -4,6 +4,8 @@
 
 // NOTE: util_literal_name_new2 to create placeholder name for Llvm_function_call generated in llvm_function_call_graphvis_internal, etc.
 
+static Alloca_table already_visited = {0};
+
 #define extend_source_loc(buf) extend_source_loc_internal(__FILE__, __LINE__, buf)
 
 static void llvm_graphvis_internal(String* buf, Name parent, const Llvm* llvm);
@@ -72,14 +74,17 @@ static void llvm_block_graphvis_internal(String* buf, Name parent, const Llvm_bl
 
     label(buf, block_name, string_to_strv(scope_buf));
 
+    for (size_t idx = 0; idx < block->children.info.count; idx++) {
+        llvm_graphvis_internal(buf, block_name, vec_at(&block->children, idx));
+        unwrap(all_tbl_add_ex(&already_visited, vec_at(&block->children, idx)));
+    }
+
     Alloca_iter iter = all_tbl_iter_new(block->scope_id);
     Llvm* curr = NULL;
     while (all_tbl_iter_next(&curr, &iter)) {
-        llvm_graphvis_internal(buf, block_name, curr);
-    }
-
-    for (size_t idx = 0; idx < block->children.info.count; idx++) {
-        llvm_graphvis_internal(buf, block_name, vec_at(&block->children, idx));
+        if (all_tbl_add_ex(&already_visited, curr)) {
+            llvm_graphvis_internal(buf, block_name, curr);
+        }
     }
 }
 
