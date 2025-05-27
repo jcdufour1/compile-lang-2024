@@ -74,9 +74,15 @@ static void llvm_block_graphvis_internal(String* buf, Name parent, const Llvm_bl
 
     label(buf, block_name, string_to_strv(scope_buf));
 
+    Name prev = block_name;
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
+        String idx_buf = {0};
+        string_extend_size_t(&a_print, &idx_buf, idx);
         llvm_graphvis_internal(buf, block_name, vec_at(&block->children, idx));
+        // TODO: move extend_source_loc to arrow_names_label, etc.
+        arrow_names_label(buf, prev, llvm_tast_get_name(vec_at(&block->children, idx)), string_to_strv(idx_buf));
         unwrap(all_tbl_add_ex(&already_visited, vec_at(&block->children, idx)));
+        prev = llvm_tast_get_name(vec_at(&block->children, idx));
     }
 
     Alloca_iter iter = all_tbl_iter_new(block->scope_id);
@@ -168,9 +174,8 @@ static void llvm_int_graphvis_internal(String* buf, Name parent, const Llvm_int*
 static void llvm_void_graphvis_internal(String* buf, Name parent, const Llvm_void* lit) {
     extend_source_loc(buf);
 
-    Name void_name = util_literal_name_new2();
-    arrow_names(buf, parent, void_name);
-    label(buf, void_name, str_view_from_cstr("void"));
+    arrow_names(buf, parent, lit->name);
+    label(buf, lit->name, str_view_from_cstr("void"));
 }
 
 static void llvm_literal_graphvis_internal(String* buf, Name parent, const Llvm_literal* lit) {
