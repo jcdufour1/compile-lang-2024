@@ -259,6 +259,7 @@ static Llvm_type llvm_gen_function_decl(void) {
 static Llvm_type llvm_gen_function_def(void) {
     Llvm_type def = {.name = llvm_name_new("def", "function_def", false)};
 
+    append_member(&def.members, "Name", "name_self");
     append_member(&def.members, "Llvm_function_decl*", "decl");
     append_member(&def.members, "Llvm_block*", "body");
 

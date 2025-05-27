@@ -1255,6 +1255,7 @@ static Name load_function_def(Tast_function_def* old_fun_def) {
 
     Llvm_function_def* new_fun_def = llvm_function_def_new(
         pos,
+        util_literal_name_new2(),
         new_decl,
         llvm_block_new(
             pos,

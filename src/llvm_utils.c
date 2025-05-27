@@ -152,7 +152,7 @@ Name llvm_def_get_name(const Llvm_def* def) {
         case LLVM_FUNCTION_DECL:
             return llvm_function_decl_const_unwrap(def)->name;
         case LLVM_FUNCTION_DEF:
-            return llvm_function_def_const_unwrap(def)->decl->name;
+            return llvm_function_def_const_unwrap(def)->name_self;
         case LLVM_LABEL:
             return llvm_label_const_unwrap(def)->name;
         case LLVM_LITERAL_DEF:
