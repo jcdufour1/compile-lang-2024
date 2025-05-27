@@ -13,6 +13,7 @@
 #include <str_view_vec.h>
 #include <subprocess.h>
 #include <llvm_print_graphvis.h>
+#include <symbol_iter.h>
  
 // TODO: make separate Env struct for every pass (each Env will need Env_common for things that all envs require (eg. for symbol table lookups))
 //
@@ -91,6 +92,14 @@ void do_passes(void) {
     Llvm_block* llvm_root = add_load_and_store(typed);
     log(LOG_DEBUG, "\nafter add_load_and_store start-------------------- \n");
     llvm_log_level(LOG_DEBUG, 0);
+
+    Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
+    Llvm* curr = NULL;
+    while (all_tbl_iter_next(&curr, &iter)) {
+        log(LOG_DEBUG, "\nbefore add_load_and_store aux end-------------------- \n");
+        log(LOG_DEBUG, TAST_FMT, llvm_print(curr));
+        log(LOG_DEBUG, "\nafter add_load_and_store aux end-------------------- \n");
+    }
     // TODO: for this to actually do anything, we need to iterate on scope_id SCOPE_BUILTIN
     log(LOG_DEBUG, TAST_FMT, llvm_block_print(llvm_root));
     log(LOG_DEBUG, "\nafter add_load_and_store end-------------------- \n");
