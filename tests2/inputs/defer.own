@@ -145,7 +145,7 @@ fn fun8() i32 {
     }
     defer io.printf("at very end yes 8.2\n")
     io.printf("at very end yes 8.8\n")
-    return num
+    return 8
     defer io.printf("at very end no 8.1\n")
     io.printf("at very end no 8.11\n")
     return 8
