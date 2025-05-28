@@ -198,8 +198,8 @@ static Pos get_curr_pos(Tk_view tokens) {
 
 static void msg_expected_expr_internal(const char* file, int line, Tk_view tokens, const char* msg_suffix) {
     String message = {0};
-    string_extend_cstr(&print_arena, &message, "expected expression ");
-    string_extend_cstr(&print_arena, &message, msg_suffix);
+    string_extend_cstr(&a_print, &message, "expected expression ");
+    string_extend_cstr(&a_print, &message, msg_suffix);
 
     msg_internal(file, line, DIAG_EXPECTED_EXPRESSION, get_curr_pos(tokens), STRING_FMT"\n", string_print(message)); \
 }
@@ -212,24 +212,24 @@ static void msg_parser_expected_internal(const char* file, int line, Token got, 
     va_start(args, count_expected);
 
     String message = {0};
-    string_extend_cstr(&print_arena, &message, "got token `");
-    string_extend_strv(&print_arena, &message, token_print_internal(&print_arena, TOKEN_MODE_MSG, got));
-    string_extend_cstr(&print_arena, &message, "`, but expected ");
+    string_extend_cstr(&a_print, &message, "got token `");
+    string_extend_strv(&a_print, &message, token_print_internal(&a_print, TOKEN_MODE_MSG, got));
+    string_extend_cstr(&a_print, &message, "`, but expected ");
 
     for (int idx = 0; idx < count_expected; idx++) {
         if (idx > 0) {
             if (idx == count_expected - 1) {
-                string_extend_cstr(&print_arena, &message, " or ");
+                string_extend_cstr(&a_print, &message, " or ");
             } else {
-                string_extend_cstr(&print_arena, &message, ", ");
+                string_extend_cstr(&a_print, &message, ", ");
             }
         }
-        string_extend_cstr(&print_arena, &message, "`");
-        string_extend_strv(&print_arena, &message, token_type_to_str_view(TOKEN_MODE_MSG, va_arg(args, TOKEN_TYPE)));
-        string_extend_cstr(&print_arena, &message, "` ");
+        string_extend_cstr(&a_print, &message, "`");
+        string_extend_strv(&a_print, &message, token_type_to_str_view(TOKEN_MODE_MSG, va_arg(args, TOKEN_TYPE)));
+        string_extend_cstr(&a_print, &message, "` ");
     }
 
-    string_extend_cstr(&print_arena, &message, msg_suffix);
+    string_extend_cstr(&a_print, &message, msg_suffix);
 
     DIAG_TYPE expect_fail_type = DIAG_PARSER_EXPECTED;
     if (got.type == TOKEN_NONTYPE) {

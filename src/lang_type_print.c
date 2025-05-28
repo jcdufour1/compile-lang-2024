@@ -6,25 +6,25 @@
 void extend_lang_type_tag_to_string(String* buf, LANG_TYPE_TYPE type) {
     switch (type) {
         case LANG_TYPE_PRIMITIVE:
-            string_extend_cstr(&print_arena, buf, "primitive");
+            string_extend_cstr(&a_print, buf, "primitive");
             return;
         case LANG_TYPE_STRUCT:
-            string_extend_cstr(&print_arena, buf, "struct");
+            string_extend_cstr(&a_print, buf, "struct");
             return;
         case LANG_TYPE_RAW_UNION:
-            string_extend_cstr(&print_arena, buf, "raw_union");
+            string_extend_cstr(&a_print, buf, "raw_union");
             return;
         case LANG_TYPE_ENUM:
-            string_extend_cstr(&print_arena, buf, "enum");
+            string_extend_cstr(&a_print, buf, "enum");
             return;
         case LANG_TYPE_TUPLE:
-            string_extend_cstr(&print_arena, buf, "tuple");
+            string_extend_cstr(&a_print, buf, "tuple");
             return;
         case LANG_TYPE_VOID:
-            string_extend_cstr(&print_arena, buf, "void");
+            string_extend_cstr(&a_print, buf, "void");
             return;
         case LANG_TYPE_FN:
-            string_extend_cstr(&print_arena, buf, "fn");
+            string_extend_cstr(&a_print, buf, "fn");
             return;
     }
     unreachable("");
@@ -66,13 +66,13 @@ void extend_lang_type_atom(String* string, LANG_TYPE_MODE mode, Lang_type_atom a
                 unreachable("");
         }
     } else {
-        string_extend_cstr(&print_arena, string, "void");
+        string_extend_cstr(&a_print, string, "void");
     }
     if (atom.pointer_depth < 0) {
         todo();
     }
     for (int16_t idx = 0; idx < atom.pointer_depth; idx++) {
-        vec_append(&print_arena, string, '*');
+        vec_append(&a_print, string, '*');
     }
 
     if (mode == LANG_TYPE_MODE_EMIT_LLVM) {
@@ -93,7 +93,7 @@ Str_view lang_type_print_internal(LANG_TYPE_MODE mode, Lang_type lang_type) {
         case LANG_TYPE_MODE_MSG:
             break;
         case LANG_TYPE_MODE_LOG:
-            string_extend_cstr(&print_arena, &buf, "\n");
+            string_extend_cstr(&a_print, &buf, "\n");
             break;
         default:
             unreachable("");
@@ -109,7 +109,7 @@ Str_view lang_type_atom_print_internal(Lang_type_atom atom, LANG_TYPE_MODE mode)
 
 void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type lang_type) {
     if (mode == LANG_TYPE_MODE_LOG) {
-        vec_append(&print_arena, string, '<');
+        vec_append(&a_print, string, '<');
     }
 
     switch (mode) {
@@ -166,7 +166,7 @@ void extend_lang_type_to_string(String* string, LANG_TYPE_MODE mode, Lang_type l
 
 end:
     if (mode == LANG_TYPE_MODE_LOG) {
-        vec_append(&print_arena, string, '>');
+        vec_append(&a_print, string, '>');
     }
 }
 

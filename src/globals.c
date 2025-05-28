@@ -6,7 +6,7 @@
 Parameters params = {0};
 
 Arena a_main = {0};
-Arena print_arena = {0};
+Arena a_print = {0};
 
 Tast* root_of_tree = NULL;
 

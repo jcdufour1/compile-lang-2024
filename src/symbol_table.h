@@ -79,6 +79,9 @@ bool all_tbl_lookup_internal(Alloca_table_tast** result, const Alloca_table* sym
 bool all_tbl_lookup(Llvm** result, Name key);
 
 // returns false if symbol has already been added to the table
+bool all_tbl_add_ex(Alloca_table* tbl, Llvm* item);
+
+// returns false if symbol has already been added to the table
 bool all_tbl_add(Llvm* tast_of_symbol);
 
 void all_tbl_update(Llvm* tast_of_symbol);

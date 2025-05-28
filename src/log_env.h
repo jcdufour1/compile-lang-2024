@@ -8,19 +8,19 @@ static inline void log_env_internal(const char* file, int line, LOG_LEVEL log_le
     (void) log_level;
     String buf = {0};
 
-    string_extend_cstr(&print_arena, &buf, "\n");
+    string_extend_cstr(&a_print, &buf, "\n");
 
     todo();
     //for (size_t idx = 0; idx < env.ancesters.info.count; idx++) {
-    //    string_extend_cstr(&print_arena, &buf, "level ");
-    //    string_extend_size_t(&print_arena, &buf, idx);
-    //    string_extend_cstr(&print_arena, &buf, ":\n");
+    //    string_extend_cstr(&a_print, &buf, "level ");
+    //    string_extend_size_t(&a_print, &buf, idx);
+    //    string_extend_cstr(&a_print, &buf, ":\n");
     //    Symbol_collection curr = *vec_at(&env.ancesters, idx);
     //    
-    //    string_extend_cstr_indent(&print_arena, &buf, "alloca_table\n", (1 + idx)*INDENT_WIDTH);
+    //    string_extend_cstr_indent(&a_print, &buf, "alloca_table\n", (1 + idx)*INDENT_WIDTH);
     //    alloca_extend_table_internal(&buf, curr.alloca_table, 2*(1 + idx)*INDENT_WIDTH);
 
-    //    string_extend_cstr_indent(&print_arena, &buf, "symbol_table\n", (1 + idx)*INDENT_WIDTH);
+    //    string_extend_cstr_indent(&a_print, &buf, "symbol_table\n", (1 + idx)*INDENT_WIDTH);
     //    symbol_extend_table_internal(&buf, curr.symbol_table, 2*(1 + idx)*INDENT_WIDTH);
     //}
 

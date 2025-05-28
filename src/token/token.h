@@ -7,7 +7,7 @@
 #include "str_view.h"
 #include "newstring.h"
 
-#define token_print(mode, token) str_view_print(token_print_internal(&print_arena, mode, token))
+#define token_print(mode, token) str_view_print(token_print_internal(&a_print, mode, token))
 
 #define TOKEN_FMT STR_VIEW_FMT
 

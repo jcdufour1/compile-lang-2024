@@ -758,7 +758,7 @@ static void emit_label(String* output, const Llvm_label* label) {
 
 static void emit_goto(String* output, const Llvm_goto* lang_goto) {
     string_extend_cstr(&a_main, output, "    br label %");
-    llvm_extend_name(output, lang_goto->name);
+    llvm_extend_name(output, lang_goto->label);
     vec_append(&a_main, output, '\n');
 }
 
@@ -1013,7 +1013,7 @@ void emit_llvm_from_tree(const Llvm_block* root) {
     String output = {0};
     String literals = {0};
 
-    Alloca_iter iter = all_tbl_iter_new(0);
+    Alloca_iter iter = all_tbl_iter_new(SCOPE_BUILTIN);
     Llvm* curr = NULL;
     while (all_tbl_iter_next(&curr, &iter)) {
         emit_sometimes(&struct_defs, &output, &literals, curr);

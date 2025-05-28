@@ -159,6 +159,9 @@ static void parse_normal_option(int* argc, char*** argv) {
         params.compile = true;
         params.run = true;
         params.input_file_path = str_view_from_cstr(consume_arg(argc, argv, "input file path was expected after `compile-run`"));
+    } else if (0 == strcmp(curr_opt, "dump-dot")) {
+        params.dump_dot = true;
+        params.input_file_path = str_view_from_cstr(consume_arg(argc, argv, "input file path was expected after `compile-run`"));
     } else {
         log(LOG_FATAL, "invalid option: %s\n", curr_opt);
         exit(EXIT_CODE_FAIL);

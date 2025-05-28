@@ -116,29 +116,29 @@ Str_view uname_print_internal(UNAME_MODE mode, Uname name) {
     return string_to_strv(buf);
 }
 
-static void extend_name_log_internal(bool is_msg, String* buf, Name name) {
+void extend_name_log_internal(bool is_msg, String* buf, Name name) {
     if (!is_msg) {
-        string_extend_cstr(&a_main, buf, "s");
-        string_extend_size_t(&a_main, buf, name.scope_id);
-        string_extend_cstr(&a_main, buf, "_");
+        string_extend_cstr(&a_print, buf, "s");
+        string_extend_size_t(&a_print, buf, name.scope_id);
+        string_extend_cstr(&a_print, buf, "_");
     }
 
-    string_extend_strv(&print_arena, buf, name.mod_path);
+    string_extend_strv(&a_print, buf, name.mod_path);
     if (name.mod_path.count > 0) {
-        string_extend_cstr(&print_arena, buf, "::");
+        string_extend_cstr(&a_print, buf, "::");
     }
-    string_extend_strv(&print_arena, buf, name.base);
+    string_extend_strv(&a_print, buf, name.base);
     if (name.gen_args.info.count > 0) {
-        string_extend_cstr(&print_arena, buf, "(<");
+        string_extend_cstr(&a_print, buf, "(<");
     }
     for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
         if (idx > 0) {
-            string_extend_cstr(&print_arena, buf, ", ");
+            string_extend_cstr(&a_print, buf, ", ");
         }
-        string_extend_strv(&print_arena, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(&name.gen_args, idx)));
+        string_extend_strv(&a_print, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(&name.gen_args, idx)));
     }
     if (name.gen_args.info.count > 0) {
-        string_extend_cstr(&print_arena, buf, ">)");
+        string_extend_cstr(&a_print, buf, ">)");
     }
 }
 
@@ -151,20 +151,20 @@ void extend_name_msg(String* buf, Name name) {
 void extend_uname(UNAME_MODE mode, String* buf, Uname name) {
     extend_name(mode == UNAME_MSG ? NAME_MSG : NAME_LOG, buf, name.mod_alias);
     if (name.mod_alias.base.count > 0 || (mode != UNAME_MSG && name.mod_alias.scope_id > 0)) {
-        string_extend_cstr(&print_arena, buf, ".");
+        string_extend_cstr(&a_print, buf, ".");
     }
-    string_extend_strv(&print_arena, buf, name.base);
+    string_extend_strv(&a_print, buf, name.base);
     if (name.gen_args.info.count > 0) {
-        string_extend_cstr(&print_arena, buf, "(<");
+        string_extend_cstr(&a_print, buf, "(<");
     }
     for (size_t idx = 0; idx < name.gen_args.info.count; idx++) {
         if (idx > 0) {
-            string_extend_cstr(&print_arena, buf, ", ");
+            string_extend_cstr(&a_print, buf, ", ");
         }
-        string_extend_strv(&print_arena, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(&name.gen_args, idx)));
+        string_extend_strv(&a_print, buf, ulang_type_print_internal(LANG_TYPE_MODE_MSG, vec_at(&name.gen_args, idx)));
     }
     if (name.gen_args.info.count > 0) {
-        string_extend_cstr(&print_arena, buf, ">)");
+        string_extend_cstr(&a_print, buf, ">)");
     }
 }
 

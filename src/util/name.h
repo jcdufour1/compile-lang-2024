@@ -52,6 +52,8 @@ void extend_uname(UNAME_MODE mode, String* buf, Uname name);
 
 void extend_name(NAME_MODE mode, String* buf, Name name);
 
+void extend_name_log_internal(bool is_msg, String* buf, Name name);
+
 Name name_clone(Name name, Scope_id scope_id);
 
 Uname uname_clone(Uname name, Scope_id scope_id);

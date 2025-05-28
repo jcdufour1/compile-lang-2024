@@ -67,7 +67,7 @@ Name util_literal_name_new_prefix_internal_2(const char* file, int line, Str_vie
     util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, debug_prefix, (Str_view) {0})
 
 // TODO: remove 2 suffix
-#define util_literal_name_new2(mod_path) \
+#define util_literal_name_new2() \
     util_literal_name_new_prefix_internal_2(__FILE__, __LINE__, str_view_from_cstr(""), (Str_view) {0})
 
 #define util_literal_name_new_mod_path2(mod_path) \

@@ -78,6 +78,8 @@ typedef struct Env_ {
 
     // this is used to define additional structs to get around the requirement of in order definitions in c
     C_forward_struct_tbl c_forward_struct_tbl;
+
+    Name llvm_graphvis_parent_block_next;
 } Env;
 
 #endif // ENV_H

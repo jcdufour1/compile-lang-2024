@@ -70,6 +70,7 @@ OBJS=\
 	 ${BUILD_DIR}/codegen/emit_llvm.o \
 	 ${BUILD_DIR}/codegen/emit_c.o \
 	 ${BUILD_DIR}/llvm_utils.o \
+	 ${BUILD_DIR}/llvm_graphvis.o \
 	 ${BUILD_DIR}/subprocess.o
 
 DEP_UTIL = Makefile src/util/*.h src/util/auto_gen.c
@@ -194,6 +195,9 @@ ${BUILD_DIR}/uast_clone.o: ${DEP_COMMON} src/uast_clone.c
 
 ${BUILD_DIR}/llvm_utils.o: ${DEP_COMMON} src/llvm_utils.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/llvm_utils.o src/llvm_utils.c
+
+${BUILD_DIR}/llvm_graphvis.o: ${DEP_COMMON} src/llvm_graphvis.c 
+	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/llvm_graphvis.o src/llvm_graphvis.c
 
 ${BUILD_DIR}/subprocess.o: ${DEP_COMMON} src/subprocess.c 
 	${CC_COMPILER} ${C_FLAGS} -c -o ${BUILD_DIR}/subprocess.o src/subprocess.c

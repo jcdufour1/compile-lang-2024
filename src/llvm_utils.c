@@ -152,7 +152,7 @@ Name llvm_def_get_name(const Llvm_def* def) {
         case LLVM_FUNCTION_DECL:
             return llvm_function_decl_const_unwrap(def)->name;
         case LLVM_FUNCTION_DEF:
-            return llvm_function_def_const_unwrap(def)->decl->name;
+            return llvm_function_def_const_unwrap(def)->name_self;
         case LLVM_LABEL:
             return llvm_label_const_unwrap(def)->name;
         case LLVM_LITERAL_DEF:
@@ -169,15 +169,15 @@ Name llvm_tast_get_name(const Llvm* llvm) {
         case LLVM_EXPR:
             return llvm_expr_get_name(llvm_expr_const_unwrap(llvm));
         case LLVM_BLOCK:
-            unreachable("");
+            return llvm_block_const_unwrap(llvm)->name;
         case LLVM_FUNCTION_PARAMS:
-            unreachable("");
+            return llvm_function_params_const_unwrap(llvm)->name;
         case LLVM_RETURN:
-            unreachable("");
+            return llvm_return_const_unwrap(llvm)->name_self;
         case LLVM_GOTO:
-            return llvm_goto_const_unwrap(llvm)->name;
+            return llvm_goto_const_unwrap(llvm)->name_self;
         case LLVM_COND_GOTO:
-            unreachable("");
+            return llvm_cond_goto_const_unwrap(llvm)->name_self;
         case LLVM_ALLOCA:
             return llvm_alloca_const_unwrap(llvm)->name;
         case LLVM_LOAD_ANOTHER_LLVM:
@@ -194,9 +194,15 @@ Name llvm_tast_get_name(const Llvm* llvm) {
 
 // TODO: rename this function
 Lang_type lang_type_from_get_name(Name name) {
+    return llvm_get_lang_type(llvm_from_get_name(name));
+}
+
+// TODO: rename this function
+// TODO: use this instead of the verbose `alloca_lookup` in more places
+Llvm* llvm_from_get_name(Name name) {
     Llvm* result = NULL;
     unwrap(alloca_lookup(&result,  name));
-    return llvm_get_lang_type(result);
+    return result;
 }
 
 size_t struct_def_get_idx_matching_member(Llvm_struct_def* def, Name memb_name) {
