@@ -85,6 +85,7 @@ static void label_ex_internal(const char* file, int line, String* buf, Name name
 static void llvm_block_graphvis_internal(String* buf, const Llvm_block* block) {
     extend_source_loc(buf);
 
+    // TODO: make size_t_print_macro?
     String scope_buf = {0};
     string_extend_strv(&a_print, &scope_buf, str_view_from_cstr("block (scope "));
     string_extend_size_t(&a_print, &scope_buf, block->scope_id);
@@ -93,8 +94,9 @@ static void llvm_block_graphvis_internal(String* buf, const Llvm_block* block) {
     label(buf, block->name, string_to_strv(scope_buf));
 
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
+        bool is_last = idx + 1 >= block->children.info.count;
         Llvm* curr = vec_at(&block->children, idx);
-        Llvm* next = idx + 1 < block->children.info.count ? vec_at(&block->children, idx + 1) : NULL;
+        Llvm* next = is_last ? NULL : vec_at(&block->children, idx + 1);
 
         if (idx < 1) {
             arrow_names_label(buf, block->name, llvm_tast_get_name(curr), str_view_from_cstr("first_stmt"));
@@ -103,13 +105,26 @@ static void llvm_block_graphvis_internal(String* buf, const Llvm_block* block) {
         String idx_buf = {0};
         string_extend_size_t(&a_print, &idx_buf, idx);
         if (all_tbl_add_ex(&already_visited, curr)) {
-            // TODO: make size_t_print_macro?
+            Name old_parent_block_next = env.llvm_graphvis_parent_block_next;
+            env.llvm_graphvis_parent_block_next = is_last ? (Name) {0} : llvm_tast_get_name(next);
             llvm_graphvis_internal(buf, curr);
+            env.llvm_graphvis_parent_block_next = old_parent_block_next;
         }
-        if (idx + 1 < block->children.info.count && llvm_graphvis_do_next_arrow(curr)) {
-            arrow_names_label(buf, llvm_tast_get_name(curr), llvm_tast_get_name(next), str_view_from_cstr("next"));
-        } else {
-            // TODO
+        if (llvm_graphvis_do_next_arrow(curr)) {
+            if (is_last) {
+                // this is the last node of this block. If we are nested in a parent block, then
+                // the next statement to be executed is in env.llvm_graphvis_parent_block_next (set by the parent block)
+                if (env.llvm_graphvis_parent_block_next.base.count > 0) {
+                    arrow_names_label(
+                        buf,
+                        llvm_tast_get_name(curr),
+                        env.llvm_graphvis_parent_block_next,
+                        str_view_from_cstr("next")
+                    );
+                }
+            } else {
+                arrow_names_label(buf, llvm_tast_get_name(curr), llvm_tast_get_name(next), str_view_from_cstr("next"));
+            }
         }
     }
 
