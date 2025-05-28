@@ -2180,8 +2180,6 @@ static void load_break(Llvm_block* new_block, Tast_break* old_break, Name label_
     }
 
     assert(env.label_if_break.base.count > 0);
-    Llvm_goto* new_goto = llvm_goto_new(old_break->pos, util_literal_name_new2(), env.label_if_break);
-    vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
 }
 
 static void load_label(Llvm_block* new_block, Tast_label* old_label) {

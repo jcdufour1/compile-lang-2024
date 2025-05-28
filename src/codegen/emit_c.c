@@ -29,12 +29,17 @@ static void emit_c_block(Emit_c_strs* strs,  const Llvm_block* block);
 
 static void emit_c_expr_piece(Emit_c_strs* strs, Name child);
 
-static void emit_c_loc(String* output, Loc loc) {
-    string_extend_cstr(&a_main, output, "/* ");
+static void emit_c_loc(String* output, Loc loc, Pos pos) {
+    string_extend_cstr(&a_main, output, "/* loc: ");
     string_extend_cstr(&a_main, output, loc.file);
     string_extend_cstr(&a_main, output, ":");
     string_extend_int64_t(&a_main, output, loc.line);
-    string_extend_cstr(&a_main, output, "*/\n");
+    string_extend_cstr(&a_main, output, " */\n");
+    string_extend_cstr(&a_main, output, "/* pos: ");
+    string_extend_strv(&a_main, output, pos.file_path);
+    string_extend_cstr(&a_main, output, ":");
+    string_extend_int64_t(&a_main, output, pos.line);
+    string_extend_cstr(&a_main, output, " */\n");
 }
 
 // TODO: see if this can be merged with extend_type_call_str in emit_llvm.c in some way
@@ -106,6 +111,7 @@ static void emit_c_function_params(String* output, const Llvm_function_params* p
 }
 
 static void emit_c_function_decl_internal(String* output, const Llvm_function_decl* decl) {
+    emit_c_loc(output, decl->loc, decl->pos);
     c_extend_type_call_str(output, decl->return_type, true);
     string_extend_cstr(&a_main, output, " ");
     llvm_extend_name(output, decl->name);
@@ -120,6 +126,7 @@ static void emit_c_function_decl_internal(String* output, const Llvm_function_de
 }
 
 static void emit_c_function_def(Emit_c_strs* strs, const Llvm_function_def* fun_def) {
+    emit_c_loc(&strs->output, fun_def->loc, fun_def->pos);
     emit_c_function_decl_internal(&strs->forward_decls, fun_def->decl);
     string_extend_cstr(&a_main, &strs->forward_decls, ";\n");
 
@@ -130,11 +137,13 @@ static void emit_c_function_def(Emit_c_strs* strs, const Llvm_function_def* fun_
 }
 
 static void emit_c_function_decl(Emit_c_strs* strs, const Llvm_function_decl* decl) {
+    emit_c_loc(&strs->output, decl->loc, decl->pos);
     emit_c_function_decl_internal(&strs->forward_decls, decl);
     string_extend_cstr(&a_main, &strs->forward_decls, ";\n");
 }
 
 static void emit_c_struct_def(Emit_c_strs* strs, const Llvm_struct_def* def) {
+    emit_c_loc(&strs->output, def->loc, def->pos);
     String buf = {0};
     Arena a_temp = {0};
     string_extend_cstr(&a_temp, &buf, "typedef struct {\n");
@@ -239,6 +248,7 @@ static void emit_c_sometimes(Emit_c_strs* strs, const Llvm* llvm) {
 }
 
 static void emit_c_function_call(Emit_c_strs* strs, const Llvm_function_call* fun_call) {
+    emit_c_loc(&strs->output, fun_call->loc, fun_call->pos);
     //assert(fun_call->llvm_id == 0);
 
     // start of actual function call
@@ -479,12 +489,14 @@ static void emit_c_expr_piece(Emit_c_strs* strs, Name child) {
 }
 
 static void emit_c_return(Emit_c_strs* strs, const Llvm_return* rtn) {
+    emit_c_loc(&strs->output, rtn->loc, rtn->pos);
     string_extend_cstr(&a_main, &strs->output, "    return ");
     emit_c_expr_piece(strs, rtn->child);
     string_extend_cstr(&a_main, &strs->output, ";\n");
 }
 
 static void emit_c_alloca(String* output, const Llvm_alloca* alloca) {
+    emit_c_loc(output, alloca->loc, alloca->pos);
     Name storage_loc = util_literal_name_new2();
 
     string_extend_cstr(&a_main, output, "    ");
@@ -518,7 +530,7 @@ static void emit_c_alloca(String* output, const Llvm_alloca* alloca) {
 }
 
 static void emit_c_label(Emit_c_strs* strs, const Llvm_label* def) {
-    emit_c_loc(&strs->output, def->loc);
+    emit_c_loc(&strs->output, def->loc, def->pos);
     llvm_extend_name(&strs->output, def->name);
     string_extend_cstr(&a_main, &strs->output, ":\n");
     // supress c compiler warnings and allow non-c23 compilers
@@ -554,6 +566,7 @@ static void emit_c_def(Emit_c_strs* strs, const Llvm_def* def) {
 }
 
 static void emit_c_store_another_llvm(Emit_c_strs* strs, const Llvm_store_another_llvm* store) {
+    emit_c_loc(&strs->output, store->loc, store->pos);
     Llvm* src = NULL;
     unwrap(alloca_lookup(&src, store->llvm_src));
 
@@ -580,6 +593,7 @@ static void emit_c_store_another_llvm(Emit_c_strs* strs, const Llvm_store_anothe
 }
 
 static void emit_c_load_another_llvm(Emit_c_strs* strs, const Llvm_load_another_llvm* load) {
+    emit_c_loc(&strs->output, load->loc, load->pos);
     string_extend_cstr(&a_main, &strs->output, "    ");
     c_extend_type_call_str(&strs->output, load->lang_type, true);
     string_extend_cstr(&a_main, &strs->output, " ");
@@ -595,6 +609,7 @@ static void emit_c_load_another_llvm(Emit_c_strs* strs, const Llvm_load_another_
 }
 
 static void emit_c_load_element_ptr(Emit_c_strs* strs, const Llvm_load_element_ptr* load) {
+    emit_c_loc(&strs->output, load->loc, load->pos);
     Llvm* struct_def_ = NULL;
     unwrap(alloca_lookup(&struct_def_, lang_type_get_str(LANG_TYPE_MODE_LOG, lang_type_from_get_name(load->llvm_src))));
 
@@ -616,6 +631,7 @@ static void emit_c_load_element_ptr(Emit_c_strs* strs, const Llvm_load_element_p
 }
 
 static void emit_c_array_access(Emit_c_strs* strs, const Llvm_array_access* access) {
+    emit_c_loc(&strs->output, access->loc, access->pos);
     string_extend_cstr(&a_main, &strs->output, "    void* ");
     llvm_extend_name(&strs->output, access->name_self);
     string_extend_cstr(&a_main, &strs->output, " = ");
@@ -636,7 +652,7 @@ static void emit_c_goto_internal(Emit_c_strs* strs, Name label) {
 }
 
 static void emit_c_cond_goto(Emit_c_strs* strs, const Llvm_cond_goto* cond_goto) {
-    emit_c_loc(&strs->output, cond_goto->loc);
+    emit_c_loc(&strs->output, cond_goto->loc, cond_goto->pos);
     string_extend_cstr(&a_main, &strs->output, "    if (");
     llvm_extend_name(&strs->output, cond_goto->condition);
     string_extend_cstr(&a_main, &strs->output, ") {\n");
@@ -647,11 +663,12 @@ static void emit_c_cond_goto(Emit_c_strs* strs, const Llvm_cond_goto* cond_goto)
 }
 
 static void emit_c_goto(Emit_c_strs* strs, const Llvm_goto* lang_goto) {
-    emit_c_loc(&strs->output, lang_goto->loc);
+    emit_c_loc(&strs->output, lang_goto->loc, lang_goto->pos);
     emit_c_goto_internal(strs, lang_goto->label);
 }
 
 static void emit_c_block(Emit_c_strs* strs, const Llvm_block* block) {
+    emit_c_loc(&strs->output, block->loc, block->pos);
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
         const Llvm* stmt = vec_at(&block->children, idx);
         switch (stmt->type) {
