@@ -1,5 +1,3 @@
-compile::stdout 0
-
 compile::stdout 2
 89
 89 89
