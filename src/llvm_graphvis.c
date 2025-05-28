@@ -12,6 +12,8 @@ static void llvm_graphvis_internal(String* buf, const Llvm* llvm);
 
 static void llvm_variable_def_graphvis_internal(String* buf, const Llvm_variable_def* def);
 
+static bool llvm_graphvis_do_next_arrow(const Llvm* llvm);
+
 static void extend_source_loc_internal(const char* file, int line, String* buf) {
     string_extend_cstr(&a_print, buf, "// ");
     string_extend_cstr(&a_print, buf, file);
@@ -90,16 +92,25 @@ static void llvm_block_graphvis_internal(String* buf, const Llvm_block* block) {
 
     label(buf, block->name, string_to_strv(scope_buf));
 
-    Name prev = block->name;
     for (size_t idx = 0; idx < block->children.info.count; idx++) {
+        Llvm* curr = vec_at(&block->children, idx);
+        Llvm* next = idx + 1 < block->children.info.count ? vec_at(&block->children, idx + 1) : NULL;
+
+        if (idx < 1) {
+            arrow_names_label(buf, block->name, llvm_tast_get_name(curr), str_view_from_cstr("first_stmt"));
+        }
+
         String idx_buf = {0};
         string_extend_size_t(&a_print, &idx_buf, idx);
-        if (all_tbl_add_ex(&already_visited, vec_at(&block->children, idx))) {
+        if (all_tbl_add_ex(&already_visited, curr)) {
             // TODO: make size_t_print_macro?
-            llvm_graphvis_internal(buf, vec_at(&block->children, idx));
+            llvm_graphvis_internal(buf, curr);
         }
-        arrow_names_label(buf, prev, llvm_tast_get_name(vec_at(&block->children, idx)), string_to_strv(idx_buf));
-        prev = llvm_tast_get_name(vec_at(&block->children, idx));
+        if (idx + 1 < block->children.info.count && llvm_graphvis_do_next_arrow(curr)) {
+            arrow_names_label(buf, llvm_tast_get_name(curr), llvm_tast_get_name(next), str_view_from_cstr("next"));
+        } else {
+            todo();
+        }
     }
 
     Alloca_iter iter = all_tbl_iter_new(block->scope_id);
@@ -336,7 +347,7 @@ static bool llvm_graphvis_do_next_arrow(const Llvm* llvm) {
         case LLVM_FUNCTION_PARAMS:
             unreachable("");
         case LLVM_RETURN:
-            return true;
+            return false;
         case LLVM_GOTO:
             return false;
         case LLVM_COND_GOTO:
@@ -392,6 +403,7 @@ static void llvm_graphvis_internal(String* buf, const Llvm* llvm) {
 }
 
 Str_view llvm_graphvis(const Llvm_block* block) {
+    // TODO: remove parameter block?
     (void) block;
     String buf = {0};
     extend_source_loc(&buf);
