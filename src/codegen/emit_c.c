@@ -604,9 +604,9 @@ static void emit_c_array_access(Emit_c_strs* strs, const Llvm_array_access* acce
     string_extend_cstr(&a_main, &strs->output, "]);\n");
 }
 
-static void emit_c_goto_internal(Emit_c_strs* strs, Name name) {
+static void emit_c_goto_internal(Emit_c_strs* strs, Name label) {
     string_extend_cstr(&a_main, &strs->output, "    goto ");
-    llvm_extend_name(&strs->output, name);
+    llvm_extend_name(&strs->output, label);
     string_extend_cstr(&a_main, &strs->output, ";\n");
 }
 
@@ -621,7 +621,7 @@ static void emit_c_cond_goto(Emit_c_strs* strs, const Llvm_cond_goto* cond_goto)
 }
 
 static void emit_c_goto(Emit_c_strs* strs, const Llvm_goto* lang_goto) {
-    emit_c_goto_internal(strs, lang_goto->name);
+    emit_c_goto_internal(strs, lang_goto->label);
 }
 
 static void emit_c_block(Emit_c_strs* strs, const Llvm_block* block) {

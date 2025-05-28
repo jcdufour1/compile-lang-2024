@@ -210,7 +210,8 @@ Str_view llvm_goto_print_internal(const Llvm_goto* lang_goto, int indent) {
     String buf = {0};
 
     string_extend_cstr_indent(&a_print, &buf, "goto", indent);
-    extend_name(NAME_LOG, &buf, lang_goto->name);
+    extend_name(NAME_LOG, &buf, lang_goto->name_self);
+    extend_name(NAME_LOG, &buf, lang_goto->label);
     string_extend_cstr(&a_print, &buf, "\n");
 
     return string_to_strv(buf);

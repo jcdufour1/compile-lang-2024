@@ -1431,6 +1431,7 @@ static Llvm_block* if_statement_to_branch(Tast_if* if_statement, Name next_if, N
 
     Llvm_goto* jmp_to_after_chain = llvm_goto_new(
         old_block->pos,
+        util_literal_name_new2(),
         after_chain
     );
     vec_append(&a_main, &new_block->children, llvm_goto_wrap(jmp_to_after_chain));
@@ -1535,7 +1536,7 @@ static Llvm_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
 
     Tast_operator* operator = old_for->condition->child;
     Name check_cond_label = util_literal_name_new_mod_path2(env.curr_mod_path);
-    Llvm_goto* jmp_to_check_cond_label = llvm_goto_new(old_for->pos, check_cond_label);
+    Llvm_goto* jmp_to_check_cond_label = llvm_goto_new(old_for->pos, util_literal_name_new2(), check_cond_label);
     Name after_check_label = util_literal_name_new_mod_path2(env.curr_mod_path);
     Name after_for_loop_label = util_literal_name_new_mod_path2(env.curr_mod_path);
 
@@ -1568,7 +1569,7 @@ static Llvm_block* for_with_cond_to_branch(Tast_for_with_cond* old_for) {
     }
 
     vec_append(&a_main, &new_branch_block->children, llvm_goto_wrap(
-        llvm_goto_new(old_for->pos, check_cond_label)
+        llvm_goto_new(old_for->pos, util_literal_name_new2(), check_cond_label)
     ));
     add_label(new_branch_block, after_for_loop_label, pos);
 
@@ -1605,7 +1606,7 @@ static void load_break(Llvm_block* new_block, Tast_break* old_break) {
     }
 
     assert(env.label_if_break.base.count > 0);
-    Llvm_goto* new_goto = llvm_goto_new(old_break->pos, env.label_if_break);
+    Llvm_goto* new_goto = llvm_goto_new(old_break->pos, util_literal_name_new2(), env.label_if_break);
     vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
 }
 
@@ -1625,7 +1626,7 @@ static void load_continue(Llvm_block* new_block, Tast_continue* old_continue) {
         return;
     }
 
-    Llvm_goto* new_goto = llvm_goto_new(old_continue->pos, env.label_if_continue);
+    Llvm_goto* new_goto = llvm_goto_new(old_continue->pos, util_literal_name_new2(), env.label_if_continue);
     vec_append(&a_main, &new_block->children, llvm_goto_wrap(new_goto));
 }
 

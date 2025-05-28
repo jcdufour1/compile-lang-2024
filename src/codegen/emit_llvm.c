@@ -758,7 +758,7 @@ static void emit_label(String* output, const Llvm_label* label) {
 
 static void emit_goto(String* output, const Llvm_goto* lang_goto) {
     string_extend_cstr(&a_main, output, "    br label %");
-    llvm_extend_name(output, lang_goto->name);
+    llvm_extend_name(output, lang_goto->label);
     vec_append(&a_main, output, '\n');
 }
 

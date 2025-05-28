@@ -380,7 +380,8 @@ static Llvm_type llvm_gen_return(void) {
 static Llvm_type llvm_gen_goto(void) {
     Llvm_type lang_goto = {.name = llvm_name_new("llvm", "goto", false)};
 
-    append_member(&lang_goto.members, "Name", "name");
+    append_member(&lang_goto.members, "Name", "name_self");
+    append_member(&lang_goto.members, "Name", "label");
 
     return lang_goto;
 }

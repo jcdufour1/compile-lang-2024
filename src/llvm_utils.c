@@ -175,7 +175,7 @@ Name llvm_tast_get_name(const Llvm* llvm) {
         case LLVM_RETURN:
             return llvm_return_const_unwrap(llvm)->name_self;
         case LLVM_GOTO:
-            return llvm_goto_const_unwrap(llvm)->name;
+            return llvm_goto_const_unwrap(llvm)->name_self;
         case LLVM_COND_GOTO:
             return llvm_cond_goto_const_unwrap(llvm)->name_self;
         case LLVM_ALLOCA:
