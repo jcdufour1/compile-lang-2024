@@ -293,6 +293,18 @@ static void llvm_alloca_graphvis_internal(String* buf, const Llvm_alloca* alloca
     // TODO
 }
 
+static void llvm_cond_goto_graphvis_internal(String* buf, const Llvm_cond_goto* cond_goto) {
+    label(buf, cond_goto->name_self, str_view_from_cstr("cond_goto"));
+    arrow_names_label(buf, cond_goto->name_self, cond_goto->if_true, str_view_from_cstr("if true"));
+    arrow_names_label(buf, cond_goto->name_self, cond_goto->if_false, str_view_from_cstr("if false"));
+    arrow_names_label(buf, cond_goto->name_self, cond_goto->condition, str_view_from_cstr("condition"));
+}
+
+static void llvm_goto_graphvis_internal(String* buf, const Llvm_goto* lang_goto) {
+    label(buf, lang_goto->name_self, str_view_from_cstr("goto"));
+    arrow_names_label(buf, lang_goto->name_self, lang_goto->label, str_view_from_cstr("label"));
+}
+
 static void llvm_store_another_llvm_graphvis_internal(String* buf, const Llvm_store_another_llvm* store) {
     // TODO: name_self and name inconsistent
     label(buf, store->name, str_view_from_cstr("store"));
@@ -331,9 +343,11 @@ static void llvm_graphvis_internal(String* buf, const Llvm* llvm) {
             llvm_return_graphvis_internal(buf, llvm_return_const_unwrap(llvm));
             return;
         case LLVM_GOTO:
-            todo();
+            llvm_goto_graphvis_internal(buf, llvm_goto_const_unwrap(llvm));
+            return;
         case LLVM_COND_GOTO:
-            todo();
+            llvm_cond_goto_graphvis_internal(buf, llvm_cond_goto_const_unwrap(llvm));
+            return;
         case LLVM_ALLOCA:
             llvm_alloca_graphvis_internal(buf, llvm_alloca_const_unwrap(llvm));
             return;
