@@ -83,7 +83,6 @@ for generics:
 - defer
 - slices
 - orelse, !!, ??, etc.
-- #pos to get position
 - extern("c") defintions
 - non-hard coded size_t, etc.
 - printing features
@@ -98,7 +97,6 @@ for generics:
 - pointer generic
 - warn about unused variables
 - when using variadic args for extern("c") function: give error when passing i16 without a cast, etc.
-- consistent naming for arenas
 - implement == for sum with void inner types, or give error for using ==
 - test case for: let num f32 = 7
 - 7_000.001
@@ -109,6 +107,14 @@ for generics:
         15 |         rl.DrawRectangleLinesEx({0.0, 0, 100, 100}, 0x40400000, rl.RED())
            |                                       ^
         16 |
+- make shorter function name for `str_view_from_cstr`, because this function is used so much
+- command line interface idea:
+### compile
+main hello.own
+### run
+main hello.own --run arg1 arg2 ..
+- consider renaming Llvm_store_another_llvm to Llvm_store
+- consider renaming Llvm_load_another_llvm to Llvm_load
     
 
 
@@ -116,7 +122,6 @@ for generics:
 - let token* Token = <...>; switch token {<...>}
 
 # optional things:
-- use 0o for octal prefix?
 - const, etc.
 - named scopes
 - designated args
