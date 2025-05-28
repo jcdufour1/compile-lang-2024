@@ -109,7 +109,7 @@ static void llvm_block_graphvis_internal(String* buf, const Llvm_block* block) {
         if (idx + 1 < block->children.info.count && llvm_graphvis_do_next_arrow(curr)) {
             arrow_names_label(buf, llvm_tast_get_name(curr), llvm_tast_get_name(next), str_view_from_cstr("next"));
         } else {
-            todo();
+            // TODO
         }
     }
 
@@ -335,7 +335,7 @@ static void llvm_load_another_llvm_graphvis_internal(String* buf, const Llvm_loa
 static bool llvm_graphvis_do_next_arrow(const Llvm* llvm) {
     switch (llvm->type) {
         case LLVM_BLOCK:
-            return true;
+            return false;
         case LLVM_EXPR:
             return true;
         case LLVM_DEF:
