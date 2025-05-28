@@ -321,6 +321,36 @@ static void llvm_load_another_llvm_graphvis_internal(String* buf, const Llvm_loa
     // TODO: lang_type
 }
 
+static bool llvm_graphvis_do_next_arrow(const Llvm* llvm) {
+    switch (llvm->type) {
+        case LLVM_BLOCK:
+            return true;
+        case LLVM_EXPR:
+            return true;
+        case LLVM_DEF:
+            return true;
+        case LLVM_LOAD_ELEMENT_PTR:
+            return true;
+        case LLVM_ARRAY_ACCESS:
+            return true;
+        case LLVM_FUNCTION_PARAMS:
+            unreachable("");
+        case LLVM_RETURN:
+            return true;
+        case LLVM_GOTO:
+            return false;
+        case LLVM_COND_GOTO:
+            return false;
+        case LLVM_ALLOCA:
+            return true;
+        case LLVM_LOAD_ANOTHER_LLVM:
+            return true;
+        case LLVM_STORE_ANOTHER_LLVM:
+            return true;
+    }
+    unreachable("");
+}
+
 static void llvm_graphvis_internal(String* buf, const Llvm* llvm) {
     switch (llvm->type) {
         case LLVM_BLOCK:
