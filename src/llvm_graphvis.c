@@ -23,7 +23,7 @@ static void extend_source_loc_internal(const char* file, int line, String* buf) 
 }
 
 static void extend_name_graphvis(String* buf, Name name) {
-    extend_name_log_internal(false, buf, name);
+    string_extend_strv(&a_print, buf, serialize_name(name));
 }
 
 #define arrow_names(buf, parent, child) arrow_names_internal(__FILE__, __LINE__, buf, parent, child)
